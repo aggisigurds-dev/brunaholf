@@ -9,8 +9,8 @@ const CLIENT_SECRET = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
 const REDIRECT = process.env.GOOGLE_OAUTH_REDIRECT;
 
 const SCOPES = [
-  'https://www.googleapis.com/auth/drive.readonly',
-  'https://www.googleapis.com/auth/drive.metadata.readonly',
+  'https://www.googleapis.com/auth/drive',                  // full Drive (read everything + create app files)
+  'https://www.googleapis.com/auth/spreadsheets',           // read + write Sheets
   'https://www.googleapis.com/auth/gmail.readonly',
   'https://www.googleapis.com/auth/userinfo.email',
   'openid',

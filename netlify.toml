@@ -60,6 +60,26 @@
   to = "/.netlify/functions/customer-map"
   status = 200
 
+[[redirects]]
+  from = "/api/sheet-create"
+  to = "/.netlify/functions/sheet-create"
+  status = 200
+
+[[redirects]]
+  from = "/api/customer-info"
+  to = "/.netlify/functions/customer-info"
+  status = 200
+
+[[redirects]]
+  from = "/api/drive-download"
+  to = "/.netlify/functions/drive-download"
+  status = 200
+
+[[redirects]]
+  from = "/api/email-tasks"
+  to = "/.netlify/functions/email-tasks"
+  status = 200
+
 # Scheduled invocation: re-runs the function every 10 minutes so the
 # (eventual) Timavera scrape result is "warm" when the page asks.
 # Cron syntax: minute hour day month weekday — every 10 min, all day.

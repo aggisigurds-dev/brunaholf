@@ -19,17 +19,60 @@ exports.handler = async (event) => {
   if (event.httpMethod !== 'GET') return json(405, { error: 'Method not allowed' });
 
   const p = event.queryStringParameters || {};
-  const year = parseInt(p.year || String(new Date().getFullYear()), 10);
+  const yearParam = (p.year || String(new Date().getFullYear())).trim();
+  // Range can be a single year or "combined" (current + previous)
+  const now = new Date().getFullYear();
+  let dateFrom, dateTo, statusYears, labelYear;
+  if (yearParam === 'combined') {
+    dateFrom = `${now - 1}-01-01`; dateTo = `${now}-12-31`;
+    statusYears = [now - 1, now]; labelYear = `${now-1}+${now}`;
+  } else {
+    const y = parseInt(yearParam, 10) || now;
+    dateFrom = `${y}-01-01`; dateTo = `${y}-12-31`;
+    statusYears = [y]; labelYear = y;
+  }
 
   try {
-    const [entries, emails, statuses, invoices, ajourCounts, mappings] = await Promise.all([
-      fetchAllPages(`timavera_entries?select=project,hours,date,employee&date=gte.${year}-01-01&date=lte.${year}-12-31&order=date.asc`),
+    const [entries, emails, statuses, invoices, ajourCounts, mappings, bankIn, customerInfos] = await Promise.all([
+      fetchAllPages(`timavera_entries?select=project,hours,date,employee&date=gte.${dateFrom}&date=lte.${dateTo}&order=date.asc`),
       fetchAllPages(`email_digest?select=id,account,sender_email,sender_name,subject,snippet,received_at`),
-      sb(`worksite_status?year=eq.${year}&select=*`),
-      fetchAllPages(`invoices?select=*&gjalddagi=gte.${year}-01-01&gjalddagi=lte.${year}-12-31&order=gjalddagi.desc`),
-      fetchAjourCounts(year),
+      sb(`worksite_status?year=in.(${statusYears.join(',')})&select=*`),
+      fetchAllPages(`invoices?select=*&or=(gjalddagi.is.null,and(gjalddagi.gte.${dateFrom},gjalddagi.lte.${dateTo}))&order=gjalddagi.desc.nullslast`),
+      fetchAjourCountsRange(dateFrom, dateTo),
       sb(`customer_worksite_map?select=*`),
+      fetchAllPages(`bank_transactions?select=trans_date,amount,text,kt_counterparty&amount=gt.0`),
+      sb(`customer_info?select=*`),
     ]);
+    const customerInfoByName = {};
+    for (const ci of customerInfos) customerInfoByName[ci.customer_name] = ci;
+
+    // Build customer → total bank inflow index. Match by kt_counterparty if present,
+    // else by first word of customer_name in `text`.
+    const bankByKt = {};
+    const bankByText = []; // [{text_lower, amount}]
+    for (const t of bankIn) {
+      if (t.kt_counterparty) {
+        const kt = String(t.kt_counterparty).replace(/-/g, '');
+        bankByKt[kt] = (bankByKt[kt] || 0) + Number(t.amount || 0);
+      }
+      if (t.text) bankByText.push({ text: t.text.toLowerCase(), amount: Number(t.amount || 0) });
+    }
+    function bankInflowForCustomer(customerName, kt) {
+      let total = 0;
+      if (kt) {
+        const cleanKt = String(kt).replace(/-/g, '');
+        if (bankByKt[cleanKt]) total += bankByKt[cleanKt];
+      }
+      // also fuzzy text match — first 1-2 distinctive words
+      const words = (customerName || '').toLowerCase().split(/\s+/).filter(w => w.length > 3);
+      if (words.length) {
+        const needle = words[0]; // e.g. "þg" or "krókur" or "dalvegur"
+        for (const t of bankByText) {
+          if (t.text.includes(needle)) total += t.amount;
+        }
+      }
+      return total;
+    }
 
     const byProject = new Map();
     for (const r of entries) {
@@ -96,18 +139,41 @@ exports.handler = async (event) => {
     }
 
     const worksites = projectsArr.map(p => {
-      // Find invoices for this worksite — explicit match wins, then via customer map
+      // Find invoices for this worksite + retention metadata per customer.
       const invMatches = new Map();
+      const customerRet = {}; // customer -> retention_pct
       for (const inv of (invByMatch[p.project] || [])) invMatches.set(inv.id, inv);
       for (const m of (mapByWorksite[p.project] || [])) {
         const c = (m.customer_name || '').toLowerCase();
+        customerRet[c] = Number(m.retention_pct || 0);
         for (const inv of (invByCustomer[c] || [])) invMatches.set(inv.id, inv);
       }
       const linkedInvoices = [...invMatches.values()];
       const invSum = linkedInvoices.reduce((a, i) => a + Number(i.hofudstoll || 0), 0);
-      const unpaid = linkedInvoices
-        .filter(i => /ógreidd|vanskil/i.test(i.status || ''))
+      const rawUnpaid = linkedInvoices
+        .filter(i => /ógreidd|ógreitt|vanskil/i.test(i.status || ''))
         .reduce((a, i) => a + Number(i.hofudstoll || 0), 0);
+      const expectedRetention = linkedInvoices
+        .filter(i => Number(i.hofudstoll || 0) > 0)
+        .reduce((a, i) => {
+          const c = (i.customer_name || '').toLowerCase();
+          const pct = customerRet[c] || 0;
+          return a + Number(i.hofudstoll || 0) * (pct / 100);
+        }, 0);
+      // Per-customer bank inflows for the invoices' customers — extra "paid via bank but not in Payday"
+      const customers = [...new Set(linkedInvoices.map(i => (i.customer_name||'')).filter(Boolean))];
+      let bankPaid = 0;
+      for (const c of customers) {
+        const ktInv = linkedInvoices.find(i => i.customer_name === c && i.kt_greidanda)?.kt_greidanda;
+        bankPaid += bankInflowForCustomer(c, ktInv);
+      }
+      // Don't credit MORE than the customer was invoiced (avoid over-counting)
+      bankPaid = Math.min(bankPaid, invSum);
+      // Real overdue = raw unpaid − retention held − bank payments not yet reflected
+      const overpaidVsPayday = Math.max(0, bankPaid - (invSum - rawUnpaid));
+      const unpaid = Math.max(0, rawUnpaid - expectedRetention - overpaidVsPayday);
+      const retentionHeld = Math.min(rawUnpaid, expectedRetention);
+      const bankCoveredHidden = Math.min(rawUnpaid - retentionHeld, overpaidVsPayday);
       const ajour = ajourCounts[p.project] || 0;
 
       return {
@@ -124,6 +190,11 @@ exports.handler = async (event) => {
         invoice_count:  linkedInvoices.length,
         invoice_total:  Math.round(invSum),
         invoice_unpaid: Math.round(unpaid),
+        invoice_unpaid_raw: Math.round(rawUnpaid),
+        retention_held: Math.round(retentionHeld),
+        bank_covered_hidden: Math.round(bankCoveredHidden),
+        bank_inflow_total: Math.round(bankPaid),
+        retention_pct: customerRet[(mapByWorksite[p.project]||[])[0]?.customer_name?.toLowerCase()] || 0,
         invoices: linkedInvoices.map(i => ({
           id: i.id,
           tilvisun: i.tilvisun,
@@ -134,6 +205,10 @@ exports.handler = async (event) => {
           greidsla_date: i.greidsla_date,
         })),
         mapped_customers: (mapByWorksite[p.project] || []).map(m => m.customer_name),
+        mapped_customer_info: (mapByWorksite[p.project] || []).map(m => ({
+          customer_name: m.customer_name,
+          ...(customerInfoByName[m.customer_name] || {}),
+        })),
         status: statusByProject[p.project] || {
           billing_status: 'unreviewed', notes: null, drive_folder_url: null,
           contract_url: null, invoice_amount: null, invoice_date: null,
@@ -142,7 +217,7 @@ exports.handler = async (event) => {
     }).sort((a, b) => b.hours - a.hours);
 
     const summary = {
-      year,
+      year: labelYear,
       total_worksites: worksites.length,
       total_hours: round1(worksites.reduce((a, w) => a + w.hours, 0)),
       total_days: new Set(entries.map(r => r.date)).size,
@@ -192,13 +267,20 @@ async function updateStatus(event) {
   return json(200, { ok: true, row: out[0] });
 }
 
-// Pull Ajour registration counts per project for a given year. Returns
-// { 'Project Name': 12345, ... }
-async function fetchAjourCounts(year) {
-  // PostgREST aggregate via head=true + count, per project
-  const rows = await fetchAllPages(`ajour_registrations?select=project_name,execution_date&execution_date=gte.${year}-01-01&execution_date=lte.${year}-12-31`);
+// Pull Ajour registration counts per project for a date range. Uses
+// project_aliases so e.g. "NLSH 5-6. hæð" rolls up under "Landsspitalinn".
+async function fetchAjourCountsRange(dateFrom, dateTo) {
+  const [aliases, rows] = await Promise.all([
+    sb('project_aliases?select=canonical_name,alias'),
+    fetchAllPages(`ajour_registrations?select=project_name,execution_date&execution_date=gte.${dateFrom}&execution_date=lte.${dateTo}`),
+  ]);
+  const aliasMap = {};
+  for (const a of aliases) aliasMap[a.alias] = a.canonical_name;
   const out = {};
-  for (const r of rows) out[r.project_name] = (out[r.project_name] || 0) + 1;
+  for (const r of rows) {
+    const canonical = aliasMap[r.project_name] || r.project_name;
+    out[canonical] = (out[canonical] || 0) + 1;
+  }
   return out;
 }
 

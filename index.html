@@ -336,6 +336,70 @@ main{padding:14px;max-width:1100px;margin:0 auto;flex:1;min-width:0;width:100%}
 .ic-tags .tag.t-q  {background:#FFEEE8;color:#8C2510;border:1px solid #FFC7B0}
 .ic-tags .tag.t-att{background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE}
 
+/* ======= Spurningar & Verkefni ======= */
+.sp-wrap{display:flex;flex-direction:column;gap:14px}
+.sp-header{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:16px;
+  padding:18px 20px;border-radius:var(--radius);box-shadow:var(--shadow);color:#fff;
+  background:linear-gradient(135deg, #4A1F3D 0%, #6B2A47 60%, #7E3055 100%);
+}
+.sp-h1{margin:0;font-family:'Fraunces',serif;font-weight:600;font-size:24px;color:#fff;letter-spacing:-.01em}
+.sp-sub{margin-top:6px;font-size:12px;color:#E8C7DA}
+.sp-controls{display:flex;gap:8px;align-items:center}
+
+.sp-kpi-new  .tv-kpi-v{color:var(--red)}
+.sp-kpi-high .tv-kpi-v{color:#7A3E10}
+.sp-kpi-done .tv-kpi-v{color:var(--green)}
+
+.sp-list{display:flex;flex-direction:column;gap:10px}
+.sp-card{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);
+  padding:14px 16px;box-shadow:var(--shadow-sm);
+  display:flex;flex-direction:column;gap:6px;
+  border-left:4px solid var(--muted-2);
+}
+.sp-card.sp-st-new  {border-left-color:var(--red)}
+.sp-card.sp-st-prog {border-left-color:var(--gold)}
+.sp-card.sp-st-done {border-left-color:var(--green)}
+.sp-card.sp-st-dism {border-left-color:var(--muted-2);opacity:.6}
+.sp-card.sp-st-snz  {border-left-color:var(--blue);opacity:.85}
+
+.sp-card-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;font-size:11.5px}
+.sp-status-pill,.sp-pri-pill{
+  display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:6px;
+  font-size:10.5px;font-weight:700;letter-spacing:.02em;cursor:pointer;
+  border:1px solid transparent;user-select:none;
+}
+.sp-status-pill.sp-st-new  {background:#FFEEE8;color:#8C2510;border-color:#FFC7B0}
+.sp-status-pill.sp-st-prog {background:#FEF3C7;color:#7A5510;border-color:#FCD34D}
+.sp-status-pill.sp-st-done {background:#F0FAF4;color:#10A36B;border-color:#86EFAC}
+.sp-status-pill.sp-st-dism {background:var(--bg-2);color:var(--muted);border-color:var(--line)}
+.sp-status-pill.sp-st-snz  {background:#EFF6FF;color:#1D4ED8;border-color:#BFDBFE}
+.sp-pri-pill.sp-pr-high   {background:var(--red);color:#fff;border-color:var(--red)}
+.sp-pri-pill.sp-pr-normal {background:var(--bg-2);color:var(--muted-2);border-color:var(--line)}
+.sp-pri-pill.sp-pr-low    {background:var(--card);color:var(--muted-2);border-color:var(--line)}
+.sp-icon{font-size:13px;line-height:1}
+.sp-sender{font-weight:700;color:var(--ink);font-size:12.5px}
+.sp-account{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted-2)}
+.sp-when{margin-left:auto;color:var(--muted);font-size:11px}
+.sp-subject{font-weight:600;color:var(--ink);font-size:13.5px;line-height:1.35}
+.sp-snippet{color:var(--muted);font-size:12px;line-height:1.5;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+}
+.sp-actions{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.sp-act-btn{
+  padding:4px 10px;font-size:11.5px;font-weight:600;
+  border:1px solid var(--line);background:var(--card);color:var(--ink-2);
+  border-radius:6px;cursor:pointer;
+}
+.sp-act-btn:hover{background:var(--bg-2);border-color:var(--line-2)}
+.sp-act-add-note{margin-left:auto}
+.sp-notes{
+  font-size:12px;color:var(--ink-2);background:#FFF5E6;padding:6px 10px;border-radius:6px;
+  border-left:3px solid var(--gold);margin-top:4px;line-height:1.5;
+}
+.sp-linked{font-size:11.5px;color:var(--muted);margin-top:4px;font-weight:500}
+
 /* ======= Tímavera dashboard ======= */
 .tv-wrap{display:flex;flex-direction:column;gap:14px}
 
@@ -598,13 +662,64 @@ main{padding:14px;max-width:1100px;margin:0 auto;flex:1;min-width:0;width:100%}
 .ws-card-stats{display:flex;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--muted);margin-bottom:8px}
 .ws-card-stats strong{color:var(--ink-2);font-weight:700}
 
-.ws-card-bars{display:flex;align-items:flex-end;gap:4px;height:40px;margin:6px 0 10px;padding:0 2px}
-.ws-mbar{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:24px;max-width:50px}
-.ws-mbar-fill{
-  width:100%;background:linear-gradient(180deg, var(--red) 0%, var(--red-dark) 100%);
-  border-radius:2px 2px 0 0;min-height:2px;
+/* Pipeline grid: 3 rows × N month cells per worksite */
+.ws-pipeline{display:flex;flex-direction:column;gap:3px;margin:8px 0 10px;padding:8px 10px;background:var(--bg-2);border-radius:8px}
+.ws-pipe-row{display:flex;align-items:center;gap:8px;height:18px}
+.ws-pipe-row-hdr{height:14px;margin-bottom:1px}
+.ws-pipe-lbl{
+  width:96px;font-size:10.5px;font-weight:700;color:var(--ink-2);letter-spacing:.01em;flex-shrink:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
-.ws-mbar-lbl{font-size:9px;color:var(--muted);font-weight:600;letter-spacing:.02em}
+.ws-pipe-row-hdr .ws-pipe-lbl{visibility:hidden}
+.ws-pipe-cells{display:grid;grid-template-columns:repeat(auto-fit, minmax(0, 1fr));gap:3px;flex:1}
+.ws-cell{
+  height:14px;border-radius:3px;background:var(--card);border:1px solid var(--line);
+  position:relative;transition:transform .12s, box-shadow .12s;cursor:default;
+}
+.ws-cell:hover{transform:scale(1.15);box-shadow:0 1px 4px rgba(0,0,0,.15);z-index:2}
+.ws-cell-hdr{
+  border:none;background:transparent;font-size:9px;color:var(--muted);font-weight:700;
+  letter-spacing:.04em;display:flex;align-items:flex-end;justify-content:center;text-transform:uppercase;
+}
+.ws-cell-bar{
+  background:transparent;border:none;
+  display:flex;align-items:flex-end;justify-content:stretch;padding:0;
+}
+.ws-cell-bar .ws-mbar-fill{
+  width:100%;background:linear-gradient(180deg, #94A3B8 0%, #64748B 100%);
+  border-radius:2px;min-height:2px;
+}
+.ws-cell-ok   {background:linear-gradient(180deg,#10A36B,#0E8B5C);border-color:#0E8B5C}
+.ws-cell-warn {background:linear-gradient(180deg,#EF4444,#C93C1D);border-color:#C93C1D}
+.ws-cell-na   {background:repeating-linear-gradient(45deg,#E5E7EB,#E5E7EB 3px,#F3F4F6 3px,#F3F4F6 6px);border-color:#D1D5DB}
+.ws-cell-empty{background:var(--bg-2);border-color:transparent}
+
+/* Whole-card state borders */
+.ws-card.ws-card-done    {border-left:4px solid var(--green);}
+.ws-card.ws-card-progress{border-left:4px solid var(--gold);}
+.ws-card.ws-card-warn    {border-left:4px solid var(--red);}
+.ws-card.ws-card-na      {border-left:4px solid var(--muted-2);}
+
+/* Action steps panel */
+.ws-actions-card{background:linear-gradient(180deg, #FFFBF5 0%, var(--card) 80%);border:1px solid #F5E2C4}
+.ws-actions-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:840px){.ws-actions-grid{grid-template-columns:1fr}}
+.ws-actions-h{
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.4px;
+  color:var(--muted);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--line);
+}
+.ws-actions-col{display:flex;flex-direction:column;gap:6px}
+.ws-action-item{
+  display:flex;flex-direction:column;gap:2px;padding:8px 12px;
+  background:var(--card);border:1px solid var(--line);border-radius:8px;
+  text-decoration:none;color:inherit;transition:border-color .15s, transform .12s, box-shadow .12s;
+}
+.ws-action-item:hover{border-color:var(--gold);transform:translateY(-1px);box-shadow:var(--shadow-sm)}
+.ws-action-name{font-weight:700;color:var(--ink);font-size:13px}
+.ws-action-meta{font-size:11.5px;color:var(--muted)}
+.ws-action-meta strong{color:var(--red);font-weight:700}
+.ws-action-sub{font-size:10.5px;color:var(--muted-2);font-style:italic}
+.ws-action-empty{font-size:12.5px;color:var(--green);font-style:italic;padding:8px 4px}
 
 .ws-card-meta{display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:12px}
 .ws-email-btn{
@@ -656,6 +771,25 @@ main{padding:14px;max-width:1100px;margin:0 auto;flex:1;min-width:0;width:100%}
 .ws-bill-warn{background:#FFEEE8;color:#8C2510;border:1px solid #FFC7B0}
 .ws-bill-na  {background:var(--card);color:var(--muted);border:1px solid var(--line);font-style:italic}
 .ws-bill-unpaid{color:var(--red);font-weight:700;margin-left:4px}
+.ws-bill-retention{color:var(--gold);font-weight:600;margin-left:4px;font-size:11px}
+.ws-bill-bank{color:var(--blue);font-weight:600;margin-left:4px;font-size:11px}
+
+/* Customer info chips */
+.ws-customers{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;width:100%}
+.ws-ci{
+  display:inline-flex;align-items:center;gap:6px;padding:4px 10px;
+  background:var(--card);border:1px solid var(--line);border-radius:6px;font-size:11.5px;
+  cursor:pointer;transition:border-color .15s, background .15s;
+}
+.ws-ci:hover{border-color:var(--ink-2);background:var(--bg-2)}
+.ws-ci strong{color:var(--ink);font-weight:700;font-size:12px}
+.ws-ci-pm{font-size:10px;font-weight:700;padding:1px 6px;border-radius:3px;letter-spacing:.04em;text-transform:uppercase}
+.ws-ci-pm-payday    {background:#EFF6FF;color:#1D4ED8}
+.ws-ci-pm-bankdirect{background:#F0FAF4;color:#10A36B}
+.ws-ci-pm-mix       {background:#FEF3C7;color:#7A5510}
+.ws-ci-pm-cheque    {background:var(--bg-2);color:var(--muted-2)}
+.ws-ci-ret  {color:var(--gold);font-weight:600}
+.ws-ci-term {color:var(--muted);font-style:italic}
 .ws-mapped{font-size:11px;color:var(--muted);font-style:italic;margin-left:4px}
 .chip.chip-warn{color:#8C2510;border-color:#FFC7B0;background:#FFF6F2}
 .chip.chip-warn.active{background:var(--red);color:#fff;border-color:var(--red)}
@@ -920,6 +1054,7 @@ const DEFAULT_STATE = {
     {id:'yfirlit',    label:'Yfirlit',    icon:'🏠'},
     {id:'okkarVerkefni', label:'Anni & Aggi', icon:'🦍', twoCol:{ Anni:{icon:'🦍', items:[]}, Aggi:{icon:'🐒', items:[]} }},
     {id:'inbox',      label:'Inbox',      icon:'📧'},
+    {id:'spurningar', label:'Spurningar', icon:'⚠'},
     {id:'timavera',   label:'Tímavera',   icon:'⏱'},
     {id:'verdsamanburdur', label:'Verðsamanburður', icon:'⚖️'},
     {id:'verkstadir',  label:'Verkstaðir',  icon:'🏗'},
@@ -1129,7 +1264,7 @@ function load(){
       mbtns.forEach(b=>{ if(!s.buttons.find(x=>x.tab==='maeting' && x.label===b.label)) s.buttons.push(JSON.parse(JSON.stringify(b))); });
     }
     // migration: ensure kvittanir + minverkefni + gogn + samthaetting + slokkvitaeki + okkarVerkefni + inbox + timavera tabs exist
-    ['kvittanir','minverkefni','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir'].forEach(id=>{
+    ['kvittanir','minverkefni','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','spurningar'].forEach(id=>{
       if(!s.tabs.find(t=>t.id===id)){
         const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
         if(d){
@@ -1222,6 +1357,7 @@ function render(){
   if(t.id==='slokkvitaeki') return renderSlokkvi(t);
   if(t.id==='okkarVerkefni') return renderOkkarVerkefni(t);
   if(t.id==='inbox') return renderInbox(t);
+  if(t.id==='spurningar') return renderSpurningar(t);
   if(t.id==='timavera') return renderTimavera(t);
   if(t.id==='verdsamanburdur') return renderCompetitors(t);
   if(t.id==='verkstadir') return renderWorksites(t);
@@ -1826,6 +1962,206 @@ function renderTimavera(t){
   load(false);
 }
 
+/* ====================== SPURNINGAR & VERKEFNI (email task triage) ====================== */
+const SP_STATUS = {
+  new:         { label:'Ný',          icon:'●',  cls:'sp-st-new'  },
+  in_progress: { label:'Í vinnslu',    icon:'…',  cls:'sp-st-prog' },
+  answered:    { label:'Svarað',       icon:'✓',  cls:'sp-st-done' },
+  dismissed:   { label:'Frávísað',     icon:'×',  cls:'sp-st-dism' },
+  snoozed:     { label:'Frestað',      icon:'⏸',  cls:'sp-st-snz'  },
+};
+const SP_PRIORITY = {
+  high:   { label:'Hátt',   cls:'sp-pr-high'   },
+  normal: { label:'Venjul.', cls:'sp-pr-normal' },
+  low:    { label:'Lágt',   cls:'sp-pr-low'    },
+};
+
+function renderSpurningar(t){
+  $view.innerHTML = `
+    <div class="sp-wrap">
+      <div class="sp-header">
+        <div>
+          <h1 class="sp-h1">Spurningar & Verkefni</h1>
+          <div class="sp-sub" id="sp-meta">Sækir…</div>
+        </div>
+        <div class="sp-controls">
+          <button id="sp-refresh" class="tv-btn" type="button">
+            <span class="tv-refresh-icon">↻</span> Sækja
+          </button>
+        </div>
+      </div>
+
+      <div class="tv-kpis sp-kpis">
+        <div class="tv-kpi sp-kpi-new"><div class="tv-kpi-l">Nýjar</div><div class="tv-kpi-v" id="sp-k-new">—</div><div class="tv-kpi-x">þurfa svar</div></div>
+        <div class="tv-kpi"><div class="tv-kpi-l">Í vinnslu</div><div class="tv-kpi-v" id="sp-k-prog">—</div><div class="tv-kpi-x">í gangi</div></div>
+        <div class="tv-kpi sp-kpi-high"><div class="tv-kpi-l">Hátt forgangur</div><div class="tv-kpi-v" id="sp-k-high">—</div><div class="tv-kpi-x">opnar + í vinnslu</div></div>
+        <div class="tv-kpi sp-kpi-done"><div class="tv-kpi-l">Svarað</div><div class="tv-kpi-v" id="sp-k-done">—</div><div class="tv-kpi-x">klárað</div></div>
+      </div>
+
+      <div class="tv-card">
+        <div class="ws-filter-bar">
+          <input type="search" id="sp-q" placeholder="Leita í spurningum (sendandi, efni, snippet)..." />
+          <div class="ws-chips" id="sp-chips"></div>
+        </div>
+      </div>
+
+      <div id="sp-list" class="sp-list"></div>
+    </div>
+  `;
+  bindEditButtons();
+
+  const $refresh = document.getElementById('sp-refresh');
+  const $q = document.getElementById('sp-q');
+  const $chips = document.getElementById('sp-chips');
+  let filterStatus = 'open';
+  let qVal = '';
+  let debounce;
+  let lastData = null;
+
+  function renderChips(counts){
+    const opts = [
+      ['open',         `Opnar`,           (counts.new||0)+(counts.in_progress||0)],
+      ['new',          'Nýjar',           counts.new||0],
+      ['in_progress',  'Í vinnslu',       counts.in_progress||0],
+      ['snoozed',      'Frestaðar',       counts.snoozed||0],
+      ['answered',     'Svarað',          counts.answered||0],
+      ['dismissed',    'Frávísað',        counts.dismissed||0],
+      ['all',          'Allt',            counts.total||0],
+    ];
+    $chips.innerHTML = opts.map(([id,label,n]) => `
+      <button class="chip ${filterStatus===id?'active':''}" data-filter="${id}">${escapeHtml(label)} <span class="chip-n">${n}</span></button>
+    `).join('');
+    $chips.querySelectorAll('button[data-filter]').forEach(b => b.addEventListener('click', () => {
+      filterStatus = b.dataset.filter;
+      load();
+    }));
+  }
+
+  function formatWhen(iso){
+    if (!iso) return '';
+    try {
+      const d = new Date(iso);
+      const now = new Date();
+      const sameDay = d.toDateString() === now.toDateString();
+      if (sameDay) return d.toLocaleTimeString('is-IS', {hour:'2-digit', minute:'2-digit'});
+      return d.toLocaleDateString('is-IS', {month:'short', day:'numeric'}) + ' ' + d.toLocaleTimeString('is-IS', {hour:'2-digit', minute:'2-digit'});
+    } catch(e){ return ''; }
+  }
+
+  async function updateAction(email_id, patch){
+    await fetch('/api/email-tasks', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ email_id, ...patch }),
+    });
+  }
+
+  function renderList(rows){
+    const $list = document.getElementById('sp-list');
+    if (!rows.length) { $list.innerHTML = '<div class="empty">Engar spurningar í þessum flokki.</div>'; return; }
+    $list.innerHTML = rows.map(r => {
+      const st = SP_STATUS[r.status] || SP_STATUS.new;
+      const pr = SP_PRIORITY[r.priority] || SP_PRIORITY.normal;
+      const sender = r.sender_name || r.sender_email || '(ókunn.)';
+      return `
+        <div class="sp-card ${st.cls}" data-email-id="${r.id}">
+          <div class="sp-card-head">
+            <span class="sp-status-pill ${st.cls}" data-action="cycle-status" title="Smelltu til að breyta">
+              <span class="sp-icon">${st.icon}</span> ${escapeHtml(st.label)}
+            </span>
+            <span class="sp-pri-pill ${pr.cls}" data-action="cycle-priority" title="Smelltu til að breyta forgang">
+              ${escapeHtml(pr.label)}
+            </span>
+            <span class="sp-sender">${escapeHtml(sender)}</span>
+            <span class="sp-account">${escapeHtml(r.account||'')}</span>
+            <span class="sp-when">${escapeHtml(formatWhen(r.received_at))}</span>
+          </div>
+          <div class="sp-subject">${escapeHtml(r.subject||'(engin efnislína)')}</div>
+          <div class="sp-snippet">${escapeHtml(r.snippet||'')}</div>
+          <div class="sp-actions">
+            <button class="sp-act-btn" data-action="answered">✓ Svarað</button>
+            <button class="sp-act-btn" data-action="in_progress">⋯ Í vinnslu</button>
+            <button class="sp-act-btn" data-action="snoozed">⏸ Fresta</button>
+            <button class="sp-act-btn" data-action="dismissed">× Vísa frá</button>
+            <button class="sp-act-btn sp-act-add-note" data-action="add-note">📝 Athugasemd</button>
+          </div>
+          ${r.notes ? `<div class="sp-notes">📝 ${escapeHtml(r.notes)}</div>` : ''}
+          ${r.linked_worksite ? `<div class="sp-linked">🏗 Verkstaður: ${escapeHtml(r.linked_worksite)}</div>` : ''}
+        </div>`;
+    }).join('');
+
+    // Wire interactions
+    const STATUS_CYCLE = ['new','in_progress','answered','dismissed','snoozed'];
+    const PRIORITY_CYCLE = ['normal','high','low'];
+
+    $list.querySelectorAll('[data-action="cycle-status"]').forEach(el => el.addEventListener('click', async e => {
+      const card = e.target.closest('.sp-card');
+      const id = parseInt(card.dataset.emailId, 10);
+      const row = lastData.rows.find(r => r.id === id);
+      const next = STATUS_CYCLE[(STATUS_CYCLE.indexOf(row.status)+1) % STATUS_CYCLE.length];
+      await updateAction(id, { status: next });
+      await load();
+    }));
+    $list.querySelectorAll('[data-action="cycle-priority"]').forEach(el => el.addEventListener('click', async e => {
+      const card = e.target.closest('.sp-card');
+      const id = parseInt(card.dataset.emailId, 10);
+      const row = lastData.rows.find(r => r.id === id);
+      const next = PRIORITY_CYCLE[(PRIORITY_CYCLE.indexOf(row.priority)+1) % PRIORITY_CYCLE.length];
+      await updateAction(id, { priority: next });
+      await load();
+    }));
+    $list.querySelectorAll('.sp-act-btn').forEach(btn => btn.addEventListener('click', async e => {
+      const card = e.target.closest('.sp-card');
+      const id = parseInt(card.dataset.emailId, 10);
+      const action = btn.dataset.action;
+      if (action === 'add-note') {
+        const row = lastData.rows.find(r => r.id === id);
+        const note = prompt('Athugasemd:', row.notes || '');
+        if (note === null) return;
+        await updateAction(id, { notes: note.trim() || null });
+      } else {
+        // Status shortcuts
+        await updateAction(id, { status: action });
+      }
+      await load();
+    }));
+  }
+
+  async function load(){
+    document.getElementById('sp-meta').textContent = 'Sækir…';
+    $refresh.disabled = true; $refresh.classList.add('loading');
+    try {
+      const params = new URLSearchParams({ status: filterStatus, limit: '200' });
+      if (qVal) params.set('q', qVal);
+      const r = await fetch('/api/email-tasks?' + params.toString());
+      if (!r.ok) {
+        const e = await r.json().catch(()=>({error:'Villa'}));
+        document.getElementById('sp-meta').innerHTML = `<span style="color:var(--red)">${escapeHtml(e.error||'HTTP '+r.status)}</span>`;
+        return;
+      }
+      lastData = await r.json();
+      const c = lastData.counts;
+      document.getElementById('sp-k-new').textContent  = c.new||0;
+      document.getElementById('sp-k-prog').textContent = c.in_progress||0;
+      document.getElementById('sp-k-high').textContent = c.high_priority||0;
+      document.getElementById('sp-k-done').textContent = c.answered||0;
+      document.getElementById('sp-meta').textContent = `${lastData.count} sýnd · ${lastData.total} alls`;
+      renderChips(c);
+      renderList(lastData.rows);
+    } finally {
+      $refresh.disabled = false; $refresh.classList.remove('loading');
+    }
+  }
+
+  $refresh.addEventListener('click', load);
+  $q.addEventListener('input', e => {
+    qVal = e.target.value.trim();
+    if (debounce) clearTimeout(debounce);
+    debounce = setTimeout(load, 250);
+  });
+
+  load();
+}
+
 /* ====================== VERKSTAÐIR (worksite billing audit) ====================== */
 const WS_STATUS_LABEL = {
   unreviewed:           {label:'Óstaðfest',  cls:'ws-st-un',  icon:'○'},
@@ -1860,6 +2196,23 @@ function renderWorksites(t){
         <div class="tv-kpi ws-kpi-good"><div class="tv-kpi-l">Reikningur sendur</div><div class="tv-kpi-v" id="ws-kpi-inv-total">—</div><div class="tv-kpi-x" id="ws-kpi-unpaid-x">— ógr.</div></div>
       </div>
 
+      <div class="tv-card ws-actions-card" id="ws-actions-card" hidden>
+        <div class="tv-card-head">
+          <div class="tv-card-title">Næstu skref til að græna</div>
+          <div class="tv-card-sub">Sjálfvirkt forgangsraðað eftir áhrifum (klst og kr)</div>
+        </div>
+        <div class="ws-actions-grid">
+          <div>
+            <div class="ws-actions-h">⚠ Vinna en enginn reikningur — útgefa</div>
+            <div class="ws-actions-col" id="ws-actions-bill"></div>
+          </div>
+          <div>
+            <div class="ws-actions-h">💰 Reikningur útgefinn en ógreitt — innheimta</div>
+            <div class="ws-actions-col" id="ws-actions-collect"></div>
+          </div>
+        </div>
+      </div>
+
       <div class="tv-card">
         <div class="ws-filter-bar">
           <input type="search" id="ws-q" placeholder="Leita í verkstöðum..." />
@@ -1882,11 +2235,15 @@ function renderWorksites(t){
   let qVal = '';
   let lastData = null;
 
-  for (let y = currentYear; y >= currentYear - 2; y--) {
+  for (let y = currentYear; y >= currentYear - 3; y--) {
     const opt = document.createElement('option');
     opt.value = String(y); opt.textContent = String(y);
     $year.appendChild(opt);
   }
+  // Add combined option (current year + last year) for cross-year audit
+  const combinedOpt = document.createElement('option');
+  combinedOpt.value = 'combined'; combinedOpt.textContent = `${currentYear-1}+${currentYear}`;
+  $year.appendChild(combinedOpt);
   $year.value = String(selectedYear);
 
   function renderChips(byStatus, noInvoiceCount){
@@ -1929,19 +2286,43 @@ function renderWorksites(t){
       const st = WS_STATUS_LABEL[w.status.billing_status] || WS_STATUS_LABEL.unreviewed;
       const monthly = Object.keys(w.monthly).sort();
       const maxM = Math.max(0.001, ...Object.values(w.monthly));
-      const monthBars = monthly.map(m => {
+      const isNonBillable = /almennt|veikindi|sick|work at home/i.test(w.project);
+      const hasInvoice  = (w.invoice_count || 0) > 0;
+      const fullyPaid   = hasInvoice && (w.invoice_unpaid || 0) === 0;
+      const monthLabels = monthly.map(m => {
+        const month = parseInt(m.slice(5,7),10);
+        return ['','Jan','Feb','Mar','Apr','Maí','Jún','Júl','Ágú','Sep','Okt','Nóv','Des'][month] || m;
+      });
+      const monthBars = monthly.map((m, i) => {
         const h = w.monthly[m];
         const pct = (h / maxM * 100).toFixed(0);
-        const month = parseInt(m.slice(5,7),10);
-        const mLabel = ['','Jan','Feb','Mar','Apr','Maí','Jún','Júl','Ágú','Sep','Okt','Nóv','Des'][month] || m;
-        return `<div class="ws-mbar" title="${mLabel}: ${h.toFixed(1)} klst">
+        return `<div class="ws-cell ws-cell-bar" title="${monthLabels[i]}: ${h.toFixed(1)} klst">
           <div class="ws-mbar-fill" style="height:${pct}%"></div>
-          <div class="ws-mbar-lbl">${mLabel}</div>
         </div>`;
       }).join('');
+      const sentCells = monthly.map((m, i) => {
+        const h = w.monthly[m];
+        if (!h) return '<div class="ws-cell ws-cell-empty"></div>';
+        if (isNonBillable) return '<div class="ws-cell ws-cell-na" title="Ekki rukkanlegt"></div>';
+        if (hasInvoice) return `<div class="ws-cell ws-cell-ok" title="${monthLabels[i]}: reikningur sendur"></div>`;
+        return `<div class="ws-cell ws-cell-warn" title="${monthLabels[i]}: vinna en enginn reikningur"></div>`;
+      }).join('');
+      const paidCells = monthly.map((m, i) => {
+        const h = w.monthly[m];
+        if (!h) return '<div class="ws-cell ws-cell-empty"></div>';
+        if (isNonBillable) return '<div class="ws-cell ws-cell-na"></div>';
+        if (!hasInvoice) return '<div class="ws-cell ws-cell-empty"></div>';
+        if (fullyPaid) return `<div class="ws-cell ws-cell-ok" title="${monthLabels[i]}: greitt"></div>`;
+        return `<div class="ws-cell ws-cell-warn" title="${monthLabels[i]}: reikningur enn ógreiddur"></div>`;
+      }).join('');
+      const monthHeaders = monthLabels.map(l => `<div class="ws-cell ws-cell-hdr">${l}</div>`).join('');
+      const cardStateClass = isNonBillable ? 'ws-card-na'
+        : !hasInvoice ? 'ws-card-warn'
+        : !fullyPaid  ? 'ws-card-progress'
+        : 'ws-card-done';
 
       return `
-        <div class="ws-card" data-project="${escapeAttr(w.project)}">
+        <div class="ws-card ${cardStateClass}" data-project="${escapeAttr(w.project)}">
           <div class="ws-card-l">
             <div class="ws-card-head">
               <div class="ws-card-name">${escapeHtml(w.project)}</div>
@@ -1960,14 +2341,27 @@ function renderWorksites(t){
             </div>
             <div class="ws-card-billing">
               ${w.invoice_count > 0
-                ? `<span class="ws-bill-pill ws-bill-ok">💰 ${w.invoice_count} reikning${w.invoice_count===1?'ur':'ar'} · ${(w.invoice_total).toLocaleString('is-IS')} kr ${w.invoice_unpaid>0 ? `<span class="ws-bill-unpaid">· ógreitt: ${w.invoice_unpaid.toLocaleString('is-IS')} kr</span>` : ''}</span>`
+                ? `<span class="ws-bill-pill ws-bill-ok">💰 ${w.invoice_count} reikning${w.invoice_count===1?'ur':'ar'} · ${(w.invoice_total).toLocaleString('is-IS')} kr ${w.invoice_unpaid>0 ? `<span class="ws-bill-unpaid">· ógr.: ${w.invoice_unpaid.toLocaleString('is-IS')} kr</span>` : ''}${w.retention_held>0 ? `<span class="ws-bill-retention" title="Áætlaður öryggisfé halda — ekki gjaldfallinn">· haldið: ${w.retention_held.toLocaleString('is-IS')} kr</span>` : ''}${w.bank_covered_hidden>0 ? `<span class="ws-bill-bank" title="Komin inn í banka en Payday ekki uppfært">· greitt í banka: ${w.bank_covered_hidden.toLocaleString('is-IS')} kr</span>` : ''}</span>`
                 : (/almennt|veikindi|sick|work at home/i.test(w.project)
                     ? '<span class="ws-bill-pill ws-bill-na">— ekki rukkanlegt</span>'
                     : '<span class="ws-bill-pill ws-bill-warn">⚠ enginn reikningur tengdur</span>')}
               <button class="ws-link-add" data-action="map-customer">+ Tengja viðskiptavin</button>
-              ${w.mapped_customers && w.mapped_customers.length ? `<span class="ws-mapped">tengdur: ${w.mapped_customers.map(c => escapeHtml(c)).join(', ')}</span>` : ''}
+              ${w.mapped_customer_info && w.mapped_customer_info.length ? `<div class="ws-customers">
+                ${w.mapped_customer_info.map(ci => {
+                  const bits = [];
+                  if (ci.payment_method) bits.push(`<span class="ws-ci-pm ws-ci-pm-${ci.payment_method.replace(/[^a-z]/gi,'')}">${escapeHtml(ci.payment_method)}</span>`);
+                  if (ci.retention_pct && Number(ci.retention_pct) > 0) bits.push(`<span class="ws-ci-ret">${ci.retention_pct}% haldið</span>`);
+                  if (ci.payment_terms) bits.push(`<span class="ws-ci-term">${escapeHtml(ci.payment_terms)}</span>`);
+                  return `<span class="ws-ci" data-action="edit-customer" data-customer="${escapeAttr(ci.customer_name)}" title="${escapeAttr(ci.general_notes || 'Smelltu til að uppfæra')}"><strong>${escapeHtml(ci.customer_name)}</strong> ${bits.join(' ')}</span>`;
+                }).join('')}
+              </div>` : ''}
             </div>
-            <div class="ws-card-bars">${monthBars}</div>
+            <div class="ws-pipeline">
+              <div class="ws-pipe-row ws-pipe-row-hdr"><span class="ws-pipe-lbl"></span><div class="ws-pipe-cells">${monthHeaders}</div></div>
+              <div class="ws-pipe-row"><span class="ws-pipe-lbl" title="Klukkutímar — vinna lokið">⏱ Vinna</span><div class="ws-pipe-cells">${monthBars}</div></div>
+              <div class="ws-pipe-row"><span class="ws-pipe-lbl" title="Reikningur útgefinn">📤 Reikningur</span><div class="ws-pipe-cells">${sentCells}</div></div>
+              <div class="ws-pipe-row"><span class="ws-pipe-lbl" title="Greiðsla móttekin">💰 Greitt</span><div class="ws-pipe-cells">${paidCells}</div></div>
+            </div>
             <div class="ws-card-meta">
               ${w.email_count > 0 ? `<button class="ws-email-btn" data-action="show-emails">📧 ${w.email_count} póst${w.email_count===1?'ur':'ar'} tengjast</button>` : '<span class="ws-no-email">Engir tengdir póstar</span>'}
               ${w.status.drive_folder_url ? `<a href="${escapeAttr(w.status.drive_folder_url)}" target="_blank" rel="noopener" class="ws-link">📁 Drive mappa ↗</a>` : '<button class="ws-link-add" data-action="add-drive">+ Drive slóð</button>'}
@@ -2023,6 +2417,33 @@ function renderWorksites(t){
       w.status.drive_folder_url = url;
       renderList();
     }));
+    $list.querySelectorAll('[data-action="edit-customer"]').forEach(el => el.addEventListener('click', async e => {
+      const cust = el.dataset.customer;
+      // Get current info
+      let cur = {};
+      try { cur = (await (await fetch('/api/customer-info?name=' + encodeURIComponent(cust))).json()).rows?.[0] || {}; } catch {}
+      const method = prompt(`Greiðsluleið fyrir ${cust}\n("payday" / "bank-direct" / "mix" / blank)`, cur.payment_method || '');
+      if (method === null) return;
+      const retentionStr = prompt(`Öryggisfé (%) fyrir ${cust}\n(t.d. 10, 0, blank)`, String(cur.retention_pct || 0));
+      if (retentionStr === null) return;
+      const terms = prompt(`Greiðsluskilmálar fyrir ${cust}\n(t.d. "30 days net")`, cur.payment_terms || '');
+      if (terms === null) return;
+      const notes = prompt(`Athugasemd fyrir ${cust}`, cur.general_notes || '');
+      if (notes === null) return;
+      try {
+        await fetch('/api/customer-info', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            customer_name: cust,
+            payment_method: method.trim() || null,
+            retention_pct: parseFloat(retentionStr) || 0,
+            payment_terms: terms.trim() || null,
+            general_notes: notes.trim() || null,
+          }),
+        });
+        await load(true);
+      } catch(err) { alert('Villa: '+err.message); }
+    }));
     $list.querySelectorAll('[data-action="map-customer"]').forEach(b => b.addEventListener('click', async e => {
       const card = e.target.closest('.ws-card');
       const project = card.dataset.project;
@@ -2057,6 +2478,48 @@ function renderWorksites(t){
     document.getElementById('ws-kpi-unpaid-x').textContent = ((s.total_unpaid||0)).toLocaleString('is-IS') + ' kr ógr.';
   }
 
+  function renderActions(){
+    if (!lastData) return;
+    const NON = /almennt|veikindi|sick|work at home/i;
+    const billable = lastData.worksites.filter(w => !NON.test(w.project) && w.hours > 0);
+    const needsBilling = billable
+      .filter(w => (w.invoice_count||0) === 0)
+      .sort((a,b) => b.hours - a.hours)
+      .slice(0, 8);
+    const needsCollection = billable
+      .filter(w => (w.invoice_unpaid||0) > 0)
+      .sort((a,b) => (b.invoice_unpaid||0) - (a.invoice_unpaid||0))
+      .slice(0, 8);
+    const card = document.getElementById('ws-actions-card');
+    if (!needsBilling.length && !needsCollection.length) { card.hidden = true; return; }
+    card.hidden = false;
+    document.getElementById('ws-actions-bill').innerHTML = needsBilling.length ? needsBilling.map(w => `
+      <a class="ws-action-item" href="#" data-jump="${escapeAttr(w.project)}">
+        <span class="ws-action-name">${escapeHtml(w.project)}</span>
+        <span class="ws-action-meta"><strong>${w.hours.toLocaleString('is-IS')}</strong> klst · ${w.days} dagar · ${w.staff_count} starfsmenn</span>
+        ${w.ajour_registrations ? `<span class="ws-action-sub">${w.ajour_registrations.toLocaleString('is-IS')} Ajour skráningar</span>` : ''}
+      </a>
+    `).join('') : '<div class="ws-action-empty">— Allt í lagi hér.</div>';
+    document.getElementById('ws-actions-collect').innerHTML = needsCollection.length ? needsCollection.map(w => `
+      <a class="ws-action-item" href="#" data-jump="${escapeAttr(w.project)}">
+        <span class="ws-action-name">${escapeHtml(w.project)}</span>
+        <span class="ws-action-meta"><strong>${(w.invoice_unpaid/1e6).toFixed(1)}M kr</strong> ógr. · ${w.invoice_count} reikning${w.invoice_count===1?'ur':'ar'}</span>
+        ${w.mapped_customers && w.mapped_customers.length ? `<span class="ws-action-sub">${escapeHtml(w.mapped_customers.join(', '))}</span>` : ''}
+      </a>
+    `).join('') : '<div class="ws-action-empty">— Engir reikningar í vanskilum 🎉</div>';
+
+    card.querySelectorAll('.ws-action-item').forEach(a => a.addEventListener('click', e => {
+      e.preventDefault();
+      const proj = a.dataset.jump;
+      const target = document.querySelector(`.ws-card[data-project="${CSS.escape(proj)}"]`);
+      if (target) {
+        target.scrollIntoView({behavior:'smooth', block:'center'});
+        target.style.outline = '3px solid var(--gold)';
+        setTimeout(() => target.style.outline = '', 1800);
+      }
+    }));
+  }
+
   async function load(force){
     document.getElementById('ws-meta').textContent = 'Sækir…';
     $refresh.disabled = true; $refresh.classList.add('loading');
@@ -2073,6 +2536,7 @@ function renderWorksites(t){
       document.getElementById('ws-meta').textContent = `${lastData.summary.total_worksites} verkstaðir · ${lastData.summary.total_hours.toLocaleString('is-IS')} klst · ${(lastData.summary.total_ajour_registrations||0).toLocaleString('is-IS')} Ajour skráningar · ${lastData.summary.total_days} virkir dagar`;
       renderSummary(lastData.summary);
       renderChips(lastData.summary.by_status, lastData.summary.worksites_with_no_invoice);
+      renderActions();
       renderList();
     } finally {
       $refresh.disabled = false; $refresh.classList.remove('loading');
