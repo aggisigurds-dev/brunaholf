@@ -42,12 +42,9 @@
   header h1 .accent { color: var(--accent); }
   header .tag { font-size: 12px; color: #b8b8b8; }
   header .brand { display: flex; align-items: center; gap: 14px; }
-  header .brand .logo { width: 120px; height: 40px; flex-shrink: 0; }
+  header .brand .logo { width: 180px; height: 60px; flex-shrink: 0; object-fit: contain; filter: brightness(0) invert(1); }
   header .brand-text { line-height: 1.2; }
-  .doc-logo { width: 220px; height: 73px; display: block; margin: 0 0 12px 0; }
-  .doc-logo .lo-text { fill: #1a1a1a; }
-  .doc-logo .lo-circle { fill: #1a1a1a; }
-  .doc-logo .lo-icon { fill: #ffffff; }
+  .doc-logo { width: 260px; height: auto; display: block; margin: 0 0 12px 0; }
   header .toolbar { display: flex; gap: 8px; }
   header button {
     background: var(--accent);
@@ -258,6 +255,35 @@
     border-color: var(--accent);
   }
 
+  /* Tegund tabs (Uppsettning / Þjónustusamningur+) */
+  .tegund-tabs {
+    display: flex;
+    gap: 0;
+    margin: 0 0 14px;
+    border-bottom: 2px solid var(--line-strong);
+  }
+  .tegund-tabs button {
+    flex: 1;
+    background: transparent;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    padding: 10px 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    cursor: pointer;
+    margin-bottom: -2px;
+    transition: color .15s, border-color .15s;
+  }
+  .tegund-tabs button:hover { color: var(--ink); }
+  .tegund-tabs button.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .tegund-only { display: none; }
+  body[data-tegund="uppsetning"] .tegund-only.uppsetning { display: block; }
+  body[data-tegund="samningur"]   .tegund-only.samningur   { display: block; }
+
   .help-banner {
     background: var(--warning-bg);
     border: 1px solid var(--warning-border);
@@ -306,22 +332,7 @@
 
 <header>
   <div class="brand">
-    <svg class="logo" viewBox="0 0 1200 400" xmlns="http://www.w3.org/2000/svg" aria-label="Slökkvitæki Brunahólf">
-      <circle cx="180" cy="200" r="170" fill="#ffffff"/>
-      <g transform="translate(180, 200) scale(1.35)" fill="#000000">
-        <rect x="-22" y="-90" width="32" height="14" rx="2"/>
-        <rect x="6" y="-100" width="22" height="10" rx="2"/>
-        <rect x="-12" y="-76" width="22" height="20"/>
-        <path d="M -40,-56 Q -40,-66 -28,-66 L 22,-66 Q 34,-66 34,-56 L 34,72 Q 34,84 22,84 L -28,84 Q -40,84 -40,72 Z"/>
-        <path d="M 14,-86 Q 50,-90 60,-55 Q 65,-25 50,-5 Q 30,15 30,30" fill="none" stroke="#000000" stroke-width="7" stroke-linecap="round"/>
-        <rect x="26" y="28" width="10" height="14" rx="1.5"/>
-        <path d="M -6,-30 Q -16,-10 -8,16 Q -12,2 -4,-8 Q -2,8 4,16 Q 2,2 8,-6 Q 6,12 14,22 Q 18,2 6,-22 Q 2,-10 -6,-30 Z" fill="#ffffff"/>
-      </g>
-      <g font-family="Arial, sans-serif" font-weight="900" fill="#ffffff">
-        <text x="380" y="175" font-size="140">Slökkvitæki</text>
-        <text x="380" y="335" font-size="140">Brunahólf</text>
-      </g>
-    </svg>
+    <img class="logo" src="logo.png" alt="Slökkvitæki Brunahólf" />
     <div class="brand-text">
       <h1>Tilboðsgerð</h1>
       <div class="tag">Sjálfvirk skýringarmynd og tilboðsskjal fyrir brunavarnir í sameign</div>
@@ -339,6 +350,11 @@
 
   <!-- ============ FORM PANEL ============ -->
   <aside class="form-panel">
+
+    <div class="tegund-tabs" role="tablist">
+      <button data-tegund="uppsetning" role="tab">Uppsettning</button>
+      <button data-tegund="samningur"   role="tab">Þjónustusamningur+</button>
+    </div>
 
     <div class="help-banner">
       Sláðu inn upplýsingar um bygginguna — skýringarmyndin og texti tilboðsins uppfærast jafnóðum hægra megin.
@@ -382,16 +398,35 @@
       <div><label>Reykskynjarar per hæð per stigi</label><input id="f-skyn-per" type="number" min="0" step="1" value="1" /></div>
     </div>
 
-    <div class="section-title">Verðskrá (kr. án vsk.)</div>
-    <div class="pricing-grid">
-      <label>Akstur (per ferð)</label><input id="v-akstur" type="number" value="3000" />
-      <label>Skýrslugerð í þjónustuskoðun</label><input id="v-skyrsla" type="number" value="3500" />
-      <label>Slökkvitæki léttvatn 6kg / stk</label><input id="v-lettvatn" type="number" value="6500" />
-      <label>Slökkvitæki ABC duft 6kg / stk</label><input id="v-duft" type="number" value="5500" />
-      <label>Reykskynjari / stk</label><input id="v-skynjari" type="number" value="2500" />
-      <label>Eldvarnarhurðir / flóttaleiðir</label><input id="v-hurdir" type="number" value="20000" />
-      <label>Neyðarlýsing</label><input id="v-neydar" type="number" value="15000" />
+    <div class="tegund-only samningur">
+      <div class="section-title">Verðskrá — Þjónustusamningur (kr. án vsk.)</div>
+      <div class="pricing-grid">
+        <label>Akstur (per ferð)</label><input id="v-akstur" type="number" value="3000" />
+        <label>Skýrslugerð í þjónustuskoðun</label><input id="v-skyrsla" type="number" value="3500" />
+        <label>Slökkvitæki léttvatn 6kg / stk</label><input id="v-lettvatn" type="number" value="6500" />
+        <label>Slökkvitæki ABC duft 6kg / stk</label><input id="v-duft" type="number" value="5500" />
+        <label>Reykskynjari / stk</label><input id="v-skynjari" type="number" value="2500" />
+        <label>Eldvarnarhurðir / flóttaleiðir</label><input id="v-hurdir" type="number" value="20000" />
+        <label>Neyðarlýsing</label><input id="v-neydar" type="number" value="15000" />
+      </div>
     </div>
+
+    <div class="tegund-only uppsetning">
+      <div class="section-title">Verðskrá — Uppsetning ár 1 (kr. án vsk.)</div>
+      <div class="pricing-grid">
+        <label>Slökkvitæki léttvatn 6 kg (nýtt) / stk</label><input id="v-nytt-lettv6kg" type="number" value="11693" />
+        <label>Slökkvitæki léttvatn 6 L kjallari (nýtt) / stk</label><input id="v-nytt-lettv6L" type="number" value="11693" />
+        <label>Slökkvitæki CO₂ 5 kg (nýtt) / stk</label><input id="v-nytt-co2" type="number" value="23790" />
+        <label>Samtengdur reykskynjari (nýr) / stk</label><input id="v-nytt-skyn" type="number" value="5363" />
+        <label>Slökkvitækjamerki 150×150 / stk</label><input id="v-skilti" type="number" value="1650" />
+        <label>Uppsetningarvinna / klst</label><input id="v-upps-klst" type="number" value="16500" />
+      </div>
+      <div class="field inline" style="margin-top: 8px;">
+        <div><label>Áætlaðar klst í uppsetningu</label><input id="f-upps-klst" type="number" min="0" value="5" /></div>
+        <div><label>Sérkjör afsláttur (%)</label><input id="f-serkjor" type="number" min="0" max="100" value="20" /></div>
+      </div>
+    </div>
+
     <div class="field" style="margin-top: 8px;"><label>Vsk. (%)</label><input id="v-vsk" type="number" value="24" /></div>
 
     <div class="section-title">Tilboð</div>
@@ -428,12 +463,13 @@
 const STORAGE_KEY = 'brunaholf-tilbod-v1';
 
 const defaultState = {
+  tegund: 'uppsetning',     // 'uppsetning' | 'samningur'
   fyrirtaeki: 'Slökkvitæki ehf.',
   kt: 'Kt. 600508-0400  ·  Vsk. nr. 98107',
   fyrirtAdr: 'Helluhrauni 10, 220 Hafnarfjörður',
   simi: '565-4080',
   netfang: 'eldklar@eldklar.is',
-  tengilidur: '',
+  tengilidur: 'Agnar Sigurðsson',
   starf: '',
   husfelag: '',
   byggAdr: '',
@@ -444,6 +480,7 @@ const defaultState = {
   kjallari: 'yes',
   slokPer: 1,
   skynPer: 1,
+  // Þjónustusamningur+ pricing
   vAkstur: 3000,
   vSkyrsla: 3500,
   vLettvatn: 6500,
@@ -451,9 +488,27 @@ const defaultState = {
   vSkynjari: 2500,
   vHurdir: 20000,
   vNeydar: 15000,
+  // Uppsetning pricing (ár 1 — ný tæki + uppsetning)
+  vNyttLettv6kg: 11693,
+  vNyttLettv6L:  11693,
+  vNyttCo2:      23790,
+  vNyttSkyn:      5363,
+  vSkilti:        1650,
+  vUppsKlst:     16500,
+  uppsKlst:          5,
+  serkjor:          20,
   vVsk: 24,
   tilbnr: '2026-001',
   dags: new Date().toISOString().slice(0, 10),
+};
+
+// Hardcoded yfirferð + 5-ára hleðsla rates fyrir 5-ára þjónustuáætlun í Uppsetning mode
+const YF_RATES = {
+  yfLettvatn: 3150,
+  yfCo2:      3270,
+  yfSkynjari: 2345,
+  hledslaLettvatn: 6782,
+  hledslaCo2:      6900,
 };
 
 let state = { ...defaultState };
@@ -495,6 +550,14 @@ const inputMap = {
   'v-skynjari': 'vSkynjari',
   'v-hurdir': 'vHurdir',
   'v-neydar': 'vNeydar',
+  'v-nytt-lettv6kg': 'vNyttLettv6kg',
+  'v-nytt-lettv6L':  'vNyttLettv6L',
+  'v-nytt-co2':      'vNyttCo2',
+  'v-nytt-skyn':     'vNyttSkyn',
+  'v-skilti':        'vSkilti',
+  'v-upps-klst':     'vUppsKlst',
+  'f-upps-klst':     'uppsKlst',
+  'f-serkjor':       'serkjor',
   'v-vsk': 'vVsk',
   'f-tilbnr': 'tilbnr',
   'f-dags': 'dags',
@@ -509,6 +572,11 @@ function syncFormFromState() {
   document.querySelectorAll('[data-toggle]').forEach(b => {
     const key = b.dataset.toggle;
     b.classList.toggle('active', state[key] === b.dataset.value);
+  });
+  // Tegund tabs
+  document.body.dataset.tegund = state.tegund || 'uppsetning';
+  document.querySelectorAll('.tegund-tabs button').forEach(b => {
+    b.classList.toggle('active', b.dataset.tegund === state.tegund);
   });
 }
 
@@ -530,6 +598,17 @@ function bindInputs() {
       document.querySelectorAll(`[data-toggle="${key}"]`).forEach(o =>
         o.classList.toggle('active', o.dataset.value === state[key])
       );
+      saveState();
+      render();
+    });
+  });
+  // Tegund tabs
+  document.querySelectorAll('.tegund-tabs button').forEach(b => {
+    b.addEventListener('click', () => {
+      state.tegund = b.dataset.tegund;
+      document.body.dataset.tegund = state.tegund;
+      document.querySelectorAll('.tegund-tabs button').forEach(o =>
+        o.classList.toggle('active', o.dataset.tegund === state.tegund));
       saveState();
       render();
     });
@@ -566,8 +645,72 @@ function isk(n) {
   return (Math.round(n) || 0).toLocaleString('is-IS') + ' kr.';
 }
 
+function computeUppsetningQty() {
+  // Birkimelur-style installation quantities, derived from BUILDING fields.
+  // stigaganger × hæðir = léttvatn 6kg á stigapöllum + samtengdir skynjarar
+  // kjallari per stigi: 1 × CO2, 1 × léttvatn 6L, 2 × skynjarar
+  const stiga = Math.max(1, Number(state.stiga) || 1);
+  const haedir = Math.max(1, Number(state.haedir) || 1);
+  const kjallari = state.kjallari === 'yes';
+  const slokPer = Math.max(0, Number(state.slokPer) || 0);
+  const skynPer = Math.max(0, Number(state.skynPer) || 0);
+  const lettvatn6kg = stiga * haedir * slokPer;
+  const co2        = kjallari ? stiga * 1 : 0;
+  const lettvatn6L = kjallari ? stiga * 1 : 0;
+  const skynjari   = stiga * (haedir * skynPer + (kjallari ? 2 : 0));
+  const skilti     = stiga * 1;
+  return { lettvatn6kg, co2, lettvatn6L, skynjari, skilti, stiga, haedir, kjallari };
+}
+
 function computePricing() {
   const q = computeQuantities();
+  const vskRate = Number(state.vVsk) / 100;
+
+  if (state.tegund === 'uppsetning') {
+    const u = computeUppsetningQty();
+    const serkjor = Math.max(0, Math.min(100, Number(state.serkjor) || 0)) / 100;
+    const mult = 1 - serkjor;
+    const r = round => Math.round(round);
+    const linur = [
+      { lysing: `Slökkvitæki léttvatn 6 kg (stigapallar)${serkjor>0?` — sérkjör –${Math.round(serkjor*100)}%`:''}`,
+        magn: u.lettvatn6kg, einingaverd: r(Number(state.vNyttLettv6kg) * mult) },
+      { lysing: `Slökkvitæki CO₂ 5 kg (rafmagnstafla í kjallara)${serkjor>0?` — sérkjör –${Math.round(serkjor*100)}%`:''}`,
+        magn: u.co2,        einingaverd: r(Number(state.vNyttCo2) * mult) },
+      { lysing: `Slökkvitæki léttvatn 6 L (kjallari)${serkjor>0?` — sérkjör –${Math.round(serkjor*100)}%`:''}`,
+        magn: u.lettvatn6L, einingaverd: r(Number(state.vNyttLettv6L) * mult) },
+      { lysing: `Samtengjanlegir reykskynjarar${serkjor>0?` — sérkjör –${Math.round(serkjor*100)}%`:''}`,
+        magn: u.skynjari,   einingaverd: r(Number(state.vNyttSkyn) * mult) },
+      { lysing: 'Slökkvitækjamerki sjálflýsandi 150×150 (1 á hvern stigagang)',
+        magn: u.skilti,     einingaverd: Number(state.vSkilti) },
+      { lysing: 'Uppsetning (klst.)',
+        magn: Math.max(0, Number(state.uppsKlst) || 0), einingaverd: Number(state.vUppsKlst) },
+    ].filter(l => l.magn > 0 && l.einingaverd > 0);
+    for (const l of linur) l.samtals = l.magn * l.einingaverd;
+    const subtotal = linur.reduce((s, l) => s + l.samtals, 0);
+    const vsk = Math.round(subtotal * vskRate);
+    const total = subtotal + vsk;
+
+    // 5-year service plan (uses fixed yfirferð + hleðsla rates)
+    const ar2plus = YF_RATES.yfLettvatn * u.lettvatn6kg
+                  + YF_RATES.yfCo2      * u.co2
+                  + YF_RATES.yfLettvatn * u.lettvatn6L
+                  + YF_RATES.yfSkynjari * u.skynjari
+                  + Number(state.vAkstur) + Number(state.vSkyrsla);
+    const ar5hledsla = YF_RATES.hledslaLettvatn * (u.lettvatn6kg + u.lettvatn6L)
+                     + YF_RATES.hledslaCo2      * u.co2;
+    const fiveYear = {
+      ar1:  { lysing: 'Uppsetning (sjá kafla 3)', net: subtotal, gross: total },
+      ar2:  { lysing: 'Árleg þjónustuskoðun (akstur, skýrsla, yfirferð slökkvitækja og reykskynjara)',
+              net: ar2plus, gross: Math.round(ar2plus * (1 + vskRate)) },
+      ar3:  { lysing: 'Árleg þjónustuskoðun', net: ar2plus, gross: Math.round(ar2plus * (1 + vskRate)) },
+      ar4:  { lysing: 'Árleg þjónustuskoðun', net: ar2plus, gross: Math.round(ar2plus * (1 + vskRate)) },
+      ar5:  { lysing: `Árleg þjónustuskoðun + 5-ára hleðsla á ${u.lettvatn6kg} léttvatn 6 kg, ${u.co2} CO₂ 5 kg og ${u.lettvatn6L} léttvatn 6 L. Lánstæki innifalið.`,
+              net: ar2plus + ar5hledsla, gross: Math.round((ar2plus + ar5hledsla) * (1 + vskRate)) },
+    };
+    return { linur, subtotal, vsk, total, q, u, fiveYear };
+  }
+
+  // Þjónustusamningur+ (existing behavior)
   const linur = [
     { lysing: 'Akstur (per ferð)', magn: 1, einingaverd: Number(state.vAkstur) },
     { lysing: 'Skýrslugerð í þjónustuskoðun', magn: 1, einingaverd: Number(state.vSkyrsla) },
@@ -580,7 +723,6 @@ function computePricing() {
 
   for (const l of linur) l.samtals = l.magn * l.einingaverd;
   const subtotal = linur.reduce((s, l) => s + l.samtals, 0);
-  const vskRate = Number(state.vVsk) / 100;
   const vsk = Math.round(subtotal * vskRate);
   const total = subtotal + vsk;
   return { linur, subtotal, vsk, total, q };
@@ -738,38 +880,19 @@ function escape(s) {
 }
 
 // ============================================================
-// Tilboð text render
+// Sameiginleg hjálparföll
 // ============================================================
-function renderTilbod() {
-  const p = computePricing();
-  const q = p.q;
-  const f = state;
-  const fyr = escape(f.fyrirtaeki || '[NAFN FYRIRTÆKIS]');
-  const dagsFmt = (() => {
-    if (!f.dags) return '';
-    const d = new Date(f.dags);
-    if (isNaN(d)) return f.dags;
-    const months = ['janúar','febrúar','mars','apríl','maí','júní','júlí','ágúst','september','október','nóvember','desember'];
-    return `${d.getDate()}. ${months[d.getMonth()]} ${d.getFullYear()}`;
-  })();
+function fmtDags(d) {
+  if (!d) return '';
+  const dt = new Date(d);
+  if (isNaN(dt)) return d;
+  const months = ['janúar','febrúar','mars','apríl','maí','júní','júlí','ágúst','september','október','nóvember','desember'];
+  return `${dt.getDate()}. ${months[dt.getMonth()]} ${dt.getFullYear()}`;
+}
 
-  const html = `
-    <svg class="doc-logo" viewBox="0 0 1200 400" xmlns="http://www.w3.org/2000/svg" aria-label="Slökkvitæki Brunahólf">
-      <circle class="lo-circle" cx="180" cy="200" r="170"/>
-      <g class="lo-icon" transform="translate(180, 200) scale(1.35)">
-        <rect x="-22" y="-90" width="32" height="14" rx="2"/>
-        <rect x="6" y="-100" width="22" height="10" rx="2"/>
-        <rect x="-12" y="-76" width="22" height="20"/>
-        <path d="M -40,-56 Q -40,-66 -28,-66 L 22,-66 Q 34,-66 34,-56 L 34,72 Q 34,84 22,84 L -28,84 Q -40,84 -40,72 Z"/>
-        <path d="M 14,-86 Q 50,-90 60,-55 Q 65,-25 50,-5 Q 30,15 30,30" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round"/>
-        <rect x="26" y="28" width="10" height="14" rx="1.5"/>
-        <path d="M -6,-30 Q -16,-10 -8,16 Q -12,2 -4,-8 Q -2,8 4,16 Q 2,2 8,-6 Q 6,12 14,22 Q 18,2 6,-22 Q 2,-10 -6,-30 Z" fill="#1a1a1a"/>
-      </g>
-      <g class="lo-text" font-family="Arial, sans-serif" font-weight="900">
-        <text x="380" y="175" font-size="140">Slökkvitæki</text>
-        <text x="380" y="335" font-size="140">Brunahólf</text>
-      </g>
-    </svg>
+function previewHeader(f, fyr, dagsFmt) {
+  return `
+    <img class="doc-logo" src="logo.png" alt="Slökkvitæki Brunahólf" />
     <div class="briefhaus">
       <strong>${fyr}</strong>
       ${escape(f.kt || '[Kt.]')} · ${escape(f.fyrirtAdr || '[Heimilisfang]')}<br>
@@ -785,7 +908,40 @@ function renderTilbod() {
       <span>Tilboð nr.: <strong>${escape(f.tilbnr)}</strong></span>
       <span>Dagsetning: <strong>${escape(dagsFmt)}</strong></span>
     </div>
+  `;
+}
 
+function verdTableHtml(p, vVsk) {
+  return `
+    <table class="verd">
+      <thead>
+        <tr><th>Liður</th><th>Magn</th><th>Einingaverð</th><th>Samtals</th></tr>
+      </thead>
+      <tbody>
+        ${p.linur.map(l => `
+          <tr>
+            <td>${escape(l.lysing)}</td>
+            <td class="ctr">${l.magn}</td>
+            <td class="num">${isk(l.einingaverd)}</td>
+            <td class="num">${isk(l.samtals)}</td>
+          </tr>`).join('')}
+        <tr class="subtotal"><td>Samtals án vsk.</td><td></td><td></td><td class="num">${isk(p.subtotal)}</td></tr>
+        <tr class="subtotal"><td>Virðisaukaskattur (${vVsk}%)</td><td></td><td></td><td class="num">${isk(p.vsk)}</td></tr>
+        <tr class="total"><td>HEILDARTILBOÐ (m. vsk.)</td><td></td><td></td><td class="num">${isk(p.total)}</td></tr>
+      </tbody>
+    </table>`;
+}
+
+// ============================================================
+// Render — Þjónustusamningur+
+// ============================================================
+function renderSamningur() {
+  const p = computePricing();
+  const f = state;
+  const fyr = escape(f.fyrirtaeki || '[NAFN FYRIRTÆKIS]');
+  const dagsFmt = fmtDags(f.dags);
+
+  const html = previewHeader(f, fyr, dagsFmt) + `
     <h1 class="tilbod-title">TILBOÐ</h1>
     <h2 class="tilbod-subtitle">Árleg yfirferð brunavarna í sameign</h2>
 
@@ -807,23 +963,7 @@ function renderTilbod() {
     <div class="schematic-wrap">${buildSvg()}</div>
 
     <h3 class="section-h">4. Sundurliðun verðs</h3>
-    <table class="verd">
-      <thead>
-        <tr><th>Liður</th><th>Magn</th><th>Einingaverð</th><th>Samtals</th></tr>
-      </thead>
-      <tbody>
-        ${p.linur.map(l => `
-          <tr>
-            <td>${escape(l.lysing)}</td>
-            <td class="ctr">${l.magn}</td>
-            <td class="num">${isk(l.einingaverd)}</td>
-            <td class="num">${isk(l.samtals)}</td>
-          </tr>`).join('')}
-        <tr class="subtotal"><td>Samtals án vsk.</td><td></td><td></td><td class="num">${isk(p.subtotal)}</td></tr>
-        <tr class="subtotal"><td>Virðisaukaskattur (${state.vVsk}%)</td><td></td><td></td><td class="num">${isk(p.vsk)}</td></tr>
-        <tr class="total"><td>HEILDARTILBOÐ (m. vsk.)</td><td></td><td></td><td class="num">${isk(p.total)}</td></tr>
-      </tbody>
-    </table>
+    ${verdTableHtml(p, state.vVsk)}
 
     <h3 class="section-h">5. Árlegur þjónustusamningur</h3>
     <p>Að lokinni fyrstu yfirferð býður ${fyr} áframhaldandi árlegan þjónustusamning þar sem yfirferð fer fram á sama tíma ár hvert á sömu einingaverðum. Verð endurskoðast skv. byggingarvísitölu, að hámarki 5% á ári. Samningur er uppsegjanlegur með 2ja mánaða fyrirvara.</p>
@@ -846,13 +986,154 @@ function renderTilbod() {
         Formaður / fulltrúi húsfélagsstjórnar<br>
         Dagsetning: _______________
       </div>
-    </div>
-  `;
+    </div>`;
 
   document.getElementById('preview').innerHTML = html;
 }
 
-function render() { renderTilbod(); }
+// ============================================================
+// Render — Uppsetning (ár 1, með 5-ára þjónustuáætlun)
+// ============================================================
+function renderUppsetning() {
+  const p = computePricing();
+  const u = p.u;
+  const fy = p.fiveYear;
+  const f = state;
+  const fyr = escape(f.fyrirtaeki || '[NAFN FYRIRTÆKIS]');
+  const dagsFmt = fmtDags(f.dags);
+  const stigaWord = f.stiga === 1 ? 'einn stigagang' : `${f.stiga} stigaganga`;
+  const ibudWord  = f.ibudir === 1 ? 'íbúð' : 'íbúðir';
+  const haedirText = `${f.haedir} hæðir${u.kjallari ? ' auk kjallara með sameign' : ''}`;
+  const totalSlok = u.lettvatn6kg + u.co2 + u.lettvatn6L;
+
+  const html = previewHeader(f, fyr, dagsFmt) + `
+    <h1 class="tilbod-title">TILBOÐ</h1>
+    <h2 class="tilbod-subtitle">Uppsetning brunavarna í sameign</h2>
+
+    <h3 class="section-h">1. Inngangur</h3>
+    <p>Vísað er til erindis húsfélagsins um tilboð í yfirferð á brunavörnum í sameign fasteignarinnar að ${escape(f.byggAdr || '[heimilisfang]')}. Um er að ræða ${stigaWord} með ${f.ibudir} ${ibudWord} samtals — ${haedirText}.</p>
+    <p>Hér með leggur ${fyr} fram tilboð í uppsetningu nýrra slökkvitækja, samtengjanlegra reykskynjara og flóttaleiðaskilta í sameign hússins. Öll tæki eru ný með ${state.serkjor}% sérkjörum. Tilboðið byggir á ákvæðum byggingarreglugerðar nr. 112/2012 og reglugerðar nr. 723/2017 um eldvarnir og eldvarnaeftirlit, ásamt staðli ÍST EN 3 um handslökkvitæki.</p>
+    <p>Vettvangsskoðun hefur farið fram og núverandi búnaður verið metinn. Þetta tilboð gildir um fyrstu uppsetningu (ár 1). Árleg þjónustuskoðun á nýjum tækjum hefst á ári 2 skv. þjónustusamningi (kafli 6).</p>
+
+    <h3 class="section-h">2. Skýringarmynd af fyrirhugaðri uppsetningu</h3>
+    <p><em>F (rauður hringur) sýnir staðsetningu hvers slökkvitækis, S (blár hringur) sýnir staðsetningu hvers samtengjanlegs reykskynjara. Sama uppsetning endurtekur sig á hverri hæð í öllum ${f.stiga} stigagöngum${u.kjallari?', með viðbótartækjum í kjallararými':''}.</em></p>
+    <div class="schematic-wrap">${buildSvg()}</div>
+    <p style="text-align:center;color:var(--ink-soft);font-size:12px;">Áætlað heildarmagn: ${totalSlok} slökkvitæki og ${u.skynjari} samtengjanlegir reykskynjarar í sameign — sjá sundurliðun verðs í kafla 4.</p>
+
+    <h3 class="section-h">3. Verklýsing</h3>
+    <h4 style="margin:14px 0 4px;font-size:14px;">3.1 Slökkvitæki — uppsetning nýrra tækja</h4>
+    <ul>
+      <li>Uppsetning ${u.lettvatn6kg} nýrra léttvatnstækja 6 kg á stigapöllum (lágm. 21A 183B, prófuð fyrir 35 kV).</li>
+      ${u.co2 ? `<li>Uppsetning ${u.co2} nýrra kolsýrutækja (CO₂) 5 kg við rafmagnstöflur í kjallara — engin leifar, óhætt á spennusettum búnaði.</li>`:''}
+      ${u.lettvatn6L ? `<li>Uppsetning ${u.lettvatn6L} nýrra léttvatnstækja 6 L í geymslu-/þvottahúsrými í kjallara.</li>`:''}
+      <li>Öll tæki eru CE-merkt og uppfylla ÍST EN 3 staðal.</li>
+      <li>Þjónustumiða (date tag) með dagsetningu fyrstu yfirferðar (ár 2) er sett á öll ný tæki.</li>
+      <li>Léttvatns- og kolsýrutæki eru yfirfarin árlega og tekin til hleðslu á 5 ára fresti hjá ${fyr}.</li>
+      <li>Á meðan á hleðslu stendur er lánstæki sett í stað tækisins.</li>
+    </ul>
+    <h4 style="margin:14px 0 4px;font-size:14px;">3.2 Samtengjanlegir reykskynjarar — uppsetning</h4>
+    <ul>
+      <li>Uppsetning ${u.skynjari} nýrra samtengjanlegra reykskynjara í stigagöngum${u.kjallari?' og geymslugöngum':''}.</li>
+      <li>Tenging á aðalstýringu og prófun á samskiptum við alla lykilskynjara.</li>
+      <li>Zónaprófun — staðfest að boðun og staðsetning skili sér á aðalstýringu.</li>
+      <li>Festingar og aðlögun að núverandi rafmagnsuppsetningu.</li>
+    </ul>
+    <h4 style="margin:14px 0 4px;font-size:14px;">3.3 Slökkvitækjamerki</h4>
+    <ul>
+      <li>Uppsetning sjálflýsandi slökkvitækjamerkja (150×150 mm), eitt á hvern stigagang.</li>
+      <li>Merkin sýna hvar slökkvitæki eru staðsett og lýsa upp í myrkri til að auðkenna staðsetninguna í neyðartilfellum.</li>
+    </ul>
+    <h4 style="margin:14px 0 4px;font-size:14px;">3.4 Skýrsla</h4>
+    <ul>
+      <li>Skrifleg skýrsla afhent húsfélaginu innan 10 virkra daga frá skoðun.</li>
+      <li>Skýrslan inniheldur ljósmyndir, lista yfir frávik og forgangsraðaðar tillögur til úrbóta.</li>
+      <li>Aukaverk verðlögð sérstaklega og kynnt húsfélaginu áður en framkvæmt er.</li>
+    </ul>
+
+    <h3 class="section-h">4. Sundurliðun verðs</h3>
+    <p style="color:var(--ink-soft);font-size:12px;font-style:italic;">Sundurliðun byggir á niðurstöðum vettvangsskoðunar. Öll verð eru í íslenskum krónum.</p>
+    ${verdTableHtml(p, state.vVsk)}
+
+    <h3 class="section-h">5. Innifalið og ekki innifalið</h3>
+    <h4 style="margin:14px 0 4px;font-size:14px;">5.1 Innifalið í tilboði</h4>
+    <ul>
+      <li>Ferðakostnaður innan höfuðborgarsvæðisins.</li>
+      <li>Vinna á dagvinnutíma (mán.–fös. 08:00–16:00).</li>
+      <li>Þjónustumiðar, smáfestingar og almenn neysluvara.</li>
+      <li>Skrifleg skoðunarskýrsla með ljósmyndum.</li>
+      <li>Ráðgjöf um úrbætur og forgangsröðun til húsfélagsstjórnar.</li>
+    </ul>
+    <h4 style="margin:14px 0 4px;font-size:14px;">5.2 Ekki innifalið — tilboðsskylt sérstaklega</h4>
+    <ul>
+      <li>Endurnýjun slökkvitækja sem hafa náð 10 ára aldri eða eru ónothæf — ${state.serkjor}% sérkjör á nýjum tækjum.</li>
+      <li>Hleðsla léttvatns- og kolsýrutækja á 5 ára fresti — lánstæki sett í stað á meðan.</li>
+      <li>10-ára þrýstiprófun hylkis á verkstæði.</li>
+      <li>Endurnýjun ónýtra eða úreltra reykskynjara — sérkjör –${state.serkjor}%.</li>
+      <li>Yfirferð eldvarnarhurða, flóttaleiða eða neyðarlýsingar — sérstök þjónusta, tilboðsskyld.</li>
+      <li>Vinna utan dagvinnutíma — 50% álag.</li>
+    </ul>
+    <h4 style="margin:14px 0 4px;font-size:14px;">5.3 Áætlað verð árlegrar þjónustu — næstu 5 árin</h4>
+    <p style="color:var(--ink-soft);font-size:12px;font-style:italic;">Eftir uppsetningu hefst árleg þjónustuskoðun á ári 2. Á ári 5 falla einnig til hleðsla léttvatns- og kolsýrutækja (lánstæki innifalið á meðan).</p>
+    <table class="verd">
+      <thead><tr><th>Ár</th><th>Þjónusta</th><th>Án vsk.</th><th>M. vsk.</th></tr></thead>
+      <tbody>
+        <tr><td class="ctr"><strong>Ár 1</strong></td><td>${fy.ar1.lysing}</td><td class="num">${isk(fy.ar1.net)}</td><td class="num">${isk(fy.ar1.gross)}</td></tr>
+        <tr><td class="ctr"><strong>Ár 2</strong></td><td>${fy.ar2.lysing}</td><td class="num">${isk(fy.ar2.net)}</td><td class="num">${isk(fy.ar2.gross)}</td></tr>
+        <tr><td class="ctr"><strong>Ár 3</strong></td><td>${fy.ar3.lysing}</td><td class="num">${isk(fy.ar3.net)}</td><td class="num">${isk(fy.ar3.gross)}</td></tr>
+        <tr><td class="ctr"><strong>Ár 4</strong></td><td>${fy.ar4.lysing}</td><td class="num">${isk(fy.ar4.net)}</td><td class="num">${isk(fy.ar4.gross)}</td></tr>
+        <tr style="background:#fff8d6;"><td class="ctr"><strong>Ár 5</strong></td><td>${fy.ar5.lysing}</td><td class="num"><strong>${isk(fy.ar5.net)}</strong></td><td class="num"><strong>${isk(fy.ar5.gross)}</strong></td></tr>
+      </tbody>
+    </table>
+    <p style="color:var(--ink-soft);font-size:11px;font-style:italic;margin-top:8px;">Verð á árlegri þjónustu er reiknað á sömu einingaverðum og kafli 3, og endurskoðast árlega skv. byggingarvísitölu (sjá kafla 6).</p>
+
+    <h3 class="section-h">6. Árlegur þjónustusamningur</h3>
+    <p>Að lokinni uppsetningu (ár 1) hefst árleg þjónustuskoðun á ári 2. ${fyr} býður húsfélaginu þjónustusamning þar sem öll uppsett tæki eru yfirfarin árlega, kolsýru- og léttvatnstæki tekin til hleðslu á 5 ára fresti með lánstæki á meðan.</p>
+    <p><strong>Sérkjör á samningstíma — gildir frá dagsetningu tilboðs:</strong></p>
+    <ul>
+      <li>${state.serkjor}% afsláttur af verði nýrra slökkvitækja sem keypt eru í gegnum samninginn.</li>
+      <li>Léttvatns- og kolsýrutæki tekin til hleðslu á 5 ára fresti — lánstæki innifalið á meðan.</li>
+      <li>Forgangur á tímapunktum og hraðari afgreiðsla á aukaverkum.</li>
+    </ul>
+    <p><strong>Helstu skilmálar þjónustusamnings:</strong></p>
+    <ul>
+      <li>Verð endurskoðast árlega skv. byggingarvísitölu (HMS-vísitala), að hámarki 5% á ári.</li>
+      <li>Yfirferð fer fram á sama mánuði ár hvert — minnt á með tölvupósti tveimur vikum áður.</li>
+      <li>Húsfélag fær 10% afslátt af öllum aukaverkum á samningstíma.</li>
+      <li>Samningurinn er uppsegjanlegur af hálfu beggja aðila með 2ja mánaða fyrirvara.</li>
+      <li>Þjónustumiðar á búnaði bera næsta yfirferðardag — engin aukagjöld fyrir áminningu.</li>
+    </ul>
+
+    <h3 class="section-h">7. Almennir skilmálar</h3>
+    <ul>
+      <li>Tilboð þetta gildir í 30 daga frá útgáfudegi.</li>
+      <li>Greiðsluskilmálar: reikningur gefinn út við lok verks, gjalddagi 10 dagar.</li>
+      <li>Tryggingar: ${fyr} er með gilda ábyrgðartryggingu skv. lögum.</li>
+      <li>Allt starfsfólk hefur tilskilin réttindi til eftirlits með brunavörnum skv. reglugerð nr. 723/2017.</li>
+      <li>Trúnaður ríkir um upplýsingar húsfélagsins.</li>
+    </ul>
+
+    <h3 class="section-h">8. Samþykki tilboðs</h3>
+    <p>Húsfélagið staðfestir samþykki á þessu tilboði með undirskrift hér að neðan. Eitt undirritað eintak sendist til ${fyr} og annað heldur húsfélagið.</p>
+    <div class="signatures">
+      <div class="sigblock">
+        <strong>F.h. ${fyr}</strong>
+        ${escape(f.tengilidur || '[Nafn]')}<br>
+        Dagsetning: ${escape(dagsFmt)}
+      </div>
+      <div class="sigblock">
+        <strong>F.h. ${escape(f.husfelag || '[Húsfélag]')}</strong>
+        Formaður / fulltrúi húsfélagsstjórnar<br>
+        Dagsetning: _______________
+      </div>
+    </div>`;
+
+  document.getElementById('preview').innerHTML = html;
+}
+
+function render() {
+  if (state.tegund === 'uppsetning') renderUppsetning();
+  else renderSamningur();
+}
 
 // ============================================================
 // Buttons
@@ -900,22 +1181,28 @@ async function svgToPng(svgEl, width) {
   });
 }
 
+async function fetchLogoBuffer() {
+  try {
+    const res = await fetch('logo.png');
+    if (!res.ok) return null;
+    return await res.arrayBuffer();
+  } catch (e) { return null; }
+}
+
 document.getElementById('btn-docx').addEventListener('click', async () => {
   const btn = document.getElementById('btn-docx');
   btn.textContent = 'Bý til skjal...';
   try {
     const svgEl = document.querySelector('#preview svg');
     const png = await svgToPng(svgEl, 1400);
+    const logoBuf = await fetchLogoBuffer();
     const docxLib = window.docx;
     const p = computePricing();
     const f = state;
     const fyr = f.fyrirtaeki || '[NAFN FYRIRTÆKIS]';
-    const dagsFmt = (() => {
-      if (!f.dags) return '';
-      const d = new Date(f.dags);
-      const months = ['janúar','febrúar','mars','apríl','maí','júní','júlí','ágúst','september','október','nóvember','desember'];
-      return `${d.getDate()}. ${months[d.getMonth()]} ${d.getFullYear()}`;
-    })();
+    const dagsFmt = fmtDags(f.dags);
+    const tegund = state.tegund || 'samningur';
+    const subtitle = tegund === 'uppsetning' ? 'Uppsetning brunavarna í sameign' : 'Árleg yfirferð brunavarna í sameign';
 
     const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, ImageRun, Footer,
             AlignmentType, LevelFormat, HeadingLevel, BorderStyle, WidthType, ShadingType,
@@ -928,9 +1215,11 @@ document.getElementById('btn-docx').addEventListener('click', async () => {
     const COLOR_BORDER = 'BFBFBF';
     const cellBorder = { style: BorderStyle.SINGLE, size: 4, color: COLOR_BORDER };
     const cellBorders = { top: cellBorder, bottom: cellBorder, left: cellBorder, right: cellBorder };
+    const noBorder = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
+    const noBorders = { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder };
 
     const para = (text, opts = {}) => new Paragraph({
-      spacing: { after: opts.after ?? 120, line: 280 },
+      spacing: { after: opts.after ?? 120, before: opts.before ?? 0, line: 280 },
       alignment: opts.align ?? AlignmentType.LEFT,
       children: [new TextRun({ text, bold: opts.bold ?? false, italics: opts.italic ?? false,
         size: opts.size ?? 22, color: opts.color ?? '111111', font: ARIAL })],
@@ -940,6 +1229,11 @@ document.getElementById('btn-docx').addEventListener('click', async () => {
       spacing: { before: 280, after: 140 },
       children: [new TextRun({ text, bold: true, size: 28, color: '111111', font: ARIAL })],
       border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: COLOR_LINE, space: 4 } },
+    });
+    const h2 = text => new Paragraph({
+      heading: HeadingLevel.HEADING_2,
+      spacing: { before: 200, after: 100 },
+      children: [new TextRun({ text, bold: true, size: 24, color: '111111', font: ARIAL })],
     });
     const bullet = text => new Paragraph({
       numbering: { reference: 'bullets', level: 0 }, spacing: { after: 60, line: 280 },
@@ -989,6 +1283,265 @@ document.getElementById('btn-docx').addEventListener('click', async () => {
       ]}),
     ];
 
+    // Header (logo + company info side-by-side if logo is available)
+    const headerChildren = logoBuf ? [
+      new Table({
+        width: { size: 9026, type: WidthType.DXA },
+        columnWidths: [4513, 4513],
+        rows: [new TableRow({ children: [
+          new TableCell({
+            borders: noBorders,
+            width: { size: 4513, type: WidthType.DXA },
+            margins: { top: 0, bottom: 0, left: 0, right: 80 },
+            verticalAlign: 'center',
+            children: [new Paragraph({
+              alignment: AlignmentType.LEFT,
+              children: [new ImageRun({ type: 'png', data: logoBuf,
+                transformation: { width: 240, height: 80 },
+                altText: { title: 'Logo', description: 'Merki fyrirtækisins', name: 'logo' } })],
+            })],
+          }),
+          new TableCell({
+            borders: noBorders,
+            width: { size: 4513, type: WidthType.DXA },
+            margins: { top: 0, bottom: 0, left: 80, right: 0 },
+            verticalAlign: 'center',
+            children: [
+              new Paragraph({ alignment: AlignmentType.RIGHT, spacing: { after: 30 },
+                children: [new TextRun({ text: fyr, bold: true, size: 26, font: ARIAL })] }),
+              new Paragraph({ alignment: AlignmentType.RIGHT, spacing: { after: 30 },
+                children: [new TextRun({ text: f.kt, size: 18, color: COLOR_SUBTLE, font: ARIAL })] }),
+              new Paragraph({ alignment: AlignmentType.RIGHT, spacing: { after: 30 },
+                children: [new TextRun({ text: f.fyrirtAdr, size: 18, color: COLOR_SUBTLE, font: ARIAL })] }),
+              new Paragraph({ alignment: AlignmentType.RIGHT, spacing: { after: 30 },
+                children: [new TextRun({ text: `Sími: ${f.simi}  •  ${f.netfang}`, size: 18, color: COLOR_SUBTLE, font: ARIAL })] }),
+            ],
+          }),
+        ]})],
+      }),
+      new Paragraph({ spacing: { before: 120, after: 120 }, children: [],
+        border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: COLOR_LINE, space: 1 } } }),
+    ] : [
+      new Paragraph({ alignment: AlignmentType.RIGHT, spacing: { after: 40 },
+        children: [new TextRun({ text: fyr, bold: true, size: 28, font: ARIAL })] }),
+      new Paragraph({ alignment: AlignmentType.RIGHT, spacing: { after: 40 },
+        children: [new TextRun({ text: `${f.kt} · ${f.fyrirtAdr}`, size: 20, color: COLOR_SUBTLE, font: ARIAL })] }),
+      new Paragraph({ alignment: AlignmentType.RIGHT, spacing: { after: 40 },
+        children: [new TextRun({ text: `Sími: ${f.simi}  •  ${f.netfang}`, size: 20, color: COLOR_SUBTLE, font: ARIAL })] }),
+      new Paragraph({ spacing: { before: 120, after: 120 }, children: [],
+        border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: COLOR_LINE, space: 1 } } }),
+    ];
+
+    const vidtakandiChildren = [
+      para('Til:', { bold: true, after: 40 }),
+      para(f.husfelag, { bold: true, after: 40 }),
+      para(f.byggAdr, { color: COLOR_SUBTLE, size: 20, after: 40 }),
+      new Paragraph({ spacing: { after: 60, before: 200 },
+        tabStops: [{ type: TabStopType.RIGHT, position: TabStopPosition.MAX }],
+        children: [
+          new TextRun({ text: `Tilboð nr.: ${f.tilbnr}`, size: 22, font: ARIAL }),
+          new TextRun({ text: `\tDagsetning: ${dagsFmt}`, size: 22, font: ARIAL }),
+        ]}),
+    ];
+
+    const titilChildren = [
+      new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 240, after: 80 },
+        children: [new TextRun({ text: 'TILBOÐ', bold: true, size: 40, font: ARIAL })] }),
+      new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 240 },
+        children: [new TextRun({ text: subtitle, bold: true, size: 28, color: COLOR_LINE, font: ARIAL })] }),
+    ];
+
+    const sigTable = new Table({
+      width: { size: 9026, type: WidthType.DXA },
+      columnWidths: [4513, 4513],
+      rows: [new TableRow({ children: [
+        new TableCell({
+          borders: noBorders,
+          width: { size: 4513, type: WidthType.DXA }, margins: { top: 600, bottom: 80, left: 0, right: 80 },
+          children: [
+            new Paragraph({ children: [new TextRun({ text: '_______________________________', size: 22, font: ARIAL })] }),
+            new Paragraph({ children: [new TextRun({ text: `F.h. ${fyr}`, bold: true, size: 22, font: ARIAL })] }),
+            new Paragraph({ children: [new TextRun({ text: `${f.tengilidur}${f.starf ? ', ' + f.starf : ''}`, size: 20, color: COLOR_SUBTLE, font: ARIAL })] }),
+            new Paragraph({ children: [new TextRun({ text: `Dagsetning: ${dagsFmt}`, size: 20, color: COLOR_SUBTLE, font: ARIAL })] }),
+          ]}),
+        new TableCell({
+          borders: noBorders,
+          width: { size: 4513, type: WidthType.DXA }, margins: { top: 600, bottom: 80, left: 80, right: 0 },
+          children: [
+            new Paragraph({ children: [new TextRun({ text: '_______________________________', size: 22, font: ARIAL })] }),
+            new Paragraph({ children: [new TextRun({ text: `F.h. ${f.husfelag}`, bold: true, size: 22, font: ARIAL })] }),
+            new Paragraph({ children: [new TextRun({ text: 'Formaður / fulltrúi húsfélagsstjórnar', size: 20, color: COLOR_SUBTLE, font: ARIAL })] }),
+            new Paragraph({ children: [new TextRun({ text: 'Dagsetning: ____________________', size: 20, color: COLOR_SUBTLE, font: ARIAL })] }),
+          ]}),
+      ]})],
+    });
+
+    // ---------- Þjónustusamningur+ body ----------
+    const samningurBody = [
+      h1('1. Inngangur'),
+      para(`Vísað er til erindis húsfélagsins um tilboð í yfirferð á brunavörnum í sameign fasteignarinnar að ${f.byggAdr}. Um er að ræða ${f.stiga} stigaganga með ${f.ibudir} íbúðum samtals.`),
+      para(`Hér með leggur ${fyr} fram tilboð í árlega yfirferð brunavarna í sameign hússins skv. byggingarreglugerð nr. 112/2012, reglugerð nr. 723/2017 og ÍST EN 3.`),
+      h1('2. Verklýsing'),
+      bullet('Árleg sjónskoðun og virknieftirlit á öllum handslökkvitækjum í sameign.'),
+      bullet('Þrýstingsprófun, vigtun og athugun á innsiglum og festingum.'),
+      bullet('Léttvatnstæki 6 kg í stigagöngum, ABC-duft 6 kg í kjallararými.'),
+      bullet('Virkniprófun reykskynjara og rafhlöðuskipti.'),
+      bullet('Yfirferð eldvarnarhurða, flóttaleiða og útihurða.'),
+      bullet('Skrifleg skýrsla afhent innan 10 virkra daga.'),
+      h1('3. Skýringarmynd af ráðlagðri uppsetningu'),
+      new Paragraph({ alignment: AlignmentType.CENTER,
+        children: [new ImageRun({ type: 'png', data: png.data,
+          transformation: { width: 620, height: Math.round(620 * png.height / png.width) },
+          altText: { title: 'Skýringarmynd', description: 'Uppsetning slökkvitækja og reykskynjara', name: 'schematic' } })] }),
+      h1('4. Sundurliðun verðs'),
+      new Table({ width: { size: 9026, type: WidthType.DXA },
+        columnWidths: [4800, 1100, 1700, 1426], rows: verdRows }),
+      h1('5. Árlegur þjónustusamningur'),
+      para(`Að lokinni fyrstu yfirferð býður ${fyr} áframhaldandi árlegan þjónustusamning þar sem yfirferð fer fram á sama tíma ár hvert á sömu einingaverðum. Verð endurskoðast skv. byggingarvísitölu, að hámarki 5% á ári. Samningur er uppsegjanlegur með 2ja mánaða fyrirvara.`),
+      h1('6. Almennir skilmálar'),
+      bullet('Tilboð gildir í 30 daga frá útgáfudegi.'),
+      bullet('Greiðsluskilmálar: reikningur við lok verks, gjalddagi 14 dagar.'),
+      bullet('Starfsfólk hefur tilskilin réttindi skv. reglugerð nr. 723/2017.'),
+      new Paragraph({ children: [new PageBreak()] }),
+      h1('7. Samþykki tilboðs'),
+      para('Húsfélagið staðfestir samþykki á þessu tilboði með undirskrift hér að neðan.', { after: 320 }),
+      sigTable,
+    ];
+
+    // ---------- Uppsetning body ----------
+    let uppsBody = [];
+    if (tegund === 'uppsetning') {
+      const u = p.u;
+      const fy = p.fiveYear;
+      const stigaWord = f.stiga === 1 ? 'einn stigagang' : `${f.stiga} stigaganga`;
+      const ibudWord  = f.ibudir === 1 ? 'íbúð' : 'íbúðir';
+      const haedirText = `${f.haedir} hæðir${u.kjallari ? ' auk kjallara með sameign' : ''}`;
+      const totalSlok = u.lettvatn6kg + u.co2 + u.lettvatn6L;
+      const fyArRows = [
+        new TableRow({ tableHeader: true, children: [
+          cell('Ár',       { width: 1400, shade: COLOR_HEADER_BG, bold: true, align: AlignmentType.CENTER }),
+          cell('Þjónusta', { width: 3826, shade: COLOR_HEADER_BG, bold: true }),
+          cell('Án vsk.',  { width: 2000, shade: COLOR_HEADER_BG, bold: true, align: AlignmentType.RIGHT }),
+          cell('M. vsk.',  { width: 2000, shade: COLOR_HEADER_BG, bold: true, align: AlignmentType.RIGHT }),
+        ]}),
+        new TableRow({ children: [
+          cell('Ár 1', { width: 1400, align: AlignmentType.CENTER, bold: true }),
+          cell(fy.ar1.lysing, { width: 3826 }),
+          cell(isk(fy.ar1.net),   { width: 2000, align: AlignmentType.RIGHT }),
+          cell(isk(fy.ar1.gross), { width: 2000, align: AlignmentType.RIGHT }),
+        ]}),
+        ...['ar2','ar3','ar4'].map(k => new TableRow({ children: [
+          cell(k.replace('ar','Ár '), { width: 1400, align: AlignmentType.CENTER, bold: true }),
+          cell(fy[k].lysing, { width: 3826 }),
+          cell(isk(fy[k].net),   { width: 2000, align: AlignmentType.RIGHT }),
+          cell(isk(fy[k].gross), { width: 2000, align: AlignmentType.RIGHT }),
+        ]})),
+        new TableRow({ children: [
+          cell('Ár 5', { width: 1400, align: AlignmentType.CENTER, bold: true, shade: 'FFF8D6' }),
+          cell(fy.ar5.lysing, { width: 3826, shade: 'FFF8D6' }),
+          cell(isk(fy.ar5.net),   { width: 2000, align: AlignmentType.RIGHT, bold: true, shade: 'FFF8D6' }),
+          cell(isk(fy.ar5.gross), { width: 2000, align: AlignmentType.RIGHT, bold: true, shade: 'FFF8D6' }),
+        ]}),
+      ];
+
+      uppsBody = [
+        h1('1. Inngangur'),
+        para(`Vísað er til erindis húsfélagsins um tilboð í yfirferð á brunavörnum í sameign fasteignarinnar að ${f.byggAdr}. Um er að ræða ${stigaWord} með ${f.ibudir} ${ibudWord} samtals — ${haedirText}.`),
+        para(`Hér með leggur ${fyr} fram tilboð í uppsetningu nýrra slökkvitækja, samtengjanlegra reykskynjara og flóttaleiðaskilta í sameign hússins. Öll tæki eru ný með ${state.serkjor}% sérkjörum. Tilboðið byggir á ákvæðum byggingarreglugerðar nr. 112/2012 og reglugerðar nr. 723/2017 um eldvarnir og eldvarnaeftirlit, ásamt staðli ÍST EN 3 um handslökkvitæki.`),
+        para('Vettvangsskoðun hefur farið fram og núverandi búnaður verið metinn. Þetta tilboð gildir um fyrstu uppsetningu (ár 1). Árleg þjónustuskoðun á nýjum tækjum hefst á ári 2 skv. þjónustusamningi (kafli 6).'),
+
+        h1('2. Skýringarmynd af fyrirhugaðri uppsetningu'),
+        para(`F (rauður hringur) sýnir staðsetningu hvers slökkvitækis, S (blár hringur) sýnir staðsetningu hvers samtengjanlegs reykskynjara. Sama uppsetning endurtekur sig á hverri hæð í öllum ${f.stiga} stigagöngum${u.kjallari?', með viðbótartækjum í kjallararými':''}.`,
+          { italic: true, color: COLOR_SUBTLE, size: 20 }),
+        new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 120, after: 120 },
+          children: [new ImageRun({ type: 'png', data: png.data,
+            transformation: { width: 620, height: Math.round(620 * png.height / png.width) },
+            altText: { title: 'Skýringarmynd', description: 'Fyrirhuguð uppsetning slökkvitækja og reykskynjara', name: 'schematic' } })] }),
+        para(`Áætlað heildarmagn: ${totalSlok} slökkvitæki og ${u.skynjari} samtengjanlegir reykskynjarar í sameign — sjá sundurliðun verðs í kafla 4.`,
+          { size: 20, color: COLOR_SUBTLE, align: AlignmentType.CENTER }),
+
+        h1('3. Verklýsing'),
+        h2('3.1 Slökkvitæki — uppsetning nýrra tækja'),
+        bullet(`Uppsetning ${u.lettvatn6kg} nýrra léttvatnstækja 6 kg á stigapöllum (lágm. 21A 183B, prófuð fyrir 35 kV).`),
+        ...(u.co2 ? [bullet(`Uppsetning ${u.co2} nýrra kolsýrutækja (CO₂) 5 kg við rafmagnstöflur í kjallara — engin leifar, óhætt á spennusettum búnaði.`)] : []),
+        ...(u.lettvatn6L ? [bullet(`Uppsetning ${u.lettvatn6L} nýrra léttvatnstækja 6 L í geymslu-/þvottahúsrými í kjallara.`)] : []),
+        bullet('Öll tæki eru CE-merkt og uppfylla ÍST EN 3 staðal.'),
+        bullet('Þjónustumiða (date tag) með dagsetningu fyrstu yfirferðar (ár 2) er sett á öll ný tæki.'),
+        bullet(`Léttvatns- og kolsýrutæki eru yfirfarin árlega og tekin til hleðslu á 5 ára fresti hjá ${fyr}.`),
+        bullet('Á meðan á hleðslu stendur er lánstæki sett í stað tækisins.'),
+
+        h2('3.2 Samtengjanlegir reykskynjarar — uppsetning'),
+        bullet(`Uppsetning ${u.skynjari} nýrra samtengjanlegra reykskynjara í stigagöngum${u.kjallari?' og geymslugöngum':''}.`),
+        bullet('Tenging á aðalstýringu og prófun á samskiptum við alla lykilskynjara.'),
+        bullet('Zónaprófun — staðfest að boðun og staðsetning skili sér á aðalstýringu.'),
+        bullet('Festingar og aðlögun að núverandi rafmagnsuppsetningu.'),
+
+        h2('3.3 Slökkvitækjamerki'),
+        bullet('Uppsetning sjálflýsandi slökkvitækjamerkja (150×150 mm), eitt á hvern stigagang.'),
+        bullet('Merkin sýna hvar slökkvitæki eru staðsett og lýsa upp í myrkri til að auðkenna staðsetninguna í neyðartilfellum.'),
+
+        h2('3.4 Skýrsla'),
+        bullet('Skrifleg skýrsla afhent húsfélaginu innan 10 virkra daga frá skoðun.'),
+        bullet('Skýrslan inniheldur ljósmyndir, lista yfir frávik og forgangsraðaðar tillögur til úrbóta.'),
+        bullet('Aukaverk verðlögð sérstaklega og kynnt húsfélaginu áður en framkvæmt er.'),
+
+        h1('4. Sundurliðun verðs'),
+        para('Sundurliðun byggir á niðurstöðum vettvangsskoðunar. Öll verð eru í íslenskum krónum.',
+          { italic: true, color: COLOR_SUBTLE, size: 20 }),
+        new Table({ width: { size: 9026, type: WidthType.DXA },
+          columnWidths: [4800, 1100, 1700, 1426], rows: verdRows }),
+
+        h1('5. Innifalið og ekki innifalið'),
+        h2('5.1 Innifalið í tilboði'),
+        bullet('Ferðakostnaður innan höfuðborgarsvæðisins.'),
+        bullet('Vinna á dagvinnutíma (mán.–fös. 08:00–16:00).'),
+        bullet('Þjónustumiðar, smáfestingar og almenn neysluvara.'),
+        bullet('Skrifleg skoðunarskýrsla með ljósmyndum.'),
+        bullet('Ráðgjöf um úrbætur og forgangsröðun til húsfélagsstjórnar.'),
+        h2('5.2 Ekki innifalið — tilboðsskylt sérstaklega'),
+        bullet(`Endurnýjun slökkvitækja sem hafa náð 10 ára aldri eða eru ónothæf — ${state.serkjor}% sérkjör á nýjum tækjum.`),
+        bullet('Hleðsla léttvatns- og kolsýrutækja á 5 ára fresti — lánstæki sett í stað á meðan.'),
+        bullet('10-ára þrýstiprófun hylkis á verkstæði.'),
+        bullet(`Endurnýjun ónýtra eða úreltra reykskynjara — sérkjör –${state.serkjor}%.`),
+        bullet('Yfirferð eldvarnarhurða, flóttaleiða eða neyðarlýsingar — sérstök þjónusta, tilboðsskyld.'),
+        bullet('Vinna utan dagvinnutíma — 50% álag.'),
+
+        h2('5.3 Áætlað verð árlegrar þjónustu — næstu 5 árin'),
+        para('Eftir uppsetningu hefst árleg þjónustuskoðun á ári 2. Á ári 5 falla einnig til hleðsla léttvatns- og kolsýrutækja (lánstæki innifalið á meðan).',
+          { size: 20, color: COLOR_SUBTLE, italic: true, after: 80 }),
+        new Table({ width: { size: 9026, type: WidthType.DXA },
+          columnWidths: [1400, 3826, 2000, 2000], rows: fyArRows }),
+        para('Verð á árlegri þjónustu er reiknað á sömu einingaverðum og kafli 3, og endurskoðast árlega skv. byggingarvísitölu (sjá kafla 6).',
+          { size: 18, color: COLOR_SUBTLE, italic: true, before: 80 }),
+
+        h1('6. Árlegur þjónustusamningur'),
+        para(`Að lokinni uppsetningu (ár 1) hefst árleg þjónustuskoðun á ári 2. ${fyr} býður húsfélaginu þjónustusamning þar sem öll uppsett tæki eru yfirfarin árlega, kolsýru- og léttvatnstæki tekin til hleðslu á 5 ára fresti með lánstæki á meðan.`),
+        para('Sérkjör á samningstíma — gildir frá dagsetningu tilboðs:', { bold: true, after: 80 }),
+        bullet(`${state.serkjor}% afsláttur af verði nýrra slökkvitækja sem keypt eru í gegnum samninginn.`),
+        bullet('Léttvatns- og kolsýrutæki tekin til hleðslu á 5 ára fresti — lánstæki innifalið á meðan.'),
+        bullet('Forgangur á tímapunktum og hraðari afgreiðsla á aukaverkum.'),
+        para('Helstu skilmálar þjónustusamnings:', { bold: true, before: 120, after: 80 }),
+        bullet('Verð endurskoðast árlega skv. byggingarvísitölu (HMS-vísitala), að hámarki 5% á ári.'),
+        bullet('Yfirferð fer fram á sama mánuði ár hvert — minnt á með tölvupósti tveimur vikum áður.'),
+        bullet('Húsfélag fær 10% afslátt af öllum aukaverkum á samningstíma.'),
+        bullet('Samningurinn er uppsegjanlegur af hálfu beggja aðila með 2ja mánaða fyrirvara.'),
+        bullet('Þjónustumiðar á búnaði bera næsta yfirferðardag — engin aukagjöld fyrir áminningu.'),
+
+        h1('7. Almennir skilmálar'),
+        bullet('Tilboð þetta gildir í 30 daga frá útgáfudegi.'),
+        bullet('Greiðsluskilmálar: reikningur gefinn út við lok verks, gjalddagi 10 dagar.'),
+        bullet(`Tryggingar: ${fyr} er með gilda ábyrgðartryggingu skv. lögum.`),
+        bullet('Allt starfsfólk hefur tilskilin réttindi til eftirlits með brunavörnum skv. reglugerð nr. 723/2017.'),
+        bullet('Trúnaður ríkir um upplýsingar húsfélagsins.'),
+
+        h1('8. Samþykki tilboðs'),
+        para(`Húsfélagið staðfestir samþykki á þessu tilboði með undirskrift hér að neðan. Eitt undirritað eintak sendist til ${fyr} og annað heldur húsfélagið.`, { after: 320 }),
+        sigTable,
+      ];
+    }
+
+    const bodyChildren = tegund === 'uppsetning' ? uppsBody : samningurBody;
+
     const doc = new Document({
       creator: fyr,
       title: `Tilboð — ${f.husfelag || 'Sameign'}`,
@@ -998,6 +1551,9 @@ document.getElementById('btn-docx').addEventListener('click', async () => {
           { id: 'Heading1', name: 'Heading 1', basedOn: 'Normal', next: 'Normal', quickFormat: true,
             run: { size: 28, bold: true, font: ARIAL },
             paragraph: { spacing: { before: 280, after: 140 }, outlineLevel: 0 } },
+          { id: 'Heading2', name: 'Heading 2', basedOn: 'Normal', next: 'Normal', quickFormat: true,
+            run: { size: 24, bold: true, font: ARIAL },
+            paragraph: { spacing: { before: 200, after: 100 }, outlineLevel: 1 } },
         ],
       },
       numbering: { config: [{ reference: 'bullets', levels: [{
@@ -1014,82 +1570,10 @@ document.getElementById('btn-docx').addEventListener('click', async () => {
             new TextRun({ children: [PageNumber.TOTAL_PAGES], size: 18, color: COLOR_SUBTLE, font: ARIAL }),
           ]})]}) },
         children: [
-          // Briefhaus
-          new Paragraph({ alignment: AlignmentType.RIGHT, spacing: { after: 40 },
-            children: [new TextRun({ text: fyr, bold: true, size: 28, font: ARIAL })] }),
-          new Paragraph({ alignment: AlignmentType.RIGHT, spacing: { after: 40 },
-            children: [new TextRun({ text: `${f.kt} · ${f.fyrirtAdr}`, size: 20, color: COLOR_SUBTLE, font: ARIAL })] }),
-          new Paragraph({ alignment: AlignmentType.RIGHT, spacing: { after: 40 },
-            children: [new TextRun({ text: `Sími: ${f.simi}  •  ${f.netfang}`, size: 20, color: COLOR_SUBTLE, font: ARIAL })] }),
-          new Paragraph({ spacing: { before: 120, after: 120 }, children: [],
-            border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: COLOR_LINE, space: 1 } } }),
-          // Vidtakandi
-          para('Til:', { bold: true, after: 40 }),
-          para(f.husfelag, { bold: true, after: 40 }),
-          para(f.byggAdr, { color: COLOR_SUBTLE, size: 20, after: 40 }),
-          new Paragraph({ spacing: { after: 60, before: 200 },
-            tabStops: [{ type: TabStopType.RIGHT, position: TabStopPosition.MAX }],
-            children: [
-              new TextRun({ text: `Tilboð nr.: ${f.tilbnr}`, size: 22, font: ARIAL }),
-              new TextRun({ text: `\tDagsetning: ${dagsFmt}`, size: 22, font: ARIAL }),
-            ]}),
-          // Titill
-          new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 240, after: 80 },
-            children: [new TextRun({ text: 'TILBOÐ', bold: true, size: 40, font: ARIAL })] }),
-          new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 240 },
-            children: [new TextRun({ text: 'Árleg yfirferð brunavarna í sameign',
-              bold: true, size: 28, color: COLOR_LINE, font: ARIAL })] }),
-          h1('1. Inngangur'),
-          para(`Vísað er til erindis húsfélagsins um tilboð í yfirferð á brunavörnum í sameign fasteignarinnar að ${f.byggAdr}. Um er að ræða ${f.stiga} stigaganga með ${f.ibudir} íbúðum samtals.`),
-          para(`Hér með leggur ${fyr} fram tilboð í árlega yfirferð brunavarna í sameign hússins skv. byggingarreglugerð nr. 112/2012, reglugerð nr. 723/2017 og ÍST EN 3.`),
-          h1('2. Verklýsing'),
-          bullet('Árleg sjónskoðun og virknieftirlit á öllum handslökkvitækjum í sameign.'),
-          bullet('Þrýstingsprófun, vigtun og athugun á innsiglum og festingum.'),
-          bullet('Léttvatnstæki 6 kg í stigagöngum, ABC-duft 6 kg í kjallararými.'),
-          bullet('Virkniprófun reykskynjara og rafhlöðuskipti.'),
-          bullet('Yfirferð eldvarnarhurða, flóttaleiða og útihurða.'),
-          bullet('Skrifleg skýrsla afhent innan 10 virkra daga.'),
-          h1('3. Skýringarmynd af ráðlagðri uppsetningu'),
-          new Paragraph({ alignment: AlignmentType.CENTER,
-            children: [new ImageRun({ type: 'png', data: png.data,
-              transformation: { width: 620, height: Math.round(620 * png.height / png.width) },
-              altText: { title: 'Skýringarmynd', description: 'Uppsetning slökkvitækja og reykskynjara', name: 'schematic' } })] }),
-          h1('4. Sundurliðun verðs'),
-          new Table({ width: { size: 9026, type: WidthType.DXA },
-            columnWidths: [4800, 1100, 1700, 1426], rows: verdRows }),
-          h1('5. Árlegur þjónustusamningur'),
-          para(`Að lokinni fyrstu yfirferð býður ${fyr} áframhaldandi árlegan þjónustusamning þar sem yfirferð fer fram á sama tíma ár hvert á sömu einingaverðum. Verð endurskoðast skv. byggingarvísitölu, að hámarki 5% á ári. Samningur er uppsegjanlegur með 2ja mánaða fyrirvara.`),
-          h1('6. Almennir skilmálar'),
-          bullet('Tilboð gildir í 30 daga frá útgáfudegi.'),
-          bullet('Greiðsluskilmálar: reikningur við lok verks, gjalddagi 14 dagar.'),
-          bullet('Starfsfólk hefur tilskilin réttindi skv. reglugerð nr. 723/2017.'),
-          new Paragraph({ children: [new PageBreak()] }),
-          h1('7. Samþykki tilboðs'),
-          para(`Húsfélagið staðfestir samþykki á þessu tilboði með undirskrift hér að neðan.`, { after: 320 }),
-          new Table({
-            width: { size: 9026, type: WidthType.DXA },
-            columnWidths: [4513, 4513],
-            rows: [new TableRow({ children: [
-              new TableCell({
-                borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } },
-                width: { size: 4513, type: WidthType.DXA }, margins: { top: 600, bottom: 80, left: 0, right: 80 },
-                children: [
-                  new Paragraph({ children: [new TextRun({ text: '_______________________________', size: 22, font: ARIAL })] }),
-                  new Paragraph({ children: [new TextRun({ text: `F.h. ${fyr}`, bold: true, size: 22, font: ARIAL })] }),
-                  new Paragraph({ children: [new TextRun({ text: `${f.tengilidur}, ${f.starf}`, size: 20, color: COLOR_SUBTLE, font: ARIAL })] }),
-                  new Paragraph({ children: [new TextRun({ text: `Dagsetning: ${dagsFmt}`, size: 20, color: COLOR_SUBTLE, font: ARIAL })] }),
-                ]}),
-              new TableCell({
-                borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } },
-                width: { size: 4513, type: WidthType.DXA }, margins: { top: 600, bottom: 80, left: 80, right: 0 },
-                children: [
-                  new Paragraph({ children: [new TextRun({ text: '_______________________________', size: 22, font: ARIAL })] }),
-                  new Paragraph({ children: [new TextRun({ text: `F.h. ${f.husfelag}`, bold: true, size: 22, font: ARIAL })] }),
-                  new Paragraph({ children: [new TextRun({ text: 'Formaður / fulltrúi húsfélagsstjórnar', size: 20, color: COLOR_SUBTLE, font: ARIAL })] }),
-                  new Paragraph({ children: [new TextRun({ text: 'Dagsetning: ____________________', size: 20, color: COLOR_SUBTLE, font: ARIAL })] }),
-                ]}),
-            ]})],
-          }),
+          ...headerChildren,
+          ...vidtakandiChildren,
+          ...titilChildren,
+          ...bodyChildren,
         ],
       }],
     });
@@ -1099,7 +1583,8 @@ document.getElementById('btn-docx').addEventListener('click', async () => {
     const a = document.createElement('a');
     a.href = url;
     const slug = (f.husfelag || 'tilbod').replace(/[^a-zA-Z0-9]+/g, '_').replace(/_+/g, '_');
-    a.download = `Tilbod_${slug}_${f.tilbnr}.docx`;
+    const prefix = tegund === 'uppsetning' ? 'Uppsetning' : 'Tilbod';
+    a.download = `${prefix}_${slug}_${f.tilbnr}.docx`;
     a.click();
     URL.revokeObjectURL(url);
     btn.textContent = 'Sækja .docx';
@@ -1120,10 +1605,13 @@ async function askLuna() {
   btn.textContent = 'Luna að hugsa...';
   btn.disabled = true;
   const p = computePricing();
-  const q = p.q;
-  const ctx = `Þetta tilboð er fyrir ${state.husfelag || '[húsfélag]'} að ${state.byggAdr || '[heimilisfang]'}.
+  const tegLabel = state.tegund === 'uppsetning' ? 'Uppsetning (ár 1)' : 'Þjónustusamningur+';
+  const magnLine = state.tegund === 'uppsetning' && p.u
+    ? `Áætlað magn: ${p.u.lettvatn6kg} léttvatn 6kg, ${p.u.co2} CO₂ 5kg, ${p.u.lettvatn6L} léttvatn 6L, ${p.u.skynjari} samtengdir skynjarar, ${p.u.skilti} skilti.`
+    : `Áætlað magn: ${p.q.lettvatn} léttvatnstæki, ${p.q.duft} duftstæki, ${p.q.skynjari} reykskynjarar.`;
+  const ctx = `Þetta tilboð (${tegLabel}) er fyrir ${state.husfelag || '[húsfélag]'} að ${state.byggAdr || '[heimilisfang]'}.
 Byggingin hefur ${state.stiga} stigaganga, ${state.haedir} hæðir${state.jardhaed==='yes'?' + jarðhæð':''}${state.kjallari==='yes'?' + kjallari':''}, ${state.ibudir} íbúðir.
-Áætlað magn: ${q.lettvatn} léttvatnstæki, ${q.duft} duftstæki, ${q.skynjari} reykskynjarar.
+${magnLine}
 Heildartilboð: ${isk(p.total)} m. vsk.`;
   try {
     if (window.luna && typeof window.luna.ask === 'function') {
