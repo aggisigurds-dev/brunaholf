@@ -1,0 +1,7 @@
+node_modules/
+*.docx
+*.pdf
+schematic.svg
+schematic.png
+_temp.docx
+.DS_Store

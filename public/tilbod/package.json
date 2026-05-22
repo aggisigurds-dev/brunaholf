@@ -1,0 +1,15 @@
+{
+  "name": "brunaholf-tilbodsgerd",
+  "version": "1.0.0",
+  "description": "Sjálfvirk tilboðsgerð fyrir brunavarnir í sameign — Slökkvitæki ehf.",
+  "main": "build_tilbod.js",
+  "scripts": {
+    "build": "node build_tilbod.js",
+    "preview": "python3 -m http.server 8080"
+  },
+  "dependencies": {
+    "docx": "^9.1.0"
+  },
+  "author": "Slökkvitæki ehf.",
+  "license": "UNLICENSED"
+}
