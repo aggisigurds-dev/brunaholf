@@ -1,0 +1,67 @@
+# Brunahólf — Stjórnstöð · Netlify build config
+
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+# Friendly URL for the Mæting bridge:
+#   /api/maeting  →  /.netlify/functions/timavera-maeting
+[[redirects]]
+  from = "/api/maeting"
+  to = "/.netlify/functions/timavera-maeting"
+  status = 200
+
+# Friendly URL for the private Inbox digest:
+#   /api/inbox    →  /.netlify/functions/inbox
+[[redirects]]
+  from = "/api/inbox"
+  to = "/.netlify/functions/inbox"
+  status = 200
+
+# Friendly URL for the Tímavera report:
+#   /api/timavera →  /.netlify/functions/timavera
+[[redirects]]
+  from = "/api/timavera"
+  to = "/.netlify/functions/timavera"
+  status = 200
+
+# Friendly URL for the competitor-price comparison:
+#   /api/competitors → /.netlify/functions/competitors
+[[redirects]]
+  from = "/api/competitors"
+  to = "/.netlify/functions/competitors"
+  status = 200
+
+# Friendly URL for worksite billing audit:
+#   /api/worksites → /.netlify/functions/worksites
+[[redirects]]
+  from = "/api/worksites"
+  to = "/.netlify/functions/worksites"
+  status = 200
+
+# Google OAuth — start, callback, and helpers
+[[redirects]]
+  from = "/api/google-auth"
+  to = "/.netlify/functions/google-auth"
+  status = 200
+
+[[redirects]]
+  from = "/api/drive-folders"
+  to = "/.netlify/functions/drive-folders"
+  status = 200
+
+[[redirects]]
+  from = "/api/gmail-search"
+  to = "/.netlify/functions/gmail-search"
+  status = 200
+
+[[redirects]]
+  from = "/api/customer-map"
+  to = "/.netlify/functions/customer-map"
+  status = 200
+
+# Scheduled invocation: re-runs the function every 10 minutes so the
+# (eventual) Timavera scrape result is "warm" when the page asks.
+# Cron syntax: minute hour day month weekday — every 10 min, all day.
+[functions."timavera-maeting"]
+  schedule = "*/10 * * * *"
