@@ -1284,6 +1284,13 @@ document.getElementById('btn-docx').addEventListener('click', async () => {
     ];
 
     // Header (logo + company info side-by-side if logo is available)
+    // Split address into separate lines (split on comma so "Helluhrauni 10, 220 Hafnarfjörður"
+    // renders as two stacked lines, matching build_tilbod.js)
+    const adrParts = (f.fyrirtAdr || '').split(',').map(s => s.trim()).filter(Boolean);
+    const adrParagraphs = adrParts.map(part => new Paragraph({
+      alignment: AlignmentType.RIGHT, spacing: { after: 30 },
+      children: [new TextRun({ text: part, size: 18, color: COLOR_SUBTLE, font: ARIAL })],
+    }));
     const headerChildren = logoBuf ? [
       new Table({
         width: { size: 9026, type: WidthType.DXA },
@@ -1296,8 +1303,9 @@ document.getElementById('btn-docx').addEventListener('click', async () => {
             verticalAlign: 'center',
             children: [new Paragraph({
               alignment: AlignmentType.LEFT,
+              spacing: { after: 0 },
               children: [new ImageRun({ type: 'png', data: logoBuf,
-                transformation: { width: 240, height: 80 },
+                transformation: { width: 280, height: 80 },
                 altText: { title: 'Logo', description: 'Merki fyrirtækisins', name: 'logo' } })],
             })],
           }),
@@ -1311,8 +1319,7 @@ document.getElementById('btn-docx').addEventListener('click', async () => {
                 children: [new TextRun({ text: fyr, bold: true, size: 26, font: ARIAL })] }),
               new Paragraph({ alignment: AlignmentType.RIGHT, spacing: { after: 30 },
                 children: [new TextRun({ text: f.kt, size: 18, color: COLOR_SUBTLE, font: ARIAL })] }),
-              new Paragraph({ alignment: AlignmentType.RIGHT, spacing: { after: 30 },
-                children: [new TextRun({ text: f.fyrirtAdr, size: 18, color: COLOR_SUBTLE, font: ARIAL })] }),
+              ...adrParagraphs,
               new Paragraph({ alignment: AlignmentType.RIGHT, spacing: { after: 30 },
                 children: [new TextRun({ text: `Sími: ${f.simi}  •  ${f.netfang}`, size: 18, color: COLOR_SUBTLE, font: ARIAL })] }),
             ],
@@ -1322,15 +1329,19 @@ document.getElementById('btn-docx').addEventListener('click', async () => {
       new Paragraph({ spacing: { before: 120, after: 120 }, children: [],
         border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: COLOR_LINE, space: 1 } } }),
     ] : [
-      new Paragraph({ alignment: AlignmentType.RIGHT, spacing: { after: 40 },
-        children: [new TextRun({ text: fyr, bold: true, size: 28, font: ARIAL })] }),
-      new Paragraph({ alignment: AlignmentType.RIGHT, spacing: { after: 40 },
-        children: [new TextRun({ text: `${f.kt} · ${f.fyrirtAdr}`, size: 20, color: COLOR_SUBTLE, font: ARIAL })] }),
-      new Paragraph({ alignment: AlignmentType.RIGHT, spacing: { after: 40 },
-        children: [new TextRun({ text: `Sími: ${f.simi}  •  ${f.netfang}`, size: 20, color: COLOR_SUBTLE, font: ARIAL })] }),
+      new Paragraph({ alignment: AlignmentType.RIGHT, spacing: { after: 30 },
+        children: [new TextRun({ text: fyr, bold: true, size: 26, font: ARIAL })] }),
+      new Paragraph({ alignment: AlignmentType.RIGHT, spacing: { after: 30 },
+        children: [new TextRun({ text: f.kt, size: 18, color: COLOR_SUBTLE, font: ARIAL })] }),
+      ...adrParagraphs,
+      new Paragraph({ alignment: AlignmentType.RIGHT, spacing: { after: 30 },
+        children: [new TextRun({ text: `Sími: ${f.simi}  •  ${f.netfang}`, size: 18, color: COLOR_SUBTLE, font: ARIAL })] }),
       new Paragraph({ spacing: { before: 120, after: 120 }, children: [],
         border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: COLOR_LINE, space: 1 } } }),
     ];
+
+    // Page break helper — use before each chapter from 2 onwards
+    const pageBreak = () => new Paragraph({ children: [new PageBreak()] });
 
     const vidtakandiChildren = [
       para('Til:', { bold: true, after: 40 }),
@@ -1381,6 +1392,7 @@ document.getElementById('btn-docx').addEventListener('click', async () => {
       h1('1. Inngangur'),
       para(`Vísað er til erindis húsfélagsins um tilboð í yfirferð á brunavörnum í sameign fasteignarinnar að ${f.byggAdr}. Um er að ræða ${f.stiga} stigaganga með ${f.ibudir} íbúðum samtals.`),
       para(`Hér með leggur ${fyr} fram tilboð í árlega yfirferð brunavarna í sameign hússins skv. byggingarreglugerð nr. 112/2012, reglugerð nr. 723/2017 og ÍST EN 3.`),
+      pageBreak(),
       h1('2. Verklýsing'),
       bullet('Árleg sjónskoðun og virknieftirlit á öllum handslökkvitækjum í sameign.'),
       bullet('Þrýstingsprófun, vigtun og athugun á innsiglum og festingum.'),
@@ -1388,21 +1400,25 @@ document.getElementById('btn-docx').addEventListener('click', async () => {
       bullet('Virkniprófun reykskynjara og rafhlöðuskipti.'),
       bullet('Yfirferð eldvarnarhurða, flóttaleiða og útihurða.'),
       bullet('Skrifleg skýrsla afhent innan 10 virkra daga.'),
+      pageBreak(),
       h1('3. Skýringarmynd af ráðlagðri uppsetningu'),
       new Paragraph({ alignment: AlignmentType.CENTER,
         children: [new ImageRun({ type: 'png', data: png.data,
           transformation: { width: 620, height: Math.round(620 * png.height / png.width) },
           altText: { title: 'Skýringarmynd', description: 'Uppsetning slökkvitækja og reykskynjara', name: 'schematic' } })] }),
+      pageBreak(),
       h1('4. Sundurliðun verðs'),
       new Table({ width: { size: 9026, type: WidthType.DXA },
         columnWidths: [4800, 1100, 1700, 1426], rows: verdRows }),
+      pageBreak(),
       h1('5. Árlegur þjónustusamningur'),
       para(`Að lokinni fyrstu yfirferð býður ${fyr} áframhaldandi árlegan þjónustusamning þar sem yfirferð fer fram á sama tíma ár hvert á sömu einingaverðum. Verð endurskoðast skv. byggingarvísitölu, að hámarki 5% á ári. Samningur er uppsegjanlegur með 2ja mánaða fyrirvara.`),
+      pageBreak(),
       h1('6. Almennir skilmálar'),
       bullet('Tilboð gildir í 30 daga frá útgáfudegi.'),
       bullet('Greiðsluskilmálar: reikningur við lok verks, gjalddagi 14 dagar.'),
       bullet('Starfsfólk hefur tilskilin réttindi skv. reglugerð nr. 723/2017.'),
-      new Paragraph({ children: [new PageBreak()] }),
+      pageBreak(),
       h1('7. Samþykki tilboðs'),
       para('Húsfélagið staðfestir samþykki á þessu tilboði með undirskrift hér að neðan.', { after: 320 }),
       sigTable,
@@ -1450,6 +1466,7 @@ document.getElementById('btn-docx').addEventListener('click', async () => {
         para(`Hér með leggur ${fyr} fram tilboð í uppsetningu nýrra slökkvitækja, samtengjanlegra reykskynjara og flóttaleiðaskilta í sameign hússins. Öll tæki eru ný með ${state.serkjor}% sérkjörum. Tilboðið byggir á ákvæðum byggingarreglugerðar nr. 112/2012 og reglugerðar nr. 723/2017 um eldvarnir og eldvarnaeftirlit, ásamt staðli ÍST EN 3 um handslökkvitæki.`),
         para('Vettvangsskoðun hefur farið fram og núverandi búnaður verið metinn. Þetta tilboð gildir um fyrstu uppsetningu (ár 1). Árleg þjónustuskoðun á nýjum tækjum hefst á ári 2 skv. þjónustusamningi (kafli 6).'),
 
+        pageBreak(),
         h1('2. Skýringarmynd af fyrirhugaðri uppsetningu'),
         para(`F (rauður hringur) sýnir staðsetningu hvers slökkvitækis, S (blár hringur) sýnir staðsetningu hvers samtengjanlegs reykskynjara. Sama uppsetning endurtekur sig á hverri hæð í öllum ${f.stiga} stigagöngum${u.kjallari?', með viðbótartækjum í kjallararými':''}.`,
           { italic: true, color: COLOR_SUBTLE, size: 20 }),
@@ -1460,6 +1477,7 @@ document.getElementById('btn-docx').addEventListener('click', async () => {
         para(`Áætlað heildarmagn: ${totalSlok} slökkvitæki og ${u.skynjari} samtengjanlegir reykskynjarar í sameign — sjá sundurliðun verðs í kafla 4.`,
           { size: 20, color: COLOR_SUBTLE, align: AlignmentType.CENTER }),
 
+        pageBreak(),
         h1('3. Verklýsing'),
         h2('3.1 Slökkvitæki — uppsetning nýrra tækja'),
         bullet(`Uppsetning ${u.lettvatn6kg} nýrra léttvatnstækja 6 kg á stigapöllum (lágm. 21A 183B, prófuð fyrir 35 kV).`),
@@ -1485,12 +1503,14 @@ document.getElementById('btn-docx').addEventListener('click', async () => {
         bullet('Skýrslan inniheldur ljósmyndir, lista yfir frávik og forgangsraðaðar tillögur til úrbóta.'),
         bullet('Aukaverk verðlögð sérstaklega og kynnt húsfélaginu áður en framkvæmt er.'),
 
+        pageBreak(),
         h1('4. Sundurliðun verðs'),
         para('Sundurliðun byggir á niðurstöðum vettvangsskoðunar. Öll verð eru í íslenskum krónum.',
           { italic: true, color: COLOR_SUBTLE, size: 20 }),
         new Table({ width: { size: 9026, type: WidthType.DXA },
           columnWidths: [4800, 1100, 1700, 1426], rows: verdRows }),
 
+        pageBreak(),
         h1('5. Innifalið og ekki innifalið'),
         h2('5.1 Innifalið í tilboði'),
         bullet('Ferðakostnaður innan höfuðborgarsvæðisins.'),
@@ -1514,6 +1534,7 @@ document.getElementById('btn-docx').addEventListener('click', async () => {
         para('Verð á árlegri þjónustu er reiknað á sömu einingaverðum og kafli 3, og endurskoðast árlega skv. byggingarvísitölu (sjá kafla 6).',
           { size: 18, color: COLOR_SUBTLE, italic: true, before: 80 }),
 
+        pageBreak(),
         h1('6. Árlegur þjónustusamningur'),
         para(`Að lokinni uppsetningu (ár 1) hefst árleg þjónustuskoðun á ári 2. ${fyr} býður húsfélaginu þjónustusamning þar sem öll uppsett tæki eru yfirfarin árlega, kolsýru- og léttvatnstæki tekin til hleðslu á 5 ára fresti með lánstæki á meðan.`),
         para('Sérkjör á samningstíma — gildir frá dagsetningu tilboðs:', { bold: true, after: 80 }),
@@ -1527,6 +1548,7 @@ document.getElementById('btn-docx').addEventListener('click', async () => {
         bullet('Samningurinn er uppsegjanlegur af hálfu beggja aðila með 2ja mánaða fyrirvara.'),
         bullet('Þjónustumiðar á búnaði bera næsta yfirferðardag — engin aukagjöld fyrir áminningu.'),
 
+        pageBreak(),
         h1('7. Almennir skilmálar'),
         bullet('Tilboð þetta gildir í 30 daga frá útgáfudegi.'),
         bullet('Greiðsluskilmálar: reikningur gefinn út við lok verks, gjalddagi 10 dagar.'),
@@ -1534,6 +1556,7 @@ document.getElementById('btn-docx').addEventListener('click', async () => {
         bullet('Allt starfsfólk hefur tilskilin réttindi til eftirlits með brunavörnum skv. reglugerð nr. 723/2017.'),
         bullet('Trúnaður ríkir um upplýsingar húsfélagsins.'),
 
+        pageBreak(),
         h1('8. Samþykki tilboðs'),
         para(`Húsfélagið staðfestir samþykki á þessu tilboði með undirskrift hér að neðan. Eitt undirritað eintak sendist til ${fyr} og annað heldur húsfélagið.`, { after: 320 }),
         sigTable,
