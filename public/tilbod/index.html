@@ -1283,14 +1283,8 @@ document.getElementById('btn-docx').addEventListener('click', async () => {
       ]}),
     ];
 
-    // Header (logo + company info side-by-side if logo is available)
-    // Split address into separate lines (split on comma so "Helluhrauni 10, 220 Hafnarfjörður"
-    // renders as two stacked lines, matching build_tilbod.js)
-    const adrParts = (f.fyrirtAdr || '').split(',').map(s => s.trim()).filter(Boolean);
-    const adrParagraphs = adrParts.map(part => new Paragraph({
-      alignment: AlignmentType.RIGHT, spacing: { after: 30 },
-      children: [new TextRun({ text: part, size: 18, color: COLOR_SUBTLE, font: ARIAL })],
-    }));
+    // Header — 4 lines on the right (nafn / kt+vsk / heimilisfang / sími)
+    // verticalAlign 'top' so the company name lines up with the top of the logo
     const headerChildren = logoBuf ? [
       new Table({
         width: { size: 9026, type: WidthType.DXA },
@@ -1300,7 +1294,7 @@ document.getElementById('btn-docx').addEventListener('click', async () => {
             borders: noBorders,
             width: { size: 4513, type: WidthType.DXA },
             margins: { top: 0, bottom: 0, left: 0, right: 80 },
-            verticalAlign: 'center',
+            verticalAlign: 'top',
             children: [new Paragraph({
               alignment: AlignmentType.LEFT,
               spacing: { after: 0 },
@@ -1313,13 +1307,14 @@ document.getElementById('btn-docx').addEventListener('click', async () => {
             borders: noBorders,
             width: { size: 4513, type: WidthType.DXA },
             margins: { top: 0, bottom: 0, left: 80, right: 0 },
-            verticalAlign: 'center',
+            verticalAlign: 'top',
             children: [
               new Paragraph({ alignment: AlignmentType.RIGHT, spacing: { after: 30 },
                 children: [new TextRun({ text: fyr, bold: true, size: 26, font: ARIAL })] }),
               new Paragraph({ alignment: AlignmentType.RIGHT, spacing: { after: 30 },
                 children: [new TextRun({ text: f.kt, size: 18, color: COLOR_SUBTLE, font: ARIAL })] }),
-              ...adrParagraphs,
+              new Paragraph({ alignment: AlignmentType.RIGHT, spacing: { after: 30 },
+                children: [new TextRun({ text: f.fyrirtAdr, size: 18, color: COLOR_SUBTLE, font: ARIAL })] }),
               new Paragraph({ alignment: AlignmentType.RIGHT, spacing: { after: 30 },
                 children: [new TextRun({ text: `Sími: ${f.simi}  •  ${f.netfang}`, size: 18, color: COLOR_SUBTLE, font: ARIAL })] }),
             ],
@@ -1333,7 +1328,8 @@ document.getElementById('btn-docx').addEventListener('click', async () => {
         children: [new TextRun({ text: fyr, bold: true, size: 26, font: ARIAL })] }),
       new Paragraph({ alignment: AlignmentType.RIGHT, spacing: { after: 30 },
         children: [new TextRun({ text: f.kt, size: 18, color: COLOR_SUBTLE, font: ARIAL })] }),
-      ...adrParagraphs,
+      new Paragraph({ alignment: AlignmentType.RIGHT, spacing: { after: 30 },
+        children: [new TextRun({ text: f.fyrirtAdr, size: 18, color: COLOR_SUBTLE, font: ARIAL })] }),
       new Paragraph({ alignment: AlignmentType.RIGHT, spacing: { after: 30 },
         children: [new TextRun({ text: `Sími: ${f.simi}  •  ${f.netfang}`, size: 18, color: COLOR_SUBTLE, font: ARIAL })] }),
       new Paragraph({ spacing: { before: 120, after: 120 }, children: [],
