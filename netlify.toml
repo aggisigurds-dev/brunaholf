@@ -87,6 +87,12 @@
   to = "/.netlify/functions/app-state"
   status = 200
 
+# Per-worksite billing rules (rate / akstur / smáhlutagjald / VSK / etc.)
+[[redirects]]
+  from = "/api/pricing-guide"
+  to = "/.netlify/functions/pricing-guide"
+  status = 200
+
 # Friendly URL for the Reikningagerð grid — uses /api/worksites under the hood,
 # kept here so the route is documented.
 [[redirects]]
