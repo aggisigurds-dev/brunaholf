@@ -94,6 +94,13 @@
   to = "/.netlify/functions/worksites"
   status = 200
 
+# Friendly URL for the standalone Reikningagerð (Efnislisti) form:
+#   /reikningur → /reikningur/index.html
+[[redirects]]
+  from = "/reikningur"
+  to = "/reikningur/index.html"
+  status = 200
+
 # Scheduled invocation: re-runs the function every 10 minutes so the
 # (eventual) Timavera scrape result is "warm" when the page asks.
 # Cron syntax: minute hour day month weekday — every 10 min, all day.
