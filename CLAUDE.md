@@ -192,10 +192,21 @@ Some worksites — or some portions of work — are billed at an
 needs to support this: per worksite (or per work item) you can
 either use the calculated total or override with a flat amount.
 
-### Invoice systems
-- **Payday** — most invoices.
-- **Landsbankinn krafnir** — krafa-only flow.
-- Both end up in the `invoices` table after syncing.
+### Invoice + payment sources (for rei / Greitt detection)
+- **Payday** — most invoices are created and sent from here. Payday
+  also marks most paid invoices. → syncs into `invoices` table
+  (`status`, `greidsla_date`).
+- **Landsbankinn krafnir** — krafa-only flow. → also syncs into
+  `invoices` table.
+- **Landsbankinn bank ledger** — some customers pay straight to the
+  bank, bypassing Payday. User exports CSV from Landsbankinn
+  regularly → imported into `bank_transactions` (currently 840 rows).
+  The `worksites.js` function already cross-references by
+  `kt_counterparty` + fuzzy text match on customer name to detect
+  bank-paid invoices that aren't marked paid in Payday.
+- Therefore in the Reikningagerð grid:
+  - `rei` = exists in `invoices` for this (worksite, month)
+  - `Greitt` = invoice `status` is paid OR matching bank inflow found
 - Older invoices for reference live in the brunaholf Google Drive
   (shared with `aggisigurds@gmail.com`).
 
