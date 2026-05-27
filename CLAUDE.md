@@ -322,6 +322,37 @@ means the anon key can read/write them. Not auto-fixing because
 enabling RLS without policies would lock the app out. Tackle as a
 dedicated task with policies designed per-table.
 
+## Companion repo: luna-bridge
+
+A separate repo `aggisigurds-dev/luna-bridge` runs on the user's
+**Windows desktop** as a set of scheduled scripts. It's the source
+for several Supabase tables this app reads:
+
+- **`bridge.js`** — reads Thunderbird mbox files for 5 accounts,
+  classifies messages, upserts to `email_digest`. Runs every 15min
+  via Task Scheduler.
+- **`timavera-bridge.js`** — reads the latest `Tímaveru vinnufærslur*.xlsx`
+  from the user's `Downloads` folder, parses with `xlsx` lib,
+  upserts to `timavera_entries`. Dedupe key:
+  `date|employee.toLowerCase()|project.toLowerCase()|time_in`.
+  Columns matched fuzzily by header substring (`dagsetning`/`date`,
+  `inn`, `út`/`ut`/`out`, `tímar`/`hours`, `starfsma…`/`employee`,
+  `verkefn…`/`project`).
+- **`ajour-ingest.py`** — reads the latest `AjourRegistrationData*.csv`
+  from Downloads, upserts to `ajour_registrations`. CSV is
+  semicolon-delimited UTF-8-with-BOM. Dedupe key:
+  `(serial_number, project_name, execution_date)`. Maps:
+  `SerialNumber`, `RegistrationType`, `RegistrationStatus`,
+  `ProjectName`, `CategoryGroup`, `Category`, `Category1`,
+  `CheckListItem`, `CheckListItemCheckedDate`,
+  `CheckListItemCheckedByUser`, `ExecutionDateFrom`,
+  `ReceiverCompany`, `Longitude`, `Latitude`,
+  `RegistrationCreatedDate`.
+
+The brunaholf drop-zone parser should reuse the exact same column
+mapping and dedupe keys so files can be uploaded via the web UI
+**or** via the local scripts interchangeably.
+
 ## Open work
 
 - **Reikningagerð (invoicing prep) tab**: replace the placeholder
