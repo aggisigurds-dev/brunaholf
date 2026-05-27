@@ -64,6 +64,9 @@ button{cursor:pointer}
 .topbar .brand,.topbar .brand-divider,.topbar .brand-slk{display:none}
 .topbar .editToggle{position:absolute;top:12px;right:14px;z-index:5;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);color:#fff}
 .topbar .editToggle.on{background:var(--gold);color:#1A1A1F}
+.topbar .sync-badge{position:absolute;top:14px;right:120px;z-index:5;font-size:11px;color:#fff;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);padding:4px 8px;border-radius:6px;font-weight:500;letter-spacing:.02em}
+.topbar .sync-badge.sync-ok{background:rgba(76,175,80,.55)}
+.topbar .sync-badge.sync-warn{background:rgba(255,152,0,.55)}
 .topbar .menu-btn{position:absolute;top:12px;left:14px;z-index:5;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);color:#fff}
 #brandTitle{display:none}
 .topbar .spacer{display:none}
@@ -1059,6 +1062,7 @@ main{padding:14px;max-width:1100px;margin:0 auto;flex:1;min-width:0;width:100%}
   <img src="banner.png" alt="Brunahólf — Slökkvitæki ehf" class="banner-img" onerror="this.onerror=null;this.src='banner.png.png';this.addEventListener('error',()=>{this.style.display='none';this.parentNode.style.minHeight='60px';this.parentNode.style.background='linear-gradient(180deg, var(--navy) 0%, var(--navy-dark) 100%)'})">
   <button class="menu-btn" id="menuBtn" title="Valmynd">☰</button>
   <button class="editToggle" id="editToggle" title="Breyta">✎ Breyta</button>
+  <span class="sync-badge" id="sync-badge" title="Vistun á milli tækja">☁ …</span>
   <span id="brandTitle" style="display:none"></span>
 </header>
 
@@ -1346,7 +1350,80 @@ function load(){
   }catch(e){ return JSON.parse(JSON.stringify(DEFAULT_STATE)); }
 }
 function save(){
+  state.ui = state.ui || {};
+  state.ui.updated_at = new Date().toISOString();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  scheduleServerSync();
+}
+
+/* ====== Cross-device state sync (Supabase via /api/app-state) ======
+   localStorage stays as the fast cache; the server copy is the
+   shared source of truth across browsers/devices. On boot we kick
+   off a background fetch; if the server has a newer version, we
+   replace the in-memory state and re-render. */
+let _syncTimer = null;
+let _syncInFlight = false;
+let _serverHasRecord = false;
+function scheduleServerSync(){
+  if(_syncTimer) clearTimeout(_syncTimer);
+  _syncTimer = setTimeout(syncToServer, 800);
+}
+async function syncToServer(){
+  if(_syncInFlight) { _syncTimer = setTimeout(syncToServer, 1000); return; }
+  _syncInFlight = true;
+  try{
+    await fetch('/api/app-state', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ key:'hub_state', value: state }),
+    });
+    _serverHasRecord = true;
+    setSyncBadge('synced');
+  }catch(e){
+    setSyncBadge('offline');
+  }finally{
+    _syncInFlight = false;
+  }
+}
+async function syncFromServer(){
+  try{
+    const r = await fetch('/api/app-state?key=hub_state');
+    if(r.status === 404){ // first device — push current local state up
+      _serverHasRecord = false;
+      if(state && state.tabs) scheduleServerSync();
+      setSyncBadge('synced');
+      return;
+    }
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const { value: server, updated_at: serverTs } = await r.json();
+    _serverHasRecord = true;
+    const localTs = state?.ui?.updated_at || '';
+    // server wins if its timestamp is strictly newer than what we
+    // have locally — otherwise keep the local copy (it may have
+    // unsynced edits) and push it up.
+    if(serverTs && serverTs > localTs && server && server.tabs){
+      state = server;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      // re-render the current view so new tabs / buttons appear
+      try{ renderActive(); }catch(e){}
+    } else if(localTs && (!serverTs || localTs > serverTs)){
+      scheduleServerSync();
+    }
+    setSyncBadge('synced');
+  }catch(e){
+    setSyncBadge('offline');
+  }
+}
+function setSyncBadge(mode){
+  const el = document.getElementById('sync-badge');
+  if(!el) return;
+  if(mode === 'synced'){ el.textContent = '☁ synced'; el.className = 'sync-badge sync-ok'; }
+  else if(mode === 'offline'){ el.textContent = '☁ offline'; el.className = 'sync-badge sync-warn'; }
+}
+// Helper used by sync to re-render the active tab after replacing state
+function renderActive(){
+  if(typeof renderTabs === 'function') renderTabs();
+  if(typeof window.__renderTab === 'function') window.__renderTab();
 }
 
 const $tabs = document.getElementById('tabs');
@@ -4771,7 +4848,15 @@ if($menuBtn) $menuBtn.onclick = ()=>{
   document.getElementById('layout').classList.toggle('open');
 };
 
+// Expose render() so the cross-device sync can call it after replacing state.
+window.__renderTab = render;
 render();
+
+// Kick off the cross-device state sync after first paint. If the server
+// has a newer copy of state than what we just loaded from localStorage,
+// it'll swap us over and re-render. Fully optional — if /api/app-state
+// is offline we just keep using localStorage.
+setTimeout(syncFromServer, 200);
 
 /* ====================== SCREENSHOT TOOL ====================== */
 (function(){
