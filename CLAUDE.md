@@ -127,11 +127,12 @@ Reikningagerð tab is being built to replace it. The sheet contains:
 6. **Materials register** — expenses by worksite by month.
 
 ### Hourly rates (Dagvinna / Eftirvinna)
-Rates are **per worksite** — confirmed examples so far:
+Rates are **per worksite** — confirmed examples so far (from
+real Efnislisti xlsx files):
 | Worksite | Dagvinna | Eftirvinna |
 |---|---|---|
 | Default | 9.951 kr | 14.927 kr |
-| Fjarðagata | 10.300 kr | 15.450 kr |
+| Fjarðagata (Feb 2026 invoice) | 9.951 kr | 14.927 kr |
 | Fjallaböðin Þjórsárdal | 9.300 kr | 13.950 kr |
 
 These come from per-worksite "Efnislisti" xlsx templates (the
@@ -141,6 +142,21 @@ which line items apply — some worksites use a slightly different
 setup (different rates, which extras get added, fixed-price
 overrides, custom material prices). Treat the price guide as
 per-worksite full template, not a single global rate card.
+
+### Tímavera xlsx export — billable hours calculation
+The Tímavera xlsx export for a worksite/period is the source for
+Dagvinna magn. Format: `Dagsetning | Inn | Út | Tímar | (lunch col) | Starfsmaður | Verkefni`.
+Each row has an optional 0.5 (or blank) "lunch" column — that's
+the **hádegismatur** deduction (lunch break) for that day.
+
+Billable Dagvinna = Σ Tímar − Σ Hádegismatur − Afsláttur
+(where Afsláttur is a manual correction entered at the bottom of
+the export).
+
+Example — Fjarðagata Feb 2026: raw 313.02 − lunch 19 − afsláttur 5
+= 289.02 billable hours. With rate 9.951 × 289.02 = 2.876.038 kr
+dagvinna, +materials +smáhlutagjald (137 × 289.02 = 39.595) +
+24% vsk = 4.295.185 kr (matches Tekjur sheet Feb cell).
 
 ### Standard line items applied to most worksites
 - **Akstur**: 186 kr/km, 4.000 kr/ferð.
@@ -290,9 +306,13 @@ operational notes, not stale data):
   (~line 1359).
 - **Endpoint pattern**: GET returns JSON, POST writes; always include
   CORS, always paginate Supabase reads via `Range` header.
-- **Icelandic worksite names**: case + diacritics are inconsistent
-  across Tímavera / Ajour / invoices. Use `project_aliases` for any
-  cross-source matching.
+- **Icelandic worksite names**: case + diacritics + naming are
+  inconsistent across Tímavera / Ajour / invoices / file names.
+  Same physical worksite can be called many things by accident —
+  e.g. Fjarðagata also appears as `Fjörður` / `Fjörðurinn` /
+  `Strandgata` / `Fjarðargata`. Always use `project_aliases` for
+  any cross-source matching, and add new aliases when you spot
+  them rather than hard-coding string lists.
 - **Co-authored commits**: include the Co-Authored-By line for Claude.
 
 ## Security note
