@@ -1433,10 +1433,21 @@ async function syncFromServer(){
     // have locally — otherwise keep the local copy (it may have
     // unsynced edits) and push it up.
     if(serverTs && serverTs > localTs && server && server.tabs){
+      const prevActiveTab = state?.ui?.activeTab;
+      const prevTabsHash  = JSON.stringify((state?.tabs||[]).map(t => t.id));
       state = server;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      // re-render the current view so new tabs / buttons appear
-      try{ renderActive(); }catch(e){}
+      // Only re-render if the structure actually changed — otherwise the
+      // re-render races with whatever the active tab is loading and breaks
+      // its in-flight DOM (race causes "can't click" bugs).
+      const newTabsHash = JSON.stringify((state?.tabs||[]).map(t => t.id));
+      const newActiveTab = state?.ui?.activeTab;
+      if(prevActiveTab !== newActiveTab || prevTabsHash !== newTabsHash){
+        try{ renderActive(); }catch(e){}
+      } else {
+        // Just refresh the nav (might have new buttons) without nuking $view
+        try{ if(typeof renderTabs === 'function') renderTabs(); }catch(e){}
+      }
     } else if(localTs && (!serverTs || localTs > serverTs)){
       scheduleServerSync();
     }
@@ -2887,21 +2898,26 @@ function renderReikningagerd(t){
   const $host = document.getElementById('rg-grid-host');
   let lastData = null;
 
-  function setMeta(s){ document.getElementById('rg-meta').textContent = s; }
+  function setMeta(s){
+    const el = document.getElementById('rg-meta');
+    if(el) el.textContent = s;
+  }
 
   async function load(){
     setMeta('Sækir…');
-    $refresh.disabled = true; $refresh.classList.add('loading');
+    if($refresh){ $refresh.disabled = true; $refresh.classList.add('loading'); }
     try{
       const r = await fetch('/api/worksites?year=combined');
       if(!r.ok) throw new Error('HTTP '+r.status);
       lastData = await r.json();
+      // Bail out if a tab switch destroyed our DOM while the fetch was in flight
+      if(!document.getElementById('rg-grid-host')) return;
       render();
       setMeta(`Uppfært ${new Date(lastData.generated_at).toLocaleTimeString('is-IS')} · ${lastData.summary.total_worksites} verkstaðir`);
     }catch(e){
       setMeta('Villa: '+(e.message||e));
     }finally{
-      $refresh.disabled = false; $refresh.classList.remove('loading');
+      if($refresh){ $refresh.disabled = false; $refresh.classList.remove('loading'); }
     }
   }
 
