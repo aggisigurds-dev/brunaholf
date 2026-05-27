@@ -794,6 +794,56 @@ main{padding:14px;max-width:1100px;margin:0 auto;flex:1;min-width:0;width:100%}
 .chip.chip-warn{color:#8C2510;border-color:#FFC7B0;background:#FFF6F2}
 .chip.chip-warn.active{background:var(--red);color:#fff;border-color:var(--red)}
 
+/* ======= Reikningagerð (invoicing prep grid) ======= */
+.rg-wrap{padding:8px 0 24px}
+.rg-header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.rg-h1{font-family:'Source Serif 4',Georgia,serif;font-size:28px;font-weight:600;letter-spacing:-.01em;margin:0}
+.rg-sub{color:var(--muted);font-size:13px;margin-top:4px}
+.rg-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rg-toolbar{display:flex;gap:6px;flex-wrap:wrap;padding:10px 12px;background:var(--bg-2);border:1px solid var(--border);border-radius:10px;margin-bottom:12px}
+.rg-tool{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;font-size:12px;font-weight:500;color:var(--text);background:#fff;border:1px solid var(--border);border-radius:6px;text-decoration:none;cursor:pointer}
+.rg-tool:hover{background:var(--bg);border-color:var(--text-2)}
+.rg-tool-icon{font-size:14px}
+.rg-grid{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;font-size:12px}
+.rg-grid th,.rg-grid td{padding:6px 8px;border-bottom:1px solid var(--border);vertical-align:middle;text-align:left}
+.rg-grid thead th{position:sticky;top:0;background:var(--bg-2);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted-2);z-index:1}
+.rg-grid tbody tr:hover{background:#FAFAF7}
+.rg-grid .rg-row-gata{background:#FFF9EE}
+.rg-grid .rg-row-gata:hover{background:#FFF3D9}
+.rg-section-row td{background:var(--bg);font-weight:700;font-family:'Source Serif 4',Georgia,serif;font-size:14px;padding:10px 8px}
+.rg-col-drive{width:34px;text-align:center}
+.rg-drive{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:4px;text-decoration:none;font-size:14px;color:var(--muted-2)}
+.rg-drive:hover{background:var(--bg-2);color:var(--text)}
+.rg-drive.rg-drive-empty{opacity:.2}
+.rg-col-src{width:28px;text-align:center;font-size:14px}
+.rg-src-tv{color:#B85C00}.rg-src-aj{color:#6B4FBB}.rg-src-fx{color:#888}
+.rg-col-name{min-width:160px;font-weight:500}
+.rg-name-sub{display:block;font-size:11px;color:var(--muted);font-weight:400;margin-top:1px}
+.rg-col-cust{min-width:120px;color:var(--muted-2);font-size:11px}
+.rg-col-skuldir{text-align:right;font-variant-numeric:tabular-nums;color:var(--red);font-weight:600;font-size:11px;min-width:80px}
+.rg-month{text-align:right;font-variant-numeric:tabular-nums;min-width:96px;padding:4px 6px;border-left:1px solid var(--border)}
+.rg-month-amt{font-weight:600}
+.rg-month-amt.rg-attn{background:#FFE9B0}
+.rg-month-amt.rg-zero{color:var(--muted-2);font-weight:400}
+.rg-cb-row{display:flex;gap:3px;justify-content:flex-end;margin-top:2px;font-size:9px;color:var(--muted-2)}
+.rg-cb{display:inline-flex;align-items:center;gap:2px}
+.rg-cb-ok{color:var(--green)}
+.rg-cb-no{opacity:.35}
+.rg-col-links{min-width:120px;white-space:nowrap}
+.rg-link{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;font-size:13px;border-radius:4px;text-decoration:none;color:var(--muted-2);margin-right:2px}
+.rg-link:hover{background:var(--bg-2);color:var(--text)}
+.rg-link[disabled],.rg-link.rg-link-empty{opacity:.2;pointer-events:none}
+.rg-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.rg-kpi{background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+.rg-kpi-l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.rg-kpi-v{font-family:'Source Serif 4',Georgia,serif;font-size:22px;font-weight:600;margin-top:2px;font-variant-numeric:tabular-nums}
+.rg-kpi-x{font-size:11px;color:var(--muted-2);margin-top:2px}
+.rg-kpi-warn{border-color:#FFC7B0;background:#FFF6F2}
+.rg-kpi-warn .rg-kpi-v{color:#8C2510}
+.rg-kpi-good{border-color:#C8E6C9;background:#F4FBF4}
+.rg-totals-row td{background:var(--bg-2);font-weight:700;border-top:2px solid var(--text-2)}
+@media(max-width:1200px){.rg-grid{font-size:11px}.rg-month{min-width:80px}}
+
 /* ======= Yfirlit · editorial dashboard layer (2026-05-20) ======= */
 /* Display serif for headlines + numerals; body stays Inter. */
 .yf-hero{
@@ -1097,7 +1147,7 @@ const DEFAULT_STATE = {
     ]},
     {id:'kvittanir',  label:'Kvittanir & PDF', icon:'📷'},
     {id:'tenglar',    label:'Tenglar',    icon:'🔗'},
-    {id:'reikningar', label:'Reikningar', icon:'💳', sheetCsv:''},
+    {id:'reikningar', label:'Reikningagerð', icon:'💳'},
     {id:'utgjold',    label:'Útgjöld',    icon:'💸', sheetCsv:''},
     {id:'stillingar', label:'Stillingar', icon:'⚙️'}
   ],
@@ -1361,6 +1411,7 @@ function render(){
   if(t.id==='timavera') return renderTimavera(t);
   if(t.id==='verdsamanburdur') return renderCompetitors(t);
   if(t.id==='verkstadir') return renderWorksites(t);
+  if(t.id==='reikningar') return renderReikningagerd(t);
   if(t.checklist!==undefined) return renderChecklist(t);
   if(t.sheetCsv!==undefined) return renderListTab(t);
   renderButtonTab(t);
@@ -2626,6 +2677,287 @@ function renderWorksites(t){
   };
 
   load(false);
+}
+
+/* ====================== REIKNINGAGERÐ (invoicing prep grid) ====================== */
+// Mirrors the Tekjur Google Sheet as a live web grid:
+//   rows = worksites (Tímavera ones first, then Gata verkefni)
+//   cols = last N months · each cell shows amount + rei/Greitt
+// Data: reuses /api/worksites?year=combined (already has hours,
+// invoices, retention, bank cross-ref). No new backend yet.
+
+// Worksites billed from Ajour (Gata verkefni) rather than Tímavera.
+// Keep this list in sync with the Tekjur sheet's "Gata verkefni" block.
+const RG_GATA_VERKEFNI = new Set([
+  'Heklu reitur', 'Heklureitur', 'Hekluvegur',
+  'Landsspitalinn', 'Landsspítalinn', 'NLSH',
+  'Dalvegur 30',
+]);
+
+// Per-worksite Tímavera filter URL (best-effort — Tímavera doesn't
+// have a public URL scheme for filtering, so we link to the app and
+// let the user pick the project).
+const RG_TIMAVERA_URL = 'https://app.timavera.is/app';
+const RG_AJOUR_URL    = 'https://brunaholf.ajoursystem.net/construction';
+const RG_PAYDAY_URL   = 'https://app.payday.is/is/dashboard/';
+const RG_LB_URL       = 'https://netbanki.landsbankinn.is/';
+const RG_TEKJUR_URL   = 'https://docs.google.com/spreadsheets/d/1cv3Q3UFXMR0D3KrdCZFYkhfVxnkvfzFYdRbxztH_NW8/edit';
+
+function renderReikningagerd(t){
+  $view.innerHTML = `
+    <div class="rg-wrap">
+      <div class="rg-header">
+        <div>
+          <h1 class="rg-h1">Reikningagerð <span class="rg-sub" id="rg-meta">Sækir…</span></h1>
+        </div>
+        <div class="rg-controls">
+          <select id="rg-window" class="tv-select">
+            <option value="6">Síðustu 6 mánuðir</option>
+            <option value="12">Síðustu 12 mánuðir</option>
+            <option value="ytd">Á þessu ári</option>
+          </select>
+          <button id="rg-refresh" class="tv-btn" type="button">
+            <span class="tv-refresh-icon">↻</span> Sækja
+          </button>
+        </div>
+      </div>
+
+      <div class="rg-toolbar">
+        <a class="rg-tool" href="${RG_PAYDAY_URL}" target="_blank" rel="noopener">
+          <span class="rg-tool-icon">💳</span> Payday
+        </a>
+        <a class="rg-tool" href="${RG_LB_URL}" target="_blank" rel="noopener">
+          <span class="rg-tool-icon">🏦</span> Landsbankinn (CSV)
+        </a>
+        <a class="rg-tool" href="${RG_AJOUR_URL}" target="_blank" rel="noopener">
+          <span class="rg-tool-icon">🏗</span> Ajour
+        </a>
+        <a class="rg-tool" href="https://mail.google.com/mail/?authuser=bokhald@brunaholf.is" target="_blank" rel="noopener">
+          <span class="rg-tool-icon">📧</span> bokhald@brunaholf.is
+        </a>
+        <a class="rg-tool" href="${RG_TIMAVERA_URL}" target="_blank" rel="noopener">
+          <span class="rg-tool-icon">⏱</span> Tímavera
+        </a>
+        <a class="rg-tool" href="${RG_TEKJUR_URL}" target="_blank" rel="noopener">
+          <span class="rg-tool-icon">📊</span> Tekjur sheet
+        </a>
+      </div>
+
+      <div class="rg-kpis">
+        <div class="rg-kpi"><div class="rg-kpi-l">Verkstaðir á tímabilinu</div><div class="rg-kpi-v" id="rg-k-count">—</div><div class="rg-kpi-x" id="rg-k-count-sub">—</div></div>
+        <div class="rg-kpi rg-kpi-warn"><div class="rg-kpi-l">Tímar án reiknings</div><div class="rg-kpi-v" id="rg-k-no-inv">—</div><div class="rg-kpi-x">verkstaðir með klst og engan reikning</div></div>
+        <div class="rg-kpi"><div class="rg-kpi-l">Reikningar (m. vsk)</div><div class="rg-kpi-v" id="rg-k-inv">—</div><div class="rg-kpi-x" id="rg-k-inv-sub">—</div></div>
+        <div class="rg-kpi rg-kpi-warn"><div class="rg-kpi-l">Skuld eftir leiðr.</div><div class="rg-kpi-v" id="rg-k-unpaid">—</div><div class="rg-kpi-x">eftir retention + bank match</div></div>
+      </div>
+
+      <div id="rg-grid-host"></div>
+    </div>
+  `;
+  bindEditButtons();
+
+  const $win = document.getElementById('rg-window');
+  const $refresh = document.getElementById('rg-refresh');
+  const $host = document.getElementById('rg-grid-host');
+  let lastData = null;
+
+  function setMeta(s){ document.getElementById('rg-meta').textContent = s; }
+
+  async function load(){
+    setMeta('Sækir…');
+    $refresh.disabled = true; $refresh.classList.add('loading');
+    try{
+      const r = await fetch('/api/worksites?year=combined');
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      lastData = await r.json();
+      render();
+      setMeta(`Uppfært ${new Date(lastData.generated_at).toLocaleTimeString('is-IS')} · ${lastData.summary.total_worksites} verkstaðir`);
+    }catch(e){
+      setMeta('Villa: '+(e.message||e));
+    }finally{
+      $refresh.disabled = false; $refresh.classList.remove('loading');
+    }
+  }
+
+  function buildMonthList(){
+    const winVal = $win.value;
+    const today = new Date();
+    const out = [];
+    if(winVal === 'ytd'){
+      for(let m=0; m<=today.getMonth(); m++){
+        out.push(`${today.getFullYear()}-${String(m+1).padStart(2,'0')}`);
+      }
+    } else {
+      const n = parseInt(winVal, 10) || 6;
+      for(let i=n-1; i>=0; i--){
+        const d = new Date(today.getFullYear(), today.getMonth()-i, 1);
+        out.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+      }
+    }
+    return out;
+  }
+
+  function monthLabel(ym){
+    const [y,m] = ym.split('-');
+    const names = ['Jan','Feb','Mar','Apr','Maí','Jún','Júl','Ágú','Sep','Okt','Nóv','Des'];
+    return `${names[parseInt(m,10)-1]} ${y.slice(2)}`;
+  }
+
+  function bucketInvoicesByMonth(invoices){
+    const out = {};
+    for(const inv of (invoices||[])){
+      if(!inv.gjalddagi) continue;
+      const ym = String(inv.gjalddagi).slice(0,7);
+      if(!out[ym]) out[ym] = { amount:0, count:0, anyPaid:false, allPaid:true, anyOpen:false };
+      const amt = Number(inv.amount||0);
+      out[ym].amount += amt;
+      out[ym].count += 1;
+      const paid = /greidd|greitt/i.test(inv.status||'') || inv.greidsla_date;
+      if(paid) out[ym].anyPaid = true; else out[ym].allPaid = false;
+      if(/ógreidd|ógreitt|vanskil/i.test(inv.status||'')) out[ym].anyOpen = true;
+    }
+    return out;
+  }
+
+  function sourceIcon(project, hours, hasInvoices){
+    if(RG_GATA_VERKEFNI.has(project) || /landsspítal|landsspital|nlsh|heklu|dalvegur 30/i.test(project)){
+      return { icon:'🏗', cls:'rg-src-aj', title:'Ajour-byggt (Gata verkefni)' };
+    }
+    if(hours > 0){
+      return { icon:'⏱', cls:'rg-src-tv', title:'Tímavera-byggt' };
+    }
+    return { icon:'💰', cls:'rg-src-fx', title:'Fast verð / annað' };
+  }
+
+  function isGata(project){
+    return RG_GATA_VERKEFNI.has(project) || /landsspítal|landsspital|nlsh|^heklu/i.test(project);
+  }
+
+  function fmtIsk(n){ return n ? Math.round(n).toLocaleString('is-IS') : ''; }
+
+  function rowLinks(w){
+    const drive = w.status?.drive_folder_url || '';
+    const customer = (w.mapped_customers||[])[0] || '';
+    const project = w.project;
+    const gmail = `https://mail.google.com/mail/u/0/?authuser=bokhald@brunaholf.is#search/${encodeURIComponent(project)}`;
+    const gata = isGata(project);
+    return `
+      <a class="rg-link ${drive?'':'rg-link-empty'}" href="${escapeHtml(drive||'#')}" target="_blank" rel="noopener" title="Drive mappa">📁</a>
+      <a class="rg-link" href="${gata?RG_AJOUR_URL:RG_TIMAVERA_URL}" target="_blank" rel="noopener" title="${gata?'Opna Ajour':'Opna Tímavera'}">${gata?'🏗':'⏱'}</a>
+      <a class="rg-link" href="${RG_PAYDAY_URL}" target="_blank" rel="noopener" title="Opna Payday">💳</a>
+      <a class="rg-link" href="${gmail}" target="_blank" rel="noopener" title="Leita í bokhald inbox">📧</a>
+    `;
+  }
+
+  function render(){
+    if(!lastData){ $host.innerHTML = ''; return; }
+    const months = buildMonthList();
+    const sites = (lastData.worksites||[]).filter(w => {
+      // skip noise buckets
+      if(/almennt|veikindi|sick|work at home|kaffi|fundir/i.test(w.project)) return false;
+      // only show sites with activity in window OR with invoices/skuldir
+      const hasMonthHours = months.some(ym => (w.monthly||{})[ym] > 0);
+      const invByMonth = bucketInvoicesByMonth(w.invoices);
+      const hasMonthInv = months.some(ym => invByMonth[ym]);
+      return hasMonthHours || hasMonthInv || (w.invoice_unpaid||0) > 0;
+    });
+
+    // split: regular (Tímavera) vs Gata verkefni
+    const regular = sites.filter(w => !isGata(w.project));
+    const gata    = sites.filter(w =>  isGata(w.project));
+
+    // sort each block by hours desc
+    regular.sort((a,b) => (b.hours||0) - (a.hours||0));
+    gata.sort((a,b) => (b.hours||0) - (a.hours||0));
+
+    // monthly totals across all visible sites
+    const monthlyTotals = months.map(ym => {
+      let sum = 0;
+      for(const w of sites){
+        const inv = bucketInvoicesByMonth(w.invoices)[ym];
+        sum += inv?.amount || 0;
+      }
+      return sum;
+    });
+
+    const rowHtml = (w) => {
+      const src = sourceIcon(w.project, w.hours||0, (w.invoice_count||0) > 0);
+      const invByMonth = bucketInvoicesByMonth(w.invoices);
+      const cust = (w.mapped_customers||[])[0] || '';
+      const skuldir = w.invoice_unpaid || 0;
+      const driveUrl = w.status?.drive_folder_url || '';
+
+      return `
+        <tr class="${isGata(w.project)?'rg-row-gata':''}">
+          <td class="rg-col-drive">
+            ${driveUrl
+              ? `<a class="rg-drive" href="${escapeHtml(driveUrl)}" target="_blank" rel="noopener" title="Drive mappa">📁</a>`
+              : `<span class="rg-drive rg-drive-empty" title="Engin Drive mappa">📁</span>`}
+          </td>
+          <td class="rg-col-src ${src.cls}" title="${src.title}">${src.icon}</td>
+          <td class="rg-col-name">${escapeHtml(w.project)}<span class="rg-name-sub">${(w.hours||0).toFixed(0)} klst · ${(w.ajour_registrations||0)} skr.</span></td>
+          <td class="rg-col-cust">${escapeHtml(cust)}</td>
+          <td class="rg-col-skuldir">${fmtIsk(skuldir)}</td>
+          ${months.map(ym => {
+            const inv = invByMonth[ym];
+            const amt = inv?.amount || 0;
+            const rei = !!inv;
+            const greitt = !!(inv && inv.allPaid && !inv.anyOpen);
+            const attn = inv?.anyOpen ? ' rg-attn' : '';
+            return `
+              <td class="rg-month">
+                <div class="rg-month-amt ${amt?'':'rg-zero'}${attn}">${amt?fmtIsk(amt):'–'}</div>
+                <div class="rg-cb-row">
+                  <span class="rg-cb ${rei?'rg-cb-ok':'rg-cb-no'}" title="${rei?'Reikningur útgefinn':'Engin reikningur'}">${rei?'☑':'☐'} rei</span>
+                  <span class="rg-cb ${greitt?'rg-cb-ok':'rg-cb-no'}" title="${greitt?'Greitt':'Ógreitt'}">${greitt?'☑':'☐'} gr</span>
+                </div>
+              </td>`;
+          }).join('')}
+          <td class="rg-col-links">${rowLinks(w)}</td>
+        </tr>
+      `;
+    };
+
+    const html = `
+      <table class="rg-grid">
+        <thead>
+          <tr>
+            <th class="rg-col-drive"></th>
+            <th class="rg-col-src"></th>
+            <th class="rg-col-name">Verkstaður</th>
+            <th class="rg-col-cust">Viðskiptavinur</th>
+            <th class="rg-col-skuldir">Skuld</th>
+            ${months.map(ym => `<th class="rg-month">${monthLabel(ym)}</th>`).join('')}
+            <th class="rg-col-links"></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${regular.map(rowHtml).join('')}
+          ${gata.length ? `<tr class="rg-section-row"><td colspan="${5+months.length+1}">Gata verkefni · Ajour</td></tr>` : ''}
+          ${gata.map(rowHtml).join('')}
+          <tr class="rg-totals-row">
+            <td colspan="5" style="text-align:right">Samtals</td>
+            ${monthlyTotals.map(t => `<td class="rg-month"><div class="rg-month-amt">${fmtIsk(t)}</div></td>`).join('')}
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+    $host.innerHTML = html;
+
+    // KPIs
+    document.getElementById('rg-k-count').textContent = sites.length;
+    document.getElementById('rg-k-count-sub').textContent = `${regular.length} Tímavera · ${gata.length} Gata`;
+    document.getElementById('rg-k-no-inv').textContent = sites.filter(w => (w.hours||0) > 0 && (w.invoice_count||0) === 0).length;
+    const invTotal = sites.reduce((a,w) => a + (w.invoice_total||0), 0);
+    const invUnpaid = sites.reduce((a,w) => a + (w.invoice_unpaid||0), 0);
+    document.getElementById('rg-k-inv').textContent = fmtIsk(invTotal);
+    document.getElementById('rg-k-inv-sub').textContent = `${sites.reduce((a,w) => a + (w.invoice_count||0), 0)} reikningar`;
+    document.getElementById('rg-k-unpaid').textContent = fmtIsk(invUnpaid);
+  }
+
+  $refresh.addEventListener('click', load);
+  $win.addEventListener('change', () => { if(lastData) render(); });
+  load();
 }
 
 /* ====================== VERÐSAMANBURÐUR (competitor prices) ====================== */
