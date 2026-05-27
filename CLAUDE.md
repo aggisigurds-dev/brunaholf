@@ -127,18 +127,48 @@ Reikningagerð tab is being built to replace it. The sheet contains:
 6. **Materials register** — expenses by worksite by month.
 
 ### Hourly rates (Dagvinna / Eftirvinna)
-| Worksite type | Dagvinna | Eftirvinna |
+Rates are **per worksite** — confirmed examples so far:
+| Worksite | Dagvinna | Eftirvinna |
 |---|---|---|
 | Default | 9.951 kr | 14.927 kr |
 | Fjarðagata | 10.300 kr | 15.450 kr |
+| Fjallaböðin Þjórsárdal | 9.300 kr | 13.950 kr |
 
-(Confirm any other per-worksite override before invoicing.)
+These come from per-worksite "Efnislisti" xlsx templates (the
+invoice prep sheet for that worksite). The `pricing_guide` table
+needs to support per-worksite overrides for both rates **and**
+which line items apply — some worksites use a slightly different
+setup (different rates, which extras get added, fixed-price
+overrides, custom material prices). Treat the price guide as
+per-worksite full template, not a single global rate card.
 
 ### Standard line items applied to most worksites
 - **Akstur**: 186 kr/km, 4.000 kr/ferð.
 - **Smáhlutagjald**: 137 kr × Dagvinna hours (auto-applied).
 - **Staðfesting brunaþéttinga**: 20.000 kr (flat, when applicable).
 - **VSK**: 24% added on top of Samtals án vsk.
+
+### Per-worksite invoice prep documents ("Efnislisti")
+Each Tímavera-based worksite has a per-month **Efnislisti** xlsx
+that is the invoice calc sheet. Format (confirmed from
+Fjallaböðin Þjórsárdal Mars 2026 example):
+
+- Header: `Brunahólf ehf. / Verðskrá / tilboð / <date range> / <worksite>`
+- Sections: Dagvinna (rate × magn = samtals), Eftirvinna,
+  Akstur (km + ferð), Efni (all materials in Verðskrá with
+  blank magn for that month), Samtals án vsk + vsk + samtals
+  með vsk.
+- The xlsx is paired with a PDF print of the same content.
+- The bottom total (samtals með vsk) is what gets entered into
+  the Tekjur sheet for that worksite/month cell, and what gets
+  invoiced via Payday.
+
+The Tímavera xlsx export for that worksite/month is the source
+for the hours that fill in Dagvinna magn + Eftirvinna magn.
+
+The Reikningagerð tab should be able to **generate this
+Efnislisti automatically** from Tímavera hours + material entries
++ per-worksite rates.
 
 ### Materials source (Tímavera-based jobs only)
 For Tímavera-based worksites, material costs that get **re-charged
@@ -168,23 +198,54 @@ Verðskrá below.
 ### Gata verkefni — Ajour-based (not Tímavera)
 All three Gata verkefni source their billable work from
 **ajoursoftware.com** (CSV imported into `ajour_registrations`),
-NOT from Tímavera. They're billed by **count × per-hole-size rate**
-from a Verðskrá table.
+NOT from Tímavera. Each has its OWN contract rates table.
 
 The three:
 - **Heklureitur** — customer **FR laug**
 - **Landsspítalinn (NLSH)** — customer **ÞG-verk**
 - **Dalvegur 30** — customer **Eykt**
 
-Verðskrá (per-hole-size rate, applies to all three):
-- Hole sizes are 50mm-wide buckets: `000-031 mm`, `032-059 mm`,
-  `060-109 mm`, … up through `1960-2009 mm`.
-- Rates: 2.900 kr (smallest) → 100.500 kr (largest). Full table
-  is in the NLSH tab of the Tekjur sheet.
-- Categories tracked per registration: Golf/Hæðarskil, loftstokkar,
-  plaströr, rafgöt, raf raufar, raflagnaþéttingar, stálrör.
-- Counts come from `ajour_registrations` in Supabase. Match worksite
-  via `project_aliases`.
+#### NLSH (Landsspítalinn 5-6 hæð) — contract rates
+Cumulative monthly tracker (one PDF/xlsx, columns added each month).
+Each work item has a target Fjöldi (budgeted count) and a
+contract unit price per "heild" (1 heild = 2 stakar). For each month:
+- Count `ajour_registrations` matching the worksite + work item type
+- `stakar` = count
+- `heilar` = `stakar / 2`
+- amount m vsk = `heilar × unit_price_m_vsk`
+
+Confirmed NLSH unit prices (m vsk) — these are CONTRACT rates,
+not the general Verðskrá:
+| Verk nr | Verkliður | Target | Verð/heild |
+|---|---|---:|---:|
+| 2.1 | Ø20-34 plaströr | 600 | 7.166 |
+| 2.2 | (35-50) plaströr m eldv. kraga | 600 | 19.532 |
+| 2.3 | Ø75-100 plaströr | 100 | 23.720 |
+| 2.4 | Ø15-35 stálror | 800 | 7.166 |
+| 2.5 | Ø40-50 stálrör | 1100 | 7.366 |
+| 2.6 | Ø75-110 stálrör | 350 | 7.566 |
+| 2.7 | Ø110-160 stálror | 100 | 8.066 |
+| 2.8 | Ø125-160 loftstokkar | 600 | 11.532 |
+| 2.9 | Ø200-315 loftstokkar | 600 | 23.064 |
+| 2.10 | Ø400-630 loftstokkar | 109 | 46.128 |
+| 2.11 | Frágangur raufa m kontuðum stokkum (metrum) | 102 | 11.532 |
+| 1.1 | Ø100-150 Golf/Hæðarskil | 50 | 38.806 |
+| 1.2 | Ø160-200 Golf/Hæðarskil | 100 | 56.224 |
+| 1.3 | Ø210-300 Golf/Hæðarskil | 25 | 65.116 |
+| 3.1 | Rafmagnsraufar | 768 | 9.766 |
+
+Header used on the PDF: "Nýji Landsspítalinn Hringbraut /
+Landsspítalinn 5-6 hæð / Brunahólf ehf / <date>". Title:
+"Samtals kláraðir verkþættir per mánuð". Sample April 2026
+totals: April m vsk = 4.956.679 / án vsk = 3.997.322;
+cumulative Heild m vsk = 56.360.118.
+
+#### Heklureitur, Dalvegur 30
+Same Ajour pattern but each has its own contract rates table
+(not yet captured — need example documents). The earlier
+generic per-hole-size Verðskrá (2.900 → 100.500 kr by 50mm
+buckets) was from a different sheet and is NOT used directly
+for these three — they bill on their own contract rates.
 
 ### Fixed price (occasional)
 Some worksites — or some portions of work — are billed at an
