@@ -80,6 +80,20 @@
   to = "/.netlify/functions/email-tasks"
   status = 200
 
+# Friendly URL for cross-device state sync (tab list / buttons / UI):
+#   /api/app-state → /.netlify/functions/app-state
+[[redirects]]
+  from = "/api/app-state"
+  to = "/.netlify/functions/app-state"
+  status = 200
+
+# Friendly URL for the Reikningagerð grid — uses /api/worksites under the hood,
+# kept here so the route is documented.
+[[redirects]]
+  from = "/api/reikningar"
+  to = "/.netlify/functions/worksites"
+  status = 200
+
 # Scheduled invocation: re-runs the function every 10 minutes so the
 # (eventual) Timavera scrape result is "warm" when the page asks.
 # Cron syntax: minute hour day month weekday — every 10 min, all day.
