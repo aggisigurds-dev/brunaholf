@@ -4276,26 +4276,31 @@ async function renderVinnustofa(t){
         <table class="vs-unb-table">
           <thead><tr>
             <th>Verkstaður</th>
+            <th class="num">Tímavera klst</th>
+            <th class="num">Rukkað</th>
+            <th class="num">Ósent klst</th>
+            <th class="num">Ósent kr m. vsk</th>
             <th>Mánuðir með ósent</th>
-            <th class="num">Klst</th>
-            <th class="num">m. vsk</th>
           </tr></thead>
           <tbody>
             ${ubRows.map(r => {
               const monthsStr = (r.months||[]).map(monthLabelStatic).join(' · ');
               const kr = r.unbilled_kr_m_vsk || Math.round(r.unbilled_hours * (r.rate || 9951) * 1.24);
+              const billed = Math.max(r.tv_hours - r.unbilled_hours, 0);
               return `
                 <tr>
                   <td><button type="button" class="vs-unb-name" data-ub-ws="${escapeAttr(r.worksite)}">${escapeHtml(r.worksite)}</button></td>
-                  <td style="font-size:11px;color:var(--muted-2)">${escapeHtml(monthsStr)}</td>
+                  <td class="num">${r.tv_hours.toFixed(1)}</td>
+                  <td class="num" style="color:var(--muted-2)">${billed.toFixed(1)}</td>
                   <td class="num vs-unb-pos">${r.unbilled_hours.toFixed(1)}</td>
                   <td class="num vs-unb-pos">${fmt(kr)}</td>
+                  <td style="font-size:10.5px;color:var(--muted-2)">${escapeHtml(monthsStr)}</td>
                 </tr>`;
             }).join('')}
           </tbody>
         </table>
         <div style="font-size:11px;color:var(--muted);font-style:italic;margin-top:8px">
-          Tölur koma úr invoice_drafts töflunni — hver mánaðar-lína sem hefur status 'overdue' eða 'draft' telst ósent.
+          Klst úr Tímavera vs ósent (úr invoice_drafts). Rukkað = mismunur. Mánuðir með ósent sýnir nákvæmlega hvaða (verkstaður, mánuður) hefur ekki verið sendur.
         </div>
       `;
       // Click worksite name → open Workcenter directly with data we have
