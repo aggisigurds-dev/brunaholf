@@ -1025,6 +1025,63 @@ main{padding:14px;max-width:1100px;margin:0 auto;flex:1;min-width:0;width:100%}
 .rg-kpi-good{border-color:#C8E6C9;background:#F4FBF4}
 .rg-totals-row td{background:var(--bg-2);font-weight:700;border-top:2px solid var(--text-2)}
 
+/* ============================================================
+   VINNUSTOFA — action-first dashboard
+   ============================================================ */
+.vs-wrap{padding:8px 0 40px;max-width:1280px;margin:0 auto}
+.vs-hero{margin-bottom:22px}
+.vs-hero h1{font-family:'Source Serif 4',Georgia,serif;font-size:36px;font-weight:600;letter-spacing:-.02em;margin:0;line-height:1.1}
+.vs-tag{color:var(--muted);font-size:14px;margin:6px 0 0;font-weight:400}
+.vs-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:24px}
+.vs-kpi{padding:18px 20px;border-radius:14px;border:1px solid var(--border);background:#fff;box-shadow:0 1px 2px rgba(0,0,0,0.03),0 4px 14px rgba(0,0,0,0.04);position:relative;overflow:hidden}
+.vs-kpi::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--bar)}
+.vs-kpi-red{--bar:#D14528}
+.vs-kpi-amber{--bar:#D49A2E}
+.vs-kpi-blue{--bar:#2E6BD4}
+.vs-kpi-green{--bar:#2E8C5B}
+.vs-kpi-l{font-size:11px;color:var(--muted-2);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.vs-kpi-v{font-family:'Source Serif 4',Georgia,serif;font-size:30px;font-weight:700;color:var(--text);margin:6px 0 2px;font-variant-numeric:tabular-nums;letter-spacing:-.015em;line-height:1.1}
+.vs-kpi-x{font-size:11px;color:var(--muted);font-weight:500}
+
+.vs-cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:24px}
+.vs-col{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px 20px;box-shadow:0 1px 2px rgba(0,0,0,0.03),0 4px 12px rgba(0,0,0,0.04)}
+.vs-h2{font-family:'Source Serif 4',Georgia,serif;font-size:18px;font-weight:600;letter-spacing:-.01em;margin:0 0 4px}
+.vs-h2-sub{color:var(--muted);font-size:11.5px;font-weight:400;margin:0 0 14px;text-transform:uppercase;letter-spacing:.05em}
+.vs-items{display:flex;flex-direction:column;gap:10px}
+.vs-item{background:#FAFAF7;border:1px solid var(--border);border-radius:10px;padding:12px 14px;transition:all 100ms ease}
+.vs-item:hover{background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.06),0 4px 14px rgba(0,0,0,0.05);transform:translateY(-1px)}
+.vs-item-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.vs-item-head strong{font-weight:600;font-size:13.5px;color:var(--text)}
+.vs-item-meta{font-size:11.5px;color:var(--muted-2)}
+.vs-pill{font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:4px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.vs-pill-red{background:#FFE0D5;color:#8C2510}
+.vs-pill-amber{background:#FFE8B5;color:#7C5500}
+.vs-item-body{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:10px;padding:6px 0;border-top:1px dashed var(--border);border-bottom:1px dashed var(--border)}
+.vs-item-num-l{font-size:10px;color:var(--muted-2);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.vs-item-num-v{font-size:14px;font-weight:600;margin-top:2px;font-variant-numeric:tabular-nums}
+.vs-item-num-amount{font-family:'Source Serif 4',Georgia,serif;font-size:17px;font-weight:700;letter-spacing:-.005em}
+.vs-item-actions{display:flex;gap:8px;flex-wrap:wrap}
+.vs-btn{padding:6px 12px;border-radius:6px;font-size:12px;font-weight:500;text-decoration:none;border:1px solid var(--border);background:#fff;color:var(--text);transition:all 100ms ease;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.vs-btn:hover{background:#FAFAF7;border-color:var(--text-2);transform:translateY(-1px)}
+.vs-btn-primary{background:#1A1F2E;color:#fff;border-color:#1A1F2E}
+.vs-btn-primary:hover{background:#3A4258;border-color:#3A4258;color:#fff}
+.vs-empty{padding:30px 14px;text-align:center;color:var(--muted);font-style:italic;font-size:13px;background:#FAFAF7;border-radius:10px}
+.vs-loading{padding:14px;color:var(--muted);font-size:13px;font-style:italic}
+
+.vs-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px 20px;box-shadow:0 1px 2px rgba(0,0,0,0.03),0 4px 12px rgba(0,0,0,0.04)}
+.vs-event{display:grid;grid-template-columns:auto auto 1fr auto;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--bg-2);font-size:12.5px}
+.vs-event:last-child{border-bottom:none}
+.vs-event-date{font-variant-numeric:tabular-nums;color:var(--muted-2);font-size:11px;font-weight:500}
+.vs-event-icon{font-size:14px}
+.vs-event-text strong{font-weight:600}
+.vs-event-tilvisun{color:var(--muted);font-size:10.5px;margin-left:6px}
+.vs-event-amount{font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+
+@media(max-width:980px){
+  .vs-kpis{grid-template-columns:1fr 1fr}
+  .vs-cols{grid-template-columns:1fr}
+}
+
 /* needs-bill highlight + dual-line hour+kr layout */
 .rg-month.rg-month-needs{background:#EFF5FB}
 .rg-month-amt{line-height:1.3}
@@ -1409,6 +1466,7 @@ const DEFAULT_STATE = {
     {id:'kvittanir',  label:'Kvittanir & PDF', icon:'📷'},
     {id:'tenglar',    label:'Tenglar',    icon:'🔗'},
     {id:'reikningar', label:'Reikningagerð', icon:'💳'},
+    {id:'vinnustofa', label:'Vinnustofa', icon:'🎯'},
     {id:'efniskostnadur', label:'Efniskostnaður', icon:'📦'},
     {id:'utgjold',    label:'Útgjöld',    icon:'💸', sheetCsv:''},
     {id:'stillingar', label:'Stillingar', icon:'⚙️'}
@@ -1759,6 +1817,7 @@ function render(){
   if(t.id==='verdsamanburdur') return renderCompetitors(t);
   if(t.id==='verkstadir') return renderWorksites(t);
   if(t.id==='reikningar') return renderReikningagerd(t);
+  if(t.id==='vinnustofa') return renderVinnustofa(t);
   if(t.id==='efniskostnadur') return renderEfniskostnadur(t);
   if(t.checklist!==undefined) return renderChecklist(t);
   if(t.sheetCsv!==undefined) return renderListTab(t);
@@ -3795,6 +3854,179 @@ function monthLabelStatic(ym){
   const names = ['Jan','Feb','Mar','Apr','Maí','Jún','Júl','Ágú','Sep','Okt','Nóv','Des'];
   const [y,m] = ym.split('-');
   return `${names[parseInt(m,10)-1]} ${y.slice(2)}`;
+}
+
+/* ====================== VINNUSTOFA — action-first dashboard ====================== */
+async function renderVinnustofa(t){
+  $view.innerHTML = `
+    <div class="vs-wrap">
+      <div class="vs-hero">
+        <h1>🎯 Vinnustofa</h1>
+        <p class="vs-tag">Hvað þarf að gera núna — raðað eftir áhrifum á reksturinn</p>
+      </div>
+      <div class="vs-kpis" id="vs-kpis">Sækir…</div>
+      <div class="vs-cols">
+        <section class="vs-col" id="vs-bill-col"><div class="vs-loading">Sækir…</div></section>
+        <section class="vs-col" id="vs-collect-col"><div class="vs-loading">Sækir…</div></section>
+      </div>
+      <section class="vs-card" id="vs-activity">
+        <h2 class="vs-h2">📰 Nýleg starfsemi</h2>
+        <div id="vs-activity-list" class="vs-loading">Sækir…</div>
+      </section>
+    </div>
+  `;
+  bindEditButtons();
+
+  const fmt = n => Math.round(n||0).toLocaleString('is-IS');
+  const $kpis = document.getElementById('vs-kpis');
+  const $bill = document.getElementById('vs-bill-col');
+  const $collect = document.getElementById('vs-collect-col');
+  const $activity = document.getElementById('vs-activity-list');
+
+  try{
+    const [wsR, drR, rdR] = await Promise.all([
+      fetch('/api/worksites?year=combined'),
+      fetch('/api/invoice-drafts?status=overdue,draft').catch(() => null),
+      fetch('/api/redder-invoices').catch(() => null),
+    ]);
+    const ws = await wsR.json();
+    const drafts = drR && drR.ok ? (await drR.json()).rows || [] : [];
+    const redder = rdR && rdR.ok ? (await rdR.json()) : { rows:[], summary:{} };
+
+    // KPI numbers
+    const totalUnpaid  = (ws.worksites||[]).reduce((a,w) => a + (w.invoice_unpaid||0), 0);
+    const totalDrafts  = drafts.reduce((a,d) => a + Number(d.total_m_vsk||0), 0);
+    const draftsCount  = drafts.length;
+    const efniTotal    = Number(redder.summary?.grand_total_m_vsk || 0);
+    const efniCount    = (redder.rows||[]).length;
+    $kpis.innerHTML = `
+      <div class="vs-kpi vs-kpi-red">
+        <div class="vs-kpi-l">🔴 Útistandandi skuldir</div>
+        <div class="vs-kpi-v">${fmt(totalUnpaid)}</div>
+        <div class="vs-kpi-x">kr m. vsk · sjá lista hægra megin →</div>
+      </div>
+      <div class="vs-kpi vs-kpi-amber">
+        <div class="vs-kpi-l">📤 Til að senda</div>
+        <div class="vs-kpi-v">${fmt(totalDrafts)}</div>
+        <div class="vs-kpi-x">${draftsCount} drög · sjá vinstri →</div>
+      </div>
+      <div class="vs-kpi vs-kpi-blue">
+        <div class="vs-kpi-l">📦 Efnisk. á reikning</div>
+        <div class="vs-kpi-v">${fmt(efniTotal)}</div>
+        <div class="vs-kpi-x">${efniCount} Redder reikningar</div>
+      </div>
+      <div class="vs-kpi vs-kpi-green">
+        <div class="vs-kpi-l">📈 Spá m. vsk</div>
+        <div class="vs-kpi-v">${fmt(totalUnpaid + totalDrafts)}</div>
+        <div class="vs-kpi-x">útistandandi + ósent</div>
+      </div>
+    `;
+
+    // ===== Left column: Til að senda (top 8 drafts) =====
+    const billItems = drafts.slice().sort((a,b) => Number(b.total_m_vsk||0) - Number(a.total_m_vsk||0)).slice(0, 8);
+    $bill.innerHTML = `
+      <h2 class="vs-h2">📤 Senda þessa reikninga næst</h2>
+      <p class="vs-h2-sub">${draftsCount} drög samtals · raðað eftir upphæð</p>
+      <div class="vs-items">
+        ${billItems.length === 0
+          ? '<div class="vs-empty">Engin ósend drög — allt í lagi 🎉</div>'
+          : billItems.map(d => {
+              const hrs = Number(d.hours_dagvinna || 0);
+              const total = Number(d.total_m_vsk || 0);
+              const tag = d.status === 'overdue' ? `<span class="vs-pill vs-pill-red">YFIR GJALDDAGA</span>` : `<span class="vs-pill vs-pill-amber">DRÖG</span>`;
+              const customerStr = d.customer_name ? ` · ${escapeHtml(d.customer_name)}` : '';
+              const url = `/reikningur?worksite=${encodeURIComponent(d.worksite_name)}&customer=${encodeURIComponent(d.customer_name||'')}&month=${encodeURIComponent(d.work_month)}&dv_hours=${hrs.toFixed(2)}`;
+              return `
+                <div class="vs-item">
+                  <div class="vs-item-head">
+                    ${tag}
+                    <strong>${escapeHtml(d.worksite_name)}</strong>
+                    <span class="vs-item-meta">${monthLabelStatic(d.work_month)}${customerStr}</span>
+                  </div>
+                  <div class="vs-item-body">
+                    <div class="vs-item-num"><div class="vs-item-num-l">Tímar</div><div class="vs-item-num-v">${hrs.toFixed(1)} klst</div></div>
+                    <div class="vs-item-num"><div class="vs-item-num-l">Áætlað m. vsk</div><div class="vs-item-num-v vs-item-num-amount">${fmt(total)}</div></div>
+                  </div>
+                  <div class="vs-item-actions">
+                    <a class="vs-btn vs-btn-primary" href="${url}" target="_blank" rel="noopener">📝 Búa til Efnislista</a>
+                    <a class="vs-btn" href="${RG_PAYDAY_URL}" target="_blank" rel="noopener">💳 Payday</a>
+                  </div>
+                </div>`;
+            }).join('')}
+      </div>
+    `;
+
+    // ===== Right column: Innheimta (top 8 unpaid) =====
+    const today = new Date();
+    const collectItems = (ws.worksites||[])
+      .filter(w => (w.invoice_unpaid||0) > 0)
+      .sort((a,b) => (b.invoice_unpaid||0) - (a.invoice_unpaid||0))
+      .slice(0, 8);
+    $collect.innerHTML = `
+      <h2 class="vs-h2">💰 Innheimta — ógreiddir reikningar</h2>
+      <p class="vs-h2-sub">${collectItems.length} verkstaðir með skuld · ${fmt(totalUnpaid)} kr</p>
+      <div class="vs-items">
+        ${collectItems.length === 0
+          ? '<div class="vs-empty">Allt greitt 🎉</div>'
+          : collectItems.map(w => {
+              const unpaid = w.invoice_unpaid || 0;
+              const oldest = (w.invoices||[]).filter(i => /ógreidd|ógreitt|vanskil/i.test(i.status||''))
+                .map(i => i.gjalddagi).filter(Boolean).sort()[0];
+              const daysOverdue = oldest ? Math.floor((today - new Date(oldest))/86400000) : null;
+              const customer = (w.mapped_customers||[])[0] || '';
+              const gmailUrl = customer ? `https://mail.google.com/mail/u/0/?authuser=bokhald@brunaholf.is#search/from%3A${encodeURIComponent(customer.split(' ')[0].toLowerCase())}` : `https://mail.google.com/mail/?authuser=bokhald@brunaholf.is`;
+              return `
+                <div class="vs-item">
+                  <div class="vs-item-head">
+                    ${daysOverdue !== null && daysOverdue > 30 ? `<span class="vs-pill vs-pill-red">${daysOverdue}d</span>` : daysOverdue !== null ? `<span class="vs-pill vs-pill-amber">${daysOverdue}d</span>` : ''}
+                    <strong>${escapeHtml(w.project)}</strong>
+                    <span class="vs-item-meta">${escapeHtml(customer || '—')}</span>
+                  </div>
+                  <div class="vs-item-body">
+                    <div class="vs-item-num"><div class="vs-item-num-l">Skuld</div><div class="vs-item-num-v vs-item-num-amount" style="color:#9B1A0F">${fmt(unpaid)}</div></div>
+                    <div class="vs-item-num"><div class="vs-item-num-l">Elsti gjalddagi</div><div class="vs-item-num-v">${oldest || '—'}</div></div>
+                  </div>
+                  <div class="vs-item-actions">
+                    <a class="vs-btn vs-btn-primary" href="${gmailUrl}" target="_blank" rel="noopener">📧 Senda áminningu</a>
+                    <a class="vs-btn" href="${RG_PAYDAY_URL}" target="_blank" rel="noopener">💳 Payday</a>
+                  </div>
+                </div>`;
+            }).join('')}
+      </div>
+    `;
+
+    // ===== Recent activity =====
+    const recent = [];
+    for (const w of (ws.worksites||[])) {
+      for (const inv of (w.invoices||[]).slice(0, 3)) {
+        if (!inv.gjalddagi) continue;
+        recent.push({
+          date: inv.greidsla_date || inv.gjalddagi,
+          kind: inv.greidsla_date ? 'paid' : 'invoiced',
+          worksite: w.project,
+          customer: (w.mapped_customers||[])[0] || '',
+          amount: inv.amount,
+          tilvisun: inv.tilvisun,
+        });
+      }
+    }
+    recent.sort((a,b) => String(b.date).localeCompare(String(a.date)));
+    $activity.innerHTML = recent.length === 0 ? '<div class="vs-empty">Engin starfsemi.</div>' : recent.slice(0, 12).map(e => `
+      <div class="vs-event">
+        <span class="vs-event-date">${e.date}</span>
+        <span class="vs-event-icon">${e.kind === 'paid' ? '✅' : '📤'}</span>
+        <span class="vs-event-text">
+          ${e.kind === 'paid' ? 'Greitt' : 'Sent'} — <strong>${escapeHtml(e.worksite)}</strong>
+          ${e.customer ? ' · '+escapeHtml(e.customer) : ''}
+          <span class="vs-event-tilvisun">#${escapeHtml(String(e.tilvisun||''))}</span>
+        </span>
+        <span class="vs-event-amount">${fmt(e.amount)} kr</span>
+      </div>
+    `).join('');
+
+  } catch(e) {
+    $kpis.innerHTML = `<div class="vs-empty">Villa: ${e.message||e}</div>`;
+  }
 }
 
 /* ====================== EFNI EDITOR (Redder line items for one worksite/month) ====================== */
