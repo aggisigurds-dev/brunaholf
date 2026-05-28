@@ -123,6 +123,12 @@
   to = "/.netlify/functions/unbilled-hours"
   status = 200
 
+# Data sources freshness report — when each source was last imported
+[[redirects]]
+  from = "/api/data-sources-status"
+  to = "/.netlify/functions/data-sources-status"
+  status = 200
+
 # Friendly URL for the Reikningagerð grid — uses /api/worksites under the hood,
 # kept here so the route is documented.
 [[redirects]]

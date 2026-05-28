@@ -1028,6 +1028,21 @@ main{padding:14px;max-width:1100px;margin:0 auto;flex:1;min-width:0;width:100%}
 .rg-col-balance{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;font-size:13px;min-width:78px;padding:6px 10px;border-left:2px solid var(--text-2);background:#FCFCFA}
 .rg-col-balance.rg-balance-unbilled{background:#FFF3F0;color:#9B1A0F;font-weight:700}
 
+/* Data sources freshness strip */
+.rg-sources{background:#FAFAF7;border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:16px;box-shadow:0 1px 2px rgba(0,0,0,0.03)}
+.rg-sources-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:12px}
+.rg-sources-title{font-family:'Source Serif 4',Georgia,serif;font-size:15px;font-weight:600;letter-spacing:-.005em}
+.rg-sources-sub{font-size:11.5px;color:var(--muted);margin-top:2px}
+.rg-sources-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.rg-source{background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 12px;transition:all 100ms ease}
+.rg-source:hover{border-color:var(--text-2);box-shadow:0 1px 4px rgba(0,0,0,0.05)}
+.rg-source-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.rg-source-icon{font-size:15px}
+.rg-source-label{font-weight:600;font-size:12.5px;flex:1}
+.rg-source-pill{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;letter-spacing:.05em}
+.rg-source-meta{font-size:11px;color:var(--muted-2);font-variant-numeric:tabular-nums;margin-bottom:4px}
+.rg-source-file{font-size:10px;color:var(--muted);font-family:'SFMono-Regular',Consolas,Monaco,monospace}
+
 /* ============================================================
    VINNUSTOFA — action-first dashboard
    ============================================================ */
@@ -1619,6 +1634,77 @@ const DEFAULT_STATE = {
 function b(){ return Math.random().toString(36).slice(2,9); }
 
 let state = load();
+
+/* ====== Data cache layer ======
+   Stops the Reikningagerð / Vinnustofa tabs from re-fetching all 5-6 API
+   endpoints on every visit. Each endpoint is cached in memory by URL with
+   a timestamp; subsequent reads within TTL (10 min default) return the
+   cached payload instantly. Clicking the Refresh button on any view
+   force-bypasses the cache via cachedFetch(url, {force:true}).
+
+   Each successful fetch updates window.__dataCacheTimestamps[url] so the
+   UI can show "Uppfært HH:MM:SS" next to it. */
+window.__dataCache = window.__dataCache || {};
+window.__dataCacheTimestamps = window.__dataCacheTimestamps || {};
+const DATA_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+async function cachedFetch(url, opts){
+  const force = opts && opts.force;
+  const now = Date.now();
+  const cached = window.__dataCache[url];
+  if (!force && cached && (now - cached.ts) < DATA_CACHE_TTL_MS) {
+    // Return a fake response-like object that supports .ok and .json()
+    return {
+      ok: cached.ok,
+      status: cached.status,
+      _cached: true,
+      _cachedAt: cached.ts,
+      json: async () => JSON.parse(cached.body),
+      text: async () => cached.body,
+    };
+  }
+  try {
+    const r = await fetch(url);
+    const body = await r.text();
+    window.__dataCache[url] = { ok: r.ok, status: r.status, body, ts: now };
+    window.__dataCacheTimestamps[url] = now;
+    return {
+      ok: r.ok,
+      status: r.status,
+      _cached: false,
+      json: async () => JSON.parse(body),
+      text: async () => body,
+    };
+  } catch(e){
+    // Network error — return cached if we have one even if stale
+    if (cached) {
+      return {
+        ok: cached.ok,
+        status: cached.status,
+        _cached: true,
+        _stale: true,
+        json: async () => JSON.parse(cached.body),
+        text: async () => cached.body,
+      };
+    }
+    return { ok: false, status: 0, json: async () => ({error:String(e)}), text: async () => String(e) };
+  }
+}
+
+function dataCacheStatus(){
+  // Returns array of {url, ts, ageSec} for display
+  const now = Date.now();
+  return Object.entries(window.__dataCacheTimestamps).map(([url, ts]) => ({
+    url,
+    ts,
+    ageSec: Math.floor((now - ts) / 1000),
+    label: new Date(ts).toLocaleTimeString('is-IS'),
+  }));
+}
+function clearDataCache(){
+  window.__dataCache = {};
+  window.__dataCacheTimestamps = {};
+}
 
 // Ensure newer tab definitions get auto-added to existing user state
 // (called both during load from localStorage AND after sync replaces
@@ -3222,6 +3308,9 @@ function renderReikningagerd(t){
         <div class="rg-kpi rg-kpi-warn"><div class="rg-kpi-l">Skuld eftir leiðr.</div><div class="rg-kpi-v" id="rg-k-unpaid">—</div><div class="rg-kpi-x">eftir retention + bank match</div></div>
       </div>
 
+      <!-- Data freshness strip: when each source was last imported -->
+      <div class="rg-sources" id="rg-sources">Sækir gagnasamantekt…</div>
+
       <!-- Revenue forecast banner: total of invoice_drafts (klst × rate × vsk that hasn't been billed yet) -->
       <div class="rg-forecast" id="rg-forecast">
         <div class="rg-forecast-head">
@@ -3259,12 +3348,12 @@ function renderReikningagerd(t){
     if($refresh){ $refresh.disabled = true; $refresh.classList.add('loading'); }
     try{
       const [r, drR, efR, pgR, rdR, ubR] = await Promise.all([
-        fetch('/api/worksites?year=combined'),
-        fetch('/api/invoice-drafts?status=invoiced').catch(() => null),
-        fetch('/api/efnislisti-docs').catch(() => null),
-        fetch('/api/pricing-guide').catch(() => null),
-        fetch('/api/redder-invoices').catch(() => null),
-        fetch('/api/unbilled-hours').catch(() => null),
+        cachedFetch('/api/worksites?year=combined'),
+        cachedFetch('/api/invoice-drafts?status=invoiced').catch(() => null),
+        cachedFetch('/api/efnislisti-docs').catch(() => null),
+        cachedFetch('/api/pricing-guide').catch(() => null),
+        cachedFetch('/api/redder-invoices').catch(() => null),
+        cachedFetch('/api/unbilled-hours').catch(() => null),
       ]);
       // Build pricing_guide map → window-global so rgRateFor() can read it
       if (pgR && pgR.ok) {
@@ -3628,10 +3717,17 @@ function renderReikningagerd(t){
   // expose for the calculator modal to use later
   window.__rgRender = render;
 
-  $refresh.addEventListener('click', load);
+  $refresh.addEventListener('click', () => {
+    clearDataCache();
+    load();
+    loadDataSources();
+    loadForecast();
+  });
   $win.addEventListener('change', () => { if(lastData) render(); });
   load();
 
+  // Data freshness strip
+  loadDataSources();
   // Forecast banner — fetch invoice_drafts and render summary + expandable breakdown
   loadForecast();
   document.getElementById('rg-forecast-toggle').onclick = () => {
@@ -3641,6 +3737,54 @@ function renderReikningagerd(t){
     if(hidden){ $list.removeAttribute('hidden'); $btn.textContent = 'Fela sundurliðun ▴'; }
     else      { $list.setAttribute('hidden',''); $btn.textContent = 'Sýna sundurliðun ▾'; }
   };
+}
+
+async function loadDataSources(){
+  const $el = document.getElementById('rg-sources');
+  if (!$el) return;
+  try{
+    const r = await fetch('/api/data-sources-status');
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const { sources } = await r.json();
+    const statusColor = s => s==='fresh'?'#2E8C5B' : s==='aging'?'#B26B00' : s==='stale'?'#9B1A0F' : '#777';
+    const statusLabel = s => s==='fresh'?'FERSKT' : s==='aging'?'ELDIST' : s==='stale'?'LIÐINN' : '?';
+    $el.innerHTML = `
+      <div class="rg-sources-head">
+        <div>
+          <div class="rg-sources-title">📊 Gögn í kerfinu</div>
+          <div class="rg-sources-sub">Hve gömul eru gögnin? Smelltu á 📥 hjá uppruna til að sjá hvaða skrá á að uppfæra.</div>
+        </div>
+        <button type="button" class="rg-tool" id="rg-sources-refresh" title="Endurnýja allar gagnasíður">↻ Endurnýja</button>
+      </div>
+      <div class="rg-sources-grid">
+        ${sources.map(s => `
+          <div class="rg-source" title="${escapeAttr(s.file_hint||'')}">
+            <div class="rg-source-head">
+              <span class="rg-source-icon">${s.icon}</span>
+              <span class="rg-source-label">${escapeHtml(s.label)}</span>
+              <span class="rg-source-pill" style="background:${statusColor(s.status)}22;color:${statusColor(s.status)}">${statusLabel(s.status)}</span>
+            </div>
+            <div class="rg-source-meta">
+              ${s.last_import
+                ? `${s.age_days != null ? (s.age_days === 0 ? 'Í dag' : s.age_days + ' dagar síðan') : '?'} · ${(s.count||0).toLocaleString('is-IS')} færslur`
+                : '<em>engin gögn enn</em>'}
+            </div>
+            <div class="rg-source-file">📥 ${escapeHtml(s.file_hint||'—')}</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    document.getElementById('rg-sources-refresh').onclick = () => {
+      clearDataCache();
+      // Re-fire the page's main load + side panels
+      if (typeof load === 'function') load();
+      else { state.ui.activeTab = 'reikningar'; save(); render(); }
+      loadDataSources();
+      loadForecast();
+    };
+  }catch(e){
+    $el.innerHTML = `<div class="vs-empty">Gat ekki sótt gagnasamantekt: ${escapeHtml(e.message||'')}</div>`;
+  }
 }
 
 async function loadForecast(){
@@ -3940,10 +4084,10 @@ async function renderVinnustofa(t){
 
   try{
     const [wsR, drR, rdR, ubR] = await Promise.all([
-      fetch('/api/worksites?year=combined'),
-      fetch('/api/invoice-drafts?status=overdue,draft').catch(() => null),
-      fetch('/api/redder-invoices').catch(() => null),
-      fetch('/api/unbilled-hours').catch(() => null),
+      cachedFetch('/api/worksites?year=combined'),
+      cachedFetch('/api/invoice-drafts?status=overdue,draft').catch(() => null),
+      cachedFetch('/api/redder-invoices').catch(() => null),
+      cachedFetch('/api/unbilled-hours').catch(() => null),
     ]);
     const ws = await wsR.json();
     const drafts = drR && drR.ok ? (await drR.json()).rows || [] : [];
