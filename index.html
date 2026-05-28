@@ -828,31 +828,41 @@ main{padding:14px;max-width:1100px;margin:0 auto;flex:1;min-width:0;width:100%}
 .rg-name-link{background:none;border:none;font:inherit;cursor:pointer;color:var(--text);font-weight:500;padding:0;text-align:left}
 .rg-name-link:hover{color:var(--red);text-decoration:underline}
 
-/* ===== Workcenter modal ===== */
+/* ===== Workcenter modal — modern workspace ===== */
 .wc-wrap{width:100%;font-size:13px}
-.wc-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:16px;padding-bottom:14px;border-bottom:2px solid var(--border)}
-.wc-title{font-family:'Source Serif 4',Georgia,serif;font-size:24px;font-weight:600;letter-spacing:-.01em}
-.wc-sub{color:var(--muted);font-size:12px;margin-top:4px}
-.wc-sub a{color:var(--blue,#2563eb);text-decoration:none}
+.wc-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#FFF 0%,#FAFAF6 100%);margin:-28px -32px 22px;padding:24px 32px 18px;border-radius:18px 18px 0 0;border-bottom:2px solid var(--text-2)}
+.wc-title{font-family:'Source Serif 4',Georgia,serif;font-size:28px;font-weight:600;letter-spacing:-.015em;line-height:1.1}
+.wc-sub{color:var(--muted);font-size:13px;margin-top:6px}
+.wc-sub a{color:var(--blue,#2563eb);text-decoration:none;font-weight:500}
 .wc-sub a:hover{text-decoration:underline}
 .wc-body{min-height:120px}
-.wc-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.wc-card{background:var(--bg-2);border:1px solid var(--border);border-radius:8px;padding:14px}
+.wc-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.wc-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px 20px;box-shadow:0 1px 2px rgba(0,0,0,0.03),0 2px 8px rgba(0,0,0,0.04);transition:box-shadow 120ms ease}
+.wc-card:hover{box-shadow:0 1px 2px rgba(0,0,0,0.05),0 4px 16px rgba(0,0,0,0.06)}
 .wc-card-full{grid-column:1 / -1}
-.wc-card h3{font-size:13px;font-weight:600;margin:0 0 12px;color:var(--text);font-family:'Source Serif 4',Georgia,serif}
-.wc-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;font-size:12px}
+.wc-card h3{font-size:14px;font-weight:600;margin:0 0 16px;color:var(--text);font-family:'Source Serif 4',Georgia,serif;padding-bottom:8px;border-bottom:1px solid var(--bg-2);letter-spacing:-.005em}
+.wc-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;font-size:12px}
 .wc-row.wc-row-full{grid-template-columns:1fr}
-.wc-row label{display:flex;flex-direction:column;gap:3px;color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
-.wc-row input, .wc-row select, .wc-row textarea{padding:6px 8px;border:1px solid var(--border);border-radius:4px;font:inherit;background:#fff;color:var(--text);text-transform:none;letter-spacing:0;font-weight:400}
-.wc-row textarea{resize:vertical;min-height:40px}
-.wc-todo-textarea{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:4px;font:inherit;font-size:13px;min-height:80px;resize:vertical;margin-bottom:8px;background:#fff}
+.wc-row label{display:flex;flex-direction:column;gap:4px;color:var(--muted-2);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em}
+.wc-row input, .wc-row select, .wc-row textarea{padding:8px 10px;border:1px solid var(--border);border-radius:6px;font:inherit;font-size:13px;background:#FCFCFA;color:var(--text);text-transform:none;letter-spacing:0;font-weight:400;transition:border-color 80ms ease,box-shadow 80ms ease}
+.wc-row input:focus, .wc-row select:focus, .wc-row textarea:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px rgba(217,56,56,0.12);background:#fff}
+.wc-row textarea{resize:vertical;min-height:44px}
+.wc-todo-textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:6px;font:inherit;font-size:13px;min-height:90px;resize:vertical;margin-bottom:10px;background:#FCFCFA;transition:border-color 80ms ease}
+.wc-todo-textarea:focus{outline:none;border-color:var(--red);background:#fff}
 .wc-mini-table{width:100%;border-collapse:collapse;font-size:12px}
-.wc-mini-table td{padding:4px 6px;border-bottom:1px solid var(--border)}
+.wc-mini-table th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted-2);font-weight:600;padding:4px 6px;border-bottom:1px solid var(--border)}
+.wc-mini-table th.num{text-align:right}
+.wc-mini-table td{padding:6px;border-bottom:1px solid var(--bg-2)}
+.wc-mini-table tr:hover td{background:#FAF9F4}
 .wc-mini-table td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
-.wc-empty{color:var(--muted);font-style:italic;font-size:11px;text-align:center;padding:12px}
-.wc-save-status{display:inline-block;margin-left:8px;font-size:11px;color:var(--muted)}
+.wc-mini-table td.num.an-vsk{color:var(--muted-2);font-weight:500}
+.wc-empty{color:var(--muted);font-style:italic;font-size:11px;text-align:center;padding:14px}
+.wc-save-status{display:inline-block;margin-left:10px;font-size:12px;color:var(--muted)}
 .wc-save-status.wc-save-ok{color:var(--green,#2e7d32);font-weight:600}
 .wc-save-status.wc-save-err{color:var(--red);font-weight:600}
+/* Modern save button */
+.wc-card .rg-tool{background:linear-gradient(180deg,#fff,#F4F1EA);border:1px solid var(--border);font-weight:500;padding:8px 14px;border-radius:6px;transition:all 100ms ease}
+.wc-card .rg-tool:hover{background:linear-gradient(180deg,#FAFAF7,#EDE9DF);border-color:var(--text-2);transform:translateY(-1px)}
 @media(max-width:760px){.wc-grid{grid-template-columns:1fr}.wc-row{grid-template-columns:1fr}}
 .rg-col-cust{min-width:120px;color:var(--muted-2);font-size:11px}
 .rg-col-skuldir{text-align:right;font-variant-numeric:tabular-nums;color:var(--red);font-weight:600;font-size:11px;min-width:80px}
@@ -1083,8 +1093,8 @@ main{padding:14px;max-width:1100px;margin:0 auto;flex:1;min-width:0;width:100%}
   max-height:90vh;overflow:auto;border:1px solid var(--line);
 }
 /* Wider modal for the Workcenter and invoice calculator */
-.modal:has(.wc-wrap)      { max-width: 1000px }
-.modal:has(.rg-calc-wrap) { max-width: 720px }
+.modal:has(.wc-wrap)      { max-width: 1240px; padding: 28px 32px }
+.modal:has(.rg-calc-wrap) { max-width: 760px }
 @media(min-width:680px){
   .modal-bg{align-items:center}
   .modal{border-radius:18px}
@@ -3517,15 +3527,37 @@ async function rgOpenWorkcenter(project, allSites, months){
       <section class="wc-card">
         <h3>💳 Reikningar (${invoices.length})</h3>
         <table class="wc-mini-table">
-          ${invoices.length ? invoices.slice(0, 10).map(i => `
-            <tr>
-              <td>${i.gjalddagi || '—'}</td>
-              <td>#${escapeHtml(String(i.tilvisun||''))}</td>
-              <td class="num">${fmt(i.amount)}</td>
-              <td>${escapeHtml(i.status || '')}</td>
-            </tr>
-          `).join('') : '<tr><td colspan="4" class="wc-empty">Engir reikningar tengdir.</td></tr>'}
+          ${invoices.length ? `
+            <thead><tr>
+              <th>Gjalddagi</th><th>#</th>
+              <th class="num">án vsk</th>
+              <th class="num">m. vsk</th>
+              <th>Staða</th>
+            </tr></thead>
+            <tbody>
+              ${invoices.slice(0, 10).map(i => {
+                // For landsbankinn_krafnir invoices the amount is m. vsk; for payday it's án vsk.
+                // We don't always know the source, so we derive both from the rate.
+                const amt = Number(i.amount) || 0;
+                const guess_an  = Math.round(amt / 1.24);
+                const guess_mvsk = Math.round(amt * 1.24);
+                // Heuristic: amounts ending in odd cents or > ~3M tend to be m. vsk
+                const looksMvsk = (amt % 1000) !== 0 && amt > 100000;
+                const anVsk  = looksMvsk ? guess_an : amt;
+                const mVsk   = looksMvsk ? amt      : guess_mvsk;
+                return `
+                  <tr>
+                    <td>${i.gjalddagi || '—'}</td>
+                    <td>#${escapeHtml(String(i.tilvisun||'').replace(/\.0$/,''))}</td>
+                    <td class="num an-vsk">${fmt(anVsk)}</td>
+                    <td class="num">${fmt(mVsk)}</td>
+                    <td>${escapeHtml(i.status || '')}</td>
+                  </tr>`;
+              }).join('')}
+            </tbody>
+          ` : '<tr><td colspan="5" class="wc-empty">Engir reikningar tengdir.</td></tr>'}
         </table>
+        <div style="font-size:10.5px;color:var(--muted-2);margin-top:8px;font-style:italic">án vsk / m. vsk samkvæmt 24% reglu — eitt þessara er talið nákvæmt eftir uppruna færslunnar.</div>
       </section>
 
       <section class="wc-card wc-card-full">
