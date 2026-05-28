@@ -124,15 +124,16 @@ button{cursor:pointer}
 .sidebar{
   position:sticky;top:66px;align-self:flex-start;height:calc(100vh - 66px);
   width:230px;flex:0 0 230px;
-  /* 2026-05-20: warm ink-black instead of cool navy gradient.
-     Reads like a library catalog drawer, pairs with Fraunces labels. */
-  background:#15110F;
+  /* 2026-05-28: cleaner professional gradient — near-black at top
+     transitioning to dark navy. Pairs with Inter labels for a more
+     workplace / dashboard feel. */
+  background:#0A0E1A;
   background-image:
-    radial-gradient(ellipse 100% 30% at 50% 0%, rgba(201,60,29,.10) 0%, transparent 70%),
-    linear-gradient(180deg, #1B1714 0%, #100D0B 100%);
-  border-right:1px solid #2A2422;padding:16px 10px;overflow-y:auto;z-index:15;
-  scrollbar-width:thin;scrollbar-color:#3A3330 transparent;
-  box-shadow:inset -1px 0 0 rgba(0,0,0,.4);
+    radial-gradient(ellipse 100% 25% at 50% 0%, rgba(64,140,255,.06) 0%, transparent 70%),
+    linear-gradient(180deg, #0A0E1A 0%, #0F1B2E 60%, #14233B 100%);
+  border-right:1px solid #1F2B40;padding:16px 10px;overflow-y:auto;z-index:15;
+  scrollbar-width:thin;scrollbar-color:#2A3850 transparent;
+  box-shadow:inset -1px 0 0 rgba(0,0,0,.5);
 }
 .sidebar::-webkit-scrollbar{width:6px}
 .sidebar::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
@@ -149,32 +150,31 @@ button{cursor:pointer}
 .layout.horizontal{flex-direction:column}
 
 .tab-v{
-  display:flex;align-items:center;gap:11px;padding:9px 13px;border-radius:7px;
-  color:#C9B89B;background:transparent;border:1px solid transparent;
-  /* 2026-05-20: Fraunces italic — gives the sidebar a library / archive-drawer feel. */
-  font-family:'Fraunces',Georgia,serif;font-style:italic;font-weight:500;font-size:14.5px;
-  font-variation-settings:'opsz' 24, 'SOFT' 50;
+  display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:6px;
+  color:#A8B3C9;background:transparent;border:1px solid transparent;
+  /* 2026-05-28: Inter for a cleaner, more workplace-professional feel */
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  font-weight:500;font-size:13.5px;letter-spacing:-.005em;
   width:100%;text-align:left;cursor:pointer;margin-bottom:1px;
-  letter-spacing:-.005em;
-  transition:background .15s ease, color .15s ease, padding-left .15s ease;
+  transition:background .14s ease, color .14s ease, padding-left .14s ease;
 }
-.tab-v:hover{background:rgba(212,162,79,.08);color:#F4E8D0;padding-left:16px}
+.tab-v:hover{background:rgba(255,255,255,.04);color:#E6EBF5;padding-left:14px}
 .tab-v.active{
   background:linear-gradient(90deg, rgba(201,60,29,.92) 0%, rgba(140,37,16,.88) 100%);
-  color:#FFF6E8;border-color:transparent;font-style:normal;font-weight:600;
-  box-shadow:inset 3px 0 0 #FFB388, 0 2px 8px rgba(201,60,29,.30);
+  color:#FFFFFF;border-color:transparent;font-weight:600;
+  box-shadow:inset 3px 0 0 #FFB388, 0 2px 8px rgba(201,60,29,.25);
 }
-.tab-v.active:hover{padding-left:13px}
-.tab-v .ti{font-size:16px;line-height:1;opacity:.88;font-style:normal;font-family:'Inter',sans-serif}
+.tab-v.active:hover{padding-left:12px}
+.tab-v .ti{font-size:15px;line-height:1;opacity:.85;font-family:'Inter',sans-serif}
 .tab-v.active .ti{opacity:1}
 .tab-v .ti{width:22px;display:inline-flex;justify-content:center;flex:0 0 auto}
 .tab-v .tn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .nav-section-label{
-  font-family:'Fraunces',Georgia,serif;font-style:italic;font-weight:500;
-  font-size:11px;color:#6B5D4A;letter-spacing:.08em;text-transform:uppercase;
-  padding:14px 13px 6px;margin:0;
+  font-family:'Inter',sans-serif;font-weight:600;
+  font-size:10px;color:#6B7896;letter-spacing:.1em;text-transform:uppercase;
+  padding:14px 12px 6px;margin:0;
 }
-.nav-sep{height:1px;background:rgba(255,255,255,.06);margin:8px 4px}
+.nav-sep{height:1px;background:rgba(255,255,255,.05);margin:8px 4px}
 
 /* compact sidebar (icons-only) */
 .layout.compact .sidebar{width:64px;flex:0 0 64px;padding:14px 6px}
@@ -812,8 +812,8 @@ main{padding:14px;max-width:1100px;margin:0 auto;flex:1;min-width:0;width:100%}
 .rg-grid thead th{position:sticky;top:0;background:linear-gradient(180deg,#F8F6F0 0%,#F1EDE3 100%);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted-2);z-index:1;border-bottom:2px solid var(--text-2)}
 .rg-grid tbody tr{transition:background 80ms ease}
 .rg-grid tbody tr:hover{background:#F7F6F1}
-.rg-grid .rg-row-gata{background:linear-gradient(90deg,#FFFAE5 0%,#FFF9EE 100%)}
-.rg-grid .rg-row-gata:hover{background:#FFF3D9}
+.rg-grid .rg-row-gata{background:linear-gradient(90deg,#EAF3FB 0%,#F4F8FC 100%)}
+.rg-grid .rg-row-gata:hover{background:#DDEAF6}
 .rg-month-amt{transition:all 100ms ease}
 .rg-month:hover .rg-month-amt{transform:scale(1.04)}
 .rg-section-row td{background:var(--bg);font-weight:700;font-family:'Source Serif 4',Georgia,serif;font-size:14px;padding:10px 8px}
@@ -880,19 +880,19 @@ main{padding:14px;max-width:1100px;margin:0 auto;flex:1;min-width:0;width:100%}
 .rg-link[disabled],.rg-link.rg-link-empty{opacity:.2;pointer-events:none}
 .rg-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
 
-/* ===== Forecast banner ===== */
-.rg-forecast{background:linear-gradient(135deg,#FFFBF0 0%,#FFF6E0 100%);border:1px solid #FFE5A5;border-radius:14px;padding:18px 22px;margin-bottom:18px;box-shadow:0 1px 3px rgba(0,0,0,0.04),0 4px 16px rgba(184,118,0,0.06)}
+/* ===== Forecast banner — bluish workplace palette ===== */
+.rg-forecast{background:linear-gradient(135deg,#F0F6FC 0%,#E2EDF7 100%);border:1px solid #B6CFE8;border-radius:14px;padding:18px 22px;margin-bottom:18px;box-shadow:0 1px 3px rgba(0,0,0,0.04),0 4px 16px rgba(15,75,140,0.07)}
 .rg-forecast-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:14px}
-.rg-forecast-title{font-family:'Source Serif 4',Georgia,serif;font-size:18px;font-weight:600;color:#5C3500;letter-spacing:-.005em}
-.rg-forecast-sub{font-size:12px;color:#8C5500;margin-top:3px}
+.rg-forecast-title{font-family:'Source Serif 4',Georgia,serif;font-size:18px;font-weight:600;color:#0F3B6E;letter-spacing:-.005em}
+.rg-forecast-sub{font-size:12px;color:#3A6296;margin-top:3px}
 .rg-forecast-totals{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
-.rg-fc-cell{background:rgba(255,255,255,.7);border:1px solid rgba(0,0,0,.05);border-radius:10px;padding:12px 14px}
-.rg-fc-cell.rg-fc-overdue{background:rgba(255,205,180,.5);border-color:rgba(180,80,30,.2)}
-.rg-fc-cell.rg-fc-draft{background:rgba(255,235,180,.5);border-color:rgba(180,120,30,.2)}
-.rg-fc-cell.rg-fc-total{background:#FFF;border-color:rgba(0,0,0,.08);box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.rg-fc-cell{background:rgba(255,255,255,.8);border:1px solid rgba(15,75,140,.08);border-radius:10px;padding:12px 14px}
+.rg-fc-cell.rg-fc-overdue{background:rgba(255,225,210,.6);border-color:rgba(180,80,30,.25)}
+.rg-fc-cell.rg-fc-draft{background:rgba(214,234,250,.7);border-color:rgba(15,75,140,.22)}
+.rg-fc-cell.rg-fc-total{background:#FFF;border-color:rgba(15,75,140,.18);box-shadow:0 1px 3px rgba(15,75,140,0.09)}
 .rg-fc-l{font-size:10.5px;color:var(--muted-2);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
 .rg-fc-v{font-family:'Source Serif 4',Georgia,serif;font-size:22px;font-weight:700;margin-top:3px;font-variant-numeric:tabular-nums;color:var(--text)}
-.rg-fc-cell.rg-fc-total .rg-fc-v{color:#5C3500;font-size:24px}
+.rg-fc-cell.rg-fc-total .rg-fc-v{color:#0F3B6E;font-size:24px}
 .rg-fc-x{font-size:11px;color:var(--muted);margin-top:2px}
 .rg-forecast-list{margin-top:16px;max-height:480px;overflow-y:auto}
 .rg-fc-item{background:#fff;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden;transition:box-shadow 100ms ease}
@@ -902,7 +902,7 @@ main{padding:14px;max-width:1100px;margin:0 auto;flex:1;min-width:0;width:100%}
 .rg-fc-item summary:hover{background:#FAFAF6}
 .rg-fc-tag{font-size:9.5px;font-weight:700;padding:2px 6px;border-radius:3px;text-transform:uppercase;letter-spacing:.04em}
 .rg-fc-tag-over{background:#FFE0D5;color:#8C2510}
-.rg-fc-tag-draft{background:#FFE8B5;color:#7C5500}
+.rg-fc-tag-draft{background:#DBE9F8;color:#0F3B6E}
 .rg-fc-item-name{font-weight:600;color:var(--text)}
 .rg-fc-item-cust{font-size:11px;color:var(--muted-2)}
 .rg-fc-item-month{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
@@ -912,7 +912,7 @@ main{padding:14px;max-width:1100px;margin:0 auto;flex:1;min-width:0;width:100%}
 .rg-fc-math-line:last-child{border-bottom:none}
 .rg-fc-math-eq{font-weight:600}
 .rg-fc-math-sub{font-weight:600;border-top:2px solid var(--text-2);padding-top:8px;margin-top:4px}
-.rg-fc-math-total{font-weight:700;background:#FFE8B5;padding:8px 10px;border-radius:6px;margin-top:6px;border-bottom:none}
+.rg-fc-math-total{font-weight:700;background:#DBE9F8;color:#0F3B6E;padding:8px 10px;border-radius:6px;margin-top:6px;border-bottom:none}
 .rg-fc-math-todo{color:var(--muted);font-style:italic}
 .rg-fc-math-note{margin-top:10px;padding:8px;background:#fff;border-left:3px solid var(--gold);font-size:11px;color:var(--muted-2);font-style:italic}
 .rg-fc-more{text-align:center;padding:8px;color:var(--muted);font-size:11px;font-style:italic}
@@ -931,8 +931,8 @@ main{padding:14px;max-width:1100px;margin:0 auto;flex:1;min-width:0;width:100%}
 
 .rg-link-btn{background:none;border:none;cursor:pointer;padding:0;font:inherit}
 .rg-link-btn:hover{background:var(--bg-2);color:var(--text)}
-.rg-link-pill{background:linear-gradient(135deg,#FFE4B0 0%,#FFD180 100%);color:#8C4500;border-radius:6px;padding:2px 6px;font-weight:600;width:auto;min-width:22px}
-.rg-link-pill:hover{background:linear-gradient(135deg,#FFD180 0%,#FFC04D 100%);color:#5C2D00}
+.rg-link-pill{background:linear-gradient(135deg,#DBE9F8 0%,#A8C9EA 100%);color:#0F3B6E;border-radius:6px;padding:2px 6px;font-weight:600;width:auto;min-width:22px}
+.rg-link-pill:hover{background:linear-gradient(135deg,#A8C9EA 0%,#6EA8DC 100%);color:#0A2747}
 .rg-hidden-bar{font-size:12px;color:var(--muted);padding:6px 12px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;display:inline-flex;align-items:center;gap:8px}
 
 /* ===== Invoice calculator modal ===== */
@@ -1221,7 +1221,7 @@ const COLORS = ['t-red','t-dark','t-gold','t-green','t-blue'];
 const DEFAULT_STATE = {
   tabs: [
     {id:'yfirlit',    label:'Yfirlit',    icon:'🏠'},
-    {id:'okkarVerkefni', label:'Anni & Aggi', icon:'🦍', twoCol:{ Anni:{icon:'🦍', items:[]}, Aggi:{icon:'🐒', items:[]} }},
+    {id:'okkarVerkefni', label:'Anni & Aggi', icon:'👥', twoCol:{ Anni:{items:[]}, Aggi:{items:[]} }},
     {id:'inbox',      label:'Inbox',      icon:'📧'},
     {id:'spurningar', label:'Spurningar', icon:'⚠'},
     {id:'timavera',   label:'Tímavera',   icon:'⏱'},
@@ -1256,7 +1256,7 @@ const DEFAULT_STATE = {
       {group:'🧹 Hreinsun (eftir migration)', text:'Loka eldklar@ OneDrive subscription (sparar pening)', done:false},
       {group:'🧹 Hreinsun (eftir migration)', text:'Cataloga gömul gögn í aggisigurds@ vs flytja yfir á brunaholfehf@', done:false}
     ]},
-    {id:'okkarVerkefni', label:'Anni & Aggi', icon:'🦍', twoCol:{ Anni:{icon:'🦍', items:[]}, Aggi:{icon:'🐒', items:[]} }},
+    {id:'okkarVerkefni', label:'Anni & Aggi', icon:'👥', twoCol:{ Anni:{items:[]}, Aggi:{items:[]} }},
     {id:'minverkefni', label:'Mín verkefni', icon:'☑', checklist:[
       {group:'🔥 Vika', text:'Klára Apríl reikninga (19 verk eftir)', done:false},
       {group:'🔥 Vika', text:'Setja upp Apps Script (Code.gs) fyrir Drive/Sheets', done:false},
@@ -4594,23 +4594,25 @@ function renderOkkarVerkefni(t){
     `).join('');
     const stat = totals.find(x=>x.p===p);
     const pct = stat.total ? Math.round(stat.done/stat.total*100) : 0;
-    const personIcon = p==='Anni'?'🦍':'🐒';
-    const headerCol = p==='Anni'?'#E55A3C':'#3B82F6';
+    // Initials in a soft chip — no monkey emojis. Anni → AS (Annþór), Aggi → AS (Agnar).
+    const initials = p === 'Anni' ? 'A' : 'A';
+    const headerCol = p === 'Anni' ? '#0F3B6E' : '#7C3F00';
+    const headerBg  = p === 'Anni' ? 'linear-gradient(135deg,#E2EDF7 0%,#C9DCF0 100%)' : 'linear-gradient(135deg,#F5EEE3 0%,#E8D9C2 100%)';
     return `
       <div style="flex:1;min-width:280px">
-        <div class="card" style="border-top:4px solid ${headerCol};margin-bottom:12px">
-          <div style="display:flex;align-items:center;gap:12px">
-            <div style="font-size:32px;line-height:1">${personIcon}</div>
+        <div class="card" style="border-top:3px solid ${headerCol};margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04),0 4px 12px rgba(0,0,0,0.05)">
+          <div style="display:flex;align-items:center;gap:14px">
+            <div style="width:44px;height:44px;border-radius:50%;background:${headerBg};color:${headerCol};display:flex;align-items:center;justify-content:center;font-family:'Source Serif 4',Georgia,serif;font-size:20px;font-weight:700">${initials}</div>
             <div style="flex:1">
-              <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1.4px;font-weight:700">${escapeHtml(p)}</div>
-              <div style="font-size:22px;font-weight:800;color:var(--ink);margin-top:2px">${stat.done} / ${stat.total} <span style="font-size:12px;color:var(--muted);font-weight:600">kláruð</span></div>
+              <div style="font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:600">${escapeHtml(p)}</div>
+              <div style="font-family:'Source Serif 4',Georgia,serif;font-size:22px;font-weight:600;color:var(--ink);margin-top:2px;letter-spacing:-.01em">${stat.done} <span style="color:var(--muted-2);font-weight:400">/ ${stat.total}</span> <span style="font-size:12px;color:var(--muted);font-weight:400;font-family:'Inter',sans-serif">kláruð</span></div>
             </div>
-            <div style="font-weight:800;color:${headerCol};font-size:20px">${pct}%</div>
+            <div style="font-weight:700;color:${headerCol};font-size:20px;font-variant-numeric:tabular-nums">${pct}%</div>
           </div>
-          <div style="height:8px;background:var(--input-bg);border-radius:5px;overflow:hidden;margin-top:10px;border:1px solid var(--line)">
-            <div style="height:100%;width:${pct}%;background:${headerCol}"></div>
+          <div style="height:6px;background:var(--bg-2);border-radius:3px;overflow:hidden;margin-top:12px">
+            <div style="height:100%;width:${pct}%;background:${headerCol};transition:width .3s ease"></div>
           </div>
-          <button class="btn primary" data-okadd="${p}" style="width:100%;margin-top:10px;padding:9px;font-size:13px">+ Bæta við hjá ${escapeHtml(p)}</button>
+          <button class="btn primary" data-okadd="${p}" style="width:100%;margin-top:12px;padding:9px;font-size:13px;font-weight:500;background:${headerCol};border:none">+ Bæta við hjá ${escapeHtml(p)}</button>
         </div>
         ${items.length===0 ? '<div class="empty" style="padding:14px;font-size:12px">Engin verkefni</div>' : groupBlocks}
       </div>`;
@@ -4663,7 +4665,7 @@ function editOkkarItem(t, person, idx){
   const it = isNew ? {text:'',group:'',note:'',link:'',done:false} : items[idx];
   const otherPerson = person==='Anni'?'Aggi':'Anni';
   openModal(`
-    <h2>${isNew?'Nýtt atriði hjá ':'Breyta atriði — '}${escapeHtml(person)} ${person==='Anni'?'🦍':'🐒'}</h2>
+    <h2>${isNew?'Nýtt atriði hjá ':'Breyta atriði — '}${escapeHtml(person)}</h2>
     <label>Texti</label><input id="ok-text" value="${escapeAttr(it.text||'')}">
     <label>Hópur (valfrjálst)</label><input id="ok-group" value="${escapeAttr(it.group||'')}" placeholder="t.d. 🔥 Núna, App, Bokhald, Slökkvitæki">
     <label>Athugasemd (valfrjálst)</label><textarea id="ok-note">${escapeHtml(it.note||'')}</textarea>
