@@ -71,21 +71,8 @@ exports.handler = async (event) => {
   if (!SUPABASE_URL || !SUPABASE_KEY) return json(500, { error: 'Supabase env missing' });
   if (event.httpMethod !== 'GET') return json(405, { error: 'Method not allowed' });
 
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/exec_sql`, {
-    method: 'POST',
-    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query: SQL }),
-  }).catch(() => null);
-
-  // exec_sql RPC may not exist — fall back to PostgREST function via raw SQL through a view
-  // For maximum portability, run via the standard rest endpoint if we have a view; otherwise
-  // we mirror the logic in pure REST by aggregating from existing tables in code.
-  if (!r || !r.ok) {
-    // Fallback: aggregate in code
-    return await aggregateInCode();
-  }
-  const rows = await r.json();
-  return json(200, buildPayload(rows));
+  // Always use the code-aggregation path so the per-month draft logic applies.
+  return await aggregateInCode();
 };
 
 async function aggregateInCode(){
@@ -111,67 +98,79 @@ async function aggregateInCode(){
     return out;
   };
 
-  const [te, aliases, invoices, redder, pricing] = await Promise.all([
+  // === PRIMARY SOURCE OF TRUTH: invoice_drafts (per-month unbilled) ===
+  // Each row represents (worksite, month) hours that aren't yet invoiced.
+  // status in ('overdue','draft') = unbilled. 'invoiced' / 'sent' / 'skipped' = handled.
+  const drafts = await fetchAll('invoice_drafts',
+    'select=worksite_name,work_month,status,hours_dagvinna,total_m_vsk,rate_dagvinna');
+
+  // Per-worksite totals from drafts
+  const byWs = {};
+  for (const d of drafts) {
+    if (!d.worksite_name) continue;
+    if (GATA_VERKEFNI.has(d.worksite_name)) continue;
+    if (!['overdue','draft'].includes(d.status)) continue;
+    if (!byWs[d.worksite_name]) byWs[d.worksite_name] = {
+      worksite: d.worksite_name,
+      tv_hours: 0,          // we'll fill from timavera totals below
+      unbilled_hours: 0,
+      unbilled_kr_m_vsk: 0,
+      rate: 9951,
+      months: [],
+    };
+    byWs[d.worksite_name].unbilled_hours += Number(d.hours_dagvinna || 0);
+    byWs[d.worksite_name].unbilled_kr_m_vsk += Number(d.total_m_vsk || 0);
+    byWs[d.worksite_name].rate = Number(d.rate_dagvinna) || byWs[d.worksite_name].rate;
+    byWs[d.worksite_name].months.push(d.work_month);
+  }
+
+  // Add total Tímavera hours per worksite (for the equation top of Vinnustofa)
+  const [te, aliases] = await Promise.all([
     fetchAll('timavera_entries', 'select=project,hours,date&date=gte.2025-09-01'),
     fetchAll('project_aliases', 'select=alias,canonical_name'),
-    fetchAll('invoices', 'select=worksite_match,tilvisun,source,hofudstoll'),
-    fetchAll('redder_invoices', 'select=worksite_match,m_vsk,recharge_amount'),
-    fetchAll('pricing_guide', 'select=worksite_name,dagvinna_rate'),
   ]);
-
   const aliasMap = new Map(aliases.map(a => [a.alias, a.canonical_name]));
-  const rateMap  = new Map(pricing.filter(p => p.dagvinna_rate != null).map(p => [p.worksite_name, Number(p.dagvinna_rate)]));
-
-  const tvByWorksite = {};
+  const tvByWs = {};
   for (const e of te) {
     if (/almennt|veikindi|sick|work at home|kaffi|fundir|slökkvitæki ehf|brunahólf verkstæði/i.test(e.project || '')) continue;
     const ws = aliasMap.get(e.project) || e.project;
-    tvByWorksite[ws] = (tvByWorksite[ws] || 0) + Number(e.hours || 0);
-  }
-
-  // dedupe invoices by (worksite, tilvisun-no-trailing-.0)
-  const dedup = {};
-  for (const i of invoices) {
-    if (!i.worksite_match) continue;
-    const tnum = String(i.tilvisun || '').replace(/\.0$/, '');
-    const k = `${i.worksite_match}|${tnum}`;
-    if (!dedup[k]) dedup[k] = { worksite: i.worksite_match };
-    if (i.source === 'payday') dedup[k].payday_an = Number(i.hofudstoll || 0);
-    else if (i.source === 'landsbankinn_krafnir') dedup[k].krafa_m = Number(i.hofudstoll || 0);
-  }
-  const invByWorksite = {};
-  for (const k in dedup) {
-    const x = dedup[k];
-    const an = x.payday_an != null ? x.payday_an : (x.krafa_m ? x.krafa_m / 1.24 : 0);
-    invByWorksite[x.worksite] = (invByWorksite[x.worksite] || 0) + an;
-  }
-
-  const matByWorksite = {};
-  for (const m of redder) {
-    if (!m.worksite_match) continue;
-    const an = (Number(m.recharge_amount != null ? m.recharge_amount : m.m_vsk) || 0) / 1.24;
-    matByWorksite[m.worksite_match] = (matByWorksite[m.worksite_match] || 0) + an;
+    if (GATA_VERKEFNI.has(ws)) continue;
+    tvByWs[ws] = (tvByWs[ws] || 0) + Number(e.hours || 0);
   }
 
   const rows = [];
-  for (const ws in tvByWorksite) {
-    const hours = tvByWorksite[ws];
-    if (hours <= 5) continue;
-    if (GATA_VERKEFNI.has(ws)) continue; // billed by Ajour, not Tímavera hours
-    const rate = rateMap.get(ws) || 9951;
-    const inv  = invByWorksite[ws] || 0;
-    const mat  = matByWorksite[ws] || 0;
-    const billable = Math.max(inv - mat, 0);
-    const est_billed = billable / rate;
+  for (const ws in tvByWs) {
+    const tv = tvByWs[ws];
+    const draftInfo = byWs[ws] || { unbilled_hours: 0, unbilled_kr_m_vsk: 0, rate: 9951, months: [] };
+    const billed = tv - draftInfo.unbilled_hours;
     rows.push({
       worksite: ws,
-      tv_hours: Math.round(hours * 10) / 10,
-      rate,
-      invoiced_an_vsk: Math.round(inv),
-      materials_an_vsk: Math.round(mat),
-      est_billed_hours: Math.round(est_billed * 10) / 10,
-      unbilled_hours:  Math.round((hours - est_billed) * 10) / 10,
+      tv_hours: Math.round(tv * 10) / 10,
+      rate: draftInfo.rate,
+      invoiced_an_vsk: 0,             // legacy field; not meaningful in per-month mode
+      materials_an_vsk: 0,             // ditto
+      est_billed_hours: Math.round(Math.max(billed, 0) * 10) / 10,
+      unbilled_hours: Math.round(draftInfo.unbilled_hours * 10) / 10,
+      unbilled_kr_m_vsk: Math.round(draftInfo.unbilled_kr_m_vsk),
+      months: draftInfo.months.sort(),
     });
+  }
+  // Include worksites that have drafts but no TV entries (rare — manual drafts)
+  for (const ws in byWs) {
+    if (!tvByWs[ws]) {
+      const d = byWs[ws];
+      rows.push({
+        worksite: ws,
+        tv_hours: 0,
+        rate: d.rate,
+        invoiced_an_vsk: 0,
+        materials_an_vsk: 0,
+        est_billed_hours: 0,
+        unbilled_hours: Math.round(d.unbilled_hours * 10) / 10,
+        unbilled_kr_m_vsk: Math.round(d.unbilled_kr_m_vsk),
+        months: d.months.sort(),
+      });
+    }
   }
   rows.sort((a, b) => b.unbilled_hours - a.unbilled_hours);
   return json(200, buildPayload(rows));

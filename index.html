@@ -4276,27 +4276,26 @@ async function renderVinnustofa(t){
         <table class="vs-unb-table">
           <thead><tr>
             <th>Verkstaður</th>
-            <th class="num">Tímavera klst</th>
-            <th class="num">Áætl. rukkað</th>
-            <th class="num">Ósent</th>
-            <th class="num">≈ kr án vsk</th>
+            <th>Mánuðir með ósent</th>
+            <th class="num">Klst</th>
+            <th class="num">m. vsk</th>
           </tr></thead>
           <tbody>
             ${ubRows.map(r => {
-              const krEst = Math.round(r.unbilled_hours * (r.rate || 9951));
+              const monthsStr = (r.months||[]).map(monthLabelStatic).join(' · ');
+              const kr = r.unbilled_kr_m_vsk || Math.round(r.unbilled_hours * (r.rate || 9951) * 1.24);
               return `
                 <tr>
                   <td><button type="button" class="vs-unb-name" data-ub-ws="${escapeAttr(r.worksite)}">${escapeHtml(r.worksite)}</button></td>
-                  <td class="num">${r.tv_hours.toFixed(1)}</td>
-                  <td class="num">${r.est_billed_hours.toFixed(1)}</td>
+                  <td style="font-size:11px;color:var(--muted-2)">${escapeHtml(monthsStr)}</td>
                   <td class="num vs-unb-pos">${r.unbilled_hours.toFixed(1)}</td>
-                  <td class="num vs-unb-pos">${fmt(krEst)}</td>
+                  <td class="num vs-unb-pos">${fmt(kr)}</td>
                 </tr>`;
             }).join('')}
           </tbody>
         </table>
         <div style="font-size:11px;color:var(--muted);font-style:italic;margin-top:8px">
-          Áætl. rukkað = (samtals reikningar án vsk − efnisk. án vsk) / dagvinna_rate (per verkstað eða 9.951). Gata verkefni (Ajour) eru oft með "ofbillaðan" tölu því þau rukkast ekki úr klst.
+          Tölur koma úr invoice_drafts töflunni — hver mánaðar-lína sem hefur status 'overdue' eða 'draft' telst ósent.
         </div>
       `;
       // Click worksite name → open Workcenter directly with data we have
