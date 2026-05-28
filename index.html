@@ -4635,36 +4635,79 @@ async function renderVinnubok(t){
   if(!Array.isArray(state.ui.vb_collapsed_years)) state.ui.vb_collapsed_years = [];
   if(!['cards','table','minimal'].includes(state.ui.vb_layout)) state.ui.vb_layout = 'cards';
 
+  const VB_URLS = ['/api/worksites?year=combined', '/api/invoice-drafts', '/api/efnislisti-docs'];
+
+  function processResponses(ws, dr, ef){
+    data = {
+      worksites: ws.worksites || [],
+      drafts: {},
+      efnislisti: {},
+      rates: window.__rgPricingGuide || {},
+    };
+    for(const d of (dr.rows || [])){
+      data.drafts[`${d.worksite_name}|${d.work_month}`] = d;
+    }
+    for(const e of (ef.rows || [])){
+      const k = `${e.worksite_name}|${e.work_month}`;
+      if(!data.efnislisti[k]) data.efnislisti[k] = { id: e.drive_file_id, title: e.title };
+    }
+  }
+
+  // Read cache synchronously (no await) — gives instant render if previous data exists.
+  function readCacheSync(){
+    const cache = window.__dataCache || {};
+    const hits = VB_URLS.map(u => cache[u]);
+    if(!hits.every(h => h && h.ok)) return null;
+    try {
+      return hits.map(h => JSON.parse(h.body));
+    } catch { return null; }
+  }
+
   async function load(opts){
     const force = opts && opts.force;
-    $meta.textContent = 'Sækir…';
-    $refresh.disabled = true;
+    let renderedFromCache = false;
+
+    // 1. Instant render from cache if available (no spinner, no wait).
+    if(!force){
+      const cached = readCacheSync();
+      if(cached){
+        processResponses(cached[0], cached[1] || {rows:[]}, cached[2] || {rows:[]});
+        render();
+        renderedFromCache = true;
+        $meta.textContent = `${data.worksites.length} verkstaðir · samstillir…`;
+      }
+    }
+
+    // 2. Background revalidate (always — fresh data, then re-render quietly).
+    if(!renderedFromCache){
+      $meta.textContent = 'Sækir…';
+      $refresh.disabled = true;
+    } else {
+      $refresh.disabled = true;
+    }
     try{
       const [wsR, drR, efR] = await Promise.all([
-        cachedFetch('/api/worksites?year=combined', {force}),
-        cachedFetch('/api/invoice-drafts', {force}).catch(() => null),
-        cachedFetch('/api/efnislisti-docs', {force}).catch(() => null),
+        cachedFetch(VB_URLS[0], {force: true}),
+        cachedFetch(VB_URLS[1], {force: true}).catch(() => null),
+        cachedFetch(VB_URLS[2], {force: true}).catch(() => null),
       ]);
       const ws = wsR ? await wsR.json() : { worksites: [] };
       const dr = drR && drR.ok ? await drR.json() : { rows: [] };
       const ef = efR && efR.ok ? await efR.json() : { rows: [] };
-      data = {
-        worksites: ws.worksites || [],
-        drafts: {},        // key: worksite|month → { status, total_m_vsk, hours_dagvinna, ... }
-        efnislisti: {},    // key: worksite|month → first Drive doc {id, title}
-        rates: window.__rgPricingGuide || {},
-      };
-      for(const d of (dr.rows || [])){
-        data.drafts[`${d.worksite_name}|${d.work_month}`] = d;
-      }
-      for(const e of (ef.rows || [])){
-        const k = `${e.worksite_name}|${e.work_month}`;
-        if(!data.efnislisti[k]) data.efnislisti[k] = { id: e.drive_file_id, title: e.title };
-      }
+      // Snapshot focus so user typing in an input doesn't lose place during re-render.
+      const focused = document.activeElement;
+      const focusKey = focused && focused.dataset && focused.dataset.vbSaveAmt;
+      const selStart = focused && focused.selectionStart;
+      processResponses(ws, dr, ef);
       render();
-      $meta.textContent = `${data.worksites.length} verkstaðir`;
+      if(focusKey){
+        const el = document.querySelector(`[data-vb-save-amt="${CSS.escape(focusKey)}"]`);
+        if(el){ el.focus(); if(selStart != null) try { el.setSelectionRange(selStart, selStart); } catch {} }
+      }
+      $meta.textContent = `${data.worksites.length} verkstaðir · uppfært ${new Date().toLocaleTimeString('is-IS')}`;
     }catch(e){
-      $meta.textContent = 'Villa: '+(e.message||e);
+      if(!renderedFromCache) $meta.textContent = 'Villa: '+(e.message||e);
+      else $meta.textContent = `${data.worksites.length} verkstaðir · samstilling mistókst`;
     }finally{
       $refresh.disabled = false;
     }
