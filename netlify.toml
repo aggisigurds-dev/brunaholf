@@ -136,6 +136,12 @@
   to = "/.netlify/functions/hole-rates"
   status = 200
 
+# Drive search for Efnislisti files
+[[redirects]]
+  from = "/api/drive-files-search"
+  to = "/.netlify/functions/drive-files-search"
+  status = 200
+
 # Data sources freshness report — when each source was last imported
 [[redirects]]
   from = "/api/data-sources-status"

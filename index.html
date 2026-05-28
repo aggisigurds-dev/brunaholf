@@ -1508,6 +1508,7 @@ const DEFAULT_STATE = {
     {id:'kvittanir',  label:'Kvittanir & PDF', icon:'📷'},
     {id:'tenglar',    label:'Tenglar',    icon:'🔗'},
     {id:'reikningar', label:'Reikningagerð', icon:'💳'},
+    {id:'vinnubok', label:'Vinnubók', icon:'📝'},
     {id:'vinnustofa', label:'Vinnustofa', icon:'🎯'},
     {id:'verdskra', label:'Verðskrá', icon:'💰'},
     {id:'efniskostnadur', label:'Efniskostnaður', icon:'📦'},
@@ -1726,15 +1727,19 @@ function clearDataCache(){
 // state with an older snapshot from the server).
 function ensureNewTabs(s){
   if(!s || !Array.isArray(s.tabs)) return;
-  ['vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','spurningar'].forEach(id=>{
+  ['vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','spurningar'].forEach(id=>{
     if(!s.tabs.find(t=>t.id===id)){
       const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
       if(d){
-        // Vinnustofa goes RIGHT AFTER reikningar; verdskra after vinnustofa; efniskostnadur after verdskra
+        // Tab order: reikningar → vinnubok → vinnustofa → verdskra → efniskostnadur
         let target;
-        if(id === 'vinnustofa'){
+        if(id === 'vinnubok'){
           const idx = s.tabs.findIndex(t=>t.id==='reikningar');
           target = idx >= 0 ? idx + 1 : -1;
+        } else if(id === 'vinnustofa'){
+          const idx = s.tabs.findIndex(t=>t.id==='vinnubok');
+          const idx2 = s.tabs.findIndex(t=>t.id==='reikningar');
+          target = idx >= 0 ? idx + 1 : (idx2 >= 0 ? idx2 + 1 : -1);
         } else if(id === 'verdskra'){
           const idx = s.tabs.findIndex(t=>t.id==='vinnustofa');
           const idx2 = s.tabs.findIndex(t=>t.id==='reikningar');
@@ -1959,6 +1964,7 @@ function render(){
   if(t.id==='verdsamanburdur') return renderCompetitors(t);
   if(t.id==='verkstadir') return renderWorksites(t);
   if(t.id==='reikningar') return renderReikningagerd(t);
+  if(t.id==='vinnubok') return renderVinnubok(t);
   if(t.id==='vinnustofa') return renderVinnustofa(t);
   if(t.id==='verdskra') return renderVerdskra(t);
   if(t.id==='efniskostnadur') return renderEfniskostnadur(t);
@@ -4441,6 +4447,362 @@ async function rgOpenEfniEditor(worksite, month){
     $s.textContent = fail ? `✗ ${ok} vistuð, ${fail} mistakast` : ok ? `✓ ${ok} vistuð` : '— engin breyting';
     $s.className = 'wc-save-status ' + (fail ? 'wc-save-err' : 'wc-save-ok');
   };
+}
+
+/* ====================== VINNUBÓK (manual per-cell editor: hours, invoice kr, Drive attach) ====================== */
+async function renderVinnubok(t){
+  $view.innerHTML = `
+    <div class="rg-wrap">
+      <div class="rg-header">
+        <div>
+          <h1 class="rg-h1">Vinnubók <span class="rg-sub" id="vb-meta">Sækir…</span></h1>
+          <div class="rg-sub-line">Manual vinnusíða · breyttu reikningsupphæð per glugga, tengdu Efnislista úr Drive, fela verkstaði sem þú þarft ekki að skoða.</div>
+        </div>
+        <div class="rg-controls">
+          <button id="vb-refresh" class="tv-btn" type="button"><span class="tv-refresh-icon">↻</span> Sækja</button>
+          <button id="vb-month-back" class="tv-btn" type="button" title="Bæta við eldri mánuði">← mánuður</button>
+          <button id="vb-month-fwd" class="tv-btn" type="button" title="Bæta við nýrri mánuði">mánuður →</button>
+        </div>
+      </div>
+      <div id="vb-grid-host"></div>
+    </div>
+    <style>
+      .vb-grid{width:100%;border-collapse:separate;border-spacing:0;font-size:12px;background:var(--card-bg,#fff)}
+      .vb-grid th,.vb-grid td{border:1px solid var(--border,#e3e6ea);padding:0;vertical-align:top}
+      .vb-grid th{background:var(--header-bg,#f5f7fa);font-weight:600;padding:8px 10px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim,#5a6473);text-align:center}
+      .vb-row-name{padding:8px 10px;font-weight:600;background:var(--header-bg,#f5f7fa);min-width:170px;max-width:240px}
+      .vb-row-name small{display:block;font-weight:400;color:var(--text-dim,#5a6473);font-size:11px;margin-top:2px}
+      .vb-cell{min-width:155px;max-width:200px;padding:6px 7px;background:var(--card-bg,#fff)}
+      .vb-cell-has-hours{background:#fbfcfd}
+      .vb-cell-has-invoice{background:#f3faf3}
+      .vb-cell-mismatch{background:#fff4e0}
+      .vb-line{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;font-size:11px;color:var(--text-dim,#5a6473)}
+      .vb-line b{color:var(--text,#1f2933)}
+      .vb-input{width:100%;padding:5px 6px;border:1px solid var(--border,#d8dee9);border-radius:4px;font:inherit;text-align:right;background:#fff}
+      .vb-input:focus{border-color:var(--accent,#0a84ff);outline:none}
+      .vb-attach{display:flex;align-items:center;gap:4px;margin-top:4px;font-size:11px}
+      .vb-attach a{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--accent,#0a84ff);text-decoration:none}
+      .vb-attach a:hover{text-decoration:underline}
+      .vb-attach-btn{padding:2px 6px;border:1px solid var(--border,#d8dee9);border-radius:3px;background:transparent;font-size:11px;cursor:pointer;color:inherit}
+      .vb-attach-btn:hover{background:var(--header-bg,#f5f7fa)}
+      .vb-save-mini{font-size:10px;color:var(--text-dim,#5a6473);text-align:right;height:11px}
+      .vb-save-ok{color:#0a8a00}
+      .vb-save-err{color:#c40000}
+      .vb-hidden-bar{padding:8px 12px;background:var(--header-bg,#f5f7fa);border-radius:6px;margin-bottom:8px;font-size:12px;color:var(--text-dim,#5a6473)}
+      .vb-hide-btn{padding:2px 6px;font-size:10px;background:transparent;border:1px solid var(--border,#d8dee9);border-radius:3px;cursor:pointer;color:inherit;float:right;margin-left:4px}
+      .vb-hide-btn:hover{background:#fbeaea;border-color:#d99}
+      .vb-zero{color:var(--text-dim,#5a6473);font-style:italic}
+      /* Drive search modal */
+      .vb-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;display:flex;align-items:center;justify-content:center}
+      .vb-modal{background:var(--card-bg,#fff);color:var(--text,#1f2933);border-radius:10px;width:min(720px,92vw);max-height:85vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+      .vb-modal-h{padding:14px 18px;border-bottom:1px solid var(--border,#e3e6ea);font-weight:600;display:flex;align-items:center;justify-content:space-between}
+      .vb-modal-x{background:transparent;border:none;font-size:22px;cursor:pointer;color:inherit}
+      .vb-modal-body{padding:14px 18px;overflow-y:auto;flex:1}
+      .vb-search-row{display:flex;gap:6px;margin-bottom:10px}
+      .vb-search-row input{flex:1;padding:8px 10px;border:1px solid var(--border,#d8dee9);border-radius:5px;font:inherit;background:#fff;color:inherit}
+      .vb-file-li{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border:1px solid var(--border,#e3e6ea);border-radius:5px;margin-bottom:5px;cursor:pointer;background:#fff;color:inherit}
+      .vb-file-li:hover{background:var(--header-bg,#f5f7fa);border-color:var(--accent,#0a84ff)}
+      .vb-file-li small{color:var(--text-dim,#5a6473);font-size:11px;display:block;margin-top:2px}
+    </style>
+  `;
+
+  const $meta = document.getElementById('vb-meta');
+  const $refresh = document.getElementById('vb-refresh');
+  const $back = document.getElementById('vb-month-back');
+  const $fwd = document.getElementById('vb-month-fwd');
+  const $host = document.getElementById('vb-grid-host');
+  let data = null;
+
+  // persisted state for vinnubok grid (month window, hidden worksites)
+  state.ui = state.ui || {};
+  if(typeof state.ui.vb_months_back !== 'number') state.ui.vb_months_back = 8;
+  if(typeof state.ui.vb_months_fwd !== 'number') state.ui.vb_months_fwd = 0;
+  if(!Array.isArray(state.ui.vb_hidden)) state.ui.vb_hidden = [];
+
+  async function load(){
+    $meta.textContent = 'Sækir…';
+    $refresh.disabled = true;
+    try{
+      const [ws, dr, ef] = await Promise.all([
+        fetch('/api/worksites?year=combined').then(r => r.json()),
+        fetch('/api/invoice-drafts').then(r => r.json()).catch(() => ({rows:[]})),
+        fetch('/api/efnislisti-docs').then(r => r.json()).catch(() => ({rows:[]})),
+      ]);
+      data = {
+        worksites: ws.worksites || [],
+        drafts: {},        // key: worksite|month → { status, total_m_vsk, hours_dagvinna, ... }
+        efnislisti: {},    // key: worksite|month → first Drive doc {id, title}
+        rates: window.__rgPricingGuide || {},
+      };
+      for(const d of (dr.rows || [])){
+        data.drafts[`${d.worksite_name}|${d.work_month}`] = d;
+      }
+      for(const e of (ef.rows || [])){
+        const k = `${e.worksite_name}|${e.work_month}`;
+        if(!data.efnislisti[k]) data.efnislisti[k] = { id: e.drive_file_id, title: e.title };
+      }
+      render();
+      $meta.textContent = `${data.worksites.length} verkstaðir`;
+    }catch(e){
+      $meta.textContent = 'Villa: '+(e.message||e);
+    }finally{
+      $refresh.disabled = false;
+    }
+  }
+
+  function buildMonths(){
+    const today = new Date();
+    const out = [];
+    const back = state.ui.vb_months_back || 8;
+    const fwd  = state.ui.vb_months_fwd  || 0;
+    for(let i = back - 1; i >= -fwd; i--){
+      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      out.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+    }
+    return out;
+  }
+  function monthLabel(ym){
+    const [y,m] = ym.split('-');
+    const names = ['Jan','Feb','Mar','Apr','Maí','Jún','Júl','Ágú','Sep','Okt','Nóv','Des'];
+    return `${names[parseInt(m,10)-1]} ${y.slice(2)}`;
+  }
+  function rateFor(project){
+    const pg = (data.rates || {})[project];
+    return {
+      dv: Number(pg?.dagvinna_rate) || 9951,
+      ev: Number(pg?.eftirvinna_rate) || 14927,
+    };
+  }
+  function fmtIsk(n){ return n ? Math.round(n).toLocaleString('is-IS') : ''; }
+  function isGata(name){
+    return /landsspítal|landsspital|nlsh|heklu|dalvegur 30/i.test(name);
+  }
+
+  function render(){
+    if(!data){ $host.innerHTML = ''; return; }
+    const months = buildMonths();
+    const hidden = new Set(state.ui.vb_hidden || []);
+    const sites = (data.worksites || []).filter(w => {
+      if(/almennt|veikindi|sick|work at home|kaffi|fundir/i.test(w.project)) return false;
+      if(hidden.has(w.project)) return false;
+      const hasHours = months.some(ym => (w.monthly||{})[ym] > 0);
+      const hasInvoiceDraft = months.some(ym => data.drafts[`${w.project}|${ym}`]);
+      return hasHours || hasInvoiceDraft || (w.invoice_unpaid||0) > 0;
+    });
+    sites.sort((a,b) => (b.hours||0) - (a.hours||0));
+
+    const hiddenCount = (state.ui.vb_hidden || []).length;
+    const hiddenBar = hiddenCount
+      ? `<div class="vb-hidden-bar">${hiddenCount} verkstaðir faldir <button type="button" class="vb-attach-btn" id="vb-unhide-all" style="margin-left:8px">↻ Sýna alla aftur</button></div>`
+      : '';
+
+    const html = `
+      ${hiddenBar}
+      <div style="overflow-x:auto">
+        <table class="vb-grid">
+          <thead>
+            <tr>
+              <th class="vb-row-name" style="text-align:left">Verkstaður</th>
+              ${months.map(ym => `<th>${monthLabel(ym)}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            ${sites.map(w => renderRow(w, months)).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+    $host.innerHTML = html;
+
+    // wire cell events
+    $host.querySelectorAll('[data-vb-save-amt]').forEach(input => {
+      input.addEventListener('blur', () => saveAmount(input));
+      input.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); input.blur(); } });
+    });
+    $host.querySelectorAll('[data-vb-attach]').forEach(btn => {
+      btn.onclick = () => openDriveSearch(btn.dataset.vbAttach);
+    });
+    $host.querySelectorAll('[data-vb-hide]').forEach(btn => {
+      btn.onclick = () => {
+        const project = btn.dataset.vbHide;
+        if(!state.ui.vb_hidden.includes(project)){
+          state.ui.vb_hidden.push(project);
+          save(); render();
+        }
+      };
+    });
+    const $unhide = document.getElementById('vb-unhide-all');
+    if($unhide){
+      $unhide.onclick = () => { state.ui.vb_hidden = []; save(); render(); };
+    }
+  }
+
+  function renderRow(w, months){
+    const cust = (w.mapped_customers || [])[0] || '';
+    const rates = rateFor(w.project);
+    return `
+      <tr>
+        <td class="vb-row-name">
+          ${escapeHtml(w.project)}
+          <button type="button" class="vb-hide-btn" data-vb-hide="${escapeAttr(w.project)}" title="Fela verkstaðinn">×</button>
+          <small>${escapeHtml(cust)}${rates.dv !== 9951 ? ' · '+rates.dv+' kr/klst' : ''}</small>
+        </td>
+        ${months.map(ym => renderCell(w, ym, rates)).join('')}
+      </tr>
+    `;
+  }
+
+  function renderCell(w, ym, rates){
+    const hours = (w.monthly || {})[ym] || 0;
+    const estKr = !isGata(w.project) ? Math.round(hours * rates.dv * 1.24) : 0;
+    const draftKey = `${w.project}|${ym}`;
+    const draft = data.drafts[draftKey];
+    const draftKr = draft ? Number(draft.total_m_vsk || 0) : 0;
+    const ef = data.efnislisti[draftKey];
+    const hasInvoice = draftKr > 0;
+    const mismatch = hasInvoice && hours > 0 && Math.abs(draftKr - estKr) > Math.max(estKr * 0.1, 50000);
+    const cls = ['vb-cell'];
+    if(hours > 0) cls.push('vb-cell-has-hours');
+    if(hasInvoice) cls.push('vb-cell-has-invoice');
+    if(mismatch) cls.push('vb-cell-mismatch');
+
+    return `
+      <td class="${cls.join(' ')}" data-vb-cell="${escapeAttr(draftKey)}">
+        <div class="vb-line">
+          <span>Klst</span>
+          <b>${hours > 0 ? hours.toFixed(1) : '<span class="vb-zero">—</span>'}</b>
+        </div>
+        <div class="vb-line">
+          <span>Áætl.</span>
+          <b>${estKr > 0 ? fmtIsk(estKr) : '<span class="vb-zero">—</span>'}</b>
+        </div>
+        <div class="vb-line">
+          <span>Reikn.</span>
+          <input type="number" class="vb-input" data-vb-save-amt="${escapeAttr(draftKey)}"
+                 value="${draftKr || ''}" placeholder="—" step="1" inputmode="numeric">
+        </div>
+        <div class="vb-save-mini" data-vb-status="${escapeAttr(draftKey)}"></div>
+        <div class="vb-attach">
+          ${ef
+            ? `<a href="https://drive.google.com/file/d/${ef.id}/view" target="_blank" rel="noopener" title="${escapeAttr(ef.title || '')}">📎 ${escapeHtml((ef.title || 'Efnislisti').replace(/\.(xlsx|pdf|docx)$/i, ''))}</a>
+               <button type="button" class="vb-attach-btn" data-vb-attach="${escapeAttr(draftKey)}" title="Skipta um skjal">↻</button>`
+            : `<button type="button" class="vb-attach-btn" data-vb-attach="${escapeAttr(draftKey)}" style="width:100%">+ Tengja Efnislista</button>`
+          }
+        </div>
+      </td>
+    `;
+  }
+
+  async function saveAmount(input){
+    const key = input.dataset.vbSaveAmt;
+    const [worksite, month] = key.split('|');
+    const newAmount = input.value === '' ? null : Number(input.value);
+    const $st = document.querySelector(`[data-vb-status="${CSS.escape(key)}"]`);
+    if($st){ $st.textContent = 'Vistar…'; $st.className = 'vb-save-mini'; }
+    try {
+      const existing = data.drafts[key];
+      const r = await fetch('/api/invoice-drafts', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          worksite_name: worksite,
+          work_month: month,
+          total_m_vsk: newAmount,
+          status: existing?.status || (newAmount ? 'draft' : 'draft'),
+          notes: `Handvirkt skráð í Vinnubók (${new Date().toLocaleString('is-IS')})`,
+          updated_by: 'vinnubok',
+        }),
+      });
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const saved = await r.json();
+      data.drafts[key] = saved;
+      if($st){ $st.textContent = '✓ vistað'; $st.className = 'vb-save-mini vb-save-ok'; }
+      // re-render just this cell (cheap: re-render whole row by re-rendering all)
+      // Skip a full re-render to keep focus; trust the data update.
+    } catch(e){
+      if($st){ $st.textContent = '✗ '+(e.message||e); $st.className = 'vb-save-mini vb-save-err'; }
+    }
+  }
+
+  function openDriveSearch(cellKey){
+    const [worksite, month] = cellKey.split('|');
+    const defaultQuery = `Efnislisti ${worksite} ${month}`;
+    const wrap = document.createElement('div');
+    wrap.className = 'vb-modal-bg';
+    wrap.innerHTML = `
+      <div class="vb-modal" role="dialog">
+        <div class="vb-modal-h">
+          <span>Tengja Efnislista — <b>${escapeHtml(worksite)}</b> · ${month}</span>
+          <button type="button" class="vb-modal-x" data-vb-close>×</button>
+        </div>
+        <div class="vb-modal-body">
+          <div class="vb-search-row">
+            <input type="text" id="vb-q" value="${escapeAttr(defaultQuery)}" placeholder="Leita í Drive...">
+            <button type="button" class="tv-btn" id="vb-go">Leita</button>
+          </div>
+          <div id="vb-results">Smelltu „Leita" til að finna skjöl.</div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(wrap);
+    const close = () => wrap.remove();
+    wrap.addEventListener('click', e => { if(e.target === wrap) close(); });
+    wrap.querySelector('[data-vb-close]').onclick = close;
+    const $q = wrap.querySelector('#vb-q');
+    const $go = wrap.querySelector('#vb-go');
+    const $r = wrap.querySelector('#vb-results');
+
+    async function runSearch(){
+      const q = $q.value.trim();
+      if(!q) return;
+      $r.innerHTML = 'Leitar…';
+      try {
+        const resp = await fetch('/api/drive-files-search?q='+encodeURIComponent(q));
+        const data = await resp.json();
+        if(!resp.ok) throw new Error(data.error || ('HTTP '+resp.status));
+        const files = data.files || [];
+        if(!files.length){ $r.innerHTML = '<i>Engin skjöl fundust.</i>'; return; }
+        $r.innerHTML = files.map(f => `
+          <div class="vb-file-li" data-pick='${escapeAttr(JSON.stringify({id:f.id, name:f.name}))}'>
+            <div>
+              <div><b>${escapeHtml(f.name)}</b></div>
+              <small>${f.mime.replace('application/','').replace('vnd.openxmlformats-officedocument.','').slice(0,30)} · ${new Date(f.modified).toLocaleDateString('is-IS')}</small>
+            </div>
+            <div>
+              <a href="${f.web_link}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="font-size:11px;margin-right:6px">👁 sjá</a>
+              <span class="vb-attach-btn">tengja →</span>
+            </div>
+          </div>
+        `).join('');
+        $r.querySelectorAll('[data-pick]').forEach(el => {
+          el.onclick = async () => {
+            const pick = JSON.parse(el.dataset.pick);
+            try {
+              const r = await fetch('/api/efnislisti-docs', {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ worksite_name: worksite, work_month: month, drive_file_id: pick.id, title: pick.name }),
+              });
+              if(!r.ok) throw new Error('HTTP '+r.status);
+              data.efnislisti[cellKey] = { id: pick.id, title: pick.name };
+              render();
+              close();
+            } catch(e){
+              alert('Tenging mistókst: '+(e.message||e));
+            }
+          };
+        });
+      } catch(e){
+        $r.innerHTML = '<i style="color:#c40000">Villa: '+(e.message||e)+'</i>';
+      }
+    }
+    $go.onclick = runSearch;
+    $q.addEventListener('keydown', e => { if(e.key === 'Enter') runSearch(); });
+    runSearch();
+  }
+
+  $refresh.onclick = load;
+  $back.onclick = () => { state.ui.vb_months_back = Math.min((state.ui.vb_months_back||8) + 2, 24); save(); render(); };
+  $fwd.onclick = () => { state.ui.vb_months_fwd = Math.min((state.ui.vb_months_fwd||0) + 1, 6); save(); render(); };
+  load();
 }
 
 /* ====================== VERÐSKRÁ (rate / pricing-guide editor) ====================== */
