@@ -940,6 +940,8 @@ main{padding:14px;max-width:1100px;margin:0 auto;flex:1;min-width:0;width:100%}
 /* clickable rei/gr — when toggled "billed manually", the row is muted/struck */
 .rg-cb-clickable{cursor:pointer;user-select:none;transition:opacity 100ms ease}
 .rg-cb-clickable:hover{opacity:.7}
+.rg-month-doc{margin-right:4px;font-size:11px;text-decoration:none;color:var(--blue,#2563eb);opacity:.7;transition:opacity 100ms ease}
+.rg-month-doc:hover{opacity:1;transform:scale(1.1)}
 .rg-month.rg-billed-manual{opacity:.55;background:#F4F4F0}
 .rg-month.rg-billed-manual .rg-month-amt{text-decoration:line-through;color:var(--muted-2)}
 .rg-month.rg-billed-manual::after{content:'rukkað í öðrum reikningi';display:block;font-size:9px;color:var(--muted);font-style:italic;text-align:center;margin-top:2px}
@@ -3023,9 +3025,10 @@ function renderReikningagerd(t){
     setMeta('Sækir…');
     if($refresh){ $refresh.disabled = true; $refresh.classList.add('loading'); }
     try{
-      const [r, drR] = await Promise.all([
+      const [r, drR, efR] = await Promise.all([
         fetch('/api/worksites?year=combined'),
         fetch('/api/invoice-drafts?status=invoiced').catch(() => null),
+        fetch('/api/efnislisti-docs').catch(() => null),
       ]);
       if(!r.ok) throw new Error('HTTP '+r.status);
       lastData = await r.json();
@@ -3037,6 +3040,16 @@ function renderReikningagerd(t){
           if (row.status === 'invoiced') {
             lastData.manual_billed[`${row.worksite_name}|${row.work_month}`] = true;
           }
+        }
+      }
+      // Build a map of (worksite, month) → efnislisti drive file URL
+      lastData.efnislisti = {};
+      if (efR && efR.ok) {
+        const { rows } = await efR.json();
+        for (const row of (rows||[])) {
+          const k = `${row.worksite_name}|${row.work_month}`;
+          if (!lastData.efnislisti[k]) lastData.efnislisti[k] = [];
+          lastData.efnislisti[k].push({ id: row.drive_file_id, title: row.title });
         }
       }
       // Bail out if a tab switch destroyed our DOM while the fetch was in flight
@@ -3227,10 +3240,16 @@ function renderReikningagerd(t){
             // Check if user has manually marked this month as billed (via override in invoice_drafts)
             const manualBilled = (lastData.manual_billed||{})[`${w.project}|${ym}`];
             const billedCls = manualBilled ? ' rg-billed-manual' : '';
+            // Efnislisti docs linked for this (worksite, month) — show 📎 link to the first one
+            const efDocs = (lastData.efnislisti||{})[`${w.project}|${ym}`] || [];
+            const efLink = efDocs.length
+              ? `<a class="rg-month-doc" href="https://drive.google.com/file/d/${efDocs[0].id}/view" target="_blank" rel="noopener" title="Efnislisti: ${escapeAttr(efDocs[0].title)}${efDocs.length>1?' (+'+(efDocs.length-1)+' fleiri)':''}" onclick="event.stopPropagation()">📎</a>`
+              : '';
             return `
               <td class="rg-month${needsBill && !manualBilled?' rg-month-needs':''}${billedCls}" title="${needsBill?(monthHours.toFixed(1)+' klst skráðar — engin reikningur'):''}">
                 <div class="rg-month-amt ${cellCls}">${cellInner}</div>
                 <div class="rg-cb-row">
+                  ${efLink}
                   <span class="rg-cb rg-cb-clickable ${rei||manualBilled?'rg-cb-ok':'rg-cb-no'}" data-rg-toggle-rei="${escapeAttr(w.project)}|${ym}" title="Smelltu til að merkja sem rukkað (bundlað í annan reikning eða sent of seint)">${rei||manualBilled?'☑':'☐'} rei</span>
                   <span class="rg-cb ${greitt?'rg-cb-ok':'rg-cb-no'}" title="${greitt?'Greitt':'Ógreitt'}">${greitt?'☑':'☐'} gr</span>
                 </div>
