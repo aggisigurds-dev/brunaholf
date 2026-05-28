@@ -1509,6 +1509,7 @@ const DEFAULT_STATE = {
     {id:'tenglar',    label:'Tenglar',    icon:'🔗'},
     {id:'reikningar', label:'Reikningagerð', icon:'💳'},
     {id:'vinnustofa', label:'Vinnustofa', icon:'🎯'},
+    {id:'verdskra', label:'Verðskrá', icon:'💰'},
     {id:'efniskostnadur', label:'Efniskostnaður', icon:'📦'},
     {id:'utgjold',    label:'Útgjöld',    icon:'💸', sheetCsv:''},
     {id:'stillingar', label:'Stillingar', icon:'⚙️'}
@@ -1725,19 +1726,24 @@ function clearDataCache(){
 // state with an older snapshot from the server).
 function ensureNewTabs(s){
   if(!s || !Array.isArray(s.tabs)) return;
-  ['vinnustofa','efniskostnadur','kvittanir','minverkefni','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','spurningar'].forEach(id=>{
+  ['vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','spurningar'].forEach(id=>{
     if(!s.tabs.find(t=>t.id===id)){
       const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
       if(d){
-        // Vinnustofa goes RIGHT AFTER reikningar; efniskostnadur after that
+        // Vinnustofa goes RIGHT AFTER reikningar; verdskra after vinnustofa; efniskostnadur after verdskra
         let target;
         if(id === 'vinnustofa'){
           const idx = s.tabs.findIndex(t=>t.id==='reikningar');
           target = idx >= 0 ? idx + 1 : -1;
-        } else if(id === 'efniskostnadur'){
+        } else if(id === 'verdskra'){
           const idx = s.tabs.findIndex(t=>t.id==='vinnustofa');
           const idx2 = s.tabs.findIndex(t=>t.id==='reikningar');
           target = idx >= 0 ? idx + 1 : (idx2 >= 0 ? idx2 + 1 : -1);
+        } else if(id === 'efniskostnadur'){
+          const idx = s.tabs.findIndex(t=>t.id==='verdskra');
+          const idx2 = s.tabs.findIndex(t=>t.id==='vinnustofa');
+          const idx3 = s.tabs.findIndex(t=>t.id==='reikningar');
+          target = idx >= 0 ? idx + 1 : (idx2 >= 0 ? idx2 + 1 : (idx3 >= 0 ? idx3 + 1 : -1));
         } else {
           target = s.tabs.findIndex(t=>t.id==='tenglar');
         }
@@ -1954,6 +1960,7 @@ function render(){
   if(t.id==='verkstadir') return renderWorksites(t);
   if(t.id==='reikningar') return renderReikningagerd(t);
   if(t.id==='vinnustofa') return renderVinnustofa(t);
+  if(t.id==='verdskra') return renderVerdskra(t);
   if(t.id==='efniskostnadur') return renderEfniskostnadur(t);
   if(t.checklist!==undefined) return renderChecklist(t);
   if(t.sheetCsv!==undefined) return renderListTab(t);
@@ -4434,6 +4441,331 @@ async function rgOpenEfniEditor(worksite, month){
     $s.textContent = fail ? `✗ ${ok} vistuð, ${fail} mistakast` : ok ? `✓ ${ok} vistuð` : '— engin breyting';
     $s.className = 'wc-save-status ' + (fail ? 'wc-save-err' : 'wc-save-ok');
   };
+}
+
+/* ====================== VERÐSKRÁ (rate / pricing-guide editor) ====================== */
+async function renderVerdskra(t){
+  $view.innerHTML = `
+    <div class="rg-wrap">
+      <div class="rg-header">
+        <div>
+          <h1 class="rg-h1">Verðskrá <span class="rg-sub" id="vs-meta">Sækir…</span></h1>
+          <div class="rg-sub-line">Stillir taxta, akstursgjald, smáhlutagjald og staðfestingu per verkstað · breytir generic gata-Verðskrá fyrir Dalvegur/Heklureitur</div>
+        </div>
+        <div class="rg-controls">
+          <button id="vs-refresh" class="tv-btn" type="button"><span class="tv-refresh-icon">↻</span> Sækja</button>
+          <button id="vs-add" class="tv-btn" type="button">+ Nýr verkstaður</button>
+        </div>
+      </div>
+
+      <div class="vs-tabs">
+        <button type="button" class="vs-tab vs-tab-active" data-vs-tab="worksites">Per verkstað</button>
+        <button type="button" class="vs-tab" data-vs-tab="holes">Gata-Verðskrá (göt)</button>
+        <button type="button" class="vs-tab" data-vs-tab="bands">Bönd / Kragar / Borði</button>
+        <button type="button" class="vs-tab" data-vs-tab="nlsh">NLSH samningur</button>
+      </div>
+
+      <div id="vs-panel-worksites" class="vs-panel"></div>
+      <div id="vs-panel-holes" class="vs-panel" hidden></div>
+      <div id="vs-panel-bands" class="vs-panel" hidden></div>
+      <div id="vs-panel-nlsh" class="vs-panel" hidden></div>
+    </div>
+    <style>
+      .vs-tabs{display:flex;gap:6px;margin:14px 0 12px;flex-wrap:wrap}
+      .vs-tab{padding:8px 14px;background:var(--card-bg,#fff);border:1px solid var(--border,#d8dee9);border-radius:8px;color:var(--text,#1f2933);cursor:pointer;font-size:13px;font-weight:600}
+      .vs-tab-active{background:var(--accent,#0a84ff);color:#fff;border-color:var(--accent,#0a84ff)}
+      .vs-table{width:100%;border-collapse:collapse;font-size:13px;background:var(--card-bg,#fff);border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+      .vs-table th,.vs-table td{padding:8px 10px;border-bottom:1px solid var(--border,#eef0f2);text-align:left;vertical-align:middle}
+      .vs-table th{background:var(--header-bg,#f5f7fa);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim,#5a6473)}
+      .vs-table tr:last-child td{border-bottom:none}
+      .vs-table tr:hover{background:var(--row-hover,#fafbfc)}
+      .vs-input{width:100%;padding:5px 7px;border:1px solid transparent;border-radius:4px;background:transparent;color:inherit;font:inherit;text-align:right}
+      .vs-input:hover{border-color:var(--border,#d8dee9);background:#fff}
+      .vs-input:focus{border-color:var(--accent,#0a84ff);background:#fff;outline:none}
+      .vs-input-text{text-align:left}
+      .vs-cb{transform:scale(1.1)}
+      .vs-source-pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;letter-spacing:.02em;text-transform:uppercase}
+      .vs-source-timavera{background:#e8f3ff;color:#0a5cad}
+      .vs-source-ajour{background:#fff2e0;color:#a96900}
+      .vs-source-fixed{background:#f0f0f0;color:#444}
+      .vs-save-status{margin-left:10px;font-size:12px;color:var(--text-dim,#5a6473)}
+      .vs-save-ok{color:#0a8a00}
+      .vs-save-err{color:#c40000}
+      .vs-notes{font-size:11px;color:var(--text-dim,#5a6473);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .vs-help{background:var(--info-bg,#f0f7ff);border-left:3px solid var(--accent,#0a84ff);padding:10px 14px;border-radius:4px;font-size:13px;margin-bottom:12px;color:var(--text,#1f2933)}
+      .vs-help b{display:block;margin-bottom:4px}
+      .vs-grid-2col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+      @media (max-width:900px){.vs-grid-2col{grid-template-columns:1fr}}
+    </style>
+  `;
+
+  const $meta = document.getElementById('vs-meta');
+  const $refresh = document.getElementById('vs-refresh');
+  let pgRows = [], holeRows = [];
+
+  async function load(){
+    $meta.textContent = 'Sækir…';
+    $refresh.disabled = true;
+    try{
+      const [pgR, hrR] = await Promise.all([
+        fetch('/api/pricing-guide'),
+        fetch('/api/hole-rates'),
+      ]);
+      if(!pgR.ok) throw new Error('pricing-guide HTTP '+pgR.status);
+      if(!hrR.ok) throw new Error('hole-rates HTTP '+hrR.status);
+      pgRows = ((await pgR.json()).rows || []).sort((a,b) => (a.worksite_name||'').localeCompare(b.worksite_name||'','is'));
+      holeRows = ((await hrR.json()).rows || []);
+      renderWorksites();
+      renderHoles();
+      renderBands();
+      renderNlsh();
+      $meta.textContent = `${pgRows.length} verkstaðir · ${holeRows.length} gata-verð`;
+    }catch(e){
+      $meta.textContent = 'Villa: '+(e.message||e);
+    }finally{
+      $refresh.disabled = false;
+    }
+  }
+
+  function renderWorksites(){
+    const $p = document.getElementById('vs-panel-worksites');
+    $p.innerHTML = `
+      <div class="vs-help">
+        <b>Per verkstað:</b> stilltu taxta, akstursgjald (kr/km + kr/ferð), smáhlutagjald (kr × klst), VSK% og hvort staðfesting brunaþéttinga sé sjálfvirk. <i>Source</i> stýrir hvort verkið er Tímavera-byggt (hourly), Ajour-byggt (gata) eða fastagjald.
+      </div>
+      <table class="vs-table">
+        <thead>
+          <tr>
+            <th>Verkstaður</th>
+            <th>Viðskiptavinur</th>
+            <th>Source</th>
+            <th title="Dagvinna taxti">Dv kr/klst</th>
+            <th title="Eftirvinna taxti">Ev kr/klst</th>
+            <th title="Akstur kr/km">km</th>
+            <th title="Akstur kr/ferð">ferð</th>
+            <th title="Smáhlutagjald kr × dagvinna klst">SH/klst</th>
+            <th title="Staðfesting brunaþéttinga (fastur)">Staðf.</th>
+            <th>VSK%</th>
+            <th title="Fast verð override (yfirskrifar útreikning)">Fastagjald</th>
+            <th>Retention%</th>
+            <th>Aths.</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${pgRows.map((r,i) => renderWorksiteRow(r, i)).join('')}
+        </tbody>
+      </table>
+    `;
+    $p.querySelectorAll('[data-vs-save]').forEach(btn => {
+      btn.onclick = () => saveWorksite(parseInt(btn.dataset.vsSave,10));
+    });
+  }
+
+  function renderWorksiteRow(r, i){
+    const src = r.source || 'timavera';
+    return `
+      <tr data-vs-row="${i}">
+        <td><input class="vs-input vs-input-text" data-f="worksite_name" value="${escapeAttr(r.worksite_name||'')}" placeholder="Nafn"></td>
+        <td><input class="vs-input vs-input-text" data-f="customer_name" value="${escapeAttr(r.customer_name||'')}" placeholder="Viðskiptavinur"></td>
+        <td>
+          <select class="vs-input vs-input-text" data-f="source">
+            <option value="timavera" ${src==='timavera'?'selected':''}>timavera</option>
+            <option value="ajour"    ${src==='ajour'?'selected':''}>ajour</option>
+            <option value="fixed"    ${src==='fixed'?'selected':''}>fixed</option>
+          </select>
+        </td>
+        <td><input class="vs-input" type="number" data-f="dagvinna_rate"     value="${r.dagvinna_rate||''}" placeholder="9951"></td>
+        <td><input class="vs-input" type="number" data-f="eftirvinna_rate"   value="${r.eftirvinna_rate||''}" placeholder="14927"></td>
+        <td><input class="vs-input" type="number" data-f="akstur_km_rate"    value="${r.akstur_km_rate||''}" placeholder="186"></td>
+        <td><input class="vs-input" type="number" data-f="akstur_ferd_rate"  value="${r.akstur_ferd_rate||''}" placeholder="4000"></td>
+        <td><input class="vs-input" type="number" data-f="smahlutagjald_per_h" value="${r.smahlutagjald_per_h||''}" placeholder="137"></td>
+        <td style="text-align:center">
+          <input type="checkbox" class="vs-cb" data-f="stadfesting_default" ${r.stadfesting_default?'checked':''}>
+        </td>
+        <td><input class="vs-input" type="number" data-f="vsk_pct" value="${r.vsk_pct||24}" placeholder="24" step="0.01"></td>
+        <td><input class="vs-input" type="number" data-f="fixed_amount" value="${r.fixed_amount||''}" placeholder="—"></td>
+        <td><input class="vs-input" type="number" data-f="retention_pct" value="${r.retention_pct||''}" placeholder="0" step="0.01"></td>
+        <td><input class="vs-input vs-input-text vs-notes" data-f="notes" value="${escapeAttr(r.notes||'')}" placeholder="..."></td>
+        <td><button type="button" class="tv-btn" data-vs-save="${i}">Vista</button> <span class="vs-save-status" data-vs-status="${i}"></span></td>
+      </tr>
+    `;
+  }
+
+  async function saveWorksite(i){
+    const row = document.querySelector(`tr[data-vs-row="${i}"]`);
+    if(!row) return;
+    const $st = row.querySelector('[data-vs-status]');
+    $st.textContent = 'Vistar…'; $st.className = 'vs-save-status';
+    const payload = {};
+    row.querySelectorAll('[data-f]').forEach(el => {
+      const f = el.dataset.f;
+      if(el.type === 'checkbox') payload[f] = el.checked;
+      else if(el.type === 'number') payload[f] = el.value === '' ? null : Number(el.value);
+      else payload[f] = el.value || null;
+    });
+    if(!payload.worksite_name){
+      $st.textContent = '✗ Vantar verkstað'; $st.className = 'vs-save-status vs-save-err';
+      return;
+    }
+    try {
+      const r = await fetch('/api/pricing-guide', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload),
+      });
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const saved = await r.json();
+      pgRows[i] = saved;
+      $st.textContent = '✓ Vistað'; $st.className = 'vs-save-status vs-save-ok';
+    } catch(e){
+      $st.textContent = '✗ '+(e.message||e); $st.className = 'vs-save-status vs-save-err';
+    }
+  }
+
+  function renderHoles(){
+    const $p = document.getElementById('vs-panel-holes');
+    const holes = holeRows.filter(r => r.category === 'hole');
+    $p.innerHTML = `
+      <div class="vs-help">
+        <b>Gata-Verðskrá (göt — Brunalokanir):</b> verðskrá fyrir Dalvegur 30 og Heklureitur (Ajour-byggt). Ajour <code>category_group = "Gat Ø NNN-NNN"</code> mapast beint á þessar bucketin. ${holes.length} buckets, 50mm trappa. Verð er <b>án vsk</b> — m. vsk = × 1,24.
+      </div>
+      <table class="vs-table">
+        <thead><tr><th>Stærð</th><th>Verð án vsk</th><th>Verð m. vsk</th><th>Aths.</th><th></th></tr></thead>
+        <tbody>${holes.map(renderHoleRow).join('')}</tbody>
+      </table>
+    `;
+    bindHoleSave($p);
+  }
+
+  function renderBands(){
+    const $p = document.getElementById('vs-panel-bands');
+    const kragi = holeRows.filter(r => r.category === 'kragi');
+    const bordi = holeRows.filter(r => r.category === 'bordi');
+    $p.innerHTML = `
+      <div class="vs-help">
+        <b>Bönd / Kragar / Borði:</b> þessir eru <i>handvirkt færðir inn</i> á mánaðar Excel sheetinu fyrir Dalvegur/Heklureitur (ekki í Ajour). Notað sem <code>bands_m_vsk</code> override í /api/gata-uppgjor.
+      </div>
+      <div class="vs-grid-2col">
+        <div>
+          <h3 style="margin:0 0 8px;font-size:14px">Eldvarnarkragi</h3>
+          <table class="vs-table">
+            <thead><tr><th>Stærð</th><th>Verð án vsk</th><th>Verð m. vsk</th><th></th></tr></thead>
+            <tbody>${kragi.map(renderHoleRow).join('')}</tbody>
+          </table>
+        </div>
+        <div>
+          <h3 style="margin:0 0 8px;font-size:14px">Eldvarnar borði / band / háþenslukítti</h3>
+          <table class="vs-table">
+            <thead><tr><th>Stærð</th><th>Verð án vsk</th><th>Verð m. vsk</th><th></th></tr></thead>
+            <tbody>${bordi.map(renderHoleRow).join('')}</tbody>
+          </table>
+        </div>
+      </div>
+    `;
+    bindHoleSave($p);
+  }
+
+  function renderHoleRow(r){
+    const mvsk = Math.round((Number(r.rate_an_vsk)||0) * 1.24);
+    return `
+      <tr data-hr-row="${r.id}">
+        <td><b>${escapeHtml(r.size_label)}</b></td>
+        <td><input class="vs-input" type="number" data-hr-f="rate_an_vsk" value="${r.rate_an_vsk}" step="1"></td>
+        <td style="text-align:right;color:var(--text-dim,#5a6473)" data-hr-mvsk>${mvsk.toLocaleString('is-IS')} kr</td>
+        ${r.category === 'hole' ? `<td><input class="vs-input vs-input-text vs-notes" data-hr-f="notes" value="${escapeAttr(r.notes||'')}" placeholder=""></td>` : ''}
+        <td><button type="button" class="tv-btn" data-hr-save="${r.id}">Vista</button> <span class="vs-save-status" data-hr-status="${r.id}"></span></td>
+      </tr>
+    `;
+  }
+
+  function bindHoleSave($p){
+    $p.querySelectorAll('[data-hr-save]').forEach(btn => {
+      btn.onclick = async () => {
+        const id = parseInt(btn.dataset.hrSave,10);
+        const row = $p.querySelector(`tr[data-hr-row="${id}"]`);
+        const $st = row.querySelector('[data-hr-status]');
+        $st.textContent = 'Vistar…'; $st.className = 'vs-save-status';
+        const payload = { id };
+        row.querySelectorAll('[data-hr-f]').forEach(el => {
+          payload[el.dataset.hrF] = el.type === 'number' ? Number(el.value) : (el.value || null);
+        });
+        try {
+          const r = await fetch('/api/hole-rates', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify(payload),
+          });
+          if(!r.ok) throw new Error('HTTP '+r.status);
+          const saved = await r.json();
+          const idx = holeRows.findIndex(x => x.id === id);
+          if(idx >= 0) holeRows[idx] = saved;
+          row.querySelector('[data-hr-mvsk]').textContent = Math.round(Number(saved.rate_an_vsk||0) * 1.24).toLocaleString('is-IS') + ' kr';
+          $st.textContent = '✓ Vistað'; $st.className = 'vs-save-status vs-save-ok';
+        } catch(e){
+          $st.textContent = '✗ '+(e.message||e); $st.className = 'vs-save-status vs-save-err';
+        }
+      };
+    });
+  }
+
+  function renderNlsh(){
+    const $p = document.getElementById('vs-panel-nlsh');
+    // NLSH contract rates from CLAUDE.md — display-only; sit in code rather than a table.
+    const rates = [
+      { nr:'1.1', label:'Ø100-150 Golf/Hæðarskil', target:50,  verd:38806 },
+      { nr:'1.2', label:'Ø160-200 Golf/Hæðarskil', target:100, verd:56224 },
+      { nr:'1.3', label:'Ø210-300 Golf/Hæðarskil', target:25,  verd:65116 },
+      { nr:'2.1', label:'Ø20-34 plaströr',                target:600,  verd:7166  },
+      { nr:'2.2', label:'(35-50) plaströr m eldv. kraga', target:600,  verd:19532 },
+      { nr:'2.3', label:'Ø75-100 plaströr',               target:100,  verd:23720 },
+      { nr:'2.4', label:'Ø15-35 stálrör',                 target:800,  verd:7166  },
+      { nr:'2.5', label:'Ø40-50 stálrör',                 target:1100, verd:7366  },
+      { nr:'2.6', label:'Ø75-110 stálrör',                target:350,  verd:7566  },
+      { nr:'2.7', label:'Ø110-160 stálrör',               target:100,  verd:8066  },
+      { nr:'2.8', label:'Ø125-160 loftstokkar',           target:600,  verd:11532 },
+      { nr:'2.9', label:'Ø200-315 loftstokkar',           target:600,  verd:23064 },
+      { nr:'2.10', label:'Ø400-630 loftstokkar',          target:109,  verd:46128 },
+      { nr:'2.11', label:'Frágangur raufa (metrar)',      target:102,  verd:11532 },
+      { nr:'3.1', label:'Rafmagnsraufar',                 target:768,  verd:9766  },
+    ];
+    $p.innerHTML = `
+      <div class="vs-help">
+        <b>NLSH (Landsspítalinn 5-6 hæð) — sérsamningur við ÞG verktaka:</b> verðlisti er fast skipt eftir verkliðum (verk nr 1.1 → 3.1). 1 heild = 2 stakar (úr Ajour). Þessi taxti er <b>m. vsk</b> per heild. <i>Þessi tafla er nú aðeins lesin — uppfærsla á NLSH samningi krefst kóða-breytinga; gefðu mér samningstextann og ég uppfæri.</i>
+      </div>
+      <table class="vs-table">
+        <thead><tr><th>Nr</th><th>Verkliður</th><th>Markmið (heilar)</th><th>Verð / heild (m. vsk)</th></tr></thead>
+        <tbody>
+          ${rates.map(r => `
+            <tr>
+              <td><b>${r.nr}</b></td>
+              <td>${escapeHtml(r.label)}</td>
+              <td style="text-align:right">${r.target.toLocaleString('is-IS')}</td>
+              <td style="text-align:right;font-weight:600">${r.verd.toLocaleString('is-IS')} kr</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  // Tab switching
+  document.querySelectorAll('[data-vs-tab]').forEach(b => {
+    b.onclick = () => {
+      document.querySelectorAll('[data-vs-tab]').forEach(x => x.classList.toggle('vs-tab-active', x === b));
+      ['worksites','holes','bands','nlsh'].forEach(id => {
+        const el = document.getElementById(`vs-panel-${id}`);
+        if(el) el.hidden = id !== b.dataset.vsTab;
+      });
+    };
+  });
+
+  // Add empty row → opens an editor row
+  document.getElementById('vs-add').onclick = () => {
+    pgRows.unshift({ worksite_name:'', customer_name:'', source:'timavera', vsk_pct:24, akstur_km_rate:186, akstur_ferd_rate:4000, smahlutagjald_per_h:137 });
+    renderWorksites();
+  };
+
+  $refresh.onclick = load;
+  load();
 }
 
 /* ====================== EFNISKOSTNAÐUR (Redder material costs per worksite/month) ====================== */

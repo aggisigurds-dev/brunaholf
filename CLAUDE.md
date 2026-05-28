@@ -47,6 +47,7 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
 - `verdsamanburdur` — Verðsamanburður / competitor pricing (renderCompetitors)
 - `verkstadir` — worksite billing audit (renderWorksites, ~line 2175)
 - `maeting`, `verkefnastada` — sheet-CSV-backed generic tabs
+- `verdskra` — Verðskrá (rate editor for pricing_guide + hole_size_rates + read-only NLSH contract)
 - `april` — Apríl reikningar punch list
 - `todo`, `minverkefni` — todo lists
 - `slokkvitaeki` — fire-extinguisher data

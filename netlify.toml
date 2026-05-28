@@ -130,6 +130,12 @@
   to = "/.netlify/functions/gata-uppgjor"
   status = 200
 
+# Generic Verðskrá hole-size rates (Dalvegur 30 / Heklureitur)
+[[redirects]]
+  from = "/api/hole-rates"
+  to = "/.netlify/functions/hole-rates"
+  status = 200
+
 # Data sources freshness report — when each source was last imported
 [[redirects]]
   from = "/api/data-sources-status"
