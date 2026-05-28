@@ -926,14 +926,25 @@ main{padding:14px;max-width:1100px;margin:0 auto;flex:1;min-width:0;width:100%}
 .rg-kpi-good{border-color:#C8E6C9;background:#F4FBF4}
 .rg-totals-row td{background:var(--bg-2);font-weight:700;border-top:2px solid var(--text-2)}
 
-/* needs-bill highlight: hours logged but no invoice this month — blue, not yellow */
+/* needs-bill highlight + dual-line hour+kr layout */
 .rg-month.rg-month-needs{background:#EFF5FB}
-.rg-month-amt.rg-needs-bill{color:#0F3B6E;font-weight:700;background:#D6E6F5;display:inline-block;padding:2px 6px;border-radius:4px}
-.rg-month-hrs{color:var(--muted-2);font-weight:500;font-size:10.5px;text-transform:lowercase;letter-spacing:.02em;margin-right:2px}
-.rg-month-kr{font-weight:600;font-variant-numeric:tabular-nums}
+.rg-month-amt{line-height:1.3}
+.rg-month-amt.rg-needs-bill{color:#0F3B6E;font-weight:600;background:#D6E6F5;display:inline-block;padding:3px 7px;border-radius:5px}
+.rg-month-hrs{color:var(--muted-2);font-weight:500;font-size:10.5px;text-transform:lowercase;letter-spacing:.02em;display:inline-flex;align-items:baseline;gap:4px}
+.rg-month-est{color:var(--muted);font-size:10px;font-weight:400;font-variant-numeric:tabular-nums}
+.rg-month-amt.rg-needs-bill .rg-month-est{color:#3A6296}
+.rg-month-kr{font-weight:700;font-variant-numeric:tabular-nums;font-size:13px;color:var(--text);display:block;margin-top:1px}
 .rg-month-amt.rg-needs-bill .rg-month-hrs{color:#0A2747;font-size:11px}
 .rg-zero{color:var(--muted-2)}
 .rg-month-amt.rg-attn{background:#FFE3D5;color:#8C2510}
+/* clickable rei/gr — when toggled "billed manually", the row is muted/struck */
+.rg-cb-clickable{cursor:pointer;user-select:none;transition:opacity 100ms ease}
+.rg-cb-clickable:hover{opacity:.7}
+.rg-month-doc{margin-right:4px;font-size:11px;text-decoration:none;color:var(--blue,#2563eb);opacity:.7;transition:opacity 100ms ease}
+.rg-month-doc:hover{opacity:1;transform:scale(1.1)}
+.rg-month.rg-billed-manual{opacity:.55;background:#F4F4F0}
+.rg-month.rg-billed-manual .rg-month-amt{text-decoration:line-through;color:var(--muted-2)}
+.rg-month.rg-billed-manual::after{content:'rukkað í öðrum reikningi';display:block;font-size:9px;color:var(--muted);font-style:italic;text-align:center;margin-top:2px}
 
 .rg-link-btn{background:none;border:none;cursor:pointer;padding:0;font:inherit}
 .rg-link-btn:hover{background:var(--bg-2);color:var(--text)}
@@ -3014,9 +3025,33 @@ function renderReikningagerd(t){
     setMeta('Sækir…');
     if($refresh){ $refresh.disabled = true; $refresh.classList.add('loading'); }
     try{
-      const r = await fetch('/api/worksites?year=combined');
+      const [r, drR, efR] = await Promise.all([
+        fetch('/api/worksites?year=combined'),
+        fetch('/api/invoice-drafts?status=invoiced').catch(() => null),
+        fetch('/api/efnislisti-docs').catch(() => null),
+      ]);
       if(!r.ok) throw new Error('HTTP '+r.status);
       lastData = await r.json();
+      // Build a map of (worksite, month) → manually billed
+      lastData.manual_billed = {};
+      if (drR && drR.ok) {
+        const { rows } = await drR.json();
+        for (const row of (rows||[])) {
+          if (row.status === 'invoiced') {
+            lastData.manual_billed[`${row.worksite_name}|${row.work_month}`] = true;
+          }
+        }
+      }
+      // Build a map of (worksite, month) → efnislisti drive file URL
+      lastData.efnislisti = {};
+      if (efR && efR.ok) {
+        const { rows } = await efR.json();
+        for (const row of (rows||[])) {
+          const k = `${row.worksite_name}|${row.work_month}`;
+          if (!lastData.efnislisti[k]) lastData.efnislisti[k] = [];
+          lastData.efnislisti[k].push({ id: row.drive_file_id, title: row.title });
+        }
+      }
       // Bail out if a tab switch destroyed our DOM while the fetch was in flight
       if(!document.getElementById('rg-grid-host')) return;
       render();
@@ -3191,20 +3226,31 @@ function renderReikningagerd(t){
             const isAjour = isGata(w.project);
             const needsBill = monthHours > 0 && !rei && !isAjour;
             const cellCls = inv?.anyOpen ? ' rg-attn' : (needsBill ? ' rg-needs-bill' : '');
-            // Always show hours when present (e.g. "289t · 4.295.185" so the user
-            // can spot when a current-month invoice actually pays for older hours)
+            // Always show hours when present, plus a rough kr estimate (hours × rate × 1.24)
+            // so even months without an invoice surface their value at a glance.
+            const rates = rgRateFor(w.project);
+            const estKr = !isAjour ? Math.round(monthHours * rates.dv * 1.24) : 0;
             const hoursLabel = !isAjour && monthHours > 0
-              ? `<span class="rg-month-hrs" title="Tímavera klst">${monthHours.toFixed(0)}t</span>`
+              ? `<span class="rg-month-hrs" title="Tímavera klst · áætluð: ${monthHours.toFixed(1)} × ${rates.dv} × 1.24 = ${fmtIsk(estKr)} kr m.vsk">${monthHours.toFixed(0)}t<span class="rg-month-est">≈${fmtIsk(estKr)}</span></span>`
               : '';
             const amtLabel = amt
               ? `<span class="rg-month-kr">${fmtIsk(amt)}</span>`
               : (hoursLabel ? '' : '<span class="rg-zero">–</span>');
-            const cellInner = `${hoursLabel}${hoursLabel && amtLabel ? ' · ' : ''}${amtLabel}`;
+            const cellInner = `${hoursLabel}${hoursLabel && amtLabel ? '<br>' : ''}${amtLabel}`;
+            // Check if user has manually marked this month as billed (via override in invoice_drafts)
+            const manualBilled = (lastData.manual_billed||{})[`${w.project}|${ym}`];
+            const billedCls = manualBilled ? ' rg-billed-manual' : '';
+            // Efnislisti docs linked for this (worksite, month) — show 📎 link to the first one
+            const efDocs = (lastData.efnislisti||{})[`${w.project}|${ym}`] || [];
+            const efLink = efDocs.length
+              ? `<a class="rg-month-doc" href="https://drive.google.com/file/d/${efDocs[0].id}/view" target="_blank" rel="noopener" title="Efnislisti: ${escapeAttr(efDocs[0].title)}${efDocs.length>1?' (+'+(efDocs.length-1)+' fleiri)':''}" onclick="event.stopPropagation()">📎</a>`
+              : '';
             return `
-              <td class="rg-month${needsBill?' rg-month-needs':''}" title="${needsBill?(monthHours.toFixed(1)+' klst skráðar — engin reikningur'):''}">
+              <td class="rg-month${needsBill && !manualBilled?' rg-month-needs':''}${billedCls}" title="${needsBill?(monthHours.toFixed(1)+' klst skráðar — engin reikningur'):''}">
                 <div class="rg-month-amt ${cellCls}">${cellInner}</div>
                 <div class="rg-cb-row">
-                  <span class="rg-cb ${rei?'rg-cb-ok':'rg-cb-no'}" title="${rei?'Reikningur útgefinn':'Engin reikningur'}">${rei?'☑':'☐'} rei</span>
+                  ${efLink}
+                  <span class="rg-cb rg-cb-clickable ${rei||manualBilled?'rg-cb-ok':'rg-cb-no'}" data-rg-toggle-rei="${escapeAttr(w.project)}|${ym}" title="Smelltu til að merkja sem rukkað (bundlað í annan reikning eða sent of seint)">${rei||manualBilled?'☑':'☐'} rei</span>
                   <span class="rg-cb ${greitt?'rg-cb-ok':'rg-cb-no'}" title="${greitt?'Greitt':'Ógreitt'}">${greitt?'☑':'☐'} gr</span>
                 </div>
               </td>`;
@@ -3255,6 +3301,36 @@ function renderReikningagerd(t){
     });
     $host.querySelectorAll('[data-rg-wc]').forEach(b => {
       b.onclick = () => rgOpenWorkcenter(b.dataset.rgWc, allSites, months);
+    });
+    // Click on the "rei" chip → mark month as manually billed (bundled / late-issue case)
+    $host.querySelectorAll('[data-rg-toggle-rei]').forEach(b => {
+      b.onclick = async () => {
+        const [worksite, work_month] = b.dataset.rgToggleRei.split('|');
+        const key = `${worksite}|${work_month}`;
+        lastData.manual_billed = lastData.manual_billed || {};
+        const currentlyBilled = !!lastData.manual_billed[key];
+        const newStatus = currentlyBilled ? 'overdue' : 'invoiced';
+        lastData.manual_billed[key] = !currentlyBilled;  // optimistic
+        render();
+        try {
+          await fetch('/api/invoice-drafts', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({
+              worksite_name: worksite,
+              work_month: work_month,
+              status: newStatus,
+              notes: newStatus === 'invoiced'
+                ? `Merkt sem rukkað handvirkt í Reikningagerð (bundlað í annan reikning eða sent of seint)`
+                : `Aftekið handvirkt merkingu`,
+              updated_by: 'rg-grid-toggle',
+            }),
+          });
+        } catch(e) {
+          // revert on error
+          lastData.manual_billed[key] = currentlyBilled;
+          render();
+        }
+      };
     });
     const $unhide = document.getElementById('rg-unhide-all');
     if($unhide) $unhide.onclick = rgUnhideAll;
