@@ -47,6 +47,7 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
 - `verdsamanburdur` — Verðsamanburður / competitor pricing (renderCompetitors)
 - `verkstadir` — worksite billing audit (renderWorksites, ~line 2175)
 - `maeting`, `verkefnastada` — sheet-CSV-backed generic tabs
+- `verdskra` — Verðskrá (rate editor for pricing_guide + hole_size_rates + read-only NLSH contract)
 - `april` — Apríl reikningar punch list
 - `todo`, `minverkefni` — todo lists
 - `slokkvitaeki` — fire-extinguisher data
@@ -256,12 +257,36 @@ Landsspítalinn 5-6 hæð / Brunahólf ehf / <date>". Title:
 totals: April m vsk = 4.956.679 / án vsk = 3.997.322;
 cumulative Heild m vsk = 56.360.118.
 
-#### Heklureitur, Dalvegur 30
-Same Ajour pattern but each has its own contract rates table
-(not yet captured — need example documents). The earlier
-generic per-hole-size Verðskrá (2.900 → 100.500 kr by 50mm
-buckets) was from a different sheet and is NOT used directly
-for these three — they bill on their own contract rates.
+#### Heklureitur, Dalvegur 30 — generic per-hole-size Verðskrá
+**Confirmed (Dalvegur_30.04.2026.xlsx, user-verified for Heklureitur):**
+both use the **same generic per-hole-size Verðskrá** — NOT a custom
+contract like NLSH. Rates by 50mm bucket from 000-031 mm → 1960-2009 mm,
+plus a Bönd/Kragar/Borði rate table by specific size in mm.
+
+Stored in `hole_size_rates` table (`scope='generic'`):
+- `category='hole'`: 41 buckets, 2.890 → 80.400 kr án vsk
+  (e.g. 000-031 = 2.890, 060-109 = 4.920, 610-659 = 26.400,
+   1960-2009 = 80.400)
+- `category='kragi'` (Eldvarnarkragi): 12 sizes, 5.208 → 42.546 kr án vsk
+- `category='bordi'` (Eldvarnar borði/band/háþenslukítti):
+   11 sizes, 2.652 → 15.776 kr án vsk
+
+Ajour mapping for Dalvegur 30:
+- Project_name in Ajour: `Dalvegur 18B`, `Dalvegur 26`, `Dalvegur 30A`
+  (the building is split in Ajour; total all three for the invoice)
+- `category_group` format: `"Gat Ø NNN-NNN"` — regex-extract the two
+  numbers and join to `hole_size_rates` by `size_min_mm/size_max_mm`.
+- Bönd/Kragar are NOT tracked in Ajour for these worksites — entered
+  manually on the monthly Excel sheet. The endpoint accepts a
+  `bands_m_vsk` override.
+
+Sample April 2026 Dalvegur uppgjör:
+- Brunalokanir (göt) — 1.705.536 kr m. vsk (per sheet) /
+  ~1.852.252 kr m. vsk (per Ajour, slightly higher due to later entries)
+- Bönd/Kragar — 562.489 kr m. vsk (manually entered)
+- **Samtals 2.268.024 kr m. vsk**
+
+Endpoint: `/api/gata-uppgjor?worksite=Dalvegur+30&month=2026-04[&bands_m_vsk=562489]`
 
 ### Fixed price (occasional)
 Some worksites — or some portions of work — are billed at an
@@ -371,7 +396,11 @@ mapping and dedupe keys so files can be uploaded via the web UI
   akríl / þéttull / kragar by size / band by size / brunaþéttirör /
   steinull / smáhlutagjald rate / akstur rates. Currently lives in
   the Tekjur sheet Verðskrá tab.
-- **`hole_size_rates` table**: per-size buckets and kr rates for
-  Gata verkefni (000-031mm → 1960-2009mm).
+- ~~**`hole_size_rates` table**: per-size buckets and kr rates for
+  Gata verkefni (000-031mm → 1960-2009mm).~~ ✓ Done — table created
+  and seeded with hole + kragi + bordi rates. `/api/gata-uppgjor`
+  computes per-month totals for Dalvegur 30 / Heklureitur from Ajour.
+  Still needed: surface in Reikningagerð grid and UI for Bönd/Kragar
+  manual override per month.
 - **Payday API integration**: end goal is to push draft invoices into
   Payday. Currently it's just one-way sync in.

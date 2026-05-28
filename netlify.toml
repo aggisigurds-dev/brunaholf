@@ -123,6 +123,25 @@
   to = "/.netlify/functions/unbilled-hours"
   status = 200
 
+# Per-month Gata verkefni uppgjör (Dalvegur 30 / Heklureitur)
+#   /api/gata-uppgjor?worksite=Dalvegur+30&month=2026-05[&bands_m_vsk=NNN]
+[[redirects]]
+  from = "/api/gata-uppgjor"
+  to = "/.netlify/functions/gata-uppgjor"
+  status = 200
+
+# Generic Verðskrá hole-size rates (Dalvegur 30 / Heklureitur)
+[[redirects]]
+  from = "/api/hole-rates"
+  to = "/.netlify/functions/hole-rates"
+  status = 200
+
+# Drive search for Efnislisti files
+[[redirects]]
+  from = "/api/drive-files-search"
+  to = "/.netlify/functions/drive-files-search"
+  status = 200
+
 # Data sources freshness report — when each source was last imported
 [[redirects]]
   from = "/api/data-sources-status"
