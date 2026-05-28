@@ -291,6 +291,9 @@ body.theme-modern button.rg-name-link:hover{color:#9B1A0F;text-decoration:none;b
 
 /* ======= Layout ======= */
 main{padding:14px;max-width:1100px;margin:0 auto;flex:1;min-width:0;width:100%}
+/* Wide tabs (Vinnubók / Reikningagerð) get the full sidebar-to-edge width */
+body[data-tab="vinnubok"] main,
+body[data-tab="reikningar"] main{max-width:none;padding:14px 24px}
 .section{margin-bottom:18px}
 .section h2{font-size:15px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin:6px 4px 10px;font-weight:700}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
@@ -1952,6 +1955,7 @@ function render(){
   renderTabs();
   const t = activeTab();
   $brandTitle.textContent = t.label;
+  document.body.dataset.tab = t.id;
   if(t.id==='yfirlit') return renderYfirlit(t);
   if(t.id==='stillingar') return renderStillingar();
   if(t.id==='maeting') return renderMaeting(t);
@@ -4462,36 +4466,146 @@ async function renderVinnubok(t){
           <button id="vb-refresh" class="tv-btn" type="button"><span class="tv-refresh-icon">↻</span> Sækja</button>
           <button id="vb-month-back" class="tv-btn" type="button" title="Bæta við eldri mánuði">← mánuður</button>
           <button id="vb-month-fwd" class="tv-btn" type="button" title="Bæta við nýrri mánuði">mánuður →</button>
+          <button id="vb-collapse-2025" class="tv-btn" type="button" title="Fela 2025 mánuði">📅 Fela 2025</button>
+          <div class="vb-layout-switch" role="group" aria-label="Velja útlit">
+            <button type="button" class="vb-layout-btn" data-vb-layout="cards"   title="Spjöld">🃏</button>
+            <button type="button" class="vb-layout-btn" data-vb-layout="table"   title="Tafla">📋</button>
+            <button type="button" class="vb-layout-btn" data-vb-layout="minimal" title="Mínímal">⚪</button>
+          </div>
         </div>
       </div>
       <div id="vb-grid-host"></div>
     </div>
     <style>
-      .vb-grid{width:100%;border-collapse:separate;border-spacing:0;font-size:12px;background:var(--card-bg,#fff)}
-      .vb-grid th,.vb-grid td{border:1px solid var(--border,#e3e6ea);padding:0;vertical-align:top}
-      .vb-grid th{background:var(--header-bg,#f5f7fa);font-weight:600;padding:8px 10px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim,#5a6473);text-align:center}
-      .vb-row-name{padding:8px 10px;font-weight:600;background:var(--header-bg,#f5f7fa);min-width:170px;max-width:240px}
-      .vb-row-name small{display:block;font-weight:400;color:var(--text-dim,#5a6473);font-size:11px;margin-top:2px}
-      .vb-cell{min-width:155px;max-width:200px;padding:6px 7px;background:var(--card-bg,#fff)}
+      .vb-grid{width:100%;border-collapse:separate;border-spacing:10px;font-size:12px;background:transparent;font-family:'Inter','SF Pro Display','Segoe UI',system-ui,sans-serif}
+      .vb-grid th,.vb-grid td{padding:0;vertical-align:top;border-radius:12px}
+      .vb-grid th{background:linear-gradient(180deg,#f8fafc 0%,#eef2f7 100%);font-weight:700;padding:12px 16px;font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:#64748b;text-align:center;border:1px solid #e2e8f0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+      .vb-row-name{padding:16px 18px;font-weight:700;background:linear-gradient(180deg,#f1f5f9 0%,#e2e8f0 100%);min-width:185px;max-width:240px;line-height:1.4;position:sticky;left:0;z-index:5;color:#0f172a;font-size:13px;border:1px solid #cbd5e1;box-shadow:2px 0 5px -2px rgba(0,0,0,.08)}
+      .vb-row-name small{display:block;font-weight:500;color:#64748b;font-size:11px;margin-top:6px;letter-spacing:.01em}
+      .vb-cell{min-width:170px;max-width:215px;padding:0;background:linear-gradient(135deg,#ffffff 0%,#f8fafc 100%);overflow:hidden;border:1px solid #e2e8f0;transition:box-shadow .15s,transform .1s;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+      .vb-cell:hover{box-shadow:0 4px 12px rgba(15,23,42,.08)}
+      .vb-cell-has-hours{background:linear-gradient(135deg,#ffffff 0%,#f0f9ff 100%);border-color:#bae6fd}
+      .vb-cell-has-invoice{background:linear-gradient(135deg,#ffffff 0%,#ecfdf5 100%);border-color:#a7f3d0}
+      .vb-cell-mismatch{background:linear-gradient(135deg,#fffaf0 0%,#fef3c7 100%);border-color:#fcd34d}
+      .vb-cell-corners{display:flex;justify-content:space-between;align-items:flex-start;padding:11px 14px 6px;gap:8px}
+      .vb-corner{display:flex;flex-direction:column;gap:1px}
+      .vb-corner-r{align-items:flex-end}
+      .vb-corner-label{font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;font-weight:600}
+      .vb-corner-val{font-family:'SF Mono','JetBrains Mono','Roboto Mono',Menlo,monospace;font-feature-settings:'tnum' 1,'cv11' 1;font-size:13px;font-weight:600;color:#1e293b;line-height:1.1}
+      .vb-corner-val.dim{color:#94a3b8;font-weight:500}
+      .vb-cell-main{padding:6px 14px 9px;display:flex;flex-direction:column;align-items:center;gap:3px}
+      .vb-amount-input{width:100%;padding:10px 12px;border:1.5px solid #cbd5e1;border-radius:8px;font-family:'SF Mono','JetBrains Mono','Roboto Mono',Menlo,monospace;font-feature-settings:'tnum' 1;font-size:16px;font-weight:700;text-align:center;background:#fff;color:#0f172a;transition:all .15s;letter-spacing:-.01em}
+      .vb-amount-input:hover{border-color:#94a3b8}
+      .vb-amount-input:focus{border-color:#3b82f6;outline:none;box-shadow:0 0 0 4px rgba(59,130,246,.12);background:#fff}
+      .vb-amount-input::placeholder{color:#cbd5e1;font-weight:500;font-size:13px;letter-spacing:0}
+      .vb-amount-currency{font-size:9.5px;color:#94a3b8;letter-spacing:.12em;text-transform:uppercase;font-weight:600}
+      .vb-save-status{font-size:10px;color:#94a3b8;text-align:center;height:13px;margin-top:2px;font-weight:500}
+      .vb-save-status.vb-save-ok{color:#059669;font-weight:600}
+      .vb-save-status.vb-save-err{color:#dc2626;font-weight:600}
+      .vb-cell-bottom{padding:9px 14px 12px;border-top:1px solid rgba(203,213,225,.5);margin-top:auto;background:rgba(248,250,252,.5)}
+      .vb-zero-num{color:#cbd5e1;font-weight:500}
+      .vb-year-collapsed{min-width:44px !important;max-width:44px !important;padding:12px 6px;background:linear-gradient(180deg,#f1f5f9 0%,#e2e8f0 100%);writing-mode:vertical-rl;text-orientation:mixed;cursor:pointer;text-align:center;color:#64748b;font-size:11px;letter-spacing:.1em;font-weight:600;border:1px solid #cbd5e1}
+      .vb-year-collapsed:hover{background:linear-gradient(180deg,#e0e7ff 0%,#c7d2fe 100%);color:#3730a3;border-color:#a5b4fc}
+
+      /* Layout switcher buttons */
+      .vb-layout-switch{display:inline-flex;border:1px solid #cbd5e1;border-radius:8px;overflow:hidden;background:#fff;margin-left:8px}
+      .vb-layout-btn{border:none;background:transparent;padding:7px 12px;cursor:pointer;font-size:14px;color:#64748b;border-right:1px solid #e2e8f0}
+      .vb-layout-btn:last-child{border-right:none}
+      .vb-layout-btn:hover{background:#f1f5f9}
+      .vb-layout-btn.active{background:linear-gradient(180deg,#3b82f6 0%,#1d4ed8 100%);color:#fff;font-weight:600}
+
+      /* === Layout: TABLE === single rounded card, gradient header, zebra rows */
+      [data-vb-layout="table"] .vb-grid{border-collapse:separate;border-spacing:0;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 16px rgba(15,23,42,.08);border:1px solid #e2e8f0}
+      [data-vb-layout="table"] .vb-grid th,
+      [data-vb-layout="table"] .vb-grid td{border:none;border-bottom:1px solid #f1f5f9;border-radius:0;box-shadow:none}
+      [data-vb-layout="table"] .vb-grid th{background:linear-gradient(180deg,#1e3a8a 0%,#3b82f6 100%);color:#fff;font-weight:700;padding:14px 12px}
+      [data-vb-layout="table"] .vb-row-name{background:#f8fafc;color:#0f172a;border-right:2px solid #e2e8f0;box-shadow:none}
+      [data-vb-layout="table"] .vb-grid tbody tr:nth-child(even) .vb-cell{background:#f8fafc}
+      [data-vb-layout="table"] .vb-grid tbody tr:nth-child(even) .vb-row-name{background:#f1f5f9}
+      [data-vb-layout="table"] .vb-cell{background:#fff;border-right:1px solid #f1f5f9}
+      [data-vb-layout="table"] .vb-cell-has-invoice .vb-amount-input{color:#059669;border-color:#a7f3d0}
+      [data-vb-layout="table"] .vb-cell-mismatch{background:#fffbeb !important}
+      [data-vb-layout="table"] .vb-cell:hover{box-shadow:none;background:#eff6ff !important}
+
+      /* === Layout: MINIMAL === no backgrounds, just lines and text */
+      [data-vb-layout="minimal"] .vb-grid{border-collapse:collapse;background:transparent;border-spacing:0}
+      [data-vb-layout="minimal"] .vb-grid th,
+      [data-vb-layout="minimal"] .vb-grid td{border:none;border-bottom:1px solid #e5e7eb;border-radius:0;box-shadow:none;background:transparent !important}
+      [data-vb-layout="minimal"] .vb-grid th{padding:10px 12px;color:#6b7280;border-bottom:2px solid #d1d5db}
+      [data-vb-layout="minimal"] .vb-row-name{font-size:13px;color:#111827;padding:14px 14px 14px 6px;border-right:none}
+      [data-vb-layout="minimal"] .vb-cell{padding:8px 12px}
+      [data-vb-layout="minimal"] .vb-corner-label{display:none}
+      [data-vb-layout="minimal"] .vb-corner-val{font-size:11px;color:#9ca3af;font-weight:500}
+      [data-vb-layout="minimal"] .vb-amount-input{border:none;background:transparent;font-size:14px;padding:2px 0;border-bottom:1px dashed transparent}
+      [data-vb-layout="minimal"] .vb-amount-input:hover{border-bottom-color:#d1d5db}
+      [data-vb-layout="minimal"] .vb-amount-input:focus{border-bottom-color:#2563eb;box-shadow:none}
+      [data-vb-layout="minimal"] .vb-amount-currency{display:none}
+      [data-vb-layout="minimal"] .vb-cell-bottom{padding:4px 0 0;border-top:none;background:transparent}
+      [data-vb-layout="minimal"] .vb-cell:hover{box-shadow:none;background:#fafafa !important}
+
+      /* Layout switcher */
+      .vb-layout-switch{display:inline-flex;border:1px solid #cbd5e1;border-radius:8px;overflow:hidden;background:#fff;margin-left:8px}
+      .vb-layout-btn{border:none;background:transparent;padding:7px 12px;cursor:pointer;font-size:14px;color:#64748b;transition:all .15s;border-right:1px solid #e2e8f0}
+      .vb-layout-btn:last-child{border-right:none}
+      .vb-layout-btn:hover{background:#f1f5f9;color:#0f172a}
+      .vb-layout-btn.active{background:linear-gradient(180deg,#3b82f6 0%,#1d4ed8 100%);color:#fff;font-weight:600}
+
+      /* ===== Layout: TABLE (single card, gradient header, zebra rows) ===== */
+      [data-layout="table"] .vb-grid{border-collapse:separate;border-spacing:0;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 16px rgba(15,23,42,.08);border:1px solid #e2e8f0}
+      [data-layout="table"] .vb-grid th,
+      [data-layout="table"] .vb-grid td{border:none;border-bottom:1px solid #f1f5f9;border-radius:0;box-shadow:none}
+      [data-layout="table"] .vb-grid th{background:linear-gradient(180deg,#1e3a8a 0%,#3b82f6 100%);color:#fff;font-weight:700;padding:14px 12px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;border-bottom:none}
+      [data-layout="table"] .vb-row-name{background:#f8fafc;color:#0f172a;font-weight:700;font-size:13px;border-right:2px solid #e2e8f0;box-shadow:none}
+      [data-layout="table"] .vb-grid tbody tr:nth-child(odd) .vb-cell{background:#fff}
+      [data-layout="table"] .vb-grid tbody tr:nth-child(even) .vb-cell{background:#f8fafc}
+      [data-layout="table"] .vb-grid tbody tr:nth-child(even) .vb-row-name{background:#f1f5f9}
+      [data-layout="table"] .vb-cell{background:#fff;border-right:1px solid #f1f5f9}
+      [data-layout="table"] .vb-cell-has-hours{background:#fff !important}
+      [data-layout="table"] .vb-cell-has-invoice .vb-amount-input{color:#059669;border-color:#a7f3d0}
+      [data-layout="table"] .vb-cell-mismatch{background:#fffbeb !important}
+      [data-layout="table"] .vb-cell:hover{box-shadow:none;transform:none;background:#eff6ff !important}
+      [data-layout="table"] .vb-year-collapsed{background:linear-gradient(180deg,#1e3a8a 0%,#3b82f6 100%) !important;color:#fff !important;border:none}
+
+      /* ===== Layout: MINIMAL (no colors, just lines and text) ===== */
+      [data-layout="minimal"] .vb-grid{border-collapse:collapse;background:transparent;border-spacing:0}
+      [data-layout="minimal"] .vb-grid th,
+      [data-layout="minimal"] .vb-grid td{border:none;border-bottom:1px solid #e5e7eb;border-radius:0;box-shadow:none;background:transparent !important}
+      [data-layout="minimal"] .vb-grid th{padding:10px 12px;font-size:10.5px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.1em;border-bottom:2px solid #d1d5db;text-align:right}
+      [data-layout="minimal"] .vb-grid th:first-child{text-align:left}
+      [data-layout="minimal"] .vb-row-name{font-weight:600;font-size:13px;color:#111827;padding:14px 14px 14px 6px;background:transparent !important;border-right:none;box-shadow:none}
+      [data-layout="minimal"] .vb-row-name small{font-size:11px;color:#9ca3af;margin-top:3px}
+      [data-layout="minimal"] .vb-cell{padding:8px 12px;min-width:120px;max-width:160px}
+      [data-layout="minimal"] .vb-cell-corners{padding:0 0 4px;justify-content:space-between}
+      [data-layout="minimal"] .vb-corner-label{display:none}
+      [data-layout="minimal"] .vb-corner-val{font-size:11px;color:#9ca3af;font-weight:500}
+      [data-layout="minimal"] .vb-cell-main{padding:0}
+      [data-layout="minimal"] .vb-amount-input{border:none;background:transparent;font-size:14px;font-weight:600;padding:2px 0;text-align:right;color:#111827;border-bottom:1px dashed transparent}
+      [data-layout="minimal"] .vb-amount-input:hover{border-bottom-color:#d1d5db}
+      [data-layout="minimal"] .vb-amount-input:focus{border-bottom-color:#2563eb;box-shadow:none;background:transparent}
+      [data-layout="minimal"] .vb-amount-currency{display:none}
+      [data-layout="minimal"] .vb-cell-bottom{padding:4px 0 0;border-top:none;background:transparent;font-size:10px;opacity:.7}
+      [data-layout="minimal"] .vb-cell:hover{box-shadow:none;transform:none;background:#fafafa !important}
+      [data-layout="minimal"] .vb-year-collapsed{background:transparent !important;color:#9ca3af;border:none}
       .vb-cell-has-hours{background:#fbfcfd}
       .vb-cell-has-invoice{background:#f3faf3}
       .vb-cell-mismatch{background:#fff4e0}
-      .vb-line{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;font-size:11px;color:var(--text-dim,#5a6473)}
-      .vb-line b{color:var(--text,#1f2933)}
-      .vb-input{width:100%;padding:5px 6px;border:1px solid var(--border,#d8dee9);border-radius:4px;font:inherit;text-align:right;background:#fff}
-      .vb-input:focus{border-color:var(--accent,#0a84ff);outline:none}
-      .vb-attach{display:flex;align-items:center;gap:4px;margin-top:4px;font-size:11px}
+      .vb-line{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;font-size:11.5px;color:var(--text-dim,#5a6473);gap:6px}
+      .vb-line:last-of-type{margin-bottom:5px}
+      .vb-line b{color:var(--text,#1f2933);font-weight:600;font-size:12.5px}
+      .vb-input{width:82px;padding:6px 9px;border:1px solid var(--border,#d8dee9);border-radius:4px;font:inherit;font-size:11.5px;text-align:right;background:#fff}
+      .vb-input:focus{border-color:var(--accent,#0a84ff);outline:none;box-shadow:0 0 0 2px rgba(10,132,255,.15)}
+      .vb-attach{display:flex;align-items:center;gap:6px;margin-top:10px;font-size:11px;padding-top:9px;border-top:1px dashed var(--border,#e3e6ea)}
       .vb-attach a{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--accent,#0a84ff);text-decoration:none}
       .vb-attach a:hover{text-decoration:underline}
-      .vb-attach-btn{padding:2px 6px;border:1px solid var(--border,#d8dee9);border-radius:3px;background:transparent;font-size:11px;cursor:pointer;color:inherit}
+      .vb-attach-btn{padding:4px 8px;border:1px solid var(--border,#d8dee9);border-radius:4px;background:transparent;font-size:11px;cursor:pointer;color:inherit}
       .vb-attach-btn:hover{background:var(--header-bg,#f5f7fa)}
-      .vb-save-mini{font-size:10px;color:var(--text-dim,#5a6473);text-align:right;height:11px}
+      .vb-save-mini{font-size:10px;color:var(--text-dim,#5a6473);text-align:right;height:12px;margin-top:2px}
       .vb-save-ok{color:#0a8a00}
       .vb-save-err{color:#c40000}
-      .vb-hidden-bar{padding:8px 12px;background:var(--header-bg,#f5f7fa);border-radius:6px;margin-bottom:8px;font-size:12px;color:var(--text-dim,#5a6473)}
-      .vb-hide-btn{padding:2px 6px;font-size:10px;background:transparent;border:1px solid var(--border,#d8dee9);border-radius:3px;cursor:pointer;color:inherit;float:right;margin-left:4px}
-      .vb-hide-btn:hover{background:#fbeaea;border-color:#d99}
-      .vb-zero{color:var(--text-dim,#5a6473);font-style:italic}
+      .vb-hidden-bar{padding:10px 14px;background:var(--header-bg,#f5f7fa);border-radius:6px;margin-bottom:10px;font-size:12px;color:var(--text-dim,#5a6473)}
+      .vb-hide-btn{padding:3px 7px;font-size:11px;background:transparent;border:1px solid var(--border,#d8dee9);border-radius:4px;cursor:pointer;color:inherit;float:right;margin-left:6px;opacity:.5}
+      .vb-hide-btn:hover{background:#fbeaea;border-color:#d99;opacity:1}
+      .vb-zero{color:var(--text-dim,#5a6473);font-style:italic;opacity:.6}
       /* Drive search modal */
       .vb-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;display:flex;align-items:center;justify-content:center}
       .vb-modal{background:var(--card-bg,#fff);color:var(--text,#1f2933);border-radius:10px;width:min(720px,92vw);max-height:85vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.3)}
@@ -4500,9 +4614,9 @@ async function renderVinnubok(t){
       .vb-modal-body{padding:14px 18px;overflow-y:auto;flex:1}
       .vb-search-row{display:flex;gap:6px;margin-bottom:10px}
       .vb-search-row input{flex:1;padding:8px 10px;border:1px solid var(--border,#d8dee9);border-radius:5px;font:inherit;background:#fff;color:inherit}
-      .vb-file-li{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border:1px solid var(--border,#e3e6ea);border-radius:5px;margin-bottom:5px;cursor:pointer;background:#fff;color:inherit}
+      .vb-file-li{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:1px solid var(--border,#e3e6ea);border-radius:5px;margin-bottom:6px;cursor:pointer;background:#fff;color:inherit}
       .vb-file-li:hover{background:var(--header-bg,#f5f7fa);border-color:var(--accent,#0a84ff)}
-      .vb-file-li small{color:var(--text-dim,#5a6473);font-size:11px;display:block;margin-top:2px}
+      .vb-file-li small{color:var(--text-dim,#5a6473);font-size:11px;display:block;margin-top:3px}
     </style>
   `;
 
@@ -4518,16 +4632,22 @@ async function renderVinnubok(t){
   if(typeof state.ui.vb_months_back !== 'number') state.ui.vb_months_back = 8;
   if(typeof state.ui.vb_months_fwd !== 'number') state.ui.vb_months_fwd = 0;
   if(!Array.isArray(state.ui.vb_hidden)) state.ui.vb_hidden = [];
+  if(!Array.isArray(state.ui.vb_collapsed_years)) state.ui.vb_collapsed_years = [];
+  if(!['cards','table','minimal'].includes(state.ui.vb_layout)) state.ui.vb_layout = 'cards';
 
-  async function load(){
+  async function load(opts){
+    const force = opts && opts.force;
     $meta.textContent = 'Sækir…';
     $refresh.disabled = true;
     try{
-      const [ws, dr, ef] = await Promise.all([
-        fetch('/api/worksites?year=combined').then(r => r.json()),
-        fetch('/api/invoice-drafts').then(r => r.json()).catch(() => ({rows:[]})),
-        fetch('/api/efnislisti-docs').then(r => r.json()).catch(() => ({rows:[]})),
+      const [wsR, drR, efR] = await Promise.all([
+        cachedFetch('/api/worksites?year=combined', {force}),
+        cachedFetch('/api/invoice-drafts', {force}).catch(() => null),
+        cachedFetch('/api/efnislisti-docs', {force}).catch(() => null),
       ]);
+      const ws = wsR ? await wsR.json() : { worksites: [] };
+      const dr = drR && drR.ok ? await drR.json() : { rows: [] };
+      const ef = efR && efR.ok ? await efR.json() : { rows: [] };
       data = {
         worksites: ws.worksites || [],
         drafts: {},        // key: worksite|month → { status, total_m_vsk, hours_dagvinna, ... }
@@ -4589,25 +4709,65 @@ async function renderVinnubok(t){
       const hasInvoiceDraft = months.some(ym => data.drafts[`${w.project}|${ym}`]);
       return hasHours || hasInvoiceDraft || (w.invoice_unpaid||0) > 0;
     });
-    sites.sort((a,b) => (b.hours||0) - (a.hours||0));
+    // Sort by latest month with activity (Tímavera klst OR a draft) — most recent first.
+    const latestActivity = (w) => {
+      let latest = '';
+      for(const ym of Object.keys(w.monthly || {})){
+        if((w.monthly[ym] || 0) > 0 && ym > latest) latest = ym;
+      }
+      for(const k of Object.keys(data.drafts)){
+        if(!k.startsWith(w.project + '|')) continue;
+        const m = k.split('|')[1];
+        if(m > latest) latest = m;
+      }
+      return latest;  // '' if no activity
+    };
+    sites.sort((a,b) => {
+      const la = latestActivity(a), lb = latestActivity(b);
+      if(la !== lb) return lb.localeCompare(la);  // descending YYYY-MM
+      return (b.hours||0) - (a.hours||0);
+    });
 
     const hiddenCount = (state.ui.vb_hidden || []).length;
     const hiddenBar = hiddenCount
       ? `<div class="vb-hidden-bar">${hiddenCount} verkstaðir faldir <button type="button" class="vb-attach-btn" id="vb-unhide-all" style="margin-left:8px">↻ Sýna alla aftur</button></div>`
       : '';
 
+    // Determine which year-collapse buttons to show and which months to fold
+    const collapsedYears = new Set(state.ui.vb_collapsed_years || []);
+    const yearsInWindow = [...new Set(months.map(ym => ym.slice(0,4)))];
+    // months becomes a mixed array: either "YYYY-MM" string or {collapsed_year: "2025"}
+    const monthCells = [];
+    let lastCollapsedYear = null;
+    for(const ym of months){
+      const year = ym.slice(0,4);
+      if(collapsedYears.has(year)){
+        if(lastCollapsedYear !== year){
+          monthCells.push({ collapsed_year: year });
+          lastCollapsedYear = year;
+        }
+      } else {
+        monthCells.push(ym);
+        lastCollapsedYear = null;
+      }
+    }
+
     const html = `
       ${hiddenBar}
-      <div style="overflow-x:auto">
+      <div class="vb-scroll-wrap" data-vb-layout="${state.ui.vb_layout || 'cards'}" style="overflow-x:auto;max-height:calc(100vh - 220px);overflow-y:auto">
         <table class="vb-grid">
           <thead>
             <tr>
               <th class="vb-row-name" style="text-align:left">Verkstaður</th>
-              ${months.map(ym => `<th>${monthLabel(ym)}</th>`).join('')}
+              ${monthCells.map(mc =>
+                typeof mc === 'string'
+                  ? `<th>${monthLabel(mc)}</th>`
+                  : `<th class="vb-year-collapsed" data-vb-expand-year="${mc.collapsed_year}" title="Smelltu til að sýna ${mc.collapsed_year} aftur">▶ ${mc.collapsed_year}</th>`
+              ).join('')}
             </tr>
           </thead>
           <tbody>
-            ${sites.map(w => renderRow(w, months)).join('')}
+            ${sites.map(w => renderRow(w, monthCells)).join('')}
           </tbody>
         </table>
       </div>
@@ -4635,9 +4795,17 @@ async function renderVinnubok(t){
     if($unhide){
       $unhide.onclick = () => { state.ui.vb_hidden = []; save(); render(); };
     }
+    // Click a collapsed year column → expand it
+    $host.querySelectorAll('[data-vb-expand-year]').forEach(el => {
+      el.onclick = () => {
+        const year = el.dataset.vbExpandYear;
+        state.ui.vb_collapsed_years = (state.ui.vb_collapsed_years || []).filter(y => y !== year);
+        save(); render();
+      };
+    });
   }
 
-  function renderRow(w, months){
+  function renderRow(w, monthCells){
     const cust = (w.mapped_customers || [])[0] || '';
     const rates = rateFor(w.project);
     return `
@@ -4647,7 +4815,11 @@ async function renderVinnubok(t){
           <button type="button" class="vb-hide-btn" data-vb-hide="${escapeAttr(w.project)}" title="Fela verkstaðinn">×</button>
           <small>${escapeHtml(cust)}${rates.dv !== 9951 ? ' · '+rates.dv+' kr/klst' : ''}</small>
         </td>
-        ${months.map(ym => renderCell(w, ym, rates)).join('')}
+        ${monthCells.map(mc =>
+          typeof mc === 'string'
+            ? renderCell(w, mc, rates)
+            : `<td class="vb-year-collapsed" data-vb-expand-year="${mc.collapsed_year}" title="Smelltu til að sýna ${mc.collapsed_year}">…</td>`
+        ).join('')}
       </tr>
     `;
   }
@@ -4666,31 +4838,49 @@ async function renderVinnubok(t){
     if(hasInvoice) cls.push('vb-cell-has-invoice');
     if(mismatch) cls.push('vb-cell-mismatch');
 
+    const hoursStr = hours > 0 ? hours.toFixed(1).replace('.0','') + 't' : '—';
+    const estStr = estKr > 0 ? fmtIskCompact(estKr) : '—';
+
     return `
       <td class="${cls.join(' ')}" data-vb-cell="${escapeAttr(draftKey)}">
-        <div class="vb-line">
-          <span>Klst</span>
-          <b>${hours > 0 ? hours.toFixed(1) : '<span class="vb-zero">—</span>'}</b>
+        <div class="vb-cell-corners">
+          <div class="vb-corner">
+            <span class="vb-corner-label">Klst</span>
+            <span class="vb-corner-val ${hours > 0 ? '' : 'dim'}">${hoursStr}</span>
+            <span class="vb-corner-label" style="margin-top:6px">Áætl.</span>
+            <span class="vb-corner-val ${estKr > 0 ? 'dim' : 'dim'}">${estStr}</span>
+          </div>
+          <div class="vb-corner vb-corner-r">
+            ${hasInvoice
+              ? `<span style="background:#10b981;color:#fff;font-size:9px;padding:2px 6px;border-radius:99px;font-weight:700;letter-spacing:.05em;text-transform:uppercase">✓ rukk.</span>`
+              : (hours > 0 ? `<span style="background:#fef3c7;color:#92400e;font-size:9px;padding:2px 6px;border-radius:99px;font-weight:700;letter-spacing:.05em;text-transform:uppercase">eftir</span>` : '')
+            }
+          </div>
         </div>
-        <div class="vb-line">
-          <span>Áætl.</span>
-          <b>${estKr > 0 ? fmtIsk(estKr) : '<span class="vb-zero">—</span>'}</b>
-        </div>
-        <div class="vb-line">
-          <span>Reikn.</span>
-          <input type="number" class="vb-input" data-vb-save-amt="${escapeAttr(draftKey)}"
+        <div class="vb-cell-main">
+          <input type="number" class="vb-amount-input" data-vb-save-amt="${escapeAttr(draftKey)}"
                  value="${draftKr || ''}" placeholder="—" step="1" inputmode="numeric">
+          <div class="vb-amount-currency">kr m. vsk</div>
+          <div class="vb-save-status" data-vb-status="${escapeAttr(draftKey)}"></div>
         </div>
-        <div class="vb-save-mini" data-vb-status="${escapeAttr(draftKey)}"></div>
-        <div class="vb-attach">
+        <div class="vb-cell-bottom">
           ${ef
-            ? `<a href="https://drive.google.com/file/d/${ef.id}/view" target="_blank" rel="noopener" title="${escapeAttr(ef.title || '')}">📎 ${escapeHtml((ef.title || 'Efnislisti').replace(/\.(xlsx|pdf|docx)$/i, ''))}</a>
-               <button type="button" class="vb-attach-btn" data-vb-attach="${escapeAttr(draftKey)}" title="Skipta um skjal">↻</button>`
-            : `<button type="button" class="vb-attach-btn" data-vb-attach="${escapeAttr(draftKey)}" style="width:100%">+ Tengja Efnislista</button>`
+            ? `<div style="display:flex;align-items:center;gap:6px;font-size:11px">
+                 <a href="https://drive.google.com/file/d/${ef.id}/view" target="_blank" rel="noopener" title="${escapeAttr(ef.title || '')}" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#3b82f6;text-decoration:none;font-weight:500">📎 ${escapeHtml((ef.title || 'Efnislisti').replace(/\.(xlsx|pdf|docx)$/i, ''))}</a>
+                 <button type="button" class="vb-attach-btn" data-vb-attach="${escapeAttr(draftKey)}" title="Skipta um skjal" style="padding:3px 7px;font-size:11px;border:1px solid #cbd5e1;background:#fff;border-radius:5px;cursor:pointer;color:#64748b">↻</button>
+               </div>`
+            : `<button type="button" class="vb-attach-btn" data-vb-attach="${escapeAttr(draftKey)}" style="width:100%;padding:7px 10px;font-size:11px;border:1.5px dashed #cbd5e1;background:transparent;border-radius:6px;cursor:pointer;color:#64748b;font-weight:500;transition:all .15s">+ Tengja Efnislista</button>`
           }
         </div>
       </td>
     `;
+  }
+
+  function fmtIskCompact(n){
+    if(!n) return '—';
+    if(n >= 1000000) return (n/1000000).toFixed(n >= 10000000 ? 1 : 2).replace('.0','') + 'M';
+    if(n >= 1000) return Math.round(n/1000) + 'k';
+    return n.toString();
   }
 
   async function saveAmount(input){
@@ -4698,7 +4888,7 @@ async function renderVinnubok(t){
     const [worksite, month] = key.split('|');
     const newAmount = input.value === '' ? null : Number(input.value);
     const $st = document.querySelector(`[data-vb-status="${CSS.escape(key)}"]`);
-    if($st){ $st.textContent = 'Vistar…'; $st.className = 'vb-save-mini'; }
+    if($st){ $st.textContent = 'Vistar…'; $st.className = 'vb-save-status'; }
     try {
       const existing = data.drafts[key];
       const r = await fetch('/api/invoice-drafts', {
@@ -4715,11 +4905,9 @@ async function renderVinnubok(t){
       if(!r.ok) throw new Error('HTTP '+r.status);
       const saved = await r.json();
       data.drafts[key] = saved;
-      if($st){ $st.textContent = '✓ vistað'; $st.className = 'vb-save-mini vb-save-ok'; }
-      // re-render just this cell (cheap: re-render whole row by re-rendering all)
-      // Skip a full re-render to keep focus; trust the data update.
+      if($st){ $st.textContent = '✓ vistað'; $st.className = 'vb-save-status vb-save-ok'; }
     } catch(e){
-      if($st){ $st.textContent = '✗ '+(e.message||e); $st.className = 'vb-save-mini vb-save-err'; }
+      if($st){ $st.textContent = '✗ '+(e.message||e); $st.className = 'vb-save-status vb-save-err'; }
     }
   }
 
@@ -4799,9 +4987,36 @@ async function renderVinnubok(t){
     runSearch();
   }
 
-  $refresh.onclick = load;
+  $refresh.onclick = () => load({force: true});
   $back.onclick = () => { state.ui.vb_months_back = Math.min((state.ui.vb_months_back||8) + 2, 24); save(); render(); };
   $fwd.onclick = () => { state.ui.vb_months_fwd = Math.min((state.ui.vb_months_fwd||0) + 1, 6); save(); render(); };
+  document.getElementById('vb-collapse-2025').onclick = () => {
+    state.ui.vb_collapsed_years = state.ui.vb_collapsed_years || [];
+    const i = state.ui.vb_collapsed_years.indexOf('2025');
+    if(i >= 0) state.ui.vb_collapsed_years.splice(i, 1);
+    else state.ui.vb_collapsed_years.push('2025');
+    const btn = document.getElementById('vb-collapse-2025');
+    btn.textContent = state.ui.vb_collapsed_years.includes('2025') ? '📅 Sýna 2025' : '📅 Fela 2025';
+    save(); render();
+  };
+  // set initial button label
+  const $col = document.getElementById('vb-collapse-2025');
+  if($col && (state.ui.vb_collapsed_years || []).includes('2025')) $col.textContent = '📅 Sýna 2025';
+  // Layout switcher: mark active + wire clicks
+  function syncLayoutBtns(){
+    document.querySelectorAll('[data-vb-layout]').forEach(b => {
+      if(b.tagName === 'BUTTON') b.classList.toggle('active', b.dataset.vbLayout === state.ui.vb_layout);
+    });
+  }
+  syncLayoutBtns();
+  document.querySelectorAll('button[data-vb-layout]').forEach(b => {
+    b.onclick = () => {
+      state.ui.vb_layout = b.dataset.vbLayout;
+      save();
+      syncLayoutBtns();
+      render();
+    };
+  });
   load();
 }
 
