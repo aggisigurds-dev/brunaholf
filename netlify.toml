@@ -107,11 +107,18 @@
   status = 200
 
 # Friendly URL for the standalone Reikningagerð (Efnislisti) form:
-#   /reikningur → /reikningur/index.html
+#   /reikningur → /reikningur/index.html (force=false so folder index serves naturally)
 [[redirects]]
   from = "/reikningur"
+  to = "/reikningur/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/reikningur/"
   to = "/reikningur/index.html"
   status = 200
+  force = true
 
 # Scheduled invocation: re-runs the function every 10 minutes so the
 # (eventual) Timavera scrape result is "warm" when the page asks.
