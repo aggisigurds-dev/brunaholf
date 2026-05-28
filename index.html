@@ -1284,6 +1284,7 @@ const DEFAULT_STATE = {
     {id:'kvittanir',  label:'Kvittanir & PDF', icon:'📷'},
     {id:'tenglar',    label:'Tenglar',    icon:'🔗'},
     {id:'reikningar', label:'Reikningagerð', icon:'💳'},
+    {id:'efniskostnadur', label:'Efniskostnaður', icon:'📦'},
     {id:'utgjold',    label:'Útgjöld',    icon:'💸', sheetCsv:''},
     {id:'stillingar', label:'Stillingar', icon:'⚙️'}
   ],
@@ -1632,6 +1633,7 @@ function render(){
   if(t.id==='verdsamanburdur') return renderCompetitors(t);
   if(t.id==='verkstadir') return renderWorksites(t);
   if(t.id==='reikningar') return renderReikningagerd(t);
+  if(t.id==='efniskostnadur') return renderEfniskostnadur(t);
   if(t.checklist!==undefined) return renderChecklist(t);
   if(t.sheetCsv!==undefined) return renderListTab(t);
   renderButtonTab(t);
@@ -3644,6 +3646,136 @@ function monthLabelStatic(ym){
   const names = ['Jan','Feb','Mar','Apr','Maí','Jún','Júl','Ágú','Sep','Okt','Nóv','Des'];
   const [y,m] = ym.split('-');
   return `${names[parseInt(m,10)-1]} ${y.slice(2)}`;
+}
+
+/* ====================== EFNISKOSTNAÐUR (Redder material costs per worksite/month) ====================== */
+async function renderEfniskostnadur(t){
+  $view.innerHTML = `
+    <div class="rg-wrap">
+      <div class="rg-header">
+        <div>
+          <h1 class="rg-h1">📦 Efniskostnaður <span class="rg-sub" id="ef-meta">Sækir…</span></h1>
+          <div class="rg-sub" style="margin-top:4px">Redder reikningar — efni sem fer á reikning hjá verkkaupa</div>
+        </div>
+        <div class="rg-controls">
+          <a class="rg-tool" href="https://mail.google.com/mail/u/0/?authuser=bokhald@brunaholf.is#search/from%3Aredder.is" target="_blank" rel="noopener">📧 Redder í Gmail</a>
+          <a class="rg-tool" href="https://drive.google.com/drive/search?q=redder" target="_blank" rel="noopener">📁 Redder í Drive</a>
+        </div>
+      </div>
+
+      <div class="rg-kpis">
+        <div class="rg-kpi"><div class="rg-kpi-l">Reikningar í gagnagrunni</div><div class="rg-kpi-v" id="ef-k-count">—</div><div class="rg-kpi-x">Redder PDFs vistaðir</div></div>
+        <div class="rg-kpi"><div class="rg-kpi-l">Heildarefniskostnaður m. vsk</div><div class="rg-kpi-v" id="ef-k-total">—</div><div class="rg-kpi-x">til endurkrafninga</div></div>
+        <div class="rg-kpi rg-kpi-warn"><div class="rg-kpi-l">Án verkstaðs</div><div class="rg-kpi-v" id="ef-k-noworksite">—</div><div class="rg-kpi-x">þarf að tengja</div></div>
+        <div class="rg-kpi"><div class="rg-kpi-l">Verkstaðir með efnisinnkaup</div><div class="rg-kpi-v" id="ef-k-sites">—</div><div class="rg-kpi-x">unique worksites</div></div>
+      </div>
+
+      <div id="ef-table-host"></div>
+    </div>
+  `;
+
+  try {
+    const r = await fetch('/api/redder-invoices');
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const { rows, summary } = await r.json();
+    const fmt = n => Math.round(n||0).toLocaleString('is-IS');
+
+    document.getElementById('ef-meta').textContent = `${rows.length} reikningar`;
+    document.getElementById('ef-k-count').textContent = rows.length;
+    document.getElementById('ef-k-total').textContent = fmt(summary.grand_total_m_vsk);
+    document.getElementById('ef-k-noworksite').textContent = rows.filter(r => !r.worksite_match).length;
+    document.getElementById('ef-k-sites').textContent = new Set(rows.map(r => r.worksite_match).filter(Boolean)).size;
+
+    // Group by worksite × month
+    const groups = {};
+    for (const inv of rows) {
+      const month = inv.dagsetning ? String(inv.dagsetning).slice(0,7) : '(óþekkt)';
+      const ws = inv.worksite_match || '(ótengt)';
+      const k = `${ws}|${month}`;
+      if (!groups[k]) groups[k] = { worksite: ws, month, invoices: [], total_m_vsk: 0 };
+      groups[k].invoices.push(inv);
+      groups[k].total_m_vsk += Number(inv.m_vsk || 0);
+    }
+    const groupRows = Object.values(groups).sort((a,b) => b.month.localeCompare(a.month) || b.total_m_vsk - a.total_m_vsk);
+
+    const html = `
+      <div class="rg-forecast" style="background:linear-gradient(135deg,#F0F6FC 0%,#E2EDF7 100%);border-color:#B6CFE8">
+        <div class="rg-forecast-head">
+          <div>
+            <div class="rg-forecast-title" style="color:#0F3B6E">Efni per verkstaður & mánuður</div>
+            <div class="rg-forecast-sub" style="color:#3A6296">Smelltu á línu til að sjá hvert efni og kostnað</div>
+          </div>
+        </div>
+        <div class="rg-forecast-list" style="max-height:none;display:block">
+          ${groupRows.length === 0
+            ? '<div class="wc-empty">Engir Redder reikningar enn í kerfinu.</div>'
+            : groupRows.map(g => `
+              <details class="rg-fc-item">
+                <summary>
+                  <span class="rg-fc-tag" style="background:#DBE9F8;color:#0F3B6E">${escapeHtml(monthLabelStatic(g.month))}</span>
+                  <span class="rg-fc-item-name">${escapeHtml(g.worksite)}</span>
+                  <span class="rg-fc-item-cust">${g.invoices.length} reikningur${g.invoices.length>1?'ar':''}</span>
+                  <span class="rg-fc-item-month"></span>
+                  <span class="rg-fc-item-hrs"></span>
+                  <span class="rg-fc-item-amt">${fmt(g.total_m_vsk)} kr</span>
+                </summary>
+                <div class="rg-fc-math">
+                  ${g.invoices.map(inv => `
+                    <div style="margin:8px 0;padding:10px;background:#fff;border-radius:6px;border:1px solid var(--border)">
+                      <div style="display:flex;justify-content:space-between;font-weight:600;font-size:12px">
+                        <span>Reikningur #${escapeHtml(inv.invoice_nr)} · ${inv.dagsetning || '—'}</span>
+                        <span>${fmt(inv.m_vsk)} kr m. vsk</span>
+                      </div>
+                      <div style="font-size:11px;color:var(--muted);margin-top:2px">${escapeHtml(inv.worksite_raw || '')} · seljandi: ${escapeHtml(inv.salesperson || '—')}</div>
+                      ${(inv.redder_line_items||[]).length ? `
+                        <table style="width:100%;margin-top:8px;font-size:11px;border-collapse:collapse">
+                          <thead><tr style="color:var(--muted-2);font-weight:600">
+                            <th style="text-align:left;padding:4px">Vörunr</th>
+                            <th style="text-align:left;padding:4px">Heiti</th>
+                            <th style="text-align:right;padding:4px">Magn</th>
+                            <th style="text-align:right;padding:4px">Verð</th>
+                            <th style="text-align:right;padding:4px">Afsl</th>
+                            <th style="text-align:right;padding:4px">Samtals</th>
+                          </tr></thead>
+                          <tbody>
+                            ${inv.redder_line_items.map(li => `
+                              <tr>
+                                <td style="padding:3px 4px;color:var(--muted-2)">${escapeHtml(li.item_code||'')}</td>
+                                <td style="padding:3px 4px">${escapeHtml(li.item_name||'')}</td>
+                                <td style="padding:3px 4px;text-align:right">${Number(li.magn||0)} ${escapeHtml(li.unit||'')}</td>
+                                <td style="padding:3px 4px;text-align:right">${fmt(li.ein_verd)}</td>
+                                <td style="padding:3px 4px;text-align:right">${li.afsl_pct||0}%</td>
+                                <td style="padding:3px 4px;text-align:right;font-weight:600">${fmt(li.upphaed)}</td>
+                              </tr>
+                            `).join('')}
+                          </tbody>
+                        </table>
+                      ` : '<div style="font-size:11px;color:var(--muted);font-style:italic;margin-top:4px">Engar línur skráðar enn — bara samtalan.</div>'}
+                    </div>
+                  `).join('')}
+                </div>
+              </details>
+            `).join('')}
+        </div>
+      </div>
+
+      <div class="wc-card" style="margin-top:20px">
+        <h3>📥 Hvernig á að bæta við Redder reikningi</h3>
+        <ol style="font-size:13px;color:var(--text);padding-left:18px;line-height:1.7">
+          <li>Sæktu PDF úr Drive: <a href="https://drive.google.com/drive/search?q=redder" target="_blank">Redder mappa</a> eða bókhald@brunaholf.is Gmail</li>
+          <li>Lestu reikninginn — leitaðu að <strong>"Vegna [verkstaður] umb [tengiliður]"</strong> textanum (oft í grænum ramma)</li>
+          <li>Færðu inn í <code>redder_invoices</code> töflu með Supabase eða POST á <code>/api/redder-invoices</code></li>
+          <li>Næsta refresh sýnir efni í Reikningagerð (þegar við tengjum saman í UI)</li>
+        </ol>
+        <div style="font-size:11px;color:var(--muted);margin-top:10px;font-style:italic">
+          Sjálfvirk PDF-lestur er á dagskrá — fyrir hverja PDF: extract texta, finna 'Reikningur nr.' / 'Dagsetning' / 'Vegna ... umb ...' / vörulínur.
+        </div>
+      </div>
+    `;
+    document.getElementById('ef-table-host').innerHTML = html;
+  } catch(e) {
+    document.getElementById('ef-meta').textContent = 'Villa: '+(e.message||e);
+  }
 }
 
 /* ====================== WORKCENTER (per-worksite hub modal) ====================== */
