@@ -4475,34 +4475,61 @@ async function renderVinnubok(t){
         </div>
       </div>
       <div id="vb-grid-host"></div>
+
+      <div class="vb-scratchpad">
+        <div class="vb-pad-card">
+          <div class="vb-pad-head">
+            <h3>📝 Minnispunktar</h3>
+            <div class="vb-pad-controls">
+              <button type="button" class="vb-pad-btn" id="vb-pad-add-row">+ röð</button>
+              <button type="button" class="vb-pad-btn" id="vb-pad-add-col">+ dálkur</button>
+              <button type="button" class="vb-pad-btn" id="vb-pad-clear" style="margin-left:8px">Hreinsa allt</button>
+            </div>
+          </div>
+          <div class="vb-pad-hint">Formúla: byrjaðu cellu á <code>=</code> (t.d. <code>=9951*289+137*289</code>) og blur-aðu til að reikna.</div>
+          <div id="vb-pad-grid"></div>
+        </div>
+        <div class="vb-calc-card">
+          <div class="vb-pad-head">
+            <h3>🧮 Reiknivél</h3>
+          </div>
+          <div class="vb-pad-hint">Sláðu inn dæmi og Enter til að reikna. Síðustu 8 útreikningar geymdir.</div>
+          <input type="text" id="vb-calc-input" class="vb-calc-input" placeholder="t.d. 9951*289+137*289">
+          <div id="vb-calc-result" class="vb-calc-result"></div>
+          <ul id="vb-calc-history" class="vb-calc-history"></ul>
+        </div>
+      </div>
     </div>
     <style>
-      .vb-grid{width:100%;border-collapse:separate;border-spacing:10px;font-size:12px;background:transparent;font-family:'Inter','SF Pro Display','Segoe UI',system-ui,sans-serif}
+      .vb-grid{width:100%;border-collapse:separate;border-spacing:4px;font-size:12px;background:transparent;font-family:'Inter','SF Pro Display','Segoe UI',system-ui,sans-serif}
       .vb-grid th,.vb-grid td{padding:0;vertical-align:top;border-radius:12px}
       .vb-grid th{background:linear-gradient(180deg,#f8fafc 0%,#eef2f7 100%);font-weight:700;padding:12px 16px;font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:#64748b;text-align:center;border:1px solid #e2e8f0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
-      .vb-row-name{padding:16px 18px;font-weight:700;background:linear-gradient(180deg,#f1f5f9 0%,#e2e8f0 100%);min-width:185px;max-width:240px;line-height:1.4;position:sticky;left:0;z-index:5;color:#0f172a;font-size:13px;border:1px solid #cbd5e1;box-shadow:2px 0 5px -2px rgba(0,0,0,.08)}
-      .vb-row-name small{display:block;font-weight:500;color:#64748b;font-size:11px;margin-top:6px;letter-spacing:.01em}
-      .vb-cell{min-width:170px;max-width:215px;padding:0;background:linear-gradient(135deg,#ffffff 0%,#f8fafc 100%);overflow:hidden;border:1px solid #e2e8f0;transition:box-shadow .15s,transform .1s;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+      .vb-row-name{padding:8px 12px;font-weight:700;background:linear-gradient(180deg,#f1f5f9 0%,#e2e8f0 100%);min-width:155px;max-width:210px;line-height:1.25;position:sticky;left:0;z-index:5;color:#0f172a;font-size:12px;border:1px solid #cbd5e1;box-shadow:2px 0 5px -2px rgba(0,0,0,.08)}
+      .vb-row-name small{display:block;font-weight:500;color:#64748b;font-size:10px;margin-top:2px;letter-spacing:.01em}
+      .vb-cell{min-width:140px;max-width:180px;padding:0;background:linear-gradient(135deg,#ffffff 0%,#f8fafc 100%);overflow:hidden;border:1px solid #e2e8f0;transition:box-shadow .15s,transform .1s;box-shadow:0 1px 2px rgba(15,23,42,.04)}
       .vb-cell:hover{box-shadow:0 4px 12px rgba(15,23,42,.08)}
       .vb-cell-has-hours{background:linear-gradient(135deg,#ffffff 0%,#f0f9ff 100%);border-color:#bae6fd}
       .vb-cell-has-invoice{background:linear-gradient(135deg,#ffffff 0%,#ecfdf5 100%);border-color:#a7f3d0}
       .vb-cell-mismatch{background:linear-gradient(135deg,#fffaf0 0%,#fef3c7 100%);border-color:#fcd34d}
-      .vb-cell-corners{display:flex;justify-content:space-between;align-items:flex-start;padding:11px 14px 6px;gap:8px}
-      .vb-corner{display:flex;flex-direction:column;gap:1px}
-      .vb-corner-r{align-items:flex-end}
-      .vb-corner-label{font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;font-weight:600}
-      .vb-corner-val{font-family:'SF Mono','JetBrains Mono','Roboto Mono',Menlo,monospace;font-feature-settings:'tnum' 1,'cv11' 1;font-size:13px;font-weight:600;color:#1e293b;line-height:1.1}
+      .vb-cell-corners{display:flex;justify-content:space-between;align-items:center;padding:3px 8px 0;gap:6px;min-height:14px}
+      .vb-corner{display:flex;flex-direction:row;align-items:baseline;gap:4px}
+      .vb-corner-r{justify-content:flex-end}
+      .vb-corner-label{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;font-weight:600}
+      .vb-corner-val{font-family:'SF Mono','JetBrains Mono','Roboto Mono',Menlo,monospace;font-feature-settings:'tnum' 1;font-size:10.5px;font-weight:600;color:#1e293b;line-height:1}
       .vb-corner-val.dim{color:#94a3b8;font-weight:500}
-      .vb-cell-main{padding:6px 14px 9px;display:flex;flex-direction:column;align-items:center;gap:3px}
-      .vb-amount-input{width:100%;padding:10px 12px;border:1.5px solid #cbd5e1;border-radius:8px;font-family:'SF Mono','JetBrains Mono','Roboto Mono',Menlo,monospace;font-feature-settings:'tnum' 1;font-size:16px;font-weight:700;text-align:center;background:#fff;color:#0f172a;transition:all .15s;letter-spacing:-.01em}
+      .vb-corner-sep{color:#cbd5e1;margin:0 2px;font-weight:400;font-size:10px}
+      .vb-cell-main{padding:0 8px 0;display:flex;flex-direction:column;align-items:center;gap:0}
+      .vb-amount-input{width:100%;padding:2px 6px;border:1.5px solid #cbd5e1;border-radius:5px;font-family:'SF Mono','JetBrains Mono','Roboto Mono',Menlo,monospace;font-feature-settings:'tnum' 1;font-size:12.5px;font-weight:700;text-align:center;background:#fff;color:#0f172a;transition:all .15s;letter-spacing:-.01em;height:22px;line-height:1}
       .vb-amount-input:hover{border-color:#94a3b8}
-      .vb-amount-input:focus{border-color:#3b82f6;outline:none;box-shadow:0 0 0 4px rgba(59,130,246,.12);background:#fff}
-      .vb-amount-input::placeholder{color:#cbd5e1;font-weight:500;font-size:13px;letter-spacing:0}
-      .vb-amount-currency{font-size:9.5px;color:#94a3b8;letter-spacing:.12em;text-transform:uppercase;font-weight:600}
-      .vb-save-status{font-size:10px;color:#94a3b8;text-align:center;height:13px;margin-top:2px;font-weight:500}
+      .vb-amount-input:focus{border-color:#3b82f6;outline:none;box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+      .vb-amount-input::placeholder{color:#cbd5e1;font-weight:500;font-size:12px;letter-spacing:0}
+      .vb-amount-currency{display:none}
+      .vb-save-status{font-size:9.5px;color:#94a3b8;text-align:center;height:0;font-weight:500;overflow:hidden;transition:height .15s}
+      .vb-save-status:not(:empty){height:11px;margin-top:1px}
       .vb-save-status.vb-save-ok{color:#059669;font-weight:600}
       .vb-save-status.vb-save-err{color:#dc2626;font-weight:600}
-      .vb-cell-bottom{padding:9px 14px 12px;border-top:1px solid rgba(203,213,225,.5);margin-top:auto;background:rgba(248,250,252,.5)}
+      .vb-cell-bottom{padding:2px 8px 3px;border-top:1px solid rgba(203,213,225,.35);margin-top:auto;background:rgba(248,250,252,.5);font-size:10px;line-height:1.2}
+      .vb-cell-bottom a,.vb-cell-bottom button{padding:1px 4px !important;font-size:10px !important;line-height:1.2 !important}
       .vb-zero-num{color:#cbd5e1;font-weight:500}
       .vb-year-collapsed{min-width:44px !important;max-width:44px !important;padding:12px 6px;background:linear-gradient(180deg,#f1f5f9 0%,#e2e8f0 100%);writing-mode:vertical-rl;text-orientation:mixed;cursor:pointer;text-align:center;color:#64748b;font-size:11px;letter-spacing:.1em;font-weight:600;border:1px solid #cbd5e1}
       .vb-year-collapsed:hover{background:linear-gradient(180deg,#e0e7ff 0%,#c7d2fe 100%);color:#3730a3;border-color:#a5b4fc}
@@ -4542,6 +4569,33 @@ async function renderVinnubok(t){
       [data-vb-layout="minimal"] .vb-amount-currency{display:none}
       [data-vb-layout="minimal"] .vb-cell-bottom{padding:4px 0 0;border-top:none;background:transparent}
       [data-vb-layout="minimal"] .vb-cell:hover{box-shadow:none;background:#fafafa !important}
+
+      /* === Scratchpad === */
+      .vb-scratchpad{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-top:24px;padding-top:16px;border-top:1px dashed #cbd5e1}
+      @media(max-width:980px){.vb-scratchpad{grid-template-columns:1fr}}
+      .vb-pad-card,.vb-calc-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;box-shadow:0 1px 3px rgba(15,23,42,.04)}
+      .vb-pad-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;flex-wrap:wrap}
+      .vb-pad-head h3{margin:0;font-size:14px;color:#0f172a;font-weight:700}
+      .vb-pad-hint{font-size:11px;color:#94a3b8;margin-bottom:10px;line-height:1.4}
+      .vb-pad-hint code{background:#f1f5f9;padding:1px 5px;border-radius:3px;font-family:'SF Mono','JetBrains Mono',monospace;font-size:10.5px;color:#475569}
+      .vb-pad-btn{padding:5px 10px;border:1px solid #cbd5e1;background:#fff;border-radius:5px;cursor:pointer;font-size:11px;color:#475569}
+      .vb-pad-btn:hover{background:#f1f5f9;border-color:#94a3b8}
+      .vb-pad-table{width:100%;border-collapse:collapse;font-family:'SF Mono','JetBrains Mono','Roboto Mono',Menlo,monospace;font-size:12px;font-feature-settings:'tnum' 1}
+      .vb-pad-table td{border:1px solid #e5e7eb;padding:0;height:26px;vertical-align:middle}
+      .vb-pad-table td:hover{background:#f8fafc}
+      .vb-pad-cell{display:block;padding:5px 8px;min-height:26px;outline:none;color:#0f172a}
+      .vb-pad-cell:focus{background:#eff6ff;box-shadow:inset 0 0 0 2px #3b82f6}
+      .vb-pad-cell.is-formula{color:#059669;font-weight:600}
+      .vb-pad-cell.is-error{color:#dc2626}
+      .vb-calc-input{width:100%;padding:8px 10px;border:1.5px solid #cbd5e1;border-radius:6px;font-family:'SF Mono','JetBrains Mono',monospace;font-size:13px;color:#0f172a;background:#fff}
+      .vb-calc-input:focus{border-color:#3b82f6;outline:none;box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+      .vb-calc-result{font-family:'SF Mono','JetBrains Mono',monospace;font-size:18px;font-weight:700;color:#059669;text-align:right;padding:8px 10px 4px;min-height:30px}
+      .vb-calc-result.is-error{color:#dc2626;font-size:13px}
+      .vb-calc-history{list-style:none;padding:0;margin:6px 0 0;max-height:200px;overflow-y:auto;border-top:1px dashed #e2e8f0}
+      .vb-calc-history li{padding:6px 8px;border-bottom:1px solid #f1f5f9;font-family:'SF Mono','JetBrains Mono',monospace;font-size:11.5px;display:flex;justify-content:space-between;gap:8px;cursor:pointer}
+      .vb-calc-history li:hover{background:#f8fafc}
+      .vb-calc-history li .expr{color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .vb-calc-history li .res{color:#059669;font-weight:600;flex-shrink:0}
 
       /* Layout switcher */
       .vb-layout-switch{display:inline-flex;border:1px solid #cbd5e1;border-radius:8px;overflow:hidden;background:#fff;margin-left:8px}
@@ -4633,38 +4687,81 @@ async function renderVinnubok(t){
   if(typeof state.ui.vb_months_fwd !== 'number') state.ui.vb_months_fwd = 0;
   if(!Array.isArray(state.ui.vb_hidden)) state.ui.vb_hidden = [];
   if(!Array.isArray(state.ui.vb_collapsed_years)) state.ui.vb_collapsed_years = [];
-  if(!['cards','table','minimal'].includes(state.ui.vb_layout)) state.ui.vb_layout = 'cards';
+  if(!['cards','table','minimal'].includes(state.ui.vb_layout)) state.ui.vb_layout = 'table';
+
+  const VB_URLS = ['/api/worksites?year=combined', '/api/invoice-drafts', '/api/efnislisti-docs'];
+
+  function processResponses(ws, dr, ef){
+    data = {
+      worksites: ws.worksites || [],
+      drafts: {},
+      efnislisti: {},
+      rates: window.__rgPricingGuide || {},
+    };
+    for(const d of (dr.rows || [])){
+      data.drafts[`${d.worksite_name}|${d.work_month}`] = d;
+    }
+    for(const e of (ef.rows || [])){
+      const k = `${e.worksite_name}|${e.work_month}`;
+      if(!data.efnislisti[k]) data.efnislisti[k] = { id: e.drive_file_id, title: e.title };
+    }
+  }
+
+  // Read cache synchronously (no await) — gives instant render if previous data exists.
+  function readCacheSync(){
+    const cache = window.__dataCache || {};
+    const hits = VB_URLS.map(u => cache[u]);
+    if(!hits.every(h => h && h.ok)) return null;
+    try {
+      return hits.map(h => JSON.parse(h.body));
+    } catch { return null; }
+  }
 
   async function load(opts){
     const force = opts && opts.force;
-    $meta.textContent = 'Sækir…';
-    $refresh.disabled = true;
+    let renderedFromCache = false;
+
+    // 1. Instant render from cache if available (no spinner, no wait).
+    if(!force){
+      const cached = readCacheSync();
+      if(cached){
+        processResponses(cached[0], cached[1] || {rows:[]}, cached[2] || {rows:[]});
+        render();
+        renderedFromCache = true;
+        $meta.textContent = `${data.worksites.length} verkstaðir · samstillir…`;
+      }
+    }
+
+    // 2. Background revalidate (always — fresh data, then re-render quietly).
+    if(!renderedFromCache){
+      $meta.textContent = 'Sækir…';
+      $refresh.disabled = true;
+    } else {
+      $refresh.disabled = true;
+    }
     try{
       const [wsR, drR, efR] = await Promise.all([
-        cachedFetch('/api/worksites?year=combined', {force}),
-        cachedFetch('/api/invoice-drafts', {force}).catch(() => null),
-        cachedFetch('/api/efnislisti-docs', {force}).catch(() => null),
+        cachedFetch(VB_URLS[0], {force: true}),
+        cachedFetch(VB_URLS[1], {force: true}).catch(() => null),
+        cachedFetch(VB_URLS[2], {force: true}).catch(() => null),
       ]);
       const ws = wsR ? await wsR.json() : { worksites: [] };
       const dr = drR && drR.ok ? await drR.json() : { rows: [] };
       const ef = efR && efR.ok ? await efR.json() : { rows: [] };
-      data = {
-        worksites: ws.worksites || [],
-        drafts: {},        // key: worksite|month → { status, total_m_vsk, hours_dagvinna, ... }
-        efnislisti: {},    // key: worksite|month → first Drive doc {id, title}
-        rates: window.__rgPricingGuide || {},
-      };
-      for(const d of (dr.rows || [])){
-        data.drafts[`${d.worksite_name}|${d.work_month}`] = d;
-      }
-      for(const e of (ef.rows || [])){
-        const k = `${e.worksite_name}|${e.work_month}`;
-        if(!data.efnislisti[k]) data.efnislisti[k] = { id: e.drive_file_id, title: e.title };
-      }
+      // Snapshot focus so user typing in an input doesn't lose place during re-render.
+      const focused = document.activeElement;
+      const focusKey = focused && focused.dataset && focused.dataset.vbSaveAmt;
+      const selStart = focused && focused.selectionStart;
+      processResponses(ws, dr, ef);
       render();
-      $meta.textContent = `${data.worksites.length} verkstaðir`;
+      if(focusKey){
+        const el = document.querySelector(`[data-vb-save-amt="${CSS.escape(focusKey)}"]`);
+        if(el){ el.focus(); if(selStart != null) try { el.setSelectionRange(selStart, selStart); } catch {} }
+      }
+      $meta.textContent = `${data.worksites.length} verkstaðir · uppfært ${new Date().toLocaleTimeString('is-IS')}`;
     }catch(e){
-      $meta.textContent = 'Villa: '+(e.message||e);
+      if(!renderedFromCache) $meta.textContent = 'Villa: '+(e.message||e);
+      else $meta.textContent = `${data.worksites.length} verkstaðir · samstilling mistókst`;
     }finally{
       $refresh.disabled = false;
     }
@@ -4845,21 +4942,20 @@ async function renderVinnubok(t){
       <td class="${cls.join(' ')}" data-vb-cell="${escapeAttr(draftKey)}">
         <div class="vb-cell-corners">
           <div class="vb-corner">
-            <span class="vb-corner-label">Klst</span>
             <span class="vb-corner-val ${hours > 0 ? '' : 'dim'}">${hoursStr}</span>
-            <span class="vb-corner-label" style="margin-top:6px">Áætl.</span>
-            <span class="vb-corner-val ${estKr > 0 ? 'dim' : 'dim'}">${estStr}</span>
+            <span class="vb-corner-sep">·</span>
+            <span class="vb-corner-val dim">${estStr}</span>
           </div>
           <div class="vb-corner vb-corner-r">
             ${hasInvoice
-              ? `<span style="background:#10b981;color:#fff;font-size:9px;padding:2px 6px;border-radius:99px;font-weight:700;letter-spacing:.05em;text-transform:uppercase">✓ rukk.</span>`
-              : (hours > 0 ? `<span style="background:#fef3c7;color:#92400e;font-size:9px;padding:2px 6px;border-radius:99px;font-weight:700;letter-spacing:.05em;text-transform:uppercase">eftir</span>` : '')
+              ? `<span style="background:#10b981;color:#fff;font-size:9px;padding:1px 5px;border-radius:99px;font-weight:700;letter-spacing:.05em;text-transform:uppercase">✓</span>`
+              : (hours > 0 ? `<span style="background:#fef3c7;color:#92400e;font-size:9px;padding:1px 5px;border-radius:99px;font-weight:700;letter-spacing:.05em;text-transform:uppercase">eftir</span>` : '')
             }
           </div>
         </div>
         <div class="vb-cell-main">
-          <input type="number" class="vb-amount-input" data-vb-save-amt="${escapeAttr(draftKey)}"
-                 value="${draftKr || ''}" placeholder="—" step="1" inputmode="numeric">
+          <input type="text" class="vb-amount-input" data-vb-save-amt="${escapeAttr(draftKey)}"
+                 value="${draftKr ? draftKr.toLocaleString('is-IS') : ''}" placeholder="—" inputmode="numeric">
           <div class="vb-amount-currency">kr m. vsk</div>
           <div class="vb-save-status" data-vb-status="${escapeAttr(draftKey)}"></div>
         </div>
@@ -4886,7 +4982,14 @@ async function renderVinnubok(t){
   async function saveAmount(input){
     const key = input.dataset.vbSaveAmt;
     const [worksite, month] = key.split('|');
-    const newAmount = input.value === '' ? null : Number(input.value);
+    // Parse "487.456" → 487456 (Icelandic thousands-separator is .); strip non-digits.
+    const rawStr = (input.value || '').replace(/[.\s ]/g, '').replace(/,/g, '.');
+    const newAmount = rawStr === '' ? null : Number(rawStr);
+    if(newAmount != null && !isNaN(newAmount)){
+      input.value = newAmount.toLocaleString('is-IS');
+    } else if(rawStr === ''){
+      input.value = '';
+    }
     const $st = document.querySelector(`[data-vb-status="${CSS.escape(key)}"]`);
     if($st){ $st.textContent = 'Vistar…'; $st.className = 'vb-save-status'; }
     try {
@@ -4986,6 +5089,111 @@ async function renderVinnubok(t){
     $q.addEventListener('keydown', e => { if(e.key === 'Enter') runSearch(); });
     runSearch();
   }
+
+  // ===== Scratchpad: editable grid + calculator =====
+  state.ui.vb_pad = state.ui.vb_pad || { rows: 6, cols: 4, cells: {} };
+  state.ui.vb_calc_history = state.ui.vb_calc_history || [];
+
+  function safeEvalFormula(expr){
+    let s = String(expr || '').trim();
+    if(s.startsWith('=')) s = s.slice(1);
+    s = s.replace(/[.\s ]/g, '').replace(/,/g, '.');  // strip thousand-dots, accept comma decimals
+    if(!/^[\d+\-*/().]+$/.test(s)) return null;
+    try { const v = Function('return '+s)(); return typeof v === 'number' && isFinite(v) ? v : null; }
+    catch { return null; }
+  }
+  function fmtCalc(n){
+    if(n == null || !isFinite(n)) return '—';
+    return Math.round(n) === n ? n.toLocaleString('is-IS') : n.toLocaleString('is-IS', { maximumFractionDigits: 4 });
+  }
+
+  function renderPad(){
+    const p = state.ui.vb_pad;
+    const $g = document.getElementById('vb-pad-grid');
+    if(!$g) return;
+    let html = '<table class="vb-pad-table"><tbody>';
+    for(let r = 0; r < p.rows; r++){
+      html += '<tr>';
+      for(let c = 0; c < p.cols; c++){
+        const key = `${r}:${c}`;
+        const raw = p.cells[key] || '';
+        const isFormula = raw.startsWith('=');
+        const display = isFormula
+          ? (() => { const v = safeEvalFormula(raw); return v == null ? raw : fmtCalc(v); })()
+          : raw;
+        const cls = isFormula ? (safeEvalFormula(raw) == null ? 'vb-pad-cell is-error' : 'vb-pad-cell is-formula') : 'vb-pad-cell';
+        html += `<td><span class="${cls}" contenteditable data-pad="${key}" data-raw="${escapeAttr(raw)}" title="${escapeAttr(raw)}">${escapeHtml(display)}</span></td>`;
+      }
+      html += '</tr>';
+    }
+    html += '</tbody></table>';
+    $g.innerHTML = html;
+    $g.querySelectorAll('[data-pad]').forEach(cell => {
+      cell.addEventListener('focus', () => { cell.textContent = cell.dataset.raw || ''; });
+      cell.addEventListener('blur', () => {
+        const text = cell.textContent.trim();
+        state.ui.vb_pad.cells[cell.dataset.pad] = text;
+        save();
+        renderPad();
+      });
+      cell.addEventListener('keydown', e => {
+        if(e.key === 'Enter'){ e.preventDefault(); cell.blur(); }
+      });
+    });
+  }
+  renderPad();
+
+  document.getElementById('vb-pad-add-row').onclick = () => { state.ui.vb_pad.rows = Math.min(state.ui.vb_pad.rows + 1, 30); save(); renderPad(); };
+  document.getElementById('vb-pad-add-col').onclick = () => { state.ui.vb_pad.cols = Math.min(state.ui.vb_pad.cols + 1, 10); save(); renderPad(); };
+  document.getElementById('vb-pad-clear').onclick = () => {
+    if(!confirm('Hreinsa alla minnispunkta?')) return;
+    state.ui.vb_pad = { rows: 6, cols: 4, cells: {} };
+    save(); renderPad();
+  };
+
+  function renderCalcHistory(){
+    const $u = document.getElementById('vb-calc-history');
+    if(!$u) return;
+    $u.innerHTML = (state.ui.vb_calc_history || []).slice(0, 8).map(h => `
+      <li data-recall="${escapeAttr(h.expr)}">
+        <span class="expr">${escapeHtml(h.expr)}</span>
+        <span class="res">${escapeHtml(h.result)}</span>
+      </li>
+    `).join('');
+    $u.querySelectorAll('[data-recall]').forEach(li => {
+      li.onclick = () => {
+        const $i = document.getElementById('vb-calc-input');
+        $i.value = li.dataset.recall;
+        $i.focus();
+      };
+    });
+  }
+  renderCalcHistory();
+
+  const $calcIn = document.getElementById('vb-calc-input');
+  const $calcRes = document.getElementById('vb-calc-result');
+  function compute(){
+    const expr = $calcIn.value.trim();
+    if(!expr){ $calcRes.textContent = ''; $calcRes.className = 'vb-calc-result'; return; }
+    const v = safeEvalFormula(expr);
+    if(v == null){ $calcRes.textContent = '✗ ógild formúla'; $calcRes.className = 'vb-calc-result is-error'; return; }
+    const r = fmtCalc(v);
+    $calcRes.textContent = '= ' + r;
+    $calcRes.className = 'vb-calc-result';
+    state.ui.vb_calc_history = [{ expr, result: r }, ...(state.ui.vb_calc_history || []).filter(h => h.expr !== expr)].slice(0, 8);
+    save();
+    renderCalcHistory();
+  }
+  $calcIn.addEventListener('input', () => {
+    // Live preview while typing (without saving to history)
+    const expr = $calcIn.value.trim();
+    if(!expr){ $calcRes.textContent = ''; return; }
+    const v = safeEvalFormula(expr);
+    if(v == null){ $calcRes.textContent = ''; return; }
+    $calcRes.textContent = '= ' + fmtCalc(v);
+    $calcRes.className = 'vb-calc-result';
+  });
+  $calcIn.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); compute(); } });
 
   $refresh.onclick = () => load({force: true});
   $back.onclick = () => { state.ui.vb_months_back = Math.min((state.ui.vb_months_back||8) + 2, 24); save(); render(); };
