@@ -942,6 +942,31 @@ main{padding:14px;max-width:1100px;margin:0 auto;flex:1;min-width:0;width:100%}
 .rg-cb-clickable:hover{opacity:.7}
 .rg-month-doc{margin-right:4px;font-size:11px;text-decoration:none;color:var(--blue,#2563eb);opacity:.7;transition:opacity 100ms ease}
 .rg-month-doc:hover{opacity:1;transform:scale(1.1)}
+/* Efni line below the kr — small, blue, clickable */
+.rg-month-efni{margin-top:4px;text-align:right;font-size:10.5px}
+.rg-efni-btn{background:#EFF5FB;border:1px solid #B6CFE8;color:#0F3B6E;font-weight:600;border-radius:4px;padding:2px 6px;cursor:pointer;font-variant-numeric:tabular-nums;font:inherit;font-size:10.5px;font-weight:600;letter-spacing:0;transition:all 100ms ease}
+.rg-efni-btn:hover{background:#D6E6F5;border-color:#6EA8DC;transform:translateY(-1px)}
+
+/* Efni editor modal */
+.modal:has(#efni-body){max-width:880px}
+.efni-totals{display:flex;justify-content:space-between;align-items:baseline;padding:14px 18px;background:linear-gradient(135deg,#F0F6FC 0%,#E2EDF7 100%);border-radius:10px;margin-bottom:14px;border:1px solid #B6CFE8}
+.efni-totals span{font-size:12px;color:#3A6296;font-weight:500;text-transform:uppercase;letter-spacing:.05em}
+.efni-totals strong{font-family:'Source Serif 4',Georgia,serif;font-size:24px;font-weight:700;color:#0F3B6E;font-variant-numeric:tabular-nums}
+.efni-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,0.03)}
+.efni-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:8px}
+.efni-inv-nr{font-weight:600;font-size:13px;color:var(--text)}
+.efni-inv-raw{font-size:11px;color:var(--muted);margin-top:2px;font-style:italic}
+.efni-inv-orig{font-size:11px;color:var(--muted-2);margin-bottom:8px}
+.efni-edit{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.efni-edit label{font-size:10px;color:var(--muted-2);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.efni-edit input{padding:6px 10px;border:1px solid var(--border);border-radius:6px;font:inherit;font-size:13px;text-align:right;font-variant-numeric:tabular-nums;width:110px;font-weight:600;background:#FCFCFA;transition:border-color 80ms ease}
+.efni-edit input:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px rgba(217,56,56,0.12);background:#fff}
+.efni-lines{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:8px}
+.efni-lines th{text-align:left;font-size:10px;color:var(--muted-2);font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:4px 6px;border-bottom:1px solid var(--border)}
+.efni-lines th.num{text-align:right}
+.efni-lines td{padding:4px 6px;border-bottom:1px solid var(--bg-2)}
+.efni-lines td.num{text-align:right;font-variant-numeric:tabular-nums}
+.efni-lines tr:last-child td{border-bottom:none}
 .rg-month.rg-billed-manual{opacity:.55;background:#F4F4F0}
 .rg-month.rg-billed-manual .rg-month-amt{text-decoration:line-through;color:var(--muted-2)}
 .rg-month.rg-billed-manual::after{content:'rukkað í öðrum reikningi';display:block;font-size:9px;color:var(--muted);font-style:italic;text-align:center;margin-top:2px}
@@ -3037,11 +3062,12 @@ function renderReikningagerd(t){
     setMeta('Sækir…');
     if($refresh){ $refresh.disabled = true; $refresh.classList.add('loading'); }
     try{
-      const [r, drR, efR, pgR] = await Promise.all([
+      const [r, drR, efR, pgR, rdR] = await Promise.all([
         fetch('/api/worksites?year=combined'),
         fetch('/api/invoice-drafts?status=invoiced').catch(() => null),
         fetch('/api/efnislisti-docs').catch(() => null),
         fetch('/api/pricing-guide').catch(() => null),
+        fetch('/api/redder-invoices').catch(() => null),
       ]);
       // Build pricing_guide map → window-global so rgRateFor() can read it
       if (pgR && pgR.ok) {
@@ -3053,6 +3079,14 @@ function renderReikningagerd(t){
       }
       if(!r.ok) throw new Error('HTTP '+r.status);
       lastData = await r.json();
+      // Build (worksite, month) → total Redder material cost (recharged onto invoice)
+      lastData.efni_total = {};
+      if (rdR && rdR.ok) {
+        const { summary } = await rdR.json();
+        for (const g of (summary?.by_worksite_month||[])) {
+          lastData.efni_total[`${g.worksite}|${g.month}`] = g.total_m_vsk;
+        }
+      }
       // Build a map of (worksite, month) → manually billed
       lastData.manual_billed = {};
       if (drR && drR.ok) {
@@ -3267,9 +3301,15 @@ function renderReikningagerd(t){
             const efLink = efDocs.length
               ? `<a class="rg-month-doc" href="https://drive.google.com/file/d/${efDocs[0].id}/view" target="_blank" rel="noopener" title="Efnislisti: ${escapeAttr(efDocs[0].title)}${efDocs.length>1?' (+'+(efDocs.length-1)+' fleiri)':''}" onclick="event.stopPropagation()">📎</a>`
               : '';
+            // Redder material cost for this (worksite, month) — recharged onto customer invoice
+            const efniKr = (lastData.efni_total||{})[`${w.project}|${ym}`] || 0;
+            const efniLine = efniKr > 0
+              ? `<div class="rg-month-efni" title="Efni úr Redder · smelltu til að breyta verðum"><button type="button" class="rg-efni-btn" data-rg-efni="${escapeAttr(w.project)}|${ym}">📦 ${fmtIsk(efniKr)}</button></div>`
+              : '';
             return `
               <td class="rg-month${needsBill && !manualBilled?' rg-month-needs':''}${billedCls}" title="${needsBill?(monthHours.toFixed(1)+' klst skráðar — engin reikningur'):''}">
                 <div class="rg-month-amt ${cellCls}">${cellInner}</div>
+                ${efniLine}
                 <div class="rg-cb-row">
                   ${efLink}
                   <span class="rg-cb rg-cb-clickable ${rei||manualBilled?'rg-cb-ok':'rg-cb-no'}" data-rg-toggle-rei="${escapeAttr(w.project)}|${ym}" title="Smelltu til að merkja sem rukkað (bundlað í annan reikning eða sent of seint)">${rei||manualBilled?'☑':'☐'} rei</span>
@@ -3323,6 +3363,13 @@ function renderReikningagerd(t){
     });
     $host.querySelectorAll('[data-rg-wc]').forEach(b => {
       b.onclick = () => rgOpenWorkcenter(b.dataset.rgWc, allSites, months);
+    });
+    // Click on the 📦 efni button → open Redder-invoices editor for (worksite, month)
+    $host.querySelectorAll('[data-rg-efni]').forEach(b => {
+      b.onclick = () => {
+        const [worksite, month] = b.dataset.rgEfni.split('|');
+        rgOpenEfniEditor(worksite, month);
+      };
     });
     // Click on the "rei" chip → mark month as manually billed (bundled / late-issue case)
     $host.querySelectorAll('[data-rg-toggle-rei]').forEach(b => {
@@ -3647,6 +3694,115 @@ function monthLabelStatic(ym){
   const names = ['Jan','Feb','Mar','Apr','Maí','Jún','Júl','Ágú','Sep','Okt','Nóv','Des'];
   const [y,m] = ym.split('-');
   return `${names[parseInt(m,10)-1]} ${y.slice(2)}`;
+}
+
+/* ====================== EFNI EDITOR (Redder line items for one worksite/month) ====================== */
+async function rgOpenEfniEditor(worksite, month){
+  const fmt = n => Math.round(n||0).toLocaleString('is-IS');
+  openModal(`
+    <div class="rg-calc-wrap">
+      <div class="rg-calc-head">
+        <div>
+          <div class="rg-calc-title">📦 Efniskostnaður — ${escapeHtml(worksite)}</div>
+          <div class="rg-calc-sub">${monthLabelStatic(month)} · Redder efni sem kemur á reikning verkkaupa</div>
+        </div>
+        <button type="button" class="rg-calc-close" id="efni-close">✕</button>
+      </div>
+      <div id="efni-body">Sækir…</div>
+    </div>
+  `);
+  document.getElementById('efni-close').onclick = closeModal;
+
+  let rows = [];
+  try{
+    const r = await fetch(`/api/redder-invoices?worksite=${encodeURIComponent(worksite)}&month=${encodeURIComponent(month)}`);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    rows = (await r.json()).rows || [];
+  }catch(e){
+    document.getElementById('efni-body').innerHTML = `<div class="wc-empty">Villa: ${e.message||e}</div>`;
+    return;
+  }
+
+  if(!rows.length){
+    document.getElementById('efni-body').innerHTML = `<div class="wc-empty">Engir Redder reikningar fyrir ${escapeHtml(worksite)} í ${monthLabelStatic(month)}.</div>`;
+    return;
+  }
+
+  let total = 0;
+  const html = rows.map(inv => {
+    const recharge = Number(inv.recharge_amount ?? inv.m_vsk) || 0;
+    total += recharge;
+    return `
+      <div class="efni-card">
+        <div class="efni-card-head">
+          <div>
+            <div class="efni-inv-nr">#${escapeHtml(inv.invoice_nr)} · ${inv.dagsetning || '—'}</div>
+            <div class="efni-inv-raw">${escapeHtml(inv.worksite_raw || '')} · seljandi: ${escapeHtml(inv.salesperson || '—')}</div>
+          </div>
+          <div class="efni-edit">
+            <label>Endurkrafa (kr m. vsk)</label>
+            <input type="number" data-efni-id="${inv.id}" data-efni-orig="${inv.m_vsk}" value="${recharge}" step="1">
+          </div>
+        </div>
+        <div class="efni-inv-orig">Upphafleg Redder upphæð: ${fmt(inv.m_vsk)} kr m. vsk (${fmt(inv.an_vsk)} án vsk)</div>
+        ${(inv.redder_line_items||[]).length ? `
+          <table class="efni-lines">
+            <thead><tr><th>Vörunr</th><th>Heiti</th><th class="num">Magn</th><th class="num">Verð</th><th class="num">Afsl</th><th class="num">Samtals</th></tr></thead>
+            <tbody>${inv.redder_line_items.map(li => `
+              <tr>
+                <td>${escapeHtml(li.item_code||'')}</td>
+                <td>${escapeHtml(li.item_name||'')}</td>
+                <td class="num">${Number(li.magn||0)} ${escapeHtml(li.unit||'')}</td>
+                <td class="num">${fmt(li.ein_verd)}</td>
+                <td class="num">${li.afsl_pct||0}%</td>
+                <td class="num">${fmt(li.upphaed)}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>` : ''}
+      </div>`;
+  }).join('');
+
+  document.getElementById('efni-body').innerHTML = `
+    <div class="efni-totals"><span>Samtals endurkrafa fyrir ${monthLabelStatic(month)}</span><strong id="efni-total">${fmt(total)} kr</strong></div>
+    ${html}
+    <div class="rg-calc-actions" style="margin-top:14px">
+      <button type="button" class="rg-tool" id="efni-save">💾 Vista allar breytingar</button>
+      <span id="efni-save-status" class="wc-save-status"></span>
+    </div>
+    <div class="rg-calc-hint">Breyting á "Endurkrafa" hefur áhrif á samtals efniskostnað í Reikningagerð. Upphafleg Redder upphæð er fast og breytist ekki — endurkrafan er bara það sem þú ætlar að rukka verkkaupa.</div>
+  `;
+
+  // live update total as user edits
+  document.querySelectorAll('[data-efni-id]').forEach(el => {
+    el.oninput = () => {
+      let t = 0;
+      document.querySelectorAll('[data-efni-id]').forEach(x => t += Number(x.value)||0);
+      document.getElementById('efni-total').textContent = fmt(t) + ' kr';
+    };
+  });
+
+  document.getElementById('efni-save').onclick = async () => {
+    const $s = document.getElementById('efni-save-status');
+    $s.textContent = '… vistar';
+    const inputs = document.querySelectorAll('[data-efni-id]');
+    let ok = 0, fail = 0;
+    for (const el of inputs) {
+      const orig = Number(el.dataset.efniOrig);
+      const val = Number(el.value)||0;
+      // Only save if changed
+      if (Math.abs(val - orig) < 0.5 && el.value === String(orig)) continue;
+      try {
+        const inv = rows.find(r => String(r.id) === el.dataset.efniId);
+        const r = await fetch('/api/redder-invoices', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ ...inv, recharge_amount: val, line_items: undefined }),
+        });
+        if (r.ok) ok++; else fail++;
+      } catch(e) { fail++; }
+    }
+    $s.textContent = fail ? `✗ ${ok} vistuð, ${fail} mistakast` : ok ? `✓ ${ok} vistuð` : '— engin breyting';
+    $s.className = 'wc-save-status ' + (fail ? 'wc-save-err' : 'wc-save-ok');
+  };
 }
 
 /* ====================== EFNISKOSTNAÐUR (Redder material costs per worksite/month) ====================== */
