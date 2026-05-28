@@ -4,6 +4,16 @@
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+// Gata verkefni — billed via Ajour stakar, NOT Tímavera hours.
+// Hours logged for these projects are meaningless for the unbilled-hours
+// calculation (work is invoiced by per-hole-size rates × stakar count).
+// Excluded from the report entirely.
+const GATA_VERKEFNI = new Set([
+  'Landsspitalinn',
+  'Heklu reitur',
+  'Dalvegur 30',
+]);
+
 const SQL = `
 WITH tv AS (
   SELECT COALESCE(pa.canonical_name, te.project) AS worksite,
@@ -52,6 +62,7 @@ FROM tv
 LEFT JOIN inv      ON inv.worksite = tv.worksite
 LEFT JOIN materials m ON m.worksite = tv.worksite
 LEFT JOIN rates r    ON r.worksite = tv.worksite
+WHERE tv.worksite NOT IN ('Landsspitalinn','Heklu reitur','Dalvegur 30')
 ORDER BY (tv.hours - GREATEST(COALESCE(inv.an_vsk, 0) - COALESCE(m.mat_an_vsk, 0), 0) / COALESCE(r.dagvinna_rate, 9951)::numeric) DESC
 `;
 
@@ -146,6 +157,7 @@ async function aggregateInCode(){
   for (const ws in tvByWorksite) {
     const hours = tvByWorksite[ws];
     if (hours <= 5) continue;
+    if (GATA_VERKEFNI.has(ws)) continue; // billed by Ajour, not Tímavera hours
     const rate = rateMap.get(ws) || 9951;
     const inv  = invByWorksite[ws] || 0;
     const mat  = matByWorksite[ws] || 0;

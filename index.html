@@ -3623,7 +3623,8 @@ function renderReikningagerd(t){
                 </div>
               </td>`;
           }).join('')}
-          <td class="rg-col-balance ${(lastData.unbilled||{})[w.project] > 0 ? 'rg-balance-unbilled' : ''}">${(() => {
+          <td class="rg-col-balance ${(lastData.unbilled||{})[w.project] > 0 && !isGata(w.project) ? 'rg-balance-unbilled' : ''}">${(() => {
+            if (isGata(w.project)) return '<span class="rg-zero" title="Gata verkefni: rukkast eftir Ajour stakar, ekki Tímavera klst">⊘</span>';
             const ub = (lastData.unbilled||{})[w.project];
             if (ub == null) return '<span class="rg-zero">—</span>';
             const sign = ub > 0 ? '+' : '';
