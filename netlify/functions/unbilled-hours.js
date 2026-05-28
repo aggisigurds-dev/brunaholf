@@ -166,16 +166,23 @@ async function aggregateInCode(){
 }
 
 function buildPayload(rows){
+  let total_tv_hours = 0;
+  let total_est_billed_hours = 0;
   let total_unbilled_hours = 0;
   let n_unbilled = 0;
   let n_overbilled = 0;
   for (const r of rows) {
+    total_tv_hours += Number(r.tv_hours || 0);
+    total_est_billed_hours += Number(r.est_billed_hours || 0);
     if (r.unbilled_hours > 0) { total_unbilled_hours += r.unbilled_hours; n_unbilled++; }
     else if (r.unbilled_hours < 0) n_overbilled++;
   }
   return {
     rows,
     summary: {
+      total_tv_hours: Math.round(total_tv_hours * 10) / 10,
+      total_est_billed_hours: Math.round(total_est_billed_hours * 10) / 10,
+      net_unbilled_hours: Math.round((total_tv_hours - total_est_billed_hours) * 10) / 10,
       total_unbilled_hours: Math.round(total_unbilled_hours * 10) / 10,
       n_unbilled_worksites: n_unbilled,
       n_overbilled_worksites: n_overbilled,
