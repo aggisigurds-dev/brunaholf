@@ -2962,6 +2962,7 @@ function renderReikningagerd(t){
         </div>
         <div class="rg-controls">
           <select id="rg-window" class="tv-select">
+            <option value="8" selected>Síðustu 8 mánuðir (Okt–Maí)</option>
             <option value="6">Síðustu 6 mánuðir</option>
             <option value="12">Síðustu 12 mánuðir</option>
             <option value="ytd">Á þessu ári</option>
@@ -3092,7 +3093,7 @@ function renderReikningagerd(t){
         out.push(`${today.getFullYear()}-${String(m+1).padStart(2,'0')}`);
       }
     } else {
-      const n = parseInt(winVal, 10) || 6;
+      const n = parseInt(winVal, 10) || 8;
       for(let i=n-1; i>=0; i--){
         const d = new Date(today.getFullYear(), today.getMonth()-i, 1);
         out.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
