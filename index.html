@@ -822,6 +822,35 @@ main{padding:14px;max-width:1100px;margin:0 auto;flex:1;min-width:0;width:100%}
 .rg-src-tv{color:#B85C00}.rg-src-aj{color:#6B4FBB}.rg-src-fx{color:#888}
 .rg-col-name{min-width:160px;font-weight:500}
 .rg-name-sub{display:block;font-size:11px;color:var(--muted);font-weight:400;margin-top:1px}
+.rg-name-link{background:none;border:none;font:inherit;cursor:pointer;color:var(--text);font-weight:500;padding:0;text-align:left}
+.rg-name-link:hover{color:var(--red);text-decoration:underline}
+
+/* ===== Workcenter modal ===== */
+.wc-wrap{max-width:900px;width:90vw;font-size:13px}
+.wc-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:16px;padding-bottom:14px;border-bottom:2px solid var(--border)}
+.wc-title{font-family:'Source Serif 4',Georgia,serif;font-size:24px;font-weight:600;letter-spacing:-.01em}
+.wc-sub{color:var(--muted);font-size:12px;margin-top:4px}
+.wc-sub a{color:var(--blue,#2563eb);text-decoration:none}
+.wc-sub a:hover{text-decoration:underline}
+.wc-body{min-height:120px}
+.wc-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.wc-card{background:var(--bg-2);border:1px solid var(--border);border-radius:8px;padding:14px}
+.wc-card-full{grid-column:1 / -1}
+.wc-card h3{font-size:13px;font-weight:600;margin:0 0 12px;color:var(--text);font-family:'Source Serif 4',Georgia,serif}
+.wc-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;font-size:12px}
+.wc-row.wc-row-full{grid-template-columns:1fr}
+.wc-row label{display:flex;flex-direction:column;gap:3px;color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.wc-row input, .wc-row select, .wc-row textarea{padding:6px 8px;border:1px solid var(--border);border-radius:4px;font:inherit;background:#fff;color:var(--text);text-transform:none;letter-spacing:0;font-weight:400}
+.wc-row textarea{resize:vertical;min-height:40px}
+.wc-todo-textarea{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:4px;font:inherit;font-size:13px;min-height:80px;resize:vertical;margin-bottom:8px;background:#fff}
+.wc-mini-table{width:100%;border-collapse:collapse;font-size:12px}
+.wc-mini-table td{padding:4px 6px;border-bottom:1px solid var(--border)}
+.wc-mini-table td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.wc-empty{color:var(--muted);font-style:italic;font-size:11px;text-align:center;padding:12px}
+.wc-save-status{display:inline-block;margin-left:8px;font-size:11px;color:var(--muted)}
+.wc-save-status.wc-save-ok{color:var(--green,#2e7d32);font-weight:600}
+.wc-save-status.wc-save-err{color:var(--red);font-weight:600}
+@media(max-width:760px){.wc-grid{grid-template-columns:1fr}.wc-row{grid-template-columns:1fr}}
 .rg-col-cust{min-width:120px;color:var(--muted-2);font-size:11px}
 .rg-col-skuldir{text-align:right;font-variant-numeric:tabular-nums;color:var(--red);font-weight:600;font-size:11px;min-width:80px}
 .rg-month{text-align:right;font-variant-numeric:tabular-nums;min-width:96px;padding:4px 6px;border-left:1px solid var(--border)}
@@ -3056,7 +3085,7 @@ function renderReikningagerd(t){
               : `<span class="rg-drive rg-drive-empty" title="Engin Drive mappa">📁</span>`}
           </td>
           <td class="rg-col-src ${src.cls}" title="${src.title}">${src.icon}</td>
-          <td class="rg-col-name">${escapeHtml(w.project)}<span class="rg-name-sub">${(w.hours||0).toFixed(0)} klst · ${(w.ajour_registrations||0)} skr.</span></td>
+          <td class="rg-col-name"><button type="button" class="rg-name-link" data-rg-wc="${escapeAttr(w.project)}" title="Opna verkstöð / Workcenter">${escapeHtml(w.project)}</button><span class="rg-name-sub">${(w.hours||0).toFixed(0)} klst · ${(w.ajour_registrations||0)} skr.</span></td>
           <td class="rg-col-cust">${escapeHtml(cust)}</td>
           <td class="rg-col-skuldir">${fmtIsk(skuldir)}</td>
           ${months.map(ym => {
@@ -3123,6 +3152,9 @@ function renderReikningagerd(t){
     });
     $host.querySelectorAll('[data-rg-calc]').forEach(b => {
       b.onclick = () => rgOpenCalculator(b.dataset.rgCalc, allSites, months);
+    });
+    $host.querySelectorAll('[data-rg-wc]').forEach(b => {
+      b.onclick = () => rgOpenWorkcenter(b.dataset.rgWc, allSites, months);
     });
     const $unhide = document.getElementById('rg-unhide-all');
     if($unhide) $unhide.onclick = rgUnhideAll;
@@ -3344,6 +3376,210 @@ function monthLabelStatic(ym){
   const names = ['Jan','Feb','Mar','Apr','Maí','Jún','Júl','Ágú','Sep','Okt','Nóv','Des'];
   const [y,m] = ym.split('-');
   return `${names[parseInt(m,10)-1]} ${y.slice(2)}`;
+}
+
+/* ====================== WORKCENTER (per-worksite hub modal) ====================== */
+// Opens when you click a worksite name in the Reikningagerð grid.
+// Shows + edits: pricing_guide rules, customer_info notes, hours by month,
+// invoice history, recent emails.
+async function rgOpenWorkcenter(project, allSites, months){
+  const w = allSites.find(s => s.project === project);
+  if(!w){ alert('Engin gögn fyrir verkstað: '+project); return; }
+  const customer = (w.mapped_customers||[])[0] || '';
+  const drive = w.status?.drive_folder_url || '';
+  const fmt = n => n ? Math.round(n).toLocaleString('is-IS') : '';
+
+  // Open shell modal with a loading state, then fetch pricing + customer info in parallel
+  openModal(`
+    <div class="wc-wrap">
+      <div class="wc-head">
+        <div>
+          <div class="wc-title">${escapeHtml(project)}</div>
+          <div class="wc-sub">${escapeHtml(customer || '—')}${drive ? ` · <a href="${escapeHtml(drive)}" target="_blank" rel="noopener">📁 Drive mappa</a>` : ''}</div>
+        </div>
+        <button type="button" class="rg-calc-close" id="wc-close">✕</button>
+      </div>
+      <div class="wc-body" id="wc-body">Sækir…</div>
+    </div>
+  `);
+  document.getElementById('wc-close').onclick = closeModal;
+  const $body = document.getElementById('wc-body');
+
+  let pricing = {}, custInfo = {};
+  try {
+    const [pr, cr] = await Promise.all([
+      fetch(`/api/pricing-guide?worksite=${encodeURIComponent(project)}`).then(r => r.ok ? r.json() : ({})),
+      customer ? fetch(`/api/customer-info?name=${encodeURIComponent(customer)}`).then(r => r.ok ? r.json() : ({})) : Promise.resolve({}),
+    ]);
+    pricing = pr || {};
+    custInfo = cr || {};
+  } catch(e){ /* ignore — show empty editable form */ }
+
+  // Hours per month from worksites data
+  const hoursRows = months.map(ym => ({ ym, h: (w.monthly||{})[ym] || 0 })).filter(r => r.h > 0);
+  const invoices = (w.invoices||[]).slice().sort((a,b) => (b.gjalddagi||'').localeCompare(a.gjalddagi||''));
+
+  $body.innerHTML = `
+    <div class="wc-grid">
+      <section class="wc-card">
+        <h3>💰 Reikningsreglur (pricing_guide)</h3>
+        <div class="wc-row">
+          <label>Source<select id="wc-src">
+            <option value="timavera" ${(pricing.source||'timavera')==='timavera'?'selected':''}>timavera</option>
+            <option value="ajour" ${pricing.source==='ajour'?'selected':''}>ajour</option>
+            <option value="fixed" ${pricing.source==='fixed'?'selected':''}>fixed</option>
+          </select></label>
+        </div>
+        <div class="wc-row">
+          <label>Dagvinna kr/klst<input type="number" id="wc-dv" value="${pricing.dagvinna_rate ?? 9951}" step="50"></label>
+          <label>Eftirvinna kr/klst<input type="number" id="wc-ev" value="${pricing.eftirvinna_rate ?? 14927}" step="50"></label>
+        </div>
+        <div class="wc-row">
+          <label>Akstur km kr<input type="number" id="wc-km" value="${pricing.akstur_km_rate ?? 186}" step="10"></label>
+          <label>Akstur ferð kr<input type="number" id="wc-fr" value="${pricing.akstur_ferd_rate ?? 4000}" step="100"></label>
+        </div>
+        <div class="wc-row">
+          <label>Smáhlutagjald / dv klst<input type="number" id="wc-sma" value="${pricing.smahlutagjald_per_h ?? 137}" step="10"></label>
+          <label>VSK %<input type="number" id="wc-vsk" value="${pricing.vsk_pct ?? 24}" step="1"></label>
+        </div>
+        <div class="wc-row">
+          <label>Fixed amount (override)<input type="number" id="wc-fix" value="${pricing.fixed_amount ?? ''}" step="1000" placeholder="—"></label>
+          <label>Retention %<input type="number" id="wc-ret" value="${pricing.retention_pct ?? 0}" step="1"></label>
+        </div>
+        <div class="wc-row">
+          <label>Greiðslufrestur (dagar)<input type="number" id="wc-pt" value="${pricing.payment_terms_days ?? ''}" step="1" placeholder="—"></label>
+          <label><input type="checkbox" id="wc-stadf" ${pricing.stadfesting_default?'checked':''}> Staðfesting brunaþéttinga sjálfvirkt</label>
+        </div>
+        <div class="wc-row wc-row-full">
+          <label>Athugasemd<textarea id="wc-notes" rows="2" placeholder="—">${escapeHtml(pricing.notes || '')}</textarea></label>
+        </div>
+        <button type="button" class="rg-tool" id="wc-save-pricing">💾 Vista verðreglur</button>
+        <span id="wc-save-pricing-status" class="wc-save-status"></span>
+      </section>
+
+      <section class="wc-card">
+        <h3>👤 Viðskiptavinaupplýsingar (customer_info)</h3>
+        ${customer ? `
+          <div class="wc-row">
+            <label>Greiðslumáti<select id="wc-pm">
+              <option value="payday"      ${custInfo.payment_method==='payday'?'selected':''}>Payday</option>
+              <option value="bank-direct" ${custInfo.payment_method==='bank-direct'?'selected':''}>Bank-direct</option>
+              <option value="mix"         ${custInfo.payment_method==='mix'?'selected':''}>Mix</option>
+              <option value="unknown"     ${(!custInfo.payment_method||custInfo.payment_method==='unknown')?'selected':''}>Óvíst</option>
+            </select></label>
+            <label>Retention %<input type="number" id="wc-ci-ret" value="${custInfo.retention_pct ?? 0}" step="1"></label>
+          </div>
+          <div class="wc-row">
+            <label>Tölvupóstur<input type="email" id="wc-email" value="${escapeAttr(custInfo.contact_email || '')}" placeholder="—"></label>
+            <label>Sími<input type="text" id="wc-phone" value="${escapeAttr(custInfo.contact_phone || '')}" placeholder="—"></label>
+          </div>
+          <div class="wc-row">
+            <label>Greiðsluskilmálar<input type="text" id="wc-pt2" value="${escapeAttr(custInfo.payment_terms || '')}" placeholder="t.d. 30 days net"></label>
+          </div>
+          <div class="wc-row wc-row-full">
+            <label>Almenn nóta<textarea id="wc-gnote" rows="2" placeholder="—">${escapeHtml(custInfo.general_notes || '')}</textarea></label>
+          </div>
+          <button type="button" class="rg-tool" id="wc-save-customer">💾 Vista viðskiptavin</button>
+          <span id="wc-save-customer-status" class="wc-save-status"></span>
+        ` : `<div class="wc-empty">Enginn viðskiptavinur tengdur — bættu við í customer_worksite_map.</div>`}
+      </section>
+
+      <section class="wc-card">
+        <h3>⏱ Tímavera klst per mánuð</h3>
+        <table class="wc-mini-table">
+          ${hoursRows.length ? hoursRows.map(r => `<tr><td>${monthLabelStatic(r.ym)}</td><td class="num">${r.h.toFixed(1)} klst</td></tr>`).join('') : '<tr><td colspan="2" class="wc-empty">Engar klst á tímabilinu.</td></tr>'}
+        </table>
+      </section>
+
+      <section class="wc-card">
+        <h3>💳 Reikningar (${invoices.length})</h3>
+        <table class="wc-mini-table">
+          ${invoices.length ? invoices.slice(0, 10).map(i => `
+            <tr>
+              <td>${i.gjalddagi || '—'}</td>
+              <td>#${escapeHtml(String(i.tilvisun||''))}</td>
+              <td class="num">${fmt(i.amount)}</td>
+              <td>${escapeHtml(i.status || '')}</td>
+            </tr>
+          `).join('') : '<tr><td colspan="4" class="wc-empty">Engir reikningar tengdir.</td></tr>'}
+        </table>
+      </section>
+
+      <section class="wc-card wc-card-full">
+        <h3>🗒 Næstu skref / Athugasemdir</h3>
+        <textarea id="wc-todo-notes" rows="4" class="wc-todo-textarea" placeholder="Hvað þarf að gera næst? T.d. 'Senda Mars reikning, fá staðfestingu á aksturskostnaði, kalla á Ívar v/staðfestingar...'">${escapeHtml(w.status?.notes || '')}</textarea>
+        <button type="button" class="rg-tool" id="wc-save-todo">💾 Vista athugasemd</button>
+        <span id="wc-save-todo-status" class="wc-save-status"></span>
+      </section>
+    </div>
+  `;
+
+  // Save handlers
+  const savePricing = async () => {
+    const $s = document.getElementById('wc-save-pricing-status');
+    $s.textContent = '… vistar';
+    const body = {
+      worksite_name: project,
+      customer_name: customer || null,
+      source: document.getElementById('wc-src').value,
+      dagvinna_rate: Number(document.getElementById('wc-dv').value) || null,
+      eftirvinna_rate: Number(document.getElementById('wc-ev').value) || null,
+      akstur_km_rate: Number(document.getElementById('wc-km').value) || null,
+      akstur_ferd_rate: Number(document.getElementById('wc-fr').value) || null,
+      smahlutagjald_per_h: Number(document.getElementById('wc-sma').value) || null,
+      vsk_pct: Number(document.getElementById('wc-vsk').value) || null,
+      fixed_amount: document.getElementById('wc-fix').value ? Number(document.getElementById('wc-fix').value) : null,
+      retention_pct: Number(document.getElementById('wc-ret').value) || 0,
+      payment_terms_days: document.getElementById('wc-pt').value ? Number(document.getElementById('wc-pt').value) : null,
+      stadfesting_default: document.getElementById('wc-stadf').checked,
+      notes: document.getElementById('wc-notes').value || null,
+      updated_by: 'workcenter',
+    };
+    try {
+      const r = await fetch('/api/pricing-guide', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      $s.textContent = r.ok ? '✓ Vistað' : '✗ Villa: '+r.status;
+      $s.className = 'wc-save-status ' + (r.ok ? 'wc-save-ok' : 'wc-save-err');
+    } catch(e){ $s.textContent = '✗ '+(e.message||e); $s.className='wc-save-status wc-save-err'; }
+  };
+  const saveCustomer = async () => {
+    const $s = document.getElementById('wc-save-customer-status');
+    $s.textContent = '… vistar';
+    const body = {
+      customer_name: customer,
+      payment_method: document.getElementById('wc-pm').value,
+      retention_pct: Number(document.getElementById('wc-ci-ret').value) || 0,
+      contact_email: document.getElementById('wc-email').value || null,
+      contact_phone: document.getElementById('wc-phone').value || null,
+      payment_terms: document.getElementById('wc-pt2').value || null,
+      general_notes: document.getElementById('wc-gnote').value || null,
+    };
+    try {
+      const r = await fetch('/api/customer-info', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      $s.textContent = r.ok ? '✓ Vistað' : '✗ Villa: '+r.status;
+      $s.className = 'wc-save-status ' + (r.ok ? 'wc-save-ok' : 'wc-save-err');
+    } catch(e){ $s.textContent = '✗ '+(e.message||e); $s.className='wc-save-status wc-save-err'; }
+  };
+  const saveTodo = async () => {
+    const $s = document.getElementById('wc-save-todo-status');
+    $s.textContent = '… vistar';
+    const body = {
+      project_name: project,
+      year: new Date().getFullYear(),
+      notes: document.getElementById('wc-todo-notes').value || null,
+      updated_by: 'workcenter',
+    };
+    try {
+      const r = await fetch('/api/worksites', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      $s.textContent = r.ok ? '✓ Vistað' : '✗ Villa: '+r.status;
+      $s.className = 'wc-save-status ' + (r.ok ? 'wc-save-ok' : 'wc-save-err');
+    } catch(e){ $s.textContent = '✗ '+(e.message||e); $s.className='wc-save-status wc-save-err'; }
+  };
+  const $sp = document.getElementById('wc-save-pricing');
+  if($sp) $sp.onclick = savePricing;
+  const $sc = document.getElementById('wc-save-customer');
+  if($sc) $sc.onclick = saveCustomer;
+  const $st = document.getElementById('wc-save-todo');
+  if($st) $st.onclick = saveTodo;
 }
 
 /* ====================== VERÐSAMANBURÐUR (competitor prices) ====================== */
