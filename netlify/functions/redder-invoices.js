@@ -50,7 +50,16 @@ exports.handler = async (event) => {
     catch { return json(400, { error: 'Invalid JSON' }); }
     if (!body.invoice_nr) return json(400, { error: 'invoice_nr required' });
 
-    const { line_items, ...invFields } = body;
+    const { line_items, redder_line_items: _unused, ...invFields } = body;
+    // Whitelist allowed columns to avoid Postgres errors from extra fields
+    const allowed = ['invoice_nr','dagsetning','eindagi','worksite_match','worksite_raw',
+      'contact_person','salesperson','an_vsk','vsk','m_vsk','recharge_amount',
+      'drive_file_id','source','notes'];
+    const cleaned = {};
+    for (const k of allowed) if (invFields[k] !== undefined) cleaned[k] = invFields[k];
+    Object.assign(invFields, cleaned);
+    // Replace invFields with cleaned to be safe
+    for (const k of Object.keys(invFields)) if (!allowed.includes(k)) delete invFields[k];
     const invR = await fetch(`${SUPABASE_URL}/rest/v1/redder_invoices?on_conflict=invoice_nr`, {
       method: 'POST',
       headers: {
