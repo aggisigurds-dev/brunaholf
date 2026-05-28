@@ -87,11 +87,24 @@
   to = "/.netlify/functions/app-state"
   status = 200
 
+# Per-worksite billing rules (rate / akstur / smáhlutagjald / VSK / etc.)
+[[redirects]]
+  from = "/api/pricing-guide"
+  to = "/.netlify/functions/pricing-guide"
+  status = 200
+
 # Friendly URL for the Reikningagerð grid — uses /api/worksites under the hood,
 # kept here so the route is documented.
 [[redirects]]
   from = "/api/reikningar"
   to = "/.netlify/functions/worksites"
+  status = 200
+
+# Friendly URL for the standalone Reikningagerð (Efnislisti) form:
+#   /reikningur → /reikningur/index.html
+[[redirects]]
+  from = "/reikningur"
+  to = "/reikningur/index.html"
   status = 200
 
 # Scheduled invocation: re-runs the function every 10 minutes so the

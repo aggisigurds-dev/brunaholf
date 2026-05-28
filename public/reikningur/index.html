@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="is">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Brunahólf — Reikningagerð (Efnislisti)</title>
+<style>
+  :root {
+    --bg: #fafaf7;
+    --panel: #ffffff;
+    --ink: #1a1a1a;
+    --ink-soft: #5b5b5b;
+    --line: #e2e2dd;
+    --line-strong: #c9c9c2;
+    --accent: #d93838;
+    --accent-soft: #fce6e6;
+    --blue: #2563eb;
+    --warning-bg: #fff8d6;
+    --warning-border: #caa33a;
+    --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.04);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg); color: var(--ink); line-height: 1.45; font-size: 14px;
+  }
+  header {
+    background: var(--ink); color: #fff; padding: 14px 24px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    border-bottom: 3px solid var(--accent);
+  }
+  header h1 { font-size: 18px; margin: 0; font-weight: 600; letter-spacing: 0.2px; }
+  header h1 .accent { color: var(--accent); }
+  header .tag { font-size: 12px; color: #b8b8b8; }
+  header button {
+    background: var(--accent); color: #fff; border: 0;
+    padding: 8px 14px; font-size: 13px; font-weight: 500;
+    border-radius: 4px; cursor: pointer;
+  }
+  header button.ghost { background: transparent; border: 1px solid #555; color: #ddd; }
+  header button:hover { filter: brightness(1.1); }
+  header .toolbar { display: flex; gap: 8px; }
+
+  .layout {
+    display: grid; grid-template-columns: 420px 1fr; gap: 0;
+    min-height: calc(100vh - 60px);
+  }
+  .form-panel {
+    background: var(--panel); border-right: 1px solid var(--line);
+    padding: 18px; overflow-y: auto;
+    max-height: calc(100vh - 60px); position: sticky; top: 0;
+  }
+  .preview-panel { padding: 24px 32px; overflow-y: auto; max-height: calc(100vh - 60px); }
+  .section-title {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px;
+    color: var(--ink-soft); font-weight: 600;
+    margin: 18px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--line);
+  }
+  .section-title:first-child { margin-top: 0; }
+  .field { margin-bottom: 10px; }
+  .field label { display: block; font-size: 12px; font-weight: 500; margin-bottom: 3px; }
+  .field input, .field select, .field textarea {
+    width: 100%; padding: 7px 9px; font-size: 13px;
+    border: 1px solid var(--line-strong); border-radius: 3px;
+    font-family: inherit; background: #fff;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(217,56,56,0.15);
+  }
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .row-3 { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 8px; }
+  .field .hint { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+  .materials-grid {
+    display: grid; grid-template-columns: 1fr 90px 70px; gap: 4px 8px;
+    font-size: 12px; align-items: center;
+  }
+  .materials-grid .mat-label { color: var(--ink); padding: 3px 0; }
+  .materials-grid .mat-unit { color: var(--ink-soft); font-size: 11px; padding: 3px 0; text-align: right; }
+  .materials-grid input { padding: 4px 6px; font-size: 12px; text-align: right; }
+  .mat-section-head { grid-column: 1 / -1; font-size: 11px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .8px; margin-top: 10px; padding-bottom: 2px; border-bottom: 1px dashed var(--line); }
+
+  .preview-doc {
+    background: #fff; box-shadow: var(--shadow);
+    max-width: 820px; margin: 0 auto; padding: 48px 56px;
+    border: 1px solid var(--line); border-radius: 4px;
+  }
+  .doc-logo { width: 240px; height: auto; display: block; margin: 0 0 12px 0; }
+  .briefhaus {
+    text-align: right; border-bottom: 2px solid var(--accent);
+    padding-bottom: 10px; margin-bottom: 20px;
+    color: var(--ink-soft); font-size: 12px;
+  }
+  .briefhaus strong { font-size: 15px; color: var(--ink); display: block; margin-bottom: 2px; }
+  .preview-doc h1.efni-title {
+    font-size: 22px; margin: 8px 0 4px; letter-spacing: 0.5px;
+  }
+  .preview-doc h2.efni-subtitle {
+    font-size: 13px; color: var(--ink-soft); margin: 0 0 18px; font-weight: 400;
+  }
+  table.efni { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12px; }
+  table.efni th, table.efni td {
+    border-bottom: 1px solid var(--line); padding: 5px 8px; text-align: left;
+  }
+  table.efni th {
+    background: #f6f3f0; font-weight: 600;
+    font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--ink-soft);
+  }
+  table.efni td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  table.efni td.label { font-weight: 500; }
+  table.efni .efni-section-row td {
+    background: #fafaf7; font-weight: 600; padding-top: 10px; border-top: 1px solid var(--line);
+  }
+  table.efni tr.subtotal td {
+    background: var(--accent-soft); font-weight: 700; border-top: 2px solid var(--accent);
+  }
+  table.efni tr.vsk td { border-top: none; font-weight: 500; }
+  table.efni tr.total td {
+    background: var(--ink); color: #fff; font-weight: 700;
+    font-size: 14px; padding: 8px 8px;
+  }
+  table.efni tr.zero td.num { color: #c5c5c0; }
+  .efni-meta {
+    display: flex; gap: 24px; font-size: 12px; color: var(--ink-soft);
+    margin-bottom: 12px;
+  }
+  .efni-meta span strong { color: var(--ink); }
+
+  .small-link { font-size: 11px; color: var(--blue); cursor: pointer; }
+  .small-link:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Brunahólf <span class="accent">·</span> Reikningagerð <span class="tag">Efnislisti</span></h1>
+  <div class="toolbar">
+    <button type="button" class="ghost" id="btnPrint">🖨 Prenta / PDF</button>
+    <button type="button" id="btnCopy">📋 Afrita</button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- =================== FORM PANEL =================== -->
+  <div class="form-panel">
+
+    <div class="section-title">Verkstaður</div>
+    <div class="field">
+      <label for="f-verkstadur">Verkstaður</label>
+      <input type="text" id="f-verkstadur" value="Fjallaböðin Þjórsárdal" />
+    </div>
+    <div class="field">
+      <label for="f-verkkaupi">Verkkaupi</label>
+      <input type="text" id="f-verkkaupi" value="JÁVERK ehf." />
+    </div>
+    <div class="row-2">
+      <div class="field">
+        <label for="f-fra">Frá</label>
+        <input type="date" id="f-fra" value="2026-04-01" />
+      </div>
+      <div class="field">
+        <label for="f-til">Til</label>
+        <input type="date" id="f-til" value="2026-04-30" />
+      </div>
+    </div>
+
+    <div class="section-title">Tími</div>
+    <div class="row-3">
+      <div class="field">
+        <label>&nbsp;</label>
+        <div style="padding:7px 0;font-size:12px;font-weight:500">Dagvinna</div>
+      </div>
+      <div class="field">
+        <label for="f-dv-rate">verð (kr/klst)</label>
+        <input type="number" id="f-dv-rate" value="9300" step="50" />
+      </div>
+      <div class="field">
+        <label for="f-dv-h">klst</label>
+        <input type="number" id="f-dv-h" value="184.8" step="0.5" />
+      </div>
+    </div>
+    <div class="row-3">
+      <div class="field">
+        <label>&nbsp;</label>
+        <div style="padding:7px 0;font-size:12px;font-weight:500">Eftirvinna</div>
+      </div>
+      <div class="field">
+        <label for="f-ev-rate">verð (kr/klst)</label>
+        <input type="number" id="f-ev-rate" value="13950" step="50" />
+      </div>
+      <div class="field">
+        <label for="f-ev-h">klst</label>
+        <input type="number" id="f-ev-h" value="0" step="0.5" />
+      </div>
+    </div>
+
+    <div class="section-title">Akstur</div>
+    <div class="row-2">
+      <div class="field">
+        <label for="f-km">km × 186 kr</label>
+        <input type="number" id="f-km" value="0" step="10" />
+      </div>
+      <div class="field">
+        <label for="f-ferd">ferðir × 4000 kr</label>
+        <input type="number" id="f-ferd" value="0" step="1" />
+      </div>
+    </div>
+
+    <div class="section-title">Efni</div>
+    <div class="materials-grid" id="mat-grid">
+      <!-- filled dynamically -->
+    </div>
+
+    <div class="section-title">Aukagjöld</div>
+    <div class="field">
+      <label><input type="checkbox" id="f-stadf" /> Staðfesting brunaþéttinga (20.000 kr flat)</label>
+    </div>
+    <div class="field">
+      <label>Smáhlutagjald: 137 kr × dagvinna klst (sjálfvirkt)</label>
+      <div class="hint" id="f-sma-hint">—</div>
+    </div>
+
+    <div class="section-title">Athugasemd (valkvætt)</div>
+    <div class="field">
+      <textarea id="f-notes" rows="2" placeholder="Birtist neðst á reikningi"></textarea>
+    </div>
+
+  </div>
+
+  <!-- =================== PREVIEW PANEL =================== -->
+  <div class="preview-panel">
+    <div class="preview-doc" id="preview">
+      <!-- rendered -->
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ====== Verðskrá efnis (sömu og í Tekjur sheet Verðskrá) ====== */
+const MATERIALS = [
+  { section: 'Almennt', items: [
+    { key:'akril',         label:'Eldvarnar akríl',         unit:'stk',  price:1624 },
+    { key:'akril5kg',      label:'Eldvarnar Akríl 5kg',     unit:'stk',  price:14400 },
+    { key:'thullkitti',    label:'Háþennslukítti',          unit:'stk',  price:4489 },
+    { key:'silikon',       label:'Eldvarnar silikon',       unit:'stk',  price:2220 },
+    { key:'steinull',      label:'Eldvarnar steinull',      unit:'plata',price:10703 },
+    { key:'malning',       label:'Eldvarnar málning',       unit:'líter',price:2500 },
+    { key:'rulla55',       label:'Eldvarnar rúlla 55mm',    unit:'stk',  price:53574 },
+  ]},
+  { section: 'Eldvarnar band (mm)', items: [
+    { key:'band55',  label:'Band 55mm',   unit:'stk', price:1621 },
+    { key:'band63',  label:'Band 63mm',   unit:'stk', price:3590 },
+    { key:'band75',  label:'Band 75mm',   unit:'stk', price:1236 },
+    { key:'band82',  label:'Band 82mm',   unit:'stk', price:1287 },
+    { key:'band90',  label:'Band 90mm',   unit:'stk', price:1556 },
+    { key:'band110', label:'Band 110mm',  unit:'stk', price:2047 },
+    { key:'band125', label:'Band 125mm',  unit:'stk', price:2628 },
+    { key:'band160', label:'Band 160mm',  unit:'stk', price:4780 },
+    { key:'band200', label:'Band 200mm',  unit:'stk', price:6025 },
+  ]},
+  { section: 'Eldvarnar kragi (mm)', items: [
+    { key:'kragi32',  label:'Kragi 32mm',  unit:'stk', price:2821 },
+    { key:'kragi40',  label:'Kragi 40mm',  unit:'stk', price:3205 },
+    { key:'kragi55',  label:'Kragi 55mm',  unit:'stk', price:3308 },
+    { key:'kragi63',  label:'Kragi 63mm',  unit:'stk', price:3590 },
+    { key:'kragi75',  label:'Kragi 75mm',  unit:'stk', price:4103 },
+    { key:'kragi82',  label:'Kragi 82mm',  unit:'stk', price:4174 },
+    { key:'kragi90',  label:'Kragi 90mm',  unit:'stk', price:4719 },
+    { key:'kragi110', label:'Kragi 110mm', unit:'stk', price:4915 },
+    { key:'kragi125', label:'Kragi 125mm', unit:'stk', price:6260 },
+    { key:'kragi140', label:'Kragi 140mm', unit:'stk', price:8052 },
+    { key:'kragi160', label:'Kragi 160mm', unit:'stk', price:10191 },
+    { key:'kragi200', label:'Kragi 200mm', unit:'stk', price:18021 },
+    { key:'kragi250', label:'Kragi 250mm', unit:'stk', price:26792 },
+    { key:'kragi315', label:'Kragi 315mm', unit:'stk', price:151754 },
+  ]},
+  { section: 'Brunaþéttirör', items: [
+    { key:'bpr16',     label:'Brunaþéttirör 16mm',     unit:'stk', price:6426 },
+    { key:'bpr20',     label:'Brunaþéttirör 20mm',     unit:'stk', price:6426 },
+    { key:'bpr32',     label:'Brunaþéttirör 32mm',     unit:'stk', price:8044 },
+    { key:'bpr50',     label:'Brunaþéttirör 50mm',     unit:'stk', price:9012 },
+    { key:'bprpvc32',  label:'Brunaþéttirör PVC 32mm', unit:'stk', price:2498 },
+    { key:'bprpvc50',  label:'Brunaþéttirör PVC 50mm', unit:'stk', price:2970 },
+  ]},
+];
+
+const VSK_PCT       = 24;
+const SMA_PER_KLST  = 137;
+const STADF_KR      = 20000;
+const KM_RATE       = 186;
+const FERD_RATE     = 4000;
+
+/* ====== Build materials inputs ====== */
+const $mat = document.getElementById('mat-grid');
+function buildMaterialsGrid(){
+  let html = '';
+  for(const sec of MATERIALS){
+    html += `<div class="mat-section-head">${sec.section}</div>`;
+    for(const it of sec.items){
+      html += `
+        <div class="mat-label">${it.label}</div>
+        <div class="mat-unit">${it.price.toLocaleString('is-IS')} kr / ${it.unit}</div>
+        <input type="number" min="0" step="1" data-mat="${it.key}" data-price="${it.price}" data-label="${it.label}" data-unit="${it.unit}" placeholder="0" />
+      `;
+    }
+  }
+  $mat.innerHTML = html;
+  $mat.querySelectorAll('input').forEach(el => el.addEventListener('input', render));
+}
+buildMaterialsGrid();
+
+/* ====== Live render ====== */
+const $ = id => document.getElementById(id);
+const num = id => Number($(id).value) || 0;
+const fmt = n => Math.round(n||0).toLocaleString('is-IS');
+
+function gatherMaterials(){
+  const lines = [];
+  for(const el of $mat.querySelectorAll('input')){
+    const qty = Number(el.value) || 0;
+    if(qty <= 0) continue;
+    const price = Number(el.dataset.price) || 0;
+    lines.push({
+      label: el.dataset.label,
+      unit:  el.dataset.unit,
+      price: price,
+      qty:   qty,
+      total: Math.round(price * qty),
+    });
+  }
+  return lines;
+}
+
+function fmtPeriod(from, til){
+  if(!from || !til) return '';
+  const fmtDate = s => {
+    const [y,m,d] = s.split('-');
+    return `${d}.${m}.${y}`;
+  };
+  return `${fmtDate(from)} til ${fmtDate(til)}`;
+}
+
+function render(){
+  const verkstadur = $('f-verkstadur').value.trim();
+  const verkkaupi  = $('f-verkkaupi').value.trim();
+  const from = $('f-fra').value;
+  const til  = $('f-til').value;
+
+  const dvH = num('f-dv-h');
+  const dvR = num('f-dv-rate');
+  const evH = num('f-ev-h');
+  const evR = num('f-ev-rate');
+  const km  = num('f-km');
+  const fr  = num('f-ferd');
+  const stadf = $('f-stadf').checked ? STADF_KR : 0;
+  const notes = $('f-notes').value.trim();
+
+  const dvAmt = dvR * dvH;
+  const evAmt = evR * evH;
+  const kmAmt = km * KM_RATE;
+  const frAmt = fr * FERD_RATE;
+  const smaAmt = Math.round(SMA_PER_KLST * dvH);
+  $('f-sma-hint').textContent = `${SMA_PER_KLST} × ${dvH.toFixed(1)} = ${fmt(smaAmt)} kr`;
+
+  const materials = gatherMaterials();
+  const matSum = materials.reduce((a,m) => a + m.total, 0);
+
+  const net = dvAmt + evAmt + kmAmt + frAmt + smaAmt + stadf + matSum;
+  const vsk = Math.round(net * VSK_PCT / 100);
+  const total = net + vsk;
+
+  /* ====== Build preview rows ====== */
+  const matRows = materials.length
+    ? materials.map(m => `
+        <tr>
+          <td class="label">${m.label}</td>
+          <td>${m.unit}</td>
+          <td class="num">${fmt(m.price)} kr</td>
+          <td class="num">${m.qty}</td>
+          <td class="num">${fmt(m.total)}</td>
+        </tr>`).join('')
+    : `<tr><td colspan="5" style="color:#aaa;font-style:italic;text-align:center">— engin efni skráð —</td></tr>`;
+
+  const tradRows = `
+    <tr class="efni-section-row"><td colspan="5">Tími</td></tr>
+    <tr>
+      <td class="label">Dagvinna</td><td></td>
+      <td class="num">${fmt(dvR)} kr</td>
+      <td class="num">${dvH.toFixed(2)}</td>
+      <td class="num">${fmt(dvAmt)}</td>
+    </tr>
+    ${evH > 0 ? `<tr>
+      <td class="label">Eftirvinna</td><td></td>
+      <td class="num">${fmt(evR)} kr</td>
+      <td class="num">${evH.toFixed(2)}</td>
+      <td class="num">${fmt(evAmt)}</td>
+    </tr>` : ''}
+    ${(km > 0 || fr > 0) ? `<tr class="efni-section-row"><td colspan="5">Akstur</td></tr>` : ''}
+    ${km > 0 ? `<tr>
+      <td class="label">ekinn km.</td><td></td>
+      <td class="num">${KM_RATE} kr</td>
+      <td class="num">${km}</td>
+      <td class="num">${fmt(kmAmt)}</td>
+    </tr>` : ''}
+    ${fr > 0 ? `<tr>
+      <td class="label">ekinn ferð</td><td></td>
+      <td class="num">${fmt(FERD_RATE)} kr</td>
+      <td class="num">${fr}</td>
+      <td class="num">${fmt(frAmt)}</td>
+    </tr>` : ''}
+  `;
+
+  const extrasRows = `
+    <tr class="efni-section-row"><td colspan="5">Aukagjöld</td></tr>
+    <tr>
+      <td class="label">Smáhlutagjald (hanskar, þurrkur o.fl.)</td><td>stk</td>
+      <td class="num">${SMA_PER_KLST} kr</td>
+      <td class="num">${dvH.toFixed(2)}</td>
+      <td class="num">${fmt(smaAmt)}</td>
+    </tr>
+    ${stadf > 0 ? `<tr>
+      <td class="label">Staðfesting brunaþéttinga</td><td></td>
+      <td class="num">${fmt(STADF_KR)} kr</td>
+      <td class="num">1</td>
+      <td class="num">${fmt(stadf)}</td>
+    </tr>` : ''}
+  `;
+
+  const $preview = document.getElementById('preview');
+  $preview.innerHTML = `
+    <img src="../tilbod/logo.png" class="doc-logo" alt="" onerror="this.style.display='none'" />
+    <div class="briefhaus">
+      <strong>Brunahólf ehf.</strong>
+      Kt. 610722-0510 · vsk. nr. 162039<br>
+      Helluhrauni 10, 220 Hafnarfjörður<br>
+      Sími 540 5400 · brunaholf@brunaholf.is
+    </div>
+
+    <h1 class="efni-title">Verðskrá / tilboð</h1>
+    <h2 class="efni-subtitle">${fmtPeriod(from, til)}</h2>
+
+    <div class="efni-meta">
+      <span><strong>Verkkaupi:</strong> ${verkkaupi || '—'}</span>
+      <span><strong>Verkstaður:</strong> ${verkstadur || '—'}</span>
+    </div>
+
+    <table class="efni">
+      <thead>
+        <tr>
+          <th>Lýsing</th><th>Eining</th><th class="num">án vsk</th><th class="num">magn</th><th class="num">samtals</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${tradRows}
+        ${extrasRows}
+        <tr class="efni-section-row"><td colspan="5">Efni</td></tr>
+        ${matRows}
+        <tr class="subtotal">
+          <td colspan="4">Samtals án vsk</td>
+          <td class="num">${fmt(net)}</td>
+        </tr>
+        <tr class="vsk">
+          <td colspan="4">VSK (${VSK_PCT}%)</td>
+          <td class="num">${fmt(vsk)}</td>
+        </tr>
+        <tr class="total">
+          <td colspan="4">Samtals m. vsk</td>
+          <td class="num">${fmt(total)} kr</td>
+        </tr>
+      </tbody>
+    </table>
+
+    ${notes ? `<p style="font-size:12px;color:#5b5b5b;margin-top:18px;font-style:italic">${notes.replace(/</g,'&lt;')}</p>` : ''}
+  `;
+}
+
+document.querySelectorAll('.form-panel input, .form-panel select, .form-panel textarea').forEach(el => {
+  el.addEventListener('input', render);
+  el.addEventListener('change', render);
+});
+
+document.getElementById('btnPrint').addEventListener('click', () => window.print());
+
+document.getElementById('btnCopy').addEventListener('click', () => {
+  const text = document.getElementById('preview').innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const b = document.getElementById('btnCopy');
+    const old = b.textContent;
+    b.textContent = '✓ Afritað';
+    setTimeout(() => b.textContent = old, 1500);
+  });
+});
+
+render();
+
+/* Print styles */
+const style = document.createElement('style');
+style.textContent = `
+@media print {
+  header, .form-panel { display: none !important; }
+  .layout { grid-template-columns: 1fr !important; }
+  .preview-panel { padding: 0 !important; max-height: none !important; overflow: visible !important; }
+  .preview-doc { box-shadow: none !important; border: none !important; max-width: 100% !important; }
+}
+`;
+document.head.appendChild(style);
+</script>
+
+</body>
+</html>
