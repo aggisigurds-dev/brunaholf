@@ -854,6 +854,10 @@ main{padding:14px;max-width:1100px;margin:0 auto;flex:1;min-width:0;width:100%}
 .wc-mini-table th.num{text-align:right}
 .wc-mini-table td{padding:6px;border-bottom:1px solid var(--bg-2)}
 .wc-mini-table tr:hover td{background:#FAF9F4}
+.wc-pd-link{font-size:11px;color:var(--blue,#2563eb);text-decoration:none;font-weight:500}
+.wc-pd-link:hover{text-decoration:underline}
+.wc-pd-link-empty{background:none;border:1px dashed var(--border);border-radius:4px;padding:1px 6px;cursor:pointer;font:inherit;font-size:10.5px;color:var(--muted-2);font-weight:500}
+.wc-pd-link-empty:hover{border-color:var(--blue,#2563eb);color:var(--blue,#2563eb);background:#F0F6FC}
 .wc-mini-table td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
 .wc-mini-table td.num.an-vsk{color:var(--muted-2);font-weight:500}
 .wc-empty{color:var(--muted);font-style:italic;font-size:11px;text-align:center;padding:14px}
@@ -4057,18 +4061,20 @@ async function rgOpenWorkcenter(project, allSites, months){
               <th class="num">án vsk</th>
               <th class="num">m. vsk</th>
               <th>Staða</th>
+              <th>Payday</th>
             </tr></thead>
             <tbody>
-              ${invoices.slice(0, 10).map(i => {
-                // For landsbankinn_krafnir invoices the amount is m. vsk; for payday it's án vsk.
-                // We don't always know the source, so we derive both from the rate.
+              ${invoices.slice(0, 15).map(i => {
                 const amt = Number(i.amount) || 0;
                 const guess_an  = Math.round(amt / 1.24);
                 const guess_mvsk = Math.round(amt * 1.24);
-                // Heuristic: amounts ending in odd cents or > ~3M tend to be m. vsk
                 const looksMvsk = (amt % 1000) !== 0 && amt > 100000;
                 const anVsk  = looksMvsk ? guess_an : amt;
                 const mVsk   = looksMvsk ? amt      : guess_mvsk;
+                const pdId   = i.payday_invoice_id;
+                const pdLink = pdId
+                  ? `<a href="https://app.payday.is/is/invoice/${pdId}/" target="_blank" rel="noopener" class="wc-pd-link" title="Opna í Payday">🔗 ${pdId}</a>`
+                  : `<button type="button" class="wc-pd-link wc-pd-link-empty" data-pd-link="${i.id}" title="Tengja við Payday URL">+ tengja</button>`;
                 return `
                   <tr>
                     <td>${i.gjalddagi || '—'}</td>
@@ -4076,12 +4082,13 @@ async function rgOpenWorkcenter(project, allSites, months){
                     <td class="num an-vsk">${fmt(anVsk)}</td>
                     <td class="num">${fmt(mVsk)}</td>
                     <td>${escapeHtml(i.status || '')}</td>
+                    <td>${pdLink}</td>
                   </tr>`;
               }).join('')}
             </tbody>
-          ` : '<tr><td colspan="5" class="wc-empty">Engir reikningar tengdir.</td></tr>'}
+          ` : '<tr><td colspan="6" class="wc-empty">Engir reikningar tengdir.</td></tr>'}
         </table>
-        <div style="font-size:10.5px;color:var(--muted-2);margin-top:8px;font-style:italic">án vsk / m. vsk samkvæmt 24% reglu — eitt þessara er talið nákvæmt eftir uppruna færslunnar.</div>
+        <div style="font-size:10.5px;color:var(--muted-2);margin-top:8px;font-style:italic">án vsk / m. vsk samkvæmt 24% reglu. Smelltu "+ tengja" til að líma inn Payday URL — næst opnast reikningurinn beint úr töflunni.</div>
       </section>
 
       <section class="wc-card wc-card-full">
@@ -4159,6 +4166,34 @@ async function rgOpenWorkcenter(project, allSites, months){
   if($sc) $sc.onclick = saveCustomer;
   const $st = document.getElementById('wc-save-todo');
   if($st) $st.onclick = saveTodo;
+
+  // "+ tengja" Payday link button — prompts for URL and saves payday_invoice_id
+  document.querySelectorAll('[data-pd-link]').forEach(b => {
+    b.onclick = async () => {
+      const invoiceId = b.dataset.pdLink;
+      const url = prompt('Líma inn Payday URL fyrir þennan reikning\n(t.d. https://app.payday.is/is/invoice/4559218/):');
+      if(!url) return;
+      const m = url.match(/\/invoice\/(\d+)/);
+      if(!m){ alert('Gat ekki fundið Payday reikningsnúmer í URL.\nFormat: https://app.payday.is/is/invoice/NNNNNN/'); return; }
+      const paydayId = Number(m[1]);
+      try{
+        const r = await fetch('/api/invoice-edit', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ id: Number(invoiceId), payday_invoice_id: paydayId }),
+        });
+        if(!r.ok) throw new Error('HTTP '+r.status);
+        // Replace button with link
+        const a = document.createElement('a');
+        a.href = `https://app.payday.is/is/invoice/${paydayId}/`;
+        a.target = '_blank'; a.rel = 'noopener';
+        a.className = 'wc-pd-link';
+        a.textContent = `🔗 ${paydayId}`;
+        b.parentNode.replaceChild(a, b);
+      }catch(e){
+        alert('Villa við að vista: '+(e.message||e));
+      }
+    };
+  });
 }
 
 /* ====================== VERÐSAMANBURÐUR (competitor prices) ====================== */
