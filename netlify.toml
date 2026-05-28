@@ -105,6 +105,12 @@
   to = "/.netlify/functions/efnislisti-docs"
   status = 200
 
+# Redder material-cost invoices (recharged to worksites)
+[[redirects]]
+  from = "/api/redder-invoices"
+  to = "/.netlify/functions/redder-invoices"
+  status = 200
+
 # Friendly URL for the Reikningagerð grid — uses /api/worksites under the hood,
 # kept here so the route is documented.
 [[redirects]]
