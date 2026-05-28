@@ -64,6 +64,101 @@ button{cursor:pointer}
 .topbar .brand,.topbar .brand-divider,.topbar .brand-slk{display:none}
 .topbar .editToggle{position:absolute;top:12px;right:14px;z-index:5;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);color:#fff}
 .topbar .editToggle.on{background:var(--gold);color:#1A1A1F}
+.topbar .themeToggle{position:absolute;top:12px;right:90px;z-index:5;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);color:#fff;border:none;border-radius:8px;width:36px;height:36px;cursor:pointer;font-size:16px;transition:all 120ms ease}
+.topbar .themeToggle:hover{background:rgba(0,0,0,.75);transform:rotate(20deg)}
+
+/* ============================================================
+   THEME: MODERN — applied via body.theme-modern
+   Refined Linear/Stripe-dashboard inspired look. Larger
+   breathing room, lighter accents, cleaner typography.
+   ============================================================ */
+body.theme-modern{
+  background:#FBFAF6;
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  font-feature-settings:'cv11','ss03','ss04','ss11';
+}
+body.theme-modern .topbar{background:#0D1421;border-bottom:none;box-shadow:0 1px 0 rgba(255,255,255,.08)}
+body.theme-modern .banner-img{filter:brightness(1.05) contrast(.95);opacity:.92}
+body.theme-modern .sidebar{
+  background:#FAFAF7;background-image:none;
+  border-right:1px solid #E8E5DE;
+  box-shadow:none;padding:18px 12px;
+}
+body.theme-modern .tab-v{
+  color:#404654;font-family:'Inter',sans-serif;font-style:normal;
+  font-size:13px;font-weight:500;padding:8px 12px;border-radius:8px;
+  letter-spacing:-.005em;margin-bottom:2px;
+}
+body.theme-modern .tab-v:hover{background:#F0EDE6;color:#1A1F2E;padding-left:12px}
+body.theme-modern .tab-v.active{
+  background:#1A1F2E;color:#fff;font-weight:600;
+  box-shadow:0 1px 2px rgba(0,0,0,0.08),0 2px 8px rgba(26,31,46,0.12);
+}
+body.theme-modern .tab-v.active:hover{padding-left:12px;background:#1A1F2E}
+body.theme-modern .tab-v .ti{font-size:14px;opacity:1}
+body.theme-modern .nav-section-label{
+  color:#7B8194;font-size:10px;font-weight:600;
+  letter-spacing:.12em;padding:16px 12px 6px;
+}
+body.theme-modern .nav-sep{background:#E8E5DE}
+
+/* Modern card / table style */
+body.theme-modern .rg-grid,
+body.theme-modern .wc-card,
+body.theme-modern .rg-kpi,
+body.theme-modern .rg-forecast,
+body.theme-modern .efni-card{
+  background:#fff;
+  border:1px solid #E8E5DE;border-radius:14px;
+  box-shadow:0 1px 2px rgba(15,18,30,0.04),0 4px 16px rgba(15,18,30,0.04);
+}
+body.theme-modern .rg-grid thead th{
+  background:#F7F5EF;font-weight:600;color:#404654;
+  font-size:11px;letter-spacing:.04em;
+  border-bottom:1px solid #E8E5DE;
+}
+body.theme-modern .rg-grid tbody tr:hover{background:#FBFAF6}
+body.theme-modern .rg-h1,
+body.theme-modern .wc-title,
+body.theme-modern .rg-forecast-title,
+body.theme-modern .efni-totals strong{
+  font-family:'Inter Tight','Inter',sans-serif;letter-spacing:-.02em;font-weight:700;
+}
+body.theme-modern .rg-kpi-v,
+body.theme-modern .rg-fc-v{
+  font-family:'Inter Tight','Inter',sans-serif;font-weight:700;letter-spacing:-.02em;
+}
+body.theme-modern .rg-tool{
+  background:#fff;border:1px solid #E0DDD4;border-radius:8px;
+  padding:7px 12px;font-weight:500;color:#1A1F2E;
+  box-shadow:0 1px 2px rgba(0,0,0,0.03);transition:all 100ms ease;
+}
+body.theme-modern .rg-tool:hover{background:#F0EDE6;border-color:#B8B2A4;transform:translateY(-1px);box-shadow:0 2px 6px rgba(0,0,0,0.06)}
+body.theme-modern .rg-link-pill{
+  background:#1A1F2E;color:#fff;border-radius:8px;padding:3px 8px;
+}
+body.theme-modern .rg-link-pill:hover{background:#3A4258;color:#fff}
+body.theme-modern .editToggle,
+body.theme-modern .themeToggle{background:rgba(255,255,255,.12);color:#fff;border-radius:8px;backdrop-filter:blur(8px)}
+body.theme-modern .editToggle.on{background:#fff;color:#0D1421}
+body.theme-modern .rg-forecast{
+  background:linear-gradient(135deg,#FBFAF6 0%,#F2EFE7 100%);
+  border-color:#E0DDD4;
+}
+body.theme-modern .rg-forecast-title{color:#1A1F2E}
+body.theme-modern .rg-forecast-sub{color:#5B6275}
+body.theme-modern .wc-head{
+  background:linear-gradient(180deg,#FFF 0%,#FBFAF6 100%);
+  border-bottom:1px solid #E8E5DE;
+}
+body.theme-modern .wc-card h3{
+  font-family:'Inter Tight','Inter',sans-serif;font-weight:700;letter-spacing:-.01em;
+  border-bottom-color:#F0EDE6;
+}
+body.theme-modern .rg-row-gata{background:linear-gradient(90deg,#FAF7F0 0%,#FBFAF6 100%)}
+body.theme-modern .rg-fc-item{border-color:#E8E5DE;border-radius:10px}
+body.theme-modern button.rg-name-link{font-weight:600;color:#1A1F2E}
+body.theme-modern button.rg-name-link:hover{color:#9B1A0F;text-decoration:none;background:#F7F5EF;border-radius:4px}
 .topbar .sync-badge{position:absolute;top:14px;right:120px;z-index:5;font-size:11px;color:#fff;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);padding:4px 8px;border-radius:6px;font-weight:500;letter-spacing:.02em}
 .topbar .sync-badge.sync-ok{background:rgba(76,175,80,.55)}
 .topbar .sync-badge.sync-warn{background:rgba(255,152,0,.55)}
@@ -1223,6 +1318,7 @@ main{padding:14px;max-width:1100px;margin:0 auto;flex:1;min-width:0;width:100%}
   <img src="banner.png" alt="Brunahólf — Slökkvitæki ehf" class="banner-img" onerror="this.onerror=null;this.src='banner.png.png';this.addEventListener('error',()=>{this.style.display='none';this.parentNode.style.minHeight='60px';this.parentNode.style.background='linear-gradient(180deg, var(--navy) 0%, var(--navy-dark) 100%)'})">
   <button class="menu-btn" id="menuBtn" title="Valmynd">☰</button>
   <button class="editToggle" id="editToggle" title="Breyta">✎ Breyta</button>
+  <button class="themeToggle" id="themeToggle" title="Skipta um þema (klassík / modern)">🎨</button>
   <span class="sync-badge" id="sync-badge" title="Vistun á milli tækja">☁ …</span>
   <span id="brandTitle" style="display:none"></span>
 </header>
@@ -1596,6 +1692,7 @@ function setSyncBadge(mode){
 // Helper used by sync to re-render the active tab after replacing state
 function renderActive(){
   if(typeof renderTabs === 'function') renderTabs();
+  if(typeof applyTheme === 'function') applyTheme(state?.ui?.theme || 'classic');
   if(typeof window.__renderTab === 'function') window.__renderTab();
 }
 
@@ -6007,6 +6104,23 @@ $fab.onclick = ()=>{
 const $menuBtn = document.getElementById('menuBtn');
 if($menuBtn) $menuBtn.onclick = ()=>{
   document.getElementById('layout').classList.toggle('open');
+};
+
+// Theme toggle — cycles 'classic' ↔ 'modern', persists in state (so it
+// follows the user across devices via app_kv sync). Apply chosen theme
+// before first render so initial paint is in the right look.
+function applyTheme(t){
+  document.body.classList.remove('theme-classic','theme-modern');
+  document.body.classList.add('theme-' + (t || 'classic'));
+}
+applyTheme(state?.ui?.theme || 'classic');
+const $themeToggle = document.getElementById('themeToggle');
+if($themeToggle) $themeToggle.onclick = () => {
+  state.ui = state.ui || {};
+  const next = state.ui.theme === 'modern' ? 'classic' : 'modern';
+  state.ui.theme = next;
+  applyTheme(next);
+  save();
 };
 
 // Expose render() so the cross-device sync can call it after replacing state.
