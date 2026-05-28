@@ -93,6 +93,12 @@
   to = "/.netlify/functions/pricing-guide"
   status = 200
 
+# Prebuilt next-invoice drafts (forecast)
+[[redirects]]
+  from = "/api/invoice-drafts"
+  to = "/.netlify/functions/invoice-drafts"
+  status = 200
+
 # Friendly URL for the Reikningagerð grid — uses /api/worksites under the hood,
 # kept here so the route is documented.
 [[redirects]]
