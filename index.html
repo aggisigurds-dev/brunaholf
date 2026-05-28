@@ -1607,6 +1607,33 @@ function b(){ return Math.random().toString(36).slice(2,9); }
 
 let state = load();
 
+// Ensure newer tab definitions get auto-added to existing user state
+// (called both during load from localStorage AND after sync replaces
+// state with an older snapshot from the server).
+function ensureNewTabs(s){
+  if(!s || !Array.isArray(s.tabs)) return;
+  ['vinnustofa','efniskostnadur','kvittanir','minverkefni','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','spurningar'].forEach(id=>{
+    if(!s.tabs.find(t=>t.id===id)){
+      const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
+      if(d){
+        // Vinnustofa goes RIGHT AFTER reikningar; efniskostnadur after that
+        let target;
+        if(id === 'vinnustofa'){
+          const idx = s.tabs.findIndex(t=>t.id==='reikningar');
+          target = idx >= 0 ? idx + 1 : -1;
+        } else if(id === 'efniskostnadur'){
+          const idx = s.tabs.findIndex(t=>t.id==='vinnustofa');
+          const idx2 = s.tabs.findIndex(t=>t.id==='reikningar');
+          target = idx >= 0 ? idx + 1 : (idx2 >= 0 ? idx2 + 1 : -1);
+        } else {
+          target = s.tabs.findIndex(t=>t.id==='tenglar');
+        }
+        if(target>=0) s.tabs.splice(target,0,JSON.parse(JSON.stringify(d))); else s.tabs.push(JSON.parse(JSON.stringify(d)));
+      }
+    }
+  });
+}
+
 function load(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -1634,26 +1661,7 @@ function load(){
       mbtns.forEach(b=>{ if(!s.buttons.find(x=>x.tab==='maeting' && x.label===b.label)) s.buttons.push(JSON.parse(JSON.stringify(b))); });
     }
     // migration: ensure new tabs exist for users with saved state
-    ['vinnustofa','efniskostnadur','kvittanir','minverkefni','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','spurningar'].forEach(id=>{
-      if(!s.tabs.find(t=>t.id===id)){
-        const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
-        if(d){
-          // Vinnustofa goes RIGHT AFTER reikningar; efniskostnadur after that
-          let target;
-          if(id === 'vinnustofa'){
-            const idx = s.tabs.findIndex(t=>t.id==='reikningar');
-            target = idx >= 0 ? idx + 1 : -1;
-          } else if(id === 'efniskostnadur'){
-            const idx = s.tabs.findIndex(t=>t.id==='vinnustofa');
-            const idx2 = s.tabs.findIndex(t=>t.id==='reikningar');
-            target = idx >= 0 ? idx + 1 : (idx2 >= 0 ? idx2 + 1 : -1);
-          } else {
-            target = s.tabs.findIndex(t=>t.id==='tenglar');
-          }
-          if(target>=0) s.tabs.splice(target,0,JSON.parse(JSON.stringify(d))); else s.tabs.push(JSON.parse(JSON.stringify(d)));
-        }
-      }
-    });
+    ensureNewTabs(s);
     // migration: ensure ui.layout / ui.uploadFolderId
     if(!s.ui.layout) s.ui.layout = 'sidebar';
     if(!s.ui.uploadFolderId || s.ui.uploadFolderId === '1MRleiwpQyqHzcSIfbbCUjPF7ujoXHd0U') s.ui.uploadFolderId = '1MRleiwpQyqHzcSIfbbCUjPF7ujoXHd0U';
@@ -1732,6 +1740,10 @@ async function syncFromServer(){
       const prevActiveTab = state?.ui?.activeTab;
       const prevTabsHash  = JSON.stringify((state?.tabs||[]).map(t => t.id));
       state = server;
+      // Re-apply tab migration to the server-fetched state so newer-than-
+      // server tabs (Vinnustofa, Efniskostnaður, etc.) still appear even
+      // when an older server snapshot would otherwise overwrite them.
+      ensureNewTabs(state);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       // Only re-render if the structure actually changed — otherwise the
       // re-render races with whatever the active tab is loading and breaks
