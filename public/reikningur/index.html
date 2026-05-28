@@ -81,51 +81,94 @@
   .materials-grid input { padding: 4px 6px; font-size: 12px; text-align: right; }
   .mat-section-head { grid-column: 1 / -1; font-size: 11px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .8px; margin-top: 10px; padding-bottom: 2px; border-bottom: 1px dashed var(--line); }
 
+  /* Preview matches the printed Efnislisti PDF exactly */
   .preview-doc {
     background: #fff; box-shadow: var(--shadow);
-    max-width: 820px; margin: 0 auto; padding: 48px 56px;
+    max-width: 820px; margin: 0 auto; padding: 56px 64px;
     border: 1px solid var(--line); border-radius: 4px;
+    font-family: "Times New Roman", Times, serif;
+    color: #000; font-size: 13px;
   }
-  .doc-logo { width: 240px; height: auto; display: block; margin: 0 0 12px 0; }
-  .briefhaus {
-    text-align: right; border-bottom: 2px solid var(--accent);
-    padding-bottom: 10px; margin-bottom: 20px;
-    color: var(--ink-soft); font-size: 12px;
+  .doc-top {
+    display: grid; grid-template-columns: 200px 1fr;
+    gap: 24px; align-items: center; margin-bottom: 28px;
   }
-  .briefhaus strong { font-size: 15px; color: var(--ink); display: block; margin-bottom: 2px; }
-  .preview-doc h1.efni-title {
-    font-size: 22px; margin: 8px 0 4px; letter-spacing: 0.5px;
+  .doc-logo { width: 180px; height: auto; display: block; }
+  .doc-title-block { text-align: left; }
+  .doc-title-block h1 {
+    font-size: 26px; margin: 0; font-weight: 700;
+    font-family: "Times New Roman", Times, serif; letter-spacing: 0.5px;
   }
-  .preview-doc h2.efni-subtitle {
-    font-size: 13px; color: var(--ink-soft); margin: 0 0 18px; font-weight: 400;
+  .doc-title-block .doc-subtitle {
+    font-size: 13px; font-style: italic; color: #555;
+    margin: 4px 0 0; font-weight: 400;
   }
-  table.efni { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12px; }
-  table.efni th, table.efni td {
-    border-bottom: 1px solid var(--line); padding: 5px 8px; text-align: left;
+  .doc-meta { margin-bottom: 16px; font-size: 13px; }
+  .doc-meta .period { color: #000; }
+  .doc-meta .worksite { font-weight: 700; margin-top: 2px; }
+
+  table.efni {
+    width: 100%; border-collapse: collapse; margin: 0;
+    font-size: 12.5px; font-family: "Times New Roman", Times, serif;
   }
-  table.efni th {
-    background: #f6f3f0; font-weight: 600;
-    font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--ink-soft);
+  table.efni td {
+    padding: 3px 4px; vertical-align: bottom;
   }
-  table.efni td.num { text-align: right; font-variant-numeric: tabular-nums; }
-  table.efni td.label { font-weight: 500; }
-  table.efni .efni-section-row td {
-    background: #fafaf7; font-weight: 600; padding-top: 10px; border-top: 1px solid var(--line);
+  table.efni thead td {
+    font-style: italic; color: #555; padding-bottom: 6px;
+    text-align: right;
   }
-  table.efni tr.subtotal td {
-    background: var(--accent-soft); font-weight: 700; border-top: 2px solid var(--accent);
+  table.efni thead td:first-child { text-align: left; }
+  table.efni td.label { text-align: left; font-weight: 400; }
+  table.efni td.size { color: #000; width: 50px; }
+  table.efni td.unit { color: #000; width: 50px; }
+  table.efni td.price {
+    text-align: right; font-variant-numeric: tabular-nums;
+    width: 100px; white-space: nowrap;
   }
-  table.efni tr.vsk td { border-top: none; font-weight: 500; }
-  table.efni tr.total td {
-    background: var(--ink); color: #fff; font-weight: 700;
-    font-size: 14px; padding: 8px 8px;
+  table.efni td.magn {
+    text-align: right; font-variant-numeric: tabular-nums;
+    width: 100px; border-bottom: 1px solid #000; white-space: nowrap;
   }
-  table.efni tr.zero td.num { color: #c5c5c0; }
-  .efni-meta {
-    display: flex; gap: 24px; font-size: 12px; color: var(--ink-soft);
-    margin-bottom: 12px;
+  table.efni td.total {
+    text-align: right; font-variant-numeric: tabular-nums;
+    width: 110px; white-space: nowrap;
   }
-  .efni-meta span strong { color: var(--ink); }
+  /* Section headers like "Akstur" / "Efni" */
+  table.efni tr.section-row td {
+    font-weight: 700; padding-top: 14px; padding-bottom: 4px;
+  }
+  /* Subtotal/VSK/Total rows with lines per PDF */
+  table.efni tr.spacer td { padding-top: 16px; }
+  table.efni tr.subtotal-row td {
+    border-top: 1px solid #000; padding-top: 4px;
+    text-align: center; font-style: italic; color: #555;
+  }
+  table.efni tr.subtotal-row td.total { font-style: normal; color: #000; text-align: right }
+  table.efni tr.vsk-row td {
+    text-align: center; font-style: italic; color: #555;
+  }
+  table.efni tr.vsk-row td.total { font-style: normal; color: #000; text-align: right }
+  table.efni tr.grand-row td {
+    border-top: 1px solid #000; border-bottom: 3px double #000;
+    padding: 6px 4px;
+    text-align: center; font-weight: 400; color: #000;
+  }
+  table.efni tr.grand-row td.total { font-weight: 700; text-align: right }
+  table.efni tr.zero-row { /* still shown in editor */ }
+
+  /* Print + saved version */
+  @media print {
+    body { background: #fff; }
+    header, .form-panel { display: none !important; }
+    .layout { grid-template-columns: 1fr !important; }
+    .preview-panel { padding: 0 !important; max-height: none !important; overflow: visible !important; }
+    .preview-doc { box-shadow: none !important; border: none !important; max-width: 100% !important; padding: 24px 32px !important; }
+    /* Hide all rows that have 0 magn — only show items actually used */
+    table.efni tr.zero-row { display: none !important; }
+    /* Hide section header if all its rows are hidden too */
+    table.efni tr.section-row.section-empty { display: none !important; }
+  }
 
   .small-link { font-size: 11px; color: var(--blue); cursor: pointer; }
   .small-link:hover { text-decoration: underline; }
@@ -372,103 +415,137 @@ function render(){
   const vsk = Math.round(net * VSK_PCT / 100);
   const total = net + vsk;
 
-  /* ====== Build preview rows ====== */
-  const matRows = materials.length
-    ? materials.map(m => `
-        <tr>
-          <td class="label">${m.label}</td>
-          <td>${m.unit}</td>
-          <td class="num">${fmt(m.price)} kr</td>
-          <td class="num">${m.qty}</td>
-          <td class="num">${fmt(m.total)}</td>
-        </tr>`).join('')
-    : `<tr><td colspan="5" style="color:#aaa;font-style:italic;text-align:center">— engin efni skráð —</td></tr>`;
+  /* ====== Build preview rows — matches the Efnislisti PDF layout exactly ====== */
+  const kr = n => (n > 0 ? fmt(n) + ' kr.' : 'kr.');
+  const krOnly = n => fmt(n) + ' kr.';
+  const magnCell = (v, fixed) => (v > 0 ? (fixed != null ? Number(v).toFixed(fixed) : String(v)) : '');
+  const zeroRow = magn => magn > 0 ? '' : 'zero-row';
 
-  const tradRows = `
-    <tr class="efni-section-row"><td colspan="5">Tími</td></tr>
-    <tr>
-      <td class="label">Dagvinna</td><td></td>
-      <td class="num">${fmt(dvR)} kr</td>
-      <td class="num">${dvH.toFixed(2)}</td>
-      <td class="num">${fmt(dvAmt)}</td>
+  /* Dagvinna + Eftirvinna (rates always shown, magn empty if 0) */
+  const timeRows = `
+    <tr class="${zeroRow(dvH)}">
+      <td class="label">Dagvinna</td>
+      <td class="size"></td><td class="unit"></td>
+      <td class="price">${krOnly(dvR)}</td>
+      <td class="magn">${magnCell(dvH, 2)}</td>
+      <td class="total">${kr(dvAmt)}</td>
     </tr>
-    ${evH > 0 ? `<tr>
-      <td class="label">Eftirvinna</td><td></td>
-      <td class="num">${fmt(evR)} kr</td>
-      <td class="num">${evH.toFixed(2)}</td>
-      <td class="num">${fmt(evAmt)}</td>
-    </tr>` : ''}
-    ${(km > 0 || fr > 0) ? `<tr class="efni-section-row"><td colspan="5">Akstur</td></tr>` : ''}
-    ${km > 0 ? `<tr>
-      <td class="label">ekinn km.</td><td></td>
-      <td class="num">${KM_RATE} kr</td>
-      <td class="num">${km}</td>
-      <td class="num">${fmt(kmAmt)}</td>
-    </tr>` : ''}
-    ${fr > 0 ? `<tr>
-      <td class="label">ekinn ferð</td><td></td>
-      <td class="num">${fmt(FERD_RATE)} kr</td>
-      <td class="num">${fr}</td>
-      <td class="num">${fmt(frAmt)}</td>
-    </tr>` : ''}
+    <tr class="${zeroRow(evH)}">
+      <td class="label">Eftirvinna</td>
+      <td class="size"></td><td class="unit"></td>
+      <td class="price">${krOnly(evR)}</td>
+      <td class="magn">${magnCell(evH, 2)}</td>
+      <td class="total">${kr(evAmt)}</td>
+    </tr>
   `;
 
+  /* Akstur — both lines always shown, hidden in print if 0 */
+  const akstrSectionEmpty = (km === 0 && fr === 0) ? 'section-empty' : '';
+  const akstrRows = `
+    <tr class="section-row ${akstrSectionEmpty}"><td colspan="6"><b>Akstur</b></td></tr>
+    <tr class="${zeroRow(km)}">
+      <td class="label">ekinn km.</td>
+      <td class="size"></td><td class="unit"></td>
+      <td class="price">${krOnly(KM_RATE)}</td>
+      <td class="magn">${magnCell(km, 2)}</td>
+      <td class="total">${kr(km * KM_RATE)}</td>
+    </tr>
+    <tr class="${zeroRow(fr)}">
+      <td class="label">ekinn ferð</td>
+      <td class="size"></td><td class="unit"></td>
+      <td class="price">${krOnly(FERD_RATE)}</td>
+      <td class="magn">${magnCell(fr, 0)}</td>
+      <td class="total">${kr(fr * FERD_RATE)}</td>
+    </tr>
+  `;
+
+  /* Efni — show ALL materials in editor; print-CSS hides zero-magn rows */
+  const matRowsFull = MATERIALS.flatMap(sec => sec.items).map(it => {
+    const used = materials.find(m => m.label === it.label && (m.unit === it.unit || true)) ;
+    // find by exact match against the input value via key
+    const input = document.querySelector(`[data-mat="${it.key}"]`);
+    const qty = input ? (Number(input.value) || 0) : 0;
+    const total = qty * it.price;
+    // Split label into name + size: "Eldvarnar band 55mm" → name "Eldvarnar band", size "55mm"
+    const m = it.label.match(/^(.*?)\s(\d+\s*mm|5kg)$/);
+    const name = m ? m[1] : it.label;
+    const size = m ? m[2] : '';
+    return `
+      <tr class="${zeroRow(qty)}">
+        <td class="label">${name}</td>
+        <td class="size">${size}</td>
+        <td class="unit">${it.unit}</td>
+        <td class="price">${krOnly(it.price)}</td>
+        <td class="magn">${magnCell(qty, qty % 1 === 0 ? 0 : 2)}</td>
+        <td class="total">${kr(total)}</td>
+      </tr>`;
+  }).join('');
+  const matSectionEmpty = materials.length === 0 ? 'section-empty' : '';
+
+  /* Smáhlutagjald + Staðfesting (extras) */
+  const extraSectionEmpty = (smaAmt === 0 && stadf === 0) ? 'section-empty' : '';
   const extrasRows = `
-    <tr class="efni-section-row"><td colspan="5">Aukagjöld</td></tr>
-    <tr>
-      <td class="label">Smáhlutagjald (hanskar, þurrkur o.fl.)</td><td>stk</td>
-      <td class="num">${SMA_PER_KLST} kr</td>
-      <td class="num">${dvH.toFixed(2)}</td>
-      <td class="num">${fmt(smaAmt)}</td>
+    <tr class="section-row ${extraSectionEmpty}"><td colspan="6"><b>Aukagjöld</b></td></tr>
+    <tr class="${zeroRow(smaAmt)}">
+      <td class="label">Smáhlutagjald (hanskar, þurrkur o.fl.)</td>
+      <td class="size"></td><td class="unit">stk</td>
+      <td class="price">${krOnly(SMA_PER_KLST)}</td>
+      <td class="magn">${magnCell(dvH, 2)}</td>
+      <td class="total">${kr(smaAmt)}</td>
     </tr>
-    ${stadf > 0 ? `<tr>
-      <td class="label">Staðfesting brunaþéttinga</td><td></td>
-      <td class="num">${fmt(STADF_KR)} kr</td>
-      <td class="num">1</td>
-      <td class="num">${fmt(stadf)}</td>
-    </tr>` : ''}
+    <tr class="${zeroRow(stadf)}">
+      <td class="label">Staðfesting brunaþéttinga</td>
+      <td class="size"></td><td class="unit"></td>
+      <td class="price">${krOnly(STADF_KR)}</td>
+      <td class="magn">${stadf > 0 ? '1' : ''}</td>
+      <td class="total">${kr(stadf)}</td>
+    </tr>
   `;
+
+  const periodLabel = fmtPeriod(from, til);
 
   const $preview = document.getElementById('preview');
   $preview.innerHTML = `
-    <img src="../tilbod/logo.png" class="doc-logo" alt="" onerror="this.style.display='none'" />
-    <div class="briefhaus">
-      <strong>Brunahólf ehf.</strong>
-      Kt. 610722-0510 · vsk. nr. 162039<br>
-      Helluhrauni 10, 220 Hafnarfjörður<br>
-      Sími 540 5400 · brunaholf@brunaholf.is
+    <div class="doc-top">
+      <img src="../tilbod/logo.png" class="doc-logo" alt="" onerror="this.style.display='none'" />
+      <div class="doc-title-block">
+        <h1>Brunahólf ehf.</h1>
+        <p class="doc-subtitle">Verðskrá / tilboð</p>
+      </div>
     </div>
 
-    <h1 class="efni-title">Verðskrá / tilboð</h1>
-    <h2 class="efni-subtitle">${fmtPeriod(from, til)}</h2>
-
-    <div class="efni-meta">
-      <span><strong>Verkkaupi:</strong> ${verkkaupi || '—'}</span>
-      <span><strong>Verkstaður:</strong> ${verkstadur || '—'}</span>
+    <div class="doc-meta">
+      <div class="period">${periodLabel}</div>
+      <div class="worksite">${verkstadur || '—'}</div>
     </div>
 
     <table class="efni">
       <thead>
         <tr>
-          <th>Lýsing</th><th>Eining</th><th class="num">án vsk</th><th class="num">magn</th><th class="num">samtals</th>
+          <td></td><td></td><td></td>
+          <td class="price">án vsk</td>
+          <td class="magn">magn</td>
+          <td class="total">samtals</td>
         </tr>
       </thead>
       <tbody>
-        ${tradRows}
+        ${timeRows}
+        ${akstrRows}
+        <tr class="section-row ${matSectionEmpty}"><td colspan="6"><b>Efni</b></td></tr>
+        ${matRowsFull}
         ${extrasRows}
-        <tr class="efni-section-row"><td colspan="5">Efni</td></tr>
-        ${matRows}
-        <tr class="subtotal">
-          <td colspan="4">Samtals án vsk</td>
-          <td class="num">${fmt(net)}</td>
+        <tr class="spacer"><td colspan="6"></td></tr>
+        <tr class="subtotal-row">
+          <td colspan="5">Samtals án vsk</td>
+          <td class="total">${krOnly(net)}</td>
         </tr>
-        <tr class="vsk">
-          <td colspan="4">VSK (${VSK_PCT}%)</td>
-          <td class="num">${fmt(vsk)}</td>
+        <tr class="vsk-row">
+          <td colspan="5">vsk</td>
+          <td class="total">${krOnly(vsk)}</td>
         </tr>
-        <tr class="total">
-          <td colspan="4">Samtals m. vsk</td>
-          <td class="num">${fmt(total)} kr</td>
+        <tr class="grand-row">
+          <td colspan="5">samtals með vsk</td>
+          <td class="total">${krOnly(total)}</td>
         </tr>
       </tbody>
     </table>
@@ -496,17 +573,7 @@ document.getElementById('btnCopy').addEventListener('click', () => {
 
 render();
 
-/* Print styles */
-const style = document.createElement('style');
-style.textContent = `
-@media print {
-  header, .form-panel { display: none !important; }
-  .layout { grid-template-columns: 1fr !important; }
-  .preview-panel { padding: 0 !important; max-height: none !important; overflow: visible !important; }
-  .preview-doc { box-shadow: none !important; border: none !important; max-width: 100% !important; }
-}
-`;
-document.head.appendChild(style);
+/* Print + saved-PDF styles are defined in the main <style> block above */
 </script>
 
 </body>
