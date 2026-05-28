@@ -879,6 +879,43 @@ main{padding:14px;max-width:1100px;margin:0 auto;flex:1;min-width:0;width:100%}
 .rg-link:hover{background:var(--bg-2);color:var(--text)}
 .rg-link[disabled],.rg-link.rg-link-empty{opacity:.2;pointer-events:none}
 .rg-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+
+/* ===== Forecast banner ===== */
+.rg-forecast{background:linear-gradient(135deg,#FFFBF0 0%,#FFF6E0 100%);border:1px solid #FFE5A5;border-radius:14px;padding:18px 22px;margin-bottom:18px;box-shadow:0 1px 3px rgba(0,0,0,0.04),0 4px 16px rgba(184,118,0,0.06)}
+.rg-forecast-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:14px}
+.rg-forecast-title{font-family:'Source Serif 4',Georgia,serif;font-size:18px;font-weight:600;color:#5C3500;letter-spacing:-.005em}
+.rg-forecast-sub{font-size:12px;color:#8C5500;margin-top:3px}
+.rg-forecast-totals{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.rg-fc-cell{background:rgba(255,255,255,.7);border:1px solid rgba(0,0,0,.05);border-radius:10px;padding:12px 14px}
+.rg-fc-cell.rg-fc-overdue{background:rgba(255,205,180,.5);border-color:rgba(180,80,30,.2)}
+.rg-fc-cell.rg-fc-draft{background:rgba(255,235,180,.5);border-color:rgba(180,120,30,.2)}
+.rg-fc-cell.rg-fc-total{background:#FFF;border-color:rgba(0,0,0,.08);box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.rg-fc-l{font-size:10.5px;color:var(--muted-2);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.rg-fc-v{font-family:'Source Serif 4',Georgia,serif;font-size:22px;font-weight:700;margin-top:3px;font-variant-numeric:tabular-nums;color:var(--text)}
+.rg-fc-cell.rg-fc-total .rg-fc-v{color:#5C3500;font-size:24px}
+.rg-fc-x{font-size:11px;color:var(--muted);margin-top:2px}
+.rg-forecast-list{margin-top:16px;max-height:480px;overflow-y:auto}
+.rg-fc-item{background:#fff;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden;transition:box-shadow 100ms ease}
+.rg-fc-item[open]{box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.rg-fc-item summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:auto 1fr 1fr auto auto;gap:12px;align-items:center;padding:10px 14px;font-size:12.5px}
+.rg-fc-item summary::-webkit-details-marker{display:none}
+.rg-fc-item summary:hover{background:#FAFAF6}
+.rg-fc-tag{font-size:9.5px;font-weight:700;padding:2px 6px;border-radius:3px;text-transform:uppercase;letter-spacing:.04em}
+.rg-fc-tag-over{background:#FFE0D5;color:#8C2510}
+.rg-fc-tag-draft{background:#FFE8B5;color:#7C5500}
+.rg-fc-item-name{font-weight:600;color:var(--text)}
+.rg-fc-item-cust{font-size:11px;color:var(--muted-2)}
+.rg-fc-item-month{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.rg-fc-item-amt{font-weight:700;font-variant-numeric:tabular-nums;text-align:right;min-width:100px}
+.rg-fc-math{padding:0 18px 16px;background:#FCFBF6;border-top:1px solid var(--bg-2);font-size:12.5px}
+.rg-fc-math-line{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dotted var(--border);font-variant-numeric:tabular-nums}
+.rg-fc-math-line:last-child{border-bottom:none}
+.rg-fc-math-eq{font-weight:600}
+.rg-fc-math-sub{font-weight:600;border-top:2px solid var(--text-2);padding-top:8px;margin-top:4px}
+.rg-fc-math-total{font-weight:700;background:#FFE8B5;padding:8px 10px;border-radius:6px;margin-top:6px;border-bottom:none}
+.rg-fc-math-todo{color:var(--muted);font-style:italic}
+.rg-fc-math-note{margin-top:10px;padding:8px;background:#fff;border-left:3px solid var(--gold);font-size:11px;color:var(--muted-2);font-style:italic}
+.rg-fc-more{text-align:center;padding:8px;color:var(--muted);font-size:11px;font-style:italic}
 .rg-kpi{background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 14px}
 .rg-kpi-l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .rg-kpi-v{font-family:'Source Serif 4',Georgia,serif;font-size:22px;font-weight:600;margin-top:2px;font-variant-numeric:tabular-nums}
@@ -2935,6 +2972,23 @@ function renderReikningagerd(t){
         <div class="rg-kpi rg-kpi-warn"><div class="rg-kpi-l">Skuld eftir leiðr.</div><div class="rg-kpi-v" id="rg-k-unpaid">—</div><div class="rg-kpi-x">eftir retention + bank match</div></div>
       </div>
 
+      <!-- Revenue forecast banner: total of invoice_drafts (klst × rate × vsk that hasn't been billed yet) -->
+      <div class="rg-forecast" id="rg-forecast">
+        <div class="rg-forecast-head">
+          <div>
+            <div class="rg-forecast-title">📈 Spá um tekjur úr óbilluðum tímum</div>
+            <div class="rg-forecast-sub">Klst úr Tímavera × verðtaxti × 24% vsk — sjá hvernig reiknað er með því að smella á línu</div>
+          </div>
+          <button type="button" class="rg-tool" id="rg-forecast-toggle">Sýna sundurliðun ▾</button>
+        </div>
+        <div class="rg-forecast-totals">
+          <div class="rg-fc-cell rg-fc-overdue"><div class="rg-fc-l">⏰ Yfir gjalddaga</div><div class="rg-fc-v" id="rg-fc-overdue-v">—</div><div class="rg-fc-x" id="rg-fc-overdue-n">—</div></div>
+          <div class="rg-fc-cell rg-fc-draft"><div class="rg-fc-l">📅 Yfirstandandi (drög)</div><div class="rg-fc-v" id="rg-fc-draft-v">—</div><div class="rg-fc-x" id="rg-fc-draft-n">—</div></div>
+          <div class="rg-fc-cell rg-fc-total"><div class="rg-fc-l">Samtals óbillað</div><div class="rg-fc-v" id="rg-fc-total-v">—</div><div class="rg-fc-x">spá m. vsk</div></div>
+        </div>
+        <div class="rg-forecast-list" id="rg-forecast-list" hidden></div>
+      </div>
+
       <div id="rg-grid-host"></div>
     </div>
   `;
@@ -3209,6 +3263,76 @@ function renderReikningagerd(t){
   $refresh.addEventListener('click', load);
   $win.addEventListener('change', () => { if(lastData) render(); });
   load();
+
+  // Forecast banner — fetch invoice_drafts and render summary + expandable breakdown
+  loadForecast();
+  document.getElementById('rg-forecast-toggle').onclick = () => {
+    const $list = document.getElementById('rg-forecast-list');
+    const $btn  = document.getElementById('rg-forecast-toggle');
+    const hidden = $list.hasAttribute('hidden');
+    if(hidden){ $list.removeAttribute('hidden'); $btn.textContent = 'Fela sundurliðun ▴'; }
+    else      { $list.setAttribute('hidden',''); $btn.textContent = 'Sýna sundurliðun ▾'; }
+  };
+}
+
+async function loadForecast(){
+  try{
+    const r = await fetch('/api/invoice-drafts?status=overdue,draft');
+    if(!r.ok) return;
+    const { rows, summary } = await r.json();
+    const fmt = n => Math.round(n||0).toLocaleString('is-IS');
+    const set = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
+    const overdue = (summary.by_status||{}).overdue || 0;
+    const draft   = (summary.by_status||{}).draft   || 0;
+    const nOver   = rows.filter(r => r.status==='overdue').length;
+    const nDraft  = rows.filter(r => r.status==='draft').length;
+    set('rg-fc-overdue-v', fmt(overdue));
+    set('rg-fc-overdue-n', `${nOver} mánaðar-línur`);
+    set('rg-fc-draft-v',   fmt(draft));
+    set('rg-fc-draft-n',   `${nDraft} mánaðar-línur`);
+    set('rg-fc-total-v',   fmt(overdue + draft));
+
+    // Build breakdown list with the math for each line
+    const $list = document.getElementById('rg-forecast-list');
+    if($list){
+      $list.innerHTML = rows.slice(0, 30).map(r => {
+        const hrs = Number(r.hours_dagvinna || 0);
+        const rate = Number(r.rate_dagvinna || 0);
+        const dvAmt = hrs * rate;
+        const sma = Number(r.smahlutagjald || 0);
+        const net = Number(r.net_an_vsk || 0);
+        const vsk = Number(r.vsk_amount || 0);
+        const total = Number(r.total_m_vsk || 0);
+        const tagCls = r.status === 'overdue' ? 'rg-fc-tag-over' : 'rg-fc-tag-draft';
+        const tagLabel = r.status === 'overdue' ? 'YFIR GJALDDAGA' : 'DRÖG';
+        return `
+          <details class="rg-fc-item">
+            <summary>
+              <span class="rg-fc-tag ${tagCls}">${tagLabel}</span>
+              <span class="rg-fc-item-name">${escapeHtml(r.worksite_name)}</span>
+              <span class="rg-fc-item-cust">${escapeHtml(r.customer_name || '—')}</span>
+              <span class="rg-fc-item-month">${monthLabelStatic(r.work_month)}</span>
+              <span class="rg-fc-item-amt">${fmt(total)} kr</span>
+            </summary>
+            <div class="rg-fc-math">
+              <div class="rg-fc-math-line"><span>Tímavera klst (dagvinna)</span><span>${hrs.toFixed(2)} klst</span></div>
+              <div class="rg-fc-math-line"><span>Verðtaxti</span><span>× ${fmt(rate)} kr/klst</span></div>
+              <div class="rg-fc-math-line rg-fc-math-eq"><span>= Dagvinna</span><span>${fmt(dvAmt)} kr</span></div>
+              <div class="rg-fc-math-line"><span>+ Smáhlutagjald (137 × ${hrs.toFixed(1)})</span><span>+ ${fmt(sma)} kr</span></div>
+              <div class="rg-fc-math-line"><span>+ Akstur</span><span class="rg-fc-math-todo">— (handvirkt)</span></div>
+              <div class="rg-fc-math-line"><span>+ Efni (Redder)</span><span class="rg-fc-math-todo">— (handvirkt)</span></div>
+              <div class="rg-fc-math-line rg-fc-math-sub"><span>= Samtals án vsk</span><span>${fmt(net)} kr</span></div>
+              <div class="rg-fc-math-line"><span>+ 24% VSK</span><span>+ ${fmt(vsk)} kr</span></div>
+              <div class="rg-fc-math-line rg-fc-math-total"><span>= Samtals m. vsk (forecast)</span><span>${fmt(total)} kr</span></div>
+              ${r.notes ? `<div class="rg-fc-math-note">${escapeHtml(r.notes)}</div>` : ''}
+            </div>
+          </details>`;
+      }).join('') + (rows.length > 30 ? `<div class="rg-fc-more">+ ${rows.length - 30} fleiri línur — sjá invoice_drafts töflu</div>` : '');
+    }
+  }catch(e){
+    const el = document.getElementById('rg-fc-total-v');
+    if(el) el.textContent = 'villa';
+  }
 }
 
 /* ====================== REIKNINGAGERÐ — invoice calculator modal ====================== */
