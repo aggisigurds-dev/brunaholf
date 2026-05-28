@@ -1105,6 +1105,20 @@ main{padding:14px;max-width:1100px;margin:0 auto;flex:1;min-width:0;width:100%}
 .vs-unb-name{background:none;border:none;font:inherit;cursor:pointer;color:var(--text);font-weight:600;text-align:left;padding:0}
 .vs-unb-name:hover{color:#9B1A0F;text-decoration:underline}
 
+/* Big equation row at the top of the unbilled panel */
+.vs-eq{display:grid;grid-template-columns:1fr auto 1fr auto 1.2fr;gap:14px;align-items:center;padding:18px 22px;background:linear-gradient(135deg,#FAFAF7 0%,#F4F2EA 100%);border-radius:14px;margin-bottom:18px;border:1px solid var(--border)}
+.vs-eq-cell{text-align:center}
+.vs-eq-l{font-size:10.5px;color:var(--muted-2);text-transform:uppercase;letter-spacing:.05em;font-weight:600;margin-bottom:6px}
+.vs-eq-v{font-family:'Source Serif 4',Georgia,serif;font-size:36px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1}
+.vs-eq-sub{font-size:11px;color:var(--muted);margin-top:4px;font-style:italic}
+.vs-eq-op{font-family:'Source Serif 4',Georgia,serif;font-size:36px;font-weight:400;color:var(--muted-2);letter-spacing:.05em;line-height:1}
+.vs-eq-result{padding:12px 14px;border-radius:10px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,0.05)}
+.vs-eq-red .vs-eq-l{color:#8C2510}
+.vs-eq-red .vs-eq-v{color:#9B1A0F}
+.vs-eq-green .vs-eq-l{color:#1B5E20}
+.vs-eq-green .vs-eq-v{color:#2E7D32}
+@media(max-width:760px){.vs-eq{grid-template-columns:1fr;gap:8px}.vs-eq-op{display:none}}
+
 @media(max-width:980px){
   .vs-kpis{grid-template-columns:1fr 1fr}
   .vs-cols{grid-template-columns:1fr}
@@ -4232,13 +4246,31 @@ async function renderVinnustofa(t){
     const $unb = document.getElementById('vs-unbilled-list');
     const ubRows = (unbilled.rows||[]).filter(r => r.unbilled_hours > 5).slice(0, 15);
     const totalUnb = unbilled.summary?.total_unbilled_hours || 0;
+    const sum = unbilled.summary || {};
+    const totalTv  = Number(sum.total_tv_hours || 0);
+    const totalBi  = Number(sum.total_est_billed_hours || 0);
+    const netUb    = Number(sum.net_unbilled_hours || 0);
     if (!ubRows.length){
       $unb.innerHTML = '<div class="vs-empty">Engar ósendar klst — vel búið! 🎉</div>';
     } else {
       $unb.innerHTML = `
-        <div style="display:flex;justify-content:space-between;align-items:baseline;padding:10px 14px;background:linear-gradient(135deg,#FFF3F0 0%,#FFE5DD 100%);border-radius:10px;margin-bottom:14px;border:1px solid #FFD0BE">
-          <span style="font-size:12px;color:#8C2510;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Samtals ósendar klst</span>
-          <strong style="font-family:'Source Serif 4',Georgia,serif;font-size:24px;font-weight:700;color:#9B1A0F;font-variant-numeric:tabular-nums">${totalUnb.toFixed(1)} klst ≈ ${fmt(unbilled.summary?.estimated_unbilled_kr_an_vsk || 0)} kr án vsk</strong>
+        <!-- Big equation: Tímavera − Áætl. rukkað = Eftirstöðvar -->
+        <div class="vs-eq">
+          <div class="vs-eq-cell">
+            <div class="vs-eq-l">Tímavera klst skráðar</div>
+            <div class="vs-eq-v">${totalTv.toFixed(0)}</div>
+          </div>
+          <div class="vs-eq-op">−</div>
+          <div class="vs-eq-cell">
+            <div class="vs-eq-l">Áætl. rukkað á reikningum</div>
+            <div class="vs-eq-v">${totalBi.toFixed(0)}</div>
+          </div>
+          <div class="vs-eq-op">=</div>
+          <div class="vs-eq-cell vs-eq-result ${netUb > 0 ? 'vs-eq-red' : 'vs-eq-green'}">
+            <div class="vs-eq-l">${netUb > 0 ? 'Eftir að rukka' : 'Yfirrukkað (akstur+efni)'}</div>
+            <div class="vs-eq-v">${netUb >= 0 ? '+' : ''}${netUb.toFixed(0)}</div>
+            <div class="vs-eq-sub">${netUb > 0 ? '≈ ' + fmt(sum.estimated_unbilled_kr_an_vsk || 0) + ' kr án vsk' : ''}</div>
+          </div>
         </div>
         <table class="vs-unb-table">
           <thead><tr>
