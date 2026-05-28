@@ -3958,7 +3958,10 @@ async function renderVinnustofa(t){
               const total = Number(d.total_m_vsk || 0);
               const tag = d.status === 'overdue' ? `<span class="vs-pill vs-pill-red">YFIR GJALDDAGA</span>` : `<span class="vs-pill vs-pill-amber">DRÖG</span>`;
               const customerStr = d.customer_name ? ` · ${escapeHtml(d.customer_name)}` : '';
-              const url = `/reikningur?worksite=${encodeURIComponent(d.worksite_name)}&customer=${encodeURIComponent(d.customer_name||'')}&month=${encodeURIComponent(d.work_month)}&dv_hours=${hrs.toFixed(2)}`;
+              const dvRate = Number(d.rate_dagvinna) || 9951;
+              const evRate = Number(d.rate_eftirvinna) || 14927;
+              // Use trailing slash to bypass the 301 redirect and preserve query params cleanly
+              const url = `/reikningur/?worksite=${encodeURIComponent(d.worksite_name)}&customer=${encodeURIComponent(d.customer_name||'')}&month=${encodeURIComponent(d.work_month)}&dv_hours=${hrs.toFixed(2)}&dv_rate=${dvRate}&ev_rate=${evRate}`;
               return `
                 <div class="vs-item">
                   <div class="vs-item-head">
