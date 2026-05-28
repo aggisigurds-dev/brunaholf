@@ -571,6 +571,28 @@ document.getElementById('btnCopy').addEventListener('click', () => {
   });
 });
 
+// Read URL params so we can be opened pre-filled from the main hub:
+// /reikningur?worksite=Fjar%C3%B0agata&customer=GG%20verk&month=2026-03&dv_hours=322.2&dv_rate=9951&ev_rate=14927
+(function applyParams(){
+  const p = new URLSearchParams(window.location.search);
+  if(p.get('worksite'))   document.getElementById('f-verkstadur').value = p.get('worksite');
+  if(p.get('customer'))   document.getElementById('f-verkkaupi').value  = p.get('customer');
+  if(p.get('dv_hours'))   document.getElementById('f-dv-h').value       = p.get('dv_hours');
+  if(p.get('dv_rate'))    document.getElementById('f-dv-rate').value    = p.get('dv_rate');
+  if(p.get('ev_hours'))   document.getElementById('f-ev-h').value       = p.get('ev_hours');
+  if(p.get('ev_rate'))    document.getElementById('f-ev-rate').value    = p.get('ev_rate');
+  if(p.get('km'))         document.getElementById('f-km').value         = p.get('km');
+  if(p.get('ferd'))       document.getElementById('f-ferd').value       = p.get('ferd');
+  if(p.get('stadf')==='1') document.getElementById('f-stadf').checked   = true;
+  // month=YYYY-MM → set from = 1st, til = last day of month
+  const m = p.get('month');
+  if(m && /^\d{4}-\d{2}$/.test(m)){
+    const [yr, mo] = m.split('-').map(Number);
+    const last = new Date(yr, mo, 0).getDate();
+    document.getElementById('f-fra').value = `${yr}-${String(mo).padStart(2,'0')}-01`;
+    document.getElementById('f-til').value = `${yr}-${String(mo).padStart(2,'0')}-${String(last).padStart(2,'0')}`;
+  }
+})();
 render();
 
 /* Print + saved-PDF styles are defined in the main <style> block above */

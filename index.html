@@ -807,12 +807,15 @@ main{padding:14px;max-width:1100px;margin:0 auto;flex:1;min-width:0;width:100%}
 .rg-tool{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;font-size:12px;font-weight:500;color:var(--text);background:#fff;border:1px solid var(--border);border-radius:6px;text-decoration:none;cursor:pointer}
 .rg-tool:hover{background:var(--bg);border-color:var(--text-2)}
 .rg-tool-icon{font-size:14px}
-.rg-grid{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;font-size:12px}
-.rg-grid th,.rg-grid td{padding:6px 8px;border-bottom:1px solid var(--border);vertical-align:middle;text-align:left}
-.rg-grid thead th{position:sticky;top:0;background:var(--bg-2);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted-2);z-index:1}
-.rg-grid tbody tr:hover{background:#FAFAF7}
-.rg-grid .rg-row-gata{background:#FFF9EE}
+.rg-grid{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;font-size:12.5px;box-shadow:0 1px 3px rgba(0,0,0,0.04),0 4px 12px rgba(0,0,0,0.03)}
+.rg-grid th,.rg-grid td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle;text-align:left}
+.rg-grid thead th{position:sticky;top:0;background:linear-gradient(180deg,#F8F6F0 0%,#F1EDE3 100%);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted-2);z-index:1;border-bottom:2px solid var(--text-2)}
+.rg-grid tbody tr{transition:background 80ms ease}
+.rg-grid tbody tr:hover{background:#F7F6F1}
+.rg-grid .rg-row-gata{background:linear-gradient(90deg,#FFFAE5 0%,#FFF9EE 100%)}
 .rg-grid .rg-row-gata:hover{background:#FFF3D9}
+.rg-month-amt{transition:all 100ms ease}
+.rg-month:hover .rg-month-amt{transform:scale(1.04)}
 .rg-section-row td{background:var(--bg);font-weight:700;font-family:'Source Serif 4',Georgia,serif;font-size:14px;padding:10px 8px}
 .rg-col-drive{width:34px;text-align:center}
 .rg-drive{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:4px;text-decoration:none;font-size:14px;color:var(--muted-2)}
@@ -853,7 +856,7 @@ main{padding:14px;max-width:1100px;margin:0 auto;flex:1;min-width:0;width:100%}
 @media(max-width:760px){.wc-grid{grid-template-columns:1fr}.wc-row{grid-template-columns:1fr}}
 .rg-col-cust{min-width:120px;color:var(--muted-2);font-size:11px}
 .rg-col-skuldir{text-align:right;font-variant-numeric:tabular-nums;color:var(--red);font-weight:600;font-size:11px;min-width:80px}
-.rg-month{text-align:right;font-variant-numeric:tabular-nums;min-width:96px;padding:4px 6px;border-left:1px solid var(--border)}
+.rg-month{text-align:right;font-variant-numeric:tabular-nums;min-width:118px;padding:6px 8px;border-left:1px solid var(--border)}
 .rg-month-amt{font-weight:600}
 .rg-month-amt.rg-attn{background:#FFE9B0}
 .rg-month-amt.rg-zero{color:var(--muted-2);font-weight:400}
@@ -881,6 +884,8 @@ main{padding:14px;max-width:1100px;margin:0 auto;flex:1;min-width:0;width:100%}
 
 .rg-link-btn{background:none;border:none;cursor:pointer;padding:0;font:inherit}
 .rg-link-btn:hover{background:var(--bg-2);color:var(--text)}
+.rg-link-pill{background:linear-gradient(135deg,#FFE4B0 0%,#FFD180 100%);color:#8C4500;border-radius:6px;padding:2px 6px;font-weight:600;width:auto;min-width:22px}
+.rg-link-pill:hover{background:linear-gradient(135deg,#FFD180 0%,#FFC04D 100%);color:#5C2D00}
 .rg-hidden-bar{font-size:12px;color:var(--muted);padding:6px 12px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;display:inline-flex;align-items:center;gap:8px}
 
 /* ===== Invoice calculator modal ===== */
@@ -3009,13 +3014,28 @@ function renderReikningagerd(t){
 
   function fmtIsk(n){ return n ? Math.round(n).toLocaleString('is-IS') : ''; }
 
-  function rowLinks(w){
+  function rowLinks(w, months, invByMonth){
     const drive = w.status?.drive_folder_url || '';
     const project = w.project;
     const gmail = `https://mail.google.com/mail/u/0/?authuser=bokhald@brunaholf.is#search/${encodeURIComponent(project)}`;
     const gata = isGata(project);
     const projAttr = escapeAttr(project);
+    const customer = (w.mapped_customers||[])[0] || '';
+    const rates = rgRateFor(project);
+    // Build /reikningur deep link with most-recent month-with-hours-but-no-invoice
+    let efnisMonth = '', efnisHours = 0;
+    for(let i = months.length-1; i >= 0; i--){
+      const ym = months[i];
+      const hr = (w.monthly||{})[ym] || 0;
+      if(hr > 0 && !invByMonth[ym]){ efnisMonth = ym; efnisHours = hr; break; }
+    }
+    if(!efnisMonth && months.length){
+      efnisMonth = months[months.length-1];
+      efnisHours = (w.monthly||{})[efnisMonth] || 0;
+    }
+    const efnisUrl = `/reikningur?worksite=${encodeURIComponent(project)}&customer=${encodeURIComponent(customer)}&month=${encodeURIComponent(efnisMonth)}&dv_hours=${efnisHours.toFixed(2)}&dv_rate=${rates.dv}&ev_rate=${rates.ev}`;
     return `
+      <a class="rg-link rg-link-pill" href="${efnisUrl}" target="_blank" rel="noopener" title="Opna Efnislista fyrir ${efnisMonth || 'nýjasta mánuð'}">📝</a>
       <button type="button" class="rg-link rg-link-btn" data-rg-calc="${projAttr}" title="Reikna næsta reikning">🧾</button>
       <a class="rg-link ${drive?'':'rg-link-empty'}" href="${escapeHtml(drive||'#')}" target="_blank" rel="noopener" title="Drive mappa">📁</a>
       <a class="rg-link" href="${gata?RG_AJOUR_URL:RG_TIMAVERA_URL}" target="_blank" rel="noopener" title="${gata?'Opna Ajour':'Opna Tímavera'}">${gata?'🏗':'⏱'}</a>
@@ -3112,7 +3132,7 @@ function renderReikningagerd(t){
                 </div>
               </td>`;
           }).join('')}
-          <td class="rg-col-links">${rowLinks(w)}</td>
+          <td class="rg-col-links">${rowLinks(w, months, invByMonth)}</td>
         </tr>
       `;
     };
