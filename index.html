@@ -1024,6 +1024,9 @@ main{padding:14px;max-width:1100px;margin:0 auto;flex:1;min-width:0;width:100%}
 .rg-kpi-warn .rg-kpi-v{color:#8C2510}
 .rg-kpi-good{border-color:#C8E6C9;background:#F4FBF4}
 .rg-totals-row td{background:var(--bg-2);font-weight:700;border-top:2px solid var(--text-2)}
+/* Eftirstöðvar klst column */
+.rg-col-balance{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;font-size:13px;min-width:78px;padding:6px 10px;border-left:2px solid var(--text-2);background:#FCFCFA}
+.rg-col-balance.rg-balance-unbilled{background:#FFF3F0;color:#9B1A0F;font-weight:700}
 
 /* ============================================================
    VINNUSTOFA — action-first dashboard
@@ -1076,6 +1079,16 @@ main{padding:14px;max-width:1100px;margin:0 auto;flex:1;min-width:0;width:100%}
 .vs-event-text strong{font-weight:600}
 .vs-event-tilvisun{color:var(--muted);font-size:10.5px;margin-left:6px}
 .vs-event-amount{font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+.vs-unb-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.vs-unb-table th{text-align:left;font-size:10.5px;font-weight:600;color:var(--muted-2);text-transform:uppercase;letter-spacing:.05em;padding:8px 6px;border-bottom:1px solid var(--border)}
+.vs-unb-table th.num{text-align:right}
+.vs-unb-table td{padding:8px 6px;border-bottom:1px solid var(--bg-2);font-variant-numeric:tabular-nums}
+.vs-unb-table td.num{text-align:right}
+.vs-unb-table tr:hover td{background:#FAFAF7}
+.vs-unb-table tr:last-child td{border-bottom:none}
+.vs-unb-pos{color:#9B1A0F;font-weight:700}
+.vs-unb-name{background:none;border:none;font:inherit;cursor:pointer;color:var(--text);font-weight:600;text-align:left;padding:0}
+.vs-unb-name:hover{color:#9B1A0F;text-decoration:underline}
 
 @media(max-width:980px){
   .vs-kpis{grid-template-columns:1fr 1fr}
@@ -3245,12 +3258,13 @@ function renderReikningagerd(t){
     setMeta('Sækir…');
     if($refresh){ $refresh.disabled = true; $refresh.classList.add('loading'); }
     try{
-      const [r, drR, efR, pgR, rdR] = await Promise.all([
+      const [r, drR, efR, pgR, rdR, ubR] = await Promise.all([
         fetch('/api/worksites?year=combined'),
         fetch('/api/invoice-drafts?status=invoiced').catch(() => null),
         fetch('/api/efnislisti-docs').catch(() => null),
         fetch('/api/pricing-guide').catch(() => null),
         fetch('/api/redder-invoices').catch(() => null),
+        fetch('/api/unbilled-hours').catch(() => null),
       ]);
       // Build pricing_guide map → window-global so rgRateFor() can read it
       if (pgR && pgR.ok) {
@@ -3262,6 +3276,12 @@ function renderReikningagerd(t){
       }
       if(!r.ok) throw new Error('HTTP '+r.status);
       lastData = await r.json();
+      // Build worksite → unbilled klst (running balance shown in last column)
+      lastData.unbilled = {};
+      if (ubR && ubR.ok) {
+        const { rows } = await ubR.json();
+        for (const x of (rows||[])) lastData.unbilled[x.worksite] = x.unbilled_hours;
+      }
       // Build (worksite, month) → total Redder material cost (recharged onto invoice)
       lastData.efni_total = {};
       if (rdR && rdR.ok) {
@@ -3500,6 +3520,12 @@ function renderReikningagerd(t){
                 </div>
               </td>`;
           }).join('')}
+          <td class="rg-col-balance ${(lastData.unbilled||{})[w.project] > 0 ? 'rg-balance-unbilled' : ''}">${(() => {
+            const ub = (lastData.unbilled||{})[w.project];
+            if (ub == null) return '<span class="rg-zero">—</span>';
+            const sign = ub > 0 ? '+' : '';
+            return `${sign}${ub.toFixed(0)}t`;
+          })()}</td>
           <td class="rg-col-links">${rowLinks(w, months, invByMonth)}</td>
         </tr>
       `;
@@ -3520,12 +3546,13 @@ function renderReikningagerd(t){
             <th class="rg-col-cust">Viðskiptavinur</th>
             <th class="rg-col-skuldir">Skuld</th>
             ${months.map(ym => `<th class="rg-month">${monthLabel(ym)}</th>`).join('')}
+            <th class="rg-col-balance" title="Klst skráðar mínus áætl. rukkaðar (Tímavera − [reikningur − efni] / taxti)">Eftirst. klst</th>
             <th class="rg-col-links"></th>
           </tr>
         </thead>
         <tbody>
           ${regular.map(rowHtml).join('')}
-          ${gata.length ? `<tr class="rg-section-row"><td colspan="${5+months.length+1}">Gata verkefni · Ajour</td></tr>` : ''}
+          ${gata.length ? `<tr class="rg-section-row"><td colspan="${6+months.length+1}">Gata verkefni · Ajour</td></tr>` : ''}
           ${gata.map(rowHtml).join('')}
           <tr class="rg-totals-row">
             <td colspan="5" style="text-align:right">Samtals</td>
@@ -3892,6 +3919,11 @@ async function renderVinnustofa(t){
         <section class="vs-col" id="vs-bill-col"><div class="vs-loading">Sækir…</div></section>
         <section class="vs-col" id="vs-collect-col"><div class="vs-loading">Sækir…</div></section>
       </div>
+      <section class="vs-card" id="vs-unbilled" style="margin-bottom:18px">
+        <h2 class="vs-h2">⏱ Ósend klst (Tímavera án reiknings)</h2>
+        <p class="vs-h2-sub">Klst skráðar í Tímavera mínus áætlaðar rukkaðar klst (eftir frádrag á efni). Smelltu á verkstað til að opna Workcenter.</p>
+        <div id="vs-unbilled-list" class="vs-loading">Sækir…</div>
+      </section>
       <section class="vs-card" id="vs-activity">
         <h2 class="vs-h2">📰 Nýleg starfsemi</h2>
         <div id="vs-activity-list" class="vs-loading">Sækir…</div>
@@ -3907,14 +3939,16 @@ async function renderVinnustofa(t){
   const $activity = document.getElementById('vs-activity-list');
 
   try{
-    const [wsR, drR, rdR] = await Promise.all([
+    const [wsR, drR, rdR, ubR] = await Promise.all([
       fetch('/api/worksites?year=combined'),
       fetch('/api/invoice-drafts?status=overdue,draft').catch(() => null),
       fetch('/api/redder-invoices').catch(() => null),
+      fetch('/api/unbilled-hours').catch(() => null),
     ]);
     const ws = await wsR.json();
     const drafts = drR && drR.ok ? (await drR.json()).rows || [] : [];
     const redder = rdR && rdR.ok ? (await rdR.json()) : { rows:[], summary:{} };
+    const unbilled = ubR && ubR.ok ? (await ubR.json()) : { rows:[], summary:{} };
 
     // KPI numbers
     const totalUnpaid  = (ws.worksites||[]).reduce((a,w) => a + (w.invoice_unpaid||0), 0);
@@ -4049,6 +4083,63 @@ async function renderVinnustofa(t){
         <span class="vs-event-amount">${fmt(e.amount)} kr</span>
       </div>
     `).join('');
+
+    // ===== Unbilled hours panel =====
+    const $unb = document.getElementById('vs-unbilled-list');
+    const ubRows = (unbilled.rows||[]).filter(r => r.unbilled_hours > 5).slice(0, 15);
+    const totalUnb = unbilled.summary?.total_unbilled_hours || 0;
+    if (!ubRows.length){
+      $unb.innerHTML = '<div class="vs-empty">Engar ósendar klst — vel búið! 🎉</div>';
+    } else {
+      $unb.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:baseline;padding:10px 14px;background:linear-gradient(135deg,#FFF3F0 0%,#FFE5DD 100%);border-radius:10px;margin-bottom:14px;border:1px solid #FFD0BE">
+          <span style="font-size:12px;color:#8C2510;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Samtals ósendar klst</span>
+          <strong style="font-family:'Source Serif 4',Georgia,serif;font-size:24px;font-weight:700;color:#9B1A0F;font-variant-numeric:tabular-nums">${totalUnb.toFixed(1)} klst ≈ ${fmt(unbilled.summary?.estimated_unbilled_kr_an_vsk || 0)} kr án vsk</strong>
+        </div>
+        <table class="vs-unb-table">
+          <thead><tr>
+            <th>Verkstaður</th>
+            <th class="num">Tímavera klst</th>
+            <th class="num">Áætl. rukkað</th>
+            <th class="num">Ósent</th>
+            <th class="num">≈ kr án vsk</th>
+          </tr></thead>
+          <tbody>
+            ${ubRows.map(r => {
+              const krEst = Math.round(r.unbilled_hours * (r.rate || 9951));
+              return `
+                <tr>
+                  <td><button type="button" class="vs-unb-name" data-ub-ws="${escapeAttr(r.worksite)}">${escapeHtml(r.worksite)}</button></td>
+                  <td class="num">${r.tv_hours.toFixed(1)}</td>
+                  <td class="num">${r.est_billed_hours.toFixed(1)}</td>
+                  <td class="num vs-unb-pos">${r.unbilled_hours.toFixed(1)}</td>
+                  <td class="num vs-unb-pos">${fmt(krEst)}</td>
+                </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+        <div style="font-size:11px;color:var(--muted);font-style:italic;margin-top:8px">
+          Áætl. rukkað = (samtals reikningar án vsk − efnisk. án vsk) / dagvinna_rate (per verkstað eða 9.951). Gata verkefni (Ajour) eru oft með "ofbillaðan" tölu því þau rukkast ekki úr klst.
+        </div>
+      `;
+      // Click worksite name → open Workcenter directly with data we have
+      const today = new Date();
+      const months = [];
+      for(let i = 7; i >= 0; i--){
+        const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        months.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+      }
+      $unb.querySelectorAll('[data-ub-ws]').forEach(b => {
+        b.onclick = () => {
+          const wsName = b.dataset.ubWs;
+          if (typeof rgOpenWorkcenter === 'function') {
+            rgOpenWorkcenter(wsName, ws.worksites, months);
+          } else {
+            state.ui.activeTab = 'reikningar'; save(); render();
+          }
+        };
+      });
+    }
 
   } catch(e) {
     $kpis.innerHTML = `<div class="vs-empty">Villa: ${e.message||e}</div>`;

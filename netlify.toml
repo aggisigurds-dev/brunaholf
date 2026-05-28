@@ -117,6 +117,12 @@
   to = "/.netlify/functions/invoice-edit"
   status = 200
 
+# Per-worksite unbilled-hours audit (Tímavera vs invoice án vsk minus materials)
+[[redirects]]
+  from = "/api/unbilled-hours"
+  to = "/.netlify/functions/unbilled-hours"
+  status = 200
+
 # Friendly URL for the Reikningagerð grid — uses /api/worksites under the hood,
 # kept here so the route is documented.
 [[redirects]]
