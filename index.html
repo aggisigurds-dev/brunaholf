@@ -2934,6 +2934,15 @@ const RG_RATES = {
   // 'Fjarðagata':            { dv: 9951,  ev: 14927 },  // confirmed default
 };
 function rgRateFor(project){
+  // 1. Prefer rates from the pricing_guide table (live, editable per worksite)
+  const pg = (window.__rgPricingGuide || {})[project];
+  if(pg && (pg.dagvinna_rate || pg.eftirvinna_rate)){
+    return {
+      dv: Number(pg.dagvinna_rate)   || RG_DEFAULT_RATE_DV,
+      ev: Number(pg.eftirvinna_rate) || RG_DEFAULT_RATE_EV,
+    };
+  }
+  // 2. Fall back to the hardcoded map (only used until pricing_guide is loaded)
   return RG_RATES[project] || { dv: RG_DEFAULT_RATE_DV, ev: RG_DEFAULT_RATE_EV };
 }
 const RG_VSK_PCT          = 24;        // % VAT
@@ -3025,11 +3034,20 @@ function renderReikningagerd(t){
     setMeta('Sækir…');
     if($refresh){ $refresh.disabled = true; $refresh.classList.add('loading'); }
     try{
-      const [r, drR, efR] = await Promise.all([
+      const [r, drR, efR, pgR] = await Promise.all([
         fetch('/api/worksites?year=combined'),
         fetch('/api/invoice-drafts?status=invoiced').catch(() => null),
         fetch('/api/efnislisti-docs').catch(() => null),
+        fetch('/api/pricing-guide').catch(() => null),
       ]);
+      // Build pricing_guide map → window-global so rgRateFor() can read it
+      if (pgR && pgR.ok) {
+        const { rows } = await pgR.json();
+        window.__rgPricingGuide = {};
+        for (const row of (rows||[])) {
+          window.__rgPricingGuide[row.worksite_name] = row;
+        }
+      }
       if(!r.ok) throw new Error('HTTP '+r.status);
       lastData = await r.json();
       // Build a map of (worksite, month) → manually billed
@@ -3229,9 +3247,10 @@ function renderReikningagerd(t){
             // Always show hours when present, plus a rough kr estimate (hours × rate × 1.24)
             // so even months without an invoice surface their value at a glance.
             const rates = rgRateFor(w.project);
+            const rateSource = (window.__rgPricingGuide||{})[w.project] ? 'pricing_guide' : (RG_RATES[w.project] ? 'hardcoded' : 'default');
             const estKr = !isAjour ? Math.round(monthHours * rates.dv * 1.24) : 0;
             const hoursLabel = !isAjour && monthHours > 0
-              ? `<span class="rg-month-hrs" title="Tímavera klst · áætluð: ${monthHours.toFixed(1)} × ${rates.dv} × 1.24 = ${fmtIsk(estKr)} kr m.vsk">${monthHours.toFixed(0)}t<span class="rg-month-est">≈${fmtIsk(estKr)}</span></span>`
+              ? `<span class="rg-month-hrs" title="Tímavera klst · taxti ${rates.dv} kr/klst (${rateSource}) · áætluð: ${monthHours.toFixed(1)} × ${rates.dv} × 1.24 = ${fmtIsk(estKr)} kr m.vsk">${monthHours.toFixed(0)}t<span class="rg-month-est">≈${fmtIsk(estKr)}</span></span>`
               : '';
             const amtLabel = amt
               ? `<span class="rg-month-kr">${fmtIsk(amt)}</span>`
