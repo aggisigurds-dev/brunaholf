@@ -4501,6 +4501,14 @@ async function renderVinnubok(t){
           <div class="vb-pad-hint">Formúla: byrjaðu cellu á <code>=</code> (t.d. <code>=9951*289+137*289</code>) og blur-aðu til að reikna.</div>
           <div id="vb-pad-grid"></div>
         </div>
+        <div class="vb-style-card">
+          <div class="vb-pad-head">
+            <h3>🎨 Stilla útlit</h3>
+            <button type="button" class="vb-pad-btn" id="vb-style-reset" style="margin-left:8px">Resetta</button>
+          </div>
+          <div class="vb-pad-hint">Renndu sliderum til að breyta gluggastærð, letri o.fl. Vistast strax.</div>
+          <div class="vb-style-rows" id="vb-style-rows"></div>
+        </div>
         <div class="vb-calc-card">
           <div class="vb-pad-head">
             <h3>🧮 Reiknivél</h3>
@@ -4542,6 +4550,11 @@ async function renderVinnubok(t){
       .vb-save-status.vb-save-err{color:#dc2626;font-weight:600}
       .vb-cell-bottom{padding:5px 12px 7px;border-top:1px solid rgba(203,213,225,.35);margin-top:auto;background:rgba(248,250,252,.5);font-size:11px;line-height:1.3}
       .vb-cell-bottom a,.vb-cell-bottom button{padding:3px 7px !important;font-size:11px !important;line-height:1.3 !important}
+
+      /* Blue divider between worksite rows — clear visual separation */
+      .vb-grid tbody tr + tr > td{border-top:3px solid #3b82f6 !important}
+      [data-vb-layout="cards"] .vb-grid tbody tr + tr > td{border-top:3px solid #93c5fd !important}
+      [data-vb-layout="minimal"] .vb-grid tbody tr + tr > td{border-top:2px solid #cbd5e1 !important}
 
       /* Month header with sum below name — sticky at top */
       .vb-grid thead th{position:sticky;top:0;z-index:4}
@@ -4602,9 +4615,15 @@ async function renderVinnubok(t){
       [data-vb-layout="minimal"] .vb-cell:hover{box-shadow:none;background:#fafafa !important}
 
       /* === Scratchpad === */
-      .vb-scratchpad{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-top:24px;padding-top:16px;border-top:1px dashed #cbd5e1}
-      @media(max-width:980px){.vb-scratchpad{grid-template-columns:1fr}}
-      .vb-pad-card,.vb-calc-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;box-shadow:0 1px 3px rgba(15,23,42,.04)}
+      .vb-scratchpad{display:grid;grid-template-columns:2fr 1fr 1fr;gap:16px;margin-top:24px;padding-top:16px;border-top:1px dashed #cbd5e1}
+      @media(max-width:1200px){.vb-scratchpad{grid-template-columns:1fr 1fr}}
+      @media(max-width:780px){.vb-scratchpad{grid-template-columns:1fr}}
+      .vb-pad-card,.vb-calc-card,.vb-style-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;box-shadow:0 1px 3px rgba(15,23,42,.04)}
+      .vb-style-rows{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+      .vb-style-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+      .vb-style-row label{font-size:11.5px;font-weight:600;color:#475569}
+      .vb-style-row input[type=range]{width:100%;accent-color:#3b82f6}
+      .vb-style-row .val{font-family:'SF Mono','JetBrains Mono',monospace;font-size:11px;color:#0f172a;font-weight:600;background:#f1f5f9;padding:2px 7px;border-radius:4px;min-width:42px;text-align:center}
       .vb-pad-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;flex-wrap:wrap}
       .vb-pad-head h3{margin:0;font-size:14px;color:#0f172a;font-weight:700}
       .vb-pad-hint{font-size:11px;color:#94a3b8;margin-bottom:10px;line-height:1.4}
@@ -5078,18 +5097,25 @@ async function renderVinnubok(t){
     if($st){ $st.textContent = 'Vistar…'; $st.className = 'vb-save-status'; }
     try {
       const existing = data.drafts[key];
+      // source is NOT NULL in invoice_drafts — must supply it for INSERT case.
+      // Use existing source if updating, otherwise auto-detect from worksite type.
+      const source = existing?.source || (isGata(worksite) ? 'ajour' : 'timavera');
       const r = await fetch('/api/invoice-drafts', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({
           worksite_name: worksite,
           work_month: month,
           total_m_vsk: newAmount,
-          status: existing?.status || (newAmount ? 'draft' : 'draft'),
+          source: source,
+          status: existing?.status || 'draft',
           notes: `Handvirkt skráð í Vinnubók (${new Date().toLocaleString('is-IS')})`,
           updated_by: 'vinnubok',
         }),
       });
-      if(!r.ok) throw new Error('HTTP '+r.status);
+      if(!r.ok){
+        const errText = await r.text().catch(() => '');
+        throw new Error('HTTP '+r.status+(errText ? ': '+errText.slice(0,120) : ''));
+      }
       const saved = await r.json();
       data.drafts[key] = saved;
       if($st){ $st.textContent = '✓ vistað'; $st.className = 'vb-save-status vb-save-ok'; }
@@ -5278,6 +5304,75 @@ async function renderVinnubok(t){
     $calcRes.className = 'vb-calc-result';
   });
   $calcIn.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); compute(); } });
+
+  // ===== Visual style controls (live tunables) =====
+  const VB_STYLE_DEFAULTS = {
+    inputFont:  { v: 14.5, min: 10,  max: 22, step: .5, label: 'Letur — Reikningsbox' },
+    inputH:     { v: 32,   min: 22,  max: 60, step: 1,  label: 'Hæð — Reikningsbox' },
+    cornerFont: { v: 12,   min: 9,   max: 18, step: .5, label: 'Letur — Klst/Áætl.' },
+    cellMin:    { v: 155,  min: 110, max: 260,step: 5,  label: 'Breidd — Gluggi' },
+    cellPadY:   { v: 5,    min: 0,   max: 16, step: 1,  label: 'Padding — Lóðrétt' },
+    cellPadX:   { v: 12,   min: 4,   max: 22, step: 1,  label: 'Padding — Lárétt' },
+    rowNameW:   { v: 175,  min: 120, max: 280,step: 5,  label: 'Breidd — Verkstaður' },
+    bSpacing:   { v: 6,    min: 0,   max: 14, step: 1,  label: 'Bil milli glugga' },
+    rowGap:     { v: 3,    min: 0,   max: 12, step: 1,  label: 'Þykkt blárrar línu' },
+  };
+  state.ui.vb_styles = state.ui.vb_styles || {};
+
+  function applyVbStyles(){
+    let s = '';
+    const v = (k) => state.ui.vb_styles[k] != null ? state.ui.vb_styles[k] : VB_STYLE_DEFAULTS[k].v;
+    s += `.vb-scroll-wrap .vb-amount-input{font-size:${v('inputFont')}px !important;height:${v('inputH')}px !important;}`;
+    s += `.vb-scroll-wrap .vb-corner-val{font-size:${v('cornerFont')}px !important;}`;
+    s += `.vb-scroll-wrap .vb-cell{min-width:${v('cellMin')}px !important;max-width:${Math.round(v('cellMin')*1.32)}px !important;}`;
+    s += `.vb-scroll-wrap .vb-cell-main{padding:${v('cellPadY')}px ${v('cellPadX')}px !important;}`;
+    s += `.vb-scroll-wrap .vb-cell-corners{padding:${v('cellPadY')+2}px ${v('cellPadX')}px ${Math.max(0,v('cellPadY')-1)}px !important;}`;
+    s += `.vb-scroll-wrap .vb-cell-bottom{padding:${v('cellPadY')+1}px ${v('cellPadX')}px ${v('cellPadY')+2}px !important;}`;
+    s += `.vb-scroll-wrap .vb-row-name{min-width:${v('rowNameW')}px !important;max-width:${Math.round(v('rowNameW')*1.3)}px !important;}`;
+    s += `.vb-scroll-wrap .vb-grid{border-spacing:${v('bSpacing')}px !important;}`;
+    s += `.vb-scroll-wrap .vb-grid tbody tr + tr > td{border-top-width:${v('rowGap')}px !important;}`;
+    let tag = document.getElementById('vb-style-tag');
+    if(!tag){ tag = document.createElement('style'); tag.id = 'vb-style-tag'; document.head.appendChild(tag); }
+    tag.textContent = s;
+  }
+
+  function renderStyleControls(){
+    const $rows = document.getElementById('vb-style-rows');
+    if(!$rows) return;
+    $rows.innerHTML = Object.entries(VB_STYLE_DEFAULTS).map(([k, def]) => {
+      const val = state.ui.vb_styles[k] != null ? state.ui.vb_styles[k] : def.v;
+      return `
+        <div class="vb-style-row">
+          <div>
+            <label>${def.label}</label>
+            <input type="range" min="${def.min}" max="${def.max}" step="${def.step}" value="${val}" data-vbstyle="${k}">
+          </div>
+          <span class="val" id="vbstyle-val-${k}">${val}</span>
+        </div>
+      `;
+    }).join('');
+    $rows.querySelectorAll('input[data-vbstyle]').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const k = inp.dataset.vbstyle;
+        const val = Number(inp.value);
+        state.ui.vb_styles[k] = val;
+        document.getElementById('vbstyle-val-'+k).textContent = val;
+        applyVbStyles();
+        // Debounce save
+        clearTimeout(window.__vbStyleSaveT);
+        window.__vbStyleSaveT = setTimeout(save, 300);
+      });
+    });
+  }
+  renderStyleControls();
+  applyVbStyles();
+  document.getElementById('vb-style-reset').onclick = () => {
+    if(!confirm('Resetta öll útlitskontról?')) return;
+    state.ui.vb_styles = {};
+    save();
+    renderStyleControls();
+    applyVbStyles();
+  };
 
   $refresh.onclick = () => load({force: true});
   $back.onclick = () => { state.ui.vb_months_back = Math.min((state.ui.vb_months_back||8) + 2, 24); save(); render(); };
