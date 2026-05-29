@@ -4994,7 +4994,14 @@ async function renderVinnubok(t){
 
     // wire cell events
     $host.querySelectorAll('[data-vb-save-amt]').forEach(input => {
-      input.addEventListener('blur', () => saveAmount(input));
+      // Snapshot the value on focus so we can detect if the user actually changed it.
+      // Without this, just tab-clicking through cells would save null and wipe data.
+      input.addEventListener('focus', () => { input.dataset.vbInitial = input.value; });
+      input.addEventListener('blur', () => {
+        const initial = input.dataset.vbInitial;
+        if (initial !== undefined && input.value === initial) return;  // no real change
+        saveAmount(input);
+      });
       input.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); input.blur(); } });
     });
     $host.querySelectorAll('[data-vb-attach]').forEach(btn => {
