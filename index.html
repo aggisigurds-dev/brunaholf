@@ -4623,6 +4623,12 @@ async function renderVinnubok(t){
       [data-vb-layout="minimal"] .vb-cell-bottom{padding:4px 0 0;border-top:none;background:transparent}
       [data-vb-layout="minimal"] .vb-cell:hover{box-shadow:none;background:#fafafa !important}
 
+      /* Review-status dot — click to cycle: empty → yellow → red → empty */
+      .vb-review-btn{width:14px;height:14px;padding:0;border-radius:50%;border:1.5px solid #cbd5e1;background:transparent;cursor:pointer;flex-shrink:0;transition:all .15s;box-shadow:inset 0 0 0 0 transparent}
+      .vb-review-btn:hover{border-color:#94a3b8;transform:scale(1.15)}
+      .vb-review-btn.state-yellow{background:#fbbf24;border-color:#d97706;box-shadow:0 0 0 1px rgba(217,119,6,.2)}
+      .vb-review-btn.state-red{background:#ef4444;border-color:#b91c1c;box-shadow:0 0 0 1px rgba(185,28,28,.25)}
+
       /* === Scratchpad === */
       .vb-scratchpad{display:grid;grid-template-columns:2fr 1fr 1fr;gap:16px;margin-top:24px;padding-top:16px;border-top:1px dashed #cbd5e1}
       @media(max-width:1200px){.vb-scratchpad{grid-template-columns:1fr 1fr}}
@@ -4994,11 +5000,34 @@ async function renderVinnubok(t){
 
     // wire cell events
     $host.querySelectorAll('[data-vb-save-amt]').forEach(input => {
-      input.addEventListener('blur', () => saveAmount(input));
+      // Snapshot the value on focus so we can detect if the user actually changed it.
+      // Without this, just tab-clicking through cells would save null and wipe data.
+      input.addEventListener('focus', () => { input.dataset.vbInitial = input.value; });
+      input.addEventListener('blur', () => {
+        const initial = input.dataset.vbInitial;
+        if (initial !== undefined && input.value === initial) return;  // no real change
+        saveAmount(input);
+      });
       input.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); input.blur(); } });
     });
     $host.querySelectorAll('[data-vb-attach]').forEach(btn => {
       btn.onclick = () => openDriveSearch(btn.dataset.vbAttach);
+    });
+    // Review-status cycle: empty → yellow → red → empty
+    $host.querySelectorAll('[data-vb-review]').forEach(btn => {
+      btn.onclick = () => {
+        const key = btn.dataset.vbReview;
+        state.ui.vb_review = state.ui.vb_review || {};
+        const cur = state.ui.vb_review[key];
+        const next = cur === 'yellow' ? 'red' : cur === 'red' ? undefined : 'yellow';
+        if(next) state.ui.vb_review[key] = next;
+        else delete state.ui.vb_review[key];
+        save();
+        btn.className = 'vb-review-btn' + (next ? ' state-'+next : '');
+        btn.title = next === 'yellow' ? 'Skoða betur — ágiskun'
+                  : next === 'red'    ? 'Þarfnast nánari skoðunar / sönnunar'
+                  : 'Smelltu til að merkja: gul = ágiskun, rauð = skoða betur';
+      };
     });
     $host.querySelectorAll('[data-vb-hide]').forEach(btn => {
       btn.onclick = () => {
@@ -5058,6 +5087,11 @@ async function renderVinnubok(t){
 
     const hoursStr = hours > 0 ? hours.toFixed(1).replace('.0','') + 't' : '—';
     const estStr = estKr > 0 ? fmtIskCompact(estKr) : '—';
+    state.ui.vb_review = state.ui.vb_review || {};
+    const reviewState = state.ui.vb_review[draftKey];  // undefined | 'yellow' | 'red'
+    const reviewLabel = reviewState === 'yellow' ? 'Skoða betur — ágiskun'
+                      : reviewState === 'red'    ? 'Þarfnast nánari skoðunar / sönnunar'
+                      : 'Smelltu til að merkja: gul = ágiskun, rauð = skoða betur';
 
     return `
       <td class="${cls.join(' ')}" data-vb-cell="${escapeAttr(draftKey)}">
@@ -5068,6 +5102,7 @@ async function renderVinnubok(t){
             <span class="vb-corner-val dim">${estStr}</span>
           </div>
           <div class="vb-corner vb-corner-r">
+            <button type="button" class="vb-review-btn ${reviewState ? 'state-'+reviewState : ''}" data-vb-review="${escapeAttr(draftKey)}" title="${reviewLabel}"></button>
             ${hasInvoice
               ? `<span style="background:#10b981;color:#fff;font-size:9px;padding:1px 5px;border-radius:99px;font-weight:700;letter-spacing:.05em;text-transform:uppercase">✓</span>`
               : (hours > 0 ? `<span style="background:#fef3c7;color:#92400e;font-size:9px;padding:1px 5px;border-radius:99px;font-weight:700;letter-spacing:.05em;text-transform:uppercase">eftir</span>` : '')
