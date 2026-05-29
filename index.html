@@ -4479,6 +4479,7 @@ async function renderVinnubok(t){
           <button id="vb-month-back" class="tv-btn" type="button" title="Bæta við eldri mánuði">← mánuður</button>
           <button id="vb-month-fwd" class="tv-btn" type="button" title="Bæta við nýrri mánuði">mánuður →</button>
           <button id="vb-collapse-2025" class="tv-btn" type="button" title="Fela 2025 mánuði">📅 Fela 2025</button>
+          <span id="vb-hidden-inline" class="vb-hidden-inline" hidden></span>
           <div class="vb-layout-switch" role="group" aria-label="Velja útlit">
             <button type="button" class="vb-layout-btn" data-vb-layout="cards"   title="Spjöld">🃏</button>
             <button type="button" class="vb-layout-btn" data-vb-layout="table"   title="Tafla">📋</button>
@@ -4577,6 +4578,11 @@ async function renderVinnubok(t){
       .vb-zero-num{color:#cbd5e1;font-weight:500}
       .vb-year-collapsed{min-width:44px !important;max-width:44px !important;padding:12px 6px;background:linear-gradient(180deg,#f1f5f9 0%,#e2e8f0 100%);writing-mode:vertical-rl;text-orientation:mixed;cursor:pointer;text-align:center;color:#64748b;font-size:11px;letter-spacing:.1em;font-weight:600;border:1px solid #cbd5e1}
       .vb-year-collapsed:hover{background:linear-gradient(180deg,#e0e7ff 0%,#c7d2fe 100%);color:#3730a3;border-color:#a5b4fc}
+
+      /* Hidden-worksites pill in the toolbar */
+      .vb-hidden-inline{display:inline-flex;align-items:center;gap:8px;padding:6px 10px 6px 12px;background:#fef3c7;color:#92400e;border-radius:8px;font-size:12px;font-weight:600;border:1px solid #fcd34d;margin-left:4px}
+      .vb-hidden-inline button{padding:3px 8px;border:1px solid #92400e;background:#fff;border-radius:5px;cursor:pointer;font-size:11px;color:#92400e;font-weight:600}
+      .vb-hidden-inline button:hover{background:#fffbeb}
 
       /* Layout switcher buttons */
       .vb-layout-switch{display:inline-flex;border:1px solid #cbd5e1;border-radius:8px;overflow:hidden;background:#fff;margin-left:8px}
@@ -4905,9 +4911,18 @@ async function renderVinnubok(t){
     });
 
     const hiddenCount = (state.ui.vb_hidden || []).length;
-    const hiddenBar = hiddenCount
-      ? `<div class="vb-hidden-bar">${hiddenCount} verkstaðir faldir <button type="button" class="vb-attach-btn" id="vb-unhide-all" style="margin-left:8px">↻ Sýna alla aftur</button></div>`
-      : '';
+    const hiddenBar = '';
+    // Render the "N faldir" pill in the toolbar instead of above the table
+    const $hi = document.getElementById('vb-hidden-inline');
+    if($hi){
+      if(hiddenCount){
+        $hi.hidden = false;
+        $hi.innerHTML = `👁 ${hiddenCount} faldir <button type="button" id="vb-unhide-all">↻ Sýna alla</button>`;
+      } else {
+        $hi.hidden = true;
+        $hi.innerHTML = '';
+      }
+    }
 
     // Determine which year-collapse buttons to show and which months to fold
     const collapsedYears = new Set(state.ui.vb_collapsed_years || []);
