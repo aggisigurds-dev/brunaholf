@@ -4525,8 +4525,10 @@ async function renderVinnubok(t){
       .vb-grid{width:100%;border-collapse:separate;border-spacing:6px;font-size:12px;background:transparent;font-family:'Inter','SF Pro Display','Segoe UI',system-ui,sans-serif}
       .vb-grid th,.vb-grid td{padding:0;vertical-align:top;border-radius:12px}
       .vb-grid th{background:linear-gradient(180deg,#f8fafc 0%,#eef2f7 100%);font-weight:700;padding:12px 16px;font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:#64748b;text-align:center;border:1px solid #e2e8f0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
-      .vb-row-name{padding:13px 16px;font-weight:700;background:linear-gradient(180deg,#f1f5f9 0%,#e2e8f0 100%);min-width:175px;max-width:230px;line-height:1.3;position:sticky;left:0;z-index:5;color:#0f172a;font-size:13px;border:1px solid #cbd5e1;box-shadow:2px 0 5px -2px rgba(0,0,0,.08)}
-      .vb-row-name small{display:block;font-weight:500;color:#64748b;font-size:11px;margin-top:4px;letter-spacing:.01em}
+      .vb-row-name{padding:13px 16px;font-weight:700;background:linear-gradient(180deg,#1e3a8a 0%,#3b82f6 100%);min-width:175px;max-width:230px;line-height:1.3;position:sticky;left:0;z-index:5;color:#fff;font-size:13px;border:1px solid #1e3a8a;box-shadow:2px 0 5px -2px rgba(15,23,42,.18)}
+      .vb-row-name small{display:block;font-weight:500;color:rgba(255,255,255,.78);font-size:11px;margin-top:4px;letter-spacing:.01em}
+      .vb-row-name .vb-hide-btn{color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.08)}
+      .vb-row-name .vb-hide-btn:hover{background:rgba(255,255,255,.18);color:#fff;border-color:rgba(255,255,255,.6)}
       .vb-cell{min-width:155px;max-width:205px;padding:0;background:linear-gradient(135deg,#ffffff 0%,#f8fafc 100%);overflow:hidden;border:1px solid #e2e8f0;transition:box-shadow .15s,transform .1s;box-shadow:0 1px 2px rgba(15,23,42,.04)}
       .vb-cell:hover{box-shadow:0 4px 12px rgba(15,23,42,.08)}
       .vb-cell-has-hours{background:linear-gradient(135deg,#ffffff 0%,#f0f9ff 100%);border-color:#bae6fd}
@@ -4596,9 +4598,10 @@ async function renderVinnubok(t){
       [data-vb-layout="table"] .vb-grid th,
       [data-vb-layout="table"] .vb-grid td{border:none;border-bottom:1px solid #f1f5f9;border-radius:0;box-shadow:none}
       [data-vb-layout="table"] .vb-grid th{background:linear-gradient(180deg,#1e3a8a 0%,#3b82f6 100%);color:#fff;font-weight:700;padding:14px 12px}
-      [data-vb-layout="table"] .vb-row-name{background:#f8fafc;color:#0f172a;border-right:2px solid #e2e8f0;box-shadow:none}
+      [data-vb-layout="table"] .vb-row-name{background:linear-gradient(180deg,#1e3a8a 0%,#3b82f6 100%);color:#fff;border-right:2px solid #1e3a8a;box-shadow:2px 0 5px -2px rgba(15,23,42,.18)}
+      [data-vb-layout="table"] .vb-row-name small{color:rgba(255,255,255,.78)}
       [data-vb-layout="table"] .vb-grid tbody tr:nth-child(even) .vb-cell{background:#f8fafc}
-      [data-vb-layout="table"] .vb-grid tbody tr:nth-child(even) .vb-row-name{background:#f1f5f9}
+      [data-vb-layout="table"] .vb-grid tbody tr:nth-child(even) .vb-row-name{background:linear-gradient(180deg,#1e40af 0%,#2563eb 100%)}
       [data-vb-layout="table"] .vb-cell{background:#fff;border-right:1px solid #f1f5f9}
       [data-vb-layout="table"] .vb-cell-has-invoice .vb-amount-input{color:#059669;border-color:#a7f3d0}
       [data-vb-layout="table"] .vb-cell-mismatch{background:#fffbeb !important}
