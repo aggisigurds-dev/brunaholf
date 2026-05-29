@@ -4479,6 +4479,7 @@ async function renderVinnubok(t){
           <button id="vb-month-back" class="tv-btn" type="button" title="Bæta við eldri mánuði">← mánuður</button>
           <button id="vb-month-fwd" class="tv-btn" type="button" title="Bæta við nýrri mánuði">mánuður →</button>
           <button id="vb-collapse-2025" class="tv-btn" type="button" title="Fela 2025 mánuði">📅 Fela 2025</button>
+          <span id="vb-hidden-inline" class="vb-hidden-inline" hidden></span>
           <div class="vb-layout-switch" role="group" aria-label="Velja útlit">
             <button type="button" class="vb-layout-btn" data-vb-layout="cards"   title="Spjöld">🃏</button>
             <button type="button" class="vb-layout-btn" data-vb-layout="table"   title="Tafla">📋</button>
@@ -4524,8 +4525,10 @@ async function renderVinnubok(t){
       .vb-grid{width:100%;border-collapse:separate;border-spacing:6px;font-size:12px;background:transparent;font-family:'Inter','SF Pro Display','Segoe UI',system-ui,sans-serif}
       .vb-grid th,.vb-grid td{padding:0;vertical-align:top;border-radius:12px}
       .vb-grid th{background:linear-gradient(180deg,#f8fafc 0%,#eef2f7 100%);font-weight:700;padding:12px 16px;font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:#64748b;text-align:center;border:1px solid #e2e8f0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
-      .vb-row-name{padding:13px 16px;font-weight:700;background:linear-gradient(180deg,#f1f5f9 0%,#e2e8f0 100%);min-width:175px;max-width:230px;line-height:1.3;position:sticky;left:0;z-index:5;color:#0f172a;font-size:13px;border:1px solid #cbd5e1;box-shadow:2px 0 5px -2px rgba(0,0,0,.08)}
-      .vb-row-name small{display:block;font-weight:500;color:#64748b;font-size:11px;margin-top:4px;letter-spacing:.01em}
+      .vb-row-name{padding:13px 16px;font-weight:700;background:linear-gradient(180deg,#1e3a8a 0%,#3b82f6 100%);min-width:175px;max-width:230px;line-height:1.3;position:sticky;left:0;z-index:5;color:#fff;font-size:13px;border:1px solid #1e3a8a;box-shadow:2px 0 5px -2px rgba(15,23,42,.18)}
+      .vb-row-name small{display:block;font-weight:500;color:rgba(255,255,255,.78);font-size:11px;margin-top:4px;letter-spacing:.01em}
+      .vb-row-name .vb-hide-btn{color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.08)}
+      .vb-row-name .vb-hide-btn:hover{background:rgba(255,255,255,.18);color:#fff;border-color:rgba(255,255,255,.6)}
       .vb-cell{min-width:155px;max-width:205px;padding:0;background:linear-gradient(135deg,#ffffff 0%,#f8fafc 100%);overflow:hidden;border:1px solid #e2e8f0;transition:box-shadow .15s,transform .1s;box-shadow:0 1px 2px rgba(15,23,42,.04)}
       .vb-cell:hover{box-shadow:0 4px 12px rgba(15,23,42,.08)}
       .vb-cell-has-hours{background:linear-gradient(135deg,#ffffff 0%,#f0f9ff 100%);border-color:#bae6fd}
@@ -4560,9 +4563,9 @@ async function renderVinnubok(t){
       .vb-grid thead th{position:sticky;top:0;z-index:4}
       .vb-th-month{padding:8px 12px !important}
       .vb-th-name{font-size:12px;font-weight:700;letter-spacing:.06em;line-height:1.1}
-      .vb-th-sum{font-family:'SF Mono','JetBrains Mono','Roboto Mono',Menlo,monospace;font-feature-settings:'tnum' 1;font-size:12px;font-weight:600;margin-top:3px;letter-spacing:-.01em;opacity:.95;text-transform:none}
+      .vb-th-sum{font-family:'SF Mono','JetBrains Mono','Roboto Mono',Menlo,monospace;font-feature-settings:'tnum' 1;font-size:13px;font-weight:700;margin-top:3px;letter-spacing:0;text-transform:none;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
       [data-vb-layout="cards"] .vb-th-sum,
-      [data-vb-layout="table"] .vb-th-sum{color:rgba(255,255,255,.92)}
+      [data-vb-layout="table"] .vb-th-sum{color:#fff}
       [data-vb-layout="cards"] .vb-grid thead th{background:linear-gradient(180deg,#1e3a8a 0%,#3b82f6 100%);color:#fff;border-color:#1e3a8a;border-radius:8px}
       [data-vb-layout="minimal"] .vb-th-sum{color:#0f172a}
       .vb-grid thead .vb-row-name{z-index:6}
@@ -4578,6 +4581,11 @@ async function renderVinnubok(t){
       .vb-year-collapsed{min-width:44px !important;max-width:44px !important;padding:12px 6px;background:linear-gradient(180deg,#f1f5f9 0%,#e2e8f0 100%);writing-mode:vertical-rl;text-orientation:mixed;cursor:pointer;text-align:center;color:#64748b;font-size:11px;letter-spacing:.1em;font-weight:600;border:1px solid #cbd5e1}
       .vb-year-collapsed:hover{background:linear-gradient(180deg,#e0e7ff 0%,#c7d2fe 100%);color:#3730a3;border-color:#a5b4fc}
 
+      /* Hidden-worksites pill in the toolbar */
+      .vb-hidden-inline{display:inline-flex;align-items:center;gap:8px;padding:6px 10px 6px 12px;background:#fef3c7;color:#92400e;border-radius:8px;font-size:12px;font-weight:600;border:1px solid #fcd34d;margin-left:4px}
+      .vb-hidden-inline button{padding:3px 8px;border:1px solid #92400e;background:#fff;border-radius:5px;cursor:pointer;font-size:11px;color:#92400e;font-weight:600}
+      .vb-hidden-inline button:hover{background:#fffbeb}
+
       /* Layout switcher buttons */
       .vb-layout-switch{display:inline-flex;border:1px solid #cbd5e1;border-radius:8px;overflow:hidden;background:#fff;margin-left:8px}
       .vb-layout-btn{border:none;background:transparent;padding:7px 12px;cursor:pointer;font-size:14px;color:#64748b;border-right:1px solid #e2e8f0}
@@ -4590,9 +4598,10 @@ async function renderVinnubok(t){
       [data-vb-layout="table"] .vb-grid th,
       [data-vb-layout="table"] .vb-grid td{border:none;border-bottom:1px solid #f1f5f9;border-radius:0;box-shadow:none}
       [data-vb-layout="table"] .vb-grid th{background:linear-gradient(180deg,#1e3a8a 0%,#3b82f6 100%);color:#fff;font-weight:700;padding:14px 12px}
-      [data-vb-layout="table"] .vb-row-name{background:#f8fafc;color:#0f172a;border-right:2px solid #e2e8f0;box-shadow:none}
+      [data-vb-layout="table"] .vb-row-name{background:linear-gradient(180deg,#1e3a8a 0%,#3b82f6 100%);color:#fff;border-right:2px solid #1e3a8a;box-shadow:2px 0 5px -2px rgba(15,23,42,.18)}
+      [data-vb-layout="table"] .vb-row-name small{color:rgba(255,255,255,.78)}
       [data-vb-layout="table"] .vb-grid tbody tr:nth-child(even) .vb-cell{background:#f8fafc}
-      [data-vb-layout="table"] .vb-grid tbody tr:nth-child(even) .vb-row-name{background:#f1f5f9}
+      [data-vb-layout="table"] .vb-grid tbody tr:nth-child(even) .vb-row-name{background:linear-gradient(180deg,#1e40af 0%,#2563eb 100%)}
       [data-vb-layout="table"] .vb-cell{background:#fff;border-right:1px solid #f1f5f9}
       [data-vb-layout="table"] .vb-cell-has-invoice .vb-amount-input{color:#059669;border-color:#a7f3d0}
       [data-vb-layout="table"] .vb-cell-mismatch{background:#fffbeb !important}
@@ -4905,9 +4914,18 @@ async function renderVinnubok(t){
     });
 
     const hiddenCount = (state.ui.vb_hidden || []).length;
-    const hiddenBar = hiddenCount
-      ? `<div class="vb-hidden-bar">${hiddenCount} verkstaðir faldir <button type="button" class="vb-attach-btn" id="vb-unhide-all" style="margin-left:8px">↻ Sýna alla aftur</button></div>`
-      : '';
+    const hiddenBar = '';
+    // Render the "N faldir" pill in the toolbar instead of above the table
+    const $hi = document.getElementById('vb-hidden-inline');
+    if($hi){
+      if(hiddenCount){
+        $hi.hidden = false;
+        $hi.innerHTML = `👁 ${hiddenCount} faldir <button type="button" id="vb-unhide-all">↻ Sýna alla</button>`;
+      } else {
+        $hi.hidden = true;
+        $hi.innerHTML = '';
+      }
+    }
 
     // Determine which year-collapse buttons to show and which months to fold
     const collapsedYears = new Set(state.ui.vb_collapsed_years || []);
