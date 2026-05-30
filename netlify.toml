@@ -4,6 +4,11 @@
   publish = "."
   functions = "netlify/functions"
 
+# Ship pdf-parse / xlsx as real node_modules (not esbuild-bundled) so the
+# Efnislisti amount parser loads reliably in the function runtime.
+[functions]
+  external_node_modules = ["pdf-parse", "xlsx"]
+
 # Friendly URL for the Mæting bridge:
 #   /api/maeting  →  /.netlify/functions/timavera-maeting
 [[redirects]]
@@ -140,6 +145,18 @@
 [[redirects]]
   from = "/api/drive-files-search"
   to = "/.netlify/functions/drive-files-search"
+  status = 200
+
+# Recursively scan a worksite's Drive folder for Efnislisti files per month
+[[redirects]]
+  from = "/api/efnislisti-scan"
+  to = "/.netlify/functions/efnislisti-scan"
+  status = 200
+
+# Extract the "samtals m. vsk" total out of one Efnislisti file (pdf/xlsx)
+[[redirects]]
+  from = "/api/efnislisti-amount"
+  to = "/.netlify/functions/efnislisti-amount"
   status = 200
 
 # Data sources freshness report — when each source was last imported

@@ -4533,6 +4533,16 @@ async function renderVinnubok(t){
       .vb-folder-link:hover{opacity:1;transform:scale(1.18)}
       .vb-folder-add{opacity:.55;filter:grayscale(.4)}
       .vb-folder-add:hover{opacity:1;filter:none}
+      .vb-scan-btn.is-scanning{animation:vb-spin 1s linear infinite}
+      @keyframes vb-spin{to{transform:rotate(360deg)}}
+      /* One-click-confirm amount suggestion from a scanned Efnislisti file */
+      .vb-suggest{display:flex;align-items:center;gap:5px;margin:3px 12px 0;padding:3px 6px;background:#eef6ff;border:1px solid #bcdcff;border-radius:6px;font-size:10.5px;color:#0f3b6e;flex-wrap:wrap}
+      .vb-suggest-loading{justify-content:center;color:#64748b;background:#f8fafc;border-color:#e2e8f0;font-style:italic}
+      .vb-suggest-amt{font-family:'SF Mono','JetBrains Mono','Roboto Mono',Menlo,monospace;font-feature-settings:'tnum' 1;font-weight:700;flex:1;white-space:nowrap}
+      .vb-suggest-yes{border:none;background:#10b981;color:#fff;font-weight:700;border-radius:5px;padding:2px 7px;cursor:pointer;font-size:10.5px}
+      .vb-suggest-yes:hover{background:#059669}
+      .vb-suggest-no{border:1px solid #cbd5e1;background:#fff;color:#64748b;border-radius:5px;padding:2px 6px;cursor:pointer;font-size:10.5px;line-height:1}
+      .vb-suggest-no:hover{background:#fef2f2;border-color:#fca5a5;color:#b91c1c}
       .vb-row-name .vb-hide-btn{color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.08)}
       .vb-row-name .vb-hide-btn:hover{background:rgba(255,255,255,.18);color:#fff;border-color:rgba(255,255,255,.6)}
       .vb-cell{min-width:155px;max-width:205px;padding:0;background:linear-gradient(135deg,#ffffff 0%,#f8fafc 100%);overflow:hidden;border:1px solid #e2e8f0;transition:box-shadow .15s,transform .1s;box-shadow:0 1px 2px rgba(15,23,42,.04)}
@@ -4767,6 +4777,7 @@ async function renderVinnubok(t){
       worksites: ws.worksites || [],
       drafts: {},
       efnislisti: {},
+      scan: {},   // `${worksite}|${month}` → { amount, snippet, file, status } from folder scan
       rates: window.__rgPricingGuide || {},
     };
     for(const d of (dr.rows || [])){
@@ -5066,6 +5077,33 @@ async function renderVinnubok(t){
         } catch(e){ alert('Tenging mistókst: '+(e.message||e)); }
       };
     });
+    // Scan the worksite's Drive folder → link Efnislistar to months + suggest amounts
+    $host.querySelectorAll('[data-vb-scan]').forEach(btn => {
+      btn.onclick = () => runScan(btn.dataset.vbScan, btn);
+    });
+    // Accept a scanned amount suggestion (writes it into the cell + persists)
+    $host.querySelectorAll('[data-vb-accept]').forEach(btn => {
+      btn.onclick = async () => {
+        const key = btn.dataset.vbAccept;
+        const sug = (data.scan || {})[key];
+        if(!sug || !sug.amount) return;
+        const input = $host.querySelector(`[data-vb-save-amt="${CSS.escape(key)}"]`);
+        if(input){
+          input.value = Number(sug.amount).toLocaleString('is-IS');
+          await saveAmount(input);
+        }
+        delete data.scan[key];
+        render();
+      };
+    });
+    // Dismiss a suggestion without applying it
+    $host.querySelectorAll('[data-vb-dismiss]').forEach(btn => {
+      btn.onclick = () => {
+        const key = btn.dataset.vbDismiss;
+        if(data.scan) delete data.scan[key];
+        render();
+      };
+    });
     // Click a collapsed year column → expand it
     $host.querySelectorAll('[data-vb-expand-year]').forEach(el => {
       el.onclick = () => {
@@ -5085,7 +5123,7 @@ async function renderVinnubok(t){
         <td class="vb-row-name">
           <button type="button" class="vb-hide-btn" data-vb-hide="${escapeAttr(w.project)}" title="Fela verkstaðinn">×</button>
           <span class="vb-ws-name">${escapeHtml(w.project)}${driveUrl
-            ? `<a class="vb-folder-link" href="${escapeAttr(driveUrl)}" target="_blank" rel="noopener" title="Opna Drive möppu verkstaðarins">📁</a>`
+            ? `<a class="vb-folder-link" href="${escapeAttr(driveUrl)}" target="_blank" rel="noopener" title="Opna Drive möppu verkstaðarins">📁</a><button type="button" class="vb-folder-link vb-scan-btn" data-vb-scan="${escapeAttr(w.project)}" title="Skanna Drive möppu eftir Efnislistum — tengir skjöl við rétta mánuði og les upphæð (m. vsk)">🔍</button>`
             : `<button type="button" class="vb-folder-link vb-folder-add" data-vb-folder="${escapeAttr(w.project)}" title="Tengja Drive möppu við verkstaðinn">🔗</button>`}</span>
           <small>${escapeHtml(cust)}${rates.dv !== 9951 ? ' · '+rates.dv+' kr/klst' : ''}</small>
         </td>
@@ -5105,6 +5143,9 @@ async function renderVinnubok(t){
     const draft = data.drafts[draftKey];
     const draftKr = draft ? Number(draft.total_m_vsk || 0) : 0;
     const ef = data.efnislisti[draftKey];
+    const sug = (data.scan || {})[draftKey];
+    const sugAmount = sug && sug.amount ? Number(sug.amount) : 0;
+    const showSug = sugAmount > 0 && sugAmount !== draftKr;
     const hasInvoice = draftKr > 0;
     const mismatch = hasInvoice && hours > 0 && Math.abs(draftKr - estKr) > Math.max(estKr * 0.1, 50000);
     const cls = ['vb-cell'];
@@ -5142,6 +5183,15 @@ async function renderVinnubok(t){
           <div class="vb-amount-currency">kr m. vsk</div>
           <div class="vb-save-status" data-vb-status="${escapeAttr(draftKey)}"></div>
         </div>
+        ${sug && sug.status === 'loading'
+          ? `<div class="vb-suggest vb-suggest-loading">⏳ les skjal…</div>`
+          : (showSug
+            ? `<div class="vb-suggest" title="${escapeAttr(sug.snippet || 'Lesið úr Efnislista')}">
+                 <span class="vb-suggest-amt">📄 ${sugAmount.toLocaleString('is-IS')}</span>
+                 <button type="button" class="vb-suggest-yes" data-vb-accept="${escapeAttr(draftKey)}" title="Nota þessa upphæð (m. vsk)">nota ✓</button>
+                 <button type="button" class="vb-suggest-no" data-vb-dismiss="${escapeAttr(draftKey)}" title="Hunsa tillögu">✕</button>
+               </div>`
+            : '')}
         <div class="vb-cell-bottom">
           ${ef
             ? `<div style="display:flex;align-items:center;gap:6px;font-size:11px">
@@ -5201,6 +5251,75 @@ async function renderVinnubok(t){
       if($st){ $st.textContent = '✓ vistað'; $st.className = 'vb-save-status vb-save-ok'; }
     } catch(e){
       if($st){ $st.textContent = '✗ '+(e.message||e); $st.className = 'vb-save-status vb-save-err'; }
+    }
+  }
+
+  // Extract a Drive folder/file id from a pasted Drive URL.
+  function driveFolderId(url){
+    const s = String(url || '');
+    let m = s.match(/\/folders\/([A-Za-z0-9_-]+)/);
+    if(m) return m[1];
+    m = s.match(/[?&]id=([A-Za-z0-9_-]+)/);
+    if(m) return m[1];
+    m = s.match(/\/d\/([A-Za-z0-9_-]+)/);
+    return m ? m[1] : '';
+  }
+
+  // Scan a worksite's Drive folder: link the per-month Efnislisti (PDF preferred)
+  // to the right month cell, then read each file's m. vsk total as a SUGGESTION
+  // the user confirms with one click. Never overwrites amounts silently.
+  async function runScan(project, btn){
+    const w = (data.worksites || []).find(x => x.project === project);
+    const folderId = driveFolderId(w?.status?.drive_folder_url || '');
+    if(!folderId){ alert('Engin gild Drive-möppuslóð fyrir þennan verkstað.'); return; }
+    if(btn) btn.classList.add('is-scanning');
+    try {
+      const r = await fetch(`/api/efnislisti-scan?folderId=${encodeURIComponent(folderId)}&worksite=${encodeURIComponent(project)}`);
+      const res = await r.json();
+      if(!r.ok) throw new Error(res.error || ('HTTP '+r.status));
+      const months = (res.months || []).filter(m => m.pick);
+      if(!months.length){
+        if(btn) btn.classList.remove('is-scanning');
+        alert(`Engin Efnislisti-skjöl fundust fyrir „${project}" (skoðaði ${res.folders_visited||0} möppur).`);
+        return;
+      }
+      data.scan = data.scan || {};
+      const toRead = [];
+      for(const m of months){
+        const pick = m.pick;
+        const key = `${project}|${m.month}`;
+        data.efnislisti[key] = { id: pick.id, title: pick.name };
+        data.scan[key] = { status:'loading', file:{ id:pick.id, name:pick.name, mime:pick.mime } };
+        toRead.push({ key, id: pick.id });
+        // Persist the file↔month link (fire-and-forget)
+        fetch('/api/efnislisti-docs', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ worksite_name: project, work_month: m.month, drive_file_id: pick.id, title: pick.name }),
+        }).catch(()=>{});
+      }
+      render();  // show 📎 links + ⏳ placeholders right away
+      // Read amounts with limited concurrency, refreshing as each lands.
+      let idx = 0;
+      async function worker(){
+        while(idx < toRead.length){
+          const job = toRead[idx++];
+          let amount = null, snippet = '';
+          try {
+            const ar = await fetch(`/api/efnislisti-amount?id=${encodeURIComponent(job.id)}`);
+            const ad = await ar.json();
+            amount = ad.amount || null; snippet = ad.snippet || '';
+          } catch(e){ /* leave amount null */ }
+          const cur = data.scan[job.key] || {};
+          data.scan[job.key] = { ...cur, status:'done', amount, snippet };
+          render();
+        }
+      }
+      await Promise.all([worker(), worker(), worker()]);
+    } catch(e){
+      alert('Skönnun mistókst: '+(e.message||e));
+    } finally {
+      const live = $host.querySelector(`[data-vb-scan="${CSS.escape(project)}"]`);
+      if(live) live.classList.remove('is-scanning');
     }
   }
 
