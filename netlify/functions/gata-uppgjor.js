@@ -17,7 +17,7 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 // Dalvegur 30 in our reporting = several Ajour projects (the building is split in Ajour).
 const WORKSITE_AJOUR_NAMES = {
   'Dalvegur 30':  ['Dalvegur 18B','Dalvegur 26','Dalvegur 30A'],
-  'Heklu reitur': ['Heklureitur','Heklu reitur'],
+  'Heklureitur':  ['Heklureitur','Heklu reitur'],
 };
 
 exports.handler = async (event) => {
@@ -30,7 +30,13 @@ exports.handler = async (event) => {
   const month = qs.month || new Date().toISOString().slice(0,7);  // YYYY-MM
   const bandsOverride = qs.bands_m_vsk ? Number(qs.bands_m_vsk) : null;
 
-  const ajourNames = WORKSITE_AJOUR_NAMES[worksite];
+  // Tolerant lookup so "Heklureitur" / "Heklu reitur" / different casing all resolve.
+  let ajourNames = WORKSITE_AJOUR_NAMES[worksite];
+  if (!ajourNames) {
+    const norm = (s) => String(s).toLowerCase().replace(/\s+/g, '');
+    const key = Object.keys(WORKSITE_AJOUR_NAMES).find((k) => norm(k) === norm(worksite));
+    if (key) ajourNames = WORKSITE_AJOUR_NAMES[key];
+  }
   if (!ajourNames) return json(400, { error: `Unknown worksite "${worksite}". Supported: ${Object.keys(WORKSITE_AJOUR_NAMES).join(', ')}` });
 
   const monthStart = `${month}-01`;
