@@ -5227,6 +5227,7 @@ async function renderVinnubok(t){
       /* Review-status dot — click to cycle: empty → yellow → red → empty */
       .vb-review-btn{width:14px;height:14px;padding:0;border-radius:50%;border:1.5px solid #cbd5e1;background:transparent;cursor:pointer;flex-shrink:0;transition:all .15s;box-shadow:inset 0 0 0 0 transparent}
       .vb-review-btn:hover{border-color:#94a3b8;transform:scale(1.15)}
+      .vb-review-btn.state-green{background:#22c55e;border-color:#15803d;box-shadow:0 0 0 1px rgba(21,128,61,.25)}
       .vb-review-btn.state-yellow{background:#fbbf24;border-color:#d97706;box-shadow:0 0 0 1px rgba(217,119,6,.2)}
       .vb-review-btn.state-red{background:#ef4444;border-color:#b91c1c;box-shadow:0 0 0 1px rgba(185,28,28,.25)}
 
@@ -5621,14 +5622,16 @@ async function renderVinnubok(t){
         const key = btn.dataset.vbReview;
         state.ui.vb_review = state.ui.vb_review || {};
         const cur = state.ui.vb_review[key];
-        const next = cur === 'yellow' ? 'red' : cur === 'red' ? undefined : 'yellow';
+        // Cycle: none → green → yellow → red → none
+        const next = cur === 'green' ? 'yellow' : cur === 'yellow' ? 'red' : cur === 'red' ? undefined : 'green';
         if(next) state.ui.vb_review[key] = next;
         else delete state.ui.vb_review[key];
         save();
         btn.className = 'vb-review-btn' + (next ? ' state-'+next : '');
-        btn.title = next === 'yellow' ? 'Skoða betur — ágiskun'
+        btn.title = next === 'green'  ? 'Staðfest / tilbúið'
+                  : next === 'yellow' ? 'Ágiskun — skoða betur'
                   : next === 'red'    ? 'Þarfnast nánari skoðunar / sönnunar'
-                  : 'Smelltu til að merkja: gul = ágiskun, rauð = skoða betur';
+                  : 'Smelltu til að merkja: grænt = staðfest, gult = ágiskun, rautt = skoða betur';
       };
     });
     $host.querySelectorAll('[data-vb-hide]').forEach(btn => {
@@ -5741,10 +5744,11 @@ async function renderVinnubok(t){
     const hoursStr = hours > 0 ? hours.toFixed(1).replace('.0','') + 't' : '—';
     const estStr = estKr > 0 ? fmtIskCompact(estKr) : '—';
     state.ui.vb_review = state.ui.vb_review || {};
-    const reviewState = state.ui.vb_review[draftKey];  // undefined | 'yellow' | 'red'
-    const reviewLabel = reviewState === 'yellow' ? 'Skoða betur — ágiskun'
+    const reviewState = state.ui.vb_review[draftKey];  // undefined | 'green' | 'yellow' | 'red'
+    const reviewLabel = reviewState === 'green'  ? 'Staðfest / tilbúið'
+                      : reviewState === 'yellow' ? 'Ágiskun — skoða betur'
                       : reviewState === 'red'    ? 'Þarfnast nánari skoðunar / sönnunar'
-                      : 'Smelltu til að merkja: gul = ágiskun, rauð = skoða betur';
+                      : 'Smelltu til að merkja: grænt = staðfest, gult = ágiskun, rautt = skoða betur';
 
     return `
       <td class="${cls.join(' ')}" data-vb-cell="${escapeAttr(draftKey)}">
