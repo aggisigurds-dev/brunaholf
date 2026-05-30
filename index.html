@@ -5215,14 +5215,12 @@ async function renderVinnubok(t){
   async function saveAmount(input){
     const key = input.dataset.vbSaveAmt;
     const [worksite, month] = key.split('|');
-    // Parse "487.456" → 487456 (Icelandic thousands-separator is .); strip non-digits.
-    const rawStr = (input.value || '').replace(/[.\s ]/g, '').replace(/,/g, '.');
-    const newAmount = rawStr === '' ? null : Number(rawStr);
-    if(newAmount != null && !isNaN(newAmount)){
-      input.value = newAmount.toLocaleString('is-IS');
-    } else if(rawStr === ''){
-      input.value = '';
-    }
+    // ISK has no decimals — keep digits only. Robust against "." / spaces / "kr" /
+    // stray chars so we never send NaN (JSON-encodes NaN to null, which wiped the
+    // amount). "4.295.185 kr" -> 4295185 ; "" -> null.
+    const digits = (input.value || "").replace(/[^0-9]/g, "");
+    const newAmount = digits === "" ? null : parseInt(digits, 10);
+    input.value = newAmount != null ? newAmount.toLocaleString("is-IS") : "";
     const $st = document.querySelector(`[data-vb-status="${CSS.escape(key)}"]`);
     if($st){ $st.textContent = 'Vistar…'; $st.className = 'vb-save-status'; }
     try {
@@ -5248,6 +5246,11 @@ async function renderVinnubok(t){
       }
       const saved = await r.json();
       data.drafts[key] = saved;
+      // Immediate visual confirmation without a disruptive full re-render:
+      // reflect the saved/has-invoice state on the cell (turns the amount green
+      // in table layout) so it's clear the value stuck.
+      const cell = input.closest('.vb-cell');
+      if(cell) cell.classList.toggle('vb-cell-has-invoice', Number(saved.total_m_vsk || 0) > 0);
       if($st){ $st.textContent = '✓ vistað'; $st.className = 'vb-save-status vb-save-ok'; }
     } catch(e){
       if($st){ $st.textContent = '✗ '+(e.message||e); $st.className = 'vb-save-status vb-save-err'; }
