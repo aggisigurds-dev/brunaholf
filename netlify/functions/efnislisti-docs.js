@@ -12,7 +12,7 @@ exports.handler = async (event) => {
 
   if (event.httpMethod === 'GET') {
     const q = event.queryStringParameters || {};
-    const params = ['select=*'];
+    const params = ['select=*', 'order=added_at.desc.nullslast'];
     if (q.worksite) params.push(`worksite_name=eq.${encodeURIComponent(q.worksite)}`);
     if (q.month)    params.push(`work_month=eq.${encodeURIComponent(q.month)}`);
     const r = await fetch(`${SUPABASE_URL}/rest/v1/efnislisti_documents?${params.join('&')}`, {
@@ -35,13 +35,15 @@ exports.handler = async (event) => {
       drive_file_id: body.drive_file_id,
       title:         body.title || null,
     };
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/efnislisti_documents`, {
+    // Upsert: PK is (worksite_name, work_month, drive_file_id). Re-linking the
+    // same file must succeed (idempotent) instead of throwing 409 Conflict.
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/efnislisti_documents?on_conflict=worksite_name,work_month,drive_file_id`, {
       method: 'POST',
       headers: {
         'apikey': SUPABASE_KEY,
         'Authorization': `Bearer ${SUPABASE_KEY}`,
         'Content-Type': 'application/json',
-        'Prefer': 'return=representation',
+        'Prefer': 'resolution=merge-duplicates,return=representation',
       },
       body: JSON.stringify(payload),
     });

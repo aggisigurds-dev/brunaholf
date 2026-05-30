@@ -5070,6 +5070,12 @@ async function renderVinnubok(t){
             <button type="button" class="vb-layout-btn" data-vb-layout="table"   title="Tafla">📋</button>
             <button type="button" class="vb-layout-btn" data-vb-layout="minimal" title="Mínímal">⚪</button>
           </div>
+          <div class="vb-filter" role="group" aria-label="Sía eftir merkingu">
+            <button type="button" class="vb-filter-btn" data-vb-filter="" title="Sýna allt">Allt</button>
+            <button type="button" class="vb-filter-btn" data-vb-filter="green" title="Aðeins grænir punktar">🟢</button>
+            <button type="button" class="vb-filter-btn" data-vb-filter="yellow" title="Aðeins gulir punktar">🟡</button>
+            <button type="button" class="vb-filter-btn" data-vb-filter="red" title="Aðeins rauðir punktar">🔴</button>
+          </div>
         </div>
       </div>
       <div id="vb-grid-host"></div>
@@ -5193,6 +5199,12 @@ async function renderVinnubok(t){
       .vb-layout-btn:last-child{border-right:none}
       .vb-layout-btn:hover{background:#f1f5f9}
       .vb-layout-btn.active{background:linear-gradient(180deg,#3b82f6 0%,#1d4ed8 100%);color:#fff;font-weight:600}
+      /* Review-dot filter chips */
+      .vb-filter{display:inline-flex;border:1px solid #cbd5e1;border-radius:8px;overflow:hidden;background:#fff;margin-left:8px}
+      .vb-filter-btn{border:none;background:transparent;padding:7px 10px;cursor:pointer;font-size:13px;color:#64748b;border-right:1px solid #e2e8f0;line-height:1}
+      .vb-filter-btn:last-child{border-right:none}
+      .vb-filter-btn:hover{background:#f1f5f9}
+      .vb-filter-btn.active{background:linear-gradient(180deg,#3b82f6 0%,#1d4ed8 100%);color:#fff;font-weight:600}
 
       /* === Layout: TABLE === single rounded card, gradient header, zebra rows */
       [data-vb-layout="table"] .vb-grid{border-collapse:separate;border-spacing:0;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 16px rgba(15,23,42,.08);border:1px solid #e2e8f0}
@@ -5227,6 +5239,7 @@ async function renderVinnubok(t){
       /* Review-status dot — click to cycle: empty → yellow → red → empty */
       .vb-review-btn{width:14px;height:14px;padding:0;border-radius:50%;border:1.5px solid #cbd5e1;background:transparent;cursor:pointer;flex-shrink:0;transition:all .15s;box-shadow:inset 0 0 0 0 transparent}
       .vb-review-btn:hover{border-color:#94a3b8;transform:scale(1.15)}
+      .vb-review-btn.state-green{background:#22c55e;border-color:#15803d;box-shadow:0 0 0 1px rgba(21,128,61,.25)}
       .vb-review-btn.state-yellow{background:#fbbf24;border-color:#d97706;box-shadow:0 0 0 1px rgba(217,119,6,.2)}
       .vb-review-btn.state-red{background:#ef4444;border-color:#b91c1c;box-shadow:0 0 0 1px rgba(185,28,28,.25)}
 
@@ -5354,6 +5367,7 @@ async function renderVinnubok(t){
   if(!Array.isArray(state.ui.vb_hidden)) state.ui.vb_hidden = [];
   if(!Array.isArray(state.ui.vb_collapsed_years)) state.ui.vb_collapsed_years = [];
   if(!['cards','table','minimal'].includes(state.ui.vb_layout)) state.ui.vb_layout = 'table';
+  if(!['','green','yellow','red'].includes(state.ui.vb_review_filter)) state.ui.vb_review_filter = '';
 
   const VB_URLS = ['/api/worksites?year=combined', '/api/invoice-drafts', '/api/efnislisti-docs'];
 
@@ -5495,9 +5509,13 @@ async function renderVinnubok(t){
     if(!data){ $host.innerHTML = ''; return; }
     const months = buildMonths();
     const hidden = new Set(state.ui.vb_hidden || []);
+    const reviewFilter = state.ui.vb_review_filter || '';
+    const reviewMap = state.ui.vb_review || {};
     const sites = (data.worksites || []).filter(w => {
       if(/almennt|veikindi|sick|work at home|kaffi|fundir/i.test(w.project)) return false;
       if(hidden.has(w.project)) return false;
+      // When a dot filter is on, show only worksites with a matching dot in the visible months.
+      if(reviewFilter) return months.some(ym => reviewMap[`${w.project}|${ym}`] === reviewFilter);
       const hasHours = months.some(ym => (w.monthly||{})[ym] > 0);
       const hasInvoiceDraft = months.some(ym => data.drafts[`${w.project}|${ym}`]);
       return hasHours || hasInvoiceDraft || (w.invoice_unpaid||0) > 0;
@@ -5621,14 +5639,16 @@ async function renderVinnubok(t){
         const key = btn.dataset.vbReview;
         state.ui.vb_review = state.ui.vb_review || {};
         const cur = state.ui.vb_review[key];
-        const next = cur === 'yellow' ? 'red' : cur === 'red' ? undefined : 'yellow';
+        // Cycle: none → green → yellow → red → none
+        const next = cur === 'green' ? 'yellow' : cur === 'yellow' ? 'red' : cur === 'red' ? undefined : 'green';
         if(next) state.ui.vb_review[key] = next;
         else delete state.ui.vb_review[key];
         save();
         btn.className = 'vb-review-btn' + (next ? ' state-'+next : '');
-        btn.title = next === 'yellow' ? 'Skoða betur — ágiskun'
+        btn.title = next === 'green'  ? 'Staðfest / tilbúið'
+                  : next === 'yellow' ? 'Ágiskun — skoða betur'
                   : next === 'red'    ? 'Þarfnast nánari skoðunar / sönnunar'
-                  : 'Smelltu til að merkja: gul = ágiskun, rauð = skoða betur';
+                  : 'Smelltu til að merkja: grænt = staðfest, gult = ágiskun, rautt = skoða betur';
       };
     });
     $host.querySelectorAll('[data-vb-hide]').forEach(btn => {
@@ -5741,10 +5761,11 @@ async function renderVinnubok(t){
     const hoursStr = hours > 0 ? hours.toFixed(1).replace('.0','') + 't' : '—';
     const estStr = estKr > 0 ? fmtIskCompact(estKr) : '—';
     state.ui.vb_review = state.ui.vb_review || {};
-    const reviewState = state.ui.vb_review[draftKey];  // undefined | 'yellow' | 'red'
-    const reviewLabel = reviewState === 'yellow' ? 'Skoða betur — ágiskun'
+    const reviewState = state.ui.vb_review[draftKey];  // undefined | 'green' | 'yellow' | 'red'
+    const reviewLabel = reviewState === 'green'  ? 'Staðfest / tilbúið'
+                      : reviewState === 'yellow' ? 'Ágiskun — skoða betur'
                       : reviewState === 'red'    ? 'Þarfnast nánari skoðunar / sönnunar'
-                      : 'Smelltu til að merkja: gul = ágiskun, rauð = skoða betur';
+                      : 'Smelltu til að merkja: grænt = staðfest, gult = ágiskun, rautt = skoða betur';
 
     return `
       <td class="${cls.join(' ')}" data-vb-cell="${escapeAttr(draftKey)}">
@@ -6203,6 +6224,15 @@ async function renderVinnubok(t){
       syncLayoutBtns();
       render();
     };
+  });
+  // Review-dot filter chips: mark active + wire clicks
+  function syncFilterBtns(){
+    document.querySelectorAll('[data-vb-filter]').forEach(b =>
+      b.classList.toggle('active', (b.dataset.vbFilter||'') === (state.ui.vb_review_filter||'')));
+  }
+  syncFilterBtns();
+  document.querySelectorAll('[data-vb-filter]').forEach(b => {
+    b.onclick = () => { state.ui.vb_review_filter = b.dataset.vbFilter || ''; save(); syncFilterBtns(); render(); };
   });
   load();
 }
