@@ -1962,6 +1962,22 @@ function buttonsFor(tabId){ return state.buttons.filter(b=>b.tab===tabId); }
 function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function escapeAttr(s){ return escapeHtml(s); }
 
+// ===== Google OAuth re-auth helpers (Drive token expires/revokes periodically) =====
+// True when a failed API response looks like the Google connection needs renewing.
+function isReauthError(status, errMsg){
+  if(status === 401) return true;
+  return /invalid_grant|token has been expired|revoked|not connected|refresh\s*4\d\d/i.test(errMsg||'');
+}
+// Send the user through the Google consent flow to mint a fresh refresh token.
+async function startGoogleReauth(){
+  try {
+    const r = await fetch('/api/google-auth?json=1');
+    const j = await r.json();
+    if(j.url){ window.location.href = j.url; return; }
+    alert('Gat ekki opnað Google tengingu.');
+  } catch(e){ alert('Gat ekki opnað Google tengingu: '+(e.message||e)); }
+}
+
 function render(){
   document.body.classList.toggle('editmode', !!state.ui.editMode);
   $editToggle.classList.toggle('on', !!state.ui.editMode);
@@ -3185,6 +3201,11 @@ function renderWorksites(t){
         pill.className = 'ws-google-pill ws-google-on';
         pill.innerHTML = `✓ ${escapeHtml(d.user_email||'tengt')}`;
         pill.title = 'Smelltu til að endurnýja tengingu';
+      } else if (d.expired) {
+        // Token exists but Google rejected it — make it obvious it needs re-consent.
+        pill.className = 'ws-google-pill ws-google-off';
+        pill.innerHTML = '⚠ Google tenging útrunnin — tengja aftur';
+        pill.title = 'Google hafnaði tókanum (útrunninn/afturkallaður). Smelltu til að tengja aftur.';
       } else {
         pill.className = 'ws-google-pill ws-google-off';
         pill.innerHTML = '✦ Tengja Google';
@@ -5883,7 +5904,11 @@ async function renderVinnubok(t){
       }
       await Promise.all([worker(), worker(), worker()]);
     } catch(e){
-      alert('Skönnun mistókst: '+(e.message||e));
+      if(isReauthError(null, e.message)){
+        if(confirm('Google tenging er útrunnin (Drive aðgangur).\n\nTengja aftur núna?')) startGoogleReauth();
+      } else {
+        alert('Skönnun mistókst: '+(e.message||e));
+      }
     } finally {
       const live = $host.querySelector(`[data-vb-scan="${CSS.escape(project)}"]`);
       if(live) live.classList.remove('is-scanning');
@@ -5958,7 +5983,14 @@ async function renderVinnubok(t){
           };
         });
       } catch(e){
-        $r.innerHTML = '<i style="color:#c40000">Villa: '+(e.message||e)+'</i>';
+        if(isReauthError(null, e.message)){
+          $r.innerHTML = `<div style="padding:10px;background:#fff7ed;border:1px solid #fdba74;border-radius:6px;color:#9a3412">
+            ⚠ Google tenging er útrunnin — Drive aðgangur virkar ekki.
+            <button type="button" class="tv-btn" id="vb-reauth" style="margin-top:8px">🔑 Tengja Google aftur</button></div>`;
+          const rb = document.getElementById('vb-reauth'); if(rb) rb.onclick = startGoogleReauth;
+        } else {
+          $r.innerHTML = '<i style="color:#c40000">Villa: '+(e.message||e)+'</i>';
+        }
       }
     }
     $go.onclick = runSearch;
