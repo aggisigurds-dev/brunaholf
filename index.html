@@ -1511,6 +1511,7 @@ const DEFAULT_STATE = {
     {id:'kvittanir',  label:'Kvittanir & PDF', icon:'📷'},
     {id:'tenglar',    label:'Tenglar',    icon:'🔗'},
     {id:'reikningar', label:'Reikningagerð', icon:'💳'},
+    {id:'gerdreikninga', label:'Gerð Reikninga', icon:'🧾'},
     {id:'vinnubok', label:'Vinnubók', icon:'📝'},
     {id:'vinnustofa', label:'Vinnustofa', icon:'🎯'},
     {id:'verdskra', label:'Verðskrá', icon:'💰'},
@@ -1943,6 +1944,7 @@ function renderTabs(){
     // Pre-warm cache on hover/touch/focus so heavy tabs feel instant on click
     const warmMap = {
       vinnubok:   ['/api/worksites?year=combined','/api/invoice-drafts','/api/efnislisti-docs'],
+      gerdreikninga: ['/api/worksites?year=combined','/api/pricing-guide','/api/invoice-drafts','/api/redder-invoices'],
       reikningar: ['/api/worksites?year=combined','/api/invoice-drafts','/api/efnislisti-docs','/api/redder-invoices','/api/pricing-guide','/api/unbilled-hours'],
       verdskra:   ['/api/pricing-guide','/api/hole-rates'],
       vinnustofa: ['/api/worksites?year=combined','/api/unbilled-hours','/api/invoice-drafts'],
@@ -1980,6 +1982,7 @@ function render(){
   if(t.id==='verdsamanburdur') return renderCompetitors(t);
   if(t.id==='verkstadir') return renderWorksites(t);
   if(t.id==='reikningar') return renderReikningagerd(t);
+  if(t.id==='gerdreikninga') return renderGerdReikninga(t);
   if(t.id==='vinnubok') return renderVinnubok(t);
   if(t.id==='vinnustofa') return renderVinnustofa(t);
   if(t.id==='verdskra') return renderVerdskra(t);
@@ -4466,6 +4469,567 @@ async function rgOpenEfniEditor(worksite, month){
 }
 
 /* ====================== VINNUBÓK (manual per-cell editor: hours, invoice kr, Drive attach) ====================== */
+async function renderGerdReikninga(t){
+  // ===== Verðskrá efnis (same price list as /reikningur) — used for quick-add =====
+  const GR_MATERIALS = [
+    { section:'Almennt', items:[
+      {label:'Eldvarnar akríl',unit:'stk',price:1624},{label:'Eldvarnar Akríl 5kg',unit:'stk',price:14400},
+      {label:'Háþennslukítti',unit:'stk',price:4489},{label:'Eldvarnar silikon',unit:'stk',price:2220},
+      {label:'Eldvarnar steinull',unit:'plata',price:10703},{label:'Eldvarnar málning',unit:'líter',price:2500},
+      {label:'Eldvarnar rúlla 55mm',unit:'stk',price:53574},
+    ]},
+    { section:'Eldvarnar band (mm)', items:[
+      {label:'Band 55mm',unit:'stk',price:1621},{label:'Band 63mm',unit:'stk',price:3590},{label:'Band 75mm',unit:'stk',price:1236},
+      {label:'Band 82mm',unit:'stk',price:1287},{label:'Band 90mm',unit:'stk',price:1556},{label:'Band 110mm',unit:'stk',price:2047},
+      {label:'Band 125mm',unit:'stk',price:2628},{label:'Band 160mm',unit:'stk',price:4780},{label:'Band 200mm',unit:'stk',price:6025},
+    ]},
+    { section:'Eldvarnar kragi (mm)', items:[
+      {label:'Kragi 32mm',unit:'stk',price:2821},{label:'Kragi 40mm',unit:'stk',price:3205},{label:'Kragi 55mm',unit:'stk',price:3308},
+      {label:'Kragi 63mm',unit:'stk',price:3590},{label:'Kragi 75mm',unit:'stk',price:4103},{label:'Kragi 82mm',unit:'stk',price:4174},
+      {label:'Kragi 90mm',unit:'stk',price:4719},{label:'Kragi 110mm',unit:'stk',price:4915},{label:'Kragi 125mm',unit:'stk',price:6260},
+      {label:'Kragi 140mm',unit:'stk',price:8052},{label:'Kragi 160mm',unit:'stk',price:10191},{label:'Kragi 200mm',unit:'stk',price:18021},
+      {label:'Kragi 250mm',unit:'stk',price:26792},{label:'Kragi 315mm',unit:'stk',price:151754},
+    ]},
+    { section:'Brunaþéttirör', items:[
+      {label:'Brunaþéttirör 16mm',unit:'stk',price:6426},{label:'Brunaþéttirör 20mm',unit:'stk',price:6426},
+      {label:'Brunaþéttirör 32mm',unit:'stk',price:8044},{label:'Brunaþéttirör 50mm',unit:'stk',price:9012},
+      {label:'Brunaþéttirör PVC 32mm',unit:'stk',price:2498},{label:'Brunaþéttirör PVC 50mm',unit:'stk',price:2970},
+    ]},
+  ];
+  const GR_FLAT = GR_MATERIALS.flatMap(s=>s.items);
+  const GR_KM=186, GR_FERD=4000, GR_SMA=137, GR_STADF=20000;
+
+  function isGata(name){ return /landsspítal|landsspital|nlsh|heklu|dalvegur 30/i.test(name||''); }
+  const fmt = n => Math.round(Number(n)||0).toLocaleString('is-IS');
+  const NON_BILLABLE = /almennt|veikindi|sick|work at home|kaffi|fundir|orlof|frí/i;
+
+  state.ui = state.ui || {};
+  if(!/^\d{4}-\d{2}$/.test(state.ui.gr_month||'')) state.ui.gr_month = '2026-05';
+
+  const LOGO_KEY = 'brunaholfReikningurLogo';
+  const getLogo = () => { try { return localStorage.getItem(LOGO_KEY) || '/reikningur/logo.png'; } catch { return '/reikningur/logo.png'; } };
+
+  const MNAMES = ['jan.','feb.','mars','apríl','maí','júní','júlí','ágúst','sept.','okt.','nóv.','des.'];
+  const monthLabel = ym => { const [y,m]=ym.split('-'); return `${MNAMES[+m-1]} ${y}`; };
+  const monthRange = ym => { const [y,m]=ym.split('-').map(Number); const last=new Date(y,m,0).getDate();
+    return { fra:`${ym}-01`, til:`${ym}-${String(last).padStart(2,'0')}` }; };
+  const dmy = s => { if(!s) return ''; const [y,m,d]=s.split('-'); return `${d}.${m}.${y}`; };
+
+  $view.innerHTML = `
+    <div class="gr-wrap">
+      <div class="gr-head">
+        <div>
+          <h1 class="gr-h1">Gerð Reikninga <span class="gr-sub" id="gr-meta">Sækir…</span></h1>
+          <div class="gr-sub-line">Mánaðamóta-reikningagerð · forútfylltur Efnislisti úr Tímavera klst + Verðskrá + Redder efni · breyttu tölum, vistaðu og prentaðu (PDF).</div>
+        </div>
+        <div class="gr-controls">
+          <button class="tv-btn" id="gr-prev" type="button" title="Fyrri mánuður">←</button>
+          <span class="gr-month" id="gr-month-lbl">${monthLabel(state.ui.gr_month)}</span>
+          <button class="tv-btn" id="gr-next" type="button" title="Næsti mánuður">→</button>
+          <button class="tv-btn" id="gr-refresh" type="button"><span class="tv-refresh-icon">↻</span> Sækja</button>
+          <label class="gr-logo-btn" title="Setja inn logo (PNG) sem birtist efst til vinstri á reikningnum">🖼 Logo<input type="file" id="gr-logo-file" accept="image/png,image/jpeg" hidden></label>
+        </div>
+      </div>
+      <div id="gr-host"><div class="gr-loading">Sæki gögn…</div></div>
+    </div>
+    <style>
+      .gr-wrap{padding:8px 0 60px;max-width:1180px;margin:0 auto}
+      .gr-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:18px;flex-wrap:wrap}
+      .gr-h1{font-family:'Source Serif 4',Georgia,serif;font-size:30px;font-weight:600;letter-spacing:-.02em;margin:0}
+      .gr-sub{font-size:13px;color:var(--muted,#64748b);font-weight:400}
+      .gr-sub-line{color:var(--muted,#64748b);font-size:12.5px;margin-top:4px;max-width:760px}
+      .gr-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+      .gr-month{font-weight:700;font-size:14px;min-width:84px;text-align:center}
+      .gr-logo-btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border:1px solid var(--border,#cbd5e1);border-radius:8px;cursor:pointer;font-size:13px;background:#fff}
+      .gr-logo-btn:hover{background:#f1f5f9}
+      .gr-loading{padding:30px;color:var(--muted,#64748b);font-style:italic}
+      .gr-section-h{font-family:'Source Serif 4',Georgia,serif;font-size:18px;font-weight:600;margin:22px 0 10px;display:flex;align-items:center;gap:8px}
+      .gr-section-h .gr-count{font-size:12px;color:var(--muted,#64748b);font-weight:400}
+      .gr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
+      .gr-card{background:#fff;border:1px solid var(--border,#e2e8f0);border-radius:12px;padding:14px 16px;box-shadow:0 1px 2px rgba(15,23,42,.04);display:flex;flex-direction:column;gap:8px}
+      .gr-card.gr-done{border-color:#a7f3d0;background:linear-gradient(135deg,#fff 0%,#f0fdf4 100%)}
+      .gr-card.gr-gata{border-color:#fcd9b6;background:linear-gradient(135deg,#fff 0%,#fff8f0 100%)}
+      .gr-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+      .gr-card-name{font-weight:700;font-size:15px;line-height:1.25}
+      .gr-card-cust{font-size:11.5px;color:var(--muted,#64748b);margin-top:1px}
+      .gr-pill{font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:999px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+      .gr-pill-draft{background:#fef3c7;color:#92400e}
+      .gr-pill-saved{background:#10b981;color:#fff}
+      .gr-card-figs{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:#334155}
+      .gr-fig b{font-family:'SF Mono','JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
+      .gr-fig-l{color:var(--muted,#94a3b8);font-size:10px;text-transform:uppercase;letter-spacing:.05em;display:block}
+      .gr-card-actions{display:flex;gap:8px;margin-top:4px}
+      .gr-btn{padding:7px 12px;border-radius:7px;font-size:12.5px;font-weight:600;border:1px solid var(--border,#cbd5e1);background:#fff;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+      .gr-btn:hover{background:#f1f5f9}
+      .gr-btn-primary{background:#1e3a8a;color:#fff;border-color:#1e3a8a}
+      .gr-btn-primary:hover{background:#3b4f9e;color:#fff}
+      /* Editor modal */
+      .gr-modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow:auto}
+      .gr-modal{background:#fff;border-radius:12px;width:min(1080px,96vw);box-shadow:0 20px 60px rgba(0,0,0,.4);display:grid;grid-template-columns:380px 1fr;overflow:hidden;min-height:520px}
+      .gr-form{padding:16px 18px;border-right:1px solid var(--border,#e2e8f0);overflow-y:auto;max-height:88vh}
+      .gr-prev{padding:18px;overflow-y:auto;max-height:88vh;background:#f8fafc}
+      .gr-mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+      .gr-mh h2{margin:0;font-size:17px;font-family:'Source Serif 4',Georgia,serif}
+      .gr-x{border:none;background:transparent;font-size:24px;cursor:pointer;color:#64748b;line-height:1}
+      .gr-st{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#64748b;font-weight:600;margin:14px 0 6px;border-bottom:1px solid var(--border,#e2e8f0);padding-bottom:3px}
+      .gr-st:first-of-type{margin-top:0}
+      .gr-f{margin-bottom:8px}
+      .gr-f label{display:block;font-size:11.5px;font-weight:500;margin-bottom:2px;color:#475569}
+      .gr-f input,.gr-f textarea{width:100%;padding:6px 8px;font-size:13px;border:1px solid var(--border,#cbd5e1);border-radius:5px;font-family:inherit}
+      .gr-r2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+      .gr-r3{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:6px;align-items:end}
+      .gr-mat-line{display:grid;grid-template-columns:1fr 74px 56px 26px;gap:5px;align-items:center;margin-bottom:5px}
+      .gr-mat-line input{padding:5px 6px;font-size:12px}
+      .gr-mat-del{border:none;background:transparent;color:#dc2626;cursor:pointer;font-size:15px}
+      .gr-mat-add{display:flex;gap:6px;margin-top:6px}
+      .gr-mat-add select{flex:1;padding:6px;font-size:12px;border:1px solid var(--border,#cbd5e1);border-radius:5px}
+      .gr-redder-note{background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:8px 10px;font-size:11.5px;color:#1e40af;margin-bottom:8px}
+      .gr-actions{display:flex;gap:8px;margin-top:16px;position:sticky;bottom:0;background:#fff;padding-top:10px}
+      /* Efnislisti document preview (mirrors /reikningur) */
+      .gr-doc{background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.08);max-width:720px;margin:0 auto;padding:44px 50px;font-family:'Times New Roman',Times,serif;color:#000;font-size:13px}
+      .gr-doc-top{display:grid;grid-template-columns:180px 1fr;gap:20px;align-items:center;margin-bottom:24px}
+      .gr-doc-logo{max-width:170px;max-height:90px;width:auto;height:auto;object-fit:contain;display:block}
+      .gr-doc h1{font-size:24px;margin:0;font-weight:700}
+      .gr-doc .gr-doc-sub{font-size:13px;font-style:italic;color:#555;margin:3px 0 0}
+      .gr-doc .gr-doc-meta{margin-bottom:14px}
+      .gr-doc .gr-doc-ws{font-weight:700}
+      table.gr-efni{width:100%;border-collapse:collapse;font-size:12.5px}
+      table.gr-efni td{padding:3px 4px;vertical-align:bottom}
+      table.gr-efni thead td{font-style:italic;color:#555;text-align:right}
+      table.gr-efni thead td:first-child{text-align:left}
+      table.gr-efni td.l{text-align:left}
+      table.gr-efni td.p,table.gr-efni td.m,table.gr-efni td.t{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+      table.gr-efni td.m{border-bottom:1px solid #000}
+      table.gr-efni tr.sec td{font-weight:700;padding-top:12px}
+      table.gr-efni tr.sub td{border-top:1px solid #000;padding-top:4px;text-align:right;font-style:italic;color:#555}
+      table.gr-efni tr.sub td.t{font-style:normal;color:#000}
+      table.gr-efni tr.grand td{border-top:1px solid #000;border-bottom:3px double #000;padding:6px 4px;text-align:right}
+      table.gr-efni tr.grand td.t{font-weight:700}
+      @media(max-width:860px){.gr-modal{grid-template-columns:1fr}.gr-prev{display:none}}
+    </style>
+  `;
+
+  const $host = document.getElementById('gr-host');
+  const $meta = document.getElementById('gr-meta');
+
+  let WS=[], PG={}, DRAFTS={}, REDDER={};
+
+  document.getElementById('gr-prev').onclick = () => shiftMonth(-1);
+  document.getElementById('gr-next').onclick = () => shiftMonth(1);
+  document.getElementById('gr-refresh').onclick = () => load(true);
+  document.getElementById('gr-logo-file').onchange = (e) => {
+    const f = e.target.files && e.target.files[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = () => { try { localStorage.setItem(LOGO_KEY, r.result); alert('Logo vistað (í þessum vafra).'); } catch { alert('Of stór mynd fyrir vistun.'); } };
+    r.readAsDataURL(f);
+  };
+
+  function shiftMonth(d){
+    const [y,m] = state.ui.gr_month.split('-').map(Number);
+    const nd = new Date(y, m-1+d, 1);
+    state.ui.gr_month = `${nd.getFullYear()}-${String(nd.getMonth()+1).padStart(2,'0')}`;
+    document.getElementById('gr-month-lbl').textContent = monthLabel(state.ui.gr_month);
+    if(typeof save==='function') try{ save(); }catch{}
+    renderList();
+  }
+
+  function rateFor(name){
+    const pg = PG[name] || {};
+    return {
+      dv: Number(pg.dagvinna_rate)||9951,
+      ev: Number(pg.eftirvinna_rate)||14927,
+      km: Number(pg.akstur_km_rate)||GR_KM,
+      ferd: Number(pg.akstur_ferd_rate)||GR_FERD,
+      sma: Number(pg.smahlutagjald_per_h)||GR_SMA,
+      vsk: Number(pg.vsk_pct)||24,
+      stadf: pg.stadfesting_default !== false,
+      customer: pg.customer_name || '',
+    };
+  }
+  const monthHours = (w) => (w.monthly||{})[state.ui.gr_month] || 0;
+  const draftFor = (name) => DRAFTS[`${name}|${state.ui.gr_month}`];
+
+  async function load(force){
+    $meta.textContent = 'Sækir…';
+    try{
+      const [wsR, pgR, drR, rdR] = await Promise.all([
+        cachedFetch('/api/worksites?year=combined', {force:!!force}),
+        cachedFetch('/api/pricing-guide', {force:!!force}).catch(()=>null),
+        cachedFetch('/api/invoice-drafts', {force:true}).catch(()=>null),
+        cachedFetch('/api/redder-invoices', {force:!!force}).catch(()=>null),
+      ]);
+      const ws = wsR ? await wsR.json() : {worksites:[]};
+      const pg = pgR && pgR.ok ? await pgR.json() : {rows:[]};
+      const dr = drR && drR.ok ? await drR.json() : {rows:[]};
+      const rd = rdR && rdR.ok ? await rdR.json() : {rows:[]};
+      WS = ws.worksites || [];
+      PG = {}; for(const r of (pg.rows||[])) PG[r.worksite_name] = r;
+      DRAFTS = {}; for(const d of (dr.rows||[])) DRAFTS[`${d.worksite_name}|${d.work_month}`] = d;
+      REDDER = {};
+      for(const r of (rd.rows||[])){
+        const ws2 = r.worksite_match; if(!ws2) continue;
+        const mo = (r.dagsetning||'').slice(0,7);
+        const k = `${ws2}|${mo}`;
+        (REDDER[k] = REDDER[k] || {an_vsk:0, lines:[]});
+        REDDER[k].an_vsk += Number(r.an_vsk)||0;
+        for(const li of (r.redder_line_items||[])){
+          REDDER[k].lines.push({ label: li.item_description||'Efni', price: Number(li.unit_price_an_vsk)||0, qty: Number(li.quantity)||0 });
+        }
+      }
+      renderList();
+    }catch(e){
+      $host.innerHTML = `<div class="gr-loading">Villa: ${escapeHtml(e.message||String(e))}</div>`;
+      $meta.textContent = 'Villa';
+    }
+  }
+
+  function renderList(){
+    const month = state.ui.gr_month;
+    const sites = WS.filter(w => !NON_BILLABLE.test(w.project));
+    const tim = sites.filter(w => !isGata(w.project) && (monthHours(w) > 0 || draftFor(w.project)));
+    tim.sort((a,b)=> monthHours(b)-monthHours(a));
+    const gataNames = ['Landsspitalinn','Heklureitur','Dalvegur 30'];
+    const gata = gataNames.map(n => sites.find(w => isGata(w.project) && new RegExp(n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace('Landsspitalinn','landssp[ií]tal'),'i').test(w.project)) || {project:n, monthly:{}, mapped_customers:[], _synthetic:true});
+
+    const card = (w, gataFlag) => {
+      const name = w.project;
+      const r = rateFor(name);
+      const cust = r.customer || (w.mapped_customers||[])[0] || '';
+      const hrs = monthHours(w);
+      const d = draftFor(name);
+      const est = !gataFlag ? Math.round(hrs * r.dv * (1+r.vsk/100)) : 0;
+      const redder = (REDDER[`${name}|${month}`]||{}).an_vsk || 0;
+      const saved = d && Number(d.total_m_vsk) > 0;
+      return `
+        <div class="gr-card ${saved?'gr-done':''} ${gataFlag?'gr-gata':''}">
+          <div class="gr-card-top">
+            <div><div class="gr-card-name">${escapeHtml(name)}</div>${cust?`<div class="gr-card-cust">${escapeHtml(cust)}</div>`:''}</div>
+            ${saved?`<span class="gr-pill gr-pill-saved">✓ ${fmt(d.total_m_vsk)}</span>`:(d?`<span class="gr-pill gr-pill-draft">drög</span>`:'')}
+          </div>
+          <div class="gr-card-figs">
+            ${gataFlag
+              ? `<div class="gr-fig"><span class="gr-fig-l">Grunnur</span><b>Ajour</b></div>`
+              : `<div class="gr-fig"><span class="gr-fig-l">Tímavera klst</span><b>${hrs.toFixed(1)}</b></div>
+                 <div class="gr-fig"><span class="gr-fig-l">Taxti</span><b>${fmt(r.dv)}</b></div>
+                 <div class="gr-fig"><span class="gr-fig-l">Áætlað m.vsk</span><b>${est?fmt(est):'—'}</b></div>
+                 ${redder>0?`<div class="gr-fig"><span class="gr-fig-l">Redder efni</span><b>${fmt(redder)}</b></div>`:''}`}
+          </div>
+          <div class="gr-card-actions">
+            ${gataFlag
+              ? `<button class="gr-btn gr-btn-primary" data-gr-gata="${escapeAttr(name)}">📐 Ajour uppgjör</button>`
+              : `<button class="gr-btn gr-btn-primary" data-gr-edit="${escapeAttr(name)}">🧾 Efnislisti</button>`}
+          </div>
+        </div>`;
+    };
+
+    $host.innerHTML = `
+      <div class="gr-section-h">🧾 Tímavera verkstaðir <span class="gr-count">· ${tim.length} með klst í ${monthLabel(month)}</span></div>
+      <div class="gr-grid">${tim.length?tim.map(w=>card(w,false)).join(''):'<div class="gr-loading">Engin Tímavera klst skráð í þessum mánuði.</div>'}</div>
+      <div class="gr-section-h">📐 Gata verkefni (Ajour) <span class="gr-count">· NLSH · Heklureitur · Dalvegur 30</span></div>
+      <div class="gr-grid">${gata.map(w=>card(w,true)).join('')}</div>
+    `;
+    $meta.textContent = `${monthLabel(month)} · ${tim.length} Tímavera verkstaðir`;
+    $host.querySelectorAll('[data-gr-edit]').forEach(b=> b.onclick = ()=> openEditor(b.dataset.grEdit));
+    $host.querySelectorAll('[data-gr-gata]').forEach(b=> b.onclick = ()=> openGata(b.dataset.grGata));
+  }
+
+  // ===== Efnislisti editor (prefilled, editable, savable) =====
+  function openEditor(name){
+    const month = state.ui.gr_month;
+    const r = rateFor(name);
+    const { fra, til } = monthRange(month);
+    const d = draftFor(name);
+    const wObj = WS.find(w=>w.project===name) || {};
+    const cust = (d && d.customer_name) || r.customer || (wObj.mapped_customers||[])[0] || '';
+    // Prefill: saved draft wins; else compute from Tímavera + pricing-guide; materials from draft or Redder.
+    const dvH = d ? Number(d.hours_dagvinna)||0 : (monthHours(wObj)||0);
+    const dvR = d && d.rate_dagvinna ? Number(d.rate_dagvinna) : r.dv;
+    const evH = d ? Number(d.hours_eftirvinna)||0 : 0;
+    const evR = d && d.rate_eftirvinna ? Number(d.rate_eftirvinna) : r.ev;
+    const km  = d ? Number(d.akstur_km)||0 : 0;
+    const fr  = d ? Number(d.akstur_ferdir)||0 : 0;
+    const stadfOn = d ? Number(d.stadfesting)>0 : r.stadf;
+    const notes = d ? (d.notes||'') : '';
+    let mats = [];
+    if(d && Array.isArray(d.materials_jsonb) && d.materials_jsonb.length){
+      mats = d.materials_jsonb.map(m=>({label:m.label||'', price:Number(m.price)||0, qty:Number(m.qty)||0}));
+    } else {
+      const rd = REDDER[`${name}|${month}`];
+      if(rd && rd.lines.length) mats = rd.lines.map(l=>({label:l.label, price:l.price, qty:l.qty}));
+    }
+    const redderTotal = (REDDER[`${name}|${month}`]||{}).an_vsk || 0;
+
+    const bg = document.createElement('div');
+    bg.className = 'gr-modal-bg';
+    const matSelect = `<select id="gr-mat-pick"><option value="">+ bæta efni úr Verðskrá…</option>${
+      GR_MATERIALS.map(s=>`<optgroup label="${escapeAttr(s.section)}">${s.items.map((it,i)=>`<option value="${escapeAttr(it.label)}|${it.price}">${escapeHtml(it.label)} — ${fmt(it.price)} kr</option>`).join('')}</optgroup>`).join('')
+    }</select>`;
+    bg.innerHTML = `
+      <div class="gr-modal">
+        <div class="gr-form">
+          <div class="gr-mh"><h2>Efnislisti</h2><button class="gr-x" id="gr-close" type="button">×</button></div>
+          <div class="gr-st">Verkstaður</div>
+          <div class="gr-f"><label>Verkstaður</label><input id="gr-ws" value="${escapeAttr(name)}"></div>
+          <div class="gr-f"><label>Verkkaupi</label><input id="gr-cust" value="${escapeAttr(cust)}"></div>
+          <div class="gr-r2"><div class="gr-f"><label>Frá</label><input type="date" id="gr-fra" value="${fra}"></div><div class="gr-f"><label>Til</label><input type="date" id="gr-til" value="${til}"></div></div>
+          <div class="gr-st">Tími</div>
+          <div class="gr-r3"><div class="gr-f"><label>Dagvinna</label><div style="font-size:11px;color:#94a3b8;padding:6px 0">kr/klst · klst</div></div>
+            <div class="gr-f"><input type="number" id="gr-dvr" value="${dvR}" step="50"></div><div class="gr-f"><input type="number" id="gr-dvh" value="${dvH}" step="0.5"></div></div>
+          <div class="gr-r3"><div class="gr-f"><label>Eftirvinna</label></div>
+            <div class="gr-f"><input type="number" id="gr-evr" value="${evR}" step="50"></div><div class="gr-f"><input type="number" id="gr-evh" value="${evH}" step="0.5"></div></div>
+          <div class="gr-st">Akstur</div>
+          <div class="gr-r2"><div class="gr-f"><label>km × ${r.km}</label><input type="number" id="gr-km" value="${km}" step="10"></div><div class="gr-f"><label>ferðir × ${fmt(r.ferd)}</label><input type="number" id="gr-ferd" value="${fr}" step="1"></div></div>
+          <div class="gr-st">Efni (Redder / handvirkt)</div>
+          ${redderTotal>0?`<div class="gr-redder-note">Redder efniskostnaður þennan mánuð: <b>${fmt(redderTotal)} kr án vsk</b>. Forútfyllt að neðan — leiðréttu magn/verð eftir þörfum.</div>`:''}
+          <div id="gr-mats"></div>
+          <div class="gr-mat-add">${matSelect}</div>
+          <div class="gr-st">Aukagjöld</div>
+          <div class="gr-f"><label><input type="checkbox" id="gr-stadf" ${stadfOn?'checked':''}> Staðfesting brunaþéttinga (${fmt(GR_STADF)} kr)</label></div>
+          <div class="gr-f"><label>Smáhlutagjald: ${r.sma} kr × dagvinna klst (sjálfvirkt)</label><div style="font-size:11px;color:#64748b" id="gr-sma-hint">—</div></div>
+          <div class="gr-st">Athugasemd</div>
+          <div class="gr-f"><textarea id="gr-notes" rows="2" placeholder="Birtist neðst á reikningi">${escapeHtml(notes)}</textarea></div>
+          <div class="gr-actions">
+            <button class="gr-btn gr-btn-primary" id="gr-save" type="button">💾 Vista</button>
+            <button class="gr-btn" id="gr-print" type="button">🖨 Prenta / PDF</button>
+            <button class="gr-btn" id="gr-close2" type="button">Loka</button>
+            <span id="gr-save-st" style="font-size:12px;color:#64748b;align-self:center"></span>
+          </div>
+        </div>
+        <div class="gr-prev"><div class="gr-doc" id="gr-doc"></div></div>
+      </div>`;
+    document.body.appendChild(bg);
+    const close = () => bg.remove();
+    bg.addEventListener('click', e=>{ if(e.target===bg) close(); });
+    document.getElementById('gr-close').onclick = close;
+    document.getElementById('gr-close2').onclick = close;
+
+    // ----- materials editable list -----
+    const $mats = document.getElementById('gr-mats');
+    function matRow(m){
+      const div = document.createElement('div');
+      div.className = 'gr-mat-line';
+      div.innerHTML = `<input class="m-label" placeholder="Lýsing" value="${escapeAttr(m.label||'')}">
+        <input class="m-price" type="number" placeholder="verð" value="${m.price||''}" step="1">
+        <input class="m-qty" type="number" placeholder="magn" value="${m.qty||''}" step="1">
+        <button class="gr-mat-del" type="button" title="Eyða">×</button>`;
+      div.querySelector('.gr-mat-del').onclick = () => { div.remove(); draw(); };
+      div.querySelectorAll('input').forEach(i=> i.addEventListener('input', draw));
+      return div;
+    }
+    function addMat(m){ $mats.appendChild(matRow(m||{label:'',price:0,qty:0})); }
+    mats.forEach(addMat);
+    document.getElementById('gr-mat-pick').onchange = (e)=>{
+      const v = e.target.value; if(!v) return;
+      const [label, price] = v.split('|');
+      addMat({label, price:Number(price)||0, qty:1}); e.target.value=''; draw();
+    };
+
+    function gatherMats(){
+      const out = [];
+      $mats.querySelectorAll('.gr-mat-line').forEach(row=>{
+        const label = row.querySelector('.m-label').value.trim();
+        const price = Number(row.querySelector('.m-price').value)||0;
+        const qty = Number(row.querySelector('.m-qty').value)||0;
+        if(!label && !qty) return;
+        out.push({ label, price, qty, total: Math.round(price*qty) });
+      });
+      return out;
+    }
+    const numv = id => Number(document.getElementById(id).value)||0;
+
+    function compute(){
+      const dvH=numv('gr-dvh'),dvR=numv('gr-dvr'),evH=numv('gr-evh'),evR=numv('gr-evr');
+      const km=numv('gr-km'),fr=numv('gr-ferd');
+      const stadf = document.getElementById('gr-stadf').checked ? GR_STADF : 0;
+      const sma = Math.round(r.sma * dvH);
+      const matLines = gatherMats();
+      const matSum = matLines.reduce((a,m)=>a+m.total,0);
+      const dvAmt=dvR*dvH, evAmt=evR*evH, kmAmt=km*r.km, frAmt=fr*r.ferd;
+      const net = dvAmt+evAmt+kmAmt+frAmt+sma+stadf+matSum;
+      const vsk = Math.round(net*r.vsk/100);
+      const total = net+vsk;
+      return {dvH,dvR,evH,evR,km,fr,stadf,sma,matLines,matSum,dvAmt,evAmt,kmAmt,frAmt,net,vsk,total};
+    }
+
+    function draw(){
+      const c = compute();
+      document.getElementById('gr-sma-hint').textContent = `${r.sma} × ${c.dvH.toFixed(1)} = ${fmt(c.sma)} kr`;
+      const kr = n => fmt(n)+' kr.';
+      const ws = document.getElementById('gr-ws').value.trim();
+      const fra = document.getElementById('gr-fra').value, til = document.getElementById('gr-til').value;
+      const row = (l,p,m,tot,md) => `<tr><td class="l">${escapeHtml(l)}</td><td class="p">${p!=null?kr(p):''}</td><td class="m">${m!=null&&m!==''?m:''}</td><td class="t">${kr(tot)}</td></tr>`;
+      let matRows = c.matLines.filter(m=>m.qty>0||m.total>0).map(m=>row(m.label, m.price, (m.qty%1?m.qty.toFixed(2):String(m.qty)), m.total)).join('');
+      if(!matRows) matRows = '';
+      const notes = document.getElementById('gr-notes').value.trim();
+      document.getElementById('gr-doc').innerHTML = `
+        <div class="gr-doc-top">
+          <img src="${escapeAttr(getLogo())}" class="gr-doc-logo" alt="" onerror="this.style.display='none'">
+          <div><h1>Brunahólf ehf.</h1><div class="gr-doc-sub">Verðskrá / tilboð</div></div>
+        </div>
+        <div class="gr-doc-meta"><div>${dmy(fra)} til ${dmy(til)}</div><div class="gr-doc-ws">${escapeHtml(ws)}</div></div>
+        <table class="gr-efni">
+          <thead><tr><td></td><td class="p">án vsk</td><td class="m">magn</td><td class="t">samtals</td></tr></thead>
+          <tbody>
+            ${c.dvH>0?row('Dagvinna', c.dvR, c.dvH.toFixed(2), c.dvAmt):''}
+            ${c.evH>0?row('Eftirvinna', c.evR, c.evH.toFixed(2), c.evAmt):''}
+            ${(c.km>0||c.fr>0)?'<tr class="sec"><td colspan="4">Akstur</td></tr>':''}
+            ${c.km>0?row('ekinn km.', r.km, c.km, c.kmAmt):''}
+            ${c.fr>0?row('ekinn ferð', r.ferd, c.fr, c.frAmt):''}
+            ${matRows?'<tr class="sec"><td colspan="4">Efni</td></tr>'+matRows:''}
+            ${(c.sma>0||c.stadf>0)?'<tr class="sec"><td colspan="4">Aukagjöld</td></tr>':''}
+            ${c.sma>0?row('Smáhlutagjald', r.sma, c.dvH.toFixed(2), c.sma):''}
+            ${c.stadf>0?row('Staðfesting brunaþéttinga', GR_STADF, '1', c.stadf):''}
+            <tr class="sub"><td colspan="3">Samtals án vsk</td><td class="t">${kr(c.net)}</td></tr>
+            <tr class="sub"><td colspan="3">vsk (${r.vsk}%)</td><td class="t">${kr(c.vsk)}</td></tr>
+            <tr class="grand"><td colspan="3">samtals með vsk</td><td class="t">${kr(c.total)}</td></tr>
+          </tbody>
+        </table>
+        ${notes?`<p style="font-size:12px;color:#555;margin-top:16px;font-style:italic">${escapeHtml(notes)}</p>`:''}`;
+    }
+    document.querySelectorAll('.gr-form input, .gr-form textarea').forEach(el=>{ el.addEventListener('input', draw); el.addEventListener('change', draw); });
+    draw();
+
+    // ----- Save -----
+    document.getElementById('gr-save').onclick = async () => {
+      const c = compute();
+      const $st = document.getElementById('gr-save-st');
+      $st.textContent = 'Vistar…';
+      const existing = draftFor(name);
+      try{
+        const rr = await fetch('/api/invoice-drafts', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            worksite_name: document.getElementById('gr-ws').value.trim(),
+            work_month: month,
+            customer_name: document.getElementById('gr-cust').value.trim() || null,
+            source: existing?.source || 'timavera',
+            hours_dagvinna: c.dvH, hours_eftirvinna: c.evH,
+            rate_dagvinna: c.dvR, rate_eftirvinna: c.evR,
+            akstur_km: c.km, akstur_ferdir: c.fr,
+            smahlutagjald: c.sma, stadfesting: c.stadf,
+            materials_jsonb: c.matLines, materials_total: c.matSum,
+            net_an_vsk: c.net, vsk_amount: c.vsk, total_m_vsk: c.total,
+            status: existing?.status || 'draft',
+            notes: document.getElementById('gr-notes').value.trim() || null,
+            updated_by: 'gerd-reikninga',
+          }),
+        });
+        if(!rr.ok) throw new Error('HTTP '+rr.status+': '+(await rr.text()).slice(0,120));
+        const saved = await rr.json();
+        DRAFTS[`${name}|${month}`] = saved;
+        $st.textContent = '✓ Vistað';
+        renderList();
+      }catch(e){ $st.textContent = '✗ '+(e.message||e); }
+    };
+
+    // ----- Print (open clean window) -----
+    document.getElementById('gr-print').onclick = () => {
+      const docHtml = document.getElementById('gr-doc').innerHTML;
+      const w = window.open('', '_blank');
+      if(!w){ alert('Leyfðu sprettiglugga til að prenta.'); return; }
+      w.document.write(`<!DOCTYPE html><html lang="is"><head><meta charset="utf-8"><title>Efnislisti — ${escapeHtml(name)} — ${monthLabel(month)}</title>
+        <style>
+          body{font-family:'Times New Roman',Times,serif;color:#000;margin:32px 40px}
+          .gr-doc-top{display:grid;grid-template-columns:180px 1fr;gap:20px;align-items:center;margin-bottom:24px}
+          .gr-doc-logo{max-width:170px;max-height:90px;object-fit:contain}
+          h1{font-size:24px;margin:0}.gr-doc-sub{font-style:italic;color:#555;margin:3px 0 0}
+          .gr-doc-meta{margin-bottom:14px}.gr-doc-ws{font-weight:700}
+          table.gr-efni{width:100%;border-collapse:collapse;font-size:13px}
+          table.gr-efni td{padding:3px 4px}
+          table.gr-efni thead td{font-style:italic;color:#555;text-align:right}
+          table.gr-efni thead td:first-child{text-align:left}
+          table.gr-efni td.l{text-align:left}
+          table.gr-efni td.p,table.gr-efni td.m,table.gr-efni td.t{text-align:right;white-space:nowrap}
+          table.gr-efni td.m{border-bottom:1px solid #000}
+          table.gr-efni tr.sec td{font-weight:700;padding-top:12px}
+          table.gr-efni tr.sub td{border-top:1px solid #000;padding-top:4px;text-align:right;font-style:italic;color:#555}
+          table.gr-efni tr.sub td.t{font-style:normal;color:#000}
+          table.gr-efni tr.grand td{border-top:1px solid #000;border-bottom:3px double #000;padding:6px 4px;text-align:right}
+          table.gr-efni tr.grand td.t{font-weight:700}
+        </style></head><body>${docHtml}<script>window.onload=function(){window.print();}<\/script></body></html>`);
+      w.document.close();
+    };
+  }
+
+  // ===== Gata (Ajour) uppgjör =====
+  async function openGata(name){
+    const month = state.ui.gr_month;
+    const isNLSH = /landssp[ií]tal|nlsh/i.test(name);
+    const bg = document.createElement('div');
+    bg.className = 'gr-modal-bg';
+    bg.innerHTML = `<div class="gr-modal" style="grid-template-columns:1fr">
+      <div class="gr-form" style="border:none;max-width:680px">
+        <div class="gr-mh"><h2>Ajour uppgjör — ${escapeHtml(name)} · ${monthLabel(month)}</h2><button class="gr-x" id="gg-x" type="button">×</button></div>
+        <div id="gg-body"><div class="gr-loading">Sæki…</div></div>
+      </div></div>`;
+    document.body.appendChild(bg);
+    const close=()=>bg.remove();
+    bg.addEventListener('click',e=>{if(e.target===bg)close();});
+    document.getElementById('gg-x').onclick=close;
+    const $b = document.getElementById('gg-body');
+
+    if(isNLSH){
+      const d = draftFor(name);
+      $b.innerHTML = `
+        <div class="gr-redder-note">NLSH (Landsspítalinn) er rukkað skv. samningstöxtum per Ajour-stökum (sjá Verðskrá → NLSH samningur). Sjálfvirkur útreikningur kemur síðar — sláðu inn heildina (m. vsk) fyrir ${monthLabel(month)} hér og vistaðu.</div>
+        <div class="gr-f"><label>Samtals m. vsk</label><input type="number" id="gg-amt" value="${d?Number(d.total_m_vsk)||'':''}" step="1"></div>
+        <div class="gr-actions"><button class="gr-btn gr-btn-primary" id="gg-save" type="button">💾 Vista</button><button class="gr-btn" id="gg-close" type="button">Loka</button><span id="gg-st" style="font-size:12px;color:#64748b;align-self:center"></span></div>`;
+      document.getElementById('gg-close').onclick=close;
+      document.getElementById('gg-save').onclick = () => saveGataTotal(name, Number(document.getElementById('gg-amt').value)||0, document.getElementById('gg-st'), close);
+      return;
+    }
+
+    // Dalvegur 30 / Heklureitur → /api/gata-uppgjor
+    try{
+      const resp = await fetch(`/api/gata-uppgjor?worksite=${encodeURIComponent(name)}&month=${encodeURIComponent(month)}`);
+      const data = await resp.json();
+      if(!resp.ok) throw new Error(data.error||('HTTP '+resp.status));
+      const holes = data.holes||[];
+      const totals = data.totals||{};
+      $b.innerHTML = `
+        <table class="gr-efni" style="margin-bottom:14px">
+          <thead><tr><td>Stærð</td><td class="m">stakar</td><td class="p">verð/stk án vsk</td><td class="t">samtals m.vsk</td></tr></thead>
+          <tbody>${holes.map(h=>`<tr><td class="l">${escapeHtml(h.size_label||h.group||'')}</td><td class="m">${h.stakar||0}</td><td class="p">${fmt(h.rate_an_vsk)} kr</td><td class="t">${fmt(h.m_vsk)} kr</td></tr>`).join('')||'<tr><td colspan="4">Engin Ajour gögn.</td></tr>'}</tbody>
+        </table>
+        <div class="gr-f"><label>Bönd / Kragar m. vsk (handvirkt — ekki í Ajour)</label><input type="number" id="gg-bands" value="${totals.bands_m_vsk||''}" step="1"></div>
+        <div style="font-weight:700;margin:8px 0">Göt m.vsk: ${fmt(totals.holes_m_vsk)} kr · Samtals m.vsk: <span id="gg-total">${fmt(totals.total_m_vsk)}</span> kr</div>
+        <div class="gr-actions"><button class="gr-btn gr-btn-primary" id="gg-save" type="button">💾 Vista heildina</button><button class="gr-btn" id="gg-close" type="button">Loka</button><span id="gg-st" style="font-size:12px;color:#64748b;align-self:center"></span></div>`;
+      const recalc = () => {
+        const bands = Number(document.getElementById('gg-bands').value)||0;
+        const tot = (Number(totals.holes_m_vsk)||0) + bands;
+        document.getElementById('gg-total').textContent = fmt(tot);
+        return tot;
+      };
+      document.getElementById('gg-bands').addEventListener('input', recalc);
+      document.getElementById('gg-close').onclick=close;
+      document.getElementById('gg-save').onclick = () => saveGataTotal(name, recalc(), document.getElementById('gg-st'), close);
+    }catch(e){
+      $b.innerHTML = `<div class="gr-loading">Villa: ${escapeHtml(e.message||String(e))}</div>`;
+    }
+  }
+
+  async function saveGataTotal(name, total, $st, close){
+    const month = state.ui.gr_month;
+    const existing = draftFor(name);
+    if($st) $st.textContent = 'Vistar…';
+    try{
+      const rr = await fetch('/api/invoice-drafts', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ worksite_name:name, work_month:month, source: existing?.source||'ajour',
+          total_m_vsk: total, status: existing?.status||'draft', updated_by:'gerd-reikninga' }),
+      });
+      if(!rr.ok) throw new Error('HTTP '+rr.status);
+      DRAFTS[`${name}|${month}`] = await rr.json();
+      if($st) $st.textContent = '✓ Vistað';
+      renderList();
+      if(close) setTimeout(close, 600);
+    }catch(e){ if($st) $st.textContent = '✗ '+(e.message||e); }
+  }
+
+  load();
+}
+
+
 async function renderVinnubok(t){
   $view.innerHTML = `
     <div class="rg-wrap">
