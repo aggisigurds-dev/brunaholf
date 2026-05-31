@@ -3464,6 +3464,7 @@ function renderReikningagerd(t){
       if (efR && efR.ok) {
         const { rows } = await efR.json();
         for (const row of (rows||[])) {
+          if (row.doc_type === 'invoice') continue;  // invoices have their own slot in Vinnubók
           const k = `${row.worksite_name}|${row.work_month}`;
           if (!lastData.efnislisti[k]) lastData.efnislisti[k] = [];
           lastData.efnislisti[k].push({ id: row.drive_file_id, title: row.title });
@@ -5428,16 +5429,19 @@ async function renderVinnubok(t){
     data = {
       worksites: ws.worksites || [],
       drafts: {},
-      efnislisti: {},
+      efnislisti: {},   // work documents (doc_type='efnislisti')
+      invoices: {},     // invoice / reikningur documents (doc_type='invoice')
       scan: {},   // `${worksite}|${month}` → { amount, snippet, file, status } from folder scan
       rates: window.__rgPricingGuide || {},
     };
     for(const d of (dr.rows || [])){
       data.drafts[`${d.worksite_name}|${d.work_month}`] = d;
     }
+    // rows ordered added_at desc → first per cell+type is the most recent
     for(const e of (ef.rows || [])){
       const k = `${e.worksite_name}|${e.work_month}`;
-      if(!data.efnislisti[k]) data.efnislisti[k] = { id: e.drive_file_id, title: e.title };
+      const slot = e.doc_type === 'invoice' ? data.invoices : data.efnislisti;
+      if(!slot[k]) slot[k] = { id: e.drive_file_id, title: e.title };
     }
   }
 
@@ -5684,7 +5688,10 @@ async function renderVinnubok(t){
       input.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); input.blur(); } });
     });
     $host.querySelectorAll('[data-vb-attach]').forEach(btn => {
-      btn.onclick = () => openDriveSearch(btn.dataset.vbAttach);
+      btn.onclick = () => openDriveSearch(btn.dataset.vbAttach, 'efnislisti');
+    });
+    $host.querySelectorAll('[data-vb-attach-inv]').forEach(btn => {
+      btn.onclick = () => openDriveSearch(btn.dataset.vbAttachInv, 'invoice');
     });
     // Review-status cycle: empty → yellow → red → empty
     $host.querySelectorAll('[data-vb-review]').forEach(btn => {
@@ -5801,6 +5808,7 @@ async function renderVinnubok(t){
     const draft = data.drafts[draftKey];
     const draftKr = draft ? Number(draft.total_m_vsk || 0) : 0;
     const ef = data.efnislisti[draftKey];
+    const inv = data.invoices[draftKey];
     const sug = (data.scan || {})[draftKey];
     const sugAmount = sug && sug.amount ? Number(sug.amount) : 0;
     const showSug = sugAmount > 0 && sugAmount !== draftKr;
@@ -5858,6 +5866,13 @@ async function renderVinnubok(t){
                  <button type="button" class="vb-attach-btn" data-vb-attach="${escapeAttr(draftKey)}" title="Skipta um skjal" style="padding:3px 7px;font-size:11px;border:1px solid #cbd5e1;background:#fff;border-radius:5px;cursor:pointer;color:#64748b">↻</button>
                </div>`
             : `<button type="button" class="vb-attach-btn" data-vb-attach="${escapeAttr(draftKey)}" style="width:100%;padding:7px 10px;font-size:11px;border:1.5px dashed #cbd5e1;background:transparent;border-radius:6px;cursor:pointer;color:#64748b;font-weight:500;transition:all .15s">+ Tengja skjal</button>`
+          }
+          ${inv
+            ? `<div style="display:flex;align-items:center;gap:6px;font-size:11px;margin-top:5px">
+                 <a href="https://drive.google.com/file/d/${inv.id}/view" target="_blank" rel="noopener" title="Reikningur: ${escapeAttr(inv.title || '')}" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#059669;text-decoration:none;font-weight:600">🧾 ${escapeHtml((inv.title || 'Reikningur').replace(/\.(xlsx|pdf|docx)$/i, ''))}</a>
+                 <button type="button" class="vb-attach-btn" data-vb-attach-inv="${escapeAttr(draftKey)}" title="Skipta um reikning" style="padding:3px 7px;font-size:11px;border:1px solid #cbd5e1;background:#fff;border-radius:5px;cursor:pointer;color:#64748b">↻</button>
+               </div>`
+            : `<button type="button" class="vb-attach-btn" data-vb-attach-inv="${escapeAttr(draftKey)}" style="width:100%;margin-top:5px;padding:6px 10px;font-size:11px;border:1.5px dashed #a7f3d0;background:transparent;border-radius:6px;cursor:pointer;color:#059669;font-weight:600;transition:all .15s">+ Tengja reikning</button>`
           }
         </div>
       </td>
@@ -6003,7 +6018,9 @@ async function renderVinnubok(t){
 
   // General document picker: attach ANY Drive file to a (worksite, month) cell.
   // Two modes — browse the worksite's Drive folder, or free-text search Drive.
-  function openDriveSearch(cellKey){
+  function openDriveSearch(cellKey, docType){
+    docType = docType === 'invoice' ? 'invoice' : 'efnislisti';
+    const isInv = docType === 'invoice';
     const [worksite, month] = cellKey.split('|');
     const w = (data.worksites || []).find(x => x.project === worksite);
     const rootFolderId = driveFolderIdFromUrl(w && w.status && w.status.drive_folder_url);
@@ -6012,7 +6029,7 @@ async function renderVinnubok(t){
     wrap.innerHTML = `
       <div class="vb-modal" role="dialog">
         <div class="vb-modal-h">
-          <span>Tengja skjal — <b>${escapeHtml(worksite)}</b> · ${month}</span>
+          <span>${isInv ? 'Tengja reikning' : 'Tengja skjal'} — <b>${escapeHtml(worksite)}</b> · ${month}</span>
           <button type="button" class="vb-modal-x" data-vb-close>×</button>
         </div>
         <div class="vb-modal-body">
@@ -6046,10 +6063,10 @@ async function renderVinnubok(t){
       try {
         const r = await fetch('/api/efnislisti-docs', {
           method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ worksite_name: worksite, work_month: month, drive_file_id: id, title: name }),
+          body: JSON.stringify({ worksite_name: worksite, work_month: month, drive_file_id: id, title: name, doc_type: docType }),
         });
         if(!r.ok) throw new Error('HTTP '+r.status);
-        data.efnislisti[cellKey] = { id, title: name };
+        (isInv ? data.invoices : data.efnislisti)[cellKey] = { id, title: name };
         render();
         close();
       } catch(e){ alert('Tenging mistókst: '+(e.message||e)); }

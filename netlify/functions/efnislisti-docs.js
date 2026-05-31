@@ -1,7 +1,9 @@
 // efnislisti-docs.js — Drive links per (worksite, month).
 //   GET  /api/efnislisti-docs                          → all rows
 //   GET  /api/efnislisti-docs?worksite=X&month=YYYY-MM → filter
-//   POST /api/efnislisti-docs   body { worksite_name, work_month, drive_file_id, title }
+//   GET  /api/efnislisti-docs?doc_type=invoice         → only invoice links
+//   POST /api/efnislisti-docs   body { worksite_name, work_month, drive_file_id, title, doc_type? }
+//        doc_type: 'efnislisti' (default, work doc) | 'invoice' (reikningur)
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -15,6 +17,7 @@ exports.handler = async (event) => {
     const params = ['select=*', 'order=added_at.desc.nullslast'];
     if (q.worksite) params.push(`worksite_name=eq.${encodeURIComponent(q.worksite)}`);
     if (q.month)    params.push(`work_month=eq.${encodeURIComponent(q.month)}`);
+    if (q.doc_type) params.push(`doc_type=eq.${encodeURIComponent(q.doc_type)}`);
     const r = await fetch(`${SUPABASE_URL}/rest/v1/efnislisti_documents?${params.join('&')}`, {
       headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` },
     });
@@ -34,6 +37,7 @@ exports.handler = async (event) => {
       work_month:    body.work_month,
       drive_file_id: body.drive_file_id,
       title:         body.title || null,
+      doc_type:      body.doc_type === 'invoice' ? 'invoice' : 'efnislisti',
     };
     // Upsert: PK is (worksite_name, work_month, drive_file_id). Re-linking the
     // same file must succeed (idempotent) instead of throwing 409 Conflict.
