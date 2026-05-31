@@ -1731,13 +1731,16 @@ function clearDataCache(){
 // state with an older snapshot from the server).
 function ensureNewTabs(s){
   if(!s || !Array.isArray(s.tabs)) return;
-  ['vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','spurningar'].forEach(id=>{
+  ['gerdreikninga','vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','spurningar'].forEach(id=>{
     if(!s.tabs.find(t=>t.id===id)){
       const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
       if(d){
-        // Tab order: reikningar → vinnubok → vinnustofa → verdskra → efniskostnadur
+        // Tab order: reikningar → gerdreikninga → vinnubok → vinnustofa → verdskra → efniskostnadur
         let target;
-        if(id === 'vinnubok'){
+        if(id === 'gerdreikninga'){
+          const idx = s.tabs.findIndex(t=>t.id==='reikningar');
+          target = idx >= 0 ? idx + 1 : -1;
+        } else if(id === 'vinnubok'){
           const idx = s.tabs.findIndex(t=>t.id==='reikningar');
           target = idx >= 0 ? idx + 1 : -1;
         } else if(id === 'vinnustofa'){
