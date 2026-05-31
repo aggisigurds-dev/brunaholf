@@ -142,6 +142,13 @@
   to = "/.netlify/functions/nlsh-uppgjor"
   status = 200
 
+# Tímabók — staff time book per worksite/month, to send with the invoice
+#   /api/timabok?worksite=Fjarðagata&month=2026-02
+[[redirects]]
+  from = "/api/timabok"
+  to = "/.netlify/functions/timabok"
+  status = 200
+
 # Generic Verðskrá hole-size rates (Dalvegur 30 / Heklureitur)
 [[redirects]]
   from = "/api/hole-rates"

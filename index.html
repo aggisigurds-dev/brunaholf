@@ -4834,6 +4834,7 @@ async function renderGerdReikninga(t){
           <div class="gr-actions">
             <button class="gr-btn gr-btn-primary" id="gr-save" type="button">💾 Vista</button>
             <button class="gr-btn" id="gr-print" type="button">🖨 Prenta / PDF</button>
+            <button class="gr-btn" id="gr-timabok" type="button" title="Prenta tímabók (mæting starfsmanna) til að senda með reikningi">🕒 Tímabók</button>
             <button class="gr-btn" id="gr-close2" type="button">Loka</button>
             <span id="gr-save-st" style="font-size:12px;color:#64748b;align-self:center"></span>
           </div>
@@ -4991,6 +4992,92 @@ async function renderGerdReikninga(t){
           table.gr-efni tr.grand td.t{font-weight:700}
         </style></head><body>${docHtml}<script>window.onload=function(){window.print();}<\/script></body></html>`);
       w.document.close();
+    };
+
+    // Tímabók: printable staff attendance (when staff came/left) to send with the invoice.
+    document.getElementById('gr-timabok').onclick = async () => {
+      const btn = document.getElementById('gr-timabok');
+      const old = btn.textContent; btn.textContent = '⏳ Sæki…'; btn.disabled = true;
+      try {
+        const resp = await fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&month=${encodeURIComponent(month)}`);
+        const data = await resp.json();
+        if(!resp.ok) throw new Error(data.error || ('HTTP '+resp.status));
+        if(!(data.rows||[]).length){ alert(`Engar tímafærslur fyrir ${name} í ${monthLabel(month)}.`); return; }
+        const t = data.totals || {};
+        const hr = n => (Number(n)||0).toLocaleString('is-IS',{minimumFractionDigits:2,maximumFractionDigits:2});
+        // Group rows by date (newest first), employees alphabetical within a day.
+        const byDate = {};
+        for(const r of data.rows){ (byDate[r.date]=byDate[r.date]||[]).push(r); }
+        const dateRows = Object.keys(byDate).sort().reverse().map(d=>{
+          const list = byDate[d].sort((a,b)=>a.employee.localeCompare(b.employee,'is'));
+          const dayH = list.reduce((s,r)=>s+(Number(r.hours)||0),0);
+          return list.map((r,i)=>`<tr>
+              <td class="d">${i===0?dmy(d):''}</td>
+              <td>${escapeHtml(r.employee)}</td>
+              <td class="c">${escapeHtml(r.time_in)}</td>
+              <td class="c">${escapeHtml(r.time_out)}</td>
+              <td class="r">${hr(r.hours)}</td>
+              <td class="r dim">${r.lunch?hr(r.lunch):''}</td>
+            </tr>`).join('')
+            + `<tr class="dsum"><td></td><td colspan="3">Samtals ${dmy(d)}</td><td class="r">${hr(dayH)}</td><td></td></tr>`;
+        }).join('');
+        const empRows = (data.by_employee||[]).map(e=>`<tr><td>${escapeHtml(e.employee)}</td><td class="r">${e.days}</td><td class="r">${hr(e.hours)}</td></tr>`).join('');
+        const logo = (()=>{ try { return localStorage.getItem('brunaholfLogo') || '/reikningur/logo.png'; } catch { return '/reikningur/logo.png'; } })();
+        const win = window.open('', '_blank');
+        if(!win){ alert('Leyfðu sprettiglugga til að prenta.'); return; }
+        win.document.write(`<!DOCTYPE html><html lang="is"><head><meta charset="utf-8"><title>Tímabók — ${escapeHtml(name)} — ${monthLabel(month)}</title>
+          <style>
+            body{font-family:'Times New Roman',Times,serif;color:#000;margin:30px 38px}
+            .tb-top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:16px}
+            .tb-logo{max-width:150px;max-height:74px;object-fit:contain}
+            h1{font-size:22px;margin:0}
+            .tb-sub{font-style:italic;color:#555;margin-top:3px}
+            .tb-ws{font-weight:700;font-size:15px;margin-top:2px}
+            table{width:100%;border-collapse:collapse;font-size:12.5px}
+            th{text-align:left;border-bottom:1px solid #000;padding:4px 5px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#444}
+            th.r,td.r{text-align:right;white-space:nowrap}th.c,td.c{text-align:center;white-space:nowrap}
+            td{padding:3px 5px}
+            td.d{font-weight:700;white-space:nowrap}
+            td.dim{color:#777}
+            tr.dsum td{border-bottom:1px solid #ccc;font-style:italic;color:#555;padding-bottom:6px}
+            tr.dsum td.r{font-style:normal;color:#000;font-weight:600}
+            .tb-totals{margin-top:18px;border-top:2px solid #000;padding-top:8px;display:flex;gap:28px;font-size:13px;flex-wrap:wrap}
+            .tb-totals b{font-size:16px}
+            .tb-emp{margin-top:22px}
+            .tb-emp h2{font-size:14px;margin:0 0 6px}
+            .tb-emp table{width:auto;min-width:280px}
+            .tb-foot{margin-top:24px;font-size:11px;color:#777;font-style:italic}
+            @media print{body{margin:12mm}}
+          </style></head><body>
+          <div class="tb-top">
+            <div>
+              <h1>Tímabók</h1>
+              <div class="tb-sub">Mæting starfsmanna — fylgiskjal með reikningi</div>
+              <div class="tb-ws">${escapeHtml(name)} · ${monthLabel(month)}</div>
+            </div>
+            <img class="tb-logo" src="${escapeAttr(logo)}" onerror="this.style.display='none'">
+          </div>
+          <table>
+            <thead><tr><th>Dagsetning</th><th>Starfsmaður</th><th class="c">Inn</th><th class="c">Út</th><th class="r">Tímar</th><th class="r">Hád.</th></tr></thead>
+            <tbody>${dateRows}</tbody>
+          </table>
+          <div class="tb-totals">
+            <div>Dagar: <b>${t.days}</b></div>
+            <div>Færslur: <b>${t.entries}</b></div>
+            <div>Tímar alls: <b>${hr(t.hours)}</b></div>
+            <div>Hádegismatur: <b>${hr(t.lunch)}</b></div>
+            <div>Vinnustundir (nettó): <b>${hr(t.net)}</b></div>
+          </div>
+          <div class="tb-emp">
+            <h2>Samantekt á starfsmann</h2>
+            <table><thead><tr><th>Starfsmaður</th><th class="r">Dagar</th><th class="r">Tímar</th></tr></thead><tbody>${empRows}</tbody></table>
+          </div>
+          <div class="tb-foot">Brunahólf ehf · unnið úr Tímaveru ${new Date().toLocaleDateString('is-IS')}</div>
+          <script>window.onload=function(){window.print();}<\/script></body></html>`);
+        win.document.close();
+      } catch(e){
+        alert('Gat ekki sótt tímabók: '+(e.message||e));
+      } finally { btn.textContent = old; btn.disabled = false; }
     };
   }
 
