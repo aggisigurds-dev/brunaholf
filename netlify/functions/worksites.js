@@ -6,7 +6,7 @@
 //
 // Supports:
 //   GET  /api/worksites?year=2026
-//   POST /api/worksites  body { project_name, year, billing_status?, notes?, drive_folder_url? }
+//   POST /api/worksites  body { project_name, year, billing_status?, notes?, drive_folder_url?, payday_url? }
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -211,7 +211,7 @@ exports.handler = async (event) => {
         })),
         status: statusByProject[p.project] || {
           billing_status: 'unreviewed', notes: null, drive_folder_url: null,
-          contract_url: null, invoice_amount: null, invoice_date: null,
+          contract_url: null, payday_url: null, invoice_amount: null, invoice_date: null,
         },
       };
     }).sort((a, b) => b.hours - a.hours);
@@ -248,7 +248,7 @@ async function updateStatus(event) {
   const { project_name, year } = body;
   if (!project_name || !year) return json(400, { error: 'project_name and year are required' });
 
-  const allowed = ['billing_status','notes','drive_folder_url','contract_url','invoice_amount','invoice_date','updated_by'];
+  const allowed = ['billing_status','notes','drive_folder_url','contract_url','payday_url','invoice_amount','invoice_date','updated_by'];
   const payload = { project_name, year, updated_at: new Date().toISOString() };
   for (const k of allowed) if (body[k] !== undefined) payload[k] = body[k];
 
