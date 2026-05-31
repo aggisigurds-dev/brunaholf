@@ -4522,6 +4522,35 @@ async function renderGerdReikninga(t){
     ]},
   ];
   const GR_FLAT = GR_MATERIALS.flatMap(s=>s.items);
+  // Autofill from Redder should bill the customer our SALE price, not the buy-in
+  // cost. Match each Redder line to a Verðskrá item → use that price; if no match,
+  // fall back to Redder cost + 15% álagning. (Markup only on first autofill;
+  // once the draft is saved, its stored prices are reused unchanged.)
+  const GR_REDDER_MARKUP = 1.15;
+  const grNorm = (s)=>String(s||'').toLowerCase().replace(/[^0-9a-záðéíóúýþæ]+/gi,' ').replace(/\s+/g,' ').trim();
+  function matchVerdskra(label){
+    const n = grNorm(label);
+    if(!n) return null;
+    const mm = (n.match(/(\d{2,3})\s*mm/)||[])[1] || null;
+    let best=null, bestScore=0;
+    for(const it of GR_FLAT){
+      const ni = grNorm(it.label);
+      const itMm = (ni.match(/(\d{2,3})\s*mm/)||[])[1] || null;
+      if((mm||itMm) && mm !== itMm) continue;          // sizes must agree if either has one
+      const toks = ni.split(' ').filter(t=>t.length>2 && !/^\d+$/.test(t) && !/mm$/.test(t));
+      if(!toks.length) continue;
+      let hit=0; for(const t of toks) if(n.includes(t)) hit++;
+      let score = hit/toks.length;
+      if(mm && itMm && mm===itMm) score += 0.5;        // matched size is a strong signal
+      if(score>bestScore){ bestScore=score; best=it; }
+    }
+    return bestScore>=0.6 ? best : null;
+  }
+  // Sale price for a Redder line: Verðskrá match, else cost + markup.
+  function grSalePrice(label, cost){
+    const m = matchVerdskra(label);
+    return m ? m.price : Math.round((Number(cost)||0) * GR_REDDER_MARKUP);
+  }
   const GR_KM=186, GR_FERD=4000, GR_SMA=137, GR_STADF=20000;
 
   function isGata(name){ return /landsspítal|landsspital|nlsh|heklu|dalvegur 30/i.test(name||''); }
@@ -4608,8 +4637,9 @@ async function renderGerdReikninga(t){
       .gr-f input,.gr-f textarea{width:100%;padding:6px 8px;font-size:13px;border:1px solid var(--border,#cbd5e1);border-radius:5px;font-family:inherit}
       .gr-r2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
       .gr-r3{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:6px;align-items:end}
-      .gr-mat-line{display:grid;grid-template-columns:1fr 74px 56px 26px;gap:5px;align-items:center;margin-bottom:5px}
+      .gr-mat-line{display:grid;grid-template-columns:1fr 74px 56px 26px;gap:5px 5px;align-items:center;margin-bottom:5px}
       .gr-mat-line input{padding:5px 6px;font-size:12px}
+      .gr-mat-line .m-warn{grid-column:1 / -1;font-size:10.5px;color:#b91c1c;background:#fef2f2;border:1px solid #fecaca;border-radius:5px;padding:3px 6px;margin-top:1px}
       .gr-mat-del{border:none;background:transparent;color:#dc2626;cursor:pointer;font-size:15px}
       .gr-mat-add{display:flex;gap:6px;margin-top:6px}
       .gr-mat-add select{flex:1;padding:6px;font-size:12px;border:1px solid var(--border,#cbd5e1);border-radius:5px}
@@ -4703,7 +4733,11 @@ async function renderGerdReikninga(t){
         (REDDER[k] = REDDER[k] || {an_vsk:0, lines:[]});
         REDDER[k].an_vsk += Number(r.an_vsk)||0;
         for(const li of (r.redder_line_items||[])){
-          REDDER[k].lines.push({ label: li.item_description||'Efni', price: Number(li.unit_price_an_vsk)||0, qty: Number(li.quantity)||0 });
+          const qty = Number(li.magn)||0;
+          // Real buy-in unit cost = line total / qty (upphaed is AFTER afsláttur);
+          // fall back to ein_verd if qty/total missing.
+          const cost = qty>0 && li.upphaed!=null ? Math.round(Number(li.upphaed)/qty) : (Number(li.ein_verd)||0);
+          REDDER[k].lines.push({ label: li.item_name||'Efni', cost, qty });
         }
       }
       renderList();
@@ -4795,10 +4829,12 @@ async function renderGerdReikninga(t){
     const notes = d ? (d.notes||'') : '';
     let mats = [];
     if(d && Array.isArray(d.materials_jsonb) && d.materials_jsonb.length){
-      mats = d.materials_jsonb.map(m=>({label:m.label||'', price:Number(m.price)||0, qty:Number(m.qty)||0}));
+      mats = d.materials_jsonb.map(m=>({label:m.label||'', price:Number(m.price)||0, qty:Number(m.qty)||0, cost:Number(m.cost)||0}));
     } else {
+      // First autofill from Redder → bill our sale price (Verðskrá match, else cost +15%).
+      // Carry the buy-in cost so we can warn if a sale price ends up below cost.
       const rd = REDDER[`${name}|${month}`];
-      if(rd && rd.lines.length) mats = rd.lines.map(l=>({label:l.label, price:l.price, qty:l.qty}));
+      if(rd && rd.lines.length) mats = rd.lines.map(l=>({label:l.label, price:grSalePrice(l.label, l.cost), qty:l.qty, cost:l.cost}));
     }
     const redderTotal = (REDDER[`${name}|${month}`]||{}).an_vsk || 0;
 
@@ -4823,7 +4859,7 @@ async function renderGerdReikninga(t){
           <div class="gr-st">Akstur</div>
           <div class="gr-r2"><div class="gr-f"><label>km × ${r.km}</label><input type="number" id="gr-km" value="${km}" step="10"></div><div class="gr-f"><label>ferðir × ${fmt(r.ferd)}</label><input type="number" id="gr-ferd" value="${fr}" step="1"></div></div>
           <div class="gr-st">Efni (Redder / handvirkt)</div>
-          ${redderTotal>0?`<div class="gr-redder-note">Redder efniskostnaður þennan mánuð: <b>${fmt(redderTotal)} kr án vsk</b>. Forútfyllt að neðan — leiðréttu magn/verð eftir þörfum.</div>`:''}
+          ${redderTotal>0?`<div class="gr-redder-note">Redder innkaupsverð þennan mánuð: <b>${fmt(redderTotal)} kr án vsk</b>. Forútfyllt á <b>söluverði</b> (Verðskrá ef til, annars innkaup +15% álagning) — leiðréttu magn/verð eftir þörfum.</div>`:''}
           <div id="gr-mats"></div>
           <div class="gr-mat-add">${matSelect}</div>
           <div class="gr-st">Aukagjöld</div>
@@ -4851,20 +4887,33 @@ async function renderGerdReikninga(t){
     function matRow(m){
       const div = document.createElement('div');
       div.className = 'gr-mat-line';
+      div.dataset.cost = Number(m.cost)||0;  // Redder buy-in unit cost (0 = manual/unknown)
       div.innerHTML = `<input class="m-label" placeholder="Lýsing" value="${escapeAttr(m.label||'')}">
         <input class="m-price" type="number" placeholder="verð" value="${m.price||''}" step="1">
         <input class="m-qty" type="number" placeholder="magn" value="${m.qty||''}" step="1">
-        <button class="gr-mat-del" type="button" title="Eyða">×</button>`;
+        <button class="gr-mat-del" type="button" title="Eyða">×</button>
+        <div class="m-warn" hidden></div>`;
       div.querySelector('.gr-mat-del').onclick = () => { div.remove(); draw(); };
-      div.querySelectorAll('input').forEach(i=> i.addEventListener('input', draw));
+      div.querySelectorAll('input').forEach(i=> i.addEventListener('input', () => { updateWarn(div); draw(); }));
+      updateWarn(div);
       return div;
     }
-    function addMat(m){ $mats.appendChild(matRow(m||{label:'',price:0,qty:0})); }
+    // Warn when the price we charge is below what we paid Redder (margin loss).
+    function updateWarn(div){
+      const cost = Number(div.dataset.cost)||0;
+      const price = Number(div.querySelector('.m-price').value)||0;
+      const $w = div.querySelector('.m-warn');
+      if(cost>0 && price>0 && price < cost){
+        $w.hidden = false;
+        $w.textContent = `⚠ Söluverð (${fmt(price)}) er lægra en innkaup hjá Redder (${fmt(cost)} kr/stk)`;
+      } else { $w.hidden = true; $w.textContent=''; }
+    }
+    function addMat(m){ $mats.appendChild(matRow(m||{label:'',price:0,qty:0,cost:0})); }
     mats.forEach(addMat);
     document.getElementById('gr-mat-pick').onchange = (e)=>{
       const v = e.target.value; if(!v) return;
       const [label, price] = v.split('|');
-      addMat({label, price:Number(price)||0, qty:1}); e.target.value=''; draw();
+      addMat({label, price:Number(price)||0, qty:1, cost:0}); e.target.value=''; draw();
     };
 
     function gatherMats(){
@@ -4873,8 +4922,9 @@ async function renderGerdReikninga(t){
         const label = row.querySelector('.m-label').value.trim();
         const price = Number(row.querySelector('.m-price').value)||0;
         const qty = Number(row.querySelector('.m-qty').value)||0;
+        const cost = Number(row.dataset.cost)||0;
         if(!label && !qty) return;
-        out.push({ label, price, qty, total: Math.round(price*qty) });
+        out.push({ label, price, qty, cost, total: Math.round(price*qty) });
       });
       return out;
     }
