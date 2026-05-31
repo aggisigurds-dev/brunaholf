@@ -4624,6 +4624,14 @@ async function renderGerdReikninga(t){
       .gr-card{background:#fff;border:1px solid var(--border,#e2e8f0);border-radius:12px;padding:14px 16px;box-shadow:0 1px 2px rgba(15,23,42,.04);display:flex;flex-direction:column;gap:8px}
       .gr-card.gr-done{border-color:#a7f3d0;background:linear-gradient(135deg,#fff 0%,#f0fdf4 100%)}
       .gr-card.gr-gata{border-color:#fcd9b6;background:linear-gradient(135deg,#fff 0%,#fff8f0 100%)}
+      .gr-card.gr-todo{border-left:4px solid #f59e0b}
+      .gr-card.gr-todo.gr-done{border-left-color:#a7f3d0}
+      .gr-pill-todo{background:#fef3c7;color:#b45309}
+      .gr-dot{width:16px;height:16px;border-radius:50%;border:2px solid #cbd5e1;background:#fff;cursor:pointer;flex:none;padding:0;transition:transform .1s,box-shadow .1s}
+      .gr-dot:hover{transform:scale(1.18)}
+      .gr-dot.state-green{background:#10b981;border-color:#059669}
+      .gr-dot.state-yellow{background:#facc15;border-color:#ca8a04}
+      .gr-dot.state-red{background:#ef4444;border-color:#b91c1c}
       .gr-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
       .gr-card-name{font-weight:700;font-size:15px;line-height:1.25}
       .gr-card-cust{font-size:11.5px;color:var(--muted,#64748b);margin-top:1px}
@@ -4780,11 +4788,21 @@ async function renderGerdReikninga(t){
       const est = !gataFlag ? Math.round(hrs * r.dv * (1+r.vsk/100)) : 0;
       const redder = (REDDER[`${name}|${month}`]||{}).an_vsk || 0;
       const saved = d && Number(d.total_m_vsk) > 0;
+      const dotKey = `${name}|${month}`;
+      state.ui.vb_review = state.ui.vb_review || {};
+      const dot = state.ui.vb_review[dotKey];   // undefined | 'green' | 'yellow' | 'red'
+      const dotTitle = dot==='green' ? 'Staðfest / tilbúið'
+                     : dot==='yellow' ? 'Ágiskun — skoða betur'
+                     : dot==='red' ? 'Þarfnast skoðunar'
+                     : 'Smelltu til að merkja: grænt = tilbúið, gult = skoða, rautt = vantar';
       return `
-        <div class="gr-card ${saved?'gr-done':''} ${gataFlag?'gr-gata':''}">
+        <div class="gr-card ${saved?'gr-done':''} ${gataFlag?'gr-gata':''} ${saved?'':'gr-todo'}">
           <div class="gr-card-top">
-            <div><div class="gr-card-name">${escapeHtml(name)}</div>${cust?`<div class="gr-card-cust">${escapeHtml(cust)}</div>`:''}</div>
-            ${saved?`<span class="gr-pill gr-pill-saved">✓ ${fmt(d.total_m_vsk)}</span>`:(d?`<span class="gr-pill gr-pill-draft">drög</span>`:'')}
+            <div style="display:flex;align-items:center;gap:8px">
+              <button type="button" class="gr-dot ${dot?'state-'+dot:''}" data-gr-dot="${escapeAttr(dotKey)}" title="${dotTitle}"></button>
+              <div><div class="gr-card-name">${escapeHtml(name)}</div>${cust?`<div class="gr-card-cust">${escapeHtml(cust)}</div>`:''}</div>
+            </div>
+            ${saved?`<span class="gr-pill gr-pill-saved">✓ ${fmt(d.total_m_vsk)}</span>`:`<span class="gr-pill gr-pill-todo">⏳ eftir</span>`}
           </div>
           <div class="gr-card-figs">
             ${gataFlag
@@ -4824,6 +4842,20 @@ async function renderGerdReikninga(t){
     $meta.textContent = `${monthLabel(month)} · ${fmt(savedTotal)} kr vistað · ${pending} eftir`;
     $host.querySelectorAll('[data-gr-edit]').forEach(b=> b.onclick = ()=> openEditor(b.dataset.grEdit));
     $host.querySelectorAll('[data-gr-gata]').forEach(b=> b.onclick = ()=> openGata(b.dataset.grGata));
+    // Status dot: cycle none → green → yellow → red → none. Shares state.ui.vb_review
+    // with Vinnubók so a worksite/month marking stays in sync across both views.
+    $host.querySelectorAll('[data-gr-dot]').forEach(btn=>{
+      btn.onclick = (e)=>{
+        e.stopPropagation();
+        const key = btn.dataset.grDot;
+        state.ui.vb_review = state.ui.vb_review || {};
+        const cur = state.ui.vb_review[key];
+        const next = cur==='green' ? 'yellow' : cur==='yellow' ? 'red' : cur==='red' ? undefined : 'green';
+        if(next) state.ui.vb_review[key] = next; else delete state.ui.vb_review[key];
+        save();
+        btn.className = 'gr-dot' + (next ? ' state-'+next : '');
+      };
+    });
   }
 
   // ===== Efnislisti editor (prefilled, editable, savable) =====
