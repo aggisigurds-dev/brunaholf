@@ -71,11 +71,40 @@ exports.handler = async (event) => {
     .map(e => ({ employee: e.employee, hours: Math.round(e.hours * 100) / 100, days: e.days.size }))
     .sort((a, b) => b.hours - a.hours);
 
+  // Dagvinna / eftirvinna split, per person per day:
+  //  - Weekends (Sat/Sun): all net hours → eftirvinna.
+  //  - Weekdays: gross hours over 8.5/day → eftirvinna (the 0.5h hádegismatur
+  //    sits inside the normal day, so overtime starts after 8.5h gross);
+  //    the remaining net hours → dagvinna.
+  const pd = {}; // `${employee}|${date}` → { gross, lunch, dow }
+  for (const r of rows) {
+    const hours = Number(r.hours) || 0;
+    if (hours <= 0) continue;
+    const k = `${r.employee}|${r.date}`;
+    if (!pd[k]) pd[k] = { gross: 0, lunch: 0, dow: new Date(r.date + 'T00:00:00Z').getUTCDay() };
+    pd[k].gross += hours;
+  }
+  let dagvinna = 0, eftirvinna = 0;
+  for (const k in pd) {
+    const p = pd[k];
+    const lunch = p.gross >= 6 ? LUNCH_HOURS : 0;
+    const net = p.gross - lunch;
+    const isWeekend = p.dow === 0 || p.dow === 6;
+    const ev = isWeekend ? net : Math.max(p.gross - 8.5, 0);
+    const dv = isWeekend ? 0 : net - ev;
+    dagvinna += dv; eftirvinna += ev;
+  }
+
   return json(200, {
     worksite, month,
     matched_names: [...names],
     rows: out,
     by_employee,
+    split: {
+      hours_dagvinna: Math.round(dagvinna * 100) / 100,
+      hours_eftirvinna: Math.round(eftirvinna * 100) / 100,
+      rule: 'yfirvinna eftir 8,5 klst/dag á mann; helgar allar yfirvinna',
+    },
     totals: {
       hours: Math.round(totalHours * 100) / 100,
       lunch: Math.round(totalLunch * 100) / 100,
