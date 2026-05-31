@@ -37,7 +37,7 @@ const VERK = [
   { verk_nr: '2.10', label: 'Ø400-630 loftstokkar',           rate: 46128, test: /loft.*400-630/i },
   { verk_nr: '2.11', label: 'Frágangur raufa m. stokkum (m)', rate: 11532, test: /^raufar/i },
   { verk_nr: '1.1',  label: 'Ø100-150 Gólf/Hæðarskil',        rate: 38806, test: /g[óo]lf.*100-150/i },
-  { verk_nr: '1.2',  label: 'Ø160-200 Gólf/Hæðarskil',        rate: 56224, test: /g[óo]lf.*160-200/i },
+  { verk_nr: '1.2',  label: 'Ø160-200 Gólf/Hæðarskil',        rate: 56224, test: /g[óo]lf.*160-200/i, full: true },
   { verk_nr: '1.3',  label: 'Ø210-300 Gólf/Hæðarskil',        rate: 65116, test: /g[óo]lf.*210-300/i },
   { verk_nr: '3.1',  label: 'Rafmagnsraufar',                 rate: 9766,  test: /^raf/i },
 ];
@@ -78,15 +78,18 @@ exports.handler = async (event) => {
 
   const lines = [];
   const unmapped = [];
-  let totalStakar = 0, totalMvsk = 0;
+  let totalStakar = 0, totalMvsk = 0, totalHeilar = 0;
   for (const [group, set] of serialsByGroup) {
     const stakar = set.size;
     totalStakar += stakar;
     const verk = VERK.find(v => v.test.test(group));
     if (!verk) { unmapped.push({ category_group: group, stakar }); continue; }
-    const heilar = stakar / 2;
+    // Most verkliðir: 1 heild = 2 stakar. Verk 1.2 (Ø160-200 Gólf/Hæðarskil)
+    // is the exception — each staka is billed at full price (1 staka = 1 heild).
+    const heilar = verk.full ? stakar : stakar / 2;
     const amount = Math.round(heilar * verk.rate);
     totalMvsk += amount;
+    totalHeilar += heilar;
     lines.push({ verk_nr: verk.verk_nr, label: verk.label, category_group: group,
       stakar, heilar, rate_m_vsk: verk.rate, amount_m_vsk: amount });
   }
@@ -97,7 +100,7 @@ exports.handler = async (event) => {
     only_done: onlyDone,
     lines,
     unmapped,
-    totals: { stakar: totalStakar, heilar: totalStakar / 2, total_m_vsk: totalMvsk },
+    totals: { stakar: totalStakar, heilar: totalHeilar, total_m_vsk: totalMvsk },
     note: 'Áætlun byggð á Ajour (stakir SerialNumber / 2 × samningstaxti per heild, kláraðir í mánuðinum). Yfirfarðu og leiðréttu fyrir vistun.',
   });
 };
