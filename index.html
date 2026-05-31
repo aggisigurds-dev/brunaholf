@@ -5185,44 +5185,162 @@ async function renderGerdReikninga(t){
       return;
     }
 
-    // Dalvegur 30 / Heklureitur → /api/gata-uppgjor
+    // Dalvegur 30 / Heklureitur → /api/gata-uppgjor (detailed Verðskrá form)
     try{
       const resp = await fetch(`/api/gata-uppgjor?worksite=${encodeURIComponent(name)}&month=${encodeURIComponent(month)}`);
       const data = await resp.json();
       if(!resp.ok) throw new Error(data.error||('HTTP '+resp.status));
       const holes = data.holes||[];
       const totals = data.totals||{};
+      const kragi = (data.band_rates&&data.band_rates.kragi)||[];
+      const bordi = (data.band_rates&&data.band_rates.bordi)||[];
+      const VSK = 1.24;
+
+      // Restore previously-saved band quantities from the draft (materials_jsonb).
+      const savedBands = {};
+      if(d && Array.isArray(d.materials_jsonb)){
+        for(const m of d.materials_jsonb){ if(m && m.band_cat && m.size_mm!=null) savedBands[`${m.band_cat}|${m.size_mm}`] = Number(m.qty)||0; }
+      }
+      const qOf = (cat,mm) => savedBands[`${cat}|${mm}`]||'';
+
+      const bandRowsHtml = (cat, arr) => arr.map(r=>`
+        <tr>
+          <td class="l">${escapeHtml(r.size_label)}</td>
+          <td class="p">${fmt(r.rate_an_vsk)} kr</td>
+          <td class="m"><input type="number" class="gg-qty" data-cat="${cat}" data-mm="${r.size_mm}" data-rate="${r.rate_an_vsk}" value="${qOf(cat,r.size_mm)}" min="0" step="1" style="width:62px;padding:4px 6px;text-align:right"></td>
+          <td class="t" data-line="${cat}|${r.size_mm}">—</td>
+        </tr>`).join('');
+
       $b.innerHTML = `
+        <div class="gr-st" style="margin-top:0">Brunalokanir (göt) — úr Ajour</div>
         <table class="gr-efni" style="margin-bottom:14px">
           <thead><tr><td>Stærð</td><td class="m">stakar</td><td class="p">verð/stk án vsk</td><td class="t">samtals m.vsk</td></tr></thead>
           <tbody>${holes.map(h=>`<tr><td class="l">${escapeHtml(h.size_label||h.group||'')}</td><td class="m">${h.stakar||0}</td><td class="p">${fmt(h.rate_an_vsk)} kr</td><td class="t">${fmt(h.m_vsk)} kr</td></tr>`).join('')||'<tr><td colspan="4">Engin Ajour gögn.</td></tr>'}</tbody>
+          <tfoot><tr class="sub"><td colspan="3">Göt samtals m.vsk</td><td class="t">${fmt(totals.holes_m_vsk)} kr</td></tr></tfoot>
         </table>
-        <div class="gr-f"><label>Bönd / Kragar m. vsk (handvirkt — ekki í Ajour)</label><input type="number" id="gg-bands" value="${totals.bands_m_vsk||''}" step="1"></div>
-        <div style="font-weight:700;margin:8px 0">Göt m.vsk: ${fmt(totals.holes_m_vsk)} kr · Samtals m.vsk: <span id="gg-total">${fmt(totals.total_m_vsk)}</span> kr</div>
-        <div class="gr-actions"><button class="gr-btn gr-btn-primary" id="gg-save" type="button">💾 Vista heildina</button><button class="gr-btn" id="gg-close" type="button">Loka</button><span id="gg-st" style="font-size:12px;color:#64748b;align-self:center"></span></div>`;
+
+        <div class="gr-st">Eldvarnarkragi — magn handvirkt</div>
+        <table class="gr-efni" style="margin-bottom:14px">
+          <thead><tr><td>Stærð</td><td class="p">verð/stk án vsk</td><td class="m">magn</td><td class="t">samtals m.vsk</td></tr></thead>
+          <tbody>${bandRowsHtml('kragi', kragi)}</tbody>
+        </table>
+
+        <div class="gr-st">Eldvarnar borði / band / háþenslukítti — magn handvirkt</div>
+        <table class="gr-efni" style="margin-bottom:14px">
+          <thead><tr><td>Stærð</td><td class="p">verð/stk án vsk</td><td class="m">magn</td><td class="t">samtals m.vsk</td></tr></thead>
+          <tbody>${bandRowsHtml('bordi', bordi)}</tbody>
+        </table>
+
+        <div style="font-weight:700;margin:10px 0;line-height:1.7">
+          Göt m.vsk: ${fmt(totals.holes_m_vsk)} kr<br>
+          Bönd/Kragar m.vsk: <span id="gg-bands-total">0 kr</span><br>
+          Samtals m.vsk: <span id="gg-total">${fmt(totals.holes_m_vsk)}</span> kr
+        </div>
+        <div class="gr-actions">
+          <button class="gr-btn gr-btn-primary" id="gg-save" type="button">💾 Vista</button>
+          <button class="gr-btn" id="gg-print" type="button">🖨 Prenta / PDF</button>
+          <button class="gr-btn" id="gg-close" type="button">Loka</button>
+          <span id="gg-st" style="font-size:12px;color:#64748b;align-self:center"></span>
+        </div>`;
+
+      // Recompute per-line + band totals; returns {bands_m_vsk, total_m_vsk, lines}.
       const recalc = () => {
-        const bands = Number(document.getElementById('gg-bands').value)||0;
-        const tot = (Number(totals.holes_m_vsk)||0) + bands;
-        document.getElementById('gg-total').textContent = fmt(tot);
-        return tot;
+        let bands_an_vsk = 0;
+        const lines = [];
+        $b.querySelectorAll('.gg-qty').forEach(inp=>{
+          const qty = Number(inp.value)||0;
+          const rate = Number(inp.dataset.rate)||0;
+          const cat = inp.dataset.cat, mm = Number(inp.dataset.mm);
+          const an = qty*rate;
+          const cell = $b.querySelector(`[data-line="${cat}|${mm}"]`);
+          if(cell) cell.textContent = qty>0 ? fmt(Math.round(an*VSK))+' kr' : '—';
+          if(qty>0){ bands_an_vsk += an; lines.push({ band_cat:cat, size_mm:mm, qty, rate_an_vsk:rate,
+            label:(cat==='kragi'?'Eldvarnarkragi ':'Eldvarnar borði ')+inp.closest('tr').querySelector('.l').textContent }); }
+        });
+        const bands_m_vsk = Math.round(bands_an_vsk*VSK);
+        const total_m_vsk = (Number(totals.holes_m_vsk)||0) + bands_m_vsk;
+        const $bt=document.getElementById('gg-bands-total'); if($bt) $bt.textContent = fmt(bands_m_vsk)+' kr';
+        const $t=document.getElementById('gg-total'); if($t) $t.textContent = fmt(total_m_vsk);
+        return { bands_m_vsk, total_m_vsk, lines };
       };
-      document.getElementById('gg-bands').addEventListener('input', recalc);
+      $b.querySelectorAll('.gg-qty').forEach(i=> i.addEventListener('input', recalc));
+      recalc();
+
       document.getElementById('gg-close').onclick=close;
-      document.getElementById('gg-save').onclick = () => saveGataTotal(name, recalc(), document.getElementById('gg-st'), close);
+      document.getElementById('gg-save').onclick = () => {
+        const c = recalc();
+        saveGataTotal(name, c.total_m_vsk, document.getElementById('gg-st'), close, c.lines);
+      };
+      document.getElementById('gg-print').onclick = () => {
+        const c = recalc();
+        printGataDoc(name, month, holes, totals, c, kragi, bordi);
+      };
     }catch(e){
       $b.innerHTML = `<div class="gr-loading">Villa: ${escapeHtml(e.message||String(e))}</div>`;
     }
   }
 
-  async function saveGataTotal(name, total, $st, close){
+  // Printable detailed Verðskrá-form for Dalvegur/Heklureitur (göt + bönd/kragar).
+  function printGataDoc(name, month, holes, totals, calc, kragi, bordi){
+    const VSK = 1.24;
+    const qtyByKey = {}; for(const l of calc.lines) qtyByKey[`${l.band_cat}|${l.size_mm}`] = l;
+    const bandTable = (cat, arr) => arr.map(r=>{
+      const l = qtyByKey[`${cat}|${r.size_mm}`];
+      if(!l) return '';
+      return `<tr><td class="l">${escapeHtml(r.size_label)}</td><td class="p">${fmt(r.rate_an_vsk)} kr</td><td class="m">${l.qty}</td><td class="t">${fmt(Math.round(l.qty*r.rate_an_vsk*VSK))} kr</td></tr>`;
+    }).join('');
+    const kragiRows = bandTable('kragi', kragi);
+    const bordiRows = bandTable('bordi', bordi);
+    const logo = (()=>{ try { return localStorage.getItem('brunaholfLogo') || '/reikningur/logo.png'; } catch { return '/reikningur/logo.png'; } })();
+    const w = window.open('', '_blank');
+    if(!w){ alert('Leyfðu sprettiglugga til að prenta.'); return; }
+    w.document.write(`<!DOCTYPE html><html lang="is"><head><meta charset="utf-8"><title>Verðskrá — ${escapeHtml(name)} — ${monthLabel(month)}</title>
+      <style>
+        body{font-family:'Times New Roman',Times,serif;color:#000;margin:30px 38px}
+        .gd-top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:16px}
+        .gd-logo{max-width:150px;max-height:74px;object-fit:contain}
+        h1{font-size:22px;margin:0}.gd-ws{font-weight:700;font-size:15px;margin-top:2px}.gd-sub{font-style:italic;color:#555;margin-top:3px}
+        h2{font-size:14px;margin:18px 0 4px}
+        table{width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:6px}
+        td{padding:3px 5px}
+        thead td{font-style:italic;color:#555;border-bottom:1px solid #000}
+        td.l{text-align:left}td.p,td.m,td.t{text-align:right;white-space:nowrap}
+        thead td.l{text-align:left}thead td.p,thead td.m,thead td.t{text-align:right}
+        tr.sub td{border-top:1px solid #000;font-style:italic;color:#555}
+        tr.sub td.t{font-style:normal;color:#000;font-weight:600}
+        .gd-grand{margin-top:16px;border-top:2px solid #000;border-bottom:3px double #000;padding:8px 0;display:flex;justify-content:space-between;font-size:16px;font-weight:700}
+        @media print{body{margin:12mm}}
+      </style></head><body>
+      <div class="gd-top">
+        <div><h1>Verðskrá — uppgjör</h1><div class="gd-ws">${escapeHtml(name)} · ${monthLabel(month)}</div><div class="gd-sub">Brunahólf ehf · kláraðir verkþættir</div></div>
+        <img class="gd-logo" src="${escapeAttr(logo)}" onerror="this.style.display='none'">
+      </div>
+      <h2>Brunalokanir (göt)</h2>
+      <table>
+        <thead><tr><td class="l">Stærð</td><td class="m">Einingar</td><td class="p">Einingaverð án vsk</td><td class="t">Samtals m.vsk</td></tr></thead>
+        <tbody>${holes.map(h=>`<tr><td class="l">${escapeHtml(h.size_label||h.group||'')}</td><td class="m">${h.stakar||0}</td><td class="p">${fmt(h.rate_an_vsk)} kr</td><td class="t">${fmt(h.m_vsk)} kr</td></tr>`).join('')}</tbody>
+        <tfoot><tr class="sub"><td colspan="3">Göt samtals m.vsk</td><td class="t">${fmt(totals.holes_m_vsk)} kr</td></tr></tfoot>
+      </table>
+      ${kragiRows?`<h2>Eldvarnarkragi</h2><table><thead><tr><td class="l">Stærð</td><td class="p">Einingaverð án vsk</td><td class="m">Einingar</td><td class="t">Samtals m.vsk</td></tr></thead><tbody>${kragiRows}</tbody></table>`:''}
+      ${bordiRows?`<h2>Eldvarnar borði / band / háþenslukítti</h2><table><thead><tr><td class="l">Stærð</td><td class="p">Einingaverð án vsk</td><td class="m">Einingar</td><td class="t">Samtals m.vsk</td></tr></thead><tbody>${bordiRows}</tbody></table>`:''}
+      ${calc.bands_m_vsk>0?`<table><tbody><tr class="sub"><td colspan="3">Bönd/Kragar samtals m.vsk</td><td class="t">${fmt(calc.bands_m_vsk)} kr</td></tr></tbody></table>`:''}
+      <div class="gd-grand"><span>Samtals m.vsk</span><span>${fmt(calc.total_m_vsk)} kr</span></div>
+      <script>window.onload=function(){window.print();}<\/script></body></html>`);
+    w.document.close();
+  }
+
+  async function saveGataTotal(name, total, $st, close, bandLines){
     const month = state.ui.gr_month;
     const existing = draftFor(name);
     if($st) $st.textContent = 'Vistar…';
     try{
+      const body = { worksite_name:name, work_month:month, source: existing?.source||'ajour',
+        total_m_vsk: total, status: existing?.status||'draft', updated_by:'gerd-reikninga' };
+      // Persist per-size Bönd/Kragar quantities so they reload next time.
+      if(Array.isArray(bandLines)) body.materials_jsonb = bandLines;
       const rr = await fetch('/api/invoice-drafts', {
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ worksite_name:name, work_month:month, source: existing?.source||'ajour',
-          total_m_vsk: total, status: existing?.status||'draft', updated_by:'gerd-reikninga' }),
+        body: JSON.stringify(body),
       });
       if(!rr.ok) throw new Error('HTTP '+rr.status);
       DRAFTS[`${name}|${month}`] = await rr.json();
