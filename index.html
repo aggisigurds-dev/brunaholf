@@ -5742,6 +5742,25 @@ async function renderVinnubok(t){
         } catch(e){ alert('Tenging mistókst: '+(e.message||e)); }
       };
     });
+    // Link the payer company's Payday ledger overview to the worksite
+    $host.querySelectorAll('[data-vb-payday]').forEach(btn => {
+      btn.onclick = async () => {
+        const project = btn.dataset.vbPayday;
+        const w = (data.worksites || []).find(x => x.project === project);
+        const cur = (w && w.status && w.status.payday_url) || '';
+        const url = (prompt(`Payday-slóð á greiðanda fyrir „${project}" (yfirlit / ledgerAccountStatement):`, cur) || '').trim();
+        if(url === cur) return;  // unchanged / cancelled
+        try {
+          const r = await fetch('/api/worksites', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ project_name: project, year: new Date().getFullYear(), payday_url: url || null, updated_by: 'vinnubok' }),
+          });
+          if(!r.ok) throw new Error('HTTP '+r.status);
+          if(w){ w.status = w.status || {}; w.status.payday_url = url || null; }
+          render();
+        } catch(e){ alert('Tenging mistókst: '+(e.message||e)); }
+      };
+    });
     // Scan the worksite's Drive folder → link Efnislistar to months + suggest amounts
     $host.querySelectorAll('[data-vb-scan]').forEach(btn => {
       btn.onclick = () => runScan(btn.dataset.vbScan, btn);
@@ -5783,13 +5802,17 @@ async function renderVinnubok(t){
     const cust = (w.mapped_customers || [])[0] || '';
     const rates = rateFor(w.project);
     const driveUrl = w.status?.drive_folder_url || '';
+    const paydayUrl = w.status?.payday_url || '';
+    const paydayLink = paydayUrl
+      ? `<a class="vb-folder-link" href="${escapeAttr(paydayUrl)}" target="_blank" rel="noopener" title="Opna greiðanda í Payday${cust ? ' ('+escapeAttr(cust)+')' : ''}">💳</a><button type="button" class="vb-folder-link vb-payday-edit vb-folder-add" data-vb-payday="${escapeAttr(w.project)}" title="Breyta Payday-slóð greiðanda">✎</button>`
+      : `<button type="button" class="vb-folder-link vb-folder-add" data-vb-payday="${escapeAttr(w.project)}" title="Tengja Payday-slóð greiðanda">💳</button>`;
     return `
       <tr>
         <td class="vb-row-name">
           <button type="button" class="vb-hide-btn" data-vb-hide="${escapeAttr(w.project)}" title="Fela verkstaðinn">×</button>
           <span class="vb-ws-name">${escapeHtml(w.project)}${driveUrl
             ? `<a class="vb-folder-link" href="${escapeAttr(driveUrl)}" target="_blank" rel="noopener" title="Opna Drive möppu verkstaðarins">📁</a><button type="button" class="vb-folder-link vb-scan-btn" data-vb-scan="${escapeAttr(w.project)}" title="Skanna Drive möppu eftir Efnislistum — tengir skjöl við rétta mánuði og les upphæð (m. vsk)">🔍</button>`
-            : `<button type="button" class="vb-folder-link vb-folder-add" data-vb-folder="${escapeAttr(w.project)}" title="Tengja Drive möppu við verkstaðinn">🔗</button>`}</span>
+            : `<button type="button" class="vb-folder-link vb-folder-add" data-vb-folder="${escapeAttr(w.project)}" title="Tengja Drive möppu við verkstaðinn">🔗</button>`}${paydayLink}</span>
           <small>${escapeHtml(cust)}${rates.dv !== 9951 ? ' · '+rates.dv+' kr/klst' : ''}</small>
         </td>
         ${monthCells.map(mc =>
