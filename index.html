@@ -5101,7 +5101,7 @@ async function renderVinnubok(t){
       <div class="rg-header">
         <div>
           <h1 class="rg-h1">Vinnubók <span class="rg-sub" id="vb-meta">Sækir…</span></h1>
-          <div class="rg-sub-line">Manual vinnusíða · breyttu reikningsupphæð per glugga, tengdu Efnislista úr Drive, fela verkstaði sem þú þarft ekki að skoða.</div>
+          <div class="rg-sub-line">Manual vinnusíða · breyttu reikningsupphæð per glugga, tengdu hvaða skjal sem er úr Drive (mappa verkstaðarins eða leit), fela verkstaði sem þú þarft ekki að skoða.</div>
         </div>
         <div class="rg-controls">
           <button id="vb-refresh" class="tv-btn" type="button"><span class="tv-refresh-icon">↻</span> Sækja</button>
@@ -5389,6 +5389,15 @@ async function renderVinnubok(t){
       .vb-modal-h{padding:14px 18px;border-bottom:1px solid var(--border,#e3e6ea);font-weight:600;display:flex;align-items:center;justify-content:space-between}
       .vb-modal-x{background:transparent;border:none;font-size:22px;cursor:pointer;color:inherit}
       .vb-modal-body{padding:14px 18px;overflow-y:auto;flex:1}
+      .vb-pick-tabs{display:flex;gap:6px;margin-bottom:12px}
+      .vb-pick-tab{flex:1;padding:8px 10px;border:1px solid var(--border,#d8dee9);border-radius:6px;background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer;transition:all .12s}
+      .vb-pick-tab:hover{background:var(--header-bg,#f5f7fa)}
+      .vb-pick-tab.is-active{background:#3b82f6;border-color:#3b82f6;color:#fff;font-weight:600}
+      .vb-crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin-bottom:10px;font-size:12px}
+      .vb-crumb{cursor:pointer;color:var(--accent,#0a84ff);padding:2px 4px;border-radius:4px}
+      .vb-crumb:hover{background:var(--header-bg,#f5f7fa);text-decoration:underline}
+      .vb-crumb:last-of-type{font-weight:700;color:inherit;cursor:default}
+      .vb-crumb-sep{color:var(--text-dim,#94a3b8)}
       .vb-search-row{display:flex;gap:6px;margin-bottom:10px}
       .vb-search-row input{flex:1;padding:8px 10px;border:1px solid var(--border,#d8dee9);border-radius:5px;font:inherit;background:#fff;color:inherit}
       .vb-file-li{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:1px solid var(--border,#e3e6ea);border-radius:5px;margin-bottom:6px;cursor:pointer;background:#fff;color:inherit}
@@ -5848,7 +5857,7 @@ async function renderVinnubok(t){
                  <a href="https://drive.google.com/file/d/${ef.id}/view" target="_blank" rel="noopener" title="${escapeAttr(ef.title || '')}" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#3b82f6;text-decoration:none;font-weight:500">📎 ${escapeHtml((ef.title || 'Efnislisti').replace(/\.(xlsx|pdf|docx)$/i, ''))}</a>
                  <button type="button" class="vb-attach-btn" data-vb-attach="${escapeAttr(draftKey)}" title="Skipta um skjal" style="padding:3px 7px;font-size:11px;border:1px solid #cbd5e1;background:#fff;border-radius:5px;cursor:pointer;color:#64748b">↻</button>
                </div>`
-            : `<button type="button" class="vb-attach-btn" data-vb-attach="${escapeAttr(draftKey)}" style="width:100%;padding:7px 10px;font-size:11px;border:1.5px dashed #cbd5e1;background:transparent;border-radius:6px;cursor:pointer;color:#64748b;font-weight:500;transition:all .15s">+ Tengja Efnislista</button>`
+            : `<button type="button" class="vb-attach-btn" data-vb-attach="${escapeAttr(draftKey)}" style="width:100%;padding:7px 10px;font-size:11px;border:1.5px dashed #cbd5e1;background:transparent;border-radius:6px;cursor:pointer;color:#64748b;font-weight:500;transition:all .15s">+ Tengja skjal</button>`
           }
         </div>
       </td>
@@ -5980,23 +5989,43 @@ async function renderVinnubok(t){
     }
   }
 
+  // Extract a Drive folder id from a folder URL (…/folders/ID or ?id=ID).
+  function driveFolderIdFromUrl(url){
+    if(!url) return null;
+    const m = String(url).match(/\/folders\/([A-Za-z0-9_-]+)/) || String(url).match(/[?&]id=([A-Za-z0-9_-]+)/);
+    return m ? m[1] : null;
+  }
+  const niceMime = (m) => String(m||'')
+    .replace('application/vnd.google-apps.','Google ')
+    .replace('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','xlsx')
+    .replace('application/vnd.openxmlformats-officedocument.wordprocessingml.document','docx')
+    .replace('application/','').slice(0,28);
+
+  // General document picker: attach ANY Drive file to a (worksite, month) cell.
+  // Two modes — browse the worksite's Drive folder, or free-text search Drive.
   function openDriveSearch(cellKey){
     const [worksite, month] = cellKey.split('|');
-    const defaultQuery = `Efnislisti ${worksite} ${month}`;
+    const w = (data.worksites || []).find(x => x.project === worksite);
+    const rootFolderId = driveFolderIdFromUrl(w && w.status && w.status.drive_folder_url);
     const wrap = document.createElement('div');
     wrap.className = 'vb-modal-bg';
     wrap.innerHTML = `
       <div class="vb-modal" role="dialog">
         <div class="vb-modal-h">
-          <span>Tengja Efnislista — <b>${escapeHtml(worksite)}</b> · ${month}</span>
+          <span>Tengja skjal — <b>${escapeHtml(worksite)}</b> · ${month}</span>
           <button type="button" class="vb-modal-x" data-vb-close>×</button>
         </div>
         <div class="vb-modal-body">
-          <div class="vb-search-row">
-            <input type="text" id="vb-q" value="${escapeAttr(defaultQuery)}" placeholder="Leita í Drive...">
+          <div class="vb-pick-tabs" role="group">
+            ${rootFolderId ? `<button type="button" class="vb-pick-tab is-active" data-mode="browse">📁 Mappa verkstaðarins</button>` : ''}
+            <button type="button" class="vb-pick-tab ${rootFolderId?'':'is-active'}" data-mode="search">🔍 Leita í Drive</button>
+          </div>
+          <div class="vb-search-row" id="vb-search-row" ${rootFolderId?'hidden':''}>
+            <input type="text" id="vb-q" value="${escapeAttr(worksite)}" placeholder="Leita að skjali á nafni…">
             <button type="button" class="tv-btn" id="vb-go">Leita</button>
           </div>
-          <div id="vb-results">Smelltu „Leita" til að finna skjöl.</div>
+          <div class="vb-crumbs" id="vb-crumbs" ${rootFolderId?'':'hidden'}></div>
+          <div id="vb-results">${rootFolderId ? 'Hleð möppu…' : 'Sláðu inn leitarorð og smelltu „Leita".'}</div>
         </div>
       </div>
     `;
@@ -6007,6 +6036,87 @@ async function renderVinnubok(t){
     const $q = wrap.querySelector('#vb-q');
     const $go = wrap.querySelector('#vb-go');
     const $r = wrap.querySelector('#vb-results');
+    const $crumbs = wrap.querySelector('#vb-crumbs');
+    const $searchRow = wrap.querySelector('#vb-search-row');
+
+    // Breadcrumb stack for folder browsing: [{id, name}]
+    const stack = rootFolderId ? [{ id: rootFolderId, name: '📁 Verkstaðarmappa' }] : [];
+
+    async function attachPick(id, name){
+      try {
+        const r = await fetch('/api/efnislisti-docs', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ worksite_name: worksite, work_month: month, drive_file_id: id, title: name }),
+        });
+        if(!r.ok) throw new Error('HTTP '+r.status);
+        data.efnislisti[cellKey] = { id, title: name };
+        render();
+        close();
+      } catch(e){ alert('Tenging mistókst: '+(e.message||e)); }
+    }
+
+    function showReauth(){
+      $r.innerHTML = `<div style="padding:10px;background:#fff7ed;border:1px solid #fdba74;border-radius:6px;color:#9a3412">
+        ⚠ Google tenging er útrunnin — Drive aðgangur virkar ekki.
+        <button type="button" class="tv-btn" id="vb-reauth" style="margin-top:8px">🔑 Tengja Google aftur</button></div>`;
+      const rb = document.getElementById('vb-reauth'); if(rb) rb.onclick = startGoogleReauth;
+    }
+
+    // Render a list of Drive items: folders navigate, files attach.
+    function renderItems(items, { allowFolders }){
+      if(!items.length){ $r.innerHTML = '<i>Tómt — engin skjöl hér.</i>'; return; }
+      const folders = allowFolders ? items.filter(f => f.is_folder) : [];
+      const files = items.filter(f => !f.is_folder);
+      $r.innerHTML =
+        folders.map(f => `
+          <div class="vb-file-li" data-nav='${escapeAttr(JSON.stringify({id:f.id, name:f.name}))}'>
+            <div><div><b>📁 ${escapeHtml(f.name)}</b></div><small>mappa</small></div>
+            <div><span class="vb-attach-btn">opna →</span></div>
+          </div>`).join('') +
+        files.map(f => `
+          <div class="vb-file-li" data-pick='${escapeAttr(JSON.stringify({id:f.id, name:f.name}))}'>
+            <div>
+              <div><b>${escapeHtml(f.name)}</b></div>
+              <small>${escapeHtml(niceMime(f.mime))} · ${f.modified ? new Date(f.modified).toLocaleDateString('is-IS') : ''}</small>
+            </div>
+            <div>
+              ${f.web_link ? `<a href="${escapeAttr(f.web_link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="font-size:11px;margin-right:6px">👁 sjá</a>` : ''}
+              <span class="vb-attach-btn">tengja →</span>
+            </div>
+          </div>`).join('');
+      $r.querySelectorAll('[data-pick]').forEach(el => {
+        el.onclick = () => { const p = JSON.parse(el.dataset.pick); attachPick(p.id, p.name); };
+      });
+      $r.querySelectorAll('[data-nav]').forEach(el => {
+        el.onclick = () => { const p = JSON.parse(el.dataset.nav); stack.push(p); browse(); };
+      });
+    }
+
+    function renderCrumbs(){
+      $crumbs.innerHTML = stack.map((s, i) =>
+        `<span class="vb-crumb" data-crumb="${i}">${escapeHtml(s.name)}</span>${i < stack.length-1 ? '<span class="vb-crumb-sep">›</span>' : ''}`
+      ).join('');
+      $crumbs.querySelectorAll('[data-crumb]').forEach(el => {
+        el.onclick = () => { stack.length = Number(el.dataset.crumb)+1; browse(); };
+      });
+    }
+
+    async function browse(){
+      renderCrumbs();
+      const cur = stack[stack.length-1];
+      $r.innerHTML = 'Hleð möppu…';
+      try {
+        const resp = await fetch('/api/drive-folders?parent='+encodeURIComponent(cur.id)+'&limit=100');
+        const j = await resp.json();
+        if(!resp.ok) throw new Error(j.error || ('HTTP '+resp.status));
+        // folders first, then files, both newest-first (API already sorts by modified)
+        const items = (j.files || []).sort((a,b) => (b.is_folder?1:0)-(a.is_folder?1:0));
+        renderItems(items, { allowFolders: true });
+      } catch(e){
+        if(isReauthError(null, e.message)) showReauth();
+        else $r.innerHTML = '<i style="color:#c40000">Villa: '+(e.message||e)+'</i>';
+      }
+    }
 
     async function runSearch(){
       const q = $q.value.trim();
@@ -6014,53 +6124,30 @@ async function renderVinnubok(t){
       $r.innerHTML = 'Leitar…';
       try {
         const resp = await fetch('/api/drive-files-search?q='+encodeURIComponent(q));
-        const data = await resp.json();
-        if(!resp.ok) throw new Error(data.error || ('HTTP '+resp.status));
-        const files = data.files || [];
-        if(!files.length){ $r.innerHTML = '<i>Engin skjöl fundust.</i>'; return; }
-        $r.innerHTML = files.map(f => `
-          <div class="vb-file-li" data-pick='${escapeAttr(JSON.stringify({id:f.id, name:f.name}))}'>
-            <div>
-              <div><b>${escapeHtml(f.name)}</b></div>
-              <small>${f.mime.replace('application/','').replace('vnd.openxmlformats-officedocument.','').slice(0,30)} · ${new Date(f.modified).toLocaleDateString('is-IS')}</small>
-            </div>
-            <div>
-              <a href="${f.web_link}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="font-size:11px;margin-right:6px">👁 sjá</a>
-              <span class="vb-attach-btn">tengja →</span>
-            </div>
-          </div>
-        `).join('');
-        $r.querySelectorAll('[data-pick]').forEach(el => {
-          el.onclick = async () => {
-            const pick = JSON.parse(el.dataset.pick);
-            try {
-              const r = await fetch('/api/efnislisti-docs', {
-                method:'POST', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({ worksite_name: worksite, work_month: month, drive_file_id: pick.id, title: pick.name }),
-              });
-              if(!r.ok) throw new Error('HTTP '+r.status);
-              data.efnislisti[cellKey] = { id: pick.id, title: pick.name };
-              render();
-              close();
-            } catch(e){
-              alert('Tenging mistókst: '+(e.message||e));
-            }
-          };
-        });
+        const j = await resp.json();
+        if(!resp.ok) throw new Error(j.error || ('HTTP '+resp.status));
+        renderItems((j.files || []).map(f => ({ ...f, is_folder:false })), { allowFolders: false });
       } catch(e){
-        if(isReauthError(null, e.message)){
-          $r.innerHTML = `<div style="padding:10px;background:#fff7ed;border:1px solid #fdba74;border-radius:6px;color:#9a3412">
-            ⚠ Google tenging er útrunnin — Drive aðgangur virkar ekki.
-            <button type="button" class="tv-btn" id="vb-reauth" style="margin-top:8px">🔑 Tengja Google aftur</button></div>`;
-          const rb = document.getElementById('vb-reauth'); if(rb) rb.onclick = startGoogleReauth;
-        } else {
-          $r.innerHTML = '<i style="color:#c40000">Villa: '+(e.message||e)+'</i>';
-        }
+        if(isReauthError(null, e.message)) showReauth();
+        else $r.innerHTML = '<i style="color:#c40000">Villa: '+(e.message||e)+'</i>';
       }
     }
+
+    // Mode switching
+    wrap.querySelectorAll('[data-mode]').forEach(tab => {
+      tab.onclick = () => {
+        wrap.querySelectorAll('[data-mode]').forEach(t => t.classList.toggle('is-active', t === tab));
+        const browseMode = tab.dataset.mode === 'browse';
+        $searchRow.hidden = browseMode;
+        $crumbs.hidden = !browseMode;
+        if(browseMode) browse(); else { $r.innerHTML = 'Sláðu inn leitarorð og smelltu „Leita".'; $q.focus(); }
+      };
+    });
     $go.onclick = runSearch;
     $q.addEventListener('keydown', e => { if(e.key === 'Enter') runSearch(); });
-    runSearch();
+
+    // Start in the most useful mode: browse the folder if we have one, else search.
+    if(rootFolderId) browse(); else runSearch();
   }
 
   // ===== Scratchpad: editable grid + calculator =====
