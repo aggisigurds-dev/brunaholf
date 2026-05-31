@@ -3325,7 +3325,7 @@ function rgRateFor(project){
   return RG_RATES[project] || { dv: RG_DEFAULT_RATE_DV, ev: RG_DEFAULT_RATE_EV };
 }
 const RG_VSK_PCT          = 24;        // % VAT
-const RG_SMAHLUTAGJALD    = 137;       // kr/dagvinna klst
+const RG_SMAHLUTAGJALD    = 137;       // kr/klst (dagvinna + yfirvinna)
 const RG_STADFESTING      = 20000;     // kr (one-off when applicable)
 const RG_AKSTUR_KM_RATE   = 186;       // kr/km
 const RG_AKSTUR_FERD_RATE = 4000;      // kr/ferð
@@ -4000,7 +4000,7 @@ function rgOpenCalculator(project, allSites, months){
         </tr>
         <tr>
           <td>Smáhlutagjald</td>
-          <td>${RG_SMAHLUTAGJALD} kr/dagvinna klst</td>
+          <td>${RG_SMAHLUTAGJALD} kr/klst (dv+ev)</td>
           <td>×</td>
           <td><span id="rg-calc-sma-mult">0</span> klst</td>
           <td class="rg-calc-amt" id="rg-calc-sma-amt">0</td>
@@ -4049,7 +4049,7 @@ function rgOpenCalculator(project, allSites, months){
     const ev = num('rg-calc-ev-rate') * num('rg-calc-ev-hours');
     const km = RG_AKSTUR_KM_RATE * num('rg-calc-km');
     const fr = RG_AKSTUR_FERD_RATE * num('rg-calc-ferd');
-    const smaMult = num('rg-calc-dv-hours');
+    const smaMult = num('rg-calc-dv-hours') + num('rg-calc-ev-hours');  // dagvinna + yfirvinna
     const sma = RG_SMAHLUTAGJALD * smaMult;
     const stadf = $('rg-calc-stadf').checked ? RG_STADFESTING : 0;
     const efni = num('rg-calc-efni');
@@ -4919,7 +4919,7 @@ async function renderGerdReikninga(t){
           <div class="gr-mat-add">${matSelect}</div>
           <div class="gr-st">Aukagjöld</div>
           <div class="gr-f"><label><input type="checkbox" id="gr-stadf" ${stadfOn?'checked':''}> Staðfesting brunaþéttinga (${fmt(GR_STADF)} kr)</label></div>
-          <div class="gr-f"><label>Smáhlutagjald = hanskar, þurrkur o.fl.: ${r.sma} kr × dagvinna klst (sjálfvirkt)</label><div style="font-size:11px;color:#64748b" id="gr-sma-hint">—</div></div>
+          <div class="gr-f"><label>Smáhlutagjald = hanskar, þurrkur o.fl.: ${r.sma} kr × (dagvinna + yfirvinna) klst (sjálfvirkt)</label><div style="font-size:11px;color:#64748b" id="gr-sma-hint">—</div></div>
           <div class="gr-st">Athugasemd</div>
           <div class="gr-f"><textarea id="gr-notes" rows="2" placeholder="Birtist neðst á reikningi">${escapeHtml(notes)}</textarea></div>
           <div class="gr-actions">
@@ -4990,7 +4990,8 @@ async function renderGerdReikninga(t){
       const dvH=numv('gr-dvh'),dvR=numv('gr-dvr'),evH=numv('gr-evh'),evR=numv('gr-evr');
       const km=numv('gr-km'),fr=numv('gr-ferd');
       const stadf = document.getElementById('gr-stadf').checked ? GR_STADF : 0;
-      const sma = Math.round(r.sma * dvH);
+      const smaH = dvH + evH;                 // smáhlutagjald á dagvinnu OG yfirvinnu
+      const sma = Math.round(r.sma * smaH);
       const matLines = gatherMats();
       const matSum = matLines.reduce((a,m)=>a+m.total,0);
       const dvAmt=dvR*dvH, evAmt=evR*evH, kmAmt=km*r.km, frAmt=fr*r.ferd;
@@ -5002,7 +5003,7 @@ async function renderGerdReikninga(t){
 
     function draw(){
       const c = compute();
-      document.getElementById('gr-sma-hint').textContent = `${r.sma} × ${c.dvH.toFixed(1)} = ${fmt(c.sma)} kr`;
+      document.getElementById('gr-sma-hint').textContent = `${r.sma} × ${(c.dvH+c.evH).toFixed(1)} (dv+ev) = ${fmt(c.sma)} kr`;
       const kr = n => fmt(n)+' kr.';
       const ws = document.getElementById('gr-ws').value.trim();
       const fra = document.getElementById('gr-fra').value, til = document.getElementById('gr-til').value;
@@ -5026,7 +5027,7 @@ async function renderGerdReikninga(t){
             ${c.fr>0?row('ekinn ferð', r.ferd, c.fr, c.frAmt):''}
             ${matRows?'<tr class="sec"><td colspan="4">Efni</td></tr>'+matRows:''}
             ${(c.sma>0||c.stadf>0)?'<tr class="sec"><td colspan="4">Aukagjöld</td></tr>':''}
-            ${c.sma>0?row('Smáhlutagjald = hanskar, þurrkur o.fl.', r.sma, c.dvH.toFixed(2), c.sma):''}
+            ${c.sma>0?row('Smáhlutagjald = hanskar, þurrkur o.fl.', r.sma, (c.dvH+c.evH).toFixed(2), c.sma):''}
             ${c.stadf>0?row('Staðfesting brunaþéttinga', GR_STADF, '1', c.stadf):''}
             <tr class="sub"><td colspan="3">Samtals án vsk</td><td class="t">${kr(c.net)}</td></tr>
             <tr class="sub"><td colspan="3">vsk (${r.vsk}%)</td><td class="t">${kr(c.vsk)}</td></tr>
@@ -6823,7 +6824,7 @@ async function renderVerdskra(t){
               <th title="Eftirvinna taxti">Ev kr/klst</th>
               <th title="Akstur kr/km">km</th>
               <th title="Akstur kr/ferð">ferð</th>
-              <th title="Smáhlutagjald kr × dagvinna klst">SH/klst</th>
+              <th title="Smáhlutagjald kr × (dagvinna + yfirvinna) klst">SH/klst</th>
               <th title="Staðfesting brunaþéttinga (fastur)">Staðf.</th>
               <th>VSK%</th>
               <th title="Fast verð override (yfirskrifar útreikning)">Fastagjald</th>
