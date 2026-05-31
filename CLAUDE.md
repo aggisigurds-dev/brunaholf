@@ -311,6 +311,10 @@ either use the calculated total or override with a flat amount.
   - `Greitt` = invoice `status` is paid OR matching bank inflow found
 - Older invoices for reference live in the brunaholf Google Drive
   (shared with `aggisigurds@gmail.com`).
+- In Vinnubók each (worksite, month) cell can attach two Drive files via
+  `efnislisti_documents.doc_type`: `efnislisti` (work doc, 📎) and
+  `invoice` (the reikningur PDF, 🧾). Both picked through the browse-folder/
+  search modal (`openDriveSearch(cellKey, docType)`).
 
 ### Status comments observed in Tekjur (examples — these are real
 operational notes, not stale data):
