@@ -905,6 +905,8 @@ body[data-tab="reikningar"] main{max-width:none;padding:14px 24px}
 .rg-tool{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;font-size:12px;font-weight:500;color:var(--text);background:#fff;border:1px solid var(--border);border-radius:6px;text-decoration:none;cursor:pointer}
 .rg-tool:hover{background:var(--bg);border-color:var(--text-2)}
 .rg-tool-icon{font-size:14px}
+.ef-filter{padding:6px 10px;font-size:12px;border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--text);cursor:pointer;max-width:200px}
+.ef-filter:hover{border-color:var(--text-2)}
 .rg-grid{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;font-size:12.5px;box-shadow:0 1px 3px rgba(0,0,0,0.04),0 4px 12px rgba(0,0,0,0.03)}
 .rg-grid th,.rg-grid td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle;text-align:left}
 .rg-grid thead th{position:sticky;top:0;background:linear-gradient(180deg,#F8F6F0 0%,#F1EDE3 100%);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted-2);z-index:1;border-bottom:2px solid var(--text-2)}
@@ -7059,6 +7061,8 @@ async function renderEfniskostnadur(t){
           <div class="rg-sub" style="margin-top:4px">Redder reikningar — efni sem fer á reikning hjá verkkaupa</div>
         </div>
         <div class="rg-controls">
+          <select id="ef-f-month" class="ef-filter"><option value="">Allir mánuðir</option></select>
+          <select id="ef-f-ws" class="ef-filter"><option value="">Allir verkstaðir</option></select>
           <a class="rg-tool" href="https://mail.google.com/mail/u/0/?authuser=bokhald@brunaholf.is#search/from%3Aredder.is" target="_blank" rel="noopener">📧 Redder í Gmail</a>
           <a class="rg-tool" href="https://drive.google.com/drive/search?q=redder" target="_blank" rel="noopener">📁 Redder í Drive</a>
         </div>
@@ -7081,17 +7085,36 @@ async function renderEfniskostnadur(t){
     const { rows, summary } = await r.json();
     const fmt = n => Math.round(n||0).toLocaleString('is-IS');
 
-    document.getElementById('ef-meta').textContent = `${rows.length} reikningar`;
-    document.getElementById('ef-k-count').textContent = rows.length;
-    document.getElementById('ef-k-total').textContent = fmt(summary.grand_total_m_vsk);
-    document.getElementById('ef-k-noworksite').textContent = rows.filter(r => !r.worksite_match).length;
-    document.getElementById('ef-k-sites').textContent = new Set(rows.map(r => r.worksite_match).filter(Boolean)).size;
+    // Normalised month/worksite per invoice (reused for filtering + grouping).
+    const invMonth = inv => inv.dagsetning ? String(inv.dagsetning).slice(0,7) : '(óþekkt)';
+    const invWs = inv => inv.worksite_match || '(ótengt)';
 
-    // Group by worksite × month
+    // Populate filter dropdowns from the data (months newest-first, worksites alpha).
+    const months = [...new Set(rows.map(invMonth))].sort().reverse();
+    const sites  = [...new Set(rows.map(invWs))].sort((a,b)=>a.localeCompare(b,'is'));
+    const $fMonth = document.getElementById('ef-f-month');
+    const $fWs = document.getElementById('ef-f-ws');
+    $fMonth.insertAdjacentHTML('beforeend', months.map(m=>`<option value="${escapeAttr(m)}">${escapeHtml(monthLabelStatic(m))}</option>`).join(''));
+    $fWs.insertAdjacentHTML('beforeend', sites.map(s=>`<option value="${escapeAttr(s)}">${escapeHtml(s)}</option>`).join(''));
+
+    const renderTable = () => {
+    const fMonth = $fMonth.value, fWs = $fWs.value;
+    const filtered = rows.filter(inv => (!fMonth || invMonth(inv)===fMonth) && (!fWs || invWs(inv)===fWs));
+
+    // KPIs reflect the current filter selection.
+    const total = filtered.reduce((a,inv)=>a+Number(inv.m_vsk||0),0);
+    const filterOn = !!(fMonth || fWs);
+    document.getElementById('ef-meta').textContent = filterOn ? `${filtered.length} af ${rows.length} reikningum` : `${rows.length} reikningar`;
+    document.getElementById('ef-k-count').textContent = filtered.length;
+    document.getElementById('ef-k-total').textContent = fmt(total);
+    document.getElementById('ef-k-noworksite').textContent = filtered.filter(r => !r.worksite_match).length;
+    document.getElementById('ef-k-sites').textContent = new Set(filtered.map(r => r.worksite_match).filter(Boolean)).size;
+
+    // Group filtered invoices by worksite × month
     const groups = {};
-    for (const inv of rows) {
-      const month = inv.dagsetning ? String(inv.dagsetning).slice(0,7) : '(óþekkt)';
-      const ws = inv.worksite_match || '(ótengt)';
+    for (const inv of filtered) {
+      const month = invMonth(inv);
+      const ws = invWs(inv);
       const k = `${ws}|${month}`;
       if (!groups[k]) groups[k] = { worksite: ws, month, invoices: [], total_m_vsk: 0 };
       groups[k].invoices.push(inv);
@@ -7109,7 +7132,7 @@ async function renderEfniskostnadur(t){
         </div>
         <div class="rg-forecast-list" style="max-height:none;display:block">
           ${groupRows.length === 0
-            ? '<div class="wc-empty">Engir Redder reikningar enn í kerfinu.</div>'
+            ? '<div class="wc-empty">Engir Redder reikningar fyrir þessa síu.</div>'
             : groupRows.map(g => `
               <details class="rg-fc-item">
                 <summary>
@@ -7174,6 +7197,11 @@ async function renderEfniskostnadur(t){
       </div>
     `;
     document.getElementById('ef-table-host').innerHTML = html;
+    }; // end renderTable
+
+    $fMonth.addEventListener('change', renderTable);
+    $fWs.addEventListener('change', renderTable);
+    renderTable();
   } catch(e) {
     document.getElementById('ef-meta').textContent = 'Villa: '+(e.message||e);
   }
