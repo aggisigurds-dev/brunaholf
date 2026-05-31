@@ -135,6 +135,13 @@
   to = "/.netlify/functions/gata-uppgjor"
   status = 200
 
+# NLSH (Landsspítalinn) contract uppgjör — per-verkliður estimate from Ajour
+#   /api/nlsh-uppgjor?month=2026-05
+[[redirects]]
+  from = "/api/nlsh-uppgjor"
+  to = "/.netlify/functions/nlsh-uppgjor"
+  status = 200
+
 # Generic Verðskrá hole-size rates (Dalvegur 30 / Heklureitur)
 [[redirects]]
   from = "/api/hole-rates"

@@ -4564,6 +4564,11 @@ async function renderGerdReikninga(t){
       .gr-logo-btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border:1px solid var(--border,#cbd5e1);border-radius:8px;cursor:pointer;font-size:13px;background:#fff}
       .gr-logo-btn:hover{background:#f1f5f9}
       .gr-loading{padding:30px;color:var(--muted,#64748b);font-style:italic}
+      .gr-summary{display:flex;gap:14px;flex-wrap:wrap;background:linear-gradient(135deg,#1e3a8a 0%,#3b82f6 100%);color:#fff;border-radius:14px;padding:16px 20px;margin-bottom:6px;box-shadow:0 4px 14px rgba(15,23,42,.12)}
+      .gr-sum-cell{display:flex;flex-direction:column;gap:3px;min-width:140px}
+      .gr-sum-l{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:rgba(255,255,255,.8);font-weight:600}
+      .gr-sum-v{font-family:'Source Serif 4',Georgia,serif;font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+      .gr-sum-v.gr-sum-warn{color:#fde68a}
       .gr-section-h{font-family:'Source Serif 4',Georgia,serif;font-size:18px;font-weight:600;margin:22px 0 10px;display:flex;align-items:center;gap:8px}
       .gr-section-h .gr-count{font-size:12px;color:var(--muted,#64748b);font-weight:400}
       .gr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
@@ -4743,13 +4748,26 @@ async function renderGerdReikninga(t){
         </div>`;
     };
 
+    // Month-total summary: sum of all saved drafts (total_m_vsk) for this month.
+    let savedCount = 0, savedTotal = 0;
+    for(const w of [...tim, ...gata]){
+      const dd = draftFor(w.project);
+      if(dd && Number(dd.total_m_vsk) > 0){ savedCount++; savedTotal += Number(dd.total_m_vsk); }
+    }
+    const pending = (tim.length + gata.length) - savedCount;
+
     $host.innerHTML = `
+      <div class="gr-summary">
+        <div class="gr-sum-cell"><span class="gr-sum-l">Samtals m. vsk · ${monthLabel(month)}</span><span class="gr-sum-v">${fmt(savedTotal)} kr</span></div>
+        <div class="gr-sum-cell"><span class="gr-sum-l">Reikningar vistaðir</span><span class="gr-sum-v">${savedCount}</span></div>
+        <div class="gr-sum-cell"><span class="gr-sum-l">Eftir að gera</span><span class="gr-sum-v ${pending>0?'gr-sum-warn':''}">${pending}</span></div>
+      </div>
       <div class="gr-section-h">🧾 Tímavera verkstaðir <span class="gr-count">· ${tim.length} með klst í ${monthLabel(month)}</span></div>
       <div class="gr-grid">${tim.length?tim.map(w=>card(w,false)).join(''):'<div class="gr-loading">Engin Tímavera klst skráð í þessum mánuði.</div>'}</div>
       <div class="gr-section-h">📐 Gata verkefni (Ajour) <span class="gr-count">· NLSH · Heklureitur · Dalvegur 30</span></div>
       <div class="gr-grid">${gata.map(w=>card(w,true)).join('')}</div>
     `;
-    $meta.textContent = `${monthLabel(month)} · ${tim.length} Tímavera verkstaðir`;
+    $meta.textContent = `${monthLabel(month)} · ${fmt(savedTotal)} kr vistað · ${pending} eftir`;
     $host.querySelectorAll('[data-gr-edit]').forEach(b=> b.onclick = ()=> openEditor(b.dataset.grEdit));
     $host.querySelectorAll('[data-gr-gata]').forEach(b=> b.onclick = ()=> openGata(b.dataset.grGata));
   }
@@ -4991,10 +5009,33 @@ async function renderGerdReikninga(t){
 
     if(isNLSH){
       const d = draftFor(name);
-      $b.innerHTML = `
-        <div class="gr-redder-note">NLSH (Landsspítalinn) er rukkað skv. samningstöxtum per Ajour-stökum (sjá Verðskrá → NLSH samningur). Sjálfvirkur útreikningur kemur síðar — sláðu inn heildina (m. vsk) fyrir ${monthLabel(month)} hér og vistaðu.</div>
-        <div class="gr-f"><label>Samtals m. vsk</label><input type="number" id="gg-amt" value="${d?Number(d.total_m_vsk)||'':''}" step="1"></div>
-        <div class="gr-actions"><button class="gr-btn gr-btn-primary" id="gg-save" type="button">💾 Vista</button><button class="gr-btn" id="gg-close" type="button">Loka</button><span id="gg-st" style="font-size:12px;color:#64748b;align-self:center"></span></div>`;
+      try{
+        const resp = await fetch(`/api/nlsh-uppgjor?month=${encodeURIComponent(month)}`);
+        const data = await resp.json();
+        if(!resp.ok) throw new Error(data.error||('HTTP '+resp.status));
+        const lines = data.lines||[];
+        const totals = data.totals||{};
+        const unmapped = data.unmapped||[];
+        const estTotal = Number(totals.total_m_vsk)||0;
+        // Prefer a previously-saved total; else the Ajour estimate.
+        const startTotal = d && Number(d.total_m_vsk) ? Number(d.total_m_vsk) : estTotal;
+        $b.innerHTML = `
+          <div class="gr-redder-note">Áætlun úr Ajour: stakir SerialNumber / 2 × samningstaxti (kláraðir í ${monthLabel(month)}). <b>Yfirfarðu</b> og leiðréttu heildina áður en þú vistar — þetta er áætlun, ekki lokatala.</div>
+          <table class="gr-efni" style="margin-bottom:12px">
+            <thead><tr><td>Verk</td><td class="l">Verkliður</td><td class="m">stakar</td><td class="m">heilar</td><td class="p">verð/heild</td><td class="t">m.vsk</td></tr></thead>
+            <tbody>${lines.map(l=>`<tr><td>${escapeHtml(l.verk_nr)}</td><td class="l">${escapeHtml(l.label)}</td><td class="m">${l.stakar}</td><td class="m">${l.heilar}</td><td class="p">${fmt(l.rate_m_vsk)}</td><td class="t">${fmt(l.amount_m_vsk)}</td></tr>`).join('')||'<tr><td colspan="6">Engin Ajour gögn fyrir þennan mánuð.</td></tr>'}</tbody>
+          </table>
+          ${unmapped.length?`<div class="gr-redder-note" style="background:#fff7ed;border-color:#fdba74;color:#9a3412">⚠ Óþekktir flokkar (ekki taldir með): ${unmapped.map(u=>escapeHtml(u.category_group)+' ('+u.stakar+')').join(', ')}</div>`:''}
+          <div style="font-weight:700;margin:8px 0">Áætlað samtals m.vsk: ${fmt(estTotal)} kr</div>
+          <div class="gr-f"><label>Samtals m. vsk (leiðréttanlegt)</label><input type="number" id="gg-amt" value="${startTotal||''}" step="1"></div>
+          <div class="gr-actions"><button class="gr-btn gr-btn-primary" id="gg-save" type="button">💾 Vista</button><button class="gr-btn" id="gg-close" type="button">Loka</button><span id="gg-st" style="font-size:12px;color:#64748b;align-self:center"></span></div>`;
+      }catch(e){
+        // Fall back to plain manual entry if the estimate endpoint fails.
+        $b.innerHTML = `
+          <div class="gr-redder-note">Gat ekki sótt Ajour-áætlun (${escapeHtml(e.message||String(e))}). Sláðu inn heildina handvirkt.</div>
+          <div class="gr-f"><label>Samtals m. vsk</label><input type="number" id="gg-amt" value="${d?Number(d.total_m_vsk)||'':''}" step="1"></div>
+          <div class="gr-actions"><button class="gr-btn gr-btn-primary" id="gg-save" type="button">💾 Vista</button><button class="gr-btn" id="gg-close" type="button">Loka</button><span id="gg-st" style="font-size:12px;color:#64748b;align-self:center"></span></div>`;
+      }
       document.getElementById('gg-close').onclick=close;
       document.getElementById('gg-save').onclick = () => saveGataTotal(name, Number(document.getElementById('gg-amt').value)||0, document.getElementById('gg-st'), close);
       return;
