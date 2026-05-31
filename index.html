@@ -4828,7 +4828,7 @@ async function renderGerdReikninga(t){
           <div class="gr-mat-add">${matSelect}</div>
           <div class="gr-st">Aukagjöld</div>
           <div class="gr-f"><label><input type="checkbox" id="gr-stadf" ${stadfOn?'checked':''}> Staðfesting brunaþéttinga (${fmt(GR_STADF)} kr)</label></div>
-          <div class="gr-f"><label>Smáhlutagjald: ${r.sma} kr × dagvinna klst (sjálfvirkt)</label><div style="font-size:11px;color:#64748b" id="gr-sma-hint">—</div></div>
+          <div class="gr-f"><label>Smáhlutagjald = hanskar, þurrkur o.fl.: ${r.sma} kr × dagvinna klst (sjálfvirkt)</label><div style="font-size:11px;color:#64748b" id="gr-sma-hint">—</div></div>
           <div class="gr-st">Athugasemd</div>
           <div class="gr-f"><textarea id="gr-notes" rows="2" placeholder="Birtist neðst á reikningi">${escapeHtml(notes)}</textarea></div>
           <div class="gr-actions">
@@ -4920,7 +4920,7 @@ async function renderGerdReikninga(t){
             ${c.fr>0?row('ekinn ferð', r.ferd, c.fr, c.frAmt):''}
             ${matRows?'<tr class="sec"><td colspan="4">Efni</td></tr>'+matRows:''}
             ${(c.sma>0||c.stadf>0)?'<tr class="sec"><td colspan="4">Aukagjöld</td></tr>':''}
-            ${c.sma>0?row('Smáhlutagjald', r.sma, c.dvH.toFixed(2), c.sma):''}
+            ${c.sma>0?row('Smáhlutagjald = hanskar, þurrkur o.fl.', r.sma, c.dvH.toFixed(2), c.sma):''}
             ${c.stadf>0?row('Staðfesting brunaþéttinga', GR_STADF, '1', c.stadf):''}
             <tr class="sub"><td colspan="3">Samtals án vsk</td><td class="t">${kr(c.net)}</td></tr>
             <tr class="sub"><td colspan="3">vsk (${r.vsk}%)</td><td class="t">${kr(c.vsk)}</td></tr>
