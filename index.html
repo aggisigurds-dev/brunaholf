@@ -4529,20 +4529,40 @@ async function renderGerdReikninga(t){
   // so they're dropped from the autofill. (Only on first autofill; once the draft
   // is saved its stored materials are reused unchanged.)
   const grNorm = (s)=>String(s||'').toLowerCase().replace(/[^0-9a-záðéíóúýþæ]+/gi,' ').replace(/\s+/g,' ').trim();
+  // Aliases for UNSIZED materials: Redder writes abbreviated/variant names
+  // (Akríll, Þéttull, ml/mm pack sizes) that the size-aware matcher misses.
+  // Each entry: a test on the normalised Redder name → the exact Verðskrá label.
+  // These are real billable materials, so they must map to a Verðskrá price.
+  const GR_REDDER_ALIASES = [
+    { label:'Eldvarnar Akríl 5kg', test:n=>/akr[íi]l?l?/.test(n) && /5\s*kg/.test(n) },
+    { label:'Eldvarnar akríl',     test:n=>/akr[íi]l?l?/.test(n) },                 // 310/600ml tubes
+    { label:'Háþennslukítti',      test:n=>/h[áa]þe?n+slu/.test(n) || /h[áa]þ.*k[íi]tti/.test(n) },
+    { label:'Eldvarnar steinull',  test:n=>/þéttull|steinull/.test(n) },           // þéttull = steinull
+    { label:'Eldvarnar silikon',   test:n=>/silikon|silicon/.test(n) },
+    { label:'Eldvarnar málning',   test:n=>/m[áa]lning/.test(n) },
+  ];
+  // Verðskrá items that are genuinely size-specific (mm must agree to match).
+  const grIsSized = (label)=>/^(band|kragi|brunaþéttirör)/i.test(label) || /rúlla/i.test(label);
   function matchVerdskra(label){
     const n = grNorm(label);
     if(!n) return null;
+    // 1) Unsized-material aliases first (akríl, þéttull, háþennslukítti, …).
+    for(const a of GR_REDDER_ALIASES){
+      if(a.test(n)){ const it = GR_FLAT.find(x=>x.label===a.label); if(it) return it; }
+    }
+    // 2) Size-aware token match — mm only constrains genuinely sized Verðskrá items.
     const mm = (n.match(/(\d{2,3})\s*mm/)||[])[1] || null;
     let best=null, bestScore=0;
     for(const it of GR_FLAT){
       const ni = grNorm(it.label);
+      const sized = grIsSized(it.label);
       const itMm = (ni.match(/(\d{2,3})\s*mm/)||[])[1] || null;
-      if((mm||itMm) && mm !== itMm) continue;          // sizes must agree if either has one
+      if(sized){ if(!mm || mm !== itMm) continue; }    // sized items require an exact mm match
       const toks = ni.split(' ').filter(t=>t.length>2 && !/^\d+$/.test(t) && !/mm$/.test(t));
       if(!toks.length) continue;
       let hit=0; for(const t of toks) if(n.includes(t)) hit++;
       let score = hit/toks.length;
-      if(mm && itMm && mm===itMm) score += 0.5;        // matched size is a strong signal
+      if(sized && mm===itMm) score += 0.5;             // matched size is a strong signal
       if(score>bestScore){ bestScore=score; best=it; }
     }
     return bestScore>=0.6 ? best : null;
