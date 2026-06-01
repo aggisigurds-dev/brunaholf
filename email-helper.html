@@ -39,12 +39,39 @@
   .spin{display:inline-block;color:var(--accent);font-size:12px;}
   .findhit{font-weight:700;}
   .hint{font-size:12px;color:var(--muted);margin:6px 0 0;}
+  .inbox{margin-top:10px;max-height:230px;overflow:auto;border:1px solid var(--line);border-radius:9px;}
+  .mail{padding:8px 10px;border-bottom:1px solid var(--line);cursor:pointer;}
+  .mail:last-child{border-bottom:none;}
+  .mail:hover{background:#f0f4fa;}
+  .mail .from{font-weight:600;font-size:12px;}
+  .mail .subj{font-size:12px;color:var(--text);}
+  .mail .meta{font-size:11px;color:var(--muted);margin-top:1px;}
+  .mail .clip{color:var(--accent);}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="top"><span class="logo">✦</span><h1>Svarhjálp fyrir tölvupósta</h1></div>
-  <div class="sub">Límdu inn póstinn, skrifaðu gróft svar — Luna finnur rétt skjal og fínpússar textann. Drög vistast sjálfkrafa.</div>
+  <div class="sub">Veldu beiðni úr innhólfi (eða límdu inn póst), skrifaðu gróft svar — Luna finnur rétt skjal og fínpússar textann.</div>
+
+  <div class="card" style="margin-bottom:14px">
+    <div class="btns" style="justify-content:space-between">
+      <label style="margin:0">Innhólf — beiðnir</label>
+      <div class="btns">
+        <select id="account" style="width:auto;min-width:190px">
+          <option value="eldklar@eldklar.is">eldklar@eldklar.is</option>
+          <option value="brunaholf@brunaholf.is">brunaholf@brunaholf.is</option>
+          <option value="bokhald@eldklar.is">bokhald@eldklar.is</option>
+        </select>
+        <select id="filter" style="width:auto">
+          <option value="questions">Aðeins beiðnir/spurningar</option>
+          <option value="all">Allt</option>
+        </select>
+        <button class="sec" id="refresh">↻ Sækja</button>
+      </div>
+    </div>
+    <div id="inbox" class="inbox"><div class="muted" style="padding:8px">Smelltu „Sækja" til að hlaða beiðnum…</div></div>
+  </div>
 
   <div class="grid">
     <div class="card">
@@ -103,6 +130,39 @@ function save(){ try{ localStorage.setItem('brunaholf_svarhjalp', JSON.stringify
 $('incoming').addEventListener('input',save);
 $('rough').addEventListener('input',save);
 
+// ---- Innhólf (inbox) ----
+const INBOX = (location.hostname.endsWith('brunaholf.netlify.app'))
+  ? '/api/inbox' : 'https://brunaholf.netlify.app/api/inbox';
+function fmtWhen(s){ try{ const d=new Date(s); return d.toLocaleDateString('is-IS',{day:'2-digit',month:'2-digit'})+' '+d.toLocaleTimeString('is-IS',{hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } }
+function esc(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+async function loadInbox(){
+  const acct=$('account').value, filt=$('filter').value;
+  const box=$('inbox');
+  box.innerHTML='<div class="muted" style="padding:8px">⏳ Sæki…</div>';
+  try{
+    const r=await fetch(INBOX+'?account='+encodeURIComponent(acct)+'&filter='+encodeURIComponent(filt)+'&limit=25');
+    const j=await r.json();
+    const rows=(j.rows||[]).filter(m=>!/no-reply@accounts\.google|account-security-noreply/i.test(m.sender_email||''));
+    if(!rows.length){ box.innerHTML='<div class="muted" style="padding:8px">Engar beiðnir fundust.</div>'; return; }
+    window.__mails={};
+    box.innerHTML=rows.map(m=>{ window.__mails[m.id]=m; const clip=m.has_attachment?' <span class="clip">📎</span>':'';
+      return `<div class="mail" data-id="${m.id}"><div class="from">${esc(m.sender_name||m.sender_email)}${clip}</div><div class="subj">${esc(m.subject||'(efni vantar)')}</div><div class="meta">${fmtWhen(m.received_at)}</div></div>`;
+    }).join('');
+    box.querySelectorAll('.mail').forEach(el=>el.addEventListener('click',()=>pickMail(el.getAttribute('data-id'))));
+  }catch(e){ box.innerHTML='<div class="muted" style="padding:8px">Villa við að sækja innhólf: '+esc(String(e.message||e))+'</div>'; }
+}
+function pickMail(id){
+  const m=window.__mails&&window.__mails[id]; if(!m) return;
+  const body = (m.subject?('Efni: '+m.subject+'\n\n'):'') + (m.snippet||'');
+  const from = m.sender_name? (m.sender_name+' <'+m.sender_email+'>') : m.sender_email;
+  $('incoming').value = 'Frá: '+from+'\n'+body;
+  save(); renderDoc();
+  $('incoming').scrollIntoView({behavior:'smooth',block:'center'});
+}
+$('refresh').addEventListener('click',loadInbox);
+$('account').addEventListener('change',loadInbox);
+$('filter').addEventListener('change',loadInbox);
+
 function findDoc(){
   const text = norm($('incoming').value+' '+$('rough').value);
   if(!text.trim()) return [];
@@ -160,6 +220,7 @@ $('go').addEventListener('click',()=>compose('is'));
 $('en').addEventListener('click',()=>compose('en'));
 $('copy').addEventListener('click',()=>{ navigator.clipboard.writeText($('output').textContent).then(()=>$('status').textContent='✓ Afritað').catch(()=>$('status').textContent='Gat ekki afritað'); });
 renderDoc();
+loadInbox();
 </script>
 </body>
 </html>
