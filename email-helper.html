@@ -40,13 +40,21 @@
   .findhit{font-weight:700;}
   .hint{font-size:12px;color:var(--muted);margin:6px 0 0;}
   .inbox{margin-top:10px;max-height:230px;overflow:auto;border:1px solid var(--line);border-radius:9px;}
-  .mail{padding:8px 10px;border-bottom:1px solid var(--line);cursor:pointer;}
+  .mail{padding:8px 10px;border-bottom:1px solid var(--line);}
   .mail:last-child{border-bottom:none;}
-  .mail:hover{background:#f0f4fa;}
+  .mail .mhead{cursor:pointer;}
+  .mail .mhead:hover .subj{color:var(--accent);}
   .mail .from{font-weight:600;font-size:12px;}
   .mail .subj{font-size:12px;color:var(--text);}
   .mail .meta{font-size:11px;color:var(--muted);margin-top:1px;}
   .mail .clip{color:var(--accent);}
+  .mail .preview{font-size:12px;color:var(--muted);margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .mail .full{font-size:12px;color:var(--text);margin-top:4px;white-space:pre-wrap;display:none;}
+  .mail.open .preview{display:none;}
+  .mail.open .full{display:block;}
+  .mrow{display:flex;gap:14px;margin-top:5px;}
+  .link{background:none;border:none;color:var(--accent);font-size:11px;font-weight:600;cursor:pointer;padding:0;}
+  .link:hover{text-decoration:underline;background:none;}
 </style>
 </head>
 <body>
@@ -146,9 +154,21 @@ async function loadInbox(){
     if(!rows.length){ box.innerHTML='<div class="muted" style="padding:8px">Engar beiðnir fundust.</div>'; return; }
     window.__mails={};
     box.innerHTML=rows.map(m=>{ window.__mails[m.id]=m; const clip=m.has_attachment?' <span class="clip">📎</span>':'';
-      return `<div class="mail" data-id="${m.id}"><div class="from">${esc(m.sender_name||m.sender_email)}${clip}</div><div class="subj">${esc(m.subject||'(efni vantar)')}</div><div class="meta">${fmtWhen(m.received_at)}</div></div>`;
+      const snip=esc(m.snippet||'');
+      const atts=(m.attachment_names&&m.attachment_names.length)?('<div class="meta">📎 '+m.attachment_names.map(esc).join(', ')+'</div>'):'';
+      return `<div class="mail" data-id="${m.id}">
+        <div class="mhead"><div><div class="from">${esc(m.sender_name||m.sender_email)}${clip}</div><div class="subj">${esc(m.subject||'(efni vantar)')}</div><div class="meta">${fmtWhen(m.received_at)}</div></div></div>
+        <div class="preview">${snip}</div>
+        <div class="full">${snip}${atts}</div>
+        <div class="mrow"><button class="link toggle" type="button">Sýna allt ▾</button><button class="link load" type="button">Nota í svar →</button></div>
+      </div>`;
     }).join('');
-    box.querySelectorAll('.mail').forEach(el=>el.addEventListener('click',()=>pickMail(el.getAttribute('data-id'))));
+    box.querySelectorAll('.mail').forEach(el=>{
+      const id=el.getAttribute('data-id');
+      el.querySelector('.toggle').addEventListener('click',ev=>{ ev.stopPropagation(); const open=el.classList.toggle('open'); ev.target.textContent=open?'Fela ▴':'Sýna allt ▾'; });
+      el.querySelector('.load').addEventListener('click',ev=>{ ev.stopPropagation(); pickMail(id); });
+      el.querySelector('.mhead').addEventListener('click',()=>pickMail(id));
+    });
   }catch(e){ box.innerHTML='<div class="muted" style="padding:8px">Villa við að sækja innhólf: '+esc(String(e.message||e))+'</div>'; }
 }
 function pickMail(id){
