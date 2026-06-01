@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#061224">
+<title>Svarhjálp — Brunahólf</title>
+<style>
+  :root{
+    --bg:#061224; --bg2:#0b1a30; --panel:#0e2138; --panel2:#13294a;
+    --line:#1d3a5f; --text:#eaf1fb; --muted:#9fb3cc; --accent:#3b82f6; --accent2:#1d4ed8;
+    --ok:#1f7a4d; --okbg:#0f2e22; --warn:#7a4a12; --warnbg:#2e1f0f;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:14px;}
+  .wrap{max-width:1080px;margin:0 auto;padding:18px;}
+  .top{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
+  .top .logo{font-size:20px;}
+  h1{font-size:18px;margin:0;font-weight:700;}
+  .sub{color:var(--muted);font-size:12px;margin:2px 0 16px;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media (max-width:820px){.grid{grid-template-columns:1fr;}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;}
+  label{display:block;font-weight:600;font-size:12px;margin:0 0 5px;color:var(--text);}
+  textarea,select{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px;font-family:inherit;font-size:13px;background:var(--bg2);color:var(--text);}
+  textarea{resize:vertical;}
+  textarea::placeholder{color:#5f7a9c;}
+  .row{margin-bottom:12px;}
+  button{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:600;cursor:pointer;}
+  button:hover{background:var(--accent2);}
+  button:disabled{opacity:.5;cursor:default;}
+  button.sec{background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--line);}
+  .btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .out{white-space:pre-wrap;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:12px;min-height:150px;font-size:13px;line-height:1.55;}
+  .doc{background:var(--okbg);border:1px solid #1f5e44;border-radius:9px;padding:8px 10px;margin-top:8px;font-size:12px;}
+  .doc.none{background:var(--warnbg);border-color:#6b4a1f;}
+  .muted{color:var(--muted);font-size:11px;margin-top:4px;}
+  .tag{display:inline-block;background:rgba(255,255,255,.08);border-radius:5px;padding:1px 6px;font-size:11px;color:var(--muted);margin-left:6px;}
+  .spin{display:inline-block;color:var(--accent);font-size:12px;}
+  .findhit{font-weight:700;}
+  .hint{font-size:12px;color:var(--muted);margin:6px 0 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><span class="logo">✦</span><h1>Svarhjálp fyrir tölvupósta</h1></div>
+  <div class="sub">Límdu inn póstinn, skrifaðu gróft svar — Luna finnur rétt skjal og fínpússar textann. Drög vistast sjálfkrafa.</div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="row">
+        <label>Tölvupóstur frá viðskiptavini</label>
+        <textarea id="incoming" rows="8" placeholder="Límdu hér innihald póstsins…"></textarea>
+      </div>
+      <div class="row">
+        <label>Þitt grófa svar / minnispunktar</label>
+        <textarea id="rough" rows="4" placeholder="T.d.: já sendi reikning, úttekt var gerð, allt í lagi, skýrsla fylgir…"></textarea>
+      </div>
+      <div class="row">
+        <label>Tónn</label>
+        <select id="tone">
+          <option value="kurteis og faglegur">Kurteis og faglegur (sjálfgefið)</option>
+          <option value="stuttur og hnitmiðaður">Stuttur og hnitmiðaður</option>
+          <option value="vinalegur og hlýr">Vinalegur og hlýr</option>
+          <option value="formlegur">Formlegur</option>
+        </select>
+      </div>
+      <div class="btns">
+        <button id="go">Semja svar</button>
+        <button class="sec" id="findbtn">Finna skjal</button>
+        <span id="status" class="spin"></span>
+      </div>
+      <div id="docbox"></div>
+    </div>
+
+    <div class="card">
+      <label>Fínpússað svar <span id="lang" class="tag">ÍS</span></label>
+      <div id="output" class="out">Svarið birtist hér…</div>
+      <div class="btns" style="margin-top:10px">
+        <button class="sec" id="copy">Afrita texta</button>
+        <button class="sec" id="en">Þýða á ensku</button>
+      </div>
+      <p class="hint">Athugaðu textann áður en þú sendir. Luna leggur til orðalag — þú átt lokaorðið.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// When this page lives inside brunaholf.netlify.app, a relative path works.
+// As a standalone file it falls back to the live endpoint.
+const LUNA = (location.hostname.endsWith('brunaholf.netlify.app'))
+  ? '/.netlify/functions/luna'
+  : 'https://brunaholf.netlify.app/.netlify/functions/luna';
+
+const DOCS = [{"company": "17.júní Torg 1-7, húsfélag", "invoice": "108250", "date": "28.04.26", "file": "17.júní Torg 1-7, húsfélag - R 108250 - 28.04.26.pdf", "kind": "reikningur"}, {"company": "AH Pípulagnir ehf", "invoice": "108274", "date": "05.05.26", "file": "AH Pípulagnir ehf - R 108274 - 05.05.26.pdf", "kind": "reikningur"}, {"company": "Aurum ehf", "invoice": "108281", "date": "05.05.26", "file": "Aurum ehf - R 108281 - 05.05.26.pdf", "kind": "reikningur"}, {"company": "Bjarnhildur M Sigurðardóttir", "invoice": "108280", "date": "05.05.26", "file": "Bjarnhildur M Sigurðardóttir - R 108280 - 05.05.26.pdf", "kind": "reikningur"}, {"company": "Bragðarefir ehf.", "invoice": "108222", "date": "27.04.26", "file": "Bragðarefir ehf. - R 108222 - 27.04.26.pdf", "kind": "reikningur"}, {"company": "Bretti Réttingarverkstæði ehf.", "invoice": "108242", "date": "28.04.26", "file": "Bretti Réttingarverkstæði ehf. - R 108242 - 28.04.26.pdf", "kind": "reikningur"}, {"company": "Bílageymsla Hörðukór 5", "invoice": "108252", "date": "28.04.26", "file": "Bílageymsla Hörðukór 5 - R 108252 - 28.04.26.pdf", "kind": "reikningur"}, {"company": "Bílaverkst. Kjartans-Þorgeirs sf", "invoice": "108261", "date": "30.04.26", "file": "Bílaverkst. Kjartans-Þorgeirs sf - R 108261 - 30.04.26.pdf", "kind": "reikningur"}, {"company": "Bílaverkstæði Högna", "invoice": "108278", "date": "05.05.26", "file": "Bílaverkstæði Högna - R 108278 - 05.05.26.pdf", "kind": "reikningur"}, {"company": "Devitos Pizza ehf", "invoice": "108224", "date": "27.04.26", "file": "Devitos Pizza ehf - R 108224 - 27.04.26.pdf", "kind": "reikningur"}, {"company": "Dún og fiður ehf", "invoice": "108223", "date": "27.04.26", "file": "Dún og fiður ehf - R 108223 - 27.04.26.pdf", "kind": "reikningur"}, {"company": "Fótaaðgerðarstofa Reykjavíkur ehf.", "invoice": "108237", "date": "28.04.26", "file": "Fótaaðgerðarstofa Reykjavíkur ehf. - R 108237 - 28.04.26.pdf", "kind": "reikningur"}, {"company": "Greiðan hárgreiðslustofa slf.", "invoice": "108238", "date": "28.04.26", "file": "Greiðan hárgreiðslustofa slf. - R 108238 - 28.04.26.pdf", "kind": "reikningur"}, {"company": "Gullsmári 5, húsfélag", "invoice": "108243", "date": "28.04.26", "file": "Gullsmári 5, húsfélag - R 108243 - 28.04.26.pdf", "kind": "reikningur"}, {"company": "Heilsudalurinn Eignarhaldsfélag ehf", "invoice": "108276", "date": "05.05.26", "file": "Heilsudalurinn Eignarhaldsfélag ehf - R 108276 - 05.05.26.pdf", "kind": "reikningur"}, {"company": "Hellas eignarhaldsfélag ehf", "invoice": "108229", "date": "27.04.26", "file": "Hellas eignarhaldsfélag ehf - R 108229 - 27.04.26.pdf", "kind": "reikningur"}, {"company": "Hilmar Már Gunnlaugsson", "invoice": "108240", "date": "28.04.26", "file": "Hilmar Már Gunnlaugsson - R 108240 - 28.04.26.pdf", "kind": "reikningur"}, {"company": "Hjallabraut 21, húsfélag", "invoice": "108275", "date": "05.05.26", "file": "Hjallabraut 21, húsfélag - R 108275 - 05.05.26 (2).pdf", "kind": "reikningur"}, {"company": "Hjallabraut 21, húsfélag", "invoice": "108275", "date": "05.05.26", "file": "Hjallabraut 21, húsfélag - R 108275 - 05.05.26.pdf", "kind": "reikningur"}, {"company": "Hreyfill svf", "invoice": "108231", "date": "27.04.26", "file": "Hreyfill svf - R 108231 - 27.04.26.pdf", "kind": "reikningur"}, {"company": "Hringdu ehf.", "invoice": "108226", "date": "27.04.26", "file": "Hringdu ehf. - R 108226 - 27.04.26.pdf", "kind": "reikningur"}, {"company": "Háskólaprent ehf.", "invoice": "108241", "date": "28.04.26", "file": "Háskólaprent ehf. - R 108241 - 28.04.26.pdf", "kind": "reikningur"}, {"company": "Hörðukór 5, húsfélag", "invoice": "108251", "date": "28.04.26", "file": "Hörðukór 5, húsfélag - R 108251 - 28.04.26.pdf", "kind": "reikningur"}, {"company": "Húsfélagið Ingólfsstræti 5", "invoice": "108219", "date": "27.04.26", "file": "Húsfélagið Ingólfsstræti 5 - R 108219 - 27.04.26.pdf", "kind": "reikningur"}, {"company": "K. Þorsteinsson og Co ehf", "invoice": "108228", "date": "27.04.26", "file": "K. Þorsteinsson og Co ehf - R 108228 - 27.04.26.pdf", "kind": "reikningur"}, {"company": "Kristnibraut 69, húsfélag", "invoice": "108270", "date": "05.05.26", "file": "Kristnibraut 69, húsfélag - R 108270 - 05.05.26.pdf", "kind": "reikningur"}, {"company": "LAG-Lögmenn sf", "invoice": "108218", "date": "27.04.26", "file": "LAG-Lögmenn sf - R 108218 - 27.04.26.pdf", "kind": "reikningur"}, {"company": "Leirubakki 4, húsfélag", "invoice": "108249", "date": "28.04.26", "file": "Leirubakki 4, húsfélag - R 108249 - 28.04.26.pdf", "kind": "reikningur"}, {"company": "Markus Lifenet ehf", "invoice": "108288", "date": "05.05.26", "file": "Markus Lifenet ehf - R 108288 - 05.05.26.pdf", "kind": "reikningur"}, {"company": "Rafeining ehf", "invoice": "108287", "date": "05.05.26", "file": "Rafeining ehf - R 108287 - 05.05.26.pdf", "kind": "reikningur"}, {"company": "Selvað 7-9-11, húsfélag", "invoice": "108268", "date": "05.05.26", "file": "Selvað 7-9-11, húsfélag - R 108268 - 05.05.26.pdf", "kind": "reikningur"}, {"company": "Skógarás 11, húsfélag", "invoice": "108273", "date": "05.05.26", "file": "Skógarás 11, húsfélag - R 108273 - 05.05.26.pdf", "kind": "reikningur"}, {"company": "Skúlagata 20, húsfélag", "invoice": "108289", "date": "05.05.26", "file": "Skúlagata 20, húsfélag - R 108289 - 05.05.26.pdf", "kind": "reikningur"}, {"company": "Sléttahraun 19-21, húsfélag", "invoice": "108284", "date": "05.05.26", "file": "Sléttahraun 19-21, húsfélag - R 108284 - 05.05.26.pdf", "kind": "reikningur"}, {"company": "Sléttahraun 32, húsfélag", "invoice": "108285", "date": "05.05.26", "file": "Sléttahraun 32, húsfélag - R 108285 - 05.05.26.pdf", "kind": "reikningur"}, {"company": "Stefanía Unnarsdóttir", "invoice": "108236", "date": "28.04.26", "file": "Stefanía Unnarsdóttir - R 108236 - 28.04.26.pdf", "kind": "reikningur"}, {"company": "Stúdíó tönn ehf", "invoice": "108286", "date": "05.05.26", "file": "Stúdíó tönn ehf - R 108286 - 05.05.26.pdf", "kind": "reikningur"}, {"company": "Teitur Jónasson ehf", "invoice": "108259", "date": "29.04.26", "file": "Teitur Jónasson ehf - R 108259 - 29.04.26.pdf", "kind": "reikningur"}, {"company": "Thai Lindin ehf.", "invoice": "108239", "date": "28.04.26", "file": "Thai Lindin ehf. - R 108239 - 28.04.26.pdf", "kind": "reikningur"}, {"company": "Tungusel 1-7, húsfélag", "invoice": "108271", "date": "05.05.26", "file": "Tungusel 1-7, húsfélag - R 108271 - 05.05.26.pdf", "kind": "reikningur"}, {"company": "VR-5 ehf.", "invoice": "108282", "date": "05.05.26", "file": "VR-5 ehf. - R 108282 - 05.05.26.pdf", "kind": "reikningur"}, {"company": "Versa ehf", "invoice": "108227", "date": "27.04.26", "file": "Versa ehf - R 108227 - 27.04.26.pdf", "kind": "reikningur"}, {"company": "Vínberið ehf.", "invoice": "108220", "date": "27.04.26", "file": "Vínberið ehf. - R 108220 - 27.04.26.pdf", "kind": "reikningur"}, {"company": "Álfaskeið 98-100, húsfélag", "invoice": "108279", "date": "05.05.26", "file": "Álfaskeið 98-100, húsfélag - R 108279 - 05.05.26.pdf", "kind": "reikningur"}, {"company": "Brunahólf", "invoice": "", "date": "", "file": "Email viðhengi/Brunahólf (Food grade CO2) - Veldix_Co2_SDS.pdf", "kind": "viðhengi"}, {"company": "Krókháls 9", "invoice": "", "date": "", "file": "Email viðhengi/Krókháls 9 (Bílaland Benna) - Úttekt á slökkvitækjum.docx", "kind": "viðhengi"}];
+
+const $ = id => document.getElementById(id);
+const norm = s => (s||'').toLowerCase().replace(/[^a-z0-9áéíóúýðþæö]/gi,'');
+
+try { const s=JSON.parse(localStorage.getItem('brunaholf_svarhjalp')||'{}');
+  if(s.incoming)$('incoming').value=s.incoming; if(s.rough)$('rough').value=s.rough; }catch(e){}
+function save(){ try{ localStorage.setItem('brunaholf_svarhjalp', JSON.stringify({incoming:$('incoming').value,rough:$('rough').value})); }catch(e){} }
+$('incoming').addEventListener('input',save);
+$('rough').addEventListener('input',save);
+
+function findDoc(){
+  const text = norm($('incoming').value+' '+$('rough').value);
+  if(!text.trim()) return [];
+  const scored = DOCS.map(d=>{
+    let score=0; const cn=norm(d.company);
+    if(cn && text.includes(cn)) score+=100;
+    (d.company.split(/[\s,.-]+/).filter(w=>w.length>=4)).forEach(tok=>{ if(text.includes(norm(tok))) score+=10; });
+    if(d.invoice && text.includes(d.invoice)) score+=80;
+    return {d,score};
+  }).filter(x=>x.score>0).sort((a,b)=>b.score-a.score);
+  return scored.slice(0,3);
+}
+function renderDoc(){
+  const hits=findDoc(); const box=$('docbox');
+  if(!hits.length){ box.innerHTML='<div class="doc none">Ekkert skjal fannst sjálfkrafa. Nefndu fyrirtækið eða reikningsnúmer.</div>'; return null; }
+  box.innerHTML=hits.map((h,i)=>`<div class="doc"><span class="findhit">${i===0?'➜ ':''}${h.d.company}</span> <span class="tag">${h.d.kind}${h.d.invoice?' R'+h.d.invoice:''}</span><div class="muted">${h.d.file}</div></div>`).join('');
+  return hits[0].d;
+}
+$('findbtn').addEventListener('click',renderDoc);
+
+async function callLuna(messages){
+  const r = await fetch(LUNA,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages})});
+  if(!r.ok) throw new Error('Luna svaraði ekki ('+r.status+')');
+  const data = await r.json();
+  return data.reply || data.text || data.message || JSON.stringify(data);
+}
+
+async function compose(targetLang){
+  const incoming=$('incoming').value.trim(), rough=$('rough').value.trim();
+  if(!incoming && !rough){ $('status').textContent='Sláðu inn póst eða minnispunkta fyrst.'; return; }
+  const top=renderDoc(); const tone=$('tone').value;
+  $('status').textContent='⏳ Semur…'; $('go').disabled=true;
+  const langInstruction = targetLang==='en' ? 'Write the reply in English.' : 'Skrifaðu svarið á íslensku.';
+  const docLine = top ? `Viðeigandi skjal sem fylgir svarinu: "${top.file}"${top.invoice?' (reikningur '+top.invoice+')':''}. Nefndu að það fylgi með.` : 'Ekkert skjal fannst — ekki lofa viðhengi nema það sé nefnt.';
+  const prompt = `Þú ert að hjálpa starfsmanni hjá Slökkvitæki ehf / Brunahólf (brunakerfi, slökkvitæki, úttektir) að svara tölvupósti.
+
+PÓSTUR VIÐSKIPTAVINAR:
+"""${incoming||'(enginn texti — notaðu minnispunkta)'}"""
+
+GRÓFIR MINNISPUNKTAR STARFSMANNS:
+"""${rough||'(engir)'}"""
+
+${docLine}
+
+Skrifaðu fágað, tilbúið svar sem má senda. ${langInstruction} Tónn: ${tone}. Hnitmiðað, ávarp í upphafi, kveðja í lok ("Með kveðju, Slökkvitæki ehf"). Ekki finna upp verð eða dagsetningar. Skilaðu AÐEINS svartextanum.`;
+  try{
+    const reply = await callLuna([{role:'user',content:prompt}]);
+    $('output').textContent=(reply||'').trim();
+    $('lang').textContent= targetLang==='en'?'EN':'ÍS';
+    $('status').textContent='✓ Tilbúið';
+  }catch(e){ $('status').textContent='Villa: '+(e&&e.message||e); }
+  finally{ $('go').disabled=false; }
+}
+$('go').addEventListener('click',()=>compose('is'));
+$('en').addEventListener('click',()=>compose('en'));
+$('copy').addEventListener('click',()=>{ navigator.clipboard.writeText($('output').textContent).then(()=>$('status').textContent='✓ Afritað').catch(()=>$('status').textContent='Gat ekki afritað'); });
+renderDoc();
+</script>
+</body>
+</html>
