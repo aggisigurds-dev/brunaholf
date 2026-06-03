@@ -210,6 +210,7 @@ function loadSale(){
   if(!s){ return; }
   lines = (s.lines||[]).map(l=>({ id:l.id, desc:l.desc, qty:l.qty, price:l.price }));
   if(s.customer && s.customer.toLowerCase()!=='staðgreitt') $('c_nafn').value = s.customer;
+  if(s.kt) $('c_kt').value = s.kt;
   if(s.num){ $('m_num').value = s.num; $('m_ref').value = s.num; }
   render();
   $('salemeta').textContent = 'Hlóð inn sölu '+(s.num||('#'+s.id))+' — '+(s.lines||[]).length+' línur';

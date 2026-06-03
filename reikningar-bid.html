@@ -36,6 +36,8 @@
   .empty{color:var(--muted);text-align:center;padding:30px;}
   .note{font-size:12px;color:var(--muted);margin-top:18px;border-top:1px solid var(--line);padding-top:10px;}
   .pill{display:inline-block;background:#eef4ff;color:var(--accent);border-radius:6px;padding:1px 7px;font-size:11px;}
+  .warn{color:#b45309;font-weight:600;}
+  .ktt{color:var(--muted);font-variant-numeric:tabular-nums;}
 </style>
 </head>
 <body>
@@ -57,13 +59,18 @@ function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;
 function fmtKr(n){ return Math.round(n||0).toLocaleString('is-IS'); }
 function todayISO(){ return new Date().toISOString().slice(0,10); }
 
-let GROUPS = [];   // [{ key, name, sales:[...] }]
+let GROUPS = [];   // [{ key, name, kt, sales:[...] }]
+
+const nkey = s => (s||'').toLowerCase().replace(/\./g,'').replace(/\s+/g,' ').trim();
+function plur(n){ return n===1 ? '1 sala' : n+' sölur'; }
 
 function groupByCustomer(sales){
+  // Canonical grouping: by resolved payer kennitala when known (merges the
+  // same customer's split sales), else by normalised name.
   const m = new Map();
   sales.forEach(s=>{
-    const key = s.customer_id ? 'id:'+s.customer_id : 'nafn:'+(s.customer||'—');
-    if(!m.has(key)) m.set(key, { key, name: s.customer || '—', sales: [] });
+    const key = s.kt ? 'kt:'+s.kt : 'nafn:'+nkey(s.customer||'—');
+    if(!m.has(key)) m.set(key, { key, name: s.customer || '—', kt: s.kt || null, sales: [] });
     m.get(key).sales.push(s);
   });
   return [...m.values()].sort((a,b)=>a.name.localeCompare(b.name,'is'));
@@ -108,13 +115,13 @@ function render(){
     div.innerHTML = `
       <div class="fhead">
         <div><div class="fname">${esc(g.name)}</div>
-        <div class="fmeta">${g.sales.length} sölur · ${fmtKr(subtotal)} kr m. vsk</div></div>
+        <div class="fmeta">${plur(g.sales.length)} · ${fmtKr(subtotal)} kr m. vsk · ${g.kt ? '<span class="ktt">kt '+esc(g.kt)+'</span>' : '<span class="warn">⚠ vantar kennitölu — lagfærðu viðskiptavin</span>'}</div></div>
         <span class="pill">${g.sales.length}</span>
       </div>
       <table><thead><tr><th></th><th>Reikn.nr</th><th>Dags.</th><th>Línur</th><th class="r">Samtals</th></tr></thead><tbody>${rows}</tbody></table>
       <div class="act">
         <span class="status" id="st-${gi}"></span>
-        <button onclick="sendGroup(${gi}, false)">Stofna 1 reikning af völdum →</button>
+        <button onclick="sendGroup(${gi})" ${g.kt?'':'disabled title="Vantar kennitölu"'}>Stofna 1 reikning af völdum →</button>
       </div>`;
     list.appendChild(div);
   });
@@ -133,6 +140,7 @@ async function sendGroup(gi){
   const g = GROUPS[gi];
   const sales = selectedSales(gi);
   if(!sales.length){ alert('Engar sölur valdar.'); return; }
+  if(!g.kt){ alert('Þennan viðskiptavin vantar kennitölu — lagfærðu hann áður en reikningur er stofnaður í dk.'); return; }
   const st = $('st-'+gi);
   if(!confirm(`Stofna ÓBÓKUÐ drög í dkPlus fyrir ${esc(g.name)} — ${sales.length} sölu(r)?\n\nEngin krafa fer í banka fyrr en bókað er í dk.`)) return;
   st.className='status'; st.textContent='Stofna drög…';
@@ -141,7 +149,7 @@ async function sendGroup(gi){
   const lines = [];
   sales.forEach(s=>(s.lines||[]).forEach(l=>lines.push({ ItemCode:String(l.id||''), Text:l.desc, Quantity:l.qty, Price:l.price, IncludingVAT:false })));
   const invoice = {
-    Customer: { Name: g.name },
+    Customer: { Number: g.kt, Name: g.name, SSN: g.kt },
     Date: todayISO(),
     Reference: sales.map(s=>s.num).filter(Boolean).join(', '),
     Lines: lines,
