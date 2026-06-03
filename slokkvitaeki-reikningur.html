@@ -90,6 +90,14 @@
 </div>
 
 <div class="picker no-print">
+  <select id="salesel" style="flex:1;min-width:240px;border:1px solid var(--line);background:#fff;padding:6px 8px;border-radius:8px">
+    <option value="">📋 Hlaða inn fyrri sölu úr Sölukerfi…</option>
+  </select>
+  <button onclick="loadSale()">Hlaða inn sölu</button>
+  <span id="salemeta" style="color:var(--muted);font-size:12px"></span>
+</div>
+
+<div class="picker no-print">
   <input class="search" id="prodsearch" list="prodlist" placeholder="🔎 Leita að vöru úr verðskrá Sölu…">
   <datalist id="prodlist"></datalist>
   <input class="qty" id="prodqty" type="number" min="1" value="1">
@@ -183,6 +191,28 @@ fetch('/api/vorur').then(r=>r.json()).then(d=>{
   PRODUCTS.forEach(p=>byName.set(p.nafn.toLowerCase(), p));
   $('pickmeta').textContent = PRODUCTS.length + ' vörur í verðskrá';
 }).catch(()=>{ $('pickmeta').textContent='Náði ekki í verðskrá (/api/vorur)'; });
+
+// Recent POS sales — so an existing sale can be loaded instead of re-typing.
+let SALES = [];
+fetch('/api/solur').then(r=>r.json()).then(d=>{
+  SALES = d.sales||[];
+  const sel = $('salesel');
+  sel.innerHTML = '<option value="">📋 Hlaða inn fyrri sölu úr Sölukerfi…</option>' +
+    SALES.map(s=>`<option value="${s.id}">${esc(s.num||('#'+s.id))} · ${s.date} · ${esc(s.customer||'')} · ${fmtKr(s.total)} kr · ${esc(s.paid_with||'')}</option>`).join('');
+  $('salemeta').textContent = SALES.length + ' sölur';
+}).catch(()=>{ $('salemeta').textContent='Náði ekki í sölur (/api/solur)'; });
+
+function loadSale(){
+  const id = $('salesel').value;
+  if(!id){ return; }
+  const s = SALES.find(x=>String(x.id)===String(id));
+  if(!s){ return; }
+  lines = (s.lines||[]).map(l=>({ id:l.id, desc:l.desc, qty:l.qty, price:l.price }));
+  if(s.customer && s.customer.toLowerCase()!=='staðgreitt') $('c_nafn').value = s.customer;
+  if(s.num){ $('m_num').value = s.num; $('m_ref').value = s.num; }
+  render();
+  $('salemeta').textContent = 'Hlóð inn sölu '+(s.num||('#'+s.id))+' — '+(s.lines||[]).length+' línur';
+}
 
 // Real company logo from the shared app_settings (same logo as the Slökkvitæki
 // app). Falls back to the SVG wordmark if unavailable.
