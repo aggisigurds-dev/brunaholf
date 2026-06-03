@@ -48,6 +48,18 @@
   .fn a{color:var(--accent);text-decoration:none;}
   .fn a:hover{text-decoration:underline;}
   .fn a::after{content:" ↗";font-size:10px;color:var(--muted);}
+  .matrix td{vertical-align:top;}
+  .matrix th{font-weight:700;}
+  .matrix a{color:var(--accent);text-decoration:none;}
+  .matrix a:hover{text-decoration:underline;}
+  .matrix a::after{content:" ↗";font-size:9px;color:var(--muted);}
+  .matrix .lk{margin:2px 0;line-height:1.35;}
+  .matrix tr.tgt td{background:#fcfdff;}
+  .vantar{display:inline-block;color:var(--warnfg);background:var(--warnbg);border:1px solid #f0e2bf;border-radius:5px;padding:0 6px;font-size:11px;}
+  .dash{color:#c4ccd6;}
+  .contracts{font-size:13px;margin-bottom:8px;}
+  .contracts a{color:#6b3fd4;}
+  .mxlabel{font-size:11.5px;color:var(--muted);margin-bottom:4px;}
   .empty{color:var(--muted);font-size:13px;padding:6px;}
   .note{font-size:12px;color:var(--muted);margin-top:20px;border-top:1px solid var(--line);padding-top:10px;}
   .kt{color:var(--muted);font-variant-numeric:tabular-nums;}
@@ -264,13 +276,60 @@ const MONTHS=['','jan','feb','mar','apr','maí','jún','júl','ágú','sep','okt
 function fmtYm(ym){ if(!ym) return ''; const [y,m]=ym.split('-'); return MONTHS[+m]+' '+y; }
 function driveLink(id, text){ const t=esc(text); return id?`<a href="https://drive.google.com/file/d/${esc(id)}/view" target="_blank" rel="noopener">${t}</a>`:t; }
 
+// Markmið: per fyrirtæki, per ár → Samningur / Úttektarskýrsla / Reikningur.
+const TARGET_YEARS=[2026,2025,2024];        // áherslan er 2024–2026
+const TYPE_LABEL={samningur:'Samningur', skyrsla:'Skýrsla', reikningur:'Reikningur'};
+// Reikningar (skannaðir) raðaðir á fyrirtæki eftir kennitölu.
+const INV_BY_KT={};
+INVOICES_2026.forEach(i=>{ if(i.worklist||!i.kt) return; (INV_BY_KT[i.kt]=INV_BY_KT[i.kt]||[]).push(i); });
+function invList(c){ return c.kt?(INV_BY_KT[c.kt]||[]):[]; }
+function hasInvoice(c){ return c.files.some(f=>f.t==='reikningur') || invList(c).length>0; }
+function docCount(c){ return c.files.length + invList(c).length; }
+// Samningur er einskiptis (við skráningu í þjónustu) — sýndur efst, ekki per ár.
+function contracts(c){
+  return c.files.filter(f=>f.t==='samningur').sort((a,b)=>(b.y||0)-(a.y||0))
+    .map(f=>({ id:f.id||FILE_IDS[f.n], y:f.y, n:f.n }));
+}
+// Fyrsta árið sem fyrirtæki er í þjónustu (elsta skjal: samningur/skýrsla/reikn.).
+function allYears(c){
+  const ys=[]; c.files.forEach(f=>{ if(f.y) ys.push(f.y); });
+  invList(c).forEach(i=>{ if(i.date) ys.push(+i.date.slice(0,4)); });
+  return ys;
+}
+function activeFrom(c){ const ys=allYears(c); return ys.length?Math.min(...ys):null; }
+// Árleg skylda (skýrsla + reikningur) gildir frá skráningarári til 2026.
+function expectedYear(c,y){ const af=activeFrom(c); return af!=null && y>=Math.max(2024,af) && y<=2026; }
+// Ár sem birtast í árlegu töflunni: raunár skýrslna/reikninga + væntanleg ár.
+function matrixYears(c){
+  const ys=new Set();
+  c.files.forEach(f=>{ if(f.y && f.t!=='samningur') ys.add(f.y); });
+  invList(c).forEach(i=>{ if(i.date) ys.add(+i.date.slice(0,4)); });
+  const af=activeFrom(c);
+  if(af!=null){ for(let y=Math.max(2024,af); y<=2026; y++) ys.add(y); }
+  return [...ys].sort((a,b)=>b-a);
+}
+// Skýrslur/reikningar án ártals (t.d. ódagsettir skannar) — sýndir í sér röð.
+function undatedDocs(c){ return c.files.filter(f=>f.t!=='samningur' && !f.y); }
+function filesOf(c,y,t){ return c.files.filter(f=>f.t===t && f.y===y).map(f=>({id:f.id||FILE_IDS[f.n], label:TYPE_LABEL[t], n:f.n})); }
+function reikningarOf(c,y){
+  const fromFiles=filesOf(c,y,'reikningur');
+  const fromScans=invList(c).filter(i=>+i.date.slice(0,4)===y)
+    .map(i=>({id:i.id, label:'Reikn. '+(i.invoice_no||'')+(i.site?' · '+i.site:''), n:i.n}));
+  return fromFiles.concat(fromScans);
+}
+function cell(items, targetYear){
+  if(items.length) return items.map(it=>`<div class="lk">${driveLink(it.id, it.label)}</div>`).join('');
+  return targetYear ? '<span class="vantar">vantar</span>' : '<span class="dash">—</span>';
+}
+
 let activeFilter='all';
 
 function passesFilter(c){
   if(activeFilter==='all') return true;
   if(activeFilter==='due') return isDue(c);
   if(activeFilter==='mgr') return !!c.manager;
-  return hasType(c, activeFilter); // skyrsla | reikningur
+  if(activeFilter==='reikningur') return hasInvoice(c);
+  return hasType(c, activeFilter); // skyrsla
 }
 
 function renderStats(){
@@ -297,9 +356,23 @@ function render(filter){
     if(c.sys) badges.push(`<span class="b sys">${esc(c.sys)}</span>`);
     if(c.manager) badges.push(`<span class="b mgr">⌂ ${esc(c.manager)}</span>`);
     if(c.next) badges.push(`<span class="b ${due?'due':'ok'}">Næsta skoðun: ${esc(fmtYm(c.next))}${due?' ⚠':''}</span>`);
-    const rows=c.files.slice().sort((a,b)=>(b.y||0)-(a.y||0)).map(fl=>
-      `<tr><td class="yr">${fl.y||'—'}</td><td class="tg"><i class="${fl.t}">${fl.t}</i></td><td class="fn">${driveLink(fl.id || FILE_IDS[fl.n], fl.n)}</td></tr>`).join('')
-      || `<tr><td colspan="3" class="empty">Engar skrár.</td></tr>`;
+    let rows=matrixYears(c).map(y=>{
+      const exp=expectedYear(c,y);
+      return `<tr class="${exp?'tgt':''}"><td class="yr">${y}</td>`
+        +`<td>${cell(filesOf(c,y,'skyrsla'), exp)}</td>`
+        +`<td>${cell(reikningarOf(c,y), exp)}</td></tr>`;
+    }).join('');
+    const und=undatedDocs(c);
+    if(und.length){
+      const usk=und.filter(f=>f.t==='skyrsla').map(f=>({id:f.id||FILE_IDS[f.n], label:TYPE_LABEL.skyrsla, n:f.n}));
+      const ure=und.filter(f=>f.t==='reikningur').map(f=>({id:f.id||FILE_IDS[f.n], label:TYPE_LABEL.reikningur, n:f.n}));
+      rows+=`<tr><td class="yr">óþekkt</td><td>${cell(usk,false)}</td><td>${cell(ure,false)}</td></tr>`;
+    }
+    if(!rows) rows='<tr><td colspan="3" class="empty">Engin árleg skjöl.</td></tr>';
+    const cs=contracts(c);
+    const conHtml = cs.length
+      ? `📝 Þjónustusamningur: ${cs.map(x=>driveLink(x.id, 'Samningur'+(x.y?' '+x.y:''))).join(' · ')}`
+      : `<span class="vantar">Enginn samningur skráður</span>`;
     const div=document.createElement('div');
     div.className='firm'+(f?' open':'');
     div.innerHTML=`
@@ -307,8 +380,12 @@ function render(filter){
         <div class="fname">${esc(c.name)}</div>
         <div class="fmeta">${c.kt?`<span class="kt">${fmtKt(c.kt)}</span> · `:''}${esc(c.addr||'')}${c.cover?` · ${esc(c.cover)}`:''}${c.contact?` · 👤 ${esc(c.contact)}${c.simi?' '+esc(c.simi):''}`:''}</div>
         <div class="badges">${badges.join('')}</div>
-      </div><div class="count"><span class="n">${c.files.length} skrár</span></div></div>
-      <div class="blds"><table><thead><tr><th>Ár</th><th>Tegund</th><th>Skrá</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+      </div><div class="count"><span class="n">${docCount(c)} skjöl</span></div></div>
+      <div class="blds">
+        <div class="contracts">${conHtml}</div>
+        <div class="mxlabel">Árlega (sama mánuð ár hvert): úttektarskýrsla + reikningur</div>
+        <table class="matrix"><thead><tr><th>Ár</th><th>Úttektarskýrsla</th><th>Reikningur</th></tr></thead><tbody>${rows}</tbody></table>
+      </div>`;
     const head=div.querySelector('.fhead');
     head.addEventListener('click',()=>div.classList.toggle('open'));
     list.appendChild(div);
