@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#ffffff">
+<title>Reikningar í bið — dk+</title>
+<style>
+  :root{ --bg:#f4f6f9; --panel:#fff; --line:#e2e6ec; --line2:#eef1f5; --text:#0b1220; --muted:#5c6b7d; --accent:#2563eb; --okbg:#eef7f1; --okfg:#1f7a4d; --errbg:#fdecec; --errfg:#b42318; }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:15px;line-height:1.5;}
+  .wrap{max-width:900px;margin:0 auto;padding:22px 18px 60px;}
+  h1{font-size:22px;margin:0 0 2px;font-weight:750;}
+  .lead{color:var(--muted);font-size:14px;margin:0 0 16px;}
+  .lead a{color:var(--accent);}
+  .stats{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:9px 14px;}
+  .stat b{font-size:18px;font-weight:760;display:block;}
+  .stat span{font-size:12px;color:var(--muted);}
+  .bar{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
+  button{border:1px solid var(--line);background:var(--panel);border-radius:9px;padding:8px 13px;font-size:13.5px;cursor:pointer;}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;}
+  button:disabled{opacity:.5;cursor:default;}
+  .firm{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px;box-shadow:0 1px 2px rgba(16,24,40,.04);}
+  .fhead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+  .fname{font-size:16px;font-weight:700;}
+  .fmeta{font-size:12.5px;color:var(--muted);margin-top:2px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px;}
+  th{text-align:left;color:var(--muted);font-weight:600;font-size:11.5px;padding:4px 6px;border-bottom:1px solid var(--line2);}
+  td{padding:6px 6px;border-bottom:1px solid var(--line2);}
+  tr:last-child td{border-bottom:none;}
+  td.r,th.r{text-align:right;font-variant-numeric:tabular-nums;}
+  .act{display:flex;gap:8px;align-items:center;margin-top:10px;justify-content:flex-end;}
+  .status{font-size:12.5px;}
+  .status.ok{color:var(--okfg);} .status.err{color:var(--errfg);}
+  .empty{color:var(--muted);text-align:center;padding:30px;}
+  .note{font-size:12px;color:var(--muted);margin-top:18px;border-top:1px solid var(--line);padding-top:10px;}
+  .pill{display:inline-block;background:#eef4ff;color:var(--accent);border-radius:6px;padding:1px 7px;font-size:11px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Reikningar í bið — dk+</h1>
+  <p class="lead">Ógreiddar reikningssölur (greitt með „reikningur“) sem á eftir að senda í dkPlus, hópaðar eftir viðskiptavin. Veldu sölur og stofnaðu <b>óbókuð drög</b> í dk — engin krafa fer í heimabanka fyrr en þú bókar í dk. Sendar sölur detta af listanum. &nbsp;·&nbsp; <a href="slokkvitaeki-reikningur.html">Stakur reikningur →</a></p>
+
+  <div id="stats" class="stats"></div>
+  <div class="bar">
+    <button onclick="load()">↻ Endurhlaða</button>
+    <span id="meta" style="color:var(--muted);font-size:12.5px"></span>
+  </div>
+  <div id="list"><div class="empty">Sæki…</div></div>
+  <div class="note">Drög eru óbókuð (<code>?post=false</code>) — ekkert fer í banka fyrr en bókað er í dk. Writeback: við stofnun er <code>invoiced_at</code> + <code>dk_invoice_id</code> skráð á söluna svo hún komi ekki aftur. Idempotent.</div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function fmtKr(n){ return Math.round(n||0).toLocaleString('is-IS'); }
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+
+let GROUPS = [];   // [{ key, name, sales:[...] }]
+
+function groupByCustomer(sales){
+  const m = new Map();
+  sales.forEach(s=>{
+    const key = s.customer_id ? 'id:'+s.customer_id : 'nafn:'+(s.customer||'—');
+    if(!m.has(key)) m.set(key, { key, name: s.customer || '—', sales: [] });
+    m.get(key).sales.push(s);
+  });
+  return [...m.values()].sort((a,b)=>a.name.localeCompare(b.name,'is'));
+}
+
+function load(){
+  $('list').innerHTML = '<div class="empty">Sæki…</div>';
+  fetch('/api/solur?unsent=1&limit=500').then(r=>r.json()).then(d=>{
+    const sales = d.sales||[];
+    GROUPS = groupByCustomer(sales);
+    renderStats(sales);
+    render();
+    $('meta').textContent = 'Uppfært '+new Date().toLocaleTimeString('is-IS');
+  }).catch(e=>{ $('list').innerHTML = '<div class="empty">Náði ekki í sölur ('+esc(String(e))+')</div>'; });
+}
+
+function renderStats(sales){
+  const total = sales.reduce((a,s)=>a+(s.total||0),0);
+  $('stats').innerHTML = [
+    ['Viðskiptavinir', GROUPS.length],
+    ['Sölur í bið', sales.length],
+    ['Samtals m. vsk', fmtKr(total)+' kr'],
+  ].map(([l,v])=>`<div class="stat"><b>${v}</b><span>${esc(l)}</span></div>`).join('');
+}
+
+function render(){
+  const list = $('list');
+  if(!GROUPS.length){ list.innerHTML = '<div class="firm"><div class="empty">Engar reikningssölur í bið. 🎉</div></div>'; return; }
+  list.innerHTML = '';
+  GROUPS.forEach((g,gi)=>{
+    const subtotal = g.sales.reduce((a,s)=>a+(s.total||0),0);
+    const rows = g.sales.map((s,si)=>`
+      <tr>
+        <td><input type="checkbox" data-g="${gi}" data-s="${si}" checked></td>
+        <td>${esc(s.num||('#'+s.id))}</td>
+        <td>${esc(s.date||'')}</td>
+        <td>${(s.lines||[]).length} línur</td>
+        <td class="r">${fmtKr(s.total)} kr</td>
+      </tr>`).join('');
+    const div = document.createElement('div');
+    div.className = 'firm';
+    div.innerHTML = `
+      <div class="fhead">
+        <div><div class="fname">${esc(g.name)}</div>
+        <div class="fmeta">${g.sales.length} sölur · ${fmtKr(subtotal)} kr m. vsk</div></div>
+        <span class="pill">${g.sales.length}</span>
+      </div>
+      <table><thead><tr><th></th><th>Reikn.nr</th><th>Dags.</th><th>Línur</th><th class="r">Samtals</th></tr></thead><tbody>${rows}</tbody></table>
+      <div class="act">
+        <span class="status" id="st-${gi}"></span>
+        <button onclick="sendGroup(${gi}, false)">Stofna 1 reikning af völdum →</button>
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+function selectedSales(gi){
+  const g = GROUPS[gi]; if(!g) return [];
+  const out = [];
+  document.querySelectorAll(`input[type=checkbox][data-g="${gi}"]:checked`).forEach(cb=>{
+    const si = +cb.getAttribute('data-s'); if(g.sales[si]) out.push(g.sales[si]);
+  });
+  return out;
+}
+
+async function sendGroup(gi){
+  const g = GROUPS[gi];
+  const sales = selectedSales(gi);
+  if(!sales.length){ alert('Engar sölur valdar.'); return; }
+  const st = $('st-'+gi);
+  if(!confirm(`Stofna ÓBÓKUÐ drög í dkPlus fyrir ${esc(g.name)} — ${sales.length} sölu(r)?\n\nEngin krafa fer í banka fyrr en bókað er í dk.`)) return;
+  st.className='status'; st.textContent='Stofna drög…';
+
+  // Combine the selected sales into one invoice (mánaðar samtölureikningur).
+  const lines = [];
+  sales.forEach(s=>(s.lines||[]).forEach(l=>lines.push({ ItemCode:String(l.id||''), Text:l.desc, Quantity:l.qty, Price:l.price, IncludingVAT:false })));
+  const invoice = {
+    Customer: { Name: g.name },
+    Date: todayISO(),
+    Reference: sales.map(s=>s.num).filter(Boolean).join(', '),
+    Lines: lines,
+  };
+  try{
+    const res = await fetch('/api/dkplus-invoice', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ mode:'create', confirm:true, post:false, invoice }) });
+    const b = await res.json();
+    if(!b.ok){ st.className='status err'; st.textContent='✗ dk villa · dk_status '+(b.dk_status!=null?b.dk_status:'?')+' '+(b.error||''); return; }
+    const dkId = (b.data && (b.data.Number || b.data.InvoiceNumber || (b.data.Head&&b.data.Head.Number))) || '';
+    const batch = 'bk-'+Date.now();
+    // Writeback so these sales drop off (idempotent).
+    const mark = await fetch('/api/solur-mark', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ ids: sales.map(s=>s.id), dk_invoice_id: String(dkId), batch_id: batch }) });
+    const mb = await mark.json();
+    st.className='status ok'; st.textContent='✓ Stofnað'+(dkId?(' ('+dkId+')'):'')+' · '+(mb.updated||0)+' sölur merktar sendar';
+    // Drop the sent sales from the group / list.
+    const ids = new Set(sales.map(s=>s.id));
+    g.sales = g.sales.filter(s=>!ids.has(s.id));
+    if(!g.sales.length) GROUPS = GROUPS.filter((_,i)=>i!==gi);
+    setTimeout(()=>{ const all = GROUPS.flatMap(x=>x.sales); renderStats(all); render(); }, 900);
+  }catch(e){ st.className='status err'; st.textContent='✗ '+String(e); }
+}
+
+load();
+</script>
+</body>
+</html>
