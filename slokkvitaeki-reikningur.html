@@ -73,7 +73,17 @@
 <div class="bar no-print">
   <strong>Reikningur</strong>
   <span class="grow"></span>
-  <input id="m_term" placeholder="Skilmáli nr" title="dkPlus greiðsluskilmáli (t.d. Krafa í banka). Tómt = sjálfgefið hjá kúnnanum." style="width:110px;border:1px solid var(--line)">
+  <input id="m_term" list="termlist" placeholder="Skilmáli" title="dkPlus greiðsluskilmáli (Head.Term): t.d. stgr, lm, d15, d30, post. Krafa-í-banka er sér innheimtustilling í dk (ekki skilmáli) sem fer af stað við bókun." style="width:108px;border:1px solid var(--line)">
+  <datalist id="termlist">
+    <option value="stgr">Staðgreitt</option>
+    <option value="lm">Líðandi mánuður</option>
+    <option value="m15">Líðandi mán. + 15</option>
+    <option value="m20">Líðandi mán. + 20</option>
+    <option value="d15">15 daga</option>
+    <option value="d20">20 daga</option>
+    <option value="d30">30 daga</option>
+    <option value="post">Póstkrafa</option>
+  </datalist>
   <button id="dkcalc" title="Forskoða verð í dkPlus (býr ekkert til)">Reikna í dkPlus</button>
   <button id="dkdraft" title="Stofna óbókuð drög í dkPlus (engin krafa fyrr en bókað)">Stofna drög í dkPlus</button>
   <button class="primary" onclick="window.print()">🖨️ Prenta / PDF</button>
