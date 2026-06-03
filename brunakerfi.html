@@ -45,6 +45,9 @@
   .tg .samningur{background:#f3eeff;color:#6b3fd4;}
   .tg .reikningur{background:var(--okbg);color:#1f7a4d;}
   .fn{word-break:break-word;}
+  .fn a{color:var(--accent);text-decoration:none;}
+  .fn a:hover{text-decoration:underline;}
+  .fn a::after{content:" ↗";font-size:10px;color:var(--muted);}
   .empty{color:var(--muted);font-size:13px;padding:6px;}
   .note{font-size:12px;color:var(--muted);margin-top:20px;border-top:1px solid var(--line);padding-top:10px;}
   .kt{color:var(--muted);font-variant-numeric:tabular-nums;}
@@ -185,23 +188,72 @@ const CUSTOMERS = [
 // site = verkstaður/hótel þar sem það á við. One file (120038) reyndist
 // handskrifaður verklisti, ekki reikningur (worklist:true).
 const INVOICES_2026 = [
-  { n:"Scan_20260424_114654.jpg", customer:"Center Hotels", site:"Grandi", kt:"4509051430", invoice_no:"108001", date:"2026-03-12", amount_m_vsk:579424 },
-  { n:"Scan_20260424_114713.jpg", customer:"G14 ehf", site:"Grensásvegur 14", kt:"5108090170", invoice_no:"107992", date:"2026-03-10", amount_m_vsk:80487 },
-  { n:"Scan_20260424_114730.jpg", customer:"Fasteignin T10 ehf", site:"Reykjavíkurvegur 68", kt:"6712220240", invoice_no:"107591", date:"2025-12-08", amount_m_vsk:86490 },
-  { n:"Scan_20260424_114751.jpg", customer:"Center Hotels", kt:"4509051430", invoice_no:"107592", date:"2025-12-08", amount_m_vsk:404381 },
-  { n:"Scan_20260424_114806.jpg", customer:"Center Hotels", site:"Klapparstíg 26", kt:"4509051430", invoice_no:"107466", date:"2025-10-30", amount_m_vsk:134606 },
-  { n:"Scan_20260424_114824.jpg", customer:"17. júnítorg 1-7, húsfélag", kt:"5007070110", invoice_no:"107465", date:"2025-10-30", amount_m_vsk:266779 },
-  { n:"Scan_20260424_114838.jpg", customer:"Center Hotels", site:"Laugavegi 95-99", kt:"4509051430", invoice_no:"107337", date:"2025-09-19", amount_m_vsk:404381 },
-  { n:"Scan_20260424_114854.jpg", customer:"Center Hotels", kt:"4509051430", invoice_no:"107336", date:"2025-09-19", amount_m_vsk:236093 },
-  { n:"Scan_20260424_114909.jpg", customer:"Center Hotels", kt:"4509051430", invoice_no:"107333", date:"2025-09-19", amount_m_vsk:102490 },
-  { n:"Scan_20260424_114926.jpg", customer:"Center Hotels", kt:"4509051430", invoice_no:"107312", date:"2025-09-11", amount_m_vsk:89331 },
-  { n:"Scan_20260424_114940.jpg", customer:"Center Hotels", site:"Miðgarður", kt:"4509051430", invoice_no:"107311", date:"2025-09-11", amount_m_vsk:451302 },
-  { n:"Scan_20260424_114954.jpg", customer:"Center Hotels", site:"Arnarhvoll", kt:"4509051430", invoice_no:"107310", date:"2025-09-11", amount_m_vsk:158263 },
-  { n:"Scan_20260424_115006.jpg", customer:"Húsfélagið Hlíðasmára 15", kt:"5306003780", invoice_no:"107340", date:"2025-09-19", amount_m_vsk:261321 },
-  { n:"Scan_20260424_115022.jpg", customer:"Húsfélagið Hlíðasmára 17", kt:"6511993019", invoice_no:"107308", date:"2025-09-11", amount_m_vsk:261971 },
-  { n:"Scan_20260424_115409.jpg", customer:"Center Hotels", site:"Grandi", kt:"4509051430", invoice_no:"106498", date:"2025-03-17", amount_m_vsk:575360 },
-  { n:"Scan_20260424_120038.jpg", customer:null, date:"2026-04-01", worklist:true },
+  { n:"Scan_20260424_114654.jpg", id:"1DrRr2Ozs4NrBvD6LDUSiAXEk1WdfIDBr", customer:"Center Hotels", site:"Grandi", kt:"4509051430", invoice_no:"108001", date:"2026-03-12", amount_m_vsk:579424 },
+  { n:"Scan_20260424_114713.jpg", id:"1Yema5x_RyQRMFHhRA_EHrqsY3wjutxxo", customer:"G14 ehf", site:"Grensásvegur 14", kt:"5108090170", invoice_no:"107992", date:"2026-03-10", amount_m_vsk:80487 },
+  { n:"Scan_20260424_114730.jpg", id:"1WvM9yCuhonbCp8q05K8bHPOiJh1Tkm3b", customer:"Fasteignin T10 ehf", site:"Reykjavíkurvegur 68", kt:"6712220240", invoice_no:"107591", date:"2025-12-08", amount_m_vsk:86490 },
+  { n:"Scan_20260424_114751.jpg", id:"1RQFG8vVl2-lXPYrl2b16erVCtfX59LGf", customer:"Center Hotels", kt:"4509051430", invoice_no:"107592", date:"2025-12-08", amount_m_vsk:404381 },
+  { n:"Scan_20260424_114806.jpg", id:"1quFGQSXgA4V0mw2NfpQS3IDaWI5QlD9x", customer:"Center Hotels", site:"Klapparstíg 26", kt:"4509051430", invoice_no:"107466", date:"2025-10-30", amount_m_vsk:134606 },
+  { n:"Scan_20260424_114824.jpg", id:"12wmywUCol5AfPSkmhs7T8dOMsv5J33Sb", customer:"17. júnítorg 1-7, húsfélag", kt:"5007070110", invoice_no:"107465", date:"2025-10-30", amount_m_vsk:266779 },
+  { n:"Scan_20260424_114838.jpg", id:"1TCybMqincvYNAsgbFVq5JqakOcYieqDF", customer:"Center Hotels", site:"Laugavegi 95-99", kt:"4509051430", invoice_no:"107337", date:"2025-09-19", amount_m_vsk:404381 },
+  { n:"Scan_20260424_114854.jpg", id:"1AdTvaX6ehEN4BX8OTQEYQDuRQN5t3pU5", customer:"Center Hotels", kt:"4509051430", invoice_no:"107336", date:"2025-09-19", amount_m_vsk:236093 },
+  { n:"Scan_20260424_114909.jpg", id:"16wRQoKCeNLt2nJXNV5hEP6YIL5WJhq5U", customer:"Center Hotels", kt:"4509051430", invoice_no:"107333", date:"2025-09-19", amount_m_vsk:102490 },
+  { n:"Scan_20260424_114926.jpg", id:"1MxvUjt3saz_8cM6YHJzJCi3ASJYfhZY_", customer:"Center Hotels", kt:"4509051430", invoice_no:"107312", date:"2025-09-11", amount_m_vsk:89331 },
+  { n:"Scan_20260424_114940.jpg", id:"1gw6Ii7wqrQVO36OfHIP7qYGjnF8oSCxz", customer:"Center Hotels", site:"Miðgarður", kt:"4509051430", invoice_no:"107311", date:"2025-09-11", amount_m_vsk:451302 },
+  { n:"Scan_20260424_114954.jpg", id:"1PW6i9Mvpwk-pCwaMDQlL4YQmJV9Rg99e", customer:"Center Hotels", site:"Arnarhvoll", kt:"4509051430", invoice_no:"107310", date:"2025-09-11", amount_m_vsk:158263 },
+  { n:"Scan_20260424_115006.jpg", id:"1ei29KTNqQxunAUaECQR0tPq39GELls8J", customer:"Húsfélagið Hlíðasmára 15", kt:"5306003780", invoice_no:"107340", date:"2025-09-19", amount_m_vsk:261321 },
+  { n:"Scan_20260424_115022.jpg", id:"1ylRj35x2GBaWXAVv29jH3-ByRfeN3hFq", customer:"Húsfélagið Hlíðasmára 17", kt:"6511993019", invoice_no:"107308", date:"2025-09-11", amount_m_vsk:261971 },
+  { n:"Scan_20260424_115409.jpg", id:"1YGmLkeGxfbFLBWX-ie57DqGaRfmKj6Oq", customer:"Center Hotels", site:"Grandi", kt:"4509051430", invoice_no:"106498", date:"2025-03-17", amount_m_vsk:575360 },
+  { n:"Scan_20260424_120038.jpg", id:"1YC9X6aABsg1u6D9gw4KZWPbMPrun0cdU", customer:null, date:"2026-04-01", worklist:true },
 ];
+
+// Google Drive fileId per skráarnafn (skýrslur / samningar / reikningar).
+// driveLink() byggir slóðina drive.google.com/file/d/<id>/view úr þessu.
+const FILE_IDS = {
+  "Center Hotels Skjaldbreið - Brunaviðvörunarkerfi - Des 2023.pdf":"1uL-Py6AK3xq8pynVrLIrZ-9OLJNFgNli",
+  "Ársskoðun Brunakerfa desember Skjaldbreið 2023.pdf":"1198aNqMW1ZHQbFL-E-6oXoizQfrEEEt_",
+  "Verkkaupi Center Hótel Þingholt - Brunaviðvörunarkerfi - sept 2023.pdf":"1cSKJH2ZQlkpik2ZGgz6gKBPuJc_hD04F",
+  "brunakerfi Center Klöpp 2023.pdf":"1dSa2rCYSslsbe2GJTQGcB8EsjQFiuo88",
+  "samningur brunakerfi Center Hótel 2022.pdf":"12A47D8LhoOekcHv9qZmsGu3uJuSOMLY0",
+  "Center Hótel Plaza 2024 brunakerfi.pdf":"1fqtz4S4SP2SUGONFQrudNaZtqhDNpMMf",
+  "Center Hótel Arnarhvoll brunakerfi 2025.pdf":"1OieRP_h8TbZX4M9waHDv6NBraAfWuvpn",
+  "Center Hótel Miðgarður brunakerfi 2025.pdf":"10vU3h9t8hGhjMY5JFo15bQDKHf_tFzP7",
+  "Center Grandi brunakerfi 2025.pdf":"1RR3BOB1ltGMmKBB4BZnnXqLkR-GE9LHh",
+  "Center Hótel klöpp brunakerfi 2025.pdf":"1OiQy0ADKkqiq7TTn6zUYuin64bQW18_P",
+  "Center Hótel Plaza 2025 brunakerfi.pdf":"1XmfaZHZ_2_F7PvjDWcNk8iCU38Kfwpnk",
+  "Centerhótels þjónustusamningur (1).pdf":"1O8TUohSExYqe85ZNLlkX0MGEGWy31yot",
+  "Center ArnarHvoll brunakerfi 2026.pdf":"1WEhrv4dSzmYZT6OVN9LIfs59bVYsYsli",
+  "Grandi Center Hótel brunakerfi 2026.pdf":"1aeffWMvl_LokZziP7QaoDr295aq9JfS6",
+  "Þjónustusamningur brunakerfi Hótel Borealis 2025.pdf":"1LzJTC2GfEUno6MRTykGC9Pl8l4drj47e",
+  "Ársskoðun Brunakerfa Borealis 2025.pdf":"1-Q_7CPhTH1IivCueDo9-FvnVBWbYFTub",
+  "G 14 ehf brunakerfi 2024.pdf":"150Hce9eO_O6Ld2sbh-G5RW82mHI6DDuF",
+  "G14 ársskoðun á brunakerfi 2026.pdf":"10sQYv_IO3_uD41m4oquAvRb7HqHH6QUg",
+  "ársskoðun brunakerfi Heilsustofnun 2023.pdf":"1-qs_P7aZ7glcJvbNqi2e-U17rsxZPBpV",
+  "17 júnítorg brunakerfi 2025.pdf":"162qtIzyBhgzIL1hnv06v3w-8DFInfePZ",
+  "Ársskoðun Brunakerfi Hlíðasmára 17 2023.pdf":"1AgGxJSfYqpzRCQeeZkCrMbgonauAk5Jo",
+  "2025 Apr Slökkvitæki ehf, þjónustusamningur Hlíðasmári 19 brunaviðvörunarkerfi.pdf":"1meDxgoN3KfVxU9LGoT35sCo6CVM-QScT",
+  "Hlíðasmári 19 brunakerfi 2024.pdf":"1xdv4GJYMUm0pk1NUQYIvdkZRxf0P1BFs",
+  "Hlíðasmári 19 - Brunaviðvörunarkerfi úttekt Maí 2026.pdf":"1xW6swq8fxh4BskbdXIN-vnLXG3k-eCJ_",
+  "Hlíðasmári 15 brunakerfi 2025.pdf":"1qYVcG9IVoUJpBV0J174RbghgJqhwZME7",
+  "Húsfélagið Hlíðasmára 15 - Brunakerfi - Reikningur - 2025.pdf":"1oGusND5YAJxtk-D_lCTnKTBj2zfUX08T",
+  "T-10 slökkvitæki,brunaslöngur 2025.pdf":"1okItMLdbISG0QuRRApgsqCElaCM5cFWx",
+  "Rétt Mál brunakerfi 2023.pdf":"1f31Z4ugPqMj0Fb0sJVG5t2x4qO3ien4v",
+  "brunakerfi 220 BAR 2023.pdf":"1oGJM4BFyZEIYBppiMZ1vvjWYrh1-I7iw",
+  "Ránargata 16. Brunaviðvörunarkerfis 2024.pdf":"1bfqjwEVfV0l3gTv6i8rry2GqnRhUdEQU",
+  "Brunakerfi Ægisgata 4 2024.pdf":"1SWXG_r9PljCyEnwhV9uwCqKEWw-pLY4u",
+  "Ársskoðun Brunakerfa Kef Ölhúsið 2023.pdf":"1lWQh2w4pIe7sbjscrDfuDes4toiaUVwi",
+  "brunakerfi Hlaðvarpinn 2024.docx":"1pnLZsWUvLUV09JeyvWGFK1gzrVerV69D",
+  "Hótel Norðurey þjónustusamningur 2025.pdf":"10jH5_h3ZmTI2tRVvGJaNuecaBEa9F3I2",
+  "Þjónustusamningur Einhella 4 2025.pdf":"19EICqBXs3iyTtYb-3Xz_vTIFQPp3bZdQ",
+  "Þjónustusamningur Thai Lindin 2026.pdf":"1IZwUxxxaqh1D_O6BV9U6-WApnPHwNQgM",
+  "Þjónustusamningur Prikið ehf 2026.pdf":"18Kr5z9jB0vMuU4llrh9g2elbGFKuZAFj",
+  "Þjónustusamningur Suðurhellu 9.pdf":"1gDpUJ6KI0P83nM-L9C88YHkKs3bMUcn0",
+  "Þjónustusamningur Indverska matarfélagið ehf 2025.pdf":"15KY1zIwBRbLhGNDgDQjKbUbCIDaA6bJI",
+  "Þjónustusamningur Kirkjulundur 12-14.docx":"1BISBTu-r8a2gMEMoUFCfeor9Hd8ynDAx",
+  "Þjónustusamningur Hertz bílaleiga 2024.pdf":"1O1Lc3bv1YwERNn6a2v4KTetqxKsW_QrU",
+  "Húsfélagið Bæjarlind 12 - reikningur -.pdf":"1iYb0AUUxaYK-zep-QuiuD5G1MJGQAR2f",
+  "Árskógar 6-8,húsfélag_Invoice_107128.pdf":"1lfMq9Ooc700V2zGx88wvfPF02jdzoXSy",
+  "Stóragerði 20 - Reikningur 2022.pdf":"1VQluZ36wEupqdSw3NjfqkBmD9rIldjrm",
+};
 
 const $ = id => document.getElementById(id);
 function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
@@ -210,6 +262,7 @@ function isDue(c){ return c.next && c.next <= TODAY; }
 function hasType(c,t){ return c.files.some(f=>f.t===t); }
 const MONTHS=['','jan','feb','mar','apr','maí','jún','júl','ágú','sep','okt','nóv','des'];
 function fmtYm(ym){ if(!ym) return ''; const [y,m]=ym.split('-'); return MONTHS[+m]+' '+y; }
+function driveLink(id, text){ const t=esc(text); return id?`<a href="https://drive.google.com/file/d/${esc(id)}/view" target="_blank" rel="noopener">${t}</a>`:t; }
 
 let activeFilter='all';
 
@@ -245,7 +298,7 @@ function render(filter){
     if(c.manager) badges.push(`<span class="b mgr">⌂ ${esc(c.manager)}</span>`);
     if(c.next) badges.push(`<span class="b ${due?'due':'ok'}">Næsta skoðun: ${esc(fmtYm(c.next))}${due?' ⚠':''}</span>`);
     const rows=c.files.slice().sort((a,b)=>(b.y||0)-(a.y||0)).map(fl=>
-      `<tr><td class="yr">${fl.y||'—'}</td><td class="tg"><i class="${fl.t}">${fl.t}</i></td><td class="fn">${esc(fl.n)}</td></tr>`).join('')
+      `<tr><td class="yr">${fl.y||'—'}</td><td class="tg"><i class="${fl.t}">${fl.t}</i></td><td class="fn">${driveLink(fl.id || FILE_IDS[fl.n], fl.n)}</td></tr>`).join('')
       || `<tr><td colspan="3" class="empty">Engar skrár.</td></tr>`;
     const div=document.createElement('div');
     div.className='firm'+(f?' open':'');
@@ -272,14 +325,14 @@ function renderUnidentified(){
   let html='<div class="firm"><table><thead><tr><th>Reikn.nr</th><th>Dags.</th><th>Viðskiptavinur</th><th>Kennitala</th><th style="text-align:right">Upphæð m. vsk</th><th>Skrá</th></tr></thead><tbody>';
   INVOICES_2026.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).forEach(i=>{
     if(i.worklist){
-      html+=`<tr><td>—</td><td class="yr">${esc(i.date||'')}</td><td colspan="3" class="empty">Handskrifaður verklisti (ekki reikningur)</td><td class="fn">${esc(i.n)}</td></tr>`;
+      html+=`<tr><td>—</td><td class="yr">${esc(i.date||'')}</td><td colspan="3" class="empty">Handskrifaður verklisti (ekki reikningur)</td><td class="fn">${driveLink(i.id, i.n)}</td></tr>`;
       return;
     }
     const who=esc(i.customer)+(i.site?` <span class="muted" style="color:var(--muted)">· ${esc(i.site)}</span>`:'');
     html+=`<tr><td class="kt">${esc(i.invoice_no||'')}</td><td class="yr">${esc(i.date||'')}</td>`
       +`<td>${who}</td><td class="kt">${fmtKt(i.kt)}</td>`
       +`<td style="text-align:right;font-variant-numeric:tabular-nums">${i.amount_m_vsk?i.amount_m_vsk.toLocaleString('is-IS')+' kr':''}</td>`
-      +`<td class="fn">${esc(i.n)}</td></tr>`;
+      +`<td class="fn">${driveLink(i.id, i.n)}</td></tr>`;
   });
   html+=`</tbody><tfoot><tr><td colspan="4" style="text-align:right;font-weight:700;border-top:1px solid var(--line)">Samtals (${inv.length} reikn.)</td>`
     +`<td style="text-align:right;font-weight:700;font-variant-numeric:tabular-nums;border-top:1px solid var(--line)">${total.toLocaleString('is-IS')} kr</td><td style="border-top:1px solid var(--line)"></td></tr></tfoot>`;
