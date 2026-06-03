@@ -408,6 +408,13 @@ Slökkvitæki Sala/POS) connects via the dkPlus REST/JSON API.
   - phase 2 (writes): `POST sales/invoice` · `POST sales/invoice/bulk` ·
     price preview `PATCH sales/invoice/calculate` · PDF/HTML/email/reverse.
 - Connection-test page: `dkplus-test.html`.
+- Phase 2 write path: `netlify/functions/dkplus-invoice.js` → `POST /api/dkplus-invoice`.
+  Safe by default: `mode:"calculate"` (default) does `PATCH sales/invoice/calculate`
+  (priced preview, **creates nothing**); an actual invoice is written only with
+  `mode:"create"` **and** `confirm:true` → `POST sales/invoice`. Never sends to a
+  customer. Body: `{ mode, confirm, draft, invoice:{…dkPlus payload…} }`. The
+  exact dkPlus create/calculate payload schema still needs to be confirmed
+  against the swagger before building per-úttekt payload assembly.
 - Phases: (1) connect + read. (2) push invoices into dk+ from POS sales /
   yearly brunakerfi úttektir. (3) customer/vörur sync + payment status back.
 

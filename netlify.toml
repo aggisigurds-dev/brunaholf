@@ -186,6 +186,13 @@
   to = "/.netlify/functions/dkplus"
   status = 200
 
+# DK Plus phase 2 — sales-invoice write path (POST; calculate-preview by default)
+#   POST /api/dkplus-invoice  { mode:"calculate"|"create", invoice:{…} }
+[[redirects]]
+  from = "/api/dkplus-invoice"
+  to = "/.netlify/functions/dkplus-invoice"
+  status = 200
+
 # Friendly URL for the Reikningagerð grid — uses /api/worksites under the hood,
 # kept here so the route is documented.
 [[redirects]]
