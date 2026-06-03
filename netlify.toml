@@ -199,6 +199,12 @@
   to = "/.netlify/functions/vorur"
   status = 200
 
+# Shared company branding (logo) from app_settings — for the reikningur generator
+[[redirects]]
+  from = "/api/branding"
+  to = "/.netlify/functions/branding"
+  status = 200
+
 # Friendly URL for the Reikningagerð grid — uses /api/worksites under the hood,
 # kept here so the route is documented.
 [[redirects]]
