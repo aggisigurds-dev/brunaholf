@@ -12,10 +12,15 @@ exports.handler = async (event) => {
 
   const q = event.queryStringParameters || {};
   const limit = Math.min(500, Math.max(1, parseInt(q.limit, 10) || 200));
+  // Only finalised sales — never the voided test rows (status='void') or drafts.
+  let filter = '&status=eq.final';
+  // Optional "unsent reikningur" view for the batch flow: credit sales not yet
+  // pushed to dk (greitt_med=reikningur, invoiced_at null).
+  if (q.unsent) filter += '&greitt_med=eq.reikningur&invoiced_at=is.null';
   try {
     const rows = await sb(`solur?select=id,num,customer_nafn,customer_id,upphaed_an_vsk,` +
       `vsk_upphaed,samtals,greitt_med,athugasemdir,created_at,linur` +
-      `&order=created_at.desc&limit=${limit}`);
+      `${filter}&order=created_at.desc&limit=${limit}`);
     const sales = rows.map((s) => ({
       id: s.id,
       num: s.num || '',
