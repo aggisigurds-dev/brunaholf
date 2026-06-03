@@ -193,6 +193,12 @@
   to = "/.netlify/functions/dkplus-invoice"
   status = 200
 
+# Slökkvitæki Sala price list (vorur) — for the reikningur generator
+[[redirects]]
+  from = "/api/vorur"
+  to = "/.netlify/functions/vorur"
+  status = 200
+
 # Friendly URL for the Reikningagerð grid — uses /api/worksites under the hood,
 # kept here so the route is documented.
 [[redirects]]
