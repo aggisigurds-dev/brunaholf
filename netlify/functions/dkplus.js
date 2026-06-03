@@ -62,6 +62,7 @@ const ALLOW = [
   /^company(\/|$|\?)/i,
   /^companies(\/|$|\?)/i,
   /^accounts?(\/|$|\?)/i,
+  /^general(\/|$|\?)/i,
   /^employees?(\/|$|\?)/i,
 ];
 

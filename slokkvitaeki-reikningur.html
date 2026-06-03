@@ -73,7 +73,9 @@
 <div class="bar no-print">
   <strong>Reikningur</strong>
   <span class="grow"></span>
-  <button id="dkbtn" title="Forskoða verð í dkPlus (býr ekkert til)">Reikna í dkPlus</button>
+  <input id="m_term" placeholder="Skilmáli nr" title="dkPlus greiðsluskilmáli (t.d. Krafa í banka). Tómt = sjálfgefið hjá kúnnanum." style="width:110px;border:1px solid var(--line)">
+  <button id="dkcalc" title="Forskoða verð í dkPlus (býr ekkert til)">Reikna í dkPlus</button>
+  <button id="dkdraft" title="Stofna óbókuð drög í dkPlus (engin krafa fyrr en bókað)">Stofna drög í dkPlus</button>
   <button class="primary" onclick="window.print()">🖨️ Prenta / PDF</button>
 </div>
 
@@ -234,20 +236,39 @@ render();
 
 // dkPlus preview (calculate — creates nothing). Best-effort payload; helps
 // confirm the dkPlus schema before enabling real invoice creation.
-$('dkbtn').addEventListener('click', async ()=>{
-  const invoice = {
-    Customer: { SSNumber: $('c_kt').value.replace(/\D/g,''), Name: $('c_nafn').value },
+// dkPlus payload — Invoice.Head / Line schema confirmed from the Swagger spec.
+// Line uses ItemCode + Price + IncludingVAT (our prices are án vsk → false).
+// Head.Term = the payment-term number; set it to the "Krafa í banka" term so dk
+// issues a bankakrafa when the invoice is posted.
+function buildInvoice(){
+  const inv = {
+    Customer: { Name: $('c_nafn').value, SSN: $('c_kt').value.replace(/\D/g,'') },
     Date: $('m_date').value,
-    PaymentTerms: $('m_pay').value,
     Reference: $('m_ref').value,
-    Lines: lines.map(l=>({ ProductNumber: l.id, Text: l.desc, Quantity: l.qty, UnitPrice: l.price, VatCode: 2 })),
+    Lines: lines.map(l=>({ ItemCode: String(l.id), Text: l.desc, Quantity: l.qty, Price: l.price, IncludingVAT: false })),
   };
-  $('dkpanel').style.display='block'; $('dkout').textContent='Sæki forskoðun…';
+  const term = $('m_term').value.trim(); if(term) inv.Term = term;
+  const a1 = $('c_addr1').value.trim(), a2 = $('c_addr2').value.trim();
+  if(a1) inv.Customer.Address1 = a1;
+  if(a2) inv.Customer.Address2 = a2;
+  return inv;
+}
+async function dkCall(mode, extra, label){
+  $('dkpanel').style.display='block'; $('dkout').textContent = label || 'Sæki…';
   try{
-    const res = await fetch('/api/dkplus-invoice', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ mode:'calculate', invoice }) });
+    const body = Object.assign({ mode, invoice: buildInvoice() }, extra||{});
+    const res = await fetch('/api/dkplus-invoice', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(body) });
     const b = await res.json();
-    $('dkout').textContent = 'HTTP '+res.status+' · dk_status '+(b.dk_status!=null?b.dk_status:'?')+'\n\n'+JSON.stringify(b.data!==undefined?b.data:b, null, 2);
+    const head = 'HTTP '+res.status+' · dk_status '+(b.dk_status!=null?b.dk_status:'?')
+      + (b.created ? ' · ✅ STOFNAÐ (óbókað drög)' : '') + (b.error ? ' · '+b.error : '');
+    $('dkout').textContent = head + '\n\n' + JSON.stringify(b.data!==undefined?b.data:b, null, 2);
   }catch(e){ $('dkout').textContent = String(e); }
+}
+$('dkcalc').addEventListener('click', ()=> dkCall('calculate', null, 'Sæki forskoðun (býr ekkert til)…'));
+$('dkdraft').addEventListener('click', ()=>{
+  if(!lines.length){ alert('Engar línur til að stofna.'); return; }
+  if(!confirm('Stofna ÓBÓKUÐ drög í dkPlus?\n\nEngin krafa fer í heimabanka fyrr en reikningurinn er bókaður í dk.')) return;
+  dkCall('create', { confirm:true, post:false }, 'Stofna drög…');
 });
 </script>
 </body>

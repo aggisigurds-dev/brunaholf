@@ -412,9 +412,24 @@ Slökkvitæki Sala/POS) connects via the dkPlus REST/JSON API.
   Safe by default: `mode:"calculate"` (default) does `PATCH sales/invoice/calculate`
   (priced preview, **creates nothing**); an actual invoice is written only with
   `mode:"create"` **and** `confirm:true` → `POST sales/invoice`. Never sends to a
-  customer. Body: `{ mode, confirm, draft, invoice:{…dkPlus payload…} }`. The
-  exact dkPlus create/calculate payload schema still needs to be confirmed
-  against the swagger before building per-úttekt payload assembly.
+  customer. Body: `{ mode, confirm, post, invoice:{…Head…} }`.
+- Confirmed dkPlus schema (Swagger `/swagger/docs/v1`): create = `POST sales/invoice`,
+  body = `Invoice.Head`. **Draft vs posted is the query flag `?post=false|true`**
+  (false = unposted draft; our function defaults to false). Head: `Customer
+  {Number,Name,SSN,Email,Address1..4,ZipCode,Country}`, `Term` (payment-term Number
+  — set to the "Krafa í banka" term so dk issues a bankakrafa **on posting**),
+  `Date/DueDate/Mode/Reference/Text1/Text2`, `Attachment{Name,Content(base64)}`
+  (úttektarskýrsla PDF), `Lines[]`. Line fields: `ItemCode` (= vörunúmer/`vorur.id`),
+  `Quantity`, `Price` (unit; ex- or með-vsk per `IncludingVAT` bool), `Text`,
+  `Discount`, `Total` — **no VatCode**. List terms via `GET general/payment/term`
+  (`{ID,Number,Description}`). Krafa-í-banka is automatic from the Term on posting
+  (no separate endpoint); rafræn afhending follows the customer's afhendingarmáti
+  set in dk. The vMail lánardrottna pósthólf is **inbound-only** (reads creditor
+  invoices in) — not for sending anything out.
+- `slokkvitaeki-reikningur.html`: invoice generator styled like the dkPlus
+  reikningur (R-000244), logo from `/api/branding`, lines from `/api/vorur` (Sala
+  verðskrá). "Reikna í dkPlus" → calculate preview; "Stofna drög í dkPlus" →
+  unposted draft (`post:false`).
 - Phases: (1) connect + read. (2) push invoices into dk+ from POS sales /
   yearly brunakerfi úttektir. (3) customer/vörur sync + payment status back.
 

@@ -92,9 +92,13 @@ exports.handler = async (event) => {
     });
   }
   const payload = { ...invoice };
-  const { res, data, mode: auth, url } = await dkFetch('sales/invoice', { method: 'POST', body: payload });
+  // dkPlus: draft vs posted is the query flag ?post=false|true (NOT a body field).
+  // Default false → unposted draft. A bankakrafa is issued only on posting,
+  // driven by Head.Term — so drafts touch no bank.
+  const post = req.post === true;
+  const { res, data, mode: auth, url } = await dkFetch(`sales/invoice?post=${post}`, { method: 'POST', body: payload });
   return json(res.ok ? 200 : res.status, {
-    ok: res.ok, dk_status: res.status, mode: 'create', created: res.ok, draft: req.draft === true,
+    ok: res.ok, dk_status: res.status, mode: 'create', created: res.ok, posted: post,
     auth_mode: auth, url, data,
   });
 };
