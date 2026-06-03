@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#ffffff">
+<title>Brunakerfi — þjónusta &amp; skýrslur</title>
+<style>
+  :root{ --bg:#f4f6f9; --panel:#fff; --line:#e2e6ec; --line2:#eef1f5; --text:#0b1220; --muted:#5c6b7d; --accent:#2563eb; --accent2:#1d4ed8; --soft:#f7f9fc; --okbg:#eef7f1; --duebg:#fdecec; --duefg:#b42318; --warnbg:#fff7e6; --warnfg:#9a6400; }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:15px;line-height:1.5;}
+  .wrap{max-width:960px;margin:0 auto;padding:22px 18px 60px;}
+  h1{font-size:22px;margin:0 0 2px;font-weight:750;}
+  .lead{color:var(--muted);font-size:14px;margin:0 0 16px;}
+  .stats{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:9px 14px;}
+  .stat b{font-size:18px;font-weight:760;display:block;}
+  .stat span{font-size:12px;color:var(--muted);}
+  .searchbar{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-size:14px;margin-bottom:8px;}
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+  .chip{border:1px solid var(--line);background:var(--panel);border-radius:20px;padding:5px 13px;font-size:13px;cursor:pointer;color:var(--muted);}
+  .chip.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;}
+  .firm{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px 17px;margin-bottom:12px;box-shadow:0 1px 2px rgba(16,24,40,.04);}
+  .fhead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;cursor:pointer;}
+  .fname{font-size:16.5px;font-weight:700;}
+  .fmeta{font-size:12.5px;color:var(--muted);margin-top:3px;}
+  .badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;}
+  .b{display:inline-block;border-radius:6px;padding:1px 8px;font-size:11px;font-weight:600;border:1px solid var(--line);background:var(--soft);color:var(--muted);}
+  .b.sys{background:#eef4ff;border-color:#d7e3ff;color:var(--accent);}
+  .b.mgr{background:#f3eeff;border-color:#e0d4ff;color:#6b3fd4;}
+  .b.due{background:var(--duebg);border-color:#f4c7c2;color:var(--duefg);}
+  .b.ok{background:var(--okbg);border-color:#cfe6d2;color:#1f7a4d;}
+  .count{flex:none;display:flex;gap:5px;align-items:center;white-space:nowrap;}
+  .count .n{background:#eef4ff;color:var(--accent);border-radius:20px;padding:3px 10px;font-size:12.5px;font-weight:700;}
+  .blds{margin-top:11px;border-top:1px solid var(--line2);padding-top:9px;display:none;}
+  .firm.open .blds{display:block;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:left;color:var(--muted);font-weight:600;font-size:11.5px;padding:4px 6px;border-bottom:1px solid var(--line2);}
+  td{padding:5px 6px;border-bottom:1px solid var(--line2);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  .yr{color:var(--muted);font-variant-numeric:tabular-nums;width:48px;}
+  .tg{width:96px;}
+  .tg i{font-style:normal;border-radius:5px;padding:1px 6px;font-size:10.5px;font-weight:600;}
+  .tg .skyrsla{background:#eef4ff;color:var(--accent);}
+  .tg .samningur{background:#f3eeff;color:#6b3fd4;}
+  .tg .reikningur{background:var(--okbg);color:#1f7a4d;}
+  .fn{word-break:break-word;}
+  .empty{color:var(--muted);font-size:13px;padding:6px;}
+  .note{font-size:12px;color:var(--muted);margin-top:20px;border-top:1px solid var(--line);padding-top:10px;}
+  .kt{color:var(--muted);font-variant-numeric:tabular-nums;}
+  .sec{font-size:13px;font-weight:700;color:var(--muted);margin:22px 0 8px;text-transform:uppercase;letter-spacing:.04em;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Brunakerfi — þjónusta &amp; skýrslur</h1>
+  <p class="lead">Rekstrarfélög og fyrirtæki í brunakerfisþjónustu (Slökkvitæki / Brunakerfi ehf). Þjónustusamningar, ársskoðunarskýrslur og reikningar úr Drive-möppunni <code>Brunakerfi</code>. Smelltu á viðskiptavin til að sjá skrár. &nbsp;·&nbsp; <a href="rekstrarfelog.html" style="color:var(--accent)">Rekstrarfélög →</a></p>
+
+  <div id="stats" class="stats"></div>
+  <input id="q" class="searchbar" placeholder="🔎 Leita að viðskiptavini, kennitölu, byggingu eða skrá…">
+  <div class="filters" id="filters">
+    <span class="chip on" data-f="all">Allir</span>
+    <span class="chip" data-f="due">Skoðun komin á tíma</span>
+    <span class="chip" data-f="skyrsla">Með skýrslu</span>
+    <span class="chip" data-f="reikningur">Með reikning</span>
+    <span class="chip" data-f="mgr">Hjá rekstrarfélagi</span>
+  </div>
+  <div id="list"></div>
+
+  <div class="sec" id="unidsec" style="display:none">Óauðkenndir reikningar (2026)</div>
+  <div id="unid"></div>
+
+  <div class="note" id="note"></div>
+</div>
+<script>
+// Today, for "inspection due" logic.
+const TODAY = "2026-06";
+
+// Brunakerfi service customers, compiled from the Drive "Brunakerfi" master
+// index (test_upload.csv) + the "Brunakerfi & Þjónustusamningar — Viðskiptavinir"
+// status sheet. kt = staðfest kennitala. manager = rekstrarfélag sem heldur utan
+// um bygginguna (kross-vísun við Rekstrarfélög síðuna eftir kennitölu).
+// files: { y: ár, t: skyrsla|samningur|reikningur, n: skráarnafn }
+const CUSTOMERS = [
+  { name:"Center Hotels (8 hótel)", kt:"4509051430", addr:"Laugavegur 16, 101 Rvk", sys:"Brunakerfi", cover:"Brunakerfi, Slökkvitæki, Brunaslöngur", contact:"Melissa", simi:"595 8500", insp:20, last:"2024-08", next:"2025-08", files:[
+    { y:2023, t:"skyrsla", n:"Center Hotels Skjaldbreið - Brunaviðvörunarkerfi - Des 2023.pdf" },
+    { y:2023, t:"skyrsla", n:"Ársskoðun Brunakerfa desember Skjaldbreið 2023.pdf" },
+    { y:2023, t:"skyrsla", n:"Verkkaupi Center Hótel Þingholt - Brunaviðvörunarkerfi - sept 2023.pdf" },
+    { y:2023, t:"skyrsla", n:"brunakerfi Center Klöpp 2023.pdf" },
+    { y:2022, t:"samningur", n:"samningur brunakerfi Center Hótel 2022.pdf" },
+    { y:2024, t:"skyrsla", n:"Center Hótel Plaza 2024 brunakerfi.pdf" },
+    { y:2025, t:"skyrsla", n:"Center Hótel Arnarhvoll brunakerfi 2025.pdf" },
+    { y:2025, t:"skyrsla", n:"Center Hótel Miðgarður brunakerfi 2025.pdf" },
+    { y:2025, t:"skyrsla", n:"Center Grandi brunakerfi 2025.pdf" },
+    { y:2025, t:"skyrsla", n:"Center Hótel klöpp brunakerfi 2025.pdf" },
+    { y:2025, t:"skyrsla", n:"Center Hótel Plaza 2025 brunakerfi.pdf" },
+    { y:2026, t:"samningur", n:"Centerhótels þjónustusamningur (1).pdf" },
+    { y:2026, t:"skyrsla", n:"Center ArnarHvoll brunakerfi 2026.pdf" },
+    { y:2026, t:"skyrsla", n:"Grandi Center Hótel brunakerfi 2026.pdf" },
+  ]},
+  { name:"Sveitahótelið Brú (Borealis)", kt:"6904250920", addr:"Borealis Hótel, 805", sys:"JUNO NET", cover:"Brunakerfi, Slökkvitæki, Reykskynjarar", insp:1, last:"2025-06", next:"2026-06", files:[
+    { y:2025, t:"samningur", n:"Þjónustusamningur brunakerfi Hótel Borealis 2025.pdf" },
+    { y:2025, t:"skyrsla", n:"Ársskoðun Brunakerfa Borealis 2025.pdf" },
+  ]},
+  { name:"G14 ehf", kt:"5108090170", addr:"Grensásvegur 14", sys:"C-Tec", cover:"Brunakerfi", contact:"Björn", simi:"699 0018", insp:3, last:"2026-02", next:"2027-02", files:[
+    { y:2024, t:"skyrsla", n:"G 14 ehf brunakerfi 2024.pdf" },
+    { y:2026, t:"skyrsla", n:"G14 ársskoðun á brunakerfi 2026.pdf" },
+  ]},
+  { name:"Heilsustofnun NLFÍ", kt:"4802696919", addr:"Grænamörk 10, Hveragerði", sys:"FireFinder", cover:"Brunakerfi", insp:2, last:"2024-05", next:"2025-05", files:[
+    { y:2023, t:"skyrsla", n:"ársskoðun brunakerfi Heilsustofnun 2023.pdf" },
+  ]},
+  { name:"Húsfélag 17. júnítorg 1-7", kt:"5007070110", addr:"17. júnítorg 1-7, 101 Rvk", sys:"Juno-Net", cover:"Brunakerfi", manager:"Eignaumsjón", insp:3, last:"2025-10", next:"2026-10", files:[
+    { y:2025, t:"skyrsla", n:"17 júnítorg brunakerfi 2025.pdf" },
+  ]},
+  { name:"Húsfélag Hlíðasmára 17", kt:"6511993019", addr:"Hlíðasmári 17", sys:"Juno Net", cover:"Brunakerfi", insp:2, last:"2024-05", next:"2025-05", files:[
+    { y:2023, t:"skyrsla", n:"Ársskoðun Brunakerfi Hlíðasmára 17 2023.pdf" },
+  ]},
+  { name:"Húsfélagið Hlíðasmára 19", kt:"5401992059", addr:"Hlíðasmári 19, 201 Kóp", sys:"Juno Net", cover:"Brunakerfi, Reykskynjarar", insp:1, last:"2024-09", next:"2025-09", files:[
+    { y:2025, t:"samningur", n:"2025 Apr Slökkvitæki ehf, þjónustusamningur Hlíðasmári 19 brunaviðvörunarkerfi.pdf" },
+    { y:2024, t:"skyrsla", n:"Hlíðasmári 19 brunakerfi 2024.pdf" },
+    { y:2026, t:"skyrsla", n:"Hlíðasmári 19 - Brunaviðvörunarkerfi úttekt Maí 2026.pdf" },
+  ]},
+  { name:"Húsfélagið Hlíðasmára 15", kt:"5306003780", addr:"Hlíðasmári 15", sys:"Eltek", cover:"Brunakerfi", insp:1, last:"2025-09", next:"2026-09", files:[
+    { y:2025, t:"skyrsla", n:"Hlíðasmári 15 brunakerfi 2025.pdf" },
+    { y:2025, t:"reikningur", n:"Húsfélagið Hlíðasmára 15 - Brunakerfi - Reikningur - 2025.pdf" },
+  ]},
+  { name:"Lindaberg ehf (T-10)", kt:"6712220240", addr:"Trönuhraun 10", sys:"Notifire ID-50", cover:"Slökkvitæki, Brunaslöngur", insp:1, last:"2024-09", next:"2025-09", files:[
+    { y:2025, t:"skyrsla", n:"T-10 slökkvitæki,brunaslöngur 2025.pdf" },
+  ]},
+  { name:"Rétt Mál verkstæði", kt:"4701200370", addr:"Hvaleyrarbraut 41", cover:"Brunakerfi", insp:1, last:"2023-12", next:"2024-12", files:[
+    { y:2023, t:"skyrsla", n:"Rétt Mál brunakerfi 2023.pdf" },
+  ]},
+  { name:"Stöff ehf (220 BAR)", kt:"5703201220", addr:"Flatahraun 5a", sys:"C-TEC", cover:"Brunakerfi", insp:1, last:"2023-03", next:"2024-03", files:[
+    { y:2023, t:"skyrsla", n:"brunakerfi 220 BAR 2023.pdf" },
+  ]},
+  { name:"Three Sisters (Ránargata 16)", kt:"6607160330", addr:"Ránargata 16", cover:"Brunakerfi", insp:1, last:"2024-10", next:"2025-10", files:[
+    { y:2024, t:"skyrsla", n:"Ránargata 16. Brunaviðvörunarkerfis 2024.pdf" },
+  ]},
+  { name:"Ægisgata 4", kt:null, addr:"Ægisgata 4", cover:"Brunakerfi", files:[
+    { y:2024, t:"skyrsla", n:"Brunakerfi Ægisgata 4 2024.pdf" },
+  ]},
+  { name:"Kef Ölhúsið", kt:null, addr:"Keflavík", cover:"Brunakerfi", files:[
+    { y:2023, t:"skyrsla", n:"Ársskoðun Brunakerfa Kef Ölhúsið 2023.pdf" },
+  ]},
+  { name:"Hlaðvarpinn", kt:null, cover:"Brunakerfi", files:[
+    { y:2024, t:"skyrsla", n:"brunakerfi Hlaðvarpinn 2024.docx" },
+  ]},
+  { name:"Hótel Norðurey ehf", kt:"4308720289", addr:"Hrísateig 14, 105 Rvk", cover:"Slökkvitæki, Brunaslöngur", files:[
+    { y:2025, t:"samningur", n:"Hótel Norðurey þjónustusamningur 2025.pdf" },
+  ]},
+  { name:"Einhella 4 rekstrarfélag", kt:"4301250600", addr:"Einhella 4, 221 Hfj", cover:"Slökkvitæki", files:[
+    { y:2025, t:"samningur", n:"Þjónustusamningur Einhella 4 2025.pdf" },
+  ]},
+  { name:"Thai Lindin ehf", kt:"4504241290", addr:"Háaleitisbraut 58, 108 Rvk", cover:"Slökkvitæki", files:[
+    { y:2026, t:"samningur", n:"Þjónustusamningur Thai Lindin 2026.pdf" },
+  ]},
+  { name:"Prikið ehf", kt:"7110032070", addr:"Bankastræti 12, 101 Rvk", cover:"Slökkvitæki, Brunaslöngur", files:[
+    { y:2026, t:"samningur", n:"Þjónustusamningur Prikið ehf 2026.pdf" },
+  ]},
+  { name:"Suðurhella 9 ehf", kt:"5406222050", addr:"Suðurhellu 9, 221 Hfj", cover:"Slökkvitæki, Brunaslöngur", files:[
+    { y:2025, t:"samningur", n:"Þjónustusamningur Suðurhellu 9.pdf" },
+  ]},
+  { name:"Indverska matarfélagið ehf", kt:null, cover:"Slökkvitæki", files:[
+    { y:2025, t:"samningur", n:"Þjónustusamningur Indverska matarfélagið ehf 2025.pdf" },
+  ]},
+  { name:"Kirkjulundur 12-14, húsfélag", kt:"6105140300", addr:"Kirkjulundur 12-14", cover:"Slökkvitæki", manager:"Eignaumsjón", files:[
+    { y:2024, t:"samningur", n:"Þjónustusamningur Kirkjulundur 12-14.docx" },
+  ]},
+  { name:"Bílaleiga Flugleiða (Hertz)", kt:null, cover:"Slökkvitæki", files:[
+    { y:2024, t:"samningur", n:"Þjónustusamningur Hertz bílaleiga 2024.pdf" },
+  ]},
+  { name:"Húsfélagið Bæjarlind 12", kt:"6301032310", addr:"Bæjarlind 12", cover:"Brunakerfi", manager:"Eignarekstur", files:[
+    { y:null, t:"reikningur", n:"Húsfélagið Bæjarlind 12 - reikningur -.pdf" },
+  ]},
+  { name:"Árskógar 6-8, húsfélag", kt:"5102932079", addr:"Árskógar 6-8", cover:"Brunakerfi", manager:"Eignarekstur", files:[
+    { y:null, t:"reikningur", n:"Árskógar 6-8,húsfélag_Invoice_107128.pdf" },
+  ]},
+  { name:"Húsf. Stóragerði 20", kt:null, addr:"Stóragerði 20", cover:"Brunakerfi", files:[
+    { y:2022, t:"reikningur", n:"Stóragerði 20 - Reikningur 2022.pdf" },
+  ]},
+];
+
+// Scanned reikningar from Brunakerfi\Reikningar\2026 (scanned 24.04.2026),
+// auðkennt með OCR. invoice_no = reikningsnr, kt = greiðandi, amount = m. vsk.
+// site = verkstaður/hótel þar sem það á við. One file (120038) reyndist
+// handskrifaður verklisti, ekki reikningur (worklist:true).
+const INVOICES_2026 = [
+  { n:"Scan_20260424_114654.jpg", customer:"Center Hotels", site:"Grandi", kt:"4509051430", invoice_no:"108001", date:"2026-03-12", amount_m_vsk:579424 },
+  { n:"Scan_20260424_114713.jpg", customer:"G14 ehf", site:"Grensásvegur 14", kt:"5108090170", invoice_no:"107992", date:"2026-03-10", amount_m_vsk:80487 },
+  { n:"Scan_20260424_114730.jpg", customer:"Fasteignin T10 ehf", site:"Reykjavíkurvegur 68", kt:"6712220240", invoice_no:"107591", date:"2025-12-08", amount_m_vsk:86490 },
+  { n:"Scan_20260424_114751.jpg", customer:"Center Hotels", kt:"4509051430", invoice_no:"107592", date:"2025-12-08", amount_m_vsk:404381 },
+  { n:"Scan_20260424_114806.jpg", customer:"Center Hotels", site:"Klapparstíg 26", kt:"4509051430", invoice_no:"107466", date:"2025-10-30", amount_m_vsk:134606 },
+  { n:"Scan_20260424_114824.jpg", customer:"17. júnítorg 1-7, húsfélag", kt:"5007070110", invoice_no:"107465", date:"2025-10-30", amount_m_vsk:266779 },
+  { n:"Scan_20260424_114838.jpg", customer:"Center Hotels", site:"Laugavegi 95-99", kt:"4509051430", invoice_no:"107337", date:"2025-09-19", amount_m_vsk:404381 },
+  { n:"Scan_20260424_114854.jpg", customer:"Center Hotels", kt:"4509051430", invoice_no:"107336", date:"2025-09-19", amount_m_vsk:236093 },
+  { n:"Scan_20260424_114909.jpg", customer:"Center Hotels", kt:"4509051430", invoice_no:"107333", date:"2025-09-19", amount_m_vsk:102490 },
+  { n:"Scan_20260424_114926.jpg", customer:"Center Hotels", kt:"4509051430", invoice_no:"107312", date:"2025-09-11", amount_m_vsk:89331 },
+  { n:"Scan_20260424_114940.jpg", customer:"Center Hotels", site:"Miðgarður", kt:"4509051430", invoice_no:"107311", date:"2025-09-11", amount_m_vsk:451302 },
+  { n:"Scan_20260424_114954.jpg", customer:"Center Hotels", site:"Arnarhvoll", kt:"4509051430", invoice_no:"107310", date:"2025-09-11", amount_m_vsk:158263 },
+  { n:"Scan_20260424_115006.jpg", customer:"Húsfélagið Hlíðasmára 15", kt:"5306003780", invoice_no:"107340", date:"2025-09-19", amount_m_vsk:261321 },
+  { n:"Scan_20260424_115022.jpg", customer:"Húsfélagið Hlíðasmára 17", kt:"6511993019", invoice_no:"107308", date:"2025-09-11", amount_m_vsk:261971 },
+  { n:"Scan_20260424_115409.jpg", customer:"Center Hotels", site:"Grandi", kt:"4509051430", invoice_no:"106498", date:"2025-03-17", amount_m_vsk:575360 },
+  { n:"Scan_20260424_120038.jpg", customer:null, date:"2026-04-01", worklist:true },
+];
+
+const $ = id => document.getElementById(id);
+function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function fmtKt(k){ return (k && k.length===10) ? k.slice(0,6)+'-'+k.slice(6) : (k||''); }
+function isDue(c){ return c.next && c.next <= TODAY; }
+function hasType(c,t){ return c.files.some(f=>f.t===t); }
+const MONTHS=['','jan','feb','mar','apr','maí','jún','júl','ágú','sep','okt','nóv','des'];
+function fmtYm(ym){ if(!ym) return ''; const [y,m]=ym.split('-'); return MONTHS[+m]+' '+y; }
+
+let activeFilter='all';
+
+function passesFilter(c){
+  if(activeFilter==='all') return true;
+  if(activeFilter==='due') return isDue(c);
+  if(activeFilter==='mgr') return !!c.manager;
+  return hasType(c, activeFilter); // skyrsla | reikningur
+}
+
+function renderStats(){
+  const nC=CUSTOMERS.length;
+  const nR=CUSTOMERS.reduce((a,c)=>a+c.files.filter(f=>f.t==='skyrsla').length,0);
+  const nInv=CUSTOMERS.reduce((a,c)=>a+c.files.filter(f=>f.t==='reikningur').length,0)+INVOICES_2026.filter(i=>!i.worklist).length;
+  const nDue=CUSTOMERS.filter(isDue).length;
+  $('stats').innerHTML=[
+    ['Viðskiptavinir',nC],['Skýrslur',nR],['Reikningar',nInv],['Skoðun komin á tíma',nDue],
+  ].map(([l,n])=>`<div class="stat"><b>${n}</b><span>${esc(l)}</span></div>`).join('');
+}
+
+function render(filter){
+  const f=(filter||'').toLowerCase().trim();
+  const list=$('list'); list.innerHTML='';
+  let shown=0;
+  CUSTOMERS.slice().sort((a,b)=>(isDue(b)-isDue(a))||a.name.localeCompare(b.name,'is')).forEach(c=>{
+    if(!passesFilter(c)) return;
+    const hay=(c.name+' '+(c.kt||'')+' '+(c.addr||'')+' '+(c.manager||'')+' '+c.files.map(x=>x.n).join(' ')).toLowerCase();
+    if(f && !hay.includes(f) && !(c.kt||'').includes(f.replace(/\D/g,''))) return;
+    shown++;
+    const due=isDue(c);
+    const badges=[];
+    if(c.sys) badges.push(`<span class="b sys">${esc(c.sys)}</span>`);
+    if(c.manager) badges.push(`<span class="b mgr">⌂ ${esc(c.manager)}</span>`);
+    if(c.next) badges.push(`<span class="b ${due?'due':'ok'}">Næsta skoðun: ${esc(fmtYm(c.next))}${due?' ⚠':''}</span>`);
+    const rows=c.files.slice().sort((a,b)=>(b.y||0)-(a.y||0)).map(fl=>
+      `<tr><td class="yr">${fl.y||'—'}</td><td class="tg"><i class="${fl.t}">${fl.t}</i></td><td class="fn">${esc(fl.n)}</td></tr>`).join('')
+      || `<tr><td colspan="3" class="empty">Engar skrár.</td></tr>`;
+    const div=document.createElement('div');
+    div.className='firm'+(f?' open':'');
+    div.innerHTML=`
+      <div class="fhead"><div>
+        <div class="fname">${esc(c.name)}</div>
+        <div class="fmeta">${c.kt?`<span class="kt">${fmtKt(c.kt)}</span> · `:''}${esc(c.addr||'')}${c.cover?` · ${esc(c.cover)}`:''}${c.contact?` · 👤 ${esc(c.contact)}${c.simi?' '+esc(c.simi):''}`:''}</div>
+        <div class="badges">${badges.join('')}</div>
+      </div><div class="count"><span class="n">${c.files.length} skrár</span></div></div>
+      <div class="blds"><table><thead><tr><th>Ár</th><th>Tegund</th><th>Skrá</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    const head=div.querySelector('.fhead');
+    head.addEventListener('click',()=>div.classList.toggle('open'));
+    list.appendChild(div);
+  });
+  if(!shown) list.innerHTML='<div class="firm"><div class="empty">Ekkert fannst.</div></div>';
+}
+
+function renderUnidentified(){
+  if(!INVOICES_2026.length){ return; }
+  const inv=INVOICES_2026.filter(i=>!i.worklist);
+  const total=inv.reduce((a,i)=>a+(i.amount_m_vsk||0),0);
+  $('unidsec').style.display='block';
+  $('unidsec').textContent=`Reikningar — Brunakerfi\\Reikningar (auðkennt úr skönnum)`;
+  let html='<div class="firm"><table><thead><tr><th>Reikn.nr</th><th>Dags.</th><th>Viðskiptavinur</th><th>Kennitala</th><th style="text-align:right">Upphæð m. vsk</th><th>Skrá</th></tr></thead><tbody>';
+  INVOICES_2026.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).forEach(i=>{
+    if(i.worklist){
+      html+=`<tr><td>—</td><td class="yr">${esc(i.date||'')}</td><td colspan="3" class="empty">Handskrifaður verklisti (ekki reikningur)</td><td class="fn">${esc(i.n)}</td></tr>`;
+      return;
+    }
+    const who=esc(i.customer)+(i.site?` <span class="muted" style="color:var(--muted)">· ${esc(i.site)}</span>`:'');
+    html+=`<tr><td class="kt">${esc(i.invoice_no||'')}</td><td class="yr">${esc(i.date||'')}</td>`
+      +`<td>${who}</td><td class="kt">${fmtKt(i.kt)}</td>`
+      +`<td style="text-align:right;font-variant-numeric:tabular-nums">${i.amount_m_vsk?i.amount_m_vsk.toLocaleString('is-IS')+' kr':''}</td>`
+      +`<td class="fn">${esc(i.n)}</td></tr>`;
+  });
+  html+=`</tbody><tfoot><tr><td colspan="4" style="text-align:right;font-weight:700;border-top:1px solid var(--line)">Samtals (${inv.length} reikn.)</td>`
+    +`<td style="text-align:right;font-weight:700;font-variant-numeric:tabular-nums;border-top:1px solid var(--line)">${total.toLocaleString('is-IS')} kr</td><td style="border-top:1px solid var(--line)"></td></tr></tfoot>`;
+  html+='</table></div>';
+  $('unid').innerHTML=html;
+}
+
+$('q').addEventListener('input', e=>render(e.target.value));
+$('filters').addEventListener('click', e=>{
+  const chip=e.target.closest('.chip'); if(!chip) return;
+  activeFilter=chip.dataset.f;
+  [...$('filters').children].forEach(ch=>ch.classList.toggle('on',ch===chip));
+  render($('q').value);
+});
+$('note').innerHTML='Sjálfvirkt tekið saman úr Drive-möppunni <code>Brunakerfi</code> (skýrslur, samningar, reikningar) og stöðublaðinu „Brunakerfi &amp; Þjónustusamningar“. Útgefandi: Slökkvitæki / Brunakerfi ehf (bokhald@eldklar.is). Kennitölur staðfestar úr stöðublaði. Uppfærið eftir þörfum.';
+
+renderStats(); render(''); renderUnidentified();
+</script>
+</body>
+</html>
