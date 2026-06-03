@@ -5,13 +5,16 @@
 //
 // Source: timavera_entries (date, time_in, time_out, hours, employee, project).
 // Uses project_aliases so e.g. "NLSH 5-6. hæð" rolls up to its canonical name.
-// Billable net = Σ hours − Σ lunch (hádegismatur 0.5/day), matching the Efnislisti
-// dagvinna calc. Aliases are resolved both ways so the worksite name as typed in
-// Vinnubók still finds Tímavera rows recorded under a variant spelling.
+// Billable net = Σ hours − Σ lunch. The hádegismatur (0.5 h/day) is deducted ONLY
+// for Fjarðagata (a.k.a. Fjörður / Fjörðurinn / Strandgata) and only on a full
+// straight 8 h workday; every other worksite (e.g. Fjallaböðin) bills gross hours.
+// Aliases are resolved both ways so the worksite name as typed in Vinnubók still
+// finds Tímavera rows recorded under a variant spelling.
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const LUNCH_HOURS = 0.5; // hádegismatur deduction per qualifying day
+const LUNCH_HOURS = 0.5; // hádegismatur deduction per qualifying full day (Fjarðagata only)
+const FULL_DAY = 8;      // gross hours that count as a full straight workday
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return resp(204, '', cors());
@@ -39,6 +42,10 @@ exports.handler = async (event) => {
     for (const a of aliases) if (a.canonical_name === canonical) names.add(a.alias);
   } catch { /* aliases optional — fall back to exact name */ }
 
+  // Hádegismatur is a Fjarðagata-only deduction. Fjörður / Fjörðurinn /
+  // Strandgata are alias spellings, already folded into `names` above.
+  const lunchApplies = [...names].some(n => n.trim().toLowerCase() === 'fjarðagata');
+
   const inList = [...names].map(n => `"${n.replace(/"/g, '\\"')}"`).join(',');
   let rows;
   try {
@@ -47,17 +54,39 @@ exports.handler = async (event) => {
       `&order=date.asc,employee.asc`);
   } catch (e) { return json(502, { error: e.message }); }
 
-  const out = [];
-  const byEmp = {};
-  const days = new Set();
-  let totalHours = 0, totalLunch = 0;
+  // Per person-day gross hours — basis for both the lunch deduction and the
+  // dagvinna/eftirvinna split (split shifts on the same day count as one day).
+  const pd = {}; // `${employee}|${date}` → { gross, dow }
   for (const r of rows) {
     const hours = Number(r.hours) || 0;
     if (hours <= 0) continue;
-    // Lunch applies to a full-ish day (matches the export's 0.5 column on ~8h days).
-    const lunch = hours >= 6 ? LUNCH_HOURS : 0;
-    totalHours += hours;
+    const k = `${r.employee}|${r.date}`;
+    if (!pd[k]) pd[k] = { gross: 0, dow: new Date(r.date + 'T00:00:00Z').getUTCDay() };
+    pd[k].gross += hours;
+  }
+
+  // Lunch per qualifying person-day: only Fjarðagata, only a full 8 h day.
+  const dayLunch = {}; // `${employee}|${date}` → 0 or 0.5
+  let totalLunch = 0;
+  for (const k in pd) {
+    const lunch = (lunchApplies && pd[k].gross >= FULL_DAY) ? LUNCH_HOURS : 0;
+    dayLunch[k] = lunch;
     totalLunch += lunch;
+  }
+
+  // Rows + per-employee totals. The day's single lunch is shown on its first row.
+  const out = [];
+  const byEmp = {};
+  const days = new Set();
+  const lunchShown = {};
+  let totalHours = 0;
+  for (const r of rows) {
+    const hours = Number(r.hours) || 0;
+    if (hours <= 0) continue;
+    const k = `${r.employee}|${r.date}`;
+    let lunch = 0;
+    if (dayLunch[k] && !lunchShown[k]) { lunch = dayLunch[k]; lunchShown[k] = true; }
+    totalHours += hours;
     days.add(r.date);
     out.push({
       date: r.date, time_in: r.time_in || '', time_out: r.time_out || '',
@@ -73,22 +102,12 @@ exports.handler = async (event) => {
 
   // Dagvinna / eftirvinna split, per person per day:
   //  - Weekends (Sat/Sun): all net hours → eftirvinna.
-  //  - Weekdays: gross hours over 8.5/day → eftirvinna (the 0.5h hádegismatur
-  //    sits inside the normal day, so overtime starts after 8.5h gross);
-  //    the remaining net hours → dagvinna.
-  const pd = {}; // `${employee}|${date}` → { gross, lunch, dow }
-  for (const r of rows) {
-    const hours = Number(r.hours) || 0;
-    if (hours <= 0) continue;
-    const k = `${r.employee}|${r.date}`;
-    if (!pd[k]) pd[k] = { gross: 0, lunch: 0, dow: new Date(r.date + 'T00:00:00Z').getUTCDay() };
-    pd[k].gross += hours;
-  }
+  //  - Weekdays: gross hours over 8.5/day → eftirvinna (for Fjarðagata the 0.5h
+  //    hádegismatur sits inside the normal day); the remaining net → dagvinna.
   let dagvinna = 0, eftirvinna = 0;
   for (const k in pd) {
     const p = pd[k];
-    const lunch = p.gross >= 6 ? LUNCH_HOURS : 0;
-    const net = p.gross - lunch;
+    const net = p.gross - (dayLunch[k] || 0);
     const isWeekend = p.dow === 0 || p.dow === 6;
     const ev = isWeekend ? net : Math.max(p.gross - 8.5, 0);
     const dv = isWeekend ? 0 : net - ev;
