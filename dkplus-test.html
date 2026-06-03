@@ -76,8 +76,8 @@ async function call(path){
   }
 }
 document.querySelectorAll('button[data-path]').forEach(b=>b.addEventListener('click',()=>{ $('path').value=b.dataset.path; call(b.dataset.path); }));
-$('go').addEventListener('click',()=>call($('path').value.trim()||'Company'));
-$('path').addEventListener('keydown',e=>{ if(e.key==='Enter') call($('path').value.trim()||'Company'); });
+$('go').addEventListener('click',()=>call($('path').value.trim()||'sales/invoice/page/1/1'));
+$('path').addEventListener('keydown',e=>{ if(e.key==='Enter') call($('path').value.trim()||'sales/invoice/page/1/1'); });
 </script>
 </body>
 </html>

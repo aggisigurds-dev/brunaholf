@@ -36,14 +36,11 @@ const DK_COMPANY = process.env.DKPLUS_COMPANY || ''; // dkPlus company GUID (Au�
 // Session-token cache (module scope; survives while the function stays warm).
 let _tok = null, _tokAt = 0;
 const TOKEN_TTL_MS = 45 * 60 * 1000;
-const AUTH_MODE = DK_COMPANY ? 'token-exchange' : 'direct-key';
 
-// Returns the Bearer token for data calls. With DKPLUS_COMPANY set, mint + cache a
-// company-scoped session token via POST /Token (authenticated by the API key);
-// otherwise send the API key directly (it may itself be a usable "General" token).
-async function bearerToken(force) {
-  if (!DK_COMPANY) return DK_KEY;
-  if (!force && _tok && Date.now() - _tokAt < TOKEN_TTL_MS) return _tok;
+// Fallback only: mint + cache a company-scoped session token via POST /Token
+// (authenticated by the API key). Used if the API key is not accepted directly.
+async function mintToken() {
+  if (_tok && Date.now() - _tokAt < TOKEN_TTL_MS) return _tok;
   const r = await fetch(`${DK_BASE}/Token`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${DK_KEY}`, 'content-type': 'application/json', Accept: 'application/json' },
@@ -51,7 +48,7 @@ async function bearerToken(force) {
   });
   const t = await r.text();
   let j; try { j = JSON.parse(t); } catch { j = {}; }
-  if (!r.ok || !j.Token) throw new Error(`Token exchange failed (dk_status ${r.status}): ${t.slice(0, 160)}`);
+  if (!r.ok || !j.Token) throw new Error(`POST /Token → dk_status ${r.status} ${t.slice(0, 120)}`);
   _tok = j.Token; _tokAt = Date.now();
   return _tok;
 }
@@ -95,26 +92,31 @@ exports.handler = async (event) => {
   const sep = path.includes('?') ? '&' : '?';
   const url = `${DK_BASE}/${path}${extra ? sep + extra : ''}`;
 
-  const fire = async (force) => {
-    const tok = await bearerToken(force);
-    return fetch(url, { headers: { [DK_AUTH_HEADER]: `${DK_AUTH_PREFIX}${tok}`, Accept: 'application/json' } });
-  };
+  const fetchWith = (tok) =>
+    fetch(url, { headers: { [DK_AUTH_HEADER]: `${DK_AUTH_PREFIX}${tok}`, Accept: 'application/json' } });
 
-  let r, text, body;
+  let r, text, body, mode = 'direct-key', exchangeErr = null;
   try {
-    r = await fire(false);
-    if (r.status === 401 && DK_COMPANY) r = await fire(true); // stale token → re-mint once
+    // 1) The API key is itself a dkPlus token — try it directly first.
+    r = await fetchWith(DK_KEY);
+    // 2) If unauthorized and a company is configured, fall back to a company-
+    //    scoped session token from POST /Token, then retry the call once.
+    if (r.status === 401 && DK_COMPANY) {
+      try {
+        const tok = await mintToken();
+        r = await fetchWith(tok);
+        mode = 'token-exchange';
+      } catch (e) { exchangeErr = String(e); }
+    }
     text = await r.text();
     try { body = JSON.parse(text); } catch { body = text; }
   } catch (e) {
-    return json(502, { error: 'dkPlus request failed', detail: String(e), url, auth_mode: AUTH_MODE });
+    return json(502, { error: 'dkPlus request failed', detail: String(e), url, auth_mode: mode });
   }
 
   // Echo url / auth mode (NOT the key) to keep the connection test self-explanatory.
-  const out = { ok: r.ok, dk_status: r.status, path, url, auth_mode: AUTH_MODE, auth_header: DK_AUTH_HEADER, data: body };
-  if (r.status === 401 && !DK_COMPANY) {
-    out.hint = '401 with direct key — set DKPLUS_COMPANY (the dkPlus company GUID) to enable token exchange, then retry.';
-  }
+  const out = { ok: r.ok, dk_status: r.status, path, url, auth_mode: mode, auth_header: DK_AUTH_HEADER, data: body };
+  if (exchangeErr) out.exchange_error = exchangeErr;
   return json(r.ok ? 200 : r.status, out);
 };
 
