@@ -179,6 +179,13 @@
   to = "/.netlify/functions/data-sources-status"
   status = 200
 
+# DK Plus (accounting) read-only API proxy (Slökkvitæki ehf)
+#   /api/dkplus?path=Company|Customers|Sales/Invoices|Products|...
+[[redirects]]
+  from = "/api/dkplus"
+  to = "/.netlify/functions/dkplus"
+  status = 200
+
 # Friendly URL for the Reikningagerð grid — uses /api/worksites under the hood,
 # kept here so the route is documented.
 [[redirects]]
