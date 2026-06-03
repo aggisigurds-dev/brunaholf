@@ -382,6 +382,52 @@ The brunaholf drop-zone parser should reuse the exact same column
 mapping and dedupe keys so files can be uploaded via the web UI
 **or** via the local scripts interchangeably.
 
+## DK Plus (accounting) integration
+
+Slökkvitæki ehf is set up in **dkPlus** (dk hugbúnaður) — the accounting
+system the service side invoices from. The "sérhæft sölukerfi" (the
+Slökkvitæki Sala/POS) connects via the dkPlus REST/JSON API.
+
+- API base: `https://api.dkplus.is/api/v1` (swagger: `https://api.dkplus.is/swagger`).
+- **Secrets** (set in the brunaholf Netlify site env, never in the repo):
+  - `DKPLUS_API_KEY` — the auðkennislykill (secret). Shared over email →
+    consider rotating it in dkPlus.
+  - `DKPLUS_COMPANY` — the dkPlus company GUID (Auðkeni dkPlús),
+    `606cc74e-…` for Slökkvitæki ehf. Enables the token exchange.
+  - (dkPlus admin login: brunaholf@brunaholf.is.)
+- **Auth model**: `POST /api/v1/Token` (Authorization: Bearer `DKPLUS_API_KEY`,
+  body `{ Company, Description }`) → company-scoped session `{ Token }`, which is
+  the Bearer for data calls. `dkplus.js` mints + caches that token when
+  `DKPLUS_COMPANY` is set, else sends the key directly; re-mints once on 401.
+- **Must run server-side**: `api.dkplus.is` is unreachable from the browser
+  (CORS) and from the build sandbox; every call goes through a Netlify function.
+- Proxy: `netlify/functions/dkplus.js` → `/api/dkplus?path=…` — phase 1 is
+  **read-only** (rejects non-GET). Confirmed endpoints (lowercase, singular):
+  - list invoices `GET sales/invoice/page/{page}/{count}` · one `GET sales/invoice/{number}`
+  - `GET customer/page/{p}/{c}` · `GET product/page/{p}/{c}`
+  - phase 2 (writes): `POST sales/invoice` · `POST sales/invoice/bulk` ·
+    price preview `PATCH sales/invoice/calculate` · PDF/HTML/email/reverse.
+- Connection-test page: `dkplus-test.html`.
+- Phases: (1) connect + read. (2) push invoices into dk+ from POS sales /
+  yearly brunakerfi úttektir. (3) customer/vörur sync + payment status back.
+
+## Service-doc ledger (standing task — keep alive)
+
+`brunakerfi.html` is a per-customer ledger for the brunakerfi /
+slökkvitæki **service customers** (fyrirtæki í þjónustu): a one-time
+þjónustusamningur + a yearly úttektarskýrsla + reikningur (2024–2026),
+each linked to Google Drive. Data is hand-encoded in `CUSTOMERS` /
+`INVOICES_2026` / `FILE_IDS`, cross-linked to `rekstrarfelog.html` by kt.
+
+**Standing instruction:** whenever new docs/PDFs surface — in the Drive
+`Brunakerfi\{Skýrslur,Samningar,Reikningar}` folders, the top-level
+`Skýrslur` slökkvitæki-inspection archive, or the `bokhald@eldklar.is` /
+`eldklar.is` mail — link them into this ledger: add the file to the right
+customer/year (resolve its Drive fileId into `FILE_IDS`; OCR scanned
+reikningar for customer + kt + amount) and fill the matching `vantar`
+cell. Add new service customers as they sign up. Surface (don't drop)
+anything undated.
+
 ## Open work
 
 - **Reikningagerð (invoicing prep) tab**: replace the placeholder
