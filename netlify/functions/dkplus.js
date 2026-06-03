@@ -15,18 +15,46 @@
 // SECRET: the dkPlus key (auðkennislykill) lives ONLY in the Netlify env var
 // DKPLUS_API_KEY. It is never committed and never returned to the client.
 //
-// AUTH HEADER: the exact scheme dkPlus expects must be confirmed against
-// https://api.dkplus.is/swagger. Default here is `Authorization: Bearer <key>`,
-// but it is overridable via env without a code change, so the connection test
-// can be tuned in the Netlify dashboard:
+// AUTH MODEL (per dkPlus swagger /Token): POST /api/v1/Token — authenticated by
+// the API key as `Authorization: Bearer <DKPLUS_API_KEY>`, body { Company, Description }
+// — returns a company-scoped session { Token }. That Token is then the Bearer for
+// data calls. We mint + cache the token when DKPLUS_COMPANY is set; otherwise we
+// send the API key directly (it may itself be a usable "General" token).
+// Env (set in Netlify, never in the repo):
+//   DKPLUS_API_KEY      the auðkennislykill (secret) — required
+//   DKPLUS_COMPANY      the dkPlus company GUID (Auðkenni) — enables token exchange
 //   DKPLUS_AUTH_HEADER  (default "Authorization")
-//   DKPLUS_AUTH_PREFIX  (default "Bearer "; set to "" to send the bare key)
+//   DKPLUS_AUTH_PREFIX  (default "Bearer "; set to "" to send the bare token)
 //   DKPLUS_BASE         (default "https://api.dkplus.is/api/v1")
 
 const DK_BASE = (process.env.DKPLUS_BASE || 'https://api.dkplus.is/api/v1').replace(/\/+$/, '');
 const DK_KEY = process.env.DKPLUS_API_KEY;
 const DK_AUTH_HEADER = process.env.DKPLUS_AUTH_HEADER || 'Authorization';
 const DK_AUTH_PREFIX = process.env.DKPLUS_AUTH_PREFIX != null ? process.env.DKPLUS_AUTH_PREFIX : 'Bearer ';
+const DK_COMPANY = process.env.DKPLUS_COMPANY || ''; // dkPlus company GUID (Auðkenni)
+
+// Session-token cache (module scope; survives while the function stays warm).
+let _tok = null, _tokAt = 0;
+const TOKEN_TTL_MS = 45 * 60 * 1000;
+const AUTH_MODE = DK_COMPANY ? 'token-exchange' : 'direct-key';
+
+// Returns the Bearer token for data calls. With DKPLUS_COMPANY set, mint + cache a
+// company-scoped session token via POST /Token (authenticated by the API key);
+// otherwise send the API key directly (it may itself be a usable "General" token).
+async function bearerToken(force) {
+  if (!DK_COMPANY) return DK_KEY;
+  if (!force && _tok && Date.now() - _tokAt < TOKEN_TTL_MS) return _tok;
+  const r = await fetch(`${DK_BASE}/Token`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${DK_KEY}`, 'content-type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({ Company: DK_COMPANY, Description: 'brunaholf dkplus proxy' }),
+  });
+  const t = await r.text();
+  let j; try { j = JSON.parse(t); } catch { j = {}; }
+  if (!r.ok || !j.Token) throw new Error(`Token exchange failed (dk_status ${r.status}): ${t.slice(0, 160)}`);
+  _tok = j.Token; _tokAt = Date.now();
+  return _tok;
+}
 
 // Read-only allowlist of dkPlus resource path prefixes for phase 1.
 const ALLOW = [
@@ -50,11 +78,11 @@ exports.handler = async (event) => {
   }
 
   const q = event.queryStringParameters || {};
-  const path = (q.path || 'Company').replace(/^\/+/, '').trim();
+  const path = (q.path || 'sales/invoice/page/1/1').replace(/^\/+/, '').trim();
   if (!ALLOW.some((re) => re.test(path))) {
     return json(400, {
       error: `Path not allowed in read-only phase: "${path}".`,
-      allowed: ['Company', 'Customers', 'Sales/Invoices', 'Products', 'Accounts', 'Employees'],
+      allowed: ['sales/invoice/page/1/3', 'sales/invoice/{number}', 'customer/page/1/3', 'product/page/1/3', 'Company'],
     });
   }
 
@@ -67,28 +95,27 @@ exports.handler = async (event) => {
   const sep = path.includes('?') ? '&' : '?';
   const url = `${DK_BASE}/${path}${extra ? sep + extra : ''}`;
 
+  const fire = async (force) => {
+    const tok = await bearerToken(force);
+    return fetch(url, { headers: { [DK_AUTH_HEADER]: `${DK_AUTH_PREFIX}${tok}`, Accept: 'application/json' } });
+  };
+
   let r, text, body;
   try {
-    r = await fetch(url, {
-      headers: { [DK_AUTH_HEADER]: `${DK_AUTH_PREFIX}${DK_KEY}`, Accept: 'application/json' },
-    });
+    r = await fire(false);
+    if (r.status === 401 && DK_COMPANY) r = await fire(true); // stale token → re-mint once
     text = await r.text();
     try { body = JSON.parse(text); } catch { body = text; }
   } catch (e) {
-    return json(502, { error: 'dkPlus request failed', detail: String(e), url });
+    return json(502, { error: 'dkPlus request failed', detail: String(e), url, auth_mode: AUTH_MODE });
   }
 
-  // Echo which header/url were used (NOT the key) to make the connection test
-  // self-explanatory while tuning the auth scheme.
-  return json(r.ok ? 200 : r.status, {
-    ok: r.ok,
-    dk_status: r.status,
-    path,
-    url,
-    auth_header: DK_AUTH_HEADER,
-    auth_prefix: DK_AUTH_PREFIX,
-    data: body,
-  });
+  // Echo url / auth mode (NOT the key) to keep the connection test self-explanatory.
+  const out = { ok: r.ok, dk_status: r.status, path, url, auth_mode: AUTH_MODE, auth_header: DK_AUTH_HEADER, data: body };
+  if (r.status === 401 && !DK_COMPANY) {
+    out.hint = '401 with direct key — set DKPLUS_COMPANY (the dkPlus company GUID) to enable token exchange, then retry.';
+  }
+  return json(r.ok ? 200 : r.status, out);
 };
 
 function cors() {
