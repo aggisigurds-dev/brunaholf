@@ -85,6 +85,7 @@
     <option value="d30">30 daga</option>
     <option value="post">Póstkrafa</option>
   </datalist>
+  <input id="m_seller" placeholder="Sölumaður" title="dkPlus Sölumaður-kóði — verður að vera til í dk. Tómt = sjálfgefið." style="width:104px;border:1px solid var(--line)">
   <button id="dkcalc" title="Forskoða verð í dkPlus (býr ekkert til)">Reikna í dkPlus</button>
   <button id="dkdraft" title="Stofna óbókuð drög í dkPlus (engin krafa fyrr en bókað)">Stofna drög í dkPlus</button>
   <button class="primary" onclick="window.print()">🖨️ Prenta / PDF</button>
@@ -290,6 +291,7 @@ function buildInvoice(){
     Lines: lines.map(l=>({ ItemCode: String(l.id), Text: l.desc, Quantity: l.qty, Price: l.price, IncludingVAT: false })),
   };
   const term = $('m_term').value.trim(); if(term) inv.Term = term;
+  const seller = $('m_seller').value.trim(); if(seller) inv.SalesPerson = seller;
   const a1 = $('c_addr1').value.trim(), a2 = $('c_addr2').value.trim();
   if(a1) inv.Customer.Address1 = a1;
   if(a2) inv.Customer.Address2 = a2;
