@@ -76,7 +76,17 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   via `customer_worksite_map` + `worksite_match`.
 - `bank_transactions` (~840 rows): Landsbankinn ledger, used to detect
   payments made via bank that haven't been reflected in Payday.
-- `customer_worksite_map`: contractor ↔ worksite links + `retention_pct`.
+- `customer_worksite_map`: unified payer → worksite/starfsstöð map +
+  `retention_pct`. Now also carries `base_id` (FK → `customers_base`, the
+  paying customer) and `heimilisfang` (site address) so one kennitala can own
+  many sites while the invoice rolls up to the base payer. Originally a
+  name-only draft of Brunahólf construction worksites (GG verk → Fjarðagata,
+  Eykt → Dalvegur 30/Heklureitur, ÞG verktakar → Landsspítalinn …); it now also
+  holds Slökkvitæki service customers' starfsstöðvar (e.g. Colas: one kt
+  420187-1499 / base 52, three sites Óseyrarbraut / Gullhella / Álfhellu).
+  Backfill `base_id` by exact `customer_name` → `customers_base.nafn` match;
+  low-confidence rows stay `base_id`-null for manual review. See
+  `sql/2026-06-04_customer_db_finish.sql`.
 - `customer_info`: payment behaviour per contractor (payment method,
   terms, notes).
 - `project_aliases`: maps Tímavera/Ajour/invoice name variants to a
