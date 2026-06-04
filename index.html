@@ -4726,7 +4726,7 @@ async function renderGerdReikninga(t){
       ev: Number(pg.eftirvinna_rate)||14927,
       km: Number(pg.akstur_km_rate)||GR_KM,
       ferd: Number(pg.akstur_ferd_rate)||GR_FERD,
-      sma: Number(pg.smahlutagjald_per_h)||GR_SMA,
+      sma: (pg.smahlutagjald_per_h == null ? GR_SMA : Number(pg.smahlutagjald_per_h)), // explicit 0 = ekkert smáhlutagjald (t.d. Fjallaböðin)
       vsk: Number(pg.vsk_pct)||24,
       stadf: pg.stadfesting_default !== false,
       customer: pg.customer_name || '',
@@ -4908,7 +4908,7 @@ async function renderGerdReikninga(t){
           <div class="gr-f"><label>Verkstaður</label><input id="gr-ws" value="${escapeAttr(name)}"></div>
           <div class="gr-f"><label>Verkkaupi</label><input id="gr-cust" value="${escapeAttr(cust)}"></div>
           <div class="gr-r2"><div class="gr-f"><label>Frá</label><input type="date" id="gr-fra" value="${fra}"></div><div class="gr-f"><label>Til</label><input type="date" id="gr-til" value="${til}"></div></div>
-          <div class="gr-st">Tími <button type="button" id="gr-fill-hours" class="gr-btn" style="float:right;padding:3px 9px;font-size:11px" title="Fylla dagvinnu/yfirvinnu úr tímabók (yfirvinna eftir 8,5 klst/dag á mann; helgar allar yfirvinna)">📥 Fylla úr tímabók</button></div>
+          <div class="gr-st">Tími <button type="button" id="gr-fill-hours" class="gr-btn" style="float:right;padding:3px 9px;font-size:11px" title="Fylla dagvinnu/yfirvinnu úr tímabók (yfirvinna eftir 8 klst/dag — 8,5 hjá Fjarðagötu; helgar (lau/sun) allar yfirvinna)">📥 Fylla úr tímabók</button></div>
           <div class="gr-r3"><div class="gr-f"><label>Dagvinna</label><div style="font-size:11px;color:#94a3b8;padding:6px 0">kr/klst · klst</div></div>
             <div class="gr-f"><input type="number" id="gr-dvr" value="${dvR}" step="50"></div><div class="gr-f"><input type="number" id="gr-dvh" value="${dvH}" step="0.5"></div></div>
           <div class="gr-r3"><div class="gr-f"><label>Eftirvinna</label></div>
@@ -4928,6 +4928,8 @@ async function renderGerdReikninga(t){
             <button class="gr-btn gr-btn-primary" id="gr-save" type="button">💾 Vista</button>
             <button class="gr-btn" id="gr-print" type="button">🖨 Prenta / PDF</button>
             <button class="gr-btn" id="gr-timabok" type="button" title="Prenta tímabók (mæting starfsmanna) til að senda með reikningi">🕒 Tímabók</button>
+            <button class="gr-btn" id="gr-logo" type="button" title="Hlaða upp Brunahólf-merki (PNG) — birtist á tímabók og efnislista">🖼 Merki</button>
+            <input type="file" id="gr-logo-file" accept="image/png,image/jpeg,image/svg+xml" style="display:none">
             <button class="gr-btn" id="gr-close2" type="button">Loka</button>
             <span id="gr-save-st" style="font-size:12px;color:#64748b;align-self:center"></span>
           </div>
@@ -4939,6 +4941,30 @@ async function renderGerdReikninga(t){
     bg.addEventListener('click', e=>{ if(e.target===bg) close(); });
     document.getElementById('gr-close').onclick = close;
     document.getElementById('gr-close2').onclick = close;
+
+    // ----- Brunahólf logo upload (stored as data URL in localStorage 'brunaholfLogo';
+    // shown on the Tímabók + Efnislisti/Verðskrá print docs) -----
+    (() => {
+      const gLogo = document.getElementById('gr-logo');
+      const gFile = document.getElementById('gr-logo-file');
+      if(!gLogo || !gFile) return;
+      gLogo.onclick = () => {
+        if(localStorage.getItem('brunaholfLogo')){
+          if(confirm('Merki er þegar til. Í lagi = velja nýtt · Hætta við = fjarlægja núverandi merki.')) gFile.click();
+          else { localStorage.removeItem('brunaholfLogo'); alert('Merki fjarlægt — notar sjálfgefið.'); }
+        } else gFile.click();
+      };
+      gFile.onchange = () => {
+        const f = gFile.files && gFile.files[0];
+        gFile.value = '';
+        if(!f) return;
+        if(!/^image\//.test(f.type)){ alert('Veldu mynd (PNG/JPG/SVG).'); return; }
+        if(f.size > 1500000){ alert('Myndin er of stór (>1,5 MB). Veldu minni PNG.'); return; }
+        const rd = new FileReader();
+        rd.onload = () => { try { localStorage.setItem('brunaholfLogo', rd.result); alert('Merki vistað ✓ — birtist á tímabók og efnislista.'); } catch(e){ alert('Gat ekki vistað merki: '+(e.message||e)); } };
+        rd.readAsDataURL(f);
+      };
+    })();
 
     // ----- materials editable list -----
     const $mats = document.getElementById('gr-mats');
@@ -5129,6 +5155,7 @@ async function renderGerdReikninga(t){
         if(!resp.ok) throw new Error(data.error || ('HTTP '+resp.status));
         if(!(data.rows||[]).length){ alert(`Engar tímafærslur fyrir ${name} í ${monthLabel(month)}.`); return; }
         const t = data.totals || {};
+        const sp = data.split || {};
         const hr = n => (Number(n)||0).toLocaleString('is-IS',{minimumFractionDigits:2,maximumFractionDigits:2});
         // Group rows by date (newest first), employees alphabetical within a day.
         const byDate = {};
@@ -5142,19 +5169,19 @@ async function renderGerdReikninga(t){
               <td class="c">${escapeHtml(r.time_in)}</td>
               <td class="c">${escapeHtml(r.time_out)}</td>
               <td class="r">${hr(r.hours)}</td>
-              <td class="r dim">${r.lunch?hr(r.lunch):''}</td>
             </tr>`).join('')
-            + `<tr class="dsum"><td></td><td colspan="3">Samtals ${dmy(d)}</td><td class="r">${hr(dayH)}</td><td></td></tr>`;
+            + `<tr class="dsum"><td></td><td colspan="3">Samtals ${dmy(d)}</td><td class="r">${hr(dayH)}</td></tr>`;
         }).join('');
-        const empRows = (data.by_employee||[]).map(e=>`<tr><td>${escapeHtml(e.employee)}</td><td class="r">${e.days}</td><td class="r">${hr(e.hours)}</td></tr>`).join('');
-        const logo = (()=>{ try { return localStorage.getItem('brunaholfLogo') || '/reikningur/logo.png'; } catch { return '/reikningur/logo.png'; } })();
+        const empRows = (data.by_employee||[]).map(e=>`<tr><td>${escapeHtml(e.employee)}</td><td class="r">${e.days}</td><td class="r">${hr(e.hours_dagvinna)}</td><td class="r">${hr(e.hours_yfirvinna)}</td><td class="r">${hr(e.hours)}</td></tr>`).join('');
+        const logo = (()=>{ let l=''; try{ l = localStorage.getItem('brunaholfLogo') || ''; }catch{} if(!l) l='/reikningur/logo.png'; if(l[0]==='/') l = location.origin + l; return l; })(); // upphlaðið Brunahólf-merki (Stillingar/Merki), annars sjálfgefið
         const win = window.open('', '_blank');
         if(!win){ alert('Leyfðu sprettiglugga til að prenta.'); return; }
         win.document.write(`<!DOCTYPE html><html lang="is"><head><meta charset="utf-8"><title>Tímabók — ${escapeHtml(name)} — ${monthLabel(month)}</title>
           <style>
             body{font-family:'Times New Roman',Times,serif;color:#000;margin:30px 38px}
             .tb-top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:16px}
-            .tb-logo{max-width:150px;max-height:74px;object-fit:contain}
+            .tb-logobox{width:240px;height:80px;display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 auto}
+            .tb-logobox img{max-width:100%;max-height:100%;object-fit:contain;display:block}
             h1{font-size:22px;margin:0}
             .tb-sub{font-style:italic;color:#555;margin-top:3px}
             .tb-ws{font-weight:700;font-size:15px;margin-top:2px}
@@ -5180,24 +5207,25 @@ async function renderGerdReikninga(t){
               <div class="tb-sub">Mæting starfsmanna — fylgiskjal með reikningi</div>
               <div class="tb-ws">${escapeHtml(name)} · ${monthLabel(month)}</div>
             </div>
-            <img class="tb-logo" src="${escapeAttr(logo)}" onerror="this.style.display='none'">
+            <div class="tb-logobox"><img src="${escapeAttr(logo)}" onerror="this.style.display='none'"></div>
           </div>
           <table>
-            <thead><tr><th>Dagsetning</th><th>Starfsmaður</th><th class="c">Inn</th><th class="c">Út</th><th class="r">Tímar</th><th class="r">Hád.</th></tr></thead>
+            <thead><tr><th>Dagsetning</th><th>Starfsmaður</th><th class="c">Inn</th><th class="c">Út</th><th class="r">Tímar</th></tr></thead>
             <tbody>${dateRows}</tbody>
           </table>
           <div class="tb-totals">
             <div>Dagar: <b>${t.days}</b></div>
             <div>Færslur: <b>${t.entries}</b></div>
             <div>Tímar alls: <b>${hr(t.hours)}</b></div>
-            <div>Hádegismatur: <b>${hr(t.lunch)}</b></div>
-            <div>Vinnustundir (nettó): <b>${hr(t.net)}</b></div>
+            <div>Dagvinna: <b>${hr(sp.hours_dagvinna)}</b></div>
+            <div>Yfirvinna: <b>${hr(sp.hours_yfirvinna)}</b></div>
+            <div>Nettó vinnutímar: <b>${hr(t.net)}</b></div>
           </div>
           <div class="tb-emp">
             <h2>Samantekt á starfsmann</h2>
-            <table><thead><tr><th>Starfsmaður</th><th class="r">Dagar</th><th class="r">Tímar</th></tr></thead><tbody>${empRows}</tbody></table>
+            <table><thead><tr><th>Starfsmaður</th><th class="r">Dagar</th><th class="r">Dagvinna</th><th class="r">Yfirvinna</th><th class="r">Tímar</th></tr></thead><tbody>${empRows}</tbody></table>
           </div>
-          <div class="tb-foot">Brunahólf ehf · unnið úr Tímaveru ${new Date().toLocaleDateString('is-IS')}</div>
+          <div class="tb-foot">Brunahólf ehf · ${new Date().toLocaleDateString('is-IS')}</div>
           <script>window.onload=function(){window.print();}<\/script></body></html>`);
         win.document.close();
       } catch(e){
@@ -6880,7 +6908,7 @@ async function renderVerdskra(t){
         <td><input class="vs-input" type="number" data-f="eftirvinna_rate"   value="${r.eftirvinna_rate||''}" placeholder="14927"></td>
         <td><input class="vs-input" type="number" data-f="akstur_km_rate"    value="${r.akstur_km_rate||''}" placeholder="186"></td>
         <td><input class="vs-input" type="number" data-f="akstur_ferd_rate"  value="${r.akstur_ferd_rate||''}" placeholder="4000"></td>
-        <td><input class="vs-input" type="number" data-f="smahlutagjald_per_h" value="${r.smahlutagjald_per_h||''}" placeholder="137"></td>
+        <td><input class="vs-input" type="number" data-f="smahlutagjald_per_h" value="${r.smahlutagjald_per_h ?? ''}" placeholder="137"></td>
         <td style="text-align:center">
           <input type="checkbox" class="vs-cb" data-f="stadfesting_default" ${r.stadfesting_default?'checked':''}>
         </td>
@@ -7398,7 +7426,7 @@ async function rgOpenWorkcenter(project, allSites, months){
       eftirvinna_rate: Number(document.getElementById('wc-ev').value) || null,
       akstur_km_rate: Number(document.getElementById('wc-km').value) || null,
       akstur_ferd_rate: Number(document.getElementById('wc-fr').value) || null,
-      smahlutagjald_per_h: Number(document.getElementById('wc-sma').value) || null,
+      smahlutagjald_per_h: document.getElementById('wc-sma').value === '' ? null : Number(document.getElementById('wc-sma').value), // keep an explicit 0 (= ekkert smáhlutagjald)
       vsk_pct: Number(document.getElementById('wc-vsk').value) || null,
       fixed_amount: document.getElementById('wc-fix').value ? Number(document.getElementById('wc-fix').value) : null,
       retention_pct: Number(document.getElementById('wc-ret').value) || 0,
