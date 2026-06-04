@@ -53,6 +53,7 @@ exports.handler = async (event) => {
       'materials_jsonb', 'materials_total',
       'net_an_vsk', 'vsk_amount', 'total_m_vsk',
       'status', 'payday_invoice_id', 'notes', 'updated_by',
+      'kennitala', 'heimilisfang',
     ];
     const payload = { updated_at: new Date().toISOString() };
     for (const k of allowed) if (body[k] !== undefined) payload[k] = body[k];
