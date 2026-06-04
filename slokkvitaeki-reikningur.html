@@ -288,7 +288,9 @@ function buildInvoice(){
     Customer: { Name: $('c_nafn').value, SSN: $('c_kt').value.replace(/\D/g,'') },
     Date: $('m_date').value,
     Reference: $('m_ref').value,
-    Lines: lines.map(l=>({ ItemCode: String(l.id), Text: l.desc, Quantity: l.qty, Price: l.price, IncludingVAT: false })),
+    // Free-text lines (no ItemCode) — dk validates ItemCode against its own Vörur
+    // catalog, which is separate from the app's vorur. Description + qty + price.
+    Lines: lines.map(l=>({ Text: l.desc, Quantity: l.qty, Price: l.price, IncludingVAT: false })),
   };
   const term = $('m_term').value.trim(); if(term) inv.Term = term;
   const seller = $('m_seller').value.trim(); if(seller) inv.SalesPerson = seller;

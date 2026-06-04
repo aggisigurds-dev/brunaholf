@@ -148,7 +148,8 @@ async function sendGroup(gi){
 
   // Combine the selected sales into one invoice (mánaðar samtölureikningur).
   const lines = [];
-  sales.forEach(s=>(s.lines||[]).forEach(l=>lines.push({ ItemCode:String(l.id||''), Text:l.desc, Quantity:l.qty, Price:l.price, IncludingVAT:false })));
+  // Free-text lines (no ItemCode) — dk's Vörur catalog is separate from the app's.
+  sales.forEach(s=>(s.lines||[]).forEach(l=>lines.push({ Text:l.desc, Quantity:l.qty, Price:l.price, IncludingVAT:false })));
   const invoice = {
     Customer: { Number: g.kt, Name: g.name, SSN: g.kt },
     Date: todayISO(),
