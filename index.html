@@ -360,6 +360,34 @@ body[data-tab="reikningar"] main{max-width:none;padding:14px 24px}
 }
 .editmode .kbtn .edit{display:flex}
 .editmode .kbtn{border-style:dashed}
+.kbtn .del{
+  position:absolute;bottom:6px;right:6px;width:24px;height:24px;border-radius:6px;
+  background:rgba(154,39,36,.08);border:0;color:var(--red);display:none;align-items:center;justify-content:center;font-size:12px;cursor:pointer;
+}
+.editmode .kbtn .del{display:flex}
+/* Reikningatenglar: always-on editing chrome (no edit-mode needed) */
+body[data-tab="reikningatenglar"] .kbtn .drag,
+body[data-tab="reikningatenglar"] .kbtn .edit,
+body[data-tab="reikningatenglar"] .kbtn .del{display:flex}
+body[data-tab="reikningatenglar"] .kbtn{border-style:dashed}
+body[data-tab="reikningatenglar"] .grid{outline:1px dashed rgba(209,69,40,.22);outline-offset:6px;border-radius:14px}
+.rt-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:2px 2px 14px;flex-wrap:wrap}
+.rt-hint{font-size:12px;color:var(--muted);font-weight:500}
+.rt-add{padding:9px 16px;border-radius:10px;border:0;background:linear-gradient(135deg,var(--red),var(--red-dark));color:#fff;font-weight:700;font-size:13px;cursor:pointer;box-shadow:var(--shadow-sm)}
+.rt-add:hover{filter:brightness(1.05)}
+.rt-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rt-search{padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--input-bg);color:var(--ink);font:inherit;font-size:13px;min-width:180px}
+.rt-quickadd{display:flex;gap:8px;flex-wrap:wrap;margin:0 2px 16px;padding:12px;border:1px dashed var(--line);border-radius:12px;background:var(--input-bg)}
+.rt-quickadd input{flex:1;min-width:120px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:13px}
+.rt-quickadd button{padding:8px 16px;border-radius:8px;border:0;background:var(--red);color:#fff;font-weight:700;cursor:pointer;font-size:13px}
+.kbtn .copy{position:absolute;bottom:6px;right:34px;width:24px;height:24px;border-radius:6px;background:rgba(0,0,0,.05);border:0;color:var(--muted);display:none;align-items:center;justify-content:center;font-size:12px;cursor:pointer}
+body[data-tab="reikningatenglar"] .kbtn .copy{display:flex}
+.rt-group-head{display:flex;align-items:center;gap:10px;margin:18px 2px 12px}
+.rt-group-head strong{font-size:11px;text-transform:uppercase;letter-spacing:1.6px;color:var(--muted);font-weight:700}
+.rt-count{font-size:11px;color:var(--muted);background:var(--input-bg);border-radius:99px;padding:1px 8px;font-weight:700}
+.rt-openall{font-size:11px;color:var(--blue);background:none;border:0;cursor:pointer;font-weight:700}
+.rt-line{flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
+.kbtn.rt-hidden{display:none}
 
 /* themed button colors */
 .kbtn.t-red .ico{background:linear-gradient(135deg, var(--red), var(--red-dark));box-shadow:0 2px 6px rgba(201,60,29,.25), inset 0 1px 0 rgba(255,255,255,.2)}
@@ -1512,6 +1540,7 @@ const DEFAULT_STATE = {
     ]},
     {id:'kvittanir',  label:'Kvittanir & PDF', icon:'📷'},
     {id:'tenglar',    label:'Tenglar',    icon:'🔗'},
+    {id:'reikningatenglar', label:'Reikningatenglar', icon:'📨'},
     {id:'reikningar', label:'Reikningagerð', icon:'💳'},
     {id:'gerdreikninga', label:'Gerð Reikninga', icon:'🧾'},
     {id:'vinnubok', label:'Vinnubók', icon:'📝'},
@@ -1550,6 +1579,15 @@ const DEFAULT_STATE = {
     {id:b(), tab:'tenglar', group:'Verkefnamöppur', label:'Strandgata',         url:'https://drive.google.com/drive/folders/1mO2A16LXFuatsIdtS8O8j95ZNI_uyDny', color:'t-blue', initials:'ST'},
     {id:b(), tab:'tenglar', group:'Verkefnamöppur', label:'Grímsbær',           url:'https://drive.google.com/drive/folders/1u1oO4BIAAGxVBB8hV0jPGAGtCnTO2-_l', color:'t-blue', initials:'GB'},
     {id:b(), tab:'tenglar', group:'Verkefnamöppur', label:'Austurhraun',        url:'https://drive.google.com/drive/folders/1m0fFPj5FamdTNbOYLp9_3IXHuiRm4fCA', color:'t-blue', initials:'AH'},
+    // ── Reikningatenglar (curated invoicing links) ──
+    {id:b(), tab:'reikningatenglar', group:'Kerfi',       label:'Payday',             url:'https://app.payday.is/is/dashboard/', color:'t-gold', initials:'PD'},
+    {id:b(), tab:'reikningatenglar', group:'Kerfi',       label:'Tímavera',           url:'https://app.timavera.is/app', color:'t-red', initials:'TV'},
+    {id:b(), tab:'reikningatenglar', group:'Kerfi',       label:'Ajour (Brunahólf)',  url:'https://brunaholf.ajoursystem.net/construction', color:'t-dark', initials:'AJ'},
+    {id:b(), tab:'reikningatenglar', group:'Kerfi',       label:'Keldan (kennitölur)',url:'https://keldan.is/Fyrirtaeki/Leit', color:'t-blue', initials:'KE'},
+    {id:b(), tab:'reikningatenglar', group:'Skjöl',       label:'Tekjur (master sheet)', url:'https://docs.google.com/spreadsheets/d/1cv3Q3UFXMR0D3KrdCZFYkhfVxnkvfzFYdRbxztH_NW8/edit', color:'t-green', initials:'TK'},
+    {id:b(), tab:'reikningatenglar', group:'Skjöl',       label:'Mars Reikningar (Drive)', url:'https://drive.google.com/drive/folders/17gbxtH3i6JtLBosZMV2EdsB7gBQ3xvci', color:'t-blue', initials:'MR'},
+    {id:b(), tab:'reikningatenglar', group:'Tölvupóstur', label:'bokhald@brunaholf.is', url:'https://mail.google.com/mail/?authuser=bokhald@brunaholf.is', color:'t-gold', initials:'BB'},
+    {id:b(), tab:'reikningatenglar', group:'Tölvupóstur', label:'bokhald@eldklar.is',   url:'https://mail.google.com/mail/?authuser=bokhald@eldklar.is', color:'t-gold', initials:'BK'},
     {id:b(), tab:'yfirlit', group:'Undirbúa reikning', label:'1. Tímar úr Tímavera', url:'https://timavera.is', color:'t-red',   initials:'1'},
     {id:b(), tab:'yfirlit', group:'Undirbúa reikning', label:'2. Skjöl úr Ajour',    url:'https://ajour.is',     color:'t-dark',  initials:'2'},
     {id:b(), tab:'yfirlit', group:'Undirbúa reikning', label:'3. Reikningur í Payday', url:'https://payday.is',  color:'t-gold',  initials:'3'},
@@ -1733,7 +1771,7 @@ function clearDataCache(){
 // state with an older snapshot from the server).
 function ensureNewTabs(s){
   if(!s || !Array.isArray(s.tabs)) return;
-  ['gerdreikninga','vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','spurningar'].forEach(id=>{
+  ['reikningatenglar','gerdreikninga','vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','spurningar'].forEach(id=>{
     if(!s.tabs.find(t=>t.id===id)){
       const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
       if(d){
@@ -1758,6 +1796,9 @@ function ensureNewTabs(s){
           const idx2 = s.tabs.findIndex(t=>t.id==='vinnustofa');
           const idx3 = s.tabs.findIndex(t=>t.id==='reikningar');
           target = idx >= 0 ? idx + 1 : (idx2 >= 0 ? idx2 + 1 : (idx3 >= 0 ? idx3 + 1 : -1));
+        } else if(id === 'reikningatenglar'){
+          const idx = s.tabs.findIndex(t=>t.id==='tenglar');
+          target = idx >= 0 ? idx + 1 : -1;
         } else {
           target = s.tabs.findIndex(t=>t.id==='tenglar');
         }
@@ -1795,6 +1836,10 @@ function load(){
     }
     // migration: ensure new tabs exist for users with saved state
     ensureNewTabs(s);
+    // migration: seed reikningatenglar curated buttons if user has none yet
+    if(s.tabs.find(t=>t.id==='reikningatenglar') && !s.buttons.some(bn=>bn.tab==='reikningatenglar')){
+      DEFAULT_STATE.buttons.filter(bn=>bn.tab==='reikningatenglar').forEach(bn=>s.buttons.push(JSON.parse(JSON.stringify(bn))));
+    }
     // migration: ensure ui.layout / ui.uploadFolderId
     if(!s.ui.layout) s.ui.layout = 'sidebar';
     if(!s.ui.uploadFolderId || s.ui.uploadFolderId === '1MRleiwpQyqHzcSIfbbCUjPF7ujoXHd0U') s.ui.uploadFolderId = '1MRleiwpQyqHzcSIfbbCUjPF7ujoXHd0U';
@@ -2008,6 +2053,7 @@ function render(){
   if(t.id==='vinnustofa') return renderVinnustofa(t);
   if(t.id==='verdskra') return renderVerdskra(t);
   if(t.id==='efniskostnadur') return renderEfniskostnadur(t);
+  if(t.id==='reikningatenglar') return renderReikningatenglar(t);
   if(t.checklist!==undefined) return renderChecklist(t);
   if(t.sheetCsv!==undefined) return renderListTab(t);
   renderButtonTab(t);
@@ -2090,8 +2136,8 @@ function loadSortable(){
   return _sortableLoading;
 }
 
-async function wireDragSort(){
-  if(!state.ui.editMode) return;
+async function wireDragSort(force){
+  if(!state.ui.editMode && !force) return;
   await loadSortable();
   document.querySelectorAll('main .grid').forEach(g=>{
     if(g._sortable) g._sortable.destroy();
@@ -2106,13 +2152,14 @@ async function wireDragSort(){
         // if moved to different group container, update the group label of the button
         const moved = state.buttons.find(b=>b.id===evt.item.dataset.id);
         if(moved){
-          const sec = evt.to.closest('.section');
-          const gt = sec ? sec.querySelector('.group-title strong') : null;
-          if(gt){
-            // strip leading icons & counts
-            const newGroup = gt.textContent.trim().replace(/\s*\(\d+\)\s*$/,'').trim();
-            if(newGroup && newGroup!==moved.group) moved.group = newGroup;
+          // prefer explicit data-group (advanced tenglar), else read group title
+          let newGroup = evt.to.dataset.group;
+          if(!newGroup){
+            const sec = evt.to.closest('.section');
+            const gt = sec ? sec.querySelector('.group-title strong') : null;
+            if(gt) newGroup = gt.textContent.trim().replace(/\s*\(\d+\)\s*$/,'').trim();
           }
+          if(newGroup && newGroup!==moved.group) moved.group = newGroup;
         }
         // Build new order from DOM across all grids on the page
         const newOrder = [];
@@ -2148,6 +2195,123 @@ function renderButtonTab(t){
   `).join('');
   $view.innerHTML = html;
   bindEditButtons();
+}
+
+/* ============ REIKNINGATENGLAR — advanced, always-editable links ============ */
+function safeHost(u){ try{ return new URL(u, location.href).host.replace(/^www\./,''); }catch{ return ''; } }
+
+function rtTile(btn){
+  const sub = btn.url ? safeHost(btn.url) : '';
+  let ico = btn.icon || autoIcon(btn.label, btn.url);
+  const icoIsEmoji = !!ico;
+  if(!ico) ico = btn.initials || (btn.label||'?').slice(0,2).toUpperCase();
+  const size = btn.size || 'm';
+  const search = ((btn.label||'')+' '+sub+' '+(btn.group||'')).toLowerCase();
+  return `
+    <a class="kbtn ${btn.color||'t-red'} size-${size}" href="${escapeAttr(btn.url||'#')}" target="_blank" rel="noopener" data-id="${btn.id}" data-search="${escapeAttr(search)}">
+      <button class="drag" title="Færa" data-drag="${btn.id}">⋮⋮</button>
+      <div class="ico ${icoIsEmoji?'ico-emoji':''}">${escapeHtml(ico)}</div>
+      <div style="min-width:0;flex:1">
+        <div class="lbl">${escapeHtml(btn.label)}</div>
+        ${sub?`<div class="sub">${escapeHtml(sub)}</div>`:''}
+      </div>
+      <button class="edit" title="Breyta" data-edit="${btn.id}">✎</button>
+      <button class="copy" title="Afrita hlekk" data-copy="${btn.id}">⧉</button>
+      <button class="del" title="Eyða" data-del="${btn.id}">🗑</button>
+    </a>`;
+}
+
+function renderReikningatenglar(t){
+  const btns = buttonsFor(t.id);
+  const groups = {};
+  btns.forEach(bn=>{ const g=bn.group||'Almennt'; (groups[g]=groups[g]||[]).push(bn); });
+  const gKeys = Object.keys(groups);
+  const groupsHtml = gKeys.length ? gKeys.map(g=>`
+    <div class="section" data-group="${escapeAttr(g)}">
+      <div class="rt-group-head">
+        <strong>${escapeHtml(g)}</strong>
+        <span class="rt-count">${groups[g].length}</span>
+        <button class="rt-openall" data-openall="${escapeAttr(g)}">↗ Opna allt</button>
+        <span class="rt-line"></span>
+      </div>
+      <div class="grid" data-group="${escapeAttr(g)}">
+        ${groups[g].map(rtTile).join('')}
+      </div>
+    </div>`).join('')
+    : `<div class="empty">Engir tenglar enn — límdu hlekk hér að ofan.</div>`;
+
+  $view.innerHTML = `
+    <div class="rt-head">
+      <div class="rt-hint">📨 Tenglar fyrir reikningagerð · dragðu ⋮⋮ til að raða · ✎ breyta · ⧉ afrita · 🗑 eyða</div>
+      <div class="rt-tools">
+        <input class="rt-search" id="rt-search" type="search" placeholder="🔎 Leita…" autocomplete="off">
+        <button class="rt-add" id="rt-add">+ Bæta við tengli</button>
+      </div>
+    </div>
+    <div class="rt-quickadd">
+      <input id="rt-qa-url" type="url" placeholder="Límdu hlekk (https://…)">
+      <input id="rt-qa-label" type="text" placeholder="Heiti (valkvætt)">
+      <input id="rt-qa-group" type="text" placeholder="Hópur" list="rt-groups">
+      <datalist id="rt-groups">${gKeys.map(g=>`<option value="${escapeAttr(g)}">`).join('')}</datalist>
+      <button id="rt-qa-add">Bæta við</button>
+    </div>
+    ${groupsHtml}`;
+
+  // full editor modal
+  document.getElementById('rt-add').onclick = ()=> openButtonEditor(null);
+
+  // quick-add by pasting a URL
+  const qaAdd = ()=>{
+    const urlEl = document.getElementById('rt-qa-url');
+    const url = urlEl.value.trim();
+    if(!url){ urlEl.focus(); return; }
+    let label = document.getElementById('rt-qa-label').value.trim();
+    const group = document.getElementById('rt-qa-group').value.trim() || 'Almennt';
+    if(!label) label = safeHost(url) || url;
+    state.buttons.push({id:b(), tab:'reikningatenglar', group, label, url, color:'t-blue', initials:''});
+    save(); render();
+  };
+  document.getElementById('rt-qa-add').onclick = qaAdd;
+  ['rt-qa-url','rt-qa-label','rt-qa-group'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); qaAdd(); } });
+  });
+
+  // live search filter
+  const search = document.getElementById('rt-search');
+  if(search) search.addEventListener('input', ()=>{
+    const q = search.value.trim().toLowerCase();
+    $view.querySelectorAll('.kbtn[data-search]').forEach(el=>{
+      el.classList.toggle('rt-hidden', !!q && !el.dataset.search.includes(q));
+    });
+    $view.querySelectorAll('.section[data-group]').forEach(sec=>{
+      const any = [...sec.querySelectorAll('.kbtn')].some(el=>!el.classList.contains('rt-hidden'));
+      sec.style.display = any ? '' : 'none';
+    });
+  });
+
+  // open every link in a group
+  $view.querySelectorAll('[data-openall]').forEach(btn=> btn.addEventListener('click', e=>{
+    e.preventDefault();
+    (groups[btn.dataset.openall]||[]).forEach(bn=>{ if(bn.url) window.open(bn.url,'_blank','noopener'); });
+  }));
+
+  // edit / delete / copy / drag-noclick
+  $view.querySelectorAll('[data-edit]').forEach(btn=> btn.addEventListener('click', e=>{ e.preventDefault(); e.stopPropagation(); openButtonEditor(btn.dataset.edit); }));
+  $view.querySelectorAll('[data-del]').forEach(btn=> btn.addEventListener('click', e=>{
+    e.preventDefault(); e.stopPropagation();
+    const bn = state.buttons.find(x=>x.id===btn.dataset.del);
+    if(bn && confirm('Eyða tengli „'+(bn.label||'')+'“?')){ state.buttons = state.buttons.filter(x=>x.id!==bn.id); save(); render(); }
+  }));
+  $view.querySelectorAll('[data-copy]').forEach(btn=> btn.addEventListener('click', async e=>{
+    e.preventDefault(); e.stopPropagation();
+    const bn = state.buttons.find(x=>x.id===btn.dataset.copy);
+    if(bn && bn.url){ try{ await navigator.clipboard.writeText(bn.url); const o=btn.textContent; btn.textContent='✓'; setTimeout(()=>{btn.textContent=o;},1000); }catch(_){} }
+  }));
+  $view.querySelectorAll('[data-drag]').forEach(btn=> btn.addEventListener('click', e=>{ e.preventDefault(); e.stopPropagation(); }));
+
+  // always-on drag reorder (no edit mode needed)
+  wireDragSort(true);
 }
 
 /* ====================== INBOX (Luna email digest) ====================== */

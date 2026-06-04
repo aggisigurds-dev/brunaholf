@@ -53,6 +53,11 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
 - `slokkvitaeki` — fire-extinguisher data
 - `gogn`, `samthaetting` — config/integration checklist
 - `kvittanir`, `tenglar`, `reikningar`, `utgjold`, `stillingar` — utility/link tabs
+- `reikningatenglar` — advanced, always-editable/movable invoice-links page
+  (`renderReikningatenglar`): live search, quick-add by pasting a URL, open-all
+  per group, copy-link, and drag-to-reorder without entering edit mode. Buttons
+  live in `state.buttons` (`tab:'reikningatenglar'`), curated defaults seeded via
+  `ensureNewTabs` + a `loadState` migration so existing users get the tab.
 
 > The `reikningar` tab is currently a placeholder. The Reikningagerð
 > (invoicing prep) work is being built on top of it — see Open work below.
