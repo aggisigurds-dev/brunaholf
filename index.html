@@ -4387,6 +4387,18 @@ async function renderVinnustofa(t){
 }
 
 /* ====================== EFNI EDITOR (Redder line items for one worksite/month) ====================== */
+// Simplify the raw Redder product text into a clean Eldvarnar-name for display.
+// Unknown materials keep their original name so nothing is lost.
+function simplifyRedderName(raw){
+  const n = String(raw||'').toLowerCase();
+  if(/silikon|silicon/.test(n))                           return 'Eldvarnar silikon';
+  if(/h[áa]þe?n+slu|h[áa]þ.*k[íi]tti/.test(n))            return 'Eldvarnar háþennslukítti';
+  if(/akr[íi]l/.test(n))                                   return 'Eldvarnar akríl';
+  if(/þéttull|thettull|steinull/.test(n))                 return 'Eldvarnar þéttull';
+  if(/m[áa]lning/.test(n))                                 return 'Eldvarnar málning';
+  if(/r[úu]lla/.test(n))                                   return 'Eldvarnar rúlla';
+  return raw || '';
+}
 async function rgOpenEfniEditor(worksite, month){
   const fmt = n => Math.round(n||0).toLocaleString('is-IS');
   openModal(`
@@ -4441,7 +4453,7 @@ async function rgOpenEfniEditor(worksite, month){
             <tbody>${inv.redder_line_items.map(li => `
               <tr>
                 <td>${escapeHtml(li.item_code||'')}</td>
-                <td>${escapeHtml(li.item_name||'')}</td>
+                <td title="${escapeAttr(li.item_name||'')}">${escapeHtml(simplifyRedderName(li.item_name))}</td>
                 <td class="num">${Number(li.magn||0)} ${escapeHtml(li.unit||'')}</td>
                 <td class="num">${fmt(li.ein_verd)}</td>
                 <td class="num">${li.afsl_pct||0}%</td>
@@ -4726,7 +4738,7 @@ async function renderGerdReikninga(t){
       ev: Number(pg.eftirvinna_rate)||14927,
       km: Number(pg.akstur_km_rate)||GR_KM,
       ferd: Number(pg.akstur_ferd_rate)||GR_FERD,
-      sma: Number(pg.smahlutagjald_per_h)||GR_SMA,
+      sma: (pg.smahlutagjald_per_h == null ? GR_SMA : Number(pg.smahlutagjald_per_h)), // explicit 0 = ekkert smáhlutagjald (t.d. Fjallaböðin)
       vsk: Number(pg.vsk_pct)||24,
       stadf: pg.stadfesting_default !== false,
       customer: pg.customer_name || '',
@@ -4868,6 +4880,8 @@ async function renderGerdReikninga(t){
     const d = draftFor(name);
     const wObj = WS.find(w=>w.project===name) || {};
     const cust = (d && d.customer_name) || r.customer || (wObj.mapped_customers||[])[0] || '';
+    const custKt = (d && d.kennitala) || '';
+    const custAddr = (d && d.heimilisfang) || '';
     // Prefill: saved draft wins; else compute from Tímavera + pricing-guide; materials from draft or Redder.
     const dvH = d ? Number(d.hours_dagvinna)||0 : (monthHours(wObj)||0);
     const dvR = d && d.rate_dagvinna ? Number(d.rate_dagvinna) : r.dv;
@@ -4907,8 +4921,12 @@ async function renderGerdReikninga(t){
           <div class="gr-st">Verkstaður</div>
           <div class="gr-f"><label>Verkstaður</label><input id="gr-ws" value="${escapeAttr(name)}"></div>
           <div class="gr-f"><label>Verkkaupi</label><input id="gr-cust" value="${escapeAttr(cust)}"></div>
+          <div id="gr-manual" style="display:none;border:1px dashed var(--border,#cbd5e1);border-radius:8px;padding:8px 10px;margin:2px 0 4px">
+            <div style="font-size:11px;color:#64748b;margin-bottom:6px">Handvirkar upplýsingar verkkaupa — birtast á reikningi (t.d. þegar fletta þarf upp kennitölu eða skipta reikningi handvirkt).</div>
+            <div class="gr-r2"><div class="gr-f"><label>Kennitala</label><input id="gr-kt" value="${escapeAttr(custKt)}" placeholder="000000-0000"></div><div class="gr-f"><label>Heimilisfang</label><input id="gr-addr" value="${escapeAttr(custAddr)}" placeholder="Heimilisfang verkkaupa"></div></div>
+          </div>
           <div class="gr-r2"><div class="gr-f"><label>Frá</label><input type="date" id="gr-fra" value="${fra}"></div><div class="gr-f"><label>Til</label><input type="date" id="gr-til" value="${til}"></div></div>
-          <div class="gr-st">Tími <button type="button" id="gr-fill-hours" class="gr-btn" style="float:right;padding:3px 9px;font-size:11px" title="Fylla dagvinnu/yfirvinnu úr tímabók (yfirvinna eftir 8,5 klst/dag á mann; helgar allar yfirvinna)">📥 Fylla úr tímabók</button></div>
+          <div class="gr-st">Tími <button type="button" id="gr-fill-hours" class="gr-btn" style="float:right;padding:3px 9px;font-size:11px" title="Fylla dagvinnu/yfirvinnu úr tímabók (yfirvinna eftir 8 klst/dag — 8,5 hjá Fjarðagötu; helgar (lau/sun) allar yfirvinna)">📥 Fylla úr tímabók</button></div>
           <div class="gr-r3"><div class="gr-f"><label>Dagvinna</label><div style="font-size:11px;color:#94a3b8;padding:6px 0">kr/klst · klst</div></div>
             <div class="gr-f"><input type="number" id="gr-dvr" value="${dvR}" step="50"></div><div class="gr-f"><input type="number" id="gr-dvh" value="${dvH}" step="0.5"></div></div>
           <div class="gr-r3"><div class="gr-f"><label>Eftirvinna</label></div>
@@ -4927,6 +4945,7 @@ async function renderGerdReikninga(t){
           <div class="gr-actions">
             <button class="gr-btn gr-btn-primary" id="gr-save" type="button">💾 Vista</button>
             <button class="gr-btn" id="gr-print" type="button">🖨 Prenta / PDF</button>
+            <button class="gr-btn" id="gr-manual-btn" type="button" title="Opna handvirka stillingu — kennitala og heimilisfang verkkaupa á reikning">✏️ Handvirkt</button>
             <button class="gr-btn" id="gr-timabok" type="button" title="Prenta tímabók (mæting starfsmanna) til að senda með reikningi">🕒 Tímabók</button>
             <button class="gr-btn" id="gr-close2" type="button">Loka</button>
             <span id="gr-save-st" style="font-size:12px;color:#64748b;align-self:center"></span>
@@ -4939,6 +4958,13 @@ async function renderGerdReikninga(t){
     bg.addEventListener('click', e=>{ if(e.target===bg) close(); });
     document.getElementById('gr-close').onclick = close;
     document.getElementById('gr-close2').onclick = close;
+    document.getElementById('gr-manual-btn').onclick = () => {
+      const m = document.getElementById('gr-manual');
+      const show = m.style.display === 'none';
+      m.style.display = show ? '' : 'none';
+      document.getElementById('gr-manual-btn').classList.toggle('gr-btn-primary', show);
+      if(show) document.getElementById('gr-kt').focus();
+    };
 
     // ----- materials editable list -----
     const $mats = document.getElementById('gr-mats');
@@ -5009,6 +5035,11 @@ async function renderGerdReikninga(t){
       const kr = n => fmt(n)+' kr.';
       const ws = document.getElementById('gr-ws').value.trim();
       const fra = document.getElementById('gr-fra').value, til = document.getElementById('gr-til').value;
+      const pCust = document.getElementById('gr-cust').value.trim();
+      const pKt   = (document.getElementById('gr-kt')   || {}).value ? document.getElementById('gr-kt').value.trim()   : '';
+      const pAddr = (document.getElementById('gr-addr') || {}).value ? document.getElementById('gr-addr').value.trim() : '';
+      const payerBlock = (pCust||pKt||pAddr)
+        ? `<div class="gr-doc-cust">${escapeHtml(pCust)}${pKt?`<br>kt. ${escapeHtml(pKt)}`:''}${pAddr?`<br>${escapeHtml(pAddr)}`:''}</div>` : '';
       const row = (l,p,m,tot,md) => `<tr><td class="l">${escapeHtml(l)}</td><td class="p">${p!=null?kr(p):''}</td><td class="m">${m!=null&&m!==''?m:''}</td><td class="t">${kr(tot)}</td></tr>`;
       let matRows = c.matLines.filter(m=>m.qty>0||m.total>0).map(m=>row(m.label, m.price, (m.qty%1?m.qty.toFixed(2):String(m.qty)), m.total)).join('');
       if(!matRows) matRows = '';
@@ -5018,7 +5049,7 @@ async function renderGerdReikninga(t){
           <img src="${escapeAttr(getLogo())}" class="gr-doc-logo" alt="" onerror="this.style.display='none'">
           <div><h1>Brunahólf ehf.</h1><div class="gr-doc-sub">Verðskrá / tilboð</div></div>
         </div>
-        <div class="gr-doc-meta"><div>${dmy(fra)} til ${dmy(til)}</div><div class="gr-doc-ws">${escapeHtml(ws)}</div></div>
+        <div class="gr-doc-meta"><div>${dmy(fra)} til ${dmy(til)}</div><div class="gr-doc-ws">${escapeHtml(ws)}</div>${payerBlock}</div>
         <table class="gr-efni">
           <thead><tr><td></td><td class="p">án vsk</td><td class="m">magn</td><td class="t">samtals</td></tr></thead>
           <tbody>
@@ -5054,6 +5085,8 @@ async function renderGerdReikninga(t){
             worksite_name: document.getElementById('gr-ws').value.trim(),
             work_month: month,
             customer_name: document.getElementById('gr-cust').value.trim() || null,
+            kennitala: document.getElementById('gr-kt').value.trim() || null,
+            heimilisfang: document.getElementById('gr-addr').value.trim() || null,
             source: existing?.source || 'timavera',
             hours_dagvinna: c.dvH, hours_eftirvinna: c.evH,
             rate_dagvinna: c.dvR, rate_eftirvinna: c.evR,
@@ -5085,7 +5118,7 @@ async function renderGerdReikninga(t){
           .gr-doc-top{display:grid;grid-template-columns:180px 1fr;gap:20px;align-items:center;margin-bottom:24px}
           .gr-doc-logo{max-width:170px;max-height:90px;object-fit:contain}
           h1{font-size:24px;margin:0}.gr-doc-sub{font-style:italic;color:#555;margin:3px 0 0}
-          .gr-doc-meta{margin-bottom:14px}.gr-doc-ws{font-weight:700}
+          .gr-doc-meta{margin-bottom:14px}.gr-doc-ws{font-weight:700}.gr-doc-cust{font-size:12px;margin-top:4px;line-height:1.45;color:#222}
           table.gr-efni{width:100%;border-collapse:collapse;font-size:13px}
           table.gr-efni td{padding:3px 4px}
           table.gr-efni thead td{font-style:italic;color:#555;text-align:right}
@@ -5129,6 +5162,7 @@ async function renderGerdReikninga(t){
         if(!resp.ok) throw new Error(data.error || ('HTTP '+resp.status));
         if(!(data.rows||[]).length){ alert(`Engar tímafærslur fyrir ${name} í ${monthLabel(month)}.`); return; }
         const t = data.totals || {};
+        const sp = data.split || {};
         const hr = n => (Number(n)||0).toLocaleString('is-IS',{minimumFractionDigits:2,maximumFractionDigits:2});
         // Group rows by date (newest first), employees alphabetical within a day.
         const byDate = {};
@@ -5142,19 +5176,19 @@ async function renderGerdReikninga(t){
               <td class="c">${escapeHtml(r.time_in)}</td>
               <td class="c">${escapeHtml(r.time_out)}</td>
               <td class="r">${hr(r.hours)}</td>
-              <td class="r dim">${r.lunch?hr(r.lunch):''}</td>
             </tr>`).join('')
-            + `<tr class="dsum"><td></td><td colspan="3">Samtals ${dmy(d)}</td><td class="r">${hr(dayH)}</td><td></td></tr>`;
+            + `<tr class="dsum"><td></td><td colspan="3">Samtals ${dmy(d)}</td><td class="r">${hr(dayH)}</td></tr>`;
         }).join('');
-        const empRows = (data.by_employee||[]).map(e=>`<tr><td>${escapeHtml(e.employee)}</td><td class="r">${e.days}</td><td class="r">${hr(e.hours)}</td></tr>`).join('');
-        const logo = (()=>{ try { return localStorage.getItem('brunaholfLogo') || '/reikningur/logo.png'; } catch { return '/reikningur/logo.png'; } })();
+        const empRows = (data.by_employee||[]).map(e=>`<tr><td>${escapeHtml(e.employee)}</td><td class="r">${e.days}</td><td class="r">${hr(e.hours_dagvinna)}</td><td class="r">${hr(e.hours_yfirvinna)}</td><td class="r">${hr(e.hours)}</td></tr>`).join('');
+        const logo = (()=>{ let l=''; try{ l = localStorage.getItem('brunaholfReikningurLogo') || ''; }catch{} if(!l) l='/reikningur/logo.png'; if(l[0]==='/') l = location.origin + l; return l; })(); // sama merki og Efnislisti (brunaholfReikningurLogo), absolút svo það prentist
         const win = window.open('', '_blank');
         if(!win){ alert('Leyfðu sprettiglugga til að prenta.'); return; }
         win.document.write(`<!DOCTYPE html><html lang="is"><head><meta charset="utf-8"><title>Tímabók — ${escapeHtml(name)} — ${monthLabel(month)}</title>
           <style>
             body{font-family:'Times New Roman',Times,serif;color:#000;margin:30px 38px}
             .tb-top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:16px}
-            .tb-logo{max-width:150px;max-height:74px;object-fit:contain}
+            .tb-logobox{width:240px;height:80px;display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 auto}
+            .tb-logobox img{max-width:100%;max-height:100%;object-fit:contain;display:block}
             h1{font-size:22px;margin:0}
             .tb-sub{font-style:italic;color:#555;margin-top:3px}
             .tb-ws{font-weight:700;font-size:15px;margin-top:2px}
@@ -5180,24 +5214,24 @@ async function renderGerdReikninga(t){
               <div class="tb-sub">Mæting starfsmanna — fylgiskjal með reikningi</div>
               <div class="tb-ws">${escapeHtml(name)} · ${monthLabel(month)}</div>
             </div>
-            <img class="tb-logo" src="${escapeAttr(logo)}" onerror="this.style.display='none'">
+            <div class="tb-logobox"><img src="${escapeAttr(logo)}" onerror="this.style.display='none'"></div>
           </div>
           <table>
-            <thead><tr><th>Dagsetning</th><th>Starfsmaður</th><th class="c">Inn</th><th class="c">Út</th><th class="r">Tímar</th><th class="r">Hád.</th></tr></thead>
+            <thead><tr><th>Dagsetning</th><th>Starfsmaður</th><th class="c">Inn</th><th class="c">Út</th><th class="r">Tímar</th></tr></thead>
             <tbody>${dateRows}</tbody>
           </table>
           <div class="tb-totals">
             <div>Dagar: <b>${t.days}</b></div>
             <div>Færslur: <b>${t.entries}</b></div>
             <div>Tímar alls: <b>${hr(t.hours)}</b></div>
-            <div>Hádegismatur: <b>${hr(t.lunch)}</b></div>
-            <div>Vinnustundir (nettó): <b>${hr(t.net)}</b></div>
+            <div>Dagvinna: <b>${hr(sp.hours_dagvinna)}</b></div>
+            <div>Yfirvinna: <b>${hr(sp.hours_yfirvinna)}</b></div>
+            <div>Nettó vinnutímar: <b>${hr(t.net)}</b></div>
           </div>
           <div class="tb-emp">
             <h2>Samantekt á starfsmann</h2>
-            <table><thead><tr><th>Starfsmaður</th><th class="r">Dagar</th><th class="r">Tímar</th></tr></thead><tbody>${empRows}</tbody></table>
+            <table><thead><tr><th>Starfsmaður</th><th class="r">Dagar</th><th class="r">Dagvinna</th><th class="r">Yfirvinna</th><th class="r">Tímar</th></tr></thead><tbody>${empRows}</tbody></table>
           </div>
-          <div class="tb-foot">Brunahólf ehf · unnið úr Tímaveru ${new Date().toLocaleDateString('is-IS')}</div>
           <script>window.onload=function(){window.print();}<\/script></body></html>`);
         win.document.close();
       } catch(e){
@@ -6880,7 +6914,7 @@ async function renderVerdskra(t){
         <td><input class="vs-input" type="number" data-f="eftirvinna_rate"   value="${r.eftirvinna_rate||''}" placeholder="14927"></td>
         <td><input class="vs-input" type="number" data-f="akstur_km_rate"    value="${r.akstur_km_rate||''}" placeholder="186"></td>
         <td><input class="vs-input" type="number" data-f="akstur_ferd_rate"  value="${r.akstur_ferd_rate||''}" placeholder="4000"></td>
-        <td><input class="vs-input" type="number" data-f="smahlutagjald_per_h" value="${r.smahlutagjald_per_h||''}" placeholder="137"></td>
+        <td><input class="vs-input" type="number" data-f="smahlutagjald_per_h" value="${r.smahlutagjald_per_h ?? ''}" placeholder="137"></td>
         <td style="text-align:center">
           <input type="checkbox" class="vs-cb" data-f="stadfesting_default" ${r.stadfesting_default?'checked':''}>
         </td>
@@ -7398,7 +7432,7 @@ async function rgOpenWorkcenter(project, allSites, months){
       eftirvinna_rate: Number(document.getElementById('wc-ev').value) || null,
       akstur_km_rate: Number(document.getElementById('wc-km').value) || null,
       akstur_ferd_rate: Number(document.getElementById('wc-fr').value) || null,
-      smahlutagjald_per_h: Number(document.getElementById('wc-sma').value) || null,
+      smahlutagjald_per_h: document.getElementById('wc-sma').value === '' ? null : Number(document.getElementById('wc-sma').value), // keep an explicit 0 (= ekkert smáhlutagjald)
       vsk_pct: Number(document.getElementById('wc-vsk').value) || null,
       fixed_amount: document.getElementById('wc-fix').value ? Number(document.getElementById('wc-fix').value) : null,
       retention_pct: Number(document.getElementById('wc-ret').value) || 0,

@@ -61,7 +61,7 @@ exports.handler = async (event) => {
     const hours = Number(r.hours) || 0;
     if (hours <= 0) continue;
     const k = `${r.employee}|${r.date}`;
-    if (!pd[k]) pd[k] = { gross: 0, dow: new Date(r.date + 'T00:00:00Z').getUTCDay() };
+    if (!pd[k]) pd[k] = { gross: 0, dow: new Date(r.date + 'T00:00:00Z').getUTCDay(), employee: r.employee || '' };
     pd[k].gross += hours;
   }
 
@@ -96,23 +96,33 @@ exports.handler = async (event) => {
     e.hours += hours; e.days.add(r.date);
   }
 
-  const by_employee = Object.values(byEmp)
-    .map(e => ({ employee: e.employee, hours: Math.round(e.hours * 100) / 100, days: e.days.size }))
-    .sort((a, b) => b.hours - a.hours);
-
-  // Dagvinna / eftirvinna split, per person per day:
-  //  - Weekends (Sat/Sun): all net hours → eftirvinna.
-  //  - Weekdays: gross hours over 8.5/day → eftirvinna (for Fjarðagata the 0.5h
-  //    hádegismatur sits inside the normal day); the remaining net → dagvinna.
-  let dagvinna = 0, eftirvinna = 0;
+  // Dagvinna / yfirvinna split, per person per day:
+  //  - Weekends (Sat/Sun): all net hours → yfirvinna.
+  //  - Weekdays: gross hours over the daily threshold → yfirvinna; the rest → dagvinna.
+  //    Threshold is 8,5 for Fjarðagata (the 0,5 h hádegismatur sits inside the day),
+  //    8 for every other worksite (e.g. Fjallaböðin).
+  const dayThreshold = lunchApplies ? 8.5 : 8;
+  const r2 = n => Math.round(n * 100) / 100;
+  let dagvinna = 0, yfirvinna = 0;
+  const empSplit = {}; // employee → { dv, ev }
   for (const k in pd) {
     const p = pd[k];
     const net = p.gross - (dayLunch[k] || 0);
     const isWeekend = p.dow === 0 || p.dow === 6;
-    const ev = isWeekend ? net : Math.max(p.gross - 8.5, 0);
+    const ev = isWeekend ? net : Math.max(p.gross - dayThreshold, 0);
     const dv = isWeekend ? 0 : net - ev;
-    dagvinna += dv; eftirvinna += ev;
+    dagvinna += dv; yfirvinna += ev;
+    const es = (empSplit[p.employee] = empSplit[p.employee] || { dv: 0, ev: 0 });
+    es.dv += dv; es.ev += ev;
   }
+
+  const by_employee = Object.values(byEmp)
+    .map(e => {
+      const s = empSplit[e.employee] || { dv: 0, ev: 0 };
+      return { employee: e.employee, hours: r2(e.hours), days: e.days.size,
+               hours_dagvinna: r2(s.dv), hours_yfirvinna: r2(s.ev) };
+    })
+    .sort((a, b) => b.hours - a.hours);
 
   return json(200, {
     worksite, month,
@@ -120,14 +130,19 @@ exports.handler = async (event) => {
     rows: out,
     by_employee,
     split: {
-      hours_dagvinna: Math.round(dagvinna * 100) / 100,
-      hours_eftirvinna: Math.round(eftirvinna * 100) / 100,
-      rule: 'yfirvinna eftir 8,5 klst/dag á mann; helgar allar yfirvinna',
+      hours_dagvinna: r2(dagvinna),
+      hours_yfirvinna: r2(yfirvinna),
+      hours_eftirvinna: r2(yfirvinna), // back-compat alias for the "Fylla úr tímabók" button
+      rule: lunchApplies
+        ? 'yfirvinna eftir 8,5 klst/dag á mann; helgar (lau/sun) allar yfirvinna'
+        : 'yfirvinna eftir 8 klst/dag á mann; helgar (lau/sun) allar yfirvinna',
     },
     totals: {
-      hours: Math.round(totalHours * 100) / 100,
-      lunch: Math.round(totalLunch * 100) / 100,
-      net: Math.round((totalHours - totalLunch) * 100) / 100,
+      hours: r2(totalHours),
+      lunch: r2(totalLunch),
+      net: r2(totalHours - totalLunch),
+      dagvinna: r2(dagvinna),
+      yfirvinna: r2(yfirvinna),
       days: days.size,
       entries: out.length,
     },
