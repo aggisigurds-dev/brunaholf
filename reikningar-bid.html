@@ -160,7 +160,12 @@ async function sendGroup(gi){
   try{
     const res = await fetch('/api/dkplus-invoice', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ mode:'create', confirm:true, post:false, invoice }) });
     const b = await res.json();
-    if(!b.ok){ st.className='status err'; st.textContent='✗ dk villa · dk_status '+(b.dk_status!=null?b.dk_status:'?')+' '+(b.error||''); return; }
+    if(!b.ok){
+      const msg = b.error || (b.data && (b.data.Message || b.data.message)) || (typeof b.data==='string' ? b.data : JSON.stringify(b.data||{}));
+      st.className='status err'; st.textContent='✗ dk_status '+(b.dk_status!=null?b.dk_status:'?')+(msg?' · '+msg:'');
+      console.warn('dkplus-invoice error:', b);
+      return;
+    }
     const dkId = (b.data && (b.data.Number || b.data.InvoiceNumber || (b.data.Head&&b.data.Head.Number))) || '';
     const batch = 'bk-'+Date.now();
     // Writeback so these sales drop off (idempotent).
