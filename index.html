@@ -4387,6 +4387,18 @@ async function renderVinnustofa(t){
 }
 
 /* ====================== EFNI EDITOR (Redder line items for one worksite/month) ====================== */
+// Simplify the raw Redder product text into a clean Eldvarnar-name for display.
+// Unknown materials keep their original name so nothing is lost.
+function simplifyRedderName(raw){
+  const n = String(raw||'').toLowerCase();
+  if(/silikon|silicon/.test(n))                           return 'Eldvarnar silikon';
+  if(/h[áa]þe?n+slu|h[áa]þ.*k[íi]tti/.test(n))            return 'Eldvarnar háþennslukítti';
+  if(/akr[íi]l/.test(n))                                   return 'Eldvarnar akríl';
+  if(/þéttull|thettull|steinull/.test(n))                 return 'Eldvarnar þéttull';
+  if(/m[áa]lning/.test(n))                                 return 'Eldvarnar málning';
+  if(/r[úu]lla/.test(n))                                   return 'Eldvarnar rúlla';
+  return raw || '';
+}
 async function rgOpenEfniEditor(worksite, month){
   const fmt = n => Math.round(n||0).toLocaleString('is-IS');
   openModal(`
@@ -4441,7 +4453,7 @@ async function rgOpenEfniEditor(worksite, month){
             <tbody>${inv.redder_line_items.map(li => `
               <tr>
                 <td>${escapeHtml(li.item_code||'')}</td>
-                <td>${escapeHtml(li.item_name||'')}</td>
+                <td title="${escapeAttr(li.item_name||'')}">${escapeHtml(simplifyRedderName(li.item_name))}</td>
                 <td class="num">${Number(li.magn||0)} ${escapeHtml(li.unit||'')}</td>
                 <td class="num">${fmt(li.ein_verd)}</td>
                 <td class="num">${li.afsl_pct||0}%</td>
@@ -4928,8 +4940,6 @@ async function renderGerdReikninga(t){
             <button class="gr-btn gr-btn-primary" id="gr-save" type="button">💾 Vista</button>
             <button class="gr-btn" id="gr-print" type="button">🖨 Prenta / PDF</button>
             <button class="gr-btn" id="gr-timabok" type="button" title="Prenta tímabók (mæting starfsmanna) til að senda með reikningi">🕒 Tímabók</button>
-            <button class="gr-btn" id="gr-logo" type="button" title="Hlaða upp Brunahólf-merki (PNG) — birtist á tímabók og efnislista">🖼 Merki</button>
-            <input type="file" id="gr-logo-file" accept="image/png,image/jpeg,image/svg+xml" style="display:none">
             <button class="gr-btn" id="gr-close2" type="button">Loka</button>
             <span id="gr-save-st" style="font-size:12px;color:#64748b;align-self:center"></span>
           </div>
@@ -4941,30 +4951,6 @@ async function renderGerdReikninga(t){
     bg.addEventListener('click', e=>{ if(e.target===bg) close(); });
     document.getElementById('gr-close').onclick = close;
     document.getElementById('gr-close2').onclick = close;
-
-    // ----- Brunahólf logo upload (stored as data URL in localStorage 'brunaholfLogo';
-    // shown on the Tímabók + Efnislisti/Verðskrá print docs) -----
-    (() => {
-      const gLogo = document.getElementById('gr-logo');
-      const gFile = document.getElementById('gr-logo-file');
-      if(!gLogo || !gFile) return;
-      gLogo.onclick = () => {
-        if(localStorage.getItem('brunaholfLogo')){
-          if(confirm('Merki er þegar til. Í lagi = velja nýtt · Hætta við = fjarlægja núverandi merki.')) gFile.click();
-          else { localStorage.removeItem('brunaholfLogo'); alert('Merki fjarlægt — notar sjálfgefið.'); }
-        } else gFile.click();
-      };
-      gFile.onchange = () => {
-        const f = gFile.files && gFile.files[0];
-        gFile.value = '';
-        if(!f) return;
-        if(!/^image\//.test(f.type)){ alert('Veldu mynd (PNG/JPG/SVG).'); return; }
-        if(f.size > 1500000){ alert('Myndin er of stór (>1,5 MB). Veldu minni PNG.'); return; }
-        const rd = new FileReader();
-        rd.onload = () => { try { localStorage.setItem('brunaholfLogo', rd.result); alert('Merki vistað ✓ — birtist á tímabók og efnislista.'); } catch(e){ alert('Gat ekki vistað merki: '+(e.message||e)); } };
-        rd.readAsDataURL(f);
-      };
-    })();
 
     // ----- materials editable list -----
     const $mats = document.getElementById('gr-mats');
@@ -5173,7 +5159,7 @@ async function renderGerdReikninga(t){
             + `<tr class="dsum"><td></td><td colspan="3">Samtals ${dmy(d)}</td><td class="r">${hr(dayH)}</td></tr>`;
         }).join('');
         const empRows = (data.by_employee||[]).map(e=>`<tr><td>${escapeHtml(e.employee)}</td><td class="r">${e.days}</td><td class="r">${hr(e.hours_dagvinna)}</td><td class="r">${hr(e.hours_yfirvinna)}</td><td class="r">${hr(e.hours)}</td></tr>`).join('');
-        const logo = (()=>{ let l=''; try{ l = localStorage.getItem('brunaholfLogo') || ''; }catch{} if(!l) l='/reikningur/logo.png'; if(l[0]==='/') l = location.origin + l; return l; })(); // upphlaðið Brunahólf-merki (Stillingar/Merki), annars sjálfgefið
+        const logo = (()=>{ let l=''; try{ l = localStorage.getItem('brunaholfReikningurLogo') || ''; }catch{} if(!l) l='/reikningur/logo.png'; if(l[0]==='/') l = location.origin + l; return l; })(); // sama merki og Efnislisti (brunaholfReikningurLogo), absolút svo það prentist
         const win = window.open('', '_blank');
         if(!win){ alert('Leyfðu sprettiglugga til að prenta.'); return; }
         win.document.write(`<!DOCTYPE html><html lang="is"><head><meta charset="utf-8"><title>Tímabók — ${escapeHtml(name)} — ${monthLabel(month)}</title>
