@@ -139,11 +139,19 @@ function selectedSales(gi){
 
 async function sendGroup(gi){
   const g = GROUPS[gi];
-  const sales = selectedSales(gi);
-  if(!sales.length){ alert('Engar sölur valdar.'); return; }
-  if(!g.kt){ alert('Þennan viðskiptavin vantar kennitölu — lagfærðu hann áður en reikningur er stofnaður í dk.'); return; }
   const st = $('st-'+gi);
-  if(!confirm(`Stofna ÓBÓKUÐ drög í dkPlus fyrir ${esc(g.name)} — ${sales.length} sölu(r)?\n\nEngin krafa fer í banka fyrr en bókað er í dk.`)) return;
+  const sales = selectedSales(gi);
+  if(!sales.length){ st.className='status err'; st.textContent='Engar sölur valdar.'; return; }
+  if(!g.kt){ st.className='status err'; st.textContent='Vantar kennitölu — lagfærðu viðskiptavin áður en reikningur er stofnaður.'; return; }
+  // Two-click confirm (no native dialog → preview/automation friendly). Still a
+  // guard: first click arms, second click within 6s creates the unposted draft.
+  if(!g._armed){
+    g._armed = true;
+    st.className='status'; st.textContent='⚠ Smelltu aftur til að staðfesta — óbókuð drög, engin krafa í banka.';
+    clearTimeout(g._armT); g._armT = setTimeout(()=>{ g._armed=false; if(st.textContent.startsWith('⚠')) st.textContent=''; }, 6000);
+    return;
+  }
+  g._armed = false; clearTimeout(g._armT);
   st.className='status'; st.textContent='Stofna drög…';
 
   // Combine the selected sales into one invoice (mánaðar samtölureikningur).
