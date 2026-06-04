@@ -6807,12 +6807,16 @@ async function renderVerdskra(t){
       /* wide tables (e.g. 14-col Per verkstað) overflowed and overlapped — scroll instead */
       .vs-table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:12px}
       .vs-table-scroll .vs-table{box-shadow:none}
-      .vs-table-wide{min-width:1180px}
-      .vs-table th,.vs-table td{padding:8px 10px;border-bottom:1px solid var(--border,#eef0f2);text-align:left;vertical-align:middle}
+      .vs-table-wide{min-width:1340px}
+      .vs-table th,.vs-table td{padding:11px 14px;border-bottom:1px solid var(--border,#eef0f2);text-align:left;vertical-align:middle}
       .vs-table th{background:var(--header-bg,#f5f7fa);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim,#5a6473);white-space:nowrap}
       .vs-table tr:last-child td{border-bottom:none}
       .vs-table tr:hover{background:var(--row-hover,#fafbfc)}
-      .vs-input{width:100%;padding:5px 7px;border:1px solid transparent;border-radius:4px;background:transparent;color:inherit;font:inherit;text-align:right}
+      .vs-input{width:100%;padding:6px 9px;border:1px solid transparent;border-radius:5px;background:transparent;color:inherit;font:inherit;text-align:right}
+      .vs-table input.vs-input{min-width:62px}
+      .vs-table input.vs-input-text{min-width:130px}
+      .vs-table input.vs-notes{min-width:170px}
+      .vs-table select.vs-input{min-width:96px}
       .vs-input:hover{border-color:var(--border,#d8dee9);background:#fff}
       .vs-input:focus{border-color:var(--accent,#0a84ff);background:#fff;outline:none}
       .vs-input-text{text-align:left}
