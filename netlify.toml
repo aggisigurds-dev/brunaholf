@@ -205,6 +205,18 @@
   to = "/.netlify/functions/branding"
   status = 200
 
+# Recent Slökkvitæki POS sales (solur) — load an existing sale into the reikningur
+[[redirects]]
+  from = "/api/solur"
+  to = "/.netlify/functions/solur"
+  status = 200
+
+# Mark sales as sent to dk (writeback for the Reikningar í bið batch flow)
+[[redirects]]
+  from = "/api/solur-mark"
+  to = "/.netlify/functions/solur-mark"
+  status = 200
+
 # Friendly URL for the Reikningagerð grid — uses /api/worksites under the hood,
 # kept here so the route is documented.
 [[redirects]]

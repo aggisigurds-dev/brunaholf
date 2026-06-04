@@ -432,7 +432,15 @@ Slökkvitæki Sala/POS) connects via the dkPlus REST/JSON API.
 - `slokkvitaeki-reikningur.html`: invoice generator styled like the dkPlus
   reikningur (R-000244), logo from `/api/branding`, lines from `/api/vorur` (Sala
   verðskrá). "Reikna í dkPlus" → calculate preview; "Stofna drög í dkPlus" →
-  unposted draft (`post:false`).
+  unposted draft (`post:false`). Can load an existing sale via `/api/solur`.
+- `reikningar-bid.html`: batch flow — unsent reikningur sales
+  (`/api/solur?unsent` = status `final` + `greitt_med=reikningur` + `invoiced_at`
+  null) grouped by customer → combine selected into one unposted draft via
+  `/api/dkplus-invoice` → writeback `/api/solur-mark` sets `invoiced_at` +
+  `dk_invoice_id` + `invoice_batch_id` so the sale drops off (idempotent).
+- `solur` tracking: added `invoiced_at`/`dk_invoice_id`/`invoice_batch_id`; the
+  `status` check now also allows `void` (test rows voided, recoverable). `/api/solur`
+  only returns `status='final'`.
 - Phases: (1) connect + read. (2) push invoices into dk+ from POS sales /
   yearly brunakerfi úttektir. (3) customer/vörur sync + payment status back.
 

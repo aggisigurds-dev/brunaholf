@@ -72,6 +72,7 @@
 
 <div class="bar no-print">
   <strong>Reikningur</strong>
+  <a href="reikningar-bid.html" style="font-size:12.5px;color:var(--accent);text-decoration:none">· Reikningar í bið →</a>
   <span class="grow"></span>
   <input id="m_term" list="termlist" placeholder="Skilmáli" title="dkPlus greiðsluskilmáli (Head.Term): t.d. stgr, lm, d15, d30, post. Krafa-í-banka er sér innheimtustilling í dk (ekki skilmáli) sem fer af stað við bókun." style="width:108px;border:1px solid var(--line)">
   <datalist id="termlist">
@@ -84,9 +85,18 @@
     <option value="d30">30 daga</option>
     <option value="post">Póstkrafa</option>
   </datalist>
+  <input id="m_seller" value="as" placeholder="Sölumaður" title="dkPlus Sölumaður-kóði — verður að vera til í dk. Sjálfgefið: as (Agnar Sigurðsson)." style="width:104px;border:1px solid var(--line)">
   <button id="dkcalc" title="Forskoða verð í dkPlus (býr ekkert til)">Reikna í dkPlus</button>
   <button id="dkdraft" title="Stofna óbókuð drög í dkPlus (engin krafa fyrr en bókað)">Stofna drög í dkPlus</button>
   <button class="primary" onclick="window.print()">🖨️ Prenta / PDF</button>
+</div>
+
+<div class="picker no-print">
+  <select id="salesel" style="flex:1;min-width:240px;border:1px solid var(--line);background:#fff;padding:6px 8px;border-radius:8px">
+    <option value="">📋 Hlaða inn fyrri sölu úr Sölukerfi…</option>
+  </select>
+  <button onclick="loadSale()">Hlaða inn sölu</button>
+  <span id="salemeta" style="color:var(--muted);font-size:12px"></span>
 </div>
 
 <div class="picker no-print">
@@ -184,6 +194,29 @@ fetch('/api/vorur').then(r=>r.json()).then(d=>{
   $('pickmeta').textContent = PRODUCTS.length + ' vörur í verðskrá';
 }).catch(()=>{ $('pickmeta').textContent='Náði ekki í verðskrá (/api/vorur)'; });
 
+// Recent POS sales — so an existing sale can be loaded instead of re-typing.
+let SALES = [];
+fetch('/api/solur').then(r=>r.json()).then(d=>{
+  SALES = d.sales||[];
+  const sel = $('salesel');
+  sel.innerHTML = '<option value="">📋 Hlaða inn fyrri sölu úr Sölukerfi…</option>' +
+    SALES.map(s=>`<option value="${s.id}">${esc(s.num||('#'+s.id))} · ${s.date} · ${esc(s.customer||'')} · ${fmtKr(s.total)} kr · ${esc(s.paid_with||'')}</option>`).join('');
+  $('salemeta').textContent = SALES.length + ' sölur';
+}).catch(()=>{ $('salemeta').textContent='Náði ekki í sölur (/api/solur)'; });
+
+function loadSale(){
+  const id = $('salesel').value;
+  if(!id){ return; }
+  const s = SALES.find(x=>String(x.id)===String(id));
+  if(!s){ return; }
+  lines = (s.lines||[]).map(l=>({ id:l.id, desc:l.desc, qty:l.qty, price:l.price }));
+  if(s.customer && s.customer.toLowerCase()!=='staðgreitt') $('c_nafn').value = s.customer;
+  if(s.kt) $('c_kt').value = s.kt;
+  if(s.num){ $('m_num').value = s.num; $('m_ref').value = s.num; }
+  render();
+  $('salemeta').textContent = 'Hlóð inn sölu '+(s.num||('#'+s.id))+' — '+(s.lines||[]).length+' línur';
+}
+
 // Real company logo from the shared app_settings (same logo as the Slökkvitæki
 // app). Falls back to the SVG wordmark if unavailable.
 fetch('/api/branding').then(r=>r.json()).then(d=>{
@@ -255,9 +288,12 @@ function buildInvoice(){
     Customer: { Name: $('c_nafn').value, SSN: $('c_kt').value.replace(/\D/g,'') },
     Date: $('m_date').value,
     Reference: $('m_ref').value,
-    Lines: lines.map(l=>({ ItemCode: String(l.id), Text: l.desc, Quantity: l.qty, Price: l.price, IncludingVAT: false })),
+    // Free-text lines (no ItemCode) — dk validates ItemCode against its own Vörur
+    // catalog, which is separate from the app's vorur. Description + qty + price.
+    Lines: lines.map(l=>({ Text: l.desc, Quantity: l.qty, Price: l.price, IncludingVAT: false })),
   };
   const term = $('m_term').value.trim(); if(term) inv.Term = term;
+  const seller = $('m_seller').value.trim(); if(seller) inv.SalesPerson = seller;
   const a1 = $('c_addr1').value.trim(), a2 = $('c_addr2').value.trim();
   if(a1) inv.Customer.Address1 = a1;
   if(a2) inv.Customer.Address2 = a2;
