@@ -193,6 +193,13 @@
   to = "/.netlify/functions/dkplus-invoice"
   status = 200
 
+# DK Plus product (Vörur) importer — create the catalog in dk from vorur.dk_vorunr
+#   POST /api/dkplus-product { mode:"dry-run"|"create", confirm, only/offset/limit }
+[[redirects]]
+  from = "/api/dkplus-product"
+  to = "/.netlify/functions/dkplus-product"
+  status = 200
+
 # Slökkvitæki Sala price list (vorur) — for the reikningur generator
 [[redirects]]
   from = "/api/vorur"

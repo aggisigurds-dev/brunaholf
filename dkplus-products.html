@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dk Vörur — innflutningur</title>
+<style>
+  :root{ --bg:#f4f6f9; --panel:#fff; --line:#e2e6ec; --muted:#5c6b7d; --accent:#2563eb; --okfg:#1f7a4d; --errfg:#b42318; --warnbg:#fff7e6; --warnfg:#9a6400; }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:#0b1220;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:14px;}
+  .wrap{max-width:900px;margin:0 auto;padding:22px 18px 60px;}
+  h1{font-size:21px;margin:0 0 2px;font-weight:750;}
+  .lead{color:var(--muted);font-size:13.5px;margin:0 0 16px;}
+  .bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
+  button{border:1px solid var(--line);background:var(--panel);border-radius:9px;padding:8px 13px;font-size:13.5px;cursor:pointer;}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;}
+  button.warn{background:#b45309;border-color:#b45309;color:#fff;font-weight:600;}
+  button:disabled{opacity:.5;cursor:default;}
+  .stat{display:inline-block;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:7px 12px;margin-right:8px;}
+  .stat b{font-size:16px;font-weight:750;}
+  #status{font-size:13px;margin:8px 0;min-height:18px;}
+  .ok{color:var(--okfg);} .err{color:var(--errfg);}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  th{text-align:left;color:var(--muted);font-weight:600;font-size:11.5px;padding:6px 8px;border-bottom:1px solid var(--line);}
+  td{padding:5px 8px;border-bottom:1px solid #eef1f5;}
+  td.r{text-align:right;font-variant-numeric:tabular-nums;}
+  tr.fail td{background:#fdecec;}
+  .note{font-size:12px;color:var(--muted);margin-top:16px;border-top:1px solid var(--line);padding-top:10px;}
+  code{background:#eef1f5;border-radius:4px;padding:1px 5px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>dk Vörur — innflutningur</h1>
+  <p class="lead">Býr til vörulistann í dkPlus úr <code>vorur.dk_vorunr</code> (vörunúmer + heiti + <b>nettóverð</b> + VSK%), svo reikningslínur geti borið raunverulegt <code>ItemCode</code>. Byrjaðu á þurrkeyrslu, svo einni prufuvöru, og loks öllum.</p>
+
+  <div class="bar">
+    <span class="stat">Vörur: <b id="st-total">…</b></span>
+    <span class="stat">Stofnaðar í dk: <b id="st-created">0</b></span>
+    <span class="stat">Villur: <b id="st-failed">0</b></span>
+  </div>
+  <div class="bar">
+    <button onclick="dryRun()">↻ Þurrkeyrsla (sýna)</button>
+    <button id="canary" class="primary" onclick="canary()">Búa til 1 (prufa)</button>
+    <button id="full" class="warn" onclick="full()">Búa til ALLAR í dk →</button>
+  </div>
+  <div id="status"></div>
+  <table><thead><tr><th>Vörunúmer</th><th>Lýsing</th><th class="r">Verð (án vsk)</th><th class="r">VSK%</th><th id="res-h">Staða</th></tr></thead><tbody id="rows"></tbody></table>
+  <div class="note">Nettóverð (<code>UnitPrice1</code>) er notað til samræmis við reikningslínurnar (sem senda verð án vsk + VSK leitt af vörunni). Endurkeyrsla er örugg — vörur sem þegar eru til skila villu en breyta engu. Eftir innflutning: víxla reikningslínum í <code>ItemCode = dk_vorunr</code> og prófa Björgunarsveit aftur.</div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function fmtKr(n){ return Math.round(n||0).toLocaleString('is-IS'); }
+let PRODUCTS = [], TOTAL = 0;
+const resultByCode = {};
+
+async function api(body){
+  const r = await fetch('/api/dkplus-product', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(body) });
+  return r.json();
+}
+function setStatus(msg, cls){ const s=$('status'); s.className=cls||''; s.textContent=msg; }
+function renderRows(){
+  $('rows').innerHTML = PRODUCTS.map(p=>{
+    const r = resultByCode[p.ItemCode];
+    const cell = r ? (r.ok ? '<span class="ok">✓ stofnuð</span>' : '<span class="err">✗ '+esc(r.message||('dk '+r.dk_status))+'</span>') : '';
+    return `<tr class="${r&&!r.ok?'fail':''}"><td>${esc(p.ItemCode)}</td><td>${esc(p.Description)}</td><td class="r">${fmtKr(p.UnitPrice1)}</td><td class="r">${p.TaxPercent}</td><td>${cell}</td></tr>`;
+  }).join('');
+  $('st-total').textContent = TOTAL;
+  const cr = Object.values(resultByCode).filter(r=>r.ok).length;
+  const fa = Object.values(resultByCode).filter(r=>!r.ok).length;
+  $('st-created').textContent = cr; $('st-failed').textContent = fa;
+}
+
+async function dryRun(){
+  setStatus('Sæki þurrkeyrslu…');
+  const b = await api({ mode:'dry-run' });
+  if(b.error){ setStatus(b.error,'err'); return; }
+  PRODUCTS = b.products||[]; TOTAL = b.total||PRODUCTS.length;
+  renderRows();
+  setStatus(`Þurrkeyrsla: ${PRODUCTS.length} vörur tilbúnar (ekkert búið til).`,'ok');
+}
+
+async function canary(){
+  if(!PRODUCTS.length) await dryRun();
+  const code = PRODUCTS[0] && PRODUCTS[0].ItemCode;
+  if(!code){ setStatus('Engin vara til að prófa.','err'); return; }
+  setStatus('Bý til prufuvöru '+code+'…');
+  const b = await api({ mode:'create', confirm:true, only:[code] });
+  (b.results||[]).forEach(r=>resultByCode[r.ItemCode]=r);
+  renderRows();
+  const r = (b.results||[])[0]||{};
+  setStatus(r.ok ? ('✓ Prufuvara '+code+' stofnuð í dk. Skoðaðu hana í dk (tax/ledger) áður en þú keyrir allar.') : ('✗ '+(r.message||('dk_status '+r.dk_status))), r.ok?'ok':'err');
+}
+
+let armed=false;
+async function full(){
+  if(!PRODUCTS.length) await dryRun();
+  if(!armed){ armed=true; setStatus('⚠ Smelltu aftur á „Búa til ALLAR“ til að staðfesta — þetta skrifar '+TOTAL+' vörur í dk.','err');
+    setTimeout(()=>{armed=false; if($('status').textContent.startsWith('⚠')) setStatus('');},6000); return; }
+  armed=false;
+  $('full').disabled=true; $('canary').disabled=true;
+  const CHUNK=20;
+  for(let off=0; off<TOTAL; off+=CHUNK){
+    setStatus(`Bý til vörur ${off+1}–${Math.min(off+CHUNK,TOTAL)} af ${TOTAL}…`);
+    const b = await api({ mode:'create', confirm:true, offset:off, limit:CHUNK });
+    if(b.error){ setStatus('Villa: '+b.error,'err'); break; }
+    (b.results||[]).forEach(r=>resultByCode[r.ItemCode]=r);
+    renderRows();
+  }
+  const cr = Object.values(resultByCode).filter(r=>r.ok).length;
+  const fa = Object.values(resultByCode).filter(r=>!r.ok).length;
+  setStatus(`Lokið: ${cr} stofnaðar, ${fa} villur. ${fa?'(villur eru oft „already exists“ ef endurkeyrt).':''}`, fa?'err':'ok');
+  $('full').disabled=false; $('canary').disabled=false;
+}
+
+dryRun();
+</script>
+</body>
+</html>

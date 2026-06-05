@@ -423,6 +423,15 @@ Slökkvitæki Sala/POS) connects via the dkPlus REST/JSON API.
   - phase 2 (writes): `POST sales/invoice` · `POST sales/invoice/bulk` ·
     price preview `PATCH sales/invoice/calculate` · PDF/HTML/email/reverse.
 - Connection-test page: `dkplus-test.html`.
+- Product importer: `netlify/functions/dkplus-product.js` → `POST /api/dkplus-product`
+  ({ mode:"dry-run"|"create", confirm, only/offset/limit }). dk rejects
+  description-only invoice lines ("Product ItemCode not defined"), so the catalog
+  must exist in dk first. Creates `vorur` (where `dk_vorunr` is set) as dk Vörur via
+  `POST /api/v1/Product` (ProductModel; only `ItemCode` required) using net
+  `UnitPrice1` + `TaxPercent` to match the net invoice lines. Admin page
+  `dkplus-products.html` (dry-run → canary → chunked full). `vorur.dk_vorunr` holds
+  the dk vörunúmer for every product (95 from the old catalog + 321+ for the rest).
+  After import, invoice lines flip from free-text to `ItemCode = dk_vorunr`.
 - Phase 2 write path: `netlify/functions/dkplus-invoice.js` → `POST /api/dkplus-invoice`.
   Safe by default: `mode:"calculate"` (default) does `PATCH sales/invoice/calculate`
   (priced preview, **creates nothing**); an actual invoice is written only with
