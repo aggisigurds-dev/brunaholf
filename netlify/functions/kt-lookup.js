@@ -13,14 +13,24 @@ exports.handler = async (event) => {
   if (kt.length !== 10) return json(400, { error: 'kt required (10 digits)' });
   const dash = kt.slice(0, 6) + '-' + kt.slice(6);
 
-  for (const table of ['customers_base', 'fyrirtaeki']) {
-    const sel = table === 'fyrirtaeki' ? 'id,nafn,heimilisfang' : 'id,nafn';
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?kennitala=eq.${dash}&select=${sel}&limit=1`, {
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
-    });
-    if (!r.ok) continue;
+  const H = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` };
+  async function one(table, sel) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?kennitala=eq.${dash}&select=${sel}&limit=1`, { headers: H });
+    if (!r.ok) return null;
     const rows = await r.json().catch(() => []);
-    if (Array.isArray(rows) && rows[0]) return json(200, { found: true, source: table, id: rows[0].id, nafn: rows[0].nafn, heimilisfang: rows[0].heimilisfang || null });
+    return (Array.isArray(rows) && rows[0]) ? rows[0] : null;
+  }
+  // Name preferred from customers_base; address comes from fyrirtaeki (where heimilisfang lives).
+  const cb = await one('customers_base', 'id,nafn');
+  const fy = await one('fyrirtaeki', 'id,nafn,heimilisfang');
+  if (cb || fy) {
+    return json(200, {
+      found: true,
+      source: cb ? 'customers_base' : 'fyrirtaeki',
+      id: (cb || fy).id,
+      nafn: (cb && cb.nafn) || (fy && fy.nafn) || null,
+      heimilisfang: (fy && fy.heimilisfang) || null,
+    });
   }
   return json(200, { found: false });
 };
