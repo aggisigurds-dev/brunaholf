@@ -237,12 +237,15 @@
   }
 
   function render(){
+    markLogicalDups();
     rowsEl.innerHTML = '';
     items.forEach((it, i) => {
       const tr = document.createElement('tr');
       tr.innerHTML =
         '<td>' + (it.done
           ? '<span class="pill" style="color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe" title="Áður unnið ' + esc((it.done.created_at||'').slice(0,10)) + (it.done.new_name ? ' → ' + esc(it.done.new_name) : '') + '">🔁</span>'
+          : it.logicalDup
+          ? '<span class="pill" style="color:#b45309;background:#fffbeb;border:1px solid #fde68a" title="Líklega sama skýrsla og önnur (sama kt + heimilisfang + mánuður)">⚠</span>'
           : (it.kt ? '' : '<span class="pill no">?</span>')) + '</td>' +
         '<td style="color:#64748b">' + esc(it.file.name) + '</td>' +
         '<td><input data-f="company" data-i="' + i + '" value="' + esc(it.company) + '"></td>' +
@@ -259,8 +262,13 @@
     tbl.hidden = items.length === 0;
     zipBtn.disabled = items.length === 0;
     const dups = items.filter(x => x.done).length;
+    const logd = items.filter(x => x.logicalDup).length;
     statEl.textContent = items.length
-      ? (items.length + ' skrár · ' + items.filter(x=>x.kt).length + ' með kt' + (dups ? ' · 🔁 ' + dups + ' áður unnin' : '') + (skipped ? ' · ' + skipped + ' tvítökum sleppt' : ''))
+      ? (items.length + ' einstök · ' + items.filter(x=>x.kt).length + ' með kt'
+         + (dupFiles.length ? ' · 🗑 ' + dupFiles.length + ' byte-tvítök' : '')
+         + (logd ? ' · ⚠ ' + logd + ' líkleg tvítök' : '')
+         + (dups ? ' · 🔁 ' + dups + ' áður unnin' : '')
+         + (skipped ? ' · ' + skipped + ' tvítökum sleppt' : ''))
       : '';
   }
 
@@ -366,20 +374,41 @@
     const handles = [];
     for await (const [name, handle] of dir.entries()){ if (handle.kind === 'file' && /\.pdf$/i.test(name)) handles.push(handle); }
     if (!handles.length){ alert('Engar PDF-skrár í möppunni.'); return; }
-    items.length = 0;
+    items.length = 0; dupFiles = []; skipped = 0;
+    const seen = new Map(); // content hash -> canonical item (keep one copy each)
     for (const h of handles){
       const file = await h.getFile();
-      const it = { file, fileHandle:h, dir, company:'', address:'', kt:'', month:'', year:'' };
-      items.push(it);
-      try { Object.assign(it, parse(await pdfText(await file.arrayBuffer()), file.name)); } catch(e){}
+      let buf; try { buf = await file.arrayBuffer(); } catch(e){ continue; }
+      const hash = await sha256(buf);
+      if (seen.has(hash)){ dupFiles.push({ dir, name: file.name, ofName: seen.get(hash).file.name }); continue; }
+      const it = { file, fileHandle:h, dir, hash, company:'', address:'', kt:'', month:'', year:'', done:null };
+      seen.set(hash, it); items.push(it);
+      try { Object.assign(it, parse(await pdfText(buf.slice(0)), file.name)); } catch(e){}
     }
     render();
-    // Add an "apply in place" button once a folder is connected
+    checkLog(items);
     if (!document.getElementById('applyDir')){
       const b = document.createElement('button'); b.id = 'applyDir'; b.className = 'btn primary'; b.textContent = '✅ Endurnefna í möppunni';
       b.addEventListener('click', applyInPlace); $('zip').after(b);
     }
+    let rb = document.getElementById('rmDup');
+    if (dupFiles.length){
+      if (!rb){ rb = document.createElement('button'); rb.id = 'rmDup'; rb.className = 'btn'; rb.addEventListener('click', removeDupFiles); document.getElementById('applyDir').after(rb); }
+      rb.textContent = '🗑 Fjarlægja ' + dupFiles.length + ' tvítök'; rb.style.display = '';
+    } else if (rb){ rb.style.display = 'none'; }
   });
+
+  async function removeDupFiles(){
+    if (!dupFiles.length) return;
+    if (!confirm('Eyða ' + dupFiles.length + ' byte-eins tvítaka-skrám úr möppunni? Ein af hverri er haldið eftir. Óafturkræft á þessari tölvu.')) return;
+    const rb = document.getElementById('rmDup'); if (rb){ rb.disabled = true; rb.textContent = 'Eyði…'; }
+    let ok = 0, fail = 0;
+    for (const d of dupFiles){ try { await d.dir.removeEntry(d.name); ok++; } catch(e){ console.error(e); fail++; } }
+    dupFiles = [];
+    if (rb){ rb.style.display = 'none'; rb.disabled = false; }
+    render();
+    alert('Eytt ' + ok + ' tvítökum' + (fail ? ', ' + fail + ' mistókust' : '') + '. Ein af hverri skýrslu er eftir.');
+  }
 
   async function applyInPlace(){
     const b = document.getElementById('applyDir'); b.disabled = true; b.textContent = 'Endurnefni…';
