@@ -118,8 +118,20 @@
   async function pdfText(buf){
     const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
     let text = '';
-    const n = Math.min(pdf.numPages, 2);
-    for (let i = 1; i <= n; i++){ const pg = await pdf.getPage(i); const tc = await pg.getTextContent(); text += ' ' + tc.items.map(t=>t.str).join(' '); }
+    const n = Math.min(pdf.numPages, 3);
+    for (let i = 1; i <= n; i++){
+      const tc = await (await pdf.getPage(i)).getTextContent();
+      let prevEnd = null, prevY = null;
+      for (const it of tc.items){
+        if (!it.str) continue;
+        const x = it.transform[4], y = it.transform[5], w = it.width || 0;
+        if (prevY !== null && Math.abs(y - prevY) > 4){ text += '\n'; prevEnd = null; }
+        else if (prevEnd !== null && !/\s$/.test(text) && !/^\s/.test(it.str) && x - prevEnd > 1.2) text += ' '; // real gap = word break
+        text += it.str;
+        prevEnd = x + w; prevY = y;
+      }
+      text += '\n';
+    }
     return text.replace(/ /g,' ').replace(/\s+/g,' ').trim();
   }
 
@@ -179,7 +191,8 @@
       company = company.replace(/[\s\-–—]+$/,'').trim();
     }
     let month = '', year = '';
-    const my = text.match(new RegExp('yfirfarin[\\s\\S]*?\\bí\\s+(' + MONTHS.join('|') + ')\\s*(\\d{4})', 'i'));
+    let my = text.match(new RegExp('yfirfarin[\\s\\S]*?\\bí\\s+(' + MONTHS.join('|') + ')\\s*(\\d{4})', 'i'));
+    if (!my) my = text.match(new RegExp('\\b(' + MONTHS.join('|') + ')\\s+(\\d{4})', 'i'));
     if (my){ month = my[1].toLowerCase(); year = my[2]; }
     if (!year && fname){ const fy = String(fname).match(/\b(20\d{2})\b/); if (fy) year = fy[1]; }
     return { company, address, kt, month, year };
