@@ -169,6 +169,8 @@
       .replace(/\s+/g, ' ').trim();
   }
   function fmtKt(s){ const d = String(s||'').replace(/\D/g,''); return d.length === 10 ? d.slice(0,6) + '-' + d.slice(6) : String(s||'').trim(); }
+  // Normalize an address + put a comma before the 3-digit postcode: "Stórhöfða 35 110 Rvk" → "Stórhöfða 35, 110 Reykjavík".
+  function commaAddr(s){ return fixCity(s).replace(/(\S)\s+(\d{3})\s+(\D)/, '$1, $2 $3'); }
   function parse(rawText, fname){
     const text = rawText;
     // De-space digits ONLY for the kt scan — not for addresses (would merge "41 111" house+postcode).
@@ -187,14 +189,14 @@
         const before = s.slice(0, pc.index).trim();
         const st = before.match(/([A-ZÁÉÍÓÚÝÞÆÖ(][A-Za-zÀ-ÿ.'’()\-]*(?:\s+\d{1,4}[A-Za-z]?(?:\s*-\s*\d+)?)?)\s*$/);
         const street = st ? st[1].trim() : '';
-        address = fixCity((street ? street + ' ' : '') + pc[1] + ' ' + pc[2]);
+        address = commaAddr((street ? street + ' ' : '') + pc[1] + ' ' + pc[2]);
         const comp = (st ? before.slice(0, st.index) : before).trim();
         const cm = comp.match(/^(.*?\b(?:ehf|hf|slf|sf)\b\.?)/i);
         company = (cm ? cm[1] : comp).trim();
       } else {
         const cm = s.match(/^(.*?\b(?:ehf|hf|slf|sf)\b\.?)\s*[-–—:]?\s*(.+)$/i);
-        if (cm){ company = cm[1].trim(); address = fixCity(cm[2].trim()); }
-        else { address = fixCity(s); }
+        if (cm){ company = cm[1].trim(); address = commaAddr(cm[2].trim()); }
+        else { address = commaAddr(s); }
       }
       company = company.replace(/[\s\-–—]+$/,'').trim();
     }
@@ -218,14 +220,17 @@
       if (d.found){
         it._matchHtml = '<span class="pill ok">✓ ' + esc(d.nafn || 'tengt') + '</span>';
         // DB name is the canonical company name — use it (PDF company text is unreliable).
+        const tr = cell.closest('tr');
         if (d.nafn && !it._companyEdited && it.company !== d.nafn){
           it.company = d.nafn;
-          const tr = cell.closest('tr');
-          if (tr){
-            const ci = tr.querySelector('input[data-f="company"]'); if (ci) ci.value = d.nafn;
-            const nm = tr.querySelector('[data-name]'); if (nm) nm.textContent = newName(it);
-          }
+          if (tr){ const ci = tr.querySelector('input[data-f="company"]'); if (ci) ci.value = d.nafn; }
         }
+        // Fall back to the registered DB address only when the PDF gave us none.
+        if (d.heimilisfang && !it._addressEdited && !String(it.address||'').trim()){
+          it.address = commaAddr(d.heimilisfang);
+          if (tr){ const ai = tr.querySelector('input[data-f="address"]'); if (ai) ai.value = it.address; }
+        }
+        if (tr){ const nm = tr.querySelector('[data-name]'); if (nm) nm.textContent = newName(it); }
       } else it._matchHtml = '<span class="pill no">✗ ekki í grunni</span>';
       cell.innerHTML = it._matchHtml;
     } catch(e){ cell.innerHTML = '<span class="pill no">villa</span>'; }
@@ -263,6 +268,7 @@
     const inp = e.target.closest('input[data-f]'); if (!inp) return;
     const i = +inp.dataset.i; items[i][inp.dataset.f] = inp.value;
     if (inp.dataset.f === 'company') items[i]._companyEdited = true;
+    if (inp.dataset.f === 'address') items[i]._addressEdited = true;
     const nm = rowsEl.querySelector('[data-name="' + i + '"]'); if (nm) nm.textContent = newName(items[i]);
     if (inp.dataset.f === 'kt') lookupKt(items[i], rowsEl.querySelector('[data-match="' + i + '"]'));
   });
