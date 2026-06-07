@@ -90,14 +90,28 @@
   if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   const MONTHS = ['janúar','febrúar','mars','apríl','maí','júní','júlí','ágúst','september','október','nóvember','desember'];
   const ISSUER = '6005080400';
-  const items = []; // { file, fileHandle?, company, address, kt, month, year, match }
+  const items = []; // { file, fileHandle?, hash, company, address, kt, month, year, done, logicalDup }
+  let dupFiles = []; // byte-identical extras found in a connected folder (removable)
+
+  // Flag rows that are very likely the same report (same kt + address + month + year)
+  // even if the bytes differ (a re-scan/re-export). Soft flag only — not auto-removed.
+  function markLogicalDups(){
+    const seen = new Set();
+    items.forEach(it => {
+      it.logicalDup = false;
+      const kt = (it.kt||'').replace(/\D/g,'');
+      if (!kt) return;
+      const key = kt + '|' + clean(it.address).toLowerCase() + '|' + it.year + '|' + it.month;
+      if (seen.has(key)) it.logicalDup = true; else seen.add(key);
+    });
+  }
   const $ = id => document.getElementById(id);
   const drop = $('drop'), fileInput = $('file'), rowsEl = $('rows'), tbl = $('tbl'), zipBtn = $('zip'), statEl = $('stat');
 
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   function clean(s){ return String(s||'').replace(/[\\/:*?"<>|]+/g,' ').replace(/\s+/g,' ').trim(); }
   function newName(it){
-    const parts = [it.company, it.address, it.kt, it.month, it.year].map(clean).filter(Boolean);
+    const parts = [it.company, it.address, fmtKt(it.kt), it.month, it.year].map(clean).filter(Boolean);
     return (parts.join(' - ') || 'óþekkt') + '.pdf';
   }
 
@@ -109,21 +123,65 @@
     return text.replace(/ /g,' ').replace(/\s+/g,' ').trim();
   }
 
-  function parse(text){
-    const kts = [...text.matchAll(/(\d{6})-?(\d{4})/g)].map(m=>m[1]+'-'+m[2]);
+  // Split the "hjá fyrirtækinu …" segment into company + address using:
+  //  - a company-type token (ehf/hf/…) marks the END of the company name;
+  //  - the address tail is street + house-no, then 3-digit postcode, then city;
+  //  - "Rvk" → "Reykjavík".
+  function splitCompanyAddress(seg){
+    let s = String(seg).replace(/[.,]\s*$/,'').replace(/\s+/g,' ').trim();
+    s = s.replace(/\bR\.?vk\.?\b/gi, 'Reykjavík');
+    let before = s, postcode = '', city = '';
+    const pc = s.match(/^(.*?)\s(\d{3})\s+([A-Za-zÀ-ÿ./'’\- ]+?)$/);
+    if (pc){ before = pc[1].trim(); postcode = pc[2]; city = pc[3].trim(); }
+    let company = '', street = '';
+    const cm = before.match(/^(.*?\b(?:ehf|hf|slf|sf|ses|ohf|bs|svf)\b\.?)(.*)$/i);
+    if (cm){ company = cm[1].trim(); street = cm[2].replace(/^[\s\-–—:]+/,'').trim(); }
+    else {
+      const am = before.match(/^(.*?)([A-Za-zÀ-ÿ.'’\-]+(?:\s+[A-Za-zÀ-ÿ.'’\-]+){0,2}\s+\d+[A-Za-z]?(?:\s*-\s*\d+)?)$/);
+      if (am){ company = am[1].trim(); street = am[2].trim(); }
+      else { street = before; }
+    }
+    const address = [street, postcode, city].filter(Boolean).join(' ').replace(/\s+/g,' ').trim();
+    return { company, address };
+  }
+
+  // Tolerant kt: 6 digits, then spaces / any dash variant, then 4 digits.
+  const KT_RE = /(\d{6})[\s‐-―−-]{0,5}(\d{4})/g;
+  function fixCity(s){
+    return String(s)
+      .replace(/\bRvk\.?\b/gi, 'Reykjavík')
+      .replace(/\bReykjavik\b/g, 'Reykjavík')
+      .replace(/\bHfj\.?\b/gi, 'Hafnarfjörður')
+      .replace(/\bK(?:óp|op)\.?\b/gi, 'Kópavogur')
+      .replace(/\bG(?:bæ|br)\.?\b/gi, 'Garðabær')
+      .replace(/\s+/g, ' ').trim();
+  }
+  function fmtKt(s){ const d = String(s||'').replace(/\D/g,''); return d.length === 10 ? d.slice(0,6) + '-' + d.slice(6) : String(s||'').trim(); }
+  function parse(rawText, fname){
+    // pdf.js scatters stray spaces inside numbers ("510486 - 3589", "11 1") — collapse spaces between digits.
+    const text = rawText.replace(/(\d)\s+(?=\d)/g, '$1');
+    const kts = [...text.matchAll(KT_RE)].map(m => m[1] + '-' + m[2]);
     const kt = kts.find(k => k.replace(/\D/g,'') !== ISSUER) || '';
     let company = '', address = '';
-    const seg = text.match(/fyrirtækinu\s+(.*?)\s+Kt\.?\s*\d{6}/i);
+    const seg = text.match(/fyrirtækinu\s+(.*?)\s*\bKt\b\.?\s*\d/i);
     if (seg){
-      const s = seg[1].replace(/[.,]\s*$/,'').trim();
-      // address = street (word+) + house-no + 3-digit postcode + city; company = anything before it
-      const am = s.match(/^(.*?)([A-Za-zÀ-ÿ.'’\-]+(?:\s+[A-Za-zÀ-ÿ.'’\-]+){0,2}\s+\d+[A-Za-z]?(?:\s*-\s*\d+)?)\s+(\d{3})\s+([A-Za-zÀ-ÿ]+)\.?$/);
-      if (am){ company = am[1].trim(); address = (am[2] + ' ' + am[3] + ' ' + am[4]).trim(); }
-      else { address = s; }
+      const s = seg[1].replace(/[.,]\s*$/,'').replace(/\s+/g,' ').trim();
+      // 1) Company name ends at the company-type word (ehf / hf / slf / sf); address is what follows.
+      const cm = s.match(/^(.*?\b(?:ehf|hf|slf|sf)\b\.?)\s*[-–—:]?\s*(.+)$/i);
+      if (cm){ company = cm[1].trim(); address = cm[2].trim(); }
+      else {
+        // 2) No company-type word: split the address (… house-no + 3-digit postcode + city) off the end.
+        const am = s.match(/^(.*?)((?:[A-Za-zÀ-ÿ.'’]+\s+){0,3}[A-Za-zÀ-ÿ.'’]+\s+\d+[A-Za-z]?(?:\s*-\s*\d+)?\s+\d{3}\s+[A-Za-zÀ-ÿ.]+)$/);
+        if (am){ company = am[1].trim(); address = am[2].trim(); }
+        else { address = s; }
+      }
+      address = fixCity(address);
+      company = company.replace(/[\s\-–—]+$/,'').trim();
     }
     let month = '', year = '';
-    const my = text.match(new RegExp('yfirfarin[^.]*?\\bí\\s+(' + MONTHS.join('|') + ')\\s+(\\d{4})', 'i'));
+    const my = text.match(new RegExp('yfirfarin[\\s\\S]*?\\bí\\s+(' + MONTHS.join('|') + ')\\s*(\\d{4})', 'i'));
     if (my){ month = my[1].toLowerCase(); year = my[2]; }
+    if (!year && fname){ const fy = String(fname).match(/\b(20\d{2})\b/); if (fy) year = fy[1]; }
     return { company, address, kt, month, year };
   }
 
@@ -200,7 +258,7 @@
       if (items.some(x => x.hash === hash)) { skipped++; continue; } // identical file already in the batch
       const it = { file, hash, company:'', address:'', kt:'', month:'', year:'', done:null };
       items.push(it); added.push(it);
-      try { Object.assign(it, parse(await pdfText(buf.slice(0)))); } catch(e){ /* manual entry */ }
+      try { Object.assign(it, parse(await pdfText(buf.slice(0)), file.name)); } catch(e){ /* manual entry */ }
     }
     render();
     checkLog(added);
@@ -272,7 +330,7 @@
       const file = await h.getFile();
       const it = { file, fileHandle:h, dir, company:'', address:'', kt:'', month:'', year:'' };
       items.push(it);
-      try { Object.assign(it, parse(await pdfText(await file.arrayBuffer()))); } catch(e){}
+      try { Object.assign(it, parse(await pdfText(await file.arrayBuffer()), file.name)); } catch(e){}
     }
     render();
     // Add an "apply in place" button once a folder is connected
