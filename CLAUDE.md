@@ -53,6 +53,11 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
 - `slokkvitaeki` — fire-extinguisher data
 - `gogn`, `samthaetting` — config/integration checklist
 - `kvittanir`, `tenglar`, `reikningar`, `utgjold`, `stillingar` — utility/link tabs
+- `bakendi` — Bakendi control panel (renderBakendi, bottom of sidebar above
+  Stillingar). Currently a PDF document-reader: pick a Google Drive folder,
+  Prufa/Keyra the server-side `/api/doc-index` indexer in batches (live
+  progress), shows connected docs + a RESOLVE list of kennitölur not in
+  `customers_base`. Reads/writes `customer_documents`.
 
 > The `reikningar` tab is currently a placeholder. The Reikningagerð
 > (invoicing prep) work is being built on top of it — see Open work below.
@@ -107,7 +112,14 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
 - `google_oauth`: OAuth tokens (1 row).
 - `app_kv`: generic key/value store.
 - Helpers: `_google.js`, `drive-folders.js`, `drive-download.js`,
+  `drive-list.js` (paginated folder/query listing),
   `gmail-search.js`, `sheet-create.js`.
+- `doc-index.js` — server-side Drive→`customer_documents` indexer behind the
+  Bakendi tab. `GET /api/doc-index?folder=ID[&dry=1][&limit=8][&offset=N]`:
+  reads each PDF (pdf-parse), requires Slökkvitæki issuer kt 600508-0400
+  (skips vendor invoices), takes the customer kt, classifies, matches
+  kt→`customers_base`, upserts `customer_documents` (dedup on drive_file_id).
+  Batched by `offset` (each call ≤ ~10s); the UI pages through.
 
 ### Email
 - `email_digest` (~29k rows): all emails from connected Gmail accounts

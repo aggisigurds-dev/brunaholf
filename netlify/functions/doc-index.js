@@ -27,7 +27,10 @@ exports.handler = async (event) => {
   const p = event.queryStringParameters || {};
   const folder = (p.folder || DEFAULT_FOLDER).trim();
   const dry = p.dry === '1' || p.dry === 'true';
-  const limit = Math.min(parseInt(p.limit || '1000', 10) || 1000, 3000);
+  // Process one bounded batch per call (each PDF download+parse takes time, and
+  // a function invocation has ~10s). The caller pages through with `offset`.
+  const limit = Math.min(parseInt(p.limit || '8', 10) || 8, 50);
+  const offset = Math.max(parseInt(p.offset || '0', 10) || 0, 0);
 
   let token;
   try { token = await freshAccessToken(); }
@@ -40,8 +43,10 @@ exports.handler = async (event) => {
 
   try {
     const files = await listPdfs(folder, token);
-    for (const f of files) {
-      if (stats.indexed >= limit) break;
+    stats.total = files.length;
+    stats.offset = offset;
+    const slice = files.slice(offset, offset + limit);
+    for (const f of slice) {
       stats.scanned++;
       try {
         if (await alreadyIndexed(f.id)) { stats.dupSkip++; continue; }
@@ -68,6 +73,8 @@ exports.handler = async (event) => {
         stats.added.push(rec);
       } catch (e) { stats.errors++; }
     }
+    stats.processed = slice.length;
+    stats.nextOffset = (offset + slice.length < files.length) ? offset + slice.length : null;
   } catch (e) {
     return json(500, { error: e.message, stats });
   }

@@ -1516,6 +1516,7 @@ const DEFAULT_STATE = {
     {id:'verdskra', label:'Verðskrá', icon:'💰'},
     {id:'efniskostnadur', label:'Efniskostnaður', icon:'📦'},
     {id:'utgjold',    label:'Útgjöld',    icon:'💸', sheetCsv:''},
+    {id:'bakendi',    label:'Bakendi',    icon:'🗄'},
     {id:'stillingar', label:'Stillingar', icon:'⚙️'}
   ],
   buttons: [
@@ -1730,13 +1731,17 @@ function clearDataCache(){
 // state with an older snapshot from the server).
 function ensureNewTabs(s){
   if(!s || !Array.isArray(s.tabs)) return;
-  ['vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','spurningar'].forEach(id=>{
+  ['vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','spurningar','bakendi'].forEach(id=>{
     if(!s.tabs.find(t=>t.id===id)){
       const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
       if(d){
         // Tab order: reikningar → vinnubok → vinnustofa → verdskra → efniskostnadur
         let target;
-        if(id === 'vinnubok'){
+        if(id === 'bakendi'){
+          // Bakendi sits at the bottom, just above Stillingar.
+          const idx = s.tabs.findIndex(t=>t.id==='stillingar');
+          target = idx >= 0 ? idx : -1;
+        } else if(id === 'vinnubok'){
           const idx = s.tabs.findIndex(t=>t.id==='reikningar');
           target = idx >= 0 ? idx + 1 : -1;
         } else if(id === 'vinnustofa'){
@@ -1984,6 +1989,7 @@ function render(){
   if(t.id==='vinnustofa') return renderVinnustofa(t);
   if(t.id==='verdskra') return renderVerdskra(t);
   if(t.id==='efniskostnadur') return renderEfniskostnadur(t);
+  if(t.id==='bakendi') return renderBakendi(t);
   if(t.checklist!==undefined) return renderChecklist(t);
   if(t.sheetCsv!==undefined) return renderListTab(t);
   renderButtonTab(t);
@@ -2135,6 +2141,137 @@ const INBOX_ACCOUNTS = [
   {value:'Brunaholf@brunaholf.is',    label:'Brunaholf@brunaholf.is'},
   {value:'bokhald@brunaholf.is',      label:'bokhald@brunaholf.is'},
 ];
+
+function renderBakendi(t){
+  const FOLDER_KEY = 'bakendi_doc_folder';
+  const DEFAULT_FOLDER = '1ApVH4kzbZ4SmwXsLtFqUOn3hotSNECTk';
+  const folder = localStorage.getItem(FOLDER_KEY) || DEFAULT_FOLDER;
+  const inp = 'padding:9px 11px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;font-size:13px';
+  const hint = 'font-size:11.5px;color:#64748b;margin-top:5px';
+
+  $view.innerHTML = `
+    <div class="section">
+      <div class="group-title"><strong>🗄 Bakendi — Skjalalestur (PDF)</strong><div class="line"></div></div>
+      <p style="color:#475569;font-size:13px;line-height:1.5;margin:0 0 14px;max-width:680px">
+        Les PDF-skjöl úr Google&nbsp;Drive möppu, þekkir reikninga og úttektarskýrslur sem
+        <b>Slökkvitæki ehf</b> gaf út (kt 600508-0400), finnur kennitölu viðskiptavinarins á skjalinu og
+        tengir það við réttan viðskiptavin (<code>customer_documents</code>). Vendor-reikningar (t.d. Redder)
+        eru hunsaðir. Endurkeyrsla býr ekki til tvítök — sama skjal er aldrei tengt tvisvar.
+      </p>
+
+      <div style="border:1px solid #e2e8f0;border-radius:11px;padding:14px 15px;max-width:680px">
+        <label style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.04em">Mappa sem lesin er (Google Drive)</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:7px">
+          <input id="bk-folder" value="${escapeAttr(folder)}" placeholder="folder-id" style="${inp};flex:1;min-width:240px">
+          <button id="bk-save-folder" class="btn">Vista möppu</button>
+        </div>
+        <div style="${hint}">Folder-id&nbsp;= síðasti hluti slóðarinnar: drive.google.com/drive/folders/<b>ÞETTA</b></div>
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:15px 0 6px">
+        <button id="bk-dry" class="btn">🔍 Prufa (engin skrif)</button>
+        <button id="bk-run" class="btn primary">▶️ Keyra og tengja</button>
+        <span id="bk-status" style="font-size:12.5px;color:#64748b"></span>
+      </div>
+
+      <div id="bk-results"></div>
+    </div>`;
+
+  const $folder = document.getElementById('bk-folder');
+  const $save = document.getElementById('bk-save-folder');
+  const $dry = document.getElementById('bk-dry');
+  const $run = document.getElementById('bk-run');
+  const $status = document.getElementById('bk-status');
+  const $results = document.getElementById('bk-results');
+
+  $save.onclick = () => {
+    localStorage.setItem(FOLDER_KEY, ($folder.value || '').trim());
+    const old = $save.textContent; $save.textContent = '✓ Vistað';
+    setTimeout(() => { $save.textContent = old; }, 1400);
+  };
+  $dry.onclick = () => runBakendi(true);
+  $run.onclick = () => runBakendi(false);
+
+  async function runBakendi(dry){
+    const f = ($folder.value || '').trim() || DEFAULT_FOLDER;
+    localStorage.setItem(FOLDER_KEY, f);
+    $dry.disabled = $run.disabled = true;
+    $results.innerHTML = '<div class="empty">Vinnur… les skjöl í lotum, þetta uppfærist jafnóðum.</div>';
+    const acc = { dry, total: 0, scanned: 0, indexed: 0, dupSkip: 0, notSlokkvitaeki: 0, noKt: 0, errors: 0, unmatched: [], added: [] };
+    let offset = 0, guard = 0;
+    try {
+      do {
+        $status.textContent = (dry ? 'Prufa… ' : 'Tengi… ') + acc.scanned + (acc.total ? '/' + acc.total : '') + ' skjöl';
+        const r = await fetch('/api/doc-index?folder=' + encodeURIComponent(f) + '&limit=8&offset=' + offset + (dry ? '&dry=1' : ''));
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+        acc.total = d.total || acc.total;
+        acc.scanned += d.scanned || 0; acc.indexed += d.indexed || 0; acc.dupSkip += d.dupSkip || 0;
+        acc.notSlokkvitaeki += d.notSlokkvitaeki || 0; acc.noKt += d.noKt || 0; acc.errors += d.errors || 0;
+        acc.unmatched = acc.unmatched.concat(d.unmatched || []);
+        acc.added = acc.added.concat(d.added || []);
+        $results.innerHTML = bakendiResultsHtml(acc);
+        offset = d.nextOffset;
+      } while (offset != null && ++guard < 300);
+      $status.textContent = (dry ? '🔍 Prufa búin — ekkert vistað. ' : '✓ Búið. ') + 'Skannað ' + acc.scanned + ' skjöl, tengd ' + acc.indexed + '.';
+    } catch (e) {
+      $results.insertAdjacentHTML('beforeend', '<div class="empty" style="color:#dc2626">Villa: ' + escapeHtml(e.message) + '</div>');
+      $status.textContent = '';
+    } finally {
+      $dry.disabled = $run.disabled = false;
+    }
+  }
+}
+
+function bakendiResultsHtml(d){
+  const DOC = { reikningur: 'Reikningur', uttektarskyrsla: 'Úttektarskýrsla', samningur: 'Samningur' };
+  const chip = (label, val, bg) => `<span style="display:inline-block;padding:3px 10px;border-radius:99px;background:${bg || '#f1f5f9'};border:1px solid #e2e8f0;font-size:12.5px;font-weight:600;margin:0 6px 6px 0">${label}: ${val}</span>`;
+  const td = 'padding:5px 8px;border-bottom:1px solid #f1f5f9';
+  let html = '<div style="margin:8px 0 12px">'
+    + chip('Skannað', d.scanned)
+    + chip('Tengd', d.indexed, '#dcfce7')
+    + chip('Áður til', d.dupSkip, '#fef9c3')
+    + chip('Ekki Slökkvitæki', d.notSlokkvitaeki)
+    + chip('Engin kt', d.noKt)
+    + chip('Villur', d.errors, d.errors ? '#fee2e2' : '#f1f5f9')
+    + '</div>';
+  if (d.dry) html += '<div style="font-size:12px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:7px 10px;margin-bottom:12px">🔍 Prufa — ekkert var vistað. Smelltu „Keyra og tengja" til að vista tengingarnar.</div>';
+
+  const added = d.added || [];
+  if (added.length) {
+    html += '<div class="group-title"><strong>Lesin skjöl (' + added.length + ')</strong><div class="line"></div></div>';
+    html += '<div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr>'
+      + ['Skrá', 'Tegund', 'Ár', 'Viðskiptavinur'].map(h => `<th style="text-align:left;padding:5px 8px;border-bottom:1px solid #e2e8f0;color:#64748b">${h}</th>`).join('')
+      + '</tr></thead><tbody>';
+    added.forEach(a => {
+      const cust = a.base_id
+        ? escapeHtml(a.base_name || ('#' + a.base_id))
+        : '<span style="color:#dc2626;font-weight:700">RESOLVE · kt ' + escapeHtml(a.kt) + '</span>';
+      html += '<tr>'
+        + `<td style="${td}">${escapeHtml(a.file)}</td>`
+        + `<td style="${td}">${escapeHtml(DOC[a.doc_type] || a.doc_type)}</td>`
+        + `<td style="${td}">${a.year || ''}</td>`
+        + `<td style="${td}">${cust}</td></tr>`;
+    });
+    html += '</tbody></table></div>';
+  }
+
+  const un = d.unmatched || [];
+  if (un.length) {
+    html += '<div class="group-title" style="margin-top:16px"><strong>⚠ Til skoðunar — kt fannst ekki sem viðskiptavinur (' + un.length + ')</strong><div class="line"></div></div>';
+    html += '<p style="color:#64748b;font-size:12px;margin:4px 0 8px;max-width:680px">Þessi skjöl voru lesin en kennitalan er ekki til í <code>customers_base</code>. Stofnaðu viðskiptavininn (eða leiðréttu kt) og keyrðu aftur.</p>';
+    html += '<div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12.5px"><tbody>';
+    un.forEach(a => {
+      html += '<tr>'
+        + `<td style="${td}">${escapeHtml(a.file)}</td>`
+        + `<td style="${td};font-weight:700">kt ${escapeHtml(a.kt)}</td>`
+        + `<td style="${td}">${escapeHtml(DOC[a.doc_type] || a.doc_type)} ${a.year || ''}</td></tr>`;
+    });
+    html += '</tbody></table></div>';
+  }
+  if (!added.length && !un.length) html += '<div class="empty">Engin ný skjöl fundust í möppunni (eða öll þegar tengd).</div>';
+  return html;
+}
 
 function renderInbox(t){
   const btns = buttonsFor(t.id);
