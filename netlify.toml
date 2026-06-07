@@ -165,6 +165,12 @@
   to = "/.netlify/functions/eml-netfong"
   status = 200
 
+# Skjalaheiti renamer: resolve a kennitala to a customer
+[[redirects]]
+  from = "/api/kt-lookup"
+  to = "/.netlify/functions/kt-lookup"
+  status = 200
+
 # Recursively scan a worksite's Drive folder for Efnislisti files per month
 [[redirects]]
   from = "/api/efnislisti-scan"

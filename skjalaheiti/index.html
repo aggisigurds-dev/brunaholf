@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skjalaheiti — endurnefna úttektarskýrslur · Brunahólf</title>
+<style>
+  :root { --bg:#f1f5f9; --card:#fff; --ink:#0f172a; --mut:#64748b; --line:#e2e8f0; --blue:#2563eb; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink); }
+  .wrap { max-width:1180px; margin:0 auto; padding:22px 16px 60px; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  .sub { color:var(--mut); font-size:13px; margin:0 0 18px; line-height:1.5; }
+  .sub code { background:#e8eef6; padding:1px 6px; border-radius:5px; }
+  .drop { border:2px dashed #cbd5e1; border-radius:14px; background:var(--card); padding:28px 18px; text-align:center; transition:.15s; cursor:pointer; }
+  .drop.hot { border-color:var(--blue); background:#eff6ff; }
+  .drop .big { font-size:15px; font-weight:700; }
+  .drop .small { font-size:12.5px; color:var(--mut); margin-top:5px; }
+  .bar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:14px 0; }
+  .btn { padding:9px 15px; border:1px solid #cbd5e1; border-radius:9px; background:#fff; cursor:pointer; font:inherit; font-size:13px; color:#334155; }
+  .btn:hover:not(:disabled) { background:#f8fafc; border-color:#94a3b8; }
+  .btn.primary { background:var(--blue); color:#fff; border-color:var(--blue); }
+  .btn.primary:hover:not(:disabled) { background:#1d4ed8; }
+  .btn:disabled { opacity:.5; cursor:not-allowed; }
+  .stat { font-size:12.5px; color:var(--mut); }
+  table { width:100%; border-collapse:collapse; background:var(--card); border-radius:12px; overflow:hidden; font-size:12.5px; }
+  th, td { text-align:left; padding:8px 9px; border-bottom:1px solid #f1f5f9; vertical-align:top; }
+  th { background:#f8fafc; color:var(--mut); font-size:11px; text-transform:uppercase; letter-spacing:.03em; position:sticky; top:0; }
+  td input { width:100%; border:1px solid #e2e8f0; border-radius:6px; padding:5px 7px; font:inherit; font-size:12px; }
+  td input:focus { outline:none; border-color:var(--blue); }
+  .newname { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:11.5px; color:#0f172a; word-break:break-all; }
+  .pill { display:inline-block; padding:1px 7px; border-radius:99px; font-size:10.5px; font-weight:700; white-space:nowrap; }
+  .ok { color:#15803d; background:#f0fdf4; border:1px solid #bbf7d0; }
+  .no { color:#b91c1c; background:#fef2f2; border:1px solid #fecaca; }
+  .wait { color:#92400e; background:#fffbeb; border:1px solid #fde68a; }
+  .rm { background:none; border:none; color:#cbd5e1; cursor:pointer; font-size:15px; }
+  .rm:hover { color:#dc2626; }
+  .foot { font-size:11.5px; color:var(--mut); margin-top:18px; line-height:1.5; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🏷 Skjalaheiti — endurnefna úttektarskýrslur</h1>
+  <p class="sub">
+    Dragðu PDF-skýrslur hingað (eða veldu möppu). Forritið les hverja skýrslu og leggur til nýtt heiti á sniðinu
+    <code>Fyrirtæki - Heimilisfang - Kennitala - Mánuður - Ár.pdf</code>. Kennitalan er flett upp í viðskiptavinagrunninum
+    jafnóðum — svo þú sérð <b>tryggða tengingu</b> við réttan kúnna áður en þú vistar. Lestur fer fram í vafranum (engin skrá er send neitt).
+  </p>
+
+  <div id="drop" class="drop">
+    <div class="big">📄 Dragðu PDF-skýrslur hingað</div>
+    <div class="small">eða smelltu til að velja skrár · margar í einu í lagi</div>
+    <input id="file" type="file" accept="application/pdf" multiple hidden>
+  </div>
+
+  <div class="bar">
+    <button id="pickFolder" class="btn" title="Aðeins Chrome/Edge — endurnefnir skrár beint í möppunni á þessari tölvu">📁 Tengja möppu (endurnefna á staðnum)</button>
+    <button id="zip" class="btn primary" disabled>⬇️ Sækja allt endurnefnt (ZIP)</button>
+    <span id="stat" class="stat"></span>
+  </div>
+
+  <table id="tbl" hidden>
+    <thead><tr>
+      <th style="width:30px"></th>
+      <th>Upprunalegt</th>
+      <th style="width:150px">Fyrirtæki</th>
+      <th style="width:170px">Heimilisfang</th>
+      <th style="width:110px">Kennitala</th>
+      <th style="width:80px">Mánuður</th>
+      <th style="width:62px">Ár</th>
+      <th>Nýtt heiti</th>
+      <th style="width:150px">Grunntenging</th>
+      <th style="width:70px"></th>
+    </tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <p class="foot">
+    Kennitalan í heitinu er það sem tryggir tenginguna: skjala-indexarinn les hana beint og tengir skýrsluna við réttan
+    viðskiptavin án ágiskunar. „✗ ekki í grunni" þýðir að kennitöluna vantar í <code>customers_base</code> — bættu kúnnanum við.
+    G-Drive endurnefning á staðnum krefst Drive-skrifréttinda (kemur síðar); núna: drag-drop eða mappa á tölvunni.
+  </p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+(() => {
+  if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const MONTHS = ['janúar','febrúar','mars','apríl','maí','júní','júlí','ágúst','september','október','nóvember','desember'];
+  const ISSUER = '6005080400';
+  const items = []; // { file, fileHandle?, company, address, kt, month, year, match }
+  const $ = id => document.getElementById(id);
+  const drop = $('drop'), fileInput = $('file'), rowsEl = $('rows'), tbl = $('tbl'), zipBtn = $('zip'), statEl = $('stat');
+
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function clean(s){ return String(s||'').replace(/[\\/:*?"<>|]+/g,' ').replace(/\s+/g,' ').trim(); }
+  function newName(it){
+    const parts = [it.company, it.address, it.kt, it.month, it.year].map(clean).filter(Boolean);
+    return (parts.join(' - ') || 'óþekkt') + '.pdf';
+  }
+
+  async function pdfText(buf){
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    let text = '';
+    const n = Math.min(pdf.numPages, 2);
+    for (let i = 1; i <= n; i++){ const pg = await pdf.getPage(i); const tc = await pg.getTextContent(); text += ' ' + tc.items.map(t=>t.str).join(' '); }
+    return text.replace(/ /g,' ').replace(/\s+/g,' ').trim();
+  }
+
+  function parse(text){
+    const kts = [...text.matchAll(/(\d{6})-?(\d{4})/g)].map(m=>m[1]+'-'+m[2]);
+    const kt = kts.find(k => k.replace(/\D/g,'') !== ISSUER) || '';
+    let company = '', address = '';
+    const seg = text.match(/fyrirtækinu\s+(.*?)\s+Kt\.?\s*\d{6}/i);
+    if (seg){
+      const s = seg[1].replace(/[.,]\s*$/,'').trim();
+      // address = street (word+) + house-no + 3-digit postcode + city; company = anything before it
+      const am = s.match(/^(.*?)([A-Za-zÀ-ÿ.'’\-]+(?:\s+[A-Za-zÀ-ÿ.'’\-]+){0,2}\s+\d+[A-Za-z]?(?:\s*-\s*\d+)?)\s+(\d{3})\s+([A-Za-zÀ-ÿ]+)\.?$/);
+      if (am){ company = am[1].trim(); address = (am[2] + ' ' + am[3] + ' ' + am[4]).trim(); }
+      else { address = s; }
+    }
+    let month = '', year = '';
+    const my = text.match(new RegExp('yfirfarin[^.]*?\\bí\\s+(' + MONTHS.join('|') + ')\\s+(\\d{4})', 'i'));
+    if (my){ month = my[1].toLowerCase(); year = my[2]; }
+    return { company, address, kt, month, year };
+  }
+
+  async function lookupKt(it, cell){
+    const digits = (it.kt||'').replace(/\D/g,'');
+    if (digits.length !== 10){ cell.innerHTML = '<span class="pill no">engin kt</span>'; return; }
+    cell.innerHTML = '<span class="pill wait">flettir…</span>';
+    try {
+      const r = await fetch('/api/kt-lookup?kt=' + encodeURIComponent(digits));
+      const d = await r.json();
+      if (d.found) cell.innerHTML = '<span class="pill ok">✓ ' + esc(d.nafn || 'tengt') + '</span>';
+      else cell.innerHTML = '<span class="pill no">✗ ekki í grunni</span>';
+    } catch(e){ cell.innerHTML = '<span class="pill no">villa</span>'; }
+  }
+
+  function render(){
+    rowsEl.innerHTML = '';
+    items.forEach((it, i) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + (it.kt ? '' : '<span class="pill no">?</span>') + '</td>' +
+        '<td style="color:#64748b">' + esc(it.file.name) + '</td>' +
+        '<td><input data-f="company" data-i="' + i + '" value="' + esc(it.company) + '"></td>' +
+        '<td><input data-f="address" data-i="' + i + '" value="' + esc(it.address) + '"></td>' +
+        '<td><input data-f="kt" data-i="' + i + '" value="' + esc(it.kt) + '"></td>' +
+        '<td><input data-f="month" data-i="' + i + '" value="' + esc(it.month) + '"></td>' +
+        '<td><input data-f="year" data-i="' + i + '" value="' + esc(it.year) + '"></td>' +
+        '<td class="newname" data-name="' + i + '">' + esc(newName(it)) + '</td>' +
+        '<td data-match="' + i + '"></td>' +
+        '<td><a class="btn" style="padding:5px 9px" data-dl="' + i + '">⬇️</a> <button class="rm" data-rm="' + i + '">✕</button></td>';
+      rowsEl.appendChild(tr);
+      lookupKt(it, tr.querySelector('[data-match="' + i + '"]'));
+    });
+    tbl.hidden = items.length === 0;
+    zipBtn.disabled = items.length === 0;
+    statEl.textContent = items.length ? (items.length + ' skrár · ' + items.filter(x=>x.kt).length + ' með kt') : '';
+  }
+
+  rowsEl.addEventListener('input', e => {
+    const inp = e.target.closest('input[data-f]'); if (!inp) return;
+    const i = +inp.dataset.i; items[i][inp.dataset.f] = inp.value;
+    const nm = rowsEl.querySelector('[data-name="' + i + '"]'); if (nm) nm.textContent = newName(items[i]);
+    if (inp.dataset.f === 'kt') lookupKt(items[i], rowsEl.querySelector('[data-match="' + i + '"]'));
+  });
+  rowsEl.addEventListener('click', async e => {
+    const dl = e.target.closest('[data-dl]');
+    if (dl){ const it = items[+dl.dataset.dl]; downloadOne(it); return; }
+    const rm = e.target.closest('[data-rm]');
+    if (rm){ items.splice(+rm.dataset.rm, 1); render(); }
+  });
+
+  function downloadOne(it){
+    const url = URL.createObjectURL(it.file);
+    const a = document.createElement('a'); a.href = url; a.download = newName(it); a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  async function addFiles(fileLike){
+    const list = [...fileLike].filter(f => /pdf$/i.test(f.name) || f.type === 'application/pdf');
+    for (const file of list){
+      const it = { file, company:'', address:'', kt:'', month:'', year:'' };
+      items.push(it);
+      try { const parsed = parse(await pdfText(await file.arrayBuffer())); Object.assign(it, parsed); }
+      catch(e){ /* leave blank for manual entry */ }
+    }
+    render();
+  }
+
+  // Drag-drop + picker
+  drop.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', () => addFiles(fileInput.files));
+  ['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('hot'); }));
+  ['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('hot'); }));
+  drop.addEventListener('drop', e => { if (e.dataTransfer && e.dataTransfer.files) addFiles(e.dataTransfer.files); });
+
+  // ZIP of renamed files
+  zipBtn.addEventListener('click', async () => {
+    if (!items.length) return;
+    zipBtn.disabled = true; const old = zipBtn.textContent; zipBtn.textContent = 'Pakka…';
+    try {
+      const zip = new JSZip();
+      const used = {};
+      for (const it of items){
+        let nm = newName(it);
+        if (used[nm]) { nm = nm.replace(/\.pdf$/i, '') + ' (' + (++used[nm]) + ').pdf'; } else used[nm] = 1;
+        zip.file(nm, await it.file.arrayBuffer());
+      }
+      const blob = await zip.generateAsync({ type:'blob' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'uttektarskyrslur-endurnefnt.zip'; a.click();
+    } catch(e){ alert('Villa við að pakka: ' + e.message); }
+    finally { zipBtn.disabled = false; zipBtn.textContent = old; }
+  });
+
+  // Local folder — rename in place (Chrome/Edge File System Access API)
+  $('pickFolder').addEventListener('click', async () => {
+    if (!window.showDirectoryPicker){ alert('Þessi vafri styður ekki möppu-aðgang. Notaðu Chrome eða Edge — eða drag-drop + ZIP.'); return; }
+    let dir; try { dir = await window.showDirectoryPicker(); } catch(e){ return; }
+    const handles = [];
+    for await (const [name, handle] of dir.entries()){ if (handle.kind === 'file' && /\.pdf$/i.test(name)) handles.push(handle); }
+    if (!handles.length){ alert('Engar PDF-skrár í möppunni.'); return; }
+    items.length = 0;
+    for (const h of handles){
+      const file = await h.getFile();
+      const it = { file, fileHandle:h, dir, company:'', address:'', kt:'', month:'', year:'' };
+      items.push(it);
+      try { Object.assign(it, parse(await pdfText(await file.arrayBuffer()))); } catch(e){}
+    }
+    render();
+    // Add an "apply in place" button once a folder is connected
+    if (!document.getElementById('applyDir')){
+      const b = document.createElement('button'); b.id = 'applyDir'; b.className = 'btn primary'; b.textContent = '✅ Endurnefna í möppunni';
+      b.addEventListener('click', applyInPlace); $('zip').after(b);
+    }
+  });
+
+  async function applyInPlace(){
+    const b = document.getElementById('applyDir'); b.disabled = true; b.textContent = 'Endurnefni…';
+    let ok = 0, fail = 0;
+    for (const it of items){
+      try {
+        const nm = newName(it);
+        if (nm === it.file.name) { ok++; continue; }
+        // Write content to the new name, then remove the old entry.
+        const w = await it.dir.getFileHandle(nm, { create:true });
+        const ws = await w.createWritable(); await ws.write(await it.file.arrayBuffer()); await ws.close();
+        await it.dir.removeEntry(it.file.name);
+        ok++;
+      } catch(e){ console.error(e); fail++; }
+    }
+    b.disabled = false; b.textContent = '✅ Endurnefna í möppunni';
+    alert('Lokið: ' + ok + ' endurnefnd' + (fail ? ', ' + fail + ' mistókust' : '') + '.');
+  }
+})();
+</script>
+</body>
+</html>
