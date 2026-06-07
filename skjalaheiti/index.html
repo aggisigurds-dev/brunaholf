@@ -179,16 +179,23 @@
     const seg = text.match(/fyrirtækinu\s+(.*?)\s*\bKt\b\.?\s*\d/i);
     if (seg){
       const s = seg[1].replace(/[.,]\s*$/,'').replace(/\s+/g,' ').trim();
-      // 1) Company name ends at the company-type word (ehf / hf / slf / sf); address is what follows.
-      const cm = s.match(/^(.*?\b(?:ehf|hf|slf|sf)\b\.?)\s*[-–—:]?\s*(.+)$/i);
-      if (cm){ company = cm[1].trim(); address = cm[2].trim(); }
-      else {
-        // 2) No company-type word: split the address (… house-no + 3-digit postcode + city) off the end.
-        const am = s.match(/^(.*?)((?:[A-Za-zÀ-ÿ.'’]+\s+){0,3}[A-Za-zÀ-ÿ.'’]+\s+\d+[A-Za-z]?(?:\s*-\s*\d+)?\s+\d{3}\s+[A-Za-zÀ-ÿ.]+)$/);
-        if (am){ company = am[1].trim(); address = am[2].trim(); }
-        else { address = s; }
+      // Address = the trailing "street [house-no] <3-digit postcode> <city>"; everything before is
+      // the company (which we take from the kt→DB match — this is only a fallback). This drops the
+      // leading company text so the address isn't a duplicate of Fyrirtæki.
+      const pc = s.match(/(\d{3})\s+([A-Za-zÀ-ÿ]+)\.?$/);
+      if (pc){
+        const before = s.slice(0, pc.index).trim();
+        const st = before.match(/([A-ZÁÉÍÓÚÝÞÆÖ(][A-Za-zÀ-ÿ.'’()\-]*(?:\s+\d{1,4}[A-Za-z]?(?:\s*-\s*\d+)?)?)\s*$/);
+        const street = st ? st[1].trim() : '';
+        address = fixCity((street ? street + ' ' : '') + pc[1] + ' ' + pc[2]);
+        const comp = (st ? before.slice(0, st.index) : before).trim();
+        const cm = comp.match(/^(.*?\b(?:ehf|hf|slf|sf)\b\.?)/i);
+        company = (cm ? cm[1] : comp).trim();
+      } else {
+        const cm = s.match(/^(.*?\b(?:ehf|hf|slf|sf)\b\.?)\s*[-–—:]?\s*(.+)$/i);
+        if (cm){ company = cm[1].trim(); address = fixCity(cm[2].trim()); }
+        else { address = fixCity(s); }
       }
-      address = fixCity(address);
       company = company.replace(/[\s\-–—]+$/,'').trim();
     }
     let month = '', year = '';
