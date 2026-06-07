@@ -147,6 +147,24 @@
   to = "/.netlify/functions/drive-files-search"
   status = 200
 
+# Paginated Drive folder/query listing (feeds the Bakendi doc indexer)
+[[redirects]]
+  from = "/api/drive-list"
+  to = "/.netlify/functions/drive-list"
+  status = 200
+
+# Bakendi: server-side Drive→customer_documents indexer
+[[redirects]]
+  from = "/api/doc-index"
+  to = "/.netlify/functions/doc-index"
+  status = 200
+
+# Bakendi: netfang backfill from sent bokhald@eldklar.is .eml
+[[redirects]]
+  from = "/api/eml-netfong"
+  to = "/.netlify/functions/eml-netfong"
+  status = 200
+
 # Recursively scan a worksite's Drive folder for Efnislisti files per month
 [[redirects]]
   from = "/api/efnislisti-scan"
