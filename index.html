@@ -2175,6 +2175,26 @@ function renderBakendi(t){
       </div>
 
       <div id="bk-results"></div>
+
+      <div style="margin-top:24px;border-top:1px solid #e2e8f0;padding-top:18px">
+        <div class="group-title"><strong>📧 Netföng úr sendum reikningum</strong><div class="line"></div></div>
+        <p style="color:#475569;font-size:13px;line-height:1.5;margin:0 0 12px;max-width:680px">
+          Les senda reikninga (<code>.eml</code>) frá <b>bokhald@eldklar.is</b> í Drive, tekur <b>To:</b>
+          (netfang viðskiptavinarins) og fyllir <code>fyrirtaeki.netfang</code> — <b>aðeins þar sem það er tómt</b>,
+          með öryggisafrit í <code>netfang_backfill_log</code> (afturkræft). Sleppir generic/eigin netföngum
+          (bokhald@/eldklar/noreply/korta…). Viðskiptavinur fundinn af kt eða nafni/heimilisfangi úr skráarnafni.
+        </p>
+        <div style="border:1px solid #e2e8f0;border-radius:11px;padding:14px 15px;max-width:680px">
+          <label style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.04em">Möppur með .eml (kommu-aðskildar folder-id)</label>
+          <input id="bk-eml-folders" value="1OMPOK9GvHSOV0CIAbYwvUew-TBcH6pmM,1paypTnF5gE2pnGvVuGGOGOV1qrUrGtpH" style="${inp};width:100%;box-sizing:border-box;margin-top:7px">
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px 0 6px">
+          <button id="bk-eml-dry" class="btn">🔍 Prufa (engin skrif)</button>
+          <button id="bk-eml-run" class="btn primary">▶️ Keyra og fylla netföng</button>
+          <span id="bk-eml-status" style="font-size:12.5px;color:#64748b"></span>
+        </div>
+        <div id="bk-eml-results"></div>
+      </div>
     </div>`;
 
   const $folder = document.getElementById('bk-folder');
@@ -2191,6 +2211,45 @@ function renderBakendi(t){
   };
   $dry.onclick = () => runBakendi(true);
   $run.onclick = () => runBakendi(false);
+
+  // ── Netföng úr sendum reikningum (.eml) ──────────────────────────────────
+  const $emlFolders = document.getElementById('bk-eml-folders');
+  const $emlDry = document.getElementById('bk-eml-dry');
+  const $emlRun = document.getElementById('bk-eml-run');
+  const $emlStatus = document.getElementById('bk-eml-status');
+  const $emlResults = document.getElementById('bk-eml-results');
+  $emlDry.onclick = () => runNetfong(true);
+  $emlRun.onclick = () => runNetfong(false);
+
+  async function runNetfong(dry){
+    const folders = ($emlFolders.value || '').split(',').map(s => s.trim()).filter(Boolean);
+    if (!folders.length) { $emlResults.innerHTML = '<div class="empty">Vantar möppu-id.</div>'; return; }
+    $emlDry.disabled = $emlRun.disabled = true;
+    $emlResults.innerHTML = '<div class="empty">Vinnur… les .eml í lotum, uppfærist jafnóðum.</div>';
+    const acc = { dry, scanned: 0, filled: 0, already: 0, generic: 0, noMatch: 0, ambiguous: 0, errors: 0, rows: [] };
+    try {
+      for (const folder of folders) {
+        let offset = 0, guard = 0;
+        do {
+          $emlStatus.textContent = (dry ? 'Prufa… ' : 'Fylli… ') + acc.scanned + ' skjöl, fyllt ' + acc.filled;
+          const r = await fetch('/api/eml-netfong?folder=' + encodeURIComponent(folder) + '&limit=10&offset=' + offset + (dry ? '&dry=1' : ''));
+          const d = await r.json();
+          if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+          acc.scanned += d.scanned || 0; acc.filled += d.filled || 0; acc.already += d.already || 0;
+          acc.generic += d.generic || 0; acc.noMatch += d.noMatch || 0; acc.ambiguous += d.ambiguous || 0; acc.errors += d.errors || 0;
+          acc.rows = acc.rows.concat(d.rows || []);
+          $emlResults.innerHTML = netfongResultsHtml(acc);
+          offset = d.nextOffset;
+        } while (offset != null && ++guard < 400);
+      }
+      $emlStatus.textContent = (dry ? '🔍 Prufa búin — ekkert vistað. ' : '✓ Búið. ') + 'Fyllt ' + acc.filled + ' netföng.';
+    } catch (e) {
+      $emlResults.insertAdjacentHTML('beforeend', '<div class="empty" style="color:#dc2626">Villa: ' + escapeHtml(e.message) + '</div>');
+      $emlStatus.textContent = '';
+    } finally {
+      $emlDry.disabled = $emlRun.disabled = false;
+    }
+  }
 
   async function runBakendi(dry){
     const f = ($folder.value || '').trim() || DEFAULT_FOLDER;
@@ -2270,6 +2329,39 @@ function bakendiResultsHtml(d){
     html += '</tbody></table></div>';
   }
   if (!added.length && !un.length) html += '<div class="empty">Engin ný skjöl fundust í möppunni (eða öll þegar tengd).</div>';
+  return html;
+}
+
+function netfongResultsHtml(d){
+  const chip = (l, v, bg) => `<span style="display:inline-block;padding:3px 10px;border-radius:99px;background:${bg || '#f1f5f9'};border:1px solid #e2e8f0;font-size:12.5px;font-weight:600;margin:0 6px 6px 0">${l}: ${v}</span>`;
+  const td = 'padding:5px 8px;border-bottom:1px solid #f1f5f9';
+  let html = '<div style="margin:8px 0 12px">'
+    + chip('Skönnuð', d.scanned)
+    + chip('Fyllt', d.filled, '#dcfce7')
+    + chip('Hafa netfang', d.already, '#fef9c3')
+    + chip('Engin gild To', d.generic)
+    + chip('Fann ekki kúnna', d.noMatch)
+    + chip('Margir mögulegir', d.ambiguous, d.ambiguous ? '#ffedd5' : '#f1f5f9')
+    + chip('Villur', d.errors, d.errors ? '#fee2e2' : '#f1f5f9')
+    + '</div>';
+  if (d.dry) html += '<div style="font-size:12px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:7px 10px;margin-bottom:12px">🔍 Prufa — ekkert var vistað. Smelltu „Keyra og fylla netföng" til að vista.</div>';
+  // Show the rows that matter for review: fills + ambiguous + no-match.
+  const rows = (d.rows || []).filter(r => r.action && /(fyll|mun fylla|margir|fann ekki)/i.test(r.action));
+  if (rows.length) {
+    html += '<div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>'
+      + ['Skrá', 'Netfang (To)', 'Viðskiptavinur', 'Hvernig', 'Aðgerð'].map(h => `<th style="text-align:left;padding:5px 8px;border-bottom:1px solid #e2e8f0;color:#64748b">${h}</th>`).join('')
+      + '</tr></thead><tbody>';
+    rows.slice(0, 400).forEach(r => {
+      const warn = /(margir|fann ekki)/i.test(r.action);
+      html += '<tr>'
+        + `<td style="${td}">${escapeHtml(r.file || '')}</td>`
+        + `<td style="${td}">${escapeHtml(r.to || '')}</td>`
+        + `<td style="${td}">${escapeHtml(r.co || '')}${r.kt ? ' · ' + escapeHtml(r.kt) : ''}</td>`
+        + `<td style="${td}">${escapeHtml(r.by || '')}</td>`
+        + `<td style="${td}${warn ? ';color:#b45309;font-weight:600' : ''}">${escapeHtml(r.action || '')}</td></tr>`;
+    });
+    html += '</tbody></table></div>';
+  }
   return html;
 }
 
