@@ -171,6 +171,12 @@
   to = "/.netlify/functions/kt-lookup"
   status = 200
 
+# Skjalaheiti renamer: memory of processed reports (dedup + history)
+[[redirects]]
+  from = "/api/skjalaheiti-log"
+  to = "/.netlify/functions/skjalaheiti-log"
+  status = 200
+
 # Recursively scan a worksite's Drive folder for Efnislisti files per month
 [[redirects]]
   from = "/api/efnislisti-scan"

@@ -56,6 +56,7 @@
   <div class="bar">
     <button id="pickFolder" class="btn" title="Aðeins Chrome/Edge — endurnefnir skrár beint í möppunni á þessari tölvu">📁 Tengja möppu (endurnefna á staðnum)</button>
     <button id="zip" class="btn primary" disabled>⬇️ Sækja allt endurnefnt (ZIP)</button>
+    <button id="saga" class="btn" title="Listi yfir skjöl sem hafa verið unnin áður">📜 Saga</button>
     <span id="stat" class="stat"></span>
   </div>
 
@@ -143,7 +144,9 @@
     items.forEach((it, i) => {
       const tr = document.createElement('tr');
       tr.innerHTML =
-        '<td>' + (it.kt ? '' : '<span class="pill no">?</span>') + '</td>' +
+        '<td>' + (it.done
+          ? '<span class="pill" style="color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe" title="Áður unnið ' + esc((it.done.created_at||'').slice(0,10)) + (it.done.new_name ? ' → ' + esc(it.done.new_name) : '') + '">🔁</span>'
+          : (it.kt ? '' : '<span class="pill no">?</span>')) + '</td>' +
         '<td style="color:#64748b">' + esc(it.file.name) + '</td>' +
         '<td><input data-f="company" data-i="' + i + '" value="' + esc(it.company) + '"></td>' +
         '<td><input data-f="address" data-i="' + i + '" value="' + esc(it.address) + '"></td>' +
@@ -158,7 +161,10 @@
     });
     tbl.hidden = items.length === 0;
     zipBtn.disabled = items.length === 0;
-    statEl.textContent = items.length ? (items.length + ' skrár · ' + items.filter(x=>x.kt).length + ' með kt') : '';
+    const dups = items.filter(x => x.done).length;
+    statEl.textContent = items.length
+      ? (items.length + ' skrár · ' + items.filter(x=>x.kt).length + ' með kt' + (dups ? ' · 🔁 ' + dups + ' áður unnin' : '') + (skipped ? ' · ' + skipped + ' tvítökum sleppt' : ''))
+      : '';
   }
 
   rowsEl.addEventListener('input', e => {
@@ -180,15 +186,52 @@
     setTimeout(() => URL.revokeObjectURL(url), 2000);
   }
 
+  let skipped = 0;
+  async function sha256(buf){
+    const d = await crypto.subtle.digest('SHA-256', buf);
+    return [...new Uint8Array(d)].map(b => b.toString(16).padStart(2,'0')).join('');
+  }
   async function addFiles(fileLike){
     const list = [...fileLike].filter(f => /pdf$/i.test(f.name) || f.type === 'application/pdf');
+    const added = [];
     for (const file of list){
-      const it = { file, company:'', address:'', kt:'', month:'', year:'' };
-      items.push(it);
-      try { const parsed = parse(await pdfText(await file.arrayBuffer())); Object.assign(it, parsed); }
-      catch(e){ /* leave blank for manual entry */ }
+      let buf; try { buf = await file.arrayBuffer(); } catch(e){ continue; }
+      const hash = await sha256(buf);
+      if (items.some(x => x.hash === hash)) { skipped++; continue; } // identical file already in the batch
+      const it = { file, hash, company:'', address:'', kt:'', month:'', year:'', done:null };
+      items.push(it); added.push(it);
+      try { Object.assign(it, parse(await pdfText(buf.slice(0)))); } catch(e){ /* manual entry */ }
     }
     render();
+    checkLog(added);
+  }
+
+  // Flag rows the renamer has already processed before (any session/device).
+  async function checkLog(list){
+    const hashes = (list || items).map(x => x.hash).filter(Boolean);
+    if (!hashes.length) return;
+    try {
+      const r = await fetch('/api/skjalaheiti-log?hashes=' + encodeURIComponent(hashes.join(',')));
+      const map = {}; ((await r.json()).rows || []).forEach(row => map[row.content_hash] = row);
+      let changed = false;
+      items.forEach(it => { if (it.hash && map[it.hash] && !it.done) { it.done = map[it.hash]; changed = true; } });
+      if (changed) render();
+    } catch(e){}
+  }
+
+  // Remember the processed reports (deduped on content hash server-side).
+  async function recordDone(list){
+    const entries = list.filter(x => x.hash).map(x => ({
+      content_hash: x.hash, kennitala: (x.kt||'').replace(/\D/g,''), nafn: x.company || null,
+      heimilisfang: x.address || null, manudur: x.month || null, ar: x.year || null,
+      original_name: x.file.name, new_name: newName(x),
+    }));
+    if (!entries.length) return;
+    try {
+      await fetch('/api/skjalaheiti-log', { method:'POST', headers:{ 'content-type':'application/json' }, body: JSON.stringify({ entries }) });
+      list.forEach(x => { if (!x.done) x.done = { created_at: new Date().toISOString(), new_name: newName(x) }; });
+      render();
+    } catch(e){}
   }
 
   // Drag-drop + picker
@@ -212,6 +255,7 @@
       }
       const blob = await zip.generateAsync({ type:'blob' });
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'uttektarskyrslur-endurnefnt.zip'; a.click();
+      recordDone(items);
     } catch(e){ alert('Villa við að pakka: ' + e.message); }
     finally { zipBtn.disabled = false; zipBtn.textContent = old; }
   });
@@ -253,8 +297,30 @@
       } catch(e){ console.error(e); fail++; }
     }
     b.disabled = false; b.textContent = '✅ Endurnefna í möppunni';
+    recordDone(items);
     alert('Lokið: ' + ok + ' endurnefnd' + (fail ? ', ' + fail + ' mistókust' : '') + '.');
   }
+
+  // Saga — history of everything the renamer has processed before.
+  $('saga').addEventListener('click', async () => {
+    let rows = [];
+    try { rows = (await (await fetch('/api/skjalaheiti-log?limit=500')).json()).rows || []; } catch(e){}
+    const body = rows.length
+      ? '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>'
+        + ['Dags','Nýtt heiti','Kennitala'].map(h => '<th style="text-align:left;padding:6px;color:#64748b;border-bottom:1px solid #e2e8f0">' + h + '</th>').join('')
+        + '</tr></thead><tbody>'
+        + rows.map(r => '<tr><td style="padding:6px;border-bottom:1px solid #f1f5f9">' + esc((r.created_at||'').slice(0,10)) + '</td><td style="padding:6px;border-bottom:1px solid #f1f5f9" class="newname">' + esc(r.new_name||'') + '</td><td style="padding:6px;border-bottom:1px solid #f1f5f9">' + esc(r.kennitala||'') + '</td></tr>').join('')
+        + '</tbody></table>'
+      : '<div style="color:#64748b;padding:14px">Ekkert skráð enn — endurnefndu skjöl (ZIP eða mappa) til að byggja upp söguna.</div>';
+    const wrap = document.createElement('div');
+    wrap.id = 'sagaModal';
+    wrap.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:50;display:flex;align-items:flex-start;justify-content:center;padding:5vh 12px';
+    wrap.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:780px;width:100%;max-height:88vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid #e2e8f0;position:sticky;top:0;background:#fff"><b>📜 Saga — ' + rows.length + ' unnin skjöl</b><button class="btn" id="sagaX">✕</button></div>'
+      + '<div style="padding:10px 18px">' + body + '</div></div>';
+    document.body.appendChild(wrap);
+    wrap.addEventListener('click', e => { if (e.target === wrap || e.target.id === 'sagaX') wrap.remove(); });
+  });
 })();
 </script>
 </body>
