@@ -170,9 +170,10 @@
   }
   function fmtKt(s){ const d = String(s||'').replace(/\D/g,''); return d.length === 10 ? d.slice(0,6) + '-' + d.slice(6) : String(s||'').trim(); }
   function parse(rawText, fname){
-    // pdf.js scatters stray spaces inside numbers ("510486 - 3589", "11 1") — collapse spaces between digits.
-    const text = rawText.replace(/(\d)\s+(?=\d)/g, '$1');
-    const kts = [...text.matchAll(KT_RE)].map(m => m[1] + '-' + m[2]);
+    const text = rawText;
+    // De-space digits ONLY for the kt scan — not for addresses (would merge "41 111" house+postcode).
+    const ktText = rawText.replace(/(\d)\s+(?=\d)/g, '$1');
+    const kts = [...ktText.matchAll(KT_RE)].map(m => m[1] + '-' + m[2]);
     const kt = kts.find(k => k.replace(/\D/g,'') !== ISSUER) || '';
     let company = '', address = '';
     const seg = text.match(/fyrirtækinu\s+(.*?)\s*\bKt\b\.?\s*\d/i);
@@ -201,12 +202,25 @@
   async function lookupKt(it, cell){
     const digits = (it.kt||'').replace(/\D/g,'');
     if (digits.length !== 10){ cell.innerHTML = '<span class="pill no">engin kt</span>'; return; }
+    if (it._matchKt === digits && it._matchHtml){ cell.innerHTML = it._matchHtml; return; } // cached
     cell.innerHTML = '<span class="pill wait">flettir…</span>';
     try {
       const r = await fetch('/api/kt-lookup?kt=' + encodeURIComponent(digits));
       const d = await r.json();
-      if (d.found) cell.innerHTML = '<span class="pill ok">✓ ' + esc(d.nafn || 'tengt') + '</span>';
-      else cell.innerHTML = '<span class="pill no">✗ ekki í grunni</span>';
+      it._matchKt = digits;
+      if (d.found){
+        it._matchHtml = '<span class="pill ok">✓ ' + esc(d.nafn || 'tengt') + '</span>';
+        // DB name is the canonical company name — use it (PDF company text is unreliable).
+        if (d.nafn && !it._companyEdited && it.company !== d.nafn){
+          it.company = d.nafn;
+          const tr = cell.closest('tr');
+          if (tr){
+            const ci = tr.querySelector('input[data-f="company"]'); if (ci) ci.value = d.nafn;
+            const nm = tr.querySelector('[data-name]'); if (nm) nm.textContent = newName(it);
+          }
+        }
+      } else it._matchHtml = '<span class="pill no">✗ ekki í grunni</span>';
+      cell.innerHTML = it._matchHtml;
     } catch(e){ cell.innerHTML = '<span class="pill no">villa</span>'; }
   }
 
@@ -241,6 +255,7 @@
   rowsEl.addEventListener('input', e => {
     const inp = e.target.closest('input[data-f]'); if (!inp) return;
     const i = +inp.dataset.i; items[i][inp.dataset.f] = inp.value;
+    if (inp.dataset.f === 'company') items[i]._companyEdited = true;
     const nm = rowsEl.querySelector('[data-name="' + i + '"]'); if (nm) nm.textContent = newName(items[i]);
     if (inp.dataset.f === 'kt') lookupKt(items[i], rowsEl.querySelector('[data-match="' + i + '"]'));
   });
