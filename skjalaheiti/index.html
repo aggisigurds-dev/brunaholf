@@ -114,8 +114,14 @@
 
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   function clean(s){ return String(s||'').replace(/[\\/:*?"<>|]+/g,' ').replace(/\s+/g,' ').trim(); }
+  // Expand the "húsf" / "Húsfélag" abbreviation to the full "Húsfélagið" (húsfélög only).
+  // "húsf - Gullsmári 6" / "Húsf. Gullsmári 6" -> "Húsfélagið Gullsmári 6". Idempotent;
+  // won't touch unrelated names like "Húsfax ehf" (requires a separator after the stem).
+  function expandHusf(s){
+    return String(s||'').replace(/^h[uú]sf(?:élagið|élag|él)?\.?(?=$|[\s\-–—.,])\s*[-–—]?\s*/i, 'Húsfélagið ').trim();
+  }
   function newName(it){
-    const parts = [it.company, it.address, fmtKt(it.kt), it.month, it.year].map(clean).filter(Boolean);
+    const parts = [expandHusf(it.company), it.address, fmtKt(it.kt), it.month, it.year].map(clean).filter(Boolean);
     return (parts.join(' - ') || 'óþekkt') + '.pdf';
   }
 
@@ -209,7 +215,7 @@
     if (!my) my = text.match(new RegExp('\\b(' + MONTHS.join('|') + ')\\s+(\\d{4})', 'i'));
     if (my){ month = my[1].toLowerCase(); year = my[2]; }
     if (!year && fname){ const fy = String(fname).match(/\b(20\d{2})\b/); if (fy) year = fy[1]; }
-    return { company, address, kt, month, year };
+    return { company: expandHusf(company), address, kt, month, year };
   }
 
   async function lookupKt(it, cell){
