@@ -135,6 +135,20 @@
   to = "/.netlify/functions/gata-uppgjor"
   status = 200
 
+# NLSH (Landsspítalinn) contract uppgjör — per-verkliður estimate from Ajour
+#   /api/nlsh-uppgjor?month=2026-05
+[[redirects]]
+  from = "/api/nlsh-uppgjor"
+  to = "/.netlify/functions/nlsh-uppgjor"
+  status = 200
+
+# Tímabók — staff time book per worksite/month, to send with the invoice
+#   /api/timabok?worksite=Fjarðagata&month=2026-02
+[[redirects]]
+  from = "/api/timabok"
+  to = "/.netlify/functions/timabok"
+  status = 200
+
 # Generic Verðskrá hole-size rates (Dalvegur 30 / Heklureitur)
 [[redirects]]
   from = "/api/hole-rates"
@@ -205,6 +219,51 @@
 [[redirects]]
   from = "/api/data-sources-status"
   to = "/.netlify/functions/data-sources-status"
+  status = 200
+
+# DK Plus (accounting) read-only API proxy (Slökkvitæki ehf)
+#   /api/dkplus?path=Company|Customers|Sales/Invoices|Products|...
+[[redirects]]
+  from = "/api/dkplus"
+  to = "/.netlify/functions/dkplus"
+  status = 200
+
+# DK Plus phase 2 — sales-invoice write path (POST; calculate-preview by default)
+#   POST /api/dkplus-invoice  { mode:"calculate"|"create", invoice:{…} }
+[[redirects]]
+  from = "/api/dkplus-invoice"
+  to = "/.netlify/functions/dkplus-invoice"
+  status = 200
+
+# DK Plus product (Vörur) importer — create the catalog in dk from vorur.dk_vorunr
+#   POST /api/dkplus-product { mode:"dry-run"|"create", confirm, only/offset/limit }
+[[redirects]]
+  from = "/api/dkplus-product"
+  to = "/.netlify/functions/dkplus-product"
+  status = 200
+
+# Slökkvitæki Sala price list (vorur) — for the reikningur generator
+[[redirects]]
+  from = "/api/vorur"
+  to = "/.netlify/functions/vorur"
+  status = 200
+
+# Shared company branding (logo) from app_settings — for the reikningur generator
+[[redirects]]
+  from = "/api/branding"
+  to = "/.netlify/functions/branding"
+  status = 200
+
+# Recent Slökkvitæki POS sales (solur) — load an existing sale into the reikningur
+[[redirects]]
+  from = "/api/solur"
+  to = "/.netlify/functions/solur"
+  status = 200
+
+# Mark sales as sent to dk (writeback for the Reikningar í bið batch flow)
+[[redirects]]
+  from = "/api/solur-mark"
+  to = "/.netlify/functions/solur-mark"
   status = 200
 
 # Friendly URL for the Reikningagerð grid — uses /api/worksites under the hood,

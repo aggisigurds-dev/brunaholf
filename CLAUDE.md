@@ -58,6 +58,11 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   Prufa/Keyra the server-side `/api/doc-index` indexer in batches (live
   progress), shows connected docs + a RESOLVE list of kennitölur not in
   `customers_base`. Reads/writes `customer_documents`.
+- `reikningatenglar` — advanced, always-editable/movable invoice-links page
+  (`renderReikningatenglar`): live search, quick-add by pasting a URL, open-all
+  per group, copy-link, and drag-to-reorder without entering edit mode. Buttons
+  live in `state.buttons` (`tab:'reikningatenglar'`), curated defaults seeded via
+  `ensureNewTabs` + a `loadState` migration so existing users get the tab.
 
 > The `reikningar` tab is currently a placeholder. The Reikningagerð
 > (invoicing prep) work is being built on top of it — see Open work below.
@@ -333,6 +338,10 @@ either use the calculated total or override with a flat amount.
   - `Greitt` = invoice `status` is paid OR matching bank inflow found
 - Older invoices for reference live in the brunaholf Google Drive
   (shared with `aggisigurds@gmail.com`).
+- In Vinnubók each (worksite, month) cell can attach two Drive files via
+  `efnislisti_documents.doc_type`: `efnislisti` (work doc, 📎) and
+  `invoice` (the reikningur PDF, 🧾). Both picked through the browse-folder/
+  search modal (`openDriveSearch(cellKey, docType)`).
 
 ### Status comments observed in Tekjur (examples — these are real
 operational notes, not stale data):
@@ -399,6 +408,94 @@ for several Supabase tables this app reads:
 The brunaholf drop-zone parser should reuse the exact same column
 mapping and dedupe keys so files can be uploaded via the web UI
 **or** via the local scripts interchangeably.
+
+## DK Plus (accounting) integration
+
+Slökkvitæki ehf is set up in **dkPlus** (dk hugbúnaður) — the accounting
+system the service side invoices from. The "sérhæft sölukerfi" (the
+Slökkvitæki Sala/POS) connects via the dkPlus REST/JSON API.
+
+- API base: `https://api.dkplus.is/api/v1` (swagger: `https://api.dkplus.is/swagger`).
+- **Secrets** (set in the brunaholf Netlify site env, never in the repo):
+  - `DKPLUS_API_KEY` — the auðkennislykill (secret). Shared over email →
+    consider rotating it in dkPlus.
+  - `DKPLUS_COMPANY` — the dkPlus company GUID (Auðkeni dkPlús),
+    `606cc74e-…` for Slökkvitæki ehf. Enables the token exchange.
+  - (dkPlus admin login: brunaholf@brunaholf.is.)
+- **Auth model**: `POST /api/v1/Token` (Authorization: Bearer `DKPLUS_API_KEY`,
+  body `{ Company, Description }`) → company-scoped session `{ Token }`, which is
+  the Bearer for data calls. `dkplus.js` mints + caches that token when
+  `DKPLUS_COMPANY` is set, else sends the key directly; re-mints once on 401.
+- **Must run server-side**: `api.dkplus.is` is unreachable from the browser
+  (CORS) and from the build sandbox; every call goes through a Netlify function.
+- Proxy: `netlify/functions/dkplus.js` → `/api/dkplus?path=…` — phase 1 is
+  **read-only** (rejects non-GET). Confirmed endpoints (lowercase, singular):
+  - list invoices `GET sales/invoice/page/{page}/{count}` · one `GET sales/invoice/{number}`
+  - `GET customer/page/{p}/{c}` · `GET product/page/{p}/{c}`
+  - phase 2 (writes): `POST sales/invoice` · `POST sales/invoice/bulk` ·
+    price preview `PATCH sales/invoice/calculate` · PDF/HTML/email/reverse.
+- Connection-test page: `dkplus-test.html`.
+- Product importer: `netlify/functions/dkplus-product.js` → `POST /api/dkplus-product`
+  ({ mode:"dry-run"|"create", confirm, only/offset/limit }). dk rejects
+  description-only invoice lines ("Product ItemCode not defined"), so the catalog
+  must exist in dk first. Creates `vorur` (where `dk_vorunr` is set) as dk Vörur via
+  `POST /api/v1/Product` (ProductModel; only `ItemCode` required) using net
+  `UnitPrice1` + `TaxPercent` to match the net invoice lines. Admin page
+  `dkplus-products.html` (dry-run → canary → chunked full). `vorur.dk_vorunr` holds
+  the dk vörunúmer for every product (95 from the old catalog + 321+ for the rest).
+  After import, invoice lines flip from free-text to `ItemCode = dk_vorunr`.
+- Phase 2 write path: `netlify/functions/dkplus-invoice.js` → `POST /api/dkplus-invoice`.
+  Safe by default: `mode:"calculate"` (default) does `PATCH sales/invoice/calculate`
+  (priced preview, **creates nothing**); an actual invoice is written only with
+  `mode:"create"` **and** `confirm:true` → `POST sales/invoice`. Never sends to a
+  customer. Body: `{ mode, confirm, post, invoice:{…Head…} }`.
+- Confirmed dkPlus schema (Swagger `/swagger/docs/v1`): create = `POST sales/invoice`,
+  body = `Invoice.Head`. **Draft vs posted is the query flag `?post=false|true`**
+  (false = unposted draft; our function defaults to false). Head: `Customer
+  {Number,Name,SSN,Email,Address1..4,ZipCode,Country}`, `Term` (payment-term — one
+  of the company's terms, confirmed live: `stgr/lm/m15/m20/d15/d20/d30/post`; **NOT**
+  "Krafa í banka" — see below), `Date/DueDate/Mode/Reference/Text1/Text2`,
+  `Attachment{Name,Content(base64)}`
+  (úttektarskýrsla PDF), `Lines[]`. Line fields: `ItemCode` (= vörunúmer/`vorur.id`),
+  `Quantity`, `Price` (unit; ex- or með-vsk per `IncludingVAT` bool), `Text`,
+  `Discount`, `Total` — **no VatCode**. List terms via `GET general/payment/term`
+  (`{ID,Number,Description}`). **Krafa-í-banka is NOT a payment term** — it is a
+  separate dk **innheimta** setting (per customer/company innheimtusamningur),
+  applied automatically on posting; not driven by `Term` and not an API field
+  (confirm where the "10 dagar" in "Krafa í banka 10 dagar" comes from). Rafræn
+  afhending follows the customer's afhendingarmáti set in dk. The vMail lánardrottna pósthólf is **inbound-only** (reads creditor
+  invoices in) — not for sending anything out.
+- `slokkvitaeki-reikningur.html`: invoice generator styled like the dkPlus
+  reikningur (R-000244), logo from `/api/branding`, lines from `/api/vorur` (Sala
+  verðskrá). "Reikna í dkPlus" → calculate preview; "Stofna drög í dkPlus" →
+  unposted draft (`post:false`). Can load an existing sale via `/api/solur`.
+- `reikningar-bid.html`: batch flow — unsent reikningur sales
+  (`/api/solur?unsent` = status `final` + `greitt_med=reikningur` + `invoiced_at`
+  null) grouped by customer → combine selected into one unposted draft via
+  `/api/dkplus-invoice` → writeback `/api/solur-mark` sets `invoiced_at` +
+  `dk_invoice_id` + `invoice_batch_id` so the sale drops off (idempotent).
+- `solur` tracking: added `invoiced_at`/`dk_invoice_id`/`invoice_batch_id`; the
+  `status` check now also allows `void` (test rows voided, recoverable). `/api/solur`
+  only returns `status='final'`.
+- Phases: (1) connect + read. (2) push invoices into dk+ from POS sales /
+  yearly brunakerfi úttektir. (3) customer/vörur sync + payment status back.
+
+## Service-doc ledger (standing task — keep alive)
+
+`brunakerfi.html` is a per-customer ledger for the brunakerfi /
+slökkvitæki **service customers** (fyrirtæki í þjónustu): a one-time
+þjónustusamningur + a yearly úttektarskýrsla + reikningur (2024–2026),
+each linked to Google Drive. Data is hand-encoded in `CUSTOMERS` /
+`INVOICES_2026` / `FILE_IDS`, cross-linked to `rekstrarfelog.html` by kt.
+
+**Standing instruction:** whenever new docs/PDFs surface — in the Drive
+`Brunakerfi\{Skýrslur,Samningar,Reikningar}` folders, the top-level
+`Skýrslur` slökkvitæki-inspection archive, or the `bokhald@eldklar.is` /
+`eldklar.is` mail — link them into this ledger: add the file to the right
+customer/year (resolve its Drive fileId into `FILE_IDS`; OCR scanned
+reikningar for customer + kt + amount) and fill the matching `vantar`
+cell. Add new service customers as they sign up. Surface (don't drop)
+anything undated.
 
 ## Open work
 

@@ -17,7 +17,7 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 // Dalvegur 30 in our reporting = several Ajour projects (the building is split in Ajour).
 const WORKSITE_AJOUR_NAMES = {
   'Dalvegur 30':  ['Dalvegur 18B','Dalvegur 26','Dalvegur 30A'],
-  'Heklu reitur': ['Heklureitur','Heklu reitur'],
+  'Heklureitur':  ['Heklureitur','Heklu reitur'],
 };
 
 exports.handler = async (event) => {
@@ -30,7 +30,13 @@ exports.handler = async (event) => {
   const month = qs.month || new Date().toISOString().slice(0,7);  // YYYY-MM
   const bandsOverride = qs.bands_m_vsk ? Number(qs.bands_m_vsk) : null;
 
-  const ajourNames = WORKSITE_AJOUR_NAMES[worksite];
+  // Tolerant lookup so "Heklureitur" / "Heklu reitur" / different casing all resolve.
+  let ajourNames = WORKSITE_AJOUR_NAMES[worksite];
+  if (!ajourNames) {
+    const norm = (s) => String(s).toLowerCase().replace(/\s+/g, '');
+    const key = Object.keys(WORKSITE_AJOUR_NAMES).find((k) => norm(k) === norm(worksite));
+    if (key) ajourNames = WORKSITE_AJOUR_NAMES[key];
+  }
   if (!ajourNames) return json(400, { error: `Unknown worksite "${worksite}". Supported: ${Object.keys(WORKSITE_AJOUR_NAMES).join(', ')}` });
 
   const monthStart = `${month}-01`;
@@ -57,10 +63,11 @@ exports.handler = async (event) => {
   };
 
   const ajourFilter = `project_name=in.(${ajourNames.map(n => `"${n}"`).join(',')})`;
-  const [ajour, rates] = await Promise.all([
+  const [ajour, rates, bandRates] = await Promise.all([
     fetchAll('ajour_registrations',
       `select=category_group&${ajourFilter}&execution_date=gte.${monthStart}&execution_date=lt.${monthEnd}&category_group=ilike.Gat*`),
     fetchAll('hole_size_rates', `select=size_min_mm,size_max_mm,size_label,rate_an_vsk&scope=eq.generic&category=eq.hole`),
+    fetchAll('hole_size_rates', `select=category,size_min_mm,size_label,rate_an_vsk&scope=eq.generic&category=in.(kragi,bordi)&order=category.asc,size_min_mm.asc`),
   ]);
 
   // Build size → rate lookup
@@ -100,12 +107,21 @@ exports.handler = async (event) => {
   const bands_m_vsk = bandsOverride != null ? bandsOverride : 0;
   const total_m_vsk = holes_m_vsk + bands_m_vsk;
 
+  // Bönd/Kragar rate tables (kragi = Eldvarnarkragi, bordi = Eldvarnar borði/band).
+  // Quantities are entered manually in the form (not in Ajour); these are the
+  // unit prices the form multiplies against the entered magn.
+  const kragar = bandRates.filter(r => r.category === 'kragi')
+    .map(r => ({ size_label: r.size_label, size_mm: r.size_min_mm, rate_an_vsk: Number(r.rate_an_vsk) }));
+  const bordar = bandRates.filter(r => r.category === 'bordi')
+    .map(r => ({ size_label: r.size_label, size_mm: r.size_min_mm, rate_an_vsk: Number(r.rate_an_vsk) }));
+
   return json(200, {
     worksite,
     month,
     ajour_projects: ajourNames,
     holes,
     unmapped,
+    band_rates: { kragi: kragar, bordi: bordar },
     totals: {
       holes_an_vsk,
       holes_m_vsk,
@@ -113,7 +129,7 @@ exports.handler = async (event) => {
       bands_source: bandsOverride != null ? 'override' : 'not_provided',
       total_m_vsk,
     },
-    note: 'Bönd/Kragar are not in Ajour for these worksites — they are entered manually on the monthly Excel sheet. Pass ?bands_m_vsk=NNN to include them in the total.',
+    note: 'Bönd/Kragar are not in Ajour for these worksites — quantities are entered manually in the form against band_rates. Pass ?bands_m_vsk=NNN to include a manual total.',
   });
 };
 

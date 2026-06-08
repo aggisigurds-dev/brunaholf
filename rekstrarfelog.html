@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#ffffff">
+<title>Rekstrarfélög — Brunahólf</title>
+<style>
+  :root{ --bg:#f4f6f9; --panel:#fff; --line:#e2e6ec; --line2:#eef1f5; --text:#0b1220; --muted:#5c6b7d; --accent:#2563eb; --accent2:#1d4ed8; --soft:#f7f9fc; --okbg:#eef7f1; }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:15px;line-height:1.5;}
+  .wrap{max-width:920px;margin:0 auto;padding:22px 18px 60px;}
+  h1{font-size:22px;margin:0 0 2px;font-weight:750;}
+  .lead{color:var(--muted);font-size:14px;margin:0 0 18px;}
+  .searchbar{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-size:14px;margin-bottom:16px;}
+  .firm{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:14px;box-shadow:0 1px 2px rgba(16,24,40,.04);}
+  .fhead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;cursor:pointer;}
+  .fname{font-size:17px;font-weight:700;}
+  .fmeta{font-size:13px;color:var(--muted);margin-top:3px;}
+  .fmeta a{color:var(--accent);text-decoration:none;}
+  .fmeta a:hover{text-decoration:underline;}
+  .count{flex:none;background:#eef4ff;color:var(--accent);border-radius:20px;padding:4px 12px;font-size:13px;font-weight:700;white-space:nowrap;}
+  .blds{margin-top:12px;border-top:1px solid var(--line2);padding-top:10px;display:none;}
+  .firm.open .blds{display:block;}
+  .firm .toggle{font-size:12.5px;color:var(--accent);font-weight:600;margin-top:8px;display:inline-block;}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  th{text-align:left;color:var(--muted);font-weight:600;font-size:12px;padding:4px 6px;border-bottom:1px solid var(--line2);}
+  td{padding:5px 6px;border-bottom:1px solid var(--line2);}
+  tr:last-child td{border-bottom:none;}
+  .kt{color:var(--muted);font-variant-numeric:tabular-nums;}
+  .pill{display:inline-block;background:var(--okbg);border:1px solid #cfe6d2;border-radius:6px;padding:1px 7px;font-size:11px;color:#1f7a4d;}
+  .note{font-size:12px;color:var(--muted);margin-top:18px;border-top:1px solid var(--line);padding-top:10px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Rekstrarfélög</h1>
+  <p class="lead">Stór félög sem reka mörg húsfélög/byggingar og fá reikninga á einn stað. Smelltu á félag til að sjá byggingarnar. &nbsp;·&nbsp; <a href="brunakerfi.html" style="color:var(--accent)">Brunakerfi — þjónusta &amp; skýrslur →</a></p>
+  <input id="q" class="searchbar" placeholder="🔎 Leita að byggingu, félagi eða kennitölu…">
+  <div id="list"></div>
+  <div class="note">Byggt úr reikningapóstum (bokhald@eldklar.is). Kennitölur eru staðfestar úr reikningum. Uppfærðu eftir þörfum.</div>
+</div>
+<script>
+const DATA = {"Eignaumsjón": {"domain": "eignaumsjon.is", "emails": ["gjaldkeri@eignaumsjon.is", "reikningar@eignaumsjon.is"], "buildings": [{"kt": "5007070110", "nafn": "17.júní Torg 1-7, húsfélag"}, {"kt": "6407891239", "nafn": "Aflagrandi 40,húsfélag"}, {"kt": "5010891769", "nafn": "Bílskýli Dalseli 6-22"}, {"kt": "4410872769", "nafn": "Bólstaðarhlíð 40,húsfélag"}, {"kt": "4309901019", "nafn": "Dofraberg 11, húsfélag"}, {"kt": "4902120190", "nafn": "Flétturimi 10-16,húsfélag"}, {"kt": "6104932389", "nafn": "Flétturimi 16,húsfélag"}, {"kt": "6611191520", "nafn": "Hverfisgata 40, húsfélag"}, {"kt": "4702891989", "nafn": "Húsfélagið Skipholti 50b"}, {"kt": "6105140300", "nafn": "Kirkjulundur 12-14, húsfélag"}, {"kt": "4404023480", "nafn": "Kórsalir 3,húsfélag"}, {"kt": "5612090570", "nafn": "Maltakur 3,húsfélag"}, {"kt": "5009760129", "nafn": "Seljabraut 42, húsfélag"}, {"kt": "6811780159", "nafn": "Skaftahlíð 4-10,húsfélag"}, {"kt": "4406992869", "nafn": "Stigahlíð 26, húsfélag"}, {"kt": "5203240700", "nafn": "Suðurhraun 10, rekstrarfélag"}, {"kt": "4802962579", "nafn": "Sóleyjarhlíð 1, húsfélag"}, {"kt": "5204190120", "nafn": "Tangabryggja 13-15, húsfélag"}, {"kt": "6009740179", "nafn": "Tjarnarból 2, húsfélag"}, {"kt": "5710872199", "nafn": "Tjarnarból 6,húsfélag"}, {"kt": "4810741349", "nafn": "Torfufell 50, húsfélag"}, {"kt": "5606171190", "nafn": "Tungusel 1-7, húsfélag"}, {"kt": "4210081240", "nafn": "Álfaskeið 78-80, húsfélag"}, {"kt": "4409003210", "nafn": "Álfholt 2a,b,c,húsfélag"}, {"kt": "6201850439", "nafn": "Álftamýri 24-30, húsfélag"}, {"kt": "5303911089", "nafn": "Ásholt 2,húsfélag"}]}, "Rekstrarumsjón": {"domain": "rekstrarumsjon.is", "emails": ["reikningar@rekstrarumsjon.is", "umsjon@rekstrarumsjon.is"], "buildings": [{"kt": "5903043440", "nafn": "Burknavellir 5, húsfélag"}, {"kt": "4309901019", "nafn": "Dofraberg 11, húsfélag"}, {"kt": "6706061980", "nafn": "Eskivellir 1, húsfélag"}, {"kt": "5312050490", "nafn": "Eskivellir 5,húsfélag"}, {"kt": "4802962579", "nafn": "Sóleyjarhlíð 1, húsfélag"}, {"kt": "4710023050", "nafn": "Álfaskeið 82-84,húsfélag"}, {"kt": "5311750859", "nafn": "Álfaskeið 98-100, húsfélag"}, {"kt": "4704868139", "nafn": "Álftahólar 4, húsfélag"}]}, "Eignarekstur": {"domain": "eignarekstur.is", "emails": ["eignarekstur@eignarekstur.is", "reikningar@eignarekstur.is"], "buildings": [{"kt": "4804867309", "nafn": "Furugrund 73,húsfélag"}, {"kt": "6301032310", "nafn": "Húsfélagið Bæjarlind 12"}, {"kt": "5208190290", "nafn": "Árskógar 1-3, húsfélag"}, {"kt": "5102932079", "nafn": "Árskógar 6-8,húsfélag"}, {"kt": "6009911169", "nafn": "Þverholt 24,húsfélag"}]}, "Heimaleiga": {"domain": "heimaleiga.is", "emails": ["dimka@heimaleiga.is", "erna@heimaleiga.is"], "buildings": [{"kt": "6810130830", "nafn": "Aegina ehf."}, {"kt": "6502220400", "nafn": "EA Law Practice ehf."}, {"kt": "6110962599", "nafn": "Húsfélagið Laugavegi 42"}, {"kt": "6411150100", "nafn": "S&H Invest ehf."}]}, "Fjöleignir": {"domain": "fjoleignir.is", "emails": ["fjoleignir@fjoleignir.is"], "buildings": [{"kt": "5605952559", "nafn": "Gullsmári 11,húsfélag"}, {"kt": "4511901569", "nafn": "Háaleitisbraut 54,húsfélag"}, {"kt": "4701912019", "nafn": "Þúfubarð 19,húsfélag"}]}};
+const $ = id => document.getElementById(id);
+function esc(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function fmtKt(k){ return (k && k.length===10) ? k.slice(0,6)+'-'+k.slice(6) : k; }
+
+function render(filter){
+  const f=(filter||'').toLowerCase().trim();
+  const list=$('list'); list.innerHTML='';
+  Object.entries(DATA).forEach(([name,info])=>{
+    const blds=info.buildings;
+    const match = !f || name.toLowerCase().includes(f) || info.emails.some(e=>e.toLowerCase().includes(f))
+      || blds.some(b=> (b.nafn||'').toLowerCase().includes(f) || (b.kt||'').includes(f.replace(/\D/g,'')));
+    if(!match) return;
+    const filteredBlds = f ? blds.filter(b=> (b.nafn||'').toLowerCase().includes(f) || (b.kt||'').includes(f.replace(/\D/g,'')) || name.toLowerCase().includes(f) || info.emails.some(e=>e.toLowerCase().includes(f))) : blds;
+    const emails=info.emails.map(e=>`<a href="mailto:${esc(e)}">${esc(e)}</a>`).join(' · ');
+    const rows=filteredBlds.map(b=>`<tr><td>${esc(b.nafn)}</td><td class="kt">${fmtKt(b.kt)}</td></tr>`).join('');
+    const div=document.createElement('div');
+    div.className='firm'+(f?' open':'');
+    div.innerHTML=`
+      <div class="fhead"><div>
+        <div class="fname">${esc(name)}</div>
+        <div class="fmeta">📧 ${emails} &nbsp;·&nbsp; ${esc(info.domain)}</div>
+      </div><div class="count">${blds.length} byggingar</div></div>
+      <div class="toggle">Sjá byggingar ▾</div>
+      <div class="blds"><table><thead><tr><th>Bygging / húsfélag</th><th>Kennitala</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    const head=div.querySelector('.fhead'), tog=div.querySelector('.toggle');
+    function flip(){ const o=div.classList.toggle('open'); tog.textContent=o?'Fela byggingar ▴':'Sjá byggingar ▾'; }
+    head.addEventListener('click',flip); tog.addEventListener('click',flip);
+    if(f) tog.textContent='Fela byggingar ▴';
+    list.appendChild(div);
+  });
+  if(!list.children.length) list.innerHTML='<div class="firm">Ekkert fannst.</div>';
+}
+$('q').addEventListener('input', e=>render(e.target.value));
+render('');
+</script>
+</body>
+</html>
