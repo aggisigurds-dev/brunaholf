@@ -223,9 +223,38 @@
     return { company: expandHusf(company), address, kt, month, year };
   }
 
+  // No kt on the report? Try to find the kennitala by company name and fill it in.
+  async function nameLookup(it, cell){
+    const name = clean(expandHusf(it.company));
+    if (name.length < 3){ if (cell) cell.innerHTML = '<span class="pill no">engin kt</span>'; return; }
+    if (cell) cell.innerHTML = '<span class="pill wait">leitar nafns…</span>';
+    try {
+      const r = await fetch('/api/name-lookup?name=' + encodeURIComponent(name));
+      const d = await r.json().catch(() => ({}));
+      if (d.found && d.exact && d.kennitala){
+        it.kt = d.kennitala; it._fromName = true; it._matchKt = null;
+        const tr = cell && cell.closest('tr');
+        if (tr){
+          const ki = tr.querySelector('input[data-f="kt"]'); if (ki) ki.value = d.kennitala;
+          const nm = tr.querySelector('[data-name]'); if (nm) nm.textContent = newName(it);
+        }
+        return lookupKt(it, cell); // confirm against the DB → paints green ✓
+      }
+      if (d.found && d.candidates && d.candidates.length){
+        it._notInDb = false;
+        const tip = d.candidates.map(c => (c.nafn || '?') + ' — ' + (c.kennitala || '')).join('\n');
+        if (cell) cell.innerHTML = '<span class="pill wait" title="' + esc(tip) + '">≈ ' + d.count + ' nöfn — veldu kt handvirkt</span>';
+        return;
+      }
+      if (cell) cell.innerHTML = '<span class="pill no">engin kt</span>';
+    } catch(e){ if (cell) cell.innerHTML = '<span class="pill no">engin kt</span>'; }
+  }
   async function lookupKt(it, cell){
     const digits = (it.kt||'').replace(/\D/g,'');
-    if (digits.length !== 10){ cell.innerHTML = '<span class="pill no">engin kt</span>'; return; }
+    if (digits.length !== 10){
+      if ((it.company||'').trim()) return nameLookup(it, cell);  // no kt → match by name
+      cell.innerHTML = '<span class="pill no">engin kt</span>'; return;
+    }
     if (it._matchKt === digits && it._matchHtml){ cell.innerHTML = it._matchHtml; return; } // cached
     cell.innerHTML = '<span class="pill wait">flettir…</span>';
     try {

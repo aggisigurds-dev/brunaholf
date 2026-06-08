@@ -183,6 +183,12 @@
   to = "/.netlify/functions/kt-create"
   status = 200
 
+# Skjalaheiti renamer: reverse lookup — find a customer's kennitala by name (reports with no kt)
+[[redirects]]
+  from = "/api/name-lookup"
+  to = "/.netlify/functions/name-lookup"
+  status = 200
+
 # Recursively scan a worksite's Drive folder for Efnislisti files per month
 [[redirects]]
   from = "/api/efnislisti-scan"
