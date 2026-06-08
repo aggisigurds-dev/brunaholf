@@ -62,6 +62,7 @@
     <button id="zip" class="btn primary" disabled>⬇️ Sækja allt endurnefnt (ZIP)</button>
     <button id="saga" class="btn" title="Listi yfir skjöl sem hafa verið unnin áður">📜 Saga</button>
     <button id="createMissing" class="btn" hidden title="Stofna alla kúnna sem vantar í viðskiptavinagrunninn (customers_base)"></button>
+    <button id="exportNoKt" class="btn" title="Sækja lista yfir skjöl sem vantar enn kennitölu — til að fletta upp á Keldan (t.d. í gegnum Cowork)">📋 Listi án kt (fyrir Keldan)</button>
     <span id="stat" class="stat"></span>
   </div>
 
@@ -395,6 +396,28 @@
     alert('Stofnað ' + ok + ' af ' + list.length + ' í grunninn.');
   }
   $('createMissing').addEventListener('click', createMany);
+
+  // Export the still-missing-kt rows (deduped by name) as a CSV to hand to Keldan / Cowork.
+  function noKtItems(){
+    return items.filter(x => (x.kt||'').replace(/\D/g,'').length !== 10 && clean(expandHusf(x.company)).length >= 2);
+  }
+  function exportNoKt(){
+    const list = noKtItems();
+    if (!list.length){ alert('Engin skjöl vantar kennitölu núna 🎉'); return; }
+    const q = s => '"' + String(s==null?'':s).replace(/"/g,'""') + '"';
+    const seen = new Set(); const rows = [];
+    list.forEach(it => {
+      const nafn = clean(expandHusf(it.company));
+      const key = nafn.toLowerCase();
+      if (seen.has(key)) return; seen.add(key);
+      rows.push([nafn, clean(it.address), it.file.name, ''].map(q).join(';'));
+    });
+    const csv = '﻿' + ['Nafn','Heimilisfang','Skrá (dæmi)','Kennitala (fylla út)'].map(q).join(';') + '\r\n' + rows.join('\r\n');
+    const blob = new Blob([csv], { type:'text/csv;charset=utf-8' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'vantar-kennitolu.csv'; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+  $('exportNoKt').addEventListener('click', exportNoKt);
 
   let skipped = 0;
   async function sha256(buf){
