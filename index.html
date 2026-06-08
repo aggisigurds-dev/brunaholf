@@ -1465,6 +1465,7 @@ const COLORS = ['t-red','t-dark','t-gold','t-green','t-blue'];
 const DEFAULT_STATE = {
   tabs: [
     {id:'yfirlit',    label:'Yfirlit',    icon:'🏠'},
+    {id:'stjornbord', label:'Stjórnborð', icon:'🎛'},
     {id:'okkarVerkefni', label:'Anni & Aggi', icon:'👥', twoCol:{ Anni:{items:[]}, Aggi:{items:[]} }},
     {id:'inbox',      label:'Inbox',      icon:'📧'},
     {id:'spurningar', label:'Spurningar', icon:'⚠'},
@@ -1731,13 +1732,17 @@ function clearDataCache(){
 // state with an older snapshot from the server).
 function ensureNewTabs(s){
   if(!s || !Array.isArray(s.tabs)) return;
-  ['vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','spurningar','bakendi'].forEach(id=>{
+  ['stjornbord','vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','spurningar','bakendi'].forEach(id=>{
     if(!s.tabs.find(t=>t.id===id)){
       const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
       if(d){
         // Tab order: reikningar → vinnubok → vinnustofa → verdskra → efniskostnadur
         let target;
-        if(id === 'bakendi'){
+        if(id === 'stjornbord'){
+          // Stjórnborð sits right under Yfirlit (top of the sidebar).
+          const idx = s.tabs.findIndex(t=>t.id==='yfirlit');
+          target = idx >= 0 ? idx + 1 : 0;
+        } else if(id === 'bakendi'){
           // Bakendi sits at the bottom, just above Stillingar.
           const idx = s.tabs.findIndex(t=>t.id==='stillingar');
           target = idx >= 0 ? idx : -1;
@@ -1974,6 +1979,7 @@ function render(){
   $brandTitle.textContent = t.label;
   document.body.dataset.tab = t.id;
   if(t.id==='yfirlit') return renderYfirlit(t);
+  if(t.id==='stjornbord') return renderStjornbord(t);
   if(t.id==='stillingar') return renderStillingar();
   if(t.id==='maeting') return renderMaeting(t);
   if(t.id==='kvittanir') return renderKvittanir(t);
@@ -6885,6 +6891,82 @@ function renderCompetitors(t){
 
   $refresh.addEventListener('click', () => load(true));
   load(false);
+}
+
+/* ====================== STJÓRNBORÐ — dashboard center ====================== */
+const COWORK_BOARD_URL = 'https://docs.google.com/spreadsheets/d/1k_tCYZfDfMDpxcZvbDVniXYf1VVhMpP4vK9gpT7uEAw/edit';
+
+function renderStjornbord(t){
+  const conn = [
+    {label:'Verkefnaborð (Cowork)', sub:'verkefni & staða', url:COWORK_BOARD_URL, icon:'🗂'},
+    {label:'Skjalaheiti', sub:'endurnefna úttektarskýrslur', url:'/skjalaheiti/', icon:'🏷'},
+    {label:'Slökkvitæki appið', sub:'slokkvitaeki.netlify.app', url:'https://slokkvitaeki.netlify.app', icon:'🔥'},
+    {label:'Tímavera', sub:'tímaskráning', url:'https://app.timavera.is/app', icon:'⏱'},
+    {label:'Ajour', sub:'skráningar', url:'https://brunaholf.ajoursystem.net/construction', icon:'📐'},
+    {label:'Payday', sub:'reikningar / laun', url:'https://app.payday.is/is/dashboard/', icon:'💸'},
+    {label:'Keldan', sub:'kennitölu leit', url:'https://keldan.is/Fyrirtaeki/Leit', icon:'🔍'},
+    {label:'Redder', sub:'innkaup', url:'https://redder.is', icon:'🛒'},
+  ];
+  const card = c => `
+    <a class="sb-conn" href="${escapeAttr(c.url)}" target="_blank" rel="noopener">
+      <span class="sb-conn-ico">${c.icon}</span>
+      <span class="sb-conn-txt"><span class="sb-conn-label">${escapeHtml(c.label)}</span><span class="sb-conn-sub">${escapeHtml(c.sub)}</span></span>
+      <span class="sb-conn-arrow">↗</span>
+    </a>`;
+  $view.innerHTML = `
+    <style>
+      .sb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+      .sb-conn{display:flex;align-items:center;gap:11px;padding:12px 14px;border:1px solid var(--line,#e2e8f0);border-radius:12px;background:var(--card,#fff);text-decoration:none;color:inherit;transition:.12s}
+      .sb-conn:hover{border-color:var(--accent,#2563eb);transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.07)}
+      .sb-conn-ico{font-size:22px;flex:0 0 auto;line-height:1}
+      .sb-conn-txt{display:flex;flex-direction:column;min-width:0;flex:1}
+      .sb-conn-label{font-weight:700;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .sb-conn-sub{font-size:11.5px;color:var(--muted,#64748b)}
+      .sb-conn-arrow{color:var(--muted,#94a3b8);flex:0 0 auto}
+      .sb-src-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+      .sb-src{border:1px solid var(--line,#e2e8f0);border-radius:12px;padding:11px 13px;background:var(--card,#fff)}
+      .sb-src-head{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+      .sb-src-label{font-weight:700;font-size:13px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .sb-pill{font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px;white-space:nowrap}
+      .sb-src-meta{font-size:11.5px;color:var(--muted,#64748b)}
+      .sb-h{display:flex;align-items:center;gap:8px;margin:20px 2px 10px;font-weight:800;font-size:14px}
+      .sb-h .ln{flex:1;height:1px;background:var(--line,#e2e8f0)}
+      .sb-mini{padding:4px 9px;border:1px solid var(--line,#e2e8f0);border-radius:8px;background:var(--card,#fff);cursor:pointer;font:inherit;font-size:11.5px;color:var(--muted,#64748b)}
+    </style>
+
+    <div class="section-head"><span class="num">01</span><span class="title">Stjórnborð</span><span class="rule"></span><span class="meta">allt á einum stað</span></div>
+
+    <div class="sb-h">🔗 Tengingar &amp; kerfi<span class="ln"></span></div>
+    <div class="sb-grid">${conn.map(card).join('')}</div>
+
+    <div class="sb-h">📊 Gögn í kerfinu — hvað þarf að uppfæra<span class="ln"></span>
+      <button type="button" class="sb-mini" id="sb-refresh">↻ Endurnýja</button></div>
+    <div id="sb-sources"><div class="empty" style="padding:12px;color:var(--muted,#64748b)">Sæki gagnastöðu…</div></div>
+
+    <div class="sb-h">🗂 Verkefnaborð (Cowork)<span class="ln"></span></div>
+    <div style="font-size:13px;color:var(--muted,#64748b);margin:0 2px 10px">Verkefni sem þú úthlutar til Cowork — það vinnur þau daglega og uppfærir stöðuna á borðinu. (Lifandi staða hér kemur næst.)</div>
+    <a class="sb-conn" style="max-width:340px" href="${escapeAttr(COWORK_BOARD_URL)}" target="_blank" rel="noopener"><span class="sb-conn-ico">🗂</span><span class="sb-conn-txt"><span class="sb-conn-label">Opna Verkefnaborð</span><span class="sb-conn-sub">Google Sheet · staða verkefna</span></span><span class="sb-conn-arrow">↗</span></a>
+  `;
+  loadStjornbordSources();
+  const rb = document.getElementById('sb-refresh'); if(rb) rb.onclick = loadStjornbordSources;
+}
+
+async function loadStjornbordSources(){
+  const el = document.getElementById('sb-sources'); if(!el) return;
+  el.innerHTML = '<div class="empty" style="padding:12px;color:var(--muted,#64748b)">Sæki gagnastöðu…</div>';
+  try{
+    const r = await fetch('/api/data-sources-status');
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const { sources } = await r.json();
+    const col = s => s==='fresh'?'#2E8C5B':s==='aging'?'#B26B00':s==='stale'?'#9B1A0F':'#777';
+    const lab = s => s==='fresh'?'FERSKT':s==='aging'?'ELDIST':s==='stale'?'LIÐINN':'?';
+    el.innerHTML = '<div class="sb-src-grid">' + (sources||[]).map(s => `
+      <div class="sb-src" title="${escapeAttr(s.file_hint||'')}">
+        <div class="sb-src-head"><span>${s.icon||'•'}</span><span class="sb-src-label">${escapeHtml(s.label)}</span>
+          <span class="sb-pill" style="background:${col(s.status)}22;color:${col(s.status)}">${lab(s.status)}</span></div>
+        <div class="sb-src-meta">${s.last_import ? ((s.age_days!=null ? (s.age_days===0?'Í dag':s.age_days+' dagar síðan') : '?') + ' · ' + (s.count||0).toLocaleString('is-IS') + ' færslur') : 'engin gögn enn'}</div>
+      </div>`).join('') + '</div>';
+  }catch(e){ el.innerHTML = '<div class="empty" style="padding:12px;color:var(--muted,#64748b)">Náði ekki í gagnastöðu — skoðaðu aftur síðar.</div>'; }
 }
 
 function renderYfirlit(t){
