@@ -177,6 +177,12 @@
   to = "/.netlify/functions/skjalaheiti-log"
   status = 200
 
+# Skjalaheiti renamer: create a missing customer in customers_base
+[[redirects]]
+  from = "/api/kt-create"
+  to = "/.netlify/functions/kt-create"
+  status = 200
+
 # Recursively scan a worksite's Drive folder for Efnislisti files per month
 [[redirects]]
   from = "/api/efnislisti-scan"

@@ -35,6 +35,8 @@
   .ok { color:#15803d; background:#f0fdf4; border:1px solid #bbf7d0; }
   .no { color:#b91c1c; background:#fef2f2; border:1px solid #fecaca; }
   .wait { color:#92400e; background:#fffbeb; border:1px solid #fde68a; }
+  .createbtn { margin-left:5px; padding:2px 8px; border:1px solid #bfdbfe; border-radius:6px; background:#eff6ff; color:#1d4ed8; cursor:pointer; font:inherit; font-size:10.5px; font-weight:700; }
+  .createbtn:hover { background:#dbeafe; border-color:#93c5fd; }
   .rm { background:none; border:none; color:#cbd5e1; cursor:pointer; font-size:15px; }
   .rm:hover { color:#dc2626; }
   .foot { font-size:11.5px; color:var(--mut); margin-top:18px; line-height:1.5; }
@@ -59,6 +61,7 @@
     <button id="pickFolder" class="btn" title="Aðeins Chrome/Edge — endurnefnir skrár beint í möppunni á þessari tölvu">📁 Tengja möppu (endurnefna á staðnum)</button>
     <button id="zip" class="btn primary" disabled>⬇️ Sækja allt endurnefnt (ZIP)</button>
     <button id="saga" class="btn" title="Listi yfir skjöl sem hafa verið unnin áður">📜 Saga</button>
+    <button id="createMissing" class="btn" hidden title="Stofna alla kúnna sem vantar í viðskiptavinagrunninn (customers_base)"></button>
     <span id="stat" class="stat"></span>
   </div>
 
@@ -228,6 +231,7 @@
       const d = await r.json();
       it._matchKt = digits;
       if (d.found){
+        it._notInDb = false;
         it._matchHtml = '<span class="pill ok">✓ ' + esc(d.nafn || 'tengt') + '</span>';
         // DB name is the canonical company name — use it (PDF company text is unreliable).
         const tr = cell.closest('tr');
@@ -241,8 +245,9 @@
           if (tr){ const ai = tr.querySelector('input[data-f="address"]'); if (ai) ai.value = it.address; }
         }
         if (tr){ const nm = tr.querySelector('[data-name]'); if (nm) nm.textContent = newName(it); }
-      } else it._matchHtml = '<span class="pill no">✗ ekki í grunni</span>';
+      } else { it._notInDb = true; it._matchHtml = '<span class="pill no">✗ ekki í grunni</span> <button class="createbtn" data-create title="Stofna þennan kúnna í grunninn úr Fyrirtæki + Heimilisfang + Kennitölu">➕ Stofna</button>'; }
       cell.innerHTML = it._matchHtml;
+      updateMissingBtn();
     } catch(e){ cell.innerHTML = '<span class="pill no">villa</span>'; }
   }
 
@@ -280,6 +285,7 @@
          + (dups ? ' · 🔁 ' + dups + ' áður unnin' : '')
          + (skipped ? ' · ' + skipped + ' tvítökum sleppt' : ''))
       : '';
+    updateMissingBtn();
   }
 
   rowsEl.addEventListener('input', e => {
@@ -293,6 +299,13 @@
   rowsEl.addEventListener('click', async e => {
     const dl = e.target.closest('[data-dl]');
     if (dl){ const it = items[+dl.dataset.dl]; downloadOne(it); return; }
+    const cr = e.target.closest('[data-create]');
+    if (cr){
+      const tr = cr.closest('tr'); const inp = tr && tr.querySelector('input[data-i]');
+      const i = inp ? +inp.dataset.i : -1;
+      if (i >= 0) createCustomer(items[i], tr.querySelector('[data-match]'));
+      return;
+    }
     const rm = e.target.closest('[data-rm]');
     if (rm){ items.splice(+rm.dataset.rm, 1); render(); }
   });
@@ -302,6 +315,55 @@
     const a = document.createElement('a'); a.href = url; a.download = newName(it); a.click();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
   }
+
+  // --- Create a missing customer (kt "ekki í grunni") into customers_base ---
+  async function createCustomer(it, cell){
+    const digits = (it.kt||'').replace(/\D/g,'');
+    if (digits.length !== 10){ alert('Vantar gilda kennitölu (10 stafir) til að stofna.'); return false; }
+    const nafn = clean(expandHusf(it.company));
+    const heimilisfang = clean(it.address);
+    if (!nafn && !confirm('Ekkert fyrirtækjanafn skráð — stofna samt með kennitölu einni?')) return false;
+    if (cell) cell.innerHTML = '<span class="pill wait">stofna…</span>';
+    try {
+      const r = await fetch('/api/kt-create', { method:'POST', headers:{ 'content-type':'application/json' }, body: JSON.stringify({ kt: digits, nafn, heimilisfang }) });
+      const d = await r.json().catch(() => ({}));
+      if (r.ok && (d.created || d.existed)){
+        it._notInDb = false; it._matchKt = digits;
+        it._matchHtml = '<span class="pill ok">✓ ' + esc(d.nafn || nafn || 'stofnað') + (d.created ? ' (nýtt)' : '') + '</span>';
+        if (cell) cell.innerHTML = it._matchHtml;
+        updateMissingBtn();
+        return true;
+      }
+      if (cell) cell.innerHTML = '<span class="pill no">✗ villa</span> <button class="createbtn" data-create>➕ reyna aftur</button>';
+      console.error('kt-create failed', d);
+    } catch(e){
+      if (cell) cell.innerHTML = '<span class="pill no">✗ villa</span> <button class="createbtn" data-create>➕ reyna aftur</button>';
+    }
+    return false;
+  }
+  function missingItems(){ return items.filter(x => x._notInDb && (x.kt||'').replace(/\D/g,'').length === 10); }
+  function updateMissingBtn(){
+    const btn = document.getElementById('createMissing'); if (!btn) return;
+    const n = missingItems().length;
+    btn.hidden = n === 0;
+    btn.textContent = '➕ Stofna ' + n + ' sem vantar';
+  }
+  async function createMany(){
+    const list = missingItems();
+    if (!list.length) return;
+    if (!confirm('Stofna ' + list.length + ' nýja kúnna í grunninn?\nYfirfarðu nöfn og heimilisföng í töflunni fyrst — þú getur breytt þeim.')) return;
+    const btn = document.getElementById('createMissing'); if (btn){ btn.disabled = true; btn.textContent = 'Stofna…'; }
+    let ok = 0;
+    for (const it of list){
+      const i = items.indexOf(it);
+      const cell = i >= 0 ? rowsEl.querySelector('[data-match="' + i + '"]') : null;
+      if (await createCustomer(it, cell)) ok++;
+    }
+    if (btn) btn.disabled = false;
+    updateMissingBtn();
+    alert('Stofnað ' + ok + ' af ' + list.length + ' í grunninn.');
+  }
+  $('createMissing').addEventListener('click', createMany);
 
   let skipped = 0;
   async function sha256(buf){
