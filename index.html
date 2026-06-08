@@ -8391,7 +8391,16 @@ function leidRenderList(){
   if(!list) return;
   const rows = _leidData.filter(leidMatch);
   const anySel = _leidSel.forg.size||_leidSel.ar.size||_leidSel.man.size||_leidSel.sv.size;
-  if(cnt) cnt.innerHTML = `${rows.length} fyrirtæki` + (anySel?` <button class="leid-clear" id="leid-clear">Hreinsa síur</button>`:'');
+  let extra = '';
+  const withAddr = rows.filter(c=>c.heim);
+  if(withAddr.length){
+    const stops = withAddr.slice(0,10);
+    const dest = encodeURIComponent(stops[stops.length-1].heim);
+    const wp = stops.slice(0,-1).map(c=>encodeURIComponent(c.heim)).join('|');
+    extra += ` <a class="leid-aka" href="https://www.google.com/maps/dir/?api=1&destination=${dest}${wp?'&waypoints='+wp:''}" target="_blank" rel="noopener" style="padding:5px 12px">🚗 Opna leiðina${withAddr.length>10?' (fyrstu 10)':''}</a>`;
+  }
+  if(anySel) extra += ` <button class="leid-clear" id="leid-clear">Hreinsa síur</button>`;
+  if(cnt) cnt.innerHTML = `${rows.length} fyrirtæki` + extra;
   const clr = document.getElementById('leid-clear'); if(clr) clr.onclick=()=>{ _leidSel.forg.clear();_leidSel.ar.clear();_leidSel.man.clear();_leidSel.sv.clear(); leidBuildFilters(); leidRenderList(); };
   if(!rows.length){ list.innerHTML = '<div class="empty" style="padding:14px;color:var(--muted,#64748b)">Engin fyrirtæki með þessar síur.</div>'; return; }
   list.innerHTML = rows.slice(0,400).map(c=>{
