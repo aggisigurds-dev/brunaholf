@@ -191,7 +191,9 @@
     const kts = [...ktText.matchAll(KT_RE)].map(m => m[1] + '-' + m[2]);
     const kt = kts.find(k => k.replace(/\D/g,'') !== ISSUER) || '';
     let company = '', address = '';
-    const seg = text.match(/fyrirtækinu\s+(.*?)\s*\bkt\b[\s.:]*\d/i);
+    // Company + address run from "fyrirtækinu" up to the customer kt ("kt:NNNNNN"),
+    // OR — when the report has no customer kt — up to the next section ("Tæki voru yfirfarin").
+    const seg = text.match(/fyrirtækinu\s+(.*?)\s*(?:\bkt\b[\s.:]*\d|t[æae]ki\s+voru|yfirfar|$)/i);
     if (seg){
       const s = seg[1].replace(/[.,]\s*$/,'').replace(/\s+/g,' ').trim();
       // Address = the trailing "street [house-no] <3-digit postcode> <city>"; everything before is
