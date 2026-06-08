@@ -1496,6 +1496,7 @@ const DEFAULT_STATE = {
   tabs: [
     {id:'yfirlit',    label:'Yfirlit',    icon:'🏠'},
     {id:'stjornbord', label:'Stjórnborð', icon:'🎛'},
+    {id:'leidsogn',   label:'Leiðsögn',   icon:'🧭'},
     {id:'okkarVerkefni', label:'Anni & Aggi', icon:'👥', twoCol:{ Anni:{items:[]}, Aggi:{items:[]} }},
     {id:'inbox',      label:'Inbox',      icon:'📧'},
     {id:'spurningar', label:'Spurningar', icon:'⚠'},
@@ -1773,7 +1774,7 @@ function clearDataCache(){
 // state with an older snapshot from the server).
 function ensureNewTabs(s){
   if(!s || !Array.isArray(s.tabs)) return;
-  ['stjornbord','reikningatenglar','gerdreikninga','vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','spurningar','bakendi'].forEach(id=>{
+  ['stjornbord','leidsogn','reikningatenglar','gerdreikninga','vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','spurningar','bakendi'].forEach(id=>{
     if(!s.tabs.find(t=>t.id===id)){
       const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
       if(d){
@@ -2048,6 +2049,7 @@ function render(){
   document.body.dataset.tab = t.id;
   if(t.id==='yfirlit') return renderYfirlit(t);
   if(t.id==='stjornbord') return renderStjornbord(t);
+  if(t.id==='leidsogn') return renderLeidsogn(t);
   if(t.id==='stillingar') return renderStillingar();
   if(t.id==='maeting') return renderMaeting(t);
   if(t.id==='kvittanir') return renderKvittanir(t);
@@ -8322,6 +8324,87 @@ async function loadStjornbordSources(){
         <div class="sb-src-meta">${s.last_import ? ((s.age_days!=null ? (s.age_days===0?'Í dag':s.age_days+' dagar síðan') : '?') + ' · ' + (s.count||0).toLocaleString('is-IS') + ' færslur') : 'engin gögn enn'}</div>
       </div>`).join('') + '</div>';
   }catch(e){ el.innerHTML = '<div class="empty" style="padding:12px;color:var(--muted,#64748b)">Náði ekki í gagnastöðu — skoðaðu aftur síðar.</div>'; }
+}
+
+/* ====================== LEIÐSÖGN — service routing ====================== */
+let _leidData = null;
+const LEID_MONTHS = ['','jan','feb','mar','apr','maí','jún','júl','ágú','sep','okt','nóv','des'];
+const LEID_FORG = { red:{lbl:'🔴 Gleymt', c:'#dc2626'}, orange:{lbl:'🟠 Á eftir', c:'#ea580c'}, yellow:{lbl:'🟡 Væntanlegt', c:'#ca8a04'}, green:{lbl:'🟢 Búið', c:'#16a34a'} };
+const _leidSel = { forg:new Set(), ar:new Set(), man:new Set(), sv:new Set() };
+
+function renderLeidsogn(t){
+  $view.innerHTML = `
+    <style>
+      .leid-grp{margin:0 2px 12px}
+      .leid-grp-h{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted,#64748b);font-weight:800;margin-bottom:6px}
+      .leid-chips{display:flex;flex-wrap:wrap;gap:6px}
+      .leid-chip{padding:5px 11px;border:1px solid var(--line,#e2e8f0);border-radius:999px;background:var(--card,#fff);cursor:pointer;font:inherit;font-size:12.5px;color:var(--ink,#0f172a);white-space:nowrap}
+      .leid-chip.on{background:#2563eb;border-color:#2563eb;color:#fff;font-weight:700}
+      .leid-row{display:flex;align-items:center;gap:11px;padding:10px 13px;border:1px solid var(--line,#e2e8f0);border-radius:11px;background:var(--card,#fff);margin-bottom:7px}
+      .leid-dot{width:11px;height:11px;border-radius:50%;flex:0 0 auto}
+      .leid-main{flex:1;min-width:0}
+      .leid-name{font-weight:700;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .leid-addr{font-size:12px;color:var(--muted,#64748b);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .leid-when{font-size:11px;color:var(--muted,#94a3b8);flex:0 0 auto;white-space:nowrap}
+      .leid-aka{flex:0 0 auto;padding:7px 12px;border-radius:9px;background:#16a34a;color:#fff;text-decoration:none;font-weight:700;font-size:12.5px;white-space:nowrap}
+      .leid-aka:hover{background:#15803d}
+      .leid-clear{padding:4px 10px;border:1px solid var(--line,#e2e8f0);border-radius:8px;background:var(--card,#fff);cursor:pointer;font:inherit;font-size:11.5px;color:var(--muted,#64748b)}
+    </style>
+    <div class="section-head"><span class="num">02</span><span class="title">Leiðsögn</span><span class="rule"></span><span class="meta">veldu síur → keyrðu</span></div>
+    <div id="leid-filters"><div class="empty" style="padding:12px;color:var(--muted,#64748b)">Sæki…</div></div>
+    <div id="leid-count" style="display:flex;align-items:center;gap:10px;margin:12px 2px 10px;font-weight:700"></div>
+    <div id="leid-list"></div>`;
+  if(_leidData){ leidBuildFilters(); leidRenderList(); }
+  else fetch('/api/leidsogn',{cache:'no-store'}).then(r=>r.json()).then(d=>{ _leidData=(d&&d.companies)||[]; leidBuildFilters(); leidRenderList(); })
+    .catch(()=>{ const e=document.getElementById('leid-filters'); if(e) e.innerHTML='<div class="empty" style="padding:12px;color:var(--muted,#64748b)">Náði ekki í leiðsögn-gögn.</div>'; });
+}
+function leidBuildFilters(){
+  const host = document.getElementById('leid-filters'); if(!host) return;
+  const years = [...new Set(_leidData.map(c=>c.ar).filter(Boolean))].sort((a,b)=>b-a);
+  const months = [...new Set(_leidData.map(c=>c.manudur))].filter(m=>m!=null).sort((a,b)=>a-b);
+  const svaedi = [...new Set(_leidData.map(c=>c.svaedi).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'is'));
+  const grp = (h, key, items, lbl) => `
+    <div class="leid-grp"><div class="leid-grp-h">${h}</div><div class="leid-chips" data-grp="${key}">
+      ${items.map(v=>`<button class="leid-chip${_leidSel[key].has(String(v))?' on':''}" data-v="${escapeAttr(String(v))}">${escapeHtml(String(lbl(v)))}</button>`).join('')}
+    </div></div>`;
+  host.innerHTML =
+    grp('Forgangur','forg',['red','orange','yellow','green'], v=>LEID_FORG[v].lbl) +
+    grp('Ár','ar', years, v=>v) +
+    grp('Mánuður','man', months, v=>LEID_MONTHS[v]||'?') +
+    grp('Svæði','sv', svaedi, v=>v);
+  host.querySelectorAll('.leid-chip').forEach(ch=>ch.onclick=()=>{
+    const key = ch.closest('[data-grp]').dataset.grp, v = ch.dataset.v;
+    if(_leidSel[key].has(v)) _leidSel[key].delete(v); else _leidSel[key].add(v);
+    ch.classList.toggle('on');
+    leidRenderList();
+  });
+}
+function leidMatch(c){
+  if(_leidSel.forg.size && !_leidSel.forg.has(c.forg)) return false;
+  if(_leidSel.ar.size && !_leidSel.ar.has(String(c.ar))) return false;
+  if(_leidSel.man.size && !_leidSel.man.has(String(c.manudur))) return false;
+  if(_leidSel.sv.size && !_leidSel.sv.has(c.svaedi)) return false;
+  return true;
+}
+function leidRenderList(){
+  const list = document.getElementById('leid-list'), cnt = document.getElementById('leid-count');
+  if(!list) return;
+  const rows = _leidData.filter(leidMatch);
+  const anySel = _leidSel.forg.size||_leidSel.ar.size||_leidSel.man.size||_leidSel.sv.size;
+  if(cnt) cnt.innerHTML = `${rows.length} fyrirtæki` + (anySel?` <button class="leid-clear" id="leid-clear">Hreinsa síur</button>`:'');
+  const clr = document.getElementById('leid-clear'); if(clr) clr.onclick=()=>{ _leidSel.forg.clear();_leidSel.ar.clear();_leidSel.man.clear();_leidSel.sv.clear(); leidBuildFilters(); leidRenderList(); };
+  if(!rows.length){ list.innerHTML = '<div class="empty" style="padding:14px;color:var(--muted,#64748b)">Engin fyrirtæki með þessar síur.</div>'; return; }
+  list.innerHTML = rows.slice(0,400).map(c=>{
+    const f = LEID_FORG[c.forg]||LEID_FORG.green;
+    const addr = c.heim || '';
+    const aka = addr ? 'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(addr) : '';
+    return `<div class="leid-row">
+      <span class="leid-dot" style="background:${f.c}" title="${f.lbl}"></span>
+      <span class="leid-main"><span class="leid-name">${escapeHtml(c.nafn||'')}</span><span class="leid-addr">${escapeHtml(addr||'— vantar heimilisfang')}</span></span>
+      <span class="leid-when">${c.manudur?LEID_MONTHS[c.manudur]:''} ${c.ar||''}</span>
+      ${aka?`<a class="leid-aka" href="${escapeAttr(aka)}" target="_blank" rel="noopener">🚗 Aka</a>`:''}
+    </div>`;
+  }).join('') + (rows.length>400?`<div class="empty" style="padding:10px;color:var(--muted,#64748b)">Sýni fyrstu 400 af ${rows.length} — þrengdu síurnar.</div>`:'');
 }
 
 function renderYfirlit(t){

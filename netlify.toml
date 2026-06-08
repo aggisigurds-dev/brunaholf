@@ -203,6 +203,12 @@
   to = "/.netlify/functions/name-lookup"
   status = 200
 
+# Leiðsögn: service-routing schedule (companies + address + month/year + priority)
+[[redirects]]
+  from = "/api/leidsogn"
+  to = "/.netlify/functions/leidsogn"
+  status = 200
+
 # Recursively scan a worksite's Drive folder for Efnislisti files per month
 [[redirects]]
   from = "/api/efnislisti-scan"
