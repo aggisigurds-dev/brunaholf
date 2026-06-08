@@ -54,7 +54,8 @@ exports.handler = async (event) => {
         if (!text) { stats.errors++; continue; }
         const norm = text.replace(/\s+/g, ' ');
         if (norm.replace(/\D/g, '').indexOf(ISSUER_KT) === -1) { stats.notSlokkvitaeki++; continue; }
-        const kt = customerKt(norm);
+        let kt = customerKt(norm);
+        if (!kt) kt = customerKtFromName(f.name);   // no kt in the PDF → use the kt the renamer put in the filename
         if (!kt) { stats.noKt++; continue; }
         const doc_type = classify(norm);
         const year = extractYear(norm);
@@ -111,6 +112,9 @@ async function readPdfText(id, token) {
 // ── Extraction ───────────────────────────────────────────────────────────────
 function allKts(s) { const out = []; const re = /\b(\d{6})-?(\d{4})\b/g; let m; while ((m = re.exec(s))) out.push(m[1] + m[2]); return out; }
 function customerKt(s) { for (const kt of allKts(s)) if (kt !== ISSUER_KT) return kt; return null; }
+// Fallback: older reports carry no customer kt in the text — but the Skjalaheiti renamer
+// wrote it into the filename ("… - 540994-2269 - febrúar - 2023.pdf"). Use that.
+function customerKtFromName(name) { for (const kt of allKts(String(name || ''))) if (kt !== ISSUER_KT) return kt; return null; }
 function classify(s) {
   if (/skýrsla\s+vegna\s+úttektar|úttektarskýrsl|uttektarskyrsl/i.test(s)) return 'uttektarskyrsla';
   if (/þjónustusamning|þjonustusamning/i.test(s)) return 'samningur';
