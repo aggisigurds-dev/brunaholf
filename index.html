@@ -8330,7 +8330,11 @@ async function loadStjornbordSources(){
 let _leidData = null;
 const LEID_MONTHS = ['','jan','feb','mar','apr','maí','jún','júl','ágú','sep','okt','nóv','des'];
 const LEID_FORG = { red:{lbl:'🔴 Gleymt', c:'#dc2626'}, orange:{lbl:'🟠 Á eftir', c:'#ea580c'}, yellow:{lbl:'🟡 Væntanlegt', c:'#ca8a04'}, green:{lbl:'🟢 Búið', c:'#16a34a'} };
-const _leidSel = { forg:new Set(), ar:new Set(), man:new Set(), sv:new Set() };
+const _leidSel = { forg:new Set(), ar:new Set(), man:new Set(), sv:new Set(), rk:new Set() };
+const REKSTRAR_CONTACT = {
+  'Eignaumsjón':'reikningar@eignaumsjon.is', 'Eignarekstur':'reikningar@eignarekstur.is',
+  'Heimaleiga':'dimka@heimaleiga.is', 'Rekstrarumsjón':'reikningar@rekstrarumsjon.is', 'Fjöleignir':'fjoleignir@fjoleignir.is'
+};
 
 function renderLeidsogn(t){
   $view.innerHTML = `
@@ -8363,6 +8367,7 @@ function leidBuildFilters(){
   const years = [...new Set(_leidData.map(c=>c.ar).filter(Boolean))].sort((a,b)=>b-a);
   const months = [...new Set(_leidData.map(c=>c.manudur))].filter(m=>m!=null).sort((a,b)=>a-b);
   const svaedi = [...new Set(_leidData.map(c=>c.svaedi).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'is'));
+  const rfs = [...new Set(_leidData.map(c=>c.rekstrarfelag).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'is'));
   const grp = (h, key, items, lbl) => `
     <div class="leid-grp"><div class="leid-grp-h">${h}</div><div class="leid-chips" data-grp="${key}">
       ${items.map(v=>`<button class="leid-chip${_leidSel[key].has(String(v))?' on':''}" data-v="${escapeAttr(String(v))}">${escapeHtml(String(lbl(v)))}</button>`).join('')}
@@ -8371,7 +8376,8 @@ function leidBuildFilters(){
     grp('Forgangur','forg',['red','orange','yellow','green'], v=>LEID_FORG[v].lbl) +
     grp('Ár','ar', years, v=>v) +
     grp('Mánuður','man', months, v=>LEID_MONTHS[v]||'?') +
-    grp('Svæði','sv', svaedi, v=>v);
+    grp('Svæði','sv', svaedi, v=>v) +
+    grp('Rekstrarfélag','rk', rfs, v=>v);
   host.querySelectorAll('.leid-chip').forEach(ch=>ch.onclick=()=>{
     const key = ch.closest('[data-grp]').dataset.grp, v = ch.dataset.v;
     if(_leidSel[key].has(v)) _leidSel[key].delete(v); else _leidSel[key].add(v);
@@ -8384,6 +8390,7 @@ function leidMatch(c){
   if(_leidSel.ar.size && !_leidSel.ar.has(String(c.ar))) return false;
   if(_leidSel.man.size && !_leidSel.man.has(String(c.manudur))) return false;
   if(_leidSel.sv.size && !_leidSel.sv.has(c.svaedi)) return false;
+  if(_leidSel.rk.size && !_leidSel.rk.has(c.rekstrarfelag)) return false;
   return true;
 }
 function leidRenderList(){
@@ -8401,16 +8408,19 @@ function leidRenderList(){
   }
   if(anySel) extra += ` <button class="leid-clear" id="leid-clear">Hreinsa síur</button>`;
   if(cnt) cnt.innerHTML = `${rows.length} fyrirtæki` + extra;
-  const clr = document.getElementById('leid-clear'); if(clr) clr.onclick=()=>{ _leidSel.forg.clear();_leidSel.ar.clear();_leidSel.man.clear();_leidSel.sv.clear(); leidBuildFilters(); leidRenderList(); };
+  const clr = document.getElementById('leid-clear'); if(clr) clr.onclick=()=>{ _leidSel.forg.clear();_leidSel.ar.clear();_leidSel.man.clear();_leidSel.sv.clear();_leidSel.rk.clear(); leidBuildFilters(); leidRenderList(); };
   if(!rows.length){ list.innerHTML = '<div class="empty" style="padding:14px;color:var(--muted,#64748b)">Engin fyrirtæki með þessar síur.</div>'; return; }
   list.innerHTML = rows.slice(0,400).map(c=>{
     const f = LEID_FORG[c.forg]||LEID_FORG.green;
     const addr = c.heim || '';
     const aka = addr ? 'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(addr) : '';
+    const rf = c.rekstrarfelag || '';
+    const rfMail = rf ? (REKSTRAR_CONTACT[rf] || '') : '';
     return `<div class="leid-row">
       <span class="leid-dot" style="background:${f.c}" title="${f.lbl}"></span>
-      <span class="leid-main"><span class="leid-name">${escapeHtml(c.nafn||'')}</span><span class="leid-addr">${escapeHtml(addr||'— vantar heimilisfang')}</span></span>
+      <span class="leid-main"><span class="leid-name">${escapeHtml(c.nafn||'')}</span><span class="leid-addr">${escapeHtml(addr||'— vantar heimilisfang')}${rf?` · <b style="color:#2563eb">${escapeHtml(rf)}</b>`:''}</span></span>
       <span class="leid-when">${c.manudur?LEID_MONTHS[c.manudur]:''} ${c.ar||''}</span>
+      ${rfMail?`<a class="leid-aka" style="background:#475569;padding:7px 10px" href="mailto:${escapeAttr(rfMail)}?subject=${encodeURIComponent('Slökkvitæki ehf — '+(c.nafn||''))}" title="Senda reikning á ${escapeAttr(rf)} (${escapeAttr(rfMail)})">✉</a>`:''}
       ${aka?`<a class="leid-aka" href="${escapeAttr(aka)}" target="_blank" rel="noopener">🚗 Aka</a>`:''}
     </div>`;
   }).join('') + (rows.length>400?`<div class="empty" style="padding:10px;color:var(--muted,#64748b)">Sýni fyrstu 400 af ${rows.length} — þrengdu síurnar.</div>`:'');
