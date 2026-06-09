@@ -173,6 +173,12 @@
   to = "/.netlify/functions/doc-index"
   status = 200
 
+# Build a sortable "whole database" Google Sheet from úttektarskýrslu filenames
+[[redirects]]
+  from = "/api/allt-sheet"
+  to = "/.netlify/functions/allt-sheet"
+  status = 200
+
 # Bakendi: netfang backfill from sent bokhald@eldklar.is .eml
 [[redirects]]
   from = "/api/eml-netfong"
