@@ -458,7 +458,14 @@ Slökkvitæki Sala/POS) connects via the dkPlus REST/JSON API.
   `Attachment{Name,Content(base64)}`
   (úttektarskýrsla PDF), `Lines[]`. Line fields: `ItemCode` (= vörunúmer/`vorur.id`),
   `Quantity`, `Price` (unit; ex- or með-vsk per `IncludingVAT` bool), `Text`,
-  `Discount`, `Total` — **no VatCode**. List terms via `GET general/payment/term`
+  `Discount`, `Total` — **no VatCode**. **`SalesPerson` is REQUIRED on create**
+  (else 400 "Sölumaður er ekki til") and must be a registered dk sölumaður —
+  list via `GET sales/person/page/1/20`; only one exists: `as` (Agnar Sigurðss).
+  Gotcha: the **create** model field is `SalesPerson` but the **read** model
+  returns it as `SalePerson` (no s) — don't copy the read field name into a
+  create payload. End-to-end create confirmed live 2026-06-09: unposted PRUFA
+  draft (RecordID 2, 1× vara 161, 4.490 kr m vsk) via `POST sales/invoice?post=false`.
+  List terms via `GET general/payment/term`
   (`{ID,Number,Description}`). **Krafa-í-banka is NOT a payment term** — it is a
   separate dk **innheimta** setting (per customer/company innheimtusamningur),
   applied automatically on posting; not driven by `Term` and not an API field
