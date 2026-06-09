@@ -1817,6 +1817,21 @@ function ensureNewTabs(s){
       }
     }
   });
+  // One-time: pull the two dashboards up to the very top (right under Yfirlit)
+  // so they are easy to find. Older saved layouts dropped new tabs at the
+  // bottom next to Tenglar, which is why Leiðsögn / Stjórnborð were "missing".
+  // Guarded by a flag so it never fights a deliberate reorder the user makes.
+  s.ui = s.ui || {};
+  if(!s.ui._navPinV2){
+    ['stjornbord','leidsogn'].forEach((id,k)=>{
+      const i = s.tabs.findIndex(t=>t.id===id);
+      if(i<0) return;
+      const [tab] = s.tabs.splice(i,1);
+      const yf = s.tabs.findIndex(t=>t.id==='yfirlit');
+      s.tabs.splice((yf>=0?yf:0)+1+k, 0, tab);
+    });
+    s.ui._navPinV2 = true;
+  }
 }
 
 function load(){
@@ -1873,8 +1888,17 @@ function load(){
     return s;
   }catch(e){ return JSON.parse(JSON.stringify(DEFAULT_STATE)); }
 }
-function save(){
+function save(opts){
   state.ui = state.ui || {};
+  // Navigation-only saves (just switching which tab is open) must NOT bump the
+  // shared structural timestamp or push to the server. Otherwise an idle/stale
+  // computer re-uploads its OLD tab order on the next click and wipes a
+  // rearrangement made on another computer — the "tabs go missing" bug.
+  // The active tab is a per-device thing, so we keep it in localStorage only.
+  if(opts && opts.nav){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    return;
+  }
   state.ui.updated_at = new Date().toISOString();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   scheduleServerSync();
@@ -1999,7 +2023,7 @@ function renderTabs(){
   }
   $tabs.querySelectorAll('[data-id]').forEach(el=>{
     el.addEventListener('click',()=>{
-      state.ui.activeTab=el.dataset.id; save(); render();
+      state.ui.activeTab=el.dataset.id; save({nav:true}); render();
       document.getElementById('layout').classList.remove('open'); // close mobile drawer
     });
     // Pre-warm cache on hover/touch/focus so heavy tabs feel instant on click
