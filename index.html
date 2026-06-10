@@ -1775,7 +1775,7 @@ function clearDataCache(){
 // state with an older snapshot from the server).
 function ensureNewTabs(s){
   if(!s || !Array.isArray(s.tabs)) return;
-  ['stjornbord','leidsogn','reikningatenglar','gerdreikninga','vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','spurningar','bakendi'].forEach(id=>{
+  ['stjornbord','leidsogn','reikningatenglar','gerdreikninga','vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','nlsh','spurningar','bakendi'].forEach(id=>{
     if(!s.tabs.find(t=>t.id===id)){
       const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
       if(d){
@@ -1810,6 +1810,10 @@ function ensureNewTabs(s){
           target = idx >= 0 ? idx + 1 : (idx2 >= 0 ? idx2 + 1 : (idx3 >= 0 ? idx3 + 1 : -1));
         } else if(id === 'reikningatenglar'){
           const idx = s.tabs.findIndex(t=>t.id==='tenglar');
+          target = idx >= 0 ? idx + 1 : -1;
+        } else if(id === 'nlsh'){
+          // Landsspítalinn sits right after Verkstaðir.
+          const idx = s.tabs.findIndex(t=>t.id==='verkstadir');
           target = idx >= 0 ? idx + 1 : -1;
         } else {
           target = s.tabs.findIndex(t=>t.id==='tenglar');
