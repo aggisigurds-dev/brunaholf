@@ -46,6 +46,9 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
 - `timavera` — hours dashboard (renderTimavera, ~line 1670)
 - `verdsamanburdur` — Verðsamanburður / competitor pricing (renderCompetitors)
 - `verkstadir` — worksite billing audit (renderWorksites, ~line 2175)
+- `nlsh` — Landsspítalinn (NLSH) dashboard (renderNLSH): tekjur/mánuð
+  (contract heildir × taxti, uppsafnað), lokuð göt per viku, vinnustundir +
+  göt per starfsmann, samningsstaða per verkliður. Data: `/api/nlsh-dashboard`
 - `maeting`, `verkefnastada` — sheet-CSV-backed generic tabs
 - `verdskra` — Verðskrá (rate editor for pricing_guide + hole_size_rates + read-only NLSH contract)
 - `april` — Apríl reikningar punch list
@@ -283,6 +286,18 @@ Landsspítalinn 5-6 hæð / Brunahólf ehf / <date>". Title:
 "Samtals kláraðir verkþættir per mánuð". Sample April 2026
 totals: April m vsk = 4.956.679 / án vsk = 3.997.322;
 cumulative Heild m vsk = 56.360.118.
+
+**Per-staff holes**: Ajour stores the staff number in the `category`
+field as `"Starfsmaður N"` (N = company staff number; map in
+`nlsh-dashboard.js` STAFF). `CheckListItemCheckedByUser` is generic
+("Starfsmaður Brunahólf") and useless for attribution — use `category`.
+
+**Endpoints**:
+- `/api/nlsh-uppgjor?month=YYYY-MM` — one-month contract calc (revenue).
+- `/api/nlsh-dashboard` — full dashboard JSON for the `nlsh` tab: totals,
+  byMonth (revenue+holes+hours, cumulative), byWeek (holes+hours), byStaff
+  (holes from Ajour `category`, hours from Tímavera `Landsspitalinn`,
+  göt/klst), byVerk (samningsstaða per verkliður w/ target + %).
 
 #### Heklureitur, Dalvegur 30 — generic per-hole-size Verðskrá
 **Confirmed (Dalvegur_30.04.2026.xlsx, user-verified for Heklureitur):**
