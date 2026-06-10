@@ -180,16 +180,21 @@ exports.handler = async (event) => {
       cum_revenue_m_vsk: cum, hours: Math.round((hoursByMonth[ym] || 0) * 10) / 10 };
   });
 
-  // ---- byWeek (holes + hours, cumulative holes) ----
+  // ---- byWeek (holes + revenue + hours, cumulative) ----
   const weeks = {};
-  for (const { date } of serialInfo.values()) {
-    if (!date) continue; const wk = isoWeek(date); weeks[wk] = (weeks[wk] || 0) + 1;
+  for (const { group, date } of serialInfo.values()) {
+    if (!date) continue; const wk = isoWeek(date);
+    (weeks[wk] || (weeks[wk] = { holes: 0, revenue: 0 }));
+    weeks[wk].holes++; weeks[wk].revenue += serialAmount(group);
   }
   const allWeeks = [...new Set([...Object.keys(weeks), ...Object.keys(hoursByWeek)])].sort();
-  let cumH = 0;
+  let cumH = 0, cumR = 0;
   const byWeek = allWeeks.map(wk => {
-    const holes = weeks[wk] || 0; cumH += holes;
-    return { week: wk, holes, cum_holes: cumH, hours: Math.round((hoursByWeek[wk] || 0) * 10) / 10 };
+    const w = weeks[wk] || { holes: 0, revenue: 0 };
+    const rev = Math.round(w.revenue);
+    cumH += w.holes; cumR += rev;
+    return { week: wk, holes: w.holes, cum_holes: cumH, revenue_m_vsk: rev,
+      cum_revenue_m_vsk: cumR, hours: Math.round((hoursByWeek[wk] || 0) * 10) / 10 };
   });
 
   // ---- byStaff (holes from Ajour category + hours from Tímavera) ----
