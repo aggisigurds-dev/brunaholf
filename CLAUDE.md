@@ -46,6 +46,9 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
 - `timavera` — hours dashboard (renderTimavera, ~line 1670)
 - `verdsamanburdur` — Verðsamanburður / competitor pricing (renderCompetitors)
 - `verkstadir` — worksite billing audit (renderWorksites, ~line 2175)
+- `nlsh` — Landsspítalinn (NLSH) dashboard (renderNLSH): tekjur/mánuð
+  (contract heildir × taxti, uppsafnað), lokuð göt per viku, vinnustundir +
+  göt per starfsmann, samningsstaða per verkliður. Data: `/api/nlsh-dashboard`
 - `maeting`, `verkefnastada` — sheet-CSV-backed generic tabs
 - `verdskra` — Verðskrá (rate editor for pricing_guide + hole_size_rates + read-only NLSH contract)
 - `april` — Apríl reikningar punch list
@@ -284,6 +287,18 @@ Landsspítalinn 5-6 hæð / Brunahólf ehf / <date>". Title:
 totals: April m vsk = 4.956.679 / án vsk = 3.997.322;
 cumulative Heild m vsk = 56.360.118.
 
+**Per-staff holes**: Ajour stores the staff number in the `category`
+field as `"Starfsmaður N"` (N = company staff number; map in
+`nlsh-dashboard.js` STAFF). `CheckListItemCheckedByUser` is generic
+("Starfsmaður Brunahólf") and useless for attribution — use `category`.
+
+**Endpoints**:
+- `/api/nlsh-uppgjor?month=YYYY-MM` — one-month contract calc (revenue).
+- `/api/nlsh-dashboard` — full dashboard JSON for the `nlsh` tab: totals,
+  byMonth (revenue+holes+hours, cumulative), byWeek (holes+hours), byStaff
+  (holes from Ajour `category`, hours from Tímavera `Landsspitalinn`,
+  göt/klst), byVerk (samningsstaða per verkliður w/ target + %).
+
 #### Heklureitur, Dalvegur 30 — generic per-hole-size Verðskrá
 **Confirmed (Dalvegur_30.04.2026.xlsx, user-verified for Heklureitur):**
 both use the **same generic per-hole-size Verðskrá** — NOT a custom
@@ -458,7 +473,14 @@ Slökkvitæki Sala/POS) connects via the dkPlus REST/JSON API.
   `Attachment{Name,Content(base64)}`
   (úttektarskýrsla PDF), `Lines[]`. Line fields: `ItemCode` (= vörunúmer/`vorur.id`),
   `Quantity`, `Price` (unit; ex- or með-vsk per `IncludingVAT` bool), `Text`,
-  `Discount`, `Total` — **no VatCode**. List terms via `GET general/payment/term`
+  `Discount`, `Total` — **no VatCode**. **`SalesPerson` is REQUIRED on create**
+  (else 400 "Sölumaður er ekki til") and must be a registered dk sölumaður —
+  list via `GET sales/person/page/1/20`; only one exists: `as` (Agnar Sigurðss).
+  Gotcha: the **create** model field is `SalesPerson` but the **read** model
+  returns it as `SalePerson` (no s) — don't copy the read field name into a
+  create payload. End-to-end create confirmed live 2026-06-09: unposted PRUFA
+  draft (RecordID 2, 1× vara 161, 4.490 kr m vsk) via `POST sales/invoice?post=false`.
+  List terms via `GET general/payment/term`
   (`{ID,Number,Description}`). **Krafa-í-banka is NOT a payment term** — it is a
   separate dk **innheimta** setting (per customer/company innheimtusamningur),
   applied automatically on posting; not driven by `Term` and not an API field
