@@ -208,6 +208,29 @@ exports.handler = async (event) => {
       holes, hours: hrs, holes_per_hour: hrs ? Math.round(holes / hrs * 100) / 100 : null };
   }).sort((a, b) => b.holes - a.holes);
 
+  // ---- byStaffWeek (holes + hours per staff per ISO week) — feeds the
+  // weekly performance matrix (frontend windows it to the chosen months).
+  const staffWeek = {}; // nr -> wk -> {holes, hours}
+  const swCell = (nr, wk) => {
+    const a = staffWeek[nr] || (staffWeek[nr] = {});
+    return a[wk] || (a[wk] = { holes: 0, hours: 0 });
+  };
+  for (const { nr, date } of serialInfo.values()) {
+    if (!nr || !date) continue;
+    swCell(nr, isoWeek(date)).holes++;
+  }
+  for (const h of hours) {
+    const hrs = +h.hours || 0; if (!hrs || !h.date) continue;
+    const nr = nrForEmployee(h.employee); if (!nr) continue;
+    swCell(nr, isoWeek(h.date)).hours += hrs;
+  }
+  const byStaffWeek = [];
+  for (const [nr, wks] of Object.entries(staffWeek)) {
+    for (const [wk, v] of Object.entries(wks)) {
+      byStaffWeek.push({ nr: +nr, week: wk, holes: v.holes, hours: Math.round(v.hours * 10) / 10 });
+    }
+  }
+
   const totalHours = Math.round(Object.values(hoursByNr).reduce((a, b) => a + b, 0) +
     // include hours whose employee didn't map to a staff nr, so the total is honest
     hours.reduce((a, h) => a + ((+h.hours || 0) && !nrForEmployee(h.employee) ? (+h.hours || 0) : 0), 0));
@@ -219,7 +242,7 @@ exports.handler = async (event) => {
       hours: totalHours, holes_per_hour: totalHours ? Math.round(totalHoles / totalHours * 100) / 100 : null,
       unmapped_stakar: unmappedStakar,
     },
-    byMonth, byWeek, byStaff, byVerk,
+    byMonth, byWeek, byStaff, byStaffWeek, byVerk,
     note: 'Áætlun byggð á Ajour (stakir SerialNumber, kláraðir) + Tímavera. Göt á starfsmann koma úr Ajour „category“ = Starfsmaður N.',
   });
 };
