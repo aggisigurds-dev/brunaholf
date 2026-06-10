@@ -39,7 +39,7 @@ const VERK = [
   { verk_nr: '2.11', label: 'Frágangur raufa m. stokkum (m)', rate: 11532, target: 102,  test: /^raufar/i },
   { verk_nr: '1.1',  label: 'Ø100-150 Gólf/Hæðarskil',        rate: 38806, target: 50,   test: /g[óo]lf.*100-150/i },
   { verk_nr: '1.2',  label: 'Ø160-200 Gólf/Hæðarskil',        rate: 56224, target: 100,  test: /g[óo]lf.*160-200/i, full: true },
-  { verk_nr: '1.3',  label: 'Ø210-300 Gólf/Hæðarskil',        rate: 65116, target: 25,   test: /g[óo]lf.*210-300/i },
+  { verk_nr: '1.3',  label: 'Ø210-300 Gólf/Hæðarskil',        rate: 65116, target: 25,   test: /g[óo]lf.*210-300/i, full: true },
   { verk_nr: '3.1',  label: 'Rafmagnsraufar',                 rate: 9766,  target: 768,  test: /^raf/i },
 ];
 
