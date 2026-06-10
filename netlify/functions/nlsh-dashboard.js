@@ -120,7 +120,10 @@ exports.handler = async (event) => {
   const serialInfo = new Map();
   for (const r of ajour) {
     const sn = r.serial_number; if (!sn) continue;
-    const eff = r.checked_date || r.execution_date || null;
+    // Contract tracks by when the hole was MADE (execution date) — checked_date
+    // bulk-clusters on QA days (e.g. a March re-check), which misattributes the
+    // month. Prefer execution_date; fall back to checked_date only if missing.
+    const eff = r.execution_date || r.checked_date || null;
     const prev = serialInfo.get(sn);
     if (!prev) serialInfo.set(sn, { group: r.category_group || '', nr: nrFromCategory(r.category), date: eff });
     else { if (!prev.date && eff) prev.date = eff; if (prev.nr == null) prev.nr = nrFromCategory(r.category); }
