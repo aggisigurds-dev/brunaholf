@@ -142,6 +142,13 @@
   to = "/.netlify/functions/nlsh-uppgjor"
   status = 200
 
+# NLSH dashboard — full page data (revenue/holes/hours per month/week/staff)
+#   /api/nlsh-dashboard
+[[redirects]]
+  from = "/api/nlsh-dashboard"
+  to = "/.netlify/functions/nlsh-dashboard"
+  status = 200
+
 # Tímabók — staff time book per worksite/month, to send with the invoice
 #   /api/timabok?worksite=Fjarðagata&month=2026-02
 [[redirects]]
