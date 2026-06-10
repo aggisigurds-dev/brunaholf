@@ -7236,6 +7236,8 @@ async function renderNLSH(t){
           <div id="nl-staff" class="nl-tw"></div>
         </div>
       </div>
+      <h3 class="nl-h3">📊 Frammistaða per starfsmann per viku <span class="nl-note" id="nl-perf-label"></span></h3>
+      <div id="nl-perf" class="nl-tw"></div>
       <h3 class="nl-h3">📋 Samningsstaða per verkliður</h3>
       <div id="nl-verk" class="nl-tw"></div>
     </div>
@@ -7294,6 +7296,15 @@ async function renderNLSH(t){
     return `<svg viewBox="0 0 ${W} ${H}" role="img"><line class="axis" x1="${P.l}" y1="${P.t+ih}" x2="${W-P.r}" y2="${P.t+ih}"/>${bars}<path d="${path}" fill="none" stroke="${o.lineColor}" stroke-width="2" stroke-linejoin="round"/>${xl}</svg>`;
   }
   const chartCard=(t,lg,svg)=>`<div class="nl-chart"><div class="nl-chart-t">${t}</div><div class="nl-chart-lg">${lg}</div>${svg}</div>`;
+  // ISO week key — same algorithm as the backend so the matrix lines up.
+  function isoWeekKey(d){
+    const dt=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+    const day=(dt.getUTCDay()+6)%7;
+    dt.setUTCDate(dt.getUTCDate()-day+3);
+    const firstThu=new Date(Date.UTC(dt.getUTCFullYear(),0,4));
+    const week=1+Math.round(((dt-firstThu)/86400000-3+((firstThu.getUTCDay()+6)%7))/7);
+    return dt.getUTCFullYear()+'-W'+String(week).padStart(2,'0');
+  }
 
   async function load(){
     const meta=document.getElementById('nl-meta'); meta.textContent='Sækir…';
@@ -7333,6 +7344,40 @@ async function renderNLSH(t){
       <thead><tr><th>#</th><th>Starfsmaður</th><th>Göt</th><th>Klst</th><th>Göt/klst</th></tr></thead>
       <tbody>${d.byStaff.map(s=>`<tr><td>${s.nr}</td><td>${s.name}</td><td>${num(s.holes)}</td><td>${num(s.hours)}</td><td>${s.holes_per_hour??'—'}</td></tr>`).join('')}</tbody>
       <tfoot><tr><td colspan="2">Samtals</td><td>${num(d.totals.holes)}</td><td>${num(d.totals.hours)}</td><td>${d.totals.holes_per_hour??'—'}</td></tr></tfoot></table>`;
+
+    // Performance matrix: staff × week (window = previous month + current
+    // month, i.e. maí & júní right now), cell = göt / klst.
+    const sw = d.byStaffWeek || [];
+    const nameByNr = {}; (d.byStaff||[]).forEach(s=>{ nameByNr[s.nr]=s.name; });
+    const _now = new Date();
+    const wstart = new Date(_now.getFullYear(), _now.getMonth()-1, 1);
+    const wkeys = []; const _seen = new Set();
+    for(let dd=new Date(wstart); dd<=_now; dd.setDate(dd.getDate()+1)){
+      const k=isoWeekKey(dd); if(!_seen.has(k)){ _seen.add(k); wkeys.push(k); }
+    }
+    const inWin = sw.filter(r=>wkeys.includes(r.week));
+    const byNr = {};
+    inWin.forEach(r=>{
+      const o = byNr[r.nr] || (byNr[r.nr] = { tot:{holes:0,hours:0}, wks:{} });
+      o.wks[r.week]=r; o.tot.holes+=r.holes; o.tot.hours+=r.hours;
+    });
+    const staffRows = Object.entries(byNr).sort((a,b)=>b[1].tot.holes-a[1].tot.holes);
+    const MONL=['janúar','febrúar','mars','apríl','maí','júní','júlí','ágúst','september','október','nóvember','desember'];
+    document.getElementById('nl-perf-label').textContent='— '+MONL[wstart.getMonth()]+' & '+MONL[_now.getMonth()]+' · göt / klst í hverri viku';
+    const winTot = staffRows.reduce((a,[,o])=>{a.holes+=o.tot.holes;a.hours+=o.tot.hours;return a;},{holes:0,hours:0});
+    document.getElementById('nl-perf').innerHTML = staffRows.length ? `<table class="nl-t">
+      <thead><tr><th>Starfsmaður</th>${wkeys.map(w=>`<th>${w.replace(/^\d+-W/,'v')}</th>`).join('')}<th>Samtals</th><th>Göt/klst</th></tr></thead>
+      <tbody>${staffRows.map(([nr,o])=>`<tr><td>${nameByNr[nr]||('Starfsmaður '+nr)}</td>${
+        wkeys.map(w=>{ const c=o.wks[w];
+          if(!c||(!c.holes&&!c.hours)) return '<td style="color:#d3d9e0">·</td>';
+          return `<td title="${c.holes} göt · ${c.hours} klst"><b>${c.holes||0}</b><span style="color:#94a3b8">/${Math.round(c.hours)||0}</span></td>`;
+        }).join('')
+      }<td><b>${o.tot.holes}</b><span style="color:#94a3b8">/${Math.round(o.tot.hours)}</span></td><td>${o.tot.hours?Math.round(o.tot.holes/o.tot.hours*100)/100:'—'}</td></tr>`).join('')}</tbody>
+      <tfoot><tr><td>Samtals</td>${wkeys.map(w=>{
+        const t=inWin.filter(r=>r.week===w).reduce((a,r)=>{a.h+=r.holes;a.k+=r.hours;return a;},{h:0,k:0});
+        return `<td><b>${t.h}</b><span style="color:#94a3b8">/${Math.round(t.k)}</span></td>`;
+      }).join('')}<td><b>${winTot.holes}</b><span style="color:#94a3b8">/${Math.round(winTot.hours)}</span></td><td>${winTot.hours?Math.round(winTot.holes/winTot.hours*100)/100:'—'}</td></tr></tfoot></table>`
+      : '<div style="padding:14px;color:#94a3b8;font-size:13px">Engin gögn í þessum mánuðum.</div>';
 
     // Per verkliður (contract status)
     document.getElementById('nl-verk').innerHTML = `<table class="nl-t">
