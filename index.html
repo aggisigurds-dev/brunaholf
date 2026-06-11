@@ -7218,6 +7218,7 @@ async function renderNLSH(t){
           <div class="rg-sub-line">Tekjur, lokuð göt per viku, vinnustundir og afköst per starfsmann — úr Ajour (samningsverð per heild) + Tímavera.</div>
         </div>
         <div class="rg-controls">
+          <button id="nl-share" class="tv-btn" type="button" title="Afrita hlekk á sjálfstæða síðu sem hægt er að senda starfsmanni">🔗 Deila síðu</button>
           <button id="nl-refresh" class="tv-btn" type="button"><span class="tv-refresh-icon">↻</span> Sækja</button>
         </div>
       </div>
@@ -7386,6 +7387,12 @@ async function renderNLSH(t){
       <tfoot><tr><td colspan="5">Samtals</td><td>${num(d.totals.heilar)}</td><td></td><td>${kr(d.totals.revenue_m_vsk)}</td></tr></tfoot></table>`;
   }
   document.getElementById('nl-refresh').onclick=load;
+  const shareBtn=document.getElementById('nl-share');
+  if(shareBtn) shareBtn.onclick=async()=>{
+    const url=location.origin+'/nlsh.html';
+    try{ await navigator.clipboard.writeText(url); const o=shareBtn.textContent; shareBtn.textContent='✓ Hlekkur afritaður'; setTimeout(()=>shareBtn.textContent=o,2000); }
+    catch(_){ window.prompt('Afritaðu hlekkinn og sendu starfsmanni:', url); }
+  };
   load();
 }
 

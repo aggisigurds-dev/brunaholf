@@ -299,6 +299,11 @@ field as `"Starfsmaður N"` (N = company staff number; map in
   (holes from Ajour `category`, hours from Tímavera `Landsspitalinn`,
   göt/klst), byVerk (samningsstaða per verkliður w/ target + %).
 
+**Standalone share page**: `nlsh.html` — self-contained copy of the NLSH
+dashboard (no sidebar/hub) at `brunaholf.netlify.app/nlsh.html`, for sharing the
+report with one employee. Pulls the same `/api/nlsh-dashboard`. The `nlsh` tab
+has a "🔗 Deila síðu" button that copies this URL.
+
 #### Heklureitur, Dalvegur 30 — generic per-hole-size Verðskrá
 **Confirmed (Dalvegur_30.04.2026.xlsx, user-verified for Heklureitur):**
 both use the **same generic per-hole-size Verðskrá** — NOT a custom
