@@ -149,6 +149,12 @@
   to = "/.netlify/functions/nlsh-dashboard"
   status = 200
 
+# NLSH shared notes/messages (manager ↔ staff) — GET list, POST append
+[[redirects]]
+  from = "/api/nlsh-notes"
+  to = "/.netlify/functions/nlsh-notes"
+  status = 200
+
 # Tímabók — staff time book per worksite/month, to send with the invoice
 #   /api/timabok?worksite=Fjarðagata&month=2026-02
 [[redirects]]
