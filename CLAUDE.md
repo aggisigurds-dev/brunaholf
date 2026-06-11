@@ -304,6 +304,11 @@ dashboard (no sidebar/hub) at `brunaholf.netlify.app/nlsh.html`, for sharing the
 report with one employee. Pulls the same `/api/nlsh-dashboard`. The `nlsh` tab
 has a "🔗 Deila síðu" button that copies this URL.
 
+**Interactive + notes**: staff rows on the page are clickable → a per-week +
+per-day drill-down (`byStaffDay` in the dashboard JSON). A shared notes thread
+(manager ↔ staff) lives in the `nlsh_notes` table via `/api/nlsh-notes`
+(GET list / POST {author, body}); shown on both the tab and nlsh.html, polled 15s.
+
 #### Heklureitur, Dalvegur 30 — generic per-hole-size Verðskrá
 **Confirmed (Dalvegur_30.04.2026.xlsx, user-verified for Heklureitur):**
 both use the **same generic per-hole-size Verðskrá** — NOT a custom

@@ -7233,14 +7233,17 @@ async function renderNLSH(t){
           <div id="nl-week" class="nl-tw"></div>
         </div>
         <div class="nl-col">
-          <h3 class="nl-h3">👷 Per starfsmann <span class="nl-note">(göt úr Ajour · klst úr Tímavera)</span></h3>
+          <h3 class="nl-h3">👷 Per starfsmann <span class="nl-note">(smelltu á starfsmann fyrir viku/dag sundurliðun)</span></h3>
           <div id="nl-staff" class="nl-tw"></div>
+          <div id="nl-staff-detail"></div>
         </div>
       </div>
       <h3 class="nl-h3">📊 Frammistaða per starfsmann per viku <span class="nl-note" id="nl-perf-label"></span></h3>
       <div id="nl-perf" class="nl-tw"></div>
       <h3 class="nl-h3">📋 Samningsstaða per verkliður</h3>
       <div id="nl-verk" class="nl-tw"></div>
+      <h3 class="nl-h3">💬 Skilaboð / minnispunktar <span class="nl-note">(stjórnandi ↔ starfsmaður)</span></h3>
+      <div id="nl-notes" class="nl-notes"></div>
     </div>
     <style>
       .nl-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:14px 0 8px}
@@ -7274,6 +7277,23 @@ async function renderNLSH(t){
       .nl-bar{display:inline-block;height:9px;border-radius:4px;background:var(--accent,#0a84ff);vertical-align:middle;min-width:2px}
       .nl-bar-bg{display:inline-block;width:90px;background:var(--border,#eef0f2);border-radius:4px;margin-right:6px;vertical-align:middle}
       .nl-pct{display:inline-block;min-width:34px}
+      .nl-staff-row{cursor:pointer}
+      .nl-staff-row:hover td{background:#eef4ff !important}
+      .nl-detail{margin-top:10px;background:var(--card-bg,#fff);border:1px solid var(--border,#e3e7ec);border-radius:10px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+      .nl-detail-h{font-size:13px;font-weight:700;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+      .nl-detail-x{border:none;background:#eef0f2;border-radius:6px;cursor:pointer;font:inherit;font-size:12px;padding:3px 9px}
+      .nl-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+      @media (max-width:700px){.nl-detail-grid{grid-template-columns:1fr}}
+      .nl-detail-t{font-size:11px;font-weight:700;color:var(--text-dim,#5a6473);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px}
+      .nl-notes{max-width:780px}
+      .nl-thread{max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:10px;padding:2px}
+      .nl-msg{background:var(--card-bg,#fff);border:1px solid var(--border,#e3e7ec);border-radius:9px;padding:8px 11px}
+      .nl-msg-h{font-size:11px;color:var(--text-dim,#7a8493);margin-bottom:3px}
+      .nl-msg-b{font-size:13px;white-space:pre-wrap;line-height:1.45;color:var(--text,#1f2933)}
+      .nl-compose{display:flex;flex-direction:column;gap:6px;max-width:780px}
+      .nl-note-author{padding:7px 10px;border:1px solid var(--border,#cbd5e1);border-radius:7px;font:inherit;font-size:13px;max-width:220px}
+      .nl-note-body{padding:9px 11px;border:1px solid var(--border,#cbd5e1);border-radius:8px;font:inherit;font-size:13px;resize:vertical;min-height:70px}
+      .nl-note-send{align-self:flex-start}
     </style>`;
   const num = n => (Math.round(n||0)).toLocaleString('is-IS');
   const kr  = n => num(n) + ' kr';
@@ -7305,6 +7325,32 @@ async function renderNLSH(t){
     const firstThu=new Date(Date.UTC(dt.getUTCFullYear(),0,4));
     const week=1+Math.round(((dt-firstThu)/86400000-3+((firstThu.getUTCDay()+6)%7))/7);
     return dt.getUTCFullYear()+'-W'+String(week).padStart(2,'0');
+  }
+
+  // --- shared notes / messages (manager ↔ staff) ---
+  const NOTE_AUTHOR='Stjórnandi';
+  function fmtTs(s){ const t=new Date(s); if(isNaN(t)) return ''; return t.toLocaleString('is-IS',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }
+  async function loadNotes(){
+    const box=document.getElementById('nl-notes'); if(!box) return;
+    const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    let notes=[];
+    try{ const r=await fetch('/api/nlsh-notes'); const j=await r.json(); if(j.error) throw 0; notes=j.notes||[]; }catch(_){}
+    const keepA=(document.getElementById('nl-note-author')||{}).value;
+    const keepB=(document.getElementById('nl-note-body')||{}).value;
+    if(document.activeElement && document.activeElement.id==='nl-note-body') return; // don't clobber while typing
+    box.innerHTML=`<div class="nl-thread" id="nl-thread">${notes.length?notes.map(n=>`<div class="nl-msg"><div class="nl-msg-h"><b>${esc(n.author)}</b> · ${fmtTs(n.created_at)}</div><div class="nl-msg-b">${esc(n.body)}</div></div>`).join(''):'<div style="color:#94a3b8;font-size:12px;padding:6px">Engin skilaboð enn — skrifaðu fyrsta skilaboðið hér að neðan.</div>'}</div>
+      <div class="nl-compose"><input id="nl-note-author" class="nl-note-author" placeholder="Nafn" value="${esc(keepA||NOTE_AUTHOR)}">
+      <textarea id="nl-note-body" class="nl-note-body" placeholder="Skrifaðu skilaboð eða minnispunkt…">${esc(keepB||'')}</textarea>
+      <button id="nl-note-send" class="tv-btn nl-note-send" type="button">Senda</button></div>`;
+    const th=box.querySelector('#nl-thread'); if(th) th.scrollTop=th.scrollHeight;
+    box.querySelector('#nl-note-send').onclick=async()=>{
+      const author=(box.querySelector('#nl-note-author').value||'').trim()||'—';
+      const body=(box.querySelector('#nl-note-body').value||'').trim();
+      if(!body){ box.querySelector('#nl-note-body').focus(); return; }
+      const btn=box.querySelector('#nl-note-send'); btn.disabled=true; btn.textContent='Sendi…';
+      try{ await fetch('/api/nlsh-notes',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({author,body})}); }catch(_){}
+      box.querySelector('#nl-note-body').value=''; loadNotes();
+    };
   }
 
   async function load(){
@@ -7340,11 +7386,30 @@ async function renderNLSH(t){
       <thead><tr><th>Vika</th><th>Göt</th><th></th><th>Uppsafnað</th><th>Klst</th></tr></thead>
       <tbody>${d.byWeek.map(w=>`<tr><td>${w.week.replace('-W','&nbsp;v')}</td><td>${num(w.holes)}</td><td style="text-align:left">${bar(w.holes,wMax)}</td><td>${num(w.cum_holes)}</td><td>${num(w.hours)}</td></tr>`).join('')}</tbody></table>`;
 
-    // Per staff
+    // Per staff (clickable rows → per-week + per-day drill-down)
     document.getElementById('nl-staff').innerHTML = `<table class="nl-t">
       <thead><tr><th>#</th><th>Starfsmaður</th><th>Göt</th><th>Klst</th><th>Göt/klst</th></tr></thead>
-      <tbody>${d.byStaff.map(s=>`<tr><td>${s.nr}</td><td>${s.name}</td><td>${num(s.holes)}</td><td>${num(s.hours)}</td><td>${s.holes_per_hour??'—'}</td></tr>`).join('')}</tbody>
+      <tbody>${d.byStaff.map(s=>`<tr class="nl-staff-row" data-nr="${s.nr}" title="Smelltu fyrir sundurliðun"><td>${s.nr}</td><td>${s.name} <span style="color:#b6c0cc">▸</span></td><td>${num(s.holes)}</td><td>${num(s.hours)}</td><td>${s.holes_per_hour??'—'}</td></tr>`).join('')}</tbody>
       <tfoot><tr><td colspan="2">Samtals</td><td>${num(d.totals.holes)}</td><td>${num(d.totals.hours)}</td><td>${d.totals.holes_per_hour??'—'}</td></tr></tfoot></table>`;
+    const escH=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    function miniTbl(rows,key,fmtK,head){
+      if(!rows.length) return '<div style="padding:10px;color:#94a3b8;font-size:12px">Engin gögn</div>';
+      return `<table class="nl-t"><thead><tr><th>${head}</th><th>Göt</th><th>Klst</th><th>Göt/klst</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${fmtK(r[key])}</td><td>${num(r.holes)}</td><td>${num(r.hours)}</td><td>${r.hours?Math.round(r.holes/r.hours*100)/100:'—'}</td></tr>`).join('')}</tbody></table>`;
+    }
+    function showStaffDetail(nr){
+      const st=(d.byStaff||[]).find(s=>s.nr===nr)||{};
+      const wks=(d.byStaffWeek||[]).filter(r=>r.nr===nr).sort((a,b)=>a.week.localeCompare(b.week));
+      const days=(d.byStaffDay||[]).filter(r=>r.nr===nr).sort((a,b)=>a.date.localeCompare(b.date));
+      const el=document.getElementById('nl-staff-detail');
+      el.innerHTML=`<div class="nl-detail"><div class="nl-detail-h"><span>${escH(st.name||('Starfsmaður '+nr))} — ${num(st.holes)} göt · ${num(st.hours)} klst</span><button class="nl-detail-x" type="button">✕ Loka</button></div>
+        <div class="nl-detail-grid">
+          <div><div class="nl-detail-t">📆 Per viku</div><div class="nl-tw">${miniTbl(wks,'week',w=>w.replace(/^\d+-W/,'v'),'Vika')}</div></div>
+          <div><div class="nl-detail-t">📅 Per dag</div><div class="nl-tw" style="max-height:300px;overflow-y:auto">${miniTbl(days,'date',dd=>dd.slice(5).replace('-','.'),'Dagur')}</div></div>
+        </div></div>`;
+      el.querySelector('.nl-detail-x').onclick=()=>{el.innerHTML='';};
+      el.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+    document.querySelectorAll('#nl-staff .nl-staff-row').forEach(tr=>tr.addEventListener('click',()=>showStaffDetail(+tr.dataset.nr)));
 
     // Performance matrix: staff × week (window = previous month + current
     // month, i.e. maí & júní right now), cell = göt / klst.
@@ -7394,6 +7459,8 @@ async function renderNLSH(t){
     catch(_){ window.prompt('Afritaðu hlekkinn og sendu starfsmanni:', url); }
   };
   load();
+  loadNotes();
+  clearInterval(window.__nlNotesPoll); window.__nlNotesPoll=setInterval(loadNotes,15000);
 }
 
 async function renderVerdskra(t){

@@ -231,6 +231,28 @@ exports.handler = async (event) => {
     }
   }
 
+  // ---- byStaffDay (holes + hours per staff per calendar day) — drill-down ----
+  const staffDay = {}; // nr -> 'YYYY-MM-DD' -> {holes, hours}
+  const sdCell = (nr, day) => {
+    const a = staffDay[nr] || (staffDay[nr] = {});
+    return a[day] || (a[day] = { holes: 0, hours: 0 });
+  };
+  for (const { nr, date } of serialInfo.values()) {
+    if (!nr || !date) continue;
+    sdCell(nr, String(date).slice(0, 10)).holes++;
+  }
+  for (const h of hours) {
+    const hrs = +h.hours || 0; if (!hrs || !h.date) continue;
+    const nr = nrForEmployee(h.employee); if (!nr) continue;
+    sdCell(nr, String(h.date).slice(0, 10)).hours += hrs;
+  }
+  const byStaffDay = [];
+  for (const [nr, days] of Object.entries(staffDay)) {
+    for (const [day, v] of Object.entries(days)) {
+      byStaffDay.push({ nr: +nr, date: day, holes: v.holes, hours: Math.round(v.hours * 10) / 10 });
+    }
+  }
+
   const totalHours = Math.round(Object.values(hoursByNr).reduce((a, b) => a + b, 0) +
     // include hours whose employee didn't map to a staff nr, so the total is honest
     hours.reduce((a, h) => a + ((+h.hours || 0) && !nrForEmployee(h.employee) ? (+h.hours || 0) : 0), 0));
@@ -242,7 +264,7 @@ exports.handler = async (event) => {
       hours: totalHours, holes_per_hour: totalHours ? Math.round(totalHoles / totalHours * 100) / 100 : null,
       unmapped_stakar: unmappedStakar,
     },
-    byMonth, byWeek, byStaff, byStaffWeek, byVerk,
+    byMonth, byWeek, byStaff, byStaffWeek, byStaffDay, byVerk,
     note: 'Áætlun byggð á Ajour (stakir SerialNumber, kláraðir) + Tímavera. Göt á starfsmann koma úr Ajour „category“ = Starfsmaður N.',
   });
 };
