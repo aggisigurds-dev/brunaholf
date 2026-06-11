@@ -309,6 +309,14 @@ per-day drill-down (`byStaffDay` in the dashboard JSON). A shared notes thread
 (manager ↔ staff) lives in the `nlsh_notes` table via `/api/nlsh-notes`
 (GET list / POST {author, body}); shown on both the tab and nlsh.html, polled 15s.
 
+**Mánaðaruppgjör (snapshot-delta billing)**: NLSH is invoiced by the *change*
+in the cumulative total Done between month-ends (it self-corrects retroactive
+size re-classifications). `nlsh_month_snapshot` (month, cumulative_m_vsk) holds
+each month-end total via `/api/nlsh-monthly` (GET/POST). The page shows a
+Mánaðaruppgjör table (charge = this month − previous) + a 📸 Loka mánaðamót
+button (hub only) that captures the live cumulative. Seeded: 2026-04 = 59.472.216
+(úr samningssheet), 2026-05 = 60.429.627 (Ajour).
+
 #### Heklureitur, Dalvegur 30 — generic per-hole-size Verðskrá
 **Confirmed (Dalvegur_30.04.2026.xlsx, user-verified for Heklureitur):**
 both use the **same generic per-hole-size Verðskrá** — NOT a custom

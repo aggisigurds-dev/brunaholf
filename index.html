@@ -7225,6 +7225,8 @@ async function renderNLSH(t){
       <div id="nl-cards" class="nl-cards"></div>
       <h3 class="nl-h3">📈 Þróun per viku</h3>
       <div id="nl-charts" class="nl-charts"></div>
+      <h3 class="nl-h3">💰 Mánaðaruppgjör — rukkun per mánuð <span class="nl-note">(staða mánaðamóta − fyrri mánuður)</span></h3>
+      <div id="nl-monthly"></div>
       <div class="nl-grid">
         <div class="nl-col">
           <h3 class="nl-h3">📅 Tekjur &amp; göt per mánuð</h3>
@@ -7327,6 +7329,35 @@ async function renderNLSH(t){
     return dt.getUTCFullYear()+'-W'+String(week).padStart(2,'0');
   }
 
+  // --- Mánaðaruppgjör: month-end cumulative snapshots → charge = delta ---
+  async function loadMonthly(currentCum, canLock){
+    const box=document.getElementById('nl-monthly'); if(!box) return;
+    const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    let snaps=[];
+    try{ const r=await fetch('/api/nlsh-monthly'); const j=await r.json(); snaps=j.snapshots||[]; }catch(_){}
+    const now=new Date(), curM=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+    const rows=snaps.map(s=>({month:s.month,cum:+s.cumulative_m_vsk,note:s.note,locked:true}));
+    if(currentCum!=null && !rows.find(r=>r.month===curM)) rows.push({month:curM,cum:Math.round(currentCum),note:'lifandi staða',locked:false});
+    rows.sort((a,b)=>a.month.localeCompare(b.month));
+    const ML=['jan','feb','mar','apr','maí','jún','júl','ágú','sep','okt','nóv','des'];
+    const ml=m=>{const p=m.split('-');return ML[+p[1]-1]+'. '+p[0];};
+    let prev=null;
+    const trs=rows.map(r=>{ const delta=prev==null?null:r.cum-prev; prev=r.cum;
+      return `<tr><td>${ml(r.month)}</td><td>${r.locked?num(r.cum):('<b>'+num(r.cum)+'</b> <span style=\"color:#94a3b8;font-size:11px\">(lifandi)</span>')}</td><td style="font-weight:700">${delta==null?'<span style=\"color:#94a3b8\">—</span>':kr(delta)}</td><td style="color:#94a3b8;font-size:11px;text-align:left">${esc(r.note||'')}</td></tr>`;
+    }).join('');
+    box.innerHTML=`<div class="nl-tw"><table class="nl-t">
+      <thead><tr><th>Mánuður</th><th>Heildarstaða m.vsk</th><th>Til að rukka (Δ)</th><th>Athugasemd</th></tr></thead>
+      <tbody>${trs}</tbody></table></div>
+      ${(canLock&&currentCum!=null)?`<div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button id="nl-lock" class="tv-btn" type="button">📸 Loka ${ml(curM)} (staða ${num(Math.round(currentCum))} m.vsk)</button>
+        <span class="nl-note">Smelltu í lok mánaðar til að festa stöðuna — rukkun reiknast sem breyting frá fyrri mánuði. Sjálfvirk leiðrétting á endurflokkun.</span></div>`:''}`;
+    const lock=box.querySelector('#nl-lock');
+    if(lock) lock.onclick=async()=>{ lock.disabled=true; lock.textContent='Vista…';
+      try{ await fetch('/api/nlsh-monthly',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({month:curM,cumulative_m_vsk:Math.round(currentCum),note:'Lokað af notanda'})}); }catch(_){}
+      loadMonthly(currentCum,canLock);
+    };
+  }
+
   // --- shared notes / messages (manager ↔ staff) ---
   const NOTE_AUTHOR='Stjórnandi';
   function fmtTs(s){ const t=new Date(s); if(isNaN(t)) return ''; return t.toLocaleString('is-IS',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }
@@ -7374,6 +7405,9 @@ async function renderNLSH(t){
         svgChart(wk,{bar:'holes',line:'cum_holes',barColor:'#9ec5fe',lineColor:'#0a84ff',fmt:num})) +
       chartCard('Tekjur per viku (m. vsk)', '▮ vikuleg · — uppsafnað (<b>'+kr(d.totals.revenue_m_vsk)+'</b>)',
         svgChart(wk,{bar:'revenue_m_vsk',line:'cum_revenue_m_vsk',barColor:'#a7e0c0',lineColor:'#12805a',fmt:kr}));
+
+    // Mánaðaruppgjör (snapshot-delta billing) — uses the live cumulative
+    loadMonthly(d.totals.revenue_m_vsk, true);
 
     // Per month
     document.getElementById('nl-month').innerHTML = `<table class="nl-t">
