@@ -131,6 +131,17 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
 - `allt-sheet.js` — builds a sortable "whole database" Google Sheet from the
   úttektarskýrslu *filenames* in a folder (parses `Fyrirtæki - Heimilisfang -
   Kennitala - Mánuður - Ár`). `GET /api/allt-sheet[?folder=ID]`.
+- **One-click data refresh from Drive** (2026-06-12): `nlsh-update.js` —
+  `GET /api/nlsh-update` finds the NEWEST `AjourRegistrationData*.csv` in Drive
+  and triggers `ajour-ingest-drive-background` with its fileId (`?status=1`
+  polls `app_kv.ajour_ingest_status`); wired to the „🔄 Uppfæra gögn úr Drive"
+  button on the NLSH tab (polls + reloads on done). `timavera-ingest-drive.js`
+  (newest „vinnufærslur" xlsx → `timavera_entries`, exact twin of
+  luna-bridge/timavera-bridge.js: same fuzzy headers + entry_key) and
+  `payday-ingest-drive.js` (newest „payday" xlsx → `invoices`, line-level
+  export grouped per Reikningur nr.; tilvisun=nr + source='payday' dedup;
+  fills kt/gjalddagi/eindagi/greidsla_date; NEVER writes worksite_match) —
+  both behind buttons in the Bakendi „🔄 Gagna-uppfærslur úr Drive" section.
 - `reikningar-read.js` + `reikningar-sheet.js` — Bakendi **Reikningalesari** for
   SENT Slökkvitæki invoice PDFs (default folder
   `1TDusB2NLhr-OMLnojSk3iw0oiuiuFMLM` = "slökkvitæki - Reikningar - Master").

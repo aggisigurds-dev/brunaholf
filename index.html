@@ -2476,6 +2476,24 @@ function renderBakendi(t){
         </div>
         <div id="bk-sm-results"></div>
       </div>
+
+      <div style="margin-top:24px;border-top:1px solid #e2e8f0;padding-top:18px">
+        <div class="group-title"><strong>🔄 Gagna-uppfærslur úr Drive</strong><div class="line"></div></div>
+        <p style="color:#475569;font-size:13px;line-height:1.5;margin:0 0 12px;max-width:680px">
+          Finnur <b>nýjustu</b> útflutningsskrána í Google Drive og les hana beint inn í gagnagrunninn
+          — sama vinnsla og luna-bridge á tölvunni, bara í skýinu. Endurkeyrsla er örugg (upsert á sömu lykla).
+          Ajour-hnappurinn er líka á NLSH-síðunni.
+        </p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:6px 0">
+          <button id="bk-tv-run" class="btn primary">⏱ Tímavera xlsx → timavera_entries</button>
+          <span id="bk-tv-status" style="font-size:12.5px;color:#64748b"></span>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:6px 0">
+          <button id="bk-pd-run" class="btn primary">💳 Payday xlsx → invoices</button>
+          <span id="bk-pd-status" style="font-size:12.5px;color:#64748b"></span>
+        </div>
+        <div style="font-size:11.5px;color:#64748b;margin-top:5px">Leitað eftir skráarnafni: „vinnufærslur" / „payday" — nýjasta útgáfan vinnur. Payday-innlestur snertir ekki worksite_match (handvirkt viðhaldið).</div>
+      </div>
     </div>`;
 
   const $folder = document.getElementById('bk-folder');
@@ -2673,6 +2691,24 @@ function renderBakendi(t){
       $smSheet.disabled = smRows.length === 0;
     }
   }
+
+  // ── Gagna-uppfærslur úr Drive (Tímavera / Payday) ─────────────────────────
+  const wireDriveIngest = (btnId, statusId, api, doneText) => {
+    const btn = document.getElementById(btnId), st = document.getElementById(statusId);
+    if (!btn) return;
+    btn.onclick = async () => {
+      btn.disabled = true; st.textContent = '🔍 Leita að nýjustu skrá og les inn…';
+      try {
+        const r = await fetch(api); const d = await r.json();
+        if (!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));
+        st.textContent = '✓ ' + doneText(d) + ' — ' + (d.file || '');
+      } catch (e) {
+        st.textContent = '⚠ Villa: ' + String(e.message || e).slice(0, 80);
+      } finally { btn.disabled = false; }
+    };
+  };
+  wireDriveIngest('bk-tv-run', 'bk-tv-status', '/api/timavera-ingest-drive', d => (d.upserted || 0) + ' færslur inn');
+  wireDriveIngest('bk-pd-run', 'bk-pd-status', '/api/payday-ingest-drive', d => (d.invoices || 0) + ' reikningar inn');
 
   async function writeSamningarSheet(){
     if (!smRows.length) return;
@@ -7468,6 +7504,7 @@ async function renderNLSH(t){
           <div class="rg-sub-line">Tekjur, lokuð göt per viku, vinnustundir og afköst per starfsmann — úr Ajour (samningsverð per heild) + Tímavera.</div>
         </div>
         <div class="rg-controls">
+          <button id="nl-update" class="tv-btn" type="button" title="Finnur nýjustu AjourRegistrationData skrána í Google Drive og les hana inn í gagnagrunninn — síðan endurnýjast talnaefnið sjálfkrafa">🔄 Uppfæra gögn úr Drive</button>
           <button id="nl-share" class="tv-btn" type="button" title="Afrita hlekk á sjálfstæða síðu sem hægt er að senda starfsmanni">🔗 Deila síðu</button>
           <button id="nl-refresh" class="tv-btn" type="button"><span class="tv-refresh-icon">↻</span> Sækja</button>
         </div>
@@ -7736,6 +7773,30 @@ async function renderNLSH(t){
       <tfoot><tr><td colspan="5">Samtals</td><td>${num(d.totals.heilar)}</td><td></td><td>${kr(d.totals.revenue_m_vsk)}</td></tr></tfoot></table>`;
   }
   document.getElementById('nl-refresh').onclick=load;
+  // 🔄 Uppfæra gögn úr Drive: finna nýjustu Ajour-skrána → background-innlestur
+  // → polla stöðuna → endurhlaða talnaefnið þegar state=done.
+  const updBtn=document.getElementById('nl-update');
+  if(updBtn) updBtn.onclick=async()=>{
+    updBtn.disabled=true; const orig='🔄 Uppfæra gögn úr Drive';
+    try{
+      updBtn.textContent='🔍 Leita að nýjustu skrá…';
+      const r=await fetch('/api/nlsh-update'); const d=await r.json();
+      if(!r.ok||d.error) throw new Error(d.error||('HTTP '+r.status));
+      updBtn.textContent='⏳ Les inn: '+(d.file||'').slice(0,34)+'…';
+      const t0=Date.now();
+      while(Date.now()-t0 < 14*60*1000){
+        await new Promise(s=>setTimeout(s,3000));
+        const sr=await fetch('/api/nlsh-update?status=1'); const st=await sr.json();
+        if(st.state==='done'){ updBtn.textContent='✓ '+(st.upserted||0)+' raðir inn — endurnýja…'; await load(); break; }
+        if(st.state==='error') throw new Error(st.error||'Innlestur mistókst');
+        updBtn.textContent='⏳ '+(st.parsed||0)+' lesnar / '+(st.upserted||0)+' vistaðar…';
+      }
+      setTimeout(()=>{updBtn.textContent=orig;},4000);
+    }catch(e){
+      updBtn.textContent='⚠ '+String(e.message||e).slice(0,40);
+      setTimeout(()=>{updBtn.textContent=orig;},6000);
+    }finally{ updBtn.disabled=false; }
+  };
   const shareBtn=document.getElementById('nl-share');
   if(shareBtn) shareBtn.onclick=async()=>{
     const url=location.origin+'/nlsh.html';

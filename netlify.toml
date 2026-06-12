@@ -155,6 +155,24 @@
   to = "/.netlify/functions/nlsh-notes"
   status = 200
 
+# One-click data refresh from Drive: newest Ajour CSV → background ingest (+?status=1 poll)
+[[redirects]]
+  from = "/api/nlsh-update"
+  to = "/.netlify/functions/nlsh-update"
+  status = 200
+
+# Tímavera xlsx from Drive → timavera_entries (twin of luna-bridge/timavera-bridge.js)
+[[redirects]]
+  from = "/api/timavera-ingest-drive"
+  to = "/.netlify/functions/timavera-ingest-drive"
+  status = 200
+
+# Payday invoices xlsx from Drive → invoices (source=payday, dedup tilvisun)
+[[redirects]]
+  from = "/api/payday-ingest-drive"
+  to = "/.netlify/functions/payday-ingest-drive"
+  status = 200
+
 # NLSH month-end cumulative snapshots (snapshot-delta billing) — GET / POST
 [[redirects]]
   from = "/api/nlsh-monthly"
