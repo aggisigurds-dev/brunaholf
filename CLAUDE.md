@@ -128,6 +128,21 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   (skips vendor invoices), takes the customer kt, classifies, matches
   kt→`customers_base`, upserts `customer_documents` (dedup on drive_file_id).
   Batched by `offset` (each call ≤ ~10s); the UI pages through.
+- `allt-sheet.js` — builds a sortable "whole database" Google Sheet from the
+  úttektarskýrslu *filenames* in a folder (parses `Fyrirtæki - Heimilisfang -
+  Kennitala - Mánuður - Ár`). `GET /api/allt-sheet[?folder=ID]`.
+- `reikningar-read.js` + `reikningar-sheet.js` — Bakendi **Reikningalesari** for
+  SENT Slökkvitæki invoice PDFs (default folder
+  `1TDusB2NLhr-OMLnojSk3iw0oiuiuFMLM` = "slökkvitæki - Reikningar - Master").
+  `reikningar-read` (`GET ?folder&dry&limit=6&offset`) reads each PDF's *content*
+  and extracts **Fyrirtæki · Heimilisfang · Kennitala · Reikningsnúmer (R-…) ·
+  Dagsetning · Heildarupphæð**; batched like doc-index; non-dry upserts
+  `customer_documents` (doc_type=reikningur; `invoice_number`/`doc_date`/
+  `customer_name`/`amount` columns added 2026-06-12, additive). Heildarupphæð =
+  largest ISK-formatted figure (grand total ≥ every line). `reikningar-sheet`
+  (`POST {folder,rows}`) find-or-creates ONE living summary Sheet
+  ("Reikningar – gagnayfirlit") **inside the folder** and overwrites it — the
+  database-summary view. UI: 🔍 Lesa / 📊 Skrifa í Google Sheet / ▶️ Skrá í gagnagrunn.
 
 ### Email
 - `email_digest` (~29k rows): all emails from connected Gmail accounts
