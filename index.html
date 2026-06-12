@@ -2426,6 +2426,31 @@ function renderBakendi(t){
         </div>
         <div id="bk-eml-results"></div>
       </div>
+
+      <div style="margin-top:24px;border-top:1px solid #e2e8f0;padding-top:18px">
+        <div class="group-title"><strong>🧾 Reikningalesari — sendir reikningar</strong><div class="line"></div></div>
+        <p style="color:#475569;font-size:13px;line-height:1.5;margin:0 0 12px;max-width:680px">
+          Les senda <b>Slökkvitæki</b> reikninga (PDF) beint úr Drive-möppu og dregur út
+          <b>Fyrirtækjanafn · Kennitölu · Reikningsnúmer (R-…) · Dagsetningu · Heildarupphæð</b>.
+          „📊 Skrifa í Google Sheet" býr til (eða uppfærir) yfirlits-Sheet <i>inni í sömu möppu</i> svo
+          það virki sem gagnagrunns-yfirlit. „▶️ Skrá í gagnagrunn" tengir hvern reikning við viðskiptavin
+          í <code>customer_documents</code> (eins og úttektarskýrslurnar).
+        </p>
+        <div style="border:1px solid #e2e8f0;border-radius:11px;padding:14px 15px;max-width:680px">
+          <label style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.04em">Reikninga-mappa (Google Drive)</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:7px">
+            <input id="bk-rk-folder" value="1TDusB2NLhr-OMLnojSk3iw0oiuiuFMLM" style="${inp};flex:1;min-width:240px">
+          </div>
+          <div style="${hint}">Sjálfgefið = „slökkvitæki - Reikningar - Master". Yfirlits-Sheet heitir „Reikningar – gagnayfirlit".</div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px 0 6px">
+          <button id="bk-rk-read" class="btn primary">🔍 Lesa reikninga</button>
+          <button id="bk-rk-sheet" class="btn" disabled>📊 Skrifa í Google Sheet</button>
+          <button id="bk-rk-db" class="btn">▶️ Skrá í gagnagrunn</button>
+          <span id="bk-rk-status" style="font-size:12.5px;color:#64748b"></span>
+        </div>
+        <div id="bk-rk-results"></div>
+      </div>
     </div>`;
 
   const $folder = document.getElementById('bk-folder');
@@ -2511,6 +2536,107 @@ function renderBakendi(t){
       $dry.disabled = $run.disabled = false;
     }
   }
+
+  // ── Reikningalesari (sendir reikningar → 5 reitir + Google Sheet) ─────────
+  const $rkFolder = document.getElementById('bk-rk-folder');
+  const $rkRead = document.getElementById('bk-rk-read');
+  const $rkSheet = document.getElementById('bk-rk-sheet');
+  const $rkDb = document.getElementById('bk-rk-db');
+  const $rkStatus = document.getElementById('bk-rk-status');
+  const $rkResults = document.getElementById('bk-rk-results');
+  let rkRows = [];   // accumulated parsed invoices (for the Sheet writer)
+
+  $rkRead.onclick = () => runReikningar(true);
+  $rkDb.onclick = () => runReikningar(false);
+  $rkSheet.onclick = writeReikningarSheet;
+
+  async function runReikningar(dry){
+    const f = ($rkFolder.value || '').trim();
+    if (!f) { $rkResults.innerHTML = '<div class="empty">Vantar möppu-id.</div>'; return; }
+    $rkRead.disabled = $rkDb.disabled = $rkSheet.disabled = true;
+    rkRows = [];
+    $rkResults.innerHTML = '<div class="empty">Vinnur… les reikninga í lotum, uppfærist jafnóðum.</div>';
+    const acc = { dry, total: 0, scanned: 0, indexed: 0, dupSkip: 0, notSlokkvitaeki: 0, errors: 0 };
+    let offset = 0, guard = 0;
+    try {
+      do {
+        $rkStatus.textContent = (dry ? 'Les… ' : 'Skrái… ') + acc.scanned + (acc.total ? '/' + acc.total : '') + ' reikninga';
+        const r = await fetch('/api/reikningar-read?folder=' + encodeURIComponent(f) + '&limit=6&offset=' + offset + (dry ? '&dry=1' : ''));
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+        acc.total = d.total || acc.total;
+        acc.scanned += d.scanned || 0; acc.indexed += d.indexed || 0; acc.dupSkip += d.dupSkip || 0;
+        acc.notSlokkvitaeki += d.notSlokkvitaeki || 0; acc.errors += d.errors || 0;
+        rkRows = rkRows.concat(d.rows || []);
+        $rkResults.innerHTML = reikningarResultsHtml(acc, rkRows);
+        offset = d.nextOffset;
+      } while (offset != null && ++guard < 400);
+      $rkStatus.textContent = (dry ? '🔍 Lestri lokið. ' : '✓ Skráð í gagnagrunn. ') + 'Lesnir ' + rkRows.length + ' reikningar.';
+      $rkSheet.disabled = rkRows.length === 0;
+    } catch (e) {
+      $rkResults.insertAdjacentHTML('beforeend', '<div class="empty" style="color:#dc2626">Villa: ' + escapeHtml(e.message) + '</div>');
+      $rkStatus.textContent = '';
+    } finally {
+      $rkRead.disabled = $rkDb.disabled = false;
+      $rkSheet.disabled = rkRows.length === 0;
+    }
+  }
+
+  async function writeReikningarSheet(){
+    if (!rkRows.length) return;
+    const f = ($rkFolder.value || '').trim();
+    $rkSheet.disabled = true;
+    const old = $rkSheet.textContent; $rkSheet.textContent = '📊 Skrifa…';
+    try {
+      const r = await fetch('/api/reikningar-sheet', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folder: f, rows: rkRows }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+      $rkStatus.innerHTML = '✓ ' + d.rows + ' raðir í Google Sheet — '
+        + '<a href="' + escapeAttr(d.url) + '" target="_blank" rel="noopener" style="color:#2563eb;font-weight:700">opna yfirlit ↗</a>'
+        + (d.created ? ' (nýtt skjal búið til í möppunni)' : ' (uppfært)');
+    } catch (e) {
+      $rkStatus.innerHTML = '<span style="color:#dc2626">Villa við Sheet: ' + escapeHtml(e.message) + '</span>';
+    } finally {
+      $rkSheet.textContent = old; $rkSheet.disabled = false;
+    }
+  }
+}
+
+function reikningarResultsHtml(d, rows){
+  const chip = (l, v, bg) => `<span style="display:inline-block;padding:3px 10px;border-radius:99px;background:${bg || '#f1f5f9'};border:1px solid #e2e8f0;font-size:12.5px;font-weight:600;margin:0 6px 6px 0">${l}: ${v}</span>`;
+  const td = 'padding:5px 8px;border-bottom:1px solid #f1f5f9';
+  const fmtKr = n => (n == null || n === '') ? '' : Math.round(Number(n)).toLocaleString('is-IS') + ' kr';
+  const fmtDate = iso => { const m = String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[3]}.${m[2]}.${m[1]}` : (iso||''); };
+  let html = '<div style="margin:8px 0 12px">'
+    + chip('Lesnir', d.scanned)
+    + (d.dry ? '' : chip('Skráðir', d.indexed, '#dcfce7'))
+    + (d.dupSkip ? chip('Áður til', d.dupSkip, '#fef9c3') : '')
+    + chip('Ekki Slökkvitæki', d.notSlokkvitaeki)
+    + chip('Villur', d.errors, d.errors ? '#fee2e2' : '#f1f5f9')
+    + '</div>';
+  if (d.dry) html += '<div style="font-size:12px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:7px 10px;margin-bottom:12px">🔍 Lestur — ekkert vistað. „📊 Skrifa í Google Sheet" býr til yfirlitið · „▶️ Skrá í gagnagrunn" tengir við viðskiptavini.</div>';
+  if (!rows || !rows.length) { html += '<div class="empty">Engir reikningar lesnir enn.</div>'; return html; }
+  html += '<div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr>'
+    + ['Fyrirtæki', 'Heimilisfang', 'Kennitala', 'Reikningsnr', 'Dagsetning', 'Heildarupphæð', 'Viðskiptavinur'].map(h => `<th style="text-align:left;padding:5px 8px;border-bottom:1px solid #e2e8f0;color:#64748b">${h}</th>`).join('')
+    + '</tr></thead><tbody>';
+  rows.forEach(a => {
+    const cust = a.base_id
+      ? escapeHtml(a.base_name || ('#' + a.base_id))
+      : (a.kt ? '<span style="color:#dc2626;font-weight:700">RESOLVE</span>' : '<span style="color:#94a3b8">—</span>');
+    html += '<tr>'
+      + `<td style="${td};font-weight:600">${escapeHtml(a.company || '')}</td>`
+      + `<td style="${td}">${escapeHtml(a.address || '')}</td>`
+      + `<td style="${td};white-space:nowrap">${escapeHtml(a.kt || '')}</td>`
+      + `<td style="${td};white-space:nowrap;font-variant-numeric:tabular-nums">${escapeHtml(a.invoice_number || '')}</td>`
+      + `<td style="${td};white-space:nowrap">${fmtDate(a.date)}</td>`
+      + `<td style="${td};text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">${fmtKr(a.total)}</td>`
+      + `<td style="${td}">${cust}</td></tr>`;
+  });
+  html += '</tbody></table></div>';
+  return html;
 }
 
 function bakendiResultsHtml(d){
