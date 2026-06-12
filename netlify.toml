@@ -210,6 +210,18 @@
   to = "/.netlify/functions/reikningar-sheet"
   status = 200
 
+# Bakendi Samningalesari: read Þjónustusamningur PDFs (fyrirtæki/heimilisfang/kt/dags)
+[[redirects]]
+  from = "/api/samningar-read"
+  to = "/.netlify/functions/samningar-read"
+  status = 200
+
+# Bakendi Samningalesari: write the parsed samningar into a summary Google Sheet in the folder
+[[redirects]]
+  from = "/api/samningar-sheet"
+  to = "/.netlify/functions/samningar-sheet"
+  status = 200
+
 # Bakendi: netfang backfill from sent bokhald@eldklar.is .eml
 [[redirects]]
   from = "/api/eml-netfong"

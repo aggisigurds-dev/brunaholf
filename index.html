@@ -2451,6 +2451,31 @@ function renderBakendi(t){
         </div>
         <div id="bk-rk-results"></div>
       </div>
+
+      <div style="margin-top:24px;border-top:1px solid #e2e8f0;padding-top:18px">
+        <div class="group-title"><strong>📝 Samningalesari — þjónustusamningar</strong><div class="line"></div></div>
+        <p style="color:#475569;font-size:13px;line-height:1.5;margin:0 0 12px;max-width:680px">
+          Les <b>þjónustusamninga</b> (PDF) beint úr Drive-möppu og dregur út
+          <b>Fyrirtækjanafn · Heimilisfang · Kennitölu · Dagsetningu</b>.
+          „📊 Skrifa í Google Sheet" býr til (eða uppfærir) yfirlits-Sheet <i>inni í sömu möppu</i>.
+          „▶️ Skrá í gagnagrunn" tengir hvern samning við viðskiptavin í <code>customer_documents</code>
+          (doc_type = samningur).
+        </p>
+        <div style="border:1px solid #e2e8f0;border-radius:11px;padding:14px 15px;max-width:680px">
+          <label style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.04em">Samninga-mappa (Google Drive)</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:7px">
+            <input id="bk-sm-folder" value="1f2kzXhbkU0xJ0MFPxRpWjoPmWZBlm1zZ" style="${inp};flex:1;min-width:240px">
+          </div>
+          <div style="${hint}">Sjálfgefið = „Slökkvitæki - Þjónustusamningar - Master". Yfirlits-Sheet heitir „Þjónustusamningar – gagnayfirlit".</div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px 0 6px">
+          <button id="bk-sm-read" class="btn primary">🔍 Lesa samninga</button>
+          <button id="bk-sm-sheet" class="btn" disabled>📊 Skrifa í Google Sheet</button>
+          <button id="bk-sm-db" class="btn">▶️ Skrá í gagnagrunn</button>
+          <span id="bk-sm-status" style="font-size:12.5px;color:#64748b"></span>
+        </div>
+        <div id="bk-sm-results"></div>
+      </div>
     </div>`;
 
   const $folder = document.getElementById('bk-folder');
@@ -2556,7 +2581,7 @@ function renderBakendi(t){
     $rkRead.disabled = $rkDb.disabled = $rkSheet.disabled = true;
     rkRows = [];
     $rkResults.innerHTML = '<div class="empty">Vinnur… les reikninga í lotum, uppfærist jafnóðum.</div>';
-    const acc = { dry, total: 0, scanned: 0, indexed: 0, dupSkip: 0, notSlokkvitaeki: 0, errors: 0 };
+    const acc = { dry, total: 0, scanned: 0, indexed: 0, dupSkip: 0, notInvoice: 0, errors: 0 };
     let offset = 0, guard = 0;
     try {
       do {
@@ -2566,7 +2591,7 @@ function renderBakendi(t){
         if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
         acc.total = d.total || acc.total;
         acc.scanned += d.scanned || 0; acc.indexed += d.indexed || 0; acc.dupSkip += d.dupSkip || 0;
-        acc.notSlokkvitaeki += d.notSlokkvitaeki || 0; acc.errors += d.errors || 0;
+        acc.notInvoice += d.notInvoice || 0; acc.errors += d.errors || 0;
         rkRows = rkRows.concat(d.rows || []);
         $rkResults.innerHTML = reikningarResultsHtml(acc, rkRows);
         offset = d.nextOffset;
@@ -2603,6 +2628,104 @@ function renderBakendi(t){
       $rkSheet.textContent = old; $rkSheet.disabled = false;
     }
   }
+
+  // ── Samningalesari (þjónustusamningar → 4 reitir + Google Sheet) ──────────
+  const $smFolder = document.getElementById('bk-sm-folder');
+  const $smRead = document.getElementById('bk-sm-read');
+  const $smSheet = document.getElementById('bk-sm-sheet');
+  const $smDb = document.getElementById('bk-sm-db');
+  const $smStatus = document.getElementById('bk-sm-status');
+  const $smResults = document.getElementById('bk-sm-results');
+  let smRows = [];
+
+  $smRead.onclick = () => runSamningar(true);
+  $smDb.onclick = () => runSamningar(false);
+  $smSheet.onclick = writeSamningarSheet;
+
+  async function runSamningar(dry){
+    const f = ($smFolder.value || '').trim();
+    if (!f) { $smResults.innerHTML = '<div class="empty">Vantar möppu-id.</div>'; return; }
+    $smRead.disabled = $smDb.disabled = $smSheet.disabled = true;
+    smRows = [];
+    $smResults.innerHTML = '<div class="empty">Vinnur… les samninga í lotum, uppfærist jafnóðum.</div>';
+    const acc = { dry, total: 0, scanned: 0, indexed: 0, dupSkip: 0, notSlokkvitaeki: 0, notSamningur: 0, errors: 0 };
+    let offset = 0, guard = 0;
+    try {
+      do {
+        $smStatus.textContent = (dry ? 'Les… ' : 'Skrái… ') + acc.scanned + (acc.total ? '/' + acc.total : '') + ' samninga';
+        const r = await fetch('/api/samningar-read?folder=' + encodeURIComponent(f) + '&limit=8&offset=' + offset + (dry ? '&dry=1' : ''));
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+        acc.total = d.total || acc.total;
+        acc.scanned += d.scanned || 0; acc.indexed += d.indexed || 0; acc.dupSkip += d.dupSkip || 0;
+        acc.notSlokkvitaeki += d.notSlokkvitaeki || 0; acc.notSamningur += d.notSamningur || 0; acc.errors += d.errors || 0;
+        smRows = smRows.concat(d.rows || []);
+        $smResults.innerHTML = samningarResultsHtml(acc, smRows);
+        offset = d.nextOffset;
+      } while (offset != null && ++guard < 400);
+      $smStatus.textContent = (dry ? '🔍 Lestri lokið. ' : '✓ Skráð í gagnagrunn. ') + 'Lesnir ' + smRows.length + ' samningar.';
+      $smSheet.disabled = smRows.length === 0;
+    } catch (e) {
+      $smResults.insertAdjacentHTML('beforeend', '<div class="empty" style="color:#dc2626">Villa: ' + escapeHtml(e.message) + '</div>');
+      $smStatus.textContent = '';
+    } finally {
+      $smRead.disabled = $smDb.disabled = false;
+      $smSheet.disabled = smRows.length === 0;
+    }
+  }
+
+  async function writeSamningarSheet(){
+    if (!smRows.length) return;
+    const f = ($smFolder.value || '').trim();
+    $smSheet.disabled = true;
+    const old = $smSheet.textContent; $smSheet.textContent = '📊 Skrifa…';
+    try {
+      const r = await fetch('/api/samningar-sheet', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folder: f, rows: smRows }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+      $smStatus.innerHTML = '✓ ' + d.rows + ' raðir í Google Sheet — '
+        + '<a href="' + escapeAttr(d.url) + '" target="_blank" rel="noopener" style="color:#2563eb;font-weight:700">opna yfirlit ↗</a>'
+        + (d.created ? ' (nýtt skjal búið til í möppunni)' : ' (uppfært)');
+    } catch (e) {
+      $smStatus.innerHTML = '<span style="color:#dc2626">Villa við Sheet: ' + escapeHtml(e.message) + '</span>';
+    } finally {
+      $smSheet.textContent = old; $smSheet.disabled = false;
+    }
+  }
+}
+
+function samningarResultsHtml(d, rows){
+  const chip = (l, v, bg) => `<span style="display:inline-block;padding:3px 10px;border-radius:99px;background:${bg || '#f1f5f9'};border:1px solid #e2e8f0;font-size:12.5px;font-weight:600;margin:0 6px 6px 0">${l}: ${v}</span>`;
+  const td = 'padding:5px 8px;border-bottom:1px solid #f1f5f9';
+  const fmtDate = iso => { const m = String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[3]}.${m[2]}.${m[1]}` : (iso||''); };
+  let html = '<div style="margin:8px 0 12px">'
+    + chip('Lesnir', d.scanned)
+    + (d.dry ? '' : chip('Skráðir', d.indexed, '#dcfce7'))
+    + (d.dupSkip ? chip('Áður til', d.dupSkip, '#fef9c3') : '')
+    + (d.notSamningur ? chip('Ekki samningur', d.notSamningur) : '')
+    + chip('Villur', d.errors, d.errors ? '#fee2e2' : '#f1f5f9')
+    + '</div>';
+  if (d.dry) html += '<div style="font-size:12px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:7px 10px;margin-bottom:12px">🔍 Lestur — ekkert vistað. „📊 Skrifa í Google Sheet" býr til yfirlitið · „▶️ Skrá í gagnagrunn" tengir við viðskiptavini.</div>';
+  if (!rows || !rows.length) { html += '<div class="empty">Engir samningar lesnir enn.</div>'; return html; }
+  html += '<div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr>'
+    + ['Fyrirtæki', 'Heimilisfang', 'Kennitala', 'Dagsetning', 'Viðskiptavinur'].map(h => `<th style="text-align:left;padding:5px 8px;border-bottom:1px solid #e2e8f0;color:#64748b">${h}</th>`).join('')
+    + '</tr></thead><tbody>';
+  rows.forEach(a => {
+    const cust = a.base_id
+      ? escapeHtml(a.base_name || ('#' + a.base_id))
+      : (a.kt ? '<span style="color:#dc2626;font-weight:700">RESOLVE</span>' : '<span style="color:#94a3b8">—</span>');
+    html += '<tr>'
+      + `<td style="${td};font-weight:600">${escapeHtml(a.company || '')}</td>`
+      + `<td style="${td}">${escapeHtml(a.address || '')}</td>`
+      + `<td style="${td};white-space:nowrap">${escapeHtml(a.kt || '')}</td>`
+      + `<td style="${td};white-space:nowrap">${fmtDate(a.date)}</td>`
+      + `<td style="${td}">${cust}</td></tr>`;
+  });
+  html += '</tbody></table></div>';
+  return html;
 }
 
 function reikningarResultsHtml(d, rows){
@@ -2614,11 +2737,12 @@ function reikningarResultsHtml(d, rows){
     + chip('Lesnir', d.scanned)
     + (d.dry ? '' : chip('Skráðir', d.indexed, '#dcfce7'))
     + (d.dupSkip ? chip('Áður til', d.dupSkip, '#fef9c3') : '')
-    + chip('Ekki Slökkvitæki', d.notSlokkvitaeki)
+    + (d.notInvoice ? chip('Ekki reikningur', d.notInvoice) : '')
     + chip('Villur', d.errors, d.errors ? '#fee2e2' : '#f1f5f9')
     + '</div>';
   if (d.dry) html += '<div style="font-size:12px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:7px 10px;margin-bottom:12px">🔍 Lestur — ekkert vistað. „📊 Skrifa í Google Sheet" býr til yfirlitið · „▶️ Skrá í gagnagrunn" tengir við viðskiptavini.</div>';
   if (!rows || !rows.length) { html += '<div class="empty">Engir reikningar lesnir enn.</div>'; return html; }
+  const kreditTag = '<span style="display:inline-block;margin-left:6px;padding:0 6px;border-radius:99px;background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;font-size:10px;font-weight:700">KREDIT</span>';
   html += '<div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr>'
     + ['Fyrirtæki', 'Heimilisfang', 'Kennitala', 'Reikningsnr', 'Dagsetning', 'Heildarupphæð', 'Viðskiptavinur'].map(h => `<th style="text-align:left;padding:5px 8px;border-bottom:1px solid #e2e8f0;color:#64748b">${h}</th>`).join('')
     + '</tr></thead><tbody>';
@@ -2630,7 +2754,7 @@ function reikningarResultsHtml(d, rows){
       + `<td style="${td};font-weight:600">${escapeHtml(a.company || '')}</td>`
       + `<td style="${td}">${escapeHtml(a.address || '')}</td>`
       + `<td style="${td};white-space:nowrap">${escapeHtml(a.kt || '')}</td>`
-      + `<td style="${td};white-space:nowrap;font-variant-numeric:tabular-nums">${escapeHtml(a.invoice_number || '')}</td>`
+      + `<td style="${td};white-space:nowrap;font-variant-numeric:tabular-nums">${escapeHtml(a.invoice_number || '')}${a.kredit ? kreditTag : ''}</td>`
       + `<td style="${td};white-space:nowrap">${fmtDate(a.date)}</td>`
       + `<td style="${td};text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">${fmtKr(a.total)}</td>`
       + `<td style="${td}">${cust}</td></tr>`;

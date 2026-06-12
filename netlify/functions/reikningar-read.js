@@ -1,17 +1,17 @@
 // reikningar-read.js — Bakendi "Reikningalesari": reads the SENT Slökkvitæki
 // invoice PDFs in a Drive folder and extracts, per invoice:
-//   Fyrirtækjanafn · Kennitala · Reikningsnúmer (R-107899) · Dagsetning · Heildarupphæð
+//   Fyrirtækjanafn · Heimilisfang · Kennitala · Reikningsnúmer (R-108285) ·
+//   Dagsetning · Heildarupphæð
 //
 //   GET /api/reikningar-read?folder=ID[&dry=1][&limit=6][&offset=N]
-//     → { total, scanned, indexed, dupSkip, notSlokkvitaeki, errors, offset,
-//         nextOffset, rows:[{ fileId, file, company, kt, invoice_number,
-//                             date, total, year, base_id, base_name }] }
 //
-// Batched (each PDF download+parse takes time, ~10s/invocation) — the UI pages
-// through with `offset`. dry=1 reads + returns without writing. When not dry it
-// upserts customer_documents (doc_type='reikningur', dedup on drive_file_id)
-// with the parsed amount / invoice_number / doc_date / customer_name.
-// The summary Google Sheet is written separately by /api/reikningar-sheet.
+// Filename-led: the renamer writes "Fyrirtæki - R NNNNNN - DD.MM.YY.pdf", which
+// is the reliable source for company / invoice number / date (the dkPlus PDF
+// text interleaves two columns, so content regexes grab the wrong number). PDF
+// content gives the customer kt + heildarupphæð, and fills gaps for unrenamed
+// "Nóta-…" exports. Kreditreikningar are detected and tagged (doc_type
+// 'kreditreikningur' so they don't inflate the reikningur counter). Batched by
+// `offset`; non-dry upserts customer_documents (dedup on drive_file_id).
 
 const pdf = require('pdf-parse');
 const { freshAccessToken, json, cors } = require('./_google');
@@ -35,7 +35,7 @@ exports.handler = async (event) => {
   try { token = await freshAccessToken(); }
   catch (e) { return json(401, { error: e.message }); }
 
-  const stats = { folder, dry, scanned: 0, indexed: 0, dupSkip: 0, notSlokkvitaeki: 0, errors: 0, rows: [] };
+  const stats = { folder, dry, scanned: 0, indexed: 0, dupSkip: 0, notInvoice: 0, errors: 0, rows: [] };
 
   try {
     const files = await listPdfs(folder, token);
@@ -46,24 +46,29 @@ exports.handler = async (event) => {
       stats.scanned++;
       try {
         const text = await readPdfText(f.id, token);
-        if (!text) { stats.errors++; continue; }
-        const norm = text.replace(/\s+/g, ' ');
-        // Only OUR sent invoices (issuer kt 600508-0400) — skip vendor bills.
-        if (norm.replace(/\D/g, '').indexOf(ISSUER_KT) === -1) { stats.notSlokkvitaeki++; continue; }
+        const norm = (text || '').replace(/\s+/g, ' ');
 
-        const invoice_number = extractInvoiceNumber(text);
-        const date = extractDate(text);                       // ISO yyyy-mm-dd
-        const year = date ? parseInt(date.slice(0, 4), 10) : extractYear(norm);
-        const total = extractTotal(text);                     // heildarupphæð m. vsk
+        const fn = parseFilename(f.name);                       // {company,number,date,kredit}
+        const kredit = fn.kredit || /kredit\s*reikning|kreditreikning/i.test(norm);
         let kt = customerKt(norm) || customerKtFromName(f.name);
-        const company = extractCompany(text, f.name, kt);
-        const address = extractAddress(text, f.name);
         const base = kt ? await matchBase(kt) : null;
+
+        const invoice_number = fn.number || extractInvoiceNumberText(text);
+        const date = fn.date || extractDate(text);
+        const year = date ? parseInt(date.slice(0, 4), 10) : extractYear(norm);
+        const total = extractTotal(text);
+        // Company: filename first, then the matched customer name, then the PDF
+        // bill-to block. (Never the "Nóta-…"/"Kreditreikningur_…" raw stem.)
+        const company = fn.company || (base && base.nafn) || extractCompanyText(text) || (kredit ? '' : cleanStem(f.name));
+        const address = extractAddress(text, f.name);
+
+        // Need at least one real signal to count it as an invoice.
+        if (!kt && !invoice_number && !total) { stats.notInvoice++; continue; }
 
         const row = {
           fileId: f.id, file: f.name,
           company, address, kt: kt ? dash(kt) : '', invoice_number,
-          date, total, year,
+          date, total, year, kredit,
           base_id: base ? base.id : null, base_name: base ? base.nafn : null,
         };
         stats.rows.push(row);
@@ -72,12 +77,11 @@ exports.handler = async (event) => {
           if (await alreadyIndexed(f.id)) { stats.dupSkip++; }
           await upsertDoc({
             customer_base_id: base ? base.id : null,
-            doc_type: 'reikningur', year, drive_file_id: f.id,
+            doc_type: kredit ? 'kreditreikningur' : 'reikningur', year, drive_file_id: f.id,
             source: 'gdrive', found_by: 'code',
             amount: total, invoice_number, doc_date: date, customer_name: company,
-            notes: (company || f.name.replace(/\.pdf$/i, '')) + (address ? ', ' + address : '')
-                 + (kt ? ' · kt ' + dash(kt) : '')
-                 + (invoice_number ? ' · ' + invoice_number : '') + (base ? '' : ' · RESOLVE'),
+            notes: (kredit ? 'KREDIT · ' : '') + (company || cleanStem(f.name)) + (address ? ', ' + address : '')
+                 + (kt ? ' · kt ' + dash(kt) : '') + (invoice_number ? ' · ' + invoice_number : '') + (base ? '' : ' · RESOLVE'),
           });
           stats.indexed++;
         }
@@ -112,85 +116,101 @@ async function listPdfs(folder, token) {
 }
 async function readPdfText(id, token) {
   const r = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media&supportsAllDrives=true`, { headers: { Authorization: `Bearer ${token}` } });
-  if (!r.ok) return null;
+  if (!r.ok) return '';
   const buf = Buffer.from(await r.arrayBuffer());
   const d = await pdf(buf).catch(() => null);
-  return d ? d.text : null;
+  return d ? d.text : '';
 }
 
-// ── Extraction ───────────────────────────────────────────────────────────────
+// ── Filename (primary) ────────────────────────────────────────────────────────
+// "Fyrirtæki - R 108285 - 05.05.26.pdf" → {company, number:'R-108285', date:'2026-05-05'}
+function parseFilename(name) {
+  const base = cleanStem(name);
+  const out = { company: '', number: '', date: '', kredit: /kredit/i.test(base) };
+  const segs = base.split(/\s+-\s+/).map(s => s.trim()).filter(Boolean);
+  for (const s of segs) {
+    if (!out.number && /^R[\s\-_]?\d{4,7}$/i.test(s)) out.number = 'R-' + s.replace(/\D/g, '');
+    else if (!out.date && /^\d{1,2}\.\d{1,2}\.\d{2,4}$/.test(s)) out.date = isoDate(s);
+  }
+  const first = segs[0] || '';
+  if (first && !/^(nóta|nota|kredit|reikningur|r[\s\-_]?\d)/i.test(first) && !/^\d/.test(first)) out.company = first;
+  return out;
+}
+function cleanStem(name) { return String(name || '').replace(/\.pdf$/i, '').trim(); }
+function isoDate(s) {
+  const m = String(s).match(/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$/);
+  if (!m) return '';
+  const y = m[3].length === 2 ? '20' + m[3] : m[3];
+  return `${y}-${String(m[2]).padStart(2, '0')}-${String(m[1]).padStart(2, '0')}`;
+}
+
+// ── PDF content (fallback / kt + total) ───────────────────────────────────────
 function allKts(s) { const out = []; const re = /\b(\d{6})-?(\d{4})\b/g; let m; while ((m = re.exec(s))) out.push(m[1] + m[2]); return out; }
 function customerKt(s) { for (const kt of allKts(s)) if (kt !== ISSUER_KT) return kt; return null; }
 function customerKtFromName(name) { for (const kt of allKts(String(name || ''))) if (kt !== ISSUER_KT) return kt; return null; }
 
-// "Reikningur 107899" → "R-107899" (also tolerates an existing R- prefix).
-function extractInvoiceNumber(text) {
-  const m = text.match(/Reikningur\s*\.?\s*:?\s*R?-?\s*(\d{3,8})/i);
-  return m ? 'R-' + m[1] : '';
+// dkPlus numbers are 6 digits (10xxxx). Exclude kt fragments ("531175-2719").
+function extractInvoiceNumberText(text) {
+  let m = text.match(/Reikningur\s*nr\.?\s*:?\s*(\d{4,7})\b/i);
+  if (m) return 'R-' + m[1];
+  const re = /\b(1\d{5})\b(?!-?\d{4})/g; let x;
+  while ((x = re.exec(text))) { const before = text.slice(Math.max(0, x.index - 7), x.index); if (!/\d[-\s]?$/.test(before)) return 'R-' + x[1]; }
+  return '';
 }
-// "Dagsetning: 26.02.26" → "2026-02-26"
 function extractDate(text) {
   let m = text.match(/Dagsetning\s*:?\s*(\d{1,2})\.(\d{1,2})\.(\d{2,4})/i);
   if (!m) m = text.match(/\b(\d{1,2})\.(\d{1,2})\.(\d{2,4})\b/);
   if (!m) return '';
-  let [, d, mo, y] = m;
-  y = y.length === 2 ? '20' + y : y;
-  return `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  const y = m[3].length === 2 ? '20' + m[3] : m[3];
+  return `${y}-${String(m[2]).padStart(2, '0')}-${String(m[1]).padStart(2, '0')}`;
 }
 function extractYear(s) {
   let m = s.match(/\b\d{1,2}\.\d{1,2}\.(\d{2})\b/); if (m) return 2000 + parseInt(m[1], 10);
   m = s.match(/\b(20\d{2})\b/); if (m) return parseInt(m[1], 10);
   return null;
 }
-// Heildarupphæð m. vsk = the largest ISK-formatted figure on the invoice (the
-// grand total is ≥ every line amount and the VSK amount). Numbers without a
-// thousands separator (invoice nr, raðnr) are excluded by requiring "N.NNN".
+// Heildarupphæð m. vsk = the largest ISK-formatted figure (grand total ≥ every
+// line amount and the VSK amount). Numbers without a thousands separator
+// (invoice nr, raðnr, kt) are excluded by requiring "N.NNN".
 function extractTotal(text) {
-  // Prefer an explicit total line when present.
-  const kw = text.match(/(?:Til\s*greiðslu|Samtals(?:\s*m(?:eð)?\.?\s*vsk)?)\s*:?\s*(?:kr\.?)?\s*([\d.]{4,})/i);
+  const kw = text.match(/Til\s*greiðslu\s*:?\s*(?:kr\.?)?\s*([\d.]{4,})/i);
   let best = 0;
   if (kw) { const n = parseInt(kw[1].replace(/\./g, ''), 10); if (Number.isFinite(n)) best = n; }
   const re = /\b\d{1,3}(?:\.\d{3})+\b/g; let m;
   while ((m = re.exec(text))) { const n = parseInt(m[0].replace(/\./g, ''), 10); if (n > best) best = n; }
   return best || null;
 }
-// Company / bill-to name. The bill-to block sits after the issuer address and
-// before "Reikningur". Take the first letter-bearing line there that isn't an
-// issuer line or a field label. Falls back to the (renamed) filename.
-function extractCompany(text, fileName, kt) {
+// Bill-to company from the PDF: first letter-bearing line after the issuer block
+// and before the customer kt, skipping labels. (Used only when the filename and
+// the kt-match both come up empty.)
+function extractCompanyText(text) {
   const lines = String(text || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-  const isIssuer = l => /slökkvitæki|brunakerfi|helluhraun|hafnarfj|vsk\s*nr|kt:\s*600508|600508-0400/i.test(l);
-  const isLabel = l => /^(reikningur|dagsetning|greiðsl|afh\.?skilm|starfsma|tilvísun|tilvisun|raðnr|radnr|vörunúmer|vorunumer|lýsing|kt\.?|pósthólf|postholf|sími|simi|netfang|s:|\d|kennitala)/i.test(l);
-  // Find where the issuer header ends, then take the first plausible name line.
+  const isIssuer = l => /slökkvitæki|brunakerfi|helluhraun|vsk\s*nr|kt:\s*600508|600508-?0400/i.test(l);
+  const isLabel = l => /^(reikningur|kreditreikningur|dagsetning|greiðsl|afh\.?skilm|starfsma|tilvísun|tilvisun|ra[ðd]nr|seljandi|greiðandi|kaupandi|vörunúmer|móttek|samtals|til\s*greiðslu|kt\.?|pósthólf|sími|netfang)/i.test(l);
   let started = false;
   for (const l of lines) {
     if (isIssuer(l)) { started = true; continue; }
     if (!started) continue;
-    if (/reikningur/i.test(l)) break;
+    if (/^reikningur|kreditreikningur/i.test(l)) break;
     if (isLabel(l)) continue;
     if (!/[A-Za-zÁÉÍÓÚÝÆÖÞÐáéíóúýæöþð]/.test(l)) continue;
-    if (l.replace(/\D/g, '').length >= 7) continue; // looks like a kt / number line
+    if (l.replace(/\D/g, '').length >= 7) continue;
     if (l.length > 60) continue;
     return l.replace(/\s+/g, ' ').trim();
   }
-  // Fallback: first " - " segment of the (renamed) filename, else filename stem.
-  const base = String(fileName || '').replace(/\.pdf$/i, '');
-  const seg = base.split(' - ').map(s => s.trim()).filter(Boolean);
-  if (seg.length && !/^\d/.test(seg[0])) return seg[0];
-  return base;
+  return '';
 }
-// Customer address: the postcode/city line in the bill-to block plus the
-// street/pósthólf line just above it (e.g. "Pósthólf 8940, 128 Reykjavík" or
-// "Helluhrauni 10, 220 Hafnarfjörður"). Falls back to the filename's address
-// segment (the renamer writes "Fyrirtæki - Heimilisfang - Kennitala - …").
+// Customer address: the postcode/city line in the bill-to block + the street
+// line above it. Issuer line identified by "Helluhraun" (NOT by "220
+// Hafnarfj…", since customers in Hafnarfjörður share that postcode).
 function extractAddress(text, fileName) {
   const lines = String(text || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-  const cityRe = /\b\d{3}\s+[A-Za-zÁÉÍÓÚÝÆÖÞÐáéíóúýæöþð]/;          // 128 Reykjavík
-  const streetRe = /(pósthólf|postholf|p\.?o\.?\s*box|\d)/i;        // street number or PO box
-  const isIssuerAddr = l => /helluhraun|220\s*hafnarfj/i.test(l);
+  const cityRe = /\b\d{3}\s+[A-Za-zÁÉÍÓÚÝÆÖÞÐáéíóúýæöþð]/;
+  const streetRe = /(pósthólf|postholf|p\.?o\.?\s*box|\d)/i;
+  const isIssuerAddr = l => /helluhraun/i.test(l);
   let cityIdx = -1;
   for (let i = 0; i < lines.length; i++) {
-    if (/reikningur/i.test(lines[i])) break;
+    if (/^reikningur|kreditreikningur/i.test(lines[i])) break;
     if (isIssuerAddr(lines[i])) continue;
     if (cityRe.test(lines[i]) && lines[i].replace(/\D/g, '').length < 7) { cityIdx = i; break; }
   }
@@ -199,18 +219,15 @@ function extractAddress(text, fileName) {
     let street = '';
     for (let j = cityIdx - 1; j >= 0 && j >= cityIdx - 3; j--) {
       const l = lines[j];
-      if (isIssuerAddr(l) || /reikningur/i.test(l)) break;
-      if (/^\d{6}-?\d{4}$/.test(l.replace(/\s/g, ''))) continue;     // kt
+      if (isIssuerAddr(l) || /^reikningur|kreditreikningur/i.test(l)) break;
+      if (/^\d{6}-?\d{4}$/.test(l.replace(/\s/g, ''))) continue;
       if (streetRe.test(l) && l.replace(/\D/g, '').length < 7 && l.length < 50) { street = l.replace(/\s+/g, ' ').trim(); break; }
     }
     return street ? street + ', ' + city : city;
   }
-  // Fallback: filename "Company - Address - kt - …"
-  const base = String(fileName || '').replace(/\.pdf$/i, '');
-  const seg = base.split(' - ').map(s => s.trim());
+  const seg = cleanStem(fileName).split(/\s+-\s+/).map(s => s.trim());
   const ktIdx = seg.findIndex(p => /^\d{6}-?\d{4}$/.test(p));
-  if (ktIdx >= 2) return seg[ktIdx - 1];
-  return '';
+  return ktIdx >= 2 ? seg[ktIdx - 1] : '';
 }
 const dash = kt => kt.length === 10 ? kt.slice(0, 6) + '-' + kt.slice(6) : kt;
 
@@ -226,8 +243,6 @@ async function matchBase(kt) {
   const rows = await r.json().catch(() => []);
   return (Array.isArray(rows) && rows[0]) ? rows[0] : null;
 }
-// Upsert on drive_file_id so re-runs refresh the parsed fields (table has a
-// unique constraint on drive_file_id — see cowork-doc-sweep skill).
 async function upsertDoc(row) {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?on_conflict=drive_file_id`, {
     method: 'POST',

@@ -1,16 +1,14 @@
-// reikningar-sheet.js — write the parsed invoice rows into a Google Sheet that
-// lives INSIDE the Reikningar folder, so the sheet doubles as a sortable
-// database summary of every sent invoice.
-//   POST /api/reikningar-sheet  body { folder, rows:[{company,kt,invoice_number,
-//        date,total,year,base_name,file,fileId}], title? }
-// Find-or-create one stable sheet ("Reikningar – gagnayfirlit") in the folder
-// and overwrite its contents (so re-running keeps ONE living summary, not many).
-// Returns { ok, id, url, rows, created }.
+// samningar-sheet.js — write the parsed Þjónustusamningur rows into a Google
+// Sheet inside the Samningar folder, so it doubles as a database summary.
+//   POST /api/samningar-sheet  body { folder, rows:[{company,address,kt,date,
+//        year,base_name,file,fileId}], title? }
+// Find-or-create ONE stable sheet ("Þjónustusamningar – gagnayfirlit") in the
+// folder and overwrite its contents. Returns { ok, id, url, rows, created }.
 
 const { freshAccessToken, json, cors } = require('./_google');
 
-const DEFAULT_FOLDER = '1TDusB2NLhr-OMLnojSk3iw0oiuiuFMLM';
-const SHEET_TITLE = 'Reikningar – gagnayfirlit';
+const DEFAULT_FOLDER = '1f2kzXhbkU0xJ0MFPxRpWjoPmWZBlm1zZ';
+const SHEET_TITLE = 'Þjónustusamningar – gagnayfirlit';
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors(), body: '' };
@@ -27,24 +25,20 @@ exports.handler = async (event) => {
   catch (e) { return json(401, { error: e.message }); }
 
   try {
-    // Sort by company, then date — the readable order for a summary.
     const rows = inRows.slice().sort((a, b) =>
       (a.company || '').localeCompare(b.company || '', 'is') ||
       String(a.date || '').localeCompare(String(b.date || '')));
 
-    const header = ['Fyrirtæki', 'Heimilisfang', 'Kennitala', 'Tegund', 'Reikningsnúmer', 'Dagsetning', 'Heildarupphæð', 'Ár', 'Viðskiptavinur (grunnur)', 'Skráarnafn', 'Tengill'];
+    const header = ['Fyrirtæki', 'Heimilisfang', 'Kennitala', 'Tegund', 'Dagsetning', 'Ár', 'Viðskiptavinur (grunnur)', 'Skráarnafn', 'Tengill'];
     const values = [header].concat(rows.map(r => [
-      r.company || '', r.address || '', r.kt || '',
-      r.kredit ? 'Kreditreikningur' : 'Reikningur', r.invoice_number || '',
+      r.company || '', r.address || '', r.kt || '', 'Þjónustusamningur',
       r.date ? fmtDate(r.date) : '',
-      (r.total != null && r.total !== '') ? Number(r.total) : '',
       r.year || (r.date ? r.date.slice(0, 4) : ''),
       r.base_name || (r.base_id ? '#' + r.base_id : ''),
       r.file || '',
       r.fileId ? 'https://drive.google.com/file/d/' + r.fileId + '/view' : '',
     ]));
 
-    // 1. find-or-create the one stable summary sheet in the folder
     let id = await findSheet(folder, title, token);
     let created = false;
     if (!id) {
@@ -57,20 +51,17 @@ exports.handler = async (event) => {
       created = true;
       await moveIntoFolder(id, folder, token);
     } else {
-      // clear old contents so a shrunk dataset doesn't leave stale rows behind
       await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${id}/values/A1:Z100000:clear`, {
         method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: '{}',
       }).catch(() => {});
     }
 
-    // 2. write the values
     const wr = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${id}/values/A1?valueInputOption=USER_ENTERED`, {
       method: 'PUT', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ values }),
     });
     if (!wr.ok) return json(wr.status, { error: 'write: ' + (await wr.text()).slice(0, 300) });
 
-    // 3. bold + freeze header, basic filter
     await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${id}:batchUpdate`, {
       method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ requests: [
