@@ -57,10 +57,11 @@ exports.handler = async (event) => {
         const date = fn.date || extractDate(text);
         const year = date ? parseInt(date.slice(0, 4), 10) : extractYear(norm);
         const total = extractTotal(text);
-        // Company: filename first, then the matched customer name, then the PDF
-        // bill-to block. (Never the "Nóta-…"/"Kreditreikningur_…" raw stem.)
-        const company = fn.company || (base && base.nafn) || extractCompanyText(text) || (kredit ? '' : cleanStem(f.name));
-        const address = extractAddress(text, f.name);
+        // Company: the matched customer's canonical name first (so messy file
+        // stems like "X_reikn_106883_05-2025" become the real name), then the
+        // clean filename segment, then the PDF bill-to block.
+        const company = (base && base.nafn) || fn.company || extractCompanyText(text) || '';
+        const address = extractAddress(text, f.name, kt);
 
         // Need at least one real signal to count it as an invoice.
         if (!kt && !invoice_number && !total) { stats.notInvoice++; continue; }
@@ -132,8 +133,16 @@ function parseFilename(name) {
     if (!out.number && /^R[\s\-_]?\d{4,7}$/i.test(s)) out.number = 'R-' + s.replace(/\D/g, '');
     else if (!out.date && /^\d{1,2}\.\d{1,2}\.\d{2,4}$/.test(s)) out.date = isoDate(s);
   }
+  // Company = first segment, unless it's a raw export stem (Nóta/Kredit/
+  // Reikningur), an R-number, a date, or a pure number. Names may legitimately
+  // start with a digit ("17.júní Torg", "17 sundlaug") so don't reject those.
   const first = segs[0] || '';
-  if (first && !/^(nóta|nota|kredit|reikningur|r[\s\-_]?\d)/i.test(first) && !/^\d/.test(first)) out.company = first;
+  if (first
+      && !/^(nóta|nota|kredit|reikningur)\b/i.test(first)
+      && !/^R[\s\-_]?\d{4,7}$/i.test(first)
+      && !/^\d{1,2}\.\d{1,2}\.\d{2,4}$/.test(first)
+      && !/^\d{4,}$/.test(first)
+      && !/^#/.test(first)) out.company = first;
   return out;
 }
 function cleanStem(name) { return String(name || '').replace(/\.pdf$/i, '').trim(); }
@@ -203,31 +212,60 @@ function extractCompanyText(text) {
 // Customer address: the postcode/city line in the bill-to block + the street
 // line above it. Issuer line identified by "Helluhraun" (NOT by "220
 // Hafnarfj…", since customers in Hafnarfjörður share that postcode).
-function extractAddress(text, fileName) {
+// Customer address. The dkPlus bill-to block reads top-down:
+//   Fyrirtæki / Gata / Póstnúmer Bær / Kennitala
+// so the most reliable anchor is the CUSTOMER kt line — the address is the
+// 1-2 lines directly above it (the issuer's "220 Hafnarfjörður" sits ABOVE
+// the issuer kt, never above the customer's). Falls back to a forward-scan
+// past the issuer block ("Helluhraun"), then to the filename segment.
+function extractAddress(text, fileName, custKt) {
   const lines = String(text || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
   const cityRe = /\b\d{3}\s+[A-Za-zÁÉÍÓÚÝÆÖÞÐáéíóúýæöþð]/;
   const streetRe = /(pósthólf|postholf|p\.?o\.?\s*box|\d)/i;
   const isIssuerAddr = l => /helluhraun/i.test(l);
-  let cityIdx = -1;
+  const clean = l => l.replace(/\s+/g, ' ').replace(/,?\s*IS\.?$/i, '').trim();
+
+  // 1) Anchor on the customer-kt line, read upwards.
+  if (custKt) {
+    const ktIdx = lines.findIndex(l => l.replace(/\D/g, '') === custKt);
+    if (ktIdx > 0) {
+      let city = '', street = '';
+      for (let j = ktIdx - 1; j >= 0 && j >= ktIdx - 4; j--) {
+        const l = lines[j];
+        if (isIssuerAddr(l) || /^reikningur|kreditreikningur/i.test(l)) break;
+        if (!city && cityRe.test(l) && l.replace(/\D/g, '').length < 7) { city = clean(l); continue; }
+        if (city && streetRe.test(l) && l.replace(/\D/g, '').length < 7 && l.length < 50) { street = clean(l); break; }
+        if (city) break; // line above the city that isn't a street → it's the name
+      }
+      if (city) return street ? street + ', ' + city : city;
+    }
+  }
+
+  // 2) Forward-scan: only AFTER the issuer block ("Helluhraun") so the
+  //    issuer's own postcode line is never picked up.
+  let cityIdx = -1, pastIssuer = false;
   for (let i = 0; i < lines.length; i++) {
     if (/^reikningur|kreditreikningur/i.test(lines[i])) break;
-    if (isIssuerAddr(lines[i])) continue;
+    if (isIssuerAddr(lines[i])) { pastIssuer = true; continue; }
+    if (!pastIssuer) continue;
     if (cityRe.test(lines[i]) && lines[i].replace(/\D/g, '').length < 7) { cityIdx = i; break; }
   }
   if (cityIdx >= 0) {
-    const city = lines[cityIdx].replace(/\s+/g, ' ').trim();
+    const city = clean(lines[cityIdx]);
     let street = '';
     for (let j = cityIdx - 1; j >= 0 && j >= cityIdx - 3; j--) {
       const l = lines[j];
       if (isIssuerAddr(l) || /^reikningur|kreditreikningur/i.test(l)) break;
       if (/^\d{6}-?\d{4}$/.test(l.replace(/\s/g, ''))) continue;
-      if (streetRe.test(l) && l.replace(/\D/g, '').length < 7 && l.length < 50) { street = l.replace(/\s+/g, ' ').trim(); break; }
+      if (streetRe.test(l) && l.replace(/\D/g, '').length < 7 && l.length < 50) { street = clean(l); break; }
     }
     return street ? street + ', ' + city : city;
   }
+
+  // 3) Filename "Company - Address - kt - …"
   const seg = cleanStem(fileName).split(/\s+-\s+/).map(s => s.trim());
-  const ktIdx = seg.findIndex(p => /^\d{6}-?\d{4}$/.test(p));
-  return ktIdx >= 2 ? seg[ktIdx - 1] : '';
+  const ktIdx2 = seg.findIndex(p => /^\d{6}-?\d{4}$/.test(p));
+  return ktIdx2 >= 2 ? seg[ktIdx2 - 1] : '';
 }
 const dash = kt => kt.length === 10 ? kt.slice(0, 6) + '-' + kt.slice(6) : kt;
 
