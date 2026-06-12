@@ -133,10 +133,13 @@ function parseFilename(name) {
     if (!out.number && /^R[\s\-_]?\d{4,7}$/i.test(s)) out.number = 'R-' + s.replace(/\D/g, '');
     else if (!out.date && /^\d{1,2}\.\d{1,2}\.\d{2,4}$/.test(s)) out.date = isoDate(s);
   }
+  // InExchange-style stems carry the number inline: "X_reikn_105530_07-2024".
+  if (!out.number) { const m = base.match(/reikn[_\s-]*(\d{4,7})/i); if (m) out.number = 'R-' + m[1]; }
   // Company = first segment, unless it's a raw export stem (Nóta/Kredit/
   // Reikningur), an R-number, a date, or a pure number. Names may legitimately
   // start with a digit ("17.júní Torg", "17 sundlaug") so don't reject those.
-  const first = segs[0] || '';
+  let first = segs[0] || '';
+  first = first.replace(/[_\s-]*reikn[_\s-]*\d[\d_\s.-]*(\(\d+\))?$/i, '').trim(); // strip "_reikn_105530_07-2024 (1)" tail
   if (first
       && !/^(nóta|nota|kredit|reikningur)\b/i.test(first)
       && !/^R[\s\-_]?\d{4,7}$/i.test(first)
@@ -218,51 +221,27 @@ function extractCompanyText(text) {
 // 1-2 lines directly above it (the issuer's "220 Hafnarfjörður" sits ABOVE
 // the issuer kt, never above the customer's). Falls back to a forward-scan
 // past the issuer block ("Helluhraun"), then to the filename segment.
+// Customer address — layout-agnostic: scan the WHOLE text for
+// "Street NN[, ]NNN City" pairs (street word(s) + house number, then postcode
+// + city), skipping the issuer's own "Helluhrauni 10 220 Hafnarfjörður". This
+// survives both PDF layouts (dkPlus export = separate lines; InExchange =
+// "12.07.24 Álfabakka 14 109 Reykjavík" merged inline) because it doesn't
+// depend on line order at all.
 function extractAddress(text, fileName, custKt) {
-  const lines = String(text || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-  const cityRe = /\b\d{3}\s+[A-Za-zÁÉÍÓÚÝÆÖÞÐáéíóúýæöþð]/;
-  const streetRe = /(pósthólf|postholf|p\.?o\.?\s*box|\d)/i;
-  const isIssuerAddr = l => /helluhraun/i.test(l);
-  const clean = l => l.replace(/\s+/g, ' ').replace(/,?\s*IS\.?$/i, '').trim();
-
-  // 1) Anchor on the customer-kt line, read upwards.
-  if (custKt) {
-    const ktIdx = lines.findIndex(l => l.replace(/\D/g, '') === custKt);
-    if (ktIdx > 0) {
-      let city = '', street = '';
-      for (let j = ktIdx - 1; j >= 0 && j >= ktIdx - 4; j--) {
-        const l = lines[j];
-        if (isIssuerAddr(l) || /^reikningur|kreditreikningur/i.test(l)) break;
-        if (!city && cityRe.test(l) && l.replace(/\D/g, '').length < 7) { city = clean(l); continue; }
-        if (city && streetRe.test(l) && l.replace(/\D/g, '').length < 7 && l.length < 50) { street = clean(l); break; }
-        if (city) break; // line above the city that isn't a street → it's the name
-      }
-      if (city) return street ? street + ', ' + city : city;
-    }
+  const t = String(text || '');
+  const pairRe = /([A-ZÁÉÍÓÚÝÆÖÞÐ][A-Za-zÁÉÍÓÚÝÆÖÞÐáéíóúýæöþð.\-]*(?:[^\S\n]+[A-Za-zÁÉÍÓÚÝÆÖÞÐáéíóúýæöþð.\-]+){0,3}[^\S\n]+\d{1,4}(?:[^\S\n]*[-–][^\S\n]*\d{1,4})?[a-dA-D]?)[,\s]+(\d{3}[^\S\n]+[A-ZÁÉÍÓÚÝÆÖÞÐ][a-záéíóúýæöþð]+(?:bær|borg)?)/g;
+  let m;
+  while ((m = pairRe.exec(t))) {
+    const street = m[1].replace(/\s+/g, ' ').trim();
+    const city = m[2].replace(/\s+/g, ' ').trim();
+    if (/helluhraun|slökkvitæki|brunakerfi|vsk\s*nr/i.test(street)) continue;   // issuer
+    if (/^(reikningur|kreditreikningur|dagsetning|krafa|skilmáli|raðnr|radnr)/i.test(street)) continue;
+    return street + ', ' + city;
   }
-
-  // 2) Forward-scan: only AFTER the issuer block ("Helluhraun") so the
-  //    issuer's own postcode line is never picked up.
-  let cityIdx = -1, pastIssuer = false;
-  for (let i = 0; i < lines.length; i++) {
-    if (/^reikningur|kreditreikningur/i.test(lines[i])) break;
-    if (isIssuerAddr(lines[i])) { pastIssuer = true; continue; }
-    if (!pastIssuer) continue;
-    if (cityRe.test(lines[i]) && lines[i].replace(/\D/g, '').length < 7) { cityIdx = i; break; }
-  }
-  if (cityIdx >= 0) {
-    const city = clean(lines[cityIdx]);
-    let street = '';
-    for (let j = cityIdx - 1; j >= 0 && j >= cityIdx - 3; j--) {
-      const l = lines[j];
-      if (isIssuerAddr(l) || /^reikningur|kreditreikningur/i.test(l)) break;
-      if (/^\d{6}-?\d{4}$/.test(l.replace(/\s/g, ''))) continue;
-      if (streetRe.test(l) && l.replace(/\D/g, '').length < 7 && l.length < 50) { street = clean(l); break; }
-    }
-    return street ? street + ', ' + city : city;
-  }
-
-  // 3) Filename "Company - Address - kt - …"
+  // Fallback: a lone "Pósthólf NNNN" + city, anywhere outside the issuer line.
+  const pb = t.match(/(Pósthólf\s+\d{1,5})[,\s]+(\d{3}\s+[A-ZÁÉÍÓÚÝÆÖÞÐ][a-záéíóúýæöþð]+)/i);
+  if (pb) return pb[1] + ', ' + pb[2];
+  // Filename "Company - Address - kt - …"
   const seg = cleanStem(fileName).split(/\s+-\s+/).map(s => s.trim());
   const ktIdx2 = seg.findIndex(p => /^\d{6}-?\d{4}$/.test(p));
   return ktIdx2 >= 2 ? seg[ktIdx2 - 1] : '';
