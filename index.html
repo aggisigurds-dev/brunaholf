@@ -5371,7 +5371,7 @@ async function renderTilbunirReikningar(t){
     if(stadf>0) body += row('Staðfesting brunaþéttinga', null, '1', stadf);
     const net=Number(d.net_an_vsk)||0, vsk=Number(d.vsk_amount)||0, total=Number(d.total_m_vsk)||0;
     const payer = [d.customer_name, d.kennitala?('kt. '+d.kennitala):'', d.heimilisfang].filter(Boolean).map(esc).join('<br>');
-    let logo; try{ logo=localStorage.getItem('brunaholfReikningurLogo')||'/public/reikningur/logo.png'; }catch{ logo='/public/reikningur/logo.png'; } if(logo[0]==='/') logo=location.origin+logo;
+    let logo; try{ logo=localStorage.getItem('brunaholfReikningurLogo')||'/public/reikningur/brunaholf-logo.png'; }catch{ logo='/public/reikningur/brunaholf-logo.png'; } if(logo[0]==='/') logo=location.origin+logo;
     const w = window.open('','_blank'); if(!w){ alert('Leyfðu sprettiglugga til að prenta.'); return; }
     w.document.write(`<!DOCTYPE html><html lang="is"><head><meta charset="utf-8"><title>Efnislisti — ${esc(d.worksite_name)} — ${esc(mlabel(d.work_month))}</title>
       <style>body{font-family:'Times New Roman',Times,serif;color:#000;margin:32px 40px}
@@ -5482,7 +5482,7 @@ async function renderGerdReikninga(t){
   if(!/^\d{4}-\d{2}$/.test(state.ui.gr_month||'')) state.ui.gr_month = '2026-05';
 
   const LOGO_KEY = 'brunaholfReikningurLogo';
-  const getLogo = () => { try { return localStorage.getItem(LOGO_KEY) || '/public/reikningur/logo.png'; } catch { return '/public/reikningur/logo.png'; } };
+  const getLogo = () => { try { return localStorage.getItem(LOGO_KEY) || '/public/reikningur/brunaholf-logo.png'; } catch { return '/public/reikningur/brunaholf-logo.png'; } };
 
   const MNAMES = ['jan.','feb.','mars','apríl','maí','júní','júlí','ágúst','sept.','okt.','nóv.','des.'];
   const monthLabel = ym => { const [y,m]=ym.split('-'); return `${MNAMES[+m-1]} ${y}`; };
@@ -6098,7 +6098,7 @@ async function renderGerdReikninga(t){
             + `<tr class="dsum"><td></td><td colspan="3">Samtals ${dmy(d)}</td><td class="r">${hr(dayH)}</td></tr>`;
         }).join('');
         const empRows = (data.by_employee||[]).map(e=>`<tr><td>${escapeHtml(e.employee)}</td><td class="r">${e.days}</td><td class="r">${hr(e.hours_dagvinna)}</td><td class="r">${hr(e.hours_yfirvinna)}</td><td class="r">${hr(e.hours)}</td></tr>`).join('');
-        const logo = (()=>{ let l=''; try{ l = localStorage.getItem('brunaholfReikningurLogo') || ''; }catch{} if(!l) l='/public/reikningur/logo.png'; if(l[0]==='/') l = location.origin + l; return l; })(); // sama merki og Efnislisti (brunaholfReikningurLogo), absolút svo það prentist
+        const logo = (()=>{ let l=''; try{ l = localStorage.getItem('brunaholfReikningurLogo') || ''; }catch{} if(!l) l='/public/reikningur/brunaholf-logo.png'; if(l[0]==='/') l = location.origin + l; return l; })(); // sama merki og Efnislisti (brunaholfReikningurLogo), absolút svo það prentist
         const win = window.open('', '_blank');
         if(!win){ alert('Leyfðu sprettiglugga til að prenta.'); return; }
         win.document.write(`<!DOCTYPE html><html lang="is"><head><meta charset="utf-8"><title>Tímabók — ${escapeHtml(name)} — ${monthLabel(month)}</title>
@@ -6315,7 +6315,7 @@ async function renderGerdReikninga(t){
     }).join('');
     const kragiRows = bandTable('kragi', kragi);
     const bordiRows = bandTable('bordi', bordi);
-    const logo = (()=>{ try { return localStorage.getItem('brunaholfLogo') || '/public/reikningur/logo.png'; } catch { return '/public/reikningur/logo.png'; } })();
+    const logo = (()=>{ try { return localStorage.getItem('brunaholfLogo') || '/public/reikningur/brunaholf-logo.png'; } catch { return '/public/reikningur/brunaholf-logo.png'; } })();
     const w = window.open('', '_blank');
     if(!w){ alert('Leyfðu sprettiglugga til að prenta.'); return; }
     w.document.write(`<!DOCTYPE html><html lang="is"><head><meta charset="utf-8"><title>Verðskrá — ${escapeHtml(name)} — ${monthLabel(month)}</title>
