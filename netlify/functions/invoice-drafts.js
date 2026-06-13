@@ -73,13 +73,24 @@ exports.handler = async (event) => {
     return json(200, arr[0] || { ok: true });
   }
 
+  if (event.httpMethod === 'DELETE') {
+    const q = event.queryStringParameters || {};
+    if (!q.worksite || !q.work_month) return json(400, { error: 'worksite + work_month required' });
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/invoice_drafts?worksite_name=eq.${encodeURIComponent(q.worksite)}&work_month=eq.${encodeURIComponent(q.work_month)}`, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Prefer': 'return=minimal' },
+    });
+    if (!r.ok) return json(r.status, { error: (await r.text()).slice(0, 300) });
+    return json(200, { ok: true, deleted: { worksite_name: q.worksite, work_month: q.work_month } });
+  }
+
   return json(405, { error: 'Method not allowed' });
 };
 
 function cors() {
   return {
     'access-control-allow-origin': '*',
-    'access-control-allow-methods': 'GET, POST, OPTIONS',
+    'access-control-allow-methods': 'GET, POST, DELETE, OPTIONS',
     'access-control-allow-headers': 'content-type',
   };
 }
