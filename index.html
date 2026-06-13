@@ -2016,7 +2016,7 @@ function renderTabs(){
       <div class="logo">🔥</div>
       <div class="txt"><strong>Brunahólf</strong><small>Stjórnstöð</small></div>
     </div>` : '';
-  const visible = state.tabs.filter(t => !t.hidden || t.id==='stillingar');
+  const visible = state.tabs.filter(t => state.ui.editMode || !t.hidden || t.id==='stillingar');
   if(lay==='horizontal'){
     $tabs.innerHTML = visible.map(t=>`
       <button class="tab ${state.ui.activeTab===t.id?'active':''}" data-id="${t.id}">
@@ -2052,10 +2052,28 @@ function renderTabs(){
   // Raða í hliðastiku: í ✎ Breyta-ham má draga flipa til að endurraða (vistast).
   if(state.ui.editMode){
     $tabs.querySelectorAll('[data-id]').forEach(el=>{
+      const _t = state.tabs.find(x=>x.id===el.dataset.id);
+      // Faldar síður birtast daufar í Breyta-ham svo hægt sé að sýna þær aftur.
+      if(_t && _t.hidden) el.style.opacity = '0.45';
+      // Fela / Sýna síðu (ekki Stillingar).
+      if(_t && _t.id!=='stillingar' && !el.querySelector('.tab-hidetog')){
+        const tog = document.createElement('span');
+        tog.className = 'tab-hidetog';
+        tog.textContent = _t.hidden ? '🙈' : '👁';
+        tog.title = _t.hidden ? 'Sýna síðu' : 'Fela síðu';
+        tog.style.cssText = 'margin-left:auto;cursor:pointer;font-size:13px;padding:0 4px;flex:0 0 auto';
+        tog.addEventListener('click', e=>{
+          e.stopPropagation(); e.preventDefault();
+          _t.hidden = !_t.hidden;
+          if(_t.hidden && state.ui.activeTab===_t.id){ const fv = state.tabs.find(x=>!x.hidden && x.id!==_t.id); if(fv) state.ui.activeTab = fv.id; }
+          save(); render();
+        });
+        el.appendChild(tog);
+      }
       el.setAttribute('draggable','true');
       el.style.cursor = 'grab';
       el.addEventListener('dragstart', e=>{ e.dataTransfer.setData('text/plain', el.dataset.id); e.dataTransfer.effectAllowed='move'; el.style.opacity='0.4'; });
-      el.addEventListener('dragend', ()=>{ el.style.opacity=''; });
+      el.addEventListener('dragend', ()=>{ el.style.opacity = (_t && _t.hidden) ? '0.45' : ''; });
       el.addEventListener('dragover', e=>{ e.preventDefault(); e.dataTransfer.dropEffect='move'; el.style.outline='2px solid var(--accent,#d93838)'; el.style.outlineOffset='-2px'; });
       el.addEventListener('dragleave', ()=>{ el.style.outline=''; });
       el.addEventListener('drop', e=>{
