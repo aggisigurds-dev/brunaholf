@@ -2049,6 +2049,28 @@ function renderTabs(){
       el.addEventListener(ev, () => warmFor(el.dataset.id), { passive: true });
     });
   });
+  // Raða í hliðastiku: í ✎ Breyta-ham má draga flipa til að endurraða (vistast).
+  if(state.ui.editMode){
+    $tabs.querySelectorAll('[data-id]').forEach(el=>{
+      el.setAttribute('draggable','true');
+      el.style.cursor = 'grab';
+      el.addEventListener('dragstart', e=>{ e.dataTransfer.setData('text/plain', el.dataset.id); e.dataTransfer.effectAllowed='move'; el.style.opacity='0.4'; });
+      el.addEventListener('dragend', ()=>{ el.style.opacity=''; });
+      el.addEventListener('dragover', e=>{ e.preventDefault(); e.dataTransfer.dropEffect='move'; el.style.outline='2px solid var(--accent,#d93838)'; el.style.outlineOffset='-2px'; });
+      el.addEventListener('dragleave', ()=>{ el.style.outline=''; });
+      el.addEventListener('drop', e=>{
+        e.preventDefault(); el.style.outline='';
+        const src = e.dataTransfer.getData('text/plain'), dst = el.dataset.id;
+        if(!src || src===dst) return;
+        const arr = state.tabs;
+        const si = arr.findIndex(t=>t.id===src); if(si<0) return;
+        const [moved] = arr.splice(si,1);
+        const di = arr.findIndex(t=>t.id===dst);
+        arr.splice(di<0?arr.length:di, 0, moved);
+        save(); renderTabs();
+      });
+    });
+  }
 }
 function activeTab(){ return state.tabs.find(t=>t.id===state.ui.activeTab) || state.tabs[0]; }
 function buttonsFor(tabId){ return state.buttons.filter(b=>b.tab===tabId); }
@@ -5631,6 +5653,7 @@ async function renderGerdReikninga(t){
 
     const card = (w, gataFlag) => {
       const name = w.project;
+      const note = (state.ui.gr_card_notes || {})[name] || '';
       const r = rateFor(name);
       const cust = r.customer || (w.mapped_customers||[])[0] || '';
       const hrs = monthHours(w);
@@ -5667,6 +5690,7 @@ async function renderGerdReikninga(t){
               ? `<button class="gr-btn gr-btn-primary" data-gr-gata="${escapeAttr(name)}">📐 Ajour uppgjör</button>`
               : `<button class="gr-btn gr-btn-primary" data-gr-edit="${escapeAttr(name)}">🧾 Efnislisti</button>`}
           </div>
+          <div class="gr-card-note"><textarea class="gr-note-in" data-gr-note="${escapeAttr(name)}" rows="2" placeholder="Athugasemd (vistast)…" style="width:100%;margin-top:8px;border:1px solid var(--border,#cbd5e1);border-radius:8px;padding:6px 8px;font:inherit;font-size:12px;resize:vertical;box-sizing:border-box">${escapeHtml(note)}</textarea></div>
         </div>`;
     };
 
@@ -5692,6 +5716,13 @@ async function renderGerdReikninga(t){
     $meta.textContent = `${monthLabel(month)} · ${fmt(savedTotal)} kr vistað · ${pending} eftir`;
     $host.querySelectorAll('[data-gr-edit]').forEach(b=> b.onclick = ()=> openEditor(b.dataset.grEdit));
     $host.querySelectorAll('[data-gr-gata]').forEach(b=> b.onclick = ()=> openGata(b.dataset.grGata));
+    // Per-worksite note box (saved to app-state, persists across months + devices).
+    $host.querySelectorAll('[data-gr-note]').forEach(ta=> ta.addEventListener('change', ()=>{
+      state.ui.gr_card_notes = state.ui.gr_card_notes || {};
+      const v = ta.value.trim();
+      if(v) state.ui.gr_card_notes[ta.dataset.grNote] = v; else delete state.ui.gr_card_notes[ta.dataset.grNote];
+      save();
+    }));
     // Status dot: cycle none → green → yellow → red → none. Shares state.ui.vb_review
     // with Vinnubók so a worksite/month marking stays in sync across both views.
     $host.querySelectorAll('[data-gr-dot]').forEach(btn=>{
