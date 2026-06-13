@@ -5402,6 +5402,7 @@ async function renderTilbunirReikningar(t){
       <div class="meta"><div>${(()=>{const _k=(d.worksite_name||'')+'|'+(d.work_month||''),_t=(state.ui&&state.ui.gr_date_text&&state.ui.gr_date_text[_k])||'';return _t?esc(_t):(dmy(fra)+' til '+dmy(til));})()}</div><div class="ws">${esc(d.worksite_name)}</div>${payer?`<div class="cust">${payer}</div>`:''}</div>
       <table><thead><tr><td></td><td class="p">án vsk</td><td class="m">magn</td><td class="t">samtals</td></tr></thead><tbody>
         ${body}
+        ${(()=>{const _k=(d.worksite_name||'')+'|'+(d.work_month||''),_p=(state.ui&&state.ui.gr_discount&&state.ui.gr_discount[_k])||0; if(!_p) return ''; const _d=Math.round(net*_p/(100-_p)); return `<tr><td class="l">Afsláttur (${_p}%)</td><td class="p"></td><td class="m"></td><td class="t">−${kr(_d)}</td></tr>`;})()}
         <tr class="sub"><td colspan="3">Samtals án vsk</td><td class="t">${kr(net)}</td></tr>
         <tr class="sub"><td colspan="3">vsk</td><td class="t">${kr(vsk)}</td></tr>
         <tr class="grand"><td colspan="3">samtals með vsk</td><td class="t">${kr(total)}</td></tr>
@@ -5799,6 +5800,7 @@ async function renderGerdReikninga(t){
     const custAddr = (d && d.heimilisfang) || '';
     const dateText = (state.ui && state.ui.gr_date_text && state.ui.gr_date_text[name+'|'+month]) || '';
     const smaOn = !(state.ui && state.ui.gr_sma_off && state.ui.gr_sma_off[name+'|'+month]);
+    const discPct = (state.ui && state.ui.gr_discount && state.ui.gr_discount[name+'|'+month]) || '';
     // Prefill: saved draft wins; else compute from Tímavera + pricing-guide; materials from draft or Redder.
     const dvH = Math.round((d ? Number(d.hours_dagvinna)||0 : (monthHours(wObj)||0))*100)/100;
     const dvR = d && d.rate_dagvinna ? Number(d.rate_dagvinna) : r.dv;
@@ -5858,6 +5860,8 @@ async function renderGerdReikninga(t){
           <div class="gr-st">Aukagjöld</div>
           <div class="gr-f"><label><input type="checkbox" id="gr-stadf" ${stadfOn?'checked':''}> Staðfesting brunaþéttinga (${fmt(GR_STADF)} kr)</label></div>
           <div class="gr-f"><label style="cursor:pointer"><input type="checkbox" id="gr-sma-on" ${smaOn?'checked':''}> Smáhlutagjald = hanskar, þurrkur o.fl. (${r.sma} kr × dagvinnu + yfirvinnu klst, sjálfvirkt) — taktu hakið af til að sleppa</label><div style="font-size:11px;color:#64748b" id="gr-sma-hint">—</div></div>
+          <div class="gr-st">Afsláttur</div>
+          <div class="gr-f"><label>Afsláttur af öllum reikningnum (%)</label><input type="text" inputmode="decimal" id="gr-disc" value="${escapeAttr(String(discPct))}" placeholder="0" style="max-width:130px"><div style="font-size:11px;color:#64748b;margin-top:3px">t.d. 10 = 10% — birtist sem lína á reikningnum</div></div>
           <div class="gr-st">Athugasemd</div>
           <div class="gr-f"><textarea id="gr-notes" rows="2" placeholder="Birtist neðst á reikningi">${escapeHtml(notes)}</textarea></div>
           <div class="gr-actions">
@@ -5957,10 +5961,13 @@ async function renderGerdReikninga(t){
       const matLines = gatherMats();
       const matSum = matLines.reduce((a,m)=>a+m.total,0);
       const dvAmt=dvR*dvH, evAmt=evR*evH, kmAmt=km*r.km, frAmt=fr*r.ferd;
-      const net = dvAmt+evAmt+kmAmt+frAmt+sma+stadf+matSum;
+      const net0 = dvAmt+evAmt+kmAmt+frAmt+sma+stadf+matSum;
+      const discPct = Math.max(0, Math.min(100, (function(){ const el=document.getElementById('gr-disc'); return el?parseNum(el.value):0; })()));
+      const disc = discPct>0 ? Math.round(net0*discPct/100) : 0;
+      const net = net0 - disc;
       const vsk = Math.round(net*r.vsk/100);
       const total = net+vsk;
-      return {dvH,dvR,evH,evR,km,fr,stadf,sma,matLines,matSum,dvAmt,evAmt,kmAmt,frAmt,net,vsk,total};
+      return {dvH,dvR,evH,evR,km,fr,stadf,sma,matLines,matSum,dvAmt,evAmt,kmAmt,frAmt,net0,discPct,disc,net,vsk,total};
     }
 
     function draw(){
@@ -5996,6 +6003,7 @@ async function renderGerdReikninga(t){
             ${(c.sma>0||c.stadf>0)?'<tr class="sec"><td colspan="4">Aukagjöld</td></tr>':''}
             ${c.sma>0?row('Smáhlutagjald = hanskar, þurrkur o.fl.', r.sma, (c.dvH+c.evH).toFixed(2), c.sma):''}
             ${c.stadf>0?row('Staðfesting brunaþéttinga', GR_STADF, '1', c.stadf):''}
+            ${c.disc>0?`<tr><td class="l">Afsláttur (${c.discPct%1?c.discPct.toFixed(1):c.discPct}%)</td><td class="p"></td><td class="m"></td><td class="t">−${kr(c.disc)}</td></tr>`:''}
             <tr class="sub"><td colspan="3">Samtals án vsk</td><td class="t">${kr(c.net)}</td></tr>
             <tr class="sub"><td colspan="3">vsk (${r.vsk}%)</td><td class="t">${kr(c.vsk)}</td></tr>
             <tr class="grand"><td colspan="3">samtals með vsk</td><td class="t">${kr(c.total)}</td></tr>
@@ -6010,7 +6018,7 @@ async function renderGerdReikninga(t){
     // ----- Save -----
     document.getElementById('gr-save').onclick = async () => {
       const c = compute();
-      { const _k=name+'|'+month, _dm=document.getElementById('gr-datemode'), _dtv=(document.getElementById('gr-datetext').value||'').trim(); state.ui=state.ui||{}; state.ui.gr_date_text=state.ui.gr_date_text||{}; if(_dm&&_dm.checked&&_dtv) state.ui.gr_date_text[_k]=_dtv; else delete state.ui.gr_date_text[_k]; state.ui.gr_sma_off=state.ui.gr_sma_off||{}; const _so=document.getElementById('gr-sma-on'); if(_so&&!_so.checked) state.ui.gr_sma_off[_k]=true; else delete state.ui.gr_sma_off[_k]; save(); }
+      { const _k=name+'|'+month, _dm=document.getElementById('gr-datemode'), _dtv=(document.getElementById('gr-datetext').value||'').trim(); state.ui=state.ui||{}; state.ui.gr_date_text=state.ui.gr_date_text||{}; if(_dm&&_dm.checked&&_dtv) state.ui.gr_date_text[_k]=_dtv; else delete state.ui.gr_date_text[_k]; state.ui.gr_sma_off=state.ui.gr_sma_off||{}; const _so=document.getElementById('gr-sma-on'); if(_so&&!_so.checked) state.ui.gr_sma_off[_k]=true; else delete state.ui.gr_sma_off[_k]; state.ui.gr_discount=state.ui.gr_discount||{}; const _dp=document.getElementById('gr-disc')?Math.max(0,Math.min(100,parseNum(document.getElementById('gr-disc').value))):0; if(_dp>0) state.ui.gr_discount[_k]=_dp; else delete state.ui.gr_discount[_k]; save(); }
       const $st = document.getElementById('gr-save-st');
       $st.textContent = 'Vistar…';
       const existing = draftFor(name);
