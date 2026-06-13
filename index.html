@@ -5297,6 +5297,11 @@ async function renderTilbunirReikningar(t){
       .tr-tbl td{padding:9px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
       .tr-tbl tbody tr:hover{background:#f8fafc}
       .tr-tbl .tv-btn{margin-right:4px}
+      .tr-check{font-size:19px;font-weight:800;line-height:1;background:none;border:none;cursor:pointer;padding:2px 9px;border-radius:6px;color:#cbd5e1;transition:color .12s}
+      .tr-check:hover{background:#f1f5f9;color:#94a3b8}
+      .tr-check.done{color:#16a34a}
+      .tr-row-done td{background:#f0fdf4}
+      .tr-row-done td:first-child{text-decoration:line-through;color:#64748b}
     </style>`;
   const host = document.getElementById('tr-host');
   let rows = [];
@@ -5308,10 +5313,12 @@ async function renderTilbunirReikningar(t){
   const $meta = document.getElementById('tr-meta'); if($meta) $meta.textContent = `${rows.length} reikningar`;
   if(!rows.length){ host.innerHTML = '<div class="gr-loading">Engir vistaðir reikningar enn. Vistaðu reikning í „Gerð Reikninga".</div>'; return; }
   rows.sort((a,b)=> String(b.work_month||'').localeCompare(String(a.work_month||'')) || String(b.updated_at||'').localeCompare(String(a.updated_at||'')));
+  const keyOf = d => (d.worksite_name||'')+'|'+(d.work_month||'');
+  const doneMap = (state.ui && state.ui.tr_done) || {};
   host.innerHTML = `<table class="tr-tbl"><thead><tr>
-      <th>Verkstaður</th><th>Verkkaupi</th><th>Mánuður</th><th style="text-align:right">Samtals m/vsk</th><th>Staða</th><th></th>
-    </tr></thead><tbody>${rows.map((d,i)=>`
-      <tr>
+      <th>Verkstaður</th><th>Verkkaupi</th><th>Mánuður</th><th style="text-align:right">Samtals m/vsk</th><th>Staða</th><th></th><th style="text-align:center" title="Hakaðu við þegar reikningurinn er kláraður / sendur">✓</th>
+    </tr></thead><tbody>${rows.map((d,i)=>{ const done = !!doneMap[keyOf(d)]; return `
+      <tr class="${done?'tr-row-done':''}">
         <td style="font-weight:600">${esc(d.worksite_name)}</td>
         <td>${esc(d.customer_name||'—')}</td>
         <td>${esc(mlabel(d.work_month))}</td>
@@ -5321,7 +5328,8 @@ async function renderTilbunirReikningar(t){
           <button class="tv-btn" data-tr-open="${i}" title="Opna í Gerð Reikninga til að breyta">✏️ Opna</button>
           <button class="tv-btn" data-tr-print="${i}" title="Prenta / PDF beint">🖨 Prenta</button>
         </td>
-      </tr>`).join('')}</tbody></table>`;
+        <td style="text-align:center"><button class="tr-check${done?' done':''}" data-tr-check="${i}" title="${done?'Klárað — smelltu til að af-merkja':'Merkja sem klárað'}">✓</button></td>
+      </tr>`; }).join('')}</tbody></table>`;
 
   host.querySelectorAll('[data-tr-open]').forEach(b=> b.onclick = ()=>{
     const d = rows[+b.dataset.trOpen];
@@ -5332,6 +5340,15 @@ async function renderTilbunirReikningar(t){
     save(); render();
   });
   host.querySelectorAll('[data-tr-print]').forEach(b=> b.onclick = ()=> printSavedInvoice(rows[+b.dataset.trPrint]));
+  host.querySelectorAll('[data-tr-check]').forEach(b=> b.onclick = ()=>{
+    const d = rows[+b.dataset.trCheck]; const k = keyOf(d);
+    state.ui = state.ui || {}; state.ui.tr_done = state.ui.tr_done || {};
+    const now = !state.ui.tr_done[k];
+    if(now) state.ui.tr_done[k] = true; else delete state.ui.tr_done[k];
+    b.classList.toggle('done', now);
+    const tr = b.closest('tr'); if(tr) tr.classList.toggle('tr-row-done', now);
+    save();
+  });
 
   function printSavedInvoice(d){
     const kr = n => fmt(n)+' kr.';
