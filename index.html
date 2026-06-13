@@ -5798,6 +5798,7 @@ async function renderGerdReikninga(t){
     const custKt = (d && d.kennitala) || '';
     const custAddr = (d && d.heimilisfang) || '';
     const dateText = (state.ui && state.ui.gr_date_text && state.ui.gr_date_text[name+'|'+month]) || '';
+    const smaOn = !(state.ui && state.ui.gr_sma_off && state.ui.gr_sma_off[name+'|'+month]);
     // Prefill: saved draft wins; else compute from Tímavera + pricing-guide; materials from draft or Redder.
     const dvH = Math.round((d ? Number(d.hours_dagvinna)||0 : (monthHours(wObj)||0))*100)/100;
     const dvR = d && d.rate_dagvinna ? Number(d.rate_dagvinna) : r.dv;
@@ -5856,7 +5857,7 @@ async function renderGerdReikninga(t){
           <div class="gr-mat-add">${matSelect} <button type="button" id="gr-mat-custom" class="gr-btn" style="margin-left:6px">+ Sérlína (handvirkt efni)</button></div>
           <div class="gr-st">Aukagjöld</div>
           <div class="gr-f"><label><input type="checkbox" id="gr-stadf" ${stadfOn?'checked':''}> Staðfesting brunaþéttinga (${fmt(GR_STADF)} kr)</label></div>
-          <div class="gr-f"><label>Smáhlutagjald = hanskar, þurrkur o.fl.: ${r.sma} kr × (dagvinna + yfirvinna) klst (sjálfvirkt)</label><div style="font-size:11px;color:#64748b" id="gr-sma-hint">—</div></div>
+          <div class="gr-f"><label style="cursor:pointer"><input type="checkbox" id="gr-sma-on" ${smaOn?'checked':''}> Smáhlutagjald = hanskar, þurrkur o.fl. (${r.sma} kr × dagvinnu + yfirvinnu klst, sjálfvirkt) — taktu hakið af til að sleppa</label><div style="font-size:11px;color:#64748b" id="gr-sma-hint">—</div></div>
           <div class="gr-st">Athugasemd</div>
           <div class="gr-f"><textarea id="gr-notes" rows="2" placeholder="Birtist neðst á reikningi">${escapeHtml(notes)}</textarea></div>
           <div class="gr-actions">
@@ -5952,7 +5953,7 @@ async function renderGerdReikninga(t){
       const km=numv('gr-km'),fr=numv('gr-ferd');
       const stadf = document.getElementById('gr-stadf').checked ? GR_STADF : 0;
       const smaH = dvH + evH;                 // smáhlutagjald á dagvinnu OG yfirvinnu
-      const sma = Math.round(r.sma * smaH);
+      const sma = (document.getElementById('gr-sma-on') && !document.getElementById('gr-sma-on').checked) ? 0 : Math.round(r.sma * smaH);
       const matLines = gatherMats();
       const matSum = matLines.reduce((a,m)=>a+m.total,0);
       const dvAmt=dvR*dvH, evAmt=evR*evH, kmAmt=km*r.km, frAmt=fr*r.ferd;
@@ -5964,7 +5965,7 @@ async function renderGerdReikninga(t){
 
     function draw(){
       const c = compute();
-      document.getElementById('gr-sma-hint').textContent = `${r.sma} × ${(c.dvH+c.evH).toFixed(1)} (dv+ev) = ${fmt(c.sma)} kr`;
+      document.getElementById('gr-sma-hint').textContent = (document.getElementById('gr-sma-on') && !document.getElementById('gr-sma-on').checked) ? 'Sleppt — ekki á reikningi' : `${r.sma} × ${(c.dvH+c.evH).toFixed(1)} (dv+ev) = ${fmt(c.sma)} kr`;
       const kr = n => fmt(n)+' kr.';
       const ws = document.getElementById('gr-ws').value.trim();
       const fra = document.getElementById('gr-fra').value, til = document.getElementById('gr-til').value;
@@ -6009,7 +6010,7 @@ async function renderGerdReikninga(t){
     // ----- Save -----
     document.getElementById('gr-save').onclick = async () => {
       const c = compute();
-      { const _k=name+'|'+month, _dm=document.getElementById('gr-datemode'), _dtv=(document.getElementById('gr-datetext').value||'').trim(); state.ui=state.ui||{}; state.ui.gr_date_text=state.ui.gr_date_text||{}; if(_dm&&_dm.checked&&_dtv) state.ui.gr_date_text[_k]=_dtv; else delete state.ui.gr_date_text[_k]; save(); }
+      { const _k=name+'|'+month, _dm=document.getElementById('gr-datemode'), _dtv=(document.getElementById('gr-datetext').value||'').trim(); state.ui=state.ui||{}; state.ui.gr_date_text=state.ui.gr_date_text||{}; if(_dm&&_dm.checked&&_dtv) state.ui.gr_date_text[_k]=_dtv; else delete state.ui.gr_date_text[_k]; state.ui.gr_sma_off=state.ui.gr_sma_off||{}; const _so=document.getElementById('gr-sma-on'); if(_so&&!_so.checked) state.ui.gr_sma_off[_k]=true; else delete state.ui.gr_sma_off[_k]; save(); }
       const $st = document.getElementById('gr-save-st');
       $st.textContent = 'Vistar…';
       const existing = draftFor(name);
