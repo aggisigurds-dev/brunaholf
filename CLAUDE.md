@@ -531,6 +531,17 @@ Slökkvitæki Sala/POS) connects via the dkPlus REST/JSON API.
   (confirm where the "10 dagar" in "Krafa í banka 10 dagar" comes from). Rafræn
   afhending follows the customer's afhendingarmáti set in dk. The vMail lánardrottna pósthólf is **inbound-only** (reads creditor
   invoices in) — not for sending anything out.
+- **Customer must already exist in dk before invoicing.** An invoice (even
+  `calculate`) for a kt not on file in dk fails 400 with the misleading
+  `"Value cannot be null. Parameter name: user"` — the direct-key API context
+  cannot auto-create the customer (confirmed 2026-06-13: only the kts already in
+  dk price/create; all missing ones fail). Customer sync:
+  `netlify/functions/dkplus-customer.js` → `POST /api/dkplus-customer`
+  (`{ mode:"dry-run"|"create", confirm, base_ids:[…] }`) reads `customers_base`,
+  **skips kts already in dk** (matched on SSNumber digits → no kt-format
+  duplicates), and creates the rest via `POST /api/v1/Customer`
+  (`{Number`=kt dashed, `Name`, `SSNumber`=10-digit, `CountryCode:'IS'`,
+  `Address1}`). Pattern: dry-run → canary `base_ids:[one]` → full.
 - `slokkvitaeki-reikningur.html`: invoice generator styled like the dkPlus
   reikningur (R-000244), logo from `/api/branding`, lines from `/api/vorur` (Sala
   verðskrá). "Reikna í dkPlus" → calculate preview; "Stofna drög í dkPlus" →
