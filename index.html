@@ -2514,6 +2514,28 @@ function renderBakendi(t){
       </div>
 
       <div style="margin-top:24px;border-top:1px solid #e2e8f0;padding-top:18px">
+        <div class="group-title"><strong>🧾 Endurnefna reikninga (djúpskönnun)</strong><div class="line"></div></div>
+        <p style="color:#475569;font-size:13px;line-height:1.5;margin:0 0 12px;max-width:680px">
+          Les <b>innihald</b> hvers reiknings-PDF (ekki skráarnafnið — „Nóta_7", „Stolpi_Invoice_…", póstskrár)
+          og leggur til staðlað nafn: <b>Fyrirtæki - kennitala - R&nbsp;nr - dags - upphæð kr</b>.
+          „🔍 Forskoða" sýnir gömul → ný nöfn (breytir engu). „✏️ Endurnefna" beitir þeim í Drive.
+        </p>
+        <div style="border:1px solid #e2e8f0;border-radius:11px;padding:14px 15px;max-width:680px">
+          <label style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.04em">Reikninga-mappa (Google Drive)</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:7px">
+            <input id="bk-rn-folder" value="1TDusB2NLhr-OMLnojSk3iw0oiuiuFMLM" style="${inp};flex:1;min-width:240px">
+          </div>
+          <div style="${hint}">Djúpskönnun les hvert PDF (hægara). Tvítök merkt „TVÍTAK?" svo þú getir eytt aukaeintökum.</div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px 0 6px">
+          <button id="bk-rn-scan" class="btn primary">🔍 Forskoða nöfn</button>
+          <button id="bk-rn-apply" class="btn" disabled>✏️ Endurnefna (í Drive)</button>
+          <span id="bk-rn-status" style="font-size:12.5px;color:#64748b"></span>
+        </div>
+        <div id="bk-rn-results"></div>
+      </div>
+
+      <div style="margin-top:24px;border-top:1px solid #e2e8f0;padding-top:18px">
         <div class="group-title"><strong>📝 Samningalesari — þjónustusamningar</strong><div class="line"></div></div>
         <p style="color:#475569;font-size:13px;line-height:1.5;margin:0 0 12px;max-width:680px">
           Les <b>þjónustusamninga</b> (PDF) beint úr Drive-möppu og dregur út
@@ -2766,6 +2788,65 @@ function renderBakendi(t){
     }
   }
 
+  // ── Endurnefna reikninga (djúpskönnun → staðlað nafn í Drive) ─────────────
+  const $rnFolder = document.getElementById('bk-rn-folder');
+  const $rnScan = document.getElementById('bk-rn-scan');
+  const $rnApply = document.getElementById('bk-rn-apply');
+  const $rnStatus = document.getElementById('bk-rn-status');
+  const $rnResults = document.getElementById('bk-rn-results');
+  let rnRows = [];
+  if ($rnScan) $rnScan.onclick = scanRename;
+  if ($rnApply) $rnApply.onclick = applyRename;
+
+  async function scanRename(){
+    const f = ($rnFolder.value || '').trim();
+    if (!f) { $rnResults.innerHTML = '<div class="empty">Vantar möppu-id.</div>'; return; }
+    $rnScan.disabled = $rnApply.disabled = true;
+    rnRows = [];
+    $rnResults.innerHTML = '<div class="empty">Djúpskanna reikninga í lotum (hægara — les innihald hvers PDF)…</div>';
+    const acc = { total: 0, scanned: 0, ready: 0, manual: 0, errors: 0 };
+    let offset = 0, guard = 0;
+    try {
+      do {
+        $rnStatus.textContent = 'Skanna… ' + acc.scanned + (acc.total ? '/' + acc.total : '') + ' reikninga';
+        const r = await fetch('/api/reikningar-rename?folder=' + encodeURIComponent(f) + '&limit=4&offset=' + offset);
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+        acc.total = d.total || acc.total; acc.scanned += d.scanned || 0; acc.ready += d.ready || 0; acc.manual += d.manual || 0; acc.errors += d.errors || 0;
+        rnRows = rnRows.concat(d.rows || []);
+        $rnResults.innerHTML = renameResultsHtml(acc, rnRows);
+        offset = d.nextOffset;
+      } while (offset != null && ++guard < 500);
+      $rnStatus.textContent = '✓ Forskoðun búin. ' + acc.ready + ' tilbúin, ' + acc.manual + ' vantar uppl.';
+      $rnApply.disabled = rnRows.filter(x => x.status === 'ready' && x.newName && x.newName !== x.oldName).length === 0;
+    } catch (e) {
+      $rnResults.insertAdjacentHTML('beforeend', bkErr(e));
+      $rnStatus.textContent = '';
+    } finally { $rnScan.disabled = false; }
+  }
+
+  async function applyRename(){
+    const ready = rnRows.filter(x => x.status === 'ready' && x.newName && x.newName !== x.oldName);
+    if (!ready.length) { $rnStatus.textContent = 'Ekkert tilbúið til að endurnefna.'; return; }
+    if (!confirm('Endurnefna ' + ready.length + ' reikninga í Drive?\n\nÞetta breytir skráarnöfnunum (tenglar haldast — file-id breytist ekki).')) return;
+    $rnApply.disabled = $rnScan.disabled = true;
+    let done = 0, errs = 0;
+    try {
+      for (let i = 0; i < ready.length; i += 25) {
+        $rnStatus.textContent = 'Endurnefni… ' + done + '/' + ready.length;
+        const chunk = ready.slice(i, i + 25).map(x => ({ fileId: x.fileId, newName: x.newName }));
+        const r = await fetch('/api/reikningar-rename', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: chunk }) });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+        done += d.renamed || 0; errs += d.errors || 0;
+      }
+      $rnStatus.textContent = '✓ Endurnefndi ' + done + ' reikninga' + (errs ? (' · ' + errs + ' villur') : '') + '. Keyrðu „Forskoða" aftur til að sjá uppfærð nöfn.';
+      rnRows = [];
+    } catch (e) {
+      $rnResults.insertAdjacentHTML('beforeend', bkErr(e));
+    } finally { $rnScan.disabled = false; }
+  }
+
   // ── Samningalesari (þjónustusamningar → 4 reitir + Google Sheet) ──────────
   const $smFolder = document.getElementById('bk-sm-folder');
   const $smRead = document.getElementById('bk-sm-read');
@@ -2887,6 +2968,35 @@ function samningarResultsHtml(d, rows){
   return html;
 }
 
+function renameResultsHtml(d, rows){
+  const chip = (l, v, bg) => `<span style="display:inline-block;padding:3px 10px;border-radius:99px;background:${bg || '#f1f5f9'};border:1px solid #e2e8f0;font-size:12.5px;font-weight:600;margin:0 6px 6px 0">${l}: ${v}</span>`;
+  const td = 'padding:5px 8px;border-bottom:1px solid #f1f5f9;vertical-align:top';
+  const seen = {}; rows.forEach(r => { if (r.newName) seen[r.newName] = (seen[r.newName] || 0) + 1; });
+  let html = '<div style="margin:8px 0 12px">'
+    + chip('Skannað', d.scanned)
+    + chip('Tilbúin', d.ready, '#dcfce7')
+    + (d.manual ? chip('Vantar uppl.', d.manual, '#fef9c3') : '')
+    + (d.errors ? chip('Villur', d.errors, '#fee2e2') : '')
+    + '</div>';
+  if (!rows || !rows.length) { html += '<div class="empty">Ekkert skannað enn.</div>'; return html; }
+  html += '<div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>'
+    + ['Gamalt nafn', '', 'Nýtt nafn', 'Staða'].map(h => `<th style="text-align:left;padding:5px 8px;border-bottom:1px solid #e2e8f0;color:#64748b">${h}</th>`).join('')
+    + '</tr></thead><tbody>';
+  rows.forEach(r => {
+    let badge;
+    if (r.status === 'ready' && seen[r.newName] > 1) badge = '<span style="color:#b91c1c;font-weight:700">TVÍTAK?</span>';
+    else if (r.status === 'ready') badge = '<span style="color:#15803d;font-weight:700">✓ tilbúið</span>';
+    else if (r.status === 'manual') badge = '<span style="color:#b45309">vantar: ' + escapeHtml(r.missing || 'uppl.') + '</span>';
+    else badge = '<span style="color:#dc2626">villa</span>';
+    html += '<tr>'
+      + `<td style="${td};color:#94a3b8">${escapeHtml(r.oldName || '')}</td>`
+      + `<td style="${td};color:#cbd5e1">→</td>`
+      + `<td style="${td};font-weight:600">${escapeHtml(r.newName || '—')}</td>`
+      + `<td style="${td};white-space:nowrap">${badge}</td></tr>`;
+  });
+  html += '</tbody></table></div>';
+  return html;
+}
 function reikningarResultsHtml(d, rows){
   const chip = (l, v, bg) => `<span style="display:inline-block;padding:3px 10px;border-radius:99px;background:${bg || '#f1f5f9'};border:1px solid #e2e8f0;font-size:12.5px;font-weight:600;margin:0 6px 6px 0">${l}: ${v}</span>`;
   const td = 'padding:5px 8px;border-bottom:1px solid #f1f5f9';
