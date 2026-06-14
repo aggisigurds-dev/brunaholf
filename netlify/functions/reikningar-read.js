@@ -120,7 +120,36 @@ async function readPdfText(id, token) {
   if (!r.ok) return '';
   const buf = Buffer.from(await r.arrayBuffer());
   const d = await pdf(buf).catch(() => null);
-  return d ? d.text : '';
+  let text = d ? d.text : '';
+  // dkPlus invoices carry a text layer that pdf-parse@1.1.1 cannot decode (it
+  // returns empty), so kt/heildarupphæð/heimilisfang came back blank. Fall back
+  // to Google Drive's own extractor: copy the PDF into a temporary Google Doc
+  // (Drive extracts/OCRs the text), export it as plain text, then delete the
+  // temp doc. The existing regexes then parse it normally.
+  if ((text || '').replace(/\s/g, '').length < 25) {
+    const viaG = await driveExtractText(id, token).catch(() => '');
+    if (viaG && viaG.replace(/\s/g, '').length >= 25) text = viaG;
+  }
+  return text;
+}
+// Drive-side text extraction fallback (handles PDFs pdf-parse can't read).
+async function driveExtractText(id, token) {
+  const cp = await fetch('https://www.googleapis.com/drive/v3/files/' + id + '/copy?supportsAllDrives=true&fields=id', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: 'tmp-ocr-' + id, mimeType: 'application/vnd.google-apps.document' }),
+  });
+  if (!cp.ok) return '';
+  const doc = await cp.json();
+  if (!doc || !doc.id) return '';
+  let text = '';
+  try {
+    const ex = await fetch('https://www.googleapis.com/drive/v3/files/' + doc.id + '/export?mimeType=text/plain', { headers: { Authorization: `Bearer ${token}` } });
+    if (ex.ok) text = await ex.text();
+  } catch (_) {}
+  // Best-effort cleanup — don't block the response on the delete.
+  fetch('https://www.googleapis.com/drive/v3/files/' + doc.id + '?supportsAllDrives=true', { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } }).catch(() => {});
+  return text;
 }
 
 // ── Filename (primary) ────────────────────────────────────────────────────────
