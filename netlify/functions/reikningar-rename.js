@@ -59,15 +59,29 @@ exports.handler = async (event) => {
     for (const f of slice) {
       stats.scanned++;
       try {
-        const text = await readPdfText(f.id, token);
+        let text = await readPdfText(f.id, token);
         const kredit = /kredit|creditnote/i.test(f.name) || /kreditreikning|kredit\s*nóta/i.test(text);
-        const kt = customerKt(text);
+        let kt = customerKt(text);
+        let number = extractInvoiceNumberText(text) || numberFromName(f.name);
+        let iso = extractDate(text) || dateFromName(f.name);
+        let total = extractTotal(text);
+        let companyTxt = extractCompanyText(text);
+        // pdf-parse mangles some Stólpi/Nóta/InExchange layouts (the number comes out
+        // wrong even though there IS text). If the number is still missing, re-read
+        // with Google Drive's clean extractor and re-pull the fields from that.
+        if (!number) {
+          const clean = await driveExtractText(f.id, token).catch(() => '');
+          if (clean && clean.replace(/\s/g, '').length >= 25) {
+            number = extractInvoiceNumberText(clean) || numberFromName(f.name);
+            kt = kt || customerKt(clean);
+            iso = iso || extractDate(clean);
+            total = total || extractTotal(clean);
+            companyTxt = companyTxt || extractCompanyText(clean);
+          }
+        }
         const base = kt ? await matchBase(kt) : null;
-        const company = (base && base.nafn) || extractCompanyText(text) || '';
-        const number = extractInvoiceNumberText(text);
-        const iso = extractDate(text) || dateFromName(f.name);
+        const company = (base && base.nafn) || companyTxt || '';
         const ddmmyy = iso ? toDdmmyy(iso) : '';
-        const total = extractTotal(text);
         const totalStr = total ? fmtKr(total) : '';
 
         let newName = '', status = 'manual';
@@ -198,4 +212,14 @@ async function matchBase(kt) {
 // ── Filename helpers ──────────────────────────────────────────────────────────
 function toDdmmyy(iso) { const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? (m[3] + '.' + m[2] + '.' + m[1].slice(2)) : ''; }
 function dateFromName(name) { const m = String(name || '').match(/(20\d{2})[-_]?(\d{2})[-_]?(\d{2})/); return m ? `${m[1]}-${m[2]}-${m[3]}` : ''; }
+// Invoice number straight from the filename when the content can't give it:
+// "X_reikn_106883", "Stolpi_Invoice_107128", "Stolpi_CreditNote_107073", "#108285", "R 108250".
+function numberFromName(name) {
+  const s = String(name || '');
+  let m = s.match(/(?:reikn|invoice|creditnote|kreditnota)[_\s-]*(\d{4,7})/i); if (m) return m[1];
+  m = s.match(/\bR[\s_-]?(\d{5,7})\b/i); if (m) return m[1];
+  m = s.match(/#\s*(\d{5,7})\b/); if (m) return m[1];
+  m = s.match(/\b(1\d{5})\b/); if (m) return m[1];
+  return '';
+}
 function sanitize(s) { return String(s || '').replace(/[\\/:*?"<>|]/g, '-').replace(/\s+/g, ' ').trim().slice(0, 90); }
