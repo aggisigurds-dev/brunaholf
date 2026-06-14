@@ -1492,7 +1492,14 @@ const STORAGE_KEY = 'brunaholf-app-v1';
 
 const COLORS = ['t-red','t-dark','t-gold','t-green','t-blue'];
 
+const BAKENDI_LINK_SEED = [
+  {label:'Reikningar – yfirlit', url:''},
+  {label:'Þjónustusamningar – yfirlit', url:''},
+  {label:'Allt – master listi', url:''},
+  {label:'', url:''}, {label:'', url:''}, {label:'', url:''}, {label:'', url:''}, {label:'', url:''},
+];
 const DEFAULT_STATE = {
+  bakendiLinks: BAKENDI_LINK_SEED.map(x=>({...x})),
   tabs: [
     {id:'yfirlit',    label:'Yfirlit',    icon:'🏠'},
     {id:'stjornbord', label:'Stjórnborð', icon:'🎛'},
@@ -1776,6 +1783,7 @@ function clearDataCache(){
 // state with an older snapshot from the server).
 function ensureNewTabs(s){
   if(!s || !Array.isArray(s.tabs)) return;
+  if(!Array.isArray(s.bakendiLinks)) s.bakendiLinks = BAKENDI_LINK_SEED.map(x=>({...x}));
   ['stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','nlsh','spurningar','bakendi'].forEach(id=>{
     if(!s.tabs.find(t=>t.id===id)){
       const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
@@ -2422,6 +2430,14 @@ function renderBakendi(t){
 
   $view.innerHTML = `
     <div class="section">
+      <div class="group-title"><strong>🔗 Mínir Sheet-tenglar</strong><div class="line"></div></div>
+      <p style="color:#475569;font-size:13px;line-height:1.5;margin:0 0 12px;max-width:680px">
+        Límdu inn tengla á Google&nbsp;Sheets sem þú vilt geyma og opna fljótt — vistast á <b>öllum tækjunum</b> þínum.
+        Yfirlits-skjölin sem „📊 Skrifa í Google Sheet" býr til (hér að neðan) bætast sjálfkrafa í fyrsta auða reitinn.
+      </p>
+      <div id="bk-links" style="max-width:720px"></div>
+      <span id="bk-links-status" style="font-size:12px;color:#16a34a"></span>
+      <div style="margin:18px 0;border-top:1px solid #e2e8f0"></div>
       <div class="group-title"><strong>🗄 Bakendi — Skjalalestur (PDF)</strong><div class="line"></div></div>
       <p style="color:#475569;font-size:13px;line-height:1.5;margin:0 0 14px;max-width:680px">
         Les PDF-skjöl úr Google&nbsp;Drive möppu, þekkir reikninga og úttektarskýrslur sem
@@ -2540,6 +2556,49 @@ function renderBakendi(t){
         <div style="font-size:11.5px;color:#64748b;margin-top:5px">Leitað eftir skráarnafni: „vinnufærslur" / „payday" — nýjasta útgáfan vinnur. Payday-innlestur snertir ekki worksite_match (handvirkt viðhaldið).</div>
       </div>
     </div>`;
+
+  // ── Mínir Sheet-tenglar (vistaðir tenglar, samstilltir á öll tæki) ────────
+  const $links = document.getElementById('bk-links');
+  const $linksStatus = document.getElementById('bk-links-status');
+  // Read the current rows straight from the DOM so unsaved typing is never lost
+  // when we re-render (e.g. on add/remove of another row).
+  function collectLinkRows(){
+    const rows = [];
+    $links.querySelectorAll('[data-bl-url]').forEach(urlEl=>{
+      const i = +urlEl.dataset.blUrl;
+      const labEl = $links.querySelector(`[data-bl-label="${i}"]`);
+      rows[i] = { label: (labEl ? labEl.value : '').trim(), url: (urlEl.value || '').trim() };
+    });
+    return rows.filter(Boolean);
+  }
+  function renderBakendiLinks(){
+    if(!Array.isArray(state.bakendiLinks)) state.bakendiLinks = BAKENDI_LINK_SEED.map(x=>({...x}));
+    $links.innerHTML = state.bakendiLinks.map((l,i)=>{
+      const u = (l.url||'').trim();
+      const openable = /^https?:\/\//i.test(u);
+      return `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+        <input data-bl-label="${i}" value="${escapeAttr(l.label||'')}" placeholder="Heiti" style="${inp};width:180px">
+        <input data-bl-url="${i}" value="${escapeAttr(u)}" placeholder="Límdu Google Sheets tengil hér…" style="${inp};flex:1;min-width:220px">
+        <button class="btn" data-bl-save="${i}">Vista</button>
+        ${openable
+          ? `<a class="btn primary" href="${escapeAttr(u)}" target="_blank" rel="noopener" style="text-decoration:none">Opna ↗</a>`
+          : `<button class="btn" disabled title="Vantar tengil">Opna ↗</button>`}
+        <button class="btn" data-bl-del="${i}" title="Eyða reit" style="color:#dc2626">✕</button>
+      </div>`;
+    }).join('') + `<button class="btn" id="bl-add" style="margin-top:2px">+ Bæta við reit</button>`;
+    const flash = (msg)=>{ $linksStatus.textContent = msg; setTimeout(()=>{ $linksStatus.textContent = ''; }, 2000); };
+    $links.querySelectorAll('[data-bl-save]').forEach(btn=>{ btn.onclick = ()=>{
+      state.bakendiLinks = collectLinkRows(); save(); renderBakendiLinks();
+      flash('✓ Vistað — birtist á öllum tækjunum þínum');
+    }; });
+    $links.querySelectorAll('[data-bl-del]').forEach(btn=>{ btn.onclick = ()=>{
+      const i = +btn.dataset.blDel; const rows = collectLinkRows(); rows.splice(i, 1);
+      state.bakendiLinks = rows; save(); renderBakendiLinks(); flash('✓ Reit eytt');
+    }; });
+    const add = document.getElementById('bl-add');
+    if(add) add.onclick = ()=>{ state.bakendiLinks = collectLinkRows().concat([{label:'', url:''}]); save(); renderBakendiLinks(); };
+  }
+  renderBakendiLinks();
 
   const $folder = document.getElementById('bk-folder');
   const $save = document.getElementById('bk-save-folder');
@@ -2685,6 +2744,10 @@ function renderBakendi(t){
       $rkStatus.innerHTML = '✓ ' + d.rows + ' raðir í Google Sheet — '
         + '<a href="' + escapeAttr(d.url) + '" target="_blank" rel="noopener" style="color:#2563eb;font-weight:700">opna yfirlit ↗</a>'
         + (d.created ? ' (nýtt skjal búið til í möppunni)' : ' (uppfært)');
+      // Remember the link in „Mínir Sheet-tenglar" (box 1) if it's still empty.
+      if (d.url && state.bakendiLinks && state.bakendiLinks[0] && !(state.bakendiLinks[0].url||'').trim()) {
+        state.bakendiLinks[0].url = d.url; save(); renderBakendiLinks();
+      }
     } catch (e) {
       $rkStatus.innerHTML = '<span style="color:#dc2626">Villa við Sheet: ' + escapeHtml(e.message) + '</span>';
     } finally {
@@ -2770,6 +2833,10 @@ function renderBakendi(t){
       $smStatus.innerHTML = '✓ ' + d.rows + ' raðir í Google Sheet — '
         + '<a href="' + escapeAttr(d.url) + '" target="_blank" rel="noopener" style="color:#2563eb;font-weight:700">opna yfirlit ↗</a>'
         + (d.created ? ' (nýtt skjal búið til í möppunni)' : ' (uppfært)');
+      // Remember the link in „Mínir Sheet-tenglar" (box 2) if it's still empty.
+      if (d.url && state.bakendiLinks && state.bakendiLinks[1] && !(state.bakendiLinks[1].url||'').trim()) {
+        state.bakendiLinks[1].url = d.url; save(); renderBakendiLinks();
+      }
     } catch (e) {
       $smStatus.innerHTML = '<span style="color:#dc2626">Villa við Sheet: ' + escapeHtml(e.message) + '</span>';
     } finally {

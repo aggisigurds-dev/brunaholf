@@ -60,7 +60,11 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   Stillingar). Currently a PDF document-reader: pick a Google Drive folder,
   Prufa/Keyra the server-side `/api/doc-index` indexer in batches (live
   progress), shows connected docs + a RESOLVE list of kennitölur not in
-  `customers_base`. Reads/writes `customer_documents`.
+  `customers_base`. Reads/writes `customer_documents`. Also hosts **Mínir
+  Sheet-tenglar** at the top: 3 manual, always-editable Google Sheets link slots
+  saved to `state.bakendiLinks` (synced cross-device via `/api/app-state`). The
+  Reikningalesari / Samningalesari „Skrifa í Google Sheet" actions auto-fill the
+  first/second slot when it's still empty.
 - `reikningatenglar` — advanced, always-editable/movable invoice-links page
   (`renderReikningatenglar`): live search, quick-add by pasting a URL, open-all
   per group, copy-link, and drag-to-reorder without entering edit mode. Buttons
@@ -131,6 +135,10 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
 - `allt-sheet.js` — builds a sortable "whole database" Google Sheet from the
   úttektarskýrslu *filenames* in a folder (parses `Fyrirtæki - Heimilisfang -
   Kennitala - Mánuður - Ár`). `GET /api/allt-sheet[?folder=ID]`.
+- **Sheet creation note**: the sheet-building fns (`allt-sheet`, `reikningar-sheet`,
+  `samningar-sheet`, `sheet-create`) create the spreadsheet **without a `locale`**
+  property — the Sheets API rejects `locale:'is_IS'` with 400 INVALID_ARGUMENT
+  ("Unsupported locale"). Don't re-add it.
 - **One-click data refresh from Drive** (2026-06-12): `nlsh-update.js` —
   `GET /api/nlsh-update` finds the NEWEST `AjourRegistrationData*.csv` in Drive
   and triggers `ajour-ingest-drive-background` with its fileId (`?status=1`

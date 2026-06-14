@@ -50,7 +50,7 @@ exports.handler = async (event) => {
     if (!id) {
       const cr = await fetch('https://sheets.googleapis.com/v4/spreadsheets', {
         method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ properties: { title, locale: 'is_IS', timeZone: 'Atlantic/Reykjavik' } }),
+        body: JSON.stringify({ properties: { title, timeZone: 'Atlantic/Reykjavik' } }),
       });
       if (!cr.ok) return json(cr.status, { error: 'create: ' + (await cr.text()).slice(0, 300) });
       id = (await cr.json()).spreadsheetId;

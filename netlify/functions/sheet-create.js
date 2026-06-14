@@ -30,7 +30,7 @@ exports.handler = async (event) => {
 
   // 1. Create the spreadsheet with named sheets
   const createBody = {
-    properties: { title, locale: 'is_IS', timeZone: 'Atlantic/Reykjavik' },
+    properties: { title, timeZone: 'Atlantic/Reykjavik' },
     sheets: [
       { properties: { sheetId: 0, title: 'Samtal Luna ↔ Aggi', gridProperties: { rowCount: 200, columnCount: 6 } } },
       { properties: { sheetId: 1, title: 'Tenglar (pricelist, drög…)', gridProperties: { rowCount: 60, columnCount: 4 } } },
