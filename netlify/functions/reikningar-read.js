@@ -78,7 +78,7 @@ exports.handler = async (event) => {
           if (await alreadyIndexed(f.id)) { stats.dupSkip++; }
           await upsertDoc({
             customer_base_id: base ? base.id : null,
-            doc_type: kredit ? 'kreditreikningur' : 'reikningur', year, drive_file_id: f.id,
+            doc_type: 'reikningur', year, drive_file_id: f.id,  // CHECK allows samningur/uttektarskyrsla/reikningur only; KREDIT is flagged in notes
             source: 'gdrive', found_by: 'code',
             amount: total, invoice_number, doc_date: date, customer_name: company,
             notes: (kredit ? 'KREDIT · ' : '') + (company || cleanStem(f.name)) + (address ? ', ' + address : '')
