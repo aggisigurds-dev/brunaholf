@@ -25,6 +25,30 @@ exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors(), body: '' };
   if (!SUPABASE_URL || !SUPABASE_KEY) return json(500, { error: 'Supabase env missing' });
 
+  // Customer picker list for the editable Viðskiptavinur match (UI autocomplete).
+  if (event.httpMethod === 'GET' && (event.queryStringParameters || {}).customers === '1') {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/customers_base?select=id,nafn,kennitala&order=nafn.asc`, { headers: sbHeaders({ Range: '0-4999' }) });
+    const rows = await r.json().catch(() => []);
+    return json(200, { customers: Array.isArray(rows) ? rows : [] });
+  }
+  // Manual override of one invoice's customer link (change company / mark wrong).
+  if (event.httpMethod === 'POST') {
+    let body = {}; try { body = JSON.parse(event.body || '{}'); } catch {}
+    if (!body.drive_file_id) return json(400, { error: 'drive_file_id required' });
+    const yr = body.year || (body.doc_date ? parseInt(String(body.doc_date).slice(0, 4), 10) : null);
+    try {
+      await upsertDoc({
+        customer_base_id: body.customer_base_id || null,
+        doc_type: 'reikningur', year: yr, drive_file_id: body.drive_file_id,
+        source: 'gdrive', found_by: 'manual',
+        amount: body.total || null, invoice_number: body.invoice_number || null,
+        doc_date: body.doc_date || null, customer_name: body.customer_name || null,
+        notes: (body.customer_base_id ? 'Handvirk tenging' : 'Handvirkt: aftengt') + (body.invoice_number ? (' · ' + body.invoice_number) : ''),
+      });
+      return json(200, { ok: true });
+    } catch (e) { return json(500, { error: String(e.message || e) }); }
+  }
+
   const p = event.queryStringParameters || {};
   const folder = (p.folder || DEFAULT_FOLDER).trim();
   const dry = p.dry === '1' || p.dry === 'true';

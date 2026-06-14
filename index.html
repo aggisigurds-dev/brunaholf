@@ -2730,6 +2730,55 @@ function renderBakendi(t){
   $rkDb.onclick = () => runReikningar(false);
   $rkSheet.onclick = writeReikningarSheet;
 
+  // ── Editable customer match: change / mark-wrong the auto-linked company ───
+  let _custList = null, _custMap = null;
+  async function ensureCustomers(){
+    if (_custList) return _custList;
+    try { const r = await fetch('/api/reikningar-read?customers=1'); const d = await r.json(); _custList = d.customers || []; }
+    catch(e){ _custList = []; }
+    _custMap = {};
+    let dl = document.getElementById('bk-customers');
+    if (!dl) { dl = document.createElement('datalist'); dl.id = 'bk-customers'; $view.appendChild(dl); }
+    dl.innerHTML = _custList.map(c => { const v = c.nafn + (c.kennitala ? (' — ' + c.kennitala) : ''); _custMap[v.toLowerCase()] = c; return '<option value="' + escapeAttr(v) + '">'; }).join('');
+    return _custList;
+  }
+  const rkRowByFid = fid => rkRows.find(x => String(x.fileId) === String(fid));
+  async function setMatch(fid, base){
+    const a = rkRowByFid(fid); if (!a) return;
+    const r = await fetch('/api/reikningar-read', { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ drive_file_id: fid, customer_base_id: base ? base.id : null,
+        customer_name: base ? base.nafn : (a.company || ''), invoice_number: a.invoice_number,
+        doc_date: a.date, year: a.year, total: a.total, kredit: a.kredit }) });
+    const d = await r.json(); if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+    a.base_id = base ? base.id : null; a.base_name = base ? base.nafn : null;
+  }
+  if ($rkResults && !$rkResults._matchWired) { $rkResults._matchWired = true;
+    $rkResults.addEventListener('click', async (e) => {
+      const editA = e.target.closest('._rk-edit');
+      const wrongA = e.target.closest('._rk-wrong');
+      const saveB = e.target.closest('._rk-save');
+      const cancelB = e.target.closest('._rk-cancel');
+      if (editA) { e.preventDefault(); const fid = editA.dataset.fid; const c = editA.closest('._rk-cust'); if (!c) return;
+        await ensureCustomers(); c.dataset.prev = c.innerHTML;
+        c.innerHTML = '<input class="_rk-pick" list="bk-customers" placeholder="Leita að fyrirtæki…" style="padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:12px;width:210px">'
+          + ' <button class="_rk-save btn" data-fid="' + escapeAttr(fid) + '" style="font-size:11px;padding:2px 8px">Vista</button>'
+          + ' <button class="_rk-cancel btn" style="font-size:11px;padding:2px 8px">Hætta</button>';
+        const inp = c.querySelector('._rk-pick'); if (inp) inp.focus(); return; }
+      if (cancelB) { e.preventDefault(); const c = cancelB.closest('._rk-cust'); if (c && c.dataset.prev != null) c.innerHTML = c.dataset.prev; return; }
+      if (saveB) { e.preventDefault(); const c = saveB.closest('._rk-cust'); const inp = c && c.querySelector('._rk-pick'); if (!inp) return;
+        const v = (inp.value || '').trim().toLowerCase(); let cu = _custMap[v];
+        if (!cu && v) cu = (_custList || []).find(x => (x.nafn || '').toLowerCase().indexOf(v) >= 0);
+        if (!cu) { alert('Veldu fyrirtæki af listanum.'); return; }
+        const fid = saveB.dataset.fid; saveB.disabled = true; saveB.textContent = 'Vista…';
+        try { await setMatch(fid, cu); c.innerHTML = rkCustCell(rkRowByFid(fid)); }
+        catch(err){ alert('Villa: ' + (err.message || err)); saveB.disabled = false; saveB.textContent = 'Vista'; } return; }
+      if (wrongA) { e.preventDefault(); const fid = wrongA.dataset.fid; const c = wrongA.closest('._rk-cust');
+        if (!confirm('Merkja tenginguna sem ranga (aftengja reikninginn)?')) return;
+        try { await setMatch(fid, null); if (c) c.innerHTML = rkCustCell(rkRowByFid(fid)); }
+        catch(err){ alert('Villa: ' + (err.message || err)); } return; }
+    });
+  }
+
   async function runReikningar(dry){
     const f = ($rkFolder.value || '').trim();
     if (!f) { $rkResults.innerHTML = '<div class="empty">Vantar möppu-id.</div>'; return; }
@@ -2997,6 +3046,16 @@ function renameResultsHtml(d, rows){
   html += '</tbody></table></div>';
   return html;
 }
+// Viðskiptavinur cell for a Reikningalesari row — shows match status + edit/wrong
+// controls. Shared by the table render and the live in-cell editing handlers.
+function rkCustCell(a){
+  const fid = escapeAttr(a.fileId || '');
+  if (a.base_id) return '<span style="color:#15803d;font-weight:600">✓ ' + escapeHtml(a.base_name || ('#' + a.base_id)) + '</span>'
+    + ' <a href="#" class="_rk-edit" data-fid="' + fid + '" style="font-size:11px;color:#2563eb">breyta</a>'
+    + ' <a href="#" class="_rk-wrong" data-fid="' + fid + '" style="font-size:11px;color:#dc2626" title="Röng tenging — aftengja">✗</a>';
+  return (a.kt ? '<span style="color:#b45309;font-weight:600">⚠ óstaðfest</span>' : '<span style="color:#94a3b8">— engin kt</span>')
+    + ' <a href="#" class="_rk-edit" data-fid="' + fid + '" style="font-size:11px;color:#2563eb">tengja</a>';
+}
 function reikningarResultsHtml(d, rows){
   const chip = (l, v, bg) => `<span style="display:inline-block;padding:3px 10px;border-radius:99px;background:${bg || '#f1f5f9'};border:1px solid #e2e8f0;font-size:12.5px;font-weight:600;margin:0 6px 6px 0">${l}: ${v}</span>`;
   const td = 'padding:5px 8px;border-bottom:1px solid #f1f5f9';
@@ -3016,17 +3075,14 @@ function reikningarResultsHtml(d, rows){
     + ['Fyrirtæki', 'Heimilisfang', 'Kennitala', 'Reikningsnr', 'Dagsetning', 'Heildarupphæð', 'Viðskiptavinur'].map(h => `<th style="text-align:left;padding:5px 8px;border-bottom:1px solid #e2e8f0;color:#64748b">${h}</th>`).join('')
     + '</tr></thead><tbody>';
   rows.forEach(a => {
-    const cust = a.base_id
-      ? escapeHtml(a.base_name || ('#' + a.base_id))
-      : (a.kt ? '<span style="color:#dc2626;font-weight:700">RESOLVE</span>' : '<span style="color:#94a3b8">—</span>');
-    html += '<tr>'
+    html += '<tr data-fid="' + escapeAttr(a.fileId || '') + '">'
       + `<td style="${td};font-weight:600">${escapeHtml(a.company || '')}</td>`
       + `<td style="${td}">${escapeHtml(a.address || '')}</td>`
       + `<td style="${td};white-space:nowrap">${escapeHtml(a.kt || '')}</td>`
       + `<td style="${td};white-space:nowrap;font-variant-numeric:tabular-nums">${escapeHtml(a.invoice_number || '')}${a.kredit ? kreditTag : ''}</td>`
       + `<td style="${td};white-space:nowrap">${fmtDate(a.date)}</td>`
       + `<td style="${td};text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">${fmtKr(a.total)}</td>`
-      + `<td style="${td}">${cust}</td></tr>`;
+      + `<td style="${td}" class="_rk-cust">${rkCustCell(a)}</td></tr>`;
   });
   html += '</tbody></table></div>';
   return html;
