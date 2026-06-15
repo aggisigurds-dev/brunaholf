@@ -101,7 +101,7 @@ exports.handler = async (event) => {
         // their locations apart). Prefer the address already in the old filename — it's
         // clean — else extract from content, strip a leading company-name (so it isn't
         // duplicated into the street), and expand abbreviated cities (Grb→Garðabær).
-        const address = expandCity(old.address || stripCompanyPrefix(party.address || extractAddress(text), company));
+        const address = expandCity(stripCompanyPrefix(old.address || party.address || extractAddress(text), company));
         // Date from content; fall back to the month/ár already in the filename so
         // hard-to-read PDFs don't lose their year.
         const di = dateInfo(text);
@@ -251,7 +251,7 @@ function fieldsFromOldName(name) {
   out.company = (ktIdx === 0) ? '' : (parts[0] || '');
   if (ktIdx >= 0) {
     out.kt = parts[ktIdx].replace(/\D/g, '');
-    if (ktIdx > 1) { const mid = parts.slice(1, ktIdx).join(', ').replace(/\s+/g, ' ').trim(); if (/\d/.test(mid)) out.address = mid; }
+    if (ktIdx > 1) out.address = parts.slice(1, ktIdx).join(', ').replace(/\s+/g, ' ').trim();  // location segment, even without a street number ("Grjótháls")
     parts.slice(ktIdx + 1).forEach(p => {
       if (new RegExp('^(' + MONTHS + ')$', 'i').test(p)) out.month = p.toLowerCase();
       else if (/^20\d{2}$/.test(p)) out.year = p;
