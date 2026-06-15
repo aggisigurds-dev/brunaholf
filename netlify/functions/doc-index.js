@@ -39,6 +39,16 @@ exports.handler = async (event) => {
         if (body.drive_file_id) await updateDocLink(body.drive_file_id, baseId, body);
         return json(200, { ok: true, base_id: baseId, nafn: body.customer_name || '' });
       }
+      if (body.action === 'relink') {   // bulk: re-link many docs to the company matching the filename kt
+        const items = Array.isArray(body.items) ? body.items : [];
+        let done = 0, errors = 0;
+        for (const it of items) {
+          if (!it || !it.drive_file_id || !it.base_id) continue;
+          try { await updateDocLink(it.drive_file_id, it.base_id, { doc_type: it.doc_type, year: it.year, customer_name: it.toName }); done++; }
+          catch (e) { errors++; }
+        }
+        return json(200, { done, errors });
+      }
     } catch (e) { return json(500, { error: String(e.message || e) }); }
     return json(400, { error: 'unknown action' });
   }
@@ -54,6 +64,12 @@ exports.handler = async (event) => {
   let token;
   try { token = await freshAccessToken(); }
   catch (e) { return json(401, { error: e.message }); }
+
+  // ── Audit: which docs are linked to the WRONG company (by filename kt) ────────
+  if (p.audit === '1') {
+    try { return json(200, await auditLinks(folder, token)); }
+    catch (e) { return json(500, { error: String(e.message || e) }); }
+  }
 
   const stats = {
     folder, dry, scanned: 0, indexed: 0, dupSkip: 0,
@@ -242,6 +258,55 @@ async function matchBase(kt) {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/customers_base?kennitala=eq.${encodeURIComponent(dash(kt))}&select=id,nafn&limit=1`, { headers: sbHeaders() });
   const rows = await r.json().catch(() => []);
   return (Array.isArray(rows) && rows[0]) ? rows[0] : null;
+}
+
+// ── Audit: compare each file's filename-kt to the company it's actually linked to ──
+async function auditLinks(folder, token) {
+  const files = await listPdfs(folder, token);
+  const rows = files.map(f => { const k = customerKtFromName(f.name); return { fid: f.id, name: f.name, kt: k ? dash(k) : null }; });
+  const ktToBase = await basesByKts([...new Set(rows.map(r => r.kt).filter(Boolean))]);
+  const fidToDoc = await docsByFids(rows.map(r => r.fid));
+  const idToName = await namesByIds([...new Set(Object.values(fidToDoc).map(d => d.customer_base_id).filter(x => x != null).map(String))]);
+  const out = { total: files.length, correct: 0, noKt: 0, mismatched: [], toLink: [], noBase: [] };
+  for (const r of rows) {
+    if (!r.kt) { out.noKt++; continue; }
+    const correct = ktToBase[r.kt];
+    const doc = fidToDoc[r.fid];
+    const meta = { doc_type: classifyDoc('', r.name), year: yearFromName(r.name) };
+    if (!correct) { out.noBase.push({ file: r.name, kt: r.kt }); continue; }
+    if (!doc) { out.toLink.push(Object.assign({ file: r.name, drive_file_id: r.fid, toName: correct.nafn, base_id: correct.id }, meta)); continue; }
+    if (String(doc.customer_base_id) === String(correct.id)) { out.correct++; continue; }
+    out.mismatched.push(Object.assign({ file: r.name, drive_file_id: r.fid, fromName: (doc.customer_base_id != null ? (idToName[String(doc.customer_base_id)] || ('#' + doc.customer_base_id)) : '(ótengt)'), toName: correct.nafn, base_id: correct.id }, meta));
+  }
+  return out;
+}
+async function basesByKts(kts) {
+  const map = {};
+  for (let i = 0; i < kts.length; i += 150) {
+    const inList = kts.slice(i, i + 150).map(k => '"' + k + '"').join(',');
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/customers_base?kennitala=in.(${encodeURIComponent(inList)})&select=id,nafn,kennitala`, { headers: sbHeaders() });
+    (await r.json().catch(() => [])).forEach(b => { if (!map[b.kennitala]) map[b.kennitala] = { id: b.id, nafn: b.nafn }; });
+  }
+  return map;
+}
+async function docsByFids(fids) {
+  const map = {};
+  for (let i = 0; i < fids.length; i += 150) {
+    const inList = fids.slice(i, i + 150).map(k => '"' + k + '"').join(',');
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?drive_file_id=in.(${encodeURIComponent(inList)})&select=drive_file_id,customer_base_id`, { headers: sbHeaders() });
+    (await r.json().catch(() => [])).forEach(d => { map[d.drive_file_id] = { customer_base_id: d.customer_base_id }; });
+  }
+  return map;
+}
+async function namesByIds(ids) {
+  const map = {};
+  for (let i = 0; i < ids.length; i += 150) {
+    const inList = ids.slice(i, i + 150).join(',');
+    if (!inList) continue;
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/customers_base?id=in.(${encodeURIComponent(inList)})&select=id,nafn`, { headers: sbHeaders() });
+    (await r.json().catch(() => [])).forEach(b => { map[String(b.id)] = b.nafn; });
+  }
+  return map;
 }
 async function insertDoc(row) {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents`, {

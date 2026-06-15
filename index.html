@@ -2573,6 +2573,15 @@ function renderBakendi(t){
           </div>
           <div id="bk-udup-results"></div>
         </div>
+        <div style="margin-top:12px;border-top:1px dashed #e2e8f0;padding-top:12px">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <button id="bk-ur-audit" class="btn">🔗 Athuga tengingar (eftir kt)</button>
+            <button id="bk-ur-relink" class="btn" disabled>Laga rangar + tengja óskráðar</button>
+            <span id="bk-ur-audit-status" style="font-size:12.5px;color:#64748b"></span>
+          </div>
+          <div style="${hint}">Ber kennitöluna í skráarnafninu saman við fyrirtækið sem skjalið er tengt í gagnagrunni — sýnir öll sem eru á röngum stað og lagar þau öll í einum smelli (eftir kt). Engin smell-á-hvert-fyrirtæki. Endurnefndu fyrst svo kt sé komin í nöfnin.</div>
+          <div id="bk-ur-audit-results"></div>
+        </div>
       </div>
 
       <div style="margin-top:24px;border-top:1px solid #e2e8f0;padding-top:18px">
@@ -3155,6 +3164,52 @@ function renderBakendi(t){
       udupTrashIds = []; $udupResults.innerHTML = '';
     } catch (e) { $udupResults.insertAdjacentHTML('beforeend', bkErr(e)); }
     finally { $udupScan.disabled = false; }
+  };
+
+  // ── Athuga / laga tengingar í fjölda (eftir kennitölu úr skráarnafni) ─────
+  const $urAudit = document.getElementById('bk-ur-audit');
+  const $urRelink = document.getElementById('bk-ur-relink');
+  const $urAuditStatus = document.getElementById('bk-ur-audit-status');
+  const $urAuditResults = document.getElementById('bk-ur-audit-results');
+  let _auditFixItems = [];
+  if ($urAudit) $urAudit.onclick = async () => {
+    const f = ($urFolder.value || '').trim();
+    if (!f) { $urAuditResults.innerHTML = '<div class="empty">Vantar möppu-id.</div>'; return; }
+    $urAudit.disabled = $urRelink.disabled = true; _auditFixItems = [];
+    $urAuditStatus.textContent = 'Skoða tengingar…'; $urAuditResults.innerHTML = '';
+    try {
+      const r = await fetch('/api/doc-index?audit=1&folder=' + encodeURIComponent(f));
+      const d = await r.json(); if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+      _auditFixItems = (d.mismatched || []).concat(d.toLink || []);
+      $urAuditStatus.textContent = '✓ ' + d.correct + ' rétt · ' + (d.mismatched || []).length + ' röng · ' + (d.toLink || []).length + ' óskráð · ' + (d.noBase || []).length + ' vantar fyrirtæki';
+      const tdc = 'padding:4px 8px;border-bottom:1px solid #f1f5f9';
+      let html = '';
+      if ((d.mismatched || []).length) html += '<div style="font-size:12.5px;color:#b91c1c;font-weight:700;margin:10px 0 4px">Á röngum stað (' + d.mismatched.length + ') — verða færð á rétt fyrirtæki:</div><div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12px"><tbody>' + d.mismatched.map(m => '<tr><td style="' + tdc + '">' + escapeHtml(m.file) + '</td><td style="' + tdc + ';color:#dc2626">' + escapeHtml(m.fromName) + '</td><td style="' + tdc + ';color:#cbd5e1">→</td><td style="' + tdc + ';color:#15803d;font-weight:600">' + escapeHtml(m.toName) + '</td></tr>').join('') + '</tbody></table></div>';
+      if ((d.toLink || []).length) html += '<div style="font-size:12.5px;color:#475569;margin:12px 0 4px">Óskráð (' + d.toLink.length + ') — verða tengd:</div><ul style="margin:0;padding-left:18px;font-size:12px;color:#334155">' + d.toLink.slice(0, 50).map(m => '<li>' + escapeHtml(m.file) + ' → <b>' + escapeHtml(m.toName) + '</b></li>').join('') + (d.toLink.length > 50 ? ('<li>… +' + (d.toLink.length - 50) + ' fleiri</li>') : '') + '</ul>';
+      if ((d.noBase || []).length) html += '<div style="font-size:12px;color:#b45309;margin-top:10px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:7px 10px">⚠ ' + d.noBase.length + ' með kennitölu sem er ekki til í grunni (þarf að stofna fyrirtæki) — t.d. ' + d.noBase.slice(0, 8).map(m => escapeHtml(m.kt)).join(', ') + (d.noBase.length > 8 ? '…' : '') + '</div>';
+      if (!_auditFixItems.length && !(d.noBase || []).length) html += '<div class="empty">Allt tengt rétta fyrirtækinu. 🎉</div>';
+      $urAuditResults.innerHTML = html;
+      $urRelink.disabled = _auditFixItems.length === 0;
+    } catch (e) { $urAuditResults.insertAdjacentHTML('beforeend', bkErr(e)); $urAuditStatus.textContent = ''; }
+    finally { $urAudit.disabled = false; }
+  };
+  if ($urRelink) $urRelink.onclick = async () => {
+    if (!_auditFixItems.length) return;
+    if (!confirm('Laga ' + _auditFixItems.length + ' tengingar (færa á rétt fyrirtæki eftir kennitölu úr skráarnafni)?\n\nAfturkræft — þú getur keyrt „Athuga" + lagað aftur hvenær sem er.')) return;
+    $urRelink.disabled = $urAudit.disabled = true;
+    let done = 0, errs = 0;
+    try {
+      for (let i = 0; i < _auditFixItems.length; i += 50) {
+        $urAuditStatus.textContent = 'Lagfæri… ' + done + '/' + _auditFixItems.length;
+        const chunk = _auditFixItems.slice(i, i + 50);
+        const r = await fetch('/api/doc-index', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'relink', items: chunk }) });
+        const d = await r.json(); if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+        done += d.done || 0; errs += d.errors || 0;
+      }
+      $urAuditStatus.textContent = '✓ Lagaði ' + done + ' tengingar' + (errs ? (' · ' + errs + ' villur') : '') + '. Keyrðu „Athuga" aftur til að staðfesta.';
+      _auditFixItems = []; $urRelink.disabled = true;
+    } catch (e) { $urAuditResults.insertAdjacentHTML('beforeend', bkErr(e)); }
+    finally { $urAudit.disabled = false; }
   };
 
   // ── Samningalesari (þjónustusamningar → 4 reitir + Google Sheet) ──────────
