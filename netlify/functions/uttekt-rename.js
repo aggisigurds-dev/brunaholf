@@ -86,6 +86,8 @@ exports.handler = async (event) => {
           const clean = await driveExtractText(f.id, token).catch(() => '');
           if (clean && clean.replace(/\s/g, '').length >= 25) { text = clean; kt = customerKt(text); }
         }
+        const old = fieldsFromOldName(f.name);   // fallback for anything the content misses
+        kt = kt || old.kt || null;
         // The folder mixes report types + stray invoices. Accept ONLY real reports —
         // (A) slökkvitæki úttektarskýrsla, (B) brunaviðvörunarkerfi viðtökupróf/árleg
         // prófun — and reject reikningar (they also carry the issuer kt).
@@ -94,22 +96,26 @@ exports.handler = async (event) => {
         const ok = isReport && !isInvoice;
         const base = kt ? await matchBase(kt) : null;
         const party = parseParty(text, base && base.nafn);
-        const company = party.company || (base && base.nafn) || '';
+        const company = party.company || (base && base.nafn) || old.company || '';
         // Address back in the name (multi-site companies like Aðalskoðun need it to tell
         // their locations apart). Prefer the address already in the old filename — it's
         // clean — else extract from content, strip a leading company-name (so it isn't
         // duplicated into the street), and expand abbreviated cities (Grb→Garðabær).
-        const address = expandCity(addressFromOldName(f.name) || stripCompanyPrefix(party.address || extractAddress(text), company));
+        const address = expandCity(old.address || stripCompanyPrefix(party.address || extractAddress(text), company));
+        // Date from content; fall back to the month/ár already in the filename so
+        // hard-to-read PDFs don't lose their year.
         const di = dateInfo(text);
+        const month = di.month || old.month;
+        const year = di.year || old.year;
         let newName = '', status = 'manual';
-        if (ok && company && kt && di.month && di.year) {
-          newName = sanitize(company) + ' - ' + (address ? sanitize(address) + ' - ' : '') + dash(kt) + ' - ' + di.month + ' - ' + di.year + '.pdf';
+        if (ok && company && kt && month && year) {
+          newName = sanitize(company) + ' - ' + (address ? sanitize(address) + ' - ' : '') + dash(kt) + ' - ' + month + ' - ' + year + '.pdf';
           status = 'ready';
         }
         if (status === 'ready') stats.ready++; else stats.manual++;
         stats.rows.push({
-          fileId: f.id, oldName: f.name, newName, status, isInvoice, company, kt: kt ? dash(kt) : '', address, month: di.month || '', year: di.year || '',
-          missing: !ok ? (isInvoice ? 'reikningur – röng mappa' : 'ekki úttektarskýrsla') : [!company ? 'fyrirtæki' : null, !kt ? 'kt' : null, !(di.month && di.year) ? 'dags' : null].filter(Boolean).join(', '),
+          fileId: f.id, oldName: f.name, newName, status, isInvoice, company, kt: kt ? dash(kt) : '', address, month: month || '', year: year || '',
+          missing: !ok ? (isInvoice ? 'reikningur – röng mappa' : 'ekki úttektarskýrsla') : [!company ? 'fyrirtæki' : null, !kt ? 'kt' : null, !(month && year) ? 'dags' : null].filter(Boolean).join(', '),
         });
       } catch (e) { stats.errors++; stats.rows.push({ fileId: f.id, oldName: f.name, status: 'error', error: String(e.message || e) }); }
     }
@@ -235,15 +241,23 @@ function extractAddress(text) {
   }
   return '';
 }
-// Address segment out of the existing filename "Fyrirtæki - Heimilisfang - kt - mán - ár"
-// — the cleanest source (preserves the user's already-good addresses; only kt/date get
-// normalised). '' if the file has no address segment (e.g. just "Fyrirtæki - kt - …").
-function addressFromOldName(name) {
+// Pull every field out of the existing filename "Fyrirtæki - Heimilisfang - kt -
+// mánuður - ár" — the cleanest source, and a reliable fallback for scanned/hard-to-read
+// PDFs where content extraction misses the address OR the date.
+function fieldsFromOldName(name) {
   const parts = String(name || '').replace(/\.pdf$/i, '').split(' - ').map(s => s.trim());
+  const out = { company: '', address: '', kt: '', month: '', year: '' };
   const ktIdx = parts.findIndex(s => /^\d{6}-?\d{4}$/.test(s.replace(/\s/g, '')));
-  if (ktIdx <= 1) return '';
-  const mid = parts.slice(1, ktIdx).join(', ').replace(/\s+/g, ' ').trim();
-  return /\d/.test(mid) ? mid : '';
+  out.company = (ktIdx === 0) ? '' : (parts[0] || '');
+  if (ktIdx >= 0) {
+    out.kt = parts[ktIdx].replace(/\D/g, '');
+    if (ktIdx > 1) { const mid = parts.slice(1, ktIdx).join(', ').replace(/\s+/g, ' ').trim(); if (/\d/.test(mid)) out.address = mid; }
+    parts.slice(ktIdx + 1).forEach(p => {
+      if (new RegExp('^(' + MONTHS + ')$', 'i').test(p)) out.month = p.toLowerCase();
+      else if (/^20\d{2}$/.test(p)) out.year = p;
+    });
+  }
+  return out;
 }
 // Drop a leading company-name from a content-extracted address ("Aðalskoðun Grjótháls"
 // → "Grjótháls") so the company isn't duplicated into the heimilisfang.
