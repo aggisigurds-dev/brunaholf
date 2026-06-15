@@ -28,6 +28,20 @@ exports.handler = async (event) => {
   // ── APPLY: rename the exact files the UI confirmed ──────────────────────────
   if (event.httpMethod === 'POST') {
     let body = {}; try { body = JSON.parse(event.body || '{}'); } catch {}
+    if (body.action === 'trash') {
+      const ids = Array.isArray(body.ids) ? body.ids : [];
+      let trashed = 0, errors = 0;
+      for (const id of ids) {
+        try {
+          const r = await fetch('https://www.googleapis.com/drive/v3/files/' + id + '?supportsAllDrives=true&fields=id', {
+            method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ trashed: true }),   // reversible — goes to Drive trash, not permanent delete
+          });
+          if (r.ok) trashed++; else errors++;
+        } catch (e) { errors++; }
+      }
+      return json(200, { trashed, errors });
+    }
     const items = Array.isArray(body.items) ? body.items : [];
     let renamed = 0, errors = 0; const results = [];
     for (const it of items) {
@@ -50,6 +64,24 @@ exports.handler = async (event) => {
   const folder = (p.folder || DEFAULT_FOLDER).trim();
   const limit = Math.min(parseInt(p.limit || '4', 10) || 4, 8);
   const offset = Math.max(parseInt(p.offset || '0', 10) || 0, 0);
+
+  // Find duplicates: byte-identical (same md5) = safe to auto-trash all-but-one;
+  // same filename but different content = flagged for manual review only.
+  if (p.dedup === '1') {
+    const files = await listPdfsMeta(folder, token);
+    const byMd5 = {}, byName = {};
+    files.forEach(f => {
+      if (f.md5Checksum) (byMd5[f.md5Checksum] = byMd5[f.md5Checksum] || []).push(f);
+      (byName[f.name] = byName[f.name] || []).push(f);
+    });
+    const exactGroups = [], trashIds = [];
+    Object.values(byMd5).forEach(g => {
+      if (g.length > 1) { const trash = g.slice(1); exactGroups.push({ name: g[0].name, keepId: g[0].id, trash: trash.map(x => x.id), count: g.length }); trash.forEach(x => trashIds.push(x.id)); }
+    });
+    const reviewGroups = [];
+    Object.keys(byName).forEach(nm => { const g = byName[nm]; if (g.length > 1 && new Set(g.map(x => x.md5Checksum || 'none')).size > 1) reviewGroups.push({ name: nm, count: g.length }); });
+    return json(200, { totalFiles: files.length, exactGroups, trashCount: trashIds.length, trashIds, reviewGroups });
+  }
 
   const stats = { folder, scanned: 0, ready: 0, manual: 0, errors: 0, rows: [] };
   try {
@@ -128,6 +160,23 @@ async function listPdfs(folder, token) {
     pageToken = d.nextPageToken;
   } while (pageToken);
   out.sort((a, b) => a.name.localeCompare(b.name, 'is'));
+  return out;
+}
+async function listPdfsMeta(folder, token) {
+  const out = []; let pageToken = null;
+  do {
+    const params = new URLSearchParams({
+      q: `'${folder.replace(/'/g, "\\'")}' in parents and trashed=false`,
+      fields: 'files(id,name,mimeType,md5Checksum),nextPageToken',
+      pageSize: '300', includeItemsFromAllDrives: 'true', supportsAllDrives: 'true', corpora: 'allDrives',
+    });
+    if (pageToken) params.set('pageToken', pageToken);
+    const r = await fetch('https://www.googleapis.com/drive/v3/files?' + params, { headers: { Authorization: `Bearer ${token}` } });
+    if (!r.ok) throw new Error('Drive list ' + r.status);
+    const d = await r.json();
+    for (const f of (d.files || [])) if (/pdf$/i.test(f.name) || f.mimeType === 'application/pdf') out.push(f);
+    pageToken = d.nextPageToken;
+  } while (pageToken);
   return out;
 }
 async function readPdfText(id, token) {
