@@ -307,6 +307,18 @@
   to = "/.netlify/functions/data-sources-status"
   status = 200
 
+# Skuldunautar (AR snapshot) — open invoices per debtor + bank cross-ref
+[[redirects]]
+  from = "/api/debtors"
+  to = "/.netlify/functions/debtors"
+  status = 200
+
+# Hreyfingaryfirlit — per-customer account statement (invoices vs payments + bank)
+[[redirects]]
+  from = "/api/hreyfingar"
+  to = "/.netlify/functions/hreyfingar"
+  status = 200
+
 # DK Plus (accounting) read-only API proxy (Slökkvitæki ehf)
 #   /api/dkplus?path=Company|Customers|Sales/Invoices|Products|...
 [[redirects]]
