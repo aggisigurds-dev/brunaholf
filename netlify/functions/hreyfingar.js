@@ -3,22 +3,24 @@
 //   GET /api/hreyfingar
 //     → { generated_at, today, totals, customers[] }
 //
-// A running account statement per customer. Two parallel truths, shown side by
-// side so the user can reconcile without the server guessing:
+// ONE running account statement per customer — Payday invoices and bank inflows
+// mixed into a single chronological ledger:
+//   • DEBITS  = invoices issued in Payday (+ manual Tekjur-sheet rows). Positive
+//               hofudstoll = reikningur; negative = kreditnóta. Landsbanki kröfur
+//               are NOT separate invoices (bank-claim mechanism for a Payday
+//               invoice — counting them would double-bill).
+//   • CREDITS = payments shown from BOTH sources, mixed in by date:
+//       – Payday-registered payments (status Greitt/Greidd) — via 'payday'.
+//       – Bank inflows (`bank_transactions`, matched by kt)        — via 'banki'.
 //
-//   • MOVEMENTS + STAÐA follow Payday (the accounting system):
-//       DEBITS  = invoices issued in Payday (+ manual Tekjur-sheet rows). Positive
-//                 hofudstoll = reikningur; negative = kreditnóta. Landsbanki kröfur
-//                 are NOT separate invoices (they are the bank-claim mechanism for
-//                 a Payday invoice — counting them would double-bill).
-//       CREDITS = invoices Payday marks paid (greidsla_date).
-//       Staða   = net reikningað − greitt (Payday).
-//
-//   • BANK INFLOWS are listed separately per customer (matched by kt). A direct
-//     millifærsla / paid krafa lands here; when bank inflows exceed what Payday
-//     registered as paid, the customer is flagged `bank_over` — i.e. they likely
-//     paid straight to the bank and the Payday status is stale (e.g. Eykt, Dalvegur).
-//     This is the "look in the bank to match" signal; balance is NOT auto-adjusted.
+// The two payment sources OVERLAP (a payment can be both registered in Payday
+// AND visible in the bank), so naively summing both double-counts. Instead the
+// running balance uses paid = max(Payday-recorded, bank-total) accumulated over
+// time: balance = Σinvoiced − max(ΣpaydayPaid, ΣbankIn). This is correct at the
+// extremes — a Payday-tracked bank transfer counts once (max), while a payment
+// Payday MISSED (bankIn > paydayPaid, e.g. a direct millifærsla) still lowers the
+// balance. Bank rows that don't move the balance (already covered by Payday) are
+// flagged `covered` so the UI can mute them.
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -43,10 +45,10 @@ exports.handler = async (event) => {
   } catch (e) { return json(502, { error: e.message }); }
 
   const today = new Date().toISOString().slice(0, 10);
-  const cust = new Map(); // kt -> { kt, names{}, mv:[], bank:[] }
+  const cust = new Map(); // kt -> { kt, names{}, mv:[] }
   const pick = (kt, name) => {
     let c = cust.get(kt);
-    if (!c) cust.set(kt, c = { kt, names: {}, mv: [], bank: [] });
+    if (!c) cust.set(kt, c = { kt, names: {}, mv: [] });
     const n = (name || '').trim();
     if (n) c.names[n] = (c.names[n] || 0) + 1;
     return c;
@@ -62,21 +64,19 @@ exports.handler = async (event) => {
     const st = lc(r.status);
     const c = pick(kt, r.customer_name);
     const kind = st.startsWith('kredit') ? (amt < 0 ? 'kreditnota' : 'kreditfaersla') : 'reikningur';
-    // debit (signed)
-    c.mv.push({ date: r.gjalddagi || r.greidsla_date || null, kind, ref: refOf(r), delta: amt, source: r.source, status: r.status, text: null });
-    // Payday-registered payment → credit
+    c.mv.push({ date: r.gjalddagi || r.greidsla_date || null, kind, ref: refOf(r), delta: amt, via: null, text: null });
     if (PAID.has(st) && amt > 0) {
-      c.mv.push({ date: r.greidsla_date || r.gjalddagi || null, kind: 'greidsla', ref: refOf(r), delta: -amt, source: 'payday', status: r.status, text: 'Greitt (Payday)' });
+      c.mv.push({ date: r.greidsla_date || r.gjalddagi || null, kind: 'greidsla', ref: refOf(r), delta: -amt, via: 'payday', text: null });
     }
   }
 
-  // ---- bank inflows → separate per-customer stream (matched by kt) ----
+  // ---- bank inflows → credits, mixed into the same ledger ----
   let unmatchedInflow = 0;
   for (const b of bank) {
     const kt = digits(b.kt_counterparty);
     const amt = +b.amount || 0; if (!amt) continue;
     if (!kt || !cust.has(kt)) { unmatchedInflow += amt; continue; }
-    cust.get(kt).bank.push({ date: b.trans_date || null, amount: amt, text: b.text || b.description || '' });
+    cust.get(kt).mv.push({ date: b.trans_date || null, kind: 'greidsla', ref: null, delta: -amt, via: 'banki', text: b.text || b.description || '' });
   }
 
   const ym = (d) => (d ? String(d).slice(0, 7) : null);
@@ -84,37 +84,43 @@ exports.handler = async (event) => {
   for (const c of cust.values()) {
     let best = '', bestN = -1;
     for (const [n, k] of Object.entries(c.names)) if (k > bestN) { best = n; bestN = k; }
-    const mv = c.mv.filter(m => m.date).sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : (b.delta - a.delta));
-    const bankList = c.bank.filter(b => b.date).sort((a, b) => a.date < b.date ? -1 : 1);
-    if (!mv.length && !bankList.length) continue;
+    const mv = c.mv.filter(m => m.date).sort((a, b) =>
+      a.date < b.date ? -1 : a.date > b.date ? 1 : (b.delta - a.delta));
+    if (!mv.length) continue;
 
-    let bal = 0, netBilled = 0, grossInv = 0, credited = 0, paid = 0;
+    // running balance = Σinvoiced − max(ΣpaydayPaid, ΣbankIn)
+    let invCum = 0, payCum = 0, bankCum = 0, grossInv = 0, credited = 0;
     const monthsMap = {};
     for (const m of mv) {
-      bal += m.delta; m.balance = Math.round(bal);
-      const k = ym(m.date); const mo = monthsMap[k] || (monthsMap[k] = { ym: k, invoiced: 0, paid: 0 });
-      if (m.kind === 'greidsla') { paid += -m.delta; mo.paid += -m.delta; }
-      else { netBilled += m.delta; mo.invoiced += m.delta; if (m.delta >= 0 && m.kind === 'reikningur') grossInv += m.delta; if (m.delta < 0) credited += -m.delta; }
+      if (m.kind === 'greidsla') {
+        const prevMax = Math.max(payCum, bankCum);
+        if (m.via === 'banki') bankCum += -m.delta; else payCum += -m.delta;
+        const newMax = Math.max(payCum, bankCum);
+        // a bank row "covered" by Payday doesn't lower the balance
+        m.covered = (m.via === 'banki') && ((newMax - prevMax) < (-m.delta) * 0.5);
+      } else {
+        invCum += m.delta;
+        if (m.delta >= 0 && m.kind === 'reikningur') grossInv += m.delta;
+        if (m.delta < 0) credited += -m.delta;
+      }
+      m.balance = Math.round(invCum - Math.max(payCum, bankCum));
+      const k = ym(m.date); const mo = monthsMap[k] || (monthsMap[k] = { ym: k });
+      mo.cum_invoiced = Math.round(invCum);
+      mo.cum_paid = Math.round(Math.max(payCum, bankCum));
     }
     const months = Object.values(monthsMap).sort((a, b) => a.ym < b.ym ? -1 : 1);
-    let ci = 0, cp = 0;
-    for (const mo of months) { ci += mo.invoiced; cp += mo.paid; mo.cum_invoiced = Math.round(ci); mo.cum_paid = Math.round(cp); mo.invoiced = Math.round(mo.invoiced); mo.paid = Math.round(mo.paid); }
-    const bank_in = Math.round(bankList.reduce((s, b) => s + b.amount, 0));
-    const balance = Math.round(bal);
+    const paid = Math.round(Math.max(payCum, bankCum));
 
     customers.push({
       kt: c.kt, name: best || ('kt ' + c.kt),
-      invoiced: Math.round(netBilled), gross_invoiced: Math.round(grossInv),
-      credited: Math.round(credited), paid: Math.round(paid), balance,
-      bank_in, bank_count: bankList.length,
-      // flagged when bank receipts clearly exceed Payday-registered payments
-      // AND there is still an open balance → likely paid to bank, Payday stale
-      bank_over: (bank_in - paid > 100000 && balance > 100000),
+      invoiced: Math.round(invCum), gross_invoiced: Math.round(grossInv),
+      credited: Math.round(credited), paid,
+      payday_paid: Math.round(payCum), bank_paid: Math.round(bankCum),
+      balance: Math.round(invCum - Math.max(payCum, bankCum)),
       n_invoices: mv.filter(m => m.kind === 'reikningur').length,
       n_payments: mv.filter(m => m.kind === 'greidsla').length,
-      first_date: (mv[0] && mv[0].date) || (bankList[0] && bankList[0].date) || null,
-      last_date: (mv.length && mv[mv.length - 1].date) || null,
-      months, movements: mv, bank: bankList,
+      first_date: mv[0].date, last_date: mv[mv.length - 1].date,
+      months, movements: mv,
     });
   }
 
@@ -124,15 +130,14 @@ exports.handler = async (event) => {
     customer_count: customers.length,
     invoiced: customers.reduce((s, c) => s + c.invoiced, 0),
     paid: customers.reduce((s, c) => s + c.paid, 0),
+    bank_paid: customers.reduce((s, c) => s + c.bank_paid, 0),
     balance: customers.reduce((s, c) => s + c.balance, 0),
-    bank_in: customers.reduce((s, c) => s + c.bank_in, 0),
     unmatched_inflow: Math.round(unmatchedInflow),
-    bank_over_count: customers.filter(c => c.bank_over).length,
   };
 
   return json(200, {
     generated_at: new Date().toISOString(), today, totals, customers,
-    note: 'Staða fylgir Payday (reikningað − greitt). Bankainnborganir eru sýndar sér; „⚠ banki > Payday“ þýðir að greitt hefur verið í banka umfram það sem Payday skráir — staðfestu handvirkt.',
+    note: 'Einn hreyfingalisti per fyrirtæki: reikningar (debet) + greiðslur (kredit) úr Payday OG banka, blandað eftir dagsetningu. Greitt = max(Payday, banki) því heimildirnar skarast; bankafærsla sem þegar er í Payday breytir ekki stöðu (dauf). Staða = reikningað − greitt.',
   });
 };
 
