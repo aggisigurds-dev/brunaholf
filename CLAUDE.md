@@ -49,6 +49,14 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
 - `timavera` — hours dashboard (renderTimavera, ~line 1670)
 - `verdsamanburdur` — Verðsamanburður / competitor pricing (renderCompetitors)
 - `verkstadir` — worksite billing audit (renderWorksites, ~line 2175)
+- `skuldunautar` — Skuldunautar (AR snapshot, renderSkuldunautar). `/api/debtors`:
+  open Payday/Landsbanki invoices per debtor, each flagged Útistandandi / Greitt í
+  banka? / Kannski í banka / Kreditfært via bank cross-ref; aging + vintage + search.
+- `hreyfingaryfirlit` — Hreyfingaryfirlit (per-customer account statement,
+  renderHreyfingar). `/api/hreyfingar`: invoices (Payday) as debet, Payday-paid as
+  kredit, running staða; bank inflows shown separately per customer with a
+  `bank_over` flag (greitt í banka umfram Payday → stale Ógreitt). Hide companies
+  (localStorage), cumulative invoiced-vs-paid charts, balance-per-customer bars.
 - `nlsh` — Landsspítalinn (NLSH) dashboard (renderNLSH): tekjur/mánuð
   (contract heildir × taxti, uppsafnað), lokuð göt per viku, vinnustundir +
   göt per starfsmann, samningsstaða per verkliður. Data: `/api/nlsh-dashboard`
@@ -270,6 +278,16 @@ The Reikningagerð tab should be able to **generate this
 Efnislisti automatically** from Tímavera hours + material entries
 + per-worksite rates.
 
+**Gerð Reikninga (renderGerdReikninga) notes**: `NON_BILLABLE` regex now also
+excludes `slökkvit|slokkvit` (Slökkvitæki ehf = okkar eigin innri tímar, ekki
+rukkað). The summary band shows **Áætlað unnið · <mánuður>** = Σ Tímavera
+verkstaðir (klst × dagvinnutaxti m.vsk) + Landsspítalinn (Ajour-tekjur úr
+`/api/nlsh-dashboard` byMonth) — work done in the month regardless of whether a
+draft is saved. `PAYER_OVERRIDE` (per-verkstaður) carries greiðanda nafn+kt+
+heimilisfang where pricing_guide can't (it only has customer_name); seeded with
+Orkureitur → SAFÍR byggingar ehf. (kt 551021-0680, Ármúla 27) — the wrong
+`Fagraf ehf → Orkureitur` row was also removed from `customer_worksite_map`.
+
 ### Materials source (Tímavera-based jobs only)
 For Tímavera-based worksites, material costs that get **re-charged
 to the customer** come from:
@@ -348,8 +366,9 @@ field as `"Starfsmaður N"` (N = company staff number; map in
 **Endpoints**:
 - `/api/nlsh-uppgjor?month=YYYY-MM` — one-month contract calc (revenue).
 - `/api/nlsh-dashboard` — full dashboard JSON for the `nlsh` tab: totals,
-  byMonth (revenue+holes+hours, cumulative), byWeek (holes+hours), byStaff
-  (holes from Ajour `category`, hours from Tímavera `Landsspitalinn`,
+  byMonth (revenue+holes+hours, cumulative), byWeek (holes+hours), **byDay
+  (göt kláruð per dag, samfelldur 14-daga gluggi — shown on the tab + nlsh.html)**,
+  byStaff (holes from Ajour `category`, hours from Tímavera `Landsspitalinn`,
   göt/klst), byVerk (samningsstaða per verkliður w/ target + %).
 
 **Standalone share page**: `nlsh.html` — self-contained copy of the NLSH
