@@ -76,6 +76,8 @@
     <div><button id="nl-refresh" class="tv-btn" type="button">↻ Sækja</button></div>
   </div>
   <div id="nl-cards" class="nl-cards"></div>
+  <h3 class="nl-h3">📅 Göt kláruð per dag <span class="nl-note">(síðustu 2 vikur)</span></h3>
+  <div id="nl-day" class="nl-tw"></div>
   <h3 class="nl-h3">📈 Þróun per viku</h3>
   <div id="nl-charts" class="nl-charts"></div>
   <h3 class="nl-h3">💰 Mánaðaruppgjör — rukkun per mánuð <span class="nl-note">(staða mánaðamóta − fyrri mánuður)</span></h3>
@@ -192,6 +194,20 @@
         svgChart(wk,{bar:'holes',line:'cum_holes',barColor:'#9ec5fe',lineColor:'#0a84ff',fmt:num})) +
       chartCard('Tekjur per viku (m. vsk)', '▮ vikuleg · — uppsafnað (<b>'+kr(d.totals.revenue_m_vsk)+'</b>)',
         svgChart(wk,{bar:'revenue_m_vsk',line:'cum_revenue_m_vsk',barColor:'#a7e0c0',lineColor:'#12805a',fmt:kr}));
+    // Göt kláruð per dag — síðustu 2 vikur
+    const day = d.byDay || [];
+    const dMax = Math.max(1, ...day.map(x=>x.holes));
+    const WD = ['su','má','þr','mi','fi','fö','la'];
+    document.getElementById('nl-day').innerHTML = `<table class="nl-t">
+      <thead><tr><th>Dagur</th><th>Göt kláruð</th><th></th></tr></thead>
+      <tbody>${day.map(x=>{
+        const dt=new Date(x.date+'T00:00:00Z');
+        const lbl=WD[dt.getUTCDay()]+'&nbsp;'+x.date.slice(8,10)+'.'+x.date.slice(5,7)+'.';
+        const wknd=(dt.getUTCDay()===0||dt.getUTCDay()===6);
+        return `<tr${wknd?' style="color:#b6c0cc"':''}><td>${lbl}</td><td>${num(x.holes)}</td><td style="text-align:left">${bar(x.holes,dMax)}</td></tr>`;
+      }).join('')}</tbody>
+      <tfoot><tr><td>Samtals (14 dagar)</td><td>${num(d.byDayTotal||0)}</td><td></td></tr></tfoot></table>`;
+
     loadMonthly(d.totals.revenue_m_vsk, false);
     document.getElementById('nl-month').innerHTML = `<table class="nl-t">
       <thead><tr><th>Mánuður</th><th>Göt</th><th>Tekjur m.vsk</th><th>Uppsafnað</th><th>Klst</th></tr></thead>
