@@ -3181,13 +3181,19 @@ function renderBakendi(t){
       const r = await fetch('/api/doc-index?audit=1&folder=' + encodeURIComponent(f));
       const d = await r.json(); if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
       _auditFixItems = (d.mismatched || []).concat(d.toLink || []);
-      $urAuditStatus.textContent = '✓ ' + d.correct + ' rétt · ' + (d.mismatched || []).length + ' röng · ' + (d.toLink || []).length + ' óskráð · ' + (d.noBase || []).length + ' vantar fyrirtæki';
-      const tdc = 'padding:4px 8px;border-bottom:1px solid #f1f5f9';
-      let html = '';
-      if ((d.mismatched || []).length) html += '<div style="font-size:12.5px;color:#b91c1c;font-weight:700;margin:10px 0 4px">Á röngum stað (' + d.mismatched.length + ') — verða færð á rétt fyrirtæki:</div><div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12px"><tbody>' + d.mismatched.map(m => '<tr><td style="' + tdc + '">' + escapeHtml(m.file) + '</td><td style="' + tdc + ';color:#dc2626">' + escapeHtml(m.fromName) + '</td><td style="' + tdc + ';color:#cbd5e1">→</td><td style="' + tdc + ';color:#15803d;font-weight:600">' + escapeHtml(m.toName) + '</td></tr>').join('') + '</tbody></table></div>';
-      if ((d.toLink || []).length) html += '<div style="font-size:12.5px;color:#475569;margin:12px 0 4px">Óskráð (' + d.toLink.length + ') — verða tengd:</div><ul style="margin:0;padding-left:18px;font-size:12px;color:#334155">' + d.toLink.slice(0, 50).map(m => '<li>' + escapeHtml(m.file) + ' → <b>' + escapeHtml(m.toName) + '</b></li>').join('') + (d.toLink.length > 50 ? ('<li>… +' + (d.toLink.length - 50) + ' fleiri</li>') : '') + '</ul>';
-      if ((d.noBase || []).length) html += '<div style="font-size:12px;color:#b45309;margin-top:10px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:7px 10px">⚠ ' + d.noBase.length + ' með kennitölu sem er ekki til í grunni (þarf að stofna fyrirtæki) — t.d. ' + d.noBase.slice(0, 8).map(m => escapeHtml(m.kt)).join(', ') + (d.noBase.length > 8 ? '…' : '') + '</div>';
-      if (!_auditFixItems.length && !(d.noBase || []).length) html += '<div class="empty">Allt tengt rétta fyrirtækinu. 🎉</div>';
+      $urAuditStatus.textContent = '✓ ' + d.correct + ' rétt · ' + (d.mismatched || []).length + ' röng · ' + (d.toLink || []).length + ' óskráð';
+      const tdc = 'padding:4px 8px;border-bottom:1px solid #f6f8fa';
+      const order = { wrong: 0, unlinked: 1, nobase: 2, nokt: 3, correct: 4 };
+      const list = (d.list || []).slice().sort((a, b) => (order[a.status] - order[b.status]) || String(a.file).localeCompare(String(b.file), 'is'));
+      const conn = x => {
+        if (x.status === 'correct') return '<span style="color:#15803d">✓ ' + escapeHtml(x.currentName || '') + '</span>';
+        if (x.status === 'wrong') return '<span style="color:#dc2626;font-weight:600">' + escapeHtml(x.currentName || '(ótengt)') + '</span> <span style="color:#cbd5e1">→</span> <b style="color:#15803d">' + escapeHtml(x.correctName || '') + '</b>';
+        if (x.status === 'unlinked') return '<span style="color:#94a3b8">óskráð</span> <span style="color:#cbd5e1">→</span> <b style="color:#15803d">' + escapeHtml(x.correctName || '') + '</b>';
+        if (x.status === 'nobase') return '<span style="color:#b45309">kt ' + escapeHtml(x.kt || '') + ' ekki til í grunni</span>';
+        return '<span style="color:#94a3b8">engin kt í nafni</span>';
+      };
+      let html = '<div style="margin:6px 0 8px;font-size:12px;color:#475569"><b>' + d.total + '</b> skjöl · <span style="color:#15803d">' + d.correct + ' rétt</span> · <span style="color:#dc2626">' + (d.mismatched || []).length + ' röng</span> · ' + (d.toLink || []).length + ' óskráð · ' + (d.noBase || []).length + ' vantar fyrirtæki · ' + d.noKt + ' án kt í nafni</div>';
+      html += '<div style="overflow:auto;max-height:480px;border:1px solid #eef1f5;border-radius:8px"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>' + ['Skrá', 'Ár', 'Tengt við'].map(h => '<th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e2e8f0;color:#64748b;position:sticky;top:0;background:#f8fafc">' + h + '</th>').join('') + '</tr></thead><tbody>' + list.map(x => '<tr><td style="' + tdc + '">' + escapeHtml(x.file) + '</td><td style="' + tdc + ';white-space:nowrap;color:#94a3b8">' + (x.year || '') + '</td><td style="' + tdc + '">' + conn(x) + '</td></tr>').join('') + '</tbody></table></div>';
       $urAuditResults.innerHTML = html;
       $urRelink.disabled = _auditFixItems.length === 0;
     } catch (e) { $urAuditResults.insertAdjacentHTML('beforeend', bkErr(e)); $urAuditStatus.textContent = ''; }
@@ -5315,7 +5321,7 @@ function rgOpenCalculator(project, allSites, months){
           <td class="rg-calc-amt" id="rg-calc-dv-amt">0</td>
         </tr>
         <tr>
-          <td>Eftirvinna</td>
+          <td>Yfirvinna</td>
           <td><input type="number" id="rg-calc-ev-rate" value="${rates.ev}" step="50"> kr/klst</td>
           <td>×</td>
           <td><input type="number" id="rg-calc-ev-hours" value="0" step="0.5"> klst</td>
@@ -5434,7 +5440,7 @@ function rgOpenCalculator(project, allSites, months){
     const lines = [
       `${project} — ${monthLabelStatic(ym)}`,
       `Dagvinna ${num('rg-calc-dv-hours').toFixed(1)} klst × ${fmt(num('rg-calc-dv-rate'))} = ${$('rg-calc-dv-amt').textContent}`,
-      `Eftirvinna ${num('rg-calc-ev-hours').toFixed(1)} klst × ${fmt(num('rg-calc-ev-rate'))} = ${$('rg-calc-ev-amt').textContent}`,
+      `Yfirvinna ${num('rg-calc-ev-hours').toFixed(1)} klst × ${fmt(num('rg-calc-ev-rate'))} = ${$('rg-calc-ev-amt').textContent}`,
       `Akstur km ${num('rg-calc-km')} = ${$('rg-calc-km-amt').textContent}`,
       `Akstur ferðir ${num('rg-calc-ferd')} = ${$('rg-calc-ferd-amt').textContent}`,
       `Smáhlutagjald = ${$('rg-calc-sma-amt').textContent}`,
@@ -5941,7 +5947,7 @@ async function renderTilbunirReikningar(t){
     if(/^\d{4}-\d{2}/.test(d.work_month||'')){ const [y,m]=d.work_month.split('-').map(Number); const last=new Date(y,m,0).getDate(); fra=`${d.work_month}-01`; til=`${d.work_month}-${String(last).padStart(2,'0')}`; }
     let body='';
     if(dvH>0) body += row('Dagvinna', dvR, dvH.toFixed(2), Math.round(dvR*dvH));
-    if(evH>0) body += row('Eftirvinna', evR, evH.toFixed(2), Math.round(evR*evH));
+    if(evH>0) body += row('Yfirvinna', evR, evH.toFixed(2), Math.round(evR*evH));
     if(km>0||fr>0) body += '<tr class="sec"><td colspan="4">Akstur</td></tr>';
     if(km>0) body += row('ekinn km.', 186, km, km*186);
     if(fr>0) body += row('ekinn ferð', 4000, fr, fr*4000);
@@ -6417,7 +6423,7 @@ async function renderGerdReikninga(t){
           <div class="gr-st">Tími <button type="button" id="gr-fill-hours" class="gr-btn" style="float:right;padding:3px 9px;font-size:11px" title="Fylla dagvinnu/yfirvinnu úr tímabók (yfirvinna eftir 8 klst/dag — 8,5 hjá Fjarðagötu; helgar (lau/sun) allar yfirvinna)">📥 Fylla úr tímabók</button></div>
           <div class="gr-r3"><div class="gr-f"><label>Dagvinna</label><div style="font-size:11px;color:#94a3b8;padding:6px 0">klst úr Tímavera</div></div>
             <div class="gr-f"><label style="font-size:11px;color:#475569;font-weight:600">klst (breyta hér)</label><input type="text" inputmode="decimal" id="gr-dvh" value="${dvH}" style="background:#fffbeb;border-color:#fcd34d"></div><div class="gr-f"><label style="font-size:11px;color:#94a3b8">kr/klst</label><input type="text" inputmode="decimal" id="gr-dvr" value="${dvR}"></div></div>
-          <div class="gr-r3"><div class="gr-f"><label>Eftirvinna</label></div>
+          <div class="gr-r3"><div class="gr-f"><label>Yfirvinna</label></div>
             <div class="gr-f"><label style="font-size:11px;color:#475569;font-weight:600">klst (breyta hér)</label><input type="text" inputmode="decimal" id="gr-evh" value="${evH}" style="background:#fffbeb;border-color:#fcd34d"></div><div class="gr-f"><label style="font-size:11px;color:#94a3b8">kr/klst</label><input type="text" inputmode="decimal" id="gr-evr" value="${evR}"></div></div>
           <div class="gr-st">Akstur</div>
           <div class="gr-r2"><div class="gr-f"><label>km × ${r.km}</label><input type="number" id="gr-km" value="${km}" step="10"></div><div class="gr-f"><label>ferðir × ${fmt(r.ferd)}</label><input type="number" id="gr-ferd" value="${fr}" step="1"></div></div>
@@ -6563,7 +6569,7 @@ async function renderGerdReikninga(t){
           <thead><tr><td></td><td class="p">án vsk</td><td class="m">magn</td><td class="t">samtals</td></tr></thead>
           <tbody>
             ${c.dvH>0?row('Dagvinna', c.dvR, c.dvH.toFixed(2), c.dvAmt):''}
-            ${c.evH>0?row('Eftirvinna', c.evR, c.evH.toFixed(2), c.evAmt):''}
+            ${c.evH>0?row('Yfirvinna', c.evR, c.evH.toFixed(2), c.evAmt):''}
             ${(c.km>0||c.fr>0)?'<tr class="sec"><td colspan="4">Akstur</td></tr>':''}
             ${c.km>0?row('ekinn km.', r.km, c.km, c.kmAmt):''}
             ${c.fr>0?row('ekinn ferð', r.ferd, c.fr, c.frAmt):''}
@@ -8703,7 +8709,7 @@ async function renderVerdskra(t){
               <th>Viðskiptavinur</th>
               <th>Source</th>
               <th title="Dagvinna taxti">Dv kr/klst</th>
-              <th title="Eftirvinna taxti">Ev kr/klst</th>
+              <th title="Yfirvinna taxti">Ev kr/klst</th>
               <th title="Akstur kr/km">km</th>
               <th title="Akstur kr/ferð">ferð</th>
               <th title="Smáhlutagjald kr × (dagvinna + yfirvinna) klst">SH/klst</th>
@@ -9142,7 +9148,7 @@ async function rgOpenWorkcenter(project, allSites, months){
         </div>
         <div class="wc-row">
           <label>Dagvinna kr/klst<input type="number" id="wc-dv" value="${pricing.dagvinna_rate ?? 9951}" step="50"></label>
-          <label>Eftirvinna kr/klst<input type="number" id="wc-ev" value="${pricing.eftirvinna_rate ?? 14927}" step="50"></label>
+          <label>Yfirvinna kr/klst<input type="number" id="wc-ev" value="${pricing.eftirvinna_rate ?? 14927}" step="50"></label>
         </div>
         <div class="wc-row">
           <label>Akstur km kr<input type="number" id="wc-km" value="${pricing.akstur_km_rate ?? 186}" step="10"></label>
