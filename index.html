@@ -2726,6 +2726,7 @@ function renderBakendi(t){
     }
   }
 
+  let docRows = [];   // accumulated read docs (for the editable customer match)
   async function runBakendi(dry){
     const f = ($folder.value || '').trim() || DEFAULT_FOLDER;
     localStorage.setItem(FOLDER_KEY, f);
@@ -2743,7 +2744,7 @@ function renderBakendi(t){
         acc.scanned += d.scanned || 0; acc.indexed += d.indexed || 0; acc.dupSkip += d.dupSkip || 0;
         acc.notSlokkvitaeki += d.notSlokkvitaeki || 0; acc.noKt += d.noKt || 0; acc.errors += d.errors || 0;
         acc.unmatched = acc.unmatched.concat(d.unmatched || []);
-        acc.added = acc.added.concat(d.added || []);
+        acc.added = acc.added.concat(d.added || []); docRows = acc.added;
         $results.innerHTML = bakendiResultsHtml(acc);
         offset = d.nextOffset;
       } while (offset != null && ++guard < 300);
@@ -2827,6 +2828,56 @@ function renderBakendi(t){
           if (c) c.innerHTML = rkCustCell(a);
           _custList = null;  // refresh picker so the new company is selectable elsewhere
         } catch(err){ alert('Villa: ' + (err.message || err)); if (c) c.innerHTML = rkCustCell(a); }
+        return; }
+    });
+  }
+
+  // ── Editable customer match for the Skjalalestur (doc-index) reader ────────
+  const docRowByFid = fid => docRows.find(x => String(x.drive_file_id) === String(fid));
+  async function setDocMatch(fid, base){
+    const a = docRowByFid(fid); if (!a) return;
+    const r = await fetch('/api/doc-index', { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action:'set-link', drive_file_id: fid, base_id: base ? base.id : null,
+        doc_type: a.doc_type, year: a.year, customer_name: base ? base.nafn : (a.company || '') }) });
+    const d = await r.json(); if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+    a.base_id = base ? base.id : null; a.base_name = base ? base.nafn : null;
+  }
+  if ($results && !$results._matchWired) { $results._matchWired = true;
+    $results.addEventListener('click', async (e) => {
+      const editA = e.target.closest('._dc-edit');
+      const wrongA = e.target.closest('._dc-wrong');
+      const saveB = e.target.closest('._dc-save');
+      const cancelB = e.target.closest('._dc-cancel');
+      const createA = e.target.closest('._dc-create');
+      if (editA) { e.preventDefault(); const fid = editA.dataset.fid; const c = editA.closest('._dc-cust'); if (!c) return;
+        await ensureCustomers(); c.dataset.prev = c.innerHTML;
+        c.innerHTML = '<input class="_dc-pick" list="bk-customers" placeholder="Leita að fyrirtæki…" style="padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:12px;width:210px">'
+          + ' <button class="_dc-save btn" data-fid="' + escapeAttr(fid) + '" style="font-size:11px;padding:2px 8px">Vista</button>'
+          + ' <button class="_dc-cancel btn" style="font-size:11px;padding:2px 8px">Hætta</button>';
+        const inp = c.querySelector('._dc-pick'); if (inp) inp.focus(); return; }
+      if (cancelB) { e.preventDefault(); const c = cancelB.closest('._dc-cust'); if (c && c.dataset.prev != null) c.innerHTML = c.dataset.prev; return; }
+      if (saveB) { e.preventDefault(); const c = saveB.closest('._dc-cust'); const inp = c && c.querySelector('._dc-pick'); if (!inp) return;
+        const v = (inp.value || '').trim().toLowerCase(); let cu = _custMap[v];
+        if (!cu && v) cu = (_custList || []).find(x => (x.nafn || '').toLowerCase().indexOf(v) >= 0);
+        if (!cu) { alert('Veldu fyrirtæki af listanum.'); return; }
+        const fid = saveB.dataset.fid; saveB.disabled = true; saveB.textContent = 'Vista…';
+        try { await setDocMatch(fid, cu); c.innerHTML = docCustCell(docRowByFid(fid)); }
+        catch(err){ alert('Villa: ' + (err.message || err)); saveB.disabled = false; saveB.textContent = 'Vista'; } return; }
+      if (wrongA) { e.preventDefault(); const fid = wrongA.dataset.fid; const c = wrongA.closest('._dc-cust');
+        if (!confirm('Merkja tenginguna sem ranga (aftengja skjalið)?')) return;
+        try { await setDocMatch(fid, null); if (c) c.innerHTML = docCustCell(docRowByFid(fid)); }
+        catch(err){ alert('Villa: ' + (err.message || err)); } return; }
+      if (createA) { e.preventDefault(); const fid = createA.dataset.fid; const a = docRowByFid(fid); const c = createA.closest('._dc-cust'); if (!a) return;
+        if (!confirm('Stofna fyrirtæki „' + (a.company || a.kt || '') + '" (' + (a.kt || '') + ') í grunninn og tengja skjalið?')) return;
+        createA.textContent = 'Stofna…';
+        try {
+          const r = await fetch('/api/doc-index', { method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ action:'create', kt:a.kt, customer_name:a.company, drive_file_id:fid, doc_type:a.doc_type, year:a.year }) });
+          const d = await r.json(); if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+          a.base_id = d.base_id; a.base_name = d.nafn || a.company;
+          if (c) c.innerHTML = docCustCell(a);
+          _custList = null;  // refresh picker so the new company is selectable elsewhere
+        } catch(err){ alert('Villa: ' + (err.message || err)); if (c) c.innerHTML = docCustCell(a); }
         return; }
     });
   }
@@ -3257,6 +3308,16 @@ function rkCustCell(a){
     + ' <a href="#" class="_rk-edit" data-fid="' + fid + '" style="font-size:11px;color:#2563eb">tengja</a>'
     + (a.kt ? ' <a href="#" class="_rk-create" data-fid="' + fid + '" style="font-size:11px;color:#16a34a" title="Stofna fyrirtæki í grunninn úr reikningnum">+ stofna</a>' : '');
 }
+// Same editable customer cell for the Skjalalestur (doc-index) reader — úttektarskýrslur etc.
+function docCustCell(a){
+  const fid = escapeAttr(a.drive_file_id || '');
+  if (a.base_id) return '<span style="color:#15803d;font-weight:600">✓ ' + escapeHtml(a.base_name || ('#' + a.base_id)) + '</span>'
+    + ' <a href="#" class="_dc-edit" data-fid="' + fid + '" style="font-size:11px;color:#2563eb">breyta</a>'
+    + ' <a href="#" class="_dc-wrong" data-fid="' + fid + '" style="font-size:11px;color:#dc2626" title="Röng tenging — aftengja">✗</a>';
+  return (a.kt ? '<span style="color:#b45309;font-weight:600">⚠ ' + (a.company ? escapeHtml(a.company) + ' · ' : '') + 'óstaðfest</span>' : '<span style="color:#94a3b8">— engin kt</span>')
+    + ' <a href="#" class="_dc-edit" data-fid="' + fid + '" style="font-size:11px;color:#2563eb">tengja</a>'
+    + (a.kt ? ' <a href="#" class="_dc-create" data-fid="' + fid + '" style="font-size:11px;color:#16a34a" title="Stofna fyrirtæki í grunninn úr skjalinu">+ stofna</a>' : '');
+}
 function reikningarResultsHtml(d, rows){
   const chip = (l, v, bg) => `<span style="display:inline-block;padding:3px 10px;border-radius:99px;background:${bg || '#f1f5f9'};border:1px solid #e2e8f0;font-size:12.5px;font-weight:600;margin:0 6px 6px 0">${l}: ${v}</span>`;
   const td = 'padding:5px 8px;border-bottom:1px solid #f1f5f9';
@@ -3310,14 +3371,11 @@ function bakendiResultsHtml(d){
       + ['Skrá', 'Tegund', 'Ár', 'Viðskiptavinur'].map(h => `<th style="text-align:left;padding:5px 8px;border-bottom:1px solid #e2e8f0;color:#64748b">${h}</th>`).join('')
       + '</tr></thead><tbody>';
     added.forEach(a => {
-      const cust = a.base_id
-        ? escapeHtml(a.base_name || ('#' + a.base_id))
-        : '<span style="color:#dc2626;font-weight:700">RESOLVE · kt ' + escapeHtml(a.kt) + '</span>';
-      html += '<tr>'
+      html += '<tr data-fid="' + escapeAttr(a.drive_file_id || '') + '">'
         + `<td style="${td}">${escapeHtml(a.file)}</td>`
         + `<td style="${td}">${escapeHtml(DOC[a.doc_type] || a.doc_type)}</td>`
         + `<td style="${td}">${a.year || ''}</td>`
-        + `<td style="${td}">${cust}</td></tr>`;
+        + `<td style="${td}" class="_dc-cust">${docCustCell(a)}</td></tr>`;
     });
     html += '</tbody></table></div>';
   }
@@ -3325,7 +3383,7 @@ function bakendiResultsHtml(d){
   const un = d.unmatched || [];
   if (un.length) {
     html += '<div class="group-title" style="margin-top:16px"><strong>⚠ Til skoðunar — kt fannst ekki sem viðskiptavinur (' + un.length + ')</strong><div class="line"></div></div>';
-    html += '<p style="color:#64748b;font-size:12px;margin:4px 0 8px;max-width:680px">Þessi skjöl voru lesin en kennitalan er ekki til í <code>customers_base</code>. Stofnaðu viðskiptavininn (eða leiðréttu kt) og keyrðu aftur.</p>';
+    html += '<p style="color:#64748b;font-size:12px;margin:4px 0 8px;max-width:680px">Þessi skjöl voru lesin en kennitalan er ekki til í <code>customers_base</code>. Þú getur <b>stofnað fyrirtækið</b> eða <b>tengt</b> það beint í töflunni að ofan (dálkurinn „Viðskiptavinur" → „+ stofna" / „tengja").</p>';
     html += '<div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12.5px"><tbody>';
     un.forEach(a => {
       html += '<tr>'

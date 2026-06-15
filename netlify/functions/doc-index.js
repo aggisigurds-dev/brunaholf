@@ -24,6 +24,25 @@ exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors(), body: '' };
   if (!SUPABASE_URL || !SUPABASE_KEY) return json(500, { error: 'Supabase env missing' });
 
+  // ── Editable match: relink / unlink a doc, or create the missing customer ────
+  if (event.httpMethod === 'POST') {
+    let body = {}; try { body = JSON.parse(event.body || '{}'); } catch {}
+    try {
+      if (body.action === 'set-link') {
+        if (!body.drive_file_id) return json(400, { error: 'vantar drive_file_id' });
+        await updateDocLink(body.drive_file_id, body.base_id || null, body);
+        return json(200, { ok: true, base_id: body.base_id || null });
+      }
+      if (body.action === 'create') {
+        if (!body.kt) return json(400, { error: 'vantar kennitölu' });
+        const baseId = await createCompany(body);
+        if (body.drive_file_id) await updateDocLink(body.drive_file_id, baseId, body);
+        return json(200, { ok: true, base_id: baseId, nafn: body.customer_name || '' });
+      }
+    } catch (e) { return json(500, { error: String(e.message || e) }); }
+    return json(400, { error: 'unknown action' });
+  }
+
   const p = event.queryStringParameters || {};
   const folder = (p.folder || DEFAULT_FOLDER).trim();
   const dry = p.dry === '1' || p.dry === 'true';
@@ -49,7 +68,8 @@ exports.handler = async (event) => {
     for (const f of slice) {
       stats.scanned++;
       try {
-        if (await alreadyIndexed(f.id)) { stats.dupSkip++; continue; }
+        const existing = await existingDoc(f.id);
+        if (existing && existing.customer_base_id) { stats.dupSkip++; continue; }   // already linked → leave it
         const text = await readPdfText(f.id, token);
         if (!text) { stats.errors++; continue; }
         const norm = text.replace(/\s+/g, ' ');
@@ -61,10 +81,12 @@ exports.handler = async (event) => {
         const year = extractYear(norm);
         const amount = doc_type === 'reikningur' ? extractAmount(norm) : null;
         const base = await matchBase(kt);
-        const rec = { file: f.name, kt: dash(kt), doc_type, year, base_id: base ? base.id : null, base_name: base ? base.nafn : null };
+        const company = companyName(f.name, norm);
+        const rec = { file: f.name, drive_file_id: f.id, kt: dash(kt), company, doc_type, year, base_id: base ? base.id : null, base_name: base ? base.nafn : null };
         if (!base) stats.unmatched.push(rec);
         if (!dry) {
-          await insertDoc({
+          if (existing) { if (base) await updateDocLink(f.id, base.id, { doc_type, year, customer_name: company }); }  // backlog row now resolvable
+          else await insertDoc({
             customer_base_id: base ? base.id : null,
             doc_type, year, drive_file_id: f.id, source: 'gdrive', found_by: 'code', amount,
             notes: f.name.replace(/\.pdf$/i, '') + ' · kt ' + dash(kt) + (base ? '' : ' · RESOLVE'),
@@ -106,7 +128,26 @@ async function readPdfText(id, token) {
   if (!r.ok) return null;
   const buf = Buffer.from(await r.arrayBuffer());
   const d = await pdf(buf).catch(() => null);
-  return d ? d.text : null;
+  let text = d ? d.text : '';
+  // pdf-parse returns empty on some scanned/dkPlus layouts — fall back to a clean
+  // Google-Docs text extraction (copy → export text/plain → delete) like the renamers.
+  if ((text || '').replace(/\s/g, '').length < 25) {
+    const viaG = await driveExtractText(id, token).catch(() => '');
+    if (viaG && viaG.replace(/\s/g, '').length >= 25) text = viaG;
+  }
+  return text || null;
+}
+async function driveExtractText(id, token) {
+  const cp = await fetch('https://www.googleapis.com/drive/v3/files/' + id + '/copy?supportsAllDrives=true&fields=id', {
+    method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: 'tmp-ocr-' + id, mimeType: 'application/vnd.google-apps.document' }),
+  });
+  if (!cp.ok) return '';
+  const doc = await cp.json(); if (!doc || !doc.id) return '';
+  let text = '';
+  try { const ex = await fetch('https://www.googleapis.com/drive/v3/files/' + doc.id + '/export?mimeType=text/plain', { headers: { Authorization: `Bearer ${token}` } }); if (ex.ok) text = await ex.text(); } catch (_) {}
+  fetch('https://www.googleapis.com/drive/v3/files/' + doc.id + '?supportsAllDrives=true', { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } }).catch(() => {});
+  return text;
 }
 
 // ── Extraction ───────────────────────────────────────────────────────────────
@@ -133,10 +174,56 @@ const dash = kt => kt.length === 10 ? kt.slice(0, 6) + '-' + kt.slice(6) : kt;
 
 // ── Supabase REST ────────────────────────────────────────────────────────────
 function sbHeaders(extra) { return Object.assign({ apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }, extra || {}); }
-async function alreadyIndexed(driveFileId) {
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?drive_file_id=eq.${encodeURIComponent(driveFileId)}&select=id&limit=1`, { headers: sbHeaders() });
+async function existingDoc(driveFileId) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?drive_file_id=eq.${encodeURIComponent(driveFileId)}&select=id,customer_base_id&limit=1`, { headers: sbHeaders() });
   const rows = await r.json().catch(() => []);
-  return Array.isArray(rows) && rows.length > 0;
+  return (Array.isArray(rows) && rows[0]) ? rows[0] : null;
+}
+// Company name for display / "+ stofna": prefer the name the renamer put in the file
+// ("Fyrirtæki - kt - …"), else pull it from the report content (both report layouts).
+function companyName(name, text) {
+  const fn = String(name || '').replace(/\.pdf$/i, '');
+  let m = fn.match(/^(.+?)\s+-\s+\d{6}-?\d{4}\b/);
+  if (m && !/^\d/.test(m[1].trim())) return m[1].trim();
+  m = String(text || '').match(/Verkkaupi\s+(.+?)\s+Kennitala/i);
+  if (m) return m[1].replace(/\s+/g, ' ').trim();
+  m = String(text || '').match(/hjá\s+fyrirt(?:æki|aeki)nu\s+(.+?)\s+[A-ZÁÉÍÓÚÝÆÖÞÐ][a-záéíóúýæöþð.\-]*\s+\d/i);
+  if (m) return m[1].replace(/\s+/g, ' ').trim();
+  return '';
+}
+async function updateDocLink(fid, baseId, meta) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?drive_file_id=eq.${encodeURIComponent(fid)}`, {
+    method: 'PATCH', headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }),
+    body: JSON.stringify({ customer_base_id: baseId, found_by: 'manual' }),
+  });
+  const rows = await r.json().catch(() => []);
+  if (!r.ok) throw new Error('update ' + r.status + ' ' + JSON.stringify(rows).slice(0, 160));
+  if (Array.isArray(rows) && rows.length) return;            // existing row updated
+  if (meta && meta.doc_type) {                               // only dry-read so far → insert one
+    await insertDoc({ customer_base_id: baseId, doc_type: meta.doc_type, year: meta.year || null, drive_file_id: fid, source: 'gdrive', found_by: 'manual', notes: (meta.customer_name || '') + ' · handvirkt' });
+  }
+}
+async function createCompany(body) {
+  const ktDash = dash(String(body.kt).replace(/\D/g, ''));
+  const nafn = (body.customer_name || '').trim() || ktDash;
+  let baseId = null;
+  const ex = await fetch(`${SUPABASE_URL}/rest/v1/customers_base?kennitala=eq.${encodeURIComponent(ktDash)}&select=id&limit=1`, { headers: sbHeaders() });
+  const exRows = await ex.json().catch(() => []);
+  if (Array.isArray(exRows) && exRows[0]) baseId = exRows[0].id;
+  if (!baseId) {
+    const ins = await fetch(`${SUPABASE_URL}/rest/v1/customers_base`, { method: 'POST', headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }), body: JSON.stringify([{ nafn, kennitala: ktDash }]) });
+    const insRows = await ins.json().catch(() => []);
+    if (!ins.ok) throw new Error('customers_base ' + ins.status + ' ' + JSON.stringify(insRows).slice(0, 160));
+    baseId = (Array.isArray(insRows) && insRows[0]) ? insRows[0].id : null;
+  }
+  try {   // service-branch row in fyrirtaeki, idempotent on kt
+    const fx = await fetch(`${SUPABASE_URL}/rest/v1/fyrirtaeki?kennitala=eq.${encodeURIComponent(ktDash)}&select=id&limit=1`, { headers: sbHeaders() });
+    const fxRows = await fx.json().catch(() => []);
+    if (!(Array.isArray(fxRows) && fxRows[0])) {
+      await fetch(`${SUPABASE_URL}/rest/v1/fyrirtaeki`, { method: 'POST', headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }), body: JSON.stringify([{ nafn, kennitala: ktDash, customer_base_id: baseId, heimilisfang: body.address || null }]) });
+    }
+  } catch (e) {}
+  return baseId;
 }
 async function matchBase(kt) {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/customers_base?kennitala=eq.${encodeURIComponent(dash(kt))}&select=id,nafn&limit=1`, { headers: sbHeaders() });
