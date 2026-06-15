@@ -1971,12 +1971,16 @@ async function syncFromServer(){
       return;
     }
     if(!r.ok) throw new Error('HTTP '+r.status);
-    const { value: server, updated_at: serverTs } = await r.json();
+    const { value: server } = await r.json();
     _serverHasRecord = true;
     const localTs = state?.ui?.updated_at || '';
-    // server wins if its timestamp is strictly newer than what we
-    // have locally — otherwise keep the local copy (it may have
-    // unsynced edits) and push it up.
+    // Compare the EMBEDDED state timestamp (server.ui.updated_at) — same field,
+    // same client clock as localTs — NOT the server record's receipt time. The
+    // record time uses the server clock; mixing clocks made the server copy win
+    // on machines whose clock lags, reverting unsynced local edits (e.g. a tab
+    // reorder made just before refresh). server wins only if its embedded state
+    // is strictly newer; otherwise keep the local copy and push it up.
+    const serverTs = server?.ui?.updated_at || '';
     if(serverTs && serverTs > localTs && server && server.tabs){
       const prevActiveTab = state?.ui?.activeTab;
       const prevTabsHash  = JSON.stringify((state?.tabs||[]).map(t => t.id));
@@ -5945,20 +5949,23 @@ async function renderTilbunirReikningar(t){
   if(!rows.length){ host.innerHTML = '<div class="gr-loading">Engir vistaðir reikningar enn. Vistaðu reikning í „Gerð Reikninga".</div>'; return; }
   const keyOf = d => (d.worksite_name||'')+'|'+(d.work_month||'');
   const doneMap = (state.ui && state.ui.tr_done) || {};
-  let sortCol = 'work_month', sortDir = 'desc';
-  const GET = { worksite_name:d=>String(d.worksite_name||''), customer_name:d=>String(d.customer_name||''), work_month:d=>String(d.work_month||''), total_m_vsk:d=>Number(d.total_m_vsk||0), status:d=>String(d.status||'') };
+  const cdate = s => { if(!s) return '—'; const d=new Date(s); if(isNaN(d)) return String(s).slice(0,10); return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear(); };
+  // Default: nýjustu gerðu reikningar efst.
+  let sortCol = 'created_at', sortDir = 'desc';
+  const GET = { worksite_name:d=>String(d.worksite_name||''), customer_name:d=>String(d.customer_name||''), work_month:d=>String(d.work_month||''), total_m_vsk:d=>Number(d.total_m_vsk||0), status:d=>String(d.status||''), created_at:d=>String(d.created_at||'') };
   function paint(){
     const g = GET[sortCol] || GET.work_month;
     rows.sort((a,b)=>{ const x=g(a), y=g(b); const c = (typeof x==='number') ? (x-y) : String(x).localeCompare(String(y),'is'); return sortDir==='asc'?c:-c; });
     const arr = c => sortCol===c ? (sortDir==='asc'?' ▲':' ▼') : '';
     const th = (c,l,st='') => `<th class="tr-sort" data-sort="${c}" style="cursor:pointer;user-select:none;${st}">${l}${arr(c)}</th>`;
     host.innerHTML = `<table class="tr-tbl"><thead><tr>
-        ${th('worksite_name','Verkstaður')}${th('customer_name','Verkkaupi')}${th('work_month','Mánuður')}${th('total_m_vsk','Samtals m/vsk','text-align:right')}${th('status','Staða')}<th></th><th style="text-align:center" title="Hakaðu við þegar reikningurinn er kláraður / sendur">✓</th>
+        ${th('worksite_name','Verkstaður')}${th('customer_name','Verkkaupi')}${th('work_month','Mánuður')}${th('created_at','Gerður')}${th('total_m_vsk','Samtals m/vsk','text-align:right')}${th('status','Staða')}<th></th><th style="text-align:center" title="Hakaðu við þegar reikningurinn er kláraður / sendur">✓</th>
       </tr></thead><tbody>${rows.map((d,i)=>{ const done = !!doneMap[keyOf(d)]; return `
         <tr class="${done?'tr-row-done':''}">
           <td style="font-weight:600">${esc(d.worksite_name)}</td>
           <td>${esc(d.customer_name||'—')}</td>
           <td>${esc(mlabel(d.work_month))}</td>
+          <td style="white-space:nowrap;color:#64748b" title="${esc(d.created_at||'')}">${cdate(d.created_at)}</td>
           <td style="text-align:right;font-variant-numeric:tabular-nums;font-weight:600">${fmt(d.total_m_vsk)} kr</td>
           <td>${esc(d.status||'draft')}</td>
           <td style="white-space:nowrap">
@@ -5968,7 +5975,7 @@ async function renderTilbunirReikningar(t){
           </td>
           <td style="text-align:center"><button class="tr-check${done?' done':''}" data-tr-check="${i}" title="${done?'Klárað — smelltu til að af-merkja':'Merkja sem klárað'}">✓</button></td>
         </tr>`; }).join('')}</tbody></table>`;
-    host.querySelectorAll('.tr-sort').forEach(h=> h.onclick = ()=>{ const c=h.dataset.sort; if(sortCol===c){ sortDir = sortDir==='asc'?'desc':'asc'; } else { sortCol=c; sortDir = (c==='total_m_vsk'||c==='work_month')?'desc':'asc'; } paint(); });
+    host.querySelectorAll('.tr-sort').forEach(h=> h.onclick = ()=>{ const c=h.dataset.sort; if(sortCol===c){ sortDir = sortDir==='asc'?'desc':'asc'; } else { sortCol=c; sortDir = (c==='total_m_vsk'||c==='work_month'||c==='created_at')?'desc':'asc'; } paint(); });
     host.querySelectorAll('[data-tr-open]').forEach(b=> b.onclick = ()=>{ const d=rows[+b.dataset.trOpen]; window.__grPendingOpen=d.worksite_name; state.ui=state.ui||{}; state.ui.gr_month=d.work_month; state.ui.activeTab='gerdreikninga'; save(); render(); });
     host.querySelectorAll('[data-tr-print]').forEach(b=> b.onclick = ()=> printSavedInvoice(rows[+b.dataset.trPrint]));
     host.querySelectorAll('[data-tr-check]').forEach(b=> b.onclick = ()=>{ const d=rows[+b.dataset.trCheck], k=keyOf(d); state.ui=state.ui||{}; state.ui.tr_done=state.ui.tr_done||{}; const now=!state.ui.tr_done[k]; if(now) state.ui.tr_done[k]=true; else delete state.ui.tr_done[k]; b.classList.toggle('done',now); const tr=b.closest('tr'); if(tr) tr.classList.toggle('tr-row-done',now); save(); });
