@@ -131,7 +131,18 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   reads each PDF (pdf-parse), requires Slökkvitæki issuer kt 600508-0400
   (skips vendor invoices), takes the customer kt, classifies, matches
   kt→`customers_base`, upserts `customer_documents` (dedup on drive_file_id).
-  Batched by `offset` (each call ≤ ~10s); the UI pages through.
+  Batched by `offset` (each call ≤ ~10s); the UI pages through. The result table
+  has an **editable customer match** (breyta/✗ + „+ stofna" — `POST
+  {action:'set-link'|'create'}`), a clean-text Drive fallback for PDFs pdf-parse
+  can't read, and re-surfaces already-indexed-but-unmatched (RESOLVE) docs so they
+  can be fixed (only already-*matched* docs are skipped on re-run).
+- `uttekt-rename.js` — Bakendi **Endurnefna úttektarskýrslur** (`/api/uttekt-rename`):
+  deep-scans report PDFs (both layouts — slökkvitæki úttektarskýrsla + brunaviðvörunar-
+  kerfi viðtökupróf/árleg prófun), renames in Drive to `Fyrirtæki - Kennitala -
+  Mánuður - Ár` (address intentionally skipped — noisy in source PDFs; app links by
+  kt+year), excludes stray reikningar, takes the real `Dags` date (not „Næsta
+  skoðun"), `?dedup=1` finds dupes. Twin of `reikningar-rename.js` (invoices →
+  `Fyrirtæki - kt - R nr - dags - upphæð`, with md5 **and** invoice-number dedup).
 - `allt-sheet.js` — builds a sortable "whole database" Google Sheet from the
   úttektarskýrslu *filenames* in a folder (parses `Fyrirtæki - Heimilisfang -
   Kennitala - Mánuður - Ár`). `GET /api/allt-sheet[?folder=ID]`.
