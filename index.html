@@ -2561,6 +2561,7 @@ function renderBakendi(t){
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px 0 6px">
           <button id="bk-ur-scan" class="btn primary">🔍 Forskoða nöfn</button>
           <button id="bk-ur-apply" class="btn" disabled>✏️ Endurnefna (í Drive)</button>
+          <button id="bk-ur-db" class="btn" title="Skrár þessa möppu í gagnagrunn gegnum Skjalalestur (með fyrirtækjatengingu + stofna)">▶️ Skrá í gagnagrunn</button>
           <span id="bk-ur-status" style="font-size:12.5px;color:#64748b"></span>
         </div>
         <div id="bk-ur-results"></div>
@@ -3053,6 +3054,15 @@ function renderBakendi(t){
   let urRows = [];
   if ($urScan) $urScan.onclick = scanUttektRename;
   if ($urApply) $urApply.onclick = applyUttektRename;
+  const $urDb = document.getElementById('bk-ur-db');
+  if ($urDb) $urDb.onclick = () => {
+    const f = ($urFolder.value || '').trim();
+    if (!f) { $urResults.innerHTML = '<div class="empty">Vantar möppu-id.</div>'; return; }
+    const tgt = document.getElementById('bk-folder'); if (tgt) tgt.value = f;   // hand the folder to Skjalalestur (doc-index)
+    $urStatus.textContent = '→ Skrái þessa möppu í gagnagrunn gegnum „Skjalalestur" hér fyrir ofan…';
+    if (tgt) tgt.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const runBtn = document.getElementById('bk-run'); if (runBtn) setTimeout(() => runBtn.click(), 500);
+  };
 
   async function scanUttektRename(){
     const f = ($urFolder.value || '').trim();
