@@ -95,14 +95,15 @@ exports.handler = async (event) => {
         const base = kt ? await matchBase(kt) : null;
         const party = parseParty(text, base && base.nafn);
         const company = party.company || (base && base.nafn) || '';
-        const address = party.address || extractAddress(text);
+        // Address back in the name (multi-site companies like Aðalskoðun need it to tell
+        // their locations apart). Prefer the address already in the old filename — it's
+        // clean — else extract from content, strip a leading company-name (so it isn't
+        // duplicated into the street), and expand abbreviated cities (Grb→Garðabær).
+        const address = expandCity(addressFromOldName(f.name) || stripCompanyPrefix(party.address || extractAddress(text), company));
         const di = dateInfo(text);
         let newName = '', status = 'manual';
         if (ok && company && kt && di.month && di.year) {
-          // Skip the address — it's noisy/inconsistent in the source PDFs (abbreviated
-          // cities, company name bleeding into the street, missing on some) and the app
-          // links reports by kennitala + year, not by the address text.
-          newName = sanitize(company) + ' - ' + dash(kt) + ' - ' + di.month + ' - ' + di.year + '.pdf';
+          newName = sanitize(company) + ' - ' + (address ? sanitize(address) + ' - ' : '') + dash(kt) + ' - ' + di.month + ' - ' + di.year + '.pdf';
           status = 'ready';
         }
         if (status === 'ready') stats.ready++; else stats.manual++;
@@ -233,6 +234,34 @@ function extractAddress(text) {
     return street + ', ' + city;
   }
   return '';
+}
+// Address segment out of the existing filename "Fyrirtæki - Heimilisfang - kt - mán - ár"
+// — the cleanest source (preserves the user's already-good addresses; only kt/date get
+// normalised). '' if the file has no address segment (e.g. just "Fyrirtæki - kt - …").
+function addressFromOldName(name) {
+  const parts = String(name || '').replace(/\.pdf$/i, '').split(' - ').map(s => s.trim());
+  const ktIdx = parts.findIndex(s => /^\d{6}-?\d{4}$/.test(s.replace(/\s/g, '')));
+  if (ktIdx <= 1) return '';
+  const mid = parts.slice(1, ktIdx).join(', ').replace(/\s+/g, ' ').trim();
+  return /\d/.test(mid) ? mid : '';
+}
+// Drop a leading company-name from a content-extracted address ("Aðalskoðun Grjótháls"
+// → "Grjótháls") so the company isn't duplicated into the heimilisfang.
+function stripCompanyPrefix(addr, company) {
+  let a = String(addr || '').replace(/\s+/g, ' ').trim();
+  const c = String(company || '').trim();
+  if (c && a.toLowerCase().indexOf(c.toLowerCase()) === 0) a = a.slice(c.length).replace(/^[\s,;:.\-]+/, '').trim();
+  return a;
+}
+// Expand the abbreviated city names that show up in the PDFs / old names.
+function expandCity(a) {
+  return String(a || '')
+    .replace(/\b(\d{3})\s+Rvk\.?\b/i, '$1 Reykjavík')
+    .replace(/\b(\d{3})\s+Hfj\.?\b/i, '$1 Hafnarfjörður')
+    .replace(/\b(\d{3})\s+Kóp\.?\b/i, '$1 Kópavogur')
+    .replace(/\b(\d{3})\s+Grb\.?\b/i, '$1 Garðabær')
+    .replace(/\b(\d{3})\s+Mos\.?\b/i, '$1 Mosfellsbær')
+    .replace(/\s+/g, ' ').trim();
 }
 const dash = kt => (kt && kt.length === 10) ? kt.slice(0, 6) + '-' + kt.slice(6) : kt;
 function sanitize(s) { return String(s || '').replace(/[\\/:*?"<>|]/g, '-').replace(/\s+/g, ' ').trim().slice(0, 70); }
