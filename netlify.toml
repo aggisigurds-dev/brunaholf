@@ -234,6 +234,13 @@
   to = "/.netlify/functions/reikningar-rename"
   status = 200
 
+# Bakendi Endurnefna úttektarskýrslur: deep-scan report PDFs (content) and rename
+# to "Fyrirtæki - Heimilisfang - Kennitala - Mánuður - Ár" + find duplicates
+[[redirects]]
+  from = "/api/uttekt-rename"
+  to = "/.netlify/functions/uttekt-rename"
+  status = 200
+
 # Bakendi Samningalesari: read Þjónustusamningur PDFs (fyrirtæki/heimilisfang/kt/dags)
 [[redirects]]
   from = "/api/samningar-read"

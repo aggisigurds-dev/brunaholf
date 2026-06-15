@@ -2544,6 +2544,37 @@ function renderBakendi(t){
       </div>
 
       <div style="margin-top:24px;border-top:1px solid #e2e8f0;padding-top:18px">
+        <div class="group-title"><strong>📋 Endurnefna úttektarskýrslur (djúpskönnun)</strong><div class="line"></div></div>
+        <p style="color:#475569;font-size:13px;line-height:1.5;margin:0 0 12px;max-width:680px">
+          Les <b>innihald</b> hverrar úttektarskýrslu-PDF og leggur til staðlað nafn:
+          <b>Fyrirtæki - Heimilisfang - Kennitala - Mánuður - Ár</b> (sama kerfi og „Allt"-mappan).
+          Yfirskrifar óskýr/ósamræmd nöfn svo allt er undir einu nafnakerfi.
+          „🔍 Forskoða" sýnir gömul → ný nöfn (breytir engu); „✏️ Endurnefna" beitir þeim í Drive.
+        </p>
+        <div style="border:1px solid #e2e8f0;border-radius:11px;padding:14px 15px;max-width:680px">
+          <label style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.04em">Úttektarskýrslu-mappa (Google Drive)</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:7px">
+            <input id="bk-ur-folder" value="11Gf4yUeR6tQ2HcFxWk-50IFQl2xBUQOg" style="${inp};flex:1;min-width:240px">
+          </div>
+          <div style="${hint}">Skannaðu hverja möppu þar sem skýrslur liggja (settu möppu-id hér að ofan). Fyrirtækjanafnið kemur úr kennitölu skýrslunnar þegar hún finnst í grunninum.</div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px 0 6px">
+          <button id="bk-ur-scan" class="btn primary">🔍 Forskoða nöfn</button>
+          <button id="bk-ur-apply" class="btn" disabled>✏️ Endurnefna (í Drive)</button>
+          <span id="bk-ur-status" style="font-size:12.5px;color:#64748b"></span>
+        </div>
+        <div id="bk-ur-results"></div>
+        <div style="margin-top:12px;border-top:1px dashed #e2e8f0;padding-top:12px">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <button id="bk-udup-scan" class="btn">🗑 Finna tvítök</button>
+            <button id="bk-udup-trash" class="btn" disabled>Eyða aukaeintökum (í ruslið)</button>
+            <span id="bk-udup-status" style="font-size:12.5px;color:#64748b"></span>
+          </div>
+          <div id="bk-udup-results"></div>
+        </div>
+      </div>
+
+      <div style="margin-top:24px;border-top:1px solid #e2e8f0;padding-top:18px">
         <div class="group-title"><strong>📝 Samningalesari — þjónustusamningar</strong><div class="line"></div></div>
         <p style="color:#475569;font-size:13px;line-height:1.5;margin:0 0 12px;max-width:680px">
           Les <b>þjónustusamninga</b> (PDF) beint úr Drive-möppu og dregur út
@@ -2959,6 +2990,109 @@ function renderBakendi(t){
       dupTrashIds = []; $dupResults.innerHTML = '';
     } catch (e) { $dupResults.insertAdjacentHTML('beforeend', bkErr(e)); }
     finally { $dupScan.disabled = false; }
+  };
+
+  // ── Endurnefna úttektarskýrslur (djúpskönnun → staðlað nafn í Drive) ──────
+  const $urFolder = document.getElementById('bk-ur-folder');
+  const $urScan = document.getElementById('bk-ur-scan');
+  const $urApply = document.getElementById('bk-ur-apply');
+  const $urStatus = document.getElementById('bk-ur-status');
+  const $urResults = document.getElementById('bk-ur-results');
+  let urRows = [];
+  if ($urScan) $urScan.onclick = scanUttektRename;
+  if ($urApply) $urApply.onclick = applyUttektRename;
+
+  async function scanUttektRename(){
+    const f = ($urFolder.value || '').trim();
+    if (!f) { $urResults.innerHTML = '<div class="empty">Vantar möppu-id.</div>'; return; }
+    $urScan.disabled = $urApply.disabled = true;
+    urRows = [];
+    $urResults.innerHTML = '<div class="empty">Djúpskanna úttektarskýrslur í lotum (hægara — les innihald hvers PDF)…</div>';
+    const acc = { total: 0, scanned: 0, ready: 0, manual: 0, errors: 0 };
+    let offset = 0, guard = 0;
+    try {
+      do {
+        $urStatus.textContent = 'Skanna… ' + acc.scanned + (acc.total ? '/' + acc.total : '') + ' skýrslur';
+        const r = await fetch('/api/uttekt-rename?folder=' + encodeURIComponent(f) + '&limit=4&offset=' + offset);
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+        acc.total = d.total || acc.total; acc.scanned += d.scanned || 0; acc.ready += d.ready || 0; acc.manual += d.manual || 0; acc.errors += d.errors || 0;
+        urRows = urRows.concat(d.rows || []);
+        $urResults.innerHTML = renameResultsHtml(acc, urRows);
+        offset = d.nextOffset;
+      } while (offset != null && ++guard < 800);
+      $urStatus.textContent = '✓ Forskoðun búin. ' + acc.ready + ' tilbúin, ' + acc.manual + ' vantar uppl.';
+      $urApply.disabled = urRows.filter(x => x.status === 'ready' && x.newName && x.newName !== x.oldName).length === 0;
+    } catch (e) {
+      $urResults.insertAdjacentHTML('beforeend', bkErr(e));
+      $urStatus.textContent = '';
+    } finally { $urScan.disabled = false; }
+  }
+
+  async function applyUttektRename(){
+    const ready = urRows.filter(x => x.status === 'ready' && x.newName && x.newName !== x.oldName);
+    if (!ready.length) { $urStatus.textContent = 'Ekkert tilbúið til að endurnefna.'; return; }
+    if (!confirm('Endurnefna ' + ready.length + ' úttektarskýrslur í Drive?\n\nÞetta breytir skráarnöfnunum (tenglar haldast — file-id breytist ekki).')) return;
+    $urApply.disabled = $urScan.disabled = true;
+    let done = 0, errs = 0;
+    try {
+      for (let i = 0; i < ready.length; i += 25) {
+        $urStatus.textContent = 'Endurnefni… ' + done + '/' + ready.length;
+        const chunk = ready.slice(i, i + 25).map(x => ({ fileId: x.fileId, newName: x.newName }));
+        const r = await fetch('/api/uttekt-rename', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: chunk }) });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+        done += d.renamed || 0; errs += d.errors || 0;
+      }
+      $urStatus.textContent = '✓ Endurnefndi ' + done + ' skýrslur' + (errs ? (' · ' + errs + ' villur') : '') + '. Keyrðu „Forskoða" aftur til að sjá uppfærð nöfn.';
+      urRows = [];
+    } catch (e) {
+      $urResults.insertAdjacentHTML('beforeend', bkErr(e));
+    } finally { $urScan.disabled = false; }
+  }
+
+  // ── Finna / eyða tvítökum úttektarskýrslna ────────────────────────────────
+  const $udupScan = document.getElementById('bk-udup-scan');
+  const $udupTrash = document.getElementById('bk-udup-trash');
+  const $udupStatus = document.getElementById('bk-udup-status');
+  const $udupResults = document.getElementById('bk-udup-results');
+  let udupTrashIds = [];
+  if ($udupScan) $udupScan.onclick = async () => {
+    const f = ($urFolder.value || '').trim();
+    if (!f) { $udupResults.innerHTML = '<div class="empty">Vantar möppu-id.</div>'; return; }
+    $udupScan.disabled = $udupTrash.disabled = true; udupTrashIds = [];
+    $udupStatus.textContent = 'Leita að tvítökum…'; $udupResults.innerHTML = '';
+    try {
+      const r = await fetch('/api/uttekt-rename?dedup=1&folder=' + encodeURIComponent(f));
+      const d = await r.json(); if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+      udupTrashIds = d.trashIds || [];
+      $udupStatus.textContent = (d.exactGroups || []).length + ' tvítaka-hópar · ' + (d.trashCount || 0) + ' aukaeintök af ' + d.totalFiles + ' skrám';
+      let html = '';
+      if ((d.exactGroups || []).length) html += '<div style="font-size:12.5px;color:#475569;margin:8px 0 4px">Nákvæm tvítök (sama skrá) — halda 1, eyða ' + d.trashCount + ':</div><ul style="margin:0;padding-left:18px;font-size:12px;color:#334155">' + d.exactGroups.map(g => '<li>' + escapeHtml(g.name) + ' <span style="color:#94a3b8">(×' + g.count + ' → eyða ' + g.trash.length + ')</span></li>').join('') + '</ul>';
+      if ((d.reviewGroups || []).length) html += '<div style="font-size:12px;color:#b45309;margin-top:8px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:7px 10px">⚠ Sama nafn en ÓLÍKT innihald — skoðaðu handvirkt (ekki eytt sjálfkrafa): ' + d.reviewGroups.map(g => escapeHtml(g.name) + ' ×' + g.count).join(' · ') + '</div>';
+      if (!(d.exactGroups || []).length) html += '<div class="empty">Engin nákvæm tvítök fundust. 🎉</div>';
+      $udupResults.innerHTML = html;
+      $udupTrash.disabled = udupTrashIds.length === 0;
+    } catch (e) { $udupResults.insertAdjacentHTML('beforeend', bkErr(e)); $udupStatus.textContent = ''; }
+    finally { $udupScan.disabled = false; }
+  };
+  if ($udupTrash) $udupTrash.onclick = async () => {
+    if (!udupTrashIds.length) return;
+    if (!confirm('Setja ' + udupTrashIds.length + ' aukaeintök í ruslið í Drive?\n\nAfturkræft — fer í ruslið (ekki varanleg eyðing). Eitt eintak af hverjum er haldið.')) return;
+    $udupTrash.disabled = $udupScan.disabled = true;
+    let done = 0;
+    try {
+      for (let i = 0; i < udupTrashIds.length; i += 50) {
+        $udupStatus.textContent = 'Set í ruslið… ' + done + '/' + udupTrashIds.length;
+        const chunk = udupTrashIds.slice(i, i + 50);
+        const r = await fetch('/api/uttekt-rename', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'trash', ids: chunk }) });
+        const d = await r.json(); if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+        done += d.trashed || 0;
+      }
+      $udupStatus.textContent = '✓ Setti ' + done + ' aukaeintök í ruslið. Keyrðu „Finna tvítök" aftur til að staðfesta.';
+      udupTrashIds = []; $udupResults.innerHTML = '';
+    } catch (e) { $udupResults.insertAdjacentHTML('beforeend', bkErr(e)); }
+    finally { $udupScan.disabled = false; }
   };
 
   // ── Samningalesari (þjónustusamningar → 4 reitir + Google Sheet) ──────────
