@@ -40,7 +40,7 @@ exports.handler = async (event) => {
   let invoices, bank;
   try {
     invoices = await fetchAll('invoices',
-      'select=id,tilvisun,kt_greidanda,customer_name,gjalddagi,eindagi,hofudstoll,status,greidsla_date,source');
+      'select=id,tilvisun,kt_greidanda,customer_name,gjalddagi,eindagi,hofudstoll,upphaed_total,status,greidsla_date,source');
     bank = await fetchAll('bank_transactions',
       'select=kt_counterparty,amount,trans_date,text,description&amount=gt.0');
   } catch (e) { return json(502, { error: e.message }); }
@@ -61,7 +61,7 @@ exports.handler = async (event) => {
   for (const r of invoices) {
     const st = lc(r.status);
     if (OPEN.has(st)) open.push(r);
-    else if (CREDIT.has(st) && (+r.hofudstoll || 0) < 0) credits.push(r); // the negative leg
+    else if (CREDIT.has(st) && (+r.upphaed_total || +r.hofudstoll || 0) < 0) credits.push(r); // the negative leg
   }
 
   // ---- offsetting credit notes: same kt, |open + credit| within tolerance ----
@@ -69,11 +69,11 @@ exports.handler = async (event) => {
   for (const c of credits) {
     const kt = digits(c.kt_greidanda);
     if (!kt) continue;
-    (creditByKt.get(kt) || creditByKt.set(kt, []).get(kt)).push({ amount: +c.hofudstoll || 0, used: false });
+    (creditByKt.get(kt) || creditByKt.set(kt, []).get(kt)).push({ amount: +c.upphaed_total || +c.hofudstoll || 0, used: false });
   }
   const isCredited = (inv) => {
     const kt = digits(inv.kt_greidanda);
-    const amt = +inv.hofudstoll || 0;
+    const amt = +inv.upphaed_total || +inv.hofudstoll || 0;
     const pool = creditByKt.get(kt);
     if (!pool) return false;
     const tol = Math.max(5000, amt * 0.005);
@@ -85,7 +85,7 @@ exports.handler = async (event) => {
   // ---- per-invoice bank reconciliation ----
   function bankMatch(inv) {
     const kt = digits(inv.kt_greidanda);
-    const amt = +inv.hofudstoll || 0;
+    const amt = +inv.upphaed_total || +inv.hofudstoll || 0;
     const dueMs = inv.gjalddagi ? Date.parse(inv.gjalddagi) : null;
     // strong: same kt, amount within max(5000,1%), paid on/after gjalddagi-15d
     if (kt && inflowByKt.has(kt)) {
@@ -111,7 +111,7 @@ exports.handler = async (event) => {
   const rows = open.map(inv => {
     const credited = isCredited(inv);
     const m = credited ? { type: 'credited' } : bankMatch(inv);
-    const amt = +inv.hofudstoll || 0;
+    const amt = +inv.upphaed_total || +inv.hofudstoll || 0;
     const dueMs = inv.gjalddagi ? Date.parse(inv.gjalddagi) : null;
     const days_overdue = dueMs != null ? Math.round((todayMs - dueMs) / 864e5) : null;
     return {

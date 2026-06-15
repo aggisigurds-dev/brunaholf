@@ -3,24 +3,22 @@
 //   GET /api/hreyfingar
 //     → { generated_at, today, totals, customers[] }
 //
-// ONE running account statement per customer — Payday invoices and bank inflows
-// mixed into a single chronological ledger:
-//   • DEBITS  = invoices issued in Payday (+ manual Tekjur-sheet rows). Positive
-//               hofudstoll = reikningur; negative = kreditnóta. Landsbanki kröfur
-//               are NOT separate invoices (bank-claim mechanism for a Payday
-//               invoice — counting them would double-bill).
-//   • CREDITS = payments shown from BOTH sources, mixed in by date:
-//       – Payday-registered payments (status Greitt/Greidd) — via 'payday'.
-//       – Bank inflows (`bank_transactions`, matched by kt)        — via 'banki'.
+// ONE running account statement per customer that matches the accounting ledger
+// (Payday / Viðskiptakröfur). All amounts are MEÐ VSK (`upphaed_total`).
 //
-// The two payment sources OVERLAP (a payment can be both registered in Payday
-// AND visible in the bank), so naively summing both double-counts. Instead the
-// running balance uses paid = max(Payday-recorded, bank-total) accumulated over
-// time: balance = Σinvoiced − max(ΣpaydayPaid, ΣbankIn). This is correct at the
-// extremes — a Payday-tracked bank transfer counts once (max), while a payment
-// Payday MISSED (bankIn > paydayPaid, e.g. a direct millifærsla) still lowers the
-// balance. Bank rows that don't move the balance (already covered by Payday) are
-// flagged `covered` so the UI can mute them.
+//   • DEBET  = invoices issued in Payday (+ manual rows). Positive = reikningur;
+//              negative = kreditnóta (Kreditreikningur). A Kreditfærður is the
+//              positive twin that the kreditnóta reverses (net 0).
+//   • KREDIT = Payday-registered payments (status Greitt/Greidd) on greidsla_date.
+//   • STAÐA  = Σdebet − Σkredit  ==  Σ ógreiddir reikningar (m.vsk). This equals
+//              the customer's Lokastaða in the accounting system (verified: ÞG
+//              verktakar 4.410.930 = reikn. 319; Eykt 22.799.337).
+//
+// Bank inflows (`bank_transactions`, matched by kt) are MIXED into the same list
+// for visibility but are INFORMATIONAL — they do NOT change the staða (the AR
+// balance is invoice-status based). A bank inflow whose Payday invoice is still
+// "Ógreitt" is the signal that money arrived but Payday is stale — reconcile by
+// hand.
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -30,6 +28,7 @@ const lc = (s) => String(s || '').trim().toLowerCase();
 const DRAFT = new Set(['drög', 'drog']);
 const PAID = new Set(['greitt', 'greidd', 'greiddur']);
 const INV_SOURCES = new Set(['payday', 'tekjur_sheet_manual']);
+const amountOf = (r) => (+r.upphaed_total || +r.hofudstoll || 0); // m.vsk preferred
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return resp(204, '', cors());
@@ -39,7 +38,7 @@ exports.handler = async (event) => {
   let invoices, bank;
   try {
     invoices = await fetchAll('invoices',
-      'select=id,tilvisun,kt_greidanda,customer_name,gjalddagi,hofudstoll,status,greidsla_date,source');
+      'select=id,tilvisun,kt_greidanda,customer_name,gjalddagi,hofudstoll,upphaed_total,status,greidsla_date,source');
     bank = await fetchAll('bank_transactions',
       'select=kt_counterparty,amount,trans_date,text,description&amount=gt.0');
   } catch (e) { return json(502, { error: e.message }); }
@@ -55,12 +54,14 @@ exports.handler = async (event) => {
   };
   const refOf = (r) => (r.tilvisun ? String(r.tilvisun).replace(/\.0$/, '') : ('#' + r.id));
 
-  // ---- invoices → debits + Payday-paid credits ----
+  // ---- invoices → debits + Payday-paid credits (m.vsk) ----
+  // Skip Landsbanki kröfur as DEBITS (they are the bank-claim twin of a Payday
+  // invoice — same money, would double-bill); their cash shows via bank inflows.
   for (const r of invoices) {
     if (!INV_SOURCES.has(lc(r.source))) continue;
     if (DRAFT.has(lc(r.status))) continue;
     const kt = digits(r.kt_greidanda); if (!kt) continue;
-    const amt = +r.hofudstoll || 0; if (!amt) continue;
+    const amt = amountOf(r); if (!amt) continue;
     const st = lc(r.status);
     const c = pick(kt, r.customer_name);
     const kind = st.startsWith('kredit') ? (amt < 0 ? 'kreditnota' : 'kreditfaersla') : 'reikningur';
@@ -70,13 +71,13 @@ exports.handler = async (event) => {
     }
   }
 
-  // ---- bank inflows → credits, mixed into the same ledger ----
+  // ---- bank inflows → informational rows mixed into the ledger ----
   let unmatchedInflow = 0;
   for (const b of bank) {
     const kt = digits(b.kt_counterparty);
     const amt = +b.amount || 0; if (!amt) continue;
     if (!kt || !cust.has(kt)) { unmatchedInflow += amt; continue; }
-    cust.get(kt).mv.push({ date: b.trans_date || null, kind: 'greidsla', ref: null, delta: -amt, via: 'banki', text: b.text || b.description || '' });
+    cust.get(kt).mv.push({ date: b.trans_date || null, kind: 'banki', ref: null, delta: -amt, via: 'banki', text: b.text || b.description || '' });
   }
 
   const ym = (d) => (d ? String(d).slice(0, 7) : null);
@@ -88,43 +89,40 @@ exports.handler = async (event) => {
       a.date < b.date ? -1 : a.date > b.date ? 1 : (b.delta - a.delta));
     if (!mv.length) continue;
 
-    // running balance = Σinvoiced − max(ΣpaydayPaid, ΣbankIn)
+    // staða = Σinvoiced − Σpaid (Payday); bank rows are informational (no effect)
     let invCum = 0, payCum = 0, bankCum = 0, grossInv = 0, credited = 0;
     const monthsMap = {};
     for (const m of mv) {
-      if (m.kind === 'greidsla') {
-        const prevMax = Math.max(payCum, bankCum);
-        if (m.via === 'banki') bankCum += -m.delta; else payCum += -m.delta;
-        const newMax = Math.max(payCum, bankCum);
-        // a bank row "covered" by Payday doesn't lower the balance
-        m.covered = (m.via === 'banki') && ((newMax - prevMax) < (-m.delta) * 0.5);
+      if (m.kind === 'banki') {
+        bankCum += -m.delta;            // tally only — does not change staða
+      } else if (m.kind === 'greidsla') {
+        payCum += -m.delta;
       } else {
         invCum += m.delta;
         if (m.delta >= 0 && m.kind === 'reikningur') grossInv += m.delta;
         if (m.delta < 0) credited += -m.delta;
       }
-      m.balance = Math.round(invCum - Math.max(payCum, bankCum));
+      m.balance = Math.round(invCum - payCum);
       const k = ym(m.date); const mo = monthsMap[k] || (monthsMap[k] = { ym: k });
       mo.cum_invoiced = Math.round(invCum);
-      mo.cum_paid = Math.round(Math.max(payCum, bankCum));
+      mo.cum_paid = Math.round(payCum);
     }
     const months = Object.values(monthsMap).sort((a, b) => a.ym < b.ym ? -1 : 1);
-    const paid = Math.round(Math.max(payCum, bankCum));
 
     customers.push({
       kt: c.kt, name: best || ('kt ' + c.kt),
       invoiced: Math.round(invCum), gross_invoiced: Math.round(grossInv),
-      credited: Math.round(credited), paid,
-      payday_paid: Math.round(payCum), bank_paid: Math.round(bankCum),
-      balance: Math.round(invCum - Math.max(payCum, bankCum)),
+      credited: Math.round(credited), paid: Math.round(payCum),
+      bank_paid: Math.round(bankCum), balance: Math.round(invCum - payCum),
       n_invoices: mv.filter(m => m.kind === 'reikningur').length,
       n_payments: mv.filter(m => m.kind === 'greidsla').length,
+      n_bank: mv.filter(m => m.kind === 'banki').length,
       first_date: mv[0].date, last_date: mv[mv.length - 1].date,
       months, movements: mv,
     });
   }
 
-  customers.sort((a, b) => b.gross_invoiced - a.gross_invoiced);
+  customers.sort((a, b) => b.balance - a.balance || b.gross_invoiced - a.gross_invoiced);
 
   const totals = {
     customer_count: customers.length,
@@ -137,7 +135,7 @@ exports.handler = async (event) => {
 
   return json(200, {
     generated_at: new Date().toISOString(), today, totals, customers,
-    note: 'Einn hreyfingalisti per fyrirtæki: reikningar (debet) + greiðslur (kredit) úr Payday OG banka, blandað eftir dagsetningu. Greitt = max(Payday, banki) því heimildirnar skarast; bankafærsla sem þegar er í Payday breytir ekki stöðu (dauf). Staða = reikningað − greitt.',
+    note: 'Staða = ógreiddir reikningar (m.vsk) — eins og bókhaldið/Payday. Bankainnborganir eru sýndar með í listanum til upplýsinga en breyta EKKI stöðu (séu þær ekki enn skráðar greiddar í Payday er það merki um að uppfæra þurfi stöðuna).',
   });
 };
 

@@ -53,10 +53,17 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   open Payday/Landsbanki invoices per debtor, each flagged Útistandandi / Greitt í
   banka? / Kannski í banka / Kreditfært via bank cross-ref; aging + vintage + search.
 - `hreyfingaryfirlit` — Hreyfingaryfirlit (per-customer account statement,
-  renderHreyfingar). `/api/hreyfingar`: invoices (Payday) as debet, Payday-paid as
-  kredit, running staða; bank inflows shown separately per customer with a
-  `bank_over` flag (greitt í banka umfram Payday → stale Ógreitt). Hide companies
+  renderHreyfingar). `/api/hreyfingar`: invoices (debet) + Payday-paid (kredit),
+  running staða — **all amounts MEÐ VSK (`upphaed_total`, not `hofudstoll`)**.
+  Staða = Σ ógreiddir reikningar, which **matches the accounting Viðskiptakröfur
+  (account 3400) Lokastaða exactly** — verified per-customer against the dkPlus
+  Hreyfingalisti export (all 18 debtors, total 159.76M; e.g. Eykt 22.799.337, ÞG
+  4.410.930). Bank inflows are mixed into the list **for information only** (they
+  do NOT change staða — the AR balance is invoice-status based; a bank inflow on a
+  still-"Ógreitt" invoice flags that Payday needs updating). Hide companies
   (localStorage), cumulative invoiced-vs-paid charts, balance-per-customer bars.
+  NB `/api/debtors` (Skuldunautar) also uses `upphaed_total` (m.vsk) for the same
+  reason.
 - `nlsh` — Landsspítalinn (NLSH) dashboard (renderNLSH): tekjur/mánuð
   (contract heildir × taxti, uppsafnað), lokuð göt per viku, vinnustundir +
   göt per starfsmann, samningsstaða per verkliður. Data: `/api/nlsh-dashboard`
