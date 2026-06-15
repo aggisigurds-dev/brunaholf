@@ -81,29 +81,31 @@ exports.handler = async (event) => {
       stats.scanned++;
       try {
         let text = await readPdfText(f.id, token);
-        // Only treat actual úttektarskýrslur (issued by Slökkvitæki) — skip others.
-        const isUttekt = /úttekt|uttekt|skýrsla vegna úttektar|600508-?0400/i.test(text);
         let kt = customerKt(text);
         if (!kt || !/[a-záéíóúýþæöð]/i.test(text)) {
           const clean = await driveExtractText(f.id, token).catch(() => '');
           if (clean && clean.replace(/\s/g, '').length >= 25) { text = clean; kt = customerKt(text); }
         }
-        const ok = /úttekt|uttekt|skýrsla vegna úttektar/i.test(text) || isUttekt;
+        // The folder mixes report types + stray invoices. Accept ONLY real reports —
+        // (A) slökkvitæki úttektarskýrsla, (B) brunaviðvörunarkerfi viðtökupróf/árleg
+        // prófun — and reject reikningar (they also carry the issuer kt).
+        const isInvoice = /til greiðslu|reikningsnr|gjalddagi\s*-?\s*eindagi|samtala reiknings|samtals fyrir vsk/i.test(text);
+        const isReport = /skýrsla vegna úttektar|úttektarskýrsl|uttektarskyrsl|viðtökupróf|árleg prófun|brunaviðvörunarkerfi/i.test(text);
+        const ok = isReport && !isInvoice;
         const base = kt ? await matchBase(kt) : null;
-        const party = parseUttektParty(text, base && base.nafn);
+        const party = parseParty(text, base && base.nafn);
         const company = party.company || (base && base.nafn) || '';
         const address = party.address || extractAddress(text);
-        const my = monthYear(text);
+        const di = dateInfo(text);
         let newName = '', status = 'manual';
-        if (ok && company && kt && my.month && my.year) {
-          newName = sanitize(company) + ' - ' + (address ? sanitize(address) + ' - ' : '') + dash(kt) + ' - ' + my.month + ' - ' + my.year + '.pdf';
+        if (ok && company && kt && di.month && di.year) {
+          newName = sanitize(company) + ' - ' + (address ? sanitize(address) + ' - ' : '') + dash(kt) + ' - ' + di.month + ' - ' + di.year + '.pdf';
           status = 'ready';
         }
         if (status === 'ready') stats.ready++; else stats.manual++;
         stats.rows.push({
-          fileId: f.id, oldName: f.name, newName, status,
-          company, kt: kt ? dash(kt) : '', address, month: my.month || '', year: my.year || '',
-          missing: [!ok ? 'ekki úttektarskýrsla?' : null, !company ? 'fyrirtæki' : null, !kt ? 'kt' : null, !(my.month && my.year) ? 'dags' : null].filter(Boolean).join(', '),
+          fileId: f.id, oldName: f.name, newName, status, isInvoice, company, kt: kt ? dash(kt) : '', address, month: di.month || '', year: di.year || '',
+          missing: !ok ? (isInvoice ? 'reikningur – röng mappa' : 'ekki úttektarskýrsla') : [!company ? 'fyrirtæki' : null, !kt ? 'kt' : null, !(di.month && di.year) ? 'dags' : null].filter(Boolean).join(', '),
         });
       } catch (e) { stats.errors++; stats.rows.push({ fileId: f.id, oldName: f.name, status: 'error', error: String(e.message || e) }); }
     }
@@ -170,26 +172,53 @@ async function driveExtractText(id, token) {
 // ── Extraction ────────────────────────────────────────────────────────────────
 function allKts(s) { const out = []; const re = /\b(\d{6})-?(\d{4})\b/g; let m; while ((m = re.exec(s))) out.push(m[1] + m[2]); return out; }
 function customerKt(s) { for (const kt of allKts(s)) if (kt !== ISSUER_KT) return kt; return null; }
-function monthYear(text) {
-  const m = String(text || '').match(new RegExp('\\b(' + MONTHS + ')\\s+(20\\d{2})\\b', 'i'));
-  return m ? { month: m[1].toLowerCase(), year: m[2] } : { month: '', year: '' };
+const MNAME = { 1: 'janúar', 2: 'febrúar', 3: 'mars', 4: 'apríl', 5: 'maí', 6: 'júní', 7: 'júlí', 8: 'ágúst', 9: 'september', 10: 'október', 11: 'nóvember', 12: 'desember' };
+// Prefer the report's own date ("Dags 28.11.2024"); else the first "{mánuður} {ár}"
+// that is NOT a "Næsta skoðun …" (next-inspection) date.
+function dateInfo(text) {
+  const t = String(text || '');
+  const m = t.match(/\bdags\.?\s*:?\s*(\d{1,2})[.\/](\d{1,2})[.\/](\d{2,4})/i);
+  if (m) { const mo = parseInt(m[2], 10); let y = m[3]; if (y.length === 2) y = '20' + y; if (mo >= 1 && mo <= 12) return { month: MNAME[mo], year: y }; }
+  const re = new RegExp('\\b(' + MONTHS + ')\\s+(20\\d{2})\\b', 'gi');
+  let mm;
+  while ((mm = re.exec(t))) {
+    const before = t.slice(Math.max(0, mm.index - 32), mm.index);
+    if (/næst|next/i.test(before)) continue;
+    return { month: mm[1].toLowerCase(), year: mm[2] };
+  }
+  return { month: '', year: '' };
 }
-// "…hjá fyrirtækinu Steypustöðin Malarhöfða 38 110 Reykjavík. Kt 660707-0420"
-// → { company:'Steypustöðin', address:'Malarhöfða 38, 110 Reykjavík' }. Prefers the
-// canonical company name from the kt (baseName); the street is the word+number that
-// sits right before the postcode, the company is whatever precedes that.
-function parseUttektParty(text, baseName) {
-  const m = String(text || '').match(/hjá\s+fyrirt(?:æki|aeki)nu\s+(.+?)\.?\s*Kt\b/i);
-  if (!m) return { company: baseName || '', address: '' };
-  const full = m[1].replace(/\s+/g, ' ').trim();
-  const pc = full.match(/^(.*?)[,\s]+(\d{3})\s+([A-ZÁÉÍÓÚÝÆÖÞÐ][a-záéíóúýæöþð]+(?:\s*\([^)]*\))?)\s*$/);
-  if (!pc) return { company: baseName || full, address: '' };
-  const head = pc[1].trim();                                   // "Steypustöðin Malarhöfða 38"
-  const st = head.match(/^(.*?)\s*([A-ZÁÉÍÓÚÝÆÖÞÐ][A-Za-zÁÉÍÓÚÝÆÖÞÐáéíóúýæöþð.\-]*\s+\d{1,4}[a-dA-D]?)\s*$/);
-  let company = baseName || '', street = head;
-  if (st) { street = st[2].trim(); if (!company) company = (st[1] || '').trim() || head; }
-  else if (!company) company = head;
-  return { company, address: street + ', ' + pc[2] + ' ' + pc[3] };
+// Two report layouts share the folder:
+//  A) slökkvitæki úttektarskýrsla: "…hjá fyrirtækinu Steypustöðin Malarhöfða 38 110
+//     Reykjavík. Kt 660707-0420"  → company 'Steypustöðin', addr 'Malarhöfða 38, 110 Reykjavík'
+//  B) brunaviðvörunarkerfi viðtökupróf: "Verkkaupi Center Hótel Klöpp Kennitala
+//     450905-1430 … Heimilisf. vegnaKlapparstígur 26 Póstnr. 101 Rvk." → company
+//     'Center Hótel Klöpp', addr 'Klapparstígur 26, 101 Reykjavík'
+// Prefers the company the report itself names (it reflects the actual site, which one
+// kt can have several of); the street is the word+number before the postcode.
+function parseParty(text, baseName) {
+  const t = String(text || '');
+  const m = t.match(/hjá\s+fyrirt(?:æki|aeki)nu\s+(.+?)\.?\s*Kt\b/i);                 // format A
+  if (m) {
+    const full = m[1].replace(/\s+/g, ' ').trim();
+    const pc = full.match(/^(.*?)[,\s]+(\d{3})\s+([A-ZÁÉÍÓÚÝÆÖÞÐ][a-záéíóúýæöþð]+(?:\s*\([^)]*\))?)\s*$/);
+    if (!pc) return { company: baseName || full, address: '' };
+    const head = pc[1].trim();
+    const st = head.match(/^(.*?)\s*([A-ZÁÉÍÓÚÝÆÖÞÐ][A-Za-zÁÉÍÓÚÝÆÖÞÐáéíóúýæöþð.\-]*\s+\d{1,4}[a-dA-D]?)\s*$/);
+    let company = '', street = head;
+    if (st) { street = st[2].trim(); company = (st[1] || '').trim(); }
+    return { company: company || baseName || '', address: street + ', ' + pc[2] + ' ' + pc[3] };
+  }
+  let company = '', address = '';                                                     // format B
+  const cm = t.match(/Verkkaupi\s+(.+?)\s+Kennitala/i);
+  if (cm) company = cm[1].replace(/\s+/g, ' ').trim();
+  const am = t.match(/Heimilisf\.?\s*(.+?)\s*Póstnr\.?\s*(\d{3})\s+([A-ZÁÉÍÓÚÝÆÖÞÐ][A-Za-zÁÉÍÓÚÝÆÖÞÐáéíóúýæöþð.]*)/i);
+  if (am) {
+    const street = am[1].replace(/^\s*vegna/i, '').replace(/\s+/g, ' ').trim();
+    const city = am[3].replace(/\.$/, '').replace(/^Rvk$/i, 'Reykjavík').replace(/^Hfj$/i, 'Hafnarfjörður').replace(/^Kóp$/i, 'Kópavogur');
+    address = street + ', ' + am[2] + ' ' + city;
+  }
+  return { company: company || baseName || '', address };
 }
 function extractAddress(text) {
   const t = String(text || '');
