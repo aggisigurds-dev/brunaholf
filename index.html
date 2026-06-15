@@ -3171,7 +3171,42 @@ function renderBakendi(t){
   const $urRelink = document.getElementById('bk-ur-relink');
   const $urAuditStatus = document.getElementById('bk-ur-audit-status');
   const $urAuditResults = document.getElementById('bk-ur-audit-results');
-  let _auditFixItems = [];
+  let _auditFixItems = [], _auditList = [];
+  const auditRowByFid = fid => _auditList.find(x => String(x.drive_file_id) === String(fid));
+  async function auditSetLink(a, base){
+    const r = await fetch('/api/doc-index', { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action:'set-link', drive_file_id:a.drive_file_id, base_id: base ? base.id : null, doc_type:a.doc_type, year:a.year, customer_name: base ? base.nafn : (a.company||'') }) });
+    const d = await r.json(); if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+    a.base_id = base ? base.id : null; a.base_name = base ? base.nafn : null; a.status = base ? 'correct' : (a.kt ? 'unlinked' : 'nokt');
+  }
+  if ($urAuditResults && !$urAuditResults._wired) { $urAuditResults._wired = true;
+    $urAuditResults.addEventListener('click', async (e) => {
+      const fixA = e.target.closest('._da-fix'), editA = e.target.closest('._da-edit'), wrongA = e.target.closest('._da-wrong'), createA = e.target.closest('._da-create'), saveB = e.target.closest('._da-save'), cancelB = e.target.closest('._da-cancel');
+      const cellOf = el => el.closest('._da-cust');
+      if (fixA) { e.preventDefault(); const a = auditRowByFid(fixA.dataset.fid), c = cellOf(fixA); if (!a || !a.correctBaseId) return;
+        try { await auditSetLink(a, { id:a.correctBaseId, nafn:a.correctName }); a.status = 'correct'; if (c) c.innerHTML = auditCustCell(a); } catch(err){ alert('Villa: ' + (err.message||err)); } return; }
+      if (wrongA) { e.preventDefault(); const a = auditRowByFid(wrongA.dataset.fid), c = cellOf(wrongA); if (!a) return;
+        if (!confirm('Aftengja skjalið frá „' + (a.base_name||'') + '"?')) return;
+        try { await auditSetLink(a, null); if (c) c.innerHTML = auditCustCell(a); } catch(err){ alert('Villa: ' + (err.message||err)); } return; }
+      if (editA) { e.preventDefault(); const a = auditRowByFid(editA.dataset.fid), c = cellOf(editA); if (!c) return;
+        await ensureCustomers(); c.dataset.prev = c.innerHTML;
+        c.innerHTML = '<input class="_da-pick" list="bk-customers" placeholder="Leita að fyrirtæki…" style="padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:12px;width:200px"> <button class="_da-save btn" data-fid="' + escapeAttr(a.drive_file_id) + '" style="font-size:11px;padding:2px 8px">Vista</button> <button class="_da-cancel btn" style="font-size:11px;padding:2px 8px">Hætta</button>';
+        const inp = c.querySelector('._da-pick'); if (inp) inp.focus(); return; }
+      if (cancelB) { e.preventDefault(); const c = cellOf(cancelB); if (c && c.dataset.prev != null) c.innerHTML = c.dataset.prev; return; }
+      if (saveB) { e.preventDefault(); const c = cellOf(saveB), inp = c && c.querySelector('._da-pick'); if (!inp) return;
+        const v = (inp.value || '').trim().toLowerCase(); let cu = _custMap[v]; if (!cu && v) cu = (_custList || []).find(x => (x.nafn || '').toLowerCase().indexOf(v) >= 0);
+        if (!cu) { alert('Veldu fyrirtæki af listanum.'); return; }
+        const a = auditRowByFid(saveB.dataset.fid); saveB.disabled = true; saveB.textContent = 'Vista…';
+        try { await auditSetLink(a, cu); a.status = 'correct'; if (c) c.innerHTML = auditCustCell(a); } catch(err){ alert('Villa: ' + (err.message||err)); saveB.disabled = false; saveB.textContent = 'Vista'; } return; }
+      if (createA) { e.preventDefault(); const a = auditRowByFid(createA.dataset.fid), c = cellOf(createA); if (!a) return;
+        if (!confirm('Stofna fyrirtæki „' + (a.company || a.kt || '') + '" (' + (a.kt || '') + ') og tengja?')) return;
+        createA.textContent = 'Stofna…';
+        try { const r = await fetch('/api/doc-index', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'create', kt:a.kt, customer_name:a.company, drive_file_id:a.drive_file_id, doc_type:a.doc_type, year:a.year }) });
+          const d = await r.json(); if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+          a.base_id = d.base_id; a.base_name = d.nafn || a.company; a.status = 'correct'; if (c) c.innerHTML = auditCustCell(a); _custList = null;
+        } catch(err){ alert('Villa: ' + (err.message||err)); if (c) c.innerHTML = auditCustCell(a); } return; }
+    });
+  }
   if ($urAudit) $urAudit.onclick = async () => {
     const f = ($urFolder.value || '').trim();
     if (!f) { $urAuditResults.innerHTML = '<div class="empty">Vantar möppu-id.</div>'; return; }
@@ -3185,15 +3220,9 @@ function renderBakendi(t){
       const tdc = 'padding:4px 8px;border-bottom:1px solid #f6f8fa';
       const order = { wrong: 0, unlinked: 1, nobase: 2, nokt: 3, correct: 4 };
       const list = (d.list || []).slice().sort((a, b) => (order[a.status] - order[b.status]) || String(a.file).localeCompare(String(b.file), 'is'));
-      const conn = x => {
-        if (x.status === 'correct') return '<span style="color:#15803d">✓ ' + escapeHtml(x.currentName || '') + '</span>';
-        if (x.status === 'wrong') return '<span style="color:#dc2626;font-weight:600">' + escapeHtml(x.currentName || '(ótengt)') + '</span> <span style="color:#cbd5e1">→</span> <b style="color:#15803d">' + escapeHtml(x.correctName || '') + '</b>';
-        if (x.status === 'unlinked') return '<span style="color:#94a3b8">óskráð</span> <span style="color:#cbd5e1">→</span> <b style="color:#15803d">' + escapeHtml(x.correctName || '') + '</b>';
-        if (x.status === 'nobase') return '<span style="color:#b45309">kt ' + escapeHtml(x.kt || '') + ' ekki til í grunni</span>';
-        return '<span style="color:#94a3b8">engin kt í nafni</span>';
-      };
+      _auditList = list;
       let html = '<div style="margin:6px 0 8px;font-size:12px;color:#475569"><b>' + d.total + '</b> skjöl · <span style="color:#15803d">' + d.correct + ' rétt</span> · <span style="color:#dc2626">' + (d.mismatched || []).length + ' röng</span> · ' + (d.toLink || []).length + ' óskráð · ' + (d.noBase || []).length + ' vantar fyrirtæki · ' + d.noKt + ' án kt í nafni</div>';
-      html += '<div style="overflow:auto;max-height:480px;border:1px solid #eef1f5;border-radius:8px"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>' + ['Skrá', 'Ár', 'Tengt við'].map(h => '<th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e2e8f0;color:#64748b;position:sticky;top:0;background:#f8fafc">' + h + '</th>').join('') + '</tr></thead><tbody>' + list.map(x => '<tr><td style="' + tdc + '">' + escapeHtml(x.file) + '</td><td style="' + tdc + ';white-space:nowrap;color:#94a3b8">' + (x.year || '') + '</td><td style="' + tdc + '">' + conn(x) + '</td></tr>').join('') + '</tbody></table></div>';
+      html += '<div style="overflow:auto;max-height:480px;border:1px solid #eef1f5;border-radius:8px"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>' + ['Skrá', 'Ár', 'Tengt við'].map(h => '<th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e2e8f0;color:#64748b;position:sticky;top:0;background:#f8fafc">' + h + '</th>').join('') + '</tr></thead><tbody>' + list.map(x => '<tr><td style="' + tdc + '">' + escapeHtml(x.file) + '</td><td style="' + tdc + ';white-space:nowrap;color:#94a3b8">' + (x.year || '') + '</td><td style="' + tdc + '" class="_da-cust" data-fid="' + escapeAttr(x.drive_file_id || '') + '">' + auditCustCell(x) + '</td></tr>').join('') + '</tbody></table></div>';
       $urAuditResults.innerHTML = html;
       $urRelink.disabled = _auditFixItems.length === 0;
     } catch (e) { $urAuditResults.insertAdjacentHTML('beforeend', bkErr(e)); $urAuditStatus.textContent = ''; }
@@ -3388,6 +3417,18 @@ function docCustCell(a){
   return (a.kt ? '<span style="color:#b45309;font-weight:600">⚠ ' + (a.company ? escapeHtml(a.company) + ' · ' : '') + 'óstaðfest</span>' : '<span style="color:#94a3b8">— engin kt</span>')
     + ' <a href="#" class="_dc-edit" data-fid="' + fid + '" style="font-size:11px;color:#2563eb">tengja</a>'
     + (a.kt ? ' <a href="#" class="_dc-create" data-fid="' + fid + '" style="font-size:11px;color:#16a34a" title="Stofna fyrirtæki í grunninn úr skjalinu">+ stofna</a>' : '');
+}
+// Editable connection cell for the bulk link-audit list (classes _da-*).
+function auditCustCell(a){
+  const fid = escapeAttr(a.drive_file_id || '');
+  const edit = ' <a href="#" class="_da-edit" data-fid="' + fid + '" style="font-size:11px;color:#2563eb">breyta</a>';
+  const unlink = ' <a href="#" class="_da-wrong" data-fid="' + fid + '" style="font-size:11px;color:#dc2626" title="Aftengja (rangt)">✗</a>';
+  const fixTo = nm => ' <a href="#" class="_da-fix" data-fid="' + fid + '" style="font-size:11px;color:#16a34a" title="Færa á rétt fyrirtæki (eftir kt)">→ ' + escapeHtml(nm) + '</a>';
+  if (a.status === 'correct') return '<span style="color:#15803d">✓ ' + escapeHtml(a.base_name || '') + '</span>' + edit + unlink;
+  if (a.status === 'wrong') return '<span style="color:#dc2626;font-weight:600">' + escapeHtml(a.base_name || '(ótengt)') + '</span>' + fixTo(a.correctName || '') + edit + unlink;
+  if (a.status === 'unlinked') return '<span style="color:#94a3b8">óskráð</span>' + fixTo(a.correctName || '') + edit;
+  if (a.status === 'nobase') return '<span style="color:#b45309">kt ' + escapeHtml(a.kt || '') + ' ekki til</span> <a href="#" class="_da-create" data-fid="' + fid + '" style="font-size:11px;color:#16a34a">+ stofna</a>' + edit;
+  return '<span style="color:#94a3b8">engin kt í nafni</span>' + edit;
 }
 function reikningarResultsHtml(d, rows){
   const chip = (l, v, bg) => `<span style="display:inline-block;padding:3px 10px;border-radius:99px;background:${bg || '#f1f5f9'};border:1px solid #e2e8f0;font-size:12.5px;font-weight:600;margin:0 6px 6px 0">${l}: ${v}</span>`;

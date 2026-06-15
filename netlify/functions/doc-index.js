@@ -272,13 +272,14 @@ async function auditLinks(folder, token) {
     const meta = { doc_type: classifyDoc('', r.name), year: yearFromName(r.name) };
     const doc = fidToDoc[r.fid];
     const curName = (doc && doc.customer_base_id != null) ? (idToName[String(doc.customer_base_id)] || ('#' + doc.customer_base_id)) : null;
-    if (!r.kt) { out.noKt++; out.list.push({ file: r.name, doc_type: meta.doc_type, year: meta.year, status: 'nokt', currentName: curName }); continue; }
+    const base = { file: r.name, drive_file_id: r.fid, kt: r.kt, company: companyName(r.name, ''), doc_type: meta.doc_type, year: meta.year, base_id: (doc ? doc.customer_base_id : null), base_name: curName };
+    if (!r.kt) { out.noKt++; out.list.push(Object.assign(base, { status: 'nokt' })); continue; }
     const correct = ktToBase[r.kt];
-    if (!correct) { out.noBase.push({ file: r.name, kt: r.kt }); out.list.push({ file: r.name, doc_type: meta.doc_type, year: meta.year, status: 'nobase', currentName: curName, kt: r.kt }); continue; }
-    if (!doc) { out.toLink.push(Object.assign({ file: r.name, drive_file_id: r.fid, toName: correct.nafn, base_id: correct.id }, meta)); out.list.push({ file: r.name, doc_type: meta.doc_type, year: meta.year, status: 'unlinked', correctName: correct.nafn }); continue; }
-    if (String(doc.customer_base_id) === String(correct.id)) { out.correct++; out.list.push({ file: r.name, doc_type: meta.doc_type, year: meta.year, status: 'correct', currentName: correct.nafn }); continue; }
+    if (!correct) { out.noBase.push({ file: r.name, kt: r.kt }); out.list.push(Object.assign(base, { status: 'nobase' })); continue; }
+    if (!doc) { out.toLink.push(Object.assign({ file: r.name, drive_file_id: r.fid, toName: correct.nafn, base_id: correct.id }, meta)); out.list.push(Object.assign(base, { status: 'unlinked', correctBaseId: correct.id, correctName: correct.nafn })); continue; }
+    if (String(doc.customer_base_id) === String(correct.id)) { out.correct++; out.list.push(Object.assign(base, { status: 'correct', correctBaseId: correct.id, correctName: correct.nafn })); continue; }
     out.mismatched.push(Object.assign({ file: r.name, drive_file_id: r.fid, fromName: curName || '(ótengt)', toName: correct.nafn, base_id: correct.id }, meta));
-    out.list.push({ file: r.name, doc_type: meta.doc_type, year: meta.year, status: 'wrong', currentName: curName || '(ótengt)', correctName: correct.nafn });
+    out.list.push(Object.assign(base, { status: 'wrong', correctBaseId: correct.id, correctName: correct.nafn }));
   }
   return out;
 }
