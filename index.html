@@ -8459,7 +8459,9 @@ async function renderHreyfingar(t){
       <path d="${path('cum_paid')}" fill="none" stroke="#067647" stroke-width="2" stroke-linejoin="round"/>
       ${xl}</svg>`;
   }
-  const KIND={reikningur:'🧾 Reikningur',kreditnota:'↩︎ Kreditnóta',kreditfaersla:'↩︎ Kreditfærsla',greidsla:'💰 Greiðsla'};
+  const KIND={reikningur:'🧾 Reikningur',kreditnota:'↩︎ Kreditnóta',kreditfaersla:'↩︎ Kreditfærsla'};
+  // greiðslu-merki eftir uppruna (Payday / banki / hvort tveggja)
+  const PAYLBL={payday:'💰 Greitt (Payday)',banki:'🏦 Innborgun (banki)','payday+banki':'💰 Greitt (Payday+banki)'};
 
   async function load(){
     const meta=document.getElementById('hy-meta'); meta.textContent='Sækir…';
@@ -8473,7 +8475,7 @@ async function renderHreyfingar(t){
       `<div class="nl-card"><div class="nl-card-l">Reikningað samtals</div><div class="nl-card-v">${kr(T.invoiced)}</div></div>`,
       `<div class="nl-card"><div class="nl-card-l">Greitt (Payday)</div><div class="nl-card-v" style="color:#067647">${kr(T.paid)}</div></div>`,
       `<div class="nl-card"><div class="nl-card-l">Útistandandi staða</div><div class="nl-card-v" style="color:#b42318">${kr(T.balance)}</div><div class="nl-card-s">skv. Payday · ${T.customer_count} fyrirtæki</div></div>`,
-      `<div class="nl-card"><div class="nl-card-l">Innborganir í banka</div><div class="nl-card-v">${kr(T.bank_in)}</div><div class="nl-card-s">${T.bank_over_count?('⚠ '+T.bank_over_count+' með banka > Payday'):'kröfur + millifærslur'}</div></div>`,
+      `<div class="nl-card"><div class="nl-card-l">þar af í banka</div><div class="nl-card-v" style="color:#0a84ff">${kr(T.bank_paid)}</div><div class="nl-card-s">kröfur + millifærslur</div></div>`,
     ].join('');
 
     // overview bars (top by |balance|)
@@ -8496,29 +8498,26 @@ async function renderHreyfingar(t){
       const isHid=hidden.has(c.kt);
       const rows=c.movements.map(m=>{
         const isPay=m.kind==='greidsla', isCr=m.delta<0;
-        const ref=isPay?`Greitt${m.ref?(' · R-'+esc(m.ref)):''}`:esc(m.ref||'');
-        return `<tr>
+        const label=isPay?(PAYLBL[m.via]||'💰 Greiðsla'):(KIND[m.kind]||m.kind);
+        const ref=isPay?(m.via==='banki'?`<span class="hy-hint">${esc(m.text||'banki')}</span>`:(m.ref?('R-'+esc(m.ref)):'')):esc(m.ref||'');
+        const extra=m.covered?' <span class="hy-hint">(þegar í Payday)</span>':'';
+        return `<tr${m.covered?' style="opacity:.5"':''}>
           <td>${m.date||''}</td>
-          <td>${KIND[m.kind]||m.kind}</td>
+          <td>${label}${extra}</td>
           <td>${ref}</td>
           <td class="hy-deb">${!isCr?kr(m.delta):''}</td>
           <td class="hy-cre">${isCr?kr(Math.abs(m.delta)):''}</td>
           <td style="font-weight:600;color:${balCol(m.balance)}">${kr(m.balance)}</td>
         </tr>`;
       }).join('');
-      const bankTbl = c.bank.length ? `<div style="margin-top:13px">
-          <div class="hy-leg" style="margin-bottom:5px">🏦 Innborganir í banka — samtals <b>${kr(c.bank_in)}</b>${c.bank_over?' <span style="color:#b54708;font-weight:700">⚠ umfram Payday — kanna</span>':''}</div>
-          <div class="hy-tw"><table class="hy-t">
-            <thead><tr><th>Dags</th><th>Skýring</th><th>Upphæð</th></tr></thead>
-            <tbody>${c.bank.map(b=>`<tr><td>${b.date||''}</td><td>${esc(b.text||'')}</td><td class="hy-cre">${kr(b.amount)}</td></tr>`).join('')}</tbody></table></div></div>` : '';
       return `<div class="hy-c${isHid?' hid':''}" data-kt="${c.kt}" data-name="${esc((c.name||'').toLowerCase())} ${c.kt}" data-hidden="${isHid?1:0}">
         <div class="hy-ch">
-          <div><div class="hy-nm">${esc(c.name)}<span class="kt">${c.kt}</span>${c.bank_over?' <span title="Greitt í banka umfram Payday" style="font-size:11px">⚠</span>':''}</div>
+          <div><div class="hy-nm">${esc(c.name)}<span class="kt">${c.kt}</span></div>
             <div class="hy-sub">${c.n_invoices} reikningar · ${c.n_payments} greiðslur · ${c.first_date||''} → ${c.last_date||''}</div></div>
           <div class="hy-stat">
             <div><div class="l">Reikningað</div><div class="v">${krM(c.invoiced)}</div></div>
             <div><div class="l">Greitt</div><div class="v" style="color:#067647">${krM(c.paid)}</div></div>
-            <div><div class="l">🏦 Banki</div><div class="v" style="color:#0a84ff">${krM(c.bank_in)}</div></div>
+            <div><div class="l">🏦 þar af banki</div><div class="v" style="color:#0a84ff">${krM(c.bank_paid)}</div></div>
             <div><div class="l">Staða</div><div class="v" style="color:${balCol(c.balance)}">${kr(c.balance)}</div></div>
           </div>
           <div class="hy-actions">
@@ -8529,9 +8528,8 @@ async function renderHreyfingar(t){
         <div class="hy-body">
           <div class="hy-chart"><div class="hy-leg"><span class="dot" style="background:#b42318"></span>uppsafnað reikningað <b>${kr(c.invoiced)}</b><span class="dot" style="background:#067647"></span>uppsafnað greitt <b>${kr(c.paid)}</b>${c.credited?` · kreditnótur ${kr(c.credited)}`:''}</div>${dualLine(c.months)}</div>
           <div class="hy-tw"><table class="hy-t">
-            <thead><tr><th>Dags</th><th>Tegund</th><th>Tilvísun</th><th>Debet</th><th>Kredit</th><th>Staða</th></tr></thead>
+            <thead><tr><th>Dags</th><th>Tegund</th><th>Tilvísun / skýring</th><th>Debet</th><th>Kredit</th><th>Staða</th></tr></thead>
             <tbody>${rows}</tbody></table></div>
-          ${bankTbl}
         </div>
       </div>`;
     }).join('');
