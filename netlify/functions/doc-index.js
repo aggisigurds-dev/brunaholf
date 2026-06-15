@@ -71,14 +71,17 @@ exports.handler = async (event) => {
         const existing = await existingDoc(f.id);
         if (existing && existing.customer_base_id) { stats.dupSkip++; continue; }   // already linked → leave it
         const text = await readPdfText(f.id, token);
-        if (!text) { stats.errors++; continue; }
-        const norm = text.replace(/\s+/g, ' ');
-        if (norm.replace(/\D/g, '').indexOf(ISSUER_KT) === -1) { stats.notSlokkvitaeki++; continue; }
-        let kt = customerKt(norm);
-        if (!kt) kt = customerKtFromName(f.name);   // no kt in the PDF → use the kt the renamer put in the filename
+        const norm = (text || '').replace(/\s+/g, ' ');
+        const ktName = customerKtFromName(f.name);
+        const hasIssuer = norm.replace(/\D/g, '').indexOf(ISSUER_KT) !== -1;
+        // Trust a canonical Slökkvitæki filename when the PDF text can't be read (scanned
+        // reports): a customer kt in the name + a report/invoice signature in the name.
+        const nameVouches = !!ktName && (nameIsReport(f.name) || nameIsInvoice(f.name));
+        if (!hasIssuer && !nameVouches) { stats.notSlokkvitaeki++; continue; }
+        const kt = customerKt(norm) || ktName;
         if (!kt) { stats.noKt++; continue; }
-        const doc_type = classify(norm);
-        const year = extractYear(norm);
+        const doc_type = classifyDoc(norm, f.name);
+        const year = extractYear(norm) || yearFromName(f.name);
         const amount = doc_type === 'reikningur' ? extractAmount(norm) : null;
         const base = await matchBase(kt);
         const company = companyName(f.name, norm);
@@ -161,6 +164,16 @@ function classify(s) {
   if (/þjónustusamning|þjonustusamning/i.test(s)) return 'samningur';
   return 'reikningur';
 }
+// Filename signatures — used to trust + classify scanned PDFs whose text won't read.
+function nameIsInvoice(name) { const n = String(name || ''); return /\bR[\s_-]?\d{5,7}\b/i.test(n) || /kredit/i.test(n); }
+function nameIsReport(name) { const n = String(name || ''); return (/\b(janúar|febrúar|mars|apríl|maí|júní|júlí|ágúst|september|október|nóvember|desember)\b/i.test(n) && /\b20\d{2}\b/.test(n)) || /úttekt|skýrsl|viðtökupróf|árleg prófun/i.test(n); }
+function classifyDoc(s, name) {
+  if (s && s.replace(/\s/g, '').length > 30) return classify(s);   // content readable → trust it
+  if (nameIsInvoice(name)) return 'reikningur';                    // else fall back to the filename
+  if (/samning/i.test(String(name || ''))) return 'samningur';
+  return 'uttektarskyrsla';
+}
+function yearFromName(name) { const m = String(name || '').match(/\b(20\d{2})\b/); return m ? parseInt(m[1], 10) : null; }
 function extractYear(s) {
   let m = s.match(/\b\d{2}\.\d{2}\.(\d{2})\b/); if (m) return 2000 + parseInt(m[1], 10);
   m = s.match(/\b(20\d{2})\b/); if (m) return parseInt(m[1], 10);

@@ -91,9 +91,12 @@ exports.handler = async (event) => {
         // The folder mixes report types + stray invoices. Accept ONLY real reports —
         // (A) slökkvitæki úttektarskýrsla, (B) brunaviðvörunarkerfi viðtökupróf/árleg
         // prófun — and reject reikningar (they also carry the issuer kt).
-        const isInvoice = /til greiðslu|reikningsnr|gjalddagi\s*-?\s*eindagi|samtala reiknings|samtals fyrir vsk/i.test(text);
+        const isInvoice = /\bR[\s_-]?\d{5,7}\b/i.test(f.name) || /til greiðslu|reikningsnr|gjalddagi\s*-?\s*eindagi|samtala reiknings|samtals fyrir vsk/i.test(text);
         const isReport = /skýrsla vegna úttektar|úttektarskýrsl|uttektarskyrsl|viðtökupróf|árleg prófun|brunaviðvörunarkerfi/i.test(text);
-        const ok = isReport && !isInvoice;
+        // Trust a canonical filename (kt + mánuður + ár) when the PDF text can't be read —
+        // scanned reports were being dropped as "ekki úttektarskýrsla" even with a perfect name.
+        const nameLooksReport = !!(old.kt && old.month && old.year);
+        const ok = (isReport || nameLooksReport) && !isInvoice;
         const base = kt ? await matchBase(kt) : null;
         const party = parseParty(text, base && base.nafn);
         const company = party.company || (base && base.nafn) || old.company || '';
