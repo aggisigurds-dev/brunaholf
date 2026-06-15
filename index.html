@@ -8390,7 +8390,7 @@ async function renderHreyfingar(t){
       <div class="rg-header">
         <div>
           <h1 class="rg-h1">📒 Hreyfingaryfirlit <span class="rg-sub" id="hy-meta">Sækir…</span></h1>
-          <div class="rg-sub-line">Viðskiptareikningur per fyrirtæki — reikningar (Payday) sem debet, innborganir í banka (kröfur + millifærslur) sem kredit, með stöðu sem uppfærist.</div>
+          <div class="rg-sub-line">Viðskiptareikningur per fyrirtæki — reikningar (debet, m.vsk) og greiðslur (kredit). Staða = ógreiddir reikningar, eins og bókhaldið (Viðskiptakröfur). Bankainnborganir eru sýndar með til upplýsinga (breyta ekki stöðu).</div>
         </div>
         <div class="rg-controls">
           <input id="hy-search" type="search" placeholder="🔍 Leita…" style="padding:8px 11px;border:1px solid var(--border,#cbd5e1);border-radius:8px;font:inherit;font-size:13px;min-width:170px">
@@ -8497,16 +8497,15 @@ async function renderHreyfingar(t){
     list.innerHTML=d.customers.map(c=>{
       const isHid=hidden.has(c.kt);
       const rows=c.movements.map(m=>{
-        const isPay=m.kind==='greidsla', isCr=m.delta<0;
-        const label=isPay?(PAYLBL[m.via]||'💰 Greiðsla'):(KIND[m.kind]||m.kind);
-        const ref=isPay?(m.via==='banki'?`<span class="hy-hint">${esc(m.text||'banki')}</span>`:(m.ref?('R-'+esc(m.ref)):'')):esc(m.ref||'');
-        const extra=m.covered?' <span class="hy-hint">(þegar í Payday)</span>':'';
-        return `<tr${m.covered?' style="opacity:.5"':''}>
+        const isBank=m.kind==='banki', isPay=m.kind==='greidsla';
+        const label=isBank?'🏦 Innborgun (banki)':isPay?'💰 Greitt (Payday)':(KIND[m.kind]||m.kind);
+        const ref=isBank?`<span class="hy-hint">${esc(m.text||'banki')} · upplýsing</span>`:(m.ref?((isPay?'R-':'')+esc(m.ref)):'');
+        return `<tr${isBank?' style="opacity:.5"':''}>
           <td>${m.date||''}</td>
-          <td>${label}${extra}</td>
+          <td>${label}</td>
           <td>${ref}</td>
-          <td class="hy-deb">${!isCr?kr(m.delta):''}</td>
-          <td class="hy-cre">${isCr?kr(Math.abs(m.delta)):''}</td>
+          <td class="hy-deb">${m.delta>0?kr(m.delta):''}</td>
+          <td class="hy-cre">${m.delta<0?kr(Math.abs(m.delta)):''}</td>
           <td style="font-weight:600;color:${balCol(m.balance)}">${kr(m.balance)}</td>
         </tr>`;
       }).join('');
