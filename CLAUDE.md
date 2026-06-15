@@ -39,7 +39,10 @@ data from Ajour, Google Drive/Sheets/Gmail integration, and a tilbod
 
 Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
 
-- `yfirlit` — front page / dashboard
+- `yfirlit` — front page / dashboard. Includes an **Útistandandi** band
+  (óinnheimt + verkstaðir án reiknings) pulling `summary.total_unpaid` +
+  `summary.worksites_with_no_invoice` live from `/api/worksites?year=combined`;
+  tiles link to the `verkstadir` tab.
 - `okkarVerkefni` — Anni & Aggi shared todo (two columns)
 - `inbox` — email digest (renderInbox)
 - `spurningar` — question-email triage (renderSpurningar)
@@ -87,12 +90,15 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
 - `worksite_status`: manual billing status per (project, year) — one of
   `unreviewed | review | billing_in_progress | invoiced | not_billable`,
   plus notes / drive folder url / contract url / invoice amount+date.
-- `invoices` (~249 rows): Payday + Landsbankinn krafnir.
+- `invoices` (~267 rows): Payday + Landsbankinn krafnir.
   Cols: `customer_name, kt_greidanda, hofudstoll, gjalddagi, status,
   greidsla_date, tilvisun, worksite_match, ...`. Joined to worksites
-  via `customer_worksite_map` + `worksite_match`.
-- `bank_transactions` (~840 rows): Landsbankinn ledger, used to detect
-  payments made via bank that haven't been reflected in Payday.
+  via `customer_worksite_map` + `worksite_match`. Upsert key `(tilvisun,source)`,
+  Payday rows `source='payday'` (refresh via Payday "Reikningar" xlsx).
+- `bank_transactions` (~938 rows): Landsbankinn ledger, used to detect
+  payments made via bank that haven't been reflected in Payday. Upsert key
+  `(trans_date, tnr, amount)`, `source='landsbankinn_account'`, `company='brunaholf'`
+  (refresh via Landsbankinn xlsx export).
 - `customer_worksite_map`: unified payer → worksite/starfsstöð map +
   `retention_pct`. Now also carries `base_id` (FK → `customers_base`, the
   paying customer) and `heimilisfang` (site address) so one kennitala can own

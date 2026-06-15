@@ -10028,6 +10028,32 @@ function renderYfirlit(t){
         </div>` : ''}
     </div>` : '';
 
+  // ----- BAND · Útistandandi (óinnheimt + óbilluð vinna) -----
+  // Lifandi tölur úr /api/worksites?year=combined — total_unpaid er reiknað
+  // eftir banka-krossvísun + haldsleiðréttingu; worksites_with_no_invoice eru
+  // verkstaðir með skráða vinnu en engan reikning (gleymt að rukka).
+  const outstandingBand = `
+    <div class="section-head">
+      <span class="num">01</span>
+      <span class="title">Útistandandi</span>
+      <span class="rule"></span>
+      <span class="meta">það sem á eftir að innheimta / rukka</span>
+    </div>
+    <div class="section">
+      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
+        <div class="tile tile-refined tile-warn" id="yf-uninnheimt" style="cursor:pointer" title="Smelltu til að opna Verkstaðir">
+          <span class="lbl">Óinnheimt (ógreitt)</span>
+          <span class="num" id="yf-uninnheimt-num">·<small> sæki…</small></span>
+          <span class="ft" id="yf-uninnheimt-sub">eftir banka- og haldsleiðréttingu</span>
+        </div>
+        <div class="tile tile-refined" id="yf-obilled" style="cursor:pointer" title="Smelltu til að opna Verkstaðir">
+          <span class="lbl">Verkstaðir án reiknings</span>
+          <span class="num" id="yf-obilled-num">·</span>
+          <span class="ft">vinna skráð en enginn reikningur — gleymt að rukka?</span>
+        </div>
+      </div>
+    </div>`;
+
   // ----- BAND 4 · hraðaðgangur (email + drive + þjónustur + gögn) -----
   const acctBtn = (cls, ico, label, sub, url) => `
     <a class="kbtn ${cls} size-s" href="${url}" target="_blank" rel="noopener" style="min-height:54px">
@@ -10116,7 +10142,26 @@ function renderYfirlit(t){
   //   3. Hraðaðgangur — the tools you click most (Email + Þjónustur + Drive + sheets)
   //   4. Í dag (live state) — Mæting + Kerfisstaða moved DOWN; informational, not actionable.
   //   Tiles-band removed — its counts are already in the hero sub-line.
-  $view.innerHTML = heroHtml + nextStepsBand + hradadgangur + todayBand;
+  $view.innerHTML = heroHtml + nextStepsBand + outstandingBand + hradadgangur + todayBand;
+
+  // ----- async: útistandandi (óinnheimt + óbilluð vinna) -----
+  fetch('/api/worksites?year=combined',{cache:'no-store'})
+    .then(r=>r.json()).then(d=>{
+      const s = d && d.summary; if(!s) return;
+      const upn = document.getElementById('yf-uninnheimt-num');
+      if(upn) upn.textContent = Math.round(s.total_unpaid||0).toLocaleString('is-IS') + ' kr';
+      const ob = document.getElementById('yf-obilled-num');
+      if(ob) ob.textContent = (s.worksites_with_no_invoice||0);
+    }).catch(()=>{
+      const upn = document.getElementById('yf-uninnheimt-num');
+      if(upn) upn.innerHTML = '—';
+      const sub = document.getElementById('yf-uninnheimt-sub');
+      if(sub) sub.textContent = 'náði ekki í gögn';
+    });
+  const goUn = document.getElementById('yf-uninnheimt');
+  if(goUn) goUn.onclick = ()=>{ state.ui.activeTab='verkstadir'; save(); render(); };
+  const goOb = document.getElementById('yf-obilled');
+  if(goOb) goOb.onclick = ()=>{ state.ui.activeTab='verkstadir'; save(); render(); };
 
   // ----- async: pull mæting -----
   const maetingTab = state.tabs.find(x=>x.id==='maeting');
