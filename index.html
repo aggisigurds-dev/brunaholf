@@ -2766,6 +2766,7 @@ function renderBakendi(t){
       const wrongA = e.target.closest('._rk-wrong');
       const saveB = e.target.closest('._rk-save');
       const cancelB = e.target.closest('._rk-cancel');
+      const createA = e.target.closest('._rk-create');
       if (editA) { e.preventDefault(); const fid = editA.dataset.fid; const c = editA.closest('._rk-cust'); if (!c) return;
         await ensureCustomers(); c.dataset.prev = c.innerHTML;
         c.innerHTML = '<input class="_rk-pick" list="bk-customers" placeholder="Leita að fyrirtæki…" style="padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:12px;width:210px">'
@@ -2784,6 +2785,18 @@ function renderBakendi(t){
         if (!confirm('Merkja tenginguna sem ranga (aftengja reikninginn)?')) return;
         try { await setMatch(fid, null); if (c) c.innerHTML = rkCustCell(rkRowByFid(fid)); }
         catch(err){ alert('Villa: ' + (err.message || err)); } return; }
+      if (createA) { e.preventDefault(); const fid = createA.dataset.fid; const a = rkRowByFid(fid); const c = createA.closest('._rk-cust'); if (!a) return;
+        if (!confirm('Stofna fyrirtæki „' + (a.company || a.kt || '') + '" (' + (a.kt || '') + ') í grunninn og tengja reikninginn?')) return;
+        createA.textContent = 'Stofna…';
+        try {
+          const r = await fetch('/api/reikningar-read', { method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ action:'create', kt:a.kt, customer_name:a.company, address:a.address, drive_file_id:fid, invoice_number:a.invoice_number, doc_date:a.date, year:a.year, total:a.total }) });
+          const d = await r.json(); if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+          a.base_id = d.base_id; a.base_name = d.nafn || a.company;
+          if (c) c.innerHTML = rkCustCell(a);
+          _custList = null;  // refresh picker so the new company is selectable elsewhere
+        } catch(err){ alert('Villa: ' + (err.message || err)); if (c) c.innerHTML = rkCustCell(a); }
+        return; }
     });
   }
 
@@ -3106,7 +3119,8 @@ function rkCustCell(a){
     + ' <a href="#" class="_rk-edit" data-fid="' + fid + '" style="font-size:11px;color:#2563eb">breyta</a>'
     + ' <a href="#" class="_rk-wrong" data-fid="' + fid + '" style="font-size:11px;color:#dc2626" title="Röng tenging — aftengja">✗</a>';
   return (a.kt ? '<span style="color:#b45309;font-weight:600">⚠ óstaðfest</span>' : '<span style="color:#94a3b8">— engin kt</span>')
-    + ' <a href="#" class="_rk-edit" data-fid="' + fid + '" style="font-size:11px;color:#2563eb">tengja</a>';
+    + ' <a href="#" class="_rk-edit" data-fid="' + fid + '" style="font-size:11px;color:#2563eb">tengja</a>'
+    + (a.kt ? ' <a href="#" class="_rk-create" data-fid="' + fid + '" style="font-size:11px;color:#16a34a" title="Stofna fyrirtæki í grunninn úr reikningnum">+ stofna</a>' : '');
 }
 function reikningarResultsHtml(d, rows){
   const chip = (l, v, bg) => `<span style="display:inline-block;padding:3px 10px;border-radius:99px;background:${bg || '#f1f5f9'};border:1px solid #e2e8f0;font-size:12.5px;font-weight:600;margin:0 6px 6px 0">${l}: ${v}</span>`;

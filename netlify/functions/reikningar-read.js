@@ -34,6 +34,7 @@ exports.handler = async (event) => {
   // Manual override of one invoice's customer link (change company / mark wrong).
   if (event.httpMethod === 'POST') {
     let body = {}; try { body = JSON.parse(event.body || '{}'); } catch {}
+    if (body.action === 'create') return await createCompany(body);
     if (!body.drive_file_id) return json(400, { error: 'drive_file_id required' });
     const yr = body.year || (body.doc_date ? parseInt(String(body.doc_date).slice(0, 4), 10) : null);
     try {
@@ -312,6 +313,41 @@ async function matchBase(kt) {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/customers_base?kennitala=eq.${encodeURIComponent(dash(kt))}&select=id,nafn&limit=1`, { headers: sbHeaders() });
   const rows = await r.json().catch(() => []);
   return (Array.isArray(rows) && rows[0]) ? rows[0] : null;
+}
+// Create a company in the registry from an invoice (customers_base + browsable
+// fyrirtaeki, both idempotent on kt), then link the invoice doc to it.
+async function createCompany(body) {
+  const d = String(body.kt || '').replace(/\D/g, '');
+  if (d.length !== 10) return json(400, { error: 'kt required (10 digits)' });
+  const ktDash = d.slice(0, 6) + '-' + d.slice(6);
+  const nafn = (body.customer_name || body.nafn || '').trim() || null;
+  const heimilisfang = (body.address || '').trim() || null;
+  let baseId = null;
+  try {
+    const ex = await fetch(`${SUPABASE_URL}/rest/v1/customers_base?kennitala=eq.${encodeURIComponent(ktDash)}&select=id&limit=1`, { headers: sbHeaders() });
+    const rows = await ex.json().catch(() => []); if (Array.isArray(rows) && rows[0]) baseId = rows[0].id;
+  } catch (e) {}
+  if (!baseId) {
+    const ins = await fetch(`${SUPABASE_URL}/rest/v1/customers_base`, { method: 'POST', headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }), body: JSON.stringify([{ kennitala: ktDash, nafn, heimilisfang, general_notes: 'Stofnað úr Reikningalesara' }]) });
+    if (!ins.ok) return json(500, { error: 'customers_base: ' + (await ins.text()).slice(0, 200) });
+    const rows = await ins.json().catch(() => []); baseId = (rows[0] && rows[0].id) || null;
+  }
+  // browsable company (fyrirtaeki) — best-effort, idempotent on kt
+  try {
+    const exf = await fetch(`${SUPABASE_URL}/rest/v1/fyrirtaeki?kennitala=eq.${encodeURIComponent(ktDash)}&deleted_at=is.null&select=id,customer_base_id&limit=1`, { headers: sbHeaders() });
+    const fr = await exf.json().catch(() => []);
+    if (Array.isArray(fr) && fr[0]) {
+      if (!fr[0].customer_base_id && baseId) await fetch(`${SUPABASE_URL}/rest/v1/fyrirtaeki?id=eq.${fr[0].id}`, { method: 'PATCH', headers: sbHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ customer_base_id: baseId }) });
+    } else {
+      await fetch(`${SUPABASE_URL}/rest/v1/fyrirtaeki`, { method: 'POST', headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }), body: JSON.stringify([{ nafn, kennitala: ktDash, customer_base_id: baseId, heimilisfang }]) });
+    }
+  } catch (e) {}
+  // link the invoice itself, if one was passed
+  if (body.drive_file_id && baseId) {
+    const yr = body.year || (body.doc_date ? parseInt(String(body.doc_date).slice(0, 4), 10) : null);
+    try { await upsertDoc({ customer_base_id: baseId, doc_type: 'reikningur', year: yr, drive_file_id: body.drive_file_id, source: 'gdrive', found_by: 'manual', amount: body.total || null, invoice_number: body.invoice_number || null, doc_date: body.doc_date || null, customer_name: nafn, notes: 'Nýtt fyrirtæki stofnað + tengt úr Reikningalesara' + (body.invoice_number ? (' · ' + body.invoice_number) : '') }); } catch (e) {}
+  }
+  return json(200, { ok: true, base_id: baseId, nafn: nafn || '' });
 }
 async function upsertDoc(row) {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?on_conflict=drive_file_id`, {
