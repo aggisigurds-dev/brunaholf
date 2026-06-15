@@ -1510,6 +1510,7 @@ const DEFAULT_STATE = {
     {id:'timavera',   label:'Tímavera',   icon:'⏱'},
     {id:'verdsamanburdur', label:'Verðsamanburður', icon:'⚖️'},
     {id:'verkstadir',  label:'Verkstaðir',  icon:'🏗'},
+    {id:'skuldunautar', label:'Skuldunautar', icon:'💸'},
     {id:'nlsh',        label:'Landsspítalinn', icon:'🏥'},
     {id:'maeting',    label:'Mæting', icon:'👥', sheetCsv:'https://docs.google.com/spreadsheets/d/e/2PACX-1vRXUTGE4Ui3eadS0kGX0d-5LvFbyt5SNWD6ToeRRn1MJ6zoiGng7RK5ZJOVEq6s_x8wkiNLpgU8nHJk/pub?output=csv'},
     {id:'verkefnastada', label:'Verkefnastaða', icon:'📊', sheetCsv:''},
@@ -2141,6 +2142,7 @@ function render(){
   if(t.id==='timavera') return renderTimavera(t);
   if(t.id==='verdsamanburdur') return renderCompetitors(t);
   if(t.id==='verkstadir') return renderWorksites(t);
+  if(t.id==='skuldunautar') return renderSkuldunautar(t);
   if(t.id==='reikningar') return renderReikningagerd(t);
   if(t.id==='gerdreikninga') return renderGerdReikninga(t);
   if(t.id==='tilbunirReikningar') return renderTilbunirReikningar(t);
@@ -8332,6 +8334,129 @@ async function renderVinnubok(t){
 }
 
 /* ====================== VERÐSKRÁ (rate / pricing-guide editor) ====================== */
+async function renderSkuldunautar(t){
+  const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const num = n => (Math.round(n||0)).toLocaleString('is-IS');
+  const kr  = n => num(n) + ' kr';
+  $view.innerHTML = `
+    <div class="rg-wrap">
+      <div class="rg-header">
+        <div>
+          <h1 class="rg-h1">💸 Skuldunautar — hreyfingalisti <span class="rg-sub" id="sk-meta">Sækir…</span></h1>
+          <div class="rg-sub-line">Ógreiddir reikningar (verk skráð í Payday + Landsbankakröfur) krossvísað við bankafærslur — bein bankainnborgun sem skilur eftir „Ógreitt“ er merkt sérstaklega.</div>
+        </div>
+        <div class="rg-controls">
+          <input id="sk-search" type="search" placeholder="🔍 Leita að skuldunaut…" style="padding:8px 11px;border:1px solid var(--border,#cbd5e1);border-radius:8px;font:inherit;font-size:13px;min-width:200px">
+          <button id="sk-refresh" class="tv-btn" type="button"><span class="tv-refresh-icon">↻</span> Sækja</button>
+        </div>
+      </div>
+      <div id="sk-cards" class="nl-cards"></div>
+      <div class="nl-grid">
+        <div class="nl-col">
+          <h3 class="nl-h3">⏳ Aldursgreining útistandandi</h3>
+          <div id="sk-aging" class="nl-tw"></div>
+        </div>
+        <div class="nl-col">
+          <h3 class="nl-h3">📅 Útistandandi eftir árgangi (gjalddagi)</h3>
+          <div id="sk-vintage" class="nl-tw"></div>
+        </div>
+      </div>
+      <h3 class="nl-h3">🧾 Skuldunautar <span class="nl-note">(smelltu á línu fyrir reikninga · raðað eftir útistandandi)</span></h3>
+      <div id="sk-list"></div>
+    </div>
+    <style>
+      .sk-d{background:var(--card-bg,#fff);border:1px solid var(--border,#e3e7ec);border-radius:10px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.05);overflow:hidden}
+      .sk-dh{display:grid;grid-template-columns:1fr auto auto auto;gap:14px;align-items:center;padding:11px 15px;cursor:pointer}
+      .sk-dh:hover{background:var(--row-hover,#fafbfc)}
+      .sk-dn{font-weight:700;font-size:14px;color:var(--text,#1f2933)}
+      .sk-dn .sk-kt{font-weight:400;font-size:11px;color:var(--text-dim,#8a93a2);margin-left:6px}
+      .sk-dm{font-size:11px;color:var(--text-dim,#7a8493);margin-top:2px}
+      .sk-dv{text-align:right;font-weight:700;font-size:15px;color:#b42318}
+      .sk-dv small{display:block;font-weight:400;font-size:10.5px;color:var(--text-dim,#8a93a2)}
+      .sk-bank{text-align:right;font-size:11px;color:var(--text-dim,#5a6473)}
+      .sk-caret{color:#b6c0cc;font-size:13px}
+      .sk-db{display:none;border-top:1px solid var(--border,#eef0f2);padding:0}
+      .sk-d.open .sk-db{display:block}
+      .sk-badge{display:inline-block;font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:20px;white-space:nowrap}
+      .sk-b-open{background:#fef3f2;color:#b42318}
+      .sk-b-bank{background:#ecfdf3;color:#067647}
+      .sk-b-maybe{background:#fffaeb;color:#b54708}
+      .sk-b-credited{background:#f2f4f7;color:#475467}
+    </style>`;
+  const badge = (s) => ({
+    open:     '<span class="sk-badge sk-b-open">Útistandandi</span>',
+    bank:     '<span class="sk-badge sk-b-bank">Greitt í banka?</span>',
+    maybe:    '<span class="sk-badge sk-b-maybe">Kannski í banka</span>',
+    credited: '<span class="sk-badge sk-b-credited">Kreditfært</span>',
+  }[s] || s);
+  const card = (l,v,s,col)=>`<div class="nl-card"><div class="nl-card-l">${l}</div><div class="nl-card-v"${col?` style="color:${col}"`:''}>${v}</div>${s?`<div class="nl-card-s">${s}</div>`:''}</div>`;
+
+  async function load(){
+    const meta=document.getElementById('sk-meta'); meta.textContent='Sækir…';
+    let d;
+    try{ const r=await fetch('/api/debtors',{cache:'no-store'}); d=await r.json(); if(d.error) throw new Error(d.error); }
+    catch(e){ meta.textContent='Villa: '+e.message; return; }
+    const T=d.totals||{};
+    meta.textContent = T.debtor_count+' skuldunautar · '+new Date(d.generated_at).toLocaleString('is-IS');
+
+    document.getElementById('sk-cards').innerHTML = [
+      card('Útistandandi', kr(T.outstanding_kr), T.outstanding_n+' reikningar · '+T.debtor_count+' skuldunautar','#b42318'),
+      card('Greitt í banka (stöðu ekki uppfærð)', kr(T.bank_paid_kr), T.bank_paid_n+' reikningar — líklega þegar greitt','#067647'),
+      card('Kannski í banka', kr(T.maybe_kr), 'upphæð fannst frá öðrum greiðanda — staðfestu','#b54708'),
+      card('Kreditfært', kr(T.credited_kr), T.credited_n+' reikningar bakfærðir','#475467'),
+    ].join('');
+
+    const aMax=Math.max(1,...(d.aging||[]).map(a=>a.kr));
+    document.getElementById('sk-aging').innerHTML = `<table class="nl-t">
+      <thead><tr><th>Aldur</th><th>Fjöldi</th><th>Upphæð</th><th></th></tr></thead>
+      <tbody>${(d.aging||[]).map(a=>`<tr><td>${a.bucket}</td><td>${num(a.n)}</td><td>${kr(a.kr)}</td><td style="text-align:left"><span class="nl-bar-bg"><span class="nl-bar" style="width:${Math.round(a.kr/aMax*90)}px;background:#b42318"></span></span></td></tr>`).join('')}</tbody>
+      <tfoot><tr><td>Samtals</td><td>${num(T.outstanding_n)}</td><td>${kr(T.outstanding_kr)}</td><td></td></tr></tfoot></table>`;
+
+    document.getElementById('sk-vintage').innerHTML = `<table class="nl-t">
+      <thead><tr><th>Árgangur</th><th>Fjöldi</th><th>Upphæð</th></tr></thead>
+      <tbody>${(d.vintages||[]).map(v=>`<tr><td>${v.year}</td><td>${num(v.n)}</td><td>${kr(v.kr)}</td></tr>`).join('')}</tbody></table>`;
+
+    const list=document.getElementById('sk-list');
+    list.innerHTML = (d.debtors||[]).map((db,i)=>{
+      const invRows = db.invoices.map(inv=>{
+        const od = inv.days_overdue==null?'—':(inv.days_overdue<0?(Math.abs(inv.days_overdue)+' d eftir'):(inv.days_overdue+' d'));
+        const bankTxt = inv.bank?`<div style="font-size:10.5px;color:#8a93a2">${esc(inv.bank.text||'')} · ${kr(inv.bank.amount)} · ${inv.bank.date||''}</div>`:'';
+        return `<tr>
+          <td>${inv.tilvisun?('R-'+esc(inv.tilvisun)):('#'+inv.id)}<div style="font-size:10.5px;color:#b6c0cc">${esc(inv.source||'')}</div></td>
+          <td>${inv.gjalddagi||'—'}</td>
+          <td>${od}</td>
+          <td style="text-align:right">${kr(inv.amount)}</td>
+          <td>${badge(inv.status)}${bankTxt}</td>
+        </tr>`;
+      }).join('');
+      const bankLine = db.bank_inflow_kr>0?`bankainnborganir ${kr(db.bank_inflow_kr)}${db.last_inflow?' · síðast '+db.last_inflow:''}`:'engar bankafærslur';
+      return `<div class="sk-d" data-i="${i}" data-name="${esc((db.customer||'').toLowerCase())} ${db.kt||''}">
+        <div class="sk-dh">
+          <div><div class="sk-dn">${esc(db.customer)}${db.kt?`<span class="sk-kt">${db.kt}</span>`:''}</div>
+            <div class="sk-dm">${db.invoices.length} reikningar · elsti gjalddagi ${db.oldest_due||'—'}</div></div>
+          <div class="sk-bank">${bankLine}</div>
+          <div class="sk-dv">${kr(db.outstanding_kr)}<small>útistandandi</small></div>
+          <div class="sk-caret">▸</div>
+        </div>
+        <div class="sk-db"><table class="nl-t">
+          <thead><tr><th>Reikningur</th><th>Gjalddagi</th><th>Aldur</th><th style="text-align:right">Upphæð</th><th>Staða</th></tr></thead>
+          <tbody>${invRows}</tbody></table></div>
+      </div>`;
+    }).join('') || '<div style="padding:20px;color:#94a3b8">Engir skuldunautar 🎉</div>';
+
+    list.querySelectorAll('.sk-dh').forEach(h=>h.addEventListener('click',()=>{
+      const d=h.parentElement; d.classList.toggle('open');
+      h.querySelector('.sk-caret').textContent = d.classList.contains('open')?'▾':'▸';
+    }));
+    const search=document.getElementById('sk-search');
+    search.oninput=()=>{ const q=search.value.trim().toLowerCase();
+      list.querySelectorAll('.sk-d').forEach(d=>{ d.style.display = !q || d.dataset.name.includes(q) ? '' : 'none'; });
+    };
+  }
+  document.getElementById('sk-refresh').addEventListener('click', load);
+  load();
+}
+
 async function renderNLSH(t){
   $view.innerHTML = `
     <div class="rg-wrap">
@@ -8347,6 +8472,8 @@ async function renderNLSH(t){
         </div>
       </div>
       <div id="nl-cards" class="nl-cards"></div>
+      <h3 class="nl-h3">📅 Göt kláruð per dag <span class="nl-note">(síðustu 2 vikur)</span></h3>
+      <div id="nl-day" class="nl-tw"></div>
       <h3 class="nl-h3">📈 Þróun per viku</h3>
       <div id="nl-charts" class="nl-charts"></div>
       <h3 class="nl-h3">💰 Mánaðaruppgjör — rukkun per mánuð <span class="nl-note">(staða mánaðamóta − fyrri mánuður)</span></h3>
@@ -8529,6 +8656,20 @@ async function renderNLSH(t){
         svgChart(wk,{bar:'holes',line:'cum_holes',barColor:'#9ec5fe',lineColor:'#0a84ff',fmt:num})) +
       chartCard('Tekjur per viku (m. vsk)', '▮ vikuleg · — uppsafnað (<b>'+kr(d.totals.revenue_m_vsk)+'</b>)',
         svgChart(wk,{bar:'revenue_m_vsk',line:'cum_revenue_m_vsk',barColor:'#a7e0c0',lineColor:'#12805a',fmt:kr}));
+
+    // Göt kláruð per dag — síðustu 2 vikur (samfellt 14-daga gluggi)
+    const day = d.byDay || [];
+    const dMax = Math.max(1, ...day.map(x=>x.holes));
+    const WD = ['su','má','þr','mi','fi','fö','la'];
+    document.getElementById('nl-day').innerHTML = `<table class="nl-t">
+      <thead><tr><th>Dagur</th><th>Göt kláruð</th><th></th></tr></thead>
+      <tbody>${day.map(x=>{
+        const dt=new Date(x.date+'T00:00:00Z');
+        const lbl=WD[dt.getUTCDay()]+'&nbsp;'+x.date.slice(8,10)+'.'+x.date.slice(5,7)+'.';
+        const wknd=(dt.getUTCDay()===0||dt.getUTCDay()===6);
+        return `<tr${wknd?' style="color:#b6c0cc"':''}><td>${lbl}</td><td>${num(x.holes)}</td><td style="text-align:left">${bar(x.holes,dMax)}</td></tr>`;
+      }).join('')}</tbody>
+      <tfoot><tr><td>Samtals (14 dagar)</td><td>${num(d.byDayTotal||0)}</td><td></td></tr></tfoot></table>`;
 
     // Mánaðaruppgjör (snapshot-delta billing) — uses the live cumulative
     loadMonthly(d.totals.revenue_m_vsk, true);

@@ -197,6 +197,25 @@ exports.handler = async (event) => {
       cum_revenue_m_vsk: cumR, hours: Math.round((hoursByWeek[wk] || 0) * 10) / 10 };
   });
 
+  // ---- byDay (holes completed per calendar day — continuous last-14-day window) ----
+  // "Jobs completed per day" = distinct finished holes on their effective (execution) date.
+  const dayHoles = {};
+  for (const { date } of serialInfo.values()) {
+    if (!date) continue;
+    const d = String(date).slice(0, 10);
+    dayHoles[d] = (dayHoles[d] || 0) + 1;
+  }
+  const byDay = [];
+  {
+    const now = new Date();
+    for (let i = 13; i >= 0; i--) {
+      const dt = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - i));
+      const key = dt.toISOString().slice(0, 10);
+      byDay.push({ date: key, holes: dayHoles[key] || 0 });
+    }
+  }
+  const byDayTotal = byDay.reduce((a, x) => a + x.holes, 0);
+
   // ---- byStaff (holes from Ajour category + hours from Tímavera) ----
   const holesByNr = {};
   for (const { nr } of serialInfo.values()) if (nr) holesByNr[nr] = (holesByNr[nr] || 0) + 1;
@@ -264,7 +283,7 @@ exports.handler = async (event) => {
       hours: totalHours, holes_per_hour: totalHours ? Math.round(totalHoles / totalHours * 100) / 100 : null,
       unmapped_stakar: unmappedStakar,
     },
-    byMonth, byWeek, byStaff, byStaffWeek, byStaffDay, byVerk,
+    byMonth, byWeek, byDay, byDayTotal, byStaff, byStaffWeek, byStaffDay, byVerk,
     note: 'Áætlun byggð á Ajour (stakir SerialNumber, kláraðir) + Tímavera. Göt á starfsmann koma úr Ajour „category“ = Starfsmaður N.',
   });
 };
