@@ -95,7 +95,7 @@ exports.handler = async (event) => {
         const isReport = /skýrsla vegna úttektar|úttektarskýrsl|uttektarskyrsl|viðtökupróf|árleg prófun|brunaviðvörunarkerfi/i.test(text);
         // Trust a canonical filename (kt + mánuður + ár) when the PDF text can't be read —
         // scanned reports were being dropped as "ekki úttektarskýrsla" even with a perfect name.
-        const nameLooksReport = !!(old.kt && old.month && old.year);
+        const nameLooksReport = !!(old.kt && old.year);   // month is optional — some old names are just "… - kt - ár"
         const ok = (isReport || nameLooksReport) && !isInvoice;
         const base = kt ? await matchBase(kt) : null;
         const party = parseParty(text, base && base.nafn);
@@ -111,14 +111,14 @@ exports.handler = async (event) => {
         const month = di.month || old.month;
         const year = di.year || old.year;
         let newName = '', status = 'manual';
-        if (ok && company && kt && month && year) {
-          newName = sanitize(company) + ' - ' + (address ? sanitize(address) + ' - ' : '') + dash(kt) + ' - ' + month + ' - ' + year + '.pdf';
+        if (ok && company && kt && year) {   // year required; month optional (drops the month segment when absent)
+          newName = sanitize(company) + ' - ' + (address ? sanitize(address) + ' - ' : '') + dash(kt) + (month ? ' - ' + month : '') + ' - ' + year + '.pdf';
           status = 'ready';
         }
         if (status === 'ready') stats.ready++; else stats.manual++;
         stats.rows.push({
           fileId: f.id, oldName: f.name, newName, status, isInvoice, company, kt: kt ? dash(kt) : '', address, month: month || '', year: year || '',
-          missing: !ok ? (isInvoice ? 'reikningur – röng mappa' : 'ekki úttektarskýrsla') : [!company ? 'fyrirtæki' : null, !kt ? 'kt' : null, !(month && year) ? 'dags' : null].filter(Boolean).join(', '),
+          missing: !ok ? (isInvoice ? 'reikningur – röng mappa' : 'ekki úttektarskýrsla') : [!company ? 'fyrirtæki' : null, !kt ? 'kt' : null, !year ? 'ár' : null].filter(Boolean).join(', '),
         });
       } catch (e) { stats.errors++; stats.rows.push({ fileId: f.id, oldName: f.name, status: 'error', error: String(e.message || e) }); }
     }
