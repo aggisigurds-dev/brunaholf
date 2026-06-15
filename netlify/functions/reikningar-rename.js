@@ -69,18 +69,30 @@ exports.handler = async (event) => {
   // same filename but different content = flagged for manual review only.
   if (p.dedup === '1') {
     const files = await listPdfsMeta(folder, token);
-    const byMd5 = {}, byName = {};
+    const byMd5 = {}, byName = {}, byNum = {};
     files.forEach(f => {
       if (f.md5Checksum) (byMd5[f.md5Checksum] = byMd5[f.md5Checksum] || []).push(f);
       (byName[f.name] = byName[f.name] || []).push(f);
+      const num = numberFromName(f.name);                                  // R-number from the (renamed) filename
+      const ktm = (f.name.match(/\b(\d{6}-\d{4})\b/) || [])[1] || '';      // kt scopes it so numbers can't collide across customers
+      if (num) { const key = ktm + '|' + num; (byNum[key] = byNum[key] || []).push(f); }
     });
     const exactGroups = [], trashIds = [];
     Object.values(byMd5).forEach(g => {
       if (g.length > 1) { const trash = g.slice(1); exactGroups.push({ name: g[0].name, keepId: g[0].id, trash: trash.map(x => x.id), count: g.length }); trash.forEach(x => trashIds.push(x.id)); }
     });
+    // Same invoice number (+ same kt) but DIFFERENT bytes — re-exported copies of ONE
+    // invoice. md5 misses these; this is what "found no duplicates" was missing.
+    const numberGroups = [];
+    Object.values(byNum).forEach(g => {
+      if (g.length < 2) return;
+      const sorted = g.slice().sort((a, b) => a.name.localeCompare(b.name, 'is'));
+      const trash = sorted.slice(1).filter(x => !trashIds.includes(x.id));
+      if (trash.length) { numberGroups.push({ name: sorted[0].name, count: g.length, trash: trash.map(x => x.id) }); trash.forEach(x => trashIds.push(x.id)); }
+    });
     const reviewGroups = [];
-    Object.keys(byName).forEach(nm => { const g = byName[nm]; if (g.length > 1 && new Set(g.map(x => x.md5Checksum || 'none')).size > 1) reviewGroups.push({ name: nm, count: g.length }); });
-    return json(200, { totalFiles: files.length, exactGroups, trashCount: trashIds.length, trashIds, reviewGroups });
+    Object.keys(byName).forEach(nm => { const g = byName[nm]; if (g.length > 1 && new Set(g.map(x => x.md5Checksum || 'none')).size > 1 && !numberGroups.some(ng => ng.name === nm)) reviewGroups.push({ name: nm, count: g.length }); });
+    return json(200, { totalFiles: files.length, exactGroups, numberGroups, trashCount: trashIds.length, trashIds, reviewGroups });
   }
 
   const stats = { folder, scanned: 0, ready: 0, manual: 0, errors: 0, rows: [] };

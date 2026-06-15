@@ -99,7 +99,10 @@ exports.handler = async (event) => {
         const di = dateInfo(text);
         let newName = '', status = 'manual';
         if (ok && company && kt && di.month && di.year) {
-          newName = sanitize(company) + ' - ' + (address ? sanitize(address) + ' - ' : '') + dash(kt) + ' - ' + di.month + ' - ' + di.year + '.pdf';
+          // Skip the address — it's noisy/inconsistent in the source PDFs (abbreviated
+          // cities, company name bleeding into the street, missing on some) and the app
+          // links reports by kennitala + year, not by the address text.
+          newName = sanitize(company) + ' - ' + dash(kt) + ' - ' + di.month + ' - ' + di.year + '.pdf';
           status = 'ready';
         }
         if (status === 'ready') stats.ready++; else stats.manual++;

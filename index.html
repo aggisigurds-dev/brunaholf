@@ -2963,11 +2963,12 @@ function renderBakendi(t){
       const r = await fetch('/api/reikningar-rename?dedup=1&folder=' + encodeURIComponent(f));
       const d = await r.json(); if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
       dupTrashIds = d.trashIds || [];
-      $dupStatus.textContent = (d.exactGroups || []).length + ' tvítaka-hópar · ' + (d.trashCount || 0) + ' aukaeintök af ' + d.totalFiles + ' skrám';
+      $dupStatus.textContent = ((d.exactGroups || []).length + (d.numberGroups || []).length) + ' tvítaka-hópar · ' + (d.trashCount || 0) + ' aukaeintök af ' + d.totalFiles + ' skrám';
       let html = '';
-      if ((d.exactGroups || []).length) html += '<div style="font-size:12.5px;color:#475569;margin:8px 0 4px">Nákvæm tvítök (sama skrá) — halda 1, eyða ' + d.trashCount + ':</div><ul style="margin:0;padding-left:18px;font-size:12px;color:#334155">' + d.exactGroups.map(g => '<li>' + escapeHtml(g.name) + ' <span style="color:#94a3b8">(×' + g.count + ' → eyða ' + g.trash.length + ')</span></li>').join('') + '</ul>';
+      if ((d.exactGroups || []).length) html += '<div style="font-size:12.5px;color:#475569;margin:8px 0 4px">Nákvæm tvítök (sama skrá) — halda 1:</div><ul style="margin:0;padding-left:18px;font-size:12px;color:#334155">' + d.exactGroups.map(g => '<li>' + escapeHtml(g.name) + ' <span style="color:#94a3b8">(×' + g.count + ' → eyða ' + g.trash.length + ')</span></li>').join('') + '</ul>';
+      if ((d.numberGroups || []).length) html += '<div style="font-size:12.5px;color:#475569;margin:10px 0 4px">Sami reikningsnúmer (afrit af sama reikningi — halda 1):</div><ul style="margin:0;padding-left:18px;font-size:12px;color:#334155">' + d.numberGroups.map(g => '<li>' + escapeHtml(g.name) + ' <span style="color:#94a3b8">(×' + g.count + ' → eyða ' + g.trash.length + ')</span></li>').join('') + '</ul>';
       if ((d.reviewGroups || []).length) html += '<div style="font-size:12px;color:#b45309;margin-top:8px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:7px 10px">⚠ Sama nafn en ÓLÍKT innihald — skoðaðu handvirkt (ekki eytt sjálfkrafa): ' + d.reviewGroups.map(g => escapeHtml(g.name) + ' ×' + g.count).join(' · ') + '</div>';
-      if (!(d.exactGroups || []).length) html += '<div class="empty">Engin nákvæm tvítök fundust. 🎉</div>';
+      if (!(d.exactGroups || []).length && !(d.numberGroups || []).length) html += '<div class="empty">Engin tvítök fundust. 🎉</div>';
       $dupResults.innerHTML = html;
       $dupTrash.disabled = dupTrashIds.length === 0;
     } catch (e) { $dupResults.insertAdjacentHTML('beforeend', bkErr(e)); $dupStatus.textContent = ''; }
