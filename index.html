@@ -1501,6 +1501,7 @@ const BAKENDI_LINK_SEED = [
 const DEFAULT_STATE = {
   bakendiLinks: BAKENDI_LINK_SEED.map(x=>({...x})),
   tabs: [
+    {id:'dagurinn',   label:'Dagurinn',   icon:'🌅'},
     {id:'yfirlit',    label:'Yfirlit',    icon:'🏠'},
     {id:'stjornbord', label:'Stjórnborð', icon:'🎛'},
     {id:'leidsogn',   label:'Leiðsögn',   icon:'🧭'},
@@ -1786,13 +1787,16 @@ function clearDataCache(){
 function ensureNewTabs(s){
   if(!s || !Array.isArray(s.tabs)) return;
   if(!Array.isArray(s.bakendiLinks)) s.bakendiLinks = BAKENDI_LINK_SEED.map(x=>({...x}));
-  ['stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','skuldunautar','hreyfingaryfirlit','nlsh','spurningar','bakendi'].forEach(id=>{
+  ['dagurinn','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','skuldunautar','hreyfingaryfirlit','nlsh','spurningar','bakendi'].forEach(id=>{
     if(!s.tabs.find(t=>t.id===id)){
       const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
       if(d){
         // Tab order: reikningar → gerdreikninga → vinnubok → vinnustofa → verdskra → efniskostnadur
         let target;
-        if(id === 'stjornbord'){
+        if(id === 'dagurinn'){
+          // Dagurinn is the landing page — pin it to the very front.
+          target = 0;
+        } else if(id === 'stjornbord'){
           // Stjórnborð sits right under Yfirlit (top of the sidebar).
           const idx = s.tabs.findIndex(t=>t.id==='yfirlit');
           target = idx >= 0 ? idx + 1 : 0;
@@ -2143,6 +2147,7 @@ function render(){
   const t = activeTab();
   $brandTitle.textContent = t.label;
   document.body.dataset.tab = t.id;
+  if(t.id==='dagurinn') return renderDagurinn(t);
   if(t.id==='yfirlit') return renderYfirlit(t);
   if(t.id==='stjornbord') return renderStjornbord(t);
   if(t.id==='leidsogn') return renderLeidsogn(t);
@@ -2643,6 +2648,38 @@ function renderBakendi(t){
         </div>
         <div style="font-size:11.5px;color:#64748b;margin-top:5px">Leitað eftir skráarnafni: „vinnufærslur" / „payday" — nýjasta útgáfan vinnur. Payday-innlestur snertir ekki worksite_match (handvirkt viðhaldið).</div>
       </div>
+
+      <div style="margin-top:24px;border-top:1px solid #e2e8f0;padding-top:18px">
+        <div class="group-title"><strong>☁️ Gmail úr skýi</strong><div class="line"></div></div>
+        <p style="color:#475569;font-size:13px;line-height:1.5;margin:0 0 12px;max-width:680px">
+          Sækir póst <b>beint frá Google</b> (Gmail API) inn í <code>email_digest</code> — sama tafla og
+          Inbox/Spurningar nota. Þannig þarf <b>ekki</b> lengur að treysta á Thunderbird/luna-bridge á
+          tölvunni fyrir Google-pósthólf. Forgangs-pósthólf: <b>eldklar@eldklar.is</b> (Slökkvitæki).
+          <br>Athugið: aðeins er hægt að sækja það Google-pósthólf sem er <b>tengt núna</b> — til að sækja
+          eldklar@eldklar.is þarftu að tengja Google sem það pósthólf.
+        </p>
+        <div style="border:1px solid #e2e8f0;border-radius:11px;padding:14px 15px;max-width:680px">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+            <span id="bk-gm-conn" style="font-size:12.5px;color:#64748b">Athuga tengingu…</span>
+            <button id="bk-gm-connect" class="btn">✦ Tengja pósthólf (Google)</button>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <label style="font-size:12px;color:#475569">Pósthólf:</label>
+            <input id="bk-gm-account" placeholder="eldklar@eldklar.is" style="${inp};flex:1;min-width:220px">
+            <label style="font-size:12px;color:#475569">Dagar aftur:</label>
+            <input id="bk-gm-days" value="10" style="${inp};width:70px">
+            <label style="font-size:12px;color:#475569;display:inline-flex;align-items:center;gap:5px">
+              <input id="bk-gm-dry" type="checkbox" checked> Prufa (engin skrif)
+            </label>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px 0 6px">
+          <button id="bk-gm-run" class="btn primary">⬇️ Sækja núna</button>
+          <span id="bk-gm-status" style="font-size:12.5px;color:#64748b"></span>
+        </div>
+        <div style="font-size:11.5px;color:#64748b;margin-top:2px">Sækir „in:inbox newer_than:&lt;dagar&gt;d" og upsertar á <code>message_id</code> (engin tvítök). Síðar: Microsoft&nbsp;Graph fyrir @brunaholf.is.</div>
+        <div id="bk-gm-results"></div>
+      </div>
     </div>`;
 
   // ── Mínir Sheet-tenglar (vistaðir tenglar, samstilltir á öll tæki) ────────
@@ -2713,6 +2750,94 @@ function renderBakendi(t){
   };
   $dry.onclick = () => runBakendi(true);
   $run.onclick = () => runBakendi(false);
+
+  // ── Gmail úr skýi (sækir póst beint frá Google → email_digest) ────────────
+  const $gmConn = document.getElementById('bk-gm-conn');
+  const $gmConnect = document.getElementById('bk-gm-connect');
+  const $gmAccount = document.getElementById('bk-gm-account');
+  const $gmDays = document.getElementById('bk-gm-days');
+  const $gmDry = document.getElementById('bk-gm-dry');
+  const $gmRun = document.getElementById('bk-gm-run');
+  const $gmStatus = document.getElementById('bk-gm-status');
+  const $gmResults = document.getElementById('bk-gm-results');
+  const GM_PRIORITY = 'eldklar@eldklar.is';
+
+  // Show which Google account is connected; default the account box to it (or to
+  // the priority mailbox if nothing is connected yet).
+  async function gmCheckConn(){
+    try {
+      const r = await fetch('/api/google-auth?status=1');
+      const d = await r.json();
+      if (d.connected) {
+        $gmConn.innerHTML = '✓ Tengt: <b>' + escapeHtml(d.user_email || 'óþekkt') + '</b>';
+        $gmConn.style.color = '#16a34a';
+        if (!$gmAccount.value.trim()) $gmAccount.value = d.user_email || GM_PRIORITY;
+      } else if (d.expired) {
+        $gmConn.innerHTML = '⚠ Google tenging útrunnin (' + escapeHtml(d.user_email || '') + ') — tengdu aftur';
+        $gmConn.style.color = '#b45309';
+        if (!$gmAccount.value.trim()) $gmAccount.value = GM_PRIORITY;
+      } else {
+        $gmConn.innerHTML = 'Ekkert Google-pósthólf tengt — smelltu „Tengja pósthólf".';
+        $gmConn.style.color = '#64748b';
+        if (!$gmAccount.value.trim()) $gmAccount.value = GM_PRIORITY;
+      }
+    } catch(e) {
+      $gmConn.textContent = 'Tenging: villa';
+      $gmConn.style.color = '#dc2626';
+    }
+  }
+  gmCheckConn();
+  $gmConnect.onclick = startGoogleReauth;   // same consent flow — connect AS the desired mailbox
+
+  $gmRun.onclick = async () => {
+    const account = ($gmAccount.value || '').trim();
+    const days = Math.min(Math.max(parseInt($gmDays.value, 10) || 10, 1), 90);
+    const dry = !!$gmDry.checked;
+    $gmRun.disabled = true;
+    $gmStatus.textContent = dry ? 'Prufa…' : 'Sæki…';
+    $gmResults.innerHTML = '<div class="empty">Vinnur… sæki póst frá Google.</div>';
+    try {
+      const qs = new URLSearchParams({ days: String(days) });
+      if (account) qs.set('account', account);
+      if (dry) qs.set('dry', '1');
+      const r = await fetch('/api/gmail-ingest?' + qs.toString());
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+      $gmResults.innerHTML = gmResultsHtml(d);
+      $gmStatus.textContent = d.dry
+        ? '🔍 Prufa búin — ekkert vistað.'
+        : ('✓ Búið. Vistað ' + (d.upserted || 0) + ' póstar.');
+    } catch (e) {
+      $gmResults.insertAdjacentHTML('beforeend', bkErr(e));
+      $gmStatus.textContent = '';
+    } finally {
+      $gmRun.disabled = false;
+    }
+  };
+
+  function gmResultsHtml(d){
+    const chip = (label, val) => '<span style="display:inline-block;background:#f1f5f9;border-radius:7px;padding:3px 9px;margin:0 6px 6px 0;font-size:12px">' + escapeHtml(label) + ': <b>' + escapeHtml(String(val)) + '</b></span>';
+    let h = '<div style="margin-top:12px">';
+    h += chip('Pósthólf', d.account || '?');
+    h += chip('Fundnir', d.listed != null ? d.listed : '?');
+    h += chip(d.dry ? 'Lesnir' : 'Vistaðir', d.dry ? (d.mapped != null ? d.mapped : '?') : (d.upserted != null ? d.upserted : '?'));
+    if (d.questions != null) h += chip('Spurningar', d.questions);
+    if (d.errors) h += chip('Villur', d.errors);
+    h += '</div>';
+    if (Array.isArray(d.samples) && d.samples.length) {
+      h += '<table style="width:100%;border-collapse:collapse;margin-top:8px;font-size:12.5px"><thead><tr style="text-align:left;color:#64748b"><th style="padding:5px 8px">Efni</th><th style="padding:5px 8px">Frá</th><th style="padding:5px 8px">Dags</th></tr></thead><tbody>';
+      for (const s of d.samples) {
+        const dt = s.received_at ? new Date(s.received_at).toLocaleDateString('is-IS') : '';
+        h += '<tr style="border-top:1px solid #eef2f7">'
+          + '<td style="padding:5px 8px">' + (s.is_question ? '❓ ' : '') + escapeHtml(s.subject || '') + '</td>'
+          + '<td style="padding:5px 8px;color:#475569">' + escapeHtml(s.from || '') + '</td>'
+          + '<td style="padding:5px 8px;color:#64748b">' + escapeHtml(dt) + '</td></tr>';
+      }
+      h += '</tbody></table>';
+    }
+    if (d.note) h += '<div style="font-size:11.5px;color:#64748b;margin-top:7px">' + escapeHtml(d.note) + '</div>';
+    return h;
+  }
 
   // ── Netföng úr sendum reikningum (.eml) ──────────────────────────────────
   const $emlFolders = document.getElementById('bk-eml-folders');
@@ -8687,6 +8812,319 @@ async function renderSkuldunautar(t){
     };
   }
   document.getElementById('sk-refresh').addEventListener('click', load);
+  load();
+}
+
+// 🌅 Dagurinn — heiðarleg byrjunarsíða. ENGIN fölsk „lifandi" merki:
+// hvert ástand er RAUNVERULEGUR tímastimpill úr gagnagrunninum.
+async function renderDagurinn(t){
+  $view.innerHTML = `
+    <div class="rg-wrap">
+      <div class="rg-header">
+        <div>
+          <h1 class="rg-h1">🌅 Dagurinn <span class="rg-sub" id="dg-meta">Sækir…</span></h1>
+          <div class="rg-sub-line">Heiðarlegt yfirlit — engin „lifandi" merki, hvert ástand er raunverulegur tímastimpill úr gagnagrunninum.</div>
+        </div>
+        <div class="rg-controls">
+          <button id="dg-refresh" class="tv-btn" type="button"><span class="tv-refresh-icon">↻</span> Sækja</button>
+        </div>
+      </div>
+
+      <h3 class="dg-h3">🔄 Samstilling <span class="dg-note">— hversu fersk eru gögnin í raun</span></h3>
+      <div id="dg-sync" class="dg-sync"><div class="dg-loading">Sækir…</div></div>
+
+      <h3 class="dg-h3">💡 Claude mælir með</h3>
+      <div id="dg-reco" class="dg-card"><div class="dg-loading">Sækir…</div></div>
+
+      <div class="dg-grid">
+        <div class="dg-col">
+          <h3 class="dg-h3">📧 Nýjustu póstar</h3>
+          <div id="dg-mail" class="dg-card"><div class="dg-loading">Sækir…</div></div>
+        </div>
+        <div class="dg-col">
+          <h3 class="dg-h3">✅ Verkefni</h3>
+          <div id="dg-todo" class="dg-card"></div>
+        </div>
+      </div>
+    </div>
+    <style>
+      .dg-h3{font-size:14px;font-weight:700;margin:18px 0 9px;color:var(--text,#1f2933)}
+      .dg-note{font-size:11px;font-weight:400;color:var(--text-dim,#7a8493)}
+      .dg-loading{color:var(--text-dim,#7a8493);font-size:13px;padding:6px 2px}
+      .dg-err{color:#c40000;font-size:13px;padding:6px 2px}
+      .dg-sync{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+      .dg-srow{background:var(--card-bg,#fff);border:1px solid var(--border,#e3e7ec);border-radius:10px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+      .dg-srow-top{display:flex;align-items:center;gap:8px}
+      .dg-dot{width:11px;height:11px;border-radius:50%;flex:none;box-shadow:0 0 0 3px rgba(0,0,0,.04)}
+      .dg-dot.fresh{background:#23a857}
+      .dg-dot.aging{background:#e8a200}
+      .dg-dot.stale{background:#d63b30}
+      .dg-dot.unknown{background:#9aa3af}
+      .dg-srow-ico{font-size:16px}
+      .dg-srow-label{font-weight:700;font-size:13.5px;color:var(--text,#1f2933)}
+      .dg-srow-real{font-size:12.5px;color:var(--text,#1f2933);margin-top:7px}
+      .dg-srow-real b{font-weight:700}
+      .dg-srow-sync{font-size:11px;color:var(--text-dim,#7a8493);margin-top:2px}
+      .dg-srow-verdict{font-size:12px;margin-top:6px;font-weight:600}
+      .dg-srow-verdict.fresh{color:#0a8a00}
+      .dg-srow-verdict.aging{color:#a96900}
+      .dg-srow-verdict.stale,.dg-srow-verdict.unknown{color:#c40000}
+      .dg-mbox-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px}
+      .dg-mbox{display:flex;align-items:center;gap:8px;background:var(--card-bg,#fff);border:1px solid var(--border,#e3e7ec);border-radius:9px;padding:9px 12px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+      .dg-mbox.bad{border-color:#e7b4af;background:#fdf3f2}
+      .dg-mbox-acct{font-weight:700;font-size:12.5px;color:var(--text,#1f2933)}
+      .dg-mbox-stat{font-size:11.5px;color:var(--text-dim,#7a8493);margin-left:auto;text-align:right}
+      .dg-mbox.bad .dg-mbox-stat{color:#c40000;font-weight:600}
+      .dg-card{background:var(--card-bg,#fff);border:1px solid var(--border,#e3e7ec);border-radius:10px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+      .dg-list{list-style:none;margin:0;padding:0}
+      .dg-list li{padding:8px 0;border-bottom:1px solid var(--border,#eef0f2);font-size:13px;color:var(--text,#1f2933)}
+      .dg-list li:last-child{border-bottom:none}
+      .dg-li-sub{display:block;font-size:11.5px;color:var(--text-dim,#7a8493);margin-top:2px}
+      .dg-reco-act{cursor:pointer;color:var(--accent,#0a84ff);text-decoration:none;font-weight:600}
+      .dg-reco-act:hover{text-decoration:underline}
+      .dg-ok{color:#0a8a00;font-weight:600;font-size:13px}
+      .dg-grp{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim,#5a6473);font-weight:700;margin:10px 0 2px}
+      .dg-grp:first-child{margin-top:0}
+      .dg-m-from{font-weight:600}
+      .dg-m-time{color:var(--text-dim,#7a8493);font-size:11.5px;float:right;font-weight:400}
+      .dg-foot{margin-top:10px}
+      .dg-foot a{color:var(--accent,#0a84ff);text-decoration:none;font-weight:600;font-size:12.5px;cursor:pointer}
+      .dg-foot a:hover{text-decoration:underline}
+      .dg-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+      @media (max-width:900px){.dg-grid{grid-template-columns:1fr}}
+    </style>`;
+
+  // ----- local helpers (mirror renderNLSH; kr/num/esc are NOT global) -----
+  const num = n => (Math.round(n||0)).toLocaleString('is-IS');
+  const kr  = n => num(n) + ' kr';
+  const esc = s => escapeHtml(String(s==null?'':s));
+  // dd.mm.yyyy
+  const fmtDate = iso => {
+    if(!iso) return '—';
+    const d = new Date(iso); if(isNaN(d)) return '—';
+    return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear();
+  };
+  // íslenskur afstæður tími úr tímastimpli
+  const relTime = iso => {
+    if(!iso) return 'óþekkt';
+    const then = new Date(iso); if(isNaN(then)) return 'óþekkt';
+    const days = Math.floor((Date.now() - then.getTime())/86400000);
+    if(days <= 0) return 'í dag';
+    if(days === 1) return 'í gær';
+    return 'fyrir '+days+' dögum';
+  };
+  // af heilum dögum (úr age_days) → íslenska
+  const relDays = age => {
+    if(age == null) return 'óþekkt';
+    if(age <= 0) return 'í dag';
+    if(age === 1) return 'í gær';
+    return 'fyrir '+age+' dögum';
+  };
+  const goTab = id => { state.ui = state.ui||{}; state.ui.activeTab = id; save(); render(); };
+
+  const $meta    = document.getElementById('dg-meta');
+  const $refresh = document.getElementById('dg-refresh');
+
+  async function load(){
+    $meta.textContent = 'Sækir…';
+    if($refresh) $refresh.disabled = true;
+
+    // ---------- BAND A · Samstilling (the honest hero) ----------
+    let sources = [], recentEmails = [], emailAccounts = [];
+    const syncBox = document.getElementById('dg-sync');
+    try{
+      const r = await fetch('/api/data-sources-status');
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const j = await r.json();
+      sources = Array.isArray(j.sources) ? j.sources : [];
+      recentEmails = Array.isArray(j.recent_emails) ? j.recent_emails : [];
+      emailAccounts = Array.isArray(j.email_accounts) ? j.email_accounts : [];
+
+      syncBox.innerHTML = sources.map(s=>{
+        const st = s.status || 'unknown';
+        const age = s.age_days;
+        // Heiðarlegur úrskurður — alltaf byggt á age_days/status úr gagnagrunni.
+        let verdict;
+        if(s.key === 'email' && age != null && age >= 2){
+          verdict = '🔴 Tölvupóstur hefur ekki samstillst í '+age+' daga — líklega er bridge-tölvan (Windows) ekki í gangi.';
+        } else if(st === 'fresh'){
+          verdict = '✓ Í lagi';
+        } else if(st === 'aging'){
+          verdict = '⚠️ '+age+' daga gömul — uppfærðu fljótlega';
+        } else if(st === 'stale'){
+          verdict = '🔴 '+age+' daga gömul — þarf uppfærslu';
+        } else {
+          verdict = '❔ Engin gögn / óþekkt staða';
+        }
+        const realLine = s.newest_real
+          ? `Nýjustu gögn: <b>${fmtDate(s.newest_real)}</b>`+(age!=null?` (${relDays(age)})`:'')
+          : `Nýjustu gögn: <b>—</b>`;
+        const syncLine = s.last_import ? `Síðast samstillt: ${relTime(s.last_import)}` : 'Síðast samstillt: óþekkt';
+        return `<div class="dg-srow">
+          <div class="dg-srow-top">
+            <span class="dg-dot ${st}" title="${esc(st)}"></span>
+            <span class="dg-srow-ico">${esc(s.icon||'')}</span>
+            <span class="dg-srow-label">${esc(s.label||s.key||'')}</span>
+          </div>
+          <div class="dg-srow-real">${realLine}</div>
+          <div class="dg-srow-sync">${esc(syncLine)}</div>
+          <div class="dg-srow-verdict ${st}">${verdict}</div>
+        </div>`;
+      }).join('');
+      if(!sources.length) syncBox.innerHTML = '<div class="dg-loading">Engar gagnalindir.</div>';
+      $meta.textContent = sources.length+' gagnalindir';
+
+      // ----- 📬 Email-pósthólf — áminning um hvaða pósthólf þarf að tengja -----
+      // Sett sem systkini á eftir #dg-sync (ekki inni í grid-inu).
+      const mailHostId = 'dg-mailboxes';
+      let mailHost = document.getElementById(mailHostId);
+      if(emailAccounts.length){
+        if(!mailHost){
+          mailHost = document.createElement('div');
+          mailHost.id = mailHostId;
+          mailHost.className = 'dg-mboxes';
+          syncBox.insertAdjacentElement('afterend', mailHost);
+        }
+        const rows = emailAccounts.map(a=>{
+          const st = a.status || 'not_connected';
+          // grænn=fresh, gulur=aging, rauður=stale OG not_connected
+          const dotCls = st==='fresh' ? 'fresh' : st==='aging' ? 'aging' : 'stale';
+          const bad = (st==='stale' || st==='not_connected');
+          let line;
+          if(st==='fresh')           line = 'Tengt ✓ — nýjast '+esc(relTime(a.newest));
+          else if(st==='aging')      line = esc(relTime(a.newest));
+          else if(st==='stale')      line = '🔴 Ekki samstillt í '+esc(a.age_days)+' daga';
+          else                       line = '🔴 Ekki tengt — bæta við í Thunderbird';
+          return `<div class="dg-mbox${bad?' bad':''}">
+            <span class="dg-dot ${dotCls}" title="${esc(st)}"></span>
+            <span class="dg-mbox-acct">${esc(a.account)}</span>
+            <span class="dg-mbox-stat">${line}</span>
+          </div>`;
+        }).join('');
+        mailHost.innerHTML = '<h3 class="dg-h3" style="margin-top:16px">📬 Email-pósthólf '
+          + '<span class="dg-note">— hvaða pósthólf eru tengd</span></h3>'
+          + '<div class="dg-mbox-grid">'+rows+'</div>';
+      } else if(mailHost){
+        mailHost.remove();
+      }
+    }catch(e){
+      syncBox.innerHTML = '<div class="dg-err">Villa: '+esc(e.message||e)+'</div>';
+      $meta.textContent = 'Villa við samstillingu';
+    }
+
+    // ---------- BAND B · Claude mælir með (reiknað úr Band A) ----------
+    const recoBox = document.getElementById('dg-reco');
+    try{
+      const recs = [];
+      // Uppfærslu-ábendingar úr ferskleika
+      sources.filter(s=>s.status==='aging' || s.status==='stale').forEach(s=>{
+        const when = s.newest_real ? relTime(s.newest_real) : (s.last_import ? relTime(s.last_import) : 'óþekkt');
+        let hint = '→ Bakendi „🔄 Gagna-uppfærslur úr Drive"';
+        if(s.key === 'ajour') hint = '→ Landsspítalinn „🔄 Uppfæra gögn úr Drive"';
+        else if(s.key === 'email') hint = '→ kveiktu á bridge-tölvunni (Windows)';
+        else if(s.key === 'bank') hint = '→ flyttu inn Landsbankinn xlsx';
+        else if(s.key === 'redder') hint = '→ Bakendi / Drive efnisreikninga';
+        recs.push(`Uppfæra <b>${esc(s.label||s.key)}</b> (nýjustu gögn ${esc(when)}) <span class="dg-li-sub">${esc(hint)}</span>`);
+      });
+      // Verkstaðir án reiknings (sama endapunktur og Yfirlit notar)
+      try{
+        const wr = await fetch('/api/worksites?year=combined');
+        if(wr.ok){
+          const wj = await wr.json();
+          const n = wj?.summary?.worksites_with_no_invoice || 0;
+          if(n > 0){
+            recs.push(`<b>${n}</b> verkstaðir án reiknings — gleymt að rukka? <a class="dg-reco-act" data-go="verkstadir">Sjá Verkstaðir →</a>`);
+          }
+        }
+      }catch(_){ /* defensive — sleppum ef verkstaða-kall klikkar */ }
+
+      if(recs.length){
+        recoBox.innerHTML = '<ul class="dg-list">'+recs.map(x=>`<li>${x}</li>`).join('')+'</ul>';
+      } else {
+        recoBox.innerHTML = '<div class="dg-ok">✓ Allt í góðu — engar aðgerðir í bið.</div>';
+      }
+      recoBox.querySelectorAll('[data-go]').forEach(a=> a.onclick = ()=> goTab(a.dataset.go));
+    }catch(e){
+      recoBox.innerHTML = '<div class="dg-err">Villa: '+esc(e.message||e)+'</div>';
+    }
+
+    // ---------- BAND C · Nýjustu póstar ----------
+    const mailBox = document.getElementById('dg-mail');
+    try{
+      if(!recentEmails.length){
+        mailBox.innerHTML = '<div class="dg-loading">Engir nýlegir póstar (eða e-mail samstilling úti).</div>';
+      } else {
+        const newest = recentEmails[0];
+        const head = `<div class="dg-li-sub" style="margin-bottom:6px">${recentEmails.length} nýjustu — nýjasti ${esc(relTime(newest.received_at))}.</div>`;
+        const list = '<ul class="dg-list">'+recentEmails.slice(0,5).map(m=>`
+          <li><span class="dg-m-time">${esc(relTime(m.received_at))}</span>
+            <span class="dg-m-from">${esc(m.from||'—')}</span>
+            <span class="dg-li-sub">${esc(m.subject||'(án efnis)')}</span></li>`).join('')+'</ul>';
+        mailBox.innerHTML = head + list + '<div class="dg-foot"><a data-go="inbox">→ Opna Inbox</a></div>';
+        mailBox.querySelectorAll('[data-go]').forEach(a=> a.onclick = ()=> goTab(a.dataset.go));
+      }
+    }catch(e){
+      mailBox.innerHTML = '<div class="dg-err">Villa: '+esc(e.message||e)+'</div>';
+    }
+
+    if($refresh) $refresh.disabled = false;
+  }
+
+  // ---------- BAND D · Verkefni (úr state — engin API) ----------
+  function renderTodos(){
+    const box = document.getElementById('dg-todo');
+    if(!box) return;
+    try{
+      const groups = []; // {label, items:[text]}
+      let openCount = 0;
+      // Mín verkefni (checklist [{text,done,group}])
+      const mv = (state.tabs||[]).find(x=>x.id==='minverkefni');
+      if(mv && Array.isArray(mv.checklist)){
+        const byGroup = {};
+        mv.checklist.filter(it=>it && !it.done).forEach(it=>{
+          const g = it.group || 'Mín verkefni';
+          (byGroup[g] = byGroup[g] || []).push(it.text||'');
+          openCount++;
+        });
+        Object.keys(byGroup).forEach(g=> groups.push({label:g, items:byGroup[g]}));
+      }
+      // Anni & Aggi (twoCol.{Aggi,Anni}.items [{text,done}])
+      const ok = (state.tabs||[]).find(x=>x.id==='okkarVerkefni');
+      if(ok && ok.twoCol){
+        ['Anni','Aggi'].forEach(who=>{
+          const items = (ok.twoCol[who] && Array.isArray(ok.twoCol[who].items)) ? ok.twoCol[who].items : [];
+          const open = items.filter(it=>it && !it.done).map(it=>it.text||'');
+          if(open.length){ groups.push({label:who, items:open}); openCount += open.length; }
+        });
+      }
+      if(!groups.length){
+        box.innerHTML = '<div class="dg-ok">✓ Engin opin verkefni.</div>';
+        return;
+      }
+      // cap ~8 items across groups
+      let shown = 0; const cap = 8; let html = '';
+      for(const g of groups){
+        if(shown >= cap) break;
+        html += `<div class="dg-grp">${esc(g.label)}</div><ul class="dg-list">`;
+        for(const it of g.items){
+          if(shown >= cap) break;
+          html += `<li>${esc(it)}</li>`;
+          shown++;
+        }
+        html += '</ul>';
+      }
+      const more = openCount > shown ? ` <span class="dg-li-sub">(+${openCount-shown} til viðbótar)</span>` : '';
+      box.innerHTML = `<div class="dg-li-sub" style="margin-bottom:6px">(${openCount} opin)${more}</div>`
+        + html
+        + '<div class="dg-foot"><a data-go="minverkefni">→ Mín verkefni</a></div>';
+      box.querySelectorAll('[data-go]').forEach(a=> a.onclick = ()=> goTab(a.dataset.go));
+    }catch(e){
+      box.innerHTML = '<div class="dg-err">Villa: '+esc(e.message||e)+'</div>';
+    }
+  }
+
+  if($refresh) $refresh.onclick = load;
+  renderTodos();
   load();
 }
 
