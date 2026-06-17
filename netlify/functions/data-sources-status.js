@@ -101,6 +101,30 @@ exports.handler = async (event) => {
     }
   } catch (_) { recent_emails = []; }
 
+  // ----- Per-mailbox connection status (reminder of which accounts to connect) -----
+  // One entry per EXPECTED business mailbox; status from the newest received_at.
+  let email_accounts = [];
+  try {
+    const EXPECTED = [
+      'eldklar@eldklar.is', 'Brunaholf@brunaholf.is', 'bokhald@brunaholf.is',
+      'brunaholfehf@gmail.com', 'bokhald@eldklar.is', 'aggi@brunaholf.is',
+    ];
+    email_accounts = await Promise.all(EXPECTED.map(async (acct) => {
+      const rows = await get(
+        'email_digest?account=eq.' + encodeURIComponent(acct) +
+        '&select=received_at&order=received_at.desc.nullslast&limit=1'
+      );
+      const newest = rows?.[0]?.received_at ?? null;
+      const age_days = ageDays(newest);
+      let status;
+      if (newest == null) status = 'not_connected';
+      else if (age_days <= 2) status = 'fresh';
+      else if (age_days <= 14) status = 'aging';
+      else status = 'stale';
+      return { account: acct, newest, age_days, status };
+    }));
+  } catch (_) { email_accounts = []; }
+
   const sources = [
     {
       key: 'timavera', label: 'Tímavera klst',
@@ -159,6 +183,7 @@ exports.handler = async (event) => {
   return json(200, {
     sources,
     recent_emails,
+    email_accounts,
     fetched_at: new Date().toISOString(),
   });
 };
