@@ -1501,6 +1501,7 @@ const BAKENDI_LINK_SEED = [
 const DEFAULT_STATE = {
   bakendiLinks: BAKENDI_LINK_SEED.map(x=>({...x})),
   tabs: [
+    {id:'dagurinn',   label:'Dagurinn',   icon:'🌅'},
     {id:'yfirlit',    label:'Yfirlit',    icon:'🏠'},
     {id:'stjornbord', label:'Stjórnborð', icon:'🎛'},
     {id:'leidsogn',   label:'Leiðsögn',   icon:'🧭'},
@@ -1786,13 +1787,16 @@ function clearDataCache(){
 function ensureNewTabs(s){
   if(!s || !Array.isArray(s.tabs)) return;
   if(!Array.isArray(s.bakendiLinks)) s.bakendiLinks = BAKENDI_LINK_SEED.map(x=>({...x}));
-  ['stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','skuldunautar','hreyfingaryfirlit','nlsh','spurningar','bakendi'].forEach(id=>{
+  ['dagurinn','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','skuldunautar','hreyfingaryfirlit','nlsh','spurningar','bakendi'].forEach(id=>{
     if(!s.tabs.find(t=>t.id===id)){
       const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
       if(d){
         // Tab order: reikningar → gerdreikninga → vinnubok → vinnustofa → verdskra → efniskostnadur
         let target;
-        if(id === 'stjornbord'){
+        if(id === 'dagurinn'){
+          // Dagurinn is the landing page — pin it to the very front.
+          target = 0;
+        } else if(id === 'stjornbord'){
           // Stjórnborð sits right under Yfirlit (top of the sidebar).
           const idx = s.tabs.findIndex(t=>t.id==='yfirlit');
           target = idx >= 0 ? idx + 1 : 0;
@@ -2143,6 +2147,7 @@ function render(){
   const t = activeTab();
   $brandTitle.textContent = t.label;
   document.body.dataset.tab = t.id;
+  if(t.id==='dagurinn') return renderDagurinn(t);
   if(t.id==='yfirlit') return renderYfirlit(t);
   if(t.id==='stjornbord') return renderStjornbord(t);
   if(t.id==='leidsogn') return renderLeidsogn(t);
@@ -8687,6 +8692,278 @@ async function renderSkuldunautar(t){
     };
   }
   document.getElementById('sk-refresh').addEventListener('click', load);
+  load();
+}
+
+// 🌅 Dagurinn — heiðarleg byrjunarsíða. ENGIN fölsk „lifandi" merki:
+// hvert ástand er RAUNVERULEGUR tímastimpill úr gagnagrunninum.
+async function renderDagurinn(t){
+  $view.innerHTML = `
+    <div class="rg-wrap">
+      <div class="rg-header">
+        <div>
+          <h1 class="rg-h1">🌅 Dagurinn <span class="rg-sub" id="dg-meta">Sækir…</span></h1>
+          <div class="rg-sub-line">Heiðarlegt yfirlit — engin „lifandi" merki, hvert ástand er raunverulegur tímastimpill úr gagnagrunninum.</div>
+        </div>
+        <div class="rg-controls">
+          <button id="dg-refresh" class="tv-btn" type="button"><span class="tv-refresh-icon">↻</span> Sækja</button>
+        </div>
+      </div>
+
+      <h3 class="dg-h3">🔄 Samstilling <span class="dg-note">— hversu fersk eru gögnin í raun</span></h3>
+      <div id="dg-sync" class="dg-sync"><div class="dg-loading">Sækir…</div></div>
+
+      <h3 class="dg-h3">💡 Claude mælir með</h3>
+      <div id="dg-reco" class="dg-card"><div class="dg-loading">Sækir…</div></div>
+
+      <div class="dg-grid">
+        <div class="dg-col">
+          <h3 class="dg-h3">📧 Nýjustu póstar</h3>
+          <div id="dg-mail" class="dg-card"><div class="dg-loading">Sækir…</div></div>
+        </div>
+        <div class="dg-col">
+          <h3 class="dg-h3">✅ Verkefni</h3>
+          <div id="dg-todo" class="dg-card"></div>
+        </div>
+      </div>
+    </div>
+    <style>
+      .dg-h3{font-size:14px;font-weight:700;margin:18px 0 9px;color:var(--text,#1f2933)}
+      .dg-note{font-size:11px;font-weight:400;color:var(--text-dim,#7a8493)}
+      .dg-loading{color:var(--text-dim,#7a8493);font-size:13px;padding:6px 2px}
+      .dg-err{color:#c40000;font-size:13px;padding:6px 2px}
+      .dg-sync{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+      .dg-srow{background:var(--card-bg,#fff);border:1px solid var(--border,#e3e7ec);border-radius:10px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+      .dg-srow-top{display:flex;align-items:center;gap:8px}
+      .dg-dot{width:11px;height:11px;border-radius:50%;flex:none;box-shadow:0 0 0 3px rgba(0,0,0,.04)}
+      .dg-dot.fresh{background:#23a857}
+      .dg-dot.aging{background:#e8a200}
+      .dg-dot.stale{background:#d63b30}
+      .dg-dot.unknown{background:#9aa3af}
+      .dg-srow-ico{font-size:16px}
+      .dg-srow-label{font-weight:700;font-size:13.5px;color:var(--text,#1f2933)}
+      .dg-srow-real{font-size:12.5px;color:var(--text,#1f2933);margin-top:7px}
+      .dg-srow-real b{font-weight:700}
+      .dg-srow-sync{font-size:11px;color:var(--text-dim,#7a8493);margin-top:2px}
+      .dg-srow-verdict{font-size:12px;margin-top:6px;font-weight:600}
+      .dg-srow-verdict.fresh{color:#0a8a00}
+      .dg-srow-verdict.aging{color:#a96900}
+      .dg-srow-verdict.stale,.dg-srow-verdict.unknown{color:#c40000}
+      .dg-card{background:var(--card-bg,#fff);border:1px solid var(--border,#e3e7ec);border-radius:10px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+      .dg-list{list-style:none;margin:0;padding:0}
+      .dg-list li{padding:8px 0;border-bottom:1px solid var(--border,#eef0f2);font-size:13px;color:var(--text,#1f2933)}
+      .dg-list li:last-child{border-bottom:none}
+      .dg-li-sub{display:block;font-size:11.5px;color:var(--text-dim,#7a8493);margin-top:2px}
+      .dg-reco-act{cursor:pointer;color:var(--accent,#0a84ff);text-decoration:none;font-weight:600}
+      .dg-reco-act:hover{text-decoration:underline}
+      .dg-ok{color:#0a8a00;font-weight:600;font-size:13px}
+      .dg-grp{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim,#5a6473);font-weight:700;margin:10px 0 2px}
+      .dg-grp:first-child{margin-top:0}
+      .dg-m-from{font-weight:600}
+      .dg-m-time{color:var(--text-dim,#7a8493);font-size:11.5px;float:right;font-weight:400}
+      .dg-foot{margin-top:10px}
+      .dg-foot a{color:var(--accent,#0a84ff);text-decoration:none;font-weight:600;font-size:12.5px;cursor:pointer}
+      .dg-foot a:hover{text-decoration:underline}
+      .dg-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+      @media (max-width:900px){.dg-grid{grid-template-columns:1fr}}
+    </style>`;
+
+  // ----- local helpers (mirror renderNLSH; kr/num/esc are NOT global) -----
+  const num = n => (Math.round(n||0)).toLocaleString('is-IS');
+  const kr  = n => num(n) + ' kr';
+  const esc = s => escapeHtml(String(s==null?'':s));
+  // dd.mm.yyyy
+  const fmtDate = iso => {
+    if(!iso) return '—';
+    const d = new Date(iso); if(isNaN(d)) return '—';
+    return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear();
+  };
+  // íslenskur afstæður tími úr tímastimpli
+  const relTime = iso => {
+    if(!iso) return 'óþekkt';
+    const then = new Date(iso); if(isNaN(then)) return 'óþekkt';
+    const days = Math.floor((Date.now() - then.getTime())/86400000);
+    if(days <= 0) return 'í dag';
+    if(days === 1) return 'í gær';
+    return 'fyrir '+days+' dögum';
+  };
+  // af heilum dögum (úr age_days) → íslenska
+  const relDays = age => {
+    if(age == null) return 'óþekkt';
+    if(age <= 0) return 'í dag';
+    if(age === 1) return 'í gær';
+    return 'fyrir '+age+' dögum';
+  };
+  const goTab = id => { state.ui = state.ui||{}; state.ui.activeTab = id; save(); render(); };
+
+  const $meta    = document.getElementById('dg-meta');
+  const $refresh = document.getElementById('dg-refresh');
+
+  async function load(){
+    $meta.textContent = 'Sækir…';
+    if($refresh) $refresh.disabled = true;
+
+    // ---------- BAND A · Samstilling (the honest hero) ----------
+    let sources = [], recentEmails = [];
+    const syncBox = document.getElementById('dg-sync');
+    try{
+      const r = await fetch('/api/data-sources-status');
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const j = await r.json();
+      sources = Array.isArray(j.sources) ? j.sources : [];
+      recentEmails = Array.isArray(j.recent_emails) ? j.recent_emails : [];
+
+      syncBox.innerHTML = sources.map(s=>{
+        const st = s.status || 'unknown';
+        const age = s.age_days;
+        // Heiðarlegur úrskurður — alltaf byggt á age_days/status úr gagnagrunni.
+        let verdict;
+        if(s.key === 'email' && age != null && age >= 2){
+          verdict = '🔴 Tölvupóstur hefur ekki samstillst í '+age+' daga — líklega er bridge-tölvan (Windows) ekki í gangi.';
+        } else if(st === 'fresh'){
+          verdict = '✓ Í lagi';
+        } else if(st === 'aging'){
+          verdict = '⚠️ '+age+' daga gömul — uppfærðu fljótlega';
+        } else if(st === 'stale'){
+          verdict = '🔴 '+age+' daga gömul — þarf uppfærslu';
+        } else {
+          verdict = '❔ Engin gögn / óþekkt staða';
+        }
+        const realLine = s.newest_real
+          ? `Nýjustu gögn: <b>${fmtDate(s.newest_real)}</b>`+(age!=null?` (${relDays(age)})`:'')
+          : `Nýjustu gögn: <b>—</b>`;
+        const syncLine = s.last_import ? `Síðast samstillt: ${relTime(s.last_import)}` : 'Síðast samstillt: óþekkt';
+        return `<div class="dg-srow">
+          <div class="dg-srow-top">
+            <span class="dg-dot ${st}" title="${esc(st)}"></span>
+            <span class="dg-srow-ico">${esc(s.icon||'')}</span>
+            <span class="dg-srow-label">${esc(s.label||s.key||'')}</span>
+          </div>
+          <div class="dg-srow-real">${realLine}</div>
+          <div class="dg-srow-sync">${esc(syncLine)}</div>
+          <div class="dg-srow-verdict ${st}">${verdict}</div>
+        </div>`;
+      }).join('');
+      if(!sources.length) syncBox.innerHTML = '<div class="dg-loading">Engar gagnalindir.</div>';
+      $meta.textContent = sources.length+' gagnalindir';
+    }catch(e){
+      syncBox.innerHTML = '<div class="dg-err">Villa: '+esc(e.message||e)+'</div>';
+      $meta.textContent = 'Villa við samstillingu';
+    }
+
+    // ---------- BAND B · Claude mælir með (reiknað úr Band A) ----------
+    const recoBox = document.getElementById('dg-reco');
+    try{
+      const recs = [];
+      // Uppfærslu-ábendingar úr ferskleika
+      sources.filter(s=>s.status==='aging' || s.status==='stale').forEach(s=>{
+        const when = s.newest_real ? relTime(s.newest_real) : (s.last_import ? relTime(s.last_import) : 'óþekkt');
+        let hint = '→ Bakendi „🔄 Gagna-uppfærslur úr Drive"';
+        if(s.key === 'ajour') hint = '→ Landsspítalinn „🔄 Uppfæra gögn úr Drive"';
+        else if(s.key === 'email') hint = '→ kveiktu á bridge-tölvunni (Windows)';
+        else if(s.key === 'bank') hint = '→ flyttu inn Landsbankinn xlsx';
+        else if(s.key === 'redder') hint = '→ Bakendi / Drive efnisreikninga';
+        recs.push(`Uppfæra <b>${esc(s.label||s.key)}</b> (nýjustu gögn ${esc(when)}) <span class="dg-li-sub">${esc(hint)}</span>`);
+      });
+      // Verkstaðir án reiknings (sama endapunktur og Yfirlit notar)
+      try{
+        const wr = await fetch('/api/worksites?year=combined');
+        if(wr.ok){
+          const wj = await wr.json();
+          const n = wj?.summary?.worksites_with_no_invoice || 0;
+          if(n > 0){
+            recs.push(`<b>${n}</b> verkstaðir án reiknings — gleymt að rukka? <a class="dg-reco-act" data-go="verkstadir">Sjá Verkstaðir →</a>`);
+          }
+        }
+      }catch(_){ /* defensive — sleppum ef verkstaða-kall klikkar */ }
+
+      if(recs.length){
+        recoBox.innerHTML = '<ul class="dg-list">'+recs.map(x=>`<li>${x}</li>`).join('')+'</ul>';
+      } else {
+        recoBox.innerHTML = '<div class="dg-ok">✓ Allt í góðu — engar aðgerðir í bið.</div>';
+      }
+      recoBox.querySelectorAll('[data-go]').forEach(a=> a.onclick = ()=> goTab(a.dataset.go));
+    }catch(e){
+      recoBox.innerHTML = '<div class="dg-err">Villa: '+esc(e.message||e)+'</div>';
+    }
+
+    // ---------- BAND C · Nýjustu póstar ----------
+    const mailBox = document.getElementById('dg-mail');
+    try{
+      if(!recentEmails.length){
+        mailBox.innerHTML = '<div class="dg-loading">Engir nýlegir póstar (eða e-mail samstilling úti).</div>';
+      } else {
+        const newest = recentEmails[0];
+        const head = `<div class="dg-li-sub" style="margin-bottom:6px">${recentEmails.length} nýjustu — nýjasti ${esc(relTime(newest.received_at))}.</div>`;
+        const list = '<ul class="dg-list">'+recentEmails.slice(0,5).map(m=>`
+          <li><span class="dg-m-time">${esc(relTime(m.received_at))}</span>
+            <span class="dg-m-from">${esc(m.from||'—')}</span>
+            <span class="dg-li-sub">${esc(m.subject||'(án efnis)')}</span></li>`).join('')+'</ul>';
+        mailBox.innerHTML = head + list + '<div class="dg-foot"><a data-go="inbox">→ Opna Inbox</a></div>';
+        mailBox.querySelectorAll('[data-go]').forEach(a=> a.onclick = ()=> goTab(a.dataset.go));
+      }
+    }catch(e){
+      mailBox.innerHTML = '<div class="dg-err">Villa: '+esc(e.message||e)+'</div>';
+    }
+
+    if($refresh) $refresh.disabled = false;
+  }
+
+  // ---------- BAND D · Verkefni (úr state — engin API) ----------
+  function renderTodos(){
+    const box = document.getElementById('dg-todo');
+    if(!box) return;
+    try{
+      const groups = []; // {label, items:[text]}
+      let openCount = 0;
+      // Mín verkefni (checklist [{text,done,group}])
+      const mv = (state.tabs||[]).find(x=>x.id==='minverkefni');
+      if(mv && Array.isArray(mv.checklist)){
+        const byGroup = {};
+        mv.checklist.filter(it=>it && !it.done).forEach(it=>{
+          const g = it.group || 'Mín verkefni';
+          (byGroup[g] = byGroup[g] || []).push(it.text||'');
+          openCount++;
+        });
+        Object.keys(byGroup).forEach(g=> groups.push({label:g, items:byGroup[g]}));
+      }
+      // Anni & Aggi (twoCol.{Aggi,Anni}.items [{text,done}])
+      const ok = (state.tabs||[]).find(x=>x.id==='okkarVerkefni');
+      if(ok && ok.twoCol){
+        ['Anni','Aggi'].forEach(who=>{
+          const items = (ok.twoCol[who] && Array.isArray(ok.twoCol[who].items)) ? ok.twoCol[who].items : [];
+          const open = items.filter(it=>it && !it.done).map(it=>it.text||'');
+          if(open.length){ groups.push({label:who, items:open}); openCount += open.length; }
+        });
+      }
+      if(!groups.length){
+        box.innerHTML = '<div class="dg-ok">✓ Engin opin verkefni.</div>';
+        return;
+      }
+      // cap ~8 items across groups
+      let shown = 0; const cap = 8; let html = '';
+      for(const g of groups){
+        if(shown >= cap) break;
+        html += `<div class="dg-grp">${esc(g.label)}</div><ul class="dg-list">`;
+        for(const it of g.items){
+          if(shown >= cap) break;
+          html += `<li>${esc(it)}</li>`;
+          shown++;
+        }
+        html += '</ul>';
+      }
+      const more = openCount > shown ? ` <span class="dg-li-sub">(+${openCount-shown} til viðbótar)</span>` : '';
+      box.innerHTML = `<div class="dg-li-sub" style="margin-bottom:6px">(${openCount} opin)${more}</div>`
+        + html
+        + '<div class="dg-foot"><a data-go="minverkefni">→ Mín verkefni</a></div>';
+      box.querySelectorAll('[data-go]').forEach(a=> a.onclick = ()=> goTab(a.dataset.go));
+    }catch(e){
+      box.innerHTML = '<div class="dg-err">Villa: '+esc(e.message||e)+'</div>';
+    }
+  }
+
+  if($refresh) $refresh.onclick = load;
+  renderTodos();
   load();
 }
 

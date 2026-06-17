@@ -39,6 +39,17 @@ data from Ajour, Google Drive/Sheets/Gmail integration, and a tilbod
 
 Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
 
+- `dagurinn` — **🌅 Dagurinn** front-page starter (first tab, the landing page,
+  renderDagurinn). Honest daily dashboard — **never a fake "live" label**; every
+  status is a real DB timestamp. Four bands: **🔄 Samstilling** (sync health from
+  `/api/data-sources-status` — per source a traffic-light dot + "Nýjustu gögn"
+  (`newest_real`) vs "Síðast samstillt" (`last_import`) + a plain-Icelandic
+  verdict; email ≥2 days flags the bridge-tölva being off), **💡 Claude mælir
+  með** (recommendations computed client-side: aging/stale sources → uppfæra,
+  plus `summary.worksites_with_no_invoice` from `/api/worksites?year=combined`),
+  **📧 Nýjustu póstar** (`recent_emails`), **✅ Verkefni** (open to-dos read from
+  `state` — `minverkefni.checklist` + `okkarVerkefni.twoCol`). Buttons switch
+  tabs via `state.ui.activeTab=…; save(); render()`.
 - `yfirlit` — front page / dashboard. Includes an **Útistandandi** band
   (óinnheimt + verkstaðir án reiknings) pulling `summary.total_unpaid` +
   `summary.worksites_with_no_invoice` live from `/api/worksites?year=combined`;
@@ -184,6 +195,15 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   export grouped per Reikningur nr.; tilvisun=nr + source='payday' dedup;
   fills kt/gjalddagi/eindagi/greidsla_date; NEVER writes worksite_match) —
   both behind buttons in the Bakendi „🔄 Gagna-uppfærslur úr Drive" section.
+- `data-sources-status.js` — `GET /api/data-sources-status` freshness report
+  per source (Tímavera/Ajour/bank/invoices/Redder/email). Each source now returns
+  both `last_import` (when last SYNCED) **and** `newest_real` (the newest REAL
+  data date — e.g. `max(timavera_entries.date)`, `max(ajour.execution_date)`,
+  `max(bank.trans_date)`); for time-data sources `age_days`/`status` are based on
+  `newest_real` so a file re-imported "today" with old rows is not falsely
+  "fresh". Also returns `recent_emails` (5 newest from `email_digest`:
+  `{subject, from(=sender_name), sender_email, received_at, account}`). Powers the
+  🌅 Dagurinn tab's Samstilling band.
 - `reikningar-read.js` + `reikningar-sheet.js` — Bakendi **Reikningalesari** for
   SENT Slökkvitæki invoice PDFs (default folder
   `1TDusB2NLhr-OMLnojSk3iw0oiuiuFMLM` = "slökkvitæki - Reikningar - Master").
