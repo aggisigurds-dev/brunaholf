@@ -2648,6 +2648,38 @@ function renderBakendi(t){
         </div>
         <div style="font-size:11.5px;color:#64748b;margin-top:5px">Leitað eftir skráarnafni: „vinnufærslur" / „payday" — nýjasta útgáfan vinnur. Payday-innlestur snertir ekki worksite_match (handvirkt viðhaldið).</div>
       </div>
+
+      <div style="margin-top:24px;border-top:1px solid #e2e8f0;padding-top:18px">
+        <div class="group-title"><strong>☁️ Gmail úr skýi</strong><div class="line"></div></div>
+        <p style="color:#475569;font-size:13px;line-height:1.5;margin:0 0 12px;max-width:680px">
+          Sækir póst <b>beint frá Google</b> (Gmail API) inn í <code>email_digest</code> — sama tafla og
+          Inbox/Spurningar nota. Þannig þarf <b>ekki</b> lengur að treysta á Thunderbird/luna-bridge á
+          tölvunni fyrir Google-pósthólf. Forgangs-pósthólf: <b>eldklar@eldklar.is</b> (Slökkvitæki).
+          <br>Athugið: aðeins er hægt að sækja það Google-pósthólf sem er <b>tengt núna</b> — til að sækja
+          eldklar@eldklar.is þarftu að tengja Google sem það pósthólf.
+        </p>
+        <div style="border:1px solid #e2e8f0;border-radius:11px;padding:14px 15px;max-width:680px">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+            <span id="bk-gm-conn" style="font-size:12.5px;color:#64748b">Athuga tengingu…</span>
+            <button id="bk-gm-connect" class="btn">✦ Tengja pósthólf (Google)</button>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <label style="font-size:12px;color:#475569">Pósthólf:</label>
+            <input id="bk-gm-account" placeholder="eldklar@eldklar.is" style="${inp};flex:1;min-width:220px">
+            <label style="font-size:12px;color:#475569">Dagar aftur:</label>
+            <input id="bk-gm-days" value="10" style="${inp};width:70px">
+            <label style="font-size:12px;color:#475569;display:inline-flex;align-items:center;gap:5px">
+              <input id="bk-gm-dry" type="checkbox" checked> Prufa (engin skrif)
+            </label>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px 0 6px">
+          <button id="bk-gm-run" class="btn primary">⬇️ Sækja núna</button>
+          <span id="bk-gm-status" style="font-size:12.5px;color:#64748b"></span>
+        </div>
+        <div style="font-size:11.5px;color:#64748b;margin-top:2px">Sækir „in:inbox newer_than:&lt;dagar&gt;d" og upsertar á <code>message_id</code> (engin tvítök). Síðar: Microsoft&nbsp;Graph fyrir @brunaholf.is.</div>
+        <div id="bk-gm-results"></div>
+      </div>
     </div>`;
 
   // ── Mínir Sheet-tenglar (vistaðir tenglar, samstilltir á öll tæki) ────────
@@ -2718,6 +2750,94 @@ function renderBakendi(t){
   };
   $dry.onclick = () => runBakendi(true);
   $run.onclick = () => runBakendi(false);
+
+  // ── Gmail úr skýi (sækir póst beint frá Google → email_digest) ────────────
+  const $gmConn = document.getElementById('bk-gm-conn');
+  const $gmConnect = document.getElementById('bk-gm-connect');
+  const $gmAccount = document.getElementById('bk-gm-account');
+  const $gmDays = document.getElementById('bk-gm-days');
+  const $gmDry = document.getElementById('bk-gm-dry');
+  const $gmRun = document.getElementById('bk-gm-run');
+  const $gmStatus = document.getElementById('bk-gm-status');
+  const $gmResults = document.getElementById('bk-gm-results');
+  const GM_PRIORITY = 'eldklar@eldklar.is';
+
+  // Show which Google account is connected; default the account box to it (or to
+  // the priority mailbox if nothing is connected yet).
+  async function gmCheckConn(){
+    try {
+      const r = await fetch('/api/google-auth?status=1');
+      const d = await r.json();
+      if (d.connected) {
+        $gmConn.innerHTML = '✓ Tengt: <b>' + escapeHtml(d.user_email || 'óþekkt') + '</b>';
+        $gmConn.style.color = '#16a34a';
+        if (!$gmAccount.value.trim()) $gmAccount.value = d.user_email || GM_PRIORITY;
+      } else if (d.expired) {
+        $gmConn.innerHTML = '⚠ Google tenging útrunnin (' + escapeHtml(d.user_email || '') + ') — tengdu aftur';
+        $gmConn.style.color = '#b45309';
+        if (!$gmAccount.value.trim()) $gmAccount.value = GM_PRIORITY;
+      } else {
+        $gmConn.innerHTML = 'Ekkert Google-pósthólf tengt — smelltu „Tengja pósthólf".';
+        $gmConn.style.color = '#64748b';
+        if (!$gmAccount.value.trim()) $gmAccount.value = GM_PRIORITY;
+      }
+    } catch(e) {
+      $gmConn.textContent = 'Tenging: villa';
+      $gmConn.style.color = '#dc2626';
+    }
+  }
+  gmCheckConn();
+  $gmConnect.onclick = startGoogleReauth;   // same consent flow — connect AS the desired mailbox
+
+  $gmRun.onclick = async () => {
+    const account = ($gmAccount.value || '').trim();
+    const days = Math.min(Math.max(parseInt($gmDays.value, 10) || 10, 1), 90);
+    const dry = !!$gmDry.checked;
+    $gmRun.disabled = true;
+    $gmStatus.textContent = dry ? 'Prufa…' : 'Sæki…';
+    $gmResults.innerHTML = '<div class="empty">Vinnur… sæki póst frá Google.</div>';
+    try {
+      const qs = new URLSearchParams({ days: String(days) });
+      if (account) qs.set('account', account);
+      if (dry) qs.set('dry', '1');
+      const r = await fetch('/api/gmail-ingest?' + qs.toString());
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+      $gmResults.innerHTML = gmResultsHtml(d);
+      $gmStatus.textContent = d.dry
+        ? '🔍 Prufa búin — ekkert vistað.'
+        : ('✓ Búið. Vistað ' + (d.upserted || 0) + ' póstar.');
+    } catch (e) {
+      $gmResults.insertAdjacentHTML('beforeend', bkErr(e));
+      $gmStatus.textContent = '';
+    } finally {
+      $gmRun.disabled = false;
+    }
+  };
+
+  function gmResultsHtml(d){
+    const chip = (label, val) => '<span style="display:inline-block;background:#f1f5f9;border-radius:7px;padding:3px 9px;margin:0 6px 6px 0;font-size:12px">' + escapeHtml(label) + ': <b>' + escapeHtml(String(val)) + '</b></span>';
+    let h = '<div style="margin-top:12px">';
+    h += chip('Pósthólf', d.account || '?');
+    h += chip('Fundnir', d.listed != null ? d.listed : '?');
+    h += chip(d.dry ? 'Lesnir' : 'Vistaðir', d.dry ? (d.mapped != null ? d.mapped : '?') : (d.upserted != null ? d.upserted : '?'));
+    if (d.questions != null) h += chip('Spurningar', d.questions);
+    if (d.errors) h += chip('Villur', d.errors);
+    h += '</div>';
+    if (Array.isArray(d.samples) && d.samples.length) {
+      h += '<table style="width:100%;border-collapse:collapse;margin-top:8px;font-size:12.5px"><thead><tr style="text-align:left;color:#64748b"><th style="padding:5px 8px">Efni</th><th style="padding:5px 8px">Frá</th><th style="padding:5px 8px">Dags</th></tr></thead><tbody>';
+      for (const s of d.samples) {
+        const dt = s.received_at ? new Date(s.received_at).toLocaleDateString('is-IS') : '';
+        h += '<tr style="border-top:1px solid #eef2f7">'
+          + '<td style="padding:5px 8px">' + (s.is_question ? '❓ ' : '') + escapeHtml(s.subject || '') + '</td>'
+          + '<td style="padding:5px 8px;color:#475569">' + escapeHtml(s.from || '') + '</td>'
+          + '<td style="padding:5px 8px;color:#64748b">' + escapeHtml(dt) + '</td></tr>';
+      }
+      h += '</tbody></table>';
+    }
+    if (d.note) h += '<div style="font-size:11.5px;color:#64748b;margin-top:7px">' + escapeHtml(d.note) + '</div>';
+    return h;
+  }
 
   // ── Netföng úr sendum reikningum (.eml) ──────────────────────────────────
   const $emlFolders = document.getElementById('bk-eml-folders');

@@ -204,6 +204,26 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   "fresh". Also returns `recent_emails` (5 newest from `email_digest`:
   `{subject, from(=sender_name), sender_email, received_at, account}`). Powers the
   🌅 Dagurinn tab's Samstilling band.
+- `gmail-ingest.js` — **Cloud email (Gmail úr skýi), phase 1.** `GET
+  /api/gmail-ingest?account=<email>&days=N&dry=1`. Pulls Gmail **straight from
+  Google** (Gmail API `users.messages.list q="in:inbox newer_than:Nd"` →
+  `messages.get` metadata) into `email_digest`, so the hub no longer needs the
+  Thunderbird/luna-bridge desktop path for Google mailboxes. Writes the **exact
+  same `email_digest` record shape** as `luna-bridge/bridge.js` (`message_id`,
+  `account`, `folder='INBOX'`, `sender_name/email`, `to_addresses`, `subject`,
+  `snippet`, `body_preview`, `is_question` [ported `looksLikeQuestion`],
+  `has_attachment`, `attachment_names`, `received_at`) and upserts
+  `on_conflict=message_id` (no dupes — bridge and cloud are interchangeable).
+  `dry=1` returns a preview (counts + sample subjects), writes nothing. `days`
+  default 10, max 90. **Single-account constraint:** `_google.js` stores ONE
+  token row (`id=1`) and `freshAccessToken()` returns that account — so this can
+  only pull the **currently connected** Google account. The `account` param is a
+  guard: if it doesn't match the connected `user_email` it 409s loudly rather
+  than pulling the wrong mailbox. To pull **eldklar@eldklar.is** (priority — 95%
+  of the Slökkvitæki side), connect Google AS eldklar@eldklar.is via
+  `/api/google-auth`. Wired to the Bakendi „☁️ Gmail úr skýi" section. Next:
+  multi-account (a `google_oauth` row per email) and Microsoft Graph for the
+  @brunaholf.is (Office 365) mailboxes.
 - `reikningar-read.js` + `reikningar-sheet.js` — Bakendi **Reikningalesari** for
   SENT Slökkvitæki invoice PDFs (default folder
   `1TDusB2NLhr-OMLnojSk3iw0oiuiuFMLM` = "slökkvitæki - Reikningar - Master").
@@ -223,6 +243,15 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   Inbox + Spurningar tabs and worksite email-mention matching.
 - `email_actions`: per-email triage state (status/priority/notes) for
   Spurningar.
+- **Two ingest paths into `email_digest` (interchangeable — same `message_id`
+  dedupe):** (1) the desktop **luna-bridge/bridge.js** (Thunderbird mbox →
+  upsert, runs every 15 min on the Windows tölva); (2) **cloud** —
+  `gmail-ingest.js` (`/api/gmail-ingest`) pulls Gmail directly via the Gmail API
+  (no desktop needed). The cloud direction is: **Gmail API now** (Google
+  mailboxes, eldklar@eldklar.is first), **Microsoft Graph later** for the
+  Office-365 @brunaholf.is mailboxes. Goal is to stop depending on the
+  bridge-tölva being on (which the 🌅 Dagurinn tab flags when email is ≥2 days
+  stale).
 
 ## Invoicing model
 
