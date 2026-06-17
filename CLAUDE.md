@@ -99,6 +99,18 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   per group, copy-link, and drag-to-reorder without entering edit mode. Buttons
   live in `state.buttons` (`tab:'reikningatenglar'`), curated defaults seeded via
   `ensureNewTabs` + a `loadState` migration so existing users get the tab.
+- `sjalfvirkni` — **⚙️ Sjálfvirkni** automation control board (renderSjalfvirkni;
+  sits in the control-panel area, just above Bakendi). Reads `/api/automations` and
+  renders one card per enabled `automation_jobs` row: a status dot from the latest
+  `automation_runs` (success=green, error=red, running=amber, no-run=grey), the
+  label + small `name`, „Síðast keyrt: <afstæður tími> · <detail>" (or „Aldrei
+  keyrt"), the schedule, a 📋 „Afrita skipun" button (copies `command`, e.g.
+  `run_workflow ajour-nlsh`) and a 🔗 „Afrita hlekk" button (copies
+  `location.origin + '/#sjalfvirkni/' + name`). A small „➕ Skrá nýja sjálfvirkni"
+  form (name/label/command/schedule) POSTs `{action:'register'}` then reloads;
+  „↻ Sækja" refreshes. Wired in the 3 standard spots (`DEFAULT_STATE.tabs`,
+  `ensureNewTabs`, the `render()` dispatcher). Reuses global `escapeHtml`; local
+  `esc`/`relTime` helpers like renderDagurinn.
 
 > The `reikningar` tab is currently a placeholder. The Reikningagerð
 > (invoicing prep) work is being built on top of it — see Open work below.
@@ -252,6 +264,27 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   Office-365 @brunaholf.is mailboxes. Goal is to stop depending on the
   bridge-tölva being on (which the 🌅 Dagurinn tab flags when email is ≥2 days
   stale).
+
+### Sjálfvirkni (automation registry + run log)
+- `automation_jobs` — one row per registered automation: `name` (UNIQUE), `label`,
+  `description`, `command` (copy-paste run command, e.g. `run_workflow ajour-nlsh`),
+  `url`, `schedule`, `runner`, `enabled` bool, `created_at`, `updated_at`. Seeded:
+  `name='ajour-nlsh'`.
+- `automation_runs` — run-status log: `job_name`, `status` (`running|success|error`),
+  `detail`, `source`, `started_at`, `finished_at` (DB default now()). Index on
+  `(job_name, finished_at desc)` — the GET pulls the latest run per job from it.
+- Endpoint: `netlify/functions/automations.js` → `/api/automations` (mirrors the
+  `debtors.js` REST pattern — `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`, CORS,
+  `json()`/`sbFetch()` helpers).
+  - `GET` → `{ jobs:[ {…automation_jobs fields…, last_run:{status,detail,source,
+    finished_at}|null } ] }` — only `enabled=true` jobs, each with its single newest
+    `automation_runs` row.
+  - `POST { action, … }`: `register` (upsert `automation_jobs` ON CONFLICT(name),
+    `Prefer: resolution=merge-duplicates`, never overwrites existing cols with null);
+    `run` (insert one `automation_runs` row — `{job_name,status,detail,source,
+    started_at?,finished_at?}`, DB fills `finished_at` when omitted); `toggle`
+    (PATCH `automation_jobs.enabled`).
+- UI: the ⚙️ Sjálfvirkni tab (`renderSjalfvirkni`) — see Tabs above.
 
 ## Invoicing model
 

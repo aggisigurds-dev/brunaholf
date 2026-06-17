@@ -313,6 +313,12 @@
   to = "/.netlify/functions/debtors"
   status = 200
 
+# Sjálfvirkni — automation registry + run-status log (GET list / POST register|run|toggle)
+[[redirects]]
+  from = "/api/automations"
+  to = "/.netlify/functions/automations"
+  status = 200
+
 # Hreyfingaryfirlit — per-customer account statement (invoices vs payments + bank)
 [[redirects]]
   from = "/api/hreyfingar"

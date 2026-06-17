@@ -1562,6 +1562,7 @@ const DEFAULT_STATE = {
     {id:'verdskra', label:'Verðskrá', icon:'💰'},
     {id:'efniskostnadur', label:'Efniskostnaður', icon:'📦'},
     {id:'utgjold',    label:'Útgjöld',    icon:'💸', sheetCsv:''},
+    {id:'sjalfvirkni', label:'Sjálfvirkni', icon:'⚙️'},
     {id:'bakendi',    label:'Bakendi',    icon:'🗄'},
     {id:'stillingar', label:'Stillingar', icon:'⚙️'}
   ],
@@ -1787,7 +1788,7 @@ function clearDataCache(){
 function ensureNewTabs(s){
   if(!s || !Array.isArray(s.tabs)) return;
   if(!Array.isArray(s.bakendiLinks)) s.bakendiLinks = BAKENDI_LINK_SEED.map(x=>({...x}));
-  ['dagurinn','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','skuldunautar','hreyfingaryfirlit','nlsh','spurningar','bakendi'].forEach(id=>{
+  ['dagurinn','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','skuldunautar','hreyfingaryfirlit','nlsh','spurningar','sjalfvirkni','bakendi'].forEach(id=>{
     if(!s.tabs.find(t=>t.id===id)){
       const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
       if(d){
@@ -1800,6 +1801,12 @@ function ensureNewTabs(s){
           // Stjórnborð sits right under Yfirlit (top of the sidebar).
           const idx = s.tabs.findIndex(t=>t.id==='yfirlit');
           target = idx >= 0 ? idx + 1 : 0;
+        } else if(id === 'sjalfvirkni'){
+          // Sjálfvirkni sits in the control-panel area, just above Bakendi
+          // (else above Stillingar).
+          const idx = s.tabs.findIndex(t=>t.id==='bakendi');
+          const idx2 = s.tabs.findIndex(t=>t.id==='stillingar');
+          target = idx >= 0 ? idx : (idx2 >= 0 ? idx2 : -1);
         } else if(id === 'bakendi'){
           // Bakendi sits at the bottom, just above Stillingar.
           const idx = s.tabs.findIndex(t=>t.id==='stillingar');
@@ -2172,6 +2179,7 @@ function render(){
   if(t.id==='nlsh') return renderNLSH(t);
   if(t.id==='efniskostnadur') return renderEfniskostnadur(t);
   if(t.id==='bakendi') return renderBakendi(t);
+  if(t.id==='sjalfvirkni') return renderSjalfvirkni(t);
   if(t.id==='reikningatenglar') return renderReikningatenglar(t);
   if(t.checklist!==undefined) return renderChecklist(t);
   if(t.sheetCsv!==undefined) return renderListTab(t);
@@ -9125,6 +9133,195 @@ async function renderDagurinn(t){
 
   if($refresh) $refresh.onclick = load;
   renderTodos();
+  load();
+}
+
+async function renderSjalfvirkni(t){
+  $view.innerHTML = `
+    <div class="rg-wrap">
+      <div class="rg-header">
+        <div>
+          <h1 class="rg-h1">⚙️ Sjálfvirkni <span class="rg-sub" id="sv-meta">Sækir…</span></h1>
+          <div class="rg-sub-line">Stjórnborð fyrir sjálfvirknina — hvaða ferli eru skráð, hvenær þau keyrðu síðast og með hvaða árangri. Afritaðu keyrsluskipun eða hlekk til að deila.</div>
+        </div>
+        <div class="rg-controls">
+          <button id="sv-refresh" class="tv-btn" type="button"><span class="tv-refresh-icon">↻</span> Sækja</button>
+        </div>
+      </div>
+      <div id="sv-cards" class="sv-cards"><div class="sv-loading">Sækir…</div></div>
+
+      <h3 class="sv-h3">➕ Skrá nýja sjálfvirkni</h3>
+      <div class="sv-form" id="sv-form">
+        <input id="sv-f-name"     class="sv-in" type="text" placeholder="name (einkvæmt, t.d. ajour-nlsh)">
+        <input id="sv-f-label"    class="sv-in" type="text" placeholder="Heiti (Sýnt á spjaldinu)">
+        <input id="sv-f-command"  class="sv-in" type="text" placeholder="Skipun (t.d. run_workflow ajour-nlsh)">
+        <input id="sv-f-schedule" class="sv-in" type="text" placeholder="Áætlun (t.d. tvisvar á dag / handvirkt)">
+        <button id="sv-f-save" class="tv-btn" type="button">Skrá</button>
+      </div>
+      <div id="sv-form-msg" class="sv-form-msg"></div>
+    </div>
+    <style>
+      .sv-h3{font-size:14px;font-weight:700;margin:20px 0 10px;color:var(--text,#1f2933)}
+      .sv-loading{color:var(--text-dim,#7a8493);font-size:13px;padding:6px 2px}
+      .sv-err{color:#c40000;font-size:13px;padding:6px 2px}
+      .sv-empty{color:var(--text-dim,#7a8493);font-size:13px;padding:6px 2px}
+      .sv-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+      .sv-card{background:var(--card-bg,#fff);border:1px solid var(--border,#e3e7ec);border-radius:11px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+      .sv-card-top{display:flex;align-items:center;gap:9px}
+      .sv-dot{width:12px;height:12px;border-radius:50%;flex:none;box-shadow:0 0 0 3px rgba(0,0,0,.04)}
+      .sv-dot.success{background:#23a857}
+      .sv-dot.error{background:#d63b30}
+      .sv-dot.running{background:#e8a200}
+      .sv-dot.none{background:#9aa3af}
+      .sv-card-label{font-weight:700;font-size:14px;color:var(--text,#1f2933)}
+      .sv-card-name{font-size:11px;color:var(--text-dim,#7a8493);margin-top:1px}
+      .sv-card-desc{font-size:12.5px;color:var(--text,#1f2933);margin-top:9px}
+      .sv-card-last{font-size:12.5px;color:var(--text,#1f2933);margin-top:9px}
+      .sv-card-last b{font-weight:700}
+      .sv-card-last.never{color:var(--text-dim,#7a8493)}
+      .sv-card-detail{display:block;font-size:11.5px;color:var(--text-dim,#7a8493);margin-top:2px}
+      .sv-card-sched{font-size:11.5px;color:var(--text-dim,#7a8493);margin-top:7px}
+      .sv-card-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+      .sv-cbtn{font-size:12px;font-weight:600;border:1px solid var(--border,#d6dbe1);background:var(--card-bg,#fff);color:var(--text,#1f2933);border-radius:8px;padding:6px 10px;cursor:pointer}
+      .sv-cbtn:hover{background:var(--hover,#f3f5f7)}
+      .sv-cbtn:disabled{opacity:.55;cursor:default}
+      .sv-form{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+      .sv-in{flex:1 1 180px;min-width:140px;font-size:13px;padding:8px 11px;border:1px solid var(--border,#d6dbe1);border-radius:8px;background:var(--card-bg,#fff);color:var(--text,#1f2933)}
+      .sv-form-msg{font-size:12.5px;margin-top:8px;min-height:16px}
+      .sv-form-msg.ok{color:#0a8a00;font-weight:600}
+      .sv-form-msg.bad{color:#c40000;font-weight:600}
+    </style>`;
+
+  // ----- local helpers (mirror renderDagurinn; kr/num/esc are NOT global) -----
+  const esc = s => escapeHtml(String(s==null?'':s));
+  // íslenskur afstæður tími úr tímastimpli
+  const relTime = iso => {
+    if(!iso) return 'óþekkt';
+    const then = new Date(iso); if(isNaN(then)) return 'óþekkt';
+    const diff = Date.now() - then.getTime();
+    const mins = Math.floor(diff/60000);
+    if(mins < 1) return 'rétt í þessu';
+    if(mins < 60) return 'fyrir '+mins+' mín';
+    const hrs = Math.floor(mins/60);
+    if(hrs < 24) return 'fyrir '+hrs+' klst';
+    const days = Math.floor(hrs/24);
+    if(days === 1) return 'í gær';
+    return 'fyrir '+days+' dögum';
+  };
+
+  const $meta    = document.getElementById('sv-meta');
+  const $refresh = document.getElementById('sv-refresh');
+  const $cards   = document.getElementById('sv-cards');
+
+  // copy helper with button-text feedback (mirrors the NLSH share button)
+  async function copyToClipboard(btn, text, okLabel){
+    const orig = btn.textContent;
+    try{
+      await navigator.clipboard.writeText(text);
+      btn.textContent = okLabel || '✓ Afritað';
+      setTimeout(()=>{ btn.textContent = orig; }, 1500);
+    }catch(_){
+      window.prompt('Afritaðu:', text);
+    }
+  }
+
+  async function load(){
+    $meta.textContent = 'Sækir…';
+    if($refresh) $refresh.disabled = true;
+    $cards.innerHTML = '<div class="sv-loading">Sækir…</div>';
+    let jobs = [];
+    try{
+      const r = await fetch('/api/automations');
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const j = await r.json();
+      jobs = Array.isArray(j.jobs) ? j.jobs : [];
+    }catch(e){
+      $cards.innerHTML = '<div class="sv-err">Villa: '+esc(e.message||e)+'</div>';
+      $meta.textContent = 'Villa';
+      if($refresh) $refresh.disabled = false;
+      return;
+    }
+
+    if(!jobs.length){
+      $cards.innerHTML = '<div class="sv-empty">Engin sjálfvirkni skráð enn — skráðu þá fyrstu hér að neðan.</div>';
+    } else {
+      $cards.innerHTML = jobs.map(job=>{
+        const lr = job.last_run;
+        const st = lr ? (lr.status || 'none') : 'none';
+        const dotCls = (st==='success'||st==='error'||st==='running') ? st : 'none';
+        let lastLine;
+        if(lr){
+          const det = lr.detail ? `<span class="sv-card-detail">${esc(lr.detail)}</span>` : '';
+          const src = lr.source ? ' · '+esc(lr.source) : '';
+          lastLine = `<div class="sv-card-last">Síðast keyrt: <b>${esc(relTime(lr.finished_at))}</b>${src}${det}</div>`;
+        } else {
+          lastLine = `<div class="sv-card-last never">Aldrei keyrt</div>`;
+        }
+        const desc  = job.description ? `<div class="sv-card-desc">${esc(job.description)}</div>` : '';
+        const sched = job.schedule ? `<div class="sv-card-sched">⏱ ${esc(job.schedule)}</div>` : '';
+        const cmd   = job.command || '';
+        const cmdBtn = cmd
+          ? `<button class="sv-cbtn" type="button" data-copy-cmd="${esc(cmd)}">📋 Afrita skipun</button>`
+          : `<button class="sv-cbtn" type="button" disabled title="Engin skipun skráð">📋 Afrita skipun</button>`;
+        return `<div class="sv-card">
+          <div class="sv-card-top">
+            <span class="sv-dot ${dotCls}" title="${esc(st)}"></span>
+            <div>
+              <div class="sv-card-label">${esc(job.label||job.name||'')}</div>
+              <div class="sv-card-name">${esc(job.name||'')}</div>
+            </div>
+          </div>
+          ${desc}
+          ${lastLine}
+          ${sched}
+          <div class="sv-card-btns">
+            ${cmdBtn}
+            <button class="sv-cbtn" type="button" data-copy-link="${esc(job.name||'')}">🔗 Afrita hlekk</button>
+          </div>
+        </div>`;
+      }).join('');
+      // wire copy buttons
+      $cards.querySelectorAll('[data-copy-cmd]').forEach(b=>{
+        b.onclick = ()=> copyToClipboard(b, b.getAttribute('data-copy-cmd'), '✓ Skipun afrituð');
+      });
+      $cards.querySelectorAll('[data-copy-link]').forEach(b=>{
+        const link = location.origin + '/#sjalfvirkni/' + b.getAttribute('data-copy-link');
+        b.onclick = ()=> copyToClipboard(b, link, '✓ Hlekkur afritaður');
+      });
+    }
+    $meta.textContent = jobs.length + (jobs.length===1 ? ' sjálfvirkni' : ' sjálfvirkni');
+    if($refresh) $refresh.disabled = false;
+  }
+
+  // ---- skráningarform ----
+  const $msg = document.getElementById('sv-form-msg');
+  const $save = document.getElementById('sv-f-save');
+  if($save) $save.onclick = async ()=>{
+    const name     = (document.getElementById('sv-f-name').value||'').trim();
+    const label    = (document.getElementById('sv-f-label').value||'').trim();
+    const command  = (document.getElementById('sv-f-command').value||'').trim();
+    const schedule = (document.getElementById('sv-f-schedule').value||'').trim();
+    if(!name){ $msg.className='sv-form-msg bad'; $msg.textContent='Sláðu inn name (einkvæmt).'; return; }
+    $save.disabled = true; $msg.className='sv-form-msg'; $msg.textContent='Skrái…';
+    try{
+      const r = await fetch('/api/automations', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ action:'register', job:{ name, label:label||name, command, schedule } })
+      });
+      const j = await r.json().catch(()=>({}));
+      if(!r.ok || j.error) throw new Error(j.error || ('HTTP '+r.status));
+      $msg.className='sv-form-msg ok'; $msg.textContent='✓ Skráð.';
+      document.getElementById('sv-f-name').value='';
+      document.getElementById('sv-f-label').value='';
+      document.getElementById('sv-f-command').value='';
+      document.getElementById('sv-f-schedule').value='';
+      await load();
+    }catch(e){
+      $msg.className='sv-form-msg bad'; $msg.textContent='Villa: '+(e.message||e);
+    }finally{ $save.disabled = false; }
+  };
+
+  if($refresh) $refresh.onclick = load;
   load();
 }
 
