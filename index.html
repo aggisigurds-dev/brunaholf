@@ -2728,6 +2728,9 @@ function renderBakendi(t){
             + (c.unmatched ? (' · ' + c.unmatched + ' ótengd') : '') + '</option>';
         }).join('');
         setSt(cs.length + ' fyrirtæki í þjónustu', '#16a34a');
+        // Deep-link from slökkvitæki: /#bakendi/<base_id> preselects that company.
+        const want = (location.hash || '').replace(/^#\/?/, '').split('/')[1];
+        if (want && cs.some(c => String(c.base_id) === String(want))) { $co.value = want; loadBoard(want); }
       } catch (e) { setSt('Villa: ' + e.message, '#dc2626'); }
     }
 
