@@ -112,32 +112,39 @@ async function companyDetail(baseId) {
   return { company: base, locations, docs };
 }
 
-// ── Address suggestion (a hint only — the user is the matcher) ─────────────────
+// ── Address suggestion ─────────────────────────────────────────────────────────
+// Single-location company → that site is the unambiguous answer for every doc.
+// Multi-site → only suggest on a strong match (street stem + postcode/number), so
+// mangled "uttekt-master" rows with no real address stay manual.
 function normAddr(s) {
   return String(s || '').toLowerCase()
     .replace(/\([^)]*\)/g, ' ')          // drop parentheticals like "(V Hringbrautar)"
     .replace(/\b\d{6}-?\d{4}\b/g, ' ')    // drop kennitala
     .replace(/[.,]/g, ' ').replace(/\s+/g, ' ').trim();
 }
-function addrTokens(s) {
-  const n = normAddr(s);
-  const post = (n.match(/\b(\d{3})\b/) || [])[1] || '';
-  const m = n.match(/([a-záéíóúýðþæö]{3,})\s*(\d+)?/);
-  return { street: m ? m[1] : '', num: m && m[2] ? m[2] : '', post };
+function siteKey(addr) {
+  const n = normAddr(addr);
+  const street = (n.match(/([a-záéíóúýðþæö]{4,})/) || ['', ''])[1];
+  const num = (n.match(/[a-záéíóúýðþæö]\s+(\d{1,3})(?:\D|$)/) || ['', ''])[1];
+  const post = (n.match(/\b(\d{3})\b/) || ['', ''])[1];
+  return { stem: street.slice(0, 6), num, post };
 }
 function suggestLoc(filename, locations) {
-  const d = addrTokens(filename);
-  if (!d.street) return null;
+  if (!locations.length) return null;
+  if (locations.length === 1) return locations[0].id;            // single site → unambiguous
+  const f = normAddr(filename);
+  const fpost = (f.match(/\b(\d{3})\b/) || ['', ''])[1];
   let best = null, bestScore = 0;
   for (const loc of locations) {
-    const l = addrTokens(loc.heimilisfang);
+    const k = siteKey(loc.heimilisfang);
+    if (!k.stem || k.stem.length < 4) continue;
     let score = 0;
-    if (l.street && (l.street.startsWith(d.street.slice(0, 5)) || d.street.startsWith(l.street.slice(0, 5)))) score += 3;
-    if (l.post && d.post && l.post === d.post) score += 2;
-    if (l.num && d.num && l.num === d.num) score += 1;
+    if (f.indexOf(k.stem) !== -1) score += 3;                    // site street stem in filename
+    if (k.post && fpost && k.post === fpost) score += 2;
+    if (k.num && new RegExp('(?:^|\\D)' + k.num + '(?:\\D|$)').test(f)) score += 1;
     if (score > bestScore) { bestScore = score; best = loc; }
   }
-  return bestScore >= 3 ? best.id : null;   // require at least a street match
+  return bestScore >= 4 ? best.id : null;   // multi-site: need street + (postcode or number)
 }
 
 // ── Writes ────────────────────────────────────────────────────────────────────

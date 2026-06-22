@@ -2472,7 +2472,7 @@ function renderBakendi(t){
       <div class="group-title"><strong>🔗 Skýrslu-stöð — tengja skýrslur við staði</strong><div class="line"></div></div>
       <p style="color:#475569;font-size:13px;line-height:1.5;margin:0 0 12px;max-width:720px">
         Veldu fyrirtæki í þjónustu, opnaðu hverja <b>skýrslu/reikning</b> (📄) og settu <b>réttan stað + ár</b> — ýttu svo á <b>✓ Staðfest</b>.
-        Mörg skráarnöfn eru röng eftir gamla lesarann (⚠ merkt), svo <b>PDF-ið ræður — ekki nafnið</b>. Ekkert er skrifað sjálfvirkt; aðeins það sem þú staðfestir.
+        Mörg skráarnöfn eru röng eftir gamla lesarann (⚠ merkt), svo <b>PDF-ið ræður — ekki nafnið</b>. Augljós pörun (t.d. fyrirtæki með einn stað) er <b>forfyllt sem gul tillaga</b> — ekkert vistast fyrr en þú ýtir á 🔗 Tengja eða ✓ Staðfest.
       </p>
       <div style="display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin:0 0 12px">
         <select id="bk-st-company" style="${inp};min-width:300px"><option value="">— sæki fyrirtæki… —</option></select>
@@ -2749,7 +2749,9 @@ function renderBakendi(t){
         + esc(l.heimilisfang || l.nafn) + '</option>').join('');
     }
     function docRow(d){
-      const suggest = (!d.fyrirtaeki_id && d.suggest_loc_id) ? LOCS.find(l => String(l.id) === String(d.suggest_loc_id)) : null;
+      const suggested = !d.fyrirtaeki_id && d.suggest_loc_id;
+      const selVal = d.fyrirtaeki_id || (suggested ? d.suggest_loc_id : '');
+      const locStyle = 'min-width:170px;padding:4px 6px;border:1px solid ' + (suggested ? '#fbbf24' : '#cbd5e1') + ';border-radius:6px;font:inherit;font-size:12px' + (suggested ? ';background:#fffbeb' : '');
       const icon = d.doc_type === 'reikningur' ? '🧾' : (d.doc_type === 'samningur' ? '📜' : '📄');
       const cell = 'padding:6px 8px';
       return '<tr data-id="' + d.id + '" style="border-top:1px solid #eef2f7' + (d.reviewed ? ';background:#f0fdf4' : '') + '">'
@@ -2759,8 +2761,8 @@ function renderBakendi(t){
         + '<td style="' + cell + ';font-size:12px;color:' + (d.mangled ? '#b45309' : '#334155') + '">' + (d.mangled ? '⚠ ' : '') + esc(d.filename) + '</td>'
         + '<td style="' + cell + ';text-align:center">' + icon + '</td>'
         + '<td style="' + cell + '"><input class="st-year" value="' + esc(d.year) + '" style="width:60px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:12px"></td>'
-        + '<td style="' + cell + '"><select class="st-loc" style="min-width:170px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:12px">' + locOptions(d.fyrirtaeki_id) + '</select>'
-          + (suggest ? (' <button class="st-suggest btn" data-loc="' + suggest.id + '" style="padding:2px 7px;font-size:11px" title="Tillaga út frá nafni — yfirfara">↪ ' + esc(suggest.heimilisfang || suggest.nafn) + '</button>') : '') + '</td>'
+        + '<td style="' + cell + '"><select class="st-loc" style="' + locStyle + '">' + locOptions(selVal) + '</select>'
+          + (suggested ? ' <span style="font-size:10.5px;color:#b45309" title="Sjálfvirk tillaga — yfirfaraðu og tengdu/staðfestu">tillaga</span>' : '') + '</td>'
         + '<td style="' + cell + ';text-align:center"><input type="checkbox" class="st-dup"' + (d.is_duplicate ? ' checked' : '') + ' title="Tvítak"></td>'
         + '<td style="' + cell + ';text-align:center"><input type="checkbox" class="st-rev"' + (d.reviewed ? ' checked' : '') + ' title="Staðfest"></td>'
         + '</tr>';
@@ -2768,11 +2770,16 @@ function renderBakendi(t){
     function renderBoard(){
       if (!COMPANY) { $board.innerHTML = ''; return; }
       const unmatched = DOCS.filter(d => !d.fyrirtaeki_id && !d.is_duplicate).length;
-      const head = '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 8px">'
+      const nConnect = DOCS.filter(d => !d.fyrirtaeki_id && d.suggest_loc_id).length;
+      const nConfirm = DOCS.filter(d => d.fyrirtaeki_id && !d.reviewed).length;
+      const head = '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 8px">'
         + '<strong style="font-size:14px">' + esc(COMPANY.nafn) + '</strong>'
         + '<span style="font-size:12px;color:#64748b">' + esc(COMPANY.kennitala) + '</span>'
-        + (unmatched ? ('<span style="font-size:12px;color:#b45309">· ' + unmatched + ' ótengd skjöl</span>') : '')
-        + '<button id="bk-st-addsite" class="btn" style="margin-left:auto;padding:4px 10px;font-size:12px">➕ Nýr staður</button></div>';
+        + (unmatched ? ('<span style="font-size:12px;color:#b45309">· ' + unmatched + ' ótengd</span>') : '')
+        + '<span style="margin-left:auto"></span>'
+        + (nConnect ? '<button id="bk-st-connect" class="btn primary" style="padding:4px 10px;font-size:12px" title="Tengja allar gular tillögur">🔗 Tengja öll augljós (' + nConnect + ')</button>' : '')
+        + (nConfirm ? '<button id="bk-st-confirm" class="btn" style="padding:4px 10px;font-size:12px" title="Merkja öll tengd skjöl staðfest">✓ Staðfesta öll tengd (' + nConfirm + ')</button>' : '')
+        + '<button id="bk-st-addsite" class="btn" style="padding:4px 10px;font-size:12px">➕ Nýr staður</button></div>';
       if (!DOCS.length) { $board.innerHTML = head + '<div style="color:#64748b;font-size:13px;padding:10px">Engin skjöl.</div>'; wireHead(); return; }
       $board.innerHTML = head
         + '<div style="overflow:auto;border:1px solid #e2e8f0;border-radius:10px"><table style="width:100%;border-collapse:collapse;font-size:13px">'
@@ -2783,7 +2790,32 @@ function renderBakendi(t){
         + '<tbody>' + DOCS.map(docRow).join('') + '</tbody></table></div>';
       wireHead();
     }
-    function wireHead(){ const b = document.getElementById('bk-st-addsite'); if (b) b.addEventListener('click', addSite); }
+    function wireHead(){
+      const a = document.getElementById('bk-st-addsite'); if (a) a.addEventListener('click', addSite);
+      const c = document.getElementById('bk-st-connect'); if (c) c.addEventListener('click', connectObvious);
+      const f = document.getElementById('bk-st-confirm'); if (f) f.addEventListener('click', confirmLinked);
+    }
+    async function batchSave(items){
+      setSt('Vista ' + items.length + '…');
+      for (let i = 0; i < items.length; i += 6)
+        await Promise.all(items.slice(i, i + 6).map(it => fetch('/api/match-station', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(Object.assign({ action: 'save', id: it.id }, it.patch)) })));
+    }
+    async function connectObvious(){
+      if (!COMPANY) return;
+      const items = DOCS.filter(d => !d.fyrirtaeki_id && d.suggest_loc_id).map(d => ({ id: d.id, patch: { fyrirtaeki_id: d.suggest_loc_id } }));
+      if (!items.length) return;
+      try { await batchSave(items); await loadBoard(COMPANY.id); setSt('Tengdi ' + items.length + ' skjöl ✓ — yfirfaraðu og staðfestu', '#16a34a'); }
+      catch (e) { setSt('Villa: ' + e.message, '#dc2626'); }
+    }
+    async function confirmLinked(){
+      if (!COMPANY) return;
+      const items = DOCS.filter(d => d.fyrirtaeki_id && !d.reviewed).map(d => ({ id: d.id, patch: { reviewed: true } }));
+      if (!items.length) return;
+      try { await batchSave(items); await loadBoard(COMPANY.id); setSt('Staðfesti ' + items.length + ' skjöl ✓', '#16a34a'); }
+      catch (e) { setSt('Villa: ' + e.message, '#dc2626'); }
+    }
 
     async function save(id, patch){
       try {
@@ -2806,12 +2838,6 @@ function renderBakendi(t){
       if (d) Object.assign(d, patch);
       tr.style.background = patch.reviewed ? '#f0fdf4' : '';
       save(id, patch);
-    });
-    $board.addEventListener('click', (e) => {
-      const sg = e.target.closest('.st-suggest'); if (!sg) return;
-      const sel = sg.closest('tr[data-id]').querySelector('.st-loc');
-      sel.value = sg.getAttribute('data-loc');
-      sel.dispatchEvent(new Event('change', { bubbles: true }));
     });
     async function addSite(){
       if (!COMPANY) return;
