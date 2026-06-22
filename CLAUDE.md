@@ -260,8 +260,19 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   company → `{company, locations, docs[]}`) · `POST {action:'save', id,
   fyrirtaeki_id, year, is_duplicate, reviewed}` (PATCH one doc) · `POST
   {action:'add-site', base_id, nafn, heimilisfang}` (create a missing
-  `fyrirtaeki` location). Added `customer_documents.reviewed bool` + `reviewed_at`
-  (additive). `er_i_thjonustu` service companies drive the picker.
+  `fyrirtaeki` location) · `POST {action:'delete', id}` (remove ONE tracking row —
+  e.g. a confirmed duplicate; the Drive file is kept). Added
+  `customer_documents.reviewed bool` + `reviewed_at` (additive). `er_i_thjonustu`
+  service companies drive the picker. The board **splits docs into 📄
+  Úttektarskýrslur vs 🧾 Reikningar** (never mixed). Suggestions carry a
+  **confidence**: `high` (single-site, or street+postcode address match) is
+  amber + bulk-connectable via „🔗 Tengja öll augljós"; `low` (a name/parenthetical
+  hint off a mangled „uttekt-master" name — incl. the `(V Hringbrautar)` 2023
+  batch) is a dashed „tillaga?" that pre-fills but is **excluded from bulk-connect**
+  (open the PDF + confirm). Per-row 🗑 removes a row; „✓ Staðfesta öll tengd"
+  bulk-marks reviewed. NB a blind duplicate purge is unsafe — the 52 flagged
+  „dups" include distinct sites mis-addressed to one location (Pizzan 2023,
+  Center Hótel Arnarhvoll), so dedup is by-eye via 🗑.
 
 ### Email
 - `email_digest` (~29k rows): all emails from connected Gmail accounts

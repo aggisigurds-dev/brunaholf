@@ -2752,9 +2752,11 @@ function renderBakendi(t){
         + esc(l.heimilisfang || l.nafn) + '</option>').join('');
     }
     function docRow(d){
-      const suggested = !d.fyrirtaeki_id && d.suggest_loc_id;
+      const sHigh = !d.fyrirtaeki_id && d.suggest_loc_id && d.suggest_conf === 'high';
+      const sLow  = !d.fyrirtaeki_id && d.suggest_loc_id && d.suggest_conf === 'low';
+      const suggested = sHigh || sLow;
       const selVal = d.fyrirtaeki_id || (suggested ? d.suggest_loc_id : '');
-      const locStyle = 'min-width:170px;padding:4px 6px;border:1px solid ' + (suggested ? '#fbbf24' : '#cbd5e1') + ';border-radius:6px;font:inherit;font-size:12px' + (suggested ? ';background:#fffbeb' : '');
+      const locStyle = 'min-width:170px;padding:4px 6px;border:' + (sLow ? '1px dashed #94a3b8' : '1px solid ' + (sHigh ? '#fbbf24' : '#cbd5e1')) + ';border-radius:6px;font:inherit;font-size:12px' + (sHigh ? ';background:#fffbeb' : (sLow ? ';background:#f8fafc' : ''));
       const icon = d.doc_type === 'reikningur' ? '🧾' : (d.doc_type === 'samningur' ? '📜' : '📄');
       const cell = 'padding:6px 8px';
       return '<tr data-id="' + d.id + '" style="border-top:1px solid #eef2f7' + (d.reviewed ? ';background:#f0fdf4' : '') + '">'
@@ -2765,9 +2767,10 @@ function renderBakendi(t){
         + '<td style="' + cell + ';text-align:center">' + icon + '</td>'
         + '<td style="' + cell + '"><input class="st-year" value="' + esc(d.year) + '" style="width:60px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:12px"></td>'
         + '<td style="' + cell + '"><select class="st-loc" style="' + locStyle + '">' + locOptions(selVal) + '</select>'
-          + (suggested ? ' <span style="font-size:10.5px;color:#b45309" title="Sjálfvirk tillaga — yfirfaraðu og tengdu/staðfestu">tillaga</span>' : '') + '</td>'
+          + (sHigh ? ' <span style="font-size:10.5px;color:#b45309" title="Sjálfvirk tillaga (heimilisfang passar)">tillaga</span>'
+             : (sLow ? ' <span style="font-size:10.5px;color:#64748b" title="Veik tillaga út frá nafni — opnaðu PDF og staðfestu">tillaga?</span>' : '')) + '</td>'
         + '<td style="' + cell + ';text-align:center"><input type="checkbox" class="st-dup"' + (d.is_duplicate ? ' checked' : '') + ' title="Tvítak"></td>'
-        + '<td style="' + cell + ';text-align:center"><input type="checkbox" class="st-rev"' + (d.reviewed ? ' checked' : '') + ' title="Staðfest"></td>'
+        + '<td style="' + cell + ';text-align:center;white-space:nowrap"><input type="checkbox" class="st-rev"' + (d.reviewed ? ' checked' : '') + ' title="Staðfest"> <button class="st-del" type="button" title="Fjarlægja skráningu (PDF helst í Drive)" style="border:0;background:none;cursor:pointer;color:#cbd5e1;font-size:13px;padding:0 2px">🗑</button></td>'
         + '</tr>';
     }
     const THEAD = '<thead><tr style="background:#f8fafc;color:#475569;font-size:11px;text-transform:uppercase;letter-spacing:.03em">'
@@ -2783,7 +2786,7 @@ function renderBakendi(t){
     function renderBoard(){
       if (!COMPANY) { $board.innerHTML = ''; return; }
       const unmatched = DOCS.filter(d => !d.fyrirtaeki_id && !d.is_duplicate).length;
-      const nConnect = DOCS.filter(d => !d.fyrirtaeki_id && d.suggest_loc_id).length;
+      const nConnect = DOCS.filter(d => !d.fyrirtaeki_id && d.suggest_loc_id && d.suggest_conf === 'high').length;
       const nConfirm = DOCS.filter(d => d.fyrirtaeki_id && !d.reviewed).length;
       const head = '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 8px">'
         + '<strong style="font-size:14px">' + esc(COMPANY.nafn) + '</strong>'
@@ -2814,7 +2817,7 @@ function renderBakendi(t){
     }
     async function connectObvious(){
       if (!COMPANY) return;
-      const items = DOCS.filter(d => !d.fyrirtaeki_id && d.suggest_loc_id).map(d => ({ id: d.id, patch: { fyrirtaeki_id: d.suggest_loc_id } }));
+      const items = DOCS.filter(d => !d.fyrirtaeki_id && d.suggest_loc_id && d.suggest_conf === 'high').map(d => ({ id: d.id, patch: { fyrirtaeki_id: d.suggest_loc_id } }));
       if (!items.length) return;
       try { await batchSave(items); await loadBoard(COMPANY.id); setSt('Tengdi ' + items.length + ' skjöl ✓ — yfirfaraðu og staðfestu', '#16a34a'); }
       catch (e) { setSt('Villa: ' + e.message, '#dc2626'); }
@@ -2850,6 +2853,17 @@ function renderBakendi(t){
       tr.style.background = '#dbeafe';
       setTimeout(() => { tr.style.background = patch.reviewed ? '#f0fdf4' : ''; }, 450);
       save(id, patch);
+    });
+    $board.addEventListener('click', async (e) => {
+      const del = e.target.closest('.st-del'); if (!del) return;
+      const tr = del.closest('tr[data-id]'); if (!tr) return;
+      const id = tr.getAttribute('data-id');
+      if (!confirm('Fjarlægja þessa skráningu af listanum?\n(PDF-ið helst í Google Drive)')) return;
+      try {
+        const r = await fetch('/api/match-station', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete', id }) });
+        const d = await r.json(); if (!r.ok) throw new Error(d.error || r.status);
+        DOCS = DOCS.filter(x => String(x.id) !== String(id)); renderBoard(); setSt('Fjarlægt ✓', '#16a34a');
+      } catch (e) { setSt('Villa: ' + e.message, '#dc2626'); }
     });
     async function addSite(){
       if (!COMPANY) return;

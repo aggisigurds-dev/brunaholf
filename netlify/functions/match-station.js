@@ -27,6 +27,7 @@ exports.handler = async (event) => {
     if (event.httpMethod === 'POST') {
       let body = {}; try { body = JSON.parse(event.body || '{}'); } catch {}
       if (body.action === 'save')     return json(200, await saveDoc(body));
+      if (body.action === 'delete')   return json(200, await deleteDoc(body));
       if (body.action === 'add-site') return json(200, await addSite(body));
       return json(400, { error: 'unknown action' });
     }
@@ -93,6 +94,7 @@ async function companyDetail(baseId) {
 
   const docs = raw.map(d => {
     const filename = String(d.notes || '').split(' · ')[0] || '(óþekkt skrá)';
+    const sug = suggestLoc(filename, locations);
     return {
       id: d.id,
       drive_file_id: d.drive_file_id || null,
@@ -101,7 +103,8 @@ async function companyDetail(baseId) {
       is_duplicate: !!d.is_duplicate, reviewed: !!d.reviewed,
       invoice_number: d.invoice_number || null, amount: d.amount || null,
       filename,
-      suggest_loc_id: suggestLoc(filename, locations),
+      suggest_loc_id: sug ? sug.id : null,
+      suggest_conf: sug ? sug.conf : null,
       mangled: /uttekt-master|MATCH\s*\d/i.test(filename),
     };
   }).sort((a, b) =>
@@ -129,10 +132,22 @@ function siteKey(addr) {
   const post = (n.match(/\b(\d{3})\b/) || ['', ''])[1];
   return { stem: street.slice(0, 6), num, post };
 }
+// Returns { id, conf:'high'|'low' } or null. 'high' = trustworthy (single site or
+// a real street+postcode address) → bulk-connectable; 'low' = a hint from a
+// mangled/ambiguous name → pre-filled but must be eyeballed, never auto-connected.
 function suggestLoc(filename, locations) {
   if (!locations.length) return null;
-  if (locations.length === 1) return locations[0].id;            // single site → unambiguous
-  const f = normAddr(filename);
+  if (locations.length === 1) return { id: locations[0].id, conf: 'high' };   // single site → certain
+  const raw = String(filename);
+  // (1) A parenthetical names the real site ("… (V Hringbrautar)") even though the
+  //     main address is wrong — suggest that site, but flagged low (the row is mangled).
+  const parens = (raw.match(/\(([^)]*)\)/g) || []).join(' ').toLowerCase();
+  if (parens) {
+    let pb = null, pl = 0;
+    for (const loc of locations) { const t = siteKey(loc.heimilisfang).stem; if (t && t.length >= 4 && parens.indexOf(t) !== -1 && t.length > pl) { pl = t.length; pb = loc; } }
+    if (pb) return { id: pb.id, conf: 'low' };
+  }
+  const f = normAddr(raw);
   const fpost = (f.match(/\b(\d{3})\b/) || ['', ''])[1];
   let best = null, bestScore = 0;
   for (const loc of locations) {
@@ -144,7 +159,9 @@ function suggestLoc(filename, locations) {
     if (k.num && new RegExp('(?:^|\\D)' + k.num + '(?:\\D|$)').test(f)) score += 1;
     if (score > bestScore) { bestScore = score; best = loc; }
   }
-  return bestScore >= 4 ? best.id : null;   // multi-site: need street + (postcode or number)
+  if (bestScore >= 4) return { id: best.id, conf: 'high' };      // street + postcode/number → trust
+  if (bestScore >= 3) return { id: best.id, conf: 'low' };       // branch/street token only → verify
+  return null;
 }
 
 // ── Writes ────────────────────────────────────────────────────────────────────
@@ -162,6 +179,17 @@ async function saveDoc(body) {
   const rows = await r.json().catch(() => []);
   if (!r.ok) throw new Error('save ' + r.status + ' ' + JSON.stringify(rows).slice(0, 160));
   return { ok: true, row: Array.isArray(rows) ? rows[0] : null };
+}
+// Remove ONE customer_documents tracking row (e.g. a confirmed duplicate). The
+// Drive file itself is untouched — re-indexing would bring the row back.
+async function deleteDoc(body) {
+  const id = parseInt(body.id, 10);
+  if (!id) throw new Error('vantar id');
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?id=eq.${id}`, {
+    method: 'DELETE', headers: sbHeaders({ Prefer: 'return=minimal' }),
+  });
+  if (!r.ok) throw new Error('delete ' + r.status + ' ' + (await r.text()).slice(0, 160));
+  return { ok: true };
 }
 async function addSite(body) {
   const baseId = parseInt(body.base_id, 10);
