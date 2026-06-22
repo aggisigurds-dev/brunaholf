@@ -2767,6 +2767,16 @@ function renderBakendi(t){
         + '<td style="' + cell + ';text-align:center"><input type="checkbox" class="st-rev"' + (d.reviewed ? ' checked' : '') + ' title="Staðfest"></td>'
         + '</tr>';
     }
+    const THEAD = '<thead><tr style="background:#f8fafc;color:#475569;font-size:11px;text-transform:uppercase;letter-spacing:.03em">'
+      + '<th style="padding:7px 8px;text-align:left">PDF</th><th style="padding:7px 8px;text-align:left">Skrá (nafn — getur verið rangt)</th>'
+      + '<th style="padding:7px 8px">Teg</th><th style="padding:7px 8px;text-align:left">Ár</th>'
+      + '<th style="padding:7px 8px;text-align:left">Staður</th><th style="padding:7px 8px">Tvítak</th><th style="padding:7px 8px">Staðfest</th></tr></thead>';
+    function sectionHtml(title, docs){
+      if (!docs.length) return '';
+      return '<div style="margin:16px 0 6px;font-weight:700;font-size:12.5px;color:#334155">' + title + ' (' + docs.length + ')</div>'
+        + '<div style="overflow:auto;border:1px solid #e2e8f0;border-radius:10px"><table style="width:100%;border-collapse:collapse;font-size:13px">'
+        + THEAD + '<tbody>' + docs.map(docRow).join('') + '</tbody></table></div>';
+    }
     function renderBoard(){
       if (!COMPANY) { $board.innerHTML = ''; return; }
       const unmatched = DOCS.filter(d => !d.fyrirtaeki_id && !d.is_duplicate).length;
@@ -2781,13 +2791,10 @@ function renderBakendi(t){
         + (nConfirm ? '<button id="bk-st-confirm" class="btn" style="padding:4px 10px;font-size:12px" title="Merkja öll tengd skjöl staðfest">✓ Staðfesta öll tengd (' + nConfirm + ')</button>' : '')
         + '<button id="bk-st-addsite" class="btn" style="padding:4px 10px;font-size:12px">➕ Nýr staður</button></div>';
       if (!DOCS.length) { $board.innerHTML = head + '<div style="color:#64748b;font-size:13px;padding:10px">Engin skjöl.</div>'; wireHead(); return; }
-      $board.innerHTML = head
-        + '<div style="overflow:auto;border:1px solid #e2e8f0;border-radius:10px"><table style="width:100%;border-collapse:collapse;font-size:13px">'
-        + '<thead><tr style="background:#f8fafc;color:#475569;font-size:11px;text-transform:uppercase;letter-spacing:.03em">'
-        + '<th style="padding:7px 8px;text-align:left">PDF</th><th style="padding:7px 8px;text-align:left">Skrá (nafn — getur verið rangt)</th>'
-        + '<th style="padding:7px 8px">Teg</th><th style="padding:7px 8px;text-align:left">Ár</th>'
-        + '<th style="padding:7px 8px;text-align:left">Staður</th><th style="padding:7px 8px">Tvítak</th><th style="padding:7px 8px">Staðfest</th></tr></thead>'
-        + '<tbody>' + DOCS.map(docRow).join('') + '</tbody></table></div>';
+      // Keep the two document kinds apart so reports and invoices never get mixed up.
+      const reports = DOCS.filter(d => d.doc_type !== 'reikningur');
+      const invoices = DOCS.filter(d => d.doc_type === 'reikningur');
+      $board.innerHTML = head + sectionHtml('📄 Úttektarskýrslur', reports) + sectionHtml('🧾 Reikningar', invoices);
       wireHead();
     }
     function wireHead(){
@@ -2836,7 +2843,9 @@ function renderBakendi(t){
       };
       const d = DOCS.find(x => String(x.id) === String(id));
       if (d) Object.assign(d, patch);
-      tr.style.background = patch.reviewed ? '#f0fdf4' : '';
+      tr.style.transition = 'background .15s';            // flash so it's obvious it saved (no button needed)
+      tr.style.background = '#dbeafe';
+      setTimeout(() => { tr.style.background = patch.reviewed ? '#f0fdf4' : ''; }, 450);
       save(id, patch);
     });
     async function addSite(){
@@ -12621,6 +12630,24 @@ if($themeToggle) $themeToggle.onclick = () => {
 
 // Expose render() so the cross-device sync can call it after replacing state.
 window.__renderTab = render;
+
+// Deep-link: open a tab straight from the URL — /#bakendi, or the clean
+// /bakendi (Netlify rewrites it to index.html). Lets slökkvitæki link straight
+// into the Bakendi / Skýrslu-stöð to fix a mismatch the moment it's spotted.
+function applyDeepLinkTab(){
+  let id = (location.hash || '').replace(/^#\/?/, '').split('/')[0].trim();
+  if(!id){ id = (location.pathname || '').replace(/^\/+|\/+$/g, '').split('/')[0].trim(); }
+  if(!id || !state.tabs) return false;
+  const tab = state.tabs.find(t => t.id === id);
+  if(!tab) return false;
+  tab.hidden = false;
+  state.ui = state.ui || {};
+  state.ui.activeTab = id;
+  return true;
+}
+applyDeepLinkTab();
+window.addEventListener('hashchange', () => { if(applyDeepLinkTab()) render(); });
+
 render();
 
 // Warm-load: pre-fetch heavy endpoints in the background after first paint so

@@ -216,6 +216,13 @@
   to = "/.netlify/functions/match-station"
   status = 200
 
+# Clean deep-link to the Bakendi tab (e.g. linked from the slökkvitæki
+# úttektar-page): serve the app, the in-app router reads the path and opens it.
+[[redirects]]
+  from = "/bakendi"
+  to = "/index.html"
+  status = 200
+
 # Build a sortable "whole database" Google Sheet from úttektarskýrslu filenames
 [[redirects]]
   from = "/api/allt-sheet"
