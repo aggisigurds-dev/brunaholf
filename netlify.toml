@@ -210,6 +210,12 @@
   to = "/.netlify/functions/doc-index"
   status = 200
 
+# Bakendi Skýrslu-stöð: report→site matching board (pure Supabase)
+[[redirects]]
+  from = "/api/match-station"
+  to = "/.netlify/functions/match-station"
+  status = 200
+
 # Build a sortable "whole database" Google Sheet from úttektarskýrslu filenames
 [[redirects]]
   from = "/api/allt-sheet"
