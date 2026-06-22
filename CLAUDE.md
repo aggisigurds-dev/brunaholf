@@ -93,7 +93,8 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   Sheet-tenglar** at the top: 3 manual, always-editable Google Sheets link slots
   saved to `state.bakendiLinks` (synced cross-device via `/api/app-state`). The
   Reikningalesari / Samningalesari „Skrifa í Google Sheet" actions auto-fill the
-  first/second slot when it's still empty.
+  first/second slot when it's still empty. Also hosts **🔗 Skýrslu-stöð** at the
+  top — the human-in-the-loop report→site matcher (see `match-station.js`).
 - `reikningatenglar` — advanced, always-editable/movable invoice-links page
   (`renderReikningatenglar`): live search, quick-add by pasting a URL, open-all
   per group, copy-link, and drag-to-reorder without entering edit mode. Buttons
@@ -248,6 +249,19 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   (`POST {folder,rows}`) find-or-creates ONE living summary Sheet
   ("Reikningar – gagnayfirlit") **inside the folder** and overwrites it — the
   database-summary view. UI: 🔍 Lesa / 📊 Skrifa í Google Sheet / ▶️ Skrá í gagnagrunn.
+- `match-station.js` — **🔗 Skýrslu-stöð** (Bakendi top): a human-in-the-loop board
+  to assign each `customer_documents` row (úttektarskýrsla/reikningur) to the RIGHT
+  service-customer **location (`fyrirtaeki_id`) + year**. Built because an earlier
+  auto-renamer mangled ~1/3 of filenames (the „uttekt-master / MATCH 90" rows), so
+  the **filename can't be trusted** — the board surfaces the actual **PDF (Drive
+  view link)** + a *suggested* site (address-match, non-authoritative) and only
+  writes what the user **confirms** (`reviewed=true`). Pure Supabase (no Drive/PDF):
+  `GET /api/match-station` (service companies + counts) · `GET ?base=ID` (one
+  company → `{company, locations, docs[]}`) · `POST {action:'save', id,
+  fyrirtaeki_id, year, is_duplicate, reviewed}` (PATCH one doc) · `POST
+  {action:'add-site', base_id, nafn, heimilisfang}` (create a missing
+  `fyrirtaeki` location). Added `customer_documents.reviewed bool` + `reviewed_at`
+  (additive). `er_i_thjonustu` service companies drive the picker.
 
 ### Email
 - `email_digest` (~29k rows): all emails from connected Gmail accounts
