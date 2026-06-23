@@ -70,6 +70,28 @@ async function handlePost(event) {
       });
       return json(200, { page: row });
     }
+    case 'capture-page': {
+      // Idempotent upsert by (slug, source='auto') used by the snapshot script.
+      // Updates the image IN PLACE so pins attached to the page survive a refresh.
+      if (!body.slug) return json(400, { error: 'slug required' });
+      if (!body.image) return json(400, { error: 'image required' });
+      const up = await uploadDataUrl(body.image, 'pages');
+      const existing = await rest(`vefryni_pages?select=id,storage_path&slug=eq.${encodeURIComponent(body.slug)}&source=eq.auto&limit=1`);
+      if (existing[0]) {
+        const patch = { image_url: up.url, storage_path: up.path, width: body.width || null, height: body.height || null };
+        if (body.title) patch.title = body.title;
+        if (body.sort_order != null) patch.sort_order = body.sort_order;
+        const row = await restPatch('vefryni_pages', existing[0].id, patch);
+        if (existing[0].storage_path && existing[0].storage_path !== up.path) await delObject(existing[0].storage_path).catch(() => {});
+        return json(200, { page: row, updated: true });
+      }
+      const row = await restInsert('vefryni_pages', {
+        title: body.title || body.slug, slug: body.slug, source: 'auto',
+        image_url: up.url, storage_path: up.path, width: body.width || null, height: body.height || null,
+        sort_order: body.sort_order != null ? body.sort_order : 9999,
+      });
+      return json(200, { page: row, created: true });
+    }
     case 'update-page': {
       if (!body.id) return json(400, { error: 'id required' });
       const patch = {};
