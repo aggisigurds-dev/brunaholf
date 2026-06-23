@@ -2708,6 +2708,7 @@ function renderVefryni(t){
   function openPin(pin){
     const isNew = !!pin._new;
     const s = st(pin.status);
+    const beforeUrl = (V.pages.find(p=>p.id===pin.page_id)||{}).image_url || '';
     let pendingImg = null, removeImg = false;
     const ov = document.createElement('div'); ov.className='vfr-modal';
     ov.innerHTML = `
@@ -2720,6 +2721,23 @@ function renderVefryni(t){
         </div>
         <div class="vfr-card-bd">
           ${pin.claude_note?`<div class="vfr-claudenote"><b>🔧 Claude:</b> ${esc(pin.claude_note)}</div>`:''}
+          ${(pin.after_url && beforeUrl)?`
+            <div class="vfr-ba" style="margin:0 0 14px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+                <strong style="font-size:13px;color:#0f172a">🔍 Fyrir → Eftir</strong>
+                <div class="vfr-seg" style="margin-left:auto">
+                  <button type="button" data-ba="fyrir" class="on">Fyrir</button>
+                  <button type="button" data-ba="eftir">Eftir</button>
+                </div>
+              </div>
+              <div class="vfr-bastage" style="border:1px solid #e2e8f0;border-radius:10px;overflow:auto;background:#f8fafc;max-height:320px">
+                <div style="position:relative;line-height:0">
+                  <img id="vfr-ba-img" src="${esc(beforeUrl)}" style="width:100%;display:block">
+                  <div style="position:absolute;left:${pin.x}%;top:${pin.y}%;transform:translate(-50%,-50%);width:24px;height:24px;border-radius:50%;border:2.5px solid #fff;background:${s.dot};box-shadow:0 2px 7px rgba(0,0,0,.45);pointer-events:none"></div>
+                </div>
+              </div>
+              <div class="vfr-hint" style="margin-top:5px">Skiptu á milli <b>Fyrir</b> / <b>Eftir</b> til að sjá breytinguna við punktinn.</div>
+            </div>`:''}
           <label class="vfr-hint" style="font-weight:700">Hvað viltu breyta hér?</label>
           <textarea class="vfr-ta" id="vfr-cm" placeholder="Lýstu breytingunni…">${esc(pin.comment||'')}</textarea>
           <div class="vfr-drop" id="vfr-drop">📎 Límdu skjámynd (Ctrl/⌘+V) eða <u>veldu mynd</u></div>
@@ -2750,6 +2768,15 @@ function renderVefryni(t){
       const rm = $('#vfr-imgrm'); if(rm) rm.onclick=()=>{ pendingImg=null; removeImg=true; thumb(); };
     };
     thumb();
+    if(pin.after_url && beforeUrl){
+      const baImg=$('#vfr-ba-img'); const stage=ov.querySelector('.vfr-bastage');
+      const scrollDot=()=>{ if(stage&&baImg&&baImg.parentElement) stage.scrollTop=Math.max(0, baImg.parentElement.offsetHeight*(pin.y/100)-stage.clientHeight/2); };
+      if(baImg){ baImg.addEventListener('load',scrollDot); setTimeout(scrollDot,250); }
+      ov.querySelectorAll('.vfr-ba [data-ba]').forEach(b=>b.addEventListener('click',()=>{
+        ov.querySelectorAll('.vfr-ba [data-ba]').forEach(x=>x.classList.toggle('on',x===b));
+        if(baImg) baImg.src = b.dataset.ba==='eftir' ? pin.after_url : beforeUrl;
+      }));
+    }
     async function takeImage(file){ if(!file) return; try{ const raw=await fileToDataUrl(file); const sc=await scale(raw,1600,4000,0.85); pendingImg=sc.url; removeImg=false; thumb(); }catch(_){ flash('Náði ekki í mynd',true); } }
     $('#vfr-drop').onclick=()=>$('#vfr-file').click();
     $('#vfr-file').onchange=e=>takeImage(e.target.files[0]);

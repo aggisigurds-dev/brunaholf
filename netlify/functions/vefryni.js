@@ -150,6 +150,16 @@ async function handlePost(event) {
       const rows = await r.json();
       return json(200, { ok: true, batch_id, count: rows.length });
     }
+    case 'set-after': {
+      // Claude attaches an "after" screenshot once a pin is fixed (Fyrir → Eftir).
+      if (!body.id) return json(400, { error: 'id required' });
+      if (!body.image) return json(400, { error: 'image required' });
+      const up = await uploadDataUrl(body.image, 'after');
+      const row = await restPatch('vefryni_pins', body.id, {
+        after_url: up.url, after_storage_path: up.path, after_at: new Date().toISOString(),
+      });
+      return json(200, { pin: row });
+    }
     default:
       return json(400, { error: 'Unknown action' });
   }
