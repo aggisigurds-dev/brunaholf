@@ -1563,6 +1563,7 @@ const DEFAULT_STATE = {
     {id:'efniskostnadur', label:'Efniskostnaður', icon:'📦'},
     {id:'utgjold',    label:'Útgjöld',    icon:'💸', sheetCsv:''},
     {id:'sjalfvirkni', label:'Sjálfvirkni', icon:'⚙️'},
+    {id:'vefryni',    label:'Vefrýni',    icon:'🔎'},
     {id:'bakendi',    label:'Bakendi',    icon:'🗄'},
     {id:'stillingar', label:'Stillingar', icon:'⚙️'}
   ],
@@ -1788,7 +1789,7 @@ function clearDataCache(){
 function ensureNewTabs(s){
   if(!s || !Array.isArray(s.tabs)) return;
   if(!Array.isArray(s.bakendiLinks)) s.bakendiLinks = BAKENDI_LINK_SEED.map(x=>({...x}));
-  ['dagurinn','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','skuldunautar','hreyfingaryfirlit','nlsh','spurningar','sjalfvirkni','bakendi'].forEach(id=>{
+  ['dagurinn','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','skuldunautar','hreyfingaryfirlit','nlsh','spurningar','sjalfvirkni','vefryni','bakendi'].forEach(id=>{
     if(!s.tabs.find(t=>t.id===id)){
       const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
       if(d){
@@ -1804,6 +1805,11 @@ function ensureNewTabs(s){
         } else if(id === 'sjalfvirkni'){
           // Sjálfvirkni sits in the control-panel area, just above Bakendi
           // (else above Stillingar).
+          const idx = s.tabs.findIndex(t=>t.id==='bakendi');
+          const idx2 = s.tabs.findIndex(t=>t.id==='stillingar');
+          target = idx >= 0 ? idx : (idx2 >= 0 ? idx2 : -1);
+        } else if(id === 'vefryni'){
+          // Vefrýni sits just above Bakendi (else above Stillingar).
           const idx = s.tabs.findIndex(t=>t.id==='bakendi');
           const idx2 = s.tabs.findIndex(t=>t.id==='stillingar');
           target = idx >= 0 ? idx : (idx2 >= 0 ? idx2 : -1);
@@ -2178,6 +2184,7 @@ function render(){
   if(t.id==='verdskra') return renderVerdskra(t);
   if(t.id==='nlsh') return renderNLSH(t);
   if(t.id==='efniskostnadur') return renderEfniskostnadur(t);
+  if(t.id==='vefryni') return renderVefryni(t);
   if(t.id==='bakendi') return renderBakendi(t);
   if(t.id==='sjalfvirkni') return renderSjalfvirkni(t);
   if(t.id==='reikningatenglar') return renderReikningatenglar(t);
@@ -2451,6 +2458,403 @@ const INBOX_ACCOUNTS = [
   {value:'bokhald@brunaholf.is',      label:'bokhald@brunaholf.is'},
 ];
 
+/* ===== VEFRÝNI — visual review / annotation tool ============================
+ * Screenshots of slokkvitæki shown as a deck (flip or scroll). Click a page to
+ * drop a dot with a comment + optional pasted screenshot. "Senda í viðgerð"
+ * hands the batch to Claude, who fixes each one and flips it to 🔵; Agnar then
+ * marks 🟢 Samþykkt or 🟠 Þarfnast lagfæringar. Backed by /api/vefryni.
+ * ========================================================================== */
+function renderVefryni(t){
+  const esc = s => escapeHtml(String(s==null?'':s));
+  const API = '/api/vefryni';
+  const V = (window.__VFR = window.__VFR || {
+    pages:[], pins:[], cur:0,
+    mode: localStorage.getItem('vfr_mode') || 'flip',
+    annotate: localStorage.getItem('vfr_annotate') !== '0',
+    loaded:false,
+  });
+
+  const STATUS = {
+    nytt:      { label:'Nýtt',                    dot:'#eab308', color:'#a16207', bg:'#fef9c3', bd:'#fde68a' },
+    tilbuid:   { label:'Tilbúið til yfirferðar',  dot:'#2563eb', color:'#1d4ed8', bg:'#dbeafe', bd:'#bfdbfe' },
+    samthykkt: { label:'Samþykkt',                dot:'#16a34a', color:'#15803d', bg:'#dcfce7', bd:'#bbf7d0' },
+    lagfaera:  { label:'Þarfnast lagfæringar',    dot:'#ea580c', color:'#c2410c', bg:'#ffedd5', bd:'#fed7aa' },
+  };
+  const st = s => STATUS[s] || STATUS.nytt;
+
+  $view.innerHTML = `
+    <style>
+      .vfr-wrap{max-width:1100px}
+      .vfr-bar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin:0 0 12px}
+      .vfr-seg{display:inline-flex;border:1px solid #cbd5e1;border-radius:9px;overflow:hidden}
+      .vfr-seg button{border:none;background:#fff;padding:8px 13px;font:inherit;font-size:13px;cursor:pointer;color:#475569}
+      .vfr-seg button.on{background:#0f172a;color:#fff;font-weight:600}
+      .vfr-legend{display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-size:12.5px;color:#475569;margin-left:auto}
+      .vfr-legend b{font-weight:700}
+      .vfr-chip{display:inline-flex;align-items:center;gap:5px}
+      .vfr-cdot{width:11px;height:11px;border-radius:50%;display:inline-block}
+      .vfr-pagehd{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 8px}
+      .vfr-pagehd .ttl{font-weight:700;font-size:15px;color:#0f172a}
+      .vfr-stage{position:relative;display:inline-block;line-height:0;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;background:#f8fafc;box-shadow:0 1px 3px rgba(0,0,0,.06);max-width:100%}
+      .vfr-stage.armed{cursor:crosshair}
+      .vfr-stage img{display:block;width:100%;height:auto;user-select:none}
+      .vfr-noimg{padding:60px 30px;color:#94a3b8;font-size:14px;text-align:center;line-height:0;display:block}
+      .vfr-dot{position:absolute;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;border:2.5px solid #fff;
+               display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:800;cursor:pointer;
+               box-shadow:0 2px 6px rgba(0,0,0,.35);line-height:1}
+      .vfr-dot:hover{filter:brightness(1.08);transform:translate(-50%,-50%) scale(1.12)}
+      .vfr-scrollpage{margin:0 0 26px}
+      .vfr-empty{padding:40px 22px;border:2px dashed #cbd5e1;border-radius:14px;text-align:center;color:#64748b;background:#f8fafc}
+      .vfr-flipnav{display:flex;gap:8px;align-items:center}
+      /* editor modal */
+      .vfr-modal{position:fixed;inset:0;z-index:99999;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:16px}
+      .vfr-card{background:#fff;border-radius:16px;width:min(560px,100%);max-height:92vh;overflow:auto;box-shadow:0 30px 80px rgba(0,0,0,.4)}
+      .vfr-card-hd{padding:15px 18px;border-bottom:1px solid #eef2f7;display:flex;align-items:center;gap:10px}
+      .vfr-card-bd{padding:16px 18px}
+      .vfr-card-ft{padding:13px 18px;border-top:1px solid #eef2f7;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+      .vfr-pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700}
+      .vfr-ta{width:100%;box-sizing:border-box;min-height:96px;padding:11px 13px;border:1px solid #cbd5e1;border-radius:10px;font:inherit;font-size:14px;resize:vertical}
+      .vfr-drop{margin-top:11px;border:1.5px dashed #cbd5e1;border-radius:11px;padding:13px;text-align:center;color:#64748b;font-size:13px;background:#f8fafc;cursor:pointer}
+      .vfr-drop:hover{border-color:#94a3b8}
+      .vfr-thumb{margin-top:11px;position:relative;display:inline-block}
+      .vfr-thumb img{max-width:100%;max-height:240px;border-radius:10px;border:1px solid #e2e8f0;display:block}
+      .vfr-claudenote{margin:0 0 13px;padding:11px 13px;border-radius:10px;background:#dbeafe;border:1px solid #bfdbfe;color:#1e3a8a;font-size:13px;line-height:1.5}
+      .vfr-statusbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+      .vfr-sbtn{flex:1;min-width:150px;padding:11px;border-radius:10px;border:2px solid;font:inherit;font-size:14px;font-weight:700;cursor:pointer;background:#fff}
+      .vfr-hint{font-size:12px;color:#64748b}
+      .vfr-iconbtn{border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:7px 10px;cursor:pointer;font:inherit;font-size:13px;color:#475569}
+      .vfr-iconbtn:hover{background:#f1f5f9}
+    </style>
+    <div class="vfr-wrap">
+      <div class="group-title"><strong>🔎 Vefrýni — myndayfirferð á slökkvitæki-appinu</strong><div class="line"></div></div>
+      <p style="color:#475569;font-size:13px;line-height:1.55;margin:0 0 14px;max-width:760px">
+        Skoðaðu skjámyndir af <b>slokkvitaeki.netlify.app</b>, smelltu þar sem þú vilt breytingu → <b>gulur punktur</b>.
+        Skrifaðu athugasemd og/eða límdu inn skjámynd. Þegar þú ert búin/n, ýttu á <b>Senda í viðgerð</b> og segðu mér
+        „kíktu á vefrýni“. Ég laga hvern punkt og geri hann <b style="color:#1d4ed8">🔵 bláan</b> (tilbúið til yfirferðar) —
+        þá merkir þú hann <b style="color:#15803d">🟢 grænan</b> (í lagi) eða <b style="color:#c2410c">🟠 appelsínugulan</b> (þarf meira).
+      </p>
+
+      <div class="vfr-bar">
+        <div class="vfr-seg" id="vfr-mode">
+          <button data-mode="flip">⇄ Fletta</button>
+          <button data-mode="scroll">▤ Listi</button>
+        </div>
+        <button class="vfr-iconbtn" id="vfr-armtog" title="Þegar kveikt er bætir smellur á mynd við punkti"></button>
+        <button class="btn" id="vfr-addpage">➕ Bæta við síðu</button>
+        <button class="btn primary" id="vfr-submit">📨 Senda í viðgerð</button>
+        <span id="vfr-status" style="font-size:12.5px;color:#16a34a"></span>
+        <div class="vfr-legend" id="vfr-legend"></div>
+      </div>
+
+      <div id="vfr-body"><div class="vfr-empty">Hleð…</div></div>
+    </div>`;
+
+  const $body   = $view.querySelector('#vfr-body');
+  const $status = $view.querySelector('#vfr-status');
+  const $legend = $view.querySelector('#vfr-legend');
+  const $armtog = $view.querySelector('#vfr-armtog');
+  const flash = (m,bad)=>{ $status.style.color = bad?'#dc2626':'#16a34a'; $status.textContent = m; if(!bad) setTimeout(()=>{ if($status.textContent===m) $status.textContent=''; },2600); };
+
+  // ── helpers ───────────────────────────────────────────────────────────────
+  async function api(body){
+    const r = await fetch(API, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+    const d = await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(d.error || ('HTTP '+r.status));
+    return d;
+  }
+  function fileToDataUrl(file){ return new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=rej; fr.readAsDataURL(file); }); }
+  function scale(dataUrl, maxW=1600, maxH=6000, q=0.82){
+    return new Promise(res=>{
+      const img=new Image();
+      img.onload=()=>{ let w=img.width,h=img.height;
+        if(w>maxW){ h=Math.round(h*maxW/w); w=maxW; }
+        if(h>maxH){ w=Math.round(w*maxH/h); h=maxH; }
+        const c=document.createElement('canvas'); c.width=w; c.height=h;
+        c.getContext('2d').drawImage(img,0,0,w,h);
+        try{ res({url:c.toDataURL('image/jpeg',q),w,h}); }catch(_){ res({url:dataUrl,w,h}); } };
+      img.onerror=()=>res({url:dataUrl}); img.src=dataUrl;
+    });
+  }
+  function pinsFor(pageId){ return V.pins.filter(p=>p.page_id===pageId); }
+
+  async function load(){
+    try{
+      const r = await fetch(API+'?what=deck'); const d = await r.json();
+      if(!r.ok) throw new Error(d.error||('HTTP '+r.status));
+      V.pages = d.pages||[]; V.pins = d.pins||[]; V.loaded = true;
+      if(V.cur >= V.pages.length) V.cur = Math.max(0, V.pages.length-1);
+      renderDeck();
+    }catch(e){ $body.innerHTML = `<div class="vfr-empty">⚠️ Náði ekki í gögn: ${esc(e.message)}</div>`; }
+  }
+
+  // ── deck rendering ──────────────────────────────────────────────────────────
+  function dotHtml(pin, n){
+    const c = st(pin.status).dot;
+    return `<div class="vfr-dot" data-pin="${pin.id}" style="left:${pin.x}%;top:${pin.y}%;background:${c}" title="${esc(pin.comment||'')}">${n}</div>`;
+  }
+  function stageHtml(page){
+    const pins = pinsFor(page.id);
+    const dots = pins.map((p,i)=>dotHtml(p,i+1)).join('');
+    const armed = V.annotate ? ' armed' : '';
+    const inner = page.image_url
+      ? `<img src="${esc(page.image_url)}" draggable="false" alt="${esc(page.title)}">`
+      : `<span class="vfr-noimg">— engin mynd —</span>`;
+    return `<div class="vfr-stage${armed}" data-page="${page.id}">${inner}${dots}</div>`;
+  }
+  function pageHeader(page, idx){
+    const pins = pinsFor(page.id);
+    const open = pins.filter(p=>p.status==='nytt'||p.status==='lagfaera').length;
+    return `<div class="vfr-pagehd">
+        <span class="ttl">${esc(page.title)}</span>
+        <span class="vfr-hint">${pins.length} punktar${open?` · ${open} ógerðir`:''}</span>
+        <span style="margin-left:auto"></span>
+        <button class="vfr-iconbtn" data-act="rename" data-page="${page.id}">✎ Nafn</button>
+        <button class="vfr-iconbtn" data-act="up" data-page="${page.id}" title="Færa upp">↑</button>
+        <button class="vfr-iconbtn" data-act="down" data-page="${page.id}" title="Færa niður">↓</button>
+        <button class="vfr-iconbtn" data-act="delpage" data-page="${page.id}" title="Eyða síðu">🗑</button>
+      </div>`;
+  }
+  function renderLegend(){
+    const counts = { nytt:0, tilbuid:0, samthykkt:0, lagfaera:0 };
+    V.pins.forEach(p=>{ counts[p.status] = (counts[p.status]||0)+1; });
+    $legend.innerHTML = Object.keys(STATUS).map(k=>
+      `<span class="vfr-chip"><span class="vfr-cdot" style="background:${STATUS[k].dot}"></span><b>${counts[k]||0}</b> ${esc(STATUS[k].label.split(' ')[0])}</span>`
+    ).join('');
+  }
+  function syncToggles(){
+    $view.querySelectorAll('#vfr-mode button').forEach(b=> b.classList.toggle('on', b.dataset.mode===V.mode));
+    $armtog.textContent = V.annotate ? '✏️ Merkja: kveikt' : '🔒 Merkja: slökkt';
+    $armtog.style.background = V.annotate ? '#fef9c3' : '#fff';
+  }
+  function renderDeck(){
+    syncToggles(); renderLegend();
+    if(!V.pages.length){
+      $body.innerHTML = `<div class="vfr-empty">
+        <div style="font-size:34px;margin-bottom:8px">🖼️</div>
+        <div style="font-weight:700;color:#334155;margin-bottom:4px">Engar síður enn</div>
+        <div style="font-size:13px;margin-bottom:14px">Bættu við skjámyndum af slökkvitæki-appinu (símamynd eða af tölvu) — eða biddu mig að sækja þær inn.</div>
+        <button class="btn primary" id="vfr-empty-add">➕ Bæta við fyrstu síðu</button>
+      </div>`;
+      $body.querySelector('#vfr-empty-add').onclick = addPage;
+      return;
+    }
+    if(V.mode==='scroll'){
+      $body.innerHTML = V.pages.map((p,i)=>`<div class="vfr-scrollpage">${pageHeader(p,i)}${stageHtml(p)}</div>`).join('');
+    } else {
+      if(V.cur>=V.pages.length) V.cur=0;
+      const p = V.pages[V.cur];
+      $body.innerHTML = `
+        <div class="vfr-pagehd">
+          <div class="vfr-flipnav">
+            <button class="vfr-iconbtn" id="vfr-prev" ${V.cur===0?'disabled':''}>← Fyrri</button>
+            <span class="vfr-hint" style="min-width:64px;text-align:center">${V.cur+1} / ${V.pages.length}</span>
+            <button class="vfr-iconbtn" id="vfr-next" ${V.cur===V.pages.length-1?'disabled':''}>Næsta →</button>
+          </div>
+          <select class="vfr-iconbtn" id="vfr-jump" style="max-width:280px">
+            ${V.pages.map((pg,i)=>`<option value="${i}" ${i===V.cur?'selected':''}>${esc(pg.title)}</option>`).join('')}
+          </select>
+          <span style="margin-left:auto"></span>
+          <button class="vfr-iconbtn" data-act="rename" data-page="${p.id}">✎ Nafn</button>
+          <button class="vfr-iconbtn" data-act="up" data-page="${p.id}">↑</button>
+          <button class="vfr-iconbtn" data-act="down" data-page="${p.id}">↓</button>
+          <button class="vfr-iconbtn" data-act="delpage" data-page="${p.id}">🗑</button>
+        </div>
+        ${stageHtml(p)}`;
+      const prev=$body.querySelector('#vfr-prev'), next=$body.querySelector('#vfr-next'), jump=$body.querySelector('#vfr-jump');
+      if(prev) prev.onclick=()=>{ V.cur=Math.max(0,V.cur-1); renderDeck(); };
+      if(next) next.onclick=()=>{ V.cur=Math.min(V.pages.length-1,V.cur+1); renderDeck(); };
+      if(jump) jump.onchange=()=>{ V.cur=+jump.value; renderDeck(); };
+    }
+  }
+
+  // click delegation: dot → open existing; empty stage (armed) → new pin
+  $body.addEventListener('click', async (e)=>{
+    const act = e.target.closest('[data-act]');
+    if(act){ return handlePageAct(act.dataset.act, +act.dataset.page); }
+    const dot = e.target.closest('.vfr-dot');
+    if(dot){ const pin = V.pins.find(p=>p.id===+dot.dataset.pin); if(pin) openPin(pin); return; }
+    const stage = e.target.closest('.vfr-stage');
+    if(stage && V.annotate){
+      const img = stage.querySelector('img'); if(!img) return;
+      const rect = img.getBoundingClientRect();
+      const x = Math.max(0,Math.min(100,((e.clientX-rect.left)/rect.width)*100));
+      const y = Math.max(0,Math.min(100,((e.clientY-rect.top)/rect.height)*100));
+      openPin({ page_id:+stage.dataset.page, x:+x.toFixed(2), y:+y.toFixed(2), status:'nytt', _new:true });
+    }
+  });
+
+  async function handlePageAct(act, pageId){
+    const page = V.pages.find(p=>p.id===pageId); if(!page) return;
+    const idx = V.pages.findIndex(p=>p.id===pageId);
+    if(act==='rename'){
+      const name = prompt('Nafn á síðu:', page.title); if(name==null) return;
+      try{ await api({action:'update-page', id:pageId, title:name.trim()||page.title}); page.title=name.trim()||page.title; renderDeck(); flash('✓ Nafn uppfært'); }
+      catch(e){ flash(e.message,true); }
+    } else if(act==='delpage'){
+      if(!confirm(`Eyða síðunni „${page.title}“ og öllum punktum á henni?`)) return;
+      try{ await api({action:'delete-page', id:pageId}); V.pages.splice(idx,1); V.pins=V.pins.filter(p=>p.page_id!==pageId); if(V.cur>=V.pages.length)V.cur=Math.max(0,V.pages.length-1); renderDeck(); flash('✓ Síðu eytt'); }
+      catch(e){ flash(e.message,true); }
+    } else if(act==='up' || act==='down'){
+      const j = act==='up' ? idx-1 : idx+1;
+      if(j<0||j>=V.pages.length) return;
+      [V.pages[idx],V.pages[j]]=[V.pages[j],V.pages[idx]];
+      if(V.mode==='flip') V.cur=j;
+      renderDeck();
+      try{ await api({action:'reorder-pages', order:V.pages.map(p=>p.id)}); }catch(e){ flash(e.message,true); }
+    }
+  }
+
+  // ── pin editor modal ────────────────────────────────────────────────────────
+  function openPin(pin){
+    const isNew = !!pin._new;
+    const s = st(pin.status);
+    let pendingImg = null, removeImg = false;
+    const ov = document.createElement('div'); ov.className='vfr-modal';
+    ov.innerHTML = `
+      <div class="vfr-card">
+        <div class="vfr-card-hd">
+          <span style="font-size:18px">📍</span>
+          <strong style="font-size:15px">${isNew?'Nýr punktur':'Punktur'}</strong>
+          <span class="vfr-pill" style="margin-left:auto;background:${s.bg};color:${s.color};border:1px solid ${s.bd}">
+            <span class="vfr-cdot" style="background:${s.dot}"></span>${esc(s.label)}</span>
+        </div>
+        <div class="vfr-card-bd">
+          ${pin.claude_note?`<div class="vfr-claudenote"><b>🔧 Claude:</b> ${esc(pin.claude_note)}</div>`:''}
+          <label class="vfr-hint" style="font-weight:700">Hvað viltu breyta hér?</label>
+          <textarea class="vfr-ta" id="vfr-cm" placeholder="Lýstu breytingunni…">${esc(pin.comment||'')}</textarea>
+          <div class="vfr-drop" id="vfr-drop">📎 Límdu skjámynd (Ctrl/⌘+V) eða <u>veldu mynd</u></div>
+          <input type="file" id="vfr-file" accept="image/*" style="display:none">
+          <div id="vfr-thumbwrap"></div>
+          ${(!isNew && (pin.status==='tilbuid'||pin.status==='samthykkt'||pin.status==='lagfaera'))?`
+            <div style="margin-top:16px">
+              <label class="vfr-hint" style="font-weight:700">Ertu sátt/ur?</label>
+              <div class="vfr-statusbtns">
+                <button class="vfr-sbtn" id="vfr-ok" style="border-color:${STATUS.samthykkt.bd};color:${STATUS.samthykkt.color}">🟢 Samþykkt</button>
+                <button class="vfr-sbtn" id="vfr-redo" style="border-color:${STATUS.lagfaera.bd};color:${STATUS.lagfaera.color}">🟠 Þarf meira</button>
+              </div>
+            </div>`:''}
+        </div>
+        <div class="vfr-card-ft">
+          <button class="btn primary" id="vfr-save">${isNew?'Bæta við punkti':'Vista'}</button>
+          ${!isNew?'<button class="btn" id="vfr-del">🗑 Eyða</button>':''}
+          <span style="margin-left:auto"></span>
+          <button class="btn" id="vfr-close">Loka</button>
+        </div>
+      </div>`;
+    document.body.appendChild(ov);
+    const $ = id => ov.querySelector(id);
+    const thumb = ()=>{
+      const url = pendingImg || (!removeImg && pin.image_url);
+      $('#vfr-thumbwrap').innerHTML = url
+        ? `<div class="vfr-thumb"><img src="${esc(url)}"><button class="vfr-iconbtn" id="vfr-imgrm" style="position:absolute;top:6px;right:6px">✕</button></div>` : '';
+      const rm = $('#vfr-imgrm'); if(rm) rm.onclick=()=>{ pendingImg=null; removeImg=true; thumb(); };
+    };
+    thumb();
+    async function takeImage(file){ if(!file) return; try{ const raw=await fileToDataUrl(file); const sc=await scale(raw,1600,4000,0.85); pendingImg=sc.url; removeImg=false; thumb(); }catch(_){ flash('Náði ekki í mynd',true); } }
+    $('#vfr-drop').onclick=()=>$('#vfr-file').click();
+    $('#vfr-file').onchange=e=>takeImage(e.target.files[0]);
+    const onPaste=e=>{ const it=[...(e.clipboardData?.items||[])].find(i=>i.type.startsWith('image/')); if(it){ e.preventDefault(); takeImage(it.getAsFile()); } };
+    ov.addEventListener('paste', onPaste);
+    const close=()=>{ document.removeEventListener('keydown',onKey); ov.remove(); };
+    const onKey=e=>{ if(e.key==='Escape') close(); };
+    document.addEventListener('keydown',onKey);
+    ov.addEventListener('click',e=>{ if(e.target===ov) close(); });
+    $('#vfr-close').onclick=close;
+    setTimeout(()=>{ const ta=$('#vfr-cm'); if(ta && isNew) ta.focus(); },30);
+
+    $('#vfr-save').onclick=async()=>{
+      const comment = $('#vfr-cm').value.trim();
+      const btn=$('#vfr-save'); btn.disabled=true; btn.textContent='Vista…';
+      try{
+        if(isNew){
+          const body={ action:'add-pin', page_id:pin.page_id, x:pin.x, y:pin.y, comment };
+          if(pendingImg) body.image=pendingImg;
+          const d=await api(body); V.pins.push(d.pin);
+        } else {
+          const body={ action:'update-pin', id:pin.id, comment };
+          if(pendingImg) body.image=pendingImg; else if(removeImg) body.removeImage=true;
+          const d=await api(body); Object.assign(pin, d.pin);
+        }
+        close(); renderDeck(); flash('✓ Vistað');
+      }catch(e){ btn.disabled=false; btn.textContent=isNew?'Bæta við punkti':'Vista'; flash(e.message,true); }
+    };
+    if($('#vfr-del')) $('#vfr-del').onclick=async()=>{
+      if(!confirm('Eyða þessum punkti?')) return;
+      try{ await api({action:'delete-pin', id:pin.id}); V.pins=V.pins.filter(p=>p.id!==pin.id); close(); renderDeck(); flash('✓ Punkti eytt'); }
+      catch(e){ flash(e.message,true); }
+    };
+    async function setStatus(status){ try{ const d=await api({action:'update-pin', id:pin.id, status}); Object.assign(pin,d.pin); close(); renderDeck(); flash('✓ Uppfært'); }catch(e){ flash(e.message,true); } }
+    if($('#vfr-ok')) $('#vfr-ok').onclick=()=>setStatus('samthykkt');
+    if($('#vfr-redo')) $('#vfr-redo').onclick=()=>setStatus('lagfaera');
+  }
+
+  // ── add page ──────────────────────────────────────────────────────────────
+  function addPage(){
+    let pendingImg=null;
+    const ov=document.createElement('div'); ov.className='vfr-modal';
+    ov.innerHTML=`
+      <div class="vfr-card">
+        <div class="vfr-card-hd"><span style="font-size:18px">🖼️</span><strong style="font-size:15px">Bæta við síðu</strong></div>
+        <div class="vfr-card-bd">
+          <label class="vfr-hint" style="font-weight:700">Heiti síðu</label>
+          <input id="vfr-pt" class="vfr-ta" style="min-height:0;height:42px" placeholder="t.d. Sala (kassi), Þjónustutæki, Geymsla…">
+          <div class="vfr-drop" id="vfr-drop" style="margin-top:13px">📎 Límdu skjámynd (Ctrl/⌘+V) eða <u>veldu mynd</u></div>
+          <input type="file" id="vfr-file" accept="image/*" style="display:none">
+          <div id="vfr-thumbwrap"></div>
+          <p class="vfr-hint" style="margin-top:12px;line-height:1.5">Taktu skjámynd af síðunni í slökkvitæki-appinu (síma: takkar til að skjóta skjámynd; tölva: <b>Win+Shift+S</b> / <b>⌘+Shift+4</b>) og límdu hana hér.</p>
+        </div>
+        <div class="vfr-card-ft">
+          <button class="btn primary" id="vfr-save">Bæta við</button>
+          <span style="margin-left:auto"></span>
+          <button class="btn" id="vfr-close">Loka</button>
+        </div>
+      </div>`;
+    document.body.appendChild(ov);
+    const $=id=>ov.querySelector(id);
+    const thumb=()=>{ $('#vfr-thumbwrap').innerHTML = pendingImg?`<div class="vfr-thumb"><img src="${esc(pendingImg)}"></div>`:''; };
+    async function takeImage(file){ if(!file) return; try{ const raw=await fileToDataUrl(file); const sc=await scale(raw,1600,6000,0.82); pendingImg=sc.url; ov._dim={w:sc.w,h:sc.h}; thumb(); }catch(_){ flash('Náði ekki í mynd',true); } }
+    $('#vfr-drop').onclick=()=>$('#vfr-file').click();
+    $('#vfr-file').onchange=e=>takeImage(e.target.files[0]);
+    ov.addEventListener('paste',e=>{ const it=[...(e.clipboardData?.items||[])].find(i=>i.type.startsWith('image/')); if(it){ e.preventDefault(); takeImage(it.getAsFile()); } });
+    const close=()=>ov.remove();
+    ov.addEventListener('click',e=>{ if(e.target===ov) close(); });
+    $('#vfr-close').onclick=close;
+    setTimeout(()=>$('#vfr-pt').focus(),30);
+    $('#vfr-save').onclick=async()=>{
+      const title=$('#vfr-pt').value.trim();
+      if(!title){ flash('Settu heiti á síðuna',true); return; }
+      if(!pendingImg){ flash('Veldu eða límdu mynd',true); return; }
+      const btn=$('#vfr-save'); btn.disabled=true; btn.textContent='Hleð upp…';
+      try{
+        const body={ action:'add-page', title, image:pendingImg, source:'upload' };
+        if(ov._dim){ body.width=ov._dim.w; body.height=ov._dim.h; }
+        const d=await api(body); V.pages.push(d.page); V.cur=V.pages.length-1; close(); renderDeck(); flash('✓ Síðu bætt við');
+      }catch(e){ btn.disabled=false; btn.textContent='Bæta við'; flash(e.message,true); }
+    };
+  }
+
+  // ── submit batch ────────────────────────────────────────────────────────────
+  async function submit(){
+    const open = V.pins.filter(p=>!p.submitted).length;
+    if(!open){ flash('Engir nýir punktar til að senda', true); return; }
+    if(!confirm(`Senda ${open} ${open===1?'punkt':'punkta'} í viðgerð?`)) return;
+    try{
+      const d=await api({action:'submit'});
+      V.pins.forEach(p=>{ if(!p.submitted){ p.submitted=true; } });
+      renderDeck();
+      alert(`📨 ${d.count} ${d.count===1?'punktur':'punktar'} sendir í viðgerð.\n\nSegðu nú við Claude: „kíktu á vefrýni“ — þá fer ég yfir alla punktana, laga þá og geri þá bláa (tilbúið til yfirferðar).`);
+    }catch(e){ flash(e.message,true); }
+  }
+
+  // ── top bar wiring ──────────────────────────────────────────────────────────
+  $view.querySelectorAll('#vfr-mode button').forEach(b=> b.onclick=()=>{ V.mode=b.dataset.mode; localStorage.setItem('vfr_mode',V.mode); renderDeck(); });
+  $armtog.onclick=()=>{ V.annotate=!V.annotate; localStorage.setItem('vfr_annotate', V.annotate?'1':'0'); renderDeck(); };
+  $view.querySelector('#vfr-addpage').onclick=addPage;
+  $view.querySelector('#vfr-submit').onclick=submit;
+
+  load();
+}
+
 function renderBakendi(t){
   const FOLDER_KEY = 'bakendi_doc_folder';
   const DEFAULT_FOLDER = '1ApVH4kzbZ4SmwXsLtFqUOn3hotSNECTk';
@@ -2460,6 +2864,13 @@ function renderBakendi(t){
 
   $view.innerHTML = `
     <div class="section">
+      <div onclick="state.ui.activeTab='vefryni';save();render()" style="margin:0 0 18px;padding:13px 15px;border:1px solid #fde68a;background:#fef9c3;border-radius:11px;max-width:680px;cursor:pointer;display:flex;align-items:center;gap:12px">
+        <span style="font-size:22px">🔎</span>
+        <div style="flex:1">
+          <div style="font-weight:700;color:#0f172a">Vefrýni — myndayfirferð á slökkvitæki-appinu</div>
+          <div style="font-size:12px;color:#713f12;margin-top:2px">Settu gula punkta á skjámyndir, skrifaðu hvað á að breyta og sendu mér í viðgerð. →</div>
+        </div>
+      </div>
       <div class="group-title"><strong>🔗 Mínir Sheet-tenglar</strong><div class="line"></div></div>
       <p style="color:#475569;font-size:13px;line-height:1.5;margin:0 0 12px;max-width:680px">
         Límdu inn tengla á Google&nbsp;Sheets sem þú vilt geyma og opna fljótt — vistast á <b>öllum tækjunum</b> þínum.

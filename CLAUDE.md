@@ -113,6 +113,21 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   `ensureNewTabs`, the `render()` dispatcher). Reuses global `escapeHtml`; local
   `esc`/`relTime` helpers like renderDagurinn.
 
+- `vefryni` — **Vefrýni** visual review/annotation tool (`renderVefryni`, tab just
+  above Bakendi; also a launch card at the top of Bakendi). A deck of slökkvitæki
+  screenshots shown flip (⇄) or scroll (▤); click a page to drop a dot with a
+  comment + optional pasted screenshot. Status flow: 🟡 `nytt` → 🔵 `tilbuid`
+  (Claude, after fixing) → 🟢 `samthykkt` / 🟠 `lagfaera` (Agnar). "Senda í viðgerð"
+  flags all unsubmitted pins as a batch. Pages added manually (upload/paste) for now;
+  one-click auto-capture is a planned fast-follow. Backend `/api/vefryni`
+  (`netlify/functions/vefryni.js`, service-role key): `GET ?what=deck|queue`; `POST`
+  actions `add-page|update-page|delete-page|reorder-pages|add-pin|update-pin|delete-pin|submit`.
+  Data: `vefryni_pages` + `vefryni_pins` (**RLS ON, no anon policies** — only this
+  function / admin can read; the public anon key cannot) + public `vefryni` storage
+  bucket (screenshots, UUID keys). **Claude's worklist after a "Senda í viðgerð":**
+  `GET /api/vefryni?what=queue` (or SQL: pins where `submitted` and `status in (nytt,lagfaera)`);
+  fix each, set `status='tilbuid'` + a `claude_note`, then Agnar marks green/orange.
+
 > The `reikningar` tab is currently a placeholder. The Reikningagerð
 > (invoicing prep) work is being built on top of it — see Open work below.
 
