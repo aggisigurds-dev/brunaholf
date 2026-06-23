@@ -92,6 +92,13 @@
   to = "/.netlify/functions/app-state"
   status = 200
 
+# Vefrýni visual-review tool (pages/pins CRUD + screenshot upload)
+#   /api/vefryni → /.netlify/functions/vefryni
+[[redirects]]
+  from = "/api/vefryni"
+  to = "/.netlify/functions/vefryni"
+  status = 200
+
 # Per-worksite billing rules (rate / akstur / smáhlutagjald / VSK / etc.)
 [[redirects]]
   from = "/api/pricing-guide"
