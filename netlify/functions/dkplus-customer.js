@@ -76,6 +76,45 @@ exports.handler = async (event) => {
   if (!SUPABASE_URL || !SUPABASE_KEY) return json(500, { error: 'Supabase env missing.' });
 
   let req; try { req = JSON.parse(event.body || '{}'); } catch { return json(400, { error: 'Invalid JSON body.' }); }
+
+  // --- update-sendto: flip a customer's delivery flags (SendTo) SAFELY ---
+  // Reads the full CustomerModel, changes ONLY the requested SendTo keys on that
+  // exact object, PUTs the same object back (round-trip → nothing else shifts),
+  // then re-reads to prove exactly which keys changed. Confirm-gated (live write).
+  //   POST { mode:"update-sendto", number:"150486-2389", set:{ PublishingSystem:true } }   // preview
+  //   POST { mode:"update-sendto", confirm:true, number, set }                              // write
+  if (req.mode === 'update-sendto') {
+    const number = (req.number || '').trim();
+    if (!number) return json(400, { error: 'update-sendto needs { number } (kt, dashed e.g. "150486-2389").' });
+    const set = req.set && typeof req.set === 'object' && !Array.isArray(req.set) ? req.set : null;
+    if (!set || !Object.keys(set).length) return json(400, { error: 'update-sendto needs { set:{…SendTo keys…} } e.g. { PublishingSystem:true }.' });
+    const ALLOWED = ['Printer', 'ClaimToPrinter', 'Email', 'EDIInvoice', 'PublishingSystem'];
+    const bad = Object.keys(set).filter((k) => !ALLOWED.includes(k));
+    if (bad.length) return json(400, { error: `Unknown SendTo key(s): ${bad.join(', ')}. Allowed: ${ALLOWED.join(', ')}.` });
+
+    // 1) read the full customer object
+    const got = await dkFetch(`Customer/${encodeURIComponent(number)}`);
+    if (!got.res.ok || !got.data || typeof got.data !== 'object') {
+      return json(got.res.status || 502, { error: `Could not read customer ${number}.`, dk_status: got.res.status, data: got.data });
+    }
+    const before = { ...(got.data.SendTo || {}) };
+    if (req.confirm !== true) {
+      return json(412, { error: 'Refusing to write. Send { mode:"update-sendto", confirm:true, number, set }.', number, current_SendTo: before, would_set: set });
+    }
+    // 2) flip ONLY the requested keys on the full object, PUT the same object back
+    const updated = { ...got.data, SendTo: { ...before, ...set } };
+    const put = await dkFetch(`Customer/${encodeURIComponent(number)}`, { method: 'PUT', body: updated });
+    // 3) re-read to prove what actually changed (and that nothing else did)
+    let after = null;
+    try { const re = await dkFetch(`Customer/${encodeURIComponent(number)}`); if (re.res.ok && re.data && typeof re.data === 'object') after = re.data.SendTo || null; } catch (e) { /* report PUT result anyway */ }
+    const changed = after ? Object.keys({ ...before, ...after }).filter((k) => before[k] !== after[k]) : null;
+    return json(put.res.ok ? 200 : put.res.status, {
+      mode: 'update-sendto', number, ok: put.res.ok, dk_status: put.res.status,
+      before_SendTo: before, requested: set, after_SendTo: after, changed_keys: changed,
+      put_response: typeof put.data === 'string' ? put.data.slice(0, 300) : put.data,
+    });
+  }
+
   const mode = req.mode === 'create' ? 'create' : 'dry-run';
 
   // Candidates from customers_base (by base_ids if given, else everyone with a kt).
