@@ -70,6 +70,18 @@ exports.handler = async (event) => {
   let req;
   try { req = JSON.parse(event.body || '{}'); } catch { return json(400, { error: 'Invalid JSON body.' }); }
 
+  // --- email: send a posted invoice as email (HTML body + PDF attachment) ---
+  // POST sales/invoice/{number}/email with a MailInfo body (recipient, subject, …).
+  // Pass the dkPlus MailInfo object straight through as `mail` so the exact field
+  // names can be tuned without redeploying. Real send → confirm-gated.
+  if (req.mode === 'email') {
+    if (!req.number) return json(400, { error: 'email mode needs { number } (the invoice number, e.g. "6").' });
+    if (req.confirm !== true) return json(412, { error: 'Refusing to send. Use { mode:"email", confirm:true, number, mail:{…MailInfo…} }.' });
+    const q = req.background === true ? '?background=true' : '';
+    const { res, data, mode: auth, url } = await dkFetch(`sales/invoice/${encodeURIComponent(req.number)}/email${q}`, { method: 'POST', body: req.mail || {} });
+    return json(res.ok ? 200 : res.status, { ok: res.ok, dk_status: res.status, mode: 'email', sent: res.ok, auth_mode: auth, url, data });
+  }
+
   const invoice = req.invoice;
   if (!invoice || typeof invoice !== 'object') {
     return json(400, { error: 'Missing "invoice" payload object (the dkPlus sales-invoice body).' });
