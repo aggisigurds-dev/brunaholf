@@ -366,6 +366,13 @@
   to = "/.netlify/functions/dkplus-product"
   status = 200
 
+# DK Plus customer (viðskiptavinir) sync + delivery-flag update
+#   POST /api/dkplus-customer { mode:"dry-run"|"create"|"update-sendto", confirm, … }
+[[redirects]]
+  from = "/api/dkplus-customer"
+  to = "/.netlify/functions/dkplus-customer"
+  status = 200
+
 # Slökkvitæki Sala price list (vorur) — for the reikningur generator
 [[redirects]]
   from = "/api/vorur"
