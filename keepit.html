@@ -562,6 +562,7 @@ function cardHtml(c){
     ${inner}
     ${tags}
     <div class="actions">
+      ${c.type==='bookmark' ? `<button class="mini" data-act="shot" data-id="${esc(c.id)}" title="Taka skjáskot af síðunni">📸</button>` : ''}
       <button class="mini" data-act="pin"  data-id="${esc(c.id)}" title="${c.pinned?'Af-pinna':'Pinna'}">${c.pinned?'📍':'📌'}</button>
       <button class="mini" data-act="arch" data-id="${esc(c.id)}" title="${c.archived?'Endurheimta':'Arkífera'}">${c.archived?'↩':'📦'}</button>
       <button class="mini" data-act="edit" data-id="${esc(c.id)}" title="Breyta">✏️</button>
@@ -678,8 +679,29 @@ function onAction(btn){
   else if(act==='dup'){ const d = clone(c); d.id = newId(); d.created_at = d.updated_at = nowStr(); d.pinned = false; state.cards.unshift(d); }
   else if(act==='del'){ if(!confirm('Eyða spjaldi?')) return; state.cards = state.cards.filter(x=>x.id!==id); }
   else if(act==='edit'){ return openEditor(c); }
+  else if(act==='shot'){ return takeScreenshot(c, btn); }
   c.updated_at = nowStr();
   save(); render();
+}
+
+// One-click "📸 Skjáskot": call the headless screenshot endpoint, replace
+// the bookmark's preview image with the rendered page. Loading state is
+// inline on the button itself so the rest of the UI stays responsive.
+async function takeScreenshot(c, btn){
+  if(!c.url) { alert('Ekkert URL á þessu spjaldi.'); return; }
+  const prev = btn.textContent;
+  btn.textContent = '⏳'; btn.disabled = true;
+  try {
+    const r = await fetch('/api/bookmark-preview?screenshot=1&url=' + encodeURIComponent(c.url));
+    const d = await r.json();
+    if(!d || !d.ok || !d.screenshot) throw new Error(d && d.error || 'engin mynd');
+    c.og_image = d.screenshot;
+    c.updated_at = nowStr();
+    save(); render();
+  } catch(e){
+    alert('Náði ekki í skjáskot: ' + (e.message||e));
+    btn.textContent = prev; btn.disabled = false;
+  }
 }
 
 // ───── Editor ─────
