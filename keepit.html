@@ -4,28 +4,45 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#fbbf24">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Keepit">
+<link rel="manifest" href="/keepit-manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="/keepit-icon.svg">
+<link rel="apple-touch-icon" href="/keepit-icon.svg">
 <title>Keepit — persónulegt</title>
 <style>
   :root{
-    --bg:#fafbfc; --ink:#1f2933; --muted:#6b7785; --border:#e3e7ec; --card-shadow:0 1px 2px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);
-    --accent:#d14528;
+    --bg:#fafbfc; --ink:#1f2933; --muted:#6b7785; --border:#e3e7ec;
+    --card-shadow:0 1px 2px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);
+    --accent:#d14528; --accent-2:#9a2f1a;
+    --pad-card:12px 14px;
+    --font-base:14px;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font:var(--font-base)/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
   a{color:#1d4ed8;text-decoration:none}
-  /* ───── Top bar ───── */
-  .topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border-bottom:1px solid var(--border);box-shadow:0 1px 2px rgba(0,0,0,.04)}
-  .brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:18px;color:var(--ink);user-select:none}
-  .brand-dot{width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,#fbbf24,#f59e0b);display:inline-flex;align-items:center;justify-content:center;font-size:14px}
-  .quick{flex:1;display:flex;gap:8px;align-items:center}
+  /* font size scale */
+  body.fs-s{font-size:13px}  body.fs-l{font-size:15px}
+  body.dens-compact{--pad-card:8px 10px}
+  body.dens-comfy{--pad-card:16px 18px}
+  /* ───── Topbar ───── */
+  .topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:8px;padding:8px 12px;background:#fff;border-bottom:1px solid var(--border);box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:17px;color:var(--ink);user-select:none;cursor:pointer}
+  .brand-dot{width:24px;height:24px;border-radius:7px;background:linear-gradient(135deg,#fbbf24,#f59e0b);display:inline-flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+  .quick{flex:1;display:flex;gap:6px;align-items:center}
   .quick input{flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font:inherit;background:#fff;outline:none}
   .quick input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(209,69,40,.16)}
   .btn{padding:8px 12px;border-radius:8px;border:1.5px solid var(--border);background:#fff;color:var(--ink);font:600 12.5px/1 inherit;cursor:pointer}
   .btn:hover{background:#f3f5f8}
-  .btn.primary{background:linear-gradient(135deg,#d14528,#9a2f1a);color:#fff;border-color:#9a2f1a}
-  .btn.primary:hover{filter:brightness(1.06)}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;border-color:var(--accent-2)}
   .btn-icon{padding:7px 9px}
-  .menubtn{padding:7px 9px;font-size:16px}
+  /* Layout switcher (segmented control) */
+  .seg-group{display:inline-flex;border:1.5px solid var(--border);border-radius:8px;overflow:hidden;background:#fff}
+  .seg-group button{padding:6px 9px;border:0;background:transparent;cursor:pointer;font-size:13px;color:var(--ink);font-weight:600}
+  .seg-group button:hover{background:#f3f5f8}
+  .seg-group button.sel{background:#1f2933;color:#fff}
   /* ───── Layout ───── */
   .layout{display:grid;grid-template-columns:230px 1fr;gap:14px;padding:14px;align-items:flex-start}
   @media (max-width:780px){
@@ -33,7 +50,7 @@
     .side{display:none}
     .layout.open .side{display:block}
   }
-  .side{background:#fff;border:1px solid var(--border);border-radius:12px;padding:6px;position:sticky;top:64px;max-height:calc(100vh - 80px);overflow:auto}
+  .side{background:#fff;border:1px solid var(--border);border-radius:12px;padding:6px;position:sticky;top:60px;max-height:calc(100vh - 76px);overflow:auto}
   .side h3{margin:8px 8px 4px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
   .side .row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;cursor:pointer;font-size:13.5px;color:var(--ink);user-select:none}
   .side .row:hover{background:#f3f5f8}
@@ -42,16 +59,33 @@
   .swatches{display:flex;flex-wrap:wrap;gap:5px;padding:4px 10px 8px}
   .swatch{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
   .swatch.sel{border-color:#111}
-  /* ───── Grid (Masonry via CSS columns) ───── */
+  /* ───── Main ───── */
   .main{min-width:0}
   .section-title{margin:4px 6px 8px;font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-  .grid{column-count:4;column-gap:14px}
-  @media (max-width:1200px){.grid{column-count:3}}
-  @media (max-width:880px){.grid{column-count:2}}
-  @media (max-width:540px){.grid{column-count:1}}
   .empty{padding:60px 20px;text-align:center;color:var(--muted);background:#fff;border:1px dashed var(--border);border-radius:12px}
+  /* Layouts */
+  .layout-masonry .grid{column-count:var(--cols,4);column-gap:14px}
+  @media (max-width:1200px){.layout-masonry .grid{column-count:min(var(--cols,4),3)}}
+  @media (max-width:880px){.layout-masonry  .grid{column-count:min(var(--cols,4),2)}}
+  @media (max-width:540px){.layout-masonry  .grid{column-count:1}}
+  .layout-grid .grid{display:grid;grid-template-columns:repeat(var(--cols,4),1fr);gap:14px}
+  @media (max-width:880px){.layout-grid .grid{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:540px){.layout-grid .grid{grid-template-columns:1fr}}
+  .layout-grid .card{aspect-ratio:1/1;display:flex;flex-direction:column}
+  .layout-list .grid{display:flex;flex-direction:column;gap:8px}
+  .layout-list .card{display:flex;align-items:flex-start;gap:12px;padding:10px 14px}
+  .layout-list .card .body{font-size:13.5px;color:#475569;line-height:1.4;flex:1;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .layout-list .card .imgs{margin:0;width:80px;flex:none}
+  .layout-list .card .imgs img{width:80px;height:80px;object-fit:cover}
+  .layout-list .card .meta{margin-top:0}
+  .layout-kanban .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;align-items:flex-start}
+  .layout-kanban .kcol{background:#f1f4f8;border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px;min-height:80px}
+  .layout-kanban .kcol-hd{display:flex;align-items:center;gap:6px;font-weight:700;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;padding:0 4px 6px}
+  .layout-kanban .kcol-hd .n{margin-left:auto;background:#fff;padding:2px 7px;border-radius:99px;font-weight:700;color:var(--ink);font-size:11px}
+  .layout-kanban .card{padding:10px 12px}
   /* ───── Card ───── */
-  .card{break-inside:avoid;margin-bottom:14px;border:1px solid var(--border);border-radius:11px;background:#fff;padding:12px 14px;box-shadow:var(--card-shadow);position:relative;overflow:hidden;transition:transform .12s,box-shadow .12s}
+  .card{break-inside:avoid;margin-bottom:14px;border:1px solid var(--border);border-radius:11px;background:#fff;padding:var(--pad-card);box-shadow:var(--card-shadow);position:relative;overflow:hidden;transition:transform .12s,box-shadow .12s}
+  .layout-grid .card,.layout-list .card,.layout-kanban .card{margin-bottom:0}
   .card:hover{transform:translateY(-1px);box-shadow:0 2px 4px rgba(0,0,0,.06),0 10px 22px rgba(0,0,0,.06)}
   .card .title{font-weight:700;font-size:14.5px;color:var(--ink);margin:0 0 6px;word-wrap:break-word}
   .card .body{font-size:13.5px;line-height:1.5;color:#2a3340;white-space:pre-wrap;word-wrap:break-word}
@@ -62,15 +96,23 @@
   .card .ck-item{display:flex;align-items:flex-start;gap:7px;font-size:13.5px}
   .card .ck-item input{margin-top:3px}
   .card .ck-item.done span{text-decoration:line-through;color:var(--muted)}
+  .card .ck-progress{margin-top:4px;height:3px;background:#e5e7eb;border-radius:99px;overflow:hidden}
+  .card .ck-progress .b{height:100%;background:#10b981;transition:width .2s}
   .card .bk-link{display:flex;flex-direction:column;text-decoration:none}
   .card .bk-link img{width:100%;border-radius:7px;display:block;background:#f1f4f7;margin-bottom:6px}
   .card .bk-link .bk-host{font-size:11.5px;color:var(--muted)}
+  .card .co-block{display:flex;gap:10px;align-items:center;margin-top:2px}
+  .card .co-avatar{width:40px;height:40px;border-radius:8px;background:linear-gradient(135deg,#fef3c7,#fcd34d);color:#92400e;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex:none}
+  .card .co-info{flex:1;min-width:0}
+  .card .co-name{font-weight:700;font-size:13.5px;color:var(--ink)}
+  .card .co-kt{font-size:11.5px;color:var(--muted);font-family:ui-monospace,Menlo,monospace}
+  .card .co-link{display:inline-block;font-size:11.5px;margin-top:3px;padding:2px 8px;background:#eef2ff;color:#3730a3;border-radius:99px;text-decoration:none}
   .card .meta{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
   .card .tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:#eef2f7;color:#374151;border:1px solid #d8dee7;cursor:pointer}
   .card .tag:hover{background:#dde4ed}
   .card .actions{position:absolute;top:6px;right:6px;display:flex;gap:2px;opacity:0;transition:opacity .12s;background:rgba(255,255,255,.92);border:1px solid var(--border);border-radius:7px;padding:2px;box-shadow:0 1px 4px rgba(0,0,0,.1)}
   .card:hover .actions{opacity:1}
-  .card.pinned .actions, .card .actions.always{opacity:1}
+  .card.pinned .actions{opacity:1}
   .mini{width:26px;height:26px;border-radius:5px;border:0;background:transparent;cursor:pointer;font-size:12.5px;line-height:1;padding:0;color:var(--ink)}
   .mini:hover{background:#eef2f7}
   .pin-badge{position:absolute;top:6px;left:6px;font-size:11px;background:rgba(0,0,0,.06);padding:2px 6px;border-radius:6px;color:var(--muted);font-weight:700}
@@ -80,10 +122,7 @@
   .composer input.cmp{flex:1;border:0;font:600 14.5px/1.4 inherit;background:transparent;outline:none;color:var(--ink);padding:6px 0}
   .composer textarea{display:none;width:100%;border:0;background:transparent;font:inherit;resize:vertical;min-height:48px;outline:none;padding:6px 0}
   .composer.expanded textarea{display:block}
-  .composer .type-row{display:flex;gap:5px;margin-top:4px}
-  .composer .seg{padding:5px 10px;border-radius:99px;border:1px solid var(--border);background:#fff;font-size:11.5px;font-weight:700;cursor:pointer;color:var(--ink)}
-  .composer .seg.sel{background:#1f2933;color:#fff;border-color:#1f2933}
-  .composer .opts{display:none;align-items:center;gap:8px;justify-content:space-between;margin-top:8px;padding-top:6px;border-top:1px solid #f1f4f7}
+  .composer .opts{display:none;align-items:center;gap:8px;justify-content:space-between;margin-top:8px;padding-top:6px;border-top:1px solid #f1f4f7;flex-wrap:wrap}
   .composer.expanded .opts{display:flex}
   .composer .opts-left{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
   .composer .tag-in{flex:1;border:0;background:transparent;font:inherit;font-size:12.5px;color:var(--muted);outline:none;padding:4px 6px;min-width:120px}
@@ -91,15 +130,15 @@
   .composer .img-preview .p{position:relative;width:80px;height:80px}
   .composer .img-preview img{width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--border)}
   .composer .img-preview .x{position:absolute;top:-5px;right:-5px;background:#dc2626;color:#fff;border:0;width:18px;height:18px;border-radius:50%;font-size:11px;cursor:pointer;line-height:1}
-  /* ───── Editor modal ───── */
+  /* ───── Modal ───── */
   .modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow:auto}
-  .modal{background:#fff;border-radius:14px;width:100%;max-width:560px;padding:18px 20px;box-shadow:0 18px 60px rgba(0,0,0,.3)}
+  .modal{background:#fff;border-radius:14px;width:100%;max-width:580px;padding:18px 20px;box-shadow:0 18px 60px rgba(0,0,0,.3)}
   .modal h3{margin:0 0 12px;font-size:16px;font-weight:800}
   .mf{display:flex;flex-direction:column;gap:10px}
   .mf label{font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;display:block}
-  .mf input[type=text],.mf input[type=url],.mf input[type=color],.mf textarea,.mf select{width:100%;padding:8px 10px;font-size:13.5px;border:1.5px solid var(--border);border-radius:8px;background:#fff;outline:none;font-family:inherit}
+  .mf input[type=text],.mf input[type=url],.mf input[type=color],.mf input[type=range],.mf textarea,.mf select{width:100%;padding:8px 10px;font-size:13.5px;border:1.5px solid var(--border);border-radius:8px;background:#fff;outline:none;font-family:inherit}
   .mf input:focus,.mf textarea:focus,.mf select:focus{border-color:var(--accent)}
-  .mf textarea{min-height:100px;resize:vertical;line-height:1.45}
+  .mf textarea{min-height:90px;resize:vertical;line-height:1.45}
   .mf-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .mf-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
   .mf .swatches{padding:0}
@@ -117,30 +156,71 @@
   .img-grid .add:hover{border-color:var(--accent);color:var(--accent)}
   .paste-zone{margin-top:8px;border:2px dashed var(--border);border-radius:8px;padding:14px;text-align:center;font-size:12px;color:var(--muted);background:#fafbfd;outline:none;cursor:text}
   .paste-zone:focus{border-color:var(--accent);background:#fff}
+  /* Company picker */
+  .co-list{max-height:260px;overflow:auto;border:1px solid var(--border);border-radius:8px}
+  .co-row{display:flex;align-items:center;gap:10px;padding:9px 11px;cursor:pointer;border-bottom:1px solid #f1f4f7}
+  .co-row:last-child{border-bottom:0}
+  .co-row:hover{background:#f3f5f8}
+  .co-row .co-avatar{width:32px;height:32px;border-radius:7px;font-size:12px}
+  .co-row .co-meta{font-size:11px;color:var(--muted);font-family:ui-monospace,Menlo,monospace}
+  .co-src{font-size:10px;font-weight:700;padding:2px 6px;border-radius:99px;background:#eef2ff;color:#3730a3;margin-left:auto}
+  .co-src.b{background:#fef3c7;color:#92400e}
+  .co-src.s{background:#fee2e2;color:#b91c1c}
+  /* Settings drawer */
+  .drawer-bg{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:90;display:none}
+  .drawer-bg.open{display:block}
+  .drawer{position:fixed;top:0;right:0;width:340px;max-width:92vw;height:100vh;background:#fff;z-index:91;transform:translateX(100%);transition:transform .18s ease;box-shadow:-8px 0 24px rgba(0,0,0,.18);overflow:auto;padding:14px 16px}
+  .drawer.open{transform:translateX(0)}
+  .drawer h2{font-size:16px;margin:0 0 14px;display:flex;align-items:center;gap:8px}
+  .drawer h2 .x{margin-left:auto;background:transparent;border:0;font-size:18px;cursor:pointer;color:var(--muted)}
+  .drawer .grp{padding:10px 0;border-bottom:1px solid var(--border)}
+  .drawer .grp:last-child{border-bottom:0}
+  .drawer .grp-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px}
+  .drawer .row{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13.5px}
+  .drawer .row label{flex:1}
+  .drawer .row select,.drawer .row input[type=number]{padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:13px;background:#fff;color:var(--ink)}
+  /* PWA install banner */
+  .install-banner{position:fixed;bottom:12px;left:12px;right:12px;background:linear-gradient(135deg,#1f2933,#0f1419);color:#fff;padding:11px 14px;border-radius:10px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(0,0,0,.3);z-index:60;font-size:13px;max-width:480px;margin:0 auto;display:none}
+  .install-banner.show{display:flex}
+  .install-banner .install-msg{flex:1}
+  .install-banner button{padding:7px 12px;border-radius:7px;font-weight:700;cursor:pointer;font-size:12.5px;border:0}
   /* Dark mode */
   body.dark{--bg:#0f1419;--ink:#e6e8eb;--muted:#9aa3af;--border:#1f2733;--card-shadow:0 1px 3px rgba(0,0,0,.5),0 4px 14px rgba(0,0,0,.35)}
   body.dark .topbar{background:#151b22;border-bottom-color:#1f2733}
-  body.dark .quick input,body.dark .btn{background:#1a2129;color:#e6e8eb;border-color:#2a3340}
+  body.dark .quick input,body.dark .btn,body.dark .seg-group{background:#1a2129;color:#e6e8eb;border-color:#2a3340}
   body.dark .btn:hover{background:#222a33}
-  body.dark .side,body.dark .card,body.dark .composer,body.dark .modal{background:#161c23;border-color:#1f2733}
-  body.dark .empty{background:#161c23;border-color:#2a3340}
+  body.dark .seg-group button:hover{background:#222a33}
+  body.dark .seg-group button.sel{background:#e6e8eb;color:#1f2933}
+  body.dark .side,body.dark .card,body.dark .composer,body.dark .modal,body.dark .drawer{background:#161c23;border-color:#1f2733}
+  body.dark .empty,body.dark .layout-kanban .kcol,body.dark .paste-zone,body.dark .img-grid .add{background:#161c23;border-color:#2a3340}
   body.dark .mini:hover{background:#222a33}
-  body.dark .composer .seg{background:#1a2129;color:#e6e8eb;border-color:#2a3340}
-  body.dark .composer .seg.sel{background:#e6e8eb;color:#1f2933;border-color:#e6e8eb}
-  body.dark .card .tag{background:#1a2129;color:#cbd5e0;border-color:#2a3340}
+  body.dark .card .tag,body.dark .layout-kanban .kcol{background:#1a2129;color:#cbd5e0;border-color:#2a3340}
 </style>
 </head>
 <body>
 
 <div class="topbar">
-  <button class="btn menubtn" id="menuBtn" title="Hliðarstika">☰</button>
-  <div class="brand"><span class="brand-dot">📒</span><span>Keepit</span></div>
+  <button class="btn btn-icon" id="menuBtn" title="Hliðarstika">☰</button>
+  <div class="brand" id="brand"><span class="brand-dot">📒</span><span>Keepit</span></div>
   <div class="quick">
     <input id="search" type="search" placeholder="🔍 Leita…">
   </div>
+  <div class="seg-group" id="layoutSeg" title="Útlit">
+    <button data-lay="masonry" title="Masonry">▦</button>
+    <button data-lay="grid"    title="Hnit">▣</button>
+    <button data-lay="list"    title="Listi">☰</button>
+    <button data-lay="kanban-type"  title="Kanban — tegund">📋</button>
+    <button data-lay="kanban-color" title="Kanban — litur">🎨</button>
+  </div>
   <button class="btn btn-icon" id="darkBtn" title="Dökk útlit">🌙</button>
-  <button class="btn btn-icon" id="syncBtn" title="Samstilling" style="display:none">☁</button>
+  <button class="btn btn-icon" id="settingsBtn" title="Stillingar">⚙</button>
   <button class="btn btn-icon" id="moreBtn" title="Fleira">⋯</button>
+</div>
+
+<div class="install-banner" id="installBanner">
+  <span class="install-msg">📲 Setja Keepit á heimaskjáinn?</span>
+  <button class="btn primary" id="installBtn">Bæta við</button>
+  <button class="btn" id="installDismiss" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.3)">Síðar</button>
 </div>
 
 <div class="layout" id="layout">
@@ -154,13 +234,16 @@
     <div class="row" data-filter="type" data-val="checklist"><span>☑️</span><span>Listi</span></div>
     <div class="row" data-filter="type" data-val="bookmark"><span>🔖</span><span>Bókmerki</span></div>
     <div class="row" data-filter="type" data-val="image"><span>🖼</span><span>Mynd</span></div>
+    <div class="row" data-filter="type" data-val="company"><span>🏢</span><span>Fyrirtæki</span></div>
     <h3>Litir</h3>
     <div class="swatches" id="colorFilter"></div>
     <h3 id="tagsHd" style="display:none">Merki</h3>
     <div id="tagsList"></div>
+    <h3 id="cosHd" style="display:none">Fyrirtæki</h3>
+    <div id="cosList"></div>
   </aside>
 
-  <main class="main">
+  <main class="main" id="mainArea">
     <!-- Composer ─────────────────────────────────── -->
     <div class="composer" id="composer">
       <div class="row">
@@ -174,15 +257,16 @@
           <button class="mini" id="cmpPin" title="Pinna">📌</button>
           <button class="mini" id="cmpColor" title="Litur">🎨</button>
           <button class="mini" id="cmpImage" title="Bæta mynd">🖼</button>
-          <button class="mini" id="cmpPaste" title="Líma mynd">📋</button>
+          <button class="mini" id="cmpCompany" title="Tengja við fyrirtæki">🏢</button>
           <input class="tag-in" id="cmpTags" type="text" placeholder="#merki kommuaðskilið">
         </div>
-        <div>
-          <select id="cmpType" class="seg" style="border-radius:8px;padding:5px 8px">
+        <div style="display:flex;gap:6px;align-items:center">
+          <select id="cmpType" class="btn" style="padding:7px 9px">
             <option value="note">📝 Glósa</option>
             <option value="checklist">☑️ Listi</option>
             <option value="bookmark">🔖 Bókmerki</option>
             <option value="image">🖼 Mynd</option>
+            <option value="company">🏢 Fyrirtæki</option>
           </select>
           <button class="btn primary" id="cmpSave">Vista</button>
         </div>
@@ -193,13 +277,81 @@
     <div id="pinnedTitle" class="section-title" style="display:none">📌 Pinnað</div>
     <div class="grid" id="pinnedGrid"></div>
     <div id="othersTitle" class="section-title" style="display:none">Annað</div>
-    <div class="grid" id="grid"></div>
+    <div id="gridHost"></div>
   </main>
 </div>
+
+<!-- Settings drawer -->
+<div class="drawer-bg" id="drawerBg"></div>
+<aside class="drawer" id="drawer">
+  <h2>⚙ Stillingar <button class="x" id="drawerX">✕</button></h2>
+  <div class="grp">
+    <div class="grp-title">Útlit</div>
+    <div class="row"><label>Layout</label>
+      <select id="sLayout">
+        <option value="masonry">▦ Masonry</option>
+        <option value="grid">▣ Hnit</option>
+        <option value="list">☰ Listi</option>
+        <option value="kanban-type">📋 Kanban — tegund</option>
+        <option value="kanban-color">🎨 Kanban — litur</option>
+      </select>
+    </div>
+    <div class="row"><label>Dálkar (masonry/hnit)</label>
+      <select id="sCols">
+        <option value="2">2</option><option value="3">3</option><option value="4">4</option>
+        <option value="5">5</option><option value="6">6</option>
+      </select>
+    </div>
+    <div class="row"><label>Þéttleiki</label>
+      <select id="sDens"><option value="compact">Þétt</option><option value="">Venjul.</option><option value="comfy">Rúmt</option></select>
+    </div>
+    <div class="row"><label>Letur</label>
+      <select id="sFs"><option value="s">Lítil</option><option value="">Venjul.</option><option value="l">Stór</option></select>
+    </div>
+    <div class="row"><label>Dökk útlit</label>
+      <input id="sDark" type="checkbox" style="transform:scale(1.3)">
+    </div>
+  </div>
+  <div class="grp">
+    <div class="grp-title">Sjálfgefið</div>
+    <div class="row"><label>Tegund við nýjt</label>
+      <select id="sDefType"><option value="note">📝 Glósa</option><option value="checklist">☑️ Listi</option><option value="bookmark">🔖 Bókmerki</option><option value="image">🖼 Mynd</option><option value="company">🏢 Fyrirtæki</option></select>
+    </div>
+    <div class="row"><label>Litur sjálfgefið</label>
+      <div class="swatches" id="sDefColor" style="padding:0"></div>
+    </div>
+  </div>
+  <div class="grp">
+    <div class="grp-title">PWA / heimaskjár</div>
+    <div class="row" style="font-size:12px;color:var(--muted);line-height:1.5;display:block">
+      Á iPhone: deila ➔ <b>Add to Home Screen</b>.<br>
+      Á Android (Chrome): valmynd ⋮ ➔ <b>Install app</b> (eða „Bæta við"-prompt birtist sjálfkrafa).
+    </div>
+    <div class="row"><label>Sjálfvirkt deila-mottöku</label><span style="font-size:11px;color:var(--muted)">virkt eftir uppsetningu (manifest.share_target)</span></div>
+  </div>
+  <div class="grp">
+    <div class="grp-title">Lyklaborð</div>
+    <div class="row" style="font-size:12px;color:var(--muted);line-height:1.6;display:block">
+      <b>N</b> nýtt · <b>/</b> leita · <b>?</b> hjálp · <b>Esc</b> loka
+    </div>
+  </div>
+  <div class="grp">
+    <div class="grp-title">Gögn</div>
+    <div class="row">
+      <button class="btn" id="sExport">Flytja út JSON</button>
+      <button class="btn" id="sImport">Flytja inn JSON</button>
+    </div>
+    <div class="row" style="margin-top:6px">
+      <button class="btn" id="sWipe" style="color:#b91c1c;border-color:#fecaca">Eyða öllu</button>
+    </div>
+    <div class="row" style="font-size:11px;color:var(--muted);display:block;margin-top:4px">Geymsla: localStorage (per device). Cross-device sync er v3.</div>
+  </div>
+</aside>
 
 <script>
 'use strict';
 
+// ───── Constants ─────
 const COLORS = [
   {id:'',  hex:'#ffffff', name:'Hvítur'},
   {id:'y', hex:'#fef3c7', name:'Gulur'},
@@ -212,15 +364,21 @@ const COLORS = [
   {id:'g', hex:'#bbf7d0', name:'Grænn'},
   {id:'k', hex:'#d1d5db', name:'Grár'},
 ];
-const colorHex = id => (COLORS.find(c=>c.id===id)||COLORS[0]).hex;
-const TYPES = {note:'📝 Glósa', checklist:'☑️ Listi', bookmark:'🔖 Bókmerki', image:'🖼 Mynd'};
+const colorHex  = id => (COLORS.find(c=>c.id===id)||COLORS[0]).hex;
+const colorName = id => (COLORS.find(c=>c.id===id)||COLORS[0]).name;
+const TYPES = {note:'📝 Glósa', checklist:'☑️ Listi', bookmark:'🔖 Bókmerki', image:'🖼 Mynd', company:'🏢 Fyrirtæki'};
 
 const LS_KEY = 'keepit:v1';
 const DEFAULT_STATE = {
   cards: [],
-  ui: { filter:{kind:'all', val:'all'}, q:'', dark:false, colorFilter:'', tagFilter:'' }
+  ui: {
+    filter:{kind:'all', val:'all'}, q:'', dark:false, colorFilter:'', tagFilter:'', companyFilter:'',
+    settings:{ layout:'masonry', cols:4, density:'', fontSize:'', defType:'note', defColor:'' },
+    installDismissedUntil: 0,
+  }
 };
 
+// ───── State persistence ─────
 function load(){
   try {
     const raw = localStorage.getItem(LS_KEY);
@@ -228,7 +386,8 @@ function load(){
     const s = JSON.parse(raw);
     s.cards = Array.isArray(s.cards) ? s.cards : [];
     s.ui    = Object.assign({}, DEFAULT_STATE.ui, s.ui||{});
-    s.ui.filter = Object.assign({}, DEFAULT_STATE.ui.filter, s.ui.filter||{});
+    s.ui.filter   = Object.assign({}, DEFAULT_STATE.ui.filter,   s.ui.filter   ||{});
+    s.ui.settings = Object.assign({}, DEFAULT_STATE.ui.settings, s.ui.settings ||{});
     return s;
   } catch(_) { return clone(DEFAULT_STATE); }
 }
@@ -240,8 +399,29 @@ function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&am
 
 let state = load();
 let composerImgs = [];
+let composerCompany = null;       // {id,name,kt,...}
+let composersettings;             // unused
 
-if(state.ui.dark) document.body.classList.add('dark');
+// ───── Apply settings to DOM ─────
+function applySettings(){
+  const s = state.ui.settings;
+  document.body.classList.toggle('dark', !!state.ui.dark);
+  document.body.classList.remove('fs-s','fs-l','dens-compact','dens-comfy');
+  if(s.fontSize==='s') document.body.classList.add('fs-s');
+  if(s.fontSize==='l') document.body.classList.add('fs-l');
+  if(s.density==='compact') document.body.classList.add('dens-compact');
+  if(s.density==='comfy')   document.body.classList.add('dens-comfy');
+  document.documentElement.style.setProperty('--cols', String(s.cols||4));
+  // Layout class on the main area
+  const main = document.getElementById('mainArea');
+  main.classList.remove('layout-masonry','layout-grid','layout-list','layout-kanban');
+  if(s.layout && s.layout.startsWith('kanban')) main.classList.add('layout-kanban');
+  else if(s.layout==='grid')                    main.classList.add('layout-grid');
+  else if(s.layout==='list')                    main.classList.add('layout-list');
+  else                                          main.classList.add('layout-masonry');
+  // Highlight in segmented control
+  document.querySelectorAll('#layoutSeg button').forEach(b => b.classList.toggle('sel', b.dataset.lay===(s.layout||'masonry')));
+}
 
 // ───── Composer ─────
 const $cmp = document.getElementById('composer');
@@ -251,19 +431,23 @@ const $cmpType = document.getElementById('cmpType');
 const $cmpTags = document.getElementById('cmpTags');
 const $cmpImgs = document.getElementById('cmpImgs');
 const $cmpFile = document.getElementById('cmpFile');
+const $cmpCompany = document.getElementById('cmpCompany');
 let composerPinned = false, composerColor = '';
 
 function expandComposer(){ $cmp.classList.add('expanded'); }
 $cmpTitle.addEventListener('focus', expandComposer);
 $cmpTitle.addEventListener('input', () => {
   const v = $cmpTitle.value.trim();
-  if(/^https?:\/\//i.test(v) || /^\w+\.\w{2,}\/?/.test(v)){ $cmpType.value = 'bookmark'; }
+  if(/^https?:\/\//i.test(v) || /^\w+\.\w{2,}\/?/.test(v)) $cmpType.value = 'bookmark';
 });
 document.getElementById('cmpExpand').onclick = expandComposer;
 document.getElementById('cmpPin').onclick = e => { composerPinned = !composerPinned; e.currentTarget.style.color = composerPinned ? '#d14528' : ''; };
-document.getElementById('cmpColor').onclick = () => { const next = (COLORS.findIndex(c=>c.id===composerColor)+1) % COLORS.length; composerColor = COLORS[next].id; $cmp.style.background = colorHex(composerColor); };
+document.getElementById('cmpColor').onclick = () => {
+  const next = (COLORS.findIndex(c=>c.id===composerColor)+1) % COLORS.length;
+  composerColor = COLORS[next].id; $cmp.style.background = colorHex(composerColor);
+};
 document.getElementById('cmpImage').onclick = () => $cmpFile.click();
-document.getElementById('cmpPaste').onclick = () => { $cmpTitle.focus(); alert('Smelltu hér og límdu mynd (Ctrl/Cmd+V)'); };
+$cmpCompany.onclick = () => openCompanyPicker(co => { composerCompany = co; $cmpType.value = 'company'; $cmpTitle.value = co.name; $cmpCompany.style.color = '#d14528'; expandComposer(); });
 $cmpFile.onchange = async e => {
   for(const f of e.target.files){
     const ds = await fileToDownscaled(f, 1200, 0.8);
@@ -294,23 +478,16 @@ document.getElementById('cmpSave').onclick = async () => {
   const body  = $cmpBody.value;
   const type  = $cmpType.value;
   const tags  = $cmpTags.value.split(',').map(s=>s.trim()).filter(Boolean);
-  if(!title && !body && composerImgs.length===0) return;
+  if(!title && !body && composerImgs.length===0 && !composerCompany) return;
   const card = {
-    id: newId(),
-    type,
-    title,
-    body: type==='checklist' ? '' : body,
-    color: composerColor,
-    tags,
-    pinned: composerPinned,
-    archived: false,
+    id: newId(), type, title, body: type==='checklist' ? '' : body,
+    color: composerColor || state.ui.settings.defColor || '',
+    tags, pinned: composerPinned, archived: false,
     images: composerImgs.slice(),
-    url: '',
-    og_image: '',
-    favicon: '',
+    url: '', og_image: '', favicon: '',
+    company: composerCompany || null,
     items: type==='checklist' ? body.split(/\n/).map(s=>s.trim()).filter(Boolean).map(t=>({text:t, done:false})) : [],
-    created_at: nowStr(),
-    updated_at: nowStr(),
+    created_at: nowStr(), updated_at: nowStr(),
   };
   if(type==='bookmark'){
     card.url = /^https?:\/\//i.test(title) ? title : (title.match(/^\w+\.\w/) ? 'https://'+title : '');
@@ -330,25 +507,46 @@ document.getElementById('cmpSave').onclick = async () => {
 function resetComposer(){
   $cmp.classList.remove('expanded');
   $cmpTitle.value = ''; $cmpBody.value = ''; $cmpTags.value = '';
-  $cmpType.value = 'note';
+  $cmpType.value = state.ui.settings.defType || 'note';
   composerImgs = []; composerPinned = false; composerColor = '';
+  composerCompany = null; $cmpCompany.style.color = '';
   document.getElementById('cmpPin').style.color = '';
   $cmp.style.background = '#fff';
   $cmpImgs.innerHTML = '';
 }
 
-// ───── Card render ─────
+// ───── Render ─────
 function cardHtml(c){
   const bg = colorHex(c.color);
-  const dark = (c.color && c.color!=='') ? '' : '';
   let inner = '';
   if(c.type==='bookmark'){
     const host = (function(){ try { return new URL(c.url).hostname.replace(/^www\./,''); } catch(_) { return ''; } })();
     const img = c.og_image ? `<img src="${esc(c.og_image)}" alt="">` : '';
     inner = `<a class="bk-link" href="${esc(c.url)}" target="_blank" rel="noopener">${img}${c.title?`<div class="title" style="margin:0">${esc(c.title)}</div>`:''}<div class="bk-host">${esc(host)}</div></a>`;
   } else if(c.type==='checklist'){
+    const done = c.items.filter(i=>i.done).length, total = c.items.length;
+    const pct = total ? Math.round(done*100/total) : 0;
     inner = (c.title ? `<div class="title">${esc(c.title)}</div>` : '')
-          + `<div class="ck-list">${c.items.map((it,i)=>`<label class="ck-item ${it.done?'done':''}"><input type="checkbox" ${it.done?'checked':''} data-toggle="${c.id}|${i}"><span>${esc(it.text)}</span></label>`).join('')}</div>`;
+          + `<div class="ck-list">${c.items.map((it,i)=>`<label class="ck-item ${it.done?'done':''}"><input type="checkbox" ${it.done?'checked':''} data-toggle="${c.id}|${i}"><span>${esc(it.text)}</span></label>`).join('')}</div>`
+          + (total ? `<div class="ck-progress"><div class="b" style="width:${pct}%"></div></div>` : '');
+  } else if(c.type==='company' && c.company){
+    const co = c.company;
+    const initials = (co.name||'??').split(/\s+/).slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
+    const slokkLink = co.refs && co.refs.slokkvitaeki ? `https://slokkvitaeki.netlify.app/#company/${co.refs.slokkvitaeki}` : '';
+    inner = `<div class="co-block">
+        <div class="co-avatar">${esc(initials)}</div>
+        <div class="co-info">
+          <div class="co-name">${esc(co.name)}</div>
+          ${co.kt ? `<div class="co-kt">${esc(co.kt)}</div>` : ''}
+        </div>
+      </div>
+      ${co.heimilisfang ? `<div class="body" style="margin-top:6px">📍 ${esc(co.heimilisfang)}</div>` : ''}
+      ${c.body ? `<div class="body" style="margin-top:6px">${esc(c.body)}</div>` : ''}
+      <div style="margin-top:6px;display:flex;gap:5px;flex-wrap:wrap">
+        ${slokkLink ? `<a class="co-link" href="${esc(slokkLink)}" target="_blank">→ Slökkvitæki</a>` : ''}
+        ${co.simi ? `<a class="co-link" href="tel:${esc(co.simi)}">📞 ${esc(co.simi)}</a>` : ''}
+        ${co.netfang ? `<a class="co-link" href="mailto:${esc(co.netfang)}">✉ ${esc(co.netfang)}</a>` : ''}
+      </div>`;
   } else if(c.type==='image'){
     inner = (c.title ? `<div class="title">${esc(c.title)}</div>` : '')
           + (c.body ? `<div class="body">${esc(c.body)}</div>` : '');
@@ -381,22 +579,27 @@ function passFilter(c){
   if(f.kind==='type' && c.type !== f.val) return false;
   if(state.ui.colorFilter && c.color !== state.ui.colorFilter) return false;
   if(state.ui.tagFilter && !(c.tags||[]).includes(state.ui.tagFilter)) return false;
+  if(state.ui.companyFilter){
+    const cid = state.ui.companyFilter;
+    if(!c.company || c.company.id !== cid) return false;
+  }
   if(state.ui.q){
     const q = state.ui.q.toLowerCase();
-    const hay = ((c.title||'')+' '+(c.body||'')+' '+((c.tags||[]).join(' '))+' '+(c.url||'')+' '+((c.items||[]).map(i=>i.text).join(' '))).toLowerCase();
+    const hay = ((c.title||'')+' '+(c.body||'')+' '+((c.tags||[]).join(' '))+' '+(c.url||'')+' '+((c.items||[]).map(i=>i.text).join(' '))+' '+((c.company&&c.company.name)||'')+' '+((c.company&&c.company.kt)||'')).toLowerCase();
     if(!hay.includes(q)) return false;
   }
   return true;
 }
 
 function render(){
+  applySettings();
   // Counts
   document.getElementById('ctAll').textContent = state.cards.filter(c=>!c.archived).length;
   document.getElementById('ctPin').textContent = state.cards.filter(c=>c.pinned && !c.archived).length;
   document.getElementById('ctArc').textContent = state.cards.filter(c=>c.archived).length;
 
   // Sidebar selection styling
-  document.querySelectorAll('.side .row').forEach(r => r.classList.remove('sel'));
+  document.querySelectorAll('.side .row[data-filter]').forEach(r => r.classList.remove('sel'));
   const cur = document.querySelector(`.side .row[data-filter="${state.ui.filter.kind}"][data-val="${state.ui.filter.val}"]`);
   if(cur) cur.classList.add('sel');
 
@@ -408,17 +611,23 @@ function render(){
     save(); render();
   });
 
-  // Tag sidebar
+  // Tag list
   const tagCounts = {};
   state.cards.filter(c=>!c.archived).forEach(c => (c.tags||[]).forEach(t => tagCounts[t]=(tagCounts[t]||0)+1));
   const tags = Object.keys(tagCounts).sort();
   document.getElementById('tagsHd').style.display = tags.length ? '' : 'none';
   const $tl = document.getElementById('tagsList');
   $tl.innerHTML = tags.map(t => `<div class="row ${state.ui.tagFilter===t?'sel':''}" data-tag="${esc(t)}"><span>#</span><span>${esc(t)}</span><span class="ct">${tagCounts[t]}</span></div>`).join('');
-  $tl.querySelectorAll('.row').forEach(r => r.onclick = () => {
-    state.ui.tagFilter = (state.ui.tagFilter===r.dataset.tag ? '' : r.dataset.tag);
-    save(); render();
-  });
+  $tl.querySelectorAll('.row').forEach(r => r.onclick = () => { state.ui.tagFilter = (state.ui.tagFilter===r.dataset.tag ? '' : r.dataset.tag); save(); render(); });
+
+  // Company list (sidebar)
+  const coMap = {};
+  state.cards.filter(c=>!c.archived && c.company).forEach(c => { coMap[c.company.id] = { name:c.company.name, n:(coMap[c.company.id]?coMap[c.company.id].n:0)+1 }; });
+  const coIds = Object.keys(coMap).sort((a,b)=>coMap[a].name.localeCompare(coMap[b].name,'is'));
+  document.getElementById('cosHd').style.display = coIds.length ? '' : 'none';
+  const $col = document.getElementById('cosList');
+  $col.innerHTML = coIds.map(id => `<div class="row ${state.ui.companyFilter===id?'sel':''}" data-co="${esc(id)}"><span>🏢</span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(coMap[id].name)}</span><span class="ct">${coMap[id].n}</span></div>`).join('');
+  $col.querySelectorAll('.row').forEach(r => r.onclick = () => { state.ui.companyFilter = (state.ui.companyFilter===r.dataset.co ? '' : r.dataset.co); save(); render(); });
 
   // Cards
   const visible = state.cards.filter(passFilter);
@@ -427,18 +636,38 @@ function render(){
   document.getElementById('pinnedTitle').style.display = pinned.length ? '' : 'none';
   document.getElementById('othersTitle').style.display = (pinned.length && others.length) ? '' : 'none';
   document.getElementById('pinnedGrid').innerHTML = pinned.map(cardHtml).join('');
-  document.getElementById('grid').innerHTML = others.length
-    ? others.map(cardHtml).join('')
-    : `<div class="empty">Engin spjöld${state.ui.q?' fyrir „'+esc(state.ui.q)+'"':''}. Skrifaðu eitthvað hér að ofan.</div>`;
+
+  const $host = document.getElementById('gridHost');
+  const lay = state.ui.settings.layout || 'masonry';
+  if(lay==='kanban-type' || lay==='kanban-color'){
+    const groups = groupCards(others, lay==='kanban-type' ? 'type' : 'color');
+    $host.innerHTML = '<div class="grid">' + groups.map(([key,label,arr]) =>
+      `<div class="kcol"><div class="kcol-hd">${label} <span class="n">${arr.length}</span></div>${arr.map(cardHtml).join('')}</div>`
+    ).join('') + '</div>';
+  } else {
+    $host.innerHTML = `<div class="grid">${others.length ? others.map(cardHtml).join('') : `<div class="empty">Engin spjöld${state.ui.q?' fyrir „'+esc(state.ui.q)+'"':''}. Skrifaðu eitthvað hér að ofan.</div>`}</div>`;
+  }
 
   // Bind card actions
-  document.querySelectorAll('.card .mini').forEach(btn => btn.onclick = e => onAction(btn));
+  document.querySelectorAll('.card .mini').forEach(btn => btn.onclick = () => onAction(btn));
   document.querySelectorAll('.card .tag').forEach(t => t.onclick = () => { state.ui.tagFilter = t.dataset.tag; save(); render(); });
   document.querySelectorAll('.card .ck-item input[type=checkbox]').forEach(cb => cb.onchange = () => {
     const [id, ix] = cb.dataset.toggle.split('|');
     const c = state.cards.find(x=>x.id===id); if(!c) return;
     c.items[+ix].done = cb.checked; c.updated_at = nowStr(); save(); render();
   });
+}
+
+function groupCards(arr, by){
+  const grp = new Map();
+  if(by==='type'){
+    Object.keys(TYPES).forEach(k => grp.set(k, [TYPES[k], []]));
+    arr.forEach(c => { const g = grp.get(c.type) || grp.set(c.type,[TYPES[c.type]||c.type,[]]).get(c.type); g[1].push(c); });
+  } else { // color
+    COLORS.forEach(cl => grp.set(cl.id, [cl.name, []]));
+    arr.forEach(c => { const g = grp.get(c.color||'') || grp.set(c.color||'',[colorName(c.color),[]]).get(c.color||''); g[1].push(c); });
+  }
+  return [...grp.entries()].map(([k,[label,arr2]]) => [k,label,arr2]).filter(([,,a]) => a.length);
 }
 
 function onAction(btn){
@@ -466,6 +695,13 @@ function openEditor(c){
       <div><label>Titill</label><input id="km-title" type="text" value="${esc(c.title||'')}"></div>
       <div id="km-body-wrap" style="${c.type==='checklist'?'display:none':''}"><label>Texti</label><textarea id="km-body">${esc(c.body||'')}</textarea></div>
       <div id="km-url-wrap" style="${c.type==='bookmark'?'':'display:none'}"><label>URL</label><input id="km-url" type="url" value="${esc(c.url||'')}"></div>
+      <div id="km-co-wrap" style="${c.type==='company'?'':'display:none'}">
+        <label>Fyrirtæki</label>
+        <div id="km-co-show" style="display:flex;align-items:center;gap:9px;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px">
+          ${c.company ? `<div class="co-avatar" style="width:32px;height:32px;border-radius:7px;font-size:12px">${esc((c.company.name||'??').split(/\s+/).slice(0,2).map(w=>w[0]||'').join('').toUpperCase())}</div><div><div style="font-weight:700">${esc(c.company.name||'')}</div><div style="font-size:11px;color:var(--muted);font-family:ui-monospace,monospace">${esc(c.company.kt||'')}</div></div>` : '<span style="color:var(--muted)">— ekkert valið —</span>'}
+          <button class="btn" id="km-co-pick" style="margin-left:auto">${c.company?'Skipta':'Velja'}</button>
+        </div>
+      </div>
       <div id="km-items-wrap" style="${c.type==='checklist'?'':'display:none'}">
         <label>Listi</label>
         <div class="ck-edit" id="km-items"></div>
@@ -480,10 +716,10 @@ function openEditor(c){
       <div>
         <label>Myndir (límdu eða veldu)</label>
         <div class="img-grid" id="km-imgs"></div>
-        <div class="paste-zone" id="km-paste" tabindex="0">📋 Smelltu hér og límdu (Ctrl/Cmd+V) eða veldu skrá að ofan</div>
+        <div class="paste-zone" id="km-paste" tabindex="0">📋 Smelltu hér og límdu (Ctrl/Cmd+V) eða veldu skrá</div>
         <input id="km-file" type="file" accept="image/*" multiple style="display:none">
       </div>
-      <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted)">
+      <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted);flex-wrap:wrap">
         <label style="display:flex;align-items:center;gap:5px;text-transform:none;letter-spacing:0;margin:0"><input id="km-pin" type="checkbox" ${c.pinned?'checked':''}> Pinna</label>
         <label style="display:flex;align-items:center;gap:5px;text-transform:none;letter-spacing:0;margin:0"><input id="km-arc" type="checkbox" ${c.archived?'checked':''}> Arkíf</label>
         <span style="margin-left:auto">Búið til: ${esc(c.created_at||'')}${c.updated_at!==c.created_at?' · uppfært: '+esc(c.updated_at||''):''}</span>
@@ -501,6 +737,7 @@ function openEditor(c){
   let imgs = (c.images||[]).slice();
   let color = c.color || '';
   let items = (c.items||[]).slice();
+  let company = c.company ? clone(c.company) : null;
 
   function drawImgs(){
     const $g = document.getElementById('km-imgs');
@@ -516,14 +753,14 @@ function openEditor(c){
     $ck.querySelectorAll('input[data-t]').forEach(tx => tx.oninput = () => { items[+tx.dataset.t].text = tx.value; });
     $ck.querySelectorAll('button[data-x]').forEach(bx => bx.onclick = () => { items.splice(+bx.dataset.x,1); drawItems(); });
   }
-  function drawSwatches(){
-    document.querySelectorAll('#km-swatches .swatch').forEach(s => s.onclick = () => { color = s.dataset.c; document.querySelectorAll('#km-swatches .swatch').forEach(x => x.classList.toggle('sel', x.dataset.c===color)); });
-  }
+  document.querySelectorAll('#km-swatches .swatch').forEach(s => s.onclick = () => { color = s.dataset.c; document.querySelectorAll('#km-swatches .swatch').forEach(x => x.classList.toggle('sel', x.dataset.c===color)); });
+
   document.getElementById('km-type').onchange = e => {
     c.type = e.target.value;
     document.getElementById('km-body-wrap').style.display  = c.type==='checklist' ? 'none' : '';
     document.getElementById('km-url-wrap').style.display   = c.type==='bookmark'  ? ''     : 'none';
     document.getElementById('km-items-wrap').style.display = c.type==='checklist' ? ''     : 'none';
+    document.getElementById('km-co-wrap').style.display    = c.type==='company'   ? ''     : 'none';
   };
   document.getElementById('km-add-item').onclick = () => { items.push({text:'', done:false}); drawItems(); };
   document.getElementById('km-file').onchange = async e => {
@@ -541,8 +778,13 @@ function openEditor(c){
     }
   };
   $paste.onclick = () => $paste.focus();
+  document.getElementById('km-co-pick').onclick = () => openCompanyPicker(co => {
+    company = co;
+    document.getElementById('km-co-show').innerHTML = `<div class="co-avatar" style="width:32px;height:32px;border-radius:7px;font-size:12px">${esc((co.name||'??').split(/\s+/).slice(0,2).map(w=>w[0]||'').join('').toUpperCase())}</div><div><div style="font-weight:700">${esc(co.name)}</div><div style="font-size:11px;color:var(--muted);font-family:ui-monospace,monospace">${esc(co.kt||'')}</div></div><button class="btn" id="km-co-pick" style="margin-left:auto">Skipta</button>`;
+    document.getElementById('km-co-pick').onclick = () => openCompanyPicker(co2 => { company = co2; document.getElementById('km-co-pick').click(); });
+  });
 
-  drawImgs(); drawItems(); drawSwatches();
+  drawImgs(); drawItems();
 
   document.getElementById('km-save').onclick = () => {
     c.type    = document.getElementById('km-type').value;
@@ -555,9 +797,59 @@ function openEditor(c){
     c.archived= document.getElementById('km-arc').checked;
     c.images  = imgs;
     c.items   = c.type==='checklist' ? items.filter(i=>i.text||i.done) : [];
+    c.company = c.type==='company' ? company : null;
     c.updated_at = nowStr();
     bg.remove(); save(); render();
   };
+}
+
+// ───── Company picker ─────
+function openCompanyPicker(onPick){
+  const bg = document.createElement('div');
+  bg.className = 'modal-bg';
+  bg.innerHTML = `<div class="modal">
+    <h3>🏢 Velja fyrirtæki</h3>
+    <div class="mf">
+      <div><input id="co-q" type="search" placeholder="Leita að nafni eða kennitölu…" autofocus></div>
+      <div id="co-status" style="font-size:12px;color:var(--muted);min-height:14px">Sæki…</div>
+      <div class="co-list" id="co-list"></div>
+      <div style="font-size:11px;color:var(--muted);text-align:right">Listi sameinar customers_base (Brunahólf) + fyrirtaeki (Slökkvitæki).</div>
+    </div>
+    <div class="mf-actions">
+      <button class="btn" id="co-cancel" type="button">Hætta við</button>
+    </div>
+  </div>`;
+  document.body.appendChild(bg);
+  bg.addEventListener('click', e => { if(e.target===bg) bg.remove(); });
+  document.getElementById('co-cancel').onclick = () => bg.remove();
+  const $q = document.getElementById('co-q');
+  const $st = document.getElementById('co-status');
+  const $list = document.getElementById('co-list');
+  let cur = '', cache = null;
+  async function fetchList(q){
+    $st.textContent = q ? `Leita „${q}"…` : 'Sæki lista…';
+    try {
+      const r = await fetch('/api/keepit-companies'+(q?'?q='+encodeURIComponent(q):''));
+      const d = await r.json();
+      cache = d.companies || [];
+      drawList();
+      $st.textContent = `${cache.length} fyrirtæki`;
+    } catch(e){ $st.textContent = 'Villa: '+(e.message||e); }
+  }
+  function drawList(){
+    $list.innerHTML = (cache||[]).map(co => {
+      const initials = (co.name||'??').split(/\s+/).slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
+      const src = co.source==='both' ? '<span class="co-src">B+S</span>' : (co.source==='brunaholf' ? '<span class="co-src b">B</span>' : '<span class="co-src s">S</span>');
+      return `<div class="co-row" data-id="${esc(co.id)}"><div class="co-avatar">${esc(initials)}</div><div><div style="font-weight:600">${esc(co.name)}</div>${co.kt?`<div class="co-meta">${esc(co.kt)}</div>`:''}</div>${src}</div>`;
+    }).join('');
+    $list.querySelectorAll('.co-row').forEach(r => r.onclick = () => {
+      const co = cache.find(x=>x.id===r.dataset.id); if(!co) return;
+      bg.remove(); onPick(co);
+    });
+  }
+  fetchList('');
+  let tm;
+  $q.oninput = () => { clearTimeout(tm); tm = setTimeout(() => fetchList($q.value.trim()), 220); };
 }
 
 // ───── Helpers ─────
@@ -581,39 +873,128 @@ function fileToDownscaled(file, maxSide, quality){
   });
 }
 
-// ───── Sidebar interactions ─────
+// ───── Sidebar / topbar interactions ─────
 document.querySelectorAll('.side .row[data-filter]').forEach(r => r.onclick = () => {
   state.ui.filter = { kind: r.dataset.filter, val: r.dataset.val };
-  if(r.dataset.filter !== 'archived') {} // archived hidden elsewhere
   save(); render();
 });
+document.getElementById('brand').onclick = () => { state.ui.filter = {kind:'all', val:'all'}; state.ui.colorFilter=''; state.ui.tagFilter=''; state.ui.companyFilter=''; state.ui.q=''; document.getElementById('search').value=''; save(); render(); };
 document.getElementById('menuBtn').onclick = () => document.getElementById('layout').classList.toggle('open');
-document.getElementById('darkBtn').onclick = () => { state.ui.dark = !state.ui.dark; document.body.classList.toggle('dark', state.ui.dark); save(); };
+document.getElementById('darkBtn').onclick = () => { state.ui.dark = !state.ui.dark; save(); render(); };
 document.getElementById('search').oninput = e => { state.ui.q = e.target.value; save(); render(); };
+document.querySelectorAll('#layoutSeg button').forEach(b => b.onclick = () => { state.ui.settings.layout = b.dataset.lay; save(); render(); });
 
-// ───── Export / Import / Wipe (kebab menu) ─────
+// ───── Settings drawer ─────
+const $drw = document.getElementById('drawer'), $drwBg = document.getElementById('drawerBg');
+function openDrawer(){
+  const s = state.ui.settings;
+  document.getElementById('sLayout').value = s.layout || 'masonry';
+  document.getElementById('sCols').value   = String(s.cols || 4);
+  document.getElementById('sDens').value   = s.density || '';
+  document.getElementById('sFs').value     = s.fontSize || '';
+  document.getElementById('sDark').checked = !!state.ui.dark;
+  document.getElementById('sDefType').value= s.defType || 'note';
+  const $sc = document.getElementById('sDefColor');
+  $sc.innerHTML = COLORS.map(c => `<div class="swatch ${s.defColor===c.id?'sel':''}" data-c="${c.id}" style="background:${c.hex}" title="${c.name}"></div>`).join('');
+  $sc.querySelectorAll('.swatch').forEach(sw => sw.onclick = () => { state.ui.settings.defColor = sw.dataset.c; save(); openDrawer(); });
+  $drw.classList.add('open'); $drwBg.classList.add('open');
+}
+function closeDrawer(){ $drw.classList.remove('open'); $drwBg.classList.remove('open'); }
+document.getElementById('settingsBtn').onclick = openDrawer;
+document.getElementById('drawerX').onclick = closeDrawer;
+$drwBg.onclick = closeDrawer;
+['sLayout','sCols','sDens','sFs','sDefType'].forEach(id => {
+  document.getElementById(id).onchange = e => {
+    const v = e.target.value;
+    if(id==='sLayout')  state.ui.settings.layout   = v;
+    if(id==='sCols')    state.ui.settings.cols     = +v;
+    if(id==='sDens')    state.ui.settings.density  = v;
+    if(id==='sFs')      state.ui.settings.fontSize = v;
+    if(id==='sDefType') state.ui.settings.defType  = v;
+    save(); render();
+  };
+});
+document.getElementById('sDark').onchange = e => { state.ui.dark = e.target.checked; save(); render(); };
+
+// ───── ⋯ menu ─────
 document.getElementById('moreBtn').onclick = () => {
-  const choice = prompt('Aðgerðir:\n1 = Flytja út (JSON)\n2 = Flytja inn (JSON)\n3 = Eyða öllu\n\nTölu (1/2/3) eða Esc til að hætta:');
-  if(choice==='1'){
-    const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-    a.download = 'keepit-'+new Date().toISOString().slice(0,10)+'.json'; a.click();
-  } else if(choice==='2'){
-    const inp = document.createElement('input'); inp.type='file'; inp.accept='application/json';
-    inp.onchange = async e => {
-      const f = e.target.files[0]; if(!f) return;
-      const txt = await f.text();
-      try { const s = JSON.parse(txt); if(!Array.isArray(s.cards)) throw 0;
-        if(!confirm('Skipta út öllum núverandi spjöldum með '+s.cards.length+' spjöldum úr skrá?')) return;
-        state = Object.assign(clone(DEFAULT_STATE), s); save(); render();
-      } catch(_){ alert('Ógild Keepit JSON.'); }
-    };
-    inp.click();
-  } else if(choice==='3'){
-    if(!confirm('Þetta eyðir ÖLLU. Heldur þú áfram?')) return;
-    if(!confirm('Alveg viss?')) return;
-    state = clone(DEFAULT_STATE); save(); render();
+  const choice = prompt('Aðgerðir:\n1 = Flytja út (JSON)\n2 = Flytja inn (JSON)\n3 = Eyða öllu\n4 = Stillingar\n\nTölu eða Esc:');
+  if(choice==='1'){ exportJson(); }
+  else if(choice==='2'){ importJson(); }
+  else if(choice==='3'){ if(confirm('Þetta eyðir ÖLLU.') && confirm('Alveg viss?')){ state = clone(DEFAULT_STATE); save(); render(); } }
+  else if(choice==='4'){ openDrawer(); }
+};
+document.getElementById('sExport').onclick = exportJson;
+document.getElementById('sImport').onclick = importJson;
+document.getElementById('sWipe').onclick   = () => { if(confirm('Þetta eyðir ÖLLU.') && confirm('Alveg viss?')){ state = clone(DEFAULT_STATE); save(); render(); closeDrawer(); } };
+
+function exportJson(){
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'keepit-'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+}
+function importJson(){
+  const inp = document.createElement('input'); inp.type='file'; inp.accept='application/json';
+  inp.onchange = async e => {
+    const f = e.target.files[0]; if(!f) return;
+    const txt = await f.text();
+    try { const s = JSON.parse(txt); if(!Array.isArray(s.cards)) throw 0;
+      if(!confirm('Skipta út öllum spjöldum með '+s.cards.length+' úr skrá?')) return;
+      state = Object.assign(clone(DEFAULT_STATE), s); save(); render();
+    } catch(_){ alert('Ógild Keepit JSON.'); }
+  };
+  inp.click();
+}
+
+// ───── Keyboard shortcuts ─────
+document.addEventListener('keydown', e => {
+  if(e.target.matches('input,textarea,select')) return;
+  if(e.key==='n' || e.key==='N'){ e.preventDefault(); $cmpTitle.focus(); expandComposer(); }
+  else if(e.key==='/' ){ e.preventDefault(); document.getElementById('search').focus(); }
+  else if(e.key==='?'){ alert('Lyklar:\n N  =  ný spjald\n /  =  leita\n Esc=  loka\n'); }
+});
+
+// ───── Share Target + URL params (PWA share, shortcuts) ─────
+(function handleShare(){
+  const p = new URLSearchParams(location.search);
+  const shareUrl   = p.get('share_url') || p.get('url') || '';
+  const shareTitle = p.get('share_title') || p.get('title') || '';
+  const shareText  = p.get('share_text') || p.get('text') || '';
+  const newType    = p.get('new');
+  if(shareUrl || shareTitle || shareText){
+    // Detect URL anywhere in the shared content.
+    const url = shareUrl || (shareText.match(/https?:\/\/\S+/) || [''])[0];
+    expandComposer();
+    if(url){ $cmpTitle.value = url; $cmpType.value = 'bookmark'; }
+    else   { $cmpTitle.value = shareTitle || ''; $cmpBody.value = shareText || ''; $cmpType.value = 'note'; }
+    history.replaceState(null,'','/keepit.html'); // clean the URL
+  } else if(newType && TYPES[newType]){
+    expandComposer(); $cmpType.value = newType; $cmpTitle.focus();
+    history.replaceState(null,'','/keepit.html');
   }
+})();
+
+// ───── PWA registration + install prompt ─────
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw-keepit.js', {scope:'/keepit.html'}).catch(()=>{});
+}
+let deferredInstall = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredInstall = e;
+  const now = Date.now();
+  if(state.ui.installDismissedUntil && state.ui.installDismissedUntil > now) return;
+  document.getElementById('installBanner').classList.add('show');
+});
+document.getElementById('installBtn').onclick = async () => {
+  if(!deferredInstall) return;
+  deferredInstall.prompt();
+  await deferredInstall.userChoice;
+  deferredInstall = null;
+  document.getElementById('installBanner').classList.remove('show');
+};
+document.getElementById('installDismiss').onclick = () => {
+  state.ui.installDismissedUntil = Date.now() + 7*24*3600*1000;
+  save(); document.getElementById('installBanner').classList.remove('show');
 };
 
 // First render

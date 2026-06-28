@@ -1,0 +1,34 @@
+{
+  "name": "Keepit — persónulegt",
+  "short_name": "Keepit",
+  "description": "Persónulegt organizer — glósur, listar, bókmerki, myndir.",
+  "start_url": "/keepit.html",
+  "scope": "/keepit.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#fafbfc",
+  "theme_color": "#fbbf24",
+  "lang": "is",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    { "src": "/keepit-icon.svg", "sizes": "any",       "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/keepit-icon.svg", "sizes": "any",       "type": "image/svg+xml", "purpose": "maskable" },
+    { "src": "/keepit-icon.svg", "sizes": "192x192",   "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/keepit-icon.svg", "sizes": "512x512",   "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "share_target": {
+    "action": "/keepit.html",
+    "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "title": "share_title",
+      "text":  "share_text",
+      "url":   "share_url"
+    }
+  },
+  "shortcuts": [
+    { "name": "Ný glósa",     "short_name": "Glósa",     "url": "/keepit.html?new=note",      "icons": [{ "src": "/keepit-icon.svg", "sizes": "any" }] },
+    { "name": "Nýtt bókmerki","short_name": "Bókmerki",  "url": "/keepit.html?new=bookmark",  "icons": [{ "src": "/keepit-icon.svg", "sizes": "any" }] },
+    { "name": "Nýr listi",    "short_name": "Listi",     "url": "/keepit.html?new=checklist", "icons": [{ "src": "/keepit-icon.svg", "sizes": "any" }] }
+  ]
+}
