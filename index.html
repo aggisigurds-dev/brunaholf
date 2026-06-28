@@ -12665,6 +12665,21 @@ function applyDeepLinkTab(){
 applyDeepLinkTab();
 window.addEventListener('hashchange', () => { if(applyDeepLinkTab()) render(); });
 
+// Mirror activeTab → location.hash so the address bar always shows the
+// current page. Lets users copy the URL to deep-link a colleague straight
+// to the tab they're looking at. Preserves any /<sub-segment> already in
+// the hash (e.g. #bakendi/52) so existing per-item deep-links keep working.
+function mirrorTabToHash(){
+  if(!state.ui || !state.ui.activeTab) return;
+  const want = state.ui.activeTab;
+  const cur  = (location.hash || '').replace(/^#\/?/, '');
+  const head = cur.split('/')[0];
+  if(head === want) return;
+  try{ history.replaceState(null, '', '#' + want); }catch(_){}
+}
+const _origRender = render;
+render = function(){ const r = _origRender.apply(this, arguments); try{ mirrorTabToHash(); }catch(_){} return r; };
+
 render();
 
 // Warm-load: pre-fetch heavy endpoints in the background after first paint so
