@@ -293,7 +293,16 @@
 
 <!-- Saved views chip row (under the topbar) -->
 <div id="viewChipsBar" style="display:flex;gap:6px;align-items:center;padding:8px 14px 0;flex-wrap:wrap;background:var(--bg)">
-  <span id="layoutLabel" style="font-size:12px;font-weight:700;color:var(--ink);background:#fff;border:1px solid var(--border);padding:4px 9px;border-radius:99px;margin-right:4px">▦ Masonry</span>
+  <!-- Front-page layout switcher (works on mobile where the topbar buttons get pushed off-screen) -->
+  <select id="layoutPick" title="Skipta um útlit" style="font-size:12.5px;font-weight:700;color:var(--ink);background:#fff;border:1.5px solid var(--border);padding:5px 9px;border-radius:99px;margin-right:6px;font-family:inherit;cursor:pointer;outline:none">
+    <option value="masonry">▦ Masonry</option>
+    <option value="grid">▣ Hnit</option>
+    <option value="list">☰ Listi</option>
+    <option value="table">📊 Tafla</option>
+    <option value="timeline">📅 Tímalína</option>
+    <option value="kanban-type">📋 Kanban — tegund</option>
+    <option value="kanban-color">🎨 Kanban — litur</option>
+  </select>
   <span style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-right:2px">Sýnir:</span>
   <div id="viewChips" style="display:flex;gap:5px;flex-wrap:wrap"></div>
   <button class="btn" id="saveViewBtn" style="padding:5px 10px;font-size:11.5px" title="Vista núverandi sýn">+ Vista sýn</button>
@@ -536,9 +545,8 @@ function applySettings(){
   document.querySelectorAll('#layoutSeg button').forEach(b => b.classList.toggle('sel', b.dataset.lay===(s.layout||'masonry')));
   // Make the layout switcher more obvious — show the active layout name
   // next to it so the user sees their click landed.
-  const LAY_NAMES = {masonry:'▦ Masonry',grid:'▣ Hnit',list:'☰ Listi',table:'📊 Tafla',timeline:'📅 Tímalína','kanban-type':'📋 Kanban (tegund)','kanban-color':'🎨 Kanban (litur)'};
-  const $lay = document.getElementById('layoutLabel');
-  if($lay) $lay.textContent = LAY_NAMES[s.layout||'masonry'] || '';
+  const $pick = document.getElementById('layoutPick');
+  if($pick) $pick.value = s.layout || 'masonry';
   // Sort selector
   const $ss = document.getElementById('sortSel'); if($ss) $ss.value = state.ui.sort || 'created-desc';
 }
@@ -1350,6 +1358,13 @@ document.getElementById('menuBtn').onclick = () => document.getElementById('layo
 document.getElementById('darkBtn').onclick = () => { state.ui.dark = !state.ui.dark; save(); render(); };
 document.getElementById('search').oninput = e => { state.ui.q = e.target.value; save(); render(); };
 document.querySelectorAll('#layoutSeg button').forEach(b => b.onclick = () => { state.ui.settings.layout = b.dataset.lay; save(); render(); });
+// Front-page layout dropdown — easy to find on mobile where the topbar
+// segmented buttons can scroll off-screen.
+document.getElementById('layoutPick').onchange = e => {
+  state.ui.settings.layout = e.target.value;
+  state.ui.activeView = '';
+  save(); render();
+};
 
 // ───── Settings drawer ─────
 const $drw = document.getElementById('drawer'), $drwBg = document.getElementById('drawerBg');
