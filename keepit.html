@@ -483,6 +483,7 @@ const DEFAULT_STATE = {
     filter:{kind:'all', val:'all'}, q:'', dark:false, colorFilter:'', tagFilter:'', tagFilters:[], companyFilter:'',
     settings:{ layout:'masonry', cols:4, density:'', fontSize:'', defType:'note', defColor:'',
                titleOnly:false, hideImgs:false, hideTags:false },
+    knownTags:[],  // user-created tags that haven't been attached to any card yet
     sort:'created-desc',
     savedViews: [],   // [{id,name,layout,sort,filter,colorFilter,tagFilter,companyFilter,settings}]
     activeView: '',
@@ -503,6 +504,7 @@ function load(){
     // Migrate single tagFilter → tagFilters array (kept tagFilter as alias)
     if(!Array.isArray(s.ui.tagFilters)) s.ui.tagFilters = s.ui.tagFilter ? [s.ui.tagFilter] : [];
     if(!Array.isArray(s.ui.savedViews))  s.ui.savedViews = [];
+    if(!Array.isArray(s.ui.knownTags))   s.ui.knownTags  = [];
     return s;
   } catch(_) { return clone(DEFAULT_STATE); }
 }
@@ -797,9 +799,11 @@ function render(){
     save(); render();
   });
 
-  // Tag list (multi-select with ⋯ rename/delete menu, populates datalist)
+  // Tag list (multi-select with ⋯ rename/delete menu, populates datalist).
+  // Includes user-defined knownTags that haven't been attached to any card yet.
   const tagCounts = {};
   state.cards.filter(c=>!c.archived).forEach(c => (c.tags||[]).forEach(t => tagCounts[t]=(tagCounts[t]||0)+1));
+  (state.ui.knownTags || []).forEach(t => { if(!(t in tagCounts)) tagCounts[t] = 0; });
   const tags = Object.keys(tagCounts).sort();
   document.getElementById('tagsHd').style.display = tags.length ? '' : 'none';
   document.getElementById('tagListDL').innerHTML = tags.map(t => `<option value="${esc(t)}">`).join('');
@@ -1156,9 +1160,12 @@ function renderQuickFilters(){
   ];
   // Colors actually in use
   const colorsUsed = [...new Set(cards.map(c => c.color || ''))].filter(c => c !== '');
-  // Tags actually in use
+  // Tags: every tag in use on a card, PLUS user-defined "ghost" tags
+  // (knownTags) that haven't been attached to anything yet — so you can
+  // build out your tag taxonomy without first creating a card to host them.
   const tagCounts = {};
   cards.forEach(c => (c.tags||[]).forEach(t => tagCounts[t] = (tagCounts[t]||0) + 1));
+  (state.ui.knownTags || []).forEach(t => { if(!(t in tagCounts)) tagCounts[t] = 0; });
   const tags = Object.keys(tagCounts).sort();
   const tf = state.ui.tagFilters || [];
 
@@ -1168,10 +1175,13 @@ function renderQuickFilters(){
     html += '<span class="qf-sep"></span>';
     html += colorsUsed.map(c => `<span class="qf-color ${state.ui.colorFilter===c?'sel':''}" data-col="${esc(c)}" style="background:${colorHex(c)}" title="${esc(colorName(c))}"></span>`).join('');
   }
+  html += '<span class="qf-sep"></span>';
   if(tags.length){
-    html += '<span class="qf-sep"></span>';
-    html += tags.map(t => `<span class="qf-chip ${tf.includes(t)?'sel':''}" data-tag="${esc(t)}">#${esc(t)} <small style="opacity:.7;font-weight:400">${tagCounts[t]}</small></span>`).join('');
+    html += tags.map(t => `<span class="qf-chip ${tf.includes(t)?'sel':''}" data-tag="${esc(t)}">#${esc(t)}${tagCounts[t]?` <small style="opacity:.7;font-weight:400">${tagCounts[t]}</small>`:''}</span>`).join('');
   }
+  // Always-visible "+ Nýtt merki" so users can create a tag without first
+  // having to make a card to attach it to.
+  html += `<button class="qf-chip" id="qfAddTag" style="background:#fff;border-color:var(--accent);color:var(--accent);cursor:pointer">+ Nýtt merki</button>`;
   $b.innerHTML = html;
 
   $b.querySelectorAll('.qf-chip[data-flt]').forEach(ch => ch.onclick = () => {
@@ -1201,6 +1211,18 @@ function renderQuickFilters(){
     state.ui.activeView = '';
     save(); render();
   });
+  // + Nýtt merki: prompt for a tag name, add to knownTags, immediately
+  // surface as a chip in the filter bar AND in the datalist autocomplete.
+  const $addBtn = document.getElementById('qfAddTag');
+  if($addBtn) $addBtn.onclick = () => {
+    const v = prompt('Heiti á nýju merki:\n(birtist strax sem sía + í völstu lista í spjaldi-formi)');
+    if(!v) return;
+    const name = String(v).trim().replace(/^#/,'');
+    if(!name) return;
+    state.ui.knownTags = state.ui.knownTags || [];
+    if(!state.ui.knownTags.includes(name) && !tags.includes(name)) state.ui.knownTags.push(name);
+    save(); render();
+  };
 }
 
 // ───── Active filters bar ─────
