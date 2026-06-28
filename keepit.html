@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Keepit — persónulegt</title>
+<style>
+  :root{
+    --bg:#fafbfc; --ink:#1f2933; --muted:#6b7785; --border:#e3e7ec; --card-shadow:0 1px 2px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);
+    --accent:#d14528;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  a{color:#1d4ed8;text-decoration:none}
+  /* ───── Top bar ───── */
+  .topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border-bottom:1px solid var(--border);box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:18px;color:var(--ink);user-select:none}
+  .brand-dot{width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,#fbbf24,#f59e0b);display:inline-flex;align-items:center;justify-content:center;font-size:14px}
+  .quick{flex:1;display:flex;gap:8px;align-items:center}
+  .quick input{flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font:inherit;background:#fff;outline:none}
+  .quick input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(209,69,40,.16)}
+  .btn{padding:8px 12px;border-radius:8px;border:1.5px solid var(--border);background:#fff;color:var(--ink);font:600 12.5px/1 inherit;cursor:pointer}
+  .btn:hover{background:#f3f5f8}
+  .btn.primary{background:linear-gradient(135deg,#d14528,#9a2f1a);color:#fff;border-color:#9a2f1a}
+  .btn.primary:hover{filter:brightness(1.06)}
+  .btn-icon{padding:7px 9px}
+  .menubtn{padding:7px 9px;font-size:16px}
+  /* ───── Layout ───── */
+  .layout{display:grid;grid-template-columns:230px 1fr;gap:14px;padding:14px;align-items:flex-start}
+  @media (max-width:780px){
+    .layout{grid-template-columns:1fr;padding:8px;gap:8px}
+    .side{display:none}
+    .layout.open .side{display:block}
+  }
+  .side{background:#fff;border:1px solid var(--border);border-radius:12px;padding:6px;position:sticky;top:64px;max-height:calc(100vh - 80px);overflow:auto}
+  .side h3{margin:8px 8px 4px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .side .row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;cursor:pointer;font-size:13.5px;color:var(--ink);user-select:none}
+  .side .row:hover{background:#f3f5f8}
+  .side .row.sel{background:#fff1ec;color:#9a2f1a;font-weight:700}
+  .side .row .ct{margin-left:auto;font-size:11.5px;color:var(--muted);font-weight:600}
+  .swatches{display:flex;flex-wrap:wrap;gap:5px;padding:4px 10px 8px}
+  .swatch{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+  .swatch.sel{border-color:#111}
+  /* ───── Grid (Masonry via CSS columns) ───── */
+  .main{min-width:0}
+  .section-title{margin:4px 6px 8px;font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .grid{column-count:4;column-gap:14px}
+  @media (max-width:1200px){.grid{column-count:3}}
+  @media (max-width:880px){.grid{column-count:2}}
+  @media (max-width:540px){.grid{column-count:1}}
+  .empty{padding:60px 20px;text-align:center;color:var(--muted);background:#fff;border:1px dashed var(--border);border-radius:12px}
+  /* ───── Card ───── */
+  .card{break-inside:avoid;margin-bottom:14px;border:1px solid var(--border);border-radius:11px;background:#fff;padding:12px 14px;box-shadow:var(--card-shadow);position:relative;overflow:hidden;transition:transform .12s,box-shadow .12s}
+  .card:hover{transform:translateY(-1px);box-shadow:0 2px 4px rgba(0,0,0,.06),0 10px 22px rgba(0,0,0,.06)}
+  .card .title{font-weight:700;font-size:14.5px;color:var(--ink);margin:0 0 6px;word-wrap:break-word}
+  .card .body{font-size:13.5px;line-height:1.5;color:#2a3340;white-space:pre-wrap;word-wrap:break-word}
+  .card .imgs{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 4px}
+  .card .imgs img{width:100%;border-radius:7px;display:block;background:#f1f4f7}
+  .card .imgs.multi img{width:calc(50% - 3px)}
+  .card .ck-list{margin:6px 0 4px;display:flex;flex-direction:column;gap:4px}
+  .card .ck-item{display:flex;align-items:flex-start;gap:7px;font-size:13.5px}
+  .card .ck-item input{margin-top:3px}
+  .card .ck-item.done span{text-decoration:line-through;color:var(--muted)}
+  .card .bk-link{display:flex;flex-direction:column;text-decoration:none}
+  .card .bk-link img{width:100%;border-radius:7px;display:block;background:#f1f4f7;margin-bottom:6px}
+  .card .bk-link .bk-host{font-size:11.5px;color:var(--muted)}
+  .card .meta{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+  .card .tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:#eef2f7;color:#374151;border:1px solid #d8dee7;cursor:pointer}
+  .card .tag:hover{background:#dde4ed}
+  .card .actions{position:absolute;top:6px;right:6px;display:flex;gap:2px;opacity:0;transition:opacity .12s;background:rgba(255,255,255,.92);border:1px solid var(--border);border-radius:7px;padding:2px;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+  .card:hover .actions{opacity:1}
+  .card.pinned .actions, .card .actions.always{opacity:1}
+  .mini{width:26px;height:26px;border-radius:5px;border:0;background:transparent;cursor:pointer;font-size:12.5px;line-height:1;padding:0;color:var(--ink)}
+  .mini:hover{background:#eef2f7}
+  .pin-badge{position:absolute;top:6px;left:6px;font-size:11px;background:rgba(0,0,0,.06);padding:2px 6px;border-radius:6px;color:var(--muted);font-weight:700}
+  /* ───── Composer ───── */
+  .composer{background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 12px;box-shadow:var(--card-shadow);margin:0 6px 14px}
+  .composer .row{display:flex;gap:8px;align-items:center}
+  .composer input.cmp{flex:1;border:0;font:600 14.5px/1.4 inherit;background:transparent;outline:none;color:var(--ink);padding:6px 0}
+  .composer textarea{display:none;width:100%;border:0;background:transparent;font:inherit;resize:vertical;min-height:48px;outline:none;padding:6px 0}
+  .composer.expanded textarea{display:block}
+  .composer .type-row{display:flex;gap:5px;margin-top:4px}
+  .composer .seg{padding:5px 10px;border-radius:99px;border:1px solid var(--border);background:#fff;font-size:11.5px;font-weight:700;cursor:pointer;color:var(--ink)}
+  .composer .seg.sel{background:#1f2933;color:#fff;border-color:#1f2933}
+  .composer .opts{display:none;align-items:center;gap:8px;justify-content:space-between;margin-top:8px;padding-top:6px;border-top:1px solid #f1f4f7}
+  .composer.expanded .opts{display:flex}
+  .composer .opts-left{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+  .composer .tag-in{flex:1;border:0;background:transparent;font:inherit;font-size:12.5px;color:var(--muted);outline:none;padding:4px 6px;min-width:120px}
+  .composer .img-preview{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+  .composer .img-preview .p{position:relative;width:80px;height:80px}
+  .composer .img-preview img{width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--border)}
+  .composer .img-preview .x{position:absolute;top:-5px;right:-5px;background:#dc2626;color:#fff;border:0;width:18px;height:18px;border-radius:50%;font-size:11px;cursor:pointer;line-height:1}
+  /* ───── Editor modal ───── */
+  .modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow:auto}
+  .modal{background:#fff;border-radius:14px;width:100%;max-width:560px;padding:18px 20px;box-shadow:0 18px 60px rgba(0,0,0,.3)}
+  .modal h3{margin:0 0 12px;font-size:16px;font-weight:800}
+  .mf{display:flex;flex-direction:column;gap:10px}
+  .mf label{font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;display:block}
+  .mf input[type=text],.mf input[type=url],.mf input[type=color],.mf textarea,.mf select{width:100%;padding:8px 10px;font-size:13.5px;border:1.5px solid var(--border);border-radius:8px;background:#fff;outline:none;font-family:inherit}
+  .mf input:focus,.mf textarea:focus,.mf select:focus{border-color:var(--accent)}
+  .mf textarea{min-height:100px;resize:vertical;line-height:1.45}
+  .mf-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .mf-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+  .mf .swatches{padding:0}
+  .mf .swatch{width:28px;height:28px}
+  .ck-edit{display:flex;flex-direction:column;gap:5px}
+  .ck-edit .ck-row{display:flex;align-items:center;gap:7px}
+  .ck-edit .ck-row input[type=checkbox]{flex:none}
+  .ck-edit .ck-row input[type=text]{flex:1;padding:6px 9px;border:1px solid var(--border);border-radius:6px}
+  .ck-edit .ck-row .x{background:transparent;border:0;color:#dc2626;cursor:pointer;font-size:14px}
+  .img-grid{display:flex;flex-wrap:wrap;gap:6px}
+  .img-grid .pi{position:relative;width:92px;height:92px}
+  .img-grid img{width:92px;height:92px;object-fit:cover;border-radius:7px;border:1px solid var(--border)}
+  .img-grid .x{position:absolute;top:-5px;right:-5px;background:#dc2626;color:#fff;border:0;width:18px;height:18px;border-radius:50%;font-size:11px;cursor:pointer;line-height:1}
+  .img-grid .add{width:92px;height:92px;border:2px dashed var(--border);border-radius:7px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11.5px;cursor:pointer;background:#fafbfd}
+  .img-grid .add:hover{border-color:var(--accent);color:var(--accent)}
+  .paste-zone{margin-top:8px;border:2px dashed var(--border);border-radius:8px;padding:14px;text-align:center;font-size:12px;color:var(--muted);background:#fafbfd;outline:none;cursor:text}
+  .paste-zone:focus{border-color:var(--accent);background:#fff}
+  /* Dark mode */
+  body.dark{--bg:#0f1419;--ink:#e6e8eb;--muted:#9aa3af;--border:#1f2733;--card-shadow:0 1px 3px rgba(0,0,0,.5),0 4px 14px rgba(0,0,0,.35)}
+  body.dark .topbar{background:#151b22;border-bottom-color:#1f2733}
+  body.dark .quick input,body.dark .btn{background:#1a2129;color:#e6e8eb;border-color:#2a3340}
+  body.dark .btn:hover{background:#222a33}
+  body.dark .side,body.dark .card,body.dark .composer,body.dark .modal{background:#161c23;border-color:#1f2733}
+  body.dark .empty{background:#161c23;border-color:#2a3340}
+  body.dark .mini:hover{background:#222a33}
+  body.dark .composer .seg{background:#1a2129;color:#e6e8eb;border-color:#2a3340}
+  body.dark .composer .seg.sel{background:#e6e8eb;color:#1f2933;border-color:#e6e8eb}
+  body.dark .card .tag{background:#1a2129;color:#cbd5e0;border-color:#2a3340}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="btn menubtn" id="menuBtn" title="Hliðarstika">☰</button>
+  <div class="brand"><span class="brand-dot">📒</span><span>Keepit</span></div>
+  <div class="quick">
+    <input id="search" type="search" placeholder="🔍 Leita…">
+  </div>
+  <button class="btn btn-icon" id="darkBtn" title="Dökk útlit">🌙</button>
+  <button class="btn btn-icon" id="syncBtn" title="Samstilling" style="display:none">☁</button>
+  <button class="btn btn-icon" id="moreBtn" title="Fleira">⋯</button>
+</div>
+
+<div class="layout" id="layout">
+  <aside class="side" id="side">
+    <h3>Sía</h3>
+    <div class="row" data-filter="all" data-val="all"><span>📋</span><span>Allt</span><span class="ct" id="ctAll"></span></div>
+    <div class="row" data-filter="pinned" data-val="1"><span>📌</span><span>Pinnað</span><span class="ct" id="ctPin"></span></div>
+    <div class="row" data-filter="archived" data-val="1"><span>📦</span><span>Arkíf</span><span class="ct" id="ctArc"></span></div>
+    <h3>Tegund</h3>
+    <div class="row" data-filter="type" data-val="note"><span>📝</span><span>Glósa</span></div>
+    <div class="row" data-filter="type" data-val="checklist"><span>☑️</span><span>Listi</span></div>
+    <div class="row" data-filter="type" data-val="bookmark"><span>🔖</span><span>Bókmerki</span></div>
+    <div class="row" data-filter="type" data-val="image"><span>🖼</span><span>Mynd</span></div>
+    <h3>Litir</h3>
+    <div class="swatches" id="colorFilter"></div>
+    <h3 id="tagsHd" style="display:none">Merki</h3>
+    <div id="tagsList"></div>
+  </aside>
+
+  <main class="main">
+    <!-- Composer ─────────────────────────────────── -->
+    <div class="composer" id="composer">
+      <div class="row">
+        <input class="cmp" id="cmpTitle" type="text" placeholder="Búa til glósu, lista eða lím URL…">
+        <button class="mini" id="cmpExpand" title="Stækka">⌄</button>
+      </div>
+      <textarea id="cmpBody" placeholder="Texti…"></textarea>
+      <div class="img-preview" id="cmpImgs"></div>
+      <div class="opts">
+        <div class="opts-left">
+          <button class="mini" id="cmpPin" title="Pinna">📌</button>
+          <button class="mini" id="cmpColor" title="Litur">🎨</button>
+          <button class="mini" id="cmpImage" title="Bæta mynd">🖼</button>
+          <button class="mini" id="cmpPaste" title="Líma mynd">📋</button>
+          <input class="tag-in" id="cmpTags" type="text" placeholder="#merki kommuaðskilið">
+        </div>
+        <div>
+          <select id="cmpType" class="seg" style="border-radius:8px;padding:5px 8px">
+            <option value="note">📝 Glósa</option>
+            <option value="checklist">☑️ Listi</option>
+            <option value="bookmark">🔖 Bókmerki</option>
+            <option value="image">🖼 Mynd</option>
+          </select>
+          <button class="btn primary" id="cmpSave">Vista</button>
+        </div>
+      </div>
+      <input type="file" id="cmpFile" accept="image/*" multiple style="display:none">
+    </div>
+
+    <div id="pinnedTitle" class="section-title" style="display:none">📌 Pinnað</div>
+    <div class="grid" id="pinnedGrid"></div>
+    <div id="othersTitle" class="section-title" style="display:none">Annað</div>
+    <div class="grid" id="grid"></div>
+  </main>
+</div>
+
+<script>
+'use strict';
+
+const COLORS = [
+  {id:'',  hex:'#ffffff', name:'Hvítur'},
+  {id:'y', hex:'#fef3c7', name:'Gulur'},
+  {id:'o', hex:'#fed7aa', name:'Appelsínu'},
+  {id:'r', hex:'#fecaca', name:'Rauður'},
+  {id:'p', hex:'#fbcfe8', name:'Bleikur'},
+  {id:'v', hex:'#ddd6fe', name:'Fjólublár'},
+  {id:'b', hex:'#bfdbfe', name:'Blár'},
+  {id:'t', hex:'#a7f3d0', name:'Grænblár'},
+  {id:'g', hex:'#bbf7d0', name:'Grænn'},
+  {id:'k', hex:'#d1d5db', name:'Grár'},
+];
+const colorHex = id => (COLORS.find(c=>c.id===id)||COLORS[0]).hex;
+const TYPES = {note:'📝 Glósa', checklist:'☑️ Listi', bookmark:'🔖 Bókmerki', image:'🖼 Mynd'};
+
+const LS_KEY = 'keepit:v1';
+const DEFAULT_STATE = {
+  cards: [],
+  ui: { filter:{kind:'all', val:'all'}, q:'', dark:false, colorFilter:'', tagFilter:'' }
+};
+
+function load(){
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return clone(DEFAULT_STATE);
+    const s = JSON.parse(raw);
+    s.cards = Array.isArray(s.cards) ? s.cards : [];
+    s.ui    = Object.assign({}, DEFAULT_STATE.ui, s.ui||{});
+    s.ui.filter = Object.assign({}, DEFAULT_STATE.ui.filter, s.ui.filter||{});
+    return s;
+  } catch(_) { return clone(DEFAULT_STATE); }
+}
+function save(){ try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch(_){} }
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+function newId(){ return 'k_'+Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4); }
+function nowStr(){ return new Date().toISOString().slice(0,16).replace('T',' '); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+let state = load();
+let composerImgs = [];
+
+if(state.ui.dark) document.body.classList.add('dark');
+
+// ───── Composer ─────
+const $cmp = document.getElementById('composer');
+const $cmpTitle = document.getElementById('cmpTitle');
+const $cmpBody = document.getElementById('cmpBody');
+const $cmpType = document.getElementById('cmpType');
+const $cmpTags = document.getElementById('cmpTags');
+const $cmpImgs = document.getElementById('cmpImgs');
+const $cmpFile = document.getElementById('cmpFile');
+let composerPinned = false, composerColor = '';
+
+function expandComposer(){ $cmp.classList.add('expanded'); }
+$cmpTitle.addEventListener('focus', expandComposer);
+$cmpTitle.addEventListener('input', () => {
+  const v = $cmpTitle.value.trim();
+  if(/^https?:\/\//i.test(v) || /^\w+\.\w{2,}\/?/.test(v)){ $cmpType.value = 'bookmark'; }
+});
+document.getElementById('cmpExpand').onclick = expandComposer;
+document.getElementById('cmpPin').onclick = e => { composerPinned = !composerPinned; e.currentTarget.style.color = composerPinned ? '#d14528' : ''; };
+document.getElementById('cmpColor').onclick = () => { const next = (COLORS.findIndex(c=>c.id===composerColor)+1) % COLORS.length; composerColor = COLORS[next].id; $cmp.style.background = colorHex(composerColor); };
+document.getElementById('cmpImage').onclick = () => $cmpFile.click();
+document.getElementById('cmpPaste').onclick = () => { $cmpTitle.focus(); alert('Smelltu hér og límdu mynd (Ctrl/Cmd+V)'); };
+$cmpFile.onchange = async e => {
+  for(const f of e.target.files){
+    const ds = await fileToDownscaled(f, 1200, 0.8);
+    composerImgs.push(ds);
+  }
+  renderComposerImgs();
+};
+$cmp.addEventListener('paste', async e => {
+  const items = e.clipboardData && e.clipboardData.items; if(!items) return;
+  for(const it of items){
+    if(it.type && it.type.startsWith('image/')){
+      const f = it.getAsFile(); if(!f) continue;
+      e.preventDefault();
+      const ds = await fileToDownscaled(f, 1200, 0.8);
+      composerImgs.push(ds);
+      renderComposerImgs();
+    }
+  }
+});
+function renderComposerImgs(){
+  $cmpImgs.innerHTML = composerImgs.map((src,i) =>
+    `<div class="p"><img src="${esc(src)}"><button class="x" data-i="${i}">×</button></div>`).join('');
+  $cmpImgs.querySelectorAll('.x').forEach(b => b.onclick = () => { composerImgs.splice(+b.dataset.i,1); renderComposerImgs(); });
+}
+
+document.getElementById('cmpSave').onclick = async () => {
+  const title = $cmpTitle.value.trim();
+  const body  = $cmpBody.value;
+  const type  = $cmpType.value;
+  const tags  = $cmpTags.value.split(',').map(s=>s.trim()).filter(Boolean);
+  if(!title && !body && composerImgs.length===0) return;
+  const card = {
+    id: newId(),
+    type,
+    title,
+    body: type==='checklist' ? '' : body,
+    color: composerColor,
+    tags,
+    pinned: composerPinned,
+    archived: false,
+    images: composerImgs.slice(),
+    url: '',
+    og_image: '',
+    favicon: '',
+    items: type==='checklist' ? body.split(/\n/).map(s=>s.trim()).filter(Boolean).map(t=>({text:t, done:false})) : [],
+    created_at: nowStr(),
+    updated_at: nowStr(),
+  };
+  if(type==='bookmark'){
+    card.url = /^https?:\/\//i.test(title) ? title : (title.match(/^\w+\.\w/) ? 'https://'+title : '');
+    if(card.url){
+      try {
+        const r = await fetch('/api/bookmark-preview?url='+encodeURIComponent(card.url));
+        const d = await r.json();
+        if(d && d.ok){ card.title = d.title || card.url; card.og_image = d.image || ''; card.favicon = d.favicon || d.google_favicon || ''; }
+      } catch(_){}
+    }
+  }
+  state.cards.unshift(card);
+  resetComposer();
+  save(); render();
+};
+
+function resetComposer(){
+  $cmp.classList.remove('expanded');
+  $cmpTitle.value = ''; $cmpBody.value = ''; $cmpTags.value = '';
+  $cmpType.value = 'note';
+  composerImgs = []; composerPinned = false; composerColor = '';
+  document.getElementById('cmpPin').style.color = '';
+  $cmp.style.background = '#fff';
+  $cmpImgs.innerHTML = '';
+}
+
+// ───── Card render ─────
+function cardHtml(c){
+  const bg = colorHex(c.color);
+  const dark = (c.color && c.color!=='') ? '' : '';
+  let inner = '';
+  if(c.type==='bookmark'){
+    const host = (function(){ try { return new URL(c.url).hostname.replace(/^www\./,''); } catch(_) { return ''; } })();
+    const img = c.og_image ? `<img src="${esc(c.og_image)}" alt="">` : '';
+    inner = `<a class="bk-link" href="${esc(c.url)}" target="_blank" rel="noopener">${img}${c.title?`<div class="title" style="margin:0">${esc(c.title)}</div>`:''}<div class="bk-host">${esc(host)}</div></a>`;
+  } else if(c.type==='checklist'){
+    inner = (c.title ? `<div class="title">${esc(c.title)}</div>` : '')
+          + `<div class="ck-list">${c.items.map((it,i)=>`<label class="ck-item ${it.done?'done':''}"><input type="checkbox" ${it.done?'checked':''} data-toggle="${c.id}|${i}"><span>${esc(it.text)}</span></label>`).join('')}</div>`;
+  } else if(c.type==='image'){
+    inner = (c.title ? `<div class="title">${esc(c.title)}</div>` : '')
+          + (c.body ? `<div class="body">${esc(c.body)}</div>` : '');
+  } else {
+    inner = (c.title ? `<div class="title">${esc(c.title)}</div>` : '')
+          + (c.body  ? `<div class="body">${esc(c.body)}</div>`   : '');
+  }
+  const imgs = (c.images && c.images.length) ? `<div class="imgs ${c.images.length>1?'multi':''}">${c.images.map(s=>`<img src="${esc(s)}" alt="">`).join('')}</div>` : '';
+  const tags = (c.tags && c.tags.length) ? `<div class="meta">${c.tags.map(t=>`<span class="tag" data-tag="${esc(t)}">#${esc(t)}</span>`).join('')}</div>` : '';
+  return `<div class="card ${c.pinned?'pinned':''}" data-id="${esc(c.id)}" style="background:${bg}">
+    ${c.pinned ? '<span class="pin-badge">📌</span>' : ''}
+    ${imgs}
+    ${inner}
+    ${tags}
+    <div class="actions">
+      <button class="mini" data-act="pin"  data-id="${esc(c.id)}" title="${c.pinned?'Af-pinna':'Pinna'}">${c.pinned?'📍':'📌'}</button>
+      <button class="mini" data-act="arch" data-id="${esc(c.id)}" title="${c.archived?'Endurheimta':'Arkífera'}">${c.archived?'↩':'📦'}</button>
+      <button class="mini" data-act="edit" data-id="${esc(c.id)}" title="Breyta">✏️</button>
+      <button class="mini" data-act="dup"  data-id="${esc(c.id)}" title="Afrita">⧉</button>
+      <button class="mini" data-act="del"  data-id="${esc(c.id)}" title="Eyða">🗑</button>
+    </div>
+  </div>`;
+}
+
+function passFilter(c){
+  const f = state.ui.filter;
+  if(f.kind==='archived'){ if(!c.archived) return false; }
+  else { if(c.archived) return false; }
+  if(f.kind==='pinned' && !c.pinned) return false;
+  if(f.kind==='type' && c.type !== f.val) return false;
+  if(state.ui.colorFilter && c.color !== state.ui.colorFilter) return false;
+  if(state.ui.tagFilter && !(c.tags||[]).includes(state.ui.tagFilter)) return false;
+  if(state.ui.q){
+    const q = state.ui.q.toLowerCase();
+    const hay = ((c.title||'')+' '+(c.body||'')+' '+((c.tags||[]).join(' '))+' '+(c.url||'')+' '+((c.items||[]).map(i=>i.text).join(' '))).toLowerCase();
+    if(!hay.includes(q)) return false;
+  }
+  return true;
+}
+
+function render(){
+  // Counts
+  document.getElementById('ctAll').textContent = state.cards.filter(c=>!c.archived).length;
+  document.getElementById('ctPin').textContent = state.cards.filter(c=>c.pinned && !c.archived).length;
+  document.getElementById('ctArc').textContent = state.cards.filter(c=>c.archived).length;
+
+  // Sidebar selection styling
+  document.querySelectorAll('.side .row').forEach(r => r.classList.remove('sel'));
+  const cur = document.querySelector(`.side .row[data-filter="${state.ui.filter.kind}"][data-val="${state.ui.filter.val}"]`);
+  if(cur) cur.classList.add('sel');
+
+  // Color filter swatches
+  const $cf = document.getElementById('colorFilter');
+  $cf.innerHTML = COLORS.map(c => `<div class="swatch ${state.ui.colorFilter===c.id?'sel':''}" data-c="${c.id}" style="background:${c.hex}" title="${c.name}"></div>`).join('');
+  $cf.querySelectorAll('.swatch').forEach(s => s.onclick = () => {
+    state.ui.colorFilter = (state.ui.colorFilter===s.dataset.c ? '' : s.dataset.c);
+    save(); render();
+  });
+
+  // Tag sidebar
+  const tagCounts = {};
+  state.cards.filter(c=>!c.archived).forEach(c => (c.tags||[]).forEach(t => tagCounts[t]=(tagCounts[t]||0)+1));
+  const tags = Object.keys(tagCounts).sort();
+  document.getElementById('tagsHd').style.display = tags.length ? '' : 'none';
+  const $tl = document.getElementById('tagsList');
+  $tl.innerHTML = tags.map(t => `<div class="row ${state.ui.tagFilter===t?'sel':''}" data-tag="${esc(t)}"><span>#</span><span>${esc(t)}</span><span class="ct">${tagCounts[t]}</span></div>`).join('');
+  $tl.querySelectorAll('.row').forEach(r => r.onclick = () => {
+    state.ui.tagFilter = (state.ui.tagFilter===r.dataset.tag ? '' : r.dataset.tag);
+    save(); render();
+  });
+
+  // Cards
+  const visible = state.cards.filter(passFilter);
+  const pinned = visible.filter(c=>c.pinned && state.ui.filter.kind!=='archived');
+  const others = visible.filter(c=>!(c.pinned && state.ui.filter.kind!=='archived'));
+  document.getElementById('pinnedTitle').style.display = pinned.length ? '' : 'none';
+  document.getElementById('othersTitle').style.display = (pinned.length && others.length) ? '' : 'none';
+  document.getElementById('pinnedGrid').innerHTML = pinned.map(cardHtml).join('');
+  document.getElementById('grid').innerHTML = others.length
+    ? others.map(cardHtml).join('')
+    : `<div class="empty">Engin spjöld${state.ui.q?' fyrir „'+esc(state.ui.q)+'"':''}. Skrifaðu eitthvað hér að ofan.</div>`;
+
+  // Bind card actions
+  document.querySelectorAll('.card .mini').forEach(btn => btn.onclick = e => onAction(btn));
+  document.querySelectorAll('.card .tag').forEach(t => t.onclick = () => { state.ui.tagFilter = t.dataset.tag; save(); render(); });
+  document.querySelectorAll('.card .ck-item input[type=checkbox]').forEach(cb => cb.onchange = () => {
+    const [id, ix] = cb.dataset.toggle.split('|');
+    const c = state.cards.find(x=>x.id===id); if(!c) return;
+    c.items[+ix].done = cb.checked; c.updated_at = nowStr(); save(); render();
+  });
+}
+
+function onAction(btn){
+  const act = btn.dataset.act, id = btn.dataset.id;
+  const c = state.cards.find(x=>x.id===id); if(!c) return;
+  if(act==='pin'){ c.pinned = !c.pinned; }
+  else if(act==='arch'){ c.archived = !c.archived; c.pinned = false; }
+  else if(act==='dup'){ const d = clone(c); d.id = newId(); d.created_at = d.updated_at = nowStr(); d.pinned = false; state.cards.unshift(d); }
+  else if(act==='del'){ if(!confirm('Eyða spjaldi?')) return; state.cards = state.cards.filter(x=>x.id!==id); }
+  else if(act==='edit'){ return openEditor(c); }
+  c.updated_at = nowStr();
+  save(); render();
+}
+
+// ───── Editor ─────
+function openEditor(c){
+  const bg = document.createElement('div');
+  bg.className = 'modal-bg';
+  bg.innerHTML = `<div class="modal" id="km">
+    <h3>Breyta spjaldi</h3>
+    <div class="mf">
+      <div><label>Tegund</label>
+        <select id="km-type">${Object.entries(TYPES).map(([k,v])=>`<option value="${k}" ${k===c.type?'selected':''}>${v}</option>`).join('')}</select>
+      </div>
+      <div><label>Titill</label><input id="km-title" type="text" value="${esc(c.title||'')}"></div>
+      <div id="km-body-wrap" style="${c.type==='checklist'?'display:none':''}"><label>Texti</label><textarea id="km-body">${esc(c.body||'')}</textarea></div>
+      <div id="km-url-wrap" style="${c.type==='bookmark'?'':'display:none'}"><label>URL</label><input id="km-url" type="url" value="${esc(c.url||'')}"></div>
+      <div id="km-items-wrap" style="${c.type==='checklist'?'':'display:none'}">
+        <label>Listi</label>
+        <div class="ck-edit" id="km-items"></div>
+        <button class="btn" id="km-add-item" type="button">+ Bæta línu</button>
+      </div>
+      <div class="mf-row">
+        <div><label>Merki</label><input id="km-tags" type="text" value="${esc((c.tags||[]).join(', '))}" placeholder="t.d. hugmynd, kaupa"></div>
+        <div><label>Litur</label>
+          <div class="swatches" id="km-swatches">${COLORS.map(cl => `<div class="swatch ${c.color===cl.id?'sel':''}" data-c="${cl.id}" style="background:${cl.hex}"></div>`).join('')}</div>
+        </div>
+      </div>
+      <div>
+        <label>Myndir (límdu eða veldu)</label>
+        <div class="img-grid" id="km-imgs"></div>
+        <div class="paste-zone" id="km-paste" tabindex="0">📋 Smelltu hér og límdu (Ctrl/Cmd+V) eða veldu skrá að ofan</div>
+        <input id="km-file" type="file" accept="image/*" multiple style="display:none">
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted)">
+        <label style="display:flex;align-items:center;gap:5px;text-transform:none;letter-spacing:0;margin:0"><input id="km-pin" type="checkbox" ${c.pinned?'checked':''}> Pinna</label>
+        <label style="display:flex;align-items:center;gap:5px;text-transform:none;letter-spacing:0;margin:0"><input id="km-arc" type="checkbox" ${c.archived?'checked':''}> Arkíf</label>
+        <span style="margin-left:auto">Búið til: ${esc(c.created_at||'')}${c.updated_at!==c.created_at?' · uppfært: '+esc(c.updated_at||''):''}</span>
+      </div>
+    </div>
+    <div class="mf-actions">
+      <button class="btn" id="km-cancel" type="button">Hætta við</button>
+      <button class="btn primary" id="km-save" type="button">Vista</button>
+    </div>
+  </div>`;
+  document.body.appendChild(bg);
+  bg.addEventListener('click', e => { if(e.target===bg) bg.remove(); });
+  document.getElementById('km-cancel').onclick = () => bg.remove();
+
+  let imgs = (c.images||[]).slice();
+  let color = c.color || '';
+  let items = (c.items||[]).slice();
+
+  function drawImgs(){
+    const $g = document.getElementById('km-imgs');
+    $g.innerHTML = imgs.map((s,i) => `<div class="pi"><img src="${esc(s)}"><button class="x" data-i="${i}">×</button></div>`).join('')
+      + `<div class="add" id="km-add">+ Bæta mynd</div>`;
+    $g.querySelectorAll('.x').forEach(b => b.onclick = () => { imgs.splice(+b.dataset.i,1); drawImgs(); });
+    document.getElementById('km-add').onclick = () => document.getElementById('km-file').click();
+  }
+  function drawItems(){
+    const $ck = document.getElementById('km-items');
+    $ck.innerHTML = items.map((it,i) => `<div class="ck-row"><input type="checkbox" ${it.done?'checked':''} data-d="${i}"><input type="text" value="${esc(it.text)}" data-t="${i}"><button class="x" data-x="${i}">×</button></div>`).join('');
+    $ck.querySelectorAll('input[data-d]').forEach(cb => cb.onchange = () => { items[+cb.dataset.d].done = cb.checked; });
+    $ck.querySelectorAll('input[data-t]').forEach(tx => tx.oninput = () => { items[+tx.dataset.t].text = tx.value; });
+    $ck.querySelectorAll('button[data-x]').forEach(bx => bx.onclick = () => { items.splice(+bx.dataset.x,1); drawItems(); });
+  }
+  function drawSwatches(){
+    document.querySelectorAll('#km-swatches .swatch').forEach(s => s.onclick = () => { color = s.dataset.c; document.querySelectorAll('#km-swatches .swatch').forEach(x => x.classList.toggle('sel', x.dataset.c===color)); });
+  }
+  document.getElementById('km-type').onchange = e => {
+    c.type = e.target.value;
+    document.getElementById('km-body-wrap').style.display  = c.type==='checklist' ? 'none' : '';
+    document.getElementById('km-url-wrap').style.display   = c.type==='bookmark'  ? ''     : 'none';
+    document.getElementById('km-items-wrap').style.display = c.type==='checklist' ? ''     : 'none';
+  };
+  document.getElementById('km-add-item').onclick = () => { items.push({text:'', done:false}); drawItems(); };
+  document.getElementById('km-file').onchange = async e => {
+    for(const f of e.target.files){ imgs.push(await fileToDownscaled(f, 1200, 0.8)); }
+    drawImgs();
+  };
+  const $paste = document.getElementById('km-paste');
+  $paste.onpaste = async e => {
+    const its = e.clipboardData && e.clipboardData.items; if(!its) return;
+    for(const it of its){
+      if(it.type && it.type.startsWith('image/')){
+        const f = it.getAsFile(); if(!f) continue; e.preventDefault();
+        imgs.push(await fileToDownscaled(f, 1200, 0.8)); drawImgs();
+      }
+    }
+  };
+  $paste.onclick = () => $paste.focus();
+
+  drawImgs(); drawItems(); drawSwatches();
+
+  document.getElementById('km-save').onclick = () => {
+    c.type    = document.getElementById('km-type').value;
+    c.title   = document.getElementById('km-title').value.trim();
+    c.body    = document.getElementById('km-body').value;
+    c.url     = document.getElementById('km-url').value.trim();
+    c.color   = color;
+    c.tags    = document.getElementById('km-tags').value.split(',').map(s=>s.trim()).filter(Boolean);
+    c.pinned  = document.getElementById('km-pin').checked;
+    c.archived= document.getElementById('km-arc').checked;
+    c.images  = imgs;
+    c.items   = c.type==='checklist' ? items.filter(i=>i.text||i.done) : [];
+    c.updated_at = nowStr();
+    bg.remove(); save(); render();
+  };
+}
+
+// ───── Helpers ─────
+function fileToDownscaled(file, maxSide, quality){
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onerror = () => rej(fr.error);
+    fr.onload = () => {
+      const img = new Image();
+      img.onerror = () => rej(new Error('image decode'));
+      img.onload = () => {
+        const r = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+        const w = Math.round(img.naturalWidth * r), h = Math.round(img.naturalHeight * r);
+        const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+        cv.getContext('2d').drawImage(img, 0, 0, w, h);
+        res(cv.toDataURL('image/jpeg', quality));
+      };
+      img.src = fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
+}
+
+// ───── Sidebar interactions ─────
+document.querySelectorAll('.side .row[data-filter]').forEach(r => r.onclick = () => {
+  state.ui.filter = { kind: r.dataset.filter, val: r.dataset.val };
+  if(r.dataset.filter !== 'archived') {} // archived hidden elsewhere
+  save(); render();
+});
+document.getElementById('menuBtn').onclick = () => document.getElementById('layout').classList.toggle('open');
+document.getElementById('darkBtn').onclick = () => { state.ui.dark = !state.ui.dark; document.body.classList.toggle('dark', state.ui.dark); save(); };
+document.getElementById('search').oninput = e => { state.ui.q = e.target.value; save(); render(); };
+
+// ───── Export / Import / Wipe (kebab menu) ─────
+document.getElementById('moreBtn').onclick = () => {
+  const choice = prompt('Aðgerðir:\n1 = Flytja út (JSON)\n2 = Flytja inn (JSON)\n3 = Eyða öllu\n\nTölu (1/2/3) eða Esc til að hætta:');
+  if(choice==='1'){
+    const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = 'keepit-'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+  } else if(choice==='2'){
+    const inp = document.createElement('input'); inp.type='file'; inp.accept='application/json';
+    inp.onchange = async e => {
+      const f = e.target.files[0]; if(!f) return;
+      const txt = await f.text();
+      try { const s = JSON.parse(txt); if(!Array.isArray(s.cards)) throw 0;
+        if(!confirm('Skipta út öllum núverandi spjöldum með '+s.cards.length+' spjöldum úr skrá?')) return;
+        state = Object.assign(clone(DEFAULT_STATE), s); save(); render();
+      } catch(_){ alert('Ógild Keepit JSON.'); }
+    };
+    inp.click();
+  } else if(choice==='3'){
+    if(!confirm('Þetta eyðir ÖLLU. Heldur þú áfram?')) return;
+    if(!confirm('Alveg viss?')) return;
+    state = clone(DEFAULT_STATE); save(); render();
+  }
+};
+
+// First render
+render();
+</script>
+
+</body>
+</html>
