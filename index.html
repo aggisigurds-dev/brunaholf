@@ -1544,6 +1544,7 @@ const DEFAULT_STATE = {
       {group:'🧹 Hreinsun (eftir migration)', text:'Cataloga gömul gögn í aggisigurds@ vs flytja yfir á brunaholfehf@', done:false}
     ]},
     {id:'okkarVerkefni', label:'Anni & Aggi', icon:'👥', twoCol:{ Anni:{items:[]}, Aggi:{items:[]} }},
+    {id:'verkefnaskra', label:'Verkefnaskrá', icon:'📋', items:[]},
     {id:'minverkefni', label:'Mín verkefni', icon:'☑', checklist:[
       {group:'🔥 Vika', text:'Klára Apríl reikninga (19 verk eftir)', done:false},
       {group:'🔥 Vika', text:'Setja upp Apps Script (Code.gs) fyrir Drive/Sheets', done:false},
@@ -1789,7 +1790,7 @@ function clearDataCache(){
 function ensureNewTabs(s){
   if(!s || !Array.isArray(s.tabs)) return;
   if(!Array.isArray(s.bakendiLinks)) s.bakendiLinks = BAKENDI_LINK_SEED.map(x=>({...x}));
-  ['dagurinn','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','skuldunautar','hreyfingaryfirlit','nlsh','spurningar','sjalfvirkni','vefryni','bakendi'].forEach(id=>{
+  ['dagurinn','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','skuldunautar','hreyfingaryfirlit','nlsh','spurningar','sjalfvirkni','vefryni','bakendi'].forEach(id=>{
     if(!s.tabs.find(t=>t.id===id)){
       const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
       if(d){
@@ -2187,6 +2188,7 @@ function render(){
   if(t.id==='vefryni') return renderVefryni(t);
   if(t.id==='bakendi') return renderBakendi(t);
   if(t.id==='sjalfvirkni') return renderSjalfvirkni(t);
+  if(t.id==='verkefnaskra') return renderVerkefnaskra(t);
   if(t.id==='reikningatenglar') return renderReikningatenglar(t);
   if(t.checklist!==undefined) return renderChecklist(t);
   if(t.sheetCsv!==undefined) return renderListTab(t);
@@ -9765,6 +9767,337 @@ async function renderDagurinn(t){
   if($refresh) $refresh.onclick = load;
   renderTodos();
   load();
+}
+
+/* ────────────────────────────────────────────────────────────────────
+   Verkefnaskrá — rich, optioned todo list. Items live on the tab object
+   (t.items[]) so they round-trip through save()/load() and sync via
+   /api/app-state like every other tab. UI state (filters/sort/search) is
+   kept in state.ui.vk so it survives navigation.
+   ──────────────────────────────────────────────────────────────────── */
+function renderVerkefnaskra(t){
+  if(!Array.isArray(t.items)) t.items = [];
+  state.ui = state.ui || {};
+  state.ui.vk = state.ui.vk || { q:'', status:'open', prio:'', asg:'', tag:'', sort:'prio' };
+  const U = state.ui.vk;
+  const PRIO = {high:{lbl:'🔴 Áríðandi',c:'#dc2626',rank:3}, med:{lbl:'🟡 Miðlungs',c:'#d97706',rank:2}, low:{lbl:'🟢 Lágt',c:'#10b981',rank:1}, '':{lbl:'⚪ Enginn',c:'#94a3b8',rank:0}};
+  const ST   = {todo:'📥 Í bið', inprog:'🚧 Í vinnslu', paused:'⏸ Á ís', done:'✅ Lokið'};
+  const ASG_OPTS = ['','Aggi','Anni','Sameiginlegt'];
+
+  const all = t.items;
+  const allTags = Array.from(new Set(all.flatMap(x=>x.tags||[]).filter(Boolean))).sort();
+  const allAsg = Array.from(new Set(all.map(x=>x.assignee).filter(Boolean))).sort();
+
+  function passFilter(x){
+    if(U.status==='open' && x.status==='done') return false;
+    if(U.status==='done' && x.status!=='done') return false;
+    if(U.status && U.status!=='open' && U.status!=='done' && x.status!==U.status) return false;
+    if(U.prio && (x.priority||'')!==U.prio) return false;
+    if(U.asg && x.assignee!==U.asg) return false;
+    if(U.tag && !(x.tags||[]).includes(U.tag)) return false;
+    if(U.q){
+      const q = U.q.toLowerCase();
+      const hay = ((x.title||'')+' '+(x.desc||'')+' '+((x.tags||[]).join(' '))).toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  }
+  function sortBy(a,b){
+    if(U.sort==='due'){
+      const av = a.due||'9999-99'; const bv = b.due||'9999-99';
+      return av.localeCompare(bv);
+    }
+    if(U.sort==='created') return (b.created_at||'').localeCompare(a.created_at||'');
+    if(U.sort==='title')   return (a.title||'').localeCompare(b.title||'', 'is');
+    // default: priority desc, then due asc, then created desc
+    const pa = PRIO[a.priority||''].rank, pb = PRIO[b.priority||''].rank;
+    if(pa!==pb) return pb-pa;
+    const da = a.due||'9999-99', db = b.due||'9999-99';
+    if(da!==db) return da.localeCompare(db);
+    return (b.created_at||'').localeCompare(a.created_at||'');
+  }
+  const open = all.filter(x=>x.status!=='done' && passFilter(x)).sort(sortBy);
+  const done = all.filter(x=>x.status==='done' && passFilter(x)).sort((a,b)=>(b.done_at||'').localeCompare(a.done_at||''));
+
+  const today = new Date().toISOString().slice(0,10);
+  const isOverdue = d => d && d < today;
+  const dueLabel = d => {
+    if(!d) return '';
+    if(d===today) return 'í dag';
+    const ms = new Date(d) - new Date(today);
+    const days = Math.round(ms/86400000);
+    if(days===1) return 'á morgun';
+    if(days===-1) return 'í gær';
+    if(days>1 && days<8) return 'eftir '+days+' daga';
+    return d;
+  };
+  const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  function cardHtml(x){
+    const p = PRIO[x.priority||''];
+    const overdue = x.status!=='done' && isOverdue(x.due);
+    return `<div class="vk-card" data-id="${esc(x.id)}" style="border-left:5px solid ${p.c}">
+      <div class="vk-card-row">
+        <div class="vk-title-wrap">
+          ${x.color ? `<span class="vk-swatch" style="background:${esc(x.color)}"></span>` : ''}
+          <div class="vk-title">${esc(x.title||'(án heitis)')}</div>
+        </div>
+        <div class="vk-card-actions">
+          <button class="vk-act" data-act="toggle" data-id="${esc(x.id)}" title="${x.status==='done'?'Færa aftur í bið':'Merkja lokið'}">${x.status==='done'?'↺':'✓'}</button>
+          <button class="vk-act" data-act="edit"   data-id="${esc(x.id)}" title="Breyta">✏️</button>
+          <button class="vk-act" data-act="del"    data-id="${esc(x.id)}" title="Eyða">🗑</button>
+        </div>
+      </div>
+      <div class="vk-meta">
+        <span class="vk-chip vk-st-${x.status}">${ST[x.status]||ST.todo}</span>
+        ${x.priority ? `<span class="vk-chip" style="background:${p.c}1a;color:${p.c};border-color:${p.c}55">${p.lbl}</span>` : ''}
+        ${x.due ? `<span class="vk-chip ${overdue?'vk-over':''}">📅 ${dueLabel(x.due)}</span>` : ''}
+        ${x.assignee ? `<span class="vk-chip vk-asg">👤 ${esc(x.assignee)}</span>` : ''}
+        ${(x.tags||[]).map(tg=>`<span class="vk-chip vk-tag" data-tag="${esc(tg)}">#${esc(tg)}</span>`).join('')}
+      </div>
+      ${x.desc ? `<div class="vk-desc">${esc(x.desc)}</div>` : ''}
+      ${x.link ? `<div class="vk-link"><a href="${esc(x.link)}" target="_blank" rel="noopener">🔗 ${esc(x.link)}</a></div>` : ''}
+    </div>`;
+  }
+
+  $view.innerHTML = `
+    <div class="vk-wrap">
+      <div class="vk-header">
+        <h1 class="vk-h1">📋 Verkefnaskrá <span class="vk-sub">${all.length} verkefni · ${open.length} opin</span></h1>
+        <div class="vk-sub-line">Verkefnalisti með forgangi, stöðu, frest, eiganda, merkjum, tengli og litum. Hraðbætt + ítarforma; sortar og síar á öllu.</div>
+      </div>
+
+      <div class="vk-bar">
+        <input id="vk-quick" class="vk-quick" type="text" placeholder="+ Nýtt verkefni — Enter til að bæta við">
+        <button id="vk-new" class="vk-btn vk-primary" type="button">⚙ Ítarforma</button>
+      </div>
+
+      <div class="vk-filters">
+        <input id="vk-q" class="vk-in" type="search" placeholder="🔍 Leita…" value="${esc(U.q)}">
+        <select id="vk-status" class="vk-in">
+          <option value="open"${U.status==='open'?' selected':''}>Öll opin</option>
+          <option value=""${U.status===''?' selected':''}>Allt (líka lokið)</option>
+          <option value="todo"${U.status==='todo'?' selected':''}>📥 Í bið</option>
+          <option value="inprog"${U.status==='inprog'?' selected':''}>🚧 Í vinnslu</option>
+          <option value="paused"${U.status==='paused'?' selected':''}>⏸ Á ís</option>
+          <option value="done"${U.status==='done'?' selected':''}>✅ Lokið</option>
+        </select>
+        <select id="vk-prio" class="vk-in">
+          <option value="">Allur forgangur</option>
+          <option value="high"${U.prio==='high'?' selected':''}>🔴 Áríðandi</option>
+          <option value="med"${U.prio==='med'?' selected':''}>🟡 Miðlungs</option>
+          <option value="low"${U.prio==='low'?' selected':''}>🟢 Lágt</option>
+        </select>
+        <select id="vk-asg" class="vk-in">
+          <option value="">Allir eigendur</option>
+          ${allAsg.map(a=>`<option value="${esc(a)}"${U.asg===a?' selected':''}>${esc(a)}</option>`).join('')}
+        </select>
+        <select id="vk-tag" class="vk-in" ${allTags.length?'':'disabled'}>
+          <option value="">Öll merki</option>
+          ${allTags.map(tg=>`<option value="${esc(tg)}"${U.tag===tg?' selected':''}>#${esc(tg)}</option>`).join('')}
+        </select>
+        <select id="vk-sort" class="vk-in">
+          <option value="prio"${U.sort==='prio'?' selected':''}>Forgangur</option>
+          <option value="due"${U.sort==='due'?' selected':''}>Frestur</option>
+          <option value="created"${U.sort==='created'?' selected':''}>Nýjast fyrst</option>
+          <option value="title"${U.sort==='title'?' selected':''}>Heiti (A–Ö)</option>
+        </select>
+        <button id="vk-clear" class="vk-btn vk-ghost" type="button">Hreinsa síu</button>
+      </div>
+
+      <div id="vk-list" class="vk-list">
+        ${open.length ? open.map(cardHtml).join('') : `<div class="vk-empty">Engin opin verkefni passa við síuna.</div>`}
+      </div>
+
+      ${done.length ? `<details class="vk-done"><summary>✅ Lokin verkefni (${done.length})</summary>
+        <div class="vk-list">${done.map(cardHtml).join('')}</div>
+      </details>` : ''}
+    </div>
+
+    <style>
+      .vk-wrap{padding:18px 6px;max-width:1100px;margin:0 auto}
+      .vk-header{margin-bottom:14px}
+      .vk-h1{font-size:22px;font-weight:800;margin:0;color:var(--ink)}
+      .vk-sub{font-size:12px;font-weight:600;color:var(--muted);margin-left:6px}
+      .vk-sub-line{font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.4}
+      .vk-bar{display:flex;gap:8px;margin:12px 0}
+      .vk-quick{flex:1;padding:11px 14px;font-size:14.5px;border:1.5px solid var(--border,#e3e7ec);border-radius:9px;background:#fff;outline:none}
+      .vk-quick:focus{border-color:var(--red,#d14528);box-shadow:0 0 0 3px rgba(209,69,40,.18)}
+      .vk-btn{padding:10px 14px;border-radius:9px;border:1.5px solid transparent;font-weight:700;cursor:pointer;font-size:13px;line-height:1}
+      .vk-primary{background:linear-gradient(135deg,#d14528,#9a2f1a);color:#fff;border-color:#9a2f1a}
+      .vk-primary:hover{transform:translateY(-1px)}
+      .vk-ghost{background:#fff;color:var(--ink);border-color:var(--border,#e3e7ec)}
+      .vk-ghost:hover{background:#f6f7f9}
+      .vk-filters{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}
+      .vk-in{padding:8px 10px;font-size:13px;border:1px solid var(--border,#e3e7ec);border-radius:8px;background:#fff;color:var(--ink);outline:none}
+      .vk-in:focus{border-color:var(--red,#d14528)}
+      .vk-list{display:flex;flex-direction:column;gap:9px}
+      .vk-empty{padding:30px 14px;text-align:center;color:var(--muted);background:#fff;border:1px dashed var(--border,#e3e7ec);border-radius:11px}
+      .vk-card{background:#fff;border:1px solid var(--border,#e3e7ec);border-radius:10px;padding:11px 13px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+      .vk-card-row{display:flex;align-items:flex-start;gap:10px}
+      .vk-title-wrap{flex:1;min-width:0;display:flex;align-items:center;gap:8px}
+      .vk-title{font-size:14.5px;font-weight:700;color:var(--ink);line-height:1.35;word-break:break-word}
+      .vk-swatch{width:12px;height:12px;border-radius:3px;flex:none;border:1px solid rgba(0,0,0,.1)}
+      .vk-card-actions{display:flex;gap:4px;flex:none}
+      .vk-act{background:#f6f7f9;border:1px solid var(--border,#e3e7ec);border-radius:7px;width:30px;height:30px;cursor:pointer;font-size:13px;line-height:1;padding:0}
+      .vk-act:hover{background:#ececf0}
+      .vk-meta{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+      .vk-chip{display:inline-block;padding:3px 8px;font-size:11px;font-weight:600;border-radius:99px;background:#f1f3f6;color:#3b4150;border:1px solid #e3e7ec;line-height:1.4}
+      .vk-chip.vk-st-todo{background:#eef2ff;color:#3730a3;border-color:#c7d2fe}
+      .vk-chip.vk-st-inprog{background:#fef3c7;color:#92400e;border-color:#fcd34d}
+      .vk-chip.vk-st-paused{background:#f5f5f4;color:#57534e;border-color:#d6d3d1}
+      .vk-chip.vk-st-done{background:#dcfce7;color:#166534;border-color:#86efac}
+      .vk-chip.vk-over{background:#fee2e2;color:#b91c1c;border-color:#fca5a5}
+      .vk-chip.vk-tag{cursor:pointer}
+      .vk-chip.vk-tag:hover{background:#e2e8f0}
+      .vk-desc{margin-top:7px;font-size:13px;color:var(--ink);line-height:1.45;white-space:pre-wrap}
+      .vk-link{margin-top:5px;font-size:12px}
+      .vk-link a{color:#1d4ed8;text-decoration:none;word-break:break-all}
+      .vk-done{margin-top:18px;background:#fafbfd;border:1px solid var(--border,#e3e7ec);border-radius:10px;padding:8px 12px}
+      .vk-done summary{cursor:pointer;font-weight:700;font-size:13px;color:var(--muted);padding:4px 0}
+      .vk-done .vk-list{margin-top:9px}
+      .vk-done .vk-card{opacity:.7}
+      /* Edit dialog */
+      .vk-modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9100;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow:auto}
+      .vk-modal{background:#fff;border-radius:14px;width:100%;max-width:560px;padding:18px 20px;box-shadow:0 18px 60px rgba(0,0,0,.3)}
+      .vk-modal h3{margin:0 0 12px;font-size:16px;font-weight:800}
+      .vk-mf{display:flex;flex-direction:column;gap:10px}
+      .vk-mf label{font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;display:block}
+      .vk-mf input[type=text], .vk-mf input[type=date], .vk-mf input[type=url], .vk-mf input[type=color], .vk-mf textarea, .vk-mf select{width:100%;padding:8px 10px;font-size:13.5px;border:1.5px solid var(--border,#e3e7ec);border-radius:8px;background:#fff;outline:none;font-family:inherit}
+      .vk-mf input:focus, .vk-mf textarea:focus, .vk-mf select:focus{border-color:#d14528}
+      .vk-mf textarea{min-height:80px;resize:vertical;line-height:1.4}
+      .vk-mf input[type=color]{padding:2px;height:34px;cursor:pointer}
+      .vk-mf .vk-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+      .vk-mf-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+    </style>
+  `;
+
+  // Wire interactions ---------------------------------------------------
+  const $list = document.getElementById('vk-list');
+  function persist(){ save(); render(); }
+  function newItem(title){
+    const id = 'vk_' + Math.random().toString(36).slice(2,10);
+    return { id, title:title||'', desc:'', priority:'', status:'todo', due:'', tags:[], assignee:'', color:'', link:'', created_at: new Date().toISOString().slice(0,16).replace('T',' '), done_at:'' };
+  }
+  function findItem(id){ return t.items.find(x=>x.id===id); }
+
+  function openEditor(item){
+    const it = item || newItem('');
+    const isNew = !item;
+    const bg = document.createElement('div');
+    bg.className = 'vk-modal-bg';
+    bg.innerHTML = `<div class="vk-modal">
+      <h3>${isNew?'Nýtt verkefni':'Breyta verkefni'}</h3>
+      <div class="vk-mf">
+        <div><label>Heiti</label><input id="m-title" type="text" value="${esc(it.title)}" placeholder="Hvað á að gera?"></div>
+        <div><label>Lýsing / minnispunktar</label><textarea id="m-desc" placeholder="Frjáls texti…">${esc(it.desc)}</textarea></div>
+        <div class="vk-grid">
+          <div><label>Forgangur</label>
+            <select id="m-prio">
+              <option value=""${!it.priority?' selected':''}>⚪ Enginn</option>
+              <option value="high"${it.priority==='high'?' selected':''}>🔴 Áríðandi</option>
+              <option value="med"${it.priority==='med'?' selected':''}>🟡 Miðlungs</option>
+              <option value="low"${it.priority==='low'?' selected':''}>🟢 Lágt</option>
+            </select>
+          </div>
+          <div><label>Staða</label>
+            <select id="m-status">
+              <option value="todo"${it.status==='todo'?' selected':''}>📥 Í bið</option>
+              <option value="inprog"${it.status==='inprog'?' selected':''}>🚧 Í vinnslu</option>
+              <option value="paused"${it.status==='paused'?' selected':''}>⏸ Á ís</option>
+              <option value="done"${it.status==='done'?' selected':''}>✅ Lokið</option>
+            </select>
+          </div>
+        </div>
+        <div class="vk-grid">
+          <div><label>Frestur</label><input id="m-due" type="date" value="${esc(it.due)}"></div>
+          <div><label>Eigandi</label>
+            <select id="m-asg">
+              ${ASG_OPTS.map(a=>`<option value="${esc(a)}"${it.assignee===a?' selected':''}>${a||'— enginn —'}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="vk-grid">
+          <div><label>Merki (kommuaðskilið)</label><input id="m-tags" type="text" value="${esc((it.tags||[]).join(', '))}" placeholder="t.d. bokhald, eyk t"></div>
+          <div><label>Litur</label><input id="m-color" type="color" value="${esc(it.color||'#d14528')}"></div>
+        </div>
+        <div><label>Tengill (URL)</label><input id="m-link" type="url" value="${esc(it.link)}" placeholder="https://…"></div>
+      </div>
+      <div class="vk-mf-actions">
+        <button class="vk-btn vk-ghost" id="m-cancel" type="button">Hætta við</button>
+        ${isNew?'':'<button class="vk-btn vk-ghost" id="m-del" type="button" style="color:#b91c1c;border-color:#fecaca">🗑 Eyða</button>'}
+        <button class="vk-btn vk-primary" id="m-save" type="button">${isNew?'+ Bæta við':'Vista'}</button>
+      </div>
+    </div>`;
+    document.body.appendChild(bg);
+    bg.addEventListener('click', e => { if(e.target===bg) bg.remove(); });
+    document.getElementById('m-cancel').onclick = () => bg.remove();
+    const delBtn = document.getElementById('m-del');
+    if(delBtn) delBtn.onclick = () => {
+      if(!confirm('Eyða „'+(it.title||'(án heitis)')+'"?')) return;
+      t.items = t.items.filter(x=>x.id!==it.id); bg.remove(); persist();
+    };
+    document.getElementById('m-save').onclick = () => {
+      it.title    = document.getElementById('m-title').value.trim();
+      it.desc     = document.getElementById('m-desc').value.trim();
+      it.priority = document.getElementById('m-prio').value;
+      const prevStatus = it.status;
+      it.status   = document.getElementById('m-status').value;
+      it.due      = document.getElementById('m-due').value;
+      it.assignee = document.getElementById('m-asg').value;
+      it.tags     = document.getElementById('m-tags').value.split(',').map(s=>s.trim()).filter(Boolean);
+      it.color    = document.getElementById('m-color').value;
+      it.link     = document.getElementById('m-link').value.trim();
+      if(it.status==='done' && prevStatus!=='done') it.done_at = new Date().toISOString().slice(0,16).replace('T',' ');
+      if(it.status!=='done') it.done_at = '';
+      if(!it.title){ alert('Heiti vantar.'); return; }
+      if(isNew) t.items.unshift(it);
+      bg.remove(); persist();
+    };
+    setTimeout(()=>document.getElementById('m-title').focus(), 30);
+  }
+
+  // Quick-add
+  const $quick = document.getElementById('vk-quick');
+  $quick.addEventListener('keydown', e => {
+    if(e.key==='Enter'){
+      const v = $quick.value.trim(); if(!v) return;
+      t.items.unshift(Object.assign(newItem(v), {})); $quick.value=''; persist();
+    }
+  });
+  document.getElementById('vk-new').onclick = () => openEditor(null);
+
+  // Filter / sort / search
+  document.getElementById('vk-q').addEventListener('input', e => { U.q = e.target.value; save(); render(); });
+  document.getElementById('vk-status').onchange = e => { U.status = e.target.value; save(); render(); };
+  document.getElementById('vk-prio').onchange   = e => { U.prio   = e.target.value; save(); render(); };
+  document.getElementById('vk-asg').onchange    = e => { U.asg    = e.target.value; save(); render(); };
+  document.getElementById('vk-tag').onchange    = e => { U.tag    = e.target.value; save(); render(); };
+  document.getElementById('vk-sort').onchange   = e => { U.sort   = e.target.value; save(); render(); };
+  document.getElementById('vk-clear').onclick   = () => { Object.assign(U,{q:'',status:'open',prio:'',asg:'',tag:'',sort:'prio'}); save(); render(); };
+
+  // Card actions — bind directly to each button (fresh on every render
+  // because $view.innerHTML rebuilt them). Avoids the accumulating
+  // $view.addEventListener problem.
+  $view.querySelectorAll('.vk-act').forEach(btn => {
+    btn.onclick = () => {
+      const it = findItem(btn.dataset.id); if(!it) return;
+      const act = btn.dataset.act;
+      if(act==='toggle'){
+        if(it.status==='done'){ it.status='todo'; it.done_at=''; }
+        else { it.status='done'; it.done_at = new Date().toISOString().slice(0,16).replace('T',' '); }
+        persist();
+      } else if(act==='edit'){ openEditor(it); }
+      else if(act==='del'){
+        if(!confirm('Eyða „'+(it.title||'(án heitis)')+'"?')) return;
+        t.items = t.items.filter(x=>x.id!==it.id); persist();
+      }
+    };
+  });
+  // Tag chips filter by that tag on click.
+  $view.querySelectorAll('.vk-chip.vk-tag').forEach(c => {
+    c.onclick = () => { U.tag = c.dataset.tag; save(); render(); };
+  });
 }
 
 async function renderSjalfvirkni(t){
