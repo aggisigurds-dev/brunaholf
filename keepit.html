@@ -171,6 +171,10 @@
   .card .actions{position:absolute;top:6px;right:6px;display:flex;gap:2px;opacity:0;transition:opacity .12s;background:rgba(255,255,255,.92);border:1px solid var(--border);border-radius:7px;padding:2px;box-shadow:0 1px 4px rgba(0,0,0,.1)}
   .card:hover .actions{opacity:1}
   .card.pinned .actions{opacity:1}
+  /* Touch devices have no hover → always show actions so cards are
+     actionable on phones/tablets (the original opacity:0 → :hover trick
+     made them invisible on mobile). */
+  @media (hover: none){.card .actions{opacity:1}}
   .mini{width:26px;height:26px;border-radius:5px;border:0;background:transparent;cursor:pointer;font-size:12.5px;line-height:1;padding:0;color:var(--ink)}
   .mini:hover{background:#eef2f7}
   .pin-badge{position:absolute;top:6px;left:6px;font-size:11px;background:rgba(0,0,0,.06);padding:2px 6px;border-radius:6px;color:var(--muted);font-weight:700}
@@ -583,9 +587,20 @@ let composerPinned = false, composerColor = '';
 
 function expandComposer(){ $cmp.classList.add('expanded'); }
 $cmpTitle.addEventListener('focus', expandComposer);
+// URL detector: accepts http(s)://… OR any "looks like a domain" string
+// (with dashes, dots, slashes, query strings). The previous regex (\w+\.\w{2,})
+// missed deploy-preview-NNN--brunaholf.netlify.app because it required \w
+// at the start (no dashes allowed before the first dot).
+function looksLikeUrl(s){
+  s = String(s||'').trim();
+  if(!s) return false;
+  if(/^https?:\/\//i.test(s)) return true;
+  // Must contain a dot, no spaces, at least one alphanumeric on each side
+  // of the (first) dot, and a TLD of 2+ alphanumeric chars somewhere.
+  return /^[a-z0-9][a-z0-9.\-_]*\.[a-z]{2,}(?:[\/?#][^\s]*)?$/i.test(s);
+}
 $cmpTitle.addEventListener('input', () => {
-  const v = $cmpTitle.value.trim();
-  if(/^https?:\/\//i.test(v) || /^\w+\.\w{2,}\/?/.test(v)) $cmpType.value = 'bookmark';
+  if(looksLikeUrl($cmpTitle.value)) $cmpType.value = 'bookmark';
 });
 document.getElementById('cmpExpand').onclick = expandComposer;
 document.getElementById('cmpPin').onclick = e => { composerPinned = !composerPinned; e.currentTarget.style.color = composerPinned ? '#d14528' : ''; };
@@ -636,14 +651,27 @@ document.getElementById('cmpSave').onclick = async () => {
     items: type==='checklist' ? body.split(/\n/).map(s=>s.trim()).filter(Boolean).map(t=>({text:t, done:false})) : [],
     created_at: nowStr(), updated_at: nowStr(),
   };
-  if(type==='bookmark'){
-    card.url = /^https?:\/\//i.test(title) ? title : (title.match(/^\w+\.\w/) ? 'https://'+title : '');
+  // Promote to bookmark if user typed a URL but didn't switch type.
+  // Auto-saves the hassle of changing the dropdown for a paste-and-go flow.
+  if(card.type === 'note' && looksLikeUrl(title)) card.type = 'bookmark';
+  if(card.type === 'bookmark'){
+    card.url = /^https?:\/\//i.test(title) ? title : (looksLikeUrl(title) ? 'https://'+title : '');
     if(card.url){
       try {
         const r = await fetch('/api/bookmark-preview?url='+encodeURIComponent(card.url));
         const d = await r.json();
         if(d && d.ok){ card.title = d.title || card.url; card.og_image = d.image || ''; card.favicon = d.favicon || d.google_favicon || ''; }
       } catch(_){}
+      // Auto-fallback: no og:image returned → render a real headless
+      // screenshot so the card always has an actual picture (user asked
+      // for AUTO preview, not a "click 📸 to get one" two-step).
+      if(!card.og_image){
+        try {
+          const r2 = await fetch('/api/bookmark-preview?screenshot=1&url='+encodeURIComponent(card.url));
+          const d2 = await r2.json();
+          if(d2 && d2.ok && d2.screenshot) card.og_image = d2.screenshot;
+        } catch(_){}
+      }
     }
   }
   state.cards.unshift(card);
