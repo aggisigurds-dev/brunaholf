@@ -35,31 +35,14 @@ exports.handler = async (event) => {
   if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
   const wantShot = qp.screenshot === '1' || qp.screenshot === 'true';
 
-  // ── Screenshot-only path: a separate cache key, calls Microlink ─────────
+  // ── Screenshot-only path: thum.io renders + hosts the image; the
+  //    browser hotlinks it directly, no external fetch from our function
+  //    (so no timeout / rate-limit issues — Microlink's free tier was
+  //    blocking screenshots and returning HTML error pages, which broke
+  //    JSON parsing client-side). ────────────────────────────────────────
   if (wantShot) {
-    const shotKey = 'bookmark-preview:' + url + ':shot';
-    if (SUPABASE_URL && SUPABASE_KEY) {
-      const cached = await kvGet(shotKey);
-      if (cached) return json(200, { ok: true, url, screenshot: cached.screenshot, cached: true });
-    }
-    try {
-      const m = await fetch('https://api.microlink.io?screenshot=true&meta=false&embed=screenshot.url&url=' + encodeURIComponent(url), { signal: AbortSignal.timeout(20_000) });
-      // The `embed` flag makes Microlink redirect straight to the image.
-      // We follow it and end up at the hosted PNG URL.
-      const shotUrl = m.url || '';
-      if (!shotUrl || !/^https?:\/\//i.test(shotUrl)) {
-        // Fallback: full JSON call
-        const j = await fetch('https://api.microlink.io?screenshot=true&meta=false&url=' + encodeURIComponent(url), { signal: AbortSignal.timeout(20_000) }).then(r => r.json());
-        const u2 = j && j.data && j.data.screenshot && j.data.screenshot.url;
-        if (!u2) return json(502, { ok: false, error: 'screenshot service returned no image' });
-        if (SUPABASE_URL && SUPABASE_KEY) await kvSet(shotKey, { screenshot: u2 });
-        return json(200, { ok: true, url, screenshot: u2, cached: false });
-      }
-      if (SUPABASE_URL && SUPABASE_KEY) await kvSet(shotKey, { screenshot: shotUrl });
-      return json(200, { ok: true, url, screenshot: shotUrl, cached: false });
-    } catch (e) {
-      return json(502, { ok: false, error: 'screenshot fetch failed: ' + (e && e.message || e) });
-    }
+    const shotUrl = 'https://image.thum.io/get/width/1200/noanimate/' + url;
+    return json(200, { ok: true, url, screenshot: shotUrl, cached: false });
   }
 
   const cacheKey = 'bookmark-preview:' + url;
