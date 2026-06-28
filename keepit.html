@@ -83,6 +83,40 @@
   .layout-kanban .kcol-hd{display:flex;align-items:center;gap:6px;font-weight:700;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;padding:0 4px 6px}
   .layout-kanban .kcol-hd .n{margin-left:auto;background:#fff;padding:2px 7px;border-radius:99px;font-weight:700;color:var(--ink);font-size:11px}
   .layout-kanban .card{padding:10px 12px}
+  /* Table layout — dense rows, all-in-one */
+  .layout-table .grid{display:block;overflow:auto;background:#fff;border:1px solid var(--border);border-radius:11px}
+  .layout-table .card{display:grid;grid-template-columns:32px 1fr 110px 90px 100px 110px;align-items:center;gap:10px;padding:7px 12px;margin-bottom:0;border-radius:0;border:0;border-bottom:1px solid var(--border);box-shadow:none;background:transparent}
+  .layout-table .card:hover{background:#f6f8fa;transform:none}
+  .layout-table .card:last-child{border-bottom:0}
+  .layout-table .card .title{font-size:13px;margin:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .layout-table .card .body{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0}
+  .layout-table .card .imgs,.layout-table .card .ck-list,.layout-table .card .ck-progress,.layout-table .card .bk-link img,.layout-table .card .co-block,.layout-table .card .pin-badge,.layout-table .card .meta{display:none}
+  .layout-table .card .actions{position:static;opacity:1;background:transparent;border:0;box-shadow:none;padding:0}
+  .layout-table .tbl-type{font-size:11px;color:var(--muted);text-align:center}
+  .layout-table .tbl-color{width:18px;height:18px;border-radius:50%;border:1.5px solid rgba(0,0,0,.1);justify-self:center}
+  .layout-table .tbl-date{font-size:11px;color:var(--muted);font-family:ui-monospace,Menlo,monospace}
+  .layout-table .tbl-tags{font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* Timeline layout — date-bucket grouped, list-like */
+  .layout-timeline .grid{display:flex;flex-direction:column;gap:18px}
+  .layout-timeline .tl-bucket{display:flex;flex-direction:column;gap:8px}
+  .layout-timeline .tl-bucket-hd{display:flex;align-items:baseline;gap:8px;padding:0 6px;font-size:13px;font-weight:800;color:var(--ink)}
+  .layout-timeline .tl-bucket-hd .n{font-size:11px;font-weight:600;color:var(--muted)}
+  .layout-timeline .card{display:flex;gap:12px;align-items:flex-start;padding:10px 14px;margin-bottom:0}
+  .layout-timeline .card .imgs{margin:0;width:80px;flex:none}
+  .layout-timeline .card .imgs img{width:80px;height:80px;object-fit:cover}
+  .layout-timeline .card .body{font-size:13px;color:#475569;flex:1;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  /* Card-content toggles */
+  body.hide-images .card .imgs, body.hide-images .card .bk-link img{display:none}
+  body.hide-tags .card .meta{display:none}
+  body.title-only .card .body, body.title-only .card .ck-list, body.title-only .card .ck-progress, body.title-only .card .imgs, body.title-only .card .bk-link img, body.title-only .card .co-block, body.title-only .card .meta{display:none}
+  /* Saved-view chips */
+  #viewChips .vchip{padding:5px 10px;font-size:11.5px;border-radius:99px;border:1px solid var(--border);background:#fff;color:var(--ink);cursor:pointer;font-weight:600}
+  #viewChips .vchip:hover{background:#f3f5f8}
+  #viewChips .vchip.sel{background:#1f2933;color:#fff;border-color:#1f2933}
+  #viewChips .vchip .x{margin-left:5px;color:var(--muted);font-weight:400}
+  #viewChips .vchip:hover .x{color:#dc2626}
+  body.dark #viewChips .vchip{background:#1a2129;color:#e6e8eb;border-color:#2a3340}
+  body.dark #viewChips .vchip.sel{background:#e6e8eb;color:#1f2933;border-color:#e6e8eb}
   /* ───── Card ───── */
   .card{break-inside:avoid;margin-bottom:14px;border:1px solid var(--border);border-radius:11px;background:#fff;padding:var(--pad-card);box-shadow:var(--card-shadow);position:relative;overflow:hidden;transition:transform .12s,box-shadow .12s}
   .layout-grid .card,.layout-list .card,.layout-kanban .card{margin-bottom:0}
@@ -206,15 +240,34 @@
     <input id="search" type="search" placeholder="🔍 Leita…">
   </div>
   <div class="seg-group" id="layoutSeg" title="Útlit">
-    <button data-lay="masonry" title="Masonry">▦</button>
-    <button data-lay="grid"    title="Hnit">▣</button>
-    <button data-lay="list"    title="Listi">☰</button>
+    <button data-lay="masonry"      title="Masonry">▦</button>
+    <button data-lay="grid"         title="Hnit">▣</button>
+    <button data-lay="list"         title="Listi">☰</button>
+    <button data-lay="table"        title="Tafla">📊</button>
+    <button data-lay="timeline"     title="Tímalína">📅</button>
     <button data-lay="kanban-type"  title="Kanban — tegund">📋</button>
     <button data-lay="kanban-color" title="Kanban — litur">🎨</button>
   </div>
+  <select id="sortSel" class="btn" title="Raða" style="padding:7px 9px">
+    <option value="created-desc">↧ Nýjast</option>
+    <option value="created-asc">↥ Elst</option>
+    <option value="updated-desc">↧ Uppfært</option>
+    <option value="title-asc">A–Ö</option>
+    <option value="title-desc">Ö–A</option>
+    <option value="color">🎨 Litur</option>
+    <option value="type">📋 Tegund</option>
+  </select>
   <button class="btn btn-icon" id="darkBtn" title="Dökk útlit">🌙</button>
   <button class="btn btn-icon" id="settingsBtn" title="Stillingar">⚙</button>
   <button class="btn btn-icon" id="moreBtn" title="Fleira">⋯</button>
+</div>
+
+<!-- Saved views chip row (under the topbar) -->
+<div id="viewChipsBar" style="display:flex;gap:6px;align-items:center;padding:8px 14px 0;flex-wrap:wrap;background:var(--bg)">
+  <span style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-right:2px">Útlit:</span>
+  <div id="viewChips" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+  <button class="btn" id="saveViewBtn" style="padding:5px 10px;font-size:11.5px" title="Vista núverandi sýn">+ Vista sýn</button>
+  <span id="viewActive" style="font-size:11px;color:var(--muted);margin-left:6px"></span>
 </div>
 
 <div class="install-banner" id="installBanner">
@@ -313,6 +366,12 @@
     </div>
   </div>
   <div class="grp">
+    <div class="grp-title">Hvað á að sýna á spjöldum</div>
+    <div class="row"><label>Bara titlar</label><input id="sTitleOnly" type="checkbox" style="transform:scale(1.3)"></div>
+    <div class="row"><label>Fela myndir</label><input id="sHideImgs" type="checkbox" style="transform:scale(1.3)"></div>
+    <div class="row"><label>Fela merki</label><input id="sHideTags" type="checkbox" style="transform:scale(1.3)"></div>
+  </div>
+  <div class="grp">
     <div class="grp-title">Sjálfgefið</div>
     <div class="row"><label>Tegund við nýjt</label>
       <select id="sDefType"><option value="note">📝 Glósa</option><option value="checklist">☑️ Listi</option><option value="bookmark">🔖 Bókmerki</option><option value="image">🖼 Mynd</option><option value="company">🏢 Fyrirtæki</option></select>
@@ -373,7 +432,11 @@ const DEFAULT_STATE = {
   cards: [],
   ui: {
     filter:{kind:'all', val:'all'}, q:'', dark:false, colorFilter:'', tagFilter:'', companyFilter:'',
-    settings:{ layout:'masonry', cols:4, density:'', fontSize:'', defType:'note', defColor:'' },
+    settings:{ layout:'masonry', cols:4, density:'', fontSize:'', defType:'note', defColor:'',
+               titleOnly:false, hideImgs:false, hideTags:false },
+    sort:'created-desc',
+    savedViews: [],   // [{id,name,layout,sort,filter,colorFilter,tagFilter,companyFilter,settings}]
+    activeView: '',
     installDismissedUntil: 0,
   }
 };
@@ -412,15 +475,55 @@ function applySettings(){
   if(s.density==='compact') document.body.classList.add('dens-compact');
   if(s.density==='comfy')   document.body.classList.add('dens-comfy');
   document.documentElement.style.setProperty('--cols', String(s.cols||4));
+  // Card-content toggles
+  document.body.classList.toggle('title-only', !!s.titleOnly);
+  document.body.classList.toggle('hide-images', !!s.hideImgs);
+  document.body.classList.toggle('hide-tags', !!s.hideTags);
   // Layout class on the main area
   const main = document.getElementById('mainArea');
-  main.classList.remove('layout-masonry','layout-grid','layout-list','layout-kanban');
-  if(s.layout && s.layout.startsWith('kanban')) main.classList.add('layout-kanban');
-  else if(s.layout==='grid')                    main.classList.add('layout-grid');
-  else if(s.layout==='list')                    main.classList.add('layout-list');
-  else                                          main.classList.add('layout-masonry');
+  main.classList.remove('layout-masonry','layout-grid','layout-list','layout-kanban','layout-table','layout-timeline');
+  const lay = s.layout || 'masonry';
+  if(lay.startsWith('kanban'))    main.classList.add('layout-kanban');
+  else if(lay==='grid')           main.classList.add('layout-grid');
+  else if(lay==='list')           main.classList.add('layout-list');
+  else if(lay==='table')          main.classList.add('layout-table');
+  else if(lay==='timeline')       main.classList.add('layout-timeline');
+  else                            main.classList.add('layout-masonry');
   // Highlight in segmented control
   document.querySelectorAll('#layoutSeg button').forEach(b => b.classList.toggle('sel', b.dataset.lay===(s.layout||'masonry')));
+  // Sort selector
+  const $ss = document.getElementById('sortSel'); if($ss) $ss.value = state.ui.sort || 'created-desc';
+}
+
+// Sort cards. Sort keys: created-desc/asc · updated-desc · title-asc/desc · color · type.
+function sortCards(arr){
+  const k = state.ui.sort || 'created-desc';
+  const cmp = (a,b) => {
+    if(k==='created-asc')  return (a.created_at||'').localeCompare(b.created_at||'');
+    if(k==='created-desc') return (b.created_at||'').localeCompare(a.created_at||'');
+    if(k==='updated-desc') return (b.updated_at||'').localeCompare(a.updated_at||'');
+    if(k==='title-asc')    return (a.title||'').localeCompare(b.title||'','is');
+    if(k==='title-desc')   return (b.title||'').localeCompare(a.title||'','is');
+    if(k==='color')        return (a.color||'').localeCompare(b.color||'');
+    if(k==='type')         return (a.type||'').localeCompare(b.type||'');
+    return 0;
+  };
+  return arr.slice().sort(cmp);
+}
+
+// Timeline buckets — group by relative date.
+function timelineBucket(d){
+  if(!d) return 'Annað';
+  const day = String(d).slice(0,10);
+  const today = new Date().toISOString().slice(0,10);
+  const y = new Date(today); y.setDate(y.getDate()-1); const yest = y.toISOString().slice(0,10);
+  const w = new Date(today); w.setDate(w.getDate()-7); const wago = w.toISOString().slice(0,10);
+  const m = new Date(today); m.setDate(m.getDate()-30); const mago = m.toISOString().slice(0,10);
+  if(day===today) return '📌 Í dag';
+  if(day===yest)  return '🕓 Í gær';
+  if(day> wago)   return '📅 Þessi vika';
+  if(day> mago)   return '🗓 Mánuðurinn';
+  return '📦 Eldra';
 }
 
 // ───── Composer ─────
@@ -630,8 +733,11 @@ function render(){
   $col.innerHTML = coIds.map(id => `<div class="row ${state.ui.companyFilter===id?'sel':''}" data-co="${esc(id)}"><span>🏢</span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(coMap[id].name)}</span><span class="ct">${coMap[id].n}</span></div>`).join('');
   $col.querySelectorAll('.row').forEach(r => r.onclick = () => { state.ui.companyFilter = (state.ui.companyFilter===r.dataset.co ? '' : r.dataset.co); save(); render(); });
 
-  // Cards
-  const visible = state.cards.filter(passFilter);
+  // View chips
+  renderViewChips();
+
+  // Cards — filter, then sort
+  const visible = sortCards(state.cards.filter(passFilter));
   const pinned = visible.filter(c=>c.pinned && state.ui.filter.kind!=='archived');
   const others = visible.filter(c=>!(c.pinned && state.ui.filter.kind!=='archived'));
   document.getElementById('pinnedTitle').style.display = pinned.length ? '' : 'none';
@@ -645,6 +751,36 @@ function render(){
     $host.innerHTML = '<div class="grid">' + groups.map(([key,label,arr]) =>
       `<div class="kcol"><div class="kcol-hd">${label} <span class="n">${arr.length}</span></div>${arr.map(cardHtml).join('')}</div>`
     ).join('') + '</div>';
+  } else if(lay==='table'){
+    const rows = others.map(c => `<div class="card" data-id="${esc(c.id)}">
+      <div class="tbl-color" style="background:${colorHex(c.color)}"></div>
+      <div>
+        <div class="title">${esc(c.title||'(án titils)')}</div>
+        ${c.body || c.url ? `<div class="body">${esc(c.url || c.body)}</div>` : ''}
+      </div>
+      <div class="tbl-type">${esc(TYPES[c.type]||c.type)}</div>
+      <div class="tbl-date" title="${esc(c.created_at||'')}">${esc((c.created_at||'').slice(0,10))}</div>
+      <div class="tbl-tags">${(c.tags||[]).map(t=>'#'+esc(t)).join(' ')}</div>
+      <div class="actions">
+        <button class="mini" data-act="edit" data-id="${esc(c.id)}" title="Breyta">✏️</button>
+        <button class="mini" data-act="pin"  data-id="${esc(c.id)}" title="Pinna">${c.pinned?'📍':'📌'}</button>
+        <button class="mini" data-act="del"  data-id="${esc(c.id)}" title="Eyða">🗑</button>
+      </div>
+    </div>`).join('');
+    $host.innerHTML = `<div class="grid">${rows || `<div class="empty" style="border-radius:11px">Engin spjöld.</div>`}</div>`;
+  } else if(lay==='timeline'){
+    // Bucket by relative date.
+    const buckets = new Map();
+    others.forEach(c => {
+      const b = timelineBucket(c.created_at);
+      if(!buckets.has(b)) buckets.set(b, []);
+      buckets.get(b).push(c);
+    });
+    const ORDER = ['📌 Í dag','🕓 Í gær','📅 Þessi vika','🗓 Mánuðurinn','📦 Eldra','Annað'];
+    const ordered = [...buckets.entries()].sort((a,b) => ORDER.indexOf(a[0]) - ORDER.indexOf(b[0]));
+    $host.innerHTML = '<div class="grid">' + (ordered.length ? ordered.map(([label, arr]) =>
+      `<div class="tl-bucket"><div class="tl-bucket-hd">${label} <span class="n">${arr.length}</span></div>${arr.map(cardHtml).join('')}</div>`
+    ).join('') : `<div class="empty">Engin spjöld.</div>`) + '</div>';
   } else {
     $host.innerHTML = `<div class="grid">${others.length ? others.map(cardHtml).join('') : `<div class="empty">Engin spjöld${state.ui.q?' fyrir „'+esc(state.ui.q)+'"':''}. Skrifaðu eitthvað hér að ofan.</div>`}</div>`;
   }
@@ -895,6 +1031,73 @@ function fileToDownscaled(file, maxSide, quality){
   });
 }
 
+// ───── Saved views ─────
+// A "view" snapshots the current layout + sort + all filters so the user
+// can switch entire perspectives with one click. Active view tracks
+// which (if any) chip is currently selected.
+function renderViewChips(){
+  const $cw = document.getElementById('viewChips');
+  const views = state.ui.savedViews || [];
+  $cw.innerHTML = views.map(v => `<button class="vchip ${state.ui.activeView===v.id?'sel':''}" data-vid="${esc(v.id)}" title="${esc(v.name)}">${esc(v.name)}<span class="x" data-del="${esc(v.id)}" title="Eyða">×</span></button>`).join('');
+  $cw.querySelectorAll('.vchip').forEach(ch => ch.onclick = e => {
+    if(e.target.classList.contains('x')){
+      const id = e.target.dataset.del;
+      if(confirm('Eyða „' + (views.find(v=>v.id===id)||{}).name + '"?')){
+        state.ui.savedViews = views.filter(v=>v.id!==id);
+        if(state.ui.activeView===id) state.ui.activeView = '';
+        save(); render();
+      }
+      e.stopPropagation();
+      return;
+    }
+    applyView(ch.dataset.vid);
+  });
+  const v = views.find(x=>x.id===state.ui.activeView);
+  document.getElementById('viewActive').textContent = v ? '— virkt: ' + v.name : '';
+}
+function saveCurrentView(){
+  const name = prompt('Nafn á sýn (t.d. „Vinnan", „Bókmerki", „Í dag"):');
+  if(!name) return;
+  const id = 'v_' + Math.random().toString(36).slice(2,8);
+  const snap = {
+    id, name: name.trim(),
+    layout: state.ui.settings.layout,
+    cols:   state.ui.settings.cols,
+    sort:   state.ui.sort,
+    filter: clone(state.ui.filter),
+    colorFilter: state.ui.colorFilter,
+    tagFilter:   state.ui.tagFilter,
+    companyFilter: state.ui.companyFilter,
+    q: state.ui.q,
+    titleOnly: state.ui.settings.titleOnly,
+    hideImgs:  state.ui.settings.hideImgs,
+    hideTags:  state.ui.settings.hideTags,
+  };
+  state.ui.savedViews = state.ui.savedViews || [];
+  state.ui.savedViews.push(snap);
+  state.ui.activeView = id;
+  save(); render();
+}
+function applyView(id){
+  const v = (state.ui.savedViews||[]).find(x=>x.id===id); if(!v) return;
+  state.ui.settings.layout = v.layout || 'masonry';
+  state.ui.settings.cols   = v.cols || 4;
+  state.ui.sort            = v.sort || 'created-desc';
+  state.ui.filter          = clone(v.filter || {kind:'all',val:'all'});
+  state.ui.colorFilter     = v.colorFilter || '';
+  state.ui.tagFilter       = v.tagFilter || '';
+  state.ui.companyFilter   = v.companyFilter || '';
+  state.ui.q               = v.q || '';
+  state.ui.settings.titleOnly = !!v.titleOnly;
+  state.ui.settings.hideImgs  = !!v.hideImgs;
+  state.ui.settings.hideTags  = !!v.hideTags;
+  state.ui.activeView      = id;
+  document.getElementById('search').value = state.ui.q;
+  save(); render();
+}
+document.getElementById('saveViewBtn').onclick = saveCurrentView;
+document.getElementById('sortSel').onchange = e => { state.ui.sort = e.target.value; state.ui.activeView = ''; save(); render(); };
+
 // ───── Sidebar / topbar interactions ─────
 document.querySelectorAll('.side .row[data-filter]').forEach(r => r.onclick = () => {
   state.ui.filter = { kind: r.dataset.filter, val: r.dataset.val };
@@ -916,6 +1119,9 @@ function openDrawer(){
   document.getElementById('sFs').value     = s.fontSize || '';
   document.getElementById('sDark').checked = !!state.ui.dark;
   document.getElementById('sDefType').value= s.defType || 'note';
+  document.getElementById('sTitleOnly').checked = !!s.titleOnly;
+  document.getElementById('sHideImgs').checked  = !!s.hideImgs;
+  document.getElementById('sHideTags').checked  = !!s.hideTags;
   const $sc = document.getElementById('sDefColor');
   $sc.innerHTML = COLORS.map(c => `<div class="swatch ${s.defColor===c.id?'sel':''}" data-c="${c.id}" style="background:${c.hex}" title="${c.name}"></div>`).join('');
   $sc.querySelectorAll('.swatch').forEach(sw => sw.onclick = () => { state.ui.settings.defColor = sw.dataset.c; save(); openDrawer(); });
@@ -937,6 +1143,17 @@ $drwBg.onclick = closeDrawer;
   };
 });
 document.getElementById('sDark').onchange = e => { state.ui.dark = e.target.checked; save(); render(); };
+['sTitleOnly','sHideImgs','sHideTags'].forEach(id => {
+  document.getElementById(id).onchange = e => {
+    const key = id==='sTitleOnly'?'titleOnly' : id==='sHideImgs'?'hideImgs' : 'hideTags';
+    state.ui.settings[key] = e.target.checked; save(); render();
+  };
+});
+// Layout segment also clears any active saved view (it diverged).
+document.querySelectorAll('#layoutSeg button').forEach(b => {
+  const prev = b.onclick;
+  b.onclick = () => { state.ui.activeView = ''; prev && prev(); };
+});
 
 // ───── ⋯ menu ─────
 document.getElementById('moreBtn').onclick = () => {
