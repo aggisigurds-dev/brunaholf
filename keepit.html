@@ -109,6 +109,19 @@
   body.hide-images .card .imgs, body.hide-images .card .bk-link img{display:none}
   body.hide-tags .card .meta{display:none}
   body.title-only .card .body, body.title-only .card .ck-list, body.title-only .card .ck-progress, body.title-only .card .imgs, body.title-only .card .bk-link img, body.title-only .card .co-block, body.title-only .card .meta{display:none}
+  /* Quick-filter chip bar (always visible) — surfaces tags + colors +
+     type filters on mobile + desktop without diving into the sidebar. */
+  .qf-bar{margin:0 6px 10px;padding:8px 10px;background:#fff;border:1px solid var(--border);border-radius:10px;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+  .qf-bar .qf-lbl{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-right:2px}
+  .qf-bar .qf-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;font-size:12px;font-weight:600;border-radius:99px;background:#f1f4f7;color:#374151;border:1px solid #d8dee7;cursor:pointer;white-space:nowrap}
+  .qf-bar .qf-chip:hover{background:#e2e8f0}
+  .qf-bar .qf-chip.sel{background:#1f2933;color:#fff;border-color:#1f2933}
+  .qf-bar .qf-color{display:inline-block;width:18px;height:18px;border-radius:50%;border:1.5px solid rgba(0,0,0,.1);cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
+  .qf-bar .qf-color.sel{outline:2px solid #1f2933;outline-offset:1px}
+  .qf-bar .qf-sep{width:1px;height:18px;background:var(--border);margin:0 2px}
+  body.dark .qf-bar{background:#161c23;border-color:#1f2733}
+  body.dark .qf-bar .qf-chip{background:#1a2129;color:#cbd5e0;border-color:#2a3340}
+  body.dark .qf-bar .qf-chip.sel{background:#e6e8eb;color:#1f2933;border-color:#e6e8eb}
   /* Active filters bar */
   .af-bar{margin:0 6px 10px;padding:8px 10px;background:#fff;border:1px solid var(--border);border-radius:10px;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
   .af-bar .af-lbl{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-right:2px}
@@ -167,8 +180,9 @@
   .composer input.cmp{flex:1;border:0;font:600 14.5px/1.4 inherit;background:transparent;outline:none;color:var(--ink);padding:6px 0}
   .composer textarea{display:none;width:100%;border:0;background:transparent;font:inherit;resize:vertical;min-height:48px;outline:none;padding:6px 0}
   .composer.expanded textarea{display:block}
-  .composer .opts{display:none;align-items:center;gap:8px;justify-content:space-between;margin-top:8px;padding-top:6px;border-top:1px solid #f1f4f7;flex-wrap:wrap}
-  .composer.expanded .opts{display:flex}
+  /* Opts row (merki + image + type + save) is ALWAYS visible so users
+     don't have to discover the expand action just to add a tag. */
+  .composer .opts{display:flex;align-items:center;gap:8px;justify-content:space-between;margin-top:8px;padding-top:6px;border-top:1px solid #f1f4f7;flex-wrap:wrap}
   .composer .opts-left{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
   .composer .tag-in{flex:1;border:0;background:transparent;font:inherit;font-size:12.5px;color:var(--muted);outline:none;padding:4px 6px;min-width:120px}
   .composer .img-preview{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
@@ -275,7 +289,8 @@
 
 <!-- Saved views chip row (under the topbar) -->
 <div id="viewChipsBar" style="display:flex;gap:6px;align-items:center;padding:8px 14px 0;flex-wrap:wrap;background:var(--bg)">
-  <span style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-right:2px">Útlit:</span>
+  <span id="layoutLabel" style="font-size:12px;font-weight:700;color:var(--ink);background:#fff;border:1px solid var(--border);padding:4px 9px;border-radius:99px;margin-right:4px">▦ Masonry</span>
+  <span style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-right:2px">Sýnir:</span>
   <div id="viewChips" style="display:flex;gap:5px;flex-wrap:wrap"></div>
   <button class="btn" id="saveViewBtn" style="padding:5px 10px;font-size:11.5px" title="Vista núverandi sýn">+ Vista sýn</button>
   <span id="viewActive" style="font-size:11px;color:var(--muted);margin-left:6px"></span>
@@ -308,6 +323,10 @@
   </aside>
 
   <main class="main" id="mainArea">
+    <!-- Quick-filter bar: status + colors + known tags, always visible
+         so adding/clearing filters is one tap (mobile-friendly). -->
+    <div id="quickFilters" class="qf-bar"></div>
+
     <!-- Active filters bar (auto-shown when any filter is on) -->
     <div id="activeFilters" class="af-bar" style="display:none"></div>
 
@@ -511,6 +530,11 @@ function applySettings(){
   else                            main.classList.add('layout-masonry');
   // Highlight in segmented control
   document.querySelectorAll('#layoutSeg button').forEach(b => b.classList.toggle('sel', b.dataset.lay===(s.layout||'masonry')));
+  // Make the layout switcher more obvious — show the active layout name
+  // next to it so the user sees their click landed.
+  const LAY_NAMES = {masonry:'▦ Masonry',grid:'▣ Hnit',list:'☰ Listi',table:'📊 Tafla',timeline:'📅 Tímalína','kanban-type':'📋 Kanban (tegund)','kanban-color':'🎨 Kanban (litur)'};
+  const $lay = document.getElementById('layoutLabel');
+  if($lay) $lay.textContent = LAY_NAMES[s.layout||'masonry'] || '';
   // Sort selector
   const $ss = document.getElementById('sortSel'); if($ss) $ss.value = state.ui.sort || 'created-desc';
 }
@@ -767,20 +791,27 @@ function render(){
   $col.innerHTML = coIds.map(id => `<div class="row ${state.ui.companyFilter===id?'sel':''}" data-co="${esc(id)}"><span>🏢</span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(coMap[id].name)}</span><span class="ct">${coMap[id].n}</span></div>`).join('');
   $col.querySelectorAll('.row').forEach(r => r.onclick = () => { state.ui.companyFilter = (state.ui.companyFilter===r.dataset.co ? '' : r.dataset.co); save(); render(); });
 
-  // View chips + active filters
+  // View chips + active filters + quick filter chips
   renderViewChips();
   renderActiveFilters();
+  renderQuickFilters();
 
   // Cards — filter, then sort
   const visible = sortCards(state.cards.filter(passFilter));
-  const pinned = visible.filter(c=>c.pinned && state.ui.filter.kind!=='archived');
-  const others = visible.filter(c=>!(c.pinned && state.ui.filter.kind!=='archived'));
+  // Table / Tímalína / Kanban have their own structure that pinned cards
+  // would break if rendered as standalone cards on top — so in those
+  // layouts we MERGE pinned into the main list (pin badge still shows
+  // they're pinned) and skip the separate pinned section.
+  const lay = state.ui.settings.layout || 'masonry';
+  const mergedLayouts = lay==='table' || lay==='timeline' || lay.startsWith('kanban');
+  const pinned = mergedLayouts ? [] : visible.filter(c=>c.pinned && state.ui.filter.kind!=='archived');
+  const others = mergedLayouts ? visible.slice().sort((a,b) => (b.pinned?1:0) - (a.pinned?1:0))
+                               : visible.filter(c=>!(c.pinned && state.ui.filter.kind!=='archived'));
   document.getElementById('pinnedTitle').style.display = pinned.length ? '' : 'none';
   document.getElementById('othersTitle').style.display = (pinned.length && others.length) ? '' : 'none';
   document.getElementById('pinnedGrid').innerHTML = pinned.map(cardHtml).join('');
 
   const $host = document.getElementById('gridHost');
-  const lay = state.ui.settings.layout || 'masonry';
   if(lay==='kanban-type' || lay==='kanban-color'){
     const groups = groupCards(others, lay==='kanban-type' ? 'type' : 'color');
     $host.innerHTML = '<div class="grid">' + groups.map(([key,label,arr]) =>
@@ -1069,6 +1100,70 @@ function fileToDownscaled(file, maxSide, quality){
       img.src = fr.result;
     };
     fr.readAsDataURL(file);
+  });
+}
+
+// ───── Quick filter chip bar (always visible) ─────
+// Lists 3 status chips + every color in use + every tag in use as
+// togglable chips. One-tap filter add/remove — no need to find the
+// sidebar (which is collapsed on mobile by default).
+function renderQuickFilters(){
+  const $b = document.getElementById('quickFilters');
+  const cards = state.cards.filter(c => !c.archived);
+  // Status chips (always show)
+  const statusChips = [
+    {k:'flt-pin',   lbl:'📌 Pinnað',   on: state.ui.filter.kind==='pinned'},
+    {k:'flt-bk',    lbl:'🔖 Bókmerki', on: state.ui.filter.kind==='type' && state.ui.filter.val==='bookmark'},
+    {k:'flt-note',  lbl:'📝 Glósur',   on: state.ui.filter.kind==='type' && state.ui.filter.val==='note'},
+    {k:'flt-list',  lbl:'☑️ Listar',   on: state.ui.filter.kind==='type' && state.ui.filter.val==='checklist'},
+    {k:'flt-co',    lbl:'🏢 Fyrirtæki', on: state.ui.filter.kind==='type' && state.ui.filter.val==='company'},
+  ];
+  // Colors actually in use
+  const colorsUsed = [...new Set(cards.map(c => c.color || ''))].filter(c => c !== '');
+  // Tags actually in use
+  const tagCounts = {};
+  cards.forEach(c => (c.tags||[]).forEach(t => tagCounts[t] = (tagCounts[t]||0) + 1));
+  const tags = Object.keys(tagCounts).sort();
+  const tf = state.ui.tagFilters || [];
+
+  let html = '<span class="qf-lbl">Sía:</span>';
+  html += statusChips.map(c => `<span class="qf-chip ${c.on?'sel':''}" data-flt="${c.k}">${esc(c.lbl)}</span>`).join('');
+  if(colorsUsed.length){
+    html += '<span class="qf-sep"></span>';
+    html += colorsUsed.map(c => `<span class="qf-color ${state.ui.colorFilter===c?'sel':''}" data-col="${esc(c)}" style="background:${colorHex(c)}" title="${esc(colorName(c))}"></span>`).join('');
+  }
+  if(tags.length){
+    html += '<span class="qf-sep"></span>';
+    html += tags.map(t => `<span class="qf-chip ${tf.includes(t)?'sel':''}" data-tag="${esc(t)}">#${esc(t)} <small style="opacity:.7;font-weight:400">${tagCounts[t]}</small></span>`).join('');
+  }
+  $b.innerHTML = html;
+
+  $b.querySelectorAll('.qf-chip[data-flt]').forEach(ch => ch.onclick = () => {
+    const k = ch.dataset.flt;
+    // Toggle off if already selected, else set.
+    if(k==='flt-pin'){
+      state.ui.filter = state.ui.filter.kind==='pinned' ? {kind:'all',val:'all'} : {kind:'pinned',val:'1'};
+    } else {
+      const type = {'flt-bk':'bookmark','flt-note':'note','flt-list':'checklist','flt-co':'company'}[k];
+      const same = state.ui.filter.kind==='type' && state.ui.filter.val===type;
+      state.ui.filter = same ? {kind:'all',val:'all'} : {kind:'type',val:type};
+    }
+    state.ui.activeView = '';
+    save(); render();
+  });
+  $b.querySelectorAll('.qf-color').forEach(s => s.onclick = () => {
+    state.ui.colorFilter = state.ui.colorFilter===s.dataset.col ? '' : s.dataset.col;
+    state.ui.activeView = '';
+    save(); render();
+  });
+  $b.querySelectorAll('.qf-chip[data-tag]').forEach(c => c.onclick = () => {
+    const t = c.dataset.tag;
+    const arr = state.ui.tagFilters = state.ui.tagFilters || [];
+    const i = arr.indexOf(t);
+    if(i >= 0) arr.splice(i,1); else arr.push(t);
+    state.ui.tagFilter = arr[0] || '';
+    state.ui.activeView = '';
+    save(); render();
   });
 }
 
