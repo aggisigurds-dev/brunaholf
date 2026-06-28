@@ -35,14 +35,13 @@ exports.handler = async (event) => {
   if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
   const wantShot = qp.screenshot === '1' || qp.screenshot === 'true';
 
-  // ── Screenshot-only path: thum.io renders + hosts the image; the
-  //    browser hotlinks it directly, no external fetch from our function
-  //    (so no timeout / rate-limit issues — Microlink's free tier was
-  //    blocking screenshots and returning HTML error pages, which broke
-  //    JSON parsing client-side). ────────────────────────────────────────
+  // ── Screenshot-only path: just return the thum.io URL (no /noanimate/,
+  //    that may be paid-only). Browser hotlinks it as <img src>. Empirically
+  //    thum.io free tier renders most public pages in ~3-10s. If thum.io
+  //    fails, the UI falls back to Microlink (which the browser fetches
+  //    directly via the embed redirect, no API key needed). ─────────────
   if (wantShot) {
-    const shotUrl = 'https://image.thum.io/get/width/1200/noanimate/' + url;
-    return json(200, { ok: true, url, screenshot: shotUrl, cached: false });
+    return json(200, { ok: true, url, screenshot: 'https://image.thum.io/get/width/1200/' + url, cached: false });
   }
 
   const cacheKey = 'bookmark-preview:' + url;
