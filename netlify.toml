@@ -85,6 +85,17 @@
   to = "/.netlify/functions/email-tasks"
   status = 200
 
+# Keepit (the standalone /keepit.html personal organizer)
+[[redirects]]
+  from = "/api/bookmark-preview"
+  to = "/.netlify/functions/bookmark-preview"
+  status = 200
+
+[[redirects]]
+  from = "/api/keepit-companies"
+  to = "/.netlify/functions/keepit-companies"
+  status = 200
+
 # Friendly URL for cross-device state sync (tab list / buttons / UI):
 #   /api/app-state → /.netlify/functions/app-state
 [[redirects]]
