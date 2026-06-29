@@ -229,8 +229,9 @@ function parseInvoice(text, name) {
     if (m) out.rNumber = 'R-' + m[1];
   }
   if (!out.rNumber) {
-    // Raðnr field in Slökkvitæki invoices (line above "Skilmáli1")
-    m = t.match(/Skilmáli\d+\s+(\d{5,7})\s+Slökkvitæki/i);
+    // Slökkvitæki invoice template: the R-number (6 digit) appears right
+    // before "Slökkvitæki ehf" in the body — distinct from the 4-digit Raðnr.
+    m = t.match(/(?:Skilmáli\d+\s+)?(\d{6})\s+Slökkvitæki\s+ehf/i);
     if (m) out.rNumber = 'R-' + m[1];
   }
 
