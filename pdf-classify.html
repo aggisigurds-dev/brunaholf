@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<title>PDF Flokkari · Brunahólf</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --bg:#f6f7fb; --panel:#fff; --line:#e2e8f0; --fg:#0f172a; --muted:#64748b;
+          --brand:#dc2626; --ok:#16a34a; --amber:#d97706; --blue:#2563eb; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.45 -apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--fg); }
+  header { background:#0f172a; color:#fff; padding:14px 20px; }
+  header h1 { margin:0; font-size:17px; }
+  header .sub { font-size:12px; opacity:.7; margin-top:3px; }
+  main { padding:20px; max-width:880px; margin:0 auto; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:16px; box-shadow:0 1px 2px rgba(15,23,42,.04); }
+  .card h2 { margin:0 0 8px; font-size:14px; font-weight:700; }
+  label { display:block; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin:8px 0 4px; font-weight:700; }
+  input { width:100%; padding:7px 9px; border:1px solid var(--line); border-radius:6px; font:inherit; font-size:13px; }
+  input:focus { outline:none; border-color:var(--blue); }
+  .row { display:flex; gap:10px; flex-wrap:wrap; }
+  .row > div { flex:1; min-width:220px; }
+  button { padding:9px 14px; border:0; border-radius:6px; font:600 13px inherit; cursor:pointer; }
+  .primary { background:var(--brand); color:#fff; }
+  .secondary { background:#f1f5f9; color:var(--fg); }
+  .actions { display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; align-items:center; }
+  .hint { font-size:11.5px; color:var(--muted); margin-top:4px; }
+  pre { background:#0f172a; color:#cbd5e1; padding:10px 12px; border-radius:6px; font:12px/1.4 ui-monospace,Menlo,monospace; overflow:auto; max-height:380px; }
+  .pill { display:inline-block; padding:2px 7px; border-radius:99px; font-size:11px; font-weight:700; }
+  .pill.queued { background:#e2e8f0; color:var(--muted); }
+  .pill.running { background:#dbeafe; color:#1d4ed8; }
+  .pill.done { background:#dcfce7; color:var(--ok); }
+  .pill.error { background:#fee2e2; color:var(--brand); }
+  table { width:100%; border-collapse:collapse; font-size:12.5px; margin-top:6px; }
+  th, td { padding:5px 7px; text-align:left; border-bottom:1px solid #f1f5f9; }
+  th { font-weight:700; color:var(--muted); font-size:11px; text-transform:uppercase; }
+  .stat { display:flex; gap:14px; font-size:13px; margin-top:6px; }
+  .stat span { color:var(--muted); }
+  .stat b { color:var(--fg); }
+  .err { color:var(--brand); font-size:11.5px; }
+  .sample { font-size:11.5px; color:#475569; margin-top:6px; }
+  .sample b { color:var(--fg); }
+  details { margin-top:6px; }
+  details summary { cursor:pointer; font-size:12px; color:var(--blue); }
+  textarea { font:11px/1.4 ui-monospace,Menlo,monospace; width:100%; padding:6px 8px; border:1px solid var(--line); border-radius:6px; resize:vertical; min-height:50px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>📄 PDF Flokkari</h1>
+  <div class="sub">Eitt folder-í-einu. Skiptir í úttektarskýrslur / reikningar / annað / dup-möppur og endurnefnir.</div>
+</header>
+<main>
+
+<div class="card">
+  <h2>1. Stilla möppurnar</h2>
+  <label>SOURCE folder (PDFs til að flokka)</label>
+  <input id="src" placeholder="1HDW3TL8kOdlWNOdrZDL3cPQ7dMXQrSCD" />
+  <div class="hint">Folder-id = síðasti hluti slóðarinnar: drive.google.com/drive/folders/<b>ÞETTA</b></div>
+
+  <div class="row" style="margin-top:10px">
+    <div>
+      <label>📄 Úttektarskýrslur (target)</label>
+      <input id="t-uttekt" placeholder="folder-id" />
+    </div>
+    <div>
+      <label>🧾 Reikningar (target)</label>
+      <input id="t-reikningar" placeholder="folder-id" />
+    </div>
+  </div>
+  <div class="row" style="margin-top:10px">
+    <div>
+      <label>📦 Annað (allt sem passar ekki)</label>
+      <input id="t-annad" placeholder="folder-id" />
+    </div>
+    <div>
+      <label>♻️ Dups (valkv. — 2. eintök fara hér)</label>
+      <input id="t-dups" placeholder="folder-id (annars fer í Annað)" />
+    </div>
+  </div>
+  <div class="row" style="margin-top:10px">
+    <div>
+      <label>Síðan (valkv.)</label>
+      <input id="since" placeholder="2023-01-01" />
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="secondary" onclick="runSample()">🔍 Prufa á 3 random PDF (engin flutningur)</button>
+    <button class="primary" onclick="kickOff(false)">▶️ Keyra (flytja og endurnefna)</button>
+    <button class="secondary" onclick="kickOff(true)">🔍 Þurrkeyra (engin flutningur)</button>
+    <span id="hint" class="hint"></span>
+  </div>
+</div>
+
+<div class="card" id="status-card" style="display:none">
+  <h2>2. Staða <span id="state-pill" class="pill queued">queued</span></h2>
+  <div class="stat">
+    <span>Processed: <b id="s-p">0</b></span>
+    <span>Úttekt: <b id="s-u">0</b></span>
+    <span>Reikningar: <b id="s-r">0</b></span>
+    <span>Annað: <b id="s-a">0</b></span>
+    <span>Dups skipped: <b id="s-d">0</b></span>
+  </div>
+  <div id="errors"></div>
+  <details>
+    <summary>Job ID + status URL</summary>
+    <pre id="raw"></pre>
+  </details>
+</div>
+
+<div class="card" id="sample-card" style="display:none">
+  <h2>Sample-niðurstaða</h2>
+  <div id="sample-body"></div>
+</div>
+
+</main>
+
+<script>
+let pollTimer = null;
+function el(id) { return document.getElementById(id); }
+function val(id) { return el(id).value.trim(); }
+function status(msg) { el('hint').textContent = msg || ''; }
+
+async function runSample() {
+  const src = val('src');
+  if (!src) { status('Vantar source folder-id'); return; }
+  status('Hleð…');
+  el('sample-card').style.display = 'block';
+  el('sample-body').innerHTML = '<div class="hint">Sæki 3 PDFs…</div>';
+  const r = await fetch('/api/pdf-classify?sample=3&source=' + encodeURIComponent(src));
+  const data = await r.json();
+  if (!data.ok) { el('sample-body').innerHTML = '<div class="err">Villa: ' + (data.error || '') + '</div>'; return; }
+  const rows = data.samples.map(s => {
+    const t = s.tentative || {};
+    return '<div class="sample" style="border-top:1px solid var(--line);padding-top:6px;margin-top:6px">' +
+      '<b>' + esc(s.name) + '</b> (' + (Number(s.size||0)/1024|0) + ' KB)<br>' +
+      'Flokkur: <span class="pill ' + (t.label==='annad'?'queued':(t.label==='reikningar'?'running':'done')) + '">' + esc(t.label||'?') + '</span> ' +
+      'is_report=' + !!t.is_report + ' · is_invoice=' + !!t.is_invoice + ' · issuer_kt_present=' + !!t.issuer_kt_present +
+      '<details><summary>Texti (fyrstu 2000)</summary><pre style="max-height:200px">' + esc(s.text_first_2000 || s.parse_error || s.error || '') + '</pre></details>' +
+      '</div>';
+  }).join('');
+  el('sample-body').innerHTML = rows;
+  status('');
+}
+
+async function kickOff(dry) {
+  const src = val('src');
+  if (!src) { status('Vantar source folder-id'); return; }
+  const u = val('t-uttekt'), r = val('t-reikningar'), a = val('t-annad'), d = val('t-dups');
+  if (!dry && (!u || !r || !a)) { status('Vantar uttekt + reikningar + annad target folder-ids'); return; }
+
+  const params = new URLSearchParams({ source: src });
+  if (u) params.set('uttekt', u);
+  if (r) params.set('reikningar', r);
+  if (a) params.set('annad', a);
+  if (d) params.set('dups', d);
+  if (val('since')) params.set('since', val('since'));
+  if (dry) params.set('dry', '1');
+
+  status('Kicking off…');
+  const res = await fetch('/api/pdf-classify?' + params);
+  const data = await res.json();
+  if (!data.jobId) { status('Villa: ' + (data.error || JSON.stringify(data))); return; }
+  status('Job: ' + data.jobId);
+  el('status-card').style.display = 'block';
+  el('raw').textContent = JSON.stringify(data, null, 2);
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(() => pollStatus(data.jobId), 3000);
+  pollStatus(data.jobId);
+}
+
+async function pollStatus(jobId) {
+  const r = await fetch('/api/pdf-classify?status=' + encodeURIComponent(jobId));
+  const j = await r.json();
+  el('s-p').textContent = j.processed || 0;
+  el('s-u').textContent = (j.classified && j.classified.uttekt) || 0;
+  el('s-r').textContent = (j.classified && j.classified.reikningar) || 0;
+  el('s-a').textContent = (j.classified && j.classified.annad) || 0;
+  el('s-d').textContent = j.dups_skipped || 0;
+  const pill = el('state-pill');
+  pill.className = 'pill ' + (j.state || 'queued');
+  pill.textContent = j.state || 'queued';
+  if (j.errors && j.errors.length) {
+    el('errors').innerHTML = '<details><summary class="err">' + j.errors.length + ' villur</summary><pre>' + esc(j.errors.join('\n')) + '</pre></details>';
+  } else {
+    el('errors').innerHTML = '';
+  }
+  el('raw').textContent = JSON.stringify(j, null, 2);
+  if (j.state === 'done' || j.state === 'error') {
+    clearInterval(pollTimer);
+    pollTimer = null;
+  }
+}
+
+function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+</script>
+</body>
+</html>
