@@ -112,6 +112,13 @@
   to = "/.netlify/functions/payday-pull"
   status = 200
 
+# Browser-bridge: Chrome extension POSTs scraped email metadata here
+#   POST /api/email-ingest-browser  (X-Brunaholf-Token header)
+[[redirects]]
+  from = "/api/email-ingest-browser"
+  to = "/.netlify/functions/email-ingest-browser"
+  status = 200
+
 # Prebuilt next-invoice drafts (forecast)
 [[redirects]]
   from = "/api/invoice-drafts"

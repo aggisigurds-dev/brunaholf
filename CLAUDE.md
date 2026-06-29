@@ -295,11 +295,18 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   Inbox + Spurningar tabs and worksite email-mention matching.
 - `email_actions`: per-email triage state (status/priority/notes) for
   Spurningar.
-- **Two ingest paths into `email_digest` (interchangeable — same `message_id`
+- **Three ingest paths into `email_digest` (interchangeable — same `message_id`
   dedupe):** (1) the desktop **luna-bridge/bridge.js** (Thunderbird mbox →
   upsert, runs every 15 min on the Windows tölva); (2) **cloud** —
   `gmail-ingest.js` (`/api/gmail-ingest`) pulls Gmail directly via the Gmail API
-  (no desktop needed). The cloud direction is: **Gmail API now** (Google
+  (no desktop needed); (3) **browser-bridge** — the `Brunahólf · Mail Pulse`
+  Chrome extension (in `extension/`) scrapes opna Gmail/Outlook flipa and POSTs
+  to **`/api/email-ingest-browser`** (auth via `X-Brunaholf-Token` header
+  matching `EXTENSION_INGEST_TOKEN` env). Stable `message_id` =
+  `browser:<sha256(account|sender|subject|received_at)>[:32]` so re-scans
+  upsert the same row; `source_path='browser-extension'`. The three paths
+  coexist without collision (RFC822 ids vs Gmail-API ids vs `browser:` prefix).
+  The cloud direction is: **Gmail API now** (Google
   mailboxes, eldklar@eldklar.is first), **Microsoft Graph later** for the
   Office-365 @brunaholf.is mailboxes. Goal is to stop depending on the
   bridge-tölva being on (which the 🌅 Dagurinn tab flags when email is ≥2 days
