@@ -1,0 +1,17 @@
+{
+  "name": "brunaholf-local-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Local MCP server for Brunahólf — gives Claude on-machine capabilities (file ops, HTTP fetch, open in browser) on the heimaskrifstofa tölva so it can drive workflows that brunaholf.netlify.app would otherwise be blocked from.",
+  "bin": {
+    "brunaholf-local-mcp": "server.mjs"
+  },
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.23.8"
+  }
+}
