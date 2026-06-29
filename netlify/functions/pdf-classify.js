@@ -58,6 +58,7 @@ exports.handler = async (event) => {
   const uttekt = (p.uttekt || '').trim();
   const reikningar = (p.reikningar || '').trim();
   const annad = (p.annad || '').trim();
+  const dups = (p.dups || '').trim();   // optional 4th folder for duplicates
   const dry = p.dry === '1' || p.dry === 'true';
   const since = (p.since || '').trim() || null;
   if (!source) return json(400, { error: 'source folder id vantar' });
@@ -69,10 +70,11 @@ exports.handler = async (event) => {
   const jobId = makeJobId();
   await writeState(jobId, {
     state: 'queued', source,
-    targets: { uttekt: uttekt || null, reikningar: reikningar || null, annad: annad || null },
+    targets: { uttekt: uttekt || null, reikningar: reikningar || null, annad: annad || null, dups: dups || null },
     dry, since,
     processed: 0,
     classified: { uttekt: 0, reikningar: 0, annad: 0 },
+    dups_skipped: 0,
     errors: [],
     started_at: new Date().toISOString(),
   });
