@@ -58,6 +58,17 @@ async function processFolder(token, jobId, state) {
   const sinceDate = since ? new Date(since + 'T00:00:00Z') : null;
   const targetIds = new Set([targets.uttekt, targets.reikningar, targets.annad].filter(Boolean));
 
+  // Dedup: first PDF for a given key (R-NNNNNN for invoices, kt+year+month
+  // for reports) gets moved+renamed. Subsequent ones with the SAME key are
+  // left in source folder untouched — they're follow-up copies of the
+  // same business document (e.g. Stolpi_Invoice_X AND Nóta-… for the same
+  // R-number).
+  const seenInvoice = new Set();   // R-number strings
+  const seenReport = new Set();    // `${kt}|${year}|${month}` strings
+  // Pre-seed from files already in target folders so subsequent runs respect
+  // earlier-processed docs too.
+  state.dups_skipped = state.dups_skipped || 0;
+
   let pageToken = '';
   let processed = 0;
   for (;;) {
@@ -81,13 +92,52 @@ async function processFolder(token, jobId, state) {
         const text = await extractText(buf);
         const cat = classify(text, file.name);
 
-        let newName = null;
+        let newName = null, dupKey = null;
         if (cat === 'reikningar') {
           const parsed = parseInvoice(text, file.name);
           if (parsed.company || parsed.rNumber) newName = invoiceName(parsed);
+          if (parsed.rNumber) dupKey = `R:${parsed.rNumber}`;
         } else if (cat === 'uttekt') {
           const parsed = parseReport(text, file.name);
           if (parsed.company || parsed.kt) newName = reportName(parsed);
+          if (parsed.kt && parsed.year && parsed.month) {
+            dupKey = `U:${parsed.kt}|${parsed.year}|${parsed.month}`;
+          }
+        }
+
+        // Dedup: if we already moved a file with the same business key
+        // earlier in this run, skip this one. Leaves it in the source folder
+        // so the user can review later.
+        const isDup = dupKey && (
+          (cat === 'reikningar' && seenInvoice.has(dupKey)) ||
+          (cat === 'uttekt' && seenReport.has(dupKey))
+        );
+        if (isDup) {
+          // Move dup OUT of source folder so it doesn't linger. Destination
+          // priority: ?dups=<folderId> if provided, else 'annað' target,
+          // else trash. Renamed with ' - DUP' suffix so reviewing is easy.
+          if (!dry) {
+            const dupTarget = targets.dups || targets.annad || null;
+            const dupName = newName ? newName.replace(/\.pdf$/i, ' - DUP.pdf') : (file.name + ' - DUP.pdf');
+            try {
+              if (dupTarget) {
+                await moveDriveFile(token, file.id, source, dupTarget);
+                await renameDriveFile(token, file.id, dupName).catch(()=>{});
+              } else {
+                // No folder available — trash the file instead.
+                await trashDriveFile(token, file.id);
+              }
+            } catch (e) {
+              state.errors.push(`dup-move ${file.name}: ${String(e.message || e).slice(0, 80)}`);
+            }
+          }
+          state.dups_skipped++;
+          processed++;
+          if (processed % STATE_UPDATE_EVERY === 0) {
+            state.processed = processed;
+            await writeState(jobId, state);
+          }
+          continue;
         }
 
         if (!dry) {
@@ -101,6 +151,10 @@ async function processFolder(token, jobId, state) {
               state.errors.push(`rename ${file.name}: ${String(e.message || e).slice(0, 80)}`);
             }
           }
+        }
+        if (dupKey) {
+          if (cat === 'reikningar') seenInvoice.add(dupKey);
+          else if (cat === 'uttekt') seenReport.add(dupKey);
         }
         state.classified[cat] = (state.classified[cat] || 0) + 1;
       } catch (e) {
@@ -189,6 +243,16 @@ async function renameDriveFile(token, fileId, name) {
     body: JSON.stringify({ name }),
   });
   if (!r.ok) throw new Error(`Drive rename ${r.status}: ${(await r.text()).slice(0, 200)}`);
+  return r.json();
+}
+
+async function trashDriveFile(token, fileId) {
+  const r = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?supportsAllDrives=true`, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ trashed: true }),
+  });
+  if (!r.ok) throw new Error(`Drive trash ${r.status}: ${(await r.text()).slice(0, 200)}`);
   return r.json();
 }
 
