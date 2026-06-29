@@ -127,7 +127,8 @@
     const folder = detectFolder();
 
     const out = [];
-    for (const tr of slice) {
+    for (let idx = 0; idx < slice.length; idx++) {
+      const tr = slice[idx];
       const { sender_email, sender_name } = extractSender(tr);
       const { subject, snippet } = extractSubjectAndSnippet(tr);
       const td_time = tr.querySelector('td.xW') || tr.querySelector('td:last-of-type');
@@ -135,7 +136,20 @@
 
       if (!subject && !sender_email && !sender_name) continue;
 
-      const idSeed = [account, sender_email || sender_name || '', subject || '', received_at || ''].join('|');
+      // Hash includes the raw displayed/title time text (locale-independent)
+      // plus the DOM row index as a final tiebreaker — keeps the message_id
+      // stable across re-scrapes of the same view, while differentiating
+      // rows that share sender+subject but landed on different dates.
+      const timeTitle = td_time?.querySelector('span[title]')?.getAttribute('title') || '';
+      const timeText = td_time?.textContent?.trim() || '';
+      const snipFrag = (snippet || '').slice(0, 60);
+      const idSeed = [
+        account,
+        sender_email || sender_name || '',
+        subject || '',
+        timeTitle, timeText, snipFrag,
+        `idx:${idx}`,
+      ].join('|');
       const h = await hash32(idSeed);
       out.push({
         message_id: `browser:${h}`,
