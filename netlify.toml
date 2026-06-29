@@ -142,6 +142,15 @@
   to = "/.netlify/functions/mbox-extract-pdfs"
   status = 200
 
+# Bulk PDF classifier — sorts a Drive folder of PDFs into 3 sub-folders
+#   GET /api/pdf-classify?sample=N&source=<id>           (analyse-first peek)
+#   GET /api/pdf-classify?source=<id>&uttekt=<id>&reikningar=<id>&annad=<id>[&dry=1]
+#   GET /api/pdf-classify?status=<jobId>
+[[redirects]]
+  from = "/api/pdf-classify"
+  to = "/.netlify/functions/pdf-classify"
+  status = 200
+
 # Prebuilt next-invoice drafts (forecast)
 [[redirects]]
   from = "/api/invoice-drafts"
