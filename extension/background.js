@@ -1,6 +1,29 @@
 // background.js — service worker.
 // Receives email batches from content scripts and POSTs to the brunahólf hub.
 
+const MAIL_URL_PATTERNS = [
+  'https://mail.google.com/*',
+  'https://outlook.office.com/mail/*',
+  'https://outlook.office365.com/mail/*',
+  'https://outlook.live.com/mail/*',
+];
+
+// On install/update/reload, force-refresh any open Gmail/Outlook tabs so the
+// content scripts inject into them. Otherwise tabs opened BEFORE the extension
+// have no content script and "Sync now" fails with "Receiving end does not
+// exist". Runs once per install/update.
+chrome.runtime.onInstalled.addListener(async () => {
+  try {
+    const tabs = await chrome.tabs.query({ url: MAIL_URL_PATTERNS });
+    for (const t of tabs) {
+      if (t.id != null) chrome.tabs.reload(t.id).catch(()=>{});
+    }
+    console.log('[Brunaholf Mail Pulse] auto-refreshed', tabs.length, 'mail tabs');
+  } catch (e) {
+    console.warn('[Brunaholf Mail Pulse] auto-refresh on install failed:', e);
+  }
+});
+
 const DEFAULTS = {
   endpoint: 'https://brunaholf.netlify.app/api/email-ingest-browser',
   token: '',

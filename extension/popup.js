@@ -55,6 +55,10 @@ $('save').addEventListener('click', async () => {
   log('Stillingar vistaðar.');
 });
 
+async function trySendScan(tabId) {
+  return chrome.tabs.sendMessage(tabId, { type: 'manual-scan' });
+}
+
 $('sync').addEventListener('click', async () => {
   log('Sendi „sync" á virkan flipa…');
   try {
@@ -62,7 +66,19 @@ $('sync').addEventListener('click', async () => {
     if (!tab?.id) { log('Enginn virkur flipi.'); return; }
     const isMailTab = /mail\.google\.com|outlook\.(office|live)\.com/.test(tab.url || '');
     if (!isMailTab) { log('Flipinn er ekki Gmail eða Outlook.'); return; }
-    const res = await chrome.tabs.sendMessage(tab.id, { type: 'manual-scan' });
+    let res;
+    try {
+      res = await trySendScan(tab.id);
+    } catch (e) {
+      // "Receiving end does not exist" → content script not loaded (tab
+      // pre-dates the extension). Auto-refresh the tab and retry once.
+      if (String(e.message || e).includes('Receiving end')) {
+        log('Endurhleður flipa og reyni aftur…');
+        await chrome.tabs.reload(tab.id);
+        await new Promise(r => setTimeout(r, 4500));
+        res = await trySendScan(tab.id);
+      } else { throw e; }
+    }
     if (res?.ok) {
       log(`Tókst: ${res.upserted} upsertaðir (${res.received} sendir).`);
     } else if (res?.reason === 'no-rows') {
