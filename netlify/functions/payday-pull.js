@@ -38,8 +38,9 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const CLIENT_ID = process.env.PAYDAY_CLIENT_ID;
 const CLIENT_SECRET = process.env.PAYDAY_CLIENT_SECRET;
 const API_BASE = (process.env.PAYDAY_API_BASE || 'https://api.payday.is').replace(/\/+$/, '');
-const TOKEN_PATH = process.env.PAYDAY_TOKEN_PATH || '/api/v1/oauth/token';
-const INVOICES_PATH = process.env.PAYDAY_INVOICES_PATH || '/api/v1/invoices';
+const TOKEN_PATH = process.env.PAYDAY_TOKEN_PATH || '/auth/token';
+const INVOICES_PATH = process.env.PAYDAY_INVOICES_PATH || '/invoices';
+const API_VERSION = process.env.PAYDAY_API_VERSION || 'alpha';
 
 const JOB_NAME = 'payday-pull';
 const BATCH = 200;
@@ -144,38 +145,27 @@ async function getAccessToken() {
   if (cached && cached.access_token && cached.exp_ts && cached.exp_ts > Date.now() + 30_000) {
     return cached.access_token;
   }
-  // Try Basic Auth first (most OAuth2 servers), fall back to body params on 4xx.
+  // Payday API auth: POST /auth/token  JSON body { clientId, clientSecret }
+  // Headers MUST include Api-Version (verified from apidoc.payday.is collection).
   const tokenUrl = API_BASE + TOKEN_PATH;
-  let r = await fetch(tokenUrl, {
+  const r = await fetch(tokenUrl, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Type': 'application/json',
       Accept: 'application/json',
-      Authorization: 'Basic ' + Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64'),
+      'Api-Version': API_VERSION,
     },
-    body: new URLSearchParams({ grant_type: 'client_credentials' }).toString(),
+    body: JSON.stringify({ clientId: CLIENT_ID, clientSecret: CLIENT_SECRET }),
   });
-  if (!r.ok && r.status >= 400 && r.status < 500) {
-    // Retry with creds in body
-    r = await fetch(tokenUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
-      body: new URLSearchParams({
-        grant_type: 'client_credentials',
-        client_id: CLIENT_ID,
-        client_secret: CLIENT_SECRET,
-      }).toString(),
-    });
-  }
   if (!r.ok) {
     const txt = (await r.text()).slice(0, 300);
     throw new Error(`Payday token ${r.status} ${tokenUrl}: ${txt}`);
   }
   const tok = await r.json();
-  const access = tok.access_token || tok.accessToken || tok.token;
+  const access = tok.accessToken || tok.access_token || tok.token;
   if (!access) throw new Error('Payday token vantar í svar: ' + JSON.stringify(tok).slice(0, 200));
-  const expSec = Number(tok.expires_in || tok.expiresIn || 3600);
-  const exp_ts = Date.now() + (expSec * 1000) - 60_000; // 60s safety
+  const expSec = Number(tok.expiresIn || tok.expires_in || 86400);
+  const exp_ts = Date.now() + (expSec * 1000) - 60_000;
   await writeCachedToken({ access_token: access, exp_ts }).catch(()=>{});
   return access;
 }
@@ -206,22 +196,18 @@ async function writeCachedToken(value) {
 
 async function fetchInvoicesPage(token, page, pageSize, since, until) {
   const params = new URLSearchParams();
-  // Payday's list APIs typically take page + pageSize. Some take "perPage" or
-  // "limit"/"offset" — send both common names so whichever the server accepts wins.
+  // Payday uses perpage + page (verified from apidoc collection).
+  params.set('perpage', String(pageSize));
   params.set('page', String(page));
-  params.set('pageSize', String(pageSize));
-  params.set('perPage', String(pageSize));
-  params.set('limit', String(pageSize));
-  params.set('offset', String((page - 1) * pageSize));
-  if (since) {
-    params.set('from', since); params.set('dateFrom', since); params.set('createdFrom', since);
-  }
-  if (until) {
-    params.set('to', until); params.set('dateTo', until); params.set('createdTo', until);
-  }
+  if (since) params.set('dateFrom', since);
+  if (until) params.set('dateTo', until);
   const url = API_BASE + INVOICES_PATH + '?' + params.toString();
   const r = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+      'Api-Version': API_VERSION,
+    },
   });
   if (!r.ok) {
     const txt = (await r.text()).slice(0, 300);
