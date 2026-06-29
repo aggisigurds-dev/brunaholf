@@ -9,8 +9,11 @@
   window.__brunaholfMailPulseLoaded = true;
 
   const LOG_PREFIX = '[Brunaholf Mail Pulse]';
-  const MAX_ROWS_PER_SCAN = 50;
+  const MAX_ROWS_PER_SCAN = 500;       // batched send to backend (lifts per scrape)
   const AUTO_SCAN_DEBOUNCE_MS = 4000;
+  const DEEP_SCAN_MAX_SCROLLS = 30;    // scroll passes before bailing
+  const DEEP_SCAN_BETWEEN_MS = 1200;   // wait per scroll for Gmail to render
+  const DEEP_SCAN_NO_NEW_STOP = 3;     // stop after N consecutive no-new-rows passes
 
   function log(...a) { try { console.log(LOG_PREFIX, ...a); } catch (_) {} }
   function warn(...a) { try { console.warn(LOG_PREFIX, ...a); } catch (_) {} }
@@ -163,6 +166,87 @@
 
   let lastScanAt = 0;
   let pendingTimer = null;
+  let deepScanDone = false;
+
+  // ── Deep scan: scroll through the inbox to load 300-500 rows in one go ──
+  function findScrollContainer() {
+    // Gmail's inbox scrolls inside a custom area, not the window. Find the
+    // nearest scrollable ancestor of an inbox row.
+    const seed = document.querySelector('tr.zA');
+    if (!seed) return null;
+    let el = seed.parentElement;
+    while (el && el !== document.body) {
+      const s = getComputedStyle(el);
+      const ovy = s.overflowY;
+      if ((ovy === 'auto' || ovy === 'scroll') && el.scrollHeight > el.clientHeight + 4) {
+        return el;
+      }
+      el = el.parentElement;
+    }
+    return null;
+  }
+
+  async function runDeepScan() {
+    if (deepScanDone) return;
+    deepScanDone = true;
+
+    const container = findScrollContainer();
+    const startScroll = container ? container.scrollTop : window.scrollY;
+    const seen = new Map(); // message_id → email
+    let account = null, folder = null;
+    let noNewCount = 0;
+
+    log('deep scan starting…');
+    for (let pass = 0; pass < DEEP_SCAN_MAX_SCROLLS; pass++) {
+      const res = await scrapeRows();
+      if (res && Array.isArray(res.emails)) {
+        if (!account && res.account) account = res.account;
+        if (!folder && res.folder) folder = res.folder;
+        let newCount = 0;
+        for (const e of res.emails) {
+          if (!seen.has(e.message_id)) {
+            seen.set(e.message_id, e);
+            newCount++;
+          }
+        }
+        log(`pass ${pass + 1}: scraped ${res.emails.length}, new ${newCount}, total ${seen.size}`);
+        if (newCount === 0) noNewCount++;
+        else noNewCount = 0;
+        if (noNewCount >= DEEP_SCAN_NO_NEW_STOP) {
+          log(`deep scan: ${DEEP_SCAN_NO_NEW_STOP} passes with no new rows — done`);
+          break;
+        }
+      }
+      // Scroll the inbox down ~90% of its visible height to trigger Gmail to
+      // load the next virtualised batch.
+      if (container) container.scrollBy(0, container.clientHeight * 0.9);
+      else window.scrollBy(0, window.innerHeight * 0.9);
+      await new Promise(r => setTimeout(r, DEEP_SCAN_BETWEEN_MS));
+    }
+
+    // Restore the user's scroll position (within reason).
+    if (container) container.scrollTop = startScroll;
+    else window.scrollTo(0, startScroll);
+
+    if (!account || !seen.size) {
+      log('deep scan: nothing to send');
+      return;
+    }
+    // Send in chunks of 500 (backend cap).
+    const all = [...seen.values()];
+    log(`deep scan: sending ${all.length} rows to backend`);
+    for (let i = 0; i < all.length; i += 500) {
+      const chunk = all.slice(i, i + 500);
+      try {
+        const response = await chrome.runtime.sendMessage({
+          type: 'emails', account, folder, emails: chunk,
+        });
+        log(`deep scan chunk ${i / 500 + 1}:`, response);
+      } catch (e) {
+        warn('deep scan chunk failed:', e);
+      }
+    }
+  }
 
   async function runScan(trigger = 'auto') {
     lastScanAt = Date.now();
@@ -193,9 +277,14 @@
     }, AUTO_SCAN_DEBOUNCE_MS);
   }
 
-  // Initial scan on load + every time the route hash changes (folder switch).
-  window.addEventListener('load', () => setTimeout(() => runScan('load'), 2000));
-  window.addEventListener('hashchange', scheduleScan);
+  // Initial scan on load — uses deep-scan (auto-scroll) to capture as much
+  // history as Gmail will paginate in.
+  window.addEventListener('load', () => setTimeout(() => runDeepScan(), 2500));
+  // Folder switch → reset and deep-scan the new folder too.
+  window.addEventListener('hashchange', () => {
+    deepScanDone = false;
+    setTimeout(() => runDeepScan(), 2500);
+  });
 
   // MutationObserver: detect when new rows appear (Gmail virtualizes the list,
   // but new arrivals/scrolling re-render rows under the same container).
@@ -208,10 +297,11 @@
   }
   setTimeout(startObserving, 4000);
 
-  // Popup → "Sync now" sends this message.
+  // Popup → "Sync now" runs a fresh deep-scan (scrolls through inbox again).
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg?.type === 'manual-scan') {
-      runScan('manual').then(sendResponse);
+      deepScanDone = false;
+      runDeepScan().then(() => sendResponse({ ok: true }));
       return true;
     }
   });
