@@ -775,3 +775,23 @@ anything undated.
   manual override per month.
 - **Payday API integration**: end goal is to push draft invoices into
   Payday. Currently it's just one-way sync in.
+
+  **Inn-átt (read) — payday-pull.js (2026-06-29):** `/api/payday-pull` —
+  OAuth2 `client_credentials` against `api.payday.is`, paginated invoice list,
+  upsert into `invoices` with `(tilvisun, source='payday')` (same key the
+  xlsx-from-Drive path uses — they're interchangeable, no dupes). Env vars:
+  `PAYDAY_CLIENT_ID`, `PAYDAY_CLIENT_SECRET` (set in Netlify, **never
+  committed**). Optional overrides: `PAYDAY_API_BASE` (default
+  `https://api.payday.is`), `PAYDAY_TOKEN_PATH` (`/api/v1/oauth/token`),
+  `PAYDAY_INVOICES_PATH` (`/api/v1/invoices`). Access-tokens are cached in
+  `app_kv['payday_oauth']` until expiry. Modes: `?probe=1` (auth only + raw
+  page 1, **no DB write** — run this first to confirm endpoint shape);
+  `?dry=1` (fetch + map + return rows, no upsert); no flag = full upsert.
+  Filters: `?since=YYYY-MM-DD&until=YYYY-MM-DD&pageSize=N`. Logs run status
+  to `automation_runs(job_name='payday-pull')`. Field-mapping is intentionally
+  forgiving (tries `number|invoiceNumber|reference|…`, `amount|subtotal|…`,
+  `amountWithTax|total|…`, `dueDate|due_date|gjalddagi`, `paidAt|paid_at|…`)
+  so it works without per-deploy tweaks; verify via probe before the first
+  real run. Register a Sjálfvirkni-spjald with `POST /api/automations
+  {action:'register', name:'payday-pull', label:'Payday — sækja reikninga',
+  command:'/api/payday-pull', url:'/api/payday-pull?probe=1', schedule:'Daglega'}`.
