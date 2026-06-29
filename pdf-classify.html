@@ -12,6 +12,15 @@
   header { background:#0f172a; color:#fff; padding:14px 20px; }
   header h1 { margin:0; font-size:17px; }
   header .sub { font-size:12px; opacity:.7; margin-top:3px; }
+  .guide { background:#fef9c3; border:1px solid #fde68a; border-radius:10px; padding:14px 16px; margin-bottom:18px; }
+  .guide h2 { margin:0 0 10px; font-size:14px; color:#713f12; }
+  .steps { display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); margin-top:8px; }
+  .step { background:#fff; border:1px solid #fde68a; border-radius:8px; padding:10px 12px; }
+  .step .n { display:inline-flex; width:22px; height:22px; align-items:center; justify-content:center; background:#dc2626; color:#fff; border-radius:50%; font-weight:700; font-size:12px; margin-right:6px; }
+  .step b { font-size:13px; color:#0f172a; }
+  .step .d { font-size:12px; color:#475569; margin-top:4px; line-height:1.4; }
+  .folder-tip { background:#dbeafe; border:1px solid #93c5fd; border-radius:8px; padding:10px 12px; margin-top:10px; font-size:12.5px; color:#1e3a8a; }
+  .folder-tip code { background:#1e3a8a; color:#dbeafe; padding:1px 5px; border-radius:3px; font-size:11px; }
   main { padding:20px; max-width:880px; margin:0 auto; }
   .card { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:16px; box-shadow:0 1px 2px rgba(15,23,42,.04); }
   .card h2 { margin:0 0 8px; font-size:14px; font-weight:700; }
@@ -51,6 +60,42 @@
   <div class="sub">Eitt folder-í-einu. Skiptir í úttektarskýrslur / reikningar / annað / dup-möppur og endurnefnir.</div>
 </header>
 <main>
+
+<div class="guide">
+  <h2>🧭 Hvernig nota — fjögur skref</h2>
+  <div class="steps">
+    <div class="step">
+      <div><span class="n">1</span><b>Búðu til 4 möppur í Drive</b></div>
+      <div class="d">Til dæmis undir <b>„bokhald@eldklar.is skjöl"</b>:<br>
+        📄 <i>Skýrslur</i><br>🧾 <i>Reikningar</i><br>📦 <i>Annað</i><br>♻️ <i>Tvítök</i>
+      </div>
+    </div>
+    <div class="step">
+      <div><span class="n">2</span><b>Náðu í folder-id-in</b></div>
+      <div class="d">Opnaðu hverja möppu í Drive → fileng-strúktúrinn í slóðinni:<br>
+        <code style="font-size:11px;background:#f1f5f9;padding:1px 4px;border-radius:3px">drive.google.com/drive/folders/<b>ÞETTA</b></code>
+      </div>
+    </div>
+    <div class="step">
+      <div><span class="n">3</span><b>Líma í reitina hér fyrir neðan</b></div>
+      <div class="d">Source = mappan með óflokkuðu PDFs.<br>
+        Hin 4 = áfangastaðir.
+      </div>
+    </div>
+    <div class="step">
+      <div><span class="n">4</span><b>Prufa → Keyra</b></div>
+      <div class="d">🔍 Prufa á 3 random sjáðu mat fyrst.<br>
+        ▶️ Keyra → flyttur + endurnefnt + dup-vörn.
+      </div>
+    </div>
+  </div>
+  <div class="folder-tip">
+    <b>💡 Tips:</b> Eftir keyrslu fer hvert PDF í rétta möppu með nýtt nafn —
+    <code>Fyrirtæki - kt - R-NNNNNN - Ár - upphæð kr.pdf</code> (reikningur) eða
+    <code>Fyrirtæki - heimilisfang - kt - Ár - Mánuður.pdf</code> (skýrsla).
+    Tvítök (sami R-nr eða sama kt+ár+mán) fara í Tvítök-möppuna með „- DUP" suffix.
+  </div>
+</div>
 
 <div class="card">
   <h2>1. Stilla möppurnar</h2>
