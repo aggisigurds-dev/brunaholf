@@ -250,12 +250,13 @@ function mapInvoice(raw) {
   const kt = pickStr(customer, 'kennitala', 'ssn', 'nationalId', 'idNumber')
           || pickStr(raw, 'kennitala', 'ssn', 'customerSsn');
 
-  const exVat = num(pickRaw(raw, 'amount', 'subtotal', 'amountExVat', 'amount_ex_vat', 'totalExcludingTax', 'totalExVat', 'netAmount'));
-  const incVat = num(pickRaw(raw, 'amountWithTax', 'amount_with_tax', 'total', 'totalIncludingTax', 'totalAmount', 'grossAmount'));
+  // Payday real shape: amountExcludingVat / amountIncludingVat / paidDate / invoiceDate.
+  const exVat = num(pickRaw(raw, 'amountExcludingVat', 'amount', 'subtotal', 'amountExVat', 'amount_ex_vat', 'totalExcludingTax', 'totalExVat', 'netAmount'));
+  const incVat = num(pickRaw(raw, 'amountIncludingVat', 'amountWithTax', 'amount_with_tax', 'total', 'totalIncludingTax', 'totalAmount', 'grossAmount'));
 
   const dueDate = isoDate(pickRaw(raw, 'dueDate', 'due_date', 'gjalddagi'));
-  const finalDue = isoDate(pickRaw(raw, 'finalDueDate', 'final_due_date', 'eindagi'));
-  const paidAt = isoDate(pickRaw(raw, 'paidAt', 'paid_at', 'paymentDate', 'payment_date', 'greidsla', 'greidsla_date'));
+  const finalDue = isoDate(pickRaw(raw, 'finalDueDate', 'final_due_date', 'eindagi', 'claimFinalDueDate'));
+  const paidAt = isoDate(pickRaw(raw, 'paidDate', 'paidAt', 'paid_at', 'paymentDate', 'payment_date', 'greidsla', 'greidsla_date'));
 
   const status = pickStr(raw, 'status', 'state', 'paymentStatus', 'staða');
 
