@@ -107,9 +107,17 @@ exports.handler = async (event) => {
 
   if (!rows.length) return json(400, { error: 'Engar gildar raðir (vantar message_id)' });
 
+  // Dedup within-batch: Postgres on_conflict can't handle two rows with the
+  // same constraint key in one statement. The extension can emit dupes when
+  // received_at parsing fails for multiple rows with the same sender+subject.
+  const seenIds = new Map();
+  for (const r of rows) if (!seenIds.has(r.message_id)) seenIds.set(r.message_id, r);
+  const deduped = [...seenIds.values()];
+  const within_batch_dupes = rows.length - deduped.length;
+
   let upserted = 0;
-  for (let i = 0; i < rows.length; i += BATCH) {
-    const slice = rows.slice(i, i + BATCH);
+  for (let i = 0; i < deduped.length; i += BATCH) {
+    const slice = deduped.slice(i, i + BATCH);
     const u = await fetch(`${SUPABASE_URL}/rest/v1/email_digest?on_conflict=message_id`, {
       method: 'POST',
       headers: {
@@ -128,7 +136,7 @@ exports.handler = async (event) => {
 
   return json(200, {
     ok: true,
-    account, folder,
+    account, folder, within_batch_dupes,
     received: emails.length, upserted,
     classified_questions: classifiedQuestions,
   });
