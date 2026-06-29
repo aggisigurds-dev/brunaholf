@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<title>Brunahólf Mail Pulse</title>
+<style>
+  :root {
+    --bg:#fff; --fg:#16182a; --muted:#6a6f88; --line:#e1e3ee;
+    --brand:#C93C1D; --ok:#16a34a; --err:#dc2626; --warn:#d97706;
+  }
+  body { width: 360px; margin: 0; padding: 14px 16px; font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: var(--fg); background: var(--bg); }
+  h1 { margin: 0 0 4px; font-size: 15px; }
+  .sub { color: var(--muted); font-size: 12px; margin-bottom: 12px; }
+  fieldset { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin: 0 0 10px; }
+  fieldset legend { font-size: 11px; color: var(--muted); padding: 0 4px; text-transform: uppercase; letter-spacing: .04em; }
+  label { display: block; font-size: 12px; color: var(--muted); margin-top: 6px; }
+  input { width: 100%; padding: 6px 8px; font: inherit; border: 1px solid var(--line); border-radius: 6px; box-sizing: border-box; }
+  button { width: 100%; padding: 8px 10px; font: 600 13px/1 inherit; border-radius: 6px; border: 0; cursor: pointer; }
+  .primary { background: var(--brand); color: #fff; }
+  .secondary { background: #f1f3f9; color: var(--fg); margin-top: 6px; }
+  .status-row { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; font-size: 12px; border-top: 1px dashed var(--line); }
+  .status-row:first-child { border-top: 0; }
+  .status-row .acct { font-weight: 600; }
+  .status-row .when { color: var(--muted); }
+  .ok { color: var(--ok); } .err { color: var(--err); } .warn { color: var(--warn); }
+  #log { font-size: 11px; color: var(--muted); margin-top: 10px; min-height: 14px; }
+</style>
+</head>
+<body>
+  <h1>Brunahólf · Mail Pulse</h1>
+  <div class="sub">Skannar opna Gmail / Outlook flipa.</div>
+
+  <button id="sync" class="primary">Sync núna á þessum flipa</button>
+
+  <fieldset>
+    <legend>Síðasta sync</legend>
+    <div id="status"><div class="sub">Engin sync skráð enn.</div></div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Stillingar</legend>
+    <label>Endpoint URL</label>
+    <input id="endpoint" type="url" placeholder="https://brunaholf.netlify.app/api/email-ingest-browser">
+    <label>X-Brunaholf-Token</label>
+    <input id="token" type="password" placeholder="Token frá Netlify env">
+    <button id="save" class="secondary">Vista stillingar</button>
+  </fieldset>
+
+  <div id="log"></div>
+  <script src="popup.js"></script>
+</body>
+</html>
