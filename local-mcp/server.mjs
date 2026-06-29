@@ -91,8 +91,8 @@ const tools = [
       local_path: z.string().describe('Absolute path to the local file.'),
       drive_folder_id: z.string().describe('Target Google Drive folder ID.'),
       name: z.string().optional().describe('Name in Drive (defaults to local filename).'),
-      upload_endpoint: z.string().optional().default('https://brunaholf.netlify.app/api/local-upload-proxy')
-        .describe('The brunahólf endpoint that owns the Drive credential.'),
+      upload_endpoint: z.string().optional().default('https://brunaholf.netlify.app/api/drive-upload-session')
+        .describe('The brunahólf endpoint that initiates a Drive resumable upload session.'),
       token: z.string().optional().describe('X-Brunaholf-Token header value (matches LOCAL_UPLOAD_TOKEN env on brunaholf).'),
     }),
   },
@@ -177,27 +177,53 @@ async function uploadToDriveViaBrunaholf({ local_path, drive_folder_id, name, up
   const p = resolve(local_path);
   const s = await stat(p);
   const fileName = name || basename(p);
-  const stream = createReadStream(p);
 
-  const res = await fetch(upload_endpoint, {
+  // Step 1: ask brunaholf to initiate a Drive resumable upload session.
+  const sessionEndpoint = (upload_endpoint || 'https://brunaholf.netlify.app/api/drive-upload-session');
+  const initRes = await fetch(sessionEndpoint, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/octet-stream',
-      'Content-Length': String(s.size),
-      'X-Brunaholf-Drive-Folder': drive_folder_id,
-      'X-Brunaholf-Drive-Name': encodeURIComponent(fileName),
+      'Content-Type': 'application/json',
       ...(token ? { 'X-Brunaholf-Token': token } : {}),
+    },
+    body: JSON.stringify({
+      folderId: drive_folder_id,
+      fileName,
+      mimeType: 'application/octet-stream',
+      size: s.size,
+    }),
+  });
+  const initText = await initRes.text();
+  let initJson = null;
+  try { initJson = JSON.parse(initText); } catch (_) {}
+  if (!initRes.ok || !initJson?.uploadUrl) {
+    throw new Error(`Drive session init failed ${initRes.status}: ${(initJson?.error || initText).slice(0, 300)}`);
+  }
+
+  // Step 2: PUT the file bytes directly to Google. No bytes flow through Netlify.
+  const stream = createReadStream(p);
+  const putRes = await fetch(initJson.uploadUrl, {
+    method: 'PUT',
+    headers: {
+      'Content-Length': String(s.size),
+      'Content-Type': 'application/octet-stream',
     },
     body: stream,
     duplex: 'half',
   });
-  const text = await res.text();
-  let json = null;
-  try { json = JSON.parse(text); } catch (_) {}
-  if (!res.ok) {
-    throw new Error(`Upload failed ${res.status}: ${(json?.error || text).slice(0, 300)}`);
+  const putText = await putRes.text();
+  let putJson = null;
+  try { putJson = JSON.parse(putText); } catch (_) {}
+  if (!putRes.ok) {
+    throw new Error(`Drive upload PUT failed ${putRes.status}: ${putText.slice(0, 300)}`);
   }
-  return { ok: true, name: fileName, drive_file_id: json?.fileId || null, raw: json };
+  return {
+    ok: true,
+    name: fileName,
+    size_bytes: s.size,
+    drive_file_id: putJson?.id || null,
+    drive_response: putJson,
+  };
 }
 
 // ─── MCP server wiring ────────────────────────────────────────────────────
