@@ -7,7 +7,7 @@
 # Ship pdf-parse / xlsx as real node_modules (not esbuild-bundled) so the
 # Efnislisti amount parser loads reliably in the function runtime.
 [functions]
-  external_node_modules = ["pdf-parse", "xlsx"]
+  external_node_modules = ["pdf-parse", "xlsx", "mailparser"]
 
 # Friendly URL for the Mæting bridge:
 #   /api/maeting  →  /.netlify/functions/timavera-maeting
@@ -132,6 +132,14 @@
 [[redirects]]
   from = "/api/drive-upload-session"
   to = "/.netlify/functions/drive-upload-session"
+  status = 200
+
+# Bulk PDF extractor from a Google Takeout .mbox sitting in Drive
+#   GET /api/mbox-extract-pdfs?fileId=<id>&targetFolder=<id>[&since=YYYY-MM-DD][&dry=1]
+#   GET /api/mbox-extract-pdfs?status=<jobId>
+[[redirects]]
+  from = "/api/mbox-extract-pdfs"
+  to = "/.netlify/functions/mbox-extract-pdfs"
   status = 200
 
 # Prebuilt next-invoice drafts (forecast)
