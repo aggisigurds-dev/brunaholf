@@ -119,6 +119,14 @@
   to = "/.netlify/functions/email-ingest-browser"
   status = 200
 
+# Local-MCP Drive upload session initiator — creates a Google resumable
+# upload URL for the MCP on the heimaskrifstofa tölva to PUT bytes into.
+#   POST /api/drive-upload-session   (X-Brunaholf-Token header)
+[[redirects]]
+  from = "/api/drive-upload-session"
+  to = "/.netlify/functions/drive-upload-session"
+  status = 200
+
 # Prebuilt next-invoice drafts (forecast)
 [[redirects]]
   from = "/api/invoice-drafts"
