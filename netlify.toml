@@ -112,6 +112,13 @@
   to = "/.netlify/functions/payday-pull"
   status = 200
 
+# Background version — same code but 15-min timeout, returns 202 instantly.
+# Used when triggering from short-timeout clients (Supabase http extension).
+[[redirects]]
+  from = "/api/payday-pull-bg"
+  to = "/.netlify/functions/payday-pull-background"
+  status = 200
+
 # Browser-bridge: Chrome extension POSTs scraped email metadata here
 #   POST /api/email-ingest-browser  (X-Brunaholf-Token header)
 [[redirects]]
