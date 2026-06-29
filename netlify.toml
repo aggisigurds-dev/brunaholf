@@ -151,6 +151,13 @@
   to = "/.netlify/functions/pdf-classify"
   status = 200
 
+# Document coverage matrix — per customer × year × type counts of
+# customer_documents, for the /doc-matrix.html checklist UI.
+[[redirects]]
+  from = "/api/doc-matrix"
+  to = "/.netlify/functions/doc-matrix"
+  status = 200
+
 # Prebuilt next-invoice drafts (forecast)
 [[redirects]]
   from = "/api/invoice-drafts"

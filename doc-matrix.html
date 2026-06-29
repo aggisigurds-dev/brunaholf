@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<title>Skjala-checklist · Brunahólf</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg: #f6f7fb; --panel: #fff; --line: #e2e8f0; --fg: #0f172a; --muted: #64748b;
+    --green: #16a34a; --amber: #d97706; --red: #dc2626; --blue: #2563eb;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:0; font: 14px/1.45 -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--fg); }
+  header { padding:16px 22px; background:#0f172a; color:#fff; }
+  header h1 { margin:0; font-size:18px; }
+  header .sub { font-size:12px; opacity:.7; margin-top:3px; }
+  main { padding:16px 22px; }
+  .toolbar { display:flex; gap:10px; margin-bottom:14px; align-items:center; flex-wrap:wrap; }
+  .toolbar input { padding:7px 9px; border:1px solid var(--line); border-radius:6px; font:inherit; }
+  .toolbar select { padding:7px 9px; border:1px solid var(--line); border-radius:6px; font:inherit; }
+  .summary { color:var(--muted); font-size:12.5px; }
+  .matrix { overflow-x:auto; background:var(--panel); border:1px solid var(--line); border-radius:10px; box-shadow:0 1px 2px rgba(15,23,42,.04); }
+  table { border-collapse: collapse; width: 100%; font-size:13px; }
+  thead th { position: sticky; top:0; background:#f1f5f9; z-index:2; border-bottom:1px solid var(--line); }
+  th, td { padding:7px 9px; text-align:left; border-bottom:1px solid #f1f5f9; white-space:nowrap; }
+  th.y, td.y { text-align:center; border-left:1px solid var(--line); min-width:48px; }
+  th.year { background:#e2e8f0; }
+  .name { font-weight:600; max-width:260px; overflow:hidden; text-overflow:ellipsis; }
+  .kt { color:var(--muted); font-size:11.5px; font-variant-numeric: tabular-nums; }
+  .badge { display:inline-block; padding:2px 6px; border-radius:5px; font-size:11px; font-weight:700; line-height:1.4; }
+  .ok { background:#dcfce7; color:var(--green); }
+  .dup { background:#fef3c7; color:var(--amber); }
+  .none { color:#cbd5e1; }
+  td.y { cursor:default; }
+  td.y.has { cursor:pointer; }
+  td.y.has:hover { background:#eff6ff; }
+  .row-thj { font-size:11px; padding:1px 5px; border-radius:4px; }
+  .row-thj.y { background:#dbeafe; color:#1d4ed8; }
+  .row-thj.n { background:#f1f5f9; color:#475569; }
+  details { padding:10px 14px; background:#f8fafc; border-bottom:1px solid var(--line); }
+  details summary { cursor:pointer; font-weight:600; }
+  ul { margin:6px 0 0; padding-left:18px; }
+  ul li a { color: var(--blue); text-decoration: none; }
+  ul li a:hover { text-decoration: underline; }
+  .ico-c { padding-left:10px; padding-right:10px; }
+  .top { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+  .legend { color:var(--muted); font-size:12px; }
+  .legend .badge { margin-left:4px; }
+  .filter-active { background:#fef3c7; }
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div>
+      <h1>📋 Skjala-checklist</h1>
+      <div class="sub">Yfirlit per kúnna × ár × týpu — finna eyður og tvítók</div>
+    </div>
+    <div class="legend">
+      Cell-merki: <span class="badge ok">1</span> = einn til  <span class="badge dup">⚠ N</span> = N tvítök  <span class="none">—</span> vantar
+    </div>
+  </div>
+</header>
+<main>
+  <div class="toolbar">
+    <input id="q" placeholder="🔍 leita (nafn / kt)" style="flex:1; min-width:240px">
+    <select id="filter">
+      <option value="all">Allir</option>
+      <option value="thj">Aðeins í þjónustu</option>
+      <option value="dup">Aðeins með tvítökum</option>
+      <option value="missing">Aðeins með eyður</option>
+    </select>
+    <span class="summary" id="summary">Hleð…</span>
+  </div>
+  <div class="matrix" id="matrix">
+    <table id="tbl"></table>
+  </div>
+</main>
+
+<script>
+const API = '/api/doc-matrix';
+const TYPE_LABEL = { uttektarskyrsla: 'Skýrsla', reikningur: 'Reikningur', samningur: 'Samningur' };
+const TYPE_ICO = { uttektarskyrsla: '📄', reikningur: '🧾', samningur: '📜' };
+
+let DATA = null;
+
+async function load() {
+  document.getElementById('summary').textContent = 'Hleð…';
+  const r = await fetch(API);
+  DATA = await r.json();
+  render();
+}
+
+function render() {
+  const q = document.getElementById('q').value.trim().toLowerCase();
+  const filter = document.getElementById('filter').value;
+  const { years, types, rows, doc_count } = DATA;
+
+  // Header
+  const tbl = document.getElementById('tbl');
+  let html = '<thead>';
+  html += '<tr><th rowspan="2">Kúnni</th><th rowspan="2">Kt</th><th rowspan="2">Þjón.</th>';
+  for (const y of years) html += '<th class="year" colspan="' + types.length + '">' + y + '</th>';
+  html += '</tr><tr>';
+  for (const y of years) for (const t of types) {
+    html += '<th class="y" title="' + esc(TYPE_LABEL[t]) + ' ' + y + '">' + TYPE_ICO[t] + '</th>';
+  }
+  html += '</tr></thead><tbody>';
+
+  let shown = 0, dups = 0, missingAny = 0;
+
+  for (const r of rows) {
+    if (q) {
+      const blob = ((r.nafn||'') + ' ' + (r.kennitala||'')).toLowerCase();
+      if (!blob.includes(q)) continue;
+    }
+    if (filter === 'thj' && !r.er_i_thjonustu) continue;
+
+    let rowHasDup = false, rowMissing = false;
+    let rowHtml = '';
+    rowHtml += '<td class="name" title="base_id ' + r.base_id + '">' + esc(r.nafn || '(nafnlaus)') + '</td>';
+    rowHtml += '<td class="kt">' + esc(r.kennitala || '') + '</td>';
+    rowHtml += '<td><span class="row-thj ' + (r.er_i_thjonustu ? 'y' : 'n') + '">' + (r.er_i_thjonustu ? 'já' : 'nei') + '</span></td>';
+
+    for (const y of years) for (const t of types) {
+      const arr = r.cells[y + ':' + t] || [];
+      const n = arr.length;
+      let cell = '<td class="y' + (n ? ' has' : '') + '"';
+      if (n) {
+        const driveLinks = arr.filter(id => id && !id.startsWith('db:')).map(id => 'https://drive.google.com/file/d/' + id + '/view');
+        cell += ' data-links=\'' + JSON.stringify(driveLinks).replace(/'/g, "&#39;") + '\'';
+        cell += ' onclick="openCell(this)"';
+      }
+      cell += '>';
+      if (n === 0) cell += '<span class="none">—</span>';
+      else if (n === 1) cell += '<span class="badge ok">1</span>';
+      else { cell += '<span class="badge dup">⚠' + n + '</span>'; rowHasDup = true; }
+      cell += '</td>';
+      rowHtml += cell;
+      if (n === 0) rowMissing = true;
+    }
+
+    if (filter === 'dup' && !rowHasDup) continue;
+    if (filter === 'missing' && !rowMissing) continue;
+
+    html += '<tr>' + rowHtml + '</tr>';
+    shown++;
+    if (rowHasDup) dups++;
+    if (rowMissing) missingAny++;
+  }
+
+  html += '</tbody>';
+  tbl.innerHTML = html;
+  document.getElementById('summary').textContent =
+    rows.length + ' kúnnar · ' + doc_count + ' skjöl · ' + dups + ' með tvítök · ' + missingAny + ' með eyður · sýni: ' + shown;
+}
+
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function openCell(td) {
+  const links = JSON.parse(td.getAttribute('data-links') || '[]');
+  if (!links.length) return;
+  if (links.length === 1) window.open(links[0], '_blank', 'noopener');
+  else for (const u of links) window.open(u, '_blank', 'noopener');
+}
+
+document.getElementById('q').addEventListener('input', render);
+document.getElementById('filter').addEventListener('change', render);
+load();
+</script>
+</body>
+</html>
