@@ -105,6 +105,13 @@
   to = "/.netlify/functions/pricing-guide"
   status = 200
 
+# Payday API pull (OAuth2 client_credentials → invoices table)
+#   /api/payday-pull[?probe=1|?dry=1|?since=&until=&pageSize=]
+[[redirects]]
+  from = "/api/payday-pull"
+  to = "/.netlify/functions/payday-pull"
+  status = 200
+
 # Prebuilt next-invoice drafts (forecast)
 [[redirects]]
   from = "/api/invoice-drafts"
