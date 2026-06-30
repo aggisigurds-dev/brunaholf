@@ -158,6 +158,14 @@
   to = "/.netlify/functions/doc-matrix"
   status = 200
 
+# Unified per-customer view composer — base + sites + docs + invoices
+# + summary + AI heuristic flags. Powers /customer.html.
+#   GET /api/customer?base=<id> | ?kt=<kennitala>
+[[redirects]]
+  from = "/api/customer"
+  to = "/.netlify/functions/customer"
+  status = 200
+
 # Prebuilt next-invoice drafts (forecast)
 [[redirects]]
   from = "/api/invoice-drafts"
