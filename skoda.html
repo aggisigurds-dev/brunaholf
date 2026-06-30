@@ -36,36 +36,51 @@
     outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(15,23,42,.08);
   }
   .info-row { margin-bottom:9px; }
+  /* Compact PDF-style table — same layout on mobile + desktop.
+     Columns: heiti | Í lagi | Ólagi | Athugasemd, 1 row per item. */
   .row {
-    display:grid; grid-template-columns: 1fr 72px 72px 1.2fr;
-    gap:6px; align-items:center; padding:8px 0;
-    border-bottom:1px solid var(--line2); font-size:13.5px;
+    display:grid; grid-template-columns: minmax(0,1fr) 44px 44px minmax(0,1.1fr);
+    gap:4px; align-items:center; padding:5px 6px;
+    border-bottom:1px solid var(--line2); font-size:13px;
   }
   .row:last-of-type { border-bottom:none; }
-  .row .lbl { font-weight:500; padding-right:6px; }
-  .row .lbl.sect { background:#fef3c7; padding:6px 8px; border-radius:6px;
-    font-weight:700; grid-column:1 / -1; }
-  .row .lbl.sect + .row { border-top:none; }
-  .sectionhead { background:#fef3c7; padding:8px 10px; border-radius:6px;
-    font-weight:700; margin:14px 0 4px; font-size:13.5px; }
-  .seg { display:flex; gap:4px; }
+  .row .lbl { font-weight:500; padding-right:4px; line-height:1.3; }
+  .sectionhead { background:#fef3c7; padding:5px 8px; border-radius:4px;
+    font-weight:700; margin:8px 0 0; font-size:12.5px;
+    border:1px solid #fde68a; border-bottom:none; }
+  .sectionhead + .row { border-top:1px solid #fde68a; }
+  /* Compact column-header row above each section's first row */
+  .tablehead {
+    display:grid; grid-template-columns: minmax(0,1fr) 44px 44px minmax(0,1.1fr);
+    gap:4px; align-items:center; padding:4px 6px;
+    background:#f1f5f9; border:1px solid var(--line);
+    font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase;
+    letter-spacing:.03em; border-radius:4px 4px 0 0;
+  }
+  .tablehead > div { text-align:center; }
+  .tablehead > div:first-child, .tablehead > div:last-child { text-align:left; }
+  .seg { display:flex; gap:2px; justify-content:center; }
   .seg button {
-    flex:1; border:1px solid var(--line); border-radius:7px;
-    background:#fff; padding:9px 4px; font-size:18px; cursor:pointer;
-    min-height:44px; font-family:inherit; color:var(--muted);
-    -webkit-tap-highlight-color: transparent;
+    width:32px; height:32px; border:1px solid var(--line); border-radius:5px;
+    background:#fff; padding:0; font-size:14px; cursor:pointer;
+    font-family:inherit; color:var(--muted);
+    -webkit-tap-highlight-color: transparent; line-height:1;
   }
   .seg button.on.ok    { background:#dcfce7; border-color:#86efac; color:var(--good); font-weight:700; }
   .seg button.on.bad   { background:#fee2e2; border-color:#fca5a5; color:var(--bad); font-weight:700; }
   .athinp {
-    width:100%; border:1px solid var(--line); border-radius:7px;
-    padding:6px 8px; font-size:13px; min-height:36px;
+    width:100%; border:1px solid var(--line); border-radius:4px;
+    padding:4px 6px; font-size:12px; min-height:30px;
     font-family:inherit; background:#fff; color:var(--text);
   }
+  /* Mobile: keep the compact table but shrink fonts further */
   @media (max-width: 640px) {
-    .row { grid-template-columns: 1fr; gap:4px; padding:10px 0; }
-    .row .lbl { font-size:14px; font-weight:600; }
-    .row .seg { max-width:200px; }
+    .row, .tablehead { grid-template-columns: minmax(0,1.4fr) 36px 36px minmax(0,1fr); gap:3px; padding:4px 4px; font-size:11.5px; }
+    .row .lbl { font-size:11.5px; line-height:1.25; }
+    .seg button { width:30px; height:30px; font-size:13px; }
+    .athinp { font-size:11.5px; min-height:26px; padding:3px 5px; }
+    .sectionhead { font-size:11.5px; padding:4px 6px; }
+    .tablehead { font-size:10px; }
   }
   .sig-wrap { border:1px solid var(--line); border-radius:10px; background:#fff;
     overflow:hidden; }
