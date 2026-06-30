@@ -24,6 +24,13 @@
   to = "/.netlify/functions/verkefnalisti"
   status = 200
 
+# Skoða — tokenized remote ársskoðun fill flow.
+# GET = invite/list/single submission, POST {action:'invite'|'submit'} = mutate.
+[[redirects]]
+  from = "/api/skoda"
+  to = "/.netlify/functions/skoda"
+  status = 200
+
 # Friendly URL for the private Inbox digest:
 #   /api/inbox    →  /.netlify/functions/inbox
 [[redirects]]
