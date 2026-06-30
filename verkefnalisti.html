@@ -94,6 +94,29 @@
   @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.5; } }
   .empty { padding:18px 0; color:var(--muted); font-size:13px; font-style:italic; text-align:center; }
 
+  /* Category filter chips */
+  .cat-bar { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:18px; padding:12px 14px; background:var(--panel); border:1px solid var(--line); border-radius:10px; box-shadow:0 1px 2px rgba(15,23,42,.03); }
+  .cat-chip { display:inline-flex; align-items:center; gap:5px; padding:5px 11px; border:1px solid var(--line); border-radius:99px; font-size:12px; font-weight:600; color:var(--muted); background:#fff; cursor:pointer; user-select:none; transition:all .12s; }
+  .cat-chip:hover { border-color:#cbd5e1; background:#f8fafc; }
+  .cat-chip.active { background:var(--fg); color:#fff; border-color:var(--fg); }
+  .cat-chip .cnt { font-variant-numeric:tabular-nums; opacity:.7; font-size:11px; }
+
+  /* Category badge on task row */
+  .cat-badge { display:inline-block; padding:1.5px 7px; border-radius:99px; font-size:10px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; margin-right:6px; vertical-align:middle; }
+  .cat-utlit    { background:#fce7f3; color:#9d174d; }
+  .cat-customer { background:#dbeafe; color:#1e40af; }
+  .cat-skjol    { background:#fef3c7; color:#92400e; }
+  .cat-reikning { background:#dcfce7; color:#166534; }
+  .cat-bakendi  { background:#e0e7ff; color:#3730a3; }
+  .cat-oryggi   { background:#fee2e2; color:#991b1b; }
+  .cat-vefryni  { background:#f3e8ff; color:#6b21a8; }
+  .cat-listi    { background:#cffafe; color:#155e75; }
+  .cat-allt     { background:#f1f5f9; color:#475569; }
+
+  /* Status: í yfirferð */
+  .pill.i_yfirferd { background:#ffedd5; color:#9a3412; border:1px solid #fed7aa; }
+  .task[data-status="i_yfirferd"] { background:#fff7ed; border-left:3px solid #f97316; padding-left:10px; }
+
   @media (max-width:640px) {
     body { padding:14px; }
     .stats { grid-template-columns:repeat(2,1fr); }
@@ -113,6 +136,18 @@
   <h2>➕ Ný beidni</h2>
   <label>Stutt fyrirsögn</label>
   <input id="add-title" placeholder="t.d. „Laga reikningalistann á customer.html"" />
+  <label>Flokkur</label>
+  <select id="add-cat" style="width:100%;padding:10px 12px;background:#fff;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:14px">
+    <option value="allt">📋 Almennt</option>
+    <option value="utlit">🎨 Útlit</option>
+    <option value="customer">👤 Customer DB</option>
+    <option value="skjol">📄 Skjala-vinnsla</option>
+    <option value="reikning">💰 Reikningagerð</option>
+    <option value="bakendi">🔌 Bakendi / API</option>
+    <option value="vefryni">🔍 Vefrýni</option>
+    <option value="oryggi">🔒 Öryggi</option>
+    <option value="listi">📋 Verkefnalisti</option>
+  </select>
   <label>Lýsing (valkv.)</label>
   <textarea id="add-desc" placeholder="Hvar gerist þetta? Hvað á að breytast? Hvaða viðmið er notað?"></textarea>
   <label>Skjámynd (valkv. — Ctrl/Cmd-V hér eða smelltu)</label>
@@ -128,9 +163,11 @@
 <div id="stats" class="stats">
   <div class="stat"><b id="c-beidni">–</b><span>Beiðnir</span></div>
   <div class="stat"><b id="c-vinnu" style="color:var(--blue)">–</b><span>Í vinnu</span></div>
+  <div class="stat"><b id="c-yfirferd" style="color:#9a3412">–</b><span>Í yfirferð</span></div>
   <div class="stat"><b id="c-klarad" style="color:var(--ok)">–</b><span>Klárað</span></div>
-  <div class="stat"><b id="c-allt">–</b><span>Heild</span></div>
 </div>
+
+<div id="cat-bar" class="cat-bar"></div>
 
 <div class="section">
   <h2>🟠 Beiðnir <span id="cnt-beidni" class="count"></span></h2>
@@ -140,6 +177,11 @@
 <div class="section">
   <h2>🔵 Í vinnu <span id="cnt-vinnu" class="count"></span></h2>
   <div id="list-vinnu"><div class="empty">Ekkert í vinnu.</div></div>
+</div>
+
+<div class="section">
+  <h2>🟧 Í yfirferð — Agent kláraði, þú/Claude staðfestir <span id="cnt-yfirferd" class="count"></span></h2>
+  <div id="list-yfirferd"><div class="empty">Ekkert í yfirferð.</div></div>
 </div>
 
 <div class="section">
@@ -207,6 +249,7 @@ $('file-input').addEventListener('change', async (e) => {
 $('clear-btn').addEventListener('click', () => {
   $('add-title').value = '';
   $('add-desc').value = '';
+  $('add-cat').value = 'allt';
   setPasteZone(null);
   toast('add-toast', '');
 });
@@ -228,6 +271,7 @@ $('add-btn').addEventListener('click', async () => {
         action:'add', title,
         description: $('add-desc').value.trim() || null,
         request_image_b64: pendingImage,
+        category: $('add-cat').value || 'allt',
       }),
     });
     const data = await r.json();
@@ -269,10 +313,19 @@ async function delTask(id) {
 function renderTask(t) {
   const ops = [];
   if (t.status === 'beidni') ops.push('<button onclick="setStatus(\'' + t.id + '\',\'i_vinnu\')">▶️ Hefja</button>');
-  if (t.status === 'i_vinnu') ops.push('<button onclick="setStatus(\'' + t.id + '\',\'klarad\')">✓ Klára</button>');
+  if (t.status === 'i_vinnu') ops.push('<button onclick="setStatus(\'' + t.id + '\',\'i_yfirferd\')">⏸ Í yfirferð</button>');
+  if (t.status === 'i_yfirferd') {
+    ops.push('<button onclick="setStatus(\'' + t.id + '\',\'klarad\')" style="border-color:var(--ok);color:var(--ok)">✓ Samþykkja</button>');
+    ops.push('<button onclick="setStatus(\'' + t.id + '\',\'i_vinnu\')">↶ Aftur í vinnu</button>');
+  }
   if (t.status === 'klarad' || t.status === 'sleppt') ops.push('<button onclick="setStatus(\'' + t.id + '\',\'beidni\')">↶ Opna aftur</button>');
-  if (t.status !== 'sleppt' && t.status !== 'klarad') ops.push('<button onclick="setStatus(\'' + t.id + '\',\'sleppt\')">⊘ Sleppa</button>');
+  if (t.status !== 'sleppt' && t.status !== 'klarad' && t.status !== 'i_yfirferd') ops.push('<button onclick="setStatus(\'' + t.id + '\',\'sleppt\')">⊘ Sleppa</button>');
   ops.push('<button class="danger" onclick="delTask(\'' + t.id + '\')">🗑</button>');
+
+  const catKey = t.category || 'allt';
+  const catLabel = (CAT_LABELS[catKey] || { label: catKey }).label;
+  const catBadge = '<span class="cat-badge cat-' + esc(catKey) + '">' + esc(catLabel) + '</span>';
+  const agentBadge = t.assigned_agent ? '<span class="cat-badge" style="background:#fef3c7;color:#92400e">🤖 ' + esc(t.assigned_agent) + '</span>' : '';
 
   const imgs = [];
   if (t.request_image_url) {
@@ -290,11 +343,11 @@ function renderTask(t) {
   const grip = draggable ? '<span class="grip" title="Draga til að breyta forgangsröð">⋮⋮</span>' : '';
 
   return (
-    '<div class="task" data-id="' + t.id + '" data-status="' + t.status + '"' + draggable + '>' +
+    '<div class="task" data-id="' + t.id + '" data-status="' + t.status + '" data-category="' + esc(catKey) + '"' + draggable + '>' +
       '<div class="task-body">' +
         grip +
         '<div class="task-text">' +
-          '<div class="title">' + esc(t.title) + '</div>' +
+          '<div class="title">' + catBadge + agentBadge + esc(t.title) + '</div>' +
           (t.description ? '<div class="desc">' + esc(t.description) + '</div>' : '') +
           notes +
           (imgs.length ? '<div class="imgs">' + imgs.join('') + '</div>' : '') +
@@ -308,27 +361,80 @@ function renderTask(t) {
   );
 }
 
+// Category metadata — labels rendered on chips + row badges. Add a new key
+// here and a matching .cat-<key> CSS rule above, and it shows up everywhere.
+const CAT_LABELS = {
+  allt:     { label: 'Allt',     emoji: '📋' },
+  utlit:    { label: 'Útlit',    emoji: '🎨' },
+  customer: { label: 'Customer DB', emoji: '👤' },
+  skjol:    { label: 'Skjala-vinnsla', emoji: '📄' },
+  reikning: { label: 'Reikningagerð', emoji: '💰' },
+  bakendi:  { label: 'Bakendi / API', emoji: '🔌' },
+  oryggi:   { label: 'Öryggi',   emoji: '🔒' },
+  vefryni:  { label: 'Vefrýni',  emoji: '🔍' },
+  listi:    { label: 'Verkefnalisti', emoji: '📋' },
+};
+
+let activeCat = (function() {
+  try { return localStorage.getItem('vl-cat') || 'allt'; } catch { return 'allt'; }
+})();
+
+function applyCatFilter() {
+  document.querySelectorAll('.task').forEach(t => {
+    const c = t.dataset.category || 'allt';
+    t.style.display = (activeCat === 'allt' || c === activeCat) ? '' : 'none';
+  });
+  document.querySelectorAll('.cat-chip').forEach(ch => {
+    ch.classList.toggle('active', ch.dataset.cat === activeCat);
+  });
+  try { localStorage.setItem('vl-cat', activeCat); } catch {}
+}
+
+function renderCatBar(tasks) {
+  const counts = { allt: tasks.length };
+  for (const t of tasks) counts[t.category || 'allt'] = (counts[t.category || 'allt'] || 0) + 1;
+  const order = ['allt','utlit','customer','skjol','reikning','bakendi','vefryni','oryggi','listi'];
+  const html = order
+    .filter(k => k === 'allt' || counts[k])
+    .map(k => {
+      const meta = CAT_LABELS[k] || { label: k, emoji: '•' };
+      return '<button class="cat-chip" data-cat="' + esc(k) + '">' +
+        meta.emoji + ' ' + esc(meta.label) +
+        ' <span class="cnt">' + (counts[k] || 0) + '</span>' +
+      '</button>';
+    }).join('');
+  $('cat-bar').innerHTML = html;
+  document.querySelectorAll('.cat-chip').forEach(ch => {
+    ch.addEventListener('click', () => { activeCat = ch.dataset.cat; applyCatFilter(); });
+  });
+}
+
 async function load() {
   try {
     const r = await fetch('/api/verkefnalisti');
     const data = await r.json();
     if (!r.ok || !data.tasks) throw new Error(data.error || 'kunni ekki að hlaða');
 
-    const groups = { beidni:[], i_vinnu:[], klarad:[], sleppt:[] };
+    const groups = { beidni:[], i_vinnu:[], i_yfirferd:[], klarad:[], sleppt:[] };
     for (const t of data.tasks) (groups[t.status] || groups.beidni).push(t);
 
     $('c-beidni').textContent = groups.beidni.length;
     $('c-vinnu').textContent = groups.i_vinnu.length;
+    $('c-yfirferd').textContent = groups.i_yfirferd.length;
     $('c-klarad').textContent = groups.klarad.length;
-    $('c-allt').textContent = data.tasks.length;
 
     $('cnt-beidni').textContent = groups.beidni.length ? '(' + groups.beidni.length + ')' : '';
     $('cnt-vinnu').textContent = groups.i_vinnu.length ? '(' + groups.i_vinnu.length + ')' : '';
+    $('cnt-yfirferd').textContent = groups.i_yfirferd.length ? '(' + groups.i_yfirferd.length + ')' : '';
     $('cnt-klarad').textContent = groups.klarad.length ? '(' + groups.klarad.length + ')' : '';
 
     $('list-beidni').innerHTML = groups.beidni.length ? groups.beidni.map(renderTask).join('') : '<div class="empty">Engin beidni virk núna.</div>';
     $('list-vinnu').innerHTML = groups.i_vinnu.length ? groups.i_vinnu.map(renderTask).join('') : '<div class="empty">Ekkert í vinnu.</div>';
+    $('list-yfirferd').innerHTML = groups.i_yfirferd.length ? groups.i_yfirferd.map(renderTask).join('') : '<div class="empty">Ekkert í yfirferð.</div>';
     $('list-klarad').innerHTML = groups.klarad.length ? groups.klarad.slice(0, 20).map(renderTask).join('') : '<div class="empty">Ekkert klárað ennþá.</div>';
+
+    renderCatBar(data.tasks);
+    applyCatFilter();
     wireDragDrop($('list-beidni'));
     wireDragDrop($('list-vinnu'));
   } catch (e) {

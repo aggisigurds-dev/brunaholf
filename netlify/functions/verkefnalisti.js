@@ -101,6 +101,7 @@ exports.handler = async (event) => {
         request_image_url: reqUrl,
         status: 'beidni',
         priority: Number.isFinite(body.priority) ? body.priority : 1,
+        category: body.category ? String(body.category).trim() : 'allt',
       };
       const r = await sb('verkefnalisti', {
         method: 'POST',
@@ -117,7 +118,7 @@ exports.handler = async (event) => {
       if (!id) return json(400, { error: 'id vantar' });
       const patch = { updated_at: new Date().toISOString() };
       if (body.status) {
-        const ok = ['beidni', 'i_vinnu', 'klarad', 'sleppt'];
+        const ok = ['beidni', 'i_vinnu', 'i_yfirferd', 'klarad', 'sleppt'];
         if (!ok.includes(body.status)) return json(400, { error: 'ógild staða' });
         patch.status = body.status;
         if (body.status === 'klarad') patch.completed_at = new Date().toISOString();
@@ -126,6 +127,8 @@ exports.handler = async (event) => {
       if (typeof body.description === 'string') patch.description = body.description.trim();
       if (typeof body.claude_notes === 'string') patch.claude_notes = body.claude_notes.trim();
       if (typeof body.priority === 'number') patch.priority = body.priority;
+      if (typeof body.category === 'string') patch.category = body.category.trim();
+      if (typeof body.assigned_agent === 'string') patch.assigned_agent = body.assigned_agent.trim();
       try {
         if (body.result_image_b64) {
           patch.result_image_url = await uploadImage(body.result_image_b64, 'result');
