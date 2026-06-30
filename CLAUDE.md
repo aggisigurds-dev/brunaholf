@@ -593,6 +593,12 @@ operational notes, not stale data):
 
 ## Conventions
 
+- **ALLTAF LEYFA VISTUN** ("always allow save"): No save / „Vista" button in
+  any form anywhere may block on validation, required fields, or unsigned
+  signatures. Drafts must always persist. Required-state checks belong on the
+  REVIEW side (Aggi sees „Vantar undirskrift" badge), never as a hard stop on
+  save. Applies to `/skoda.html`, all Slökkvitæki templates, Verkefnalisti
+  beidnir, customer-detail editing — every form.
 - **Language**: UI text in Icelandic. Keep new labels in Icelandic
   unless the field is intrinsically English (e.g. column names).
 - **Money**: ISK, no decimals. Format with `Math.round` + locale.
