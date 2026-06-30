@@ -220,8 +220,20 @@ function render(d) {
     }
     const yrParts = Object.entries(byYear).sort((a, b) => b[0] - a[0])
       .map(([y, v]) => `<b>${y}</b>: ${v.count} stk · ${fmtKr(v.sum)} kr`).join(' · ');
+    const ocrOk = slInv.filter(x => x.amount && x.invoice_number && x.doc_date).length;
     html += '<div class="card"><h2>🧾 Reikningar (Slökkvitæki) — ' + slInv.length + ' · ' + fmtKr(slTotal) + ' kr alls</h2>';
-    if (yrParts) html += '<div class="meta" style="margin-bottom:8px">' + yrParts + '</div>';
+    if (yrParts) html += '<div class="meta" style="margin-bottom:6px">' + yrParts + '</div>';
+    if (ocrOk < slInv.length) {
+      html += '<div class="meta" style="margin-bottom:8px;color:var(--warn)">⚠ ' + ocrOk + ' af ' + slInv.length +
+        ' með fullum OCR-gögnum. Keyrðu Reikningalesari í <a href="/#bakendi" target="_blank" style="color:var(--accent)">Bakenda</a> til að fylla restina.</div>';
+    }
+    // Sort: rows with most data first, then by doc_date desc, then by year desc
+    slInv.sort((a, b) => {
+      const sa = (a.amount ? 1 : 0) + (a.invoice_number ? 1 : 0) + (a.doc_date ? 1 : 0);
+      const sb = (b.amount ? 1 : 0) + (b.invoice_number ? 1 : 0) + (b.doc_date ? 1 : 0);
+      if (sa !== sb) return sb - sa;
+      return (b.doc_date || String(b.year || '')).localeCompare(a.doc_date || String(a.year || ''));
+    });
     html += '<table class="inv"><thead><tr><th>R-nr</th><th>Dags</th><th>Staðsettning</th><th class="num">Upphæð</th><th></th></tr></thead><tbody>';
     for (const i of slInv.slice(0, 60)) {
       html += `<tr><td>${esc(i.invoice_number || '—')}</td>`;
