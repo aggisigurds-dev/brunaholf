@@ -452,13 +452,12 @@ async function submitForm() {
   readHeader();
   readChecks();
 
+  // Signatures are OPTIONAL — employee can save mid-fill and sign later.
+  // Verkkaupinn skrifar oft ekki undir um leið og starfsmaður er á staðnum.
   const sigCust = sigs['sigCanvas'];
-  if (!sigCust || !sigCust.hasInk) {
-    showStatus('Vinsamlegast skrifaðu undir áður en þú vistar.', 'error');
-    return;
-  }
   const sigInsp = sigs['sigInspectorCanvas'];
-  const sigCustDataUrl = sigCust.canvas.toDataURL('image/png');
+  const sigCustDataUrl = (sigCust && sigCust.hasInk)
+    ? sigCust.canvas.toDataURL('image/png') : null;
   const sigInspDataUrl = (sigInsp && sigInsp.hasInk)
     ? sigInsp.canvas.toDataURL('image/png') : null;
 
