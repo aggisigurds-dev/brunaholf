@@ -198,16 +198,17 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   can be fixed (only already-*matched* docs are skipped on re-run).
 - `uttekt-rename.js` — Bakendi **Endurnefna úttektarskýrslur** (`/api/uttekt-rename`):
   deep-scans report PDFs (both layouts — slökkvitæki úttektarskýrsla + brunaviðvörunar-
-  kerfi viðtökupróf/árleg prófun), renames in Drive to `Fyrirtæki - Heimilisfang -
-  Kennitala - Mánuður - Ár` (address preferred from the clean old filename, else
+  kerfi viðtökupróf/árleg prófun), renames in Drive to `Fyrirtæki - Kennitala -
+  Heimilisfang - Ár - Mánuður` (address preferred from the clean old filename, else
   extracted from content with the company-prefix stripped + city abbrevs expanded
   e.g. Grb→Garðabær — multi-site companies like Aðalskoðun stay distinct), excludes
   stray reikningar, takes the real `Dags` date (not „Næsta
   skoðun"), `?dedup=1` finds dupes. Twin of `reikningar-rename.js` (invoices →
   `Fyrirtæki - kt - R nr - dags - upphæð`, with md5 **and** invoice-number dedup).
 - `allt-sheet.js` — builds a sortable "whole database" Google Sheet from the
-  úttektarskýrslu *filenames* in a folder (parses `Fyrirtæki - Heimilisfang -
-  Kennitala - Mánuður - Ár`). `GET /api/allt-sheet[?folder=ID]`.
+  úttektarskýrslu *filenames* in a folder (parses `Fyrirtæki - Kennitala -
+  Heimilisfang - Ár - Mánuður` — also tolerates the legacy
+  `Fyrirtæki - Heimilisfang - Kennitala - Mánuður - Ár` order). `GET /api/allt-sheet[?folder=ID]`.
 - **Sheet creation note**: the sheet-building fns (`allt-sheet`, `reikningar-sheet`,
   `samningar-sheet`, `sheet-create`) create the spreadsheet **without a `locale`**
   property — the Sheets API rejects `locale:'is_IS'` with 400 INVALID_ARGUMENT

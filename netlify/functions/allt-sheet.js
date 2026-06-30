@@ -1,7 +1,9 @@
 // allt-sheet.js — build a sortable "whole database" Google Sheet from the
 // úttektarskýrslu filenames in a Drive folder (default: the "Allt" folder).
 //   GET /api/allt-sheet[?folder=ID][&title=...]
-// Lists every file, parses "Fyrirtæki - Heimilisfang - Kennitala - Mánuður - Ár"
+// Lists every file, parses "Fyrirtæki - Kennitala - Heimilisfang - Ár - Mánuður"
+// (also handles the legacy "Fyrirtæki - Heimilisfang - Kennitala - Mánuður - Ár"
+// layout — parseName uses the kennitala index to detect which order it is in)
 // out of the name, creates a Google Sheet IN that same folder, and returns its url.
 const { freshAccessToken, json, cors } = require('./_google');
 

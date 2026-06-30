@@ -316,7 +316,7 @@
   status = 200
 
 # Bakendi Endurnefna úttektarskýrslur: deep-scan report PDFs (content) and rename
-# to "Fyrirtæki - Heimilisfang - Kennitala - Mánuður - Ár" + find duplicates
+# to "Fyrirtæki - Kennitala - Heimilisfang - Ár - Mánuður" + find duplicates
 [[redirects]]
   from = "/api/uttekt-rename"
   to = "/.netlify/functions/uttekt-rename"
