@@ -16,6 +16,14 @@
   to = "/.netlify/functions/timavera-maeting"
   status = 200
 
+# Brunahólf verkefnalisti — interactive task board between Aggi and Claude.
+# GET = list, POST {action:'add'|'update'|'delete'} = mutate. Screenshots upload
+# to Supabase Storage `verkefnalisti` bucket.
+[[redirects]]
+  from = "/api/verkefnalisti"
+  to = "/.netlify/functions/verkefnalisti"
+  status = 200
+
 # Friendly URL for the private Inbox digest:
 #   /api/inbox    →  /.netlify/functions/inbox
 [[redirects]]

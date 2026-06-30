@@ -6,86 +6,316 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root {
-    --bg:#0f172a; --panel:#1e293b; --line:#334155; --fg:#f1f5f9; --muted:#94a3b8;
-    --ok:#16a34a; --amber:#d97706; --red:#dc2626; --blue:#3b82f6;
+    --bg:#0f172a; --panel:#1e293b; --panel-2:#273549; --line:#334155;
+    --fg:#f1f5f9; --muted:#94a3b8;
+    --ok:#16a34a; --amber:#d97706; --red:#dc2626; --blue:#3b82f6; --violet:#8b5cf6;
   }
   * { box-sizing:border-box; }
-  body { margin:0; font:15px/1.5 -apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--fg); padding:24px; }
-  header { max-width:880px; margin:0 auto 24px; }
+  body { margin:0; font:15px/1.5 -apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--fg); padding:24px; padding-bottom:80px; }
+  header { max-width:980px; margin:0 auto 24px; }
   header h1 { margin:0; font-size:22px; }
   header .sub { color:var(--muted); font-size:13px; margin-top:6px; }
-  main { max-width:880px; margin:0 auto; }
-  .section { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:18px 20px; margin-bottom:18px; }
-  .section h2 { margin:0 0 12px; font-size:15px; font-weight:700; color:var(--blue); letter-spacing:.02em; }
-  .task { display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:start; padding:10px 0; border-bottom:1px solid var(--line); }
-  .task:last-child { border-bottom:0; }
-  .task .id { font:600 12px ui-monospace,Menlo,monospace; color:var(--muted); padding-top:2px; min-width:36px; }
-  .task .body { font-size:14px; }
-  .task .body .desc { color:var(--muted); font-size:12.5px; margin-top:3px; line-height:1.45; }
-  .pill { display:inline-block; padding:3px 9px; border-radius:99px; font-size:11px; font-weight:700; letter-spacing:.02em; }
-  .pill.done { background:rgba(22,163,74,.15); color:var(--ok); border:1px solid rgba(22,163,74,.3); }
-  .pill.open { background:rgba(217,119,6,.15); color:var(--amber); border:1px solid rgba(217,119,6,.3); }
-  .pill.now  { background:rgba(59,130,246,.15); color:var(--blue); border:1px solid rgba(59,130,246,.3); }
-  .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:18px; }
+  main { max-width:980px; margin:0 auto; }
+
+  /* Add form */
+  .add-card { background:linear-gradient(135deg, #1e293b 0%, #273549 100%); border:1px solid var(--line); border-radius:14px; padding:20px; margin-bottom:24px; }
+  .add-card h2 { margin:0 0 14px; font-size:14px; font-weight:700; color:var(--violet); letter-spacing:.04em; text-transform:uppercase; }
+  .add-card label { display:block; font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin:10px 0 5px; font-weight:700; }
+  .add-card input, .add-card textarea {
+    width:100%; padding:10px 12px; background:#0b1320; border:1px solid var(--line); border-radius:8px;
+    color:var(--fg); font:inherit; font-size:14px;
+  }
+  .add-card textarea { min-height:64px; resize:vertical; font:13px/1.45 inherit; }
+  .add-card input:focus, .add-card textarea:focus { outline:none; border-color:var(--blue); }
+  .paste-zone {
+    margin-top:8px; padding:14px; border:1px dashed var(--line); border-radius:8px;
+    background:#0b1320; color:var(--muted); font-size:12.5px; text-align:center; cursor:pointer;
+  }
+  .paste-zone:focus { outline:2px solid var(--blue); }
+  .paste-zone.has-image { border-style:solid; border-color:var(--ok); color:var(--ok); }
+  .paste-zone img { max-width:100%; max-height:200px; border-radius:6px; margin-top:8px; display:block; margin-left:auto; margin-right:auto; }
+  .actions { display:flex; gap:10px; margin-top:14px; align-items:center; flex-wrap:wrap; }
+  .btn { padding:10px 18px; border:0; border-radius:8px; font:600 13px inherit; cursor:pointer; }
+  .btn.primary { background:var(--violet); color:#fff; }
+  .btn.primary:hover { background:#9966f5; }
+  .btn.ghost { background:transparent; color:var(--muted); border:1px solid var(--line); }
+  .btn.ghost:hover { color:var(--fg); border-color:var(--fg); }
+  .btn[disabled] { opacity:.4; cursor:not-allowed; }
+  .toast { font-size:12.5px; }
+  .toast.ok { color:var(--ok); }
+  .toast.err { color:var(--red); }
+
+  /* Stats */
+  .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:20px; }
   .stat { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px; text-align:center; }
-  .stat b { display:block; font-size:24px; }
-  .stat span { color:var(--muted); font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; }
-  .footer-note { text-align:center; color:var(--muted); font-size:12px; margin-top:24px; }
-  .footer-note a { color:var(--blue); text-decoration:none; }
+  .stat b { display:block; font-size:24px; font-weight:700; }
+  .stat span { color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.04em; }
+
+  /* Sections */
+  .section { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-bottom:16px; }
+  .section h2 { margin:0 0 10px; font-size:13px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; display:flex; align-items:center; gap:8px; }
+  .section .count { color:var(--muted); font-weight:500; font-size:12px; }
+
+  /* Task row */
+  .task { display:grid; grid-template-columns:1fr auto; gap:12px; padding:12px 0; border-bottom:1px solid var(--line); align-items:start; }
+  .task:last-child { border-bottom:0; }
+  .task .title { font-size:14px; font-weight:600; line-height:1.4; }
+  .task .desc { color:var(--muted); font-size:12.5px; margin-top:4px; line-height:1.45; white-space:pre-wrap; }
+  .task .meta { color:var(--muted); font-size:11px; margin-top:6px; }
+  .task .imgs { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+  .task .imgs a { display:inline-block; }
+  .task .imgs img { max-width:180px; max-height:140px; border-radius:6px; border:1px solid var(--line); }
+  .task .img-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:2px; }
+  .task .img-box { display:flex; flex-direction:column; }
+  .task .ops { display:flex; gap:6px; align-items:flex-start; flex-wrap:wrap; justify-content:flex-end; }
+  .task .ops button { font-size:11.5px; padding:5px 10px; border-radius:6px; border:1px solid var(--line); background:transparent; color:var(--fg); cursor:pointer; }
+  .task .ops button:hover { background:var(--panel-2); }
+  .task .ops button.danger:hover { background:rgba(220,38,38,.2); color:var(--red); border-color:var(--red); }
+
+  /* Status pills */
+  .pill { display:inline-block; padding:3px 9px; border-radius:99px; font-size:10.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
+  .pill.beidni { background:rgba(217,119,6,.15); color:var(--amber); border:1px solid rgba(217,119,6,.3); }
+  .pill.i_vinnu { background:rgba(59,130,246,.15); color:var(--blue); border:1px solid rgba(59,130,246,.3); }
+  .pill.klarad { background:rgba(22,163,74,.15); color:var(--ok); border:1px solid rgba(22,163,74,.3); }
+  .pill.sleppt { background:rgba(148,163,184,.15); color:var(--muted); border:1px solid rgba(148,163,184,.3); }
   .live-dot { display:inline-block; width:8px; height:8px; background:var(--ok); border-radius:50%; box-shadow:0 0 0 4px rgba(22,163,74,.2); margin-right:6px; vertical-align:middle; animation:pulse 2s infinite; }
   @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.5; } }
+  .empty { padding:18px 0; color:var(--muted); font-size:13px; font-style:italic; text-align:center; }
+
+  @media (max-width:640px) {
+    body { padding:14px; }
+    .stats { grid-template-columns:repeat(2,1fr); }
+    .task { grid-template-columns:1fr; }
+    .task .ops { justify-content:flex-start; }
+  }
 </style>
 </head>
 <body>
 <header>
   <h1>📋 Brunahólf · Verkefnalisti</h1>
-  <div class="sub"><span class="live-dot"></span>Lifandi — listinn yfir það sem er á döfinni og það sem var klárað í dag.</div>
+  <div class="sub"><span class="live-dot"></span>Lifandi borð. Líma skjámynd með Ctrl/Cmd-V eða smella til að velja skrá. Claude svarar með skjámynd af niðurstöðu.</div>
 </header>
 <main>
 
-<div class="stats">
-  <div class="stat"><b style="color:var(--ok)">34</b><span>Klárað</span></div>
-  <div class="stat"><b style="color:var(--blue)">3</b><span>Í dag</span></div>
-  <div class="stat"><b style="color:var(--amber)">15</b><span>Eftir</span></div>
-  <div class="stat"><b>49</b><span>Heild</span></div>
+<div class="add-card">
+  <h2>➕ Ný beidni</h2>
+  <label>Stutt fyrirsögn</label>
+  <input id="add-title" placeholder="t.d. „Laga reikningalistann á customer.html"" />
+  <label>Lýsing (valkv.)</label>
+  <textarea id="add-desc" placeholder="Hvar gerist þetta? Hvað á að breytast? Hvaða viðmið er notað?"></textarea>
+  <label>Skjámynd (valkv. — Ctrl/Cmd-V hér eða smelltu)</label>
+  <div id="paste-zone" class="paste-zone" tabindex="0" role="button" aria-label="Líma skjámynd hér">📎 Límdu skjámynd með Ctrl/Cmd-V — eða smelltu til að velja skrá</div>
+  <input id="file-input" type="file" accept="image/*" capture="environment" hidden />
+  <div class="actions">
+    <button id="add-btn" class="btn primary">➕ Skrá beidni</button>
+    <button id="clear-btn" class="btn ghost">Hreinsa</button>
+    <span id="add-toast" class="toast"></span>
+  </div>
+</div>
+
+<div id="stats" class="stats">
+  <div class="stat"><b id="c-beidni">–</b><span>Beiðnir</span></div>
+  <div class="stat"><b id="c-vinnu" style="color:var(--blue)">–</b><span>Í vinnu</span></div>
+  <div class="stat"><b id="c-klarad" style="color:var(--ok)">–</b><span>Klárað</span></div>
+  <div class="stat"><b id="c-allt">–</b><span>Heild</span></div>
 </div>
 
 <div class="section">
-  <h2>✅ Klárað í dag</h2>
-  <div class="task"><span class="id">#31</span><div class="body">pdf-classify.html: tips-text → nýtt format<div class="desc">„Fyrirtæki - kt - heimilisfang - Ár - Mánuður"</div></div><span class="pill done">DONE</span></div>
-  <div class="task"><span class="id">#32</span><div class="body">uttekt-rename.js: kt á undan heimilisfangi<div class="desc">Nýja formatröðin pushuð í /api/uttekt-rename (PR #132)</div></div><span class="pill done">DONE</span></div>
-  <div class="task"><span class="id">#33</span><div class="body">CLAUDE.md + Bakendi-tile + skjalaheiti + netlify.toml + allt-sheet<div class="desc">Allar tilvísanir í gamla röð uppfærðar á einum stað</div></div><span class="pill done">DONE</span></div>
-  <div class="task"><span class="id">#35</span><div class="body">PDF-flokkari á 940 PDF í MBOX-möppunni<div class="desc">Niðurstaða: Processed: 970 · Úttekt: 143 · Reikningar: 664 · Annað: 38 · Dups: 125</div></div><span class="pill done">DONE</span></div>
+  <h2>🟠 Beiðnir <span id="cnt-beidni" class="count"></span></h2>
+  <div id="list-beidni"><div class="empty">Engin beidni virk núna.</div></div>
 </div>
 
 <div class="section">
-  <h2>🔵 Næst á dagskrá</h2>
-  <div class="task"><span class="id">#34</span><div class="body">Staðfesta að MBOX-extract resume klárist<div class="desc">Eftirstandandi póstar úr gærdags-fyrirspurn (940 í gær)</div></div><span class="pill open">PENDING</span></div>
-  <div class="task"><span class="id">#36</span><div class="body">Indexa endurnefnda PDF í customer_documents<div class="desc">Eftir flokkun: keyra Bakendi → Reikningalesari á reikninga-möppunni</div></div><span class="pill open">PENDING</span></div>
-  <div class="task"><span class="id">#37</span><div class="body">Bakendi card-grid: revert eða iterate?<div class="desc">Þú sagðir „hrillilega ljótt" — þarf að ákveða: rífa eða lagfæra?</div></div><span class="pill open">PENDING</span></div>
+  <h2>🔵 Í vinnu <span id="cnt-vinnu" class="count"></span></h2>
+  <div id="list-vinnu"><div class="empty">Ekkert í vinnu.</div></div>
 </div>
 
 <div class="section">
-  <h2>🟡 Á restina af lista</h2>
-  <div class="task"><span class="id">#38</span><div class="body">Vefrýni queue workflow<div class="desc">Verklag að taka pinna úr „Senda í viðgerð" og laga</div></div><span class="pill open">PENDING</span></div>
-  <div class="task"><span class="id">#39</span><div class="body">Slökkvitæki: restyle restina af views<div class="desc">Brunastál þema á allar síður sem eru ekki hand-styled enn</div></div><span class="pill open">PENDING</span></div>
-  <div class="task"><span class="id">#40</span><div class="body">Slökkvitæki sidebar: STJÓRNSTÖÐ / LEIÐSÖGN section labels<div class="desc">Hópa nav-items með smáu hástafa-label</div></div><span class="pill open">PENDING</span></div>
-  <div class="task"><span class="id">#41</span><div class="body">Customer.html Phase 3 — inline editing af customer_documents<div class="desc">Breyta doc_type / amount / invoice_number beint í UI</div></div><span class="pill open">PENDING</span></div>
-  <div class="task"><span class="id">#42</span><div class="body">Customer.html Phase 4 — AI deep-review<div class="desc">Senda allt fyrir kúnna í Claude og fá yfirgripsmikið mat</div></div><span class="pill open">PENDING</span></div>
-  <div class="task"><span class="id">#43</span><div class="body">dkPlus phase 2 — push invoices úr POS sala / brunakerfi úttektir<div class="desc">Skrifa reikninga inn í dkPlus í gegnum /api/dkplus-invoice</div></div><span class="pill open">PENDING</span></div>
-  <div class="task"><span class="id">#44</span><div class="body">Payday API push — útgáfa drög í Payday<div class="desc">Núna les payday-pull bara inn; vantar push hina leiðina</div></div><span class="pill open">PENDING</span></div>
-  <div class="task"><span class="id">#45</span><div class="body">Reikningagerð tab — Verðlisti + Til að senda + Sent nýlega<div class="desc">Leysir af hólmi Tekjur Google Sheet (sjá CLAUDE.md „Invoicing model")</div></div><span class="pill open">PENDING</span></div>
-  <div class="task"><span class="id">#46</span><div class="body">pricing_guide tafla — schema + UI<div class="desc">Per-verkstaður taxti + line-item-overrides</div></div><span class="pill open">PENDING</span></div>
-  <div class="task"><span class="id">#47</span><div class="body">material_prices tafla — unit prices per material<div class="desc">Akríl / kragar / bönd osfrv. (úr Verðskrá flipanum í Tekjur)</div></div><span class="pill open">PENDING</span></div>
-  <div class="task"><span class="id">#48</span><div class="body">Hole_size_rates: surface í Reikningagerð grid + UI fyrir Bönd/Kragar override<div class="desc">Daglegt yfirlit fyrir Heklureit / Dalveg / NLSH</div></div><span class="pill open">PENDING</span></div>
-  <div class="task"><span class="id">#49</span><div class="body">RLS á 19 töflur — design policies per table<div class="desc">19 töflur opnar fyrir anon key núna; design öryggis-stefnu</div></div><span class="pill open">PENDING</span></div>
-</div>
-
-<div class="footer-note">
-  PR sem er að deploy-a núna: <a href="https://github.com/aggisigurds-dev/brunaholf/pull/132" target="_blank">PR #132 — Skýrslu-format</a>
-  · Síða uppfærð sjálfvirkt þegar Netlify-deploy klárast.
+  <h2>🟢 Klárað <span id="cnt-klarad" class="count"></span></h2>
+  <div id="list-klarad"><div class="empty">Ekkert klárað ennþá.</div></div>
 </div>
 
 </main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtTime = (iso) => {
+  if (!iso) return '';
+  try {
+    const d = new Date(iso); const now = new Date();
+    const dayMs = 86400000; const dt = (now - d) / dayMs;
+    if (dt < 1/24) return Math.max(1, Math.round((now - d) / 60000)) + ' mín síðan';
+    if (dt < 1) return Math.round((now - d) / 3600000) + ' klst síðan';
+    if (dt < 7) return Math.round(dt) + ' d síðan';
+    return d.toLocaleDateString('is-IS', { day:'2-digit', month:'2-digit', year:'numeric' });
+  } catch { return iso; }
+};
+
+let pendingImage = null;     // base64 data URL waiting to be sent
+
+function setPasteZone(dataUrl) {
+  pendingImage = dataUrl;
+  const z = $('paste-zone');
+  if (!dataUrl) {
+    z.classList.remove('has-image');
+    z.innerHTML = '📎 Límdu skjámynd með Ctrl/Cmd-V — eða smelltu til að velja skrá';
+  } else {
+    z.classList.add('has-image');
+    z.innerHTML = '✓ Skjámynd hlaðin (smelltu til að skipta út)<br><img src="' + dataUrl + '" alt="">';
+  }
+}
+
+function fileToDataUrl(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+document.addEventListener('paste', async (ev) => {
+  const items = (ev.clipboardData || {}).items || [];
+  for (const it of items) {
+    if (it.type && it.type.startsWith('image/')) {
+      const file = it.getAsFile();
+      if (file) { setPasteZone(await fileToDataUrl(file)); ev.preventDefault(); break; }
+    }
+  }
+});
+
+$('paste-zone').addEventListener('click', () => $('file-input').click());
+$('paste-zone').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('file-input').click(); } });
+$('file-input').addEventListener('change', async (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (file) setPasteZone(await fileToDataUrl(file));
+});
+
+$('clear-btn').addEventListener('click', () => {
+  $('add-title').value = '';
+  $('add-desc').value = '';
+  setPasteZone(null);
+  toast('add-toast', '');
+});
+
+function toast(id, msg, kind) {
+  const t = $(id);
+  t.textContent = msg || '';
+  t.className = 'toast ' + (kind || '');
+}
+
+$('add-btn').addEventListener('click', async () => {
+  const title = $('add-title').value.trim();
+  if (!title) { toast('add-toast', 'Sláðu inn fyrirsögn', 'err'); return; }
+  $('add-btn').disabled = true; toast('add-toast', 'Sendi…');
+  try {
+    const r = await fetch('/api/verkefnalisti', {
+      method:'POST', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({
+        action:'add', title,
+        description: $('add-desc').value.trim() || null,
+        request_image_b64: pendingImage,
+      }),
+    });
+    const data = await r.json();
+    if (!r.ok || data.error) throw new Error(data.error || ('HTTP ' + r.status));
+    toast('add-toast', '✓ Skráð', 'ok');
+    $('add-title').value=''; $('add-desc').value=''; setPasteZone(null);
+    setTimeout(() => toast('add-toast', ''), 2500);
+    await load();
+  } catch (e) {
+    toast('add-toast', 'Villa: ' + e.message, 'err');
+  } finally {
+    $('add-btn').disabled = false;
+  }
+});
+
+async function setStatus(id, status) {
+  try {
+    const r = await fetch('/api/verkefnalisti', {
+      method:'POST', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ action:'update', id, status }),
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    await load();
+  } catch (e) { alert('Villa: ' + e.message); }
+}
+
+async function delTask(id) {
+  if (!confirm('Eyða þessari beidni?')) return;
+  try {
+    const r = await fetch('/api/verkefnalisti', {
+      method:'POST', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ action:'delete', id }),
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    await load();
+  } catch (e) { alert('Villa: ' + e.message); }
+}
+
+function renderTask(t) {
+  const ops = [];
+  if (t.status === 'beidni') ops.push('<button onclick="setStatus(\'' + t.id + '\',\'i_vinnu\')">▶️ Hefja</button>');
+  if (t.status === 'i_vinnu') ops.push('<button onclick="setStatus(\'' + t.id + '\',\'klarad\')">✓ Klára</button>');
+  if (t.status === 'klarad' || t.status === 'sleppt') ops.push('<button onclick="setStatus(\'' + t.id + '\',\'beidni\')">↶ Opna aftur</button>');
+  if (t.status !== 'sleppt' && t.status !== 'klarad') ops.push('<button onclick="setStatus(\'' + t.id + '\',\'sleppt\')">⊘ Sleppa</button>');
+  ops.push('<button class="danger" onclick="delTask(\'' + t.id + '\')">🗑</button>');
+
+  const imgs = [];
+  if (t.request_image_url) {
+    imgs.push('<div class="img-box"><div class="img-label">Beidni</div><a href="' + esc(t.request_image_url) + '" target="_blank"><img src="' + esc(t.request_image_url) + '" alt="beidni"></a></div>');
+  }
+  if (t.result_image_url) {
+    imgs.push('<div class="img-box"><div class="img-label">Niðurstaða</div><a href="' + esc(t.result_image_url) + '" target="_blank"><img src="' + esc(t.result_image_url) + '" alt="niðurstaða"></a></div>');
+  }
+
+  const notes = t.claude_notes ? '<div class="desc" style="color:#a5b4fc;margin-top:6px"><b>Claude:</b> ' + esc(t.claude_notes) + '</div>' : '';
+
+  return (
+    '<div class="task">' +
+      '<div>' +
+        '<div class="title">' + esc(t.title) + '</div>' +
+        (t.description ? '<div class="desc">' + esc(t.description) + '</div>' : '') +
+        notes +
+        (imgs.length ? '<div class="imgs">' + imgs.join('') + '</div>' : '') +
+        '<div class="meta">' + fmtTime(t.created_at) +
+          (t.completed_at ? ' · klárað ' + fmtTime(t.completed_at) : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="ops">' + ops.join('') + '</div>' +
+    '</div>'
+  );
+}
+
+async function load() {
+  try {
+    const r = await fetch('/api/verkefnalisti');
+    const data = await r.json();
+    if (!r.ok || !data.tasks) throw new Error(data.error || 'kunni ekki að hlaða');
+
+    const groups = { beidni:[], i_vinnu:[], klarad:[], sleppt:[] };
+    for (const t of data.tasks) (groups[t.status] || groups.beidni).push(t);
+
+    $('c-beidni').textContent = groups.beidni.length;
+    $('c-vinnu').textContent = groups.i_vinnu.length;
+    $('c-klarad').textContent = groups.klarad.length;
+    $('c-allt').textContent = data.tasks.length;
+
+    $('cnt-beidni').textContent = groups.beidni.length ? '(' + groups.beidni.length + ')' : '';
+    $('cnt-vinnu').textContent = groups.i_vinnu.length ? '(' + groups.i_vinnu.length + ')' : '';
+    $('cnt-klarad').textContent = groups.klarad.length ? '(' + groups.klarad.length + ')' : '';
+
+    $('list-beidni').innerHTML = groups.beidni.length ? groups.beidni.map(renderTask).join('') : '<div class="empty">Engin beidni virk núna.</div>';
+    $('list-vinnu').innerHTML = groups.i_vinnu.length ? groups.i_vinnu.map(renderTask).join('') : '<div class="empty">Ekkert í vinnu.</div>';
+    $('list-klarad').innerHTML = groups.klarad.length ? groups.klarad.slice(0, 20).map(renderTask).join('') : '<div class="empty">Ekkert klárað ennþá.</div>';
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+load();
+setInterval(load, 15000);   // poll every 15s — Claude can drop a result and you see it
+</script>
 </body>
 </html>
