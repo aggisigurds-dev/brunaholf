@@ -189,7 +189,9 @@ async function boot() {
       tegund_kerfis: '',
       naesta_skodun: '',
       profun_af: '',
+      starfsmadur: '',
       athugasemdir: '',
+      rafhl_dags: '',
     };
     ROWS.forEach(r => { if (r.key) state.checks[r.key] = { state: null, note: '' }; });
     render();
@@ -212,14 +214,21 @@ function render() {
       <div class="grid2">
         <div class="info-row"><label>Verkkaupi</label><input type="text" id="f_verkkaupi" value="${esc(state.values.verkkaupi)}"></div>
         <div class="info-row"><label>Kennitala</label><input type="text" id="f_kennitala" value="${esc(state.values.kennitala)}"></div>
+        <div class="info-row"><label>Sími</label><input type="tel" id="f_simi" value="${esc(state.values.simi)}"></div>
+        <div class="info-row"><label>Tengiliður</label><input type="text" id="f_tengilidur" value="${esc(state.values.tengilidur)}"></div>
         <div class="info-row"><label>Heimilisfang</label><input type="text" id="f_heimilisfang" value="${esc(state.values.heimilisfang)}"></div>
         <div class="info-row"><label>Póstnúmer</label><input type="text" id="f_postnr" value="${esc(state.values.postnr)}"></div>
-        <div class="info-row"><label>Tengiliður</label><input type="text" id="f_tengilidur" value="${esc(state.values.tengilidur)}"></div>
-        <div class="info-row"><label>Sími</label><input type="tel" id="f_simi" value="${esc(state.values.simi)}"></div>
-        <div class="info-row"><label>Dagsetning</label><input type="date" id="f_dagsetning" value="${esc(state.values.dagsetning)}"></div>
-        <div class="info-row"><label>Prófun (allt kerfið / hluti)</label><input type="text" id="f_profunarsvid" placeholder="t.d. Allt kerfið"></div>
-        <div class="info-row"><label>Tegund kerfis</label><input type="text" id="f_tegund_kerfis" placeholder="t.d. Esser"></div>
+        <div class="info-row">
+          <label>Prófun</label>
+          <select id="f_profunarsvid">
+            <option value="">— veldu —</option>
+            <option value="Allt kerfið">Allt kerfið</option>
+            <option value="Hluti af kerfi">Hluti af kerfi</option>
+          </select>
+        </div>
+        <div class="info-row"><label>Tegund kerfis</label><input type="text" id="f_tegund_kerfis" placeholder="t.d. Esser, Bosch, Siemens…"></div>
         <div class="info-row"><label>Næsta skoðun</label><input type="text" id="f_naesta_skodun" placeholder="t.d. Júní 2027"></div>
+        <div class="info-row"><label>Dagsetning skoðunar</label><input type="date" id="f_dagsetning" value="${esc(state.values.dagsetning)}"></div>
       </div>
     </div>
 
@@ -232,23 +241,39 @@ function render() {
       <h2>Athugasemdir og undirritun</h2>
       <div class="info-row">
         <label>Prófun framkvæmd af</label>
-        <input type="text" id="f_profun_af" placeholder="Nafn starfsmanns">
+        <input type="text" id="f_profun_af" placeholder="Nafn þess sem framkvæmdi prófunina">
       </div>
       <div class="info-row">
         <label>Athugasemdir</label>
         <textarea id="f_athugasemdir" rows="3" placeholder="Ef einhverjar athugasemdir…"></textarea>
       </div>
 
-      <label style="margin-top:10px">Undirritun verkkaupa</label>
-      <div class="sig-wrap">
-        <canvas id="sigCanvas" width="800" height="160"></canvas>
-        <div class="sig-actions">
-          <span>Skrifaðu undir með fingri eða mús</span>
-          <button type="button" onclick="clearSig()">Hreinsa</button>
+      <div class="grid2" style="margin-top:14px">
+        <div>
+          <label>F.h. Slökkvitæki ehf (starfsmaður) — nafn</label>
+          <input type="text" id="f_starfsmadur" placeholder="Nafn starfsmanns Slökkvitækja" style="margin-bottom:8px">
+          <div class="sig-wrap">
+            <canvas id="sigInspectorCanvas" width="800" height="160"></canvas>
+            <div class="sig-actions">
+              <span>Undirritun starfsmanns</span>
+              <button type="button" onclick="clearInspectorSig()">Hreinsa</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <label>F.h. verkkaupa — nafn</label>
+          <input type="text" id="f_verkkaupi_sig_name" value="${esc(state.values.verkkaupi)}" placeholder="Nafn verkkaupa" style="margin-bottom:8px">
+          <div class="sig-wrap">
+            <canvas id="sigCanvas" width="800" height="160"></canvas>
+            <div class="sig-actions">
+              <span>Undirritun verkkaupa</span>
+              <button type="button" onclick="clearSig()">Hreinsa</button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="info-row" style="margin-top:10px">
+      <div class="info-row" style="margin-top:14px">
         <label>Nafn þess sem skilar inn (valkvætt)</label>
         <input type="text" id="f_submitter_name" placeholder="Þitt nafn">
       </div>
@@ -268,12 +293,24 @@ function render() {
       Slökkvitæki ehf · Helluhrauni 10, 220 Hafnarfirði · kt. 600508-0400 · sími 565-4080
     </div>
   `;
+  // Re-apply any select values (selects don't honour `value=` attribute).
+  const profSel = document.getElementById('f_profunarsvid');
+  if (profSel && state.values.profunarsvid) profSel.value = state.values.profunarsvid;
+  // Pre-fill known values into inputs that aren't initialised inline.
+  const presetIds = ['profun_af','starfsmadur','tegund_kerfis','naesta_skodun','athugasemdir','rafhl_dags'];
+  presetIds.forEach(id => {
+    const el = document.getElementById('f_' + id);
+    if (el && state.values[id]) el.value = state.values[id];
+  });
   initSignature();
 }
 
 function rowHtml(row, idx) {
   if (row.sect) return `<div class="sectionhead">${esc(row.sect)}</div>`;
   const k = row.key;
+  // Row a11 (rafhlöður) keeps the dagsetning column matching the
+  // slokkvitæki template's `{{rafhl_dags}}` field instead of `ath_a11`.
+  const noteId = (k === 'a11') ? 'f_rafhl_dags' : ('ath_' + k);
   return `
     <div class="row">
       <div class="lbl">${esc(row.label)}</div>
@@ -283,7 +320,7 @@ function rowHtml(row, idx) {
       <div class="seg">
         <button type="button" class="bad" onclick="setCheck('${k}','bad')" id="b_${k}_bad" title="Ólagi">✗</button>
       </div>
-      <input type="text" class="athinp" id="ath_${k}" placeholder="${esc(row.athPlaceholder || 'Athugasemd')}">
+      <input type="text" class="athinp" id="${noteId}" placeholder="${esc(row.athPlaceholder || 'Athugasemd')}">
     </div>`;
 }
 
@@ -296,50 +333,58 @@ function setCheck(key, val) {
   bad.classList.toggle('on', state.checks[key].state === 'bad');
 }
 
-/* — Signature pad — */
-let sigCtx, sigCanvas, sigDrawing = false, sigHasInk = false;
+/* — Signature pads (verkkaupi + starfsmaður) — */
+const sigs = {}; // { custId: { canvas, ctx, hasInk } }
 function initSignature() {
-  sigCanvas = document.getElementById('sigCanvas');
-  if (!sigCanvas) return;
-  // Match canvas backing-store to displayed size for sharp lines.
-  const rect = sigCanvas.getBoundingClientRect();
-  sigCanvas.width  = Math.round(rect.width  * (window.devicePixelRatio || 1));
-  sigCanvas.height = Math.round(rect.height * (window.devicePixelRatio || 1));
-  sigCtx = sigCanvas.getContext('2d');
-  sigCtx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
-  sigCtx.lineWidth = 2;
-  sigCtx.lineCap = 'round';
-  sigCtx.lineJoin = 'round';
-  sigCtx.strokeStyle = '#0f172a';
+  initOneSig('sigCanvas');
+  initOneSig('sigInspectorCanvas');
+}
+function initOneSig(canvasId) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width  = Math.round(rect.width  * (window.devicePixelRatio || 1));
+  canvas.height = Math.round(rect.height * (window.devicePixelRatio || 1));
+  const ctx = canvas.getContext('2d');
+  ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = '#0f172a';
+  sigs[canvasId] = { canvas, ctx, hasInk: false, drawing: false };
+  const s = sigs[canvasId];
 
-  const start = (x, y) => { sigDrawing = true; sigCtx.beginPath(); sigCtx.moveTo(x, y); };
-  const move  = (x, y) => { if (sigDrawing) { sigCtx.lineTo(x, y); sigCtx.stroke(); sigHasInk = true; } };
-  const end   = () => { sigDrawing = false; };
   const pos = (e) => {
-    const r = sigCanvas.getBoundingClientRect();
+    const r = canvas.getBoundingClientRect();
     if (e.touches && e.touches.length) {
       return [e.touches[0].clientX - r.left, e.touches[0].clientY - r.top];
     }
     return [e.clientX - r.left, e.clientY - r.top];
   };
-  sigCanvas.addEventListener('mousedown', e => { const [x,y]=pos(e); start(x,y); });
-  sigCanvas.addEventListener('mousemove', e => { const [x,y]=pos(e); move(x,y); });
-  sigCanvas.addEventListener('mouseup',   end);
-  sigCanvas.addEventListener('mouseleave',end);
-  sigCanvas.addEventListener('touchstart',e => { e.preventDefault(); const [x,y]=pos(e); start(x,y); }, { passive:false });
-  sigCanvas.addEventListener('touchmove', e => { e.preventDefault(); const [x,y]=pos(e); move(x,y); },  { passive:false });
-  sigCanvas.addEventListener('touchend',  e => { e.preventDefault(); end(); }, { passive:false });
+  const start = (x, y) => { s.drawing = true; s.ctx.beginPath(); s.ctx.moveTo(x, y); };
+  const move  = (x, y) => { if (s.drawing) { s.ctx.lineTo(x, y); s.ctx.stroke(); s.hasInk = true; } };
+  const end   = () => { s.drawing = false; };
+  canvas.addEventListener('mousedown', e => { const [x,y]=pos(e); start(x,y); });
+  canvas.addEventListener('mousemove', e => { const [x,y]=pos(e); move(x,y); });
+  canvas.addEventListener('mouseup',   end);
+  canvas.addEventListener('mouseleave',end);
+  canvas.addEventListener('touchstart',e => { e.preventDefault(); const [x,y]=pos(e); start(x,y); }, { passive:false });
+  canvas.addEventListener('touchmove', e => { e.preventDefault(); const [x,y]=pos(e); move(x,y); },  { passive:false });
+  canvas.addEventListener('touchend',  e => { e.preventDefault(); end(); }, { passive:false });
 }
 function clearSig() {
-  if (sigCtx && sigCanvas) {
-    sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
-    sigHasInk = false;
-  }
+  const s = sigs['sigCanvas'];
+  if (s) { s.ctx.clearRect(0, 0, s.canvas.width, s.canvas.height); s.hasInk = false; }
+}
+function clearInspectorSig() {
+  const s = sigs['sigInspectorCanvas'];
+  if (s) { s.ctx.clearRect(0, 0, s.canvas.width, s.canvas.height); s.hasInk = false; }
 }
 
 function readHeader() {
   const ids = ['verkkaupi','kennitala','heimilisfang','postnr','tengilidur','simi',
-    'dagsetning','profunarsvid','tegund_kerfis','naesta_skodun','profun_af','athugasemdir'];
+    'dagsetning','profunarsvid','tegund_kerfis','naesta_skodun','profun_af',
+    'starfsmadur','athugasemdir','rafhl_dags'];
   ids.forEach(id => {
     const el = document.getElementById('f_' + id);
     if (el) state.values[id] = el.value;
@@ -348,26 +393,70 @@ function readHeader() {
 function readChecks() {
   ROWS.forEach(r => {
     if (!r.key) return;
-    const el = document.getElementById('ath_' + r.key);
+    // Row a11 stores its „athugasemd" in the dedicated rafhl_dags field.
+    const id = (r.key === 'a11') ? 'f_rafhl_dags' : ('ath_' + r.key);
+    const el = document.getElementById(id);
     if (el) state.checks[r.key].note = el.value;
   });
+}
+
+// Build a flat, template-compatible field map matching the
+// slokkvitæki `seed_arsskodun_brunakerfa` HTML placeholders:
+//   {{chk_a1}} / {{chk_a1n}} / {{ath_a1}} … plus the header keys.
+// This lets the slokkvitæki side (or any downstream PDF generator)
+// drop the form_data straight into the template HTML.
+function buildTemplateFields() {
+  const f = {
+    dagsetning:    state.values.dagsetning   || '',
+    verkkaupi:     state.values.verkkaupi    || '',
+    kennitala:     state.values.kennitala    || '',
+    simi:          state.values.simi         || '',
+    tengilidur:    state.values.tengilidur   || '',
+    heimilisfang:  state.values.heimilisfang || '',
+    postnr:        state.values.postnr       || '',
+    profunarsvid:  state.values.profunarsvid || '',
+    tegund_kerfis: state.values.tegund_kerfis|| '',
+    naesta_skodun: state.values.naesta_skodun|| '',
+    profun_af:     state.values.profun_af    || '',
+    starfsmadur:   state.values.starfsmadur  || '',
+    athugasemdir:  state.values.athugasemdir || '',
+    rafhl_dags:    state.values.rafhl_dags   || '',
+  };
+  ROWS.forEach(r => {
+    if (!r.key) return;
+    const c = state.checks[r.key] || {};
+    f['chk_'  + r.key]       = (c.state === 'ok');
+    f['chk_'  + r.key + 'n'] = (c.state === 'bad');
+    // a11's note is rafhl_dags (already populated above); other rows use ath_X.
+    if (r.key !== 'a11') f['ath_' + r.key] = c.note || '';
+  });
+  return f;
 }
 
 async function submitForm() {
   readHeader();
   readChecks();
 
-  // Light validation: customer signature is the only hard requirement.
-  if (!sigHasInk) {
+  const sigCust = sigs['sigCanvas'];
+  if (!sigCust || !sigCust.hasInk) {
     showStatus('Vinsamlegast skrifaðu undir áður en þú vistar.', 'error');
     return;
   }
-  const sig = sigCanvas.toDataURL('image/png');
+  const sigInsp = sigs['sigInspectorCanvas'];
+  const sigCustDataUrl = sigCust.canvas.toDataURL('image/png');
+  const sigInspDataUrl = (sigInsp && sigInsp.hasInk)
+    ? sigInsp.canvas.toDataURL('image/png') : null;
 
   const btn = document.getElementById('submitBtn');
   btn.disabled = true;
   btn.textContent = 'Vista…';
   showStatus('Sendir skoðun til Slökkvitækja…', 'info');
+
+  // form_data shape:
+  //   fields  — flat template-key map (slokkvitæki HTML placeholders)
+  //   checks  — compact per-row {state:'ok'|'bad'|null, note} (UI replay)
+  //   header  — original header values (back-compat with earlier shape)
+  const templateFields = buildTemplateFields();
 
   try {
     const r = await fetch('/api/skoda', {
@@ -376,10 +465,15 @@ async function submitForm() {
       body: JSON.stringify({
         action: 'submit',
         token: TOKEN,
-        form_data: { fields: state.values, checks: state.checks },
-        signature_customer: sig,
-        submitter_name:  state.values._submitter_name || document.getElementById('f_submitter_name')?.value || '',
-        submitter_email: state.values._submitter_email || document.getElementById('f_submitter_email')?.value || '',
+        form_data: {
+          fields: templateFields,
+          checks: state.checks,
+          header: state.values,
+        },
+        signature_customer: sigCustDataUrl,
+        signature_inspector: sigInspDataUrl,
+        submitter_name:  document.getElementById('f_submitter_name')?.value || '',
+        submitter_email: document.getElementById('f_submitter_email')?.value || '',
       }),
     });
     const j = await r.json();
