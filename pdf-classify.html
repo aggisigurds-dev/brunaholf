@@ -167,6 +167,20 @@ function el(id) { return document.getElementById(id); }
 function val(id) { return el(id).value.trim(); }
 function status(msg) { el('hint').textContent = msg || ''; }
 
+// Persist folder-id inputs across page loads so they don't have to be
+// re-pasted every visit. Saves on each keystroke, restores on boot.
+const PERSIST_IDS = ['src', 't-uttekt', 't-reikningar', 't-annad', 't-dups', 'since'];
+const LS_PREFIX = 'pdf-classify:';
+for (const id of PERSIST_IDS) {
+  const node = el(id);
+  if (!node) continue;
+  const saved = localStorage.getItem(LS_PREFIX + id);
+  if (saved != null && !node.value) node.value = saved;
+  node.addEventListener('input', () => {
+    try { localStorage.setItem(LS_PREFIX + id, node.value); } catch {}
+  });
+}
+
 async function runSample() {
   const src = val('src');
   if (!src) { status('Vantar source folder-id'); return; }
