@@ -1,6 +1,6 @@
 // uttekt-rename.js — Bakendi "Endurnefna úttektarskýrslur": DEEP-SCANS each
 // inspection-report PDF in a Drive folder by its CONTENT and proposes / applies
-// the canonical name  "Fyrirtæki - Heimilisfang - Kennitala - Mánuður - Ár.pdf"
+// the canonical name  "Fyrirtæki - Kennitala - Heimilisfang - Ár - Mánuður.pdf"
 // (the same scheme as the Allt folder + Skjalaheiti). Overrides whatever the file
 // is currently called. Mirrors reikningar-rename.js (incl. the Google-Drive clean
 // text fallback for PDFs pdf-parse can't decode) + a "Finna tvítök" dedup.
@@ -112,7 +112,7 @@ exports.handler = async (event) => {
         const year = di.year || old.year;
         let newName = '', status = 'manual';
         if (ok && company && kt && year) {   // year required; month optional (drops the month segment when absent)
-          newName = sanitize(company) + ' - ' + (address ? sanitize(address) + ' - ' : '') + dash(kt) + (month ? ' - ' + month : '') + ' - ' + year + '.pdf';
+          newName = sanitize(company) + ' - ' + dash(kt) + (address ? ' - ' + sanitize(address) : '') + ' - ' + year + (month ? ' - ' + month : '') + '.pdf';
           status = 'ready';
         }
         if (status === 'ready') stats.ready++; else stats.manual++;
@@ -244,9 +244,11 @@ function extractAddress(text) {
   }
   return '';
 }
-// Pull every field out of the existing filename "Fyrirtæki - Heimilisfang - kt -
-// mánuður - ár" — the cleanest source, and a reliable fallback for scanned/hard-to-read
-// PDFs where content extraction misses the address OR the date.
+// Pull every field out of the existing filename. Handles BOTH layouts: the new
+// canonical "Fyrirtæki - kt - Heimilisfang - Ár - Mánuður" (ktIdx === 1) AND the
+// legacy "Fyrirtæki - Heimilisfang - kt - Mánuður - Ár" (ktIdx > 1). Cleanest
+// source, and a reliable fallback for scanned/hard-to-read PDFs where content
+// extraction misses the address OR the date.
 function fieldsFromOldName(name) {
   const parts = String(name || '').replace(/\.pdf$/i, '').split(' - ').map(s => s.trim());
   const out = { company: '', address: '', kt: '', month: '', year: '' };

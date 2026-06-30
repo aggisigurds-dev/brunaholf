@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<title>Verkefnalisti · Brunahólf</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg:#f6f7fb; --panel:#fff; --panel-2:#f8fafc; --line:#e2e8f0;
+    --fg:#0f172a; --muted:#64748b;
+    --ok:#16a34a; --amber:#d97706; --red:#dc2626; --brand:#dc2626; --blue:#2563eb;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.5 -apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--fg); padding:24px; padding-bottom:80px; }
+  header { max-width:980px; margin:0 auto 24px; padding:18px 22px; background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%); color:#fff; border-radius:14px; box-shadow:0 1px 3px rgba(15,23,42,.06); }
+  header h1 { margin:0; font-size:20px; font-weight:700; display:flex; align-items:center; gap:10px; }
+  header h1 .badge { background:var(--brand); color:#fff; padding:3px 9px; border-radius:6px; font-size:11px; font-weight:700; letter-spacing:.04em; }
+  header .sub { color:#cbd5e1; font-size:13px; margin-top:6px; }
+  main { max-width:980px; margin:0 auto; }
+
+  /* Add form */
+  .add-card { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:20px 22px; margin-bottom:22px; box-shadow:0 1px 2px rgba(15,23,42,.04); }
+  .add-card h2 { margin:0 0 14px; font-size:13px; font-weight:700; color:var(--brand); letter-spacing:.06em; text-transform:uppercase; }
+  .add-card label { display:block; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin:12px 0 5px; font-weight:700; }
+  .add-card input, .add-card textarea {
+    width:100%; padding:10px 12px; background:#fff; border:1px solid var(--line); border-radius:8px;
+    color:var(--fg); font:inherit; font-size:14px;
+  }
+  .add-card textarea { min-height:64px; resize:vertical; font:13px/1.45 inherit; }
+  .add-card input:focus, .add-card textarea:focus { outline:none; border-color:var(--brand); box-shadow:0 0 0 3px rgba(220,38,38,.1); }
+  .paste-zone {
+    margin-top:8px; padding:14px; border:1.5px dashed #cbd5e1; border-radius:8px;
+    background:#f8fafc; color:var(--muted); font-size:12.5px; text-align:center; cursor:pointer;
+    transition:border-color .15s, background .15s;
+  }
+  .paste-zone:hover { border-color:var(--brand); background:#fff; }
+  .paste-zone:focus { outline:2px solid var(--brand); }
+  .paste-zone.has-image { border-style:solid; border-color:var(--ok); background:#f0fdf4; color:var(--ok); }
+  .paste-zone img { max-width:100%; max-height:200px; border-radius:6px; margin-top:8px; display:block; margin-left:auto; margin-right:auto; box-shadow:0 1px 3px rgba(15,23,42,.1); }
+  .actions { display:flex; gap:10px; margin-top:14px; align-items:center; flex-wrap:wrap; }
+  .btn { padding:10px 18px; border:0; border-radius:8px; font:600 13px inherit; cursor:pointer; transition:background .15s; }
+  .btn.primary { background:var(--brand); color:#fff; box-shadow:0 1px 2px rgba(220,38,38,.25); }
+  .btn.primary:hover { background:#b91c1c; }
+  .btn.ghost { background:transparent; color:var(--muted); border:1px solid var(--line); }
+  .btn.ghost:hover { color:var(--fg); border-color:var(--fg); background:#f1f5f9; }
+  .btn[disabled] { opacity:.4; cursor:not-allowed; }
+  .toast { font-size:12.5px; }
+  .toast.ok { color:var(--ok); }
+  .toast.err { color:var(--red); }
+
+  /* Stats */
+  .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:20px; }
+  .stat { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px; text-align:center; box-shadow:0 1px 2px rgba(15,23,42,.03); }
+  .stat b { display:block; font-size:24px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .stat span { color:var(--muted); font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; font-weight:600; }
+
+  /* Sections */
+  .section { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px 20px; margin-bottom:14px; box-shadow:0 1px 2px rgba(15,23,42,.03); }
+  .section h2 { margin:0 0 10px; font-size:12.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; display:flex; align-items:center; gap:8px; color:var(--fg); padding-bottom:8px; border-bottom:1px solid var(--line); }
+  .section .count { color:var(--muted); font-weight:500; font-size:12px; }
+
+  /* Task row */
+  .task { display:grid; grid-template-columns:1fr auto; gap:12px; padding:12px 0; border-bottom:1px solid var(--line); align-items:start; transition:background .12s, border-color .12s; }
+  .task:last-child { border-bottom:0; }
+  .task[draggable="true"] { cursor:grab; }
+  .task[draggable="true"]:active { cursor:grabbing; }
+  .task.dragging { opacity:.4; background:#f8fafc; }
+  .task.drop-above { box-shadow:inset 0 3px 0 var(--brand); }
+  .task.drop-below { box-shadow:inset 0 -3px 0 var(--brand); }
+  .task .task-body { display:flex; gap:8px; align-items:flex-start; }
+  .task .task-text { flex:1; min-width:0; }
+  .grip { color:#cbd5e1; font-size:14px; padding:2px 4px; user-select:none; line-height:1.4; letter-spacing:-1px; flex:0 0 auto; }
+  .task[draggable="true"]:hover .grip { color:var(--muted); }
+  .task .title { font-size:14px; font-weight:600; line-height:1.4; }
+  .task .desc { color:var(--muted); font-size:12.5px; margin-top:4px; line-height:1.45; white-space:pre-wrap; }
+  .task .meta { color:var(--muted); font-size:11px; margin-top:6px; }
+  .task .imgs { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+  .task .imgs a { display:inline-block; }
+  .task .imgs img { max-width:180px; max-height:140px; border-radius:6px; border:1px solid var(--line); }
+  .task .img-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:2px; }
+  .task .img-box { display:flex; flex-direction:column; }
+  .task .ops { display:flex; gap:6px; align-items:flex-start; flex-wrap:wrap; justify-content:flex-end; }
+  .task .ops button { font-size:11.5px; padding:5px 10px; border-radius:6px; border:1px solid var(--line); background:#fff; color:var(--fg); cursor:pointer; font-weight:500; }
+  .task .ops button:hover { background:var(--panel-2); border-color:#cbd5e1; }
+  .task .ops button.danger:hover { background:#fef2f2; color:var(--red); border-color:var(--red); }
+
+  /* Status pills */
+  .pill { display:inline-block; padding:3px 9px; border-radius:99px; font-size:10.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
+  .pill.beidni { background:#fef3c7; color:#92400e; border:1px solid #fde68a; }
+  .pill.i_vinnu { background:#dbeafe; color:#1e40af; border:1px solid #93c5fd; }
+  .pill.klarad { background:#dcfce7; color:#166534; border:1px solid #86efac; }
+  .pill.sleppt { background:#f1f5f9; color:var(--muted); border:1px solid var(--line); }
+  .live-dot { display:inline-block; width:8px; height:8px; background:var(--ok); border-radius:50%; box-shadow:0 0 0 4px rgba(22,163,74,.2); margin-right:6px; vertical-align:middle; animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.5; } }
+  .empty { padding:18px 0; color:var(--muted); font-size:13px; font-style:italic; text-align:center; }
+
+  /* Category filter chips */
+  .cat-bar { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:18px; padding:12px 14px; background:var(--panel); border:1px solid var(--line); border-radius:10px; box-shadow:0 1px 2px rgba(15,23,42,.03); }
+  .cat-chip { display:inline-flex; align-items:center; gap:5px; padding:5px 11px; border:1px solid var(--line); border-radius:99px; font-size:12px; font-weight:600; color:var(--muted); background:#fff; cursor:pointer; user-select:none; transition:all .12s; }
+  .cat-chip:hover { border-color:#cbd5e1; background:#f8fafc; }
+  .cat-chip.active { background:var(--fg); color:#fff; border-color:var(--fg); }
+  .cat-chip .cnt { font-variant-numeric:tabular-nums; opacity:.7; font-size:11px; }
+
+  /* Category badge on task row */
+  .cat-badge { display:inline-block; padding:1.5px 7px; border-radius:99px; font-size:10px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; margin-right:6px; vertical-align:middle; }
+  .cat-utlit    { background:#fce7f3; color:#9d174d; }
+  .cat-customer { background:#dbeafe; color:#1e40af; }
+  .cat-skjol    { background:#fef3c7; color:#92400e; }
+  .cat-reikning { background:#dcfce7; color:#166534; }
+  .cat-bakendi  { background:#e0e7ff; color:#3730a3; }
+  .cat-oryggi   { background:#fee2e2; color:#991b1b; }
+  .cat-vefryni  { background:#f3e8ff; color:#6b21a8; }
+  .cat-listi    { background:#cffafe; color:#155e75; }
+  .cat-allt     { background:#f1f5f9; color:#475569; }
+
+  /* Status: í yfirferð */
+  .pill.i_yfirferd { background:#ffedd5; color:#9a3412; border:1px solid #fed7aa; }
+  .task[data-status="i_yfirferd"] { background:#fff7ed; border-left:3px solid #f97316; padding-left:10px; }
+
+  @media (max-width:640px) {
+    body { padding:14px; }
+    .stats { grid-template-columns:repeat(2,1fr); }
+    .task { grid-template-columns:1fr; }
+    .task .ops { justify-content:flex-start; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>📋 Brunahólf · Verkefnalisti <span class="badge">CLAUDE</span></h1>
+  <div class="sub"><span class="live-dot"></span>Lifandi borð. Líma skjámynd með Ctrl/Cmd-V eða smella til að velja skrá. Claude svarar með skjámynd af niðurstöðu.</div>
+</header>
+<main>
+
+<div class="add-card">
+  <h2>➕ Ný beidni</h2>
+  <label>Stutt fyrirsögn</label>
+  <input id="add-title" placeholder="t.d. „Laga reikningalistann á customer.html"" />
+  <label>Flokkur</label>
+  <select id="add-cat" style="width:100%;padding:10px 12px;background:#fff;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:14px">
+    <option value="allt">📋 Almennt</option>
+    <option value="utlit">🎨 Útlit</option>
+    <option value="customer">👤 Customer DB</option>
+    <option value="skjol">📄 Skjala-vinnsla</option>
+    <option value="reikning">💰 Reikningagerð</option>
+    <option value="bakendi">🔌 Bakendi / API</option>
+    <option value="vefryni">🔍 Vefrýni</option>
+    <option value="oryggi">🔒 Öryggi</option>
+    <option value="listi">📋 Verkefnalisti</option>
+  </select>
+  <label>Lýsing (valkv.)</label>
+  <textarea id="add-desc" placeholder="Hvar gerist þetta? Hvað á að breytast? Hvaða viðmið er notað?"></textarea>
+  <label>Skjámynd (valkv. — Ctrl/Cmd-V hér eða smelltu)</label>
+  <div id="paste-zone" class="paste-zone" tabindex="0" role="button" aria-label="Líma skjámynd hér">📎 Límdu skjámynd með Ctrl/Cmd-V — eða smelltu til að velja skrá</div>
+  <input id="file-input" type="file" accept="image/*" capture="environment" hidden />
+  <div class="actions">
+    <button id="add-btn" class="btn primary">➕ Skrá beidni</button>
+    <button id="clear-btn" class="btn ghost">Hreinsa</button>
+    <span id="add-toast" class="toast"></span>
+  </div>
+</div>
+
+<div id="stats" class="stats">
+  <div class="stat"><b id="c-beidni">–</b><span>Beiðnir</span></div>
+  <div class="stat"><b id="c-vinnu" style="color:var(--blue)">–</b><span>Í vinnu</span></div>
+  <div class="stat"><b id="c-yfirferd" style="color:#9a3412">–</b><span>Í yfirferð</span></div>
+  <div class="stat"><b id="c-klarad" style="color:var(--ok)">–</b><span>Klárað</span></div>
+</div>
+
+<div id="cat-bar" class="cat-bar"></div>
+
+<div class="section">
+  <h2>🟠 Beiðnir <span id="cnt-beidni" class="count"></span></h2>
+  <div id="list-beidni"><div class="empty">Engin beidni virk núna.</div></div>
+</div>
+
+<div class="section">
+  <h2>🔵 Í vinnu <span id="cnt-vinnu" class="count"></span></h2>
+  <div id="list-vinnu"><div class="empty">Ekkert í vinnu.</div></div>
+</div>
+
+<div class="section">
+  <h2>🟧 Í yfirferð — Agent kláraði, þú/Claude staðfestir <span id="cnt-yfirferd" class="count"></span></h2>
+  <div id="list-yfirferd"><div class="empty">Ekkert í yfirferð.</div></div>
+</div>
+
+<div class="section">
+  <h2>🟢 Klárað <span id="cnt-klarad" class="count"></span></h2>
+  <div id="list-klarad"><div class="empty">Ekkert klárað ennþá.</div></div>
+</div>
+
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtTime = (iso) => {
+  if (!iso) return '';
+  try {
+    const d = new Date(iso); const now = new Date();
+    const dayMs = 86400000; const dt = (now - d) / dayMs;
+    if (dt < 1/24) return Math.max(1, Math.round((now - d) / 60000)) + ' mín síðan';
+    if (dt < 1) return Math.round((now - d) / 3600000) + ' klst síðan';
+    if (dt < 7) return Math.round(dt) + ' d síðan';
+    return d.toLocaleDateString('is-IS', { day:'2-digit', month:'2-digit', year:'numeric' });
+  } catch { return iso; }
+};
+
+let pendingImage = null;     // base64 data URL waiting to be sent
+
+function setPasteZone(dataUrl) {
+  pendingImage = dataUrl;
+  const z = $('paste-zone');
+  if (!dataUrl) {
+    z.classList.remove('has-image');
+    z.innerHTML = '📎 Límdu skjámynd með Ctrl/Cmd-V — eða smelltu til að velja skrá';
+  } else {
+    z.classList.add('has-image');
+    z.innerHTML = '✓ Skjámynd hlaðin (smelltu til að skipta út)<br><img src="' + dataUrl + '" alt="">';
+  }
+}
+
+function fileToDataUrl(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+document.addEventListener('paste', async (ev) => {
+  const items = (ev.clipboardData || {}).items || [];
+  for (const it of items) {
+    if (it.type && it.type.startsWith('image/')) {
+      const file = it.getAsFile();
+      if (file) { setPasteZone(await fileToDataUrl(file)); ev.preventDefault(); break; }
+    }
+  }
+});
+
+$('paste-zone').addEventListener('click', () => $('file-input').click());
+$('paste-zone').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('file-input').click(); } });
+$('file-input').addEventListener('change', async (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (file) setPasteZone(await fileToDataUrl(file));
+});
+
+$('clear-btn').addEventListener('click', () => {
+  $('add-title').value = '';
+  $('add-desc').value = '';
+  $('add-cat').value = 'allt';
+  setPasteZone(null);
+  toast('add-toast', '');
+});
+
+function toast(id, msg, kind) {
+  const t = $(id);
+  t.textContent = msg || '';
+  t.className = 'toast ' + (kind || '');
+}
+
+$('add-btn').addEventListener('click', async () => {
+  const title = $('add-title').value.trim();
+  if (!title) { toast('add-toast', 'Sláðu inn fyrirsögn', 'err'); return; }
+  $('add-btn').disabled = true; toast('add-toast', 'Sendi…');
+  try {
+    const r = await fetch('/api/verkefnalisti', {
+      method:'POST', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({
+        action:'add', title,
+        description: $('add-desc').value.trim() || null,
+        request_image_b64: pendingImage,
+        category: $('add-cat').value || 'allt',
+      }),
+    });
+    const data = await r.json();
+    if (!r.ok || data.error) throw new Error(data.error || ('HTTP ' + r.status));
+    toast('add-toast', '✓ Skráð', 'ok');
+    $('add-title').value=''; $('add-desc').value=''; setPasteZone(null);
+    setTimeout(() => toast('add-toast', ''), 2500);
+    await load();
+  } catch (e) {
+    toast('add-toast', 'Villa: ' + e.message, 'err');
+  } finally {
+    $('add-btn').disabled = false;
+  }
+});
+
+async function setStatus(id, status) {
+  try {
+    const r = await fetch('/api/verkefnalisti', {
+      method:'POST', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ action:'update', id, status }),
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    await load();
+  } catch (e) { alert('Villa: ' + e.message); }
+}
+
+async function delTask(id) {
+  if (!confirm('Eyða þessari beidni?')) return;
+  try {
+    const r = await fetch('/api/verkefnalisti', {
+      method:'POST', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ action:'delete', id }),
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    await load();
+  } catch (e) { alert('Villa: ' + e.message); }
+}
+
+function renderTask(t) {
+  const ops = [];
+  if (t.status === 'beidni') ops.push('<button onclick="setStatus(\'' + t.id + '\',\'i_vinnu\')">▶️ Hefja</button>');
+  if (t.status === 'i_vinnu') ops.push('<button onclick="setStatus(\'' + t.id + '\',\'i_yfirferd\')">⏸ Í yfirferð</button>');
+  if (t.status === 'i_yfirferd') {
+    ops.push('<button onclick="setStatus(\'' + t.id + '\',\'klarad\')" style="border-color:var(--ok);color:var(--ok)">✓ Samþykkja</button>');
+    ops.push('<button onclick="setStatus(\'' + t.id + '\',\'i_vinnu\')">↶ Aftur í vinnu</button>');
+  }
+  if (t.status === 'klarad' || t.status === 'sleppt') ops.push('<button onclick="setStatus(\'' + t.id + '\',\'beidni\')">↶ Opna aftur</button>');
+  if (t.status !== 'sleppt' && t.status !== 'klarad' && t.status !== 'i_yfirferd') ops.push('<button onclick="setStatus(\'' + t.id + '\',\'sleppt\')">⊘ Sleppa</button>');
+  ops.push('<button class="danger" onclick="delTask(\'' + t.id + '\')">🗑</button>');
+
+  const catKey = t.category || 'allt';
+  const catLabel = (CAT_LABELS[catKey] || { label: catKey }).label;
+  const catBadge = '<span class="cat-badge cat-' + esc(catKey) + '">' + esc(catLabel) + '</span>';
+  const agentBadge = t.assigned_agent ? '<span class="cat-badge" style="background:#fef3c7;color:#92400e">🤖 ' + esc(t.assigned_agent) + '</span>' : '';
+
+  const imgs = [];
+  if (t.request_image_url) {
+    imgs.push('<div class="img-box"><div class="img-label">Beidni</div><a href="' + esc(t.request_image_url) + '" target="_blank"><img src="' + esc(t.request_image_url) + '" alt="beidni"></a></div>');
+  }
+  if (t.result_image_url) {
+    imgs.push('<div class="img-box"><div class="img-label">Niðurstaða</div><a href="' + esc(t.result_image_url) + '" target="_blank"><img src="' + esc(t.result_image_url) + '" alt="niðurstaða"></a></div>');
+  }
+
+  const notes = t.claude_notes ? '<div class="desc" style="color:#1e40af;margin-top:6px;background:#eff6ff;padding:6px 9px;border-radius:6px"><b>Claude:</b> ' + esc(t.claude_notes) + '</div>' : '';
+
+  // Drag handle: only on rows still in beidni/i_vinnu (klárað/sleppt rows
+  // stay frozen). data-id is what /api/verkefnalisti?reorder needs.
+  const draggable = (t.status === 'beidni' || t.status === 'i_vinnu') ? ' draggable="true"' : '';
+  const grip = draggable ? '<span class="grip" title="Draga til að breyta forgangsröð">⋮⋮</span>' : '';
+
+  return (
+    '<div class="task" data-id="' + t.id + '" data-status="' + t.status + '" data-category="' + esc(catKey) + '"' + draggable + '>' +
+      '<div class="task-body">' +
+        grip +
+        '<div class="task-text">' +
+          '<div class="title">' + catBadge + agentBadge + esc(t.title) + '</div>' +
+          (t.description ? '<div class="desc">' + esc(t.description) + '</div>' : '') +
+          notes +
+          (imgs.length ? '<div class="imgs">' + imgs.join('') + '</div>' : '') +
+          '<div class="meta">' + fmtTime(t.created_at) +
+            (t.completed_at ? ' · klárað ' + fmtTime(t.completed_at) : '') +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="ops">' + ops.join('') + '</div>' +
+    '</div>'
+  );
+}
+
+// Category metadata — labels rendered on chips + row badges. Add a new key
+// here and a matching .cat-<key> CSS rule above, and it shows up everywhere.
+const CAT_LABELS = {
+  allt:     { label: 'Allt',     emoji: '📋' },
+  utlit:    { label: 'Útlit',    emoji: '🎨' },
+  customer: { label: 'Customer DB', emoji: '👤' },
+  skjol:    { label: 'Skjala-vinnsla', emoji: '📄' },
+  reikning: { label: 'Reikningagerð', emoji: '💰' },
+  bakendi:  { label: 'Bakendi / API', emoji: '🔌' },
+  oryggi:   { label: 'Öryggi',   emoji: '🔒' },
+  vefryni:  { label: 'Vefrýni',  emoji: '🔍' },
+  listi:    { label: 'Verkefnalisti', emoji: '📋' },
+};
+
+let activeCat = (function() {
+  try { return localStorage.getItem('vl-cat') || 'allt'; } catch { return 'allt'; }
+})();
+
+function applyCatFilter() {
+  document.querySelectorAll('.task').forEach(t => {
+    const c = t.dataset.category || 'allt';
+    t.style.display = (activeCat === 'allt' || c === activeCat) ? '' : 'none';
+  });
+  document.querySelectorAll('.cat-chip').forEach(ch => {
+    ch.classList.toggle('active', ch.dataset.cat === activeCat);
+  });
+  try { localStorage.setItem('vl-cat', activeCat); } catch {}
+}
+
+function renderCatBar(tasks) {
+  const counts = { allt: tasks.length };
+  for (const t of tasks) counts[t.category || 'allt'] = (counts[t.category || 'allt'] || 0) + 1;
+  const order = ['allt','utlit','customer','skjol','reikning','bakendi','vefryni','oryggi','listi'];
+  const html = order
+    .filter(k => k === 'allt' || counts[k])
+    .map(k => {
+      const meta = CAT_LABELS[k] || { label: k, emoji: '•' };
+      return '<button class="cat-chip" data-cat="' + esc(k) + '">' +
+        meta.emoji + ' ' + esc(meta.label) +
+        ' <span class="cnt">' + (counts[k] || 0) + '</span>' +
+      '</button>';
+    }).join('');
+  $('cat-bar').innerHTML = html;
+  document.querySelectorAll('.cat-chip').forEach(ch => {
+    ch.addEventListener('click', () => { activeCat = ch.dataset.cat; applyCatFilter(); });
+  });
+}
+
+async function load() {
+  try {
+    const r = await fetch('/api/verkefnalisti');
+    const data = await r.json();
+    if (!r.ok || !data.tasks) throw new Error(data.error || 'kunni ekki að hlaða');
+
+    const groups = { beidni:[], i_vinnu:[], i_yfirferd:[], klarad:[], sleppt:[] };
+    for (const t of data.tasks) (groups[t.status] || groups.beidni).push(t);
+
+    $('c-beidni').textContent = groups.beidni.length;
+    $('c-vinnu').textContent = groups.i_vinnu.length;
+    $('c-yfirferd').textContent = groups.i_yfirferd.length;
+    $('c-klarad').textContent = groups.klarad.length;
+
+    $('cnt-beidni').textContent = groups.beidni.length ? '(' + groups.beidni.length + ')' : '';
+    $('cnt-vinnu').textContent = groups.i_vinnu.length ? '(' + groups.i_vinnu.length + ')' : '';
+    $('cnt-yfirferd').textContent = groups.i_yfirferd.length ? '(' + groups.i_yfirferd.length + ')' : '';
+    $('cnt-klarad').textContent = groups.klarad.length ? '(' + groups.klarad.length + ')' : '';
+
+    $('list-beidni').innerHTML = groups.beidni.length ? groups.beidni.map(renderTask).join('') : '<div class="empty">Engin beidni virk núna.</div>';
+    $('list-vinnu').innerHTML = groups.i_vinnu.length ? groups.i_vinnu.map(renderTask).join('') : '<div class="empty">Ekkert í vinnu.</div>';
+    $('list-yfirferd').innerHTML = groups.i_yfirferd.length ? groups.i_yfirferd.map(renderTask).join('') : '<div class="empty">Ekkert í yfirferð.</div>';
+    $('list-klarad').innerHTML = groups.klarad.length ? groups.klarad.slice(0, 20).map(renderTask).join('') : '<div class="empty">Ekkert klárað ennþá.</div>';
+
+    renderCatBar(data.tasks);
+    applyCatFilter();
+    wireDragDrop($('list-beidni'));
+    wireDragDrop($('list-vinnu'));
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+// ─── Drag-to-reorder within a section ───────────────────────────────────
+// Pause polling while dragging so a refresh doesn't rip the list out from
+// under the user. Resume on dragend.
+let isDragging = false;
+let dragSrc = null;
+
+function wireDragDrop(container) {
+  if (!container) return;
+  const tasks = container.querySelectorAll('.task[draggable="true"]');
+  tasks.forEach(el => {
+    el.addEventListener('dragstart', (e) => {
+      isDragging = true;
+      dragSrc = el;
+      el.classList.add('dragging');
+      // Some browsers need this to let drop happen
+      try { e.dataTransfer.setData('text/plain', el.dataset.id); e.dataTransfer.effectAllowed = 'move'; } catch {}
+    });
+    el.addEventListener('dragend', () => {
+      isDragging = false;
+      el.classList.remove('dragging');
+      container.querySelectorAll('.task').forEach(t => t.classList.remove('drop-above','drop-below'));
+      dragSrc = null;
+    });
+    el.addEventListener('dragover', (e) => {
+      if (!dragSrc || dragSrc === el) return;
+      // Only allow reorder within the same section/status
+      if (dragSrc.dataset.status !== el.dataset.status) return;
+      e.preventDefault();
+      const rect = el.getBoundingClientRect();
+      const above = (e.clientY - rect.top) < rect.height / 2;
+      container.querySelectorAll('.task').forEach(t => t.classList.remove('drop-above','drop-below'));
+      el.classList.add(above ? 'drop-above' : 'drop-below');
+    });
+    el.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      if (!dragSrc || dragSrc === el) return;
+      if (dragSrc.dataset.status !== el.dataset.status) return;
+      const rect = el.getBoundingClientRect();
+      const above = (e.clientY - rect.top) < rect.height / 2;
+      container.querySelectorAll('.task').forEach(t => t.classList.remove('drop-above','drop-below'));
+      // Reorder DOM optimistically
+      if (above) el.parentNode.insertBefore(dragSrc, el);
+      else el.parentNode.insertBefore(dragSrc, el.nextSibling);
+      // Send the new order to the server
+      const ids = Array.from(container.querySelectorAll('.task[draggable="true"]')).map(t => t.dataset.id);
+      try {
+        const r = await fetch('/api/verkefnalisti', {
+          method:'POST', headers:{ 'Content-Type':'application/json' },
+          body: JSON.stringify({ action:'reorder', ids }),
+        });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+      } catch (err) {
+        console.error('reorder failed', err);
+        load();   // re-fetch on failure
+      }
+    });
+  });
+}
+
+load();
+// Poll every 15s, BUT skip while a drag is in flight so the list doesn't
+// rip out from under the user mid-drag.
+setInterval(() => { if (!isDragging) load(); }, 15000);
+</script>
+</body>
+</html>

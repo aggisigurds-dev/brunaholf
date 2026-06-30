@@ -16,6 +16,14 @@
   to = "/.netlify/functions/timavera-maeting"
   status = 200
 
+# Brunahólf verkefnalisti — interactive task board between Aggi and Claude.
+# GET = list, POST {action:'add'|'update'|'delete'} = mutate. Screenshots upload
+# to Supabase Storage `verkefnalisti` bucket.
+[[redirects]]
+  from = "/api/verkefnalisti"
+  to = "/.netlify/functions/verkefnalisti"
+  status = 200
+
 # Friendly URL for the private Inbox digest:
 #   /api/inbox    →  /.netlify/functions/inbox
 [[redirects]]
@@ -316,7 +324,7 @@
   status = 200
 
 # Bakendi Endurnefna úttektarskýrslur: deep-scan report PDFs (content) and rename
-# to "Fyrirtæki - Heimilisfang - Kennitala - Mánuður - Ár" + find duplicates
+# to "Fyrirtæki - Kennitala - Heimilisfang - Ár - Mánuður" + find duplicates
 [[redirects]]
   from = "/api/uttekt-rename"
   to = "/.netlify/functions/uttekt-rename"

@@ -328,7 +328,8 @@ function invoiceName({ company, kt, rNumber, year, total }) {
   return parts.join(' - ').replace(/\s*-\s*$/, '') + '.pdf';
 }
 
-// Skýrsla:  Fyrirtæki - Heimilisfang - kt - Ár - Mánuður
+// parseReport — extract company / address / kt / year / month from PDF content.
+// (Output format is set by reportName below: Fyrirtæki - kt - Heimilisfang - Ár - Mánuður.)
 const MONTHS_IS = ['janúar','febrúar','mars','apríl','maí','júní','júlí','ágúst','september','október','nóvember','desember'];
 function parseReport(text, name) {
   const t = (text || '').replace(/\s+/g, ' ').trim();
