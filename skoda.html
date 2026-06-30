@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0f172a">
+<title>Brunakerfi · Ársskoðun</title>
+<style>
+  :root {
+    --bg:#f1f5f9; --panel:#fff; --line:#e2e8f0; --line2:#eef2f7;
+    --text:#0f172a; --muted:#64748b; --accent:#0f172a; --good:#15803d;
+    --bad:#b91c1c; --soft:#f8fafc; --amber:#b45309;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text);
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size:15px; line-height:1.5; }
+  .wrap { max-width:880px; margin:0 auto; padding:18px 14px 80px; }
+  header { background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    padding:18px 18px 16px; margin-bottom:14px; box-shadow:0 1px 2px rgba(15,23,42,.04); }
+  header h1 { font-size:20px; margin:0 0 4px; font-weight:750; }
+  header .sub { color:var(--muted); font-size:13px; }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    padding:14px 16px 16px; margin-bottom:14px; box-shadow:0 1px 2px rgba(15,23,42,.03); }
+  .panel h2 { font-size:15px; margin:0 0 10px; font-weight:700; }
+  .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+  @media (max-width: 640px) { .grid2 { grid-template-columns: 1fr; } }
+  label { display:block; font-size:12px; color:var(--muted); margin-bottom:3px; font-weight:600; }
+  input[type=text], input[type=tel], input[type=email], input[type=date],
+  textarea, select {
+    width:100%; border:1px solid var(--line); border-radius:8px;
+    padding:10px 11px; font-size:16px; font-family:inherit; background:#fff;
+    color:var(--text);
+  }
+  input:focus, textarea:focus, select:focus {
+    outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(15,23,42,.08);
+  }
+  .info-row { margin-bottom:9px; }
+  .row {
+    display:grid; grid-template-columns: 1fr 72px 72px 1.2fr;
+    gap:6px; align-items:center; padding:8px 0;
+    border-bottom:1px solid var(--line2); font-size:13.5px;
+  }
+  .row:last-of-type { border-bottom:none; }
+  .row .lbl { font-weight:500; padding-right:6px; }
+  .row .lbl.sect { background:#fef3c7; padding:6px 8px; border-radius:6px;
+    font-weight:700; grid-column:1 / -1; }
+  .row .lbl.sect + .row { border-top:none; }
+  .sectionhead { background:#fef3c7; padding:8px 10px; border-radius:6px;
+    font-weight:700; margin:14px 0 4px; font-size:13.5px; }
+  .seg { display:flex; gap:4px; }
+  .seg button {
+    flex:1; border:1px solid var(--line); border-radius:7px;
+    background:#fff; padding:9px 4px; font-size:18px; cursor:pointer;
+    min-height:44px; font-family:inherit; color:var(--muted);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .seg button.on.ok    { background:#dcfce7; border-color:#86efac; color:var(--good); font-weight:700; }
+  .seg button.on.bad   { background:#fee2e2; border-color:#fca5a5; color:var(--bad); font-weight:700; }
+  .athinp {
+    width:100%; border:1px solid var(--line); border-radius:7px;
+    padding:6px 8px; font-size:13px; min-height:36px;
+    font-family:inherit; background:#fff; color:var(--text);
+  }
+  @media (max-width: 640px) {
+    .row { grid-template-columns: 1fr; gap:4px; padding:10px 0; }
+    .row .lbl { font-size:14px; font-weight:600; }
+    .row .seg { max-width:200px; }
+  }
+  .sig-wrap { border:1px solid var(--line); border-radius:10px; background:#fff;
+    overflow:hidden; }
+  .sig-wrap canvas { display:block; width:100%; height:160px;
+    touch-action:none; cursor:crosshair; background:#fff; }
+  .sig-actions { display:flex; justify-content:space-between; align-items:center;
+    padding:6px 10px; background:var(--soft); border-top:1px solid var(--line);
+    font-size:12px; color:var(--muted); }
+  .sig-actions button { border:none; background:transparent; color:var(--accent);
+    font-size:13px; cursor:pointer; font-weight:600; padding:4px 8px; }
+  .actions { position:sticky; bottom:0; background:rgba(241,245,249,.95);
+    backdrop-filter:blur(6px); padding:12px 0 8px; margin-top:18px;
+    border-top:1px solid var(--line); display:flex; gap:10px; justify-content:flex-end; }
+  .btn { border:none; border-radius:10px; padding:14px 22px; font-size:16px;
+    cursor:pointer; font-weight:700; font-family:inherit; min-height:50px;
+    -webkit-tap-highlight-color: transparent; }
+  .btn-primary { background:var(--accent); color:#fff; }
+  .btn-primary:hover { background:#1e293b; }
+  .btn-primary:disabled { background:#cbd5e1; cursor:not-allowed; }
+  .btn-ghost { background:transparent; color:var(--muted); }
+  .status { padding:14px; border-radius:10px; margin-bottom:14px; font-size:14px; }
+  .status.error   { background:#fee2e2; border:1px solid #fca5a5; color:#7f1d1d; }
+  .status.success { background:#dcfce7; border:1px solid #86efac; color:#14532d; }
+  .status.info    { background:#dbeafe; border:1px solid #93c5fd; color:#1e3a8a; }
+  .loading { text-align:center; padding:60px 20px; color:var(--muted); }
+  .footer-note { font-size:12px; color:var(--muted); text-align:center; margin-top:18px; }
+  .brand { font-weight:700; letter-spacing:.3px; }
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div class="loading" id="boot">Hleður…</div>
+</div>
+
+<script>
+const TOKEN = new URLSearchParams(location.search).get('token') || '';
+const ROWS = [
+  { sect: 'Prófun á stjórnstöð' },
+  { key:'a1',  label:'Analog gildi lesin og yfirfarin á stjórnstöð' },
+  { key:'a2',  label:'Skynjarar prófaðir frá stöð' },
+  { key:'a3',  label:'Lampaprófun' },
+  { key:'a4',  label:'Bilun ef skynjararás er rofin' },
+  { key:'a5',  label:'Bilun ef aðvörunarrás er rofin' },
+  { key:'a6',  label:'Bilun frá aðalaflgjafa ath.' },
+  { key:'a7',  label:'Bilun frá varaaflgjafa ath.' },
+  { key:'a8',  label:'Hleðsluspenna og straumnotkun mæld' },
+  { key:'a9',  label:'Prófun útganga' },
+  { key:'a10', label:'Merkingar, þjónustubók og yfirlitsmynd í lagi' },
+  { key:'a11', label:'Rafhlöður (merking/dagsetning)', athPlaceholder:'Dags. á rafhlöðum' },
+  { sect: 'Prófun á jaðarbúnaði' },
+  { key:'b1',  label:'Reykskynjarar prófaðir með gasi' },
+  { key:'b2',  label:'Hitaskynjarar prófaðir með hitagjafa' },
+  { key:'b3',  label:'Prófun á öllum handboðum' },
+  { key:'b4',  label:'Bilun þegar skynjari er fjarlægður (5% per rás)' },
+  { key:'b5',  label:'Gaumljós athuguð' },
+  { key:'b6',  label:'Bjöllur (hljóðprófun)' },
+  { key:'b7',  label:'Hurðaseglar' },
+  { key:'b8',  label:'Textar lesnir saman við númer og staðsetn.' },
+  { key:'b9',  label:'Stýribúnaður (loftræsting, reyklúgur, sprinkler o.fl.)' },
+  { sect: 'Undirstöðvar' },
+  { key:'c1',  label:'Athuga hvort textar og boð skili sér' },
+  { key:'c2',  label:'Merking á þjónustubók og yfirlitsmynd í lagi' },
+  { sect: 'Boðsendir' },
+  { key:'d1',  label:'Skilar brunaboð sér frá hverri rás' },
+  { key:'d2',  label:'Skila bilunarboð sér' },
+  { key:'d3',  label:'Skynjari tekinn úr sökkli' },
+  { key:'d4',  label:'Ath útkallsleiðbeiningar og tengiliði' },
+];
+
+const state = {
+  invite: null,
+  values: {}, // header fields
+  checks: {}, // checks[key] = { state: 'ok'|'bad'|null, note: '' }
+  signature: null,
+};
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function todayIcelandic() {
+  const d = new Date();
+  return d.getFullYear() + '-' +
+    String(d.getMonth()+1).padStart(2,'0') + '-' +
+    String(d.getDate()).padStart(2,'0');
+}
+
+async function boot() {
+  const app = document.getElementById('app');
+  if (!TOKEN) {
+    app.innerHTML = '<div class="status error">Engin token í tengli. Sá tengill sem þú smelltir á er ekki gildur.</div>';
+    return;
+  }
+  try {
+    const r = await fetch('/api/skoda?token=' + encodeURIComponent(TOKEN));
+    if (!r.ok) {
+      const e = await r.json().catch(() => ({ error: 'Boðsmerki fannst ekki' }));
+      app.innerHTML = '<div class="status error">' + esc(e.error || 'Villa') + '</div>';
+      return;
+    }
+    const data = await r.json();
+    if (data.expired) {
+      app.innerHTML = '<div class="status error">Þessi tengill er útrunninn (eldri en 14 dagar). Hafðu samband við Aggi til að fá nýjan.</div>';
+      return;
+    }
+    if (data.used) {
+      app.innerHTML = '<div class="status info">Þessi skoðun hefur þegar verið skilað inn. Þakka þér fyrir!</div>';
+      return;
+    }
+    state.invite = data.invite;
+    state.values = {
+      verkkaupi:   data.invite.verkkaupi || '',
+      kennitala:   data.invite.kennitala || '',
+      simi:        data.invite.simi || '',
+      tengilidur:  data.invite.tengilidur || '',
+      heimilisfang: data.invite.heimilisfang || '',
+      postnr:      data.invite.postnumer || '',
+      dagsetning:  todayIcelandic(),
+      profunarsvid: '',
+      tegund_kerfis: '',
+      naesta_skodun: '',
+      profun_af: '',
+      athugasemdir: '',
+    };
+    ROWS.forEach(r => { if (r.key) state.checks[r.key] = { state: null, note: '' }; });
+    render();
+  } catch (e) {
+    app.innerHTML = '<div class="status error">Villa við að ná í boð: ' + esc(e.message || e) + '</div>';
+  }
+}
+
+function render() {
+  const app = document.getElementById('app');
+  const i = state.invite;
+  app.innerHTML = `
+    <header>
+      <h1>📋 Ársskoðun brunakerfa</h1>
+      <div class="sub">Viðtökupróf / Árleg prófun · <span class="brand">Slökkvitæki ehf</span></div>
+    </header>
+
+    <div class="panel">
+      <h2>Upplýsingar um verkkaupa</h2>
+      <div class="grid2">
+        <div class="info-row"><label>Verkkaupi</label><input type="text" id="f_verkkaupi" value="${esc(state.values.verkkaupi)}"></div>
+        <div class="info-row"><label>Kennitala</label><input type="text" id="f_kennitala" value="${esc(state.values.kennitala)}"></div>
+        <div class="info-row"><label>Heimilisfang</label><input type="text" id="f_heimilisfang" value="${esc(state.values.heimilisfang)}"></div>
+        <div class="info-row"><label>Póstnúmer</label><input type="text" id="f_postnr" value="${esc(state.values.postnr)}"></div>
+        <div class="info-row"><label>Tengiliður</label><input type="text" id="f_tengilidur" value="${esc(state.values.tengilidur)}"></div>
+        <div class="info-row"><label>Sími</label><input type="tel" id="f_simi" value="${esc(state.values.simi)}"></div>
+        <div class="info-row"><label>Dagsetning</label><input type="date" id="f_dagsetning" value="${esc(state.values.dagsetning)}"></div>
+        <div class="info-row"><label>Prófun (allt kerfið / hluti)</label><input type="text" id="f_profunarsvid" placeholder="t.d. Allt kerfið"></div>
+        <div class="info-row"><label>Tegund kerfis</label><input type="text" id="f_tegund_kerfis" placeholder="t.d. Esser"></div>
+        <div class="info-row"><label>Næsta skoðun</label><input type="text" id="f_naesta_skodun" placeholder="t.d. Júní 2027"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Prófun</h2>
+      <div id="checks">${ROWS.map(rowHtml).join('')}</div>
+    </div>
+
+    <div class="panel">
+      <h2>Athugasemdir og undirritun</h2>
+      <div class="info-row">
+        <label>Prófun framkvæmd af</label>
+        <input type="text" id="f_profun_af" placeholder="Nafn starfsmanns">
+      </div>
+      <div class="info-row">
+        <label>Athugasemdir</label>
+        <textarea id="f_athugasemdir" rows="3" placeholder="Ef einhverjar athugasemdir…"></textarea>
+      </div>
+
+      <label style="margin-top:10px">Undirritun verkkaupa</label>
+      <div class="sig-wrap">
+        <canvas id="sigCanvas" width="800" height="160"></canvas>
+        <div class="sig-actions">
+          <span>Skrifaðu undir með fingri eða mús</span>
+          <button type="button" onclick="clearSig()">Hreinsa</button>
+        </div>
+      </div>
+
+      <div class="info-row" style="margin-top:10px">
+        <label>Nafn þess sem skilar inn (valkvætt)</label>
+        <input type="text" id="f_submitter_name" placeholder="Þitt nafn">
+      </div>
+      <div class="info-row">
+        <label>Netfang (valkvætt)</label>
+        <input type="email" id="f_submitter_email" placeholder="netfang@…">
+      </div>
+    </div>
+
+    <div id="statusBox"></div>
+
+    <div class="actions">
+      <button type="button" class="btn btn-primary" id="submitBtn" onclick="submitForm()">Vista skoðun</button>
+    </div>
+
+    <div class="footer-note">
+      Slökkvitæki ehf · Helluhrauni 10, 220 Hafnarfirði · kt. 600508-0400 · sími 565-4080
+    </div>
+  `;
+  initSignature();
+}
+
+function rowHtml(row, idx) {
+  if (row.sect) return `<div class="sectionhead">${esc(row.sect)}</div>`;
+  const k = row.key;
+  return `
+    <div class="row">
+      <div class="lbl">${esc(row.label)}</div>
+      <div class="seg">
+        <button type="button" class="ok" onclick="setCheck('${k}','ok')" id="b_${k}_ok" title="Í lagi">✓</button>
+      </div>
+      <div class="seg">
+        <button type="button" class="bad" onclick="setCheck('${k}','bad')" id="b_${k}_bad" title="Ólagi">✗</button>
+      </div>
+      <input type="text" class="athinp" id="ath_${k}" placeholder="${esc(row.athPlaceholder || 'Athugasemd')}">
+    </div>`;
+}
+
+function setCheck(key, val) {
+  const cur = state.checks[key].state;
+  state.checks[key].state = (cur === val) ? null : val;
+  const ok  = document.getElementById('b_' + key + '_ok');
+  const bad = document.getElementById('b_' + key + '_bad');
+  ok.classList.toggle('on', state.checks[key].state === 'ok');
+  bad.classList.toggle('on', state.checks[key].state === 'bad');
+}
+
+/* — Signature pad — */
+let sigCtx, sigCanvas, sigDrawing = false, sigHasInk = false;
+function initSignature() {
+  sigCanvas = document.getElementById('sigCanvas');
+  if (!sigCanvas) return;
+  // Match canvas backing-store to displayed size for sharp lines.
+  const rect = sigCanvas.getBoundingClientRect();
+  sigCanvas.width  = Math.round(rect.width  * (window.devicePixelRatio || 1));
+  sigCanvas.height = Math.round(rect.height * (window.devicePixelRatio || 1));
+  sigCtx = sigCanvas.getContext('2d');
+  sigCtx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+  sigCtx.lineWidth = 2;
+  sigCtx.lineCap = 'round';
+  sigCtx.lineJoin = 'round';
+  sigCtx.strokeStyle = '#0f172a';
+
+  const start = (x, y) => { sigDrawing = true; sigCtx.beginPath(); sigCtx.moveTo(x, y); };
+  const move  = (x, y) => { if (sigDrawing) { sigCtx.lineTo(x, y); sigCtx.stroke(); sigHasInk = true; } };
+  const end   = () => { sigDrawing = false; };
+  const pos = (e) => {
+    const r = sigCanvas.getBoundingClientRect();
+    if (e.touches && e.touches.length) {
+      return [e.touches[0].clientX - r.left, e.touches[0].clientY - r.top];
+    }
+    return [e.clientX - r.left, e.clientY - r.top];
+  };
+  sigCanvas.addEventListener('mousedown', e => { const [x,y]=pos(e); start(x,y); });
+  sigCanvas.addEventListener('mousemove', e => { const [x,y]=pos(e); move(x,y); });
+  sigCanvas.addEventListener('mouseup',   end);
+  sigCanvas.addEventListener('mouseleave',end);
+  sigCanvas.addEventListener('touchstart',e => { e.preventDefault(); const [x,y]=pos(e); start(x,y); }, { passive:false });
+  sigCanvas.addEventListener('touchmove', e => { e.preventDefault(); const [x,y]=pos(e); move(x,y); },  { passive:false });
+  sigCanvas.addEventListener('touchend',  e => { e.preventDefault(); end(); }, { passive:false });
+}
+function clearSig() {
+  if (sigCtx && sigCanvas) {
+    sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+    sigHasInk = false;
+  }
+}
+
+function readHeader() {
+  const ids = ['verkkaupi','kennitala','heimilisfang','postnr','tengilidur','simi',
+    'dagsetning','profunarsvid','tegund_kerfis','naesta_skodun','profun_af','athugasemdir'];
+  ids.forEach(id => {
+    const el = document.getElementById('f_' + id);
+    if (el) state.values[id] = el.value;
+  });
+}
+function readChecks() {
+  ROWS.forEach(r => {
+    if (!r.key) return;
+    const el = document.getElementById('ath_' + r.key);
+    if (el) state.checks[r.key].note = el.value;
+  });
+}
+
+async function submitForm() {
+  readHeader();
+  readChecks();
+
+  // Light validation: customer signature is the only hard requirement.
+  if (!sigHasInk) {
+    showStatus('Vinsamlegast skrifaðu undir áður en þú vistar.', 'error');
+    return;
+  }
+  const sig = sigCanvas.toDataURL('image/png');
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Vista…';
+  showStatus('Sendir skoðun til Slökkvitækja…', 'info');
+
+  try {
+    const r = await fetch('/api/skoda', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'submit',
+        token: TOKEN,
+        form_data: { fields: state.values, checks: state.checks },
+        signature_customer: sig,
+        submitter_name:  state.values._submitter_name || document.getElementById('f_submitter_name')?.value || '',
+        submitter_email: state.values._submitter_email || document.getElementById('f_submitter_email')?.value || '',
+      }),
+    });
+    const j = await r.json();
+    if (!r.ok) {
+      btn.disabled = false;
+      btn.textContent = 'Vista skoðun';
+      showStatus(j.error || 'Villa við að vista', 'error');
+      return;
+    }
+    // Success — replace whole page with thank-you.
+    document.getElementById('app').innerHTML = `
+      <header>
+        <h1>✅ Takk fyrir!</h1>
+        <div class="sub">Skoðun móttekin · ${new Date().toLocaleString('is-IS')}</div>
+      </header>
+      <div class="panel">
+        <p>Skoðunin hefur verið send Slökkvitæki ehf. Þú mátt loka glugganum.</p>
+        <p style="color:var(--muted);font-size:13px">Tengillinn er nú notaður og er ekki lengur virkur.</p>
+      </div>
+    `;
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = 'Vista skoðun';
+    showStatus('Netvilla: ' + (e.message || e), 'error');
+  }
+}
+
+function showStatus(msg, kind) {
+  const box = document.getElementById('statusBox');
+  if (!box) return;
+  box.innerHTML = '<div class="status ' + kind + '">' + esc(msg) + '</div>';
+  if (kind === 'info') return;
+  setTimeout(() => { if (box.innerHTML.includes(msg)) box.innerHTML = ''; }, 6000);
+}
+
+boot();
+</script>
+</body>
+</html>
