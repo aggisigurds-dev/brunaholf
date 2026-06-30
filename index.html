@@ -2897,256 +2897,331 @@ function renderBakendi(t){
   const inp = 'padding:9px 11px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;font-size:13px';
   const hint = 'font-size:11.5px;color:#64748b;margin-top:5px';
 
+  // Card-grid layout (Bakendi.dc.html design reference). Each tool is a self-contained
+  // card; all ids preserved — handler wiring further down keeps working unchanged.
+  const card = 'border-radius:18px;border:1px solid rgba(20,24,34,.08);background:#fff;box-shadow:0 12px 32px -20px rgba(15,23,42,.28);padding:20px;display:flex;flex-direction:column;gap:14px';
+  const iconSq = 'width:42px;height:42px;border-radius:13px;display:inline-flex;align-items:center;justify-content:center;font-size:20px;color:#fff;flex-shrink:0;box-shadow:0 6px 18px -10px rgba(15,23,42,.45)';
+  const titleStyle = 'font-size:15.5px;font-weight:700;color:#0f172a;line-height:1.25';
+  const descStyle = 'font-size:12.5px;color:#64748b;line-height:1.55;margin:0';
+  const labelStyle = 'font-size:10.5px;font-weight:700;color:#94a3b8;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:5px';
+  const inp2 = 'padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;font:inherit;font-size:13px;background:#fff';
+  const inpMono = inp2 + ';font-family:"Space Mono","SF Mono",Consolas,monospace;font-size:12.5px';
+  const chipStyle = (bg, fg) => 'display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:' + bg + ';color:' + fg;
+  const dropZone = 'border:1.5px dashed #c7d2fe;background:linear-gradient(180deg,#f5f7ff,#fbfcff);border-radius:14px;padding:14px';
+  const ICON = {
+    red:    'background:linear-gradient(150deg,#ff897e,#df2c2c 55%,#8a1414)',
+    blue:   'background:linear-gradient(150deg,#8fb0ff,#2f5fe0 55%,#15306f)',
+    green:  'background:linear-gradient(150deg,#6fe2a2,#22b063 55%,#0c5d32)',
+    black:  'background:linear-gradient(145deg,#08080a,#26262c 26%,#3a3a41 50%,#19191d 74%,#070709)',
+    purple: 'background:linear-gradient(150deg,#c084fc,#7c3aed 55%,#3b1078)',
+    amber:  'background:linear-gradient(150deg,#fbbf24,#d97706 55%,#7c2d12)',
+    teal:   'background:linear-gradient(150deg,#7dd3fc,#0891b2 55%,#0c4a6e)',
+    indigo: 'background:linear-gradient(150deg,#a5b4fc,#4f46e5 55%,#1e1b4b)',
+  };
+
   $view.innerHTML = `
-    <div class="section">
-      <div onclick="state.ui.activeTab='vefryni';save();render()" style="margin:0 0 18px;padding:13px 15px;border:1px solid #fde68a;background:#fef9c3;border-radius:11px;max-width:680px;cursor:pointer;display:flex;align-items:center;gap:12px">
-        <span style="font-size:22px">🔎</span>
+    <div class="section" style="max-width:1180px">
+
+      <!-- ── Vefrýni callout (top) ────────────────────────────────────────── -->
+      <div onclick="state.ui.activeTab='vefryni';save();render()" style="margin:0 0 20px;padding:14px 18px;border-radius:14px;cursor:pointer;display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#fef3c7,#fef9c3);border:1px solid #fde68a;box-shadow:0 8px 24px -16px rgba(120,53,15,.4)">
+        <span style="${iconSq};${ICON.amber}">🔎</span>
         <div style="flex:1">
-          <div style="font-weight:700;color:#0f172a">Vefrýni — myndayfirferð á slökkvitæki-appinu</div>
-          <div style="font-size:12px;color:#713f12;margin-top:2px">Settu gula punkta á skjámyndir, skrifaðu hvað á að breyta og sendu mér í viðgerð. →</div>
+          <div style="font-weight:700;color:#0f172a;font-size:14.5px">Vefrýni — myndayfirferð á slökkvitæki-appinu</div>
+          <div style="font-size:12.5px;color:#713f12;margin-top:3px">Settu gula punkta á skjámyndir, skrifaðu hvað á að breyta og sendu mér í viðgerð. →</div>
         </div>
-      </div>
-      <div class="group-title"><strong>🔗 Mínir Sheet-tenglar</strong><div class="line"></div></div>
-      <p style="color:#475569;font-size:13px;line-height:1.5;margin:0 0 12px;max-width:680px">
-        Límdu inn tengla á Google&nbsp;Sheets sem þú vilt geyma og opna fljótt — vistast á <b>öllum tækjunum</b> þínum.
-        Yfirlits-skjölin sem „📊 Skrifa í Google Sheet" býr til (hér að neðan) bætast sjálfkrafa í fyrsta auða reitinn.
-      </p>
-      <div id="bk-links" style="max-width:720px"></div>
-      <span id="bk-links-status" style="font-size:12px;color:#16a34a"></span>
-      <div style="margin:18px 0;border-top:1px solid #e2e8f0"></div>
-
-      <div class="group-title"><strong>🔗 Skýrslu-stöð — tengja skýrslur við staði</strong><div class="line"></div></div>
-      <p style="color:#475569;font-size:13px;line-height:1.5;margin:0 0 12px;max-width:720px">
-        Veldu fyrirtæki í þjónustu, opnaðu hverja <b>skýrslu/reikning</b> (📄) og settu <b>réttan stað + ár</b> — ýttu svo á <b>✓ Staðfest</b>.
-        Mörg skráarnöfn eru röng eftir gamla lesarann (⚠ merkt), svo <b>PDF-ið ræður — ekki nafnið</b>. Augljós pörun (t.d. fyrirtæki með einn stað) er <b>forfyllt sem gul tillaga</b> — ekkert vistast fyrr en þú ýtir á 🔗 Tengja eða ✓ Staðfest.
-      </p>
-      <div style="display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin:0 0 12px">
-        <select id="bk-st-company" style="${inp};min-width:300px"><option value="">— sæki fyrirtæki… —</option></select>
-        <button id="bk-st-reload" class="btn">↻ Sækja</button>
-        <span id="bk-st-status" style="font-size:12.5px;color:#64748b"></span>
-      </div>
-      <div id="bk-st-board"></div>
-      <div style="margin:22px 0;border-top:1px solid #e2e8f0"></div>
-
-      <div class="group-title"><strong>🗄 Bakendi — Skjalalestur (PDF)</strong><div class="line"></div></div>
-      <p style="color:#475569;font-size:13px;line-height:1.5;margin:0 0 14px;max-width:680px">
-        Les PDF-skjöl úr Google&nbsp;Drive möppu, þekkir reikninga og úttektarskýrslur sem
-        <b>Slökkvitæki ehf</b> gaf út (kt 600508-0400), finnur kennitölu viðskiptavinarins á skjalinu og
-        tengir það við réttan viðskiptavin (<code>customer_documents</code>). Vendor-reikningar (t.d. Redder)
-        eru hunsaðir. Endurkeyrsla býr ekki til tvítök — sama skjal er aldrei tengt tvisvar.
-      </p>
-
-      <div style="margin:0 0 18px;padding:13px 15px;border:1px solid #ddd6fe;background:#f5f3ff;border-radius:11px;max-width:680px">
-        <a href="/skjalaheiti/" target="_blank" rel="noopener" class="btn primary" style="text-decoration:none;display:inline-flex;align-items:center;gap:7px">🏷 Endurnefna skýrslur (Skjalaheiti)</a>
-        <div style="font-size:12px;color:#6d28d9;margin-top:8px;line-height:1.5">Drag-drop PDF-skýrslur (eða tengdu möppu) → endurnefnir í <b>Fyrirtæki - Heimilisfang - Kennitala - Mánuður - Ár</b> og flettir kt upp í grunninum jafnóðum. Sækja allt sem ZIP eða endurnefna á staðnum.</div>
+        <span style="${chipStyle('#fde68a','#7c2d12')}">Skjár-yfirferð</span>
       </div>
 
-      <div style="border:1px solid #e2e8f0;border-radius:11px;padding:14px 15px;max-width:680px">
-        <label style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.04em">Mappa sem lesin er (Google Drive)</label>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:7px">
-          <input id="bk-folder" value="${escapeAttr(folder)}" placeholder="folder-id" style="${inp};flex:1;min-width:240px">
-          <button id="bk-save-folder" class="btn">Vista möppu</button>
-        </div>
-        <div style="${hint}">Folder-id&nbsp;= síðasti hluti slóðarinnar: drive.google.com/drive/folders/<b>ÞETTA</b></div>
-      </div>
-
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:15px 0 6px">
-        <button id="bk-dry" class="btn">🔍 Prufa (engin skrif)</button>
-        <button id="bk-run" class="btn primary">▶️ Keyra og tengja</button>
-        <span id="bk-status" style="font-size:12.5px;color:#64748b"></span>
-      </div>
-
-      <div id="bk-results"></div>
-
-      <div style="margin-top:24px;border-top:1px solid #e2e8f0;padding-top:18px">
-        <div class="group-title"><strong>📧 Netföng úr sendum reikningum</strong><div class="line"></div></div>
-        <p style="color:#475569;font-size:13px;line-height:1.5;margin:0 0 12px;max-width:680px">
-          Les senda reikninga (<code>.eml</code>) frá <b>bokhald@eldklar.is</b> í Drive, tekur <b>To:</b>
-          (netfang viðskiptavinarins) og fyllir <code>fyrirtaeki.netfang</code> — <b>aðeins þar sem það er tómt</b>,
-          með öryggisafrit í <code>netfang_backfill_log</code> (afturkræft). Sleppir generic/eigin netföngum
-          (bokhald@/eldklar/noreply/korta…). Viðskiptavinur fundinn af kt eða nafni/heimilisfangi úr skráarnafni.
-        </p>
-        <div style="border:1px solid #e2e8f0;border-radius:11px;padding:14px 15px;max-width:680px">
-          <label style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.04em">Möppur með .eml (kommu-aðskildar folder-id)</label>
-          <input id="bk-eml-folders" value="1OMPOK9GvHSOV0CIAbYwvUew-TBcH6pmM,1paypTnF5gE2pnGvVuGGOGOV1qrUrGtpH" style="${inp};width:100%;box-sizing:border-box;margin-top:7px">
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px 0 6px">
-          <button id="bk-eml-dry" class="btn">🔍 Prufa (engin skrif)</button>
-          <button id="bk-eml-run" class="btn primary">▶️ Keyra og fylla netföng</button>
-          <span id="bk-eml-status" style="font-size:12.5px;color:#64748b"></span>
-        </div>
-        <div id="bk-eml-results"></div>
-      </div>
-
-      <div style="margin-top:24px;border-top:1px solid #e2e8f0;padding-top:18px">
-        <div class="group-title"><strong>🧾 Reikningalesari — sendir reikningar</strong><div class="line"></div></div>
-        <p style="color:#475569;font-size:13px;line-height:1.5;margin:0 0 12px;max-width:680px">
-          Les senda <b>Slökkvitæki</b> reikninga (PDF) beint úr Drive-möppu og dregur út
-          <b>Fyrirtækjanafn · Kennitölu · Reikningsnúmer (R-…) · Dagsetningu · Heildarupphæð</b>.
-          „📊 Skrifa í Google Sheet" býr til (eða uppfærir) yfirlits-Sheet <i>inni í sömu möppu</i> svo
-          það virki sem gagnagrunns-yfirlit. „▶️ Skrá í gagnagrunn" tengir hvern reikning við viðskiptavin
-          í <code>customer_documents</code> (eins og úttektarskýrslurnar).
-        </p>
-        <div style="border:1px solid #e2e8f0;border-radius:11px;padding:14px 15px;max-width:680px">
-          <label style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.04em">Reikninga-mappa (Google Drive)</label>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:7px">
-            <input id="bk-rk-folder" value="1TDusB2NLhr-OMLnojSk3iw0oiuiuFMLM" style="${inp};flex:1;min-width:240px">
+      <!-- ── Mínir Sheet-tenglar (full-width card) ───────────────────────── -->
+      <div style="${card};margin-bottom:18px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="${iconSq};${ICON.indigo}">🔗</span>
+          <div style="flex:1">
+            <div style="${titleStyle}">Mínir Sheet-tenglar</div>
+            <p style="${descStyle};margin-top:3px">Límdu inn tengla á Google&nbsp;Sheets sem þú vilt geyma og opna fljótt — vistast á <b>öllum tækjunum</b> þínum. Yfirlits-skjölin sem „📊 Skrifa í Google Sheet" býr til bætast sjálfkrafa í fyrsta auða reitinn.</p>
           </div>
-          <div style="${hint}">Sjálfgefið = „slökkvitæki - Reikningar - Master". Yfirlits-Sheet heitir „Reikningar – gagnayfirlit".</div>
+          <span style="${chipStyle('#e0e7ff','#3730a3')}">Samstilltir</span>
         </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px 0 6px">
-          <button id="bk-rk-read" class="btn primary">🔍 Lesa reikninga</button>
-          <button id="bk-rk-sheet" class="btn" disabled>📊 Skrifa í Google Sheet</button>
-          <button id="bk-rk-db" class="btn">▶️ Skrá í gagnagrunn</button>
-          <span id="bk-rk-status" style="font-size:12.5px;color:#64748b"></span>
-        </div>
-        <div id="bk-rk-results"></div>
+        <div id="bk-links"></div>
+        <span id="bk-links-status" style="font-size:12px;color:#16a34a"></span>
       </div>
 
-      <div style="margin-top:24px;border-top:1px solid #e2e8f0;padding-top:18px">
-        <div class="group-title"><strong>🧾 Endurnefna reikninga (djúpskönnun)</strong><div class="line"></div></div>
-        <p style="color:#475569;font-size:13px;line-height:1.5;margin:0 0 12px;max-width:680px">
-          Les <b>innihald</b> hvers reiknings-PDF (ekki skráarnafnið — „Nóta_7", „Stolpi_Invoice_…", póstskrár)
-          og leggur til staðlað nafn: <b>Fyrirtæki - kennitala - R&nbsp;nr - dags - upphæð kr</b>.
-          „🔍 Forskoða" sýnir gömul → ný nöfn (breytir engu). „✏️ Endurnefna" beitir þeim í Drive.
-        </p>
-        <div style="border:1px solid #e2e8f0;border-radius:11px;padding:14px 15px;max-width:680px">
-          <label style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.04em">Reikninga-mappa (Google Drive)</label>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:7px">
-            <input id="bk-rn-folder" value="1TDusB2NLhr-OMLnojSk3iw0oiuiuFMLM" style="${inp};flex:1;min-width:240px">
+      <!-- ── Skýrslu-stöð (full-width — has its own table UI) ────────────── -->
+      <div style="${card};margin-bottom:22px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="${iconSq};${ICON.teal}">🔗</span>
+          <div style="flex:1">
+            <div style="${titleStyle}">Skýrslu-stöð — tengja skýrslur við staði</div>
+            <p style="${descStyle};margin-top:3px">Veldu fyrirtæki í þjónustu, opnaðu hverja <b>skýrslu/reikning</b> (📄) og settu <b>réttan stað + ár</b> — ýttu svo á <b>✓ Staðfest</b>. Mörg skráarnöfn eru röng eftir gamla lesarann (⚠ merkt), svo <b>PDF-ið ræður — ekki nafnið</b>. Augljós pörun er <b>forfyllt sem gul tillaga</b>.</p>
           </div>
-          <div style="${hint}">Djúpskönnun les hvert PDF (hægara). Tvítök merkt „TVÍTAK?" svo þú getir eytt aukaeintökum.</div>
+          <span style="${chipStyle('#cffafe','#155e75')}">Yfirferð</span>
         </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px 0 6px">
-          <button id="bk-rn-scan" class="btn primary">🔍 Forskoða nöfn</button>
-          <button id="bk-rn-apply" class="btn" disabled>✏️ Endurnefna (í Drive)</button>
-          <span id="bk-rn-status" style="font-size:12.5px;color:#64748b"></span>
+        <div style="display:flex;gap:9px;flex-wrap:wrap;align-items:center">
+          <select id="bk-st-company" style="${inp2};min-width:300px;flex:1"><option value="">— sæki fyrirtæki… —</option></select>
+          <button id="bk-st-reload" class="btn">↻ Sækja</button>
+          <span id="bk-st-status" style="font-size:12.5px;color:#64748b"></span>
         </div>
-        <div id="bk-rn-results"></div>
-        <div style="margin-top:12px;border-top:1px dashed #e2e8f0;padding-top:12px">
+        <div id="bk-st-board"></div>
+      </div>
+
+      <!-- ── Stat strip ──────────────────────────────────────────────────── -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:22px">
+        <div style="border-radius:14px;border:1px solid rgba(20,24,34,.08);background:linear-gradient(160deg,#f8fafc,#fff);padding:16px 18px">
+          <div style="font-size:10.5px;font-weight:700;color:#94a3b8;letter-spacing:.12em;text-transform:uppercase">Sjálfgefin Drive-mappa</div>
+          <div style="font-family:'Space Mono','SF Mono',Consolas,monospace;font-size:12px;color:#0f172a;margin-top:6px;word-break:break-all">${escapeHtml(folder.slice(0,32))}${folder.length>32?'…':''}</div>
+        </div>
+        <div style="border-radius:14px;border:1px solid rgba(20,24,34,.08);background:linear-gradient(160deg,#f8fafc,#fff);padding:16px 18px">
+          <div style="font-size:10.5px;font-weight:700;color:#94a3b8;letter-spacing:.12em;text-transform:uppercase">Vinnsla</div>
+          <div style="font-size:18px;font-weight:700;color:#0f172a;margin-top:6px">PDF-skjöl ➜ Customer docs</div>
+        </div>
+        <div style="border-radius:14px;border:1px solid rgba(20,24,34,.08);background:linear-gradient(160deg,#f8fafc,#fff);padding:16px 18px">
+          <div style="font-size:10.5px;font-weight:700;color:#94a3b8;letter-spacing:.12em;text-transform:uppercase">Öryggi</div>
+          <div style="font-size:18px;font-weight:700;color:#0f172a;margin-top:6px">Tvíkeyrsla óhætt</div>
+        </div>
+      </div>
+
+      <!-- ── 2-column tool grid ──────────────────────────────────────────── -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(440px,1fr));gap:18px">
+
+        <!-- 🏷 Endurnefna skýrslur (Skjalaheiti) -->
+        <div style="${card}">
+          <div style="display:flex;align-items:center;gap:12px">
+            <span style="${iconSq};${ICON.red}">🏷</span>
+            <div style="flex:1">
+              <div style="${titleStyle}">Endurnefna skýrslur (Skjalaheiti)</div>
+              <p style="${descStyle};margin-top:3px">Drag-drop PDF-skýrslur eða tengdu möppu → endurnefnir í <b>Fyrirtæki - Heimilisfang - Kennitala - Mánuður - Ár</b> og flettir kt upp í grunninum jafnóðum.</p>
+            </div>
+            <span style="${chipStyle('#fee2e2','#991b1b')}">Skjalaheiti</span>
+          </div>
+          <div style="${dropZone};text-align:center">
+            <div style="font-size:12.5px;color:#475569;line-height:1.55">Sækja allt sem ZIP eða endurnefna á staðnum. Lifandi vefsíða — opnast í nýjum flipa.</div>
+          </div>
+          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:auto">
+            <a href="/skjalaheiti/" target="_blank" rel="noopener" class="btn primary" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px">Opna Skjalaheiti ↗</a>
+          </div>
+        </div>
+
+        <!-- 🗄 Bakendi PDF reader (Skjalalestur, doc-index) -->
+        <div style="${card}">
+          <div style="display:flex;align-items:center;gap:12px">
+            <span style="${iconSq};${ICON.purple}">🗄</span>
+            <div style="flex:1">
+              <div style="${titleStyle}">Skjalalestur (PDF ➜ customer_documents)</div>
+              <p style="${descStyle};margin-top:3px">Les PDF úr Drive, þekkir <b>Slökkvitæki ehf</b> (kt 600508-0400) skjöl, finnur kt viðskiptavinarins og tengir í <code>customer_documents</code>. Vendor-reikningar hunsaðir. Engin tvítök.</p>
+            </div>
+            <span style="${chipStyle('#ede9fe','#5b21b6')}">PDF</span>
+          </div>
+          <div>
+            <label style="${labelStyle}">Drive-mappa</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <input id="bk-folder" value="${escapeAttr(folder)}" placeholder="folder-id" style="${inpMono};flex:1;min-width:220px;height:42px;box-sizing:border-box">
+              <button id="bk-save-folder" class="btn">Vista möppu</button>
+            </div>
+            <div style="${hint}">Folder-id&nbsp;= síðasti hluti slóðarinnar: drive.google.com/drive/folders/<b>ÞETTA</b></div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:auto">
+            <button id="bk-dry" class="btn">🔍 Prufa</button>
+            <button id="bk-run" class="btn primary">▶️ Keyra og tengja</button>
+            <span id="bk-status" style="font-size:12.5px;color:#64748b"></span>
+          </div>
+          <div id="bk-results"></div>
+        </div>
+
+        <!-- 📧 Netföng úr sendum reikningum -->
+        <div style="${card}">
+          <div style="display:flex;align-items:center;gap:12px">
+            <span style="${iconSq};${ICON.blue}">📧</span>
+            <div style="flex:1">
+              <div style="${titleStyle}">Netföng úr sendum reikningum</div>
+              <p style="${descStyle};margin-top:3px">Les <code>.eml</code>-skjöl frá <b>bokhald@eldklar.is</b>, tekur <b>To:</b> og fyllir <code>fyrirtaeki.netfang</code> — aðeins þar sem það er tómt. Sleppir generic/eigin netföngum. Afturkræft í <code>netfang_backfill_log</code>.</p>
+            </div>
+            <span style="${chipStyle('#dbeafe','#1e3a8a')}">Sjálfvirkt</span>
+          </div>
+          <div>
+            <label style="${labelStyle}">Möppur með .eml (kommu-aðskildar)</label>
+            <input id="bk-eml-folders" value="1OMPOK9GvHSOV0CIAbYwvUew-TBcH6pmM,1paypTnF5gE2pnGvVuGGOGOV1qrUrGtpH" style="${inpMono};width:100%;box-sizing:border-box;height:42px">
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:auto">
+            <button id="bk-eml-dry" class="btn">🔍 Prufa</button>
+            <button id="bk-eml-run" class="btn primary">▶️ Keyra og fylla netföng</button>
+            <span id="bk-eml-status" style="font-size:12.5px;color:#64748b"></span>
+          </div>
+          <div id="bk-eml-results"></div>
+        </div>
+
+        <!-- 🧾 Reikningalesari (sendir reikningar) -->
+        <div style="${card}">
+          <div style="display:flex;align-items:center;gap:12px">
+            <span style="${iconSq};${ICON.green}">🧾</span>
+            <div style="flex:1">
+              <div style="${titleStyle}">Reikningalesari — sendir reikningar</div>
+              <p style="${descStyle};margin-top:3px">Les senda <b>Slökkvitæki</b> reikninga (PDF) og dregur út <b>Fyrirtæki · Kt · R-nr · Dags · Upphæð</b>. „📊 Skrifa í Google Sheet" býr til yfirlit í sömu möppu. „▶️ Skrá í gagnagrunn" tengir í <code>customer_documents</code>.</p>
+            </div>
+            <span style="${chipStyle('#dcfce7','#14532d')}">Google Sheet</span>
+          </div>
+          <div>
+            <label style="${labelStyle}">Reikninga-mappa</label>
+            <input id="bk-rk-folder" value="1TDusB2NLhr-OMLnojSk3iw0oiuiuFMLM" style="${inpMono};width:100%;box-sizing:border-box;height:42px">
+            <div style="${hint}">Sjálfgefið = „slökkvitæki - Reikningar - Master". Yfirlits-Sheet heitir „Reikningar – gagnayfirlit".</div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:auto">
+            <button id="bk-rk-read" class="btn primary">🔍 Lesa reikninga</button>
+            <button id="bk-rk-sheet" class="btn" disabled>📊 Skrifa í Google Sheet</button>
+            <button id="bk-rk-db" class="btn">▶️ Skrá í gagnagrunn</button>
+            <span id="bk-rk-status" style="font-size:12.5px;color:#64748b"></span>
+          </div>
+          <div id="bk-rk-results"></div>
+        </div>
+
+        <!-- 🧾 Endurnefna reikninga djúpskönnun + tvítök -->
+        <div style="${card}">
+          <div style="display:flex;align-items:center;gap:12px">
+            <span style="${iconSq};${ICON.black}">🧾</span>
+            <div style="flex:1">
+              <div style="${titleStyle}">Endurnefna reikninga (djúpskönnun)</div>
+              <p style="${descStyle};margin-top:3px">Les <b>innihald</b> hvers reiknings-PDF og leggur til <b>Fyrirtæki - kt - R&nbsp;nr - dags - upphæð kr</b>. „🔍 Forskoða" sýnir gömul → ný nöfn (breytir engu). „✏️ Endurnefna" beitir þeim í Drive.</p>
+            </div>
+            <span style="${chipStyle('#1f2937','#f9fafb')}">Öruggt</span>
+          </div>
+          <div>
+            <label style="${labelStyle}">Reikninga-mappa</label>
+            <input id="bk-rn-folder" value="1TDusB2NLhr-OMLnojSk3iw0oiuiuFMLM" style="${inpMono};width:100%;box-sizing:border-box;height:42px">
+            <div style="${hint}">Djúpskönnun les hvert PDF (hægara). Tvítök merkt „TVÍTAK?" svo þú getir eytt aukaeintökum.</div>
+          </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-            <button id="bk-dup-scan" class="btn">🗑 Finna tvítök</button>
-            <button id="bk-dup-trash" class="btn" disabled>Eyða aukaeintökum (í ruslið)</button>
-            <span id="bk-dup-status" style="font-size:12.5px;color:#64748b"></span>
+            <button id="bk-rn-scan" class="btn primary">🔍 Forskoða nöfn</button>
+            <button id="bk-rn-apply" class="btn" disabled>✏️ Endurnefna (í Drive)</button>
+            <span id="bk-rn-status" style="font-size:12.5px;color:#64748b"></span>
           </div>
-          <div id="bk-dup-results"></div>
+          <div id="bk-rn-results"></div>
+          <div style="border-top:1px dashed #e2e8f0;padding-top:12px">
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+              <button id="bk-dup-scan" class="btn">🗑 Finna tvítök</button>
+              <button id="bk-dup-trash" class="btn" disabled>Eyða aukaeintökum</button>
+              <span id="bk-dup-status" style="font-size:12.5px;color:#64748b"></span>
+            </div>
+            <div id="bk-dup-results"></div>
+          </div>
         </div>
-      </div>
 
-      <div style="margin-top:24px;border-top:1px solid #e2e8f0;padding-top:18px">
-        <div class="group-title"><strong>📋 Endurnefna úttektarskýrslur (djúpskönnun)</strong><div class="line"></div></div>
-        <p style="color:#475569;font-size:13px;line-height:1.5;margin:0 0 12px;max-width:680px">
-          Les <b>innihald</b> hverrar úttektarskýrslu-PDF og leggur til staðlað nafn:
-          <b>Fyrirtæki - Heimilisfang - Kennitala - Mánuður - Ár</b> (sama kerfi og „Allt"-mappan).
-          Yfirskrifar óskýr/ósamræmd nöfn svo allt er undir einu nafnakerfi.
-          „🔍 Forskoða" sýnir gömul → ný nöfn (breytir engu); „✏️ Endurnefna" beitir þeim í Drive.
-        </p>
-        <div style="border:1px solid #e2e8f0;border-radius:11px;padding:14px 15px;max-width:680px">
-          <label style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.04em">Úttektarskýrslu-mappa (Google Drive)</label>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:7px">
-            <input id="bk-ur-folder" value="11Gf4yUeR6tQ2HcFxWk-50IFQl2xBUQOg" style="${inp};flex:1;min-width:240px">
+        <!-- 📋 Endurnefna úttektarskýrslur djúpskönnun + tvítök + audit -->
+        <div style="${card}">
+          <div style="display:flex;align-items:center;gap:12px">
+            <span style="${iconSq};${ICON.red}">📋</span>
+            <div style="flex:1">
+              <div style="${titleStyle}">Endurnefna úttektarskýrslur (djúpskönnun)</div>
+              <p style="${descStyle};margin-top:3px">Les <b>innihald</b> hverrar úttektarskýrslu-PDF og leggur til <b>Fyrirtæki - Heimilisfang - Kennitala - Mánuður - Ár</b>. Yfirskrifar óskýr/ósamræmd nöfn svo allt er undir einu nafnakerfi.</p>
+            </div>
+            <span style="${chipStyle('#fee2e2','#991b1b')}">Skjalaheiti</span>
           </div>
-          <div style="${hint}">Skannaðu hverja möppu þar sem skýrslur liggja (settu möppu-id hér að ofan). Fyrirtækjanafnið kemur úr kennitölu skýrslunnar þegar hún finnst í grunninum.</div>
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px 0 6px">
-          <button id="bk-ur-scan" class="btn primary">🔍 Forskoða nöfn</button>
-          <button id="bk-ur-apply" class="btn" disabled>✏️ Endurnefna (í Drive)</button>
-          <button id="bk-ur-db" class="btn" title="Skrár þessa möppu í gagnagrunn gegnum Skjalalestur (með fyrirtækjatengingu + stofna)">▶️ Skrá í gagnagrunn</button>
-          <span id="bk-ur-status" style="font-size:12.5px;color:#64748b"></span>
-        </div>
-        <div id="bk-ur-results"></div>
-        <div style="margin-top:12px;border-top:1px dashed #e2e8f0;padding-top:12px">
+          <div>
+            <label style="${labelStyle}">Úttektarskýrslu-mappa</label>
+            <input id="bk-ur-folder" value="11Gf4yUeR6tQ2HcFxWk-50IFQl2xBUQOg" style="${inpMono};width:100%;box-sizing:border-box;height:42px">
+            <div style="${hint}">Fyrirtækjanafnið kemur úr kennitölu skýrslunnar þegar hún finnst í grunninum.</div>
+          </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-            <button id="bk-udup-scan" class="btn">🗑 Finna tvítök</button>
-            <button id="bk-udup-trash" class="btn" disabled>Eyða aukaeintökum (í ruslið)</button>
-            <span id="bk-udup-status" style="font-size:12.5px;color:#64748b"></span>
+            <button id="bk-ur-scan" class="btn primary">🔍 Forskoða nöfn</button>
+            <button id="bk-ur-apply" class="btn" disabled>✏️ Endurnefna (í Drive)</button>
+            <button id="bk-ur-db" class="btn" title="Skrár þessa möppu í gagnagrunn gegnum Skjalalestur">▶️ Skrá í gagnagrunn</button>
+            <span id="bk-ur-status" style="font-size:12.5px;color:#64748b"></span>
           </div>
-          <div id="bk-udup-results"></div>
+          <div id="bk-ur-results"></div>
+          <div style="border-top:1px dashed #e2e8f0;padding-top:12px">
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+              <button id="bk-udup-scan" class="btn">🗑 Finna tvítök</button>
+              <button id="bk-udup-trash" class="btn" disabled>Eyða aukaeintökum</button>
+              <span id="bk-udup-status" style="font-size:12.5px;color:#64748b"></span>
+            </div>
+            <div id="bk-udup-results"></div>
+          </div>
+          <div style="border-top:1px dashed #e2e8f0;padding-top:12px">
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+              <button id="bk-ur-audit" class="btn">🔗 Athuga tengingar (eftir kt)</button>
+              <button id="bk-ur-relink" class="btn" disabled>Laga rangar + tengja óskráðar</button>
+              <span id="bk-ur-audit-status" style="font-size:12.5px;color:#64748b"></span>
+            </div>
+            <div style="${hint}">Ber kt í skráarnafninu saman við fyrirtækið í gagnagrunni — lagar öll í einum smelli. Endurnefndu fyrst svo kt sé komin í nöfnin.</div>
+            <div id="bk-ur-audit-results"></div>
+          </div>
         </div>
-        <div style="margin-top:12px;border-top:1px dashed #e2e8f0;padding-top:12px">
+
+        <!-- 📝 Samningalesari -->
+        <div style="${card}">
+          <div style="display:flex;align-items:center;gap:12px">
+            <span style="${iconSq};${ICON.green}">📝</span>
+            <div style="flex:1">
+              <div style="${titleStyle}">Samningalesari — þjónustusamningar</div>
+              <p style="${descStyle};margin-top:3px">Les <b>þjónustusamninga</b> (PDF) og dregur út <b>Fyrirtæki · Heimilisfang · Kt · Dagsetning</b>. „📊 Skrifa í Google Sheet" býr til yfirlit í sömu möppu. „▶️ Skrá í gagnagrunn" tengir í <code>customer_documents</code> (doc_type = samningur).</p>
+            </div>
+            <span style="${chipStyle('#dcfce7','#14532d')}">Google Sheet</span>
+          </div>
+          <div>
+            <label style="${labelStyle}">Samninga-mappa</label>
+            <input id="bk-sm-folder" value="1f2kzXhbkU0xJ0MFPxRpWjoPmWZBlm1zZ" style="${inpMono};width:100%;box-sizing:border-box;height:42px">
+            <div style="${hint}">Sjálfgefið = „Slökkvitæki - Þjónustusamningar - Master". Yfirlits-Sheet heitir „Þjónustusamningar – gagnayfirlit".</div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:auto">
+            <button id="bk-sm-read" class="btn primary">🔍 Lesa samninga</button>
+            <button id="bk-sm-sheet" class="btn" disabled>📊 Skrifa í Google Sheet</button>
+            <button id="bk-sm-db" class="btn">▶️ Skrá í gagnagrunn</button>
+            <span id="bk-sm-status" style="font-size:12.5px;color:#64748b"></span>
+          </div>
+          <div id="bk-sm-results"></div>
+        </div>
+
+        <!-- 🔄 Gagna-uppfærslur úr Drive -->
+        <div style="${card}">
+          <div style="display:flex;align-items:center;gap:12px">
+            <span style="${iconSq};${ICON.blue}">🔄</span>
+            <div style="flex:1">
+              <div style="${titleStyle}">Gagna-uppfærslur úr Drive</div>
+              <p style="${descStyle};margin-top:3px">Finnur <b>nýjustu</b> útflutningsskrána í Drive og les hana beint inn í gagnagrunninn — sama vinnsla og luna-bridge á tölvunni, bara í skýinu. Endurkeyrsla er örugg (upsert).</p>
+            </div>
+            <span style="${chipStyle('#dbeafe','#1e3a8a')}">Sjálfvirkt</span>
+          </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-            <button id="bk-ur-audit" class="btn">🔗 Athuga tengingar (eftir kt)</button>
-            <button id="bk-ur-relink" class="btn" disabled>Laga rangar + tengja óskráðar</button>
-            <span id="bk-ur-audit-status" style="font-size:12.5px;color:#64748b"></span>
+            <button id="bk-tv-run" class="btn primary">⏱ Tímavera xlsx → timavera_entries</button>
+            <span id="bk-tv-status" style="font-size:12.5px;color:#64748b"></span>
           </div>
-          <div style="${hint}">Ber kennitöluna í skráarnafninu saman við fyrirtækið sem skjalið er tengt í gagnagrunni — sýnir öll sem eru á röngum stað og lagar þau öll í einum smelli (eftir kt). Engin smell-á-hvert-fyrirtæki. Endurnefndu fyrst svo kt sé komin í nöfnin.</div>
-          <div id="bk-ur-audit-results"></div>
-        </div>
-      </div>
-
-      <div style="margin-top:24px;border-top:1px solid #e2e8f0;padding-top:18px">
-        <div class="group-title"><strong>📝 Samningalesari — þjónustusamningar</strong><div class="line"></div></div>
-        <p style="color:#475569;font-size:13px;line-height:1.5;margin:0 0 12px;max-width:680px">
-          Les <b>þjónustusamninga</b> (PDF) beint úr Drive-möppu og dregur út
-          <b>Fyrirtækjanafn · Heimilisfang · Kennitölu · Dagsetningu</b>.
-          „📊 Skrifa í Google Sheet" býr til (eða uppfærir) yfirlits-Sheet <i>inni í sömu möppu</i>.
-          „▶️ Skrá í gagnagrunn" tengir hvern samning við viðskiptavin í <code>customer_documents</code>
-          (doc_type = samningur).
-        </p>
-        <div style="border:1px solid #e2e8f0;border-radius:11px;padding:14px 15px;max-width:680px">
-          <label style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.04em">Samninga-mappa (Google Drive)</label>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:7px">
-            <input id="bk-sm-folder" value="1f2kzXhbkU0xJ0MFPxRpWjoPmWZBlm1zZ" style="${inp};flex:1;min-width:240px">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <button id="bk-pd-run" class="btn primary">💳 Payday xlsx → invoices</button>
+            <span id="bk-pd-status" style="font-size:12.5px;color:#64748b"></span>
           </div>
-          <div style="${hint}">Sjálfgefið = „Slökkvitæki - Þjónustusamningar - Master". Yfirlits-Sheet heitir „Þjónustusamningar – gagnayfirlit".</div>
+          <div style="${hint}">Leitað eftir skráarnafni: „vinnufærslur" / „payday" — nýjasta útgáfan vinnur. Payday-innlestur snertir ekki worksite_match (handvirkt viðhaldið).</div>
         </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px 0 6px">
-          <button id="bk-sm-read" class="btn primary">🔍 Lesa samninga</button>
-          <button id="bk-sm-sheet" class="btn" disabled>📊 Skrifa í Google Sheet</button>
-          <button id="bk-sm-db" class="btn">▶️ Skrá í gagnagrunn</button>
-          <span id="bk-sm-status" style="font-size:12.5px;color:#64748b"></span>
-        </div>
-        <div id="bk-sm-results"></div>
-      </div>
 
-      <div style="margin-top:24px;border-top:1px solid #e2e8f0;padding-top:18px">
-        <div class="group-title"><strong>🔄 Gagna-uppfærslur úr Drive</strong><div class="line"></div></div>
-        <p style="color:#475569;font-size:13px;line-height:1.5;margin:0 0 12px;max-width:680px">
-          Finnur <b>nýjustu</b> útflutningsskrána í Google Drive og les hana beint inn í gagnagrunninn
-          — sama vinnsla og luna-bridge á tölvunni, bara í skýinu. Endurkeyrsla er örugg (upsert á sömu lykla).
-          Ajour-hnappurinn er líka á NLSH-síðunni.
-        </p>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:6px 0">
-          <button id="bk-tv-run" class="btn primary">⏱ Tímavera xlsx → timavera_entries</button>
-          <span id="bk-tv-status" style="font-size:12.5px;color:#64748b"></span>
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:6px 0">
-          <button id="bk-pd-run" class="btn primary">💳 Payday xlsx → invoices</button>
-          <span id="bk-pd-status" style="font-size:12.5px;color:#64748b"></span>
-        </div>
-        <div style="font-size:11.5px;color:#64748b;margin-top:5px">Leitað eftir skráarnafni: „vinnufærslur" / „payday" — nýjasta útgáfan vinnur. Payday-innlestur snertir ekki worksite_match (handvirkt viðhaldið).</div>
-      </div>
-
-      <div style="margin-top:24px;border-top:1px solid #e2e8f0;padding-top:18px">
-        <div class="group-title"><strong>☁️ Gmail úr skýi</strong><div class="line"></div></div>
-        <p style="color:#475569;font-size:13px;line-height:1.5;margin:0 0 12px;max-width:680px">
-          Sækir póst <b>beint frá Google</b> (Gmail API) inn í <code>email_digest</code> — sama tafla og
-          Inbox/Spurningar nota. Þannig þarf <b>ekki</b> lengur að treysta á Thunderbird/luna-bridge á
-          tölvunni fyrir Google-pósthólf. Forgangs-pósthólf: <b>eldklar@eldklar.is</b> (Slökkvitæki).
-          <br>Athugið: aðeins er hægt að sækja það Google-pósthólf sem er <b>tengt núna</b> — til að sækja
-          eldklar@eldklar.is þarftu að tengja Google sem það pósthólf.
-        </p>
-        <div style="border:1px solid #e2e8f0;border-radius:11px;padding:14px 15px;max-width:680px">
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+        <!-- ☁️ Gmail úr skýi -->
+        <div style="${card}">
+          <div style="display:flex;align-items:center;gap:12px">
+            <span style="${iconSq};${ICON.teal}">☁️</span>
+            <div style="flex:1">
+              <div style="${titleStyle}">Gmail úr skýi</div>
+              <p style="${descStyle};margin-top:3px">Sækir póst <b>beint frá Google</b> (Gmail API) inn í <code>email_digest</code> — sama tafla og Inbox/Spurningar nota. Þannig þarf <b>ekki</b> að treysta á Thunderbird/luna-bridge. Forgangs-pósthólf: <b>eldklar@eldklar.is</b>.</p>
+            </div>
+            <span style="${chipStyle('#cffafe','#155e75')}">Skýi</span>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
             <span id="bk-gm-conn" style="font-size:12.5px;color:#64748b">Athuga tengingu…</span>
             <button id="bk-gm-connect" class="btn">✦ Tengja pósthólf (Google)</button>
           </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-            <label style="font-size:12px;color:#475569">Pósthólf:</label>
-            <input id="bk-gm-account" placeholder="eldklar@eldklar.is" style="${inp};flex:1;min-width:220px">
-            <label style="font-size:12px;color:#475569">Dagar aftur:</label>
-            <input id="bk-gm-days" value="10" style="${inp};width:70px">
-            <label style="font-size:12px;color:#475569;display:inline-flex;align-items:center;gap:5px">
-              <input id="bk-gm-dry" type="checkbox" checked> Prufa (engin skrif)
-            </label>
+          <div>
+            <label style="${labelStyle}">Pósthólf · Dagar aftur · Prufa</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <input id="bk-gm-account" placeholder="eldklar@eldklar.is" style="${inpMono};flex:1;min-width:200px;height:42px;box-sizing:border-box">
+              <input id="bk-gm-days" value="10" style="${inpMono};width:70px;height:42px;box-sizing:border-box">
+              <label style="font-size:12px;color:#475569;display:inline-flex;align-items:center;gap:5px">
+                <input id="bk-gm-dry" type="checkbox" checked> Prufa
+              </label>
+            </div>
           </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:auto">
+            <button id="bk-gm-run" class="btn primary">⬇️ Sækja núna</button>
+            <span id="bk-gm-status" style="font-size:12.5px;color:#64748b"></span>
+          </div>
+          <div style="${hint}">Sækir „in:inbox newer_than:&lt;dagar&gt;d" og upsertar á <code>message_id</code> (engin tvítök). Síðar: Microsoft&nbsp;Graph fyrir @brunaholf.is.</div>
+          <div id="bk-gm-results"></div>
         </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px 0 6px">
-          <button id="bk-gm-run" class="btn primary">⬇️ Sækja núna</button>
-          <span id="bk-gm-status" style="font-size:12.5px;color:#64748b"></span>
-        </div>
-        <div style="font-size:11.5px;color:#64748b;margin-top:2px">Sækir „in:inbox newer_than:&lt;dagar&gt;d" og upsertar á <code>message_id</code> (engin tvítök). Síðar: Microsoft&nbsp;Graph fyrir @brunaholf.is.</div>
-        <div id="bk-gm-results"></div>
+
       </div>
     </div>`;
 

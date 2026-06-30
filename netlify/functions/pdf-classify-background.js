@@ -375,11 +375,12 @@ function parseReport(text, name) {
   }
   return out;
 }
+// Skýrsla: Fyrirtæki - Kennitala - Heimilisfang - Ár - Mánuður
 function reportName({ company, address, kt, year, month }) {
   const parts = [];
   parts.push(sanitize(company || 'Óþekkt'));
-  if (address) parts.push(sanitize(address));
   if (kt) parts.push(kt);
+  if (address) parts.push(sanitize(address));
   if (year) parts.push(year);
   if (month) parts.push(month);
   return parts.join(' - ') + '.pdf';
