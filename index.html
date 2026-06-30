@@ -9894,6 +9894,13 @@ async function renderDagurinn(t){
    kept in state.ui.vk so it survives navigation.
    ──────────────────────────────────────────────────────────────────── */
 function renderVerkefnaskra(t){
+  // 2026-06-30: this tab now embeds the live Supabase-backed verkefnalisti
+  // page (`/verkefnalisti.html`) so the in-hub tab and the standalone share
+  // ONE board (categories, drag-to-reorder, paste-screenshot beidnir, the
+  // 'í yfirferð' agent-review status). The old per-tab `t.items[]` system
+  // was empty and confusing.
+  return '<iframe src="/verkefnalisti.html" style="width:100%;height:calc(100vh - 120px);min-height:600px;border:0;background:#f6f7fb;border-radius:8px" title="Verkefnalisti"></iframe>';
+  // ─── Legacy per-tab implementation kept below for reference ────────────
   if(!Array.isArray(t.items)) t.items = [];
   state.ui = state.ui || {};
   state.ui.vk = state.ui.vk || { q:'', status:'open', prio:'', asg:'', tag:'', sort:'prio' };
