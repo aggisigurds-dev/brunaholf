@@ -28,10 +28,54 @@
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+const EDITABLE_DOC_FIELDS = ['doc_type', 'amount', 'invoice_number', 'doc_date', 'customer_name', 'notes'];
+
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors(), body: '' };
-  if (event.httpMethod !== 'GET') return json(405, { error: 'GET only' });
   if (!SUPABASE_URL || !SUPABASE_KEY) return json(500, { error: 'Supabase env vantar' });
+
+  if (event.httpMethod === 'POST') {
+    let body;
+    try { body = JSON.parse(event.body || '{}'); }
+    catch { return json(400, { error: 'Ógilt JSON í líkama' }); }
+    const action = body.action;
+    if (action === 'update-doc') {
+      const id = parseInt(body.id, 10);
+      if (!id) return json(400, { error: 'id vantar' });
+      const fields = body.fields || {};
+      const patch = {};
+      for (const k of EDITABLE_DOC_FIELDS) {
+        if (Object.prototype.hasOwnProperty.call(fields, k)) {
+          let v = fields[k];
+          if (k === 'amount') {
+            if (v === '' || v === null || v === undefined) v = null;
+            else { const n = Number(v); v = Number.isFinite(n) ? n : null; }
+          } else if (k === 'doc_date') {
+            if (!v) v = null;
+          } else if (typeof v === 'string') {
+            v = v.trim();
+            if (v === '') v = null;
+          }
+          patch[k] = v;
+        }
+      }
+      if (!Object.keys(patch).length) return json(400, { error: 'Engin reitir til að uppfæra' });
+      try {
+        const r = await sbPatch(`customer_documents?id=eq.${id}&select=*`, patch);
+        if (!r.ok) {
+          const txt = await r.text();
+          return json(r.status, { error: 'Supabase villa', detail: txt });
+        }
+        const rows = await r.json();
+        return json(200, { ok: true, row: rows[0] || null });
+      } catch (e) {
+        return json(500, { error: String(e.message || e) });
+      }
+    }
+    return json(400, { error: 'Óþekkt aðgerð', action });
+  }
+
+  if (event.httpMethod !== 'GET') return json(405, { error: 'GET eða POST only' });
 
   const p = event.queryStringParameters || {};
   let baseId = parseInt(p.base, 10);
@@ -259,10 +303,23 @@ function sbGet(qs) {
   });
 }
 
+function sbPatch(qs, body) {
+  return fetch(`${SUPABASE_URL}/rest/v1/${qs}`, {
+    method: 'PATCH',
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=representation',
+    },
+    body: JSON.stringify(body),
+  });
+}
+
 function cors() {
   return {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   };
 }

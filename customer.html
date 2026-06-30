@@ -78,6 +78,23 @@
 
   details { margin-top:8px; }
   details summary { cursor:pointer; font-size:12px; color:var(--accent); }
+
+  /* Inline edit */
+  .ed-btn { background:none; border:1px solid var(--line); border-radius:5px; padding:2px 6px; font-size:11px; cursor:pointer; color:var(--muted); }
+  .ed-btn:hover { color:var(--fg); background:#f8fafc; }
+  .ed-btn.save { color:var(--ok); border-color:#bbf7d0; }
+  .ed-btn.save:hover { background:#dcfce7; }
+  .ed-btn.cancel { color:var(--err); border-color:#fecaca; }
+  .ed-btn.cancel:hover { background:#fee2e2; }
+  .ed-input { padding:2px 5px; border:1px solid var(--line); border-radius:4px; font:12px Inter,sans-serif; max-width:100%; }
+  .ed-input.num { text-align:right; font-variant-numeric:tabular-nums; width:90px; }
+  .ed-input.date { width:130px; }
+  .ed-input.text { width:100%; min-width:80px; }
+  .ed-input.rno { width:90px; }
+  .ed-input:focus { outline:none; border-color:var(--accent); }
+  tr.editing { background:#fffbeb; }
+  tr.editing td { vertical-align:middle; }
+  .ed-actions { display:flex; gap:4px; }
 </style>
 </head>
 <body>
@@ -141,7 +158,12 @@ async function load() {
   history.replaceState(null, '', '?base=' + data.base.id);
 }
 
+let LAST_DATA = null;
+const DOC_TYPES = ['uttektarskyrsla', 'reikningur', 'samningur', 'annad'];
+const DOC_TYPE_LABEL = { uttektarskyrsla: 'Úttekt', reikningur: 'Reikningur', samningur: 'Samningur', annad: 'Annað' };
+
 function render(d) {
+  LAST_DATA = d;
   const { base, sites, docs, invoices, summary, ai_flags } = d;
   let html = '';
 
@@ -234,13 +256,9 @@ function render(d) {
       if (sa !== sb) return sb - sa;
       return (b.doc_date || String(b.year || '')).localeCompare(a.doc_date || String(a.year || ''));
     });
-    html += '<table class="inv"><thead><tr><th>R-nr</th><th>Dags</th><th>Staðsettning</th><th class="num">Upphæð</th><th></th></tr></thead><tbody>';
+    html += '<table class="inv" id="slInvTable"><thead><tr><th>R-nr</th><th>Dags</th><th>Tegund</th><th>Kúnni / nafn</th><th class="num">Upphæð</th><th>PDF</th><th></th></tr></thead><tbody>';
     for (const i of slInv.slice(0, 60)) {
-      html += `<tr><td>${esc(i.invoice_number || '—')}</td>`;
-      html += `<td>${esc(fmtDate(i.doc_date) || (i.year || ''))}</td>`;
-      html += `<td>${esc(i.site_nafn || '')}</td>`;
-      html += `<td class="num">${i.amount ? fmtKr(i.amount) + ' kr' : ''}</td>`;
-      html += `<td>${i.view_url ? `<a class="doc-link" href="${esc(i.view_url)}" target="_blank" rel="noopener">PDF</a>` : ''}</td></tr>`;
+      html += renderDocRow(i);
     }
     html += '</tbody></table>';
     if (slInv.length > 60) html += '<div class="meta" style="margin-top:6px">+ ' + (slInv.length - 60) + ' fleiri</div>';
@@ -268,6 +286,79 @@ function render(d) {
   html += '<details><summary>Sjá raw JSON</summary><pre style="font:11px ui-monospace,Menlo,monospace;overflow:auto;background:#f8fafc;padding:10px;border-radius:6px">' + esc(JSON.stringify(d, null, 2)) + '</pre></details>';
 
   el('out').innerHTML = html;
+}
+
+function renderDocRow(i) {
+  const editing = window._editingDocId === i.id;
+  if (editing) {
+    const typeOpts = DOC_TYPES.map(t => `<option value="${t}"${i.doc_type === t ? ' selected' : ''}>${DOC_TYPE_LABEL[t]}</option>`).join('');
+    return `<tr class="editing" data-doc-id="${i.id}">
+      <td><input class="ed-input rno" data-f="invoice_number" value="${esc(i.invoice_number || '')}"></td>
+      <td><input class="ed-input date" data-f="doc_date" type="date" value="${esc(i.doc_date || '')}"></td>
+      <td><select class="ed-input" data-f="doc_type" style="width:110px">${typeOpts}</select></td>
+      <td><input class="ed-input text" data-f="customer_name" value="${esc(i.customer_name || '')}"></td>
+      <td class="num"><input class="ed-input num" data-f="amount" type="number" step="1" value="${i.amount != null ? Number(i.amount) : ''}"></td>
+      <td>${i.view_url ? `<a class="doc-link" href="${esc(i.view_url)}" target="_blank" rel="noopener">PDF</a>` : ''}</td>
+      <td><div class="ed-actions">
+        <button class="ed-btn save" onclick="saveDocEdit(${i.id})" title="Vista">💾</button>
+        <button class="ed-btn cancel" onclick="cancelDocEdit()" title="Hætta við">✕</button>
+      </div></td>
+    </tr>
+    <tr class="editing" data-doc-id="${i.id}-notes">
+      <td colspan="7" style="padding-top:0">
+        <div class="meta" style="margin-bottom:2px;font-size:11px">Athugasemd</div>
+        <input class="ed-input text" data-f="notes" style="width:100%" value="${esc(i.notes || '')}">
+      </td>
+    </tr>`;
+  }
+  return `<tr data-doc-id="${i.id}"><td>${esc(i.invoice_number || '—')}</td>
+    <td>${esc(fmtDate(i.doc_date) || (i.year || ''))}</td>
+    <td>${esc(DOC_TYPE_LABEL[i.doc_type] || i.doc_type || '')}</td>
+    <td>${esc(i.customer_name || i.site_nafn || '')}</td>
+    <td class="num">${i.amount ? fmtKr(i.amount) + ' kr' : ''}</td>
+    <td>${i.view_url ? `<a class="doc-link" href="${esc(i.view_url)}" target="_blank" rel="noopener">PDF</a>` : ''}</td>
+    <td><button class="ed-btn" onclick="startDocEdit(${i.id})" title="Breyta">✏️</button></td>
+  </tr>`;
+}
+
+function startDocEdit(id) {
+  window._editingDocId = id;
+  if (LAST_DATA) render(LAST_DATA);
+}
+
+function cancelDocEdit() {
+  window._editingDocId = null;
+  if (LAST_DATA) render(LAST_DATA);
+}
+
+async function saveDocEdit(id) {
+  const rows = document.querySelectorAll(`tr[data-doc-id^="${id}"]`);
+  const fields = {};
+  rows.forEach(tr => {
+    tr.querySelectorAll('[data-f]').forEach(inp => {
+      fields[inp.dataset.f] = inp.value;
+    });
+  });
+  const saveBtn = document.querySelector(`tr[data-doc-id="${id}"] .ed-btn.save`);
+  if (saveBtn) { saveBtn.textContent = '…'; saveBtn.disabled = true; }
+  try {
+    const r = await fetch('/api/customer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'update-doc', id, fields }),
+    });
+    const j = await r.json();
+    if (!r.ok || j.error) {
+      alert('Villa við vistun: ' + (j.error || r.status));
+      if (saveBtn) { saveBtn.textContent = '💾'; saveBtn.disabled = false; }
+      return;
+    }
+    window._editingDocId = null;
+    await load();
+  } catch (e) {
+    alert('Villa: ' + e.message);
+    if (saveBtn) { saveBtn.textContent = '💾'; saveBtn.disabled = false; }
+  }
 }
 
 function docLink(doc) {
