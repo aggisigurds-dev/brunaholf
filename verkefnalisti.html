@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<title>Verkefnalisti · Brunahólf</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg:#0f172a; --panel:#1e293b; --line:#334155; --fg:#f1f5f9; --muted:#94a3b8;
+    --ok:#16a34a; --amber:#d97706; --red:#dc2626; --blue:#3b82f6;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.5 -apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--fg); padding:24px; }
+  header { max-width:880px; margin:0 auto 24px; }
+  header h1 { margin:0; font-size:22px; }
+  header .sub { color:var(--muted); font-size:13px; margin-top:6px; }
+  main { max-width:880px; margin:0 auto; }
+  .section { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:18px 20px; margin-bottom:18px; }
+  .section h2 { margin:0 0 12px; font-size:15px; font-weight:700; color:var(--blue); letter-spacing:.02em; }
+  .task { display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:start; padding:10px 0; border-bottom:1px solid var(--line); }
+  .task:last-child { border-bottom:0; }
+  .task .id { font:600 12px ui-monospace,Menlo,monospace; color:var(--muted); padding-top:2px; min-width:36px; }
+  .task .body { font-size:14px; }
+  .task .body .desc { color:var(--muted); font-size:12.5px; margin-top:3px; line-height:1.45; }
+  .pill { display:inline-block; padding:3px 9px; border-radius:99px; font-size:11px; font-weight:700; letter-spacing:.02em; }
+  .pill.done { background:rgba(22,163,74,.15); color:var(--ok); border:1px solid rgba(22,163,74,.3); }
+  .pill.open { background:rgba(217,119,6,.15); color:var(--amber); border:1px solid rgba(217,119,6,.3); }
+  .pill.now  { background:rgba(59,130,246,.15); color:var(--blue); border:1px solid rgba(59,130,246,.3); }
+  .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:18px; }
+  .stat { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px; text-align:center; }
+  .stat b { display:block; font-size:24px; }
+  .stat span { color:var(--muted); font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; }
+  .footer-note { text-align:center; color:var(--muted); font-size:12px; margin-top:24px; }
+  .footer-note a { color:var(--blue); text-decoration:none; }
+  .live-dot { display:inline-block; width:8px; height:8px; background:var(--ok); border-radius:50%; box-shadow:0 0 0 4px rgba(22,163,74,.2); margin-right:6px; vertical-align:middle; animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.5; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>📋 Brunahólf · Verkefnalisti</h1>
+  <div class="sub"><span class="live-dot"></span>Lifandi — listinn yfir það sem er á döfinni og það sem var klárað í dag.</div>
+</header>
+<main>
+
+<div class="stats">
+  <div class="stat"><b style="color:var(--ok)">34</b><span>Klárað</span></div>
+  <div class="stat"><b style="color:var(--blue)">3</b><span>Í dag</span></div>
+  <div class="stat"><b style="color:var(--amber)">15</b><span>Eftir</span></div>
+  <div class="stat"><b>49</b><span>Heild</span></div>
+</div>
+
+<div class="section">
+  <h2>✅ Klárað í dag</h2>
+  <div class="task"><span class="id">#31</span><div class="body">pdf-classify.html: tips-text → nýtt format<div class="desc">„Fyrirtæki - kt - heimilisfang - Ár - Mánuður"</div></div><span class="pill done">DONE</span></div>
+  <div class="task"><span class="id">#32</span><div class="body">uttekt-rename.js: kt á undan heimilisfangi<div class="desc">Nýja formatröðin pushuð í /api/uttekt-rename (PR #132)</div></div><span class="pill done">DONE</span></div>
+  <div class="task"><span class="id">#33</span><div class="body">CLAUDE.md + Bakendi-tile + skjalaheiti + netlify.toml + allt-sheet<div class="desc">Allar tilvísanir í gamla röð uppfærðar á einum stað</div></div><span class="pill done">DONE</span></div>
+  <div class="task"><span class="id">#35</span><div class="body">PDF-flokkari á 940 PDF í MBOX-möppunni<div class="desc">Niðurstaða: Processed: 970 · Úttekt: 143 · Reikningar: 664 · Annað: 38 · Dups: 125</div></div><span class="pill done">DONE</span></div>
+</div>
+
+<div class="section">
+  <h2>🔵 Næst á dagskrá</h2>
+  <div class="task"><span class="id">#34</span><div class="body">Staðfesta að MBOX-extract resume klárist<div class="desc">Eftirstandandi póstar úr gærdags-fyrirspurn (940 í gær)</div></div><span class="pill open">PENDING</span></div>
+  <div class="task"><span class="id">#36</span><div class="body">Indexa endurnefnda PDF í customer_documents<div class="desc">Eftir flokkun: keyra Bakendi → Reikningalesari á reikninga-möppunni</div></div><span class="pill open">PENDING</span></div>
+  <div class="task"><span class="id">#37</span><div class="body">Bakendi card-grid: revert eða iterate?<div class="desc">Þú sagðir „hrillilega ljótt" — þarf að ákveða: rífa eða lagfæra?</div></div><span class="pill open">PENDING</span></div>
+</div>
+
+<div class="section">
+  <h2>🟡 Á restina af lista</h2>
+  <div class="task"><span class="id">#38</span><div class="body">Vefrýni queue workflow<div class="desc">Verklag að taka pinna úr „Senda í viðgerð" og laga</div></div><span class="pill open">PENDING</span></div>
+  <div class="task"><span class="id">#39</span><div class="body">Slökkvitæki: restyle restina af views<div class="desc">Brunastál þema á allar síður sem eru ekki hand-styled enn</div></div><span class="pill open">PENDING</span></div>
+  <div class="task"><span class="id">#40</span><div class="body">Slökkvitæki sidebar: STJÓRNSTÖÐ / LEIÐSÖGN section labels<div class="desc">Hópa nav-items með smáu hástafa-label</div></div><span class="pill open">PENDING</span></div>
+  <div class="task"><span class="id">#41</span><div class="body">Customer.html Phase 3 — inline editing af customer_documents<div class="desc">Breyta doc_type / amount / invoice_number beint í UI</div></div><span class="pill open">PENDING</span></div>
+  <div class="task"><span class="id">#42</span><div class="body">Customer.html Phase 4 — AI deep-review<div class="desc">Senda allt fyrir kúnna í Claude og fá yfirgripsmikið mat</div></div><span class="pill open">PENDING</span></div>
+  <div class="task"><span class="id">#43</span><div class="body">dkPlus phase 2 — push invoices úr POS sala / brunakerfi úttektir<div class="desc">Skrifa reikninga inn í dkPlus í gegnum /api/dkplus-invoice</div></div><span class="pill open">PENDING</span></div>
+  <div class="task"><span class="id">#44</span><div class="body">Payday API push — útgáfa drög í Payday<div class="desc">Núna les payday-pull bara inn; vantar push hina leiðina</div></div><span class="pill open">PENDING</span></div>
+  <div class="task"><span class="id">#45</span><div class="body">Reikningagerð tab — Verðlisti + Til að senda + Sent nýlega<div class="desc">Leysir af hólmi Tekjur Google Sheet (sjá CLAUDE.md „Invoicing model")</div></div><span class="pill open">PENDING</span></div>
+  <div class="task"><span class="id">#46</span><div class="body">pricing_guide tafla — schema + UI<div class="desc">Per-verkstaður taxti + line-item-overrides</div></div><span class="pill open">PENDING</span></div>
+  <div class="task"><span class="id">#47</span><div class="body">material_prices tafla — unit prices per material<div class="desc">Akríl / kragar / bönd osfrv. (úr Verðskrá flipanum í Tekjur)</div></div><span class="pill open">PENDING</span></div>
+  <div class="task"><span class="id">#48</span><div class="body">Hole_size_rates: surface í Reikningagerð grid + UI fyrir Bönd/Kragar override<div class="desc">Daglegt yfirlit fyrir Heklureit / Dalveg / NLSH</div></div><span class="pill open">PENDING</span></div>
+  <div class="task"><span class="id">#49</span><div class="body">RLS á 19 töflur — design policies per table<div class="desc">19 töflur opnar fyrir anon key núna; design öryggis-stefnu</div></div><span class="pill open">PENDING</span></div>
+</div>
+
+<div class="footer-note">
+  PR sem er að deploy-a núna: <a href="https://github.com/aggisigurds-dev/brunaholf/pull/132" target="_blank">PR #132 — Skýrslu-format</a>
+  · Síða uppfærð sjálfvirkt þegar Netlify-deploy klárast.
+</div>
+
+</main>
+</body>
+</html>
