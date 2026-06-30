@@ -49,7 +49,7 @@ exports.handler = async (event) => {
 
     // 1) Base + sites in parallel
     const [baseRes, sitesRes] = await Promise.all([
-      sbGet(`customers_base?id=eq.${baseId}&select=id,kennitala,nafn,heimilisfang,er_i_thjonustu,rekstrarfelag,greidsluskilmali,payment_method,retention_pct,general_notes,last_payment_at,stofn_dags,arsleg_skodun_due_month,ai_confidence,ai_flags&limit=1`),
+      sbGet(`customers_base?id=eq.${baseId}&select=id,kennitala,nafn,heimilisfang,rekstrarfelag,greidsluskilmali,payment_method,retention_pct,retention_notes,contact_email,contact_phone,general_notes,last_payment_at&limit=1`),
       sbGet(`fyrirtaeki?customer_base_id=eq.${baseId}&deleted_at=is.null&select=id,nafn,heimilisfang,er_i_thjonustu,status,banner_note,review_flag,kennitala`),
     ]);
     const baseRows = await baseRes.json();
@@ -57,6 +57,7 @@ exports.handler = async (event) => {
     const base = baseRows[0];
     const sites = await sitesRes.json();
     const siteIds = sites.map(s => s.id);
+    base.er_i_thjonustu = sites.some(s => s.er_i_thjonustu === true);
 
     // 2) Docs in parallel — both link paths, then union
     const directDocs = await sbGet(

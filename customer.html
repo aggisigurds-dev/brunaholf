@@ -159,6 +159,12 @@ function render(d) {
   else if (base.er_i_thjonustu) html += '<span class="b due">⚠ Vantar ' + yearNow + ' skýrslu</span>';
   if (summary.ar_open_kr > 0) html += '<span class="b due">' + fmtKr(summary.ar_open_kr) + ' kr óinnheimt</span>';
   if (summary.dup_count > 0) html += '<span class="b vantar">' + summary.dup_count + ' tvítak</span>';
+  const slReikThisYear = docs.filter(d => d.doc_type === 'reikningur' &&
+    (d.year === yearNow || (d.doc_date && d.doc_date.startsWith(String(yearNow)))));
+  if (slReikThisYear.length) {
+    const sum = slReikThisYear.reduce((s, x) => s + (Number(x.amount) || 0), 0);
+    html += '<span class="b sys">' + yearNow + ': ' + slReikThisYear.length + ' reikn · ' + fmtKr(sum) + ' kr</span>';
+  }
   html += '</div></div>';
 
   // AI advisor
@@ -199,9 +205,51 @@ function render(d) {
     html += '</div>';
   }
 
-  // Invoices (from invoices table — brunaholf side reikningar)
+  // Slökkvitæki invoices (OCR'd PDFs from customer_documents)
+  const slInv = docs
+    .filter(d => d.doc_type === 'reikningur')
+    .sort((a, b) => (b.doc_date || '').localeCompare(a.doc_date || ''));
+  if (slInv.length) {
+    const slTotal = slInv.reduce((s, x) => s + (Number(x.amount) || 0), 0);
+    const byYear = {};
+    for (const i of slInv) {
+      const y = i.year || (i.doc_date ? Number(i.doc_date.slice(0, 4)) : '?');
+      byYear[y] = byYear[y] || { count: 0, sum: 0 };
+      byYear[y].count++;
+      byYear[y].sum += Number(i.amount) || 0;
+    }
+    const yrParts = Object.entries(byYear).sort((a, b) => b[0] - a[0])
+      .map(([y, v]) => `<b>${y}</b>: ${v.count} stk · ${fmtKr(v.sum)} kr`).join(' · ');
+    const ocrOk = slInv.filter(x => x.amount && x.invoice_number && x.doc_date).length;
+    html += '<div class="card"><h2>🧾 Reikningar (Slökkvitæki) — ' + slInv.length + ' · ' + fmtKr(slTotal) + ' kr alls</h2>';
+    if (yrParts) html += '<div class="meta" style="margin-bottom:6px">' + yrParts + '</div>';
+    if (ocrOk < slInv.length) {
+      html += '<div class="meta" style="margin-bottom:8px;color:var(--warn)">⚠ ' + ocrOk + ' af ' + slInv.length +
+        ' með fullum OCR-gögnum. Keyrðu Reikningalesari í <a href="/#bakendi" target="_blank" style="color:var(--accent)">Bakenda</a> til að fylla restina.</div>';
+    }
+    // Sort: rows with most data first, then by doc_date desc, then by year desc
+    slInv.sort((a, b) => {
+      const sa = (a.amount ? 1 : 0) + (a.invoice_number ? 1 : 0) + (a.doc_date ? 1 : 0);
+      const sb = (b.amount ? 1 : 0) + (b.invoice_number ? 1 : 0) + (b.doc_date ? 1 : 0);
+      if (sa !== sb) return sb - sa;
+      return (b.doc_date || String(b.year || '')).localeCompare(a.doc_date || String(a.year || ''));
+    });
+    html += '<table class="inv"><thead><tr><th>R-nr</th><th>Dags</th><th>Staðsettning</th><th class="num">Upphæð</th><th></th></tr></thead><tbody>';
+    for (const i of slInv.slice(0, 60)) {
+      html += `<tr><td>${esc(i.invoice_number || '—')}</td>`;
+      html += `<td>${esc(fmtDate(i.doc_date) || (i.year || ''))}</td>`;
+      html += `<td>${esc(i.site_nafn || '')}</td>`;
+      html += `<td class="num">${i.amount ? fmtKr(i.amount) + ' kr' : ''}</td>`;
+      html += `<td>${i.view_url ? `<a class="doc-link" href="${esc(i.view_url)}" target="_blank" rel="noopener">PDF</a>` : ''}</td></tr>`;
+    }
+    html += '</tbody></table>';
+    if (slInv.length > 60) html += '<div class="meta" style="margin-top:6px">+ ' + (slInv.length - 60) + ' fleiri</div>';
+    html += '</div>';
+  }
+
+  // Invoices (from invoices table — brunaholf side reikningar, contractor jobs)
   if (invoices && invoices.length) {
-    html += '<div class="card"><h2>💰 Reikningar (brunahólf / Payday) — ' + invoices.length + '</h2>';
+    html += '<div class="card"><h2>💰 Reikningar (Brunahólf / Payday) — ' + invoices.length + '</h2>';
     html += '<table class="inv"><thead><tr><th>Nr</th><th>Dags</th><th class="num">Upphæð</th><th>Staða</th><th>Greitt</th></tr></thead><tbody>';
     for (const i of invoices.slice(0, 50)) {
       const stCl = /paid|greidd/i.test(i.status || '') ? 'stat-paid' : 'stat-sent';
