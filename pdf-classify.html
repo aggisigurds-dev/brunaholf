@@ -164,7 +164,13 @@
 <script>
 let pollTimer = null;
 function el(id) { return document.getElementById(id); }
-function val(id) { return el(id).value.trim(); }
+function val(id) {
+  // Extract folder-id from any drive.google.com/drive/folders/<ID>?…&… URL;
+  // pass bare IDs through unchanged. Users keep pasting full URLs.
+  const raw = el(id).value.trim();
+  const m = raw.match(/\/folders\/([^/?#]+)/i);
+  return m ? m[1] : raw;
+}
 function status(msg) { el('hint').textContent = msg || ''; }
 
 // Persist folder-id inputs across page loads so they don't have to be
