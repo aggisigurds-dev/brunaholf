@@ -76,7 +76,7 @@ exports.handler = async (event) => {
 
   try {
     if (event.httpMethod === 'GET') {
-      const r = await sb('verkefnalisti?select=*&order=status.asc,created_at.desc&limit=500');
+      const r = await sb('verkefnalisti?select=*&order=status.asc,priority.desc,created_at.desc&limit=500');
       if (!r.ok) return json(r.status, { error: await r.text() });
       const tasks = await r.json();
       return json(200, { tasks });
@@ -150,6 +150,25 @@ exports.handler = async (event) => {
       const r = await sb(`verkefnalisti?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE' });
       if (!r.ok) return json(r.status, { error: await r.text() });
       return json(200, { ok: true });
+    }
+
+    if (action === 'reorder') {
+      // Body: { ids: ["uuid1","uuid2",…] } in the new top-to-bottom order.
+      // We rewrite priorities so the first id in the list ranks highest. Use
+      // descending integers (N, N-1, …, 1) so a future insert with priority=1
+      // lands at the bottom unless the user reorders it.
+      const ids = Array.isArray(body.ids) ? body.ids.map(String) : [];
+      if (!ids.length) return json(400, { error: 'ids vantar' });
+      const N = ids.length;
+      const updates = ids.map((id, i) => ({ id, priority: N - i, updated_at: new Date().toISOString() }));
+      // PostgREST batch-upsert via POST with merge-duplicates
+      const r = await sb('verkefnalisti?on_conflict=id', {
+        method: 'POST',
+        headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+        body: JSON.stringify(updates),
+      });
+      if (!r.ok) return json(r.status, { error: await r.text() });
+      return json(200, { ok: true, reordered: ids.length });
     }
 
     return json(400, { error: 'unknown action' });

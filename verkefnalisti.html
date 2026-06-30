@@ -60,8 +60,17 @@
   .section .count { color:var(--muted); font-weight:500; font-size:12px; }
 
   /* Task row */
-  .task { display:grid; grid-template-columns:1fr auto; gap:12px; padding:12px 0; border-bottom:1px solid var(--line); align-items:start; }
+  .task { display:grid; grid-template-columns:1fr auto; gap:12px; padding:12px 0; border-bottom:1px solid var(--line); align-items:start; transition:background .12s, border-color .12s; }
   .task:last-child { border-bottom:0; }
+  .task[draggable="true"] { cursor:grab; }
+  .task[draggable="true"]:active { cursor:grabbing; }
+  .task.dragging { opacity:.4; background:#f8fafc; }
+  .task.drop-above { box-shadow:inset 0 3px 0 var(--brand); }
+  .task.drop-below { box-shadow:inset 0 -3px 0 var(--brand); }
+  .task .task-body { display:flex; gap:8px; align-items:flex-start; }
+  .task .task-text { flex:1; min-width:0; }
+  .grip { color:#cbd5e1; font-size:14px; padding:2px 4px; user-select:none; line-height:1.4; letter-spacing:-1px; flex:0 0 auto; }
+  .task[draggable="true"]:hover .grip { color:var(--muted); }
   .task .title { font-size:14px; font-weight:600; line-height:1.4; }
   .task .desc { color:var(--muted); font-size:12.5px; margin-top:4px; line-height:1.45; white-space:pre-wrap; }
   .task .meta { color:var(--muted); font-size:11px; margin-top:6px; }
@@ -273,17 +282,25 @@ function renderTask(t) {
     imgs.push('<div class="img-box"><div class="img-label">Niðurstaða</div><a href="' + esc(t.result_image_url) + '" target="_blank"><img src="' + esc(t.result_image_url) + '" alt="niðurstaða"></a></div>');
   }
 
-  const notes = t.claude_notes ? '<div class="desc" style="color:#a5b4fc;margin-top:6px"><b>Claude:</b> ' + esc(t.claude_notes) + '</div>' : '';
+  const notes = t.claude_notes ? '<div class="desc" style="color:#1e40af;margin-top:6px;background:#eff6ff;padding:6px 9px;border-radius:6px"><b>Claude:</b> ' + esc(t.claude_notes) + '</div>' : '';
+
+  // Drag handle: only on rows still in beidni/i_vinnu (klárað/sleppt rows
+  // stay frozen). data-id is what /api/verkefnalisti?reorder needs.
+  const draggable = (t.status === 'beidni' || t.status === 'i_vinnu') ? ' draggable="true"' : '';
+  const grip = draggable ? '<span class="grip" title="Draga til að breyta forgangsröð">⋮⋮</span>' : '';
 
   return (
-    '<div class="task">' +
-      '<div>' +
-        '<div class="title">' + esc(t.title) + '</div>' +
-        (t.description ? '<div class="desc">' + esc(t.description) + '</div>' : '') +
-        notes +
-        (imgs.length ? '<div class="imgs">' + imgs.join('') + '</div>' : '') +
-        '<div class="meta">' + fmtTime(t.created_at) +
-          (t.completed_at ? ' · klárað ' + fmtTime(t.completed_at) : '') +
+    '<div class="task" data-id="' + t.id + '" data-status="' + t.status + '"' + draggable + '>' +
+      '<div class="task-body">' +
+        grip +
+        '<div class="task-text">' +
+          '<div class="title">' + esc(t.title) + '</div>' +
+          (t.description ? '<div class="desc">' + esc(t.description) + '</div>' : '') +
+          notes +
+          (imgs.length ? '<div class="imgs">' + imgs.join('') + '</div>' : '') +
+          '<div class="meta">' + fmtTime(t.created_at) +
+            (t.completed_at ? ' · klárað ' + fmtTime(t.completed_at) : '') +
+          '</div>' +
         '</div>' +
       '</div>' +
       '<div class="ops">' + ops.join('') + '</div>' +
@@ -312,13 +329,76 @@ async function load() {
     $('list-beidni').innerHTML = groups.beidni.length ? groups.beidni.map(renderTask).join('') : '<div class="empty">Engin beidni virk núna.</div>';
     $('list-vinnu').innerHTML = groups.i_vinnu.length ? groups.i_vinnu.map(renderTask).join('') : '<div class="empty">Ekkert í vinnu.</div>';
     $('list-klarad').innerHTML = groups.klarad.length ? groups.klarad.slice(0, 20).map(renderTask).join('') : '<div class="empty">Ekkert klárað ennþá.</div>';
+    wireDragDrop($('list-beidni'));
+    wireDragDrop($('list-vinnu'));
   } catch (e) {
     console.error(e);
   }
 }
 
+// ─── Drag-to-reorder within a section ───────────────────────────────────
+// Pause polling while dragging so a refresh doesn't rip the list out from
+// under the user. Resume on dragend.
+let isDragging = false;
+let dragSrc = null;
+
+function wireDragDrop(container) {
+  if (!container) return;
+  const tasks = container.querySelectorAll('.task[draggable="true"]');
+  tasks.forEach(el => {
+    el.addEventListener('dragstart', (e) => {
+      isDragging = true;
+      dragSrc = el;
+      el.classList.add('dragging');
+      // Some browsers need this to let drop happen
+      try { e.dataTransfer.setData('text/plain', el.dataset.id); e.dataTransfer.effectAllowed = 'move'; } catch {}
+    });
+    el.addEventListener('dragend', () => {
+      isDragging = false;
+      el.classList.remove('dragging');
+      container.querySelectorAll('.task').forEach(t => t.classList.remove('drop-above','drop-below'));
+      dragSrc = null;
+    });
+    el.addEventListener('dragover', (e) => {
+      if (!dragSrc || dragSrc === el) return;
+      // Only allow reorder within the same section/status
+      if (dragSrc.dataset.status !== el.dataset.status) return;
+      e.preventDefault();
+      const rect = el.getBoundingClientRect();
+      const above = (e.clientY - rect.top) < rect.height / 2;
+      container.querySelectorAll('.task').forEach(t => t.classList.remove('drop-above','drop-below'));
+      el.classList.add(above ? 'drop-above' : 'drop-below');
+    });
+    el.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      if (!dragSrc || dragSrc === el) return;
+      if (dragSrc.dataset.status !== el.dataset.status) return;
+      const rect = el.getBoundingClientRect();
+      const above = (e.clientY - rect.top) < rect.height / 2;
+      container.querySelectorAll('.task').forEach(t => t.classList.remove('drop-above','drop-below'));
+      // Reorder DOM optimistically
+      if (above) el.parentNode.insertBefore(dragSrc, el);
+      else el.parentNode.insertBefore(dragSrc, el.nextSibling);
+      // Send the new order to the server
+      const ids = Array.from(container.querySelectorAll('.task[draggable="true"]')).map(t => t.dataset.id);
+      try {
+        const r = await fetch('/api/verkefnalisti', {
+          method:'POST', headers:{ 'Content-Type':'application/json' },
+          body: JSON.stringify({ action:'reorder', ids }),
+        });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+      } catch (err) {
+        console.error('reorder failed', err);
+        load();   // re-fetch on failure
+      }
+    });
+  });
+}
+
 load();
-setInterval(load, 15000);   // poll every 15s — Claude can drop a result and you see it
+// Poll every 15s, BUT skip while a drag is in flight so the list doesn't
+// rip out from under the user mid-drag.
+setInterval(() => { if (!isDragging) load(); }, 15000);
 </script>
 </body>
 </html>
