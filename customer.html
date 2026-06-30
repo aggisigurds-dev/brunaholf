@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<title>Kúnna-yfirlit · Brunahólf</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --bg:#f4f6f9; --panel:#fff; --line:#e2e6ec; --fg:#0f172a; --muted:#64748b;
+          --accent:#2563eb; --ok:#1f7a4d; --warn:#9a6400; --err:#b42318; --purple:#6b3fd4; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.45 Inter,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--fg); }
+  .wrap { max-width:960px; margin:0 auto; padding:18px 22px 60px; }
+  h1 { margin:0 0 4px; font-size:22px; }
+  .lead { color:var(--muted); font-size:13px; margin:0 0 18px; }
+  .lead a { color:var(--accent); text-decoration:none; }
+  .lead a:hover { text-decoration:underline; }
+
+  .picker { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; align-items:center; }
+  .picker input, .picker select { padding:8px 10px; border:1px solid var(--line); border-radius:7px; font:inherit; font-size:13px; }
+  .picker input { min-width:220px; }
+  .picker select { min-width:280px; }
+  .picker button { padding:8px 12px; border:1px solid var(--line); border-radius:7px; background:#fff; cursor:pointer; font:inherit; font-size:12px; color:var(--muted); }
+  .picker button:hover { color:var(--fg); }
+
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:16px 18px; margin-bottom:14px; box-shadow:0 1px 2px rgba(15,23,42,.04); }
+  .card h2 { margin:0 0 10px; font-size:14px; font-weight:700; }
+  .meta { color:var(--muted); font-size:12.5px; }
+  .meta b { color:var(--fg); }
+  .kt { font-variant-numeric:tabular-nums; }
+
+  .badges { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .b { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:99px; font-size:11.5px; font-weight:700; }
+  .b.sys   { background:#dbeafe; color:var(--accent); }
+  .b.ok    { background:#d1fae5; color:var(--ok); }
+  .b.due   { background:#fee2e2; color:var(--err); }
+  .b.mgr   { background:#ede9fe; color:var(--purple); }
+  .b.vantar { background:#fef3c7; color:var(--warn); }
+
+  /* AI advisor */
+  .advisor { background:#fff7ed; border:1px solid #fed7aa; border-radius:14px; padding:14px 16px; margin-bottom:14px; }
+  .advisor h2 { margin:0 0 8px; font-size:14px; color:#9a3412; }
+  .advisor ul { margin:0; padding-left:20px; font-size:13px; }
+  .advisor li { margin:5px 0; line-height:1.45; }
+  .advisor li.warn { color:var(--err); }
+  .advisor li.info { color:#92400e; }
+  .advisor li .hint { color:var(--muted); font-size:12px; display:block; margin-top:2px; }
+
+  /* Year matrix */
+  table.matrix { width:100%; border-collapse:collapse; margin-top:6px; font-size:13px; }
+  table.matrix th, table.matrix td { padding:8px 10px; text-align:left; border-bottom:1px solid #f1f5f9; vertical-align:top; }
+  table.matrix th { font-weight:700; font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; background:#f8fafc; }
+  table.matrix .yr { font-variant-numeric:tabular-nums; font-weight:700; width:60px; }
+  table.matrix .cell-empty { color:#cbd5e1; }
+  .doc-link { display:inline-block; padding:2px 8px; margin:2px 4px 2px 0; border-radius:5px; background:#eff6ff; color:var(--accent); text-decoration:none; font-size:12px; }
+  .doc-link::after { content:" ↗"; opacity:.6; }
+  .doc-link:hover { background:#dbeafe; }
+  .doc-link.dup { background:#fef3c7; color:var(--warn); }
+  .doc-link.dup::before { content:"⚠ "; }
+  .doc-link.reviewed { background:#dcfce7; color:var(--ok); }
+  .doc-link.reviewed::before { content:"✓ "; }
+
+  /* Sites */
+  .site { padding:10px 0; border-bottom:1px solid #f1f5f9; }
+  .site:last-child { border-bottom:0; }
+  .site .n { font-weight:600; }
+  .site .a { color:var(--muted); font-size:12px; margin-top:2px; }
+
+  /* AR / invoices */
+  table.inv { width:100%; border-collapse:collapse; font-size:12.5px; }
+  table.inv th, table.inv td { padding:6px 8px; text-align:left; border-bottom:1px solid #f1f5f9; }
+  table.inv th { font-weight:700; font-size:11px; color:var(--muted); text-transform:uppercase; }
+  table.inv td.num { text-align:right; font-variant-numeric:tabular-nums; }
+  .stat-paid { color:var(--ok); }
+  .stat-sent { color:var(--warn); }
+
+  .empty { color:var(--muted); font-style:italic; font-size:13px; }
+  pre.err { background:#fee2e2; color:var(--err); padding:8px 10px; border-radius:6px; font:12px ui-monospace,Menlo,monospace; }
+
+  details { margin-top:8px; }
+  details summary { cursor:pointer; font-size:12px; color:var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>👤 Kúnna-yfirlit</h1>
+<p class="lead">Eitt-kúnni-í-einu. Skýrslur · reikningar · samningur · staðsettningar · AI ráðgjafi · á einum stað.
+  · <a href="doc-matrix.html">Skjala-checklist →</a> · <a href="brunakerfi.html">Brunakerfi →</a> · <a href="rekstrarfelog.html">Rekstrarfélög →</a></p>
+
+<div class="picker">
+  <input id="kt" placeholder="Kennitala (xxxxxx-xxxx eða xxxxxxxxxx)">
+  <input id="id" placeholder="base_id (valkv.)" style="min-width:120px">
+  <select id="dropdown"><option value="">— eða veldu úr lista (þjónustukúnnar) —</option></select>
+  <button onclick="load()">Sækja</button>
+  <span id="hint" class="meta"></span>
+</div>
+
+<div id="out"></div>
+
+<script>
+const MONTHS = ['','jan','feb','mar','apr','maí','jún','júl','ágú','sep','okt','nóv','des'];
+function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtKt(k) { if (!k) return ''; const d = String(k).replace(/\D/g,''); return d.length === 10 ? d.slice(0,6) + '-' + d.slice(6) : k; }
+function fmtKr(n) { return Math.round(Number(n)||0).toLocaleString('is-IS').replace(/,/g,'.'); }
+function fmtDate(d) { if (!d) return ''; const m = d.match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? `${parseInt(m[3])}. ${MONTHS[parseInt(m[2])]} ${m[1]}` : d; }
+function el(id) { return document.getElementById(id); }
+
+// Pre-load service-customer dropdown
+async function loadDropdown() {
+  try {
+    const r = await fetch('/api/doc-matrix?from=2023&to=2026');
+    const d = await r.json();
+    const opts = (d.rows || [])
+      .filter(r => r.er_i_thjonustu)
+      .sort((a,b) => (a.nafn||'').localeCompare(b.nafn||'','is'))
+      .map(r => `<option value="${r.base_id}">${esc(r.nafn || '?')} (${esc(fmtKt(r.kennitala))})</option>`);
+    el('dropdown').innerHTML = '<option value="">— veldu kúnna —</option>' + opts.join('');
+    el('dropdown').onchange = () => { if (el('dropdown').value) { el('id').value = el('dropdown').value; el('kt').value=''; load(); } };
+  } catch (e) {
+    el('hint').textContent = 'Listi ekki tilbúinn: ' + e.message;
+  }
+}
+loadDropdown();
+
+async function load() {
+  const id = el('id').value.trim();
+  const kt = el('kt').value.trim();
+  if (!id && !kt) { el('hint').textContent = 'Vantar kennitala eða base_id'; return; }
+  el('hint').textContent = 'Hleð…';
+  el('out').innerHTML = '<div class="card meta">Hleð…</div>';
+  const q = id ? '?base=' + encodeURIComponent(id) : '?kt=' + encodeURIComponent(kt);
+  const r = await fetch('/api/customer' + q);
+  const data = await r.json();
+  if (!r.ok || data.error) {
+    el('out').innerHTML = '<pre class="err">' + esc(data.error || 'villa') + '</pre>';
+    el('hint').textContent = '';
+    return;
+  }
+  render(data);
+  el('hint').textContent = '';
+  history.replaceState(null, '', '?base=' + data.base.id);
+}
+
+function render(d) {
+  const { base, sites, docs, invoices, summary, ai_flags } = d;
+  let html = '';
+
+  // Header card
+  html += `<div class="card">`;
+  html += `<h2>${esc(base.nafn || '(nafnlaus)')}</h2>`;
+  html += `<div class="meta"><b class="kt">${esc(fmtKt(base.kennitala))}</b>`;
+  if (base.heimilisfang) html += ` · ${esc(base.heimilisfang)}`;
+  if (base.rekstrarfelag) html += ` · ⌂ ${esc(base.rekstrarfelag)}`;
+  html += `</div>`;
+  const yearNow = new Date().getUTCFullYear();
+  html += '<div class="badges">';
+  if (base.er_i_thjonustu) html += '<span class="b ok">✓ Í þjónustu</span>';
+  if (summary.has_2026_uttekt) html += '<span class="b ok">' + yearNow + ' skýrsla komin</span>';
+  else if (base.er_i_thjonustu) html += '<span class="b due">⚠ Vantar ' + yearNow + ' skýrslu</span>';
+  if (summary.ar_open_kr > 0) html += '<span class="b due">' + fmtKr(summary.ar_open_kr) + ' kr óinnheimt</span>';
+  if (summary.dup_count > 0) html += '<span class="b vantar">' + summary.dup_count + ' tvítak</span>';
+  html += '</div></div>';
+
+  // AI advisor
+  if (ai_flags && ai_flags.length) {
+    html += '<div class="advisor"><h2>🤖 AI Ráðgjafi</h2><ul>';
+    for (const f of ai_flags) {
+      html += `<li class="${esc(f.severity)}">${esc(f.msg)}`;
+      if (f.hint) html += `<span class="hint">${esc(f.hint)}</span>`;
+      html += '</li>';
+    }
+    html += '</ul></div>';
+  }
+
+  // Stofn samningur
+  const samningur = docs.filter(x => x.doc_type === 'samningur');
+  html += '<div class="card"><h2>📝 Þjónustusamningur</h2>';
+  if (samningur.length) {
+    html += samningur.map(s => docLink(s)).join(' ');
+  } else {
+    html += '<div class="empty">Enginn skráður þjónustusamningur</div>';
+  }
+  html += '</div>';
+
+  // Year matrix
+  html += '<div class="card"><h2>📊 Ár-grid</h2>';
+  html += yearMatrix(docs, base.er_i_thjonustu);
+  html += '</div>';
+
+  // Sites (only if >0)
+  if (sites && sites.length) {
+    html += '<div class="card"><h2>📍 Staðsettningar (' + sites.length + ')</h2>';
+    for (const s of sites) {
+      html += '<div class="site">';
+      html += '<div class="n">' + esc(s.nafn || '?') + (s.er_i_thjonustu ? ' <span class="b ok" style="font-size:10px">í þjón.</span>' : '') + '</div>';
+      if (s.heimilisfang) html += '<div class="a">' + esc(s.heimilisfang) + '</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+
+  // Invoices (from invoices table — brunaholf side reikningar)
+  if (invoices && invoices.length) {
+    html += '<div class="card"><h2>💰 Reikningar (brunahólf / Payday) — ' + invoices.length + '</h2>';
+    html += '<table class="inv"><thead><tr><th>Nr</th><th>Dags</th><th class="num">Upphæð</th><th>Staða</th><th>Greitt</th></tr></thead><tbody>';
+    for (const i of invoices.slice(0, 50)) {
+      const stCl = /paid|greidd/i.test(i.status || '') ? 'stat-paid' : 'stat-sent';
+      html += `<tr><td>${esc(i.tilvisun || '')}</td>`;
+      html += `<td>${esc(fmtDate(i.gjalddagi))}</td>`;
+      html += `<td class="num">${fmtKr(i.upphaed_total || i.hofudstoll)} kr</td>`;
+      html += `<td class="${stCl}">${esc(i.status || '')}</td>`;
+      html += `<td>${esc(fmtDate(i.greidsla_date))}</td></tr>`;
+    }
+    html += '</tbody></table>';
+    if (invoices.length > 50) html += '<div class="meta" style="margin-top:6px">+ ' + (invoices.length - 50) + ' fleiri</div>';
+    html += '</div>';
+  }
+
+  // Raw debug
+  html += '<details><summary>Sjá raw JSON</summary><pre style="font:11px ui-monospace,Menlo,monospace;overflow:auto;background:#f8fafc;padding:10px;border-radius:6px">' + esc(JSON.stringify(d, null, 2)) + '</pre></details>';
+
+  el('out').innerHTML = html;
+}
+
+function docLink(doc) {
+  if (!doc.view_url) {
+    return `<span class="doc-link" style="background:#f1f5f9;color:#94a3b8">(${esc(doc.doc_type)} — engin Drive-tenging)</span>`;
+  }
+  const cls = doc.reviewed ? 'doc-link reviewed' : (doc.is_duplicate ? 'doc-link dup' : 'doc-link');
+  let label = doc.doc_type;
+  if (doc.invoice_number) label = doc.invoice_number;
+  else if (doc.amount) label = fmtKr(doc.amount) + ' kr';
+  return `<a class="${cls}" href="${esc(doc.view_url)}" target="_blank" rel="noopener" title="${esc((doc.customer_name || '') + ' ' + (doc.doc_date || ''))}">${esc(label)}</a>`;
+}
+
+function yearMatrix(docs, expected) {
+  // Determine year range
+  const years = new Set();
+  for (const d of docs) {
+    const y = d.year || (d.doc_date ? Number(d.doc_date.slice(0, 4)) : null);
+    if (y) years.add(y);
+  }
+  const cy = new Date().getUTCFullYear();
+  if (expected) {
+    for (let y = Math.max(2024, cy - 3); y <= cy; y++) years.add(y);
+  }
+  if (!years.size) return '<div class="empty">Engin skjöl með ári</div>';
+  const sorted = [...years].sort((a, b) => b - a);
+
+  let html = '<table class="matrix"><thead><tr><th>Ár</th><th>📄 Úttektarskýrsla</th><th>🧾 Reikningar</th></tr></thead><tbody>';
+  for (const y of sorted) {
+    const u = docs.filter(d => (d.year || (d.doc_date ? Number(d.doc_date.slice(0, 4)) : null)) === y && d.doc_type === 'uttektarskyrsla');
+    const r = docs.filter(d => (d.year || (d.doc_date ? Number(d.doc_date.slice(0, 4)) : null)) === y && d.doc_type === 'reikningur');
+    html += `<tr><td class="yr">${y}</td>`;
+    html += '<td>' + (u.length ? u.map(docLink).join(' ') : (expected ? '<span class="b vantar">vantar</span>' : '<span class="cell-empty">—</span>')) + '</td>';
+    html += '<td>' + (r.length ? r.map(docLink).join(' ') : '<span class="cell-empty">—</span>') + '</td>';
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  return html;
+}
+
+// On boot: if ?base= or ?kt= in URL, auto-load
+(function bootFromUrl() {
+  const sp = new URLSearchParams(location.search);
+  if (sp.get('base')) { el('id').value = sp.get('base'); load(); }
+  else if (sp.get('kt')) { el('kt').value = sp.get('kt'); load(); }
+})();
+</script>
+</div>
+</body>
+</html>
