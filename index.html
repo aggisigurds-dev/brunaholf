@@ -159,6 +159,182 @@ body.theme-modern .rg-row-gata{background:linear-gradient(90deg,#FAF7F0 0%,#FBFA
 body.theme-modern .rg-fc-item{border-color:#E8E5DE;border-radius:10px}
 body.theme-modern button.rg-name-link{font-weight:600;color:#1A1F2E}
 body.theme-modern button.rg-name-link:hover{color:#9B1A0F;text-decoration:none;background:#F7F5EF;border-radius:4px}
+
+/* ============================================================
+   THEME: BRUNASTÁL — applied via body.theme-brunastal
+   Dark metallic + fire-red look, ported from the Slökkvitæki
+   „🔥 Brunastál" theme. Mostly variable overrides (the app is
+   variable-driven), plus targeted surface rules for the pieces
+   that hardcode a light finish.
+   ============================================================ */
+body.theme-brunastal{
+  /* dark metallic surfaces + fire accents */
+  --navy:#12161F;
+  --navy-2:#1A2130;
+  --navy-dark:#070809;
+  --red:#D64020;           /* fire accent */
+  --red-2:#F0584C;
+  --red-dark:#8C2510;
+  --ember:#FF7A45;
+  --ink:#E7ECF4;
+  --ink-2:#C0C8D6;
+  --muted:#8A93A6;
+  --muted-2:#6B7488;
+  --bg:#08090C;
+  --bg-2:#0D1017;
+  --card:#14171E;
+  --line:#242A36;
+  --line-2:#2E3542;
+  --gold:#D9AF52;
+  --green:#1FA867;
+  --blue:#5B86FF;
+  --input-bg:#0E121A;
+  --tbl-header:#1A1F2A;
+  /* component vars used across bespoke tabs (only ever referenced with a
+     light fallback — defining them here retints every tab's own <style>) */
+  --card-bg:#14171E;
+  --border:#242A36;
+  --text:#E7ECF4;
+  --text-dim:#8A93A6;
+  --header-bg:#1A1F2A;
+  --row-hover:rgba(255,255,255,.035);
+  --hover:rgba(255,255,255,.05);
+  --accent:#F0584C;
+  --info-bg:rgba(91,134,255,.10);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.5);
+  --shadow: 0 1px 3px rgba(0,0,0,.5), 0 6px 20px rgba(0,0,0,.45);
+  --shadow-lg: 0 6px 14px rgba(0,0,0,.55), 0 20px 48px rgba(0,0,0,.6);
+  --shadow-red: 0 4px 18px rgba(214,64,32,.4);
+  background:#08090C;
+  background-image:
+    radial-gradient(ellipse 120% 40% at 50% 0%, rgba(255,110,30,.05) 0%, transparent 60%),
+    linear-gradient(180deg,#060607 0%,#0A0C12 100%);
+  background-attachment:fixed;
+  color:var(--ink);
+}
+/* Topbar → brushed near-black metal with an ember hairline */
+body.theme-brunastal .topbar{
+  background:linear-gradient(180deg,#141519 0%,#0C0D10 100%);
+  border-bottom:1px solid #050506;
+  box-shadow:0 2px 0 rgba(255,120,40,.10), 0 8px 24px rgba(0,0,0,.6);
+}
+body.theme-brunastal .banner-img{filter:brightness(.92) contrast(1.05) saturate(1.05)}
+/* Sidebar → deeper metallic black (matches the Brunastál steel sidebar) */
+body.theme-brunastal .sidebar{
+  background:#0A0B0D;
+  background-image:
+    radial-gradient(ellipse 100% 22% at 50% 0%, rgba(255,110,30,.05) 0%, transparent 70%),
+    linear-gradient(180deg,#141519 0%,#0C0D10 60%,#070709 100%);
+  border-right:1px solid #050506;
+  box-shadow:inset -1px 0 0 rgba(0,0,0,.6);
+}
+body.theme-brunastal .nav-section-label{color:rgba(255,255,255,.32)}
+body.theme-brunastal .tab-v{color:rgba(255,255,255,.62)}
+body.theme-brunastal .tab-v:hover{background:rgba(255,255,255,.05);color:#fff}
+body.theme-brunastal .tab-v.active{
+  background:linear-gradient(145deg,#380506 0%,#6c0d10 43%,#971515 53%,#420607 78%,#100102 100%);
+  color:#fff;font-weight:600;
+  box-shadow:inset 3px 0 0 var(--ember), 0 0 16px -4px rgba(160,16,16,.6), inset 0 1px 0 rgba(255,255,255,.12);
+}
+/* Cards / kbtn / generic surfaces → dark plate */
+body.theme-brunastal .card,
+body.theme-brunastal .kbtn,
+body.theme-brunastal .rg-grid,
+body.theme-brunastal .wc-card,
+body.theme-brunastal .rg-kpi,
+body.theme-brunastal .rg-forecast,
+body.theme-brunastal .efni-card{
+  background:var(--card);
+  border:1px solid var(--line);
+  box-shadow:0 1px 3px rgba(0,0,0,.5), 0 8px 24px -12px rgba(0,0,0,.7);
+}
+body.theme-brunastal .kbtn:hover{border-color:var(--red);box-shadow:var(--shadow-red),0 12px 28px rgba(0,0,0,.6)}
+/* Tables → dark body, metallic header, subtle row hover */
+body.theme-brunastal table,
+body.theme-brunastal .rg-grid{background:var(--card)}
+body.theme-brunastal .rg-grid thead th,
+body.theme-brunastal table thead th{
+  background:linear-gradient(180deg,#232733,#15171C);
+  color:#E7ECF4;border-bottom:1px solid #0A0B0D;
+}
+body.theme-brunastal .rg-grid tbody tr:hover,
+body.theme-brunastal table tbody tr:hover{background:rgba(255,255,255,.035)}
+body.theme-brunastal .rg-grid td,
+body.theme-brunastal .rg-grid th,
+body.theme-brunastal table td,
+body.theme-brunastal table th{border-color:var(--line)}
+/* Forecast / gata highlight bands → dark tints */
+body.theme-brunastal .rg-forecast{background:linear-gradient(135deg,#12161F 0%,#171B26 100%);border-color:var(--line)}
+body.theme-brunastal .rg-forecast-title,
+body.theme-brunastal .wc-title,
+body.theme-brunastal .rg-h1{color:#F1F4F9}
+body.theme-brunastal .rg-forecast-sub{color:var(--muted)}
+body.theme-brunastal .rg-row-gata{background:linear-gradient(90deg,rgba(255,110,30,.06) 0%,transparent 100%)}
+body.theme-brunastal .rg-fc-item{border-color:var(--line)}
+body.theme-brunastal .wc-head{background:linear-gradient(180deg,#181C26 0%,#12161F 100%);border-bottom:1px solid var(--line)}
+body.theme-brunastal .wc-card h3{border-bottom-color:var(--line);color:#EAEFF6}
+/* Inputs / selects / textareas → recessed dark field */
+body.theme-brunastal input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=range]),
+body.theme-brunastal select,
+body.theme-brunastal textarea{
+  background:var(--input-bg);border:1px solid var(--line);color:var(--ink);
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.4);
+}
+body.theme-brunastal input:focus,
+body.theme-brunastal select:focus,
+body.theme-brunastal textarea:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px rgba(214,64,32,.35)}
+body.theme-brunastal input[type=checkbox],
+body.theme-brunastal input[type=radio]{accent-color:var(--red)}
+/* Buttons */
+body.theme-brunastal .btn{background:var(--input-bg);color:var(--ink);border:1px solid var(--line)}
+body.theme-brunastal .btn.primary{background:linear-gradient(145deg,#380506,#6c0d10 45%,#971515 55%,#420607);border:1px solid rgba(190,32,28,.55);box-shadow:0 0 16px -4px rgba(160,16,16,.55),inset 0 1px 0 rgba(255,255,255,.14)}
+body.theme-brunastal .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink-2)}
+body.theme-brunastal .rg-tool{background:var(--card);border:1px solid var(--line);color:var(--ink-2);box-shadow:none}
+body.theme-brunastal .rg-tool:hover{background:#1B2030;border-color:var(--line-2);color:#fff}
+body.theme-brunastal .rg-link-pill{background:linear-gradient(145deg,#380506,#971515);color:#fff}
+body.theme-brunastal .rg-link-pill:hover{background:linear-gradient(145deg,#6c0d10,#c92a2a);color:#fff}
+body.theme-brunastal button.rg-name-link{color:#8FB4FF;font-weight:600}
+body.theme-brunastal button.rg-name-link:hover{color:#fff;background:rgba(255,255,255,.06);border-radius:4px}
+/* KPI numbers → warm metallic */
+body.theme-brunastal .rg-kpi-v,
+body.theme-brunastal .rg-fc-v{color:#F3F6FB}
+/* Section labels + muted text stay readable */
+body.theme-brunastal .section h2{color:var(--muted)}
+/* Chips */
+body.theme-brunastal .chip{background:var(--input-bg);border:1px solid var(--line);color:var(--ink-2)}
+body.theme-brunastal .chip.active{background:var(--red);border-color:var(--red);color:#fff}
+body.theme-brunastal .chip.chip-warn{background:rgba(214,64,32,.12);border-color:rgba(214,64,32,.4);color:#FFB398}
+body.theme-brunastal .chip.chip-warn.active{background:var(--red);color:#fff}
+/* Toggle buttons in the topbar */
+body.theme-brunastal .editToggle,
+body.theme-brunastal .themeToggle{background:rgba(255,255,255,.1);color:#fff;border-radius:8px;backdrop-filter:blur(8px)}
+body.theme-brunastal .editToggle.on{background:var(--gold);color:#1A1A1F}
+/* Headings that colour text with --navy (remapped to a dark chrome tone) →
+   force light so they stay legible on the dark backdrop. */
+body.theme-brunastal .headline,
+body.theme-brunastal .section-head .title,
+body.theme-brunastal .yf-band .panel h3,
+body.theme-brunastal .tile.tile-refined .num,
+body.theme-brunastal .wc-title,
+body.theme-brunastal h1,body.theme-brunastal h2,body.theme-brunastal h3{color:#EEF2F8}
+/* Yfirlit landing hero → dark plate (was a white gradient) */
+body.theme-brunastal .yf-hero .greet{
+  background:linear-gradient(135deg,#14171E 0%,#181C26 100%);
+  border-color:var(--line);
+}
+body.theme-brunastal .yf-hero .greet .headline{color:#F1F4F9}
+body.theme-brunastal .yf-hero .stat-card{
+  background:linear-gradient(135deg,#1A2130 0%,#0A0E16 100%);
+  box-shadow:0 8px 28px rgba(0,0,0,.55);
+}
+body.theme-brunastal .yf-band .panel{background:var(--card);border-color:var(--line)}
+body.theme-brunastal .section-head a.go{border-color:var(--line);color:var(--red-2)}
+body.theme-brunastal .section-head a.go:hover{border-color:var(--red);background:rgba(214,64,32,.15)}
+body.theme-brunastal .section-head .rule{background:linear-gradient(90deg,var(--line) 0%,transparent 100%)}
+/* Warn/ok tile footers stay readable on dark */
+body.theme-brunastal .tile.tile-refined.tile-warn .ft{color:#F6B545}
+body.theme-brunastal .tbl th{background:var(--tbl-header);color:var(--ink-2)}
+
 .topbar .sync-badge{position:absolute;top:14px;right:120px;z-index:5;font-size:11px;color:#fff;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);padding:4px 8px;border-radius:6px;font-weight:500;letter-spacing:.02em}
 .topbar .sync-badge.sync-ok{background:rgba(76,175,80,.55)}
 .topbar .sync-badge.sync-warn{background:rgba(255,152,0,.55)}
@@ -13824,15 +14000,21 @@ if($menuBtn) $menuBtn.onclick = ()=>{
 // Theme toggle — cycles 'classic' ↔ 'modern', persists in state (so it
 // follows the user across devices via app_kv sync). Apply chosen theme
 // before first render so initial paint is in the right look.
+const THEME_CYCLE = ['classic','modern','brunastal'];
+const THEME_ICON = {classic:'🎨', modern:'✨', brunastal:'🔥'};
 function applyTheme(t){
-  document.body.classList.remove('theme-classic','theme-modern');
-  document.body.classList.add('theme-' + (t || 'classic'));
+  document.body.classList.remove('theme-classic','theme-modern','theme-brunastal');
+  const name = THEME_CYCLE.includes(t) ? t : 'classic';
+  document.body.classList.add('theme-' + name);
+  const tt = document.getElementById('themeToggle');
+  if(tt){ tt.textContent = THEME_ICON[name] || '🎨'; tt.title = 'Skipta um þema (klassík / modern / Brunastál)'; }
 }
 applyTheme(state?.ui?.theme || 'classic');
 const $themeToggle = document.getElementById('themeToggle');
 if($themeToggle) $themeToggle.onclick = () => {
   state.ui = state.ui || {};
-  const next = state.ui.theme === 'modern' ? 'classic' : 'modern';
+  const cur = THEME_CYCLE.indexOf(state.ui.theme);
+  const next = THEME_CYCLE[(cur + 1) % THEME_CYCLE.length];
   state.ui.theme = next;
   applyTheme(next);
   save();
