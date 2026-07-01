@@ -64,8 +64,10 @@ button{cursor:pointer}
 .topbar .brand,.topbar .brand-divider,.topbar .brand-slk{display:none}
 .topbar .editToggle{position:absolute;top:12px;right:14px;z-index:5;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);color:#fff}
 .topbar .editToggle.on{background:var(--gold);color:#1A1A1F}
-.topbar .themeToggle{position:absolute;top:12px;right:90px;z-index:5;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);color:#fff;border:none;border-radius:8px;width:36px;height:36px;cursor:pointer;font-size:16px;transition:all 120ms ease}
-.topbar .themeToggle:hover{background:rgba(0,0,0,.75);transform:rotate(20deg)}
+.topbar .themeToggle{position:absolute;top:12px;right:90px;z-index:5;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);color:#fff;border:none;border-radius:8px;height:36px;padding:0 12px;cursor:pointer;font-size:13px;font-weight:700;letter-spacing:.01em;white-space:nowrap;transition:background 120ms ease,filter 120ms ease}
+.topbar .themeToggle:hover{background:rgba(0,0,0,.75)}
+.topbar .themeToggle.on{background:linear-gradient(145deg,#6c0d10,#971515);color:#fff}
+.topbar .themeToggle.on:hover{filter:brightness(1.15)}
 
 /* ============================================================
    THEME: MODERN — applied via body.theme-modern
@@ -335,7 +337,7 @@ body.theme-brunastal .section-head .rule{background:linear-gradient(90deg,var(--
 body.theme-brunastal .tile.tile-refined.tile-warn .ft{color:#F6B545}
 body.theme-brunastal .tbl th{background:var(--tbl-header);color:var(--ink-2)}
 
-.topbar .sync-badge{position:absolute;top:14px;right:120px;z-index:5;font-size:11px;color:#fff;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);padding:4px 8px;border-radius:6px;font-weight:500;letter-spacing:.02em}
+.topbar .sync-badge{position:absolute;top:14px;right:180px;z-index:5;font-size:11px;color:#fff;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);padding:4px 8px;border-radius:6px;font-weight:500;letter-spacing:.02em}
 .topbar .sync-badge.sync-ok{background:rgba(76,175,80,.55)}
 .topbar .sync-badge.sync-warn{background:rgba(255,152,0,.55)}
 .topbar .menu-btn{position:absolute;top:12px;left:14px;z-index:5;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);color:#fff}
@@ -1632,7 +1634,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
   <img src="banner.png" alt="Brunahólf — Slökkvitæki ehf" class="banner-img" onerror="this.onerror=null;this.src='banner.png.png';this.addEventListener('error',()=>{this.style.display='none';this.parentNode.style.minHeight='60px';this.parentNode.style.background='linear-gradient(180deg, var(--navy) 0%, var(--navy-dark) 100%)'})">
   <button class="menu-btn" id="menuBtn" title="Valmynd">☰</button>
   <button class="editToggle" id="editToggle" title="Breyta">✎ Breyta</button>
-  <button class="themeToggle" id="themeToggle" title="Skipta um þema (klassík / modern)">🎨</button>
+  <button class="themeToggle" id="themeToggle" title="Skipta yfir í nýja Brunastáls-útlitið">🔥 Nýtt</button>
   <span class="sync-badge" id="sync-badge" title="Vistun á milli tækja">☁ …</span>
   <span id="brandTitle" style="display:none"></span>
 </header>
@@ -14000,23 +14002,34 @@ if($menuBtn) $menuBtn.onclick = ()=>{
 // Theme toggle — cycles 'classic' ↔ 'modern', persists in state (so it
 // follows the user across devices via app_kv sync). Apply chosen theme
 // before first render so initial paint is in the right look.
-const THEME_CYCLE = ['classic','modern','brunastal'];
-const THEME_ICON = {classic:'🎨', modern:'✨', brunastal:'🔥'};
+// One-tap "old ↔ new" switch: flips between the Brunastál (new) look and
+// whichever non-Brunastál look was last active (classic or modern). The 🎨
+// dropdown in Stillingar still lets power users pick modern explicitly; this
+// button just gives Aggi a clear gamalt/nýtt toggle by the banner.
 function applyTheme(t){
   document.body.classList.remove('theme-classic','theme-modern','theme-brunastal');
-  const name = THEME_CYCLE.includes(t) ? t : 'classic';
+  const name = ['classic','modern','brunastal'].includes(t) ? t : 'classic';
   document.body.classList.add('theme-' + name);
   const tt = document.getElementById('themeToggle');
-  if(tt){ tt.textContent = THEME_ICON[name] || '🎨'; tt.title = 'Skipta um þema (klassík / modern / Brunastál)'; }
+  if(tt){
+    const isNew = name === 'brunastal';
+    tt.textContent = isNew ? '☀️ Gamla' : '🔥 Nýtt';
+    tt.title = isNew ? 'Til baka í gamla útlitið' : 'Skipta yfir í nýja Brunastáls-útlitið';
+    tt.classList.toggle('on', isNew);
+  }
 }
 applyTheme(state?.ui?.theme || 'classic');
 const $themeToggle = document.getElementById('themeToggle');
 if($themeToggle) $themeToggle.onclick = () => {
   state.ui = state.ui || {};
-  const cur = THEME_CYCLE.indexOf(state.ui.theme);
-  const next = THEME_CYCLE[(cur + 1) % THEME_CYCLE.length];
-  state.ui.theme = next;
-  applyTheme(next);
+  const cur = state.ui.theme || 'classic';
+  if(cur === 'brunastal'){
+    state.ui.theme = state.ui.prevTheme || 'classic';   // back to the old look
+  } else {
+    state.ui.prevTheme = cur;                            // remember gamalt (classic/modern)
+    state.ui.theme = 'brunastal';                        // switch to nýtt
+  }
+  applyTheme(state.ui.theme);
   save();
 };
 
