@@ -764,6 +764,15 @@ Slökkvitæki Sala/POS) connects via the dkPlus REST/JSON API.
 
 ## Service-doc ledger (standing task — keep alive)
 
+`brunakerfi-skodun.html` — a self-contained, fillable + printable
+**Skoðunarskýrsla brunaviðvörunarkerfis** (fire-alarm-system inspection report),
+modelled on the Öryggismiðstöðin layout but branded Slökkvitæki ehf (logo from
+`/api/branding`, kt 600508-0400). Sections: Búnaður counts (Samtals/Í lagi/Ekki í
+lagi/Vantar), Hljóðstyrksmælingar, Aðalstöð/rása checklist, Rafhlöðumælingar,
+repeatable Athugasemdir tables per device group, Ábendingar, signature canvas.
+localStorage draft autosave (no required fields — ALLTAF LEYFA VISTUN), 🖨 print
+CSS for a clean PDF. Linked from `brunakerfi.html` („🧯 Ný skoðunarskýrsla…").
+
 `brunakerfi.html` is a per-customer ledger for the brunakerfi /
 slökkvitæki **service customers** (fyrirtæki í þjónustu): a one-time
 þjónustusamningur + a yearly úttektarskýrsla + reikningur (2024–2026),
