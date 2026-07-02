@@ -265,6 +265,22 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   (`POST {folder,rows}`) find-or-creates ONE living summary Sheet
   ("Reikningar – gagnayfirlit") **inside the folder** and overwrites it — the
   database-summary view. UI: 🔍 Lesa / 📊 Skrifa í Google Sheet / ▶️ Skrá í gagnagrunn.
+- `redder-read.js` — **Redder-lesari** (Efniskostnaður tab): the CLOUD twin of
+  `luna-bridge/redder.js`. `GET /api/redder-read?folder&dry&limit=6&offset` reads
+  the Redder supplier-invoice PDFs in the Drive folder
+  `1GXs9fVXfl_nU2L8xBy_aDIKdiev8lgIt` ("Reikningar — Redder"), parses each
+  (Reikningur nr. · Dagsetning · Eindagi · Sölumaður · „Vegna <verkstaður> umb
+  <tengiliður>" · Upphæð án vsk / Vsk / Samtals m.vsk — Icelandic `.`=thousands),
+  and non-dry **upserts `redder_invoices`** (`on_conflict=invoice_nr`,
+  `source='gdrive'`, `drive_file_id` set). `invoice_nr` is **zero-padded to 7**
+  (e.g. `0129467`) so the Drive path and the luna-bridge mbox path dedup to the
+  same key — the two are interchangeable, no collisions. Worksite via a small
+  `ALIAS` map (Strandgata→Fjarðagata etc.); unknown worksite kept as the cleaned
+  raw string (still groups) — keep this map in sync with `redder.js` +
+  `project_aliases`. Batched by `offset`; UI (`efReadRedder`) is **preview-first**
+  (dry → parsed table) then „▶️ Skrá N í gagnagrunn". Reuses `pdf-parse` (already
+  in `external_node_modules`) + the `reikningar-read` Drive/OCR-fallback helpers.
+  Redirect `/api/redder-read` in netlify.toml.
 - `match-station.js` — **🔗 Skýrslu-stöð** (Bakendi top): a human-in-the-loop board
   to assign each `customer_documents` row (úttektarskýrsla/reikningur) to the RIGHT
   service-customer **location (`fyrirtaeki_id`) + year**. Built because an earlier

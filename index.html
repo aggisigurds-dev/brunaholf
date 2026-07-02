@@ -11566,6 +11566,7 @@ async function renderEfniskostnadur(t){
           <select id="ef-f-ws" class="ef-filter"><option value="">Allir verkstaðir</option></select>
           <a class="rg-tool" href="https://mail.google.com/mail/u/0/?authuser=bokhald@brunaholf.is#search/from%3Aredder.is" target="_blank" rel="noopener">📧 Redder í Gmail</a>
           <a class="rg-tool" href="https://drive.google.com/drive/search?q=redder" target="_blank" rel="noopener">📁 Redder í Drive</a>
+          <button class="rg-tool" id="ef-read-btn" title="Les Redder PDF-a úr Drive-möppunni og skráir nýja í gagnagrunn">🔍 Lesa Redder úr Drive</button>
         </div>
       </div>
 
@@ -11579,6 +11580,9 @@ async function renderEfniskostnadur(t){
       <div id="ef-table-host"></div>
     </div>
   `;
+
+  const readBtn = document.getElementById('ef-read-btn');
+  if (readBtn) readBtn.onclick = () => efReadRedder(t, readBtn);
 
   try {
     const r = await fetch('/api/redder-invoices');
@@ -11685,15 +11689,14 @@ async function renderEfniskostnadur(t){
       </div>
 
       <div class="wc-card" style="margin-top:20px">
-        <h3>📥 Hvernig á að bæta við Redder reikningi</h3>
+        <h3>📥 Bæta við Redder reikningum</h3>
         <ol style="font-size:13px;color:var(--text);padding-left:18px;line-height:1.7">
-          <li>Sæktu PDF úr Drive: <a href="https://drive.google.com/drive/search?q=redder" target="_blank">Redder mappa</a> eða bókhald@brunaholf.is Gmail</li>
-          <li>Lestu reikninginn — leitaðu að <strong>"Vegna [verkstaður] umb [tengiliður]"</strong> textanum (oft í grænum ramma)</li>
-          <li>Færðu inn í <code>redder_invoices</code> töflu með Supabase eða POST á <code>/api/redder-invoices</code></li>
-          <li>Næsta refresh sýnir efni í Reikningagerð (þegar við tengjum saman í UI)</li>
+          <li>Redder-reikningar detta sjálfkrafa í Drive-möppuna <a href="https://drive.google.com/drive/folders/1GXs9fVXfl_nU2L8xBy_aDIKdiev8lgIt" target="_blank">Reikningar — Redder</a> (úr bókhald@brunaholf.is).</li>
+          <li>Smelltu á <strong>🔍 Lesa Redder úr Drive</strong> hér að ofan — kerfið les hverja PDF (Reikningur nr. · Dagsetning · „Vegna … umb …" · upphæðir) og skráir nýja í gagnagrunn.</li>
+          <li>Reikningar án verkstaðs birtast undir „Án verkstaðs" — hægt að tengja handvirkt síðar.</li>
         </ol>
         <div style="font-size:11px;color:var(--muted);margin-top:10px;font-style:italic">
-          Sjálfvirk PDF-lestur er á dagskrá — fyrir hverja PDF: extract texta, finna 'Reikningur nr.' / 'Dagsetning' / 'Vegna ... umb ...' / vörulínur.
+          Sama tafla og luna-bridge/redder.js skrifar í (dedup á Reikningsnúmeri) — leiðirnar tvær rekast ekki á.
         </div>
       </div>
     `;
@@ -11705,6 +11708,82 @@ async function renderEfniskostnadur(t){
     renderTable();
   } catch(e) {
     document.getElementById('ef-meta').textContent = 'Villa: '+(e.message||e);
+  }
+}
+
+// Two-step Redder-lesari: first click PREVIEWS (dry) every PDF and shows the
+// parsed fields so nothing wrong gets stored; the button then flips to
+// „▶️ Skrá N í gagnagrunn" which pages through for real and reloads the tab.
+async function efReadRedder(t, btn){
+  const meta = document.getElementById('ef-meta');
+  // Second click → write.
+  if (btn && btn.dataset.mode === 'write') return efWriteRedder(t, btn);
+
+  const orig = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Les…'; }
+  let offset = 0, guard = 0, total = null, rows = [], errors = 0;
+  try {
+    while (guard++ < 200) {
+      const r = await fetch(`/api/redder-read?dry=1&offset=${offset}&limit=6`);
+      const j = await r.json().catch(()=>({}));
+      if (!r.ok) throw new Error(j.error || ('HTTP '+r.status));
+      rows = rows.concat(j.rows||[]); errors += j.errors||0;
+      if (total == null && typeof j.total === 'number') total = j.total;
+      if (meta) meta.textContent = `Forskoða Redder… ${rows.length}${total?('/'+total):''} lesnir`;
+      if (j.nextOffset == null) break;
+      offset = j.nextOffset;
+    }
+    const fmt = n => (n==null?'—':Math.round(n).toLocaleString('is-IS'));
+    const host = document.getElementById('ef-table-host');
+    if (host) host.innerHTML = `
+      <div class="wc-card">
+        <h3>🔍 Forskoðun — ${rows.length} Redder reikningar úr Drive${errors?(' · '+errors+' villur'):''}</h3>
+        <div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="color:var(--muted-2);font-weight:600;text-align:left">
+            <th style="padding:5px 6px">Nr.</th><th style="padding:5px 6px">Dags</th>
+            <th style="padding:5px 6px">Verkstaður</th><th style="padding:5px 6px">Tengiliður</th>
+            <th style="padding:5px 6px;text-align:right">Án vsk</th><th style="padding:5px 6px;text-align:right">Vsk</th>
+            <th style="padding:5px 6px;text-align:right">m. vsk</th></tr></thead>
+          <tbody>${rows.map(x=>`<tr style="border-top:1px solid var(--border)">
+            <td style="padding:4px 6px;font-family:JetBrains Mono,monospace">${escapeHtml(x.invoice_nr||'')}</td>
+            <td style="padding:4px 6px">${escapeHtml(x.dagsetning||'—')}</td>
+            <td style="padding:4px 6px">${escapeHtml(x.worksite_match||'⚠︎ óþekkt')}</td>
+            <td style="padding:4px 6px">${escapeHtml(x.contact_person||'')}</td>
+            <td style="padding:4px 6px;text-align:right">${fmt(x.an_vsk)}</td>
+            <td style="padding:4px 6px;text-align:right">${fmt(x.vsk)}</td>
+            <td style="padding:4px 6px;text-align:right;font-weight:600">${fmt(x.m_vsk)}</td></tr>`).join('')}</tbody>
+        </table></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:8px">Yfirfarðu tölurnar. Ef eitthvað er skakkt, láttu Claude vita — annars smelltu „▶️ Skrá".</div>
+      </div>`;
+    if (meta) meta.textContent = `Forskoðun tilbúin — ${rows.length} reikningar`;
+    if (btn) { btn.dataset.mode = 'write'; btn.textContent = `▶️ Skrá ${rows.length} í gagnagrunn`; }
+  } catch (e) {
+    if (meta) meta.textContent = 'Villa við forskoðun: ' + (e.message||e);
+    if (btn) btn.textContent = orig || '🔍 Lesa Redder úr Drive';
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+async function efWriteRedder(t, btn){
+  const meta = document.getElementById('ef-meta');
+  btn.disabled = true; btn.textContent = '⏳ Skrái…';
+  let offset = 0, guard = 0, indexed = 0, dupSkip = 0, errors = 0, total = null;
+  try {
+    while (guard++ < 200) {
+      const r = await fetch(`/api/redder-read?offset=${offset}&limit=6`);
+      const j = await r.json().catch(()=>({}));
+      if (!r.ok) throw new Error(j.error || ('HTTP '+r.status));
+      indexed += j.indexed||0; dupSkip += j.dupSkip||0; errors += j.errors||0;
+      if (total == null && typeof j.total === 'number') total = j.total;
+      if (meta) meta.textContent = `Skrái Redder… ${indexed} skráðir`;
+      if (j.nextOffset == null) break;
+      offset = j.nextOffset;
+    }
+    if (meta) meta.textContent = `✓ Lokið: ${indexed} skráðir (${dupSkip} þegar til)${errors?(' · '+errors+' villur'):''}`;
+    setTimeout(() => { try { renderEfniskostnadur(t); } catch(_){} }, 900);
+  } catch (e) {
+    if (meta) meta.textContent = 'Villa við skráningu: ' + (e.message||e);
+    btn.disabled = false; btn.textContent = '▶️ Skrá í gagnagrunn';
   }
 }
 
