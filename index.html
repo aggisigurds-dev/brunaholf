@@ -1630,6 +1630,19 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 </head>
 <body>
 
+<!-- Embed mode (?embed=1): when the hub is shown inside another app (e.g. the
+     slökkvitæki „Fjármál" app iframes /?embed=1#gerdreikninga), hide our own
+     chrome — banner + side panel + FABs — so only the tab content shows. The
+     class goes on <html> before layout paints, so there is no flash. -->
+<script>try{if(new URLSearchParams(location.search).get('embed')==='1')document.documentElement.classList.add('embedded');}catch(_){}</script>
+<style>
+html.embedded .topbar{display:none!important}
+html.embedded #tabs{display:none!important}
+html.embedded .layout{min-height:100vh!important}
+html.embedded #view{width:100%!important;margin:0!important;flex:1 1 auto!important}
+html.embedded .fab,html.embedded .fab-screenshot{display:none!important}
+</style>
+
 <header class="topbar">
   <img src="banner.png" alt="Brunahólf — Slökkvitæki ehf" class="banner-img" onerror="this.onerror=null;this.src='banner.png.png';this.addEventListener('error',()=>{this.style.display='none';this.parentNode.style.minHeight='60px';this.parentNode.style.background='linear-gradient(180deg, var(--navy) 0%, var(--navy-dark) 100%)'})">
   <button class="menu-btn" id="menuBtn" title="Valmynd">☰</button>
