@@ -2197,6 +2197,11 @@ async function syncFromServer(){
       // server tabs (Vinnustofa, Efniskostnaður, etc.) still appear even
       // when an older server snapshot would otherwise overwrite them.
       ensureNewTabs(state);
+      // Respect a URL deep-link (e.g. when embedded in slökkvitæki-appinu as
+      // brunaholf.netlify.app/#gerdreikninga): keep that tab active even though
+      // the server snapshot carries a different last-used activeTab. No-op when
+      // the hash names no tab, so normal cross-device sync is unaffected.
+      try{ if(typeof applyDeepLinkTab === 'function') applyDeepLinkTab(); }catch(_){}
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       // Only re-render if the structure actually changed — otherwise the
       // re-render races with whatever the active tab is loading and breaks
