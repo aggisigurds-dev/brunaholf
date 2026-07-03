@@ -199,6 +199,12 @@
   to = "/.netlify/functions/redder-invoices"
   status = 200
 
+# Redder-lesari: read the Redder PDFs in Drive → parse → upsert redder_invoices
+[[redirects]]
+  from = "/api/redder-read"
+  to = "/.netlify/functions/redder-read"
+  status = 200
+
 # Per-invoice editor (payday_invoice_id, status, worksite_match, notes)
 [[redirects]]
   from = "/api/invoice-edit"

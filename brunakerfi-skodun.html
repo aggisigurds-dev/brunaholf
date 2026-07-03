@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0f172a">
+<title>Skoðunarskýrsla Brunaviðvörunarkerfis · Slökkvitæki ehf</title>
+<style>
+  :root{
+    --bg:#f1f5f9; --panel:#fff; --line:#e2e8f0; --line2:#eef2f7;
+    --text:#0f172a; --muted:#64748b; --accent:#0f172a; --good:#15803d;
+    --bad:#b91c1c; --soft:#f8fafc; --amber:#b45309; --head:#fef3c7; --head-b:#fde68a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:15px;line-height:1.5}
+  .wrap{max-width:920px;margin:0 auto;padding:18px 14px 90px}
+  header{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:16px 18px;margin-bottom:14px;box-shadow:0 1px 2px rgba(15,23,42,.04);
+    display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  header .h-left{min-width:0}
+  header h1{font-size:19px;margin:0 0 3px;font-weight:800;letter-spacing:.01em}
+  header .sub{color:var(--muted);font-size:13px}
+  header .brand{font-weight:700;color:var(--text)}
+  #brandlogo{max-height:70px;max-width:260px;object-fit:contain;object-position:right top}
+  .brand-fallback{font-size:19px;font-weight:800;color:#b91c1c;text-align:right;line-height:1.15}
+  .brand-fallback small{display:block;font-size:11px;font-weight:600;color:var(--muted)}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:14px 16px 16px;margin-bottom:14px;box-shadow:0 1px 2px rgba(15,23,42,.03)}
+  .panel h2{font-size:14px;margin:0 0 10px;font-weight:800;text-transform:uppercase;
+    letter-spacing:.04em;color:#334155}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  @media(max-width:640px){.grid2,.grid3{grid-template-columns:1fr}}
+  label{display:block;font-size:12px;color:var(--muted);margin-bottom:3px;font-weight:600}
+  input[type=text],input[type=tel],input[type=email],input[type=date],input[type=number],
+  textarea,select{width:100%;border:1px solid var(--line);border-radius:8px;
+    padding:9px 10px;font-size:15px;font-family:inherit;background:#fff;color:var(--text)}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(15,23,42,.08)}
+  textarea{min-height:64px;resize:vertical}
+  .info-row{margin-bottom:9px}
+  /* Data tables (Búnaður / mælingar / athugasemdir) */
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{background:#f1f5f9;border:1px solid var(--line);padding:6px 8px;font-size:11px;
+    font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;text-align:center}
+  th:first-child{text-align:left}
+  td{border:1px solid var(--line);padding:3px 5px;vertical-align:middle}
+  td.lbl{font-weight:600;font-size:13px}
+  td input{border:none;border-radius:4px;padding:6px;text-align:center;font-size:14px}
+  td input.txt{text-align:left}
+  td input:focus{box-shadow:inset 0 0 0 2px rgba(15,23,42,.12)}
+  .num{max-width:70px}
+  /* Yes/No toggle (Í lagi / Ekki í lagi) */
+  .seg{display:flex;gap:3px;justify-content:center}
+  .seg button{min-width:34px;height:30px;border:1px solid var(--line);border-radius:5px;
+    background:#fff;padding:0 6px;font-size:13px;cursor:pointer;font-family:inherit;color:var(--muted)}
+  .seg button.on.ok{background:#dcfce7;border-color:#86efac;color:var(--good);font-weight:700}
+  .seg button.on.bad{background:#fee2e2;border-color:#fca5a5;color:var(--bad);font-weight:700}
+  .addrow{margin-top:8px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;
+    padding:8px 12px;font-size:13px;font-weight:600;color:#334155;cursor:pointer;width:100%}
+  .addrow:hover{background:#eef2f7}
+  .delrow{border:none;background:transparent;color:#cbd5e1;cursor:pointer;font-size:16px;padding:0 4px}
+  .delrow:hover{color:#b91c1c}
+  .note{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5}
+  .reg{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:12px 14px;
+    font-size:12px;color:#475569;line-height:1.6;margin-bottom:14px}
+  .sig-wrap{border:1px solid var(--line);border-radius:10px;background:#fff;overflow:hidden}
+  .sig-wrap canvas{display:block;width:100%;height:150px;touch-action:none;cursor:crosshair;background:#fff}
+  .sig-actions{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;
+    background:var(--soft);border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+  .sig-actions button{border:none;background:transparent;color:var(--accent);font-size:13px;
+    cursor:pointer;font-weight:600;padding:4px 8px}
+  .actions{position:sticky;bottom:0;background:rgba(241,245,249,.95);backdrop-filter:blur(6px);
+    padding:12px 0 8px;margin-top:18px;border-top:1px solid var(--line);display:flex;gap:10px;
+    justify-content:flex-end;flex-wrap:wrap}
+  .btn{border:none;border-radius:10px;padding:13px 20px;font-size:15px;cursor:pointer;
+    font-weight:700;font-family:inherit;min-height:48px}
+  .btn-primary{background:#b91c1c;color:#fff}
+  .btn-primary:hover{background:#991b1b}
+  .btn-ghost{background:#fff;color:var(--text);border:1px solid var(--line)}
+  .footer-note{font-size:12px;color:var(--muted);text-align:center;margin-top:16px;line-height:1.6}
+  .saved{font-size:12px;color:var(--good);align-self:center;margin-right:auto}
+  /* ── Print: clean A4 report, hide chrome ── */
+  @media print{
+    body{background:#fff;font-size:12px}
+    .wrap{max-width:none;padding:0}
+    .actions,.addrow,.delrow,.sig-actions,.no-print{display:none!important}
+    .panel,header,.reg{box-shadow:none;border:1px solid #cbd5e1;break-inside:avoid;page-break-inside:avoid}
+    header{border-radius:0}
+    input,textarea,select{border:none!important;box-shadow:none!important;padding:2px 3px!important;font-size:12px!important}
+    td input{padding:2px!important}
+    .seg button{border:1px solid #cbd5e1}
+    table{font-size:11px}
+    @page{margin:14mm}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="h-left">
+      <h1>Skoðunarskýrsla brunaviðvörunarkerfis</h1>
+      <div class="sub">Sjálfvirk brunaviðvörun · <span class="brand">Slökkvitæki ehf</span></div>
+    </div>
+    <div>
+      <img id="brandlogo" alt="Slökkvitæki ehf" style="display:none">
+      <div id="brandfallback" class="brand-fallback">Slökkvitæki ehf<small>kt. 600508-0400</small></div>
+    </div>
+  </header>
+
+  <!-- Haus: örm nr / staður / dags / starfsmaður -->
+  <div class="panel">
+    <div class="grid3">
+      <div class="info-row"><label>Örm nr / verknúmer</label><input type="text" id="f_orm"></div>
+      <div class="info-row"><label>Staður</label><input type="text" id="f_stadur"></div>
+      <div class="info-row"><label>Dagsetning</label><input type="date" id="f_dags"></div>
+    </div>
+    <div class="grid2">
+      <div class="info-row"><label>Skoðunarmaður (F.h. Slökkvitæki ehf)</label><input type="text" id="f_starfsmadur"></div>
+      <div class="info-row"><label>Starfsmannanúmer</label><input type="text" id="f_starfsnr"></div>
+    </div>
+  </div>
+
+  <!-- Viðskiptavinur -->
+  <div class="panel">
+    <h2>Viðskiptavinur</h2>
+    <div class="grid2">
+      <div class="info-row"><label>Viðskiptavinur</label><input type="text" id="f_vidskiptavinur"></div>
+      <div class="info-row"><label>Umbeðið af (nafn / netfang)</label><input type="text" id="f_umbedid"></div>
+      <div class="info-row"><label>Tengiliður á verkstað</label><input type="text" id="f_tengilidur"></div>
+      <div class="info-row"><label>Aðsetur / heimilisfang</label><input type="text" id="f_adsetur"></div>
+      <div class="info-row"><label>Póstnúmer og staður</label><input type="text" id="f_postnr"></div>
+      <div class="info-row"><label>Sími</label><input type="tel" id="f_simi"></div>
+    </div>
+  </div>
+
+  <!-- Búnaður -->
+  <div class="panel">
+    <h2>Búnaður</h2>
+    <table>
+      <thead><tr><th>Búnaður</th><th>Samtals</th><th>Í lagi</th><th>Ekki í lagi</th><th>Vantar</th></tr></thead>
+      <tbody id="bunadur"></tbody>
+    </table>
+  </div>
+
+  <!-- Hljóðstyrksmælingar (yfirlit) -->
+  <div class="panel">
+    <h2>Hljóðstyrksmælingar</h2>
+    <table>
+      <thead><tr><th>Mæling</th><th>Hljóðst. (dB)</th><th>Í lagi</th><th>Ekki í lagi</th></tr></thead>
+      <tbody id="hljod"></tbody>
+    </table>
+  </div>
+
+  <!-- Aðalstöð / rása prófun -->
+  <div class="panel">
+    <h2>Aðalstöð</h2>
+    <div class="grid3">
+      <div class="info-row"><label>Aðalstöð (tegund)</label><input type="text" id="f_adalstod" placeholder="t.d. Rása"></div>
+      <div class="info-row"><label>Fjöldi rása / slaufa</label><input type="number" id="f_fjoldi_rasa" class="num"></div>
+      <div class="info-row"><label>Tegund búnaðar</label><input type="text" id="f_tegund"></div>
+      <div class="info-row"><label>Heiti fjargæsluaðila</label><input type="text" id="f_fjargaesla"></div>
+      <div class="info-row"><label>Yfirlitsmynd teiknuð af</label><input type="text" id="f_yfirlitsmynd"></div>
+    </div>
+    <table style="margin-top:10px">
+      <thead><tr><th>Prófun á stöð</th><th>Í lagi</th><th>Ekki í lagi</th><th>Á ekki við</th></tr></thead>
+      <tbody id="stod"></tbody>
+    </table>
+  </div>
+
+  <!-- Rafhlöðumælingar -->
+  <div class="panel">
+    <h2>Rafhlöðumælingar</h2>
+    <div class="grid3">
+      <div class="info-row"><label>Stærð rafhlaðna</label><input type="text" id="rb_staerd" placeholder="t.d. 2×12 Volt"></div>
+      <div class="info-row"><label>Ástimpluð rýmd (Ah)</label><input type="text" id="rb_astimplud"></div>
+      <div class="info-row"><label>Mæld rýmd (%)</label><input type="text" id="rb_maeld_pct"></div>
+      <div class="info-row"><label>Mæld rýmd (Ah)</label><input type="text" id="rb_maeld_ah"></div>
+      <div class="info-row"><label>Árgerð rafhlaðna</label><input type="text" id="rb_argerd"></div>
+      <div class="info-row"><label>Spenna eftir prófun (V)</label><input type="text" id="rb_spenna"></div>
+      <div class="info-row"><label>Straumdráttur í rafmagnsleysi i1 (mA)</label><input type="text" id="rb_i1"></div>
+      <div class="info-row"><label>Straumdráttur í útkalli i2 (mA)</label><input type="text" id="rb_i2"></div>
+      <div class="info-row"><label>Lágmarks ending (klst)</label><input type="text" id="rb_lagmark"></div>
+      <div class="info-row"><label>Áætluð ending (klst)</label><input type="text" id="rb_aaetlud"></div>
+      <div class="info-row"><label>Lágmarks rýmd rafhlaðna (Ah)</label><input type="text" id="rb_lagmark_rymd"></div>
+    </div>
+  </div>
+
+  <!-- Athugasemdir og ábendingar (endurteknar línur per flokk) -->
+  <div class="panel">
+    <h2>Athugasemdir og ábendingar</h2>
+    <datalist id="ath-options">
+      <option value="Vantar"><option value="Er ekki til staðar"><option value="Laus frá lofti">
+      <option value="Of nálægt loftræstingu"><option value="Of nálægt innblæstri">
+      <option value="Díóða virkar ekki"><option value="Vantar á yfirlitsmynd"><option value="Annað">
+    </datalist>
+    <div id="ath-groups"></div>
+  </div>
+
+  <!-- Hljóðstyrksmælingar (nánar) -->
+  <div class="panel">
+    <h2>Hljóðstyrksmælingar — nánar</h2>
+    <table>
+      <thead><tr><th>Tegund mælingar</th><th>Hljóðst. (dB)</th><th>Lýsing</th><th class="no-print"></th></tr></thead>
+      <tbody id="hljod-nanar"></tbody>
+    </table>
+    <button type="button" class="addrow" data-add="hljod-nanar">+ Bæta við mælingu</button>
+  </div>
+
+  <!-- Ábendingar (frjáls texti) -->
+  <div class="panel">
+    <h2>Ábendingar</h2>
+    <textarea id="f_abendingar" placeholder="Almennar ábendingar og ráðleggingar…"></textarea>
+  </div>
+
+  <!-- Undirskrift -->
+  <div class="panel">
+    <h2>Undirskrift</h2>
+    <div class="grid2">
+      <div class="info-row"><label>Staður</label><input type="text" id="f_sig_stadur"></div>
+      <div class="info-row"><label>Dagsetning</label><input type="date" id="f_sig_dags"></div>
+    </div>
+    <label>Undirskrift skoðunarmanns (F.h. Slökkvitæki ehf)</label>
+    <div class="sig-wrap">
+      <canvas id="sig"></canvas>
+      <div class="sig-actions"><span>Skrifaðu undir hér að ofan</span><button type="button" id="sigClear">Hreinsa undirskrift</button></div>
+    </div>
+  </div>
+
+  <div class="reg">
+    Afrit af skoðunarskýrslunni verður sent eldvarnareftirliti slökkviliðs ef kallað er eftir því.<br>
+    Skoðað er samkvæmt nýjustu leiðbeiningum um sjálfvirka brunaviðvörun útg. af HMS 6.038.
+  </div>
+
+  <div class="actions">
+    <span class="saved" id="savedMsg"></span>
+    <button type="button" class="btn btn-ghost" id="clearBtn">Hreinsa allt</button>
+    <button type="button" class="btn btn-ghost" id="saveBtn">💾 Vista drög</button>
+    <button type="button" class="btn btn-primary" id="printBtn">🖨 Prenta / PDF</button>
+  </div>
+
+  <div class="footer-note">
+    <span class="brand" style="font-weight:700">Slökkvitæki ehf</span> · Helluhrauni 10, 220 Hafnarfirði · kt. 600508-0400 · sími 565-4080 · eldklar@eldklar.is
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const LS_KEY = 'brunakerfi_skodun_drog_v1';
+
+// Real company logo (same app_settings logo the Slökkvitæki app uses).
+fetch('/api/branding').then(r=>r.json()).then(d=>{
+  if(d && d.logo_url){ const img=$('brandlogo'); img.src=d.logo_url; img.style.display='block'; $('brandfallback').style.display='none'; }
+}).catch(()=>{});
+
+// ── Búnaður rows: Samtals / Í lagi / Ekki í lagi / Vantar ──
+const BUNADUR = ['Stjórnstöð','Boðbúnaður','Reykskynjarar','Hitaskynjarar','Handboðar','Bjöllur / Sírenur','Rafhlöður'];
+$('bunadur').innerHTML = BUNADUR.map((b,i)=>`<tr>
+  <td class="lbl">${b}</td>
+  <td><input type="number" class="num" data-f="bun_${i}_samtals"></td>
+  <td><input type="number" class="num" data-f="bun_${i}_ilagi"></td>
+  <td><input type="number" class="num" data-f="bun_${i}_ekki"></td>
+  <td><input type="number" class="num" data-f="bun_${i}_vantar"></td>
+</tr>`).join('');
+
+// ── Hljóðstyrksmælingar (yfirlit) ──
+const HLJOD = ['Mesti hljóðst. 1M frá hljóðgjöfum','Mesti umhverfishávaði','Hljóðst. bjöllu með umhverfishávaða','Minnsti hljóðst. bjöllu í húsi','Hljóðst. í svefnherbergi'];
+$('hljod').innerHTML = HLJOD.map((h,i)=>`<tr>
+  <td class="lbl">${h}</td>
+  <td><input type="text" class="num" data-f="hlj_${i}_db"></td>
+  <td colspan="2" data-seg="hlj_${i}_ok"></td>
+</tr>`).join('');
+$('hljod').querySelectorAll('[data-seg]').forEach(td=>td.appendChild(makeSeg(td.dataset.seg)));
+
+// ── Prófun á stöð (Í lagi / Ekki í lagi / Á ekki við) ──
+const STOD = ['Spenna 24V','Spenna 230V','Staða rása í stöð','Staða bjöllurása / slaufu','Brunaboð frá öllum rásum','Lampaprófun','Innri væla í stöð'];
+$('stod').innerHTML = STOD.map((s,i)=>`<tr><td class="lbl">${s}</td><td colSpan="3" data-seg="stod_${i}"></td></tr>`).join('');
+$('stod').querySelectorAll('[data-seg]').forEach(td=>td.appendChild(makeSeg(td.dataset.seg,true)));
+
+// ── Athugasemdir groups (repeatable rows: Númer / Svæði / Athugasemd / Lýsing) ──
+const ATH_GROUPS = ['Reykskynjarar','Hitaskynjarar','Handboðar','Bjöllur / Sírenur','Yfirlitsmynd'];
+$('ath-groups').innerHTML = ATH_GROUPS.map(g=>{
+  const id='ath_'+g.replace(/[^a-zA-ZÀ-ÿ]/g,'');
+  return `<div style="margin-bottom:14px">
+    <div style="font-weight:700;font-size:13px;margin-bottom:6px;color:#334155">${g}</div>
+    <table><thead><tr><th style="width:64px">Númer</th><th style="width:90px">Svæði</th><th style="width:170px">Athugasemd</th><th>Lýsing</th><th class="no-print" style="width:28px"></th></tr></thead>
+    <tbody id="${id}"></tbody></table>
+    <button type="button" class="addrow" data-add="${id}" data-kind="ath">+ Bæta við línu</button>
+  </div>`;
+}).join('');
+
+// seed one empty row in each repeatable table
+document.querySelectorAll('[data-add]').forEach(btn=>{
+  addRow(btn.dataset.add, btn.dataset.kind || (btn.dataset.add==='hljod-nanar'?'hljod':'ath'));
+});
+
+// ── helpers ──
+function makeSeg(field, threeState){
+  const wrap=document.createElement('div'); wrap.className='seg'; wrap.dataset.field=field;
+  const opts = threeState ? [['ok','✓'],['bad','✕'],['na','–']] : [['ok','✓'],['bad','✕']];
+  opts.forEach(([v,txt])=>{
+    const b=document.createElement('button'); b.type='button'; b.textContent=txt; b.dataset.val=v;
+    b.onclick=()=>{ const on=b.classList.contains('on'); wrap.querySelectorAll('button').forEach(x=>x.className=''); if(!on){b.className='on '+(v==='ok'?'ok':v==='bad'?'bad':'');} scheduleSave(); };
+    wrap.appendChild(b);
+  });
+  return wrap;
+}
+function addRow(tbodyId, kind){
+  const tb=$(tbodyId); if(!tb) return;
+  const tr=document.createElement('tr');
+  if(kind==='hljod'){
+    tr.innerHTML = `<td><input type="text" class="txt" placeholder="Hljóðstyrksmæling"></td>
+      <td><input type="text" class="num"></td>
+      <td><input type="text" class="txt"></td>
+      <td class="no-print"><button type="button" class="delrow">✕</button></td>`;
+  } else {
+    tr.innerHTML = `<td><input type="text" class="num"></td>
+      <td><input type="text" class="num" placeholder="svæði"></td>
+      <td><input type="text" class="txt" list="ath-options"></td>
+      <td><input type="text" class="txt"></td>
+      <td class="no-print"><button type="button" class="delrow">✕</button></td>`;
+  }
+  tr.querySelector('.delrow').onclick=()=>{ tr.remove(); scheduleSave(); };
+  tr.querySelectorAll('input').forEach(inp=>inp.addEventListener('input',scheduleSave));
+  tb.appendChild(tr);
+}
+document.querySelectorAll('[data-add]').forEach(btn=>{
+  btn.addEventListener('click',()=>addRow(btn.dataset.add, btn.dataset.kind || (btn.dataset.add==='hljod-nanar'?'hljod':'ath')));
+});
+
+// ── Signature pad ──
+(function(){
+  const c=$('sig'), ctx=c.getContext('2d'); let drawing=false,last=null;
+  function size(){ const r=c.getBoundingClientRect(); const dpr=window.devicePixelRatio||1;
+    const data=c.toDataURL(); c.width=r.width*dpr; c.height=r.height*dpr; ctx.scale(dpr,dpr);
+    ctx.lineWidth=2; ctx.lineCap='round'; ctx.strokeStyle='#0f172a';
+    const img=new Image(); img.onload=()=>ctx.drawImage(img,0,0,r.width,r.height); img.src=data; }
+  setTimeout(size,50); window.addEventListener('resize',size);
+  const pos=e=>{const r=c.getBoundingClientRect();const t=e.touches?e.touches[0]:e;return{x:t.clientX-r.left,y:t.clientY-r.top};};
+  const start=e=>{drawing=true;last=pos(e);e.preventDefault();};
+  const move=e=>{if(!drawing)return;const p=pos(e);ctx.beginPath();ctx.moveTo(last.x,last.y);ctx.lineTo(p.x,p.y);ctx.stroke();last=p;e.preventDefault();scheduleSave();};
+  const end=()=>{drawing=false;};
+  c.addEventListener('mousedown',start);c.addEventListener('mousemove',move);window.addEventListener('mouseup',end);
+  c.addEventListener('touchstart',start,{passive:false});c.addEventListener('touchmove',move,{passive:false});c.addEventListener('touchend',end);
+  $('sigClear').onclick=()=>{ctx.clearRect(0,0,c.width,c.height);scheduleSave();};
+})();
+
+// ── localStorage draft save/restore (ALLTAF LEYFA VISTUN — no required fields) ──
+let saveTimer=null;
+function scheduleSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(saveDraft,600); }
+function collect(){
+  const data={ f:{}, seg:{}, ath:{}, hljod:[] };
+  document.querySelectorAll('input[id^="f_"],input[id^="rb_"],textarea[id^="f_"],input[id^="f_"]').forEach(el=>{ if(el.id) data.f[el.id]=el.value; });
+  document.querySelectorAll('input[data-f]').forEach(el=>{ data.f[el.dataset.f]=el.value; });
+  document.querySelectorAll('.seg[data-field]').forEach(w=>{ const on=w.querySelector('button.on'); data.seg[w.dataset.field]=on?on.dataset.val:''; });
+  ATH_GROUPS.forEach(g=>{ const id='ath_'+g.replace(/[^a-zA-ZÀ-ÿ]/g,''); data.ath[id]=[...$(id).querySelectorAll('tr')].map(tr=>[...tr.querySelectorAll('input')].map(i=>i.value)); });
+  data.hljod=[...$('hljod-nanar').querySelectorAll('tr')].map(tr=>[...tr.querySelectorAll('input')].map(i=>i.value));
+  try{ data.sig=$('sig').toDataURL(); }catch(_){}
+  return data;
+}
+function saveDraft(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(collect())); const m=$('savedMsg'); m.textContent='✓ Drög vistuð '+new Date().toLocaleTimeString('is-IS',{hour:'2-digit',minute:'2-digit'}); }catch(_){} }
+function restore(){
+  let data; try{ data=JSON.parse(localStorage.getItem(LS_KEY)||'null'); }catch(_){}
+  if(!data) return;
+  Object.entries(data.f||{}).forEach(([k,v])=>{ const byId=$(k); if(byId){byId.value=v;return;} const byF=document.querySelector('input[data-f="'+k+'"]'); if(byF)byF.value=v; });
+  Object.entries(data.seg||{}).forEach(([k,v])=>{ const w=document.querySelector('.seg[data-field="'+k+'"]'); if(w&&v){ const b=w.querySelector('button[data-val="'+v+'"]'); if(b){b.className='on '+(v==='ok'?'ok':v==='bad'?'bad':'');} } });
+  Object.entries(data.ath||{}).forEach(([id,rows])=>{ const tb=$(id); if(!tb)return; tb.innerHTML=''; (rows.length?rows:[[]]).forEach(r=>{ addRow(id,'ath'); const tr=tb.lastElementChild; tr.querySelectorAll('input').forEach((inp,i)=>inp.value=r[i]||''); }); });
+  if(data.hljod){ const tb=$('hljod-nanar'); tb.innerHTML=''; (data.hljod.length?data.hljod:[[]]).forEach(r=>{ addRow('hljod-nanar','hljod'); const tr=tb.lastElementChild; tr.querySelectorAll('input').forEach((inp,i)=>inp.value=r[i]||''); }); }
+  if(data.sig){ const c=$('sig'),ctx=c.getContext('2d'),img=new Image(); img.onload=()=>{const r=c.getBoundingClientRect();ctx.drawImage(img,0,0,r.width,r.height);}; img.src=data.sig; }
+}
+document.addEventListener('input', e=>{ if(e.target.matches('input,textarea,select')) scheduleSave(); });
+$('saveBtn').onclick=saveDraft;
+$('printBtn').onclick=()=>window.print();
+$('clearBtn').onclick=()=>{ if(confirm('Hreinsa allt formið? Drög eyðast.')){ localStorage.removeItem(LS_KEY); location.reload(); } };
+
+// default today's date
+const today=new Date().toISOString().slice(0,10);
+if(!$('f_dags').value)$('f_dags').value=today;
+if(!$('f_sig_dags').value)$('f_sig_dags').value=today;
+restore();
+</script>
+</body>
+</html>
