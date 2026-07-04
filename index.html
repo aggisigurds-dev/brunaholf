@@ -10013,6 +10013,7 @@ async function renderKrofur(t){
 
       <h3 class="kf-sec" data-sec="bh">🔥 Brunahólf — krófur <span class="kf-note">(Payday + Landsbanki · gjalddagi ${esc(YEAR)})</span></h3>
       <div id="kf-bh-cards" class="kf-cards"></div>
+      <div id="kf-bh-detail"></div>
 
       <h3 class="kf-sec" data-sec="wsbill">🏗️ Brunahólf verkstaðir — reikningsstaða <span class="kf-note" id="kf-wsbill-note"></span></h3>
       <div id="kf-wsbill"></div>
@@ -10160,7 +10161,31 @@ async function renderKrofur(t){
       C('paid','Greitt', s.paid, 'green', (s.paid_count||0)+' greiddar') +
       C('open','Útistandandi', s.outstanding, 'red', (openCount)+' ógreiddar krófur'+(allOverdue?' · allt komið fram yfir gjalddaga':'')) +
       C('overdue','Útrunnið', s.overdue, 'amber', (s.overdue_count||0)+' af '+openCount+' ógreiddum'+(openCount?` · ${odPct}% af útistandandi`:'')+' komnar fram yfir gjalddaga');
-    $('kf-bh-cards').querySelectorAll('.kf-card').forEach(c=> c.onclick=()=>{ const f=c.dataset.filter; filter = (filter===f && f!=='all')?'all':f; paint(); const el=$('kf-list'); if(el&&f!=='all') el.scrollIntoView({behavior:'smooth',block:'nearest'}); });
+    $('kf-bh-cards').querySelectorAll('.kf-card').forEach(c=> c.onclick=()=>{ const f=c.dataset.filter; filter = (filter===f && f!=='all')?'all':f; paint(); const el=$('kf-bh-detail'); if(el&&filter!=='all') el.scrollIntoView({behavior:'smooth',block:'nearest'}); });
+  }
+
+  // Inline breakdown right under the Brunahólf cards: tap a card → see exactly
+  // which krófur make up that total (so 26,6M „útistandandi" lists its 22 rows here,
+  // not buried in the full krófulista far down the page).
+  function bhDetail(){
+    const host = $('kf-bh-detail'); if(!host) return;
+    if(filter==='all'){ host.innerHTML=''; return; }
+    const today = DATA.today;
+    let rows = (DATA.rows||[]).filter(r=>!r.hidden && !r.excluded);
+    if(filter==='open')       rows = rows.filter(r=>!r.paid);
+    else if(filter==='overdue') rows = rows.filter(r=>r.overdue);
+    else if(filter==='paid')  rows = rows.filter(r=>r.paid);
+    else if(filter==='flag')  rows = (DATA.rows||[]).filter(r=>r.flagged);
+    rows = rows.slice().sort((a,b)=>b.amount-a.amount);
+    const tot = rows.reduce((t,r)=>t+r.amount,0);
+    const title = {open:'Útistandandi — ógreiddar krófur',overdue:'Útrunnið — komnar fram yfir gjalddaga',paid:'Greitt',flag:'Til skoðunar'}[filter]||'Krófur';
+    const tag = r => r.paid ? '<span style="color:#067647;font-weight:700">✓ greitt</span>'
+      : (r.gjalddagi&&r.gjalddagi<today ? '<span style="color:#b42318;font-weight:700">● útrunnið</span>' : '<span style="color:#b54708;font-weight:700">● ógreitt</span>');
+    const list = rows.length ? rows.map(r=>`<div class="kf-mod-r"><span>${esc(r.customer_name||'—')} — ${tag(r)} <small>${esc(r.source||'')} ${esc(String(r.tilvisun||''))} · gjalddagi ${esc(r.gjalddagi||'—')}${r.kt?(' · '+esc(r.kt)):''}${r.bank_paid?' · 🏦 e.t.v. greitt í banka':''}</small></span><b>${kr(r.amount)}</b></div>`).join('') : '<div class="kf-note">Engar krófur.</div>';
+    host.innerHTML = `<div class="kf-mod"><h4>${title} <span class="kf-note">(${rows.length} krófur · smelltu aftur á spjaldið til að loka)</span></h4>
+      <div class="kf-note" style="margin-bottom:4px">✓ greitt / ● ógreitt / ● útrunnið sýnir stöðu hverrar krófu · smelltu á nafn til að fletta í krófulistanum að neðan</div>
+      ${list}<div class="kf-mod-tot"><span>Samtals</span><span>${kr(tot)}</span></div></div>`;
+    host.querySelectorAll('.kf-mod-r span').forEach((sp,i)=>{ sp.style.cursor='pointer'; sp.onclick=()=>{ q=String(rows[i].tilvisun||''); const si=$('kf-search'); if(si) si.value=q; list(); const el=$('kf-list'); if(el) el.scrollIntoView({behavior:'smooth',block:'nearest'}); }; });
   }
 
   function slokkCards(){
@@ -10396,7 +10421,7 @@ async function renderKrofur(t){
     $('kf-chips').querySelectorAll('.kf-chip').forEach(c=> c.onclick=()=>{ filter=c.dataset.c; paint(); });
   }
 
-  function paint(){ cards(); wsBilling(); slokkCards(); dailyIncome(); uncollected(); inspections(); months(); chips(); list(); }
+  function paint(){ cards(); bhDetail(); wsBilling(); slokkCards(); dailyIncome(); uncollected(); inspections(); months(); chips(); list(); }
 
   // Collapsible section headers — click a kf-sec to fold its content. State
   // persists per-section in localStorage; the golink inside a header still works.
