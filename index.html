@@ -14141,7 +14141,7 @@ async function openTimabok(name, month){
 async function buildAndSaveTimabokPdf(name, month, rows){
   const lib = await loadJsPdf();
   const logo = await bhLogoDataUrl();
-  const doc = new lib.jsPDF({ unit:'pt', format:'a4' });
+  const doc = new lib.jsPDF({ unit:'pt', format:'a4', compress:true });
   const W = doc.internal.pageSize.getWidth();
   let y = 40;
   if(logo){ try{ doc.addImage(logo, 'PNG', 40, y, 150, 46); }catch{} }
@@ -14182,7 +14182,7 @@ async function buildAndSaveEfnislistiPdf(name, month, data){
   const lib = await loadJsPdf();
   const logo = await bhLogoDataUrl();
   const c = data.c, rt = data.rate;
-  const doc = new lib.jsPDF({ unit:'pt', format:'a4' });
+  const doc = new lib.jsPDF({ unit:'pt', format:'a4', compress:true });
   const W = doc.internal.pageSize.getWidth();
   const dmy = s => { const p=String(s||'').split('-'); return p.length===3? `${p[2]}.${p[1]}.${p[0]}` : (s||''); };
   let y = 40;
