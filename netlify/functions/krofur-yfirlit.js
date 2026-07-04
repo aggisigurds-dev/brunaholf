@@ -214,7 +214,12 @@ exports.handler = async (event) => {
     slokk = s;
   } catch (_) { slokk = null; }
 
-  return json(200, { year, generated_at: new Date().toISOString(), today, summary, byMonth, byCustomer, rows, slokk });
+  // Worksite-billing overrides (inv_key='ws|<project>') — hide/edit-estimate/note
+  // a worksite row in the „Brunahólf verkstaðir — reikningsstaða" section.
+  const wsMeta = {};
+  for (const m of meta) { if (String(m.inv_key || '').startsWith('ws|')) wsMeta[m.inv_key] = { hidden: !!m.hidden, amount_override: m.amount_override != null ? Number(m.amount_override) : null, note: m.note || null }; }
+
+  return json(200, { year, generated_at: new Date().toISOString(), today, summary, byMonth, byCustomer, rows, slokk, wsMeta });
 };
 
 async function saveOverride(event) {

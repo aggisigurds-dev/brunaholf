@@ -9989,7 +9989,7 @@ async function renderKrofur(t){
   const kr  = n => num(n) + ' kr';
   const mlabel = (m) => { const [y,mo]=String(m||'').split('-'); return ['jan','feb','mar','apr','maí','jún','júl','ágú','sep','okt','nóv','des'][(+mo||1)-1]+' '+(y||''); };
   let YEAR = (t && t._krofurYear) || '2026';
-  let DATA = null, filter = 'all', q = '', moSel = null, moMode = 'invoiced', WSD = null;
+  let DATA = null, filter = 'all', q = '', moSel = null, moMode = 'invoiced', WSD = null, WSMETA = null;
 
   $view.innerHTML = `
     <div class="rg-wrap kf-wrap">
@@ -10072,6 +10072,13 @@ async function renderKrofur(t){
       .kf-mod-r small{color:var(--text-dim,#8a93a2)}
       .kf-mod-r b{font-variant-numeric:tabular-nums;white-space:nowrap}
       .kf-mod-tot{display:flex;justify-content:space-between;font-weight:800;font-size:13px;margin-top:6px;padding-top:6px;border-top:2px solid var(--border,#e3e7ec)}
+      .kf-wsright{display:flex;align-items:center;gap:6px;white-space:nowrap}
+      .kf-wsact{display:inline-flex;gap:2px}
+      .kf-wsact .kf-btn{padding:1px 4px;font-size:12px;line-height:1.4;background:transparent;border:1px solid var(--border,#e3e7ec);border-radius:6px;cursor:pointer}
+      .kf-wsact .kf-btn:hover{background:var(--bg-2,#f4f6f8)}
+      .kf-wsamt{width:76px;text-align:right;font:inherit;font-variant-numeric:tabular-nums;padding:1px 4px;border:1px solid var(--border,#e3e7ec);border-radius:6px;background:var(--card-bg,#fff)}
+      .kf-wshidden{margin-top:8px;font-size:12px}
+      .kf-wshidden summary{cursor:pointer;color:var(--text-dim,#8a93a2);padding:4px 0}
       .kf-dtable{background:var(--card-bg,#fff);border:1px solid var(--border,#e3e7ec);border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)}
       .kf-dhead,.kf-drow{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr 1fr 1fr;gap:8px;padding:8px 14px;align-items:center;font-size:12.5px;font-variant-numeric:tabular-nums}
       .kf-dhead{background:var(--bg-2,#f4f6f8);font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--text-dim,#5a6473)}
@@ -10145,11 +10152,14 @@ async function renderKrofur(t){
   function cards(){
     const s = DATA.summary||{};
     const C = (id,label,val,cls,extra) => `<div class="kf-card ${filter===id?'on':''}" data-filter="${id}"><span class="kf-exp">${filter===id?'▲ falið':'▾ sundurliðun'}</span><div class="kf-cl">${label}</div><div class="kf-cv ${cls}">${kr(val)}</div><div class="kf-cx">${extra}</div></div>`;
+    const openCount = Math.max(0,(s.count||0)-(s.paid_count||0));   // unpaid (visible) krófur
+    const allOverdue = openCount>0 && (s.overdue_count||0)===openCount && s.overdue===s.outstanding;
+    const odPct = s.outstanding ? Math.round((s.overdue/s.outstanding)*100) : 0;
     $('kf-bh-cards').innerHTML =
       C('all','Útgefið '+YEAR, s.invoiced, 'blue', (s.count||0)+' gildar krófur'+(s.dup_count?` · ${s.dup_count} tvítekningar sleppt`:'')+(s.cancelled_count?` · ${s.cancelled_count} afturkallaðar`:'')+(s.hidden_count?` · ${s.hidden_count} falin`:'')) +
       C('paid','Greitt', s.paid, 'green', (s.paid_count||0)+' greiddar') +
-      C('open','Útistandandi', s.outstanding, 'red', 'ógreitt') +
-      C('overdue','Útrunnið', s.overdue, 'amber', (s.overdue_count||0)+' krófur komnar fram yfir');
+      C('open','Útistandandi', s.outstanding, 'red', (openCount)+' ógreiddar krófur'+(allOverdue?' · allt komið fram yfir gjalddaga':'')) +
+      C('overdue','Útrunnið', s.overdue, 'amber', (s.overdue_count||0)+' af '+openCount+' ógreiddum'+(openCount?` · ${odPct}% af útistandandi`:'')+' komnar fram yfir gjalddaga');
     $('kf-bh-cards').querySelectorAll('.kf-card').forEach(c=> c.onclick=()=>{ const f=c.dataset.filter; filter = (filter===f && f!=='all')?'all':f; paint(); const el=$('kf-list'); if(el&&f!=='all') el.scrollIntoView({behavior:'smooth',block:'nearest'}); });
   }
 
@@ -10221,27 +10231,53 @@ async function renderKrofur(t){
   }
 
   // Brunahólf worksites: which have invoices sent vs only unbilled Tímavera hours.
+  // Persist a worksite-billing override (hide / edit estimate / note), keyed ws|<project>.
+  async function saveWs(project, patch){
+    const key='ws|'+project;
+    try{
+      const r=await fetch('/api/krofur-yfirlit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(Object.assign({action:'save',inv_key:key},patch))});
+      if(!r.ok) throw new Error(await r.text());
+      WSMETA=WSMETA||{}; WSMETA[key]=Object.assign({}, WSMETA[key]||{}, patch);
+      wsBilling();
+    }catch(e){ alert('Villa við vistun: '+(e.message||e)); }
+  }
+
   function wsBilling(){
     const host=$('kf-wsbill'); if(!host) return;
     if(!WSD){ host.innerHTML='<div class="kf-note" style="padding:8px">⏳ Sæki verkstaði úr Tímavera… <small>(getur tekið ~20 sek — þung fyrirspurn)</small></div>'; $('kf-wsbill-note').textContent=''; return; }
+    if(WSMETA===null) WSMETA=Object.assign({}, (DATA&&DATA.wsMeta)||{});
+    const metaOf=w=> WSMETA['ws|'+(w.project||'')]||{};
     const NB = /almennt|veikindi|sick|work at home|kaffi|fundir|orlof|frí|slökkvit|slokkvit/i;
     // Deduped billed total per worksite (drop Landsbanki .0 twins + cancelled/credit).
     const cleanTot=(invs)=>{ const pk=new Set(); (invs||[]).forEach(i=>{ if(!String(i.tilvisun).includes('.')) pk.add(String(i.tilvisun)); });
       let t=0; (invs||[]).forEach(i=>{ const st=String(i.status||'').toLowerCase(); if(st.includes('cancel')||st.includes('credit')||st.includes('kredit')||Number(i.amount)<0) return;
         if(String(i.tilvisun).includes('.') && pk.has(String(i.tilvisun).replace(/\.0+$/,''))) return; t+=Number(i.amount)||0; }); return t; };
-    const ws=(WSD.worksites||[]).filter(w=>!NB.test(w.project||'') && ((w.hours||0)>0 || (w.invoice_count||0)>0));
     const RATE=9951*1.24;
-    const billed=ws.filter(w=>(w.invoice_count||0)>0).map(w=>({...w, _t:cleanTot(w.invoices)})).sort((a,b)=>b._t-a._t);
-    const unbilled=ws.filter(w=>!(w.invoice_count||0) && (w.hours||0)>0).sort((a,b)=>b.hours-a.hours);
-    const estU=unbilled.reduce((t,w)=>t+(w.hours||0)*RATE,0);
+    const all=(WSD.worksites||[]).filter(w=>!NB.test(w.project||'') && ((w.hours||0)>0 || (w.invoice_count||0)>0))
+      .map(w=>({...w, _meta:metaOf(w), _t:cleanTot(w.invoices)}));
+    const hiddenWs=all.filter(w=>w._meta.hidden);
+    const shown=all.filter(w=>!w._meta.hidden);
+    // Estimate for unbilled = manual override if set, else rough hours × rate.
+    const estOf=w=> w._meta.amount_override!=null ? Number(w._meta.amount_override) : (w.hours||0)*RATE;
+    const billed=shown.filter(w=>(w.invoice_count||0)>0).sort((a,b)=>b._t-a._t);
+    const unbilled=shown.filter(w=>!(w.invoice_count||0) && (w.hours||0)>0).sort((a,b)=>estOf(b)-estOf(a));
+    const estU=unbilled.reduce((t,w)=>t+estOf(w),0);
     const bTot=billed.reduce((t,w)=>t+w._t,0);
-    $('kf-wsbill-note').textContent=`${billed.length} reikningað · ${unbilled.length} bara klst (≈ ${kr(estU)} óreikningað)`;
-    const uRow=w=>`<div class="kf-mod-r"><span>${esc(w.project)} <small>${(w.hours||0).toFixed(0)} klst${w.last?(' · síðast '+esc(String(w.last).slice(0,10))):''}</small></span><b>≈ ${kr((w.hours||0)*RATE)}</b></div>`;
-    const bRow=w=>`<div class="kf-mod-r"><span>${esc(w.project)} <small>${(w.hours||0).toFixed(0)} klst · ${w.invoice_count} reikn.</small></span><b>${kr(w._t)}</b></div>`;
+    $('kf-wsbill-note').textContent=`${billed.length} reikningað · ${unbilled.length} bara klst (≈ ${kr(estU)} óreikningað)`+(hiddenWs.length?` · ${hiddenWs.length} falið`:'');
+    const acts=w=>`<span class="kf-wsact"><button class="kf-btn" data-ws-note="${esc(w.project)}" title="Minnispunktur">📝</button><button class="kf-btn" data-ws-hide="${esc(w.project)}" title="Fela / fjarlægja úr yfirliti">🙈</button></span>`;
+    const noteL=w=> w._meta.note?`<div class="kf-note-l">📝 ${esc(w._meta.note)}</div>`:'';
+    const uRow=w=>`<div class="kf-mod-r"><span>${esc(w.project)} <small>${(w.hours||0).toFixed(0)} klst${w.last?(' · síðast '+esc(String(w.last).slice(0,10))):''}${w._meta.amount_override!=null?' · leiðrétt':''}</small>${noteL(w)}</span><span class="kf-wsright"><b>≈ <input class="kf-wsamt" type="text" value="${num(estOf(w))}" data-ws-amt="${esc(w.project)}"> kr</b>${acts(w)}</span></div>`;
+    const bRow=w=>`<div class="kf-mod-r"><span>${esc(w.project)} <small>${(w.hours||0).toFixed(0)} klst · ${w.invoice_count} reikn.</small>${noteL(w)}</span><span class="kf-wsright"><b>${kr(w._t)}</b>${acts(w)}</span></div>`;
+    const hRow=w=>`<div class="kf-mod-r" style="opacity:.6"><span>${esc(w.project)} <small>${(w.invoice_count||0)>0?w.invoice_count+' reikn.':(w.hours||0).toFixed(0)+' klst'}</small></span><span class="kf-wsright"><button class="kf-btn" data-ws-show="${esc(w.project)}" title="Sýna aftur">👁 Sýna</button></span></div>`;
     host.innerHTML=`<div class="kf-mod"><div class="kf-mod-cols">
       <div class="kf-mod-col"><h5>🔴 Bara Tímavera klst — óreikningað (${unbilled.length})</h5>${unbilled.length?unbilled.map(uRow).join(''):'<div class="kf-note">Ekkert óreikningað.</div>'}<div class="kf-mod-tot"><span>≈ áætlað verðmæti</span><span>${kr(estU)}</span></div></div>
       <div class="kf-mod-col"><h5>✅ Reikningað (${billed.length})</h5>${billed.map(bRow).join('')}<div class="kf-mod-tot"><span>Reikningað samtals</span><span>${kr(bTot)}</span></div></div>
-    </div><div class="kf-note" style="margin-top:6px">Klst úr Tímavera (2025+2026). „Óreikningað" = verkstaðir með skráðar klst en engan reikning. ≈ áætlað = klst × dagvinnutaxti m.vsk (gróft mat). Nákvæm reikningagerð er á <b>Gerð Reikninga</b>.</div></div>`;
+    </div>${hiddenWs.length?`<details class="kf-wshidden"><summary>🙈 Falin verkstaði (${hiddenWs.length}) — smelltu til að sýna/endurheimta</summary>${hiddenWs.map(hRow).join('')}</details>`:''}<div class="kf-note" style="margin-top:6px">Klst úr Tímavera (2025+2026). „Óreikningað" = verkstaðir með skráðar klst en engan reikning. ≈ áætlað = klst × dagvinnutaxti m.vsk (gróft mat) — smelltu á töluna til að leiðrétta. 🙈 felur verkstað (t.d. innri vinnu / búið verk) úr yfirlitinu; 📝 bætir minnispunkti. Nákvæm reikningagerð er á <b>Gerð Reikninga</b>.</div></div>`;
+    // Wire per-row actions.
+    host.querySelectorAll('[data-ws-hide]').forEach(b=> b.onclick=()=> saveWs(b.dataset.wsHide,{hidden:true}));
+    host.querySelectorAll('[data-ws-show]').forEach(b=> b.onclick=()=> saveWs(b.dataset.wsShow,{hidden:false}));
+    host.querySelectorAll('[data-ws-note]').forEach(b=> b.onclick=()=>{ const p=b.dataset.wsNote; const cur=(WSMETA['ws|'+p]||{}).note||''; const v=prompt('Minnispunktur fyrir '+p+':', cur); if(v!==null) saveWs(p,{note:v.trim()||null}); });
+    host.querySelectorAll('[data-ws-amt]').forEach(inp=> inp.addEventListener('change',()=>{ const p=inp.dataset.wsAmt; const w=all.find(x=>x.project===p); const v=Number(String(inp.value).replace(/[^\d-]/g,'')); const rough=Math.round((w&&w.hours||0)*RATE); saveWs(p,{amount_override:(v===rough||!v)?null:v}); }));
   }
 
   function dailyIncome(){
@@ -10383,7 +10419,7 @@ async function renderKrofur(t){
     // Worksite billing status — parallel, non-blocking (heavier endpoint, ~20s).
     // cachedFetch reuses the copy the Dagurinn/Yfirlit landing tabs already fetched,
     // so this usually renders instantly instead of re-fetching for 20s.
-    WSD=null; wsBilling();
+    WSD=null; WSMETA=null; wsBilling();
     cachedFetch('/api/worksites?year=combined').then(r=>r.ok?r.json():null).then(d=>{ WSD=d||{worksites:[]}; wsBilling(); })
       .catch(e=>{ const h=$('kf-wsbill'); if(h) h.innerHTML='<div class="kf-note" style="padding:8px">Villa við að sækja verkstaði: '+esc(e&&e.message||e)+'</div>'; });
     try{
