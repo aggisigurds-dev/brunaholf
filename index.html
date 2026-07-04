@@ -10223,7 +10223,7 @@ async function renderKrofur(t){
   // Brunahólf worksites: which have invoices sent vs only unbilled Tímavera hours.
   function wsBilling(){
     const host=$('kf-wsbill'); if(!host) return;
-    if(!WSD){ host.innerHTML='<div class="kf-note" style="padding:8px">Sæki verkstaði…</div>'; $('kf-wsbill-note').textContent=''; return; }
+    if(!WSD){ host.innerHTML='<div class="kf-note" style="padding:8px">⏳ Sæki verkstaði úr Tímavera… <small>(getur tekið ~20 sek — þung fyrirspurn)</small></div>'; $('kf-wsbill-note').textContent=''; return; }
     const NB = /almennt|veikindi|sick|work at home|kaffi|fundir|orlof|frí|slökkvit|slokkvit/i;
     // Deduped billed total per worksite (drop Landsbanki .0 twins + cancelled/credit).
     const cleanTot=(invs)=>{ const pk=new Set(); (invs||[]).forEach(i=>{ if(!String(i.tilvisun).includes('.')) pk.add(String(i.tilvisun)); });
@@ -10380,8 +10380,12 @@ async function renderKrofur(t){
 
   async function load(){
     $('kf-meta').textContent='Sækir…';
-    // Worksite billing status — parallel, non-blocking (heavier endpoint).
-    fetch('/api/worksites?year=combined').then(r=>r.ok?r.json():null).then(d=>{ WSD=d; wsBilling(); }).catch(()=>{});
+    // Worksite billing status — parallel, non-blocking (heavier endpoint, ~20s).
+    // cachedFetch reuses the copy the Dagurinn/Yfirlit landing tabs already fetched,
+    // so this usually renders instantly instead of re-fetching for 20s.
+    WSD=null; wsBilling();
+    cachedFetch('/api/worksites?year=combined').then(r=>r.ok?r.json():null).then(d=>{ WSD=d||{worksites:[]}; wsBilling(); })
+      .catch(e=>{ const h=$('kf-wsbill'); if(h) h.innerHTML='<div class="kf-note" style="padding:8px">Villa við að sækja verkstaði: '+esc(e&&e.message||e)+'</div>'; });
     try{
       const r = await fetch('/api/krofur-yfirlit?year='+encodeURIComponent(YEAR));
       if(!r.ok) throw new Error(await r.text());
