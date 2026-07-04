@@ -7558,9 +7558,16 @@ async function renderGerdReikninga(t){
         </div>
       </div>
       <div id="gr-host"><div class="gr-loading">Sæki gögn…</div></div>
+      <div id="gr-pdflist"></div>
     </div>
     <style>
       .gr-wrap{padding:8px 0 60px;max-width:1180px;margin:0 auto}
+      .grp-tbl{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border:1px solid var(--border,#e2e8f0);border-radius:12px;overflow:hidden;max-width:1000px}
+      .grp-tbl th{text-align:left;padding:8px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#64748b;background:#f8fafc;border-bottom:1px solid #e2e8f0}
+      .grp-tbl td{padding:8px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+      .grp-tbl tbody tr:hover{background:#f8fafc}
+      .grp-badge{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:20px}
+      .grp-badge.ef{background:#e0edff;color:#1d4ed8}.grp-badge.tb{background:#fef3c7;color:#92400e}
       .gr-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:18px;flex-wrap:wrap}
       .gr-h1{font-family:'Source Serif 4',Georgia,serif;font-size:30px;font-weight:600;letter-spacing:-.02em;margin:0}
       .gr-sub{font-size:13px;color:var(--muted,#64748b);font-weight:400}
@@ -7625,7 +7632,22 @@ async function renderGerdReikninga(t){
       .gr-mat-add{display:flex;gap:6px;margin-top:6px}
       .gr-mat-add select{flex:1;padding:6px;font-size:12px;border:1px solid var(--border,#cbd5e1);border-radius:5px}
       .gr-redder-note{background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:8px 10px;font-size:11.5px;color:#1e40af;margin-bottom:8px}
-      .gr-actions{display:flex;gap:8px;margin-top:16px;position:sticky;bottom:0;background:#fff;padding-top:10px}
+      .gr-actions{display:flex;gap:8px;margin-top:16px;position:sticky;bottom:0;background:#fff;padding-top:10px;flex-wrap:wrap}
+      /* Tímaskýrsla editable table */
+      .tbk-tbl{border:1px solid var(--border,#e2e8f0);border-radius:8px;overflow:hidden}
+      .tbk-r{display:grid;grid-template-columns:130px 1fr 70px 70px 74px 30px;gap:6px;align-items:center;padding:4px 8px;border-bottom:1px solid #f1f5f9}
+      .tbk-r input{font:inherit;font-size:12px;padding:4px 6px;border:1px solid var(--border,#e2e8f0);border-radius:6px;width:100%;box-sizing:border-box}
+      .tbk-r .tbk-h-in{background:#fffbeb;border-color:#fcd34d;text-align:right;font-variant-numeric:tabular-nums}
+      .tbk-h{background:#f8fafc;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;color:#64748b;font-weight:600}
+      .tbk-h span{padding:2px 2px}
+      .tbk-del{border:0;background:none;color:#dc2626;cursor:pointer;font-size:14px;line-height:1;padding:2px}
+      .tbk-del:hover{background:#fef2f2;border-radius:5px}
+      .tbk-tot{display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding:8px 10px;border-top:2px solid #0f172a;font-weight:700}
+      .tbk-tot b{font-size:16px;font-variant-numeric:tabular-nums}
+      .tbk-emp{margin-top:12px;border:1px solid var(--border,#e2e8f0);border-radius:8px;overflow:hidden}
+      .tbk-er{display:grid;grid-template-columns:1fr 90px 110px;gap:6px;padding:5px 10px;border-bottom:1px solid #f1f5f9;font-size:12.5px}
+      .tbk-er span:nth-child(n+2){text-align:right;font-variant-numeric:tabular-nums}
+      .tbk-eh{background:#f8fafc;font-size:10.5px;text-transform:uppercase;color:#64748b;font-weight:600}
       /* Efnislisti document preview (mirrors /reikningur) */
       .gr-doc{background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.08);max-width:720px;margin:0 auto;padding:44px 50px;font-family:'Times New Roman',Times,serif;color:#000;font-size:13px}
       .gr-doc-top{display:grid;grid-template-columns:180px 1fr;gap:20px;align-items:center;margin-bottom:24px}
@@ -7673,6 +7695,33 @@ async function renderGerdReikninga(t){
     if(typeof save==='function') try{ save(); }catch{}
     renderList();
   }
+
+  // Vistuð PDF-skjöl (Efnislisti + Tímaskýrsla) — generated PDFs stored in Drive.
+  async function loadPdfList(){
+    const box = document.getElementById('gr-pdflist'); if(!box) return;
+    box.innerHTML = `<div class="gr-section-h">📄 Vistuð PDF-skjöl <span class="gr-count">sæki…</span></div>`;
+    let rows = [];
+    try{
+      const r = await fetch('/api/efnislisti-docs');
+      const j = r.ok ? await r.json() : { rows: [] };
+      rows = (j.rows||[]).filter(d => d.doc_type==='efnislisti_pdf' || d.doc_type==='timabok_pdf');
+    }catch(e){ box.innerHTML = `<div class="gr-section-h">📄 Vistuð PDF-skjöl</div><div class="gr-loading">Villa: ${escapeHtml(e.message||String(e))}</div>`; return; }
+    rows.sort((a,b)=> String(b.added_at||'').localeCompare(String(a.added_at||'')));
+    const dt = s => { if(!s) return '—'; const d=new Date(s); return isNaN(d)?String(s).slice(0,10):(String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear()); };
+    const head = `<div class="gr-section-h">📄 Vistuð PDF-skjöl <span class="gr-count">${rows.length} skjöl · Efnislisti + Tímaskýrsla, geymd í Google Drive</span></div>`;
+    if(!rows.length){ box.innerHTML = head + `<div class="gr-loading" style="padding:14px">Engin vistuð PDF enn. Búðu til PDF með „📄 Vista PDF" í Efnislista eða Tímaskýrslu.</div>`; return; }
+    box.innerHTML = head + `<table class="grp-tbl"><thead><tr>
+        <th>Skjal</th><th>Verkstaður</th><th>Mánuður</th><th>Gert</th><th></th></tr></thead><tbody>
+      ${rows.map(d=>{ const tb=d.doc_type==='timabok_pdf'; const view=`https://drive.google.com/file/d/${d.drive_file_id}/view`; const dl=`https://drive.google.com/uc?export=download&id=${d.drive_file_id}`; return `<tr>
+        <td><span class="grp-badge ${tb?'tb':'ef'}">${tb?'Tímaskýrsla':'Efnislisti'}</span> ${escapeHtml(d.title||'')}</td>
+        <td>${escapeHtml(d.worksite_name||'—')}</td>
+        <td>${escapeHtml(d.work_month?monthLabel(d.work_month):'—')}</td>
+        <td style="white-space:nowrap;color:#64748b">${dt(d.added_at)}</td>
+        <td style="white-space:nowrap"><a class="tv-btn" href="${view}" target="_blank" rel="noopener">🔗 Opna</a> <a class="tv-btn" href="${dl}" target="_blank" rel="noopener">⤓ Sækja</a></td>
+      </tr>`; }).join('')}</tbody></table>`;
+  }
+  window.__grReloadPdfList = loadPdfList;
+  loadPdfList();
 
   function rateFor(name){
     const pg = PG[name] || {};
@@ -7938,6 +7987,7 @@ async function renderGerdReikninga(t){
           <div class="gr-f"><textarea id="gr-notes" rows="2" placeholder="Birtist neðst á reikningi">${escapeHtml(notes)}</textarea></div>
           <div class="gr-actions">
             <button class="gr-btn gr-btn-primary" id="gr-save" type="button">💾 Vista</button>
+            <button class="gr-btn" id="gr-savepdf" type="button" title="Vista sem PDF í Drive — birtist neðst í „Vistuð PDF-skjöl" til að opna/sækja">📄 Vista PDF (Drive)</button>
             <button class="gr-btn" id="gr-print" type="button">🖨 Prenta / PDF</button>
             <button class="gr-btn" id="gr-manual-btn" type="button" title="Opna handvirka stillingu — kennitala og heimilisfang verkkaupa á reikning">✏️ Handvirkt</button>
             <button class="gr-btn" id="gr-timabok" type="button" title="Prenta tímabók (mæting starfsmanna) til að senda með reikningi">🕒 Tímabók</button>
@@ -8151,6 +8201,31 @@ async function renderGerdReikninga(t){
       w.document.close();
     };
 
+    // ----- Save as PDF (vector) → Google Drive → shows in "Vistuð PDF-skjöl" -----
+    document.getElementById('gr-savepdf').onclick = async () => {
+      const btn = document.getElementById('gr-savepdf'); const old = btn.textContent;
+      btn.textContent = '⏳ Bý til PDF…'; btn.disabled = true;
+      const $st = document.getElementById('gr-save-st');
+      try {
+        const c = compute();
+        const _dm=document.getElementById('gr-datemode'), _dt=document.getElementById('gr-datetext');
+        const dateText = (_dm&&_dm.checked&&_dt&&(_dt.value||'').trim()) ? _dt.value.trim() : '';
+        const data = {
+          ws: document.getElementById('gr-ws').value.trim() || name,
+          cust: document.getElementById('gr-cust').value.trim(),
+          kt: (document.getElementById('gr-kt')||{}).value ? document.getElementById('gr-kt').value.trim() : '',
+          addr: (document.getElementById('gr-addr')||{}).value ? document.getElementById('gr-addr').value.trim() : '',
+          fra: document.getElementById('gr-fra').value, til: document.getElementById('gr-til').value,
+          dateText, notes: document.getElementById('gr-notes').value.trim(),
+          rate: { km:r.km, ferd:r.ferd, vsk:r.vsk, sma:r.sma, stadf:GR_STADF }, c,
+        };
+        const res = await buildAndSaveEfnislistiPdf(name, month, data);
+        $st.innerHTML = `✓ PDF í Drive — <a href="${res.webViewLink}" target="_blank" rel="noopener">opna</a> · <a href="${res.downloadUrl}" target="_blank" rel="noopener">sækja</a>`;
+        if(typeof window.__grReloadPdfList==='function') window.__grReloadPdfList();
+      } catch(e){ $st.textContent = '✗ '+(e.message||e); alert('Gat ekki vistað PDF: '+(e.message||e)); }
+      finally { btn.textContent = old; btn.disabled = false; }
+    };
+
     // Fill dagvinna/eftirvinna from the timebook using the overtime rule.
     document.getElementById('gr-fill-hours').onclick = async () => {
       const btn = document.getElementById('gr-fill-hours');
@@ -8168,92 +8243,8 @@ async function renderGerdReikninga(t){
       finally { btn.textContent = old; btn.disabled = false; }
     };
 
-    // Tímabók: printable staff attendance (when staff came/left) to send with the invoice.
-    document.getElementById('gr-timabok').onclick = async () => {
-      const btn = document.getElementById('gr-timabok');
-      const old = btn.textContent; btn.textContent = '⏳ Sæki…'; btn.disabled = true;
-      try {
-        const resp = await fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&month=${encodeURIComponent(month)}`);
-        const data = await resp.json();
-        if(!resp.ok) throw new Error(data.error || ('HTTP '+resp.status));
-        if(!(data.rows||[]).length){ alert(`Engar tímafærslur fyrir ${name} í ${monthLabel(month)}.`); return; }
-        const t = data.totals || {};
-        const sp = data.split || {};
-        const hr = n => (Number(n)||0).toLocaleString('is-IS',{minimumFractionDigits:2,maximumFractionDigits:2});
-        // Group rows by date (newest first), employees alphabetical within a day.
-        const byDate = {};
-        for(const r of data.rows){ (byDate[r.date]=byDate[r.date]||[]).push(r); }
-        const dateRows = Object.keys(byDate).sort().reverse().map(d=>{
-          const list = byDate[d].sort((a,b)=>a.employee.localeCompare(b.employee,'is'));
-          const dayH = list.reduce((s,r)=>s+(Number(r.hours)||0),0);
-          return list.map((r,i)=>`<tr>
-              <td class="d">${i===0?dmy(d):''}</td>
-              <td>${escapeHtml(r.employee)}</td>
-              <td class="c">${escapeHtml(r.time_in)}</td>
-              <td class="c">${escapeHtml(r.time_out)}</td>
-              <td class="r">${hr(r.hours)}</td>
-            </tr>`).join('')
-            + `<tr class="dsum"><td></td><td colspan="3">Samtals ${dmy(d)}</td><td class="r">${hr(dayH)}</td></tr>`;
-        }).join('');
-        const empRows = (data.by_employee||[]).map(e=>`<tr><td>${escapeHtml(e.employee)}</td><td class="r">${e.days}</td><td class="r">${hr(e.hours_dagvinna)}</td><td class="r">${hr(e.hours_yfirvinna)}</td><td class="r">${hr(e.hours)}</td></tr>`).join('');
-        const logo = (()=>{ let l=''; try{ l = localStorage.getItem('brunaholfReikningurLogo') || ''; }catch{} if(!l) l='/public/reikningur/brunaholf-logo.png'; if(l[0]==='/') l = location.origin + l; return l; })(); // sama merki og Efnislisti (brunaholfReikningurLogo), absolút svo það prentist
-        const win = window.open('', '_blank');
-        if(!win){ alert('Leyfðu sprettiglugga til að prenta.'); return; }
-        win.document.write(`<!DOCTYPE html><html lang="is"><head><meta charset="utf-8"><title>Tímabók — ${escapeHtml(name)} — ${monthLabel(month)}</title>
-          <style>
-            body{font-family:'Times New Roman',Times,serif;color:#000;margin:30px 38px}
-            .tb-top{display:flex;justify-content:flex-start;gap:20px;align-items:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:16px}
-            .tb-logobox{width:240px;height:80px;display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 auto}
-            .tb-logobox img{max-width:100%;max-height:100%;object-fit:contain;display:block}
-            h1{font-size:22px;margin:0}
-            .tb-sub{font-style:italic;color:#555;margin-top:3px}
-            .tb-ws{font-weight:700;font-size:15px;margin-top:2px}
-            table{width:100%;border-collapse:collapse;font-size:12.5px}
-            th{text-align:left;border-bottom:1px solid #000;padding:4px 5px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#444}
-            th.r,td.r{text-align:right;white-space:nowrap}th.c,td.c{text-align:center;white-space:nowrap}
-            td{padding:3px 5px}
-            td.d{font-weight:700;white-space:nowrap}
-            td.dim{color:#777}
-            tr.dsum td{border-bottom:1px solid #ccc;font-style:italic;color:#555;padding-bottom:6px}
-            tr.dsum td.r{font-style:normal;color:#000;font-weight:600}
-            .tb-totals{margin-top:18px;border-top:2px solid #000;padding-top:8px;display:flex;gap:28px;font-size:13px;flex-wrap:wrap}
-            .tb-totals b{font-size:16px}
-            .tb-emp{margin-top:22px}
-            .tb-emp h2{font-size:14px;margin:0 0 6px}
-            .tb-emp table{width:auto;min-width:280px}
-            .tb-foot{margin-top:24px;font-size:11px;color:#777;font-style:italic}
-            @media print{body{margin:12mm}}
-          </style></head><body>
-          <div class="tb-top">
-            <div class="tb-logobox"><img src="${escapeAttr(logo)}" onerror="this.style.display='none'"></div>
-            <div>
-              <h1>Tímabók</h1>
-              <div class="tb-sub">Mæting starfsmanna — fylgiskjal með reikningi</div>
-              <div class="tb-ws">${escapeHtml(name)} · ${monthLabel(month)}</div>
-            </div>
-          </div>
-          <table>
-            <thead><tr><th>Dagsetning</th><th>Starfsmaður</th><th class="c">Inn</th><th class="c">Út</th><th class="r">Tímar</th></tr></thead>
-            <tbody>${dateRows}</tbody>
-          </table>
-          <div class="tb-totals">
-            <div>Dagar: <b>${t.days}</b></div>
-            <div>Færslur: <b>${t.entries}</b></div>
-            <div>Tímar alls: <b>${hr(t.hours)}</b></div>
-            <div>Dagvinna: <b>${hr(sp.hours_dagvinna)}</b></div>
-            <div>Yfirvinna: <b>${hr(sp.hours_yfirvinna)}</b></div>
-            <div>Nettó vinnutímar: <b>${hr(t.net)}</b></div>
-          </div>
-          <div class="tb-emp">
-            <h2>Samantekt á starfsmann</h2>
-            <table><thead><tr><th>Starfsmaður</th><th class="r">Dagar</th><th class="r">Dagvinna</th><th class="r">Yfirvinna</th><th class="r">Tímar</th></tr></thead><tbody>${empRows}</tbody></table>
-          </div>
-          <script>window.onload=function(){window.print();}<\/script></body></html>`);
-        win.document.close();
-      } catch(e){
-        alert('Gat ekki sótt tímabók: '+(e.message||e));
-      } finally { btn.textContent = old; btn.disabled = false; }
-    };
+    // Tímaskýrsla: open the editable staff-attendance sheet (edit hours → save + PDF).
+    document.getElementById('gr-timabok').onclick = () => openTimabok(name, month);
   }
 
   // ===== Gata (Ajour) uppgjör =====
@@ -14018,6 +14009,269 @@ function loadPdfJs(){
 const TEMPLATE_KEY = 'brunaholf-pdf-templates';
 function loadTemplates(){ try{return JSON.parse(localStorage.getItem(TEMPLATE_KEY)||'{}')}catch(e){return{}} }
 function saveTemplates(t){ localStorage.setItem(TEMPLATE_KEY, JSON.stringify(t)) }
+
+/* ====================== jsPDF (vector PDF generation + Drive save) ====================== */
+let _jspdfLoading = null;
+function loadJsPdf(){
+  if(window.jspdf && window.jspdf.jsPDF) return Promise.resolve(window.jspdf);
+  if(_jspdfLoading) return _jspdfLoading;
+  const add = src => new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
+  _jspdfLoading = add('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
+    .then(()=> add('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js'))
+    .then(()=> window.jspdf);
+  return _jspdfLoading;
+}
+// Brunahólf logo as a data URL (for jsPDF addImage). Cached. Resolves '' on failure.
+let _bhLogoData = null;
+async function bhLogoDataUrl(){
+  if(_bhLogoData!==null) return _bhLogoData;
+  let url=''; try{ url = localStorage.getItem('brunaholfReikningurLogo') || ''; }catch{}
+  if(!url) url = '/public/reikningur/brunaholf-logo.png';
+  if(url[0]==='/') url = location.origin + url;
+  try{
+    const r = await fetch(url); if(!r.ok) throw 0;
+    const blob = await r.blob();
+    _bhLogoData = await new Promise((res)=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=()=>res(''); fr.readAsDataURL(blob); });
+  }catch{ _bhLogoData=''; }
+  return _bhLogoData;
+}
+// Upload a jsPDF doc to Drive + record it. Returns {drive_file_id, webViewLink, downloadUrl}.
+async function bhSavePdfToDrive(doc, meta){
+  const b64 = doc.output('datauristring').split(',')[1];   // strip "data:application/pdf;base64,"
+  const r = await fetch('/api/efnislisti-pdf', { method:'POST', headers:{'content-type':'application/json'},
+    body: JSON.stringify({ fileName: meta.fileName, contentBase64: b64, worksite_name: meta.worksite_name, work_month: meta.work_month, doc_type: meta.doc_type }) });
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(j.error || ('HTTP '+r.status));
+  return j;
+}
+// Icelandic number/króna formatting for PDFs.
+const _pkr = n => (Math.round(Number(n)||0)).toLocaleString('is-IS')+' kr';
+const _phr = n => (Number(n)||0).toLocaleString('is-IS',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+/* ====================== Tímaskýrsla (Tímabók) — editable + PDF ====================== */
+// Editable staff-attendance sheet per (worksite, month). Rows pull from /api/timabok
+// but any hand-edits persist in state.ui.timabok_edits[worksite|month] (synced across
+// devices via /api/app-state). Save as a Drive PDF from here too.
+async function openTimabok(name, month){
+  const key = name+'|'+month;
+  const bg = document.createElement('div');
+  bg.className = 'gr-modal-bg';
+  bg.innerHTML = `<div class="gr-modal" style="display:block;width:min(820px,96vw);min-height:0"><div class="gr-form" style="width:100%">
+    <div class="gr-mh"><h2>🕒 Tímaskýrsla — ${escapeHtml(name)} · ${escapeHtml(monthLabelStatic(month))}</h2><button class="gr-x" id="tbk-x" type="button">×</button></div>
+    <div style="font-size:12px;color:#64748b;margin:2px 0 8px">Mæting starfsmanna — fylgiskjal með reikningi. Breyttu tímum beint í töflunni; „💾 Vista" geymir breytingar (samstillt milli tækja), „📄 Vista PDF" hleður í Drive.</div>
+    <div id="tbk-body"><div class="gr-loading">Sæki tímafærslur…</div></div>
+    <div class="gr-actions" style="margin-top:10px">
+      <button class="gr-btn" id="tbk-add" type="button">＋ Bæta línu</button>
+      <button class="gr-btn gr-btn-primary" id="tbk-save" type="button">💾 Vista</button>
+      <button class="gr-btn" id="tbk-pdf" type="button">📄 Vista PDF (Drive)</button>
+      <button class="gr-btn" id="tbk-print" type="button">🖨 Prenta</button>
+      <button class="gr-btn" id="tbk-close" type="button">Loka</button>
+      <span id="tbk-st" style="font-size:12px;color:#64748b;align-self:center"></span>
+    </div>
+  </div></div>`;
+  document.body.appendChild(bg);
+  const close = ()=> bg.remove();
+  bg.addEventListener('mousedown', e=>{ if(e.target===bg) close(); });
+  document.getElementById('tbk-x').onclick = close;
+  document.getElementById('tbk-close').onclick = close;
+  const st = document.getElementById('tbk-st');
+
+  let rows = [];
+  const saved = (state.ui && state.ui.timabok_edits && state.ui.timabok_edits[key]) || null;
+  if(saved && Array.isArray(saved.rows)){
+    rows = saved.rows.map(r=>({...r}));
+    st.textContent = 'breytt eintak (vistað ' + (saved.saved_at? String(saved.saved_at).slice(0,10):'') + ')';
+  } else {
+    try{
+      const resp = await fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&month=${encodeURIComponent(month)}`);
+      const data = await resp.json();
+      if(!resp.ok) throw new Error(data.error||('HTTP '+resp.status));
+      rows = (data.rows||[]).map(r=>({ date:r.date||'', employee:r.employee||'', time_in:r.time_in||'', time_out:r.time_out||'', hours:Number(r.hours)||0 }));
+    }catch(e){ document.getElementById('tbk-body').innerHTML = `<div class="gr-loading">Gat ekki sótt tímafærslur: ${escapeHtml(e.message||String(e))}</div>`; return; }
+  }
+  rows.sort((a,b)=> String(b.date).localeCompare(String(a.date)) || String(a.employee).localeCompare(String(b.employee),'is'));
+
+  function totals(){
+    const total = rows.reduce((s,r)=>s+(Number(r.hours)||0),0);
+    const byEmp = {}; for(const r of rows){ const e=r.employee||'—'; (byEmp[e]=byEmp[e]||{days:new Set(),hours:0}); byEmp[e].hours+=Number(r.hours)||0; if(r.date) byEmp[e].days.add(r.date); }
+    return { total, byEmp };
+  }
+  function paint(){
+    const body = document.getElementById('tbk-body');
+    const head = `<div class="tbk-r tbk-h"><span>Dagsetning</span><span>Starfsmaður</span><span>Inn</span><span>Út</span><span>Tímar</span><span></span></div>`;
+    const rr = rows.map((r,i)=>`<div class="tbk-r">
+        <input type="date" value="${escapeAttr(r.date)}" data-f="date" data-i="${i}">
+        <input type="text" value="${escapeAttr(r.employee)}" data-f="employee" data-i="${i}" placeholder="Nafn">
+        <input type="text" value="${escapeAttr(r.time_in)}" data-f="time_in" data-i="${i}" placeholder="08:00">
+        <input type="text" value="${escapeAttr(r.time_out)}" data-f="time_out" data-i="${i}" placeholder="16:00">
+        <input type="text" inputmode="decimal" value="${escapeAttr(String(r.hours))}" data-f="hours" data-i="${i}" class="tbk-h-in">
+        <button class="tbk-del" data-del="${i}" title="Fjarlægja línu">✕</button>
+      </div>`).join('');
+    const t = totals();
+    const emp = Object.keys(t.byEmp).sort((a,b)=>a.localeCompare(b,'is')).map(e=>`<div class="tbk-er"><span>${escapeHtml(e)}</span><span>${t.byEmp[e].days.size} dagar</span><span>${_phr(t.byEmp[e].hours)} klst</span></div>`).join('');
+    body.innerHTML = `<div class="tbk-tbl">${head}${rr||'<div class="gr-loading" style="padding:10px">Engar línur — bættu við með ＋.</div>'}</div>
+      <div class="tbk-tot"><span>Tímar alls</span><b>${_phr(t.total)} klst</b></div>
+      ${emp?`<div class="tbk-emp"><div class="tbk-er tbk-eh"><span>Starfsmaður</span><span>Dagar</span><span>Tímar</span></div>${emp}</div>`:''}`;
+    body.querySelectorAll('input[data-i]').forEach(inp=> inp.addEventListener('change',()=>{ const i=+inp.dataset.i, f=inp.dataset.f; rows[i][f] = f==='hours'? (Number(String(inp.value).replace(',','.').replace(/[^\d.]/g,''))||0) : inp.value; if(f==='hours'||f==='employee'||f==='date') paint(); }));
+    body.querySelectorAll('[data-del]').forEach(b=> b.onclick=()=>{ rows.splice(+b.dataset.del,1); paint(); });
+  }
+  paint();
+
+  document.getElementById('tbk-add').onclick = ()=>{ rows.unshift({ date:month+'-01', employee:'', time_in:'', time_out:'', hours:0 }); paint(); };
+  document.getElementById('tbk-save').onclick = ()=>{
+    state.ui = state.ui||{}; state.ui.timabok_edits = state.ui.timabok_edits||{};
+    state.ui.timabok_edits[key] = { rows: rows.map(r=>({...r})), saved_at: new Date().toISOString() };
+    save(); st.textContent = '✓ vistað'; setTimeout(()=>{ st.textContent=''; }, 2500);
+  };
+  document.getElementById('tbk-print').onclick = ()=> printTimabok(name, month, rows);
+  document.getElementById('tbk-pdf').onclick = async ()=>{
+    const btn = document.getElementById('tbk-pdf'); const old = btn.textContent; btn.textContent='⏳ Bý til PDF…'; btn.disabled=true;
+    try{
+      // Persist the current edits first so the PDF and the saved copy match.
+      state.ui = state.ui||{}; state.ui.timabok_edits = state.ui.timabok_edits||{};
+      state.ui.timabok_edits[key] = { rows: rows.map(r=>({...r})), saved_at: new Date().toISOString() }; save();
+      const res = await buildAndSaveTimabokPdf(name, month, rows);
+      st.innerHTML = `✓ vistað í Drive — <a href="${res.webViewLink}" target="_blank" rel="noopener">opna</a> · <a href="${res.downloadUrl}" target="_blank" rel="noopener">sækja</a>`;
+    }catch(e){ alert('Gat ekki vistað PDF: '+(e.message||e)); }
+    finally{ btn.textContent=old; btn.disabled=false; }
+  };
+}
+
+// Build the Tímaskýrsla PDF (vector) and upload to Drive.
+async function buildAndSaveTimabokPdf(name, month, rows){
+  const lib = await loadJsPdf();
+  const logo = await bhLogoDataUrl();
+  const doc = new lib.jsPDF({ unit:'pt', format:'a4' });
+  const W = doc.internal.pageSize.getWidth();
+  let y = 40;
+  if(logo){ try{ doc.addImage(logo, 'PNG', 40, y, 150, 46); }catch{} }
+  doc.setFont('helvetica','bold'); doc.setFontSize(20); doc.text('Tímaskýrsla', W-40, y+16, {align:'right'});
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(90);
+  doc.text('Mæting starfsmanna — fylgiskjal með reikningi', W-40, y+32, {align:'right'});
+  doc.setTextColor(20); doc.setFont('helvetica','bold'); doc.setFontSize(12);
+  doc.text(`${name} · ${monthLabelStatic(month)}`, W-40, y+48, {align:'right'});
+  y += 70;
+  const sorted = rows.slice().sort((a,b)=> String(a.date).localeCompare(String(b.date)) || String(a.employee).localeCompare(String(b.employee),'is'));
+  const total = sorted.reduce((s,r)=>s+(Number(r.hours)||0),0);
+  const dmy = s => { const p=String(s||'').split('-'); return p.length===3? `${p[2]}.${p[1]}.${p[0]}` : (s||''); };
+  doc.autoTable({
+    startY: y,
+    head: [['Dagsetning','Starfsmaður','Inn','Út','Tímar']],
+    body: sorted.map(r=>[dmy(r.date), r.employee||'', r.time_in||'', r.time_out||'', _phr(r.hours)]),
+    foot: [['', '', '', 'Tímar alls', _phr(total)]],
+    styles:{ font:'helvetica', fontSize:9, cellPadding:3 },
+    headStyles:{ fillColor:[30,30,30], textColor:255, fontSize:8 },
+    footStyles:{ fillColor:[240,240,240], textColor:20, fontStyle:'bold' },
+    columnStyles:{ 2:{halign:'center'}, 3:{halign:'center'}, 4:{halign:'right'} },
+    margin:{ left:40, right:40 },
+  });
+  // Per-employee summary.
+  const byEmp = {}; for(const r of sorted){ const e=r.employee||'—'; (byEmp[e]=byEmp[e]||{days:new Set(),hours:0}); byEmp[e].hours+=Number(r.hours)||0; if(r.date) byEmp[e].days.add(r.date); }
+  const empRows = Object.keys(byEmp).sort((a,b)=>a.localeCompare(b,'is')).map(e=>[e, String(byEmp[e].days.size), _phr(byEmp[e].hours)]);
+  let y2 = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y) + 22;
+  doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.text('Samantekt á starfsmann', 40, y2);
+  doc.autoTable({ startY: y2+6, head:[['Starfsmaður','Dagar','Tímar']], body: empRows,
+    styles:{ font:'helvetica', fontSize:9, cellPadding:3 }, headStyles:{ fillColor:[30,30,30], textColor:255, fontSize:8 },
+    columnStyles:{ 1:{halign:'right'}, 2:{halign:'right'} }, margin:{ left:40, right:40 }, tableWidth: 320 });
+  const fileName = `Tímaskýrsla - ${name} - ${monthLabelStatic(month)}.pdf`.replace(/[\\/:*?"<>|]/g,'-');
+  return bhSavePdfToDrive(doc, { fileName, worksite_name:name, work_month:month, doc_type:'timabok_pdf' });
+}
+
+// Build the Efnislisti (invoice prep) PDF from the editor's computed numbers, upload to Drive.
+async function buildAndSaveEfnislistiPdf(name, month, data){
+  const lib = await loadJsPdf();
+  const logo = await bhLogoDataUrl();
+  const c = data.c, rt = data.rate;
+  const doc = new lib.jsPDF({ unit:'pt', format:'a4' });
+  const W = doc.internal.pageSize.getWidth();
+  const dmy = s => { const p=String(s||'').split('-'); return p.length===3? `${p[2]}.${p[1]}.${p[0]}` : (s||''); };
+  let y = 40;
+  if(logo){ try{ doc.addImage(logo, 'PNG', 40, y, 150, 46); }catch{} }
+  doc.setFont('helvetica','bold'); doc.setFontSize(20); doc.text('Brunahólf ehf.', W-40, y+14, {align:'right'});
+  doc.setFont('helvetica','italic'); doc.setFontSize(10); doc.setTextColor(90); doc.text('Verðskrá / tilboð', W-40, y+30, {align:'right'});
+  doc.setTextColor(20); doc.setFont('helvetica','normal');
+  y += 66;
+  doc.setFontSize(11); doc.text(data.dateText || (dmy(data.fra)+' til '+dmy(data.til)), 40, y);
+  doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.text(data.ws||'', 40, y+18);
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(60);
+  let by = y+34;
+  if(data.cust){ doc.text(data.cust, 40, by); by+=13; }
+  if(data.kt){ doc.text('kt. '+data.kt, 40, by); by+=13; }
+  if(data.addr){ doc.text(data.addr, 40, by); by+=13; }
+  doc.setTextColor(20);
+  const kr = n => _pkr(n);
+  const sec = t => [{ content:t, colSpan:4, styles:{ fontStyle:'bold', fillColor:[245,245,245], textColor:20 } }];
+  const line = (l,p,m,tot) => [l, p!=null?kr(p):'', m!=null?String(m):'', kr(tot)];
+  const bodyRows = [];
+  if(c.dvH>0) bodyRows.push(line('Dagvinna', c.dvR, c.dvH.toFixed(2), c.dvAmt));
+  if(c.evH>0) bodyRows.push(line('Yfirvinna', c.evR, c.evH.toFixed(2), c.evAmt));
+  if(c.km>0||c.fr>0) bodyRows.push(sec('Akstur'));
+  if(c.km>0) bodyRows.push(line('ekinn km.', rt.km, c.km, c.kmAmt));
+  if(c.fr>0) bodyRows.push(line('ekin ferð', rt.ferd, c.fr, c.frAmt));
+  const mats = (c.matLines||[]).filter(m=>m.qty>0||m.total>0);
+  if(mats.length){ bodyRows.push(sec('Efni')); mats.forEach(m=> bodyRows.push(line(m.label, m.price, (m.qty%1?m.qty.toFixed(2):String(m.qty)), m.total))); }
+  if(c.sma>0||c.stadf>0) bodyRows.push(sec('Aukagjöld'));
+  if(c.sma>0) bodyRows.push(line('Smáhlutagjald (hanskar, þurrkur o.fl.)', rt.sma, (c.dvH+c.evH).toFixed(2), c.sma));
+  if(c.stadf>0) bodyRows.push(line('Staðfesting brunaþéttinga', rt.stadf, '1', c.stadf));
+  if(c.disc>0) bodyRows.push(['Afsláttur ('+(c.discPct%1?c.discPct.toFixed(1):c.discPct)+'%)', '', '', '−'+kr(c.disc)]);
+  const foot = [
+    [{content:'Samtals án vsk', colSpan:3, styles:{halign:'right',fontStyle:'italic'}}, {content:kr(c.net), styles:{halign:'right'}}],
+    [{content:'vsk ('+rt.vsk+'%)', colSpan:3, styles:{halign:'right',fontStyle:'italic'}}, {content:kr(c.vsk), styles:{halign:'right'}}],
+    [{content:'Samtals með vsk', colSpan:3, styles:{halign:'right',fontStyle:'bold'}}, {content:kr(c.total), styles:{halign:'right',fontStyle:'bold'}}],
+  ];
+  doc.autoTable({
+    startY: Math.max(by+8, y+40),
+    head: [[ '', {content:'án vsk',styles:{halign:'right'}}, {content:'magn',styles:{halign:'right'}}, {content:'samtals',styles:{halign:'right'}} ]],
+    body: bodyRows, foot,
+    styles:{ font:'helvetica', fontSize:9.5, cellPadding:3 },
+    headStyles:{ fillColor:[255,255,255], textColor:90, fontStyle:'italic', lineWidth:{bottom:0.5}, lineColor:[180,180,180] },
+    footStyles:{ fillColor:[255,255,255], textColor:20 },
+    columnStyles:{ 1:{halign:'right'}, 2:{halign:'right'}, 3:{halign:'right'} },
+    margin:{ left:40, right:40 },
+  });
+  if(data.notes){ let ny=(doc.lastAutoTable?doc.lastAutoTable.finalY:y)+18; doc.setFont('helvetica','italic'); doc.setFontSize(10); doc.setTextColor(85); doc.text(doc.splitTextToSize(data.notes, W-80), 40, ny); }
+  const fileName = `Efnislisti - ${name} - ${monthLabelStatic(month)}.pdf`.replace(/[\\/:*?"<>|]/g,'-');
+  return bhSavePdfToDrive(doc, { fileName, worksite_name:name, work_month:month, doc_type:'efnislisti_pdf' });
+}
+
+// Print the (possibly edited) tímaskýrsla as HTML.
+function printTimabok(name, month, rows){
+  const hr = n => _phr(n);
+  const dmy = s => { const p=String(s||'').split('-'); return p.length===3? `${p[2]}.${p[1]}.${p[0]}` : (s||''); };
+  const sorted = rows.slice().sort((a,b)=> String(b.date).localeCompare(String(a.date)) || String(a.employee).localeCompare(String(b.employee),'is'));
+  const byDate = {}; for(const r of sorted){ (byDate[r.date]=byDate[r.date]||[]).push(r); }
+  const dateRows = Object.keys(byDate).sort().reverse().map(d=>{
+    const list = byDate[d]; const dayH = list.reduce((s,r)=>s+(Number(r.hours)||0),0);
+    return list.map((r,i)=>`<tr><td class="d">${i===0?dmy(d):''}</td><td>${escapeHtml(r.employee)}</td><td class="c">${escapeHtml(r.time_in)}</td><td class="c">${escapeHtml(r.time_out)}</td><td class="r">${hr(r.hours)}</td></tr>`).join('')
+      + `<tr class="dsum"><td></td><td colspan="3">Samtals ${dmy(d)}</td><td class="r">${hr(dayH)}</td></tr>`;
+  }).join('');
+  const total = sorted.reduce((s,r)=>s+(Number(r.hours)||0),0);
+  const byEmp = {}; for(const r of sorted){ const e=r.employee||'—'; (byEmp[e]=byEmp[e]||{days:new Set(),hours:0}); byEmp[e].hours+=Number(r.hours)||0; if(r.date) byEmp[e].days.add(r.date); }
+  const empRows = Object.keys(byEmp).sort((a,b)=>a.localeCompare(b,'is')).map(e=>`<tr><td>${escapeHtml(e)}</td><td class="r">${byEmp[e].days.size}</td><td class="r">${hr(byEmp[e].hours)}</td></tr>`).join('');
+  let logo=''; try{ logo = localStorage.getItem('brunaholfReikningurLogo')||''; }catch{} if(!logo) logo='/public/reikningur/brunaholf-logo.png'; if(logo[0]==='/') logo=location.origin+logo;
+  const win = window.open('', '_blank'); if(!win){ alert('Leyfðu sprettiglugga til að prenta.'); return; }
+  win.document.write(`<!DOCTYPE html><html lang="is"><head><meta charset="utf-8"><title>Tímaskýrsla — ${escapeHtml(name)} — ${monthLabelStatic(month)}</title>
+    <style>body{font-family:'Times New Roman',Times,serif;color:#000;margin:30px 38px}
+    .tb-top{display:flex;gap:20px;align-items:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:16px}
+    .tb-logobox{width:240px;height:80px;display:flex;align-items:center;overflow:hidden;flex:0 0 auto}
+    .tb-logobox img{max-width:100%;max-height:100%;object-fit:contain}
+    h1{font-size:22px;margin:0}.tb-sub{font-style:italic;color:#555;margin-top:3px}.tb-ws{font-weight:700;font-size:15px;margin-top:2px}
+    table{width:100%;border-collapse:collapse;font-size:12.5px}
+    th{text-align:left;border-bottom:1px solid #000;padding:4px 5px;font-size:11px;text-transform:uppercase;color:#444}
+    th.r,td.r{text-align:right;white-space:nowrap}th.c,td.c{text-align:center;white-space:nowrap}
+    td{padding:3px 5px}td.d{font-weight:700;white-space:nowrap}
+    tr.dsum td{border-bottom:1px solid #ccc;font-style:italic;color:#555}tr.dsum td.r{font-style:normal;color:#000;font-weight:600}
+    .tb-tot{margin-top:16px;border-top:2px solid #000;padding-top:8px;font-size:14px}.tb-tot b{font-size:16px}
+    .tb-emp{margin-top:22px}.tb-emp h2{font-size:14px;margin:0 0 6px}.tb-emp table{width:auto;min-width:280px}
+    @media print{body{margin:12mm}}</style></head><body>
+    <div class="tb-top"><div class="tb-logobox"><img src="${escapeAttr(logo)}" onerror="this.style.display='none'"></div>
+      <div><h1>Tímaskýrsla</h1><div class="tb-sub">Mæting starfsmanna — fylgiskjal með reikningi</div><div class="tb-ws">${escapeHtml(name)} · ${monthLabelStatic(month)}</div></div></div>
+    <table><thead><tr><th>Dagsetning</th><th>Starfsmaður</th><th class="c">Inn</th><th class="c">Út</th><th class="r">Tímar</th></tr></thead><tbody>${dateRows}</tbody></table>
+    <div class="tb-tot">Tímar alls: <b>${hr(total)}</b></div>
+    <div class="tb-emp"><h2>Samantekt á starfsmann</h2><table><thead><tr><th>Starfsmaður</th><th class="r">Dagar</th><th class="r">Tímar</th></tr></thead><tbody>${empRows}</tbody></table></div>
+    <script>window.onload=function(){window.print();}<\/script></body></html>`);
+  win.document.close();
+}
 
 function renderKvittanir(t){
   const folderId = state.ui.uploadFolderId || '1MRleiwpQyqHzcSIfbbCUjPF7ujoXHd0U';
