@@ -119,16 +119,19 @@ exports.handler = async (event) => {
     invoiced: 0, paid: 0, outstanding: 0, overdue: 0, overdue_count: 0, paid_count: 0,
   };
   const byMonthMap = new Map(), byCustMap = new Map();
+  const moEntry = (mo) => { let e = byMonthMap.get(mo); if (!e) { e = { month: mo, invoiced: 0, received: 0, paid: 0, outstanding: 0, count: 0 }; byMonthMap.set(mo, e); } return e; };
   for (const r of visible) {
     summary.invoiced += r.amount;
     if (r.paid) { summary.paid += r.amount; summary.paid_count++; }
     else { summary.outstanding += r.amount; }
     if (r.overdue) { summary.overdue += r.amount; summary.overdue_count++; }
 
-    const mm = byMonthMap.get(r.month) || { month: r.month, invoiced: 0, paid: 0, outstanding: 0, count: 0 };
+    // Útgefið: bucket by gjalddagi month. Innkomið (cash in): bucket the payment by
+    // its greidsla_date month — real money movement, which is what cashflow tracks.
+    const mm = moEntry(r.month);
     mm.invoiced += r.amount; mm.count++;
     if (r.paid) mm.paid += r.amount; else mm.outstanding += r.amount;
-    byMonthMap.set(r.month, mm);
+    if (r.paid && r.greidsla_date) moEntry(String(r.greidsla_date).slice(0, 7)).received += r.amount;
 
     if (!r.paid) {
       const cn = r.customer_name || '—';

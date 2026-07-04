@@ -9989,7 +9989,7 @@ async function renderKrofur(t){
   const kr  = n => num(n) + ' kr';
   const mlabel = (m) => { const [y,mo]=String(m||'').split('-'); return ['jan','feb','mar','apr','maí','jún','júl','ágú','sep','okt','nóv','des'][(+mo||1)-1]+' '+(y||''); };
   let YEAR = (t && t._krofurYear) || '2026';
-  let DATA = null, filter = 'all', q = '', moSel = null;
+  let DATA = null, filter = 'all', q = '', moSel = null, moMode = 'invoiced';
 
   $view.innerHTML = `
     <div class="rg-wrap kf-wrap">
@@ -10007,6 +10007,7 @@ async function renderKrofur(t){
       </div>
 
       <h3 class="kf-sec" data-sec="months">📈 Mánaðartekjur ${esc(YEAR)} <span class="kf-note">(smelltu á mánuð til að sjá hvaðan talan kemur)</span></h3>
+      <div class="kf-chips" id="kf-motoggle" style="margin-bottom:10px"></div>
       <div id="kf-months" class="kf-months"></div>
       <div id="kf-mo-detail"></div>
 
@@ -10204,35 +10205,44 @@ async function renderKrofur(t){
   }
 
   function months(){
+    const rec = moMode==='received';
+    $('kf-motoggle').innerHTML = [['invoiced','📄 Útgefið'],['received','💰 Innkomið']].map(([k,l])=>`<span class="kf-chip ${moMode===k?'on':''}" data-mm="${k}">${l}</span>`).join('');
+    $('kf-motoggle').querySelectorAll('[data-mm]').forEach(c=> c.onclick=()=>{ moMode=c.dataset.mm; months(); });
     const bh = new Map((DATA.byMonth||[]).map(m=>[m.month,m]));
     const sl = new Map(((DATA.slokk&&DATA.slokk.byMonth)||[]).map(m=>[m.month,m]));
     const all = [...new Set([...bh.keys(), ...sl.keys()])].sort();
     if(!all.length){ $('kf-months').innerHTML='<div class="kf-note">Engin gögn.</div>'; return; }
     $('kf-months').innerHTML = all.map(m=>{
       const b = bh.get(m)||{}, s = sl.get(m)||{};
+      const bhV = rec ? (b.received||0) : (b.invoiced||0);
+      const slV = rec ? (s.stadgreitt||0) : (s.revenue||0);
       return `<div class="kf-mo ${moSel===m?'on':''}" data-mo="${m}"><div class="kf-mo-l">${esc(mlabel(m))}</div>
-        <div class="kf-mo-r"><span>🔥 Brunahólf</span><b>${kr(b.invoiced||0)}</b></div>
-        <div class="kf-mo-r"><span>🧯 Slökkvitæki</span><b>${kr(s.revenue||0)}</b></div></div>`;
+        <div class="kf-mo-r"><span>🔥 Brunahólf</span><b>${kr(bhV)}</b></div>
+        <div class="kf-mo-r"><span>🧯 Slökkvitæki</span><b>${kr(slV)}</b></div></div>`;
     }).join('');
     $('kf-months').querySelectorAll('.kf-mo').forEach(el=> el.onclick=()=>{ moSel = (moSel===el.dataset.mo)?null:el.dataset.mo; months(); });
     moDetail();
   }
 
-  // Drill-down: which invoices/sales make up a month's totals.
+  // Drill-down: which invoices/sales make up a month's total (mode-aware).
   function moDetail(){
     const host = $('kf-mo-detail'); if(!host) return;
     if(!moSel){ host.innerHTML=''; return; }
-    const mo = moSel;
-    const bhRows = (DATA.rows||[]).filter(r=> r.month===mo && !r.hidden && !r.excluded).sort((a,b)=>b.amount-a.amount);
+    const mo = moSel, rec = moMode==='received';
+    let bhRows = (DATA.rows||[]).filter(r=> !r.hidden && !r.excluded && (rec
+      ? (r.paid && r.greidsla_date && String(r.greidsla_date).slice(0,7)===mo)
+      : (r.month===mo)));
+    bhRows.sort((a,b)=>b.amount-a.amount);
     const bhTot = bhRows.reduce((t,r)=>t+r.amount,0);
-    const slRows = ((DATA.slokk&&DATA.slokk.sales)||[]).filter(r=> r.month===mo).sort((a,b)=>b.amount-a.amount);
+    let slRows = ((DATA.slokk&&DATA.slokk.sales)||[]).filter(r=> r.month===mo && (rec ? r.method!=='reikningur' : true));
+    slRows.sort((a,b)=>b.amount-a.amount);
     const slTot = slRows.reduce((t,r)=>t+r.amount,0);
     const METH = {reikningur:'reikningur',stadgreitt:'staðgreitt',greitt_sidar:'greitt síðar'};
-    const bhList = bhRows.length ? bhRows.map(r=>`<div class="kf-mod-r"><span>${esc(r.customer_name||'—')} <small>${esc(r.source||'')} ${esc(String(r.tilvisun||''))} · ${esc(r.gjalddagi||'')}${r.paid?' · greitt':(r.overdue?' · útrunnið':'')}</small></span><b>${kr(r.amount)}</b></div>`).join('') : '<div class="kf-note">Engar krófur.</div>';
+    const bhList = bhRows.length ? bhRows.map(r=>`<div class="kf-mod-r"><span>${esc(r.customer_name||'—')} <small>${esc(r.source||'')} ${esc(String(r.tilvisun||''))} · ${rec?('greitt '+esc(r.greidsla_date||'')):esc(r.gjalddagi||'')+(r.paid?' · greitt':(r.overdue?' · útrunnið':''))}</small></span><b>${kr(r.amount)}</b></div>`).join('') : '<div class="kf-note">Engar krófur.</div>';
     const slList = slRows.length ? slRows.map(r=>`<div class="kf-mod-r"><span>${esc(r.customer||'—')} <small>R-${esc(String(r.num||''))} · ${METH[r.method]||esc(r.method||'')} · ${esc(r.date||'')}</small></span><b>${kr(r.amount)}</b></div>`).join('') : '<div class="kf-note">Engar sölur.</div>';
     host.innerHTML = `<div class="kf-mod">
-      <h4>${esc(mlabel(mo))} — hvaðan talan kemur</h4>
-      <div class="kf-note">Brunahólf eftir gjalddaga · Slökkvitæki eftir söludegi (created_at)</div>
+      <h4>${esc(mlabel(mo))} — ${rec?'innkomið (greitt í mánuðinum)':'útgefið'}</h4>
+      <div class="kf-note">${rec?'Eftir greiðsludegi · Slökkvitæki staðgreitt (reikningssölur bíða greiðslu í dkPlus)':'Brunahólf eftir gjalddaga · Slökkvitæki eftir söludegi (created_at)'}</div>
       <div class="kf-mod-cols">
         <div class="kf-mod-col"><h5>🔥 Brunahólf (${bhRows.length})</h5>${bhList}<div class="kf-mod-tot"><span>Samtals</span><span>${kr(bhTot)}</span></div></div>
         <div class="kf-mod-col"><h5>🧯 Slökkvitæki (${slRows.length})</h5>${slList}<div class="kf-mod-tot"><span>Samtals</span><span>${kr(slTot)}</span></div></div>
