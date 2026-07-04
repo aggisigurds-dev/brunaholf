@@ -198,6 +198,12 @@
   to = "/.netlify/functions/efnislisti-docs"
   status = 200
 
+# Store a browser-generated Efnislisti/Tímaskýrsla PDF into Drive + record it
+[[redirects]]
+  from = "/api/efnislisti-pdf"
+  to = "/.netlify/functions/efnislisti-pdf"
+  status = 200
+
 # Redder material-cost invoices (recharged to worksites)
 [[redirects]]
   from = "/api/redder-invoices"
