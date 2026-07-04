@@ -34,7 +34,7 @@ exports.handler = async (event) => {
   try {
     invoices = await fetchAll('invoices',
       `select=id,tilvisun,kt_greidanda,customer_name,gjalddagi,eindagi,hofudstoll,upphaed_total,status,greidsla_date,source&gjalddagi=gte.${from}&gjalddagi=lt.${to}`);
-    meta = await fetchAll('krofur_yfirlit_meta', 'select=inv_key,hidden,amount_override,note');
+    meta = await fetchAll('krofur_yfirlit_meta', 'select=inv_key,hidden,amount_override,note,flagged');
     bank = await fetchAll('bank_transactions', 'select=kt_counterparty,amount,trans_date,text,description&amount=gt.0').catch(() => []);
     // What the office tracked in Vinnubók / Reikningagerð (saved efnislisti totals).
     drafts = await fetchAll('invoice_drafts', 'select=worksite_name,work_month,total_m_vsk,customer_name').catch(() => []);
@@ -93,7 +93,7 @@ exports.handler = async (event) => {
       gjalddagi: r.gjalddagi, eindagi: r.eindagi, greidsla_date: r.greidsla_date,
       status: r.status, amount, base_amount: base,
       amount_override: m.amount_override != null ? Number(m.amount_override) : null,
-      hidden: !!m.hidden, note: m.note || null,
+      hidden: !!m.hidden, flagged: !!m.flagged, note: m.note || null,
       paid, paid_status: paidStatus, credit, cancelled, excluded, overdue,
       bank_paid: !!bm, bank_text: bm ? bm.text : null, bank_date: bm ? bm.date : null,
       draft_match: draftHit ? { worksite: draftHit.worksite, total: draftHit.total } : null,
@@ -170,6 +170,7 @@ async function saveOverride(event) {
 
   const patch = { inv_key, updated_at: new Date().toISOString() };
   if (typeof body.hidden === 'boolean') patch.hidden = body.hidden;
+  if (typeof body.flagged === 'boolean') patch.flagged = body.flagged;
   if ('amount_override' in body) patch.amount_override = body.amount_override === null || body.amount_override === '' ? null : Number(body.amount_override);
   if ('note' in body) patch.note = body.note ? String(body.note).slice(0, 500) : null;
 

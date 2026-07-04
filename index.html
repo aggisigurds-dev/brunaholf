@@ -10059,6 +10059,10 @@ async function renderKrofur(t){
       .kf-b-open{background:#fef3f2;color:#b42318}.kf-b-paid{background:#ecfdf3;color:#067647}
       .kf-b-bank{background:#e7f0ff;color:#0a5ad6}.kf-b-overdue{background:#fffaeb;color:#b54708}
       .kf-b-credit{background:#f2f4f7;color:#475467}
+      .kf-b-flag{background:#fef0c7;color:#b54708;border:1px solid #f5c86b}
+      .kf-row.flag-r{border-color:#f5c86b;box-shadow:0 0 0 1px #f5c86b inset}
+      .kf-note-l{font-size:10.5px;color:#b54708;margin-top:2px}
+      .kf-btn.on-flag{background:#fef0c7;color:#b54708;border-color:#f5c86b}
       .kf-act{display:flex;gap:6px}
       .kf-btn{font-size:12px;padding:5px 9px;border-radius:7px;border:1px solid var(--border,#cbd5e1);background:var(--card-bg,#fff);color:var(--text-dim,#5a6473);cursor:pointer}
       .kf-btn:hover{background:var(--row-hover,#f5f7fa)}
@@ -10074,7 +10078,7 @@ async function renderKrofur(t){
       if(!r.ok) throw new Error(await r.text());
       // reflect locally without a full refetch
       const row = (DATA.rows||[]).find(x=>x.inv_key===inv_key);
-      if(row){ if('hidden' in patch) row.hidden=patch.hidden; if('amount_override' in patch){ row.amount_override=patch.amount_override==null?null:Number(patch.amount_override); row.amount = row.amount_override!=null?row.amount_override:row.base_amount; } if('note' in patch) row.note=patch.note; }
+      if(row){ if('hidden' in patch) row.hidden=patch.hidden; if('flagged' in patch) row.flagged=patch.flagged; if('amount_override' in patch){ row.amount_override=patch.amount_override==null?null:Number(patch.amount_override); row.amount = row.amount_override!=null?row.amount_override:row.base_amount; } if('note' in patch) row.note=patch.note; }
       recompute(); paint();
     }catch(e){ alert('Villa við vistun: '+(e.message||e)); }
   }
@@ -10138,16 +10142,19 @@ async function renderKrofur(t){
     else if(r.paid_status) badges.push('<span class="kf-badge kf-b-paid">Greitt</span>');
     else if(r.overdue) badges.push('<span class="kf-badge kf-b-overdue">Útrunnið</span>');
     else badges.push('<span class="kf-badge kf-b-open">Útistandandi</span>');
+    if(r.flagged) badges.unshift('<span class="kf-badge kf-b-flag">⚠️ Tvíkanna</span>');
     const ov = r.amount_override!=null;
-    return `<div class="kf-row ${r.hidden?'hidden-r':''}" data-k="${esc(r.inv_key)}">
+    return `<div class="kf-row ${r.hidden?'hidden-r':''} ${r.flagged?'flag-r':''}" data-k="${esc(r.inv_key)}">
       <div class="kf-rn">${esc(r.customer_name||'—')}
         <small>${esc(r.source||'')} nr. ${esc(r.tilvisun||'')} · gjalddagi ${esc(r.gjalddagi||'—')}${r.kt?(' · '+esc(r.kt)):''}</small>
+        ${r.note?`<div class="kf-note-l">📝 ${esc(r.note)}</div>`:''}
         ${r.bank_text?`<div class="kf-src">🏦 ${esc(r.bank_text)} (${esc(r.bank_date||'')})</div>`:''}
         ${r.draft_match?`<div class="kf-draft">✓ passar við Reikningagerð: ${esc(r.draft_match.worksite||'')} ${kr(r.draft_match.total)}</div>`:''}
       </div>
       <div>${badges.join(' ')}</div>
       <div class="kf-amt"><input type="text" value="${num(r.amount)}" data-amt> ${ov?'<small>leiðrétt</small>':''}</div>
       <div class="kf-act">
+        <button class="kf-btn ${r.flagged?'on-flag':''}" data-flag title="Merkja til skoðunar">${r.flagged?'⚠️ Afmerkja':'⚠️ Merkja'}</button>
         <button class="kf-btn" data-hide>${r.hidden?'👁 Sýna':'🙈 Fela'}</button>
       </div>
     </div>`;
@@ -10159,9 +10166,10 @@ async function renderKrofur(t){
     if(filter==='paid') rows = rows.filter(r=>!r.hidden && r.paid && !r.excluded);
     else if(filter==='open') rows = rows.filter(r=>!r.hidden && !r.paid && !r.excluded);
     else if(filter==='overdue') rows = rows.filter(r=>!r.hidden && !r.paid && !r.excluded && r.gjalddagi && r.gjalddagi<today);
+    else if(filter==='flag') rows = rows.filter(r=>r.flagged);
     // 'all' shows everything incl. hidden (so they can be un-hidden)
     if(q){ const ql=q.toLowerCase(); rows = rows.filter(r=> (r.customer_name||'').toLowerCase().includes(ql) || String(r.tilvisun||'').includes(ql) || String(r.kt||'').includes(ql)); }
-    const fnote = {all:'allar krófur',paid:'greiddar',open:'útistandandi',overdue:'útrunnið'}[filter];
+    const fnote = {all:'allar krófur',paid:'greiddar',open:'útistandandi',overdue:'útrunnið',flag:'til skoðunar'}[filter];
     $('kf-list-note').textContent = `(${rows.length} · ${fnote} · smelltu á upphæð til að leiðrétta)`;
     $('kf-list').innerHTML = rows.length ? rows.map(rowHtml).join('') : '<div class="kf-note" style="padding:12px">Engar krófur.</div>';
     $('kf-list').querySelectorAll('.kf-row').forEach(el=>{
@@ -10169,11 +10177,12 @@ async function renderKrofur(t){
       const inp = el.querySelector('[data-amt]');
       inp.addEventListener('change', ()=>{ const v = Number(String(inp.value).replace(/[^\d-]/g,'')); const row=(DATA.rows||[]).find(x=>x.inv_key===k); const base=row?row.base_amount:0; save(k, {amount_override: (v===base||!v&&!base)?null:v}); });
       el.querySelector('[data-hide]').onclick = ()=>{ const row=(DATA.rows||[]).find(x=>x.inv_key===k); save(k,{hidden:!row.hidden}); };
+      el.querySelector('[data-flag]').onclick = ()=>{ const row=(DATA.rows||[]).find(x=>x.inv_key===k); save(k,{flagged:!row.flagged}); };
     });
   }
 
   function chips(){
-    const defs=[['all','Allar'],['open','Útistandandi'],['overdue','Útrunnið'],['paid','Greiddar']];
+    const defs=[['all','Allar'],['open','Útistandandi'],['overdue','Útrunnið'],['flag','⚠️ Til skoðunar'],['paid','Greiddar']];
     $('kf-chips').innerHTML = defs.map(([k,l])=>`<span class="kf-chip ${filter===k?'on':''}" data-c="${k}">${l}</span>`).join('');
     $('kf-chips').querySelectorAll('.kf-chip').forEach(c=> c.onclick=()=>{ filter=c.dataset.c; paint(); });
   }
