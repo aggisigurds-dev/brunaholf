@@ -7684,7 +7684,20 @@ async function renderGerdReikninga(t){
   const draftFor = (name) => DRAFTS[`${name}|${state.ui.gr_month}`];
 
   async function load(force){
-    $meta.textContent = 'Sækir…';
+    // Instant launch: paint from the saved snapshot first (stale-while-revalidate)
+    // so opening never blocks on the heavy /api/worksites fetch. „Sækja" (force)
+    // skips the snapshot; the background fetch refreshes + re-saves it.
+    let painted = false;
+    if(!force){
+      try{
+        const snap = JSON.parse(localStorage.getItem('gr_snapshot_v1')||'null');
+        if(snap && Array.isArray(snap.WS) && snap.WS.length){
+          WS=snap.WS; PG=snap.PG||{}; DRAFTS=snap.DRAFTS||{}; REDDER=snap.REDDER||{}; NLSH_MONTHLY=snap.NLSH_MONTHLY||{};
+          renderList(); painted = true; $meta.textContent = 'úr skyndiminni · uppfæri…';
+        }
+      }catch(_){}
+    }
+    if(!painted) $meta.textContent = 'Sækir…';
     try{
       const [wsR, pgR, drR, rdR, nlR] = await Promise.all([
         cachedFetch('/api/worksites?year=combined', {force:!!force}),
@@ -7720,12 +7733,18 @@ async function renderGerdReikninga(t){
           REDDER[k].lines.push({ label: li.item_name||'Efni', cost, qty });
         }
       }
+      // Persist a snapshot so the next open paints instantly (stale-while-revalidate).
+      try{ localStorage.setItem('gr_snapshot_v1', JSON.stringify({WS,PG,DRAFTS,REDDER,NLSH_MONTHLY,ts:Date.now()})); }catch(_){}
       renderList();
       // Re-open editor directly when arriving from the "Tilbúnir reikningar" page.
       if(window.__grPendingOpen){ const pe = window.__grPendingOpen; window.__grPendingOpen = null; try{ openEditor(pe); }catch(_e){} }
     }catch(e){
-      $host.innerHTML = `<div class="gr-loading">Villa: ${escapeHtml(e.message||String(e))}</div>`;
-      $meta.textContent = 'Villa';
+      if(!painted){
+        $host.innerHTML = `<div class="gr-loading">Villa: ${escapeHtml(e.message||String(e))}</div>`;
+        $meta.textContent = 'Villa';
+      } else {
+        $meta.textContent = 'Sýni skyndiminni — ekki tókst að uppfæra';
+      }
     }
   }
 
