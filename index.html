@@ -10013,6 +10013,12 @@ async function renderKrofur(t){
       <h3 class="kf-sec">🧯 Slökkvitæki — krófur &amp; sala <span class="kf-note">(POS · dkPlus)</span></h3>
       <div id="kf-sl-cards" class="kf-cards"></div>
 
+      <h3 class="kf-sec">🧾 Óinnheimt í afgreiðslu <span class="kf-note" id="kf-unc-note"></span></h3>
+      <div id="kf-uncollected"></div>
+
+      <h3 class="kf-sec">🔧 Ókláraðar ársskoðanir <span class="kf-note" id="kf-ins-note"></span></h3>
+      <div id="kf-inspections"></div>
+
       <h3 class="kf-sec">📈 Mánaðartekjur ${esc(YEAR)} <span class="kf-note">(bæði félög)</span></h3>
       <div id="kf-months" class="kf-months"></div>
 
@@ -10077,7 +10083,8 @@ async function renderKrofur(t){
       const r = await fetch('/api/krofur-yfirlit', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(Object.assign({action:'save', inv_key}, patch))});
       if(!r.ok) throw new Error(await r.text());
       // reflect locally without a full refetch
-      const row = (DATA.rows||[]).find(x=>x.inv_key===inv_key);
+      const pools = [DATA.rows||[], (DATA.slokk&&DATA.slokk.uncollected)||[], (DATA.slokk&&DATA.slokk.inspections&&DATA.slokk.inspections.companies)||[]];
+      let row=null; for(const p of pools){ row = p.find(x=>x.inv_key===inv_key); if(row) break; }
       if(row){ if('hidden' in patch) row.hidden=patch.hidden; if('flagged' in patch) row.flagged=patch.flagged; if('amount_override' in patch){ row.amount_override=patch.amount_override==null?null:Number(patch.amount_override); row.amount = row.amount_override!=null?row.amount_override:row.base_amount; } if('note' in patch) row.note=patch.note; }
       recompute(); paint();
     }catch(e){ alert('Villa við vistun: '+(e.message||e)); }
@@ -10119,6 +10126,62 @@ async function renderKrofur(t){
       C('Staðgreitt (afgr.)', s.stadgreitt, 'green', `${s.stadgreitt_count} sölur`) +
       C('Greitt síðar', s.greitt_sidar, 'amber', `${s.greitt_sidar_count} sölur`) +
       C('Sala samtals', s.sala_total, 'blue', 'öll final sala '+YEAR);
+  }
+
+  // Shared flag/note/hide controls for a slokk line.
+  function slActs(r, editable){
+    return `<div class="kf-act">
+      <button class="kf-btn ${r.flagged?'on-flag':''}" data-flag title="Merkja til skoðunar">${r.flagged?'⚠️':'⚠️ Merkja'}</button>
+      <button class="kf-btn" data-note title="Athugasemd / áminning">📝</button>
+      <button class="kf-btn" data-hide>${r.hidden?'👁':'🙈'}</button>
+    </div>`;
+  }
+  function wireSl(container){
+    container.querySelectorAll('[data-k]').forEach(el=>{
+      const k = el.dataset.k;
+      const find = ()=>{ for(const p of [(DATA.slokk&&DATA.slokk.uncollected)||[], (DATA.slokk&&DATA.slokk.inspections&&DATA.slokk.inspections.companies)||[]]){ const r=p.find(x=>x.inv_key===k); if(r) return r; } return null; };
+      const fb=el.querySelector('[data-flag]'); if(fb) fb.onclick=()=>{ const r=find(); save(k,{flagged:!r.flagged}); };
+      const hb=el.querySelector('[data-hide]'); if(hb) hb.onclick=()=>{ const r=find(); save(k,{hidden:!r.hidden}); };
+      const nb=el.querySelector('[data-note]'); if(nb) nb.onclick=()=>{ const r=find(); const v=prompt('Athugasemd / áminning:', r.note||''); if(v!==null) save(k,{note:v.trim()}); };
+      const amt=el.querySelector('[data-amt]'); if(amt) amt.addEventListener('change', ()=>{ const r=find(); const v=Number(String(amt.value).replace(/[^\d-]/g,'')); save(k,{amount_override:(v===r.base_amount)?null:v}); });
+    });
+  }
+
+  function uncollected(){
+    const u = (DATA.slokk&&DATA.slokk.uncollected)||[];
+    const vis = u.filter(r=>!r.hidden);
+    const tot = vis.reduce((t,r)=>t+r.amount,0);
+    $('kf-unc-note').textContent = `${vis.length} reikningssölur · ${kr(tot)} · greiðslustaða í dkPlus`;
+    if(!vis.length){ $('kf-uncollected').innerHTML='<div class="kf-note" style="padding:8px">Engar óinnheimtar reikningssölur.</div>'; return; }
+    $('kf-uncollected').innerHTML = vis.map(r=>`<div class="kf-row ${r.flagged?'flag-r':''}" data-k="${esc(r.inv_key)}">
+      <div class="kf-rn">${esc(r.customer_name)} ${r.flagged?'<span class="kf-badge kf-b-flag">⚠️ Skoða</span>':''}
+        <small>R-${esc(String(r.num||''))} · ${esc(r.created_at||'')}${r.kt?(' · '+esc(r.kt)):''} · ${r.sent_to_dk?'✓ í dkPlus':'ekki í dkPlus'}</small>
+        ${r.note?`<div class="kf-note-l">📝 ${esc(r.note)}</div>`:''}
+      </div>
+      <div class="kf-amt"><input type="text" value="${num(r.amount)}" data-amt></div>
+      ${slActs(r,true)}
+    </div>`).join('');
+    wireSl($('kf-uncollected'));
+  }
+
+  function inspections(){
+    const ins = DATA.slokk&&DATA.slokk.inspections;
+    if(!ins){ $('kf-inspections').innerHTML=''; $('kf-ins-note').textContent=''; return; }
+    const comp = (ins.companies||[]).filter(r=>!r.hidden);
+    $('kf-ins-note').textContent = `${ins.overdue_companies} fyrirtæki · ${ins.overdue_equip} tæki komin fram yfir skoðun (óinnheimt/óunnin vinna)`;
+    if(!comp.length){ $('kf-inspections').innerHTML='<div class="kf-note" style="padding:8px">Engar útrunnar ársskoðanir.</div>'; return; }
+    const today = DATA.today;
+    $('kf-inspections').innerHTML = comp.map(r=>{
+      const veryOld = r.elsta && r.elsta < (today.slice(0,4)-1)+today.slice(4); // >~1 ár
+      return `<div class="kf-row ${r.flagged?'flag-r':''}" data-k="${esc(r.inv_key)}">
+      <div class="kf-rn">${esc(r.client)} ${r.flagged?'<span class="kf-badge kf-b-flag">⚠️ Skoða</span>':''}${veryOld?'<span class="kf-badge kf-b-overdue">>1 ár</span>':''}
+        <small>${r.overdue_equip} tæki yfir skoðun · elsti gjalddagi ${esc(r.elsta||'—')}${r.sidasta?(' · síðast skoðað '+esc(r.sidasta)):''}</small>
+        ${r.note?`<div class="kf-note-l">📝 ${esc(r.note)}</div>`:''}
+      </div>
+      <div class="kf-amt" style="min-width:70px"><b>${r.overdue_equip}</b><small>tæki</small></div>
+      ${slActs(r,false)}
+    </div>`;}).join('');
+    wireSl($('kf-inspections'));
   }
 
   function months(){
@@ -10187,7 +10250,7 @@ async function renderKrofur(t){
     $('kf-chips').querySelectorAll('.kf-chip').forEach(c=> c.onclick=()=>{ filter=c.dataset.c; paint(); });
   }
 
-  function paint(){ cards(); slokkCards(); months(); chips(); list(); }
+  function paint(){ cards(); slokkCards(); uncollected(); inspections(); months(); chips(); list(); }
 
   async function load(){
     $('kf-meta').textContent='Sækir…';
