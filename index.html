@@ -1641,6 +1641,10 @@ html.embedded #tabs{display:none!important}
 html.embedded .layout{min-height:100vh!important}
 html.embedded #view{width:100%!important;margin:0!important;flex:1 1 auto!important}
 html.embedded .fab,html.embedded .fab-screenshot{display:none!important}
+/* Embedded = shown on a phone inside the app → scale the whole page up for
+   readability + touch. zoom reflows layout (unlike transform), and the card
+   grids are auto-fill/minmax so they re-column cleanly. */
+html.embedded #view{zoom:1.32}
 </style>
 
 <header class="topbar">
