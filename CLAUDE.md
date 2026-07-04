@@ -63,6 +63,23 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
 - `skuldunautar` — Skuldunautar (AR snapshot, renderSkuldunautar). `/api/debtors`:
   open Payday/Landsbanki invoices per debtor, each flagged Útistandandi / Greitt í
   banka? / Kannski í banka / Kreditfært via bank cross-ref; aging + vintage + search.
+- `krofur` — **📊 Krófur & Tekjur** (renderKrofur) — executive overview of BOTH
+  companies' krófur, scoped to one year (default 2026). Endpoint
+  `/api/krofur-yfirlit?year=YYYY` (`krofur-yfirlit.js`, service role): reads
+  `invoices` (Payday+Landsbanki, filtered by gjalddagi year) and cross-references
+  `bank_transactions` (the old Landsbanki CSV — a krófa is `bank_paid` when an
+  inflow matches kt+amount within max(5k,1%) and lands ≥ gjalddagi−15d) and
+  `invoice_drafts` (what the office computed in Vinnubók/Reikningagerð → `draft_match`
+  hint). Also returns a Slökkvitæki summary from `solur` (reikningur=krófur út,
+  staðgreitt, greitt síðar) + per-month revenue for both. **Manual overrides** live
+  in `krofur_yfirlit_meta` (`inv_key='source|tilvisun'`, `hidden` + `amount_override`
+  + `note`; RLS off) via `POST {action:'save',...}` — hide a krófa already paid by
+  bank, or correct a wrong amount; hidden krófur drop from every total, override
+  replaces upphaed_total. UI: expandable stat cards (click a total → filter the list
+  to its rows), searchable krófulista with inline amount edit + 🙈 fela, Slökkvitæki
+  cards, monthly-revenue strip. NB Slökkvitæki monthly is by `solur.created_at`
+  (bill date) — distorted when invoicing is batched/caught-up; flag this, inspection
+  date would be truer but isn't on the sale row.
 - `hreyfingaryfirlit` — Hreyfingaryfirlit (per-customer account statement,
   renderHreyfingar). `/api/hreyfingar`: invoices (debet) + Payday-paid (kredit),
   running staða — **all amounts MEÐ VSK (`upphaed_total`, not `hofudstoll`)**.

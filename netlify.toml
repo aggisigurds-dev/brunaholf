@@ -76,6 +76,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/krofur-yfirlit"
+  to = "/.netlify/functions/krofur-yfirlit"
+  status = 200
+
+[[redirects]]
   from = "/api/customer-map"
   to = "/.netlify/functions/customer-map"
   status = 200
