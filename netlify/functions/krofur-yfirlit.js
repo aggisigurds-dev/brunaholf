@@ -140,16 +140,20 @@ exports.handler = async (event) => {
   let slokk = null;
   try {
     const solur = await fetchAll('solur',
-      `select=samtals,greitt_med,invoiced_at,created_at&status=eq.final&created_at=gte.${from}&created_at=lt.${to}`);
-    const paidMethods = new Set(['kort', 'reidufe', 'reiðufé', 'pening', 'peningur', 'stadgreitt', 'staðgreitt']);
-    const s = { reikningur_sent: 0, reikningur_count: 0, sent_to_dk: 0, stadgreitt: 0, stadgreitt_count: 0, greitt_sidar: 0, greitt_sidar_count: 0, sala_total: 0, byMonth: [] };
+      `select=id,num,customer_nafn,customer_kt,samtals,greitt_med,invoiced_at,created_at&status=eq.final&created_at=gte.${from}&created_at=lt.${to}`);
+    const s = { reikningur_sent: 0, reikningur_count: 0, sent_to_dk: 0, stadgreitt: 0, stadgreitt_count: 0, greitt_sidar: 0, greitt_sidar_count: 0, sala_total: 0, byMonth: [], uncollected: [] };
     const mMap = new Map();
     for (const r of solur) {
       const amt = Number(r.samtals) || 0; s.sala_total += amt;
       const gm = String(r.greitt_med || '').toLowerCase().replace(/\s+/g, '_');
       let bucket = 'stadgreitt';
-      if (gm.includes('reikning')) { s.reikningur_sent += amt; s.reikningur_count++; if (r.invoiced_at) s.sent_to_dk++; bucket = 'reikningur'; }
-      else if (gm.includes('sidar') || gm.includes('síðar')) { s.greitt_sidar += amt; s.greitt_sidar_count++; bucket = 'greitt_sidar'; }
+      if (gm.includes('reikning')) {
+        s.reikningur_sent += amt; s.reikningur_count++; if (r.invoiced_at) s.sent_to_dk++; bucket = 'reikningur';
+        const k = `sl-sala|${r.id}`, mt = metaBy.get(k) || {};
+        if (!mt.hidden) s.uncollected.push({ inv_key: k, id: r.id, num: r.num, customer_name: r.customer_nafn || '—', kt: r.customer_kt || null,
+          amount: mt.amount_override != null ? Number(mt.amount_override) : amt, base_amount: amt, amount_override: mt.amount_override != null ? Number(mt.amount_override) : null,
+          created_at: (r.created_at || '').slice(0, 10), sent_to_dk: !!r.invoiced_at, flagged: !!mt.flagged, note: mt.note || null });
+      } else if (gm.includes('sidar') || gm.includes('síðar')) { s.greitt_sidar += amt; s.greitt_sidar_count++; bucket = 'greitt_sidar'; }
       else { s.stadgreitt += amt; s.stadgreitt_count++; }
       const mo = String(r.created_at || '').slice(0, 7); if (!mo) continue;
       const mm = mMap.get(mo) || { month: mo, revenue: 0, reikningur: 0, stadgreitt: 0, count: 0 };
@@ -157,6 +161,31 @@ exports.handler = async (event) => {
       mMap.set(mo, mm);
     }
     s.byMonth = [...mMap.values()].sort((a, b) => a.month.localeCompare(b.month));
+    s.uncollected.sort((a, b) => (a.created_at || '').localeCompare(b.created_at || ''));
+    s.uncollected_total = s.uncollected.reduce((t, r) => t + r.amount, 0);
+
+    // ── Ókláraðar ársskoðanir: equipment past due for annual inspection ──────
+    const overdue = await fetchAll('uttaeki',
+      `select=client,next_insp,last_insp,status&next_insp=not.is.null&next_insp=lte.${today}`).catch(() => []);
+    const insMap = new Map();
+    let overdueEquip = 0;
+    for (const u of overdue) {
+      const st = String(u.status || '').toLowerCase();
+      if (['loaned', 'removed', 'archived', 'deleted'].includes(st)) continue;
+      const c = (u.client || '').trim(); if (!c) continue;
+      overdueEquip++;
+      const g = insMap.get(c) || { client: c, overdue_equip: 0, elsta: null, sidasta: null };
+      g.overdue_equip++;
+      if (!g.elsta || u.next_insp < g.elsta) g.elsta = u.next_insp;
+      if (u.last_insp && (!g.sidasta || u.last_insp > g.sidasta)) g.sidasta = u.last_insp;
+      insMap.set(c, g);
+    }
+    const companies = [...insMap.values()].map((g) => {
+      const k = `sl-ars|${g.client}`, mt = metaBy.get(k) || {};
+      return Object.assign(g, { inv_key: k, hidden: !!mt.hidden, flagged: !!mt.flagged, note: mt.note || null });
+    }).filter((g) => !g.hidden).sort((a, b) => b.overdue_equip - a.overdue_equip);
+    s.inspections = { overdue_equip: overdueEquip, overdue_companies: companies.length, companies: companies.slice(0, 40) };
+
     slokk = s;
   } catch (_) { slokk = null; }
 

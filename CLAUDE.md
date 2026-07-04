@@ -77,7 +77,12 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   bank, or correct a wrong amount; hidden krófur drop from every total, override
   replaces upphaed_total. UI: expandable stat cards (click a total → filter the list
   to its rows), searchable krófulista with inline amount edit + 🙈 fela, Slökkvitæki
-  cards, monthly-revenue strip. NB Slökkvitæki monthly is by `solur.created_at`
+  cards, monthly-revenue strip. Also **🧾 Óinnheimt í afgreiðslu** (Slökkvitæki
+  reikningur sales from `solur` = POS AR, each flag/note/hide-able, `inv_key='sl-sala|<id>'`)
+  and **🔧 Ókláraðar ársskoðanir** (equipment from `uttaeki` with `next_insp<=today`,
+  grouped by `client` = overdue annual inspections / unbilled work, flag/note/hide-able,
+  `inv_key='sl-ars|<client>'`, `>1 ár` badge for long-overdue). Meant to be the main
+  financial-status page across both companies. NB Slökkvitæki monthly is by `solur.created_at`
   (bill date) — distorted when invoicing is batched/caught-up; flag this, inspection
   date would be truer but isn't on the sale row.
 - `hreyfingaryfirlit` — Hreyfingaryfirlit (per-customer account statement,
