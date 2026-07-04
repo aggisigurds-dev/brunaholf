@@ -1645,6 +1645,10 @@ html.embedded .fab,html.embedded .fab-screenshot{display:none!important}
    readability + touch. zoom reflows layout (unlike transform), and the card
    grids are auto-fill/minmax so they re-column cleanly. */
 html.embedded #view{zoom:1.32}
+/* Vinnubók has a bounded scroll-wrap (frozen header row + worksite column). zoom
+   inflates its max-height past the viewport so it never becomes the inner
+   scroller and the header won't stick — so skip zoom on that page. */
+html.embedded #view:has(.vb-scroll-wrap){zoom:1 !important}
 </style>
 
 <header class="topbar">
@@ -2733,7 +2737,7 @@ function renderVefryni(t){
       .vfr-drop:hover{border-color:#94a3b8}
       .vfr-thumb{margin-top:11px;position:relative;display:inline-block}
       .vfr-thumb img{max-width:100%;max-height:240px;border-radius:10px;border:1px solid #e2e8f0;display:block}
-      .vfr-claudenote{margin:0 0 13px;padding:11px 13px;border-radius:10px;background:#dbeafe;border:1px solid #bfdbfe;color:#1e3a8a;font-size:13px;line-height:1.5}
+      .vfr-claudenote{margin:0 0 13px;padding:11px 13px;border-radius:10px;background:#dbeafe;border:1px solid #bfdbfe;color:#101d2e;font-size:13px;line-height:1.5}
       .vfr-statusbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
       .vfr-sbtn{flex:1;min-width:150px;padding:11px;border-radius:10px;border:2px solid;font:inherit;font-size:14px;font-weight:700;cursor:pointer;background:#fff}
       .vfr-hint{font-size:12px;color:#64748b}
@@ -3679,7 +3683,7 @@ function renderBakendi(t){
               <div style="${titleStyle}">Tímavera + Payday úr Drive</div>
               <p style="${descStyle};margin-top:4px">Finnur <b>nýjustu</b> útflutningsskrána í Drive og les hana beint inn í gagnagrunninn — sama vinnsla og luna-bridge á tölvunni, bara í skýinu. Endurkeyrsla er örugg (upsert).</p>
             </div>
-            <span style="${chipStyle('#dbeafe','#1e3a8a')}">Sjálfvirkt</span>
+            <span style="${chipStyle('#dbeafe','#101d2e')}">Sjálfvirkt</span>
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
             <button id="bk-tv-run" class="btn primary">⏱ Tímavera xlsx → timavera_entries</button>
@@ -3741,7 +3745,7 @@ function renderBakendi(t){
               <div style="${titleStyle}">Netföng úr sendum reikningum</div>
               <p style="${descStyle};margin-top:4px">Les <code>.eml</code>-skjöl frá <b>bokhald@eldklar.is</b>, tekur <b>To:</b> og fyllir <code>fyrirtaeki.netfang</code> — aðeins þar sem það er tómt. Sleppir generic/eigin netföngum. Afturkræft í <code>netfang_backfill_log</code>.</p>
             </div>
-            <span style="${chipStyle('#dbeafe','#1e3a8a')}">Sjálfvirkt</span>
+            <span style="${chipStyle('#dbeafe','#101d2e')}">Sjálfvirkt</span>
           </div>
           <div>
             <label style="${labelStyle}">Möppur með .eml (kommu-aðskildar)</label>
@@ -7554,7 +7558,7 @@ async function renderGerdReikninga(t){
       .gr-logo-btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border:1px solid var(--border,#cbd5e1);border-radius:8px;cursor:pointer;font-size:13px;background:#fff}
       .gr-logo-btn:hover{background:#f1f5f9}
       .gr-loading{padding:30px;color:var(--muted,#64748b);font-style:italic}
-      .gr-summary{display:flex;gap:14px;flex-wrap:wrap;background:linear-gradient(135deg,#1e3a8a 0%,#3b82f6 100%);color:#fff;border-radius:14px;padding:16px 20px;margin-bottom:6px;box-shadow:0 4px 14px rgba(15,23,42,.12)}
+      .gr-summary{display:flex;gap:14px;flex-wrap:wrap;background:linear-gradient(135deg,#101d2e 0%,#3b82f6 100%);color:#fff;border-radius:14px;padding:16px 20px;margin-bottom:6px;box-shadow:0 4px 14px rgba(15,23,42,.12)}
       .gr-sum-cell{display:flex;flex-direction:column;gap:3px;min-width:140px}
       .gr-sum-l{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:rgba(255,255,255,.8);font-weight:600}
       .gr-sum-v{font-family:'Source Serif 4',Georgia,serif;font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
@@ -7585,7 +7589,7 @@ async function renderGerdReikninga(t){
       .gr-card-actions{display:flex;gap:8px;margin-top:4px}
       .gr-btn{padding:7px 12px;border-radius:7px;font-size:12.5px;font-weight:600;border:1px solid var(--border,#cbd5e1);background:#fff;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
       .gr-btn:hover{background:#f1f5f9}
-      .gr-btn-primary{background:#1e3a8a;color:#fff;border-color:#1e3a8a}
+      .gr-btn-primary{background:#101d2e;color:#fff;border-color:#101d2e}
       .gr-btn-primary:hover{background:#3b4f9e;color:#fff}
       /* Editor modal */
       .gr-modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow:auto}
@@ -8506,7 +8510,7 @@ async function renderVinnubok(t){
       .vb-grid{width:100%;border-collapse:separate;border-spacing:6px;font-size:12px;background:transparent;font-family:'Inter','SF Pro Display','Segoe UI',system-ui,sans-serif}
       .vb-grid th,.vb-grid td{padding:0;vertical-align:top;border-radius:12px}
       .vb-grid th{background:linear-gradient(180deg,#f8fafc 0%,#eef2f7 100%);font-weight:700;padding:12px 16px;font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:#64748b;text-align:center;border:1px solid #e2e8f0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
-      .vb-row-name{padding:13px 16px;font-weight:700;background:linear-gradient(180deg,#1e3a8a 0%,#3b82f6 100%);min-width:175px;max-width:230px;line-height:1.3;position:sticky;left:0;z-index:5;color:#fff;font-size:13px;border:1px solid #1e3a8a;box-shadow:2px 0 5px -2px rgba(15,23,42,.18)}
+      .vb-row-name{padding:13px 16px;font-weight:700;background:linear-gradient(180deg,#3a5578 0%,#22354f 42%,#132234 100%);min-width:175px;max-width:230px;line-height:1.3;position:sticky;left:0;z-index:5;color:#fff;font-size:13px;border:1px solid #101d2e;box-shadow:2px 0 5px -2px rgba(15,23,42,.18)}
       .vb-row-name small{display:block;font-weight:500;color:rgba(255,255,255,.78);font-size:11px;margin-top:4px;letter-spacing:.01em}
       /* Larger, prominent worksite name + Drive-folder icon in the name cell */
       .vb-ws-name{display:block;font-size:16px;font-weight:800;line-height:1.25;letter-spacing:-.01em}
@@ -8563,12 +8567,12 @@ async function renderVinnubok(t){
       .vb-th-sum{font-family:'SF Mono','JetBrains Mono','Roboto Mono',Menlo,monospace;font-feature-settings:'tnum' 1;font-size:13px;font-weight:700;margin-top:3px;letter-spacing:0;text-transform:none;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
       [data-vb-layout="cards"] .vb-th-sum,
       [data-vb-layout="table"] .vb-th-sum{color:#fff}
-      [data-vb-layout="cards"] .vb-grid thead th{background:linear-gradient(180deg,#1e3a8a 0%,#3b82f6 100%);color:#fff;border-color:#1e3a8a;border-radius:8px}
+      [data-vb-layout="cards"] .vb-grid thead th{background:linear-gradient(180deg,#3a5578 0%,#22354f 42%,#132234 100%);color:#fff;border-color:#101d2e;border-radius:8px}
       [data-vb-layout="minimal"] .vb-th-sum{color:#0f172a}
       .vb-grid thead .vb-row-name{z-index:6}
 
       /* Totals row in tfoot — sticky at bottom of scroll container so always visible */
-      .vb-totals-row td{background:linear-gradient(180deg,#1e3a8a 0%,#3b82f6 100%);color:#fff;font-weight:700;border-color:#1e3a8a;box-shadow:0 -4px 10px -2px rgba(15,23,42,.18);position:sticky;bottom:0;z-index:4}
+      .vb-totals-row td{background:linear-gradient(180deg,#3a5578 0%,#22354f 42%,#132234 100%);color:#fff;font-weight:700;border-color:#101d2e;box-shadow:0 -4px 10px -2px rgba(15,23,42,.18);position:sticky;bottom:0;z-index:4}
       .vb-totals-row .vb-row-name{background:linear-gradient(180deg,#0f172a 0%,#1e293b 100%);color:#fff;font-weight:800;text-transform:uppercase;letter-spacing:.05em;font-size:11px;border-color:#0f172a;left:0;z-index:6}
       .vb-totals-row .vb-total-cell{padding:10px 12px;text-align:center;font-family:'SF Mono','JetBrains Mono','Roboto Mono',Menlo,monospace;font-feature-settings:'tnum' 1;font-size:13.5px;letter-spacing:-.01em}
       .vb-totals-row .vb-total-sub{display:block;font-size:9.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-top:2px}
@@ -8600,8 +8604,8 @@ async function renderVinnubok(t){
       [data-vb-layout="table"] .vb-grid{border-collapse:separate;border-spacing:0;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 16px rgba(15,23,42,.08);border:1px solid #e2e8f0}
       [data-vb-layout="table"] .vb-grid th,
       [data-vb-layout="table"] .vb-grid td{border:none;border-bottom:1px solid #f1f5f9;border-radius:0;box-shadow:none}
-      [data-vb-layout="table"] .vb-grid th{background:linear-gradient(180deg,#1e3a8a 0%,#3b82f6 100%);color:#fff;font-weight:700;padding:14px 12px}
-      [data-vb-layout="table"] .vb-row-name{background:linear-gradient(180deg,#1e3a8a 0%,#3b82f6 100%);color:#fff;border-right:2px solid #1e3a8a;box-shadow:2px 0 5px -2px rgba(15,23,42,.18)}
+      [data-vb-layout="table"] .vb-grid th{background:linear-gradient(180deg,#3a5578 0%,#22354f 42%,#132234 100%);color:#fff;font-weight:700;padding:14px 12px}
+      [data-vb-layout="table"] .vb-row-name{background:linear-gradient(180deg,#3a5578 0%,#22354f 42%,#132234 100%);color:#fff;border-right:2px solid #101d2e;box-shadow:2px 0 5px -2px rgba(15,23,42,.18)}
       [data-vb-layout="table"] .vb-row-name small{color:rgba(255,255,255,.78)}
       [data-vb-layout="table"] .vb-grid tbody tr:nth-child(even) .vb-cell{background:#f8fafc}
       [data-vb-layout="table"] .vb-grid tbody tr:nth-child(even) .vb-row-name{background:linear-gradient(180deg,#1e40af 0%,#2563eb 100%)}
@@ -8677,7 +8681,7 @@ async function renderVinnubok(t){
       [data-layout="table"] .vb-grid{border-collapse:separate;border-spacing:0;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 16px rgba(15,23,42,.08);border:1px solid #e2e8f0}
       [data-layout="table"] .vb-grid th,
       [data-layout="table"] .vb-grid td{border:none;border-bottom:1px solid #f1f5f9;border-radius:0;box-shadow:none}
-      [data-layout="table"] .vb-grid th{background:linear-gradient(180deg,#1e3a8a 0%,#3b82f6 100%);color:#fff;font-weight:700;padding:14px 12px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;border-bottom:none}
+      [data-layout="table"] .vb-grid th{background:linear-gradient(180deg,#3a5578 0%,#22354f 42%,#132234 100%);color:#fff;font-weight:700;padding:14px 12px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;border-bottom:none}
       [data-layout="table"] .vb-row-name{background:#f8fafc;color:#0f172a;font-weight:700;font-size:13px;border-right:2px solid #e2e8f0;box-shadow:none}
       [data-layout="table"] .vb-grid tbody tr:nth-child(odd) .vb-cell{background:#fff}
       [data-layout="table"] .vb-grid tbody tr:nth-child(even) .vb-cell{background:#f8fafc}
@@ -8687,7 +8691,7 @@ async function renderVinnubok(t){
       [data-layout="table"] .vb-cell-has-invoice .vb-amount-input{color:#059669;border-color:#a7f3d0}
       [data-layout="table"] .vb-cell-mismatch{background:#fffbeb !important}
       [data-layout="table"] .vb-cell:hover{box-shadow:none;transform:none;background:#eff6ff !important}
-      [data-layout="table"] .vb-year-collapsed{background:linear-gradient(180deg,#1e3a8a 0%,#3b82f6 100%) !important;color:#fff !important;border:none}
+      [data-layout="table"] .vb-year-collapsed{background:linear-gradient(180deg,#3a5578 0%,#22354f 42%,#132234 100%) !important;color:#fff !important;border:none}
 
       /* ===== Layout: MINIMAL (no colors, just lines and text) ===== */
       [data-layout="minimal"] .vb-grid{border-collapse:collapse;background:transparent;border-spacing:0}
