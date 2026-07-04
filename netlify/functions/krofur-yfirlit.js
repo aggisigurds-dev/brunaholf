@@ -67,6 +67,14 @@ exports.handler = async (event) => {
     (draftByMonth.get(mo) || draftByMonth.set(mo, []).get(mo)).push({ worksite: d.worksite_name, customer: d.customer_name, total: Number(d.total_m_vsk) || 0 });
   }
 
+  // Dedup: every Landsbanki krafa mirrors a Payday invoice (same payer kt + invoice
+  // number, e.g. payday "299" ↔ landsbankinn_krafnir "299.0"). Counting both doubles
+  // the book. Keep the Payday row (it carries payment status); drop the Landsbanki twin.
+  const ktd = (s) => String(s || '').replace(/\D/g, '');
+  const tnorm = (s) => String(s || '').replace(/\.0+$/, '');
+  const paydayKeys = new Set();
+  for (const r of invoices) { if (r.source === 'payday' && ktd(r.kt_greidanda)) paydayKeys.add(ktd(r.kt_greidanda) + '|' + tnorm(r.tilvisun)); }
+
   const rows = invoices.map((r) => {
     const k = keyOf(r);
     const m = metaBy.get(k) || {};
@@ -76,9 +84,10 @@ exports.handler = async (event) => {
     // Voided invoices (Payday "CANCELLED", afturkallað, felld) are NOT revenue and
     // NOT outstanding — exclude them from every total (their paired credit note nets out).
     const cancelled = /cancel|afturkoll|afturkall|felld|ógild|ogild|void/.test(st);
+    const dup = r.source === 'landsbankinn_krafnir' && ktd(r.kt_greidanda) && paydayKeys.has(ktd(r.kt_greidanda) + '|' + tnorm(r.tilvisun));
     const paidStatus = !!r.greidsla_date || PAID_HINT.some((p) => st.includes(p));
     const credit = amount < 0 || st.includes('credit') || st.includes('kredit');
-    const excluded = cancelled || credit;
+    const excluded = cancelled || credit || dup;
     // Bank hint only matters for krófur not already marked paid in Payday.
     const bm = (paidStatus || excluded) ? null : bankMatch(r.kt_greidanda, amount, r.gjalddagi);
     const paid = paidStatus || !!bm;
@@ -94,7 +103,7 @@ exports.handler = async (event) => {
       status: r.status, amount, base_amount: base,
       amount_override: m.amount_override != null ? Number(m.amount_override) : null,
       hidden: !!m.hidden, flagged: !!m.flagged, note: m.note || null,
-      paid, paid_status: paidStatus, credit, cancelled, excluded, overdue,
+      paid, paid_status: paidStatus, credit, cancelled, dup, excluded, overdue,
       bank_paid: !!bm, bank_text: bm ? bm.text : null, bank_date: bm ? bm.date : null,
       draft_match: draftHit ? { worksite: draftHit.worksite, total: draftHit.total } : null,
       month: mo,
@@ -106,6 +115,7 @@ exports.handler = async (event) => {
   const summary = {
     count: visible.length, hidden_count: rows.filter((r) => r.hidden).length,
     cancelled_count: rows.filter((r) => r.cancelled && !r.hidden).length,
+    dup_count: rows.filter((r) => r.dup && !r.hidden).length,
     invoiced: 0, paid: 0, outstanding: 0, overdue: 0, overdue_count: 0, paid_count: 0,
   };
   const byMonthMap = new Map(), byCustMap = new Map();
