@@ -9989,7 +9989,7 @@ async function renderKrofur(t){
   const kr  = n => num(n) + ' kr';
   const mlabel = (m) => { const [y,mo]=String(m||'').split('-'); return ['jan','feb','mar','apr','maí','jún','júl','ágú','sep','okt','nóv','des'][(+mo||1)-1]+' '+(y||''); };
   let YEAR = (t && t._krofurYear) || '2026';
-  let DATA = null, filter = 'all', q = '';
+  let DATA = null, filter = 'all', q = '', moSel = null;
 
   $view.innerHTML = `
     <div class="rg-wrap kf-wrap">
@@ -10006,8 +10006,9 @@ async function renderKrofur(t){
         </div>
       </div>
 
-      <h3 class="kf-sec" data-sec="months">📈 Mánaðartekjur ${esc(YEAR)} <span class="kf-note">(bæði félög)</span></h3>
+      <h3 class="kf-sec" data-sec="months">📈 Mánaðartekjur ${esc(YEAR)} <span class="kf-note">(smelltu á mánuð til að sjá hvaðan talan kemur)</span></h3>
       <div id="kf-months" class="kf-months"></div>
+      <div id="kf-mo-detail"></div>
 
       <h3 class="kf-sec" data-sec="bh">🔥 Brunahólf — krófur <span class="kf-note">(Payday + Landsbanki · gjalddagi ${esc(YEAR)})</span></h3>
       <div id="kf-bh-cards" class="kf-cards"></div>
@@ -10051,7 +10052,19 @@ async function renderKrofur(t){
       .kf-card .kf-exp{position:absolute;top:10px;right:12px;font-size:11px;color:#b6c0cc}
       .kf-detail{background:var(--card-bg,#fff);border:1px solid var(--border,#e3e7ec);border-radius:12px;margin-top:12px;padding:6px 4px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
       .kf-months{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
-      .kf-mo{background:var(--card-bg,#fff);border:1px solid var(--border,#e3e7ec);border-radius:10px;padding:10px 12px}
+      .kf-mo{background:var(--card-bg,#fff);border:1px solid var(--border,#e3e7ec);border-radius:10px;padding:10px 12px;cursor:pointer;transition:box-shadow .08s,border-color .08s}
+      .kf-mo:hover{box-shadow:0 3px 12px rgba(0,0,0,.09)}
+      .kf-mo.on{border-color:var(--accent,#0a84ff);box-shadow:0 0 0 1px var(--accent,#0a84ff) inset}
+      #kf-mo-detail{margin-top:10px}
+      .kf-mod{background:var(--card-bg,#fff);border:1px solid var(--border,#e3e7ec);border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+      .kf-mod h4{margin:0 0 4px;font-size:14px;font-weight:800}
+      .kf-mod-cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:10px}
+      @media(max-width:700px){.kf-mod-cols{grid-template-columns:1fr}}
+      .kf-mod-col h5{margin:0 0 6px;font-size:12px;font-weight:700;color:var(--text-dim,#5a6473);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border,#eef0f2);padding-bottom:4px}
+      .kf-mod-r{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;padding:3px 0;border-bottom:1px solid var(--bg-2,#f4f6f8)}
+      .kf-mod-r small{color:var(--text-dim,#8a93a2)}
+      .kf-mod-r b{font-variant-numeric:tabular-nums;white-space:nowrap}
+      .kf-mod-tot{display:flex;justify-content:space-between;font-weight:800;font-size:13px;margin-top:6px;padding-top:6px;border-top:2px solid var(--border,#e3e7ec)}
       .kf-mo-l{font-size:11.5px;font-weight:700;color:var(--text,#1f2933);text-transform:capitalize}
       .kf-mo-r{font-size:11px;margin-top:5px;display:flex;justify-content:space-between}
       .kf-mo-r span:first-child{color:var(--text-dim,#8a93a2)}
@@ -10197,10 +10210,33 @@ async function renderKrofur(t){
     if(!all.length){ $('kf-months').innerHTML='<div class="kf-note">Engin gögn.</div>'; return; }
     $('kf-months').innerHTML = all.map(m=>{
       const b = bh.get(m)||{}, s = sl.get(m)||{};
-      return `<div class="kf-mo"><div class="kf-mo-l">${esc(mlabel(m))}</div>
+      return `<div class="kf-mo ${moSel===m?'on':''}" data-mo="${m}"><div class="kf-mo-l">${esc(mlabel(m))}</div>
         <div class="kf-mo-r"><span>🔥 Brunahólf</span><b>${kr(b.invoiced||0)}</b></div>
         <div class="kf-mo-r"><span>🧯 Slökkvitæki</span><b>${kr(s.revenue||0)}</b></div></div>`;
     }).join('');
+    $('kf-months').querySelectorAll('.kf-mo').forEach(el=> el.onclick=()=>{ moSel = (moSel===el.dataset.mo)?null:el.dataset.mo; months(); });
+    moDetail();
+  }
+
+  // Drill-down: which invoices/sales make up a month's totals.
+  function moDetail(){
+    const host = $('kf-mo-detail'); if(!host) return;
+    if(!moSel){ host.innerHTML=''; return; }
+    const mo = moSel;
+    const bhRows = (DATA.rows||[]).filter(r=> r.month===mo && !r.hidden && !r.excluded).sort((a,b)=>b.amount-a.amount);
+    const bhTot = bhRows.reduce((t,r)=>t+r.amount,0);
+    const slRows = ((DATA.slokk&&DATA.slokk.sales)||[]).filter(r=> r.month===mo).sort((a,b)=>b.amount-a.amount);
+    const slTot = slRows.reduce((t,r)=>t+r.amount,0);
+    const METH = {reikningur:'reikningur',stadgreitt:'staðgreitt',greitt_sidar:'greitt síðar'};
+    const bhList = bhRows.length ? bhRows.map(r=>`<div class="kf-mod-r"><span>${esc(r.customer_name||'—')} <small>${esc(r.source||'')} ${esc(String(r.tilvisun||''))} · ${esc(r.gjalddagi||'')}${r.paid?' · greitt':(r.overdue?' · útrunnið':'')}</small></span><b>${kr(r.amount)}</b></div>`).join('') : '<div class="kf-note">Engar krófur.</div>';
+    const slList = slRows.length ? slRows.map(r=>`<div class="kf-mod-r"><span>${esc(r.customer||'—')} <small>R-${esc(String(r.num||''))} · ${METH[r.method]||esc(r.method||'')} · ${esc(r.date||'')}</small></span><b>${kr(r.amount)}</b></div>`).join('') : '<div class="kf-note">Engar sölur.</div>';
+    host.innerHTML = `<div class="kf-mod">
+      <h4>${esc(mlabel(mo))} — hvaðan talan kemur</h4>
+      <div class="kf-note">Brunahólf eftir gjalddaga · Slökkvitæki eftir söludegi (created_at)</div>
+      <div class="kf-mod-cols">
+        <div class="kf-mod-col"><h5>🔥 Brunahólf (${bhRows.length})</h5>${bhList}<div class="kf-mod-tot"><span>Samtals</span><span>${kr(bhTot)}</span></div></div>
+        <div class="kf-mod-col"><h5>🧯 Slökkvitæki (${slRows.length})</h5>${slList}<div class="kf-mod-tot"><span>Samtals</span><span>${kr(slTot)}</span></div></div>
+      </div></div>`;
   }
 
   function rowHtml(r){

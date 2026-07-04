@@ -141,7 +141,7 @@ exports.handler = async (event) => {
   try {
     const solur = await fetchAll('solur',
       `select=id,num,customer_nafn,customer_kt,samtals,greitt_med,invoiced_at,created_at&status=eq.final&created_at=gte.${from}&created_at=lt.${to}`);
-    const s = { reikningur_sent: 0, reikningur_count: 0, sent_to_dk: 0, stadgreitt: 0, stadgreitt_count: 0, greitt_sidar: 0, greitt_sidar_count: 0, sala_total: 0, byMonth: [], uncollected: [] };
+    const s = { reikningur_sent: 0, reikningur_count: 0, sent_to_dk: 0, stadgreitt: 0, stadgreitt_count: 0, greitt_sidar: 0, greitt_sidar_count: 0, sala_total: 0, byMonth: [], uncollected: [], sales: [] };
     const mMap = new Map();
     for (const r of solur) {
       const amt = Number(r.samtals) || 0; s.sala_total += amt;
@@ -156,6 +156,7 @@ exports.handler = async (event) => {
       } else if (gm.includes('sidar') || gm.includes('síðar')) { s.greitt_sidar += amt; s.greitt_sidar_count++; bucket = 'greitt_sidar'; }
       else { s.stadgreitt += amt; s.stadgreitt_count++; }
       const mo = String(r.created_at || '').slice(0, 7); if (!mo) continue;
+      s.sales.push({ num: r.num, customer: r.customer_nafn || '—', amount: amt, method: bucket, date: (r.created_at || '').slice(0, 10), month: mo });
       const mm = mMap.get(mo) || { month: mo, revenue: 0, reikningur: 0, stadgreitt: 0, count: 0 };
       mm.revenue += amt; mm.count++; mm[bucket === 'reikningur' ? 'reikningur' : 'stadgreitt'] += amt;
       mMap.set(mo, mm);
