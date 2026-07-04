@@ -1,0 +1,199 @@
+// krofur-yfirlit.js — Brunahólf krófur (invoices) overview, scoped to one year.
+//
+//   GET  /api/krofur-yfirlit?year=2026
+//     → { year, generated_at, summary, byMonth[], byCustomer[], rows[] }
+//   POST /api/krofur-yfirlit  { action:'save', inv_key, hidden?, amount_override?, note? }
+//     → { ok, meta }
+//
+// Reads the `invoices` table (Payday + Landsbankinn kröfur + manual Tekjur rows),
+// filtered by gjalddagi year, and applies per-invoice manual overrides from
+// `krofur_yfirlit_meta` (hide a krófa that was actually paid by bank transfer,
+// or correct its amount). Hidden krófur are dropped from every total; an
+// amount_override replaces upphaed_total (m.vsk) in the totals + the row.
+//
+// Amounts are MEÐ VSK (`upphaed_total`) to match Skuldunautar / Hreyfingaryfirlit.
+
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const PAID_HINT = ['greitt', 'greidd', 'paid'];
+const digits = (s) => String(s || '').replace(/\D/g, '');
+const keyOf = (r) => `${r.source || ''}|${r.tilvisun || r.id}`;
+
+exports.handler = async (event) => {
+  if (event.httpMethod === 'OPTIONS') return resp(204, '', cors());
+  if (!SUPABASE_URL || !SUPABASE_KEY) return json(500, { error: 'Supabase env missing' });
+
+  if (event.httpMethod === 'POST') return saveOverride(event);
+  if (event.httpMethod !== 'GET') return json(405, { error: 'Method not allowed' });
+
+  const year = String((event.queryStringParameters || {}).year || '2026').slice(0, 4);
+  const from = `${year}-01-01`, to = `${Number(year) + 1}-01-01`;
+
+  let invoices, meta, bank, drafts;
+  try {
+    invoices = await fetchAll('invoices',
+      `select=id,tilvisun,kt_greidanda,customer_name,gjalddagi,eindagi,hofudstoll,upphaed_total,status,greidsla_date,source&gjalddagi=gte.${from}&gjalddagi=lt.${to}`);
+    meta = await fetchAll('krofur_yfirlit_meta', 'select=inv_key,hidden,amount_override,note');
+    bank = await fetchAll('bank_transactions', 'select=kt_counterparty,amount,trans_date,text,description&amount=gt.0').catch(() => []);
+    // What the office tracked in Vinnubók / Reikningagerð (saved efnislisti totals).
+    drafts = await fetchAll('invoice_drafts', 'select=worksite_name,work_month,total_m_vsk,customer_name').catch(() => []);
+  } catch (e) { return json(502, { error: e.message }); }
+
+  const metaBy = new Map(meta.map((m) => [m.inv_key, m]));
+  const today = new Date().toISOString().slice(0, 10);
+
+  // ── Bank cross-reference (the old CSV statement) ──────────────────────────
+  // Index inflows by payer kt; a krófa is "likely paid by bank" when an inflow
+  // matches its kt + amount (within max(5.000, 1%)) and lands on/after gjalddagi−15d.
+  const inflowByKt = new Map();
+  for (const b of bank) {
+    const kt = digits(b.kt_counterparty); if (!kt) continue;
+    (inflowByKt.get(kt) || inflowByKt.set(kt, []).get(kt)).push({ amount: +b.amount || 0, date: b.trans_date, text: b.text || b.description || '' });
+  }
+  function bankMatch(kt, amount, gjalddagi) {
+    const list = inflowByKt.get(digits(kt)); if (!list || !amount) return null;
+    const tol = Math.max(5000, Math.abs(amount) * 0.01);
+    const floor = gjalddagi ? new Date(Date.parse(gjalddagi) - 15 * 864e5).toISOString().slice(0, 10) : null;
+    for (const inf of list) {
+      if (Math.abs(inf.amount - amount) <= tol && (!floor || inf.date >= floor)) return inf;
+    }
+    return null;
+  }
+  // Reikningagerð/Vinnubók amounts the office computed, indexed by month for a sanity cross-check.
+  const draftByMonth = new Map();
+  for (const d of drafts) {
+    const mo = String(d.work_month || '').slice(0, 7); if (!mo) continue;
+    (draftByMonth.get(mo) || draftByMonth.set(mo, []).get(mo)).push({ worksite: d.worksite_name, customer: d.customer_name, total: Number(d.total_m_vsk) || 0 });
+  }
+
+  const rows = invoices.map((r) => {
+    const k = keyOf(r);
+    const m = metaBy.get(k) || {};
+    const base = Number(r.upphaed_total) || 0;
+    const amount = m.amount_override != null ? Number(m.amount_override) : base;
+    const st = String(r.status || '').toLowerCase();
+    const paidStatus = !!r.greidsla_date || PAID_HINT.some((p) => st.includes(p));
+    const credit = amount < 0 || st.includes('credit') || st.includes('kredit');
+    // Bank hint only matters for krófur not already marked paid in Payday.
+    const bm = (paidStatus || credit) ? null : bankMatch(r.kt_greidanda, amount, r.gjalddagi);
+    const paid = paidStatus || !!bm;
+    const overdue = !paid && !credit && r.gjalddagi && r.gjalddagi < today;
+    // Cross-check: does a saved Reikningagerð/Vinnubók total for this month match this amount?
+    const mo = (r.gjalddagi || '').slice(0, 7);
+    const dl = draftByMonth.get(mo) || [];
+    const draftHit = dl.find((d) => Math.abs(d.total - amount) <= Math.max(5000, amount * 0.02));
+    return {
+      inv_key: k, id: r.id, tilvisun: r.tilvisun, source: r.source,
+      customer_name: r.customer_name, kt: r.kt_greidanda,
+      gjalddagi: r.gjalddagi, eindagi: r.eindagi, greidsla_date: r.greidsla_date,
+      status: r.status, amount, base_amount: base,
+      amount_override: m.amount_override != null ? Number(m.amount_override) : null,
+      hidden: !!m.hidden, note: m.note || null,
+      paid, paid_status: paidStatus, credit, overdue,
+      bank_paid: !!bm, bank_text: bm ? bm.text : null, bank_date: bm ? bm.date : null,
+      draft_match: draftHit ? { worksite: draftHit.worksite, total: draftHit.total } : null,
+      month: mo,
+    };
+  });
+
+  // Totals ignore hidden krófur entirely; credits net down the invoiced sum.
+  const visible = rows.filter((r) => !r.hidden);
+  const summary = {
+    count: visible.length, hidden_count: rows.length - visible.length,
+    invoiced: 0, paid: 0, outstanding: 0, overdue: 0, overdue_count: 0, paid_count: 0,
+  };
+  const byMonthMap = new Map(), byCustMap = new Map();
+  for (const r of visible) {
+    summary.invoiced += r.amount;
+    if (r.paid) { summary.paid += r.amount; summary.paid_count++; }
+    else if (!r.credit) { summary.outstanding += r.amount; }
+    if (r.overdue) { summary.overdue += r.amount; summary.overdue_count++; }
+
+    const mm = byMonthMap.get(r.month) || { month: r.month, invoiced: 0, paid: 0, outstanding: 0, count: 0 };
+    mm.invoiced += r.amount; mm.count++;
+    if (r.paid) mm.paid += r.amount; else if (!r.credit) mm.outstanding += r.amount;
+    byMonthMap.set(r.month, mm);
+
+    if (!r.paid && !r.credit) {
+      const cn = r.customer_name || '—';
+      const cc = byCustMap.get(cn) || { customer_name: cn, kt: r.kt, outstanding: 0, count: 0 };
+      cc.outstanding += r.amount; cc.count++;
+      byCustMap.set(cn, cc);
+    }
+  }
+
+  const byMonth = [...byMonthMap.values()].filter((m) => m.month).sort((a, b) => a.month.localeCompare(b.month));
+  const byCustomer = [...byCustMap.values()].sort((a, b) => b.outstanding - a.outstanding).slice(0, 20);
+
+  rows.sort((a, b) => (b.gjalddagi || '').localeCompare(a.gjalddagi || ''));
+
+  // ── Slökkvitæki side (POS sales, same Supabase) ───────────────────────────
+  // "Krófur" = reikningur (on-account) sales; staðgreitt = paid at the counter.
+  // Payment status of the reikningur krófur lives in dkPlus (not synced), so we
+  // report what's tracked here: sent + how many reached dkPlus.
+  let slokk = null;
+  try {
+    const solur = await fetchAll('solur',
+      `select=samtals,greitt_med,invoiced_at,created_at&status=eq.final&created_at=gte.${from}&created_at=lt.${to}`);
+    const paidMethods = new Set(['kort', 'reidufe', 'reiðufé', 'pening', 'peningur', 'stadgreitt', 'staðgreitt']);
+    const s = { reikningur_sent: 0, reikningur_count: 0, sent_to_dk: 0, stadgreitt: 0, stadgreitt_count: 0, greitt_sidar: 0, greitt_sidar_count: 0, sala_total: 0, byMonth: [] };
+    const mMap = new Map();
+    for (const r of solur) {
+      const amt = Number(r.samtals) || 0; s.sala_total += amt;
+      const gm = String(r.greitt_med || '').toLowerCase().replace(/\s+/g, '_');
+      let bucket = 'stadgreitt';
+      if (gm.includes('reikning')) { s.reikningur_sent += amt; s.reikningur_count++; if (r.invoiced_at) s.sent_to_dk++; bucket = 'reikningur'; }
+      else if (gm.includes('sidar') || gm.includes('síðar')) { s.greitt_sidar += amt; s.greitt_sidar_count++; bucket = 'greitt_sidar'; }
+      else { s.stadgreitt += amt; s.stadgreitt_count++; }
+      const mo = String(r.created_at || '').slice(0, 7); if (!mo) continue;
+      const mm = mMap.get(mo) || { month: mo, revenue: 0, reikningur: 0, stadgreitt: 0, count: 0 };
+      mm.revenue += amt; mm.count++; mm[bucket === 'reikningur' ? 'reikningur' : 'stadgreitt'] += amt;
+      mMap.set(mo, mm);
+    }
+    s.byMonth = [...mMap.values()].sort((a, b) => a.month.localeCompare(b.month));
+    slokk = s;
+  } catch (_) { slokk = null; }
+
+  return json(200, { year, generated_at: new Date().toISOString(), today, summary, byMonth, byCustomer, rows, slokk });
+};
+
+async function saveOverride(event) {
+  let body; try { body = JSON.parse(event.body || '{}'); } catch (_) { return json(400, { error: 'bad json' }); }
+  const inv_key = String(body.inv_key || '').trim();
+  if (!inv_key) return json(400, { error: 'inv_key required' });
+
+  const patch = { inv_key, updated_at: new Date().toISOString() };
+  if (typeof body.hidden === 'boolean') patch.hidden = body.hidden;
+  if ('amount_override' in body) patch.amount_override = body.amount_override === null || body.amount_override === '' ? null : Number(body.amount_override);
+  if ('note' in body) patch.note = body.note ? String(body.note).slice(0, 500) : null;
+
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/krofur_yfirlit_meta?on_conflict=inv_key`, {
+    method: 'POST',
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`,
+      'content-type': 'application/json', Prefer: 'resolution=merge-duplicates,return=representation' },
+    body: JSON.stringify(patch),
+  });
+  if (!r.ok) return json(502, { error: `save: ${r.status} ${(await r.text()).slice(0, 200)}` });
+  const out = await r.json();
+  return json(200, { ok: true, meta: out[0] || patch });
+}
+
+async function fetchAll(table, qs) {
+  const out = []; let from = 0;
+  for (;;) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${qs}`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`,
+        Range: `${from}-${from + 999}`, 'Range-Unit': 'items' },
+    });
+    if (!r.ok) throw new Error(`${table}: ${r.status} ${(await r.text()).slice(0, 200)}`);
+    const page = await r.json();
+    out.push(...page);
+    if (page.length < 1000) break;
+    from += 1000;
+  }
+  return out;
+}
+function cors() { return { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET, POST, OPTIONS', 'access-control-allow-headers': 'content-type' }; }
+function json(s, p) { return resp(s, JSON.stringify(p), { 'content-type': 'application/json', ...cors() }); }
+function resp(statusCode, body, headers) { return { statusCode, headers, body }; }
