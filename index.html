@@ -1649,6 +1649,11 @@ html.embedded #view{zoom:1.32}
    inflates its max-height past the viewport so it never becomes the inner
    scroller and the header won't stick — so skip zoom on that page. */
 html.embedded #view:has(.vb-scroll-wrap){zoom:1 !important}
+/* Phone tuning for Vinnubók: narrower worksite (blue) column so the month
+   columns get more room, and bigger month-name + month-total header text. */
+html.embedded .vb-scroll-wrap .vb-row-name{min-width:118px !important;max-width:150px !important}
+html.embedded .vb-scroll-wrap .vb-th-name{font-size:15.5px !important}
+html.embedded .vb-scroll-wrap .vb-th-sum{font-size:17px !important}
 </style>
 
 <header class="topbar">
