@@ -73,12 +73,16 @@ exports.handler = async (event) => {
     const base = Number(r.upphaed_total) || 0;
     const amount = m.amount_override != null ? Number(m.amount_override) : base;
     const st = String(r.status || '').toLowerCase();
+    // Voided invoices (Payday "CANCELLED", afturkallað, felld) are NOT revenue and
+    // NOT outstanding — exclude them from every total (their paired credit note nets out).
+    const cancelled = /cancel|afturkoll|afturkall|felld|ógild|ogild|void/.test(st);
     const paidStatus = !!r.greidsla_date || PAID_HINT.some((p) => st.includes(p));
     const credit = amount < 0 || st.includes('credit') || st.includes('kredit');
+    const excluded = cancelled || credit;
     // Bank hint only matters for krófur not already marked paid in Payday.
-    const bm = (paidStatus || credit) ? null : bankMatch(r.kt_greidanda, amount, r.gjalddagi);
+    const bm = (paidStatus || excluded) ? null : bankMatch(r.kt_greidanda, amount, r.gjalddagi);
     const paid = paidStatus || !!bm;
-    const overdue = !paid && !credit && r.gjalddagi && r.gjalddagi < today;
+    const overdue = !paid && !excluded && r.gjalddagi && r.gjalddagi < today;
     // Cross-check: does a saved Reikningagerð/Vinnubók total for this month match this amount?
     const mo = (r.gjalddagi || '').slice(0, 7);
     const dl = draftByMonth.get(mo) || [];
@@ -90,32 +94,33 @@ exports.handler = async (event) => {
       status: r.status, amount, base_amount: base,
       amount_override: m.amount_override != null ? Number(m.amount_override) : null,
       hidden: !!m.hidden, note: m.note || null,
-      paid, paid_status: paidStatus, credit, overdue,
+      paid, paid_status: paidStatus, credit, cancelled, excluded, overdue,
       bank_paid: !!bm, bank_text: bm ? bm.text : null, bank_date: bm ? bm.date : null,
       draft_match: draftHit ? { worksite: draftHit.worksite, total: draftHit.total } : null,
       month: mo,
     };
   });
 
-  // Totals ignore hidden krófur entirely; credits net down the invoiced sum.
-  const visible = rows.filter((r) => !r.hidden);
+  // Totals ignore hidden + cancelled + credit-note krófur; only valid invoices count.
+  const visible = rows.filter((r) => !r.hidden && !r.excluded);
   const summary = {
-    count: visible.length, hidden_count: rows.length - visible.length,
+    count: visible.length, hidden_count: rows.filter((r) => r.hidden).length,
+    cancelled_count: rows.filter((r) => r.cancelled && !r.hidden).length,
     invoiced: 0, paid: 0, outstanding: 0, overdue: 0, overdue_count: 0, paid_count: 0,
   };
   const byMonthMap = new Map(), byCustMap = new Map();
   for (const r of visible) {
     summary.invoiced += r.amount;
     if (r.paid) { summary.paid += r.amount; summary.paid_count++; }
-    else if (!r.credit) { summary.outstanding += r.amount; }
+    else { summary.outstanding += r.amount; }
     if (r.overdue) { summary.overdue += r.amount; summary.overdue_count++; }
 
     const mm = byMonthMap.get(r.month) || { month: r.month, invoiced: 0, paid: 0, outstanding: 0, count: 0 };
     mm.invoiced += r.amount; mm.count++;
-    if (r.paid) mm.paid += r.amount; else if (!r.credit) mm.outstanding += r.amount;
+    if (r.paid) mm.paid += r.amount; else mm.outstanding += r.amount;
     byMonthMap.set(r.month, mm);
 
-    if (!r.paid && !r.credit) {
+    if (!r.paid) {
       const cn = r.customer_name || '—';
       const cc = byCustMap.get(cn) || { customer_name: cn, kt: r.kt, outstanding: 0, count: 0 };
       cc.outstanding += r.amount; cc.count++;

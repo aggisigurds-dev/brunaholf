@@ -10080,16 +10080,17 @@ async function renderKrofur(t){
   }
 
   // Recompute Brunahólf summary client-side so edits/hides update totals live.
+  // Mirrors the endpoint: hidden + cancelled + credit-notes are excluded from totals.
   function recompute(){
     const today = DATA.today;
-    const vis = (DATA.rows||[]).filter(r=>!r.hidden);
-    const s = {count:vis.length, hidden_count:(DATA.rows||[]).length-vis.length, invoiced:0, paid:0, outstanding:0, overdue:0, overdue_count:0, paid_count:0};
+    const all = (DATA.rows||[]);
+    const vis = all.filter(r=>!r.hidden && !r.excluded);
+    const s = {count:vis.length, hidden_count:all.filter(r=>r.hidden).length, cancelled_count:all.filter(r=>r.cancelled&&!r.hidden).length, invoiced:0, paid:0, outstanding:0, overdue:0, overdue_count:0, paid_count:0};
     for(const r of vis){
-      const paid = r.paid, credit = r.credit;
       s.invoiced += r.amount;
-      if(paid){ s.paid += r.amount; s.paid_count++; }
-      else if(!credit){ s.outstanding += r.amount; }
-      if(!paid && !credit && r.gjalddagi && r.gjalddagi < today){ s.overdue += r.amount; s.overdue_count++; }
+      if(r.paid){ s.paid += r.amount; s.paid_count++; }
+      else { s.outstanding += r.amount; }
+      if(!r.paid && r.gjalddagi && r.gjalddagi < today){ s.overdue += r.amount; s.overdue_count++; }
     }
     DATA.summary = s;
   }
@@ -10098,7 +10099,7 @@ async function renderKrofur(t){
     const s = DATA.summary||{};
     const C = (id,label,val,cls,extra) => `<div class="kf-card ${filter===id?'on':''}" data-filter="${id}"><span class="kf-exp">${filter===id?'▲ falið':'▾ sundurliðun'}</span><div class="kf-cl">${label}</div><div class="kf-cv ${cls}">${kr(val)}</div><div class="kf-cx">${extra}</div></div>`;
     $('kf-bh-cards').innerHTML =
-      C('all','Útgefið '+YEAR, s.invoiced, 'blue', (s.count||0)+' krófur'+(s.hidden_count?` · ${s.hidden_count} falin`:'')) +
+      C('all','Útgefið '+YEAR, s.invoiced, 'blue', (s.count||0)+' gildar krófur'+(s.cancelled_count?` · ${s.cancelled_count} afturkallaðar sleppt`:'')+(s.hidden_count?` · ${s.hidden_count} falin`:'')) +
       C('paid','Greitt', s.paid, 'green', (s.paid_count||0)+' greiddar') +
       C('open','Útistandandi', s.outstanding, 'red', 'ógreitt') +
       C('overdue','Útrunnið', s.overdue, 'amber', (s.overdue_count||0)+' krófur komnar fram yfir');
@@ -10131,7 +10132,8 @@ async function renderKrofur(t){
 
   function rowHtml(r){
     const badges = [];
-    if(r.credit) badges.push('<span class="kf-badge kf-b-credit">Kreditfært</span>');
+    if(r.cancelled) badges.push('<span class="kf-badge kf-b-credit">Afturkallað</span>');
+    else if(r.credit) badges.push('<span class="kf-badge kf-b-credit">Kreditfært</span>');
     else if(r.bank_paid) badges.push('<span class="kf-badge kf-b-bank">Greitt í banka</span>');
     else if(r.paid_status) badges.push('<span class="kf-badge kf-b-paid">Greitt</span>');
     else if(r.overdue) badges.push('<span class="kf-badge kf-b-overdue">Útrunnið</span>');
@@ -10154,9 +10156,9 @@ async function renderKrofur(t){
   function list(){
     const today = DATA.today;
     let rows = (DATA.rows||[]).slice();
-    if(filter==='paid') rows = rows.filter(r=>!r.hidden && r.paid && !r.credit);
-    else if(filter==='open') rows = rows.filter(r=>!r.hidden && !r.paid && !r.credit);
-    else if(filter==='overdue') rows = rows.filter(r=>!r.hidden && !r.paid && !r.credit && r.gjalddagi && r.gjalddagi<today);
+    if(filter==='paid') rows = rows.filter(r=>!r.hidden && r.paid && !r.excluded);
+    else if(filter==='open') rows = rows.filter(r=>!r.hidden && !r.paid && !r.excluded);
+    else if(filter==='overdue') rows = rows.filter(r=>!r.hidden && !r.paid && !r.excluded && r.gjalddagi && r.gjalddagi<today);
     // 'all' shows everything incl. hidden (so they can be un-hidden)
     if(q){ const ql=q.toLowerCase(); rows = rows.filter(r=> (r.customer_name||'').toLowerCase().includes(ql) || String(r.tilvisun||'').includes(ql) || String(r.kt||'').includes(ql)); }
     const fnote = {all:'allar krófur',paid:'greiddar',open:'útistandandi',overdue:'útrunnið'}[filter];
