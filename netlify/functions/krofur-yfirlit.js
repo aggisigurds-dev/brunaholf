@@ -154,11 +154,21 @@ exports.handler = async (event) => {
   try {
     const solur = await fetchAll('solur',
       `select=id,num,customer_nafn,customer_kt,samtals,greitt_med,invoiced_at,created_at&status=eq.final&created_at=gte.${from}&created_at=lt.${to}`);
-    const s = { reikningur_sent: 0, reikningur_count: 0, sent_to_dk: 0, stadgreitt: 0, stadgreitt_count: 0, greitt_sidar: 0, greitt_sidar_count: 0, sala_total: 0, byMonth: [], uncollected: [], sales: [] };
-    const mMap = new Map();
+    const s = { reikningur_sent: 0, reikningur_count: 0, sent_to_dk: 0, stadgreitt: 0, stadgreitt_count: 0, greitt_sidar: 0, greitt_sidar_count: 0, sala_total: 0, byMonth: [], uncollected: [], sales: [], daily: [] };
+    const mMap = new Map(), dMap = new Map();
     for (const r of solur) {
       const amt = Number(r.samtals) || 0; s.sala_total += amt;
       const gm = String(r.greitt_med || '').toLowerCase().replace(/\s+/g, '_');
+      // Daily counter income: card (kort) vs cash (reiðufé/pening) vs reikningur.
+      const day = (r.created_at || '').slice(0, 10);
+      if (day) {
+        const dd = dMap.get(day) || { date: day, card: 0, cash: 0, reikningur: 0, n: 0 };
+        dd.n++;
+        if (gm.includes('reikning')) dd.reikningur += amt;
+        else if (gm.includes('kort')) dd.card += amt;
+        else dd.cash += amt;   // reiðufé / pening / other counter payment
+        dMap.set(day, dd);
+      }
       let bucket = 'stadgreitt';
       if (gm.includes('reikning')) {
         s.reikningur_sent += amt; s.reikningur_count++; if (r.invoiced_at) s.sent_to_dk++; bucket = 'reikningur';
@@ -175,6 +185,7 @@ exports.handler = async (event) => {
       mMap.set(mo, mm);
     }
     s.byMonth = [...mMap.values()].sort((a, b) => a.month.localeCompare(b.month));
+    s.daily = [...dMap.values()].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 60);
     s.uncollected.sort((a, b) => (a.created_at || '').localeCompare(b.created_at || ''));
     s.uncollected_total = s.uncollected.reduce((t, r) => t + r.amount, 0);
 
