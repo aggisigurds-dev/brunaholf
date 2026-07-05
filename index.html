@@ -4429,18 +4429,28 @@ function renderBakendi(t){
       const ids = [...$ddResults.querySelectorAll('._dd-cb:checked')].map(c => c.value);
       if (!ids.length) return;
       if (!confirm('Færa ' + ids.length + ' aukaeintök í ruslmöppu? (skrárnar eyðast ekki — bara færðar)')) return;
-      $ddMove.disabled = true; $ddScan.disabled = true; $ddStatus.textContent = 'Færi ' + ids.length + ' skrár…';
+      $ddMove.disabled = true; $ddScan.disabled = true;
+      const trashFolder = ($ddTrash.value||'').trim();
+      const moved = new Set(); let errCount = 0;
+      // Chunk: 67 Drive moves in one call blows the function timeout (Netlify then
+      // returns an HTML error page → "Unexpected token '<'"). ~12 per call stays safe.
       try {
-        const r = await fetch('/api/drive-dedup', { method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ action:'move', fileIds: ids, trashFolder: ($ddTrash.value||'').trim() }) });
-        const d = await r.json();
-        if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
-        $ddStatus.innerHTML = '✅ Færði <b>' + d.moved_count + '</b> í ruslmöppu' + (d.errors && d.errors.length ? (' · ' + d.errors.length + ' villur') : '') + '. Skanna aftur til að staðfesta.';
-        // drop moved rows from the view
-        const moved = new Set(d.moved||[]);
-        $ddResults.querySelectorAll('._dd-cb').forEach(cb => { if (moved.has(cb.value)) { const tr = cb.closest('tr'); if (tr) tr.remove(); } });
-      } catch(e){ $ddStatus.textContent = 'Villa: ' + (e.message||e); }
-      finally { $ddScan.disabled = false; }
+        for (let i = 0; i < ids.length; i += 12) {
+          const chunk = ids.slice(i, i + 12);
+          $ddStatus.textContent = 'Færi ' + Math.min(i + 12, ids.length) + '/' + ids.length + '…';
+          const r = await fetch('/api/drive-dedup', { method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ action:'move', fileIds: chunk, trashFolder }) });
+          const txt = await r.text(); let d;
+          try { d = JSON.parse(txt); } catch { throw new Error('óvænt svar frá þjóni (HTTP ' + r.status + ')'); }
+          if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+          (d.moved || []).forEach(x => moved.add(x));
+          errCount += (d.errors && d.errors.length) ? d.errors.length : 0;
+          // drop moved rows as we go
+          $ddResults.querySelectorAll('._dd-cb').forEach(cb => { if (moved.has(cb.value)) { const tr = cb.closest('tr'); if (tr) tr.remove(); } });
+        }
+        $ddStatus.innerHTML = '✅ Færði <b>' + moved.size + '</b> í ruslmöppu' + (errCount ? (' · ' + errCount + ' villur') : '') + '. Skanna aftur til að staðfesta.';
+      } catch(e){ $ddStatus.textContent = 'Villa: ' + (e.message||e) + (moved.size ? (' (' + moved.size + ' þegar færð)') : ''); }
+      finally { $ddScan.disabled = false; const n = $ddResults.querySelectorAll('._dd-cb:checked').length; $ddMove.disabled = !n; }
     }
 
     $ddScan.onclick = doScan;
