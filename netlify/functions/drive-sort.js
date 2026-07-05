@@ -47,17 +47,17 @@ async function countLeft(token, folder) {
   const d = await r.json();
   return (d.files || []).length;
 }
-// pdf-parse first; fall back to Drive's Google-Doc OCR for PDFs it can't decode.
+// DEEP-READ every file via Drive OCR (Google-Doc extraction) as the PRIMARY path
+// — pdf-parse is unreliable on dkPlus PDFs (it returns garbage or empty, so the
+// real "Reikningur / Skýrsla" wording is missed). pdf-parse is only a fallback if
+// OCR yields nothing.
 async function readContent(id, token) {
-  const r = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media&supportsAllDrives=true`, { headers: { Authorization: `Bearer ${token}` } });
-  if (!r.ok) return '';
-  const buf = Buffer.from(await r.arrayBuffer());
-  let text = '';
-  try { const d = await pdf(buf); text = d ? (d.text || '') : ''; } catch (_) {}
-  if ((text || '').replace(/\s/g, '').length < 25) {
-    const viaG = await driveOcr(id, token).catch(() => '');
-    if (viaG && viaG.replace(/\s/g, '').length >= 25) text = viaG;
-  }
+  let text = await driveOcr(id, token).catch(() => '');
+  if ((text || '').replace(/\s/g, '').length >= 25) return text;
+  try {
+    const r = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media&supportsAllDrives=true`, { headers: { Authorization: `Bearer ${token}` } });
+    if (r.ok) { const d = await pdf(Buffer.from(await r.arrayBuffer())); text = d ? (d.text || '') : ''; }
+  } catch (_) {}
   return text;
 }
 async function driveOcr(id, token) {
@@ -85,6 +85,14 @@ function cleanStem(name) { return String(name || '').replace(/\.pdf$/i, '').trim
 function allKts(s) { const out = []; const re = /\b(\d{6})-?(\d{4})\b/g; let m; while ((m = re.exec(s))) out.push(m[1] + m[2]); return out; }
 function customerKt(s) { for (const kt of allKts(s)) if (kt !== ISSUER_KT) return kt; return null; }
 function isSlokkviDoc(text, name) { return /600508-?0400|slökkvitæki ehf|slökkvitæki/i.test((text || '') + ' ' + (name || '')); }
+// Is Slökkvitæki the ISSUER of this document (not merely a party on it)? Vendor
+// invoices carry Slökkvitæki's kt as the BUYER, so a plain name/kt match is not
+// enough. These markers appear only on Slökkvitæki-ISSUED docs: the e-invoice
+// footer (reglugerð 505/2013), Slökkvitæki's VSK number (98107), and the report
+// sign-off lines. If none are present → treat as vendor/other (óflokkað).
+function slokkviIssuer(text) {
+  return /reglugerð\s*nr\.?\s*505\s*\/\s*2013|VSK\s*nr\.?\s*:?\s*98107|fyrir\s+h[öo]nd\s+sl[öo]kkvit[æa]ki|verktaki:?\s*sl[öo]kkvit[æa]ki|yfirfarin\s+af\s+sl[öo]kkvit[æa]ki/i.test(text || '');
+}
 // A Slökkvitæki-ISSUED inspection report (úttektarskýrsla or brunaviðvörunarkerfi
 // viðtökupróf). Matches the real wording seen in the PDFs — both the extinguisher
 // report ("Skýrsla vegna úttektar … Fyrir hönd Slökkvitæki ehf") and the alarm
@@ -95,10 +103,14 @@ function isReport(text) {
   return /úttektarsk[ýy]rsla|sko[ðd]unarsk[ýy]rsla|sk[ýy]rsla\s+vegna\s+[úu]ttektar|[úu]ttekt\w*\s+á\s+(brunasl[öo]ng|sl[öo]kkvit|handsl[öo]kkvit)|yfirfarin\s+af\s+sl[öo]kkvit[æa]ki|fyrir\s+h[öo]nd\s+sl[öo]kkvit[æa]ki|verktaki:?\s*sl[öo]kkvit[æa]ki|vi[ðd]t[öo]kupr[óo]f|árleg\w*\s+pr[óo]fun|árssko[ðd]un|brunavi[ðd]v[öo]runarkerfi/i.test(text || '');
 }
 function invNum(text, name) {
-  // Only an explicit R-number (renamed file) or a "Reikningur nr:" label — NOT a
-  // bare 6-digit number, which in a mixed folder would grab vendor invoice
-  // numbers (e.g. "Stolpi_Invoice_107869") and misfile them as our reikningur.
+  // An explicit R-number in the (renamed) file name.
   let m = String(name).match(/\bR[\s\-_]?(\d{5,7})\b/i); if (m) return 'R-' + m[1];
+  // dkPlus header: "Reikningur\n\n107910 …" / "Kreditreikningur … 1xxxxx" — the
+  // 6-digit invoice number (1xxxxx) right after the header word. Anchored to the
+  // header so it never grabs Raðnr (9666) or VSK nr (98107); this is only reached
+  // once slokkviIssuer() confirmed Slökkvitæki issued the doc, so a bare vendor
+  // number can't slip in.
+  m = String(text).match(/(?:kredit)?reikningur\s*(?:nr\.?\s*:?\s*)?(1\d{5})\b/i); if (m) return 'R-' + m[1];
   m = String(text).match(/Reikningur\s*nr\.?\s*:?\s*(\d{4,7})\b/i); if (m) return 'R-' + m[1];
   return '';
 }
@@ -155,9 +167,11 @@ async function handleFile(token, f, dest, opts) {
   if (!isPdf) { if (!opts.dry) await moveFile(token, f.id, dest.other, from, null); return { name: f.name, action: 'other', reason: 'ekki PDF' }; }
 
   const text = await readContent(f.id, token);
-  // Only Slökkvitæki-issued documents are ours; everything else (vendor bókhald,
-  // Nóta, credit-notes) → óflokkað.
-  if (!isSlokkviDoc(text, f.name)) { if (!opts.dry) await moveFile(token, f.id, dest.other, from, null); return { name: f.name, action: 'other', reason: 'ekki Slökkvitæki-skjal' }; }
+  // Only docs ISSUED BY Slökkvitæki are ours. Filenames lie ("Nóta-…" is often a
+  // real reikningur; a vendor "…slökkvitæki.pdf" is not ours) — so this is decided
+  // purely from the OCR'd content. Vendor bókhald / Nóta / payslips (where
+  // Slökkvitæki is only the buyer) → óflokkað.
+  if (!slokkviIssuer(text)) { if (!opts.dry) await moveFile(token, f.id, dest.other, from, null); return { name: f.name, action: 'other', reason: 'ekki Slökkvitæki-útgefið' }; }
 
   const kt = customerKt(text) || customerKt(f.name);
   const ktd = kt ? dash(kt) : '';
@@ -204,7 +218,7 @@ exports.handler = async (event) => {
     if (!src) return json(400, { error: 'src required' });
     if (!dest.master || !dest.dupes || !dest.other) return json(400, { error: 'master, dupes and other folders required' });
     if (!dest.reports) dest.reports = dest.other;   // reports → óflokkað if no reports folder given
-    const limit = Math.min(Math.max(parseInt(p.limit || '2', 10) || 2, 1), 5);
+    const limit = Math.min(Math.max(parseInt(p.limit || '1', 10) || 1, 1), 5);
     const opts = { rename: p.rename !== '0' && p.rename !== 'false', dry: p.dry === '1' || p.dry === 'true' };
     const token = await freshAccessToken();
 

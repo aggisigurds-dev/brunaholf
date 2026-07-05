@@ -3631,7 +3631,7 @@ function renderBakendi(t){
           </div>
           <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#475569;margin:2px 0"><input type="checkbox" id="bk-ds-rename" checked> Endurnefna reikninga (Fyrirtæki - kt - R-nr - ár - upphæð)</label>
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:auto">
-            <button id="bk-ds-step" class="btn">▶️ Flokka næstu 2</button>
+            <button id="bk-ds-step" class="btn">▶️ Flokka næsta skjal</button>
             <button id="bk-ds-run" class="btn primary">⏩ Keyra þar til tómt</button>
             <button id="bk-ds-stop" class="btn" disabled>⏸ Stöðva</button>
             <span id="bk-ds-status" style="font-size:12.5px;color:#64748b"></span>
@@ -4368,7 +4368,7 @@ function renderBakendi(t){
         + '&reports=' + encodeURIComponent(($reports.value||'').trim())
         + '&dupes=' + encodeURIComponent($dupes.value.trim())
         + '&other=' + encodeURIComponent($other.value.trim())
-        + '&limit=2&rename=' + ($rename.checked ? '1' : '0');
+        + '&limit=1&rename=' + ($rename.checked ? '1' : '0');
     }
     function logRows(results){
       let html = '';
