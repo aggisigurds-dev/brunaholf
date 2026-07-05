@@ -87,10 +87,11 @@ function customerKt(s) { for (const kt of allKts(s)) if (kt !== ISSUER_KT) retur
 function isSlokkviDoc(text, name) { return /600508-?0400|slökkvitæki ehf|slökkvitæki/i.test((text || '') + ' ' + (name || '')); }
 function isReport(text) { return /úttektarskýrsla|uttektarskyrsla|skoðunarskýrsla|árs\s*skoðun|ársskoðun|skoðun á slökkvi|handslökkvitæk|slökkvitækja/i.test(text || ''); }
 function invNum(text, name) {
+  // Only an explicit R-number (renamed file) or a "Reikningur nr:" label — NOT a
+  // bare 6-digit number, which in a mixed folder would grab vendor invoice
+  // numbers (e.g. "Stolpi_Invoice_107869") and misfile them as our reikningur.
   let m = String(name).match(/\bR[\s\-_]?(\d{5,7})\b/i); if (m) return 'R-' + m[1];
   m = String(text).match(/Reikningur\s*nr\.?\s*:?\s*(\d{4,7})\b/i); if (m) return 'R-' + m[1];
-  const re = /\b(1\d{5})\b(?!-?\d{4})/g; let x;
-  while ((x = re.exec(text))) { const before = text.slice(Math.max(0, x.index - 7), x.index); if (!/\d[-\s]?$/.test(before)) return 'R-' + x[1]; }
   return '';
 }
 function yearFrom(s) {
