@@ -36,12 +36,13 @@ exports.handler = async (event) => {
     // preview: don't ship the whole reconnect_many detail, just its count is in sum
     return json(200, {
       buckets: {
-        reconnect:    buckets.reconnect,
-        base_link:    buckets.base_link,
-        base_missing: buckets.base_missing,
-        deleted_ptr:  buckets.deleted_ptr,
-        dangling:     buckets.dangling,
-        bad_year:     buckets.bad_year,
+        reconnect:          buckets.reconnect,
+        base_link:          buckets.base_link,
+        base_missing:       buckets.base_missing,
+        deleted_ptr:        buckets.deleted_ptr,
+        dangling:           buckets.dangling,
+        bad_year:           buckets.bad_year,
+        reconnect_conflict: buckets.reconnect_conflict,
       },
       sum,
     });
@@ -108,9 +109,10 @@ async function computeBuckets() {
     }
   });
   const baseByKt = {};
-  bases.forEach(b => { const d = ktDigits(b.kennitala); if (d) baseByKt[d] = b; });
+  const baseById = {};
+  bases.forEach(b => { const d = ktDigits(b.kennitala); if (d) baseByKt[d] = b; baseById[b.id] = b; });
 
-  const B = { reconnect: [], reconnect_many: [], base_link: [], base_missing: [], deleted_ptr: [], dangling: [], bad_year: [] };
+  const B = { reconnect: [], reconnect_many: [], reconnect_conflict: [], base_link: [], base_missing: [], deleted_ptr: [], dangling: [], bad_year: [] };
 
   for (const d of docs) {
     const name = d.customer_name || (d.notes || '').replace(/\s+/g, ' ').slice(0, 80) || '';
@@ -135,8 +137,14 @@ async function computeBuckets() {
 
     // -- reconnect: no location yet, but a kt in text --
     if (d.fyrirtaeki_id == null && kt) {
+      // Guard: if the doc already has a base whose kt disagrees with the notes-kt
+      // (e.g. notes carry two kts), never silently link to a third company —
+      // surface it for a human instead (this was the doc-1595 class).
+      const curBaseKt = d.customer_base_id != null ? ktDigits((baseById[d.customer_base_id] || {}).kennitala) : '';
       const cands = liveByKt[kt] || [];
-      if (cands.length === 1) {
+      if (curBaseKt && curBaseKt !== kt) {
+        B.reconnect_conflict.push({ id: d.id, doc_type: d.doc_type, year: d.year, name, notes_kt: ktDashed(kt), base_kt: ktDashed(curBaseKt) });
+      } else if (cands.length === 1) {
         const f = cands[0];
         B.reconnect.push({
           id: d.id, doc_type: d.doc_type, year: d.year, name, kt: ktDashed(kt),
@@ -168,6 +176,7 @@ async function computeBuckets() {
     docs: docs.length,
     reconnect: B.reconnect.length,
     reconnect_many: B.reconnect_many.length,
+    reconnect_conflict: B.reconnect_conflict.length,
     base_link: B.base_link.length,
     base_missing: B.base_missing.length,
     deleted_ptr: B.deleted_ptr.length,
