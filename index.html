@@ -4888,6 +4888,7 @@ function renderBakendi(t){
       { k: 'deleted_ptr',  ic: '♻️', title: 'Endurbeina af eyddu fyrirtæki', desc: 'Skjal bendir á soft-eytt fyrirtæki → færist á lifandi systur-stað (eða losað, base helst).', cols: ['Skjal', 'Frá (eytt)', '→ Til'], row: r => [r.name, r.from_nafn, r.to_nafn || '(losað)'] },
       { k: 'dangling',     ic: '🧹', title: 'Hreinsa dauða vísun', desc: 'fyrirtaeki_id bendir á röð sem er ekki til → losað.', cols: ['Skjal', 'fyrirtaeki_id'], row: r => [r.name, r.fyrirtaeki_id] },
       { k: 'bad_year',     ic: '📅', title: 'Ómöguleg ár', desc: 'Ár utan 2005…næsta ár. Reikningur/skýrsla verður að hafa ár (CHECK-regla) → lagfærist handvirkt í Skýrslu-stöð.', manual: true, cols: ['Skjal', 'Ár'], row: r => [r.name, r.year] },
+      { k: 'reconnect_conflict', ic: '⚠️', title: 'Misvísandi kt (tvö kt í nótu)', desc: 'Skjal með base á einu kt en nótan nefnir annað kt → tengist EKKI sjálfkrafa. Yfirfarist handvirkt í Skýrslu-stöð.', manual: true, cols: ['Skjal', 'Base kt', 'Nótu kt'], row: r => [r.name, r.base_kt, r.notes_kt] },
     ];
     function render(){
       const s = DATA.sum;
