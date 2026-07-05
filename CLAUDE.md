@@ -275,9 +275,17 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   `/api/google-auth`. Wired to the Bakendi „☁️ Gmail úr skýi" section. Next:
   multi-account (a `google_oauth` row per email) and Microsoft Graph for the
   @brunaholf.is (Office 365) mailboxes.
+- **Canonical doc folders (2026-07-05):** all readers now default to ONE folder per
+  type — reikningar → **`1FHHX99LRB_9w_LqwHIY57T4l9mLMID7p` "Reikningar - Invoices"**,
+  úttektarskýrslur → **`1VSRRw6O8U6lU8WzZxA8CkLtrAmiU07mg` "Úttektarskýrslur"** (both
+  under parent `1ZATA15k…`; also the Drive-flokkun master/reports + Skjalatalning +
+  skýrslu-ár defaults). The old split folders (`1TDusB2…` "Slökkvitæki - Reikningar -
+  Master" and `11Gf4yU…` "Allt") were retired — `reikningar-read/rename/sheet` +
+  `uttekt-rename` + `allt-sheet` all repointed. Þjónustusamningar (`1f2kzXh…`) and
+  Redder (`1GXs9fV…`) stay separate (different doc types).
 - `reikningar-read.js` + `reikningar-sheet.js` — Bakendi **Reikningalesari** for
   SENT Slökkvitæki invoice PDFs (default folder
-  `1TDusB2NLhr-OMLnojSk3iw0oiuiuFMLM` = "slökkvitæki - Reikningar - Master").
+  `1FHHX99LRB_9w_LqwHIY57T4l9mLMID7p` = "Reikningar - Invoices").
   `reikningar-read` (`GET ?folder&dry&limit=6&offset`) reads each PDF's *content*
   and extracts **Fyrirtæki · Heimilisfang · Kennitala · Reikningsnúmer (R-…) ·
   Dagsetning · Heildarupphæð**; batched like doc-index; non-dry upserts
