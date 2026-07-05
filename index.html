@@ -4887,7 +4887,7 @@ function renderBakendi(t){
       { k: 'base_missing', ic: '🆕', title: 'Búa til base + tengja', desc: 'kt í nótu er EKKI til í customers_base → býr til nýja base-röð og tengir.', cols: ['Skjal', 'kt', 'Ár'], row: r => [r.name, r.kt, r.year || '—'] },
       { k: 'deleted_ptr',  ic: '♻️', title: 'Endurbeina af eyddu fyrirtæki', desc: 'Skjal bendir á soft-eytt fyrirtæki → færist á lifandi systur-stað (eða losað, base helst).', cols: ['Skjal', 'Frá (eytt)', '→ Til'], row: r => [r.name, r.from_nafn, r.to_nafn || '(losað)'] },
       { k: 'dangling',     ic: '🧹', title: 'Hreinsa dauða vísun', desc: 'fyrirtaeki_id bendir á röð sem er ekki til → losað.', cols: ['Skjal', 'fyrirtaeki_id'], row: r => [r.name, r.fyrirtaeki_id] },
-      { k: 'bad_year',     ic: '📅', title: 'Laga ómöguleg ár', desc: 'Ár utan 2005…næsta ár → sett í tómt.', cols: ['Skjal', 'Ár'], row: r => [r.name, r.year] },
+      { k: 'bad_year',     ic: '📅', title: 'Ómöguleg ár', desc: 'Ár utan 2005…næsta ár. Reikningur/skýrsla verður að hafa ár (CHECK-regla) → lagfærist handvirkt í Skýrslu-stöð.', manual: true, cols: ['Skjal', 'Ár'], row: r => [r.name, r.year] },
     ];
     function render(){
       const s = DATA.sum;
@@ -4897,7 +4897,7 @@ function renderBakendi(t){
         const open = !!expanded[b.k];
         let c = '<div style="border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin-bottom:10px">' +
           '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span style="font-size:18px">' + b.ic + '</span><div style="flex:1;min-width:200px"><div style="font-weight:700;color:#0f172a">' + b.title + ' <span style="color:#2563eb">' + nf(list.length) + '</span></div><div style="font-size:12px;color:#64748b">' + b.desc + '</div></div>' +
-          (list.length ? btn('_hb-see', open ? 'Fela' : '👁 Skoða', b.k) + ' ' + btn('_hb-run', '▶️ Keyra ' + nf(list.length), b.k, '#16a34a') : '<span style="color:#94a3b8;font-size:13px">ekkert</span>') + '</div>';
+          (list.length ? btn('_hb-see', open ? 'Fela' : '👁 Skoða', b.k) + (b.manual ? ' <span style="color:#b45309;font-size:12px;font-weight:600">→ Skýrslu-stöð</span>' : ' ' + btn('_hb-run', '▶️ Keyra ' + nf(list.length), b.k, '#16a34a')) : '<span style="color:#94a3b8;font-size:13px">ekkert</span>') + '</div>';
         if (open && list.length) {
           c += '<div style="overflow-x:auto;margin-top:10px;border:1px solid #eef2f7;border-radius:10px"><table style="width:100%;border-collapse:collapse;font-size:12px;min-width:520px"><thead><tr>' +
             b.cols.map(x => '<th style="text-align:left;background:#f8fafc;color:#475569;padding:6px 9px;font-size:10.5px;text-transform:uppercase">' + x + '</th>').join('') + '</tr></thead><tbody>' +
@@ -4915,9 +4915,18 @@ function renderBakendi(t){
       $panel.querySelectorAll('._hb-run').forEach(b => b.onclick = async () => {
         const k = b.dataset.k; const list = DATA.buckets[k] || []; const meta = BUCKETS.find(x => x.k === k);
         if (!confirm('Keyra „' + meta.title + '" á ' + list.length + ' skjöl? Þetta skrifar í gagnagrunninn (viðbætandi, engin eyðing).')) return;
-        b.disabled = true; b.textContent = '…keyri';
-        try { const d = await post('apply', { bucket: k, ids: list.map(x => x.id) }); $status.textContent = '✓ ' + (d.applied != null ? d.applied : list.length) + ' unnin'; await load(); }
-        catch (e) { alert('Villa: ' + e.message); b.disabled = false; }
+        b.disabled = true;
+        // Chunk so a big batch doesn't time out one function call (~each row is a PATCH).
+        const ids = list.map(x => x.id); let applied = 0, failed = 0;
+        try {
+          for (let i = 0; i < ids.length; i += 50) {
+            b.textContent = '…keyri ' + Math.min(i + 50, ids.length) + '/' + ids.length;
+            const d = await post('apply', { bucket: k, ids: ids.slice(i, i + 50) });
+            applied += (d.applied || 0); failed += (d.failed || 0);
+          }
+          $status.textContent = '✓ ' + applied + ' unnin' + (failed ? ' · ' + failed + ' sleppt' : '');
+          await load();
+        } catch (e) { alert('Villa: ' + e.message); b.disabled = false; }
       });
     }
     async function post(action, payload){

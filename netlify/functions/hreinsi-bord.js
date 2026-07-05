@@ -198,7 +198,7 @@ async function apply(body) {
     }
   }
 
-  let applied = 0;
+  let applied = 0; const failed = [];
   for (const p of list) {
     const patch = {};
     if (bucket === 'reconnect') {
@@ -214,13 +214,19 @@ async function apply(body) {
       if (p.set_base_id) patch.customer_base_id = p.set_base_id;
     } else if (bucket === 'dangling') {
       patch.fyrirtaeki_id = null;
-    } else if (bucket === 'bad_year') {
-      patch.year = null;
     } else {
-      throw new Error('bucket „' + bucket + '" er ekki keyranlegt');
+      // bad_year is surface-only: a CHECK constraint forbids null year on
+      // reikningur/úttektarskýrsla, and we can't invent the real year → fix by
+      // hand in Skýrslu-stöð. Any other bucket is not runnable.
+      throw new Error('bucket „' + bucket + '" er ekki keyranlegt (lagfærist handvirkt í Skýrslu-stöð)');
     }
-    await sbWrite('PATCH', `customer_documents?id=eq.${p.id}`, patch, 'return=minimal');
-    applied++;
+    // Resilient per-row: one bad row (e.g. a CHECK violation) must not abort the batch.
+    try {
+      await sbWrite('PATCH', `customer_documents?id=eq.${p.id}`, patch, 'return=minimal');
+      applied++;
+    } catch (e) {
+      failed.push({ id: p.id, error: String(e.message || e).slice(0, 140) });
+    }
   }
-  return { ok: true, applied };
+  return { ok: true, applied, failed: failed.length, errors: failed.slice(0, 5) };
 }
