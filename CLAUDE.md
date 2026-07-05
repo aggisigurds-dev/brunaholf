@@ -363,6 +363,14 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   `{ folders:{ reikningar:{total,pdf,subfolders,byYear}, skyrslur:{…} } }`. UI is a
   per-year table + a „↻ Uppfæra talningu" manual-refresh button (defaults to the
   Drive-flokkun master/reports folder ids). No move, no DB write.
+- `skyrslu-ar.js` — **Bakendi „🔎 Lesa ár á skýrslur án árs"** (`/api/skyrslu-ar`):
+  many úttektarskýrslu file names carry NO date (`Torfufell 50 111 Reykjavík -
+  481074-1349.pdf`) → counted as „óþekkt". These reports are app-generated PDFs
+  with a real TEXT LAYER (`…yfirfarin af Slökkvitæki ehf í nóvember 2025`), so this
+  reads the date with **pdf-parse (NO OCR — no Google-Doc copy)** and **renames**
+  the file appending „ - <ár> - <mánuður>" (same „Dags"/„{mánuður} {ár}"-not-„Næsta
+  skoðun" logic as `uttekt-rename`). Batched (`?limit=4`, default folder = skýrslur);
+  the Skjalatalning card loops it until done, then re-counts. Read + rename only.
 
 ### Email
 - `email_digest` (~29k rows): all emails from connected Gmail accounts

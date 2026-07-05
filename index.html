@@ -3662,6 +3662,8 @@ function renderBakendi(t){
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:auto">
             <button id="bk-dc-run" class="btn primary">↻ Uppfæra talningu</button>
+            <button id="bk-dc-skyr-ar" class="btn">🔎 Lesa ár á skýrslur án árs</button>
+            <button id="bk-dc-skyr-stop" class="btn" disabled>⏸ Stöðva</button>
             <span id="bk-dc-status" style="font-size:12.5px;color:#64748b"></span>
           </div>
           <div id="bk-dc-results"></div>
@@ -4475,6 +4477,8 @@ function renderBakendi(t){
     const $reik = document.getElementById('bk-dc-reik');
     const $skyr = document.getElementById('bk-dc-skyr');
     const $run = document.getElementById('bk-dc-run');
+    const $arBtn = document.getElementById('bk-dc-skyr-ar');
+    const $arStop = document.getElementById('bk-dc-skyr-stop');
     const $status = document.getElementById('bk-dc-status');
     const $results = document.getElementById('bk-dc-results');
     if (!$run) return;
@@ -4526,6 +4530,34 @@ function renderBakendi(t){
       finally { $run.disabled = false; }
     }
     $run.onclick = run;
+
+    // 🔎 Read year+month from dateless report PDFs (text layer, no OCR) and rename
+    // them, a few per call, until none are left; then refresh the count.
+    let arStop = false;
+    async function readYears(){
+      arStop = false;
+      $arBtn.disabled = true; $run.disabled = true; $arStop.disabled = false;
+      let done = 0, unread = 0;
+      try {
+        while (!arStop) {
+          const qs = '?folder=' + encodeURIComponent(($skyr.value||'').trim()) + '&limit=4';
+          const r = await fetch('/api/skyrslu-ar' + qs);
+          const d = await r.json();
+          if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+          const gotYear = (d.results||[]).filter(x => x.status === 'ár');
+          done += gotYear.length;
+          unread = d.unread != null ? unread + d.unread : unread;
+          $status.textContent = '🔎 Les skýrslur… ' + done + ' merktar' + (d.total_yearless!=null ? (' · ~' + Math.max(0, d.total_yearless - gotYear.length) + ' eftir') : '');
+          // stop when the batch found no new years (only unreadable/empty remain)
+          if (d.processed === 0 || gotYear.length === 0) break;
+        }
+        $status.textContent = '✅ ' + done + ' skýrslur merktar með ári' + (unread ? (' · ' + unread + ' ólæsilegar') : '') + '. Uppfæri talningu…';
+        await run();
+      } catch(e){ $status.textContent = 'Villa: ' + (e.message||e); }
+      finally { $arBtn.disabled = false; $run.disabled = false; $arStop.disabled = true; }
+    }
+    $arBtn.onclick = readYears;
+    $arStop.onclick = () => { arStop = true; $status.textContent += ' (stöðva…)'; };
   })();
 
   // ── Editable customer match: change / mark-wrong the auto-linked company ───

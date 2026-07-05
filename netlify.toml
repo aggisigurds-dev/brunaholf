@@ -354,6 +354,12 @@
   to = "/.netlify/functions/drive-count"
   status = 200
 
+# Read year+month from dateless report PDFs (text layer, no OCR) and rename them.
+[[redirects]]
+  from = "/api/skyrslu-ar"
+  to = "/.netlify/functions/skyrslu-ar"
+  status = 200
+
 # Bakendi Reikningalesari: write the parsed invoices into a summary Google Sheet in the folder
 [[redirects]]
   from = "/api/reikningar-sheet"
