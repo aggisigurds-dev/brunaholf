@@ -85,13 +85,14 @@ function cleanStem(name) { return String(name || '').replace(/\.pdf$/i, '').trim
 function allKts(s) { const out = []; const re = /\b(\d{6})-?(\d{4})\b/g; let m; while ((m = re.exec(s))) out.push(m[1] + m[2]); return out; }
 function customerKt(s) { for (const kt of allKts(s)) if (kt !== ISSUER_KT) return kt; return null; }
 function isSlokkviDoc(text, name) { return /600508-?0400|slökkvitæki ehf|slökkvitæki/i.test((text || '') + ' ' + (name || '')); }
-// Is Slökkvitæki the ISSUER of this document (not merely a party on it)? Vendor
-// invoices carry Slökkvitæki's kt as the BUYER, so a plain name/kt match is not
-// enough. These markers appear only on Slökkvitæki-ISSUED docs: the e-invoice
-// footer (reglugerð 505/2013), Slökkvitæki's VSK number (98107), and the report
-// sign-off lines. If none are present → treat as vendor/other (óflokkað).
+// Is Slökkvitæki the ISSUER (seller) of this document — not merely a party on it?
+// A vendor invoice carries Slökkvitæki's kt as the BUYER and the generic e-invoice
+// footer "reglugerð 505/2013" (which is NOT Slökkvitæki-specific), so neither is
+// safe. The reliable seller-only signal is Slökkvitæki's own VSK number (98107) —
+// a buyer's VSK is never printed on an invoice — plus the report sign-off lines.
+// If none are present → treat as vendor/other (óflokkað).
 function slokkviIssuer(text) {
-  return /reglugerð\s*nr\.?\s*505\s*\/\s*2013|VSK\s*nr\.?\s*:?\s*98107|fyrir\s+h[öo]nd\s+sl[öo]kkvit[æa]ki|verktaki:?\s*sl[öo]kkvit[æa]ki|yfirfarin\s+af\s+sl[öo]kkvit[æa]ki/i.test(text || '');
+  return /VSK\s*nr\.?\s*:?\s*98107|fyrir\s+h[öo]nd\s+sl[öo]kkvit[æa]ki|verktaki:?\s*sl[öo]kkvit[æa]ki|yfirfarin\s+af\s+sl[öo]kkvit[æa]ki/i.test(text || '');
 }
 // A Slökkvitæki-ISSUED inspection report (úttektarskýrsla or brunaviðvörunarkerfi
 // viðtökupróf). Matches the real wording seen in the PDFs — both the extinguisher
