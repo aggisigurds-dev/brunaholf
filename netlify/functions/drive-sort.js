@@ -85,7 +85,15 @@ function cleanStem(name) { return String(name || '').replace(/\.pdf$/i, '').trim
 function allKts(s) { const out = []; const re = /\b(\d{6})-?(\d{4})\b/g; let m; while ((m = re.exec(s))) out.push(m[1] + m[2]); return out; }
 function customerKt(s) { for (const kt of allKts(s)) if (kt !== ISSUER_KT) return kt; return null; }
 function isSlokkviDoc(text, name) { return /600508-?0400|slökkvitæki ehf|slökkvitæki/i.test((text || '') + ' ' + (name || '')); }
-function isReport(text) { return /úttektarskýrsla|uttektarskyrsla|skoðunarskýrsla|árs\s*skoðun|ársskoðun|skoðun á slökkvi|handslökkvitæk|slökkvitækja/i.test(text || ''); }
+// A Slökkvitæki-ISSUED inspection report (úttektarskýrsla or brunaviðvörunarkerfi
+// viðtökupróf). Matches the real wording seen in the PDFs — both the extinguisher
+// report ("Skýrsla vegna úttektar … Fyrir hönd Slökkvitæki ehf") and the alarm
+// report ("Viðtökupróf/Árleg prófun … Verktaki: Slökkvitæki ehf"). These phrases
+// mark Slökkvitæki as the ISSUER, so vendor invoices (Slökkvitæki only the buyer)
+// do NOT match.
+function isReport(text) {
+  return /úttektarsk[ýy]rsla|sko[ðd]unarsk[ýy]rsla|sk[ýy]rsla\s+vegna\s+[úu]ttektar|[úu]ttekt\w*\s+á\s+(brunasl[öo]ng|sl[öo]kkvit|handsl[öo]kkvit)|yfirfarin\s+af\s+sl[öo]kkvit[æa]ki|fyrir\s+h[öo]nd\s+sl[öo]kkvit[æa]ki|verktaki:?\s*sl[öo]kkvit[æa]ki|vi[ðd]t[öo]kupr[óo]f|árleg\w*\s+pr[óo]fun|árssko[ðd]un|brunavi[ðd]v[öo]runarkerfi/i.test(text || '');
+}
 function invNum(text, name) {
   // Only an explicit R-number (renamed file) or a "Reikningur nr:" label — NOT a
   // bare 6-digit number, which in a mixed folder would grab vendor invoice
@@ -155,16 +163,16 @@ async function handleFile(token, f, dest, opts) {
   const ktd = kt ? dash(kt) : '';
   const inv = invNum(text, f.name);
   const year = yearFrom(f.name) || yearFrom(text);
-  const co = companyFrom(text, f.name);
   let base = null; if (kt) { try { base = await matchBase(kt); } catch (_) {} }
+  const coName = (base && base.nafn) || companyFrom(text, f.name) || '';
 
   // úttektarskýrsla (report) — Slökkvitæki-issued, report wording, no R-number
   if (!inv && isReport(text)) {
     if (base && await reportKnown(base.id, year)) { if (!opts.dry) await moveFile(token, f.id, dest.dupes, from, null); return { name: f.name, action: 'dupes', reason: 'skýrsla þegar til', year }; }
-    const nn = opts.rename ? nameReport(co || (base && base.nafn), ktd, year) : null;
+    const nn = opts.rename ? nameReport(coName, ktd, year) : null;
     if (!opts.dry) {
       await moveFile(token, f.id, dest.reports, from, nn);
-      try { await upsertDoc({ customer_base_id: base ? base.id : null, doc_type: 'uttektarskyrsla', year: year || null, drive_file_id: f.id, source: 'gdrive', found_by: 'drive-sort', invoice_number: null, doc_date: null, customer_name: co || (base && base.nafn) || null, notes: (co || (base && base.nafn) || '') + ' · úttektarskýrsla' + (year ? (' ' + year) : '') + (kt ? (' · kt ' + ktd) : '') + (base ? '' : ' · RESOLVE') }); } catch (_) {}
+      try { await upsertDoc({ customer_base_id: base ? base.id : null, doc_type: 'uttektarskyrsla', year: year || null, drive_file_id: f.id, source: 'gdrive', found_by: 'drive-sort', invoice_number: null, doc_date: null, customer_name: coName || null, notes: (coName || '') + ' · úttektarskýrsla' + (year ? (' ' + year) : '') + (kt ? (' · kt ' + ktd) : '') + (base ? '' : ' · RESOLVE') }); } catch (_) {}
     }
     return { name: f.name, action: 'reports', newName: nn, year, base_id: base ? base.id : null, base_name: base ? base.nafn : null };
   }
@@ -173,10 +181,10 @@ async function handleFile(token, f, dest, opts) {
   if (inv) {
     if (await invoiceKnown(inv)) { if (!opts.dry) await moveFile(token, f.id, dest.dupes, from, null); return { name: f.name, action: 'dupes', reason: 'reikningur þegar til', invoice_number: inv }; }
     const tot = totalFrom(text);
-    const nn = opts.rename ? nameInvoice(co || (base && base.nafn), ktd, inv, year, tot) : null;
+    const nn = opts.rename ? nameInvoice(coName, ktd, inv, year, tot) : null;
     if (!opts.dry) {
       await moveFile(token, f.id, dest.master, from, nn);
-      try { await upsertDoc({ customer_base_id: base ? base.id : null, doc_type: 'reikningur', year: year || null, drive_file_id: f.id, source: 'gdrive', found_by: 'drive-sort', amount: tot || null, invoice_number: inv, doc_date: null, customer_name: co || (base && base.nafn) || null, notes: (co || (base && base.nafn) || '') + ' · ' + inv + (kt ? (' · kt ' + ktd) : '') + (base ? '' : ' · RESOLVE') }); } catch (_) {}
+      try { await upsertDoc({ customer_base_id: base ? base.id : null, doc_type: 'reikningur', year: year || null, drive_file_id: f.id, source: 'gdrive', found_by: 'drive-sort', amount: tot || null, invoice_number: inv, doc_date: null, customer_name: coName || null, notes: (coName || '') + ' · ' + inv + (kt ? (' · kt ' + ktd) : '') + (base ? '' : ' · RESOLVE') }); } catch (_) {}
     }
     return { name: f.name, action: 'master', newName: nn, invoice_number: inv, base_id: base ? base.id : null, base_name: base ? base.nafn : null };
   }
