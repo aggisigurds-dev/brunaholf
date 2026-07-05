@@ -3669,6 +3669,33 @@ function renderBakendi(t){
           <div id="bk-dc-results"></div>
         </div>
 
+        <!-- 🗂️ Skjalavörsla (raða í árs-undirmöppur + sameina gamlar möppur) -->
+        <div style="${card}">
+          <div style="display:flex;align-items:center;gap:14px">
+            <span style="${iconSq};${ICON.indigo}">🗂️</span>
+            <div style="flex:1">
+              <div style="${titleStyle}">Skjalavörsla — raða í árs-möppur</div>
+              <p style="${descStyle};margin-top:4px">Raðar hverri skrá í <b>&lt;ár&gt;/</b> undirmöppu (2024/, 2025/… · óþekkt/) eftir ári í skráarheiti — <b>engin OCR, engin endurnefning</b>. Gefðu <b>Uppspretta</b> (gömul mappa) til að <b>sameina</b> hana inn í áfangastað. Tvítök (sama nafn) fara í rusl. Byrjaðu á <b>👁 Forskoða</b>.</p>
+            </div>
+            <span style="${chipStyle('#e0e7ff','#3730a3')}">Röðun</span>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin:2px 0">
+            <button id="bk-sv-preset-reik" class="btn" style="font-size:12px">🧾 Reikningar (+ gamla master)</button>
+            <button id="bk-sv-preset-skyr" class="btn" style="font-size:12px">📄 Skýrslur (+ „Allt")</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div><label style="${labelStyle}">Áfangastaður (canonical mappa)</label><input id="bk-sv-dest" value="1FHHX99LRB_9w_LqwHIY57T4l9mLMID7p" placeholder="folder-id / slóð" style="${inpMono};width:100%;box-sizing:border-box;height:40px"></div>
+            <div><label style="${labelStyle}">Uppspretta (gömul mappa — valfrjálst)</label><input id="bk-sv-src" value="1TDusB2NLhr-OMLnojSk3iw0oiuiuFMLM" placeholder="folder-id / slóð (tómt = bara raða áfangastað)" style="${inpMono};width:100%;box-sizing:border-box;height:40px"></div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:auto">
+            <button id="bk-sv-dry" class="btn">👁 Forskoða (dry)</button>
+            <button id="bk-sv-run" class="btn primary">▶️ Raða &amp; sameina</button>
+            <button id="bk-sv-stop" class="btn" disabled>⏸ Stöðva</button>
+            <span id="bk-sv-status" style="font-size:12.5px;color:#64748b"></span>
+          </div>
+          <div id="bk-sv-results"></div>
+        </div>
+
         <!-- 📝 Samningalesari -->
         <div style="${card}">
           <div style="display:flex;align-items:center;gap:14px">
@@ -4556,6 +4583,58 @@ function renderBakendi(t){
     }
     $arBtn.onclick = readYears;
     $arStop.onclick = () => { arStop = true; $status.textContent += ' (stöðva…)'; };
+  })();
+
+  // ── 🗂️ Skjalavörsla: file into <ár>/ subfolders + consolidate an old folder ──
+  (function wireSkjalavarsla(){
+    const $dest = document.getElementById('bk-sv-dest');
+    const $src = document.getElementById('bk-sv-src');
+    const $dry = document.getElementById('bk-sv-dry');
+    const $run = document.getElementById('bk-sv-run');
+    const $stop = document.getElementById('bk-sv-stop');
+    const $status = document.getElementById('bk-sv-status');
+    const $results = document.getElementById('bk-sv-results');
+    if (!$run) return;
+    const REIK = '1FHHX99LRB_9w_LqwHIY57T4l9mLMID7p', REIK_OLD = '1TDusB2NLhr-OMLnojSk3iw0oiuiuFMLM';
+    const SKYR = '1VSRRw6O8U6lU8WzZxA8CkLtrAmiU07mg', SKYR_OLD = '11Gf4yUeR6tQ2HcFxWk-50IFQl2xBUQOg';
+    document.getElementById('bk-sv-preset-reik').onclick = () => { $dest.value = REIK; $src.value = REIK_OLD; };
+    document.getElementById('bk-sv-preset-skyr').onclick = () => { $dest.value = SKYR; $src.value = SKYR_OLD; };
+    let stop = false;
+
+    function renderTally(byYear, dupes){
+      const years = Object.keys(byYear).sort((a,b)=>(a==='óþekkt')?1:(b==='óþekkt')?-1:(+b)-(+a));
+      if (!years.length && !dupes) { $results.innerHTML=''; return; }
+      let rows = years.map(y => '<tr><td style="padding:4px 10px;font-weight:600">'+escapeHtml(y)+'/</td><td style="text-align:right;padding:4px 10px">'+byYear[y]+'</td></tr>').join('');
+      if (dupes) rows += '<tr><td style="padding:4px 10px;color:#b45309">🗑 tvítök → rusl</td><td style="text-align:right;padding:4px 10px;color:#b45309">'+dupes+'</td></tr>';
+      $results.innerHTML = '<div style="margin-top:10px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;max-width:320px"><table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead style="background:#f8fafc"><tr><th style="text-align:left;padding:6px 10px">Árs-mappa</th><th style="text-align:right;padding:6px 10px">Raðað</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+    }
+
+    async function go(dry){
+      stop = false;
+      $dry.disabled = true; $run.disabled = true; $stop.disabled = dry; if(!dry)$stop.disabled=false;
+      const tally = {}; let filed = 0, duped = 0, guard = 0;
+      try {
+        while (!stop && guard++ < 300) {
+          const qs = '?dest=' + encodeURIComponent(($dest.value||'').trim()) +
+            (($src.value||'').trim() ? '&src=' + encodeURIComponent($src.value.trim()) : '') +
+            '&limit=' + (dry ? 40 : 25) + (dry ? '&dry=1' : '');
+          const r = await fetch('/api/skjalavarsla' + qs);
+          const d = await r.json();
+          if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+          filed += d.filed || 0; duped += d.duped || 0;
+          Object.keys(d.movedByYear||{}).forEach(y => tally[y] = (tally[y]||0) + d.movedByYear[y]);
+          renderTally(tally, duped);
+          $status.textContent = (dry?'👁 Forskoðun… ':'🗂️ Raða… ') + filed + ' raðað' + (duped?(' · '+duped+' tvítök'):'') + ' · ' + (d.remaining||0) + ' eftir';
+          if (d.done || d.processed === 0) break;
+          if (dry) break;   // dry: one page is enough of a preview (nothing leaves the list)
+        }
+        $status.textContent = (dry?'👁 Forskoðun: ':'✅ ') + filed + ' skrár' + (dry?' myndu raðast':' raðaðar') + (duped?(' · '+duped+' tvítök í rusl'):'') + (dry?' (ekkert fært)':'');
+      } catch(e){ $status.textContent = 'Villa: ' + (e.message||e); }
+      finally { $dry.disabled = false; $run.disabled = false; $stop.disabled = true; }
+    }
+    $dry.onclick = () => go(true);
+    $run.onclick = () => go(false);
+    $stop.onclick = () => { stop = true; $status.textContent += ' (stöðva…)'; };
   })();
 
   // ── Editable customer match: change / mark-wrong the auto-linked company ───
