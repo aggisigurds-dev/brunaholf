@@ -124,22 +124,31 @@ exports.handler = async (event) => {
 };
 
 // ── Drive ────────────────────────────────────────────────────────────────────
+// Walk the folder TREE (BFS) — the master folders are now organised into <ár>/
+// subfolders, so a direct-children-only listing would find nothing to index.
 async function listPdfs(folder, token) {
-  const out = [];
-  let pageToken = null;
-  do {
-    const params = new URLSearchParams({
-      q: `'${folder.replace(/'/g, "\\'")}' in parents and trashed=false`,
-      fields: 'files(id,name,mimeType),nextPageToken',
-      pageSize: '200', includeItemsFromAllDrives: 'true', supportsAllDrives: 'true', corpora: 'allDrives',
-    });
-    if (pageToken) params.set('pageToken', pageToken);
-    const r = await fetch('https://www.googleapis.com/drive/v3/files?' + params, { headers: { Authorization: `Bearer ${token}` } });
-    if (!r.ok) throw new Error('Drive list ' + r.status + ' ' + (await r.text()).slice(0, 200));
-    const d = await r.json();
-    for (const f of (d.files || [])) if (/pdf$/i.test(f.name) || f.mimeType === 'application/pdf') out.push(f);
-    pageToken = d.nextPageToken;
-  } while (pageToken);
+  const out = [], queue = [folder], seen = new Set();
+  while (queue.length) {
+    const fid = queue.shift();
+    if (seen.has(fid)) continue; seen.add(fid);
+    let pageToken = null;
+    do {
+      const params = new URLSearchParams({
+        q: `'${fid.replace(/'/g, "\\'")}' in parents and trashed=false`,
+        fields: 'files(id,name,mimeType),nextPageToken',
+        pageSize: '200', includeItemsFromAllDrives: 'true', supportsAllDrives: 'true', corpora: 'allDrives',
+      });
+      if (pageToken) params.set('pageToken', pageToken);
+      const r = await fetch('https://www.googleapis.com/drive/v3/files?' + params, { headers: { Authorization: `Bearer ${token}` } });
+      if (!r.ok) throw new Error('Drive list ' + r.status + ' ' + (await r.text()).slice(0, 200));
+      const d = await r.json();
+      for (const f of (d.files || [])) {
+        if (f.mimeType === 'application/vnd.google-apps.folder') { queue.push(f.id); continue; }
+        if (/pdf$/i.test(f.name) || f.mimeType === 'application/pdf') out.push(f);
+      }
+      pageToken = d.nextPageToken;
+    } while (pageToken);
+  }
   return out;
 }
 async function readPdfText(id, token) {
