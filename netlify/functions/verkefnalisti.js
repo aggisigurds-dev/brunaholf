@@ -57,6 +57,7 @@ async function uploadImage(b64, prefix) {
   const r = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${key}`, {
     method: 'POST',
     headers: {
+      apikey: SUPABASE_KEY,
       Authorization: `Bearer ${SUPABASE_KEY}`,
       'Content-Type': dec.mime,
       'x-upsert': 'true',
