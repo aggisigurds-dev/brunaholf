@@ -3582,6 +3582,36 @@ function renderBakendi(t){
           <div id="bk-rk-results"></div>
         </div>
 
+        <!-- 🗂️ Drive tvítekningar (finna + færa aukaeintök í ruslmöppu) -->
+        <div style="${card}">
+          <div style="display:flex;align-items:center;gap:14px">
+            <span style="${iconSq};${ICON.amber}">🗂️</span>
+            <div style="flex:1">
+              <div style="${titleStyle}">Drive tvítekningar — finna &amp; hreinsa</div>
+              <p style="${descStyle};margin-top:4px">Veldu Drive-möppu → finnur skrár með <b>sama nafni</b> (og „(1)/(2)" afrit). Sýnir listann til <b>staðfestingar fyrst</b>, færir svo valin aukaeintök í <b>ruslmöppu</b> — <b>ekkert er eytt</b>, bara fært.</p>
+            </div>
+            <span style="${chipStyle('#fef3c7','#92400e')}">Drive</span>
+          </div>
+          <div>
+            <label style="${labelStyle}">Mappa til að skanna</label>
+            <input id="bk-dd-folder" placeholder="folder-id eða Drive-slóð" style="${inpMono};width:100%;box-sizing:border-box;height:42px">
+            <div style="${hint}">Límdu inn folder-id eða heila slóð (drive.google.com/drive/folders/<b>ÞETTA</b>).</div>
+          </div>
+          <div>
+            <label style="${labelStyle}">Ruslmappa (aukaeintök færð hingað)</label>
+            <input id="bk-dd-trash" value="1CnnNHm1xCukiTs806z9Ha1nZnSELM9k8" style="${inpMono};width:100%;box-sizing:border-box;height:42px">
+          </div>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#475569;margin:2px 0">
+            <input type="checkbox" id="bk-dd-cap100"> Stoppa eftir fyrstu 100 tvítök
+          </label>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:auto">
+            <button id="bk-dd-scan" class="btn primary">🔍 Finna tvítök</button>
+            <button id="bk-dd-move" class="btn" disabled>🗑 Færa valin í ruslmöppu</button>
+            <span id="bk-dd-status" style="font-size:12.5px;color:#64748b"></span>
+          </div>
+          <div id="bk-dd-results"></div>
+        </div>
+
         <!-- 📝 Samningalesari -->
         <div style="${card}">
           <div style="display:flex;align-items:center;gap:14px">
@@ -4193,6 +4223,94 @@ function renderBakendi(t){
   $rkRead.onclick = () => runReikningar(true);
   $rkDb.onclick = () => runReikningar(false);
   $rkSheet.onclick = writeReikningarSheet;
+
+  // ── 🗂️ Drive tvítekningar: finna afrit → staðfesta → færa í ruslmöppu ──────
+  (function wireDriveDedup(){
+    const $ddFolder = document.getElementById('bk-dd-folder');
+    const $ddTrash  = document.getElementById('bk-dd-trash');
+    const $ddCap    = document.getElementById('bk-dd-cap100');
+    const $ddScan   = document.getElementById('bk-dd-scan');
+    const $ddMove   = document.getElementById('bk-dd-move');
+    const $ddStatus = document.getElementById('bk-dd-status');
+    const $ddResults= document.getElementById('bk-dd-results');
+    if (!$ddScan) return;
+    let ddScan = null;   // last scan result
+
+    const fmtBytes = n => { n = Number(n)||0; if (!n) return ''; const u=['B','KB','MB','GB']; let i=0; while(n>=1024&&i<u.length-1){n/=1024;i++;} return n.toFixed(n<10&&i>0?1:0)+' '+u[i]; };
+
+    async function doScan(){
+      const folder = ($ddFolder.value||'').trim();
+      if (!folder) { $ddStatus.textContent = 'Sláðu inn möppu.'; return; }
+      $ddScan.disabled = true; $ddMove.disabled = true; ddScan = null;
+      $ddStatus.textContent = 'Skanna möppu…'; $ddResults.innerHTML = '';
+      try {
+        const cap = $ddCap.checked ? 100 : 0;
+        const r = await fetch('/api/drive-dedup?folder=' + encodeURIComponent(folder) + '&cap=' + cap);
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+        ddScan = d;
+        renderScan(d);
+      } catch(e){ $ddStatus.textContent = 'Villa: ' + (e.message||e); }
+      finally { $ddScan.disabled = false; }
+    }
+
+    function renderScan(d){
+      if (!d.groups || !d.groups.length){
+        $ddStatus.textContent = 'Engin tvítök fundust (' + (d.total_files||0) + ' skrár skannaðar).';
+        $ddResults.innerHTML = ''; $ddMove.disabled = true; return;
+      }
+      const capNote = d.capped ? (' · sýni fyrstu ' + d.dupe_count + ' af ' + d.total_dupe_count + ' tvítökum') : '';
+      $ddStatus.innerHTML = '<b>' + d.group_count + '</b> nöfn með afritum · <b>' + d.dupe_count + '</b> aukaeintök til að færa (' + (d.total_files||0) + ' skrár skannaðar)' + capNote;
+      let rows = '';
+      d.groups.forEach(g => {
+        rows += '<tr style="background:#f8fafc"><td colspan="4" style="padding:8px 10px;font-weight:700;color:#0f172a;border-top:2px solid #e2e8f0">'
+             + '📌 ' + escapeHtml(g.name) + ' <span style="font-weight:500;color:#64748b">— held eftir 1, færi ' + g.dupes.length + '</span></td></tr>';
+        rows += '<tr style="color:#16a34a"><td style="padding:4px 10px;width:28px">✅</td>'
+             + '<td style="padding:4px 10px"><a href="' + g.keeper.viewUrl + '" target="_blank" rel="noopener" style="color:#0f172a">' + escapeHtml(g.keeper.name) + '</a></td>'
+             + '<td style="padding:4px 10px;color:#64748b;font-size:11.5px">' + (g.keeper.createdTime||'').slice(0,10) + '</td>'
+             + '<td style="padding:4px 10px;color:#64748b;font-size:11.5px">held eftir</td></tr>';
+        g.dupes.forEach(f => {
+          rows += '<tr><td style="padding:4px 10px"><input type="checkbox" class="_dd-cb" value="' + f.id + '" checked></td>'
+               + '<td style="padding:4px 10px"><a href="' + f.viewUrl + '" target="_blank" rel="noopener" style="color:#475569">' + escapeHtml(f.name) + '</a></td>'
+               + '<td style="padding:4px 10px;color:#94a3b8;font-size:11.5px">' + (f.createdTime||'').slice(0,10) + '</td>'
+               + '<td style="padding:4px 10px;color:#b45309;font-size:11.5px">' + fmtBytes(f.size) + ' → rusl</td></tr>';
+        });
+      });
+      $ddResults.innerHTML =
+        '<div style="margin:10px 0;display:flex;gap:8px;align-items:center;font-size:12px">'
+        + '<button id="_dd-all" class="btn" style="font-size:11px;padding:3px 9px">Velja allt</button>'
+        + '<button id="_dd-none" class="btn" style="font-size:11px;padding:3px 9px">Hreinsa val</button></div>'
+        + '<div style="max-height:460px;overflow:auto;border:1px solid #e2e8f0;border-radius:10px">'
+        + '<table style="width:100%;border-collapse:collapse;font-size:12.5px">' + rows + '</table></div>';
+      const upd = () => { const n = $ddResults.querySelectorAll('._dd-cb:checked').length; $ddMove.disabled = !n; $ddMove.textContent = n ? ('🗑 Færa ' + n + ' í ruslmöppu') : '🗑 Færa valin í ruslmöppu'; };
+      $ddResults.querySelectorAll('._dd-cb').forEach(cb => cb.addEventListener('change', upd));
+      const a = document.getElementById('_dd-all'), z = document.getElementById('_dd-none');
+      if (a) a.onclick = () => { $ddResults.querySelectorAll('._dd-cb').forEach(c => c.checked = true); upd(); };
+      if (z) z.onclick = () => { $ddResults.querySelectorAll('._dd-cb').forEach(c => c.checked = false); upd(); };
+      upd();
+    }
+
+    async function doMove(){
+      const ids = [...$ddResults.querySelectorAll('._dd-cb:checked')].map(c => c.value);
+      if (!ids.length) return;
+      if (!confirm('Færa ' + ids.length + ' aukaeintök í ruslmöppu? (skrárnar eyðast ekki — bara færðar)')) return;
+      $ddMove.disabled = true; $ddScan.disabled = true; $ddStatus.textContent = 'Færi ' + ids.length + ' skrár…';
+      try {
+        const r = await fetch('/api/drive-dedup', { method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ action:'move', fileIds: ids, trashFolder: ($ddTrash.value||'').trim() }) });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+        $ddStatus.innerHTML = '✅ Færði <b>' + d.moved_count + '</b> í ruslmöppu' + (d.errors && d.errors.length ? (' · ' + d.errors.length + ' villur') : '') + '. Skanna aftur til að staðfesta.';
+        // drop moved rows from the view
+        const moved = new Set(d.moved||[]);
+        $ddResults.querySelectorAll('._dd-cb').forEach(cb => { if (moved.has(cb.value)) { const tr = cb.closest('tr'); if (tr) tr.remove(); } });
+      } catch(e){ $ddStatus.textContent = 'Villa: ' + (e.message||e); }
+      finally { $ddScan.disabled = false; }
+    }
+
+    $ddScan.onclick = doScan;
+    $ddMove.onclick = doMove;
+  })();
 
   // ── Editable customer match: change / mark-wrong the auto-linked company ───
   let _custList = null, _custMap = null;

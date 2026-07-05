@@ -335,6 +335,12 @@
   to = "/.netlify/functions/reikningar-read"
   status = 200
 
+# Bakendi Drive-tvítekningar: find duplicate-named files, move copies to a bin folder
+[[redirects]]
+  from = "/api/drive-dedup"
+  to = "/.netlify/functions/drive-dedup"
+  status = 200
+
 # Bakendi Reikningalesari: write the parsed invoices into a summary Google Sheet in the folder
 [[redirects]]
   from = "/api/reikningar-sheet"

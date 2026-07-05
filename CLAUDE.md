@@ -328,6 +328,16 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   „dups" include distinct sites mis-addressed to one location (Pizzan 2023,
   Center Hótel Arnarhvoll), so dedup is by-eye via 🗑.
 
+- `drive-dedup.js` — **Bakendi „🗂️ Drive tvítekningar"** (`/api/drive-dedup`): pick any
+  Drive folder → lists files with **duplicate names** (groups by name with the extension
+  and a trailing `(1)/(2)` copy-suffix stripped, case-folded). `GET ?folder=ID[&cap=N]`
+  returns the duplicate groups (one keeper per name — prefers the copy WITHOUT a `(n)`
+  suffix, else oldest `createdTime` — plus the extra copies to move); `cap=100` stops after
+  the first 100 duplicate files. Human-in-the-loop: the UI shows the list for confirmation,
+  then `POST {action:'move', fileIds:[…], trashFolder}` **moves** (never deletes) each copy
+  into the bin folder (default `1CnnNHm1xCukiTs806z9Ha1nZnSELM9k8`) via Drive
+  `files.update` (addParents=trash, removeParents=current). Reuses `_google.freshAccessToken`.
+
 ### Email
 - `email_digest` (~29k rows): all emails from connected Gmail accounts
   (`Brunaholf@brunaholf.is`, `aggisigurds@gmail.com` etc.). Used for
