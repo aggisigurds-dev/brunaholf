@@ -366,6 +366,12 @@
   to = "/.netlify/functions/skjalavarsla"
   status = 200
 
+# Live snapshot of companies (+tags) and documents (+link status) for Bakendi.
+[[redirects]]
+  from = "/api/kunnagrunnur"
+  to = "/.netlify/functions/kunnagrunnur"
+  status = 200
+
 # Bakendi Reikningalesari: write the parsed invoices into a summary Google Sheet in the folder
 [[redirects]]
   from = "/api/reikningar-sheet"
