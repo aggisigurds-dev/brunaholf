@@ -379,6 +379,16 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   the file appending „ - <ár> - <mánuður>" (same „Dags"/„{mánuður} {ár}"-not-„Næsta
   skoðun" logic as `uttekt-rename`). Batched (`?limit=4`, default folder = skýrslur);
   the Skjalatalning card loops it until done, then re-counts. Read + rename only.
+- `skjalavarsla.js` — **Bakendi „🗂️ Skjalavörsla"** (`/api/skjalavarsla`): files every
+  doc into a `<ár>/` subfolder (2024/, 2025/…, óþekkt/) under a canonical folder by
+  the **year in its NAME** (cheap — NO OCR, NO rename). Optional `src` = an old folder
+  → its files are **moved** into `dest/<ár>/` (names KEPT, so well-named files are not
+  downgraded). `GET ?dest=<canonical>[&src=<old>][&dupes=<bin>][&limit=20][&dry=1]`,
+  batched; the UI loops with 👁 dry preview + ▶️ run. **Dedup is by exact filename
+  within a year folder** — so multi-address kts (rekstrarfélög with several sites, whose
+  names carry different addresses) are NEVER collapsed; only true same-name copies go to
+  the bin. NB it trusts the filename year; run `skyrslu-ar` (and any OCR-rename) FIRST so
+  names are reliable before filing.
 
 ### Email
 - `email_digest` (~29k rows): all emails from connected Gmail accounts
