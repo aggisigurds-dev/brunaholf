@@ -399,6 +399,17 @@ body.theme-brunastal .tbl th{background:var(--tbl-header);color:var(--ink-2)}
 .sb-brand .txt strong{display:block;color:#fff;font-size:13px;font-weight:700;letter-spacing:-.01em}
 .sb-brand .txt small{display:block;color:#9BA3AF;font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-top:2px}
 
+/* ======= Sidebar dividers (dauf lína / skil, notandi-stillanleg) ======= */
+.tab-sep{display:flex;align-items:center;gap:8px;padding:9px 14px 5px;margin-top:4px;user-select:none;color:#94a3b8}
+.tab-sep .sep-line{flex:1;height:1px;background:currentColor;opacity:.18}
+.tab-sep .sep-label{font-size:9.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;opacity:.6;white-space:nowrap}
+body.theme-brunastal .tab-sep{color:rgba(255,255,255,.5)}
+body.theme-modern .tab-sep{color:#8a8f9c}
+.tab-sep-h{display:inline-block;width:1px;height:20px;background:currentColor;color:#94a3b8;opacity:.25;margin:0 6px;align-self:center;flex:0 0 auto}
+.tab-addsep{display:block;width:calc(100% - 20px);margin:8px 10px 4px;padding:7px 8px;border:1px dashed currentColor;border-radius:8px;background:none;color:#94a3b8;font:inherit;font-size:11.5px;cursor:pointer;opacity:.7;transition:opacity .15s}
+.tab-addsep:hover{opacity:1}
+body.theme-brunastal .tab-addsep{color:rgba(255,255,255,.55)}
+
 /* ======= Sidebar Nav (vertical) ======= */
 .layout{display:flex;align-items:flex-start;gap:0;min-height:calc(100vh - 66px);}
 .sidebar{
@@ -2293,19 +2304,21 @@ function renderTabs(){
     </div>` : '';
   const visible = state.tabs.filter(t => state.ui.editMode || !t.hidden || t.id==='stillingar');
   if(lay==='horizontal'){
-    $tabs.innerHTML = visible.map(t=>`
-      <button class="tab ${state.ui.activeTab===t.id?'active':''}" data-id="${t.id}">
+    $tabs.innerHTML = visible.map(t=> t.sep
+      ? `<span class="tab-sep-h" data-id="${t.id}" data-sep="1"></span>`
+      : `<button class="tab ${state.ui.activeTab===t.id?'active':''}" data-id="${t.id}">
         <span>${t.icon||'•'}</span><span>${escapeHtml(t.label)}</span>
       </button>
     `).join('');
   } else {
-    $tabs.innerHTML = brand + visible.map(t=>`
-      <button class="tab-v ${state.ui.activeTab===t.id?'active':''}" data-id="${t.id}" title="${escapeAttr(t.label)}">
+    $tabs.innerHTML = brand + visible.map(t=> t.sep
+      ? `<div class="tab-sep" data-id="${t.id}" data-sep="1">${t.label?`<span class="sep-label">${escapeHtml(t.label)}</span>`:''}<span class="sep-line"></span></div>`
+      : `<button class="tab-v ${state.ui.activeTab===t.id?'active':''}" data-id="${t.id}" title="${escapeAttr(t.label)}">
         <span class="ti">${t.icon||'•'}</span><span class="tn">${escapeHtml(t.label)}</span>
       </button>
     `).join('');
   }
-  $tabs.querySelectorAll('[data-id]').forEach(el=>{
+  $tabs.querySelectorAll('[data-id]:not([data-sep])').forEach(el=>{
     el.addEventListener('click',()=>{
       state.ui.activeTab=el.dataset.id; save({nav:true}); render();
       document.getElementById('layout').classList.remove('open'); // close mobile drawer
@@ -2328,10 +2341,25 @@ function renderTabs(){
   if(state.ui.editMode){
     $tabs.querySelectorAll('[data-id]').forEach(el=>{
       const _t = state.tabs.find(x=>x.id===el.dataset.id);
+      // Dauf lína (skil): endurnefna (tvísmella) + fjarlægja (✕). Ekki hide-toggle.
+      if(_t && _t.sep){
+        if(!el.querySelector('.sep-x')){
+          const x = document.createElement('span');
+          x.className='sep-x'; x.textContent='✕'; x.title='Fjarlægja línu';
+          x.style.cssText='margin-left:auto;cursor:pointer;font-size:11px;padding:0 4px;opacity:.6;flex:0 0 auto';
+          x.addEventListener('click', e=>{ e.stopPropagation(); e.preventDefault();
+            state.tabs = state.tabs.filter(t=>t.id!==_t.id); save(); renderTabs(); });
+          el.appendChild(x);
+          el.title='Tvísmelltu til að nefna skil · dragðu til að færa';
+          el.addEventListener('dblclick', e=>{ e.stopPropagation();
+            const lbl = prompt('Heiti á skilum (tómt = bara lína):', _t.label||''); if(lbl===null) return;
+            _t.label = lbl.trim(); save(); renderTabs(); });
+        }
+      }
       // Faldar síður birtast daufar í Breyta-ham svo hægt sé að sýna þær aftur.
       if(_t && _t.hidden) el.style.opacity = '0.45';
-      // Fela / Sýna síðu (ekki Stillingar).
-      if(_t && _t.id!=='stillingar' && !el.querySelector('.tab-hidetog')){
+      // Fela / Sýna síðu (ekki Stillingar, ekki skil).
+      if(_t && !_t.sep && _t.id!=='stillingar' && !el.querySelector('.tab-hidetog')){
         const tog = document.createElement('span');
         tog.className = 'tab-hidetog';
         tog.textContent = _t.hidden ? '🙈' : '👁';
@@ -2363,9 +2391,22 @@ function renderTabs(){
         save(); renderTabs();
       });
     });
+    // „➕ Bæta daufri línu" — setur ný skil (dauf lína) fyrir ofan Stillingar;
+    // dragðu upp til að flokka. Vistast í state.tabs → /api/app-state (samstillt).
+    if(!$tabs.querySelector('.tab-addsep')){
+      const add = document.createElement('button');
+      add.className='tab-addsep'; add.type='button'; add.textContent='➕ Bæta daufri línu';
+      add.onclick = ()=>{
+        const sep = { id:'sep-'+Date.now().toString(36), sep:true, label:'' };
+        const si = state.tabs.findIndex(t=>t.id==='stillingar');
+        state.tabs.splice(si<0?state.tabs.length:si, 0, sep);
+        save(); renderTabs();
+      };
+      $tabs.appendChild(add);
+    }
   }
 }
-function activeTab(){ return state.tabs.find(t=>t.id===state.ui.activeTab) || state.tabs[0]; }
+function activeTab(){ return state.tabs.find(t=>t.id===state.ui.activeTab && !t.sep) || state.tabs.find(t=>!t.sep) || state.tabs[0]; }
 function buttonsFor(tabId){ return state.buttons.filter(b=>b.tab===tabId); }
 
 function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
