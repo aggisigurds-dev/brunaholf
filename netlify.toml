@@ -341,6 +341,13 @@
   to = "/.netlify/functions/drive-dedup"
   status = 200
 
+# Bakendi Drive-flokkun: deep-scan a messy folder → invoices to master (renamed),
+# duplicates to bin, other docs to an unsorted folder — one file at a time.
+[[redirects]]
+  from = "/api/drive-sort"
+  to = "/.netlify/functions/drive-sort"
+  status = 200
+
 # Bakendi Reikningalesari: write the parsed invoices into a summary Google Sheet in the folder
 [[redirects]]
   from = "/api/reikningar-sheet"

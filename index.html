@@ -3612,6 +3612,33 @@ function renderBakendi(t){
           <div id="bk-dd-results"></div>
         </div>
 
+        <!-- 🧹 Drive-flokkun (deep-scan → reikningar/master · tvítök/rusl · annað/óflokkað) -->
+        <div style="${card}">
+          <div style="display:flex;align-items:center;gap:14px">
+            <span style="${iconSq};${ICON.teal}">🧹</span>
+            <div style="flex:1">
+              <div style="${titleStyle}">Drive-flokkun — djúpskönnun &amp; flokkun</div>
+              <p style="${descStyle};margin-top:4px">Skannar rusl-möppu <b>eitt skjal í einu</b> og færir jafnóðum: <b>reikningar</b> endurnefndir í master-möppu, <b>tvítök</b> í rusl, <b>annað</b> í óflokkað. Frýs aldrei allt — hvert skjal er fært um leið, svo þú getur stoppað og haldið áfram hvenær sem er.</p>
+            </div>
+            <span style="${chipStyle('#cffafe','#155e75')}">Flæði</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div><label style="${labelStyle}">Uppspretta (rusl-mappa)</label><input id="bk-ds-src" placeholder="folder-id / slóð" style="${inpMono};width:100%;box-sizing:border-box;height:40px"></div>
+            <div><label style="${labelStyle}">Master (reikningar hingað)</label><input id="bk-ds-master" placeholder="folder-id / slóð" style="${inpMono};width:100%;box-sizing:border-box;height:40px"></div>
+            <div><label style="${labelStyle}">Skýrslur (úttektarskýrslur hingað)</label><input id="bk-ds-reports" placeholder="folder-id / slóð (valfrjálst)" style="${inpMono};width:100%;box-sizing:border-box;height:40px"></div>
+            <div><label style="${labelStyle}">Rusl (tvítök hingað)</label><input id="bk-ds-dupes" value="1CnnNHm1xCukiTs806z9Ha1nZnSELM9k8" style="${inpMono};width:100%;box-sizing:border-box;height:40px"></div>
+            <div style="grid-column:1 / -1"><label style="${labelStyle}">Óflokkað (annað / vendor-reikningar hingað)</label><input id="bk-ds-other" placeholder="folder-id / slóð" style="${inpMono};width:100%;box-sizing:border-box;height:40px"></div>
+          </div>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#475569;margin:2px 0"><input type="checkbox" id="bk-ds-rename" checked> Endurnefna reikninga (Fyrirtæki - kt - R-nr - ár - upphæð)</label>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:auto">
+            <button id="bk-ds-step" class="btn">▶️ Flokka næstu 2</button>
+            <button id="bk-ds-run" class="btn primary">⏩ Keyra þar til tómt</button>
+            <button id="bk-ds-stop" class="btn" disabled>⏸ Stöðva</button>
+            <span id="bk-ds-status" style="font-size:12.5px;color:#64748b"></span>
+          </div>
+          <div id="bk-ds-results"></div>
+        </div>
+
         <!-- 📝 Samningalesari -->
         <div style="${card}">
           <div style="display:flex;align-items:center;gap:14px">
@@ -4310,6 +4337,90 @@ function renderBakendi(t){
 
     $ddScan.onclick = doScan;
     $ddMove.onclick = doMove;
+  })();
+
+  // ── 🧹 Drive-flokkun: deep-scan → master / rusl / óflokkað, eitt í einu ─────
+  (function wireDriveSort(){
+    const $src = document.getElementById('bk-ds-src');
+    const $master = document.getElementById('bk-ds-master');
+    const $reports = document.getElementById('bk-ds-reports');
+    const $dupes = document.getElementById('bk-ds-dupes');
+    const $other = document.getElementById('bk-ds-other');
+    const $rename = document.getElementById('bk-ds-rename');
+    const $step = document.getElementById('bk-ds-step');
+    const $run = document.getElementById('bk-ds-run');
+    const $stop = document.getElementById('bk-ds-stop');
+    const $status = document.getElementById('bk-ds-status');
+    const $results = document.getElementById('bk-ds-results');
+    if (!$step) return;
+    let running = false, totals = { master:0, reports:0, dupes:0, other:0, error:0 }, batches = 0;
+    const ICONA = { master:'📁', reports:'📄', dupes:'🗑', other:'📦', error:'⚠️' };
+    const COLA = { master:'#0f7a43', reports:'#2563eb', dupes:'#b45309', other:'#6366f1', error:'#dc2626' };
+
+    function need(){
+      for (const [el,label] of [[$src,'Uppspretta'],[$master,'Master'],[$dupes,'Rusl'],[$other,'Óflokkað']])
+        if (!(el.value||'').trim()) { $status.textContent = 'Vantar möppu: ' + label; return false; }
+      return true;
+    }
+    function qs(){
+      return '?src=' + encodeURIComponent($src.value.trim())
+        + '&master=' + encodeURIComponent($master.value.trim())
+        + '&reports=' + encodeURIComponent(($reports.value||'').trim())
+        + '&dupes=' + encodeURIComponent($dupes.value.trim())
+        + '&other=' + encodeURIComponent($other.value.trim())
+        + '&limit=2&rename=' + ($rename.checked ? '1' : '0');
+    }
+    function logRows(results){
+      let html = '';
+      results.forEach(r => {
+        const c = COLA[r.action] || '#334155';
+        const detail = r.action==='master' ? (r.newName ? ('→ ' + escapeHtml(r.newName)) : escapeHtml(r.invoice_number||''))
+                     : r.action==='error' ? escapeHtml(r.error||'') : ('(' + escapeHtml(r.reason||r.action) + ')');
+        html += '<tr><td style="padding:3px 8px;white-space:nowrap;color:'+c+';font-weight:700">'+(ICONA[r.action]||'?')+' '+r.action+'</td>'
+             + '<td style="padding:3px 8px;color:#475569">'+escapeHtml(r.name||'')+'</td>'
+             + '<td style="padding:3px 8px;color:#94a3b8;font-size:11.5px">'+detail+'</td></tr>';
+      });
+      // prepend newest batch
+      const tbl = $results.querySelector('tbody');
+      if (tbl) tbl.insertAdjacentHTML('afterbegin', html);
+      else $results.innerHTML = '<div style="max-height:420px;overflow:auto;border:1px solid #e2e8f0;border-radius:10px;margin-top:8px"><table style="width:100%;border-collapse:collapse;font-size:12px"><tbody>'+html+'</tbody></table></div>';
+    }
+    function summary(done){
+      $status.innerHTML = '📁 '+totals.master+' reikn · 📄 '+totals.reports+' skýrslur · 🗑 '+totals.dupes+' tvítök · 📦 '+totals.other+' annað'
+        + (totals.error?(' · ⚠️ '+totals.error+' villur'):'') + ' · '+batches+' lotur'
+        + (done ? ' <b style="color:#0f7a43">— tómt, búið ✅</b>' : (running?' …':''));
+    }
+    async function oneBatch(){
+      const r = await fetch('/api/drive-sort' + qs());
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+      batches++;
+      (d.results||[]).forEach(x => { totals[x.action] = (totals[x.action]||0) + 1; });
+      if (d.results && d.results.length) logRows(d.results);
+      return d;
+    }
+    async function step(){
+      if (!need()) return;
+      $step.disabled = true; $run.disabled = true;
+      try { const d = await oneBatch(); summary(d.done || d.processed===0); }
+      catch(e){ $status.textContent = 'Villa: ' + (e.message||e); }
+      finally { $step.disabled = false; $run.disabled = false; }
+    }
+    async function runLoop(){
+      if (!need()) return;
+      running = true; $run.disabled = true; $step.disabled = true; $stop.disabled = false;
+      try {
+        while (running) {
+          const d = await oneBatch();
+          summary(false);
+          if (d.done || d.processed === 0) { summary(true); break; }
+        }
+      } catch(e){ $status.textContent = 'Villa: ' + (e.message||e); }
+      finally { running = false; $run.disabled = false; $step.disabled = false; $stop.disabled = true; }
+    }
+    $step.onclick = step;
+    $run.onclick = runLoop;
+    $stop.onclick = () => { running = false; $status.textContent += ' (stöðva…)'; };
   })();
 
   // ── Editable customer match: change / mark-wrong the auto-linked company ───

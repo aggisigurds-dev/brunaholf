@@ -338,6 +338,19 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   into the bin folder (default `1CnnNHm1xCukiTs806z9Ha1nZnSELM9k8`) via Drive
   `files.update` (addParents=trash, removeParents=current). Reuses `_google.freshAccessToken`.
 
+- `drive-sort.js` — **Bakendi „🧹 Drive-flokkun"** (`/api/drive-sort`): resilient,
+  slow-&-steady pipeline for a messy source folder of mixed PDFs. `GET
+  ?src=&master=&reports=&dupes=&other=[&limit=2][&rename=1][&dry=1]` reads a FEW
+  files per call with the **OCR reader** (pdf-parse → Google-Doc OCR fallback, the
+  reliable path for dkPlus PDFs) and MOVES each immediately, so a freeze never loses
+  more than the file in hand (resumable — sorted files leave `src`). Only
+  **Slökkvitæki-issued** docs (issuer kt 600508-0400) are kept: reikningur (has an
+  R-number) → rename → master + link `customer_documents`; úttektarskýrsla (report
+  wording, no R-nr) → rename → reports + link (doc_type `uttektarskyrsla`); a copy of
+  an already-recorded doc → dupes (delete folder); everything else (vendor bókhald,
+  Nóta, mbox, …) → other (óflokkað). Dedup by invoice number (reikn.) or (base,year)
+  (skýrsla). Reuses `_google.freshAccessToken`. UI loops 2-at-a-time until `done`.
+
 ### Email
 - `email_digest` (~29k rows): all emails from connected Gmail accounts
   (`Brunaholf@brunaholf.is`, `aggisigurds@gmail.com` etc.). Used for
