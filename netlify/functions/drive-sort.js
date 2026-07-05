@@ -14,8 +14,11 @@
 //   • a copy of an already-recorded doc → DUPES (delete folder)
 //   • anything else (vendor invoice, mbox, other)     → OTHER (óflokkað)
 //
-//   GET /api/drive-sort?src=&master=&reports=&dupes=&other=[&limit=2][&rename=1][&dry=1]
+//   GET /api/drive-sort?src=&master=&reports=&dupes=&other=[&limit=2][&rename=1][&dry=1][&recurse=1]
 //        → process up to `limit` files; call repeatedly until done:true.
+//   recurse (default ON): walk subfolders too — files anywhere in the tree get
+//   sorted (each keeps its own parent, so moveFile lifts it out of its subfolder).
+//   recurse=0 restores flat, direct-children-only behaviour.
 
 const pdf = require('pdf-parse');
 const { freshAccessToken, json, cors } = require('./_google');
@@ -25,39 +28,75 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ISSUER_KT = '6005080400';
 
 // ── Drive ─────────────────────────────────────────────────────────────────────
+const FOLDER_MIME = 'application/vnd.google-apps.folder';
 function folderId(raw) { const s = String(raw || '').trim(); const m = s.match(/[-\w]{25,}/); return m ? m[0] : s; }
+// List ALL direct children of one folder (paged), files AND subfolders.
+async function listChildren(token, folder) {
+  const out = []; let pageToken = '';
+  do {
+    const params = new URLSearchParams({
+      q: `'${folder.replace(/'/g, "\\'")}' in parents and trashed=false`,
+      fields: 'files(id,name,mimeType,parents),nextPageToken',
+      pageSize: '200', supportsAllDrives: 'true', includeItemsFromAllDrives: 'true',
+    });
+    if (pageToken) params.set('pageToken', pageToken);
+    const r = await fetch('https://www.googleapis.com/drive/v3/files?' + params, { headers: { Authorization: `Bearer ${token}` } });
+    if (!r.ok) throw new Error('Drive list ' + r.status + ': ' + (await r.text()).slice(0, 200));
+    const d = await r.json();
+    out.push(...(d.files || []));
+    pageToken = d.nextPageToken || '';
+  } while (pageToken);
+  return out;
+}
+// Direct-children-only listing (recurse OFF) — the original behaviour.
 async function listSome(token, folder, limit) {
-  const params = new URLSearchParams({
-    q: `'${folder.replace(/'/g, "\\'")}' in parents and trashed=false`,
-    fields: 'files(id,name,mimeType,parents),nextPageToken',
-    pageSize: String(Math.min(Math.max(limit, 1), 20)), supportsAllDrives: 'true', includeItemsFromAllDrives: 'true',
-  });
-  const r = await fetch('https://www.googleapis.com/drive/v3/files?' + params, { headers: { Authorization: `Bearer ${token}` } });
-  if (!r.ok) throw new Error('Drive list ' + r.status + ': ' + (await r.text()).slice(0, 200));
-  const d = await r.json();
-  return d.files || [];
+  const kids = await listChildren(token, folder);
+  return kids.filter(f => f.mimeType !== FOLDER_MIME).slice(0, Math.min(Math.max(limit, 1), 20));
 }
-async function countLeft(token, folder) {
-  const params = new URLSearchParams({
-    q: `'${folder.replace(/'/g, "\\'")}' in parents and trashed=false`,
-    fields: 'files(id)', pageSize: '1', supportsAllDrives: 'true', includeItemsFromAllDrives: 'true',
-  });
-  const r = await fetch('https://www.googleapis.com/drive/v3/files?' + params, { headers: { Authorization: `Bearer ${token}` } });
-  if (!r.ok) return null;
-  const d = await r.json();
-  return (d.files || []).length;
-}
-// pdf-parse first; fall back to Drive's Google-Doc OCR for PDFs it can't decode.
-async function readContent(id, token) {
-  const r = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media&supportsAllDrives=true`, { headers: { Authorization: `Bearer ${token}` } });
-  if (!r.ok) return '';
-  const buf = Buffer.from(await r.arrayBuffer());
-  let text = '';
-  try { const d = await pdf(buf); text = d ? (d.text || '') : ''; } catch (_) {}
-  if ((text || '').replace(/\s/g, '').length < 25) {
-    const viaG = await driveOcr(id, token).catch(() => '');
-    if (viaG && viaG.replace(/\s/g, '').length >= 25) text = viaG;
+// Walk the folder tree (BFS) and collect up to `limit` actual FILES (never
+// folders), descending into subfolders. Each file keeps its real `parents`, so
+// moveFile lifts it straight out of whichever subfolder it lives in. We stop as
+// soon as we have `limit` files — the next call re-walks from the root and finds
+// the rest (moved files have left the tree), keeping every call slow-&-steady.
+async function collectFiles(token, root, limit) {
+  const files = []; const queue = [root]; const seen = new Set();
+  while (queue.length && files.length < limit) {
+    const folder = queue.shift();
+    if (seen.has(folder)) continue; seen.add(folder);
+    const kids = await listChildren(token, folder);
+    for (const c of kids) {
+      if (c.mimeType === FOLDER_MIME) queue.push(c.id);
+      else { files.push(c); if (files.length >= limit) break; }
+    }
   }
+  return files;
+}
+// True if ANY file remains anywhere in the tree (folders alone don't count).
+// Returns on the first file found, so the near-done case is cheap.
+async function anyFileLeft(token, root) {
+  const queue = [root]; const seen = new Set();
+  while (queue.length) {
+    const folder = queue.shift();
+    if (seen.has(folder)) continue; seen.add(folder);
+    let kids; try { kids = await listChildren(token, folder); } catch (_) { return null; }
+    for (const c of kids) {
+      if (c.mimeType === FOLDER_MIME) queue.push(c.id);
+      else return true;
+    }
+  }
+  return false;
+}
+// DEEP-READ every file via Drive OCR (Google-Doc extraction) as the PRIMARY path
+// — pdf-parse is unreliable on dkPlus PDFs (it returns garbage or empty, so the
+// real "Reikningur / Skýrsla" wording is missed). pdf-parse is only a fallback if
+// OCR yields nothing.
+async function readContent(id, token) {
+  let text = await driveOcr(id, token).catch(() => '');
+  if ((text || '').replace(/\s/g, '').length >= 25) return text;
+  try {
+    const r = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media&supportsAllDrives=true`, { headers: { Authorization: `Bearer ${token}` } });
+    if (r.ok) { const d = await pdf(Buffer.from(await r.arrayBuffer())); text = d ? (d.text || '') : ''; }
+  } catch (_) {}
   return text;
 }
 async function driveOcr(id, token) {
@@ -85,12 +124,33 @@ function cleanStem(name) { return String(name || '').replace(/\.pdf$/i, '').trim
 function allKts(s) { const out = []; const re = /\b(\d{6})-?(\d{4})\b/g; let m; while ((m = re.exec(s))) out.push(m[1] + m[2]); return out; }
 function customerKt(s) { for (const kt of allKts(s)) if (kt !== ISSUER_KT) return kt; return null; }
 function isSlokkviDoc(text, name) { return /600508-?0400|slökkvitæki ehf|slökkvitæki/i.test((text || '') + ' ' + (name || '')); }
-function isReport(text) { return /úttektarskýrsla|uttektarskyrsla|skoðunarskýrsla|árs\s*skoðun|ársskoðun|skoðun á slökkvi|handslökkvitæk|slökkvitækja/i.test(text || ''); }
+// Is Slökkvitæki the ISSUER (seller) of this document — not merely a party on it?
+// A vendor invoice carries Slökkvitæki's kt as the BUYER and the generic e-invoice
+// footer "reglugerð 505/2013" (which is NOT Slökkvitæki-specific), so neither is
+// safe. The reliable seller-only signal is Slökkvitæki's own VSK number (98107) —
+// a buyer's VSK is never printed on an invoice — plus the report sign-off lines.
+// If none are present → treat as vendor/other (óflokkað).
+function slokkviIssuer(text) {
+  return /VSK\s*nr\.?\s*:?\s*98107|fyrir\s+h[öo]nd\s+sl[öo]kkvit[æa]ki|verktaki:?\s*sl[öo]kkvit[æa]ki|yfirfarin\s+af\s+sl[öo]kkvit[æa]ki/i.test(text || '');
+}
+// A Slökkvitæki-ISSUED inspection report (úttektarskýrsla or brunaviðvörunarkerfi
+// viðtökupróf). Matches the real wording seen in the PDFs — both the extinguisher
+// report ("Skýrsla vegna úttektar … Fyrir hönd Slökkvitæki ehf") and the alarm
+// report ("Viðtökupróf/Árleg prófun … Verktaki: Slökkvitæki ehf"). These phrases
+// mark Slökkvitæki as the ISSUER, so vendor invoices (Slökkvitæki only the buyer)
+// do NOT match.
+function isReport(text) {
+  return /úttektarsk[ýy]rsla|sko[ðd]unarsk[ýy]rsla|sk[ýy]rsla\s+vegna\s+[úu]ttektar|[úu]ttekt\w*\s+á\s+(brunasl[öo]ng|sl[öo]kkvit|handsl[öo]kkvit)|yfirfarin\s+af\s+sl[öo]kkvit[æa]ki|fyrir\s+h[öo]nd\s+sl[öo]kkvit[æa]ki|verktaki:?\s*sl[öo]kkvit[æa]ki|vi[ðd]t[öo]kupr[óo]f|árleg\w*\s+pr[óo]fun|árssko[ðd]un|brunavi[ðd]v[öo]runarkerfi/i.test(text || '');
+}
 function invNum(text, name) {
-  // Only an explicit R-number (renamed file) or a "Reikningur nr:" label — NOT a
-  // bare 6-digit number, which in a mixed folder would grab vendor invoice
-  // numbers (e.g. "Stolpi_Invoice_107869") and misfile them as our reikningur.
+  // An explicit R-number in the (renamed) file name.
   let m = String(name).match(/\bR[\s\-_]?(\d{5,7})\b/i); if (m) return 'R-' + m[1];
+  // dkPlus header: "Reikningur\n\n107910 …" / "Kreditreikningur … 1xxxxx" — the
+  // 6-digit invoice number (1xxxxx) right after the header word. Anchored to the
+  // header so it never grabs Raðnr (9666) or VSK nr (98107); this is only reached
+  // once slokkviIssuer() confirmed Slökkvitæki issued the doc, so a bare vendor
+  // number can't slip in.
+  m = String(text).match(/(?:kredit)?reikningur\s*(?:nr\.?\s*:?\s*)?(1\d{5})\b/i); if (m) return 'R-' + m[1];
   m = String(text).match(/Reikningur\s*nr\.?\s*:?\s*(\d{4,7})\b/i); if (m) return 'R-' + m[1];
   return '';
 }
@@ -147,24 +207,26 @@ async function handleFile(token, f, dest, opts) {
   if (!isPdf) { if (!opts.dry) await moveFile(token, f.id, dest.other, from, null); return { name: f.name, action: 'other', reason: 'ekki PDF' }; }
 
   const text = await readContent(f.id, token);
-  // Only Slökkvitæki-issued documents are ours; everything else (vendor bókhald,
-  // Nóta, credit-notes) → óflokkað.
-  if (!isSlokkviDoc(text, f.name)) { if (!opts.dry) await moveFile(token, f.id, dest.other, from, null); return { name: f.name, action: 'other', reason: 'ekki Slökkvitæki-skjal' }; }
+  // Only docs ISSUED BY Slökkvitæki are ours. Filenames lie ("Nóta-…" is often a
+  // real reikningur; a vendor "…slökkvitæki.pdf" is not ours) — so this is decided
+  // purely from the OCR'd content. Vendor bókhald / Nóta / payslips (where
+  // Slökkvitæki is only the buyer) → óflokkað.
+  if (!slokkviIssuer(text)) { if (!opts.dry) await moveFile(token, f.id, dest.other, from, null); return { name: f.name, action: 'other', reason: 'ekki Slökkvitæki-útgefið' }; }
 
   const kt = customerKt(text) || customerKt(f.name);
   const ktd = kt ? dash(kt) : '';
   const inv = invNum(text, f.name);
   const year = yearFrom(f.name) || yearFrom(text);
-  const co = companyFrom(text, f.name);
   let base = null; if (kt) { try { base = await matchBase(kt); } catch (_) {} }
+  const coName = (base && base.nafn) || companyFrom(text, f.name) || '';
 
   // úttektarskýrsla (report) — Slökkvitæki-issued, report wording, no R-number
   if (!inv && isReport(text)) {
     if (base && await reportKnown(base.id, year)) { if (!opts.dry) await moveFile(token, f.id, dest.dupes, from, null); return { name: f.name, action: 'dupes', reason: 'skýrsla þegar til', year }; }
-    const nn = opts.rename ? nameReport(co || (base && base.nafn), ktd, year) : null;
+    const nn = opts.rename ? nameReport(coName, ktd, year) : null;
     if (!opts.dry) {
       await moveFile(token, f.id, dest.reports, from, nn);
-      try { await upsertDoc({ customer_base_id: base ? base.id : null, doc_type: 'uttektarskyrsla', year: year || null, drive_file_id: f.id, source: 'gdrive', found_by: 'drive-sort', invoice_number: null, doc_date: null, customer_name: co || (base && base.nafn) || null, notes: (co || (base && base.nafn) || '') + ' · úttektarskýrsla' + (year ? (' ' + year) : '') + (kt ? (' · kt ' + ktd) : '') + (base ? '' : ' · RESOLVE') }); } catch (_) {}
+      try { await upsertDoc({ customer_base_id: base ? base.id : null, doc_type: 'uttektarskyrsla', year: year || null, drive_file_id: f.id, source: 'gdrive', found_by: 'drive-sort', invoice_number: null, doc_date: null, customer_name: coName || null, notes: (coName || '') + ' · úttektarskýrsla' + (year ? (' ' + year) : '') + (kt ? (' · kt ' + ktd) : '') + (base ? '' : ' · RESOLVE') }); } catch (_) {}
     }
     return { name: f.name, action: 'reports', newName: nn, year, base_id: base ? base.id : null, base_name: base ? base.nafn : null };
   }
@@ -173,10 +235,10 @@ async function handleFile(token, f, dest, opts) {
   if (inv) {
     if (await invoiceKnown(inv)) { if (!opts.dry) await moveFile(token, f.id, dest.dupes, from, null); return { name: f.name, action: 'dupes', reason: 'reikningur þegar til', invoice_number: inv }; }
     const tot = totalFrom(text);
-    const nn = opts.rename ? nameInvoice(co || (base && base.nafn), ktd, inv, year, tot) : null;
+    const nn = opts.rename ? nameInvoice(coName, ktd, inv, year, tot) : null;
     if (!opts.dry) {
       await moveFile(token, f.id, dest.master, from, nn);
-      try { await upsertDoc({ customer_base_id: base ? base.id : null, doc_type: 'reikningur', year: year || null, drive_file_id: f.id, source: 'gdrive', found_by: 'drive-sort', amount: tot || null, invoice_number: inv, doc_date: null, customer_name: co || (base && base.nafn) || null, notes: (co || (base && base.nafn) || '') + ' · ' + inv + (kt ? (' · kt ' + ktd) : '') + (base ? '' : ' · RESOLVE') }); } catch (_) {}
+      try { await upsertDoc({ customer_base_id: base ? base.id : null, doc_type: 'reikningur', year: year || null, drive_file_id: f.id, source: 'gdrive', found_by: 'drive-sort', amount: tot || null, invoice_number: inv, doc_date: null, customer_name: coName || null, notes: (coName || '') + ' · ' + inv + (kt ? (' · kt ' + ktd) : '') + (base ? '' : ' · RESOLVE') }); } catch (_) {}
     }
     return { name: f.name, action: 'master', newName: nn, invoice_number: inv, base_id: base ? base.id : null, base_name: base ? base.nafn : null };
   }
@@ -196,18 +258,24 @@ exports.handler = async (event) => {
     if (!src) return json(400, { error: 'src required' });
     if (!dest.master || !dest.dupes || !dest.other) return json(400, { error: 'master, dupes and other folders required' });
     if (!dest.reports) dest.reports = dest.other;   // reports → óflokkað if no reports folder given
-    const limit = Math.min(Math.max(parseInt(p.limit || '2', 10) || 2, 1), 5);
+    const limit = Math.min(Math.max(parseInt(p.limit || '1', 10) || 1, 1), 5);
+    const recurse = p.recurse !== '0' && p.recurse !== 'false';   // default ON — also read subfolders
     const opts = { rename: p.rename !== '0' && p.rename !== 'false', dry: p.dry === '1' || p.dry === 'true' };
     const token = await freshAccessToken();
 
-    const files = await listSome(token, src, limit);
+    const files = recurse ? await collectFiles(token, src, limit) : await listSome(token, src, limit);
     const results = []; const tally = { master: 0, reports: 0, dupes: 0, other: 0, error: 0 };
     for (const f of files) {
       try { const r = await handleFile(token, f, dest, opts); results.push(r); tally[r.action] = (tally[r.action] || 0) + 1; }
       catch (e) { results.push({ name: f.name, action: 'error', error: String(e.message || e) }); tally.error++; }
     }
-    const left = opts.dry ? files.length : await countLeft(token, src);
-    return json(200, { processed: files.length, tally, results, done: (left === 0), dry: opts.dry });
+    // done = no files left to sort. In dry mode we don't move, so "done" just
+    // means this scan found nothing. Live mode re-walks the tree (recurse) or the
+    // root (flat) to see if anything remains.
+    let left;
+    if (opts.dry) left = files.length ? 1 : 0;
+    else left = recurse ? (await anyFileLeft(token, src) ? 1 : 0) : (await listSome(token, src, 1)).length;
+    return json(200, { processed: files.length, tally, results, done: (left === 0), recurse, dry: opts.dry });
   } catch (e) {
     return json(500, { error: String(e.message || e) });
   }
