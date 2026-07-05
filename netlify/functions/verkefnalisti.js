@@ -76,7 +76,9 @@ exports.handler = async (event) => {
 
   try {
     if (event.httpMethod === 'GET') {
-      const r = await sb('verkefnalisti?select=*&order=status.asc,priority.desc,created_at.desc&limit=500');
+      // Röðun: staða → forgangs-merki (rautt=3 efst) → handvirk röð (priority) → nýjast.
+      // Liturinn er þannig aðal-forgangurinn; drag fínstillir innan sama litar.
+      const r = await sb('verkefnalisti?select=*&order=status.asc,flag.desc,priority.desc,created_at.desc&limit=500');
       if (!r.ok) return json(r.status, { error: await r.text() });
       const tasks = await r.json();
       return json(200, { tasks });

@@ -73,6 +73,9 @@
   .task[draggable="true"]:hover .grip { color:var(--muted); }
   .task .title { font-size:14px; font-weight:600; line-height:1.4; }
   .task .desc { color:var(--muted); font-size:12.5px; margin-top:4px; line-height:1.45; white-space:pre-wrap; }
+  /* Löng lýsing klippt í 5 línur svo röðin haldist stutt (auðveldara að draga); smellt til að opna */
+  .task .desc.clamp { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:5; overflow:hidden; cursor:pointer; }
+  .task .desc.clamp:hover { color:var(--fg); }
   .task .meta { color:var(--muted); font-size:11px; margin-top:6px; }
   .task .imgs { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
   .task .imgs a { display:inline-block; }
@@ -377,7 +380,7 @@ function renderTask(t) {
         grip +
         '<div class="task-text">' +
           '<div class="title">' + catBadge + agentBadge + esc(t.title) + '</div>' +
-          (t.description ? '<div class="desc">' + esc(t.description) + '</div>' : '') +
+          (t.description ? '<div class="desc clamp" title="Smelltu til að opna/loka" onclick="this.classList.toggle(\'clamp\')">' + esc(t.description) + '</div>' : '') +
           notes +
           (imgs.length ? '<div class="imgs">' + imgs.join('') + '</div>' : '') +
           '<div class="meta">' + fmtTime(t.created_at) +
