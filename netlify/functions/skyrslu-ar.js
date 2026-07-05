@@ -35,6 +35,11 @@ function yearFromName(name) {
   return null;
 }
 
+// Accent-insensitive month matching — the reports spell months inconsistently
+// („oktober" vs „október", „januar" vs „janúar", „mai" vs „maí"), so we match on
+// the accent-stripped text and map back to the canonical Icelandic name.
+const MASCII = { januar: 'janúar', februar: 'febrúar', mars: 'mars', april: 'apríl', mai: 'maí', juni: 'júní', juli: 'júlí', agust: 'ágúst', september: 'september', oktober: 'október', november: 'nóvember', desember: 'desember' };
+function stripAccents(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, ''); }
 // Date from the report's TEXT LAYER — prefer „Dags 28.11.2024", else the first
 // „{mánuður} {ár}" that is NOT a „Næsta skoðun" date (the report writes „…yfirfarin
 // af Slökkvitæki ehf í <mánuður> <ár>"). Returns { year:Number, month:String }|null.
@@ -42,8 +47,9 @@ function dateInfo(text) {
   const t = String(text || '');
   let m = t.match(/\bdags\.?\s*:?\s*(\d{1,2})[.\/](\d{1,2})[.\/](\d{2,4})/i);
   if (m) { const mo = +m[2]; let y = m[3]; if (y.length === 2) y = '20' + y; if (mo >= 1 && mo <= 12 && /^20\d{2}$/.test(y)) return { year: +y, month: MNAME[mo] }; }
-  const re = new RegExp('\\b(' + MONTHS + ')\\s+(20\\d{2})\\b', 'gi'); let mm;
-  while ((mm = re.exec(t))) { const before = t.slice(Math.max(0, mm.index - 32), mm.index); if (/næst|next/i.test(before)) continue; return { year: +mm[2], month: mm[1].toLowerCase() }; }
+  const ta = stripAccents(t).toLowerCase();
+  const re = /\b(januar|februar|mars|april|mai|juni|juli|agust|september|oktober|november|desember)\s+(20\d{2})\b/g; let mm;
+  while ((mm = re.exec(ta))) { const before = ta.slice(Math.max(0, mm.index - 32), mm.index); if (/næst|naest|next/.test(before)) continue; return { year: +mm[2], month: MASCII[mm[1]] }; }
   m = t.match(/\b(\d{1,2})[.\/](\d{1,2})[.\/](20\d{2})\b/);   // any dd.mm.yyyy
   if (m) { const mo = +m[2]; return { year: +m[3], month: (mo >= 1 && mo <= 12) ? MNAME[mo] : '' }; }
   return null;
@@ -104,11 +110,16 @@ exports.handler = async (event) => {
     const p = event.queryStringParameters || {};
     const folder = folderId(p.folder || DEFAULT_SKYRSLUR);
     const limit = Math.min(Math.max(parseInt(p.limit || '4', 10) || 4, 1), 10);
+    const offset = Math.max(parseInt(p.offset || '0', 10) || 0, 0);
     const dry = p.dry === '1' || p.dry === 'true';
     const token = await freshAccessToken();
 
+    // `offset` walks PAST files that stayed dateless last round (pdf-parse found no
+    // date) so the batch never re-clogs on the same unreadable files at the front.
+    // Renamed files leave the list, so the client advances offset by the batch's
+    // unread count each call.
     const pending = await datelessReports(token, folder);
-    const batch = pending.slice(0, limit);
+    const batch = pending.slice(offset, offset + limit);
     const results = []; let renamed = 0, unread = 0;
     for (const f of batch) {
       try {
@@ -120,13 +131,16 @@ exports.handler = async (event) => {
         renamed++;
         results.push({ name: f.name, status: 'ár', year: di.year, month: di.month || '', newName: nn });
       } catch (e) {
-        results.push({ name: f.name, status: 'villa', reason: String(e.message || e) });
+        unread++; results.push({ name: f.name, status: 'villa', reason: String(e.message || e) });
       }
     }
-    // remaining = date-less files still needing a successful read next time.
-    // (unreadable ones stay in the list; the UI stops when a whole batch yields 0 renamed.)
-    const remaining = Math.max(0, pending.length - renamed);
-    return json(200, { processed: batch.length, renamed, unread, remaining, total_yearless: pending.length, done: batch.length === 0, dry, results });
+    // In dry mode nothing leaves the list, so advance offset by the whole batch.
+    const nextOffset = dry ? (offset + batch.length) : (offset + unread);
+    return json(200, {
+      processed: batch.length, renamed, unread,
+      total_yearless: pending.length, offset, next_offset: nextOffset,
+      done: offset + batch.length >= pending.length, dry, results,
+    });
   } catch (e) {
     return json(500, { error: String(e.message || e) });
   }

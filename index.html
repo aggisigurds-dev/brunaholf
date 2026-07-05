@@ -4537,21 +4537,19 @@ function renderBakendi(t){
     async function readYears(){
       arStop = false;
       $arBtn.disabled = true; $run.disabled = true; $arStop.disabled = false;
-      let done = 0, unread = 0;
+      let done = 0, offset = 0, guard = 0;
       try {
-        while (!arStop) {
-          const qs = '?folder=' + encodeURIComponent(($skyr.value||'').trim()) + '&limit=4';
+        while (!arStop && guard++ < 400) {
+          const qs = '?folder=' + encodeURIComponent(($skyr.value||'').trim()) + '&limit=8&offset=' + offset;
           const r = await fetch('/api/skyrslu-ar' + qs);
           const d = await r.json();
           if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
-          const gotYear = (d.results||[]).filter(x => x.status === 'ár');
-          done += gotYear.length;
-          unread = d.unread != null ? unread + d.unread : unread;
-          $status.textContent = '🔎 Les skýrslur… ' + done + ' merktar' + (d.total_yearless!=null ? (' · ~' + Math.max(0, d.total_yearless - gotYear.length) + ' eftir') : '');
-          // stop when the batch found no new years (only unreadable/empty remain)
-          if (d.processed === 0 || gotYear.length === 0) break;
+          done += d.renamed || 0;
+          offset = d.next_offset != null ? d.next_offset : (offset + (d.processed||0));
+          $status.textContent = '🔎 Les skýrslur… ' + done + ' merktar (' + Math.min(offset, d.total_yearless||offset) + '/' + (d.total_yearless||'?') + ')';
+          if (d.done || d.processed === 0) break;
         }
-        $status.textContent = '✅ ' + done + ' skýrslur merktar með ári' + (unread ? (' · ' + unread + ' ólæsilegar') : '') + '. Uppfæri talningu…';
+        $status.textContent = '✅ ' + done + ' skýrslur merktar með ári. Uppfæri talningu…';
         await run();
       } catch(e){ $status.textContent = 'Villa: ' + (e.message||e); }
       finally { $arBtn.disabled = false; $run.disabled = false; $arStop.disabled = true; }
