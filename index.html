@@ -8292,6 +8292,9 @@ async function renderGerdReikninga(t){
 
   state.ui = state.ui || {};
   if(!/^\d{4}-\d{2}$/.test(state.ui.gr_month||'')) state.ui.gr_month = '2026-05';
+  // Sýn: spjöld (default) eða listi. Vistast í state.ui → /api/app-state (samstillist
+  // milli tækja), EKKI localStorage.
+  if(state.ui.gr_view!=='list') state.ui.gr_view = 'card';
 
   const LOGO_KEY = 'brunaholfReikningurLogo';
   const getLogo = () => { try { return localStorage.getItem(LOGO_KEY) || '/public/reikningur/brunaholf-logo.png'; } catch { return '/public/reikningur/brunaholf-logo.png'; } };
@@ -8314,6 +8317,10 @@ async function renderGerdReikninga(t){
           <span class="gr-month" id="gr-month-lbl">${monthLabel(state.ui.gr_month)}</span>
           <button class="tv-btn" id="gr-next" type="button" title="Næsti mánuður">→</button>
           <button class="tv-btn" id="gr-refresh" type="button"><span class="tv-refresh-icon">↻</span> Sækja</button>
+          <div class="gr-viewtog" id="gr-viewtog" role="group" title="Skipta um sýn — samstillist milli tækja">
+            <button class="gr-vt" data-gr-view="card" type="button">▦ Spjöld</button>
+            <button class="gr-vt" data-gr-view="list" type="button">☰ Listi</button>
+          </div>
           <label class="gr-logo-btn" title="Setja inn logo (PNG) sem birtist efst til vinstri á reikningnum">🖼 Logo<input type="file" id="gr-logo-file" accept="image/png,image/jpeg" hidden></label>
         </div>
       </div>
@@ -8333,6 +8340,16 @@ async function renderGerdReikninga(t){
       .gr-sub{font-size:13px;color:var(--muted,#64748b);font-weight:400}
       .gr-sub-line{color:var(--muted,#64748b);font-size:12.5px;margin-top:4px;max-width:760px}
       .gr-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+      .gr-viewtog{display:inline-flex;border:1px solid var(--border,#cbd5e1);border-radius:8px;overflow:hidden}
+      .gr-viewtog .gr-vt{border:0;background:#fff;color:#475569;font:inherit;font-size:13px;padding:7px 11px;cursor:pointer}
+      .gr-viewtog .gr-vt+.gr-vt{border-left:1px solid var(--border,#e2e8f0)}
+      .gr-viewtog .gr-vt.on{background:#101d2e;color:#fff}
+      .grl-wrap{overflow-x:auto;border-radius:12px;max-width:1000px}
+      .grl-tbl{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border:1px solid var(--border,#e2e8f0);border-radius:12px;overflow:hidden;min-width:640px}
+      .grl-tbl th{text-align:left;padding:8px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#64748b;background:#f8fafc;border-bottom:1px solid #e2e8f0;white-space:nowrap}
+      .grl-tbl td{padding:8px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+      .grl-tbl tbody tr:hover{background:#f8fafc}
+      .grl-tbl .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
       .gr-month{font-weight:700;font-size:14px;min-width:84px;text-align:center}
       .gr-logo-btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border:1px solid var(--border,#cbd5e1);border-radius:8px;cursor:pointer;font-size:13px;background:#fff}
       .gr-logo-btn:hover{background:#f1f5f9}
@@ -8440,6 +8457,16 @@ async function renderGerdReikninga(t){
   document.getElementById('gr-prev').onclick = () => shiftMonth(-1);
   document.getElementById('gr-next').onclick = () => shiftMonth(1);
   document.getElementById('gr-refresh').onclick = () => load(true);
+  // Sýn-toggle (spjöld/listi) — vistast í state.ui (samstillist milli tækja).
+  document.querySelectorAll('#gr-viewtog .gr-vt').forEach(b => {
+    b.classList.toggle('on', b.dataset.grView === (state.ui.gr_view || 'card'));
+    b.onclick = () => {
+      state.ui.gr_view = b.dataset.grView;
+      try { save(); } catch {}
+      document.querySelectorAll('#gr-viewtog .gr-vt').forEach(x => x.classList.toggle('on', x.dataset.grView === state.ui.gr_view));
+      renderList();
+    };
+  });
   document.getElementById('gr-logo-file').onchange = (e) => {
     const f = e.target.files && e.target.files[0]; if(!f) return;
     const r = new FileReader();
@@ -8615,6 +8642,39 @@ async function renderGerdReikninga(t){
         </div>`;
     };
 
+    // Compact list row — same data + same data-attrs (dot/edit/gata) so the shared
+    // event wiring below works for both views. Note is a 📝 hover-hint (edit in card view).
+    const row = (w, gataFlag) => {
+      const name = w.project;
+      const note = (state.ui.gr_card_notes || {})[name] || '';
+      const r = rateFor(name);
+      const cust = (PAYER_OVERRIDE[name] && PAYER_OVERRIDE[name].name) || r.customer || (w.mapped_customers||[])[0] || '';
+      const hrs = monthHours(w);
+      const d = draftFor(name);
+      const est = !gataFlag ? Math.round(hrs * r.dv * (1+r.vsk/100)) : 0;
+      const redder = (REDDER[`${name}|${month}`]||{}).an_vsk || 0;
+      const saved = d && Number(d.total_m_vsk) > 0;
+      const dotKey = `${name}|${month}`;
+      state.ui.vb_review = state.ui.vb_review || {};
+      const dot = state.ui.vb_review[dotKey];
+      return `<tr>
+        <td><button type="button" class="gr-dot ${dot?'state-'+dot:''}" data-gr-dot="${escapeAttr(dotKey)}" title="Smelltu til að merkja: grænt/gult/rautt"></button></td>
+        <td><div class="gr-card-name" style="font-size:13.5px">${escapeHtml(name)}${note?` <span title="${escapeAttr(note)}" style="cursor:help">📝</span>`:''}</div>${cust?`<div class="gr-card-cust">${escapeHtml(cust)}</div>`:''}</td>
+        <td class="num">${gataFlag?'<span class="grp-badge tb">Ajour</span>':hrs.toFixed(1)}</td>
+        <td class="num">${gataFlag?'—':fmt(r.dv)}</td>
+        <td class="num">${gataFlag?'—':(est?fmt(est):'—')}</td>
+        <td class="num">${redder>0?fmt(redder):'—'}</td>
+        <td>${saved?`<span class="gr-pill gr-pill-saved">✓ ${fmt(d.total_m_vsk)}</span>`:`<span class="gr-pill gr-pill-todo">⏳ eftir</span>`}</td>
+        <td>${gataFlag?`<button class="gr-btn gr-btn-primary" data-gr-gata="${escapeAttr(name)}">📐 Uppgjör</button>`:`<button class="gr-btn gr-btn-primary" data-gr-edit="${escapeAttr(name)}">🧾 Efnislisti</button>`}</td>
+      </tr>`;
+    };
+
+    const isList = state.ui.gr_view === 'list';
+    const GRL_HEAD = ['', 'Verkstaður', 'Klst', 'Taxti', 'Áætl. m.vsk', 'Redder', 'Staða', ''];
+    const asTable = (items, gataFlag) => `<div class="grl-wrap"><table class="grl-tbl"><thead><tr>${GRL_HEAD.map((h,i)=>`<th class="${i>=2&&i<=5?'num':''}">${h}</th>`).join('')}</tr></thead><tbody>${items.map(w=>row(w,gataFlag)).join('')}</tbody></table></div>`;
+    const asGrid  = (items, gataFlag) => `<div class="gr-grid">${items.map(w=>card(w,gataFlag)).join('')}</div>`;
+    const sectionBody = (items, gataFlag) => isList ? asTable(items, gataFlag) : asGrid(items, gataFlag);
+
     // Month-total summary: sum of all saved drafts (total_m_vsk) for this month.
     let savedCount = 0, savedTotal = 0;
     for(const w of [...tim, ...gata]){
@@ -8638,9 +8698,9 @@ async function renderGerdReikninga(t){
         <div class="gr-sum-cell"><span class="gr-sum-l">Eftir að gera</span><span class="gr-sum-v ${pending>0?'gr-sum-warn':''}">${pending}</span></div>
       </div>
       <div class="gr-section-h">🧾 Tímavera verkstaðir <span class="gr-count">· ${tim.length} með klst í ${monthLabel(month)}</span></div>
-      <div class="gr-grid">${tim.length?tim.map(w=>card(w,false)).join(''):'<div class="gr-loading">Engin Tímavera klst skráð í þessum mánuði.</div>'}</div>
+      ${tim.length ? sectionBody(tim, false) : '<div class="gr-loading">Engin Tímavera klst skráð í þessum mánuði.</div>'}
       <div class="gr-section-h">📐 Gata verkefni (Ajour) <span class="gr-count">· NLSH · Heklureitur · Dalvegur 30</span></div>
-      <div class="gr-grid">${gata.map(w=>card(w,true)).join('')}</div>
+      ${sectionBody(gata, true)}
     `;
     $meta.textContent = `${monthLabel(month)} · ${fmt(savedTotal)} kr vistað · ${pending} eftir`;
     $host.querySelectorAll('[data-gr-edit]').forEach(b=> b.onclick = ()=> openEditor(b.dataset.grEdit));
