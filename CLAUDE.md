@@ -336,6 +336,30 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   „dups" include distinct sites mis-addressed to one location (Pizzan 2023,
   Center Hótel Arnarhvoll), so dedup is by-eye via 🗑.
 
+- `kt-samraeming.js` — **Bakendi „🧩 Kt-samræming"** (`/api/kt-samraeming`): closes the
+  last gaps in the customer spine (`customers_base` root → `fyrirtaeki` locations →
+  `vidskiptavinir`) **additively — never deletes/merges a location**. `GET` returns three
+  worklists: **kt-less live fyrirtaeki** (no kennitala AND no `customer_base_id`),
+  **multi-location kts** (one kt across >1 live `fyrirtaeki` = rekstrarfélög með marga
+  staði; flags `same_address` when ≥2 sites share one address), and **vidskiptavinir gaps**
+  (unlinked / no-kt). `POST` actions: `set-kt` (set `fyrirtaeki.kennitala` + find-or-create
+  base by kt + link `customer_base_id`), `link-base`, `create-base` (find-or-create),
+  `relabel` (fix a mislabelled site nafn/heimilisfang), `flag-note` (mark a site for review
+  via `banner_note`). Bakendi card + `wireKtSamraeming` in index.html. Service role.
+- `hreinsi-bord.js` — **Bakendi „🧽 Hreinsi-borð"** (`/api/hreinsi-bord`): safe, additive,
+  idempotent **batch reconnect of `customer_documents` to the spine**. Never deletes a doc,
+  never flags a duplicate (that stays by-eye in Skýrslu-stöð), never touches a location.
+  `GET` computes preview buckets from a full snapshot; `POST {action:'apply',bucket,ids}`
+  **recomputes server-side** so apply always matches the preview. Buckets: `reconnect`
+  (fyrirtaeki_id null · kt-in-notes → exactly ONE live fyrirtæki → set it +base), `base_link`
+  (cb null · kt already in base → set cb), `base_missing` (kt not in base → create base +
+  link), `deleted_ptr` (fyrirtaeki_id → soft-deleted row → repoint to lone live sibling else
+  clear, keep base), `dangling` (fyrirtaeki_id → no row → clear), `bad_year` (year <2005 or
+  >next year → null). `reconnect_many` (kt → several live sites) is COUNT-only, handed to
+  Skýrslu-stöð. Verified against live DB 2026-07-05: reconnect 372 · reconnect_many 26 ·
+  base_link 0 · base_missing 93 · deleted_ptr 72 · dangling 1 · bad_year 3. Bakendi card +
+  `wireHreinsiBord` in index.html. Service role.
+
 - `drive-dedup.js` — **Bakendi „🗂️ Drive tvítekningar"** (`/api/drive-dedup`): pick any
   Drive folder → lists files with **duplicate names** (groups by name with the extension
   and a trailing `(1)/(2)` copy-suffix stripped, case-folded). `GET ?folder=ID[&cap=N]`

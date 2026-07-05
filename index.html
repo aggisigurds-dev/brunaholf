@@ -3686,6 +3686,40 @@ function renderBakendi(t){
           <div id="bk-kg-panel"></div>
         </div>
 
+        <!-- 🧩 Kt-samræming (loka götum í kúnna-hryggnum — kt-lausir · fjölstaðir · vidsk) -->
+        <div style="${card}">
+          <div style="display:flex;align-items:center;gap:14px">
+            <span style="${iconSq};${ICON.blue}">🧩</span>
+            <div style="flex:1">
+              <div style="${titleStyle}">Kt-samræming — loka götum í kúnna-hryggnum</div>
+              <p style="${descStyle};margin-top:4px">Klárar tenginguna við <b>customers_base</b>: fyrirtæki <b>án kt</b> (settu kt → tengist base sjálfkrafa), <b>fjölstaða-kt</b> (rekstrarfélög með marga staði — merktu/lagfærðu, <b>aldrei sameinað/eytt</b>) og <b>viðskiptavinir</b> án base-tengingar. Bara viðbætandi — engin eyðing.</p>
+            </div>
+            <span style="${chipStyle('#dbeafe','#1e40af')}">Hryggur</span>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:auto">
+            <button id="bk-ks-open" class="btn primary">🧩 Opna kt-samræmingu</button>
+            <span id="bk-ks-status" style="font-size:12.5px;color:#64748b"></span>
+          </div>
+          <div id="bk-ks-panel"></div>
+        </div>
+
+        <!-- 🧽 Hreinsi-borð (batch-tengja skjöl við hrygginn — additive) -->
+        <div style="${card}">
+          <div style="display:flex;align-items:center;gap:14px">
+            <span style="${iconSq};${ICON.green}">🧽</span>
+            <div style="flex:1">
+              <div style="${titleStyle}">Hreinsi-borð — tengja skjöl við hrygginn</div>
+              <p style="${descStyle};margin-top:4px">Öruggar <b>batch-aðgerðir</b> á <b>customer_documents</b>: tengja skjöl við stað (kt í nótu → eitt lifandi fyrirtæki), tengja/búa til base, endurbeina skjöl af <b>eyddum</b> fyrirtækjum, laga ómöguleg ár. <b>Forskoða fyrst</b> → keyra valið. Aldrei eytt skjali; rugluð nöfn fara í Skýrslu-stöð.</p>
+            </div>
+            <span style="${chipStyle('#dcfce7','#15803d')}">Skjöl</span>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:auto">
+            <button id="bk-hb-open" class="btn primary">🧽 Opna hreinsi-borð</button>
+            <span id="bk-hb-status" style="font-size:12.5px;color:#64748b"></span>
+          </div>
+          <div id="bk-hb-panel"></div>
+        </div>
+
         <!-- 🗂️ Skjalavörsla (raða í árs-undirmöppur + sameina gamlar möppur) -->
         <div style="${card}">
           <div style="display:flex;align-items:center;gap:14px">
@@ -4733,6 +4767,167 @@ function renderBakendi(t){
         DATA = d; $status.textContent = '';
         render();
       } catch (e) { $status.textContent = 'Villa: ' + (e.message || e); }
+      finally { $open.disabled = false; }
+    }
+    $open.onclick = () => { if (DATA) { $panel.innerHTML ? ($panel.innerHTML = '') : render(); } else load(); };
+  })();
+
+  // ── 🧩 Kt-samræming: close spine gaps (kt-less fyrirtæki · multi-loc · vidsk) ──
+  (function wireKtSamraeming(){
+    const $open = document.getElementById('bk-ks-open');
+    const $status = document.getElementById('bk-ks-status');
+    const $panel = document.getElementById('bk-ks-panel');
+    if (!$open) return;
+    const esc = s => escapeHtml(String(s == null ? '' : s));
+    const nf = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    let DATA = null, tab = 'ktless';
+    async function post(action, payload){
+      const r = await fetch('/api/kt-samraeming', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(Object.assign({ action }, payload)) });
+      const d = await r.json(); if (!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status)); return d;
+    }
+    const tile = (n, lbl, c) => '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:9px 12px;min-width:96px"><div style="font-size:18px;font-weight:800;color:' + (c || '#0f172a') + '">' + nf(n) + '</div><div style="font-size:11px;color:#64748b">' + lbl + '</div></div>';
+    const tabBtn = (t, lbl) => '<button class="_ks-tab" data-t="' + t + '" style="background:none;border:0;border-bottom:2.5px solid ' + (tab === t ? '#2563eb' : 'transparent') + ';font:inherit;font-size:14px;font-weight:650;color:' + (tab === t ? '#0f172a' : '#94a3b8') + ';padding:8px 6px;cursor:pointer;margin-bottom:-1px">' + lbl + '</button>';
+    const th = xs => '<thead><tr>' + xs.map(x => '<th style="text-align:left;background:#f8fafc;color:#475569;padding:7px 10px;font-size:11px;text-transform:uppercase;white-space:nowrap">' + x + '</th></tr>'.replace('</tr>', '')).join('') + '</tr></thead>';
+    const wrap = inner => '<div style="overflow-x:auto;border:1px solid #e2e8f0;border-radius:12px"><table style="width:100%;border-collapse:collapse;font-size:12.5px;min-width:620px">' + inner + '</table></div>';
+    const btn = (cls, txt, extra) => '<button class="' + cls + '" ' + (extra || '') + ' style="font:inherit;font-size:12px;font-weight:600;padding:5px 10px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#334155;cursor:pointer">' + txt + '</button>';
+
+    function render(){
+      const s = DATA.sum;
+      let h = '<div style="display:flex;gap:8px;margin:14px 0 12px;flex-wrap:wrap">' +
+        tile(s.ktless, 'fyrirtæki án kt', '#b45309') + tile(s.multiloc_groups, 'fjölstaða-kt', '#0f172a') +
+        tile(s.multiloc_extra, 'auka-staðir', '#64748b') + tile(s.vidsk_unlinked, 'vidsk. ótengd', '#b45309') + '</div>';
+      h += '<div style="display:flex;gap:10px;border-bottom:1px solid #e2e8f0;margin-bottom:12px;flex-wrap:wrap">' +
+        tabBtn('ktless', '🏢 Án kt (' + DATA.ktless.length + ')') + tabBtn('multi', '📍 Fjölstaðir (' + DATA.multiloc.length + ')') +
+        tabBtn('vidsk', '👤 Viðskiptavinir (' + (DATA.vidsk.unlinked.length + DATA.vidsk.no_kt.length) + ')') + '</div>';
+      h += tab === 'ktless' ? renderKtless() : tab === 'multi' ? renderMulti() : renderVidsk();
+      $panel.innerHTML = h; wire();
+    }
+    function renderKtless(){
+      if (!DATA.ktless.length) return empty('Öll fyrirtæki með kt eru þegar tengd. 🎉');
+      let h = '<div style="font-size:12px;color:#94a3b8;margin-bottom:6px">Sláðu inn kt → fyrirtækið tengist (eða býr til) base-röð sjálfkrafa.</div>' +
+        wrap(th(['Nafn', 'Heimilisfang', 'Þjónusta', 'Kennitala']) + '<tbody>' + DATA.ktless.slice(0, 300).map(f =>
+          '<tr data-id="' + f.id + '"><td style="padding:6px 10px;font-weight:600;color:#0f172a">' + esc(f.nafn) + '</td><td style="padding:6px 10px;color:#475569">' + esc(f.heimilisfang) + '</td><td style="padding:6px 10px">' + (f.er_i_thjonustu ? '🟢' : '—') +
+          '</td><td style="padding:6px 10px;white-space:nowrap"><input class="_ks-kt" placeholder="000000-0000" style="width:120px;border:1px solid #cbd5e1;border-radius:7px;padding:5px 8px;font:inherit;font-size:12px"> ' + btn('_ks-setkt btn', 'Setja') + '</td></tr>'
+        ).join('') + '</tbody>');
+      return h;
+    }
+    function renderMulti(){
+      if (!DATA.multiloc.length) return empty('Engin fjölstaða-kt.');
+      return '<div style="font-size:12px;color:#94a3b8;margin-bottom:10px">Rekstrarfélög með marga staði. <b>Aldrei sameina/eyða</b> — bara lagfæra nafn/heimilisfang eða merkja stað sem þarf skoðun.</div>' +
+        DATA.multiloc.map(g => {
+          const warn = g.same_address ? '<span style="background:#fef3c7;color:#b45309;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;margin-left:8px">⚠ 2+ staðir á sama heimilisfangi</span>' : '';
+          return '<div style="border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin-bottom:10px"><div style="font-weight:700;color:#0f172a">' + esc(g.base_nafn) + ' <span style="color:#94a3b8;font-weight:500;font-family:monospace;font-size:12px">' + esc(g.kt) + '</span> <span style="color:#64748b;font-weight:500">· ' + g.site_count + ' staðir</span>' + warn + '</div>' +
+            '<div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">' + g.sites.map(sst =>
+              '<div data-id="' + sst.id + '" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 8px;background:#f8fafc;border-radius:8px"><span style="flex:1;min-width:200px"><b>' + esc(sst.nafn) + '</b> <span style="color:#64748b">— ' + esc(sst.heimilisfang || 'ekkert heimilisfang') + '</span>' + (sst.er_i_thjonustu ? ' 🟢' : '') + (sst.banner_note ? ' <span style="color:#b45309">📝 ' + esc(sst.banner_note) + '</span>' : '') + '</span>' +
+              btn('_ks-relabel btn', '✏️ Lagfæra') + ' ' + btn('_ks-flag btn', '🏷 Merkja') + '</div>'
+            ).join('') + '</div></div>';
+        }).join('');
+    }
+    function renderVidsk(){
+      const u = DATA.vidsk.unlinked, nk = DATA.vidsk.no_kt;
+      let h = '';
+      h += '<div style="font-size:13px;font-weight:700;color:#0f172a;margin:4px 0 6px">Ótengd (með kt) — ' + u.length + '</div>';
+      h += u.length ? wrap(th(['Nafn', 'Kennitala', 'Í base?', '']) + '<tbody>' + u.slice(0, 300).map(v =>
+        '<tr data-id="' + v.id + '" data-kt="' + esc(v.kennitala) + '" data-nafn="' + esc(v.nafn) + '"><td style="padding:6px 10px;font-weight:600">' + esc(v.nafn) + '</td><td style="padding:6px 10px;font-family:monospace">' + esc(v.kennitala) + '</td><td style="padding:6px 10px">' + (v.in_base ? '🟢 já' : '🟡 vantar') + '</td><td style="padding:6px 10px">' + btn('_ks-vlink btn', '🔗 Tengja') + '</td></tr>'
+      ).join('') + '</tbody>') : empty('Allir tengdir.');
+      if (nk.length) h += '<div style="font-size:13px;font-weight:700;color:#0f172a;margin:14px 0 6px">Án kt — ' + nk.length + ' <span style="font-weight:500;color:#94a3b8">(þarf kt annars staðar áður en hægt er að tengja)</span></div>' +
+        wrap(th(['id', 'Nafn']) + '<tbody>' + nk.slice(0, 200).map(v => '<tr><td style="padding:6px 10px;color:#94a3b8;font-family:monospace">' + v.id + '</td><td style="padding:6px 10px">' + esc(v.nafn) + '</td></tr>').join('') + '</tbody>');
+      return h;
+    }
+    const empty = m => '<div style="padding:20px;text-align:center;color:#94a3b8;font-size:13px">' + m + '</div>';
+
+    function wire(){
+      $panel.querySelectorAll('._ks-tab').forEach(b => b.onclick = () => { tab = b.dataset.t; render(); });
+      $panel.querySelectorAll('._ks-setkt').forEach(b => b.onclick = async () => {
+        const tr = b.closest('[data-id]'); const kt = tr.querySelector('._ks-kt').value.trim();
+        if (kt.replace(/\D/g,'').length !== 10) { alert('Kennitala verður að vera 10 tölustafir.'); return; }
+        b.disabled = true; b.textContent = '…';
+        try { await post('set-kt', { id: tr.dataset.id, kennitala: kt }); tr.style.opacity = .4; tr.querySelector('td:last-child').innerHTML = '<span style="color:#15803d;font-weight:700">✓ tengt</span>'; DATA.sum.ktless--; }
+        catch (e) { alert('Villa: ' + e.message); b.disabled = false; b.textContent = 'Setja'; }
+      });
+      $panel.querySelectorAll('._ks-relabel').forEach(b => b.onclick = async () => {
+        const row = b.closest('[data-id]');
+        const nafn = prompt('Nýtt nafn (skildu eftir óbreytt til að sleppa):', row.querySelector('b').textContent) ; if (nafn === null) return;
+        const heim = prompt('Nýtt heimilisfang:', ''); if (heim === null) return;
+        try { await post('relabel', { id: row.dataset.id, nafn, heimilisfang: heim }); alert('Vistað. Endurhladdu til að sjá uppfært.'); }
+        catch (e) { alert('Villa: ' + e.message); }
+      });
+      $panel.querySelectorAll('._ks-flag').forEach(b => b.onclick = async () => {
+        const row = b.closest('[data-id]'); const note = prompt('Minnispunktur / ástæða skoðunar (tómt = hreinsa):', ''); if (note === null) return;
+        try { await post('flag-note', { id: row.dataset.id, note }); b.textContent = note.trim() ? '🏷 Merkt' : '🏷 Merkja'; }
+        catch (e) { alert('Villa: ' + e.message); }
+      });
+      $panel.querySelectorAll('._ks-vlink').forEach(b => b.onclick = async () => {
+        const tr = b.closest('[data-id]'); b.disabled = true; b.textContent = '…';
+        try { const base = await post('create-base', { kennitala: tr.dataset.kt, nafn: tr.dataset.nafn }); await post('link-base', { table: 'vidskiptavinir', id: tr.dataset.id, customer_base_id: base.base.id }); tr.style.opacity = .4; tr.querySelector('td:last-child').innerHTML = '<span style="color:#15803d;font-weight:700">✓ tengt</span>'; }
+        catch (e) { alert('Villa: ' + e.message); b.disabled = false; b.textContent = '🔗 Tengja'; }
+      });
+    }
+    async function load(){
+      $open.disabled = true; $status.textContent = 'Sæki gögn…';
+      try { const r = await fetch('/api/kt-samraeming'); const d = await r.json(); if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); DATA = d; $status.textContent = ''; render(); }
+      catch (e) { $status.textContent = 'Villa: ' + (e.message || e); }
+      finally { $open.disabled = false; }
+    }
+    $open.onclick = () => { if (DATA) { $panel.innerHTML ? ($panel.innerHTML = '') : render(); } else load(); };
+  })();
+
+  // ── 🧽 Hreinsi-borð: safe batch reconnect of customer_documents → spine ────────
+  (function wireHreinsiBord(){
+    const $open = document.getElementById('bk-hb-open');
+    const $status = document.getElementById('bk-hb-status');
+    const $panel = document.getElementById('bk-hb-panel');
+    if (!$open) return;
+    const esc = s => escapeHtml(String(s == null ? '' : s));
+    const nf = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    let DATA = null;
+    const BUCKETS = [
+      { k: 'reconnect',    ic: '🔗', title: 'Tengja skjöl við stað', desc: 'Vantar fyrirtaeki_id · kt í nótu bendir á EITT lifandi fyrirtæki.', cols: ['Skjal', 'kt', 'Ár', '→ Fyrirtæki'], row: r => [r.name, r.kt, r.year || '—', r.fyrirtaeki_nafn] },
+      { k: 'base_link',    ic: '🧬', title: 'Tengja við base', desc: 'Vantar customer_base_id · kt er þegar til í customers_base.', cols: ['Skjal', 'kt', 'Ár', '→ Base'], row: r => [r.name, r.kt, r.year || '—', r.base_nafn] },
+      { k: 'base_missing', ic: '🆕', title: 'Búa til base + tengja', desc: 'kt í nótu er EKKI til í customers_base → býr til nýja base-röð og tengir.', cols: ['Skjal', 'kt', 'Ár'], row: r => [r.name, r.kt, r.year || '—'] },
+      { k: 'deleted_ptr',  ic: '♻️', title: 'Endurbeina af eyddu fyrirtæki', desc: 'Skjal bendir á soft-eytt fyrirtæki → færist á lifandi systur-stað (eða losað, base helst).', cols: ['Skjal', 'Frá (eytt)', '→ Til'], row: r => [r.name, r.from_nafn, r.to_nafn || '(losað)'] },
+      { k: 'dangling',     ic: '🧹', title: 'Hreinsa dauða vísun', desc: 'fyrirtaeki_id bendir á röð sem er ekki til → losað.', cols: ['Skjal', 'fyrirtaeki_id'], row: r => [r.name, r.fyrirtaeki_id] },
+      { k: 'bad_year',     ic: '📅', title: 'Laga ómöguleg ár', desc: 'Ár utan 2005…næsta ár → sett í tómt.', cols: ['Skjal', 'Ár'], row: r => [r.name, r.year] },
+    ];
+    function render(){
+      const s = DATA.sum;
+      let h = '<div style="margin:14px 0 10px;font-size:12.5px;color:#64748b">' + nf(s.docs) + ' skjöl alls · rugluð „uttekt-master" nöfn (' + '~970' + ') fara í <b>Skýrslu-stöð</b> (nafn ekki treyst). Fjölstaða-kt skjöl (' + nf(s.reconnect_many) + ') þurfa handvirkt staðaval.</div>';
+      h += BUCKETS.map(b => {
+        const list = DATA.buckets[b.k] || [];
+        const open = !!expanded[b.k];
+        let c = '<div style="border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin-bottom:10px">' +
+          '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span style="font-size:18px">' + b.ic + '</span><div style="flex:1;min-width:200px"><div style="font-weight:700;color:#0f172a">' + b.title + ' <span style="color:#2563eb">' + nf(list.length) + '</span></div><div style="font-size:12px;color:#64748b">' + b.desc + '</div></div>' +
+          (list.length ? btn('_hb-see', open ? 'Fela' : '👁 Skoða', b.k) + ' ' + btn('_hb-run', '▶️ Keyra ' + nf(list.length), b.k, '#16a34a') : '<span style="color:#94a3b8;font-size:13px">ekkert</span>') + '</div>';
+        if (open && list.length) {
+          c += '<div style="overflow-x:auto;margin-top:10px;border:1px solid #eef2f7;border-radius:10px"><table style="width:100%;border-collapse:collapse;font-size:12px;min-width:520px"><thead><tr>' +
+            b.cols.map(x => '<th style="text-align:left;background:#f8fafc;color:#475569;padding:6px 9px;font-size:10.5px;text-transform:uppercase">' + x + '</th>').join('') + '</tr></thead><tbody>' +
+            list.slice(0, 60).map(r => '<tr>' + b.row(r).map((v, i) => '<td style="padding:5px 9px;' + (i === 0 ? 'color:#475569' : 'color:#0f172a;font-weight:600') + '">' + esc(v) + '</td>').join('') + '</tr>').join('') +
+            '</tbody></table>' + (list.length > 60 ? '<div style="padding:6px 9px;color:#94a3b8;font-size:11px">…sýni 60 af ' + nf(list.length) + '</div>' : '') + '</div>';
+        }
+        return c + '</div>';
+      }).join('');
+      $panel.innerHTML = h; wire();
+    }
+    const expanded = {};
+    const btn = (cls, txt, k, col) => '<button class="' + cls + '" data-k="' + k + '" style="font:inherit;font-size:12px;font-weight:600;padding:6px 11px;border-radius:8px;border:1px solid ' + (col ? col : '#cbd5e1') + ';background:' + (col ? col : '#fff') + ';color:' + (col ? '#fff' : '#334155') + ';cursor:pointer">' + txt + '</button>';
+    function wire(){
+      $panel.querySelectorAll('._hb-see').forEach(b => b.onclick = () => { expanded[b.dataset.k] = !expanded[b.dataset.k]; render(); });
+      $panel.querySelectorAll('._hb-run').forEach(b => b.onclick = async () => {
+        const k = b.dataset.k; const list = DATA.buckets[k] || []; const meta = BUCKETS.find(x => x.k === k);
+        if (!confirm('Keyra „' + meta.title + '" á ' + list.length + ' skjöl? Þetta skrifar í gagnagrunninn (viðbætandi, engin eyðing).')) return;
+        b.disabled = true; b.textContent = '…keyri';
+        try { const d = await post('apply', { bucket: k, ids: list.map(x => x.id) }); $status.textContent = '✓ ' + (d.applied != null ? d.applied : list.length) + ' unnin'; await load(); }
+        catch (e) { alert('Villa: ' + e.message); b.disabled = false; }
+      });
+    }
+    async function post(action, payload){
+      const r = await fetch('/api/hreinsi-bord', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(Object.assign({ action }, payload)) });
+      const d = await r.json(); if (!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status)); return d;
+    }
+    async function load(){
+      $open.disabled = true; $status.textContent = 'Reikna forskoðun…';
+      try { const r = await fetch('/api/hreinsi-bord'); const d = await r.json(); if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); DATA = d; $status.textContent = ''; render(); }
+      catch (e) { $status.textContent = 'Villa: ' + (e.message || e); }
       finally { $open.disabled = false; }
     }
     $open.onclick = () => { if (DATA) { $panel.innerHTML ? ($panel.innerHTML = '') : render(); } else load(); };
