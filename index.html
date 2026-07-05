@@ -3623,11 +3623,11 @@ function renderBakendi(t){
             <span style="${chipStyle('#cffafe','#155e75')}">Flæði</span>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div><label style="${labelStyle}">Uppspretta (rusl-mappa)</label><input id="bk-ds-src" placeholder="folder-id / slóð" style="${inpMono};width:100%;box-sizing:border-box;height:40px"></div>
-            <div><label style="${labelStyle}">Master (reikningar hingað)</label><input id="bk-ds-master" placeholder="folder-id / slóð" style="${inpMono};width:100%;box-sizing:border-box;height:40px"></div>
-            <div><label style="${labelStyle}">Skýrslur (úttektarskýrslur hingað)</label><input id="bk-ds-reports" placeholder="folder-id / slóð (valfrjálst)" style="${inpMono};width:100%;box-sizing:border-box;height:40px"></div>
+            <div><label style="${labelStyle}">Uppspretta (rusl-mappa)</label><input id="bk-ds-src" value="1HDW3TL8kOdlWNOdrZDL3cPQ7dMXQrSCD" placeholder="folder-id / slóð" style="${inpMono};width:100%;box-sizing:border-box;height:40px"></div>
+            <div><label style="${labelStyle}">Master (reikningar hingað)</label><input id="bk-ds-master" value="1FHHX99LRB_9w_LqwHIY57T4l9mLMID7p" placeholder="folder-id / slóð" style="${inpMono};width:100%;box-sizing:border-box;height:40px"></div>
+            <div><label style="${labelStyle}">Skýrslur (úttektarskýrslur hingað)</label><input id="bk-ds-reports" value="1VSRRw6O8U6lU8WzZxA8CkLtrAmiU07mg" placeholder="folder-id / slóð (valfrjálst)" style="${inpMono};width:100%;box-sizing:border-box;height:40px"></div>
             <div><label style="${labelStyle}">Rusl (tvítök hingað)</label><input id="bk-ds-dupes" value="1CnnNHm1xCukiTs806z9Ha1nZnSELM9k8" style="${inpMono};width:100%;box-sizing:border-box;height:40px"></div>
-            <div style="grid-column:1 / -1"><label style="${labelStyle}">Óflokkað (annað / vendor-reikningar hingað)</label><input id="bk-ds-other" placeholder="folder-id / slóð" style="${inpMono};width:100%;box-sizing:border-box;height:40px"></div>
+            <div style="grid-column:1 / -1"><label style="${labelStyle}">Óflokkað (annað / vendor-reikningar hingað)</label><input id="bk-ds-other" value="1H6izhb24L5Rp2m7XMgt1ss-MkcLltf5O" placeholder="folder-id / slóð" style="${inpMono};width:100%;box-sizing:border-box;height:40px"></div>
           </div>
           <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#475569;margin:2px 0"><input type="checkbox" id="bk-ds-rename" checked> Endurnefna reikninga (Fyrirtæki - kt - R-nr - ár - upphæð)</label>
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:auto">
@@ -4353,6 +4353,23 @@ function renderBakendi(t){
     const $status = document.getElementById('bk-ds-status');
     const $results = document.getElementById('bk-ds-results');
     if (!$step) return;
+
+    // Remember the folder ids across reloads so they don't fall out. The markup
+    // seeds the last-known folders as defaults; saved values (from any edit)
+    // override them. Stored under one localStorage key as JSON.
+    const DS_KEY = 'drive_sort_folders_v1';
+    const persistEls = { src:$src, master:$master, reports:$reports, dupes:$dupes, other:$other };
+    try {
+      const saved = JSON.parse(localStorage.getItem(DS_KEY) || '{}');
+      for (const k in persistEls) if (saved[k] != null && saved[k] !== '') persistEls[k].value = saved[k];
+    } catch(_) {}
+    function saveFolders(){
+      const out = {};
+      for (const k in persistEls) out[k] = (persistEls[k].value || '').trim();
+      try { localStorage.setItem(DS_KEY, JSON.stringify(out)); } catch(_) {}
+    }
+    for (const k in persistEls) { persistEls[k].addEventListener('change', saveFolders); persistEls[k].addEventListener('blur', saveFolders); }
+
     let running = false, totals = { master:0, reports:0, dupes:0, other:0, error:0 }, batches = 0;
     const ICONA = { master:'📁', reports:'📄', dupes:'🗑', other:'📦', error:'⚠️' };
     const COLA = { master:'#0f7a43', reports:'#2563eb', dupes:'#b45309', other:'#6366f1', error:'#dc2626' };
@@ -4401,6 +4418,7 @@ function renderBakendi(t){
     }
     async function step(){
       if (!need()) return;
+      saveFolders();
       $step.disabled = true; $run.disabled = true;
       try { const d = await oneBatch(); summary(d.done || d.processed===0); }
       catch(e){ $status.textContent = 'Villa: ' + (e.message||e); }
@@ -4408,6 +4426,7 @@ function renderBakendi(t){
     }
     async function runLoop(){
       if (!need()) return;
+      saveFolders();
       running = true; $run.disabled = true; $step.disabled = true; $stop.disabled = false;
       try {
         while (running) {
