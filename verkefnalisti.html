@@ -161,8 +161,10 @@
   <label>Lýsing (valkv.)</label>
   <textarea id="add-desc" placeholder="Hvar gerist þetta? Hvað á að breytast? Hvaða viðmið er notað?"></textarea>
   <label>Skjámynd (valkv. — Ctrl/Cmd-V hér eða smelltu)</label>
-  <div id="paste-zone" class="paste-zone" tabindex="0" role="button" aria-label="Líma skjámynd hér">📎 Límdu skjámynd með Ctrl/Cmd-V — eða smelltu til að velja skrá</div>
-  <input id="file-input" type="file" accept="image/*" capture="environment" hidden />
+  <div id="paste-zone" class="paste-zone" tabindex="0" role="button" aria-label="Líma skjámynd hér">📎 Límdu skjámynd með Ctrl/Cmd-V — eða smelltu til að velja mynd úr albúmi</div>
+  <!-- ekkert `capture`: annars opnast myndavélin beint á síma. Án þess sýnir
+       vafrinn venjulegan val — Albúm / Myndavél / Skrár. -->
+  <input id="file-input" type="file" accept="image/*" hidden />
   <div class="actions">
     <button id="add-btn" class="btn primary">➕ Skrá beidni</button>
     <button id="clear-btn" class="btn ghost">Hreinsa</button>
@@ -223,7 +225,7 @@ function setPasteZone(dataUrl) {
   const z = $('paste-zone');
   if (!dataUrl) {
     z.classList.remove('has-image');
-    z.innerHTML = '📎 Límdu skjámynd með Ctrl/Cmd-V — eða smelltu til að velja skrá';
+    z.innerHTML = '📎 Límdu skjámynd með Ctrl/Cmd-V — eða smelltu til að velja mynd úr albúmi';
   } else {
     z.classList.add('has-image');
     z.innerHTML = '✓ Skjámynd hlaðin (smelltu til að skipta út)<br><img src="' + dataUrl + '" alt="">';
