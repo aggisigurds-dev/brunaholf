@@ -3646,6 +3646,29 @@ function renderBakendi(t){
           <div id="bk-ds-results"></div>
         </div>
 
+        <!-- 📊 Skjalatalning (telur skrár í reikningar + skýrslur, per ár) -->
+        <div style="${card}">
+          <div style="display:flex;align-items:center;gap:14px">
+            <span style="${iconSq};${ICON.blue}">📊</span>
+            <div style="flex:1">
+              <div style="${titleStyle}">Skjalatalning — fjöldi skráa per ár</div>
+              <p style="${descStyle};margin-top:4px">Telur skrárnar í <b>reikningar</b>- og <b>skýrslur</b>-möppunum á Drive og sundurliðar <b>eftir ári</b> (úr skráarheiti). Les-aðeins — færir ekkert. Smelltu á <b>↻ Uppfæra</b> til að telja núna.</p>
+            </div>
+            <span style="${chipStyle('#dbeafe','#1e40af')}">Talning</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div><label style="${labelStyle}">Reikningar (master)</label><input id="bk-dc-reik" value="1FHHX99LRB_9w_LqwHIY57T4l9mLMID7p" placeholder="folder-id / slóð" style="${inpMono};width:100%;box-sizing:border-box;height:40px"></div>
+            <div><label style="${labelStyle}">Skýrslur (úttektarskýrslur)</label><input id="bk-dc-skyr" value="1VSRRw6O8U6lU8WzZxA8CkLtrAmiU07mg" placeholder="folder-id / slóð" style="${inpMono};width:100%;box-sizing:border-box;height:40px"></div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:auto">
+            <button id="bk-dc-run" class="btn primary">↻ Uppfæra talningu</button>
+            <button id="bk-dc-skyr-ar" class="btn">🔎 Lesa ár á skýrslur án árs</button>
+            <button id="bk-dc-skyr-stop" class="btn" disabled>⏸ Stöðva</button>
+            <span id="bk-dc-status" style="font-size:12.5px;color:#64748b"></span>
+          </div>
+          <div id="bk-dc-results"></div>
+        </div>
+
         <!-- 📝 Samningalesari -->
         <div style="${card}">
           <div style="display:flex;align-items:center;gap:14px">
@@ -4447,6 +4470,92 @@ function renderBakendi(t){
     $step.onclick = step;
     $run.onclick = runLoop;
     $stop.onclick = () => { running = false; $status.textContent += ' (stöðva…)'; };
+  })();
+
+  // ── 📊 Skjalatalning: count files in reikningar + skýrslur, per year ─────────
+  (function wireDriveCount(){
+    const $reik = document.getElementById('bk-dc-reik');
+    const $skyr = document.getElementById('bk-dc-skyr');
+    const $run = document.getElementById('bk-dc-run');
+    const $arBtn = document.getElementById('bk-dc-skyr-ar');
+    const $arStop = document.getElementById('bk-dc-skyr-stop');
+    const $status = document.getElementById('bk-dc-status');
+    const $results = document.getElementById('bk-dc-results');
+    if (!$run) return;
+    const nf = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+    function renderTable(folders){
+      const cols = [
+        { key: 'reikningar', label: '🧾 Reikningar', col: '#1d4ed8' },
+        { key: 'skyrslur',   label: '📄 Skýrslur',   col: '#0891b2' },
+      ];
+      // union of all years across both folders, newest first, „óþekkt" last
+      const yset = {};
+      cols.forEach(c => { const by = (folders[c.key]||{}).byYear || {}; Object.keys(by).forEach(y => { yset[y] = 1; }); });
+      const years = Object.keys(yset).sort((a,b) => {
+        if (a === 'óþekkt') return 1; if (b === 'óþekkt') return -1; return (+b) - (+a);
+      });
+      let head = '<tr><th style="text-align:left;padding:7px 10px">Ár</th>' +
+        cols.map(c => '<th style="text-align:right;padding:7px 10px;color:'+c.col+'">'+c.label+'</th>').join('') + '</tr>';
+      let body = years.map(y => {
+        const cells = cols.map(c => { const n = ((folders[c.key]||{}).byYear||{})[y] || 0;
+          return '<td style="text-align:right;padding:6px 10px;font-variant-numeric:tabular-nums">'+(n?nf(n):'<span style="color:#cbd5e1">–</span>')+'</td>'; }).join('');
+        return '<tr><td style="padding:6px 10px;font-weight:600">'+escapeHtml(y)+'</td>'+cells+'</tr>';
+      }).join('');
+      const totRow = '<tr style="border-top:2px solid #e2e8f0;font-weight:800">' +
+        '<td style="padding:8px 10px">Samtals</td>' +
+        cols.map(c => '<td style="text-align:right;padding:8px 10px">'+nf((folders[c.key]||{}).total||0)+'</td>').join('') + '</tr>';
+      const sub = cols.map(c => { const f = folders[c.key]||{}; return f.subfolders ? (c.label.replace(/^\S+\s/,'')+': '+f.subfolders+' undirmöppur') : ''; }).filter(Boolean).join(' · ');
+      $results.innerHTML =
+        '<div style="margin-top:12px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden">' +
+        '<table style="width:100%;border-collapse:collapse;font-size:13px">' +
+        '<thead style="background:#f8fafc;color:#334155">'+head+'</thead><tbody>'+body+totRow+'</tbody></table></div>' +
+        (sub ? '<div style="font-size:11.5px;color:#94a3b8;margin-top:6px">'+escapeHtml(sub)+'</div>' : '');
+    }
+
+    async function run(){
+      $run.disabled = true; $status.textContent = 'Tel skrár…';
+      const qs = '?reikningar=' + encodeURIComponent(($reik.value||'').trim()) +
+                 '&skyrslur=' + encodeURIComponent(($skyr.value||'').trim());
+      try {
+        const r = await fetch('/api/drive-count' + qs);
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+        renderTable(d.folders || {});
+        const tr = (d.folders.reikningar||{}).total||0, ts = (d.folders.skyrslur||{}).total||0;
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+        $status.innerHTML = '🧾 '+nf(tr)+' reikningar · 📄 '+nf(ts)+' skýrslur · uppfært '+hh;
+      } catch(e){ $status.textContent = 'Villa: ' + (e.message||e); }
+      finally { $run.disabled = false; }
+    }
+    $run.onclick = run;
+
+    // 🔎 Read year+month from dateless report PDFs (text layer, no OCR) and rename
+    // them, a few per call, until none are left; then refresh the count.
+    let arStop = false;
+    async function readYears(){
+      arStop = false;
+      $arBtn.disabled = true; $run.disabled = true; $arStop.disabled = false;
+      let done = 0, offset = 0, guard = 0;
+      try {
+        while (!arStop && guard++ < 400) {
+          const qs = '?folder=' + encodeURIComponent(($skyr.value||'').trim()) + '&limit=8&offset=' + offset;
+          const r = await fetch('/api/skyrslu-ar' + qs);
+          const d = await r.json();
+          if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+          done += d.renamed || 0;
+          offset = d.next_offset != null ? d.next_offset : (offset + (d.processed||0));
+          $status.textContent = '🔎 Les skýrslur… ' + done + ' merktar (' + Math.min(offset, d.total_yearless||offset) + '/' + (d.total_yearless||'?') + ')';
+          if (d.done || d.processed === 0) break;
+        }
+        $status.textContent = '✅ ' + done + ' skýrslur merktar með ári. Uppfæri talningu…';
+        await run();
+      } catch(e){ $status.textContent = 'Villa: ' + (e.message||e); }
+      finally { $arBtn.disabled = false; $run.disabled = false; $arStop.disabled = true; }
+    }
+    $arBtn.onclick = readYears;
+    $arStop.onclick = () => { arStop = true; $status.textContent += ' (stöðva…)'; };
   })();
 
   // ── Editable customer match: change / mark-wrong the auto-linked company ───
