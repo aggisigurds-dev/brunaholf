@@ -127,6 +127,8 @@ exports.handler = async (event) => {
       if (typeof body.description === 'string') patch.description = body.description.trim();
       if (typeof body.claude_notes === 'string') patch.claude_notes = body.claude_notes.trim();
       if (typeof body.priority === 'number') patch.priority = body.priority;
+      // forgangs-merki: 0=grátt 1=grænt 2=gult 3=rautt (hringrás í UI)
+      if (typeof body.flag === 'number') patch.flag = ((body.flag % 4) + 4) % 4;
       if (typeof body.category === 'string') patch.category = body.category.trim();
       if (typeof body.assigned_agent === 'string') patch.assigned_agent = body.assigned_agent.trim();
       try {
