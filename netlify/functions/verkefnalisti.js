@@ -76,7 +76,9 @@ exports.handler = async (event) => {
 
   try {
     if (event.httpMethod === 'GET') {
-      const r = await sb('verkefnalisti?select=*&order=status.asc,priority.desc,created_at.desc&limit=500');
+      // Röðun: staða → forgangs-merki (rautt=3 efst) → handvirk röð (priority) → nýjast.
+      // Liturinn er þannig aðal-forgangurinn; drag fínstillir innan sama litar.
+      const r = await sb('verkefnalisti?select=*&order=status.asc,flag.desc,priority.desc,created_at.desc&limit=500');
       if (!r.ok) return json(r.status, { error: await r.text() });
       const tasks = await r.json();
       return json(200, { tasks });
@@ -127,6 +129,8 @@ exports.handler = async (event) => {
       if (typeof body.description === 'string') patch.description = body.description.trim();
       if (typeof body.claude_notes === 'string') patch.claude_notes = body.claude_notes.trim();
       if (typeof body.priority === 'number') patch.priority = body.priority;
+      // forgangs-merki: 0=grátt 1=grænt 2=gult 3=rautt (hringrás í UI)
+      if (typeof body.flag === 'number') patch.flag = ((body.flag % 4) + 4) % 4;
       if (typeof body.category === 'string') patch.category = body.category.trim();
       if (typeof body.assigned_agent === 'string') patch.assigned_agent = body.assigned_agent.trim();
       try {
