@@ -355,10 +355,16 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   (cb null · kt already in base → set cb), `base_missing` (kt not in base → create base +
   link), `deleted_ptr` (fyrirtaeki_id → soft-deleted row → repoint to lone live sibling else
   clear, keep base), `dangling` (fyrirtaeki_id → no row → clear), `bad_year` (year <2005 or
-  >next year → null). `reconnect_many` (kt → several live sites) is COUNT-only, handed to
-  Skýrslu-stöð. Verified against live DB 2026-07-05: reconnect 372 · reconnect_many 26 ·
-  base_link 0 · base_missing 93 · deleted_ptr 72 · dangling 1 · bad_year 3. Bakendi card +
-  `wireHreinsiBord` in index.html. Service role.
+  >next year → null). `reconnect_many` (kt → several live sites), `reconnect_conflict`
+  (doc's base kt disagrees with a second kt in notes), `bad_kt` (implausible/corrupted kt
+  in notes — `ktShapeValid` guards it, so a base is NEVER minted for a garbage kt), and
+  `bad_year` are all COUNT/surface-only → handed to Skýrslu-stöð. **Run history (2026-07-05):**
+  reconnect 372, deleted_ptr 72, dangling 1 applied live (445 docs reconnected); base_missing
+  ran via SQL with the same ktShapeValid guard → 73 new `customers_base` rows (ids 962-1034,
+  7 misleading auto-names reset to `kt …` placeholders) + 92 docs linked; docs-without-base
+  164→72. Remaining: reconnect_many 26 · reconnect_conflict 1 · bad_kt 1 (VR-5) · bad_year 3 ·
+  ~970 mangled names → all by-hand in Skýrslu-stöð. Bakendi card + `wireHreinsiBord` in
+  index.html. Service role.
 
 - `drive-dedup.js` — **Bakendi „🗂️ Drive tvítekningar"** (`/api/drive-dedup`): pick any
   Drive folder → lists files with **duplicate names** (groups by name with the extension
