@@ -39,6 +39,7 @@ exports.handler = async (event) => {
         reconnect:          buckets.reconnect,
         base_link:          buckets.base_link,
         base_missing:       buckets.base_missing,
+        bad_kt:             buckets.bad_kt,
         deleted_ptr:        buckets.deleted_ptr,
         dangling:           buckets.dangling,
         bad_year:           buckets.bad_year,
@@ -76,6 +77,13 @@ async function sbWrite(method, path, payload, prefer) {
 
 const ktDigits = k => String(k || '').replace(/\D/g, '');
 const ktDashed = d => (String(d).length === 10 ? String(d).slice(0, 6) + '-' + String(d).slice(6) : String(d));
+// A plausibly-real Icelandic kt: 10 digits, month 1-12, day 1-31 (person) or 41-71
+// (company +40). Guards against corrupted notes-kts (e.g. VR-5's 912091-2709).
+function ktShapeValid(d10) {
+  if (!/^[0-9]{10}$/.test(d10)) return false;
+  const day = +d10.slice(0, 2), mon = +d10.slice(2, 4);
+  return mon >= 1 && mon <= 12 && ((day >= 1 && day <= 31) || (day >= 41 && day <= 71));
+}
 // pull a kennitala out of free text (notes/customer_name). Prefer a "kt: NNNNNN-NNNN"
 // form, else any 6-4 (dashed or not) run that isn't obviously an amount/date.
 function ktFromText(t) {
@@ -112,7 +120,7 @@ async function computeBuckets() {
   const baseById = {};
   bases.forEach(b => { const d = ktDigits(b.kennitala); if (d) baseByKt[d] = b; baseById[b.id] = b; });
 
-  const B = { reconnect: [], reconnect_many: [], reconnect_conflict: [], base_link: [], base_missing: [], deleted_ptr: [], dangling: [], bad_year: [] };
+  const B = { reconnect: [], reconnect_many: [], reconnect_conflict: [], base_link: [], base_missing: [], bad_kt: [], deleted_ptr: [], dangling: [], bad_year: [] };
 
   for (const d of docs) {
     const name = d.customer_name || (d.notes || '').replace(/\s+/g, ' ').slice(0, 80) || '';
@@ -161,8 +169,11 @@ async function computeBuckets() {
       const base = baseByKt[kt];
       if (base) {
         B.base_link.push({ id: d.id, doc_type: d.doc_type, year: d.year, name, kt: ktDashed(kt), set_base_id: base.id, base_nafn: base.nafn });
-      } else {
+      } else if (ktShapeValid(kt)) {
         B.base_missing.push({ id: d.id, doc_type: d.doc_type, year: d.year, name, kt: ktDashed(kt) });
+      } else {
+        // corrupted/implausible kt in notes → never mint a base for it; review by hand
+        B.bad_kt.push({ id: d.id, doc_type: d.doc_type, year: d.year, name, kt: ktDashed(kt) });
       }
     }
 
@@ -179,6 +190,7 @@ async function computeBuckets() {
     reconnect_conflict: B.reconnect_conflict.length,
     base_link: B.base_link.length,
     base_missing: B.base_missing.length,
+    bad_kt: B.bad_kt.length,
     deleted_ptr: B.deleted_ptr.length,
     dangling: B.dangling.length,
     bad_year: B.bad_year.length,
@@ -200,6 +212,7 @@ async function apply(body) {
   const baseMade = {};
   if (bucket === 'base_missing') {
     for (const p of list) {
+      if (!ktShapeValid(ktDigits(p.kt))) continue;   // never mint a base for a corrupted kt
       const found = await sbGet(`customers_base?kennitala=eq.${p.kt}&select=id`);
       if (found[0]) { baseMade[p.id] = found[0].id; continue; }
       const rows = await sbWrite('POST', 'customers_base', [{ kennitala: p.kt, nafn: (p.name || '').trim() || ('kt ' + p.kt) }]);
@@ -217,6 +230,7 @@ async function apply(body) {
     } else if (bucket === 'base_link') {
       patch.customer_base_id = p.set_base_id;
     } else if (bucket === 'base_missing') {
+      if (!baseMade[p.id]) { failed.push({ id: p.id, error: 'gallað kt — sleppt' }); continue; }
       patch.customer_base_id = baseMade[p.id];
     } else if (bucket === 'deleted_ptr') {
       patch.fyrirtaeki_id = p.to_id;   // lone live sibling, or null → keep base link, drop the dead pointer
