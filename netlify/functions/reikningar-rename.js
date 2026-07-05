@@ -156,40 +156,39 @@ exports.handler = async (event) => {
 };
 
 // ── Drive listing + content reader (mirrors reikningar-read.js) ────────────────
+// Recurse the folder TREE — the master is now organised into <ár>/ subfolders.
+async function listTree(folder, token, fields) {
+  const out = [], queue = [folder], seen = new Set();
+  while (queue.length) {
+    const fid = queue.shift();
+    if (seen.has(fid)) continue; seen.add(fid);
+    let pageToken = null;
+    do {
+      const params = new URLSearchParams({
+        q: `'${fid.replace(/'/g, "\\'")}' in parents and trashed=false`,
+        fields: `files(${fields}),nextPageToken`,
+        pageSize: '300', includeItemsFromAllDrives: 'true', supportsAllDrives: 'true', corpora: 'allDrives',
+      });
+      if (pageToken) params.set('pageToken', pageToken);
+      const r = await fetch('https://www.googleapis.com/drive/v3/files?' + params, { headers: { Authorization: `Bearer ${token}` } });
+      if (!r.ok) throw new Error('Drive list ' + r.status + ' ' + (await r.text()).slice(0, 150));
+      const d = await r.json();
+      for (const f of (d.files || [])) {
+        if (f.mimeType === 'application/vnd.google-apps.folder') { queue.push(f.id); continue; }
+        if (/pdf$/i.test(f.name) || f.mimeType === 'application/pdf') out.push(f);
+      }
+      pageToken = d.nextPageToken;
+    } while (pageToken);
+  }
+  return out;
+}
 async function listPdfs(folder, token) {
-  const out = []; let pageToken = null;
-  do {
-    const params = new URLSearchParams({
-      q: `'${folder.replace(/'/g, "\\'")}' in parents and trashed=false`,
-      fields: 'files(id,name,mimeType),nextPageToken',
-      pageSize: '200', includeItemsFromAllDrives: 'true', supportsAllDrives: 'true', corpora: 'allDrives',
-    });
-    if (pageToken) params.set('pageToken', pageToken);
-    const r = await fetch('https://www.googleapis.com/drive/v3/files?' + params, { headers: { Authorization: `Bearer ${token}` } });
-    if (!r.ok) throw new Error('Drive list ' + r.status + ' ' + (await r.text()).slice(0, 150));
-    const d = await r.json();
-    for (const f of (d.files || [])) if (/pdf$/i.test(f.name) || f.mimeType === 'application/pdf') out.push(f);
-    pageToken = d.nextPageToken;
-  } while (pageToken);
+  const out = await listTree(folder, token, 'id,name,mimeType');
   out.sort((a, b) => a.name.localeCompare(b.name, 'is'));
   return out;
 }
 async function listPdfsMeta(folder, token) {
-  const out = []; let pageToken = null;
-  do {
-    const params = new URLSearchParams({
-      q: `'${folder.replace(/'/g, "\\'")}' in parents and trashed=false`,
-      fields: 'files(id,name,mimeType,md5Checksum),nextPageToken',
-      pageSize: '300', includeItemsFromAllDrives: 'true', supportsAllDrives: 'true', corpora: 'allDrives',
-    });
-    if (pageToken) params.set('pageToken', pageToken);
-    const r = await fetch('https://www.googleapis.com/drive/v3/files?' + params, { headers: { Authorization: `Bearer ${token}` } });
-    if (!r.ok) throw new Error('Drive list ' + r.status);
-    const d = await r.json();
-    for (const f of (d.files || [])) if (/pdf$/i.test(f.name) || f.mimeType === 'application/pdf') out.push(f);
-    pageToken = d.nextPageToken;
-  } while (pageToken);
-  return out;
+  return listTree(folder, token, 'id,name,mimeType,md5Checksum');
 }
 async function readPdfText(id, token) {
   const r = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media&supportsAllDrives=true`, { headers: { Authorization: `Bearer ${token}` } });
