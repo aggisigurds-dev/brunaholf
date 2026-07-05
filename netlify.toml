@@ -372,6 +372,18 @@
   to = "/.netlify/functions/kunnagrunnur"
   status = 200
 
+# Kt reconciliation board — close spine gaps (kt-less, multi-loc, vidsk) safely.
+[[redirects]]
+  from = "/api/kt-samraeming"
+  to = "/.netlify/functions/kt-samraeming"
+  status = 200
+
+# Document cleaning board — batch reconnect docs → spine (additive only).
+[[redirects]]
+  from = "/api/hreinsi-bord"
+  to = "/.netlify/functions/hreinsi-bord"
+  status = 200
+
 # Bakendi Reikningalesari: write the parsed invoices into a summary Google Sheet in the folder
 [[redirects]]
   from = "/api/reikningar-sheet"
