@@ -9,7 +9,7 @@
 
 const { freshAccessToken, json, cors } = require('./_google');
 
-const DEFAULT_FOLDER = '1TDusB2NLhr-OMLnojSk3iw0oiuiuFMLM';
+const DEFAULT_FOLDER = '1FHHX99LRB_9w_LqwHIY57T4l9mLMID7p';
 const SHEET_TITLE = 'Reikningar – gagnayfirlit';
 
 exports.handler = async (event) => {

@@ -15,7 +15,7 @@ const { freshAccessToken, json, cors } = require('./_google');
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ISSUER_KT = '6005080400';
-const DEFAULT_FOLDER = '11Gf4yUeR6tQ2HcFxWk-50IFQl2xBUQOg'; // "Allt" (úttektarskýrslur)
+const DEFAULT_FOLDER = '1VSRRw6O8U6lU8WzZxA8CkLtrAmiU07mg'; // Úttektarskýrslur (canonical)
 const MONTHS = 'janúar|febrúar|mars|apríl|maí|júní|júlí|ágúst|september|október|nóvember|desember';
 
 exports.handler = async (event) => {

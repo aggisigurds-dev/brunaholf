@@ -16,7 +16,7 @@ const { freshAccessToken, json, cors } = require('./_google');
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ISSUER_KT = '6005080400';
-const DEFAULT_FOLDER = '1TDusB2NLhr-OMLnojSk3iw0oiuiuFMLM'; // slökkvitæki - Reikningar - Master
+const DEFAULT_FOLDER = '1FHHX99LRB_9w_LqwHIY57T4l9mLMID7p'; // Reikningar - Invoices (canonical)
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors(), body: '' };

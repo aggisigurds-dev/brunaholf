@@ -7,7 +7,7 @@
 // out of the name, creates a Google Sheet IN that same folder, and returns its url.
 const { freshAccessToken, json, cors } = require('./_google');
 
-const DEFAULT_FOLDER = '11Gf4yUeR6tQ2HcFxWk-50IFQl2xBUQOg';
+const DEFAULT_FOLDER = '1VSRRw6O8U6lU8WzZxA8CkLtrAmiU07mg';
 const MONTHS = { 'janúar':1,'jan':1,'febrúar':2,'feb':2,'mars':3,'mar':3,'apríl':4,'apr':4,'maí':5,'mai':5,
   'júní':6,'jún':6,'jun':6,'júlí':7,'júl':7,'jul':7,'ágúst':8,'ágú':8,'agust':8,
   'september':9,'sep':9,'sept':9,'október':10,'okt':10,'nóvember':11,'nóv':11,'nov':11,'desember':12,'des':12 };
