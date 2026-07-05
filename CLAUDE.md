@@ -350,6 +350,10 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   an already-recorded doc → dupes (delete folder); everything else (vendor bókhald,
   Nóta, mbox, …) → other (óflokkað). Dedup by invoice number (reikn.) or (base,year)
   (skýrsla). Reuses `_google.freshAccessToken`. UI loops 2-at-a-time until `done`.
+  **Subfolders (2026-07-05):** `recurse` (default ON) walks the whole folder tree
+  — files anywhere under `src` get sorted (each keeps its own `parents`, so a move
+  lifts it straight out of its subfolder); `done` covers the whole tree. `recurse=0`
+  restores flat, direct-children-only behaviour. Folders themselves are never moved.
 
 ### Email
 - `email_digest` (~29k rows): all emails from connected Gmail accounts

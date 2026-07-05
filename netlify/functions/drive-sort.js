@@ -14,8 +14,11 @@
 //   • a copy of an already-recorded doc → DUPES (delete folder)
 //   • anything else (vendor invoice, mbox, other)     → OTHER (óflokkað)
 //
-//   GET /api/drive-sort?src=&master=&reports=&dupes=&other=[&limit=2][&rename=1][&dry=1]
+//   GET /api/drive-sort?src=&master=&reports=&dupes=&other=[&limit=2][&rename=1][&dry=1][&recurse=1]
 //        → process up to `limit` files; call repeatedly until done:true.
+//   recurse (default ON): walk subfolders too — files anywhere in the tree get
+//   sorted (each keeps its own parent, so moveFile lifts it out of its subfolder).
+//   recurse=0 restores flat, direct-children-only behaviour.
 
 const pdf = require('pdf-parse');
 const { freshAccessToken, json, cors } = require('./_google');
@@ -25,27 +28,63 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ISSUER_KT = '6005080400';
 
 // ── Drive ─────────────────────────────────────────────────────────────────────
+const FOLDER_MIME = 'application/vnd.google-apps.folder';
 function folderId(raw) { const s = String(raw || '').trim(); const m = s.match(/[-\w]{25,}/); return m ? m[0] : s; }
-async function listSome(token, folder, limit) {
-  const params = new URLSearchParams({
-    q: `'${folder.replace(/'/g, "\\'")}' in parents and trashed=false`,
-    fields: 'files(id,name,mimeType,parents),nextPageToken',
-    pageSize: String(Math.min(Math.max(limit, 1), 20)), supportsAllDrives: 'true', includeItemsFromAllDrives: 'true',
-  });
-  const r = await fetch('https://www.googleapis.com/drive/v3/files?' + params, { headers: { Authorization: `Bearer ${token}` } });
-  if (!r.ok) throw new Error('Drive list ' + r.status + ': ' + (await r.text()).slice(0, 200));
-  const d = await r.json();
-  return d.files || [];
+// List ALL direct children of one folder (paged), files AND subfolders.
+async function listChildren(token, folder) {
+  const out = []; let pageToken = '';
+  do {
+    const params = new URLSearchParams({
+      q: `'${folder.replace(/'/g, "\\'")}' in parents and trashed=false`,
+      fields: 'files(id,name,mimeType,parents),nextPageToken',
+      pageSize: '200', supportsAllDrives: 'true', includeItemsFromAllDrives: 'true',
+    });
+    if (pageToken) params.set('pageToken', pageToken);
+    const r = await fetch('https://www.googleapis.com/drive/v3/files?' + params, { headers: { Authorization: `Bearer ${token}` } });
+    if (!r.ok) throw new Error('Drive list ' + r.status + ': ' + (await r.text()).slice(0, 200));
+    const d = await r.json();
+    out.push(...(d.files || []));
+    pageToken = d.nextPageToken || '';
+  } while (pageToken);
+  return out;
 }
-async function countLeft(token, folder) {
-  const params = new URLSearchParams({
-    q: `'${folder.replace(/'/g, "\\'")}' in parents and trashed=false`,
-    fields: 'files(id)', pageSize: '1', supportsAllDrives: 'true', includeItemsFromAllDrives: 'true',
-  });
-  const r = await fetch('https://www.googleapis.com/drive/v3/files?' + params, { headers: { Authorization: `Bearer ${token}` } });
-  if (!r.ok) return null;
-  const d = await r.json();
-  return (d.files || []).length;
+// Direct-children-only listing (recurse OFF) — the original behaviour.
+async function listSome(token, folder, limit) {
+  const kids = await listChildren(token, folder);
+  return kids.filter(f => f.mimeType !== FOLDER_MIME).slice(0, Math.min(Math.max(limit, 1), 20));
+}
+// Walk the folder tree (BFS) and collect up to `limit` actual FILES (never
+// folders), descending into subfolders. Each file keeps its real `parents`, so
+// moveFile lifts it straight out of whichever subfolder it lives in. We stop as
+// soon as we have `limit` files — the next call re-walks from the root and finds
+// the rest (moved files have left the tree), keeping every call slow-&-steady.
+async function collectFiles(token, root, limit) {
+  const files = []; const queue = [root]; const seen = new Set();
+  while (queue.length && files.length < limit) {
+    const folder = queue.shift();
+    if (seen.has(folder)) continue; seen.add(folder);
+    const kids = await listChildren(token, folder);
+    for (const c of kids) {
+      if (c.mimeType === FOLDER_MIME) queue.push(c.id);
+      else { files.push(c); if (files.length >= limit) break; }
+    }
+  }
+  return files;
+}
+// True if ANY file remains anywhere in the tree (folders alone don't count).
+// Returns on the first file found, so the near-done case is cheap.
+async function anyFileLeft(token, root) {
+  const queue = [root]; const seen = new Set();
+  while (queue.length) {
+    const folder = queue.shift();
+    if (seen.has(folder)) continue; seen.add(folder);
+    let kids; try { kids = await listChildren(token, folder); } catch (_) { return null; }
+    for (const c of kids) {
+      if (c.mimeType === FOLDER_MIME) queue.push(c.id);
+      else return true;
+    }
+  }
+  return false;
 }
 // DEEP-READ every file via Drive OCR (Google-Doc extraction) as the PRIMARY path
 // — pdf-parse is unreliable on dkPlus PDFs (it returns garbage or empty, so the
@@ -220,17 +259,23 @@ exports.handler = async (event) => {
     if (!dest.master || !dest.dupes || !dest.other) return json(400, { error: 'master, dupes and other folders required' });
     if (!dest.reports) dest.reports = dest.other;   // reports → óflokkað if no reports folder given
     const limit = Math.min(Math.max(parseInt(p.limit || '1', 10) || 1, 1), 5);
+    const recurse = p.recurse !== '0' && p.recurse !== 'false';   // default ON — also read subfolders
     const opts = { rename: p.rename !== '0' && p.rename !== 'false', dry: p.dry === '1' || p.dry === 'true' };
     const token = await freshAccessToken();
 
-    const files = await listSome(token, src, limit);
+    const files = recurse ? await collectFiles(token, src, limit) : await listSome(token, src, limit);
     const results = []; const tally = { master: 0, reports: 0, dupes: 0, other: 0, error: 0 };
     for (const f of files) {
       try { const r = await handleFile(token, f, dest, opts); results.push(r); tally[r.action] = (tally[r.action] || 0) + 1; }
       catch (e) { results.push({ name: f.name, action: 'error', error: String(e.message || e) }); tally.error++; }
     }
-    const left = opts.dry ? files.length : await countLeft(token, src);
-    return json(200, { processed: files.length, tally, results, done: (left === 0), dry: opts.dry });
+    // done = no files left to sort. In dry mode we don't move, so "done" just
+    // means this scan found nothing. Live mode re-walks the tree (recurse) or the
+    // root (flat) to see if anything remains.
+    let left;
+    if (opts.dry) left = files.length ? 1 : 0;
+    else left = recurse ? (await anyFileLeft(token, src) ? 1 : 0) : (await listSome(token, src, 1)).length;
+    return json(200, { processed: files.length, tally, results, done: (left === 0), recurse, dry: opts.dry });
   } catch (e) {
     return json(500, { error: String(e.message || e) });
   }
