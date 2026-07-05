@@ -17,13 +17,26 @@ const DEFAULTS = {
 
 function folderId(raw) { const s = String(raw || '').trim(); const m = s.match(/[-\w]{25,}/); return m ? m[0] : s; }
 
-// Year from a file name. The Drive-flokkun namer writes „… - <ár> - …"; take a
-// standalone 20xx, else a dd.mm.yy / dd.mm.yyyy date, else null (óþekkt).
+// Year from a file name. The Drive-flokkun namer writes „Fyrirtæki - kt - R-nr -
+// <ár> - upphæð". Parsing has to avoid the kt suffix (…-2049) and amounts, which
+// a naive \b20\d\d\b would grab as bogus years (2049, 2099, …). Strategy:
+//  1) the real year lives in its OWN „ - ÁÁÁÁ - " segment → split on spaced dashes
+//     and take a segment that is EXACTLY 20xx (kt/amount segments never are).
+//  2) else a dd.mm.yyyy / dd.mm.yy date.
+//  3) else a standalone 20xx bounded by whitespace (never a „-2049" kt tail).
+// All gated to a sane range [2008 .. current+1] so kt suffixes 20yy fall out.
 function yearFrom(name) {
-  const s = String(name || '');
-  let m = s.match(/\b(20\d{2})\b/); if (m) return +m[1];
-  m = s.match(/\b\d{1,2}\.\d{1,2}\.(20\d{2})\b/); if (m) return +m[1];
-  m = s.match(/\b\d{1,2}\.\d{1,2}\.(\d{2})\b/); if (m) return 2000 + (+m[1]);
+  const stem = String(name || '').replace(/\.[a-z0-9]+$/i, '');
+  const maxY = new Date().getFullYear() + 1;
+  const ok = (y) => y >= 2008 && y <= maxY;
+  for (const seg of stem.split(/\s+-\s+/)) {
+    const mm = seg.trim().match(/^(20\d{2})$/); if (mm && ok(+mm[1])) return +mm[1];
+  }
+  let m = stem.match(/\b\d{1,2}\.\d{1,2}\.(20\d{2})\b/); if (m && ok(+m[1])) return +m[1];
+  m = stem.match(/\b\d{1,2}\.\d{1,2}\.(\d{2})\b/); if (m && ok(2000 + +m[1])) return 2000 + +m[1];
+  const re = /(?:^|\s)(20\d{2})(?=\s|$)/g; let x; const cands = [];
+  while ((x = re.exec(stem))) cands.push(+x[1]);
+  for (let i = cands.length - 1; i >= 0; i--) if (ok(cands[i])) return cands[i];
   return null;
 }
 
