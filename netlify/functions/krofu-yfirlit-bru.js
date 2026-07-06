@@ -1,0 +1,154 @@
+// krofu-yfirlit-bru.js — Kröfu yfirlit (þrepaskipt) fyrir Brunahólf.
+//
+//   GET /api/krofu-yfirlit-bru
+//     → { generated_at, newest_timavera, tier1, tier2, draftKeys }
+//
+// Þrepaskipt kröfu-yfirlit í Slökkvitæki-stíl. Þessi endapunktur skilar tveimur
+// efstu þrepunum (þriðja þrepið — óinnvoiceaðir Tímavera-tímar — er reiknað í
+// vafranum úr /api/worksites):
+//   • tier1  🔴 Ógreiddar kröfur  = allir reikningar sem eru ÓBORGAÐIR
+//     (Payday `SENT` + Landsbanki `Ógreidd` + handvirkar) — EKKI greitt/kreditfært/
+//     cancelled/draft. NB: gamla /api/debtors mátaði bara íslenska `ógreitt/ógreidd`
+//     og sleppti þar með ÖLLUM Payday `SENT` (54 kröfur / ~159M) — það er lagað hér.
+//   • tier2  🟡 Ósendar kröfur   = Payday `DRAFT`/`Drög` reikningar + vistuð
+//     `invoice_drafts` úr Gerð Reikninga (síðustu mánuði) sem ekki eru enn send.
+//
+// Handvirkar merkingar (merkt greitt / fela) lifa í `krofur_yfirlit_meta`
+// (inv_key = `<source>|<tilvisun>`), skrifað gegnum /api/krofur-yfirlit POST.
+// paid=true eða hidden=true → dettur úr þrepi 1 (og úr summum).
+
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const digits = (s) => String(s || '').replace(/\D/g, '');
+const lc = (s) => String(s || '').trim().toLowerCase();
+
+// Status-flokkun (case-insensitive). Allt sem er hvorki greitt, kreditfært/
+// cancelled né draft telst ÓGREITT (þ.m.t. Payday `SENT`).
+const PAID = new Set(['greitt', 'greidd', 'greiddur', 'paid']);
+const CREDIT = new Set(['kreditreikningur', 'kreditfærður', 'kreditfaerdur', 'credit', 'cancelled', 'cancel', 'reversed']);
+const DRAFT = new Set(['drög', 'drog', 'draft']);
+
+exports.handler = async (event) => {
+  if (event.httpMethod === 'OPTIONS') return resp(204, '', cors());
+  if (!SUPABASE_URL || !SUPABASE_KEY) return json(500, { error: 'Supabase env missing' });
+  if (event.httpMethod !== 'GET') return json(405, { error: 'GET only (skrifað gegnum /api/krofur-yfirlit)' });
+
+  let invoices, drafts, meta;
+  try {
+    invoices = await fetchAll('invoices',
+      'select=id,tilvisun,kt_greidanda,customer_name,gjalddagi,eindagi,hofudstoll,upphaed_total,status,source');
+    drafts = await fetchAll('invoice_drafts',
+      'select=worksite_name,work_month,total_m_vsk,customer_name,kennitala').catch(() => []);
+    meta = await fetchAll('krofur_yfirlit_meta', 'select=inv_key,hidden,paid,note').catch(() => []);
+  } catch (e) { return json(502, { error: e.message }); }
+
+  const metaBy = new Map(meta.map((m) => [m.inv_key, m]));
+  const today = new Date().toISOString().slice(0, 10);
+  const todayMs = Date.parse(today);
+
+  // ---- classify invoices ----
+  const t1 = [], t2 = [];
+  for (const r of invoices) {
+    const st = lc(r.status);
+    const amt = +r.upphaed_total || +r.hofudstoll || 0;
+    if (amt === 0) continue;
+    if (CREDIT.has(st) || amt < 0) continue;                 // kreditfært/cancelled/negative leg
+    const key = `${r.source || 'x'}|${r.tilvisun || r.id}`;
+    const mt = metaBy.get(key) || {};
+    if (mt.hidden) continue;                                  // handvirkt falið
+    const isDraft = DRAFT.has(st);
+    const isPaid = PAID.has(st) || !!mt.paid;                 // Payday-greitt eða handvirkt merkt
+    if (isPaid) continue;                                     // ekki útistandandi lengur
+    const dueMs = r.gjalddagi ? Date.parse(r.gjalddagi) : null;
+    const row = {
+      inv_key: key, id: r.id, tilvisun: r.tilvisun, source: r.source,
+      kt: digits(r.kt_greidanda), customer: r.customer_name || '(óþekkt)',
+      gjalddagi: r.gjalddagi, days_overdue: dueMs != null ? Math.round((todayMs - dueMs) / 864e5) : null,
+      amount: amt, note: mt.note || null,
+    };
+    (isDraft ? t2 : t1).push(row);
+  }
+
+  // ---- invoice_drafts (Gerð Reikninga) → tier2, only recent unsent cycle ----
+  // Bundið við síðustu 3 mánuði svo gamlar (þegar sendar) drög-raðir dredgist ekki upp.
+  const cutoff = monthsAgo(3);
+  const draftKeys = [];
+  for (const d of drafts) {
+    const wm = String(d.work_month || '');
+    if (d.worksite_name && wm) draftKeys.push(`${d.worksite_name}|${wm}`);
+    const amt = +d.total_m_vsk || 0;
+    if (amt <= 0 || wm < cutoff) continue;
+    const key = `draftinv|${d.worksite_name}|${wm}`;
+    const mt = metaBy.get(key) || {};
+    if (mt.hidden || mt.paid) continue;
+    t2.push({
+      inv_key: key, id: null, tilvisun: null, source: 'gerd-drög',
+      kt: digits(d.kennitala), customer: d.customer_name || d.worksite_name || '(verkstaður)',
+      gjalddagi: null, days_overdue: null, amount: amt, note: mt.note || null,
+      worksite: d.worksite_name, work_month: wm,
+    });
+  }
+
+  return json(200, {
+    generated_at: new Date().toISOString(),
+    newest_timavera: await newestTimavera().catch(() => null),
+    tier1: rollup(t1),
+    tier2: rollup(t2),
+    draftKeys,
+    note: 'Ógreitt = allir reikningar sem eru hvorki greiddir, kreditfærðir né drög. Payday SENT telst ógreitt (útistandandi).',
+  });
+};
+
+// Group rows by debtor (kt else name), sort debtors + rows by amount desc.
+function rollup(rows) {
+  const by = new Map();
+  for (const r of rows) {
+    const gk = r.kt || lc(r.customer);
+    let g = by.get(gk);
+    if (!g) by.set(gk, g = { kt: r.kt, customer: r.customer, invoices: [], outstanding_kr: 0, oldest_due: null });
+    g.invoices.push(r);
+    g.outstanding_kr += r.amount;
+    if (r.gjalddagi && (!g.oldest_due || r.gjalddagi < g.oldest_due)) g.oldest_due = r.gjalddagi;
+  }
+  const debtors = [...by.values()].sort((a, b) => b.outstanding_kr - a.outstanding_kr);
+  debtors.forEach((d) => d.invoices.sort((a, b) => b.amount - a.amount));
+  return {
+    debtors,
+    total: debtors.reduce((a, d) => a + d.outstanding_kr, 0),
+    n: rows.length,
+    debtor_count: debtors.length,
+  };
+}
+
+function monthsAgo(n) {
+  // ISO YYYY-MM cutoff n months before today (no Date.now()-free needed; server ok).
+  const d = new Date(); d.setMonth(d.getMonth() - n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+async function newestTimavera() {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/timavera_entries?select=date&order=date.desc&limit=1`, {
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
+  });
+  if (!r.ok) return null;
+  const rows = await r.json();
+  return rows[0] ? rows[0].date : null;
+}
+async function fetchAll(table, qs) {
+  const out = []; let from = 0;
+  for (;;) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${qs}`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`,
+        Range: `${from}-${from + 999}`, 'Range-Unit': 'items' },
+    });
+    if (!r.ok) throw new Error(`${table}: ${r.status} ${(await r.text()).slice(0, 200)}`);
+    const page = await r.json();
+    out.push(...page);
+    if (page.length < 1000) break;
+    from += 1000;
+  }
+  return out;
+}
+function cors() { return { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET, OPTIONS', 'access-control-allow-headers': 'content-type' }; }
+function json(s, p) { return resp(s, JSON.stringify(p), { 'content-type': 'application/json', ...cors() }); }
+function resp(statusCode, body, headers) { return { statusCode, headers, body }; }
