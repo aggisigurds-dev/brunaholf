@@ -1740,6 +1740,7 @@ const DEFAULT_STATE = {
     {id:'verdsamanburdur', label:'Verðsamanburður', icon:'⚖️'},
     {id:'verkstadir',  label:'Verkstaðir',  icon:'🏗'},
     {id:'skuldunautar', label:'Skuldunautar', icon:'💸'},
+    {id:'krofuyfirlit', label:'Kröfu yfirlit', icon:'📄'},
     {id:'krofur', label:'Krófur & Tekjur', icon:'📊'},
     {id:'hreyfingaryfirlit', label:'Hreyfingaryfirlit', icon:'📒'},
     {id:'nlsh',        label:'Landsspítalinn', icon:'🏥'},
@@ -2020,7 +2021,7 @@ function clearDataCache(){
 function ensureNewTabs(s){
   if(!s || !Array.isArray(s.tabs)) return;
   if(!Array.isArray(s.bakendiLinks)) s.bakendiLinks = BAKENDI_LINK_SEED.map(x=>({...x}));
-  ['dagurinn','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','skuldunautar','krofur','hreyfingaryfirlit','nlsh','spurningar','sjalfvirkni','vefryni','skodanir','bakendi'].forEach(id=>{
+  ['dagurinn','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','skuldunautar','krofuyfirlit','krofur','hreyfingaryfirlit','nlsh','spurningar','sjalfvirkni','vefryni','skodanir','bakendi'].forEach(id=>{
     if(!s.tabs.find(t=>t.id===id)){
       const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
       if(d){
@@ -2082,11 +2083,17 @@ function ensureNewTabs(s){
           // Skuldunautar right after Verkstaðir.
           const idx = s.tabs.findIndex(t=>t.id==='verkstadir');
           target = idx >= 0 ? idx + 1 : -1;
-        } else if(id === 'krofur'){
-          // Krófur & Tekjur right after Skuldunautar.
+        } else if(id === 'krofuyfirlit'){
+          // Kröfu yfirlit right after Skuldunautar.
           const idx = s.tabs.findIndex(t=>t.id==='skuldunautar');
           const idx2 = s.tabs.findIndex(t=>t.id==='verkstadir');
           target = idx >= 0 ? idx + 1 : (idx2 >= 0 ? idx2 + 1 : -1);
+        } else if(id === 'krofur'){
+          // Krófur & Tekjur right after Kröfu yfirlit (else Skuldunautar).
+          const idx = s.tabs.findIndex(t=>t.id==='krofuyfirlit');
+          const idx0 = s.tabs.findIndex(t=>t.id==='skuldunautar');
+          const idx2 = s.tabs.findIndex(t=>t.id==='verkstadir');
+          target = idx >= 0 ? idx + 1 : (idx0 >= 0 ? idx0 + 1 : (idx2 >= 0 ? idx2 + 1 : -1));
         } else if(id === 'hreyfingaryfirlit'){
           // Hreyfingaryfirlit right after Skuldunautar (else after Verkstaðir).
           const idx = s.tabs.findIndex(t=>t.id==='skuldunautar');
@@ -2327,6 +2334,7 @@ function renderTabs(){
     const warmMap = {
       vinnubok:   ['/api/worksites?year=combined','/api/invoice-drafts','/api/efnislisti-docs'],
       gerdreikninga: ['/api/worksites?year=combined','/api/pricing-guide','/api/invoice-drafts','/api/redder-invoices'],
+      krofuyfirlit: ['/api/debtors'],
       reikningar: ['/api/worksites?year=combined','/api/invoice-drafts','/api/efnislisti-docs','/api/redder-invoices','/api/pricing-guide','/api/unbilled-hours'],
       verdskra:   ['/api/pricing-guide','/api/hole-rates'],
       vinnustofa: ['/api/worksites?year=combined','/api/unbilled-hours','/api/invoice-drafts'],
@@ -2451,6 +2459,7 @@ function render(){
   if(t.id==='verdsamanburdur') return renderCompetitors(t);
   if(t.id==='verkstadir') return renderWorksites(t);
   if(t.id==='skuldunautar') return renderSkuldunautar(t);
+  if(t.id==='krofuyfirlit') return renderKrofuyfirlit(t);
   if(t.id==='krofur') return renderKrofur(t);
   if(t.id==='hreyfingaryfirlit') return renderHreyfingar(t);
   if(t.id==='reikningar') return renderReikningagerd(t);
@@ -11313,6 +11322,257 @@ async function renderKrofur(t){
   $('kf-refresh').onclick = load;
   $('kf-search').addEventListener('input', e=>{ q=e.target.value.trim(); list(); });
   setupCollapse();
+  load();
+}
+
+// ── Kröfu yfirlit — grouped-by-debtor AR overview (Slökkvitæki look) ────────
+// READ-ONLY v1. Replicates Slökkvitæki's Kröfu yfirlit visually (metallic stat
+// cards + gradient hero cards + white grouped debtor cards + aging pills +
+// ky-abtn status chips), fed by brunaholf's /api/debtors, grouped/sorted by
+// skuldunautur. No Payday write actions yet — that connection comes later.
+async function renderKrofuyfirlit(t){
+  const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const fmtKr = n => (Math.round(Number(n)||0)).toLocaleString('is-IS').replace(/,/g,'.') + ' kr';
+  const fmtDate = iso => { if(!iso) return '—'; const d=new Date(iso); if(isNaN(d)) return '—';
+    return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear(); };
+  const ktDigits = s => String(s||'').replace(/\D+/g,'');
+
+  // Aging pill: green ≤30d · amber 31–60d · red >60d (ported verbatim).
+  function agingPill(days){
+    if(days==null) return '';
+    const p = days>60 ? {bg:'#fff1f2',tx:'#be123c',bd:'#fecdd3'}
+            : days>30 ? {bg:'#fffbeb',tx:'#b45309',bd:'#fde68a'}
+            : {bg:'#ecfdf5',tx:'#047857',bd:'#a7f3d0'};
+    return '<span class="ky-num" style="background:'+p.bg+';color:'+p.tx+';border:1px solid '+p.bd+';padding:2px 8px;border-radius:99px;font-size:10.5px;font-weight:700;white-space:nowrap">'+days+' d.</span>';
+  }
+  // Light-metallic labelled chip (icon + tiny colored label). filled=true → dark green.
+  function kyAbtn(cls,extra,glyph,label,color,title,filled){
+    return '<button class="'+cls+' ky-abtn'+(filled?' on':'')+'" '+extra+' type="button" title="'+esc(title)+'">'+
+      '<span style="font-size:14px;line-height:1;color:'+(filled?'#fff':color)+'">'+glyph+'</span>'+
+      '<span style="font-size:8.5px;font-weight:700;letter-spacing:.02em;color:'+(filled?'#fff':color)+'">'+esc(label)+'</span>'+
+    '</button>';
+  }
+
+  const state = { data:null, sort:'outstanding_desc', search:'', viewFilter:'utistandandi' };
+
+  $view.innerHTML = `
+    <div class="kyf-wrap">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px;margin-bottom:18px">
+        <div>
+          <h1 style="margin:0;font-size:24px;font-weight:800;color:#0f172a;display:flex;align-items:center;gap:10px">📄 Kröfu yfirlit</h1>
+          <div style="font-size:12px;color:#64748b;margin-top:2px" id="kyf-meta">Útistandandi kröfur per skuldunaut — raðað eftir upphæð · Sækir…</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <select class="kyf-sort" title="Raða" style="padding:7px 9px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;font:inherit;font-size:12.5px;font-weight:600;color:#475569;cursor:pointer">
+            <option value="outstanding_desc">💰 Útistandandi hæst</option>
+            <option value="outstanding_asc">💰 Útistandandi lægst</option>
+            <option value="oldest_due">📅 Elsti gjalddagi</option>
+            <option value="name">🔤 Nafn A–Ö</option>
+          </select>
+          <input class="kyf-search" type="search" placeholder="🔍 Leita (nafn · kt · R-nr)…" style="padding:7px 11px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;font:inherit;font-size:13px;min-width:210px">
+        </div>
+      </div>
+
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+        ${[['utistandandi','📋 Útistandandi'],['banki','🏦 Greitt í banka'],['allt','📚 Sýna allt']].map(([k,label])=>{
+          const on = k==='utistandandi';
+          return `<button class="kyf-vf" data-vf="${k}" type="button" style="padding:7px 14px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;${on?'border:1px solid #1d4ed8;background:#1d4ed8;color:#fff':'border:1px solid #cbd5e1;background:#fff;color:#475569'}">${label}</button>`;
+        }).join('')}
+        <button class="kyf-refresh" type="button" style="margin-left:auto;padding:7px 14px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;border:1px solid #cbd5e1;background:#fff;color:#475569">↻ Sækja</button>
+      </div>
+
+      <div class="kyf-cards" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px"></div>
+
+      <div style="font-size:12.5px;color:#5b6472;margin-bottom:14px;padding:11px 15px;background:#fff;border:1px solid rgba(20,24,34,.08);border-radius:14px;box-shadow:0 8px 22px -16px rgba(25,35,60,.18);line-height:1.5">
+        💡 Útistandandi kröfur per skuldunaut, raðað eftir upphæð. Payday-tenging kemur síðar — þá verður hægt að merkja sent/greitt beint héðan.
+      </div>
+
+      <div class="kyf-list"></div>
+    </div>
+    <style>
+      .kyf-wrap .ky-abtn{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:46px;height:42px;padding:0 7px;border-radius:9px;border:1px solid rgba(20,24,34,.2);background:linear-gradient(180deg,#ffffff,#dbe0e9);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.95),0 3px 6px -3px rgba(20,30,60,.3);cursor:default;font:inherit}
+      .kyf-wrap .ky-abtn.on{background:linear-gradient(150deg,#2bbf6c,#0f6e3a);border-color:#156e3a;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 3px 7px -3px rgba(15,110,58,.5)}
+      .kyf-wrap .ky-num{font-variant-numeric:tabular-nums}
+      .kyf-wrap .ky-row:hover{background:#f7f9fd}
+    </style>`;
+
+  function renderCards(){
+    const T = (state.data && state.data.totals) || {};
+    const CS = '0 1px 1px rgba(15,23,42,.05),0 8px 16px -8px rgba(15,23,42,.15),0 24px 44px -20px rgba(15,23,42,.3),inset 0 2px 0 rgba(255,255,255,.95),inset 0 -10px 20px -14px rgba(15,23,42,.14)';
+    const light = (label,value,sub,ic,icbg,glow)=>
+      `<div style="flex:1 1 240px;min-width:240px;border-radius:18px;padding:15px 17px;display:flex;align-items:center;gap:13px;background:linear-gradient(180deg,#ffffff,#eef1f6);box-shadow:${CS}">
+        <div style="width:46px;height:46px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;background:${icbg};box-shadow:inset 0 1.5px 0 rgba(255,255,255,.5),inset 0 -3px 6px rgba(0,0,0,.25),0 4px 10px -3px ${glow}">${ic}</div>
+        <div style="min-width:0">
+          <div style="font-size:10.5px;font-weight:700;letter-spacing:.14em;color:#8a93a5;text-transform:uppercase">${esc(label)}</div>
+          <div class="ky-num" style="font-size:24px;font-weight:700;color:#11141c;margin-top:2px;white-space:nowrap">${fmtKr(value)}</div>
+          <div style="font-size:11px;color:#9098a6;margin-top:1px">${esc(sub)}</div>
+        </div>
+      </div>`;
+    const hero = (label,value,sub,ic,grad,glowShadow)=>
+      `<div style="flex:1 1 240px;min-width:240px;border-radius:18px;padding:15px 17px;display:flex;align-items:center;gap:13px;background:${grad};box-shadow:0 1px 1px rgba(15,23,42,.05),0 10px 20px -8px rgba(15,23,42,.25),${glowShadow},inset 0 1px 0 rgba(255,255,255,.45)">
+        <div style="width:46px;height:46px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;background:rgba(255,255,255,.16);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.5),inset 0 -3px 6px rgba(0,0,0,.2)">${ic}</div>
+        <div style="min-width:0">
+          <div style="font-size:10.5px;font-weight:700;letter-spacing:.14em;color:rgba(255,255,255,.72);text-transform:uppercase">${esc(label)}</div>
+          <div class="ky-num" style="font-size:24px;font-weight:700;color:#fff;margin-top:2px;white-space:nowrap">${fmtKr(value)}</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:1px">${esc(sub)}</div>
+        </div>
+      </div>`;
+    $view.querySelector('.kyf-cards').innerHTML =
+      light('Kannski í banka', T.maybe_kr, 'upphæð fannst frá öðrum greiðanda — staðfestu', '❓', 'linear-gradient(180deg,#d4a94f,#ab7f2a)', 'rgba(171,127,42,.45)') +
+      light('Kreditfært', T.credited_kr, (T.credited_n||0)+' bakfærðir', '↩', 'linear-gradient(180deg,#c99a3a,#8a6414)', 'rgba(138,100,20,.45)') +
+      hero('Útistandandi', T.outstanding_kr, (T.outstanding_n||0)+' kröfur · '+(T.debtor_count||0)+' skuldunautar', '💰', 'linear-gradient(150deg,#6f97ff 0%,#2f5fe0 34%,#1c3d8c 60%,#0b1838 100%)', '0 26px 46px -20px rgba(20,40,120,.5)') +
+      hero('Greitt í banka', T.bank_paid_kr, (T.bank_paid_n||0)+' reikningar', '🏦', 'linear-gradient(150deg,#37c6a6 0%,#0f9d78 34%,#0a5f52 60%,#062f2b 100%)', '0 26px 46px -20px rgba(10,90,80,.5)');
+  }
+
+  function statusChip(status){
+    if(status==='bank')     return kyAbtn('kyf-chip','','✓','Greitt í banka','#0f7a43','Fannst greitt beint í banka',true);
+    if(status==='maybe')    return kyAbtn('kyf-chip','','❓','Kannski','#b45309','Upphæð fannst frá öðrum greiðanda — staðfestu',false);
+    if(status==='credited') return kyAbtn('kyf-chip','','↩','Kreditfært','#64748b','Bakfærður (kreditreikningur)',false);
+    return kyAbtn('kyf-chip','','⚠','Útistandandi','#dc2626','Ógreitt — engin bankafærsla fannst',false);
+  }
+
+  function renderDebtor(db){
+    const nm = db.customer || '(óþekkt)';
+    const metaBits = [];
+    if(db.kt) metaBits.push('kt '+esc(db.kt));
+    const meta = metaBits.join(' · ');
+    const totalStr = String(Math.round(db.outstanding_kr||0));
+
+    // Aging mini-bar from each invoice's days_overdue: ≤30 green · 31–90 amber · >90 red.
+    let agG=0, agA=0, agR=0;
+    (db.invoices||[]).forEach(inv=>{ const d=inv.days_overdue; const amt=inv.amount||0;
+      if(d==null){ agG+=amt; } else if(d>90){ agR+=amt; } else if(d>30){ agA+=amt; } else { agG+=amt; } });
+    const agTot = agG+agA+agR || 1;
+    const agBar = '<div style="height:6px;border-radius:99px;overflow:hidden;display:flex;background:#eef1f6;width:180px;max-width:44vw;margin-top:6px">'+
+      (agG?'<div style="width:'+(agG/agTot*100)+'%;background:#22c55e"></div>':'')+
+      (agA?'<div style="width:'+(agA/agTot*100)+'%;background:#f59e0b"></div>':'')+
+      (agR?'<div style="width:'+(agR/agTot*100)+'%;background:#ef4444"></div>':'')+
+    '</div>';
+
+    const rows = (db.invoices||[]).map(inv=>{
+      const rnum = inv.tilvisun ? ('R-'+esc(inv.tilvisun)) : ('#'+esc(inv.id));
+      const bankTxt = inv.bank ? `<div style="font-size:10.5px;color:#8a93a2;margin-top:2px">${esc(inv.bank.text||'')} · ${fmtKr(inv.bank.amount)} · ${esc(inv.bank.date||'')}</div>` : '';
+      return `
+        <div class="ky-row" style="display:flex;align-items:center;gap:12px;padding:9px 18px;border-bottom:1px solid #f3f5f9;font-size:12.5px">
+          <div style="width:120px;flex-shrink:0;line-height:1.2">
+            <div class="ky-num" style="color:#1d4ed8;font-weight:700">${rnum}</div>
+            <div style="color:#b6c0cc;font-size:10.5px">${esc(inv.source||'')}</div>
+          </div>
+          <div style="width:96px;flex-shrink:0" class="ky-num">
+            <div style="color:#64748b;font-size:11px">${esc(inv.gjalddagi||'—')}</div>
+          </div>
+          ${agingPill(inv.days_overdue)}
+          <div style="flex:1;min-width:0"></div>
+          <span class="ky-num" style="width:100px;text-align:right;font-weight:700;color:#11141c;white-space:nowrap;flex-shrink:0">${fmtKr(inv.amount)}</span>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0;width:120px">
+            ${statusChip(inv.status)}
+            ${bankTxt}
+          </div>
+        </div>`;
+    }).join('');
+
+    return `
+      <div style="background:#fff;border:1px solid rgba(20,24,34,.08);border-radius:16px;margin-bottom:12px;overflow:hidden;box-shadow:0 10px 28px -16px rgba(25,35,60,.16)">
+        <div style="padding:14px 18px;border-bottom:1px solid #eef1f6;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+          <div style="display:flex;align-items:flex-start;gap:12px">
+            <div>
+              <div style="font-weight:800;color:#11141c;font-size:16px">${esc(nm)}</div>
+              ${meta?`<div style="font-size:11px;color:#8a93a5;margin-top:2px">${meta}</div>`:''}
+              ${agBar}
+              <div style="font-size:11px;color:#8a93a5;margin-top:4px">${(db.invoices||[]).length} reikningar · elsti gjalddagi ${esc(db.oldest_due||'—')}${db.bank_inflow_kr>0?' · <span style="color:#0f7a43">banki: '+fmtKr(db.bank_inflow_kr)+'</span>':''}</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <div style="text-align:right">
+              <div style="font-size:10px;color:#8a93a5;text-transform:uppercase;letter-spacing:.1em;font-weight:700">Útistandandi</div>
+              <div class="ky-num" style="font-size:22px;font-weight:700;color:#2f5fe0">${fmtKr(db.outstanding_kr)}</div>
+            </div>
+            <button class="kyf-copy" data-value="${esc(totalStr)}" type="button" title="Afrita upphæð (fyrir heimabanka)" style="width:38px;height:38px;background:#f1f5f9;color:#475569;border:1px solid rgba(20,24,34,.14);border-radius:10px;cursor:pointer;font:inherit;font-size:13px">📋</button>
+          </div>
+        </div>
+        <div>${rows}</div>
+      </div>`;
+  }
+
+  function renderList(){
+    const listEl = $view.querySelector('.kyf-list');
+    if(!state.data){ listEl.innerHTML = '<div style="padding:32px;text-align:center;color:#94a3b8">Hleður kröfum…</div>'; return; }
+    let debtors = (state.data.debtors||[]).slice();
+
+    // View filter.
+    if(state.viewFilter==='utistandandi') debtors = debtors.filter(d=>d.outstanding_kr>0);
+    else if(state.viewFilter==='banki')   debtors = debtors.filter(d=>d.bank_paid_kr>0);
+    // 'allt' → no filter.
+
+    // Search: name · kt · R-nr.
+    const q = (state.search||'').trim().toLowerCase();
+    const qDigits = q.replace(/\D/g,'');
+    const total = debtors.length;
+    if(q){
+      debtors = debtors.filter(d=>{
+        if(String(d.customer||'').toLowerCase().indexOf(q)!==-1) return true;
+        if(qDigits.length>=3 && ktDigits(d.kt).indexOf(qDigits)!==-1) return true;
+        if((d.invoices||[]).some(inv=>String(inv.tilvisun||'').toLowerCase().indexOf(q)!==-1)) return true;
+        return false;
+      });
+    }
+
+    // Sort.
+    debtors.sort((a,b)=>{
+      if(state.sort==='outstanding_asc') return (a.outstanding_kr||0)-(b.outstanding_kr||0);
+      if(state.sort==='oldest_due')      return String(a.oldest_due||'9999').localeCompare(String(b.oldest_due||'9999'));
+      if(state.sort==='name')            return String(a.customer||'').localeCompare(String(b.customer||''),'is');
+      return (b.outstanding_kr||0)-(a.outstanding_kr||0); // outstanding_desc
+    });
+
+    const searchNote = q && total ? `<div style="font-size:12px;color:#64748b;margin-bottom:10px">🔍 ${debtors.length} af ${total} skuldunautum passa við „${esc(state.search)}"</div>` : '';
+    listEl.innerHTML = searchNote + (debtors.length
+      ? debtors.map(renderDebtor).join('')
+      : (q
+          ? '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:9px;padding:40px;text-align:center;color:#94a3b8;font-style:italic">Enginn skuldunautur passar við „'+esc(state.search)+'"</div>'
+          : '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:9px;padding:40px;text-align:center;color:#94a3b8;font-style:italic">Engar útistandandi kröfur 🎉</div>'));
+
+    listEl.querySelectorAll('.kyf-copy').forEach(b=>b.addEventListener('click',async()=>{
+      try{ await navigator.clipboard.writeText(b.dataset.value); b.textContent='✓'; setTimeout(()=>{b.textContent='📋';},1200); }catch(_){}
+    }));
+  }
+
+  async function load(){
+    const meta = $view.querySelector('#kyf-meta');
+    if(meta) meta.textContent = 'Útistandandi kröfur per skuldunaut — raðað eftir upphæð · Sækir…';
+    try{
+      const r = await fetch('/api/debtors',{cache:'no-store'});
+      const d = await r.json();
+      if(d.error) throw new Error(d.error);
+      state.data = d;
+    }catch(e){
+      if(meta) meta.textContent = 'Villa: '+e.message;
+      $view.querySelector('.kyf-list').innerHTML = '<div style="padding:32px;color:#dc2626">Villa við að sækja kröfur: '+esc(e.message)+'</div>';
+      return;
+    }
+    const T = state.data.totals||{};
+    if(meta) meta.textContent = (T.debtor_count||0)+' skuldunautar · '+(T.outstanding_n||0)+' útistandandi kröfur · '+new Date(state.data.generated_at).toLocaleString('is-IS');
+    renderCards();
+    renderList();
+  }
+
+  // Wire controls.
+  $view.querySelector('.kyf-sort').addEventListener('change', e=>{ state.sort = e.target.value; renderList(); });
+  const searchInp = $view.querySelector('.kyf-search');
+  searchInp.addEventListener('input', e=>{ state.search = e.target.value; renderList();
+    const el = $view.querySelector('.kyf-search'); if(el){ el.focus(); } });
+  $view.querySelectorAll('.kyf-vf').forEach(b=>b.addEventListener('click',()=>{
+    if(state.viewFilter===b.dataset.vf) return;
+    state.viewFilter = b.dataset.vf;
+    $view.querySelectorAll('.kyf-vf').forEach(x=>{
+      const on = x.dataset.vf===state.viewFilter;
+      x.style.cssText = 'padding:7px 14px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;'+(on?'border:1px solid #1d4ed8;background:#1d4ed8;color:#fff':'border:1px solid #cbd5e1;background:#fff;color:#475569');
+    });
+    renderList();
+  }));
+  $view.querySelector('.kyf-refresh').addEventListener('click', load);
+
+  renderList(); // loading state
   load();
 }
 
