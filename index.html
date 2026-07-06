@@ -11353,19 +11353,44 @@ async function renderKrofuyfirlit(t){
     '</button>';
   }
 
-  const state = { data:null, sort:'outstanding_desc', search:'', viewFilter:'utistandandi' };
+  // ── Þrepaskipt (stepped) útgáfa: 3 þrep top→bottom + lifandi summu-spjöld ──
+  // Reiknistærðfræði þreps 3 (Tímavera-áætlun) er tekin ÓBREYTT úr renderGerdReikninga.
+  const isGata = name => /landsspítal|landsspital|nlsh|heklu|dalvegur 30/i.test(name||'');
+  const NON_BILLABLE = /almennt|veikindi|sick|work at home|kaffi|fundir|orlof|frí|slökkvit|slokkvit/i;
+  let PG = {};
+  function rateFor(name){ const pg=PG[name]||{}; return { dv:Number(pg.dagvinna_rate)||9951, vsk:Number(pg.vsk_pct)||24, customer:pg.customer_name||'' }; }
+
+  const MNAMES = ['jan.','feb.','mars','apríl','maí','júní','júlí','ágúst','sept.','okt.','nóv.','des.'];
+  const monthLbl = ym => { if(!ym) return ''; const [y,m]=String(ym).split('-'); return (MNAMES[+m-1]||m)+' '+y; };
+  const dayMon = iso => { if(!iso) return ''; const d=new Date(iso); if(isNaN(d)) return ''; return d.getDate()+'. '+(MNAMES[d.getMonth()]||''); };
+  const isoM = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  const _now = new Date();
+  const CUR_MONTH = isoM(_now);
+  const PREV_MONTH = isoM(new Date(_now.getFullYear(), _now.getMonth()-1, 1));
+  const WINDOW = [PREV_MONTH, CUR_MONTH];
+
+  // Falin/greidd merki — lifa í krofur_yfirlit_meta (bakendi). hiddenSet er líka
+  // afritað í localStorage svo þrep-3 raðir (reiknaðar í vafra) haldast faldar
+  // milli endurhleðslna; þrep 1/2 eru síuð af bakendanum sjálfum.
+  const HKEY = 'ky_hidden_v1';
+  let hiddenSet = new Set(); try{ hiddenSet = new Set(JSON.parse(localStorage.getItem(HKEY)||'[]')); }catch(_){}
+  const paidSet = new Set();
+  const persistHidden = () => { try{ localStorage.setItem(HKEY, JSON.stringify([...hiddenSet])); }catch(_){} };
+
+  const state = { data:null, tier3:null, sort:'amount_desc', search:'', tierFilter:'all', newest:null };
 
   $view.innerHTML = `
     <div class="kyf-wrap">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px;margin-bottom:18px">
         <div>
           <h1 style="margin:0;font-size:24px;font-weight:800;color:#0f172a;display:flex;align-items:center;gap:10px">📄 Kröfu yfirlit</h1>
-          <div style="font-size:12px;color:#64748b;margin-top:2px" id="kyf-meta">Útistandandi kröfur per skuldunaut — raðað eftir upphæð · Sækir…</div>
+          <div style="font-size:12px;color:#64748b;margin-top:2px" id="kyf-meta">Þrepaskipt kröfu-yfirlit — ógreitt → ósent → tími eftir · Sækir…</div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:3px" id="kyf-fresh">Síðasta uppfærsla: …</div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <select class="kyf-sort" title="Raða" style="padding:7px 9px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;font:inherit;font-size:12.5px;font-weight:600;color:#475569;cursor:pointer">
-            <option value="outstanding_desc">💰 Útistandandi hæst</option>
-            <option value="outstanding_asc">💰 Útistandandi lægst</option>
+            <option value="amount_desc">💰 Upphæð hæst</option>
+            <option value="amount_asc">💰 Upphæð lægst</option>
             <option value="oldest_due">📅 Elsti gjalddagi</option>
             <option value="name">🔤 Nafn A–Ö</option>
           </select>
@@ -11374,17 +11399,18 @@ async function renderKrofuyfirlit(t){
       </div>
 
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
-        ${[['utistandandi','📋 Útistandandi'],['banki','🏦 Greitt í banka'],['allt','📚 Sýna allt']].map(([k,label])=>{
-          const on = k==='utistandandi';
+        ${[['all','📚 Allt'],['t1','🔴 Ógreiddar'],['t2','🟡 Ósendar'],['t3','⚪ Tími eftir']].map(([k,label])=>{
+          const on = k==='all';
           return `<button class="kyf-vf" data-vf="${k}" type="button" style="padding:7px 14px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;${on?'border:1px solid #1d4ed8;background:#1d4ed8;color:#fff':'border:1px solid #cbd5e1;background:#fff;color:#475569'}">${label}</button>`;
         }).join('')}
-        <button class="kyf-refresh" type="button" style="margin-left:auto;padding:7px 14px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;border:1px solid #cbd5e1;background:#fff;color:#475569">↻ Sækja</button>
+        <button class="kyf-payday" type="button" style="margin-left:auto;padding:7px 14px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;border:1px solid #cbd5e1;background:#fff;color:#475569">🔄 Uppfæra Payday stöðu</button>
+        <button class="kyf-refresh" type="button" style="padding:7px 14px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;border:1px solid #cbd5e1;background:#fff;color:#475569">↻ Sækja</button>
       </div>
 
       <div class="kyf-cards" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px"></div>
 
       <div style="font-size:12.5px;color:#5b6472;margin-bottom:14px;padding:11px 15px;background:#fff;border:1px solid rgba(20,24,34,.08);border-radius:14px;box-shadow:0 8px 22px -16px rgba(25,35,60,.18);line-height:1.5">
-        💡 Útistandandi kröfur per skuldunaut, raðað eftir upphæð. Payday-tenging kemur síðar — þá verður hægt að merkja sent/greitt beint héðan.
+        💡 Þrjú þrep: <b>🔴 Ógreiddar</b> (sendir reikningar sem eru enn óborgaðir — Payday SENT meðtaldir) · <b>🟡 Ósendar</b> (drög sem á eftir að senda) · <b>⚪ Tími eftir</b> (óinnvoiceaðir Tímavera-tímar × dagvinnutaxti = áætlaðar tekjur í pípunni). Merktu ✓ greitt eða 🙈 fela beint héðan.
       </div>
 
       <div class="kyf-list"></div>
@@ -11392,15 +11418,108 @@ async function renderKrofuyfirlit(t){
     <style>
       .kyf-wrap .ky-abtn{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:46px;height:42px;padding:0 7px;border-radius:9px;border:1px solid rgba(20,24,34,.2);background:linear-gradient(180deg,#ffffff,#dbe0e9);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.95),0 3px 6px -3px rgba(20,30,60,.3);cursor:default;font:inherit}
       .kyf-wrap .ky-abtn.on{background:linear-gradient(150deg,#2bbf6c,#0f6e3a);border-color:#156e3a;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 3px 7px -3px rgba(15,110,58,.5)}
+      .kyf-wrap .ky-act{cursor:pointer}
+      .kyf-wrap .ky-act:hover{filter:brightness(1.03);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.95),0 4px 9px -3px rgba(20,30,60,.4)}
+      .kyf-wrap .ky-act:disabled{opacity:.55;cursor:default}
       .kyf-wrap .ky-num{font-variant-numeric:tabular-nums}
       .kyf-wrap .ky-row:hover{background:#f7f9fd}
+      .kyf-wrap .ky-sec{display:flex;align-items:baseline;gap:10px;margin:24px 0 12px;flex-wrap:wrap}
+      .kyf-wrap .ky-sec h2{margin:0;font-size:17px;font-weight:800;color:#0f172a}
     </style>`;
 
-  function renderCards(){
-    const T = (state.data && state.data.totals) || {};
+  // Group flat tier-3 rows into debtor-cards { customer, kt, invoices, outstanding_kr, oldest_due }.
+  function groupTier3(rows){
+    const by = new Map();
+    for(const r of rows){
+      const gk = r.kt || String(r.customer||'').toLowerCase();
+      let g = by.get(gk);
+      if(!g) by.set(gk, g = { kt:r.kt||'', customer:r.customer, invoices:[], outstanding_kr:0, oldest_due:null });
+      g.invoices.push(r); g.outstanding_kr += r.amount;
+    }
+    const debtors = [...by.values()].sort((a,b)=>b.outstanding_kr-a.outstanding_kr);
+    debtors.forEach(d=>d.invoices.sort((a,b)=>b.amount-a.amount));
+    return { debtors, total:debtors.reduce((a,d)=>a+d.outstanding_kr,0), n:rows.length, debtor_count:debtors.length };
+  }
+
+  // Þrep 3 — reiknað í vafra úr /api/worksites (+ pricing-guide + nlsh-dashboard).
+  async function computeTier3(){
+    const [ws, pg, nl] = await Promise.all([
+      fetch('/api/worksites?year=combined',{cache:'no-store'}).then(r=>r.json()).catch(()=>({worksites:[]})),
+      fetch('/api/pricing-guide',{cache:'no-store'}).then(r=>r.ok?r.json():{rows:[]}).catch(()=>({rows:[]})),
+      fetch('/api/nlsh-dashboard',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null),
+    ]);
+    PG = {}; for(const r of (pg.rows||[])) PG[r.worksite_name] = r;
+    const draftKeys = new Set((state.data && state.data.draftKeys) || []);
+    const rows = [];
+    for(const w of (ws.worksites||[])){
+      if(NON_BILLABLE.test(w.project) || isGata(w.project)) continue;
+      const r = rateFor(w.project);
+      const cust = r.customer || (w.mapped_customers||[])[0] || w.project;
+      for(const month of WINDOW){
+        const hours = (w.monthly||{})[month] || 0;
+        if(hours<=0) continue;
+        if(draftKeys.has(`${w.project}|${month}`)) continue;   // þegar með vistuð drög
+        const est = Math.round(hours * r.dv * (1 + r.vsk/100));
+        if(est<=0) continue;
+        rows.push({ inv_key:`timavera|${w.project}|${month}`, id:null, tilvisun:null, source:'tímavera',
+          kt:'', customer:cust, worksite:w.project, work_month:month, hours,
+          amount:est, gjalddagi:null, days_overdue:null, partial: month===CUR_MONTH });
+      }
+    }
+    // Landsspítalinn (NLSH) — Ajour-tekjur úr byMonth sem eigin hópur.
+    for(const m of ((nl && nl.byMonth) || [])){
+      if(!WINDOW.includes(m.month)) continue;
+      const amt = Number(m.revenue_m_vsk)||0;
+      if(amt<=0) continue;
+      rows.push({ inv_key:`nlsh|${m.month}`, id:null, tilvisun:null, source:'ajour',
+        kt:'', customer:'Landsspítalinn / ÞG verktakar', worksite:'Landsspítalinn', work_month:m.month,
+        amount:amt, gjalddagi:null, days_overdue:null, partial: m.month===CUR_MONTH });
+    }
+    return groupTier3(rows);
+  }
+
+  // Remove hidden/paid invoices, drop empty debtors, recompute outstanding.
+  function liveDebtors(debtors){
+    const out = [];
+    for(const d of (debtors||[])){
+      const invs = (d.invoices||[]).filter(inv=> !hiddenSet.has(inv.inv_key) && !paidSet.has(inv.inv_key));
+      if(!invs.length) continue;
+      out.push({ ...d, invoices:invs, outstanding_kr:invs.reduce((a,i)=>a+i.amount,0) });
+    }
+    return out;
+  }
+  const sumKr = debtors => debtors.reduce((a,d)=>a+d.outstanding_kr,0);
+  const countN = debtors => debtors.reduce((a,d)=>a+d.invoices.length,0);
+
+  function searchSort(debtors){
+    const q = (state.search||'').trim().toLowerCase();
+    const qd = q.replace(/\D/g,'');
+    let arr = debtors;
+    if(q){
+      arr = [];
+      for(const d of debtors){
+        const nameHit = String(d.customer||'').toLowerCase().indexOf(q)!==-1;
+        const ktHit = qd.length>=3 && ktDigits(d.kt).indexOf(qd)!==-1;
+        let invs = d.invoices;
+        if(!nameHit && !ktHit){
+          invs = d.invoices.filter(inv=> String(inv.tilvisun||'').toLowerCase().indexOf(q)!==-1 || String(inv.worksite||'').toLowerCase().indexOf(q)!==-1);
+        }
+        if(!invs.length) continue;
+        arr.push({ ...d, invoices:invs, outstanding_kr:invs.reduce((a,i)=>a+i.amount,0) });
+      }
+    }
+    return arr.slice().sort((a,b)=>{
+      if(state.sort==='amount_asc')  return (a.outstanding_kr||0)-(b.outstanding_kr||0);
+      if(state.sort==='oldest_due')  return String(a.oldest_due||'9999').localeCompare(String(b.oldest_due||'9999'));
+      if(state.sort==='name')        return String(a.customer||'').localeCompare(String(b.customer||''),'is');
+      return (b.outstanding_kr||0)-(a.outstanding_kr||0); // amount_desc
+    });
+  }
+
+  function renderCards(l1,l2,l3){
     const CS = '0 1px 1px rgba(15,23,42,.05),0 8px 16px -8px rgba(15,23,42,.15),0 24px 44px -20px rgba(15,23,42,.3),inset 0 2px 0 rgba(255,255,255,.95),inset 0 -10px 20px -14px rgba(15,23,42,.14)';
     const light = (label,value,sub,ic,icbg,glow)=>
-      `<div style="flex:1 1 240px;min-width:240px;border-radius:18px;padding:15px 17px;display:flex;align-items:center;gap:13px;background:linear-gradient(180deg,#ffffff,#eef1f6);box-shadow:${CS}">
+      `<div style="flex:1 1 220px;min-width:220px;border-radius:18px;padding:15px 17px;display:flex;align-items:center;gap:13px;background:linear-gradient(180deg,#ffffff,#eef1f6);box-shadow:${CS}">
         <div style="width:46px;height:46px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;background:${icbg};box-shadow:inset 0 1.5px 0 rgba(255,255,255,.5),inset 0 -3px 6px rgba(0,0,0,.25),0 4px 10px -3px ${glow}">${ic}</div>
         <div style="min-width:0">
           <div style="font-size:10.5px;font-weight:700;letter-spacing:.14em;color:#8a93a5;text-transform:uppercase">${esc(label)}</div>
@@ -11417,142 +11536,167 @@ async function renderKrofuyfirlit(t){
           <div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:1px">${esc(sub)}</div>
         </div>
       </div>`;
+    const n1=countN(l1), n2=countN(l2), n3=countN(l3);
+    const tot1=sumKr(l1), tot2=sumKr(l2), tot3=sumKr(l3);
+    const t3sub = state.newest ? ('til '+dayMon(state.newest)+' · '+n3+' liðir') : (n3+' liðir');
     $view.querySelector('.kyf-cards').innerHTML =
-      light('Kannski í banka', T.maybe_kr, 'upphæð fannst frá öðrum greiðanda — staðfestu', '❓', 'linear-gradient(180deg,#d4a94f,#ab7f2a)', 'rgba(171,127,42,.45)') +
-      light('Kreditfært', T.credited_kr, (T.credited_n||0)+' bakfærðir', '↩', 'linear-gradient(180deg,#c99a3a,#8a6414)', 'rgba(138,100,20,.45)') +
-      hero('Útistandandi', T.outstanding_kr, (T.outstanding_n||0)+' kröfur · '+(T.debtor_count||0)+' skuldunautar', '💰', 'linear-gradient(150deg,#6f97ff 0%,#2f5fe0 34%,#1c3d8c 60%,#0b1838 100%)', '0 26px 46px -20px rgba(20,40,120,.5)') +
-      hero('Greitt í banka', T.bank_paid_kr, (T.bank_paid_n||0)+' reikningar', '🏦', 'linear-gradient(150deg,#37c6a6 0%,#0f9d78 34%,#0a5f52 60%,#062f2b 100%)', '0 26px 46px -20px rgba(10,90,80,.5)');
+      light('Ógreitt', tot1, n1+' '+(n1===1?'krafa':'kröfur')+' · '+l1.length+' aðilar', '🔴', 'linear-gradient(180deg,#ef6060,#c0342f)', 'rgba(192,52,47,.45)') +
+      light('Ósent', tot2, n2+' '+(n2===1?'drög':'drög')+' · '+l2.length+' aðilar', '🟡', 'linear-gradient(180deg,#e6b23c,#b7861a)', 'rgba(183,134,26,.45)') +
+      light('Tími eftir', tot3, t3sub, '⚪', 'linear-gradient(180deg,#9aa4b3,#6b7482)', 'rgba(107,116,130,.4)') +
+      hero('Samtals í pípunni', tot1+tot2+tot3, 'ógreitt + ósent + áætlaðar tekjur', '💰', 'linear-gradient(150deg,#6f97ff 0%,#2f5fe0 34%,#1c3d8c 60%,#0b1838 100%)', '0 26px 46px -20px rgba(20,40,120,.5)');
   }
 
-  function statusChip(status){
-    if(status==='bank')     return kyAbtn('kyf-chip','','✓','Greitt í banka','#0f7a43','Fannst greitt beint í banka',true);
-    if(status==='maybe')    return kyAbtn('kyf-chip','','❓','Kannski','#b45309','Upphæð fannst frá öðrum greiðanda — staðfestu',false);
-    if(status==='credited') return kyAbtn('kyf-chip','','↩','Kreditfært','#64748b','Bakfærður (kreditreikningur)',false);
-    return kyAbtn('kyf-chip','','⚠','Útistandandi','#dc2626','Ógreitt — engin bankafærsla fannst',false);
+  function actChips(inv, tier){
+    const k = esc(inv.inv_key);
+    const hide = kyAbtn('ky-act','data-act="hide" data-key="'+k+'"','🙈','Fela','#64748b','Fela kröfu',false);
+    if(tier===1){
+      const paid = kyAbtn('ky-act','data-act="paid" data-key="'+k+'"','✓','Greitt','#0f7a43','Merkja sem greitt',false);
+      return paid + hide;
+    }
+    return hide;
   }
 
-  function renderDebtor(db){
+  function renderDebtor(db, tier){
     const nm = db.customer || '(óþekkt)';
-    const metaBits = [];
-    if(db.kt) metaBits.push('kt '+esc(db.kt));
-    const meta = metaBits.join(' · ');
+    const meta = db.kt ? 'kt '+esc(db.kt) : '';
     const totalStr = String(Math.round(db.outstanding_kr||0));
 
-    // Aging mini-bar from each invoice's days_overdue: ≤30 green · 31–90 amber · >90 red.
-    let agG=0, agA=0, agR=0;
-    (db.invoices||[]).forEach(inv=>{ const d=inv.days_overdue; const amt=inv.amount||0;
-      if(d==null){ agG+=amt; } else if(d>90){ agR+=amt; } else if(d>30){ agA+=amt; } else { agG+=amt; } });
-    const agTot = agG+agA+agR || 1;
-    const agBar = '<div style="height:6px;border-radius:99px;overflow:hidden;display:flex;background:#eef1f6;width:180px;max-width:44vw;margin-top:6px">'+
-      (agG?'<div style="width:'+(agG/agTot*100)+'%;background:#22c55e"></div>':'')+
-      (agA?'<div style="width:'+(agA/agTot*100)+'%;background:#f59e0b"></div>':'')+
-      (agR?'<div style="width:'+(agR/agTot*100)+'%;background:#ef4444"></div>':'')+
-    '</div>';
+    let agBar = '';
+    if(tier===1){
+      let agG=0, agA=0, agR=0;
+      (db.invoices||[]).forEach(inv=>{ const d=inv.days_overdue; const amt=inv.amount||0;
+        if(d==null){ agG+=amt; } else if(d>90){ agR+=amt; } else if(d>30){ agA+=amt; } else { agG+=amt; } });
+      const agTot = agG+agA+agR || 1;
+      agBar = '<div style="height:6px;border-radius:99px;overflow:hidden;display:flex;background:#eef1f6;width:180px;max-width:44vw;margin-top:6px">'+
+        (agG?'<div style="width:'+(agG/agTot*100)+'%;background:#22c55e"></div>':'')+
+        (agA?'<div style="width:'+(agA/agTot*100)+'%;background:#f59e0b"></div>':'')+
+        (agR?'<div style="width:'+(agR/agTot*100)+'%;background:#ef4444"></div>':'')+
+      '</div>';
+    }
 
     const rows = (db.invoices||[]).map(inv=>{
-      const rnum = inv.tilvisun ? ('R-'+esc(inv.tilvisun)) : ('#'+esc(inv.id));
-      const bankTxt = inv.bank ? `<div style="font-size:10.5px;color:#8a93a2;margin-top:2px">${esc(inv.bank.text||'')} · ${fmtKr(inv.bank.amount)} · ${esc(inv.bank.date||'')}</div>` : '';
+      const rnum = inv.tilvisun ? ('R-'+esc(inv.tilvisun)) : (inv.worksite ? esc(inv.worksite) : ('#'+esc(inv.id||'')));
+      let sub;
+      if(tier===3){
+        sub = esc(monthLbl(inv.work_month)) + (inv.hours!=null ? ' · '+inv.hours.toFixed(0)+'t' : '') + (inv.partial && state.newest ? ' · til '+esc(dayMon(state.newest)) : '');
+      } else {
+        sub = esc(inv.source||'');
+      }
       return `
-        <div class="ky-row" style="display:flex;align-items:center;gap:12px;padding:9px 18px;border-bottom:1px solid #f3f5f9;font-size:12.5px">
-          <div style="width:120px;flex-shrink:0;line-height:1.2">
+        <div class="ky-row" data-key="${esc(inv.inv_key)}" style="display:flex;align-items:center;gap:12px;padding:9px 18px;border-bottom:1px solid #f3f5f9;font-size:12.5px">
+          <div style="width:150px;flex-shrink:0;line-height:1.2">
             <div class="ky-num" style="color:#1d4ed8;font-weight:700">${rnum}</div>
-            <div style="color:#b6c0cc;font-size:10.5px">${esc(inv.source||'')}</div>
+            <div style="color:#b6c0cc;font-size:10.5px">${sub}</div>
           </div>
           <div style="width:96px;flex-shrink:0" class="ky-num">
             <div style="color:#64748b;font-size:11px">${esc(inv.gjalddagi||'—')}</div>
           </div>
-          ${agingPill(inv.days_overdue)}
+          ${tier===1?agingPill(inv.days_overdue):''}
           <div style="flex:1;min-width:0"></div>
-          <span class="ky-num" style="width:100px;text-align:right;font-weight:700;color:#11141c;white-space:nowrap;flex-shrink:0">${fmtKr(inv.amount)}</span>
-          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0;width:120px">
-            ${statusChip(inv.status)}
-            ${bankTxt}
-          </div>
+          <span class="ky-num" style="width:110px;text-align:right;font-weight:700;color:#11141c;white-space:nowrap;flex-shrink:0">${fmtKr(inv.amount)}</span>
+          <div style="display:flex;gap:6px;flex-shrink:0">${actChips(inv, tier)}</div>
         </div>`;
     }).join('');
 
+    // Zero-balance debtors (e.g. everything netted to 0 after mark-paid) render
+    // collapsed by default so they don't clutter the list; nonzero = expanded.
+    const collapsed = (db.outstanding_kr||0) === 0;
     return `
       <div style="background:#fff;border:1px solid rgba(20,24,34,.08);border-radius:16px;margin-bottom:12px;overflow:hidden;box-shadow:0 10px 28px -16px rgba(25,35,60,.16)">
-        <div style="padding:14px 18px;border-bottom:1px solid #eef1f6;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
-          <div style="display:flex;align-items:flex-start;gap:12px">
+        <div class="ky-card-head" role="button" tabindex="0" title="Smelltu til að opna/loka" style="padding:14px 18px;border-bottom:1px solid #eef1f6;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;cursor:pointer">
+          <div style="display:flex;align-items:flex-start;gap:10px">
+            <span class="ky-caret" style="font-size:13px;color:#94a3b8;line-height:1.6;user-select:none">${collapsed?'▸':'▾'}</span>
             <div>
               <div style="font-weight:800;color:#11141c;font-size:16px">${esc(nm)}</div>
               ${meta?`<div style="font-size:11px;color:#8a93a5;margin-top:2px">${meta}</div>`:''}
               ${agBar}
-              <div style="font-size:11px;color:#8a93a5;margin-top:4px">${(db.invoices||[]).length} reikningar · elsti gjalddagi ${esc(db.oldest_due||'—')}${db.bank_inflow_kr>0?' · <span style="color:#0f7a43">banki: '+fmtKr(db.bank_inflow_kr)+'</span>':''}</div>
+              <div style="font-size:11px;color:#8a93a5;margin-top:4px">${(db.invoices||[]).length} ${tier===3?'liðir':(tier===2?'drög':'reikningar')}${tier===1?' · elsti gjalddagi '+esc(db.oldest_due||'—'):''}</div>
             </div>
           </div>
           <div style="display:flex;gap:10px;align-items:center">
             <div style="text-align:right">
-              <div style="font-size:10px;color:#8a93a5;text-transform:uppercase;letter-spacing:.1em;font-weight:700">Útistandandi</div>
+              <div style="font-size:10px;color:#8a93a5;text-transform:uppercase;letter-spacing:.1em;font-weight:700">${tier===3?'Áætlað':(tier===2?'Ósent':'Útistandandi')}</div>
               <div class="ky-num" style="font-size:22px;font-weight:700;color:#2f5fe0">${fmtKr(db.outstanding_kr)}</div>
             </div>
             <button class="kyf-copy" data-value="${esc(totalStr)}" type="button" title="Afrita upphæð (fyrir heimabanka)" style="width:38px;height:38px;background:#f1f5f9;color:#475569;border:1px solid rgba(20,24,34,.14);border-radius:10px;cursor:pointer;font:inherit;font-size:13px">📋</button>
           </div>
         </div>
-        <div>${rows}</div>
+        <div class="ky-card-rows" style="display:${collapsed?'none':'block'}">${rows}</div>
       </div>`;
+  }
+
+  function section(tier, icon, title, subtitle, live){
+    const disp = searchSort(live);
+    const total = sumKr(live), n = countN(live);
+    const header = `<div class="ky-sec"><h2>${icon} ${esc(title)}</h2>`+
+      `<span style="font-size:12px;color:#64748b">${n} ${n===1?'liður':'liðir'} · ${live.length} ${live.length===1?'aðili':'aðilar'}</span>`+
+      `<span style="margin-left:auto;font-weight:800;font-size:15px;color:#11141c" class="ky-num">${fmtKr(total)}</span></div>`+
+      (subtitle?`<div style="font-size:11.5px;color:#8a93a5;margin:-4px 0 10px">${esc(subtitle)}</div>`:'');
+    const body = disp.length
+      ? disp.map(d=>renderDebtor(d, tier)).join('')
+      : `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:26px;text-align:center;color:#94a3b8;font-style:italic">${state.search?'Ekkert passar við leit':'Engar kröfur 🎉'}</div>`;
+    return header + body;
   }
 
   function renderList(){
     const listEl = $view.querySelector('.kyf-list');
     if(!state.data){ listEl.innerHTML = '<div style="padding:32px;text-align:center;color:#94a3b8">Hleður kröfum…</div>'; return; }
-    let debtors = (state.data.debtors||[]).slice();
+    const l1 = liveDebtors(((state.data.tier1)||{}).debtors || []);
+    const l2 = liveDebtors(((state.data.tier2)||{}).debtors || []);
+    const l3 = liveDebtors(((state.tier3)||{}).debtors || []);
+    renderCards(l1, l2, l3);
 
-    // View filter.
-    if(state.viewFilter==='utistandandi') debtors = debtors.filter(d=>d.outstanding_kr>0);
-    else if(state.viewFilter==='banki')   debtors = debtors.filter(d=>d.bank_paid_kr>0);
-    // 'allt' → no filter.
+    const show = k => state.tierFilter==='all' || state.tierFilter===k;
+    const t3sub = 'Óinnvoiceaðir Tímavera-tímar × dagvinnutaxti m.vsk — áætlaðar tekjur í pípunni'+
+      (state.newest ? ' · yfirstandandi mánuður aðeins til '+dayMon(state.newest)+' (hluti)' : '');
+    let html = '';
+    if(show('t1')) html += section(1,'🔴','Ógreiddar kröfur','Sendir reikningar sem eru enn óborgaðir — Payday SENT + Landsbanki + handvirkir.', l1);
+    if(show('t2')) html += section(2,'🟡','Ósendar kröfur','Drög sem á eftir að senda (engir gjalddagar enn).', l2);
+    if(show('t3')) html += section(3,'⚪','Tími eftir að senda', t3sub, l3);
+    listEl.innerHTML = html;
 
-    // Search: name · kt · R-nr.
-    const q = (state.search||'').trim().toLowerCase();
-    const qDigits = q.replace(/\D/g,'');
-    const total = debtors.length;
-    if(q){
-      debtors = debtors.filter(d=>{
-        if(String(d.customer||'').toLowerCase().indexOf(q)!==-1) return true;
-        if(qDigits.length>=3 && ktDigits(d.kt).indexOf(qDigits)!==-1) return true;
-        if((d.invoices||[]).some(inv=>String(inv.tilvisun||'').toLowerCase().indexOf(q)!==-1)) return true;
-        return false;
-      });
-    }
-
-    // Sort.
-    debtors.sort((a,b)=>{
-      if(state.sort==='outstanding_asc') return (a.outstanding_kr||0)-(b.outstanding_kr||0);
-      if(state.sort==='oldest_due')      return String(a.oldest_due||'9999').localeCompare(String(b.oldest_due||'9999'));
-      if(state.sort==='name')            return String(a.customer||'').localeCompare(String(b.customer||''),'is');
-      return (b.outstanding_kr||0)-(a.outstanding_kr||0); // outstanding_desc
+    // Collapsible cards: click header toggles its invoice rows + caret.
+    listEl.querySelectorAll('.ky-card-head').forEach(h=>{
+      const toggle = ()=>{ const rowsEl = h.nextElementSibling; const car = h.querySelector('.ky-caret');
+        if(!rowsEl) return; const open = rowsEl.style.display==='none';
+        rowsEl.style.display = open?'block':'none'; if(car) car.textContent = open?'▾':'▸'; };
+      h.addEventListener('click', toggle);
+      h.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggle(); } });
     });
-
-    const searchNote = q && total ? `<div style="font-size:12px;color:#64748b;margin-bottom:10px">🔍 ${debtors.length} af ${total} skuldunautum passa við „${esc(state.search)}"</div>` : '';
-    listEl.innerHTML = searchNote + (debtors.length
-      ? debtors.map(renderDebtor).join('')
-      : (q
-          ? '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:9px;padding:40px;text-align:center;color:#94a3b8;font-style:italic">Enginn skuldunautur passar við „'+esc(state.search)+'"</div>'
-          : '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:9px;padding:40px;text-align:center;color:#94a3b8;font-style:italic">Engar útistandandi kröfur 🎉</div>'));
-
-    listEl.querySelectorAll('.kyf-copy').forEach(b=>b.addEventListener('click',async()=>{
+    listEl.querySelectorAll('.kyf-copy').forEach(b=>b.addEventListener('click',async(e)=>{
+      e.stopPropagation();
       try{ await navigator.clipboard.writeText(b.dataset.value); b.textContent='✓'; setTimeout(()=>{b.textContent='📋';},1200); }catch(_){}
+    }));
+    listEl.querySelectorAll('.ky-act').forEach(b=>b.addEventListener('click', async(e)=>{
+      e.stopPropagation();
+      const key = b.dataset.key, act = b.dataset.act;
+      if(!key || b.disabled) return;
+      b.disabled = true;
+      if(act==='paid') b.classList.add('on');
+      const payload = act==='paid' ? {action:'save', inv_key:key, paid:true} : {action:'save', inv_key:key, hidden:true};
+      try{ await fetch('/api/krofur-yfirlit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)}); }catch(_){}
+      if(act==='paid'){ paidSet.add(key); setTimeout(renderList, 260); }
+      else { hiddenSet.add(key); persistHidden(); renderList(); }
     }));
   }
 
   async function load(){
     const meta = $view.querySelector('#kyf-meta');
-    if(meta) meta.textContent = 'Útistandandi kröfur per skuldunaut — raðað eftir upphæð · Sækir…';
+    if(meta) meta.textContent = 'Þrepaskipt kröfu-yfirlit — Sækir…';
     try{
-      const r = await fetch('/api/debtors',{cache:'no-store'});
+      const r = await fetch('/api/krofu-yfirlit-bru',{cache:'no-store'});
       const d = await r.json();
       if(d.error) throw new Error(d.error);
-      state.data = d;
+      state.data = d; state.newest = d.newest_timavera || null;
     }catch(e){
       if(meta) meta.textContent = 'Villa: '+e.message;
       $view.querySelector('.kyf-list').innerHTML = '<div style="padding:32px;color:#dc2626">Villa við að sækja kröfur: '+esc(e.message)+'</div>';
       return;
     }
-    const T = state.data.totals||{};
-    if(meta) meta.textContent = (T.debtor_count||0)+' skuldunautar · '+(T.outstanding_n||0)+' útistandandi kröfur · '+new Date(state.data.generated_at).toLocaleString('is-IS');
-    renderCards();
+    // Þrep 3 (reiknað í vafra). Ef það fellur → tómur hópur, þrep 1/2 birtast samt.
+    try{ state.tier3 = await computeTier3(); }catch(_){ state.tier3 = groupTier3([]); }
+    const t1n = (state.data.tier1||{}).n||0, t2n = (state.data.tier2||{}).n||0, t3n = (state.tier3||{}).n||0;
+    if(meta) meta.textContent = t1n+' ógreiddar · '+t2n+' ósendar · '+t3n+' tími eftir · '+new Date(state.data.generated_at).toLocaleString('is-IS');
     renderList();
   }
 
@@ -11562,15 +11706,38 @@ async function renderKrofuyfirlit(t){
   searchInp.addEventListener('input', e=>{ state.search = e.target.value; renderList();
     const el = $view.querySelector('.kyf-search'); if(el){ el.focus(); } });
   $view.querySelectorAll('.kyf-vf').forEach(b=>b.addEventListener('click',()=>{
-    if(state.viewFilter===b.dataset.vf) return;
-    state.viewFilter = b.dataset.vf;
+    if(state.tierFilter===b.dataset.vf) return;
+    state.tierFilter = b.dataset.vf;
     $view.querySelectorAll('.kyf-vf').forEach(x=>{
-      const on = x.dataset.vf===state.viewFilter;
+      const on = x.dataset.vf===state.tierFilter;
       x.style.cssText = 'padding:7px 14px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;'+(on?'border:1px solid #1d4ed8;background:#1d4ed8;color:#fff':'border:1px solid #cbd5e1;background:#fff;color:#475569');
     });
     renderList();
   }));
   $view.querySelector('.kyf-refresh').addEventListener('click', load);
+  $view.querySelector('.kyf-payday').addEventListener('click', async(e)=>{
+    const b = e.currentTarget; const orig = b.textContent;
+    b.disabled = true; b.style.opacity = '.6'; b.textContent = '⏳ Sæki úr Payday…';
+    try{
+      const r = await fetch('/api/payday-pull',{cache:'no-store'});
+      const d = await r.json().catch(()=>({}));
+      if(!r.ok || d.error) throw new Error(d.error || ('HTTP '+r.status));
+    }catch(err){ alert('Ekki tókst að uppfæra Payday stöðu: '+(err.message||err)); }
+    finally{ b.disabled = false; b.style.opacity = ''; b.textContent = orig; }
+    await load();   // newly-paid invoices drop out of þrep 1 + summur uppfærast
+  });
+
+  // Síðasta uppfærsla — Tímavera · Ajour · Redder (prefer newest_real).
+  (async function loadFreshness(){
+    const el = $view.querySelector('#kyf-fresh'); if(!el) return;
+    try{
+      const r = await fetch('/api/data-sources-status',{cache:'no-store'});
+      const d = await r.json();
+      const by = {}; for(const s of (d.sources||[])) by[s.key] = s;
+      const pick = k => { const s = by[k]; if(!s) return '—'; const v = s.newest_real || s.last_import; return v ? dayMon(v) : '—'; };
+      el.textContent = 'Síðasta uppfærsla — Tímavera: '+pick('timavera')+' · Ajour: '+pick('ajour')+' · Redder: '+pick('redder');
+    }catch(_){ el.textContent = ''; }
+  })();
 
   renderList(); // loading state
   load();
