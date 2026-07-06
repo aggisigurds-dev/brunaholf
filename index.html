@@ -11399,7 +11399,7 @@ async function renderKrofuyfirlit(t){
       </div>
 
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
-        ${[['all','📚 Allt'],['t1','🔴 Ógreiddar'],['t2','🟡 Ósendar'],['t3','⚪ Tími eftir']].map(([k,label])=>{
+        ${[['all','📚 Allt'],['t1','🔴 Ógreiddar'],['likely','🏦 Líklega greitt'],['t2','🟡 Ósendar'],['t3','⚪ Tími eftir']].map(([k,label])=>{
           const on = k==='all';
           return `<button class="kyf-vf" data-vf="${k}" type="button" style="padding:7px 14px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;${on?'border:1px solid #1d4ed8;background:#1d4ed8;color:#fff':'border:1px solid #cbd5e1;background:#fff;color:#475569'}">${label}</button>`;
         }).join('')}
@@ -11409,9 +11409,21 @@ async function renderKrofuyfirlit(t){
 
       <div class="kyf-cards" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px"></div>
 
-      <div style="font-size:12.5px;color:#5b6472;margin-bottom:14px;padding:11px 15px;background:#fff;border:1px solid rgba(20,24,34,.08);border-radius:14px;box-shadow:0 8px 22px -16px rgba(25,35,60,.18);line-height:1.5">
-        💡 Þrjú þrep: <b>🔴 Ógreiddar</b> (sendir reikningar sem eru enn óborgaðir — Payday SENT meðtaldir) · <b>🟡 Ósendar</b> (drög sem á eftir að senda) · <b>⚪ Tími eftir</b> (óinnvoiceaðir Tímavera-tímar × dagvinnutaxti = áætlaðar tekjur í pípunni). Merktu ✓ greitt eða 🙈 fela beint héðan.
-      </div>
+      <details class="kyf-help">
+        <summary style="cursor:pointer;font-size:12.5px;font-weight:700;color:#334155;padding:11px 15px;background:#fff;border:1px solid rgba(20,24,34,.08);border-radius:14px;box-shadow:0 8px 22px -16px rgba(25,35,60,.18);list-style:none;user-select:none">❓ Hvað þýðir þetta? <span style="font-weight:500;color:#94a3b8">— smelltu til að opna skýringu</span></summary>
+        <div style="font-size:12.5px;color:#475569;margin-top:8px;padding:14px 16px;background:#fff;border:1px solid rgba(20,24,34,.08);border-radius:14px;box-shadow:0 8px 22px -16px rgba(25,35,60,.18);line-height:1.7">
+          <div style="font-weight:700;color:#0f172a;margin-bottom:4px">Þrepin þrjú</div>
+          <div><b>🔴 Ógreiddar</b> — reikningar sem eru <b>sendir</b> en enn óborgaðir (Payday SENT + Landsbanki + handvirkir).</div>
+          <div><b>🟡 Ósendar</b> — <b>drög</b> sem á eftir að senda (enginn gjalddagi enn).</div>
+          <div><b>⚪ Tími eftir</b> — vinna sem er unnin en <b>óinnvoiceað</b> (Tímavera-tímar × dagvinnutaxti m.vsk = áætlaðar tekjur í pípunni).</div>
+          <div style="font-weight:700;color:#0f172a;margin:10px 0 4px">Aldurs-litir (gjalddagi)</div>
+          <div><span style="background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;padding:1px 7px;border-radius:99px;font-size:10.5px;font-weight:700">grænt ≤30 d.</span> &nbsp;<span style="background:#fffbeb;color:#b45309;border:1px solid #fde68a;padding:1px 7px;border-radius:99px;font-size:10.5px;font-weight:700">gult 31–90 d.</span> &nbsp;<span style="background:#fff1f2;color:#be123c;border:1px solid #fecdd3;padding:1px 7px;border-radius:99px;font-size:10.5px;font-weight:700">rautt &gt;90 d.</span> — hve langt síðan gjalddagi rann út.</div>
+          <div style="font-weight:700;color:#0f172a;margin:10px 0 4px">🏦 Líklega þegar greitt</div>
+          <div>Reikningur sem er enn „ógreiddur" í Payday <b>en fannst greiddur beint í banka</b> (sama kt + upphæð). Yfirfarðu og smelltu <b>✓ Greitt</b> til að staðfesta. „<b>+vextir</b>" = bankagreiðslan var hærri (dráttarvextir).</div>
+        </div>
+      </details>
+
+      <div class="kyf-lp-banner"></div>
 
       <div class="kyf-list"></div>
     </div>
@@ -11421,6 +11433,12 @@ async function renderKrofuyfirlit(t){
       .kyf-wrap .ky-act{cursor:pointer}
       .kyf-wrap .ky-act:hover{filter:brightness(1.03);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.95),0 4px 9px -3px rgba(20,30,60,.4)}
       .kyf-wrap .ky-act:disabled{opacity:.55;cursor:default}
+      .kyf-wrap .ky-row.ky-likely{background:linear-gradient(90deg,rgba(16,185,129,.09),rgba(16,185,129,.03))}
+      .kyf-wrap .ky-row.ky-likely:hover{background:linear-gradient(90deg,rgba(16,185,129,.15),rgba(16,185,129,.06))}
+      .kyf-wrap .ky-act.ky-nudge{border-color:#22c55e;box-shadow:inset 0 1.5px 0 rgba(255,255,255,.95),0 0 0 3px rgba(34,197,94,.28),0 3px 6px -3px rgba(20,30,60,.3);animation:kyPulse 1.8s ease-in-out infinite}
+      @keyframes kyPulse{0%,100%{box-shadow:inset 0 1.5px 0 rgba(255,255,255,.95),0 0 0 3px rgba(34,197,94,.28),0 3px 6px -3px rgba(20,30,60,.3)}50%{box-shadow:inset 0 1.5px 0 rgba(255,255,255,.95),0 0 0 5px rgba(34,197,94,.14),0 3px 6px -3px rgba(20,30,60,.3)}}
+      .kyf-wrap details.kyf-help{margin-bottom:14px}
+      .kyf-wrap details.kyf-help summary::-webkit-details-marker{display:none}
       .kyf-wrap .ky-num{font-variant-numeric:tabular-nums}
       .kyf-wrap .ky-row:hover{background:#f7f9fd}
       .kyf-wrap .ky-sec{display:flex;align-items:baseline;gap:10px;margin:24px 0 12px;flex-wrap:wrap}
@@ -11550,7 +11568,10 @@ async function renderKrofuyfirlit(t){
     const k = esc(inv.inv_key);
     const hide = kyAbtn('ky-act','data-act="hide" data-key="'+k+'"','🙈','Fela','#64748b','Fela kröfu',false);
     if(tier===1){
-      const paid = kyAbtn('ky-act','data-act="paid" data-key="'+k+'"','✓','Greitt','#0f7a43','Merkja sem greitt',false);
+      // Líklega-greitt raðir → auðkenna ✓ Greitt takkann (grænn hringur/púls) sem hnipp.
+      const cls = 'ky-act'+(inv.likely_paid?' ky-nudge':'');
+      const title = inv.likely_paid ? 'Fannst greitt í banka — staðfestu að merkja greitt' : 'Merkja sem greitt';
+      const paid = kyAbtn(cls,'data-act="paid" data-key="'+k+'"','✓','Greitt','#0f7a43',title,false);
       return paid + hide;
     }
     return hide;
@@ -11582,11 +11603,17 @@ async function renderKrofuyfirlit(t){
       } else {
         sub = esc(inv.source||'');
       }
+      // Líklega-greitt vísbending (banka-krossvísun): grænn blær + skýringarlína.
+      const lp = tier===1 && inv.likely_paid && inv.bank;
+      const bankLine = lp
+        ? `<div style="color:#0f7a43;font-size:10.5px;font-weight:600;margin-top:2px;line-height:1.35">🏦 Líklega þegar greitt — ${fmtKr(inv.bank.amount)} í banka ${esc(inv.bank.date||'')}${inv.bank.extra>0?' (+'+fmtKr(inv.bank.extra)+' vextir)':''}</div>`
+        : '';
       return `
-        <div class="ky-row" data-key="${esc(inv.inv_key)}" style="display:flex;align-items:center;gap:12px;padding:9px 18px;border-bottom:1px solid #f3f5f9;font-size:12.5px">
-          <div style="width:150px;flex-shrink:0;line-height:1.2">
+        <div class="ky-row${lp?' ky-likely':''}" data-key="${esc(inv.inv_key)}" style="display:flex;align-items:center;gap:12px;padding:9px 18px;border-bottom:1px solid #f3f5f9;font-size:12.5px">
+          <div style="width:220px;flex-shrink:0;line-height:1.2">
             <div class="ky-num" style="color:#1d4ed8;font-weight:700">${rnum}</div>
             <div style="color:#b6c0cc;font-size:10.5px">${sub}</div>
+            ${bankLine}
           </div>
           <div style="width:96px;flex-shrink:0" class="ky-num">
             <div style="color:#64748b;font-size:11px">${esc(inv.gjalddagi||'—')}</div>
@@ -11646,14 +11673,47 @@ async function renderKrofuyfirlit(t){
     const l3 = liveDebtors(((state.tier3)||{}).debtors || []);
     renderCards(l1, l2, l3);
 
-    const show = k => state.tierFilter==='all' || state.tierFilter===k;
+    // Líklega-greitt banner (fjöldi/upphæð úr lifandi þrepi 1 svo tölur lækki þegar merkt er greitt).
+    const likelyRows = l1.flatMap(d=>(d.invoices||[]).filter(i=>i.likely_paid));
+    const lpN = likelyRows.length, lpKr = likelyRows.reduce((a,i)=>a+i.amount,0);
+    const banner = $view.querySelector('.kyf-lp-banner');
+    if(banner){
+      banner.innerHTML = lpN>0
+        ? `<div style="display:flex;align-items:center;gap:10px;font-size:12.5px;color:#065f46;margin-bottom:14px;padding:11px 15px;background:linear-gradient(90deg,#ecfdf5,#f0fdf4);border:1px solid #a7f3d0;border-radius:14px;box-shadow:0 8px 22px -16px rgba(16,90,60,.3);line-height:1.5">
+            <span style="font-size:18px">🏦</span>
+            <span><b>${lpN} ${lpN===1?'krafa líklega þegar greidd':'kröfur líklega þegar greiddar'} (${fmtKr(lpKr)})</b> — fundust í banka en enn ógreiddar í Payday. Yfirfarðu og merktu greitt.
+            <button class="kyf-show-likely" type="button" style="margin-left:6px;padding:3px 10px;border-radius:7px;border:1px solid #10b981;background:#fff;color:#047857;font:inherit;font-size:11.5px;font-weight:700;cursor:pointer">Sýna þessar →</button></span>
+          </div>`
+        : '';
+    }
+
+    // Aðeins líklega-greitt raðir (þrep 1).
+    const onlyLikely = ds => ds.map(d=>{ const invs=(d.invoices||[]).filter(i=>i.likely_paid);
+      return invs.length ? {...d, invoices:invs, outstanding_kr:invs.reduce((a,i)=>a+i.amount,0)} : null; }).filter(Boolean);
+
     const t3sub = 'Óinnvoiceaðir Tímavera-tímar × dagvinnutaxti m.vsk — áætlaðar tekjur í pípunni'+
       (state.newest ? ' · yfirstandandi mánuður aðeins til '+dayMon(state.newest)+' (hluti)' : '');
     let html = '';
-    if(show('t1')) html += section(1,'🔴','Ógreiddar kröfur','Sendir reikningar sem eru enn óborgaðir — Payday SENT + Landsbanki + handvirkir.', l1);
-    if(show('t2')) html += section(2,'🟡','Ósendar kröfur','Drög sem á eftir að senda (engir gjalddagar enn).', l2);
-    if(show('t3')) html += section(3,'⚪','Tími eftir að senda', t3sub, l3);
+    if(state.tierFilter==='likely'){
+      html += section(1,'🏦','Líklega þegar greitt','Enn ógreiddar í Payday en fundust greiddar í banka (sama kt + upphæð) — smelltu ✓ Greitt til að staðfesta.', onlyLikely(l1));
+    } else {
+      const show = k => state.tierFilter==='all' || state.tierFilter===k;
+      if(show('t1')) html += section(1,'🔴','Ógreiddar kröfur','Sendir reikningar sem eru enn óborgaðir — Payday SENT + Landsbanki + handvirkir.', l1);
+      if(show('t2')) html += section(2,'🟡','Ósendar kröfur','Drög sem á eftir að senda (engir gjalddagar enn).', l2);
+      if(show('t3')) html += section(3,'⚪','Tími eftir að senda', t3sub, l3);
+    }
     listEl.innerHTML = html;
+
+    // „Sýna þessar" hnappur í banner → skipta á 🏦 síuna.
+    const showLikelyBtn = banner && banner.querySelector('.kyf-show-likely');
+    if(showLikelyBtn) showLikelyBtn.addEventListener('click', ()=>{
+      state.tierFilter = 'likely';
+      $view.querySelectorAll('.kyf-vf').forEach(x=>{
+        const on = x.dataset.vf===state.tierFilter;
+        x.style.cssText = 'padding:7px 14px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;'+(on?'border:1px solid #1d4ed8;background:#1d4ed8;color:#fff':'border:1px solid #cbd5e1;background:#fff;color:#475569');
+      });
+      renderList();
+    });
 
     // Collapsible cards: click header toggles its invoice rows + caret.
     listEl.querySelectorAll('.ky-card-head').forEach(h=>{
