@@ -230,6 +230,9 @@ async function saveOverride(event) {
   const patch = { inv_key, updated_at: new Date().toISOString() };
   if (typeof body.hidden === 'boolean') patch.hidden = body.hidden;
   if (typeof body.flagged === 'boolean') patch.flagged = body.flagged;
+  // Kröfu yfirlit (þrepaskipt) — handvirk „merkt greitt" merking. paid=true → dettur
+  // úr Ógreitt-þrepi; paid_at stimplað. Aðskilið frá Payday-stöðu (sem breytist ekki).
+  if (typeof body.paid === 'boolean') { patch.paid = body.paid; patch.paid_at = body.paid ? new Date().toISOString() : null; }
   if ('amount_override' in body) patch.amount_override = body.amount_override === null || body.amount_override === '' ? null : Number(body.amount_override);
   if ('note' in body) patch.note = body.note ? String(body.note).slice(0, 500) : null;
 
