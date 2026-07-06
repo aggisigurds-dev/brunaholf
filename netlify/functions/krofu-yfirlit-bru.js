@@ -79,7 +79,7 @@ exports.handler = async (event) => {
     const row = {
       inv_key: key, id: r.id, tilvisun: r.tilvisun, source: r.source,
       kt: digits(r.kt_greidanda), customer: r.customer_name || '(óþekkt)',
-      gjalddagi: r.gjalddagi, dueMs, days_overdue: dueMs != null ? Math.round((todayMs - dueMs) / 864e5) : null,
+      gjalddagi: r.gjalddagi, eindagi: r.eindagi, dueMs, days_overdue: dueMs != null ? Math.round((todayMs - dueMs) / 864e5) : null,
       amount: amt, note: mt.note || null,
       likely_paid: false, bank: null,        // fyllt í matchBank() hér að neðan
     };
