@@ -34,18 +34,45 @@ exports.handler = async (event) => {
   if (!SUPABASE_URL || !SUPABASE_KEY) return json(500, { error: 'Supabase env missing' });
   if (event.httpMethod !== 'GET') return json(405, { error: 'GET only (skrifað gegnum /api/krofur-yfirlit)' });
 
-  let invoices, drafts, meta;
+  let invoices, drafts, meta, bank;
   try {
     invoices = await fetchAll('invoices',
       'select=id,tilvisun,kt_greidanda,customer_name,gjalddagi,eindagi,hofudstoll,upphaed_total,status,source');
     drafts = await fetchAll('invoice_drafts',
       'select=worksite_name,work_month,total_m_vsk,customer_name,kennitala').catch(() => []);
     meta = await fetchAll('krofur_yfirlit_meta', 'select=inv_key,hidden,paid,note').catch(() => []);
+    bank = await fetchAll('bank_transactions',
+      'select=kt_counterparty,amount,trans_date,text,description&amount=gt.0').catch(() => []);
   } catch (e) { return json(502, { error: e.message }); }
 
   const metaBy = new Map(meta.map((m) => [m.inv_key, m]));
   const today = new Date().toISOString().slice(0, 10);
   const todayMs = Date.parse(today);
+
+  // ---- bank cross-reference (sama og Skuldunautar/debtors.js) ---------------
+  // Vísbending: reikningur sem enn er „ógreiddur" í Payday en fannst greiddur
+  // beint í banka → líklega þegar greitt (skrifstofan gleymdi að merkja í Payday).
+  const inflowByKt = new Map();
+  for (const b of bank) {
+    const kt = digits(b.kt_counterparty);
+    if (!kt) continue;
+    (inflowByKt.get(kt) || inflowByKt.set(kt, []).get(kt))
+      .push({ amount: +b.amount || 0, date: b.trans_date, text: b.text || b.description || '' });
+  }
+  // AÐEINS sterkt match (nákvæmt): sama kt + upphæð innan max(5k,1%) + greitt
+  // á/eftir gjalddaga−15d. Veika „upphæð-fannst-frá-öðrum" mátunin er VÍSVITANDI
+  // sleppt — hún gaf falska jákvæða (t.d. borg sem greiðir fyrir marga) og
+  // ruglaði myndina. Staðfest á raunum: 6 af 59 ógreiddum (22,7M) fá sterkt match.
+  function bankMatch(kt, amt, dueMs) {
+    if (!kt || !inflowByKt.has(kt)) return null;
+    const tol = Math.max(5000, amt * 0.01);
+    for (const b of inflowByKt.get(kt)) {
+      if (Math.abs(b.amount - amt) <= tol && (!dueMs || Date.parse(b.date) >= dueMs - 15 * 864e5)) {
+        return { amount: b.amount, date: b.date, text: b.text };
+      }
+    }
+    return null;
+  }
 
   // ---- classify invoices ----
   const t1 = [], t2 = [];
@@ -61,11 +88,13 @@ exports.handler = async (event) => {
     const isPaid = PAID.has(st) || !!mt.paid;                 // Payday-greitt eða handvirkt merkt
     if (isPaid) continue;                                     // ekki útistandandi lengur
     const dueMs = r.gjalddagi ? Date.parse(r.gjalddagi) : null;
+    const bm = isDraft ? null : bankMatch(digits(r.kt_greidanda), amt, dueMs);
     const row = {
       inv_key: key, id: r.id, tilvisun: r.tilvisun, source: r.source,
       kt: digits(r.kt_greidanda), customer: r.customer_name || '(óþekkt)',
       gjalddagi: r.gjalddagi, days_overdue: dueMs != null ? Math.round((todayMs - dueMs) / 864e5) : null,
       amount: amt, note: mt.note || null,
+      likely_paid: !!bm, bank: bm,           // 🏦 fannst greitt í banka en enn „ógreitt" í Payday
     };
     (isDraft ? t2 : t1).push(row);
   }
@@ -90,13 +119,15 @@ exports.handler = async (event) => {
     });
   }
 
+  const likely = t1.filter((r) => r.likely_paid);
   return json(200, {
     generated_at: new Date().toISOString(),
     newest_timavera: await newestTimavera().catch(() => null),
     tier1: rollup(t1),
     tier2: rollup(t2),
     draftKeys,
-    note: 'Ógreitt = allir reikningar sem eru hvorki greiddir, kreditfærðir né drög. Payday SENT telst ógreitt (útistandandi).',
+    likely_paid: { n: likely.length, kr: likely.reduce((a, r) => a + r.amount, 0) },
+    note: 'Ógreitt = allir reikningar sem eru hvorki greiddir, kreditfærðir né drög. Payday SENT telst ógreitt (útistandandi). likely_paid = fannst greitt í banka en enn ógreitt í Payday.',
   });
 };
 
