@@ -59,20 +59,8 @@ exports.handler = async (event) => {
     (inflowByKt.get(kt) || inflowByKt.set(kt, []).get(kt))
       .push({ amount: +b.amount || 0, date: b.trans_date, text: b.text || b.description || '' });
   }
-  // AÐEINS sterkt match (nákvæmt): sama kt + upphæð innan max(5k,1%) + greitt
-  // á/eftir gjalddaga−15d. Veika „upphæð-fannst-frá-öðrum" mátunin er VÍSVITANDI
-  // sleppt — hún gaf falska jákvæða (t.d. borg sem greiðir fyrir marga) og
-  // ruglaði myndina. Staðfest á raunum: 6 af 59 ógreiddum (22,7M) fá sterkt match.
-  function bankMatch(kt, amt, dueMs) {
-    if (!kt || !inflowByKt.has(kt)) return null;
-    const tol = Math.max(5000, amt * 0.01);
-    for (const b of inflowByKt.get(kt)) {
-      if (Math.abs(b.amount - amt) <= tol && (!dueMs || Date.parse(b.date) >= dueMs - 15 * 864e5)) {
-        return { amount: b.amount, date: b.date, text: b.text };
-      }
-    }
-    return null;
-  }
+  // Banka-mátun er gerð SÍÐAR í einni heildar-yfirferð (matchBank) — EKKI per röð —
+  // svo ein bankafærsla sé aldrei eignuð tveimur reikningum (nákvæm match fyrst).
 
   // ---- classify invoices ----
   const t1 = [], t2 = [];
@@ -88,13 +76,12 @@ exports.handler = async (event) => {
     const isPaid = PAID.has(st) || !!mt.paid;                 // Payday-greitt eða handvirkt merkt
     if (isPaid) continue;                                     // ekki útistandandi lengur
     const dueMs = r.gjalddagi ? Date.parse(r.gjalddagi) : null;
-    const bm = isDraft ? null : bankMatch(digits(r.kt_greidanda), amt, dueMs);
     const row = {
       inv_key: key, id: r.id, tilvisun: r.tilvisun, source: r.source,
       kt: digits(r.kt_greidanda), customer: r.customer_name || '(óþekkt)',
-      gjalddagi: r.gjalddagi, days_overdue: dueMs != null ? Math.round((todayMs - dueMs) / 864e5) : null,
+      gjalddagi: r.gjalddagi, dueMs, days_overdue: dueMs != null ? Math.round((todayMs - dueMs) / 864e5) : null,
       amount: amt, note: mt.note || null,
-      likely_paid: !!bm, bank: bm,           // 🏦 fannst greitt í banka en enn „ógreitt" í Payday
+      likely_paid: false, bank: null,        // fyllt í matchBank() hér að neðan
     };
     (isDraft ? t2 : t1).push(row);
   }
@@ -118,6 +105,35 @@ exports.handler = async (event) => {
       worksite: d.worksite_name, work_month: wm,
     });
   }
+
+  // ---- banka-mátun (ein heildar-yfirferð) ----------------------------------
+  // Nákvæm match fyrst; leyfi bankaupphæð allt að +8% hærri (dráttarvextir gera
+  // greiðsluna oft aðeins hærri) en neðri mörk þétt. HVER bankafærsla notuð í
+  // mesta lagi EINU SINNI — annars myndi ein greiðsla ranglega merkja tvo
+  // reikninga (t.d. R-296 2.166.740 greip greiðslu R-306 2.268.025). Nákvæma
+  // parið vinnur (cost 0), svo R-296 stendur réttilega eftir ómerkt.
+  const pairs = [];
+  for (const row of t1) {
+    const kt = row.kt;
+    if (!kt || !inflowByKt.has(kt)) continue;
+    const tolLow = Math.max(5000, row.amount * 0.01);
+    const tolHigh = Math.max(10000, row.amount * 0.08);
+    inflowByKt.get(kt).forEach((b, bi) => {
+      if (b.amount >= row.amount - tolLow && b.amount <= row.amount + tolHigh &&
+          (row.dueMs == null || Date.parse(b.date) >= row.dueMs - 15 * 864e5)) {
+        pairs.push({ row, ref: kt + '#' + bi, b, cost: Math.abs(b.amount - row.amount) });
+      }
+    });
+  }
+  pairs.sort((a, b) => a.cost - b.cost);
+  const usedInflow = new Set();
+  for (const p of pairs) {
+    if (p.row.likely_paid || usedInflow.has(p.ref)) continue;
+    p.row.likely_paid = true;
+    p.row.bank = { amount: p.b.amount, date: p.b.date, text: p.b.text, extra: Math.max(0, Math.round(p.b.amount - p.row.amount)) };
+    usedInflow.add(p.ref);
+  }
+  for (const row of t1) delete row.dueMs;   // innra hjálparfelt — ekki í svari
 
   const likely = t1.filter((r) => r.likely_paid);
   return json(200, {
