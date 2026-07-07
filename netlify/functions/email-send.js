@@ -12,7 +12,7 @@
 // senda Efnislista/Tímaskjal á bókara (bokhald@brunaholf.is) fyrir Payday.
 //
 // 2026-07-07: RESEND_API_KEY settur í brunaholf Netlify (afritaður úr Slökkvitæki);
-// þessi commit endurbyggir svo functionið sjái nýju env-breytuna.
+// þessi commit endurbyggir svo functionið sjái nýju env-breytuna (v2 — lykill staðfestur í env).
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return resp(204, '', cors());
