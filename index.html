@@ -11417,6 +11417,7 @@ async function renderKrofuyfirlit(t){
             <option value="name">🔤 Nafn A–Ö</option>
           </select>
           <input class="kyf-search" type="search" placeholder="🔍 Leita (nafn · kt · R-nr)…" style="padding:7px 11px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;font:inherit;font-size:13px;min-width:210px">
+          <button class="kyf-me" type="button" title="Hver ert þú? — nafnið er skráð á vinnuflæði-skref (staðfest/sent/klárt) svo hinn sér hver gerði hvað" style="padding:7px 11px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;font:inherit;font-size:12.5px;font-weight:700;color:#475569;cursor:pointer;white-space:nowrap">👤 <span class="kyf-me-lbl"></span></button>
         </div>
       </div>
 
@@ -11636,12 +11637,20 @@ async function renderKrofuyfirlit(t){
       : `<span style="color:#94a3b8;font-size:11px;font-style:italic">Engin Efnislisti/Tímaskjal tengd${ws?(' — '+esc(ws)+' '+esc(wm)):''}</span>`;
     const pill = (bg,bd,col,txt)=>`<span class="ky-num" style="font-size:11px;font-weight:700;padding:2px 10px;border-radius:99px;background:${bg};border:1px solid ${bd};color:${col}">${txt}</span>`;
     const statusPill = done ? pill('#ecfdf5','#a7f3d0','#047857','✅ Allt klárt')
-      : sent ? pill('#ecfdf5','#a7f3d0','#047857','🟢 Sent á bókhald'+(inv.sent_at?(' '+esc(String(inv.sent_at).slice(0,10))):''))
+      : sent ? pill('#ecfdf5','#a7f3d0','#047857','🟢 Sent á bókhald')
       : conf ? pill('#eff6ff','#bfdbfe','#1d4ed8','🔵 Staðfest')
       : pill('#f1f5f9','#e2e8f0','#64748b','⚪ Ósent');
+    // Hver-gerði-hvað slóð svo hinn sér stöðuna og hver kláraði hvert skref.
+    const fD = iso => iso ? fmtDate(iso) : '';
+    const trailBits = [];
+    if(conf) trailBits.push('🔵 Staðfest'+(inv.confirmed_by?(' · '+esc(inv.confirmed_by)):'')+(inv.confirmed_at?(' · '+fD(inv.confirmed_at)):''));
+    if(sent) trailBits.push('🟢 Sent'+(inv.sent_by?(' · '+esc(inv.sent_by)):'')+(inv.sent_at?(' · '+fD(inv.sent_at)):''));
+    if(done) trailBits.push('✅ Klárt'+(inv.done_by?(' · '+esc(inv.done_by)):'')+(inv.done_at?(' · '+fD(inv.done_at)):''));
+    const trail = trailBits.length ? `<div style="font-size:10.5px;color:#475569;display:flex;gap:12px;flex-wrap:wrap">${trailBits.map(t=>'<span>'+t+'</span>').join('')}</div>` : '';
     const wfBtn=(act,label,on,onCol)=>`<button class="ky-wf" data-act="${act}" data-key="${esc(inv.inv_key)}" data-worksite="${esc(ws)}" data-month="${esc(wm)}" data-customer="${esc(inv.customer||'')}" style="padding:6px 12px;border-radius:8px;cursor:pointer;font:inherit;font-size:12px;font-weight:700;${on?('border:1px solid '+onCol+';background:'+onCol+';color:#fff'):'border:1px solid #cbd5e1;background:#fff;color:#334155'}">${label}</button>`;
     return `<div class="ky-wf-strip" style="margin-top:11px;padding-top:11px;border-top:1px dashed #e2e8f0;display:flex;flex-direction:column;gap:9px">
       <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">${statusPill}<span style="color:#94a3b8;font-size:10.5px">ósent → staðfest → sent á bókara (Payday) → allt klárt</span></div>
+      ${trail}
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">${linksHtml}</div>
       <div style="display:flex;gap:7px;flex-wrap:wrap">
         ${wfBtn('confirm', conf?'🔵 Staðfest ✓':'Staðfesta', conf, '#2563eb')}
@@ -11703,8 +11712,9 @@ async function renderKrofuyfirlit(t){
           </div>
           <div class="ky-detail" style="display:none;padding:11px 18px 14px 41px;background:#fafbfe;border-bottom:1px solid #f3f5f9">
             <div style="display:flex;flex-wrap:wrap;gap:12px 28px">${detailCells}</div>
-            ${bankDetail}${wfStrip(inv, tier)}
+            ${bankDetail}${tier!==2?wfStrip(inv, tier):''}
           </div>
+          ${tier===2?`<div class="ky-wf-open" style="padding:2px 18px 13px 41px;background:#fafbfe;border-bottom:1px solid #f3f5f9">${wfStrip(inv, 2)}</div>`:''}
         </div>`;
     }).join('');
   }
@@ -11862,8 +11872,9 @@ async function renderKrofuyfirlit(t){
           </div>
           <div class="ky-detail" style="display:none;padding:11px 18px 14px 41px;background:#fafbfe;border-bottom:1px solid #f3f5f9">
             <div style="display:flex;flex-wrap:wrap;gap:12px 28px">${detailCells}</div>
-            ${bankDetail}${wfStrip(inv, tier)}
+            ${bankDetail}${tier!==2?wfStrip(inv, tier):''}
           </div>
+          ${tier===2?`<div class="ky-wf-open" style="padding:2px 18px 13px 41px;background:#fafbfe;border-bottom:1px solid #f3f5f9">${wfStrip(inv, 2)}</div>`:''}
         </div>`;
     }).join('');
 
@@ -12021,10 +12032,11 @@ async function renderKrofuyfirlit(t){
       if(act==='confirm' || act==='done'){
         const field = act==='confirm' ? 'confirmed' : 'done';
         const cur = b.textContent.includes('✓'); const val = !cur;
+        const by = val ? bhEnsureMe() : '';
         b.disabled=true;
-        try{ await fetch('/api/krofur-yfirlit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'save', inv_key:key, [field]:val})}); }
+        try{ await fetch('/api/krofur-yfirlit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'save', inv_key:key, [field]:val, by})}); }
         catch(_){ b.disabled=false; return; }
-        wfPatchLocal(key, {[field]:val});
+        wfPatchLocal(key, {[field]:val, [field+'_by']: val?by:null, [field+'_at']: val?new Date().toISOString():null});
         renderList();
         return;
       }
@@ -12033,6 +12045,7 @@ async function renderKrofuyfirlit(t){
         const docs=((ws&&wm)?(EFDOCS[ws+'|'+wm]||[]):[]).filter(d=>d.drive_file_id);
         if(!docs.length && !confirm('Engin Efnislisti/Tímaskjal tengd við '+(ws||'—')+' '+(wm||'')+'.\nSenda samt (án viðhengja)?')) return;
         const to = prompt('Senda Efnislista/Tímaskjal á (bókari):', 'bokhald@brunaholf.is'); if(to===null) return;
+        const by = bhEnsureMe();
         b.disabled=true; const orig=b.textContent; b.textContent='📤 Sendi…';
         // Supabase-hýst skjöl → {url} (sótt server-megin, engin Google-innskráning); Drive → {driveId}.
         const attachments = docs.map(d=>{ const fn=((d.title||(d.doc_type==='timabok_pdf'?'Tímaskjal':'Efnislisti'))).replace(/\.pdf$/i,'')+'.pdf'; return d.public_url ? { filename:fn, url:d.public_url } : { filename:fn, driveId:d.drive_file_id }; });
@@ -12043,8 +12056,8 @@ async function renderKrofuyfirlit(t){
           const r=await fetch('/api/email-send',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({ from:'Brunahólf <eldklar@eldklar.is>', to:[to], subject, html, attachments })});
           const j=await r.json().catch(()=>({}));
           if(!r.ok || j.error) throw new Error((j&&(j.message||j.error))||('HTTP '+r.status));
-          await fetch('/api/krofur-yfirlit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'save', inv_key:key, sent:true})}).catch(()=>{});
-          wfPatchLocal(key, { sent:true, sent_at:new Date().toISOString() });
+          await fetch('/api/krofur-yfirlit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'save', inv_key:key, sent:true, by})}).catch(()=>{});
+          wfPatchLocal(key, { sent:true, sent_at:new Date().toISOString(), sent_by:by });
           renderList();
         }catch(err){ alert('Sending mistókst: '+((err&&err.message)||err)+'\n\n(Ath: RESEND_API_KEY þarf að vera stilltur í brunaholf Netlify + sendandi á staðfestu eldklar.is léni.)'); b.disabled=false; b.textContent=orig; }
         return;
@@ -12118,6 +12131,35 @@ async function renderKrofuyfirlit(t){
     renderList();
   }));
   $view.querySelector('.kyf-refresh').addEventListener('click', ()=>load(true));
+  // „👤 Ég" — hver notandinn er (skráð á vinnuflæði-skref). Smellur → breyta.
+  const meBtn = $view.querySelector('.kyf-me');
+  const KY_TEAM = ['Annþór','Agnar','Andri','Hákon','Elías'];
+  const paintMe = ()=>{ const l=meBtn && meBtn.querySelector('.kyf-me-lbl'); if(l) l.textContent = bhMe() || 'velja nafn'; };
+  paintMe();
+  if(meBtn) meBtn.addEventListener('click', (ev)=>{
+    ev.stopPropagation();
+    const old=document.getElementById('_kyf-me-menu'); if(old){ old.remove(); return; }
+    const cur=bhMe(); const rect=meBtn.getBoundingClientRect();
+    const menu=document.createElement('div'); menu.id='_kyf-me-menu';
+    menu.style.cssText=`position:fixed;top:${rect.bottom+4}px;left:${Math.max(8,Math.min(rect.left,window.innerWidth-170))}px;z-index:99999;background:#fff;border:1px solid #cbd5e1;border-radius:9px;box-shadow:0 10px 28px -8px rgba(20,25,40,.3);padding:5px;min-width:154px`;
+    menu.innerHTML = KY_TEAM.map(n=>`<button data-n="${esc(n)}" type="button" style="display:block;width:100%;text-align:left;padding:8px 11px;border:0;background:${n===cur?'#eff6ff':'#fff'};border-radius:6px;font:inherit;font-size:13px;font-weight:${n===cur?'700':'500'};color:#334155;cursor:pointer">${n===cur?'✓ ':''}${esc(n)}</button>`).join('')
+      + `<button data-n="__other" type="button" style="display:block;width:100%;text-align:left;padding:7px 11px;margin-top:3px;border:0;border-top:1px solid #f1f5f9;background:#fff;font:inherit;font-size:12.5px;color:#64748b;cursor:pointer">✏️ Annað nafn…</button>`;
+    document.body.appendChild(menu);
+    const close=()=>{ menu.remove(); document.removeEventListener('click',close); };
+    setTimeout(()=>document.addEventListener('click',close),0);
+    menu.querySelectorAll('button').forEach(bb=>bb.addEventListener('click',(e)=>{
+      e.stopPropagation(); let v=bb.dataset.n;
+      if(v==='__other'){ v=(prompt('Nafn:', cur)||'').trim(); if(!v){ close(); return; } }
+      bhSetMe(v); paintMe(); close();
+    }));
+  });
+  // Sjálfvirk endurnýjun þegar komið er aftur í flipann — svo hinn sér nýjustu
+  // stöðu án þess að ýta á „Sækja". Þrengt við 20s svo alt-tab spammi ekki netið.
+  if(window.__kyfFocus) window.removeEventListener('focus', window.__kyfFocus);
+  let _lastFocusReval = 0;
+  window.__kyfFocus = ()=>{ if(!$view.querySelector('.kyf-wrap')) return; const now=+new Date(); if(now-_lastFocusReval < 20000) return; _lastFocusReval=now;
+    (async()=>{ try{ await fetchAll(); metaFromState(); renderList(); }catch(_){} })(); };
+  window.addEventListener('focus', window.__kyfFocus);
   $view.querySelector('.kyf-payday').addEventListener('click', async(e)=>{
     const b = e.currentTarget; const orig = b.textContent;
     b.disabled = true; b.style.opacity = '.6'; b.textContent = '⏳ Sæki úr Payday…';
@@ -15763,6 +15805,11 @@ function bhPdfName(kind, o){
   if(o.month) parts.push(monthLabelStatic(o.month));
   return (parts.join(' - ')+'.pdf').replace(/[\\/:*?"<>|]/g,'-').replace(/\s{2,}/g,' ');
 }
+// „Hver er ég" — nafn notanda (Aggi/Anni …) geymt í localStorage, skráð á
+// vinnuflæði-skref svo samstarfsmaðurinn sér hver gerði hvað.
+function bhMe(){ try{ return (localStorage.getItem('bh_me')||'').trim(); }catch(_){ return ''; } }
+function bhSetMe(v){ try{ localStorage.setItem('bh_me', String(v||'').trim().slice(0,40)); }catch(_){} }
+function bhEnsureMe(){ let m=bhMe(); if(!m){ m=(prompt('Hver ert þú? (skráð á vinnuflæði-skref — t.d. Aggi eða Anni)','')||'').trim(); if(m) bhSetMe(m); } return m; }
 // View/download URL for a stored PDF doc row — Supabase public_url when present,
 // else the legacy Google-Drive link. Works for both the full row and the reduced
 // {id,title,url} shapes used on the Vinnubók/Gerð Reikninga grids.

@@ -924,6 +924,14 @@ anything undated.
 
 ## Open work
 
+- **Innskráning + notenda-aðgangsstýring (síðar — beðið um 2026-07-07):** virkja
+  innskráningarsíðu fyrir hubbið. Sameiginlegt lykilorð fyrir alla `@brunaholf.is`
+  notendur. Teymi: **Annþór, Agnar, Andri, Hákon, Elías** (nöfnin þegar notuð í
+  „👤 Ég" veljaranum á Kröfu yfirlit). **Agnar = admin** og fær nýja stjórnborðs-síðu
+  þar sem hann velur **hvaða síður/flipa hver notandi sér** (per-user page
+  permissions — sbr. `sidebar_hidden`/`sidebar_order` mynstrið sem er þegar til).
+  Vinnuflæði-rekjanleiki (hver staðfesti/sendi/kláraði) er þegar kominn í
+  `krofur_yfirlit_meta` (`confirmed_by/sent_by/done_by`), svo auðkennið er til staðar.
 - **Reikningagerð (invoicing prep) tab**: replace the placeholder
   `reikningar` tab with a real consolidated view —
   - **Verðlisti** (price guide per worksite / per job type)
