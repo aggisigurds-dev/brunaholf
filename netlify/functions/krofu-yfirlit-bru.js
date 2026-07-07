@@ -34,7 +34,7 @@ exports.handler = async (event) => {
   if (!SUPABASE_URL || !SUPABASE_KEY) return json(500, { error: 'Supabase env missing' });
   if (event.httpMethod !== 'GET') return json(405, { error: 'GET only (skrifað gegnum /api/krofur-yfirlit)' });
 
-  let invoices, drafts, meta, bank;
+  let invoices, drafts, meta, bank, cwmap;
   try {
     invoices = await fetchAll('invoices',
       'select=id,tilvisun,kt_greidanda,customer_name,gjalddagi,eindagi,hofudstoll,upphaed_total,status,source');
@@ -43,7 +43,33 @@ exports.handler = async (event) => {
     meta = await fetchAll('krofur_yfirlit_meta', 'select=inv_key,hidden,paid,note').catch(() => []);
     bank = await fetchAll('bank_transactions',
       'select=kt_counterparty,amount,trans_date,text,description&amount=gt.0').catch(() => []);
+    cwmap = await fetchAll('customer_worksite_map',
+      'select=customer_name,worksite_name').catch(() => []);
   } catch (e) { return json(502, { error: e.message }); }
+
+  // ---- worksite → payer resolution (rekstrarfélög / verkstaðir) -------------
+  // Sami verkstaður (t.d. „Landsspitalinn") er rukkaður af einum greiðanda
+  // („ÞG verktakar ehf."). invoice_drafts-raðir bera stundum verkstaðar-nafnið
+  // og stundum greiðandann → þær tvístrast í tvo hópa. Hér er verkstaður leystur
+  // í greiðanda svo öll drögin lendi undir sama greiðanda. kt greiðandans er
+  // sótt úr `invoices` (customer_name → kt_greidanda) svo drögin geti sameinast
+  // Payday-hópi greiðandans þegar við á.
+  const worksiteToPayer = new Map();  // lc(worksite) -> payer customer_name
+  for (const m of (cwmap || [])) {
+    const w = lc(m.worksite_name), p = String(m.customer_name || '').trim();
+    if (w && p && !worksiteToPayer.has(w)) worksiteToPayer.set(w, p);
+  }
+  const payerKt = new Map();           // lc(customer_name) -> kt (digits)
+  for (const inv of invoices) {
+    const nm = lc(inv.customer_name), kt = digits(inv.kt_greidanda);
+    if (nm && kt && !payerKt.has(nm)) payerKt.set(nm, kt);
+  }
+  // Resolve a draft's {customer,kt} to its payer when the label is a worksite.
+  function resolvePayer(name) {
+    const payer = worksiteToPayer.get(lc(name));
+    if (!payer) return null;
+    return { customer: payer, kt: payerKt.get(lc(payer)) || '' };
+  }
 
   const metaBy = new Map(meta.map((m) => [m.inv_key, m]));
   const today = new Date().toISOString().slice(0, 10);
@@ -98,9 +124,14 @@ exports.handler = async (event) => {
     const key = `draftinv|${d.worksite_name}|${wm}`;
     const mt = metaBy.get(key) || {};
     if (mt.hidden || mt.paid) continue;
+    // Leysa verkstaðar-nafn í greiðanda svo öll drögin lendi undir sama greiðanda
+    // (t.d. Landsspítalinn-drög → ÞG verktakar). Fellur til baka á upprunalega
+    // nafnið ef enginn greiðandi finnst í customer_worksite_map.
+    const payer = resolvePayer(d.worksite_name) || resolvePayer(d.customer_name);
     t2.push({
       inv_key: key, id: null, tilvisun: null, source: 'gerd-drög',
-      kt: digits(d.kennitala), customer: d.customer_name || d.worksite_name || '(verkstaður)',
+      kt: (payer && payer.kt) || digits(d.kennitala),
+      customer: (payer && payer.customer) || d.customer_name || d.worksite_name || '(verkstaður)',
       gjalddagi: null, days_overdue: null, amount: amt, note: mt.note || null,
       worksite: d.worksite_name, work_month: wm,
     });
