@@ -10,6 +10,9 @@
 //
 // Sendandi verður að vera á staðfestu Resend-léni (eldklar.is). Notað til að
 // senda Efnislista/Tímaskjal á bókara (bokhald@brunaholf.is) fyrir Payday.
+//
+// 2026-07-07: RESEND_API_KEY settur í brunaholf Netlify (afritaður úr Slökkvitæki);
+// þessi commit endurbyggir svo functionið sjái nýju env-breytuna.
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return resp(204, '', cors());
