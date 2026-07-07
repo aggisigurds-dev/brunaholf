@@ -733,8 +733,11 @@ either use the calculated total or override with a flat amount.
   raðir á Kröfu yfirlit sýna litla `.ky-abtn`-stíl hnappa (icon + örsmár texti, grænn
   gradient þegar virkur — sama og #166 á Slökkvitæki) + compact talna-reiti (🕒 Tímar ·
   🧱 Redder · 📄 Efnislisti, rammi grár/blár/grænn eftir stöðu): 🕒 Tímask.(vista PDF) ·
-  📄 Efnisl.(vista PDF) · ✓ Staðfest (bæði) · ✏️ Breyta · netfang + 📤 Senda (grænt þegar sent).
-  (v1 var stór „reita-borð" með köntuðum boxum; endurstílað í compact eftir ósk Agnars.)
+  📄 Efnisl.(vista PDF) · ✓ Staðfest (bæði) · ✏️ Breyta · 📤 Senda (grænt þegar sent).
+  **v3 (eftir ósk Agnars — innsláttur í röðinni of ruglingslegur):** ENGIR innsláttarreitir
+  í röðinni — aðeins lítil lesskrifta-samantekt (🕒 klst · 🧱 Redder · 📄 heild) + hreinir
+  hnappar; „⚙️ Stilla" opnar lítinn glugga (`openWfEditor`) til að breyta Tímum/Redder/
+  Efnislista-heild/netfangi. (v1 köntuð box → v2 compact m/reitum → v3 hreinir hnappar + ⚙️.)
   Undirliggjandi rök óbreytt: **🕒 Tímaskýrsla** (klst úr
   Tímaveru, breytanlegt) → **🧱 Redder efni** (breytanlegt, forfyllt úr
   `/api/redder-invoices` `summary.by_worksite_month`) → **📄 Efnislisti** (heild reiknuð:
