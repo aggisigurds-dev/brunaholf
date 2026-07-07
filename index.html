@@ -11716,15 +11716,13 @@ async function renderKrofuyfirlit(t){
     const sentTrail = inv.sent ? `<span style="font-size:9.5px;color:#047857;white-space:nowrap">${(inv.sent_by?esc(inv.sent_by)+' · ':'')}${inv.sent_at?esc(fmtDate(inv.sent_at)):''}</span>` : '';
     // Tímask. + Efnisl. OPNA ritlana í Gerð Reikninga/Tímaskýrslu — þú vistar/staðfestir
     // ÞAR og það birtist hér (grænt + 📄 þegar skjalið er til). Engin inline-vistun.
-    return `<div class="ky-wf-boxes" style="display:flex;gap:6px 10px;flex-wrap:wrap;align-items:flex-start;flex:1 1 100%;justify-content:flex-start;padding:7px 0 1px 41px;margin-top:5px;border-top:1px dashed #eef1f6">
+    return `<div class="ky-wf-boxes" style="display:flex;gap:3px;flex-wrap:wrap;align-items:flex-start;flex:1 1 100%;justify-content:flex-start;padding:7px 0 1px 41px;margin-top:5px;border-top:1px dashed #eef1f6">
       ${abtnN('tim','opentim','🕒','Tímask.',!!timDoc, hoursDisp+' klst')}${pdfLink(timDoc?bhDocUrl(timDoc):null,'Opna Tímaskýrslu PDF')}
       ${abtnN('efn','openefn','📄','Efnisl.',!!efnDoc, numIS(n.redder)+' kr efni')}${pdfLink(efnDoc?bhDocUrl(efnDoc):null,'Opna Efnislista PDF')}
-      ${sep}
       ${abtnN('conf','confirm','✓','Staðfest',conf, numIS(n.total)+' kr')}
       ${conf?abtn('conf','breyta','✏️','Breyta',false):''}
-      ${sep}
       ${abtn('send','send','📤',inv.sent?'Sent ✓':'Senda',inv.sent)}
-      ${inv.sent?`<span style="align-self:center">${sentTrail}</span>`:''}
+      ${inv.sent?`<span style="align-self:center;margin-left:4px">${sentTrail}</span>`:''}
     </div>`;
   }
 
