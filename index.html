@@ -8551,13 +8551,24 @@ async function renderGerdReikninga(t){
     if(!rows.length){ box.innerHTML = head + `<div class="gr-loading" style="padding:14px">Engin vistuð PDF enn. Búðu til PDF með „📄 Vista PDF" í Efnislista eða Tímaskýrslu.</div>`; return; }
     box.innerHTML = head + `<table class="grp-tbl"><thead><tr>
         <th>Skjal</th><th>Verkstaður</th><th>Mánuður</th><th>Gert</th><th></th></tr></thead><tbody>
-      ${rows.map(d=>{ const tb=d.doc_type==='timabok_pdf'; const view=`https://drive.google.com/file/d/${d.drive_file_id}/view`; const dl=`https://drive.google.com/uc?export=download&id=${d.drive_file_id}`; return `<tr>
+      ${rows.map(d=>{ const tb=d.doc_type==='timabok_pdf'; const view=`https://drive.google.com/file/d/${d.drive_file_id}/view`; const dl=`https://drive.google.com/uc?export=download&id=${d.drive_file_id}`; return `<tr data-fid="${escapeHtml(d.drive_file_id)}">
         <td><span class="grp-badge ${tb?'tb':'ef'}">${tb?'Tímaskýrsla':'Efnislisti'}</span> ${escapeHtml(d.title||'')}</td>
         <td>${escapeHtml(d.worksite_name||'—')}</td>
         <td>${escapeHtml(d.work_month?monthLabel(d.work_month):'—')}</td>
         <td style="white-space:nowrap;color:#64748b">${dt(d.added_at)}</td>
-        <td style="white-space:nowrap"><a class="tv-btn" href="${view}" target="_blank" rel="noopener">🔗 Opna</a> <a class="tv-btn" href="${dl}" target="_blank" rel="noopener">⤓ Sækja</a></td>
+        <td style="white-space:nowrap"><a class="tv-btn" href="${view}" target="_blank" rel="noopener">🔗 Opna</a> <a class="tv-btn" href="${dl}" target="_blank" rel="noopener">⤓ Sækja</a> <button class="tv-btn grp-del" data-fid="${escapeHtml(d.drive_file_id)}" data-title="${escapeHtml(d.title||'')}" title="Eyða PDF (fer í Drive-ruslið, endurheimtanlegt)" style="color:#b91c1c;border-color:#fecaca">🗑</button></td>
       </tr>`; }).join('')}</tbody></table>`;
+    box.querySelectorAll('.grp-del').forEach(b=>b.addEventListener('click', async ()=>{
+      const fid=b.dataset.fid; if(!fid) return;
+      if(!confirm('Eyða þessu PDF?\n„'+(b.dataset.title||fid)+'"\n\nSkjalið fer í Drive-ruslið (endurheimtanlegt í 30 daga) og hverfur af listanum.')) return;
+      b.disabled=true; b.textContent='…';
+      try{
+        const r=await fetch('/api/efnislisti-docs',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({drive_file_id:fid})});
+        const j=await r.json().catch(()=>({}));
+        if(!r.ok||j.error) throw new Error(j.error||('HTTP '+r.status));
+        const tr=b.closest('tr'); if(tr) tr.remove();
+      }catch(e){ alert('Tókst ekki að eyða: '+(e.message||e)); b.disabled=false; b.textContent='🗑'; }
+    }));
   }
   window.__grReloadPdfList = loadPdfList;
   loadPdfList();
@@ -11387,6 +11398,8 @@ async function renderKrofuyfirlit(t){
   const persistHidden = () => { try{ localStorage.setItem(HKEY, JSON.stringify([...hiddenSet])); }catch(_){} };
 
   const state = { data:null, tier3:null, sort:'amount_desc', search:'', tierFilter:'all', newest:null };
+  // Efnislisti/Tímaskjal Drive-tenglar per „<verkstaður>|<mánuður>" (fyllt í load()).
+  let EFDOCS = {};
 
   $view.innerHTML = `
     <div class="kyf-wrap">
@@ -11608,6 +11621,36 @@ async function renderKrofuyfirlit(t){
   // 2026-07-07: Per-fyrirtæki view — build ONLY the invoice-rows for a set of
   // invoices (same markup as renderDebtor's rows, reused by the company cards so
   // the class-based click/note/action wiring below picks them up automatically).
+  // Ósendar-vinnuflæði (tier 2): tenglar á Efnislista/Tímaskjal + staða
+  // ⚪ ósent → 🔵 staðfest → 🟢 sent á bókara → ✅ allt klárt. Birtist í ky-detail.
+  function wfStrip(inv, tier){
+    if(tier!==2) return '';
+    const conf=!!inv.confirmed, sent=!!inv.sent, done=!!inv.done;
+    const ws=inv.worksite||'', wm=inv.work_month||'';
+    const docs = (ws && wm) ? (EFDOCS[ws+'|'+wm]||[]) : [];
+    const tb = docs.filter(d=>d.doc_type==='timabok_pdf');
+    const ef = docs.filter(d=>d.doc_type!=='timabok_pdf');
+    const link = (d,ic,lab)=>`<a class="tv-btn" href="https://drive.google.com/file/d/${esc(d.drive_file_id)}/view" target="_blank" rel="noopener" style="font-size:11px">${ic} ${esc(lab)}</a>`;
+    const linksHtml = (ef.length||tb.length)
+      ? ef.map(d=>link(d,'📄','Efnislisti')).join(' ') + (ef.length&&tb.length?' ':'') + tb.map(d=>link(d,'🕐','Tímaskjal')).join(' ')
+      : `<span style="color:#94a3b8;font-size:11px;font-style:italic">Engin Efnislisti/Tímaskjal tengd${ws?(' — '+esc(ws)+' '+esc(wm)):''}</span>`;
+    const pill = (bg,bd,col,txt)=>`<span class="ky-num" style="font-size:11px;font-weight:700;padding:2px 10px;border-radius:99px;background:${bg};border:1px solid ${bd};color:${col}">${txt}</span>`;
+    const statusPill = done ? pill('#ecfdf5','#a7f3d0','#047857','✅ Allt klárt')
+      : sent ? pill('#ecfdf5','#a7f3d0','#047857','🟢 Sent á bókhald'+(inv.sent_at?(' '+esc(String(inv.sent_at).slice(0,10))):''))
+      : conf ? pill('#eff6ff','#bfdbfe','#1d4ed8','🔵 Staðfest')
+      : pill('#f1f5f9','#e2e8f0','#64748b','⚪ Ósent');
+    const wfBtn=(act,label,on,onCol)=>`<button class="ky-wf" data-act="${act}" data-key="${esc(inv.inv_key)}" data-worksite="${esc(ws)}" data-month="${esc(wm)}" data-customer="${esc(inv.customer||'')}" style="padding:6px 12px;border-radius:8px;cursor:pointer;font:inherit;font-size:12px;font-weight:700;${on?('border:1px solid '+onCol+';background:'+onCol+';color:#fff'):'border:1px solid #cbd5e1;background:#fff;color:#334155'}">${label}</button>`;
+    return `<div class="ky-wf-strip" style="margin-top:11px;padding-top:11px;border-top:1px dashed #e2e8f0;display:flex;flex-direction:column;gap:9px">
+      <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">${statusPill}<span style="color:#94a3b8;font-size:10.5px">ósent → staðfest → sent á bókara (Payday) → allt klárt</span></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">${linksHtml}</div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        ${wfBtn('confirm', conf?'🔵 Staðfest ✓':'Staðfesta', conf, '#2563eb')}
+        ${wfBtn('send', sent?'🟢 Sent ✓':'📤 Senda á bókhald', sent, '#16a34a')}
+        ${wfBtn('done', done?'✅ Allt klárt ✓':'Allt klárt', done, '#16a34a')}
+      </div>
+    </div>`;
+  }
+
   function buildInvoiceRows(invoices, tier){
     return (invoices||[]).map(inv=>{
       const rnum = inv.tilvisun ? ('R-'+esc(inv.tilvisun)) : (inv.worksite ? esc(inv.worksite) : ('#'+esc(inv.id||'')));
@@ -11660,7 +11703,7 @@ async function renderKrofuyfirlit(t){
           </div>
           <div class="ky-detail" style="display:none;padding:11px 18px 14px 41px;background:#fafbfe;border-bottom:1px solid #f3f5f9">
             <div style="display:flex;flex-wrap:wrap;gap:12px 28px">${detailCells}</div>
-            ${bankDetail}
+            ${bankDetail}${wfStrip(inv, tier)}
           </div>
         </div>`;
     }).join('');
@@ -11819,7 +11862,7 @@ async function renderKrofuyfirlit(t){
           </div>
           <div class="ky-detail" style="display:none;padding:11px 18px 14px 41px;background:#fafbfe;border-bottom:1px solid #f3f5f9">
             <div style="display:flex;flex-wrap:wrap;gap:12px 28px">${detailCells}</div>
-            ${bankDetail}
+            ${bankDetail}${wfStrip(inv, tier)}
           </div>
         </div>`;
     }).join('');
@@ -11967,6 +12010,45 @@ async function renderKrofuyfirlit(t){
       if(act==='paid'){ paidSet.add(key); setTimeout(renderList, 260); }
       else { hiddenSet.add(key); persistHidden(); renderList(); }
     }));
+
+    // Ósendar-vinnuflæði: staðfesta (🔵) · senda á bókara (🟢) · allt klárt (✅).
+    function wfPatchLocal(key, patch){
+      for(const d of (((state.data||{}).tier2||{}).debtors||[])) for(const iv of (d.invoices||[])) if(iv.inv_key===key) Object.assign(iv, patch);
+    }
+    listEl.querySelectorAll('.ky-wf').forEach(b=>b.addEventListener('click', async(e)=>{
+      e.stopPropagation();
+      const act=b.dataset.act, key=b.dataset.key; if(!key || b.disabled) return;
+      if(act==='confirm' || act==='done'){
+        const field = act==='confirm' ? 'confirmed' : 'done';
+        const cur = b.textContent.includes('✓'); const val = !cur;
+        b.disabled=true;
+        try{ await fetch('/api/krofur-yfirlit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'save', inv_key:key, [field]:val})}); }
+        catch(_){ b.disabled=false; return; }
+        wfPatchLocal(key, {[field]:val});
+        renderList();
+        return;
+      }
+      if(act==='send'){
+        const ws=b.dataset.worksite, wm=b.dataset.month, cust=b.dataset.customer||ws;
+        const docs=((ws&&wm)?(EFDOCS[ws+'|'+wm]||[]):[]).filter(d=>d.drive_file_id);
+        if(!docs.length && !confirm('Engin Efnislisti/Tímaskjal tengd við '+(ws||'—')+' '+(wm||'')+'.\nSenda samt (án viðhengja)?')) return;
+        const to = prompt('Senda Efnislista/Tímaskjal á (bókari):', 'bokhald@brunaholf.is'); if(to===null) return;
+        b.disabled=true; const orig=b.textContent; b.textContent='📤 Sendi…';
+        const attachments = docs.map(d=>({ filename:((d.title||(d.doc_type==='timabok_pdf'?'Tímaskjal':'Efnislisti'))).replace(/\.pdf$/i,'')+'.pdf', driveId:d.drive_file_id }));
+        const docLinks = docs.length ? '<p>Skjöl:</p><ul>'+docs.map(d=>'<li><a href="https://drive.google.com/file/d/'+esc(d.drive_file_id)+'/view">'+esc(d.title||d.doc_type)+'</a></li>').join('')+'</ul>' : '';
+        const subject = 'Efnislisti/Tímaskjal — '+(cust||ws||'')+(wm?(' '+wm):'');
+        const html = '<p>Sæll,</p><p>Meðfylgjandi Efnislisti/Tímaskjal fyrir <b>'+esc(cust||ws||'')+'</b>'+(wm?(' ('+esc(wm)+')'):'')+' til skráningar í Payday.</p>'+docLinks+'<p>Kveðja,<br>Brunahólf</p>';
+        try{
+          const r=await fetch('/api/email-send',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({ from:'Brunahólf <eldklar@eldklar.is>', to:[to], subject, html, attachments })});
+          const j=await r.json().catch(()=>({}));
+          if(!r.ok || j.error) throw new Error((j&&(j.message||j.error))||('HTTP '+r.status));
+          await fetch('/api/krofur-yfirlit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'save', inv_key:key, sent:true})}).catch(()=>{});
+          wfPatchLocal(key, { sent:true, sent_at:new Date().toISOString() });
+          renderList();
+        }catch(err){ alert('Sending mistókst: '+((err&&err.message)||err)+'\n\n(Ath: RESEND_API_KEY þarf að vera stilltur í brunaholf Netlify + sendandi á staðfestu eldklar.is léni.)'); b.disabled=false; b.textContent=orig; }
+        return;
+      }
+    }));
   }
 
   async function load(){
@@ -11982,6 +12064,13 @@ async function renderKrofuyfirlit(t){
       $view.querySelector('.kyf-list').innerHTML = '<div style="padding:32px;color:#dc2626">Villa við að sækja kröfur: '+esc(e.message)+'</div>';
       return;
     }
+    // Efnislisti/Tímaskjal tenglar (fyrir Ósendar-vinnuflæðið) — index eftir verkstaður|mánuður.
+    try{
+      const er = await fetch('/api/efnislisti-docs'); const ej = er.ok ? await er.json() : {rows:[]};
+      const idx = {};
+      for(const d of (ej.rows||[])){ const k = (d.worksite_name||'')+'|'+(d.work_month||''); (idx[k] = idx[k] || []).push(d); }
+      EFDOCS = idx;
+    }catch(_){ EFDOCS = {}; }
     // Þrep 3 (reiknað í vafra). Ef það fellur → tómur hópur, þrep 1/2 birtast samt.
     try{ state.tier3 = await computeTier3(); }catch(_){ state.tier3 = groupTier3([]); }
     const t1n = (state.data.tier1||{}).n||0, t2n = (state.data.tier2||{}).n||0, t3n = (state.tier3||{}).n||0;
