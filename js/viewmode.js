@@ -54,19 +54,23 @@
 
   ready(function () {
     var m = mode();
-    if (m === 'mobile' || m === 'tablet') {
+    var target = WIDTHS[m] || 0;
+    // Ramma AÐEINS þegar raunverulegi skjárinn er nógu breiður til að forskoða tækið
+    // (þ.e. á tölvu). Á alvöru síma/spjaldtölvu (skjár ≤ markmið) → fullur skjár,
+    // engir svartir borðar — appið er hvort eð er viðbragðshannað.
+    if ((m === 'mobile' || m === 'tablet') && window.innerWidth >= target + 80) {
       buildFrame(m);
     } else {
-      buildFloatingToggle();
+      buildFloatingToggle(m);
     }
   });
 
-  // Fljótandi rofi neðst til vinstri (Tölvu-ham).
-  function buildFloatingToggle() {
+  // Fljótandi rofi neðst til vinstri (fullur-skjár ham; sýnir valið tæki sem virkt).
+  function buildFloatingToggle(active) {
     var host = document.createElement('div');
     host.id = '_bh-viewmode';
     host.style.cssText = 'position:fixed;left:12px;bottom:12px;z-index:2147483000';
-    host.appendChild(seg('desktop', pick));
+    host.appendChild(seg(active || 'desktop', pick));
     document.body.appendChild(host);
   }
 
