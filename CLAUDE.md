@@ -738,6 +738,15 @@ either use the calculated total or override with a flat amount.
   í röðinni — aðeins lítil lesskrifta-samantekt (🕒 klst · 🧱 Redder · 📄 heild) + hreinir
   hnappar; „⚙️ Stilla" opnar lítinn glugga (`openWfEditor`) til að breyta Tímum/Redder/
   Efnislista-heild/netfangi. (v1 köntuð box → v2 compact m/reitum → v3 hreinir hnappar + ⚙️.)
+  **v4 (2026-07-07, eftir ósk Agnars — ENGIN inline-vistun/⚙️):** hnapparnir eru núna
+  TENGLAR í ritlana sem ERU ÞEGAR TIL: **🕒 Tímask.** → `openTimabok(worksite,month)`,
+  **📄 Efnisl.** → `grOpenWorksite(worksite,month)` (opnar Gerð Reikninga fyrir þann
+  verkstað/mánuð; global `grOpenWorksite` notar `__grPendingOpen`+`gr_month`+activeTab).
+  Þú vistar/staðfestir Í Gerð Reikninga/Tímaskýrslu og skjalið birtist hér: hnappur
+  verður GRÆNN + 📄-tengill þegar skjalið er til (úr `EFDOCS`, ekki wf_state). ✓ Staðfest
+  (`wf.confirmed`) + ✏️ Breyta + 📤 Senda eru áfram merking/sending á Kröfu yfirliti.
+  Fjarlægt: ⚙️ Stilla + inline PDF-vistun (`pdf-store overwrite`/`buildAndSave*Pdf(...,true)`
+  eru enn til fyrir Gerð Reikninga-hliðina en Kröfu yfirlit býr ekki lengur til PDF).
   Undirliggjandi rök óbreytt: **🕒 Tímaskýrsla** (klst úr
   Tímaveru, breytanlegt) → **🧱 Redder efni** (breytanlegt, forfyllt úr
   `/api/redder-invoices` `summary.by_worksite_month`) → **📄 Efnislisti** (heild reiknuð:
