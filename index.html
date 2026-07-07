@@ -11675,8 +11675,8 @@ async function renderKrofuyfirlit(t){
       ${abtn('cfg','stilla','⚙️','Stilla',false)}
       ${sep}
       ${abtnN('tim','vista','🕒','Tímask.',timSaved, hoursDisp+' klst')}${pdfLink(n.wf.tim_pdf,'Opna Tímaskýrslu PDF')}
-      ${abtnN('efn','vista','📄','Efnisl.',efnSaved, numIS(n.total)+' kr')}${pdfLink(n.wf.efn_pdf,'Opna Efnislista PDF')}
-      ${abtn('both','confirm','✓','Staðfest',bothConf)}
+      ${abtnN('efn','vista','📄','Efnisl.',efnSaved, numIS(n.redder)+' kr efni')}${pdfLink(n.wf.efn_pdf,'Opna Efnislista PDF')}
+      ${abtnN('both','confirm','✓','Staðfest',bothConf, numIS(n.total)+' kr')}
       ${anyConf?abtn('both','breyta','✏️','Breyta',false):''}
       ${sep}
       ${abtn('send','send','📤',inv.sent?'Sent ✓':'Senda',inv.sent)}
