@@ -11703,8 +11703,9 @@ async function renderKrofuyfirlit(t){
           </div>
           <div class="ky-detail" style="display:none;padding:11px 18px 14px 41px;background:#fafbfe;border-bottom:1px solid #f3f5f9">
             <div style="display:flex;flex-wrap:wrap;gap:12px 28px">${detailCells}</div>
-            ${bankDetail}${wfStrip(inv, tier)}
+            ${bankDetail}${tier!==2?wfStrip(inv, tier):''}
           </div>
+          ${tier===2?`<div class="ky-wf-open" style="padding:2px 18px 13px 41px;background:#fafbfe;border-bottom:1px solid #f3f5f9">${wfStrip(inv, 2)}</div>`:''}
         </div>`;
     }).join('');
   }
@@ -11862,8 +11863,9 @@ async function renderKrofuyfirlit(t){
           </div>
           <div class="ky-detail" style="display:none;padding:11px 18px 14px 41px;background:#fafbfe;border-bottom:1px solid #f3f5f9">
             <div style="display:flex;flex-wrap:wrap;gap:12px 28px">${detailCells}</div>
-            ${bankDetail}${wfStrip(inv, tier)}
+            ${bankDetail}${tier!==2?wfStrip(inv, tier):''}
           </div>
+          ${tier===2?`<div class="ky-wf-open" style="padding:2px 18px 13px 41px;background:#fafbfe;border-bottom:1px solid #f3f5f9">${wfStrip(inv, 2)}</div>`:''}
         </div>`;
     }).join('');
 
