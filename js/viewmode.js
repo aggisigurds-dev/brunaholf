@@ -52,13 +52,21 @@
 
   function ready(fn) { if (document.body) fn(); else document.addEventListener('DOMContentLoaded', fn); }
 
+  // Snertiskjár (sími/spjaldtölva) → ALDREI ramma; device-ramminn er bara
+  // forskoðunartól á tölvu með mús. Þannig fyllir alvöru tæki alltaf skjáinn,
+  // óháð því hvaða breidd vafrinn segir (t.d. „desktop site" á síma).
+  function isRealTouchDevice() {
+    try {
+      if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) return true;
+    } catch (_) {}
+    return ('ontouchstart' in window) || (navigator.maxTouchPoints || 0) > 0;
+  }
+
   ready(function () {
     var m = mode();
     var target = WIDTHS[m] || 0;
-    // Ramma AÐEINS þegar raunverulegi skjárinn er nógu breiður til að forskoða tækið
-    // (þ.e. á tölvu). Á alvöru síma/spjaldtölvu (skjár ≤ markmið) → fullur skjár,
-    // engir svartir borðar — appið er hvort eð er viðbragðshannað.
-    if ((m === 'mobile' || m === 'tablet') && window.innerWidth >= target + 80) {
+    // Ramma AÐEINS á tölvu-skjá (mús + nóg breidd). Snertiskjár → fullur skjár.
+    if ((m === 'mobile' || m === 'tablet') && !isRealTouchDevice() && window.innerWidth >= target + 80) {
       buildFrame(m);
     } else {
       buildFloatingToggle(m);
