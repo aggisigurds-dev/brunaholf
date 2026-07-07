@@ -11650,51 +11650,37 @@ async function renderKrofuyfirlit(t){
     : st==='saved' ? {bd:'#93c5fd',bg:'#eff6ff',dot:'#2563eb',lbl:'🔵 Vistað'}
     : {bd:'#e2e8f0',bg:'#fff',dot:'#94a3b8',lbl:'⚪ Óunnið'}; }
 
-  // Ósendar-vinnuflæði (tier 2) sem lárétt skref-borð: 🕒 Tímaskýrsla → 🧱 Redder
-  // → 📄 Efnislisti → 📤 Senda. Hver reitur: grár→blár(vistað)→grænn(staðfest);
-  // „Breyta" fer aftur í bláan og næsta „Vista PDF" skrifar yfir fyrra PDF.
+  // Ósendar-vinnuflæði (tier 2) — compact hnappa-röð í Slökkvitæki-stíl (.ky-abtn):
+  // litlar tölur (🕒 Tímar · 🧱 Redder · 📄 Efnislisti) + merktir hnappar sem verða
+  // grænir þegar virkir. „💾" vistar/yfirskrifar PDF, „✓ Staðfest" → grænt, „Breyta" bakkar.
   function wfStrip(inv, tier){
     if(tier!==2) return '';
     const n = wfNums(inv), key = esc(inv.inv_key);
     const numIS = v => (Math.round(Number(v)||0)).toLocaleString('is-IS').replace(/,/g,'.');
     const hoursDisp = (Math.round(n.hours*100)/100).toString().replace('.',',');
-    const arrow = `<div style="display:flex;align-items:center;color:#cbd5e1;font-size:16px;flex:0 0 auto">→</div>`;
-    const bx=(box,act,label,col,bd,bg)=>`<button class="ky-bx" data-box="${box}" data-act="${act}" data-key="${key}" type="button" style="padding:5px 9px;border-radius:7px;cursor:pointer;font:inherit;font-size:11px;font-weight:700;border:1px solid ${bd};background:${bg||'#fff'};color:${col}">${label}</button>`;
-    const field=(f,val,w,unit)=>`<div style="display:flex;align-items:center;gap:5px"><input class="ky-bf" data-f="${f}" data-key="${key}" value="${val}" inputmode="decimal" style="width:${w}px;padding:5px 7px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:13px;text-align:right">${unit?`<span style="font-size:11px;color:#64748b">${unit}</span>`:''}</div>`;
-    const pdfLink=(url)=> url ? `<a class="tv-btn" href="${esc(url)}" target="_blank" rel="noopener" style="font-size:10.5px">📄 PDF</a>` : '';
-    function box(box, icon, title, st, inner){
-      const c=boxSt(st);
-      const acts = st==='confirmed' ? bx(box,'breyta','✏️ Breyta','#64748b','#cbd5e1')
-        : bx(box,'vista','💾 Vista PDF','#334155','#cbd5e1')+' '+bx(box,'confirm','✓ Staðfesta','#16a34a','#a7f3d0');
-      return `<div class="ky-box" style="min-width:196px;flex:0 0 auto;border:1.5px solid ${c.bd};background:${c.bg};border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:7px">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span style="font-size:12px;font-weight:800;color:#334155">${icon} ${title}</span><span style="font-size:9.5px;font-weight:700;color:${c.dot};white-space:nowrap">${c.lbl}</span></div>
-        ${inner}
-        ${box!=='redder'?`<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">${acts}${box==='tim'?pdfLink(n.wf.tim_pdf):pdfLink(n.wf.efn_pdf)}</div>`:''}
-      </div>`;
-    }
-    // 🕒 Tímaskýrsla
-    const timInner = field('hours', hoursDisp, 74, 'klst')
-      + `<div style="font-size:9.5px;color:#94a3b8">úr Tímaveru${n.wf.tim_by?(' · '+esc(n.wf.tim_by)):''}</div>`;
-    const boxTim = box('tim','🕒','Tímaskýrsla', n.wf.tim, timInner);
-    // 🧱 Redder efni (breytanlegt, forfyllt úr Redder)
-    const boxRedder = box('redder','🧱','Redder efni', null,
-      field('redder', numIS(n.redder), 92, 'kr') + `<div style="font-size:9.5px;color:#94a3b8">forfyllt úr Redder — má breyta</div>`);
-    // 📄 Efnislisti (samstillt við Tímar; heild reiknuð, má yfirskrifa)
-    const efnInner = `<div style="font-size:9.5px;color:#94a3b8;line-height:1.5">${numIS(n.hours*n.rate)} dagv. + ${numIS(n.smahl)} smáhl. + ${numIS(n.redder)} efni +${n.vsk}%</div>`
-      + field('efn_total', numIS(n.total), 100, 'kr m.vsk');
-    const boxEfn = box('efn','📄','Efnislisti', n.wf.efn, efnInner);
-    // 📤 Senda á bókhald
-    let to='bokhald@brunaholf.is'; try{ to = localStorage.getItem('email_to')||to; }catch(_){}
-    const cS = boxSt(inv.sent?'confirmed':null);
-    const sentTrail = inv.sent ? `<div style="font-size:9.5px;color:#047857">${(inv.sent_by?esc(inv.sent_by)+' · ':'')}${inv.sent_at?esc(fmtDate(inv.sent_at)):''}</div>` : '';
-    const boxSend = `<div class="ky-box" style="min-width:210px;flex:0 0 auto;border:1.5px solid ${cS.bd};background:${cS.bg};border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:7px">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span style="font-size:12px;font-weight:800;color:#334155">📤 Senda á bókhald</span><span style="font-size:9.5px;font-weight:700;color:${cS.dot}">${inv.sent?'🟢 Sent':'⚪ Ósent'}</span></div>
-      <input class="ky-bf" data-f="to" data-key="${key}" value="${esc(to)}" style="width:100%;padding:5px 7px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:12px">
-      <div style="display:flex;gap:5px;align-items:center">${bx('send','send',inv.sent?'🟢 Sent ✓':'📤 Senda',inv.sent?'#fff':'#16a34a',inv.sent?'#16a34a':'#a7f3d0',inv.sent?'#16a34a':'#fff')}</div>
-      ${sentTrail}
-    </div>`;
-    return `<div class="ky-wf-boxes" style="margin-top:11px;padding-top:11px;border-top:1px dashed #e2e8f0;display:flex;gap:9px;flex-wrap:nowrap;overflow-x:auto;align-items:stretch">
-      ${boxTim}${arrow}${boxRedder}${arrow}${boxEfn}${arrow}${boxSend}
+    const timSaved = n.wf.tim==='saved'||n.wf.tim==='confirmed', efnSaved = n.wf.efn==='saved'||n.wf.efn==='confirmed';
+    const bothConf = n.wf.tim==='confirmed' && n.wf.efn==='confirmed', anyConf = n.wf.tim==='confirmed'||n.wf.efn==='confirmed';
+    // Compact merktur hnappur (icon yfir, örsmár texti undir) — grænn þegar `on`.
+    const abtn=(box,act,icon,label,on)=>`<button class="ky-bx" data-box="${box}" data-act="${act}" data-key="${key}" type="button" title="${esc(label)}" style="display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:54px;height:44px;padding:0 8px;border-radius:9px;cursor:pointer;font:inherit;${on?'border:1px solid #156e3a;background:linear-gradient(150deg,#2bbf6c,#0f6e3a);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 3px 7px -3px rgba(15,110,58,.5)':'border:1px solid rgba(20,24,34,.2);background:linear-gradient(180deg,#fff,#dbe0e9);color:#334155;box-shadow:inset 0 1.5px 0 rgba(255,255,255,.95),0 3px 6px -3px rgba(20,30,60,.3)'}"><span style="font-size:15px;line-height:1">${icon}</span><span style="font-size:8.5px;font-weight:700;letter-spacing:.02em;white-space:nowrap">${esc(label)}</span></button>`;
+    // Compact talna-reitur með stöðu-lit á ramma (grár/blár/grænn).
+    const cf=(f,val,w,unit,st)=>{ const bd=boxSt(st).bd; return `<span style="display:inline-flex;align-items:center;gap:3px"><input class="ky-bf" data-f="${f}" data-key="${key}" value="${val}" inputmode="decimal" style="width:${w}px;padding:4px 6px;border:1.5px solid ${bd};border-radius:7px;font:inherit;font-size:12.5px;text-align:right;background:#fff">${unit?`<span style="font-size:10px;color:#64748b">${unit}</span>`:''}</span>`; };
+    // Hnappur með örsmárri tölu undir (t.d. klst / rukkuð upphæð).
+    const abtnN=(box,act,icon,label,on,num)=>`<span style="display:inline-flex;flex-direction:column;align-items:center;gap:2px">${abtn(box,act,icon,label,on)}${num?`<span style="font-size:9.5px;color:#64748b;font-weight:700;white-space:nowrap">${num}</span>`:''}</span>`;
+    const pdfLink=(url,t)=> url ? `<a href="${esc(url)}" target="_blank" rel="noopener" title="${t}" style="font-size:14px;text-decoration:none;align-self:flex-start;margin-top:6px">📄</a>` : '';
+    const sep = `<span style="width:1px;height:30px;background:#e5e7eb;flex:0 0 auto;align-self:center"></span>`;
+    const sentTrail = inv.sent ? `<span style="font-size:9.5px;color:#047857;white-space:nowrap">${(inv.sent_by?esc(inv.sent_by)+' · ':'')}${inv.sent_at?esc(fmtDate(inv.sent_at)):''}</span>` : '';
+    // Engir innsláttarreitir í röðinni — bara hreinir hnappar (eins og Slökkvitæki).
+    // Litlu tölurnar birtast UNDIR viðeigandi hnappi; „⚙️ Stilla" opnar glugga til að breyta.
+    return `<div class="ky-wf-boxes" style="margin-top:9px;padding-top:9px;border-top:1px dashed #e2e8f0;display:flex;gap:7px 10px;flex-wrap:wrap;align-items:flex-start">
+      ${abtn('cfg','stilla','⚙️','Stilla',false)}
+      ${sep}
+      ${abtnN('tim','vista','🕒','Tímask.',timSaved, hoursDisp+' klst')}${pdfLink(n.wf.tim_pdf,'Opna Tímaskýrslu PDF')}
+      ${abtnN('efn','vista','📄','Efnisl.',efnSaved, numIS(n.redder)+' kr efni')}${pdfLink(n.wf.efn_pdf,'Opna Efnislista PDF')}
+      ${abtnN('both','confirm','✓','Staðfest',bothConf, numIS(n.total)+' kr')}
+      ${anyConf?abtn('both','breyta','✏️','Breyta',false):''}
+      ${sep}
+      ${abtn('send','send','📤',inv.sent?'Sent ✓':'Senda',inv.sent)}
+      ${inv.sent?`<span style="align-self:center">${sentTrail}</span>`:''}
     </div>`;
   }
 
@@ -12073,6 +12059,51 @@ async function renderKrofuyfirlit(t){
         for(const d of (ej.rows||[])){ const k=(d.worksite_name||'')+'|'+(d.work_month||''); (idx[k]=idx[k]||[]).push(d); } EFDOCS=idx; }catch(_){}
     }
     const parseNum = s => { const v=String(s==null?'':s).replace(/\./g,'').replace(',','.').replace(/[^\d.]/g,''); return v===''?null:Number(v); };
+    // ⚙️ Stilla-gluggi: breyta Tímum / Redder / Efnislista-heild / netfangi án þess að
+    // hafa innsláttarreiti í sjálfri röðinni (röðin heldur hreinum hnöppum).
+    function openWfEditor(iv, key){
+      const n = wfNums(iv);
+      const numIS = v => (Math.round(Number(v)||0)).toLocaleString('is-IS').replace(/,/g,'.');
+      const hoursDisp = (Math.round(n.hours*100)/100).toString().replace('.',',');
+      let to='bokhald@brunaholf.is'; try{ to=localStorage.getItem('email_to')||to; }catch(_){}
+      const bg=document.createElement('div');
+      bg.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px';
+      const fld=(id,lbl,val,unit)=>`<label style="display:block;font-size:12px;font-weight:700;color:#475569;margin:10px 0 3px">${lbl}</label>
+        <div style="display:flex;align-items:center;gap:6px"><input id="${id}" value="${esc(val)}" inputmode="decimal" style="flex:1;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;font-size:14px;text-align:right">${unit?`<span style="font-size:12px;color:#64748b;min-width:34px">${unit}</span>`:''}</div>`;
+      bg.innerHTML=`<div style="background:#fff;border-radius:14px;padding:18px 20px;width:min(430px,96vw);box-shadow:0 24px 60px -14px rgba(0,0,0,.45)">
+        <div style="font-weight:800;font-size:15px;color:#0f172a;margin-bottom:2px">⚙️ Stilla — ${esc(iv.customer||iv.worksite||'')}</div>
+        <div style="font-size:12px;color:#94a3b8;margin-bottom:6px">${esc(monthLbl(iv.work_month))} · Efnislisti reiknast úr Tímum × taxta + smáhluta + Redder + VSK — má yfirskrifa.</div>
+        ${fld('_wf-h','🕒 Tímar',hoursDisp,'klst')}
+        ${fld('_wf-r','🧱 Redder efni',numIS(n.redder),'kr')}
+        ${fld('_wf-t','📄 Efnislisti heild',numIS(n.total),'kr m.vsk')}
+        <div id="_wf-calc" style="font-size:11px;color:#94a3b8;margin-top:6px"></div>
+        <label style="display:block;font-size:12px;font-weight:700;color:#475569;margin:12px 0 3px">📤 Netfang bókara</label>
+        <input id="_wf-to" value="${esc(to)}" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;font-size:14px">
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+          <button id="_wf-cancel" type="button" style="padding:9px 16px;border:1px solid #cbd5e1;background:#fff;border-radius:9px;cursor:pointer;font:inherit;font-weight:700;color:#475569">Hætta</button>
+          <button id="_wf-save" type="button" style="padding:9px 18px;border:none;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border-radius:9px;cursor:pointer;font:inherit;font-weight:700">💾 Vista</button>
+        </div>
+      </div>`;
+      document.body.appendChild(bg);
+      const close=()=>bg.remove();
+      bg.addEventListener('mousedown',e=>{ if(e.target===bg) close(); });
+      document.getElementById('_wf-cancel').onclick=close;
+      const $h=document.getElementById('_wf-h'), $r=document.getElementById('_wf-r'), $t=document.getElementById('_wf-t'), $calc=document.getElementById('_wf-calc');
+      const recalc=()=>{ const h=parseNum($h.value)||0, r=parseNum($r.value)||0; const dag=h*n.rate, sma=h*137, net=dag+r+sma; const tot=Math.round(net*(1+n.vsk/100));
+        $calc.textContent=`= ${numIS(dag)} dagv. + ${numIS(sma)} smáhluta + ${numIS(r)} efni + ${n.vsk}% VSK = ${numIS(tot)} kr`;
+        return tot; };
+      let autoTot=recalc();
+      $h.addEventListener('input',()=>{ autoTot=recalc(); $t.value=numIS(autoTot); });
+      $r.addEventListener('input',()=>{ autoTot=recalc(); $t.value=numIS(autoTot); });
+      document.getElementById('_wf-save').onclick=async()=>{
+        iv.wf=Object.assign({},iv.wf);
+        const h=parseNum($h.value), r=parseNum($r.value), t=parseNum($t.value);
+        iv.wf.hours = h; iv.wf.redder = r;
+        iv.wf.efn_total = (t!=null && Math.abs(t-recalc())>1) ? t : null;   // yfirskrift aðeins ef frábrugðið sjálfvirku
+        try{ const em=document.getElementById('_wf-to').value.trim(); if(em) localStorage.setItem('email_to', em); }catch(_){}
+        wfPatchLocal(key,{wf:iv.wf}); await persistWf(key, iv.wf); close(); renderList();
+      };
+    }
     // Reita-innslátt (Tímar / Redder / Efnislisti-heild / netfang) → wf_state.
     listEl.querySelectorAll('.ky-bf').forEach(inp=>{
       const stop=e=>e.stopPropagation(); inp.addEventListener('click',stop); inp.addEventListener('mousedown',stop);
@@ -12090,9 +12121,11 @@ async function renderKrofuyfirlit(t){
       e.stopPropagation();
       const key=b.dataset.key, box=b.dataset.box, act=b.dataset.act; const iv=findInv(key); if(!iv||b.disabled) return;
       iv.wf = Object.assign({}, iv.wf);
-      const stF = box==='tim' ? 'tim' : 'efn';
-      if(act==='breyta'){ iv.wf[stF]='saved'; wfPatchLocal(key,{wf:iv.wf}); await persistWf(key, iv.wf); renderList(); return; }
-      if(act==='confirm'){ const by=bhEnsureMe(); iv.wf[stF]='confirmed'; iv.wf[stF+'_by']=by; iv.wf[stF+'_at']=new Date().toISOString(); wfPatchLocal(key,{wf:iv.wf}); await persistWf(key, iv.wf, by); renderList(); return; }
+      // ⚙️ Stilla → lítill gluggi til að breyta Tímum / Redder / Efnislista-heild / netfangi.
+      if(act==='stilla'){ openWfEditor(iv, key); return; }
+      const fields = box==='both' ? ['tim','efn'] : [box==='tim'?'tim':'efn'];
+      if(act==='breyta'){ fields.forEach(f=>{ iv.wf[f]='saved'; }); wfPatchLocal(key,{wf:iv.wf}); await persistWf(key, iv.wf); renderList(); return; }
+      if(act==='confirm'){ const by=bhEnsureMe(); fields.forEach(f=>{ iv.wf[f]='confirmed'; iv.wf[f+'_by']=by; iv.wf[f+'_at']=new Date().toISOString(); }); wfPatchLocal(key,{wf:iv.wf}); await persistWf(key, iv.wf, by); renderList(); return; }
       if(act==='vista'){
         b.disabled=true; const o=b.textContent; b.textContent='⏳…';
         try{
