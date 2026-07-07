@@ -11684,7 +11684,7 @@ async function renderKrofuyfirlit(t){
     const sentTrail = inv.sent ? `<span style="font-size:9.5px;color:#047857;white-space:nowrap">${(inv.sent_by?esc(inv.sent_by)+' · ':'')}${inv.sent_at?esc(fmtDate(inv.sent_at)):''}</span>` : '';
     // Tímask. + Efnisl. OPNA ritlana í Gerð Reikninga/Tímaskýrslu — þú vistar/staðfestir
     // ÞAR og það birtist hér (grænt + 📄 þegar skjalið er til). Engin inline-vistun.
-    return `<div class="ky-wf-boxes" style="display:flex;gap:6px 8px;flex-wrap:wrap;align-items:center;flex:1 1 auto;justify-content:flex-end">
+    return `<div class="ky-wf-boxes" style="display:flex;gap:6px 10px;flex-wrap:wrap;align-items:flex-start;flex:1 1 100%;justify-content:flex-start;padding:7px 0 1px 41px;margin-top:5px;border-top:1px dashed #eef1f6">
       ${abtnN('tim','opentim','🕒','Tímask.',!!timDoc, hoursDisp+' klst')}${pdfLink(timDoc?bhDocUrl(timDoc):null,'Opna Tímaskýrslu PDF')}
       ${abtnN('efn','openefn','📄','Efnisl.',!!efnDoc, numIS(n.redder)+' kr efni')}${pdfLink(efnDoc?bhDocUrl(efnDoc):null,'Opna Efnislista PDF')}
       ${sep}
@@ -11745,7 +11745,7 @@ async function renderKrofuyfirlit(t){
             ${noteHtml}
             <span class="ky-num" style="width:104px;text-align:right;font-weight:700;color:#11141c;white-space:nowrap;flex-shrink:0">${fmtKr(inv.amount)}</span>
             <div style="display:flex;gap:6px;flex-shrink:0">${actChips(inv, tier)}</div>
-            ${tier===2?`<span style="width:1px;height:36px;background:#e5e7eb;flex:0 0 auto;margin:0 2px;align-self:center"></span>${wfStrip(inv, 2)}`:''}
+            ${tier===2?wfStrip(inv, 2):''}
           </div>
           <div class="ky-detail" style="display:none;padding:11px 18px 14px 41px;background:#fafbfe;border-bottom:1px solid #f3f5f9">
             <div style="display:flex;flex-wrap:wrap;gap:12px 28px">${detailCells}</div>
@@ -11905,7 +11905,7 @@ async function renderKrofuyfirlit(t){
             ${noteHtml}
             <span class="ky-num" style="width:104px;text-align:right;font-weight:700;color:#11141c;white-space:nowrap;flex-shrink:0">${fmtKr(inv.amount)}</span>
             <div style="display:flex;gap:6px;flex-shrink:0">${actChips(inv, tier)}</div>
-            ${tier===2?`<span style="width:1px;height:36px;background:#e5e7eb;flex:0 0 auto;margin:0 2px;align-self:center"></span>${wfStrip(inv, 2)}`:''}
+            ${tier===2?wfStrip(inv, 2):''}
           </div>
           <div class="ky-detail" style="display:none;padding:11px 18px 14px 41px;background:#fafbfe;border-bottom:1px solid #f3f5f9">
             <div style="display:flex;flex-wrap:wrap;gap:12px 28px">${detailCells}</div>
