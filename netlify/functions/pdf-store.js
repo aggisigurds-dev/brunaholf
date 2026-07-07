@@ -45,8 +45,12 @@ exports.handler = async (event) => {
   // Deterministic-ish object path: <ascii-worksite>/<month>/<doc_type>-<rand>.pdf
   const slug = worksite_name.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase().slice(0, 48) || 'verkstadur';
-  const rand = Math.random().toString(36).slice(2, 10);
-  const storage_path = `${slug}/${work_month}/${doc_type}-${rand}.pdf`;
+  // overwrite=true → fast slóð per (verkstaður, mánuður, tegund) svo endur-vistun
+  // SKRIFAR YFIR fyrra PDF (sami storage-hlutur + sama efnislisti_documents röð).
+  // Annars random slóð (mörg söguleg eintök leyfð).
+  const storage_path = body.overwrite
+    ? `${slug}/${work_month}/${doc_type}.pdf`
+    : `${slug}/${work_month}/${doc_type}-${Math.random().toString(36).slice(2, 10)}.pdf`;
 
   // 1) Upload to Supabase Storage (service role → no auth flow for the user).
   const up = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeURI(storage_path)}`, {
@@ -62,7 +66,9 @@ exports.handler = async (event) => {
   });
   if (!up.ok) return json(up.status, { error: `Storage upload ${up.status}: ${(await up.text()).slice(0, 300)}` });
 
-  const public_url = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${encodeURI(storage_path)}`;
+  // Cache-buster (?v=) svo yfirskrifað PDF birtist strax þrátt fyrir CDN-cache.
+  const ver = Date.now();
+  const public_url = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${encodeURI(storage_path)}?v=${ver}`;
   const drive_file_id = 'sb:' + storage_path;
 
   // 2) Record it so the "Vistuð PDF-skjöl" list + send flow can find it.
