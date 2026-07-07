@@ -11664,23 +11664,23 @@ async function renderKrofuyfirlit(t){
     const abtn=(box,act,icon,label,on)=>`<button class="ky-bx" data-box="${box}" data-act="${act}" data-key="${key}" type="button" title="${esc(label)}" style="display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:54px;height:44px;padding:0 8px;border-radius:9px;cursor:pointer;font:inherit;${on?'border:1px solid #156e3a;background:linear-gradient(150deg,#2bbf6c,#0f6e3a);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 3px 7px -3px rgba(15,110,58,.5)':'border:1px solid rgba(20,24,34,.2);background:linear-gradient(180deg,#fff,#dbe0e9);color:#334155;box-shadow:inset 0 1.5px 0 rgba(255,255,255,.95),0 3px 6px -3px rgba(20,30,60,.3)'}"><span style="font-size:15px;line-height:1">${icon}</span><span style="font-size:8.5px;font-weight:700;letter-spacing:.02em;white-space:nowrap">${esc(label)}</span></button>`;
     // Compact talna-reitur með stöðu-lit á ramma (grár/blár/grænn).
     const cf=(f,val,w,unit,st)=>{ const bd=boxSt(st).bd; return `<span style="display:inline-flex;align-items:center;gap:3px"><input class="ky-bf" data-f="${f}" data-key="${key}" value="${val}" inputmode="decimal" style="width:${w}px;padding:4px 6px;border:1.5px solid ${bd};border-radius:7px;font:inherit;font-size:12.5px;text-align:right;background:#fff">${unit?`<span style="font-size:10px;color:#64748b">${unit}</span>`:''}</span>`; };
-    const pdfLink=(url,t)=> url ? `<a href="${esc(url)}" target="_blank" rel="noopener" title="${t}" style="font-size:14px;text-decoration:none">📄</a>` : '';
-    const sep = `<span style="width:1px;height:30px;background:#e5e7eb;flex:0 0 auto"></span>`;
+    // Hnappur með örsmárri tölu undir (t.d. klst / rukkuð upphæð).
+    const abtnN=(box,act,icon,label,on,num)=>`<span style="display:inline-flex;flex-direction:column;align-items:center;gap:2px">${abtn(box,act,icon,label,on)}${num?`<span style="font-size:9.5px;color:#64748b;font-weight:700;white-space:nowrap">${num}</span>`:''}</span>`;
+    const pdfLink=(url,t)=> url ? `<a href="${esc(url)}" target="_blank" rel="noopener" title="${t}" style="font-size:14px;text-decoration:none;align-self:flex-start;margin-top:6px">📄</a>` : '';
+    const sep = `<span style="width:1px;height:30px;background:#e5e7eb;flex:0 0 auto;align-self:center"></span>`;
     const sentTrail = inv.sent ? `<span style="font-size:9.5px;color:#047857;white-space:nowrap">${(inv.sent_by?esc(inv.sent_by)+' · ':'')}${inv.sent_at?esc(fmtDate(inv.sent_at)):''}</span>` : '';
     // Engir innsláttarreitir í röðinni — bara hreinir hnappar (eins og Slökkvitæki).
-    // Litla samantektin sýnir tölurnar; „⚙️ Stilla" opnar glugga til að breyta þeim.
-    const summary = `<span style="font-size:11px;color:#64748b;white-space:nowrap">🕒 ${hoursDisp} klst · 🧱 ${numIS(n.redder)} · 📄 <b style="color:#0f172a">${numIS(n.total)} kr</b></span>`;
-    return `<div class="ky-wf-boxes" style="margin-top:9px;padding-top:9px;border-top:1px dashed #e2e8f0;display:flex;gap:7px 10px;flex-wrap:wrap;align-items:center">
-      ${summary}
+    // Litlu tölurnar birtast UNDIR viðeigandi hnappi; „⚙️ Stilla" opnar glugga til að breyta.
+    return `<div class="ky-wf-boxes" style="margin-top:9px;padding-top:9px;border-top:1px dashed #e2e8f0;display:flex;gap:7px 10px;flex-wrap:wrap;align-items:flex-start">
       ${abtn('cfg','stilla','⚙️','Stilla',false)}
       ${sep}
-      ${abtn('tim','vista','🕒','Tímask.',timSaved)}${pdfLink(n.wf.tim_pdf,'Opna Tímaskýrslu PDF')}
-      ${abtn('efn','vista','📄','Efnisl.',efnSaved)}${pdfLink(n.wf.efn_pdf,'Opna Efnislista PDF')}
+      ${abtnN('tim','vista','🕒','Tímask.',timSaved, hoursDisp+' klst')}${pdfLink(n.wf.tim_pdf,'Opna Tímaskýrslu PDF')}
+      ${abtnN('efn','vista','📄','Efnisl.',efnSaved, numIS(n.total)+' kr')}${pdfLink(n.wf.efn_pdf,'Opna Efnislista PDF')}
       ${abtn('both','confirm','✓','Staðfest',bothConf)}
       ${anyConf?abtn('both','breyta','✏️','Breyta',false):''}
       ${sep}
       ${abtn('send','send','📤',inv.sent?'Sent ✓':'Senda',inv.sent)}
-      ${sentTrail}
+      ${inv.sent?`<span style="align-self:center">${sentTrail}</span>`:''}
     </div>`;
   }
 
