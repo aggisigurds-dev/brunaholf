@@ -12105,6 +12105,12 @@ async function renderKrofuyfirlit(t){
         wfPatchLocal(key,{wf:iv.wf}); await persistWf(key, iv.wf); close(); renderList();
       };
     }
+    // Litaður snúnings-status á hnapp meðan aðgerð keyrir (í stað „⏳"). Skilar
+    // afturkalls-falli sem endurheimtir hnappinn ef aðgerð fellur.
+    if(!document.getElementById('_ky-spin-css')){ const st=document.createElement('style'); st.id='_ky-spin-css'; st.textContent='@keyframes ky-spin{to{transform:rotate(360deg)}}'; document.head.appendChild(st); }
+    function spinBtn(b){ const prev=b.innerHTML; b.disabled=true; b.style.opacity='.85';
+      b.innerHTML='<span style="display:inline-block;width:18px;height:18px;border:2.5px solid rgba(20,24,34,.2);border-top-color:#2563eb;border-radius:50%;animation:ky-spin .7s linear infinite"></span>';
+      return ()=>{ b.innerHTML=prev; b.disabled=false; b.style.opacity=''; }; }
     // Reita-innslátt (Tímar / Redder / Efnislisti-heild / netfang) → wf_state.
     listEl.querySelectorAll('.ky-bf').forEach(inp=>{
       const stop=e=>e.stopPropagation(); inp.addEventListener('click',stop); inp.addEventListener('mousedown',stop);
@@ -12126,11 +12132,11 @@ async function renderKrofuyfirlit(t){
       if(act==='stilla'){ openWfEditor(iv, key); return; }
       const fields = box==='both' ? ['tim','efn'] : [box==='tim'?'tim':'efn'];
       if(act==='breyta'){ fields.forEach(f=>{ iv.wf[f]='saved'; }); wfPatchLocal(key,{wf:iv.wf}); await persistWf(key, iv.wf); renderList(); return; }
-      if(act==='confirm'){ const by=bhEnsureMe(); fields.forEach(f=>{ iv.wf[f]='confirmed'; iv.wf[f+'_by']=by; iv.wf[f+'_at']=new Date().toISOString(); }); wfPatchLocal(key,{wf:iv.wf}); await persistWf(key, iv.wf, by); renderList(); return; }
+      if(act==='confirm'){ const by=bhMe(); fields.forEach(f=>{ iv.wf[f]='confirmed'; iv.wf[f+'_by']=by; iv.wf[f+'_at']=new Date().toISOString(); }); wfPatchLocal(key,{wf:iv.wf}); await persistWf(key, iv.wf, by); renderList(); return; }
       if(act==='vista'){
-        b.disabled=true; const o=b.textContent; b.textContent='⏳…';
+        const restore=spinBtn(b);
         try{
-          const by=bhEnsureMe(); let res;
+          const by=bhMe(); let res;
           if(box==='tim'){
             let rows=[]; try{ const rr=await fetch(`/api/timabok?worksite=${encodeURIComponent(iv.worksite)}&month=${encodeURIComponent(iv.work_month)}`); const dd=await rr.json(); rows=(dd.rows||[]).map(r=>({date:r.date||'',employee:r.employee||'',time_in:r.time_in||'',time_out:r.time_out||'',hours:Number(r.hours)||0})); }catch(_){}
             res=await buildAndSaveTimabokPdf(iv.worksite, iv.work_month, rows, true);
@@ -12146,7 +12152,7 @@ async function renderKrofuyfirlit(t){
             iv.wf.efn='saved'; iv.wf.efn_pdf=res.public_url||null; iv.wf.efn_by=by;
           }
           wfPatchLocal(key,{wf:iv.wf}); await persistWf(key, iv.wf, by); await refreshEfdocs(); renderList();
-        }catch(err){ alert('Gat ekki vistað PDF: '+((err&&err.message)||err)); b.disabled=false; b.textContent=o; }
+        }catch(err){ alert('Gat ekki vistað PDF: '+((err&&err.message)||err)); restore(); }
         return;
       }
       if(act==='send'){
@@ -12156,8 +12162,10 @@ async function renderKrofuyfirlit(t){
         const toInp = b.closest('.ky-box') && b.closest('.ky-box').querySelector('input[data-f="to"]'); if(toInp && toInp.value.trim()) to=toInp.value.trim();
         const docs=((ws&&wm)?(EFDOCS[ws+'|'+wm]||[]):[]).filter(d=>d.drive_file_id);
         if(!docs.length && !confirm('Ekkert vistað Efnislisti/Tímaskýrsla PDF fyrir '+(ws||'—')+' '+(wm||'')+'.\nVista fyrst með „💾 Vista PDF". Senda samt án viðhengja?')) return;
-        const by=bhEnsureMe();
-        b.disabled=true; const orig=b.textContent; b.textContent='📤 Sendi…';
+        // Senda er óafturkræft (póstur út) — ein staðfesting svo óvart-smellur sendi ekki.
+        if(docs.length && !confirm('Senda '+docs.length+' skjal á '+to+'?')) return;
+        const by=bhMe();
+        const restore=spinBtn(b);
         const attachments = docs.map(d=>{ const fn=((d.title||(d.doc_type==='timabok_pdf'?'Tímaskýrsla':'Efnislisti'))).replace(/\.pdf$/i,'')+'.pdf'; return d.public_url ? { filename:fn, url:d.public_url } : { filename:fn, driveId:d.drive_file_id }; });
         const docLinks = docs.length ? '<p>Skjöl:</p><ul>'+docs.map(d=>'<li><a href="'+esc(bhDocUrl(d))+'">'+esc(d.title||d.doc_type)+'</a></li>').join('')+'</ul>' : '';
         const subject = 'Efnislisti/Tímaskýrsla — '+(cust||ws||'')+(wm?(' '+wm):'');
@@ -12169,7 +12177,7 @@ async function renderKrofuyfirlit(t){
           await fetch('/api/krofur-yfirlit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'save', inv_key:key, sent:true, by})}).catch(()=>{});
           wfPatchLocal(key, { sent:true, sent_at:new Date().toISOString(), sent_by:by });
           renderList();
-        }catch(err){ alert('Sending mistókst: '+((err&&err.message)||err)+'\n\n(Ath: RESEND_API_KEY þarf að vera stilltur + sendandi á staðfestu eldklar.is léni.)'); b.disabled=false; b.textContent=orig; }
+        }catch(err){ alert('Sending mistókst: '+((err&&err.message)||err)+'\n\n(Ath: RESEND_API_KEY þarf að vera stilltur + sendandi á staðfestu eldklar.is léni.)'); restore(); }
         return;
       }
     }));
@@ -15924,7 +15932,6 @@ function bhPdfName(kind, o){
 // vinnuflæði-skref svo samstarfsmaðurinn sér hver gerði hvað.
 function bhMe(){ try{ return (localStorage.getItem('bh_me')||'').trim(); }catch(_){ return ''; } }
 function bhSetMe(v){ try{ localStorage.setItem('bh_me', String(v||'').trim().slice(0,40)); }catch(_){} }
-function bhEnsureMe(){ let m=bhMe(); if(!m){ m=(prompt('Hver ert þú? (skráð á vinnuflæði-skref — t.d. Aggi eða Anni)','')||'').trim(); if(m) bhSetMe(m); } return m; }
 // View/download URL for a stored PDF doc row — Supabase public_url when present,
 // else the legacy Google-Drive link. Works for both the full row and the reduced
 // {id,title,url} shapes used on the Vinnubók/Gerð Reikninga grids.
