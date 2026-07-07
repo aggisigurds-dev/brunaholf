@@ -16014,18 +16014,36 @@ async function openTimabok(name, month){
 
   let rows = [];
   const saved = (state.ui && state.ui.timabok_edits && state.ui.timabok_edits[key]) || null;
+  const sortRows = ()=> rows.sort((a,b)=> String(b.date).localeCompare(String(a.date)) || String(a.employee).localeCompare(String(b.employee),'is'));
+  // Taflan birtist STRAX (hangir aldrei); Tímavera er sótt í bakgrunni með tímamörkum
+  // svo hægt kall eða teikni-villa festi ekki gluggann á „Sæki tímafærslur…".
   if(saved && Array.isArray(saved.rows)){
     rows = saved.rows.map(r=>({...r}));
     st.textContent = 'breytt eintak (vistað ' + (saved.saved_at? String(saved.saved_at).slice(0,10):'') + ')';
+    sortRows(); paint();
+  } else if(!name || !/^\d{4}-\d{2}$/.test(String(month))){
+    // Vantar verkstað/mánuð (t.d. Payday-drög án verkstaðar) → ekkert að sækja.
+    st.textContent = 'vantar verkstað/mánuð — bættu við línum handvirkt (＋)';
+    paint();
   } else {
-    try{
-      const resp = await fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&month=${encodeURIComponent(month)}`);
-      const data = await resp.json();
-      if(!resp.ok) throw new Error(data.error||('HTTP '+resp.status));
-      rows = (data.rows||[]).map(r=>({ date:r.date||'', employee:r.employee||'', time_in:r.time_in||'', time_out:r.time_out||'', hours:Number(r.hours)||0 }));
-    }catch(e){ document.getElementById('tbk-body').innerHTML = `<div class="gr-loading">Gat ekki sótt tímafærslur: ${escapeHtml(e.message||String(e))}</div>`; return; }
+    paint();   // tóm tafla strax svo glugginn sé nothæfur samstundis
+    const _b0 = document.getElementById('tbk-body'); if(_b0) _b0.innerHTML = '<div class="gr-loading">Sæki tímafærslur…</div>';
+    (async()=>{
+      try{
+        const ctrl = new AbortController(); const to = setTimeout(()=>ctrl.abort(), 15000);
+        const resp = await fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&month=${encodeURIComponent(month)}`, { signal: ctrl.signal });
+        clearTimeout(to);
+        const data = await resp.json().catch(()=>({}));
+        if(!resp.ok) throw new Error(data.error||('HTTP '+resp.status));
+        rows = (data.rows||[]).map(r=>({ date:r.date||'', employee:r.employee||'', time_in:r.time_in||'', time_out:r.time_out||'', hours:Number(r.hours)||0 }));
+        sortRows();
+      }catch(e){
+        if(!bg.isConnected) return;   // notandi lokaði glugganum á meðan
+        st.textContent = 'gat ekki sótt Tímaveru ('+(e&&e.name==='AbortError'?'timeout':escapeHtml(String(e&&e.message||e)))+') — bættu við handvirkt';
+      }
+      paint();
+    })();
   }
-  rows.sort((a,b)=> String(b.date).localeCompare(String(a.date)) || String(a.employee).localeCompare(String(b.employee),'is'));
 
   function totals(){
     const total = rows.reduce((s,r)=>s+(Number(r.hours)||0),0);
@@ -16033,7 +16051,8 @@ async function openTimabok(name, month){
     return { total, byEmp };
   }
   function paint(){
-    const body = document.getElementById('tbk-body');
+    const body = document.getElementById('tbk-body'); if(!body) return;
+    try{
     const head = `<div class="tbk-r tbk-h"><span>Dagsetning</span><span>Starfsmaður</span><span>Inn</span><span>Út</span><span>Tímar</span><span></span></div>`;
     const rr = rows.map((r,i)=>`<div class="tbk-r">
         <input type="date" value="${escapeAttr(r.date)}" data-f="date" data-i="${i}">
@@ -16050,8 +16069,8 @@ async function openTimabok(name, month){
       ${emp?`<div class="tbk-emp"><div class="tbk-er tbk-eh"><span>Starfsmaður</span><span>Dagar</span><span>Tímar</span></div>${emp}</div>`:''}`;
     body.querySelectorAll('input[data-i]').forEach(inp=> inp.addEventListener('change',()=>{ const i=+inp.dataset.i, f=inp.dataset.f; rows[i][f] = f==='hours'? (Number(String(inp.value).replace(',','.').replace(/[^\d.]/g,''))||0) : inp.value; if(f==='hours'||f==='employee'||f==='date') paint(); }));
     body.querySelectorAll('[data-del]').forEach(b=> b.onclick=()=>{ rows.splice(+b.dataset.del,1); paint(); });
+    }catch(err){ body.innerHTML = `<div class="gr-loading">Villa við að teikna tímaskýrslu: ${escapeHtml(String(err&&err.message||err))}</div>`; }
   }
-  paint();
 
   document.getElementById('tbk-add').onclick = ()=>{ rows.unshift({ date:month+'-01', employee:'', time_in:'', time_out:'', hours:0 }); paint(); };
   document.getElementById('tbk-save').onclick = ()=>{
