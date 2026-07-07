@@ -234,9 +234,11 @@ async function saveOverride(event) {
   // úr Ógreitt-þrepi; paid_at stimplað. Aðskilið frá Payday-stöðu (sem breytist ekki).
   if (typeof body.paid === 'boolean') { patch.paid = body.paid; patch.paid_at = body.paid ? new Date().toISOString() : null; }
   // Ósendar-vinnuflæði (Kröfu yfirlit): ⚪ → 🔵 staðfest → 🟢 sent á bókara → ✅ allt klárt.
-  if (typeof body.confirmed === 'boolean') { patch.confirmed = body.confirmed; patch.confirmed_at = body.confirmed ? new Date().toISOString() : null; }
-  if (typeof body.sent === 'boolean') { patch.sent = body.sent; patch.sent_at = body.sent ? new Date().toISOString() : null; }
-  if (typeof body.done === 'boolean') { patch.done = body.done; patch.done_at = body.done ? new Date().toISOString() : null; }
+  // `by` = hver gerði skrefið (t.d. „Aggi"/„Anni") svo hinn sér hver gerði hvað.
+  const who = body.by ? String(body.by).slice(0, 40) : null;
+  if (typeof body.confirmed === 'boolean') { patch.confirmed = body.confirmed; patch.confirmed_at = body.confirmed ? new Date().toISOString() : null; patch.confirmed_by = body.confirmed ? who : null; }
+  if (typeof body.sent === 'boolean') { patch.sent = body.sent; patch.sent_at = body.sent ? new Date().toISOString() : null; patch.sent_by = body.sent ? who : null; }
+  if (typeof body.done === 'boolean') { patch.done = body.done; patch.done_at = body.done ? new Date().toISOString() : null; patch.done_by = body.done ? who : null; }
   if ('amount_override' in body) patch.amount_override = body.amount_override === null || body.amount_override === '' ? null : Number(body.amount_override);
   if ('note' in body) patch.note = body.note ? String(body.note).slice(0, 500) : null;
 

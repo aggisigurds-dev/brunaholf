@@ -40,7 +40,7 @@ exports.handler = async (event) => {
       'select=id,tilvisun,kt_greidanda,customer_name,gjalddagi,eindagi,hofudstoll,upphaed_total,status,source');
     drafts = await fetchAll('invoice_drafts',
       'select=worksite_name,work_month,total_m_vsk,customer_name,kennitala').catch(() => []);
-    meta = await fetchAll('krofur_yfirlit_meta', 'select=inv_key,hidden,paid,note,confirmed,sent,done,sent_at').catch(() => []);
+    meta = await fetchAll('krofur_yfirlit_meta', 'select=inv_key,hidden,paid,note,confirmed,sent,done,sent_at,confirmed_at,done_at,confirmed_by,sent_by,done_by').catch(() => []);
     bank = await fetchAll('bank_transactions',
       'select=kt_counterparty,amount,trans_date,text,description&amount=gt.0').catch(() => []);
     cwmap = await fetchAll('customer_worksite_map',
@@ -108,6 +108,8 @@ exports.handler = async (event) => {
       gjalddagi: r.gjalddagi, eindagi: r.eindagi, dueMs, days_overdue: dueMs != null ? Math.round((todayMs - dueMs) / 864e5) : null,
       amount: amt, note: mt.note || null,
       confirmed: !!mt.confirmed, sent: !!mt.sent, done: !!mt.done, sent_at: mt.sent_at || null,
+      confirmed_at: mt.confirmed_at || null, done_at: mt.done_at || null,
+      confirmed_by: mt.confirmed_by || null, sent_by: mt.sent_by || null, done_by: mt.done_by || null,
       likely_paid: false, bank: null,        // fyllt í matchBank() hér að neðan
     };
     (isDraft ? t2 : t1).push(row);
@@ -135,6 +137,8 @@ exports.handler = async (event) => {
       customer: (payer && payer.customer) || d.customer_name || d.worksite_name || '(verkstaður)',
       gjalddagi: null, days_overdue: null, amount: amt, note: mt.note || null,
       confirmed: !!mt.confirmed, sent: !!mt.sent, done: !!mt.done, sent_at: mt.sent_at || null,
+      confirmed_at: mt.confirmed_at || null, done_at: mt.done_at || null,
+      confirmed_by: mt.confirmed_by || null, sent_by: mt.sent_by || null, done_by: mt.done_by || null,
       worksite: d.worksite_name, work_month: wm,
     });
   }
