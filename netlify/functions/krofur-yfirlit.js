@@ -241,6 +241,9 @@ async function saveOverride(event) {
   if (typeof body.done === 'boolean') { patch.done = body.done; patch.done_at = body.done ? new Date().toISOString() : null; patch.done_by = body.done ? who : null; }
   if ('amount_override' in body) patch.amount_override = body.amount_override === null || body.amount_override === '' ? null : Number(body.amount_override);
   if ('note' in body) patch.note = body.note ? String(body.note).slice(0, 500) : null;
+  // Ósendar-vinnuflæði — reitastaða (Tímar/Redder/Efnislisti box states + tölur +
+  // vistuð PDF). Client sendir ALLT wf_state objectið svo við geymum það eins og er.
+  if (body.wf_state && typeof body.wf_state === 'object') patch.wf_state = body.wf_state;
 
   const r = await fetch(`${SUPABASE_URL}/rest/v1/krofur_yfirlit_meta?on_conflict=inv_key`, {
     method: 'POST',

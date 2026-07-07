@@ -729,6 +729,20 @@ either use the calculated total or override with a flat amount.
   „📤 Senda á bókhald" sends Supabase docs via `{url}`. `efnislisti-docs.js` DELETE
   removes the Storage object for `sb:` rows. Old Drive-hosted rows still open via the
   Drive link. `bhSavePdfToDrive` kept for reference but no longer called.
+- **Ósendar-vinnuflæði sem lárétt skref-borð (2026-07-07, v1):** tier-2 raðir á Kröfu
+  yfirlit sýna nú lárétt reita-borð (alltaf sýnilegt): **🕒 Tímaskýrsla** (klst úr
+  Tímaveru, breytanlegt) → **🧱 Redder efni** (breytanlegt, forfyllt úr
+  `/api/redder-invoices` `summary.by_worksite_month`) → **📄 Efnislisti** (heild reiknuð:
+  klst×dagvinnutaxti + smáhlutagjald 137/klst + Redder + VSK — samstillt við Tímar-reitinn,
+  má yfirskrifa) → **📤 Senda** (netfang breytanlegt, sjálfgefið bokhald@brunaholf.is).
+  Hver reitur: grár óunnið → **blár vistað** → **grænn staðfest**; „✏️ Breyta" fer aftur í
+  bláan og „💾 Vista PDF" SKRIFAR YFIR fyrra PDF (`pdf-store` `overwrite:true` → föst slóð
+  `<slug>/<mánuður>/<doc_type>.pdf` + `?v=` cache-buster). Reitastaðan + tölur geymast í
+  `krofur_yfirlit_meta.wf_state` (jsonb) svo hún samstillist milli tækja/notenda.
+  `wfNums()` reiknar; `HOURS`/`REDDER` lookup fyllt í `fetchAll()`. Tímar-tölur koma úr
+  `/api/worksites?year=combined` (`w.monthly`). NB heildin er einfölduð nálgun (engin
+  akstur/staðfesting sjálfvirkt) — full nákvæmni er í Gerð Reikninga; „þarf kanski að
+  endurbæta" (Agnar). Efnislisti/Tímaskýrsla PDF nota `buildAndSave*Pdf(...,true)`.
 - **Kröfu yfirlit hraði (2026-07-07):** `renderKrofuyfirlit` now uses a
   stale-while-revalidate cache (`window.__KYF_CACHE`, TTL 5 mín) so flakk milli
   síðna sýnir síðustu útgáfu STRAX (áður ~1 mín bið í hvert sinn) og uppfærir
