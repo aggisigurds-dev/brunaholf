@@ -1645,6 +1645,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
+<script src="/js/hub-sync-buttons.js" defer></script>
 </head>
 <body>
 
@@ -8361,6 +8362,7 @@ async function renderGerdReikninga(t){
         <div>
           <h1 class="gr-h1">Gerð Reikninga <span class="gr-sub" id="gr-meta">Sækir…</span></h1>
           <div class="gr-sub-line">Mánaðamóta-reikningagerð · forútfylltur Efnislisti úr Tímavera klst + Verðskrá + Redder efni · breyttu tölum, vistaðu og prentaðu (PDF).</div>
+          <div style="margin-top:8px"><span data-sync-workflow="timavera" data-sync-label="Tímavera"></span></div>
         </div>
         <div class="gr-controls">
           <button class="tv-btn" id="gr-prev" type="button" title="Fyrri mánuður">←</button>
@@ -9344,6 +9346,7 @@ async function renderVinnubok(t){
         <div>
           <h1 class="rg-h1">Vinnubók <span class="rg-sub" id="vb-meta">Sækir…</span></h1>
           <div class="rg-sub-line">Manual vinnusíða · breyttu reikningsupphæð per glugga, tengdu hvaða skjal sem er úr Drive (mappa verkstaðarins eða leit), fela verkstaði sem þú þarft ekki að skoða.</div>
+          <div style="margin-top:8px"><span data-sync-workflow="timavera" data-sync-label="Tímavera"></span></div>
         </div>
         <div class="rg-controls">
           <button id="vb-refresh" class="tv-btn" type="button"><span class="tv-refresh-icon">↻</span> Sækja</button>
@@ -12853,6 +12856,7 @@ async function renderNLSH(t){
         <div>
           <h1 class="rg-h1">🏥 Landsspítalinn (NLSH) <span class="rg-sub" id="nl-meta">Sækir…</span></h1>
           <div class="rg-sub-line">Tekjur, lokuð göt per viku, vinnustundir og afköst per starfsmann — úr Ajour (samningsverð per heild) + Tímavera.</div>
+          <div style="margin-top:8px;display:flex;gap:14px;flex-wrap:wrap"><span data-sync-workflow="timavera" data-sync-label="Tímavera"></span><span data-sync-workflow="ajour" data-sync-label="Ajour"></span></div>
         </div>
         <div class="rg-controls">
           <button id="nl-update" class="tv-btn" type="button" title="Finnur nýjustu AjourRegistrationData skrána í Google Drive og les hana inn í gagnagrunninn — síðan endurnýjast talnaefnið sjálfkrafa">🔄 Uppfæra gögn úr Drive</button>
