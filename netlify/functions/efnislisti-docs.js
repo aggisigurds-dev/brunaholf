@@ -55,13 +55,45 @@ exports.handler = async (event) => {
     return json(200, (await r.json())[0] || { ok: true });
   }
 
+  // DELETE /api/efnislisti-docs   body { drive_file_id }  (eða ?drive_file_id=)
+  //   Eyðir tengil-röðinni OG hendir Drive-skránni í ruslið (endurheimtanlegt).
+  if (event.httpMethod === 'DELETE') {
+    const q = event.queryStringParameters || {};
+    let body = {}; try { body = JSON.parse(event.body || '{}'); } catch { /* ignore */ }
+    const fid = q.drive_file_id || body.drive_file_id;
+    if (!fid) return json(400, { error: 'drive_file_id required' });
+    // 1) eyða tengil-röð(um) fyrir þessa skrá
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/efnislisti_documents?drive_file_id=eq.${encodeURIComponent(fid)}`, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Prefer': 'return=representation' },
+    });
+    if (!r.ok) return json(r.status, { error: (await r.text()).slice(0, 300) });
+    const removed = (await r.json().catch(() => [])) || [];
+    // 2) besta-tilraun: henda Drive-skránni í ruslið (endurheimtanlegt í 30 daga).
+    //    Ef Google-tenging vantar eða PATCH bregst → tengill er samt farinn af listanum.
+    let drive = 'skipped';
+    try {
+      const g = require('./_google');
+      const tok = g && g.freshAccessToken ? await g.freshAccessToken() : null;
+      if (tok) {
+        const dr = await fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fid)}?supportsAllDrives=true`, {
+          method: 'PATCH',
+          headers: { 'Authorization': `Bearer ${tok}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ trashed: true }),
+        });
+        drive = dr.ok ? 'trashed' : ('drive ' + dr.status);
+      }
+    } catch (_) { drive = 'drive-error'; }
+    return json(200, { ok: true, removed: removed.length, drive });
+  }
+
   return json(405, { error: 'Method not allowed' });
 };
 
 function cors() {
   return {
     'access-control-allow-origin': '*',
-    'access-control-allow-methods': 'GET, POST, OPTIONS',
+    'access-control-allow-methods': 'GET, POST, DELETE, OPTIONS',
     'access-control-allow-headers': 'content-type',
   };
 }

@@ -8551,13 +8551,24 @@ async function renderGerdReikninga(t){
     if(!rows.length){ box.innerHTML = head + `<div class="gr-loading" style="padding:14px">Engin vistuð PDF enn. Búðu til PDF með „📄 Vista PDF" í Efnislista eða Tímaskýrslu.</div>`; return; }
     box.innerHTML = head + `<table class="grp-tbl"><thead><tr>
         <th>Skjal</th><th>Verkstaður</th><th>Mánuður</th><th>Gert</th><th></th></tr></thead><tbody>
-      ${rows.map(d=>{ const tb=d.doc_type==='timabok_pdf'; const view=`https://drive.google.com/file/d/${d.drive_file_id}/view`; const dl=`https://drive.google.com/uc?export=download&id=${d.drive_file_id}`; return `<tr>
+      ${rows.map(d=>{ const tb=d.doc_type==='timabok_pdf'; const view=`https://drive.google.com/file/d/${d.drive_file_id}/view`; const dl=`https://drive.google.com/uc?export=download&id=${d.drive_file_id}`; return `<tr data-fid="${escapeHtml(d.drive_file_id)}">
         <td><span class="grp-badge ${tb?'tb':'ef'}">${tb?'Tímaskýrsla':'Efnislisti'}</span> ${escapeHtml(d.title||'')}</td>
         <td>${escapeHtml(d.worksite_name||'—')}</td>
         <td>${escapeHtml(d.work_month?monthLabel(d.work_month):'—')}</td>
         <td style="white-space:nowrap;color:#64748b">${dt(d.added_at)}</td>
-        <td style="white-space:nowrap"><a class="tv-btn" href="${view}" target="_blank" rel="noopener">🔗 Opna</a> <a class="tv-btn" href="${dl}" target="_blank" rel="noopener">⤓ Sækja</a></td>
+        <td style="white-space:nowrap"><a class="tv-btn" href="${view}" target="_blank" rel="noopener">🔗 Opna</a> <a class="tv-btn" href="${dl}" target="_blank" rel="noopener">⤓ Sækja</a> <button class="tv-btn grp-del" data-fid="${escapeHtml(d.drive_file_id)}" data-title="${escapeHtml(d.title||'')}" title="Eyða PDF (fer í Drive-ruslið, endurheimtanlegt)" style="color:#b91c1c;border-color:#fecaca">🗑</button></td>
       </tr>`; }).join('')}</tbody></table>`;
+    box.querySelectorAll('.grp-del').forEach(b=>b.addEventListener('click', async ()=>{
+      const fid=b.dataset.fid; if(!fid) return;
+      if(!confirm('Eyða þessu PDF?\n„'+(b.dataset.title||fid)+'"\n\nSkjalið fer í Drive-ruslið (endurheimtanlegt í 30 daga) og hverfur af listanum.')) return;
+      b.disabled=true; b.textContent='…';
+      try{
+        const r=await fetch('/api/efnislisti-docs',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({drive_file_id:fid})});
+        const j=await r.json().catch(()=>({}));
+        if(!r.ok||j.error) throw new Error(j.error||('HTTP '+r.status));
+        const tr=b.closest('tr'); if(tr) tr.remove();
+      }catch(e){ alert('Tókst ekki að eyða: '+(e.message||e)); b.disabled=false; b.textContent='🗑'; }
+    }));
   }
   window.__grReloadPdfList = loadPdfList;
   loadPdfList();
