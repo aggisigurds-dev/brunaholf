@@ -11684,7 +11684,7 @@ async function renderKrofuyfirlit(t){
     const sentTrail = inv.sent ? `<span style="font-size:9.5px;color:#047857;white-space:nowrap">${(inv.sent_by?esc(inv.sent_by)+' · ':'')}${inv.sent_at?esc(fmtDate(inv.sent_at)):''}</span>` : '';
     // Tímask. + Efnisl. OPNA ritlana í Gerð Reikninga/Tímaskýrslu — þú vistar/staðfestir
     // ÞAR og það birtist hér (grænt + 📄 þegar skjalið er til). Engin inline-vistun.
-    return `<div class="ky-wf-boxes" style="display:flex;gap:6px 8px;flex-wrap:nowrap;align-items:center;flex:0 0 auto">
+    return `<div class="ky-wf-boxes" style="display:flex;gap:6px 8px;flex-wrap:wrap;align-items:center;flex:1 1 auto;justify-content:flex-end">
       ${abtnN('tim','opentim','🕒','Tímask.',!!timDoc, hoursDisp+' klst')}${pdfLink(timDoc?bhDocUrl(timDoc):null,'Opna Tímaskýrslu PDF')}
       ${abtnN('efn','openefn','📄','Efnisl.',!!efnDoc, numIS(n.redder)+' kr efni')}${pdfLink(efnDoc?bhDocUrl(efnDoc):null,'Opna Efnislista PDF')}
       ${sep}
@@ -11728,7 +11728,7 @@ async function renderKrofuyfirlit(t){
         : '';
       return `
         <div class="ky-invrow">
-          <div class="ky-row${lp?' ky-likely':''}" data-key="${esc(inv.inv_key)}" style="display:flex;align-items:center;gap:11px;padding:9px 18px;border-bottom:1px solid #f3f5f9;font-size:12.5px;cursor:pointer">
+          <div class="ky-row${lp?' ky-likely':''}" data-key="${esc(inv.inv_key)}" style="display:flex;align-items:center;gap:11px;${tier===2?'flex-wrap:wrap;':''}padding:9px 18px;border-bottom:1px solid #f3f5f9;font-size:12.5px;cursor:pointer">
             <span class="ky-caret2" style="width:11px;flex-shrink:0;color:#b6c0cc;font-size:11px;user-select:none">▸</span>
             <div style="width:200px;flex-shrink:0;line-height:1.2">
               <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
@@ -11888,7 +11888,7 @@ async function renderKrofuyfirlit(t){
         : '';
       return `
         <div class="ky-invrow">
-          <div class="ky-row${lp?' ky-likely':''}" data-key="${esc(inv.inv_key)}" style="display:flex;align-items:center;gap:11px;padding:9px 18px;border-bottom:1px solid #f3f5f9;font-size:12.5px;cursor:pointer">
+          <div class="ky-row${lp?' ky-likely':''}" data-key="${esc(inv.inv_key)}" style="display:flex;align-items:center;gap:11px;${tier===2?'flex-wrap:wrap;':''}padding:9px 18px;border-bottom:1px solid #f3f5f9;font-size:12.5px;cursor:pointer">
             <span class="ky-caret2" style="width:11px;flex-shrink:0;color:#b6c0cc;font-size:11px;user-select:none">▸</span>
             <div style="width:200px;flex-shrink:0;line-height:1.2">
               <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
