@@ -756,6 +756,10 @@ either use the calculated total or override with a flat amount.
   síðna sýnir síðustu útgáfu STRAX (áður ~1 mín bið í hvert sinn) og uppfærir
   hljóðlega í bakgrunni; `krofu-yfirlit-bru` + `efnislisti-docs` eru nú sótt samhliða
   (`fetchAll`). „↻ Sækja" og Payday-uppfærsla þvinga ferskt (`load(true)`).
+  **2026-07-07 (viðbót):** `fetchAll` málar núna þrep 1+2 (+Ósendar-borðið) STRAX og
+  reiknar þunga þrep-3 (`computeTier3` → `/api/worksites?year=combined` + `/api/nlsh-dashboard`
+  + `/api/redder-invoices`) í bakgrunni → miklu fyrri fyrsta málning. Sjálfgefin sýn er nú
+  **🏢 Fyrirtæki** (`tierFilter:'company'`) í stað „Allt" (sem er þyngst að teikna).
 
 ### Status comments observed in Tekjur (examples — these are real
 operational notes, not stale data):

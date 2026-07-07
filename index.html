@@ -11397,7 +11397,7 @@ async function renderKrofuyfirlit(t){
   const paidSet = new Set();
   const persistHidden = () => { try{ localStorage.setItem(HKEY, JSON.stringify([...hiddenSet])); }catch(_){} };
 
-  const state = { data:null, tier3:null, sort:'amount_desc', search:'', tierFilter:'all', newest:null };
+  const state = { data:null, tier3:null, sort:'amount_desc', search:'', tierFilter:'company', newest:null };
   // Efnislisti/Tímaskjal Drive-tenglar per „<verkstaður>|<mánuður>" (fyllt í load()).
   let EFDOCS = {};
   // Tímavera-tímar + Redder-efniskostnaður per „<verkstaður>|<mánuður>" (fyrir Ósendar-reitina).
@@ -11424,8 +11424,8 @@ async function renderKrofuyfirlit(t){
       </div>
 
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
-        ${[['all','📚 Allt'],['company','🏢 Fyrirtæki'],['t1','🔴 Ógreiddar'],['likely','🏦 Líklega greitt'],['t2','🟡 Ósendar'],['t3','⚪ Tími eftir']].map(([k,label])=>{
-          const on = k==='all';
+        ${[['company','🏢 Fyrirtæki'],['all','📚 Allt'],['t1','🔴 Ógreiddar'],['likely','🏦 Líklega greitt'],['t2','🟡 Ósendar'],['t3','⚪ Tími eftir']].map(([k,label])=>{
+          const on = k==='company';
           return `<button class="kyf-vf" data-vf="${k}" type="button" style="padding:7px 14px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;${on?'border:1px solid #1d4ed8;background:#1d4ed8;color:#fff':'border:1px solid #cbd5e1;background:#fff;color:#475569'}">${label}</button>`;
         }).join('')}
         <button class="kyf-payday" type="button" style="margin-left:auto;padding:7px 14px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;border:1px solid #cbd5e1;background:#fff;color:#475569">🔄 Uppfæra Payday stöðu</button>
@@ -12196,8 +12196,12 @@ async function renderKrofuyfirlit(t){
     const idx = {};
     for(const d of (efR.rows||[])){ const k=(d.worksite_name||'')+'|'+(d.work_month||''); (idx[k]=idx[k]||[]).push(d); }
     EFDOCS = idx;
-    // Þrep 3 (reiknað í vafra, þarf draftKeys úr state.data). Fellur → tómur hópur.
+    // FYRSTA MÁLNING STRAX með þrep 1+2 (+Ósendar-borðið) — ekki bíða eftir þunga
+    // þrep-3 útreikningnum (worksites/nlsh/redder). Notandi sér listann miklu fyrr.
+    metaFromState(); renderList();
+    // Þrep 3 (reiknað í vafra) + HOURS/REDDER í bakgrunni → endur-teikna þegar klárt.
     try{ state.tier3 = await computeTier3(); }catch(_){ state.tier3 = groupTier3([]); }
+    metaFromState(); renderList();
     cacheStore();
   }
   async function load(force){
