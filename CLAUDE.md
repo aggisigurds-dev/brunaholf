@@ -775,6 +775,17 @@ either use the calculated total or override with a flat amount.
   reiknar þunga þrep-3 (`computeTier3` → `/api/worksites?year=combined` + `/api/nlsh-dashboard`
   + `/api/redder-invoices`) í bakgrunni → miklu fyrri fyrsta málning. Sjálfgefin sýn er nú
   **🏢 Fyrirtæki** (`tierFilter:'company'`) í stað „Allt" (sem er þyngst að teikna).
+- **Falin (🙈 Fela) — haldast falin þvert á tæki + „👁 Sýna falin" hnappur (2026-07-07):**
+  áður „poppuðu faldar upp" hjá hinum notandanum af því þrep-3 raðir (reiknaðar í vafra)
+  voru AÐEINS síaðar úr localStorage `ky_hidden_v1` — hitt tækið hafði ekki þann lista.
+  Núna skilar `krofu-yfirlit-bru` **öllum röðum með `hidden:true`** (í stað þess að sleppa
+  þeim) + `hidden_keys` fylki (öll faldar inv_keys úr `krofur_yfirlit_meta`, líka þrep-3).
+  Framendinn heldur `serverHidden` (endurnýjað í hverri hleðslu, EKKI geymt í localStorage)
+  svo hidden er authoritative þvert á tæki; `invHidden(inv)` = `inv.hidden || hiddenSet ||
+  serverHidden`. Faldar teljast ekki í summur (bæði bakenda-`rollup` og frontend-`liveDebtors`
+  sleppa þeim). Einn **„👁 Sýna falin (N)"** hnappur (í síuröðinni) víxlar `state.showHidden`:
+  þá birtast faldar daufar (opacity .5) með **👁 Sýna** (af-fela → `hidden:false`) í stað 🙈 Fela.
+  Sjálfgefið er `showHidden:false` (faldar sjást ekki).
 
 ### Status comments observed in Tekjur (examples — these are real
 operational notes, not stale data):

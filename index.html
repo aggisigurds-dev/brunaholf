@@ -11404,10 +11404,21 @@ async function renderKrofuyfirlit(t){
   // milli endurhleðslna; þrep 1/2 eru síuð af bakendanum sjálfum.
   const HKEY = 'ky_hidden_v1';
   let hiddenSet = new Set(); try{ hiddenSet = new Set(JSON.parse(localStorage.getItem(HKEY)||'[]')); }catch(_){}
+  let serverHidden = new Set();   // faldar inv_keys frá bakenda (meta.hidden) — EKKI geymt í localStorage
   const paidSet = new Set();
   const persistHidden = () => { try{ localStorage.setItem(HKEY, JSON.stringify([...hiddenSet])); }catch(_){} };
+  // Röð er falin ef bakendinn segir það (inv.hidden / serverHidden úr meta) EÐA
+  // notandinn faldi hana núna (hiddenSet í localStorage). serverHidden er sótt í
+  // hverri hleðslu svo þrep-3 (reiknað í vafra, hefur ekkert inv.hidden) haldist
+  // falið þvert á tæki/vafra — það var ástæðan fyrir að faldar „poppuðu upp" hjá hinum.
+  const invHidden = inv => !!(inv && (inv.hidden || hiddenSet.has(inv.inv_key) || serverHidden.has(inv.inv_key)));
+  // Bjartsýnis-uppfærsla: setja hidden-flagg beint á in-memory röð (öll þrep).
+  function setInvHidden(key, val){
+    for(const bag of [state.data&&state.data.tier1, state.data&&state.data.tier2, state.tier3])
+      for(const d of ((bag&&bag.debtors)||[])) for(const iv of (d.invoices||[])) if(iv.inv_key===key) iv.hidden = val;
+  }
 
-  const state = { data:null, tier3:null, sort:'amount_desc', search:'', tierFilter:'company', newest:null };
+  const state = { data:null, tier3:null, sort:'amount_desc', search:'', tierFilter:'company', newest:null, showHidden:false };
   // Efnislisti/Tímaskjal Drive-tenglar per „<verkstaður>|<mánuður>" (fyllt í load()).
   let EFDOCS = {};
   // Tímavera-tímar + Redder-efniskostnaður per „<verkstaður>|<mánuður>" (fyrir Ósendar-reitina).
@@ -11441,6 +11452,7 @@ async function renderKrofuyfirlit(t){
         }).join('')}
         <button class="kyf-payday" type="button" style="margin-left:auto;padding:7px 14px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;border:1px solid #cbd5e1;background:#fff;color:#475569">🔄 Uppfæra Payday stöðu</button>
         <button class="kyf-refresh" type="button" style="padding:7px 14px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;border:1px solid #cbd5e1;background:#fff;color:#475569">↻ Sækja</button>
+        <button class="kyf-hidden-toggle" type="button" title="Sýna/fela faldar kröfur" style="display:none;padding:7px 14px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;border:1px solid #cbd5e1;background:#fff;color:#475569"></button>
       </div>
 
       <div class="kyf-cards" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px"></div>
@@ -11560,9 +11572,14 @@ async function renderKrofuyfirlit(t){
   function liveDebtors(debtors){
     const out = [];
     for(const d of (debtors||[])){
-      const invs = (d.invoices||[]).filter(inv=> !hiddenSet.has(inv.inv_key) && !paidSet.has(inv.inv_key));
+      const invs = (d.invoices||[]).filter(inv=>{
+        if(paidSet.has(inv.inv_key)) return false;
+        if(invHidden(inv)) return state.showHidden;   // faldar sjást AÐEINS þegar „Sýna falin" er á
+        return true;
+      }).map(inv=> invHidden(inv) ? {...inv, _hidden:true} : inv);
       if(!invs.length) continue;
-      out.push({ ...d, invoices:invs, outstanding_kr:invs.reduce((a,i)=>a+i.amount,0) });
+      // Faldar raðir (þegar sýndar) teljast EKKI í útistandandi summuna.
+      out.push({ ...d, invoices:invs, outstanding_kr:invs.reduce((a,i)=> a + (i._hidden?0:i.amount), 0) });
     }
     return out;
   }
@@ -11626,6 +11643,10 @@ async function renderKrofuyfirlit(t){
 
   function actChips(inv, tier){
     const k = esc(inv.inv_key);
+    // Falin röð (sýnd í gegnum „Sýna falin") → 👁 Sýna (af-fela) í stað 🙈 Fela.
+    if(inv._hidden){
+      return kyAbtn('ky-act','data-act="unhide" data-key="'+k+'"','👁','Sýna','#0f7a43','Sýna aftur — hætta að fela',false);
+    }
     const hide = kyAbtn('ky-act','data-act="hide" data-key="'+k+'"','🙈','Fela','#64748b','Fela kröfu',false);
     if(tier===1){
       // Líklega-greitt raðir → auðkenna ✓ Greitt takkann (grænn hringur/púls) sem hnipp.
@@ -11728,7 +11749,7 @@ async function renderKrofuyfirlit(t){
         : '';
       return `
         <div class="ky-invrow">
-          <div class="ky-row${lp?' ky-likely':''}" data-key="${esc(inv.inv_key)}" style="display:flex;align-items:center;gap:11px;${tier===2?'flex-wrap:wrap;':''}padding:9px 18px;border-bottom:1px solid #f3f5f9;font-size:12.5px;cursor:pointer">
+          <div class="ky-row${lp?' ky-likely':''}" data-key="${esc(inv.inv_key)}" style="display:flex;align-items:center;gap:11px;${tier===2?'flex-wrap:wrap;':''}padding:9px 18px;border-bottom:1px solid #f3f5f9;font-size:12.5px;cursor:pointer;${inv._hidden?'opacity:.5':''}">
             <span class="ky-caret2" style="width:11px;flex-shrink:0;color:#b6c0cc;font-size:11px;user-select:none">▸</span>
             <div style="width:200px;flex-shrink:0;line-height:1.2">
               <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
@@ -11888,7 +11909,7 @@ async function renderKrofuyfirlit(t){
         : '';
       return `
         <div class="ky-invrow">
-          <div class="ky-row${lp?' ky-likely':''}" data-key="${esc(inv.inv_key)}" style="display:flex;align-items:center;gap:11px;${tier===2?'flex-wrap:wrap;':''}padding:9px 18px;border-bottom:1px solid #f3f5f9;font-size:12.5px;cursor:pointer">
+          <div class="ky-row${lp?' ky-likely':''}" data-key="${esc(inv.inv_key)}" style="display:flex;align-items:center;gap:11px;${tier===2?'flex-wrap:wrap;':''}padding:9px 18px;border-bottom:1px solid #f3f5f9;font-size:12.5px;cursor:pointer;${inv._hidden?'opacity:.5':''}">
             <span class="ky-caret2" style="width:11px;flex-shrink:0;color:#b6c0cc;font-size:11px;user-select:none">▸</span>
             <div style="width:200px;flex-shrink:0;line-height:1.2">
               <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
@@ -11957,6 +11978,23 @@ async function renderKrofuyfirlit(t){
   function renderList(){
     const listEl = $view.querySelector('.kyf-list');
     if(!state.data){ listEl.innerHTML = '<div style="padding:32px;text-align:center;color:#94a3b8">Hleður kröfum…</div>'; return; }
+    // serverHidden endurnýjast í hverri hleðslu úr bakenda-meta (authoritative).
+    serverHidden = new Set(state.data.hidden_keys || []);
+    // „👁 Sýna falin (N)" hnappur — birtist aðeins ef eitthvað er falið.
+    (function(){
+      const btn = $view.querySelector('.kyf-hidden-toggle'); if(!btn) return;
+      let hc = 0;
+      for(const bag of [state.data&&state.data.tier1, state.data&&state.data.tier2, state.tier3])
+        for(const d of ((bag&&bag.debtors)||[])) for(const iv of (d.invoices||[]))
+          if(invHidden(iv) && !paidSet.has(iv.inv_key)) hc++;
+      if(hc===0 && !state.showHidden){ btn.style.display='none'; return; }
+      btn.style.display='';
+      const on = state.showHidden;
+      btn.textContent = on ? ('🙈 Fela aftur ('+hc+')') : ('👁 Sýna falin ('+hc+')');
+      btn.style.borderColor = on ? '#1d4ed8' : '#cbd5e1';
+      btn.style.background   = on ? '#eff6ff' : '#fff';
+      btn.style.color        = on ? '#1d4ed8' : '#475569';
+    })();
     const l1 = liveDebtors(((state.data.tier1)||{}).debtors || []);
     const l2 = liveDebtors(((state.data.tier2)||{}).debtors || []);
     const l3 = liveDebtors(((state.tier3)||{}).debtors || []);
@@ -12051,11 +12089,18 @@ async function renderKrofuyfirlit(t){
       const key = b.dataset.key, act = b.dataset.act;
       if(!key || b.disabled) return;
       b.disabled = true;
+      // 👁 Sýna — hætta að fela (af-fela). Skrifar hidden:false, hreinsar bæði
+      // localStorage-settið og bakenda-flaggið svo hún birtist strax aftur.
+      if(act==='unhide'){
+        try{ await fetch('/api/krofur-yfirlit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'save', inv_key:key, hidden:false})}); }catch(_){}
+        hiddenSet.delete(key); persistHidden(); serverHidden.delete(key); setInvHidden(key,false); renderList();
+        return;
+      }
       if(act==='paid') b.classList.add('on');
       const payload = act==='paid' ? {action:'save', inv_key:key, paid:true} : {action:'save', inv_key:key, hidden:true};
       try{ await fetch('/api/krofur-yfirlit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)}); }catch(_){}
       if(act==='paid'){ paidSet.add(key); setTimeout(renderList, 260); }
-      else { hiddenSet.add(key); persistHidden(); renderList(); }
+      else { hiddenSet.add(key); persistHidden(); setInvHidden(key,true); renderList(); }
     }));
 
     // ── Ósendar-vinnuflæði (lárétt skref-borð) ──────────────────────────────
@@ -12245,6 +12290,8 @@ async function renderKrofuyfirlit(t){
     renderList();
   }));
   $view.querySelector('.kyf-refresh').addEventListener('click', ()=>load(true));
+  const hidToggle = $view.querySelector('.kyf-hidden-toggle');
+  if(hidToggle) hidToggle.addEventListener('click', ()=>{ state.showHidden = !state.showHidden; renderList(); });
   // „👤 Ég" — hver notandinn er (skráð á vinnuflæði-skref). Smellur → breyta.
   const meBtn = $view.querySelector('.kyf-me');
   const KY_TEAM = ['Annþór','Agnar','Andri','Hákon','Elías'];

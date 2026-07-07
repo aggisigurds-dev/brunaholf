@@ -97,16 +97,18 @@ exports.handler = async (event) => {
     if (CREDIT.has(st) || amt < 0) continue;                 // kreditfært/cancelled/negative leg
     const key = `${r.source || 'x'}|${r.tilvisun || r.id}`;
     const mt = metaBy.get(key) || {};
-    if (mt.hidden) continue;                                  // handvirkt falið
     const isDraft = DRAFT.has(st);
     const isPaid = PAID.has(st) || !!mt.paid;                 // Payday-greitt eða handvirkt merkt
     if (isPaid) continue;                                     // ekki útistandandi lengur
+    // Falið (handvirkt) er EKKI sleppt lengur — við sendum röðina með `hidden:true`
+    // svo framendinn geti (a) haldið henni falinni þvert á tæki og (b) sýnt hana
+    // aftur með „👁 Sýna falin" hnappnum. Faldar raðir teljast ekki í summur.
     const dueMs = r.gjalddagi ? Date.parse(r.gjalddagi) : null;
     const row = {
       inv_key: key, id: r.id, tilvisun: r.tilvisun, source: r.source,
       kt: digits(r.kt_greidanda), customer: r.customer_name || '(óþekkt)',
       gjalddagi: r.gjalddagi, eindagi: r.eindagi, dueMs, days_overdue: dueMs != null ? Math.round((todayMs - dueMs) / 864e5) : null,
-      amount: amt, note: mt.note || null,
+      amount: amt, note: mt.note || null, hidden: !!mt.hidden,
       confirmed: !!mt.confirmed, sent: !!mt.sent, done: !!mt.done, sent_at: mt.sent_at || null,
       confirmed_at: mt.confirmed_at || null, done_at: mt.done_at || null,
       confirmed_by: mt.confirmed_by || null, sent_by: mt.sent_by || null, done_by: mt.done_by || null,
@@ -127,7 +129,7 @@ exports.handler = async (event) => {
     if (amt <= 0 || wm < cutoff) continue;
     const key = `draftinv|${d.worksite_name}|${wm}`;
     const mt = metaBy.get(key) || {};
-    if (mt.hidden || mt.paid) continue;
+    if (mt.paid) continue;   // falið er sent áfram (hidden:true), bara greitt er sleppt
     // Leysa verkstaðar-nafn í greiðanda svo öll drögin lendi undir sama greiðanda
     // (t.d. Landsspítalinn-drög → ÞG verktakar). Fellur til baka á upprunalega
     // nafnið ef enginn greiðandi finnst í customer_worksite_map.
@@ -136,7 +138,7 @@ exports.handler = async (event) => {
       inv_key: key, id: null, tilvisun: null, source: 'gerd-drög',
       kt: (payer && payer.kt) || digits(d.kennitala),
       customer: (payer && payer.customer) || d.customer_name || d.worksite_name || '(verkstaður)',
-      gjalddagi: null, days_overdue: null, amount: amt, note: mt.note || null,
+      gjalddagi: null, days_overdue: null, amount: amt, note: mt.note || null, hidden: !!mt.hidden,
       confirmed: !!mt.confirmed, sent: !!mt.sent, done: !!mt.done, sent_at: mt.sent_at || null,
       confirmed_at: mt.confirmed_at || null, done_at: mt.done_at || null,
       confirmed_by: mt.confirmed_by || null, sent_by: mt.sent_by || null, done_by: mt.done_by || null,
@@ -153,6 +155,7 @@ exports.handler = async (event) => {
   // parið vinnur (cost 0), svo R-296 stendur réttilega eftir ómerkt.
   const pairs = [];
   for (const row of t1) {
+    if (row.hidden) continue;                  // falin röð grípur ekki bankagreiðslu
     const kt = row.kt;
     if (!kt || !inflowByKt.has(kt)) continue;
     const tolLow = Math.max(5000, row.amount * 0.01);
@@ -174,12 +177,15 @@ exports.handler = async (event) => {
   }
   for (const row of t1) delete row.dueMs;   // innra hjálparfelt — ekki í svari
 
-  const likely = t1.filter((r) => r.likely_paid);
+  const likely = t1.filter((r) => r.likely_paid && !r.hidden);
   return json(200, {
     generated_at: new Date().toISOString(),
     newest_timavera: await newestTimavera().catch(() => null),
     tier1: rollup(t1),
     tier2: rollup(t2),
+    // Öll faldar inv_keys (öll þrep, líka þrep-3 sem er reiknað í vafra) svo
+    // framendinn haldi þeim falinni þvert á tæki/vafra — ekki bara í localStorage.
+    hidden_keys: meta.filter((m) => m.hidden).map((m) => m.inv_key),
     draftKeys,
     likely_paid: { n: likely.length, kr: likely.reduce((a, r) => a + r.amount, 0) },
     note: 'Ógreitt = allir reikningar sem eru hvorki greiddir, kreditfærðir né drög. Payday SENT telst ógreitt (útistandandi). likely_paid = fannst greitt í banka en enn ógreitt í Payday.',
@@ -194,16 +200,18 @@ function rollup(rows) {
     let g = by.get(gk);
     if (!g) by.set(gk, g = { kt: r.kt, customer: r.customer, invoices: [], outstanding_kr: 0, oldest_due: null });
     g.invoices.push(r);
+    if (r.hidden) continue;                    // faldar raðir teljast ekki í summur
     g.outstanding_kr += r.amount;
     if (r.gjalddagi && (!g.oldest_due || r.gjalddagi < g.oldest_due)) g.oldest_due = r.gjalddagi;
   }
   const debtors = [...by.values()].sort((a, b) => b.outstanding_kr - a.outstanding_kr);
   debtors.forEach((d) => d.invoices.sort((a, b) => b.amount - a.amount));
+  const visibleRows = rows.filter((r) => !r.hidden);
   return {
     debtors,
     total: debtors.reduce((a, d) => a + d.outstanding_kr, 0),
-    n: rows.length,
-    debtor_count: debtors.length,
+    n: visibleRows.length,
+    debtor_count: debtors.filter((d) => d.outstanding_kr > 0).length,
   };
 }
 
