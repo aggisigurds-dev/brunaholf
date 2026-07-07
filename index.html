@@ -11408,7 +11408,7 @@ async function renderKrofuyfirlit(t){
       </div>
 
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
-        ${[['all','📚 Allt'],['t1','🔴 Ógreiddar'],['likely','🏦 Líklega greitt'],['t2','🟡 Ósendar'],['t3','⚪ Tími eftir']].map(([k,label])=>{
+        ${[['all','📚 Allt'],['company','🏢 Fyrirtæki'],['t1','🔴 Ógreiddar'],['likely','🏦 Líklega greitt'],['t2','🟡 Ósendar'],['t3','⚪ Tími eftir']].map(([k,label])=>{
           const on = k==='all';
           return `<button class="kyf-vf" data-vf="${k}" type="button" style="padding:7px 14px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;${on?'border:1px solid #1d4ed8;background:#1d4ed8;color:#fff':'border:1px solid #cbd5e1;background:#fff;color:#475569'}">${label}</button>`;
         }).join('')}
@@ -11458,6 +11458,15 @@ async function renderKrofuyfirlit(t){
       .kyf-wrap .ky-note::placeholder{color:#cbd5e1}
       .kyf-wrap .ky-sec{display:flex;align-items:baseline;gap:10px;margin:24px 0 12px;flex-wrap:wrap}
       .kyf-wrap .ky-sec h2{margin:0;font-size:17px;font-weight:800;color:#0f172a}
+      /* 2026-07-07: á síma eru kröfu-raðirnar breiðari en skjárinn (nafn+dags+
+         upphæð+aðgerðir) — leyfa lárétta rennu á raða-svæðinu svo hægt sé að
+         slæda að upphæð/aðgerðum í stað þess að þær klippist af. */
+      @media (max-width:760px){
+        .kyf-wrap .ky-card-rows{overflow-x:auto;-webkit-overflow-scrolling:touch}
+        .kyf-wrap .ky-card-rows > div{min-width:max-content}
+        .kyf-wrap .ky-invrow{min-width:max-content}
+        .kyf-wrap .ky-detail{min-width:100%}
+      }
     </style>`;
 
   // Group flat tier-3 rows into debtor-cards { customer, kt, invoices, outstanding_kr, oldest_due }.
@@ -11594,6 +11603,141 @@ async function renderKrofuyfirlit(t){
       return paid + hide;
     }
     return hide;
+  }
+
+  // 2026-07-07: Per-fyrirtæki view — build ONLY the invoice-rows for a set of
+  // invoices (same markup as renderDebtor's rows, reused by the company cards so
+  // the class-based click/note/action wiring below picks them up automatically).
+  function buildInvoiceRows(invoices, tier){
+    return (invoices||[]).map(inv=>{
+      const rnum = inv.tilvisun ? ('R-'+esc(inv.tilvisun)) : (inv.worksite ? esc(inv.worksite) : ('#'+esc(inv.id||'')));
+      let sub;
+      if(tier===3){
+        sub = esc(monthLbl(inv.work_month)) + (inv.hours!=null ? ' · '+inv.hours.toFixed(0)+'t' : '') + (inv.partial && state.newest ? ' · til '+esc(dayMon(state.newest)) : '');
+      } else {
+        sub = esc(inv.source||'');
+      }
+      const lp = tier===1 && inv.likely_paid && inv.bank;
+      const bankLine = lp
+        ? `<div style="color:#0f7a43;font-size:10.5px;font-weight:600;margin-top:2px;line-height:1.35">🏦 Líklega þegar greitt — ${fmtKr(inv.bank.amount)} í banka ${esc(inv.bank.date||'')}${inv.bank.extra>0?' (+'+fmtKr(inv.bank.extra)+' vextir)':''}</div>`
+        : '';
+      const mtag = monthTag(inv.gjalddagi || inv.work_month);
+      const mtagHtml = mtag ? `<span class="ky-num" style="font-size:9.5px;font-weight:700;color:#64748b;background:#eef2f7;border-radius:6px;padding:1px 7px;white-space:nowrap">${esc(mtag)}</span>` : '';
+      const note = inv.note || '';
+      const noteHtml = `<div style="flex:1;display:flex;align-items:center;gap:5px;min-width:80px">
+        <span class="ky-note-ic" style="font-size:11px;flex-shrink:0;${note?'':'opacity:.22'}">📝</span>
+        <input class="ky-note" data-key="${esc(inv.inv_key)}" value="${esc(note)}" placeholder="minnispunktur…" style="flex:1;min-width:60px;background:transparent;border:0;border-bottom:1px dashed #cbd5e1;color:#334155;font:inherit;font-size:11.5px;padding:2px 3px;outline:none">
+      </div>`;
+      const detailCells = [
+        ['Gjalddagi', esc(inv.gjalddagi||'—')],
+        ['Eindagi', esc(inv.eindagi||'—')],
+        ['Uppruni', esc(inv.source||'—')],
+        ['Upphæð', fmtKr(inv.amount)],
+        ['Tímabil', esc(monthPeriod(inv.gjalddagi || inv.work_month))],
+      ].map(([l,v])=>`<div><div class="kd-l">${l}</div><div class="kd-v">${v}</div></div>`).join('');
+      const bankDetail = (inv.bank)
+        ? `<div style="margin-top:9px;color:#0f7a43;font-size:11px;font-weight:600;line-height:1.4">🏦 Banki: ${fmtKr(inv.bank.amount)} · ${esc(inv.bank.date||'—')}${inv.bank.text?' · '+esc(inv.bank.text):''}${inv.bank.extra>0?' <span style="color:#b45309">(+'+fmtKr(inv.bank.extra)+' vextir)</span>':''}</div>`
+        : '';
+      return `
+        <div class="ky-invrow">
+          <div class="ky-row${lp?' ky-likely':''}" data-key="${esc(inv.inv_key)}" style="display:flex;align-items:center;gap:11px;padding:9px 18px;border-bottom:1px solid #f3f5f9;font-size:12.5px;cursor:pointer">
+            <span class="ky-caret2" style="width:11px;flex-shrink:0;color:#b6c0cc;font-size:11px;user-select:none">▸</span>
+            <div style="width:200px;flex-shrink:0;line-height:1.2">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                <span class="ky-num" style="color:#1d4ed8;font-weight:700">${rnum}</span>
+                ${mtagHtml}
+              </div>
+              <div style="color:#b6c0cc;font-size:10.5px">${sub}</div>
+              ${bankLine}
+            </div>
+            <div style="width:84px;flex-shrink:0" class="ky-num">
+              <div style="color:#64748b;font-size:11px">${esc(inv.gjalddagi||'—')}</div>
+            </div>
+            ${tier===1?agingPill(inv.days_overdue):''}
+            ${noteHtml}
+            <span class="ky-num" style="width:104px;text-align:right;font-weight:700;color:#11141c;white-space:nowrap;flex-shrink:0">${fmtKr(inv.amount)}</span>
+            <div style="display:flex;gap:6px;flex-shrink:0">${actChips(inv, tier)}</div>
+          </div>
+          <div class="ky-detail" style="display:none;padding:11px 18px 14px 41px;background:#fafbfe;border-bottom:1px solid #f3f5f9">
+            <div style="display:flex;flex-wrap:wrap;gap:12px 28px">${detailCells}</div>
+            ${bankDetail}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // Per-fyrirtæki: eitt spjald per greiðanda með öll þrjú þrepin saman
+  // (🔴 ógreitt · 🟡 ósent · ⚪ tími eftir). Sameinar l1/l2/l3 eftir kt (annars nafni).
+  function renderCompanyView(l1,l2,l3){
+    const normName = s => String(s||'').trim().toLowerCase().replace(/\s+/g,' ');
+    // name → kt úr ÖLLUM þrepum sem HAFA kt, svo kt-lausar raðir (t.d.
+    // NLSH-punktavirði skráð sem „ÞG verktakar ehf." án kt í ⚪ Tími-þrepinu)
+    // sameinist rétta fyrirtæki í stað þess að lenda á sér-spjaldi.
+    const nameToKt = new Map();
+    for(const arr of [l1,l2,l3]) for(const d of (arr||[])){ const kt=ktDigits(d.kt); const nn=normName(d.customer); if(kt && nn && !nameToKt.has(nn)) nameToKt.set(nn, kt); }
+    const keyf = d => { const kt=ktDigits(d.kt); if(kt) return kt; const nn=normName(d.customer); return nameToKt.get(nn) || nn; };
+    const map = new Map();
+    const add = (arr,tier)=>{ for(const d of (arr||[])){ const k=keyf(d); let g=map.get(k);
+      if(!g) map.set(k, g={ kt:d.kt||'', customer:d.customer, t:{} });
+      if(!g.kt && d.kt) g.kt=d.kt; if(!g.customer && d.customer) g.customer=d.customer;
+      g.t[tier]=d; } };
+    add(l1,1); add(l2,2); add(l3,3);
+    let companies = [...map.values()].map(g=>{
+      const s1=g.t[1]?g.t[1].outstanding_kr:0, s2=g.t[2]?g.t[2].outstanding_kr:0, s3=g.t[3]?g.t[3].outstanding_kr:0;
+      return {...g, s1,s2,s3, total:s1+s2+s3};
+    });
+    const q=(state.search||'').trim().toLowerCase(), qd=q.replace(/\D/g,'');
+    if(q) companies = companies.filter(c=> String(c.customer||'').toLowerCase().indexOf(q)!==-1 || (qd.length>=3 && ktDigits(c.kt).indexOf(qd)!==-1));
+    companies.sort((a,b)=>{
+      if(state.sort==='amount_asc') return a.total-b.total;
+      if(state.sort==='name') return String(a.customer||'').localeCompare(String(b.customer||''),'is');
+      return b.total-a.total;
+    });
+    const total = companies.reduce((a,c)=>a+c.total,0);
+    const head = `<div class="ky-sec"><h2>🏢 Per fyrirtæki</h2>`+
+      `<span style="font-size:12px;color:#64748b">${companies.length} ${companies.length===1?'fyrirtæki':'fyrirtæki'}</span>`+
+      `<span style="margin-left:auto;font-weight:800;font-size:15px;color:#11141c" class="ky-num">${fmtKr(total)}</span></div>`+
+      `<div style="font-size:11.5px;color:#8a93a5;margin:-4px 0 10px">Ógreitt + ósent + tímauppsöfnun saman á hvert fyrirtæki.</div>`;
+    if(!companies.length) return head + `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:26px;text-align:center;color:#94a3b8;font-style:italic">${state.search?'Ekkert passar við leit':'Engin fyrirtæki 🎉'}</div>`;
+    const mini=(ic,label,val,col)=> `<span class="ky-num" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:${col};background:${col}14;border:1px solid ${col}33;border-radius:99px;padding:2px 9px">${ic} ${label} ${fmtKr(val)}</span>`;
+    const tierBlock=(d,tier,ic,title,col)=> !d ? '' : `
+      <div style="border-top:1px solid #eef1f6">
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 18px;background:#fafbfe;font-size:11px;font-weight:800;letter-spacing:.02em;color:${col}">
+          <span>${ic} ${title}</span>
+          <span class="ky-num" style="margin-left:auto;color:#11141c">${fmtKr(d.outstanding_kr)}</span>
+        </div>
+        ${buildInvoiceRows(d.invoices||[], tier)}
+      </div>`;
+    const body = companies.map(c=>`
+      <div style="background:#fff;border:1px solid rgba(20,24,34,.08);border-radius:16px;margin-bottom:14px;overflow:hidden;box-shadow:0 10px 28px -16px rgba(25,35,60,.16)">
+        <div class="ky-card-head" role="button" tabindex="0" title="Smelltu til að opna/loka" style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;cursor:pointer">
+          <div style="display:flex;align-items:flex-start;gap:10px">
+            <span class="ky-caret" style="font-size:13px;color:#94a3b8;line-height:1.6;user-select:none">▾</span>
+            <div>
+              <div style="font-weight:800;color:#11141c;font-size:16px">${esc(c.customer||'(óþekkt)')}</div>
+              ${c.kt?`<div style="font-size:11px;color:#8a93a5;margin-top:2px">kt ${esc(c.kt)}</div>`:''}
+              <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+                ${c.s1?mini('🔴','Ógreitt',c.s1,'#c0342f'):''}
+                ${c.s2?mini('🟡','Ósent',c.s2,'#b7861a'):''}
+                ${c.s3?mini('⚪','Tími',c.s3,'#6b7482'):''}
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <div style="text-align:right">
+              <div style="font-size:10px;color:#8a93a5;text-transform:uppercase;letter-spacing:.1em;font-weight:700">Samtals</div>
+              <div class="ky-num" style="font-size:22px;font-weight:700;color:#2f5fe0">${fmtKr(c.total)}</div>
+            </div>
+            <button class="kyf-copy" data-value="${esc(String(Math.round(c.total)))}" type="button" title="Afrita samtölu" style="width:38px;height:38px;background:#f1f5f9;color:#475569;border:1px solid rgba(20,24,34,.14);border-radius:10px;cursor:pointer;font:inherit;font-size:13px">📋</button>
+          </div>
+        </div>
+        <div class="ky-card-rows" style="display:block">
+          ${tierBlock(c.t[1],1,'🔴','Ógreiddar','#c0342f')}
+          ${tierBlock(c.t[2],2,'🟡','Ósendar','#b7861a')}
+          ${tierBlock(c.t[3],3,'⚪','Tími eftir','#6b7482')}
+        </div>
+      </div>`).join('');
+    return head + body;
   }
 
   function renderDebtor(db, tier){
@@ -11749,7 +11893,9 @@ async function renderKrofuyfirlit(t){
     const t3sub = 'Óinnvoiceaðir Tímavera-tímar × dagvinnutaxti m.vsk — áætlaðar tekjur í pípunni'+
       (state.newest ? ' · yfirstandandi mánuður aðeins til '+dayMon(state.newest)+' (hluti)' : '');
     let html = '';
-    if(state.tierFilter==='likely'){
+    if(state.tierFilter==='company'){
+      html += renderCompanyView(l1, l2, l3);
+    } else if(state.tierFilter==='likely'){
       html += section(1,'🏦','Líklega þegar greitt','Enn ógreiddar í Payday en fundust greiddar í banka (sama kt + upphæð) — smelltu ✓ Greitt til að staðfesta.', onlyLikely(l1));
     } else {
       const show = k => state.tierFilter==='all' || state.tierFilter===k;
