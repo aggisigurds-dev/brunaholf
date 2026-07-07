@@ -27,6 +27,12 @@ data from Ajour, Google Drive/Sheets/Gmail integration, and a tilbod
 - **Frontend**: `index.html` — single 4800-line file, vanilla JS, no
   framework. Tabs defined in `DEFAULT_STATE.tabs` around line 1052.
   Each tab id maps to a `render<Name>(t)` function further down.
+- **Viewmode-rofi (`js/viewmode.js`, 2026-07-07):** fljótandi 📱 Sími · 📲
+  Spjaldtölva · 🖥 Tölva rofi (neðst til vinstri í Tölvu-ham). „Sími"/„Spjaldtölva"
+  birta appið í miðjuðum **device-ramma (iframe í 390/834px)** svo ALLAR `@media`-reglur
+  svara eins og á alvöru tæki (ekki bara það sem er sér-stílað). Val geymt í
+  `localStorage.bh_viewmode`; iframe-eintakið keyrir `?bhframe=1` og römmun sig ekki
+  aftur. Sjálf-innihaldið, einn `<script src>` (eins og `hub-sync-buttons.js`).
 - **Backend**: Netlify Functions in `netlify/functions/*.js`. CommonJS,
   no TypeScript. Each function is self-contained.
 - **DB**: Supabase project `osfdzskyvisifcwyjkuk` (region eu-west-1).
