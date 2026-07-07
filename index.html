@@ -15747,6 +15747,22 @@ async function bhSavePdfToSupabase(doc, meta){
   if(!r.ok) throw new Error(j.error || ('HTTP '+r.status));
   return Object.assign({ webViewLink: j.public_url, downloadUrl: j.public_url }, j);
 }
+// Accurate, consistent PDF filename: "<Tegund> - <greiðandi> - <verkstaður> -
+// kt NNNNNN-NNNN - <Mánuður Ár>.pdf". Greiðandi er sleppt ef hann er sami og
+// verkstaðurinn; kt bætt við þegar það er þekkt (á brunahólf-forminu).
+function bhPdfName(kind, o){
+  o = o || {};
+  const ws = String(o.ws||'').trim(), payer = String(o.payer||'').trim();
+  const norm = s => s.toLowerCase().replace(/\s+/g,' ').trim();
+  const parts = [kind];
+  if(payer && (!ws || norm(payer)!==norm(ws))){ parts.push(payer); if(ws) parts.push(ws); }
+  else if(ws){ parts.push(ws); }
+  const ktd = String(o.kt||'').replace(/\D/g,'');
+  if(ktd.length===10) parts.push('kt '+ktd.slice(0,6)+'-'+ktd.slice(6));
+  else if(o.kt) parts.push('kt '+String(o.kt).trim());
+  if(o.month) parts.push(monthLabelStatic(o.month));
+  return (parts.join(' - ')+'.pdf').replace(/[\\/:*?"<>|]/g,'-').replace(/\s{2,}/g,' ');
+}
 // View/download URL for a stored PDF doc row — Supabase public_url when present,
 // else the legacy Google-Drive link. Works for both the full row and the reduced
 // {id,title,url} shapes used on the Vinnubók/Gerð Reikninga grids.
@@ -15886,7 +15902,7 @@ async function buildAndSaveTimabokPdf(name, month, rows){
   doc.autoTable({ startY: y2+6, head:[['Starfsmaður','Dagar','Tímar']], body: empRows,
     styles:{ font:'helvetica', fontSize:9, cellPadding:3 }, headStyles:{ fillColor:[30,30,30], textColor:255, fontSize:8 },
     columnStyles:{ 1:{halign:'right'}, 2:{halign:'right'} }, margin:{ left:40, right:40 }, tableWidth: 320 });
-  const fileName = `Tímaskýrsla - ${name} - ${monthLabelStatic(month)}.pdf`.replace(/[\\/:*?"<>|]/g,'-');
+  const fileName = bhPdfName('Tímaskýrsla', { ws:name, month });
   // Geymt á Supabase (ekkert Google-innskráning) — sést strax í „Vistuð PDF-skjöl".
   return bhSavePdfToSupabase(doc, { fileName, worksite_name:name, work_month:month, doc_type:'timabok_pdf' });
 }
@@ -15944,7 +15960,7 @@ async function buildAndSaveEfnislistiPdf(name, month, data){
     margin:{ left:40, right:40 },
   });
   if(data.notes){ let ny=(doc.lastAutoTable?doc.lastAutoTable.finalY:y)+18; doc.setFont('helvetica','italic'); doc.setFontSize(10); doc.setTextColor(85); doc.text(doc.splitTextToSize(data.notes, W-80), 40, ny); }
-  const fileName = `Efnislisti - ${name} - ${monthLabelStatic(month)}.pdf`.replace(/[\\/:*?"<>|]/g,'-');
+  const fileName = bhPdfName('Efnislisti', { payer:data.cust, ws:data.ws||name, kt:data.kt, month });
   return bhSavePdfToSupabase(doc, { fileName, worksite_name:name, work_month:month, doc_type:'efnislisti_pdf' });
 }
 
