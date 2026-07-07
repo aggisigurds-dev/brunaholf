@@ -7076,7 +7076,7 @@ function renderReikningagerd(t){
           if (row.doc_type === 'invoice') continue;  // invoices have their own slot in Vinnubók
           const k = `${row.worksite_name}|${row.work_month}`;
           if (!lastData.efnislisti[k]) lastData.efnislisti[k] = [];
-          lastData.efnislisti[k].push({ id: row.drive_file_id, title: row.title });
+          lastData.efnislisti[k].push({ id: row.drive_file_id, title: row.title, url: row.public_url || null });
         }
       }
       // Bail out if a tab switch destroyed our DOM while the fetch was in flight
@@ -7271,7 +7271,7 @@ function renderReikningagerd(t){
             // Efnislisti docs linked for this (worksite, month) — show 📎 link to the first one
             const efDocs = (lastData.efnislisti||{})[`${w.project}|${ym}`] || [];
             const efLink = efDocs.length
-              ? `<a class="rg-month-doc" href="https://drive.google.com/file/d/${efDocs[0].id}/view" target="_blank" rel="noopener" title="Efnislisti: ${escapeAttr(efDocs[0].title)}${efDocs.length>1?' (+'+(efDocs.length-1)+' fleiri)':''}" onclick="event.stopPropagation()">📎</a>`
+              ? `<a class="rg-month-doc" href="${escapeAttr(bhDocUrl(efDocs[0]))}" target="_blank" rel="noopener" title="Efnislisti: ${escapeAttr(efDocs[0].title)}${efDocs.length>1?' (+'+(efDocs.length-1)+' fleiri)':''}" onclick="event.stopPropagation()">📎</a>`
               : '';
             // Redder material cost for this (worksite, month) — recharged onto customer invoice
             const efniKr = (lastData.efni_total||{})[`${w.project}|${ym}`] || 0;
@@ -8547,20 +8547,20 @@ async function renderGerdReikninga(t){
     }catch(e){ box.innerHTML = `<div class="gr-section-h">📄 Vistuð PDF-skjöl</div><div class="gr-loading">Villa: ${escapeHtml(e.message||String(e))}</div>`; return; }
     rows.sort((a,b)=> String(b.added_at||'').localeCompare(String(a.added_at||'')));
     const dt = s => { if(!s) return '—'; const d=new Date(s); return isNaN(d)?String(s).slice(0,10):(String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear()); };
-    const head = `<div class="gr-section-h">📄 Vistuð PDF-skjöl <span class="gr-count">${rows.length} skjöl · Efnislisti + Tímaskýrsla, geymd í Google Drive</span></div>`;
+    const head = `<div class="gr-section-h">📄 Vistuð PDF-skjöl <span class="gr-count">${rows.length} skjöl · Efnislisti + Tímaskýrsla, geymd á Supabase (engin innskráning)</span></div>`;
     if(!rows.length){ box.innerHTML = head + `<div class="gr-loading" style="padding:14px">Engin vistuð PDF enn. Búðu til PDF með „📄 Vista PDF" í Efnislista eða Tímaskýrslu.</div>`; return; }
     box.innerHTML = head + `<table class="grp-tbl"><thead><tr>
         <th>Skjal</th><th>Verkstaður</th><th>Mánuður</th><th>Gert</th><th></th></tr></thead><tbody>
-      ${rows.map(d=>{ const tb=d.doc_type==='timabok_pdf'; const view=`https://drive.google.com/file/d/${d.drive_file_id}/view`; const dl=`https://drive.google.com/uc?export=download&id=${d.drive_file_id}`; return `<tr data-fid="${escapeHtml(d.drive_file_id)}">
+      ${rows.map(d=>{ const tb=d.doc_type==='timabok_pdf'; const url=bhDocUrl(d); const view=url; const dl=d.public_url?d.public_url:(d.drive_file_id&&!String(d.drive_file_id).startsWith('sb:')?`https://drive.google.com/uc?export=download&id=${d.drive_file_id}`:url); return `<tr data-fid="${escapeHtml(d.drive_file_id)}">
         <td><span class="grp-badge ${tb?'tb':'ef'}">${tb?'Tímaskýrsla':'Efnislisti'}</span> ${escapeHtml(d.title||'')}</td>
         <td>${escapeHtml(d.worksite_name||'—')}</td>
         <td>${escapeHtml(d.work_month?monthLabel(d.work_month):'—')}</td>
         <td style="white-space:nowrap;color:#64748b">${dt(d.added_at)}</td>
-        <td style="white-space:nowrap"><a class="tv-btn" href="${view}" target="_blank" rel="noopener">🔗 Opna</a> <a class="tv-btn" href="${dl}" target="_blank" rel="noopener">⤓ Sækja</a> <button class="tv-btn grp-del" data-fid="${escapeHtml(d.drive_file_id)}" data-title="${escapeHtml(d.title||'')}" title="Eyða PDF (fer í Drive-ruslið, endurheimtanlegt)" style="color:#b91c1c;border-color:#fecaca">🗑</button></td>
+        <td style="white-space:nowrap"><a class="tv-btn" href="${view}" target="_blank" rel="noopener">🔗 Opna</a> <a class="tv-btn" href="${dl}" target="_blank" rel="noopener"${d.public_url?' download':''}>⤓ Sækja</a> <button class="tv-btn grp-del" data-fid="${escapeHtml(d.drive_file_id)}" data-title="${escapeHtml(d.title||'')}" title="Eyða PDF (endurheimtanlegt)" style="color:#b91c1c;border-color:#fecaca">🗑</button></td>
       </tr>`; }).join('')}</tbody></table>`;
     box.querySelectorAll('.grp-del').forEach(b=>b.addEventListener('click', async ()=>{
       const fid=b.dataset.fid; if(!fid) return;
-      if(!confirm('Eyða þessu PDF?\n„'+(b.dataset.title||fid)+'"\n\nSkjalið fer í Drive-ruslið (endurheimtanlegt í 30 daga) og hverfur af listanum.')) return;
+      if(!confirm('Eyða þessu PDF?\n„'+(b.dataset.title||fid)+'"\n\nSkjalið hverfur af listanum (Drive-skjöl fara í ruslið, endurheimtanleg í 30 daga).')) return;
       b.disabled=true; b.textContent='…';
       try{
         const r=await fetch('/api/efnislisti-docs',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({drive_file_id:fid})});
@@ -8870,7 +8870,7 @@ async function renderGerdReikninga(t){
           <div class="gr-f"><textarea id="gr-notes" rows="2" placeholder="Birtist neðst á reikningi">${escapeHtml(notes)}</textarea></div>
           <div class="gr-actions">
             <button class="gr-btn gr-btn-primary" id="gr-save" type="button">💾 Vista</button>
-            <button class="gr-btn" id="gr-savepdf" type="button" title="Vista sem PDF í Drive — birtist neðst í „Vistuð PDF-skjöl" til að opna/sækja">📄 Vista PDF (Drive)</button>
+            <button class="gr-btn" id="gr-savepdf" type="button" title="Vista sem PDF (geymt á Supabase, engin innskráning) — birtist neðst í „Vistuð PDF-skjöl" til að opna/sækja/senda">📄 Vista PDF</button>
             <button class="gr-btn" id="gr-print" type="button">🖨 Prenta / PDF</button>
             <button class="gr-btn" id="gr-manual-btn" type="button" title="Opna handvirka stillingu — kennitala og heimilisfang verkkaupa á reikning">✏️ Handvirkt</button>
             <button class="gr-btn" id="gr-timabok" type="button" title="Prenta tímabók (mæting starfsmanna) til að senda með reikningi">🕒 Tímabók</button>
@@ -9103,7 +9103,7 @@ async function renderGerdReikninga(t){
           rate: { km:r.km, ferd:r.ferd, vsk:r.vsk, sma:r.sma, stadf:GR_STADF }, c,
         };
         const res = await buildAndSaveEfnislistiPdf(name, month, data);
-        $st.innerHTML = `✓ PDF í Drive — <a href="${res.webViewLink}" target="_blank" rel="noopener">opna</a> · <a href="${res.downloadUrl}" target="_blank" rel="noopener">sækja</a>`;
+        $st.innerHTML = `✓ PDF vistað — <a href="${res.webViewLink}" target="_blank" rel="noopener">opna</a> · <a href="${res.downloadUrl}" target="_blank" rel="noopener">sækja</a>`;
         if(typeof window.__grReloadPdfList==='function') window.__grReloadPdfList();
       } catch(e){ $st.textContent = '✗ '+(e.message||e); alert('Gat ekki vistað PDF: '+(e.message||e)); }
       finally { btn.textContent = old; btn.disabled = false; }
@@ -9696,7 +9696,7 @@ async function renderVinnubok(t){
     for(const e of (ef.rows || [])){
       const k = `${e.worksite_name}|${e.work_month}`;
       const slot = e.doc_type === 'invoice' ? data.invoices : data.efnislisti;
-      if(!slot[k]) slot[k] = { id: e.drive_file_id, title: e.title };
+      if(!slot[k]) slot[k] = { id: e.drive_file_id, title: e.title, url: e.public_url || null };
     }
   }
 
@@ -10140,14 +10140,14 @@ async function renderVinnubok(t){
         <div class="vb-cell-bottom">
           ${ef
             ? `<div style="display:flex;align-items:center;gap:6px;font-size:11px">
-                 <a href="https://drive.google.com/file/d/${ef.id}/view" target="_blank" rel="noopener" title="${escapeAttr(ef.title || '')}" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#3b82f6;text-decoration:none;font-weight:500">📎 ${escapeHtml((ef.title || 'Efnislisti').replace(/\.(xlsx|pdf|docx)$/i, ''))}</a>
+                 <a href="${escapeAttr(bhDocUrl(ef))}" target="_blank" rel="noopener" title="${escapeAttr(ef.title || '')}" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#3b82f6;text-decoration:none;font-weight:500">📎 ${escapeHtml((ef.title || 'Efnislisti').replace(/\.(xlsx|pdf|docx)$/i, ''))}</a>
                  <button type="button" class="vb-attach-btn" data-vb-attach="${escapeAttr(draftKey)}" title="Skipta um skjal" style="padding:3px 7px;font-size:11px;border:1px solid #cbd5e1;background:#fff;border-radius:5px;cursor:pointer;color:#64748b">↻</button>
                </div>`
             : `<button type="button" class="vb-attach-btn" data-vb-attach="${escapeAttr(draftKey)}" style="width:100%;padding:7px 10px;font-size:11px;border:1.5px dashed #cbd5e1;background:transparent;border-radius:6px;cursor:pointer;color:#64748b;font-weight:500;transition:all .15s">+ Tengja skjal</button>`
           }
           ${inv
             ? `<div style="display:flex;align-items:center;gap:6px;font-size:11px;margin-top:5px">
-                 <a href="https://drive.google.com/file/d/${inv.id}/view" target="_blank" rel="noopener" title="Reikningur: ${escapeAttr(inv.title || '')}" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#059669;text-decoration:none;font-weight:600">🧾 ${escapeHtml((inv.title || 'Reikningur').replace(/\.(xlsx|pdf|docx)$/i, ''))}</a>
+                 <a href="${escapeAttr(bhDocUrl(inv))}" target="_blank" rel="noopener" title="Reikningur: ${escapeAttr(inv.title || '')}" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#059669;text-decoration:none;font-weight:600">🧾 ${escapeHtml((inv.title || 'Reikningur').replace(/\.(xlsx|pdf|docx)$/i, ''))}</a>
                  <button type="button" class="vb-attach-btn" data-vb-attach-inv="${escapeAttr(draftKey)}" title="Skipta um reikning" style="padding:3px 7px;font-size:11px;border:1px solid #cbd5e1;background:#fff;border-radius:5px;cursor:pointer;color:#64748b">↻</button>
                </div>`
             : `<button type="button" class="vb-attach-btn" data-vb-attach-inv="${escapeAttr(draftKey)}" style="width:100%;margin-top:5px;padding:6px 10px;font-size:11px;border:1.5px dashed #a7f3d0;background:transparent;border-radius:6px;cursor:pointer;color:#059669;font-weight:600;transition:all .15s">+ Tengja reikning</button>`
@@ -11630,7 +11630,7 @@ async function renderKrofuyfirlit(t){
     const docs = (ws && wm) ? (EFDOCS[ws+'|'+wm]||[]) : [];
     const tb = docs.filter(d=>d.doc_type==='timabok_pdf');
     const ef = docs.filter(d=>d.doc_type!=='timabok_pdf');
-    const link = (d,ic,lab)=>`<a class="tv-btn" href="https://drive.google.com/file/d/${esc(d.drive_file_id)}/view" target="_blank" rel="noopener" style="font-size:11px">${ic} ${esc(lab)}</a>`;
+    const link = (d,ic,lab)=>`<a class="tv-btn" href="${esc(bhDocUrl(d))}" target="_blank" rel="noopener" style="font-size:11px">${ic} ${esc(lab)}</a>`;
     const linksHtml = (ef.length||tb.length)
       ? ef.map(d=>link(d,'📄','Efnislisti')).join(' ') + (ef.length&&tb.length?' ':'') + tb.map(d=>link(d,'🕐','Tímaskjal')).join(' ')
       : `<span style="color:#94a3b8;font-size:11px;font-style:italic">Engin Efnislisti/Tímaskjal tengd${ws?(' — '+esc(ws)+' '+esc(wm)):''}</span>`;
@@ -12034,8 +12034,9 @@ async function renderKrofuyfirlit(t){
         if(!docs.length && !confirm('Engin Efnislisti/Tímaskjal tengd við '+(ws||'—')+' '+(wm||'')+'.\nSenda samt (án viðhengja)?')) return;
         const to = prompt('Senda Efnislista/Tímaskjal á (bókari):', 'bokhald@brunaholf.is'); if(to===null) return;
         b.disabled=true; const orig=b.textContent; b.textContent='📤 Sendi…';
-        const attachments = docs.map(d=>({ filename:((d.title||(d.doc_type==='timabok_pdf'?'Tímaskjal':'Efnislisti'))).replace(/\.pdf$/i,'')+'.pdf', driveId:d.drive_file_id }));
-        const docLinks = docs.length ? '<p>Skjöl:</p><ul>'+docs.map(d=>'<li><a href="https://drive.google.com/file/d/'+esc(d.drive_file_id)+'/view">'+esc(d.title||d.doc_type)+'</a></li>').join('')+'</ul>' : '';
+        // Supabase-hýst skjöl → {url} (sótt server-megin, engin Google-innskráning); Drive → {driveId}.
+        const attachments = docs.map(d=>{ const fn=((d.title||(d.doc_type==='timabok_pdf'?'Tímaskjal':'Efnislisti'))).replace(/\.pdf$/i,'')+'.pdf'; return d.public_url ? { filename:fn, url:d.public_url } : { filename:fn, driveId:d.drive_file_id }; });
+        const docLinks = docs.length ? '<p>Skjöl:</p><ul>'+docs.map(d=>'<li><a href="'+esc(bhDocUrl(d))+'">'+esc(d.title||d.doc_type)+'</a></li>').join('')+'</ul>' : '';
         const subject = 'Efnislisti/Tímaskjal — '+(cust||ws||'')+(wm?(' '+wm):'');
         const html = '<p>Sæll,</p><p>Meðfylgjandi Efnislisti/Tímaskjal fyrir <b>'+esc(cust||ws||'')+'</b>'+(wm?(' ('+esc(wm)+')'):'')+' til skráningar í Payday.</p>'+docLinks+'<p>Kveðja,<br>Brunahólf</p>';
         try{
@@ -12051,30 +12052,54 @@ async function renderKrofuyfirlit(t){
     }));
   }
 
-  async function load(){
+  // Stale-while-revalidate skyndiminni (lifir milli síðu-flakks). Þegar notandi
+  // flakkar milli síðna og kemur til baka birtist síðasta útgáfa STRAX (engin
+  // ~mín bið) og gögnin uppfærast hljóðlega í bakgrunni. TTL 5 mín; eldra en það
+  // → sýnum cache samt en revalidate-um. „↻ Sækja" þvingar ferskt (force=true).
+  const KYF_TTL = 5*60*1000;
+  function cacheStore(){ try{ window.__KYF_CACHE = { data:state.data, tier3:state.tier3, efdocs:EFDOCS, pg:PG, ts:Date.now() }; }catch(_){} }
+  function metaFromState(){
+    const meta = $view.querySelector('#kyf-meta'); if(!meta || !state.data) return;
+    const t1n=(state.data.tier1||{}).n||0, t2n=(state.data.tier2||{}).n||0, t3n=(state.tier3||{}).n||0;
+    meta.textContent = t1n+' ógreiddar · '+t2n+' ósendar · '+t3n+' tími eftir · '+new Date(state.data.generated_at).toLocaleString('is-IS');
+  }
+  async function fetchAll(){
+    // krofu-yfirlit-bru + efnislisti-docs eru óháð → samhliða (áður í röð).
+    const [bruR, efR] = await Promise.all([
+      fetch('/api/krofu-yfirlit-bru',{cache:'no-store'}).then(r=>r.json()),
+      fetch('/api/efnislisti-docs').then(r=>r.ok?r.json():{rows:[]}).catch(()=>({rows:[]})),
+    ]);
+    if(bruR && bruR.error) throw new Error(bruR.error);
+    state.data = bruR; state.newest = bruR.newest_timavera || null;
+    const idx = {};
+    for(const d of (efR.rows||[])){ const k=(d.worksite_name||'')+'|'+(d.work_month||''); (idx[k]=idx[k]||[]).push(d); }
+    EFDOCS = idx;
+    // Þrep 3 (reiknað í vafra, þarf draftKeys úr state.data). Fellur → tómur hópur.
+    try{ state.tier3 = await computeTier3(); }catch(_){ state.tier3 = groupTier3([]); }
+    cacheStore();
+  }
+  async function load(force){
     const meta = $view.querySelector('#kyf-meta');
-    if(meta) meta.textContent = 'Þrepaskipt kröfu-yfirlit — Sækir…';
-    try{
-      const r = await fetch('/api/krofu-yfirlit-bru',{cache:'no-store'});
-      const d = await r.json();
-      if(d.error) throw new Error(d.error);
-      state.data = d; state.newest = d.newest_timavera || null;
-    }catch(e){
-      if(meta) meta.textContent = 'Villa: '+e.message;
-      $view.querySelector('.kyf-list').innerHTML = '<div style="padding:32px;color:#dc2626">Villa við að sækja kröfur: '+esc(e.message)+'</div>';
+    const cache = (!force && window.__KYF_CACHE) || null;
+    if(cache && cache.data){
+      // Sýnum síðustu útgáfu STRAX.
+      state.data = cache.data; state.tier3 = cache.tier3; EFDOCS = cache.efdocs||{}; PG = cache.pg||PG;
+      state.newest = cache.data.newest_timavera || null;
+      metaFromState(); renderList();
+      if(Date.now()-cache.ts < KYF_TTL) return;   // nógu ferskt → sleppum netkalli
+      // Annars: revalidate hljóðlega (engin spinner, síðan uppfærist þegar klárt).
+      try{ await fetchAll(); metaFromState(); renderList(); }catch(_){}
       return;
     }
-    // Efnislisti/Tímaskjal tenglar (fyrir Ósendar-vinnuflæðið) — index eftir verkstaður|mánuður.
+    if(meta) meta.textContent = 'Þrepaskipt kröfu-yfirlit — Sækir…';
     try{
-      const er = await fetch('/api/efnislisti-docs'); const ej = er.ok ? await er.json() : {rows:[]};
-      const idx = {};
-      for(const d of (ej.rows||[])){ const k = (d.worksite_name||'')+'|'+(d.work_month||''); (idx[k] = idx[k] || []).push(d); }
-      EFDOCS = idx;
-    }catch(_){ EFDOCS = {}; }
-    // Þrep 3 (reiknað í vafra). Ef það fellur → tómur hópur, þrep 1/2 birtast samt.
-    try{ state.tier3 = await computeTier3(); }catch(_){ state.tier3 = groupTier3([]); }
-    const t1n = (state.data.tier1||{}).n||0, t2n = (state.data.tier2||{}).n||0, t3n = (state.tier3||{}).n||0;
-    if(meta) meta.textContent = t1n+' ógreiddar · '+t2n+' ósendar · '+t3n+' tími eftir · '+new Date(state.data.generated_at).toLocaleString('is-IS');
+      await fetchAll();
+    }catch(e){
+      if(meta) meta.textContent = 'Villa: '+e.message;
+      const lst = $view.querySelector('.kyf-list'); if(lst) lst.innerHTML = '<div style="padding:32px;color:#dc2626">Villa við að sækja kröfur: '+esc(e.message)+'</div>';
+      return;
+    }
+    metaFromState();
     renderList();
   }
 
@@ -12092,7 +12117,7 @@ async function renderKrofuyfirlit(t){
     });
     renderList();
   }));
-  $view.querySelector('.kyf-refresh').addEventListener('click', load);
+  $view.querySelector('.kyf-refresh').addEventListener('click', ()=>load(true));
   $view.querySelector('.kyf-payday').addEventListener('click', async(e)=>{
     const b = e.currentTarget; const orig = b.textContent;
     b.disabled = true; b.style.opacity = '.6'; b.textContent = '⏳ Sæki úr Payday…';
@@ -12102,7 +12127,7 @@ async function renderKrofuyfirlit(t){
       if(!r.ok || d.error) throw new Error(d.error || ('HTTP '+r.status));
     }catch(err){ alert('Ekki tókst að uppfæra Payday stöðu: '+(err.message||err)); }
     finally{ b.disabled = false; b.style.opacity = ''; b.textContent = orig; }
-    await load();   // newly-paid invoices drop out of þrep 1 + summur uppfærast
+    await load(true);   // newly-paid invoices drop out of þrep 1 + summur uppfærast (ferskt)
   });
 
   // Síðasta uppfærsla — Tímavera · Ajour · Redder (prefer newest_real).
@@ -15711,6 +15736,43 @@ async function bhSavePdfToDrive(doc, meta){
   if(!r.ok) throw new Error(j.error || ('HTTP '+r.status));
   return j;
 }
+// Upload a jsPDF doc to SUPABASE STORAGE + record it (no Google login needed).
+// Returns { id, storage_path, public_url, title }. webViewLink/downloadUrl are
+// aliased to public_url so callers written for the Drive path keep working.
+async function bhSavePdfToSupabase(doc, meta){
+  const b64 = doc.output('datauristring').split(',')[1];
+  const r = await fetch('/api/pdf-store', { method:'POST', headers:{'content-type':'application/json'},
+    body: JSON.stringify({ fileName: meta.fileName, contentBase64: b64, worksite_name: meta.worksite_name, work_month: meta.work_month, doc_type: meta.doc_type }) });
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(j.error || ('HTTP '+r.status));
+  return Object.assign({ webViewLink: j.public_url, downloadUrl: j.public_url }, j);
+}
+// Accurate, consistent PDF filename: "<Tegund> - <greiðandi> - <verkstaður> -
+// kt NNNNNN-NNNN - <Mánuður Ár>.pdf". Greiðandi er sleppt ef hann er sami og
+// verkstaðurinn; kt bætt við þegar það er þekkt (á brunahólf-forminu).
+function bhPdfName(kind, o){
+  o = o || {};
+  const ws = String(o.ws||'').trim(), payer = String(o.payer||'').trim();
+  const norm = s => s.toLowerCase().replace(/\s+/g,' ').trim();
+  const parts = [kind];
+  if(payer && (!ws || norm(payer)!==norm(ws))){ parts.push(payer); if(ws) parts.push(ws); }
+  else if(ws){ parts.push(ws); }
+  const ktd = String(o.kt||'').replace(/\D/g,'');
+  if(ktd.length===10) parts.push('kt '+ktd.slice(0,6)+'-'+ktd.slice(6));
+  else if(o.kt) parts.push('kt '+String(o.kt).trim());
+  if(o.month) parts.push(monthLabelStatic(o.month));
+  return (parts.join(' - ')+'.pdf').replace(/[\\/:*?"<>|]/g,'-').replace(/\s{2,}/g,' ');
+}
+// View/download URL for a stored PDF doc row — Supabase public_url when present,
+// else the legacy Google-Drive link. Works for both the full row and the reduced
+// {id,title,url} shapes used on the Vinnubók/Gerð Reikninga grids.
+function bhDocUrl(d){
+  if(!d) return '';
+  const u = d.public_url || d.url; if(u) return u;
+  const fid = d.drive_file_id || d.id || '';
+  if(!fid || String(fid).startsWith('sb:')) return '';
+  return 'https://drive.google.com/file/d/'+fid+'/view';
+}
 // Icelandic number/króna formatting for PDFs.
 const _pkr = n => (Math.round(Number(n)||0)).toLocaleString('is-IS')+' kr';
 const _phr = n => (Number(n)||0).toLocaleString('is-IS',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -15725,12 +15787,12 @@ async function openTimabok(name, month){
   bg.className = 'gr-modal-bg';
   bg.innerHTML = `<div class="gr-modal" style="display:block;width:min(820px,96vw);min-height:0"><div class="gr-form" style="width:100%">
     <div class="gr-mh"><h2>🕒 Tímaskýrsla — ${escapeHtml(name)} · ${escapeHtml(monthLabelStatic(month))}</h2><button class="gr-x" id="tbk-x" type="button">×</button></div>
-    <div style="font-size:12px;color:#64748b;margin:2px 0 8px">Mæting starfsmanna — fylgiskjal með reikningi. Breyttu tímum beint í töflunni; „💾 Vista" geymir breytingar (samstillt milli tækja), „📄 Vista PDF" hleður í Drive.</div>
+    <div style="font-size:12px;color:#64748b;margin:2px 0 8px">Mæting starfsmanna — fylgiskjal með reikningi. Breyttu tímum beint í töflunni; „💾 Vista" geymir breytingar (samstillt milli tækja), „📄 Vista PDF" geymir á Supabase (engin innskráning).</div>
     <div id="tbk-body"><div class="gr-loading">Sæki tímafærslur…</div></div>
     <div class="gr-actions" style="margin-top:10px">
       <button class="gr-btn" id="tbk-add" type="button">＋ Bæta línu</button>
       <button class="gr-btn gr-btn-primary" id="tbk-save" type="button">💾 Vista</button>
-      <button class="gr-btn" id="tbk-pdf" type="button">📄 Vista PDF (Drive)</button>
+      <button class="gr-btn" id="tbk-pdf" type="button">📄 Vista PDF</button>
       <button class="gr-btn" id="tbk-print" type="button">🖨 Prenta</button>
       <button class="gr-btn" id="tbk-close" type="button">Loka</button>
       <span id="tbk-st" style="font-size:12px;color:#64748b;align-self:center"></span>
@@ -15798,7 +15860,7 @@ async function openTimabok(name, month){
       state.ui = state.ui||{}; state.ui.timabok_edits = state.ui.timabok_edits||{};
       state.ui.timabok_edits[key] = { rows: rows.map(r=>({...r})), saved_at: new Date().toISOString() }; save();
       const res = await buildAndSaveTimabokPdf(name, month, rows);
-      st.innerHTML = `✓ vistað í Drive — <a href="${res.webViewLink}" target="_blank" rel="noopener">opna</a> · <a href="${res.downloadUrl}" target="_blank" rel="noopener">sækja</a>`;
+      st.innerHTML = `✓ vistað — <a href="${res.webViewLink}" target="_blank" rel="noopener">opna</a> · <a href="${res.downloadUrl}" target="_blank" rel="noopener">sækja</a>`;
     }catch(e){ alert('Gat ekki vistað PDF: '+(e.message||e)); }
     finally{ btn.textContent=old; btn.disabled=false; }
   };
@@ -15840,8 +15902,9 @@ async function buildAndSaveTimabokPdf(name, month, rows){
   doc.autoTable({ startY: y2+6, head:[['Starfsmaður','Dagar','Tímar']], body: empRows,
     styles:{ font:'helvetica', fontSize:9, cellPadding:3 }, headStyles:{ fillColor:[30,30,30], textColor:255, fontSize:8 },
     columnStyles:{ 1:{halign:'right'}, 2:{halign:'right'} }, margin:{ left:40, right:40 }, tableWidth: 320 });
-  const fileName = `Tímaskýrsla - ${name} - ${monthLabelStatic(month)}.pdf`.replace(/[\\/:*?"<>|]/g,'-');
-  return bhSavePdfToDrive(doc, { fileName, worksite_name:name, work_month:month, doc_type:'timabok_pdf' });
+  const fileName = bhPdfName('Tímaskýrsla', { ws:name, month });
+  // Geymt á Supabase (ekkert Google-innskráning) — sést strax í „Vistuð PDF-skjöl".
+  return bhSavePdfToSupabase(doc, { fileName, worksite_name:name, work_month:month, doc_type:'timabok_pdf' });
 }
 
 // Build the Efnislisti (invoice prep) PDF from the editor's computed numbers, upload to Drive.
@@ -15897,8 +15960,8 @@ async function buildAndSaveEfnislistiPdf(name, month, data){
     margin:{ left:40, right:40 },
   });
   if(data.notes){ let ny=(doc.lastAutoTable?doc.lastAutoTable.finalY:y)+18; doc.setFont('helvetica','italic'); doc.setFontSize(10); doc.setTextColor(85); doc.text(doc.splitTextToSize(data.notes, W-80), 40, ny); }
-  const fileName = `Efnislisti - ${name} - ${monthLabelStatic(month)}.pdf`.replace(/[\\/:*?"<>|]/g,'-');
-  return bhSavePdfToDrive(doc, { fileName, worksite_name:name, work_month:month, doc_type:'efnislisti_pdf' });
+  const fileName = bhPdfName('Efnislisti', { payer:data.cust, ws:data.ws||name, kt:data.kt, month });
+  return bhSavePdfToSupabase(doc, { fileName, worksite_name:name, work_month:month, doc_type:'efnislisti_pdf' });
 }
 
 // Print the (possibly edited) tímaskýrsla as HTML.

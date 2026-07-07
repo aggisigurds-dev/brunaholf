@@ -714,6 +714,26 @@ either use the calculated total or override with a flat amount.
   `efnislisti_documents.doc_type`: `efnislisti` (work doc, 📎) and
   `invoice` (the reikningur PDF, 🧾). Both picked through the browse-folder/
   search modal (`openDriveSearch(cellKey, docType)`).
+- **Sjálf-stofnuð PDF á Supabase (2026-07-07):** the browser-generated Efnislisti +
+  Tímaskýrsla PDFs (jsPDF, „📄 Vista PDF" á Gerð Reikninga/Tímabók) are now stored
+  in **Supabase Storage** (public bucket `efnislisti-pdf`) instead of Google Drive —
+  **no Google login needed** to view/send them (the whole point). Endpoint
+  `pdf-store.js` (`/api/pdf-store`, service role) mirrors `efnislisti-pdf.js` (the
+  Drive twin) but uploads to Storage + records in `efnislisti_documents` with
+  additive cols `storage_path` + `public_url` and a synthetic
+  `drive_file_id='sb:'+storage_path` (so the (worksite,month,drive_file_id) PK +
+  EFDOCS index + delete-by-fid all keep working). Client: `bhSavePdfToSupabase`
+  (twin of `bhSavePdfToDrive`) + `bhDocUrl(d)` (prefers `public_url`, else the
+  legacy Drive link). `email-send.js` now also accepts `{filename, url}` attachments
+  (fetches any public URL → base64 server-side, no OAuth) — the Kröfu yfirlit
+  „📤 Senda á bókhald" sends Supabase docs via `{url}`. `efnislisti-docs.js` DELETE
+  removes the Storage object for `sb:` rows. Old Drive-hosted rows still open via the
+  Drive link. `bhSavePdfToDrive` kept for reference but no longer called.
+- **Kröfu yfirlit hraði (2026-07-07):** `renderKrofuyfirlit` now uses a
+  stale-while-revalidate cache (`window.__KYF_CACHE`, TTL 5 mín) so flakk milli
+  síðna sýnir síðustu útgáfu STRAX (áður ~1 mín bið í hvert sinn) og uppfærir
+  hljóðlega í bakgrunni; `krofu-yfirlit-bru` + `efnislisti-docs` eru nú sótt samhliða
+  (`fetchAll`). „↻ Sækja" og Payday-uppfærsla þvinga ferskt (`load(true)`).
 
 ### Status comments observed in Tekjur (examples — these are real
 operational notes, not stale data):

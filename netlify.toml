@@ -215,6 +215,12 @@
   to = "/.netlify/functions/efnislisti-pdf"
   status = 200
 
+# Store a browser-generated Efnislisti/Tímaskýrsla PDF into Supabase Storage (no Google login)
+[[redirects]]
+  from = "/api/pdf-store"
+  to = "/.netlify/functions/pdf-store"
+  status = 200
+
 # Redder material-cost invoices (recharged to worksites)
 [[redirects]]
   from = "/api/redder-invoices"
