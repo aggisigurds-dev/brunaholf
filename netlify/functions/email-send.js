@@ -33,7 +33,15 @@ exports.handler = async (event) => {
     const DRIVE_DL = process.env.DRIVE_DOWNLOAD_URL || `${origin}/api/drive-download`;
     const out = [], warnings = [];
     for (const a of payload.attachments) {
-      if (a && a.driveId) {
+      if (a && a.url) {
+        // Any public URL (e.g. Supabase Storage public bucket) → base64. No OAuth needed.
+        try {
+          const ur = await fetch(a.url);
+          if (!ur.ok) { warnings.push((a.filename || a.url) + ': HTTP ' + ur.status); continue; }
+          const ab = await ur.arrayBuffer();
+          out.push({ filename: a.filename || (a.url.split('/').pop() || 'skjal.pdf'), content: Buffer.from(ab).toString('base64') });
+        } catch (e) { warnings.push((a.filename || a.url) + ': ' + String((e && e.message) || e)); }
+      } else if (a && a.driveId) {
         try {
           const dr = await fetch(DRIVE_DL + '?id=' + encodeURIComponent(a.driveId));
           const dj = await dr.json().catch(() => ({}));

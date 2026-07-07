@@ -69,6 +69,20 @@ exports.handler = async (event) => {
     });
     if (!r.ok) return json(r.status, { error: (await r.text()).slice(0, 300) });
     const removed = (await r.json().catch(() => [])) || [];
+    // 2a) Supabase-hýst skjöl (drive_file_id = 'sb:<path>') → eyða úr Storage-bucket.
+    let storage = 'n/a';
+    const sbPaths = removed.map(x => x && (x.storage_path || (String(x.drive_file_id||'').startsWith('sb:') ? String(x.drive_file_id).slice(3) : null))).filter(Boolean);
+    if (sbPaths.length) {
+      try {
+        const sr = await fetch(`${SUPABASE_URL}/storage/v1/object/efnislisti-pdf`, {
+          method: 'DELETE',
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prefixes: sbPaths }),
+        });
+        storage = sr.ok ? 'deleted' : ('storage ' + sr.status);
+      } catch (_) { storage = 'storage-error'; }
+      return json(200, { ok: true, removed: removed.length, storage });
+    }
     // 2) besta-tilraun: henda Drive-skránni í ruslið (endurheimtanlegt í 30 daga).
     //    Ef Google-tenging vantar eða PATCH bregst → tengill er samt farinn af listanum.
     let drive = 'skipped';
