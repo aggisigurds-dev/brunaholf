@@ -11410,6 +11410,7 @@ async function renderKrofuyfirlit(t){
           <h1 style="margin:0;font-size:24px;font-weight:800;color:#0f172a;display:flex;align-items:center;gap:10px">📄 Kröfu yfirlit</h1>
           <div style="font-size:12px;color:#64748b;margin-top:2px" id="kyf-meta">Þrepaskipt kröfu-yfirlit — ógreitt → ósent → tími eftir · Sækir…</div>
           <div style="font-size:11px;color:#94a3b8;margin-top:3px" id="kyf-fresh">Síðasta uppfærsla: …</div>
+          <div style="margin-top:8px"><span data-sync-workflow="ajour" data-sync-label="Ajour"></span></div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <select class="kyf-sort" title="Raða" style="padding:7px 9px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;font:inherit;font-size:12.5px;font-weight:600;color:#475569;cursor:pointer">
@@ -11671,7 +11672,7 @@ async function renderKrofuyfirlit(t){
     const sentTrail = inv.sent ? `<span style="font-size:9.5px;color:#047857;white-space:nowrap">${(inv.sent_by?esc(inv.sent_by)+' · ':'')}${inv.sent_at?esc(fmtDate(inv.sent_at)):''}</span>` : '';
     // Engir innsláttarreitir í röðinni — bara hreinir hnappar (eins og Slökkvitæki).
     // Litlu tölurnar birtast UNDIR viðeigandi hnappi; „⚙️ Stilla" opnar glugga til að breyta.
-    return `<div class="ky-wf-boxes" style="margin-top:9px;padding-top:9px;border-top:1px dashed #e2e8f0;display:flex;gap:7px 10px;flex-wrap:wrap;align-items:flex-start">
+    return `<div class="ky-wf-boxes" style="display:flex;gap:6px 8px;flex-wrap:nowrap;align-items:center;flex:0 0 auto">
       ${abtn('cfg','stilla','⚙️','Stilla',false)}
       ${sep}
       ${abtnN('tim','vista','🕒','Tímask.',timSaved, hoursDisp+' klst')}${pdfLink(n.wf.tim_pdf,'Opna Tímaskýrslu PDF')}
@@ -11700,7 +11701,7 @@ async function renderKrofuyfirlit(t){
       const mtag = monthTag(inv.gjalddagi || inv.work_month);
       const mtagHtml = mtag ? `<span class="ky-num" style="font-size:9.5px;font-weight:700;color:#64748b;background:#eef2f7;border-radius:6px;padding:1px 7px;white-space:nowrap">${esc(mtag)}</span>` : '';
       const note = inv.note || '';
-      const noteHtml = `<div style="flex:1;display:flex;align-items:center;gap:5px;min-width:80px">
+      const noteHtml = `<div style="flex:${tier===2?'0 1 90px':'1'};display:flex;align-items:center;gap:5px;min-width:${tier===2?'56px':'80px'}">
         <span class="ky-note-ic" style="font-size:11px;flex-shrink:0;${note?'':'opacity:.22'}">📝</span>
         <input class="ky-note" data-key="${esc(inv.inv_key)}" value="${esc(note)}" placeholder="minnispunktur…" style="flex:1;min-width:60px;background:transparent;border:0;border-bottom:1px dashed #cbd5e1;color:#334155;font:inherit;font-size:11.5px;padding:2px 3px;outline:none">
       </div>`;
@@ -11733,12 +11734,12 @@ async function renderKrofuyfirlit(t){
             ${noteHtml}
             <span class="ky-num" style="width:104px;text-align:right;font-weight:700;color:#11141c;white-space:nowrap;flex-shrink:0">${fmtKr(inv.amount)}</span>
             <div style="display:flex;gap:6px;flex-shrink:0">${actChips(inv, tier)}</div>
+            ${tier===2?`<span style="width:1px;height:36px;background:#e5e7eb;flex:0 0 auto;margin:0 2px;align-self:center"></span>${wfStrip(inv, 2)}`:''}
           </div>
           <div class="ky-detail" style="display:none;padding:11px 18px 14px 41px;background:#fafbfe;border-bottom:1px solid #f3f5f9">
             <div style="display:flex;flex-wrap:wrap;gap:12px 28px">${detailCells}</div>
-            ${bankDetail}${tier!==2?wfStrip(inv, tier):''}
+            ${bankDetail}
           </div>
-          ${tier===2?`<div class="ky-wf-open" style="padding:2px 18px 13px 41px;background:#fafbfe;border-bottom:1px solid #f3f5f9">${wfStrip(inv, 2)}</div>`:''}
         </div>`;
     }).join('');
   }
@@ -11859,7 +11860,7 @@ async function renderKrofuyfirlit(t){
       const mtagHtml = mtag ? `<span class="ky-num" style="font-size:9.5px;font-weight:700;color:#64748b;background:#eef2f7;border-radius:6px;padding:1px 7px;white-space:nowrap">${esc(mtag)}</span>` : '';
       // Minnispunktur (Feature 2) — dauf-strikaður reitur; 📝 fyllist þegar punktur er til.
       const note = inv.note || '';
-      const noteHtml = `<div style="flex:1;display:flex;align-items:center;gap:5px;min-width:80px">
+      const noteHtml = `<div style="flex:${tier===2?'0 1 90px':'1'};display:flex;align-items:center;gap:5px;min-width:${tier===2?'56px':'80px'}">
         <span class="ky-note-ic" style="font-size:11px;flex-shrink:0;${note?'':'opacity:.22'}">📝</span>
         <input class="ky-note" data-key="${esc(inv.inv_key)}" value="${esc(note)}" placeholder="minnispunktur…" style="flex:1;min-width:60px;background:transparent;border:0;border-bottom:1px dashed #cbd5e1;color:#334155;font:inherit;font-size:11.5px;padding:2px 3px;outline:none">
       </div>`;
@@ -11893,12 +11894,12 @@ async function renderKrofuyfirlit(t){
             ${noteHtml}
             <span class="ky-num" style="width:104px;text-align:right;font-weight:700;color:#11141c;white-space:nowrap;flex-shrink:0">${fmtKr(inv.amount)}</span>
             <div style="display:flex;gap:6px;flex-shrink:0">${actChips(inv, tier)}</div>
+            ${tier===2?`<span style="width:1px;height:36px;background:#e5e7eb;flex:0 0 auto;margin:0 2px;align-self:center"></span>${wfStrip(inv, 2)}`:''}
           </div>
           <div class="ky-detail" style="display:none;padding:11px 18px 14px 41px;background:#fafbfe;border-bottom:1px solid #f3f5f9">
             <div style="display:flex;flex-wrap:wrap;gap:12px 28px">${detailCells}</div>
-            ${bankDetail}${tier!==2?wfStrip(inv, tier):''}
+            ${bankDetail}
           </div>
-          ${tier===2?`<div class="ky-wf-open" style="padding:2px 18px 13px 41px;background:#fafbfe;border-bottom:1px solid #f3f5f9">${wfStrip(inv, 2)}</div>`:''}
         </div>`;
     }).join('');
 
