@@ -11458,6 +11458,15 @@ async function renderKrofuyfirlit(t){
       .kyf-wrap .ky-note::placeholder{color:#cbd5e1}
       .kyf-wrap .ky-sec{display:flex;align-items:baseline;gap:10px;margin:24px 0 12px;flex-wrap:wrap}
       .kyf-wrap .ky-sec h2{margin:0;font-size:17px;font-weight:800;color:#0f172a}
+      /* 2026-07-07: á síma eru kröfu-raðirnar breiðari en skjárinn (nafn+dags+
+         upphæð+aðgerðir) — leyfa lárétta rennu á raða-svæðinu svo hægt sé að
+         slæda að upphæð/aðgerðum í stað þess að þær klippist af. */
+      @media (max-width:760px){
+        .kyf-wrap .ky-card-rows{overflow-x:auto;-webkit-overflow-scrolling:touch}
+        .kyf-wrap .ky-card-rows > div{min-width:max-content}
+        .kyf-wrap .ky-invrow{min-width:max-content}
+        .kyf-wrap .ky-detail{min-width:100%}
+      }
     </style>`;
 
   // Group flat tier-3 rows into debtor-cards { customer, kt, invoices, outstanding_kr, oldest_due }.
@@ -11660,7 +11669,13 @@ async function renderKrofuyfirlit(t){
   // Per-fyrirtæki: eitt spjald per greiðanda með öll þrjú þrepin saman
   // (🔴 ógreitt · 🟡 ósent · ⚪ tími eftir). Sameinar l1/l2/l3 eftir kt (annars nafni).
   function renderCompanyView(l1,l2,l3){
-    const keyf = d => d.kt ? ktDigits(d.kt) : String(d.customer||'').trim().toLowerCase();
+    const normName = s => String(s||'').trim().toLowerCase().replace(/\s+/g,' ');
+    // name → kt úr ÖLLUM þrepum sem HAFA kt, svo kt-lausar raðir (t.d.
+    // NLSH-punktavirði skráð sem „ÞG verktakar ehf." án kt í ⚪ Tími-þrepinu)
+    // sameinist rétta fyrirtæki í stað þess að lenda á sér-spjaldi.
+    const nameToKt = new Map();
+    for(const arr of [l1,l2,l3]) for(const d of (arr||[])){ const kt=ktDigits(d.kt); const nn=normName(d.customer); if(kt && nn && !nameToKt.has(nn)) nameToKt.set(nn, kt); }
+    const keyf = d => { const kt=ktDigits(d.kt); if(kt) return kt; const nn=normName(d.customer); return nameToKt.get(nn) || nn; };
     const map = new Map();
     const add = (arr,tier)=>{ for(const d of (arr||[])){ const k=keyf(d); let g=map.get(k);
       if(!g) map.set(k, g={ kt:d.kt||'', customer:d.customer, t:{} });
