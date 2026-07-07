@@ -11650,51 +11650,38 @@ async function renderKrofuyfirlit(t){
     : st==='saved' ? {bd:'#93c5fd',bg:'#eff6ff',dot:'#2563eb',lbl:'🔵 Vistað'}
     : {bd:'#e2e8f0',bg:'#fff',dot:'#94a3b8',lbl:'⚪ Óunnið'}; }
 
-  // Ósendar-vinnuflæði (tier 2) sem lárétt skref-borð: 🕒 Tímaskýrsla → 🧱 Redder
-  // → 📄 Efnislisti → 📤 Senda. Hver reitur: grár→blár(vistað)→grænn(staðfest);
-  // „Breyta" fer aftur í bláan og næsta „Vista PDF" skrifar yfir fyrra PDF.
+  // Ósendar-vinnuflæði (tier 2) — compact hnappa-röð í Slökkvitæki-stíl (.ky-abtn):
+  // litlar tölur (🕒 Tímar · 🧱 Redder · 📄 Efnislisti) + merktir hnappar sem verða
+  // grænir þegar virkir. „💾" vistar/yfirskrifar PDF, „✓ Staðfest" → grænt, „Breyta" bakkar.
   function wfStrip(inv, tier){
     if(tier!==2) return '';
     const n = wfNums(inv), key = esc(inv.inv_key);
     const numIS = v => (Math.round(Number(v)||0)).toLocaleString('is-IS').replace(/,/g,'.');
     const hoursDisp = (Math.round(n.hours*100)/100).toString().replace('.',',');
-    const arrow = `<div style="display:flex;align-items:center;color:#cbd5e1;font-size:16px;flex:0 0 auto">→</div>`;
-    const bx=(box,act,label,col,bd,bg)=>`<button class="ky-bx" data-box="${box}" data-act="${act}" data-key="${key}" type="button" style="padding:5px 9px;border-radius:7px;cursor:pointer;font:inherit;font-size:11px;font-weight:700;border:1px solid ${bd};background:${bg||'#fff'};color:${col}">${label}</button>`;
-    const field=(f,val,w,unit)=>`<div style="display:flex;align-items:center;gap:5px"><input class="ky-bf" data-f="${f}" data-key="${key}" value="${val}" inputmode="decimal" style="width:${w}px;padding:5px 7px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:13px;text-align:right">${unit?`<span style="font-size:11px;color:#64748b">${unit}</span>`:''}</div>`;
-    const pdfLink=(url)=> url ? `<a class="tv-btn" href="${esc(url)}" target="_blank" rel="noopener" style="font-size:10.5px">📄 PDF</a>` : '';
-    function box(box, icon, title, st, inner){
-      const c=boxSt(st);
-      const acts = st==='confirmed' ? bx(box,'breyta','✏️ Breyta','#64748b','#cbd5e1')
-        : bx(box,'vista','💾 Vista PDF','#334155','#cbd5e1')+' '+bx(box,'confirm','✓ Staðfesta','#16a34a','#a7f3d0');
-      return `<div class="ky-box" style="min-width:196px;flex:0 0 auto;border:1.5px solid ${c.bd};background:${c.bg};border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:7px">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span style="font-size:12px;font-weight:800;color:#334155">${icon} ${title}</span><span style="font-size:9.5px;font-weight:700;color:${c.dot};white-space:nowrap">${c.lbl}</span></div>
-        ${inner}
-        ${box!=='redder'?`<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">${acts}${box==='tim'?pdfLink(n.wf.tim_pdf):pdfLink(n.wf.efn_pdf)}</div>`:''}
-      </div>`;
-    }
-    // 🕒 Tímaskýrsla
-    const timInner = field('hours', hoursDisp, 74, 'klst')
-      + `<div style="font-size:9.5px;color:#94a3b8">úr Tímaveru${n.wf.tim_by?(' · '+esc(n.wf.tim_by)):''}</div>`;
-    const boxTim = box('tim','🕒','Tímaskýrsla', n.wf.tim, timInner);
-    // 🧱 Redder efni (breytanlegt, forfyllt úr Redder)
-    const boxRedder = box('redder','🧱','Redder efni', null,
-      field('redder', numIS(n.redder), 92, 'kr') + `<div style="font-size:9.5px;color:#94a3b8">forfyllt úr Redder — má breyta</div>`);
-    // 📄 Efnislisti (samstillt við Tímar; heild reiknuð, má yfirskrifa)
-    const efnInner = `<div style="font-size:9.5px;color:#94a3b8;line-height:1.5">${numIS(n.hours*n.rate)} dagv. + ${numIS(n.smahl)} smáhl. + ${numIS(n.redder)} efni +${n.vsk}%</div>`
-      + field('efn_total', numIS(n.total), 100, 'kr m.vsk');
-    const boxEfn = box('efn','📄','Efnislisti', n.wf.efn, efnInner);
-    // 📤 Senda á bókhald
+    const timSaved = n.wf.tim==='saved'||n.wf.tim==='confirmed', efnSaved = n.wf.efn==='saved'||n.wf.efn==='confirmed';
+    const bothConf = n.wf.tim==='confirmed' && n.wf.efn==='confirmed', anyConf = n.wf.tim==='confirmed'||n.wf.efn==='confirmed';
+    // Compact merktur hnappur (icon yfir, örsmár texti undir) — grænn þegar `on`.
+    const abtn=(box,act,icon,label,on)=>`<button class="ky-bx" data-box="${box}" data-act="${act}" data-key="${key}" type="button" title="${esc(label)}" style="display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:54px;height:44px;padding:0 8px;border-radius:9px;cursor:pointer;font:inherit;${on?'border:1px solid #156e3a;background:linear-gradient(150deg,#2bbf6c,#0f6e3a);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 3px 7px -3px rgba(15,110,58,.5)':'border:1px solid rgba(20,24,34,.2);background:linear-gradient(180deg,#fff,#dbe0e9);color:#334155;box-shadow:inset 0 1.5px 0 rgba(255,255,255,.95),0 3px 6px -3px rgba(20,30,60,.3)'}"><span style="font-size:15px;line-height:1">${icon}</span><span style="font-size:8.5px;font-weight:700;letter-spacing:.02em;white-space:nowrap">${esc(label)}</span></button>`;
+    // Compact talna-reitur með stöðu-lit á ramma (grár/blár/grænn).
+    const cf=(f,val,w,unit,st)=>{ const bd=boxSt(st).bd; return `<span style="display:inline-flex;align-items:center;gap:3px"><input class="ky-bf" data-f="${f}" data-key="${key}" value="${val}" inputmode="decimal" style="width:${w}px;padding:4px 6px;border:1.5px solid ${bd};border-radius:7px;font:inherit;font-size:12.5px;text-align:right;background:#fff">${unit?`<span style="font-size:10px;color:#64748b">${unit}</span>`:''}</span>`; };
+    const lab=(ic,t)=>`<span style="font-size:11px;color:#475569;font-weight:700;white-space:nowrap">${ic} ${t}</span>`;
+    const pdfLink=(url,t)=> url ? `<a href="${esc(url)}" target="_blank" rel="noopener" title="${t}" style="font-size:14px;text-decoration:none">📄</a>` : '';
+    const sep = `<span style="width:1px;height:30px;background:#e5e7eb;flex:0 0 auto"></span>`;
     let to='bokhald@brunaholf.is'; try{ to = localStorage.getItem('email_to')||to; }catch(_){}
-    const cS = boxSt(inv.sent?'confirmed':null);
-    const sentTrail = inv.sent ? `<div style="font-size:9.5px;color:#047857">${(inv.sent_by?esc(inv.sent_by)+' · ':'')}${inv.sent_at?esc(fmtDate(inv.sent_at)):''}</div>` : '';
-    const boxSend = `<div class="ky-box" style="min-width:210px;flex:0 0 auto;border:1.5px solid ${cS.bd};background:${cS.bg};border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:7px">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span style="font-size:12px;font-weight:800;color:#334155">📤 Senda á bókhald</span><span style="font-size:9.5px;font-weight:700;color:${cS.dot}">${inv.sent?'🟢 Sent':'⚪ Ósent'}</span></div>
-      <input class="ky-bf" data-f="to" data-key="${key}" value="${esc(to)}" style="width:100%;padding:5px 7px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:12px">
-      <div style="display:flex;gap:5px;align-items:center">${bx('send','send',inv.sent?'🟢 Sent ✓':'📤 Senda',inv.sent?'#fff':'#16a34a',inv.sent?'#16a34a':'#a7f3d0',inv.sent?'#16a34a':'#fff')}</div>
+    const sentTrail = inv.sent ? `<span style="font-size:9.5px;color:#047857;white-space:nowrap">${(inv.sent_by?esc(inv.sent_by)+' · ':'')}${inv.sent_at?esc(fmtDate(inv.sent_at)):''}</span>` : '';
+    return `<div class="ky-wf-boxes" style="margin-top:9px;padding-top:9px;border-top:1px dashed #e2e8f0;display:flex;gap:7px 9px;flex-wrap:wrap;align-items:center">
+      ${lab('🕒','Tímar')}${cf('hours',hoursDisp,66,'klst',n.wf.tim)}
+      ${lab('🧱','Redder')}${cf('redder',numIS(n.redder),84,'kr',null)}
+      ${lab('📄','Efnislisti')}${cf('efn_total',numIS(n.total),96,'kr',n.wf.efn)}
+      ${sep}
+      ${abtn('tim','vista','🕒','Tímask.',timSaved)}${pdfLink(n.wf.tim_pdf,'Opna Tímaskýrslu PDF')}
+      ${abtn('efn','vista','📄','Efnisl.',efnSaved)}${pdfLink(n.wf.efn_pdf,'Opna Efnislista PDF')}
+      ${abtn('both','confirm','✓','Staðfest',bothConf)}
+      ${anyConf?abtn('both','breyta','✏️','Breyta',false):''}
+      ${sep}
+      <input class="ky-bf" data-f="to" data-key="${key}" value="${esc(to)}" title="Netfang bókara" style="width:180px;max-width:44vw;padding:5px 7px;border:1px solid #cbd5e1;border-radius:7px;font:inherit;font-size:11.5px">
+      ${abtn('send','send','📤',inv.sent?'Sent ✓':'Senda',inv.sent)}
       ${sentTrail}
-    </div>`;
-    return `<div class="ky-wf-boxes" style="margin-top:11px;padding-top:11px;border-top:1px dashed #e2e8f0;display:flex;gap:9px;flex-wrap:nowrap;overflow-x:auto;align-items:stretch">
-      ${boxTim}${arrow}${boxRedder}${arrow}${boxEfn}${arrow}${boxSend}
     </div>`;
   }
 
@@ -12090,9 +12077,9 @@ async function renderKrofuyfirlit(t){
       e.stopPropagation();
       const key=b.dataset.key, box=b.dataset.box, act=b.dataset.act; const iv=findInv(key); if(!iv||b.disabled) return;
       iv.wf = Object.assign({}, iv.wf);
-      const stF = box==='tim' ? 'tim' : 'efn';
-      if(act==='breyta'){ iv.wf[stF]='saved'; wfPatchLocal(key,{wf:iv.wf}); await persistWf(key, iv.wf); renderList(); return; }
-      if(act==='confirm'){ const by=bhEnsureMe(); iv.wf[stF]='confirmed'; iv.wf[stF+'_by']=by; iv.wf[stF+'_at']=new Date().toISOString(); wfPatchLocal(key,{wf:iv.wf}); await persistWf(key, iv.wf, by); renderList(); return; }
+      const fields = box==='both' ? ['tim','efn'] : [box==='tim'?'tim':'efn'];
+      if(act==='breyta'){ fields.forEach(f=>{ iv.wf[f]='saved'; }); wfPatchLocal(key,{wf:iv.wf}); await persistWf(key, iv.wf); renderList(); return; }
+      if(act==='confirm'){ const by=bhEnsureMe(); fields.forEach(f=>{ iv.wf[f]='confirmed'; iv.wf[f+'_by']=by; iv.wf[f+'_at']=new Date().toISOString(); }); wfPatchLocal(key,{wf:iv.wf}); await persistWf(key, iv.wf, by); renderList(); return; }
       if(act==='vista'){
         b.disabled=true; const o=b.textContent; b.textContent='⏳…';
         try{

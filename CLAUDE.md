@@ -729,8 +729,13 @@ either use the calculated total or override with a flat amount.
   „📤 Senda á bókhald" sends Supabase docs via `{url}`. `efnislisti-docs.js` DELETE
   removes the Storage object for `sb:` rows. Old Drive-hosted rows still open via the
   Drive link. `bhSavePdfToDrive` kept for reference but no longer called.
-- **Ósendar-vinnuflæði sem lárétt skref-borð (2026-07-07, v1):** tier-2 raðir á Kröfu
-  yfirlit sýna nú lárétt reita-borð (alltaf sýnilegt): **🕒 Tímaskýrsla** (klst úr
+- **Ósendar-vinnuflæði — compact hnappa-röð í Slökkvitæki-stíl (2026-07-07, v2):** tier-2
+  raðir á Kröfu yfirlit sýna litla `.ky-abtn`-stíl hnappa (icon + örsmár texti, grænn
+  gradient þegar virkur — sama og #166 á Slökkvitæki) + compact talna-reiti (🕒 Tímar ·
+  🧱 Redder · 📄 Efnislisti, rammi grár/blár/grænn eftir stöðu): 🕒 Tímask.(vista PDF) ·
+  📄 Efnisl.(vista PDF) · ✓ Staðfest (bæði) · ✏️ Breyta · netfang + 📤 Senda (grænt þegar sent).
+  (v1 var stór „reita-borð" með köntuðum boxum; endurstílað í compact eftir ósk Agnars.)
+  Undirliggjandi rök óbreytt: **🕒 Tímaskýrsla** (klst úr
   Tímaveru, breytanlegt) → **🧱 Redder efni** (breytanlegt, forfyllt úr
   `/api/redder-invoices` `summary.by_worksite_month`) → **📄 Efnislisti** (heild reiknuð:
   klst×dagvinnutaxti + smáhlutagjald 137/klst + Redder + VSK — samstillt við Tímar-reitinn,
