@@ -203,6 +203,12 @@
   to = "/.netlify/functions/efnislisti-docs"
   status = 200
 
+# Resend póstsending (Efnislisti/Tímaskjal á bókara fyrir Payday)
+[[redirects]]
+  from = "/api/email-send"
+  to = "/.netlify/functions/email-send"
+  status = 200
+
 # Store a browser-generated Efnislisti/Tímaskýrsla PDF into Drive + record it
 [[redirects]]
   from = "/api/efnislisti-pdf"
