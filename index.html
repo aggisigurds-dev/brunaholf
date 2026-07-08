@@ -16137,7 +16137,44 @@ const _phr = n => (Number(n)||0).toLocaleString('is-IS',{minimumFractionDigits:2
 // Editable staff-attendance sheet per (worksite, month). Rows pull from /api/timabok
 // but any hand-edits persist in state.ui.timabok_edits[worksite|month] (synced across
 // devices via /api/app-state). Save as a Drive PDF from here too.
+// 2026-07-08: gr-modal/tbk CSS-ið býr INNI í Gerð Reikninga-sniðmátinu og er
+// því ekki til fyrr en sá flipi hefur verið teiknaður. Þegar Tímaskýrslan er
+// opnuð beint úr Kröfu yfirliti (án þess að gerd hafi verið opnað) birtist
+// modalið ÓSTÍLAÐ neðst í skjalinu — ósýnilegt ("takkinn virkar ekki").
+// Þessi injector tryggir lágmarks-CSS-ið alltaf, einu sinni.
+function ensureGrModalCss(){
+  if(document.getElementById('_gr-modal-css')) return;
+  const st = document.createElement('style');
+  st.id = '_gr-modal-css';
+  st.textContent = `
+    .gr-modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow:auto}
+    .gr-modal{background:#fff;border-radius:12px;width:min(1080px,96vw);box-shadow:0 20px 60px rgba(0,0,0,.4);overflow:hidden}
+    .gr-form{padding:16px 18px;overflow-y:auto;max-height:88vh}
+    .gr-mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    .gr-mh h2{margin:0;font-size:17px}
+    .gr-x{border:none;background:transparent;font-size:24px;cursor:pointer;color:#64748b;line-height:1}
+    .gr-loading{padding:30px;color:#64748b;font-style:italic}
+    .gr-actions{display:flex;gap:8px;margin-top:16px;position:sticky;bottom:0;background:#fff;padding-top:10px;flex-wrap:wrap}
+    .gr-btn{padding:7px 12px;border-radius:7px;font-size:12.5px;font-weight:600;border:1px solid #cbd5e1;background:#fff;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+    .gr-btn-primary{background:#101d2e;color:#fff;border-color:#101d2e}
+    .tbk-tbl{border:1px solid #e2e8f0;border-radius:8px;overflow:hidden}
+    .tbk-r{display:grid;grid-template-columns:130px 1fr 70px 70px 74px 30px;gap:6px;align-items:center;padding:4px 8px;border-bottom:1px solid #f1f5f9}
+    .tbk-r input{font:inherit;font-size:12px;padding:4px 6px;border:1px solid #e2e8f0;border-radius:6px;width:100%;box-sizing:border-box}
+    .tbk-r .tbk-h-in{background:#fffbeb;border-color:#fcd34d;text-align:right;font-variant-numeric:tabular-nums}
+    .tbk-h{background:#f8fafc;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;color:#64748b;font-weight:600}
+    .tbk-h span{padding:2px 2px}
+    .tbk-del{border:0;background:none;color:#dc2626;cursor:pointer;font-size:14px;line-height:1;padding:2px}
+    .tbk-tot{display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding:8px 10px;border-top:2px solid #0f172a;font-weight:700}
+    .tbk-tot b{font-size:16px;font-variant-numeric:tabular-nums}
+    .tbk-emp{margin-top:12px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden}
+    .tbk-er{display:grid;grid-template-columns:1fr 90px 110px;gap:6px;padding:5px 10px;border-bottom:1px solid #f1f5f9;font-size:12.5px}
+    .tbk-er span:nth-child(n+2){text-align:right;font-variant-numeric:tabular-nums}
+    .tbk-eh{background:#f8fafc;font-size:10.5px;text-transform:uppercase;color:#64748b;font-weight:600}`;
+  document.head.appendChild(st);
+}
+
 async function openTimabok(name, month){
+  ensureGrModalCss();
   const key = name+'|'+month;
   const bg = document.createElement('div');
   bg.className = 'gr-modal-bg';
