@@ -11728,10 +11728,12 @@ async function renderKrofuyfirlit(t){
     // ÞAR og það birtist hér (grænt + 📄 þegar skjalið er til). Engin inline-vistun.
     // Tölurnar (klst · efni · heild) á EINNI línu undir — svo takkarnir sjálfir
     // þjappast saman í eina þétta röð (annars verður hver takki að stökum dálki).
-    // HÆGRA MEGIN eins og í Slökkvitæki-viðmiðinu: takkaklasinn situr við hægri
-    // brún raðarinnar (upphæðin vinstra megin), tölu-línan hægri-jöfnuð undir.
-    const summary = `<div style="flex:1 1 100%;font-size:10px;color:#64748b;font-weight:700;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right">🕒 ${hoursDisp} klst · 🧱 ${numIS(n.redder)} kr efni · 📄 ${numIS(n.total)} kr m.vsk</div>`;
-    return `<div class="ky-wf-boxes" style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;flex:1 1 100%;max-width:100%;justify-content:flex-end;padding:7px 0 1px 0;margin-top:5px;border-top:1px dashed #eef1f6">
+    // INNI Í RÖÐINNI, aftast hægra megin — eins og í Slökkvitæki-viðmiðinu þar
+    // sem takkarnir sitja á SÖMU línu og upphæðin (ekki á sér línu fyrir neðan).
+    // Borðinn er þéttur klasi (flex:0 1 auto + margin-left:auto ýtir honum að
+    // hægri brún); tölu-línan hægri-jöfnuð beint undir tökkunum.
+    const summary = `<div style="flex:1 1 100%;font-size:10px;color:#64748b;font-weight:700;margin-top:2px;white-space:nowrap;text-align:right">🕒 ${hoursDisp} klst · 🧱 ${numIS(n.redder)} kr efni · 📄 ${numIS(n.total)} kr m.vsk</div>`;
+    return `<div class="ky-wf-boxes" style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;justify-content:flex-end;flex:0 1 auto;margin-left:auto">
       ${abtn('tim','opentim','🕒','Tímask.',!!timDoc,'#2563eb')}${pdfLink(timDoc?bhDocUrl(timDoc):null,'Opna Tímaskýrslu PDF')}
       ${abtn('efn','openefn','📄','Efnisl.',!!efnDoc,'#0f766e')}${pdfLink(efnDoc?bhDocUrl(efnDoc):null,'Opna Efnislista PDF')}
       ${abtn('conf','confirm','✓','Staðfest',conf,'#16a34a')}
