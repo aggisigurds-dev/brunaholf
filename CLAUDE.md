@@ -753,6 +753,17 @@ either use the calculated total or override with a flat amount.
   (`wf.confirmed`) + ✏️ Breyta + 📤 Senda eru áfram merking/sending á Kröfu yfirliti.
   Fjarlægt: ⚙️ Stilla + inline PDF-vistun (`pdf-store overwrite`/`buildAndSave*Pdf(...,true)`
   eru enn til fyrir Gerð Reikninga-hliðina en Kröfu yfirlit býr ekki lengur til PDF).
+  **v5 (2026-07-08, LOKAÚTGÁFA eftir óháða rýni — 8 ítranir af „þú ert ekki að ná
+  þessu"):** takkarnir sitja INLINE á sömu línu og upphæðin (eins og Greitt/Fela í
+  þrepi 1 og Slökkvitæki #166 viðmiðið), gegnum SAMA `kyAbtn`-smiðinn og actChips
+  (pixel-eins 46×42 `.ky-abtn`). Röðin er `min-width:max-content` og skrunar lárétt
+  á síma eins og þrep 1. Núll-tölulínan horfin; tölur (klst·efni·heild) birtast
+  aðeins þegar >0, sem lítill span vinstra megin við takkana. **GILDRA — rótin að
+  öllum fyrri umkvörtunum var að klasinn lenti á sér línu; ALDREI setja á
+  `.ky-wf-boxes` eða þrep-2 `.ky-row`: `flex-wrap:wrap`, `margin-left:auto`,
+  `justify-content:flex-end` eða `flex-basis:100%` barn — hvert um sig þvingar
+  línubrotið aftur.** Sama gildir um síma-undanþágur (`.ky-t2 min-width:0` var
+  fjarlægt — þrep 2 fylgir max-content mynstri þreps 1).
   Undirliggjandi rök óbreytt: **🕒 Tímaskýrsla** (klst úr
   Tímaveru, breytanlegt) → **🧱 Redder efni** (breytanlegt, forfyllt úr
   `/api/redder-invoices` `summary.by_worksite_month`) → **📄 Efnislisti** (heild reiknuð:
