@@ -11505,6 +11505,12 @@ async function renderKrofuyfirlit(t){
         .kyf-wrap .ky-card-rows > div{min-width:max-content}
         .kyf-wrap .ky-invrow{min-width:max-content}
         .kyf-wrap .ky-detail{min-width:100%}
+        /* Ósendar (þrep-2) raðir: EKKI max-content — þær eiga að passa á skjáinn
+           svo takka-borðinn fylli breiddina í stað þess að skilja eftir autt bil. */
+        .kyf-wrap .ky-card-rows > div.ky-tblock2{min-width:0}
+        .kyf-wrap .ky-invrow.ky-t2{min-width:0;width:100%}
+        .kyf-wrap .ky-invrow.ky-t2 .ky-row{min-width:0;flex-wrap:wrap}
+        .kyf-wrap .ky-invrow.ky-t2 .ky-wf-boxes{max-width:100%!important}
       }
     </style>`;
 
@@ -11706,7 +11712,7 @@ async function renderKrofuyfirlit(t){
     const timDoc = _docs.find(d=>d.doc_type==='timabok_pdf'), efnDoc = _docs.find(d=>d.doc_type!=='timabok_pdf');
     const conf = !!n.wf.confirmed;
     // Compact merktur hnappur (icon yfir, örsmár texti undir) — grænn þegar `on`.
-    const abtn=(box,act,icon,label,on)=>`<button class="ky-bx" data-box="${box}" data-act="${act}" data-key="${key}" type="button" title="${esc(label)}" style="flex:1 1 0;max-width:130px;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:52px;height:44px;padding:0 6px;border-radius:9px;cursor:pointer;font:inherit;${on?'border:1px solid #156e3a;background:linear-gradient(150deg,#2bbf6c,#0f6e3a);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 3px 7px -3px rgba(15,110,58,.5)':'border:1px solid rgba(20,24,34,.2);background:linear-gradient(180deg,#fff,#dbe0e9);color:#334155;box-shadow:inset 0 1.5px 0 rgba(255,255,255,.95),0 3px 6px -3px rgba(20,30,60,.3)'}"><span style="font-size:15px;line-height:1">${icon}</span><span style="font-size:8.5px;font-weight:700;letter-spacing:.02em;white-space:nowrap">${esc(label)}</span></button>`;
+    const abtn=(box,act,icon,label,on)=>`<button class="ky-bx" data-box="${box}" data-act="${act}" data-key="${key}" type="button" title="${esc(label)}" style="flex:1 1 0;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:52px;height:44px;padding:0 6px;border-radius:9px;cursor:pointer;font:inherit;${on?'border:1px solid #156e3a;background:linear-gradient(150deg,#2bbf6c,#0f6e3a);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 3px 7px -3px rgba(15,110,58,.5)':'border:1px solid rgba(20,24,34,.2);background:linear-gradient(180deg,#fff,#dbe0e9);color:#334155;box-shadow:inset 0 1.5px 0 rgba(255,255,255,.95),0 3px 6px -3px rgba(20,30,60,.3)'}"><span style="font-size:15px;line-height:1">${icon}</span><span style="font-size:8.5px;font-weight:700;letter-spacing:.02em;white-space:nowrap">${esc(label)}</span></button>`;
     // Compact talna-reitur með stöðu-lit á ramma (grár/blár/grænn).
     const cf=(f,val,w,unit,st)=>{ const bd=boxSt(st).bd; return `<span style="display:inline-flex;align-items:center;gap:3px"><input class="ky-bf" data-f="${f}" data-key="${key}" value="${val}" inputmode="decimal" style="width:${w}px;padding:4px 6px;border:1.5px solid ${bd};border-radius:7px;font:inherit;font-size:12.5px;text-align:right;background:#fff">${unit?`<span style="font-size:10px;color:#64748b">${unit}</span>`:''}</span>`; };
     // Hnappur með örsmárri tölu undir (t.d. klst / rukkuð upphæð).
@@ -11761,7 +11767,7 @@ async function renderKrofuyfirlit(t){
         ? `<div style="margin-top:9px;color:#0f7a43;font-size:11px;font-weight:600;line-height:1.4">🏦 Banki: ${fmtKr(inv.bank.amount)} · ${esc(inv.bank.date||'—')}${inv.bank.text?' · '+esc(inv.bank.text):''}${inv.bank.extra>0?' <span style="color:#b45309">(+'+fmtKr(inv.bank.extra)+' vextir)</span>':''}</div>`
         : '';
       return `
-        <div class="ky-invrow">
+        <div class="ky-invrow${tier===2?' ky-t2':''}">
           <div class="ky-row${lp?' ky-likely':''}" data-key="${esc(inv.inv_key)}" style="display:flex;align-items:center;gap:11px;${tier===2?'flex-wrap:wrap;':''}padding:9px 18px;border-bottom:1px solid #f3f5f9;font-size:12.5px;cursor:pointer;${inv._hidden?'opacity:.5':''}">
             <span class="ky-caret2" style="width:11px;flex-shrink:0;color:#b6c0cc;font-size:11px;user-select:none">▸</span>
             <div style="width:200px;flex-shrink:0;line-height:1.2">
@@ -11824,7 +11830,7 @@ async function renderKrofuyfirlit(t){
     if(!companies.length) return head + `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:26px;text-align:center;color:#94a3b8;font-style:italic">${state.search?'Ekkert passar við leit':'Engin fyrirtæki 🎉'}</div>`;
     const mini=(ic,label,val,col)=> `<span class="ky-num" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:${col};background:${col}14;border:1px solid ${col}33;border-radius:99px;padding:2px 9px">${ic} ${label} ${fmtKr(val)}</span>`;
     const tierBlock=(d,tier,ic,title,col)=> !d ? '' : `
-      <div style="border-top:1px solid #eef1f6">
+      <div class="${tier===2?'ky-tblock2':''}" style="border-top:1px solid #eef1f6">
         <div style="display:flex;align-items:center;gap:8px;padding:8px 18px;background:#fafbfe;font-size:11px;font-weight:800;letter-spacing:.02em;color:${col}">
           <span>${ic} ${title}</span>
           <span class="ky-num" style="margin-left:auto;color:#11141c">${fmtKr(d.outstanding_kr)}</span>
@@ -11922,7 +11928,7 @@ async function renderKrofuyfirlit(t){
         ? `<div style="margin-top:9px;color:#0f7a43;font-size:11px;font-weight:600;line-height:1.4">🏦 Banki: ${fmtKr(inv.bank.amount)} · ${esc(inv.bank.date||'—')}${inv.bank.text?' · '+esc(inv.bank.text):''}${inv.bank.extra>0?' <span style="color:#b45309">(+'+fmtKr(inv.bank.extra)+' vextir)</span>':''}</div>`
         : '';
       return `
-        <div class="ky-invrow">
+        <div class="ky-invrow${tier===2?' ky-t2':''}">
           <div class="ky-row${lp?' ky-likely':''}" data-key="${esc(inv.inv_key)}" style="display:flex;align-items:center;gap:11px;${tier===2?'flex-wrap:wrap;':''}padding:9px 18px;border-bottom:1px solid #f3f5f9;font-size:12.5px;cursor:pointer;${inv._hidden?'opacity:.5':''}">
             <span class="ky-caret2" style="width:11px;flex-shrink:0;color:#b6c0cc;font-size:11px;user-select:none">▸</span>
             <div style="width:200px;flex-shrink:0;line-height:1.2">
