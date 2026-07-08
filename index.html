@@ -11946,12 +11946,10 @@ async function renderKrofuyfirlit(t){
             </div>
           </div>
           <div style="display:flex;gap:10px;align-items:center">
-            ${c.t[1]?allPaidBtn(c.t[1].invoices):''}
             <div style="text-align:right">
               <div style="font-size:10px;color:#8a93a5;text-transform:uppercase;letter-spacing:.1em;font-weight:700">Samtals</div>
               <div class="ky-num" style="font-size:22px;font-weight:700;color:#2f5fe0">${fmtKr(c.total)}</div>
             </div>
-            <button class="kyf-copy" data-value="${esc(String(Math.round(c.total)))}" type="button" title="Afrita samtölu" style="width:38px;height:38px;background:#f1f5f9;color:#475569;border:1px solid rgba(20,24,34,.14);border-radius:10px;cursor:pointer;font:inherit;font-size:13px">📋</button>
           </div>
         </div>
         <div class="ky-card-rows" style="display:block">
