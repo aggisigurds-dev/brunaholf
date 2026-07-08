@@ -12216,8 +12216,11 @@ async function renderKrofuyfirlit(t){
       inp.addEventListener('change', save);
       inp.addEventListener('blur', save);
     });
-    listEl.querySelectorAll('.ky-act').forEach(b=>b.addEventListener('click', async(e)=>{
-      e.stopPropagation();
+    // 2026-07-08: .ky-act + .ky-bx fara gegnum EINN delegated listener á
+    // listEl (festur einu sinni, lifir öll innerHTML-re-render af) — á síma
+    // Agnars gerðu takkarnir stundum ekkert, sem bendir til að per-takka
+    // wiring-passinn hafi ekki náð að festast (re-render/villa á milli).
+    async function handleKyAct(b){
       const key = b.dataset.key, act = b.dataset.act;
       if(!key || b.disabled) return;
       b.disabled = true;
@@ -12233,7 +12236,7 @@ async function renderKrofuyfirlit(t){
       try{ await fetch('/api/krofur-yfirlit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)}); }catch(_){}
       if(act==='paid'){ paidSet.add(key); setTimeout(renderList, 260); }
       else { hiddenSet.add(key); persistHidden(); setInvHidden(key,true); renderList(); }
-    }));
+    }
 
     // ── Ósendar-vinnuflæði (lárétt skref-borð) ──────────────────────────────
     function wfPatchLocal(key, patch){
@@ -12311,10 +12314,12 @@ async function renderKrofuyfirlit(t){
         renderList();   // uppfæra afleiddar tölur (Efnislisti samstillist við Tímar/Redder)
       });
     });
-    // Reita-takkar: 💾 Vista PDF · ✓ Staðfesta · ✏️ Breyta · 📤 Senda.
-    listEl.querySelectorAll('.ky-bx').forEach(b=>b.addEventListener('click', async(e)=>{
-      e.stopPropagation();
-      const key=b.dataset.key, box=b.dataset.box, act=b.dataset.act; const iv=findInv(key); if(!iv||b.disabled) return;
+    // Reita-takkar: 🕒 Tímask. · 📄 Efnisl. · ✓ Staðfesta · ✏️ Breyta · 📤 Senda.
+    async function handleKyBx(b){
+      const key=b.dataset.key, box=b.dataset.box, act=b.dataset.act;
+      if(b.disabled) return;
+      const iv=findInv(key);
+      if(!iv){ console.warn('[kyf] .ky-bx: inv fannst ekki fyrir', key); return; }
       iv.wf = Object.assign({}, iv.wf);
       // 🕒 Tímask. → Tímaskýrslu-ritill (sami og Gerð Reikninga notar).
       if(act==='opentim'){ if(typeof openTimabok==='function') openTimabok(iv.worksite, iv.work_month); return; }
@@ -12348,7 +12353,19 @@ async function renderKrofuyfirlit(t){
         }catch(err){ alert('Sending mistókst: '+((err&&err.message)||err)+'\n\n(Ath: RESEND_API_KEY þarf að vera stilltur + sendandi á staðfestu eldklar.is léni.)'); restore(); }
         return;
       }
-    }));
+    }
+    // Einn delegated listener — festur EINU SINNI á listEl (innerHTML-re-render
+    // eyðir per-takka listener-um en ekki þessum). closest() ræður við smell á
+    // icon/label inni í takkanum.
+    if(!listEl._kyDelegated){
+      listEl._kyDelegated = true;
+      listEl.addEventListener('click', async (e)=>{
+        const act = e.target.closest && e.target.closest('.ky-act');
+        if(act && listEl.contains(act)){ e.stopPropagation(); await handleKyAct(act); return; }
+        const bx = e.target.closest && e.target.closest('.ky-bx');
+        if(bx && listEl.contains(bx)){ e.stopPropagation(); await handleKyBx(bx); return; }
+      });
+    }
   }
 
   // Stale-while-revalidate skyndiminni (lifir milli síðu-flakks). Þegar notandi
