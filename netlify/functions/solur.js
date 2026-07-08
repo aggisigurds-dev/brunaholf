@@ -28,7 +28,7 @@ exports.handler = async (event) => {
 
   try {
     const [rows, credits, vrows, frows] = await Promise.all([
-      sb(`solur?select=id,num,customer_nafn,customer_id,upphaed_an_vsk,vsk_upphaed,samtals,` +
+      sb(`solur?select=id,num,customer_nafn,customer_id,upphaed_an_vsk,vsk_upphaed,samtals,afslattur,` +
         `greitt_med,athugasemdir,created_at,is_credit,credit_of,linur${filter}` +
         `&order=created_at.desc&limit=${limit}`),
       sb('solur?select=credit_of&is_credit=is.true'),
@@ -78,6 +78,10 @@ exports.handler = async (event) => {
           ex_vsk: Number(s.upphaed_an_vsk) || 0,
           vsk: Number(s.vsk_upphaed) || 0,
           total: Number(s.samtals) || 0,
+          // 2026-07-08 (afsláttar-úttekt): the sale-level discount (kr m.vsk)
+          // + per-line discount_pct/vsk_pct were dropped here — every
+          // discounted POS sale became a FULL-price dk draft.
+          afslattur: Number(s.afslattur) || 0,
           paid_with: s.greitt_med || '',
           date: (s.created_at || '').slice(0, 10),
           lines: Array.isArray(s.linur) ? s.linur.map((l) => ({
@@ -85,6 +89,8 @@ exports.handler = async (event) => {
             desc: l.desc || '',
             qty: Number(l.qty) || 0,
             price: Number(l.unit_price_ex_vat) || 0,
+            vsk_pct: l.vsk_pct == null ? 24 : Number(l.vsk_pct) || 0,
+            discount_pct: Math.max(0, Math.min(100, Number(l.discount_pct) || 0)),
           })) : [],
         };
       });

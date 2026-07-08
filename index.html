@@ -8252,7 +8252,7 @@ async function renderTilbunirReikningar(t){
       <div class="meta"><div>${(()=>{const _k=(d.worksite_name||'')+'|'+(d.work_month||''),_t=(state.ui&&state.ui.gr_date_text&&state.ui.gr_date_text[_k])||'';return _t?esc(_t):(dmy(fra)+' til '+dmy(til));})()}</div><div class="ws">${esc(d.worksite_name)}</div>${payer?`<div class="cust">${payer}</div>`:''}</div>
       <table><thead><tr><td></td><td class="p">án vsk</td><td class="m">magn</td><td class="t">samtals</td></tr></thead><tbody>
         ${body}
-        ${(()=>{const _k=(d.worksite_name||'')+'|'+(d.work_month||''),_p=(state.ui&&state.ui.gr_discount&&state.ui.gr_discount[_k])||0; if(!_p) return ''; const _d=Math.round(net*_p/(100-_p)); return `<tr><td class="l">Afsláttur (${_p}%)</td><td class="p"></td><td class="m"></td><td class="t">−${kr(_d)}</td></tr>`;})()}
+        ${(()=>{const _k=(d.worksite_name||'')+'|'+(d.work_month||''),_p=(d.discount_pct!=null?+d.discount_pct:((state.ui&&state.ui.gr_discount&&state.ui.gr_discount[_k])||0))||0; if(!_p) return ''; const _d=Math.round(net*_p/(100-_p)); return `<tr><td class="l">Afsláttur (${_p}%)</td><td class="p"></td><td class="m"></td><td class="t">−${kr(_d)}</td></tr>`;})()}
         <tr class="sub"><td colspan="3">Samtals án vsk</td><td class="t">${kr(net)}</td></tr>
         <tr class="sub"><td colspan="3">vsk</td><td class="t">${kr(vsk)}</td></tr>
         <tr class="grand"><td colspan="3">samtals með vsk</td><td class="t">${kr(total)}</td></tr>
@@ -9059,6 +9059,9 @@ async function renderGerdReikninga(t){
             smahlutagjald: c.sma, stadfesting: c.stadf,
             materials_jsonb: c.matLines, materials_total: c.matSum,
             net_an_vsk: c.net, vsk_amount: c.vsk, total_m_vsk: c.total,
+            // afsláttur vistast Á drögunum (ekki bara í UI-state) svo
+            // endurprentun stemmi á öllum tækjum.
+            discount_pct: (state.ui.gr_discount||{})[name+'|'+month] || 0,
             status: existing?.status || 'draft',
             notes: document.getElementById('gr-notes').value.trim() || null,
             updated_by: 'gerd-reikninga',
@@ -9162,9 +9165,12 @@ async function renderGerdReikninga(t){
     bg.addEventListener('click',e=>{if(e.target===bg)close();});
     document.getElementById('gg-x').onclick=close;
     const $b = document.getElementById('gg-body');
+    // 2026-07-08: d hoisted out of the NLSH branch — the Dalvegur/Heklureitur
+    // branch reads it too (savedBands restore) and threw "d is not defined",
+    // killing the whole uppgjör modal for non-NLSH gata worksites.
+    const d = draftFor(name);
 
     if(isNLSH){
-      const d = draftFor(name);
       try{
         const resp = await fetch(`/api/nlsh-uppgjor?month=${encodeURIComponent(month)}`);
         const data = await resp.json();

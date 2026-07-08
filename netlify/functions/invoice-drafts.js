@@ -54,6 +54,11 @@ exports.handler = async (event) => {
       'net_an_vsk', 'vsk_amount', 'total_m_vsk',
       'status', 'payday_invoice_id', 'notes', 'updated_by',
       'kennitala', 'heimilisfang',
+      // 2026-07-08 (afsláttar-úttekt): persist the Gerð Reikninga discount so
+      // a saved draft reprints correctly on any device — it used to be
+      // reconstructed from the CURRENT UI state (state.ui.gr_discount), so a
+      // changed/unsyncced pct printed a sheet that didn't add up.
+      'discount_pct',
     ];
     const payload = { updated_at: new Date().toISOString() };
     for (const k of allowed) if (body[k] !== undefined) payload[k] = body[k];
