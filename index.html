@@ -11860,12 +11860,12 @@ async function renderKrofuyfirlit(t){
           <div class="ky-row${lp?' ky-likely':''}" data-key="${esc(inv.inv_key)}" style="display:flex;align-items:center;gap:11px;padding:9px 18px;border-bottom:1px solid #f3f5f9;font-size:12.5px;cursor:pointer;${inv._hidden?'opacity:.5':''}">
             <span class="ky-caret2" style="width:11px;flex-shrink:0;color:#b6c0cc;font-size:11px;user-select:none">▸</span>
             <div style="width:200px;flex-shrink:0;line-height:1.2">
-              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                 <span class="ky-num" style="color:#1d4ed8;font-weight:700">${rnum}</span>
                 ${mtagHtml}
                 ${tier===1?agingPill(inv.days_overdue):''}
               </div>
-              <div style="color:#b6c0cc;font-size:10.5px">${sub}${tier===1&&inv.gjalddagi?` · <span class="ky-num" style="color:#8a93a5">${esc(inv.gjalddagi)}</span>`:''}</div>
+              <div style="color:#b6c0cc;font-size:10.5px;margin-top:3px">${tier===1&&inv.gjalddagi?`<span class="ky-num" style="color:#8a93a5">${esc(inv.gjalddagi)}</span> &nbsp;·&nbsp; `:''}${sub}</div>
               ${bankLine}
               ${tier===2?noteInline:''}
             </div>
@@ -12026,12 +12026,12 @@ async function renderKrofuyfirlit(t){
           <div class="ky-row${lp?' ky-likely':''}" data-key="${esc(inv.inv_key)}" style="display:flex;align-items:center;gap:11px;padding:9px 18px;border-bottom:1px solid #f3f5f9;font-size:12.5px;cursor:pointer;${inv._hidden?'opacity:.5':''}">
             <span class="ky-caret2" style="width:11px;flex-shrink:0;color:#b6c0cc;font-size:11px;user-select:none">▸</span>
             <div style="width:200px;flex-shrink:0;line-height:1.2">
-              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                 <span class="ky-num" style="color:#1d4ed8;font-weight:700">${rnum}</span>
                 ${mtagHtml}
                 ${tier===1?agingPill(inv.days_overdue):''}
               </div>
-              <div style="color:#b6c0cc;font-size:10.5px">${sub}${tier===1&&inv.gjalddagi?` · <span class="ky-num" style="color:#8a93a5">${esc(inv.gjalddagi)}</span>`:''}</div>
+              <div style="color:#b6c0cc;font-size:10.5px;margin-top:3px">${tier===1&&inv.gjalddagi?`<span class="ky-num" style="color:#8a93a5">${esc(inv.gjalddagi)}</span> &nbsp;·&nbsp; `:''}${sub}</div>
               ${bankLine}
               ${tier===2?noteInline:''}
             </div>
