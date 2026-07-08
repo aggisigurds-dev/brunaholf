@@ -11857,13 +11857,13 @@ async function renderKrofuyfirlit(t){
               <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
                 <span class="ky-num" style="color:#1d4ed8;font-weight:700">${rnum}</span>
                 ${mtagHtml}
+                ${tier===1?agingPill(inv.days_overdue):''}
               </div>
-              <div style="color:#b6c0cc;font-size:10.5px">${sub}</div>
+              <div style="color:#b6c0cc;font-size:10.5px">${sub}${tier===1&&inv.gjalddagi?` · <span class="ky-num" style="color:#8a93a5">${esc(inv.gjalddagi)}</span>`:''}</div>
               ${bankLine}
               ${tier===2?noteInline:''}
             </div>
-            ${tier===2?'<span style="flex:1 1 0;min-width:0"></span>':`<div style="width:84px;flex-shrink:0" class="ky-num"><div style="color:#64748b;font-size:11px">${esc(inv.gjalddagi||'—')}</div></div>`}
-            ${tier===1?agingPill(inv.days_overdue):''}
+            ${tier===2?'<span style="flex:1 1 0;min-width:0"></span>':''}
             ${noteHtml}
             <span class="ky-num" style="width:104px;text-align:right;font-weight:700;color:#11141c;white-space:nowrap;flex-shrink:0">${fmtKr(inv.amount)}</span>
             <div style="display:flex;gap:6px;flex-shrink:0">${actChips(inv, tier)}</div>
@@ -12023,13 +12023,13 @@ async function renderKrofuyfirlit(t){
               <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
                 <span class="ky-num" style="color:#1d4ed8;font-weight:700">${rnum}</span>
                 ${mtagHtml}
+                ${tier===1?agingPill(inv.days_overdue):''}
               </div>
-              <div style="color:#b6c0cc;font-size:10.5px">${sub}</div>
+              <div style="color:#b6c0cc;font-size:10.5px">${sub}${tier===1&&inv.gjalddagi?` · <span class="ky-num" style="color:#8a93a5">${esc(inv.gjalddagi)}</span>`:''}</div>
               ${bankLine}
               ${tier===2?noteInline:''}
             </div>
-            ${tier===2?'<span style="flex:1 1 0;min-width:0"></span>':`<div style="width:84px;flex-shrink:0" class="ky-num"><div style="color:#64748b;font-size:11px">${esc(inv.gjalddagi||'—')}</div></div>`}
-            ${tier===1?agingPill(inv.days_overdue):''}
+            ${tier===2?'<span style="flex:1 1 0;min-width:0"></span>':''}
             ${noteHtml}
             <span class="ky-num" style="width:104px;text-align:right;font-weight:700;color:#11141c;white-space:nowrap;flex-shrink:0">${fmtKr(inv.amount)}</span>
             <div style="display:flex;gap:6px;flex-shrink:0">${actChips(inv, tier)}</div>
