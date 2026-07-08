@@ -11510,7 +11510,8 @@ async function renderKrofuyfirlit(t){
         .kyf-wrap .ky-card-rows > div.ky-tblock2{min-width:0}
         .kyf-wrap .ky-invrow.ky-t2{min-width:0;width:100%}
         .kyf-wrap .ky-invrow.ky-t2 .ky-row{min-width:0;flex-wrap:wrap}
-        .kyf-wrap .ky-invrow.ky-t2 .ky-wf-boxes{max-width:100%!important}
+        /* Sleppa 41px innskotinu á síma svo allir 5 takkarnir passi á EINA línu. */
+        .kyf-wrap .ky-invrow.ky-t2 .ky-wf-boxes{max-width:100%!important;padding-left:0!important;gap:4px!important}
       }
     </style>`;
 
@@ -11711,8 +11712,11 @@ async function renderKrofuyfirlit(t){
     const _docs = (n.ws&&n.wm) ? (EFDOCS[n.ws+'|'+n.wm]||[]) : [];
     const timDoc = _docs.find(d=>d.doc_type==='timabok_pdf'), efnDoc = _docs.find(d=>d.doc_type!=='timabok_pdf');
     const conf = !!n.wf.confirmed;
-    // Compact merktur hnappur (icon yfir, örsmár texti undir) — grænn þegar `on`.
-    const abtn=(box,act,icon,label,on)=>`<button class="ky-bx" data-box="${box}" data-act="${act}" data-key="${key}" type="button" title="${esc(label)}" style="flex:1 1 0;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:52px;height:44px;padding:0 6px;border-radius:9px;cursor:pointer;font:inherit;${on?'border:1px solid #156e3a;background:linear-gradient(150deg,#2bbf6c,#0f6e3a);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 3px 7px -3px rgba(15,110,58,.5)':'border:1px solid rgba(20,24,34,.2);background:linear-gradient(180deg,#fff,#dbe0e9);color:#334155;box-shadow:inset 0 1.5px 0 rgba(255,255,255,.95),0 3px 6px -3px rgba(20,30,60,.3)'}"><span style="font-size:15px;line-height:1">${icon}</span><span style="font-size:8.5px;font-weight:700;letter-spacing:.02em;white-space:nowrap">${esc(label)}</span></button>`;
+    // Ferningstakki EINS OG á Slökkvitæki #166 (viðmiðunar-myndin): föst stærð
+    // (~64px), hvítur með LITUÐUM texta (Greitt grænt / Reikning blátt / Breyta
+    // appelsínugult), fylltur grænn þegar `on`. ENGIN teygja (flex-grow) — þeir
+    // mynda þéttan klasa eins og 6-takka röðin í viðmiðinu.
+    const abtn=(box,act,icon,label,on,col)=>`<button class="ky-bx" data-box="${box}" data-act="${act}" data-key="${key}" type="button" title="${esc(label)}" style="flex:0 0 auto;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:64px;height:54px;padding:0 4px;border-radius:13px;cursor:pointer;font:inherit;${on?'border:1px solid #156e3a;background:linear-gradient(160deg,#27ab61,#0f7a43);color:#fff;box-shadow:0 3px 8px -3px rgba(15,110,58,.55)':'border:1px solid #e2e8f0;background:linear-gradient(180deg,#ffffff,#f4f6f9);color:'+(col||'#334155')+';box-shadow:0 1px 3px rgba(15,23,42,.08),0 3px 8px -5px rgba(15,23,42,.18)'}"><span style="font-size:17px;line-height:1">${icon}</span><span style="font-size:10px;font-weight:700;letter-spacing:.01em;white-space:nowrap;color:${on?'#fff':(col||'#334155')}">${esc(label)}</span></button>`;
     // Compact talna-reitur með stöðu-lit á ramma (grár/blár/grænn).
     const cf=(f,val,w,unit,st)=>{ const bd=boxSt(st).bd; return `<span style="display:inline-flex;align-items:center;gap:3px"><input class="ky-bf" data-f="${f}" data-key="${key}" value="${val}" inputmode="decimal" style="width:${w}px;padding:4px 6px;border:1.5px solid ${bd};border-radius:7px;font:inherit;font-size:12.5px;text-align:right;background:#fff">${unit?`<span style="font-size:10px;color:#64748b">${unit}</span>`:''}</span>`; };
     // Hnappur með örsmárri tölu undir (t.d. klst / rukkuð upphæð).
@@ -11725,12 +11729,12 @@ async function renderKrofuyfirlit(t){
     // Tölurnar (klst · efni · heild) á EINNI línu undir — svo takkarnir sjálfir
     // þjappast saman í eina þétta röð (annars verður hver takki að stökum dálki).
     const summary = `<div style="flex:1 1 100%;font-size:10px;color:#64748b;font-weight:700;padding-left:1px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">🕒 ${hoursDisp} klst · 🧱 ${numIS(n.redder)} kr efni · 📄 ${numIS(n.total)} kr m.vsk</div>`;
-    return `<div class="ky-wf-boxes" style="display:flex;gap:2px;flex-wrap:wrap;align-items:center;flex:1 1 100%;max-width:min(560px,calc(100vw - 80px));justify-content:flex-start;padding:7px 0 1px 41px;margin-top:5px;border-top:1px dashed #eef1f6">
-      ${abtn('tim','opentim','🕒','Tímask.',!!timDoc)}${pdfLink(timDoc?bhDocUrl(timDoc):null,'Opna Tímaskýrslu PDF')}
-      ${abtn('efn','openefn','📄','Efnisl.',!!efnDoc)}${pdfLink(efnDoc?bhDocUrl(efnDoc):null,'Opna Efnislista PDF')}
-      ${abtn('conf','confirm','✓','Staðfest',conf)}
-      ${conf?abtn('conf','breyta','✏️','Breyta',false):''}
-      ${abtn('send','send','📤',inv.sent?'Sent ✓':'Senda',inv.sent)}
+    return `<div class="ky-wf-boxes" style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;flex:1 1 100%;max-width:100%;justify-content:flex-start;padding:7px 0 1px 41px;margin-top:5px;border-top:1px dashed #eef1f6">
+      ${abtn('tim','opentim','🕒','Tímask.',!!timDoc,'#2563eb')}${pdfLink(timDoc?bhDocUrl(timDoc):null,'Opna Tímaskýrslu PDF')}
+      ${abtn('efn','openefn','📄','Efnisl.',!!efnDoc,'#0f766e')}${pdfLink(efnDoc?bhDocUrl(efnDoc):null,'Opna Efnislista PDF')}
+      ${abtn('conf','confirm','✓','Staðfest',conf,'#16a34a')}
+      ${conf?abtn('conf','breyta','✏️','Breyta',false,'#ea580c'):''}
+      ${abtn('send','send','📤',inv.sent?'Sent ✓':'Senda',inv.sent,'#16a34a')}
       ${inv.sent?`<span style="align-self:center;margin-left:4px">${sentTrail}</span>`:''}
       ${summary}
     </div>`;
