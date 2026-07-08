@@ -64,6 +64,15 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
 - `inbox` — email digest (renderInbox)
 - `spurningar` — question-email triage (renderSpurningar)
 - `timavera` — hours dashboard (renderTimavera, ~line 1670)
+- `tvmaeting` — **🕒 Mæting · verkstaðir** (renderTvMaeting, situr undir Tímaveru):
+  hvenær starfsmenn mættu og hættu síðustu daga + verkstaðir. Eitt spjald per dag
+  (nýjast efst, „Í dag/Í gær"), röð per starfsmann: 🟢 mætti (fyrsta time_in) ·
+  🔴 hætti (síðasta time_out) · klst · verkstaða-chippar (hver með eigin
+  inn–út/klst). Dagafjöldi 3/8/14/31 (`state.ui.tvm_days`). Endpoint
+  `/api/timavera-dagar?days=N` (`timavera-dagar.js`, les `timavera_entries` —
+  NB ólíkt `timavera-maeting.js` sem er dagurinn-í-dag úr Mæting-sheetinu).
+  Líka síða í Slökkvitæki **Fjármál-appinu** (patch 261 `br-maeting`,
+  `?embed=1#tvmaeting`).
 - `verdsamanburdur` — Verðsamanburður / competitor pricing (renderCompetitors)
 - `verkstadir` — worksite billing audit (renderWorksites, ~line 2175)
 - `skuldunautar` — Skuldunautar (AR snapshot, renderSkuldunautar). `/api/debtors`:

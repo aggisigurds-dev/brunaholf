@@ -303,6 +303,13 @@
   to = "/.netlify/functions/timabok"
   status = 200
 
+# Tímavera-dagar — mæting + verkstaðir síðustu daga (hvenær staff mætti/hætti)
+#   /api/timavera-dagar?days=8
+[[redirects]]
+  from = "/api/timavera-dagar"
+  to = "/.netlify/functions/timavera-dagar"
+  status = 200
+
 # Generic Verðskrá hole-size rates (Dalvegur 30 / Heklureitur)
 [[redirects]]
   from = "/api/hole-rates"

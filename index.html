@@ -1739,6 +1739,7 @@ const DEFAULT_STATE = {
     {id:'inbox',      label:'Inbox',      icon:'📧'},
     {id:'spurningar', label:'Spurningar', icon:'⚠'},
     {id:'timavera',   label:'Tímavera',   icon:'⏱'},
+    {id:'tvmaeting',  label:'Mæting · verkstaðir', icon:'🕒'},
     {id:'verdsamanburdur', label:'Verðsamanburður', icon:'⚖️'},
     {id:'verkstadir',  label:'Verkstaðir',  icon:'🏗'},
     {id:'skuldunautar', label:'Skuldunautar', icon:'💸'},
@@ -2023,7 +2024,7 @@ function clearDataCache(){
 function ensureNewTabs(s){
   if(!s || !Array.isArray(s.tabs)) return;
   if(!Array.isArray(s.bakendiLinks)) s.bakendiLinks = BAKENDI_LINK_SEED.map(x=>({...x}));
-  ['dagurinn','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','verdsamanburdur','verkstadir','skuldunautar','krofuyfirlit','krofur','hreyfingaryfirlit','nlsh','spurningar','sjalfvirkni','vefryni','skodanir','bakendi'].forEach(id=>{
+  ['dagurinn','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','tvmaeting','verdsamanburdur','verkstadir','skuldunautar','krofuyfirlit','krofur','hreyfingaryfirlit','nlsh','spurningar','sjalfvirkni','vefryni','skodanir','bakendi'].forEach(id=>{
     if(!s.tabs.find(t=>t.id===id)){
       const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
       if(d){
@@ -2042,6 +2043,10 @@ function ensureNewTabs(s){
           const idx = s.tabs.findIndex(t=>t.id==='bakendi');
           const idx2 = s.tabs.findIndex(t=>t.id==='stillingar');
           target = idx >= 0 ? idx : (idx2 >= 0 ? idx2 : -1);
+        } else if(id === 'tvmaeting'){
+          // Mæting · verkstaðir situr beint undir Tímaveru.
+          const tvIdx = s.tabs.findIndex(t=>t.id==='timavera');
+          target = tvIdx >= 0 ? tvIdx + 1 : -1;
         } else if(id === 'vefryni'){
           // Vefrýni sits just above Bakendi (else above Stillingar).
           const idx = s.tabs.findIndex(t=>t.id==='bakendi');
@@ -2458,6 +2463,7 @@ function render(){
   if(t.id==='inbox') return renderInbox(t);
   if(t.id==='spurningar') return renderSpurningar(t);
   if(t.id==='timavera') return renderTimavera(t);
+  if(t.id==='tvmaeting') return renderTvMaeting(t);
   if(t.id==='verdsamanburdur') return renderCompetitors(t);
   if(t.id==='verkstadir') return renderWorksites(t);
   if(t.id==='skuldunautar') return renderSkuldunautar(t);
@@ -11354,6 +11360,80 @@ async function renderKrofur(t){
 // cards + gradient hero cards + white grouped debtor cards + aging pills +
 // ky-abtn status chips), fed by brunaholf's /api/debtors, grouped/sorted by
 // skuldunautur. No Payday write actions yet — that connection comes later.
+// ── 🕒 Mæting · verkstaðir — hvenær starfsmenn mættu/hættu síðustu daga ──────
+// Les /api/timavera-dagar (timavera_entries). Eitt spjald per dag, röð per
+// starfsmann: 🟢 mætti (fyrsta inn) · 🔴 hætti (síðasta út) · klst · verkstaðir.
+async function renderTvMaeting(t){
+  const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const WD = ['Sunnudagur','Mánudagur','Þriðjudagur','Miðvikudagur','Fimmtudagur','Föstudagur','Laugardagur'];
+  const MN = ['jan','feb','mar','apr','maí','jún','júl','ágú','sep','okt','nóv','des'];
+  const dayLbl = iso => { const d=new Date(iso+'T00:00:00'); if(isNaN(d)) return iso;
+    const today=new Date(); today.setHours(0,0,0,0);
+    const diff=Math.round((today-d)/864e5);
+    const base=WD[d.getDay()]+' '+d.getDate()+'. '+MN[d.getMonth()];
+    return diff===0?('Í dag — '+base):diff===1?('Í gær — '+base):base; };
+  const hf = n => (Math.round((Number(n)||0)*100)/100).toLocaleString('is-IS');
+  state.ui.tvm_days = state.ui.tvm_days || 8;
+
+  $view.innerHTML = `
+    <div style="max-width:860px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+        <div>
+          <h1 style="margin:0;font-size:24px;font-weight:800;color:#0f172a">🕒 Mæting · verkstaðir</h1>
+          <div style="font-size:12px;color:#64748b;margin-top:2px" id="tvm-meta">Hvenær starfsmenn mættu og hættu — beint úr Tímaveru · Sæki…</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap" id="tvm-range">
+          ${[3,8,14,31].map(n=>`<button data-d="${n}" type="button" style="padding:7px 13px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;${n===state.ui.tvm_days?'border:1px solid #1d4ed8;background:#1d4ed8;color:#fff':'border:1px solid #cbd5e1;background:#fff;color:#475569'}">${n} d.</button>`).join('')}
+          <button id="tvm-refresh" type="button" style="padding:7px 13px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;border:1px solid #cbd5e1;background:#fff;color:#475569">↻</button>
+        </div>
+      </div>
+      <div id="tvm-list"><div style="padding:32px;text-align:center;color:#94a3b8">Sæki mætingu…</div></div>
+    </div>`;
+
+  async function load(){
+    const list = $view.querySelector('#tvm-list'); const meta = $view.querySelector('#tvm-meta');
+    try{
+      const r = await fetch('/api/timavera-dagar?days='+state.ui.tvm_days, {cache:'no-store'});
+      const d = await r.json();
+      if(!r.ok || d.error) throw new Error(d.error||('HTTP '+r.status));
+      if(meta) meta.textContent = 'Hvenær starfsmenn mættu og hættu — beint úr Tímaveru · síðustu '+d.days_back+' dagar';
+      if(!(d.days||[]).length){ list.innerHTML = '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:26px;text-align:center;color:#94a3b8;font-style:italic">Engar tímafærslur á tímabilinu</div>'; return; }
+      list.innerHTML = d.days.map(day=>`
+        <div style="background:#fff;border:1px solid rgba(20,24,34,.08);border-radius:16px;margin-bottom:14px;overflow:hidden;box-shadow:0 10px 28px -16px rgba(25,35,60,.16)">
+          <div style="padding:12px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid #eef1f6;background:#fafbfe">
+            <div style="font-weight:800;color:#11141c;font-size:15px">${esc(dayLbl(day.date))}</div>
+            <div style="font-size:12px;color:#64748b;font-weight:700">${day.staff.length} starfsm. · <span style="color:#11141c">${hf(day.total_hours)} klst</span></div>
+          </div>
+          <div style="overflow-x:auto">
+            <table style="width:100%;border-collapse:collapse;font-size:13px;min-width:520px">
+              <thead><tr style="color:#8a93a5;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em">
+                <th style="text-align:left;padding:7px 10px 7px 18px">Starfsmaður</th>
+                <th style="text-align:left;padding:7px 10px">🟢 Mætti</th>
+                <th style="text-align:left;padding:7px 10px">🔴 Hætti</th>
+                <th style="text-align:right;padding:7px 10px">Klst</th>
+                <th style="text-align:left;padding:7px 18px 7px 10px">Verkstaðir</th>
+              </tr></thead>
+              <tbody>${day.staff.map(s=>`
+                <tr style="border-top:1px solid #f3f5f9">
+                  <td style="padding:8px 10px 8px 18px;font-weight:700;color:#0f172a;white-space:nowrap;text-transform:capitalize">${esc(s.employee)}</td>
+                  <td style="padding:8px 10px;font-weight:700;color:#047857;white-space:nowrap" class="ky-num">${esc(s.in||'—')}</td>
+                  <td style="padding:8px 10px;font-weight:700;color:#be123c;white-space:nowrap" class="ky-num">${esc(s.out||'—')}</td>
+                  <td style="padding:8px 10px;text-align:right;font-weight:700;color:#11141c;white-space:nowrap" class="ky-num">${hf(s.hours)}</td>
+                  <td style="padding:8px 18px 8px 10px;color:#475569">${s.projects.map(p=>`<span style="display:inline-block;background:#eef2f7;border-radius:99px;padding:1px 9px;margin:1px 3px 1px 0;font-size:11.5px;white-space:nowrap">${esc(p.project)} <span style="color:#8a93a5">${hf(p.hours)}klst${p.in?' · '+esc(p.in)+'–'+esc(p.out||'?'):''}</span></span>`).join('')}</td>
+                </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>`).join('');
+    }catch(e){
+      list.innerHTML = '<div style="padding:26px;color:#dc2626;background:#fff;border:1px solid #fecaca;border-radius:12px">Gat ekki sótt mætingu: '+esc(e.message||String(e))+'</div>';
+    }
+  }
+  $view.querySelectorAll('#tvm-range [data-d]').forEach(b=>b.addEventListener('click',()=>{ state.ui.tvm_days=+b.dataset.d; save(); render(); }));
+  const rf = $view.querySelector('#tvm-refresh'); if(rf) rf.addEventListener('click', load);
+  load();
+}
+
 async function renderKrofuyfirlit(t){
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fmtKr = n => (Math.round(Number(n)||0)).toLocaleString('is-IS').replace(/,/g,'.') + ' kr';
