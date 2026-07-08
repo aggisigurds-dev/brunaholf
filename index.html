@@ -3550,6 +3550,21 @@ function renderBakendi(t){
         <span id="bk-links-status" style="font-size:12px;color:#16a34a"></span>
       </div>
 
+      <div style="${card}">
+        <div style="display:flex;align-items:center;gap:14px">
+          <span style="${iconSq};${ICON.amber}">📂</span>
+          <div style="flex:1">
+            <div style="${titleStyle}">Velja möppu úr Google Drive</div>
+            <p style="${descStyle};margin-top:4px">Flettu í gegnum Drive eða leitaðu að möppu — sérð <b>nafnið</b>, afritar <b>ID-ið</b> í hvaða verkfæri sem er hér að neðan, eða opnar hana í Drive. Síðasta valda mappan er munuð.</p>
+          </div>
+          <span style="${chipStyle('#fef3c7','#92400e')}">Drive</span>
+        </div>
+        <div style="display:flex;gap:9px;flex-wrap:wrap;align-items:center">
+          <button id="bk-pickfolder" class="btn">📂 Opna möppuval</button>
+          <span id="bk-pickfolder-out" style="font-size:13px;color:#334155;display:inline-flex;align-items:center;gap:7px;flex-wrap:wrap"></span>
+        </div>
+      </div>
+
       <!-- ══════════════════════════════════════════════════════════════════
            SECTION · Yfirferð
            ══════════════════════════════════════════════════════════════════ -->
@@ -4219,6 +4234,27 @@ function renderBakendi(t){
     if(add) add.onclick = ()=>{ state.bakendiLinks = collectLinkRows().concat([{label:'', url:''}]); save(); renderBakendiLinks(); };
   }
   renderBakendiLinks();
+
+  // ── 📂 Drive-möppuval (verkefnalisti-beiðni 2026-07-05) ──────────────────
+  (function(){
+    const $pf = document.getElementById('bk-pickfolder');
+    const $pfOut = document.getElementById('bk-pickfolder-out');
+    if(!$pf || !$pfOut) return;
+    const showPicked = (p) => {
+      if(!p || !p.id){ $pfOut.innerHTML=''; return; }
+      $pfOut.innerHTML = '📁 <b>'+escapeHtml(p.name||'—')+'</b>'+
+        '<code style="font-size:11px;background:#f1f5f9;padding:2px 6px;border-radius:6px">'+escapeHtml(p.id)+'</code>'+
+        '<button type="button" class="btn" id="bk-pf-copy" style="padding:3px 10px;font-size:11.5px">📋 Afrita ID</button>'+
+        '<a href="https://drive.google.com/drive/folders/'+encodeURIComponent(p.id)+'" target="_blank" rel="noopener" style="font-size:11.5px">🔗 Opna í Drive</a>';
+      const cb=document.getElementById('bk-pf-copy');
+      if(cb) cb.onclick=async()=>{ try{ await navigator.clipboard.writeText(p.id); cb.textContent='✓ Afritað'; setTimeout(()=>{ cb.textContent='📋 Afrita ID'; },1800); }catch(_){ prompt('Mappa ID:', p.id); } };
+    };
+    try{ showPicked(JSON.parse(localStorage.getItem('bk_last_folder')||'null')); }catch(_){}
+    $pf.onclick = () => openDriveFolderPicker(p => {
+      try{ localStorage.setItem('bk_last_folder', JSON.stringify(p)); }catch(_){}
+      showPicked(p);
+    });
+  })();
 
   // Friendly error: when a Google call fails because the connection expired,
   // show a one-click reconnect instead of a raw "Refresh 400".
@@ -16169,6 +16205,78 @@ function ensureGrModalCss(){
     .tbk-er span:nth-child(n+2){text-align:right;font-variant-numeric:tabular-nums}
     .tbk-eh{background:#f8fafc;font-size:10.5px;text-transform:uppercase;color:#64748b;font-weight:600}`;
   document.head.appendChild(st);
+}
+
+// 📂 Endurnýtanlegur Drive-möppuvals-gluggi (verkefnalisti-beiðni 2026-07-05):
+// fletta úr rót / leita að nafni, opna undirmöppur, velja — onPick({id,name}).
+function openDriveFolderPicker(onPick){
+  ensureGrModalCss();
+  const bg=document.createElement('div');
+  bg.className='gr-modal-bg';
+  bg.innerHTML=`<div class="gr-modal" style="display:block;width:min(560px,96vw);min-height:0"><div class="gr-form" style="width:100%;border-right:0">
+    <div class="gr-mh"><h2>📂 Velja möppu úr Google Drive</h2><button class="gr-x" id="dfp-x" type="button">×</button></div>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <input id="dfp-q" placeholder="Leita að möppu…" style="flex:1;padding:9px 11px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;font-size:13.5px">
+      <button class="gr-btn" id="dfp-search" type="button">🔍 Leita</button>
+    </div>
+    <div id="dfp-crumbs" style="font-size:12px;color:#2563eb;margin-bottom:6px;display:flex;gap:4px;flex-wrap:wrap;align-items:center"></div>
+    <div id="dfp-list" style="border:1px solid #e2e8f0;border-radius:10px;max-height:50vh;overflow-y:auto"><div class="gr-loading">Sæki möppur…</div></div>
+  </div></div>`;
+  document.body.appendChild(bg);
+  const close=()=>bg.remove();
+  bg.addEventListener('mousedown',e=>{ if(e.target===bg) close(); });
+  bg.querySelector('#dfp-x').onclick=close;
+  const $list=bg.querySelector('#dfp-list'), $crumbs=bg.querySelector('#dfp-crumbs'), $q=bg.querySelector('#dfp-q');
+  const stack=[{id:'root',name:'Drifið mitt'}];
+  const esc2=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function paintCrumbs(){
+    $crumbs.innerHTML = stack.map((s,i)=>`<span data-i="${i}" style="cursor:pointer;${i===stack.length-1?'font-weight:700;color:#0f172a':''}">${esc2(s.name)}</span>`).join('<span style="color:#94a3b8">›</span>');
+    $crumbs.querySelectorAll('[data-i]').forEach(el=>el.onclick=()=>{ stack.length=(+el.dataset.i)+1; browse(); });
+  }
+  function rows(files){
+    if(!files.length) return '<div class="gr-loading" style="padding:14px">Engar möppur.</div>';
+    return files.map(f=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #f1f5f9">
+      <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px">📁 ${esc2(f.name)}</span>
+      <button class="gr-btn" data-open="${esc2(f.id)}" data-name="${esc2(f.name)}" type="button" style="padding:4px 9px;font-size:11.5px">Opna ▸</button>
+      <button class="gr-btn gr-btn-primary" data-pick="${esc2(f.id)}" data-name="${esc2(f.name)}" type="button" style="padding:4px 9px;font-size:11.5px">✓ Velja</button>
+    </div>`).join('');
+  }
+  function wire(){
+    $list.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{ stack.push({id:b.dataset.open,name:b.dataset.name}); browse(); });
+    $list.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{ const p={id:b.dataset.pick,name:b.dataset.name}; close(); try{ onPick&&onPick(p); }catch(_){} });
+  }
+  async function browse(){
+    paintCrumbs();
+    $list.innerHTML='<div class="gr-loading">Sæki möppur…</div>';
+    try{
+      const cur=stack[stack.length-1];
+      const r=await fetch('/api/drive-folders?parent='+encodeURIComponent(cur.id)+'&limit=100');
+      const j=await r.json();
+      if(j.error) throw new Error(j.error);
+      const folders=(j.files||[]).filter(f=>f.is_folder).sort((a,b)=>String(a.name).localeCompare(String(b.name),'is'));
+      $list.innerHTML=rows(folders);
+      if(stack.length>1){
+        $list.insertAdjacentHTML('afterbegin', `<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:2px solid #e2e8f0;background:#f8fafc">
+          <span style="flex:1;font-size:12.5px;color:#475569">Þessi mappa: <b>${esc2(cur.name)}</b></span>
+          <button class="gr-btn gr-btn-primary" data-pick="${esc2(cur.id)}" data-name="${esc2(cur.name)}" type="button" style="padding:4px 9px;font-size:11.5px">✓ Velja þessa</button>
+        </div>`);
+      }
+      wire();
+    }catch(e){ $list.innerHTML='<div class="gr-loading">Villa: '+esc2(String(e&&e.message||e))+'</div>'; }
+  }
+  async function search(){
+    const q=$q.value.trim(); if(!q) return browse();
+    $crumbs.innerHTML='<span style="color:#64748b">Leitarniðurstöður — smelltu á „Opna ▸" til að fletta þaðan</span>';
+    $list.innerHTML='<div class="gr-loading">Leita…</div>';
+    try{
+      const r=await fetch('/api/drive-folders?q='+encodeURIComponent(q)+'&limit=60');
+      const j=await r.json(); if(j.error) throw new Error(j.error);
+      $list.innerHTML=rows((j.files||[]).filter(f=>f.is_folder)); wire();
+    }catch(e){ $list.innerHTML='<div class="gr-loading">Villa: '+esc2(String(e&&e.message||e))+'</div>'; }
+  }
+  bg.querySelector('#dfp-search').onclick=search;
+  $q.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); search(); } });
+  browse();
 }
 
 async function openTimabok(name, month){
