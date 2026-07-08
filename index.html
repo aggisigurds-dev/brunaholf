@@ -11505,6 +11505,13 @@ async function renderKrofuyfirlit(t){
         .kyf-wrap .ky-card-rows > div{min-width:max-content}
         .kyf-wrap .ky-invrow{min-width:max-content}
         .kyf-wrap .ky-detail{min-width:100%}
+        /* Ósendar (þrep-2) raðir: EKKI max-content — þær eiga að passa á skjáinn
+           svo takka-borðinn fylli breiddina í stað þess að skilja eftir autt bil. */
+        .kyf-wrap .ky-card-rows > div.ky-tblock2{min-width:0}
+        .kyf-wrap .ky-invrow.ky-t2{min-width:0;width:100%}
+        .kyf-wrap .ky-invrow.ky-t2 .ky-row{min-width:0;flex-wrap:wrap}
+        /* Sleppa 41px innskotinu á síma svo allir 5 takkarnir passi á EINA línu. */
+        .kyf-wrap .ky-invrow.ky-t2 .ky-wf-boxes{max-width:100%!important;padding-left:0!important;gap:4px!important}
       }
     </style>`;
 
@@ -11641,6 +11648,17 @@ async function renderKrofuyfirlit(t){
       hero('Samtals í pípunni', tot1+tot2+tot3, 'ógreitt + ósent + áætlaðar tekjur', '💰', 'linear-gradient(150deg,#6f97ff 0%,#2f5fe0 34%,#1c3d8c 60%,#0b1838 100%)', '0 26px 46px -20px rgba(20,40,120,.5)');
   }
 
+  // „✓ Allar greiddar" — grænn fjöldasend-hnappur á fyrirtækja-kort (eins og
+  // Slökkvitæki #166): merkir ALLAR ógreiddu (þrep-1) kröfur fyrirtækisins greiddar
+  // í einu — heimabanka-verkflæðið („settu í heimabanka → hreinsaðu út").
+  function allPaidBtn(t1inv){
+    const keys = (t1inv||[]).filter(i=>!i._hidden && !paidSet.has(i.inv_key)).map(i=>i.inv_key);
+    if(!keys.length) return '';
+    return '<button class="kyf-allpaid" data-keys="'+esc(keys.join('~'))+'" type="button" title="Merkja allar kröfur þessa fyrirtækis sem greiddar (heimabanki)" '+
+      'style="display:inline-flex;align-items:center;gap:6px;padding:10px 15px;border-radius:11px;border:1px solid #156e3a;background:linear-gradient(150deg,#2bbf6c,#0f6e3a);color:#fff;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 3px 8px -3px rgba(15,110,58,.5)" '+
+      'onmouseover="this.style.filter=\'brightness(1.05)\'" onmouseout="this.style.filter=\'\'">✓ Allar greiddar</button>';
+  }
+
   function actChips(inv, tier){
     const k = esc(inv.inv_key);
     // Falin röð (sýnd í gegnum „Sýna falin") → 👁 Sýna (af-fela) í stað 🙈 Fela.
@@ -11694,8 +11712,11 @@ async function renderKrofuyfirlit(t){
     const _docs = (n.ws&&n.wm) ? (EFDOCS[n.ws+'|'+n.wm]||[]) : [];
     const timDoc = _docs.find(d=>d.doc_type==='timabok_pdf'), efnDoc = _docs.find(d=>d.doc_type!=='timabok_pdf');
     const conf = !!n.wf.confirmed;
-    // Compact merktur hnappur (icon yfir, örsmár texti undir) — grænn þegar `on`.
-    const abtn=(box,act,icon,label,on)=>`<button class="ky-bx" data-box="${box}" data-act="${act}" data-key="${key}" type="button" title="${esc(label)}" style="display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:54px;height:44px;padding:0 8px;border-radius:9px;cursor:pointer;font:inherit;${on?'border:1px solid #156e3a;background:linear-gradient(150deg,#2bbf6c,#0f6e3a);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 3px 7px -3px rgba(15,110,58,.5)':'border:1px solid rgba(20,24,34,.2);background:linear-gradient(180deg,#fff,#dbe0e9);color:#334155;box-shadow:inset 0 1.5px 0 rgba(255,255,255,.95),0 3px 6px -3px rgba(20,30,60,.3)'}"><span style="font-size:15px;line-height:1">${icon}</span><span style="font-size:8.5px;font-weight:700;letter-spacing:.02em;white-space:nowrap">${esc(label)}</span></button>`;
+    // Ferningstakki EINS OG á Slökkvitæki #166 (viðmiðunar-myndin): föst stærð
+    // (~64px), hvítur með LITUÐUM texta (Greitt grænt / Reikning blátt / Breyta
+    // appelsínugult), fylltur grænn þegar `on`. ENGIN teygja (flex-grow) — þeir
+    // mynda þéttan klasa eins og 6-takka röðin í viðmiðinu.
+    const abtn=(box,act,icon,label,on,col)=>`<button class="ky-bx" data-box="${box}" data-act="${act}" data-key="${key}" type="button" title="${esc(label)}" style="flex:0 0 auto;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:64px;height:54px;padding:0 4px;border-radius:13px;cursor:pointer;font:inherit;${on?'border:1px solid #156e3a;background:linear-gradient(160deg,#27ab61,#0f7a43);color:#fff;box-shadow:0 3px 8px -3px rgba(15,110,58,.55)':'border:1px solid #e2e8f0;background:linear-gradient(180deg,#ffffff,#f4f6f9);color:'+(col||'#334155')+';box-shadow:0 1px 3px rgba(15,23,42,.08),0 3px 8px -5px rgba(15,23,42,.18)'}"><span style="font-size:17px;line-height:1">${icon}</span><span style="font-size:10px;font-weight:700;letter-spacing:.01em;white-space:nowrap;color:${on?'#fff':(col||'#334155')}">${esc(label)}</span></button>`;
     // Compact talna-reitur með stöðu-lit á ramma (grár/blár/grænn).
     const cf=(f,val,w,unit,st)=>{ const bd=boxSt(st).bd; return `<span style="display:inline-flex;align-items:center;gap:3px"><input class="ky-bf" data-f="${f}" data-key="${key}" value="${val}" inputmode="decimal" style="width:${w}px;padding:4px 6px;border:1.5px solid ${bd};border-radius:7px;font:inherit;font-size:12.5px;text-align:right;background:#fff">${unit?`<span style="font-size:10px;color:#64748b">${unit}</span>`:''}</span>`; };
     // Hnappur með örsmárri tölu undir (t.d. klst / rukkuð upphæð).
@@ -11705,15 +11726,17 @@ async function renderKrofuyfirlit(t){
     const sentTrail = inv.sent ? `<span style="font-size:9.5px;color:#047857;white-space:nowrap">${(inv.sent_by?esc(inv.sent_by)+' · ':'')}${inv.sent_at?esc(fmtDate(inv.sent_at)):''}</span>` : '';
     // Tímask. + Efnisl. OPNA ritlana í Gerð Reikninga/Tímaskýrslu — þú vistar/staðfestir
     // ÞAR og það birtist hér (grænt + 📄 þegar skjalið er til). Engin inline-vistun.
-    return `<div class="ky-wf-boxes" style="display:flex;gap:6px 10px;flex-wrap:wrap;align-items:flex-start;flex:1 1 100%;justify-content:flex-start;padding:7px 0 1px 41px;margin-top:5px;border-top:1px dashed #eef1f6">
-      ${abtnN('tim','opentim','🕒','Tímask.',!!timDoc, hoursDisp+' klst')}${pdfLink(timDoc?bhDocUrl(timDoc):null,'Opna Tímaskýrslu PDF')}
-      ${abtnN('efn','openefn','📄','Efnisl.',!!efnDoc, numIS(n.redder)+' kr efni')}${pdfLink(efnDoc?bhDocUrl(efnDoc):null,'Opna Efnislista PDF')}
-      ${sep}
-      ${abtnN('conf','confirm','✓','Staðfest',conf, numIS(n.total)+' kr')}
-      ${conf?abtn('conf','breyta','✏️','Breyta',false):''}
-      ${sep}
-      ${abtn('send','send','📤',inv.sent?'Sent ✓':'Senda',inv.sent)}
-      ${inv.sent?`<span style="align-self:center">${sentTrail}</span>`:''}
+    // Tölurnar (klst · efni · heild) á EINNI línu undir — svo takkarnir sjálfir
+    // þjappast saman í eina þétta röð (annars verður hver takki að stökum dálki).
+    const summary = `<div style="flex:1 1 100%;font-size:10px;color:#64748b;font-weight:700;padding-left:1px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">🕒 ${hoursDisp} klst · 🧱 ${numIS(n.redder)} kr efni · 📄 ${numIS(n.total)} kr m.vsk</div>`;
+    return `<div class="ky-wf-boxes" style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;flex:1 1 100%;max-width:100%;justify-content:flex-start;padding:7px 0 1px 41px;margin-top:5px;border-top:1px dashed #eef1f6">
+      ${abtn('tim','opentim','🕒','Tímask.',!!timDoc,'#2563eb')}${pdfLink(timDoc?bhDocUrl(timDoc):null,'Opna Tímaskýrslu PDF')}
+      ${abtn('efn','openefn','📄','Efnisl.',!!efnDoc,'#0f766e')}${pdfLink(efnDoc?bhDocUrl(efnDoc):null,'Opna Efnislista PDF')}
+      ${abtn('conf','confirm','✓','Staðfest',conf,'#16a34a')}
+      ${conf?abtn('conf','breyta','✏️','Breyta',false,'#ea580c'):''}
+      ${abtn('send','send','📤',inv.sent?'Sent ✓':'Senda',inv.sent,'#16a34a')}
+      ${inv.sent?`<span style="align-self:center;margin-left:4px">${sentTrail}</span>`:''}
+      ${summary}
     </div>`;
   }
 
@@ -11748,7 +11771,7 @@ async function renderKrofuyfirlit(t){
         ? `<div style="margin-top:9px;color:#0f7a43;font-size:11px;font-weight:600;line-height:1.4">🏦 Banki: ${fmtKr(inv.bank.amount)} · ${esc(inv.bank.date||'—')}${inv.bank.text?' · '+esc(inv.bank.text):''}${inv.bank.extra>0?' <span style="color:#b45309">(+'+fmtKr(inv.bank.extra)+' vextir)</span>':''}</div>`
         : '';
       return `
-        <div class="ky-invrow">
+        <div class="ky-invrow${tier===2?' ky-t2':''}">
           <div class="ky-row${lp?' ky-likely':''}" data-key="${esc(inv.inv_key)}" style="display:flex;align-items:center;gap:11px;${tier===2?'flex-wrap:wrap;':''}padding:9px 18px;border-bottom:1px solid #f3f5f9;font-size:12.5px;cursor:pointer;${inv._hidden?'opacity:.5':''}">
             <span class="ky-caret2" style="width:11px;flex-shrink:0;color:#b6c0cc;font-size:11px;user-select:none">▸</span>
             <div style="width:200px;flex-shrink:0;line-height:1.2">
@@ -11811,7 +11834,7 @@ async function renderKrofuyfirlit(t){
     if(!companies.length) return head + `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:26px;text-align:center;color:#94a3b8;font-style:italic">${state.search?'Ekkert passar við leit':'Engin fyrirtæki 🎉'}</div>`;
     const mini=(ic,label,val,col)=> `<span class="ky-num" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:${col};background:${col}14;border:1px solid ${col}33;border-radius:99px;padding:2px 9px">${ic} ${label} ${fmtKr(val)}</span>`;
     const tierBlock=(d,tier,ic,title,col)=> !d ? '' : `
-      <div style="border-top:1px solid #eef1f6">
+      <div class="${tier===2?'ky-tblock2':''}" style="border-top:1px solid #eef1f6">
         <div style="display:flex;align-items:center;gap:8px;padding:8px 18px;background:#fafbfe;font-size:11px;font-weight:800;letter-spacing:.02em;color:${col}">
           <span>${ic} ${title}</span>
           <span class="ky-num" style="margin-left:auto;color:#11141c">${fmtKr(d.outstanding_kr)}</span>
@@ -11834,6 +11857,7 @@ async function renderKrofuyfirlit(t){
             </div>
           </div>
           <div style="display:flex;gap:10px;align-items:center">
+            ${c.t[1]?allPaidBtn(c.t[1].invoices):''}
             <div style="text-align:right">
               <div style="font-size:10px;color:#8a93a5;text-transform:uppercase;letter-spacing:.1em;font-weight:700">Samtals</div>
               <div class="ky-num" style="font-size:22px;font-weight:700;color:#2f5fe0">${fmtKr(c.total)}</div>
@@ -11908,7 +11932,7 @@ async function renderKrofuyfirlit(t){
         ? `<div style="margin-top:9px;color:#0f7a43;font-size:11px;font-weight:600;line-height:1.4">🏦 Banki: ${fmtKr(inv.bank.amount)} · ${esc(inv.bank.date||'—')}${inv.bank.text?' · '+esc(inv.bank.text):''}${inv.bank.extra>0?' <span style="color:#b45309">(+'+fmtKr(inv.bank.extra)+' vextir)</span>':''}</div>`
         : '';
       return `
-        <div class="ky-invrow">
+        <div class="ky-invrow${tier===2?' ky-t2':''}">
           <div class="ky-row${lp?' ky-likely':''}" data-key="${esc(inv.inv_key)}" style="display:flex;align-items:center;gap:11px;${tier===2?'flex-wrap:wrap;':''}padding:9px 18px;border-bottom:1px solid #f3f5f9;font-size:12.5px;cursor:pointer;${inv._hidden?'opacity:.5':''}">
             <span class="ky-caret2" style="width:11px;flex-shrink:0;color:#b6c0cc;font-size:11px;user-select:none">▸</span>
             <div style="width:200px;flex-shrink:0;line-height:1.2">
@@ -11951,6 +11975,7 @@ async function renderKrofuyfirlit(t){
             </div>
           </div>
           <div style="display:flex;gap:10px;align-items:center">
+            ${tier===1?allPaidBtn(db.invoices):''}
             <div style="text-align:right">
               <div style="font-size:10px;color:#8a93a5;text-transform:uppercase;letter-spacing:.1em;font-weight:700">${tier===3?'Áætlað':(tier===2?'Ósent':'Útistandandi')}</div>
               <div class="ky-num" style="font-size:22px;font-weight:700;color:#2f5fe0">${fmtKr(db.outstanding_kr)}</div>
@@ -12055,6 +12080,19 @@ async function renderKrofuyfirlit(t){
     listEl.querySelectorAll('.kyf-copy').forEach(b=>b.addEventListener('click',async(e)=>{
       e.stopPropagation();
       try{ await navigator.clipboard.writeText(b.dataset.value); b.textContent='✓'; setTimeout(()=>{b.textContent='📋';},1200); }catch(_){}
+    }));
+    // „✓ Allar greiddar" — merkja allar ógreiddu kröfur fyrirtækisins greiddar í einu.
+    listEl.querySelectorAll('.kyf-allpaid').forEach(b=>b.addEventListener('click',async(e)=>{
+      e.stopPropagation();
+      const keys=(b.dataset.keys||'').split('~').filter(Boolean);
+      if(!keys.length || b.disabled) return;
+      if(!confirm('Merkja '+keys.length+' kröfu'+(keys.length===1?'':'r')+' þessa fyrirtækis sem greidda'+(keys.length===1?'':'r')+'?')) return;
+      b.disabled=true; b.style.opacity='.7'; b.textContent='⏳ Merki…';
+      for(const k of keys){
+        try{ await fetch('/api/krofur-yfirlit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'save', inv_key:k, paid:true})}); }catch(_){}
+        paidSet.add(k);
+      }
+      renderList();
     }));
     // Feature 1 — smellur á röð opnar/lokar sundurliðun (ekki á reit/aðgerð).
     listEl.querySelectorAll('.ky-row').forEach(r=>r.addEventListener('click',(e)=>{
@@ -16014,18 +16052,36 @@ async function openTimabok(name, month){
 
   let rows = [];
   const saved = (state.ui && state.ui.timabok_edits && state.ui.timabok_edits[key]) || null;
+  const sortRows = ()=> rows.sort((a,b)=> String(b.date).localeCompare(String(a.date)) || String(a.employee).localeCompare(String(b.employee),'is'));
+  // Taflan birtist STRAX (hangir aldrei); Tímavera er sótt í bakgrunni með tímamörkum
+  // svo hægt kall eða teikni-villa festi ekki gluggann á „Sæki tímafærslur…".
   if(saved && Array.isArray(saved.rows)){
     rows = saved.rows.map(r=>({...r}));
     st.textContent = 'breytt eintak (vistað ' + (saved.saved_at? String(saved.saved_at).slice(0,10):'') + ')';
+    sortRows(); paint();
+  } else if(!name || !/^\d{4}-\d{2}$/.test(String(month))){
+    // Vantar verkstað/mánuð (t.d. Payday-drög án verkstaðar) → ekkert að sækja.
+    st.textContent = 'vantar verkstað/mánuð — bættu við línum handvirkt (＋)';
+    paint();
   } else {
-    try{
-      const resp = await fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&month=${encodeURIComponent(month)}`);
-      const data = await resp.json();
-      if(!resp.ok) throw new Error(data.error||('HTTP '+resp.status));
-      rows = (data.rows||[]).map(r=>({ date:r.date||'', employee:r.employee||'', time_in:r.time_in||'', time_out:r.time_out||'', hours:Number(r.hours)||0 }));
-    }catch(e){ document.getElementById('tbk-body').innerHTML = `<div class="gr-loading">Gat ekki sótt tímafærslur: ${escapeHtml(e.message||String(e))}</div>`; return; }
+    paint();   // tóm tafla strax svo glugginn sé nothæfur samstundis
+    const _b0 = document.getElementById('tbk-body'); if(_b0) _b0.innerHTML = '<div class="gr-loading">Sæki tímafærslur…</div>';
+    (async()=>{
+      try{
+        const ctrl = new AbortController(); const to = setTimeout(()=>ctrl.abort(), 15000);
+        const resp = await fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&month=${encodeURIComponent(month)}`, { signal: ctrl.signal });
+        clearTimeout(to);
+        const data = await resp.json().catch(()=>({}));
+        if(!resp.ok) throw new Error(data.error||('HTTP '+resp.status));
+        rows = (data.rows||[]).map(r=>({ date:r.date||'', employee:r.employee||'', time_in:r.time_in||'', time_out:r.time_out||'', hours:Number(r.hours)||0 }));
+        sortRows();
+      }catch(e){
+        if(!bg.isConnected) return;   // notandi lokaði glugganum á meðan
+        st.textContent = 'gat ekki sótt Tímaveru ('+(e&&e.name==='AbortError'?'timeout':escapeHtml(String(e&&e.message||e)))+') — bættu við handvirkt';
+      }
+      paint();
+    })();
   }
-  rows.sort((a,b)=> String(b.date).localeCompare(String(a.date)) || String(a.employee).localeCompare(String(b.employee),'is'));
 
   function totals(){
     const total = rows.reduce((s,r)=>s+(Number(r.hours)||0),0);
@@ -16033,7 +16089,8 @@ async function openTimabok(name, month){
     return { total, byEmp };
   }
   function paint(){
-    const body = document.getElementById('tbk-body');
+    const body = document.getElementById('tbk-body'); if(!body) return;
+    try{
     const head = `<div class="tbk-r tbk-h"><span>Dagsetning</span><span>Starfsmaður</span><span>Inn</span><span>Út</span><span>Tímar</span><span></span></div>`;
     const rr = rows.map((r,i)=>`<div class="tbk-r">
         <input type="date" value="${escapeAttr(r.date)}" data-f="date" data-i="${i}">
@@ -16050,8 +16107,8 @@ async function openTimabok(name, month){
       ${emp?`<div class="tbk-emp"><div class="tbk-er tbk-eh"><span>Starfsmaður</span><span>Dagar</span><span>Tímar</span></div>${emp}</div>`:''}`;
     body.querySelectorAll('input[data-i]').forEach(inp=> inp.addEventListener('change',()=>{ const i=+inp.dataset.i, f=inp.dataset.f; rows[i][f] = f==='hours'? (Number(String(inp.value).replace(',','.').replace(/[^\d.]/g,''))||0) : inp.value; if(f==='hours'||f==='employee'||f==='date') paint(); }));
     body.querySelectorAll('[data-del]').forEach(b=> b.onclick=()=>{ rows.splice(+b.dataset.del,1); paint(); });
+    }catch(err){ body.innerHTML = `<div class="gr-loading">Villa við að teikna tímaskýrslu: ${escapeHtml(String(err&&err.message||err))}</div>`; }
   }
-  paint();
 
   document.getElementById('tbk-add').onclick = ()=>{ rows.unshift({ date:month+'-01', employee:'', time_in:'', time_out:'', hours:0 }); paint(); };
   document.getElementById('tbk-save').onclick = ()=>{
