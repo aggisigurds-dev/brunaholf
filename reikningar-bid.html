@@ -157,7 +157,19 @@ async function sendGroup(gi){
   // Combine the selected sales into one invoice (mánaðar samtölureikningur).
   const lines = [];
   // Free-text lines (no ItemCode) — dk's Vörur catalog is separate from the app's.
-  sales.forEach(s=>(s.lines||[]).forEach(l=>lines.push({ Text:l.desc, Quantity:l.qty, Price:l.price, IncludingVAT:false })));
+  // 2026-07-08 (afsláttar-úttekt): línur bera FULL verð í solur; afslátturinn
+  // býr í línu-discount_pct og/eða sölu-afslattur (kr m.vsk, dregst af
+  // samtals). Áður fóru hráu verðin í dk → drögin rukkuðu fullt verð þó salan
+  // væri með afslætti. Nú skalast hver lína svo Σ dk-línur ≈ bókað samtals.
+  sales.forEach(s=>{
+    const ls = s.lines||[];
+    const gross = ls.reduce((a,l)=>a + (l.qty||0)*(l.price||0)*(1-Math.max(0,Math.min(100,l.discount_pct||0))/100)*(1+((l.vsk_pct==null?24:l.vsk_pct)||0)/100), 0);
+    const f = (gross>0 && s.total>0 && Math.abs(gross - s.total)>2) ? (s.total/gross) : 1;
+    ls.forEach(l=>{
+      const d = Math.max(0,Math.min(100,l.discount_pct||0));
+      lines.push({ Text: l.desc + (d>0?' · −'+d+'% afsl.':'') + (f<1?' · m/ afsl.':''), Quantity: l.qty, Price: (l.price||0)*(1-d/100)*f, IncludingVAT: false });
+    });
+  });
   const invoice = {
     Customer: { Number: g.kt, Name: g.name, SSN: g.kt },
     Date: todayISO(),

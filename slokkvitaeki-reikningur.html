@@ -209,7 +209,18 @@ function loadSale(){
   if(!id){ return; }
   const s = SALES.find(x=>String(x.id)===String(id));
   if(!s){ return; }
-  lines = (s.lines||[]).map(l=>({ id:l.id, desc:l.desc, qty:l.qty, price:l.price }));
+  // 2026-07-08 (afsláttar-úttekt): baka línu-discount_pct + sölu-afslátt inn í
+  // verðin þegar sala er hlaðin — annars sýndi forskoðunin og dk-drögin fullt
+  // verð þó salan væri bókuð með afslætti. Sama skalning og reikningar-bid.
+  (function(){
+    const ls = s.lines||[];
+    const gross = ls.reduce((a,l)=>a + (l.qty||0)*(l.price||0)*(1-Math.max(0,Math.min(100,l.discount_pct||0))/100)*(1+((l.vsk_pct==null?24:l.vsk_pct)||0)/100), 0);
+    const f = (gross>0 && s.total>0 && Math.abs(gross - s.total)>2) ? (s.total/gross) : 1;
+    lines = ls.map(l=>{
+      const d = Math.max(0,Math.min(100,l.discount_pct||0));
+      return { id:l.id, desc:l.desc + (d>0?' · −'+d+'% afsl.':''), qty:l.qty, price:(l.price||0)*(1-d/100)*f };
+    });
+  })();
   if(s.customer && s.customer.toLowerCase()!=='staðgreitt') $('c_nafn').value = s.customer;
   if(s.kt) $('c_kt').value = s.kt;
   if(s.num){ $('m_num').value = s.num; $('m_ref').value = s.num; }
