@@ -11805,17 +11805,22 @@ async function renderKrofuyfirlit(t){
     // Litlu tölurnar (klst · efni · heild) — AÐEINS þegar eitthvað er reiknað;
     // annars bara takkar eins og í viðmiðinu (núll-línan var hávaði).
     const hasNums = (n.hours>0 || n.redder>0 || n.total>0);
+    // 2026-07-08 (ósk Agnars): tölurnar sitja UNDIR takkaröðinni (ekki vinstra
+    // megin) — ytri spanninn er dálkur (buttons-röð + tölulína) en er áfram
+    // EITT inline-flex stykki í röðinni, svo GILDRA-reglurnar halda.
     const numHtml = hasNums
-      ? `<span style="flex:0 0 auto;align-self:center;font-size:9.5px;color:#64748b;font-weight:700;white-space:nowrap;margin-right:2px" title="Tímar · Redder-efni · Efnislisti m.vsk">🕒 ${hoursDisp} · 🧱 ${numIS(n.redder)} · 📄 ${numIS(n.total)}</span>`
+      ? `<span style="font-size:9.5px;color:#64748b;font-weight:700;white-space:nowrap" title="Tímar · Redder-efni · Efnislisti m.vsk">🕒 ${hoursDisp} · 🧱 ${numIS(n.redder)} · 📄 ${numIS(n.total)}</span>`
       : '';
-    return `<span class="ky-wf-boxes" style="display:inline-flex;flex:0 0 auto;align-items:center;gap:6px;flex-wrap:nowrap">
+    return `<span class="ky-wf-boxes" style="display:inline-flex;flex:0 0 auto;flex-direction:column;align-items:center;gap:3px">
+      <span style="display:inline-flex;align-items:center;gap:6px;flex-wrap:nowrap">
+        ${wfBtn('tim','opentim','🕒','Tímask.','#2563eb','Opna Tímaskýrslu',!!timDoc)}${pdfLink(timDoc?bhDocUrl(timDoc):null,'Opna Tímaskýrslu PDF')}
+        ${wfBtn('efn','openefn','📄','Efnisl.','#0f766e','Opna Efnislista í Gerð Reikninga',!!efnDoc)}${pdfLink(efnDoc?bhDocUrl(efnDoc):null,'Opna Efnislista PDF')}
+        ${wfBtn('conf','confirm','✓','Staðfest','#16a34a','Staðfesta',conf)}
+        ${conf?wfBtn('conf','breyta','✏️','Breyta','#ea580c','Breyta (af-staðfesta)',false):''}
+        ${wfBtn('send','send','📤',inv.sent?'Sent ✓':'Senda','#16a34a',inv.sent?'Þegar sent':'Senda á bókara',!!inv.sent)}
+        ${sentTrail}
+      </span>
       ${numHtml}
-      ${wfBtn('tim','opentim','🕒','Tímask.','#2563eb','Opna Tímaskýrslu',!!timDoc)}${pdfLink(timDoc?bhDocUrl(timDoc):null,'Opna Tímaskýrslu PDF')}
-      ${wfBtn('efn','openefn','📄','Efnisl.','#0f766e','Opna Efnislista í Gerð Reikninga',!!efnDoc)}${pdfLink(efnDoc?bhDocUrl(efnDoc):null,'Opna Efnislista PDF')}
-      ${wfBtn('conf','confirm','✓','Staðfest','#16a34a','Staðfesta',conf)}
-      ${conf?wfBtn('conf','breyta','✏️','Breyta','#ea580c','Breyta (af-staðfesta)',false):''}
-      ${wfBtn('send','send','📤',inv.sent?'Sent ✓':'Senda','#16a34a',inv.sent?'Þegar sent':'Senda á bókara',!!inv.sent)}
-      ${sentTrail}
     </span>`;
   }
 
