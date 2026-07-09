@@ -983,6 +983,26 @@ Slökkvitæki Sala/POS) connects via the dkPlus REST/JSON API.
 - Phases: (1) connect + read. (2) push invoices into dk+ from POS sales /
   yearly brunakerfi úttektir. (3) customer/vörur sync + payment status back.
 
+## Verkefnalisti (Claude task board) — vinnureglur
+
+`verkefnalisti.html` + `/api/verkefnalisti` (tafla `verkefnalisti`, myndir í
+public `verkefnalisti` bucket). Staðir: beidni → i_vinnu → i_yfirferd (Agnar
+samþykkir) → klarad. GET skilar öllu; POST `{action:'update', id, …}`.
+
+**Standing instructions fyrir Claude/agenta sem vinna verkefni af listanum:**
+- **Skjáskot af niðurstöðunni er hluti af verklokum.** Þegar verk fer í
+  `i_yfirferd` skal fylgja skjámynd af breytingunni (Playwright-skot af
+  síðunni eftir breytingu) gegnum `result_image_b64` í sama update-kalli —
+  Agnar yfirfer af símanum og á að geta séð útkomuna án þess að opna appið.
+- **Lesa `feedback` þegar verk kemur aftur í vinnu.** „↶ Aftur í vinnu" úr
+  yfirferð opnar athugasemdabox hjá Agnari; textinn bætist tímastimplaður í
+  `feedback`-dálkinn (birtist sem 📣 á síðunni). Nýjasta línan segir hverju á
+  að breyta — taktu hana fram yfir upprunalegu lýsinguna ef þær stangast á.
+- Margar beiðni-skjámyndir: `request_image_urls` (jsonb fylki) er aðal-sniðið;
+  `request_image_url` er alltaf fyrsta myndin (eldri lesarar). `add` tekur
+  `request_images_b64` fylki; `update` tekur `add_request_images_b64` (viðbót)
+  og `request_image_urls` (fjarlæging). `claude_notes` er svar-texti Claude.
+
 ## Service-doc ledger (standing task — keep alive)
 
 `brunakerfi-skodun.html` — a self-contained, fillable + printable

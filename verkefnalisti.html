@@ -358,7 +358,7 @@ function renderTask(t) {
   if (t.status === 'i_vinnu') ops.push('<button onclick="setStatus(\'' + t.id + '\',\'i_yfirferd\')">⏸ Í yfirferð</button>');
   if (t.status === 'i_yfirferd') {
     ops.push('<button onclick="setStatus(\'' + t.id + '\',\'klarad\')" style="border-color:var(--ok);color:var(--ok)">✓ Samþykkja</button>');
-    ops.push('<button onclick="setStatus(\'' + t.id + '\',\'i_vinnu\')">↶ Aftur í vinnu</button>');
+    ops.push('<button onclick="openFeedback(\'' + t.id + '\')">↶ Aftur í vinnu</button>');
   }
   if (t.status === 'klarad' || t.status === 'sleppt') ops.push('<button onclick="setStatus(\'' + t.id + '\',\'beidni\')">↶ Opna aftur</button>');
   if (t.status !== 'sleppt' && t.status !== 'klarad' && t.status !== 'i_yfirferd') ops.push('<button onclick="setStatus(\'' + t.id + '\',\'sleppt\')">⊘ Sleppa</button>');
@@ -383,6 +383,9 @@ function renderTask(t) {
   }
 
   const notes = t.claude_notes ? '<div class="desc" style="color:#1e40af;margin-top:6px;background:#eff6ff;padding:6px 9px;border-radius:6px"><b>Claude:</b> ' + esc(t.claude_notes) + '</div>' : '';
+  // Athugasemdir Agnars (t.d. „gerðu þetta öðruvísi" við ↶ Aftur í vinnu) —
+  // appelsínugult box svo agentinn og skrifstofan sjái þær strax.
+  const fb = t.feedback ? '<div class="desc" style="color:#9a3412;margin-top:6px;background:#fff7ed;border:1px solid #fed7aa;padding:6px 9px;border-radius:6px;white-space:pre-wrap"><b>📣 Athugasemdir:</b>\n' + esc(t.feedback) + '</div>' : '';
 
   // Drag handle: only on rows still in beidni/i_vinnu (klárað/sleppt rows
   // stay frozen), and only in forgangs-röðun — í „Nýjast fyrst" ræður tíminn.
@@ -401,6 +404,7 @@ function renderTask(t) {
           '<div class="title">' + catBadge + agentBadge + esc(t.title) + '</div>' +
           (t.description ? '<div class="desc clamp" title="Smelltu til að opna/loka" onclick="this.classList.toggle(\'clamp\')">' + esc(t.description) + '</div>' : '') +
           notes +
+          fb +
           (imgs.length ? '<div class="imgs">' + imgs.join('') + '</div>' : '') +
           '<div class="meta">' + fmtTime(t.created_at) +
             (t.completed_at ? ' · klárað ' + fmtTime(t.completed_at) : '') +
@@ -485,8 +489,8 @@ async function load() {
     const data = await r.json();
     if (!r.ok || !data.tasks) throw new Error(data.error || 'kunni ekki að hlaða');
 
-    // Ritill opinn? Ekki teikna yfir hann — næsta 15s-tif nær breytingunum.
-    if (document.querySelector('.edit-form')) { TASKS = Object.fromEntries(data.tasks.map(t => [t.id, t])); return; }
+    // Ritill eða athugasemdabox opið? Ekki teikna yfir það — næsta 15s-tif nær breytingunum.
+    if (document.querySelector('.edit-form') || document.querySelector('.fb-box')) { TASKS = Object.fromEntries(data.tasks.map(t => [t.id, t])); return; }
 
     TASKS = Object.fromEntries(data.tasks.map(t => [t.id, t]));
     const groups = { beidni:[], i_vinnu:[], i_yfirferd:[], klarad:[], sleppt:[] };
@@ -576,6 +580,47 @@ function wireDragDrop(container) {
       }
     });
   });
+}
+
+// ─── ↶ Aftur í vinnu MEÐ athugasemd (2026-07-09) ─────────────────────────
+// Úr yfirferð: lítið box þar sem Agnar segir HVAÐ á að breyta áður en verkið
+// fer aftur í vinnu. Athugasemdin bætist við feedback-dálkinn (tímastimplað)
+// og agentinn les hana þegar hann tekur verkið aftur upp.
+function openFeedback(id) {
+  const row = document.querySelector('.task[data-id="' + id + '"]');
+  if (!row) return;
+  if (row.querySelector('.fb-box')) return;   // þegar opið
+  const box = document.createElement('div');
+  box.className = 'fb-box';
+  box.style.cssText = 'grid-column:1/-1;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 12px;margin-top:4px';
+  box.innerHTML =
+    '<label style="display:block;font-size:11px;color:#9a3412;text-transform:uppercase;letter-spacing:.04em;margin:0 0 5px;font-weight:700">Hverju á að breyta?</label>' +
+    '<textarea class="fb-text" style="width:100%;min-height:56px;padding:8px 10px;border:1px solid #fed7aa;border-radius:7px;font:13px/1.45 inherit;resize:vertical" placeholder="t.d. „takkinn á að vera vinstra megin, ekki hægra megin""></textarea>' +
+    '<div class="actions" style="margin-top:8px">' +
+      '<button class="btn primary fb-send">↶ Senda aftur í vinnu</button>' +
+      '<button class="btn ghost fb-cancel">Hætta við</button>' +
+      '<span class="fb-toast toast"></span>' +
+    '</div>';
+  row.appendChild(box);
+  box.querySelector('.fb-text').focus();
+  box.querySelector('.fb-cancel').onclick = () => box.remove();
+  box.querySelector('.fb-send').onclick = async () => {
+    const txt = box.querySelector('.fb-text').value.trim();
+    const btn = box.querySelector('.fb-send'); btn.disabled = true;
+    const tt = box.querySelector('.fb-toast'); tt.textContent = 'Sendi…'; tt.className = 'toast';
+    try {
+      const r = await fetch('/api/verkefnalisti', {
+        method:'POST', headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ action:'update', id, status:'i_vinnu', feedback: txt || undefined }),
+      });
+      const data = await r.json();
+      if (!r.ok || data.error) throw new Error(data.error || ('HTTP ' + r.status));
+      await load();
+    } catch (e) {
+      tt.textContent = 'Villa: ' + e.message; tt.className = 'toast err';
+      btn.disabled = false;
+    }
+  };
 }
 
 // ─── ✏️ Breyta beiðni (2026-07-09) ────────────────────────────────────────
