@@ -142,6 +142,16 @@ exports.handler = async (event) => {
       if (typeof body.title === 'string') patch.title = body.title.trim();
       if (typeof body.description === 'string') patch.description = body.description.trim();
       if (typeof body.claude_notes === 'string') patch.claude_notes = body.claude_notes.trim();
+      // Athugasemd frá Agnari (t.d. við „↶ Aftur í vinnu" úr yfirferð) — BÆTIST
+      // við með tímastimpli svo eldri athugasemdir glatist ekki; agentinn les
+      // feedback-dálkinn þegar verkið kemur aftur í vinnu.
+      if (typeof body.feedback === 'string' && body.feedback.trim()) {
+        const cur = await sb(`verkefnalisti?id=eq.${encodeURIComponent(id)}&select=feedback`);
+        const [row0] = cur.ok ? await cur.json() : [];
+        const stamp = new Date().toISOString().slice(0, 16).replace('T', ' ');
+        const line = '[' + stamp + '] ' + body.feedback.trim();
+        patch.feedback = (row0 && row0.feedback ? row0.feedback + '\n' : '') + line;
+      }
       if (typeof body.priority === 'number') patch.priority = body.priority;
       // forgangs-merki: 0=grátt 1=grænt 2=gult 3=rautt (hringrás í UI)
       if (typeof body.flag === 'number') patch.flag = ((body.flag % 4) + 4) % 4;
