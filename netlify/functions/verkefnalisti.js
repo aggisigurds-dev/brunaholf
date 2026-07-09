@@ -71,6 +71,16 @@ async function uploadImage(b64, prefix) {
   return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${key}`;
 }
 
+// Margar skjámyndir í einu (2026-07-09): hlaðið upp í röð, skilar url-fylki.
+async function uploadImages(arr, prefix) {
+  const urls = [];
+  for (const b64 of (arr || [])) {
+    const u = await uploadImage(b64, prefix);
+    if (u) urls.push(u);
+  }
+  return urls;
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: corsHeaders, body: '' };
   if (!SUPABASE_URL || !SUPABASE_KEY) return json(500, { error: 'Supabase env vars missing' });
@@ -93,15 +103,18 @@ exports.handler = async (event) => {
     if (action === 'add') {
       const title = String(body.title || '').trim();
       if (!title) return json(400, { error: 'title vantar' });
-      let reqUrl = null;
-      if (body.request_image_b64) {
-        try { reqUrl = await uploadImage(body.request_image_b64, 'request'); }
-        catch (e) { return json(400, { error: e.message }); }
-      }
+      // request_images_b64 (fylki) er nýja sniðið; staka request_image_b64
+      // heldur áfram að virka (t.d. eldri köll frá Claude).
+      const b64s = Array.isArray(body.request_images_b64) ? body.request_images_b64
+                 : (body.request_image_b64 ? [body.request_image_b64] : []);
+      let reqUrls = [];
+      try { reqUrls = await uploadImages(b64s, 'request'); }
+      catch (e) { return json(400, { error: e.message }); }
       const row = {
         title,
         description: body.description ? String(body.description).trim() : null,
-        request_image_url: reqUrl,
+        request_image_url: reqUrls[0] || null,
+        request_image_urls: reqUrls.length ? reqUrls : null,
         status: 'beidni',
         priority: Number.isFinite(body.priority) ? body.priority : 1,
         category: body.category ? String(body.category).trim() : 'allt',
@@ -140,6 +153,24 @@ exports.handler = async (event) => {
         }
         if (body.request_image_b64) {
           patch.request_image_url = await uploadImage(body.request_image_b64, 'request');
+        }
+        // Ritill: beint sett mynd-fylki (fjarlæging) og/eða nýjum myndum bætt við.
+        let urls = null;
+        if (Array.isArray(body.request_image_urls)) {
+          urls = body.request_image_urls.map(String).filter(Boolean);
+        }
+        if (Array.isArray(body.add_request_images_b64) && body.add_request_images_b64.length) {
+          if (urls === null) {
+            const cur = await sb(`verkefnalisti?id=eq.${encodeURIComponent(id)}&select=request_image_url,request_image_urls`);
+            const [row0] = cur.ok ? await cur.json() : [];
+            urls = Array.isArray(row0 && row0.request_image_urls) ? row0.request_image_urls.slice()
+                 : (row0 && row0.request_image_url ? [row0.request_image_url] : []);
+          }
+          urls = urls.concat(await uploadImages(body.add_request_images_b64, 'request'));
+        }
+        if (urls !== null) {
+          patch.request_image_urls = urls.length ? urls : null;
+          patch.request_image_url = urls[0] || null;   // eldri lesarar nota stöku slóðina
         }
       } catch (e) { return json(400, { error: e.message }); }
       const r = await sb(`verkefnalisti?id=eq.${encodeURIComponent(id)}`, {
