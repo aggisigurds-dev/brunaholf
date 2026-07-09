@@ -11,7 +11,11 @@
 //
 // Batched by `offset` (each call ≤ ~10s); the UI pages through via `nextOffset`.
 // Per PDF it extracts: Reikningur nr. · Dagsetning · Eindagi · Sölumaður ·
-// "Vegna <verkstaður> umb <tengiliður>" · Upphæð án vsk / Vsk / Samtals m. vsk.
+// "Vegna <verkstaður> umb <tengiliður>" · Upphæð án vsk / Vsk / Samtals m. vsk —
+// and since 2026-07-09 also the EFNIS-VÖRULÍNUR (vörunr/heiti/magn/ein.verð/
+// afsl%/upphæð) → `redder_line_items`, so Gerð Reikninga can match each line to
+// the Verðskrá (matchVerdskra) and prefill the Efnislisti. Verified against all
+// 65 PDFs in the folder: Σ line upphæð === Upphæð án vsk on every one.
 
 const pdf = require('pdf-parse');
 const { freshAccessToken, json, cors } = require('./_google');
@@ -54,14 +58,24 @@ exports.handler = async (event) => {
         const dagsetning = extractDate(norm, /Dagsetning/i);
         const eindagi = extractDate(norm, /Eindagi/i);
         const salesperson = extractSalesperson(norm);
-        const vegna = extractVegna(norm);                 // { worksite, contact, raw }
-        let an_vsk = parseIsk(matchNum(norm, /án\s*vsk\.?\s*:?\s*([\d.,]{2,})/i));
-        const vsk = parseIsk(matchNum(norm, /[Vv]sk\.?\s*upph[æa]\S*\s*:?\s*([\d.,]{2,})/i));
-        let m_vsk = parseIsk(matchNum(norm, /[Ss]amtals[^\d]*?með\s*vsk\.?\s*:?\s*(?:ISK)?\s*([\d.,]{2,})/i));
+        const li = extractLines(text);                    // { lines:[…], refs:{ub,v,umb,sott} }
+        let vegna = extractVegna(norm);                   // { worksite, contact, raw }
+        // Newer PDFs reference the site as "V: <staður>" / "V/ <staður> umb: <nafn>" /
+        // "Vegna: <staður> - Sótt: <nafn>" instead of the old "Vegna X umb Y" — the
+        // line scanner picks those up.
+        if (!vegna.worksite && (li.refs.v || li.refs.umb || li.refs.sott || li.refs.ub)) {
+          const ws = li.refs.v || '';
+          const contact = li.refs.umb || li.refs.sott || li.refs.ub || '';
+          vegna = { worksite: ws, contact, raw: (ws + (contact ? ' umb ' + contact : '')).trim() || null };
+        }
+        // Kredit invoices print amounts with a TRAILING minus ("41.458-") — keep the sign.
+        let an_vsk = parseIsk(matchNum(norm, /án\s*vsk\.?\s*:?\s*([\d.,]{2,}-?)/i));
+        const vsk = parseIsk(matchNum(norm, /[Vv]sk\.?\s*upph[æa]\S*\s*:?\s*([\d.,]{2,}-?)/i));
+        let m_vsk = parseIsk(matchNum(norm, /[Ss]amtals[^\d]*?með\s*vsk\.?\s*:?\s*(?:ISK)?\s*([\d.,]{2,}-?)/i));
         // sanity fill-ins (án vsk + vsk = m. vsk)
         if (m_vsk == null && an_vsk != null && vsk != null) m_vsk = an_vsk + vsk;
         if (an_vsk == null && m_vsk != null && vsk != null) an_vsk = m_vsk - vsk;
-        if (m_vsk == null) m_vsk = parseIsk(matchNum(norm, /[Ss]amtals\s*(?:ISK)?\s*:?\s*([\d.,]{4,})/i));
+        if (m_vsk == null) m_vsk = parseIsk(matchNum(norm, /[Ss]amtals\s*(?:ISK)?\s*:?\s*([\d.,]{4,}-?)/i));
 
         const worksite_match = normWorksite(vegna.worksite);
 
@@ -72,12 +86,13 @@ exports.handler = async (event) => {
           an_vsk, vsk, m_vsk,
           drive_file_id: f.id, source: 'gdrive',
           file: f.name,
+          lines: li.lines,
         };
         stats.rows.push(row);
 
         if (!dry) {
           if (await invoiceExists(invoice_nr)) stats.dupSkip++;   // stat only — upsert still refreshes it
-          await upsertInvoice({
+          const inv = await upsertInvoice({
             invoice_nr, dagsetning, eindagi, salesperson,
             worksite_match, worksite_raw: vegna.raw || null,
             contact_person: vegna.contact || null,
@@ -85,6 +100,12 @@ exports.handler = async (event) => {
             drive_file_id: f.id, source: 'gdrive',
             notes: 'Lesið úr Drive (redder-read)',
           });
+          // Replace the invoice's line items ONLY when the parse found some —
+          // a parse miss must never wipe good existing lines.
+          if (inv && inv.id && li.lines.length) {
+            await replaceLineItems(inv.id, li.lines);
+            stats.linesWritten = (stats.linesWritten || 0) + li.lines.length;
+          }
           stats.indexed++;
         }
       } catch (e) { stats.errors++; }
@@ -182,11 +203,122 @@ function extractVegna(norm) {
 }
 function matchNum(norm, re) { const m = norm.match(re); return m ? m[1] : null; }
 // Icelandic money: "1.234.567" thousands, optional ",00" decimals → integer ISK.
+// A TRAILING minus ("41.458-", kredit invoices) makes it negative.
 function parseIsk(s) {
   if (s == null) return null;
-  let x = String(s).replace(/\s/g, '').replace(/,\d{1,2}$/, '').replace(/\./g, '');
+  let x = String(s).replace(/\s/g, '');
+  const neg = /-$/.test(x);
+  x = x.replace(/-/g, '').replace(/,\d{1,2}$/, '').replace(/\./g, '');
   const n = parseInt(x.replace(/[^\d]/g, ''), 10);
+  return Number.isFinite(n) ? (neg ? -n : n) : null;
+}
+// "1.547,58" → 1547.58 (Icelandic decimals).
+function parseDec(s) {
+  if (s == null) return null;
+  const n = parseFloat(String(s).replace(/\./g, '').replace(',', '.'));
   return Number.isFinite(n) ? n : null;
+}
+
+// ── Efnis-vörulínur ───────────────────────────────────────────────────────────
+// Extract the item lines + reference hints from the RAW pdf text (line-based,
+// NOT the whitespace-collapsed norm). Layout (dkPlus-style Redder invoice):
+//   Vörunr.VöruheitiMagnEin.verðAfsl%Upphæð          ← header (concatenated)
+//   UB: Lukas / V: Kársnesbraut 96 / Vegna: X - Sótt: Y   ← optional ref rows
+//   POL PRO059                                       ← item code row
+//   Eldv. Málning 8L  ISO14001 Hvítt1,00Stk19.846,77           50,00 9.923
+//   Upphæð án vsk.9.923                              ← end marker
+// The item row concatenates desc+magn+unit+ein.verð+afsl%+upphæð. Because the
+// description can END in a digit ("(12)", hanska-stærðir "M-st8"), the magn
+// split is ambiguous — every trailing "N,NN" candidate is tried and verified
+// against round(magn × ein.verð × (1−afsl/100)) === upphæð.
+function extractLines(rawText) {
+  const out = { lines: [], refs: {} };
+  const rows = String(rawText || '').split(/\r?\n/).map(s => s.replace(/\s+$/, '')).filter(s => s.trim());
+  const isHeader = s => /Vörunr\.?\s*Vöruheiti/i.test(s.replace(/\s+/g, ' '));
+  const start = rows.findIndex(isHeader);
+  if (start < 0) return out;
+
+  let pendingCode = null;
+  for (let i = start + 1; i < rows.length; i++) {
+    const line = rows[i].trim();
+    if (/^Upphæð án vsk/i.test(line)) break;
+    if (isHeader(line)) { pendingCode = null; continue; }     // repeated page header
+    // Reference rows — seen forms: "UB: Lukas" · "V: Kársnesbraut 96" ·
+    // "V/ landsspitali umb: Tommi" · "Vegna: Landsspítali - Sótt: Lena" ·
+    // "Vegna Heklureitur umb Tommi" · "v Heklureitur umb Elí".
+    let m;
+    if ((m = line.match(/^UB[:\/]\s*(.+)$/i))) { out.refs.ub = m[1].trim(); continue; }
+    if ((m = line.match(/^(?:V|Vegna)[:\/.]?\s+(.+)$/i))) {
+      let rest = m[1].trim();
+      const sm = rest.match(/^(.*?)\s*[-–]\s*Sótt:?\s*(.+)$/i);
+      if (sm) { rest = sm[1].trim(); out.refs.sott = sm[2].trim(); }
+      const um = rest.match(/^(.*?)\s+umb\.?:?\s+(.+)$/i);
+      if (um) { rest = um[1].trim(); out.refs.umb = um[2].trim(); }
+      if (rest) out.refs.v = rest;
+      continue;
+    }
+    if ((m = line.match(/^Sótt:?\s*(.+)$/i))) { out.refs.sott = m[1].trim(); continue; }
+
+    const item = parseItemLine(line);
+    if (item) {
+      if (pendingCode) { item.item_code = pendingCode; pendingCode = null; }
+      out.lines.push(item);
+      continue;
+    }
+    // Item-code row: short, uppercase/digits ("POL PRO059", "STA S-093110111").
+    if (/^[A-ZÐÞÆÖÁÉÍÓÚÝ0-9][A-ZÐÞÆÖÁÉÍÓÚÝ0-9 ._\/-]{1,29}$/.test(line) && /\d/.test(line)) {
+      pendingCode = line;
+      continue;
+    }
+    pendingCode = null;
+  }
+  return out;
+}
+
+// One concatenated item row → {item_name, magn, unit, ein_verd, afsl_pct, upphaed}.
+// Kredit lines carry a TRAILING minus on magn + upphæð ("30,00-Stk … 41.458-").
+function parseItemLine(line) {
+  // Fixed tail, form A: unit + ein.verð + afsl% + upphæð. Unit letters sit right
+  // against the ein.verð number ("Stk1.547,58"); afsl and upphæð space-separated.
+  let tail = line.match(/([A-Za-zÁÐÉÍÓÚÝÞÆÖáðéíóúýþæö]{1,8})\s*((?:\d{1,3}\.)*\d{1,3},\d{2})\s+((?:\d{1,3}\.)*\d{1,3}(?:,\d{1,2})?)\s+((?:\d{1,3}\.)*\d{1,3})(-?)\s*$/);
+  let afsl_pct;
+  if (tail) { afsl_pct = parseDec(tail[3]) || 0; }
+  else {
+    // Form B: NO Afsl%-column — ein.verð and upphæð run together with no space
+    // ("stk2.217,7417.742"; the ,dd decimals delimit them). Whole invoices can
+    // lack the column (header "…MagnEin.verðUpphæð") or single 0%-lines within
+    // a discounted invoice.
+    const b = line.match(/([A-Za-zÁÐÉÍÓÚÝÞÆÖáðéíóúýþæö]{1,8})\s*((?:\d{1,3}\.)*\d{1,3},\d{2})\s*((?:\d{1,3}\.)*\d{1,3})(-?)\s*$/);
+    if (!b) return null;
+    tail = [b[0], b[1], b[2], null, b[3], b[4]];
+    afsl_pct = 0;
+  }
+  const unit = tail[1], ein_verd = parseDec(tail[2]);
+  const negAmt = tail[5] === '-';
+  let upphaed = parseIsk(tail[4]);
+  const head = line.slice(0, line.length - tail[0].length);   // desc + magn (+ '-')
+  const mg = head.match(/((?:\d{1,3}\.)*\d{1,4},\d{2})(-?)\s*$/);
+  if (!mg || ein_verd == null || upphaed == null) return null;
+  const full = mg[1], negQty = mg[2] === '-';
+  if (negAmt) upphaed = -upphaed;
+  const descBase = head.slice(0, head.length - mg[0].length);
+  const sign = negQty || negAmt ? -1 : 1;
+  const candidates = [];
+  for (let cut = 0; cut < full.length; cut++) {
+    const cand = full.slice(cut);
+    if (/^(?:\d{1,3}\.)*\d{1,4},\d{2}$/.test(cand)) candidates.push(cand);
+  }
+  let magnStr = full;
+  for (const cand of candidates) {
+    const q = parseDec(cand);
+    if (q == null || q <= 0) continue;
+    const calc = Math.round(sign * q * ein_verd * (1 - afsl_pct / 100));
+    if (Math.abs(calc - upphaed) <= Math.max(2, Math.abs(upphaed) * 0.005)) { magnStr = cand; break; }
+  }
+  const magn = parseDec(magnStr);
+  const item_name = (descBase + full.slice(0, full.length - magnStr.length)).replace(/\s+/g, ' ').trim();
+  if (!item_name || magn == null || magn <= 0) return null;
+  return { item_name, magn: sign * magn, unit, ein_verd, afsl_pct, upphaed };
 }
 
 // Small worksite alias map (canonical worksite names). Unknown → null so the
@@ -198,8 +330,12 @@ const ALIAS = {
   'dalvegur': 'Dalvegur 30', 'dalvegur 30': 'Dalvegur 30', 'dalvegur 18b': 'Dalvegur 30',
   'dalvegur 26': 'Dalvegur 30', 'dalvegur 30a': 'Dalvegur 30',
   'heklureitur': 'Heklureitur', 'landsspítalinn': 'Landsspítalinn', 'landspitalinn': 'Landsspítalinn',
+  // PDF-in skrifa spítalann á alla vegu: Landspítalinn/Landsspítali/landsspitali/
+  // Nýi Landspítali … — stofn-lyklarnir grípa þau öll (substring-match að neðan).
+  'landspítal': 'Landsspítalinn', 'landsspítal': 'Landsspítalinn', 'landspital': 'Landsspítalinn',
+  'landsspital': 'Landsspítalinn',
   'nlsh': 'Landsspítalinn', 'nlsh 5-6. hæð': 'Landsspítalinn', 'nlsh 5-6': 'Landsspítalinn',
-  'orkureitur': 'Orkureitur', 'fjallaböðin': 'Fjallaböðin Þjórsárdal',
+  'orkureitur': 'Orkureitur', 'fjallaböðin': 'Fjallaböðin Þjórsárdal', 'fjallaböð': 'Fjallaböðin Þjórsárdal',
 };
 function normWorksite(name) {
   const n = String(name || '').trim();
@@ -220,8 +356,29 @@ async function invoiceExists(invoice_nr) {
 async function upsertInvoice(row) {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/redder_invoices?on_conflict=invoice_nr`, {
     method: 'POST',
-    headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' }),
+    headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=representation' }),
     body: JSON.stringify(row),
   });
   if (!r.ok) throw new Error('upsert ' + r.status + ' ' + (await r.text()).slice(0, 200));
+  const arr = await r.json().catch(() => []);
+  return Array.isArray(arr) ? arr[0] : null;
+}
+// Wipe + re-insert the invoice's line items (same semantics as the
+// /api/redder-invoices POST). Called ONLY when the parse found lines.
+async function replaceLineItems(invoice_id, lines) {
+  await fetch(`${SUPABASE_URL}/rest/v1/redder_line_items?invoice_id=eq.${invoice_id}`, {
+    method: 'DELETE', headers: sbHeaders(),
+  });
+  const rows = lines.map((li, i) => ({
+    invoice_id, line_no: i + 1,
+    item_code: li.item_code || null, item_name: li.item_name || null,
+    magn: li.magn, unit: li.unit || null, ein_verd: li.ein_verd,
+    afsl_pct: li.afsl_pct, upphaed: li.upphaed,
+  }));
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/redder_line_items`, {
+    method: 'POST',
+    headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
+    body: JSON.stringify(rows),
+  });
+  if (!r.ok) throw new Error('lines ' + r.status + ' ' + (await r.text()).slice(0, 200));
 }

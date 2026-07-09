@@ -14349,6 +14349,7 @@ async function efReadRedder(t, btn){
           <thead><tr style="color:var(--muted-2);font-weight:600;text-align:left">
             <th style="padding:5px 6px">Nr.</th><th style="padding:5px 6px">Dags</th>
             <th style="padding:5px 6px">Verkstaður</th><th style="padding:5px 6px">Tengiliður</th>
+            <th style="padding:5px 6px">Efnislínur</th>
             <th style="padding:5px 6px;text-align:right">Án vsk</th><th style="padding:5px 6px;text-align:right">Vsk</th>
             <th style="padding:5px 6px;text-align:right">m. vsk</th></tr></thead>
           <tbody>${rows.map(x=>`<tr style="border-top:1px solid var(--border)">
@@ -14356,6 +14357,7 @@ async function efReadRedder(t, btn){
             <td style="padding:4px 6px">${escapeHtml(x.dagsetning||'—')}</td>
             <td style="padding:4px 6px">${escapeHtml(x.worksite_match||'⚠︎ óþekkt')}</td>
             <td style="padding:4px 6px">${escapeHtml(x.contact_person||'')}</td>
+            <td style="padding:4px 6px;max-width:340px" title="${escapeAttr((x.lines||[]).map(l=>`${l.magn}× ${l.item_name}`).join('\n'))}">${(x.lines||[]).length?((x.lines.length+' línur: ')+escapeHtml(x.lines.map(l=>l.item_name).join(' · ').slice(0,80))+(x.lines.map(l=>l.item_name).join(' · ').length>80?'…':'')):'<span style="color:var(--muted)">engar</span>'}</td>
             <td style="padding:4px 6px;text-align:right">${fmt(x.an_vsk)}</td>
             <td style="padding:4px 6px;text-align:right">${fmt(x.vsk)}</td>
             <td style="padding:4px 6px;text-align:right;font-weight:600">${fmt(x.m_vsk)}</td></tr>`).join('')}</tbody>
@@ -14374,19 +14376,19 @@ async function efReadRedder(t, btn){
 async function efWriteRedder(t, btn){
   const meta = document.getElementById('ef-meta');
   btn.disabled = true; btn.textContent = '⏳ Skrái…';
-  let offset = 0, guard = 0, indexed = 0, dupSkip = 0, errors = 0, total = null;
+  let offset = 0, guard = 0, indexed = 0, dupSkip = 0, errors = 0, total = null, lines = 0;
   try {
     while (guard++ < 200) {
       const r = await fetch(`/api/redder-read?offset=${offset}&limit=6`);
       const j = await r.json().catch(()=>({}));
       if (!r.ok) throw new Error(j.error || ('HTTP '+r.status));
-      indexed += j.indexed||0; dupSkip += j.dupSkip||0; errors += j.errors||0;
+      indexed += j.indexed||0; dupSkip += j.dupSkip||0; errors += j.errors||0; lines += j.linesWritten||0;
       if (total == null && typeof j.total === 'number') total = j.total;
       if (meta) meta.textContent = `Skrái Redder… ${indexed} skráðir`;
       if (j.nextOffset == null) break;
       offset = j.nextOffset;
     }
-    if (meta) meta.textContent = `✓ Lokið: ${indexed} skráðir (${dupSkip} þegar til)${errors?(' · '+errors+' villur'):''}`;
+    if (meta) meta.textContent = `✓ Lokið: ${indexed} skráðir · ${lines} efnislínur (${dupSkip} þegar til)${errors?(' · '+errors+' villur'):''}`;
     setTimeout(() => { try { renderEfniskostnadur(t); } catch(_){} }, 900);
   } catch (e) {
     if (meta) meta.textContent = 'Villa við skráningu: ' + (e.message||e);

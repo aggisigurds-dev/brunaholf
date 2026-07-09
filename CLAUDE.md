@@ -326,6 +326,21 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   (dry → parsed table) then „▶️ Skrá N í gagnagrunn". Reuses `pdf-parse` (already
   in `external_node_modules`) + the `reikningar-read` Drive/OCR-fallback helpers.
   Redirect `/api/redder-read` in netlify.toml.
+  **Efnis-vörulínur (2026-07-09):** `extractLines()` þáttar líka vörulínurnar
+  (vörunr/heiti/magn/eining/ein.verð/afsl%/upphæð) og skrifar þær í
+  `redder_line_items` (wipe+insert per reikning, AÐEINS þegar þáttun fann línur
+  — mislestur þurrkar aldrei út góðar línur). Línusniðið er samþjappað
+  (`…Hvítt (12)12,00Stk1.547,58  50,00 9.285`) og lýsingin getur endað á tölustaf
+  (hanska-stærðir „M-st8") svo magn-skiptingin er reynd á alla mögulega vegu og
+  **sannreynd með round(magn×verð×(1−afsl%)) === upphæð**. Form B: línur án
+  Afsl%-dálks líma ein.verð+upphæð saman („stk2.217,7417.742" — ,dd afmarkar).
+  Kredit-reikningar bera AFTANÁ-mínus („41.458-") → magn/upphæð (og haus-tölurnar
+  an_vsk/vsk/m_vsk gegnum `parseIsk`) verða neikvæð. Tilvísanir „V: <staður>" /
+  „V/ <staður> umb: <nafn>" / „Vegna: <staður> - Sótt: <nafn>" fylla vegna/tengilið
+  þegar gamla „Vegna X umb Y" formið vantar. Sannreynt 65/65 PDF í möppunni:
+  Σ línu-upphæða === Upphæð án vsk á hverjum einasta. Þar með getur Gerð Reikninga
+  Efnislisti-autofillið (`matchVerdskra` á `item_name`) loks unnið úr Drive-lesnum
+  reikningum — áður skrifaði Drive-leiðin engar línur (0 af 65).
 - `match-station.js` — **🔗 Skýrslu-stöð** (Bakendi top): a human-in-the-loop board
   to assign each `customer_documents` row (úttektarskýrsla/reikningur) to the RIGHT
   service-customer **location (`fyrirtaeki_id`) + year**. Built because an earlier
