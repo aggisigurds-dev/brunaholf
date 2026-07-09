@@ -44,10 +44,11 @@
   }
 
   const CSS = `
-    .hub-sync{display:inline-flex;align-items:center;gap:8px;font-size:12px}
+    .hub-sync{display:inline-flex;flex-direction:column;align-items:flex-start;gap:3px;font-size:12px}
     .hub-sync button{background:#e8590c;color:#fff;border:0;border-radius:8px;padding:6px 11px;font-weight:600;font-size:12px;cursor:pointer}
     .hub-sync button:disabled{opacity:.6;cursor:default}
-    .hub-sync .d{color:#6b7280}
+    .hub-sync .d{color:#2563eb;font-weight:600;font-size:11px;padding-left:2px}
+    .hub-sync.fresh .d{color:#16a34a}
     .hub-sync .dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px;background:#adb5bd;vertical-align:middle}
     .hub-sync .dot.done{background:#2f9e44}.hub-sync .dot.running{background:#1c7ed6}.hub-sync .dot.pending{background:#f59f00}.hub-sync .dot.error{background:#e03131}`;
   function injectCss() { if (document.getElementById("hub-sync-css")) return; const s = document.createElement("style"); s.id = "hub-sync-css"; s.textContent = CSS; document.head.appendChild(s); }
@@ -62,10 +63,14 @@
     async function refresh() {
       const last = await lastRun(wf);
       dot.className = "dot" + (last ? " " + last.status : "");
-      if (!last) { txt.textContent = "aldrei samstillt"; return; }
-      const when = fmt(last.finished_at || last.started_at || last.requested_at);
+      if (!last) { txt.textContent = "aldrei samstillt"; el.classList.remove("fresh"); return; }
+      const ts = last.finished_at || last.started_at || last.requested_at;
+      const when = fmt(ts);
       const state = (last.status === "pending" || last.status === "running") ? ` (${last.status})` : "";
       txt.textContent = `síðast samstillt: ${when}${state}`;
+      // Grænn þegar samstillt innan 24 klst, annars blár (ósk Agnars 2026-07-08).
+      const ageH = ts ? (Date.now() - new Date(ts).getTime()) / 3600000 : Infinity;
+      el.classList.toggle("fresh", isFinite(ageH) && ageH < 24);
     }
     btn.onclick = async () => {
       btn.disabled = true; btn.textContent = "⏳ Samstilli…";
