@@ -8350,10 +8350,16 @@ async function renderGerdReikninga(t){
   const GR_REDDER_ALIASES = [
     { label:'Eldvarnar Akríl 5kg', test:n=>/akr[íi]l?l?/.test(n) && /5\s*kg/.test(n) },
     { label:'Eldvarnar akríl',     test:n=>/akr[íi]l?l?/.test(n) },                 // 310/600ml tubes
-    { label:'Háþennslukítti',      test:n=>/h[áa]þe?n+slu/.test(n) || /h[áa]þ.*k[íi]tti/.test(n) },
+    // „háþensl" stofn (án -u) grípur líka „Eldvarnar kítti háþensla 310ml" —
+    // sama vara, ein_verd 4.488,71 = Verðskrá 4.489 (staðfest úr redder_line_items).
+    { label:'Háþennslukítti',      test:n=>/h[áa]þe?n+sl/.test(n) || /h[áa]þ.*k[íi]tti/.test(n) },
     { label:'Eldvarnar steinull',  test:n=>/þéttull|steinull/.test(n) },           // þéttull = steinull
     { label:'Eldvarnar silikon',   test:n=>/silikon|silicon/.test(n) },
     { label:'Eldvarnar málning',   test:n=>/m[áa]lning/.test(n) },
+    // Band á RÚLLU er rúllu-varan, ekki stök bönd — bæði Redder-heitin
+    // („Eldv.band á rúllu 25M 50mmx1,8" og „Eldvarnarband PW á rúllu 2mm x 25M")
+    // bera nákvæmlega Verðskrárverðið 53.574,19 (staðfest úr redder_line_items).
+    { label:'Eldvarnar rúlla 55mm', test:n=>/rúll/.test(n) && /eldv/.test(n) },
   ];
   // Verðskrá items that are genuinely size-specific (mm must agree to match).
   const grIsSized = (label)=>/^(band|kragi|brunaþéttirör)/i.test(label) || /rúlla/i.test(label);
