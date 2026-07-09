@@ -8525,6 +8525,9 @@ async function renderGerdReikninga(t){
       .tbk-r{display:grid;grid-template-columns:130px 1fr 70px 70px 74px 30px;gap:6px;align-items:center;padding:4px 8px;border-bottom:1px solid #f1f5f9}
       .tbk-r input{font:inherit;font-size:12px;padding:4px 6px;border:1px solid var(--border,#e2e8f0);border-radius:6px;width:100%;box-sizing:border-box}
       .tbk-r .tbk-h-in{background:#fffbeb;border-color:#fcd34d;text-align:right;font-variant-numeric:tabular-nums}
+    .tbk-r.tbk-r8{grid-template-columns:130px 1fr 70px 70px 74px 56px 56px 30px}
+    .tbk-r .tbk-ro{text-align:right;font-variant-numeric:tabular-nums;font-size:12px;color:#475569;padding:4px 2px;white-space:nowrap}
+    .tbk-r .tbk-ro.yf{color:#e8590c;font-weight:600}
       .tbk-h{background:#f8fafc;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;color:#64748b;font-weight:600}
       .tbk-h span{padding:2px 2px}
       .tbk-del{border:0;background:none;color:#dc2626;cursor:pointer;font-size:14px;line-height:1;padding:2px}
@@ -16217,6 +16220,9 @@ function ensureGrModalCss(){
     .tbk-r{display:grid;grid-template-columns:130px 1fr 70px 70px 74px 30px;gap:6px;align-items:center;padding:4px 8px;border-bottom:1px solid #f1f5f9}
     .tbk-r input{font:inherit;font-size:12px;padding:4px 6px;border:1px solid #e2e8f0;border-radius:6px;width:100%;box-sizing:border-box}
     .tbk-r .tbk-h-in{background:#fffbeb;border-color:#fcd34d;text-align:right;font-variant-numeric:tabular-nums}
+    .tbk-r.tbk-r8{grid-template-columns:130px 1fr 70px 70px 74px 56px 56px 30px}
+    .tbk-r .tbk-ro{text-align:right;font-variant-numeric:tabular-nums;font-size:12px;color:#475569;padding:4px 2px;white-space:nowrap}
+    .tbk-r .tbk-ro.yf{color:#e8590c;font-weight:600}
     .tbk-h{background:#f8fafc;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;color:#64748b;font-weight:600}
     .tbk-h span{padding:2px 2px}
     .tbk-del{border:0;background:none;color:#dc2626;cursor:pointer;font-size:14px;line-height:1;padding:2px}
@@ -16375,16 +16381,22 @@ async function openTimabok(name, month){
   function paint(){
     const body = document.getElementById('tbk-body'); if(!body) return;
     try{
-    const head = `<div class="tbk-r tbk-h"><span>Dagsetning</span><span>Starfsmaður</span><span>Inn</span><span>Út</span><span>Tímar</span><span></span></div>`;
-    const rr = rows.map((r,i)=>`<div class="tbk-r">
+    const t = tbkYfSplit(rows, yf);
+    // Per-röð ÐV/YF dálkar (verkefnalisti 65adc9e7): þegar Yfirvinna er hökuð
+    // sýnir hver lína sína skiptingu — fyrstu klst dagsins (per starfsmann,
+    // raðað eftir Inn-tíma) upp að þröskuldinum eru dagvinna, restin yfirvinna.
+    const rs = tbkRowSplit(rows, { on: t.on, thr: t.thr });
+    const rcls = t.on ? ' tbk-r8' : '';
+    const head = `<div class="tbk-r tbk-h${rcls}"><span>Dagsetning</span><span>Starfsmaður</span><span>Inn</span><span>Út</span><span>Tímar</span>${t.on?'<span style="text-align:right">Dagv.</span><span style="text-align:right">Yfirv.</span>':''}<span></span></div>`;
+    const rr = rows.map((r,i)=>`<div class="tbk-r${rcls}">
         <input type="date" value="${escapeAttr(r.date)}" data-f="date" data-i="${i}">
         <input type="text" value="${escapeAttr(r.employee)}" data-f="employee" data-i="${i}" placeholder="Nafn">
         <input type="text" value="${escapeAttr(r.time_in)}" data-f="time_in" data-i="${i}" placeholder="08:00">
         <input type="text" value="${escapeAttr(r.time_out)}" data-f="time_out" data-i="${i}" placeholder="16:00">
         <input type="text" inputmode="decimal" value="${escapeAttr(String(r.hours))}" data-f="hours" data-i="${i}" class="tbk-h-in">
+        ${t.on?`<span class="tbk-ro">${_phr(rs[i].dv)}</span><span class="tbk-ro yf">${rs[i].yf>0?_phr(rs[i].yf):''}</span>`:''}
         <button class="tbk-del" data-del="${i}" title="Fjarlægja línu">✕</button>
       </div>`).join('');
-    const t = tbkYfSplit(rows, yf);
     const emp = Object.keys(t.byEmp).sort((a,b)=>a.localeCompare(b,'is')).map(e=>{
       const m = t.byEmp[e];
       return t.on
@@ -16404,7 +16416,7 @@ async function openTimabok(name, month){
       <div class="tbk-tot tbk-sub"><span>Yfirvinna (yfir ${tbkThrTxt(t.thr)} klst/dag)</span><b>${_phr(t.yf)} klst</b></div>`:''}
       <div class="tbk-tot"><span>Tímar alls</span><b>${_phr(t.total)} klst</b></div>
       ${emp?`<div class="tbk-emp">${empHead}${emp}</div>`:''}`;
-    body.querySelectorAll('input[data-i]').forEach(inp=> inp.addEventListener('change',()=>{ const i=+inp.dataset.i, f=inp.dataset.f; rows[i][f] = f==='hours'? (Number(String(inp.value).replace(',','.').replace(/[^\d.]/g,''))||0) : inp.value; if(f==='hours'||f==='employee'||f==='date') paint(); }));
+    body.querySelectorAll('input[data-i]').forEach(inp=> inp.addEventListener('change',()=>{ const i=+inp.dataset.i, f=inp.dataset.f; rows[i][f] = f==='hours'? (Number(String(inp.value).replace(',','.').replace(/[^\d.]/g,''))||0) : inp.value; if(f==='hours'||f==='employee'||f==='date'||f==='time_in') paint(); }));
     body.querySelectorAll('[data-del]').forEach(b=> b.onclick=()=>{ rows.splice(+b.dataset.del,1); paint(); });
     const yfChk = body.querySelector('#tbk-yf'), yfThr = body.querySelector('#tbk-yf-thr');
     if(yfChk) yfChk.onchange = ()=>{ yf.on = yfChk.checked; paint(); };
@@ -16464,6 +16476,29 @@ function tbkYfSplit(rows, yfCfg){
   }
   return { on, thr, total, dv, yf, byEmp };
 }
+// Per-röð skipting (verkefnalisti 65adc9e7): dreifir dagvinnu/yfirvinnu dagsins
+// niður á einstakar færslur. Innan sama (starfsmanns, dags) er röðunin eftir
+// Inn-tíma (svo fyrstu tímar dagsins eru dagvinna) óháð birtingarröð — summa
+// per dag stemmir alltaf við tbkYfSplit. Skilar fylki samsíða rows.
+function tbkRowSplit(rows, yfCfg){
+  const on = !!(yfCfg && yfCfg.on);
+  const thr = (yfCfg && Number(yfCfg.thr) > 0) ? Number(yfCfg.thr) : 8;
+  const out = rows.map(r=>({ dv: Number(r.hours)||0, yf: 0 }));
+  if(!on) return out;
+  const groups = {};
+  rows.forEach((r,i)=>{ const k=(r.employee||'—')+'\u0001'+(r.date||''); (groups[k]=groups[k]||[]).push(i); });
+  for(const k of Object.keys(groups)){
+    const idx = groups[k].slice().sort((a,b)=> String(rows[a].time_in||'99:99').localeCompare(String(rows[b].time_in||'99:99')) || a-b);
+    let used = 0;
+    for(const i of idx){
+      const h = Number(rows[i].hours)||0;
+      const dv = Math.max(0, Math.min(h, thr - used));
+      used += h;
+      out[i].dv = dv; out[i].yf = h - dv;
+    }
+  }
+  return out;
+}
 // „8" án aukastafa, „7,5" með — fyrir merkimiða.
 function tbkThrTxt(thr){ return thr % 1 ? (Number(thr)).toLocaleString('is-IS') : String(thr); }
 // Sjálfgefin yfirvinnu-stilling fyrir (verkstaður, mánuð) — það sem síðast var
@@ -16492,20 +16527,25 @@ async function buildAndSaveTimabokPdf(name, month, rows, overwrite, yfCfg){
   if(yfCfg === undefined) yfCfg = tbkSavedYf(name, month);
   const t = tbkYfSplit(sorted, yfCfg);
   const dmy = s => { const p=String(s||'').split('-'); return p.length===3? `${p[2]}.${p[1]}.${p[0]}` : (s||''); };
+  const rsPdf = tbkRowSplit(sorted, { on: t.on, thr: t.thr });   // per-röð ÐV/YF dálkar (65adc9e7)
   const foot = t.on
-    ? [['', '', '', 'Dagvinna', _phr(t.dv)],
-       ['', '', '', `Yfirvinna (yfir ${tbkThrTxt(t.thr)} klst/dag)`, _phr(t.yf)],
-       ['', '', '', 'Tímar alls', _phr(t.total)]]
+    ? [[{ content:`Samtals (yfirvinna yfir ${tbkThrTxt(t.thr)} klst/dag)`, colSpan:4, styles:{ halign:'right' } }, _phr(t.dv), _phr(t.yf), _phr(t.total)]]
     : [['', '', '', 'Tímar alls', _phr(t.total)]];
   doc.autoTable({
     startY: y,
-    head: [['Dagsetning','Starfsmaður','Inn','Út','Tímar']],
-    body: sorted.map(r=>[dmy(r.date), r.employee||'', r.time_in||'', r.time_out||'', _phr(r.hours)]),
+    head: t.on
+      ? [['Dagsetning','Starfsmaður','Inn','Út','Dagvinna','Yfirvinna','Tímar']]
+      : [['Dagsetning','Starfsmaður','Inn','Út','Tímar']],
+    body: sorted.map((r,i)=> t.on
+      ? [dmy(r.date), r.employee||'', r.time_in||'', r.time_out||'', _phr(rsPdf[i].dv), rsPdf[i].yf>0?_phr(rsPdf[i].yf):'', _phr(r.hours)]
+      : [dmy(r.date), r.employee||'', r.time_in||'', r.time_out||'', _phr(r.hours)]),
     foot,
     styles:{ font:'helvetica', fontSize:9, cellPadding:3 },
     headStyles:{ fillColor:[30,30,30], textColor:255, fontSize:8 },
     footStyles:{ fillColor:[240,240,240], textColor:20, fontStyle:'bold' },
-    columnStyles:{ 2:{halign:'center'}, 3:{halign:'center'}, 4:{halign:'right'} },
+    columnStyles: t.on
+      ? { 2:{halign:'center'}, 3:{halign:'center'}, 4:{halign:'right'}, 5:{halign:'right'}, 6:{halign:'right'} }
+      : { 2:{halign:'center'}, 3:{halign:'center'}, 4:{halign:'right'} },
     margin:{ left:40, right:40 },
   });
   // Per-employee summary.
@@ -16589,13 +16629,22 @@ function printTimabok(name, month, rows, yfCfg){
   const dmy = s => { const p=String(s||'').split('-'); return p.length===3? `${p[2]}.${p[1]}.${p[0]}` : (s||''); };
   if(yfCfg === undefined) yfCfg = tbkSavedYf(name, month);
   const sorted = rows.slice().sort((a,b)=> String(b.date).localeCompare(String(a.date)) || String(a.employee).localeCompare(String(b.employee),'is'));
+  const t = tbkYfSplit(sorted, yfCfg);
+  // Per-röð ÐV/YF (65adc9e7) — Map á röð-hlutina svo ekkert `_rs` mengist inn í vistuð gögn.
+  const rsArr = tbkRowSplit(sorted, { on: t.on, thr: t.thr });
+  const rsMap = new Map(sorted.map((r,i)=>[r, rsArr[i]]));
   const byDate = {}; for(const r of sorted){ (byDate[r.date]=byDate[r.date]||[]).push(r); }
   const dateRows = Object.keys(byDate).sort().reverse().map(d=>{
     const list = byDate[d]; const dayH = list.reduce((s,r)=>s+(Number(r.hours)||0),0);
-    return list.map((r,i)=>`<tr><td class="d">${i===0?dmy(d):''}</td><td>${escapeHtml(r.employee)}</td><td class="c">${escapeHtml(r.time_in)}</td><td class="c">${escapeHtml(r.time_out)}</td><td class="r">${hr(r.hours)}</td></tr>`).join('')
-      + `<tr class="dsum"><td></td><td colspan="3">Samtals ${dmy(d)}</td><td class="r">${hr(dayH)}</td></tr>`;
+    const dayDv = list.reduce((s,r)=>s+((rsMap.get(r)||{}).dv||0),0), dayYf = list.reduce((s,r)=>s+((rsMap.get(r)||{}).yf||0),0);
+    return list.map((r,i)=>{
+      const s = rsMap.get(r)||{dv:0,yf:0};
+      return `<tr><td class="d">${i===0?dmy(d):''}</td><td>${escapeHtml(r.employee)}</td><td class="c">${escapeHtml(r.time_in)}</td><td class="c">${escapeHtml(r.time_out)}</td>${t.on?`<td class="r">${hr(s.dv)}</td><td class="r">${s.yf>0?hr(s.yf):''}</td>`:''}<td class="r">${hr(r.hours)}</td></tr>`;
+    }).join('')
+      + (t.on
+        ? `<tr class="dsum"><td></td><td colspan="3">Samtals ${dmy(d)}</td><td class="r">${hr(dayDv)}</td><td class="r">${dayYf>0?hr(dayYf):''}</td><td class="r">${hr(dayH)}</td></tr>`
+        : `<tr class="dsum"><td></td><td colspan="3">Samtals ${dmy(d)}</td><td class="r">${hr(dayH)}</td></tr>`);
   }).join('');
-  const t = tbkYfSplit(sorted, yfCfg);
   const totHtml = t.on
     ? `<div class="tb-tot">Dagvinna: <b>${hr(t.dv)}</b> &nbsp;·&nbsp; Yfirvinna (yfir ${tbkThrTxt(t.thr)} klst/dag): <b>${hr(t.yf)}</b> &nbsp;·&nbsp; Tímar alls: <b>${hr(t.total)}</b></div>`
     : `<div class="tb-tot">Tímar alls: <b>${hr(t.total)}</b></div>`;
@@ -16626,7 +16675,7 @@ function printTimabok(name, month, rows, yfCfg){
     @media print{body{margin:12mm}}</style></head><body>
     <div class="tb-top"><div class="tb-logobox"><img src="${escapeAttr(logo)}" onerror="this.style.display='none'"></div>
       <div><h1>Tímaskýrsla</h1><div class="tb-sub">Mæting starfsmanna — fylgiskjal með reikningi</div><div class="tb-ws">${escapeHtml(name)} · ${monthLabelStatic(month)}</div></div></div>
-    <table><thead><tr><th>Dagsetning</th><th>Starfsmaður</th><th class="c">Inn</th><th class="c">Út</th><th class="r">Tímar</th></tr></thead><tbody>${dateRows}</tbody></table>
+    <table><thead><tr><th>Dagsetning</th><th>Starfsmaður</th><th class="c">Inn</th><th class="c">Út</th>${t.on?'<th class="r">Dagvinna</th><th class="r">Yfirvinna</th>':''}<th class="r">Tímar</th></tr></thead><tbody>${dateRows}</tbody></table>
     ${totHtml}
     <div class="tb-emp"><h2>Samantekt á starfsmann</h2><table><thead>${empHead}</thead><tbody>${empRows}</tbody></table></div>
     <script>window.onload=function(){window.print();}<\/script></body></html>`);
