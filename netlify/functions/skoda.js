@@ -158,7 +158,9 @@ exports.handler = async (event) => {
 
     if (event.httpMethod !== 'POST') return json(405, { error: 'Method not allowed' });
 
-    const body = JSON.parse(event.body || '{}');
+    let body;
+    try { body = JSON.parse(event.body || '{}'); }
+    catch (_) { return json(400, { error: 'Ógilt JSON í body' }); }
     const action = body.action;
 
     if (action === 'invite') {

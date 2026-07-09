@@ -24,7 +24,7 @@ data from Ajour, Google Drive/Sheets/Gmail integration, and a tilbod
 
 ## Stack
 
-- **Frontend**: `index.html` — single 4800-line file, vanilla JS, no
+- **Frontend**: `index.html` — single ~17.700-line / 1,1 MB file, vanilla JS, no
   framework. Tabs defined in `DEFAULT_STATE.tabs` around line 1052.
   Each tab id maps to a `render<Name>(t)` function further down.
 - **Viewmode-rofi (`js/viewmode.js`, 2026-07-07):** fljótandi 📱 Sími · 📲
@@ -165,8 +165,9 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   `GET /api/vefryni?what=queue` (or SQL: pins where `submitted` and `status in (nytt,lagfaera)`);
   fix each, set `status='tilbuid'` + a `claude_note`, then Agnar marks green/orange.
 
-> The `reikningar` tab is currently a placeholder. The Reikningagerð
-> (invoicing prep) work is being built on top of it — see Open work below.
+> The `reikningar` tab is NO LONGER a placeholder — `render()` maps it to
+> `renderReikningagerd` (full invoicing-prep view). The remaining Reikningagerð
+> ambitions live under Open work below.
 
 ## Data sources
 
