@@ -64,7 +64,25 @@ exports.handler = async (event) => {
       return { date, total_hours: r2(staff.reduce((s, e) => s + e.hours, 0)), staff };
     });
 
-  return json(200, { generated_at: new Date().toISOString(), days_back: days, days: out });
+  // Ferskleiki (2026-07-09, verkefnalisti c9fbea70): „sækir ekki nýjustu" var í
+  // raun GÖMUL útflutningsskrá (t.d. „1 til 6 Jul") — samstillingin keyrði en
+  // gögnin ná bara að skrá-lokum. Skila nýjustu dagsetningu + skráarheiti svo
+  // síðan geti sagt það hreint út í stað þess að þegja.
+  let newest_entry = null, source_file = null, last_import = null;
+  try {
+    const hdrs = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` };
+    const [nr, mr] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/timavera_entries?select=date&order=date.desc&limit=1`, { headers: hdrs }),
+      fetch(`${SUPABASE_URL}/rest/v1/timavera_meta?select=last_import,source_file&order=last_import.desc&limit=1`, { headers: hdrs }),
+    ]);
+    const [n0] = nr.ok ? await nr.json() : [];
+    const [m0] = mr.ok ? await mr.json() : [];
+    newest_entry = (n0 && n0.date) || null;
+    source_file = (m0 && m0.source_file) || null;
+    last_import = (m0 && m0.last_import) || null;
+  } catch (_) {}
+
+  return json(200, { generated_at: new Date().toISOString(), days_back: days, newest_entry, source_file, last_import, days: out });
 };
 
 async function fetchAll(table, qs) {

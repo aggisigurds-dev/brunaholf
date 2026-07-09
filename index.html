@@ -11445,8 +11445,22 @@ async function renderTvMaeting(t){
       const d = await r.json();
       if(!r.ok || d.error) throw new Error(d.error||('HTTP '+r.status));
       if(meta) meta.textContent = 'Hvenær starfsmenn mættu og hættu — beint úr Tímaveru · síðustu '+d.days_back+' dagar';
-      if(!(d.days||[]).length){ list.innerHTML = '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:26px;text-align:center;color:#94a3b8;font-style:italic">Engar tímafærslur á tímabilinu</div>'; return; }
-      list.innerHTML = d.days.map(day=>`
+      // Ferskleika-viðvörun: gögnin ná bara að lokum nýjustu útflutningsskrárinnar
+      // úr Tímaveru — ef nýjasta færslan er >1 dags gömul segjum við það hreint út
+      // (samstilling flytur bara skrána sem er til; hún býr ekki til nýja daga).
+      let staleBanner = '';
+      if (d.newest_entry) {
+        const nd = new Date(d.newest_entry+'T00:00:00'); const t0 = new Date(); t0.setHours(0,0,0,0);
+        const ageD = Math.round((t0-nd)/864e5);
+        if (ageD > 1) {
+          staleBanner = '<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:12px;padding:11px 15px;margin-bottom:12px;font-size:12.5px;color:#92400e;line-height:1.5">'+
+            '⚠️ <b>Nýjustu Tímaveru-gögnin eru frá '+esc(dayLbl(d.newest_entry))+' ('+ageD+' daga gömul).</b> '+
+            (d.source_file ? 'Nýjasta útflutningsskráin („'+esc(d.source_file)+'") nær bara þangað — ' : '')+
+            'sæktu ferskan export úr Tímaveru (vinnufærslur-xlsx í Downloads/Drive) og keyrðu Samstilla, þá birtast nýju dagarnir.</div>';
+        }
+      }
+      if(!(d.days||[]).length){ list.innerHTML = staleBanner + '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:26px;text-align:center;color:#94a3b8;font-style:italic">Engar tímafærslur á tímabilinu</div>'; return; }
+      list.innerHTML = staleBanner + d.days.map(day=>`
         <div style="background:#fff;border:1px solid rgba(20,24,34,.08);border-radius:16px;margin-bottom:14px;overflow:hidden;box-shadow:0 10px 28px -16px rgba(25,35,60,.16)">
           <div style="padding:12px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid #eef1f6;background:#fafbfe">
             <div style="font-weight:800;color:#11141c;font-size:15px">${esc(dayLbl(day.date))}</div>
