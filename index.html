@@ -16200,8 +16200,17 @@ function ensureGrModalCss(){
     .tbk-del{border:0;background:none;color:#dc2626;cursor:pointer;font-size:14px;line-height:1;padding:2px}
     .tbk-tot{display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding:8px 10px;border-top:2px solid #0f172a;font-weight:700}
     .tbk-tot b{font-size:16px;font-variant-numeric:tabular-nums}
+    .tbk-tot.tbk-sub{border-top:1px solid #e2e8f0;margin-top:4px;padding:4px 10px;font-weight:600;font-size:12.5px;color:#475569}
+    .tbk-tot.tbk-sub b{font-size:13.5px;color:#0f172a}
+    .tbk-yf{display:flex;align-items:center;gap:7px;margin-top:10px;font-size:13px;font-weight:600;color:#0f172a}
+    .tbk-yf input[type=checkbox]{width:16px;height:16px;accent-color:#e8590c;cursor:pointer}
+    .tbk-yf label{display:flex;align-items:center;gap:6px;cursor:pointer}
+    .tbk-yf .thr{width:52px;font:inherit;font-size:12.5px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;text-align:right;font-variant-numeric:tabular-nums}
+    .tbk-yf .thr:disabled{background:#f1f5f9;color:#94a3b8}
+    .tbk-yf .hint{font-weight:400;font-size:11.5px;color:#64748b}
     .tbk-emp{margin-top:12px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden}
     .tbk-er{display:grid;grid-template-columns:1fr 90px 110px;gap:6px;padding:5px 10px;border-bottom:1px solid #f1f5f9;font-size:12.5px}
+    .tbk-er.tbk-er5{grid-template-columns:1fr 62px 84px 84px 96px}
     .tbk-er span:nth-child(n+2){text-align:right;font-variant-numeric:tabular-nums}
     .tbk-eh{background:#f8fafc;font-size:10.5px;text-transform:uppercase;color:#64748b;font-weight:600}`;
   document.head.appendChild(st);
@@ -16306,6 +16315,10 @@ async function openTimabok(name, month){
 
   let rows = [];
   const saved = (state.ui && state.ui.timabok_edits && state.ui.timabok_edits[key]) || null;
+  // Yfirvinnu-stilling (☑ + þröskuldur klst/dag) — fylgir vistaða eintakinu.
+  const yf = (saved && saved.yfirvinna)
+    ? { on: !!saved.yfirvinna.on, thr: (Number(saved.yfirvinna.thr) > 0 ? Number(saved.yfirvinna.thr) : 8) }
+    : { on: false, thr: 8 };
   const sortRows = ()=> rows.sort((a,b)=> String(b.date).localeCompare(String(a.date)) || String(a.employee).localeCompare(String(b.employee),'is'));
   // Taflan birtist STRAX (hangir aldrei); Tímavera er sótt í bakgrunni með tímamörkum
   // svo hægt kall eða teikni-villa festi ekki gluggann á „Sæki tímafærslur…".
@@ -16337,11 +16350,6 @@ async function openTimabok(name, month){
     })();
   }
 
-  function totals(){
-    const total = rows.reduce((s,r)=>s+(Number(r.hours)||0),0);
-    const byEmp = {}; for(const r of rows){ const e=r.employee||'—'; (byEmp[e]=byEmp[e]||{days:new Set(),hours:0}); byEmp[e].hours+=Number(r.hours)||0; if(r.date) byEmp[e].days.add(r.date); }
-    return { total, byEmp };
-  }
   function paint(){
     const body = document.getElementById('tbk-body'); if(!body) return;
     try{
@@ -16354,38 +16362,96 @@ async function openTimabok(name, month){
         <input type="text" inputmode="decimal" value="${escapeAttr(String(r.hours))}" data-f="hours" data-i="${i}" class="tbk-h-in">
         <button class="tbk-del" data-del="${i}" title="Fjarlægja línu">✕</button>
       </div>`).join('');
-    const t = totals();
-    const emp = Object.keys(t.byEmp).sort((a,b)=>a.localeCompare(b,'is')).map(e=>`<div class="tbk-er"><span>${escapeHtml(e)}</span><span>${t.byEmp[e].days.size} dagar</span><span>${_phr(t.byEmp[e].hours)} klst</span></div>`).join('');
+    const t = tbkYfSplit(rows, yf);
+    const emp = Object.keys(t.byEmp).sort((a,b)=>a.localeCompare(b,'is')).map(e=>{
+      const m = t.byEmp[e];
+      return t.on
+        ? `<div class="tbk-er tbk-er5"><span>${escapeHtml(e)}</span><span>${m.days.size} dagar</span><span>${_phr(m.dv)}</span><span>${_phr(m.yf)}</span><span>${_phr(m.hours)} klst</span></div>`
+        : `<div class="tbk-er"><span>${escapeHtml(e)}</span><span>${m.days.size} dagar</span><span>${_phr(m.hours)} klst</span></div>`;
+    }).join('');
+    const empHead = t.on
+      ? `<div class="tbk-er tbk-eh tbk-er5"><span>Starfsmaður</span><span>Dagar</span><span>Dagvinna</span><span>Yfirvinna</span><span>Tímar</span></div>`
+      : `<div class="tbk-er tbk-eh"><span>Starfsmaður</span><span>Dagar</span><span>Tímar</span></div>`;
     body.innerHTML = `<div class="tbk-tbl">${head}${rr||'<div class="gr-loading" style="padding:10px">Engar línur — bættu við með ＋.</div>'}</div>
+      <div class="tbk-yf">
+        <label><input type="checkbox" id="tbk-yf" ${t.on?'checked':''}> Yfirvinna</label>
+        <input type="text" inputmode="decimal" class="thr" id="tbk-yf-thr" value="${escapeAttr(tbkThrTxt(yf.thr))}" ${t.on?'':'disabled'}>
+        <span class="hint">klst/dag — tímar umfram teljast yfirvinna</span>
+      </div>
+      ${t.on?`<div class="tbk-tot tbk-sub"><span>Dagvinna</span><b>${_phr(t.dv)} klst</b></div>
+      <div class="tbk-tot tbk-sub"><span>Yfirvinna (yfir ${tbkThrTxt(t.thr)} klst/dag)</span><b>${_phr(t.yf)} klst</b></div>`:''}
       <div class="tbk-tot"><span>Tímar alls</span><b>${_phr(t.total)} klst</b></div>
-      ${emp?`<div class="tbk-emp"><div class="tbk-er tbk-eh"><span>Starfsmaður</span><span>Dagar</span><span>Tímar</span></div>${emp}</div>`:''}`;
+      ${emp?`<div class="tbk-emp">${empHead}${emp}</div>`:''}`;
     body.querySelectorAll('input[data-i]').forEach(inp=> inp.addEventListener('change',()=>{ const i=+inp.dataset.i, f=inp.dataset.f; rows[i][f] = f==='hours'? (Number(String(inp.value).replace(',','.').replace(/[^\d.]/g,''))||0) : inp.value; if(f==='hours'||f==='employee'||f==='date') paint(); }));
     body.querySelectorAll('[data-del]').forEach(b=> b.onclick=()=>{ rows.splice(+b.dataset.del,1); paint(); });
+    const yfChk = body.querySelector('#tbk-yf'), yfThr = body.querySelector('#tbk-yf-thr');
+    if(yfChk) yfChk.onchange = ()=>{ yf.on = yfChk.checked; paint(); };
+    if(yfThr) yfThr.addEventListener('change', ()=>{ const v = Number(String(yfThr.value).replace(',','.').replace(/[^\d.]/g,'')); yf.thr = v>0? v : 8; paint(); });
     }catch(err){ body.innerHTML = `<div class="gr-loading">Villa við að teikna tímaskýrslu: ${escapeHtml(String(err&&err.message||err))}</div>`; }
   }
 
   document.getElementById('tbk-add').onclick = ()=>{ rows.unshift({ date:month+'-01', employee:'', time_in:'', time_out:'', hours:0 }); paint(); };
   document.getElementById('tbk-save').onclick = ()=>{
     state.ui = state.ui||{}; state.ui.timabok_edits = state.ui.timabok_edits||{};
-    state.ui.timabok_edits[key] = { rows: rows.map(r=>({...r})), saved_at: new Date().toISOString() };
+    state.ui.timabok_edits[key] = { rows: rows.map(r=>({...r})), yfirvinna:{ on:yf.on, thr:yf.thr }, saved_at: new Date().toISOString() };
     save(); st.textContent = '✓ vistað'; setTimeout(()=>{ st.textContent=''; }, 2500);
   };
-  document.getElementById('tbk-print').onclick = ()=> printTimabok(name, month, rows);
+  document.getElementById('tbk-print').onclick = ()=> printTimabok(name, month, rows, { on:yf.on, thr:yf.thr });
   document.getElementById('tbk-pdf').onclick = async ()=>{
     const btn = document.getElementById('tbk-pdf'); const old = btn.textContent; btn.textContent='⏳ Bý til PDF…'; btn.disabled=true;
     try{
       // Persist the current edits first so the PDF and the saved copy match.
       state.ui = state.ui||{}; state.ui.timabok_edits = state.ui.timabok_edits||{};
-      state.ui.timabok_edits[key] = { rows: rows.map(r=>({...r})), saved_at: new Date().toISOString() }; save();
-      const res = await buildAndSaveTimabokPdf(name, month, rows);
+      state.ui.timabok_edits[key] = { rows: rows.map(r=>({...r})), yfirvinna:{ on:yf.on, thr:yf.thr }, saved_at: new Date().toISOString() }; save();
+      const res = await buildAndSaveTimabokPdf(name, month, rows, undefined, { on:yf.on, thr:yf.thr });
       st.innerHTML = `✓ vistað — <a href="${res.webViewLink}" target="_blank" rel="noopener">opna</a> · <a href="${res.downloadUrl}" target="_blank" rel="noopener">sækja</a>`;
     }catch(e){ alert('Gat ekki vistað PDF: '+(e.message||e)); }
     finally{ btn.textContent=old; btn.disabled=false; }
   };
 }
 
+// Yfirvinnu-skipting (verkefnalisti-beiðni 2026-07-08): þegar „Yfirvinna" er
+// hakað í Tímaskýrslunni telst hver dagur per starfsmann upp að þröskuldinum
+// (sjálfgefið 8 klst/dag) sem dagvinna og allt umfram sem yfirvinna. Skiptingin
+// er reiknuð á (starfsmaður, dagur) — margar færslur sama dag leggjast saman
+// áður en þröskuldurinn er borinn við. Notað af modal + PDF + prenti.
+function tbkYfSplit(rows, yfCfg){
+  const on = !!(yfCfg && yfCfg.on);
+  const thr = (yfCfg && Number(yfCfg.thr) > 0) ? Number(yfCfg.thr) : 8;
+  const byEmp = {}, byDay = {};
+  let total = 0;
+  for(const r of rows){
+    const h = Number(r.hours)||0; total += h;
+    const e = r.employee||'—';
+    const em = (byEmp[e] = byEmp[e]||{ days:new Set(), hours:0, dv:0, yf:0 });
+    em.hours += h; if(r.date) em.days.add(r.date);
+    const k = e+'\u0001'+(r.date||'');
+    (byDay[k] = byDay[k]||{ e, h:0 }).h += h;
+  }
+  let dv = 0, yf = 0;
+  if(on){
+    for(const k of Object.keys(byDay)){
+      const d = byDay[k];
+      const dvd = Math.min(d.h, thr), yfd = Math.max(0, d.h - thr);
+      dv += dvd; yf += yfd;
+      byEmp[d.e].dv += dvd; byEmp[d.e].yf += yfd;
+    }
+  } else {
+    dv = total;
+    for(const e of Object.keys(byEmp)) byEmp[e].dv = byEmp[e].hours;
+  }
+  return { on, thr, total, dv, yf, byEmp };
+}
+// „8" án aukastafa, „7,5" með — fyrir merkimiða.
+function tbkThrTxt(thr){ return thr % 1 ? (Number(thr)).toLocaleString('is-IS') : String(thr); }
+// Sjálfgefin yfirvinnu-stilling fyrir (verkstaður, mánuð) — það sem síðast var
+// vistað í Tímaskýrslu-glugganum. PDF/prent utan gluggans nota þetta líka.
+function tbkSavedYf(name, month){
+  try{ return (((state.ui||{}).timabok_edits||{})[name+'|'+month]||{}).yfirvinna || null; }catch(_){ return null; }
+}
+
 // Build the Tímaskýrsla PDF (vector) and upload to Drive.
-async function buildAndSaveTimabokPdf(name, month, rows, overwrite){
+async function buildAndSaveTimabokPdf(name, month, rows, overwrite, yfCfg){
   const lib = await loadJsPdf();
   const logo = await bhLogoDataUrl();
   const doc = new lib.jsPDF({ unit:'pt', format:'a4', compress:true });
@@ -16399,13 +16465,21 @@ async function buildAndSaveTimabokPdf(name, month, rows, overwrite){
   doc.text(`${name} · ${monthLabelStatic(month)}`, W-40, y+48, {align:'right'});
   y += 70;
   const sorted = rows.slice().sort((a,b)=> String(a.date).localeCompare(String(b.date)) || String(a.employee).localeCompare(String(b.employee),'is'));
-  const total = sorted.reduce((s,r)=>s+(Number(r.hours)||0),0);
+  // Yfirvinnu-skipting: sjálfgefið það sem var vistað með eintakinu (svo PDF
+  // utan gluggans — t.d. endurprentun — noti sömu stillingu).
+  if(yfCfg === undefined) yfCfg = tbkSavedYf(name, month);
+  const t = tbkYfSplit(sorted, yfCfg);
   const dmy = s => { const p=String(s||'').split('-'); return p.length===3? `${p[2]}.${p[1]}.${p[0]}` : (s||''); };
+  const foot = t.on
+    ? [['', '', '', 'Dagvinna', _phr(t.dv)],
+       ['', '', '', `Yfirvinna (yfir ${tbkThrTxt(t.thr)} klst/dag)`, _phr(t.yf)],
+       ['', '', '', 'Tímar alls', _phr(t.total)]]
+    : [['', '', '', 'Tímar alls', _phr(t.total)]];
   doc.autoTable({
     startY: y,
     head: [['Dagsetning','Starfsmaður','Inn','Út','Tímar']],
     body: sorted.map(r=>[dmy(r.date), r.employee||'', r.time_in||'', r.time_out||'', _phr(r.hours)]),
-    foot: [['', '', '', 'Tímar alls', _phr(total)]],
+    foot,
     styles:{ font:'helvetica', fontSize:9, cellPadding:3 },
     headStyles:{ fillColor:[30,30,30], textColor:255, fontSize:8 },
     footStyles:{ fillColor:[240,240,240], textColor:20, fontStyle:'bold' },
@@ -16413,13 +16487,18 @@ async function buildAndSaveTimabokPdf(name, month, rows, overwrite){
     margin:{ left:40, right:40 },
   });
   // Per-employee summary.
-  const byEmp = {}; for(const r of sorted){ const e=r.employee||'—'; (byEmp[e]=byEmp[e]||{days:new Set(),hours:0}); byEmp[e].hours+=Number(r.hours)||0; if(r.date) byEmp[e].days.add(r.date); }
-  const empRows = Object.keys(byEmp).sort((a,b)=>a.localeCompare(b,'is')).map(e=>[e, String(byEmp[e].days.size), _phr(byEmp[e].hours)]);
+  const empRows = Object.keys(t.byEmp).sort((a,b)=>a.localeCompare(b,'is')).map(e=>{
+    const m = t.byEmp[e];
+    return t.on ? [e, String(m.days.size), _phr(m.dv), _phr(m.yf), _phr(m.hours)] : [e, String(m.days.size), _phr(m.hours)];
+  });
   let y2 = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y) + 22;
   doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.text('Samantekt á starfsmann', 40, y2);
-  doc.autoTable({ startY: y2+6, head:[['Starfsmaður','Dagar','Tímar']], body: empRows,
+  doc.autoTable({ startY: y2+6,
+    head: t.on ? [['Starfsmaður','Dagar','Dagvinna','Yfirvinna','Tímar']] : [['Starfsmaður','Dagar','Tímar']],
+    body: empRows,
     styles:{ font:'helvetica', fontSize:9, cellPadding:3 }, headStyles:{ fillColor:[30,30,30], textColor:255, fontSize:8 },
-    columnStyles:{ 1:{halign:'right'}, 2:{halign:'right'} }, margin:{ left:40, right:40 }, tableWidth: 320 });
+    columnStyles: t.on ? { 1:{halign:'right'}, 2:{halign:'right'}, 3:{halign:'right'}, 4:{halign:'right'} } : { 1:{halign:'right'}, 2:{halign:'right'} },
+    margin:{ left:40, right:40 }, tableWidth: t.on ? 420 : 320 });
   const fileName = bhPdfName('Tímaskýrsla', { ws:name, month });
   // Geymt á Supabase (ekkert Google-innskráning) — sést strax í „Vistuð PDF-skjöl".
   return bhSavePdfToSupabase(doc, { fileName, worksite_name:name, work_month:month, doc_type:'timabok_pdf', overwrite });
@@ -16483,9 +16562,10 @@ async function buildAndSaveEfnislistiPdf(name, month, data, overwrite){
 }
 
 // Print the (possibly edited) tímaskýrsla as HTML.
-function printTimabok(name, month, rows){
+function printTimabok(name, month, rows, yfCfg){
   const hr = n => _phr(n);
   const dmy = s => { const p=String(s||'').split('-'); return p.length===3? `${p[2]}.${p[1]}.${p[0]}` : (s||''); };
+  if(yfCfg === undefined) yfCfg = tbkSavedYf(name, month);
   const sorted = rows.slice().sort((a,b)=> String(b.date).localeCompare(String(a.date)) || String(a.employee).localeCompare(String(b.employee),'is'));
   const byDate = {}; for(const r of sorted){ (byDate[r.date]=byDate[r.date]||[]).push(r); }
   const dateRows = Object.keys(byDate).sort().reverse().map(d=>{
@@ -16493,9 +16573,19 @@ function printTimabok(name, month, rows){
     return list.map((r,i)=>`<tr><td class="d">${i===0?dmy(d):''}</td><td>${escapeHtml(r.employee)}</td><td class="c">${escapeHtml(r.time_in)}</td><td class="c">${escapeHtml(r.time_out)}</td><td class="r">${hr(r.hours)}</td></tr>`).join('')
       + `<tr class="dsum"><td></td><td colspan="3">Samtals ${dmy(d)}</td><td class="r">${hr(dayH)}</td></tr>`;
   }).join('');
-  const total = sorted.reduce((s,r)=>s+(Number(r.hours)||0),0);
-  const byEmp = {}; for(const r of sorted){ const e=r.employee||'—'; (byEmp[e]=byEmp[e]||{days:new Set(),hours:0}); byEmp[e].hours+=Number(r.hours)||0; if(r.date) byEmp[e].days.add(r.date); }
-  const empRows = Object.keys(byEmp).sort((a,b)=>a.localeCompare(b,'is')).map(e=>`<tr><td>${escapeHtml(e)}</td><td class="r">${byEmp[e].days.size}</td><td class="r">${hr(byEmp[e].hours)}</td></tr>`).join('');
+  const t = tbkYfSplit(sorted, yfCfg);
+  const totHtml = t.on
+    ? `<div class="tb-tot">Dagvinna: <b>${hr(t.dv)}</b> &nbsp;·&nbsp; Yfirvinna (yfir ${tbkThrTxt(t.thr)} klst/dag): <b>${hr(t.yf)}</b> &nbsp;·&nbsp; Tímar alls: <b>${hr(t.total)}</b></div>`
+    : `<div class="tb-tot">Tímar alls: <b>${hr(t.total)}</b></div>`;
+  const empHead = t.on
+    ? `<tr><th>Starfsmaður</th><th class="r">Dagar</th><th class="r">Dagvinna</th><th class="r">Yfirvinna</th><th class="r">Tímar</th></tr>`
+    : `<tr><th>Starfsmaður</th><th class="r">Dagar</th><th class="r">Tímar</th></tr>`;
+  const empRows = Object.keys(t.byEmp).sort((a,b)=>a.localeCompare(b,'is')).map(e=>{
+    const m = t.byEmp[e];
+    return t.on
+      ? `<tr><td>${escapeHtml(e)}</td><td class="r">${m.days.size}</td><td class="r">${hr(m.dv)}</td><td class="r">${hr(m.yf)}</td><td class="r">${hr(m.hours)}</td></tr>`
+      : `<tr><td>${escapeHtml(e)}</td><td class="r">${m.days.size}</td><td class="r">${hr(m.hours)}</td></tr>`;
+  }).join('');
   let logo=''; try{ logo = localStorage.getItem('brunaholfReikningurLogo')||''; }catch{} if(!logo) logo='/public/reikningur/brunaholf-logo.png'; if(logo[0]==='/') logo=location.origin+logo;
   const win = window.open('', '_blank'); if(!win){ alert('Leyfðu sprettiglugga til að prenta.'); return; }
   win.document.write(`<!DOCTYPE html><html lang="is"><head><meta charset="utf-8"><title>Tímaskýrsla — ${escapeHtml(name)} — ${monthLabelStatic(month)}</title>
@@ -16515,8 +16605,8 @@ function printTimabok(name, month, rows){
     <div class="tb-top"><div class="tb-logobox"><img src="${escapeAttr(logo)}" onerror="this.style.display='none'"></div>
       <div><h1>Tímaskýrsla</h1><div class="tb-sub">Mæting starfsmanna — fylgiskjal með reikningi</div><div class="tb-ws">${escapeHtml(name)} · ${monthLabelStatic(month)}</div></div></div>
     <table><thead><tr><th>Dagsetning</th><th>Starfsmaður</th><th class="c">Inn</th><th class="c">Út</th><th class="r">Tímar</th></tr></thead><tbody>${dateRows}</tbody></table>
-    <div class="tb-tot">Tímar alls: <b>${hr(total)}</b></div>
-    <div class="tb-emp"><h2>Samantekt á starfsmann</h2><table><thead><tr><th>Starfsmaður</th><th class="r">Dagar</th><th class="r">Tímar</th></tr></thead><tbody>${empRows}</tbody></table></div>
+    ${totHtml}
+    <div class="tb-emp"><h2>Samantekt á starfsmann</h2><table><thead>${empHead}</thead><tbody>${empRows}</tbody></table></div>
     <script>window.onload=function(){window.print();}<\/script></body></html>`);
   win.document.close();
 }
