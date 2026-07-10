@@ -137,6 +137,14 @@
   to = "/.netlify/functions/payday-pull"
   status = 200
 
+# Tímavera Customer API pull (Bearer tv_live_… → timavera_entries)
+#   GET /api/timavera-pull[?probe=1|?dry=1|?days=N|&from=&to=]
+#   POST {action:'set-key'|'clear-key'|'has-key'}
+[[redirects]]
+  from = "/api/timavera-pull"
+  to = "/.netlify/functions/timavera-pull"
+  status = 200
+
 # Background version — same code but 15-min timeout, returns 202 instantly.
 # Used when triggering from short-timeout clients (Supabase http extension).
 [[redirects]]

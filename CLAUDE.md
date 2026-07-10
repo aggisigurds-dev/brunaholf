@@ -262,6 +262,25 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   export grouped per Reikningur nr.; tilvisun=nr + source='payday' dedup;
   fills kt/gjalddagi/eindagi/greidsla_date; NEVER writes worksite_match) —
   both behind buttons in the Bakendi „🔄 Gagna-uppfærslur úr Drive" section.
+- `timavera-pull.js` — **Tímavera API beintenging (2026-07-10)**: pulls work logs
+  STRAIGHT from the Tímavera Customer API (`https://api.timavera.is/api/v1`,
+  read-only, `Authorization: Bearer tv_live_…`; OpenAPI at
+  api.timavera.com/docs/tv-docs-2026/openapi.yaml — endpoints /employees,
+  /projects, /worklogs?from&to [ISO, no pagination], /report, /billing/status)
+  into `timavera_entries` with the SAME `entry_key` as bridge/Drive
+  (`date|employee.lc|project.lc|time_in`, `source_file='timavera-api'`) — all
+  three paths interchangeable. Iceland=UTC so UTC clock == wall time; OPEN
+  (running) worklogs are skipped until closed. `GET /api/timavera-pull?probe=1`
+  (auth check) · `?dry=1&days=N` (map only) · `?days=N|&from&to` (upsert + stamps
+  `timavera_meta` + logs `automation_runs('timavera-pull')`). **Key handling:**
+  `POST {action:'set-key', key}` stores the key server-side in
+  `app_kv['timavera_api_key']` (`has-key`/`clear-key` too); env
+  `TIMAVERA_API_KEY` overrides. The key itself was shared via a 1Password link
+  (gildir í 30 daga) in the 2026-07-09 email from timavera@timavera.is to
+  brunaholf@brunaholf.is — Agnar opens it and pastes into the Bakendi
+  „🕒 Tímavera API — beintenging" card (input POSTs set-key, never stored in the
+  browser). Registered in Sjálfvirkni as `timavera-pull`. This replaces the
+  desktop scraper dependency (c9fbea70 staleness root cause).
 - `data-sources-status.js` — `GET /api/data-sources-status` freshness report
   per source (Tímavera/Ajour/bank/invoices/Redder/email). Each source now returns
   both `last_import` (when last SYNCED) **and** `newest_real` (the newest REAL
