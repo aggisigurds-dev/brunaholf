@@ -3945,6 +3945,33 @@ function renderBakendi(t){
           <div style="${hint}">Leitað eftir skráarnafni: „vinnufærslur" / „payday" — nýjasta útgáfan vinnur. Payday-innlestur snertir ekki worksite_match (handvirkt viðhaldið).</div>
         </div>
 
+        <!-- 🕒 Tímavera API (beintenging, engin Drive-skrá) -->
+        <div style="${card}">
+          <div style="display:flex;align-items:center;gap:14px">
+            <span style="${iconSq};${ICON.blue}">🕒</span>
+            <div style="flex:1">
+              <div style="${titleStyle}">Tímavera API — beintenging</div>
+              <p style="${descStyle};margin-top:4px">Sækir vinnufærslur <b>beint frá Tímaveru</b> (les-aðgangur, <code>tv_live_…</code> lykill) inn í <code>timavera_entries</code> — engin xlsx-skrá, engin bridge-tölva. Sama dedup-lykill og hinar leiðirnar (engin tvítök).</p>
+            </div>
+            <span id="bk-tvapi-keychip" style="${chipStyle('#fef9c3','#713f12')}">Vantar lykil</span>
+          </div>
+          <div>
+            <label style="${labelStyle}">API-lykill (tv_live_…) — úr 1Password-hlekknum í póstinum frá Tímaveru</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <input id="bk-tvapi-key" type="password" placeholder="tv_live_…" autocomplete="off" style="${inpMono};flex:1;min-width:220px;height:42px;box-sizing:border-box">
+              <button id="bk-tvapi-save" class="btn">💾 Vista lykil</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <button id="bk-tvapi-probe" class="btn">🔌 Prófa tengingu</button>
+            <input id="bk-tvapi-days" value="14" title="Dagar aftur í tímann" style="${inpMono};width:64px;height:38px;box-sizing:border-box">
+            <button id="bk-tvapi-dry" class="btn">👁 Prufa (ekkert vistað)</button>
+            <button id="bk-tvapi-run" class="btn primary">⬇️ Sækja færslur</button>
+            <span id="bk-tvapi-status" style="font-size:12.5px;color:#64748b"></span>
+          </div>
+          <div style="${hint}">Lykillinn geymist server-megin (<code>app_kv</code>) — aldrei í vafranum. Opnar færslur (enn í gangi) eru sóttar í næstu keyrslu þegar þeim er lokað. Keyrslur skrást í ⚙️ Sjálfvirkni (<code>timavera-pull</code>).</div>
+        </div>
+
       </div>
 
       <!-- ══════════════════════════════════════════════════════════════════
@@ -5576,6 +5603,56 @@ function renderBakendi(t){
   };
   wireDriveIngest('bk-tv-run', 'bk-tv-status', '/api/timavera-ingest-drive', d => (d.upserted || 0) + ' færslur inn');
   wireDriveIngest('bk-pd-run', 'bk-pd-status', '/api/payday-ingest-drive', d => (d.invoices || 0) + ' reikningar inn');
+
+  // ── Tímavera API beintenging (timavera-pull) ──────────────────────────────
+  (function wireTimaveraApi(){
+    const $key = document.getElementById('bk-tvapi-key');
+    if (!$key) return;
+    const $save = document.getElementById('bk-tvapi-save');
+    const $probe = document.getElementById('bk-tvapi-probe');
+    const $dry = document.getElementById('bk-tvapi-dry');
+    const $run = document.getElementById('bk-tvapi-run');
+    const $days = document.getElementById('bk-tvapi-days');
+    const $st = document.getElementById('bk-tvapi-status');
+    const $chip = document.getElementById('bk-tvapi-keychip');
+    const setChip = has => {
+      $chip.textContent = has ? 'Lykill vistaður' : 'Vantar lykil';
+      $chip.style.background = has ? '#dcfce7' : '#fef9c3';
+      $chip.style.color = has ? '#14532d' : '#713f12';
+    };
+    // initial: does the server have a key?
+    fetch('/api/timavera-pull', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'has-key' }) })
+      .then(r => r.json()).then(d => setChip(!!d.has_key)).catch(() => {});
+    const call = async (btn, url, opts, done) => {
+      btn.disabled = true; $st.textContent = '⏳ …';
+      try {
+        const r = await fetch(url, opts);
+        const d = await r.json();
+        if (!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));
+        $st.textContent = '✓ ' + done(d);
+        return d;
+      } catch (e) {
+        $st.textContent = '⚠ ' + String(e.message || e).slice(0, 110);
+        return null;
+      } finally { btn.disabled = false; }
+    };
+    $save.onclick = async () => {
+      const key = ($key.value || '').trim();
+      if (!key) { $st.textContent = '⚠ Límdu lykilinn fyrst í reitinn.'; return; }
+      const d = await call($save, '/api/timavera-pull', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'set-key', key }),
+      }, () => 'Lykill vistaður — prófaðu tenginguna');
+      if (d) { $key.value = ''; setChip(true); }
+    };
+    $probe.onclick = () => call($probe, '/api/timavera-pull?probe=1', undefined,
+      d => d.employees + ' starfsmenn · ' + d.projects + ' verkefni — tenging virkar');
+    const daysQ = () => 'days=' + encodeURIComponent(parseInt($days.value, 10) || 14);
+    $dry.onclick = () => call($dry, '/api/timavera-pull?dry=1&' + daysQ(), undefined,
+      d => d.mapped + ' færslur lesnar (ekkert vistað)' + (d.open_skipped ? ' · ' + d.open_skipped + ' opnar sleppt' : ''));
+    $run.onclick = () => call($run, '/api/timavera-pull?' + daysQ(), undefined,
+      d => d.upserted + ' færslur inn í timavera_entries' + (d.open_skipped ? ' · ' + d.open_skipped + ' opnar sleppt' : ''));
+  })();
 
   async function writeSamningarSheet(){
     if (!smRows.length) return;
