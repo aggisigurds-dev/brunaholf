@@ -35,7 +35,8 @@ exports.handler = async (event) => {
   try {
     const [entries, emails, statuses, invoices, ajourCounts, mappings, bankIn, customerInfos] = await Promise.all([
       fetchAllPages(`timavera_entries?select=project,hours,date,employee&date=gte.${dateFrom}&date=lte.${dateTo}&order=date.asc`),
-      fetchAllPages(`email_digest?select=id,account,sender_email,sender_name,subject,snippet,received_at`),
+      // folder=neq.SENT — our own sent replies must not count as email mentions
+      fetchAllPages(`email_digest?select=id,account,sender_email,sender_name,subject,snippet,received_at&folder=neq.SENT`),
       sb(`worksite_status?year=in.(${statusYears.join(',')})&select=*`),
       fetchAllPages(`invoices?select=*&or=(gjalddagi.is.null,and(gjalddagi.gte.${dateFrom},gjalddagi.lte.${dateTo}))&order=gjalddagi.desc.nullslast`),
       fetchAjourCountsRange(dateFrom, dateTo),

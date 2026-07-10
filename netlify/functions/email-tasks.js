@@ -25,6 +25,7 @@ exports.handler = async (event) => {
     const parts = [
       'select=id,account,sender_name,sender_email,subject,snippet,is_question,has_attachment,attachment_names,received_at',
       'is_question=eq.true',
+      'folder=neq.SENT', // belt & braces — SENT rows are always is_question=false anyway
       `limit=${limit}`,
       'order=received_at.desc.nullslast',
     ];

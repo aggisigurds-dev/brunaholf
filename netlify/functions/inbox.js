@@ -33,6 +33,7 @@ exports.handler = async (event) => {
   // Build the PostgREST query.
   const queryParts = [
     'select=id,account,folder,sender_name,sender_email,subject,snippet,is_question,has_attachment,attachment_names,received_at,fetched_at',
+    'folder=neq.SENT', // sent-mail rows (SENT ingest) must not appear in the inbox feed
     `limit=${limit}`,
     'order=received_at.desc.nullslast',
   ];
