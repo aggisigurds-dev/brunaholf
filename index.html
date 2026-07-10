@@ -9687,7 +9687,7 @@ async function renderVinnubok(t){
       .vb-review-btn.state-red{background:#ef4444;border-color:#b91c1c;box-shadow:0 0 0 1px rgba(185,28,28,.25)}
 
       /* === Scratchpad === */
-      .vb-scratchpad{display:grid;grid-template-columns:2fr 1fr 1fr;gap:16px;margin-top:24px;padding-top:16px;border-top:1px dashed #cbd5e1}
+      .vb-scratchpad{display:grid;grid-template-columns:2fr 1fr 1fr;gap:16px;margin-top:24px;padding-top:16px;border-top:1px dashed #cbd5e1;align-items:stretch;min-height:calc(100vh - 220px)}
       @media(max-width:1200px){.vb-scratchpad{grid-template-columns:1fr 1fr}}
       @media(max-width:780px){.vb-scratchpad{grid-template-columns:1fr}}
       .vb-pad-card,.vb-calc-card,.vb-style-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;box-shadow:0 1px 3px rgba(15,23,42,.04)}
@@ -9703,7 +9703,7 @@ async function renderVinnubok(t){
       .vb-pad-btn{padding:5px 10px;border:1px solid #cbd5e1;background:#fff;border-radius:5px;cursor:pointer;font-size:11px;color:#475569}
       .vb-pad-btn:hover{background:#f1f5f9;border-color:#94a3b8}
       .vb-pad-table{width:100%;border-collapse:collapse;font-family:'SF Mono','JetBrains Mono','Roboto Mono',Menlo,monospace;font-size:12px;font-feature-settings:'tnum' 1}
-      .vb-pad-table td{border:1px solid #e5e7eb;padding:0;height:26px;vertical-align:middle}
+      .vb-pad-table td{border:1px solid #e5e7eb;padding:0;height:30px;vertical-align:middle}
       .vb-pad-table td:hover{background:#f8fafc}
       .vb-pad-cell{display:block;padding:5px 8px;min-height:26px;outline:none;color:#0f172a}
       .vb-pad-cell:focus{background:#eff6ff;box-shadow:inset 0 0 0 2px #3b82f6}
@@ -10590,6 +10590,10 @@ async function renderVinnubok(t){
 
   // ===== Scratchpad: editable grid + calculator =====
   state.ui.vb_pad = state.ui.vb_pad || { rows: 6, cols: 4, cells: {} };
+  // 2026-07-10 (verkefnalisti e812a962): vinnubókin á að vera MUN stærri og ná
+  // niður síðuna — lyfta gömlu 6-raða sjálfgefnu upp í a.m.k. 16 raðir (einskiptis
+  // per notanda; „+ röð" heldur áfram þaðan, „Hreinsa allt" byrjar líka á 16).
+  if ((state.ui.vb_pad.rows || 0) < 16) { state.ui.vb_pad.rows = 16; }
   state.ui.vb_calc_history = state.ui.vb_calc_history || [];
 
   function safeEvalFormula(expr){
@@ -10641,11 +10645,11 @@ async function renderVinnubok(t){
   }
   renderPad();
 
-  document.getElementById('vb-pad-add-row').onclick = () => { state.ui.vb_pad.rows = Math.min(state.ui.vb_pad.rows + 1, 30); save(); renderPad(); };
+  document.getElementById('vb-pad-add-row').onclick = () => { state.ui.vb_pad.rows = Math.min(state.ui.vb_pad.rows + 1, 60); save(); renderPad(); };
   document.getElementById('vb-pad-add-col').onclick = () => { state.ui.vb_pad.cols = Math.min(state.ui.vb_pad.cols + 1, 10); save(); renderPad(); };
   document.getElementById('vb-pad-clear').onclick = () => {
     if(!confirm('Hreinsa alla minnispunkta?')) return;
-    state.ui.vb_pad = { rows: 6, cols: 4, cells: {} };
+    state.ui.vb_pad = { rows: 16, cols: 4, cells: {} };
     save(); renderPad();
   };
 
@@ -12012,8 +12016,8 @@ async function renderKrofuyfirlit(t){
             ${tier===2?'<span style="flex:1 1 0;min-width:0"></span>':''}
             ${noteHtml}
             <span class="ky-num" style="width:104px;text-align:right;font-weight:700;color:#11141c;white-space:nowrap;flex-shrink:0">${fmtKr(inv.amount)}</span>
-            <div style="display:flex;gap:6px;flex-shrink:0">${actChips(inv, tier)}</div>
             ${tier===2?wfStrip(inv, 2):''}
+            <div style="display:flex;gap:6px;flex-shrink:0">${actChips(inv, tier)}</div>
           </div>
           <div class="ky-detail" style="display:none;padding:11px 18px 14px 41px;background:#fafbfe;border-bottom:1px solid #f3f5f9">
             <div style="display:flex;flex-wrap:wrap;gap:12px 28px">${detailCells}</div>
@@ -12176,8 +12180,8 @@ async function renderKrofuyfirlit(t){
             ${tier===2?'<span style="flex:1 1 0;min-width:0"></span>':''}
             ${noteHtml}
             <span class="ky-num" style="width:104px;text-align:right;font-weight:700;color:#11141c;white-space:nowrap;flex-shrink:0">${fmtKr(inv.amount)}</span>
-            <div style="display:flex;gap:6px;flex-shrink:0">${actChips(inv, tier)}</div>
             ${tier===2?wfStrip(inv, 2):''}
+            <div style="display:flex;gap:6px;flex-shrink:0">${actChips(inv, tier)}</div>
           </div>
           <div class="ky-detail" style="display:none;padding:11px 18px 14px 41px;background:#fafbfe;border-bottom:1px solid #f3f5f9">
             <div style="display:flex;flex-wrap:wrap;gap:12px 28px">${detailCells}</div>
