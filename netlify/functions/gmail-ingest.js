@@ -1,6 +1,6 @@
 // gmail-ingest.js — pull Gmail straight from Google (cloud) into email_digest.
 //
-//   GET /api/gmail-ingest?account=<email>&days=N&dry=1
+//   GET /api/gmail-ingest?account=<email>&days=N&dry=1[&folder=sent]
 //
 // The cloud twin of luna-bridge/bridge.js: instead of reading Thunderbird mbox
 // files on the Windows desktop, it asks the Gmail API for recent INBOX messages
@@ -13,6 +13,10 @@
 //            Optional — defaults to whatever account is connected. If given it
 //            MUST match the connected account (see the single-account note below).
 //   days     look-back window for `newer_than:Nd` (default 10, max 90).
+//   folder   'sent' pulls the SENT mailbox instead of the inbox: the Gmail
+//            query becomes `in:sent newer_than:Nd` and rows are written with
+//            folder='SENT', is_question=false (our own replies are never
+//            inbound questions). Default (param omitted) = inbox, unchanged.
 //   dry=1    preview only — returns counts + a few sample subjects, writes NOTHING.
 //
 // ── Single-account note ──────────────────────────────────────────────────────
@@ -81,6 +85,8 @@ exports.handler = async (event) => {
   const dry = p.dry === '1' || p.dry === 'true';
   const days = Math.min(Math.max(parseInt(p.days || '10', 10) || 10, 1), 90);
   const wantAccount = (p.account || '').trim();
+  // folder=sent → pull the SENT mailbox (rows get folder='SENT', is_question=false).
+  const sentFolder = (p.folder || '').trim().toLowerCase() === 'sent';
 
   // ── Get a token for the connected Google account ───────────────────────────
   let token, connected;
@@ -108,8 +114,8 @@ exports.handler = async (event) => {
   const account = connected || wantAccount || 'me';
 
   try {
-    // 1) list recent INBOX message ids
-    const q = `in:inbox newer_than:${days}d`;
+    // 1) list recent message ids (inbox by default, sent mail with folder=sent)
+    const q = `in:${sentFolder ? 'sent' : 'inbox'} newer_than:${days}d`;
     const ids = [];
     let pageToken = '';
     let guard = 0;
@@ -168,14 +174,14 @@ exports.handler = async (event) => {
             // dedupe key — RFC822 Message-Id header, fall back to the gmail id.
             message_id: (hh['message-id'] || '').trim() || `gmail:${account}/${id}`,
             account,
-            folder: 'INBOX',
+            folder: sentFolder ? 'SENT' : 'INBOX',
             sender_name: from.name,
             sender_email: from.address,
             to_addresses: hh.to || null,
             subject: hh.subject || '',
             snippet: snippetOf(snippetText),
             body_preview: snippetText.slice(0, 4000),
-            is_question: looksLikeQuestion({
+            is_question: sentFolder ? false : looksLikeQuestion({
               subject: hh.subject, bodyText: snippetText, fromAddr: from.address,
             }),
             has_attachment: attachment_names.length > 0,
@@ -192,7 +198,7 @@ exports.handler = async (event) => {
     // 3) dry-run → preview, no writes
     if (dry) {
       return json(200, {
-        ok: true, dry: true, account, days,
+        ok: true, dry: true, account, days, folder: sentFolder ? 'SENT' : 'INBOX',
         listed: ids.length, mapped: records.length, errors,
         questions: records.filter(r => r.is_question).length,
         with_attachment: records.filter(r => r.has_attachment).length,
@@ -225,7 +231,7 @@ exports.handler = async (event) => {
     }
 
     return json(200, {
-      ok: true, account, days,
+      ok: true, account, days, folder: sentFolder ? 'SENT' : 'INBOX',
       listed: ids.length, mapped: records.length, upserted, errors,
       questions: records.filter(r => r.is_question).length,
     });

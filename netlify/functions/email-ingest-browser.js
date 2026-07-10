@@ -18,7 +18,13 @@
 //         ...
 //       ]
 //     }
-//     → { ok, account, folder, received, upserted, classified_questions }
+//     → { ok, account, folder, received, inserted, upserted, skipped_empty,
+//         classified_questions }
+//
+// Junk guard: items with NEITHER a non-empty subject NOR a non-empty snippet
+// are skipped (counted in skipped_empty, never upserted). The extension can
+// emit placeholder rows (null subject, no body, received_at = scan time) —
+// 348 such rows were purged from email_digest on 2026-07-10; they must not return.
 //
 // Env vars (set in Netlify):
 //   EXTENSION_INGEST_TOKEN  — shared secret the extension sends
@@ -80,6 +86,7 @@ exports.handler = async (event) => {
 
   const now = new Date().toISOString();
   let classifiedQuestions = 0;
+  let skippedEmpty = 0;
   const rows = emails.map(e => {
     const message_id = String(e.message_id || '').trim();
     if (!message_id) return null;
@@ -88,6 +95,10 @@ exports.handler = async (event) => {
     const sender_name = (e.sender_name || '').toString().trim() || null;
     const subject = (e.subject || '').toString().trim() || null;
     const snippet = (e.snippet || '').toString().trim().slice(0, 500) || null;
+
+    // Junk-row guard: no subject AND no body text → scan artifact, never upsert.
+    if (!subject && !snippet) { skippedEmpty++; return null; }
+
     const received_at = isoTimestamp(e.received_at) || now;
     const has_attachment = !!e.has_attachment;
 
@@ -105,7 +116,17 @@ exports.handler = async (event) => {
     };
   }).filter(Boolean);
 
-  if (!rows.length) return json(400, { error: 'Engar gildar raðir (vantar message_id)' });
+  if (!rows.length) {
+    if (skippedEmpty) {
+      // The whole batch was content-less junk — fine, nothing written.
+      return json(200, {
+        ok: true, account, folder,
+        received: emails.length, inserted: 0, upserted: 0,
+        skipped_empty: skippedEmpty, classified_questions: 0,
+      });
+    }
+    return json(400, { error: 'Engar gildar raðir (vantar message_id)' });
+  }
 
   // Dedup within-batch: Postgres on_conflict can't handle two rows with the
   // same constraint key in one statement. The extension can emit dupes when
@@ -137,7 +158,8 @@ exports.handler = async (event) => {
   return json(200, {
     ok: true,
     account, folder, within_batch_dupes,
-    received: emails.length, upserted,
+    received: emails.length, inserted: upserted, upserted,
+    skipped_empty: skippedEmpty,
     classified_questions: classifiedQuestions,
   });
 };

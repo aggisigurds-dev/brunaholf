@@ -301,7 +301,9 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   `has_attachment`, `attachment_names`, `received_at`) and upserts
   `on_conflict=message_id` (no dupes — bridge and cloud are interchangeable).
   `dry=1` returns a preview (counts + sample subjects), writes nothing. `days`
-  default 10, max 90. **Single-account constraint:** `_google.js` stores ONE
+  default 10, max 90. `folder=sent` pulls the SENT mailbox instead (`in:sent`) —
+  rows get `folder='SENT'`, `is_question=false`, same `message_id` upsert.
+  **Single-account constraint:** `_google.js` stores ONE
   token row (`id=1`) and `freshAccessToken()` returns that account — so this can
   only pull the **currently connected** Google account. The `account` param is a
   guard: if it doesn't match the connected `user_email` it 409s loudly rather
@@ -492,6 +494,17 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   Office-365 @brunaholf.is mailboxes. Goal is to stop depending on the
   bridge-tölva being on (which the 🌅 Dagurinn tab flags when email is ≥2 days
   stale).
+- **SENT-ingest (2026-07-10):** the digest also carries the company's OWN
+  outgoing mail — `luna-bridge/bridge.js` reads each account's sent mbox
+  (`[Gmail].sbd/Sent Mail` / `Sent` / `Sent Items`, skipped when missing) and
+  `gmail-ingest.js` takes `folder=sent`. SENT rows land with `folder='SENT'`,
+  `is_question=false` (same `message_id` dedupe), so answered/unanswered state
+  can be computed downstream. Inbox-style consumers filter them out with
+  `folder=neq.SENT`: `inbox.js`, `email-tasks.js`, `worksites.js`
+  (email-mention matching) and `data-sources-status.js` (freshness,
+  recent_emails, per-account status). `email-ingest-browser.js` additionally
+  rejects content-less extension rows (no subject AND no snippet → counted as
+  `skipped_empty`, never upserted).
 
 ### Sjálfvirkni (automation registry + run log)
 - `automation_jobs` — one row per registered automation: `name` (UNIQUE), `label`,

@@ -81,7 +81,9 @@ exports.handler = async (event) => {
   const rdCount = await head('redder_invoices');
 
   // ----- Email digest (luna-bridge scrape) -----
-  const edLatest = await get('email_digest?select=received_at&order=received_at.desc.nullslast&limit=1');
+  // folder=neq.SENT everywhere below: sent-mail rows (SENT ingest, 2026-07-10)
+  // must not skew inbox freshness or show up under "newest emails".
+  const edLatest = await get('email_digest?select=received_at&folder=neq.SENT&order=received_at.desc.nullslast&limit=1');
   const edTs = edLatest?.[0]?.received_at;
   const edReal = edTs; // for email the received_at IS the real data date
   const edCount = await head('email_digest');
@@ -89,7 +91,7 @@ exports.handler = async (event) => {
   // ----- 5 newest emails (defensive; never breaks the report) -----
   let recent_emails = [];
   try {
-    const rows = await get('email_digest?select=subject,sender_name,sender_email,received_at,account&order=received_at.desc.nullslast&limit=5');
+    const rows = await get('email_digest?select=subject,sender_name,sender_email,received_at,account&folder=neq.SENT&order=received_at.desc.nullslast&limit=5');
     if (Array.isArray(rows)) {
       recent_emails = rows.map(r => ({
         subject: r.subject || '(án efnis)',
@@ -112,7 +114,7 @@ exports.handler = async (event) => {
     email_accounts = await Promise.all(EXPECTED.map(async (acct) => {
       const rows = await get(
         'email_digest?account=eq.' + encodeURIComponent(acct) +
-        '&select=received_at&order=received_at.desc.nullslast&limit=1'
+        '&folder=neq.SENT&select=received_at&order=received_at.desc.nullslast&limit=1'
       );
       const newest = rows?.[0]?.received_at ?? null;
       const age_days = ageDays(newest);
