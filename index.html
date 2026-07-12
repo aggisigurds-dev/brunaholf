@@ -4136,6 +4136,7 @@ function renderBakendi(t){
         + '<span style="margin-left:auto"></span>'
         + (nConnect ? '<button id="bk-st-connect" class="btn primary" style="padding:4px 10px;font-size:12px" title="Tengja allar gular tillögur">🔗 Tengja öll augljós (' + nConnect + ')</button>' : '')
         + (nConfirm ? '<button id="bk-st-confirm" class="btn" style="padding:4px 10px;font-size:12px" title="Merkja öll tengd skjöl staðfest">✓ Staðfesta öll tengd (' + nConfirm + ')</button>' : '')
+        + '<button id="bk-st-consolidate" class="btn" style="padding:4px 10px;font-size:12px" title="Endurtengja augljós skjöl við réttan stað (yfirskrifar óstaðfestar tengingar) og merkja tvítök: ein ársskýrsla per staður+ár; reikningar aðeins tvítök ef sama R-númer. Rekstrarfélög: hver staður sér. Forsýn fyrst; ekkert eytt.">🧹 Sameina í eitt per ár</button>'
         + '<button id="bk-st-addsite" class="btn" style="padding:4px 10px;font-size:12px">➕ Nýr staður</button></div>';
       if (!DOCS.length) { $board.innerHTML = head + '<div style="color:#64748b;font-size:13px;padding:10px">Engin skjöl.</div>'; wireHead(); return; }
       // Keep the two document kinds apart so reports and invoices never get mixed up.
@@ -4148,6 +4149,27 @@ function renderBakendi(t){
       const a = document.getElementById('bk-st-addsite'); if (a) a.addEventListener('click', addSite);
       const c = document.getElementById('bk-st-connect'); if (c) c.addEventListener('click', connectObvious);
       const f = document.getElementById('bk-st-confirm'); if (f) f.addEventListener('click', confirmLinked);
+      const g = document.getElementById('bk-st-consolidate'); if (g) g.addEventListener('click', consolidateCo);
+    }
+    async function consolidateCo(){
+      if (!COMPANY) return;
+      setSt('Reikna forsýn…');
+      try {
+        const r = await fetch('/api/match-station?consolidate=1&overwrite=1&base=' + encodeURIComponent(COMPANY.id));
+        const d = await r.json(); if (!r.ok) throw new Error(d.error || r.status);
+        if (!d.relink_count && !d.dup_count) { setSt('Ekkert að sameina — þegar eitt eintak per stað/ár ✓', '#16a34a'); return; }
+        if (!confirm('Sameina „' + COMPANY.nafn + '" (' + d.sites + ' staðir):\n\n'
+          + '• Endurtengja ' + d.relink_count + ' skjöl við réttan stað\n'
+          + '   (yfirskrifar gamlar ÓSTAÐFESTAR tengingar; staðfestar halda sér)\n'
+          + '• Merkja ' + d.dup_count + ' skjöl sem tvítök\n'
+          + '   (afturkræft — ekkert eytt; hver staður er sér, ólíkir staðir aldrei sameinaðir)\n\nHalda áfram?')) { setSt(''); return; }
+        setSt('Sameina…');
+        const a = await fetch('/api/match-station', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'consolidate', base_id: COMPANY.id, overwrite: true }) });
+        const ad = await a.json(); if (!a.ok) throw new Error(ad.error || a.status);
+        await loadBoard(COMPANY.id);
+        setSt('Endurtengdi ' + ad.relinked + ' · merkti ' + ad.duped + ' tvítök ✓ — yfirfaraðu', '#16a34a');
+      } catch (e) { setSt('Villa: ' + e.message, '#dc2626'); }
     }
     async function batchSave(items){
       setSt('Vista ' + items.length + '…');
