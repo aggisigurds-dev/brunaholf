@@ -3708,7 +3708,13 @@ function renderBakendi(t){
             <div><label style="${labelStyle}">Rusl (tvítök hingað)</label><input id="bk-ds-dupes" value="1CnnNHm1xCukiTs806z9Ha1nZnSELM9k8" style="${inpMono};width:100%;box-sizing:border-box;height:40px"></div>
             <div style="grid-column:1 / -1"><label style="${labelStyle}">Óflokkað (annað / vendor-reikningar hingað)</label><input id="bk-ds-other" value="1H6izhb24L5Rp2m7XMgt1ss-MkcLltf5O" placeholder="folder-id / slóð" style="${inpMono};width:100%;box-sizing:border-box;height:40px"></div>
           </div>
+          <div style="margin-top:2px">
+            <label style="${labelStyle}">Biðlisti — fleiri rusl-möppur (ein per línu, keyrðar í röð á eftir uppsprettunni)</label>
+            <textarea id="bk-ds-queue" rows="3" placeholder="Límdu inn margar folder-slóðir/id — eina í hverja línu.&#10;Uppsprettan að ofan er keyrð fyrst, svo þessar koll af kolli þar til allar eru tómar." style="${inpMono};width:100%;box-sizing:border-box;resize:vertical;min-height:52px;padding:8px 10px;line-height:1.5"></textarea>
+            <div style="font-size:11.5px;color:#94a3b8;margin-top:3px">💡 Undirmöppur eru lesnar sjálfkrafa (rofinn að neðan) — biðlistinn er fyrir aðskildar rót-möppur sem eru ekki undir sömu yfirmöppu.</div>
+          </div>
           <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#475569;margin:2px 0"><input type="checkbox" id="bk-ds-rename" checked> Endurnefna reikninga (Fyrirtæki - kt - R-nr - ár - upphæð)</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#475569;margin:2px 0"><input type="checkbox" id="bk-ds-recurse" checked> Lesa undirmöppur líka (+ undir-undirmöppur — allt tréð)</label>
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:auto">
             <button id="bk-ds-step" class="btn">▶️ Flokka næsta skjal</button>
             <button id="bk-ds-run" class="btn primary">⏩ Keyra þar til tómt</button>
@@ -4585,6 +4591,8 @@ function renderBakendi(t){
     const $dupes = document.getElementById('bk-ds-dupes');
     const $other = document.getElementById('bk-ds-other');
     const $rename = document.getElementById('bk-ds-rename');
+    const $recurse = document.getElementById('bk-ds-recurse');
+    const $queue = document.getElementById('bk-ds-queue');
     const $step = document.getElementById('bk-ds-step');
     const $run = document.getElementById('bk-ds-run');
     const $stop = document.getElementById('bk-ds-stop');
@@ -4600,13 +4608,32 @@ function renderBakendi(t){
     try {
       const saved = JSON.parse(localStorage.getItem(DS_KEY) || '{}');
       for (const k in persistEls) if (saved[k] != null && saved[k] !== '') persistEls[k].value = saved[k];
+      if ($queue && saved.queue != null) $queue.value = saved.queue;
     } catch(_) {}
     function saveFolders(){
       const out = {};
       for (const k in persistEls) out[k] = (persistEls[k].value || '').trim();
+      if ($queue) out.queue = $queue.value || '';
       try { localStorage.setItem(DS_KEY, JSON.stringify(out)); } catch(_) {}
     }
     for (const k in persistEls) { persistEls[k].addEventListener('change', saveFolders); persistEls[k].addEventListener('blur', saveFolders); }
+    if ($queue) { $queue.addEventListener('change', saveFolders); $queue.addEventListener('blur', saveFolders); }
+
+    // The work-list: the primary Uppspretta folder first, then every non-empty
+    // line of the Biðlisti. Deduped by the extracted folder-id (a URL and its
+    // bare id collapse to one) so the same folder is never queued twice.
+    function folderList(){
+      const raw = [($src.value||'').trim()];
+      if ($queue) ($queue.value||'').split(/[\n,]+/).forEach(s => { s = s.trim(); if (s) raw.push(s); });
+      const seen = new Set(), out = [];
+      for (const r of raw) {
+        if (!r) continue;
+        const m = r.match(/[-\w]{25,}/); const id = m ? m[0] : r;
+        if (seen.has(id)) continue; seen.add(id); out.push(r);
+      }
+      return out;
+    }
+    let curFolder = 0, curTotal = 1;
 
     let running = false, totals = { master:0, reports:0, dupes:0, other:0, error:0 }, batches = 0;
     const ICONA = { master:'📁', reports:'📄', dupes:'🗑', other:'📦', error:'⚠️' };
@@ -4617,13 +4644,14 @@ function renderBakendi(t){
         if (!(el.value||'').trim()) { $status.textContent = 'Vantar möppu: ' + label; return false; }
       return true;
     }
-    function qs(){
-      return '?src=' + encodeURIComponent($src.value.trim())
+    function qs(srcRaw){
+      return '?src=' + encodeURIComponent((srcRaw != null ? srcRaw : $src.value).trim())
         + '&master=' + encodeURIComponent($master.value.trim())
         + '&reports=' + encodeURIComponent(($reports.value||'').trim())
         + '&dupes=' + encodeURIComponent($dupes.value.trim())
         + '&other=' + encodeURIComponent($other.value.trim())
-        + '&limit=1&rename=' + ($rename.checked ? '1' : '0');
+        + '&limit=1&rename=' + ($rename.checked ? '1' : '0')
+        + '&recurse=' + (($recurse && $recurse.checked) ? '1' : '0');
     }
     function logRows(results){
       let html = '';
@@ -4641,12 +4669,13 @@ function renderBakendi(t){
       else $results.innerHTML = '<div style="max-height:420px;overflow:auto;border:1px solid #e2e8f0;border-radius:10px;margin-top:8px"><table style="width:100%;border-collapse:collapse;font-size:12px"><tbody>'+html+'</tbody></table></div>';
     }
     function summary(done){
+      const fp = curTotal > 1 ? (' · mappa '+(curFolder+1)+'/'+curTotal) : '';
       $status.innerHTML = '📁 '+totals.master+' reikn · 📄 '+totals.reports+' skýrslur · 🗑 '+totals.dupes+' tvítök · 📦 '+totals.other+' annað'
-        + (totals.error?(' · ⚠️ '+totals.error+' villur'):'') + ' · '+batches+' lotur'
-        + (done ? ' <b style="color:#0f7a43">— tómt, búið ✅</b>' : (running?' …':''));
+        + (totals.error?(' · ⚠️ '+totals.error+' villur'):'') + ' · '+batches+' lotur' + fp
+        + (done ? ' <b style="color:#0f7a43">— allt tómt, búið ✅</b>' : (running?' …':''));
     }
-    async function oneBatch(){
-      const r = await fetch('/api/drive-sort' + qs());
+    async function oneBatch(srcRaw){
+      const r = await fetch('/api/drive-sort' + qs(srcRaw));
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
       batches++;
@@ -4657,21 +4686,30 @@ function renderBakendi(t){
     async function step(){
       if (!need()) return;
       saveFolders();
+      const folders = folderList(); curTotal = folders.length; curFolder = 0;
       $step.disabled = true; $run.disabled = true;
-      try { const d = await oneBatch(); summary(d.done || d.processed===0); }
+      try { const d = await oneBatch(folders[0]); summary(d.done || d.processed===0); }
       catch(e){ $status.textContent = 'Villa: ' + (e.message||e); }
       finally { $step.disabled = false; $run.disabled = false; }
     }
     async function runLoop(){
       if (!need()) return;
       saveFolders();
+      const folders = folderList(); curTotal = folders.length;
       running = true; $run.disabled = true; $step.disabled = true; $stop.disabled = false;
       try {
-        while (running) {
-          const d = await oneBatch();
-          summary(false);
-          if (d.done || d.processed === 0) { summary(true); break; }
+        for (curFolder = 0; curFolder < folders.length && running; curFolder++) {
+          // Drain this folder (whole tree if recurse is on) before moving to the
+          // next one in the biðlisti. A folder that errors is skipped, not fatal.
+          while (running) {
+            let d;
+            try { d = await oneBatch(folders[curFolder]); }
+            catch(e){ $status.innerHTML = 'Villa í möppu '+(curFolder+1)+'/'+folders.length+': ' + escapeHtml(e.message||String(e)) + ' — held áfram…'; break; }
+            summary(false);
+            if (d.done || d.processed === 0) break;
+          }
         }
+        if (running) { curFolder = Math.max(0, folders.length - 1); summary(true); }
       } catch(e){ $status.textContent = 'Villa: ' + (e.message||e); }
       finally { running = false; $run.disabled = false; $step.disabled = false; $stop.disabled = true; }
     }
