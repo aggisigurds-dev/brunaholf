@@ -41,6 +41,46 @@ data from Ajour, Google Drive/Sheets/Gmail integration, and a tilbod
   Drive/Sheets/Gmail. See `netlify/functions/_google.js`.
 - **Static site**: `public/tilbod/` is the standalone tilbod generator.
 
+## Gagnalíkan viðskiptavina (the customer spine) + 🗺️ Kerfis-kort
+
+**Read this before touching customer / document / equipment data in either app.**
+Slökkvitæki + Brunahólf share ONE Supabase project, and the customer model is a
+spine — one canonical customer, then its sites, then its equipment:
+
+- **`customers_base`** — the *canonical* customer, **one row per kennitala**
+  ("Allir viðskiptavinir"). Carries `rekstrarfelag`.
+- **`fyrirtaeki`** — **sites / starfsstöðvar**, linked to base via
+  `customer_base_id`. **One kt can own many sites = rekstrarfélag** (Pizzan 11,
+  Colas 3). `er_i_thjonustu` = in service (this IS the "þjónustuflokkur" signal —
+  there is no separate category column). `deleted_at` = soft-deleted.
+  **NEVER merge/delete a rekstrarfélag's sites** (Agnar, standing rule).
+- **`uttaeki`** — equipment, linked via `customer_base_id` + `worksite_id`→site.
+  **Auto-generated PLACEHOLDERS — they don't matter; may be deleted / regenerated.
+  "Equipment without a site" (`worksite_id` null) is NOT a problem** (Agnar
+  2026-07-12) — do not surface it as a health flag.
+- **`customer_documents`** — úttektarskýrslur / reikningar / samningar indexed from
+  Google Drive. Keyed `customer_base_id` + `fyrirtaeki_id` (site) + `year`;
+  `drive_file_id` = the file in the master folder. **One úttektarskýrsla per
+  (site, year); reikningar deduped by R-number.** `is_duplicate=true` = flagged
+  copy (reversible, never deleted).
+- **`solur`** (POS/Slökkvitæki invoices) + **`payday_invoices_slokk`** (Payday
+  krófur, kt stored **digits-only**) link by **kt**, not a base FK. ~120 krófur
+  are sent via Payday out of Kröfu yfirlit; patch 199 (slökkvitæki) surfaces them
+  on the company profile.
+- **Conventions:** walk-in / anonymous sale = kt `999999-9999`.
+
+**🗺️ Kerfis-kort** (`kerfiskort.html` at `brunaholf.netlify.app/kerfiskort.html`
++ hero card at the top of Bakendi) is the **live single-page map of the whole
+customer DB** — one row per customer with kt · service · rekstrarfélag · sites ·
+equipment · master-folder docs · 2023–2026 skýrsla/reikningur/Payday per year ·
+health flags (unlinked docs, dups, no-kt/base). Expand a row → sites + all docs
+(Drive links) + Payday + a link to Skýrslu-stöð. It reads live every time (no
+cache). Backed by Postgres view **`v_kerfi_kort`** (rollup per base, `grant select
+to anon`) + endpoint **`/api/kerfi-kort`** (`kerfi-kort.js`: default=all ·
+`?base=ID`=detail · `?counts=1`=schema/health). **Fixing connection gaps** is done
+in the Bakendi tools: 🔗 Skýrslu-stöð (doc→site), 🧩 Kt-samræming (kt/base on
+sites), 🧽 Hreinsi-borð (batch doc reconnect), 🧹 Drive-flokkun + 🗜️ Fletja (Drive).
+
 ## Tabs (current)
 
 Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:

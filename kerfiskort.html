@@ -93,6 +93,26 @@
 
   <div class="schema" id="schema"><h2>🔗 Hvernig kerfið er tengt</h2><div class="muted">Hleð…</div></div>
 
+  <details class="schema" style="padding:0">
+    <summary style="cursor:pointer;padding:14px 16px;font-size:13px;font-weight:700;color:var(--ink2);list-style:none;user-select:none">ℹ️ Um bygginguna — lestu þetta til að skilja gagnalíkanið (fyrir fólk OG Claude-agenta)</summary>
+    <div style="padding:0 16px 16px;font-size:13px;color:var(--ink2);line-height:1.65">
+      <p><b>Hryggjarstykkið (the spine):</b> ein rót per viðskiptavin, síðan staðir, síðan tæki.</p>
+      <ul style="margin:6px 0 12px;padding-left:20px">
+        <li><b>customers_base</b> — <i>canonical</i> viðskiptavinur, EINN per kennitölu. „Allir viðskiptavinir". Hér er <code>rekstrarfelag</code> merkið.</li>
+        <li><b>fyrirtaeki</b> — <b>staðir / starfsstöðvar</b> (tengt base gegnum <code>customer_base_id</code>). <b>Einn kt getur átt marga staði = rekstrarfélag</b> (Pizzan 11, Colas 3). <code>er_i_thjonustu</code> = í þjónustu. <b>MÁ ALDREI sameina staði rekstrarfélags.</b></li>
+        <li><b>uttaeki</b> — tæki (tengt gegnum <code>customer_base_id</code> + <code>worksite_id</code>→staður). <b>Auto-generuð placeholder — skipta ekki máli, má eyða/búa til ný. „Tæki án staðar" er EKKI vandamál.</b></li>
+      </ul>
+      <p><b>Skjöl & reikningar:</b></p>
+      <ul style="margin:6px 0 12px;padding-left:20px">
+        <li><b>customer_documents</b> — úttektarskýrslur / reikningar / samningar úr Google Drive. Tengt <code>customer_base_id</code> + <code>fyrirtaeki_id</code> (staður) + <code>year</code>. <code>drive_file_id</code> = skráin í master-möppunni. <b>Ein ársskýrsla per (staður, ár); reikningar aðgreindir á R-númeri.</b> <code>is_duplicate=true</code> = tvítak (afturkræft, ekki eytt).</li>
+        <li><b>solur</b> — POS/Slökkvitæki-reikningar · <b>payday_invoices_slokk</b> — Payday-kröfur. Bæði tengjast eftir <b>kt</b> (ekki base-FK).</li>
+      </ul>
+      <p><b>Reglur:</b> walk-in / nafnlaus sala = kt <code>999999-9999</code>. Þjónustu-flokkur er í reynd <code>er_i_thjonustu</code> á stað.</p>
+      <p><b>Að laga tengingar (verkfæri í Bakendi):</b> „🔗 Skýrslu-stöð" (tengja skjal→stað), „🧩 Kt-samræming" (kt/base á staði), „🧽 Hreinsi-borð" (batch skjala-tenging), „🧹 Drive-flokkun" + „🗜️ Fletja" (Drive-möppur). Þessi síða er <b>lifandi</b> (les grunninn í hvert sinn) — ekkert cache.</p>
+      <p style="color:var(--ink4)"><b>Flögg þýða:</b> „ótengd" = skjöl án <code>fyrirtaeki_id</code> (þarf by-eye í Skýrslu-stöð) · „tvítök" = <code>is_duplicate</code> · „án kt/base" = staður vantar tengingu í hrygginn.</p>
+    </div>
+  </details>
+
   <div class="stats" id="stats"></div>
 
   <div class="row" style="margin:8px 0 4px">
