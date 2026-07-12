@@ -58,14 +58,19 @@ async function listSome(token, folder, limit) {
 // moveFile lifts it straight out of whichever subfolder it lives in. We stop as
 // soon as we have `limit` files — the next call re-walks from the root and finds
 // the rest (moved files have left the tree), keeping every call slow-&-steady.
-async function collectFiles(token, root, limit) {
+async function collectFiles(token, root, limit, skip) {
+  skip = skip || new Set();
   const files = []; const queue = [root]; const seen = new Set();
   while (queue.length && files.length < limit) {
     const folder = queue.shift();
     if (seen.has(folder)) continue; seen.add(folder);
     const kids = await listChildren(token, folder);
     for (const c of kids) {
-      if (c.mimeType === FOLDER_MIME) queue.push(c.id);
+      // NEVER descend into a destination folder (master/reports/dupes/other) — its
+      // files are already sorted & recorded; re-processing them would flag the
+      // canonical copy as a dup and move it to rusl. This lets `src` be the whole
+      // parent that contains the dest folders.
+      if (c.mimeType === FOLDER_MIME) { if (!skip.has(c.id)) queue.push(c.id); }
       else { files.push(c); if (files.length >= limit) break; }
     }
   }
@@ -73,14 +78,15 @@ async function collectFiles(token, root, limit) {
 }
 // True if ANY file remains anywhere in the tree (folders alone don't count).
 // Returns on the first file found, so the near-done case is cheap.
-async function anyFileLeft(token, root) {
+async function anyFileLeft(token, root, skip) {
+  skip = skip || new Set();
   const queue = [root]; const seen = new Set();
   while (queue.length) {
     const folder = queue.shift();
     if (seen.has(folder)) continue; seen.add(folder);
     let kids; try { kids = await listChildren(token, folder); } catch (_) { return null; }
     for (const c of kids) {
-      if (c.mimeType === FOLDER_MIME) queue.push(c.id);
+      if (c.mimeType === FOLDER_MIME) { if (!skip.has(c.id)) queue.push(c.id); }
       else return true;
     }
   }
@@ -296,7 +302,11 @@ exports.handler = async (event) => {
     const opts = { rename: p.rename !== '0' && p.rename !== 'false', dry: p.dry === '1' || p.dry === 'true' };
     const token = await freshAccessToken();
 
-    const files = recurse ? await collectFiles(token, src, limit) : await listSome(token, src, limit);
+    // Destination folders are excluded from the recursive walk so `src` can be the
+    // whole parent that CONTAINS them — already-sorted canonical files are never
+    // re-processed (which would trash them as "dups").
+    const skip = new Set([dest.master, dest.reports, dest.dupes, dest.other].filter(Boolean));
+    const files = recurse ? await collectFiles(token, src, limit, skip) : await listSome(token, src, limit);
     const results = []; const tally = { master: 0, reports: 0, dupes: 0, other: 0, error: 0 };
     for (const f of files) {
       try { const r = await handleFile(token, f, dest, opts); results.push(r); tally[r.action] = (tally[r.action] || 0) + 1; }
@@ -311,7 +321,7 @@ exports.handler = async (event) => {
       // anyFileLeft returns false only when the WHOLE tree is definitively
       // empty; null means a transient list error — treat that as "not done"
       // so a deep walk never stops early on a hiccup (re-run finds the rest).
-      const al = await anyFileLeft(token, src);
+      const al = await anyFileLeft(token, src, skip);
       left = al === false ? 0 : 1;
     } else left = (await listSome(token, src, 1)).length;
     return json(200, { processed: files.length, tally, results, done: (left === 0), recurse, dry: opts.dry });
