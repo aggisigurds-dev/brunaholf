@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🗺️ Kerfis-kort — viðskiptavina-gagnagrunnur</title>
+<style>
+  :root{
+    --bg:#0b0d12; --panel:#141821; --panel2:#1b2130; --brd:#2a3142; --brd2:#212838;
+    --ink1:#f1f5f9; --ink2:#cbd5e1; --ink3:#94a3b8; --ink4:#64748b;
+    --green:#34d399; --greenbg:#0e2b22; --amber:#fbbf24; --amberbg:#2b230c;
+    --red:#f87171; --redbg:#2c1414; --blue:#60a5fa; --purple:#a78bfa; --purplebg:#211a3a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,#060607 0,#0b0d12 340px,#0e1117 100%);color:var(--ink1);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-text-size-adjust:100%}
+  a{color:var(--blue);text-decoration:none}
+  .wrap{max-width:1500px;margin:0 auto;padding:20px 16px 80px}
+  h1{font-size:24px;font-weight:800;margin:0 0 2px;letter-spacing:-.01em}
+  .sub{color:var(--ink3);font-size:13px;margin-bottom:16px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .btn{background:var(--panel2);border:1px solid var(--brd);color:var(--ink2);border-radius:9px;padding:8px 13px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+  .btn:hover{border-color:var(--blue);color:var(--ink1)}
+  .btn.on{background:#12324f;border-color:var(--blue);color:#dbeafe}
+  input.search{background:var(--panel);border:1px solid var(--brd);color:var(--ink1);border-radius:9px;padding:9px 12px;font-size:14px;min-width:230px;flex:1;font-family:inherit}
+
+  /* schema graphic */
+  .schema{background:var(--panel);border:1px solid var(--brd);border-radius:16px;padding:16px;margin:14px 0 18px;overflow-x:auto}
+  .schema h2{font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink3);margin:0 0 12px;font-weight:700}
+  .flow{display:flex;align-items:stretch;gap:0;min-width:820px}
+  .node{background:var(--panel2);border:1px solid var(--brd);border-radius:12px;padding:12px 14px;min-width:150px;display:flex;flex-direction:column;gap:3px}
+  .node .nm{font-weight:700;font-size:13px;color:var(--ink1)}
+  .node .ct{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+  .node .lbl{font-size:11px;color:var(--ink4)}
+  .node .warn{font-size:11px;color:var(--red);font-weight:700}
+  .arrow{display:flex;flex-direction:column;justify-content:center;align-items:center;color:var(--ink4);font-size:11px;padding:0 8px;min-width:64px;text-align:center}
+  .arrow .a{font-size:20px;color:var(--brd)}
+  .col{display:flex;flex-direction:column;gap:10px;justify-content:center}
+
+  /* stat chips row */
+  .stats{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+  .stat{background:var(--panel2);border:1px solid var(--brd);border-radius:10px;padding:7px 12px;cursor:pointer}
+  .stat b{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums}
+  .stat span{font-size:11px;color:var(--ink3);display:block}
+  .stat.warn b{color:var(--amber)} .stat.bad b{color:var(--red)} .stat.ok b{color:var(--green)}
+  .stat.act{border-color:var(--blue);background:#0f2438}
+
+  /* table */
+  .tblwrap{background:var(--panel);border:1px solid var(--brd);border-radius:14px;overflow:auto;margin-top:6px}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:1080px}
+  thead th{position:sticky;top:0;background:#10151f;color:var(--ink3);font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;font-weight:700;text-align:left;padding:9px 10px;border-bottom:1px solid var(--brd);white-space:nowrap;cursor:pointer;user-select:none}
+  thead th:hover{color:var(--ink1)}
+  tbody td{padding:8px 10px;border-top:1px solid var(--brd2);vertical-align:middle}
+  tbody tr.main{cursor:pointer}
+  tbody tr.main:hover{background:var(--panel2)}
+  .nm-cell{font-weight:700;color:var(--ink1);display:flex;align-items:center;gap:7px;min-width:180px}
+  .rf{font-size:10px;font-weight:800;background:var(--purplebg);color:var(--purple);border:1px solid #3b2f66;border-radius:99px;padding:1px 7px}
+  .kt{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:var(--ink3);white-space:nowrap}
+  .pill{font-size:10.5px;font-weight:700;border-radius:99px;padding:2px 8px;white-space:nowrap;border:1px solid}
+  .pill.svc{background:var(--greenbg);color:var(--green);border-color:#1e5540}
+  .pill.no{background:var(--panel2);color:var(--ink4);border-color:var(--brd)}
+  .num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+  .yr{display:flex;gap:3px;justify-content:center}
+  .dot{width:20px;height:20px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;border:1px solid var(--brd);background:var(--panel2);color:var(--ink4)}
+  .dot.rep{background:var(--greenbg);border-color:#1e5540;color:var(--green)}
+  .dot.inv{background:#0e2536;border-color:#1e456b;color:var(--blue)}
+  .dot.pd{background:var(--purplebg);border-color:#3b2f66;color:var(--purple)}
+  .flags{display:flex;gap:4px;flex-wrap:wrap}
+  .flag{font-size:10px;font-weight:700;border-radius:6px;padding:2px 6px;white-space:nowrap;border:1px solid}
+  .flag.red{background:var(--redbg);color:var(--red);border-color:#5b2020}
+  .flag.amber{background:var(--amberbg);color:var(--amber);border-color:#5b4a12}
+  .clean{color:var(--green);font-size:15px}
+  /* detail */
+  tr.detail td{background:#0d1119;padding:0;border-top:0}
+  .det{padding:14px 18px;display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .det h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink3)}
+  .site{background:var(--panel2);border:1px solid var(--brd);border-radius:9px;padding:8px 11px;margin-bottom:6px}
+  .site .snm{font-weight:700;font-size:13px}
+  .site .sad{font-size:12px;color:var(--ink3)}
+  .site.dead{opacity:.5}
+  .doc{display:flex;align-items:center;gap:7px;padding:5px 8px;border-radius:7px;font-size:12px;margin-bottom:3px;border:1px solid var(--brd2)}
+  .doc .t{font-size:11px;font-weight:700;padding:1px 6px;border-radius:5px}
+  .doc .t.rep{background:var(--greenbg);color:var(--green)} .doc .t.inv{background:#0e2536;color:var(--blue)} .doc .t.samn{background:#2a2412;color:var(--amber)}
+  .badge{font-size:10px;font-weight:700;padding:1px 6px;border-radius:5px}
+  .badge.un{background:var(--redbg);color:var(--red)} .badge.dup{background:var(--amberbg);color:var(--amber)}
+  .muted{color:var(--ink4);font-size:12px}
+  @media(max-width:720px){ .det{grid-template-columns:1fr} .wrap{padding:14px 8px 60px} h1{font-size:20px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🗺️ Kerfis-kort</h1>
+  <div class="sub">Öll viðskiptavina-gagnaskrá á einum stað — tengingar, skjöl, staðir, tæki og heilsa. <span id="gen"></span></div>
+
+  <div class="schema" id="schema"><h2>🔗 Hvernig kerfið er tengt</h2><div class="muted">Hleð…</div></div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="row" style="margin:8px 0 4px">
+    <input class="search" id="q" placeholder="🔍 Leita — nafn eða kennitala…">
+    <button class="btn" id="f-svc">Í þjónustu</button>
+    <button class="btn" id="f-rf">Rekstrarfélög</button>
+    <button class="btn" id="f-flag">⚠ Aðeins með flögg</button>
+    <button class="btn" id="reload">↻ Sækja</button>
+    <span class="muted" id="cnt"></span>
+  </div>
+
+  <div class="tblwrap">
+    <table id="tbl">
+      <thead><tr>
+        <th data-s="nafn">Viðskiptavinur</th>
+        <th data-s="kennitala">Kt</th>
+        <th data-s="in_service">Þjónusta</th>
+        <th data-s="n_sites" class="num">Staðir</th>
+        <th data-s="n_eq" class="num">Tæki</th>
+        <th data-s="n_in_master" class="num">Skjöl</th>
+        <th>2023</th><th>2024</th><th>2025</th><th>2026</th>
+        <th data-s="payday_n" class="num">Payday</th>
+        <th>Flögg</th>
+      </tr></thead>
+      <tbody id="body"><tr><td colspan="12" class="muted" style="padding:24px">Hleð…</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const API='/api/kerfi-kort';
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nf=n=>String(n).replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+let DATA=[], STATE={svc:false,rf:false,flag:false,q:'',sort:'nafn',dir:1,open:new Set(),detail:{}};
+
+function hasFlag(c){ return c.n_unlinked>0 || c.n_dup>0 || c.n_eq_nosite>0 || c.no_kt || (c.in_service && c.n_eq===0); }
+
+async function load(){
+  document.getElementById('body').innerHTML='<tr><td colspan="12" class="muted" style="padding:24px">Hleð…</td></tr>';
+  try{
+    const [mapR, cntR] = await Promise.all([ fetch(API).then(r=>r.json()), fetch(API+'?counts=1').then(r=>r.json()) ]);
+    DATA = mapR.customers||[];
+    renderSchema(cntR);
+    render();
+    document.getElementById('gen').textContent='· '+DATA.length+' viðskiptavinir';
+  }catch(e){ document.getElementById('body').innerHTML='<tr><td colspan="12" style="padding:24px;color:var(--red)">Villa: '+esc(e.message||e)+'</td></tr>'; }
+}
+
+function node(nm,count,lbl,warn){
+  return '<div class="node"><div class="nm">'+esc(nm)+'</div><div class="ct">'+nf(count)+'</div><div class="lbl">'+esc(lbl)+'</div>'+(warn?'<div class="warn">'+esc(warn)+'</div>':'')+'</div>';
+}
+function arrow(t){ return '<div class="arrow"><div class="a">→</div>'+(t?('<div>'+esc(t)+'</div>'):'')+'</div>'; }
+
+function renderSchema(d){
+  const t=d.tables||{}, h=d.health||{};
+  const flow =
+    '<div class="flow">'
+    + '<div class="col">'+node('customers_base', t.customers_base, 'rót viðskiptavinur', h.fyr_nobase?null:null)+node('rekstrarfélög', t.rekstrarfelog, 'marg-staða kt', '')+'</div>'
+    + arrow('customer_base_id')
+    + '<div class="col">'+node('fyrirtaeki', t.fyrirtaeki_live, 'staðir (lifandi)', h.fyr_nobase?(h.fyr_nobase+' án base'):'')+'</div>'
+    + arrow('worksite_id')
+    + '<div class="col">'+node('uttaeki', t.uttaeki, 'tæki', h.eq_nosite?(h.eq_nosite+' án staðar'):'')+'</div>'
+    + '</div>'
+    + '<div class="flow" style="margin-top:12px">'
+    + '<div class="col">'+node('customer_documents', t.docs_active, 'virk skjöl (+'+nf(t.docs_dup)+' tvítök)', h.docs_unlinked?(h.docs_unlinked+' ótengd staðum'):'')+'</div>'
+    + arrow('base + fyrirtaeki')
+    + '<div class="col">'+node('solur', t.solur, 'POS/reikningar (kt)','')+'</div>'
+    + arrow('kt')
+    + '<div class="col">'+node('payday_invoices_slokk', t.payday, 'Payday-kröfur (kt)','')+'</div>'
+    + '</div>';
+  document.getElementById('schema').innerHTML='<h2>🔗 Hvernig kerfið er tengt · lifandi tölur</h2>'+flow;
+
+  const stats=[
+    {k:'total', b:t.customers_base, s:'viðskiptavinir', cls:''},
+    {k:'svc', b:DATA.filter(c=>c.in_service).length, s:'í þjónustu', cls:'ok'},
+    {k:'unlinked', b:h.docs_unlinked, s:'skjöl án staðar', cls:'warn'},
+    {k:'nosite', b:h.eq_nosite, s:'tæki án staðar', cls:'warn'},
+    {k:'dup', b:t.docs_dup, s:'skjöl-tvítök', cls:'warn'},
+    {k:'nokt', b:h.fyr_nokt, s:'staðir án kt', cls:'bad'},
+    {k:'nobase', b:h.fyr_nobase, s:'staðir án base', cls:'bad'},
+  ];
+  document.getElementById('stats').innerHTML=stats.map(x=>'<div class="stat '+x.cls+'" data-stat="'+x.k+'"><b>'+nf(x.b||0)+'</b><span>'+esc(x.s)+'</span></div>').join('');
+  document.querySelectorAll('[data-stat]').forEach(el=>el.onclick=()=>{
+    const k=el.dataset.stat;
+    if(k==='svc'){ STATE.svc=!STATE.svc; syncBtns(); render(); }
+    else if(k==='total'){ STATE.svc=STATE.flag=STATE.rf=false; STATE.q=''; document.getElementById('q').value=''; syncBtns(); render(); }
+    else { STATE.flag=true; STATE._only=k; syncBtns(); render(); }
+  });
+}
+
+function yrCell(c,y){
+  const rep=c['r'+y]>0, inv=c['i'+y]>0;
+  const pd = y==='26' && c.payday_n>0;
+  let h='<div class="yr">';
+  h+= rep?'<span class="dot rep" title="'+c['r'+y]+' úttektarskýrsla">📄</span>':'<span class="dot" title="engin skýrsla">·</span>';
+  h+= inv?'<span class="dot inv" title="'+c['i'+y]+' reikningur">🧾</span>':(pd?'<span class="dot pd" title="Payday-kröfur">🟣</span>':'<span class="dot" title="enginn reikningur">·</span>');
+  h+='</div>'; return h;
+}
+function flagsCell(c){
+  let f=[];
+  if(c.n_unlinked>0) f.push('<span class="flag red" title="skjöl ekki tengd stað">'+c.n_unlinked+' ótengd</span>');
+  if(c.n_eq_nosite>0) f.push('<span class="flag amber" title="tæki án worksite">'+c.n_eq_nosite+' tæki◦</span>');
+  if(c.n_dup>0) f.push('<span class="flag amber" title="skjöl-tvítök">'+c.n_dup+' tvítök</span>');
+  if(c.no_kt) f.push('<span class="flag red">án kt</span>');
+  if(c.in_service && c.n_eq===0) f.push('<span class="flag amber">í þjón. 0 tæki</span>');
+  return f.length? '<div class="flags">'+f.join('')+'</div>' : '<span class="clean" title="allt tengt">✓</span>';
+}
+
+function filtered(){
+  let a=DATA.slice();
+  if(STATE.svc) a=a.filter(c=>c.in_service);
+  if(STATE.rf) a=a.filter(c=>c.rekstrarfelag);
+  if(STATE.flag){
+    if(STATE._only==='unlinked') a=a.filter(c=>c.n_unlinked>0);
+    else if(STATE._only==='nosite') a=a.filter(c=>c.n_eq_nosite>0);
+    else if(STATE._only==='dup') a=a.filter(c=>c.n_dup>0);
+    else if(STATE._only==='nokt') a=a.filter(c=>c.no_kt);
+    else a=a.filter(hasFlag);
+  }
+  if(STATE.q){ const q=STATE.q.toLowerCase(), qd=STATE.q.replace(/\D/g,'');
+    a=a.filter(c=>(c.nafn||'').toLowerCase().includes(q) || (qd&&String(c.kennitala||'').replace(/\D/g,'').includes(qd))); }
+  const s=STATE.sort, d=STATE.dir;
+  a.sort((x,y)=>{ let vx=x[s],vy=y[s];
+    if(typeof vx==='string'||typeof vy==='string'){ return String(vx||'').localeCompare(String(vy||''),'is')*d; }
+    return ((vx||0)-(vy||0))*d; });
+  return a;
+}
+
+function render(){
+  const a=filtered();
+  document.getElementById('cnt').textContent=a.length+' af '+DATA.length;
+  const rows=a.map(c=>{
+    const open=STATE.open.has(c.id);
+    let h='<tr class="main" data-id="'+c.id+'">'
+      +'<td><div class="nm-cell">'+(open?'▾':'▸')+' '+esc(c.nafn||('#'+c.id))+(c.rekstrarfelag?' <span class="rf">🏢 '+esc(c.rekstrarfelag)+'</span>':'')+'</div></td>'
+      +'<td class="kt">'+(c.kennitala?esc(c.kennitala):'<span style="color:var(--red)">— vantar</span>')+'</td>'
+      +'<td>'+(c.in_service?'<span class="pill svc">í þjónustu'+(c.n_service<c.n_sites?(' '+c.n_service+'/'+c.n_sites):'')+'</span>':'<span class="pill no">nei</span>')+'</td>'
+      +'<td class="num">'+c.n_sites+'</td>'
+      +'<td class="num">'+c.n_eq+(c.n_eq_nosite>0?' <span style="color:var(--amber)" title="án staðar">◦'+c.n_eq_nosite+'</span>':'')+'</td>'
+      +'<td class="num">'+c.n_in_master+(c.n_dup>0?' <span style="color:var(--amber)">+'+c.n_dup+'</span>':'')+'</td>'
+      +'<td>'+yrCell(c,'23')+'</td><td>'+yrCell(c,'24')+'</td><td>'+yrCell(c,'25')+'</td><td>'+yrCell(c,'26')+'</td>'
+      +'<td class="num">'+(c.payday_n||'<span class="muted">·</span>')+'</td>'
+      +'<td>'+flagsCell(c)+'</td></tr>';
+    if(open) h+='<tr class="detail" data-det="'+c.id+'"><td colspan="12"><div class="det" id="det-'+c.id+'"><div class="muted">Hleð…</div></div></td></tr>';
+    return h;
+  }).join('');
+  document.getElementById('body').innerHTML=rows||'<tr><td colspan="12" class="muted" style="padding:24px">Ekkert fannst</td></tr>';
+}
+
+async function openDetail(id){
+  const box=document.getElementById('det-'+id); if(!box) return;
+  if(STATE.detail[id]){ box.innerHTML=STATE.detail[id]; return; }
+  try{
+    const d=await fetch(API+'?base='+id).then(r=>r.json());
+    const sites=(d.sites||[]).map(s=>'<div class="site'+(s.deleted_at?' dead':'')+'"><div class="snm">'+esc(s.nafn||'')+(s.er_i_thjonustu?' <span class="pill svc">þjón.</span>':'')+(s.deleted_at?' <span class="muted">(eytt)</span>':'')+'</div><div class="sad">'+esc(s.heimilisfang||'—')+(s.kennitala?(' · '+esc(s.kennitala)):'')+'</div>'+(s.banner_note?'<div style="color:var(--amber);font-size:11px">📌 '+esc(s.banner_note)+'</div>':'')+'</div>').join('')||'<div class="muted">Engir staðir</div>';
+    const docs=(d.docs||[]).map(x=>{
+      const t=x.doc_type==='uttektarskyrsla'?'rep':(x.doc_type==='reikningur'?'inv':'samn');
+      const tl=x.doc_type==='uttektarskyrsla'?'skýrsla':(x.doc_type==='reikningur'?'reikn':'samn');
+      const nm=String(x.notes||'').split(' · ')[0]||x.invoice_number||'skjal';
+      const url=x.drive_file_id?('https://drive.google.com/file/d/'+x.drive_file_id+'/view'):null;
+      return '<div class="doc"><span class="t '+t+'">'+tl+(x.year?(' '+x.year):'')+'</span>'
+        +(url?'<a href="'+url+'" target="_blank" rel="noopener">'+esc(nm.slice(0,40))+'</a>':'<span>'+esc(nm.slice(0,40))+'</span>')
+        +(x.fyrirtaeki_id==null&&!x.is_duplicate?' <span class="badge un">ótengt stað</span>':'')
+        +(x.is_duplicate?' <span class="badge dup">tvítak</span>':'')
+        +'</div>';
+    }).join('')||'<div class="muted">Engin skjöl</div>';
+    const pd=(d.payday||[]).map(p=>'<div class="doc"><span class="t inv" style="background:var(--purplebg);color:var(--purple)">PD '+esc(p.number||'')+'</span><span>'+nf(p.amount_total||0)+' kr · '+esc(p.paid_date?'greitt':(p.status||''))+(p.due_date?(' · '+esc(String(p.due_date).slice(0,10))):'')+'</span></div>').join('');
+    const html='<div><h4>🏢 Staðir ('+(d.sites||[]).length+')</h4>'+sites+'</div>'
+      +'<div><h4>📄 Skjöl ('+(d.docs||[]).length+')</h4>'+docs
+      +(pd?('<h4 style="margin-top:12px">🟣 Payday-kröfur ('+(d.payday||[]).length+')</h4>'+pd):'')
+      +'<div style="margin-top:10px"><a href="https://brunaholf.netlify.app/#bakendi/'+id+'" target="_blank" rel="noopener" style="font-size:12px;font-weight:700">🔗 Laga pörun í Skýrslu-stöð →</a></div></div>';
+    STATE.detail[id]=html; box.innerHTML=html;
+  }catch(e){ box.innerHTML='<div style="color:var(--red)">Villa: '+esc(e.message||e)+'</div>'; }
+}
+
+function syncBtns(){
+  document.getElementById('f-svc').classList.toggle('on',STATE.svc);
+  document.getElementById('f-rf').classList.toggle('on',STATE.rf);
+  document.getElementById('f-flag').classList.toggle('on',STATE.flag);
+  if(!STATE.flag) STATE._only=null;
+}
+
+document.getElementById('body').addEventListener('click',e=>{
+  const tr=e.target.closest('tr.main'); if(!tr) return;
+  const id=+tr.dataset.id;
+  if(STATE.open.has(id)) STATE.open.delete(id); else STATE.open.add(id);
+  render();
+  if(STATE.open.has(id)) openDetail(id);
+});
+document.getElementById('q').addEventListener('input',e=>{ STATE.q=e.target.value.trim(); render(); });
+document.getElementById('f-svc').onclick=()=>{ STATE.svc=!STATE.svc; syncBtns(); render(); };
+document.getElementById('f-rf').onclick=()=>{ STATE.rf=!STATE.rf; syncBtns(); render(); };
+document.getElementById('f-flag').onclick=()=>{ STATE.flag=!STATE.flag; STATE._only=null; syncBtns(); render(); };
+document.getElementById('reload').onclick=load;
+document.querySelectorAll('thead th[data-s]').forEach(th=>th.onclick=()=>{
+  const s=th.dataset.s; STATE.dir = (STATE.sort===s)? -STATE.dir : (typeof (DATA[0]||{})[s]==='string'?1:-1); STATE.sort=s; render();
+});
+load();
+</script>
+</body>
+</html>
