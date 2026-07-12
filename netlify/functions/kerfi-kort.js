@@ -61,6 +61,20 @@ exports.handler = async (event) => {
       });
     }
 
+    // ── to-bill: 2026 úttektarskýrsla done but NO invoice in any channel ──
+    // (customer_documents reikningur 2026 · solur 2026 · payday 2026). This is
+    // real uninvoiced annual-inspection work — the office's bill-me queue.
+    if(p.tobill){
+      const cand = await sbGet('v_kerfi_kort?select=id,kennitala,r26,i26&r26=gt.0&i26=eq.0');
+      const sol = await sbGet('solur?status=eq.final&created_at=gte.2026-01-01&created_at=lt.2027-01-01&select=customer_kt');
+      const pd  = await sbGet('payday_invoices_slokk?created_date=gte.2026-01-01&created_date=lt.2027-01-01&select=kt');
+      const billed = new Set();
+      sol.forEach(s=>{ const d=digits(s.customer_kt); if(d.length===10) billed.add(d); });
+      pd.forEach(x=>{ const d=digits(x.kt); if(d.length===10) billed.add(d); });
+      const ids = cand.filter(c=> !billed.has(digits(c.kennitala))).map(c=>c.id);
+      return json(200,{ ids });
+    }
+
     // ── one customer: sites + docs + payday ──
     if(p.base){
       const bid = parseInt(p.base,10);
