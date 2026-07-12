@@ -392,6 +392,12 @@
   to = "/.netlify/functions/drive-flatten"
   status = 200
 
+# Kerfis-kort: the whole customer database + connection health on one live page.
+[[redirects]]
+  from = "/api/kerfi-kort"
+  to = "/.netlify/functions/kerfi-kort"
+  status = 200
+
 # Read year+month from dateless report PDFs (text layer, no OCR) and rename them.
 [[redirects]]
   from = "/api/skyrslu-ar"
