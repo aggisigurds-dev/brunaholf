@@ -155,7 +155,7 @@ function bunHtml(b){
     +(b.year?(' <span class="muted">· úr skýrslu '+b.year+'</span>'):'');
 }
 const nf=n=>String(n).replace(/\B(?=(\d{3})+(?!\d))/g,'.');
-let DATA=[], STATE={svc:false,rf:false,flag:false,q:'',sort:'nafn',dir:1,open:new Set(),detail:{}};
+let DATA=[], STATE={svc:false,rf:false,flag:false,q:'',sort:'nafn',dir:1,open:new Set(),detail:{},tobill:new Set()};
 
 // NB tæki án worksite (n_eq_nosite) er EKKI flagg — tækin eru auto-generuð
 // placeholder (Agnar), svo það er suð, ekki raunveruleg vöntun á tengingu.
@@ -164,8 +164,9 @@ function hasFlag(c){ return c.n_unlinked>0 || c.n_dup>0 || c.no_kt || (c.in_serv
 async function load(){
   document.getElementById('body').innerHTML='<tr><td colspan="12" class="muted" style="padding:24px">Hleð…</td></tr>';
   try{
-    const [mapR, cntR] = await Promise.all([ fetch(API).then(r=>r.json()), fetch(API+'?counts=1').then(r=>r.json()) ]);
+    const [mapR, cntR, tbR] = await Promise.all([ fetch(API).then(r=>r.json()), fetch(API+'?counts=1').then(r=>r.json()), fetch(API+'?tobill=1').then(r=>r.json()).catch(()=>({ids:[]})) ]);
     DATA = mapR.customers||[];
+    STATE.tobill = new Set((tbR.ids||[]).map(Number));
     renderSchema(cntR);
     render();
     document.getElementById('gen').textContent='· '+DATA.length+' viðskiptavinir';
@@ -199,6 +200,7 @@ function renderSchema(d){
   const stats=[
     {k:'total', b:t.customers_base, s:'viðskiptavinir', cls:''},
     {k:'svc', b:DATA.filter(c=>c.in_service).length, s:'í þjónustu', cls:'ok'},
+    {k:'tobill', b:STATE.tobill.size, s:'🧾 rukka 2026', cls:'bad'},
     {k:'unlinked', b:h.docs_unlinked, s:'skjöl án staðar', cls:'warn'},
     {k:'dup', b:t.docs_dup, s:'skjöl-tvítök', cls:'warn'},
     {k:'nokt', b:h.fyr_nokt, s:'staðir án kt', cls:'bad'},
@@ -208,7 +210,8 @@ function renderSchema(d){
   document.querySelectorAll('[data-stat]').forEach(el=>el.onclick=()=>{
     const k=el.dataset.stat;
     if(k==='svc'){ STATE.svc=!STATE.svc; syncBtns(); render(); }
-    else if(k==='total'){ STATE.svc=STATE.flag=STATE.rf=false; STATE.q=''; document.getElementById('q').value=''; syncBtns(); render(); }
+    else if(k==='total'){ STATE.svc=STATE.flag=STATE.rf=false; STATE.q=''; STATE._only=null; document.getElementById('q').value=''; syncBtns(); render(); }
+    else if(k==='tobill'){ STATE.flag=true; STATE._only='tobill'; syncBtns(); render(); }
     else { STATE.flag=true; STATE._only=k; syncBtns(); render(); }
   });
 }
@@ -223,6 +226,7 @@ function yrCell(c,y){
 }
 function flagsCell(c){
   let f=[];
+  if(STATE.tobill.has(+c.id)) f.push('<span class="flag red" title="ársskoðun 2026 gerð en enginn reikningur — á að rukka">🧾 rukka</span>');
   if(c.n_unlinked>0) f.push('<span class="flag red" title="skjöl ekki tengd stað">'+c.n_unlinked+' ótengd</span>');
   if(c.n_dup>0) f.push('<span class="flag amber" title="skjöl-tvítök">'+c.n_dup+' tvítök</span>');
   if(c.no_kt) f.push('<span class="flag red">án kt</span>');
@@ -235,7 +239,8 @@ function filtered(){
   if(STATE.svc) a=a.filter(c=>c.in_service);
   if(STATE.rf) a=a.filter(c=>c.rekstrarfelag);
   if(STATE.flag){
-    if(STATE._only==='unlinked') a=a.filter(c=>c.n_unlinked>0);
+    if(STATE._only==='tobill') a=a.filter(c=>STATE.tobill.has(+c.id));
+    else if(STATE._only==='unlinked') a=a.filter(c=>c.n_unlinked>0);
     else if(STATE._only==='dup') a=a.filter(c=>c.n_dup>0);
     else if(STATE._only==='nokt') a=a.filter(c=>c.no_kt);
     else a=a.filter(hasFlag);
@@ -289,7 +294,16 @@ async function openDetail(id){
         +'</div>';
     }).join('')||'<div class="muted">Engin skjöl</div>';
     const pd=(d.payday||[]).map(p=>'<div class="doc"><span class="t inv" style="background:var(--purplebg);color:var(--purple)">PD '+esc(p.number||'')+'</span><span>'+nf(p.amount_total||0)+' kr · '+esc(p.paid_date?'greitt':(p.status||''))+(p.due_date?(' · '+esc(String(p.due_date).slice(0,10))):'')+'</span></div>').join('');
-    const html='<div style="grid-column:1/-1"><h4>🧯 Búnaður úr síðustu úttektarskýrslu</h4><div id="bun-'+id+'" class="muted">Les úr PDF…</div><div id="bunx-'+id+'"></div></div>'
+    const bs=d.base||{};
+    const contact='<div style="grid-column:1/-1;font-size:12.5px;color:var(--ink2)">'
+      + (bs.netfang?('✉️ <a href="mailto:'+esc(bs.netfang)+'">'+esc(bs.netfang)+'</a>  '):'')
+      + (bs.simi?('📞 <a href="tel:'+esc(String(bs.simi).replace(/\s/g,''))+'">'+esc(bs.simi)+'</a>  '):'')
+      + (bs.heimilisfang?('📍 '+esc(bs.heimilisfang)):'')
+      + (!bs.netfang&&!bs.simi?'<span class="muted">engin tengiliðaupplýsing</span>':'')
+      + (bs.general_notes?('<div style="color:var(--amber);margin-top:3px">📝 '+esc(bs.general_notes)+'</div>'):'')
+      +'</div>';
+    const html=contact
+      +'<div style="grid-column:1/-1"><h4>🧯 Búnaður úr síðustu úttektarskýrslu</h4><div id="bun-'+id+'" class="muted">Les úr PDF…</div><div id="bunx-'+id+'"></div></div>'
       +'<div><h4>🏢 Staðir ('+(d.sites||[]).length+')</h4>'+sites+'</div>'
       +'<div><h4>📄 Skjöl ('+(d.docs||[]).length+')</h4>'+docs
       +(pd?('<h4 style="margin-top:12px">🟣 Payday-kröfur ('+(d.payday||[]).length+')</h4>'+pd):'')
