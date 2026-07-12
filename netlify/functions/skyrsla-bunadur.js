@@ -45,14 +45,16 @@ const CATS = [
 
 function parseBunadur(text){
   const t = String(text||'').replace(/\r/g,'');
-  const detail={}; const grp={ slk:0, rs:0, bsl:0, teppi:0 };
-  let found=0;
-  for(const c of CATS){
-    const m = t.match(c.re);
-    if(m){ const n=sumNums(m[1]); detail[c.key]=n; grp[c.grp]+=n; found++; }
-    else detail[c.key]=null;
-  }
-  return { ...grp, detail, matched:found };
+  // Per-subtype (best effort, for the tooltip/detail).
+  const detail={};
+  for(const c of CATS){ const m=t.match(c.re); detail[c.key]= m ? sumNums(m[1]) : null; }
+  // Slk total is computed ROBUSTLY from EVERY "Slökkvitæki … Fjöldi: N" line so a
+  // CO2/kolsýra subtype whose exact-size regex misses is never dropped from the sum.
+  let slk=0; const re=/sl[öo]kkvit[æa]ki\b[^\n]*?fj[öo]ldi:?\s*([^\n]*?)(?:[íi]\s*lagi|\n|$)/gi; let m;
+  while((m=re.exec(t))){ slk += sumNums(m[1]); if(re.lastIndex===m.index) re.lastIndex++; }
+  const rs=detail.rs||0, bsl=detail.bsl||0, teppi=detail.teppi||0;
+  const matched=Object.values(detail).filter(v=>v!=null).length;
+  return { slk, rs, bsl, teppi, detail, matched };
 }
 
 exports.handler = async (event) => {
