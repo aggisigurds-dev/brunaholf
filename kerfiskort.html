@@ -145,7 +145,15 @@
 
 <script>
 const API='/api/kerfi-kort';
+const BUNAPI='/api/skyrsla-bunadur';
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function bunHtml(b){
+  if(!b||!b.ok) return '<span class="muted">'+esc((b&&b.reason)||'engin skýrsla')+'</span>';
+  const g=b.bunadur||{};
+  return '🧯 <b style="color:var(--green)">Slk</b> '+(g.slk||0)+' · <b style="color:var(--blue)">Rs</b> '+(g.rs||0)
+    +' · <b style="color:var(--amber)">BSL</b> '+(g.bsl||0)+' · Teppi '+(g.teppi||0)
+    +(b.year?(' <span class="muted">· úr skýrslu '+b.year+'</span>'):'');
+}
 const nf=n=>String(n).replace(/\B(?=(\d{3})+(?!\d))/g,'.');
 let DATA=[], STATE={svc:false,rf:false,flag:false,q:'',sort:'nafn',dir:1,open:new Set(),detail:{}};
 
@@ -275,18 +283,31 @@ async function openDetail(id){
       const url=x.drive_file_id?('https://drive.google.com/file/d/'+x.drive_file_id+'/view'):null;
       return '<div class="doc"><span class="t '+t+'">'+tl+(x.year?(' '+x.year):'')+'</span>'
         +(url?'<a href="'+url+'" target="_blank" rel="noopener">'+esc(nm.slice(0,40))+'</a>':'<span>'+esc(nm.slice(0,40))+'</span>')
+        +(x.doc_type==='uttektarskyrsla'&&x.drive_file_id?' <button class="btn" style="padding:1px 7px;font-size:10.5px" data-bun-file="'+esc(x.drive_file_id)+'" title="Lesa búnað úr þessari skýrslu">🧯 búnaður</button>':'')
         +(x.fyrirtaeki_id==null&&!x.is_duplicate?' <span class="badge un">ótengt stað</span>':'')
         +(x.is_duplicate?' <span class="badge dup">tvítak</span>':'')
         +'</div>';
     }).join('')||'<div class="muted">Engin skjöl</div>';
     const pd=(d.payday||[]).map(p=>'<div class="doc"><span class="t inv" style="background:var(--purplebg);color:var(--purple)">PD '+esc(p.number||'')+'</span><span>'+nf(p.amount_total||0)+' kr · '+esc(p.paid_date?'greitt':(p.status||''))+(p.due_date?(' · '+esc(String(p.due_date).slice(0,10))):'')+'</span></div>').join('');
-    const html='<div><h4>🏢 Staðir ('+(d.sites||[]).length+')</h4>'+sites+'</div>'
+    const html='<div style="grid-column:1/-1"><h4>🧯 Búnaður úr síðustu úttektarskýrslu</h4><div id="bun-'+id+'" class="muted">Les úr PDF…</div><div id="bunx-'+id+'"></div></div>'
+      +'<div><h4>🏢 Staðir ('+(d.sites||[]).length+')</h4>'+sites+'</div>'
       +'<div><h4>📄 Skjöl ('+(d.docs||[]).length+')</h4>'+docs
       +(pd?('<h4 style="margin-top:12px">🟣 Payday-kröfur ('+(d.payday||[]).length+')</h4>'+pd):'')
       +'<div style="margin-top:10px"><a href="https://brunaholf.netlify.app/#bakendi/'+id+'" target="_blank" rel="noopener" style="font-size:12px;font-weight:700">🔗 Laga pörun í Skýrslu-stöð →</a></div></div>';
     STATE.detail[id]=html; box.innerHTML=html;
+    // auto-read the equipment breakdown from the base's latest úttektarskýrsla
+    fetch(BUNAPI+'?base='+id).then(r=>r.json()).then(b=>{ const el=document.getElementById('bun-'+id); if(el) el.innerHTML=bunHtml(b); }).catch(()=>{ const el=document.getElementById('bun-'+id); if(el) el.innerHTML='<span class="muted">gat ekki lesið</span>'; });
   }catch(e){ box.innerHTML='<div style="color:var(--red)">Villa: '+esc(e.message||e)+'</div>'; }
 }
+// Per-report "🧯 búnaður" button → read that specific úttektarskýrsla.
+document.getElementById('body').addEventListener('click', async e=>{
+  const btn=e.target.closest('[data-bun-file]'); if(!btn) return;
+  e.stopPropagation();
+  const fid=btn.getAttribute('data-bun-file'); btn.textContent='🧯 les…'; btn.disabled=true;
+  try{ const b=await fetch(BUNAPI+'?file='+encodeURIComponent(fid)).then(r=>r.json());
+    const g=b&&b.bunadur; btn.outerHTML = (b&&b.ok) ? ('<span style="font-size:11px">🧯 Slk '+(g.slk||0)+' · Rs '+(g.rs||0)+' · BSL '+(g.bsl||0)+' · Teppi '+(g.teppi||0)+'</span>') : '<span class="muted" style="font-size:11px">'+esc((b&&b.reason)||'gat ekki lesið')+'</span>';
+  }catch(_){ btn.textContent='villa'; btn.disabled=false; }
+});
 
 function syncBtns(){
   document.getElementById('f-svc').classList.toggle('on',STATE.svc);

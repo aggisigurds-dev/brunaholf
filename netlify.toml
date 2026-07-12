@@ -398,6 +398,12 @@
   to = "/.netlify/functions/kerfi-kort"
   status = 200
 
+# Read the equipment breakdown (Slk/Rs/BSL/teppi) out of an úttektarskýrslu PDF.
+[[redirects]]
+  from = "/api/skyrsla-bunadur"
+  to = "/.netlify/functions/skyrsla-bunadur"
+  status = 200
+
 # Read year+month from dateless report PDFs (text layer, no OCR) and rename them.
 [[redirects]]
   from = "/api/skyrslu-ar"
