@@ -128,7 +128,9 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;'
 const nf=n=>String(n).replace(/\B(?=(\d{3})+(?!\d))/g,'.');
 let DATA=[], STATE={svc:false,rf:false,flag:false,q:'',sort:'nafn',dir:1,open:new Set(),detail:{}};
 
-function hasFlag(c){ return c.n_unlinked>0 || c.n_dup>0 || c.n_eq_nosite>0 || c.no_kt || (c.in_service && c.n_eq===0); }
+// NB tæki án worksite (n_eq_nosite) er EKKI flagg — tækin eru auto-generuð
+// placeholder (Agnar), svo það er suð, ekki raunveruleg vöntun á tengingu.
+function hasFlag(c){ return c.n_unlinked>0 || c.n_dup>0 || c.no_kt || (c.in_service && c.n_eq===0); }
 
 async function load(){
   document.getElementById('body').innerHTML='<tr><td colspan="12" class="muted" style="padding:24px">Hleð…</td></tr>';
@@ -154,7 +156,7 @@ function renderSchema(d){
     + arrow('customer_base_id')
     + '<div class="col">'+node('fyrirtaeki', t.fyrirtaeki_live, 'staðir (lifandi)', h.fyr_nobase?(h.fyr_nobase+' án base'):'')+'</div>'
     + arrow('worksite_id')
-    + '<div class="col">'+node('uttaeki', t.uttaeki, 'tæki', h.eq_nosite?(h.eq_nosite+' án staðar'):'')+'</div>'
+    + '<div class="col">'+node('uttaeki', t.uttaeki, 'tæki (auto-generuð)','')+'</div>'
     + '</div>'
     + '<div class="flow" style="margin-top:12px">'
     + '<div class="col">'+node('customer_documents', t.docs_active, 'virk skjöl (+'+nf(t.docs_dup)+' tvítök)', h.docs_unlinked?(h.docs_unlinked+' ótengd staðum'):'')+'</div>'
@@ -169,7 +171,6 @@ function renderSchema(d){
     {k:'total', b:t.customers_base, s:'viðskiptavinir', cls:''},
     {k:'svc', b:DATA.filter(c=>c.in_service).length, s:'í þjónustu', cls:'ok'},
     {k:'unlinked', b:h.docs_unlinked, s:'skjöl án staðar', cls:'warn'},
-    {k:'nosite', b:h.eq_nosite, s:'tæki án staðar', cls:'warn'},
     {k:'dup', b:t.docs_dup, s:'skjöl-tvítök', cls:'warn'},
     {k:'nokt', b:h.fyr_nokt, s:'staðir án kt', cls:'bad'},
     {k:'nobase', b:h.fyr_nobase, s:'staðir án base', cls:'bad'},
@@ -194,7 +195,6 @@ function yrCell(c,y){
 function flagsCell(c){
   let f=[];
   if(c.n_unlinked>0) f.push('<span class="flag red" title="skjöl ekki tengd stað">'+c.n_unlinked+' ótengd</span>');
-  if(c.n_eq_nosite>0) f.push('<span class="flag amber" title="tæki án worksite">'+c.n_eq_nosite+' tæki◦</span>');
   if(c.n_dup>0) f.push('<span class="flag amber" title="skjöl-tvítök">'+c.n_dup+' tvítök</span>');
   if(c.no_kt) f.push('<span class="flag red">án kt</span>');
   if(c.in_service && c.n_eq===0) f.push('<span class="flag amber">í þjón. 0 tæki</span>');
@@ -207,7 +207,6 @@ function filtered(){
   if(STATE.rf) a=a.filter(c=>c.rekstrarfelag);
   if(STATE.flag){
     if(STATE._only==='unlinked') a=a.filter(c=>c.n_unlinked>0);
-    else if(STATE._only==='nosite') a=a.filter(c=>c.n_eq_nosite>0);
     else if(STATE._only==='dup') a=a.filter(c=>c.n_dup>0);
     else if(STATE._only==='nokt') a=a.filter(c=>c.no_kt);
     else a=a.filter(hasFlag);
@@ -231,7 +230,7 @@ function render(){
       +'<td class="kt">'+(c.kennitala?esc(c.kennitala):'<span style="color:var(--red)">— vantar</span>')+'</td>'
       +'<td>'+(c.in_service?'<span class="pill svc">í þjónustu'+(c.n_service<c.n_sites?(' '+c.n_service+'/'+c.n_sites):'')+'</span>':'<span class="pill no">nei</span>')+'</td>'
       +'<td class="num">'+c.n_sites+'</td>'
-      +'<td class="num">'+c.n_eq+(c.n_eq_nosite>0?' <span style="color:var(--amber)" title="án staðar">◦'+c.n_eq_nosite+'</span>':'')+'</td>'
+      +'<td class="num">'+c.n_eq+'</td>'
       +'<td class="num">'+c.n_in_master+(c.n_dup>0?' <span style="color:var(--amber)">+'+c.n_dup+'</span>':'')+'</td>'
       +'<td>'+yrCell(c,'23')+'</td><td>'+yrCell(c,'24')+'</td><td>'+yrCell(c,'25')+'</td><td>'+yrCell(c,'26')+'</td>'
       +'<td class="num">'+(c.payday_n||'<span class="muted">·</span>')+'</td>'
