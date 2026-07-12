@@ -171,11 +171,20 @@ function companyFrom(text, name) {
   if (first && /[A-Za-zÁÉÍÓÚÝÆÖÞÐ]/.test(first)) return first.replace(/_/g, ' ').trim();
   return '';
 }
+// Pull the SITE descriptor (name + address) out of a report body so distinct
+// starfsstöðvar of one rekstrarfélag get distinct file names (and true copies of
+// the SAME site collapse to one name). Report wording: "…hjá fyrirtækinu <SITE …>
+// (kt|Kt|<ktnr>)…". Returns '' when nothing plausible is found.
+function siteFrom(text) {
+  const m = String(text || '').match(/hj[áa]\s+fyrirt[æa]kinu\s+(.+?)\s*[.,]?\s*(?:\bkt\b|\bKt\b|\d{6}-?\d{4})/i);
+  let s = m ? m[1].replace(/\s+/g, ' ').trim().replace(/[.,]+$/, '') : '';
+  return (s.length >= 4 && s.length <= 80) ? s : '';
+}
 const dash = kt => (kt && kt.length === 10) ? kt.slice(0, 6) + '-' + kt.slice(6) : kt;
 function fmtIsk(n) { return n == null ? '' : String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
 function sanitize(s) { return String(s || '').replace(/[\\/:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim(); }
 function nameInvoice(co, ktd, inv, yr, tot) { return [sanitize(co) || 'Óþekkt', ktd || '', inv || '', yr || '', (tot != null ? fmtIsk(tot) + ' kr' : '')].filter(Boolean).join(' - ') + '.pdf'; }
-function nameReport(co, ktd, yr) { return [sanitize(co) || 'Óþekkt', ktd || '', 'úttektarskýrsla', yr || ''].filter(Boolean).join(' - ') + '.pdf'; }
+function nameReport(co, ktd, yr, site) { return [sanitize(co) || 'Óþekkt', site ? sanitize(site) : '', ktd || '', 'úttektarskýrsla', yr || ''].filter(Boolean).join(' - ') + '.pdf'; }
 
 // ── Supabase ──────────────────────────────────────────────────────────────────
 function sbHeaders(extra) { return Object.assign({ apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }, extra || {}); }
@@ -192,6 +201,19 @@ async function reportKnown(baseId, year) {
 async function matchBase(kt) {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/customers_base?kennitala=eq.${encodeURIComponent(dash(kt))}&select=id,nafn&limit=1`, { headers: sbHeaders() });
   const rows = await r.json().catch(() => []); return (Array.isArray(rows) && rows[0]) ? rows[0] : null;
+}
+// How many `fyrirtaeki` locations carry this kt? >1 ⇒ a rekstrarfélag with many
+// starfsstöðvar (Pizzan, Colas …). Such a company legitimately has ONE report per
+// site per year, so the (base, year) dedup below MUST NOT trash the 2nd..Nth —
+// that would delete distinct-site reports (the never-merge-locations rule). We
+// count by kt (the true multi-site signal) and fail SAFE: on any error → treat as
+// multi-site (0 dedup) rather than risk a wrong trash.
+async function siteCountForKt(kt) {
+  if (!kt) return 0;
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/fyrirtaeki?kennitala=eq.${encodeURIComponent(dash(kt))}&select=id`, { headers: sbHeaders() });
+    const rows = await r.json().catch(() => []); return Array.isArray(rows) ? rows.length : 99;
+  } catch (_) { return 99; }
 }
 async function upsertDoc(row) {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?on_conflict=drive_file_id`, {
@@ -222,13 +244,24 @@ async function handleFile(token, f, dest, opts) {
 
   // úttektarskýrsla (report) — Slökkvitæki-issued, report wording, no R-number
   if (!inv && isReport(text)) {
-    if (base && await reportKnown(base.id, year)) { if (!opts.dry) await moveFile(token, f.id, dest.dupes, from, null); return { name: f.name, action: 'dupes', reason: 'skýrsla þegar til', year }; }
-    const nn = opts.rename ? nameReport(coName, ktd, year) : null;
+    // A rekstrarfélag with >1 starfsstöð (same kt on many fyrirtaeki) legitimately
+    // has one report PER SITE per year — so the (base, year) dedup would wrongly
+    // trash its distinct-site reports. For multi-site kts we NEVER auto-trash;
+    // instead the site address goes into the name so distinct sites stay distinct
+    // (and true copies of one site collapse to the same name → drive-dedup / by-eye).
+    const siteCount = kt ? await siteCountForKt(kt) : 0;
+    const multiSite = siteCount > 1;
+    if (!multiSite && base && await reportKnown(base.id, year)) { if (!opts.dry) await moveFile(token, f.id, dest.dupes, from, null); return { name: f.name, action: 'dupes', reason: 'skýrsla þegar til', year }; }
+    const site = multiSite ? siteFrom(text) : '';
+    // If we can't tell the sites apart (multi-site but no address parsed), keep the
+    // ORIGINAL name rather than rename to a colliding "<co> - kt - úttektarskýrsla -
+    // year" that would later look like a dup.
+    const nn = (opts.rename && !(multiSite && !site)) ? nameReport(coName, ktd, year, site) : null;
     if (!opts.dry) {
       await moveFile(token, f.id, dest.reports, from, nn);
-      try { await upsertDoc({ customer_base_id: base ? base.id : null, doc_type: 'uttektarskyrsla', year: year || null, drive_file_id: f.id, source: 'gdrive', found_by: 'drive-sort', invoice_number: null, doc_date: null, customer_name: coName || null, notes: (coName || '') + ' · úttektarskýrsla' + (year ? (' ' + year) : '') + (kt ? (' · kt ' + ktd) : '') + (base ? '' : ' · RESOLVE') }); } catch (_) {}
+      try { await upsertDoc({ customer_base_id: base ? base.id : null, doc_type: 'uttektarskyrsla', year: year || null, drive_file_id: f.id, source: 'gdrive', found_by: 'drive-sort', invoice_number: null, doc_date: null, customer_name: coName || null, notes: (coName || '') + (site ? (' · ' + site) : '') + ' · úttektarskýrsla' + (year ? (' ' + year) : '') + (kt ? (' · kt ' + ktd) : '') + (base ? '' : ' · RESOLVE') }); } catch (_) {}
     }
-    return { name: f.name, action: 'reports', newName: nn, year, base_id: base ? base.id : null, base_name: base ? base.nafn : null };
+    return { name: f.name, action: 'reports', newName: nn, year, base_id: base ? base.id : null, base_name: base ? base.nafn : null, multi_site: multiSite };
   }
 
   // reikningur
@@ -274,7 +307,13 @@ exports.handler = async (event) => {
     // root (flat) to see if anything remains.
     let left;
     if (opts.dry) left = files.length ? 1 : 0;
-    else left = recurse ? (await anyFileLeft(token, src) ? 1 : 0) : (await listSome(token, src, 1)).length;
+    else if (recurse) {
+      // anyFileLeft returns false only when the WHOLE tree is definitively
+      // empty; null means a transient list error — treat that as "not done"
+      // so a deep walk never stops early on a hiccup (re-run finds the rest).
+      const al = await anyFileLeft(token, src);
+      left = al === false ? 0 : 1;
+    } else left = (await listSome(token, src, 1)).length;
     return json(200, { processed: files.length, tally, results, done: (left === 0), recurse, dry: opts.dry });
   } catch (e) {
     return json(500, { error: String(e.message || e) });

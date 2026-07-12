@@ -26,12 +26,14 @@ exports.handler = async (event) => {
   try {
     if (event.httpMethod === 'POST') {
       let body = {}; try { body = JSON.parse(event.body || '{}'); } catch {}
-      if (body.action === 'save')     return json(200, await saveDoc(body));
-      if (body.action === 'delete')   return json(200, await deleteDoc(body));
-      if (body.action === 'add-site') return json(200, await addSite(body));
+      if (body.action === 'save')        return json(200, await saveDoc(body));
+      if (body.action === 'delete')      return json(200, await deleteDoc(body));
+      if (body.action === 'add-site')    return json(200, await addSite(body));
+      if (body.action === 'consolidate') return json(200, await consolidate(body.base_id, true, !!body.overwrite));
       return json(400, { error: 'unknown action' });
     }
     const p = event.queryStringParameters || {};
+    if (p.base && p.consolidate) return json(200, await consolidate(p.base, false, p.overwrite === '1' || p.overwrite === 'true'));
     if (p.base) return json(200, await companyDetail(p.base));
     return json(200, await listCompanies());
   } catch (e) {
@@ -93,8 +95,13 @@ async function companyDetail(baseId) {
   const raw = await sbGet(`customer_documents?customer_base_id=eq.${baseId}&select=id,drive_file_id,doc_type,year,fyrirtaeki_id,is_duplicate,reviewed,notes,doc_date,amount,invoice_number`);
 
   const docs = raw.map(d => {
-    const filename = String(d.notes || '').split(' · ')[0] || '(óþekkt skrá)';
-    const sug = suggestLoc(filename, locations);
+    const seg = String(d.notes || '').split(' · ');
+    // drive-sort now writes "<company> · <site address> · úttektarskýrsla <yr> · kt …"
+    // for multi-site rekstrarfélög — show the site so the human can tell branches
+    // apart, and feed the WHOLE notes to the suggester so its address match works.
+    const site = (seg[1] && !/^(úttektarsk|reikningur|kt\b|R-|RESOLVE)/i.test(seg[1])) ? seg[1] : '';
+    const filename = (seg[0] || '(óþekkt skrá)') + (site ? ' — ' + site : '');
+    const sug = suggestLoc(d.notes || filename, locations);
     return {
       id: d.id,
       drive_file_id: d.drive_file_id || null,
@@ -180,6 +187,80 @@ async function saveDoc(body) {
   if (!r.ok) throw new Error('save ' + r.status + ' ' + JSON.stringify(rows).slice(0, 160));
   return { ok: true, row: Array.isArray(rows) ? rows[0] : null };
 }
+async function patchDoc(id, patch) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?id=eq.${id}`, {
+    method: 'PATCH', headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }), body: JSON.stringify(patch),
+  });
+  if (!r.ok) throw new Error('patch ' + r.status + ' ' + (await r.text()).slice(0, 120));
+}
+
+// ── Consolidate one rekstrarfélag: one report + one invoice per (site, year) ────
+// Preview-first + reversible. Two steps, computed the SAME way for preview & apply:
+//   1) RELINK — assign a site to docs where a HIGH-confidence address suggestion
+//      exists (single-site company, or street+postcode match). Only fills null
+//      links unless `overwrite` is set; a human-confirmed (reviewed) link is NEVER
+//      overwritten. Distinct sites are kept apart — never merged.
+//   2) DEDUP — within one resolved (site, year, doc_type) keep the best copy and
+//      flag the rest `is_duplicate=true` (NOT deleted — undo = untick the box).
+//      Grouping is per SITE, so a rekstrarfélag's different branches for the same
+//      year are never collapsed — only true copies of the SAME branch/year.
+async function consolidate(baseId, apply, overwrite) {
+  baseId = parseInt(baseId, 10);
+  if (!baseId) throw new Error('vantar base_id');
+  const locations = await sbGet(`fyrirtaeki?customer_base_id=eq.${baseId}&select=id,nafn,heimilisfang&deleted_at=is.null`);
+  const raw = await sbGet(`customer_documents?customer_base_id=eq.${baseId}&select=id,drive_file_id,doc_type,year,fyrirtaeki_id,is_duplicate,reviewed,notes,invoice_number`);
+
+  const resolved = raw.map(d => {
+    const sug = (locations.length === 1) ? { id: locations[0].id, conf: 'high' } : suggestLoc(d.notes || '', locations);
+    let target = d.fyrirtaeki_id;
+    const canWrite = sug && sug.conf === 'high';
+    if (d.fyrirtaeki_id == null && canWrite) target = sug.id;                 // fill a gap
+    else if (overwrite && !d.reviewed && canWrite) target = sug.id;          // overwrite an old (unconfirmed) link
+    return { d, target };
+  });
+
+  const relink = resolved
+    .filter(x => x.target != null && String(x.target) !== String(x.d.fyrirtaeki_id))
+    .map(x => ({ id: x.d.id, from: x.d.fyrirtaeki_id, to: x.target }));
+
+  // Dedup key differs by doc kind — this is the crux of "one per year":
+  //   • úttektarskýrsla / samningur → ONE per (site, year). A site has a single
+  //     annual inspection report per year, so 2+ are true copies.
+  //   • reikningur → a company legitimately has MANY invoices per year (each a
+  //     distinct R-number), so year is NOT a dup signal. The only real duplicate
+  //     is the SAME invoice_number; invoices without an R-number are never grouped.
+  const groups = {};
+  resolved.forEach(x => {
+    if (x.target == null || x.d.is_duplicate) return;
+    let k;
+    if (x.d.doc_type === 'reikningur') {
+      if (!x.d.invoice_number) return;
+      k = x.target + '|R|' + String(x.d.invoice_number).trim().toUpperCase();
+    } else {
+      if (x.d.year == null) return;
+      k = x.target + '|' + x.d.year + '|' + x.d.doc_type;
+    }
+    (groups[k] = groups[k] || []).push(x.d);
+  });
+  const dups = [];
+  for (const k in groups) {
+    const arr = groups[k];
+    if (arr.length < 2) continue;
+    arr.sort((a, b) =>
+      Number(!!b.reviewed) - Number(!!a.reviewed) ||                          // keep a confirmed one
+      Number(!!b.drive_file_id) - Number(!!a.drive_file_id) ||                // keep one with a real file
+      String(b.notes || '').length - String(a.notes || '').length ||          // keep the most complete name
+      a.id - b.id);
+    for (let i = 1; i < arr.length; i++) dups.push(arr[i].id);
+  }
+
+  if (!apply) return { sites: locations.length, relink_count: relink.length, dup_count: dups.length, relink, dups };
+
+  for (const r of relink) await patchDoc(r.id, { fyrirtaeki_id: r.to, found_by: 'match-station-auto' });
+  for (const id of dups) await patchDoc(id, { is_duplicate: true });
+  return { ok: true, sites: locations.length, relinked: relink.length, duped: dups.length };
+}
+
 // Remove ONE customer_documents tracking row (e.g. a confirmed duplicate). The
 // Drive file itself is untouched — re-indexing would bring the row back.
 async function deleteDoc(body) {
