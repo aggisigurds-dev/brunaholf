@@ -54,6 +54,7 @@
   tbody tr.main:hover{background:var(--panel2)}
   .nm-cell{font-weight:700;color:var(--ink1);display:flex;align-items:center;gap:7px;min-width:180px}
   .rf{font-size:10px;font-weight:800;background:var(--purplebg);color:var(--purple);border:1px solid #3b2f66;border-radius:99px;padding:1px 7px}
+  .idb{font-family:ui-monospace,Menlo,monospace;font-size:10px;font-weight:600;color:var(--ink4);background:var(--panel2);border:1px solid var(--brd);border-radius:5px;padding:0 5px}
   .kt{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:var(--ink3);white-space:nowrap}
   .pill{font-size:10.5px;font-weight:700;border-radius:99px;padding:2px 8px;white-space:nowrap;border:1px solid}
   .pill.svc{background:var(--greenbg);color:var(--green);border-color:#1e5540}
@@ -246,7 +247,7 @@ function render(){
   const rows=a.map(c=>{
     const open=STATE.open.has(c.id);
     let h='<tr class="main" data-id="'+c.id+'">'
-      +'<td><div class="nm-cell">'+(open?'▾':'▸')+' '+esc(c.nafn||('#'+c.id))+(c.rekstrarfelag?' <span class="rf">🏢 '+esc(c.rekstrarfelag)+'</span>':'')+'</div></td>'
+      +'<td><div class="nm-cell">'+(open?'▾':'▸')+' '+esc(c.nafn||('#'+c.id))+' <span class="idb" title="customer_base id">#'+c.id+'</span>'+(c.rekstrarfelag?' <span class="rf">🏢 '+esc(c.rekstrarfelag)+'</span>':'')+'</div></td>'
       +'<td class="kt">'+(c.kennitala?esc(c.kennitala):'<span style="color:var(--red)">— vantar</span>')+'</td>'
       +'<td>'+(c.in_service?'<span class="pill svc">í þjónustu'+(c.n_service<c.n_sites?(' '+c.n_service+'/'+c.n_sites):'')+'</span>':'<span class="pill no">nei</span>')+'</td>'
       +'<td class="num">'+c.n_sites+'</td>'
@@ -266,7 +267,7 @@ async function openDetail(id){
   if(STATE.detail[id]){ box.innerHTML=STATE.detail[id]; return; }
   try{
     const d=await fetch(API+'?base='+id).then(r=>r.json());
-    const sites=(d.sites||[]).map(s=>'<div class="site'+(s.deleted_at?' dead':'')+'"><div class="snm">'+esc(s.nafn||'')+(s.er_i_thjonustu?' <span class="pill svc">þjón.</span>':'')+(s.deleted_at?' <span class="muted">(eytt)</span>':'')+'</div><div class="sad">'+esc(s.heimilisfang||'—')+(s.kennitala?(' · '+esc(s.kennitala)):'')+'</div>'+(s.banner_note?'<div style="color:var(--amber);font-size:11px">📌 '+esc(s.banner_note)+'</div>':'')+'</div>').join('')||'<div class="muted">Engir staðir</div>';
+    const sites=(d.sites||[]).map(s=>'<div class="site'+(s.deleted_at?' dead':'')+'"><div class="snm">'+esc(s.nafn||'')+' <span class="idb" title="fyrirtaeki id">#'+s.id+'</span>'+(s.er_i_thjonustu?' <span class="pill svc">þjón.</span>':'')+(s.deleted_at?' <span class="muted">(eytt)</span>':'')+'</div><div class="sad">'+esc(s.heimilisfang||'—')+(s.kennitala?(' · '+esc(s.kennitala)):'')+'</div>'+(s.banner_note?'<div style="color:var(--amber);font-size:11px">📌 '+esc(s.banner_note)+'</div>':'')+'</div>').join('')||'<div class="muted">Engir staðir</div>';
     const docs=(d.docs||[]).map(x=>{
       const t=x.doc_type==='uttektarskyrsla'?'rep':(x.doc_type==='reikningur'?'inv':'samn');
       const tl=x.doc_type==='uttektarskyrsla'?'skýrsla':(x.doc_type==='reikningur'?'reikn':'samn');
