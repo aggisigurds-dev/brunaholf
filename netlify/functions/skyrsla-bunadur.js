@@ -20,7 +20,24 @@ function cors(){ return { 'Access-Control-Allow-Origin':'*', 'Access-Control-All
 function json(code, body){ return { statusCode:code, headers:Object.assign({'Content-Type':'application/json'},cors()), body:JSON.stringify(body) }; }
 function sbHeaders(){ return { apikey:SUPABASE_KEY, Authorization:`Bearer ${SUPABASE_KEY}` }; }
 
+// Google-Doc OCR (copy → export text → delete) — the RELIABLE reader for these
+// app-generated report PDFs (pdf-parse can drop table columns like the CO2 lines,
+// so the Slk sum came out low). Same path drive-sort uses.
+async function driveOcr(id, token){
+  const cp = await fetch('https://www.googleapis.com/drive/v3/files/'+id+'/copy?supportsAllDrives=true&fields=id', {
+    method:'POST', headers:{ Authorization:`Bearer ${token}`, 'Content-Type':'application/json' },
+    body: JSON.stringify({ name:'tmp-ocr-'+id, mimeType:'application/vnd.google-apps.document' }),
+  });
+  if(!cp.ok) return '';
+  const doc = await cp.json().catch(()=>null); if(!doc||!doc.id) return '';
+  let text='';
+  try{ const ex=await fetch('https://www.googleapis.com/drive/v3/files/'+doc.id+'/export?mimeType=text/plain', { headers:{ Authorization:`Bearer ${token}` } }); if(ex.ok) text=await ex.text(); }catch(_){}
+  fetch('https://www.googleapis.com/drive/v3/files/'+doc.id+'?supportsAllDrives=true', { method:'DELETE', headers:{ Authorization:`Bearer ${token}` } }).catch(()=>{});
+  return text;
+}
 async function pdfText(id, token){
+  let text = await driveOcr(id, token).catch(()=>'');
+  if((text||'').replace(/\s/g,'').length >= 25) return text;
   const r = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media&supportsAllDrives=true`, { headers:{ Authorization:`Bearer ${token}` } });
   if(!r.ok) throw new Error('Drive '+r.status);
   const d = await pdf(Buffer.from(await r.arrayBuffer())).catch(()=>null);
