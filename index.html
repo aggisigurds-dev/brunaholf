@@ -3721,6 +3721,12 @@ function renderBakendi(t){
             <button id="bk-ds-stop" class="btn" disabled>⏸ Stöðva</button>
             <span id="bk-ds-status" style="font-size:12.5px;color:#64748b"></span>
           </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px;padding-top:8px;border-top:1px dashed #e2e8f0">
+            <span style="font-size:12px;color:#64748b">🗜️ Fletja út árs-undirmöppur (allt flatt í eina möppu):</span>
+            <button id="bk-ds-flat-master" class="btn" style="padding:4px 10px;font-size:12px" title="Flytur alla reikninga úr árs-undirmöppum upp í Master-möppuna (flatt). Ekkert eytt.">Reikninga-Master</button>
+            <button id="bk-ds-flat-reports" class="btn" style="padding:4px 10px;font-size:12px" title="Flytur allar skýrslur úr árs-undirmöppum upp í Skýrslur-möppuna (flatt). Ekkert eytt.">Skýrslur</button>
+            <span id="bk-ds-flat-status" style="font-size:12px;color:#64748b"></span>
+          </div>
           <div id="bk-ds-results"></div>
         </div>
 
@@ -4738,6 +4744,31 @@ function renderBakendi(t){
     $step.onclick = step;
     $run.onclick = runLoop;
     $stop.onclick = () => { running = false; $status.textContent += ' (stöðva…)'; };
+
+    // 🗜️ Flatten: move files out of a folder's year subfolders up into the folder
+    // itself so it's one flat master (better for connecting + reading). Loops the
+    // /api/drive-flatten endpoint (25 files/call) until empty. Nothing is deleted.
+    const $flatSt = document.getElementById('bk-ds-flat-status');
+    async function flatten(folderVal, label){
+      const folder = (folderVal || '').trim();
+      if (!folder) { if ($flatSt) $flatSt.textContent = 'Vantar möppu-id'; return; }
+      if (!confirm('Fletja út árs-undirmöppur í „' + label + '"?\n\nAllar skrár úr undirmöppum færast upp í möppuna sjálfa (flatt). Ekkert er eytt.')) return;
+      let moved = 0, err = 0, i = 0;
+      try {
+        while (i < 400) {
+          i++;
+          const r = await fetch('/api/drive-flatten?limit=25&folder=' + encodeURIComponent(folder));
+          const d = await r.json(); if (!r.ok) throw new Error(d.error || r.status);
+          moved += d.moved || 0; err += d.errors || 0;
+          if ($flatSt) $flatSt.textContent = label + ': flutt ' + moved + (err ? (' · ' + err + ' villur') : '') + (d.done ? ' — búið ✅' : ' …');
+          if (d.done) break;
+        }
+      } catch (e) { if ($flatSt) $flatSt.textContent = 'Villa: ' + (e.message || e); }
+    }
+    const $flatM = document.getElementById('bk-ds-flat-master');
+    const $flatR = document.getElementById('bk-ds-flat-reports');
+    if ($flatM) $flatM.onclick = () => flatten($master.value, 'Reikninga-Master');
+    if ($flatR) $flatR.onclick = () => flatten($reports.value, 'Skýrslur');
   })();
 
   // ── 📊 Skjalatalning: count files in reikningar + skýrslur, per year ─────────

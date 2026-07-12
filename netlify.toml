@@ -386,6 +386,12 @@
   to = "/.netlify/functions/drive-count"
   status = 200
 
+# Flatten a folder's year subfolders into the folder itself (one flat master).
+[[redirects]]
+  from = "/api/drive-flatten"
+  to = "/.netlify/functions/drive-flatten"
+  status = 200
+
 # Read year+month from dateless report PDFs (text layer, no OCR) and rename them.
 [[redirects]]
   from = "/api/skyrslu-ar"
