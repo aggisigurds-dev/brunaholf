@@ -101,6 +101,7 @@ exports.handler = async (event) => {
   if (!SUPABASE_URL || !SUPABASE_KEY) return json(500, { error: 'Supabase env missing' });
   const p = event.queryStringParameters || {};
   const apply = p.apply === '1' || p.apply === 'true';
+  const flagdups = p.flagdups === '1' || p.flagdups === 'true';   // merkja árekstra-doc sem is_duplicate
   const reikFolder = p.reikningar || DEFAULTS.reikningar;
   const skyrFolder = p.skyrslur || DEFAULTS.skyrslur;
 
@@ -175,6 +176,7 @@ exports.handler = async (event) => {
     }
     relink.length = 0; relink.push(...safe);
 
+    const byType = (arr) => arr.reduce((m, x) => { m[x.doc_type] = (m[x.doc_type] || 0) + 1; return m; }, {});
     const summary = {
       master_files: { reikningar: reikFiles.length, skyrslur: skyrFiles.length },
       docs_with_fileid: docs.length,
@@ -183,6 +185,9 @@ exports.handler = async (event) => {
       collision_count: collision.length,
       ambiguous_count: ambiguous.length,
       unmatched_count: unmatched.length,
+      unmatched_by_type: byType(unmatched),
+      collision_by_type: byType(collision),
+      ambiguous_by_type: byType(ambiguous),
     };
 
     if (!apply) {
@@ -190,13 +195,22 @@ exports.handler = async (event) => {
         sample_relink: relink.slice(0, 25), sample_collision: collision.slice(0, 15), sample_unmatched: unmatched.slice(0, 15), sample_ambiguous: ambiguous.slice(0, 15) });
     }
 
-    // Samhliða í lotum (chunks) svo 326 PATCH klárist innan Netlify-timeout.
+    // Samhliða í lotum (chunks) svo PATCH klárist innan Netlify-timeout.
     let done = 0;
     for (let i = 0; i < relink.length; i += 40) {
       const chunk = relink.slice(i, i + 40);
       await Promise.all(chunk.map(r => patchDoc(r.id, { drive_file_id: r.to }).then(() => { done++; })));
     }
-    return json(200, { ok: true, applied: true, summary, relinked: done, collision_count: collision.length, sample_collision: collision.slice(0, 30) });
+    // Valkvætt: merkja árekstra-doc (tvítök — canonical skrá þegar í eigu annars)
+    // sem is_duplicate. Öruggt + afturkræft; „eigandinn" heldur virka linknum.
+    let flaggedDups = 0;
+    if (flagdups) {
+      for (let i = 0; i < collision.length; i += 40) {
+        const chunk = collision.slice(i, i + 40);
+        await Promise.all(chunk.map(c => patchDoc(c.id, { is_duplicate: true }).then(() => { flaggedDups++; })));
+      }
+    }
+    return json(200, { ok: true, applied: true, summary, relinked: done, flagged_dups: flaggedDups, collision_count: collision.length, sample_collision: collision.slice(0, 30) });
   } catch (e) {
     return json(500, { error: String(e.message || e) });
   }
