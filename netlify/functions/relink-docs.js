@@ -105,6 +105,23 @@ function isJunk(f) {
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors(), body: '' };
   if (!SUPABASE_URL || !SUPABASE_KEY) return json(500, { error: 'Supabase env missing' });
+  // POST {action:'set', id, drive_file_id} — handvirkt val á réttri master-skrá
+  // fyrir eitt „óviss"/„fannst ekki" skjal (úr listanum í Bakendi).
+  if (event.httpMethod === 'POST') {
+    let body = {};
+    try { body = JSON.parse(event.body || '{}'); } catch (_) {}
+    if (body.action !== 'set' || !body.id || !body.drive_file_id) return json(400, { error: 'set: vantar id + drive_file_id' });
+    try {
+      await patchDoc(body.id, { drive_file_id: body.drive_file_id, is_duplicate: false });
+      return json(200, { ok: true, id: body.id, drive_file_id: body.drive_file_id });
+    } catch (e) {
+      const msg = String(e.message || e);
+      // UNIQUE-þvingun: skráin er þegar tengd öðru skjali → láta vita í stað 500.
+      if (/duplicate key|unique/i.test(msg)) return json(409, { error: 'Þessi skrá er þegar tengd öðru skjali (tvítak).' });
+      return json(500, { error: msg });
+    }
+  }
+
   const p = event.queryStringParameters || {};
   const apply = p.apply === '1' || p.apply === 'true';
   const flagdups = p.flagdups === '1' || p.flagdups === 'true';   // merkja árekstra-doc sem is_duplicate
@@ -120,22 +137,24 @@ exports.handler = async (event) => {
     const masterIds = new Set([...reikFiles, ...skyrFiles].map(f => f.id));
 
     // Uppflettingar
-    const byR = new Map();                 // rNum → [fileId]
-    reikFiles.forEach(f => { const n = rNumFromName(f.name); if (n != null) { const a = byR.get(n) || []; a.push(f.id); byR.set(n, a); } });
-    const bySkyr = new Map();              // kt|ár → [{id, addrkey}]
+    const byR = new Map();                 // rNum → [{id, name}]
+    reikFiles.forEach(f => { const n = rNumFromName(f.name); if (n != null) { const a = byR.get(n) || []; a.push({ id: f.id, name: f.name }); byR.set(n, a); } });
+    const bySkyr = new Map();              // kt|ár → [{id, addrkey, name}]
     skyrFiles.forEach(f => {
       const kt = ktFromName(f.name), yr = yearFromName(f.name);
       if (!kt || !yr) return;
       const k = kt + '|' + yr;
-      const a = bySkyr.get(k) || []; a.push({ id: f.id, addrkey: addrKey(f.name) }); bySkyr.set(k, a);
+      const a = bySkyr.get(k) || []; a.push({ id: f.id, addrkey: addrKey(f.name), name: f.name }); bySkyr.set(k, a);
     });
 
     // Skjöl + kt (úr customers_base) + heimilisfang staðar (úr fyrirtaeki)
     const docs = await sbGet('customer_documents?drive_file_id=not.is.null&select=id,doc_type,drive_file_id,invoice_number,year,customer_base_id,fyrirtaeki_id');
-    const bases = await sbGet('customers_base?select=id,kennitala');
+    const bases = await sbGet('customers_base?select=id,kennitala,nafn');
     const ktByBase = new Map(bases.map(b => [b.id, digits(b.kennitala)]));
-    const sites = await sbGet('fyrirtaeki?select=id,heimilisfang,customer_base_id,deleted_at');
+    const nameByBase = new Map(bases.map(b => [b.id, b.nafn || ('kt ' + (b.kennitala || '?'))]));
+    const sites = await sbGet('fyrirtaeki?select=id,nafn,heimilisfang,customer_base_id,deleted_at');
     const addrBySite = new Map(sites.map(s => [s.id, addrKey(s.heimilisfang)]));
+    const siteById = new Map(sites.map(s => [s.id, s]));
     // Fjöldi LIFANDI staða per base → rekstrarfélög (Pizzan 11, Colas 3) fá
     // strangara match: skýrsla verður að passa við HEIMILISFANG staðarins
     // (site-id), aldrei bara kt+ár — annars gæti hún víxlast milli staða.
@@ -145,15 +164,29 @@ exports.handler = async (event) => {
     const relink = [], unmatched = [], ambiguous = [];
     let okInMaster = 0;
 
+    // Auðgun fyrir handvirkan lista: fyrirtæki · staður · ár · núverandi (dauð)
+    // skrá · möguleg master-skjöl (svo hægt sé að velja rétt í UI).
+    const meta = (d, cands) => {
+      const st = siteById.get(d.fyrirtaeki_id);
+      return {
+        base_nafn: nameByBase.get(d.customer_base_id) || '(óþekkt)',
+        site_nafn: st ? (st.nafn || null) : null,
+        site_addr: st ? (st.heimilisfang || null) : null,
+        year: d.year || null,
+        dead_fid: d.drive_file_id,
+        candidates: (cands || []).map(c => ({ id: c.id, name: c.name })),
+      };
+    };
+
     for (const d of docs) {
       if (masterIds.has(d.drive_file_id)) { okInMaster++; continue; }   // linkur bendir þegar á master → í lagi
       // Ekki í master → dauður eða úrelt afrit. Reyna að finna réttu skrána.
       if (d.doc_type === 'reikningur') {
         const rn = rNumFromDoc(d.invoice_number);
         const hits = rn != null ? (byR.get(rn) || []) : [];
-        if (hits.length === 1) relink.push({ id: d.id, doc_type: d.doc_type, key: 'R-' + rn, to: hits[0], from: d.drive_file_id });
-        else if (hits.length > 1) ambiguous.push({ id: d.id, doc_type: d.doc_type, key: 'R-' + rn, n: hits.length });
-        else unmatched.push({ id: d.id, doc_type: d.doc_type, key: d.invoice_number || '(ekkert R-nr)' });
+        if (hits.length === 1) relink.push({ id: d.id, doc_type: d.doc_type, key: 'R-' + rn, to: hits[0].id, from: d.drive_file_id });
+        else if (hits.length > 1) ambiguous.push(Object.assign({ id: d.id, doc_type: d.doc_type, key: 'R-' + rn, n: hits.length }, meta(d, hits)));
+        else unmatched.push(Object.assign({ id: d.id, doc_type: d.doc_type, key: d.invoice_number || '(ekkert R-nr)' }, meta(d, [])));
       } else if (d.doc_type === 'uttektarskyrsla') {
         const kt = ktByBase.get(d.customer_base_id) || '';
         const yr = d.year;
@@ -168,11 +201,11 @@ exports.handler = async (event) => {
           const ak = addrBySite.get(d.fyrirtaeki_id);
           const m = ak ? hits.filter(h => h.addrkey === ak) : [];
           if (m.length === 1) relink.push({ id: d.id, doc_type: d.doc_type, key: kt + '|' + yr + '|' + ak, to: m[0].id, from: d.drive_file_id });
-          else ambiguous.push({ id: d.id, doc_type: d.doc_type, key: kt + '|' + yr + (multiSite ? '|fjölstaður' : ''), n: hits.length });
-        } else unmatched.push({ id: d.id, doc_type: d.doc_type, key: (kt || '?') + '|' + (yr || '?') });
+          else ambiguous.push(Object.assign({ id: d.id, doc_type: d.doc_type, key: kt + '|' + yr + (multiSite ? '|fjölstaður' : ''), n: hits.length }, meta(d, hits)));
+        } else unmatched.push(Object.assign({ id: d.id, doc_type: d.doc_type, key: (kt || '?') + '|' + (yr || '?') }, meta(d, [])));
       } else {
         // samningur o.fl. — önnur mappa, ekki snert hér
-        unmatched.push({ id: d.id, doc_type: d.doc_type, key: '(önnur mappa)' });
+        unmatched.push(Object.assign({ id: d.id, doc_type: d.doc_type, key: '(önnur mappa)' }, meta(d, [])));
       }
     }
 
@@ -206,8 +239,10 @@ exports.handler = async (event) => {
     };
 
     if (!apply) {
+      const CAP = 800;   // full listi fyrir handvirkan yfirlestur (en með þak svo svarið sé ekki risavaxið)
       return json(200, { ok: true, dry: true, summary,
-        sample_relink: relink.slice(0, 25), sample_collision: collision.slice(0, 15), sample_unmatched: unmatched.slice(0, 15), sample_ambiguous: ambiguous.slice(0, 15) });
+        sample_relink: relink.slice(0, 25), sample_collision: collision.slice(0, 30),
+        ambiguous: ambiguous.slice(0, CAP), unmatched: unmatched.slice(0, CAP) });
     }
 
     // Samhliða í lotum (chunks) svo PATCH klárist innan Netlify-timeout.
