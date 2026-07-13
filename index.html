@@ -5264,6 +5264,7 @@ function renderBakendi(t){
         card('⚠️', 'Tvítök (árekstrar)', s.collision_count, '#b45309', byTypeStr(s.collision_by_type)) +
         card('❓', 'Óviss (margir möguleikar)', s.ambiguous_count, '#7c3aed', byTypeStr(s.ambiguous_by_type)) +
         card('🚫', 'Fannst ekki í master', s.unmatched_count, '#64748b', byTypeStr(s.unmatched_by_type)) +
+        (s.site_fix_count ? card('🎯', applied ? 'Fest á stað (#id)' : 'Fest á stað (#id)', applied ? d.site_fixed : s.site_fix_count, '#0891b2', 'úr #id í skráarheiti → réttur staður') : '') +
         '</div>' +
         '<div style="font-size:11.5px;color:#94a3b8;margin-top:8px">Master-skrár: 🧾 ' + nf((s.master_files||{}).reikningar||0) + ' reikningar · 📄 ' + nf((s.master_files||{}).skyrslur||0) + ' skýrslur · ' + nf(s.docs_with_fileid||0) + ' skjöl með link · ' + nf(s.ok_already_in_master||0) + ' þegar í lagi.</div>';
       // Handvirki listinn — sést aðeins eftir Greina (dry skilar honum)

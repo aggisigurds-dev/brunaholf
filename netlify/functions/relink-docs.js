@@ -101,6 +101,12 @@ function isJunk(f) {
   // tmp-ocr-* Google-Docs (leifar frá OCR-lesurum) — ekki alvöru skjöl.
   return f.mimeType !== FOLDER_MIME && f.mimeType !== 'application/pdf' && /^tmp-ocr-/i.test(f.name || '');
 }
+// STAÐA-id (fyrirtaeki.id) stimplað í skráarheiti af slökkvitæki-generatornum, t.d.
+// „… - 2026 - júlí - #1612.pdf". Nákvæmur tengilykill → réttur staður án ágiskunar.
+function subIdFromName(name) {
+  const m = String(name || '').match(/#(\d{1,9})\b/);
+  return m ? parseInt(m[1], 10) : null;
+}
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors(), body: '' };
@@ -135,6 +141,9 @@ exports.handler = async (event) => {
     const junkCount = 0; // (junk excluded above by pdf-only filter)
 
     const masterIds = new Set([...reikFiles, ...skyrFiles].map(f => f.id));
+    // fileId → STAÐA-id (#id úr skráarheiti) fyrir báðar master-möppur.
+    const subIdByFile = new Map();
+    [...reikFiles, ...skyrFiles].forEach(f => { const s = subIdFromName(f.name); if (s != null) subIdByFile.set(f.id, s); });
 
     // Uppflettingar
     const byR = new Map();                 // rNum → [{id, name}]
@@ -224,6 +233,24 @@ exports.handler = async (event) => {
     }
     relink.length = 0; relink.push(...safe);
 
+    // ── STAÐA-id (#id) → fyrirtaeki_id ──────────────────────────────────────────
+    // Þegar master-skráin ber „#<id>" í skráarheiti (slökkvitæki-generatorinn
+    // stimplar það) tengjum við skjalið BEINT á réttan stað — nákvæmt, engin
+    // adressu-ágiskun. Þetta er „lesarinn les #id" hlutinn. Aðeins þegar staðurinn
+    // er LIFANDI og tilheyrir SAMA kúnna (base) og skjalið (fjölstaða-öruggt).
+    const relinkTo = new Map(relink.map(r => [r.id, r.to]));
+    const siteFix = [];
+    for (const d of docs) {
+      const fid = masterIds.has(d.drive_file_id) ? d.drive_file_id : relinkTo.get(d.id);
+      if (!fid) continue;
+      const sub = subIdByFile.get(fid);
+      if (sub == null || d.fyrirtaeki_id === sub) continue;
+      const st = siteById.get(sub);
+      if (!st || st.deleted_at != null) continue;
+      if (d.customer_base_id != null && st.customer_base_id != null && st.customer_base_id !== d.customer_base_id) continue;
+      siteFix.push({ id: d.id, to: sub, doc_type: d.doc_type });
+    }
+
     const byType = (arr) => arr.reduce((m, x) => { m[x.doc_type] = (m[x.doc_type] || 0) + 1; return m; }, {});
     const summary = {
       master_files: { reikningar: reikFiles.length, skyrslur: skyrFiles.length },
@@ -233,6 +260,7 @@ exports.handler = async (event) => {
       collision_count: collision.length,
       ambiguous_count: ambiguous.length,
       unmatched_count: unmatched.length,
+      site_fix_count: siteFix.length,   // skjöl sem #id festir á réttan stað
       unmatched_by_type: byType(unmatched),
       collision_by_type: byType(collision),
       ambiguous_by_type: byType(ambiguous),
@@ -260,7 +288,13 @@ exports.handler = async (event) => {
         await Promise.all(chunk.map(c => patchDoc(c.id, { is_duplicate: true }).then(() => { flaggedDups++; })));
       }
     }
-    return json(200, { ok: true, applied: true, summary, relinked: done, flagged_dups: flaggedDups, collision_count: collision.length, sample_collision: collision.slice(0, 30) });
+    // #id → fyrirtaeki_id: nákvæm stað-tenging (reviewed=true því #id er áreiðanlegt).
+    let siteFixed = 0;
+    for (let i = 0; i < siteFix.length; i += 40) {
+      const chunk = siteFix.slice(i, i + 40);
+      await Promise.all(chunk.map(s => patchDoc(s.id, { fyrirtaeki_id: s.to, reviewed: true }).then(() => { siteFixed++; })));
+    }
+    return json(200, { ok: true, applied: true, summary, relinked: done, flagged_dups: flaggedDups, site_fixed: siteFixed, collision_count: collision.length, sample_collision: collision.slice(0, 30) });
   } catch (e) {
     return json(500, { error: String(e.message || e) });
   }
