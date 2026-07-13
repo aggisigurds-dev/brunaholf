@@ -110,14 +110,18 @@ exports.handler = async (event) => {
         const di = dateInfo(text);
         const month = di.month || old.month;
         const year = di.year || old.year;
+        // STAÐA-id: skeytt aftast (#id) svo lesarinn tengi skjalið BEINT á réttan
+        // stað. Aðeins þegar staðurinn er örugglega þekktur (einn staður eða
+        // einkvæmt heimilisfang) — annars sleppt (Skýrslu-stöð).
+        const siteId = (ok && base) ? await matchSite(base.id, address) : null;
         let newName = '', status = 'manual';
         if (ok && company && kt && year) {   // year required; month optional (drops the month segment when absent)
-          newName = sanitize(company) + ' - ' + dash(kt) + (address ? ' - ' + sanitize(address) : '') + ' - ' + year + (month ? ' - ' + month : '') + '.pdf';
+          newName = sanitize(company) + ' - ' + dash(kt) + (address ? ' - ' + sanitize(address) : '') + ' - ' + year + (month ? ' - ' + month : '') + (siteId ? ' - #' + siteId : '') + '.pdf';
           status = 'ready';
         }
         if (status === 'ready') stats.ready++; else stats.manual++;
         stats.rows.push({
-          fileId: f.id, oldName: f.name, newName, status, isInvoice, company, kt: kt ? dash(kt) : '', address, month: month || '', year: year || '',
+          fileId: f.id, oldName: f.name, newName, status, isInvoice, company, kt: kt ? dash(kt) : '', address, month: month || '', year: year || '', site_id: siteId || null,
           missing: !ok ? (isInvoice ? 'reikningur – röng mappa' : 'ekki úttektarskýrsla') : [!company ? 'fyrirtæki' : null, !kt ? 'kt' : null, !year ? 'ár' : null].filter(Boolean).join(', '),
         });
       } catch (e) { stats.errors++; stats.rows.push({ fileId: f.id, oldName: f.name, status: 'error', error: String(e.message || e) }); }
@@ -290,4 +294,26 @@ async function matchBase(kt) {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/customers_base?kennitala=eq.${encodeURIComponent(dash(kt))}&select=id,nafn&limit=1`, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } });
   const rows = await r.json().catch(() => []);
   return (Array.isArray(rows) && rows[0]) ? rows[0] : null;
+}
+// Heimilisfangs-lykill (gata-forskeyti + númer) til að greina staði rekstrarfélags.
+function siteAddrKey(s) {
+  const t = String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const num = (t.match(/(\d+)/) || [])[1] || '';
+  const street = (t.replace(/\d.*/, '').match(/[a-z]+/g) || []).join('').slice(0, 6);
+  return street + '|' + num;
+}
+// Finnur STAÐA-id (fyrirtaeki.id) fyrir skýrslu: einn lifandi staður → einkvæmt;
+// fjölstaða-rekstrarfélag → aðeins ef heimilisfang passar EINKVÆMT (annars null →
+// ekkert #id, Skýrslu-stöð sér um það). Þetta er þvingunar-punkturinn: gömlu
+// skjölin fá #id þegar staðurinn er örugglega þekktur.
+async function matchSite(baseId, address) {
+  if (!baseId) return null;
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/fyrirtaeki?customer_base_id=eq.${baseId}&deleted_at=is.null&select=id,heimilisfang`, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } });
+  const rows = await r.json().catch(() => []);
+  if (!Array.isArray(rows) || !rows.length) return null;
+  if (rows.length === 1) return rows[0].id;
+  const ak = siteAddrKey(address);
+  if (!ak || ak === '|') return null;
+  const m = rows.filter(s => siteAddrKey(s.heimilisfang) === ak);
+  return m.length === 1 ? m[0].id : null;
 }
