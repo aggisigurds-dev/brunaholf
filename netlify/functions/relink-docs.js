@@ -160,18 +160,34 @@ exports.handler = async (event) => {
       }
     }
 
+    // Árekstra-sía: drive_file_id hefur UNIQUE-þvingun. Ef master-skráin sem á
+    // að tengja á er ÞEGAR eign annars skjals (eða tvö skjöl stefna á sömu skrá
+    // í þessari lotu) → það skjal er tvítak, ekki bara dauður linkur. Slík eru
+    // EKKI endurtengd (myndi brjóta þvingun) heldur skýrð til handvirkrar yfirferðar.
+    const ownerOf = new Map();
+    for (const d of docs) if (d.drive_file_id) ownerOf.set(d.drive_file_id, d.id);
+    const claimed = new Set();
+    const safe = [], collision = [];
+    for (const r of relink) {
+      const owner = ownerOf.get(r.to);
+      if ((owner && owner !== r.id) || claimed.has(r.to)) collision.push({ id: r.id, doc_type: r.doc_type, key: r.key, to: r.to, owned_by: owner || '(annar í lotu)' });
+      else { claimed.add(r.to); safe.push(r); }
+    }
+    relink.length = 0; relink.push(...safe);
+
     const summary = {
       master_files: { reikningar: reikFiles.length, skyrslur: skyrFiles.length },
       docs_with_fileid: docs.length,
       ok_already_in_master: okInMaster,
       relink_count: relink.length,
+      collision_count: collision.length,
       ambiguous_count: ambiguous.length,
       unmatched_count: unmatched.length,
     };
 
     if (!apply) {
       return json(200, { ok: true, dry: true, summary,
-        sample_relink: relink.slice(0, 25), sample_unmatched: unmatched.slice(0, 15), sample_ambiguous: ambiguous.slice(0, 15) });
+        sample_relink: relink.slice(0, 25), sample_collision: collision.slice(0, 15), sample_unmatched: unmatched.slice(0, 15), sample_ambiguous: ambiguous.slice(0, 15) });
     }
 
     // Samhliða í lotum (chunks) svo 326 PATCH klárist innan Netlify-timeout.
@@ -180,7 +196,7 @@ exports.handler = async (event) => {
       const chunk = relink.slice(i, i + 40);
       await Promise.all(chunk.map(r => patchDoc(r.id, { drive_file_id: r.to }).then(() => { done++; })));
     }
-    return json(200, { ok: true, applied: true, summary, relinked: done, ambiguous: ambiguous.slice(0, 40), unmatched: unmatched.slice(0, 40) });
+    return json(200, { ok: true, applied: true, summary, relinked: done, collision_count: collision.length, sample_collision: collision.slice(0, 30) });
   } catch (e) {
     return json(500, { error: String(e.message || e) });
   }
