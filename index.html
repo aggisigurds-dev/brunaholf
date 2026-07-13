@@ -5606,25 +5606,35 @@ function renderBakendi(t){
     $urScan.disabled = $urApply.disabled = true;
     urRows = [];
     $urResults.innerHTML = '<div class="empty">Djúpskanna úttektarskýrslur í lotum (hægara — les innihald hvers PDF)…</div>';
-    const acc = { total: 0, scanned: 0, ready: 0, manual: 0, errors: 0 };
+    const acc = { total: 0, scanned: 0, ready: 0, manual: 0, errors: 0, skipped: 0 };
+    const LIMIT = 4;
     let offset = 0, guard = 0;
-    try {
-      do {
-        $urStatus.textContent = 'Skanna… ' + acc.scanned + (acc.total ? '/' + acc.total : '') + ' skýrslur';
-        const r = await fetch('/api/uttekt-rename?folder=' + encodeURIComponent(f) + '&limit=4&offset=' + offset);
-        const d = await r.json();
-        if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
-        acc.total = d.total || acc.total; acc.scanned += d.scanned || 0; acc.ready += d.ready || 0; acc.manual += d.manual || 0; acc.errors += d.errors || 0;
-        urRows = urRows.concat(d.rows || []);
-        $urResults.innerHTML = renameResultsHtml(acc, urRows);
-        offset = d.nextOffset;
-      } while (offset != null && ++guard < 800);
-      $urStatus.textContent = '✓ Forskoðun búin. ' + acc.ready + ' tilbúin, ' + acc.manual + ' vantar uppl.';
-      $urApply.disabled = urRows.filter(x => x.status === 'ready' && x.newName && x.newName !== x.oldName).length === 0;
-    } catch (e) {
-      $urResults.insertAdjacentHTML('beforeend', bkErr(e));
-      $urStatus.textContent = '';
-    } finally { $urScan.disabled = false; }
+    // Per-lotu seigla: ein misheppnuð lota (stórt/þungt PDF sem fer fram úr
+    // 10-sek tímamörkum fallsins, eða net-hiksti) fellir EKKI lengur alla
+    // forskoðunina — reynt tvisvar, svo hoppað yfir þessi ≤4 skjöl og haldið
+    // áfram á enda. Áður aborteraði eitt try/catch utan um alla lykkjuna öllu.
+    do {
+      $urStatus.textContent = 'Skanna… ' + acc.scanned + (acc.total ? '/' + acc.total : '') + ' skýrslur'
+        + (acc.skipped ? ' · ' + acc.skipped + ' sleppt' : '');
+      let d = null;
+      for (let attempt = 0; attempt < 2 && !d; attempt++) {
+        try {
+          const r = await fetch('/api/uttekt-rename?folder=' + encodeURIComponent(f) + '&limit=' + LIMIT + '&offset=' + offset);
+          const j = await r.json();
+          if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+          d = j;
+        } catch (e) { if (attempt === 1) acc.skipped += LIMIT; }
+      }
+      if (!d) { offset += LIMIT; continue; }        // lota féll eftir 2 tilraunir → hoppa yfir hana
+      acc.total = d.total || acc.total; acc.scanned += d.scanned || 0; acc.ready += d.ready || 0; acc.manual += d.manual || 0; acc.errors += d.errors || 0;
+      urRows = urRows.concat(d.rows || []);
+      $urResults.innerHTML = renameResultsHtml(acc, urRows);
+      offset = d.nextOffset;                         // null = server segir búið
+    } while (offset != null && ++guard < 1200);
+    $urStatus.textContent = '✓ Forskoðun búin. ' + acc.ready + ' tilbúin, ' + acc.manual + ' vantar uppl.'
+      + (acc.skipped ? ' · ' + acc.skipped + ' skjöl sleppt (of þung)' : '');
+    $urApply.disabled = urRows.filter(x => x.status === 'ready' && x.newName && x.newName !== x.oldName).length === 0;
+    $urScan.disabled = false;
   }
 
   async function applyUttektRename(){
