@@ -47,7 +47,7 @@
   <h1>🏷 Skjalaheiti — endurnefna úttektarskýrslur</h1>
   <p class="sub">
     Dragðu PDF-skýrslur hingað (eða veldu möppu). Forritið les hverja skýrslu og leggur til nýtt heiti á sniðinu
-    <code>Fyrirtæki - Kennitala - Heimilisfang - Ár - Mánuður.pdf</code>. Kennitalan er flett upp í viðskiptavinagrunninum
+    <code>Fyrirtæki - Heimilisfang - Kennitala - Ár - Mánuður.pdf</code>. Kennitalan er flett upp í viðskiptavinagrunninum
     jafnóðum — svo þú sérð <b>tryggða tengingu</b> við réttan kúnna áður en þú vistar. Lestur fer fram í vafranum (engin skrá er send neitt).
   </p>
 
@@ -125,7 +125,7 @@
     return String(s||'').replace(/^h[uú]sf(?:élagið|élag|él)?\.?(?=$|[\s\-–—.,])\s*[-–—]?\s*/i, 'Húsfélagið ').trim();
   }
   function newName(it){
-    const parts = [expandHusf(it.company), it.address, fmtKt(it.kt), it.month, it.year].map(clean).filter(Boolean);
+    const parts = [expandHusf(it.company), it.address, fmtKt(it.kt), it.year, it.month].map(clean).filter(Boolean);
     return (parts.join(' - ') || 'óþekkt') + '.pdf';
   }
 

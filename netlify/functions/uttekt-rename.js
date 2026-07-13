@@ -124,7 +124,7 @@ exports.handler = async (event) => {
         const siteId = (ok && base) ? await matchSite(base.id, address) : null;
         let newName = '', status = 'manual';
         if (ok && realish(company) && kt && year) {   // year required; month optional (drops the month segment when absent). Company verður að vera raunverulegt nafn (ekki tómt/gallað/plásshaldari) — annars 'manual', aldrei fjölda-endurnefnt.
-          newName = sanitize(company) + ' - ' + dash(kt) + (address ? ' - ' + sanitize(address) : '') + ' - ' + year + (month ? ' - ' + month : '') + (siteId ? ' - #' + siteId : '') + '.pdf';
+          newName = sanitize(company) + (address ? ' - ' + sanitize(address) : '') + ' - ' + dash(kt) + ' - ' + year + (month ? ' - ' + month : '') + (siteId ? ' - #' + siteId : '') + '.pdf';
           status = 'ready';
         }
         if (status === 'ready') stats.ready++; else stats.manual++;
