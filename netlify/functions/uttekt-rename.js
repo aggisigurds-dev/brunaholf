@@ -99,7 +99,15 @@ exports.handler = async (event) => {
         const ok = (isReport || nameLooksReport) && !isInvoice;
         const base = kt ? await matchBase(kt) : null;
         const party = parseParty(text, base && base.nafn);
-        const company = party.company || (base && base.nafn) || old.company || '';
+        // Fyrirtækjanafn: KANÓNÍSKA base-nafnið (gagnagrunnur) er áreiðanlegra en
+        // efnis-þáttun (sem gaf t.d. „húsfélaginu" í stað „Húsfélagið Bárugranda 1").
+        // Nota base.nafn NEMA það sé „kt …" plásshaldari; annars efnis-nafn.
+        const isKtPlaceholder = c => /^kt[\s\d-]*$/i.test(String(c || '').trim());
+        const realish = c => { const t = String(c || '').normalize('NFD').replace(/[^a-z]/gi, ''); return t.length >= 3 && !isKtPlaceholder(c); };
+        let company;
+        if (base && realish(base.nafn)) company = String(base.nafn).trim();
+        else if (realish(party.company)) company = String(party.company).trim();
+        else company = (party.company || (base && base.nafn) || old.company || '').trim();
         // Address back in the name (multi-site companies like Aðalskoðun need it to tell
         // their locations apart). Prefer the address already in the old filename — it's
         // clean — else extract from content, strip a leading company-name (so it isn't
@@ -115,14 +123,14 @@ exports.handler = async (event) => {
         // einkvæmt heimilisfang) — annars sleppt (Skýrslu-stöð).
         const siteId = (ok && base) ? await matchSite(base.id, address) : null;
         let newName = '', status = 'manual';
-        if (ok && company && kt && year) {   // year required; month optional (drops the month segment when absent)
+        if (ok && realish(company) && kt && year) {   // year required; month optional (drops the month segment when absent). Company verður að vera raunverulegt nafn (ekki tómt/gallað/plásshaldari) — annars 'manual', aldrei fjölda-endurnefnt.
           newName = sanitize(company) + ' - ' + dash(kt) + (address ? ' - ' + sanitize(address) : '') + ' - ' + year + (month ? ' - ' + month : '') + (siteId ? ' - #' + siteId : '') + '.pdf';
           status = 'ready';
         }
         if (status === 'ready') stats.ready++; else stats.manual++;
         stats.rows.push({
           fileId: f.id, oldName: f.name, newName, status, isInvoice, company, kt: kt ? dash(kt) : '', address, month: month || '', year: year || '', site_id: siteId || null,
-          missing: !ok ? (isInvoice ? 'reikningur – röng mappa' : 'ekki úttektarskýrsla') : [!company ? 'fyrirtæki' : null, !kt ? 'kt' : null, !year ? 'ár' : null].filter(Boolean).join(', '),
+          missing: !ok ? (isInvoice ? 'reikningur – röng mappa' : 'ekki úttektarskýrsla') : [!realish(company) ? 'fyrirtæki' : null, !kt ? 'kt' : null, !year ? 'ár' : null].filter(Boolean).join(', '),
         });
       } catch (e) { stats.errors++; stats.rows.push({ fileId: f.id, oldName: f.name, status: 'error', error: String(e.message || e) }); }
     }
