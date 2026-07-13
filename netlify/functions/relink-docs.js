@@ -15,6 +15,12 @@
 //   GET /api/relink-docs?dry=1   → greinir + skýrsla, EKKERT skrifað
 //   GET /api/relink-docs?apply=1 → endurtengir (uppfærir drive_file_id)
 //   Valkv.: &reikningar=<id>&skyrslur=<id> (sjálfgefnar master-möppur).
+//
+// FJÖLSTAÐA-VÖRN (rekstrarfélög: Pizzan 11 staðir, Colas 3 …): reikningar
+// matchast á EINKVÆMU R-númeri (rétt skrá óháð stað). Úttektarskýrslur matchast
+// á kt+ári — EN ef kt á fleiri en einn lifandi stað verður skýrslan að passa
+// líka við HEIMILISFANG staðarins (fyrirtaeki_id → site). Passi ekki → „óviss",
+// ALDREI tengt á rangan stað. Þannig víxlast staðir rekstrarfélags aldrei.
 
 const { freshAccessToken, json, cors } = require('./_google');
 
@@ -128,8 +134,13 @@ exports.handler = async (event) => {
     const docs = await sbGet('customer_documents?drive_file_id=not.is.null&select=id,doc_type,drive_file_id,invoice_number,year,customer_base_id,fyrirtaeki_id');
     const bases = await sbGet('customers_base?select=id,kennitala');
     const ktByBase = new Map(bases.map(b => [b.id, digits(b.kennitala)]));
-    const sites = await sbGet('fyrirtaeki?select=id,heimilisfang');
+    const sites = await sbGet('fyrirtaeki?select=id,heimilisfang,customer_base_id,deleted_at');
     const addrBySite = new Map(sites.map(s => [s.id, addrKey(s.heimilisfang)]));
+    // Fjöldi LIFANDI staða per base → rekstrarfélög (Pizzan 11, Colas 3) fá
+    // strangara match: skýrsla verður að passa við HEIMILISFANG staðarins
+    // (site-id), aldrei bara kt+ár — annars gæti hún víxlast milli staða.
+    const liveSitesByBase = new Map();
+    sites.forEach(s => { if (s.deleted_at == null && s.customer_base_id != null) liveSitesByBase.set(s.customer_base_id, (liveSitesByBase.get(s.customer_base_id) || 0) + 1); });
 
     const relink = [], unmatched = [], ambiguous = [];
     let okInMaster = 0;
@@ -147,13 +158,17 @@ exports.handler = async (event) => {
         const kt = ktByBase.get(d.customer_base_id) || '';
         const yr = d.year;
         const hits = (kt && yr) ? (bySkyr.get(kt + '|' + yr) || []) : [];
-        if (hits.length === 1) relink.push({ id: d.id, doc_type: d.doc_type, key: kt + '|' + yr, to: hits[0].id, from: d.drive_file_id });
-        else if (hits.length > 1) {
-          // margir staðir sama kt+ár → greina eftir heimilisfangi staðarins
+        const multiSite = (liveSitesByBase.get(d.customer_base_id) || 0) > 1;   // rekstrarfélag með marga staði
+        if (hits.length === 1 && !multiSite) {
+          // Einn staður undir þessu kt → einkvæmt, óhætt að tengja beint.
+          relink.push({ id: d.id, doc_type: d.doc_type, key: kt + '|' + yr, to: hits[0].id, from: d.drive_file_id });
+        } else if (hits.length >= 1) {
+          // Fjölstaða-kt (Pizzan/Colas …) EÐA margar skrár sama kt+ár →
+          // verður að passa við heimilisfang staðarins (site-id). Aldrei víxla.
           const ak = addrBySite.get(d.fyrirtaeki_id);
           const m = ak ? hits.filter(h => h.addrkey === ak) : [];
           if (m.length === 1) relink.push({ id: d.id, doc_type: d.doc_type, key: kt + '|' + yr + '|' + ak, to: m[0].id, from: d.drive_file_id });
-          else ambiguous.push({ id: d.id, doc_type: d.doc_type, key: kt + '|' + yr, n: hits.length });
+          else ambiguous.push({ id: d.id, doc_type: d.doc_type, key: kt + '|' + yr + (multiSite ? '|fjölstaður' : ''), n: hits.length });
         } else unmatched.push({ id: d.id, doc_type: d.doc_type, key: (kt || '?') + '|' + (yr || '?') });
       } else {
         // samningur o.fl. — önnur mappa, ekki snert hér
