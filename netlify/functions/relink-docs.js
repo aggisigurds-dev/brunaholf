@@ -157,7 +157,7 @@ exports.handler = async (event) => {
     });
 
     // Skjöl + kt (úr customers_base) + heimilisfang staðar (úr fyrirtaeki)
-    const docs = await sbGet('customer_documents?drive_file_id=not.is.null&select=id,doc_type,drive_file_id,invoice_number,year,customer_base_id,fyrirtaeki_id');
+    const docs = await sbGet('customer_documents?drive_file_id=not.is.null&select=id,doc_type,drive_file_id,invoice_number,year,customer_base_id,fyrirtaeki_id,reviewed');
     const bases = await sbGet('customers_base?select=id,kennitala,nafn');
     const ktByBase = new Map(bases.map(b => [b.id, digits(b.kennitala)]));
     const nameByBase = new Map(bases.map(b => [b.id, b.nafn || ('kt ' + (b.kennitala || '?'))]));
@@ -241,13 +241,16 @@ exports.handler = async (event) => {
     const relinkTo = new Map(relink.map(r => [r.id, r.to]));
     const siteFix = [];
     for (const d of docs) {
+      if (d.reviewed) continue;                         // virða handvirka staðfestingu (Skýrslu-stöð) — aldrei skrifa yfir
       const fid = masterIds.has(d.drive_file_id) ? d.drive_file_id : relinkTo.get(d.id);
       if (!fid) continue;
       const sub = subIdByFile.get(fid);
       if (sub == null || d.fyrirtaeki_id === sub) continue;
       const st = siteById.get(sub);
       if (!st || st.deleted_at != null) continue;
-      if (d.customer_base_id != null && st.customer_base_id != null && st.customer_base_id !== d.customer_base_id) continue;
+      // Krefjast JÁKVÆÐS base-match: bæði kúnna-id þekkt OG EINS. Aldrei festa skjal
+      // á stað annars kúnna (né skjal án base) — engin gögn styðja það.
+      if (d.customer_base_id == null || st.customer_base_id == null || st.customer_base_id !== d.customer_base_id) continue;
       siteFix.push({ id: d.id, to: sub, doc_type: d.doc_type });
     }
 
