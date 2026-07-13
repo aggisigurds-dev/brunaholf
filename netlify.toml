@@ -386,6 +386,12 @@
   to = "/.netlify/functions/drive-count"
   status = 200
 
+# Finna dauða/úrelta skjala-linka og endurtengja við master-möppurnar tvær.
+[[redirects]]
+  from = "/api/relink-docs"
+  to = "/.netlify/functions/relink-docs"
+  status = 200
+
 # Flatten a folder's year subfolders into the folder itself (one flat master).
 [[redirects]]
   from = "/api/drive-flatten"
