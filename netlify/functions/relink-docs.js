@@ -174,8 +174,12 @@ exports.handler = async (event) => {
         sample_relink: relink.slice(0, 25), sample_unmatched: unmatched.slice(0, 15), sample_ambiguous: ambiguous.slice(0, 15) });
     }
 
+    // Samhliða í lotum (chunks) svo 326 PATCH klárist innan Netlify-timeout.
     let done = 0;
-    for (const r of relink) { await patchDoc(r.id, { drive_file_id: r.to }); done++; }
+    for (let i = 0; i < relink.length; i += 40) {
+      const chunk = relink.slice(i, i + 40);
+      await Promise.all(chunk.map(r => patchDoc(r.id, { drive_file_id: r.to }).then(() => { done++; })));
+    }
     return json(200, { ok: true, applied: true, summary, relinked: done, ambiguous: ambiguous.slice(0, 40), unmatched: unmatched.slice(0, 40) });
   } catch (e) {
     return json(500, { error: String(e.message || e) });
