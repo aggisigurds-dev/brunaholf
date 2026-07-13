@@ -3815,6 +3815,28 @@ function renderBakendi(t){
           <div id="bk-hb-panel"></div>
         </div>
 
+        <!-- 🔗 Dauðir skjala-linkar (endurtengja drive_file_id við master-möppurnar) -->
+        <div style="${card}">
+          <div style="display:flex;align-items:center;gap:14px">
+            <span style="${iconSq};${ICON.red}">🔗</span>
+            <div style="flex:1">
+              <div style="${titleStyle}">Dauðir skjala-linkar — endurtengja við master-möppurnar</div>
+              <p style="${descStyle};margin-top:4px">Þegar skrár voru <b>færðar</b> í master-möppurnar tvær (reikningar + úttektarskýrslur) og gömul afrit eydd sitja sum <b>customer_documents.drive_file_id</b> eftir á eydda afritinu → <b>dauður linkur</b>. Finnur réttu master-skrána (reikningur → R-númer · skýrsla → kt + ár, marga staði greint eftir heimilisfangi) og <b>endurtengir</b>. Árekstrar (skráin þegar í eigu annars skjals) eru <b>merktir tvítök</b> (is_duplicate, afturkræft — aldrei eytt). Byrjaðu á <b>👁 Greina</b>.</p>
+            </div>
+            <span style="${chipStyle('#fee2e2','#b91c1c')}">Linkar</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div><label style="${labelStyle}">Reikningar (master)</label><input id="bk-rl-reik" value="1FHHX99LRB_9w_LqwHIY57T4l9mLMID7p" placeholder="folder-id / slóð" style="${inpMono};width:100%;box-sizing:border-box;height:40px"></div>
+            <div><label style="${labelStyle}">Skýrslur (úttektarskýrslur)</label><input id="bk-rl-skyr" value="1VSRRw6O8U6lU8WzZxA8CkLtrAmiU07mg" placeholder="folder-id / slóð" style="${inpMono};width:100%;box-sizing:border-box;height:40px"></div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:auto">
+            <button id="bk-rl-dry" class="btn">👁 Greina (dry)</button>
+            <button id="bk-rl-run" class="btn primary">🔗 Laga dauða linka + merkja tvítök</button>
+            <span id="bk-rl-status" style="font-size:12.5px;color:#64748b"></span>
+          </div>
+          <div id="bk-rl-results"></div>
+        </div>
+
         <!-- 🗂️ Skjalavörsla (raða í árs-undirmöppur + sameina gamlar möppur) -->
         <div style="${card}">
           <div style="display:flex;align-items:center;gap:14px">
@@ -5174,6 +5196,59 @@ function renderBakendi(t){
       finally { $open.disabled = false; }
     }
     $open.onclick = () => { if (DATA) { $panel.innerHTML ? ($panel.innerHTML = '') : render(); } else load(); };
+  })();
+
+  // ── 🔗 Dauðir skjala-linkar: relink drive_file_id to the master folders ────────
+  (function wireRelinkDocs(){
+    const $reik = document.getElementById('bk-rl-reik');
+    const $skyr = document.getElementById('bk-rl-skyr');
+    const $dry = document.getElementById('bk-rl-dry');
+    const $run = document.getElementById('bk-rl-run');
+    const $status = document.getElementById('bk-rl-status');
+    const $results = document.getElementById('bk-rl-results');
+    if (!$dry) return;
+    const nf = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    const esc = s => escapeHtml(String(s == null ? '' : s));
+
+    function qs(){
+      return '?reikningar=' + encodeURIComponent(($reik.value||'').trim()) +
+             '&skyrslur=' + encodeURIComponent(($skyr.value||'').trim());
+    }
+    function byTypeStr(o){ o = o || {}; const k = Object.keys(o); return k.length ? k.map(t => esc(t)+': '+nf(o[t])).join(' · ') : '—'; }
+
+    function renderSummary(d, applied){
+      const s = d.summary || {};
+      const card = (ic, lbl, n, col, sub) =>
+        '<div style="border:1px solid #e2e8f0;border-radius:12px;padding:11px 14px;min-width:150px;flex:1">' +
+        '<div style="font-size:12px;color:#64748b">' + ic + ' ' + lbl + '</div>' +
+        '<div style="font-size:22px;font-weight:800;color:' + col + '">' + nf(n||0) + '</div>' +
+        (sub ? '<div style="font-size:11px;color:#94a3b8;margin-top:2px">' + sub + '</div>' : '') + '</div>';
+      let h = '';
+      if (applied) h += '<div style="margin:12px 0 8px;padding:9px 12px;background:#dcfce7;border:1px solid #86efac;border-radius:10px;color:#15803d;font-weight:700">✓ ' + nf(d.relinked||0) + ' dauðir linkar endurtengdir · ' + nf(d.flagged_dups||0) + ' tvítök merkt (is_duplicate)</div>';
+      h += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">' +
+        card('🔗', applied ? 'Endurtengt' : 'Til að endurtengja', applied ? d.relinked : s.relink_count, '#16a34a') +
+        card('⚠️', 'Tvítök (árekstrar)', s.collision_count, '#b45309', byTypeStr(s.collision_by_type)) +
+        card('❓', 'Óviss (margir möguleikar)', s.ambiguous_count, '#7c3aed', byTypeStr(s.ambiguous_by_type)) +
+        card('🚫', 'Fannst ekki í master', s.unmatched_count, '#64748b', byTypeStr(s.unmatched_by_type)) +
+        '</div>' +
+        '<div style="font-size:11.5px;color:#94a3b8;margin-top:8px">Master-skrár: 🧾 ' + nf((s.master_files||{}).reikningar||0) + ' reikningar · 📄 ' + nf((s.master_files||{}).skyrslur||0) + ' skýrslur · ' + nf(s.docs_with_fileid||0) + ' skjöl með link · ' + nf(s.ok_already_in_master||0) + ' þegar í lagi. „Óviss" + „fannst ekki" (mest samningar úr annarri möppu) lagfærast handvirkt í Skýrslu-stöð.</div>';
+      $results.innerHTML = h;
+    }
+
+    async function go(apply){
+      $dry.disabled = true; $run.disabled = true;
+      $status.textContent = apply ? 'Endurtengi + merki tvítök…' : 'Greini master-möppurnar…';
+      try {
+        const url = '/api/relink-docs' + qs() + (apply ? '&apply=1&flagdups=1' : '&dry=1');
+        const r = await fetch(url);
+        const d = await r.json(); if (!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));
+        renderSummary(d, apply);
+        $status.textContent = apply ? '✓ búið' : '';
+      } catch (e) { $status.textContent = 'Villa: ' + (e.message || e); }
+      finally { $dry.disabled = false; $run.disabled = false; }
+    }
+    $dry.onclick = () => go(false);
+    $run.onclick = () => { if (confirm('Endurtengja dauða skjala-linka við master-möppurnar og merkja árekstra sem tvítök (is_duplicate)?\n\nViðbætandi + afturkræft — engin skrá er eydd.')) go(true); };
   })();
 
   // ── Editable customer match: change / mark-wrong the auto-linked company ───
