@@ -458,6 +458,25 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   ~970 mangled names → all by-hand in Skýrslu-stöð. Bakendi card + `wireHreinsiBord` in
   index.html. Service role.
 
+- `relink-docs.js` — **Bakendi „🔗 Dauðir skjala-linkar"** (`/api/relink-docs`): when
+  files were MOVED into the two master folders and old copies deleted in cleanup,
+  `customer_documents.drive_file_id` kept pointing at the deleted copy → dead link.
+  Lists both masters (reikningar + úttektarskýrslur), builds R-number→file (reikn.)
+  and kt|year(+addr)→file (skýrslur) lookups, and for every doc whose `drive_file_id`
+  is NOT in a master, finds the right master file and relinks. **Multi-site guard:**
+  reikningar match on the unique R-number (right file regardless of site); skýrslur of
+  a **rekstrarfélag (>1 live fyrirtaeki: Pizzan/Colas)** must ALSO match the site's
+  `heimilisfang` (fyrirtaeki_id) — no unique address match → „óviss", never cross-linked.
+  `GET ?dry=1` → summary + FULL `ambiguous`/`unmatched` lists (each enriched: base
+  nafn · site · year · dead fid · candidate master files) rendered as a picker in the
+  Bakendi card. `GET ?apply=1[&flagdups=1]` → relinks (parallel chunks) + optionally
+  flags collisions `is_duplicate`. `POST {action:'set',id,drive_file_id}` → manual pick
+  of the right master file for one óviss/unmatched doc (409 on UNIQUE collision). NB
+  Skýrslu-stöð assigns site+year but does NOT repair dead drive_file_ids — THIS does.
+  Run history (2026-07-13): 149 relinked + 177→170 collisions flagged; 6 multi-site
+  relinks all reikningar (0 skýrslur crossed). Bakendi card + `wireRelinkDocs` in
+  index.html; redirect in netlify.toml. Service role + `_google.freshAccessToken`.
+
 - `drive-dedup.js` — **Bakendi „🗂️ Drive tvítekningar"** (`/api/drive-dedup`): pick any
   Drive folder → lists files with **duplicate names** (groups by name with the extension
   and a trailing `(1)/(2)` copy-suffix stripped, case-folded). `GET ?folder=ID[&cap=N]`
