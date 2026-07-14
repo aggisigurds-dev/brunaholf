@@ -71,8 +71,57 @@ async function listFolder(token, folder) {
   return out;
 }
 
+// Drive-víð leit að skrá eftir heiti (utan master-mappa). „name contains"
+// gerir orð-prefix match hjá Drive; við síum svo nákvæmar client-megin.
+async function driveSearchName(token, tok) {
+  const q = `name contains '${String(tok).replace(/'/g, "\\'")}' and mimeType='application/pdf' and trashed=false`;
+  const params = new URLSearchParams({
+    q, fields: 'files(id,name,parents)', pageSize: '80',
+    supportsAllDrives: 'true', includeItemsFromAllDrives: 'true', corpora: 'allDrives',
+  });
+  const r = await fetch('https://www.googleapis.com/drive/v3/files?' + params, { headers: { Authorization: `Bearer ${token}` } });
+  if (!r.ok) return [];
+  const d = await r.json();
+  return d.files || [];
+}
+
 // ── parsing helpers ──────────────────────────────────────────────────────────
 function digits(s) { return String(s || '').replace(/\D/g, ''); }
+// Fold diacritics + lowercase (fyrir samanburð heita).
+function fold(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
+// Aðgreinandi orð fyrir Drive-leit. Sleppir viðskeytum (ehf/hf/húsfélagið …) OG
+// borgar-/póstnúmera-orðum (reykjavik/kopavogur …) sem matcha allt-of-margt.
+// Tekur bæði fyrirtækjanafn OG götuheiti úr heimilisfangi (aðgreinandi fyrir húsfélög).
+const SEARCH_STOP = new Set([
+  'ehf', 'hf', 'slf', 'sf', 'ohf', 'the', 'og', 'husfelag', 'husfelagid', 'husfelagi', 'husfelog',
+  'reykjavik', 'reykjavikur', 'kopavogur', 'kopavogi', 'kopavogs', 'hafnarfjordur', 'hafnarfirdi',
+  'gardabaer', 'gardabae', 'gardabar', 'akureyri', 'mosfellsbaer', 'mosfellsbae', 'keflavik',
+  'reykjanesbaer', 'selfoss', 'seltjarnarnes', 'grindavik', 'hveragerdi', 'sudurnes', 'iceland', 'island',
+]);
+// Skilar aðgreinandi RÁ-orðum (með broddstöfum) → sem STOFN (6 stafir) fyrir Drive
+// prefix-leit. Stofn nær beygingum (Hlíðasmára→Hlíðasmári) og Drive er hástafa-óháð.
+function tokWords(s) {
+  const out = [];
+  const words = String(s || '').replace(/[()]/g, ' ').split(/[^a-zA-ZÀ-ÿæðþöáéíóúýÆÐÞÖ0-9]+/);
+  for (const w of words) {
+    const raw = w.trim();
+    if (!raw) continue;
+    const f = fold(raw);
+    if (f.length < 4 || SEARCH_STOP.has(f) || /^\d+$/.test(f)) continue;
+    out.push(raw.length > 7 ? raw.slice(0, 6) : raw);   // stofn fyrir löng orð
+  }
+  return out;
+}
+function searchTokens(nafn, addr) {
+  // Götuheiti úr heimilisfangi = fyrsti bókstafa-hlutinn á undan húsnúmeri.
+  const streetRaw = String(addr || '').replace(/,.*$/, '').replace(/\d.*$/, '');
+  const street = tokWords(streetRaw);
+  const nameWords = tokWords(nafn);
+  const all = [...street, ...nameWords];           // götuheiti fyrst (aðgreinandi)
+  const uniq = [...new Set(all)];
+  uniq.sort((a, b) => b.length - a.length);
+  return uniq.slice(0, 2);
+}
 function ktFromName(name) {
   const m = String(name || '').match(/\b(\d{6}-\d{4})\b/) || String(name || '').match(/\b(\d{10})\b/);
   return m ? digits(m[1]) : '';
@@ -216,6 +265,93 @@ exports.handler = async (event) => {
         // samningur o.fl. — önnur mappa, ekki snert hér
         unmatched.push(Object.assign({ id: d.id, doc_type: d.doc_type, key: '(önnur mappa)' }, meta(d, [])));
       }
+    }
+
+    // ── WIDE: Drive-víð endurheimt (2026-07-14, ósk Agnars: „perhaps there is
+    // still a missing folder somewhere that are not in the master … profadu tad").
+    // Fyrir „fannst ekki" úttektarskýrslur (skráin er hvergi í master) — leitum
+    // Drive-vítt eftir fyrirtækjanafni, skorum eftir kt/ári/heimilisfangi og
+    // (apply) endurtengjum HÁ-öruggar einkvæmar samsvaranir. Fjölstaða-öruggt:
+    // rekstrarfélög (>1 lifandi staður) krefjast heimilisfangs-match.
+    if (p.wide === '1' || p.wide === 'true') {
+      const limit = Math.max(1, Math.min(30, parseInt(p.limit || '12', 10)));
+      const offset = Math.max(0, parseInt(p.offset || '0', 10));
+      const docsBaseById = new Map(docs.map(d => [d.id, d.customer_base_id]));
+      const claimedFids = new Set(docs.map(d => d.drive_file_id).filter(Boolean));
+      const ownerHas = (fid) => claimedFids.has(fid);
+      // aðeins úttektarskýrslur (reikningar eiga R-nr → önnur leið); röðum eftir id
+      const pool = unmatched.filter(u => u.doc_type === 'uttektarskyrsla');
+      pool.sort((a, b) => a.id - b.id);
+      const slice = pool.slice(offset, offset + limit);
+      const results = [];
+      for (const u of slice) {
+        const kt = (u.key.split('|')[0] || '').replace(/\D/g, '');
+        const yr = u.year || (parseInt((u.key.split('|')[1] || ''), 10) || null);
+        const toks = searchTokens(u.base_nafn, u.site_addr);
+        let files = [];
+        // 1) kt-leit (áreiðanlegust — vel-nefndar skrár bera kt með striki)
+        const ktDash = kt.length === 10 ? kt.slice(0, 6) + '-' + kt.slice(6) : '';
+        if (ktDash) files = files.concat(await driveSearchName(token, ktDash));
+        // 2) nafn/götu-token
+        for (const t of toks) { if (files.length >= 60) break; files = files.concat(await driveSearchName(token, t)); }
+        // víxl-fjarlægja tvítök + sleppa master-skrám sem eru ÞEGAR í eigu annars doc
+        const seen = new Set();
+        const cand = [];
+        for (const f of files) {
+          if (seen.has(f.id)) continue; seen.add(f.id);
+          if (ownerHas(f.id)) continue;             // skráin er þegar tengd öðru skjali
+          if (rNumFromName(f.name) != null) continue; // R-númer í heiti → reikningur, EKKI skýrsla
+          const fk = ktFromName(f.name), fy = yearFromName(f.name);
+          const ak = addrKey(f.name);
+          const siteAk = u.site_addr ? addrKey(u.site_addr) : '';
+          let score = 0; const why = [];
+          if (fk && kt && fk === kt) { score += 3; why.push('kt'); }
+          if (fy && yr && fy === yr) { score += 2; why.push('ár'); }
+          if (siteAk && ak === siteAk && ak !== '|') { score += 2; why.push('heimilisfang'); }
+          // nafn-token í heiti (bæði folduð svo broddstafir/hástafir trufli ekki)
+          const fn = fold(f.name);
+          if (toks.some(t => fn.includes(fold(t)))) { score += 1; why.push('nafn'); }
+          const inMaster = masterIds.has(f.id);
+          cand.push({ id: f.id, name: f.name, score, why, inMaster, noYear: !fy });
+        }
+        cand.sort((a, b) => b.score - a.score);
+        results.push({ id: u.id, base_nafn: u.base_nafn, site_addr: u.site_addr, kt, year: yr,
+          multiSite: (liveSitesByBase.get(docsBaseById.get(u.id)) || 0) > 1,
+          dead_fid: u.dead_fid, candidates: cand.slice(0, 6) });
+      }
+
+      let applied = 0, applyErrors = [];
+      if (apply) {
+        // Tvær skrár eru „sama skýrslan" ef heiti stemmir eftir að afrit-viðskeyti
+        // („(1)"), .pdf og tákn eru fjarlægð → afrit (Fornhagi…(1) vs …(2)) teljast
+        // EKKI sem tvíræðni, aðeins ÖNNUR skýrsla (annað heimilisfang/ár) gerir það.
+        const normRep = (s) => fold(s).replace(/\(\d+\)/g, '').replace(/\.pdf$/, '').replace(/[^a-z0-9]/g, '');
+        for (const r of results) {
+          const best = r.candidates[0];
+          if (!best) continue;
+          const rivals = r.candidates.filter((c, i) => i > 0 && c.score >= best.score && normRep(c.name) !== normRep(best.name));
+          const unique = rivals.length === 0;
+          // Öruggt að endurtengja: (a) KT passar (aldrei rangt fyrirtæki), (b) OG
+          // ár passar EÐA skráin er án árs í heiti (þessar týndu skýrslur eru einmitt
+          // án dags — árs-krafa myndi endurheimta ~0), (c) OG einkvæmt (næsti lægri),
+          // (d) OG fjölstaða-öruggt: rekstrarfélög krefjast heimilisfangs-match.
+          // UNIQUE-þvingun ver gegn tvítengingu ef tvær raðir stefna á sömu skrá.
+          // Þessar skrár bera oftast EKKI kt (mangl. heiti) → tvær öruggar leiðir:
+          //   (A) kt-match + (ár EÐA án-árs)  — réttur kúnni, rétt ár/óþekkt ár
+          //   (B) ÁR-match + HEIMILISFANGS-match — réttur staður + rétt ár (nær
+          //       fjölstaða-öruggt í eðli sínu; útilokar árs-víxl eins og Kríuás).
+          const byKt = best.why.includes('kt') && (best.why.includes('ár') || best.noYear);
+          const byAddrYear = best.why.includes('ár') && best.why.includes('heimilisfang');
+          const strong = byKt || byAddrYear;
+          const multiOk = !r.multiSite || best.why.includes('heimilisfang');
+          if (strong && unique && multiOk) {
+            try { await patchDoc(r.id, { drive_file_id: best.id, is_duplicate: false }); applied++; r.applied = best.id; }
+            catch (e) { const m = String(e.message || e); if (/duplicate key|unique/i.test(m)) r.skip = 'tvítak'; else applyErrors.push({ id: r.id, err: m.slice(0, 100) }); }
+          }
+        }
+      }
+      return json(200, { ok: true, wide: true, pool_total: pool.length, offset, limit,
+        returned: results.length, applied, applyErrors, results });
     }
 
     // Árekstra-sía: drive_file_id hefur UNIQUE-þvingun. Ef master-skráin sem á
