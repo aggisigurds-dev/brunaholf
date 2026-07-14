@@ -71,8 +71,33 @@ async function listFolder(token, folder) {
   return out;
 }
 
+// Drive-víð leit að skrá eftir heiti (utan master-mappa). „name contains"
+// gerir orð-prefix match hjá Drive; við síum svo nákvæmar client-megin.
+async function driveSearchName(token, tok) {
+  const q = `name contains '${String(tok).replace(/'/g, "\\'")}' and mimeType='application/pdf' and trashed=false`;
+  const params = new URLSearchParams({
+    q, fields: 'files(id,name,parents)', pageSize: '80',
+    supportsAllDrives: 'true', includeItemsFromAllDrives: 'true', corpora: 'allDrives',
+  });
+  const r = await fetch('https://www.googleapis.com/drive/v3/files?' + params, { headers: { Authorization: `Bearer ${token}` } });
+  if (!r.ok) return [];
+  const d = await r.json();
+  return d.files || [];
+}
+
 // ── parsing helpers ──────────────────────────────────────────────────────────
 function digits(s) { return String(s || '').replace(/\D/g, ''); }
+// Fold diacritics + lowercase (fyrir samanburð heita).
+function fold(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
+// Aðgreinandi orð úr fyrirtækjanafni fyrir Drive-leit (lengsta bókstafa-orðið,
+// sleppir alg. viðskeytum ehf/hf/slf/sf/húsfélagið …).
+function searchTokens(nafn) {
+  const stop = new Set(['ehf', 'hf', 'slf', 'sf', 'ohf', 'husfelag', 'husfelagid', 'the', 'og']);
+  const words = fold(nafn).replace(/[()]/g, ' ').split(/[^a-zA-Z0-9æðþöáéíóúý]+/)
+    .map(w => w.replace(/[^a-z0-9]/gi, '')).filter(w => w && w.length >= 4 && !stop.has(w));
+  words.sort((a, b) => b.length - a.length);
+  return [...new Set(words)].slice(0, 2);
+}
 function ktFromName(name) {
   const m = String(name || '').match(/\b(\d{6}-\d{4})\b/) || String(name || '').match(/\b(\d{10})\b/);
   return m ? digits(m[1]) : '';
@@ -216,6 +241,77 @@ exports.handler = async (event) => {
         // samningur o.fl. — önnur mappa, ekki snert hér
         unmatched.push(Object.assign({ id: d.id, doc_type: d.doc_type, key: '(önnur mappa)' }, meta(d, [])));
       }
+    }
+
+    // ── WIDE: Drive-víð endurheimt (2026-07-14, ósk Agnars: „perhaps there is
+    // still a missing folder somewhere that are not in the master … profadu tad").
+    // Fyrir „fannst ekki" úttektarskýrslur (skráin er hvergi í master) — leitum
+    // Drive-vítt eftir fyrirtækjanafni, skorum eftir kt/ári/heimilisfangi og
+    // (apply) endurtengjum HÁ-öruggar einkvæmar samsvaranir. Fjölstaða-öruggt:
+    // rekstrarfélög (>1 lifandi staður) krefjast heimilisfangs-match.
+    if (p.wide === '1' || p.wide === 'true') {
+      const limit = Math.max(1, Math.min(30, parseInt(p.limit || '12', 10)));
+      const offset = Math.max(0, parseInt(p.offset || '0', 10));
+      const docsBaseById = new Map(docs.map(d => [d.id, d.customer_base_id]));
+      const claimedFids = new Set(docs.map(d => d.drive_file_id).filter(Boolean));
+      const ownerHas = (fid) => claimedFids.has(fid);
+      // aðeins úttektarskýrslur (reikningar eiga R-nr → önnur leið); röðum eftir id
+      const pool = unmatched.filter(u => u.doc_type === 'uttektarskyrsla');
+      pool.sort((a, b) => a.id - b.id);
+      const slice = pool.slice(offset, offset + limit);
+      const results = [];
+      for (const u of slice) {
+        const kt = (u.key.split('|')[0] || '').replace(/\D/g, '');
+        const yr = u.year || (parseInt((u.key.split('|')[1] || ''), 10) || null);
+        const toks = searchTokens(u.base_nafn);
+        let files = [];
+        for (const t of toks) { files = files.concat(await driveSearchName(token, t)); if (files.length >= 40) break; }
+        // sértæk: ef ekkert nafn-token, reyna kt-leit
+        if (!files.length && kt) files = await driveSearchName(token, u.key.split('|')[0]);
+        // víxl-fjarlægja tvítök + sleppa master-skrám sem eru ÞEGAR í eigu annars doc
+        const seen = new Set();
+        const cand = [];
+        for (const f of files) {
+          if (seen.has(f.id)) continue; seen.add(f.id);
+          if (ownerHas(f.id)) continue;             // skráin er þegar tengd öðru skjali
+          const fk = ktFromName(f.name), fy = yearFromName(f.name);
+          const ak = addrKey(f.name);
+          const siteAk = u.site_addr ? addrKey(u.site_addr) : '';
+          let score = 0; const why = [];
+          if (fk && kt && fk === kt) { score += 3; why.push('kt'); }
+          if (fy && yr && fy === yr) { score += 2; why.push('ár'); }
+          if (siteAk && ak === siteAk && ak !== '|') { score += 2; why.push('heimilisfang'); }
+          // nafn-token í heiti
+          const fn = fold(f.name);
+          if (toks.some(t => fn.includes(t))) { score += 1; why.push('nafn'); }
+          const inMaster = masterIds.has(f.id);
+          cand.push({ id: f.id, name: f.name, score, why, inMaster });
+        }
+        cand.sort((a, b) => b.score - a.score);
+        results.push({ id: u.id, base_nafn: u.base_nafn, site_addr: u.site_addr, kt, year: yr,
+          multiSite: (liveSitesByBase.get(docsBaseById.get(u.id)) || 0) > 1,
+          dead_fid: u.dead_fid, candidates: cand.slice(0, 6) });
+      }
+
+      let applied = 0, applyErrors = [];
+      if (apply) {
+        for (const r of results) {
+          const best = r.candidates[0];
+          if (!best) continue;
+          // HÁ-öryggis regla: kt+ár (score≥5) OG einkvæmt (næsti frambjóðandi lægri).
+          // Fjölstaða-kt krefst þess að heimilisfang sé með í skorinu.
+          const second = r.candidates[1];
+          const unique = !second || second.score < best.score;
+          const strong = best.score >= 5 && best.why.includes('kt') && best.why.includes('ár');
+          const multiOk = !r.multiSite || best.why.includes('heimilisfang');
+          if (strong && unique && multiOk) {
+            try { await patchDoc(r.id, { drive_file_id: best.id, is_duplicate: false }); applied++; r.applied = best.id; }
+            catch (e) { const m = String(e.message || e); if (/duplicate key|unique/i.test(m)) r.skip = 'tvítak'; else applyErrors.push({ id: r.id, err: m.slice(0, 100) }); }
+          }
+        }
+      }
+      return json(200, { ok: true, wide: true, pool_total: pool.length, offset, limit,
+        returned: results.length, applied, applyErrors, results });
     }
 
     // Árekstra-sía: drive_file_id hefur UNIQUE-þvingun. Ef master-skráin sem á
