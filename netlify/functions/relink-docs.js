@@ -312,7 +312,7 @@ exports.handler = async (event) => {
           const fn = fold(f.name);
           if (toks.some(t => fn.includes(fold(t)))) { score += 1; why.push('nafn'); }
           const inMaster = masterIds.has(f.id);
-          cand.push({ id: f.id, name: f.name, score, why, inMaster });
+          cand.push({ id: f.id, name: f.name, score, why, inMaster, noYear: !fy });
         }
         cand.sort((a, b) => b.score - a.score);
         results.push({ id: u.id, base_nafn: u.base_nafn, site_addr: u.site_addr, kt, year: yr,
@@ -329,9 +329,14 @@ exports.handler = async (event) => {
           // Fjölstaða-kt krefst þess að heimilisfang sé með í skorinu.
           const second = r.candidates[1];
           const unique = !second || second.score < best.score;
-          const strong = best.score >= 5 && best.why.includes('kt') && best.why.includes('ár');
+          // Öruggt að endurtengja: (a) KT passar (aldrei rangt fyrirtæki), (b) OG
+          // ár passar EÐA skráin er án árs í heiti (þessar týndu skýrslur eru einmitt
+          // án dags — árs-krafa myndi endurheimta ~0), (c) OG einkvæmt (næsti lægri),
+          // (d) OG fjölstaða-öruggt: rekstrarfélög krefjast heimilisfangs-match.
+          // UNIQUE-þvingun ver gegn tvítengingu ef tvær raðir stefna á sömu skrá.
+          const strong = best.why.includes('kt') && (best.why.includes('ár') || best.noYear);
           const multiOk = !r.multiSite || best.why.includes('heimilisfang');
-          if (strong && unique && multiOk) {
+          if (strong && unique && multiOk && best.score >= 3) {
             try { await patchDoc(r.id, { drive_file_id: best.id, is_duplicate: false }); applied++; r.applied = best.id; }
             catch (e) { const m = String(e.message || e); if (/duplicate key|unique/i.test(m)) r.skip = 'tvítak'; else applyErrors.push({ id: r.id, err: m.slice(0, 100) }); }
           }
