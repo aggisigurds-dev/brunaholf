@@ -89,14 +89,38 @@ async function driveSearchName(token, tok) {
 function digits(s) { return String(s || '').replace(/\D/g, ''); }
 // Fold diacritics + lowercase (fyrir samanburð heita).
 function fold(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
-// Aðgreinandi orð úr fyrirtækjanafni fyrir Drive-leit (lengsta bókstafa-orðið,
-// sleppir alg. viðskeytum ehf/hf/slf/sf/húsfélagið …).
-function searchTokens(nafn) {
-  const stop = new Set(['ehf', 'hf', 'slf', 'sf', 'ohf', 'husfelag', 'husfelagid', 'the', 'og']);
-  const words = fold(nafn).replace(/[()]/g, ' ').split(/[^a-zA-Z0-9æðþöáéíóúý]+/)
-    .map(w => w.replace(/[^a-z0-9]/gi, '')).filter(w => w && w.length >= 4 && !stop.has(w));
-  words.sort((a, b) => b.length - a.length);
-  return [...new Set(words)].slice(0, 2);
+// Aðgreinandi orð fyrir Drive-leit. Sleppir viðskeytum (ehf/hf/húsfélagið …) OG
+// borgar-/póstnúmera-orðum (reykjavik/kopavogur …) sem matcha allt-of-margt.
+// Tekur bæði fyrirtækjanafn OG götuheiti úr heimilisfangi (aðgreinandi fyrir húsfélög).
+const SEARCH_STOP = new Set([
+  'ehf', 'hf', 'slf', 'sf', 'ohf', 'the', 'og', 'husfelag', 'husfelagid', 'husfelagi', 'husfelog',
+  'reykjavik', 'reykjavikur', 'kopavogur', 'kopavogi', 'kopavogs', 'hafnarfjordur', 'hafnarfirdi',
+  'gardabaer', 'gardabae', 'gardabar', 'akureyri', 'mosfellsbaer', 'mosfellsbae', 'keflavik',
+  'reykjanesbaer', 'selfoss', 'seltjarnarnes', 'grindavik', 'hveragerdi', 'sudurnes', 'iceland', 'island',
+]);
+// Skilar aðgreinandi RÁ-orðum (með broddstöfum) → sem STOFN (6 stafir) fyrir Drive
+// prefix-leit. Stofn nær beygingum (Hlíðasmára→Hlíðasmári) og Drive er hástafa-óháð.
+function tokWords(s) {
+  const out = [];
+  const words = String(s || '').replace(/[()]/g, ' ').split(/[^a-zA-ZÀ-ÿæðþöáéíóúýÆÐÞÖ0-9]+/);
+  for (const w of words) {
+    const raw = w.trim();
+    if (!raw) continue;
+    const f = fold(raw);
+    if (f.length < 4 || SEARCH_STOP.has(f) || /^\d+$/.test(f)) continue;
+    out.push(raw.length > 7 ? raw.slice(0, 6) : raw);   // stofn fyrir löng orð
+  }
+  return out;
+}
+function searchTokens(nafn, addr) {
+  // Götuheiti úr heimilisfangi = fyrsti bókstafa-hlutinn á undan húsnúmeri.
+  const streetRaw = String(addr || '').replace(/,.*$/, '').replace(/\d.*$/, '');
+  const street = tokWords(streetRaw);
+  const nameWords = tokWords(nafn);
+  const all = [...street, ...nameWords];           // götuheiti fyrst (aðgreinandi)
+  const uniq = [...new Set(all)];
+  uniq.sort((a, b) => b.length - a.length);
+  return uniq.slice(0, 2);
 }
 function ktFromName(name) {
   const m = String(name || '').match(/\b(\d{6}-\d{4})\b/) || String(name || '').match(/\b(\d{10})\b/);
@@ -263,11 +287,13 @@ exports.handler = async (event) => {
       for (const u of slice) {
         const kt = (u.key.split('|')[0] || '').replace(/\D/g, '');
         const yr = u.year || (parseInt((u.key.split('|')[1] || ''), 10) || null);
-        const toks = searchTokens(u.base_nafn);
+        const toks = searchTokens(u.base_nafn, u.site_addr);
         let files = [];
-        for (const t of toks) { files = files.concat(await driveSearchName(token, t)); if (files.length >= 40) break; }
-        // sértæk: ef ekkert nafn-token, reyna kt-leit
-        if (!files.length && kt) files = await driveSearchName(token, u.key.split('|')[0]);
+        // 1) kt-leit (áreiðanlegust — vel-nefndar skrár bera kt með striki)
+        const ktDash = kt.length === 10 ? kt.slice(0, 6) + '-' + kt.slice(6) : '';
+        if (ktDash) files = files.concat(await driveSearchName(token, ktDash));
+        // 2) nafn/götu-token
+        for (const t of toks) { if (files.length >= 60) break; files = files.concat(await driveSearchName(token, t)); }
         // víxl-fjarlægja tvítök + sleppa master-skrám sem eru ÞEGAR í eigu annars doc
         const seen = new Set();
         const cand = [];
@@ -281,9 +307,9 @@ exports.handler = async (event) => {
           if (fk && kt && fk === kt) { score += 3; why.push('kt'); }
           if (fy && yr && fy === yr) { score += 2; why.push('ár'); }
           if (siteAk && ak === siteAk && ak !== '|') { score += 2; why.push('heimilisfang'); }
-          // nafn-token í heiti
+          // nafn-token í heiti (bæði folduð svo broddstafir/hástafir trufli ekki)
           const fn = fold(f.name);
-          if (toks.some(t => fn.includes(t))) { score += 1; why.push('nafn'); }
+          if (toks.some(t => fn.includes(fold(t)))) { score += 1; why.push('nafn'); }
           const inMaster = masterIds.has(f.id);
           cand.push({ id: f.id, name: f.name, score, why, inMaster });
         }
