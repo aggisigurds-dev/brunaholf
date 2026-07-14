@@ -300,6 +300,7 @@ exports.handler = async (event) => {
         for (const f of files) {
           if (seen.has(f.id)) continue; seen.add(f.id);
           if (ownerHas(f.id)) continue;             // skráin er þegar tengd öðru skjali
+          if (rNumFromName(f.name) != null) continue; // R-númer í heiti → reikningur, EKKI skýrsla
           const fk = ktFromName(f.name), fy = yearFromName(f.name);
           const ak = addrKey(f.name);
           const siteAk = u.site_addr ? addrKey(u.site_addr) : '';
