@@ -33,6 +33,7 @@ exports.handler = async (event) => {
       return json(400, { error: 'unknown action' });
     }
     const p = event.queryStringParameters || {};
+    if (p.scope === 'unmatched' || p.scope === 'dups') return json(200, await globalList(p.scope));
     if (p.base && p.consolidate) return json(200, await consolidate(p.base, false, p.overwrite === '1' || p.overwrite === 'true'));
     if (p.base) return json(200, await companyDetail(p.base));
     return json(200, await listCompanies());
@@ -120,6 +121,55 @@ async function companyDetail(baseId) {
     (a.year || 0) - (b.year || 0));
 
   return { company: base, locations, docs };
+}
+
+// ── Global worklists: ALL unconnected docs / ALL flagged duplicates ────────────
+// One flat list across every service company so the human can see everything in
+// one place (instead of clicking company by company). Each row carries its base
+// (nafn + kt), its sites, and a suggested site — same shape the per-company board
+// uses, so the existing save/assign UI works unchanged.
+async function globalList(scope) {
+  const locs = await sbGet('fyrirtaeki?er_i_thjonustu=eq.true&select=id,nafn,heimilisfang,customer_base_id&deleted_at=is.null');
+  const baseIds = [...new Set(locs.map(l => l.customer_base_id).filter(x => x != null))];
+  if (!baseIds.length) return { scope, count: 0, docs: [] };
+
+  const bases = {};
+  const sitesByBase = {};
+  locs.forEach(l => { (sitesByBase[l.customer_base_id] = sitesByBase[l.customer_base_id] || []).push({ id: l.id, nafn: l.nafn, heimilisfang: l.heimilisfang }); });
+  for (let i = 0; i < baseIds.length; i += 200) {
+    (await sbGet(`customers_base?id=in.${inList(baseIds.slice(i, i + 200))}&select=id,nafn,kennitala`)).forEach(b => { bases[b.id] = b; });
+  }
+
+  const filt = scope === 'dups' ? 'is_duplicate=eq.true' : 'fyrirtaeki_id=is.null&is_duplicate=eq.false';
+  const raw = [];
+  for (let i = 0; i < baseIds.length; i += 200) {
+    raw.push(...await sbGet(`customer_documents?customer_base_id=in.${inList(baseIds.slice(i, i + 200))}&${filt}&select=id,customer_base_id,drive_file_id,doc_type,year,fyrirtaeki_id,is_duplicate,reviewed,notes,doc_date,amount,invoice_number`));
+  }
+
+  const docs = raw.map(d => {
+    const seg = String(d.notes || '').split(' · ');
+    const site = (seg[1] && !/^(úttektarsk|reikningur|kt\b|R-|RESOLVE)/i.test(seg[1])) ? seg[1] : '';
+    const filename = (seg[0] || '(óþekkt skrá)') + (site ? ' — ' + site : '');
+    const b = bases[d.customer_base_id] || {};
+    const sites = sitesByBase[d.customer_base_id] || [];
+    const sug = suggestLoc(d.notes || filename, sites);
+    return {
+      id: d.id, base_id: d.customer_base_id, base_nafn: b.nafn || ('#' + d.customer_base_id), kennitala: b.kennitala || '',
+      multi_site: sites.length > 1, sites,
+      drive_file_id: d.drive_file_id || null,
+      view_url: d.drive_file_id ? `https://drive.google.com/file/d/${d.drive_file_id}/view` : null,
+      doc_type: d.doc_type, year: d.year, fyrirtaeki_id: d.fyrirtaeki_id,
+      is_duplicate: !!d.is_duplicate, reviewed: !!d.reviewed,
+      invoice_number: d.invoice_number || null, amount: d.amount || null,
+      filename,
+      suggest_loc_id: sug ? sug.id : null, suggest_conf: sug ? sug.conf : null,
+    };
+  }).sort((a, b) =>
+    String(a.base_nafn).localeCompare(String(b.base_nafn), 'is') ||
+    String(a.doc_type).localeCompare(String(b.doc_type)) ||
+    (a.year || 0) - (b.year || 0));
+
+  return { scope, count: docs.length, docs };
 }
 
 // ── Address suggestion ─────────────────────────────────────────────────────────

@@ -3592,6 +3592,9 @@ function renderBakendi(t){
         <div style="display:flex;gap:9px;flex-wrap:wrap;align-items:center">
           <select id="bk-st-company" style="${inp2};min-width:300px;flex:1"><option value="">— sæki fyrirtæki… —</option></select>
           <button id="bk-st-reload" class="btn">↻ Sækja</button>
+          <span style="width:1px;height:22px;background:#e2e8f0;margin:0 2px"></span>
+          <button id="bk-st-all-unmatched" class="btn" title="Sjá ALLAR ótengdar skýrslur/reikninga á einum stað (þvert á öll fyrirtæki)">🌍 Allar ótengdar</button>
+          <button id="bk-st-all-dups" class="btn" title="Sjá öll skjöl sem eru flögguð sem tvítök — til að yfirfara">📑 Tvítök</button>
           <span id="bk-st-status" style="font-size:12.5px;color:#64748b"></span>
         </div>
         <div id="bk-st-board"></div>
@@ -4091,8 +4094,9 @@ function renderBakendi(t){
     const $st = document.getElementById('bk-st-status');
     const $board = document.getElementById('bk-st-board');
     if (!$co || !$board) return;
-    let LOCS = [], DOCS = [], COMPANY = null;
+    let LOCS = [], DOCS = [], COMPANY = null, GLOBAL = null;
     const esc = s => escapeHtml(String(s == null ? '' : s));
+    const rerender = () => { if (GLOBAL) renderGlobal(); else renderBoard(); };
     const setSt = (m, c) => { $st.textContent = m || ''; $st.style.color = c || '#64748b'; };
 
     async function loadCompanies(){
@@ -4264,9 +4268,72 @@ function renderBakendi(t){
       try {
         const r = await fetch('/api/match-station', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete', id }) });
         const d = await r.json(); if (!r.ok) throw new Error(d.error || r.status);
-        DOCS = DOCS.filter(x => String(x.id) !== String(id)); renderBoard(); setSt('Fjarlægt ✓', '#16a34a');
+        DOCS = DOCS.filter(x => String(x.id) !== String(id)); rerender(); setSt('Fjarlægt ✓', '#16a34a');
       } catch (e) { setSt('Villa: ' + e.message, '#dc2626'); }
     });
+
+    // ── Global worklists: ALL unmatched / ALL dups across every company ────────
+    const THEAD_G = '<thead><tr style="background:#f8fafc;color:#475569;font-size:11px;text-transform:uppercase;letter-spacing:.03em">'
+      + '<th style="padding:7px 8px;text-align:left">PDF</th><th style="padding:7px 8px;text-align:left">Fyrirtæki</th>'
+      + '<th style="padding:7px 8px;text-align:left">Skrá</th><th style="padding:7px 8px">Teg</th><th style="padding:7px 8px;text-align:left">Ár</th>'
+      + '<th style="padding:7px 8px;text-align:left">Staður</th><th style="padding:7px 8px">Tvítak</th><th style="padding:7px 8px">Staðfest</th></tr></thead>';
+    function gLocOptions(d){
+      const sel = d.fyrirtaeki_id || '';
+      return '<option value="">—</option>' + (d.sites || []).map(l =>
+        '<option value="' + l.id + '"' + (String(l.id) === String(sel) ? ' selected' : '') + '>' + esc(l.heimilisfang || l.nafn) + '</option>').join('');
+    }
+    function gRow(d){
+      const icon = d.doc_type === 'reikningur' ? '🧾' : (d.doc_type === 'samningur' ? '📜' : '📄');
+      const cell = 'padding:6px 8px';
+      const warn = d.multi_site ? ' <span title="rekstrarfélag — margir staðir; opnaðu PDF og staðfestu réttan" style="color:#b45309;font-weight:600">⚠ ' + d.sites.length + '</span>' : '';
+      return '<tr data-id="' + d.id + '" style="border-top:1px solid #eef2f7' + (d.reviewed ? ';background:#f0fdf4' : '') + '">'
+        + '<td style="' + cell + ';white-space:nowrap">' + (d.view_url
+            ? '<a href="' + d.view_url + '" target="_blank" rel="noopener" class="btn" style="padding:3px 8px;text-decoration:none">📄 Opna</a>'
+            : '<span style="color:#cbd5e1">engin skrá</span>') + '</td>'
+        + '<td style="' + cell + ';font-size:12px"><div style="font-weight:600;color:#0f172a">' + esc(d.base_nafn) + warn + '</div><div style="color:#94a3b8;font-size:11px;font-family:monospace">' + esc(d.kennitala || '') + '</div></td>'
+        + '<td style="' + cell + ';font-size:12px;color:#334155">' + esc(d.filename) + '</td>'
+        + '<td style="' + cell + ';text-align:center">' + icon + '</td>'
+        + '<td style="' + cell + '"><input class="st-year" value="' + esc(d.year) + '" style="width:56px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:12px"></td>'
+        + '<td style="' + cell + '"><select class="st-loc" style="min-width:170px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:12px">' + gLocOptions(d) + '</select></td>'
+        + '<td style="' + cell + ';text-align:center"><input type="checkbox" class="st-dup"' + (d.is_duplicate ? ' checked' : '') + ' title="Tvítak"></td>'
+        + '<td style="' + cell + ';text-align:center;white-space:nowrap"><input type="checkbox" class="st-rev"' + (d.reviewed ? ' checked' : '') + ' title="Staðfest"> <button class="st-del" type="button" title="Fjarlægja skráningu (PDF helst í Drive)" style="border:0;background:none;cursor:pointer;color:#cbd5e1;font-size:13px;padding:0 2px">🗑</button></td>'
+        + '</tr>';
+    }
+    function renderGlobal(){
+      const isDup = GLOBAL === 'dups';
+      const title = isDup ? '📑 Öll flögguð tvítök' : '🌍 Allar ótengdar skýrslur/reikningar';
+      const note = isDup
+        ? 'Hakaðu AF „Tvítak" til að af-flagga · 🗑 fjarlægir skráninguna (PDF helst í Drive). Ólíkir staðir rekstrarfélags eru EKKI tvítök.'
+        : 'Veldu stað í fellilistanum (aðeins staðir viðkomandi fyrirtækis birtast). ⚠ = rekstrarfélag með marga staði → opnaðu PDF og staðfestu réttan stað.';
+      const head = '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 4px">'
+        + '<strong style="font-size:14px">' + title + '</strong>'
+        + '<span style="font-size:12px;color:#64748b">' + DOCS.length + ' skjöl · þvert á öll fyrirtæki</span>'
+        + '<span style="margin-left:auto"></span>'
+        + '<button id="bk-st-back" class="btn" style="padding:4px 10px;font-size:12px">← Til baka</button></div>'
+        + '<div style="font-size:12px;color:#64748b;margin:0 0 8px">' + note + '</div>';
+      const secG = (t, docs) => !docs.length ? '' :
+        '<div style="margin:16px 0 6px;font-weight:700;font-size:12.5px;color:#334155">' + t + ' (' + docs.length + ')</div>'
+        + '<div style="overflow:auto;border:1px solid #e2e8f0;border-radius:10px"><table style="width:100%;border-collapse:collapse;font-size:13px">'
+        + THEAD_G + '<tbody>' + docs.map(gRow).join('') + '</tbody></table></div>';
+      if (!DOCS.length) { $board.innerHTML = head + '<div style="color:#16a34a;font-size:13px;padding:10px">Ekkert ' + (isDup ? 'flaggað sem tvítak' : 'ótengt') + ' — allt í lagi ✓</div>'; }
+      else {
+        const reports = DOCS.filter(d => d.doc_type !== 'reikningur');
+        const invoices = DOCS.filter(d => d.doc_type === 'reikningur');
+        $board.innerHTML = head + secG('📄 Úttektarskýrslur', reports) + secG('🧾 Reikningar', invoices);
+      }
+      const b = document.getElementById('bk-st-back'); if (b) b.addEventListener('click', () => { GLOBAL = null; $board.innerHTML = ''; setSt(''); if ($co.value) loadBoard($co.value); });
+    }
+    async function loadGlobal(scope){
+      GLOBAL = scope; COMPANY = null; $co.value = '';
+      setSt('Sæki ' + (scope === 'dups' ? 'tvítök' : 'ótengd') + '…'); $board.innerHTML = '<div style="color:#64748b;font-size:13px;padding:10px">…</div>';
+      try {
+        const r = await fetch('/api/match-station?scope=' + scope);
+        const d = await r.json(); if (!r.ok) throw new Error(d.error || r.status);
+        DOCS = d.docs || []; renderGlobal();
+        setSt(d.count + ' skjöl', '#16a34a');
+      } catch (e) { setSt('Villa: ' + e.message, '#dc2626'); $board.innerHTML = ''; }
+    }
+
     async function addSite(){
       if (!COMPANY) return;
       const nafn = prompt('Nafn nýs staðar (t.d. „Pizzan Hverafold"):'); if (!nafn) return;
@@ -4280,8 +4347,10 @@ function renderBakendi(t){
       } catch (e) { setSt('Villa: ' + e.message, '#dc2626'); }
     }
 
-    $co.addEventListener('change', () => loadBoard($co.value));
-    $reload.addEventListener('click', () => $co.value ? loadBoard($co.value) : loadCompanies());
+    $co.addEventListener('change', () => { GLOBAL = null; loadBoard($co.value); });
+    $reload.addEventListener('click', () => GLOBAL ? loadGlobal(GLOBAL) : ($co.value ? loadBoard($co.value) : loadCompanies()));
+    const $allUn = document.getElementById('bk-st-all-unmatched'); if ($allUn) $allUn.addEventListener('click', () => loadGlobal('unmatched'));
+    const $allDup = document.getElementById('bk-st-all-dups'); if ($allDup) $allDup.addEventListener('click', () => loadGlobal('dups'));
     loadCompanies();
   })();
 
