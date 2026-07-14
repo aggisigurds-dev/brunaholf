@@ -621,3 +621,10 @@
 # Cron syntax: minute hour day month weekday — every 10 min, all day.
 [functions."timavera-maeting"]
   schedule = "*/10 * * * *"
+
+# Nightly (03:00 UTC) append-only backup of the Supabase document PDFs
+# (úttektarskýrslur + reikningar + Efnislisti/Tímaskýrsla) into a Google Drive
+# backup folder — a durable second copy so the docs never live in one unbacked
+# store. Background function (15-min budget) → handles the full backfill.
+[functions."storage-backup-background"]
+  schedule = "0 3 * * *"
