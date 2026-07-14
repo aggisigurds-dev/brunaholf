@@ -322,21 +322,29 @@ exports.handler = async (event) => {
 
       let applied = 0, applyErrors = [];
       if (apply) {
+        // Tvær skrár eru „sama skýrslan" ef heiti stemmir eftir að afrit-viðskeyti
+        // („(1)"), .pdf og tákn eru fjarlægð → afrit (Fornhagi…(1) vs …(2)) teljast
+        // EKKI sem tvíræðni, aðeins ÖNNUR skýrsla (annað heimilisfang/ár) gerir það.
+        const normRep = (s) => fold(s).replace(/\(\d+\)/g, '').replace(/\.pdf$/, '').replace(/[^a-z0-9]/g, '');
         for (const r of results) {
           const best = r.candidates[0];
           if (!best) continue;
-          // HÁ-öryggis regla: kt+ár (score≥5) OG einkvæmt (næsti frambjóðandi lægri).
-          // Fjölstaða-kt krefst þess að heimilisfang sé með í skorinu.
-          const second = r.candidates[1];
-          const unique = !second || second.score < best.score;
+          const rivals = r.candidates.filter((c, i) => i > 0 && c.score >= best.score && normRep(c.name) !== normRep(best.name));
+          const unique = rivals.length === 0;
           // Öruggt að endurtengja: (a) KT passar (aldrei rangt fyrirtæki), (b) OG
           // ár passar EÐA skráin er án árs í heiti (þessar týndu skýrslur eru einmitt
           // án dags — árs-krafa myndi endurheimta ~0), (c) OG einkvæmt (næsti lægri),
           // (d) OG fjölstaða-öruggt: rekstrarfélög krefjast heimilisfangs-match.
           // UNIQUE-þvingun ver gegn tvítengingu ef tvær raðir stefna á sömu skrá.
-          const strong = best.why.includes('kt') && (best.why.includes('ár') || best.noYear);
+          // Þessar skrár bera oftast EKKI kt (mangl. heiti) → tvær öruggar leiðir:
+          //   (A) kt-match + (ár EÐA án-árs)  — réttur kúnni, rétt ár/óþekkt ár
+          //   (B) ÁR-match + HEIMILISFANGS-match — réttur staður + rétt ár (nær
+          //       fjölstaða-öruggt í eðli sínu; útilokar árs-víxl eins og Kríuás).
+          const byKt = best.why.includes('kt') && (best.why.includes('ár') || best.noYear);
+          const byAddrYear = best.why.includes('ár') && best.why.includes('heimilisfang');
+          const strong = byKt || byAddrYear;
           const multiOk = !r.multiSite || best.why.includes('heimilisfang');
-          if (strong && unique && multiOk && best.score >= 3) {
+          if (strong && unique && multiOk) {
             try { await patchDoc(r.id, { drive_file_id: best.id, is_duplicate: false }); applied++; r.applied = best.id; }
             catch (e) { const m = String(e.message || e); if (/duplicate key|unique/i.test(m)) r.skip = 'tvítak'; else applyErrors.push({ id: r.id, err: m.slice(0, 100) }); }
           }
