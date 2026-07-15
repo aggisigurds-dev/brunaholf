@@ -22,6 +22,7 @@
 
 const pdf = require('pdf-parse');
 const { freshAccessToken, json, cors } = require('./_google');
+const { sitesForBase, resolveSite, siteWriteAllowed } = require('./_spine');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -259,15 +260,26 @@ async function handleFile(token, f, dest, opts) {
     const multiSite = siteCount > 1;
     if (!multiSite && base && await reportKnown(base.id, year)) { if (!opts.dry) await moveFile(token, f.id, dest.dupes, from, null); return { name: f.name, action: 'dupes', reason: 'skýrsla þegar til', year }; }
     const site = multiSite ? siteFrom(text) : '';
+    // Tengireglan (_spine): staðurinn (fyrirtaeki_id) AÐEINS með sönnun — #id-stimpill
+    // í gamla nafninu / einn lifandi staður / heimilisfang (nafn eða PDF-textinn).
+    let siteRow = null;
+    if (base) { try { siteRow = resolveSite(f.name, await sitesForBase(base.id), site || null); } catch (_) {} }
     // If we can't tell the sites apart (multi-site but no address parsed), keep the
     // ORIGINAL name rather than rename to a colliding "<co> - kt - úttektarskýrsla -
     // year" that would later look like a dup.
-    const nn = (opts.rename && !(multiSite && !site)) ? nameReport(coName, ktd, year, site) : null;
+    let nn = (opts.rename && !(multiSite && !site)) ? nameReport(coName, ktd, year, site) : null;
+    // #id-stimpillinn í nýja nafnið þegar staðurinn er þekktur — beini lykillinn
+    // sem allir framtíðar-lesarar tengja á án gisks.
+    if (nn && siteRow) nn = nn.replace(/\.pdf$/i, '') + ' - #' + siteRow.id + '.pdf';
     if (!opts.dry) {
       await moveFile(token, f.id, dest.reports, from, nn);
-      try { await upsertDoc({ customer_base_id: base ? base.id : null, doc_type: 'uttektarskyrsla', year: year || null, drive_file_id: f.id, source: 'gdrive', found_by: 'drive-sort', invoice_number: null, doc_date: null, customer_name: coName || null, notes: (coName || '') + (site ? (' · ' + site) : '') + ' · úttektarskýrsla' + (year ? (' ' + year) : '') + (kt ? (' · kt ' + ktd) : '') + (base ? '' : ' · RESOLVE') }); } catch (_) {}
+      try {
+        const docRow = { customer_base_id: base ? base.id : null, doc_type: 'uttektarskyrsla', year: year || null, drive_file_id: f.id, source: 'gdrive', found_by: 'drive-sort', invoice_number: null, doc_date: null, customer_name: coName || null, notes: (coName || '') + (site ? (' · ' + site) : '') + ' · úttektarskýrsla' + (year ? (' ' + year) : '') + (kt ? (' · kt ' + ktd) : '') + (base ? '' : ' · RESOLVE') };
+        if (siteRow && await siteWriteAllowed(f.id, siteRow)) docRow.fyrirtaeki_id = siteRow.id;
+        await upsertDoc(docRow);
+      } catch (_) {}
     }
-    return { name: f.name, action: 'reports', newName: nn, year, base_id: base ? base.id : null, base_name: base ? base.nafn : null, multi_site: multiSite };
+    return { name: f.name, action: 'reports', newName: nn, year, base_id: base ? base.id : null, base_name: base ? base.nafn : null, site_id: siteRow ? siteRow.id : null, multi_site: multiSite };
   }
 
   // reikningur
@@ -275,11 +287,19 @@ async function handleFile(token, f, dest, opts) {
     if (await invoiceKnown(inv)) { if (!opts.dry) await moveFile(token, f.id, dest.dupes, from, null); return { name: f.name, action: 'dupes', reason: 'reikningur þegar til', invoice_number: inv }; }
     const tot = totalFrom(text);
     const nn = opts.rename ? nameInvoice(coName, ktd, inv, year, tot) : null;
+    // Tengireglan (_spine): reikningar líka á STAÐINN þegar sönnun er til
+    // (stimpill / einn lifandi staður) — nafnasniðið helst óbreytt (R-nr er lykillinn).
+    let siteRow = null;
+    if (base) { try { siteRow = resolveSite(f.name, await sitesForBase(base.id)); } catch (_) {} }
     if (!opts.dry) {
       await moveFile(token, f.id, dest.master, from, nn);
-      try { await upsertDoc({ customer_base_id: base ? base.id : null, doc_type: 'reikningur', year: year || null, drive_file_id: f.id, source: 'gdrive', found_by: 'drive-sort', amount: tot || null, invoice_number: inv, doc_date: null, customer_name: coName || null, notes: (coName || '') + ' · ' + inv + (kt ? (' · kt ' + ktd) : '') + (base ? '' : ' · RESOLVE') }); } catch (_) {}
+      try {
+        const docRow = { customer_base_id: base ? base.id : null, doc_type: 'reikningur', year: year || null, drive_file_id: f.id, source: 'gdrive', found_by: 'drive-sort', amount: tot || null, invoice_number: inv, doc_date: null, customer_name: coName || null, notes: (coName || '') + ' · ' + inv + (kt ? (' · kt ' + ktd) : '') + (base ? '' : ' · RESOLVE') };
+        if (siteRow && await siteWriteAllowed(f.id, siteRow)) docRow.fyrirtaeki_id = siteRow.id;
+        await upsertDoc(docRow);
+      } catch (_) {}
     }
-    return { name: f.name, action: 'master', newName: nn, invoice_number: inv, base_id: base ? base.id : null, base_name: base ? base.nafn : null };
+    return { name: f.name, action: 'master', newName: nn, invoice_number: inv, base_id: base ? base.id : null, base_name: base ? base.nafn : null, site_id: siteRow ? siteRow.id : null };
   }
 
   // Slökkvitæki-ish but neither a clear invoice nor report → óflokkað for review

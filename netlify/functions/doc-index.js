@@ -14,6 +14,7 @@
 
 const pdf = require('pdf-parse');
 const { freshAccessToken, json, cors } = require('./_google');
+const { sitesByBases, sitesForBase, resolveSite, siteWriteAllowed } = require('./_spine');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -44,7 +45,7 @@ exports.handler = async (event) => {
         let done = 0, errors = 0;
         for (const it of items) {
           if (!it || !it.drive_file_id || !it.base_id) continue;
-          try { await updateDocLink(it.drive_file_id, it.base_id, { doc_type: it.doc_type, year: it.year, customer_name: it.toName }); done++; }
+          try { await updateDocLink(it.drive_file_id, it.base_id, { doc_type: it.doc_type, year: it.year, customer_name: it.toName, site_id: it.site_id }); done++; }
           catch (e) { errors++; }
         }
         return json(200, { done, errors });
@@ -101,12 +102,18 @@ exports.handler = async (event) => {
         const amount = doc_type === 'reikningur' ? extractAmount(norm) : null;
         const base = await matchBase(kt);
         const company = companyName(f.name, norm);
-        const rec = { file: f.name, drive_file_id: f.id, kt: dash(kt), company, doc_type, year, base_id: base ? base.id : null, base_name: base ? base.nafn : null };
+        // Tengireglan (_spine): staðurinn AÐEINS með sönnun (stimpill/einn staður/
+        // heimilisfang í skráarheiti) — annars fyrirtaeki_id ósnert, aldrei giskað.
+        let site = null;
+        if (base) { try { site = resolveSite(f.name, await sitesForBase(base.id)); } catch (_) {} }
+        const rec = { file: f.name, drive_file_id: f.id, kt: dash(kt), company, doc_type, year, base_id: base ? base.id : null, base_name: base ? base.nafn : null, site_id: site ? site.id : null, site_name: site ? site.nafn : null };
         if (!base) stats.unmatched.push(rec);
         if (!dry) {
-          if (existing) { if (base) await updateDocLink(f.id, base.id, { doc_type, year, customer_name: company }); }  // backlog row now resolvable
+          const siteOk = site && await siteWriteAllowed(f.id, site);
+          if (existing) { if (base) await updateDocLink(f.id, base.id, { doc_type, year, customer_name: company, site_id: siteOk ? site.id : null }); }  // backlog row now resolvable
           else await insertDoc({
             customer_base_id: base ? base.id : null,
+            fyrirtaeki_id: siteOk ? site.id : null,
             doc_type, year, drive_file_id: f.id, source: 'gdrive', found_by: 'code', amount,
             notes: f.name.replace(/\.pdf$/i, '') + ' · kt ' + dash(kt) + (base ? '' : ' · RESOLVE'),
           });
@@ -230,15 +237,20 @@ function companyName(name, text) {
   return '';
 }
 async function updateDocLink(fid, baseId, meta) {
+  // site_id (fyrirtaeki_id) fylgir með þegar staðurinn er ÓTVÍRÆÐUR (stimpill/
+  // heimilisfang/einn staður) — annars er hann EKKI snertur (aldrei giskað,
+  // aldrei skrifað yfir rétta stað-tengingu með engu).
+  const patch = { customer_base_id: baseId, found_by: 'manual' };
+  if (meta && meta.site_id != null) patch.fyrirtaeki_id = meta.site_id;
   const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?drive_file_id=eq.${encodeURIComponent(fid)}`, {
     method: 'PATCH', headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }),
-    body: JSON.stringify({ customer_base_id: baseId, found_by: 'manual' }),
+    body: JSON.stringify(patch),
   });
   const rows = await r.json().catch(() => []);
   if (!r.ok) throw new Error('update ' + r.status + ' ' + JSON.stringify(rows).slice(0, 160));
   if (Array.isArray(rows) && rows.length) return;            // existing row updated
   if (meta && meta.doc_type) {                               // only dry-read so far → insert one
-    await insertDoc({ customer_base_id: baseId, doc_type: meta.doc_type, year: meta.year || null, drive_file_id: fid, source: 'gdrive', found_by: 'manual', notes: (meta.customer_name || '') + ' · handvirkt' });
+    await insertDoc({ customer_base_id: baseId, fyrirtaeki_id: (meta.site_id != null ? meta.site_id : null), doc_type: meta.doc_type, year: meta.year || null, drive_file_id: fid, source: 'gdrive', found_by: 'manual', notes: (meta.customer_name || '') + ' · handvirkt' });
   }
 }
 async function createCompany(body) {
@@ -270,10 +282,16 @@ async function matchBase(kt) {
 }
 
 // ── Audit: compare each file's filename-kt to the company it's actually linked to ──
+// Staðar-upplausn (2026-07-15): kt ein dugar EKKI fyrir rekstrarfélög — tengireglan
+// (stimpill → einn staður → heimilisfang → annars ekkert) lifir nú í ./_spine.js
+// og er notuð af öllum tengjurum (doc-index, reikningar-read, samningar-read,
+// drive-sort). Aldrei giskað.
+
 async function auditLinks(folder, token) {
   const files = await listPdfs(folder, token);
   const rows = files.map(f => { const k = customerKtFromName(f.name); return { fid: f.id, name: f.name, kt: k ? dash(k) : null }; });
   const ktToBase = await basesByKts([...new Set(rows.map(r => r.kt).filter(Boolean))]);
+  const sitesMap = await sitesByBases(Object.values(ktToBase).map(b => b.id));
   const fidToDoc = await docsByFids(rows.map(r => r.fid));
   const idToName = await namesByIds([...new Set(Object.values(fidToDoc).map(d => d.customer_base_id).filter(x => x != null).map(String))]);
   const out = { total: files.length, correct: 0, noKt: 0, mismatched: [], toLink: [], noBase: [], list: [] };
@@ -285,9 +303,11 @@ async function auditLinks(folder, token) {
     if (!r.kt) { out.noKt++; out.list.push(Object.assign(base, { status: 'nokt' })); continue; }
     const correct = ktToBase[r.kt];
     if (!correct) { out.noBase.push({ file: r.name, kt: r.kt }); out.list.push(Object.assign(base, { status: 'nobase' })); continue; }
-    if (!doc) { out.toLink.push(Object.assign({ file: r.name, drive_file_id: r.fid, toName: correct.nafn, base_id: correct.id }, meta)); out.list.push(Object.assign(base, { status: 'unlinked', correctBaseId: correct.id, correctName: correct.nafn })); continue; }
-    if (String(doc.customer_base_id) === String(correct.id)) { out.correct++; out.list.push(Object.assign(base, { status: 'correct', correctBaseId: correct.id, correctName: correct.nafn })); continue; }
-    out.mismatched.push(Object.assign({ file: r.name, drive_file_id: r.fid, fromName: curName || '(ótengt)', toName: correct.nafn, base_id: correct.id }, meta));
+    const site = resolveSite(r.name, sitesMap[String(correct.id)]);
+    const siteMeta = site ? { site_id: site.id, site_name: site.nafn } : {};
+    if (!doc) { out.toLink.push(Object.assign({ file: r.name, drive_file_id: r.fid, toName: correct.nafn, base_id: correct.id }, meta, siteMeta)); out.list.push(Object.assign(base, { status: 'unlinked', correctBaseId: correct.id, correctName: correct.nafn }, siteMeta)); continue; }
+    if (String(doc.customer_base_id) === String(correct.id)) { out.correct++; out.list.push(Object.assign(base, { status: 'correct', correctBaseId: correct.id, correctName: correct.nafn }, siteMeta)); continue; }
+    out.mismatched.push(Object.assign({ file: r.name, drive_file_id: r.fid, fromName: curName || '(ótengt)', toName: correct.nafn, base_id: correct.id }, meta, siteMeta));
     out.list.push(Object.assign(base, { status: 'wrong', correctBaseId: correct.id, correctName: correct.nafn }));
   }
   return out;

@@ -69,6 +69,22 @@ spine — one canonical customer, then its sites, then its equipment:
   on the company profile.
 - **Conventions:** walk-in / anonymous sale = kt `999999-9999`.
 
+**Tengireglan (2026-07-15, `netlify/functions/_spine.js`)** — EIN sameiginleg regla
+fyrir hvernig skjal tengist hryggnum, notuð af öllum tengjurum (doc-index,
+reikningar-read, samningar-read, drive-sort): `customer_base_id` kemur úr
+kennitölunni; `fyrirtaeki_id` (STAÐURINN — það sem skiptir máli fyrir
+rekstrarfélög eins og Center Hótel) AÐEINS með sönnun, í röð: (1) „` - #<id>`"
+stimpill í skráarheiti → sá staður (eina sönnunin sem má yfirskrifa fyrirliggjandi
+fyrirtaeki_id), (2) félagið á nákvæmlega EINN lifandi stað, (3) heimilisfang í
+skráarheiti (heild + per „ - " bút) eða PDF-innihaldi passar við nákvæmlega EINN
+lifandi stað (`addrKeyLoose`: götu-forskeyti + húsnúmer; tveir staðir á sama
+lykli → óvíst), (4) annars ÓSNERT — aldrei giskað, aldrei núllað.
+API: `siteStampFromName · addrKeyLoose · sitesByBases · sitesForBase ·
+resolveSite(fileName, sites, extraAddr) → {id,nafn,via:'stamp'|'single'|'addr'}|null ·
+siteWriteAllowed(drive_file_id, site)` (varðar merge-upsert gegn yfirskrift).
+Framleiðendahliðin: `uttekt-rename` og `drive-sort` (skýrslur) skeyta #id-stimplinum
+aftan á kanónísk nöfn þegar staðurinn er þekktur, svo framtíðar-lesarar tengja beint.
+
 **🗺️ Kerfis-kort** (`kerfiskort.html` at `brunaholf.netlify.app/kerfiskort.html`
 + hero card at the top of Bakendi) is the **live single-page map of the whole
 customer DB** — one row per customer with kt · service · rekstrarfélag · sites ·
@@ -273,7 +289,9 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   has an **editable customer match** (breyta/✗ + „+ stofna" — `POST
   {action:'set-link'|'create'}`), a clean-text Drive fallback for PDFs pdf-parse
   can't read, and re-surfaces already-indexed-but-unmatched (RESOLVE) docs so they
-  can be fixed (only already-*matched* docs are skipped on re-run).
+  can be fixed (only already-*matched* docs are skipped on re-run). **Tengist líka
+  á STAÐINN** (2026-07-15): aðal-lykkjan, audit-relink og set-link nota
+  `_spine.resolveSite` — `fyrirtaeki_id` fylgir aðeins með sönnun (sjá Tengireglan).
 - `uttekt-rename.js` — Bakendi **Endurnefna úttektarskýrslur** (`/api/uttekt-rename`):
   deep-scans report PDFs (both layouts — slökkvitæki úttektarskýrsla + brunaviðvörunar-
   kerfi viðtökupróf/árleg prófun), renames in Drive to `Fyrirtæki - Kennitala -
@@ -379,6 +397,9 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   (`POST {folder,rows}`) find-or-creates ONE living summary Sheet
   ("Reikningar – gagnayfirlit") **inside the folder** and overwrites it — the
   database-summary view. UI: 🔍 Lesa / 📊 Skrifa í Google Sheet / ▶️ Skrá í gagnagrunn.
+  **Tengist líka á STAÐINN** (2026-07-15): `_spine.resolveSite(f.name, sites, address)`
+  — PDF-heimilisfangið er líka sönnun; `fyrirtaeki_id` fer aðeins í upsertið gegnum
+  `siteWriteAllowed` (yfirskrifar aldrei réttan stað). Sama gildir um `samningar-read.js`.
 - `redder-read.js` — **Redder-lesari** (Efniskostnaður tab): the CLOUD twin of
   `luna-bridge/redder.js`. `GET /api/redder-read?folder&dry&limit=6&offset` reads
   the Redder supplier-invoice PDFs in the Drive folder
@@ -526,6 +547,11 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   — files anywhere under `src` get sorted (each keeps its own `parents`, so a move
   lifts it straight out of its subfolder); `done` covers the whole tree. `recurse=0`
   restores flat, direct-children-only behaviour. Folders themselves are never moved.
+  **Tengist líka á STAÐINN** (2026-07-15): báðar greinar (skýrsla + reikningur) nota
+  `_spine.resolveSite` (skýrslur fá `siteFrom(text)` sem auka-sönnun) og skrifa
+  `fyrirtaeki_id` aðeins gegnum `siteWriteAllowed`; endurnefnd skýrsla með þekktan
+  stað fær ` - #<fyrirtaeki_id>` stimpilinn aftast (reikninga-nafnasniðið óbreytt —
+  R-nr er lykillinn).
 
 - `drive-count.js` — **Bakendi „📊 Skjalatalning"** (`/api/drive-count`): read-only
   file counter for the reikningar (master) + skýrslur Drive folders, broken down
