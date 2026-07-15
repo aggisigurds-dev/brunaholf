@@ -62,6 +62,13 @@
 [functions."timavera-pull"]
   schedule = "15 */2 * * *"
 
+# Payday reikningar → invoices (Brunahólf AR). Tvisvar á dag (07/15). Upsert á
+# (tilvisun, source='payday') með dedupe — sama lykill og xlsx-leiðin, engin tvítök.
+# Staðfest 2026-07-15: probe OK, dry mappar 345 raðir rétt (kt/hofudstoll/upphaed_total/
+# gjalddagi/status, kredit meðhöndlað). Heldur Skuldunautum/Krófum ferskum án handvirkni.
+[functions."payday-pull"]
+  schedule = "0 7,15 * * *"
+
 # Nightly (03:00 UTC) append-only backup of the Supabase document PDFs
 # (úttektarskýrslur + reikningar + Efnislisti/Tímaskýrsla) into a Google Drive
 # backup folder — a durable second copy so the docs never live in one unbacked
