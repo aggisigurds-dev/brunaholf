@@ -84,6 +84,17 @@ resolveSite(fileName, sites, extraAddr) → {id,nafn,via:'stamp'|'single'|'addr'
 siteWriteAllowed(drive_file_id, site)` (varðar merge-upsert gegn yfirskrift).
 Framleiðendahliðin: `uttekt-rename` og `drive-sort` (skýrslur) skeyta #id-stimplinum
 aftan á kanónísk nöfn þegar staðurinn er þekktur, svo framtíðar-lesarar tengja beint.
+**Nafnavenja staða (Agnar 2026-07-15) + nafna-sönnun `via:'name'`:** staðanöfn
+fylgja „Rekstrarfélag - Sérkenni" („Aðalskoðun - Skeifan", „Heimaleiga -
+Laugavegi 18", „Center Hótel - Arnarhvoll") — „ - " á eftir félagsnafni merkir
+að næsti bútur sé AÐGREINIR staðarins (útibú/undirfang) og skal reyndur sem
+staðar-sönnun úr skráarheiti/innihaldi. Endandi „ehf."/„hf." = eins-staðar félag
+eða höfuðstöð rekstrarfélagsins sjálfs — EKKI útibú (fær engan nafna-lykil).
+Samanburður er fold-aður (án broddstafa/hástafa/greinarmerkja) svo „Center Hótel
+Arnarhvoll" og „Center Hótel - Arnarhvoll" eru jafngild. Útfært í
+`felag-endurlestur.js` (`resolveByName`: sameiginlegt forskeyti + ehf/hf klippt,
+HQ-lykill sem er forskeyti að útibús-lykli felldur; nákvæmlega EITT aðgreinandi
+nafn í skjali = sönnun, 0 eða 2+ = ekki snert).
 
 **🗺️ Kerfis-kort** (`kerfiskort.html` at `brunaholf.netlify.app/kerfiskort.html`
 + hero card at the top of Bakendi) is the **live single-page map of the whole

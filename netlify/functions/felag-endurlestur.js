@@ -145,17 +145,32 @@ function extractAddress(text){
 }
 
 // ── Nafna-sönnun (via:'name') ─────────────────────────────────────────────────
-// Fold: án broddstafa/hástafa/greinarmerkja. Sameiginlegt orða-forskeyti allra
-// staða-nafna er klippt („Center Hótel Plaza" → „Plaza") svo AÐGREINANDI hlutinn
-// verði að finnast; nákvæmlega EITT nafn í skráarheiti/texta = sönnun.
+// Nafnavenja staða (Agnar 2026-07-15): „Rekstrarfélag - Sérkenni" — það sem
+// kemur á eftir „ - " á eftir félagsnafninu er AÐGREINIRINN (útibú/undirfang),
+// t.d. „Aðalskoðun - Skeifan", „Center Hótel - Arnarhvoll". fold() þurrkar
+// greinarmerki svo „Center Hótel Arnarhvoll" (án striks) og „… - Arnarhvoll"
+// eru jafngild. Endandi „ehf."/„hf." = eins-staðar félag eða höfuðstöð
+// rekstrarfélagsins sjálfs — EKKI útibú → ehf/hf-tóken klippt og staður án
+// aðgreinis fær engan nafna-lykil (tengist aldrei á „ehf"). Sameiginlegt
+// orða-forskeyti allra staða-nafna er klippt („Center Hótel Plaza" → „plaza")
+// svo AÐGREINANDI hlutinn verði að finnast; nákvæmlega EITT nafn í
+// skráarheiti/texta = sönnun.
 function fold(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim(); }
+function siteWords(nafn){
+  const w = fold(nafn).split(' ').filter(Boolean);
+  while (w.length && /^(ehf|hf|slf|sf)$/.test(w[w.length-1])) w.pop();   // ehf/hf = HQ-merki, ekki aðgreinir
+  return w;
+}
 function distinctiveNames(sites){
-  const words = sites.map(s => fold(s.nafn).split(' ').filter(Boolean));
+  const words = sites.map(s => siteWords(s.nafn));
   let prefix = 0;
   if (sites.length > 1){
     while (words.every(w => w.length > prefix + 1 && w[prefix] === words[0][prefix])) prefix++;
   }
-  return sites.map((s, i) => ({ site: s, key: words[i].slice(prefix).join(' ').trim() })).filter(x => x.key.length >= 3);
+  const out = sites.map((s, i) => ({ site: s, key: words[i].slice(prefix).join(' ').trim() })).filter(x => x.key.length >= 3);
+  // HQ-röð sem heitir bara félagsnafninu (lykill hennar er forskeyti að lykli
+  // annars staðar) myndi passa við ÖLL skjöl félagsins → hún fær engan lykil.
+  return out.filter(x => !out.some(y => y !== x && y.key.startsWith(x.key + ' ')));
 }
 function resolveByName(fileName, text, sites){
   if (!Array.isArray(sites) || sites.length < 2) return null;   // 1 staður → 'single' sér um það
