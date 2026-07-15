@@ -281,7 +281,14 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   extracted from content with the company-prefix stripped + city abbrevs expanded
   e.g. Grb→Garðabær — multi-site companies like Aðalskoðun stay distinct), excludes
   stray reikningar, takes the real `Dags` date (not „Næsta
-  skoðun"), `?dedup=1` finds dupes. Twin of `reikningar-rename.js` (invoices →
+  skoðun"), `?dedup=1` finds dupes. **Seigla (2026-07-15):** all Drive calls go
+  through `driveFetch` (backoff-retry á 403/429/5xx), canonical names
+  (fyrirtæki+kt+ár í nafni) are SKIPPED without download/OCR, `?apply=1` renames
+  each ready file INLINE per batch (nothing lost on a crash; default limit 2,
+  UI uses limit 1) and the UI persists progress in
+  `localStorage.bh_uttekt_progress` so a re-run RESUMES from the saved offset
+  (live-log + counter instead of one giant table; manual/villur rows kept for
+  review). Twin of `reikningar-rename.js` (invoices →
   `Fyrirtæki - kt - R nr - dags - upphæð`, with md5 **and** invoice-number dedup).
 - `allt-sheet.js` — builds a sortable "whole database" Google Sheet from the
   úttektarskýrslu *filenames* in a folder (parses `Fyrirtæki - Kennitala -
@@ -434,8 +441,14 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   stað í þjónustu: base/félag/kt/staður/heimilisfang/`sites_i_felagi`/
   `report_year`/`stada`, þar sem `stada ∈ engin_skyrsla·olesanleg·gomul·ok`).
   GET skilar `{counts, rows}` — rows = allar EKKI-ok raðir raðaðar engin_skyrsla
-  → olesanleg → gomul, fjölstaða-félög fyrst. UI: Bakendi-spjaldið „🚨
-  Skýrslu-vakt" (4 talnapillur + tafla, rekstrarfélög feitletruð með 📍N-badge,
+  → olesanleg → gomul, rekstrarfélags-hópar fyrst. **Rekstrarfélags-hópun
+  (2026-07-15):** sýnin ber líka `rekstrarfelag` (merkið á `customers_base` —
+  Eignaumsjón spannar 59+ staði þvert á margar kt) og `felag_stadir` (fjöldi
+  þjónustu-staða yfir allt MERKIÐ þegar það er sett, annars per base). Hópur í
+  endapunktinum = rekstrarfélags-merki EÐA `sites_i_felagi>1`; hópum raðað eftir
+  stærð (`felag_stadir` desc). UI: Bakendi-spjaldið „🚨 Skýrslu-vakt" (4
+  talnapillur + tafla með **hópa-hausum per rekstrarfélag** — merki + 📍N staðir
+  + hve marga vantar — staðir inndregnir undir, stakir staðir á eftir,
   `wireSkyrsluVakt`) + viðvörunarlína á 🌅 Dagurinn (birtist AÐEINS þegar
   engin_skyrsla+olesanleg > 0, smellur opnar Bakendi). Lagfærist í Skýrslu-stöð.
 - `kt-samraeming.js` — **Bakendi „🧩 Kt-samræming"** (`/api/kt-samraeming`): closes the

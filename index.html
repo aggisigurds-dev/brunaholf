@@ -5138,19 +5138,38 @@ function renderBakendi(t){
       const rows = d.rows || [];
       if (!rows.length) { $body.innerHTML = '<span style="font-size:13px;color:#16a34a;font-weight:600">Allir staðir með gilda skýrslu. 🎉</span>'; return; }
       const td = 'padding:6px 10px;color:#475569';
+      // Hópa eftir rekstrarfélags-MERKI (Eignaumsjón o.fl. þvert á kt) eða
+      // fjölstaða-base; stakir staðir koma á eftir hópunum.
+      const isGrp = r => !!(r.rekstrarfelag && String(r.rekstrarfelag).trim()) || (r.sites_i_felagi || 0) > 1;
+      const gkey = r => (r.rekstrarfelag && String(r.rekstrarfelag).trim()) || String(r.felag || '');
+      const groups = [], gidx = {}, singles = [];
+      rows.forEach(r => {
+        if (!isGrp(r)) { singles.push(r); return; }
+        const k = gkey(r);
+        if (!(k in gidx)) { gidx[k] = groups.length; groups.push({ k, total: r.felag_stadir || r.sites_i_felagi || 0, rows: [] }); }
+        groups[gidx[k]].rows.push(r);
+      });
+      const rowHtml = (r, indent) => {
+        const st = STADA[r.stada] || { lbl: esc(r.stada), bg: '#f1f5f9', fg: '#475569' };
+        return '<tr style="border-top:1px solid #f1f5f9">'
+          + '<td style="padding:6px 10px 6px ' + (indent ? '26px' : '10px') + ';color:#0f172a;font-weight:500">' + esc(r.felag) + '</td>'
+          + '<td style="' + td + '">' + esc(r.site_nafn) + '</td>'
+          + '<td style="' + td + '">' + esc(r.heimilisfang) + '</td>'
+          + '<td style="padding:6px 10px;white-space:nowrap"><span style="background:' + st.bg + ';color:' + st.fg + ';font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px">' + st.lbl + '</span></td>'
+          + '<td style="' + td + '">' + (r.report_year || '—') + '</td></tr>';
+      };
+      let bodyH = '';
+      groups.forEach(g => {
+        bodyH += '<tr style="border-top:1px solid #e2e8f0;background:#fffbeb"><td colspan="5" style="padding:7px 10px;color:#0f172a;font-weight:800">'
+          + esc(g.k)
+          + ' <span style="background:#fde68a;color:#7c2d12;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:6px;white-space:nowrap">📍' + g.total + ' staðir</span>'
+          + ' <span style="color:#b45309;font-weight:600;font-size:11.5px">· ' + g.rows.length + ' vantar/gamalt</span></td></tr>'
+          + g.rows.map(r => rowHtml(r, true)).join('');
+      });
+      bodyH += singles.map(r => rowHtml(r, false)).join('');
       $body.innerHTML = '<div style="overflow-x:auto;border:1px solid #e2e8f0;border-radius:12px;max-height:440px;overflow-y:auto"><table style="width:100%;border-collapse:collapse;font-size:12.5px;min-width:640px">'
         + '<thead><tr>' + ['Félag','Staður','Heimilisfang','Staða','Ár'].map(x => '<th style="text-align:left;background:#f8fafc;color:#475569;padding:7px 10px;font-size:11px;text-transform:uppercase;white-space:nowrap;position:sticky;top:0">' + x + '</th>').join('') + '</tr></thead><tbody>'
-        + rows.map(r => {
-            const multi = (r.sites_i_felagi || 0) > 1;
-            const st = STADA[r.stada] || { lbl: esc(r.stada), bg: '#f1f5f9', fg: '#475569' };
-            return '<tr style="border-top:1px solid #f1f5f9' + (multi ? ';background:#fffbeb' : '') + '">'
-              + '<td style="padding:6px 10px;color:#0f172a;font-weight:' + (multi ? '800' : '500') + '">' + esc(r.felag)
-              + (multi ? ' <span style="background:#fde68a;color:#7c2d12;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:6px;white-space:nowrap">📍' + r.sites_i_felagi + ' staðir</span>' : '') + '</td>'
-              + '<td style="' + td + '">' + esc(r.site_nafn) + '</td>'
-              + '<td style="' + td + '">' + esc(r.heimilisfang) + '</td>'
-              + '<td style="padding:6px 10px;white-space:nowrap"><span style="background:' + st.bg + ';color:' + st.fg + ';font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px">' + st.lbl + '</span></td>'
-              + '<td style="' + td + '">' + (r.report_year || '—') + '</td></tr>';
-          }).join('')
+        + bodyH
         + '</tbody></table></div>';
     }
     async function load(force){
@@ -5744,35 +5763,65 @@ function renderBakendi(t){
     const f = ($urFolder.value || '').trim();
     if (!f) { $urResults.innerHTML = '<div class="empty">Vantar möppu-id.</div>'; return; }
     $urScan.disabled = $urApply.disabled = true;
-    urRows = [];
-    $urResults.innerHTML = '<div class="empty">Djúpskanna úttektarskýrslur í lotum (hægara — les innihald hvers PDF)…</div>';
-    const acc = { total: 0, scanned: 0, ready: 0, manual: 0, errors: 0, skipped: 0 };
-    const LIMIT = 4;
-    let offset = 0, guard = 0;
-    // Per-lotu seigla: ein misheppnuð lota (stórt/þungt PDF sem fer fram úr
-    // 10-sek tímamörkum fallsins, eða net-hiksti) fellir EKKI lengur alla
-    // forskoðunina — reynt tvisvar, svo hoppað yfir þessi ≤4 skjöl og haldið
-    // áfram á enda. Áður aborteraði eitt try/catch utan um alla lykkjuna öllu.
+    urRows = [];   // aðeins manual/villu-raðir fyrir yfirferðartöfluna
+    const PROG_KEY = 'bh_uttekt_progress';
+    const LIMIT = 1;
+    // Endurheimt: sama mappa → haldið áfram frá vistuðu offseti (ekkert endur-OCR-að).
+    const acc = { total: 0, scanned: 0, ready: 0, manual: 0, errors: 0, skipped: 0, renamed: 0 };
+    let offset = 0;
+    try {
+      const saved = JSON.parse(localStorage.getItem(PROG_KEY) || 'null');
+      if (saved && saved.folder === f && typeof saved.offset === 'number') {
+        offset = saved.offset; Object.assign(acc, saved.acc || {});
+      }
+    } catch (_) {}
+    $urResults.innerHTML =
+      '<div id="bk-ur-count" style="font-size:12.5px;font-weight:600;color:#334155;margin:6px 0"></div>'
+      + '<div id="bk-ur-log" style="max-height:260px;overflow:auto;font-size:11.5px;font-family:ui-monospace,monospace;color:#475569;border:1px solid #e2e8f0;border-radius:8px;padding:6px 8px;margin-bottom:8px"></div>'
+      + '<div id="bk-ur-review"></div>';
+    const $log = document.getElementById('bk-ur-log');
+    const $count = document.getElementById('bk-ur-count');
+    const $review = document.getElementById('bk-ur-review');
+    const updCount = () => { $count.textContent = 'Endurnefnt ' + (acc.renamed || 0) + ' · sleppt ' + (acc.skipped || 0) + ' · handvirkt ' + (acc.manual || 0) + ' · villur ' + (acc.errors || 0) + ' — af ' + (acc.total || acc.scanned); };
+    const logLine = (html) => {
+      const div = document.createElement('div'); div.innerHTML = html; $log.appendChild(div);
+      while ($log.children.length > 200) $log.removeChild($log.firstChild);   // ~200 nýjustu línur
+      $log.scrollTop = $log.scrollHeight;
+    };
+    if (offset > 0) logLine('<span style="color:#2563eb">↻ Held áfram frá skrá ' + (offset + 1) + '…</span>');
+    updCount();
+    let guard = 0;
+    // Endurnefnir STRAX á þjóninum (&apply=1) — hver skrá er kláruð um leið og
+    // hún er lesin, svo stopp/frost tapar engu; framvinda vistuð eftir hverja lotu.
     do {
-      $urStatus.textContent = 'Skanna… ' + acc.scanned + (acc.total ? '/' + acc.total : '') + ' skýrslur'
-        + (acc.skipped ? ' · ' + acc.skipped + ' sleppt' : '');
+      $urStatus.textContent = 'Vinn… ' + acc.scanned + (acc.total ? '/' + acc.total : '') + ' skýrslur';
       let d = null;
       for (let attempt = 0; attempt < 2 && !d; attempt++) {
         try {
-          const r = await fetch('/api/uttekt-rename?folder=' + encodeURIComponent(f) + '&limit=' + LIMIT + '&offset=' + offset);
+          const r = await fetch('/api/uttekt-rename?folder=' + encodeURIComponent(f) + '&limit=' + LIMIT + '&offset=' + offset + '&apply=1');
           const j = await r.json();
           if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
           d = j;
-        } catch (e) { if (attempt === 1) acc.skipped += LIMIT; }
+        } catch (e) { if (attempt === 1) { acc.skipped += LIMIT; logLine('<span style="color:#dc2626">✗ lota féll (offset ' + offset + '): ' + escapeHtml(String(e.message || e)) + '</span>'); } }
       }
-      if (!d) { offset += LIMIT; continue; }        // lota féll eftir 2 tilraunir → hoppa yfir hana
-      acc.total = d.total || acc.total; acc.scanned += d.scanned || 0; acc.ready += d.ready || 0; acc.manual += d.manual || 0; acc.errors += d.errors || 0;
-      urRows = urRows.concat(d.rows || []);
-      $urResults.innerHTML = renameResultsHtml(acc, urRows);
+      if (!d) { offset += LIMIT; localStorage.setItem(PROG_KEY, JSON.stringify({ folder: f, offset, acc })); continue; }   // hoppa yfir eftir 2 tilraunir
+      acc.total = d.total || acc.total; acc.scanned += d.scanned || 0; acc.ready += d.ready || 0; acc.manual += d.manual || 0; acc.errors += d.errors || 0; acc.skipped += d.skipped || 0; acc.renamed += d.renamed || 0;
+      (d.rows || []).forEach(row => {
+        if (row.renamed) logLine('<span style="color:#15803d">✓ endurnefnt</span> ' + escapeHtml(row.oldName || '') + ' → <b>' + escapeHtml(row.newName || '') + '</b>');
+        else if (row.status === 'skip') logLine('<span style="color:#94a3b8">– sleppt (þegar rétt nafn)</span> ' + escapeHtml(row.oldName || ''));
+        else if (row.status === 'manual') { urRows.push(row); logLine('<span style="color:#b45309">⚠ handvirkt (' + escapeHtml(row.missing || 'uppl.') + ')</span> ' + escapeHtml(row.oldName || '')); }
+        else if (row.status === 'error') { urRows.push(row); logLine('<span style="color:#dc2626">✗ villa</span> ' + escapeHtml(row.oldName || '') + ' — ' + escapeHtml(row.error || '')); }
+        else logLine('<span style="color:#64748b">·</span> ' + escapeHtml(row.oldName || ''));
+      });
+      updCount();
       offset = d.nextOffset;                         // null = server segir búið
-    } while (offset != null && ++guard < 1200);
-    $urStatus.textContent = '✓ Forskoðun búin. ' + acc.ready + ' tilbúin, ' + acc.manual + ' vantar uppl.'
-      + (acc.skipped ? ' · ' + acc.skipped + ' skjöl sleppt (of þung)' : '');
+      if (offset != null) localStorage.setItem(PROG_KEY, JSON.stringify({ folder: f, offset, acc }));
+      else localStorage.removeItem(PROG_KEY);        // hreint lok → byrja frá 0 næst
+    } while (offset != null && ++guard < 2500);
+    if (offset != null) localStorage.setItem(PROG_KEY, JSON.stringify({ folder: f, offset, acc }));
+    $urStatus.textContent = (offset == null ? '✓ Búið. ' : '⏸ Stöðvað — má halda áfram. ')
+      + acc.renamed + ' endurnefnt · ' + acc.skipped + ' sleppt · ' + acc.manual + ' handvirkt · ' + acc.errors + ' villur';
+    if (urRows.length) $review.innerHTML = renameResultsHtml(acc, urRows);   // aðeins handvirkt/villur til yfirferðar
     $urApply.disabled = urRows.filter(x => x.status === 'ready' && x.newName && x.newName !== x.oldName).length === 0;
     $urScan.disabled = false;
   }

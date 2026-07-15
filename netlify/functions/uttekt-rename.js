@@ -18,6 +18,30 @@ const ISSUER_KT = '6005080400';
 const DEFAULT_FOLDER = '1VSRRw6O8U6lU8WzZxA8CkLtrAmiU07mg'; // Úttektarskýrslur (canonical)
 const MONTHS = 'janúar|febrúar|mars|apríl|maí|júní|júlí|ágúst|september|október|nóvember|desember';
 
+// Allar Drive-kallanir fara í gegnum þetta: endurreynir á 403/429/5xx með
+// exponential backoff (400ms·2^i + slembi) svo rate-limit fellir ekki keyrsluna.
+async function driveFetch(url, opts, tries = 4) {
+  let last;
+  for (let i = 0; i < tries; i++) {
+    try {
+      const r = await fetch(url, opts);
+      if (r.ok || (r.status !== 403 && r.status !== 429 && r.status < 500)) return r;
+      last = r;
+    } catch (e) { last = e; }
+    if (i < tries - 1) await new Promise(res => setTimeout(res, 400 * Math.pow(2, i) + Math.floor(Math.random() * 300)));
+  }
+  if (last instanceof Error) throw last;
+  return last;
+}
+
+// Nafn sem er þegar á kanónísku sniði (fyrirtæki + kt + ár + .pdf) þarf enga
+// djúpskönnun — sleppt strax án niðurhals/OCR.
+function isCanonical(name) {
+  if (!/\.pdf$/i.test(String(name || ''))) return false;
+  const f = fieldsFromOldName(name);
+  return !!(f.company && f.kt && f.year);
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors(), body: '' };
   let token;
@@ -31,7 +55,7 @@ exports.handler = async (event) => {
       let trashed = 0, errors = 0;
       for (const id of ids) {
         try {
-          const r = await fetch('https://www.googleapis.com/drive/v3/files/' + id + '?supportsAllDrives=true&fields=id', {
+          const r = await driveFetch('https://www.googleapis.com/drive/v3/files/' + id + '?supportsAllDrives=true&fields=id', {
             method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({ trashed: true }),
           });
@@ -45,7 +69,7 @@ exports.handler = async (event) => {
     for (const it of items) {
       if (!it || !it.fileId || !it.newName) continue;
       try {
-        const r = await fetch('https://www.googleapis.com/drive/v3/files/' + it.fileId + '?supportsAllDrives=true&fields=id', {
+        const r = await driveFetch('https://www.googleapis.com/drive/v3/files/' + it.fileId + '?supportsAllDrives=true&fields=id', {
           method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ name: it.newName }),
         });
@@ -58,8 +82,9 @@ exports.handler = async (event) => {
 
   const p = event.queryStringParameters || {};
   const folder = (p.folder || DEFAULT_FOLDER).trim();
-  const limit = Math.min(parseInt(p.limit || '4', 10) || 4, 8);
+  const limit = Math.min(parseInt(p.limit || '2', 10) || 2, 8);
   const offset = Math.max(parseInt(p.offset || '0', 10) || 0, 0);
+  const applyMode = p.apply === '1';   // endurnefna strax í sömu lotu (ekkert tapast þótt keyrslan stoppi)
 
   if (p.dedup === '1') {
     const files = await listPdfsMeta(folder, token);
@@ -72,7 +97,7 @@ exports.handler = async (event) => {
     return json(200, { totalFiles: files.length, exactGroups, trashCount: trashIds.length, trashIds, reviewGroups });
   }
 
-  const stats = { folder, scanned: 0, ready: 0, manual: 0, errors: 0, rows: [] };
+  const stats = { folder, scanned: 0, ready: 0, manual: 0, errors: 0, skipped: 0, renamed: 0, rows: [] };
   try {
     const files = await listPdfs(folder, token);
     stats.total = files.length;
@@ -80,6 +105,12 @@ exports.handler = async (event) => {
     for (const f of slice) {
       stats.scanned++;
       try {
+        // Skip-fast: nafn þegar á kanónísku sniði → ekkert niðurhal/OCR.
+        if (isCanonical(f.name)) {
+          stats.skipped++;
+          stats.rows.push({ fileId: f.id, oldName: f.name, newName: f.name, status: 'skip' });
+          continue;
+        }
         let text = await readPdfText(f.id, token);
         let kt = customerKt(text);
         if (!kt || !/[a-záéíóúýþæöð]/i.test(text)) {
@@ -128,10 +159,22 @@ exports.handler = async (event) => {
           status = 'ready';
         }
         if (status === 'ready') stats.ready++; else stats.manual++;
-        stats.rows.push({
+        const row = {
           fileId: f.id, oldName: f.name, newName, status, isInvoice, company, kt: kt ? dash(kt) : '', address, month: month || '', year: year || '', site_id: siteId || null,
           missing: !ok ? (isInvoice ? 'reikningur – röng mappa' : 'ekki úttektarskýrsla') : [!realish(company) ? 'fyrirtæki' : null, !kt ? 'kt' : null, !year ? 'ár' : null].filter(Boolean).join(', '),
-        });
+        };
+        // apply=1: endurnefna STRAX (per skrá) svo ekkert tapist þótt keyrslan stoppi.
+        if (applyMode && status === 'ready' && newName && newName !== f.name) {
+          try {
+            const rr = await driveFetch('https://www.googleapis.com/drive/v3/files/' + f.id + '?supportsAllDrives=true&fields=id', {
+              method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name: newName }),
+            });
+            if (rr.ok) { row.renamed = true; stats.renamed++; }
+            else { row.status = 'error'; row.error = 'rename ' + rr.status + ': ' + (await rr.text().catch(() => '')).slice(0, 120); stats.ready--; stats.errors++; }
+          } catch (e) { row.status = 'error'; row.error = String(e.message || e); stats.ready--; stats.errors++; }
+        }
+        stats.rows.push(row);
       } catch (e) { stats.errors++; stats.rows.push({ fileId: f.id, oldName: f.name, status: 'error', error: String(e.message || e) }); }
     }
     stats.nextOffset = (offset + slice.length < files.length) ? offset + slice.length : null;
@@ -147,7 +190,7 @@ async function listPdfs(folder, token) {
   do {
     const params = new URLSearchParams({ q: `'${folder.replace(/'/g, "\\'")}' in parents and trashed=false`, fields: 'files(id,name,mimeType),nextPageToken', pageSize: '300', includeItemsFromAllDrives: 'true', supportsAllDrives: 'true', corpora: 'allDrives' });
     if (pageToken) params.set('pageToken', pageToken);
-    const r = await fetch('https://www.googleapis.com/drive/v3/files?' + params, { headers: { Authorization: `Bearer ${token}` } });
+    const r = await driveFetch('https://www.googleapis.com/drive/v3/files?' + params, { headers: { Authorization: `Bearer ${token}` } });
     if (!r.ok) throw new Error('Drive list ' + r.status);
     const d = await r.json();
     for (const f of (d.files || [])) if (/pdf$/i.test(f.name) || f.mimeType === 'application/pdf') out.push(f);
@@ -161,7 +204,7 @@ async function listPdfsMeta(folder, token) {
   do {
     const params = new URLSearchParams({ q: `'${folder.replace(/'/g, "\\'")}' in parents and trashed=false`, fields: 'files(id,name,mimeType,md5Checksum),nextPageToken', pageSize: '300', includeItemsFromAllDrives: 'true', supportsAllDrives: 'true', corpora: 'allDrives' });
     if (pageToken) params.set('pageToken', pageToken);
-    const r = await fetch('https://www.googleapis.com/drive/v3/files?' + params, { headers: { Authorization: `Bearer ${token}` } });
+    const r = await driveFetch('https://www.googleapis.com/drive/v3/files?' + params, { headers: { Authorization: `Bearer ${token}` } });
     if (!r.ok) throw new Error('Drive list ' + r.status);
     const d = await r.json();
     for (const f of (d.files || [])) if (/pdf$/i.test(f.name) || f.mimeType === 'application/pdf') out.push(f);
@@ -170,7 +213,7 @@ async function listPdfsMeta(folder, token) {
   return out;
 }
 async function readPdfText(id, token) {
-  const r = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media&supportsAllDrives=true`, { headers: { Authorization: `Bearer ${token}` } });
+  const r = await driveFetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media&supportsAllDrives=true`, { headers: { Authorization: `Bearer ${token}` } });
   if (!r.ok) return '';
   const buf = Buffer.from(await r.arrayBuffer());
   const d = await pdf(buf).catch(() => null);
@@ -182,15 +225,15 @@ async function readPdfText(id, token) {
   return text;
 }
 async function driveExtractText(id, token) {
-  const cp = await fetch('https://www.googleapis.com/drive/v3/files/' + id + '/copy?supportsAllDrives=true&fields=id', {
+  const cp = await driveFetch('https://www.googleapis.com/drive/v3/files/' + id + '/copy?supportsAllDrives=true&fields=id', {
     method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ name: 'tmp-ocr-' + id, mimeType: 'application/vnd.google-apps.document' }),
   });
   if (!cp.ok) return '';
   const doc = await cp.json(); if (!doc || !doc.id) return '';
   let text = '';
-  try { const ex = await fetch('https://www.googleapis.com/drive/v3/files/' + doc.id + '/export?mimeType=text/plain', { headers: { Authorization: `Bearer ${token}` } }); if (ex.ok) text = await ex.text(); } catch (_) {}
-  fetch('https://www.googleapis.com/drive/v3/files/' + doc.id + '?supportsAllDrives=true', { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } }).catch(() => {});
+  try { const ex = await driveFetch('https://www.googleapis.com/drive/v3/files/' + doc.id + '/export?mimeType=text/plain', { headers: { Authorization: `Bearer ${token}` } }); if (ex.ok) text = await ex.text(); } catch (_) {}
+  try { await driveFetch('https://www.googleapis.com/drive/v3/files/' + doc.id + '?supportsAllDrives=true', { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } }); } catch (_) {}   // leki þolanlegur — tmp-skjal
   return text;
 }
 
