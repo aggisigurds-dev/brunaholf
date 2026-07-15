@@ -3608,6 +3608,20 @@ function renderBakendi(t){
         <div id="bk-st-board"></div>
       </div>
 
+      <!-- 🚨 Skýrslu-vakt — staðir án gildrar skýrslu -->
+      <div style="${card};border-color:#fca5a5">
+        <div style="display:flex;align-items:center;gap:14px">
+          <span style="${iconSq};${ICON.red}">🚨</span>
+          <div style="flex:1">
+            <div style="${titleStyle}">Skýrslu-vakt — staðir án gildrar skýrslu</div>
+            <p style="${descStyle};margin-top:4px">Fastur vörður yfir <b>hvern lifandi stað í þjónustu</b>: er til gild úttektarskýrsla? Rekstrarfélög með marga staði (stærstu kúnnarnir) efst — <b>ef staður gleymist er samningurinn í hættu</b>. Lagfærist í Skýrslu-stöð hér fyrir ofan.</p>
+          </div>
+          <button id="bk-skv-reload" class="btn">↻ Uppfæra</button>
+        </div>
+        <div id="bk-skv-pills" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+        <div id="bk-skv-body"><span style="font-size:12.5px;color:#94a3b8">Sæki stöðu…</span></div>
+      </div>
+
       <!-- ══════════════════════════════════════════════════════════════════
            SECTION · Skjala-vinnsla
            ══════════════════════════════════════════════════════════════════ -->
@@ -5104,6 +5118,55 @@ function renderBakendi(t){
   })();
 
   // ── 🧩 Kt-samræming: close spine gaps (kt-less fyrirtæki · multi-loc · vidsk) ──
+  // ── Skýrslu-vakt (per-site report-coverage guard) ────────────────────────
+  (function wireSkyrsluVakt(){
+    const $pills = document.getElementById('bk-skv-pills');
+    const $body = document.getElementById('bk-skv-body');
+    const $reload = document.getElementById('bk-skv-reload');
+    if (!$pills || !$body) return;
+    const esc = s => escapeHtml(String(s == null ? '' : s));
+    const STADA = {
+      engin_skyrsla: { lbl: '🔴 Engin skýrsla', bg: '#fee2e2', fg: '#991b1b' },
+      olesanleg:     { lbl: '🟠 Ólesanleg/dauður linkur', bg: '#ffedd5', fg: '#9a3412' },
+      gomul:         { lbl: '🟡 Gömul (<2025)', bg: '#fef9c3', fg: '#854d0e' },
+      ok:            { lbl: '✅ Í lagi', bg: '#dcfce7', fg: '#166534' },
+    };
+    const pill = (k, n) => '<span style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:99px;font-size:12.5px;font-weight:700;background:' + STADA[k].bg + ';color:' + STADA[k].fg + '">' + STADA[k].lbl + ' · ' + n + '</span>';
+    function render(d){
+      const c = d.counts || {};
+      $pills.innerHTML = ['engin_skyrsla','olesanleg','gomul','ok'].map(k => pill(k, c[k] || 0)).join('');
+      const rows = d.rows || [];
+      if (!rows.length) { $body.innerHTML = '<span style="font-size:13px;color:#16a34a;font-weight:600">Allir staðir með gilda skýrslu. 🎉</span>'; return; }
+      const td = 'padding:6px 10px;color:#475569';
+      $body.innerHTML = '<div style="overflow-x:auto;border:1px solid #e2e8f0;border-radius:12px;max-height:440px;overflow-y:auto"><table style="width:100%;border-collapse:collapse;font-size:12.5px;min-width:640px">'
+        + '<thead><tr>' + ['Félag','Staður','Heimilisfang','Staða','Ár'].map(x => '<th style="text-align:left;background:#f8fafc;color:#475569;padding:7px 10px;font-size:11px;text-transform:uppercase;white-space:nowrap;position:sticky;top:0">' + x + '</th>').join('') + '</tr></thead><tbody>'
+        + rows.map(r => {
+            const multi = (r.sites_i_felagi || 0) > 1;
+            const st = STADA[r.stada] || { lbl: esc(r.stada), bg: '#f1f5f9', fg: '#475569' };
+            return '<tr style="border-top:1px solid #f1f5f9' + (multi ? ';background:#fffbeb' : '') + '">'
+              + '<td style="padding:6px 10px;color:#0f172a;font-weight:' + (multi ? '800' : '500') + '">' + esc(r.felag)
+              + (multi ? ' <span style="background:#fde68a;color:#7c2d12;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:6px;white-space:nowrap">📍' + r.sites_i_felagi + ' staðir</span>' : '') + '</td>'
+              + '<td style="' + td + '">' + esc(r.site_nafn) + '</td>'
+              + '<td style="' + td + '">' + esc(r.heimilisfang) + '</td>'
+              + '<td style="padding:6px 10px;white-space:nowrap"><span style="background:' + st.bg + ';color:' + st.fg + ';font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px">' + st.lbl + '</span></td>'
+              + '<td style="' + td + '">' + (r.report_year || '—') + '</td></tr>';
+          }).join('')
+        + '</tbody></table></div>';
+    }
+    async function load(force){
+      if (!force && window.__SKV_CACHE) { render(window.__SKV_CACHE); return; }
+      $body.innerHTML = '<span style="font-size:12.5px;color:#94a3b8">Sæki stöðu…</span>';
+      try{
+        const r = await fetch('/api/skyrslu-vakt');
+        const d = await r.json();
+        if (!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));
+        window.__SKV_CACHE = d; render(d);
+      }catch(e){ $body.innerHTML = '<span style="font-size:12.5px;color:#c40000">Villa: ' + esc(e.message) + '</span>'; }
+    }
+    if ($reload) $reload.onclick = () => load(true);
+    load(false);
+  })();
+
   (function wireKtSamraeming(){
     const $open = document.getElementById('bk-ks-open');
     const $status = document.getElementById('bk-ks-status');
@@ -13128,6 +13191,8 @@ async function renderDagurinn(t){
       <h3 class="dg-h3">🔄 Samstilling <span class="dg-note">— hversu fersk eru gögnin í raun</span></h3>
       <div id="dg-sync" class="dg-sync"><div class="dg-loading">Sækir…</div></div>
 
+      <div id="dg-skv" class="dg-skv" style="display:none"></div>
+
       <h3 class="dg-h3">💡 Claude mælir með</h3>
       <div id="dg-reco" class="dg-card"><div class="dg-loading">Sækir…</div></div>
 
@@ -13175,6 +13240,7 @@ async function renderDagurinn(t){
       .dg-list li{padding:8px 0;border-bottom:1px solid var(--border,#eef0f2);font-size:13px;color:var(--text,#1f2933)}
       .dg-list li:last-child{border-bottom:none}
       .dg-li-sub{display:block;font-size:11.5px;color:var(--text-dim,#7a8493);margin-top:2px}
+      .dg-skv{margin:12px 0 0;padding:10px 14px;border:1px solid #e7b4af;background:#fdf3f2;border-radius:10px;font-size:13px;color:#7a1f18;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
       .dg-reco-act{cursor:pointer;color:var(--accent,#0a84ff);text-decoration:none;font-weight:600}
       .dg-reco-act:hover{text-decoration:underline}
       .dg-ok{color:#0a8a00;font-weight:600;font-size:13px}
@@ -13223,6 +13289,26 @@ async function renderDagurinn(t){
   async function load(){
     $meta.textContent = 'Sækir…';
     if($refresh) $refresh.disabled = true;
+
+    // ---------- Skýrslu-vakt viðvörunarlína (birtist AÐEINS þegar vandi er) ----------
+    (async ()=>{
+      const box = document.getElementById('dg-skv');
+      if(!box) return;
+      try{
+        const r = await fetch('/api/skyrslu-vakt');
+        if(!r.ok) throw new Error('HTTP '+r.status);
+        const j = await r.json();
+        const c = j.counts || {};
+        const n = (c.engin_skyrsla||0) + (c.olesanleg||0);
+        if(!n){ box.style.display = 'none'; box.innerHTML = ''; return; }
+        const m = (j.rows||[]).filter(x => (x.stada==='engin_skyrsla'||x.stada==='olesanleg') && (x.sites_i_felagi||0) > 1).length;
+        box.innerHTML = '<span>🚨 <b>'+n+' staðir án gildrar úttektarskýrslu</b>'
+          + (m ? ' (þar af '+m+' hjá rekstrarfélögum)' : '')
+          + ' — </span><a class="dg-reco-act" id="dg-skv-open">opna Skýrslu-vakt →</a>';
+        box.style.display = '';
+        const a = document.getElementById('dg-skv-open'); if(a) a.onclick = ()=>goTab('bakendi');
+      }catch(e){ box.style.display = 'none'; }
+    })();
 
     // ---------- BAND A · Samstilling (the honest hero) ----------
     let sources = [], recentEmails = [], emailAccounts = [];

@@ -428,6 +428,16 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   „dups" include distinct sites mis-addressed to one location (Pizzan 2023,
   Center Hótel Arnarhvoll), so dedup is by-eye via 🗑.
 
+- `skyrslu-vakt.js` — **🚨 Skýrslu-vakt** (`/api/skyrslu-vakt`): fastur vörður yfir
+  skýrslu-þekju per stað — ef staður rekstrarfélags gleymist er samningurinn í
+  hættu. Les Postgres-sýnina **`v_stadir_skyrslu_stada`** (ein röð per lifandi
+  stað í þjónustu: base/félag/kt/staður/heimilisfang/`sites_i_felagi`/
+  `report_year`/`stada`, þar sem `stada ∈ engin_skyrsla·olesanleg·gomul·ok`).
+  GET skilar `{counts, rows}` — rows = allar EKKI-ok raðir raðaðar engin_skyrsla
+  → olesanleg → gomul, fjölstaða-félög fyrst. UI: Bakendi-spjaldið „🚨
+  Skýrslu-vakt" (4 talnapillur + tafla, rekstrarfélög feitletruð með 📍N-badge,
+  `wireSkyrsluVakt`) + viðvörunarlína á 🌅 Dagurinn (birtist AÐEINS þegar
+  engin_skyrsla+olesanleg > 0, smellur opnar Bakendi). Lagfærist í Skýrslu-stöð.
 - `kt-samraeming.js` — **Bakendi „🧩 Kt-samræming"** (`/api/kt-samraeming`): closes the
   last gaps in the customer spine (`customers_base` root → `fyrirtaeki` locations →
   `vidskiptavinir`) **additively — never deletes/merges a location**. `GET` returns three
