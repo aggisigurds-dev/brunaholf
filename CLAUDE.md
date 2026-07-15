@@ -281,7 +281,14 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   extracted from content with the company-prefix stripped + city abbrevs expanded
   e.g. Grb→Garðabær — multi-site companies like Aðalskoðun stay distinct), excludes
   stray reikningar, takes the real `Dags` date (not „Næsta
-  skoðun"), `?dedup=1` finds dupes. Twin of `reikningar-rename.js` (invoices →
+  skoðun"), `?dedup=1` finds dupes. **Seigla (2026-07-15):** all Drive calls go
+  through `driveFetch` (backoff-retry á 403/429/5xx), canonical names
+  (fyrirtæki+kt+ár í nafni) are SKIPPED without download/OCR, `?apply=1` renames
+  each ready file INLINE per batch (nothing lost on a crash; default limit 2,
+  UI uses limit 1) and the UI persists progress in
+  `localStorage.bh_uttekt_progress` so a re-run RESUMES from the saved offset
+  (live-log + counter instead of one giant table; manual/villur rows kept for
+  review). Twin of `reikningar-rename.js` (invoices →
   `Fyrirtæki - kt - R nr - dags - upphæð`, with md5 **and** invoice-number dedup).
 - `allt-sheet.js` — builds a sortable "whole database" Google Sheet from the
   úttektarskýrslu *filenames* in a folder (parses `Fyrirtæki - Kennitala -
