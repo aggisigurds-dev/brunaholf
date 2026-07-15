@@ -31,13 +31,20 @@ exports.handler = async (event) => {
   const from = `${year}-01-01`, to = `${Number(year) + 1}-01-01`;
 
   let invoices, meta, bank, drafts;
+  // Non-fatal read failures are recorded here and returned so the frontend can
+  // warn the user that a total may be wrong (instead of silently dropping data).
+  const warnings = [];
   try {
     invoices = await fetchAll('invoices',
       `select=id,tilvisun,kt_greidanda,customer_name,gjalddagi,eindagi,hofudstoll,upphaed_total,status,greidsla_date,source&gjalddagi=gte.${from}&gjalddagi=lt.${to}`);
     meta = await fetchAll('krofur_yfirlit_meta', 'select=inv_key,hidden,amount_override,note,flagged');
-    bank = await fetchAll('bank_transactions', 'select=kt_counterparty,amount,trans_date,text,description&amount=gt.0').catch(() => []);
+    // Bank cross-ref removes krófur that were paid straight to the bank from the
+    // outstanding total — if it fails, those krófur wrongly stay "ógreitt".
+    bank = await fetchAll('bank_transactions', 'select=kt_counterparty,amount,trans_date,text,description&amount=gt.0')
+      .catch(() => { warnings.push('bank_transactions lestur mistókst — bankagreiðslur ekki krossaðar, greiddar kröfur gætu talist ógreiddar'); return []; });
     // What the office tracked in Vinnubók / Reikningagerð (saved efnislisti totals).
-    drafts = await fetchAll('invoice_drafts', 'select=worksite_name,work_month,total_m_vsk,customer_name').catch(() => []);
+    drafts = await fetchAll('invoice_drafts', 'select=worksite_name,work_month,total_m_vsk,customer_name')
+      .catch(() => { warnings.push('invoice_drafts lestur mistókst — Reikningagerðar-samanburður vantar'); return []; });
   } catch (e) { return json(502, { error: e.message }); }
 
   const metaBy = new Map(meta.map((m) => [m.inv_key, m]));
@@ -219,7 +226,7 @@ exports.handler = async (event) => {
   const wsMeta = {};
   for (const m of meta) { if (String(m.inv_key || '').startsWith('ws|')) wsMeta[m.inv_key] = { hidden: !!m.hidden, amount_override: m.amount_override != null ? Number(m.amount_override) : null, note: m.note || null }; }
 
-  return json(200, { year, generated_at: new Date().toISOString(), today, summary, byMonth, byCustomer, rows, slokk, wsMeta });
+  return json(200, { year, generated_at: new Date().toISOString(), today, summary, byMonth, byCustomer, rows, slokk, wsMeta, warnings });
 };
 
 async function saveOverride(event) {

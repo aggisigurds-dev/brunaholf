@@ -35,16 +35,28 @@ exports.handler = async (event) => {
   if (event.httpMethod !== 'GET') return json(405, { error: 'GET only (skrifað gegnum /api/krofur-yfirlit)' });
 
   let invoices, drafts, meta, bank, cwmap;
+  // Non-fatal read failures are recorded here and returned so the frontend can
+  // warn the user that a total may be wrong (instead of silently dropping data).
+  const warnings = [];
   try {
     invoices = await fetchAll('invoices',
       'select=id,tilvisun,kt_greidanda,customer_name,gjalddagi,eindagi,hofudstoll,upphaed_total,status,source');
+    // invoice_drafts feed the „Ósendar kröfur" (tier2) totals — a failure hides real drafts.
     drafts = await fetchAll('invoice_drafts',
-      'select=worksite_name,work_month,total_m_vsk,customer_name,kennitala').catch(() => []);
-    meta = await fetchAll('krofur_yfirlit_meta', 'select=inv_key,hidden,paid,note,confirmed,sent,done,sent_at,confirmed_at,done_at,confirmed_by,sent_by,done_by,wf_state').catch(() => []);
+      'select=worksite_name,work_month,total_m_vsk,customer_name,kennitala')
+      .catch(() => { warnings.push('invoice_drafts lestur mistókst — ósendar drög gætu vantað í þrep 2'); return []; });
+    // meta carries the manual greitt/falið/staðfest flags — without it, hidden or
+    // paid krófur reappear and the outstanding totals are wrong.
+    meta = await fetchAll('krofur_yfirlit_meta', 'select=inv_key,hidden,paid,note,confirmed,sent,done,sent_at,confirmed_at,done_at,confirmed_by,sent_by,done_by,wf_state')
+      .catch(() => { warnings.push('krofur_yfirlit_meta lestur mistókst — handvirkar merkingar (greitt/falið) vantar, tölur gætu verið rangar'); return []; });
+    // Bank cross-ref only flags likely-paid krófur (does not change the total) — still surface a failure.
     bank = await fetchAll('bank_transactions',
-      'select=kt_counterparty,amount,trans_date,text,description&amount=gt.0').catch(() => []);
+      'select=kt_counterparty,amount,trans_date,text,description&amount=gt.0')
+      .catch(() => { warnings.push('bank_transactions lestur mistókst — „líklega greitt" bankamátun vantar'); return []; });
+    // Worksite→payer map only affects grouping (optional) — record but stay resilient.
     cwmap = await fetchAll('customer_worksite_map',
-      'select=customer_name,worksite_name').catch(() => []);
+      'select=customer_name,worksite_name')
+      .catch(() => { warnings.push('customer_worksite_map lestur mistókst — greiðanda-hópun gæti verið ónákvæm'); return []; });
   } catch (e) { return json(502, { error: e.message }); }
 
   // ---- worksite → payer resolution (rekstrarfélög / verkstaðir) -------------
@@ -180,9 +192,10 @@ exports.handler = async (event) => {
   const likely = t1.filter((r) => r.likely_paid && !r.hidden);
   return json(200, {
     generated_at: new Date().toISOString(),
-    newest_timavera: await newestTimavera().catch(() => null),
+    newest_timavera: await newestTimavera().catch(() => { warnings.push('timavera_entries lestur mistókst — nýjasta Tímavera-dagsetning óþekkt'); return null; }),
     tier1: rollup(t1),
     tier2: rollup(t2),
+    warnings,
     // Öll faldar inv_keys (öll þrep, líka þrep-3 sem er reiknað í vafra) svo
     // framendinn haldi þeim falinni þvert á tæki/vafra — ekki bara í localStorage.
     hidden_keys: meta.filter((m) => m.hidden).map((m) => m.inv_key),
