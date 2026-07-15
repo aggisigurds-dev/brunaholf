@@ -55,6 +55,13 @@
 [functions."timavera-maeting"]
   schedule = "*/10 * * * *"
 
+# Tímavera beintenging (API) — nú AÐAL-heimild vinnufærslna (2026-07-15). Sækir
+# beint úr Tímavera Customer API á 2 tíma fresti; dedupe á entry_key svo endur-pull
+# er skaðlaus. Leysir af desktop-xlsx-brúna (luna-bridge/timavera-bridge.js RETIRED)
+# + Drive-xlsx innsog. Lykill í app_kv['timavera_api_key'] (Agnar setti 2026-07-15).
+[functions."timavera-pull"]
+  schedule = "15 */2 * * *"
+
 # Nightly (03:00 UTC) append-only backup of the Supabase document PDFs
 # (úttektarskýrslur + reikningar + Efnislisti/Tímaskýrsla) into a Google Drive
 # backup folder — a durable second copy so the docs never live in one unbacked
