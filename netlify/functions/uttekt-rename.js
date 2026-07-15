@@ -101,16 +101,25 @@ exports.handler = async (event) => {
   try {
     const files = await listPdfs(folder, token);
     stats.total = files.length;
-    const slice = files.slice(offset, offset + limit);
-    for (const f of slice) {
+    // 2026-07-15: sleppt-skrár telja EKKI í limit-kvótann — kallið hleypur
+    // framhjá öllum réttnefndum skrám (ókeypis nafna-tékk) og stoppar aðeins
+    // á þeim sem þarf að VINNA (niðurhal/OCR). Áður tók heil yfirferð 1230
+    // köll (~2-3 klst af möppu-listunum einum saman); nú ~fjöldi vinnu-skráa.
+    // Tímavörn: hættum eftir ~8s svo Netlify-fresturinn springi aldrei.
+    const T0 = Date.now();
+    let workDone = 0;
+    let idx = offset;
+    for (; idx < files.length; idx++) {
+      if (workDone >= limit || (Date.now() - T0) > 8000) break;
+      const f = files[idx];
       stats.scanned++;
       try {
-        // Skip-fast: nafn þegar á kanónísku sniði → ekkert niðurhal/OCR.
+        // Skip-fast: nafn þegar á kanónísku sniði → ekkert niðurhal/OCR, telur ekki í limit.
         if (isCanonical(f.name)) {
           stats.skipped++;
-          stats.rows.push({ fileId: f.id, oldName: f.name, newName: f.name, status: 'skip' });
           continue;
         }
+        workDone++;
         let text = await readPdfText(f.id, token);
         let kt = customerKt(text);
         if (!kt || !/[a-záéíóúýþæöð]/i.test(text)) {
@@ -177,7 +186,7 @@ exports.handler = async (event) => {
         stats.rows.push(row);
       } catch (e) { stats.errors++; stats.rows.push({ fileId: f.id, oldName: f.name, status: 'error', error: String(e.message || e) }); }
     }
-    stats.nextOffset = (offset + slice.length < files.length) ? offset + slice.length : null;
+    stats.nextOffset = idx < files.length ? idx : null;
   } catch (e) {
     return json(500, { error: e.message, stats });
   }
