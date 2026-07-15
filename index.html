@@ -5138,19 +5138,38 @@ function renderBakendi(t){
       const rows = d.rows || [];
       if (!rows.length) { $body.innerHTML = '<span style="font-size:13px;color:#16a34a;font-weight:600">Allir staðir með gilda skýrslu. 🎉</span>'; return; }
       const td = 'padding:6px 10px;color:#475569';
+      // Hópa eftir rekstrarfélags-MERKI (Eignaumsjón o.fl. þvert á kt) eða
+      // fjölstaða-base; stakir staðir koma á eftir hópunum.
+      const isGrp = r => !!(r.rekstrarfelag && String(r.rekstrarfelag).trim()) || (r.sites_i_felagi || 0) > 1;
+      const gkey = r => (r.rekstrarfelag && String(r.rekstrarfelag).trim()) || String(r.felag || '');
+      const groups = [], gidx = {}, singles = [];
+      rows.forEach(r => {
+        if (!isGrp(r)) { singles.push(r); return; }
+        const k = gkey(r);
+        if (!(k in gidx)) { gidx[k] = groups.length; groups.push({ k, total: r.felag_stadir || r.sites_i_felagi || 0, rows: [] }); }
+        groups[gidx[k]].rows.push(r);
+      });
+      const rowHtml = (r, indent) => {
+        const st = STADA[r.stada] || { lbl: esc(r.stada), bg: '#f1f5f9', fg: '#475569' };
+        return '<tr style="border-top:1px solid #f1f5f9">'
+          + '<td style="padding:6px 10px 6px ' + (indent ? '26px' : '10px') + ';color:#0f172a;font-weight:500">' + esc(r.felag) + '</td>'
+          + '<td style="' + td + '">' + esc(r.site_nafn) + '</td>'
+          + '<td style="' + td + '">' + esc(r.heimilisfang) + '</td>'
+          + '<td style="padding:6px 10px;white-space:nowrap"><span style="background:' + st.bg + ';color:' + st.fg + ';font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px">' + st.lbl + '</span></td>'
+          + '<td style="' + td + '">' + (r.report_year || '—') + '</td></tr>';
+      };
+      let bodyH = '';
+      groups.forEach(g => {
+        bodyH += '<tr style="border-top:1px solid #e2e8f0;background:#fffbeb"><td colspan="5" style="padding:7px 10px;color:#0f172a;font-weight:800">'
+          + esc(g.k)
+          + ' <span style="background:#fde68a;color:#7c2d12;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:6px;white-space:nowrap">📍' + g.total + ' staðir</span>'
+          + ' <span style="color:#b45309;font-weight:600;font-size:11.5px">· ' + g.rows.length + ' vantar/gamalt</span></td></tr>'
+          + g.rows.map(r => rowHtml(r, true)).join('');
+      });
+      bodyH += singles.map(r => rowHtml(r, false)).join('');
       $body.innerHTML = '<div style="overflow-x:auto;border:1px solid #e2e8f0;border-radius:12px;max-height:440px;overflow-y:auto"><table style="width:100%;border-collapse:collapse;font-size:12.5px;min-width:640px">'
         + '<thead><tr>' + ['Félag','Staður','Heimilisfang','Staða','Ár'].map(x => '<th style="text-align:left;background:#f8fafc;color:#475569;padding:7px 10px;font-size:11px;text-transform:uppercase;white-space:nowrap;position:sticky;top:0">' + x + '</th>').join('') + '</tr></thead><tbody>'
-        + rows.map(r => {
-            const multi = (r.sites_i_felagi || 0) > 1;
-            const st = STADA[r.stada] || { lbl: esc(r.stada), bg: '#f1f5f9', fg: '#475569' };
-            return '<tr style="border-top:1px solid #f1f5f9' + (multi ? ';background:#fffbeb' : '') + '">'
-              + '<td style="padding:6px 10px;color:#0f172a;font-weight:' + (multi ? '800' : '500') + '">' + esc(r.felag)
-              + (multi ? ' <span style="background:#fde68a;color:#7c2d12;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:6px;white-space:nowrap">📍' + r.sites_i_felagi + ' staðir</span>' : '') + '</td>'
-              + '<td style="' + td + '">' + esc(r.site_nafn) + '</td>'
-              + '<td style="' + td + '">' + esc(r.heimilisfang) + '</td>'
-              + '<td style="padding:6px 10px;white-space:nowrap"><span style="background:' + st.bg + ';color:' + st.fg + ';font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px">' + st.lbl + '</span></td>'
-              + '<td style="' + td + '">' + (r.report_year || '—') + '</td></tr>';
-          }).join('')
+        + bodyH
         + '</tbody></table></div>';
     }
     async function load(force){

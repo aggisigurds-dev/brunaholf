@@ -434,8 +434,14 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   stað í þjónustu: base/félag/kt/staður/heimilisfang/`sites_i_felagi`/
   `report_year`/`stada`, þar sem `stada ∈ engin_skyrsla·olesanleg·gomul·ok`).
   GET skilar `{counts, rows}` — rows = allar EKKI-ok raðir raðaðar engin_skyrsla
-  → olesanleg → gomul, fjölstaða-félög fyrst. UI: Bakendi-spjaldið „🚨
-  Skýrslu-vakt" (4 talnapillur + tafla, rekstrarfélög feitletruð með 📍N-badge,
+  → olesanleg → gomul, rekstrarfélags-hópar fyrst. **Rekstrarfélags-hópun
+  (2026-07-15):** sýnin ber líka `rekstrarfelag` (merkið á `customers_base` —
+  Eignaumsjón spannar 59+ staði þvert á margar kt) og `felag_stadir` (fjöldi
+  þjónustu-staða yfir allt MERKIÐ þegar það er sett, annars per base). Hópur í
+  endapunktinum = rekstrarfélags-merki EÐA `sites_i_felagi>1`; hópum raðað eftir
+  stærð (`felag_stadir` desc). UI: Bakendi-spjaldið „🚨 Skýrslu-vakt" (4
+  talnapillur + tafla með **hópa-hausum per rekstrarfélag** — merki + 📍N staðir
+  + hve marga vantar — staðir inndregnir undir, stakir staðir á eftir,
   `wireSkyrsluVakt`) + viðvörunarlína á 🌅 Dagurinn (birtist AÐEINS þegar
   engin_skyrsla+olesanleg > 0, smellur opnar Bakendi). Lagfærist í Skýrslu-stöð.
 - `kt-samraeming.js` — **Bakendi „🧩 Kt-samræming"** (`/api/kt-samraeming`): closes the

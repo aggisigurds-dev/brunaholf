@@ -9,8 +9,10 @@
 // stada ∈ ('engin_skyrsla','olesanleg','gomul','ok').
 //
 // rows = allar EKKI-ok raðir, raðaðar: engin_skyrsla → olesanleg → gomul;
-// innan hvers flokks rekstrarfélög (sites_i_felagi > 1) FYRST — stærstu
-// kúnnarnir — svo eftir félags-nafni.
+// innan hvers flokks rekstrarfélags-hópar FYRST (hópur = `rekstrarfelag`-merkið
+// á customers_base — t.d. Eignaumsjón þvert á margar kt — EÐA sites_i_felagi>1),
+// stærstu hóparnir efst (`felag_stadir` desc), svo eftir hóps-/félags-nafni.
+// Raðir bera líka `rekstrarfelag` + `felag_stadir` fyrir hópa-hausana í UI.
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -30,14 +32,19 @@ exports.handler = async (event) => {
   const counts = { engin_skyrsla: 0, olesanleg: 0, gomul: 0, ok: 0 };
   for (const r of all) if (counts[r.stada] != null) counts[r.stada]++;
 
+  const isGroup = (r) => !!(r.rekstrarfelag && String(r.rekstrarfelag).trim()) || (r.sites_i_felagi || 0) > 1;
+  const groupKey = (r) => (r.rekstrarfelag && String(r.rekstrarfelag).trim()) || String(r.felag || '');
   const rows = all
     .filter((r) => r.stada !== 'ok')
     .sort((a, b) => {
       const s = (ORDER[a.stada] ?? 9) - (ORDER[b.stada] ?? 9);
       if (s) return s;
-      const ma = (a.sites_i_felagi || 0) > 1 ? 0 : 1;
-      const mb = (b.sites_i_felagi || 0) > 1 ? 0 : 1;
+      const ma = isGroup(a) ? 0 : 1, mb = isGroup(b) ? 0 : 1;
       if (ma !== mb) return ma - mb;
+      const sz = (b.felag_stadir || b.sites_i_felagi || 0) - (a.felag_stadir || a.sites_i_felagi || 0);
+      if (sz) return sz;
+      const g = groupKey(a).localeCompare(groupKey(b), 'is');
+      if (g) return g;
       return String(a.felag || '').localeCompare(String(b.felag || ''), 'is');
     });
 
