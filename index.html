@@ -3960,8 +3960,9 @@ function renderBakendi(t){
             <div style="${hint}">Fyrirtækjanafnið kemur úr kennitölu skýrslunnar þegar hún finnst í grunninum.</div>
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-            <button id="bk-ur-scan" class="btn primary">🔍 Forskoða nöfn</button>
-            <button id="bk-ur-apply" class="btn" disabled>✏️ Endurnefna (í Drive)</button>
+            <button id="bk-ur-scan" class="btn primary" title="Endurnefnir hverja skrá STRAX í Drive um leið og hún er lesin — má stoppa hvenær sem er, ekkert tapast, heldur áfram þar sem frá var horfið">▶️ Endurnefna jafnóðum (í Drive)</button>
+            <button id="bk-ur-preview" class="btn" title="Les og sýnir gömul → ný nöfn án þess að breyta NOKKRU í Drive">🔍 Forskoða (breytir engu)</button>
+            <button id="bk-ur-apply" class="btn" disabled>✏️ Endurnefna forskoðað</button>
             <button id="bk-ur-db" class="btn" title="Skrár þessa möppu í gagnagrunn gegnum Skjalalestur">▶️ Skrá í gagnagrunn</button>
             <span id="bk-ur-status" style="font-size:12.5px;color:#64748b"></span>
           </div>
@@ -5747,7 +5748,9 @@ function renderBakendi(t){
   const $urStatus = document.getElementById('bk-ur-status');
   const $urResults = document.getElementById('bk-ur-results');
   let urRows = [];
-  if ($urScan) $urScan.onclick = scanUttektRename;
+  if ($urScan) $urScan.onclick = () => scanUttektRename(true);
+  const $urPreview = document.getElementById('bk-ur-preview');
+  if ($urPreview) $urPreview.onclick = () => scanUttektRename(false);
   if ($urApply) $urApply.onclick = applyUttektRename;
   const $urDb = document.getElementById('bk-ur-db');
   if ($urDb) $urDb.onclick = () => {
@@ -5759,7 +5762,9 @@ function renderBakendi(t){
     const runBtn = document.getElementById('bk-run'); if (runBtn) setTimeout(() => runBtn.click(), 500);
   };
 
-  async function scanUttektRename(){
+  // applyMode=true: endurnefnir jafnóðum í Drive. false: hrein forskoðun —
+  // breytir ENGU, safnar tillögum í yfirferðartöfluna fyrir „Endurnefna forskoðað".
+  async function scanUttektRename(applyMode = true){
     const f = ($urFolder.value || '').trim();
     if (!f) { $urResults.innerHTML = '<div class="empty">Vantar möppu-id.</div>'; return; }
     $urScan.disabled = $urApply.disabled = true;
@@ -5798,7 +5803,7 @@ function renderBakendi(t){
       let d = null;
       for (let attempt = 0; attempt < 2 && !d; attempt++) {
         try {
-          const r = await fetch('/api/uttekt-rename?folder=' + encodeURIComponent(f) + '&limit=' + LIMIT + '&offset=' + offset + '&apply=1');
+          const r = await fetch('/api/uttekt-rename?folder=' + encodeURIComponent(f) + '&limit=' + LIMIT + '&offset=' + offset + (applyMode ? '&apply=1' : ''));
           const j = await r.json();
           if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
           d = j;
@@ -5811,6 +5816,7 @@ function renderBakendi(t){
         else if (row.status === 'skip') logLine('<span style="color:#94a3b8">– sleppt (þegar rétt nafn)</span> ' + escapeHtml(row.oldName || ''));
         else if (row.status === 'manual') { urRows.push(row); logLine('<span style="color:#b45309">⚠ handvirkt (' + escapeHtml(row.missing || 'uppl.') + ')</span> ' + escapeHtml(row.oldName || '')); }
         else if (row.status === 'error') { urRows.push(row); logLine('<span style="color:#dc2626">✗ villa</span> ' + escapeHtml(row.oldName || '') + ' — ' + escapeHtml(row.error || '')); }
+        else if (row.status === 'ready') { if (!applyMode) urRows.push(row); logLine('<span style="color:#2563eb">→ tillaga</span> ' + escapeHtml(row.oldName || '') + ' → <b>' + escapeHtml(row.newName || '') + '</b>'); }
         else logLine('<span style="color:#64748b">·</span> ' + escapeHtml(row.oldName || ''));
       });
       updCount();
