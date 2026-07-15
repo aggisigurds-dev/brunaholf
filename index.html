@@ -1798,6 +1798,7 @@ const DEFAULT_STATE = {
     {id:'sjalfvirkni', label:'Sjálfvirkni', icon:'⚙️'},
     {id:'vefryni',    label:'Vefrýni',    icon:'🔎'},
     {id:'skodanir',   label:'Skoðanir',   icon:'📋'},
+    {id:'verkfaeri',  label:'Verkfæri',   icon:'🧰', url:'https://verkfaeri.netlify.app', external:true},
     {id:'bakendi',    label:'Bakendi',    icon:'🗄'},
     {id:'stillingar', label:'Stillingar', icon:'⚙️'}
   ],
@@ -2023,7 +2024,7 @@ function clearDataCache(){
 function ensureNewTabs(s){
   if(!s || !Array.isArray(s.tabs)) return;
   if(!Array.isArray(s.bakendiLinks)) s.bakendiLinks = BAKENDI_LINK_SEED.map(x=>({...x}));
-  ['dagurinn','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','tvmaeting','verdsamanburdur','verkstadir','skuldunautar','krofuyfirlit','krofur','hreyfingaryfirlit','nlsh','spurningar','sjalfvirkni','vefryni','skodanir','bakendi'].forEach(id=>{
+  ['dagurinn','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','tvmaeting','verdsamanburdur','verkstadir','skuldunautar','krofuyfirlit','krofur','hreyfingaryfirlit','nlsh','spurningar','sjalfvirkni','vefryni','skodanir','verkfaeri','bakendi'].forEach(id=>{
     if(!s.tabs.find(t=>t.id===id)){
       const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
       if(d){
@@ -2053,6 +2054,11 @@ function ensureNewTabs(s){
           target = idx >= 0 ? idx : (idx2 >= 0 ? idx2 : -1);
         } else if(id === 'skodanir'){
           // Skoðanir sits just above Bakendi (else above Stillingar).
+          const idx = s.tabs.findIndex(t=>t.id==='bakendi');
+          const idx2 = s.tabs.findIndex(t=>t.id==='stillingar');
+          target = idx >= 0 ? idx : (idx2 >= 0 ? idx2 : -1);
+        } else if(id === 'verkfaeri'){
+          // Verkfæri (ytri tengill á verkfaeri.netlify.app) situr fyrir ofan Bakendi.
           const idx = s.tabs.findIndex(t=>t.id==='bakendi');
           const idx2 = s.tabs.findIndex(t=>t.id==='stillingar');
           target = idx >= 0 ? idx : (idx2 >= 0 ? idx2 : -1);
@@ -2333,6 +2339,8 @@ function renderTabs(){
   }
   $tabs.querySelectorAll('[data-id]:not([data-sep])').forEach(el=>{
     el.addEventListener('click',()=>{
+      const _lt = state.tabs.find(x=>x.id===el.dataset.id);
+      if(_lt && _lt.url){ window.open(_lt.url, '_blank', 'noopener'); return; } // ytri tengill (t.d. Verkfæri) → opnast í nýjum flipa, skiptir ekki um view
       state.ui.activeTab=el.dataset.id; save({nav:true}); render();
       document.getElementById('layout').classList.remove('open'); // close mobile drawer
     });
@@ -17749,6 +17757,7 @@ function applyDeepLinkTab(){
   if(!id || !state.tabs) return false;
   const tab = state.tabs.find(t => t.id === id);
   if(!tab) return false;
+  if(tab.url){ try{ window.open(tab.url, '_blank', 'noopener'); }catch(_){} return false; } // ytri tengill (t.d. Verkfæri) — opna, ekki skipta um view
   tab.hidden = false;
   state.ui = state.ui || {};
   state.ui.activeTab = id;
