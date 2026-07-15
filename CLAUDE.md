@@ -84,6 +84,17 @@ resolveSite(fileName, sites, extraAddr) → {id,nafn,via:'stamp'|'single'|'addr'
 siteWriteAllowed(drive_file_id, site)` (varðar merge-upsert gegn yfirskrift).
 Framleiðendahliðin: `uttekt-rename` og `drive-sort` (skýrslur) skeyta #id-stimplinum
 aftan á kanónísk nöfn þegar staðurinn er þekktur, svo framtíðar-lesarar tengja beint.
+**Nafnavenja staða (Agnar 2026-07-15) + nafna-sönnun `via:'name'`:** staðanöfn
+fylgja „Rekstrarfélag - Sérkenni" („Aðalskoðun - Skeifan", „Heimaleiga -
+Laugavegi 18", „Center Hótel - Arnarhvoll") — „ - " á eftir félagsnafni merkir
+að næsti bútur sé AÐGREINIR staðarins (útibú/undirfang) og skal reyndur sem
+staðar-sönnun úr skráarheiti/innihaldi. Endandi „ehf."/„hf." = eins-staðar félag
+eða höfuðstöð rekstrarfélagsins sjálfs — EKKI útibú (fær engan nafna-lykil).
+Samanburður er fold-aður (án broddstafa/hástafa/greinarmerkja) svo „Center Hótel
+Arnarhvoll" og „Center Hótel - Arnarhvoll" eru jafngild. Útfært í
+`felag-endurlestur.js` (`resolveByName`: sameiginlegt forskeyti + ehf/hf klippt,
+HQ-lykill sem er forskeyti að útibús-lykli felldur; nákvæmlega EITT aðgreinandi
+nafn í skjali = sönnun, 0 eða 2+ = ekki snert).
 
 **🗺️ Kerfis-kort** (`kerfiskort.html` at `brunaholf.netlify.app/kerfiskort.html`
 + hero card at the top of Bakendi) is the **live single-page map of the whole
@@ -472,6 +483,27 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   + hve marga vantar — staðir inndregnir undir, stakir staðir á eftir,
   `wireSkyrsluVakt`) + viðvörunarlína á 🌅 Dagurinn (birtist AÐEINS þegar
   engin_skyrsla+olesanleg > 0, smellur opnar Bakendi). Lagfærist í Skýrslu-stöð.
+- `felag-endurlestur.js` — **„🔁 Endurlesa öll skjöl (innihald)"** (`/api/
+  felag-endurlestur`), hnappur í haus Skýrslu-stöðvar-borðsins per félag. Les ÖLL
+  `customer_documents` eins base úr Drive (pdf-parse → Google-Doc OCR fallback,
+  `driveFetch`-backoff), flokkar úr INNIHALDI (slökkvitæki-úttekt [Fjöldi-línur] ·
+  **brunakerfi** [viðtökupróf/árleg prófun, engin slökkvitæki — NÝTT additive
+  doc_type gildi, sjá `sql/2026-07-15_doc_type_brunakerfi.sql`; skýrslu-lesarar
+  sía `uttektarskyrsla` svo brunakerfi-skjal hættir réttilega að teljast] ·
+  reikningur [R-nr/„til greiðslu"]), les rétt ár+mánuð (Dags, ekki „Næsta
+  skoðun") og með `&apply=1` leiðréttir `year`/`doc_type`/`fyrirtaeki_id`.
+  Staðurinn fer gegnum Tengiregluna (`_spine.resolveSite` + `siteWriteAllowed`)
+  **plús nafna-sönnun `via:'name'`** (Agnar: „endurtengja á address … eða
+  heiti"): sameiginlegt forskeyti staða-nafna klippt („Center Hótel Plaza" →
+  „plaza") og NÁKVÆMLEGA EITT aðgreinandi nafn í skráarheiti/PDF-texta = sönnun;
+  0 eða 2+ → ósnert. Eftir lotu: nýjasta slökkvitæki-skýrsla hvers staðar →
+  upsert **`arsskodun_report_facts`** (PK fyrirtaeki_id; equipment 9-bucket
+  jsonb, sama Fjöldi-lógík og `skyrsla-bunadur.js`; aldrei yfirskrifað með eldri
+  skýrslu). `GET ?base=ID[&offset&limit=2][&apply=1]` →
+  `{base,total,offset,nextOffset,rows:[{id,file,verdict,year,site,via,changed}],
+  counts,facts_updated}`; batchað (~8s vörn), UI lykkjar með live-log +
+  localStorage framvindu (`bh_felag_endurlestur`, `rereadFelag` í index.html).
+  Skráð í Sjálfvirkni sem `felag-endurlestur` (sjálfvirkt í lok apply-yfirferðar).
 - `kt-samraeming.js` — **Bakendi „🧩 Kt-samræming"** (`/api/kt-samraeming`): closes the
   last gaps in the customer spine (`customers_base` root → `fyrirtaeki` locations →
   `vidskiptavinir`) **additively — never deletes/merges a location**. `GET` returns three
