@@ -15,6 +15,7 @@
 
 const pdf = require('pdf-parse');
 const { freshAccessToken, json, cors } = require('./_google');
+const { sitesForBase, resolveSite, siteWriteAllowed } = require('./_spine');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -87,6 +88,10 @@ exports.handler = async (event) => {
         // clean filename segment, then the PDF bill-to block.
         const company = (base && base.nafn) || fn.company || extractCompanyText(text) || '';
         const address = extractAddress(text, f.name, kt);
+        // Tengireglan (_spine): staðurinn AÐEINS með sönnun (stimpill / einn staður /
+        // heimilisfang úr skráarheiti EÐA PDF-innihaldi) — annars ósnert, aldrei giskað.
+        let site = null;
+        if (base) { try { site = resolveSite(f.name, await sitesForBase(base.id), address); } catch (_) {} }
 
         // Need at least one real signal to count it as an invoice.
         if (!kt && !invoice_number && !total) { stats.notInvoice++; continue; }
@@ -96,19 +101,24 @@ exports.handler = async (event) => {
           company, address, kt: kt ? dash(kt) : '', invoice_number,
           date, total, year, kredit,
           base_id: base ? base.id : null, base_name: base ? base.nafn : null,
+          site_id: site ? site.id : null, site_name: site ? site.nafn : null,
         };
         stats.rows.push(row);
 
         if (!dry) {
           if (await alreadyIndexed(f.id)) { stats.dupSkip++; }
-          await upsertDoc({
+          const docRow = {
             customer_base_id: base ? base.id : null,
             doc_type: 'reikningur', year, drive_file_id: f.id,  // CHECK allows samningur/uttektarskyrsla/reikningur only; KREDIT is flagged in notes
             source: 'gdrive', found_by: 'code',
             amount: total, invoice_number, doc_date: date, customer_name: company,
             notes: (kredit ? 'KREDIT · ' : '') + (company || cleanStem(f.name)) + (address ? ', ' + address : '')
                  + (kt ? ' · kt ' + dash(kt) : '') + (invoice_number ? ' · ' + invoice_number : '') + (base ? '' : ' · RESOLVE'),
-          });
+          };
+          // fyrirtaeki_id fylgir AÐEINS þegar hann er sannaður OG má skrifast
+          // (merge-upsert má aldrei núlla/yfirskrifa stað sem er þegar réttur).
+          if (site && await siteWriteAllowed(f.id, site)) docRow.fyrirtaeki_id = site.id;
+          await upsertDoc(docRow);
           stats.indexed++;
         }
       } catch (e) { stats.errors++; }

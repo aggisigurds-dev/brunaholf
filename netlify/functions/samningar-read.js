@@ -14,6 +14,7 @@
 
 const pdf = require('pdf-parse');
 const { freshAccessToken, json, cors } = require('./_google');
+const { sitesForBase, resolveSite, siteWriteAllowed } = require('./_spine');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -62,24 +63,31 @@ exports.handler = async (event) => {
         const date = extractDate(text);                       // ISO yyyy-mm-dd
         const year = date ? parseInt(date.slice(0, 4), 10) : extractYear(norm);
         const base = kt ? await matchBase(kt) : null;
+        // Tengireglan (_spine): staðurinn AÐEINS með sönnun (stimpill / einn staður /
+        // heimilisfang úr skráarheiti EÐA samningstexta) — annars ósnert, aldrei giskað.
+        let site = null;
+        if (base) { try { site = resolveSite(f.name, await sitesForBase(base.id), address); } catch (_) {} }
 
         const row = {
           fileId: f.id, file: f.name,
           company, address, kt: kt ? dash(kt) : '', date, year,
           base_id: base ? base.id : null, base_name: base ? base.nafn : null,
+          site_id: site ? site.id : null, site_name: site ? site.nafn : null,
         };
         stats.rows.push(row);
 
         if (!dry) {
           if (await alreadyIndexed(f.id)) { stats.dupSkip++; }
-          await upsertDoc({
+          const docRow = {
             customer_base_id: base ? base.id : null,
             doc_type: 'samningur', year, drive_file_id: f.id,
             source: 'gdrive', found_by: 'code',
             doc_date: date, customer_name: company,
             notes: 'Þjónustusamningur · ' + (company || f.name.replace(/\.pdf$/i, ''))
                  + (address ? ', ' + address : '') + (kt ? ' · kt ' + dash(kt) : '') + (base ? '' : ' · RESOLVE'),
-          });
+          };
+          if (site && await siteWriteAllowed(f.id, site)) docRow.fyrirtaeki_id = site.id;
+          await upsertDoc(docRow);
           stats.indexed++;
         }
       } catch (e) { stats.errors++; }

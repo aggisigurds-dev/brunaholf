@@ -14,6 +14,7 @@
 
 const pdf = require('pdf-parse');
 const { freshAccessToken, json, cors } = require('./_google');
+const { sitesByBases, sitesForBase, resolveSite, siteWriteAllowed } = require('./_spine');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -101,12 +102,18 @@ exports.handler = async (event) => {
         const amount = doc_type === 'reikningur' ? extractAmount(norm) : null;
         const base = await matchBase(kt);
         const company = companyName(f.name, norm);
-        const rec = { file: f.name, drive_file_id: f.id, kt: dash(kt), company, doc_type, year, base_id: base ? base.id : null, base_name: base ? base.nafn : null };
+        // Tengireglan (_spine): staðurinn AÐEINS með sönnun (stimpill/einn staður/
+        // heimilisfang í skráarheiti) — annars fyrirtaeki_id ósnert, aldrei giskað.
+        let site = null;
+        if (base) { try { site = resolveSite(f.name, await sitesForBase(base.id)); } catch (_) {} }
+        const rec = { file: f.name, drive_file_id: f.id, kt: dash(kt), company, doc_type, year, base_id: base ? base.id : null, base_name: base ? base.nafn : null, site_id: site ? site.id : null, site_name: site ? site.nafn : null };
         if (!base) stats.unmatched.push(rec);
         if (!dry) {
-          if (existing) { if (base) await updateDocLink(f.id, base.id, { doc_type, year, customer_name: company }); }  // backlog row now resolvable
+          const siteOk = site && await siteWriteAllowed(f.id, site);
+          if (existing) { if (base) await updateDocLink(f.id, base.id, { doc_type, year, customer_name: company, site_id: siteOk ? site.id : null }); }  // backlog row now resolvable
           else await insertDoc({
             customer_base_id: base ? base.id : null,
+            fyrirtaeki_id: siteOk ? site.id : null,
             doc_type, year, drive_file_id: f.id, source: 'gdrive', found_by: 'code', amount,
             notes: f.name.replace(/\.pdf$/i, '') + ' · kt ' + dash(kt) + (base ? '' : ' · RESOLVE'),
           });
@@ -275,45 +282,10 @@ async function matchBase(kt) {
 }
 
 // ── Audit: compare each file's filename-kt to the company it's actually linked to ──
-// ── Staðar-upplausn (2026-07-15, ósk Agnars eftir 8 misheppnaðar kt-tengingar):
-// kt ein dugar EKKI fyrir rekstrarfélög (öll Center Hótel deila einni kt) —
-// tengjum á STAÐINN (fyrirtaeki_id) þegar hann er ótvíræður, annars aldrei giskað:
-//   1) „ - #<id>" stimpill í skráarheiti (beini lykillinn) → sá staður
-//   2) félag á EINN lifandi stað → hann
-//   3) heimilisfang í skráarheiti passar við nákvæmlega EINN stað félagsins
-function siteStampFromName(name) {
-  const m = String(name || '').match(/[-\s]#(\d{1,7})\s*(\.pdf)?$/i);
-  return m ? parseInt(m[1], 10) : null;
-}
-function addrKeyLoose(s) {
-  const t = String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-  const num = (t.match(/(\d+)/) || [])[1] || '';
-  const street = (t.replace(/\d.*/, '').match(/[a-z]+/g) || []).join('').slice(0, 6);
-  return street && num ? street + '|' + num : '';
-}
-async function sitesByBases(baseIds) {
-  const map = {};
-  const ids = [...new Set(baseIds.filter(x => x != null).map(String))];
-  for (let i = 0; i < ids.length; i += 100) {
-    const inList = ids.slice(i, i + 100).join(',');
-    if (!inList) continue;
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/fyrirtaeki?customer_base_id=in.(${encodeURIComponent(inList)})&deleted_at=is.null&select=id,nafn,heimilisfang,customer_base_id`, { headers: sbHeaders() });
-    (await r.json().catch(() => [])).forEach(s => {
-      const k = String(s.customer_base_id);
-      (map[k] = map[k] || []).push({ id: s.id, nafn: s.nafn, addrkey: addrKeyLoose(s.heimilisfang) });
-    });
-  }
-  return map;
-}
-function resolveSite(fileName, sites) {
-  if (!Array.isArray(sites) || !sites.length) return null;
-  const stamp = siteStampFromName(fileName);
-  if (stamp != null) { const hit = sites.find(s => s.id === stamp); if (hit) return hit; }
-  if (sites.length === 1) return sites[0];
-  const ak = addrKeyLoose(fileName);
-  if (ak) { const hits = sites.filter(s => s.addrkey && s.addrkey === ak); if (hits.length === 1) return hits[0]; }
-  return null;   // margir staðir, engin sönnun → ALDREI giskað
-}
+// Staðar-upplausn (2026-07-15): kt ein dugar EKKI fyrir rekstrarfélög — tengireglan
+// (stimpill → einn staður → heimilisfang → annars ekkert) lifir nú í ./_spine.js
+// og er notuð af öllum tengjurum (doc-index, reikningar-read, samningar-read,
+// drive-sort). Aldrei giskað.
 
 async function auditLinks(folder, token) {
   const files = await listPdfs(folder, token);
