@@ -4203,7 +4203,9 @@ function renderBakendi(t){
         + (nConnect ? '<button id="bk-st-connect" class="btn primary" style="padding:4px 10px;font-size:12px" title="Tengja allar gular tillögur">🔗 Tengja öll augljós (' + nConnect + ')</button>' : '')
         + (nConfirm ? '<button id="bk-st-confirm" class="btn" style="padding:4px 10px;font-size:12px" title="Merkja öll tengd skjöl staðfest">✓ Staðfesta öll tengd (' + nConfirm + ')</button>' : '')
         + '<button id="bk-st-consolidate" class="btn" style="padding:4px 10px;font-size:12px" title="Endurtengja augljós skjöl við réttan stað (yfirskrifar óstaðfestar tengingar) og merkja tvítök: ein ársskýrsla per staður+ár; reikningar aðeins tvítök ef sama R-númer. Rekstrarfélög: hver staður sér. Forsýn fyrst; ekkert eytt.">🧹 Sameina í eitt per ár</button>'
-        + '<button id="bk-st-addsite" class="btn" style="padding:4px 10px;font-size:12px">➕ Nýr staður</button></div>';
+        + '<button id="bk-st-reread" class="btn" style="padding:4px 10px;font-size:12px" title="Les hvert PDF félagsins úr Drive (innihald, ekki skráarheiti), leiðréttir ár/tegund/stað (aðeins með sönnun: stimpill · einn staður · heimilisfang · staðar-nafn) og uppfærir búnaðar-facts nýjustu skýrslu hvers staðar">🔁 Endurlesa öll skjöl (innihald)</button>'
+        + '<button id="bk-st-addsite" class="btn" style="padding:4px 10px;font-size:12px">➕ Nýr staður</button></div>'
+        + '<div id="bk-st-reread-out"></div>';
       if (!DOCS.length) { $board.innerHTML = head + '<div style="color:#64748b;font-size:13px;padding:10px">Engin skjöl.</div>'; wireHead(); return; }
       // Keep the two document kinds apart so reports and invoices never get mixed up.
       const reports = DOCS.filter(d => d.doc_type !== 'reikningur');
@@ -4216,6 +4218,68 @@ function renderBakendi(t){
       const c = document.getElementById('bk-st-connect'); if (c) c.addEventListener('click', connectObvious);
       const f = document.getElementById('bk-st-confirm'); if (f) f.addEventListener('click', confirmLinked);
       const g = document.getElementById('bk-st-consolidate'); if (g) g.addEventListener('click', consolidateCo);
+      const rr = document.getElementById('bk-st-reread'); if (rr) rr.addEventListener('click', rereadFelag);
+    }
+    // 🔁 Endurlesa öll skjöl félagsins úr INNIHALDI (felag-endurlestur) — lykkjar
+    // batchað með lifandi log-línum + teljara; framvinda vistuð per base í
+    // localStorage svo endur-smellur heldur áfram þar sem frá var horfið
+    // (sama mynstur og scanUttektRename / bh_uttekt_progress).
+    async function rereadFelag(){
+      if (!COMPANY) return;
+      const btn = document.getElementById('bk-st-reread'); if (btn) btn.disabled = true;
+      const $out = document.getElementById('bk-st-reread-out');
+      const PROG_KEY = 'bh_felag_endurlestur';
+      const acc = { read: 0, updated: 0, oviss: 0, errors: 0, facts: 0, total: 0 };
+      let offset = 0;
+      try {
+        const saved = JSON.parse(localStorage.getItem(PROG_KEY) || 'null');
+        if (saved && String(saved.base) === String(COMPANY.id) && typeof saved.offset === 'number') { offset = saved.offset; Object.assign(acc, saved.acc || {}); }
+      } catch (_) {}
+      $out.innerHTML = '<div id="bk-rr-count" style="font-size:12.5px;font-weight:600;color:#334155;margin:6px 0"></div>'
+        + '<div id="bk-rr-log" style="max-height:220px;overflow:auto;font-size:11.5px;font-family:ui-monospace,monospace;color:#475569;border:1px solid #e2e8f0;border-radius:8px;padding:6px 8px;margin-bottom:8px"></div>';
+      const $log = document.getElementById('bk-rr-log');
+      const $count = document.getElementById('bk-rr-count');
+      const updCount = () => { $count.textContent = 'Lesið ' + acc.read + (acc.total ? '/' + acc.total : '') + ' · leiðrétt ' + acc.updated + ' · óviss ' + acc.oviss + ' · villur ' + acc.errors + ' · facts ' + acc.facts; };
+      const logLine = (html) => { const div = document.createElement('div'); div.innerHTML = html; $log.appendChild(div); while ($log.children.length > 200) $log.removeChild($log.firstChild); $log.scrollTop = $log.scrollHeight; };
+      if (offset > 0) logLine('<span style="color:#2563eb">↻ Held áfram frá skjali ' + (offset + 1) + '…</span>');
+      const VIA = { stamp: '#stimpill', single: 'einn staður', addr: 'heimilisfang', name: 'staðar-nafn' };
+      updCount();
+      let guard = 0;
+      do {
+        setSt('Endurles… ' + acc.read + (acc.total ? '/' + acc.total : '') + ' skjöl');
+        let d = null;
+        for (let attempt = 0; attempt < 2 && !d; attempt++) {
+          try {
+            const r = await fetch('/api/felag-endurlestur?base=' + encodeURIComponent(COMPANY.id) + '&offset=' + offset + '&limit=2&apply=1');
+            const j = await r.json(); if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+            d = j;
+          } catch (e) { if (attempt === 1) { acc.errors++; logLine('<span style="color:#dc2626">✗ lota féll (offset ' + offset + '): ' + escapeHtml(String(e.message || e)) + '</span>'); offset += 2; } }
+        }
+        if (!d) { localStorage.setItem(PROG_KEY, JSON.stringify({ base: COMPANY.id, offset, acc })); continue; }
+        acc.total = d.total || acc.total;
+        (d.rows || []).forEach(row => {
+          acc.read++;
+          const ch = row.changed || {};
+          const chTxt = Object.keys(ch).map(k => k + (ch[k].via ? ' (' + (VIA[ch[k].via] || ch[k].via) + ')' : '') + ': ' + (ch[k].from == null ? '—' : ch[k].from) + '→' + ch[k].to).join(' · ');
+          if (row.verdict === 'villa') { acc.errors++; logLine('<span style="color:#dc2626">✗ villa</span> ' + escapeHtml(row.file || '') + ' — ' + escapeHtml(row.error || '')); }
+          else if (row.verdict === 'óviss') { acc.oviss++; logLine('<span style="color:#b45309">? óviss</span> ' + escapeHtml(row.file || '') + (row.readable === false ? ' <span style="color:#94a3b8">(ólesanlegt PDF)</span>' : '')); }
+          else {
+            if (chTxt) acc.updated++;
+            logLine((chTxt ? '<span style="color:#15803d">✓ ' : '<span style="color:#64748b">· ') + escapeHtml(row.verdict) + '</span> '
+              + escapeHtml(row.file || '') + (row.site ? ' <span style="color:#2563eb">→ ' + escapeHtml(row.site) + (row.via ? ' (' + (VIA[row.via] || row.via) + ')' : '') + '</span>' : '')
+              + (chTxt ? ' <b>' + escapeHtml(chTxt) + '</b>' : ' <span style="color:#94a3b8">(óbreytt)</span>'));
+          }
+        });
+        acc.facts += d.facts_updated || 0;
+        updCount();
+        offset = d.nextOffset;
+        if (offset != null) localStorage.setItem(PROG_KEY, JSON.stringify({ base: COMPANY.id, offset, acc }));
+        else localStorage.removeItem(PROG_KEY);
+      } while (offset != null && ++guard < 2000);
+      setSt((offset == null ? '✓ Endurlestri lokið. ' : '⏸ Stöðvað — smelltu aftur til að halda áfram. ')
+        + acc.updated + ' leiðrétt · ' + acc.oviss + ' óviss · ' + acc.errors + ' villur · ' + acc.facts + ' búnaðar-facts', offset == null ? '#16a34a' : '#b45309');
+      if (btn) btn.disabled = false;
+      if (offset == null) await loadBoard(COMPANY.id);
     }
     async function consolidateCo(){
       if (!COMPANY) return;

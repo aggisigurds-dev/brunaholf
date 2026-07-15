@@ -472,6 +472,27 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   + hve marga vantar — staðir inndregnir undir, stakir staðir á eftir,
   `wireSkyrsluVakt`) + viðvörunarlína á 🌅 Dagurinn (birtist AÐEINS þegar
   engin_skyrsla+olesanleg > 0, smellur opnar Bakendi). Lagfærist í Skýrslu-stöð.
+- `felag-endurlestur.js` — **„🔁 Endurlesa öll skjöl (innihald)"** (`/api/
+  felag-endurlestur`), hnappur í haus Skýrslu-stöðvar-borðsins per félag. Les ÖLL
+  `customer_documents` eins base úr Drive (pdf-parse → Google-Doc OCR fallback,
+  `driveFetch`-backoff), flokkar úr INNIHALDI (slökkvitæki-úttekt [Fjöldi-línur] ·
+  **brunakerfi** [viðtökupróf/árleg prófun, engin slökkvitæki — NÝTT additive
+  doc_type gildi, sjá `sql/2026-07-15_doc_type_brunakerfi.sql`; skýrslu-lesarar
+  sía `uttektarskyrsla` svo brunakerfi-skjal hættir réttilega að teljast] ·
+  reikningur [R-nr/„til greiðslu"]), les rétt ár+mánuð (Dags, ekki „Næsta
+  skoðun") og með `&apply=1` leiðréttir `year`/`doc_type`/`fyrirtaeki_id`.
+  Staðurinn fer gegnum Tengiregluna (`_spine.resolveSite` + `siteWriteAllowed`)
+  **plús nafna-sönnun `via:'name'`** (Agnar: „endurtengja á address … eða
+  heiti"): sameiginlegt forskeyti staða-nafna klippt („Center Hótel Plaza" →
+  „plaza") og NÁKVÆMLEGA EITT aðgreinandi nafn í skráarheiti/PDF-texta = sönnun;
+  0 eða 2+ → ósnert. Eftir lotu: nýjasta slökkvitæki-skýrsla hvers staðar →
+  upsert **`arsskodun_report_facts`** (PK fyrirtaeki_id; equipment 9-bucket
+  jsonb, sama Fjöldi-lógík og `skyrsla-bunadur.js`; aldrei yfirskrifað með eldri
+  skýrslu). `GET ?base=ID[&offset&limit=2][&apply=1]` →
+  `{base,total,offset,nextOffset,rows:[{id,file,verdict,year,site,via,changed}],
+  counts,facts_updated}`; batchað (~8s vörn), UI lykkjar með live-log +
+  localStorage framvindu (`bh_felag_endurlestur`, `rereadFelag` í index.html).
+  Skráð í Sjálfvirkni sem `felag-endurlestur` (sjálfvirkt í lok apply-yfirferðar).
 - `kt-samraeming.js` — **Bakendi „🧩 Kt-samræming"** (`/api/kt-samraeming`): closes the
   last gaps in the customer spine (`customers_base` root → `fyrirtaeki` locations →
   `vidskiptavinir`) **additively — never deletes/merges a location**. `GET` returns three
