@@ -44,7 +44,7 @@ exports.handler = async (event) => {
         let done = 0, errors = 0;
         for (const it of items) {
           if (!it || !it.drive_file_id || !it.base_id) continue;
-          try { await updateDocLink(it.drive_file_id, it.base_id, { doc_type: it.doc_type, year: it.year, customer_name: it.toName }); done++; }
+          try { await updateDocLink(it.drive_file_id, it.base_id, { doc_type: it.doc_type, year: it.year, customer_name: it.toName, site_id: it.site_id }); done++; }
           catch (e) { errors++; }
         }
         return json(200, { done, errors });
@@ -230,15 +230,20 @@ function companyName(name, text) {
   return '';
 }
 async function updateDocLink(fid, baseId, meta) {
+  // site_id (fyrirtaeki_id) fylgir með þegar staðurinn er ÓTVÍRÆÐUR (stimpill/
+  // heimilisfang/einn staður) — annars er hann EKKI snertur (aldrei giskað,
+  // aldrei skrifað yfir rétta stað-tengingu með engu).
+  const patch = { customer_base_id: baseId, found_by: 'manual' };
+  if (meta && meta.site_id != null) patch.fyrirtaeki_id = meta.site_id;
   const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?drive_file_id=eq.${encodeURIComponent(fid)}`, {
     method: 'PATCH', headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }),
-    body: JSON.stringify({ customer_base_id: baseId, found_by: 'manual' }),
+    body: JSON.stringify(patch),
   });
   const rows = await r.json().catch(() => []);
   if (!r.ok) throw new Error('update ' + r.status + ' ' + JSON.stringify(rows).slice(0, 160));
   if (Array.isArray(rows) && rows.length) return;            // existing row updated
   if (meta && meta.doc_type) {                               // only dry-read so far → insert one
-    await insertDoc({ customer_base_id: baseId, doc_type: meta.doc_type, year: meta.year || null, drive_file_id: fid, source: 'gdrive', found_by: 'manual', notes: (meta.customer_name || '') + ' · handvirkt' });
+    await insertDoc({ customer_base_id: baseId, fyrirtaeki_id: (meta.site_id != null ? meta.site_id : null), doc_type: meta.doc_type, year: meta.year || null, drive_file_id: fid, source: 'gdrive', found_by: 'manual', notes: (meta.customer_name || '') + ' · handvirkt' });
   }
 }
 async function createCompany(body) {
@@ -270,10 +275,51 @@ async function matchBase(kt) {
 }
 
 // ── Audit: compare each file's filename-kt to the company it's actually linked to ──
+// ── Staðar-upplausn (2026-07-15, ósk Agnars eftir 8 misheppnaðar kt-tengingar):
+// kt ein dugar EKKI fyrir rekstrarfélög (öll Center Hótel deila einni kt) —
+// tengjum á STAÐINN (fyrirtaeki_id) þegar hann er ótvíræður, annars aldrei giskað:
+//   1) „ - #<id>" stimpill í skráarheiti (beini lykillinn) → sá staður
+//   2) félag á EINN lifandi stað → hann
+//   3) heimilisfang í skráarheiti passar við nákvæmlega EINN stað félagsins
+function siteStampFromName(name) {
+  const m = String(name || '').match(/[-\s]#(\d{1,7})\s*(\.pdf)?$/i);
+  return m ? parseInt(m[1], 10) : null;
+}
+function addrKeyLoose(s) {
+  const t = String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const num = (t.match(/(\d+)/) || [])[1] || '';
+  const street = (t.replace(/\d.*/, '').match(/[a-z]+/g) || []).join('').slice(0, 6);
+  return street && num ? street + '|' + num : '';
+}
+async function sitesByBases(baseIds) {
+  const map = {};
+  const ids = [...new Set(baseIds.filter(x => x != null).map(String))];
+  for (let i = 0; i < ids.length; i += 100) {
+    const inList = ids.slice(i, i + 100).join(',');
+    if (!inList) continue;
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/fyrirtaeki?customer_base_id=in.(${encodeURIComponent(inList)})&deleted_at=is.null&select=id,nafn,heimilisfang,customer_base_id`, { headers: sbHeaders() });
+    (await r.json().catch(() => [])).forEach(s => {
+      const k = String(s.customer_base_id);
+      (map[k] = map[k] || []).push({ id: s.id, nafn: s.nafn, addrkey: addrKeyLoose(s.heimilisfang) });
+    });
+  }
+  return map;
+}
+function resolveSite(fileName, sites) {
+  if (!Array.isArray(sites) || !sites.length) return null;
+  const stamp = siteStampFromName(fileName);
+  if (stamp != null) { const hit = sites.find(s => s.id === stamp); if (hit) return hit; }
+  if (sites.length === 1) return sites[0];
+  const ak = addrKeyLoose(fileName);
+  if (ak) { const hits = sites.filter(s => s.addrkey && s.addrkey === ak); if (hits.length === 1) return hits[0]; }
+  return null;   // margir staðir, engin sönnun → ALDREI giskað
+}
+
 async function auditLinks(folder, token) {
   const files = await listPdfs(folder, token);
   const rows = files.map(f => { const k = customerKtFromName(f.name); return { fid: f.id, name: f.name, kt: k ? dash(k) : null }; });
   const ktToBase = await basesByKts([...new Set(rows.map(r => r.kt).filter(Boolean))]);
+  const sitesMap = await sitesByBases(Object.values(ktToBase).map(b => b.id));
   const fidToDoc = await docsByFids(rows.map(r => r.fid));
   const idToName = await namesByIds([...new Set(Object.values(fidToDoc).map(d => d.customer_base_id).filter(x => x != null).map(String))]);
   const out = { total: files.length, correct: 0, noKt: 0, mismatched: [], toLink: [], noBase: [], list: [] };
@@ -285,9 +331,11 @@ async function auditLinks(folder, token) {
     if (!r.kt) { out.noKt++; out.list.push(Object.assign(base, { status: 'nokt' })); continue; }
     const correct = ktToBase[r.kt];
     if (!correct) { out.noBase.push({ file: r.name, kt: r.kt }); out.list.push(Object.assign(base, { status: 'nobase' })); continue; }
-    if (!doc) { out.toLink.push(Object.assign({ file: r.name, drive_file_id: r.fid, toName: correct.nafn, base_id: correct.id }, meta)); out.list.push(Object.assign(base, { status: 'unlinked', correctBaseId: correct.id, correctName: correct.nafn })); continue; }
-    if (String(doc.customer_base_id) === String(correct.id)) { out.correct++; out.list.push(Object.assign(base, { status: 'correct', correctBaseId: correct.id, correctName: correct.nafn })); continue; }
-    out.mismatched.push(Object.assign({ file: r.name, drive_file_id: r.fid, fromName: curName || '(ótengt)', toName: correct.nafn, base_id: correct.id }, meta));
+    const site = resolveSite(r.name, sitesMap[String(correct.id)]);
+    const siteMeta = site ? { site_id: site.id, site_name: site.nafn } : {};
+    if (!doc) { out.toLink.push(Object.assign({ file: r.name, drive_file_id: r.fid, toName: correct.nafn, base_id: correct.id }, meta, siteMeta)); out.list.push(Object.assign(base, { status: 'unlinked', correctBaseId: correct.id, correctName: correct.nafn }, siteMeta)); continue; }
+    if (String(doc.customer_base_id) === String(correct.id)) { out.correct++; out.list.push(Object.assign(base, { status: 'correct', correctBaseId: correct.id, correctName: correct.nafn }, siteMeta)); continue; }
+    out.mismatched.push(Object.assign({ file: r.name, drive_file_id: r.fid, fromName: curName || '(ótengt)', toName: correct.nafn, base_id: correct.id }, meta, siteMeta));
     out.list.push(Object.assign(base, { status: 'wrong', correctBaseId: correct.id, correctName: correct.nafn }));
   }
   return out;
