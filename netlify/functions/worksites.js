@@ -36,7 +36,10 @@ exports.handler = async (event) => {
     const [entries, emails, statuses, invoices, ajourCounts, mappings, bankIn, customerInfos] = await Promise.all([
       fetchAllPages(`timavera_entries?select=project,hours,date,employee&date=gte.${dateFrom}&date=lte.${dateTo}&order=date.asc`),
       // folder=neq.SENT — our own sent replies must not count as email mentions
-      fetchAllPages(`email_digest?select=id,account,sender_email,sender_name,subject,snippet,received_at&folder=neq.SENT`),
+      // Scope email mentions to the same year window as timavera/ajour (was: whole
+      // ~30k-row table on every call → ~23s). received_at≥dateFrom cuts it to the
+      // current 1–2 year window; email→worksite matching only needs in-window mail.
+      fetchAllPages(`email_digest?select=id,account,sender_email,sender_name,subject,snippet,received_at&folder=neq.SENT&received_at=gte.${dateFrom}`),
       sb(`worksite_status?year=in.(${statusYears.join(',')})&select=*`),
       fetchAllPages(`invoices?select=*&or=(gjalddagi.is.null,and(gjalddagi.gte.${dateFrom},gjalddagi.lte.${dateTo}))&order=gjalddagi.desc.nullslast`),
       fetchAjourCountsRange(dateFrom, dateTo),
