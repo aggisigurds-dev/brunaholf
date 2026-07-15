@@ -8954,6 +8954,11 @@ async function renderGerdReikninga(t){
   const $meta = document.getElementById('gr-meta');
 
   let WS=[], PG={}, DRAFTS={}, REDDER={}, NLSH_MONTHLY={};
+  // Verðskrá-sókn mistókst (net/500) → sjálfgefnir taxtar hefðu skekkt áætlanir.
+  // ATH: aðgreint frá „engin verðskrá skráð" (tómt rows með 200) — banner + faldar
+  // áætlanir birtast AÐEINS þegar sóknin sjálf klikkaði.
+  let pgFailed = false;
+  const grMoneyWarn = (msg) => `<div class="money-warn" style="display:flex;align-items:center;gap:9px;font-size:12.5px;color:#92400e;margin:0 0 14px;padding:11px 15px;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;line-height:1.5"><span style="font-size:16px;flex-shrink:0">⚠</span><span>${escapeHtml(msg)}</span></div>`;
 
   document.getElementById('gr-prev').onclick = () => shiftMonth(-1);
   document.getElementById('gr-next').onclick = () => shiftMonth(1);
@@ -9062,7 +9067,11 @@ async function renderGerdReikninga(t){
         cachedFetch('/api/nlsh-dashboard', {force:!!force}).catch(()=>null),
       ]);
       const ws = wsR ? await wsR.json() : {worksites:[]};
-      const pg = pgR && pgR.ok ? await pgR.json() : {rows:[]};
+      // Fail (net-villa → pgR null, eða HTTP-villa → !pgR.ok) er AÐGREINT frá
+      // löglega tómri verðskrá (pgR.ok en rows:[]). Aðeins raunveruleg klikkun
+      // kveikir bannerinn + felur áætlanirnar.
+      pgFailed = !pgR || !pgR.ok;
+      const pg = pgFailed ? {rows:[]} : await pgR.json();
       const dr = drR && drR.ok ? await drR.json() : {rows:[]};
       const rd = rdR && rdR.ok ? await rdR.json() : {rows:[]};
       // NLSH (Landsspítalinn) Ajour-based revenue per month → fold into estimate
@@ -9142,7 +9151,7 @@ async function renderGerdReikninga(t){
               ? `<div class="gr-fig"><span class="gr-fig-l">Grunnur</span><b>Ajour</b></div>`
               : `<div class="gr-fig"><span class="gr-fig-l">Tímavera klst</span><b>${hrs.toFixed(1)}</b></div>
                  <div class="gr-fig"><span class="gr-fig-l">Taxti</span><b>${fmt(r.dv)}</b></div>
-                 <div class="gr-fig"><span class="gr-fig-l">Áætlað m.vsk</span><b>${est?fmt(est):'—'}</b></div>
+                 <div class="gr-fig"><span class="gr-fig-l">Áætlað m.vsk</span><b>${pgFailed?'⚠ óviss':(est?fmt(est):'—')}</b></div>
                  ${redder>0?`<div class="gr-fig"><span class="gr-fig-l">Redder efni</span><b>${fmt(redder)}</b></div>`:''}`}
           </div>
           <div class="gr-card-actions">
@@ -9174,7 +9183,7 @@ async function renderGerdReikninga(t){
         <td><div class="gr-card-name" style="font-size:13.5px">${escapeHtml(name)}${note?` <span title="${escapeAttr(note)}" style="cursor:help">📝</span>`:''}</div>${cust?`<div class="gr-card-cust">${escapeHtml(cust)}</div>`:''}</td>
         <td class="num">${gataFlag?'<span class="grp-badge tb">Ajour</span>':hrs.toFixed(1)}</td>
         <td class="num">${gataFlag?'—':fmt(r.dv)}</td>
-        <td class="num">${gataFlag?'—':(est?fmt(est):'—')}</td>
+        <td class="num">${gataFlag?'—':(pgFailed?'⚠':(est?fmt(est):'—'))}</td>
         <td class="num">${redder>0?fmt(redder):'—'}</td>
         <td>${saved?`<span class="gr-pill gr-pill-saved">✓ ${fmt(d.total_m_vsk)}</span>`:`<span class="gr-pill gr-pill-todo">⏳ eftir</span>`}</td>
         <td>${gataFlag?`<button class="gr-btn gr-btn-primary" data-gr-gata="${escapeAttr(name)}">📐 Uppgjör</button>`:`<button class="gr-btn gr-btn-primary" data-gr-edit="${escapeAttr(name)}">🧾 Efnislisti</button>`}</td>
@@ -9203,8 +9212,9 @@ async function renderGerdReikninga(t){
     const estTotal = estTim + estNlsh;
 
     $host.innerHTML = `
+      ${pgFailed ? grMoneyWarn('Verðskrá náðist ekki — sjálfgefnir taxtar (9.951/14.927) hefðu verið notaðir, svo áætlaðar upphæðir eru faldar (⚠ óviss) því þær gætu verið rangar. Ýttu á „↻ Sækja" til að reyna aftur.') : ''}
       <div class="gr-summary">
-        <div class="gr-sum-cell"><span class="gr-sum-l">Áætlað unnið · ${monthLabel(month)}</span><span class="gr-sum-v" style="color:#0a84ff" title="Tímavera verkstaðir ${fmt(estTim)} kr${estNlsh?(' + Landsspítalinn (Ajour) '+fmt(estNlsh)+' kr'):''}">${fmt(estTotal)} kr</span></div>
+        <div class="gr-sum-cell"><span class="gr-sum-l">Áætlað unnið · ${monthLabel(month)}</span><span class="gr-sum-v" style="color:#0a84ff" title="Tímavera verkstaðir ${fmt(estTim)} kr${estNlsh?(' + Landsspítalinn (Ajour) '+fmt(estNlsh)+' kr'):''}">${pgFailed?'⚠ óviss':fmt(estTotal)+' kr'}</span></div>
         <div class="gr-sum-cell"><span class="gr-sum-l">Vistað m. vsk · ${monthLabel(month)}</span><span class="gr-sum-v">${fmt(savedTotal)} kr</span></div>
         <div class="gr-sum-cell"><span class="gr-sum-l">Reikningar vistaðir</span><span class="gr-sum-v">${savedCount}</span></div>
         <div class="gr-sum-cell"><span class="gr-sum-l">Eftir að gera</span><span class="gr-sum-v ${pending>0?'gr-sum-warn':''}">${pending}</span></div>
@@ -11955,7 +11965,7 @@ async function renderKrofuyfirlit(t){
       for(const d of ((bag&&bag.debtors)||[])) for(const iv of (d.invoices||[])) if(iv.inv_key===key) iv.hidden = val;
   }
 
-  const state = { data:null, tier3:null, sort:'amount_desc', search:'', tierFilter:'company', newest:null, showHidden:false };
+  const state = { data:null, tier3:null, sort:'amount_desc', search:'', tierFilter:'company', newest:null, showHidden:false, pgFailed:false, wsFailed:false };
   // Efnislisti/Tímaskjal Drive-tenglar per „<verkstaður>|<mánuður>" (fyllt í load()).
   let EFDOCS = {};
   // Tímavera-tímar + Redder-efniskostnaður per „<verkstaður>|<mánuður>" (fyrir Ósendar-reitina).
@@ -12008,6 +12018,7 @@ async function renderKrofuyfirlit(t){
         </div>
       </details>
 
+      <div class="kyf-warn"></div>
       <div class="kyf-lp-banner"></div>
 
       <div class="kyf-list"></div>
@@ -12063,12 +12074,19 @@ async function renderKrofuyfirlit(t){
 
   // Þrep 3 — reiknað í vafra úr /api/worksites (+ pricing-guide + nlsh-dashboard).
   async function computeTier3(){
+    // Aðgreina raunverulega sóknar-villu (net/HTTP) frá löglega tómu svari svo
+    // við föllum ekki hljóðlega á sjálfgefna taxta og sýnum rangar áætlanir.
+    let pgFail=false, wsFail=false;
     const [ws, pg, nl, rd] = await Promise.all([
-      fetch('/api/worksites?year=combined',{cache:'no-store'}).then(r=>r.json()).catch(()=>({worksites:[]})),
-      fetch('/api/pricing-guide',{cache:'no-store'}).then(r=>r.ok?r.json():{rows:[]}).catch(()=>({rows:[]})),
+      fetch('/api/worksites?year=combined',{cache:'no-store'}).then(r=>{ if(!r.ok) throw 0; return r.json(); }).catch(()=>{ wsFail=true; return {worksites:[]}; }),
+      fetch('/api/pricing-guide',{cache:'no-store'}).then(r=>{ if(!r.ok) throw 0; return r.json(); }).catch(()=>{ pgFail=true; return {rows:[]}; }),
       fetch('/api/nlsh-dashboard',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null),
       fetch('/api/redder-invoices',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null),
     ]);
+    state.pgFailed = pgFail; state.wsFailed = wsFail;
+    // Verðskrá náðist ekki → sjálfgefnir taxtar (9.951/14.927) hefðu skekkt hverja
+    // áætlun → EKKI sýna tilbúnar tölur; fela þrep 3 og láta bannerinn útskýra.
+    if(pgFail){ PG = {}; return groupTier3([]); }
     PG = {}; for(const r of (pg.rows||[])) PG[r.worksite_name] = r;
     // Tímar per (verkstaður|mánuður) úr öllum verkstöðum (fyrir Ósendar-reitina).
     HOURS = {}; for(const w of (ws.worksites||[])) for(const [m,h] of Object.entries(w.monthly||{})) HOURS[w.project+'|'+m] = h;
@@ -12543,9 +12561,23 @@ async function renderKrofuyfirlit(t){
     return header + body;
   }
 
+  // Gulur viðvörunar-borði: bakenda-`warnings` (mistókst lestur) + verðskrá/verkstaða
+  // sem náðist ekki (áætlanir faldar). Tómt → enginn borði (happy path óbreyttur).
+  function renderMoneyWarn(){
+    const box = $view.querySelector('.kyf-warn'); if(!box) return;
+    const msgs = [];
+    for(const m of ((state.data && state.data.warnings) || [])) if(m) msgs.push(String(m));
+    if(state.pgFailed) msgs.push('Verðskrá náðist ekki — sjálfgefnir taxtar (9.951/14.927) hefðu verið notaðir, svo „Tími eftir"-áætlanir eru faldar því þær gætu verið rangar.');
+    else if(state.wsFailed) msgs.push('Verkstaða-gögn náðust ekki — „Tími eftir"-áætlanir gætu verið ófullkomnar.');
+    if(!msgs.length){ box.innerHTML = ''; return; }
+    box.innerHTML = '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;padding:11px 15px;background:#fffbeb;border:1px solid #fde68a;border-radius:14px;color:#92400e;font-size:12.5px;line-height:1.5">'
+      + msgs.map(m=>'<div style="display:flex;gap:8px;align-items:flex-start"><span style="font-size:15px;flex-shrink:0">⚠</span><span>'+esc(m)+'</span></div>').join('')
+      + '</div>';
+  }
   function renderList(){
     const listEl = $view.querySelector('.kyf-list');
     if(!state.data){ listEl.innerHTML = '<div style="padding:32px;text-align:center;color:#94a3b8">Hleður kröfum…</div>'; return; }
+    renderMoneyWarn();
     // serverHidden endurnýjast í hverri hleðslu úr bakenda-meta (authoritative).
     serverHidden = new Set(state.data.hidden_keys || []);
     // „👁 Sýna falin (N)" hnappur — birtist aðeins ef eitthvað er falið.
