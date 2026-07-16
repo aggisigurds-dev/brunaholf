@@ -161,7 +161,15 @@ exports.handler = async (event) => {
         // STAÐA-id: skeytt aftast (#id) svo lesarinn tengi skjalið BEINT á réttan
         // stað. Aðeins þegar staðurinn er örugglega þekktur (einn staður eða
         // einkvæmt heimilisfang) — annars sleppt (Skýrslu-stöð).
-        const siteId = (ok && base) ? await matchSite(base.id, address) : null;
+        // Kt-vöntun: nýrri skýrslur prenta ekki kt viðskiptavinarins — flettum
+        // henni upp í grunninum eftir fyrirtækjanafni (+heimilisfangi) þegar
+        // nákvæmlega eitt passar. Base/staður endurreiknuð með fundnu kt-inu.
+        let effBase = base;
+        if (ok && !kt && realish(company)) {
+          const foundKt = await ktByCompanyName(company, address);
+          if (foundKt) { kt = foundKt; effBase = await matchBase(kt); }
+        }
+        const siteId = (ok && effBase) ? await matchSite(effBase.id, address) : null;
         let newName = '', status = 'manual';
         if (ok && realish(company) && kt && year) {   // year required; month optional (drops the month segment when absent). Company verður að vera raunverulegt nafn (ekki tómt/gallað/plásshaldari) — annars 'manual', aldrei fjölda-endurnefnt.
           newName = sanitize(company) + (address ? ' - ' + sanitize(address) : '') + ' - ' + dash(kt) + ' - ' + year + (month ? ' - ' + month : '') + (siteId ? ' - #' + siteId : '') + '.pdf';
@@ -349,6 +357,37 @@ function expandCity(a) {
 const dash = kt => (kt && kt.length === 10) ? kt.slice(0, 6) + '-' + kt.slice(6) : kt;
 function sanitize(s) { return String(s || '').replace(/[\\/:*?"<>|]/g, '-').replace(/\s+/g, ' ').trim().slice(0, 70); }
 
+// Öfug uppfletting (2026-07-16, „kom bara handvirkt"): nýrri skýrslur prenta
+// EKKI kennitölu viðskiptavinarins — fyrirtæki/heimilisfang/dags lesast en kt
+// vantar og allt féll á handvirkt. Þegar nafnið þekkist í grunninum á
+// NÁKVÆMLEGA EINUM lifandi stað (fold-samanburður; heimilisfang notað til að
+// skera úr þegar nöfn skarast) tökum við kt þaðan. 0 eða 2+ möguleikar → null
+// (áfram handvirkt — aldrei giskað).
+function foldNm(s) {
+  return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+    .replace(/\b(ehf|hf|slf|sf)\.?\b/g, '').replace(/[^a-z0-9]+/g, '');
+}
+let _ktByNameCache = null;
+async function ktByCompanyName(company, address) {
+  const key = foldNm(company);
+  if (!key || key.length < 4) return null;
+  if (!_ktByNameCache) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/fyrirtaeki?deleted_at=is.null&kennitala=not.is.null&select=nafn,kennitala,heimilisfang&limit=5000`, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } });
+    const rows = await r.json().catch(() => []);
+    _ktByNameCache = Array.isArray(rows) ? rows : [];
+  }
+  const hits = _ktByNameCache.filter(x => foldNm(x.nafn) === key && String(x.kennitala || '').replace(/\D/g, '').length === 10);
+  if (!hits.length) return null;
+  const kts = [...new Set(hits.map(h => String(h.kennitala).replace(/\D/g, '')))];
+  if (kts.length === 1) return hits[0].kennitala;           // eitt kt → öruggt (líka rekstrarfélag með marga staði)
+  if (address) {                                            // nöfn skarast milli kt-a → heimilisfangið sker úr
+    const ak = siteAddrKey(address);
+    const byAddr = hits.filter(h => siteAddrKey(h.heimilisfang) === ak);
+    const akts = [...new Set(byAddr.map(h => String(h.kennitala).replace(/\D/g, '')))];
+    if (akts.length === 1) return byAddr[0].kennitala;
+  }
+  return null;
+}
 async function matchBase(kt) {
   if (!kt) return null;
   const r = await fetch(`${SUPABASE_URL}/rest/v1/customers_base?kennitala=eq.${encodeURIComponent(dash(kt))}&select=id,nafn&limit=1`, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } });
