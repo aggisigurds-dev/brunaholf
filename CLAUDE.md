@@ -498,8 +498,15 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   „plaza") og NÁKVÆMLEGA EITT aðgreinandi nafn í skráarheiti/PDF-texta = sönnun;
   0 eða 2+ → ósnert. Eftir lotu: nýjasta slökkvitæki-skýrsla hvers staðar →
   upsert **`arsskodun_report_facts`** (PK fyrirtaeki_id; equipment 9-bucket
-  jsonb, sama Fjöldi-lógík og `skyrsla-bunadur.js`; aldrei yfirskrifað með eldri
-  skýrslu). `GET ?base=ID[&offset&limit=2][&apply=1]` →
+  jsonb, Fjöldi-lógíkin er SAMEIGINLEG í `_bunadur.js` — líka notuð af
+  `skyrsla-bunadur.js`; aldrei yfirskrifað með eldri skýrslu). **CO2-gildran
+  (2026-07-16, `_bunadur.js`):** pdf-parse brýtur ₂-subscriptið í „Co₂" á eigin
+  línu („Slökkvitæki Co\n2\n 2 kg. Fjöldi: …") svo línu-bundnu regexin misstu
+  ALLAR CO2-línur → co2_2/co2_5 kerfisbundið 0 í facts. `normalizeText` límir
+  brotið saman (+NBSP/₂), CO2-merkið þolir að „Slökkvitæki"-forskeytið vanti
+  („Kolsýrutæki 5 kg") og stærðarlaus CO2-lína fer í co2_5 — aldrei tvítalin í
+  duft6_12-remainder. ~184 staðir þurfa facts-endurkeyrslu eftir deploy (listi:
+  co2-rerun-list, sjá PR). `GET ?base=ID[&offset&limit=2][&apply=1]` →
   `{base,total,offset,nextOffset,rows:[{id,file,verdict,year,site,via,changed}],
   counts,facts_updated}`; batchað (~8s vörn), UI lykkjar með live-log +
   localStorage framvindu (`bh_felag_endurlestur`, `rereadFelag` í index.html).
