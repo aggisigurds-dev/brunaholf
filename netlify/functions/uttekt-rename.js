@@ -156,8 +156,14 @@ exports.handler = async (event) => {
         // Date from content; fall back to the month/ár already in the filename so
         // hard-to-read PDFs don't lose their year.
         const di = dateInfo(text);
-        const month = di.month || old.month;
-        const year = di.year || old.year;
+        // Laust fall af skráarheitinu (2026-07-16): mörg gömul nöfn bera ár/mánuð
+        // þó þau séu ekki á kanóníska sniðinu („… - maí - 2023.pdf") — strangi
+        // old-þátturinn missti þau og skýrslan féll á handvirkt (ár).
+        const nameYear = (f.name.match(/\b(20[0-3]\d)\b/) || [])[1] || '';
+        const nameMonth = ((f.name.toLowerCase().match(/\b(jan[úu]ar|febr[úu]ar|mars|apr[íi]l|ma[íi]|j[úu]n[íi]|j[úu]l[íi]|[áa]g[úu]st|september|okt[óo]ber|n[óo]vember|desember)\b/) || [])[1] || '')
+          .replace(/^agust$/, 'ágúst');
+        const month = di.month || old.month || nameMonth;
+        const year = di.year || old.year || nameYear;
         // STAÐA-id: skeytt aftast (#id) svo lesarinn tengi skjalið BEINT á réttan
         // stað. Aðeins þegar staðurinn er örugglega þekktur (einn staður eða
         // einkvæmt heimilisfang) — annars sleppt (Skýrslu-stöð).
