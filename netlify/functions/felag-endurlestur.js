@@ -79,40 +79,11 @@ async function driveFileName(id, token){
 }
 
 // ── Flokkun + útdráttur (sama lógík og uttekt-rename / skyrsla-bunadur) ──────
-function sumNums(s){ const m = String(s||'').match(/\d+/g); return m ? m.reduce((a,b) => a + (+b), 0) : 0; }
-// Slökkvitæki-úttekt: per-tegund „Fjöldi:"-línur.
-const CATS = [
-  { key:'lettvatn', re:/sl[öo]kkvit[æa]ki\s+l[ée]ttvatn[^\n]*?fj[öo]ldi:?\s*([^\n]*?)(?:[íi]\s*lagi|$)/i },
-  { key:'duft_2',   re:/sl[öo]kkvit[æa]ki\s+duft\s*2[^\n]*?fj[öo]ldi:?\s*([^\n]*?)(?:[íi]\s*lagi|$)/i },
-  { key:'duft_6',   re:/sl[öo]kkvit[æa]ki\s+duft\s*6[^\n]*?fj[öo]ldi:?\s*([^\n]*?)(?:[íi]\s*lagi|$)/i },
-  { key:'co2_2',    re:/sl[öo]kkvit[æa]ki\s+(?:co2|kols[ýy]r)[^\n]*?2\s*kg[^\n]*?fj[öo]ldi:?\s*([^\n]*?)(?:[íi]\s*lagi|$)/i },
-  { key:'co2_5',    re:/sl[öo]kkvit[æa]ki\s+(?:co2|kols[ýy]r)[^\n]*?5\s*kg[^\n]*?fj[öo]ldi:?\s*([^\n]*?)(?:[íi]\s*lagi|$)/i },
-  { key:'bsl',      re:/brunasl[öo]ng[^\n]*?fj[öo]ldi:?\s*([^\n]*?)(?:[íi]\s*lagi|$)/i },
-  { key:'teppi',    re:/eldvarnarteppi[^\n]*?fj[öo]ldi:?\s*([^\n]*?)(?:[íi]\s*lagi|$)/i },
-  { key:'rs',       re:/reykskynjar[^\n]*?fj[öo]ldi:?\s*([^\n]*?)(?:[íi]\s*lagi|$)/i },
-];
-function parseBunadur(text){
-  const t = String(text||'').replace(/\r/g,'');
-  const detail = {};
-  for (const c of CATS){ const m = t.match(c.re); detail[c.key] = m ? sumNums(m[1]) : null; }
-  // Slk-heild ROBUST: allar „Slökkvitæki … Fjöldi: N" línur (CO2-undirstærð sem
-  // nákvæma regexið missir dettur aldrei úr summunni).
-  let slk = 0; const re = /sl[öo]kkvit[æa]ki\b[^\n]*?fj[öo]ldi:?\s*([^\n]*?)(?:[íi]\s*lagi|\n|$)/gi; let m;
-  while ((m = re.exec(t))){ slk += sumNums(m[1]); if (re.lastIndex === m.index) re.lastIndex++; }
-  const matched = Object.values(detail).filter(v => v != null).length;
-  return { slk, rs: detail.rs||0, bsl: detail.bsl||0, teppi: detail.teppi||0, detail, matched };
-}
-// 9-bucket equipment jsonb (sömu lyklar og skyrsla-bunadur.toEquipment).
-function toEquipment(b){
-  const d = b.detail || {};
-  const known = (d.lettvatn||0)+(d.duft_2||0)+(d.duft_6||0)+(d.co2_2||0)+(d.co2_5||0);
-  const remainder = Math.max(0, (b.slk||0) - known);
-  return {
-    lettvatn: d.lettvatn||0, duft2: d.duft_2||0, duft6_12: (d.duft_6||0)+remainder,
-    co2_2: d.co2_2||0, co2_5: d.co2_5||0,
-    brunaslongur: b.bsl||0, reykskynjarar: b.rs||0, eldvarnarteppi: b.teppi||0,
-  };
-}
+// Slökkvitæki-úttekt: per-tegund „Fjöldi:"-línur — SAMEIGINLEG lógík í
+// _bunadur.js (líka notuð af skyrsla-bunadur). CO2-subscript-brot pdf-parse
+// (Co\n2\n → merki og Fjöldi á sitthvorri línu) er normaliserað þar — það var
+// rótin að co2_2/co2_5=0 í arsskodun_report_facts.
+const { parseBunadur, toEquipment } = require('./_bunadur');
 // Rétt dagsetning: „Dags dd.mm.yyyy" fyrst; annars fyrsta „{mánuður} 20yy" sem
 // er EKKI „Næsta skoðun".
 function dateInfo(text){

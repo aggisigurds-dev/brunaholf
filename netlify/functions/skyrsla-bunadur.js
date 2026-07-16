@@ -52,35 +52,10 @@ async function pdfText(id, token){
   return (d && d.text) || '';
 }
 
-// Sum the integers in a "Fjöldi" value: "1+1 ABF" → 2 · "x" → 0 · "2" → 2.
-function sumNums(s){ const m=String(s||'').match(/\d+/g); return m ? m.reduce((a,b)=>a+ (+b),0) : 0; }
-
-// Each category line: "<label> … Fjöldi: <value> [Í lagi: …]". Value is read up to
-// "Í lagi" (or line end) so the "Já/nei/x" status never leaks into the count.
-const CATS = [
-  { key:'lettvatn', grp:'slk',   re:/sl[öo]kkvit[æa]ki\s+l[ée]ttvatn[^\n]*?fj[öo]ldi:?\s*([^\n]*?)(?:[íi]\s*lagi|$)/i },
-  { key:'duft_2',   grp:'slk',   re:/sl[öo]kkvit[æa]ki\s+duft\s*2[^\n]*?fj[öo]ldi:?\s*([^\n]*?)(?:[íi]\s*lagi|$)/i },
-  { key:'duft_6',   grp:'slk',   re:/sl[öo]kkvit[æa]ki\s+duft\s*6[^\n]*?fj[öo]ldi:?\s*([^\n]*?)(?:[íi]\s*lagi|$)/i },
-  { key:'co2_2',    grp:'slk',   re:/sl[öo]kkvit[æa]ki\s+(?:co2|kols[ýy]r)[^\n]*?2\s*kg[^\n]*?fj[öo]ldi:?\s*([^\n]*?)(?:[íi]\s*lagi|$)/i },
-  { key:'co2_5',    grp:'slk',   re:/sl[öo]kkvit[æa]ki\s+(?:co2|kols[ýy]r)[^\n]*?5\s*kg[^\n]*?fj[öo]ldi:?\s*([^\n]*?)(?:[íi]\s*lagi|$)/i },
-  { key:'bsl',      grp:'bsl',   re:/brunasl[öo]ng[^\n]*?fj[öo]ldi:?\s*([^\n]*?)(?:[íi]\s*lagi|$)/i },
-  { key:'teppi',    grp:'teppi', re:/eldvarnarteppi[^\n]*?fj[öo]ldi:?\s*([^\n]*?)(?:[íi]\s*lagi|$)/i },
-  { key:'rs',       grp:'rs',    re:/reykskynjar[^\n]*?fj[öo]ldi:?\s*([^\n]*?)(?:[íi]\s*lagi|$)/i },
-];
-
-function parseBunadur(text){
-  const t = String(text||'').replace(/\r/g,'');
-  // Per-subtype (best effort, for the tooltip/detail).
-  const detail={};
-  for(const c of CATS){ const m=t.match(c.re); detail[c.key]= m ? sumNums(m[1]) : null; }
-  // Slk total is computed ROBUSTLY from EVERY "Slökkvitæki … Fjöldi: N" line so a
-  // CO2/kolsýra subtype whose exact-size regex misses is never dropped from the sum.
-  let slk=0; const re=/sl[öo]kkvit[æa]ki\b[^\n]*?fj[öo]ldi:?\s*([^\n]*?)(?:[íi]\s*lagi|\n|$)/gi; let m;
-  while((m=re.exec(t))){ slk += sumNums(m[1]); if(re.lastIndex===m.index) re.lastIndex++; }
-  const rs=detail.rs||0, bsl=detail.bsl||0, teppi=detail.teppi||0;
-  const matched=Object.values(detail).filter(v=>v!=null).length;
-  return { slk, rs, bsl, teppi, detail, matched };
-}
+// „Fjöldi"-lína búnaðar-lógík er SAMEIGINLEG í _bunadur.js (líka notuð af
+// felag-endurlestur). CO2-subscript-brot pdf-parse (Co\n2\n) er normaliserað
+// þar áður en parsað er — sjá skýringu efst í _bunadur.js.
+const { parseBunadur, toEquipment } = require('./_bunadur');
 
 // Report month: prefer "Dags dd.mm.yyyy"; else "{mánuður} 20yy".
 const MNUM = { 'janúar':1,'febrúar':2,'mars':3,'apríl':4,'maí':5,'júní':6,'júlí':7,'ágúst':8,'september':9,'október':10,'nóvember':11,'desember':12 };
@@ -91,20 +66,6 @@ function parseMonth(text){
   m = /(janúar|febrúar|mars|apríl|maí|júní|júlí|ágúst|september|október|nóvember|desember)\s+20\d\d/i.exec(t);
   if(m) return MNUM[m[1].toLowerCase()] || null;
   return null;
-}
-// Map skyrsla-bunadur detail → the detailed equipment keys Slökkvitæki's
-// eqGroups() sums (lettvatn+duft2+duft6_12+co2_2+co2_5 = SLT; brunaslongur = BSL;
-// reykskynjarar = RS). Any Slk remainder the exact-size regex missed is dumped
-// into duft6_12 so the SLT total always equals the robust `slk` count.
-function toEquipment(b){
-  const d = b.detail || {};
-  const known = (d.lettvatn||0)+(d.duft_2||0)+(d.duft_6||0)+(d.co2_2||0)+(d.co2_5||0);
-  const remainder = Math.max(0, (b.slk||0) - known);
-  return {
-    lettvatn: d.lettvatn||0, duft2: d.duft_2||0, duft6_12: (d.duft_6||0)+remainder,
-    co2_2: d.co2_2||0, co2_5: d.co2_5||0,
-    brunaslongur: b.bsl||0, reykskynjarar: b.rs||0, eldvarnarteppi: b.teppi||0,
-  };
 }
 async function sbAll(path){
   const out=[];
