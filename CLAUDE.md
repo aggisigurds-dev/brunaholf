@@ -442,6 +442,20 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   Σ línu-upphæða === Upphæð án vsk á hverjum einasta. Þar með getur Gerð Reikninga
   Efnislisti-autofillið (`matchVerdskra` á `item_name`) loks unnið úr Drive-lesnum
   reikningum — áður skrifaði Drive-leiðin engar línur (0 af 65).
+- `uttekt-upload.js` — **App→Drive brú fyrir úttektarskýrslur** (`POST
+  /api/uttekt-upload`): Slökkvitæki-appið (patch 233) vistar app-gerðar
+  úttektarskýrslur aðeins í Supabase bucket — þessi endapunktur tekur við
+  `{kt, fyrirtaeki_id?, company, address?, year, month?, filename?,
+  pdf_base64?|public_url?}` (public_url = aðal-leiðin, max ~10 MB, %PDF-vörn),
+  setur AFRIT í kanónísku Úttektarskýrslur-möppuna (`1VSRRw6O…`) undir
+  uttekt-rename nafnavenjunni `Fyrirtæki[ - Heimilisfang] - kt - Ár[ - mánuður]
+  [ - #fyrirtaeki_id].pdf` og upsert-ar `customer_documents`
+  (doc_type=uttektarskyrsla; base find-or-create eftir kt). Idempotent: sama
+  nafn í möppunni → files.update (ný revision, aldrei annað eintak); til
+  (fyrirtaeki_id, year) röð → drive_file_id hennar uppfært + ` · app-útgáfa
+  <dags>` í notes; 409 á drive_file_id → sótt fyrirliggjandi id. Svar
+  `{ok, drive_file_id, doc_id, name, updated}`. CORS `*` (m.a.
+  slokkvitaeki.netlify.app); generic `/api/*` redirect dekkar slóðina.
 - `match-station.js` — **🔗 Skýrslu-stöð** (Bakendi top): a human-in-the-loop board
   to assign each `customer_documents` row (úttektarskýrsla/reikningur) to the RIGHT
   service-customer **location (`fyrirtaeki_id`) + year**. Built because an earlier
