@@ -4660,7 +4660,7 @@ function renderBakendi(t){
 
   let docRows = [];   // accumulated read docs (for the editable customer match)
   async function runBakendi(dry){
-    const f = ($folder.value || '').trim() || DEFAULT_FOLDER;
+    const f = driveFolderId(($folder.value || '').trim()) || DEFAULT_FOLDER;
     localStorage.setItem(FOLDER_KEY, f);
     $dry.disabled = $run.disabled = true;
     $results.innerHTML = '<div class="empty">Vinnur… les skjöl í lotum, þetta uppfærist jafnóðum.</div>';
@@ -5644,7 +5644,7 @@ function renderBakendi(t){
   }
 
   async function runReikningar(dry){
-    const f = ($rkFolder.value || '').trim();
+    const f = driveFolderId(($rkFolder.value || '').trim());
     if (!f) { $rkResults.innerHTML = '<div class="empty">Vantar möppu-id.</div>'; return; }
     $rkRead.disabled = $rkDb.disabled = $rkSheet.disabled = true;
     rkRows = [];
@@ -5677,7 +5677,7 @@ function renderBakendi(t){
 
   async function writeReikningarSheet(){
     if (!rkRows.length) return;
-    const f = ($rkFolder.value || '').trim();
+    const f = driveFolderId(($rkFolder.value || '').trim());
     $rkSheet.disabled = true;
     const old = $rkSheet.textContent; $rkSheet.textContent = '📊 Skrifa…';
     try {
@@ -5712,7 +5712,7 @@ function renderBakendi(t){
   if ($rnApply) $rnApply.onclick = applyRename;
 
   async function scanRename(){
-    const f = ($rnFolder.value || '').trim();
+    const f = driveFolderId(($rnFolder.value || '').trim());
     if (!f) { $rnResults.innerHTML = '<div class="empty">Vantar möppu-id.</div>'; return; }
     $rnScan.disabled = $rnApply.disabled = true;
     rnRows = [];
@@ -5767,7 +5767,7 @@ function renderBakendi(t){
   const $dupResults = document.getElementById('bk-dup-results');
   let dupTrashIds = [];
   if ($dupScan) $dupScan.onclick = async () => {
-    const f = ($rnFolder.value || '').trim();
+    const f = driveFolderId(($rnFolder.value || '').trim());
     if (!f) { $dupResults.innerHTML = '<div class="empty">Vantar möppu-id.</div>'; return; }
     $dupScan.disabled = $dupTrash.disabled = true; dupTrashIds = [];
     $dupStatus.textContent = 'Leita að tvítökum…'; $dupResults.innerHTML = '';
@@ -5806,6 +5806,15 @@ function renderBakendi(t){
   };
 
   // ── Endurnefna úttektarskýrslur (djúpskönnun → staðlað nafn í Drive) ──────
+
+  // Möppu-reitirnir taka nú líka við LÍMDRI Drive-slóð — ID-ið er dregið út
+  // (https://drive.google.com/drive/folders/<ID>?..., /d/<ID>/, ?id=<ID>).
+  function driveFolderId(v) {
+    v = String(v || '').trim();
+    if (!v) return v;
+    const m = v.match(/[-\w]{25,}/);
+    return m ? m[0] : v;
+  }
   const $urFolder = document.getElementById('bk-ur-folder');
   const $urScan = document.getElementById('bk-ur-scan');
   const $urApply = document.getElementById('bk-ur-apply');
@@ -5818,7 +5827,7 @@ function renderBakendi(t){
   if ($urApply) $urApply.onclick = applyUttektRename;
   const $urDb = document.getElementById('bk-ur-db');
   if ($urDb) $urDb.onclick = () => {
-    const f = ($urFolder.value || '').trim();
+    const f = driveFolderId(($urFolder.value || '').trim());
     if (!f) { $urResults.innerHTML = '<div class="empty">Vantar möppu-id.</div>'; return; }
     const tgt = document.getElementById('bk-folder'); if (tgt) tgt.value = f;   // hand the folder to Skjalalestur (doc-index)
     $urStatus.textContent = '→ Skrái þessa möppu í gagnagrunn gegnum „Skjalalestur" hér fyrir ofan…';
@@ -5829,7 +5838,7 @@ function renderBakendi(t){
   // applyMode=true: endurnefnir jafnóðum í Drive. false: hrein forskoðun —
   // breytir ENGU, safnar tillögum í yfirferðartöfluna fyrir „Endurnefna forskoðað".
   async function scanUttektRename(applyMode = true){
-    const f = ($urFolder.value || '').trim();
+    const f = driveFolderId(($urFolder.value || '').trim());
     if (!f) { $urResults.innerHTML = '<div class="empty">Vantar möppu-id.</div>'; return; }
     $urScan.disabled = $urApply.disabled = true;
     urRows = [];   // aðeins manual/villu-raðir fyrir yfirferðartöfluna
@@ -5925,7 +5934,7 @@ function renderBakendi(t){
   const $udupResults = document.getElementById('bk-udup-results');
   let udupTrashIds = [];
   if ($udupScan) $udupScan.onclick = async () => {
-    const f = ($urFolder.value || '').trim();
+    const f = driveFolderId(($urFolder.value || '').trim());
     if (!f) { $udupResults.innerHTML = '<div class="empty">Vantar möppu-id.</div>'; return; }
     $udupScan.disabled = $udupTrash.disabled = true; udupTrashIds = [];
     $udupStatus.textContent = 'Leita að tvítökum…'; $udupResults.innerHTML = '';
@@ -6004,7 +6013,7 @@ function renderBakendi(t){
     });
   }
   if ($urAudit) $urAudit.onclick = async () => {
-    const f = ($urFolder.value || '').trim();
+    const f = driveFolderId(($urFolder.value || '').trim());
     if (!f) { $urAuditResults.innerHTML = '<div class="empty">Vantar möppu-id.</div>'; return; }
     $urAudit.disabled = $urRelink.disabled = true; _auditFixItems = [];
     $urAuditStatus.textContent = 'Skoða tengingar…'; $urAuditResults.innerHTML = '';
