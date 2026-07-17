@@ -12,7 +12,7 @@
 //   account  the connected Google mailbox to pull (e.g. eldklar@eldklar.is).
 //            Optional — defaults to whatever account is connected. If given it
 //            MUST match the connected account (see the single-account note below).
-//   days     look-back window for `newer_than:Nd` (default 10, max 90).
+//   days     look-back window for `newer_than:Nd` (default 10, max 400).
 //   folder   'sent' pulls the SENT mailbox instead of the inbox: the Gmail
 //            query becomes `in:sent newer_than:Nd` and rows are written with
 //            folder='SENT', is_question=false (our own replies are never
@@ -27,7 +27,7 @@
 // `account` guard below makes a mismatch loud rather than silently pulling the
 // wrong mailbox. Multi-account (a token row per email) is a separate, larger task.
 
-const { freshAccessToken, loadTokens, json, cors } = require('./_google');
+const { freshAccessToken, loadTokens, freshAccessTokenFor, loadTokensFor, json, cors } = require('./_google');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -83,30 +83,49 @@ exports.handler = async (event) => {
 
   const p = event.queryStringParameters || {};
   const dry = p.dry === '1' || p.dry === 'true';
-  const days = Math.min(Math.max(parseInt(p.days || '10', 10) || 10, 1), 90);
+  // 2026-07-17: hámark hækkað 90 → 400 svo Stólpa-tímabilið (feb–mars 2026)
+  // náist í sögulegri sókn; venjuleg keyrsla notar áfram fáa daga.
+  const days = Math.min(Math.max(parseInt(p.days || '10', 10) || 10, 1), 400);
   const wantAccount = (p.account || '').trim();
   // folder=sent → pull the SENT mailbox (rows get folder='SENT', is_question=false).
   const sentFolder = (p.folder || '').trim().toLowerCase() === 'sent';
 
-  // ── Get a token for the connected Google account ───────────────────────────
+  // ── Get a token for the requested Google account ───────────────────────────
+  // 2026-07-17 fjölreikningar: sé `account` gefið er FYRST leitað að eigin
+  // token-röð fyrir það netfang (google_oauth keyed á user_email) — svo hvaða
+  // tengt pósthólf sem er er sótt beint. Fallback: aðal-reikningurinn (id=1)
+  // með gamla 409-verðinum ef netfangið passar ekki.
   let token, connected;
-  try {
-    token = await freshAccessToken();
-    const t = await loadTokens();
-    connected = (t && t.user_email) || null;
-  } catch (e) {
-    return json(401, { error: e.message });
+  if (wantAccount) {
+    const own = await loadTokensFor(wantAccount).catch(() => null);
+    if (own && own.refresh_token) {
+      try {
+        token = await freshAccessTokenFor(wantAccount);
+        connected = own.user_email;
+      } catch (e) {
+        return json(401, { error: e.message });
+      }
+    }
   }
-
-  // Single-account guard: only the connected mailbox can be pulled (see header).
-  if (wantAccount && connected &&
-      wantAccount.toLowerCase() !== connected.toLowerCase()) {
-    return json(409, {
-      error: `Tengt pósthólf er ${connected}, ekki ${wantAccount}. ` +
-        `Aðeins er hægt að sækja það pósthólf sem er tengt núna. ` +
-        `Til að sækja ${wantAccount} úr skýinu þarftu að tengja Google sem ${wantAccount}.`,
-      connected, requested: wantAccount,
-    });
+  if (!token) {
+    try {
+      token = await freshAccessToken();
+      const t = await loadTokens();
+      connected = (t && t.user_email) || null;
+    } catch (e) {
+      return json(401, { error: e.message });
+    }
+    // Single-account guard for the primary row: a mismatch is loud, with the
+    // multi-account fix in the message.
+    if (wantAccount && connected &&
+        wantAccount.toLowerCase() !== connected.toLowerCase()) {
+      return json(409, {
+        error: `Tengt pósthólf er ${connected}, ekki ${wantAccount}. ` +
+          `Tengdu ${wantAccount} sem AUKAREIKNING: opnaðu /api/google-auth?account=${encodeURIComponent(wantAccount)} ` +
+          `og skráðu þig inn sem það netfang — aðal-tengingin (Drive) helst óbreytt.`,
+        connected, requested: wantAccount,
+      });
+    }
   }
   // The mailbox label we tag rows with: prefer the connected identity, fall back
   // to the requested account string (so the row is attributable even if the

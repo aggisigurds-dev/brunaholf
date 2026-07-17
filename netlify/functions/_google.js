@@ -16,7 +16,7 @@ const SCOPES = [
   'openid',
 ];
 
-function buildAuthUrl(state) {
+function buildAuthUrl(state, loginHint) {
   const p = new URLSearchParams({
     client_id: CLIENT_ID,
     redirect_uri: REDIRECT,
@@ -27,6 +27,7 @@ function buildAuthUrl(state) {
     include_granted_scopes: 'true',
     state: state || '',
   });
+  if (loginHint) p.set('login_hint', loginHint);   // forval á rétta netfanginu (fjölreikningar)
   return `https://accounts.google.com/o/oauth2/v2/auth?${p.toString()}`;
 }
 
@@ -106,6 +107,68 @@ async function loadTokens() {
   return rows[0] || null;
 }
 
+// ── Multi-account (2026-07-17) ───────────────────────────────────────────────
+// Row id=1 stays the PRIMARY account (Drive/Sheets — everything existing).
+// Additional mailboxes (bokhald@eldklar.is …) get their OWN row keyed by
+// user_email (unique index google_oauth_user_email_key, id from sequence).
+// Existing callers (freshAccessToken/saveTokens/loadTokens) are untouched.
+async function saveTokensFor(email, { access_token, refresh_token, expires_in, scope }) {
+  const em = String(email || '').trim().toLowerCase();
+  if (!em) throw new Error('saveTokensFor: vantar netfang');
+  const primary = await loadTokens().catch(() => null);
+  // Same email as the primary row (or no primary yet) → keep using id=1 so
+  // Drive/Sheets keep working exactly as before.
+  if (!primary || String(primary.user_email || '').toLowerCase() === em) {
+    return saveTokens({ user_email: em, access_token, refresh_token, expires_in, scope });
+  }
+  const expires_at = new Date(Date.now() + (expires_in - 60) * 1000).toISOString();
+  const payload = { user_email: em, access_token, expires_at, scope, updated_at: new Date().toISOString() };
+  if (refresh_token) payload.refresh_token = refresh_token;
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/google_oauth?on_conflict=user_email`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'resolution=merge-duplicates,return=minimal',
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!r.ok) throw new Error(`Save tokens (${em}) ${r.status}: ${(await r.text()).slice(0, 300)}`);
+}
+
+async function loadTokensFor(email) {
+  const em = String(email || '').trim().toLowerCase();
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/google_oauth?user_email=eq.${encodeURIComponent(em)}&select=*`, {
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` },
+  });
+  if (!r.ok) throw new Error(`Load tokens (${em}) ${r.status}`);
+  const rows = await r.json();
+  return rows[0] || null;
+}
+
+// Fresh access_token for a SPECIFIC connected mailbox (any row, incl. id=1).
+async function freshAccessTokenFor(email) {
+  const t = await loadTokensFor(email);
+  if (!t || !t.refresh_token) throw new Error(`${email} er ekki tengt — opnaðu /api/google-auth?account=${encodeURIComponent(email)} og skráðu þig inn sem það netfang.`);
+  const now = Date.now();
+  const expiresAt = t.expires_at ? new Date(t.expires_at).getTime() : 0;
+  if (t.access_token && expiresAt > now + 30 * 1000) return t.access_token;
+  const fresh = await refreshAccessToken(t.refresh_token);
+  await saveTokensFor(t.user_email, {
+    access_token: fresh.access_token, refresh_token: null,
+    expires_in: fresh.expires_in, scope: fresh.scope || t.scope,
+  });
+  return fresh.access_token;
+}
+
+async function listConnectedAccounts() {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/google_oauth?select=id,user_email,scope,updated_at&order=id`, {
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` },
+  });
+  if (!r.ok) return [];
+  return r.json();
+}
+
 // Returns a fresh access_token (refreshing if needed). Throws if not connected.
 async function freshAccessToken() {
   const t = await loadTokens();
@@ -140,5 +203,6 @@ module.exports = {
   CLIENT_ID, CLIENT_SECRET, REDIRECT, SCOPES,
   buildAuthUrl, exchangeCodeForTokens, refreshAccessToken,
   getUserInfo, saveTokens, loadTokens, freshAccessToken,
+  saveTokensFor, loadTokensFor, freshAccessTokenFor, listConnectedAccounts,
   cors, json,
 };

@@ -2,7 +2,7 @@
 // GET /api/google-auth          → 302 to Google consent page
 // GET /api/google-auth?json=1   → returns { url } so the page can navigate itself
 
-const { buildAuthUrl, loadTokens, freshAccessToken, json, cors } = require('./_google');
+const { buildAuthUrl, loadTokens, freshAccessToken, listConnectedAccounts, json, cors } = require('./_google');
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors(), body: '' };
@@ -27,8 +27,16 @@ exports.handler = async (event) => {
     }
   }
 
+  // 2026-07-17 fjölreikningar: listi yfir allar tengingar (aðal + auka).
+  if (p.accounts === '1') {
+    const rows = await listConnectedAccounts().catch(() => []);
+    return json(200, { accounts: rows.map(r => ({ id: r.id, user_email: r.user_email, primary: r.id === 1, updated_at: r.updated_at })) });
+  }
+
   const state = Math.random().toString(36).slice(2, 12);
-  const url = buildAuthUrl(state);
+  // ?account=bokhald@eldklar.is forvelur netfangið á Google-innskráningunni;
+  // callback-ið vistar það í SÍNA röð (yfirskrifar aldrei aðal-tenginguna).
+  const url = buildAuthUrl(state, (p.account || '').trim() || undefined);
 
   if (p.json === '1') return json(200, { url });
 

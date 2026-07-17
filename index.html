@@ -4091,6 +4091,9 @@ function renderBakendi(t){
               <label style="font-size:12px;color:#475569;display:inline-flex;align-items:center;gap:5px">
                 <input id="bk-gm-dry" type="checkbox" checked> Prufa
               </label>
+              <label style="font-size:12px;color:#475569;display:inline-flex;align-items:center;gap:5px" title="Sækja SENT-möppuna (sendan póst) í stað innhólfsins">
+                <input id="bk-gm-sent" type="checkbox"> Sent-mappa
+              </label>
             </div>
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:auto">
@@ -4584,7 +4587,24 @@ function renderBakendi(t){
     }
   }
   gmCheckConn();
-  $gmConnect.onclick = startGoogleReauth;   // same consent flow — connect AS the desired mailbox
+  // Fjölreikningar (2026-07-17): sýna ALLAR tengingar (aðal + auka) undir stöðulínunni.
+  (async () => {
+    try {
+      const r = await fetch('/api/google-auth?accounts=1');
+      const d = await r.json();
+      if (d.accounts && d.accounts.length > 1) {
+        $gmConn.insertAdjacentHTML('afterend',
+          '<span style="font-size:12px;color:#475569">· Tengd: ' +
+          d.accounts.map(a => escapeHtml(a.user_email || '?') + (a.primary ? ' (aðal)' : '')).join(', ') + '</span>');
+      }
+    } catch (_) {}
+  })();
+  // Tengja SEM netfangið í reitnum (login_hint) — auka-netfang fær sína eigin
+  // token-röð í callbackinu og aðal-tengingin (Drive) helst ósnert.
+  $gmConnect.onclick = () => {
+    const acc = ($gmAccount.value || '').trim();
+    location.href = '/api/google-auth' + (acc ? ('?account=' + encodeURIComponent(acc)) : '');
+  };
 
   $gmRun.onclick = async () => {
     const account = ($gmAccount.value || '').trim();
@@ -4597,6 +4617,7 @@ function renderBakendi(t){
       const qs = new URLSearchParams({ days: String(days) });
       if (account) qs.set('account', account);
       if (dry) qs.set('dry', '1');
+      if (document.getElementById('bk-gm-sent').checked) qs.set('folder', 'sent');
       const r = await fetch('/api/gmail-ingest?' + qs.toString());
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
