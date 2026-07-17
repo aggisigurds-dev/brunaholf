@@ -12114,6 +12114,7 @@ async function renderTvMaeting(t){
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap" id="tvm-range">
           ${[3,8,14,31].map(n=>`<button data-d="${n}" type="button" style="padding:7px 13px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;${n===state.ui.tvm_days?'border:1px solid #1d4ed8;background:#1d4ed8;color:#fff':'border:1px solid #cbd5e1;background:#fff;color:#475569'}">${n} d.</button>`).join('')}
+          <button id="tvm-sync" type="button" title="Sækja nýjustu tímafærslur beint úr Tímaveru API" style="padding:7px 13px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;border:1px solid #047857;background:#059669;color:#fff">🔄 Samstilla</button>
           <button id="tvm-refresh" type="button" style="padding:7px 13px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;border:1px solid #cbd5e1;background:#fff;color:#475569">↻</button>
         </div>
       </div>
@@ -12138,7 +12139,7 @@ async function renderTvMaeting(t){
           staleBanner = '<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:12px;padding:11px 15px;margin-bottom:12px;font-size:12.5px;color:#92400e;line-height:1.5">'+
             '⚠️ <b>Nýjustu Tímaveru-gögnin eru frá '+esc(dayLbl(d.newest_entry))+' ('+ageD+' daga gömul).</b> '+
             (d.source_file ? 'Nýjasta útflutningsskráin („'+esc(d.source_file)+'") nær bara þangað — ' : '')+
-            'sæktu ferskan export úr Tímaveru (vinnufærslur-xlsx í Downloads/Drive) og keyrðu Samstilla, þá birtast nýju dagarnir.</div>';
+            'smelltu á <b>🔄 Samstilla</b> hér að ofan — það sækir nýjustu færslurnar beint úr Tímaveru API.</div>';
         }
       }
       if(!(d.days||[]).length){ list.innerHTML = staleBanner + '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:26px;text-align:center;color:#94a3b8;font-style:italic">Engar tímafærslur á tímabilinu</div>'; return; }
@@ -12175,6 +12176,28 @@ async function renderTvMaeting(t){
   }
   $view.querySelectorAll('#tvm-range [data-d]').forEach(b=>b.addEventListener('click',()=>{ state.ui.tvm_days=+b.dataset.d; save(); render(); }));
   const rf = $view.querySelector('#tvm-refresh'); if(rf) rf.addEventListener('click', load);
+  // 🔄 Samstilla — beintengingin við Tímaveru API (timavera-pull, 2026-07-10):
+  // sækir vinnufærslur síðustu daga beint frá api.timavera.is og upsertar í
+  // timavera_entries — enginn xlsx-export/bridge lengur nauðsynlegur.
+  const sy = $view.querySelector('#tvm-sync');
+  if (sy) sy.addEventListener('click', async () => {
+    const orig = sy.textContent;
+    sy.disabled = true; sy.textContent = '⏳ Samstilli…';
+    try {
+      const days = Math.max(state.ui.tvm_days || 8, 8);
+      const r = await fetch('/api/timavera-pull?days=' + days, { cache: 'no-store' });
+      const d = await r.json();
+      if (!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));
+      sy.textContent = '✓ ' + (d.upserted != null ? d.upserted + ' færslur' : 'Búið');
+      await load();
+    } catch (e) {
+      sy.textContent = '⚠ Villa';
+      alert('Samstilling mistókst: ' + (e.message || e) + '\n\nEf API-lykillinn er ekki skráður: Bakendi → „🕒 Tímavera API — beintenging".');
+    } finally {
+      sy.disabled = false;
+      setTimeout(() => { sy.textContent = orig; }, 4000);
+    }
+  });
   load();
 }
 
