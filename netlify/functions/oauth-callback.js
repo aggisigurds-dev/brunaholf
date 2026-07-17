@@ -2,7 +2,7 @@
 // Exchanges the code for tokens, fetches the user's email, stores in Supabase,
 // then redirects the user back to the main app with a success flag.
 
-const { exchangeCodeForTokens, getUserInfo, saveTokens, cors } = require('./_google');
+const { exchangeCodeForTokens, getUserInfo, saveTokensFor, cors } = require('./_google');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'GET') {
@@ -18,8 +18,9 @@ exports.handler = async (event) => {
   try {
     const tokens = await exchangeCodeForTokens(p.code);
     const info   = await getUserInfo(tokens.access_token);
-    await saveTokens({
-      user_email:   info.email,
+    // 2026-07-17 fjölreikningar: innskráning sem ANNAÐ netfang en aðal-reikningurinn
+    // (id=1, Drive/Sheets) fer í SÍNA eigin röð — yfirskrifar aldrei aðal-tenginguna.
+    await saveTokensFor(info.email, {
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
       expires_in:   tokens.expires_in,

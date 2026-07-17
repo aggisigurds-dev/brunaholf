@@ -379,14 +379,20 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   `dry=1` returns a preview (counts + sample subjects), writes nothing. `days`
   default 10, max 90. `folder=sent` pulls the SENT mailbox instead (`in:sent`) —
   rows get `folder='SENT'`, `is_question=false`, same `message_id` upsert.
-  **Single-account constraint:** `_google.js` stores ONE
-  token row (`id=1`) and `freshAccessToken()` returns that account — so this can
-  only pull the **currently connected** Google account. The `account` param is a
-  guard: if it doesn't match the connected `user_email` it 409s loudly rather
-  than pulling the wrong mailbox. To pull **eldklar@eldklar.is** (priority — 95%
-  of the Slökkvitæki side), connect Google AS eldklar@eldklar.is via
-  `/api/google-auth`. Wired to the Bakendi „☁️ Gmail úr skýi" section. Next:
-  multi-account (a `google_oauth` row per email) and Microsoft Graph for the
+  **Multi-account (2026-07-17):** `google_oauth` now holds a row PER
+  mailbox (unique index on `user_email`, id from `google_oauth_id_seq`; row
+  `id=1` stays the PRIMARY account that Drive/Sheets use — untouched).
+  `/api/google-auth?account=<email>` starts consent with `login_hint`;
+  `oauth-callback` saves via `_google.saveTokensFor` (same email as primary →
+  id=1, otherwise its own row — NEVER clobbers the Drive token).
+  `gmail-ingest?account=<email>` uses `freshAccessTokenFor(email)` when that
+  mailbox has its own row, else falls back to the primary with the old 409
+  guard. `?accounts=1` lists connections. `_google.js` exports
+  `saveTokensFor/loadTokensFor/freshAccessTokenFor/listConnectedAccounts`.
+  Bakendi „☁️ Gmail úr skýi": „Tengja" connects AS the email in the input,
+  shows all connections, and a „Sent-mappa" checkbox pulls `folder=sent`.
+  First use-case: **bokhald@eldklar.is SENT** (týndu Stólpa-reikningarnir
+  feb–mars 2026 — sjá Verkborð #690). Next: Microsoft Graph for the
   @brunaholf.is (Office 365) mailboxes.
 - **Canonical doc folders (2026-07-05):** all readers now default to ONE folder per
   type — reikningar → **`1FHHX99LRB_9w_LqwHIY57T4l9mLMID7p` "Reikningar - Invoices"**,
