@@ -12,7 +12,7 @@
 //   account  the connected Google mailbox to pull (e.g. eldklar@eldklar.is).
 //            Optional — defaults to whatever account is connected. If given it
 //            MUST match the connected account (see the single-account note below).
-//   days     look-back window for `newer_than:Nd` (default 10, max 90).
+//   days     look-back window for `newer_than:Nd` (default 10, max 400).
 //   folder   'sent' pulls the SENT mailbox instead of the inbox: the Gmail
 //            query becomes `in:sent newer_than:Nd` and rows are written with
 //            folder='SENT', is_question=false (our own replies are never
@@ -83,7 +83,9 @@ exports.handler = async (event) => {
 
   const p = event.queryStringParameters || {};
   const dry = p.dry === '1' || p.dry === 'true';
-  const days = Math.min(Math.max(parseInt(p.days || '10', 10) || 10, 1), 90);
+  // 2026-07-17: hámark hækkað 90 → 400 svo Stólpa-tímabilið (feb–mars 2026)
+  // náist í sögulegri sókn; venjuleg keyrsla notar áfram fáa daga.
+  const days = Math.min(Math.max(parseInt(p.days || '10', 10) || 10, 1), 400);
   const wantAccount = (p.account || '').trim();
   // folder=sent → pull the SENT mailbox (rows get folder='SENT', is_question=false).
   const sentFolder = (p.folder || '').trim().toLowerCase() === 'sent';
