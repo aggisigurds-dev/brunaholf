@@ -12164,7 +12164,15 @@ async function renderTvMaeting(t){
                   <td style="padding:8px 10px;font-weight:700;color:#047857;white-space:nowrap" class="ky-num">${esc(s.in||'—')}</td>
                   <td style="padding:8px 10px;font-weight:700;color:#be123c;white-space:nowrap" class="ky-num">${esc(s.out||'—')}</td>
                   <td style="padding:8px 10px;text-align:right;font-weight:700;color:#11141c;white-space:nowrap" class="ky-num">${hf(s.hours)}</td>
-                  <td style="padding:8px 18px 8px 10px;color:#475569">${s.projects.map(p=>`<span style="display:inline-block;background:#eef2f7;border-radius:99px;padding:1px 9px;margin:1px 3px 1px 0;font-size:11.5px;white-space:nowrap">${esc(p.project)} <span style="color:#8a93a5">${hf(p.hours)}klst${p.in?' · '+esc(p.in)+'–'+esc(p.out||'?'):''}</span></span>`).join('')}</td>
+                  <td style="padding:8px 18px 8px 10px;color:#475569">${s.projects.map(p=>{
+                    // Lita-kóðun verkstaða (ósk Agnars 2026-07-17): himinblátt =
+                    // Slökkvitæki, rautt = veikindi/sick leave, blátt = allt annað.
+                    const pn = String(p.project||'');
+                    const c = /veikindi|sick/i.test(pn) ? ['#fee2e2','#b91c1c','#fecaca']
+                          : /slökkvit|slokkvit/i.test(pn) ? ['#e0f2fe','#0369a1','#bae6fd']
+                          : ['#dbeafe','#1e40af','#bfdbfe'];
+                    return `<span style="display:inline-block;background:${c[0]};color:${c[1]};border:1px solid ${c[2]};border-radius:99px;padding:1px 9px;margin:1px 3px 1px 0;font-size:11.5px;white-space:nowrap;font-weight:600">${esc(pn)} <span style="opacity:.65">${hf(p.hours)}klst${p.in?' · '+esc(p.in)+'–'+esc(p.out||'?'):''}</span></span>`;
+                  }).join('')}</td>
                 </tr>`).join('')}
               </tbody>
             </table>
