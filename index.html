@@ -3859,6 +3859,23 @@ function renderBakendi(t){
             <button id="bk-rl-run" class="btn primary">🔗 Laga dauða linka + merkja tvítök</button>
             <span id="bk-rl-status" style="font-size:12.5px;color:#64748b"></span>
           </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;padding:9px 11px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px">
+            <b style="font-size:12.5px;color:#0f172a">🌐 Drive-víð leit — hluti í einu:</b>
+            <select id="bk-rlw-type" style="font:inherit;font-size:12px;padding:4px 7px;border:1px solid #cbd5e1;border-radius:7px">
+              <option value="uttektarskyrsla">📄 skýrslur</option>
+              <option value="reikningur">🧾 reikningar</option>
+              <option value="samningur">📝 samningar</option>
+            </select>
+            <select id="bk-rlw-n" style="font:inherit;font-size:12px;padding:4px 7px;border:1px solid #cbd5e1;border-radius:7px">
+              <option value="6">6 í einu</option>
+              <option value="12" selected>12 í einu</option>
+              <option value="24">24 í einu</option>
+            </select>
+            <button id="bk-rlw-dry" class="btn" style="font-size:12px">👁 Skoða næsta hluta</button>
+            <button id="bk-rlw-run" class="btn" style="font-size:12px">⚡ Keyra + laga næsta hluta</button>
+            <button id="bk-rlw-reset" class="btn" style="font-size:12px" title="Byrja frá byrjun">↺</button>
+            <span id="bk-rlw-status" style="font-size:12px;color:#64748b"></span>
+          </div>
           <div id="bk-rl-results"></div>
         </div>
 
@@ -5529,6 +5546,46 @@ function renderBakendi(t){
     }
     $dry.onclick = () => go(false);
     $run.onclick = () => { if (confirm('Endurtengja dauða skjala-linka við master-möppurnar og merkja árekstra sem tvítök (is_duplicate)?\n\nViðbætandi + afturkræft — engin skrá er eydd.')) go(true); };
+
+    // ── 🌐 Drive-víð leit — HLUTI Í EINU (2026-07-17, ósk Agnars: „bæta inn
+    // möguleikunum að taka einhvern hluta í einu"). Notar ?wide=1&limit&offset
+    // á endapunktinum; framvindan (offset per tegund) geymist í localStorage
+    // (bh_relink_wide) svo „næsti hluti" heldur áfram þar sem frá var horfið.
+    (function wireWideChunks(){
+      const $t = document.getElementById('bk-rlw-type');
+      const $n = document.getElementById('bk-rlw-n');
+      const $wd = document.getElementById('bk-rlw-dry');
+      const $wr = document.getElementById('bk-rlw-run');
+      const $rst = document.getElementById('bk-rlw-reset');
+      const $st = document.getElementById('bk-rlw-status');
+      if (!$wd) return;
+      const prog = () => { try { return JSON.parse(localStorage.getItem('bh_relink_wide') || '{}'); } catch(_) { return {}; } };
+      const setProg = (p) => { try { localStorage.setItem('bh_relink_wide', JSON.stringify(p)); } catch(_) {} };
+      const showOff = () => { const o = prog()[$t.value] || 0; $st.textContent = 'næst frá nr. ' + o; };
+      $t.onchange = showOff; showOff();
+      $rst.onclick = () => { const p = prog(); p[$t.value] = 0; setProg(p); showOff(); };
+      async function chunk(apply){
+        $wd.disabled = $wr.disabled = true;
+        const type = $t.value, limit = +$n.value, offset = prog()[type] || 0;
+        $st.textContent = (apply ? '⚡ keyri ' : '👁 skoða ') + (offset+1) + '–' + (offset+limit) + '…';
+        try {
+          const url = '/api/relink-docs' + qs() + '&wide=1&type=' + type + '&limit=' + limit + '&offset=' + offset + (apply ? '&apply=1' : '');
+          const r = await fetch(url);
+          const d = await r.json(); if (!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));
+          const p = prog(); p[type] = Math.min(offset + limit, d.pool_total || (offset + limit)); setProg(p);
+          const done = (p[type] >= (d.pool_total || 0));
+          $st.textContent = '✓ ' + (d.returned||0) + ' skoðuð · ' + (d.alive||0) + ' virk · ' + (apply ? ((d.applied||0) + ' löguð · ') : '') + p[type] + '/' + nf(d.pool_total||0) + (done ? ' — BÚIÐ (↺ til að byrja aftur)' : '');
+          // birta niðurstöðurnar með Velja-tökkum (sama listHtml og óviss-listinn)
+          const items = (d.results||[]).filter(x => !x.alive).map(x => ({ id:x.id, base_nafn:x.base_nafn, site_addr:x.site_addr, doc_type:type, year:x.year, candidates:(x.candidates||[]).map(c=>({id:c.id,name:c.name + (c.score!=null?('  ['+(c.why||[]).join('+')+']'):'')})), }));
+          $results.innerHTML = section('bk-rlw-list', '🌐', 'Drive-víð leit — hluti ' + (offset+1) + '–' + (offset+(d.returned||0)), items,
+            (apply ? nf(d.applied||0) + ' öruggar samsvaranir voru lagaðar sjálfkrafa. ' : '') + 'Smelltu „✓ Velja" á réttu skránni fyrir hin.');
+          wirePicks();
+        } catch (e) { $st.textContent = 'Villa: ' + (e.message || e); }
+        finally { $wd.disabled = $wr.disabled = false; }
+      }
+      $wd.onclick = () => chunk(false);
+      $wr.onclick = () => chunk(true);
+    })();
   })();
 
   // ── Editable customer match: change / mark-wrong the auto-linked company ───
