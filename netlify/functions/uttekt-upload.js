@@ -24,6 +24,7 @@ const _g = require('./_google');
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const FOLDER = '1VSRRw6O8U6lU8WzZxA8CkLtrAmiU07mg'; // Úttektarskýrslur (canonical)
+const FOLDER_REIKN = '1FHHX99LRB_9w_LqwHIY57T4l9mLMID7p'; // Reikningar - Invoices (canonical)
 const MAX_PDF = 10 * 1024 * 1024; // ~10 MB
 
 // — sömu hjálparar og uttekt-rename.js (dash + sanitize) —
@@ -49,6 +50,16 @@ exports.handler = async (event) => {
   const year = parseInt(body.year, 10);
   const month = body.month ? sanitize(String(body.month)).toLowerCase() : '';
   const fyrirtaekiId = body.fyrirtaeki_id ? parseInt(body.fyrirtaeki_id, 10) : null;
+  // 2026-07-18: brúin tekur nú LÍKA app-gerða REIKNINGA (doc_type='reikningur'
+  // + invoice_number [R-nr, dedup-lykillinn] + amount/doc_date valkvætt) —
+  // lenda í Reikningar-master möppunni undir reikningar-rename nafnavenjunni
+  // og upsert-ast í customer_documents á R-númerinu. Default óbreytt: skýrsla.
+  const docType = String(body.doc_type || 'uttektarskyrsla');
+  const isInv = docType === 'reikningur';
+  const invNr = isInv ? sanitize(String(body.invoice_number || '')).toUpperCase() : '';
+  const amount = body.amount != null ? Math.round(Number(body.amount) || 0) : null;
+  const docDate = body.doc_date ? String(body.doc_date).slice(0, 10) : '';
+  if (isInv && !/^R-?\d{4,7}$/.test(invNr)) return json(400, { error: 'invoice_number (R-nr) vantar eða rangt snið fyrir doc_type=reikningur' });
 
   if (ktRaw.length !== 10) return json(400, { error: 'kt (10 tölustafir) vantar eða rangt snið' });
   if (!company) return json(400, { error: 'company vantar' });
@@ -77,15 +88,22 @@ exports.handler = async (event) => {
   if (pdfBuf.slice(0, 5).toString('latin1') !== '%PDF-') return json(400, { error: 'Skjalið er ekki PDF (%PDF- haus vantar)' });
 
   const ktDash = dash(ktRaw);
+  const TARGET = isInv ? FOLDER_REIKN : FOLDER;
   const name = body.filename
     ? sanitize(String(body.filename).replace(/\.pdf$/i, '')) + '.pdf'
-    : company
-      + (address ? ' - ' + address : '')
-      + ' - ' + ktDash
-      + ' - ' + year
-      + (month ? ' - ' + month : '')
-      + (fyrirtaekiId ? ' - #' + fyrirtaekiId : '')
-      + '.pdf';
+    : isInv
+      // reikningar-rename venjan: Fyrirtæki - kt - R nr - dags - upphæð
+      ? [company, ktDash, invNr.replace(/^R-?/, 'R '),
+         docDate ? docDate.slice(8, 10) + '.' + docDate.slice(5, 7) + '.' + docDate.slice(2, 4) : '',
+         amount != null ? amount.toLocaleString('is-IS').replace(/,/g, '.') + ' kr' : '']
+          .filter(Boolean).join(' - ') + '.pdf'
+      : company
+        + (address ? ' - ' + address : '')
+        + ' - ' + ktDash
+        + ' - ' + year
+        + (month ? ' - ' + month : '')
+        + (fyrirtaekiId ? ' - #' + fyrirtaekiId : '')
+        + '.pdf';
 
   let token;
   try { token = await _g.freshAccessToken(); }
@@ -94,7 +112,7 @@ exports.handler = async (event) => {
   // 2) Idempotency í Drive: sama kanóníska nafn í möppunni → uppfæra innihald.
   let fileId = null, updated = false;
   try {
-    const q = `'${FOLDER}' in parents and name = '${name.replace(/'/g, "\\'")}' and trashed = false`;
+    const q = `'${TARGET}' in parents and name = '${name.replace(/'/g, "\\'")}' and trashed = false`;
     const sr = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name)&pageSize=2`, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -115,7 +133,7 @@ exports.handler = async (event) => {
       if (!ur.ok) return json(502, { error: `Drive update ${ur.status}: ${(await ur.text()).slice(0, 300)}` });
     } else {
       const boundary = 'bh_uttekt_' + Date.now();
-      const meta = JSON.stringify({ name, parents: [FOLDER], mimeType: 'application/pdf' });
+      const meta = JSON.stringify({ name, parents: [TARGET], mimeType: 'application/pdf' });
       const multi = Buffer.concat([
         Buffer.from(`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n--${boundary}\r\nContent-Type: application/pdf\r\n\r\n`),
         pdfBuf,
@@ -151,9 +169,13 @@ exports.handler = async (event) => {
 
     const today = new Date().toISOString().slice(0, 10);
 
-    // Er til röð fyrir (fyrirtaeki_id, year, uttektarskyrsla)? → UPPFÆRA drive_file_id
+    // Er til röð? Reikningur: dedup á R-númerinu (einkvæmt). Skýrsla: (staður, ár).
     let existing = null;
-    if (fyrirtaekiId) {
+    if (isInv) {
+      const nrDash = invNr.replace(/^R-?/, 'R-');
+      const er = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?doc_type=eq.reikningur&invoice_number=eq.${encodeURIComponent(nrDash)}&select=id,notes,drive_file_id&limit=1`, { headers: sbHeaders() });
+      if (er.ok) existing = (await er.json())[0] || null;
+    } else if (fyrirtaekiId) {
       const er = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?fyrirtaeki_id=eq.${fyrirtaekiId}&year=eq.${year}&doc_type=eq.uttektarskyrsla&select=id,notes,drive_file_id&limit=1`, { headers: sbHeaders() });
       if (er.ok) existing = (await er.json())[0] || null;
     }
@@ -175,12 +197,13 @@ exports.handler = async (event) => {
     } else {
       const row = {
         drive_file_id: fileId,
-        doc_type: 'uttektarskyrsla',
+        doc_type: docType,
         year,
         customer_base_id: baseId,
         fyrirtaeki_id: fyrirtaekiId || null,
         customer_name: company,
         notes: `Sjálfvirkt úr appi ${today} · kt ${ktDash}`,
+        ...(isInv ? { invoice_number: invNr.replace(/^R-?/, 'R-'), ...(amount != null ? { amount } : {}), ...(docDate ? { doc_date: docDate } : {}) } : {}),
       };
       const ir = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents`, {
         method: 'POST',
