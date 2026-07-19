@@ -1,108 +1,276 @@
 <!DOCTYPE html><html lang="is"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Verkkaupar 2026 — Brunahólf</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font:14px/1.5 -apple-system,'Segoe UI',Roboto,sans-serif;background:#f4f6fb;color:#1e293b}
-.wrap{max-width:1180px;margin:0 auto;padding:16px}
-header{background:linear-gradient(135deg,#1d4ed8,#0ea5e9);padding:22px 26px;border-radius:0 0 16px 16px;box-shadow:0 4px 20px rgba(29,78,216,.15)}
-h1{font-size:20px;color:#fff}header p{color:#e0f2fe;font-size:12.5px;margin-top:4px}
-.kpis{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0}
-.kpi{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:13px 18px;flex:1;min-width:150px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
-.kpi b{display:block;font-size:22px;color:#0f172a}.kpi small{color:#64748b;font-size:11px}
-.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
-input,textarea,select{background:#fff;border:1px solid #cbd5e1;color:#1e293b;border-radius:9px;padding:8px 12px;font:inherit}
-input:focus,textarea:focus,select:focus{outline:2px solid #2563eb;border-color:#2563eb}
-#q{flex:1;min-width:200px}
-.chip{background:#fff;border:1px solid #cbd5e1;color:#475569;border-radius:20px;padding:6px 14px;cursor:pointer;font-size:12.5px}
-.chip.on{background:#2563eb;border-color:#2563eb;color:#fff}
-.card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;margin-bottom:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)}
-.chead{display:grid;grid-template-columns:1fr auto auto auto;gap:14px;align-items:center;padding:14px 18px;cursor:pointer}
-.chead:hover{background:#f8fafc}
-.cn{font-size:15px;font-weight:700;color:#0f172a}.ckt{font-family:ui-monospace,monospace;color:#94a3b8;font-size:11px}
-.amt{text-align:right;font-variant-numeric:tabular-nums}.amt b{color:#0f172a;font-size:15px}.amt small{color:#94a3b8;font-size:10.5px;display:block}
-.badge{font-size:10.5px;padding:3px 9px;border-radius:20px;font-weight:700;white-space:nowrap}
-.b-ok{background:#dcfce7;color:#15803d}.b-out{background:#ffedd5;color:#c2410c}.b-q{background:#fef9c3;color:#a16207}.b-aj{background:#e0e7ff;color:#4338ca}
-.body{display:none;padding:0 18px 18px;border-top:1px solid #eef2f7}
-.card.open .body{display:block}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px}
-@media(max-width:760px){.grid2{grid-template-columns:1fr}.chead{grid-template-columns:1fr auto}}
-.sec{margin-top:16px}.sec h4{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#64748b;margin-bottom:8px}
-table{width:100%;border-collapse:collapse;font-size:12.5px}
-th{text-align:left;color:#94a3b8;font-size:10.5px;padding:5px 8px;border-bottom:1px solid #e2e8f0}
-td{padding:6px 8px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
-.pill{padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700}
-.pd{background:#dcfce7;color:#15803d}.se{background:#ffedd5;color:#c2410c}.ca{background:#e2e8f0;color:#64748b}
-.btnp{background:#16a34a;color:#fff;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font:inherit;font-size:11px;font-weight:700}
-.btnp.undo{background:#94a3b8}
-.fld{margin-bottom:8px}.fld label{display:block;font-size:11px;color:#64748b;margin-bottom:3px}
-.fld input,.fld textarea{width:100%}
-.email{padding:8px 0;border-bottom:1px solid #f1f5f9}
-.email .top{display:flex;justify-content:space-between;gap:8px;font-size:12px}
-.email .subj{color:#334155;font-weight:600}.email .dt{color:#94a3b8;font-size:11px;white-space:nowrap}
-.email .snip{color:#64748b;font-size:11.5px;margin-top:2px}
-.qflag{background:#fef9c3;color:#a16207;font-size:9.5px;padding:1px 6px;border-radius:10px;margin-left:6px}
-.drop{border:2px dashed #cbd5e1;border-radius:10px;padding:16px;text-align:center;color:#94a3b8;font-size:12px}
-.save-ind{font-size:10.5px;color:#16a34a;margin-left:8px;opacity:0;transition:opacity .3s}.save-ind.on{opacity:1}
-.add{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px;margin-top:20px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
-.add h3{font-size:14px;color:#0f172a;margin-bottom:10px}
-button.addbtn{background:#2563eb;color:#fff;border:none;border-radius:9px;padding:9px 16px;cursor:pointer;font:inherit;font-weight:600}
-.tim{background:#f8fafc;border:1px solid #e8eef6;border-radius:10px;padding:10px 12px}
-.mbars{display:flex;gap:4px;align-items:flex-end;height:56px;margin:8px 0}
-.mbar{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px}
-.mbar .b{width:100%;background:#60a5fa;border-radius:3px 3px 0 0;min-height:2px}
-.mbar .l{font-size:9px;color:#94a3b8}.mbar .v{font-size:9px;color:#475569;font-weight:600}
-.tgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;font-size:12px}
-.tgrid div b{display:block;font-size:15px;color:#0f172a}
-.tgrid div small{color:#64748b;font-size:10px}
-.ajnote{background:#e0e7ff;color:#4338ca;border-radius:8px;padding:8px 10px;font-size:11.5px;margin-top:8px}
-.mtiles{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px}
-.mtile{flex:1;min-width:56px;border:1px solid #e2e8f0;border-radius:9px;padding:6px 4px;text-align:center;background:#fff}
-.mtile.mosent{border-color:#fdba74;background:#fff7ed;cursor:pointer}
-.mtile.msent{border-color:#93c5fd;background:#eff6ff;cursor:pointer}
-.mtile.mgreitt{border-color:#86efac;background:#f0fdf4;cursor:pointer}
-.mtile.m0{opacity:.45}
-.mtile .ml{font-size:10px;color:#94a3b8;text-transform:uppercase}
-.mtile .mh{font-size:15px;font-weight:700;color:#0f172a}
-.mtile.mosent .mc{font-size:9.5px;color:#c2410c;font-weight:700}
-.mtile.msent .mc{font-size:9.5px;color:#1d4ed8;font-weight:700}
-.mtile.mgreitt .mc{font-size:9.5px;color:#15803d;font-weight:700}
-.keybox{background:linear-gradient(135deg,#f8fbff,#eff6ff);border:1px solid #cfe0f5;border-radius:12px;padding:14px 16px;margin-top:14px}
-.keybox h4{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#1d4ed8;margin-bottom:10px}
-.kgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px 18px}
-.kitem{min-width:0}
-.kitem .kl{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.03em}
-.kitem .kv{font-size:13.5px;color:#0f172a;font-weight:600;margin-top:2px;word-break:break-word}
-.kitem .kv.muted{color:#94a3b8;font-weight:400;font-style:italic}
-.klink{display:inline-block;background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:4px 10px;margin:3px 5px 0 0;font-size:12px;color:#1d4ed8;text-decoration:none}
-.klink:hover{border-color:#2563eb;background:#eff6ff}
+/* ============================================================
+   Brunahólf — Verkkaupar 2026 (v3) theme
+   Self-contained: fonts inlined, no JS. Link this file, then use
+   the classes in verkkaupar.html. Toggle .is-open / .is-active /
+   badge classes at runtime (see README).
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+:root{
+  --metb:linear-gradient(180deg,#2f333b,#1b1e24 60%,#111318);
+  --green-m:linear-gradient(145deg,#2f9d63,#0f6e3a 60%,#062815);
+  --gold-m:linear-gradient(145deg,#e6b45a,#b47f1e 55%,#7a5210);
+  --blue-m:linear-gradient(145deg,#5a86e0,#2f5fe0 42%,#12296b);
+  --info-bg:linear-gradient(180deg,#f4f8ff,#e9f0fb);
+  --info-bd:#cfdcf0; --info-tx:#5f7196;
+  --font:'Space Grotesk',system-ui,-apple-system,sans-serif;
+  --mono:'Space Mono',monospace;
+  --ink:#0b1220; --ink-2:#3a4250; --muted:#5b6472; --faint:#94a3b8;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--font);
+  background:linear-gradient(180deg,#0a1c52 0px,#0a1c52 70px,#152a66 150px,#6b789a 380px,#6b789a 100%)}
+.page{max-width:1200px;margin:0 auto;padding:20px 24px 60px}
+
+/* ---- page header ---- */
+.page-head{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+.page-head__icon{width:44px;height:44px;flex:none;border-radius:12px;background:var(--metb);
+  border:1px solid #0a0b0d;display:flex;align-items:center;justify-content:center;font-size:20px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
+.page-title{margin:0;font-size:25px;font-weight:700;color:#fff;letter-spacing:-.01em}
+.page-sub{margin:2px 0 0;font-size:12.5px;color:rgba(255,255,255,.55)}
+.folder-chip{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;
+  color:rgba(255,255,255,.85);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);
+  border-radius:20px;padding:5px 13px;margin:0 0 18px 58px}
+
+/* ---- stat cards (clickable filters) ---- */
+.stat-row{display:flex;gap:13px;margin-bottom:16px;flex-wrap:wrap}
+.stat{flex:1 1 148px;min-width:148px;border-radius:15px;border:1px solid rgba(20,24,34,.08);
+  background:#fff;box-shadow:0 12px 30px -18px rgba(15,23,42,.4);padding:15px 16px;cursor:pointer}
+.stat__val{font-family:var(--mono);font-size:21px;font-weight:700;color:#11141c;line-height:1.12}
+.stat__lab{font-size:11px;color:#8a93a5;margin-top:6px;line-height:1.35}
+.stat--green{background:linear-gradient(180deg,#eaf7ef,#fff);border-color:#b9e3cc}
+.stat--green .stat__val{color:#1f9d57}
+.stat--amber{background:linear-gradient(180deg,#fff7e6,#fff);border-color:#fde68a}
+.stat--amber .stat__val{color:#c77a16}
+.stat--red{background:linear-gradient(180deg,#fdecec,#fff);border-color:#f3c6c4}
+.stat--red .stat__val{color:#c0241f}
+.stat--blue .stat__val{color:#2f5fe0}
+
+/* ---- posts bar ---- */
+.posts-bar{border-radius:15px;border:1px solid rgba(20,24,34,.08);background:#fff;
+  box-shadow:0 10px 26px -18px rgba(15,23,42,.3);padding:14px 18px;margin-bottom:16px;
+  display:flex;align-items:center;gap:13px}
+.posts-bar__icon{width:40px;height:40px;flex:none;border-radius:11px;
+  background:linear-gradient(180deg,#fffbeb,#fdefc4);border:1px solid #fde68a;
+  display:flex;align-items:center;justify-content:center;font-size:18px}
+.posts-bar__num{font-family:var(--mono);font-size:22px;font-weight:700;color:#b45309;line-height:1}
+.posts-bar__lab{font-size:12px;color:#8a93a5;margin-top:3px}
+
+/* ---- toolbar (search / filter chips / sort) ---- */
+.toolbar{border-radius:16px;border:1px solid rgba(20,24,34,.1);
+  background:linear-gradient(180deg,#ffffff,#f5f7fb);
+  box-shadow:0 16px 38px -20px rgba(15,23,42,.34),inset 0 2px 0 rgba(255,255,255,.95);
+  padding:14px 16px;margin-bottom:18px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.search{position:relative;flex:1;min-width:220px;display:flex;align-items:center;height:40px;
+  padding:0 14px;border-radius:11px;border:1px solid rgba(20,24,34,.14);background:#fff}
+.search svg{margin-right:9px;flex:none}
+.search input{flex:1;border:0;background:transparent;font-family:inherit;font-size:13.5px;color:#141822;outline:none}
+.fchip{height:38px;padding:0 15px;border-radius:20px;border:1px solid rgba(20,24,34,.16);
+  background:linear-gradient(180deg,#fdfdfe,#e3e7ee);color:var(--ink-2);
+  font-family:inherit;font-size:12.5px;cursor:pointer;white-space:nowrap}
+.fchip.is-active{border:1px solid #0a0b0d;background:var(--metb);color:#fff;font-weight:600}
+.toolbar select{height:38px;padding:0 13px;border-radius:10px;border:1px solid rgba(20,24,34,.14);
+  background:#fff;color:var(--ink-2);font-family:inherit;font-size:13px;cursor:pointer}
+.btn-mini{height:38px;padding:0 13px;border-radius:10px;border:1px solid rgba(20,24,34,.16);
+  background:linear-gradient(180deg,#fdfdfe,#e3e7ee);color:var(--ink-2);
+  font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap}
+
+/* ---- accordion buyer card ---- */
+.acc-list{display:flex;flex-direction:column;gap:12px}
+.acc{border-radius:16px;overflow:hidden;border:1px solid rgba(20,24,34,.1);background:#fff;
+  box-shadow:0 18px 40px -20px rgba(6,12,40,.7)}
+.acc__head{position:relative;cursor:pointer;display:flex;align-items:center;gap:16px;
+  padding:16px 20px 16px 22px;background:linear-gradient(180deg,#ffffff,#eef1f7);transition:background .12s}
+.acc__head:hover{background:#f3f6fc}
+.rail{position:absolute;left:0;top:0;bottom:0;width:6px;box-shadow:2px 0 6px -1px rgba(0,0,0,.25)}
+.rail--green{background:linear-gradient(180deg,#4fd08a,#0f6e3a)}
+.rail--gold{background:linear-gradient(180deg,#e6b45a,#8a5310)}
+.rail--red{background:linear-gradient(180deg,#e2555f,#8a1418)}
+.acc__name{font-size:16.5px;font-weight:700;color:var(--ink);letter-spacing:-.01em}
+.acc__sub{font-family:var(--mono);font-size:11.5px;color:#8a93a5;margin-top:2px}
+.acc__velta{font-family:var(--mono);font-size:16.5px;font-weight:700;color:#12305e;text-align:right}
+.acc__velta-lab{font-size:10.5px;color:#9098a6;text-align:right}
+.acc__side{display:flex;align-items:center;gap:8px;flex:none}
+
+/* mini % ring: set stroke-dashoffset = 81.7*(1-pct/100) inline */
+.ring{position:relative;width:34px;height:34px;flex:none}
+.ring svg{transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:4}
+.ring .track{stroke:#e6e9ef}
+.ring .bar{stroke-dasharray:81.7;stroke-linecap:round}
+.ring--green .bar{stroke:#1f9d57}.ring--gold .bar{stroke:#e0a93e}.ring--red .bar{stroke:#e23232}
+.ring__pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:9px;font-weight:700}
+.ring--green .ring__pct{color:#1f9d57}.ring--gold .ring__pct{color:#e0a93e}.ring--red .ring__pct{color:#e23232}
+
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:#fff;
+  border-radius:8px;padding:4px 10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.3);
+  text-shadow:0 1px 1px rgba(0,0,0,.3);white-space:nowrap}
+.pill--time{background:var(--blue-m);border:1px solid #12296b}
+.pill--uti{background:var(--gold-m);border:1px solid #4a3208}
+.chev{width:30px;height:30px;border-radius:9px;background:#f1f5f9;border:1px solid rgba(20,24,34,.1);
+  display:flex;align-items:center;justify-content:center;color:#8a93a5;font-size:14px;transition:transform .28s}
+.acc.is-open .chev{transform:rotate(180deg)}
+.acc__body{max-height:0;opacity:0;overflow:hidden;transition:max-height .34s ease,opacity .26s ease;
+  border-top:1px solid rgba(20,24,34,.07)}
+.acc.is-open .acc__body{max-height:1600px;opacity:1}
+.acc__pad{padding:16px 18px;background:#fbfcfe}
+
+/* ---- progress ---- */
+.paid-line{font-size:12px;color:var(--muted);margin-bottom:7px}
+.progress{height:9px;border-radius:5px;background:#e6e9ef;overflow:hidden;margin-bottom:16px;
+  box-shadow:inset 0 1px 2px rgba(20,30,60,.12)}
+.progress__bar{height:100%;background:linear-gradient(90deg,#2bbf6c,#1f9d57)}
+
+/* ---- blue info boxes (Lykilupplýsingar / Tímavera) ---- */
+.info-box{border-radius:13px;border:1px solid var(--info-bd);background:var(--info-bg);
+  padding:14px 16px;margin-bottom:14px;box-shadow:inset 0 2px 0 rgba(255,255,255,.7)}
+.info-box__head{display:flex;align-items:center;margin-bottom:12px;
+  font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--info-tx)}
+.qa{margin-left:auto;display:flex;gap:7px}
+.qa button{height:30px;padding:0 11px;border-radius:8px;border:1px solid rgba(20,24,34,.14);
+  background:linear-gradient(180deg,#fff,#e3e7ee);font-family:inherit;font-size:11.5px;font-weight:600;cursor:pointer;color:var(--ink-2)}
+.qa .qa--mail{color:#2f5fe0}
+.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.info-item{display:flex;gap:9px;align-items:flex-start}
+.ic-tile{width:28px;height:28px;flex:none;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.ic-tile--blue{background:linear-gradient(180deg,#eef3ff,#dbe6fb);border:1px solid #c7d2fe}
+.ic-tile--green{background:linear-gradient(180deg,#f0fdf7,#cdeeda);border:1px solid #a7f3d0}
+.ic-tile--violet{background:linear-gradient(180deg,#f5f3ff,#e2dbfb);border:1px solid #ddd6fe}
+.ic-tile--grey{background:linear-gradient(180deg,#eef1f6,#dbe0e9);border:1px solid rgba(20,24,34,.12)}
+.info-item__lab{font-size:10px;color:var(--faint)}
+.info-item__val{font-size:12.5px;font-weight:600;color:#2f5fe0;margin-top:3px}
+.chip--vantar{display:inline-block;font-size:10.5px;font-weight:600;color:#3a5a9a;background:#eaf0fb;
+  border:1px solid #c7d6f0;border-radius:6px;padding:1px 8px;margin-top:3px}
+.info-divider{margin-top:12px;padding-top:12px;border-top:1px dashed rgba(20,24,34,.12)}
+.chip--folder{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;
+  color:#2f5fe0;background:#eef3ff;border:1px solid #c6d6ff;border-radius:8px;padding:5px 11px}
+
+/* ---- tímavera month tiles ---- */
+.month-row{display:flex;gap:9px;flex-wrap:wrap}
+.month{flex:1 1 90px;min-width:90px;border-radius:11px;border:1px solid #a9c1ec;
+  background:linear-gradient(180deg,#e6effc,#cfe0f8);padding:11px 8px;text-align:center}
+.month--empty{border-color:rgba(20,24,34,.08);background:#f6f8fb}
+.month__name{font-size:9.5px;font-weight:700;letter-spacing:.1em;color:var(--faint)}
+.month__val{font-family:var(--mono);font-size:17px;font-weight:700;color:#11141c;margin-top:4px}
+.month--empty .month__val{color:#cbd2dc}
+.month__state{font-size:9.5px;color:#aeb4be;margin-top:1px}
+.uppgjor{margin-top:12px;border-radius:12px;border:1px solid #c6d6ff;
+  background:linear-gradient(180deg,#eef4ff,#f8faff);padding:13px 15px}
+.uppgjor__kpis{display:flex;gap:26px;flex-wrap:wrap}
+.uppgjor__val{font-family:var(--mono);font-size:17px;font-weight:700;color:#11141c}
+.uppgjor__val--red{color:#c0241f}
+.uppgjor__lab{font-size:10.5px;color:#9098a6}
+
+/* ---- two-column split ---- */
+.split{display:flex;gap:14px;flex-wrap:wrap}
+.panel{flex:1 1 380px;min-width:320px;border-radius:13px;border:1px solid rgba(20,24,34,.09);
+  background:#fff;overflow:hidden}
+.panel__head{padding:11px 14px;border-bottom:1px solid var(--info-bd);background:var(--info-bg);
+  font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--info-tx)}
+
+/* ---- invoices table ---- */
+.inv{width:100%;border-collapse:collapse}
+.inv thead tr{background:var(--metb)}
+.inv th{text-align:left;padding:9px 14px;font-size:9.5px;font-weight:700;letter-spacing:.08em;color:#f0f2f5}
+.inv th.r{text-align:right}.inv th.c{text-align:center}
+.inv td{padding:10px 14px;border-top:1px solid rgba(20,24,34,.06);
+  font-family:var(--mono);font-size:12px;color:var(--ink-2)}
+.inv td.nr{color:#9098a6}
+.inv td.amt{text-align:right;font-size:12.5px;font-weight:700;color:#11141c}
+.inv td.st{text-align:center}
+.badge{display:inline-flex;font-family:var(--mono);font-size:10.5px;font-weight:700;color:#fff;
+  border-radius:7px;padding:2px 9px;box-shadow:inset 0 1px 0 rgba(255,255,255,.28);text-shadow:0 1px 1px rgba(0,0,0,.3)}
+.badge--greitt{background:var(--green-m);border:1px solid #062815}
+.badge--sent{background:var(--gold-m);border:1px solid #4a3208}
+.btn-mark{height:26px;padding:0 10px;border-radius:7px;border:1px solid #0c5e30;background:var(--green-m);
+  color:#fff;font-family:inherit;font-size:10.5px;font-weight:700;cursor:pointer;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35);white-space:nowrap;margin-top:5px}
+
+/* ---- samskiptasaga ---- */
+.msg{padding:11px 14px;border-top:1px solid rgba(20,24,34,.06)}
+.msg__row{display:flex;align-items:center;gap:8px}
+.msg__subj{font-size:12.5px;font-weight:600;color:#11141c;flex:1;min-width:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.msg__date{font-family:var(--mono);font-size:10.5px;color:#9098a6;flex:none}
+.msg__body{font-size:11.5px;color:#8a93a5;margin-top:3px;line-height:1.4}
+.tag--spurning{flex:none;font-size:9.5px;font-weight:700;color:#fff;background:var(--gold-m);
+  border:1px solid #4a3208;border-radius:6px;padding:2px 7px;text-shadow:0 1px 1px rgba(0,0,0,.3)}
+
+/* ---- misc ---- */
+.empty{border-radius:16px;border:1px dashed rgba(20,24,34,.2);background:rgba(255,255,255,.6);
+  padding:34px;text-align:center;color:var(--muted);font-size:14px}
+button{transition:transform .1s ease,filter .12s ease}
+button:active{transform:translateY(1px)}
+
+
+/* ===== supplement: real-page bits not in the base theme ===== */
+.add{border-radius:15px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.07);padding:16px 18px;margin-top:22px}
+.add h3{color:#fff;font-size:14px;margin:0 0 11px;font-weight:600}
+.add input{height:38px;padding:0 12px;border-radius:9px;border:1px solid rgba(20,24,34,.14);background:#fff;font-family:inherit;font-size:13px;color:#141822;outline:none}
+.add input:focus{border-color:#2f5fe0;box-shadow:0 0 0 2px rgba(47,95,224,.18)}
+.fld{margin-bottom:9px}
+.fld label{display:block;font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);margin-bottom:3px}
+.fld input,.fld textarea{width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(20,24,34,.14);background:#fff;font-family:inherit;font-size:12.5px;color:#141822;outline:none;resize:vertical}
+.fld input:focus,.fld textarea:focus{border-color:#2f5fe0;box-shadow:0 0 0 2px rgba(47,95,224,.18)}
+.save-ind{font-size:10px;color:#1f9d57;opacity:0;transition:opacity .3s}
+.save-ind.on{opacity:1}
+.panel__body{padding:12px 14px}
+.qa button[disabled]{opacity:.45;cursor:default}
+.acc__velta-lab{max-width:230px}
+@media(max-width:820px){.split{flex-direction:column}.acc__head{flex-wrap:wrap;gap:10px}.ring{display:none}.acc__velta{text-align:left}.info-grid{grid-template-columns:1fr 1fr}}
+.qa-btn{height:30px;padding:0 11px;border-radius:8px;border:1px solid rgba(20,24,34,.14);background:linear-gradient(180deg,#fff,#e3e7ee);font-family:inherit;font-size:11.5px;font-weight:600;color:#3a4250;display:inline-flex;align-items:center;gap:5px;text-decoration:none;cursor:pointer}
+.qa-btn--mail{color:#2f5fe0}
+.qa-btn.is-off{opacity:.4;pointer-events:none}
+
 </style></head><body>
-<header><div class="wrap" style="padding:0"><h1>🏗️ Verkkaupar 2026 — Brunahólf</h1>
-<p>Payday-reikningar + tímavera + samskiptasaga · greitt/afstemming/tímagjald vistast · uppfært 2026-07-19</p>
-<p style="margin-top:6px"><a href="https://drive.google.com/drive/folders/1CebzBKYdSj8NP4F-vEA5HepOULH-bwoT" target="_blank" style="color:#fff;background:rgba(255,255,255,.18);padding:4px 12px;border-radius:8px;text-decoration:none;font-size:12px">📂 Aðal-Brunahólfsmappan (efnislistar)</a></p></div></header>
-<div class="wrap">
-<div class="kpis" id="kpis"></div>
-<div class="bar">
-<input id="q" placeholder="🔍 Leita að verkkaupa / kennitölu...">
-<span class="chip on" data-f="all">Allir</span>
-<span class="chip" data-f="out">Útistandandi</span>
-<span class="chip" data-f="ok">Greitt að fullu</span>
-<span class="chip" data-f="drog">📝 Drög (eftir að senda)</span>
-<span class="chip" data-f="orukkad">⏱ Órukkuð verk</span>
-<span class="chip" data-f="tim">Með tíma</span>
-<span class="chip" data-f="q">Þarf svar</span>
-<span class="chip" data-f="prospect">Hugsanlegir</span>
-<select id="sort"><option value="out">Röð: mest útistandandi</option><option value="tot">Mest velta</option><option value="tim">Mest tímar</option><option value="name">Nafn A-Ö</option></select>
+<div class="page">
+  <div class="page-head">
+    <div class="page-head__icon">🧰</div>
+    <div>
+      <h1 class="page-title">Verkkaupar 2026 — Brunahólf</h1>
+      <p class="page-sub">Payday-reikningar + tímavera + samskiptasaga · greitt/afstemming/tímagjald vistast · uppfært 2026-07-19</p>
+    </div>
+  </div>
+  <a class="folder-chip" href="https://drive.google.com/drive/folders/1CebzBKYdSj8NP4F-vEA5HepOULH-bwoT" target="_blank" style="text-decoration:none">🗂 Aðal-Brunahólfsmappan (efnislistar)</a>
+
+  <div id="kpis"></div>
+
+  <div class="toolbar">
+    <div class="search">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#9aa3b5" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+      <input id="q" placeholder="Leita að verkkaupa / kennitölu…">
+    </div>
+    <button class="fchip is-active" data-f="all">Allir</button>
+    <button class="fchip" data-f="out">Útistandandi</button>
+    <button class="fchip" data-f="ok">Greitt að fullu</button>
+    <button class="fchip" data-f="drog">📄 Drög (eftir að senda)</button>
+    <button class="fchip" data-f="orukkad">⏱ Órukkuð verk</button>
+    <button class="fchip" data-f="tim">Með tíma</button>
+    <button class="fchip" data-f="q">Þarf svar</button>
+    <button class="fchip" data-f="prospect">Hugsanlegir</button>
+    <select id="sort"><option value="out">Röð: mest útistandandi</option><option value="tot">Röð: mest velta</option><option value="tim">Röð: mest tímar</option><option value="name">Röð: nafn A–Ö</option></select>
+    <button class="btn-mini" onclick="openAll()">⌄ Opna allt</button>
+    <button class="btn-mini" onclick="closeAll()">⌃ Loka öllu</button>
+  </div>
+
+  <div class="acc-list" id="list"></div>
+
+  <div class="add">
+    <h3>➕ Bæta við hugsanlegum verkkaupa</h3>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <input id="p_nafn" placeholder="Fyrirtæki" style="flex:2;min-width:160px">
+      <input id="p_kt" placeholder="Kennitala" style="flex:1;min-width:120px">
+      <input id="p_note" placeholder="Verk / staðsetning / næsta skref" style="flex:3;min-width:200px">
+      <button class="btn-mini" onclick="addProspect()">Vista</button>
+    </div>
+  </div>
 </div>
-<div id="list"></div>
-<div class="add">
-<h3>➕ Bæta við hugsanlegum verkkaupa</h3>
-<div style="display:flex;gap:8px;flex-wrap:wrap">
-<input id="p_nafn" placeholder="Fyrirtæki" style="flex:2;min-width:160px">
-<input id="p_kt" placeholder="Kennitala" style="flex:1;min-width:120px">
-<input id="p_note" placeholder="Verk / staðsetning / næsta skref" style="flex:3;min-width:200px">
-<button class="addbtn" onclick="addProspect()">Vista</button>
-</div></div>
-</div>
+
 <script>
 const SUPA="https://osfdzskyvisifcwyjkuk.supabase.co", ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zZmR6c2t5dmlzaWZjd3lqa3VrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0MTUwOTIsImV4cCI6MjA5MTk5MTA5Mn0.2FdQVPKX4utNO02vqEDI89YwKs5VEtPUC8gOKK134O4";
 const H={apikey:ANON,Authorization:'Bearer '+ANON,'Content-Type':'application/json'};
@@ -152,6 +320,8 @@ async function addProspect(){const nafn=p_nafn.value.trim();if(!nafn)return;cons
 let T={};
 let OPEN=new Set();
 function toggleCard(kt){if(OPEN.has(kt))OPEN.delete(kt);else OPEN.add(kt);render()}
+function openAll(){DATA.forEach(c=>OPEN.add(c.kt));render()}
+function closeAll(){OPEN.clear();render()}
 function crmChange(kt,nafn,field,val,ind){clearTimeout(T[kt+field]);const c=DATA.find(x=>x.kt===kt);if(c){c._crm=c._crm||{};c._crm[field]=val}T[kt+field]=setTimeout(async()=>{await saveCrm(kt,nafn,{[field]:val});if(ind){ind.classList.add('on');setTimeout(()=>ind.classList.remove('on'),1200)};if(field==='timagjald')render()},800)}
 function esc(s){return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
@@ -162,15 +332,16 @@ function render(){
     if(c.ajour&&c.ajour_amount!=null)gdrog+=Math.max(0,c.ajour_amount-totals(c).tot);
     if(c._orukkad){orukk++;if(c.tim)orukkH+=c.tim.total;return}
     act++;const t=totals(c);gt+=t.tot;gp+=t.paid;go+=t.out;gq+=openQ(c);if(c.tim)ghrs+=c.tim.total});
-  kpis.innerHTML=`
-   <div class="kpi"><b>${act}</b><small>virkir verkkaupar 2026</small></div>
-   <div class="kpi"><b>${kr(gt)}</b><small>reikningað</small></div>
-   <div class="kpi"><b style="color:#15803d">${kr(gp)}</b><small>greitt</small></div>
-   <div class="kpi"><b style="color:#c2410c">${kr(go)}</b><small>útistandandi</small></div>
-   <div class="kpi" style="cursor:pointer;border-color:#fdba74" onclick="document.querySelector('.chip[data-f=drog]').click()"><b style="color:#c2410c">${kr(gdrog)}</b><small>eftir að senda (áætl. drög)</small></div>
-   <div class="kpi"><b style="color:#2563eb">${ghrs.toLocaleString('is-IS')}</b><small>tímar skráðir 2026</small></div>
-   <div class="kpi" style="cursor:pointer;border-color:#fdba74" onclick="document.querySelector('.chip[data-f=orukkad]').click()"><b style="color:#c2410c">${orukk} · ${orukkH} klst</b><small>órukkuð verk (tímar, enginn reikn.)</small></div>
-   <div class="kpi"><b style="color:#a16207">${gq}</b><small>póstar sem gætu þurft svar</small></div>`;
+  kpis.innerHTML=`<div class="stat-row">
+   <div class="stat" onclick="document.querySelector('.fchip[data-f=all]').click()"><div class="stat__val">${act}</div><div class="stat__lab">virkir verkkaupar 2026</div></div>
+   <div class="stat"><div class="stat__val">${kr(gt)}</div><div class="stat__lab">reikningað</div></div>
+   <div class="stat stat--green" onclick="document.querySelector('.fchip[data-f=ok]').click()"><div class="stat__val">${kr(gp)}</div><div class="stat__lab">greitt</div></div>
+   <div class="stat stat--amber" onclick="document.querySelector('.fchip[data-f=out]').click()"><div class="stat__val">${kr(go)}</div><div class="stat__lab">útistandandi</div></div>
+   <div class="stat stat--red" onclick="document.querySelector('.fchip[data-f=drog]').click()"><div class="stat__val">${kr(gdrog)}</div><div class="stat__lab">eftir að senda (áætl. drög)</div></div>
+   <div class="stat stat--blue"><div class="stat__val">${ghrs.toLocaleString('is-IS')}</div><div class="stat__lab">tímar skráðir 2026</div></div>
+   <div class="stat stat--red" onclick="document.querySelector('.fchip[data-f=orukkad]').click()"><div class="stat__val">${orukk} · ${orukkH} klst</div><div class="stat__lab">órukkuð verk (tímar, enginn reikn.)</div></div>
+ </div>
+ <div class="posts-bar"><span class="posts-bar__icon">✉️</span><div><div class="posts-bar__num">${gq}</div><div class="posts-bar__lab">póstar sem gætu þurft svar</div></div><a class="btn-mini" style="margin-left:auto;text-decoration:none;display:inline-flex;align-items:center" href="https://brunaholf.netlify.app/#inbox" target="_blank">Skoða pósthólf →</a></div>`;
   let rows=DATA.filter(c=>{
     if(q){if(!((c.nafn+' '+c.kt).toLowerCase().includes(q)))return false}
     if(filter==='prospect')return c._prospect;
@@ -191,99 +362,89 @@ function render(){
 }
 function keyBox(c){
   const cr=c._crm||{}, r=rate(c);
-  const rateStr=r>0?`${kr(r)} <span style="color:#64748b;font-weight:400">án VSK · ${kr(r*1.24)} m/VSK</span>`:'<span style="color:#94a3b8;font-weight:400;font-style:italic">ekki skráð</span>';
-  const drive=(c.drive||[]).map(d=>`<a class="klink" href="${esc(d.url)}" target="_blank">📂 ${esc(d.label)}</a>`).join('');
-  const item=(l,v)=>`<div class="kitem"><div class="kl">${l}</div><div class="kv${v?'':' muted'}">${v||'—'}</div></div>`;
-  const aj=c.ajour?`<div class="kitem"><div class="kl">Uppgjör</div><div class="kv">⚙️ ${esc(c.ajour_label||'Ájour / per gat')}</div></div>`:'';
-  return `<div class="keybox"><h4>🔑 Lykilupplýsingar</h4><div class="kgrid">
-    ${item('Staðsetning',esc(cr.stadsetning||''))}
-    <div class="kitem"><div class="kl">Tímagjald</div><div class="kv">${rateStr}</div></div>
-    ${item('Verðtilboð',esc(cr.tilbod_info||''))}
-    ${aj}
-    ${item('Næsta aðgerð',esc(cr.next_action||''))}
-   </div>${drive?`<div style="margin-top:10px"><div class="kl" style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.03em">Efnislisti / verkmappa (Drive)</div>${drive}</div>`:'<div style="margin-top:8px;font-size:11px;color:#94a3b8">Engin verkmappa tengd</div>'}</div>`;
+  const net=cr.netfang||(c.contact&&c.contact.netfang)||'', simi=cr.simi||(c.contact&&c.contact.simi)||'';
+  const drv=(c.drive&&c.drive[0])?c.drive[0].url:'';
+  const folders=(c.drive||[]).map(d=>`<a class="chip--folder" href="${esc(d.url)}" target="_blank">📁 ${esc(d.label)}</a>`).join('')||'<span style="font-size:11.5px;color:#94a3b8">Engin verkmappa tengd</span>';
+  const cell=(icon,tile,lab,val)=>`<div class="info-item"><span class="ic-tile ic-tile--${tile}">${icon}</span><div style="min-width:0"><div class="info-item__lab">${lab}</div>${val?`<div class="info-item__val">${val}</div>`:'<span class="chip--vantar">vantar</span>'}</div></div>`;
+  const upp=c.ajour?esc(c.ajour_label||'Ájour / per gat'):'';
+  const qa=`<div class="qa">
+      <a class="qa-btn qa-btn--mail${net?'':' is-off'}" href="${net?'mailto:'+esc(net):'#'}">✉️ Póstur</a>
+      <a class="qa-btn${simi?'':' is-off'}" href="${simi?'tel:'+esc(String(simi).replace(/\s/g,'')):'#'}">📞 Hringja</a>
+      <a class="qa-btn${drv?'':' is-off'}" href="${drv?esc(drv):'#'}" target="_blank">📁 Drive</a>
+    </div>`;
+  return `<div class="info-box">
+    <div class="info-box__head">🔑 LYKILUPPLÝSINGAR ${qa}</div>
+    <div class="info-grid">
+      ${cell('📍','blue','STAÐSETNING',esc(cr.stadsetning||''))}
+      ${cell('⏱','green','TÍMAGJALD',r>0?`${kr(r)} <span style="color:#94a3b8;font-weight:400">án VSK</span>`:'')}
+      ${cell('🏷','violet','VERÐTILBOÐ',esc(cr.tilbod_info||''))}
+      ${cell('📄','grey','UPPGJÖR',upp)}
+    </div>
+    <div class="info-divider">
+      <div class="info-item__lab" style="margin-bottom:7px">EFNISLISTI / VERKMAPPA (DRIVE)</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">${folders}</div>
+    </div>
+  </div>`;
 }
 function cardHTML(c){
   const t=totals(c), oq=openQ(c), cr=c._crm||{};
   const pct=t.tot>0?Math.round(t.paid/t.tot*100):0;
-  const badge=c._orukkad?'<span class="badge b-out">⏱ órukkað</span>':c._prospect?'<span class="badge b-q">hugsanlegur</span>':(t.out>0.5?`<span class="badge b-out">${kr(t.out)} úti</span>`:(t.tot>0?'<span class="badge b-ok">✓ greitt</span>':''));
-  const tb=c.tim?`<span class="badge b-aj" style="background:#dbeafe;color:#1d4ed8">⏱ ${c.tim.total} klst</span>`:'';
-  const qb=oq>0?`<span class="badge b-q">✉ ${oq}</span>`:'';
+  const isOpen=OPEN.has(c.kt);
+  const railCol=pct>=85?'linear-gradient(180deg,#4fd08a,#0f6e3a)':(pct>=50?'linear-gradient(180deg,#e6b45a,#8a5310)':'linear-gradient(180deg,#e2555f,#8a1418)');
+  const ringCls=pct>=85?'ring--green':(pct>=50?'ring--gold':'ring--red');
+  const off=(81.68*(1-pct/100)).toFixed(1);
+  const nm=cr.nafn||c.nafn||'?', simi=cr.simi||(c.contact&&c.contact.simi)||'', net=cr.netfang||(c.contact&&c.contact.netfang)||'';
+  const sub=[esc(c.kt),simi&&esc(simi),net&&esc(net)].filter(Boolean).join(' · ');
+  let est=0; if(c.ajour&&c.ajour_amount!=null)est=c.ajour_amount; else if(c.tim)est=c.tim.total*rate(c);
+  const veltaStr=t.tot>0.5?kr(t.tot):(est>0?'≈ '+kr(est):kr(0));
+  const veltaSub=t.tot>0.5?(est>0?`velta 2026 · ≈ ${kr(est)} í tímum`:'velta 2026'):(est>0?'tímar × tímagjald':'0 kr reikningað');
+  const ring=t.tot>0?`<div class="ring ${ringCls}"><svg width="34" height="34" viewBox="0 0 34 34"><circle class="track" cx="17" cy="17" r="13"></circle><circle class="bar" cx="17" cy="17" r="13" style="stroke-dashoffset:${off}"></circle></svg><span class="ring__pct">${pct}%</span></div>`:'';
+  const badge=c._orukkad?'<span class="pill pill--uti" style="background:linear-gradient(145deg,#e2555f,#8a1418);border-color:#8a1418">⏱ órukkað</span>':(c._prospect?'<span class="pill" style="background:linear-gradient(180deg,#2f333b,#1b1e24);border:1px solid #0a0b0d">hugsanlegur</span>':'');
+  const timePill=c.tim?`<span class="pill pill--time">⏱ ${c.tim.total} klst</span>`:'';
+  const utiPill=(t.out>0.5)?`<span class="pill pill--uti">✉️ ${oq} · ${kr(t.out)} úti</span>`:(oq>0?`<span class="pill pill--uti">✉️ ${oq}</span>`:'');
   const invRows=(c.inv||[]).filter(isActive).map(i=>{
     const paid=isPaid(i);
-    const st=paid?'<span class="pill pd">greitt</span>':(i.status==='SENT'?'<span class="pill se">sent</span>':`<span class="pill ca">${esc(i.status)}</span>`);
-    const btn=paid?`<button class="btnp undo" onclick="togglePaid('${c.kt}','${esc(i.tilvisun)}')">afmerkja</button>`:`<button class="btnp" onclick="togglePaid('${c.kt}','${esc(i.tilvisun)}')">✓ greitt</button>`;
-    return `<tr><td>${esc(i.gjalddagi||'')}</td><td style="font-family:ui-monospace">#${esc(i.tilvisun)}</td><td style="text-align:right;font-variant-numeric:tabular-nums">${kr(num2(i.total))}</td><td>${st}</td><td style="text-align:right">${btn}</td></tr>`;
-  }).join('');
-  const emailRows=(c.emails||[]).map(e=>`<div class="email"><div class="top"><span class="subj">${esc(e.subj||'(ekkert efni)')}${e.q?'<span class="qflag">SPURNING</span>':''}${e.att?' 📎':''}</span><span class="dt">${esc(e.d||'')}</span></div><div class="snip">${esc(e.frm||'')} — ${esc(e.snip||'')}</div></div>`).join('')||'<div style="color:#94a3b8;font-size:12px">Engir matchaðir póstar</div>';
-  const f=(label,field,val,area)=>{const el=area?`<textarea rows="2" oninput="crmChange('${c.kt}','${esc(c.nafn)}','${field}',this.value,this.nextElementSibling)">${esc(val)}</textarea>`:`<input value="${esc(val)}" oninput="crmChange('${c.kt}','${esc(c.nafn)}','${field}',this.value,this.nextElementSibling)">`;return `<div class="fld"><label>${label}</label>${el}<span class="save-ind">✓ vistað</span></div>`};
-  // timavera panel
-  let timHTML='';
+    const bdg=paid?'<span class="badge badge--greitt">greitt</span>':(i.status==='SENT'?'<span class="badge badge--sent">sent</span>':`<span class="badge">${esc(i.status)}</span>`);
+    const btn=paid?`<button class="btn-mark" style="background:#94a3b8;border-color:#64748b" onclick="togglePaid('${c.kt}','${esc(i.tilvisun)}')">afmerkja</button>`:`<button class="btn-mark" onclick="togglePaid('${c.kt}','${esc(i.tilvisun)}')">✓ merkja greitt</button>`;
+    return `<tr><td>${esc(i.gjalddagi||'')}</td><td class="nr">#${esc(i.tilvisun)}</td><td class="amt">${kr(num2(i.total))}</td><td class="st"><div style="display:flex;flex-direction:column;align-items:center;gap:5px">${bdg}${btn}</div></td></tr>`;
+  }).join('')||'<tr><td colspan="4" style="padding:14px;color:#94a3b8;font-family:inherit;font-size:12px">Engir reikningar</td></tr>';
+  const msgs=(c.emails||[]).map(e=>`<div class="msg"><div class="msg__row"><span class="msg__subj">${esc(e.subj||'(ekkert efni)')}</span>${e.q?'<span class="tag--spurning">SPURNING</span>':''}${e.att?'<span class="msg__date">📎</span>':''}<span class="msg__date">${esc(e.d||'')}</span></div><div class="msg__body">${esc(e.frm||'')} — ${esc(e.snip||'')}</div></div>`).join('')||'<div class="msg" style="color:#94a3b8;font-size:12px">Engir matchaðir póstar</div>';
+  let timBox='';
   if(c.tim){
-    let tiles='';
     const STLAB={osent:'ósent',sent:'✔ sent',greitt:'✓✓ greitt'};
-    for(let m=1;m<=7;m++){const h=c.tim.by_month[m]||0;const st=mState(c,m);
-      const cls=h===0?'m0':('m'+st);
-      tiles+=`<div class="mtile ${cls}" ${h>0?`onclick="toggleManad('${c.kt}',${m})" title="Smelltu: ósent→sent→greitt"`:''}>
-        <div class="ml">${MAN[m]}</div><div class="mh">${h||'–'}</div>${h>0?`<div class="mc">${STLAB[st]}</div>`:''}</div>`;}
-    const r=rate(c), ubh=unbilledHrs(c), phrs=paidHrs(c), billedH=c.tim.total-ubh;
-    let calc='';
-    if(c.ajour){
-      const lp=(c.ajour_note||'').indexOf('Landsp')>=0?' <a href="https://brunaholf.netlify.app/#nlsh" target="_blank" style="color:#4338ca;font-weight:700">→ Landspítala-síðan</a>':'';
-      let amt='';
-      if(c.ajour_amount!=null){const eftir=c.ajour_amount-t.tot;amt=`<div class="tgrid" style="margin-top:8px"><div><b>${kr(c.ajour_amount)}</b><small>uppsafnað (ájour)</small></div><div><b>${kr(t.tot)}</b><small>reikningað</small></div><div><b style="color:${eftir>0?'#c2410c':'#15803d'}">${kr(Math.max(0,eftir))}</b><small>eftir að senda ≈</small></div></div>`;}
-      else if(c.ajour_reg!=null){amt=`<div style="margin-top:8px;font-size:13px"><b>${c.ajour_reg.toLocaleString('is-IS')}</b> gata-skráningar · uppgjör per gat</div>`;}
-      calc=`<div class="ajnote">⚙️ <b>${esc(c.ajour_label||'Sérstakt uppgjör')}</b>${lp}${amt}</div>`;
-    } else if(r>0){
-      calc=`<div class="tgrid"><div><b style="color:${ubh>0?'#c2410c':'#15803d'}">${kr(ubh*r)}</b><small>EFTIR AÐ SENDA · ${ubh} ósendir klst × ${kr(r)}</small></div><div><b>${kr((billedH-phrs)*r)}</b><small>sent, ógreitt (${billedH-phrs} klst)</small></div><div><b style="color:#15803d">${kr(phrs*r)}</b><small>greitt (${phrs} klst)</small></div></div>`;
-    } else {
-      calc=`<div style="font-size:11.5px;color:#64748b;margin-top:6px"><b>${ubh}</b> ósendir klst. Settu <b>tímagjald</b> að neðan til að sjá upphæð eftir að senda.</div>`;
+    let tiles='';
+    for(let m=1;m<=12;m++){ const h=c.tim.by_month[m]||0; if(!h && m>7) continue; const st=mState(c,m); const empty=h===0;
+      tiles+=`<div class="month${empty?' month--empty':''}"${h>0?` style="cursor:pointer" onclick="toggleManad('${c.kt}',${m})"`:''}><div class="month__name">${MAN[m]}</div><div class="month__val">${h||'–'}</div><div class="month__state">${h>0?STLAB[st]:''}</div></div>`;
     }
-    timHTML=`<div class="sec"><h4>⏱ Tímavera — ${c.tim.total} klst 2026 · ${esc(c.tim.projects.join(', '))}</h4>
-      <div class="tim"><div class="mtiles">${tiles}</div>${calc}
-      <div style="font-size:10.5px;color:#94a3b8;margin-top:6px">Smelltu á mánuð til að merkja hann sendan/ósendan — t.d. þegar þú bunkar 3 mánuði í einn reikning.</div></div></div>`;
+    let uppRow=''; const r=rate(c), ubh=unbilledHrs(c), phrs=paidHrs(c);
+    if(c.ajour && c.ajour_amount!=null){ const eftir=Math.max(0,c.ajour_amount-t.tot);
+      uppRow=`<div class="uppgjor"><div style="font-size:12px;color:#3a4658;margin-bottom:9px">🏛 ${esc(c.ajour_label||'Uppgjör')}</div><div class="uppgjor__kpis"><div><div class="uppgjor__val">${kr(c.ajour_amount)}</div><div class="uppgjor__lab">uppsafnað (ájour)</div></div><div><div class="uppgjor__val">${kr(t.tot)}</div><div class="uppgjor__lab">reikningað</div></div><div><div class="uppgjor__val uppgjor__val--red">${kr(eftir)}</div><div class="uppgjor__lab">eftir að senda ≈</div></div></div></div>`;
+    } else if(r>0){ uppRow=`<div class="uppgjor"><div class="uppgjor__kpis"><div><div class="uppgjor__val uppgjor__val--red">${kr(ubh*r)}</div><div class="uppgjor__lab">eftir að senda · ${ubh} klst × ${kr(r)}</div></div><div><div class="uppgjor__val">${kr(phrs*r)}</div><div class="uppgjor__lab">greitt (${phrs} klst)</div></div></div></div>`; }
+    timBox=`<div class="info-box"><div class="info-box__head">⏱ TÍMAVERA — ${c.tim.total} KLST 2026 · ${esc((c.tim.projects||[]).join(', '))}</div><div class="month-row">${tiles}</div>${uppRow}</div>`;
   }
-  const ct=c.contact||{};
-  const nm=cr.nafn||c.nafn||'?', simi=cr.simi||ct.simi||'', net=cr.netfang||ct.netfang||'';
-  return `<div class="card${OPEN.has(c.kt)?' open':''}">
-   <div class="chead" onclick="toggleCard('${esc(c.kt)}')">
-     <div><div class="cn">${esc(nm)}</div><div class="ckt">${esc(c.kt)}${simi?' · '+esc(simi):''}${net?' · '+esc(net):''}</div></div>
-     <div class="amt">${(function(){let est=0;if(c.ajour&&c.ajour_amount!=null)est=c.ajour_amount;else if(c.tim)est=c.tim.total*rate(c);
-        if(t.tot>0.5)return `<b>${kr(t.tot)}</b><small>velta 2026</small>${est>0?`<small style="color:#2563eb">≈ ${kr(est)} í tímum</small>`:''}`;
-        if(est>0)return `<b style="color:#2563eb">≈ ${kr(est)}</b><small>tímar × tímagjald${c.tim?` (${c.tim.total} klst)`:''}</small><small style="color:#94a3b8">0 kr reikningað</small>`;
-        return `<b>${kr(t.tot)}</b><small>velta 2026</small>`;})()}</div>
-     <div>${tb}</div><div>${qb}${badge}</div>
-   </div>
-   <div class="body">
-     <div style="margin-top:14px;height:8px;background:#eef2f7;border-radius:6px;overflow:hidden"><div style="height:100%;width:${pct}%;background:#16a34a"></div></div>
-     <div style="font-size:11px;color:#64748b;margin-top:4px">${kr(t.paid)} greitt af ${kr(t.tot)} (${pct}%) · ${kr(t.out)} útistandandi</div>
-     ${keyBox(c)}
-     ${timHTML}
-     <div class="grid2">
-       <div>
-         <div class="sec"><h4>💰 Hreyfingalisti / reikningar</h4>
-           <table><tr><th>Gjalddagi</th><th>Nr</th><th>Upphæð</th><th>Staða</th><th></th></tr>${invRows||'<tr><td colspan=5 style="color:#94a3b8">Engir reikningar</td></tr>'}</table></div>
-         <div class="sec"><h4>👤 Tengiliður (breytanlegt)</h4>
-           ${f('Fyrirtæki / nafn','nafn',nm)}
-           ${f('Sími','simi',cr.simi||ct.simi||'')}
-           ${f('Netfang','netfang',cr.netfang||ct.netfang||'')}
-           ${f('Heimilisfang','heimili',cr.heimili||ct.heimili||'')}</div>
-         <div class="sec"><h4>📋 Verk-upplýsingar</h4>
-           ${f('Staðsetning verks','stadsetning',cr.stadsetning||'')}
-           ${f('Lýsing á verki','verk_lysing',cr.verk_lysing||'',1)}
-           ${f('Verðtilboð','tilbod_info',cr.tilbod_info||'')}
-           ${f('Tímagjald (kr/klst)','timagjald',cr.timagjald||'')}
-           ${f('Næsta aðgerð','next_action',cr.next_action||'')}
-           ${f('Nótur','notes',cr.notes||'',1)}</div>
-       </div>
-       <div>
-         <div class="sec"><h4>✉️ Samskiptasaga${oq?` · <span style="color:#a16207">${oq} gætu þurft svar</span>`:''}</h4>${emailRows}</div>
-         <div class="sec"><h4>📎 Skjöl & teikningar</h4><div class="drop">Skjala-upphleðsla kemur í næstu útgáfu.</div></div>
-       </div>
-     </div>
-   </div></div>`;
+  const f=(label,field,val,area)=>{const el=area?`<textarea rows="2" oninput="crmChange('${c.kt}','${esc(nm)}','${field}',this.value,this.nextElementSibling)">${esc(val)}</textarea>`:`<input value="${esc(val)}" oninput="crmChange('${c.kt}','${esc(nm)}','${field}',this.value,this.nextElementSibling)">`;return `<div class="fld"><label>${label}</label>${el}<span class="save-ind">✓ vistað</span></div>`};
+  const editPanel=`<div class="panel"><div class="panel__head">✏️ SKRÁ / BREYTA (vistast sjálfkrafa)</div><div class="panel__body">${f('Staðsetning','stadsetning',cr.stadsetning||'')}${f('Tímagjald (kr/klst)','timagjald',cr.timagjald||'')}${f('Verðtilboð','tilbod_info',cr.tilbod_info||'')}${f('Sími','simi',simi)}${f('Netfang','netfang',net)}${f('Lýsing á verki','verk_lysing',cr.verk_lysing||'',1)}${f('Næsta aðgerð','next_action',cr.next_action||'')}${f('Nótur','notes',cr.notes||'',1)}</div></div>`;
+  return `<div class="acc${isOpen?' is-open':''}">
+    <div class="acc__head" onclick="toggleCard('${esc(c.kt)}')">
+      <span class="rail" style="background:${railCol}"></span>
+      <div style="flex:1;min-width:0"><div class="acc__name">${esc(nm)}</div><div class="acc__sub">${sub}</div></div>
+      <div><div class="acc__velta">${veltaStr}</div><div class="acc__velta-lab">${veltaSub}</div></div>
+      <div class="acc__side">${ring}${timePill}${utiPill}${badge}<span class="chev">⌄</span></div>
+    </div>
+    <div class="acc__body"><div class="acc__pad">
+      <div class="paid-line">${kr(t.paid)} greitt af ${kr(t.tot)} (${pct}%) · ${kr(t.out)} útistandandi</div>
+      <div class="progress"><div class="progress__bar" style="width:${pct}%"></div></div>
+      ${keyBox(c)}
+      ${timBox}
+      <div class="split">
+        <div class="panel"><div class="panel__head">🧾 HREYFINGALISTI / REIKNINGAR</div><table class="inv"><thead><tr><th>GJALDDAGI</th><th>NR</th><th class="r">UPPHÆÐ</th><th class="c">STAÐA</th></tr></thead><tbody>${invRows}</tbody></table></div>
+        <div class="panel"><div class="panel__head">💬 SAMSKIPTASAGA${oq?` · ${oq} GÆTU ÞURFT SVAR`:''}</div>${msgs}</div>
+      </div>
+      <div class="split" style="margin-top:14px">${editPanel}</div>
+    </div></div>
+  </div>`;
 }
-document.querySelectorAll('.chip').forEach(ch=>ch.onclick=()=>{document.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));ch.classList.add('on');filter=ch.dataset.f;render()});
+document.querySelectorAll('.fchip').forEach(ch=>ch.onclick=()=>{document.querySelectorAll('.fchip').forEach(x=>x.classList.remove('is-active'));ch.classList.add('is-active');filter=ch.dataset.f;render()});
 document.getElementById('q').oninput=e=>{q=e.target.value.toLowerCase();render()};
 document.getElementById('sort').onchange=render;
 render(); loadOverlay();
