@@ -1731,6 +1731,7 @@ const BAKENDI_LINK_SEED = [
 const DEFAULT_STATE = {
   bakendiLinks: BAKENDI_LINK_SEED.map(x=>({...x})),
   tabs: [
+    {id:'verkkaupar', label:'Verkkaupar', icon:'🤝', url:'/verkkaupar.html', external:true},
     {id:'dagurinn',   label:'Dagurinn',   icon:'🌅'},
     {id:'yfirlit',    label:'Yfirlit',    icon:'🏠'},
     {id:'stjornbord', label:'Stjórnborð', icon:'🎛'},
@@ -2024,13 +2025,16 @@ function clearDataCache(){
 function ensureNewTabs(s){
   if(!s || !Array.isArray(s.tabs)) return;
   if(!Array.isArray(s.bakendiLinks)) s.bakendiLinks = BAKENDI_LINK_SEED.map(x=>({...x}));
-  ['dagurinn','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','tvmaeting','verdsamanburdur','verkstadir','skuldunautar','krofuyfirlit','krofur','hreyfingaryfirlit','nlsh','spurningar','sjalfvirkni','vefryni','skodanir','verkfaeri','bakendi'].forEach(id=>{
+  ['verkkaupar','dagurinn','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','tvmaeting','verdsamanburdur','verkstadir','skuldunautar','krofuyfirlit','krofur','hreyfingaryfirlit','nlsh','spurningar','sjalfvirkni','vefryni','skodanir','verkfaeri','bakendi'].forEach(id=>{
     if(!s.tabs.find(t=>t.id===id)){
       const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
       if(d){
         // Tab order: reikningar → gerdreikninga → vinnubok → vinnustofa → verdskra → efniskostnadur
         let target;
-        if(id === 'dagurinn'){
+        if(id === 'verkkaupar'){
+          // Verkkaupar (ytri síða /verkkaupar.html) — fyrsti flipi í hliðarstiku.
+          target = 0;
+        } else if(id === 'dagurinn'){
           // Dagurinn is the landing page — pin it to the very front.
           target = 0;
         } else if(id === 'stjornbord'){
@@ -2136,6 +2140,13 @@ function ensureNewTabs(s){
       s.tabs.splice((yf>=0?yf:0)+1+k, 0, tab);
     });
     s.ui._navPinV2 = true;
+  }
+  // One-time: pin Verkkaupar to the very top of the sidebar (Agnar's request).
+  // Guarded so it never fights a later deliberate reorder.
+  if(!s.ui._verkkauparPinV1){
+    const i = s.tabs.findIndex(t=>t.id==='verkkaupar');
+    if(i>0){ const [tab] = s.tabs.splice(i,1); s.tabs.unshift(tab); }
+    s.ui._verkkauparPinV1 = true;
   }
 }
 
