@@ -80,8 +80,12 @@ exports.handler = async (event) => {
     Object.values(gn).forEach(g => { if (g.length > 1) { const keep = pickKeeper(g); g.forEach(x => { if (x.id !== keep.id && !trash.has(x.id)) { trash.add(x.id); byName++; } }); } });
     const ids = [...trash];
     let trashed = 0;
-    if (!dry) for (const id of ids) { try { if (await trashFile(id, token)) trashed++; } catch (_) {} }
-    return json(200, { dedup: true, total: files.length, would_trash: ids.length, trashed, by_md5: byMd5, by_name: byName, dry });
+    const T = Date.now();
+    if (!dry) for (const id of ids) {
+      if ((Date.now() - T) > 8000) break;   // tímavörn — afgangur í næsta kalli (resumable)
+      try { if (await trashFile(id, token)) trashed++; } catch (_) {}
+    }
+    return json(200, { dedup: true, total: files.length, would_trash: ids.length, trashed, remaining: ids.length - trashed, by_md5: byMd5, by_name: byName, dry });
   }
 
   // ── CONNECT-sweep: skrá HVERT PDF í áfangamöppunni sem er ekki þegar tengt ──
