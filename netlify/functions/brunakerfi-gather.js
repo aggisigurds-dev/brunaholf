@@ -79,13 +79,15 @@ exports.handler = async (event) => {
     const gn = {}; files.forEach(f => { if (!trash.has(f.id)) (gn[f.name] = gn[f.name] || []).push(f); });
     Object.values(gn).forEach(g => { if (g.length > 1) { const keep = pickKeeper(g); g.forEach(x => { if (x.id !== keep.id && !trash.has(x.id)) { trash.add(x.id); byName++; } }); } });
     const ids = [...trash];
-    let trashed = 0;
+    let trashed = 0, failed = 0;
     const T = Date.now();
     if (!dry) for (const id of ids) {
       if ((Date.now() - T) > 8000) break;   // tímavörn — afgangur í næsta kalli (resumable)
-      try { if (await trashFile(id, token)) trashed++; } catch (_) {}
+      // MOVE í rusl-möppu frekar en trash: sumar skrár eru í eigu annars reiknings
+      // (aggisigurds má FÆRA en ekki henda) → trashed:true féll. Færsla virkar alltaf.
+      try { if (await moveToBin(id, token)) trashed++; else failed++; } catch (_) { failed++; }
     }
-    return json(200, { dedup: true, total: files.length, would_trash: ids.length, trashed, remaining: ids.length - trashed, by_md5: byMd5, by_name: byName, dry });
+    return json(200, { dedup: true, total: files.length, would_trash: ids.length, trashed, failed, remaining: ids.length - trashed, by_md5: byMd5, by_name: byName, dry });
   }
 
   // ── CONNECT-sweep: skrá HVERT PDF í áfangamöppunni sem er ekki þegar tengt ──
@@ -288,9 +290,10 @@ async function listFolderMeta(folder, token) {
   } while (pageToken);
   return out;
 }
-async function trashFile(id, token) {
-  const r = await driveFetch('https://www.googleapis.com/drive/v3/files/' + id + '?supportsAllDrives=true&fields=id', {
-    method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ trashed: true }) });
+const BIN = '1CnnNHm1xCukiTs806z9Ha1nZnSELM9k8';   // rusl-mappa (afturkræft — skrá ekki eydd)
+async function moveToBin(id, token) {
+  const r = await driveFetch('https://www.googleapis.com/drive/v3/files/' + id + '?supportsAllDrives=true&addParents=' + BIN + '&removeParents=' + DEST + '&fields=id', {
+    method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: '{}' });
   return r.ok;
 }
 // Hvaða eintaki á að HALDA í tvítaka-hópi: helst nafn ÁN afrit-viðskeytis
