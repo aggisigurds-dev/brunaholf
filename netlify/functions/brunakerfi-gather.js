@@ -65,6 +65,53 @@ exports.handler = async (event) => {
     return json(200, { total_candidates: candidates.length, already_in_dest: alreadyDone, pending: candidates.length - alreadyDone });
   }
 
+  // ── DEDUP: fjarlægja tvítök í áfangamöppunni (afturkræft — í rusl) ──────────
+  //   ?dedup=1        → HENDA (trasha) tvítökum
+  //   ?dedup=1&dry=1  → sýna aðeins hvað yrði hent
+  // Tvö skref: (1) sama md5 = 100% eins innihald; (2) sama NAFN. Í báðum er einu
+  // eintaki HALDIÐ (helst án „(1)"/„copy"-viðskeytis, annars elsta).
+  if (p.dedup === '1') {
+    const files = await listFolderMeta(DEST, token);
+    const trash = new Set();
+    let byMd5 = 0, byName = 0;
+    const g5 = {}; files.forEach(f => { if (f.md5Checksum) (g5[f.md5Checksum] = g5[f.md5Checksum] || []).push(f); });
+    Object.values(g5).forEach(g => { if (g.length > 1) { const keep = pickKeeper(g); g.forEach(x => { if (x.id !== keep.id) { trash.add(x.id); byMd5++; } }); } });
+    const gn = {}; files.forEach(f => { if (!trash.has(f.id)) (gn[f.name] = gn[f.name] || []).push(f); });
+    Object.values(gn).forEach(g => { if (g.length > 1) { const keep = pickKeeper(g); g.forEach(x => { if (x.id !== keep.id && !trash.has(x.id)) { trash.add(x.id); byName++; } }); } });
+    const ids = [...trash];
+    let trashed = 0;
+    if (!dry) for (const id of ids) { try { if (await trashFile(id, token)) trashed++; } catch (_) {} }
+    return json(200, { dedup: true, total: files.length, would_trash: ids.length, trashed, by_md5: byMd5, by_name: byName, dry });
+  }
+
+  // ── CONNECT-sweep: skrá HVERT PDF í áfangamöppunni sem er ekki þegar tengt ──
+  //   ?connect=1[&offset=N]  → les innihald, tengir base/stað, upsert-ar (batchað)
+  if (p.connect === '1') {
+    const files = (await listFolderMeta(DEST, token)).sort((a, b) => String(a.id).localeCompare(String(b.id)));
+    const st = { connect: true, total: files.length, offset, scanned: 0, indexed: 0, skipped: 0, errors: 0 };
+    const T = Date.now(); let w = 0, j = offset;
+    for (; j < files.length; j++) {
+      if (w >= limit || (Date.now() - T) > 9000) break;
+      const f = files[j];
+      try {
+        const ex = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?drive_file_id=eq.${encodeURIComponent(f.id)}&select=id&limit=1`, { headers: sbHeaders() });
+        const exr = await ex.json().catch(() => []);
+        if (Array.isArray(exr) && exr[0]) { st.skipped++; continue; }   // þegar tengt
+        w++; st.scanned++;
+        const text = await readPdfText(f.id, token);
+        const parsed = await parseReport(text, f.name);
+        await fetch(`${SUPABASE_URL}/rest/v1/customer_documents`, {
+          method: 'POST', headers: sbHeaders({ Prefer: 'return=minimal' }),
+          body: JSON.stringify({ drive_file_id: f.id, doc_type: 'brunakerfi', year: parsed.year ? +parsed.year : null,
+            customer_base_id: parsed.base ? parsed.base.id : null, fyrirtaeki_id: parsed.siteId || null,
+            customer_name: parsed.company, notes: 'brunakerfi-connect ' + new Date().toISOString().slice(0, 10) }) });
+        st.indexed++;
+      } catch (e) { st.errors++; }
+    }
+    st.nextOffset = j < files.length ? j : null; st.done = st.nextOffset === null;
+    return json(200, st);
+  }
+
   const stats = { dest: DEST, total_candidates: candidates.length, offset,
                   scanned: 0, moved: 0, indexed: 0, skipped: 0, errors: 0, rows: [] };
   const T0 = Date.now();
@@ -182,6 +229,49 @@ async function findCandidates(token) {
     } while (pageToken);
   }
   return Object.values(seen);
+}
+// Möppu-listi með md5 + createdTime (fyrir dedup + connect).
+async function listFolderMeta(folder, token) {
+  const out = []; let pageToken = null;
+  do {
+    const params = new URLSearchParams({ q: `'${folder.replace(/'/g, "\\'")}' in parents and trashed=false`, fields: 'files(id,name,md5Checksum,createdTime),nextPageToken', pageSize: '300', includeItemsFromAllDrives: 'true', supportsAllDrives: 'true', corpora: 'allDrives' });
+    if (pageToken) params.set('pageToken', pageToken);
+    const r = await driveFetch('https://www.googleapis.com/drive/v3/files?' + params, { headers: { Authorization: `Bearer ${token}` } });
+    if (!r.ok) throw new Error('list ' + r.status);
+    const d = await r.json();
+    for (const f of (d.files || [])) if (/pdf$/i.test(f.name)) out.push(f);
+    pageToken = d.nextPageToken;
+  } while (pageToken);
+  return out;
+}
+async function trashFile(id, token) {
+  const r = await driveFetch('https://www.googleapis.com/drive/v3/files/' + id + '?supportsAllDrives=true&fields=id', {
+    method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ trashed: true }) });
+  return r.ok;
+}
+// Hvaða eintaki á að HALDA í tvítaka-hópi: helst nafn ÁN afrit-viðskeytis
+// („ (1)", „copy", „-kópía"), annars elsta (createdTime).
+function pickKeeper(group) {
+  const clean = group.filter(f => !/\((\d+)\)\.pdf$|\bcopy\b|kópía|afrit/i.test(f.name));
+  const pool = clean.length ? clean : group;
+  return pool.slice().sort((a, b) => String(a.createdTime || '').localeCompare(String(b.createdTime || '')))[0];
+}
+// Þáttun skýrslu → {base, siteId, company, year} (fyrir connect-sweep).
+async function parseReport(text, name) {
+  let kt = customerKt(text);
+  const old = fieldsFromOldName(name);
+  kt = kt || old.kt || null;
+  let base = kt ? await matchBase(kt) : null;
+  const party = parseParty(text, base && base.nafn);
+  const realish = c => { const t = String(c || '').normalize('NFD').replace(/[^a-z]/gi, ''); return t.length >= 3 && !/^kt[\s\d-]*$/i.test(String(c || '').trim()); };
+  let company = (base && realish(base.nafn)) ? String(base.nafn).trim() : realish(party.company) ? String(party.company).trim() : (party.company || (base && base.nafn) || old.company || '').trim();
+  const address = expandCity(stripCompanyPrefix(old.address || party.address || extractAddress(text), company));
+  const di = dateInfo(text);
+  const nameYear = (name.match(/\b(20[0-3]\d)\b/) || [])[1] || '';
+  const year = di.year || old.year || nameYear || '';
+  if (!kt && realish(company)) { const fk = await ktByCompanyName(company, address); if (fk) { kt = fk.replace(/\D/g, ''); base = await matchBase(kt); } }
+  const siteId = base ? await matchSite(base.id, address) : null;
+  return { kt, base, company, address, year, siteId };
 }
 async function readPdfText(id, token) {
   const r = await driveFetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media&supportsAllDrives=true`, { headers: { Authorization: `Bearer ${token}` } });
