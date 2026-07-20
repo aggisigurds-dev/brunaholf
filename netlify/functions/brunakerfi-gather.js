@@ -48,26 +48,33 @@ exports.handler = async (event) => {
   const p = event.queryStringParameters || {};
   const dry = p.dry === '1';
   const limit = Math.min(parseInt(p.limit || (dry ? '8' : '6'), 10) || 6, 12);
+  const offset = Math.max(parseInt(p.offset || '0', 10) || 0, 0);
 
   // Frambjóðendur: PDF með brunakerfi-vísandi nafni, hvar sem er á Drive-inu.
-  // (Nafna-forsía; INNIHALD sker svo úr — sjá isBrunakerfi.)
+  // (Nafna-forsía; INNIHALD sker svo úr — sjá isBruna.) Raðað eftir id svo
+  // offset-gluggin sé STÖÐUGUR milli kalla (skrár sem eru færðar/sleppt fara
+  // ekki úr listanum, en offset skríður framhjá þeim → hver skrá heimsótt einu
+  // sinni; annars myndu sleppt skjöl endurskannast endalaust).
   let candidates;
   try { candidates = await findCandidates(token); }
   catch (e) { return json(500, { error: 'Drive leit mistókst: ' + e.message }); }
+  candidates.sort((a, b) => String(a.id).localeCompare(String(b.id)));
 
-  // Sleppa þeim sem eru ÞEGAR í áfangamöppunni (resumable) og tvítökum.
-  const pending = candidates.filter(f => !(f.parents || []).includes(DEST));
-
+  const alreadyDone = candidates.filter(f => (f.parents || []).includes(DEST)).length;
   if (p.status === '1') {
-    return json(200, { total_candidates: candidates.length, already_in_dest: candidates.length - pending.length, pending: pending.length });
+    return json(200, { total_candidates: candidates.length, already_in_dest: alreadyDone, pending: candidates.length - alreadyDone });
   }
 
-  const stats = { dest: DEST, total_candidates: candidates.length, pending: pending.length,
+  const stats = { dest: DEST, total_candidates: candidates.length, offset,
                   scanned: 0, moved: 0, indexed: 0, skipped: 0, errors: 0, rows: [] };
   const T0 = Date.now();
   let work = 0;
-  for (const f of pending) {
+  let idx = offset;
+  for (; idx < candidates.length; idx++) {
     if (work >= limit || (Date.now() - T0) > 9000) break;
+    const f = candidates[idx];
+    // Þegar í áfangamöppunni → búið (offset skríður framhjá án niðurhals).
+    if ((f.parents || []).includes(DEST)) { continue; }
     work++; stats.scanned++;
     try {
       const text = await readPdfText(f.id, token);
@@ -147,8 +154,8 @@ exports.handler = async (event) => {
       stats.rows.push(row);
     } catch (e) { stats.errors++; stats.rows.push({ fileId: f.id, name: f.name, action: 'error', error: String(e.message || e) }); }
   }
-  stats.done = stats.scanned < 1 || (stats.moved + stats.skipped + stats.errors) >= pending.length || work < limit;
-  stats.remaining = Math.max(0, pending.length - stats.moved - stats.skipped);
+  stats.nextOffset = idx < candidates.length ? idx : null;
+  stats.done = stats.nextOffset === null;
   return json(200, stats);
 };
 
