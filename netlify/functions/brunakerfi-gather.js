@@ -112,6 +112,46 @@ exports.handler = async (event) => {
     return json(200, st);
   }
 
+  // ── SERVICE-sweep: tengiliðir + búa til/uppfæra fyrirtæki í brunakerfisþjónustu ─
+  //   ?service=1[&offset=N]  → les hverja skýrslu, dregur út síma/netfang/tengilið,
+  //   fyllir AUÐA reiti á fyrirtækinu (yfirskrifar aldrei), setur er_i_thjonustu=true,
+  //   BÝR TIL fyrirtæki+base ef kt er ekki til, og bætir staðnum í brunakerfi-listann
+  //   (app_settings.brunakerfi_customers). Batchað.
+  if (p.service === '1') {
+    const files = (await listFolderMeta(DEST, token)).sort((a, b) => String(a.id).localeCompare(String(b.id)));
+    const st = { service: true, total: files.length, offset, scanned: 0, contact_filled: 0, upgraded: 0, created: 0, ambiguous: 0, no_kt: 0, errors: 0, map_added: 0 };
+    const addIds = [];
+    const T = Date.now(); let w = 0, j = offset;
+    for (; j < files.length; j++) {
+      if (w >= limit || (Date.now() - T) > 9000) break;
+      const f = files[j]; w++; st.scanned++;
+      try {
+        const text = await readPdfText(f.id, token);
+        const pr = await parseReport(text, f.name);
+        const contact = parseContact(text);
+        if (pr.base && pr.siteId) {
+          if (await updateSiteContact(pr.siteId, contact)) st.contact_filled++;
+          st.upgraded++; addIds.push(pr.siteId);
+        } else if (pr.base && !pr.siteId) {
+          st.ambiguous++;   // rekstrarfélag með marga staði → Skýrslu-stöð sker úr
+        } else if (!pr.base && pr.kt && pr.kt.length === 10 && pr.kt !== '9999999999') {
+          const base = await createBase(pr.kt, pr.company);
+          if (base) {
+            const site = await createSite(pr.kt, pr.company, pr.address, contact, base.id);
+            if (site) {
+              st.created++; addIds.push(site.id);
+              await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?drive_file_id=eq.${encodeURIComponent(f.id)}`, {
+                method: 'PATCH', headers: sbHeaders(), body: JSON.stringify({ customer_base_id: base.id, fyrirtaeki_id: site.id }) });
+            }
+          }
+        } else { st.no_kt++; }
+      } catch (e) { st.errors++; }
+    }
+    st.map_added = await addToBrunakerfiMap([...new Set(addIds)]);
+    st.nextOffset = j < files.length ? j : null; st.done = st.nextOffset === null;
+    return json(200, st);
+  }
+
   const stats = { dest: DEST, total_candidates: candidates.length, offset,
                   scanned: 0, moved: 0, indexed: 0, skipped: 0, errors: 0, rows: [] };
   const T0 = Date.now();
@@ -255,6 +295,76 @@ function pickKeeper(group) {
   const clean = group.filter(f => !/\((\d+)\)\.pdf$|\bcopy\b|kópía|afrit/i.test(f.name));
   const pool = clean.length ? clean : group;
   return pool.slice().sort((a, b) => String(a.createdTime || '').localeCompare(String(b.createdTime || '')))[0];
+}
+// Búa til canonical base ef kt er ekki til (additive; matchBase staðfesti null).
+async function createBase(kt, nafn) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/customers_base`, {
+    method: 'POST', headers: sbHeaders({ Prefer: 'return=representation' }),
+    body: JSON.stringify({ kennitala: dash(kt), nafn: (nafn && nafn.trim()) || ('kt ' + dash(kt)) }) });
+  const rows = await r.json().catch(() => []);
+  return Array.isArray(rows) && rows[0] ? rows[0] : null;
+}
+// Búa til fyrirtæki (staður) fyrir nýtt brunakerfi-fyrirtæki.
+async function createSite(kt, nafn, address, contact, baseId) {
+  const body = { kennitala: dash(kt), nafn: (nafn && nafn.trim()) || ('kt ' + dash(kt)),
+    heimilisfang: address || null, er_i_thjonustu: true, customer_base_id: baseId };
+  if (contact.simi) body.simi = contact.simi;
+  if (contact.netfang) body.netfang = contact.netfang;
+  if (contact.tengilidur) body['tengiliður'] = contact.tengilidur;
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/fyrirtaeki`, {
+    method: 'POST', headers: sbHeaders({ Prefer: 'return=representation' }), body: JSON.stringify(body) });
+  const rows = await r.json().catch(() => []);
+  return Array.isArray(rows) && rows[0] ? rows[0] : null;
+}
+// Fylla AÐEINS auða reiti (yfirskrifar aldrei) + setja er_i_thjonustu=true.
+async function updateSiteContact(siteId, contact) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/fyrirtaeki?id=eq.${siteId}&select=simi,netfang,${encodeURIComponent('tengiliður')},er_i_thjonustu`, { headers: sbHeaders() });
+  const rows = await r.json().catch(() => []);
+  const cur = rows[0] || {};
+  const patch = {};
+  if (contact.simi && !cur.simi) patch.simi = contact.simi;
+  if (contact.netfang && !cur.netfang) patch.netfang = contact.netfang;
+  if (contact.tengilidur && !cur['tengiliður']) patch['tengiliður'] = contact.tengilidur;
+  if (!cur.er_i_thjonustu) patch.er_i_thjonustu = true;
+  if (!Object.keys(patch).length) return 0;
+  await fetch(`${SUPABASE_URL}/rest/v1/fyrirtaeki?id=eq.${siteId}`, { method: 'PATCH', headers: sbHeaders(), body: JSON.stringify(patch) });
+  return 1;
+}
+// Bæta stöðum í brunakerfisþjónustu-listann (app_settings.settings.brunakerfi_customers).
+async function addToBrunakerfiMap(ids) {
+  if (!ids.length) return 0;
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/app_settings?id=eq.1&select=settings`, { headers: sbHeaders() });
+  const rows = await r.json().catch(() => []);
+  const exists = Array.isArray(rows) && rows[0];
+  const settings = (exists && rows[0].settings) || {};
+  const map = settings.brunakerfi_customers || {};
+  let added = 0;
+  for (const id of ids) { if (!map[id]) { map[id] = true; added++; } }
+  settings.brunakerfi_customers = map;
+  if (exists) {
+    await fetch(`${SUPABASE_URL}/rest/v1/app_settings?id=eq.1`, { method: 'PATCH', headers: sbHeaders(), body: JSON.stringify({ settings, updated_at: new Date().toISOString() }) });
+  } else {
+    await fetch(`${SUPABASE_URL}/rest/v1/app_settings`, { method: 'POST', headers: sbHeaders({ Prefer: 'return=minimal' }), body: JSON.stringify({ id: 1, settings, updated_at: new Date().toISOString() }) });
+  }
+  return added;
+}
+// Tengiliðaupplýsingar úr skýrslunni: sími / netfang / tengiliður.
+// Útilokar SÖLUAÐILANN (Slökkvitæki: sími 565-4080, eldklar/brunaholf netföng).
+function parseContact(text) {
+  const t = String(text || '');
+  let simi = '';
+  for (const m of t.matchAll(/S[íi]mi\s*:?\s*(\d[\d\s-]{5,11}\d)/gi)) {
+    const d = m[1].replace(/[\s-]/g, '');
+    if (d && d !== '5654080' && d.length >= 6) { simi = d; break; }
+  }
+  let tengilidur = '';
+  const tm = t.match(/Tengili[ðd]ur\s+([A-ZÁÉÍÓÚÝÆÖÞÐ][^\n]{1,40}?)\s*(?:Heimilisf|Kennitala|P[óo]stnr|S[íi]mi|Netfang|$)/i);
+  if (tm) tengilidur = tm[1].replace(/\s+/g, ' ').trim();
+  let netfang = '';
+  for (const m of t.matchAll(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g)) {
+    if (!/eldklar|slokkvit|brunaholf/i.test(m[0])) { netfang = m[0]; break; }
+  }
+  return { simi, netfang, tengilidur };
 }
 // Þáttun skýrslu → {base, siteId, company, year} (fyrir connect-sweep).
 async function parseReport(text, name) {
