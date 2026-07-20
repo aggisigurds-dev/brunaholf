@@ -12,6 +12,7 @@ const SCOPES = [
   'https://www.googleapis.com/auth/drive',                  // full Drive (read everything + create app files)
   'https://www.googleapis.com/auth/spreadsheets',           // read + write Sheets
   'https://www.googleapis.com/auth/gmail.readonly',
+  'https://www.googleapis.com/auth/gmail.send',             // senda póst FRÁ tengda pósthólfinu (gmail-send.js)
   'https://www.googleapis.com/auth/userinfo.email',
   'openid',
 ];
