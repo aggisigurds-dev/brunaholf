@@ -28,7 +28,7 @@
  * Eftir að skópinu var bætt við (`_google.js`) þarf að TENGJA HVERT PÓSTHÓLF
  * UPP Á NÝTT einu sinni — gömul token bera ekki nýja skópið.
  */
-const { freshAccessTokenFor, listConnectedAccounts, json, cors } = require('./_google');
+const { freshAccessTokenFor, freshAccessToken, listConnectedAccounts, json, cors } = require('./_google');
 
 const GMAIL_SEND = 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send';
 
@@ -70,6 +70,15 @@ exports.handler = async (event) => {
   }
 
   // ── Viðhengi leyst í base64 ────────────────────────────────────────────────
+  // Drive-skrár eru sóttar með AÐAL-tokeninu (id=1, aggisigurds) því skjölin
+  // (customer_documents, þjónustusamningar o.fl.) liggja í HANS Drive — send-
+  // pósthólfið (t.d. eldklar@) hefur ekki endilega aðgang að þeim skrám.
+  let _driveTok = null;
+  async function driveTok() {
+    if (_driveTok) return _driveTok;
+    try { _driveTok = await freshAccessToken(); } catch (_) { _driveTok = token; }
+    return _driveTok || token;
+  }
   const atts = [];
   const warnings = [];
   for (const a of (Array.isArray(body.attachments) ? body.attachments : [])) {
@@ -79,10 +88,9 @@ exports.handler = async (event) => {
       if (a.content) {
         atts.push({ filename: name, content: String(a.content), type: a.contentType || guessType(name) });
       } else if (a.driveId) {
-        // Sama OAuth-token og sendir — nær í aðgangsstýrðar Drive-skrár.
         const r = await fetch(
           'https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(a.driveId) + '?alt=media&supportsAllDrives=true',
-          { headers: { Authorization: 'Bearer ' + token } });
+          { headers: { Authorization: 'Bearer ' + (await driveTok()) } });
         if (!r.ok) { warnings.push(name + ': Drive HTTP ' + r.status); continue; }
         const buf = Buffer.from(await r.arrayBuffer());
         atts.push({ filename: name, content: buf.toString('base64'), type: a.contentType || guessType(name) });
