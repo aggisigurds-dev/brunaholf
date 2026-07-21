@@ -181,13 +181,22 @@ function buildMime(o) {
   h.push('Content-Type: multipart/mixed; boundary="' + bnd + '"');
   const parts = ['--' + bnd, htmlPart];
   for (const a of o.attachments) {
-    // filename* (RFC 5987) ber íslensku stafina; venjulega filename er ascii-vara.
-    const ascii = a.filename.replace(/[^\x20-\x7E]/g, '_').replace(/"/g, '');
+    // GMAIL HUNSAR filename* (RFC 2231/5987) og les venjulega name=/filename=
+    // beint — þess vegna birtist „Tilbo_" í stað „Tilboð" (staðfest á sendu
+    // tilboði 2026-07-21). Gmail (og Outlook/Apple Mail) skilja hins vegar
+    // RFC 2047 encoded-word INNI í parametrinum — það er sniðið sem Gmail
+    // sjálft býr til. Því fer B-kóðaða nafnið í name/filename þegar íslenskir
+    // stafir eru til staðar, og filename* fylgir áfram fyrir staðal-þæga
+    // klienta.
+    const clean = String(a.filename).replace(/"/g, '');
+    const q = /^[\x20-\x7E]*$/.test(clean)
+      ? '"' + clean + '"'
+      : '"=?UTF-8?B?' + Buffer.from(clean, 'utf8').toString('base64') + '?="';
     parts.push('--' + bnd);
     parts.push(
-      'Content-Type: ' + a.type + '; name="' + ascii + '"\r\n' +
-      'Content-Disposition: attachment; filename="' + ascii + '"; ' +
-        "filename*=UTF-8''" + encodeURIComponent(a.filename) + '\r\n' +
+      'Content-Type: ' + a.type + '; name=' + q + '\r\n' +
+      'Content-Disposition: attachment; filename=' + q + '; ' +
+        "filename*=UTF-8''" + encodeURIComponent(clean) + '\r\n' +
       'Content-Transfer-Encoding: base64\r\n\r\n' +
       wrap(a.content));
   }
