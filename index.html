@@ -3908,6 +3908,11 @@ function renderBakendi(t){
             <div><label style="${labelStyle}">Áfangastaður (canonical mappa)</label><input id="bk-sv-dest" value="1FHHX99LRB_9w_LqwHIY57T4l9mLMID7p" placeholder="folder-id / slóð" style="${inpMono};width:100%;box-sizing:border-box;height:40px"></div>
             <div><label style="${labelStyle}">Uppspretta (gömul mappa — valfrjálst)</label><input id="bk-sv-src" value="1TDusB2NLhr-OMLnojSk3iw0oiuiuFMLM" placeholder="folder-id / slóð (tómt = bara raða áfangastað)" style="${inpMono};width:100%;box-sizing:border-box;height:40px"></div>
           </div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end">
+            <div><label style="${labelStyle}">Aðeins þessi ár (t.d. 2023 eða 2023,2024 · tómt = öll)</label><input id="bk-sv-years" value="" placeholder="tómt = öll ár · annars 2022 / 2023 / óþekkt …" style="${inpMono};width:100%;box-sizing:border-box;height:40px"></div>
+            <button id="bk-sv-count" class="btn" style="font-size:12px;height:40px">📊 Telja per ár</button>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin:2px 0"><span style="${labelStyle};align-self:center">Flýti-ár:</span><button class="btn bk-sv-yr" data-yr="2023" style="font-size:11px">2023</button><button class="btn bk-sv-yr" data-yr="2024" style="font-size:11px">2024</button><button class="btn bk-sv-yr" data-yr="óþekkt" style="font-size:11px">óþekkt</button><button class="btn bk-sv-yr" data-yr="" style="font-size:11px">öll</button><span style="${labelStyle};align-self:center">· smelltu á „📊 Telja per ár" til að sjá 2022 og eldri.</span></div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:auto">
             <button id="bk-sv-dry" class="btn">👁 Forskoða (dry)</button>
             <button id="bk-sv-run" class="btn primary">▶️ Raða &amp; sameina</button>
@@ -5099,12 +5104,34 @@ function renderBakendi(t){
   (function wireSkjalavarsla(){
     const $dest = document.getElementById('bk-sv-dest');
     const $src = document.getElementById('bk-sv-src');
+    const $years = document.getElementById('bk-sv-years');
+    const $count = document.getElementById('bk-sv-count');
     const $dry = document.getElementById('bk-sv-dry');
     const $run = document.getElementById('bk-sv-run');
     const $stop = document.getElementById('bk-sv-stop');
     const $status = document.getElementById('bk-sv-status');
     const $results = document.getElementById('bk-sv-results');
     if (!$run) return;
+    document.querySelectorAll('.bk-sv-yr').forEach(b => b.onclick = () => { $years.value = b.getAttribute('data-yr') || ''; });
+    function yearsQs(){ const v = ($years && $years.value || '').trim(); return v ? '&years=' + encodeURIComponent(v) : ''; }
+    // 📊 Telja per ár — per-year tally of the UNFILED flat files (no move). Rows
+    // are clickable to load that year into the filter, so you can do one at a time.
+    async function countPerYear(){
+      $count.disabled = true; $status.textContent = '📊 Tel…';
+      try {
+        const qs = '?dest=' + encodeURIComponent(($dest.value||'').trim()) +
+          (($src.value||'').trim() ? '&src=' + encodeURIComponent($src.value.trim()) : '') + '&counts=1';
+        const r = await fetch('/api/skjalavarsla' + qs); const d = await r.json();
+        if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+        const years = Object.keys(d.byYear||{}).sort((a,b)=>(a==='óþekkt')?1:(b==='óþekkt')?-1:(+b)-(+a));
+        const rows = years.map(y => '<tr class="bk-sv-crow" data-yr="'+escapeHtml(y)+'" style="cursor:pointer"><td style="padding:4px 10px;font-weight:600">'+escapeHtml(y)+(y==='óþekkt'?'':'/')+'</td><td style="text-align:right;padding:4px 10px">'+d.byYear[y]+'</td></tr>').join('');
+        $results.innerHTML = '<div style="margin-top:10px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;max-width:340px"><table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead style="background:#f8fafc"><tr><th style="text-align:left;padding:6px 10px">Óraðað per ár (smelltu)</th><th style="text-align:right;padding:6px 10px">Fjöldi</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+        $results.querySelectorAll('.bk-sv-crow').forEach(tr => tr.onclick = () => { $years.value = tr.getAttribute('data-yr'); $status.textContent = 'Valið ár: ' + $years.value + ' — ýttu 👁 Forskoða.'; });
+        $status.textContent = (d.flat_unfiled||0) + ' óraðaðar skrár samtals';
+      } catch(e){ $status.textContent = 'Villa: ' + (e.message||e); }
+      finally { $count.disabled = false; }
+    }
+    if ($count) $count.onclick = countPerYear;
     const REIK = '1FHHX99LRB_9w_LqwHIY57T4l9mLMID7p', REIK_OLD = '1TDusB2NLhr-OMLnojSk3iw0oiuiuFMLM';
     const SKYR = '1VSRRw6O8U6lU8WzZxA8CkLtrAmiU07mg', SKYR_OLD = '11Gf4yUeR6tQ2HcFxWk-50IFQl2xBUQOg';
     document.getElementById('bk-sv-preset-reik').onclick = () => { $dest.value = REIK; $src.value = REIK_OLD; };
@@ -5127,6 +5154,7 @@ function renderBakendi(t){
         while (!stop && guard++ < 300) {
           const qs = '?dest=' + encodeURIComponent(($dest.value||'').trim()) +
             (($src.value||'').trim() ? '&src=' + encodeURIComponent($src.value.trim()) : '') +
+            yearsQs() +
             '&limit=' + (dry ? 40 : 25) + (dry ? '&dry=1' : '');
           const r = await fetch('/api/skjalavarsla' + qs);
           const d = await r.json();

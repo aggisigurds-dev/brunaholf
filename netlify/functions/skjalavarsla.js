@@ -83,6 +83,12 @@ exports.handler = async (event) => {
     const dupes = folderId(p.dupes || DEFAULT_DUPES);
     const limit = Math.min(Math.max(parseInt(p.limit || '20', 10) || 20, 1), 100);
     const dry = p.dry === '1' || p.dry === 'true';
+    // Optional year-filter — process ONE (or a few) years at a time, e.g.
+    // ?years=2023 or ?years=2023,2024 or ?years=óþekkt. Absent = all years (as before).
+    // Lets the office split the big flat folder incrementally, lowest-risk first.
+    const yearsFilter = String(p.years || '').trim()
+      ? new Set(String(p.years).split(',').map(s => s.trim().toLowerCase()).filter(Boolean))
+      : null;
     const token = await freshAccessToken();
 
     // existing year subfolders under dest (name → id) + their file-name sets
@@ -98,7 +104,15 @@ exports.handler = async (event) => {
     // work-list: flat file children of dest (not yet filed) + all files under src
     const flat = (await listChildren(token, dest)).filter(f => f.mimeType !== FOLDER_MIME);
     const fromSrc = (src && src !== dest) ? await allFilesUnder(token, src) : [];
-    const worklist = flat.concat(fromSrc);
+    let worklist = flat.concat(fromSrc);
+    // ?counts=1 → per-year tally of the UNFILED (flat) files, no move. Drives the
+    // year-picker in the Bakendi card so the office can process one year at a time.
+    if (p.counts === '1' || p.counts === 'true') {
+      const byYear = {};
+      for (const f of worklist) { const y = String(yearLabel(f.name)); byYear[y] = (byYear[y] || 0) + 1; }
+      return json(200, { counts: true, flat_unfiled: worklist.length, byYear });
+    }
+    if (yearsFilter) worklist = worklist.filter(f => yearsFilter.has(String(yearLabel(f.name)).toLowerCase()));
     const batch = worklist.slice(0, limit);
 
     const results = []; let filed = 0, duped = 0; const movedByYear = {};
@@ -121,7 +135,7 @@ exports.handler = async (event) => {
     }
     // In dry mode nothing moves, so „remaining" = whole worklist; live shrinks it.
     const remaining = dry ? Math.max(0, worklist.length - batch.length) : Math.max(0, worklist.length - (filed + duped));
-    return json(200, { processed: batch.length, filed, duped, movedByYear, remaining, worklist: worklist.length, done: batch.length === 0, dry, results });
+    return json(200, { processed: batch.length, filed, duped, movedByYear, remaining, worklist: worklist.length, done: batch.length === 0, dry, years: yearsFilter ? [...yearsFilter] : null, results });
   } catch (e) {
     return json(500, { error: String(e.message || e) });
   }
