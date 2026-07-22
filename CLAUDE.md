@@ -579,6 +579,11 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   Run history (2026-07-13): 149 relinked + 177→170 collisions flagged; 6 multi-site
   relinks all reikningar (0 skýrslur crossed). Bakendi card + `wireRelinkDocs` in
   index.html; redirect in netlify.toml. Service role + `_google.freshAccessToken`.
+  **Recursion (2026-07-22):** `listFolder` now WALKS the master tree (subfolders
+  too), so when a master is split into `<ár>/` subfolders (Skjalavörsla) a file
+  living at `master/2023/…` stays in `masterIds` — otherwise relink-docs would see
+  the live file as a dead link and false-cross-link it. Folders themselves are never
+  returned; behaviour is identical when there are no subfolders.
 
 - `drive-dedup.js` — **Bakendi „🗂️ Drive tvítekningar"** (`/api/drive-dedup`): pick any
   Drive folder → lists files with **duplicate names** (groups by name with the extension
