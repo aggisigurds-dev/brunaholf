@@ -53,22 +53,36 @@ async function patchDoc(id, patch) {
   if (!r.ok) throw new Error('patch ' + r.status + ' ' + (await r.text()).slice(0, 120));
 }
 
+// Recurse into subfolders. When the master gets split into „<ár>/" subfolders
+// (Skjalavarsla), a file physically lives at master/2023/Foo.pdf but its
+// drive_file_id is unchanged — still a LIVE link. A direct-children-only listing
+// would miss it, so `masterIds` wouldn't contain it, and relink-docs would treat
+// the live file as a dead link and try to re-point it at some OTHER master file
+// → a dangerous false cross-link. Walking the tree keeps every master file
+// (in root OR any year subfolder) in `masterIds`. Folders themselves are never
+// returned — only files — so behaviour is identical when there are no subfolders.
 async function listFolder(token, folder) {
-  const out = [];
-  let pageToken = '';
-  do {
-    const params = new URLSearchParams({
-      q: `'${folder.replace(/'/g, "\\'")}' in parents and trashed=false`,
-      fields: 'files(id,name,mimeType),nextPageToken',
-      pageSize: '1000', supportsAllDrives: 'true', includeItemsFromAllDrives: 'true',
-    });
-    if (pageToken) params.set('pageToken', pageToken);
-    const r = await fetch('https://www.googleapis.com/drive/v3/files?' + params, { headers: { Authorization: `Bearer ${token}` } });
-    if (!r.ok) throw new Error('Drive list ' + r.status + ': ' + (await r.text()).slice(0, 200));
-    const d = await r.json();
-    out.push(...(d.files || []));
-    pageToken = d.nextPageToken || '';
-  } while (pageToken);
+  const FOLDER_MIME = 'application/vnd.google-apps.folder';
+  const out = []; const queue = [folder]; const seen = new Set();
+  while (queue.length) {
+    const fid = queue.shift(); if (seen.has(fid)) continue; seen.add(fid);
+    let pageToken = '';
+    do {
+      const params = new URLSearchParams({
+        q: `'${fid.replace(/'/g, "\\'")}' in parents and trashed=false`,
+        fields: 'files(id,name,mimeType),nextPageToken',
+        pageSize: '1000', supportsAllDrives: 'true', includeItemsFromAllDrives: 'true',
+      });
+      if (pageToken) params.set('pageToken', pageToken);
+      const r = await fetch('https://www.googleapis.com/drive/v3/files?' + params, { headers: { Authorization: `Bearer ${token}` } });
+      if (!r.ok) throw new Error('Drive list ' + r.status + ': ' + (await r.text()).slice(0, 200));
+      const d = await r.json();
+      for (const f of (d.files || [])) {
+        if (f.mimeType === FOLDER_MIME) queue.push(f.id); else out.push(f);
+      }
+      pageToken = d.nextPageToken || '';
+    } while (pageToken);
+  }
   return out;
 }
 

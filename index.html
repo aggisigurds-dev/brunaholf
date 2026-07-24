@@ -3908,6 +3908,11 @@ function renderBakendi(t){
             <div><label style="${labelStyle}">Áfangastaður (canonical mappa)</label><input id="bk-sv-dest" value="1FHHX99LRB_9w_LqwHIY57T4l9mLMID7p" placeholder="folder-id / slóð" style="${inpMono};width:100%;box-sizing:border-box;height:40px"></div>
             <div><label style="${labelStyle}">Uppspretta (gömul mappa — valfrjálst)</label><input id="bk-sv-src" value="1TDusB2NLhr-OMLnojSk3iw0oiuiuFMLM" placeholder="folder-id / slóð (tómt = bara raða áfangastað)" style="${inpMono};width:100%;box-sizing:border-box;height:40px"></div>
           </div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end">
+            <div><label style="${labelStyle}">Aðeins þessi ár (t.d. 2023 eða 2023,2024 · tómt = öll)</label><input id="bk-sv-years" value="" placeholder="tómt = öll ár · annars 2022 / 2023 / óþekkt …" style="${inpMono};width:100%;box-sizing:border-box;height:40px"></div>
+            <button id="bk-sv-count" class="btn" style="font-size:12px;height:40px">📊 Telja per ár</button>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin:2px 0"><span style="${labelStyle};align-self:center">Flýti-ár:</span><button class="btn bk-sv-yr" data-yr="2023" style="font-size:11px">2023</button><button class="btn bk-sv-yr" data-yr="2024" style="font-size:11px">2024</button><button class="btn bk-sv-yr" data-yr="óþekkt" style="font-size:11px">óþekkt</button><button class="btn bk-sv-yr" data-yr="" style="font-size:11px">öll</button><span style="${labelStyle};align-self:center">· smelltu á „📊 Telja per ár" til að sjá 2022 og eldri.</span></div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:auto">
             <button id="bk-sv-dry" class="btn">👁 Forskoða (dry)</button>
             <button id="bk-sv-run" class="btn primary">▶️ Raða &amp; sameina</button>
@@ -3915,6 +3920,43 @@ function renderBakendi(t){
             <span id="bk-sv-status" style="font-size:12.5px;color:#64748b"></span>
           </div>
           <div id="bk-sv-results"></div>
+        </div>
+
+        <!-- ✂️ Skipta PDF í stakar síður (Drive → Drive, eða úr tölvu → ZIP) -->
+        <div style="${card}">
+          <div style="display:flex;align-items:center;gap:14px">
+            <span style="${iconSq};${ICON.teal}">✂️</span>
+            <div style="flex:1">
+              <div style="${titleStyle}">Skipta PDF í stakar síður</div>
+              <p style="${descStyle};margin-top:4px">Stór PDF (t.d. 70 síður) → <b>ein PDF á hverja síðu</b>. Úr <b>Google Drive</b> → skrifast til baka í nýja <b>„&lt;nafn&gt; - stakar"</b> undirmöppu við hlið skrárinnar. (Eða veldu skrá úr tölvu og fáðu ZIP.)</p>
+            </div>
+            <span style="${chipStyle('#cffafe','#0c4a6e')}">Drive</span>
+          </div>
+          <div>
+            <label style="${labelStyle}">Google Drive — PDF (skrár-ID eða hlekkur)</label>
+            <input id="bk-ps-drive-file" placeholder="1AbC… eða https://drive.google.com/file/d/…" style="${inpMono};width:100%;box-sizing:border-box;height:40px">
+          </div>
+          <div>
+            <label style="${labelStyle}">Áfangamappa (valfrjálst — tómt = við hlið upprunaskrár)</label>
+            <input id="bk-ps-drive-dest" placeholder="folder-id / hlekkur (tómt = sama mappa og skráin)" style="${inpMono};width:100%;box-sizing:border-box;height:40px">
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <button id="bk-ps-drive-run" class="btn primary">☁️ Skipta í Drive</button>
+            <span id="bk-ps-drive-status" style="font-size:12.5px;color:#64748b"></span>
+          </div>
+          <div id="bk-ps-drive-out" style="font-size:12.5px;color:#334155"></div>
+
+          <div style="border-top:1px dashed #e2e8f0;margin-top:4px;padding-top:14px">
+            <label style="${labelStyle}">Eða: úr tölvu → ZIP (í vafra, engin Drive)</label>
+            <div style="${dropZone}">
+              <input id="bk-ps-file" type="file" accept="application/pdf,.pdf" style="width:100%;font:inherit;font-size:13px">
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px">
+              <button id="bk-ps-run" class="btn" disabled>✂️ Skipta í ZIP</button>
+              <span id="bk-ps-status" style="font-size:12.5px;color:#64748b"></span>
+            </div>
+            <div id="bk-ps-out" style="font-size:12.5px;color:#334155"></div>
+          </div>
         </div>
 
         <!-- 📝 Samningalesari -->
@@ -5095,16 +5137,130 @@ function renderBakendi(t){
     $arStop.onclick = () => { arStop = true; $status.textContent += ' (stöðva…)'; };
   })();
 
+  // ── ☁️ Skipta PDF í Drive → stakar síður aftur í Drive (/api/pdf-split, batchað) ──
+  (function wirePdfSplitDrive(){
+    const $file = document.getElementById('bk-ps-drive-file');
+    const $dest = document.getElementById('bk-ps-drive-dest');
+    const $run = document.getElementById('bk-ps-drive-run');
+    const $status = document.getElementById('bk-ps-drive-status');
+    const $out = document.getElementById('bk-ps-drive-out');
+    if (!$run || !$file) return;
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    const idFrom = s => { const m = String(s || '').match(/[-\w]{25,}/); return m ? m[0] : ''; };
+    $run.onclick = async () => {
+      const source = idFrom($file.value);
+      if (!source) { $status.textContent = 'Límdu inn Drive-skrár-ID eða hlekk.'; return; }
+      const dest = idFrom($dest.value);
+      $run.disabled = true; $out.innerHTML = ''; $status.textContent = 'Byrja…';
+      let offset = 0, folder = '', total = 0, folderLink = '', folderName = '';
+      try {
+        for (let guard = 0; guard < 500; guard++) {
+          const qs = new URLSearchParams({ file: source, offset: String(offset), limit: '8' });
+          if (folder) qs.set('folder', folder); else if (dest) qs.set('dest', dest);
+          const r = await fetch('/api/pdf-split?' + qs.toString());
+          const d = await r.json().catch(() => ({}));
+          if (!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));
+          folder = d.folder; total = d.total; folderLink = d.folderLink; folderName = d.folderName;
+          offset = d.nextOffset;
+          $status.textContent = 'Bý til síður í Drive… ' + Math.min(offset, total) + '/' + total;
+          if (d.done) break;
+        }
+        $status.textContent = '✓ Búið — ' + total + ' síður.';
+        $out.innerHTML = '<div style="color:#16a34a">Skrifaði <b>' + total + '</b> stakar PDF í Drive-möppuna <b>' + esc(folderName) + '</b>. ' +
+          (folderLink ? '<a href="' + esc(folderLink) + '" target="_blank" rel="noopener" style="color:#2563eb">Opna möppu ↗</a>' : '') + '</div>';
+      } catch (e) { $status.textContent = 'Villa: ' + (e && e.message || e); }
+      finally { $run.disabled = false; }
+    };
+  })();
+
+  // ── ✂️ Skipta PDF í stakar síður (pdf-lib + JSZip, alfarið í vafra) ──
+  (function wirePdfSplit(){
+    const $file = document.getElementById('bk-ps-file');
+    const $run = document.getElementById('bk-ps-run');
+    const $status = document.getElementById('bk-ps-status');
+    const $out = document.getElementById('bk-ps-out');
+    if (!$run || !$file) return;
+    let libs = null;
+    function loadLibs(){
+      if (libs) return Promise.resolve(libs);
+      const add = src => new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=()=>rej(new Error('Náði ekki að hlaða '+src)); document.head.appendChild(s); });
+      let p = Promise.resolve();
+      if (!(window.PDFLib && window.PDFLib.PDFDocument)) p = p.then(()=>add('https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js'));
+      if (!window.JSZip) p = p.then(()=>add('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'));
+      return p.then(()=>{ libs = { PDFLib: window.PDFLib, JSZip: window.JSZip }; return libs; });
+    }
+    const baseName = name => (String(name||'skjal').replace(/\.pdf$/i,'').replace(/[\\/:*?"<>|]+/g,'_').trim().slice(0,80) || 'skjal');
+    $file.onchange = ()=>{
+      const has = $file.files && $file.files.length;
+      $run.disabled = !has; $out.innerHTML='';
+      $status.textContent = has ? $file.files[0].name : '';
+    };
+    $run.onclick = async ()=>{
+      const f = $file.files && $file.files[0]; if (!f) return;
+      $run.disabled = true; $out.innerHTML=''; $status.textContent = 'Hleð inn verkfærum…';
+      try {
+        const { PDFLib, JSZip } = await loadLibs();
+        $status.textContent = 'Les PDF…';
+        const bytes = await f.arrayBuffer();
+        const src = await PDFLib.PDFDocument.load(bytes, { ignoreEncryption: true });
+        const n = src.getPageCount();
+        if (!n) { $status.textContent = 'Engar síður fundust í skránni.'; $run.disabled=false; return; }
+        const base = baseName(f.name);
+        const pad = String(n).length;
+        const zip = new JSZip();
+        for (let i=0;i<n;i++){
+          const out = await PDFLib.PDFDocument.create();
+          const [pg] = await out.copyPages(src, [i]);
+          out.addPage(pg);
+          const b = await out.save();
+          zip.file(base + '-' + String(i+1).padStart(pad,'0') + '.pdf', b);
+          if (i % 5 === 0 || i === n-1) { $status.textContent = 'Bý til síður… ' + (i+1) + '/' + n; await new Promise(r=>setTimeout(r,0)); }
+        }
+        $status.textContent = 'Pakka í ZIP…';
+        const blob = await zip.generateAsync({ type:'blob' }, m => { if (m && m.percent!=null) $status.textContent = 'Pakka í ZIP… ' + Math.round(m.percent) + '%'; });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = base + '-stakar-sidur.zip';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(()=>URL.revokeObjectURL(url), 60000);
+        $status.textContent = '✓ Búið — ' + n + ' síður.';
+        $out.innerHTML = '<div style="color:#16a34a">Sótti <b>' + base + '-stakar-sidur.zip</b> með <b>' + n + '</b> PDF-skrám (ein á hverja síðu).</div>';
+      } catch(e){ $status.textContent = 'Villa: ' + (e && e.message || e); }
+      finally { $run.disabled = false; }
+    };
+  })();
+
   // ── 🗂️ Skjalavörsla: file into <ár>/ subfolders + consolidate an old folder ──
   (function wireSkjalavarsla(){
     const $dest = document.getElementById('bk-sv-dest');
     const $src = document.getElementById('bk-sv-src');
+    const $years = document.getElementById('bk-sv-years');
+    const $count = document.getElementById('bk-sv-count');
     const $dry = document.getElementById('bk-sv-dry');
     const $run = document.getElementById('bk-sv-run');
     const $stop = document.getElementById('bk-sv-stop');
     const $status = document.getElementById('bk-sv-status');
     const $results = document.getElementById('bk-sv-results');
     if (!$run) return;
+    document.querySelectorAll('.bk-sv-yr').forEach(b => b.onclick = () => { $years.value = b.getAttribute('data-yr') || ''; });
+    function yearsQs(){ const v = ($years && $years.value || '').trim(); return v ? '&years=' + encodeURIComponent(v) : ''; }
+    // 📊 Telja per ár — per-year tally of the UNFILED flat files (no move). Rows
+    // are clickable to load that year into the filter, so you can do one at a time.
+    async function countPerYear(){
+      $count.disabled = true; $status.textContent = '📊 Tel…';
+      try {
+        const qs = '?dest=' + encodeURIComponent(($dest.value||'').trim()) +
+          (($src.value||'').trim() ? '&src=' + encodeURIComponent($src.value.trim()) : '') + '&counts=1';
+        const r = await fetch('/api/skjalavarsla' + qs); const d = await r.json();
+        if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+        const years = Object.keys(d.byYear||{}).sort((a,b)=>(a==='óþekkt')?1:(b==='óþekkt')?-1:(+b)-(+a));
+        const rows = years.map(y => '<tr class="bk-sv-crow" data-yr="'+escapeHtml(y)+'" style="cursor:pointer"><td style="padding:4px 10px;font-weight:600">'+escapeHtml(y)+(y==='óþekkt'?'':'/')+'</td><td style="text-align:right;padding:4px 10px">'+d.byYear[y]+'</td></tr>').join('');
+        $results.innerHTML = '<div style="margin-top:10px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;max-width:340px"><table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead style="background:#f8fafc"><tr><th style="text-align:left;padding:6px 10px">Óraðað per ár (smelltu)</th><th style="text-align:right;padding:6px 10px">Fjöldi</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+        $results.querySelectorAll('.bk-sv-crow').forEach(tr => tr.onclick = () => { $years.value = tr.getAttribute('data-yr'); $status.textContent = 'Valið ár: ' + $years.value + ' — ýttu 👁 Forskoða.'; });
+        $status.textContent = (d.flat_unfiled||0) + ' óraðaðar skrár samtals';
+      } catch(e){ $status.textContent = 'Villa: ' + (e.message||e); }
+      finally { $count.disabled = false; }
+    }
+    if ($count) $count.onclick = countPerYear;
     const REIK = '1FHHX99LRB_9w_LqwHIY57T4l9mLMID7p', REIK_OLD = '1TDusB2NLhr-OMLnojSk3iw0oiuiuFMLM';
     const SKYR = '1VSRRw6O8U6lU8WzZxA8CkLtrAmiU07mg', SKYR_OLD = '11Gf4yUeR6tQ2HcFxWk-50IFQl2xBUQOg';
     document.getElementById('bk-sv-preset-reik').onclick = () => { $dest.value = REIK; $src.value = REIK_OLD; };
@@ -5127,6 +5283,7 @@ function renderBakendi(t){
         while (!stop && guard++ < 300) {
           const qs = '?dest=' + encodeURIComponent(($dest.value||'').trim()) +
             (($src.value||'').trim() ? '&src=' + encodeURIComponent($src.value.trim()) : '') +
+            yearsQs() +
             '&limit=' + (dry ? 40 : 25) + (dry ? '&dry=1' : '');
           const r = await fetch('/api/skjalavarsla' + qs);
           const d = await r.json();

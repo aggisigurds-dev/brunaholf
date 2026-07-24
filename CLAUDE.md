@@ -579,6 +579,11 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   Run history (2026-07-13): 149 relinked + 177→170 collisions flagged; 6 multi-site
   relinks all reikningar (0 skýrslur crossed). Bakendi card + `wireRelinkDocs` in
   index.html; redirect in netlify.toml. Service role + `_google.freshAccessToken`.
+  **Recursion (2026-07-22):** `listFolder` now WALKS the master tree (subfolders
+  too), so when a master is split into `<ár>/` subfolders (Skjalavörsla) a file
+  living at `master/2023/…` stays in `masterIds` — otherwise relink-docs would see
+  the live file as a dead link and false-cross-link it. Folders themselves are never
+  returned; behaviour is identical when there are no subfolders.
 
 - `drive-dedup.js` — **Bakendi „🗂️ Drive tvítekningar"** (`/api/drive-dedup`): pick any
   Drive folder → lists files with **duplicate names** (groups by name with the extension
@@ -638,6 +643,16 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   names carry different addresses) are NEVER collapsed; only true same-name copies go to
   the bin. NB it trusts the filename year; run `skyrslu-ar` (and any OCR-rename) FIRST so
   names are reliable before filing.
+- `pdf-split.js` — **Bakendi „✂️ Skipta PDF í stakar síður"** (`/api/pdf-split`): splits a
+  big Drive PDF (e.g. 70 pages) into one-page PDFs written BACK to Drive, into a new
+  `„<nafn> - stakar"` subfolder beside the source (or under a given `dest`). `GET
+  ?file=<id|url>[&dest=<parentFolder>][&folder=<destSubfolder>][&offset=N][&limit=M]`
+  — batched/resumable like drive-sort (first call creates the subfolder + returns its
+  id; UI loops passing `folder`+`nextOffset` until `done`, ~8 pages/call). Uses
+  `pdf-lib` (added to deps + `external_node_modules`) + `_google.freshAccessToken`;
+  re-reads the (small/medium) source per batch; read+create+upload only, no DB. The
+  Bakendi card also has a **local browser mode** (úr tölvu → ZIP) via client-side
+  `pdf-lib`+`JSZip` — no Drive, nothing sent to the server.
 
 ### Email
 - `email_digest` (~29k rows): all emails from connected Gmail accounts

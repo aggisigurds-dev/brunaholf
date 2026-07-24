@@ -7,7 +7,7 @@
 # Ship pdf-parse / xlsx as real node_modules (not esbuild-bundled) so the
 # Efnislisti amount parser loads reliably in the function runtime.
 [functions]
-  external_node_modules = ["pdf-parse", "xlsx", "mailparser"]
+  external_node_modules = ["pdf-parse", "xlsx", "mailparser", "pdf-lib"]
 
 # Friendly URL for the Mæting bridge:
 #   /api/maeting  →  /.netlify/functions/timavera-maeting
