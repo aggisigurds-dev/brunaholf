@@ -3922,6 +3922,26 @@ function renderBakendi(t){
           <div id="bk-sv-results"></div>
         </div>
 
+        <!-- ✂️ Skipta PDF í stakar síður (alfarið í vafra — engin Drive) -->
+        <div style="${card}">
+          <div style="display:flex;align-items:center;gap:14px">
+            <span style="${iconSq};${ICON.teal}">✂️</span>
+            <div style="flex:1">
+              <div style="${titleStyle}">Skipta PDF í stakar síður</div>
+              <p style="${descStyle};margin-top:4px">Veldu <b>eina PDF</b> (t.d. 70 síður) → færð <b>eina PDF á hverja síðu</b> í einni ZIP-skrá. Keyrir <b>alfarið í vafranum</b> — ekkert sent á netið, engin Drive.</p>
+            </div>
+            <span style="${chipStyle('#cffafe','#0c4a6e')}">Vafri</span>
+          </div>
+          <div style="${dropZone}">
+            <input id="bk-ps-file" type="file" accept="application/pdf,.pdf" style="width:100%;font:inherit;font-size:13px">
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:auto">
+            <button id="bk-ps-run" class="btn primary" disabled>✂️ Skipta í stakar síður</button>
+            <span id="bk-ps-status" style="font-size:12.5px;color:#64748b"></span>
+          </div>
+          <div id="bk-ps-out" style="font-size:12.5px;color:#334155"></div>
+        </div>
+
         <!-- 📝 Samningalesari -->
         <div style="${card}">
           <div style="display:flex;align-items:center;gap:14px">
@@ -5098,6 +5118,62 @@ function renderBakendi(t){
     }
     $arBtn.onclick = readYears;
     $arStop.onclick = () => { arStop = true; $status.textContent += ' (stöðva…)'; };
+  })();
+
+  // ── ✂️ Skipta PDF í stakar síður (pdf-lib + JSZip, alfarið í vafra) ──
+  (function wirePdfSplit(){
+    const $file = document.getElementById('bk-ps-file');
+    const $run = document.getElementById('bk-ps-run');
+    const $status = document.getElementById('bk-ps-status');
+    const $out = document.getElementById('bk-ps-out');
+    if (!$run || !$file) return;
+    let libs = null;
+    function loadLibs(){
+      if (libs) return Promise.resolve(libs);
+      const add = src => new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=()=>rej(new Error('Náði ekki að hlaða '+src)); document.head.appendChild(s); });
+      let p = Promise.resolve();
+      if (!(window.PDFLib && window.PDFLib.PDFDocument)) p = p.then(()=>add('https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js'));
+      if (!window.JSZip) p = p.then(()=>add('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'));
+      return p.then(()=>{ libs = { PDFLib: window.PDFLib, JSZip: window.JSZip }; return libs; });
+    }
+    const baseName = name => (String(name||'skjal').replace(/\.pdf$/i,'').replace(/[\\/:*?"<>|]+/g,'_').trim().slice(0,80) || 'skjal');
+    $file.onchange = ()=>{
+      const has = $file.files && $file.files.length;
+      $run.disabled = !has; $out.innerHTML='';
+      $status.textContent = has ? $file.files[0].name : '';
+    };
+    $run.onclick = async ()=>{
+      const f = $file.files && $file.files[0]; if (!f) return;
+      $run.disabled = true; $out.innerHTML=''; $status.textContent = 'Hleð inn verkfærum…';
+      try {
+        const { PDFLib, JSZip } = await loadLibs();
+        $status.textContent = 'Les PDF…';
+        const bytes = await f.arrayBuffer();
+        const src = await PDFLib.PDFDocument.load(bytes, { ignoreEncryption: true });
+        const n = src.getPageCount();
+        if (!n) { $status.textContent = 'Engar síður fundust í skránni.'; $run.disabled=false; return; }
+        const base = baseName(f.name);
+        const pad = String(n).length;
+        const zip = new JSZip();
+        for (let i=0;i<n;i++){
+          const out = await PDFLib.PDFDocument.create();
+          const [pg] = await out.copyPages(src, [i]);
+          out.addPage(pg);
+          const b = await out.save();
+          zip.file(base + '-' + String(i+1).padStart(pad,'0') + '.pdf', b);
+          if (i % 5 === 0 || i === n-1) { $status.textContent = 'Bý til síður… ' + (i+1) + '/' + n; await new Promise(r=>setTimeout(r,0)); }
+        }
+        $status.textContent = 'Pakka í ZIP…';
+        const blob = await zip.generateAsync({ type:'blob' }, m => { if (m && m.percent!=null) $status.textContent = 'Pakka í ZIP… ' + Math.round(m.percent) + '%'; });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = base + '-stakar-sidur.zip';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(()=>URL.revokeObjectURL(url), 60000);
+        $status.textContent = '✓ Búið — ' + n + ' síður.';
+        $out.innerHTML = '<div style="color:#16a34a">Sótti <b>' + base + '-stakar-sidur.zip</b> með <b>' + n + '</b> PDF-skrám (ein á hverja síðu).</div>';
+      } catch(e){ $status.textContent = 'Villa: ' + (e && e.message || e); }
+      finally { $run.disabled = false; }
+    };
   })();
 
   // ── 🗂️ Skjalavörsla: file into <ár>/ subfolders + consolidate an old folder ──
