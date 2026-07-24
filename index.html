@@ -3922,24 +3922,41 @@ function renderBakendi(t){
           <div id="bk-sv-results"></div>
         </div>
 
-        <!-- ✂️ Skipta PDF í stakar síður (alfarið í vafra — engin Drive) -->
+        <!-- ✂️ Skipta PDF í stakar síður (Drive → Drive, eða úr tölvu → ZIP) -->
         <div style="${card}">
           <div style="display:flex;align-items:center;gap:14px">
             <span style="${iconSq};${ICON.teal}">✂️</span>
             <div style="flex:1">
               <div style="${titleStyle}">Skipta PDF í stakar síður</div>
-              <p style="${descStyle};margin-top:4px">Veldu <b>eina PDF</b> (t.d. 70 síður) → færð <b>eina PDF á hverja síðu</b> í einni ZIP-skrá. Keyrir <b>alfarið í vafranum</b> — ekkert sent á netið, engin Drive.</p>
+              <p style="${descStyle};margin-top:4px">Stór PDF (t.d. 70 síður) → <b>ein PDF á hverja síðu</b>. Úr <b>Google Drive</b> → skrifast til baka í nýja <b>„&lt;nafn&gt; - stakar"</b> undirmöppu við hlið skrárinnar. (Eða veldu skrá úr tölvu og fáðu ZIP.)</p>
             </div>
-            <span style="${chipStyle('#cffafe','#0c4a6e')}">Vafri</span>
+            <span style="${chipStyle('#cffafe','#0c4a6e')}">Drive</span>
           </div>
-          <div style="${dropZone}">
-            <input id="bk-ps-file" type="file" accept="application/pdf,.pdf" style="width:100%;font:inherit;font-size:13px">
+          <div>
+            <label style="${labelStyle}">Google Drive — PDF (skrár-ID eða hlekkur)</label>
+            <input id="bk-ps-drive-file" placeholder="1AbC… eða https://drive.google.com/file/d/…" style="${inpMono};width:100%;box-sizing:border-box;height:40px">
           </div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:auto">
-            <button id="bk-ps-run" class="btn primary" disabled>✂️ Skipta í stakar síður</button>
-            <span id="bk-ps-status" style="font-size:12.5px;color:#64748b"></span>
+          <div>
+            <label style="${labelStyle}">Áfangamappa (valfrjálst — tómt = við hlið upprunaskrár)</label>
+            <input id="bk-ps-drive-dest" placeholder="folder-id / hlekkur (tómt = sama mappa og skráin)" style="${inpMono};width:100%;box-sizing:border-box;height:40px">
           </div>
-          <div id="bk-ps-out" style="font-size:12.5px;color:#334155"></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <button id="bk-ps-drive-run" class="btn primary">☁️ Skipta í Drive</button>
+            <span id="bk-ps-drive-status" style="font-size:12.5px;color:#64748b"></span>
+          </div>
+          <div id="bk-ps-drive-out" style="font-size:12.5px;color:#334155"></div>
+
+          <div style="border-top:1px dashed #e2e8f0;margin-top:4px;padding-top:14px">
+            <label style="${labelStyle}">Eða: úr tölvu → ZIP (í vafra, engin Drive)</label>
+            <div style="${dropZone}">
+              <input id="bk-ps-file" type="file" accept="application/pdf,.pdf" style="width:100%;font:inherit;font-size:13px">
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px">
+              <button id="bk-ps-run" class="btn" disabled>✂️ Skipta í ZIP</button>
+              <span id="bk-ps-status" style="font-size:12.5px;color:#64748b"></span>
+            </div>
+            <div id="bk-ps-out" style="font-size:12.5px;color:#334155"></div>
+          </div>
         </div>
 
         <!-- 📝 Samningalesari -->
@@ -5118,6 +5135,42 @@ function renderBakendi(t){
     }
     $arBtn.onclick = readYears;
     $arStop.onclick = () => { arStop = true; $status.textContent += ' (stöðva…)'; };
+  })();
+
+  // ── ☁️ Skipta PDF í Drive → stakar síður aftur í Drive (/api/pdf-split, batchað) ──
+  (function wirePdfSplitDrive(){
+    const $file = document.getElementById('bk-ps-drive-file');
+    const $dest = document.getElementById('bk-ps-drive-dest');
+    const $run = document.getElementById('bk-ps-drive-run');
+    const $status = document.getElementById('bk-ps-drive-status');
+    const $out = document.getElementById('bk-ps-drive-out');
+    if (!$run || !$file) return;
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    const idFrom = s => { const m = String(s || '').match(/[-\w]{25,}/); return m ? m[0] : ''; };
+    $run.onclick = async () => {
+      const source = idFrom($file.value);
+      if (!source) { $status.textContent = 'Límdu inn Drive-skrár-ID eða hlekk.'; return; }
+      const dest = idFrom($dest.value);
+      $run.disabled = true; $out.innerHTML = ''; $status.textContent = 'Byrja…';
+      let offset = 0, folder = '', total = 0, folderLink = '', folderName = '';
+      try {
+        for (let guard = 0; guard < 500; guard++) {
+          const qs = new URLSearchParams({ file: source, offset: String(offset), limit: '8' });
+          if (folder) qs.set('folder', folder); else if (dest) qs.set('dest', dest);
+          const r = await fetch('/api/pdf-split?' + qs.toString());
+          const d = await r.json().catch(() => ({}));
+          if (!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));
+          folder = d.folder; total = d.total; folderLink = d.folderLink; folderName = d.folderName;
+          offset = d.nextOffset;
+          $status.textContent = 'Bý til síður í Drive… ' + Math.min(offset, total) + '/' + total;
+          if (d.done) break;
+        }
+        $status.textContent = '✓ Búið — ' + total + ' síður.';
+        $out.innerHTML = '<div style="color:#16a34a">Skrifaði <b>' + total + '</b> stakar PDF í Drive-möppuna <b>' + esc(folderName) + '</b>. ' +
+          (folderLink ? '<a href="' + esc(folderLink) + '" target="_blank" rel="noopener" style="color:#2563eb">Opna möppu ↗</a>' : '') + '</div>';
+      } catch (e) { $status.textContent = 'Villa: ' + (e && e.message || e); }
+      finally { $run.disabled = false; }
+    };
   })();
 
   // ── ✂️ Skipta PDF í stakar síður (pdf-lib + JSZip, alfarið í vafra) ──

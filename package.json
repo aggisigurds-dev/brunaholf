@@ -5,6 +5,7 @@
   "description": "Netlify function dependencies for the Brunahólf hub (Efnislisti amount parsing).",
   "dependencies": {
     "mailparser": "^3.7.1",
+    "pdf-lib": "^1.17.1",
     "pdf-parse": "^1.1.1",
     "xlsx": "^0.18.5"
   }
