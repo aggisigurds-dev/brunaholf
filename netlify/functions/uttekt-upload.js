@@ -20,6 +20,7 @@
 // röð í customer_documents er drive_file_id hennar UPPFÆRT (aldrei tvíröð).
 
 const _g = require('./_google');
+const _spine = require('./_spine');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -88,6 +89,29 @@ exports.handler = async (event) => {
   if (pdfBuf.slice(0, 5).toString('latin1') !== '%PDF-') return json(400, { error: 'Skjalið er ekki PDF (%PDF- haus vantar)' });
 
   const ktDash = dash(ktRaw);
+
+  // Herða staðar-tengingu (2026-07-24): ef appið gaf EKKI fyrirtaeki_id, leysum
+  // við hann úr STÖÐUM félagsins (sömu kt) gegnum sameiginlegu tengiregluna —
+  // AÐEINS með sönnun (#id-stimpill / eini staðurinn / heimilisfang passar við
+  // nákvæmlega EINN stað). resolveSite skoðar aldrei annað en staði þessarar kt,
+  // svo skýrslan getur ALDREI ratað á fyrirtæki með svipað nafn undir annarri kt
+  // (rótin að „Hamraborg 7" → „Hamraborg ehf" ruglingnum). Enginn match → látið
+  // óbreytt (null) — aldrei giskað á nafn. Skýrslur aðeins (reikn. dedup-ast á R-nr).
+  let resolvedVia = null;
+  if (!isInv && !fyrirtaekiId) {
+    try {
+      const br0 = await fetch(`${SUPABASE_URL}/rest/v1/customers_base?kennitala=eq.${encodeURIComponent(ktDash)}&select=id&limit=1`, { headers: sbHeaders() });
+      const baseId0 = br0.ok ? ((await br0.json())[0] || {}).id || null : null;
+      if (baseId0) {
+        const sites = await _spine.sitesForBase(baseId0);
+        // Byggjum kandídat-„skráarheiti" úr nafni+heimilisfangi svo addrKeyLoose
+        // nái húsnúmerinu; PDF/app-heimilisfangið fer líka sem extraAddr.
+        const r = _spine.resolveSite(company + (address ? ' - ' + address : ''), sites, address);
+        if (r) { fyrirtaekiId = r.id; resolvedVia = r.via; }
+      }
+    } catch (_) { /* óvissa → fyrirtaekiId óbreytt (má vera null), aldrei giskað */ }
+  }
+
   const TARGET = isInv ? FOLDER_REIKN : FOLDER;
   const name = body.filename
     ? sanitize(String(body.filename).replace(/\.pdf$/i, '')) + '.pdf'
@@ -222,7 +246,7 @@ exports.handler = async (event) => {
   }
 
   // Drive-afritið er komið — skila alltaf fileId þótt skráningin klikki.
-  return json(200, { ok: true, drive_file_id: fileId, doc_id: docId, name, updated, ...(docErr ? { doc_error: docErr } : {}) });
+  return json(200, { ok: true, drive_file_id: fileId, doc_id: docId, name, updated, fyrirtaeki_id: fyrirtaekiId, ...(resolvedVia ? { resolved_via: resolvedVia } : {}), ...(docErr ? { doc_error: docErr } : {}) });
 };
 
 function cors() {

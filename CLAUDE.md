@@ -460,8 +460,16 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   nafn í möppunni → files.update (ný revision, aldrei annað eintak); til
   (fyrirtaeki_id, year) röð → drive_file_id hennar uppfært + ` · app-útgáfa
   <dags>` í notes; 409 á drive_file_id → sótt fyrirliggjandi id. Svar
-  `{ok, drive_file_id, doc_id, name, updated}`. CORS `*` (m.a.
-  slokkvitaeki.netlify.app); generic `/api/*` redirect dekkar slóðina.
+  `{ok, drive_file_id, doc_id, name, updated, fyrirtaeki_id, resolved_via?}`.
+  CORS `*` (m.a. slokkvitaeki.netlify.app); generic `/api/*` redirect dekkar slóðina.
+  **Staðar-herðing (2026-07-24):** ef appið gefur EKKI `fyrirtaeki_id` leysir
+  brúin hann úr STÖÐUM félagsins (sömu kt) gegnum `_spine.resolveSite` (#id-stimpill
+  / eini staðurinn / heimilisfang → nákvæmlega EINN stað); enginn match → óbreytt
+  (null), aldrei giskað. Þar sem `resolveSite` skoðar aldrei annað en staði
+  ÞESSARAR kt getur app-skýrsla ALDREI ratað á fyrirtæki með svipað nafn undir
+  annarri kt (rótin að „Hamraborg 7"→„Hamraborg ehf" ruglingnum). Leyst
+  `fyrirtaeki_id` fær líka ` - #<id>` stimpil í skráarheitið svo framtíðar-lesarar
+  tengja beint (`via:'stamp'`). App-gefið `fyrirtaeki_id` er treyst óbreytt.
 - `match-station.js` — **🔗 Skýrslu-stöð** (Bakendi top): a human-in-the-loop board
   to assign each `customer_documents` row (úttektarskýrsla/reikningur) to the RIGHT
   service-customer **location (`fyrirtaeki_id`) + year**. Built because an earlier
