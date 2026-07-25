@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fjármála-yfirlit</title>
+<style>
+  :root{ --bg:#0b1220; --card:#111a2e; --line:#1f2b45; --ink:#e8edf7; --ink2:#9fb0cc; --ink3:#6b7d9c;
+    --green:#16a34a; --amber:#d97706; --blue:#2563eb; --hero:#274a9e; --red:#dc2626; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Space Grotesk",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    background:linear-gradient(180deg,#060810 0,#0b1220 200px,#0e1830 100%); color:var(--ink);
+    -webkit-text-size-adjust:100%; padding:16px 14px calc(28px + env(safe-area-inset-bottom)); }
+  h1{ font-size:22px; margin:2px 0 2px; letter-spacing:-.01em; }
+  .sub{ color:var(--ink3); font-size:12.5px; margin:0 0 14px; }
+  .month{ display:flex; align-items:center; gap:10px; margin:8px 0 16px; }
+  .month button{ background:var(--card); border:1px solid var(--line); color:var(--ink); width:40px; height:40px;
+    border-radius:11px; font-size:18px; cursor:pointer; }
+  .month .m{ font-weight:700; font-size:15px; min-width:120px; text-align:center; }
+  .grand{ background:linear-gradient(120deg,#0c1018,#13203f 55%,var(--hero)); border:1px solid #2c4a86;
+    border-radius:18px; padding:16px 18px; margin-bottom:16px; box-shadow:0 12px 34px -18px #0008; }
+  .grand .lbl{ color:#bcd0f5; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+  .grand .val{ font-size:30px; font-weight:800; margin-top:3px; font-variant-numeric:tabular-nums; }
+  section{ margin:0 0 18px; }
+  .sh{ display:flex; align-items:baseline; gap:8px; margin:0 0 9px; }
+  .sh h2{ font-size:14px; margin:0; letter-spacing:.02em; }
+  .sh .st{ margin-left:auto; font-size:15px; font-weight:800; font-variant-numeric:tabular-nums; }
+  .grid{ display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 13px; }
+  .card.full{ grid-column:1/-1; }
+  .card .l{ color:var(--ink2); font-size:11.5px; font-weight:600; line-height:1.25; }
+  .card .v{ font-size:19px; font-weight:800; margin-top:5px; font-variant-numeric:tabular-nums; }
+  .card .n{ color:var(--ink3); font-size:10.5px; margin-top:1px; }
+  .card--amber{ border-color:#5a3f16; } .card--amber .v{ color:#fbbf6b; }
+  .card--green{ border-color:#1f5233; } .card--green .v{ color:#6ee7a5; }
+  .card--blue{ border-color:#22406f; } .card--blue .v{ color:#8fb6ff; }
+  .card--sub{ background:#0f1e14; border-color:#1f5233; } .card--sub .v{ color:#7ff0b0; font-size:22px; }
+  .card--hero{ background:#122444; border-color:#2c4a86; } .card--hero .v{ color:#bcd6ff; font-size:22px; }
+  .note{ color:var(--ink3); font-size:11px; margin:7px 2px 0; line-height:1.45; }
+  .warn{ background:#2a1508; border:1px solid #5a3f16; color:#fcd9a6; border-radius:10px; padding:9px 11px; font-size:12px; margin:0 0 14px; }
+  .mrow{ display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--line); font-size:12.5px; }
+  .mrow:last-child{ border-bottom:0; }
+  .mrow .mm{ color:var(--ink2); font-variant-numeric:tabular-nums; }
+  .mrow .mk{ font-weight:700; font-variant-numeric:tabular-nums; }
+  .loading{ text-align:center; color:var(--ink3); padding:60px 0; }
+  a.refresh{ color:var(--ink2); font-size:12px; text-decoration:none; }
+</style>
+</head>
+<body>
+  <h1>💰 Fjármála-yfirlit</h1>
+  <p class="sub">Peningapípan þvert á Slökkvitæki + Brunahólf · <a class="refresh" href="#" id="refresh">↻ uppfæra</a></p>
+  <div class="month">
+    <button id="prev" title="Fyrri mánuður">‹</button>
+    <div class="m" id="mlabel">…</div>
+    <button id="next" title="Næsti mánuður">›</button>
+  </div>
+  <div id="app"><div class="loading">Sæki tölur…</div></div>
+
+<script>
+  var API = '/api/fjarmal-yfirlit';
+  var MONTHS = ['janúar','febrúar','mars','apríl','maí','júní','júlí','ágúst','september','október','nóvember','desember'];
+  function kr(n){ return (Math.round(n||0)).toLocaleString('is-IS').replace(/,/g,'.') + ' kr'; }
+  function ym(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+  function mlabel(m){ var p=m.split('-'); return MONTHS[(+p[1])-1]+' '+p[0]; }
+  var cur = new Date(); var month = ym(cur);
+
+  function card(cls,l,v,n){ return '<div class="card '+(cls||'')+'"><div class="l">'+l+'</div><div class="v">'+kr(v)+'</div>'+(n!=null?'<div class="n">'+n+'</div>':'')+'</div>'; }
+
+  function render(d){
+    var A=d.slokk, warnHtml = (d.warnings&&d.warnings.length)? '<div class="warn">⚠ '+d.warnings.map(function(w){return w.replace(/</g,'&lt;');}).join('<br>')+'</div>' : '';
+    var eldriRows = (d.timavera_eldri.per_month||[]).slice().reverse().map(function(r){
+      return '<div class="mrow"><span class="mm">'+mlabel(r.month)+' · '+r.klst+' klst</span><span class="mk">'+kr(r.kr)+'</span></div>'; }).join('') || '<div class="mrow"><span class="mm">engir eldri mánuðir</span></div>';
+    document.getElementById('app').innerHTML =
+      warnHtml +
+      '<div class="grand"><div class="lbl">Heildar-pípa (allt óinnheimt/óuppgert)</div><div class="val">'+kr(d.grand_total)+'</div></div>' +
+
+      '<section><div class="sh"><h2>🧯 Slökkvitæki — kröfur</h2><span class="st">'+kr(A.heildar.kr)+'</span></div>' +
+        '<div class="grid">' +
+          card('', 'Þessi mánuður', A.thessi_manudur.kr, A.thessi_manudur.n+' kröfur') +
+          card('card--amber', 'Eldri ógreitt', A.eldri.kr, A.eldri.n+' kröfur') +
+          card('card--amber', 'Ógreiddar í Payday', A.ogreitt_payday.kr, A.ogreitt_payday.n+' kröfur') +
+          card('card--blue', 'Ósendar kröfur', A.osendar.kr, A.osendar.n+' kröfur') +
+          card('card--sub full', 'Heildarkröfur (millisamtala)', A.heildar.kr, A.heildar.n+' sölur') +
+        '</div></section>' +
+
+      '<section><div class="sh"><h2>🏦 Brunahólf — raun-ógreitt í Payday</h2><span class="st">'+kr(d.bru_payday_ogreitt.kr)+'</span></div>' +
+        '<div class="grid">' + card('card--green full', 'Útistandandi krófur (óborgaðar)', d.bru_payday_ogreitt.kr, d.bru_payday_ogreitt.n+' krófur') + '</div></section>' +
+
+      '<section><div class="sh"><h2>🕒 Áunnið Tímavera — '+mlabel(d.month)+'</h2><span class="st">'+kr(d.timavera_manudur.kr)+'</span></div>' +
+        '<div class="grid">' + card('card--hero full', 'Þessi mánuður (klst × dagvinnutaxti m/vsk)', d.timavera_manudur.kr, d.timavera_manudur.klst+' klst · taxti '+kr(d.taxti_mvsk)+'/klst') + '</div></section>' +
+
+      '<section><div class="sh"><h2>📤 Óinnheimt eldra</h2><span class="st">'+kr(d.bru_osendar.kr + d.timavera_eldri.kr)+'</span></div>' +
+        '<div class="grid">' +
+          card('card--blue full', 'Ósendir reikningar (Brunahólf drög)', d.bru_osendar.kr, d.bru_osendar.n+' drög · síðustu 3 mán') +
+          '<div class="card full"><div class="l">Eldri Tímavera-mánuðir — áunnið virði (' + d.timavera_eldri.klst + ' klst)</div>' +
+            '<div class="v" style="color:#fbbf6b">'+kr(d.timavera_eldri.kr)+'</div>' + eldriRows + '</div>' +
+        '</div>' +
+        '<div class="note">⚠ „Áunnið virði" er brúttó (klst × taxti) — ekki er dregið frá það sem er nú þegar rukkað/sent. Nota sem vísbendingu, ekki nákvæma útistandandi upphæð. Brunahólf-drög geta líka skarast við senda reikninga.</div>' +
+      '</section>' +
+      '<div class="note">Uppfært '+new Date(d.generated_at).toLocaleString('is-IS')+'. Taxti '+kr(d.taxti_mvsk)+'/klst m/vsk (9.951 × 1,24). Rukkanlegir Tímavera-verkstaðir (án Slökkvitæki-innri / NLSH).</div>';
+  }
+
+  function load(){
+    document.getElementById('mlabel').textContent = mlabel(month);
+    document.getElementById('app').innerHTML = '<div class="loading">Sæki tölur…</div>';
+    fetch(API+'?month='+month).then(function(r){ return r.json(); }).then(function(d){
+      if(d.error){ document.getElementById('app').innerHTML='<div class="warn">Villa: '+d.error+'</div>'; return; }
+      render(d);
+    }).catch(function(e){ document.getElementById('app').innerHTML='<div class="warn">Netvilla: '+e.message+'</div>'; });
+  }
+  function shift(k){ var p=month.split('-'); var d=new Date(+p[0], +p[1]-1+k, 1); month=ym(d); load(); }
+  document.getElementById('prev').onclick=function(){ shift(-1); };
+  document.getElementById('next').onclick=function(){ shift(1); };
+  document.getElementById('refresh').onclick=function(e){ e.preventDefault(); load(); };
+  load();
+</script>
+</body>
+</html>
