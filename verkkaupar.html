@@ -256,13 +256,13 @@ button:active{transform:translateY(1px)}
   </div>
   <a class="folder-chip" href="https://drive.google.com/drive/folders/1CebzBKYdSj8NP4F-vEA5HepOULH-bwoT" target="_blank" style="text-decoration:none">🗂 Aðal-Brunahólfsmappan (efnislistar)</a>
 
+  <!-- Samstillingar-hnappar: SAMA hub-sync-buttons.js íhlutur og Kröfu yfirlit
+       (bein ský-samstilling, „síðast samstillt", samræmt þvert á hubbið). -->
   <div class="syncbar">
-    <span class="syncbar__lab">🔄 Samstilla</span>
-    <button class="syncbtn" data-src="timavera">🕒 Tímavera</button>
-    <button class="syncbtn" data-src="payday">💳 Payday</button>
-    <button class="syncbtn" data-src="redder">🧱 Redder</button>
-    <button class="syncbtn" data-src="ajour">🏛 Ajour</button>
-    <span class="syncbar__msg" id="syncmsg"></span>
+    <span data-sync-workflow="timavera" data-sync-label="Tímavera"></span>
+    <span data-sync-workflow="ajour" data-sync-label="Ajour"></span>
+    <span data-sync-workflow="redder" data-sync-label="Redder"></span>
+    <span data-sync-workflow="payday" data-sync-label="Payday"></span>
   </div>
 
   <div id="kpis"></div>
@@ -480,69 +480,6 @@ document.querySelectorAll('.fchip').forEach(ch=>ch.onclick=()=>{document.querySe
 document.getElementById('q').oninput=e=>{q=e.target.value.toLowerCase();render()};
 document.getElementById('sort').onchange=render;
 render(); loadOverlay();
-
-/* ---- Samstillingar-hnappar: virkja beina ský-syncana (Tímavera / Payday / Redder / Ajour) ---- */
-(function(){
-  const bar=document.querySelector('.syncbar'); if(!bar) return;
-  const msg=document.getElementById('syncmsg');
-  async function oneShot(url, fmt){
-    const r=await fetch(url); const d=await r.json().catch(()=>({}));
-    if(!r.ok||d.error) throw new Error(d.error||('HTTP '+r.status));
-    return fmt(d);
-  }
-  async function redderRun(){
-    // Redder er lotu-keyrt (les PDF úr Drive) — margar kallanir í röð. Drive getur
-    // hökt/rate-limitað; ÞVÍ endurreynum við hverja lotu 3x með bakslagi í stað
-    // þess að fella allt syncið. Minni lotur (4) svo ekkert kall fari yfir tímamörk.
-    let off=0,total=0,guard=0;
-    while(guard++<80){
-      let d=null,lastErr='';
-      for(let a=0;a<3;a++){
-        try{
-          const r=await fetch('/api/redder-read?limit=4&offset='+off);
-          d=await r.json().catch(()=>({}));
-          if(!r.ok||d.error){ lastErr=(d&&d.error)||('HTTP '+r.status); d=null; }
-          else break;
-        }catch(e){ lastErr=e.message; d=null; }
-        await new Promise(s=>setTimeout(s,1500*(a+1)));  // 1.5s → 3s → 4.5s bakslag
-      }
-      if(!d) throw new Error('lota féll (offset '+off+'): '+lastErr);
-      total+=(d.processed||0);
-      if(d.total) msg.textContent='🧱 Redder '+Math.min(off+(d.processed||0),d.total)+'/'+d.total+'…';
-      if(d.nextOffset==null) break;
-      off=d.nextOffset;
-    }
-    return total+' reikningar lesnir';
-  }
-  async function ajourRun(){
-    const r=await fetch('/api/nlsh-update'); const d=await r.json().catch(()=>({}));
-    if(!r.ok||d.error) throw new Error(d.error||('HTTP '+r.status));
-    for(let i=0;i<45;i++){
-      await new Promise(s=>setTimeout(s,2000));
-      const s=await fetch('/api/nlsh-update?status=1').then(x=>x.json()).catch(()=>({}));
-      const n=s.upserted??s.inserted??s.count;
-      if(s.state==='done') return (n!=null? n+' færslur':'lokið');
-      if(s.state==='error') throw new Error(s.error||'Ajour villa');
-      msg.textContent='🏛 Ajour les inn… ('+((i+1)*2)+'s)';
-    }
-    return 'í vinnslu — pollaðu aftur';
-  }
-  const EP={
-    timavera:{label:'Tímavera', run:()=>oneShot('/api/timavera-pull?days=30', d=>(d.upserted??0)+' færslur')},
-    payday:  {label:'Payday',   run:()=>oneShot('/api/payday-pull',           d=>(d.upserted??0)+' reikningar')},
-    redder:  {label:'Redder',   run:redderRun},
-    ajour:   {label:'Ajour',    run:ajourRun},
-  };
-  bar.querySelectorAll('.syncbtn').forEach(btn=>{
-    const orig=btn.innerHTML, key=btn.dataset.src, ep=EP[key]; if(!ep) return;
-    btn.onclick=async()=>{
-      if(btn.disabled) return;
-      btn.disabled=true; btn.dataset.state='run'; btn.innerHTML='⏳ '+ep.label;
-      msg.textContent='Samstilli '+ep.label+'…';
-      try{ const detail=await ep.run(); btn.dataset.state='ok'; msg.textContent='✓ '+ep.label+': '+detail; }
-      catch(e){ btn.dataset.state='err'; msg.textContent='✗ '+ep.label+': '+(e.message||e); }
-      finally{ btn.disabled=false; btn.innerHTML=orig; setTimeout(()=>{ if(btn.dataset.state!=='run') btn.removeAttribute('data-state'); },8000); }
-    };
-  });
-})();
-</script></body></html>
+</script>
+<script src="/js/hub-sync-buttons.js" defer></script>
+</body></html>
