@@ -189,11 +189,18 @@ function buildSummary(docs, invoices) {
     if (t === 'reikningur' && d.amount) reikningur_amount_total += Number(d.amount) || 0;
   }
 
-  const ar_open = invoices.filter(i =>
-    (i.status || '').toLowerCase() !== 'paid' &&
-    (i.status || '').toLowerCase() !== 'greidd' &&
-    !i.greidsla_date
-  );
+  // Open AR = unpaid, non-draft, non-cancelled, non-credit invoices with no
+  // payment date. Status vocabulary is mixed (English PAID/SENT/CANCELLED/CREDIT
+  // vs Icelandic Greitt/Ógreitt); the „ó/o"-prefix guard stops ógreitt/ógreidd
+  // (UNPAID) from matching the paid word.
+  const ar_open = invoices.filter(i => {
+    if (i.greidsla_date) return false;
+    const s = (i.status || '');
+    const amt = Number(i.upphaed_total || i.hofudstoll) || 0;
+    if (!/[óo]grei/i.test(s) && /paid|greitt|greidd/i.test(s)) return false;
+    if (/draft|dr[öo]g|cancel|afturk|felld|[óo]gild|credit|kredit/i.test(s)) return false;
+    return amt > 0;
+  });
   const ar_open_kr = ar_open.reduce((sum, i) => sum + (Number(i.upphaed_total || i.hofudstoll) || 0), 0);
   const ar_oldest_due = ar_open.length
     ? ar_open.map(i => i.gjalddagi).filter(Boolean).sort()[0] || null

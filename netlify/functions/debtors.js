@@ -24,10 +24,17 @@
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-const PAID = new Set(['greitt', 'greidd', 'greiddur']);
-const OPEN = new Set(['ógreitt', 'ógreidd', 'ogreitt', 'ogreidd']);
-const CREDIT = new Set(['kreditreikningur', 'kreditfærður', 'kreditfaerdur']);
-const DRAFT = new Set(['drög', 'drog']);
+// Status vocabulary is MIXED: Payday-API rows are English UPPERCASE
+// (PAID/SENT/CANCELLED/CREDIT/DRAFT); Landsbanki/manual rows are Icelandic
+// (Greitt/Greidd/Ógreidd/Drög). Match by SUBSTRING, and define "open" as the
+// COMPLEMENT (not paid/credited/cancelled/draft) so a new status word never
+// silently drops real AR — an exact-string OPEN set had dropped all 41 SENT
+// invoices (~130M). Keep in sync with hreyfingar.js + krofur-yfirlit.js.
+// NB the „ó/o" negation prefix: „ógreitt/ógreidd" = UNPAID, must NOT match paid.
+const isPaid = (st) => !/[óo]grei/i.test(st) && /paid|greitt|greidd|greid/i.test(st);
+const isCancelled = (st) => /cancel|afturk|felld|[óo]gild/i.test(st);
+const isDraft = (st) => /draft|dr[öo]g/i.test(st);
+const isCreditWord = (st) => /credit|kredit/i.test(st);
 
 const digits = (s) => String(s || '').replace(/\D/g, '');
 const lc = (s) => String(s || '').trim().toLowerCase();
@@ -60,8 +67,11 @@ exports.handler = async (event) => {
   const open = [], credits = [];
   for (const r of invoices) {
     const st = lc(r.status);
-    if (OPEN.has(st)) open.push(r);
-    else if (CREDIT.has(st) && (+r.upphaed_total || +r.hofudstoll || 0) < 0) credits.push(r); // the negative leg
+    const amt = +r.upphaed_total || +r.hofudstoll || 0;
+    if (isCreditWord(st) && amt < 0) { credits.push(r); continue; }  // credit note (negative leg)
+    if (isDraft(st) || isCancelled(st) || isPaid(st)) continue;      // not outstanding
+    if (amt <= 0) continue;
+    open.push(r);   // SENT / Ógreidd / OPEN / OVERDUE = genuinely unpaid AR
   }
 
   // ---- offsetting credit notes: same kt, |open + credit| within tolerance ----

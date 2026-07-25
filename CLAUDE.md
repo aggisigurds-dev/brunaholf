@@ -249,11 +249,26 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
 - `worksite_status`: manual billing status per (project, year) — one of
   `unreviewed | review | billing_in_progress | invoiced | not_billable`,
   plus notes / drive folder url / contract url / invoice amount+date.
-- `invoices` (~267 rows): Payday + Landsbankinn krafnir.
+- `invoices` (~430 rows): Payday + Landsbankinn krafnir.
   Cols: `customer_name, kt_greidanda, hofudstoll, gjalddagi, status,
   greidsla_date, tilvisun, worksite_match, ...`. Joined to worksites
   via `customer_worksite_map` + `worksite_match`. Upsert key `(tilvisun,source)`,
   Payday rows `source='payday'` (refresh via Payday "Reikningar" xlsx).
+  **⚠️ `status` vocabulary is MIXED (2026-07-25):** the Payday-API sync
+  (`payday-pull.js`) writes **English UPPERCASE** — `PAID` / `SENT` (=unpaid
+  krafa) / `CANCELLED` (+) / `CREDIT` (− twin of CANCELLED, nets to 0) / `DRAFT`;
+  Landsbanki + manual rows still use Icelandic `Greidd` / `Ógreidd` / `Greitt` /
+  `Drög`. **Every reader must match by SUBSTRING, not exact string**, and treat
+  the „ó/o"-prefix as negation (`ógreitt`/`ógreidd` = UNPAID — must NOT match the
+  paid word). Canonical helpers (copied across `hreyfingar.js`, `debtors.js`,
+  `worksites.js`, `customer.js`; `krofur-yfirlit.js`/`krofu-yfirlit-bru.js` were
+  already tolerant): `isPaid = !/[óo]grei/ && /paid|greitt|greidd/`, `isDraft =
+  /draft|dr[öo]g/`, `isCancelled = /cancel|afturk|felld|[óo]gild/`, `isCredit =
+  /credit|kredit/ || amt<0`; **open AR = the COMPLEMENT** (not paid/draft/
+  cancelled/credit, amt>0) so a new status word never silently drops real AR.
+  True unpaid AR ≈ **131.5M** (41 `SENT` 130.1M + 5 `Ógreidd` 1.4M). An
+  exact-string match had broken Hreyfingar (showed 489.6M — PAID un-credited) and
+  Skuldunautar (showed 1.4M — all SENT dropped); fixed 2026-07-25.
 - `bank_transactions` (~938 rows): Landsbankinn ledger, used to detect
   payments made via bank that haven't been reflected in Payday. Upsert key
   `(trans_date, tnr, amount)`, `source='landsbankinn_account'`, `company='brunaholf'`

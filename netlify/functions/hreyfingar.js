@@ -25,8 +25,16 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const digits = (s) => String(s || '').replace(/\D/g, '');
 const lc = (s) => String(s || '').trim().toLowerCase();
-const DRAFT = new Set(['drög', 'drog']);
-const PAID = new Set(['greitt', 'greidd', 'greiddur']);
+// Status vocabulary is MIXED: Payday-API rows are English UPPERCASE
+// (PAID/SENT/CANCELLED/CREDIT/DRAFT); Landsbanki + manual rows are Icelandic
+// (Greidd/Ógreidd/Greitt/Drög). Match by substring so BOTH are handled — an
+// exact-string match silently broke this page (PAID → un-credited → staða blew
+// up to gross invoiced). Keep these in sync with debtors.js + krofur-yfirlit.js.
+const isDraft = (st) => /draft|dr[öo]g/i.test(st);
+// NB the „ó/o" negation prefix: „ógreitt/ógreidd" = UNPAID, must NOT match paid.
+const isPaid = (st) => !/[óo]grei/i.test(st) && /paid|greitt|greidd|greid/i.test(st);
+const isCancelled = (st) => /cancel|afturk|felld|[óo]gild/i.test(st); // CANCELLED / afturkallað
+const isCredit = (st, amt) => /credit|kredit/i.test(st) || amt < 0;  // CREDIT / kreditnóta
 const INV_SOURCES = new Set(['payday', 'tekjur_sheet_manual']);
 const amountOf = (r) => (+r.upphaed_total || +r.hofudstoll || 0); // m.vsk preferred
 
@@ -59,14 +67,19 @@ exports.handler = async (event) => {
   // invoice — same money, would double-bill); their cash shows via bank inflows.
   for (const r of invoices) {
     if (!INV_SOURCES.has(lc(r.source))) continue;
-    if (DRAFT.has(lc(r.status))) continue;
+    const st = lc(r.status);
+    if (isDraft(st)) continue;
     const kt = digits(r.kt_greidanda); if (!kt) continue;
     const amt = amountOf(r); if (!amt) continue;
-    const st = lc(r.status);
     const c = pick(kt, r.customer_name);
-    const kind = st.startsWith('kredit') ? (amt < 0 ? 'kreditnota' : 'kreditfaersla') : 'reikningur';
-    c.mv.push({ date: r.gjalddagi || r.greidsla_date || null, kind, ref: refOf(r), delta: amt, via: null, text: null });
-    if (PAID.has(st) && amt > 0) {
+    // A CANCELLED invoice and its CREDIT note are equal-and-opposite twins that
+    // net to 0 in the balance; we keep both as debit/credit rows (so staða stays
+    // correct) but flag `cancelled` so it doesn't inflate gross_invoiced.
+    const credit = isCredit(st, amt);
+    const cancelled = isCancelled(st);
+    const kind = credit ? (amt < 0 ? 'kreditnota' : 'kreditfaersla') : 'reikningur';
+    c.mv.push({ date: r.gjalddagi || r.greidsla_date || null, kind, ref: refOf(r), delta: amt, via: null, text: null, cancelled });
+    if (isPaid(st) && amt > 0) {
       c.mv.push({ date: r.greidsla_date || r.gjalddagi || null, kind: 'greidsla', ref: refOf(r), delta: -amt, via: 'payday', text: null });
     }
   }
@@ -99,7 +112,7 @@ exports.handler = async (event) => {
         payCum += -m.delta;
       } else {
         invCum += m.delta;
-        if (m.delta >= 0 && m.kind === 'reikningur') grossInv += m.delta;
+        if (m.delta >= 0 && m.kind === 'reikningur' && !m.cancelled) grossInv += m.delta;
         if (m.delta < 0) credited += -m.delta;
       }
       m.balance = Math.round(invCum - payCum);
