@@ -491,12 +491,24 @@ render(); loadOverlay();
     return fmt(d);
   }
   async function redderRun(){
+    // Redder er lotu-keyrt (les PDF úr Drive) — margar kallanir í röð. Drive getur
+    // hökt/rate-limitað; ÞVÍ endurreynum við hverja lotu 3x með bakslagi í stað
+    // þess að fella allt syncið. Minni lotur (4) svo ekkert kall fari yfir tímamörk.
     let off=0,total=0,guard=0;
-    while(guard++<50){
-      const r=await fetch('/api/redder-read?limit=6&offset='+off);
-      const d=await r.json().catch(()=>({}));
-      if(!r.ok||d.error) throw new Error(d.error||('HTTP '+r.status));
+    while(guard++<80){
+      let d=null,lastErr='';
+      for(let a=0;a<3;a++){
+        try{
+          const r=await fetch('/api/redder-read?limit=4&offset='+off);
+          d=await r.json().catch(()=>({}));
+          if(!r.ok||d.error){ lastErr=(d&&d.error)||('HTTP '+r.status); d=null; }
+          else break;
+        }catch(e){ lastErr=e.message; d=null; }
+        await new Promise(s=>setTimeout(s,1500*(a+1)));  // 1.5s → 3s → 4.5s bakslag
+      }
+      if(!d) throw new Error('lota féll (offset '+off+'): '+lastErr);
       total+=(d.processed||0);
+      if(d.total) msg.textContent='🧱 Redder '+Math.min(off+(d.processed||0),d.total)+'/'+d.total+'…';
       if(d.nextOffset==null) break;
       off=d.nextOffset;
     }
@@ -511,6 +523,7 @@ render(); loadOverlay();
       const n=s.upserted??s.inserted??s.count;
       if(s.state==='done') return (n!=null? n+' færslur':'lokið');
       if(s.state==='error') throw new Error(s.error||'Ajour villa');
+      msg.textContent='🏛 Ajour les inn… ('+((i+1)*2)+'s)';
     }
     return 'í vinnslu — pollaðu aftur';
   }
