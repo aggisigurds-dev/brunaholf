@@ -145,6 +145,22 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
 - `skuldunautar` — Skuldunautar (AR snapshot, renderSkuldunautar). `/api/debtors`:
   open Payday/Landsbanki invoices per debtor, each flagged Útistandandi / Greitt í
   banka? / Kannski í banka / Kreditfært via bank cross-ref; aging + vintage + search.
+  **Vocabulary-agnostic + respects `krofur_yfirlit_meta` (2026-07-25):** `debtors.js`
+  now matches status by substring (English `PAID/SENT/CANCELLED/CREDIT` + Icelandic)
+  and honours the shared `paid`/`hidden` meta flags — so old SENT krófur the office
+  already marked greitt/falið in Kröfu yfirlit drop here too (fixed a 124.5M→5.8M
+  overstatement from stale-SENT invoices Payday was never marked paid on, older than
+  the bank ledger's 2025-07-30 start). **Staðfestir stöðupunktar + inline mark
+  (2026-07-25):** `debtors.js` also takes **POST** — `{action:'mark',inv_key,paid?
+  |hidden?}` writes the SAME `krofur_yfirlit_meta` (a reikningur drops instantly,
+  consistent with Kröfu yfirlit); `{action:'confirm',kt,confirmed_balance,by}` /
+  `{action:'unconfirm',kt}` snapshot/clear a per-customer checkpoint in new table
+  **`ar_checkpoints`** (`kt`+`company` unique, RLS-locked to service role). GET now
+  returns per-invoice `inv_key`+`is_new` and per-debtor `checkpoint{confirmed_balance,
+  confirmed_at,delta,new_kr}`. UI (`renderSkuldunautar`): „✓ greitt"/„🙈 fela" per
+  reikningur, „✓ Staðfesta stöðu núna (X)" per skuldunaut → „🔒 Staðfest X · breyting
+  síðan ±Y", newer invoices badged „🆕 nýtt síðan staðfest". Lets the office work
+  down the AR gradually and measure new numbers against a confirmed baseline.
 - `krofur` — **📊 Krófur & Tekjur** (renderKrofur) — executive overview of BOTH
   companies' krófur, scoped to one year (default 2026). Endpoint
   `/api/krofur-yfirlit?year=YYYY` (`krofur-yfirlit.js`, service role): reads
