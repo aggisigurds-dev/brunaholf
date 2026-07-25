@@ -44,13 +44,21 @@ exports.handler = async (event) => {
   if (!SUPABASE_URL || !SUPABASE_KEY) return json(500, { error: 'Supabase env missing' });
   if (event.httpMethod !== 'GET') return json(405, { error: 'Method not allowed' });
 
-  let invoices, bank;
+  let invoices, bank, meta = [];
   try {
     invoices = await fetchAll('invoices',
       'select=id,tilvisun,kt_greidanda,customer_name,gjalddagi,eindagi,hofudstoll,upphaed_total,status,greidsla_date,source');
     bank = await fetchAll('bank_transactions',
       'select=kt_counterparty,amount,trans_date,text,description&amount=gt.0');
+    // Manual reconciliation flags SHARED with Kröfu yfirlit (krofur_yfirlit_meta,
+    // inv_key='<source>|<tilvisun>'): paid=merkt greitt í banka, hidden=fela. The
+    // office marks OLD Payday invoices that sit at SENT forever (Payday never gets
+    // marked paid, and the bank ledger doesn't reach back far enough to auto-clear
+    // them) — so Skuldunautar MUST honour these or it shows ~130M of long-paid AR.
+    meta = await fetchAll('krofur_yfirlit_meta', 'select=inv_key,paid,hidden').catch(() => []);
   } catch (e) { return json(502, { error: e.message }); }
+  const metaCleared = new Set(
+    meta.filter(m => m.paid || m.hidden).map(m => String(m.inv_key)));
 
   const today = new Date().toISOString().slice(0, 10);
   const todayMs = Date.parse(today);
@@ -71,7 +79,8 @@ exports.handler = async (event) => {
     if (isCreditWord(st) && amt < 0) { credits.push(r); continue; }  // credit note (negative leg)
     if (isDraft(st) || isCancelled(st) || isPaid(st)) continue;      // not outstanding
     if (amt <= 0) continue;
-    open.push(r);   // SENT / Ógreidd / OPEN / OVERDUE = genuinely unpaid AR
+    if (metaCleared.has(`${r.source}|${r.tilvisun}`)) continue;      // office marked greitt/falið í Kröfu yfirliti
+    open.push(r);   // SENT / Ógreidd / OPEN / OVERDUE, ekki handvirkt uppgert = raun-útistandandi
   }
 
   // ---- offsetting credit notes: same kt, |open + credit| within tolerance ----
@@ -193,7 +202,7 @@ exports.handler = async (event) => {
   return json(200, {
     generated_at: new Date().toISOString(), today,
     totals, vintages, aging, debtors,
-    note: 'Útistandandi = ógreiddir reikningar sem hvorki eru kreditfærðir né fundust greiddir beint í banka. „Kannski í banka“ = upphæð fannst í banka frá öðrum greiðanda (t.d. Reykjavíkurborg fyrir skóla) — staðfestu handvirkt.',
+    note: 'Útistandandi = ógreiddir reikningar sem hvorki eru kreditfærðir, merktir greitt/faldir í Kröfu yfirliti, né fundust greiddir beint í banka. Gamlar SENT-kröfur sem Payday var aldrei merkt greitt á (og bankagögnin ná ekki aftur til) detta út um leið og þær eru merktar í Kröfu yfirliti. „Kannski í banka“ = upphæð fannst í banka frá öðrum greiðanda — staðfestu handvirkt.',
   });
 };
 
