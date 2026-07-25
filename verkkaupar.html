@@ -220,6 +220,19 @@ button:active{transform:translateY(1px)}
 .save-ind{font-size:10px;color:#1f9d57;opacity:0;transition:opacity .3s}
 .save-ind.on{opacity:1}
 .panel__body{padding:12px 14px}
+.panel__body--edit{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px}
+.panel__body--edit .fld{margin-bottom:0;min-width:0}
+.panel__body--edit .fld--wide{grid-column:1/-1}
+/* ---- samstillingar-hnappar (Tímavera / Payday / Redder / Ajour) ---- */
+.syncbar{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin:11px 0 3px}
+.syncbar__lab{font-size:11.5px;font-weight:700;color:var(--faint);letter-spacing:.03em;text-transform:uppercase;margin-right:2px}
+.syncbtn{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid rgba(20,24,34,.14);border-radius:9px;padding:6px 11px;font-size:12.5px;font-weight:600;color:#243;cursor:pointer;transition:transform .1s ease,background .12s,border-color .12s}
+.syncbtn:active{transform:scale(.95)}
+.syncbtn[data-state=run]{background:#eef4ff;border-color:#9ec0ff;color:#2f5fe0}
+.syncbtn[data-state=ok]{background:#eaf7ef;border-color:#b9e3cc;color:#1f9d57}
+.syncbtn[data-state=err]{background:#fdecec;border-color:#f3c6c4;color:#c0241f}
+.syncbtn:disabled{cursor:default}
+.syncbar__msg{font-size:11.5px;color:#6b7688;flex:1 1 100%}
 .qa button[disabled]{opacity:.45;cursor:default}
 .acc__velta-lab{max-width:230px}
 @media(max-width:820px){.split{flex-direction:column}.acc__head{flex-wrap:wrap;gap:10px}.ring{display:none}.acc__velta{text-align:left}.info-grid{grid-template-columns:1fr 1fr}}
@@ -242,6 +255,15 @@ button:active{transform:translateY(1px)}
     </div>
   </div>
   <a class="folder-chip" href="https://drive.google.com/drive/folders/1CebzBKYdSj8NP4F-vEA5HepOULH-bwoT" target="_blank" style="text-decoration:none">🗂 Aðal-Brunahólfsmappan (efnislistar)</a>
+
+  <div class="syncbar">
+    <span class="syncbar__lab">🔄 Samstilla</span>
+    <button class="syncbtn" data-src="timavera">🕒 Tímavera</button>
+    <button class="syncbtn" data-src="payday">💳 Payday</button>
+    <button class="syncbtn" data-src="redder">🧱 Redder</button>
+    <button class="syncbtn" data-src="ajour">🏛 Ajour</button>
+    <span class="syncbar__msg" id="syncmsg"></span>
+  </div>
 
   <div id="kpis"></div>
 
@@ -427,8 +449,8 @@ function cardHTML(c){
     } else if(r>0){ uppRow=`<div class="uppgjor"><div class="uppgjor__kpis"><div><div class="uppgjor__val uppgjor__val--red">${kr(ubh*r)}</div><div class="uppgjor__lab">eftir að senda · ${ubh} klst × ${kr(r)}</div></div><div><div class="uppgjor__val">${kr(phrs*r)}</div><div class="uppgjor__lab">greitt (${phrs} klst)</div></div></div></div>`; }
     timBox=`<div class="info-box"><div class="info-box__head">⏱ TÍMAVERA — ${c.tim.total} KLST 2026 · ${esc((c.tim.projects||[]).join(', '))}</div><div class="month-row">${tiles}</div>${uppRow}</div>`;
   }
-  const f=(label,field,val,area)=>{const el=area?`<textarea rows="2" oninput="crmChange('${c.kt}','${esc(nm)}','${field}',this.value,this.nextElementSibling)">${esc(val)}</textarea>`:`<input value="${esc(val)}" oninput="crmChange('${c.kt}','${esc(nm)}','${field}',this.value,this.nextElementSibling)">`;return `<div class="fld"><label>${label}</label>${el}<span class="save-ind">✓ vistað</span></div>`};
-  const editPanel=`<div class="panel"><div class="panel__head">✏️ SKRÁ / BREYTA (vistast sjálfkrafa)</div><div class="panel__body">${f('Staðsetning','stadsetning',cr.stadsetning||'')}${f('Tímagjald (kr/klst)','timagjald',cr.timagjald||'')}${f('Verðtilboð','tilbod_info',cr.tilbod_info||'')}${f('Sími','simi',simi)}${f('Netfang','netfang',net)}${f('Lýsing á verki','verk_lysing',cr.verk_lysing||'',1)}${f('Næsta aðgerð','next_action',cr.next_action||'')}${f('Nótur','notes',cr.notes||'',1)}</div></div>`;
+  const f=(label,field,val,area)=>{const el=area?`<textarea rows="2" oninput="crmChange('${c.kt}','${esc(nm)}','${field}',this.value,this.nextElementSibling)">${esc(val)}</textarea>`:`<input value="${esc(val)}" oninput="crmChange('${c.kt}','${esc(nm)}','${field}',this.value,this.nextElementSibling)">`;return `<div class="fld${area?' fld--wide':''}"><label>${label}</label>${el}<span class="save-ind">✓ vistað</span></div>`};
+  const editPanel=`<div class="panel"><div class="panel__head">✏️ SKRÁ / BREYTA (vistast sjálfkrafa)</div><div class="panel__body panel__body--edit">${f('Staðsetning','stadsetning',cr.stadsetning||'')}${f('Tímagjald (kr/klst)','timagjald',cr.timagjald||'')}${f('Verðtilboð','tilbod_info',cr.tilbod_info||'')}${f('Sími','simi',simi)}${f('Netfang','netfang',net)}${f('Lýsing á verki','verk_lysing',cr.verk_lysing||'',1)}${f('Næsta aðgerð','next_action',cr.next_action||'')}${f('Nótur','notes',cr.notes||'',1)}</div></div>`;
   return `<div class="acc${isOpen?' is-open':''}">
     <div class="acc__head" onclick="toggleCard('${esc(c.kt)}')">
       <span class="rail" style="background:${railCol}"></span>
@@ -458,4 +480,56 @@ document.querySelectorAll('.fchip').forEach(ch=>ch.onclick=()=>{document.querySe
 document.getElementById('q').oninput=e=>{q=e.target.value.toLowerCase();render()};
 document.getElementById('sort').onchange=render;
 render(); loadOverlay();
+
+/* ---- Samstillingar-hnappar: virkja beina ský-syncana (Tímavera / Payday / Redder / Ajour) ---- */
+(function(){
+  const bar=document.querySelector('.syncbar'); if(!bar) return;
+  const msg=document.getElementById('syncmsg');
+  async function oneShot(url, fmt){
+    const r=await fetch(url); const d=await r.json().catch(()=>({}));
+    if(!r.ok||d.error) throw new Error(d.error||('HTTP '+r.status));
+    return fmt(d);
+  }
+  async function redderRun(){
+    let off=0,total=0,guard=0;
+    while(guard++<50){
+      const r=await fetch('/api/redder-read?limit=6&offset='+off);
+      const d=await r.json().catch(()=>({}));
+      if(!r.ok||d.error) throw new Error(d.error||('HTTP '+r.status));
+      total+=(d.processed||0);
+      if(d.nextOffset==null) break;
+      off=d.nextOffset;
+    }
+    return total+' reikningar lesnir';
+  }
+  async function ajourRun(){
+    const r=await fetch('/api/nlsh-update'); const d=await r.json().catch(()=>({}));
+    if(!r.ok||d.error) throw new Error(d.error||('HTTP '+r.status));
+    for(let i=0;i<45;i++){
+      await new Promise(s=>setTimeout(s,2000));
+      const s=await fetch('/api/nlsh-update?status=1').then(x=>x.json()).catch(()=>({}));
+      const n=s.upserted??s.inserted??s.count;
+      if(s.state==='done') return (n!=null? n+' færslur':'lokið');
+      if(s.state==='error') throw new Error(s.error||'Ajour villa');
+    }
+    return 'í vinnslu — pollaðu aftur';
+  }
+  const EP={
+    timavera:{label:'Tímavera', run:()=>oneShot('/api/timavera-pull?days=30', d=>(d.upserted??0)+' færslur')},
+    payday:  {label:'Payday',   run:()=>oneShot('/api/payday-pull',           d=>(d.upserted??0)+' reikningar')},
+    redder:  {label:'Redder',   run:redderRun},
+    ajour:   {label:'Ajour',    run:ajourRun},
+  };
+  bar.querySelectorAll('.syncbtn').forEach(btn=>{
+    const orig=btn.innerHTML, key=btn.dataset.src, ep=EP[key]; if(!ep) return;
+    btn.onclick=async()=>{
+      if(btn.disabled) return;
+      btn.disabled=true; btn.dataset.state='run'; btn.innerHTML='⏳ '+ep.label;
+      msg.textContent='Samstilli '+ep.label+'…';
+      try{ const detail=await ep.run(); btn.dataset.state='ok'; msg.textContent='✓ '+ep.label+': '+detail; }
+      catch(e){ btn.dataset.state='err'; msg.textContent='✗ '+ep.label+': '+(e.message||e); }
+      finally{ btn.disabled=false; btn.innerHTML=orig; setTimeout(()=>{ if(btn.dataset.state!=='run') btn.removeAttribute('data-state'); },8000); }
+    };
+  });
+})();
 </script></body></html>

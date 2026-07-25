@@ -154,8 +154,17 @@ exports.handler = async (event) => {
       }
       const linkedInvoices = [...invMatches.values()];
       const invSum = linkedInvoices.reduce((a, i) => a + Number(i.hofudstoll || 0), 0);
+      // Unpaid = complement (not paid/draft/cancelled/credit) so English Payday
+      // statuses (SENT) count, not just Icelandic ógreidd/ógreitt. „ó/o"-prefix
+      // guards against ógreidd matching the paid word.
       const rawUnpaid = linkedInvoices
-        .filter(i => /ógreidd|ógreitt|vanskil/i.test(i.status || ''))
+        .filter(i => {
+          const s = i.status || '';
+          if (i.greidsla_date) return false;
+          if (!/[óo]grei/i.test(s) && /paid|greitt|greidd/i.test(s)) return false;
+          if (/draft|dr[öo]g|cancel|afturk|felld|[óo]gild|credit|kredit/i.test(s)) return false;
+          return true;
+        })
         .reduce((a, i) => a + Number(i.hofudstoll || 0), 0);
       const expectedRetention = linkedInvoices
         .filter(i => Number(i.hofudstoll || 0) > 0)

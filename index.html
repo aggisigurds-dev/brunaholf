@@ -13503,6 +13503,16 @@ async function renderSkuldunautar(t){
       .sk-b-bank{background:#ecfdf3;color:#067647}
       .sk-b-maybe{background:#fffaeb;color:#b54708}
       .sk-b-credited{background:#f2f4f7;color:#475467}
+      .sk-mk{border:1px solid var(--border,#d5dbe2);background:#fff;border-radius:6px;padding:3px 7px;font-size:11.5px;cursor:pointer;margin-right:3px}
+      .sk-mk:hover{background:#f2f4f7}
+      .sk-mk[data-act=paid]:hover{background:#ecfdf3;border-color:#a7e0bf;color:#067647}
+      .sk-new{display:inline-block;font-size:9.5px;font-weight:700;color:#b54708;background:#fffaeb;border-radius:10px;padding:1px 6px;margin-left:6px}
+      .sk-cp{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 15px;background:#f8fafc;border-bottom:1px solid var(--border,#eef0f2);font-size:12px}
+      .sk-cp-badge{display:inline-flex;align-items:center;gap:6px;font-weight:600;color:#0369a1;background:#eff8ff;border:1px solid #b9e0fb;border-radius:8px;padding:4px 9px}
+      .sk-cp-delta{font-weight:600}
+      .sk-confirm{border:1px solid #a7e0bf;background:#ecfdf3;color:#067647;border-radius:8px;padding:5px 11px;font-weight:600;font-size:12px;cursor:pointer}
+      .sk-confirm:hover{background:#d1fae5}
+      .sk-unconfirm{border:1px solid var(--border,#d5dbe2);background:#fff;border-radius:8px;padding:4px 9px;font-size:11.5px;cursor:pointer;color:#64748b}
     </style>`;
   const badge = (s) => ({
     open:     '<span class="sk-badge sk-b-open">Útistandandi</span>',
@@ -13542,14 +13552,22 @@ async function renderSkuldunautar(t){
       const invRows = db.invoices.map(inv=>{
         const od = inv.days_overdue==null?'—':(inv.days_overdue<0?(Math.abs(inv.days_overdue)+' d eftir'):(inv.days_overdue+' d'));
         const bankTxt = inv.bank?`<div style="font-size:10.5px;color:#8a93a2">${esc(inv.bank.text||'')} · ${kr(inv.bank.amount)} · ${inv.bank.date||''}</div>`:'';
+        const mk = inv.inv_key?`<button class="sk-mk" data-key="${esc(inv.inv_key)}" data-act="paid" title="Merkja greitt (dettur af listanum)">✓ greitt</button><button class="sk-mk" data-key="${esc(inv.inv_key)}" data-act="hidden" title="Fela">🙈</button>`:'';
         return `<tr>
-          <td>${inv.tilvisun?('R-'+esc(inv.tilvisun)):('#'+inv.id)}<div style="font-size:10.5px;color:#b6c0cc">${esc(inv.source||'')}</div></td>
+          <td>${inv.tilvisun?('R-'+esc(inv.tilvisun)):('#'+inv.id)}${inv.is_new?'<span class="sk-new">🆕 nýtt síðan staðfest</span>':''}<div style="font-size:10.5px;color:#b6c0cc">${esc(inv.source||'')}</div></td>
           <td>${inv.gjalddagi||'—'}</td>
           <td>${od}</td>
           <td style="text-align:right">${kr(inv.amount)}</td>
           <td>${badge(inv.status)}${bankTxt}</td>
+          <td style="white-space:nowrap">${mk}</td>
         </tr>`;
       }).join('');
+      const cp = db.checkpoint;
+      const cpHtml = cp
+        ? `<span class="sk-cp-badge">🔒 Staðfest ${kr(cp.confirmed_balance)}<small style="font-weight:400;color:#64748b"> · ${new Date(cp.confirmed_at).toLocaleDateString('is-IS')}${cp.confirmed_by?' · '+esc(cp.confirmed_by):''}</small></span>`
+          + (cp.delta ? `<span class="sk-cp-delta" style="color:${cp.delta>0?'#b42318':'#067647'}">breyting síðan: ${cp.delta>0?'+':''}${kr(cp.delta)}</span>` : `<span class="sk-cp-delta" style="color:#067647">óbreytt síðan staðfest ✓</span>`)
+          + (db.kt?`<button class="sk-unconfirm" data-kt="${db.kt}">↺ Af-staðfesta</button>`:'')
+        : (db.kt?`<button class="sk-confirm" data-kt="${db.kt}" data-out="${db.outstanding_kr}">✓ Staðfesta stöðu núna (${kr(db.outstanding_kr)})</button><span style="color:#8a93a2">— festir þessa upphæð sem viðmið; nýir reikningar merkjast „nýtt síðan"</span>`:'<span style="color:#8a93a2">Engin kennitala — ekki hægt að staðfesta</span>');
       const bankLine = db.bank_inflow_kr>0?`bankainnborganir ${kr(db.bank_inflow_kr)}${db.last_inflow?' · síðast '+db.last_inflow:''}`:'engar bankafærslur';
       return `<div class="sk-d" data-i="${i}" data-name="${esc((db.customer||'').toLowerCase())} ${db.kt||''}">
         <div class="sk-dh">
@@ -13559,8 +13577,10 @@ async function renderSkuldunautar(t){
           <div class="sk-dv">${kr(db.outstanding_kr)}<small>útistandandi</small></div>
           <div class="sk-caret">▸</div>
         </div>
-        <div class="sk-db"><table class="nl-t">
-          <thead><tr><th>Reikningur</th><th>Gjalddagi</th><th>Aldur</th><th style="text-align:right">Upphæð</th><th>Staða</th></tr></thead>
+        <div class="sk-db">
+          <div class="sk-cp">${cpHtml}</div>
+          <table class="nl-t">
+          <thead><tr><th>Reikningur</th><th>Gjalddagi</th><th>Aldur</th><th style="text-align:right">Upphæð</th><th>Staða</th><th>Aðgerð</th></tr></thead>
           <tbody>${invRows}</tbody></table></div>
       </div>`;
     }).join('') || '<div style="padding:20px;color:#94a3b8">Engir skuldunautar 🎉</div>';
@@ -13573,6 +13593,28 @@ async function renderSkuldunautar(t){
     search.oninput=()=>{ const q=search.value.trim().toLowerCase();
       list.querySelectorAll('.sk-d').forEach(d=>{ d.style.display = !q || d.dataset.name.includes(q) ? '' : 'none'; });
     };
+
+    // ---- Aðgerðir: merkja reikning greitt/fela + staðfesta/af-staðfesta stöðu ----
+    async function post(payload){
+      const r=await fetch('/api/debtors',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      const j=await r.json().catch(()=>({})); if(!r.ok||j.error) throw new Error(j.error||('HTTP '+r.status)); return j;
+    }
+    const who = ()=> (localStorage.getItem('bh_user')||localStorage.getItem('ky_user')||null);
+    list.querySelectorAll('.sk-mk').forEach(b=>b.addEventListener('click',async(e)=>{
+      e.stopPropagation(); b.disabled=true; b.textContent='…';
+      try{ await post({action:'mark', inv_key:b.dataset.key, [b.dataset.act]:true, by:who()}); await load(); }
+      catch(err){ b.disabled=false; alert('Villa: '+err.message); }
+    }));
+    list.querySelectorAll('.sk-confirm').forEach(b=>b.addEventListener('click',async(e)=>{
+      e.stopPropagation(); b.disabled=true; b.textContent='Staðfesti…';
+      try{ await post({action:'confirm', kt:b.dataset.kt, confirmed_balance:+b.dataset.out, by:who()}); await load(); }
+      catch(err){ b.disabled=false; alert('Villa: '+err.message); }
+    }));
+    list.querySelectorAll('.sk-unconfirm').forEach(b=>b.addEventListener('click',async(e)=>{
+      e.stopPropagation(); if(!confirm('Af-staðfesta stöðupunkt þessa skuldunauts?')) return;
+      try{ await post({action:'unconfirm', kt:b.dataset.kt}); await load(); }
+      catch(err){ alert('Villa: '+err.message); }
+    }));
   }
   document.getElementById('sk-refresh').addEventListener('click', load);
   load();

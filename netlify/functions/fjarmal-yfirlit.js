@@ -23,9 +23,13 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 // Dagvinnutaxti (sjálfgefinn) — 9.951 kr án vsk × 1,24 = m/vsk. Sama grunntala og
 // „Áætlað unnið · mánuður" í Gerð Reikninga. Hægt að yfirskrifa með ?taxti=.
 const DAGVINNA_MVSK_DEFAULT = Math.round(9951 * 1.24); // 12.339
-// Tímar sem EKKI eru rukkanlegir sem tímagjald: Slökkvitæki-innri + Landsspítalinn
-// (rukkað gegnum Ajour, ekki Tímaveru) + frí/orlof/veikindi.
-const NON_BILLABLE = /sl[oö]kkvit|landssp[ií]|nlsh|hringbraut|fr[ií]\b|orlof|veik|p[aá]ska|jó?l|innr[ií]/i;
+// Tímar/reikningar sem EKKI eru rukkanlegir sem TÍMAGJALD:
+//  · Slökkvitæki-innri + „Brunahólf almennt"/„work at home" (innri yfirbygging)
+//  · Gata-verkefni sem eru rukkuð gegnum AJOUR (hola × taxti), EKKI tímagjald:
+//    Landsspítalinn/NLSH, Dalvegur 30 og Heklureitur — annars tvítalið á móti
+//    Ajour-tekjum / drögum.
+//  · frí/orlof/veikindi.
+const NON_BILLABLE = /sl[oö]kkvit|landssp[ií]|nlsh|hringbraut|dalveg|heklu|almennt|work.?at.?home|heiman|fr[ií]\b|orlof|veik|p[aá]ska|jó?l|innr[ií]/i;
 
 function sbHeaders() { return { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }; }
 const digits = (s) => String(s || '').replace(/\D/g, '');
@@ -116,6 +120,7 @@ exports.handler = async (event) => {
     const wm = String(d.work_month || '');
     const amt = +d.total_m_vsk || 0;
     if (amt <= 0 || wm < cutoff) continue;
+    if (NON_BILLABLE.test(d.worksite_name || '')) continue; // sleppa innri + Ajour-verkefnum (annars tvítalið)
     if ((metaBy.get(`draftinv|${d.worksite_name}|${wm}`) || {}).paid) continue;
     add(C_osendar, amt);
   }

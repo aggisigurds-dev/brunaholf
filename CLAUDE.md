@@ -145,6 +145,22 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
 - `skuldunautar` — Skuldunautar (AR snapshot, renderSkuldunautar). `/api/debtors`:
   open Payday/Landsbanki invoices per debtor, each flagged Útistandandi / Greitt í
   banka? / Kannski í banka / Kreditfært via bank cross-ref; aging + vintage + search.
+  **Vocabulary-agnostic + respects `krofur_yfirlit_meta` (2026-07-25):** `debtors.js`
+  now matches status by substring (English `PAID/SENT/CANCELLED/CREDIT` + Icelandic)
+  and honours the shared `paid`/`hidden` meta flags — so old SENT krófur the office
+  already marked greitt/falið in Kröfu yfirlit drop here too (fixed a 124.5M→5.8M
+  overstatement from stale-SENT invoices Payday was never marked paid on, older than
+  the bank ledger's 2025-07-30 start). **Staðfestir stöðupunktar + inline mark
+  (2026-07-25):** `debtors.js` also takes **POST** — `{action:'mark',inv_key,paid?
+  |hidden?}` writes the SAME `krofur_yfirlit_meta` (a reikningur drops instantly,
+  consistent with Kröfu yfirlit); `{action:'confirm',kt,confirmed_balance,by}` /
+  `{action:'unconfirm',kt}` snapshot/clear a per-customer checkpoint in new table
+  **`ar_checkpoints`** (`kt`+`company` unique, RLS-locked to service role). GET now
+  returns per-invoice `inv_key`+`is_new` and per-debtor `checkpoint{confirmed_balance,
+  confirmed_at,delta,new_kr}`. UI (`renderSkuldunautar`): „✓ greitt"/„🙈 fela" per
+  reikningur, „✓ Staðfesta stöðu núna (X)" per skuldunaut → „🔒 Staðfest X · breyting
+  síðan ±Y", newer invoices badged „🆕 nýtt síðan staðfest". Lets the office work
+  down the AR gradually and measure new numbers against a confirmed baseline.
 - `krofur` — **📊 Krófur & Tekjur** (renderKrofur) — executive overview of BOTH
   companies' krófur, scoped to one year (default 2026). Endpoint
   `/api/krofur-yfirlit?year=YYYY` (`krofur-yfirlit.js`, service role): reads
@@ -249,11 +265,26 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
 - `worksite_status`: manual billing status per (project, year) — one of
   `unreviewed | review | billing_in_progress | invoiced | not_billable`,
   plus notes / drive folder url / contract url / invoice amount+date.
-- `invoices` (~267 rows): Payday + Landsbankinn krafnir.
+- `invoices` (~430 rows): Payday + Landsbankinn krafnir.
   Cols: `customer_name, kt_greidanda, hofudstoll, gjalddagi, status,
   greidsla_date, tilvisun, worksite_match, ...`. Joined to worksites
   via `customer_worksite_map` + `worksite_match`. Upsert key `(tilvisun,source)`,
   Payday rows `source='payday'` (refresh via Payday "Reikningar" xlsx).
+  **⚠️ `status` vocabulary is MIXED (2026-07-25):** the Payday-API sync
+  (`payday-pull.js`) writes **English UPPERCASE** — `PAID` / `SENT` (=unpaid
+  krafa) / `CANCELLED` (+) / `CREDIT` (− twin of CANCELLED, nets to 0) / `DRAFT`;
+  Landsbanki + manual rows still use Icelandic `Greidd` / `Ógreidd` / `Greitt` /
+  `Drög`. **Every reader must match by SUBSTRING, not exact string**, and treat
+  the „ó/o"-prefix as negation (`ógreitt`/`ógreidd` = UNPAID — must NOT match the
+  paid word). Canonical helpers (copied across `hreyfingar.js`, `debtors.js`,
+  `worksites.js`, `customer.js`; `krofur-yfirlit.js`/`krofu-yfirlit-bru.js` were
+  already tolerant): `isPaid = !/[óo]grei/ && /paid|greitt|greidd/`, `isDraft =
+  /draft|dr[öo]g/`, `isCancelled = /cancel|afturk|felld|[óo]gild/`, `isCredit =
+  /credit|kredit/ || amt<0`; **open AR = the COMPLEMENT** (not paid/draft/
+  cancelled/credit, amt>0) so a new status word never silently drops real AR.
+  True unpaid AR ≈ **131.5M** (41 `SENT` 130.1M + 5 `Ógreidd` 1.4M). An
+  exact-string match had broken Hreyfingar (showed 489.6M — PAID un-credited) and
+  Skuldunautar (showed 1.4M — all SENT dropped); fixed 2026-07-25.
 - `bank_transactions` (~938 rows): Landsbankinn ledger, used to detect
   payments made via bank that haven't been reflected in Payday. Upsert key
   `(trans_date, tnr, amount)`, `source='landsbankinn_account'`, `company='brunaholf'`
