@@ -42,9 +42,10 @@ const lc = (s) => String(s || '').trim().toLowerCase();
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return resp(204, '', cors());
   if (!SUPABASE_URL || !SUPABASE_KEY) return json(500, { error: 'Supabase env missing' });
+  if (event.httpMethod === 'POST') return handlePost(event);
   if (event.httpMethod !== 'GET') return json(405, { error: 'Method not allowed' });
 
-  let invoices, bank, meta = [];
+  let invoices, bank, meta = [], checkpoints = [];
   try {
     invoices = await fetchAll('invoices',
       'select=id,tilvisun,kt_greidanda,customer_name,gjalddagi,eindagi,hofudstoll,upphaed_total,status,greidsla_date,source');
@@ -56,9 +57,13 @@ exports.handler = async (event) => {
     // marked paid, and the bank ledger doesn't reach back far enough to auto-clear
     // them) — so Skuldunautar MUST honour these or it shows ~130M of long-paid AR.
     meta = await fetchAll('krofur_yfirlit_meta', 'select=inv_key,paid,hidden').catch(() => []);
+    // Per-customer confirmed status/balance checkpoints (staðfestir stöðupunktar).
+    checkpoints = await fetchAll('ar_checkpoints',
+      'select=kt,confirmed_balance,confirmed_at,confirmed_by,note').catch(() => []);
   } catch (e) { return json(502, { error: e.message }); }
   const metaCleared = new Set(
     meta.filter(m => m.paid || m.hidden).map(m => String(m.inv_key)));
+  const cpByKt = new Map(checkpoints.map(c => [digits(c.kt), c]));
 
   const today = new Date().toISOString().slice(0, 10);
   const todayMs = Date.parse(today);
@@ -133,11 +138,18 @@ exports.handler = async (event) => {
     const amt = +inv.upphaed_total || +inv.hofudstoll || 0;
     const dueMs = inv.gjalddagi ? Date.parse(inv.gjalddagi) : null;
     const days_overdue = dueMs != null ? Math.round((todayMs - dueMs) / 864e5) : null;
+    const kt = digits(inv.kt_greidanda);
+    const cp = cpByKt.get(kt);
+    // „new since checkpoint" = due-date after the confirmed timestamp (proxy for
+    // an invoice that arrived after the customer was reviewed/confirmed).
+    const is_new = !!(cp && inv.gjalddagi && Date.parse(inv.gjalddagi) > Date.parse(cp.confirmed_at));
     return {
       id: inv.id, tilvisun: inv.tilvisun, source: inv.source,
-      kt: digits(inv.kt_greidanda), customer: inv.customer_name || '(óþekkt)',
+      inv_key: `${inv.source}|${inv.tilvisun}`,   // key for POST mark (shared with Kröfu yfirlit meta)
+      kt, customer: inv.customer_name || '(óþekkt)',
       gjalddagi: inv.gjalddagi, days_overdue, amount: amt,
       status: m.type,            // open | bank | maybe | credited
+      is_new,
       bank: m.type === 'bank' || m.type === 'maybe'
         ? { amount: m.amount, date: m.date, text: m.text } : null,
       // counts toward outstanding only if genuinely open or weak-maybe
@@ -168,6 +180,16 @@ exports.handler = async (event) => {
     d.bank_inflow_kr = inf.reduce((a, b) => a + b.amount, 0);
     d.last_inflow = inf.reduce((mx, b) => (!mx || b.date > mx ? b.date : mx), null);
     d.invoices.sort((a, b) => (b.amount - a.amount));
+    // Confirmed status checkpoint (staðfestur stöðupunktur) — new numbers measure
+    // against this: delta = current outstanding − confirmed balance; new_kr =
+    // Σ invoices whose due-date is after the confirm timestamp.
+    const cp = cpByKt.get(d.kt);
+    d.checkpoint = cp ? {
+      confirmed_balance: Number(cp.confirmed_balance) || 0,
+      confirmed_at: cp.confirmed_at, confirmed_by: cp.confirmed_by || null, note: cp.note || null,
+      delta: Math.round(d.outstanding_kr - (Number(cp.confirmed_balance) || 0)),
+      new_kr: Math.round(d.invoices.filter(iv => iv.is_new).reduce((a, iv) => a + iv.outstanding, 0)),
+    } : null;
   }
   const debtors = [...byDebtor.values()]
     .filter(d => d.outstanding_kr > 0 || d.bank_paid_kr > 0 || d.credited_kr > 0)
@@ -206,6 +228,62 @@ exports.handler = async (event) => {
   });
 };
 
+// ---- POST: mark an invoice (greitt/fela) + confirm/unconfirm a debtor status ----
+async function handlePost(event) {
+  let body;
+  try { body = JSON.parse(event.body || '{}'); } catch { return json(400, { error: 'Ógilt JSON í body' }); }
+  const action = body.action;
+  const by = body.by ? String(body.by).slice(0, 60) : null;
+  try {
+    if (action === 'mark') {
+      const inv_key = String(body.inv_key || '');
+      if (!inv_key.includes('|')) return json(400, { error: 'inv_key vantar (source|tilvisun)' });
+      const patch = { inv_key };
+      if ('paid' in body) patch.paid = !!body.paid;
+      if ('hidden' in body) patch.hidden = !!body.hidden;
+      if ('note' in body) patch.note = body.note == null ? null : String(body.note).slice(0, 500);
+      if (Object.keys(patch).length === 1) return json(400, { error: 'ekkert að uppfæra' });
+      // Shared with Kröfu yfirlit — merge-upsert so other flags on the row survive.
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/krofur_yfirlit_meta?on_conflict=inv_key`, {
+        method: 'POST', headers: sbW('resolution=merge-duplicates,return=minimal'),
+        body: JSON.stringify(patch),
+      });
+      if (!r.ok) throw new Error('meta ' + r.status + ' ' + (await r.text()).slice(0, 200));
+      return json(200, { ok: true, ...patch });
+    }
+    if (action === 'confirm') {
+      const kt = digits(body.kt);
+      if (!kt) return json(400, { error: 'kt vantar' });
+      const row = {
+        kt, company: 'brunaholf',
+        confirmed_balance: Math.round(Number(body.confirmed_balance) || 0),
+        confirmed_at: new Date().toISOString(),
+        confirmed_by: by,
+        note: body.note == null ? null : String(body.note).slice(0, 500),
+      };
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/ar_checkpoints?on_conflict=kt,company`, {
+        method: 'POST', headers: sbW('resolution=merge-duplicates,return=minimal'),
+        body: JSON.stringify(row),
+      });
+      if (!r.ok) throw new Error('checkpoint ' + r.status + ' ' + (await r.text()).slice(0, 200));
+      return json(200, { ok: true, kt, confirmed_balance: row.confirmed_balance, confirmed_at: row.confirmed_at });
+    }
+    if (action === 'unconfirm') {
+      const kt = digits(body.kt);
+      if (!kt) return json(400, { error: 'kt vantar' });
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/ar_checkpoints?kt=eq.${encodeURIComponent(kt)}&company=eq.brunaholf`, {
+        method: 'DELETE', headers: sbW('return=minimal'),
+      });
+      if (!r.ok) throw new Error('del ' + r.status);
+      return json(200, { ok: true, kt, removed: true });
+    }
+    return json(400, { error: 'Óþekkt action' });
+  } catch (e) { return json(500, { error: e.message }); }
+}
+function sbW(prefer) {
+  return { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: prefer };
+}
+
 async function fetchAll(table, qs) {
   const out = []; let from = 0;
   for (;;) {
@@ -221,6 +299,6 @@ async function fetchAll(table, qs) {
   }
   return out;
 }
-function cors() { return { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET, OPTIONS', 'access-control-allow-headers': 'content-type' }; }
+function cors() { return { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET, POST, OPTIONS', 'access-control-allow-headers': 'content-type' }; }
 function json(s, p) { return resp(s, JSON.stringify(p), { 'content-type': 'application/json', ...cors() }); }
 function resp(statusCode, body, headers) { return { statusCode, headers, body }; }
