@@ -456,8 +456,8 @@
         + '<label>Athugasemd — af hverju var tillagan röng / hvað á tólið að finna næst? (valkvætt)</label>'
         + '<textarea class="ed-note" placeholder="t.d. „á að heita Center Hótel Ingólfsstræti", „þetta er brunakerfi ekki Annað", „kt vantar í skrá"">'+esc(r.__note||'')+'</textarea>'
         + '<div class="ed-btns">'
-        +   '<button class="btn primary sm ed-save" data-save="'+i+'">💾 Vista leiðréttingu</button>'
-        +   '<button class="btn sm ed-cancel" data-cancel="'+i+'">Hætta við</button>'
+        +   '<button class="btn primary sm ed-save" data-save="'+i+'" data-nostop="1">💾 Vista leiðréttingu</button>'
+        +   '<button class="btn sm ed-cancel" data-cancel="'+i+'" data-nostop="1">Hætta við</button>'
         +   '<span class="ed-msg" data-msg="'+i+'"></span>'
         + '</div></div>';
       body+='<div class="item'+(i===sel?' sel':'')+(isDupe?' dupe':'')+(r.__edited?' edited':'')+'" data-idx="'+i+'" style="'+(muted?'opacity:.6;':'')+'border-left-color:'+dt.col+'">'
