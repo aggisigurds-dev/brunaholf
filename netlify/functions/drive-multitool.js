@@ -143,8 +143,15 @@ function slokkviIssuer(text) {
   if (/VSK\s*nr\.?\s*:?\s*98107|\b98107\b|fyrir\s+h[öo]nd\s+sl[öo]kkvit[æa]ki|verktaki:?\s*sl[öo]kkvit[æa]ki|yfirfarin\s+af\s+sl[öo]kkvit[æa]ki/i.test(t)) return true;
   // Bakvörn þegar hausinn/98107 les illa (gamlir „Stolpi"-reikningar): Slökkvitæki-
   // þjónustulínur. Þessi orð eru á reikningi SEM VIÐ GEFUM ÚT (okkar vörulisti) — birgja-
-  // reikningur til okkar ber þau aldrei. Krefjumst ≥2 aðgreinandi svo þetta sé öruggt.
-  return slokkviServiceLines(t) >= 2;
+  // reikningur til okkar ber þau aldrei. Krefjumst ≥2 aðgreinandi OG að Akstur EÐA
+  // Skýrslugerð sé á reikningnum (Agnar 2026-07-26): þessar tvær línur eru á NÆR ÖLLUM
+  // okkar þjónustureikningum en aldrei á birgja-reikningi til okkar → herðir fallbackið.
+  return slokkviServiceLines(t) >= 2 && hasAksturOrSkyrsla(t);
+}
+// Akstur eða Skýrslugerð — einkennislínur á okkar þjónustureikningi. Krafa fyrir
+// veika þjónustulínu-fallbackið (98107-seljanda-merkið stendur eitt sér, óháð þessu).
+function hasAksturOrSkyrsla(text) {
+  return /\bakstur\b/i.test(text || '') || /sk[ýy]rslu(?:g?jer[ðd]|ger[ðd])/i.test(text || '');
 }
 // Fjöldi aðgreinandi Slökkvitæki-þjónustulína í texta (okkar vörulisti).
 function slokkviServiceLines(text) {

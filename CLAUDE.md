@@ -758,7 +758,11 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
     + tengist þótt R-nr misfórst í OCR. ÖRUGGT: issuerOurs er seljanda-eingöngu, svo
     birgja-reikningur TIL okkar (ber okkar kt í kaupanda-blokk en hvorki 98107 né
     þjónustulínur) helst vendor. Sannreynt á Babalú R-104339 (hreint + gallað OCR) +
-    mótdæmi (birgja-reikningur → áfram vendor).
+    mótdæmi (birgja-reikningur → áfram vendor). **Hert (Agnar 2026-07-26):** veika
+    þjónustulínu-fallbackið (`slokkviServiceLines ≥2`) krefst NÚ að **Akstur EÐA
+    Skýrslugerð** sé á reikningnum (`hasAksturOrSkyrsla`) — þessar tvær einkennislínur
+    eru á nær öllum okkar þjónustureikningum en aldrei á birgja-reikningi til okkar.
+    98107-seljanda-merkið stendur áfram eitt sér (óháð þessu).
   - **„Annað / óflokkað"-markmappa (2026-07-26):** nýr markmöppu-reitur `tf-annad`
     (📦 docs · sheets · innkaup) fyrir vendor/other skjöl. `targetFor` beinir
     vendor+other þangað; þegar reiturinn er fylltur verða vendor/other raðir VALANLEGAR
