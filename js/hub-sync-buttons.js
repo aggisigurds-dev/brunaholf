@@ -151,4 +151,12 @@
   }
   if (document.readyState !== "loading") init(); else document.addEventListener("DOMContentLoaded", init);
   window.addEventListener("hashchange", () => setTimeout(init, 300)); // hub is a hash-SPA
+  // SPA re-render öryggi: hub-ið skiptir um flipa-DOM gegnum render() sem notar
+  // history.replaceState (ekki hashchange), svo nýteiknuð [data-sync-workflow] spön
+  // myndu ANNARS aldrei ræsast. Fylgjast með DOM og ræsa (init er idempotent —
+  // sleppir spönum sem eru þegar ræstar). Debounce svo það kosti ekkert í þungu appi.
+  let _moT = null;
+  const rescan = () => { clearTimeout(_moT); _moT = setTimeout(init, 120); };
+  const startMo = () => { try { new MutationObserver(rescan).observe(document.body, { childList: true, subtree: true }); } catch (_) {} };
+  if (document.body) startMo(); else document.addEventListener("DOMContentLoaded", startMo);
 })();
