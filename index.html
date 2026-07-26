@@ -1645,7 +1645,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
-<script src="/js/hub-sync-buttons.js" defer></script>
+<script src="/js/hub-sync-buttons.js?v=20260726mo" defer></script>
 <script src="/js/viewmode.js?v=2" defer></script>
 </head>
 <body>
@@ -9253,7 +9253,12 @@ async function renderGerdReikninga(t){
         <div>
           <h1 class="gr-h1">Gerð Reikninga <span class="gr-sub" id="gr-meta">Sækir…</span></h1>
           <div class="gr-sub-line">Mánaðamóta-reikningagerð · forútfylltur Efnislisti úr Tímavera klst + Verðskrá + Redder efni · breyttu tölum, vistaðu og prentaðu (PDF).</div>
-          <div style="margin-top:8px"><span data-sync-workflow="timavera" data-sync-label="Tímavera"></span></div>
+          <div style="margin-top:8px;display:flex;gap:14px;flex-wrap:wrap">
+            <span data-sync-workflow="timavera" data-sync-label="Tímavera"></span>
+            <span data-sync-workflow="redder" data-sync-label="Redder"></span>
+            <span data-sync-workflow="ajour" data-sync-label="Ajour"></span>
+            <span data-sync-workflow="payday" data-sync-label="Payday"></span>
+          </div>
         </div>
         <div class="gr-controls">
           <button class="tv-btn" id="gr-prev" type="button" title="Fyrri mánuður">←</button>
