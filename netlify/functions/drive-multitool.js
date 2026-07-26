@@ -1,25 +1,37 @@
-// drive-multitool.js — Fasi 1 (AÐEINS forskoðun / READ-ONLY) af sameinaða
-// „Skjala-multitool". Les Drive-möppu (og undirmöppur), OCR-flokkar hvert PDF og
-// skilar TILLÖGU um hvað ætti að gera við það — EN FÆRIR EKKERT og SKRIFAR
-// EKKERT (hvorki Drive né Supabase). Þetta er öryggis-ábyrgðin: allur þessi
-// endapunktur er les-eingöngu. (Fasi 2 bætir við eyðileggjandi „keyra".)
+// drive-multitool.js — sameinaða „Skjala-multitool". TVEIR endapunktar:
 //
-// Byggt á drive-sort.js — endurnýtir SAMA innihalds-lesara (pdf-parse → Google-Doc
-// OCR fallback), sömu issuer-kt lógík (Slökkvitæki útgefandi kt 600508-0400),
-// kt-/R-númer-/árs-útdrátt og _spine tengiregluna (sitesForBase / resolveSite).
-// Hjálparföllin eru AFRITUÐ hingað (sjálf-innihaldið, Fasi-1 hagkvæmni) — seinni
-// hreinsun væri sameiginlegt `_docread.js` sem drive-sort + reikningar-read +
-// þessi deildu (NÓTA: refactor síðar).
+//   Fasi 1 — GET (AÐEINS forskoðun / READ-ONLY): les Drive-möppu (og undirmöppur),
+//   OCR-flokkar hvert PDF og skilar TILLÖGU um hvað ætti að gera við það — EN
+//   FÆRIR EKKERT og SKRIFAR EKKERT (hvorki Drive né Supabase). GET er alltaf
+//   les-eingöngu.
 //
-//   GET /api/drive-multitool?src=<folderId>[&recurse=1][&limit=3][&offset=N]
+//   Fasi 2 — POST {action:'apply', …} (EYÐILEGGJANDI „keyra"): tekur EITT skjal
+//   sem notandinn hefur yfirfarið í forskoðuninni og (1) endurnefnir það í
+//   `proposed_name`, (2) FÆRIR (relocate) það í `targetFolder` gegnum
+//   files.update addParents/removeParents, (3) tengir `customer_documents` eftir
+//   `linkMode` (warn / if_empty / overwrite). Öryggis-ábyrgðin: EKKERT gerist án
+//   `action:'apply'` + skýrs `id`; ALDREI files.delete (tvítök eru FÆRÐ í ruslmöppu,
+//   aldrei eytt); idempotent (endurkeyrsla → sama útkoma); vendor/other eru hvorki
+//   færð né tengd nema UI sendi þeim markmöppu vísvitandi; hver skref er skráð í
+//   `override_log` (field 'multitool_apply').
+//
+// Byggt á drive-sort.js — endurnýtir SÖMU sönnuðu frumaðgerðir (move/rename via
+// files.update, upsert customer_documents, dedup-uppfletting) + _spine
+// tengiregluna (sitesForBase / resolveSite / siteWriteAllowed). Hjálparföllin eru
+// AFRITUÐ hingað (sjálf-innihaldið) — seinni hreinsun væri sameiginlegt
+// `_docread.js` (NÓTA: refactor síðar).
+//
+//   GET  /api/drive-multitool?src=<folderId>[&recurse=1][&limit=3][&offset=N]
 //        → les `limit` skjöl (sjálfgefið 3, ~10s hámark per kall), skilar
 //          forskoðunar-röðum; UI lykkjar offset þar til nextOffset==null.
-//
-// ENGIN files.update / move, ENGIN Supabase-skrif — les eingöngu.
+//   POST /api/drive-multitool  {action:'apply', id, doc_type, base_id, year,
+//          invoice_number, site_id, proposed_name, targetFolder, linkMode}
+//        → beitir EINU skjali; skilar {ok, id, renamed, moved, linked, linkAction,
+//          conflict, doc_id}. UI keyrir valdar raðir í röð (samhliðni ≤2).
 
 const pdf = require('pdf-parse');
 const { freshAccessToken, json, cors } = require('./_google');
-const { sitesForBase, resolveSite } = require('./_spine');
+const { sitesForBase, resolveSite, siteWriteAllowed, siteStampFromName } = require('./_spine');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -302,11 +314,194 @@ async function previewFile(token, f) {
   };
 }
 
+// ── Fasi 2: APPLY (eyðileggjandi) ───────────────────────────────────────────
+// ENGIN files.delete NOKKURS STAÐAR — tvítök eru FÆRÐ (relocate) í ruslmöppu.
+
+// Drive files.get — sækir núverandi nafn + foreldra (til að ákveða hvort þarf að
+// endurnefna/færa; grunnurinn að idempotency).
+async function getFile(token, id) {
+  const r = await fetch('https://www.googleapis.com/drive/v3/files/' + id + '?fields=id,name,parents&supportsAllDrives=true', { headers: { Authorization: `Bearer ${token}` } });
+  if (!r.ok) throw new Error('get ' + r.status + ': ' + (await r.text()).slice(0, 160));
+  return r.json();
+}
+// EIN files.update PATCH sem endurnefnir OG/EÐA færir (relocate) — sama frumaðgerð
+// og drive-sort.moveFile en sameinuð svo endurnefna-eingöngu (án markmöppu) gangi
+// líka. addParents/removeParents = relocate; body.name = endurnefna. ENGIN eyðing.
+async function movePatch(token, id, { addParents, removeParents, name }) {
+  const params = new URLSearchParams({ supportsAllDrives: 'true', fields: 'id,name,parents' });
+  if (addParents) params.set('addParents', addParents);
+  if (removeParents) params.set('removeParents', removeParents);
+  const body = name ? JSON.stringify({ name }) : '{}';
+  const r = await fetch('https://www.googleapis.com/drive/v3/files/' + id + '?' + params, { method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body });
+  if (!r.ok) throw new Error('move ' + r.status + ': ' + (await r.text()).slice(0, 160));
+  return r.json();
+}
+// Upsert customer_documents á drive_file_id (sama og drive-sort.upsertDoc) —
+// idempotent: sama skrá → sama röð uppfærð, aldrei tvítekin.
+async function upsertDoc(row) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?on_conflict=drive_file_id`, {
+    method: 'POST', headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' }), body: JSON.stringify(row),
+  });
+  if (!r.ok) throw new Error('upsert ' + r.status + ' ' + (await r.text()).slice(0, 160));
+}
+// PATCH einnar fyrirliggjandi tengiraðar (overwrite: beina henni á ÞESSA skrá).
+async function patchDocById(docId, row) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?id=eq.${docId}`, {
+    method: 'PATCH', headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }), body: JSON.stringify(row),
+  });
+  if (!r.ok) throw new Error('patch ' + r.status + ' ' + (await r.text()).slice(0, 160));
+}
+// Fyrirliggjandi tengi-röð fyrir LYKILINN (ekki fyrir þessa drive_file_id):
+//   reikningur              → invoice_number (R-nr er einkvæmur)
+//   uttektarskyrsla/        → (customer_base_id, doc_type, year) [+ fyrirtaeki_id
+//   brunakerfi/samningur       fyrir rekstrarfélag með >1 lifandi stað]
+// Skilar {id, drive_file_id} eða null. Fyrir report-family án árs (nema samningur)
+// → null (of óvíst til að fullyrða tvítak). Multi-site án staðar-sönnunar → null.
+async function findExistingLink({ doc_type, invoice_number, base_id, year, site_id, multiSite }) {
+  try {
+    if (doc_type === 'reikningur') {
+      if (!invoice_number) return null;
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?doc_type=eq.reikningur&invoice_number=eq.${encodeURIComponent(invoice_number)}&drive_file_id=not.is.null&select=id,drive_file_id&limit=1`, { headers: sbHeaders() });
+      const rows = await r.json().catch(() => []); return (Array.isArray(rows) && rows[0]) ? rows[0] : null;
+    }
+    if (!base_id) return null;
+    if ((doc_type === 'uttektarskyrsla' || doc_type === 'brunakerfi') && !year) return null;
+    if (multiSite && !site_id) return null;   // of óvíst til að fullyrða tvítak
+    let url = `${SUPABASE_URL}/rest/v1/customer_documents?doc_type=eq.${encodeURIComponent(doc_type)}&customer_base_id=eq.${base_id}&drive_file_id=not.is.null&select=id,drive_file_id&limit=1`;
+    if (year) url += `&year=eq.${year}`;
+    if (multiSite && site_id) url += `&fyrirtaeki_id=eq.${site_id}`;
+    const r = await fetch(url, { headers: sbHeaders() });
+    const rows = await r.json().catch(() => []); return (Array.isArray(rows) && rows[0]) ? rows[0] : null;
+  } catch (_) { return null; }
+}
+// Rekjanleiki: hvert apply skráð í override_log (best-effort, aldrei kastar).
+async function logApply({ base_id, base_nafn, origName, proposed_name, doc_type, targetFolder, linkAction, conflict }) {
+  try {
+    const newVal = [(proposed_name || origName || ''), '→ ' + (doc_type || '') + (targetFolder ? (' @' + targetFolder) : ''), (linkAction || '')].filter(Boolean).join(' · ');
+    await fetch(`${SUPABASE_URL}/rest/v1/override_log`, {
+      method: 'POST', headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
+      body: JSON.stringify({ field: 'multitool_apply', old_value: origName || null, new_value: newVal, page: 'drive-multitool', co_nafn: base_nafn || null, note: conflict ? 'árekstur — ekki tengt' : null, resolved: true }),
+    });
+  } catch (_) {}
+}
+
+const LINKABLE = new Set(['reikningur', 'uttektarskyrsla', 'brunakerfi', 'samningur']);
+
+// Beitir EINU skjali. Öryggis-samningur að fullu í þessu falli:
+//   • ekkert án id (haus tryggir action:'apply'); GET er les-eingöngu.
+//   • vendor/other → hvorki fært né tengt NEMA UI sendi þeim markmöppu; aldrei tengt.
+//   • markmöppu vantar → færsla sleppt (endurnefna+tengja samt), sagt frá.
+//   • idempotent: rétt nafn → engin endurnefning; þegar í markmöppu → engin færsla;
+//     upsert á drive_file_id.
+//   • best-effort: hver villa skilar {ok:false,error} fyrir ÞETTA skjal (kastar
+//     aldrei hálf-kláruðu í hljóði).
+async function applyFile(token, body) {
+  const id = String(body.id || '').trim();
+  if (!id) return { ok: false, error: 'id required' };
+  const doc_type = String(body.doc_type || '').trim();
+  const base_id = (body.base_id != null && body.base_id !== '') ? Number(body.base_id) : null;
+  const base_nafn = body.base_nafn ? String(body.base_nafn) : null;
+  const year = (body.year != null && body.year !== '') ? Number(body.year) : null;
+  const invoice_number = String(body.invoice_number || '').trim() || null;
+  const site_id = (body.site_id != null && body.site_id !== '') ? Number(body.site_id) : null;
+  const proposed_name = body.proposed_name ? String(body.proposed_name).trim() : null;
+  const targetFolder = folderId(body.targetFolder);
+  const linkMode = ['overwrite', 'if_empty', 'warn'].includes(body.linkMode) ? body.linkMode : 'warn';
+  const isOurs = LINKABLE.has(doc_type);
+
+  // vendor/other: sjálfgefið EKKERT gert; aðeins fært ef UI sendir markmöppu; aldrei tengt.
+  if (!isOurs && !targetFolder) return { ok: true, id, skipped: 'not-ours', renamed: false, moved: false, linked: false, linkAction: 'not-ours' };
+
+  // ── Drive: endurnefna + færa (idempotent) ──
+  let cur;
+  try { cur = await getFile(token, id); } catch (e) { return { ok: false, id, error: 'get: ' + (e.message || e) }; }
+  const origName = cur.name || '';
+  const parents = cur.parents || [];
+  const needRename = !!(proposed_name && proposed_name !== origName);
+  const inTarget = targetFolder ? parents.includes(targetFolder) : true;
+  const needMove = !!(targetFolder && !inTarget);
+  let renamed = false, moved = false;
+  try {
+    if (needRename || needMove) {
+      await movePatch(token, id, {
+        addParents: needMove ? targetFolder : undefined,
+        removeParents: needMove ? parents.join(',') : undefined,
+        name: needRename ? proposed_name : undefined,
+      });
+      renamed = needRename; moved = needMove;
+    }
+  } catch (e) { return { ok: false, id, renamed: false, moved: false, error: 'move/rename: ' + (e.message || e) }; }
+  const moveSkipped = (isOurs && !targetFolder) ? 'no-target' : null;
+
+  // vendor/other MEÐ markmöppu: fært (relocate) en ALDREI tengt í customer_documents.
+  if (!isOurs) {
+    await logApply({ base_id, base_nafn, origName, proposed_name, doc_type, targetFolder, linkAction: 'not-ours', conflict: false });
+    return { ok: true, id, renamed, moved, linked: false, linkAction: 'not-ours', doc_id: null, moveSkipped };
+  }
+
+  // ── Tengja customer_documents eftir linkMode ──
+  let sites = []; try { if (base_id) sites = await sitesForBase(base_id); } catch (_) {}
+  const multiSite = sites.length > 1;
+  let existing = null;
+  try { existing = await findExistingLink({ doc_type, invoice_number, base_id, year, site_id, multiSite }); } catch (_) {}
+  const conflictRow = !!(existing && existing.drive_file_id !== id);   // önnur skrá heldur lyklinum
+
+  // Staðar-heimild: #id-stimpill í nafni er einа sönnunin sem má yfirskrifa
+  // fyrirliggjandi fyrirtaeki_id (via 'stamp'); annars via 'addr' (siteWriteAllowed
+  // leyfir þá aðeins þegar fyrirliggjandi er null eða sami staður).
+  let site = null;
+  if (site_id) {
+    const viaStamp = (siteStampFromName(proposed_name) === site_id) || (siteStampFromName(origName) === site_id);
+    site = { id: site_id, via: viaStamp ? 'stamp' : 'addr' };
+  }
+  const docRow = {
+    customer_base_id: base_id, doc_type, year: year || null, drive_file_id: id,
+    source: 'gdrive', found_by: 'drive-multitool',
+    invoice_number: doc_type === 'reikningur' ? invoice_number : null,
+    customer_name: base_nafn || null,
+    notes: 'drive-multitool' + (invoice_number ? (' · ' + invoice_number) : '') + (year ? (' · ' + year) : '') + (base_id ? '' : ' · RESOLVE'),
+  };
+  if (site && await siteWriteAllowed(id, site)) docRow.fyrirtaeki_id = site.id;
+
+  let linked = false, linkAction = '', conflict = false, doc_id = null;
+  try {
+    if (conflictRow && linkMode === 'warn') {
+      // warn: aldrei skrifa í hljóði — skila árekstri, EKKI tengja.
+      conflict = true; linkAction = 'conflict'; linked = false;
+    } else if (conflictRow && linkMode === 'if_empty') {
+      // if_empty: tengill er þegar til → snerta EKKERT.
+      linkAction = 'skipped_exists'; linked = false;
+    } else if (conflictRow && linkMode === 'overwrite') {
+      // overwrite: beina fyrirliggjandi lykil-röð á ÞESSA skrá; falli það á
+      // einkvæmnisárekstri (þessi skrá á þegar sína röð) → upsert á drive_file_id.
+      try { await patchDocById(existing.id, docRow); linked = true; linkAction = 'overwritten'; doc_id = existing.id; }
+      catch (_) { await upsertDoc(docRow); linked = true; linkAction = 'overwritten'; }
+    } else {
+      // enginn árekstur (enginn tengill, eða tengillinn ER þessi skrá) → upsert.
+      await upsertDoc(docRow); linked = true; linkAction = existing ? 'updated' : 'linked';
+    }
+  } catch (e) { return { ok: false, id, renamed, moved, error: 'link: ' + (e.message || e) }; }
+
+  await logApply({ base_id, base_nafn, origName, proposed_name, doc_type, targetFolder, linkAction, conflict });
+  return { ok: true, id, renamed, moved, linked, linkAction, conflict, doc_id, moveSkipped };
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors(), body: '' };
-  // Les-eingöngu: hafnar öllu sem er ekki GET (engin skrif nokkurs staðar).
-  if (event.httpMethod !== 'GET') return json(405, { error: 'read-only (GET aðeins)' });
   if (!SUPABASE_URL || !SUPABASE_KEY) return json(500, { error: 'Supabase env missing' });
+
+  // Fasi 2 — POST {action:'apply'} (eyðileggjandi, EITT skjal). Ekkert gerist án þess.
+  if (event.httpMethod === 'POST') {
+    let b; try { b = JSON.parse(event.body || '{}'); } catch (_) { return json(400, { error: 'bad json' }); }
+    if (b.action !== 'apply') return json(400, { error: "action must be 'apply'" });
+    if (!b.id) return json(400, { error: 'id required' });
+    let token; try { token = await freshAccessToken(); } catch (e) { return json(401, { error: e.message }); }
+    try { return json(200, await applyFile(token, b)); }
+    catch (e) { return json(200, { ok: false, id: b.id, error: String(e.message || e) }); }
+  }
+
+  // Fasi 1 — GET er alltaf les-eingöngu.
+  if (event.httpMethod !== 'GET') return json(405, { error: 'GET (forskoðun) eða POST {action:apply}' });
 
   try {
     const p = event.queryStringParameters || {};

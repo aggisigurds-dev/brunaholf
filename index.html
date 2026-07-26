@@ -3785,10 +3785,10 @@ function renderBakendi(t){
               <div style="${titleStyle}">Skjala-multitool — sameinuð forskoðun</div>
               <p style="${descStyle};margin-top:4px">Eitt tól sem les Drive-möppu, <b>OCR-flokkar hvert PDF</b> (úttektarskýrsla · brunakerfi · reikningur · samningur · vendor · annað) og sýnir <b>hvað það MYNDI gera</b> — fyrirtæki/stað, þegar-tengt?, tillögu að nafni og markmöppu.</p>
             </div>
-            <span style="${chipStyle('#e0e7ff','#3730a3')}">Fasi 1</span>
+            <span style="${chipStyle('#e0e7ff','#3730a3')}">Fasi 1+2</span>
           </div>
           <div style="background:#eef2ff;border:1px solid #c7d2fe;border-radius:10px;padding:9px 12px;font-size:12px;color:#3730a3;line-height:1.5">
-            <b>Fasi 1 — AÐEINS forskoðun.</b> Ekkert fært eða skrifað (hvorki Drive né gagnagrunnur). Keyra/færa kemur í Fasa 2. Sameinar með tímanum: <b>Skjalalestur</b> (doc-index) · <b>Drive-flokkun</b> · <b>Drive tvítekningar</b> · <b>Endurnefna skýrslur</b> · <b>Skjalavörsla</b> — þau haldast öll virk á meðan.
+            <b>Fasi 1 = forskoðun · Fasi 2 = „▶️ Keyra" (LIFANDI).</b> Keyrsla endurnefnir, <b>FÆRIR</b> skjöl og skrifar tenginguna í gagnagrunn. Öryggi: <b>aldrei eytt</b> (tvítök eru FÆRÐ í ruslmöppu), <b>færsla afturkræf</b> (bara flutt milli mappa), <b>tengi-hamur ræður</b> hvort árekstur skrifast. Keyrt <b>eina röð í einu</b> (þú velur með hökum). Sameinar með tímanum: <b>Skjalalestur</b> · <b>Drive-flokkun</b> · <b>Drive tvítekningar</b> · <b>Endurnefna skýrslur</b> · <b>Skjalavörsla</b> — þau haldast öll virk á meðan.
           </div>
           <div>
             <label style="${labelStyle}">Uppspretta (Drive-mappa til að forskoða)</label>
@@ -3806,6 +3806,29 @@ function renderBakendi(t){
             <span id="bk-mt-status" style="font-size:12.5px;color:#64748b"></span>
           </div>
           <div id="bk-mt-results"></div>
+
+          <!-- Fasi 2 — keyrslu-stillingar (birtast eftir forskoðun) -->
+          <div id="bk-mt-apply" style="display:none;margin-top:6px;border-top:1px dashed #c7d2fe;padding-top:12px">
+            <div style="${labelStyle};margin-bottom:6px">Tengi-hamur (hvernig tenging við gagnagrunn er meðhöndluð)</div>
+            <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:#334155">
+              <label style="display:flex;align-items:center;gap:6px"><input type="radio" name="bk-mt-linkmode" value="warn" checked> 🟠 Vara við árekstra (öruggast)</label>
+              <label style="display:flex;align-items:center;gap:6px"><input type="radio" name="bk-mt-linkmode" value="if_empty"> ➕ Bæta við ef tómt</label>
+              <label style="display:flex;align-items:center;gap:6px"><input type="radio" name="bk-mt-linkmode" value="overwrite"> ♻️ Yfirskrifa</label>
+            </div>
+            <div style="${labelStyle};margin:12px 0 6px">Markmöppur (skjöl færð þangað eftir tegund — 📁 til að velja)</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div><label style="font-size:11px;color:#64748b">🧾 Reikningar (master)</label><input id="bk-mt-tf-reik" value="1FHHX99LRB_9w_LqwHIY57T4l9mLMID7p" placeholder="folder-id / slóð" style="${inpMono};width:100%;box-sizing:border-box;height:38px"></div>
+              <div><label style="font-size:11px;color:#64748b">📄 Úttektarskýrslur</label><input id="bk-mt-tf-skyr" value="1VSRRw6O8U6lU8WzZxA8CkLtrAmiU07mg" placeholder="folder-id / slóð" style="${inpMono};width:100%;box-sizing:border-box;height:38px"></div>
+              <div><label style="font-size:11px;color:#64748b">📝 Samningar</label><input id="bk-mt-tf-samn" value="1f2kzXhbkU0xJ0MFPxRpWjoPmWZBlm1zZ" placeholder="folder-id / slóð" style="${inpMono};width:100%;box-sizing:border-box;height:38px"></div>
+              <div><label style="font-size:11px;color:#64748b">🔔 Brunakerfi (veldu möppu)</label><input id="bk-mt-tf-bruna" value="" placeholder="folder-id / slóð" style="${inpMono};width:100%;box-sizing:border-box;height:38px"></div>
+              <div><label style="font-size:11px;color:#64748b">🗑 Tvítök / rusl</label><input id="bk-mt-tf-dupes" value="1CnnNHm1xCukiTs806z9Ha1nZnSELM9k8" placeholder="folder-id / slóð" style="${inpMono};width:100%;box-sizing:border-box;height:38px"></div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px">
+              <button id="bk-mt-apply-run" class="btn primary">▶️ Keyra valið (0)</button>
+              <button id="bk-mt-apply-stop" class="btn" disabled>⏸ Stöðva</button>
+              <span id="bk-mt-apply-status" style="font-size:12.5px;color:#64748b"></span>
+            </div>
+          </div>
         </div>
 
         <!-- 📊 Skjalatalning (telur skrár í reikningar + skýrslur, per ár) -->
@@ -4627,6 +4650,11 @@ function renderBakendi(t){
       { id:'bk-dd-trash',      title:'📂 Velja rusl-möppu' },
       { id:'bk-ds-src',        title:'📂 Velja uppsprettu-möppu' },
       { id:'bk-mt-src',        title:'📂 Velja möppu til að forskoða (multitool)' },
+      { id:'bk-mt-tf-reik',    title:'📂 Velja Reikningar-markmöppu (multitool)' },
+      { id:'bk-mt-tf-skyr',    title:'📂 Velja Skýrslur-markmöppu (multitool)' },
+      { id:'bk-mt-tf-samn',    title:'📂 Velja Samningar-markmöppu (multitool)' },
+      { id:'bk-mt-tf-bruna',   title:'📂 Velja Brunakerfi-markmöppu (multitool)' },
+      { id:'bk-mt-tf-dupes',   title:'📂 Velja Tvítök/rusl-markmöppu (multitool)' },
       { id:'bk-ds-master',     title:'📂 Velja Master-möppu (reikningar)' },
       { id:'bk-ds-reports',    title:'📂 Velja Skýrslur-möppu' },
       { id:'bk-ds-dupes',      title:'📂 Velja rusl-möppu (tvítök)' },
@@ -5145,7 +5173,26 @@ function renderBakendi(t){
     const $stop = document.getElementById('bk-mt-stop');
     const $status = document.getElementById('bk-mt-status');
     const $results = document.getElementById('bk-mt-results');
+    const $applyBox = document.getElementById('bk-mt-apply');
+    const $applyRun = document.getElementById('bk-mt-apply-run');
+    const $applyStop = document.getElementById('bk-mt-apply-stop');
+    const $applyStatus = document.getElementById('bk-mt-apply-status');
     if (!$run || $run._mtWired) return; $run._mtWired = true;
+
+    const OURS = new Set(['reikningur','uttektarskyrsla','brunakerfi','samningur']);
+    // doc_type → markmöppu-reitur (vendor/other fá enga → sleppt sjálfgefið).
+    function targetFor(dt){
+      const v = id => (document.getElementById(id)||{}).value || '';
+      if (dt==='reikningur') return (v('bk-mt-tf-reik')||'').trim();
+      if (dt==='uttektarskyrsla') return (v('bk-mt-tf-skyr')||'').trim();
+      if (dt==='brunakerfi') return (v('bk-mt-tf-bruna')||'').trim();
+      if (dt==='samningur') return (v('bk-mt-tf-samn')||'').trim();
+      return '';
+    }
+    function linkMode(){
+      const el = document.querySelector('input[name="bk-mt-linkmode"]:checked');
+      return el ? el.value : 'warn';
+    }
 
     // Muna síðustu uppsprettu-möppu milli hleðslna.
     const MT_KEY = 'drive_multitool_src_v1';
@@ -5163,15 +5210,15 @@ function renderBakendi(t){
       error:           { lbl:'⚠️ Villa',            col:'#dc2626' },
     };
 
-    let running = false, rows = [], counts = {};
+    let running = false, applying = false, rows = [], counts = {};
     function paint(done){
       const c = Object.keys(counts).sort().map(k => (DT[k]?DT[k].lbl:k) + ' ' + counts[k]).join(' · ');
       $status.innerHTML = 'Lesin ' + rows.length + ' skjöl' + (c ? (' · ' + c) : '') + (done ? ' <b style="color:#0f7a43">— búið ✅</b>' : (running ? ' …' : ''));
       let body = '';
-      rows.forEach(r => {
+      rows.forEach((r, i) => {
         const dt = DT[r.doc_type] || { lbl:r.doc_type, col:'#334155' };
+        const ours = OURS.has(r.doc_type);
         const muted = (r.doc_type==='vendor' || r.doc_type==='other');
-        const cls = 'greining:' + r.doc_type + (r.sub_hint ? (' (' + r.sub_hint + ')') : '') + (r.issuer_ours===false ? ' · ekki okkar' : '');
         const co = (r.base_nafn ? esc(r.base_nafn) : '<span style="color:#cbd5e1">—</span>')
                  + (r.site_nafn ? ('<div style="font-size:11px;color:#64748b">📍 ' + esc(r.site_nafn) + (r.site_via?(' <span style="color:#94a3b8">('+esc(r.site_via)+')</span>'):'') + '</div>')
                     : (r.kt ? ('<div style="font-size:11px;color:#94a3b8">kt '+esc(r.kt)+'</div>') : ''));
@@ -5180,21 +5227,51 @@ function renderBakendi(t){
           : '<span style="color:#cbd5e1;font-size:11px">nei</span>';
         const prop = r.proposed_name ? esc(r.proposed_name) : '<span style="color:#cbd5e1">—</span>';
         const tgt = r.target ? ('<span style="font-size:11px;color:#475569;background:#f1f5f9;padding:1px 7px;border-radius:6px">'+esc(r.target)+'</span>') : '';
-        body += '<tr style="'+(muted?'opacity:.62;':'')+'border-top:1px solid #eef2f7">'
-          + '<td style="padding:5px 8px;color:#475569;max-width:220px;word-break:break-word">'+esc(r.name)+'</td>'
+        // Hak: sjálfgefið valið fyrir okkar tegundir; vendor/other/villa afvalin+óvirk.
+        const canApply = ours && r.doc_type!=='error';
+        const chk = '<input type="checkbox" class="bk-mt-chk" data-idx="'+i+'"'
+          + (canApply ? (r.__done?'':' checked') : ' disabled')
+          + (r.__done?' disabled':'') + '>';
+        const resCell = r.__res || '<span style="color:#cbd5e1">—</span>';
+        body += '<tr data-row="'+i+'" style="'+(muted?'opacity:.62;':'')+'border-top:1px solid #eef2f7">'
+          + '<td style="padding:5px 6px;text-align:center">'+chk+'</td>'
+          + '<td style="padding:5px 8px;color:#475569;max-width:200px;word-break:break-word">'+esc(r.name)+'</td>'
           + '<td style="padding:5px 8px;white-space:nowrap;color:'+dt.col+';font-weight:700">'+dt.lbl+(r.sub_hint?('<div style="font-size:10.5px;color:#94a3b8;font-weight:400">'+esc(r.sub_hint)+'</div>'):'')+'</td>'
           + '<td style="padding:5px 8px">'+co+'</td>'
           + '<td style="padding:5px 8px;text-align:center">'+linked+'</td>'
-          + '<td style="padding:5px 8px;color:#334155;font-size:11.5px;max-width:240px;word-break:break-word">'+prop+'</td>'
-          + '<td style="padding:5px 8px;white-space:nowrap">'+tgt+'</td></tr>';
+          + '<td style="padding:5px 8px;color:#334155;font-size:11.5px;max-width:220px;word-break:break-word">'+prop+'</td>'
+          + '<td style="padding:5px 8px;white-space:nowrap">'+tgt+'</td>'
+          + '<td class="bk-mt-res" style="padding:5px 8px;font-size:11.5px;white-space:nowrap">'+resCell+'</td></tr>';
       });
       $results.innerHTML = rows.length
         ? '<div style="max-height:480px;overflow:auto;border:1px solid #e2e8f0;border-radius:10px;margin-top:8px">'
           + '<table style="width:100%;border-collapse:collapse;font-size:12px">'
           + '<thead><tr style="position:sticky;top:0;background:#f8fafc;text-align:left;color:#64748b;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em">'
-          + '<th style="padding:6px 8px">Skrá</th><th style="padding:6px 8px">Greining</th><th style="padding:6px 8px">Fyrirtæki</th><th style="padding:6px 8px;text-align:center">Þegar tengt?</th><th style="padding:6px 8px">Tillaga að nafni</th><th style="padding:6px 8px">Markmappa</th>'
+          + '<th style="padding:6px 6px;text-align:center">✓</th><th style="padding:6px 8px">Skrá</th><th style="padding:6px 8px">Greining</th><th style="padding:6px 8px">Fyrirtæki</th><th style="padding:6px 8px;text-align:center">Þegar tengt?</th><th style="padding:6px 8px">Tillaga að nafni</th><th style="padding:6px 8px">Markmappa</th><th style="padding:6px 8px">Niðurstaða</th>'
           + '</tr></thead><tbody>'+body+'</tbody></table></div>'
         : '';
+      // Sýna Fasa-2 borðið um leið og eitthvað er lesið; uppfæra val-teljara.
+      if ($applyBox) $applyBox.style.display = rows.length ? 'block' : 'none';
+      updateSelCount();
+    }
+    // Uppfæra „Keyra valið (N)" teljarann út frá hökunum.
+    function selectedIdxs(){
+      return Array.prototype.slice.call(document.querySelectorAll('.bk-mt-chk'))
+        .filter(c => c.checked && !c.disabled).map(c => parseInt(c.dataset.idx,10));
+    }
+    function updateSelCount(){
+      if (!$applyRun) return;
+      const n = selectedIdxs().length;
+      $applyRun.textContent = '▶️ Keyra valið (' + n + ')';
+      $applyRun.disabled = (n===0) || applying;
+    }
+    if ($results && !$results._mtSel){ $results._mtSel = true;
+      $results.addEventListener('change', e => { if (e.target.classList.contains('bk-mt-chk')) updateSelCount(); }); }
+    // Skrifa niðurstöðu í röð i (uppfærir aðeins þá reit — ekki alla töfluna).
+    function setRes(i, html){
+      rows[i].__res = html;
+      const tr = $results.querySelector('tr[data-row="'+i+'"]');
+      if (tr){ const cell = tr.querySelector('.bk-mt-res'); if (cell) cell.innerHTML = html; }
     }
 
     async function runLoop(){
@@ -5227,6 +5304,65 @@ function renderBakendi(t){
     }
     $run.onclick = runLoop;
     $stop.onclick = () => { running = false; $status.innerHTML += ' (stöðva…)'; };
+
+    // ── Fasi 2: keyra valdar raðir (POST apply), í röð, samhliðni ≤2 ──────────
+    async function applyOne(i){
+      const r = rows[i];
+      setRes(i, '<span style="color:#64748b">… vinn</span>');
+      const body = {
+        action: 'apply', id: r.id, doc_type: r.doc_type,
+        base_id: r.base_id, base_nafn: r.base_nafn, year: r.year,
+        invoice_number: r.invoice_number, site_id: r.site_id,
+        proposed_name: r.proposed_name, targetFolder: targetFor(r.doc_type),
+        linkMode: linkMode(),
+      };
+      try {
+        const rr = await fetch('/api/drive-multitool', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+        const d = await rr.json().catch(()=>({ok:false,error:'HTTP '+rr.status}));
+        r.__done = true;
+        if (!d.ok){ setRes(i, '<span style="color:#dc2626;font-weight:700">✗ '+esc(d.error||'villa')+'</span>'); return {res:'err'}; }
+        if (d.skipped==='not-ours'){ setRes(i, '<span style="color:#94a3b8">— sleppt (ekki okkar)</span>'); return {res:'skip'}; }
+        if (d.conflict){ setRes(i, '<span style="color:#b45309;font-weight:700">⚠ árekstur — ekki tengt</span>'+(d.moved?' <span style="color:#64748b">· fært</span>':'')); return {res:'conflict'}; }
+        const bits = [];
+        if (d.moved) bits.push('fært'); if (d.renamed) bits.push('endurnefnt');
+        if (d.linkAction==='skipped_exists') bits.push('tengill til (ósnert)');
+        else if (d.linked) bits.push('tengt'+(d.linkAction&&d.linkAction!=='linked'?(' ('+d.linkAction+')'):''));
+        if (d.moveSkipped==='no-target') bits.push('engin markmappa');
+        setRes(i, '<span style="color:#0f7a43;font-weight:700">✓ '+esc(bits.join(' + ')||'engin breyting')+'</span>');
+        return {res:'ok'};
+      } catch(e){ r.__done = true; setRes(i, '<span style="color:#dc2626;font-weight:700">✗ '+esc(e&&e.message||e)+'</span>'); return {res:'err'}; }
+    }
+    async function runApply(){
+      const idxs = selectedIdxs();
+      if (!idxs.length) return;
+      const cap = Math.max(parseInt($cap.value||'100',10)||100, 1);
+      const todo = idxs.slice(0, cap);
+      applying = true; $applyStop.disabled = false; $run.disabled = true; $stop.disabled = true;
+      // Óvirkja öll hök meðan keyrt er.
+      document.querySelectorAll('.bk-mt-chk').forEach(c => c.disabled = true);
+      let done=0, ok=0, conflict=0, err=0, skip=0;
+      const total = todo.length;
+      function tick(res){ done++; if(res==='ok')ok++; else if(res==='conflict')conflict++; else if(res==='err')err++; else skip++;
+        $applyStatus.innerHTML = 'Keyrt '+done+'/'+total+' · ✓ '+ok+' · ⚠ '+conflict+' · ✗ '+err+(skip?(' · — '+skip):''); }
+      $applyStatus.textContent = 'Keyri 0/'+total+' …';
+      // Samhliðni ≤2 gegnum einfaldan worker-pool.
+      let cursor = 0;
+      async function worker(){
+        while (applying && cursor < todo.length){
+          const i = todo[cursor++];
+          const { res } = await applyOne(i);
+          tick(res);
+        }
+      }
+      await Promise.all([worker(), worker()]);
+      applying = false; $applyStop.disabled = true; $run.disabled = false; $stop.disabled = true;
+      // Endur-virkja hök á röðum sem eru enn ókeyrðar (t.d. eftir „Stöðva").
+      document.querySelectorAll('.bk-mt-chk').forEach(c => { const i = parseInt(c.dataset.idx,10); if (!rows[i] || !rows[i].__done) c.disabled = false; });
+      $applyStatus.innerHTML += ' <b style="color:#0f7a43">— búið ✅</b>';
+      updateSelCount();
+    }
+    if ($applyRun){ $applyRun.onclick = runApply; }
+    if ($applyStop){ $applyStop.onclick = () => { applying = false; $applyStatus.innerHTML += ' (stöðva…)'; }; }
   })();
 
   // ── 📊 Skjalatalning: count files in reikningar + skýrslur, per year ─────────
