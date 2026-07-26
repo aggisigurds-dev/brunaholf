@@ -245,15 +245,17 @@ function addrMinusCoTail(addr, co) {
   }
   return aw.slice(best).join(' ').replace(/^[\s,]+/, '').trim();
 }
-function nameReport(co, ktd, yr, site) {
+function nameReport(co, ktd, yr, site, kind) {
   const c = sanitize(co) || 'Óþekkt';
-  let s = site ? sanitize(site).replace(/,+/g, ',').replace(/\s*,\s*/g, ', ').replace(/,\s*$/, '') : '';
+  // Normalisera stað: „ - " inni í staðar-nafni („Center Hótel - Plaza") → bil svo
+  // siteMinusCo grípi forskeytið og við fáum ekki „Center Hótel - Center Hótel - Plaza".
+  let s = site ? sanitize(site).replace(/\s+-\s+/g, ' ').replace(/,+/g, ',').replace(/\s*,\s*/g, ', ').replace(/^[\s,-]+|[\s,-]+$/g, '') : '';
   if (s) {
     s = siteMinusCo(s, c);       // rekstrarfélag: strjúka sameiginlegt forskeyti (Steypustöðin)
     s = addrMinusCoTail(s, c);   // húsfélag: strjúka götuna sem er þegar í félagsnafni
-    if (foldWord(c).indexOf(foldWord(s)) !== -1) s = ''; // enn undirstrengur → sleppa
+    if (s && foldWord(c).indexOf(foldWord(s)) !== -1) s = ''; // enn undirstrengur → sleppa
   }
-  return [c, s, ktd || '', 'úttektarskýrsla', yr || ''].filter(Boolean).join(' - ') + '.pdf';
+  return [c, s, ktd || '', kind || 'úttektarskýrsla', yr || ''].filter(Boolean).join(' - ') + '.pdf';
 }
 // Heimilisfang úr SKRÁARHEITI — bútur með húsnúmeri + 3-stafa póstnúmeri + borg
 // („Álftamýri 36, 108 Reykjavík"). Áreiðanlegasta heimildin fyrir þessi vel-nefndu skjöl.
@@ -396,7 +398,7 @@ async function previewFile(token, f) {
     // Aðgreinandi staður/heimilisfang: heimilisfang úr innihaldi > úr skráarheiti >
     // leyst stöð > „hjá fyrirtækinu"-bútur. (Heimilisfang er það sem Agnar vill sjá.)
     const siteDesc = reportAddr(text) || addrFromName(f.name) || (site ? site.nafn : '') || (multiSite ? siteFrom(text) : '');
-    proposed_name = nameReport(coName, ktd, year, siteDesc);
+    proposed_name = nameReport(coName, ktd, year, siteDesc, cls.doc_type === 'brunakerfi' ? 'brunakerfi' : 'úttektarskýrsla');
   }
   else if (cls.doc_type === 'samningur') proposed_name = nameSamningur(coName, ktd, year, cls.sub_hint);
 
