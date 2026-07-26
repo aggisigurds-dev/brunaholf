@@ -274,7 +274,17 @@ function cleanAddr(a) {
   a = String(a || '').trim();
   let prev;
   do { prev = a; a = a.replace(/^(?:vegna|[íi]b[úu][ðd]a?(?:ir|inni?)?|h[úu]sn[æa][ðd]is?|atvinnuh[úu]sn[æa][ðd]is?|fyrir|um)\s+/i, '').trim(); } while (a !== prev);
-  return a;
+  return streetOnly(a);
+}
+// Halda AÐEINS raunverulegu götuheiti + húsnúmeri (+ póstnr/borg) — sleppa félags-/
+// útibúa-orðum sem standa á undan („hótel Arnarhvoll Íngólfsstræti 1" → „Íngólfsstræti
+// 1"). Tekur SÍÐASTA „<Hástafaorð> <húsnúmer>" í strengnum og heldur þaðan.
+function streetOnly(a) {
+  a = String(a || '').trim();
+  const L = 'A-Za-zÁÉÍÓÚÝÆÖÞÐáéíóúýæöþð';
+  const re = new RegExp('[' + L + ']{2,}\\s+\\d{1,4}(?:\\s*[-–]\\s*\\d{1,4})?[a-dA-D]?(?:\\s*,?\\s*\\d{3}\\s+[' + L + ']{2,}(?:bær|borg)?)?\\s*$');
+  const m = a.match(re);
+  return m ? m[0].replace(/\s+/g, ' ').trim() : a;
 }
 // Heimilisfang KAUPANDA úr skýrslu-innihaldi (báðar útfærslur — slökkvitæki-úttekt +
 // brunakerfi-viðtökupróf). Sleppir verktaka-heimilisfangi Slökkvitæki (Helluhraun 10).
