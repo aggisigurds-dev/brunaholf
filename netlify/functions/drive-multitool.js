@@ -206,34 +206,39 @@ async function existingDocId({ cls, inv, baseId, year, siteId, multiSite }) {
 
 // ── flokkun ─────────────────────────────────────────────────────────────────
 // Skilar { doc_type, sub_hint, target }. Röð skiptir máli.
-function classify(text, name, inv, total, issuerOurs) {
+// ORÐALAG RÆÐUR (ekki OCR-viðkvæma útgefanda-merkið): skjöl sem VIÐ gerum
+// (þjónustusamningar + skoðunar-/úttektarskýrslur) eru ALLTAF okkar — OCR-villa
+// á útgefanda á ekki að henda þeim í vendor/other. issuer_ours er aðeins notað
+// til að greina OKKAR reikning frá reikningi frá öðrum (báðir bera „reikningur").
+function classify(text, name, inv, total, issuerOurs, invInName) {
   const t = text || '';
-  if (!issuerOurs) {
-    // Útgefandi er EKKI Slökkvitæki. Reikningslegt orðalag → vendor (reikningur
-    // sem við fengum); annars → other (mbox, launaseðill, óþekkt).
-    const looksInvoice = !!inv || /reikningur|kreditreikning/i.test(t);
-    return { doc_type: looksInvoice ? 'vendor' : 'other', sub_hint: '', target: 'óflokkað' };
-  }
-  // Slökkvitæki-útgefið héðan í frá.
-  if (inv) {
-    // reikningur — R-nr er sterkasta merkið. sub_hint: úttektar-reikningur (lítil
-    // upphæð ~ akstur+skoðun) vs brunakerfi-reikningur (ársskoðun brunakerfis).
-    let sub = '';
-    if (/[áa]rssko[ðd]un\s+brunakerfis|sk[ýy]rslugerð/i.test(t) || total === 8387 || (total && total >= 6000 && /brunakerfi|brunavi[ðd]v[öo]run/i.test(t))) sub = 'brunakerfi-reikningur';
-    else if ((total && total < 5000) || (total && total >= 3000 && total <= 3500)) sub = 'úttektar-reikningur';
-    return { doc_type: 'reikningur', sub_hint: sub, target: 'reikningar-master' };
-  }
-  if (isSamningur(t)) {
-    const sub = /brunakerfi|brunavi[ðd]v[öo]run/i.test(t) ? 'brunakerfi' : 'slökkvitæki';
+  const nm = name || '';
+  // 1) Þjónustusamningur — sérkennandi orðalag, ekkert R-númer.
+  if ((isSamningur(t) || /þj[óo]nustusamning/i.test(nm)) && !inv) {
+    const sub = /brunakerfi|brunavi[ðd]v[öo]run/i.test(t + ' ' + nm) ? 'brunakerfi' : 'slökkvitæki';
     return { doc_type: 'samningur', sub_hint: sub, target: 'samningar' };
   }
-  // Hrein brunakerfis-skýrsla: brunaviðvörunar-orðalag OG engar slökkvitækja-talningar.
+  // 2) Reikningur — R-nr + „okkar"-merki (útgefanda-merki EÐA okkar nafna-venja).
+  //    R-nr vinnur á undan skýrslu-orðalagi (sama röð og drive-sort).
+  if (inv && (issuerOurs || invInName)) {
+    // sub_hint AÐEINS af orðalagi — hrein upphæð (≥6000) er of gróft merki og
+    // flaggaði venjulega slökkvitækja-reikninga ranglega sem brunakerfi.
+    let sub = '';
+    if (/[áa]rssko[ðd]un\s+brunakerfis|sk[ýy]rsluger[ðd]/i.test(t) ||
+        (/brunakerfi|brunavi[ðd]v[öo]run/i.test(t) && !hasExtinguisherCounts(t))) sub = 'brunakerfi-reikningur';
+    else if (total && total < 5000) sub = 'úttektar-reikningur';
+    return { doc_type: 'reikningur', sub_hint: sub, target: 'reikningar-master' };
+  }
+  // 3) Hrein brunakerfis-skýrsla: brunaviðvörunar-orðalag OG engar slökkvitækja-talningar.
   if (isAlarmReport(t) && !hasExtinguisherCounts(t)) {
     const sub = /vi[ðd]t[öo]kupr[óo]f/i.test(t) ? 'viðtökupróf' : (/árleg/i.test(t) ? 'árleg prófun' : '');
     return { doc_type: 'brunakerfi', sub_hint: sub, target: 'brunakerfi' };
   }
+  // 4) Slökkvitækja-úttektarskýrsla.
   if (isReport(t)) return { doc_type: 'uttektarskyrsla', sub_hint: '', target: 'skýrslur-reports' };
-  return { doc_type: 'other', sub_hint: '', target: 'óflokkað' };
+  // 5) Ekki okkar útgáfa (eða óviss): reikningslegt orðalag → vendor, annars other.
+  const looksInvoice = !!inv || /reikningur|kreditreikning/i.test(t);
+  return { doc_type: looksInvoice ? 'vendor' : 'other', sub_hint: '', target: 'óflokkað' };
 }
 
 // Forskoðun EINS skjals — les innihald, flokkar, byggir tengi-tillögu. ENGIN skrif.
@@ -243,10 +248,13 @@ async function previewFile(token, f) {
   const kt = customerKt(text) || customerKt(f.name);
   const ktd = kt ? dash(kt) : '';
   const inv = invNum(text, f.name);
+  // Ber skráarheitið OKKAR R-númera-venju („ - R NNNNNN - ")? Sterkt „okkar"-merki
+  // óháð OCR (endurnefndir reikningar bera hana; vendor-skrár eins og Redder ekki).
+  const invInName = /\bR[\s\-_]?\d{5,7}\b/i.test(f.name || '');
   const year = yearFrom(f.name) || yearFrom(text);
   const total = totalFrom(text);
 
-  const cls = classify(text, f.name, inv, total, issuerOurs);
+  const cls = classify(text, f.name, inv, total, issuerOurs, invInName);
 
   // Hryggur: base úr kt; staður AÐEINS með sönnun (_spine.resolveSite).
   let base = null, sites = [], site = null, multiSite = false;
