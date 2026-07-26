@@ -461,7 +461,7 @@
         +   (isDupe?'<span class="badge-dupe">🔁 aukaeintak</span> ':'')
         +   (r.__edited?'<span class="badge-edit">✏️ leiðrétt</span> ':'')
         +   '<a class="fname" href="https://drive.google.com/file/d/'+esc(r.id)+'/view" target="_blank" rel="noopener" data-nostop="1" title="Opna í Drive í nýjum flipa">'+esc(r.name)+'</a>'
-        +   ((hasAnnad && !r.__done) ? '<button class="rm-btn" data-rm="'+i+'" data-nostop="1" title="Fjarlægja — færa skrána í Annað-möppuna">✕</button>' : '')
+        +   (!r.__done ? '<button class="rm-btn" data-rm="'+i+'" data-nostop="1" title="Fjarlægja af listanum'+(hasAnnad?' — færa skrána í Annað-möppuna':'')+'">✕</button>' : '')
         + '</div>'
         + '<div class="l2">'+bits.join('')+'</div>'
         + editor
@@ -496,10 +496,25 @@
     updateSelCount();
   }
 
-  // ── ✕ Fjarlægja röð: færa skrána í Annað-möppuna (hrein færsla, afturkræf) ──
+  // ── ✕ Fjarlægja röð: taka af listanum + (ef Annað-mappa er valin) færa skrána
+  //    þangað. Ef mappan er ekki valin → bjóða að fjarlægja bara af listanum
+  //    (skráin verður EKKI færð, birtist aftur við næstu skönnun). Aldrei eytt.
+  function dropRow(i){
+    rows.splice(i,1);
+    if(sel===i){ sel=-1; $('pv-empty').style.display='flex'; $('pv-frame').style.display='none'; $('pv-name').textContent='Veldu skrá til að forskoða'; $('pv-open').style.display='none'; }
+    else if(sel>i){ sel--; }
+    recount(); paint(false);
+  }
   async function removeToAnnad(i){
     var r=rows[i]; if(!r) return;
-    var annad=val('tf-annad'); if(!annad){ alert('Vantar „Annað / óflokkað" möppu (fylltu reitinn efst).'); return; }
+    var annad=val('tf-annad');
+    if(!annad){
+      // Engin Annað-mappa valin → getum ekki fært. Bjóða að fjarlægja bara af listanum.
+      if(confirm('„Annað / óflokkað"-mappa er ekki valin, svo skráin verður ekki færð í Drive (hún gæti birst aftur við næstu skönnun).\n\nViltu samt fjarlægja röðina af listanum núna?\n\n(Til að FÆRA skrárnar í Annað-möppu: fylltu 📦 „Annað / óflokkað" reitinn efst.)')){
+        dropRow(i);
+      }
+      return;
+    }
     setRes(i,'<span style="color:#64748b">… færi í Annað</span>');
     var d;
     try{
@@ -507,12 +522,7 @@
       d=await rr.json().catch(function(){return{ok:false,error:'HTTP '+rr.status};});
     }catch(e){ d={ok:false,error:(e&&e.message)||'net'}; }
     if(!d.ok){ setRes(i,'<span style="color:#dc2626;font-weight:700">✗ '+esc(d.error||'villa')+'</span>'); return; }
-    // fært → taka röðina af listanum (og af forskoðun ef hún var valin)
-    rows.splice(i,1);
-    if(sel===i){ sel=-1; $('pv-empty').style.display='flex'; $('pv-frame').style.display='none'; $('pv-name').textContent='Veldu skrá til að forskoða'; $('pv-open').style.display='none'; }
-    else if(sel>i){ sel--; }
-    recount();
-    paint(false);
+    dropRow(i);   // fært í Annað → taka röðina af listanum
   }
 
   // ── Vista leiðréttingu: uppfæra röð + skrá í villuskýrsluna ──
