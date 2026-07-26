@@ -747,6 +747,21 @@ async function moveDupe(token, body, opts = {}) {
   return { ok: true, id, moved: true };
 }
 
+// Eyða skrá — í RUSLAFÖTU Drive (trashed=true), EKKI varanleg eyðing (files.delete).
+// Afturkræft: skráin er endurheimtanleg úr Drive-rusli í ~30 daga. Þarf enga
+// markmöppu (þess vegna „delete-hnappurinn" sem virkar strax). Skráð í override_log.
+async function trashFile(token, body) {
+  const id = String(body.id || '').trim();
+  if (!id) return { ok: false, error: 'id required' };
+  let cur; try { cur = await getFile(token, id); } catch (e) { return { ok: false, id, error: 'get: ' + (e.message || e) }; }
+  const r = await fetch('https://www.googleapis.com/drive/v3/files/' + id + '?supportsAllDrives=true&fields=id,trashed', {
+    method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ trashed: true }),
+  });
+  if (!r.ok) return { ok: false, id, error: 'trash ' + r.status + ': ' + (await r.text()).slice(0, 160) };
+  await logApply({ base_id: null, base_nafn: body.base_nafn || null, origName: cur.name || '', proposed_name: null, doc_type: 'eytt', targetFolder: null, linkAction: 'trashed', conflict: false });
+  return { ok: true, id, trashed: true };
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors(), body: '' };
   if (!SUPABASE_URL || !SUPABASE_KEY) return json(500, { error: 'Supabase env missing' });
@@ -760,12 +775,13 @@ exports.handler = async (event) => {
       try { return json(200, await logCorrection(b)); }
       catch (e) { return json(200, { ok: false, error: String(e.message || e) }); }
     }
-    if (b.action !== 'apply' && b.action !== 'move-dupe' && b.action !== 'move-annad') return json(400, { error: "action must be 'apply', 'move-dupe', 'move-annad' or 'log-correction'" });
+    if (b.action !== 'apply' && b.action !== 'move-dupe' && b.action !== 'move-annad' && b.action !== 'trash') return json(400, { error: "action must be 'apply', 'move-dupe', 'move-annad', 'trash' or 'log-correction'" });
     if (!b.id) return json(400, { error: 'id required' });
     let token; try { token = await freshAccessToken(); } catch (e) { return json(401, { error: e.message }); }
     try {
       if (b.action === 'move-dupe') return json(200, await moveDupe(token, b));
       if (b.action === 'move-annad') return json(200, await moveDupe(token, b, { docType: 'annað', linkAction: 'moved-to-annad', alreadyNote: 'þegar í Annað' }));
+      if (b.action === 'trash') return json(200, await trashFile(token, b));
       return json(200, await applyFile(token, b));
     } catch (e) { return json(200, { ok: false, id: b.id, error: String(e.message || e) }); }
   }
