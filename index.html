@@ -3820,7 +3820,8 @@ function renderBakendi(t){
               <div><label style="font-size:11px;color:#64748b">🧾 Reikningar (master)</label><input id="bk-mt-tf-reik" value="1FHHX99LRB_9w_LqwHIY57T4l9mLMID7p" placeholder="folder-id / slóð" style="${inpMono};width:100%;box-sizing:border-box;height:38px"></div>
               <div><label style="font-size:11px;color:#64748b">📄 Úttektarskýrslur</label><input id="bk-mt-tf-skyr" value="1VSRRw6O8U6lU8WzZxA8CkLtrAmiU07mg" placeholder="folder-id / slóð" style="${inpMono};width:100%;box-sizing:border-box;height:38px"></div>
               <div><label style="font-size:11px;color:#64748b">📝 Samningar</label><input id="bk-mt-tf-samn" value="1f2kzXhbkU0xJ0MFPxRpWjoPmWZBlm1zZ" placeholder="folder-id / slóð" style="${inpMono};width:100%;box-sizing:border-box;height:38px"></div>
-              <div><label style="font-size:11px;color:#64748b">🔔 Brunakerfi (veldu möppu)</label><input id="bk-mt-tf-bruna" value="" placeholder="folder-id / slóð" style="${inpMono};width:100%;box-sizing:border-box;height:38px"></div>
+              <div><label style="font-size:11px;color:#64748b">🔔 Brunakerfisskýrslur</label><input id="bk-mt-tf-bruna" value="" placeholder="folder-id / slóð" style="${inpMono};width:100%;box-sizing:border-box;height:38px"></div>
+              <div><label style="font-size:11px;color:#64748b">🔔 Brunakerfis reikningar</label><input id="bk-mt-tf-bruna-reik" value="" placeholder="folder-id / slóð" style="${inpMono};width:100%;box-sizing:border-box;height:38px"></div>
               <div><label style="font-size:11px;color:#64748b">🗑 Tvítök / rusl</label><input id="bk-mt-tf-dupes" value="1CnnNHm1xCukiTs806z9Ha1nZnSELM9k8" placeholder="folder-id / slóð" style="${inpMono};width:100%;box-sizing:border-box;height:38px"></div>
             </div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px">
@@ -4653,7 +4654,8 @@ function renderBakendi(t){
       { id:'bk-mt-tf-reik',    title:'📂 Velja Reikningar-markmöppu (multitool)' },
       { id:'bk-mt-tf-skyr',    title:'📂 Velja Skýrslur-markmöppu (multitool)' },
       { id:'bk-mt-tf-samn',    title:'📂 Velja Samningar-markmöppu (multitool)' },
-      { id:'bk-mt-tf-bruna',   title:'📂 Velja Brunakerfi-markmöppu (multitool)' },
+      { id:'bk-mt-tf-bruna',   title:'📂 Velja Brunakerfisskýrslur-markmöppu (multitool)' },
+      { id:'bk-mt-tf-bruna-reik', title:'📂 Velja Brunakerfis reikningar-markmöppu (multitool)' },
       { id:'bk-mt-tf-dupes',   title:'📂 Velja Tvítök/rusl-markmöppu (multitool)' },
       { id:'bk-ds-master',     title:'📂 Velja Master-möppu (reikningar)' },
       { id:'bk-ds-reports',    title:'📂 Velja Skýrslur-möppu' },
@@ -5180,10 +5182,17 @@ function renderBakendi(t){
     if (!$run || $run._mtWired) return; $run._mtWired = true;
 
     const OURS = new Set(['reikningur','uttektarskyrsla','brunakerfi','samningur']);
-    // doc_type → markmöppu-reitur (vendor/other fá enga → sleppt sjálfgefið).
-    function targetFor(dt){
+    // röð → markmöppu-reitur (vendor/other fá enga → sleppt sjálfgefið).
+    // Brunakerfi hefur TVÆR möppur: skýrslur (doc_type brunakerfi) og reikningar
+    // (doc_type reikningur + sub_hint brunakerfi-reikningur; fellur á reikningar-
+    // master ef brunakerfi-reikninga-mappan er ekki fyllt).
+    function targetFor(r){
       const v = id => (document.getElementById(id)||{}).value || '';
-      if (dt==='reikningur') return (v('bk-mt-tf-reik')||'').trim();
+      const dt = (r && r.doc_type) || '', sub = (r && r.sub_hint) || '';
+      if (dt==='reikningur') {
+        if (sub==='brunakerfi-reikningur') return (v('bk-mt-tf-bruna-reik')||v('bk-mt-tf-reik')||'').trim();
+        return (v('bk-mt-tf-reik')||'').trim();
+      }
       if (dt==='uttektarskyrsla') return (v('bk-mt-tf-skyr')||'').trim();
       if (dt==='brunakerfi') return (v('bk-mt-tf-bruna')||'').trim();
       if (dt==='samningur') return (v('bk-mt-tf-samn')||'').trim();
@@ -5235,7 +5244,7 @@ function renderBakendi(t){
         const resCell = r.__res || '<span style="color:#cbd5e1">—</span>';
         body += '<tr data-row="'+i+'" style="'+(muted?'opacity:.62;':'')+'border-top:1px solid #eef2f7">'
           + '<td style="padding:5px 6px;text-align:center">'+chk+'</td>'
-          + '<td style="padding:5px 8px;color:#475569;max-width:200px;word-break:break-word">'+esc(r.name)+'</td>'
+          + '<td style="padding:5px 8px;max-width:200px;word-break:break-word"><a href="https://drive.google.com/file/d/'+esc(r.id)+'/view" target="_blank" rel="noopener" title="Opna skjalið í Drive" style="color:#1d4ed8;text-decoration:none">'+esc(r.name)+' <span style="color:#94a3b8">↗</span></a></td>'
           + '<td style="padding:5px 8px;white-space:nowrap;color:'+dt.col+';font-weight:700">'+dt.lbl+(r.sub_hint?('<div style="font-size:10.5px;color:#94a3b8;font-weight:400">'+esc(r.sub_hint)+'</div>'):'')+'</td>'
           + '<td style="padding:5px 8px">'+co+'</td>'
           + '<td style="padding:5px 8px;text-align:center">'+linked+'</td>'
@@ -5313,7 +5322,7 @@ function renderBakendi(t){
         action: 'apply', id: r.id, doc_type: r.doc_type,
         base_id: r.base_id, base_nafn: r.base_nafn, year: r.year,
         invoice_number: r.invoice_number, site_id: r.site_id,
-        proposed_name: r.proposed_name, targetFolder: targetFor(r.doc_type),
+        proposed_name: r.proposed_name, targetFolder: targetFor(r),
         linkMode: linkMode(),
       };
       try {

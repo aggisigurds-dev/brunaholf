@@ -699,11 +699,17 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
     beinir lykil-röð á ranga skrá — því er `warn` sjálfgefið og aldrei skrifað án
     ótvíræðs vals; jafnvel þá er skráin bara FÆRÐ (afturkræft), ekkert eytt.
   - **UI (Bakendi-spjaldið):** linkMode-rofi (warn sjálfgefinn), markmöppu-reitir per
-    tegund (reikningar-master · skýrslur · samningar · brunakerfi · rusl, með 📁 Velja
-    picker), hak per röð (sjálfgefið valið fyrir okkar tegundir; vendor/other/villa
-    afvalin+óvirk) + „▶️ Keyra valið (N)" sem POST-ar valdar raðir í röð (samhliðni
-    ≤2) með lifandi framvindu + niðurstöðu per röð (✓ fært+tengt / ⚠ árekstur / ✗
-    villa / — sleppt) + „⏸ Stöðva"; virðir „Stöðva eftir N" þakið.
+    tegund (reikningar-master · skýrslur · samningar · **brunakerfisskýrslur** ·
+    **brunakerfis reikningar** · rusl, með 📁 Velja picker), hak per röð (sjálfgefið
+    valið fyrir okkar tegundir; vendor/other/villa afvalin+óvirk) + „▶️ Keyra valið (N)"
+    sem POST-ar valdar raðir í röð (samhliðni ≤2) með lifandi framvindu + niðurstöðu
+    per röð (✓ fært+tengt / ⚠ árekstur / ✗ villa / — sleppt) + „⏸ Stöðva"; virðir
+    „Stöðva eftir N" þakið. **Skrá-nafnið í forskoðuninni er tengill** → opnar PDF-ið í
+    Drive (`drive.google.com/file/d/<id>/view`) svo hægt sé að skoða skjalið fyrir apply.
+  - **Brunakerfi — TVÆR markmöppur (2026-07-26):** skýrslur (doc_type `brunakerfi` →
+    target `brunakerfi-skýrslur`) og reikningar (doc_type `reikningur` + sub_hint
+    `brunakerfi-reikningur` → target `brunakerfi-reikningar`) fara í SITT hvora möppuna;
+    brunakerfis-reikningur fellur á reikningar-master ef sú mappa er ekki fyllt.
 
 - `drive-count.js` — **Bakendi „📊 Skjalatalning"** (`/api/drive-count`): read-only
   file counter for the reikningar (master) + skýrslur Drive folders, broken down
