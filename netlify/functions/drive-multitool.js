@@ -250,16 +250,30 @@ function streetName(addr) {
   const m = String(addr || '').match(/^([A-ZÁÉÍÓÚÝÆÖÞÐ][A-Za-zÁÉÍÓÚÝÆÖÞÐáéíóúýæöþð.]+(?:\s+[A-Za-zÁÉÍÓÚÝÆÖÞÐáéíóúýæöþð.]+){0,1})\s+\d/);
   return m ? m[1].trim() : '';
 }
-function nameReport(co, ktd, yr, site, kind, multiSite) {
+// ehf/hf-viðskeyti: strjúka (fyrir útibú) eða tryggja (fyrir höfuðstöð).
+function stripEhf(s) { return String(s || '').replace(/[\s,]*\b(?:ehf|hf)\.?\s*$/i, '').trim(); }
+function ensureEhf(s) { s = String(s || '').trim(); return /\b(?:ehf|hf)\.?\s*$/i.test(s) ? s : (s + ' ehf'); }
+// Er STAÐUR (fyrirtaeki-nafn) höfuðstöð rekstrarfélagsins? Merki: nafnið endar á
+// ehf/hf (= grunn-nafnið sjálft, ekki „- <gata>" útibú) EÐA ber HQ/skrifstofu-merki.
+function isHqSite(nafn) {
+  const n = String(nafn || '');
+  if (/\((?:[^)]*)(?:hq|skrifstofa|h[öo]fu[ðd]st[öo])/i.test(n)) return true;
+  if (/\b(?:skrifstofa|h[öo]fu[ðd]st[öo]var?)\b/i.test(n)) return true;
+  return /\b(?:ehf|hf)\.?\s*$/i.test(n) && !/\s-\s/.test(n); // „Bílabúð Benna ehf" en ekki „Colas - X ehf"
+}
+function nameReport(co, ktd, yr, site, kind, multiSite, hq) {
   const c = sanitize(co) || 'Óþekkt';
   // Normalisera stað: „ - " inni í staðar-nafni („Center Hótel - Plaza") → bil.
   let s = site ? sanitize(site).replace(/\s+-\s+/g, ' ').replace(/,+/g, ',').replace(/\s*,\s*/g, ', ').replace(/^[\s,-]+|[\s,-]+$/g, '') : '';
-  // Rekstrarfélag (Center Hótel: >1 lifandi staður) — útibú auðkennt með GÖTU (ósk
-  // Agnars): „Center Hótel Aðalstræti - Aðalstræti 6, 101 Reykjavík". Félagsnafnið fær
-  // götuheitið aftan á (ef það er ekki þegar þar), fullt heimilisfang helst sem lýsing.
+  // Rekstrarfélag (>1 lifandi staður). Höfuðstöð → „<Félag> ehf" (engin gata).
+  // Útibú → „<Félag án ehf> <Gata> - <heimilisfang>" („Center Hótel Aðalstræti -
+  // Aðalstræti 6, 101 Reykjavík"; „Colas Ísland Gullhella - …").
+  if (multiSite && hq) {
+    return [ensureEhf(c), ktd || '', kind || 'úttektarskýrsla', yr || ''].filter(Boolean).join(' - ') + '.pdf';
+  }
   if (multiSite && s) {
-    const st = streetName(s);
-    const cb = (st && foldWord(c).indexOf(foldWord(st)) === -1) ? (c + ' ' + st) : c;
+    const st = streetName(s), base = stripEhf(c);
+    const cb = (st && foldWord(base).indexOf(foldWord(st)) === -1) ? (base + ' ' + st) : base;
     return [cb, s, ktd || '', kind || 'úttektarskýrsla', yr || ''].filter(Boolean).join(' - ') + '.pdf';
   }
   // Eins-staðar félög/húsfélög: strjúka götuna úr lýsingu ef hún er þegar í nafni.
@@ -436,7 +450,8 @@ async function previewFile(token, f) {
     // Aðgreinandi staður/heimilisfang: heimilisfang úr innihaldi > úr skráarheiti >
     // leyst stöð > „hjá fyrirtækinu"-bútur. (Heimilisfang er það sem Agnar vill sjá.)
     const siteDesc = cleanAddr(reportAddr(text) || addrFromName(f.name)) || (site ? site.nafn : '') || (multiSite ? siteFrom(text) : '');
-    proposed_name = nameReport(coName, ktd, year, siteDesc, cls.doc_type === 'brunakerfi' ? 'brunakerfi' : 'úttektarskýrsla', multiSite);
+    const siteIsHq = !!(site && isHqSite(site.nafn));
+    proposed_name = nameReport(coName, ktd, year, siteDesc, cls.doc_type === 'brunakerfi' ? 'brunakerfi' : 'úttektarskýrsla', multiSite, siteIsHq);
   }
   else if (cls.doc_type === 'samningur') proposed_name = nameSamningur(coName, ktd, year, cls.sub_hint);
 
