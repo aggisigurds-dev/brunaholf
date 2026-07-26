@@ -143,8 +143,15 @@ function slokkviIssuer(text) {
   if (/VSK\s*nr\.?\s*:?\s*98107|\b98107\b|fyrir\s+h[öo]nd\s+sl[öo]kkvit[æa]ki|verktaki:?\s*sl[öo]kkvit[æa]ki|yfirfarin\s+af\s+sl[öo]kkvit[æa]ki/i.test(t)) return true;
   // Bakvörn þegar hausinn/98107 les illa (gamlir „Stolpi"-reikningar): Slökkvitæki-
   // þjónustulínur. Þessi orð eru á reikningi SEM VIÐ GEFUM ÚT (okkar vörulisti) — birgja-
-  // reikningur til okkar ber þau aldrei. Krefjumst ≥2 aðgreinandi svo þetta sé öruggt.
-  return slokkviServiceLines(t) >= 2;
+  // reikningur til okkar ber þau aldrei. Krefjumst ≥2 aðgreinandi OG að Akstur EÐA
+  // Skýrslugerð sé á reikningnum (Agnar 2026-07-26): þessar tvær línur eru á NÆR ÖLLUM
+  // okkar þjónustureikningum en aldrei á birgja-reikningi til okkar → herðir fallbackið.
+  return slokkviServiceLines(t) >= 2 && hasAksturOrSkyrsla(t);
+}
+// Akstur eða Skýrslugerð — einkennislínur á okkar þjónustureikningi. Krafa fyrir
+// veika þjónustulínu-fallbackið (98107-seljanda-merkið stendur eitt sér, óháð þessu).
+function hasAksturOrSkyrsla(text) {
+  return /\bakstur\b/i.test(text || '') || /sk[ýy]rslu(?:g?jer[ðd]|ger[ðd])/i.test(text || '');
 }
 // Fjöldi aðgreinandi Slökkvitæki-þjónustulína í texta (okkar vörulisti).
 function slokkviServiceLines(text) {
@@ -721,19 +728,22 @@ async function applyFile(token, body) {
   return { ok: true, id, renamed, moved, linked, linkAction, conflict, doc_id, moveSkipped };
 }
 
-// Færa AUKA-eintak af tvítaki í ruslmöppu — hrein færsla, ENGIN endurnefning,
-// ENGIN DB-tenging, ENGIN eyðing (afturkræft). Aldrei snert skráin sem er höfð.
-async function moveDupe(token, body) {
+// Hrein færsla EINS skjals í markmöppu — ENGIN endurnefning, ENGIN DB-tenging,
+// ENGIN eyðing (afturkræft). Notað bæði fyrir „🗑 Færa aukaeintök í rusl" (tvítök)
+// og „✕ Fjarlægja → Annað" (fjarlægja ranga forskoðunar-röð í Annað-möppuna).
+// `opts.docType`/`opts.linkAction` stýra einungis override_log-merkinu.
+async function moveDupe(token, body, opts = {}) {
   const id = String(body.id || '').trim();
   const targetFolder = folderId(body.targetFolder);
+  const already = opts.alreadyNote || 'þegar í rusli';
   if (!id) return { ok: false, error: 'id required' };
-  if (!targetFolder) return { ok: false, id, error: 'targetFolder (rusl) required' };
+  if (!targetFolder) return { ok: false, id, error: 'targetFolder required' };
   let cur; try { cur = await getFile(token, id); } catch (e) { return { ok: false, id, error: 'get: ' + (e.message || e) }; }
   const parents = cur.parents || [];
-  if (parents.includes(targetFolder)) return { ok: true, id, moved: false, note: 'þegar í rusli' };
+  if (parents.includes(targetFolder)) return { ok: true, id, moved: false, note: already };
   try { await movePatch(token, id, { addParents: targetFolder, removeParents: parents.join(',') }); }
   catch (e) { return { ok: false, id, error: 'move: ' + (e.message || e) }; }
-  await logApply({ base_id: null, base_nafn: body.base_nafn || null, origName: cur.name || '', proposed_name: null, doc_type: 'tvítak', targetFolder, linkAction: 'moved-to-bin', conflict: false });
+  await logApply({ base_id: null, base_nafn: body.base_nafn || null, origName: cur.name || '', proposed_name: null, doc_type: opts.docType || 'tvítak', targetFolder, linkAction: opts.linkAction || 'moved-to-bin', conflict: false });
   return { ok: true, id, moved: true };
 }
 
@@ -750,11 +760,14 @@ exports.handler = async (event) => {
       try { return json(200, await logCorrection(b)); }
       catch (e) { return json(200, { ok: false, error: String(e.message || e) }); }
     }
-    if (b.action !== 'apply' && b.action !== 'move-dupe') return json(400, { error: "action must be 'apply', 'move-dupe' or 'log-correction'" });
+    if (b.action !== 'apply' && b.action !== 'move-dupe' && b.action !== 'move-annad') return json(400, { error: "action must be 'apply', 'move-dupe', 'move-annad' or 'log-correction'" });
     if (!b.id) return json(400, { error: 'id required' });
     let token; try { token = await freshAccessToken(); } catch (e) { return json(401, { error: e.message }); }
-    try { return json(200, b.action === 'move-dupe' ? await moveDupe(token, b) : await applyFile(token, b)); }
-    catch (e) { return json(200, { ok: false, id: b.id, error: String(e.message || e) }); }
+    try {
+      if (b.action === 'move-dupe') return json(200, await moveDupe(token, b));
+      if (b.action === 'move-annad') return json(200, await moveDupe(token, b, { docType: 'annað', linkAction: 'moved-to-annad', alreadyNote: 'þegar í Annað' }));
+      return json(200, await applyFile(token, b));
+    } catch (e) { return json(200, { ok: false, id: b.id, error: String(e.message || e) }); }
   }
 
   // Fasi 1 — GET er alltaf les-eingöngu.
