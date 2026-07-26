@@ -108,6 +108,28 @@
   .dupbar .btn.warn{ background:#ea580c; color:#fff; border-color:#c2410c; }
   .item.dupe{ border-left-color:#ea580c !important; }
   .badge-dupe{ display:inline-block; background:#ffedd5; color:#9a3412; font-size:10.5px; font-weight:800; padding:1px 7px; border-radius:99px; }
+  .item.edited{ border-left-color:#0f7a43 !important; }
+  .badge-edit{ display:inline-block; background:#dcfce7; color:#166534; font-size:10.5px; font-weight:800; padding:1px 7px; border-radius:99px; }
+  /* inline correction editor */
+  .edit-btn{ border:1px solid #cbd5e1; background:#fff; color:#334155; border-radius:7px; padding:2px 9px; font-size:11.5px; font-weight:700; cursor:pointer; }
+  .edit-btn:hover{ background:#eef2ff; border-color:#c7d2fe; color:#3730a3; }
+  .editor{ margin-top:9px; padding:11px 12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:9px; }
+  .editor label{ display:block; font-size:11px; font-weight:700; color:#64748b; margin:8px 0 3px; }
+  .editor .ed-grid{ display:flex; gap:10px; flex-wrap:wrap; }
+  .editor .ed-grid > div{ flex:1; min-width:130px; }
+  .editor input, .editor select, .editor textarea{ width:100%; background:#fff; color:#0f172a; border:1px solid #cbd5e1; border-radius:7px; padding:7px 9px; font-size:13px; height:auto; }
+  .editor textarea{ min-height:46px; resize:vertical; font-family:inherit; }
+  .editor .ed-name{ font-weight:600; }
+  .editor .ed-btns{ display:flex; gap:9px; align-items:center; margin-top:11px; flex-wrap:wrap; }
+  .editor .ed-msg{ font-size:12px; }
+  /* corrections log modal */
+  .clist{ overflow:auto; padding:6px 4px 12px; }
+  .crow{ border-bottom:1px solid var(--line); padding:9px 6px; font-size:12.5px; }
+  .crow .cf{ font-weight:700; color:#0f172a; word-break:break-word; }
+  .crow .cprop{ color:#b91c1c; text-decoration:line-through; word-break:break-word; }
+  .crow .ccorr{ color:#166534; font-weight:600; word-break:break-word; }
+  .crow .cmeta{ color:#94a3b8; font-size:11px; margin-top:2px; }
+  .crow .cnote{ color:#475569; font-style:italic; margin-top:2px; }
 </style>
 </head>
 <body>
@@ -120,6 +142,7 @@
     <button id="run" class="btn primary">👁 Forskoða</button>
     <button id="stop" class="btn" disabled>⏸ Stöðva</button>
     <button id="save-folder" class="btn sm" title="Vista þessa möppu sem tengil">💾 Vista möppu</button>
+    <button id="show-corr" class="btn sm" title="Skoða leiðréttingaskrána (villuskýrslu)">📋 Leiðréttingaskrá</button>
   </div>
   <a href="/#bakendi" target="_top" class="muted" style="color:#93c5fd">← Bakendi</a>
 </div>
@@ -149,6 +172,7 @@
         <div><label>📝 Samningar</label><div class="tf-row"><input id="tf-samn" value="1f2kzXhbkU0xJ0MFPxRpWjoPmWZBlm1zZ"><button class="pick" data-for="tf-samn">📁</button></div></div>
         <div><label>🔔 Brunakerfisskýrslur</label><div class="tf-row"><input id="tf-bruna" value="" placeholder="folder-id"><button class="pick" data-for="tf-bruna">📁</button></div></div>
         <div><label>🔔 Brunakerfis reikningar</label><div class="tf-row"><input id="tf-bruna-reik" value="" placeholder="folder-id"><button class="pick" data-for="tf-bruna-reik">📁</button></div></div>
+        <div><label>📦 Annað / óflokkað (docs · sheets · innkaup)</label><div class="tf-row"><input id="tf-annad" value="" placeholder="folder-id"><button class="pick" data-for="tf-annad">📁</button></div></div>
         <div><label>🗑 Tvítök / rusl</label><div class="tf-row"><input id="tf-dupes" value="1CnnNHm1xCukiTs806z9Ha1nZnSELM9k8"><button class="pick" data-for="tf-dupes">📁</button></div></div>
       </div>
       <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:12px">
@@ -191,6 +215,16 @@
   </div>
 </div>
 
+<!-- Leiðréttingaskrá (villuskýrsla) -->
+<div class="modal-bg" id="corr-bg">
+  <div class="modal">
+    <div class="mh"><h2>📋 Leiðréttingaskrá — villuskýrsla</h2><button class="x" id="corr-x">×</button></div>
+    <div class="crumb">Leiðréttingar sem þú vistar hér safnast saman svo hægt sé að yfirfara og stilla flokkarann (nafn / tegund / ár). Nýjast efst.</div>
+    <div class="clist" id="corr-list"><div class="muted" style="padding:16px">…</div></div>
+    <div class="mfoot"><span class="cur" id="corr-count"></span><button class="btn" id="corr-close">Loka</button></div>
+  </div>
+</div>
+
 <script>
 (function(){
   var $ = function(id){ return document.getElementById(id); };
@@ -207,6 +241,10 @@
     error:           { lbl:'⚠️ Villa',            col:'#dc2626' },
   };
   var OURS = { reikningur:1, uttektarskyrsla:1, brunakerfi:1, samningur:1 };
+  // tegundir í valmynd leiðréttingar + samsvarandi mappa-merki (til birtingar)
+  var DT_ORDER = ['uttektarskyrsla','brunakerfi','reikningur','samningur','vendor','other'];
+  var DT_NAME = { uttektarskyrsla:'Úttektarskýrsla', brunakerfi:'Brunakerfi', reikningur:'Reikningur', samningur:'Samningur', vendor:'Vendor (birgir)', other:'Annað' };
+  var TARGET_LBL = { uttektarskyrsla:'skýrslur-reports', brunakerfi:'brunakerfi-skýrslur', reikningur:'reikningar-master', samningur:'samningar', vendor:'óflokkað', other:'óflokkað' };
 
   function val(id){ var el=$(id); return el ? String(el.value||'').trim() : ''; }
   // röð → markmöppu-reitur. Brunakerfi: skýrslur vs reikningar (fellur á reikningar-master).
@@ -216,6 +254,7 @@
     if (dt==='uttektarskyrsla') return val('tf-skyr');
     if (dt==='brunakerfi') return val('tf-bruna');
     if (dt==='samningur') return val('tf-samn');
+    if (dt==='vendor' || dt==='other') return val('tf-annad');   // óskyld skjöl → Annað-mappa
     return '';
   }
   function linkMode(){ var el=document.querySelector('input[name=linkmode]:checked'); return el?el.value:'warn'; }
@@ -226,6 +265,14 @@
   var MTKEY='multitool_src_v1';
   try{ var s=localStorage.getItem(MTKEY); if(s) $('src').value=s; }catch(_){}
   $('src').addEventListener('change', function(){ try{ localStorage.setItem(MTKEY, folderId($('src').value)); }catch(_){} });
+
+  // ── remember „Annað" target folder + re-paint svo vendor/other verði valanleg ──
+  var ANNADKEY='multitool_tf_annad_v1';
+  try{ var av=localStorage.getItem(ANNADKEY); if(av) $('tf-annad').value=av; }catch(_){}
+  $('tf-annad').addEventListener('change', function(){
+    try{ localStorage.setItem(ANNADKEY, folderId($('tf-annad').value)); }catch(_){}
+    if(rows.length) paint(false);
+  });
 
   // ── saved Drive folder shortcuts (localStorage) — hjálpar við að skipuleggja möppur ──
   var FKEY='multitool_folders_v1';
@@ -371,8 +418,12 @@
       var co=r.base_nafn?esc(r.base_nafn):'';
       var site=r.site_nafn?('📍 '+esc(r.site_nafn)+(r.site_via?(' ('+esc(r.site_via)+')'):'')):(r.kt?('kt '+esc(r.kt)):'');
       var linked=r.already_linked?'<span class="pill amber">þegar tengt</span>':'<span class="pill grey">ekki tengt</span>';
-      var canApply=ours && r.doc_type!=='error';
-      var chk='<input type="checkbox" class="chk" data-idx="'+i+'"'+(canApply?(r.__done?'':' checked'):' disabled')+(r.__done?' disabled':'')+' data-nostop="1">';
+      // vendor/other má SÓPA í „Annað"-möppuna EF hún er fyllt (opt-in — sjálfgefið óvalið)
+      var isMisc=(r.doc_type==='vendor'||r.doc_type==='other');
+      var hasAnnad=!!val('tf-annad');
+      var canApply=(ours && r.doc_type!=='error') || (isMisc && hasAnnad);
+      var autoCheck=ours && r.doc_type!=='error';   // okkar tegundir sjálfvaldar; vendor/other óvalið
+      var chk='<input type="checkbox" class="chk" data-idx="'+i+'"'+(r.__done?' disabled':(canApply?'':' disabled'))+((canApply&&autoCheck&&!r.__done)?' checked':'')+' data-nostop="1">';
       var res=r.__res||'';
       // Línu 2 bútar (birtast aðeins þegar til)
       var bits=[];
@@ -380,15 +431,36 @@
       if(r.proposed_name) bits.push('<span><span class="k">→ nafn:</span><span class="prop">'+esc(r.proposed_name)+'</span></span>');
       if(r.target) bits.push('<span><span class="k">mappa:</span><span class="tgt">'+esc(r.target)+'</span></span>');
       bits.push('<span>'+linked+'</span>');
+      // ✏️ Leiðrétta — opnar innfelldan ritil (data-nostop svo röð-smellur opni ekki forskoðun)
+      if(r.doc_type!=='error' && !r.__done) bits.push('<button class="edit-btn" data-edit="'+i+'" data-nostop="1" title="Leiðrétta tillögu — vistast í villuskýrslu">✏️ Leiðrétta</button>');
       if(res) bits.push('<span class="res">'+res+'</span>'); else bits.push('<span class="res" style="display:none"></span>');
-      body+='<div class="item'+(i===sel?' sel':'')+(isDupe?' dupe':'')+'" data-idx="'+i+'" style="'+(muted?'opacity:.6;':'')+'border-left-color:'+dt.col+'">'
+      // innfelldur ritill (falinn nema r.__editing)
+      var yr = (r.year!=null?r.year:'');
+      var dtOpts = DT_ORDER.map(function(k){ return '<option value="'+k+'"'+(k===r.doc_type?' selected':'')+'>'+esc(DT_NAME[k]||k)+'</option>'; }).join('');
+      var editor = '<div class="editor" data-ed="'+i+'" style="display:'+(r.__editing?'block':'none')+'">'
+        + '<div class="ed-grid">'
+        +   '<div style="flex:2"><label>Tegund</label><select class="ed-dt">'+dtOpts+'</select></div>'
+        +   '<div style="flex:1"><label>Ár</label><input class="ed-year" type="number" min="2005" max="2099" value="'+esc(yr)+'"></div>'
+        + '</div>'
+        + '<label>Nafn (endurnefning við keyrslu)</label>'
+        + '<input class="ed-name" value="'+esc(r.proposed_name||'')+'" placeholder="Fyrirtæki - heimilisfang - kt - úttektarskýrsla - ár">'
+        + '<label>Athugasemd — af hverju var tillagan röng / hvað á tólið að finna næst? (valkvætt)</label>'
+        + '<textarea class="ed-note" placeholder="t.d. „á að heita Center Hótel Ingólfsstræti", „þetta er brunakerfi ekki Annað", „kt vantar í skrá"">'+esc(r.__note||'')+'</textarea>'
+        + '<div class="ed-btns">'
+        +   '<button class="btn primary sm ed-save" data-save="'+i+'">💾 Vista leiðréttingu</button>'
+        +   '<button class="btn sm ed-cancel" data-cancel="'+i+'">Hætta við</button>'
+        +   '<span class="ed-msg" data-msg="'+i+'"></span>'
+        + '</div></div>';
+      body+='<div class="item'+(i===sel?' sel':'')+(isDupe?' dupe':'')+(r.__edited?' edited':'')+'" data-idx="'+i+'" style="'+(muted?'opacity:.6;':'')+'border-left-color:'+dt.col+'">'
         + '<div class="l1">'
         +   chk
         +   '<span class="dt" style="color:'+dt.col+'">'+dt.lbl+(r.sub_hint?(' <span class="sub">· '+esc(r.sub_hint)+'</span>'):'')+'</span>'
         +   (isDupe?'<span class="badge-dupe">🔁 aukaeintak</span> ':'')
+        +   (r.__edited?'<span class="badge-edit">✏️ leiðrétt</span> ':'')
         +   '<a class="fname" href="https://drive.google.com/file/d/'+esc(r.id)+'/view" target="_blank" rel="noopener" data-nostop="1" title="Opna í Drive í nýjum flipa">'+esc(r.name)+'</a>'
         + '</div>'
         + '<div class="l2">'+bits.join('')+'</div>'
+        + editor
         + '</div>';
     });
     $('results').innerHTML = rows.length ? body
@@ -399,8 +471,54 @@
       el.addEventListener('click', function(e){ if(e.target.closest('[data-nostop]')) return; showPreview(+el.dataset.idx); });
     });
     Array.prototype.forEach.call(document.querySelectorAll('.chk'), function(c){ c.addEventListener('change', updateSelCount); });
+    // ✏️ opna ritil (data-nostop hindrar forskoðun)
+    Array.prototype.forEach.call(document.querySelectorAll('[data-edit]'), function(b){
+      b.addEventListener('click', function(e){ e.stopPropagation(); var i=+b.dataset.edit; rows[i].__editing=!rows[i].__editing; paint(false); });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-cancel]'), function(b){
+      b.addEventListener('click', function(e){ e.stopPropagation(); var i=+b.dataset.cancel; rows[i].__editing=false; paint(false); });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.editor'), function(ed){
+      ed.addEventListener('click', function(e){ if(e.target.closest('[data-nostop]')) return; e.stopPropagation(); }, true);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-save]'), function(b){
+      b.addEventListener('click', function(e){ e.stopPropagation(); saveCorrection(+b.dataset.save, b.closest('.editor')); });
+    });
     renderDupbar(dup);
     updateSelCount();
+  }
+
+  // ── Vista leiðréttingu: uppfæra röð + skrá í villuskýrsluna ──
+  async function saveCorrection(i, ed){
+    var r=rows[i]; if(!r||!ed) return;
+    var msg=ed.querySelector('.ed-msg');
+    var newDt=(ed.querySelector('.ed-dt').value||r.doc_type);
+    var newName=(ed.querySelector('.ed-name').value||'').trim() || null;
+    var yv=(ed.querySelector('.ed-year').value||'').trim();
+    var newYear=yv?(parseInt(yv,10)||null):null;
+    var note=(ed.querySelector('.ed-note').value||'').trim() || null;
+    var o=r.__orig||{};
+    // ekkert breytt og engin athugasemd → engin þörf á að skrá
+    var changed=(newDt!==o.doc_type)||(newName!==(o.proposed_name||null))||(newYear!==(o.year!=null?o.year:null));
+    if(!changed && !note){ if(msg){ msg.style.color='#94a3b8'; msg.textContent='Ekkert breytt.'; } return; }
+    if(msg){ msg.style.color='#64748b'; msg.textContent='… vista'; }
+    r.__note=note;
+    var body={ action:'log-correction', id:r.id, orig_name:r.name,
+      proposed_doc_type:o.doc_type||null, proposed_name_orig:o.proposed_name||null,
+      proposed_base_id:o.base_id||null, proposed_site_id:o.site_id||null, proposed_year:(o.year!=null?o.year:null),
+      corrected_doc_type:newDt, corrected_name:newName, corrected_year:newYear,
+      corrected_target:(TARGET_LBL[newDt]||null), note:note, applied:false };
+    var rr, d;
+    try{
+      rr=await fetch('/api/drive-multitool',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      d=await rr.json().catch(function(){return{ok:false,error:'HTTP '+rr.status};});
+    }catch(e){ d={ok:false,error:(e&&e.message)||'net'}; }
+    if(!d.ok){ if(msg){ msg.style.color='#dc2626'; msg.textContent='✗ '+(d.error||'villa'); } return; }
+    // vistun tókst → uppfæra röðina (svo „Keyra valið" noti leiðréttu gildin) + loka ritli
+    r.doc_type=newDt; r.proposed_name=newName; r.year=newYear;
+    if(newDt!==o.doc_type){ r.sub_hint=''; r.target=TARGET_LBL[newDt]||r.target; if(!OURS[newDt]){ r.site_id=null; r.site_nafn=null; } }
+    r.__edited=true; r.__editing=false;
+    paint(false);
   }
 
   // ── preview run loop ──
@@ -418,7 +536,7 @@
         var url='/api/drive-multitool?src='+encodeURIComponent(src)+'&recurse='+recurse+'&limit=3&offset='+offset;
         var r=await fetch(url); var d=await r.json();
         if(!r.ok) throw new Error(d.error||('HTTP '+r.status));
-        (d.rows||[]).forEach(function(x){ rows.push(x); counts[x.doc_type]=(counts[x.doc_type]||0)+1; });
+        (d.rows||[]).forEach(function(x){ x.__orig={ doc_type:x.doc_type, proposed_name:x.proposed_name, year:x.year, base_id:x.base_id, site_id:x.site_id, target:x.target }; rows.push(x); counts[x.doc_type]=(counts[x.doc_type]||0)+1; });
         paint(false);
         if(d.nextOffset==null){ running=false; paint(true); break; }
         offset=d.nextOffset;
@@ -471,6 +589,37 @@
   }
   $('apply-run').onclick=runApply;
   $('apply-stop').onclick=function(){ applying=false; $('apply-status').innerHTML+=' (stöðva…)'; };
+
+  // ── Leiðréttingaskrá (villuskýrsla) viewer ──
+  function fmtDate(s){ try{ var d=new Date(s); return d.toLocaleDateString('is-IS')+' '+d.toLocaleTimeString('is-IS',{hour:'2-digit',minute:'2-digit'}); }catch(_){ return s||''; } }
+  async function openCorrections(){
+    $('corr-bg').classList.add('on');
+    $('corr-list').innerHTML='<div class="muted" style="padding:16px">Sæki leiðréttingar…</div>';
+    $('corr-count').textContent='';
+    try{
+      var r=await fetch('/api/drive-multitool?corrections=1&limit=200'); var d=await r.json();
+      if(!r.ok) throw new Error(d.error||('HTTP '+r.status));
+      var arr=d.corrections||[];
+      $('corr-count').textContent=arr.length+' leiðrétting'+(arr.length===1?'':'ar');
+      if(!arr.length){ $('corr-list').innerHTML='<div class="muted" style="padding:16px">Engar leiðréttingar skráðar enn. Notaðu „✏️ Leiðrétta" á röð til að skrá.</div>'; return; }
+      $('corr-list').innerHTML=arr.map(function(c){
+        var pn=c.proposed_name||'(engin tillaga)', cn=c.corrected_name||'(óbreytt)';
+        var dtLine=(c.proposed_doc_type&&c.corrected_doc_type&&c.proposed_doc_type!==c.corrected_doc_type)
+          ? ' · tegund: '+esc(DT_NAME[c.proposed_doc_type]||c.proposed_doc_type)+' → '+esc(DT_NAME[c.corrected_doc_type]||c.corrected_doc_type) : '';
+        var yrLine=(c.corrected_year&&c.proposed_year!==c.corrected_year)?(' · ár: '+(c.proposed_year||'?')+' → '+c.corrected_year):'';
+        return '<div class="crow">'
+          + '<div class="cf">'+esc(c.orig_name||'')+(c.applied?' <span class="badge-edit">keyrt</span>':'')+'</div>'
+          + (pn!==cn ? '<div class="cprop">'+esc(pn)+'</div><div class="ccorr">→ '+esc(cn)+'</div>' : '')
+          + (c.note?'<div class="cnote">📝 '+esc(c.note)+'</div>':'')
+          + '<div class="cmeta">'+fmtDate(c.created_at)+dtLine+yrLine+(c.drive_file_id?(' · <a href="https://drive.google.com/file/d/'+esc(c.drive_file_id)+'/view" target="_blank" rel="noopener">opna PDF ↗</a>'):'')+'</div>'
+          + '</div>';
+      }).join('');
+    }catch(e){ $('corr-list').innerHTML='<div class="muted" style="padding:16px;color:#dc2626">Villa: '+esc(e&&e.message||e)+'</div>'; }
+  }
+  function closeCorr(){ $('corr-bg').classList.remove('on'); }
+  $('show-corr').onclick=openCorrections;
+  $('corr-x').onclick=closeCorr; $('corr-close').onclick=closeCorr;
+  $('corr-bg').addEventListener('click', function(e){ if(e.target===$('corr-bg')) closeCorr(); });
 })();
 </script>
 </body>

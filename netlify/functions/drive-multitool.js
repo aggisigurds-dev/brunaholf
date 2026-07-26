@@ -136,7 +136,27 @@ function customerKt(s) {
 // örugga seljanda-merkið er VSK-númer Slökkvitæki (98107) — kaupanda-VSK er aldrei
 // prentað — auk undirskriftar-lína skýrslu. Ekkert af þessu → vendor/other.
 function slokkviIssuer(text) {
-  return /VSK\s*nr\.?\s*:?\s*98107|fyrir\s+h[öo]nd\s+sl[öo]kkvit[æa]ki|verktaki:?\s*sl[öo]kkvit[æa]ki|yfirfarin\s+af\s+sl[öo]kkvit[æa]ki/i.test(text || '');
+  const t = text || '';
+  // Seljanda-VSK 98107 er sterkasta merkið; leyfum bæði „VSK nr. 98107" OG bert
+  // 98107 (OCR sleppir stundum „VSK nr."-forskeytinu). Kaupanda-VSK er ALDREI prentað
+  // svo 98107 birtist eingöngu á reikningum sem VIÐ gefum út — óhætt.
+  if (/VSK\s*nr\.?\s*:?\s*98107|\b98107\b|fyrir\s+h[öo]nd\s+sl[öo]kkvit[æa]ki|verktaki:?\s*sl[öo]kkvit[æa]ki|yfirfarin\s+af\s+sl[öo]kkvit[æa]ki/i.test(t)) return true;
+  // Bakvörn þegar hausinn/98107 les illa (gamlir „Stolpi"-reikningar): Slökkvitæki-
+  // þjónustulínur. Þessi orð eru á reikningi SEM VIÐ GEFUM ÚT (okkar vörulisti) — birgja-
+  // reikningur til okkar ber þau aldrei. Krefjumst ≥2 aðgreinandi svo þetta sé öruggt.
+  return slokkviServiceLines(t) >= 2;
+}
+// Fjöldi aðgreinandi Slökkvitæki-þjónustulína í texta (okkar vörulisti).
+function slokkviServiceLines(text) {
+  const t = text || '';
+  let n = 0;
+  if (/l[ée]ttvatn/i.test(t)) n++;                                   // Léttvatnstæki
+  if (/sk[ýy]rslugjer[ðd]|sk[ýy]rsluger[ðd]\s+og\s+vottun/i.test(t)) n++;   // Skýrslugerð og vottun
+  if (/yfirfer[ðd]\s+(?:l[ée]ttvatn|co2|duft|kols[ýy]r)/i.test(t)) n++;
+  if (/hle[ðd]sla\s+(?:l[ée]ttvatn|co2|duft|kols[ýy]r)/i.test(t)) n++;
+  if (/kols[ýy]rut[æa]k|\bco2\b\s*\d/i.test(t)) n++;                  // Kolsýra / Co2 N kg
+  if (/handsl[öo]kkvit[æa]k/i.test(t)) n++;
+  return n;
 }
 // Slökkvitæki-útgefin úttektarskýrsla EÐA brunaviðvörunarkerfis-skýrsla (bæði
 // layoutin). Sömu orðalags-merkin og drive-sort.isReport.
@@ -400,6 +420,16 @@ function classify(text, name, inv, total, issuerOurs, invInName) {
     // almenna reikningar-master) svo UI geti beint honum í brunakerfi-reikninga.
     return { doc_type: 'reikningur', sub_hint: sub, target: sub === 'brunakerfi-reikningur' ? 'brunakerfi-reikningar' : 'reikningar-master' };
   }
+  // 2b) OKKAR reikningur án lesanlegs númers: issuerOurs (seljanda-merki/þjónustulínur)
+  //     + „reikningur"-orðalag EN R-nr misfórst í OCR (gamlir Stolpi-reikningar með
+  //     númerið fjarri hausnum). Flokkast samt sem reikningur (invoice_number null) svo
+  //     hann lendi í reikningar-master + tengist — ekki vendor/óflokkað. ÖRUGGT því
+  //     issuerOurs er seljanda-eingöngu (birgja-reikningur til okkar fellur ekki hér).
+  if (!inv && issuerOurs && /(?:kredit)?reikningur/i.test(t) && !isReport(t)) {
+    const sub = /brunavi[ðd]v[öo]runarkerfi|[áa]rssko[ðd]un\s+brunakerfis|brunakerfis(?:reikning|samning|sk[oó][ðd]un|þj[óo]nust)/i.test(t) ? 'brunakerfi-reikningur'
+      : (total && total < 5000 ? 'úttektar-reikningur' : '');
+    return { doc_type: 'reikningur', sub_hint: sub, target: sub === 'brunakerfi-reikningur' ? 'brunakerfi-reikningar' : 'reikningar-master' };
+  }
   // 3) Hrein brunakerfis-skýrsla: brunaviðvörunar-orðalag OG engar slökkvitækja-talningar.
   if (isAlarmReport(t) && !hasExtinguisherCounts(t)) {
     const sub = /vi[ðd]t[öo]kupr[óo]f/i.test(t) ? 'viðtökupróf' : (/árleg/i.test(t) ? 'árleg prófun' : '');
@@ -554,6 +584,42 @@ async function logApply({ base_id, base_nafn, origName, proposed_name, doc_type,
   } catch (_) {}
 }
 
+// Villuskýrsla: notandinn leiðréttir tillögu (nafn/tegund/ár) → skráð í
+// multitool_corrections svo hægt sé að yfirfara og stilla flokkarann. Best-effort.
+function intOrNull(v) { return (v != null && v !== '') ? (Number(v) || null) : null; }
+async function logCorrection(body) {
+  const id = String(body.id || '').trim();
+  const row = {
+    drive_file_id: id || null,
+    orig_name: body.orig_name ? String(body.orig_name) : null,
+    proposed_doc_type: body.proposed_doc_type ? String(body.proposed_doc_type) : null,
+    proposed_name: body.proposed_name_orig ? String(body.proposed_name_orig) : null,
+    proposed_base_id: intOrNull(body.proposed_base_id),
+    proposed_site_id: intOrNull(body.proposed_site_id),
+    proposed_year: intOrNull(body.proposed_year),
+    corrected_doc_type: body.corrected_doc_type ? String(body.corrected_doc_type) : null,
+    corrected_name: body.corrected_name ? String(body.corrected_name) : null,
+    corrected_year: intOrNull(body.corrected_year),
+    corrected_target: body.corrected_target ? String(body.corrected_target) : null,
+    note: body.note ? String(body.note) : null,
+    applied: !!body.applied,
+  };
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/multitool_corrections`, {
+    method: 'POST', headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }),
+    body: JSON.stringify(row),
+  });
+  if (!r.ok) return { ok: false, error: 'log: ' + r.status + ' ' + (await r.text()).slice(0, 160) };
+  const d = await r.json().catch(() => [null]);
+  return { ok: true, correction_id: (Array.isArray(d) && d[0]) ? d[0].id : null };
+}
+// Lesa villuskýrsluna (nýjast fyrst) fyrir yfirferð.
+async function listCorrections(limit) {
+  const lim = Math.min(Math.max(parseInt(limit || '100', 10) || 100, 1), 500);
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/multitool_corrections?select=*&order=created_at.desc&limit=${lim}`, { headers: sbHeaders() });
+  if (!r.ok) throw new Error('corrections ' + r.status);
+  return await r.json().catch(() => []);
+}
+
 const LINKABLE = new Set(['reikningur', 'uttektarskyrsla', 'brunakerfi', 'samningur']);
 
 // Beitir EINU skjali. Öryggis-samningur að fullu í þessu falli:
@@ -675,10 +741,16 @@ exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors(), body: '' };
   if (!SUPABASE_URL || !SUPABASE_KEY) return json(500, { error: 'Supabase env missing' });
 
-  // Fasi 2 — POST {action:'apply'|'move-dupe'} (eyðileggjandi, EITT skjal). Ekkert gerist án þess.
+  // POST — leiðréttingaskrá (Supabase-eingöngu, engin Drive-aðgerð) EÐA
+  // Fasi 2 {action:'apply'|'move-dupe'} (eyðileggjandi, EITT skjal). Ekkert gerist án þess.
   if (event.httpMethod === 'POST') {
     let b; try { b = JSON.parse(event.body || '{}'); } catch (_) { return json(400, { error: 'bad json' }); }
-    if (b.action !== 'apply' && b.action !== 'move-dupe') return json(400, { error: "action must be 'apply' or 'move-dupe'" });
+    // log-correction: ekkert snert í Drive — bara skrá í villuskýrsluna.
+    if (b.action === 'log-correction') {
+      try { return json(200, await logCorrection(b)); }
+      catch (e) { return json(200, { ok: false, error: String(e.message || e) }); }
+    }
+    if (b.action !== 'apply' && b.action !== 'move-dupe') return json(400, { error: "action must be 'apply', 'move-dupe' or 'log-correction'" });
     if (!b.id) return json(400, { error: 'id required' });
     let token; try { token = await freshAccessToken(); } catch (e) { return json(401, { error: e.message }); }
     try { return json(200, b.action === 'move-dupe' ? await moveDupe(token, b) : await applyFile(token, b)); }
@@ -690,6 +762,10 @@ exports.handler = async (event) => {
 
   try {
     const p = event.queryStringParameters || {};
+    // Villuskýrslan (les-eingöngu) — engin Drive-aðgerð.
+    if (p.corrections === '1' || p.corrections === 'true') {
+      return json(200, { ok: true, corrections: await listCorrections(p.limit) });
+    }
     const src = folderId(p.src);
     if (!src) return json(400, { error: 'src required' });
     const recurse = p.recurse !== '0' && p.recurse !== 'false';   // sjálfgefið ON

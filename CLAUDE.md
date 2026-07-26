@@ -710,8 +710,6 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
     target `brunakerfi-skýrslur`) og reikningar (doc_type `reikningur` + sub_hint
     `brunakerfi-reikningur` → target `brunakerfi-reikningar`) fara í SITT hvora möppuna;
     brunakerfis-reikningur fellur á reikningar-master ef sú mappa er ekki fyllt.
-<<<<<<< Updated upstream
-=======
     Brunakerfis-reikningur greinist AÐEINS á sterku fire-alarm-orðalagi
     (`brunaviðvörunarkerfi`/`ársskoðun brunakerfis`/`brunakerfis…`) — ekki hverju stöku
     „brunakerfi"-orði. Samningar fá nafn `Fyrirtæki - kt - (þjónustu|brunakerfis)samningur - ár`.
@@ -736,7 +734,38 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
     Bakendi; `renderMultitool` fellir `/multitool.html` inn í `#view` sem full-hæðar iframe —
     endurnýtir sömu síðu, enginn tvíverknaður). Bætt í `DEFAULT_STATE.tabs` + `ensureNewTabs`
     + dispatcher eins og aðrir flipar; deep-link `#multitool`.
->>>>>>> Stashed changes
+  - **Leiðréttingar + villuskýrsla (2026-07-26):** hver forskoðunar-röð fær „✏️ Leiðrétta"
+    hnapp sem opnar innfelldan ritil (Tegund · Ár · Nafn · Athugasemd). „💾 Vista leiðréttingu"
+    (1) uppfærir röðina svo „Keyra valið" noti leiðréttu gildin (breytt tegund → ný markmappa
+    gegnum `TARGET_LBL`, `site_id` hreinsað ef ekki-okkar tegund) OG (2) skráir í nýja töflu
+    **`multitool_corrections`** (tillaga tólsins vs leiðrétting notandans + athugasemd; service
+    role skrifar, RLS af). POST `{action:'log-correction', …}` snertir EKKERT í Drive — bara
+    skráning. „📋 Leiðréttingaskrá" hnappur efst opnar viewer (`GET ?corrections=1&limit=N`,
+    nýjast fyrst) svo hægt sé að yfirfara og stilla flokkarann/nafnasmíðina út frá raunverulegum
+    villum. Ritillinn breytir röðinni AÐEINS við vistun (án vistunar → apply notar upprunalegu
+    tillöguna, engin þögul gliðnun). NB v1 leiðréttir nafn/tegund/ár — base/staðar-tenging er
+    áfram Skýrslu-stöðvar-verk.
+  - **Gamlir „Stolpi"-reikningar greindir sem OKKAR (2026-07-26):** Slökkvitæki-útgefnir
+    reikningar úr gamla Stolpi-kerfinu (skráarnöfn eins og `…bokhald-Nóta.pdf` /
+    `Stolpi_Invoice_10xxxx.pdf`) lentu ranglega í vendor/óflokkað því `slokkviIssuer`
+    náði ekki seljanda-merkinu í OCR. Hert: (1) `slokkviIssuer` þolir bert `98107`
+    (seljanda-VSK, OCR sleppir stundum „VSK nr."-forskeytinu — kaupanda-VSK er ALDREI
+    prentað svo 98107 = við erum seljandi, óhætt) OG fellur á Slökkvitæki-þjónustulínur
+    (`slokkviServiceLines ≥2`: léttvatn · skýrslugerð og vottun · yfirferð/hleðsla
+    Co2/duft/kolsýra · handslökkvitæki — okkar vörulisti, birt AÐEINS á reikningi sem
+    VIÐ gefum út). (2) Ný classify-grein 2b: `!inv && issuerOurs && „reikningur"-orðalag
+    && !isReport` → reikningur (invoice_number null) svo hann lendi í reikningar-master
+    + tengist þótt R-nr misfórst í OCR. ÖRUGGT: issuerOurs er seljanda-eingöngu, svo
+    birgja-reikningur TIL okkar (ber okkar kt í kaupanda-blokk en hvorki 98107 né
+    þjónustulínur) helst vendor. Sannreynt á Babalú R-104339 (hreint + gallað OCR) +
+    mótdæmi (birgja-reikningur → áfram vendor).
+  - **„Annað / óflokkað"-markmappa (2026-07-26):** nýr markmöppu-reitur `tf-annad`
+    (📦 docs · sheets · innkaup) fyrir vendor/other skjöl. `targetFor` beinir
+    vendor+other þangað; þegar reiturinn er fylltur verða vendor/other raðir VALANLEGAR
+    (opt-in, sjálfgefið ÓVALIÐ — okkar tegundir áfram sjálfvaldar) svo hægt sé að SÓPA
+    óskyldum birgja-/bókhalds-/innkaupa-skjölum í eina Annað-möppu. Bakendinn færir
+    vendor/other AÐEINS þegar markmappa fylgir og TENGIR þau ALDREI í customer_documents
+    (óbreyttur öryggis-samningur). Reiturinn geymist í `localStorage.multitool_tf_annad_v1`.
 
 - `drive-count.js` — **Bakendi „📊 Skjalatalning"** (`/api/drive-count`): read-only
   file counter for the reikningar (master) + skýrslur Drive folders, broken down
