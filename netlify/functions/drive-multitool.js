@@ -384,7 +384,10 @@ async function previewFile(token, f) {
   if (base) {
     try { sites = await sitesForBase(base.id); } catch (_) { sites = []; }
     multiSite = sites.length > 1;
-    const addr = addrFromContent(text) || (siteFrom(text) || null);
+    // Heimilisfang sem auka-sönnun fyrir staðar-tengingu (rekstrarfélög eins og
+    // Center Hótel) — reportAddr nær „Seljavegur 2"/„Þingholtsstræti 2-4" úr
+    // brunakerfi-/úttektar-hausnum sem addrFromContent missti af.
+    const addr = reportAddr(text) || addrFromContent(text) || siteFrom(text) || null;
     try { site = resolveSite(f.name, sites, addr); } catch (_) { site = null; }
   }
 
