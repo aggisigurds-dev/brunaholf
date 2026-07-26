@@ -207,9 +207,24 @@ function totalFrom(text) {
   return best || null;
 }
 function companyFrom(text, name) {
-  const segs = cleanStem(name).split(/\s+-\s+/).map(s => s.trim()).filter(Boolean);
+  // Strjúka dkPlus/bókhalds-forskeyti sem lauma sér fremst í nafnið þegar kt
+  // leysist EKKI í base („2024-03-22-bokhald-Ölfusborgir 2024", „bokhald-Nóta",
+  // „Stolpi_Invoice_104702"): leiðandi ISO-dagsetning, „bokhald", Stolpi/Nóta-tákn.
+  let stem = cleanStem(name)
+    .replace(/^\d{4}-\d{2}-\d{2}[-_\s]*/, '')                          // leiðandi ISO-dagsetning
+    .replace(/^bokhald[-_\s]*/i, '')                                   // leiðandi „bokhald-"
+    .replace(/\bStolpi[_\-\s]?(?:Invoice|CreditNote)[_\-\s]?\d*/ig, ' ')
+    .replace(/\bbokhald\b/ig, ' ')
+    .replace(/\bN[óo]ta\b/ig, ' ')
+    .replace(/\s+/g, ' ').trim();
+  const segs = stem.split(/\s+-\s+/).map(s => s.trim()).filter(Boolean);
   const first = segs.find(s => s && !/^\d{4}-\d{2}-\d{2}$/.test(s) && !/^(bokhald|nóta|nota|kredit|reikningur|invoice|creditnote)$/i.test(s) && !/^R[\s\-_]?\d{4,7}$/i.test(s) && !/^\d{6}-?\d{4}$/.test(s));
-  if (first && /[A-Za-zÁÉÍÓÚÝÆÖÞÐ]/.test(first)) return first.replace(/_/g, ' ').trim();
+  // Strjúka aftasta stakt ártal („Ölfusborgir 2024" → „Ölfusborgir", „Bæjarlind 12 2025"
+  // → „Bæjarlind 12"). Aðeins þegar eitthvað stendur eftir (verndar „…12" húsnúmer).
+  if (first && /[A-Za-zÁÉÍÓÚÝÆÖÞÐ]/.test(first)) {
+    const c = first.replace(/_/g, ' ').replace(/\s+(?:19|20)\d{2}$/, '').replace(/\s+/g, ' ').trim();
+    if (c && /[A-Za-zÁÉÍÓÚÝÆÖÞÐ]/.test(c)) return c;
+  }
   return '';
 }
 // Site descriptor out of a report body (drive-sort.siteFrom).
@@ -318,9 +333,31 @@ function addrFromName(name) {
   for (const raw of segs) {
     const t = raw.trim().replace(/,\s*$/, '');
     if (/^\d{6}\s?-?\s?\d{4}$/.test(t)) continue;               // kt
-    if (/\b\d{3}\s+[A-ZÁÉÍÓÚÝÆÖÞÐ][a-záéíóúýæöþð]/.test(t) && /\d/.test(t.replace(/\b\d{3}\s+\S+/, ''))) return t.replace(/\s+/g, ' ').trim();
+    if (/^(?:19|20)\d{2}$/.test(t)) continue;                   // ár
+    // Póstnúmer (3 tölust.) + borg = heimilisfang — MEÐ eða ÁN húsnúmers
+    // („Skeifan, 108 Reykjavík" hefur bara póstnúmer; áður krafðist húsnúmers og
+    // datt út → lenti á OCR-innihaldi sem tvítók félagsnafnið).
+    if (/\b\d{3}\s+[A-ZÁÉÍÓÚÝÆÖÞÐ][a-záéíóúýæöþð]/.test(t)) return t.replace(/\s+/g, ' ').trim();
   }
   return '';
+}
+// Heimilisfang úr „…hjá fyrirtækinu <Félag> <heimilisfang>. Kt…" hausnum. Félags-
+// nafnið er LÍMT framan á heimilisfangið án skiltákns, svo við strjúkum þekkta
+// félagsnafnið (fold-samanburður orð fyrir orð) af forskeytinu og skilum afganginum.
+// Aðeins treyst þegar félagsnafnið fannst raunverulega fremst (i>0) og afgangur ber
+// tölu (húsnúmer/póstnr) — annars '' (fellur á reportAddr). OCR-afbökuð félagsnöfn
+// (t.d. „Aðalsoðun") fold-passa ekki → skilar '', og skráarheitið sér um þau tilvik.
+function addrFromReportHeader(text, co) {
+  const chunk = siteFrom(text); if (!chunk || !co) return '';
+  const cw = stripEhf(String(co)).split(/\s+/).filter(Boolean);
+  const sw = chunk.split(/\s+/).filter(Boolean);
+  let i = 0; while (i < cw.length && i < sw.length && foldWord(sw[i]) === foldWord(cw[i])) i++;
+  if (i === 0) return '';                                       // félagsnafn fannst ekki fremst → ekki treysta
+  let rest = sw.slice(i).join(' ').trim();
+  if (!rest || !/\d/.test(rest)) return '';
+  // Komma á undan póstnúmeri: „Skipholti 50 B 105 Reykjavík" → „Skipholti 50 B, 105 Reykjavík".
+  rest = rest.replace(/\s+(\d{3}\s+[A-ZÁÉÍÓÚÝÆÖÞÐ][A-Za-zÁÉÍÓÚÝÆÖÞÐáéíóúýæöþð]+(?:b[æa]r|borg)?)\s*$/, ', $1');
+  return rest;
 }
 // Strjúka lýsingar-orð sem lauma sér framan á heimilisfang („vegna íbúðir Þingholts-
 // stræti 2-4" → „Þingholtsstræti 2-4"). Bæði brýtur nafnið og fellir staðar-tenginguna.
@@ -486,7 +523,9 @@ async function previewFile(token, f) {
   else if (cls.doc_type === 'uttektarskyrsla' || cls.doc_type === 'brunakerfi') {
     // Aðgreinandi staður/heimilisfang: heimilisfang úr innihaldi > úr skráarheiti >
     // leyst stöð > „hjá fyrirtækinu"-bútur. (Heimilisfang er það sem Agnar vill sjá.)
-    const siteDesc = cleanAddr(reportAddr(text) || addrFromName(f.name)) || (site ? site.nafn : '') || (multiSite ? siteFrom(text) : '');
+    // Heimilisfang: hreint skráarheiti > félags-strípaður haus („hjá fyrirtækinu …") >
+    // gamla innihalds-leitin. Röðin sett svo OCR-límt félagsnafn tvítakist ekki.
+    const siteDesc = cleanAddr(addrFromName(f.name) || addrFromReportHeader(text, coName) || reportAddr(text)) || (site ? site.nafn : '') || (multiSite ? siteFrom(text) : '');
     const siteIsHq = !!(site && isHqSite(site.nafn));
     proposed_name = nameReport(coName, ktd, year, siteDesc, cls.doc_type === 'brunakerfi' ? 'brunakerfi' : 'úttektarskýrsla', multiSite, siteIsHq);
   }
