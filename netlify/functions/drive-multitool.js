@@ -268,6 +268,14 @@ function addrFromName(name) {
   }
   return '';
 }
+// Strjúka lýsingar-orð sem lauma sér framan á heimilisfang („vegna íbúðir Þingholts-
+// stræti 2-4" → „Þingholtsstræti 2-4"). Bæði brýtur nafnið og fellir staðar-tenginguna.
+function cleanAddr(a) {
+  a = String(a || '').trim();
+  let prev;
+  do { prev = a; a = a.replace(/^(?:vegna|[íi]b[úu][ðd]a?(?:ir|inni?)?|h[úu]sn[æa][ðd]is?|atvinnuh[úu]sn[æa][ðd]is?|fyrir|um)\s+/i, '').trim(); } while (a !== prev);
+  return a;
+}
 // Heimilisfang KAUPANDA úr skýrslu-innihaldi (báðar útfærslur — slökkvitæki-úttekt +
 // brunakerfi-viðtökupróf). Sleppir verktaka-heimilisfangi Slökkvitæki (Helluhraun 10).
 function reportAddr(text) {
@@ -387,7 +395,7 @@ async function previewFile(token, f) {
     // Heimilisfang sem auka-sönnun fyrir staðar-tengingu (rekstrarfélög eins og
     // Center Hótel) — reportAddr nær „Seljavegur 2"/„Þingholtsstræti 2-4" úr
     // brunakerfi-/úttektar-hausnum sem addrFromContent missti af.
-    const addr = reportAddr(text) || addrFromContent(text) || siteFrom(text) || null;
+    const addr = cleanAddr(reportAddr(text) || addrFromContent(text) || siteFrom(text) || '') || null;
     try { site = resolveSite(f.name, sites, addr); } catch (_) { site = null; }
   }
 
@@ -400,7 +408,7 @@ async function previewFile(token, f) {
   else if (cls.doc_type === 'uttektarskyrsla' || cls.doc_type === 'brunakerfi') {
     // Aðgreinandi staður/heimilisfang: heimilisfang úr innihaldi > úr skráarheiti >
     // leyst stöð > „hjá fyrirtækinu"-bútur. (Heimilisfang er það sem Agnar vill sjá.)
-    const siteDesc = reportAddr(text) || addrFromName(f.name) || (site ? site.nafn : '') || (multiSite ? siteFrom(text) : '');
+    const siteDesc = cleanAddr(reportAddr(text) || addrFromName(f.name)) || (site ? site.nafn : '') || (multiSite ? siteFrom(text) : '');
     proposed_name = nameReport(coName, ktd, year, siteDesc, cls.doc_type === 'brunakerfi' ? 'brunakerfi' : 'úttektarskýrsla');
   }
   else if (cls.doc_type === 'samningur') proposed_name = nameSamningur(coName, ktd, year, cls.sub_hint);
