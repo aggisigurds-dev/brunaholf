@@ -490,6 +490,8 @@ main{padding:14px;max-width:1100px;margin:0 auto;flex:1;min-width:0;width:100%}
 /* Wide tabs (Vinnubók / Reikningagerð) get the full sidebar-to-edge width */
 body[data-tab="vinnubok"] main,
 body[data-tab="reikningar"] main{max-width:none;padding:14px 24px}
+/* Skjala-multitool fyllir alla breidd (iframe með eigin útliti) — engin padding/hámark */
+body[data-tab="multitool"] main{max-width:none;padding:0}
 .section{margin-bottom:18px}
 .section h2{font-size:15px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin:6px 4px 10px;font-weight:700}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
