@@ -745,6 +745,20 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
     villum. Ritillinn breytir röðinni AÐEINS við vistun (án vistunar → apply notar upprunalegu
     tillöguna, engin þögul gliðnun). NB v1 leiðréttir nafn/tegund/ár — base/staðar-tenging er
     áfram Skýrslu-stöðvar-verk.
+  - **Gamlir „Stolpi"-reikningar greindir sem OKKAR (2026-07-26):** Slökkvitæki-útgefnir
+    reikningar úr gamla Stolpi-kerfinu (skráarnöfn eins og `…bokhald-Nóta.pdf` /
+    `Stolpi_Invoice_10xxxx.pdf`) lentu ranglega í vendor/óflokkað því `slokkviIssuer`
+    náði ekki seljanda-merkinu í OCR. Hert: (1) `slokkviIssuer` þolir bert `98107`
+    (seljanda-VSK, OCR sleppir stundum „VSK nr."-forskeytinu — kaupanda-VSK er ALDREI
+    prentað svo 98107 = við erum seljandi, óhætt) OG fellur á Slökkvitæki-þjónustulínur
+    (`slokkviServiceLines ≥2`: léttvatn · skýrslugerð og vottun · yfirferð/hleðsla
+    Co2/duft/kolsýra · handslökkvitæki — okkar vörulisti, birt AÐEINS á reikningi sem
+    VIÐ gefum út). (2) Ný classify-grein 2b: `!inv && issuerOurs && „reikningur"-orðalag
+    && !isReport` → reikningur (invoice_number null) svo hann lendi í reikningar-master
+    + tengist þótt R-nr misfórst í OCR. ÖRUGGT: issuerOurs er seljanda-eingöngu, svo
+    birgja-reikningur TIL okkar (ber okkar kt í kaupanda-blokk en hvorki 98107 né
+    þjónustulínur) helst vendor. Sannreynt á Babalú R-104339 (hreint + gallað OCR) +
+    mótdæmi (birgja-reikningur → áfram vendor).
   - **„Annað / óflokkað"-markmappa (2026-07-26):** nýr markmöppu-reitur `tf-annad`
     (📦 docs · sheets · innkaup) fyrir vendor/other skjöl. `targetFor` beinir
     vendor+other þangað; þegar reiturinn er fylltur verða vendor/other raðir VALANLEGAR

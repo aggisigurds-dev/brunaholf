@@ -136,7 +136,27 @@ function customerKt(s) {
 // örugga seljanda-merkið er VSK-númer Slökkvitæki (98107) — kaupanda-VSK er aldrei
 // prentað — auk undirskriftar-lína skýrslu. Ekkert af þessu → vendor/other.
 function slokkviIssuer(text) {
-  return /VSK\s*nr\.?\s*:?\s*98107|fyrir\s+h[öo]nd\s+sl[öo]kkvit[æa]ki|verktaki:?\s*sl[öo]kkvit[æa]ki|yfirfarin\s+af\s+sl[öo]kkvit[æa]ki/i.test(text || '');
+  const t = text || '';
+  // Seljanda-VSK 98107 er sterkasta merkið; leyfum bæði „VSK nr. 98107" OG bert
+  // 98107 (OCR sleppir stundum „VSK nr."-forskeytinu). Kaupanda-VSK er ALDREI prentað
+  // svo 98107 birtist eingöngu á reikningum sem VIÐ gefum út — óhætt.
+  if (/VSK\s*nr\.?\s*:?\s*98107|\b98107\b|fyrir\s+h[öo]nd\s+sl[öo]kkvit[æa]ki|verktaki:?\s*sl[öo]kkvit[æa]ki|yfirfarin\s+af\s+sl[öo]kkvit[æa]ki/i.test(t)) return true;
+  // Bakvörn þegar hausinn/98107 les illa (gamlir „Stolpi"-reikningar): Slökkvitæki-
+  // þjónustulínur. Þessi orð eru á reikningi SEM VIÐ GEFUM ÚT (okkar vörulisti) — birgja-
+  // reikningur til okkar ber þau aldrei. Krefjumst ≥2 aðgreinandi svo þetta sé öruggt.
+  return slokkviServiceLines(t) >= 2;
+}
+// Fjöldi aðgreinandi Slökkvitæki-þjónustulína í texta (okkar vörulisti).
+function slokkviServiceLines(text) {
+  const t = text || '';
+  let n = 0;
+  if (/l[ée]ttvatn/i.test(t)) n++;                                   // Léttvatnstæki
+  if (/sk[ýy]rslugjer[ðd]|sk[ýy]rsluger[ðd]\s+og\s+vottun/i.test(t)) n++;   // Skýrslugerð og vottun
+  if (/yfirfer[ðd]\s+(?:l[ée]ttvatn|co2|duft|kols[ýy]r)/i.test(t)) n++;
+  if (/hle[ðd]sla\s+(?:l[ée]ttvatn|co2|duft|kols[ýy]r)/i.test(t)) n++;
+  if (/kols[ýy]rut[æa]k|\bco2\b\s*\d/i.test(t)) n++;                  // Kolsýra / Co2 N kg
+  if (/handsl[öo]kkvit[æa]k/i.test(t)) n++;
+  return n;
 }
 // Slökkvitæki-útgefin úttektarskýrsla EÐA brunaviðvörunarkerfis-skýrsla (bæði
 // layoutin). Sömu orðalags-merkin og drive-sort.isReport.
@@ -398,6 +418,16 @@ function classify(text, name, inv, total, issuerOurs, invInName) {
     else if (total && total < 5000) sub = 'úttektar-reikningur';
     // brunakerfis-reikningur fær sína eigin markmöppu-merkingu (aðskilin frá
     // almenna reikningar-master) svo UI geti beint honum í brunakerfi-reikninga.
+    return { doc_type: 'reikningur', sub_hint: sub, target: sub === 'brunakerfi-reikningur' ? 'brunakerfi-reikningar' : 'reikningar-master' };
+  }
+  // 2b) OKKAR reikningur án lesanlegs númers: issuerOurs (seljanda-merki/þjónustulínur)
+  //     + „reikningur"-orðalag EN R-nr misfórst í OCR (gamlir Stolpi-reikningar með
+  //     númerið fjarri hausnum). Flokkast samt sem reikningur (invoice_number null) svo
+  //     hann lendi í reikningar-master + tengist — ekki vendor/óflokkað. ÖRUGGT því
+  //     issuerOurs er seljanda-eingöngu (birgja-reikningur til okkar fellur ekki hér).
+  if (!inv && issuerOurs && /(?:kredit)?reikningur/i.test(t) && !isReport(t)) {
+    const sub = /brunavi[ðd]v[öo]runarkerfi|[áa]rssko[ðd]un\s+brunakerfis|brunakerfis(?:reikning|samning|sk[oó][ðd]un|þj[óo]nust)/i.test(t) ? 'brunakerfi-reikningur'
+      : (total && total < 5000 ? 'úttektar-reikningur' : '');
     return { doc_type: 'reikningur', sub_hint: sub, target: sub === 'brunakerfi-reikningur' ? 'brunakerfi-reikningar' : 'reikningar-master' };
   }
   // 3) Hrein brunakerfis-skýrsla: brunaviðvörunar-orðalag OG engar slökkvitækja-talningar.
