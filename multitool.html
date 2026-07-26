@@ -260,6 +260,12 @@
     return '';
   }
   function linkMode(){ var el=document.querySelector('input[name=linkmode]:checked'); return el?el.value:'warn'; }
+  // ── muna tengihaminn (warn/if_empty/overwrite) milli heimsókna ──
+  var LMKEY='multitool_linkmode_v1';
+  try{ var lm=localStorage.getItem(LMKEY); if(lm){ var el=document.querySelector('input[name=linkmode][value="'+lm+'"]'); if(el) el.checked=true; } }catch(_){}
+  Array.prototype.forEach.call(document.querySelectorAll('input[name=linkmode]'), function(r){
+    r.addEventListener('change', function(){ try{ localStorage.setItem(LMKEY, linkMode()); }catch(_){} });
+  });
 
   var rows=[], counts={}, running=false, applying=false, sel=-1;
 
