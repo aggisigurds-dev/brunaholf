@@ -113,6 +113,8 @@
   /* inline correction editor */
   .edit-btn{ border:1px solid #cbd5e1; background:#fff; color:#334155; border-radius:7px; padding:2px 9px; font-size:11.5px; font-weight:700; cursor:pointer; }
   .edit-btn:hover{ background:#eef2ff; border-color:#c7d2fe; color:#3730a3; }
+  .rm-btn{ flex:none; align-self:center; border:1px solid #fecaca; background:#fef2f2; color:#dc2626; border-radius:8px; width:30px; height:30px; font-size:16px; font-weight:800; line-height:1; cursor:pointer; }
+  .rm-btn:hover{ background:#dc2626; border-color:#dc2626; color:#fff; }
   .editor{ margin-top:9px; padding:11px 12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:9px; }
   .editor label{ display:block; font-size:11px; font-weight:700; color:#64748b; margin:8px 0 3px; }
   .editor .ed-grid{ display:flex; gap:10px; flex-wrap:wrap; }
@@ -371,6 +373,7 @@
   }
   function updateSelCount(){ var n=selectedIdxs().length; var b=$('apply-run'); if(b) b.textContent='▶️ Keyra valið ('+n+')'; }
   function setRes(i, html){ var el=document.querySelector('.item[data-idx="'+i+'"]'); if(el){ var c=el.querySelector('.res'); if(c){ c.innerHTML=html; c.style.display=''; } } }
+  function recount(){ counts={}; rows.forEach(function(x){ counts[x.doc_type]=(counts[x.doc_type]||0)+1; }); }
 
   // ── tvítök: hópa eftir tillögu-nafni; halda einu (helst þegar-tengda), rest = aukaeintök ──
   function dupInfo(){
@@ -458,6 +461,7 @@
         +   (isDupe?'<span class="badge-dupe">🔁 aukaeintak</span> ':'')
         +   (r.__edited?'<span class="badge-edit">✏️ leiðrétt</span> ':'')
         +   '<a class="fname" href="https://drive.google.com/file/d/'+esc(r.id)+'/view" target="_blank" rel="noopener" data-nostop="1" title="Opna í Drive í nýjum flipa">'+esc(r.name)+'</a>'
+        +   ((hasAnnad && !r.__done) ? '<button class="rm-btn" data-rm="'+i+'" data-nostop="1" title="Fjarlægja — færa skrána í Annað-möppuna">✕</button>' : '')
         + '</div>'
         + '<div class="l2">'+bits.join('')+'</div>'
         + editor
@@ -484,8 +488,31 @@
     Array.prototype.forEach.call(document.querySelectorAll('[data-save]'), function(b){
       b.addEventListener('click', function(e){ e.stopPropagation(); saveCorrection(+b.dataset.save, b.closest('.editor')); });
     });
+    // ✕ Fjarlægja → færa skrána í Annað-möppuna + taka röðina af listanum
+    Array.prototype.forEach.call(document.querySelectorAll('[data-rm]'), function(b){
+      b.addEventListener('click', function(e){ e.stopPropagation(); removeToAnnad(+b.dataset.rm); });
+    });
     renderDupbar(dup);
     updateSelCount();
+  }
+
+  // ── ✕ Fjarlægja röð: færa skrána í Annað-möppuna (hrein færsla, afturkræf) ──
+  async function removeToAnnad(i){
+    var r=rows[i]; if(!r) return;
+    var annad=val('tf-annad'); if(!annad){ alert('Vantar „Annað / óflokkað" möppu (fylltu reitinn efst).'); return; }
+    setRes(i,'<span style="color:#64748b">… færi í Annað</span>');
+    var d;
+    try{
+      var rr=await fetch('/api/drive-multitool',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'move-annad',id:r.id,targetFolder:annad,base_nafn:r.base_nafn})});
+      d=await rr.json().catch(function(){return{ok:false,error:'HTTP '+rr.status};});
+    }catch(e){ d={ok:false,error:(e&&e.message)||'net'}; }
+    if(!d.ok){ setRes(i,'<span style="color:#dc2626;font-weight:700">✗ '+esc(d.error||'villa')+'</span>'); return; }
+    // fært → taka röðina af listanum (og af forskoðun ef hún var valin)
+    rows.splice(i,1);
+    if(sel===i){ sel=-1; $('pv-empty').style.display='flex'; $('pv-frame').style.display='none'; $('pv-name').textContent='Veldu skrá til að forskoða'; $('pv-open').style.display='none'; }
+    else if(sel>i){ sel--; }
+    recount();
+    paint(false);
   }
 
   // ── Vista leiðréttingu: uppfæra röð + skrá í villuskýrsluna ──
