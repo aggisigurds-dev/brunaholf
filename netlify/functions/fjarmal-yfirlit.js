@@ -66,10 +66,10 @@ exports.handler = async (event) => {
   const warnings = [];
   let solur = [], invoices = [], drafts = [], meta = [], tv = [];
   try {
-    solur = await sbAll('solur', 'select=samtals,greitt_med,paid_at,krafa_sent_at,invoiced_at,dk_invoice_id,is_credit,created_at,status&greitt_med=eq.reikningur');
+    solur = await sbAll('solur', 'select=samtals,greitt_med,paid_at,krafa_sent_at,invoiced_at,dk_invoice_id,is_credit,created_at,status,num,customer_nafn&greitt_med=eq.reikningur');
   } catch (e) { warnings.push('solur lestur mistókst — Slökkvitæki-kröfur gætu vantað: ' + e.message); }
   try {
-    invoices = await sbAll('invoices', 'select=upphaed_total,hofudstoll,status,source,tilvisun,id,kt_greidanda');
+    invoices = await sbAll('invoices', 'select=upphaed_total,hofudstoll,status,source,tilvisun,id,kt_greidanda,customer_name');
   } catch (e) { warnings.push('invoices lestur mistókst — Brunahólf Payday-ógreitt gæti vantað: ' + e.message); }
   try {
     drafts = await sbAll('invoice_drafts', 'select=worksite_name,work_month,total_m_vsk');
@@ -92,10 +92,12 @@ exports.handler = async (event) => {
     const amt = +s.samtals || 0;
     if (amt <= 0) continue;
     const inMonth = (s.created_at || '') >= mStart && (s.created_at || '') < mEnd;
-    add(A.heildar, amt);
-    add(inMonth ? A.thessi_manudur : A.eldri, amt);
-    if (s.dk_invoice_id) add(A.ogreitt_payday, amt);
-    if (!s.krafa_sent_at && !s.invoiced_at && !s.dk_invoice_id) add(A.osendar, amt);
+    const num = s.num != null ? String(s.num) : '';
+    const item = { label: s.customer_nafn || num || '—', sub: num, kr: Math.round(amt) };
+    add(A.heildar, amt, item);
+    add(inMonth ? A.thessi_manudur : A.eldri, amt, item);
+    if (s.dk_invoice_id) add(A.ogreitt_payday, amt, item);
+    if (!s.krafa_sent_at && !s.invoiced_at && !s.dk_invoice_id) add(A.osendar, amt, item);
   }
 
   // ── B) Brunahólf Payday-ógreitt (tier-1) ─────────────────────────────────
@@ -110,7 +112,7 @@ exports.handler = async (event) => {
     const mt = metaBy.get(`${r.source || 'x'}|${r.tilvisun || r.id}`) || {};
     if (PAID.has(st) || mt.paid) continue;
     if (mt.hidden) continue;
-    add(B, amt);
+    add(B, amt, { label: r.customer_name || '—', sub: r.tilvisun != null ? String(r.tilvisun) : '', kr: Math.round(amt) });
   }
 
   // ── C1) Ósendir reikningar hjá Brunahólf (invoice_drafts, síðustu 3 mán) ──
@@ -122,24 +124,38 @@ exports.handler = async (event) => {
     if (amt <= 0 || wm < cutoff) continue;
     if (NON_BILLABLE.test(d.worksite_name || '')) continue; // sleppa innri + Ajour-verkefnum (annars tvítalið)
     if ((metaBy.get(`draftinv|${d.worksite_name}|${wm}`) || {}).paid) continue;
-    add(C_osendar, amt);
+    add(C_osendar, amt, { label: d.worksite_name || '—', sub: wm, kr: Math.round(amt) });
   }
 
   // ── C2/D) Tímavera-áunnið (klst × taxti) — rukkanlegir verkstaðir ─────────
   const tvByMonth = {}; // 'YYYY-MM' → klst
+  const tvByMonthProj = {}; // 'YYYY-MM' → { project → klst }
   for (const e of tv) {
     if (NON_BILLABLE.test(e.project || '')) continue;
     const ym = String(e.date || '').slice(0, 7);
     if (!ym) continue;
-    tvByMonth[ym] = (tvByMonth[ym] || 0) + (+e.hours || 0);
+    const h = +e.hours || 0;
+    tvByMonth[ym] = (tvByMonth[ym] || 0) + h;
+    const proj = String(e.project || '—').trim() || '—';
+    (tvByMonthProj[ym] || (tvByMonthProj[ym] = {}))[proj] = (tvByMonthProj[ym][proj] || 0) + h;
   }
-  const D = { klst: Math.round((tvByMonth[month] || 0) * 100) / 100, kr: Math.round((tvByMonth[month] || 0) * taxti) };
+  // Per-project listi mánaðar (klst × taxti), raðað eftir kr, cap 300.
+  const projList = (ym) => {
+    const m = tvByMonthProj[ym] || {};
+    const list = Object.keys(m).map((p) => ({ label: p, sub: (Math.round(m[p] * 100) / 100) + ' klst', kr: Math.round(m[p] * taxti) }));
+    list.sort((a, b) => b.kr - a.kr);
+    return list.length > 300 ? list.slice(0, 300) : list;
+  };
+  const D = { klst: Math.round((tvByMonth[month] || 0) * 100) / 100, kr: Math.round((tvByMonth[month] || 0) * taxti), list: projList(month) };
   const tvEldriMonths = Object.keys(tvByMonth).filter((m) => m < month).sort();
   const timavera_eldri = {
     klst: Math.round(tvEldriMonths.reduce((s, m) => s + tvByMonth[m], 0) * 100) / 100,
     kr: Math.round(tvEldriMonths.reduce((s, m) => s + tvByMonth[m] * taxti, 0)),
-    per_month: tvEldriMonths.map((m) => ({ month: m, klst: Math.round(tvByMonth[m] * 100) / 100, kr: Math.round(tvByMonth[m] * taxti) })),
+    per_month: tvEldriMonths.map((m) => ({ month: m, klst: Math.round(tvByMonth[m] * 100) / 100, kr: Math.round(tvByMonth[m] * taxti), list: projList(m) })),
   };
+
+  // Raða + cap-a alla bucket-lista (kr desc, max 300).
+  [A.thessi_manudur, A.eldri, A.heildar, A.ogreitt_payday, A.osendar, B, C_osendar].forEach(finalize);
 
   const grand_total = A.heildar.kr + B.kr + C_osendar.kr + timavera_eldri.kr + D.kr;
 
@@ -156,8 +172,9 @@ exports.handler = async (event) => {
   });
 };
 
-function n0() { return { kr: 0, n: 0 }; }
-function add(o, amt) { o.kr += Math.round(amt); o.n += 1; }
+function n0() { return { kr: 0, n: 0, list: [] }; }
+function add(o, amt, item) { o.kr += Math.round(amt); o.n += 1; if (item) o.list.push(item); }
+function finalize(o) { if (o && Array.isArray(o.list)) { o.list.sort((a, b) => b.kr - a.kr); if (o.list.length > 300) o.list = o.list.slice(0, 300); } return o; }
 function ymOf(d) { return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`; }
 function addMonths(d, k) { const x = new Date(d); x.setUTCMonth(x.getUTCMonth() + k); return x; }
 function cors() { return { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET, OPTIONS', 'access-control-allow-headers': 'content-type' }; }
