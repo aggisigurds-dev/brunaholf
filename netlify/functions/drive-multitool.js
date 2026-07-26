@@ -280,12 +280,16 @@ function cleanAddr(a) {
 // brunakerfi-viðtökupróf). Sleppir verktaka-heimilisfangi Slökkvitæki (Helluhraun 10).
 function reportAddr(text) {
   const t = String(text || '');
-  const re = /Heimilisf(?:ang)?\.?\s*:?\s*(?:vegna\s+\S+(?:\s+\S+)?\s+)?([A-ZÁÉÍÓÚÝÆÖÞÐ][A-Za-zÁÉÍÓÚÝÆÖÞÐáéíóúýæöþð.]+(?:\s+[A-Za-zÁÉÍÓÚÝÆÖÞÐáéíóúýæöþð.]+){0,2}\s+\d{1,4}(?:\s*[-–]\s*\d{1,4})?[A-Da-d]?)/g;
+  // Sleppa AÐEINS þekktum lýsingar-orðum (vegna/íbúðir/húsnæðis…) — EKKI hverju sem
+  // er: gamla „vegna \S+ \S+"-skiptingin gleypti götuna („vegna Seljavegur 2") og
+  // greip svo póstnúmer-merkið („Póstnr. 101") sem heimilisfang.
+  const re = /Heimilisf(?:ang)?\.?\s*:?\s*(?:(?:vegna|[íi]b[úu][ðd]a?(?:ir|inni?)?|h[úu]sn[æa][ðd]is?|atvinnuh[úu]sn[æa][ðd]is?|fyrir|um)\s+)*([A-ZÁÉÍÓÚÝÆÖÞÐ][A-Za-zÁÉÍÓÚÝÆÖÞÐáéíóúýæöþð.]+(?:\s+[A-Za-zÁÉÍÓÚÝÆÖÞÐáéíóúýæöþð.]+){0,2}\s+\d{1,4}(?:\s*[-–]\s*\d{1,4})?[A-Da-d]?)/g;
   let m;
   while ((m = re.exec(t))) {
     const a = m[1].replace(/\s+/g, ' ').trim();
     if (a.length < 4 || a.length > 48) continue;
-    if (/helluhraun|sl[öo]kkvit/i.test(a)) continue; // Slökkvitæki-verktaki, ekki kúnninn
+    if (/helluhraun|sl[öo]kkvit/i.test(a)) continue;                 // Slökkvitæki-verktaki, ekki kúnninn
+    if (/^(?:p[óo]stnr|s[íi]mi|kt|kennitala|tegund|verktaki|verkkaupi|tengili[ðd]ur)\b/i.test(a)) continue; // merki, ekki heimilisfang
     return a;
   }
   return addrFromContent(t);
