@@ -183,6 +183,11 @@ function fmtIsk(n) { return n == null ? '' : String(n).replace(/\B(?=(\d{3})+(?!
 function sanitize(s) { return String(s || '').replace(/[\\/:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim(); }
 function nameInvoice(co, ktd, inv, yr, tot) { return [sanitize(co) || 'Óþekkt', ktd || '', inv || '', yr || '', (tot != null ? fmtIsk(tot) + ' kr' : '')].filter(Boolean).join(' - ') + '.pdf'; }
 function nameReport(co, ktd, yr, site) { return [sanitize(co) || 'Óþekkt', site ? sanitize(site) : '', ktd || '', 'úttektarskýrsla', yr || ''].filter(Boolean).join(' - ') + '.pdf'; }
+// Samningur: Fyrirtæki - kt - (þjónustusamningur|brunakerfissamningur) - ár gerður.
+function nameSamningur(co, ktd, yr, kind) {
+  const label = kind === 'brunakerfi' ? 'brunakerfissamningur' : 'þjónustusamningur';
+  return [sanitize(co) || 'Óþekkt', ktd || '', label, yr || ''].filter(Boolean).join(' - ') + '.pdf';
+}
 
 // ── Supabase (les eingöngu) ─────────────────────────────────────────────────
 function sbHeaders(extra) { return Object.assign({ apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }, extra || {}); }
@@ -236,8 +241,12 @@ function classify(text, name, inv, total, issuerOurs, invInName) {
     // sub_hint AÐEINS af orðalagi — hrein upphæð (≥6000) er of gróft merki og
     // flaggaði venjulega slökkvitækja-reikninga ranglega sem brunakerfi.
     let sub = '';
-    if (/[áa]rssko[ðd]un\s+brunakerfis|sk[ýy]rsluger[ðd]/i.test(t) ||
-        (/brunakerfi|brunavi[ðd]v[öo]run/i.test(t) && !hasExtinguisherCounts(t))) sub = 'brunakerfi-reikningur';
+    // brunakerfis-reikningur AÐEINS á STERKU, sértæku brunakerfis-þjónustu-orðalagi
+    // (fire-alarm-system). Gamla „/brunakerfi/ && !hasExtinguisherCounts" merkið
+    // flaggaði NÆR ALLA reikninga ranglega: reikningar bera aldrei „Fjöldi:"-
+    // talningar svo !hasExtinguisherCounts var nær alltaf satt → hvert stakt
+    // „brunakerfi"-orð (líka í hausum/línum) beindi öllu í brunakerfi-möppuna.
+    if (/brunavi[ðd]v[öo]runarkerfi|[áa]rssko[ðd]un\s+brunakerfis|brunakerfis(?:reikning|samning|sk[oó][ðd]un|þj[óo]nust)/i.test(t)) sub = 'brunakerfi-reikningur';
     else if (total && total < 5000) sub = 'úttektar-reikningur';
     // brunakerfis-reikningur fær sína eigin markmöppu-merkingu (aðskilin frá
     // almenna reikningar-master) svo UI geti beint honum í brunakerfi-reikninga.
@@ -287,6 +296,7 @@ async function previewFile(token, f) {
   let proposed_name = null;
   if (cls.doc_type === 'reikningur') proposed_name = nameInvoice(coName, ktd, inv, year, total);
   else if (cls.doc_type === 'uttektarskyrsla' || cls.doc_type === 'brunakerfi') proposed_name = nameReport(coName, ktd, year, site ? site.nafn : (multiSite ? siteFrom(text) : ''));
+  else if (cls.doc_type === 'samningur') proposed_name = nameSamningur(coName, ktd, year, cls.sub_hint);
 
   // Þegar tengt?
   let existing_doc_id = null;
