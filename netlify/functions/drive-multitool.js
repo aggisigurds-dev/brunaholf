@@ -164,9 +164,14 @@ function invNum(text, name) {
   return '';
 }
 function yearFrom(s) {
-  let m = String(s).match(/^(\d{4})-\d{2}-\d{2}/); if (m) return parseInt(m[1], 10);
-  m = String(s).match(/\b\d{1,2}\.\d{1,2}\.(\d{2})\b/); if (m) return 2000 + parseInt(m[1], 10);
-  m = String(s).match(/\b(20\d{2})\b/); return m ? parseInt(m[1], 10) : null;
+  s = String(s);
+  let m = s.match(/^(\d{4})-\d{2}-\d{2}/); if (m) return parseInt(m[1], 10);
+  m = s.match(/\b\d{1,2}\.\d{1,2}\.(\d{2})\b/); if (m) return 2000 + parseInt(m[1], 10);
+  // MIKILVÆGT: fjarlægja kennitölur fyrst — kt endar oft á „20xx" (500993-2009,
+  // 481205-2040) og var ranglega lesið sem árið. Póstnúmer eru 3 stafir (101/201)
+  // svo þau rugla ekki „20\d\d".
+  const noKt = s.replace(/(?<!\d)\d{6}\s?-?\s?\d{4}(?!\d)/g, ' ');
+  m = noKt.match(/\b(20\d{2})\b/); return m ? parseInt(m[1], 10) : null;
 }
 function totalFrom(text) {
   const kw = String(text).match(/Til\s*greiðslu\s*:?\s*(?:kr\.?)?\s*([\d.]{4,})/i); let best = 0;
@@ -204,6 +209,16 @@ function addrFromContent(text) {
 const dash = kt => (kt && kt.length === 10) ? kt.slice(0, 6) + '-' + kt.slice(6) : kt;
 function fmtIsk(n) { return n == null ? '' : String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
 function sanitize(s) { return String(s || '').replace(/[\\/:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim(); }
+// Hreinsa félagsnafn úr customers_base sem ber rusl („Lautasmári 45,húsfélag",
+// „Húsfélagið Austurgötu 26,", leiðandi „- "): forskeyta-strik, aftasta komma og
+// límt „,húsfélag(ið/inu)"-viðskeyti burt.
+function cleanCompany(s) {
+  return sanitize(s)
+    .replace(/^[-–\s]+/, '')
+    .replace(/\s*,\s*h[úu]sf[ée]lag(?:i[ðn]u?|ið|i)?\.?\s*$/i, '')
+    .replace(/[\s,]+$/, '')
+    .trim();
+}
 function nameInvoice(co, ktd, inv, yr, tot) { return [sanitize(co) || 'Óþekkt', ktd || '', inv || '', yr || '', (tot != null ? fmtIsk(tot) + ' kr' : '')].filter(Boolean).join(' - ') + '.pdf'; }
 // Fold-a orð til samanburðar (án broddstafa/hástafa/greinarmerkja).
 function foldWord(w) { return String(w || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, ''); }
@@ -215,14 +230,41 @@ function siteMinusCo(site, co) {
   let i = 0; while (i < cw.length && i < sw.length && foldWord(sw[i]) === foldWord(cw[i])) i++;
   return sw.slice(i).join(' ').trim();
 }
+// Klippa af staðar-strengnum þau BYRJUNAR-orð sem eru ENDA-orð félagsnafns —
+// „Húsfélagið Álfabakki 12" + „Álfabakki 12, 109 Reykjavík" → „109 Reykjavík"
+// (svo gatan tvítakist ekki en póstnr/borg haldist). Center Hótel + „Þingholts-
+// stræti 2-4" hafa enga skörun → heimilisfangið helst óskert.
+function addrMinusCoTail(addr, co) {
+  const aw = String(addr || '').trim().split(/\s+/).filter(Boolean);
+  const cw = String(co || '').trim().split(/\s+/).filter(Boolean);
+  let best = 0;
+  for (let k = 1; k <= Math.min(aw.length, cw.length); k++) {
+    let ok = true;
+    for (let j = 0; j < k; j++) { if (foldWord(cw[cw.length - k + j]) !== foldWord(aw[j])) { ok = false; break; } }
+    if (ok) best = k;
+  }
+  return aw.slice(best).join(' ').replace(/^[\s,]+/, '').trim();
+}
 function nameReport(co, ktd, yr, site) {
   const c = sanitize(co) || 'Óþekkt';
-  let s = site ? siteMinusCo(sanitize(site), c) : '';
-  // Ef félagsnafnið inniheldur nú þegar staðinn („Húsfélagið Hamraborg 20" ⊇
-  // „Hamraborg 20") → sleppa honum svo hann tvítakist ekki. Fyrir rekstrarfélög
-  // (Center Hótel ⊉ Þingholtsstræti 2-4) helst aðgreinandi heimilisfangið.
-  if (s && foldWord(c).indexOf(foldWord(s)) !== -1) s = '';
+  let s = site ? sanitize(site).replace(/,+/g, ',').replace(/\s*,\s*/g, ', ').replace(/,\s*$/, '') : '';
+  if (s) {
+    s = siteMinusCo(s, c);       // rekstrarfélag: strjúka sameiginlegt forskeyti (Steypustöðin)
+    s = addrMinusCoTail(s, c);   // húsfélag: strjúka götuna sem er þegar í félagsnafni
+    if (foldWord(c).indexOf(foldWord(s)) !== -1) s = ''; // enn undirstrengur → sleppa
+  }
   return [c, s, ktd || '', 'úttektarskýrsla', yr || ''].filter(Boolean).join(' - ') + '.pdf';
+}
+// Heimilisfang úr SKRÁARHEITI — bútur með húsnúmeri + 3-stafa póstnúmeri + borg
+// („Álftamýri 36, 108 Reykjavík"). Áreiðanlegasta heimildin fyrir þessi vel-nefndu skjöl.
+function addrFromName(name) {
+  const segs = cleanStem(name).split(/\s+-\s+/);
+  for (const raw of segs) {
+    const t = raw.trim().replace(/,\s*$/, '');
+    if (/^\d{6}\s?-?\s?\d{4}$/.test(t)) continue;               // kt
+    if (/\b\d{3}\s+[A-ZÁÉÍÓÚÝÆÖÞÐ][a-záéíóúýæöþð]/.test(t) && /\d/.test(t.replace(/\b\d{3}\s+\S+/, ''))) return t.replace(/\s+/g, ' ').trim();
+  }
+  return '';
 }
 // Heimilisfang KAUPANDA úr skýrslu-innihaldi (báðar útfærslur — slökkvitæki-úttekt +
 // brunakerfi-viðtökupróf). Sleppir verktaka-heimilisfangi Slökkvitæki (Helluhraun 10).
@@ -344,15 +386,16 @@ async function previewFile(token, f) {
     try { site = resolveSite(f.name, sites, addr); } catch (_) { site = null; }
   }
 
-  const coName = (base && base.nafn) || companyFrom(text, f.name) || '';
+  const coName = cleanCompany((base && base.nafn) || companyFrom(text, f.name) || '');
 
   // proposed_name — kanóníska endurnefningin (aðeins fyrir reikninga + skýrslur;
   // Fasi 1 NEFNIR bara, færir/endurnefnir ekki).
   let proposed_name = null;
   if (cls.doc_type === 'reikningur') proposed_name = nameInvoice(coName, ktd, inv, year, total);
   else if (cls.doc_type === 'uttektarskyrsla' || cls.doc_type === 'brunakerfi') {
-    // Aðgreinandi staður: leyst stöð > heimilisfang úr innihaldi > „hjá fyrirtækinu"-bútur.
-    const siteDesc = (site ? site.nafn : '') || reportAddr(text) || (multiSite ? siteFrom(text) : '');
+    // Aðgreinandi staður/heimilisfang: heimilisfang úr innihaldi > úr skráarheiti >
+    // leyst stöð > „hjá fyrirtækinu"-bútur. (Heimilisfang er það sem Agnar vill sjá.)
+    const siteDesc = reportAddr(text) || addrFromName(f.name) || (site ? site.nafn : '') || (multiSite ? siteFrom(text) : '');
     proposed_name = nameReport(coName, ktd, year, siteDesc);
   }
   else if (cls.doc_type === 'samningur') proposed_name = nameSamningur(coName, ktd, year, cls.sub_hint);
