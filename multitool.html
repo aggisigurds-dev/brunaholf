@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🧰 Skjala-multitool — Brunahólf</title>
+<style>
+  :root{ --ink:#0f172a; --sub:#64748b; --line:#e2e8f0; --indigo:#4f46e5; --bg:#f1f5f9; }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; height:100%; }
+  body{ font-family:'Space Grotesk',system-ui,-apple-system,Segoe UI,Roboto,sans-serif; color:var(--ink); background:var(--bg); }
+  a{ color:#1d4ed8; }
+  .top{ background:#0b1220; color:#fff; padding:12px 18px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .top h1{ font-size:17px; margin:0; font-weight:800; letter-spacing:.2px; }
+  .top .badge{ background:#e0e7ff; color:#3730a3; font-size:11px; font-weight:800; padding:3px 9px; border-radius:99px; }
+  .top .src{ display:flex; gap:8px; align-items:center; flex:1; min-width:280px; }
+  .top input.mono{ font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12.5px; }
+  input,button,select{ font-family:inherit; }
+  input{ border:1px solid #334155; background:#0f172a; color:#e5eefb; border-radius:8px; padding:8px 10px; height:38px; }
+  .top input{ flex:1; min-width:180px; }
+  .btn{ border:1px solid rgba(0,0,0,.15); background:#fff; color:#1e293b; padding:9px 15px; border-radius:9px; font-weight:700; cursor:pointer; font-size:13px; }
+  .btn:disabled{ opacity:.5; cursor:default; }
+  .btn.primary{ background:linear-gradient(180deg,#4f46e5,#4338ca); color:#fff; border-color:rgba(0,0,0,.2); }
+  .btn.sm{ padding:6px 10px; font-size:12px; }
+  .muted{ color:var(--sub); font-size:12.5px; }
+  /* two-pane full-height */
+  .wrap{ display:grid; grid-template-columns: minmax(520px, 1.25fr) minmax(380px, 1fr); gap:0; height:calc(100vh - 58px); }
+  @media(max-width:900px){ .wrap{ grid-template-columns:1fr; height:auto; } }
+  .pane{ overflow:auto; padding:16px 18px; }
+  .pane.left{ border-right:1px solid var(--line); background:#fff; }
+  .pane.right{ background:#0b1220; padding:0; display:flex; flex-direction:column; }
+  @media(max-width:900px){ .pane{ height:auto; } .pane.right{ height:70vh; } }
+  /* controls */
+  .controls{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px; }
+  .controls label{ font-size:12.5px; color:var(--sub); display:flex; align-items:center; gap:6px; }
+  .controls input[type=number]{ width:72px; background:#fff; color:#0f172a; border-color:#cbd5e1; height:34px; }
+  /* table */
+  table.res{ width:100%; border-collapse:collapse; font-size:12.5px; }
+  table.res thead th{ position:sticky; top:0; background:#f8fafc; text-align:left; color:#64748b; font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; padding:8px 8px; z-index:1; }
+  table.res td{ padding:7px 8px; border-top:1px solid #eef2f7; vertical-align:top; }
+  table.res tr.row{ cursor:pointer; }
+  table.res tr.row:hover{ background:#f8fafc; }
+  table.res tr.sel{ background:#eef2ff; }
+  table.res tr.sel td{ border-top-color:#c7d2fe; }
+  .fname{ color:#1d4ed8; text-decoration:none; font-weight:600; word-break:break-word; }
+  .dt{ font-weight:700; white-space:nowrap; }
+  .sub{ font-size:10.5px; color:#94a3b8; font-weight:400; }
+  .pill{ display:inline-block; padding:1px 8px; border-radius:99px; font-size:11px; font-weight:700; }
+  .pill.amber{ background:#fef3c7; color:#92400e; }
+  .pill.grey{ color:#cbd5e1; font-weight:400; }
+  .tgt{ font-size:11px; color:#475569; background:#f1f5f9; padding:1px 7px; border-radius:6px; white-space:nowrap; }
+  /* apply box */
+  .applybox{ margin-top:14px; border-top:1px dashed #c7d2fe; padding-top:14px; }
+  .applybox h3{ font-size:13px; margin:0 0 8px; }
+  .radios{ display:flex; gap:16px; flex-wrap:wrap; font-size:12.5px; margin-bottom:10px; }
+  .radios label{ display:flex; align-items:center; gap:6px; }
+  .folders{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px; }
+  .folders label{ font-size:11px; color:#64748b; display:block; margin-bottom:3px; }
+  .folders input{ width:100%; background:#fff; color:#0f172a; border-color:#cbd5e1; height:36px; font-family:ui-monospace,monospace; font-size:12px; }
+  /* preview pane */
+  .pv-head{ display:flex; align-items:center; gap:10px; padding:10px 14px; color:#e5eefb; border-bottom:1px solid #1e293b; flex-wrap:wrap; }
+  .pv-head .nm{ flex:1; min-width:120px; font-size:12.5px; color:#cbd5e1; word-break:break-word; }
+  .pv-head .btn{ background:#1e293b; color:#e5eefb; border-color:#334155; }
+  .pv-frame{ flex:1; border:0; width:100%; background:#0b1220; }
+  .pv-empty{ flex:1; display:flex; align-items:center; justify-content:center; color:#475569; font-size:14px; text-align:center; padding:24px; }
+  .counter{ font-size:12px; color:#94a3b8; }
+  /* folder shortcuts */
+  .folderbar{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px; padding-bottom:12px; border-bottom:1px dashed var(--line); }
+  .folderbar .fb-title{ font-size:11px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; margin-right:2px; }
+  .fchip{ display:inline-flex; align-items:center; gap:6px; background:#eef2ff; border:1px solid #c7d2fe; border-radius:99px; padding:5px 6px 5px 11px; font-size:12.5px; }
+  .fchip .go{ color:#3730a3; font-weight:700; cursor:pointer; }
+  .fchip .go:hover{ text-decoration:underline; }
+  .fchip a.open{ color:#4f46e5; text-decoration:none; font-size:13px; }
+  .fchip .del{ color:#94a3b8; cursor:pointer; font-size:13px; border:0; background:none; padding:0 2px; }
+  .fchip .del:hover{ color:#dc2626; }
+  .fb-add{ border:1px dashed #cbd5e1; background:#fff; color:#475569; border-radius:99px; padding:5px 12px; font-size:12.5px; cursor:pointer; }
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>🧰 Skjala-multitool</h1>
+  <span class="badge">Fasi 1+2</span>
+  <div class="src">
+    <input id="src" class="mono" placeholder="Drive-mappa (folder-id / slóð) til að forskoða">
+    <button id="run" class="btn primary">👁 Forskoða</button>
+    <button id="stop" class="btn" disabled>⏸ Stöðva</button>
+    <button id="save-folder" class="btn sm" title="Vista þessa möppu sem tengil">💾 Vista möppu</button>
+  </div>
+  <a href="/#bakendi" target="_top" class="muted" style="color:#93c5fd">← Bakendi</a>
+</div>
+
+<div class="wrap">
+  <!-- LEFT: list + controls + apply -->
+  <div class="pane left">
+    <div id="folderbar" class="folderbar"></div>
+    <div class="controls">
+      <label><input type="checkbox" id="recurse" checked> Lesa undirmöppur líka</label>
+      <label>Stöðva eftir <input type="number" id="cap" value="100" min="1" step="10"> skjöl</label>
+      <span id="status" class="muted"></span>
+    </div>
+    <div id="results"></div>
+
+    <div class="applybox" id="applybox" style="display:none">
+      <h3>Fasi 2 — keyra valdar raðir (LIFANDI: endurnefnir · færir · tengir)</h3>
+      <div class="radios">
+        <label><input type="radio" name="linkmode" value="warn" checked> 🟠 Vara við árekstra (öruggast)</label>
+        <label><input type="radio" name="linkmode" value="if_empty"> ➕ Bæta við ef tómt</label>
+        <label><input type="radio" name="linkmode" value="overwrite"> ♻️ Yfirskrifa</label>
+      </div>
+      <div class="folders">
+        <div><label>🧾 Reikningar (master)</label><input id="tf-reik" value="1FHHX99LRB_9w_LqwHIY57T4l9mLMID7p"></div>
+        <div><label>📄 Úttektarskýrslur</label><input id="tf-skyr" value="1VSRRw6O8U6lU8WzZxA8CkLtrAmiU07mg"></div>
+        <div><label>📝 Samningar</label><input id="tf-samn" value="1f2kzXhbkU0xJ0MFPxRpWjoPmWZBlm1zZ"></div>
+        <div><label>🔔 Brunakerfisskýrslur</label><input id="tf-bruna" value="" placeholder="folder-id"></div>
+        <div><label>🔔 Brunakerfis reikningar</label><input id="tf-bruna-reik" value="" placeholder="folder-id"></div>
+        <div><label>🗑 Tvítök / rusl</label><input id="tf-dupes" value="1CnnNHm1xCukiTs806z9Ha1nZnSELM9k8"></div>
+      </div>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:12px">
+        <button id="apply-run" class="btn primary">▶️ Keyra valið (0)</button>
+        <button id="apply-stop" class="btn" disabled>⏸ Stöðva</button>
+        <span id="apply-status" class="muted"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: PDF preview -->
+  <div class="pane right">
+    <div class="pv-head">
+      <button id="pv-prev" class="btn sm" disabled>◀</button>
+      <button id="pv-next" class="btn sm" disabled>▶</button>
+      <span id="pv-counter" class="counter"></span>
+      <span id="pv-name" class="nm">Veldu skrá til að forskoða</span>
+      <a id="pv-open" class="btn sm" target="_blank" rel="noopener" style="display:none">Opna í Drive ↗</a>
+    </div>
+    <div id="pv-empty" class="pv-empty">👈 Smelltu á skrá í listanum (eða notaðu ◀ ▶) til að sjá PDF-ið hér.</div>
+    <iframe id="pv-frame" class="pv-frame" style="display:none" referrerpolicy="no-referrer"></iframe>
+  </div>
+</div>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
+  function folderId(s){ s=String(s||'').trim(); var m=s.match(/[-\w]{25,}/); return m?m[0]:s; }
+
+  var DT = {
+    uttektarskyrsla: { lbl:'📄 Úttektarskýrsla', col:'#0891b2' },
+    brunakerfi:      { lbl:'🔔 Brunakerfi',      col:'#7c3aed' },
+    reikningur:      { lbl:'🧾 Reikningur',       col:'#1d4ed8' },
+    samningur:       { lbl:'📝 Samningur',        col:'#0f7a43' },
+    vendor:          { lbl:'📦 Vendor',           col:'#94a3b8' },
+    other:           { lbl:'· Annað',             col:'#94a3b8' },
+    error:           { lbl:'⚠️ Villa',            col:'#dc2626' },
+  };
+  var OURS = { reikningur:1, uttektarskyrsla:1, brunakerfi:1, samningur:1 };
+
+  function val(id){ var el=$(id); return el ? String(el.value||'').trim() : ''; }
+  // röð → markmöppu-reitur. Brunakerfi: skýrslur vs reikningar (fellur á reikningar-master).
+  function targetFor(r){
+    var dt=(r&&r.doc_type)||'', sub=(r&&r.sub_hint)||'';
+    if (dt==='reikningur'){ if (sub==='brunakerfi-reikningur') return val('tf-bruna-reik')||val('tf-reik'); return val('tf-reik'); }
+    if (dt==='uttektarskyrsla') return val('tf-skyr');
+    if (dt==='brunakerfi') return val('tf-bruna');
+    if (dt==='samningur') return val('tf-samn');
+    return '';
+  }
+  function linkMode(){ var el=document.querySelector('input[name=linkmode]:checked'); return el?el.value:'warn'; }
+
+  var rows=[], counts={}, running=false, applying=false, sel=-1;
+
+  // ── remember source folder ──
+  var MTKEY='multitool_src_v1';
+  try{ var s=localStorage.getItem(MTKEY); if(s) $('src').value=s; }catch(_){}
+  $('src').addEventListener('change', function(){ try{ localStorage.setItem(MTKEY, folderId($('src').value)); }catch(_){} });
+
+  // ── saved Drive folder shortcuts (localStorage) — hjálpar við að skipuleggja möppur ──
+  var FKEY='multitool_folders_v1';
+  function loadFolders(){ try{ return JSON.parse(localStorage.getItem(FKEY)||'[]')||[]; }catch(_){ return []; } }
+  function saveFolders(a){ try{ localStorage.setItem(FKEY, JSON.stringify(a)); }catch(_){} }
+  function renderFolders(){
+    var arr=loadFolders(), bar=$('folderbar');
+    var html='<span class="fb-title">📁 Möppur</span>';
+    arr.forEach(function(f,i){
+      html+='<span class="fchip">'
+        + '<span class="go" data-go="'+i+'" title="Setja sem uppsprettu + forskoða">'+esc(f.label||f.id)+'</span>'
+        + '<a class="open" href="https://drive.google.com/drive/folders/'+esc(f.id)+'" target="_blank" rel="noopener" title="Opna möppuna í Drive">↗</a>'
+        + '<button class="del" data-del="'+i+'" title="Fjarlægja">✕</button></span>';
+    });
+    html+='<button class="fb-add" id="fb-add">➕ Bæta möppu</button>';
+    bar.innerHTML=html;
+    Array.prototype.forEach.call(bar.querySelectorAll('[data-go]'), function(el){ el.onclick=function(){ var f=loadFolders()[+el.dataset.go]; if(f){ $('src').value=f.id; try{localStorage.setItem(MTKEY,f.id);}catch(_){} runLoop(); } }; });
+    Array.prototype.forEach.call(bar.querySelectorAll('[data-del]'), function(el){ el.onclick=function(){ var a=loadFolders(); a.splice(+el.dataset.del,1); saveFolders(a); renderFolders(); }; });
+    var add=$('fb-add'); if(add) add.onclick=function(){ addFolder(); };
+  }
+  function addFolder(presetId){
+    var id=folderId(presetId!=null?presetId:(prompt('Drive-möppu ID eða slóð:','')||'')); if(!id) return;
+    var label=prompt('Nafn á möppunni (til að þekkja hana):', '')||id;
+    var a=loadFolders(); a.push({label:label, id:id}); saveFolders(a); renderFolders();
+  }
+  $('save-folder').onclick=function(){ var id=folderId($('src').value); if(!id){ alert('Settu fyrst inn möppu í uppsprettu-reitinn.'); return; } addFolder(id); };
+  renderFolders();
+
+  // ── preview pane ──
+  function showPreview(i){
+    if (i<0 || i>=rows.length) return;
+    sel=i; var r=rows[i];
+    Array.prototype.forEach.call(document.querySelectorAll('tr.row'), function(tr){ tr.classList.toggle('sel', +tr.dataset.idx===i); });
+    var tr=document.querySelector('tr.row[data-idx="'+i+'"]'); if(tr && tr.scrollIntoView) tr.scrollIntoView({block:'nearest'});
+    $('pv-empty').style.display='none';
+    var fr=$('pv-frame'); fr.style.display='block';
+    fr.src='https://drive.google.com/file/d/'+encodeURIComponent(r.id)+'/preview';
+    $('pv-name').textContent=r.name||'';
+    var op=$('pv-open'); op.style.display='inline-block'; op.href='https://drive.google.com/file/d/'+encodeURIComponent(r.id)+'/view';
+    $('pv-counter').textContent=(i+1)+' / '+rows.length;
+    $('pv-prev').disabled = i<=0; $('pv-next').disabled = i>=rows.length-1;
+  }
+  $('pv-prev').onclick=function(){ if(sel>0) showPreview(sel-1); };
+  $('pv-next').onclick=function(){ if(sel<rows.length-1) showPreview(sel+1); };
+  document.addEventListener('keydown', function(e){
+    if (e.target && /input|textarea/i.test(e.target.tagName)) return;
+    if (e.key==='ArrowDown'){ e.preventDefault(); showPreview(Math.min(rows.length-1, sel<0?0:sel+1)); }
+    else if (e.key==='ArrowUp'){ e.preventDefault(); showPreview(Math.max(0, sel<0?0:sel-1)); }
+  });
+
+  // ── render list ──
+  function selectedIdxs(){
+    return Array.prototype.slice.call(document.querySelectorAll('.chk'))
+      .filter(function(c){ return c.checked && !c.disabled; })
+      .map(function(c){ return +c.dataset.idx; });
+  }
+  function updateSelCount(){ var n=selectedIdxs().length; var b=$('apply-run'); if(b) b.textContent='▶️ Keyra valið ('+n+')'; }
+  function setRes(i, html){ var tr=document.querySelector('tr.row[data-idx="'+i+'"]'); if(tr){ var c=tr.querySelector('.res'); if(c) c.innerHTML=html; } }
+
+  function paint(done){
+    var c = Object.keys(counts).sort().map(function(k){ return (DT[k]?DT[k].lbl:k)+' '+counts[k]; }).join(' · ');
+    $('status').innerHTML='Lesin '+rows.length+' skjöl'+(c?(' · '+c):'')+(done?' <b style="color:#0f7a43">— búið ✅</b>':(running?' …':''));
+    var body='';
+    rows.forEach(function(r,i){
+      var dt=DT[r.doc_type]||{lbl:r.doc_type,col:'#334155'};
+      var ours=!!OURS[r.doc_type];
+      var muted=(r.doc_type==='vendor'||r.doc_type==='other');
+      var co=(r.base_nafn?esc(r.base_nafn):'<span style="color:#cbd5e1">—</span>')
+        + (r.site_nafn?('<div class="sub">📍 '+esc(r.site_nafn)+(r.site_via?(' ('+esc(r.site_via)+')'):'')+'</div>')
+           : (r.kt?('<div class="sub">kt '+esc(r.kt)+'</div>'):''));
+      var linked=r.already_linked?'<span class="pill amber">þegar tengt</span>':'<span class="pill grey">nei</span>';
+      var prop=r.proposed_name?esc(r.proposed_name):'<span style="color:#cbd5e1">—</span>';
+      var tgt=r.target?('<span class="tgt">'+esc(r.target)+'</span>'):'';
+      var canApply=ours && r.doc_type!=='error';
+      var chk='<input type="checkbox" class="chk" data-idx="'+i+'"'+(canApply?(r.__done?'':' checked'):' disabled')+(r.__done?' disabled':'')+'>';
+      var res=r.__res||'<span style="color:#cbd5e1">—</span>';
+      body+='<tr class="row'+(i===sel?' sel':'')+'" data-idx="'+i+'" style="'+(muted?'opacity:.62;':'')+'">'
+        + '<td style="text-align:center" data-nostop="1">'+chk+'</td>'
+        + '<td style="max-width:260px"><a class="fname" href="https://drive.google.com/file/d/'+esc(r.id)+'/view" target="_blank" rel="noopener" data-nostop="1" title="Opna í Drive">'+esc(r.name)+' ↗</a></td>'
+        + '<td class="dt" style="color:'+dt.col+'">'+dt.lbl+(r.sub_hint?('<div class="sub">'+esc(r.sub_hint)+'</div>'):'')+'</td>'
+        + '<td>'+co+'</td>'
+        + '<td style="text-align:center">'+linked+'</td>'
+        + '<td style="max-width:240px;word-break:break-word;color:#334155">'+prop+'</td>'
+        + '<td>'+tgt+'</td>'
+        + '<td class="res" style="white-space:nowrap">'+res+'</td></tr>';
+    });
+    $('results').innerHTML = rows.length
+      ? '<table class="res"><thead><tr>'
+        + '<th style="text-align:center">✓</th><th>Skrá</th><th>Greining</th><th>Fyrirtæki</th><th style="text-align:center">Tengt?</th><th>Tillaga að nafni</th><th>Markmappa</th><th>Niðurstaða</th>'
+        + '</tr></thead><tbody>'+body+'</tbody></table>'
+      : '<div class="muted" style="padding:20px 4px">Engin skjöl lesin enn — settu inn möppu og ýttu 👁 Forskoða.</div>';
+    $('applybox').style.display = rows.length ? 'block' : 'none';
+    // row click → preview (nema smellt á hök eða tengil)
+    Array.prototype.forEach.call(document.querySelectorAll('tr.row'), function(tr){
+      tr.addEventListener('click', function(e){ if(e.target.closest('[data-nostop]')) return; showPreview(+tr.dataset.idx); });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.chk'), function(c){ c.addEventListener('change', updateSelCount); });
+    updateSelCount();
+  }
+
+  // ── preview run loop ──
+  async function runLoop(){
+    var src=folderId($('src').value); if(!src){ $('status').textContent='Settu inn möppu.'; return; }
+    try{ localStorage.setItem(MTKEY, src); }catch(_){}
+    var cap=Math.max(parseInt($('cap').value||'100',10)||100,1);
+    var recurse=$('recurse').checked?'1':'0';
+    rows=[]; counts={}; sel=-1; running=true;
+    $('run').disabled=true; $('stop').disabled=false;
+    $('pv-empty').style.display='flex'; $('pv-frame').style.display='none'; $('pv-name').textContent='Veldu skrá til að forskoða'; $('pv-open').style.display='none'; $('pv-counter').textContent='';
+    var offset=0;
+    try{
+      while(running && rows.length<cap){
+        var url='/api/drive-multitool?src='+encodeURIComponent(src)+'&recurse='+recurse+'&limit=3&offset='+offset;
+        var r=await fetch(url); var d=await r.json();
+        if(!r.ok) throw new Error(d.error||('HTTP '+r.status));
+        (d.rows||[]).forEach(function(x){ rows.push(x); counts[x.doc_type]=(counts[x.doc_type]||0)+1; });
+        paint(false);
+        if(d.nextOffset==null){ running=false; paint(true); break; }
+        offset=d.nextOffset;
+      }
+      if(rows.length>=cap){ running=false; $('status').innerHTML=$('status').innerHTML.replace(/ …$/,'')+' <b style="color:#b45309">— stöðvað eftir '+cap+' skjöl</b>'; }
+    }catch(e){ running=false; $('status').textContent='Villa: '+(e&&e.message||e); }
+    finally{ running=false; $('run').disabled=false; $('stop').disabled=true; }
+  }
+  $('run').onclick=runLoop;
+  $('stop').onclick=function(){ running=false; $('status').innerHTML+=' (stöðva…)'; };
+
+  // ── apply (Fasi 2) ──
+  async function applyOne(i){
+    var r=rows[i]; setRes(i,'<span style="color:#64748b">… vinn</span>');
+    var body={ action:'apply', id:r.id, doc_type:r.doc_type, base_id:r.base_id, base_nafn:r.base_nafn,
+      year:r.year, invoice_number:r.invoice_number, site_id:r.site_id, proposed_name:r.proposed_name,
+      targetFolder:targetFor(r), linkMode:linkMode() };
+    try{
+      var rr=await fetch('/api/drive-multitool',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+      var d=await rr.json().catch(function(){ return {ok:false,error:'HTTP '+rr.status}; });
+      r.__done=true;
+      if(!d.ok){ setRes(i,'<span style="color:#dc2626;font-weight:700">✗ '+esc(d.error||'villa')+'</span>'); return {res:'err'}; }
+      if(d.skipped==='not-ours'){ setRes(i,'<span style="color:#94a3b8">— sleppt (ekki okkar)</span>'); return {res:'skip'}; }
+      if(d.conflict){ setRes(i,'<span style="color:#b45309;font-weight:700">⚠ árekstur — ekki tengt</span>'+(d.moved?' <span style="color:#64748b">· fært</span>':'')); return {res:'conflict'}; }
+      var bits=[]; if(d.moved) bits.push('fært'); if(d.renamed) bits.push('endurnefnt');
+      if(d.linkAction==='skipped_exists') bits.push('tengill til (ósnert)');
+      else if(d.linked) bits.push('tengt'+(d.linkAction&&d.linkAction!=='linked'?(' ('+d.linkAction+')'):''));
+      if(d.moveSkipped==='no-target') bits.push('engin markmappa');
+      setRes(i,'<span style="color:#0f7a43;font-weight:700">✓ '+esc(bits.join(' + ')||'engin breyting')+'</span>');
+      return {res:'ok'};
+    }catch(e){ r.__done=true; setRes(i,'<span style="color:#dc2626;font-weight:700">✗ '+esc(e&&e.message||e)+'</span>'); return {res:'err'}; }
+  }
+  async function runApply(){
+    var idxs=selectedIdxs(); if(!idxs.length) return;
+    var cap=Math.max(parseInt($('cap').value||'100',10)||100,1);
+    var todo=idxs.slice(0,cap);
+    applying=true; $('apply-stop').disabled=false; $('apply-run').disabled=true; $('run').disabled=true; $('stop').disabled=true;
+    document.querySelectorAll('.chk').forEach(function(c){ c.disabled=true; });
+    var done=0,ok=0,conflict=0,err=0,skip=0, total=todo.length;
+    function tick(res){ done++; if(res==='ok')ok++; else if(res==='conflict')conflict++; else if(res==='err')err++; else skip++;
+      $('apply-status').innerHTML='Keyrt '+done+'/'+total+' · ✓ '+ok+' · ⚠ '+conflict+' · ✗ '+err+(skip?(' · — '+skip):''); }
+    $('apply-status').textContent='Keyri 0/'+total+' …';
+    var cursor=0;
+    async function worker(){ while(applying && cursor<todo.length){ var i=todo[cursor++]; var o=await applyOne(i); tick(o.res); } }
+    await Promise.all([worker(),worker()]);
+    applying=false; $('apply-stop').disabled=true; $('apply-run').disabled=false; $('run').disabled=false; $('stop').disabled=true;
+    document.querySelectorAll('.chk').forEach(function(c){ var i=parseInt(c.dataset.idx,10); if(!rows[i]||!rows[i].__done) c.disabled=false; });
+    $('apply-status').innerHTML+=' <b style="color:#0f7a43">— búið ✅</b>';
+    updateSelCount();
+  }
+  $('apply-run').onclick=runApply;
+  $('apply-stop').onclick=function(){ applying=false; $('apply-status').innerHTML+=' (stöðva…)'; };
+})();
+</script>
+</body>
+</html>

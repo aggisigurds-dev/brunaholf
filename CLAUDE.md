@@ -710,6 +710,25 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
     target `brunakerfi-skýrslur`) og reikningar (doc_type `reikningur` + sub_hint
     `brunakerfi-reikningur` → target `brunakerfi-reikningar`) fara í SITT hvora möppuna;
     brunakerfis-reikningur fellur á reikningar-master ef sú mappa er ekki fyllt.
+<<<<<<< Updated upstream
+=======
+    Brunakerfis-reikningur greinist AÐEINS á sterku fire-alarm-orðalagi
+    (`brunaviðvörunarkerfi`/`ársskoðun brunakerfis`/`brunakerfis…`) — ekki hverju stöku
+    „brunakerfi"-orði. Samningar fá nafn `Fyrirtæki - kt - (þjónustu|brunakerfis)samningur - ár`.
+  - **Standalone-síða `multitool.html` (2026-07-26):** full-breidd útgáfa á eigin síðu
+    (`brunaholf.netlify.app/multitool.html`, tengt af Bakendi-spjaldinu) af því tólið var
+    of þröngt í 2-dálka Bakendi-grindinni (nöfn ólæsileg). Tveggja-glugga útlit: vinstra
+    megin skjala-listinn (full breidd, læsileg nöfn), hægra megin **PDF-forskoðun í iframe**
+    (`drive.google.com/file/d/<id>/preview`) sem uppfærist við að smella á röð eða fletta
+    með ◀ ▶ / örvatökkum. Sami `/api/drive-multitool` endapunktur + sama apply-lógík
+    (linkMode, markmöppur, Keyra valið ≤2 samhliða). Auka: **möppu-tenglar** (localStorage
+    `multitool_folders_v1`) — vista Drive-möppur sem flýtileiðir (setja sem uppsprettu +
+    forskoða / opna í Drive) til að skipuleggja. Bakendi-spjaldið er áfram til en vísar á síðuna.
+    **Líka innfelldur SPA-flipi `multitool`** (🗂️ Skjala-multitool í hliðarstiku, fyrir ofan
+    Bakendi; `renderMultitool` fellir `/multitool.html` inn í `#view` sem full-hæðar iframe —
+    endurnýtir sömu síðu, enginn tvíverknaður). Bætt í `DEFAULT_STATE.tabs` + `ensureNewTabs`
+    + dispatcher eins og aðrir flipar; deep-link `#multitool`.
+>>>>>>> Stashed changes
 
 - `drive-count.js` — **Bakendi „📊 Skjalatalning"** (`/api/drive-count`): read-only
   file counter for the reikningar (master) + skýrslur Drive folders, broken down
