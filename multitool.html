@@ -101,6 +101,13 @@
   .frow .pickone{ border:1px solid #4f46e5; color:#4f46e5; background:#eef2ff; border-radius:7px; padding:4px 10px; font-size:12px; font-weight:700; cursor:pointer; }
   .mfoot{ padding:12px 16px; border-top:1px solid var(--line); display:flex; gap:10px; align-items:center; }
   .mfoot .cur{ flex:1; font-size:12px; color:#64748b; word-break:break-all; }
+  /* duplicate banner + badge */
+  #dupbar:not(:empty){ margin:0 0 12px; }
+  .dupbar{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; background:#fff7ed; border:1px solid #fed7aa; border-radius:10px; padding:10px 14px; }
+  .dupbar .t{ flex:1; font-size:13px; color:#9a3412; font-weight:600; }
+  .dupbar .btn.warn{ background:#ea580c; color:#fff; border-color:#c2410c; }
+  .item.dupe{ border-left-color:#ea580c !important; }
+  .badge-dupe{ display:inline-block; background:#ffedd5; color:#9a3412; font-size:10.5px; font-weight:800; padding:1px 7px; border-radius:99px; }
 </style>
 </head>
 <body>
@@ -126,6 +133,7 @@
       <label>Stöðva eftir <input type="number" id="cap" value="100" min="1" step="10"> skjöl</label>
       <span id="status" class="muted"></span>
     </div>
+    <div id="dupbar"></div>
     <div id="results"></div>
 
     <div class="applybox" id="applybox" style="display:none">
@@ -317,14 +325,49 @@
   function updateSelCount(){ var n=selectedIdxs().length; var b=$('apply-run'); if(b) b.textContent='▶️ Keyra valið ('+n+')'; }
   function setRes(i, html){ var el=document.querySelector('.item[data-idx="'+i+'"]'); if(el){ var c=el.querySelector('.res'); if(c){ c.innerHTML=html; c.style.display=''; } } }
 
+  // ── tvítök: hópa eftir tillögu-nafni; halda einu (helst þegar-tengda), rest = aukaeintök ──
+  function dupInfo(){
+    var byName={};
+    rows.forEach(function(r,i){ if(!r.proposed_name||!OURS[r.doc_type]||r.__done) return; var k=r.proposed_name.toLowerCase(); (byName[k]=byName[k]||[]).push(i); });
+    var extras=new Set(), groups=0;
+    Object.keys(byName).forEach(function(k){ var idxs=byName[k]; if(idxs.length<2) return; groups++;
+      var keep=idxs.find(function(i){ return rows[i].already_linked; }); if(keep==null) keep=idxs[0];
+      idxs.forEach(function(i){ if(i!==keep) extras.add(i); }); });
+    return { extras:extras, groups:groups, count:extras.size };
+  }
+  function renderDupbar(dup){
+    var bar=$('dupbar');
+    if(!dup.count){ bar.innerHTML=''; return; }
+    bar.innerHTML='<div class="dupbar"><span class="t">🔁 '+dup.count+' aukaeintök í '+dup.groups+' hópum (sama tillögu-nafn) — merkt 🔁 hér að neðan. Ein afrit haldið eftir í hverjum hópi.</span>'
+      + '<button class="btn warn" id="dup-move">🗑 Færa aukaeintök í rusl ('+dup.count+')</button></div>';
+    $('dup-move').onclick=moveDupes;
+  }
+  async function moveDupes(){
+    var idxs=Array.from(dupInfo().extras); if(!idxs.length) return;
+    var rusl=val('tf-dupes'); if(!rusl){ alert('Vantar rusl-möppu (fylltu „Tvítök / rusl" reitinn).'); return; }
+    var btn=$('dup-move'); if(btn) btn.disabled=true;
+    var done=0, cursor=0;
+    async function worker(){ while(cursor<idxs.length){ var i=idxs[cursor++]; var r=rows[i];
+      setRes(i,'<span style="color:#64748b">… færi í rusl</span>');
+      try{ var rr=await fetch('/api/drive-multitool',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'move-dupe',id:r.id,targetFolder:rusl,base_nafn:r.base_nafn})});
+        var d=await rr.json().catch(function(){return{ok:false,error:'HTTP '+rr.status};}); r.__done=true;
+        setRes(i, d.ok?('<span style="color:#0f7a43;font-weight:700">✓ '+(d.moved?'fært í rusl':'þegar í rusli')+'</span>'):('<span style="color:#dc2626;font-weight:700">✗ '+esc(d.error||'villa')+'</span>'));
+      }catch(e){ r.__done=true; setRes(i,'<span style="color:#dc2626">✗ '+esc(e&&e.message||e)+'</span>'); }
+      done++; if(btn) btn.textContent='Færi '+done+'/'+idxs.length+'…'; } }
+    await Promise.all([worker(),worker()]);
+    paint(true); updateSelCount();
+  }
+
   function paint(done){
     var c = Object.keys(counts).sort().map(function(k){ return (DT[k]?DT[k].lbl:k)+' '+counts[k]; }).join(' · ');
     $('status').innerHTML='Lesin '+rows.length+' skjöl'+(c?(' · '+c):'')+(done?' <b style="color:#0f7a43">— búið ✅</b>':(running?' …':''));
     var body='';
+    var dup=dupInfo();
     rows.forEach(function(r,i){
       var dt=DT[r.doc_type]||{lbl:r.doc_type,col:'#334155'};
       var ours=!!OURS[r.doc_type];
       var muted=(r.doc_type==='vendor'||r.doc_type==='other');
+      var isDupe=dup.extras.has(i);
       var co=r.base_nafn?esc(r.base_nafn):'';
       var site=r.site_nafn?('📍 '+esc(r.site_nafn)+(r.site_via?(' ('+esc(r.site_via)+')'):'')):(r.kt?('kt '+esc(r.kt)):'');
       var linked=r.already_linked?'<span class="pill amber">þegar tengt</span>':'<span class="pill grey">ekki tengt</span>';
@@ -338,10 +381,11 @@
       if(r.target) bits.push('<span><span class="k">mappa:</span><span class="tgt">'+esc(r.target)+'</span></span>');
       bits.push('<span>'+linked+'</span>');
       if(res) bits.push('<span class="res">'+res+'</span>'); else bits.push('<span class="res" style="display:none"></span>');
-      body+='<div class="item'+(i===sel?' sel':'')+'" data-idx="'+i+'" style="'+(muted?'opacity:.6;':'')+'border-left-color:'+dt.col+'">'
+      body+='<div class="item'+(i===sel?' sel':'')+(isDupe?' dupe':'')+'" data-idx="'+i+'" style="'+(muted?'opacity:.6;':'')+'border-left-color:'+dt.col+'">'
         + '<div class="l1">'
         +   chk
         +   '<span class="dt" style="color:'+dt.col+'">'+dt.lbl+(r.sub_hint?(' <span class="sub">· '+esc(r.sub_hint)+'</span>'):'')+'</span>'
+        +   (isDupe?'<span class="badge-dupe">🔁 aukaeintak</span> ':'')
         +   '<a class="fname" href="https://drive.google.com/file/d/'+esc(r.id)+'/view" target="_blank" rel="noopener" data-nostop="1" title="Opna í Drive í nýjum flipa">'+esc(r.name)+'</a>'
         + '</div>'
         + '<div class="l2">'+bits.join('')+'</div>'
@@ -355,6 +399,7 @@
       el.addEventListener('click', function(e){ if(e.target.closest('[data-nostop]')) return; showPreview(+el.dataset.idx); });
     });
     Array.prototype.forEach.call(document.querySelectorAll('.chk'), function(c){ c.addEventListener('change', updateSelCount); });
+    renderDupbar(dup);
     updateSelCount();
   }
 

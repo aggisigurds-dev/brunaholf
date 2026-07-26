@@ -107,8 +107,29 @@ async function driveOcr(id, token) {
 
 // ── parsing (afritað úr drive-sort / reikningar-read) ───────────────────────
 function cleanStem(name) { return String(name || '').replace(/\.pdf$/i, '').trim(); }
-function allKts(s) { const out = []; const re = /\b(\d{6})-?(\d{4})\b/g; let m; while ((m = re.exec(s))) out.push(m[1] + m[2]); return out; }
-function customerKt(s) { for (const kt of allKts(s)) if (kt !== ISSUER_KT) return kt; return null; }
+// kt-lestur þolir bil við bandstrikið („510809 - 0170" úr form-línum með undirstrikum).
+function allKts(s) { const out = []; const re = /\b(\d{6})\s?-?\s?(\d{4})\b/g; let m; while ((m = re.exec(s))) out.push(m[1] + m[2]); return out; }
+// Finna kt sem stendur skammt á eftir tilteknu kjölfestu-orðalagi (t.d. „Nafn:" eða
+// „fyrir hönd Slökkvitæki") — notað til að greina kaupanda-kt frá undirritara-kt.
+function ktNear(s, anchorRe) {
+  const m = String(s || '').match(anchorRe);
+  if (!m) return null;
+  const seg = String(s).slice(m.index, m.index + 130);
+  const k = seg.match(/kt\.?\s*:?\s*(\d{6})\s?-?\s?(\d{4})\b/i);
+  return k ? (k[1] + k[2]) : null;
+}
+// Kaupanda-kt. ALDREI kt Slökkvitæki-útgefanda NÉ kt undirritaðs Slökkvitæki-fulltrúa
+// („Fyrir hönd Slökkvitækja ehf … Frank Höybye kt: 080379-5019" er ekki kúnninn).
+// Kjósum kt í kaupanda-blokkinni („Nafn: <félag> … kt: …"); annars fyrsta gilda kt.
+function customerKt(s) {
+  s = String(s || '');
+  const repKt = ktNear(s, /fyrir\s+h[öo]nd\s+sl[öo]kkvit[æa]k/i);
+  const bad = new Set([ISSUER_KT]); if (repKt) bad.add(repKt);
+  const named = ktNear(s, /\bnafn\s*:/i);
+  if (named && !bad.has(named)) return named;
+  for (const kt of allKts(s)) if (!bad.has(kt)) return kt;
+  return null;
+}
 // Er Slökkvitæki ÚTGEFANDI (seljandi) skjalsins — ekki bara aðili á því? Eina
 // örugga seljanda-merkið er VSK-númer Slökkvitæki (98107) — kaupanda-VSK er aldrei
 // prentað — auk undirskriftar-lína skýrslu. Ekkert af þessu → vendor/other.
@@ -498,17 +519,33 @@ async function applyFile(token, body) {
   return { ok: true, id, renamed, moved, linked, linkAction, conflict, doc_id, moveSkipped };
 }
 
+// Færa AUKA-eintak af tvítaki í ruslmöppu — hrein færsla, ENGIN endurnefning,
+// ENGIN DB-tenging, ENGIN eyðing (afturkræft). Aldrei snert skráin sem er höfð.
+async function moveDupe(token, body) {
+  const id = String(body.id || '').trim();
+  const targetFolder = folderId(body.targetFolder);
+  if (!id) return { ok: false, error: 'id required' };
+  if (!targetFolder) return { ok: false, id, error: 'targetFolder (rusl) required' };
+  let cur; try { cur = await getFile(token, id); } catch (e) { return { ok: false, id, error: 'get: ' + (e.message || e) }; }
+  const parents = cur.parents || [];
+  if (parents.includes(targetFolder)) return { ok: true, id, moved: false, note: 'þegar í rusli' };
+  try { await movePatch(token, id, { addParents: targetFolder, removeParents: parents.join(',') }); }
+  catch (e) { return { ok: false, id, error: 'move: ' + (e.message || e) }; }
+  await logApply({ base_id: null, base_nafn: body.base_nafn || null, origName: cur.name || '', proposed_name: null, doc_type: 'tvítak', targetFolder, linkAction: 'moved-to-bin', conflict: false });
+  return { ok: true, id, moved: true };
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors(), body: '' };
   if (!SUPABASE_URL || !SUPABASE_KEY) return json(500, { error: 'Supabase env missing' });
 
-  // Fasi 2 — POST {action:'apply'} (eyðileggjandi, EITT skjal). Ekkert gerist án þess.
+  // Fasi 2 — POST {action:'apply'|'move-dupe'} (eyðileggjandi, EITT skjal). Ekkert gerist án þess.
   if (event.httpMethod === 'POST') {
     let b; try { b = JSON.parse(event.body || '{}'); } catch (_) { return json(400, { error: 'bad json' }); }
-    if (b.action !== 'apply') return json(400, { error: "action must be 'apply'" });
+    if (b.action !== 'apply' && b.action !== 'move-dupe') return json(400, { error: "action must be 'apply' or 'move-dupe'" });
     if (!b.id) return json(400, { error: 'id required' });
     let token; try { token = await freshAccessToken(); } catch (e) { return json(401, { error: e.message }); }
-    try { return json(200, await applyFile(token, b)); }
+    try { return json(200, b.action === 'move-dupe' ? await moveDupe(token, b) : await applyFile(token, b)); }
     catch (e) { return json(200, { ok: false, id: b.id, error: String(e.message || e) }); }
   }
 

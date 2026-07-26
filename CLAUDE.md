@@ -715,6 +715,14 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
     Brunakerfis-reikningur greinist AÐEINS á sterku fire-alarm-orðalagi
     (`brunaviðvörunarkerfi`/`ársskoðun brunakerfis`/`brunakerfis…`) — ekki hverju stöku
     „brunakerfi"-orði. Samningar fá nafn `Fyrirtæki - kt - (þjónustu|brunakerfis)samningur - ár`.
+  - **Kaupanda-kt (2026-07-26):** `customerKt` sleppir NÚ bæði útgefanda-kt (600508-0400)
+    OG kt undirritaðs Slökkvitæki-fulltrúa („Fyrir hönd Slökkvitækja ehf … Frank Höybye
+    kt: 080379-5019" er ekki kúnninn) og kýs kt í kaupanda-blokk („Nafn: <félag> … kt:").
+    `allKts` þolir bil við bandstrik („510809 - 0170" úr form-línum).
+  - **Tvítök (2026-07-26):** UI hópar raðir eftir tillögu-nafni; aukaeintök (sama nafn)
+    fá 🔁-merki + „🗑 Færa aukaeintök í rusl"-hnapp. POST `{action:'move-dupe', id,
+    targetFolder}` FÆRIR eintakið í ruslmöppu (engin endurnefning/tenging/eyðing, afturkræft;
+    heldur einu — helst þegar-tengda — í hverjum hópi). Skráð í override_log.
   - **Standalone-síða `multitool.html` (2026-07-26):** full-breidd útgáfa á eigin síðu
     (`brunaholf.netlify.app/multitool.html`, tengt af Bakendi-spjaldinu) af því tólið var
     of þröngt í 2-dálka Bakendi-grindinni (nöfn ólæsileg). Tveggja-glugga útlit: vinstra
