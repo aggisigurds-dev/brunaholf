@@ -239,12 +239,14 @@ function classify(text, name, inv, total, issuerOurs, invInName) {
     if (/[áa]rssko[ðd]un\s+brunakerfis|sk[ýy]rsluger[ðd]/i.test(t) ||
         (/brunakerfi|brunavi[ðd]v[öo]run/i.test(t) && !hasExtinguisherCounts(t))) sub = 'brunakerfi-reikningur';
     else if (total && total < 5000) sub = 'úttektar-reikningur';
-    return { doc_type: 'reikningur', sub_hint: sub, target: 'reikningar-master' };
+    // brunakerfis-reikningur fær sína eigin markmöppu-merkingu (aðskilin frá
+    // almenna reikningar-master) svo UI geti beint honum í brunakerfi-reikninga.
+    return { doc_type: 'reikningur', sub_hint: sub, target: sub === 'brunakerfi-reikningur' ? 'brunakerfi-reikningar' : 'reikningar-master' };
   }
   // 3) Hrein brunakerfis-skýrsla: brunaviðvörunar-orðalag OG engar slökkvitækja-talningar.
   if (isAlarmReport(t) && !hasExtinguisherCounts(t)) {
     const sub = /vi[ðd]t[öo]kupr[óo]f/i.test(t) ? 'viðtökupróf' : (/árleg/i.test(t) ? 'árleg prófun' : '');
-    return { doc_type: 'brunakerfi', sub_hint: sub, target: 'brunakerfi' };
+    return { doc_type: 'brunakerfi', sub_hint: sub, target: 'brunakerfi-skýrslur' };
   }
   // 4) Slökkvitækja-úttektarskýrsla.
   if (isReport(t)) return { doc_type: 'uttektarskyrsla', sub_hint: '', target: 'skýrslur-reports' };
