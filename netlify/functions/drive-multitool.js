@@ -554,6 +554,42 @@ async function logApply({ base_id, base_nafn, origName, proposed_name, doc_type,
   } catch (_) {}
 }
 
+// Villuskýrsla: notandinn leiðréttir tillögu (nafn/tegund/ár) → skráð í
+// multitool_corrections svo hægt sé að yfirfara og stilla flokkarann. Best-effort.
+function intOrNull(v) { return (v != null && v !== '') ? (Number(v) || null) : null; }
+async function logCorrection(body) {
+  const id = String(body.id || '').trim();
+  const row = {
+    drive_file_id: id || null,
+    orig_name: body.orig_name ? String(body.orig_name) : null,
+    proposed_doc_type: body.proposed_doc_type ? String(body.proposed_doc_type) : null,
+    proposed_name: body.proposed_name_orig ? String(body.proposed_name_orig) : null,
+    proposed_base_id: intOrNull(body.proposed_base_id),
+    proposed_site_id: intOrNull(body.proposed_site_id),
+    proposed_year: intOrNull(body.proposed_year),
+    corrected_doc_type: body.corrected_doc_type ? String(body.corrected_doc_type) : null,
+    corrected_name: body.corrected_name ? String(body.corrected_name) : null,
+    corrected_year: intOrNull(body.corrected_year),
+    corrected_target: body.corrected_target ? String(body.corrected_target) : null,
+    note: body.note ? String(body.note) : null,
+    applied: !!body.applied,
+  };
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/multitool_corrections`, {
+    method: 'POST', headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }),
+    body: JSON.stringify(row),
+  });
+  if (!r.ok) return { ok: false, error: 'log: ' + r.status + ' ' + (await r.text()).slice(0, 160) };
+  const d = await r.json().catch(() => [null]);
+  return { ok: true, correction_id: (Array.isArray(d) && d[0]) ? d[0].id : null };
+}
+// Lesa villuskýrsluna (nýjast fyrst) fyrir yfirferð.
+async function listCorrections(limit) {
+  const lim = Math.min(Math.max(parseInt(limit || '100', 10) || 100, 1), 500);
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/multitool_corrections?select=*&order=created_at.desc&limit=${lim}`, { headers: sbHeaders() });
+  if (!r.ok) throw new Error('corrections ' + r.status);
+  return await r.json().catch(() => []);
+}
+
 const LINKABLE = new Set(['reikningur', 'uttektarskyrsla', 'brunakerfi', 'samningur']);
 
 // Beitir EINU skjali. Öryggis-samningur að fullu í þessu falli:
@@ -675,10 +711,16 @@ exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors(), body: '' };
   if (!SUPABASE_URL || !SUPABASE_KEY) return json(500, { error: 'Supabase env missing' });
 
-  // Fasi 2 — POST {action:'apply'|'move-dupe'} (eyðileggjandi, EITT skjal). Ekkert gerist án þess.
+  // POST — leiðréttingaskrá (Supabase-eingöngu, engin Drive-aðgerð) EÐA
+  // Fasi 2 {action:'apply'|'move-dupe'} (eyðileggjandi, EITT skjal). Ekkert gerist án þess.
   if (event.httpMethod === 'POST') {
     let b; try { b = JSON.parse(event.body || '{}'); } catch (_) { return json(400, { error: 'bad json' }); }
-    if (b.action !== 'apply' && b.action !== 'move-dupe') return json(400, { error: "action must be 'apply' or 'move-dupe'" });
+    // log-correction: ekkert snert í Drive — bara skrá í villuskýrsluna.
+    if (b.action === 'log-correction') {
+      try { return json(200, await logCorrection(b)); }
+      catch (e) { return json(200, { ok: false, error: String(e.message || e) }); }
+    }
+    if (b.action !== 'apply' && b.action !== 'move-dupe') return json(400, { error: "action must be 'apply', 'move-dupe' or 'log-correction'" });
     if (!b.id) return json(400, { error: 'id required' });
     let token; try { token = await freshAccessToken(); } catch (e) { return json(401, { error: e.message }); }
     try { return json(200, b.action === 'move-dupe' ? await moveDupe(token, b) : await applyFile(token, b)); }
@@ -690,6 +732,10 @@ exports.handler = async (event) => {
 
   try {
     const p = event.queryStringParameters || {};
+    // Villuskýrslan (les-eingöngu) — engin Drive-aðgerð.
+    if (p.corrections === '1' || p.corrections === 'true') {
+      return json(200, { ok: true, corrections: await listCorrections(p.limit) });
+    }
     const src = folderId(p.src);
     if (!src) return json(400, { error: 'src required' });
     const recurse = p.recurse !== '0' && p.recurse !== 'false';   // sjálfgefið ON

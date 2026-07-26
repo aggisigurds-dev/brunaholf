@@ -710,8 +710,6 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
     target `brunakerfi-skýrslur`) og reikningar (doc_type `reikningur` + sub_hint
     `brunakerfi-reikningur` → target `brunakerfi-reikningar`) fara í SITT hvora möppuna;
     brunakerfis-reikningur fellur á reikningar-master ef sú mappa er ekki fyllt.
-<<<<<<< Updated upstream
-=======
     Brunakerfis-reikningur greinist AÐEINS á sterku fire-alarm-orðalagi
     (`brunaviðvörunarkerfi`/`ársskoðun brunakerfis`/`brunakerfis…`) — ekki hverju stöku
     „brunakerfi"-orði. Samningar fá nafn `Fyrirtæki - kt - (þjónustu|brunakerfis)samningur - ár`.
@@ -736,7 +734,17 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
     Bakendi; `renderMultitool` fellir `/multitool.html` inn í `#view` sem full-hæðar iframe —
     endurnýtir sömu síðu, enginn tvíverknaður). Bætt í `DEFAULT_STATE.tabs` + `ensureNewTabs`
     + dispatcher eins og aðrir flipar; deep-link `#multitool`.
->>>>>>> Stashed changes
+  - **Leiðréttingar + villuskýrsla (2026-07-26):** hver forskoðunar-röð fær „✏️ Leiðrétta"
+    hnapp sem opnar innfelldan ritil (Tegund · Ár · Nafn · Athugasemd). „💾 Vista leiðréttingu"
+    (1) uppfærir röðina svo „Keyra valið" noti leiðréttu gildin (breytt tegund → ný markmappa
+    gegnum `TARGET_LBL`, `site_id` hreinsað ef ekki-okkar tegund) OG (2) skráir í nýja töflu
+    **`multitool_corrections`** (tillaga tólsins vs leiðrétting notandans + athugasemd; service
+    role skrifar, RLS af). POST `{action:'log-correction', …}` snertir EKKERT í Drive — bara
+    skráning. „📋 Leiðréttingaskrá" hnappur efst opnar viewer (`GET ?corrections=1&limit=N`,
+    nýjast fyrst) svo hægt sé að yfirfara og stilla flokkarann/nafnasmíðina út frá raunverulegum
+    villum. Ritillinn breytir röðinni AÐEINS við vistun (án vistunar → apply notar upprunalegu
+    tillöguna, engin þögul gliðnun). NB v1 leiðréttir nafn/tegund/ár — base/staðar-tenging er
+    áfram Skýrslu-stöðvar-verk.
 
 - `drive-count.js` — **Bakendi „📊 Skjalatalning"** (`/api/drive-count`): read-only
   file counter for the reikningar (master) + skýrslur Drive folders, broken down
