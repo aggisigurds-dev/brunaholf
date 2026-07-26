@@ -53,6 +53,13 @@
   to = "/.netlify/functions/landsbanki-ingest-drive"
   status = 200
 
+# Skjala-multitool (Fasi 1 — les-eingöngu forskoðun). Ríður líka /api/* catch-all,
+# en skýr redirect fyrir vissu.
+[[redirects]]
+  from = "/api/drive-multitool"
+  to = "/.netlify/functions/drive-multitool"
+  status = 200
+
 # Öll önnur /api/* → samnefnd function (leysti 90 eins 1:1 blokkir af)
 [[redirects]]
   from = "/api/*"

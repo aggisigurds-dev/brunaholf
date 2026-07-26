@@ -3777,6 +3777,37 @@ function renderBakendi(t){
           <div id="bk-ds-results"></div>
         </div>
 
+        <!-- 🧰 Skjala-multitool (Fasi 1 — AÐEINS forskoðun, ekkert fært/skrifað) -->
+        <div style="${card};border-color:#c7d2fe">
+          <div style="display:flex;align-items:center;gap:14px">
+            <span style="${iconSq};${ICON.indigo}">🧰</span>
+            <div style="flex:1">
+              <div style="${titleStyle}">Skjala-multitool — sameinuð forskoðun</div>
+              <p style="${descStyle};margin-top:4px">Eitt tól sem les Drive-möppu, <b>OCR-flokkar hvert PDF</b> (úttektarskýrsla · brunakerfi · reikningur · samningur · vendor · annað) og sýnir <b>hvað það MYNDI gera</b> — fyrirtæki/stað, þegar-tengt?, tillögu að nafni og markmöppu.</p>
+            </div>
+            <span style="${chipStyle('#e0e7ff','#3730a3')}">Fasi 1</span>
+          </div>
+          <div style="background:#eef2ff;border:1px solid #c7d2fe;border-radius:10px;padding:9px 12px;font-size:12px;color:#3730a3;line-height:1.5">
+            <b>Fasi 1 — AÐEINS forskoðun.</b> Ekkert fært eða skrifað (hvorki Drive né gagnagrunnur). Keyra/færa kemur í Fasa 2. Sameinar með tímanum: <b>Skjalalestur</b> (doc-index) · <b>Drive-flokkun</b> · <b>Drive tvítekningar</b> · <b>Endurnefna skýrslur</b> · <b>Skjalavörsla</b> — þau haldast öll virk á meðan.
+          </div>
+          <div>
+            <label style="${labelStyle}">Uppspretta (Drive-mappa til að forskoða)</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <input id="bk-mt-src" placeholder="folder-id / slóð" style="${inpMono};flex:1;min-width:220px;height:42px;box-sizing:border-box">
+            </div>
+          </div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+            <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#475569"><input type="checkbox" id="bk-mt-recurse" checked> Lesa undirmöppur líka</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#475569">Stöðva eftir <input type="number" id="bk-mt-cap" value="100" min="1" step="10" style="${inp2};width:80px;height:36px;padding:6px 8px"> skjöl</label>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:auto">
+            <button id="bk-mt-run" class="btn primary">👁 Forskoða</button>
+            <button id="bk-mt-stop" class="btn" disabled>⏸ Stöðva</button>
+            <span id="bk-mt-status" style="font-size:12.5px;color:#64748b"></span>
+          </div>
+          <div id="bk-mt-results"></div>
+        </div>
+
         <!-- 📊 Skjalatalning (telur skrár í reikningar + skýrslur, per ár) -->
         <div style="${card}">
           <div style="display:flex;align-items:center;gap:14px">
@@ -4595,6 +4626,7 @@ function renderBakendi(t){
       { id:'bk-dd-folder',     title:'📂 Velja möppu til að finna tvítök' },
       { id:'bk-dd-trash',      title:'📂 Velja rusl-möppu' },
       { id:'bk-ds-src',        title:'📂 Velja uppsprettu-möppu' },
+      { id:'bk-mt-src',        title:'📂 Velja möppu til að forskoða (multitool)' },
       { id:'bk-ds-master',     title:'📂 Velja Master-möppu (reikningar)' },
       { id:'bk-ds-reports',    title:'📂 Velja Skýrslur-möppu' },
       { id:'bk-ds-dupes',      title:'📂 Velja rusl-möppu (tvítök)' },
@@ -5102,6 +5134,99 @@ function renderBakendi(t){
     const $flatR = document.getElementById('bk-ds-flat-reports');
     if ($flatM) $flatM.onclick = () => flatten($master.value, 'Reikninga-Master');
     if ($flatR) $flatR.onclick = () => flatten($reports.value, 'Skýrslur');
+  })();
+
+  // ── 🧰 Skjala-multitool: Fasi 1 — les-eingöngu forskoðun (ekkert fært/skrifað) ─
+  (function wireDriveMultitool(){
+    const $src = document.getElementById('bk-mt-src');
+    const $recurse = document.getElementById('bk-mt-recurse');
+    const $cap = document.getElementById('bk-mt-cap');
+    const $run = document.getElementById('bk-mt-run');
+    const $stop = document.getElementById('bk-mt-stop');
+    const $status = document.getElementById('bk-mt-status');
+    const $results = document.getElementById('bk-mt-results');
+    if (!$run || $run._mtWired) return; $run._mtWired = true;
+
+    // Muna síðustu uppsprettu-möppu milli hleðslna.
+    const MT_KEY = 'drive_multitool_src_v1';
+    try { const s = localStorage.getItem(MT_KEY); if (s && !$src.value) $src.value = s; } catch(_){}
+    $src.addEventListener('change', ()=>{ try{ localStorage.setItem(MT_KEY, ($src.value||'').trim()); }catch(_){} });
+
+    const esc = (s)=> (window.escapeHtml ? escapeHtml(String(s==null?'':s)) : String(s==null?'':s));
+    const DT = {
+      uttektarskyrsla: { lbl:'📄 Úttektarskýrsla', col:'#0891b2' },
+      brunakerfi:      { lbl:'🔔 Brunakerfi',      col:'#7c3aed' },
+      reikningur:      { lbl:'🧾 Reikningur',       col:'#1d4ed8' },
+      samningur:       { lbl:'📝 Samningur',        col:'#0f7a43' },
+      vendor:          { lbl:'📦 Vendor',           col:'#94a3b8' },
+      other:           { lbl:'· Annað',             col:'#94a3b8' },
+      error:           { lbl:'⚠️ Villa',            col:'#dc2626' },
+    };
+
+    let running = false, rows = [], counts = {};
+    function paint(done){
+      const c = Object.keys(counts).sort().map(k => (DT[k]?DT[k].lbl:k) + ' ' + counts[k]).join(' · ');
+      $status.innerHTML = 'Lesin ' + rows.length + ' skjöl' + (c ? (' · ' + c) : '') + (done ? ' <b style="color:#0f7a43">— búið ✅</b>' : (running ? ' …' : ''));
+      let body = '';
+      rows.forEach(r => {
+        const dt = DT[r.doc_type] || { lbl:r.doc_type, col:'#334155' };
+        const muted = (r.doc_type==='vendor' || r.doc_type==='other');
+        const cls = 'greining:' + r.doc_type + (r.sub_hint ? (' (' + r.sub_hint + ')') : '') + (r.issuer_ours===false ? ' · ekki okkar' : '');
+        const co = (r.base_nafn ? esc(r.base_nafn) : '<span style="color:#cbd5e1">—</span>')
+                 + (r.site_nafn ? ('<div style="font-size:11px;color:#64748b">📍 ' + esc(r.site_nafn) + (r.site_via?(' <span style="color:#94a3b8">('+esc(r.site_via)+')</span>'):'') + '</div>')
+                    : (r.kt ? ('<div style="font-size:11px;color:#94a3b8">kt '+esc(r.kt)+'</div>') : ''));
+        const linked = r.already_linked
+          ? '<span style="display:inline-block;padding:1px 7px;border-radius:99px;background:#fef3c7;color:#92400e;font-size:11px;font-weight:700">þegar tengt</span>'
+          : '<span style="color:#cbd5e1;font-size:11px">nei</span>';
+        const prop = r.proposed_name ? esc(r.proposed_name) : '<span style="color:#cbd5e1">—</span>';
+        const tgt = r.target ? ('<span style="font-size:11px;color:#475569;background:#f1f5f9;padding:1px 7px;border-radius:6px">'+esc(r.target)+'</span>') : '';
+        body += '<tr style="'+(muted?'opacity:.62;':'')+'border-top:1px solid #eef2f7">'
+          + '<td style="padding:5px 8px;color:#475569;max-width:220px;word-break:break-word">'+esc(r.name)+'</td>'
+          + '<td style="padding:5px 8px;white-space:nowrap;color:'+dt.col+';font-weight:700">'+dt.lbl+(r.sub_hint?('<div style="font-size:10.5px;color:#94a3b8;font-weight:400">'+esc(r.sub_hint)+'</div>'):'')+'</td>'
+          + '<td style="padding:5px 8px">'+co+'</td>'
+          + '<td style="padding:5px 8px;text-align:center">'+linked+'</td>'
+          + '<td style="padding:5px 8px;color:#334155;font-size:11.5px;max-width:240px;word-break:break-word">'+prop+'</td>'
+          + '<td style="padding:5px 8px;white-space:nowrap">'+tgt+'</td></tr>';
+      });
+      $results.innerHTML = rows.length
+        ? '<div style="max-height:480px;overflow:auto;border:1px solid #e2e8f0;border-radius:10px;margin-top:8px">'
+          + '<table style="width:100%;border-collapse:collapse;font-size:12px">'
+          + '<thead><tr style="position:sticky;top:0;background:#f8fafc;text-align:left;color:#64748b;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em">'
+          + '<th style="padding:6px 8px">Skrá</th><th style="padding:6px 8px">Greining</th><th style="padding:6px 8px">Fyrirtæki</th><th style="padding:6px 8px;text-align:center">Þegar tengt?</th><th style="padding:6px 8px">Tillaga að nafni</th><th style="padding:6px 8px">Markmappa</th>'
+          + '</tr></thead><tbody>'+body+'</tbody></table></div>'
+        : '';
+    }
+
+    async function runLoop(){
+      const src = ($src.value||'').trim();
+      if (!src) { $status.textContent = 'Vantar möppu'; return; }
+      try{ localStorage.setItem(MT_KEY, src); }catch(_){}
+      const cap = Math.max(parseInt($cap.value||'100',10)||100, 1);
+      const recurse = ($recurse && $recurse.checked) ? '1' : '0';
+      rows = []; counts = {}; running = true;
+      $run.disabled = true; $stop.disabled = false;
+      let offset = 0;
+      try {
+        while (running && rows.length < cap) {
+          const url = '/api/drive-multitool?src=' + encodeURIComponent(src) + '&recurse=' + recurse + '&limit=3&offset=' + offset;
+          const r = await fetch(url);
+          const d = await r.json();
+          if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+          (d.rows||[]).forEach(x => { rows.push(x); counts[x.doc_type] = (counts[x.doc_type]||0) + 1; });
+          paint(false);
+          if (d.nextOffset == null) { running = false; paint(true); break; }
+          offset = d.nextOffset;
+        }
+        if (rows.length >= cap) { running = false; $status.innerHTML = $status.innerHTML.replace(/ …$/, '') + ' <b style="color:#b45309">— stöðvað eftir '+cap+' skjöl</b>'; }
+      } catch(e) {
+        running = false;
+        $status.textContent = 'Villa: ' + (e && e.message || e);
+      } finally {
+        running = false; $run.disabled = false; $stop.disabled = true;
+      }
+    }
+    $run.onclick = runLoop;
+    $stop.onclick = () => { running = false; $status.innerHTML += ' (stöðva…)'; };
   })();
 
   // ── 📊 Skjalatalning: count files in reikningar + skýrslur, per year ─────────
