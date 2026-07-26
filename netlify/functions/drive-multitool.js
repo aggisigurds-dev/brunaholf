@@ -268,16 +268,28 @@ function addrFromName(name) {
   }
   return '';
 }
+// Strjúka lýsingar-orð sem lauma sér framan á heimilisfang („vegna íbúðir Þingholts-
+// stræti 2-4" → „Þingholtsstræti 2-4"). Bæði brýtur nafnið og fellir staðar-tenginguna.
+function cleanAddr(a) {
+  a = String(a || '').trim();
+  let prev;
+  do { prev = a; a = a.replace(/^(?:vegna|[íi]b[úu][ðd]a?(?:ir|inni?)?|h[úu]sn[æa][ðd]is?|atvinnuh[úu]sn[æa][ðd]is?|fyrir|um)\s+/i, '').trim(); } while (a !== prev);
+  return a;
+}
 // Heimilisfang KAUPANDA úr skýrslu-innihaldi (báðar útfærslur — slökkvitæki-úttekt +
 // brunakerfi-viðtökupróf). Sleppir verktaka-heimilisfangi Slökkvitæki (Helluhraun 10).
 function reportAddr(text) {
   const t = String(text || '');
-  const re = /Heimilisf(?:ang)?\.?\s*:?\s*(?:vegna\s+\S+(?:\s+\S+)?\s+)?([A-ZÁÉÍÓÚÝÆÖÞÐ][A-Za-zÁÉÍÓÚÝÆÖÞÐáéíóúýæöþð.]+(?:\s+[A-Za-zÁÉÍÓÚÝÆÖÞÐáéíóúýæöþð.]+){0,2}\s+\d{1,4}(?:\s*[-–]\s*\d{1,4})?[A-Da-d]?)/g;
+  // Sleppa AÐEINS þekktum lýsingar-orðum (vegna/íbúðir/húsnæðis…) — EKKI hverju sem
+  // er: gamla „vegna \S+ \S+"-skiptingin gleypti götuna („vegna Seljavegur 2") og
+  // greip svo póstnúmer-merkið („Póstnr. 101") sem heimilisfang.
+  const re = /Heimilisf(?:ang)?\.?\s*:?\s*(?:(?:vegna|[íi]b[úu][ðd]a?(?:ir|inni?)?|h[úu]sn[æa][ðd]is?|atvinnuh[úu]sn[æa][ðd]is?|fyrir|um)\s+)*([A-ZÁÉÍÓÚÝÆÖÞÐ][A-Za-zÁÉÍÓÚÝÆÖÞÐáéíóúýæöþð.]+(?:\s+[A-Za-zÁÉÍÓÚÝÆÖÞÐáéíóúýæöþð.]+){0,2}\s+\d{1,4}(?:\s*[-–]\s*\d{1,4})?[A-Da-d]?)/g;
   let m;
   while ((m = re.exec(t))) {
     const a = m[1].replace(/\s+/g, ' ').trim();
     if (a.length < 4 || a.length > 48) continue;
-    if (/helluhraun|sl[öo]kkvit/i.test(a)) continue; // Slökkvitæki-verktaki, ekki kúnninn
+    if (/helluhraun|sl[öo]kkvit/i.test(a)) continue;                 // Slökkvitæki-verktaki, ekki kúnninn
+    if (/^(?:p[óo]stnr|s[íi]mi|kt|kennitala|tegund|verktaki|verkkaupi|tengili[ðd]ur)\b/i.test(a)) continue; // merki, ekki heimilisfang
     return a;
   }
   return addrFromContent(t);
@@ -387,7 +399,7 @@ async function previewFile(token, f) {
     // Heimilisfang sem auka-sönnun fyrir staðar-tengingu (rekstrarfélög eins og
     // Center Hótel) — reportAddr nær „Seljavegur 2"/„Þingholtsstræti 2-4" úr
     // brunakerfi-/úttektar-hausnum sem addrFromContent missti af.
-    const addr = reportAddr(text) || addrFromContent(text) || siteFrom(text) || null;
+    const addr = cleanAddr(reportAddr(text) || addrFromContent(text) || siteFrom(text) || '') || null;
     try { site = resolveSite(f.name, sites, addr); } catch (_) { site = null; }
   }
 
@@ -400,7 +412,7 @@ async function previewFile(token, f) {
   else if (cls.doc_type === 'uttektarskyrsla' || cls.doc_type === 'brunakerfi') {
     // Aðgreinandi staður/heimilisfang: heimilisfang úr innihaldi > úr skráarheiti >
     // leyst stöð > „hjá fyrirtækinu"-bútur. (Heimilisfang er það sem Agnar vill sjá.)
-    const siteDesc = reportAddr(text) || addrFromName(f.name) || (site ? site.nafn : '') || (multiSite ? siteFrom(text) : '');
+    const siteDesc = cleanAddr(reportAddr(text) || addrFromName(f.name)) || (site ? site.nafn : '') || (multiSite ? siteFrom(text) : '');
     proposed_name = nameReport(coName, ktd, year, siteDesc, cls.doc_type === 'brunakerfi' ? 'brunakerfi' : 'úttektarskýrsla');
   }
   else if (cls.doc_type === 'samningur') proposed_name = nameSamningur(coName, ktd, year, cls.sub_hint);
