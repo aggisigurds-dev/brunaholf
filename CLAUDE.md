@@ -663,6 +663,48 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   stað fær ` - #<fyrirtaeki_id>` stimpilinn aftast (reikninga-nafnasniðið óbreytt —
   R-nr er lykillinn).
 
+- `drive-multitool.js` — **Bakendi „🧰 Skjala-multitool"** (`/api/drive-multitool`):
+  sameinaða skjala-tólið — READ **og** WRITE, tveir hamir sem sameina með tímanum
+  Skjalalestur · Drive-flokkun · Drive tvítekningar · Endurnefna skýrslur · Skjalavörsla.
+  Endurnýtir sönnuðu frumaðgerðir drive-sort (move/rename via `files.update`,
+  `upsertDoc`, dedup-uppfletting) + `_spine` (`sitesForBase`/`resolveSite`/
+  `siteWriteAllowed`/`siteStampFromName`).
+  - **Fasi 1 — GET (les-eingöngu forskoðun):** `?src=&recurse=&limit=3&offset=N` →
+    OCR-flokkar hvert PDF og skilar TILLÖGU per skrá (`doc_type · base/site ·
+    proposed_name · target · already_linked`). FÆRIR EKKERT, SKRIFAR EKKERT.
+  - **Fasi 2 — POST `{action:'apply', id, doc_type, base_id, year, invoice_number,
+    site_id, proposed_name, targetFolder, linkMode}`** (eyðileggjandi, EITT skjal
+    sem UI rekur af yfirfarnu forskoðuninni — aldrei blint bulk-sweep): (1)
+    endurnefnir í `proposed_name`, (2) **FÆRIR** (relocate) í `targetFolder` gegnum
+    `files.update` addParents/removeParents, (3) tengir `customer_documents` eftir
+    `linkMode`. Endurnefning+færsla gerast óháð `linkMode`; aðeins DB-tengingin er
+    hlið-stýrð. Skilar `{ok, id, renamed, moved, linked, linkAction, conflict, doc_id}`.
+  - **`linkMode` (þrír hamir):** `warn` (SJÁLFGEFIÐ, öruggast) — ef tengill fyrir
+    lykilinn er þegar til á ANNARRI skrá → `conflict:true, linkAction:'conflict'`,
+    EKKERT tengt (skrifar aldrei í hljóði; UI birtir mannin til að leysa). `if_empty`
+    — tengir aðeins ef enginn tengill er til; annars `linkAction:'skipped_exists'`,
+    ósnert. `overwrite` — beinir fyrirliggjandi lykil-röð á ÞESSA skrá (fall-back
+    upsert á `drive_file_id` við einkvæmnisárekstur). Lykill = `invoice_number`
+    (reikningur) · `(customer_base_id, doc_type, year)` [+ `fyrirtaeki_id` fyrir
+    rekstrarfélag með >1 lifandi stað] (skýrsla/brunakerfi/samningur).
+  - **Öryggis-samningur (allur útfærður):** ekkert án `action:'apply'`+`id` (GET
+    er les-eingöngu); **ALDREI `files.delete`** — tvítök eru FÆRÐ í ruslmöppu;
+    idempotent (rétt nafn→engin endurnefning · þegar í markmöppu→engin færsla ·
+    upsert á `drive_file_id`); `vendor`/`other` hvorki færð né tengd nema UI sendi
+    þeim markmöppu vísvitandi (og ALDREI tengd í customer_documents); markmöppu
+    vantar → færsla sleppt (endurnefna+tengja samt); hver villa skilar
+    `{ok:false,error}` fyrir ÞÁ skrá (kastar aldrei hálf-kláruðu); hvert apply skráð
+    í **`override_log`** (`field='multitool_apply'`, old=upphaflegt nafn,
+    new=proposed+target+linkAction). Hæsta áhætta: rangur `linkMode:'overwrite'`
+    beinir lykil-röð á ranga skrá — því er `warn` sjálfgefið og aldrei skrifað án
+    ótvíræðs vals; jafnvel þá er skráin bara FÆRÐ (afturkræft), ekkert eytt.
+  - **UI (Bakendi-spjaldið):** linkMode-rofi (warn sjálfgefinn), markmöppu-reitir per
+    tegund (reikningar-master · skýrslur · samningar · brunakerfi · rusl, með 📁 Velja
+    picker), hak per röð (sjálfgefið valið fyrir okkar tegundir; vendor/other/villa
+    afvalin+óvirk) + „▶️ Keyra valið (N)" sem POST-ar valdar raðir í röð (samhliðni
+    ≤2) með lifandi framvindu + niðurstöðu per röð (✓ fært+tengt / ⚠ árekstur / ✗
+    villa / — sleppt) + „⏸ Stöðva"; virðir „Stöðva eftir N" þakið.
+
 - `drive-count.js` — **Bakendi „📊 Skjalatalning"** (`/api/drive-count`): read-only
   file counter for the reikningar (master) + skýrslur Drive folders, broken down
   **per year** (parsed from each file name via a `20\d\d` / date regex). `GET
