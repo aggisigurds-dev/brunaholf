@@ -745,6 +745,13 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
     villum. Ritillinn breytir röðinni AÐEINS við vistun (án vistunar → apply notar upprunalegu
     tillöguna, engin þögul gliðnun). NB v1 leiðréttir nafn/tegund/ár — base/staðar-tenging er
     áfram Skýrslu-stöðvar-verk.
+  - **„Annað / óflokkað"-markmappa (2026-07-26):** nýr markmöppu-reitur `tf-annad`
+    (📦 docs · sheets · innkaup) fyrir vendor/other skjöl. `targetFor` beinir
+    vendor+other þangað; þegar reiturinn er fylltur verða vendor/other raðir VALANLEGAR
+    (opt-in, sjálfgefið ÓVALIÐ — okkar tegundir áfram sjálfvaldar) svo hægt sé að SÓPA
+    óskyldum birgja-/bókhalds-/innkaupa-skjölum í eina Annað-möppu. Bakendinn færir
+    vendor/other AÐEINS þegar markmappa fylgir og TENGIR þau ALDREI í customer_documents
+    (óbreyttur öryggis-samningur). Reiturinn geymist í `localStorage.multitool_tf_annad_v1`.
 
 - `drive-count.js` — **Bakendi „📊 Skjalatalning"** (`/api/drive-count`): read-only
   file counter for the reikningar (master) + skýrslur Drive folders, broken down

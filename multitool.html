@@ -172,6 +172,7 @@
         <div><label>📝 Samningar</label><div class="tf-row"><input id="tf-samn" value="1f2kzXhbkU0xJ0MFPxRpWjoPmWZBlm1zZ"><button class="pick" data-for="tf-samn">📁</button></div></div>
         <div><label>🔔 Brunakerfisskýrslur</label><div class="tf-row"><input id="tf-bruna" value="" placeholder="folder-id"><button class="pick" data-for="tf-bruna">📁</button></div></div>
         <div><label>🔔 Brunakerfis reikningar</label><div class="tf-row"><input id="tf-bruna-reik" value="" placeholder="folder-id"><button class="pick" data-for="tf-bruna-reik">📁</button></div></div>
+        <div><label>📦 Annað / óflokkað (docs · sheets · innkaup)</label><div class="tf-row"><input id="tf-annad" value="" placeholder="folder-id"><button class="pick" data-for="tf-annad">📁</button></div></div>
         <div><label>🗑 Tvítök / rusl</label><div class="tf-row"><input id="tf-dupes" value="1CnnNHm1xCukiTs806z9Ha1nZnSELM9k8"><button class="pick" data-for="tf-dupes">📁</button></div></div>
       </div>
       <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:12px">
@@ -253,6 +254,7 @@
     if (dt==='uttektarskyrsla') return val('tf-skyr');
     if (dt==='brunakerfi') return val('tf-bruna');
     if (dt==='samningur') return val('tf-samn');
+    if (dt==='vendor' || dt==='other') return val('tf-annad');   // óskyld skjöl → Annað-mappa
     return '';
   }
   function linkMode(){ var el=document.querySelector('input[name=linkmode]:checked'); return el?el.value:'warn'; }
@@ -263,6 +265,14 @@
   var MTKEY='multitool_src_v1';
   try{ var s=localStorage.getItem(MTKEY); if(s) $('src').value=s; }catch(_){}
   $('src').addEventListener('change', function(){ try{ localStorage.setItem(MTKEY, folderId($('src').value)); }catch(_){} });
+
+  // ── remember „Annað" target folder + re-paint svo vendor/other verði valanleg ──
+  var ANNADKEY='multitool_tf_annad_v1';
+  try{ var av=localStorage.getItem(ANNADKEY); if(av) $('tf-annad').value=av; }catch(_){}
+  $('tf-annad').addEventListener('change', function(){
+    try{ localStorage.setItem(ANNADKEY, folderId($('tf-annad').value)); }catch(_){}
+    if(rows.length) paint(false);
+  });
 
   // ── saved Drive folder shortcuts (localStorage) — hjálpar við að skipuleggja möppur ──
   var FKEY='multitool_folders_v1';
@@ -408,8 +418,12 @@
       var co=r.base_nafn?esc(r.base_nafn):'';
       var site=r.site_nafn?('📍 '+esc(r.site_nafn)+(r.site_via?(' ('+esc(r.site_via)+')'):'')):(r.kt?('kt '+esc(r.kt)):'');
       var linked=r.already_linked?'<span class="pill amber">þegar tengt</span>':'<span class="pill grey">ekki tengt</span>';
-      var canApply=ours && r.doc_type!=='error';
-      var chk='<input type="checkbox" class="chk" data-idx="'+i+'"'+(canApply?(r.__done?'':' checked'):' disabled')+(r.__done?' disabled':'')+' data-nostop="1">';
+      // vendor/other má SÓPA í „Annað"-möppuna EF hún er fyllt (opt-in — sjálfgefið óvalið)
+      var isMisc=(r.doc_type==='vendor'||r.doc_type==='other');
+      var hasAnnad=!!val('tf-annad');
+      var canApply=(ours && r.doc_type!=='error') || (isMisc && hasAnnad);
+      var autoCheck=ours && r.doc_type!=='error';   // okkar tegundir sjálfvaldar; vendor/other óvalið
+      var chk='<input type="checkbox" class="chk" data-idx="'+i+'"'+(r.__done?' disabled':(canApply?'':' disabled'))+((canApply&&autoCheck&&!r.__done)?' checked':'')+' data-nostop="1">';
       var res=r.__res||'';
       // Línu 2 bútar (birtast aðeins þegar til)
       var bits=[];
