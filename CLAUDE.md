@@ -288,7 +288,14 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
 - `bank_transactions` (~938 rows): Landsbankinn ledger, used to detect
   payments made via bank that haven't been reflected in Payday. Upsert key
   `(trans_date, tnr, amount)`, `source='landsbankinn_account'`, `company='brunaholf'`
-  (refresh via Landsbankinn xlsx export).
+  (refresh via Landsbankinn xlsx export). **Drive-ingest (2026-07-26):**
+  `landsbanki-ingest-drive.js` (`/api/landsbanki-ingest-drive`) — twin of
+  `payday-ingest-drive`: finds the newest Landsbanki xlsx in Drive (name matches
+  `/landsbank|hreyf|a[ck]count|f[æa]rsl/i`), fuzzy-maps headers → upserts on the
+  same key. `?dry=1` previews (no write, echoes resolved header→column mapping —
+  RUN THIS FIRST to confirm the mapping against a real export, esp. the `tnr`
+  column); default upserts. Bakendi „🔄 Gagna-uppfærslur úr Drive" button.
+  ⚠️ mapping is best-guess (`// TODO verify against real export`) until confirmed.
 - `customer_worksite_map`: unified payer → worksite/starfsstöð map +
   `retention_pct`. Now also carries `base_id` (FK → `customers_base`, the
   paying customer) and `heimilisfang` (site address) so one kennitala can own

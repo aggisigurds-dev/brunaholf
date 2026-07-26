@@ -4083,7 +4083,12 @@ function renderBakendi(t){
             <button id="bk-pd-run" class="btn primary">💳 Payday xlsx → invoices</button>
             <span id="bk-pd-status" style="font-size:12.5px;color:#64748b"></span>
           </div>
-          <div style="${hint}">Leitað eftir skráarnafni: „vinnufærslur" / „payday" — nýjasta útgáfan vinnur. Payday-innlestur snertir ekki worksite_match (handvirkt viðhaldið).</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <button id="bk-lb-dry" class="btn">👁 Prufa (ekkert vistað)</button>
+            <button id="bk-lb-run" class="btn primary">🏦 Landsbanki — sækja hreyfingar úr Drive</button>
+            <span id="bk-lb-status" style="font-size:12.5px;color:#64748b"></span>
+          </div>
+          <div style="${hint}">Leitað eftir skráarnafni: „vinnufærslur" / „payday" / „landsbanki" · „hreyfingar" · „account" — nýjasta útgáfan vinnur. <b>Prófaðu fyrst</b> (👁) og staðfestu dálka-mátun áður en þú keyrir — Landsbanka-útflutningur hefur óstaðfesta hausa. Færir í <code>bank_transactions</code> (lykill dags+tnr+upphæð). Payday-innlestur snertir ekki worksite_match (handvirkt viðhaldið).</div>
         </div>
 
         <!-- 🕒 Tímavera API (beintenging, engin Drive-skrá) -->
@@ -6360,6 +6365,35 @@ function renderBakendi(t){
   };
   wireDriveIngest('bk-tv-run', 'bk-tv-status', '/api/timavera-ingest-drive', d => (d.upserted || 0) + ' færslur inn');
   wireDriveIngest('bk-pd-run', 'bk-pd-status', '/api/payday-ingest-drive', d => (d.invoices || 0) + ' reikningar inn');
+
+  // ── Landsbanki-hreyfingar úr Drive (dry-preview → run) ────────────────────
+  (function wireLandsbankiIngest(){
+    const dryBtn = document.getElementById('bk-lb-dry');
+    const runBtn = document.getElementById('bk-lb-run');
+    const st = document.getElementById('bk-lb-status');
+    if (!runBtn) return;
+    const go = async (dry) => {
+      dryBtn.disabled = runBtn.disabled = true;
+      st.textContent = dry ? '👁 Les nýjustu skrá (ekkert vistað)…' : '🔍 Leita að nýjustu skrá og les inn…';
+      try {
+        const r = await fetch('/api/landsbanki-ingest-drive' + (dry ? '?dry=1' : ''));
+        const d = await r.json();
+        if (!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));
+        if (dry) {
+          const m = d.mapping || {};
+          st.textContent = '👁 ' + (d.unique ?? d.parsed ?? 0) + ' færslur · ' + (d.file || '') +
+            ' — dálkar: dags=' + (m.trans_date || '?') + ' · upphæð=' + (m.amount || '?') +
+            ' · kt=' + (m.kt_counterparty || '—') + ' · tnr=' + (m.tnr || '—') + ' · texti=' + (m.text || '—');
+        } else {
+          st.textContent = '✓ ' + (d.upserted || 0) + ' hreyfingar inn — ' + (d.file || '');
+        }
+      } catch (e) {
+        st.textContent = '⚠ Villa: ' + String(e.message || e).slice(0, 120);
+      } finally { dryBtn.disabled = runBtn.disabled = false; }
+    };
+    dryBtn.onclick = () => go(true);
+    runBtn.onclick = () => go(false);
+  })();
 
   // ── Tímavera API beintenging (timavera-pull) ──────────────────────────────
   (function wireTimaveraApi(){

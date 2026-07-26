@@ -46,6 +46,13 @@
   force = true
 
 
+# Landsbanki-hreyfingar úr Drive → bank_transactions (twin of payday/timavera
+# ingest-drive). Rides the /api/* catch-all below too, en skýr redirect fyrir vissu.
+[[redirects]]
+  from = "/api/landsbanki-ingest-drive"
+  to = "/.netlify/functions/landsbanki-ingest-drive"
+  status = 200
+
 # Öll önnur /api/* → samnefnd function (leysti 90 eins 1:1 blokkir af)
 [[redirects]]
   from = "/api/*"
