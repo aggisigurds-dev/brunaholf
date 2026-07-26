@@ -4583,6 +4583,54 @@ function renderBakendi(t){
     });
   })();
 
+  // ── 📁 „Velja"-hnappar við hvern möppu-ID reit (verkefnalisti 5606a0f5) ──────
+  // Additivt: setur lítinn 📁-hnapp aftan við hvern Drive-möppu-reit sem opnar
+  // öflugu möppuvals-gluggann (openDrivePicker) og skrifar valið ID í reitinn.
+  // Copy-paste á ID heldur áfram að virka — hnappurinn er bara annar valkostur.
+  (function(){
+    // Reitir sem taka EITT folder-id (bk-eml-folders er kommu-listi → sleppt).
+    const FOLDER_INPUTS = [
+      { id:'bk-folder',        title:'📂 Velja Skjalalestur-möppu' },
+      { id:'bk-rk-folder',     title:'📂 Velja Reikningalesari-möppu' },
+      { id:'bk-dd-folder',     title:'📂 Velja möppu til að finna tvítök' },
+      { id:'bk-dd-trash',      title:'📂 Velja rusl-möppu' },
+      { id:'bk-ds-src',        title:'📂 Velja uppsprettu-möppu' },
+      { id:'bk-ds-master',     title:'📂 Velja Master-möppu (reikningar)' },
+      { id:'bk-ds-reports',    title:'📂 Velja Skýrslur-möppu' },
+      { id:'bk-ds-dupes',      title:'📂 Velja rusl-möppu (tvítök)' },
+      { id:'bk-ds-other',      title:'📂 Velja Óflokkað-möppu' },
+      { id:'bk-sv-dest',       title:'📂 Velja áfangastaðar-möppu' },
+      { id:'bk-sv-src',        title:'📂 Velja uppsprettu-möppu' },
+      { id:'bk-ps-drive-dest', title:'📂 Velja áfangastaðar-möppu' },
+      { id:'bk-sm-folder',     title:'📂 Velja Samningalesari-möppu' },
+      { id:'bk-rn-folder',     title:'📂 Velja Endurnefna-möppu (reikningar)' },
+      { id:'bk-ur-folder',     title:'📂 Velja Endurnefna-möppu (skýrslur)' },
+    ];
+    FOLDER_INPUTS.forEach(function(cfg){
+      const el = document.getElementById(cfg.id);
+      if(!el || el._pickWired) return;
+      el._pickWired = true;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn';
+      btn.textContent = '📁 Velja';
+      btn.title = 'Fletta í Drive og velja möppu — skrifar ID í reitinn';
+      btn.style.cssText = 'padding:0 12px;min-height:42px;font-size:12.5px;white-space:nowrap;flex-shrink:0';
+      btn.onclick = function(){
+        const cur = (el.value||'').trim();
+        // Bara hreint folder-id (ekki slóð) dugar sem startId; annars byrja í rót.
+        const startId = /^[A-Za-z0-9_-]{10,}$/.test(cur) ? cur : undefined;
+        openDrivePicker(function(p){
+          if(!p || !p.id) return;
+          el.value = p.id;
+          try{ el.dispatchEvent(new Event('input',{bubbles:true})); }catch(_){}
+          try{ el.dispatchEvent(new Event('change',{bubbles:true})); }catch(_){}
+        }, { title: cfg.title, startId: startId });
+      };
+      el.insertAdjacentElement('afterend', btn);
+    });
+  })();
+
   // Friendly error: when a Google call fails because the connection expired,
   // show a one-click reconnect instead of a raw "Refresh 400".
   if(!$view._bkReauthWired){ $view._bkReauthWired = true;
@@ -17250,12 +17298,14 @@ function ensureGrModalCss(){
 
 // 📂 Endurnýtanlegur Drive-möppuvals-gluggi (verkefnalisti-beiðni 2026-07-05):
 // fletta úr rót / leita að nafni, opna undirmöppur, velja — onPick({id,name}).
-function openDriveFolderPicker(onPick){
+function openDriveFolderPicker(onPick, opts){
+  opts = opts || {};
   ensureGrModalCss();
   const bg=document.createElement('div');
   bg.className='gr-modal-bg';
+  const pickTitle = opts.title ? String(opts.title) : '📂 Velja möppu úr Google Drive';
   bg.innerHTML=`<div class="gr-modal" style="display:block;width:min(560px,96vw);min-height:0"><div class="gr-form" style="width:100%;border-right:0">
-    <div class="gr-mh"><h2>📂 Velja möppu úr Google Drive</h2><button class="gr-x" id="dfp-x" type="button">×</button></div>
+    <div class="gr-mh"><h2>${String(pickTitle).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</h2><button class="gr-x" id="dfp-x" type="button">×</button></div>
     <div style="display:flex;gap:8px;margin-bottom:8px">
       <input id="dfp-q" placeholder="Leita að möppu…" style="flex:1;padding:9px 11px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;font-size:13.5px">
       <button class="gr-btn" id="dfp-search" type="button">🔍 Leita</button>
@@ -17269,6 +17319,8 @@ function openDriveFolderPicker(onPick){
   bg.querySelector('#dfp-x').onclick=close;
   const $list=bg.querySelector('#dfp-list'), $crumbs=bg.querySelector('#dfp-crumbs'), $q=bg.querySelector('#dfp-q');
   const stack=[{id:'root',name:'Drifið mitt'}];
+  // Optional: opna beint inni í tiltekinni möppu (opts.startId) svo notandi byrjar dýpra.
+  if(opts.startId){ stack.push({ id:String(opts.startId), name: opts.startName ? String(opts.startName) : 'Valin mappa' }); }
   const esc2=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function paintCrumbs(){
     $crumbs.innerHTML = stack.map((s,i)=>`<span data-i="${i}" style="cursor:pointer;${i===stack.length-1?'font-weight:700;color:#0f172a':''}">${esc2(s.name)}</span>`).join('<span style="color:#94a3b8">›</span>');
@@ -17317,8 +17369,15 @@ function openDriveFolderPicker(onPick){
   }
   bg.querySelector('#dfp-search').onclick=search;
   $q.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); search(); } });
+  // Debounced live-leit meðan skrifað er (400ms); tómt → aftur í flettu-sýn.
+  let _dfpT=null;
+  $q.addEventListener('input',()=>{ clearTimeout(_dfpT); _dfpT=setTimeout(()=>{ (($q.value.trim())?search:browse)(); },400); });
   browse();
 }
+// Endurnýtanlegt samheiti (verkefnalisti-beiðni 5606a0f5): openDrivePicker(onPick, opts)
+// opts: { startId?, startName?, title? }. Skilar {id,name} um onPick.
+function openDrivePicker(onPick, opts){ return openDriveFolderPicker(onPick, opts); }
+try{ window.openDrivePicker = openDrivePicker; window.openDriveFolderPicker = openDriveFolderPicker; }catch(_){}
 
 async function openTimabok(name, month){
   ensureGrModalCss();
