@@ -107,8 +107,10 @@ async function driveOcr(id, token) {
 
 // ── parsing (afritað úr drive-sort / reikningar-read) ───────────────────────
 function cleanStem(name) { return String(name || '').replace(/\.pdf$/i, '').trim(); }
-// kt-lestur þolir bil við bandstrikið („510809 - 0170" úr form-línum með undirstrikum).
-function allKts(s) { const out = []; const re = /\b(\d{6})\s?-?\s?(\d{4})\b/g; let m; while ((m = re.exec(s))) out.push(m[1] + m[2]); return out; }
+// kt-lestur þolir bil við bandstrikið („510809 - 0170") OG þegar „Kt"/„kt." er límt
+// beint framan á tölurnar („Kt540119-0660") — `\b` brást því 't5' er ekki orðamörk.
+// `(?<!\d)`/`(?!\d)` verja gegn því að grípa mitt í lengri talnarunu.
+function allKts(s) { const out = []; const re = /(?<!\d)(\d{6})\s?-?\s?(\d{4})(?!\d)/g; let m; while ((m = re.exec(s))) out.push(m[1] + m[2]); return out; }
 // Finna kt sem stendur skammt á eftir tilteknu kjölfestu-orðalagi (t.d. „Nafn:" eða
 // „fyrir hönd Slökkvitæki") — notað til að greina kaupanda-kt frá undirritara-kt.
 function ktNear(s, anchorRe) {
@@ -203,7 +205,39 @@ const dash = kt => (kt && kt.length === 10) ? kt.slice(0, 6) + '-' + kt.slice(6)
 function fmtIsk(n) { return n == null ? '' : String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
 function sanitize(s) { return String(s || '').replace(/[\\/:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim(); }
 function nameInvoice(co, ktd, inv, yr, tot) { return [sanitize(co) || 'Óþekkt', ktd || '', inv || '', yr || '', (tot != null ? fmtIsk(tot) + ' kr' : '')].filter(Boolean).join(' - ') + '.pdf'; }
-function nameReport(co, ktd, yr, site) { return [sanitize(co) || 'Óþekkt', site ? sanitize(site) : '', ktd || '', 'úttektarskýrsla', yr || ''].filter(Boolean).join(' - ') + '.pdf'; }
+// Fold-a orð til samanburðar (án broddstafa/hástafa/greinarmerkja).
+function foldWord(w) { return String(w || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, ''); }
+// Klippa félagsnafns-forskeyti framan af staðar-nafni: eins-staðar húsfélög hafa
+// stað == félag („Húsfélagið Hamraborg 20") → skila '' ; rekstrarfélög hafa stað
+// sem BYRJAR á félaginu („Steypustöðin Malarhöfða 38") → skila aðgreininum einum.
+function siteMinusCo(site, co) {
+  const sw = String(site || '').trim().split(/\s+/), cw = String(co || '').trim().split(/\s+/);
+  let i = 0; while (i < cw.length && i < sw.length && foldWord(sw[i]) === foldWord(cw[i])) i++;
+  return sw.slice(i).join(' ').trim();
+}
+function nameReport(co, ktd, yr, site) {
+  const c = sanitize(co) || 'Óþekkt';
+  let s = site ? siteMinusCo(sanitize(site), c) : '';
+  // Ef félagsnafnið inniheldur nú þegar staðinn („Húsfélagið Hamraborg 20" ⊇
+  // „Hamraborg 20") → sleppa honum svo hann tvítakist ekki. Fyrir rekstrarfélög
+  // (Center Hótel ⊉ Þingholtsstræti 2-4) helst aðgreinandi heimilisfangið.
+  if (s && foldWord(c).indexOf(foldWord(s)) !== -1) s = '';
+  return [c, s, ktd || '', 'úttektarskýrsla', yr || ''].filter(Boolean).join(' - ') + '.pdf';
+}
+// Heimilisfang KAUPANDA úr skýrslu-innihaldi (báðar útfærslur — slökkvitæki-úttekt +
+// brunakerfi-viðtökupróf). Sleppir verktaka-heimilisfangi Slökkvitæki (Helluhraun 10).
+function reportAddr(text) {
+  const t = String(text || '');
+  const re = /Heimilisf(?:ang)?\.?\s*:?\s*(?:vegna\s+\S+(?:\s+\S+)?\s+)?([A-ZÁÉÍÓÚÝÆÖÞÐ][A-Za-zÁÉÍÓÚÝÆÖÞÐáéíóúýæöþð.]+(?:\s+[A-Za-zÁÉÍÓÚÝÆÖÞÐáéíóúýæöþð.]+){0,2}\s+\d{1,4}(?:\s*[-–]\s*\d{1,4})?[A-Da-d]?)/g;
+  let m;
+  while ((m = re.exec(t))) {
+    const a = m[1].replace(/\s+/g, ' ').trim();
+    if (a.length < 4 || a.length > 48) continue;
+    if (/helluhraun|sl[öo]kkvit/i.test(a)) continue; // Slökkvitæki-verktaki, ekki kúnninn
+    return a;
+  }
+  return addrFromContent(t);
+}
 // Samningur: Fyrirtæki - kt - (þjónustusamningur|brunakerfissamningur) - ár gerður.
 function nameSamningur(co, ktd, yr, kind) {
   const label = kind === 'brunakerfi' ? 'brunakerfissamningur' : 'þjónustusamningur';
@@ -316,7 +350,11 @@ async function previewFile(token, f) {
   // Fasi 1 NEFNIR bara, færir/endurnefnir ekki).
   let proposed_name = null;
   if (cls.doc_type === 'reikningur') proposed_name = nameInvoice(coName, ktd, inv, year, total);
-  else if (cls.doc_type === 'uttektarskyrsla' || cls.doc_type === 'brunakerfi') proposed_name = nameReport(coName, ktd, year, site ? site.nafn : (multiSite ? siteFrom(text) : ''));
+  else if (cls.doc_type === 'uttektarskyrsla' || cls.doc_type === 'brunakerfi') {
+    // Aðgreinandi staður: leyst stöð > heimilisfang úr innihaldi > „hjá fyrirtækinu"-bútur.
+    const siteDesc = (site ? site.nafn : '') || reportAddr(text) || (multiSite ? siteFrom(text) : '');
+    proposed_name = nameReport(coName, ktd, year, siteDesc);
+  }
   else if (cls.doc_type === 'samningur') proposed_name = nameSamningur(coName, ktd, year, cls.sub_hint);
 
   // Þegar tengt?
