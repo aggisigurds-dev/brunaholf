@@ -95,7 +95,7 @@
       var r=await fetch(API+'?base='+encodeURIComponent(baseId)); var d=await r.json();
       if(!r.ok||d.error) throw new Error(d.error||('HTTP '+r.status));
       var docs=(d.docs||[]).map(function(x){
-        var lk=driveLink(x.drive_file_id);
+        var lk=x.open_url||driveLink(x.drive_file_id);
         var nm=(DT[x.doc_type]||x.doc_type)+(x.year?(' '+x.year):'')+(x.invoice_number?(' · '+x.invoice_number):'')+(x.is_duplicate?' · 🔁 dup':'');
         return '<div class="doc">'+(lk?('<a href="'+lk+'" target="_blank" rel="noopener">📄 '+esc(nm)+'</a>'):('📄 '+esc(nm)))+(x.customer_name?(' <span class="muted">— '+esc(x.customer_name)+'</span>'):'')+'</div>';
       }).join('')||'<div class="muted">Engin skjöl.</div>';
@@ -116,7 +116,7 @@
     var el=document.getElementById('secB');
     if(!unlinked.length){ el.innerHTML='<div class="card" style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;color:#16a34a;font-weight:600">Engin ótengd þjónustu-skjöl. 🎉</div>'; return; }
     var h='<table><thead><tr>'+['Skjal','Tegund','Ár',''].map(function(x){return '<th>'+x+'</th>';}).join('')+'</tr></thead><tbody>'+unlinked.map(function(x){
-      var lk=driveLink(x.drive_file_id);
+      var lk=x.open_url||driveLink(x.drive_file_id);
       var nm=x.customer_name||('#'+x.id);
       return '<tr><td>'+(lk?('<a href="'+lk+'" target="_blank" rel="noopener">'+esc(nm)+'</a>'):esc(nm))+'</td>'
         +'<td><span class="tag '+(x.doc_type==='samningur'?'b':'y')+'">'+esc(DT[x.doc_type]||x.doc_type)+'</span></td>'

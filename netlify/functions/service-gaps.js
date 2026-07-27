@@ -20,6 +20,14 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const SVC_DOCS = "('uttektarskyrsla','brunakerfi','samningur')";
 
+// Opnanlegur tengill á skjal: Drive-view ef drive_file_id, annars Supabase public URL
+// (storage_path byrjar á bucket-nafni, t.d. „samningar/…"; samningar-bucket er public).
+function openUrl(d) {
+  if (d.drive_file_id) return 'https://drive.google.com/file/d/' + d.drive_file_id + '/view';
+  if (d.storage_path) return SUPABASE_URL + '/storage/v1/object/public/' + d.storage_path;
+  return null;
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return resp(204, '', cors());
   if (!SUPABASE_URL || !SUPABASE_KEY) return json(500, { error: 'Supabase env missing' });
@@ -46,10 +54,11 @@ exports.handler = async (event) => {
   if (p.base) {
     try {
       const bid = encodeURIComponent(p.base);
-      const [docs, sites] = await Promise.all([
-        fetchAll('customer_documents', `customer_base_id=eq.${bid}&doc_type=in.(uttektarskyrsla,brunakerfi,samningur,reikningur)&select=id,doc_type,year,invoice_number,drive_file_id,customer_name,fyrirtaeki_id,is_duplicate&order=doc_type,year.desc.nullslast`),
+      const [docsRaw, sites] = await Promise.all([
+        fetchAll('customer_documents', `customer_base_id=eq.${bid}&doc_type=in.(uttektarskyrsla,brunakerfi,samningur,reikningur)&select=id,doc_type,year,invoice_number,drive_file_id,storage_path,customer_name,fyrirtaeki_id,is_duplicate&order=doc_type,year.desc.nullslast`),
         fetchAll('fyrirtaeki', `customer_base_id=eq.${bid}&deleted_at=is.null&select=id,nafn,heimilisfang,er_i_thjonustu`),
       ]);
+      const docs = docsRaw.map(d => ({ ...d, open_url: openUrl(d) }));
       return json(200, { base_id: Number(p.base), docs, sites });
     } catch (e) { return json(502, { error: e.message }); }
   }
@@ -59,7 +68,7 @@ exports.handler = async (event) => {
   try {
     [all, unlinkedRaw] = await Promise.all([
       fetchAll('v_service_gaps', 'select=*'),
-      fetchAll('customer_documents', `customer_base_id=is.null&doc_type=in.(uttektarskyrsla,brunakerfi,samningur)&select=id,doc_type,year,customer_name,drive_file_id,is_duplicate`),
+      fetchAll('customer_documents', `customer_base_id=is.null&doc_type=in.(uttektarskyrsla,brunakerfi,samningur)&select=id,doc_type,year,customer_name,drive_file_id,storage_path,is_duplicate`),
     ]);
   } catch (e) { return json(502, { error: e.message }); }
 
@@ -74,6 +83,7 @@ exports.handler = async (event) => {
 
   const unlinked = unlinkedRaw
     .filter((d) => !d.is_duplicate)
+    .map((d) => ({ ...d, open_url: openUrl(d) }))
     .sort((a, b) => (String(a.doc_type).localeCompare(String(b.doc_type))) || String(a.customer_name || '').localeCompare(String(b.customer_name || ''), 'is'));
 
   const counts = {
