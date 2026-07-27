@@ -334,6 +334,10 @@ function addrFromName(name) {
     const t = raw.trim().replace(/,\s*$/, '');
     if (/^\d{6}\s?-?\s?\d{4}$/.test(t)) continue;               // kt
     if (/^(?:19|20)\d{2}$/.test(t)) continue;                   // ár
+    // AÐEINS póstnúmer + borg (engin gata á undan) → SLEPPA: „200 Kópavogi" /
+    // „110 Reykjavík" er of rýrt (missir götuna Skemmuvegi/Grjótháls). Falla þá á
+    // innihaldið sem ber fulla götu. Krafa: eitthvað (gata) á undan póstnúmerinu.
+    if (/^\d{3}\s+[A-ZÁÉÍÓÚÝÆÖÞÐ]/.test(t)) continue;
     // Póstnúmer (3 tölust.) + borg = heimilisfang — MEÐ eða ÁN húsnúmers
     // („Skeifan, 108 Reykjavík" hefur bara póstnúmer; áður krafðist húsnúmers og
     // datt út → lenti á OCR-innihaldi sem tvítók félagsnafnið).
@@ -354,6 +358,8 @@ function addrFromReportHeader(text, co) {
   let i = 0; while (i < cw.length && i < sw.length && foldWord(sw[i]) === foldWord(cw[i])) i++;
   if (i === 0) return '';                                       // félagsnafn fannst ekki fremst → ekki treysta
   let rest = sw.slice(i).join(' ').trim();
+  // Strjúka ehf/hf-hala sem hangir eftir í hausnum (co var ehf-strípað) + leiðandi komma.
+  rest = rest.replace(/^(?:ehf|hf)\.?[\s,]*/i, '').replace(/^[\s,]+/, '').trim();
   if (!rest || !/\d/.test(rest)) return '';
   // Komma á undan póstnúmeri: „Skipholti 50 B 105 Reykjavík" → „Skipholti 50 B, 105 Reykjavík".
   rest = rest.replace(/\s+(\d{3}\s+[A-ZÁÉÍÓÚÝÆÖÞÐ][A-Za-zÁÉÍÓÚÝÆÖÞÐáéíóúýæöþð]+(?:b[æa]r|borg)?)\s*$/, ', $1');
