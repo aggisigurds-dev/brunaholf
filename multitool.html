@@ -342,7 +342,7 @@
     $('pk-list').innerHTML='<div class="muted" style="padding:16px">Sæki möppur…</div>';
     pkCrumb(); setChoose();
     try{
-      var u='/api/drive-folders?limit=60' + (q?('&q='+encodeURIComponent(q)):(parent?('&parent='+encodeURIComponent(parent)):''));
+      var u='/api/drive-folders?limit=100' + (q?('&q='+encodeURIComponent(q)):(parent?('&parent='+encodeURIComponent(parent)):'&roots=1'));
       var r=await fetch(u); var d=await r.json();
       if(!r.ok) throw new Error(d.error||('HTTP '+r.status));
       var folders=(d.files||[]).filter(function(f){ return f.is_folder; });
@@ -733,16 +733,25 @@
     var ids=[]; DEDUP.groups.forEach(function(g){ (g.dupes||[]).forEach(function(f){ ids.push(f.id); }); });
     if(!ids.length) return;
     if(!confirm('Færa '+ids.length+' aukaeintök í ruslmöppu? (Ekkert eytt — bara fært, afturkræft.)')) return;
-    var mv=$('dedup-move'); mv.disabled=true; mv.textContent='… færi';
-    try{
-      var body={action:'move',fileIds:ids};
-      var annad=val('tf-annad'); if(annad) body.trashFolder=annad;   // annars notar endapunkturinn sjálfgefna ruslmöppu
-      var r=await fetch('/api/drive-dedup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-      var d=await r.json(); if(!r.ok) throw new Error(d.error||('HTTP '+r.status));
-      var moved=(d.moved||[]).length, errs=(d.errors||[]).length;
-      $('dedup-count').textContent='✓ '+moved+' færð í rusl'+(errs?(' · '+errs+' villur'):'');
-      await openDedup();   // endur-skanna svo listinn uppfærist
-    }catch(e){ mv.disabled=false; mv.textContent='✗ '+(e&&e.message||e); }
+    var mv=$('dedup-move'); mv.disabled=true;
+    var annad=val('tf-annad');   // annars notar endapunkturinn sjálfgefna ruslmöppu
+    // Færa í LOTUM (12 í einu) svo Netlify-fallið renni ekki út á tíma (302 skrár ×
+    // 2 Drive-köll hvert = tímarof í einu kalli → HTML-villusíða „Unexpected token <").
+    var CHUNK=12, movedAll=0, errAll=0, i;
+    for(i=0;i<ids.length;i+=CHUNK){
+      var slice=ids.slice(i,i+CHUNK);
+      mv.textContent='… færi '+Math.min(i+CHUNK,ids.length)+'/'+ids.length;
+      try{
+        var body={action:'move',fileIds:slice}; if(annad) body.trashFolder=annad;
+        var r=await fetch('/api/drive-dedup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        var txt=await r.text(); var d; try{ d=JSON.parse(txt); }catch(_){ throw new Error('HTTP '+r.status+' (tímarof?)'); }
+        if(!r.ok) throw new Error(d.error||('HTTP '+r.status));
+        movedAll+=(d.moved||[]).length; errAll+=(d.errors||[]).length;
+        $('dedup-count').textContent='… '+movedAll+' færð'+(errAll?(' · '+errAll+' villur'):'');
+      }catch(e){ errAll+=slice.length; $('dedup-count').textContent='⚠ '+(e&&e.message||e)+' — '+movedAll+' færð áður (held áfram)'; }
+    }
+    $('dedup-count').textContent='✓ '+movedAll+' færð í rusl'+(errAll?(' · '+errAll+' villur'):'');
+    await openDedup();   // endur-skanna svo listinn uppfærist
   }
   $('dedup-btn').onclick=openDedup;
   $('dedup-move').onclick=moveDedupes;
