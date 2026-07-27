@@ -688,9 +688,13 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   Endurnýtir sönnuðu frumaðgerðir drive-sort (move/rename via `files.update`,
   `upsertDoc`, dedup-uppfletting) + `_spine` (`sitesForBase`/`resolveSite`/
   `siteWriteAllowed`/`siteStampFromName`).
-  - **Fasi 1 — GET (les-eingöngu forskoðun):** `?src=&recurse=&limit=3&offset=N` →
-    OCR-flokkar hvert PDF og skilar TILLÖGU per skrá (`doc_type · base/site ·
+  - **Fasi 1 — GET (les-eingöngu forskoðun):** `?src=&recurse=&limit=3&offset=N[&order=]`
+    → OCR-flokkar hvert PDF og skilar TILLÖGU per skrá (`doc_type · base/site ·
     proposed_name · target · already_linked`). FÆRIR EKKERT, SKRIFAR EKKERT.
+    `order` (UI-veljari „Röð", geymt í `localStorage.multitool_order_v1`): `name`
+    (sjálfg. A→Ö) · `new` (nýjast BÆTT við fyrst, createdTime desc) · `name-desc`
+    (öfug nöfn). `new` gerir kleift að lesa AÐEINS nýbættar skrár (t.d. 100 nýjar í
+    1100-skjala möppu) án þess að endur-OCR-a allt — `createdTime` bætt í fields.
   - **Fasi 2 — POST `{action:'apply', id, doc_type, base_id, year, invoice_number,
     site_id, proposed_name, targetFolder, linkMode}`** (eyðileggjandi, EITT skjal
     sem UI rekur af yfirfarnu forskoðuninni — aldrei blint bulk-sweep): (1)
