@@ -146,6 +146,7 @@
     <button id="stop" class="btn" disabled>⏸ Stöðva</button>
     <button id="save-folder" class="btn sm" title="Vista þessa möppu sem tengil">💾 Vista möppu</button>
     <button id="show-corr" class="btn sm" title="Skoða leiðréttingaskrána (villuskýrslu)">📋 Leiðréttingaskrá</button>
+    <button id="dedup-btn" class="btn sm" title="Fljót tvítekninga-leit — les BARA nöfn (engin OCR), strípar (1)/(2)">🗂️ Tvítök (nöfn)</button>
   </div>
   <a href="/#bakendi" target="_top" class="muted" style="color:#93c5fd">← Bakendi</a>
 </div>
@@ -230,6 +231,15 @@
     <div class="crumb">Leiðréttingar sem þú vistar hér safnast saman svo hægt sé að yfirfara og stilla flokkarann (nafn / tegund / ár). Nýjast efst.</div>
     <div class="clist" id="corr-list"><div class="muted" style="padding:16px">…</div></div>
     <div class="mfoot"><span class="cur" id="corr-count"></span><button class="btn" id="corr-close">Loka</button></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="dedup-bg">
+  <div class="modal">
+    <div class="mh"><h2>🗂️ Tvítök eftir nafni</h2><button class="x" id="dedup-x">×</button></div>
+    <div class="crumb">Les <b>aðeins skráarnöfn</b> úr uppruna-möppunni (engin OCR). Hópar saman nöfn með <code>(1)/(2)</code> strípað burt. Heldur einu eintaki (helst án <code>(n)</code>-viðskeytis, annars elsta) og <b>færir hin í ruslmöppu</b> — aldrei eytt. Aðeins bein börn möppunnar.</div>
+    <div class="clist" id="dedup-list"><div class="muted" style="padding:16px">…</div></div>
+    <div class="mfoot"><span class="cur" id="dedup-count"></span><button class="btn primary" id="dedup-move" style="display:none">🗑 Færa öll aukaeintök í rusl</button><button class="btn" id="dedup-close">Loka</button></div>
   </div>
 </div>
 
@@ -690,6 +700,54 @@
   $('show-corr').onclick=openCorrections;
   $('corr-x').onclick=closeCorr; $('corr-close').onclick=closeCorr;
   $('corr-bg').addEventListener('click', function(e){ if(e.target===$('corr-bg')) closeCorr(); });
+
+  // ── 🗂️ Tvítök eftir nafni (fljót — les bara nöfn, engin OCR) ──
+  var DEDUP=null;
+  function closeDedup(){ $('dedup-bg').classList.remove('on'); }
+  async function openDedup(){
+    var src=folderId($('src').value);
+    if(!src){ alert('Settu inn uppruna-möppu fyrst (reiturinn efst).'); return; }
+    $('dedup-bg').classList.add('on');
+    $('dedup-move').style.display='none';
+    $('dedup-count').textContent='';
+    $('dedup-list').innerHTML='<div class="muted" style="padding:16px">Les skráarnöfn…</div>';
+    try{
+      var r=await fetch('/api/drive-dedup?folder='+encodeURIComponent(src)+'&cap=0'); var d=await r.json();
+      if(!r.ok) throw new Error(d.error||('HTTP '+r.status));
+      DEDUP=d;
+      var groups=d.groups||[];
+      $('dedup-count').textContent=d.total_files+' skrár · '+groups.length+' tvítaka-hópar · '+d.total_dupe_count+' aukaeintök';
+      if(!groups.length){ $('dedup-list').innerHTML='<div class="muted" style="padding:16px;color:#16a34a;font-weight:600">Engin tvítök eftir nafni. 🎉</div>'; return; }
+      $('dedup-list').innerHTML=groups.map(function(g){
+        var dupes=(g.dupes||[]).map(function(f){ return '<div style="padding:2px 0;color:#b91c1c;font-size:12.5px">🗑 <a href="'+f.viewUrl+'" target="_blank" rel="noopener">'+esc(f.name)+'</a></div>'; }).join('');
+        return '<div class="crow"><div class="cf">🗂️ '+esc(g.name)+' <span class="muted" style="font-weight:400">('+((g.dupes||[]).length+1)+' eintök)</span></div>'
+          + '<div style="padding:2px 0;color:#166534;font-size:12.5px">✅ Held: <a href="'+g.keeper.viewUrl+'" target="_blank" rel="noopener">'+esc(g.keeper.name)+'</a></div>'
+          + dupes + '</div>';
+      }).join('');
+      var total=d.total_dupe_count||0;
+      var mv=$('dedup-move'); mv.style.display=''; mv.disabled=false; mv.textContent='🗑 Færa öll aukaeintök í rusl ('+total+')';
+    }catch(e){ $('dedup-list').innerHTML='<div class="muted" style="padding:16px;color:#dc2626">Villa: '+esc(e&&e.message||e)+'</div>'; }
+  }
+  async function moveDedupes(){
+    if(!DEDUP||!DEDUP.groups) return;
+    var ids=[]; DEDUP.groups.forEach(function(g){ (g.dupes||[]).forEach(function(f){ ids.push(f.id); }); });
+    if(!ids.length) return;
+    if(!confirm('Færa '+ids.length+' aukaeintök í ruslmöppu? (Ekkert eytt — bara fært, afturkræft.)')) return;
+    var mv=$('dedup-move'); mv.disabled=true; mv.textContent='… færi';
+    try{
+      var body={action:'move',fileIds:ids};
+      var annad=val('tf-annad'); if(annad) body.trashFolder=annad;   // annars notar endapunkturinn sjálfgefna ruslmöppu
+      var r=await fetch('/api/drive-dedup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      var d=await r.json(); if(!r.ok) throw new Error(d.error||('HTTP '+r.status));
+      var moved=(d.moved||[]).length, errs=(d.errors||[]).length;
+      $('dedup-count').textContent='✓ '+moved+' færð í rusl'+(errs?(' · '+errs+' villur'):'');
+      await openDedup();   // endur-skanna svo listinn uppfærist
+    }catch(e){ mv.disabled=false; mv.textContent='✗ '+(e&&e.message||e); }
+  }
+  $('dedup-btn').onclick=openDedup;
+  $('dedup-move').onclick=moveDedupes;
+  $('dedup-x').onclick=closeDedup; $('dedup-close').onclick=closeDedup;
+  $('dedup-bg').addEventListener('click', function(e){ if(e.target===$('dedup-bg')) closeDedup(); });
 })();
 </script>
 </body>

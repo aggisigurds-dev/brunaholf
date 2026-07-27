@@ -757,6 +757,14 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
     Bakendi; `renderMultitool` fellir `/multitool.html` inn í `#view` sem full-hæðar iframe —
     endurnýtir sömu síðu, enginn tvíverknaður). Bætt í `DEFAULT_STATE.tabs` + `ensureNewTabs`
     + dispatcher eins og aðrir flipar; deep-link `#multitool`.
+  - **Röðun + fljót tvítaka-hreinsun + edit-vernd (2026-07-27):** „Röð"-veljari
+    (`?order=name|new|name-desc`, geymt í `localStorage.multitool_order_v1`) — `new`
+    (createdTime desc) les AÐEINS nýbættar skrár svo ekki þarf að endur-OCR-a allt.
+    „🗂️ Tvítök (nöfn)"-hnappur opnar glugga sem endurnýtir `/api/drive-dedup` (les BARA
+    nöfn, engin OCR, strípar `(1)/(2)`, færir aukaeintök í rusl — sjá drive-dedup.js).
+    `paint()` varðveitir nú ó-vistaðar breytingar í opnum „✏️ Leiðrétta"-ritli (`__draft*`)
+    + fókus/bendil við endur-teikningu, svo næsta forskoðunar-lota sópi þeim ekki burt.
+    „ekki tengt" statusinn er rauð pilla (⛔).
   - **Leiðréttingar + villuskýrsla (2026-07-26):** hver forskoðunar-röð fær „✏️ Leiðrétta"
     hnapp sem opnar innfelldan ritil (Tegund · Ár · Nafn · Athugasemd). „💾 Vista leiðréttingu"
     (1) uppfærir röðina svo „Keyra valið" noti leiðréttu gildin (breytt tegund → ný markmappa
