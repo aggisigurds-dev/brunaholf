@@ -79,6 +79,7 @@
   .fb-add{ border:1px dashed #cbd5e1; background:#fff; color:#475569; border-radius:99px; padding:5px 12px; font-size:12.5px; cursor:pointer; }
   /* folder input + pick button */
   .tf-row{ display:flex; gap:6px; }
+  .tf-name{ font-size:11px; margin-top:3px; min-height:14px; word-break:break-word; line-height:1.2; }
   .tf-row input{ flex:1; }
   .pick{ border:1px solid #cbd5e1; background:#fff; color:#334155; border-radius:8px; padding:0 10px; cursor:pointer; font-size:14px; height:36px; }
   .pick.top{ height:38px; background:#1e293b; color:#e5eefb; border-color:#334155; }
@@ -297,10 +298,44 @@
 
   // ── remember „Annað" target folder + re-paint svo vendor/other verði valanleg ──
   var ANNADKEY='multitool_tf_annad_v1';
-  try{ var av=localStorage.getItem(ANNADKEY); if(av) $('tf-annad').value=av; }catch(_){}
   $('tf-annad').addEventListener('change', function(){
-    try{ localStorage.setItem(ANNADKEY, folderId($('tf-annad').value)); }catch(_){}
     if(rows.length) paint(false);
+  });
+
+  // ── ALLAR markmöppur: muna gildi + SÝNA nafn (svo þær detti ekki út og maður sjái
+  //    hvaða möppu hver reitur er / hvort id-ið sé enn til) ──
+  var TF_IDS=['tf-reik','tf-skyr','tf-samn','tf-bruna','tf-bruna-reik','tf-annad','tf-dupes'];
+  function tfValKey(id){ return id==='tf-annad'?ANNADKEY:('mt_tf_'+id); }
+  function tfNmKey(id){ return 'mt_tfnm_'+id; }
+  function setTfName(id,name){
+    var sp=$(id+'-nm'); if(!sp) return;
+    var hasVal=$(id)&&$(id).value.trim();
+    if(name){ sp.innerHTML='📁 '+esc(name); sp.style.color='#166534'; }
+    else if(hasVal){ sp.innerHTML='⚠ óþekkt mappa — smelltu 📁 til að velja'; sp.style.color='#b45309'; }
+    else { sp.innerHTML='<span style="color:#94a3b8">engin mappa valin</span>'; }
+  }
+  async function resolveTfName(id){
+    var v=$(id)?folderId($(id).value):''; if(!v){ setTfName(id,''); return; }
+    try{
+      var r=await fetch('/api/drive-folders?info='+encodeURIComponent(v));
+      var d=await r.json(); var f=(d.files||[])[0];
+      if(f&&f.name){ setTfName(id,f.name); try{ localStorage.setItem(tfNmKey(id),f.name); }catch(_){} }
+      else { setTfName(id,''); }   // id fannst ekki → viðvörun
+    }catch(_){ var cached=localStorage.getItem(tfNmKey(id)); if(cached) setTfName(id,cached); }
+  }
+  TF_IDS.forEach(function(id){
+    var inp=$(id); if(!inp) return;
+    if(!$(id+'-nm')){ var sp=document.createElement('div'); sp.className='tf-name'; sp.id=id+'-nm'; (inp.closest('div')||inp.parentNode).appendChild(sp); }
+    try{ var sv=localStorage.getItem(tfValKey(id)); if(sv!=null && sv!=='') inp.value=sv; }catch(_){}
+    try{ var snm=localStorage.getItem(tfNmKey(id)); setTfName(id, snm||''); }catch(_){}
+    inp.addEventListener('change', function(){
+      var v=folderId(inp.value); inp.value=v;
+      try{ localStorage.setItem(tfValKey(id), v); }catch(_){}
+      try{ localStorage.removeItem(tfNmKey(id)); }catch(_){}
+      setTfName(id,'');
+      resolveTfName(id);
+    });
+    resolveTfName(id);   // staðfesta nafn úr Drive við opnun
   });
 
   // ── saved Drive folder shortcuts (localStorage) — hjálpar við að skipuleggja möppur ──
