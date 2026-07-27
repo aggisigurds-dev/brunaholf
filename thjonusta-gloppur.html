@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🕵️ Gleymt að skrá í þjónustu — Brunahólf</title>
+<style>
+  :root{ --ink:#0f172a; --sub:#64748b; --line:#e2e8f0; --bg:#f1f5f9; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:'Space Grotesk',system-ui,-apple-system,Segoe UI,Roboto,sans-serif; color:var(--ink); background:var(--bg); }
+  a{ color:#1d4ed8; }
+  .top{ background:linear-gradient(180deg,#0b1220,#131c2e); color:#fff; padding:18px 20px; }
+  .top h1{ font-size:20px; margin:0 0 4px; font-weight:800; }
+  .top p{ margin:0; font-size:13px; color:#cbd5e1; max-width:820px; }
+  .wrap{ max-width:1100px; margin:0 auto; padding:16px 18px 60px; }
+  .bar{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:14px 0; }
+  .pill{ display:inline-flex; align-items:center; gap:6px; padding:6px 13px; border-radius:99px; font-size:13px; font-weight:700; }
+  .btn{ border:1px solid rgba(0,0,0,.15); background:#fff; color:#1e293b; padding:8px 14px; border-radius:9px; font-weight:700; cursor:pointer; font-size:13px; }
+  .btn:disabled{ opacity:.5; cursor:default; }
+  .btn.dark{ background:#0f172a; color:#fff; border-color:#0f172a; }
+  h2{ font-size:15px; margin:22px 0 8px; }
+  .sub{ font-size:12.5px; color:var(--sub); margin:0 0 10px; }
+  table{ width:100%; border-collapse:collapse; font-size:13px; background:#fff; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  th{ text-align:left; background:#f8fafc; color:#475569; padding:8px 11px; font-size:11px; text-transform:uppercase; white-space:nowrap; }
+  td{ padding:8px 11px; border-top:1px solid #f1f5f9; vertical-align:top; }
+  tr.main{ cursor:pointer; }
+  tr.main:hover{ background:#f8fafc; }
+  .tag{ font-size:11px; font-weight:700; padding:2px 8px; border-radius:6px; white-space:nowrap; }
+  .g{ background:#dcfce7; color:#166534; } .a{ background:#ffedd5; color:#9a3412; } .b{ background:#e0e7ff; color:#3730a3; } .y{ background:#fef9c3; color:#854d0e; }
+  .rf{ font-size:10.5px; color:#7c3aed; }
+  .detail{ background:#fbfdff; }
+  .detail .card{ border:1px solid var(--line); border-radius:9px; padding:8px 11px; margin:4px 0; font-size:12.5px; }
+  .muted{ color:var(--sub); }
+  .doc{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding:3px 0; }
+  .loading{ color:#94a3b8; font-size:13px; padding:14px; }
+  .err{ color:#c40000; font-size:13px; padding:14px; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <h1>🕵️ Gleymt að skrá í þjónustu</h1>
+    <p>Fyrirtæki sem <b>eiga úttektarskýrslu / brunakerfi / þjónustusamning</b> en eru ekki merkt „í þjónustu" — plús <b>ótengd þjónustu-skjöl</b> (kt ekki á skrá). Les lifandi úr gagnagrunni. Smelltu á röð til að <b>sjá nákvæmlega hvaða skjöl og staði liggja að baki</b> (Drive-tenglar) og sannreyna áður en þú treystir.</p>
+  </div>
+  <div class="wrap">
+    <div class="bar" id="pills"></div>
+    <div class="bar"><button class="btn" id="reload">↻ Uppfæra (lifandi)</button> <span class="muted" id="stamp"></span></div>
+
+    <h2>🏢 Á skrá — en enginn staður í þjónustu</h2>
+    <p class="sub">„📍 Á stað" = á lifandi stað, bara vantar merkinguna → einn smellur. „⚠ Enginn staður" = engan lifandi stað á skrá → lagast í Skýrslu-stöð / Kt-samræming.</p>
+    <div id="secA"><div class="loading">Sæki…</div></div>
+
+    <h2 style="margin-top:28px">🔗 Ótengd þjónustu-skjöl <span class="muted" style="font-weight:400;font-size:12.5px">(kt ekki á skrá — falla annars á milli)</span></h2>
+    <p class="sub">Skjöl sem eru ekki tengd við neinn viðskiptavin. Tengist í <b>Skýrslu-stöð</b> (skjal → staður) eða <b>Kt-samræming</b> (stofna kt/base). Smelltu á skráarheiti til að skoða í Drive.</p>
+    <div id="secB"><div class="loading">Sæki…</div></div>
+  </div>
+
+<script>
+  var API='/api/service-gaps';
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  function pill(lbl,n,cls){ return '<span class="pill '+cls+'">'+lbl+' · '+n+'</span>'; }
+  function driveLink(id){ return id? ('https://drive.google.com/file/d/'+encodeURIComponent(id)+'/view') : null; }
+  var DT={uttektarskyrsla:'Úttektarskýrsla',brunakerfi:'Brunakerfi',samningur:'Samningur',reikningur:'Reikningur'};
+
+  async function post(body){ var r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); var d=await r.json(); if(!r.ok||!d.ok) throw new Error(d.error||('HTTP '+r.status)); return d; }
+
+  function rowA(r){
+    var onSite=r.flokkur==='med_stad';
+    var flag=onSite?'<span class="tag g">📍 '+(r.lifandi_stadir||0)+' staður</span>':'<span class="tag a">⚠ enginn staður</span>';
+    var act=onSite?'<button class="btn" data-mark="'+r.base_id+'" style="padding:4px 10px;font-size:12px">✓ Merkja í þjónustu</button>':'<span class="muted" style="font-size:11.5px">→ Skýrslu-stöð</span>';
+    return '<tr class="main" data-base="'+r.base_id+'">'
+      +'<td style="font-weight:600">▸ '+esc(r.nafn||('kt '+(r.kennitala||'—')))+(r.rekstrarfelag?' <span class="rf">· '+esc(r.rekstrarfelag)+'</span>':'')+'</td>'
+      +'<td class="muted" style="white-space:nowrap">'+esc(r.kennitala||'')+'</td>'
+      +'<td style="text-align:center">'+(r.skyrslur||0)+'</td>'
+      +'<td style="text-align:center">'+(r.samningar||0)+'</td>'
+      +'<td style="text-align:center">'+(r.nyjasta_ar||'—')+'</td>'
+      +'<td>'+flag+'</td>'
+      +'<td onclick="event.stopPropagation()">'+act+'</td></tr>'
+      +'<tr class="detail" data-detail="'+r.base_id+'" style="display:none"><td colspan="7"><div class="loading">…</div></td></tr>';
+  }
+
+  function renderA(rows){
+    if(!rows.length){ document.getElementById('secA').innerHTML='<div class="card" style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;color:#16a34a;font-weight:600">Allir á skrá eru merktir í þjónustu. 🎉</div>'; return; }
+    var h='<table><thead><tr>'+['Fyrirtæki','Kt','Skýrslur','Samn.','Nýjast','Staða',''].map(function(x){return '<th>'+x+'</th>';}).join('')+'</tr></thead><tbody>'+rows.map(rowA).join('')+'</tbody></table>';
+    var el=document.getElementById('secA'); el.innerHTML=h;
+    el.querySelectorAll('tr.main').forEach(function(tr){ tr.addEventListener('click',function(){ toggle(tr.getAttribute('data-base')); }); });
+    el.querySelectorAll('[data-mark]').forEach(function(b){ b.addEventListener('click',function(){ mark(b); }); });
+  }
+
+  async function toggle(baseId){
+    var dr=document.querySelector('tr.detail[data-detail="'+baseId+'"]'); if(!dr) return;
+    if(dr.style.display!=='none'){ dr.style.display='none'; return; }
+    dr.style.display='';
+    var cell=dr.querySelector('td');
+    try{
+      var r=await fetch(API+'?base='+encodeURIComponent(baseId)); var d=await r.json();
+      if(!r.ok||d.error) throw new Error(d.error||('HTTP '+r.status));
+      var docs=(d.docs||[]).map(function(x){
+        var lk=driveLink(x.drive_file_id);
+        var nm=(DT[x.doc_type]||x.doc_type)+(x.year?(' '+x.year):'')+(x.invoice_number?(' · '+x.invoice_number):'')+(x.is_duplicate?' · 🔁 dup':'');
+        return '<div class="doc">'+(lk?('<a href="'+lk+'" target="_blank" rel="noopener">📄 '+esc(nm)+'</a>'):('📄 '+esc(nm)))+(x.customer_name?(' <span class="muted">— '+esc(x.customer_name)+'</span>'):'')+'</div>';
+      }).join('')||'<div class="muted">Engin skjöl.</div>';
+      var sites=(d.sites||[]).map(function(s){
+        return '<div class="doc">'+(s.er_i_thjonustu?'🟢':'⚪')+' '+esc(s.nafn||'')+(s.heimilisfang?(' <span class="muted">· '+esc(s.heimilisfang)+'</span>'):'')+(s.er_i_thjonustu?' <span class="tag g">í þjónustu</span>':' <span class="tag a">ekki í þjónustu</span>')+'</div>';
+      }).join('')||'<div class="muted">Enginn lifandi staður — stofnast í Skýrslu-stöð / Kt-samræming.</div>';
+      cell.innerHTML='<div class="card"><b>📄 Skjöl</b>'+docs+'</div><div class="card"><b>📍 Staðir</b>'+sites+'</div>';
+    }catch(e){ cell.innerHTML='<div class="err">Villa: '+esc(e.message)+'</div>'; }
+  }
+
+  async function mark(btn){
+    var id=btn.getAttribute('data-mark'); btn.disabled=true; btn.textContent='… merki';
+    try{ var d=await post({action:'mark-service',base_id:Number(id)}); btn.outerHTML='<span style="color:#16a34a;font-weight:700;font-size:12px">✓ Merkt ('+d.updated+')</span>'; }
+    catch(e){ btn.disabled=false; btn.textContent='✗ '+(e.message||'villa'); }
+  }
+
+  function renderB(unlinked){
+    var el=document.getElementById('secB');
+    if(!unlinked.length){ el.innerHTML='<div class="card" style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;color:#16a34a;font-weight:600">Engin ótengd þjónustu-skjöl. 🎉</div>'; return; }
+    var h='<table><thead><tr>'+['Skjal','Tegund','Ár',''].map(function(x){return '<th>'+x+'</th>';}).join('')+'</tr></thead><tbody>'+unlinked.map(function(x){
+      var lk=driveLink(x.drive_file_id);
+      var nm=x.customer_name||('#'+x.id);
+      return '<tr><td>'+(lk?('<a href="'+lk+'" target="_blank" rel="noopener">'+esc(nm)+'</a>'):esc(nm))+'</td>'
+        +'<td><span class="tag '+(x.doc_type==='samningur'?'b':'y')+'">'+esc(DT[x.doc_type]||x.doc_type)+'</span></td>'
+        +'<td>'+(x.year||'—')+'</td>'
+        +'<td class="muted" style="font-size:11.5px">→ Skýrslu-stöð / Kt-samræming</td></tr>';
+    }).join('')+'</tbody></table>';
+    el.innerHTML=h;
+  }
+
+  async function load(){
+    document.getElementById('secA').innerHTML='<div class="loading">Sæki…</div>';
+    document.getElementById('secB').innerHTML='<div class="loading">Sæki…</div>';
+    try{
+      var r=await fetch(API); var d=await r.json();
+      if(!r.ok||d.error) throw new Error(d.error||('HTTP '+r.status));
+      var c=d.counts||{};
+      document.getElementById('pills').innerHTML=
+        pill('🕵️ Á skrá',c.linked_total||0,'y')+pill('📍 Á stað',c.med_stad||0,'g')+pill('⚠ Enginn staður',c.an_stadar||0,'a')+pill('🔗 Ótengd skjöl',c.unlinked||0,'b');
+      document.getElementById('stamp').textContent=d.generated_at?('lesið '+new Date(d.generated_at).toLocaleString('is-IS')):'';
+      renderA(d.rows||[]); renderB(d.unlinked||[]);
+    }catch(e){
+      document.getElementById('secA').innerHTML='<div class="err">Villa: '+esc(e.message)+'</div>';
+      document.getElementById('secB').innerHTML='';
+    }
+  }
+  document.getElementById('reload').addEventListener('click',load);
+  load();
+</script>
+</body>
+</html>

@@ -5822,9 +5822,11 @@ function renderBakendi(t){
     const pill = (lbl, n, bg, fg) => '<span style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:99px;font-size:12.5px;font-weight:700;background:' + bg + ';color:' + fg + '">' + lbl + ' · ' + n + '</span>';
     function render(d){
       const c = d.counts || {};
-      $pills.innerHTML = pill('🕵️ Samtals', c.total || 0, '#fef9c3', '#854d0e')
+      $pills.innerHTML = pill('🕵️ Á skrá', c.linked_total || 0, '#fef9c3', '#854d0e')
         + pill('📍 Á stað (bara merkja)', c.med_stad || 0, '#dcfce7', '#166534')
-        + pill('⚠ Enginn staður', c.an_stadar || 0, '#ffedd5', '#9a3412');
+        + pill('⚠ Enginn staður', c.an_stadar || 0, '#ffedd5', '#9a3412')
+        + pill('🔗 Ótengd skjöl', c.unlinked || 0, '#e0e7ff', '#3730a3')
+        + '<a href="/thjonusta-gloppur.html" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:99px;font-size:12.5px;font-weight:700;background:#0f172a;color:#fff;text-decoration:none">🔎 Opna sér-síðu (sannreyna)</a>';
       const rows = d.rows || [];
       if (!rows.length) { $body.innerHTML = '<span style="font-size:13px;color:#16a34a;font-weight:600">Allir með skjöl eru merktir í þjónustu. 🎉</span>'; return; }
       const td = 'padding:6px 10px;color:#475569';
