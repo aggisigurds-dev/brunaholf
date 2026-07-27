@@ -14095,6 +14095,7 @@ async function renderDagurinn(t){
       <div id="dg-sync" class="dg-sync"><div class="dg-loading">Sækir…</div></div>
 
       <div id="dg-skv" class="dg-skv" style="display:none"></div>
+      <div id="dg-sg" class="dg-skv" style="display:none"></div>
 
       <h3 class="dg-h3">💡 Claude mælir með</h3>
       <div id="dg-reco" class="dg-card"><div class="dg-loading">Sækir…</div></div>
@@ -14210,6 +14211,24 @@ async function renderDagurinn(t){
           + ' — </span><a class="dg-reco-act" id="dg-skv-open">opna Skýrslu-vakt →</a>';
         box.style.display = '';
         const a = document.getElementById('dg-skv-open'); if(a) a.onclick = ()=>goTab('bakendi');
+      }catch(e){ box.style.display = 'none'; }
+    })();
+
+    // ---------- Gleymt að skrá í þjónustu (birtist AÐEINS þegar vandi er) ----------
+    (async ()=>{
+      const box = document.getElementById('dg-sg');
+      if(!box) return;
+      try{
+        const r = await fetch('/api/service-gaps');
+        if(!r.ok) throw new Error('HTTP '+r.status);
+        const j = await r.json();
+        const c = j.counts || {};
+        const n = (c.linked_total||0) + (c.unlinked||0);
+        if(!n){ box.style.display = 'none'; box.innerHTML = ''; return; }
+        box.innerHTML = '<span>🕵️ <b>'+(c.linked_total||0)+' fyrirtæki með skjöl en ekki merkt í þjónustu</b>'
+          + ((c.unlinked||0) ? ' + '+(c.unlinked||0)+' ótengd skjöl' : '')
+          + ' — </span><a class="dg-reco-act" href="/thjonusta-gloppur.html" target="_blank" rel="noopener">opna sér-síðu →</a>';
+        box.style.display = '';
       }catch(e){ box.style.display = 'none'; }
     })();
 
