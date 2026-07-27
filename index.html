@@ -3650,6 +3650,20 @@ function renderBakendi(t){
         <div id="bk-skv-body"><span style="font-size:12.5px;color:#94a3b8">Sæki stöðu…</span></div>
       </div>
 
+      <!-- 🕵️ Gleymt að skrá í þjónustu — kúnnar með skýrslu/samning en enginn staður í þjónustu -->
+      <div style="${card};border-color:#fcd34d">
+        <div style="display:flex;align-items:center;gap:14px">
+          <span style="${iconSq};${ICON.amber}">🕵️</span>
+          <div style="flex:1">
+            <div style="${titleStyle}">Gleymt að skrá í þjónustu</div>
+            <p style="${descStyle};margin-top:4px">Öfug hlið á Skýrslu-vaktinni: fyrirtæki sem <b>eiga úttektarskýrslu / brunakerfi / þjónustusamning</b> en <b>enginn lifandi staður þeirra er merktur „í þjónustu"</b> — líklega gleymt að skrá. „📍 Á stað" = bara vantar merkinguna (smelltu „✓ Merkja í þjónustu"); „⚠ Enginn staður" lagast í Skýrslu-stöð / Kt-samræming.</p>
+          </div>
+          <button id="bk-sg-reload" class="btn">↻ Uppfæra</button>
+        </div>
+        <div id="bk-sg-pills" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+        <div id="bk-sg-body"><span style="font-size:12.5px;color:#94a3b8">Sæki stöðu…</span></div>
+      </div>
+
       <!-- ══════════════════════════════════════════════════════════════════
            SECTION · Skjala-vinnsla
            ══════════════════════════════════════════════════════════════════ -->
@@ -5792,6 +5806,71 @@ function renderBakendi(t){
         const d = await r.json();
         if (!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));
         window.__SKV_CACHE = d; render(d);
+      }catch(e){ $body.innerHTML = '<span style="font-size:12.5px;color:#c40000">Villa: ' + esc(e.message) + '</span>'; }
+    }
+    if ($reload) $reload.onclick = () => load(true);
+    load(false);
+  })();
+
+  // ── Gleymt að skrá í þjónustu (kúnnar með skjöl en enginn staður í þjónustu) ──
+  (function wireServiceGaps(){
+    const $pills = document.getElementById('bk-sg-pills');
+    const $body = document.getElementById('bk-sg-body');
+    const $reload = document.getElementById('bk-sg-reload');
+    if (!$pills || !$body) return;
+    const esc = s => escapeHtml(String(s == null ? '' : s));
+    const pill = (lbl, n, bg, fg) => '<span style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:99px;font-size:12.5px;font-weight:700;background:' + bg + ';color:' + fg + '">' + lbl + ' · ' + n + '</span>';
+    function render(d){
+      const c = d.counts || {};
+      $pills.innerHTML = pill('🕵️ Samtals', c.total || 0, '#fef9c3', '#854d0e')
+        + pill('📍 Á stað (bara merkja)', c.med_stad || 0, '#dcfce7', '#166534')
+        + pill('⚠ Enginn staður', c.an_stadar || 0, '#ffedd5', '#9a3412');
+      const rows = d.rows || [];
+      if (!rows.length) { $body.innerHTML = '<span style="font-size:13px;color:#16a34a;font-weight:600">Allir með skjöl eru merktir í þjónustu. 🎉</span>'; return; }
+      const td = 'padding:6px 10px;color:#475569';
+      const rowHtml = (r) => {
+        const onSite = r.flokkur === 'med_stad';
+        const flag = onSite
+          ? '<span style="background:#dcfce7;color:#166534;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px">📍 ' + (r.lifandi_stadir || 0) + ' staður</span>'
+          : '<span style="background:#ffedd5;color:#9a3412;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px">⚠ enginn staður</span>';
+        const act = onSite
+          ? '<button class="btn" data-sg-mark="' + r.base_id + '" style="padding:4px 10px;font-size:12px">✓ Merkja í þjónustu</button>'
+          : '<span style="font-size:11px;color:#94a3b8">→ Skýrslu-stöð</span>';
+        return '<tr style="border-top:1px solid #f1f5f9" data-sg-row="' + r.base_id + '">'
+          + '<td style="padding:6px 10px;color:#0f172a;font-weight:500">' + esc(r.nafn || ('kt ' + (r.kennitala || '—'))) + (r.rekstrarfelag ? (' <span style="font-size:10.5px;color:#7c3aed">· ' + esc(r.rekstrarfelag) + '</span>') : '') + '</td>'
+          + '<td style="' + td + ';white-space:nowrap">' + esc(r.kennitala || '') + '</td>'
+          + '<td style="' + td + ';text-align:center">' + (r.skyrslur || 0) + '</td>'
+          + '<td style="' + td + ';text-align:center">' + (r.samningar || 0) + '</td>'
+          + '<td style="' + td + ';text-align:center">' + (r.nyjasta_ar || '—') + '</td>'
+          + '<td style="padding:6px 10px;white-space:nowrap">' + flag + '</td>'
+          + '<td style="padding:6px 10px;white-space:nowrap">' + act + '</td></tr>';
+      };
+      $body.innerHTML = '<div style="overflow-x:auto;border:1px solid #e2e8f0;border-radius:12px;max-height:440px;overflow-y:auto"><table style="width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px">'
+        + '<thead><tr>' + ['Fyrirtæki','Kt','Skýrslur','Samn.','Nýjast','Staða',''].map(x => '<th style="text-align:left;background:#f8fafc;color:#475569;padding:7px 10px;font-size:11px;text-transform:uppercase;white-space:nowrap;position:sticky;top:0">' + x + '</th>').join('') + '</tr></thead><tbody>'
+        + rows.map(rowHtml).join('')
+        + '</tbody></table></div>';
+      $body.querySelectorAll('[data-sg-mark]').forEach(b => b.addEventListener('click', () => markService(b)));
+    }
+    async function markService(btn){
+      const baseId = btn.getAttribute('data-sg-mark');
+      btn.disabled = true; btn.textContent = '… merki';
+      try{
+        const r = await fetch('/api/service-gaps', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'mark-service', base_id: Number(baseId) }) });
+        const d = await r.json();
+        if (!r.ok || !d.ok) throw new Error(d.error || ('HTTP ' + r.status));
+        const tr = $body.querySelector('[data-sg-row="' + baseId + '"]');
+        if (tr) { tr.style.opacity = '.45'; tr.querySelector('[data-sg-mark]').outerHTML = '<span style="font-size:12px;color:#16a34a;font-weight:700">✓ Merkt (' + d.updated + ')</span>'; }
+        window.__SG_CACHE = null;
+      }catch(e){ btn.disabled = false; btn.textContent = '✗ ' + (e.message || 'villa'); }
+    }
+    async function load(force){
+      if (!force && window.__SG_CACHE) { render(window.__SG_CACHE); return; }
+      $body.innerHTML = '<span style="font-size:12.5px;color:#94a3b8">Sæki stöðu…</span>';
+      try{
+        const r = await fetch('/api/service-gaps');
+        const d = await r.json();
+        if (!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));
+        window.__SG_CACHE = d; render(d);
       }catch(e){ $body.innerHTML = '<span style="font-size:12.5px;color:#c40000">Villa: ' + esc(e.message) + '</span>'; }
     }
     if ($reload) $reload.onclick = () => load(true);
