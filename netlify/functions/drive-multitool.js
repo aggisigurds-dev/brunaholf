@@ -47,7 +47,7 @@ async function listChildren(token, folder) {
   do {
     const params = new URLSearchParams({
       q: `'${folder.replace(/'/g, "\\'")}' in parents and trashed=false`,
-      fields: 'files(id,name,mimeType,parents),nextPageToken',
+      fields: 'files(id,name,mimeType,parents,createdTime),nextPageToken',
       pageSize: '200', supportsAllDrives: 'true', includeItemsFromAllDrives: 'true', corpora: 'allDrives',
     });
     if (pageToken) params.set('pageToken', pageToken);
@@ -61,9 +61,13 @@ async function listChildren(token, folder) {
 }
 // List every PDF in the folder — the whole tree when `recurse`, else direct
 // children only. Read-only walk (never moves anything), so — unlike drive-sort —
-// we list the FULL set every call and slice by offset (files stay put). Sorted by
-// name for stable paging across calls.
-async function listPdfs(token, root, recurse) {
+// we list the FULL set every call and slice by offset (files stay put). Röðun
+// (`order`) svo hægt sé að lesa AÐEINS nýbættar skrár í stað þess að endur-OCR-a allt:
+//   'name' (sjálfgefið) = stafrófsröð A→Ö (stöðug paging) ·
+//   'name-desc'         = öfug stafrófsröð (síðustu nöfn fyrst) ·
+//   'new'               = nýjast BÆTT við fyrst (createdTime desc) — best til að
+//                         lesa bara „100 nýju" án þess að fara aftur í gegnum 1000.
+async function listPdfs(token, root, recurse, order) {
   const out = [], queue = [root], seen = new Set();
   while (queue.length) {
     const folder = queue.shift();
@@ -74,7 +78,9 @@ async function listPdfs(token, root, recurse) {
       if (/pdf$/i.test(c.name || '') || /pdf/i.test(c.mimeType || '')) out.push(c);
     }
   }
-  out.sort((a, b) => String(a.name).localeCompare(String(b.name), 'is'));
+  if (order === 'new') out.sort((a, b) => String(b.createdTime || '').localeCompare(String(a.createdTime || '')));
+  else if (order === 'name-desc') out.sort((a, b) => String(b.name).localeCompare(String(a.name), 'is'));
+  else out.sort((a, b) => String(a.name).localeCompare(String(b.name), 'is'));
   return out;
 }
 // DEEP-READ a file via Drive OCR (Google-Doc extraction) as PRIMARY path, with
@@ -845,12 +851,13 @@ exports.handler = async (event) => {
     const recurse = p.recurse !== '0' && p.recurse !== 'false';   // sjálfgefið ON
     const limit = Math.min(Math.max(parseInt(p.limit || '3', 10) || 3, 1), 5);
     const offset = Math.max(parseInt(p.offset || '0', 10) || 0, 0);
+    const order = (p.order === 'new' || p.order === 'name-desc') ? p.order : 'name';
 
     let token;
     try { token = await freshAccessToken(); }
     catch (e) { return json(401, { error: e.message }); }
 
-    const files = await listPdfs(token, src, recurse);
+    const files = await listPdfs(token, src, recurse, order);
     const total = files.length;
     const slice = files.slice(offset, offset + limit);
 

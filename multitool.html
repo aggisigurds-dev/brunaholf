@@ -156,6 +156,11 @@
     <div class="controls">
       <label><input type="checkbox" id="recurse" checked> Lesa undirmöppur líka</label>
       <label>Stöðva eftir <input type="number" id="cap" value="100" min="1" step="10"> skjöl</label>
+      <label>Röð <select id="order" style="height:34px;background:#fff;color:#0f172a;border:1px solid #cbd5e1;border-radius:8px;padding:0 6px">
+        <option value="name">A→Ö (nafn)</option>
+        <option value="new">🆕 Nýjustu fyrst (nýbætt)</option>
+        <option value="name-desc">Ö→A (öfug nöfn)</option>
+      </select></label>
       <span id="status" class="muted"></span>
     </div>
     <div id="dupbar"></div>
@@ -268,6 +273,11 @@
   });
 
   var rows=[], counts={}, running=false, applying=false, sel=-1;
+
+  // ── muna röðunar-val (nafn / nýjustu fyrst / öfug) milli heimsókna ──
+  var ORDERKEY='multitool_order_v1';
+  try{ var ov=localStorage.getItem(ORDERKEY); if(ov && $('order')) $('order').value=ov; }catch(_){}
+  if($('order')) $('order').addEventListener('change', function(){ try{ localStorage.setItem(ORDERKEY, $('order').value); }catch(_){} });
 
   // ── remember source folder ──
   var MTKEY='multitool_src_v1';
@@ -563,13 +573,14 @@
     try{ localStorage.setItem(MTKEY, src); }catch(_){}
     var cap=Math.max(parseInt($('cap').value||'100',10)||100,1);
     var recurse=$('recurse').checked?'1':'0';
+    var order=($('order')&&$('order').value)||'name';
     rows=[]; counts={}; sel=-1; running=true;
     $('run').disabled=true; $('stop').disabled=false;
     $('pv-empty').style.display='flex'; $('pv-frame').style.display='none'; $('pv-name').textContent='Veldu skrá til að forskoða'; $('pv-open').style.display='none'; $('pv-counter').textContent='';
     var offset=0;
     try{
       while(running && rows.length<cap){
-        var url='/api/drive-multitool?src='+encodeURIComponent(src)+'&recurse='+recurse+'&limit=3&offset='+offset;
+        var url='/api/drive-multitool?src='+encodeURIComponent(src)+'&recurse='+recurse+'&order='+order+'&limit=3&offset='+offset;
         var r=await fetch(url); var d=await r.json();
         if(!r.ok) throw new Error(d.error||('HTTP '+r.status));
         (d.rows||[]).forEach(function(x){ x.__orig={ doc_type:x.doc_type, proposed_name:x.proposed_name, year:x.year, base_id:x.base_id, site_id:x.site_id, target:x.target }; rows.push(x); counts[x.doc_type]=(counts[x.doc_type]||0)+1; });
