@@ -50,6 +50,7 @@
   .pill{ display:inline-block; padding:1px 8px; border-radius:99px; font-size:11px; font-weight:700; }
   .pill.amber{ background:#fef3c7; color:#92400e; }
   .pill.grey{ color:#94a3b8; font-weight:600; font-size:11px; }
+  .pill.red{ background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; }
   .tgt{ font-size:11px; color:#3730a3; background:#eef2ff; padding:1px 8px; border-radius:6px; white-space:nowrap; font-weight:600; }
   /* apply box */
   .applybox{ margin-top:14px; border-top:1px dashed #c7d2fe; padding-top:14px; }
@@ -436,7 +437,7 @@
       var isDupe=dup.extras.has(i);
       var co=r.base_nafn?esc(r.base_nafn):'';
       var site=r.site_nafn?('📍 '+esc(r.site_nafn)+(r.site_via?(' ('+esc(r.site_via)+')'):'')):(r.kt?('kt '+esc(r.kt)):'');
-      var linked=r.already_linked?'<span class="pill amber">þegar tengt</span>':'<span class="pill grey">ekki tengt</span>';
+      var linked=r.already_linked?'<span class="pill amber">þegar tengt</span>':'<span class="pill red">⛔ ekki tengt</span>';
       // vendor/other má SÓPA í „Annað"-möppuna EF hún er fyllt (opt-in — sjálfgefið óvalið)
       var isMisc=(r.doc_type==='vendor'||r.doc_type==='other');
       var hasAnnad=!!val('tf-annad');
