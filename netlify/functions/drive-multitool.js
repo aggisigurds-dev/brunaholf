@@ -761,8 +761,12 @@ async function applyFile(token, body) {
     const viaStamp = (siteStampFromName(proposed_name) === site_id) || (siteStampFromName(origName) === site_id);
     site = { id: site_id, via: viaStamp ? 'stamp' : 'addr' };
   }
+  // CHECK-reglan `customer_documents_year_shape`: samningur VERÐUR að hafa year=NULL
+  // (uttektarskyrsla/reikningur verða að hafa ár). Ár samnings má standa í nafninu en
+  // ekki í year-dálki → annars 23514 check_violation.
+  const rowYear = doc_type === 'samningur' ? null : (year || null);
   const docRow = {
-    customer_base_id: base_id, doc_type, year: year || null, drive_file_id: id,
+    customer_base_id: base_id, doc_type, year: rowYear, drive_file_id: id,
     source: 'gdrive', found_by: 'drive-multitool',
     invoice_number: doc_type === 'reikningur' ? invoice_number : null,
     customer_name: base_nafn || null,
