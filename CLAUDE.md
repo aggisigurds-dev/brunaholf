@@ -549,6 +549,19 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   + hve marga vantar — staðir inndregnir undir, stakir staðir á eftir,
   `wireSkyrsluVakt`) + viðvörunarlína á 🌅 Dagurinn (birtist AÐEINS þegar
   engin_skyrsla+olesanleg > 0, smellur opnar Bakendi). Lagfærist í Skýrslu-stöð.
+- `service-gaps.js` — **🕵️ Gleymt að skrá í þjónustu** (`/api/service-gaps`): ÖFUG
+  hlið á Skýrslu-vaktinni — fyrirtæki sem EIGA úttektarskýrslu/brunakerfi/þjónustu-
+  samning (`customer_documents`) EN enginn lifandi staður þeirra er merktur
+  `er_i_thjonustu` = líklega gleymt að skrá í þjónustu. Les Postgres-sýnina
+  **`v_service_gaps`** (rollup per base: base_id/nafn/kt/rekstrarfelag/skyrslur/
+  samningar/nyjasta_ar/lifandi_stadir, `grant select to anon`; sjá
+  `sql/2026-07-27_v_service_gaps.sql`). `GET` → `{counts:{total,med_stad,an_stadar},
+  rows}` (flokkur `med_stad` = á lifandi stað, bara vantar merkinguna | `an_stadar`).
+  `POST {action:'mark-service', base_id}` merkir ALLA lifandi staði base
+  `er_i_thjonustu=true` (fljót-lagfæring, afturkræft). Bakendi-spjald „🕵️ Gleymt að
+  skrá í þjónustu" (`wireServiceGaps`, undir Skýrslu-vaktinni): talnapillur + tafla
+  með „✓ Merkja í þjónustu" per með-stað röð; án-staðar raðir vísast á Skýrslu-stöð/
+  Kt-samræming. (Skráning gleymdra þjónustukúnna — 38 við útgáfu: 20 með stað, 18 án.)
 - `felag-endurlestur.js` — **„🔁 Endurlesa öll skjöl (innihald)"** (`/api/
   felag-endurlestur`), hnappur í haus Skýrslu-stöðvar-borðsins per félag. Les ÖLL
   `customer_documents` eins base úr Drive (pdf-parse → Google-Doc OCR fallback,
