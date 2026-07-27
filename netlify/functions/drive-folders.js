@@ -39,6 +39,22 @@ exports.handler = async (event) => {
   };
 
   try {
+    // Fletta upp NAFNI á tilteknum möppu-ids (svo UI geti sýnt hvað hver markmöppu-reitur
+    // er — og hvort id-ið sé enn til). `?info=id1,id2,…` → { files:[{id,name,is_folder}] }.
+    const info = (p.info || '').trim();
+    if (info) {
+      const ids = info.split(',').map(s => s.trim()).filter(Boolean).slice(0, 20);
+      const got = await Promise.all(ids.map(async (id) => {
+        try {
+          const r = await fetch('https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(id) + '?fields=id,name,mimeType&supportsAllDrives=true', { headers: { Authorization: `Bearer ${token}` } });
+          if (!r.ok) return null;
+          const f = await r.json();
+          return { id: f.id, name: f.name, is_folder: f.mimeType === 'application/vnd.google-apps.folder' };
+        } catch (_) { return null; }
+      }));
+      return json(200, { info: true, files: got.filter(Boolean) });
+    }
+
     // GRUNN-möppur (efsta lag): möppur beint undir „My Drive" rót OG möppur sem deilt
     // er með reikningnum („shared with me") — svo grunn-möpppurnar sjáist, ekki bara
     // undirmöppur í flötum nýlega-breytt lista. Aðeins þegar hvorki parent né leit.
