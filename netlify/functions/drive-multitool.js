@@ -264,10 +264,19 @@ function cleanCompany(s) {
   return sanitize(s)
     .replace(/^[-–\s]+/, '')
     .replace(/\s*,\s*h[úu]sf[ée]lag(?:i[ðn]u?|ið|i)?\.?\s*$/i, '')
+    .replace(/\s+(?:vegna|v\/|v:)\s*$/i, '')   // „Heimaleiga ehf. vegna" → „Heimaleiga ehf."
     .replace(/[\s,]+$/, '')
     .trim();
 }
-function nameInvoice(co, ktd, inv, yr, tot) { return [sanitize(co) || 'Óþekkt', ktd || '', inv || '', yr || '', (tot != null ? fmtIsk(tot) + ' kr' : '')].filter(Boolean).join(' - ') + '.pdf'; }
+// Reikningur: Fyrirtæki - [Heimilisfang] - kt - R-nr - ár - upphæð. Heimilisfangið
+// bætt við (Agnar 2026-07-27 — var handvirkt bætt á nær hvern reikning). Deduppað
+// gegn félagsnafni eins og í skýrslum (rekstrarfélag-forskeyti / húsfélags-gata).
+function nameInvoice(co, addr, ktd, inv, yr, tot) {
+  const c = sanitize(co) || 'Óþekkt';
+  let a = addr ? sanitize(addr).replace(/\s+-\s+/g, ' ').replace(/^[\s,-]+|[\s,-]+$/g, '') : '';
+  if (a) { a = siteMinusCo(a, c); a = addrMinusCoTail(a, c); if (a && foldWord(c).indexOf(foldWord(a)) !== -1) a = ''; }
+  return [c, a, ktd || '', inv || '', yr || '', (tot != null ? fmtIsk(tot) + ' kr' : '')].filter(Boolean).join(' - ') + '.pdf';
+}
 // Fold-a orð til samanburðar (án broddstafa/hástafa/greinarmerkja).
 function foldWord(w) { return String(w || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, ''); }
 // Klippa félagsnafns-forskeyti framan af staðar-nafni: eins-staðar húsfélög hafa
@@ -531,7 +540,12 @@ async function previewFile(token, f) {
   // proposed_name — kanóníska endurnefningin (aðeins fyrir reikninga + skýrslur;
   // Fasi 1 NEFNIR bara, færir/endurnefnir ekki).
   let proposed_name = null;
-  if (cls.doc_type === 'reikningur') proposed_name = nameInvoice(coName, ktd, inv, year, total);
+  if (cls.doc_type === 'reikningur') {
+    // Heimilisfang kúnnans: hreint skráarheiti > innihald > staðar-aðgreinir
+    // (rekstrarfélag). Sama regla og skýrslu-nöfnin nota.
+    const invAddr = cleanAddr(addrFromName(f.name) || addrFromReportHeader(text, coName) || reportAddr(text)) || (site ? site.nafn : '');
+    proposed_name = nameInvoice(coName, invAddr, ktd, inv, year, total);
+  }
   else if (cls.doc_type === 'uttektarskyrsla' || cls.doc_type === 'brunakerfi') {
     // Aðgreinandi staður/heimilisfang: heimilisfang úr innihaldi > úr skráarheiti >
     // leyst stöð > „hjá fyrirtækinu"-bútur. (Heimilisfang er það sem Agnar vill sjá.)
