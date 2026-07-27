@@ -426,6 +426,19 @@
   }
 
   function paint(done){
+    // Varðveita ó-vistaðar breytingar í opnum ritli ÁÐUR en listinn er endur-teiknaður
+    // (t.d. þegar næsta forskoðunar-lota poppar inn á meðan verið er að leiðrétta) —
+    // lesa lifandi reit-gildin í __draft* svo ný teikning noti þau í stað gömlu gildanna.
+    document.querySelectorAll('.editor[data-ed]').forEach(function(ed){
+      var i=+ed.getAttribute('data-ed'); var r=rows[i]; if(!r||!r.__editing) return;
+      var dt=ed.querySelector('.ed-dt'), yr=ed.querySelector('.ed-year'), nm=ed.querySelector('.ed-name'), nt=ed.querySelector('.ed-note');
+      if(dt) r.__draftDt=dt.value; if(yr) r.__draftYear=yr.value; if(nm) r.__draftName=nm.value; if(nt) r.__draftNote=nt.value;
+    });
+    // Muna hvaða reit var í fókus (+ bendil) svo innsláttur rofni ekki við endur-teikningu.
+    var _focus=null, _ae=document.activeElement;
+    if(_ae && _ae.closest){ var _ed=_ae.closest('.editor[data-ed]'); var _m=(_ae.className||'').match(/ed-(?:dt|year|name|note)/);
+      if(_ed && _m){ _focus={ i:+_ed.getAttribute('data-ed'), cls:_m[0], ss:_ae.selectionStart, se:_ae.selectionEnd }; } }
+    window.__mtFocus=_focus;
     var c = Object.keys(counts).sort().map(function(k){ return (DT[k]?DT[k].lbl:k)+' '+counts[k]; }).join(' · ');
     $('status').innerHTML='Lesin '+rows.length+' skjöl'+(c?(' · '+c):'')+(done?' <b style="color:#0f7a43">— búið ✅</b>':(running?' …':''));
     var body='';
@@ -454,18 +467,23 @@
       // ✏️ Leiðrétta — opnar innfelldan ritil (data-nostop svo röð-smellur opni ekki forskoðun)
       if(r.doc_type!=='error' && !r.__done) bits.push('<button class="edit-btn" data-edit="'+i+'" data-nostop="1" title="Leiðrétta tillögu — vistast í villuskýrslu">✏️ Leiðrétta</button>');
       if(res) bits.push('<span class="res">'+res+'</span>'); else bits.push('<span class="res" style="display:none"></span>');
-      // innfelldur ritill (falinn nema r.__editing)
-      var yr = (r.year!=null?r.year:'');
-      var dtOpts = DT_ORDER.map(function(k){ return '<option value="'+k+'"'+(k===r.doc_type?' selected':'')+'>'+esc(DT_NAME[k]||k)+'</option>'; }).join('');
+      // innfelldur ritill (falinn nema r.__editing). Nota ó-vistuð drög (__draft*)
+      // þegar þau eru til svo endur-teikning (næsta forskoðunar-lota) sópi þeim ekki burt.
+      var edng = r.__editing;
+      var yr = (edng && r.__draftYear!=null) ? r.__draftYear : (r.year!=null?r.year:'');
+      var edDt = (edng && r.__draftDt!=null) ? r.__draftDt : r.doc_type;
+      var edName = (edng && r.__draftName!=null) ? r.__draftName : (r.proposed_name||'');
+      var edNote = (edng && r.__draftNote!=null) ? r.__draftNote : (r.__note||'');
+      var dtOpts = DT_ORDER.map(function(k){ return '<option value="'+k+'"'+(k===edDt?' selected':'')+'>'+esc(DT_NAME[k]||k)+'</option>'; }).join('');
       var editor = '<div class="editor" data-ed="'+i+'" style="display:'+(r.__editing?'block':'none')+'">'
         + '<div class="ed-grid">'
         +   '<div style="flex:2"><label>Tegund</label><select class="ed-dt">'+dtOpts+'</select></div>'
         +   '<div style="flex:1"><label>Ár</label><input class="ed-year" type="number" min="2005" max="2099" value="'+esc(yr)+'"></div>'
         + '</div>'
         + '<label>Nafn (endurnefning við keyrslu)</label>'
-        + '<input class="ed-name" value="'+esc(r.proposed_name||'')+'" placeholder="Fyrirtæki - heimilisfang - kt - úttektarskýrsla - ár">'
+        + '<input class="ed-name" value="'+esc(edName)+'" placeholder="Fyrirtæki - heimilisfang - kt - úttektarskýrsla - ár">'
         + '<label>Athugasemd — af hverju var tillagan röng / hvað á tólið að finna næst? (valkvætt)</label>'
-        + '<textarea class="ed-note" placeholder="t.d. „á að heita Center Hótel Ingólfsstræti", „þetta er brunakerfi ekki Annað", „kt vantar í skrá"">'+esc(r.__note||'')+'</textarea>'
+        + '<textarea class="ed-note" placeholder="t.d. „á að heita Center Hótel Ingólfsstræti", „þetta er brunakerfi ekki Annað", „kt vantar í skrá"">'+esc(edNote)+'</textarea>'
         + '<div class="ed-btns">'
         +   '<button class="btn primary sm ed-save" data-save="'+i+'" data-nostop="1">💾 Vista leiðréttingu</button>'
         +   '<button class="btn sm ed-cancel" data-cancel="'+i+'" data-nostop="1">Hætta við</button>'
@@ -486,6 +504,9 @@
     });
     $('results').innerHTML = rows.length ? body
       : '<div class="muted" style="padding:20px 4px">Engin skjöl lesin enn — settu inn möppu og ýttu 👁 Forskoða.</div>';
+    // Endurheimta fókus + bendil í ritilinn sem var í notkun (svo innsláttur haldi áfram).
+    if(window.__mtFocus){ var f=window.__mtFocus; var el2=document.querySelector('.editor[data-ed="'+f.i+'"] .'+f.cls);
+      if(el2){ try{ el2.focus(); if(f.ss!=null && el2.setSelectionRange) el2.setSelectionRange(f.ss,f.se); }catch(_){} } window.__mtFocus=null; }
     $('applybox').style.display = rows.length ? 'block' : 'none';
     // röð-smellur → forskoðun (nema smellt á hök eða skrá-tengil)
     Array.prototype.forEach.call(document.querySelectorAll('.item'), function(el){
@@ -494,10 +515,10 @@
     Array.prototype.forEach.call(document.querySelectorAll('.chk'), function(c){ c.addEventListener('change', updateSelCount); });
     // ✏️ opna ritil (data-nostop hindrar forskoðun)
     Array.prototype.forEach.call(document.querySelectorAll('[data-edit]'), function(b){
-      b.addEventListener('click', function(e){ e.stopPropagation(); var i=+b.dataset.edit; rows[i].__editing=!rows[i].__editing; paint(false); });
+      b.addEventListener('click', function(e){ e.stopPropagation(); var i=+b.dataset.edit; rows[i].__editing=!rows[i].__editing; clearDraft(rows[i]); paint(false); });
     });
     Array.prototype.forEach.call(document.querySelectorAll('[data-cancel]'), function(b){
-      b.addEventListener('click', function(e){ e.stopPropagation(); var i=+b.dataset.cancel; rows[i].__editing=false; paint(false); });
+      b.addEventListener('click', function(e){ e.stopPropagation(); var i=+b.dataset.cancel; rows[i].__editing=false; clearDraft(rows[i]); paint(false); });
     });
     Array.prototype.forEach.call(document.querySelectorAll('.editor'), function(ed){
       ed.addEventListener('click', function(e){ if(e.target.closest('[data-nostop]')) return; e.stopPropagation(); }, true);
@@ -564,9 +585,10 @@
     // vistun tókst → uppfæra röðina (svo „Keyra valið" noti leiðréttu gildin) + loka ritli
     r.doc_type=newDt; r.proposed_name=newName; r.year=newYear;
     if(newDt!==o.doc_type){ r.sub_hint=''; r.target=TARGET_LBL[newDt]||r.target; if(!OURS[newDt]){ r.site_id=null; r.site_nafn=null; } }
-    r.__edited=true; r.__editing=false;
+    r.__edited=true; r.__editing=false; clearDraft(r);
     paint(false);
   }
+  function clearDraft(r){ if(r){ r.__draftDt=r.__draftYear=r.__draftName=r.__draftNote=null; } }
 
   // ── preview run loop ──
   async function runLoop(){
