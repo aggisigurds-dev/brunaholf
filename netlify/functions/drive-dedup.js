@@ -118,28 +118,39 @@ async function scan(folder, cap) {
   };
 }
 
-async function moveToTrash(fileIds, trashFolder) {
+// Move each file into the trash folder. `removeParent` (the source folder, sent by
+// the caller) lets us SKIP the per-file parents GET — one PATCH per file instead of
+// GET+PATCH — and we PARALLELISE in small batches, so a batch of files finishes in
+// ~1s instead of timing the function out (the "Unexpected token <" HTML error).
+async function moveToTrash(fileIds, trashFolder, removeParent) {
   const token = await freshAccessToken();
   const trash = folderId(trashFolder) || DEFAULT_TRASH;
+  const rmSrc = folderId(removeParent) || '';
   const moved = [];
   const errors = [];
-  for (const id of fileIds) {
+  async function moveOne(id) {
     try {
-      // fetch current parents so we can remove them precisely
-      const gr = await fetch('https://www.googleapis.com/drive/v3/files/' + id +
-        '?fields=id,parents&supportsAllDrives=true', { headers: { Authorization: `Bearer ${token}` } });
-      if (!gr.ok) throw new Error('get ' + gr.status);
-      const meta = await gr.json();
-      const parents = (meta.parents || []).join(',');
-      const params = new URLSearchParams({ addParents: trash, supportsAllDrives: 'true', fields: 'id,parents' });
-      if (parents) params.set('removeParents', parents);
+      let removeParents = rmSrc;
+      if (!removeParents) {
+        // Fallback (enginn removeParent): sækja núverandi foreldra.
+        const gr = await fetch('https://www.googleapis.com/drive/v3/files/' + id +
+          '?fields=id,parents&supportsAllDrives=true', { headers: { Authorization: `Bearer ${token}` } });
+        if (!gr.ok) throw new Error('get ' + gr.status);
+        removeParents = ((await gr.json()).parents || []).join(',');
+      }
+      const params = new URLSearchParams({ addParents: trash, supportsAllDrives: 'true', fields: 'id' });
+      if (removeParents) params.set('removeParents', removeParents);
       const pr = await fetch('https://www.googleapis.com/drive/v3/files/' + id + '?' + params,
         { method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: '{}' });
-      if (!pr.ok) throw new Error('move ' + pr.status + ': ' + (await pr.text()).slice(0, 200));
+      if (!pr.ok) throw new Error('move ' + pr.status + ': ' + (await pr.text()).slice(0, 160));
       moved.push(id);
     } catch (e) {
       errors.push({ id, error: String(e.message || e) });
     }
+  }
+  const BATCH = 8;
+  for (let i = 0; i < fileIds.length; i += BATCH) {
+    await Promise.all(fileIds.slice(i, i + BATCH).map(moveOne));
   }
   return { moved, moved_count: moved.length, errors, trashFolder: trash };
 }
@@ -153,7 +164,7 @@ exports.handler = async (event) => {
         const ids = Array.isArray(body.fileIds) ? body.fileIds.filter(Boolean) : [];
         if (!ids.length) return json(400, { error: 'no fileIds' });
         if (ids.length > 500) return json(400, { error: 'too many at once (max 500)' });
-        return json(200, await moveToTrash(ids, body.trashFolder || DEFAULT_TRASH));
+        return json(200, await moveToTrash(ids, body.trashFolder || DEFAULT_TRASH, body.removeParent || ''));
       }
       return json(400, { error: 'unknown action' });
     }

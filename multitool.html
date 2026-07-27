@@ -735,14 +735,15 @@
     if(!confirm('Færa '+ids.length+' aukaeintök í ruslmöppu? (Ekkert eytt — bara fært, afturkræft.)')) return;
     var mv=$('dedup-move'); mv.disabled=true;
     var annad=val('tf-annad');   // annars notar endapunkturinn sjálfgefna ruslmöppu
+    var srcFolder=folderId($('src').value);   // svo bakendinn sleppi hæga foreldra-GET-inu
     // Færa í LOTUM (12 í einu) svo Netlify-fallið renni ekki út á tíma (302 skrár ×
     // 2 Drive-köll hvert = tímarof í einu kalli → HTML-villusíða „Unexpected token <").
-    var CHUNK=12, movedAll=0, errAll=0, i;
+    var CHUNK=30, movedAll=0, errAll=0, i;
     for(i=0;i<ids.length;i+=CHUNK){
       var slice=ids.slice(i,i+CHUNK);
       mv.textContent='… færi '+Math.min(i+CHUNK,ids.length)+'/'+ids.length;
       try{
-        var body={action:'move',fileIds:slice}; if(annad) body.trashFolder=annad;
+        var body={action:'move',fileIds:slice}; if(annad) body.trashFolder=annad; if(srcFolder) body.removeParent=srcFolder;
         var r=await fetch('/api/drive-dedup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
         var txt=await r.text(); var d; try{ d=JSON.parse(txt); }catch(_){ throw new Error('HTTP '+r.status+' (tímarof?)'); }
         if(!r.ok) throw new Error(d.error||('HTTP '+r.status));
