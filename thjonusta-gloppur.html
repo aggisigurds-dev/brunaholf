@@ -66,7 +66,7 @@
   function rowA(r){
     var onSite=r.flokkur==='med_stad';
     var flag=onSite?'<span class="tag g">📍 '+(r.lifandi_stadir||0)+' staður</span>':'<span class="tag a">⚠ enginn staður</span>';
-    var act=onSite?'<button class="btn" data-mark="'+r.base_id+'" style="padding:4px 10px;font-size:12px">✓ Merkja í þjónustu</button>':'<span class="muted" style="font-size:11.5px">→ Skýrslu-stöð</span>';
+    var act=onSite?'<button class="btn" data-mark="'+r.base_id+'" style="padding:4px 10px;font-size:12px">✓ Merkja í þjónustu</button>':'<a class="btn" href="/#bakendi/'+r.base_id+'" target="_blank" rel="noopener" style="padding:4px 10px;font-size:12px;text-decoration:none">→ Skýrslu-stöð</a>';
     return '<tr class="main" data-base="'+r.base_id+'">'
       +'<td style="font-weight:600">▸ '+esc(r.nafn||('kt '+(r.kennitala||'—')))+(r.rekstrarfelag?' <span class="rf">· '+esc(r.rekstrarfelag)+'</span>':'')+'</td>'
       +'<td class="muted" style="white-space:nowrap">'+esc(r.kennitala||'')+'</td>'
@@ -121,7 +121,7 @@
       return '<tr><td>'+(lk?('<a href="'+lk+'" target="_blank" rel="noopener">'+esc(nm)+'</a>'):esc(nm))+'</td>'
         +'<td><span class="tag '+(x.doc_type==='samningur'?'b':'y')+'">'+esc(DT[x.doc_type]||x.doc_type)+'</span></td>'
         +'<td>'+(x.year||'—')+'</td>'
-        +'<td class="muted" style="font-size:11.5px">→ Skýrslu-stöð / Kt-samræming</td></tr>';
+        +'<td><a class="btn" href="/#bakendi" target="_blank" rel="noopener" style="padding:3px 9px;font-size:11.5px;text-decoration:none">→ Skýrslu-stöð</a></td></tr>';
     }).join('')+'</tbody></table>';
     el.innerHTML=h;
   }
