@@ -234,6 +234,18 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   Brunakerfis-búnaður (skynjarar/sensorar/tæki) bætist við undir eigin flokki svo
   brunakerfis-verk geti síðar sótt vörur eftir `flokkur`. **Bætti `vorur.birgi`
   (text) — birgir/seljandi** (additive, sjá migration `add_birgi_to_vorur`).
+  **📥 Skrá birgja-reikning (2026-07-28):** hnappur efst + modal (`openImport`) þar
+  sem maður límir línur af birgja-reikningi (afritað úr PDF). Framendinn þáttar hverja
+  línu (`parseLine`: klippir tölu-halann magn·ein.verð·afsl·vsk·samtals frá HÆGRI svo
+  innfelldar tölur í lýsingu — „2kg", 1", „SND-500-S", „FLÖT(12)" — lifa; hendir
+  dagsetningum), reiknar **kaupverð án vsk = ein.verð×(1−afsl%)**, giskar á vöru-match
+  (`bestMatch`, token-skörun með æ→ae/þ→th/ð→d) og birtir ritanlegt borð (lýsing ·
+  kaupverð · vöru-veljari · flokkur-ef-ný). „Vista" POSTar `{action:'import', birgir,
+  overwrite?, rows}`. Endapunktur: **tengd vara → PATCH AÐEINS `kostnadarverd`+`birgi`**
+  (aldrei nafn/söluverð/virkt; sleppir ef kaupverð er þegar til nema `overwrite=true`);
+  **ný vara → INSERT `virkt=false` + `verd_an_vsk=null`** (poppar ekki á Sölu fyrr en
+  verðlögð). NB verð sem eru „með VSK" á reikningi (sumar töflur) þarf að leiðrétta í
+  borðinu — allt er ritanlegt fyrir vistun.
 - `sjalfvirkni` — **⚙️ Sjálfvirkni** automation control board (renderSjalfvirkni;
   sits in the control-panel area, just above Bakendi). Reads `/api/automations` and
   renders one card per enabled `automation_jobs` row: a status dot from the latest

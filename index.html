@@ -14797,6 +14797,7 @@ async function renderVorubirgdir(t){
           <div class="rg-sub-line">Allar vörur sem við seljum — inn- og söluverð á einum stað. Deilir <b>sömu vörulista og Slökkvitæki Sala</b>; hér má líka bæta við brunakerfis-búnaði (skynjarar, tæki, sensorar) sem brunakerfis-verk geta síðar sótt eftir flokki.</div>
         </div>
         <div class="rg-controls">
+          <button id="vb-import" class="tv-btn" type="button">📥 Skrá birgja-reikning</button>
           <button id="vb-new" class="tv-btn" type="button">➕ Ný vara</button>
           <button id="vb-refresh" class="tv-btn" type="button"><span class="tv-refresh-icon">↻</span> Sækja</button>
         </div>
@@ -14869,6 +14870,23 @@ async function renderVorubirgdir(t){
       .vb-btn-del{padding:9px 14px;border-radius:8px;border:1px solid #e8c9c4;background:#fff;color:#c0392b;font-weight:600;font-size:13px;cursor:pointer}
       .vb-msg{font-size:12.5px;min-height:15px}
       .vb-msg.bad{color:#c40000;font-weight:600} .vb-msg.ok{color:#0a8a00;font-weight:600}
+      /* birgja-reikningur import modal */
+      #vb-imp-modal{position:fixed;inset:0;z-index:100061;background:rgba(15,23,42,.55);display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;overflow:auto}
+      #vb-imp-modal .vb-imp-card{background:var(--card-bg,#fff);border-radius:14px;padding:20px 22px;max-width:820px;width:100%;box-shadow:0 20px 60px rgba(15,23,42,.3)}
+      #vb-imp-modal h2{margin:0 0 6px;font-size:18px;color:var(--text,#0f172a)}
+      .vb-imp-sub{font-size:12.5px;color:var(--text-dim,#7a8493);margin-bottom:14px;line-height:1.5}
+      #vb-imp-modal textarea{font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;padding:9px 11px;border:1px solid var(--border,#d6dbe1);border-radius:8px;background:var(--card-bg,#fff);color:var(--text,#1f2933);width:100%;box-sizing:border-box}
+      .vb-imp-bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+      .vb-imp-ow{font-size:12px;color:var(--text-dim,#7a8493);display:flex;align-items:center;gap:6px;cursor:pointer}
+      .vb-imp-tblwrap{overflow-x:auto;border:1px solid var(--border,#e3e7ec);border-radius:10px;margin:6px 0 10px}
+      table.vb-imp-tbl{width:100%;min-width:640px;border-collapse:collapse;font-size:12.5px}
+      .vb-imp-tbl thead th{text-align:left;padding:8px 10px;font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--text-dim,#7a8493);background:var(--hover,#f6f8fb);border-bottom:1px solid var(--border,#e3e7ec);white-space:nowrap}
+      .vb-imp-tbl th.r,.vb-imp-tbl td.r{text-align:right} .vb-imp-tbl th.c,.vb-imp-tbl td.c{text-align:center}
+      .vb-imp-tbl tbody td{padding:6px 10px;border-bottom:1px solid var(--border,#f0f2f5);vertical-align:top}
+      .vb-imp-tbl input[type=text],.vb-imp-tbl input[type=number],.vb-imp-tbl select{font-size:12.5px;padding:5px 7px;border:1px solid var(--border,#d6dbe1);border-radius:6px;background:var(--card-bg,#fff);color:var(--text,#1f2933);width:100%;box-sizing:border-box}
+      .vb-imp-tbl input[type=number]{text-align:right;width:96px}
+      .vb-imp-tbl select{max-width:230px}
+      .vb-imp-tbl input:disabled{background:var(--hover,#f3f5f7);color:var(--text-dim,#9aa3af)}
     </style>`;
 
   const $meta = document.getElementById('vb-meta');
@@ -15059,7 +15077,185 @@ async function renderVorubirgdir(t){
     paintTable();
   }
 
+  // ── 📥 Skrá birgja-reikning (paste-import) ────────────────────────────────
+  const norm = s => String(s==null?'':s).toLowerCase()
+    .replace(/æ/g,'ae').replace(/þ/g,'th').replace(/ð/g,'d')
+    .normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+  const isNumTok = t => /^-?[\d.,]+%?$/.test(t);
+  const isDateTok = t => /^\d{1,2}\.\d{1,2}\.\d{2,4}$/.test(t);
+  function parseNum(tok){
+    if(tok==null) return null;
+    let s = String(tok).replace(/%/g,'').replace(/\s|kr\.?/gi,'');
+    const neg = /-/.test(s); s = s.replace(/-/g,'');
+    if(!s || !/\d/.test(s)) return null;
+    if(s.includes(',')) s = s.replace(/\./g,'').replace(',','.'); // . þúsundir, , aukastafur
+    else s = s.replace(/\./g,''); // . = þúsundaskil (íslenskt)
+    const n = Number(s); if(!Number.isFinite(n)) return null;
+    return neg ? -n : n;
+  }
+  function parseLine(line){
+    let rest = line.trim(), nr='';
+    if(!rest) return null;
+    // sleppa haus-/fótlínum
+    if(/^(nr\b|lýsing|magn|ein\.?verð|afsl|vsk%|línu|samtals|millisamtala|vsk-?upphæð|slétt|dags|reikning|pöntun|afh|eindagi|tilvís|greiðslu)/i.test(rest)) return null;
+    const mcode = rest.match(/^([0-9][0-9\-]{2,}[0-9A-Za-z]?|[0-9]{2}-[0-9]{2}-[0-9]{3,})\s+/);
+    if(mcode){ nr = mcode[1]; rest = rest.slice(mcode[0].length); }
+    const toks = rest.split(/\s+/).filter(Boolean);
+    // finna tölu-hala frá hægri (magn·verð·afsl·vsk·samtals) — innfelldar tölur í
+    // lýsingu ("2kg", 1", "SND-500-S", "FLÖT(12)") eru ekki hreinar tölur og lifa.
+    let cut = toks.length;
+    while(cut>0 && (isNumTok(toks[cut-1]) || isDateTok(toks[cut-1]))) cut--;
+    const lysing = toks.slice(0, cut).join(' ').trim();
+    const tail = toks.slice(cut).filter(tk=>!isDateTok(tk)); // henda dagsetningum úr halanum
+    if(!lysing && !nr) return null;
+    const nums = tail.map(tk=>({ raw:tk, val:parseNum(tk), pct:tk.includes('%'), dec:tk.includes(',') }));
+    // afsláttur = %-tákn með gildi ≤90 sem er hvorki 24 né 11 (vsk); annars neikvæð %.
+    let disc = 0;
+    const dTok = nums.find(x=>x.pct && x.val!=null && Math.abs(x.val)<=90 && Math.abs(x.val)!==24 && Math.abs(x.val)!==11);
+    if(dTok) disc = Math.abs(dTok.val);
+    // einingaverð = fyrsti tugatölu-token (ein.verð er oftast með ,dd), annars 2. talan
+    const valNums = nums.filter(x=>x.val!=null && !x.pct);
+    let unit = null;
+    const decTok = valNums.find(x=>x.dec && Math.abs(x.val)>=1);
+    if(decTok) unit = decTok.val;
+    else if(valNums.length>=2) unit = valNums[1].val;
+    else if(valNums.length===1) unit = valNums[0].val;
+    const net = unit!=null ? Math.round(Math.abs(unit)*(1-disc/100)) : null;
+    return { nr, lysing, unit: unit!=null?Math.abs(unit):null, disc, net };
+  }
+  function bestMatch(desc){
+    const d = norm(desc); if(!d) return null;
+    const dt = new Set(d.split(' ').filter(w=>w.length>2));
+    let best=null, bestScore=0;
+    for(const p of ALL){
+      const pn = norm(p.nafn); if(!pn) continue;
+      let overlap=0; for(const w of pn.split(' ')) if(w.length>2 && dt.has(w)) overlap++;
+      let score = overlap;
+      if(d.includes(pn) || pn.includes(d)) score += 2;
+      if(score>bestScore){ bestScore=score; best=p; }
+    }
+    return bestScore>=2 ? best : null;
+  }
+  function openImport(){
+    document.getElementById('vb-imp-modal')?.remove();
+    const m = document.createElement('div');
+    m.id = 'vb-imp-modal'; m.className = 'vb-imp-modal';
+    m.innerHTML = `
+      <div class="vb-imp-card">
+        <h2>📥 Skrá birgja-reikning</h2>
+        <div class="vb-imp-sub">Límdu inn línurnar af birgja-reikningi (afritaðu úr PDF). Ég þátta hverja línu, reikna <b>kaupverð án vsk</b> (ein.verð − afsláttur) og stimpla birgjann á. Yfirfarðu, tengdu við vöru eða búðu til nýja — svo „Vista".</div>
+        <div class="vb-frow">
+          <div class="vb-fg"><label>Birgir / seljandi</label><input id="vb-imp-birgi" type="text" placeholder="t.d. Ólafur Gíslason & Co hf"></div>
+        </div>
+        <div class="vb-frow">
+          <div class="vb-fg full"><label>Reikningslínur (ein á línu)</label><textarea id="vb-imp-raw" rows="6" placeholder="300004  2kg MOBIAK Dufttæki m/mæli  40  6.927,42  -30%  24  193.968"></textarea></div>
+        </div>
+        <div class="vb-imp-bar">
+          <button class="vb-btn-cancel" id="vb-imp-parse" type="button">🔎 Þátta línur</button>
+          <label class="vb-imp-ow"><input type="checkbox" id="vb-imp-ow"> Yfirskrifa kaupverð sem er þegar til</label>
+        </div>
+        <div id="vb-imp-rows"></div>
+        <div class="vb-msg" id="vb-imp-msg"></div>
+        <div class="vb-mbtns">
+          <div class="spacer"></div>
+          <button class="vb-btn-cancel" id="vb-imp-close" type="button">Loka</button>
+          <button class="vb-btn-save" id="vb-imp-save" type="button" disabled>💾 Vista (0)</button>
+        </div>
+      </div>`;
+    document.body.appendChild(m);
+    const $ = s => m.querySelector(s);
+    const close = ()=> m.remove();
+    m.addEventListener('click', e=>{ if(e.target===m) close(); });
+    $('#vb-imp-close').onclick = close;
+
+    // fastur vöru-veljari (byggður einu sinni)
+    const optsHtml = '<option value="">🆕 Búa til nýja vöru</option>' +
+      ALL.slice().sort((a,b)=>String(a.nafn||'').localeCompare(String(b.nafn||''),'is'))
+        .map(p=>`<option value="${p.id}">${esc(p.nafn||'(nafnlaus)')}${p.flokkur?' · '+esc(p.flokkur):''}${Number(p.kostnadarverd)>0?' · kaupv '+kr(p.kostnadarverd):''}</option>`).join('');
+
+    let PARSED = [];
+    function renderRows(){
+      const $rows = $('#vb-imp-rows');
+      if(!PARSED.length){ $rows.innerHTML=''; updateSave(); return; }
+      $rows.innerHTML = `<div class="vb-imp-tblwrap"><table class="vb-imp-tbl"><thead><tr>`+
+        `<th class="c">✓</th><th>Lýsing</th><th class="r">Kaupv. án vsk</th><th>Tengja við vöru</th><th>Flokkur (ef ný)</th>`+
+        `</tr></thead><tbody>`+
+        PARSED.map((row,i)=>{
+          const sel = row.match_id!=null ? String(row.match_id) : '';
+          return `<tr data-i="${i}">`+
+            `<td class="c"><input type="checkbox" class="vb-imp-inc" ${row.include?'checked':''}></td>`+
+            `<td><input type="text" class="vb-imp-lys" value="${esc(row.lysing)}">`+
+              `${row.nr?`<div class="vb-desc">birgja-vnr ${esc(row.nr)}${row.unit!=null?' · ein.verð '+kr(row.unit)+(row.disc?' · −'+row.disc+'%':''):''}</div>`:''}</td>`+
+            `<td class="r"><input type="number" class="vb-imp-net" step="1" value="${row.net!=null?row.net:''}"></td>`+
+            `<td><select class="vb-imp-sel">${optsHtml.replace('value="'+sel+'"','value="'+sel+'" selected')}</select></td>`+
+            `<td><input type="text" class="vb-imp-flok" list="vb-catlist-imp" value="${esc(row.flokkur||'')}" placeholder="—" ${sel?'disabled':''}></td>`+
+          `</tr>`;
+        }).join('')+
+        `</tbody></table></div><datalist id="vb-catlist-imp">${CATS.map(c=>`<option value="${esc(c)}">`).join('')}</datalist>`;
+      $rows.querySelectorAll('tr[data-i]').forEach(tr=>{
+        const i = +tr.getAttribute('data-i');
+        tr.querySelector('.vb-imp-inc').addEventListener('change', e=>{ PARSED[i].include=e.target.checked; updateSave(); });
+        tr.querySelector('.vb-imp-lys').addEventListener('input', e=>{ PARSED[i].lysing=e.target.value; });
+        tr.querySelector('.vb-imp-net').addEventListener('input', e=>{ PARSED[i].net = e.target.value===''?null:Number(e.target.value); });
+        tr.querySelector('.vb-imp-flok').addEventListener('input', e=>{ PARSED[i].flokkur=e.target.value; });
+        tr.querySelector('.vb-imp-sel').addEventListener('change', e=>{
+          const v = e.target.value;
+          PARSED[i].match_id = v || null;
+          tr.querySelector('.vb-imp-flok').disabled = !!v;
+        });
+      });
+      updateSave();
+    }
+    function updateSave(){
+      const n = PARSED.filter(r=>r.include && r.net!=null).length;
+      const btn = $('#vb-imp-save');
+      btn.disabled = n===0; btn.textContent = '💾 Vista ('+n+')';
+    }
+    $('#vb-imp-parse').onclick = ()=>{
+      const raw = $('#vb-imp-raw').value || '';
+      const lines = raw.split(/\r?\n/);
+      PARSED = [];
+      for(const ln of lines){
+        const p = parseLine(ln);
+        if(!p) continue;
+        const match = bestMatch(p.lysing);
+        PARSED.push({ nr:p.nr, lysing:p.lysing, unit:p.unit, disc:p.disc, net:p.net,
+                      match_id: match?String(match.id):null, flokkur:'', include:true });
+      }
+      const msg = $('#vb-imp-msg');
+      if(!PARSED.length){ msg.className='vb-msg bad'; msg.textContent='Engar línur þáttaðar — athugaðu að hver vörulína sé á sinni línu.'; }
+      else { msg.className='vb-msg'; msg.textContent=PARSED.length+' línur þáttaðar. 🆕 = ný vara (falin frá Sölu þar til verðlögð).'; }
+      renderRows();
+    };
+    $('#vb-imp-save').onclick = async ()=>{
+      const btn = $('#vb-imp-save'), msg = $('#vb-imp-msg');
+      const birgir = $('#vb-imp-birgi').value.trim();
+      const overwrite = $('#vb-imp-ow').checked;
+      const rows = PARSED.filter(r=>r.include && r.net!=null).map(r=>({
+        match_id: r.match_id || undefined,
+        net: r.net,
+        nafn: r.lysing,
+        lysing: r.nr ? ('birgja-vnr '+r.nr) : undefined,
+        flokkur: r.match_id ? undefined : (r.flokkur||undefined),
+      }));
+      if(!rows.length) return;
+      btn.disabled=true; msg.className='vb-msg'; msg.textContent='Vista '+rows.length+' línur…';
+      try{
+        const r = await fetch('/api/vorubirgdir', { method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ action:'import', birgir, overwrite, rows }) });
+        const j = await r.json();
+        if(!r.ok || j.error) throw new Error(j.error||('HTTP '+r.status));
+        const s = j.summary||{};
+        msg.className='vb-msg ok';
+        msg.textContent = `✅ ${s.created||0} nýjar · ${s.updated||0} uppfærðar · ${s.skipped||0} sleppt${s.failed?' · '+s.failed+' villur':''}.`;
+        await load();
+        setTimeout(close, 1600);
+      }catch(e){ btn.disabled=false; msg.className='vb-msg bad'; msg.textContent='Villa: '+(e.message||e); }
+    };
+  }
+
   document.getElementById('vb-refresh').addEventListener('click', load);
+  document.getElementById('vb-import').addEventListener('click', openImport);
   document.getElementById('vb-new').addEventListener('click', ()=> openEditor(null));
   $q.addEventListener('input', e=>{ state.q = e.target.value; paintTable(); });
   $cat.addEventListener('change', e=>{ state.cat = e.target.value; paintTable(); });

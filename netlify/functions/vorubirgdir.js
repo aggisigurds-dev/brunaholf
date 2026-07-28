@@ -20,6 +20,13 @@
 //     • action:'delete' { id }
 //         → eyðir röð. NB varan hverfur þá líka af Sölu-síðunni — notaðu heldur
 //           virkt=false til að fela hana. Skilar { ok:true }.
+//     • action:'import' { birgir, overwrite?, rows:[{ match_id?, net, nafn?,
+//                          flokkur?, lysing?, vsk? }] }
+//         → Skrá birgja-reikning. Hver lína: match_id sett → PATCH AÐEINS
+//           kostnadarverd (+birgi) á þá vöru (aldrei nafn/söluverð/virkt; sleppir
+//           ef kaupverð er þegar til nema overwrite=true). match_id vantar → INSERT
+//           ný vara (virkt=false, verd_an_vsk=null svo hún poppi ekki á Sölu fyrr en
+//           verðlögð). Skilar { ok, results[], summary:{created,updated,skipped,failed} }.
 //
 // Mirrors the automations.js REST pattern (SUPABASE_URL + SERVICE_ROLE_KEY,
 // cors/json/sbFetch helpers). Rides the generic /api/* → functions redirect.
@@ -89,6 +96,66 @@ async function handlePost(event) {
     } catch (e) { return json(502, { error: e.message }); }
   }
 
+  if (action === 'import') {
+    // Skrá birgja-reikning: hver lína annaðhvort TENGD við vöru (uppfærir AÐEINS
+    // kaupverð + birgja — snertir ALDREI nafn/söluverð/virkt) EÐA ný vara (insert,
+    // virkt=false, ekkert söluverð svo hún poppi ekki upp á Sölu fyrr en verðlögð).
+    const birgir = cleanStr(body.birgir);
+    const rows = Array.isArray(body.rows) ? body.rows : [];
+    const overwrite = body.overwrite === true; // yfirskrifa kaupverð sem er þegar til?
+    const results = [];
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i] || {};
+      const cost = numOrNull(row.net);
+      try {
+        const matchId = row.match_id != null && String(row.match_id).trim() !== '' ? String(row.match_id) : null;
+        if (matchId) {
+          const patch = {};
+          if (cost != null) patch.kostnadarverd = cost;
+          if (birgir) patch.birgi = birgir;
+          if (!Object.keys(patch).length) { results.push({ i, action: 'skip', ok: true, reason: 'ekkert að uppfæra' }); continue; }
+          // only_if_empty (nema overwrite) — uppfærir ekki kaupverð sem er þegar sett
+          let target = `vorur?id=eq.${encodeURIComponent(matchId)}&select=${COLS}`;
+          if (!overwrite && cost != null) target += '&kostnadarverd=is.null';
+          const r = await sbFetch(target, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', Prefer: 'return=representation' },
+            body: JSON.stringify(patch),
+          });
+          if (!r.ok) throw new Error(`${r.status} ${(await r.text()).slice(0, 160)}`);
+          const out = await r.json();
+          if (Array.isArray(out) && out.length) results.push({ i, action: 'update', ok: true, id: matchId, product: out[0] });
+          else results.push({ i, action: 'skip', ok: true, id: matchId, reason: 'kaupverð þegar til (ekki yfirskrifað)' });
+        } else {
+          const ins = {
+            nafn: cleanStr(row.nafn) || 'Nafnlaus vara',
+            flokkur: cleanStr(row.flokkur) || null,
+            birgi: birgir || null,
+            kostnadarverd: cost,
+            verd_an_vsk: null, // ekkert söluverð enn — falin frá Sölu þar til verðlögð
+            vsk_prosenta: numOr(row.vsk, 24),
+            birgdir: null,
+            virkt: false,
+            lysing: cleanStr(row.lysing) || null,
+          };
+          const r = await sbFetch('vorur', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Prefer: 'return=representation' },
+            body: JSON.stringify(ins),
+          });
+          if (!r.ok) throw new Error(`${r.status} ${(await r.text()).slice(0, 160)}`);
+          const out = await r.json();
+          results.push({ i, action: 'create', ok: true, product: Array.isArray(out) ? out[0] : out });
+        }
+      } catch (e) { results.push({ i, action: 'error', ok: false, error: String(e.message || e) }); }
+    }
+    const created = results.filter(x => x.action === 'create' && x.ok).length;
+    const updated = results.filter(x => x.action === 'update' && x.ok).length;
+    const skipped = results.filter(x => x.action === 'skip').length;
+    const failed = results.filter(x => x.ok === false).length;
+    return json(200, { ok: true, results, summary: { created, updated, skipped, failed } });
+  }
+
   if (action === 'delete') {
     const id = body.id;
     if (id == null || String(id).trim() === '') return json(400, { error: 'id required' });
@@ -102,6 +169,7 @@ async function handlePost(event) {
   return json(400, { error: 'Unknown action' });
 }
 
+function cleanStr(v) { return v == null || String(v).trim() === '' ? '' : String(v).trim(); }
 function numOrNull(v) {
   if (v == null || v === '') return null;
   const n = Number(String(v).replace(/\s/g, '').replace(',', '.'));
