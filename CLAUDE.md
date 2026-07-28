@@ -220,6 +220,20 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   per group, copy-link, and drag-to-reorder without entering edit mode. Buttons
   live in `state.buttons` (`tab:'reikningatenglar'`), curated defaults seeded via
   `ensureNewTabs` + a `loadState` migration so existing users get the tab.
+- `vorubirgdir` — **🏷️ Vörubirgðir** (renderVorubirgdir; situr rétt á eftir
+  Efniskostnaði). EIN vörulisti þvert á Slökkvitæki + Brunakerfi með **inn- og
+  söluverði**. Les/skrifar **SÖMU `vorur`-töflu og Slökkvitæki Sala** (deildur
+  Supabase) gegnum `/api/vorubirgdir` (`vorubirgdir.js`, service role): `GET` →
+  `{products, categories}`; `POST {action:'save', product}` (insert/PATCH — ALLTAF
+  LEYFA VISTUN, aðeins nafn skylda) · `POST {action:'delete', id}` (NB eyðir líka
+  af Sölu — nota heldur `virkt=false`). Tafla: nafn · flokkur (brunakerfis-flokkar
+  rauðir) · birgir · **kaupverð (`vorur.kostnadarverd`)** · söluverð (`verd_an_vsk`)
+  · **álagning** (reiknuð) · vsk% · lager · virk. Leit + flokka-sía + sýn-rofi
+  (Allar / 🧯 Slökkvitæki / 🚨 Brunakerfi / Aðeins virkar) + tölfustika (m.a.
+  lagervirði). Modal-ritill (add/edit) reiknar álagning + söluverð m.vsk lifandi.
+  Brunakerfis-búnaður (skynjarar/sensorar/tæki) bætist við undir eigin flokki svo
+  brunakerfis-verk geti síðar sótt vörur eftir `flokkur`. **Bætti `vorur.birgi`
+  (text) — birgir/seljandi** (additive, sjá migration `add_birgi_to_vorur`).
 - `sjalfvirkni` — **⚙️ Sjálfvirkni** automation control board (renderSjalfvirkni;
   sits in the control-panel area, just above Bakendi). Reads `/api/automations` and
   renders one card per enabled `automation_jobs` row: a status dot from the latest
