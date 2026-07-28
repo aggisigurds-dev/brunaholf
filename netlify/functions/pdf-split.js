@@ -143,7 +143,7 @@ exports.handler = async (event) => {
       if (!files.length) return json(400, { error: 'Engar PDF-skrár í möppunni.' });
       const fi = Math.max(parseInt(p.fi || '0', 10) || 0, 0);
       if (fi >= files.length) {
-        return json(200, { ok: true, mode: 'folder', inplace, fileCount: files.length, fi, nextFi: fi, nextOffset: 0, nextFolder: '', done: true, processed: 0, results: [] });
+        return json(200, { ok: true, mode: 'folder', inplace, fileCount: files.length, fi, nextFi: fi, nextOffset: null, nextFolder: '', done: true, processed: 0, results: [] });
       }
       const cur = files[fi];
       // in-place → target = the source folder itself (folderIn set ⇒ no subfolder created).
@@ -157,7 +157,7 @@ exports.handler = async (event) => {
         return json(200, {
           ok: true, mode: 'folder', inplace, fileCount: files.length, fi, fileName: cur.name,
           total: 0, from: 0, to: 0, processed: 0, fileError: 'Ekki lesanleg PDF: ' + (e.message || e),
-          nextFi, nextOffset: 0, nextFolder: '', done: nextFi >= files.length, results: [],
+          nextFi, nextOffset: nextFi >= files.length ? null : 0, nextFolder: '', done: nextFi >= files.length, results: [],
         });
       }
       const fileMore = b.to < b.total;
@@ -168,7 +168,7 @@ exports.handler = async (event) => {
         folder: b.folder,
         folderName: inplace ? (meta.name || 'sama mappa') : ((b.folderInfo && b.folderInfo.name) || (b.base + ' - stakar')),
         folderLink: b.folder ? 'https://drive.google.com/drive/folders/' + b.folder : '',
-        nextFi, nextOffset: fileMore ? b.to : 0, nextFolder: fileMore ? b.folder : '',
+        nextFi, nextOffset: fileMore ? b.to : (nextFi >= files.length ? null : 0), nextFolder: fileMore ? b.folder : '',
         done: !fileMore && nextFi >= files.length, results: b.results,
       });
     }
@@ -190,7 +190,7 @@ exports.handler = async (event) => {
     return json(200, {
       ok: true, mode: 'file', inplace, fileCount: 1, fi: 0, fileName: meta.name,
       total: b.total, from: b.from, to: b.to, processed: b.results.length,
-      nextFi: 0, nextOffset: b.to, nextFolder: done ? '' : b.folder, done,
+      nextFi: 0, nextOffset: done ? null : b.to, nextFolder: done ? '' : b.folder, done,
       folder: b.folder,
       folderName: inplace ? 'sama mappa' : ((b.folderInfo && b.folderInfo.name) || (b.base + ' - stakar')),
       folderLink: b.folder ? 'https://drive.google.com/drive/folders/' + b.folder : '',
