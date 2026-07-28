@@ -1797,6 +1797,7 @@ const DEFAULT_STATE = {
     {id:'vinnustofa', label:'Vinnustofa', icon:'🎯'},
     {id:'verdskra', label:'Verðskrá', icon:'💰'},
     {id:'efniskostnadur', label:'Efniskostnaður', icon:'📦'},
+    {id:'vorubirgdir', label:'Vörubirgðir', icon:'🏷️'},
     {id:'utgjold',    label:'Útgjöld',    icon:'💸', sheetCsv:''},
     {id:'sjalfvirkni', label:'Sjálfvirkni', icon:'⚙️'},
     {id:'vefryni',    label:'Vefrýni',    icon:'🔎'},
@@ -2074,6 +2075,11 @@ function ensureNewTabs(s){
           const idx = s.tabs.findIndex(t=>t.id==='bakendi');
           const idx2 = s.tabs.findIndex(t=>t.id==='stillingar');
           target = idx >= 0 ? idx : (idx2 >= 0 ? idx2 : -1);
+        } else if(id === 'vorubirgdir'){
+          // Vörubirgðir situr rétt á eftir Efniskostnaði (annars fyrir ofan Bakendi).
+          const idx = s.tabs.findIndex(t=>t.id==='efniskostnadur');
+          const bIdx = s.tabs.findIndex(t=>t.id==='bakendi');
+          target = idx >= 0 ? idx + 1 : (bIdx >= 0 ? bIdx : -1);
         } else if(id === 'bakendi'){
           // Bakendi sits at the bottom, just above Stillingar.
           const idx = s.tabs.findIndex(t=>t.id==='stillingar');
@@ -2509,6 +2515,7 @@ function render(){
   if(t.id==='multitool') return renderMultitool(t);
   if(t.id==='bakendi') return renderBakendi(t);
   if(t.id==='sjalfvirkni') return renderSjalfvirkni(t);
+  if(t.id==='vorubirgdir') return renderVorubirgdir(t);
   if(t.id==='verkefnaskra') return renderVerkefnaskra(t);
   if(t.id==='reikningatenglar') return renderReikningatenglar(t);
   if(t.checklist!==undefined) return renderChecklist(t);
@@ -14767,6 +14774,498 @@ function renderVerkefnaskra(t){
   $view.querySelectorAll('.vk-chip.vk-tag').forEach(c => {
     c.onclick = () => { U.tag = c.dataset.tag; save(); render(); };
   });
+}
+
+async function renderVorubirgdir(t){
+  // 🏷️ Vörubirgðir — EIN vörulisti þvert á Slökkvitæki + Brunakerfi, með inn- og
+  // söluverði. Les/skrifar sömu `vorur`-töflu og Slökkvitæki Sala (deildur Supabase)
+  // gegnum /api/vorubirgdir. Sjálf-innihaldið eins og renderSjalfvirkni.
+  const esc = s => escapeHtml(String(s==null?'':s));
+  const kr  = n => (n==null||n==='') ? '' : Math.round(Number(n)).toLocaleString('is-IS');
+  // brunakerfis-flokkar (til að lita/sía) — additive, hvaða flokkur má bætast við.
+  const BRUNA = ['brunakerfi','skynjarar','viðvörunarkerfi','vidvorunarkerfi','skynjari','sensor'];
+  const isBruna = f => { const x=String(f||'').toLowerCase(); return BRUNA.some(b=>x.includes(b)); };
+
+  let ALL = [], CATS = [];
+  const state = { q:'', cat:'', view:'allar' }; // view: allar | brunakerfi | slokkvitaeki | virkar
+
+  $view.innerHTML = `
+    <div class="rg-wrap">
+      <div class="rg-header">
+        <div>
+          <h1 class="rg-h1">🏷️ Vörubirgðir <span class="rg-sub" id="vb-meta">Sækir…</span></h1>
+          <div class="rg-sub-line">Allar vörur sem við seljum — inn- og söluverð á einum stað. Deilir <b>sömu vörulista og Slökkvitæki Sala</b>; hér má líka bæta við brunakerfis-búnaði (skynjarar, tæki, sensorar) sem brunakerfis-verk geta síðar sótt eftir flokki.</div>
+        </div>
+        <div class="rg-controls">
+          <button id="vb-import" class="tv-btn" type="button">📥 Skrá birgja-reikning</button>
+          <button id="vb-new" class="tv-btn" type="button">➕ Ný vara</button>
+          <button id="vb-refresh" class="tv-btn" type="button"><span class="tv-refresh-icon">↻</span> Sækja</button>
+        </div>
+      </div>
+
+      <div id="vb-stats" class="vb-stats"></div>
+
+      <div class="vb-toolbar">
+        <input id="vb-q" class="vb-in" type="text" placeholder="🔎 Leita að vöru, flokki eða birgja…">
+        <select id="vb-cat" class="vb-in vb-sel"><option value="">Allir flokkar</option></select>
+        <div class="vb-segs" id="vb-segs">
+          <button class="vb-seg is-on" data-v="allar" type="button">Allar</button>
+          <button class="vb-seg" data-v="slokkvitaeki" type="button">🧯 Slökkvitæki</button>
+          <button class="vb-seg" data-v="brunakerfi" type="button">🚨 Brunakerfi</button>
+          <button class="vb-seg" data-v="virkar" type="button">Aðeins virkar</button>
+        </div>
+      </div>
+
+      <div id="vb-tblwrap" class="vb-tblwrap"><div class="vb-loading">Sækir…</div></div>
+    </div>
+    <style>
+      .vb-stats{display:flex;gap:10px;flex-wrap:wrap;margin:4px 0 14px}
+      .vb-stat{background:var(--card-bg,#fff);border:1px solid var(--border,#e3e7ec);border-radius:11px;padding:10px 14px;min-width:120px}
+      .vb-stat b{display:block;font-size:19px;font-weight:800;color:var(--text,#1f2933);font-variant-numeric:tabular-nums}
+      .vb-stat span{font-size:11.5px;color:var(--text-dim,#7a8493)}
+      .vb-toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+      .vb-in{font-size:13px;padding:8px 11px;border:1px solid var(--border,#d6dbe1);border-radius:8px;background:var(--card-bg,#fff);color:var(--text,#1f2933)}
+      #vb-q{flex:1 1 260px;min-width:180px}
+      .vb-sel{flex:0 0 auto}
+      .vb-segs{display:inline-flex;gap:0;border:1px solid var(--border,#d6dbe1);border-radius:9px;overflow:hidden}
+      .vb-seg{font-size:12.5px;font-weight:600;border:0;background:var(--card-bg,#fff);color:var(--text,#1f2933);padding:8px 12px;cursor:pointer;border-right:1px solid var(--border,#e3e7ec)}
+      .vb-seg:last-child{border-right:0}
+      .vb-seg.is-on{background:#274a9e;color:#fff}
+      .vb-tblwrap{overflow-x:auto;background:var(--card-bg,#fff);border:1px solid var(--border,#e3e7ec);border-radius:12px}
+      .vb-loading,.vb-empty,.vb-err{padding:16px;font-size:13px}
+      .vb-empty{color:var(--text-dim,#7a8493)} .vb-err{color:#c40000}
+      table.vb-tbl{width:100%;min-width:900px;border-collapse:collapse;font-size:13px}
+      .vb-tbl thead th{position:sticky;top:0;text-align:left;padding:10px 12px;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim,#7a8493);background:var(--card-bg,#fff);border-bottom:1px solid var(--border,#e3e7ec);white-space:nowrap}
+      .vb-tbl th.r,.vb-tbl td.r{text-align:right}
+      .vb-tbl th.c,.vb-tbl td.c{text-align:center}
+      .vb-tbl tbody td{padding:9px 12px;border-bottom:1px solid var(--border,#f0f2f5);vertical-align:middle}
+      .vb-tbl tbody tr:hover{background:var(--hover,#f6f8fb)}
+      .vb-tbl tbody tr.off{opacity:.5}
+      .vb-name{font-weight:600;color:var(--text,#1f2933)}
+      .vb-desc{font-size:11px;color:var(--text-dim,#7a8493);margin-top:1px}
+      .vb-cat{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:#eef2f7;color:#3a4250;white-space:nowrap}
+      .vb-cat.bruna{background:#fde2e1;color:#a01820}
+      .vb-mono{font-variant-numeric:tabular-nums;white-space:nowrap}
+      .vb-marg{font-weight:700;font-variant-numeric:tabular-nums}
+      .vb-marg.pos{color:#15803d} .vb-marg.neg{color:#b91c1c} .vb-marg.na{color:var(--text-dim,#9aa3af);font-weight:400}
+      .vb-nobuy{color:#b45309;font-weight:600}
+      .vb-act{font-size:12px;border:1px solid var(--border,#d6dbe1);background:var(--card-bg,#fff);border-radius:7px;padding:5px 9px;cursor:pointer;margin-left:4px}
+      .vb-act:hover{background:var(--hover,#f3f5f7)}
+      .vb-act.del{color:#c0392b;border-color:#e8c9c4}
+      /* modal */
+      #vb-modal{position:fixed;inset:0;z-index:100060;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:16px}
+      #vb-modal .vb-card{background:var(--card-bg,#fff);border-radius:14px;padding:20px 22px;max-width:520px;width:100%;max-height:92vh;overflow:auto;box-shadow:0 20px 60px rgba(15,23,42,.3)}
+      #vb-modal h2{margin:0 0 14px;font-size:18px;color:var(--text,#0f172a)}
+      .vb-frow{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:11px}
+      .vb-fg{flex:1 1 150px;min-width:120px;display:flex;flex-direction:column;gap:4px}
+      .vb-fg.full{flex-basis:100%}
+      .vb-fg label{font-size:11.5px;font-weight:600;color:var(--text-dim,#7a8493)}
+      .vb-fg input,.vb-fg textarea{font-size:13.5px;padding:8px 10px;border:1px solid var(--border,#d6dbe1);border-radius:8px;background:var(--card-bg,#fff);color:var(--text,#1f2933);width:100%;box-sizing:border-box}
+      .vb-fhint{font-size:11px;color:var(--text-dim,#9aa3af)}
+      .vb-fg .vb-calc{font-size:12px;font-weight:700}
+      .vb-mbtns{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:8px}
+      .vb-mbtns .spacer{flex:1}
+      .vb-btn-save{padding:9px 18px;border-radius:8px;border:none;background:#16a34a;color:#fff;font-weight:700;font-size:14px;cursor:pointer}
+      .vb-btn-cancel{padding:9px 16px;border-radius:8px;border:1px solid var(--border,#d6dbe1);background:var(--card-bg,#fff);color:var(--text,#334155);font-weight:600;font-size:14px;cursor:pointer}
+      .vb-btn-del{padding:9px 14px;border-radius:8px;border:1px solid #e8c9c4;background:#fff;color:#c0392b;font-weight:600;font-size:13px;cursor:pointer}
+      .vb-msg{font-size:12.5px;min-height:15px}
+      .vb-msg.bad{color:#c40000;font-weight:600} .vb-msg.ok{color:#0a8a00;font-weight:600}
+      /* birgja-reikningur import modal */
+      #vb-imp-modal{position:fixed;inset:0;z-index:100061;background:rgba(15,23,42,.55);display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;overflow:auto}
+      #vb-imp-modal .vb-imp-card{background:var(--card-bg,#fff);border-radius:14px;padding:20px 22px;max-width:820px;width:100%;box-shadow:0 20px 60px rgba(15,23,42,.3)}
+      #vb-imp-modal h2{margin:0 0 6px;font-size:18px;color:var(--text,#0f172a)}
+      .vb-imp-sub{font-size:12.5px;color:var(--text-dim,#7a8493);margin-bottom:14px;line-height:1.5}
+      #vb-imp-modal textarea{font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;padding:9px 11px;border:1px solid var(--border,#d6dbe1);border-radius:8px;background:var(--card-bg,#fff);color:var(--text,#1f2933);width:100%;box-sizing:border-box}
+      .vb-imp-bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+      .vb-imp-ow{font-size:12px;color:var(--text-dim,#7a8493);display:flex;align-items:center;gap:6px;cursor:pointer}
+      .vb-imp-tblwrap{overflow-x:auto;border:1px solid var(--border,#e3e7ec);border-radius:10px;margin:6px 0 10px}
+      table.vb-imp-tbl{width:100%;min-width:640px;border-collapse:collapse;font-size:12.5px}
+      .vb-imp-tbl thead th{text-align:left;padding:8px 10px;font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--text-dim,#7a8493);background:var(--hover,#f6f8fb);border-bottom:1px solid var(--border,#e3e7ec);white-space:nowrap}
+      .vb-imp-tbl th.r,.vb-imp-tbl td.r{text-align:right} .vb-imp-tbl th.c,.vb-imp-tbl td.c{text-align:center}
+      .vb-imp-tbl tbody td{padding:6px 10px;border-bottom:1px solid var(--border,#f0f2f5);vertical-align:top}
+      .vb-imp-tbl input[type=text],.vb-imp-tbl input[type=number],.vb-imp-tbl select{font-size:12.5px;padding:5px 7px;border:1px solid var(--border,#d6dbe1);border-radius:6px;background:var(--card-bg,#fff);color:var(--text,#1f2933);width:100%;box-sizing:border-box}
+      .vb-imp-tbl input[type=number]{text-align:right;width:96px}
+      .vb-imp-tbl select{max-width:230px}
+      .vb-imp-tbl input:disabled{background:var(--hover,#f3f5f7);color:var(--text-dim,#9aa3af)}
+    </style>`;
+
+  const $meta = document.getElementById('vb-meta');
+  const $wrap = document.getElementById('vb-tblwrap');
+  const $stats = document.getElementById('vb-stats');
+  const $cat = document.getElementById('vb-cat');
+  const $q   = document.getElementById('vb-q');
+
+  function margin(p){
+    const buy = Number(p.kostnadarverd), sell = Number(p.verd_an_vsk);
+    if(!Number.isFinite(buy) || buy<=0 || !Number.isFinite(sell)) return null;
+    return { kr: sell-buy, pct: ((sell-buy)/buy)*100 };
+  }
+
+  function paintStats(){
+    const n = ALL.length;
+    const withBuy = ALL.filter(p=>Number(p.kostnadarverd)>0).length;
+    const bruna = ALL.filter(p=>isBruna(p.flokkur)).length;
+    const stockVal = ALL.reduce((s,p)=> s + (Number(p.kostnadarverd)>0 && Number(p.birgdir)>0 ? Number(p.kostnadarverd)*Number(p.birgdir) : 0), 0);
+    $stats.innerHTML =
+      `<div class="vb-stat"><b>${n}</b><span>vörur alls</span></div>`+
+      `<div class="vb-stat"><b>${withBuy}</b><span>með kaupverði</span></div>`+
+      `<div class="vb-stat"><b>${bruna}</b><span>brunakerfis-vörur</span></div>`+
+      `<div class="vb-stat"><b>${kr(stockVal)}</b><span>lagervirði (kaupv. × lager)</span></div>`;
+  }
+
+  function filtered(){
+    const q = state.q.toLowerCase().trim();
+    return ALL.filter(p=>{
+      if(state.view==='virkar' && p.virkt===false) return false;
+      if(state.view==='brunakerfi' && !isBruna(p.flokkur)) return false;
+      if(state.view==='slokkvitaeki' && isBruna(p.flokkur)) return false;
+      if(state.cat && (p.flokkur||'')!==state.cat) return false;
+      if(q){
+        const hay = ((p.nafn||'')+' '+(p.flokkur||'')+' '+(p.birgi||'')+' '+(p.lysing||'')).toLowerCase();
+        if(hay.indexOf(q)<0) return false;
+      }
+      return true;
+    });
+  }
+
+  function paintTable(){
+    const rows = filtered();
+    if(!rows.length){ $wrap.innerHTML = '<div class="vb-empty">Engin vara fannst með þessum síum.</div>'; return; }
+    const body = rows.map(p=>{
+      const m = margin(p);
+      const mCell = m
+        ? `<td class="r vb-marg ${m.kr>=0?'pos':'neg'}">${kr(m.kr)}<div class="vb-desc" style="text-align:right">${m.pct>=0?'+':''}${m.pct.toFixed(0)}%</div></td>`
+        : `<td class="r vb-marg na">—</td>`;
+      const buyCell = Number(p.kostnadarverd)>0
+        ? `<td class="r vb-mono">${kr(p.kostnadarverd)}</td>`
+        : `<td class="r vb-nobuy" title="Kaupverð vantar">vantar</td>`;
+      const catCls = isBruna(p.flokkur) ? 'vb-cat bruna' : 'vb-cat';
+      return `<tr class="${p.virkt===false?'off':''}" data-id="${p.id}">`+
+        `<td><div class="vb-name">${esc(p.nafn||'(nafnlaus)')}</div>${p.lysing?`<div class="vb-desc">${esc(p.lysing)}</div>`:''}</td>`+
+        `<td>${p.flokkur?`<span class="${catCls}">${esc(p.flokkur)}</span>`:''}</td>`+
+        `<td>${esc(p.birgi||'')}</td>`+
+        buyCell+
+        `<td class="r vb-mono">${kr(p.verd_an_vsk)}</td>`+
+        mCell+
+        `<td class="c vb-mono">${p.vsk_prosenta!=null?esc(p.vsk_prosenta)+'%':''}</td>`+
+        `<td class="c vb-mono">${p.birgdir!=null?esc(p.birgdir):''}</td>`+
+        `<td class="c">${p.virkt===false?'—':'✓'}</td>`+
+        `<td class="r" style="white-space:nowrap"><button class="vb-act" data-edit="${p.id}" type="button">✏️ Breyta</button></td>`+
+      `</tr>`;
+    }).join('');
+    $wrap.innerHTML =
+      `<table class="vb-tbl"><thead><tr>`+
+        `<th>Vara</th><th>Flokkur</th><th>Birgir</th>`+
+        `<th class="r">Kaupverð</th><th class="r">Söluverð</th><th class="r">Álagning</th>`+
+        `<th class="c">VSK</th><th class="c">Lager</th><th class="c">Virk</th><th></th>`+
+      `</tr></thead><tbody>${body}</tbody></table>`;
+    $wrap.querySelectorAll('[data-edit]').forEach(b=> b.addEventListener('click', ()=> openEditor(String(b.getAttribute('data-edit')))));
+  }
+
+  // ── add/edit modal ────────────────────────────────────────────────────────
+  function openEditor(id){
+    const p = id ? (ALL.find(x=>String(x.id)===String(id)) || {}) : {};
+    document.getElementById('vb-modal')?.remove();
+    const catOpts = CATS.map(c=>`<option value="${esc(c)}">`).join('');
+    const m = document.createElement('div');
+    m.id = 'vb-modal';
+    m.innerHTML = `
+      <div class="vb-card">
+        <h2>${id?'✏️ Breyta vöru':'➕ Ný vara'}</h2>
+        <div class="vb-frow">
+          <div class="vb-fg full"><label>Nafn</label><input id="vb-f-nafn" type="text" value="${esc(p.nafn||'')}" placeholder="Heiti vöru"></div>
+        </div>
+        <div class="vb-frow">
+          <div class="vb-fg"><label>Flokkur</label><input id="vb-f-flokkur" type="text" list="vb-catlist" value="${esc(p.flokkur||'')}" placeholder="t.d. Skynjarar og rafhlöður"><datalist id="vb-catlist">${catOpts}</datalist></div>
+          <div class="vb-fg"><label>Birgir / seljandi</label><input id="vb-f-birgi" type="text" value="${esc(p.birgi||'')}" placeholder="Hvar keypt"></div>
+        </div>
+        <div class="vb-frow">
+          <div class="vb-fg"><label>Kaupverð (án vsk)</label><input id="vb-f-buy" type="number" min="0" step="1" value="${p.kostnadarverd!=null?esc(p.kostnadarverd):''}" placeholder="0"></div>
+          <div class="vb-fg"><label>Söluverð (án vsk)</label><input id="vb-f-sell" type="number" min="0" step="1" value="${p.verd_an_vsk!=null?esc(p.verd_an_vsk):''}" placeholder="0"></div>
+          <div class="vb-fg"><label>VSK %</label><input id="vb-f-vsk" type="number" min="0" step="1" value="${p.vsk_prosenta!=null?esc(p.vsk_prosenta):'24'}"></div>
+        </div>
+        <div class="vb-frow">
+          <div class="vb-fg"><label>Álagning</label><div class="vb-calc" id="vb-f-marg">—</div><div class="vb-fhint">Söluverð m.vsk: <span id="vb-f-mvsk">—</span></div></div>
+          <div class="vb-fg"><label>Lager (stk)</label><input id="vb-f-lager" type="number" step="1" value="${p.birgdir!=null?esc(p.birgdir):''}" placeholder="—"></div>
+          <div class="vb-fg"><label>Virk (birtist í Sölu)</label><label style="flex-direction:row;align-items:center;gap:7px;font-weight:400;color:var(--text,#1f2933)"><input id="vb-f-virk" type="checkbox" ${p.virkt===false?'':'checked'} style="width:auto"> Já, seljanleg</label></div>
+        </div>
+        <div class="vb-frow">
+          <div class="vb-fg full"><label>Lýsing (valfrjálst)</label><textarea id="vb-f-lysing" rows="2" placeholder="Athugasemd / vörulýsing">${esc(p.lysing||'')}</textarea></div>
+        </div>
+        <div class="vb-msg" id="vb-f-msg"></div>
+        <div class="vb-mbtns">
+          ${id?'<button class="vb-btn-del" id="vb-f-del" type="button">🗑 Eyða</button>':''}
+          <div class="spacer"></div>
+          <button class="vb-btn-cancel" id="vb-f-cancel" type="button">Hætta við</button>
+          <button class="vb-btn-save" id="vb-f-save" type="button">💾 Vista</button>
+        </div>
+      </div>`;
+    document.body.appendChild(m);
+    const $ = s => m.querySelector(s);
+    const close = ()=> m.remove();
+    m.addEventListener('click', e=>{ if(e.target===m) close(); });
+    $('#vb-f-cancel').onclick = close;
+
+    function recalc(){
+      const buy = parseFloat($('#vb-f-buy').value), sell = parseFloat($('#vb-f-sell').value), vsk = parseFloat($('#vb-f-vsk').value);
+      const marg = $('#vb-f-marg'), mvsk = $('#vb-f-mvsk');
+      if(Number.isFinite(sell) && Number.isFinite(vsk)) mvsk.textContent = kr(sell*(1+vsk/100))+' kr';
+      else mvsk.textContent = '—';
+      if(Number.isFinite(buy) && buy>0 && Number.isFinite(sell)){
+        const d = sell-buy, pct = d/buy*100;
+        marg.textContent = kr(d)+' kr  ('+(pct>=0?'+':'')+pct.toFixed(0)+'%)';
+        marg.style.color = d>=0 ? '#15803d' : '#b91c1c';
+      } else { marg.textContent = '—'; marg.style.color=''; }
+    }
+    ['#vb-f-buy','#vb-f-sell','#vb-f-vsk'].forEach(s=> $(s).addEventListener('input', recalc));
+    recalc();
+
+    $('#vb-f-save').onclick = async ()=>{
+      const btn = $('#vb-f-save'), msg = $('#vb-f-msg');
+      const product = {
+        id: id || undefined,
+        nafn: $('#vb-f-nafn').value,
+        flokkur: $('#vb-f-flokkur').value,
+        birgi: $('#vb-f-birgi').value,
+        kostnadarverd: $('#vb-f-buy').value,
+        verd_an_vsk: $('#vb-f-sell').value,
+        vsk_prosenta: $('#vb-f-vsk').value,
+        birgdir: $('#vb-f-lager').value,
+        virkt: $('#vb-f-virk').checked,
+        lysing: $('#vb-f-lysing').value,
+      };
+      btn.disabled = true; msg.className='vb-msg'; msg.textContent='Vista…';
+      try{
+        const r = await fetch('/api/vorubirgdir', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'save', product }) });
+        const j = await r.json();
+        if(!r.ok || j.error) throw new Error(j.error||('HTTP '+r.status));
+        close(); await load();
+      }catch(e){ btn.disabled=false; msg.className='vb-msg bad'; msg.textContent='Villa: '+(e.message||e); }
+    };
+
+    const del = $('#vb-f-del');
+    if(del) del.onclick = async ()=>{
+      if(!confirm('Eyða „'+(p.nafn||'')+'"?\n\nNB varan hverfur þá LÍKA af Sölu-síðunni í Slökkvitæki. Til að fela hana án þess að eyða — taktu „Virk" af og vistaðu.')) return;
+      const msg = $('#vb-f-msg'); msg.className='vb-msg'; msg.textContent='Eyði…';
+      try{
+        const r = await fetch('/api/vorubirgdir', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'delete', id }) });
+        const j = await r.json();
+        if(!r.ok || j.error) throw new Error(j.error||('HTTP '+r.status));
+        close(); await load();
+      }catch(e){ msg.className='vb-msg bad'; msg.textContent='Villa: '+(e.message||e); }
+    };
+  }
+
+  async function load(){
+    $meta.textContent = 'Sækir…';
+    $wrap.innerHTML = '<div class="vb-loading">Sækir…</div>';
+    try{
+      const r = await fetch('/api/vorubirgdir');
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const j = await r.json();
+      ALL = Array.isArray(j.products) ? j.products : [];
+      CATS = Array.isArray(j.categories) ? j.categories : [];
+    }catch(e){
+      $wrap.innerHTML = '<div class="vb-err">Villa: '+esc(e.message||e)+'</div>';
+      $meta.textContent = 'Villa'; return;
+    }
+    $meta.textContent = ALL.length+' vörur';
+    // fylla flokka-veljara
+    const cur = state.cat;
+    $cat.innerHTML = '<option value="">Allir flokkar</option>' + CATS.map(c=>`<option value="${esc(c)}"${c===cur?' selected':''}>${esc(c)}</option>`).join('');
+    paintStats();
+    paintTable();
+  }
+
+  // ── 📥 Skrá birgja-reikning (paste-import) ────────────────────────────────
+  const norm = s => String(s==null?'':s).toLowerCase()
+    .replace(/æ/g,'ae').replace(/þ/g,'th').replace(/ð/g,'d')
+    .normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+  const isNumTok = t => /^-?[\d.,]+%?$/.test(t);
+  const isDateTok = t => /^\d{1,2}\.\d{1,2}\.\d{2,4}$/.test(t);
+  function parseNum(tok){
+    if(tok==null) return null;
+    let s = String(tok).replace(/%/g,'').replace(/\s|kr\.?/gi,'');
+    const neg = /-/.test(s); s = s.replace(/-/g,'');
+    if(!s || !/\d/.test(s)) return null;
+    if(s.includes(',')) s = s.replace(/\./g,'').replace(',','.'); // . þúsundir, , aukastafur
+    else s = s.replace(/\./g,''); // . = þúsundaskil (íslenskt)
+    const n = Number(s); if(!Number.isFinite(n)) return null;
+    return neg ? -n : n;
+  }
+  function parseLine(line){
+    let rest = line.trim(), nr='';
+    if(!rest) return null;
+    // sleppa haus-/fótlínum
+    if(/^(nr\b|lýsing|magn|ein\.?verð|afsl|vsk%|línu|samtals|millisamtala|vsk-?upphæð|slétt|dags|reikning|pöntun|afh|eindagi|tilvís|greiðslu)/i.test(rest)) return null;
+    const mcode = rest.match(/^([0-9][0-9\-]{2,}[0-9A-Za-z]?|[0-9]{2}-[0-9]{2}-[0-9]{3,})\s+/);
+    if(mcode){ nr = mcode[1]; rest = rest.slice(mcode[0].length); }
+    const toks = rest.split(/\s+/).filter(Boolean);
+    // finna tölu-hala frá hægri (magn·verð·afsl·vsk·samtals) — innfelldar tölur í
+    // lýsingu ("2kg", 1", "SND-500-S", "FLÖT(12)") eru ekki hreinar tölur og lifa.
+    let cut = toks.length;
+    while(cut>0 && (isNumTok(toks[cut-1]) || isDateTok(toks[cut-1]))) cut--;
+    const lysing = toks.slice(0, cut).join(' ').trim();
+    const tail = toks.slice(cut).filter(tk=>!isDateTok(tk)); // henda dagsetningum úr halanum
+    if(!lysing && !nr) return null;
+    const nums = tail.map(tk=>({ raw:tk, val:parseNum(tk), pct:tk.includes('%'), dec:tk.includes(',') }));
+    // afsláttur = %-tákn með gildi ≤90 sem er hvorki 24 né 11 (vsk); annars neikvæð %.
+    let disc = 0;
+    const dTok = nums.find(x=>x.pct && x.val!=null && Math.abs(x.val)<=90 && Math.abs(x.val)!==24 && Math.abs(x.val)!==11);
+    if(dTok) disc = Math.abs(dTok.val);
+    // einingaverð = fyrsti tugatölu-token (ein.verð er oftast með ,dd), annars 2. talan
+    const valNums = nums.filter(x=>x.val!=null && !x.pct);
+    let unit = null;
+    const decTok = valNums.find(x=>x.dec && Math.abs(x.val)>=1);
+    if(decTok) unit = decTok.val;
+    else if(valNums.length>=2) unit = valNums[1].val;
+    else if(valNums.length===1) unit = valNums[0].val;
+    const net = unit!=null ? Math.round(Math.abs(unit)*(1-disc/100)) : null;
+    return { nr, lysing, unit: unit!=null?Math.abs(unit):null, disc, net };
+  }
+  function bestMatch(desc){
+    const d = norm(desc); if(!d) return null;
+    const dt = new Set(d.split(' ').filter(w=>w.length>2));
+    let best=null, bestScore=0;
+    for(const p of ALL){
+      const pn = norm(p.nafn); if(!pn) continue;
+      let overlap=0; for(const w of pn.split(' ')) if(w.length>2 && dt.has(w)) overlap++;
+      let score = overlap;
+      if(d.includes(pn) || pn.includes(d)) score += 2;
+      if(score>bestScore){ bestScore=score; best=p; }
+    }
+    return bestScore>=2 ? best : null;
+  }
+  function openImport(){
+    document.getElementById('vb-imp-modal')?.remove();
+    const m = document.createElement('div');
+    m.id = 'vb-imp-modal'; m.className = 'vb-imp-modal';
+    m.innerHTML = `
+      <div class="vb-imp-card">
+        <h2>📥 Skrá birgja-reikning</h2>
+        <div class="vb-imp-sub">Límdu inn línurnar af birgja-reikningi (afritaðu úr PDF). Ég þátta hverja línu, reikna <b>kaupverð án vsk</b> (ein.verð − afsláttur) og stimpla birgjann á. Yfirfarðu, tengdu við vöru eða búðu til nýja — svo „Vista".</div>
+        <div class="vb-frow">
+          <div class="vb-fg"><label>Birgir / seljandi</label><input id="vb-imp-birgi" type="text" placeholder="t.d. Ólafur Gíslason & Co hf"></div>
+        </div>
+        <div class="vb-frow">
+          <div class="vb-fg full"><label>Reikningslínur (ein á línu)</label><textarea id="vb-imp-raw" rows="6" placeholder="300004  2kg MOBIAK Dufttæki m/mæli  40  6.927,42  -30%  24  193.968"></textarea></div>
+        </div>
+        <div class="vb-imp-bar">
+          <button class="vb-btn-cancel" id="vb-imp-parse" type="button">🔎 Þátta línur</button>
+          <label class="vb-imp-ow"><input type="checkbox" id="vb-imp-ow"> Yfirskrifa kaupverð sem er þegar til</label>
+        </div>
+        <div id="vb-imp-rows"></div>
+        <div class="vb-msg" id="vb-imp-msg"></div>
+        <div class="vb-mbtns">
+          <div class="spacer"></div>
+          <button class="vb-btn-cancel" id="vb-imp-close" type="button">Loka</button>
+          <button class="vb-btn-save" id="vb-imp-save" type="button" disabled>💾 Vista (0)</button>
+        </div>
+      </div>`;
+    document.body.appendChild(m);
+    const $ = s => m.querySelector(s);
+    const close = ()=> m.remove();
+    m.addEventListener('click', e=>{ if(e.target===m) close(); });
+    $('#vb-imp-close').onclick = close;
+
+    // fastur vöru-veljari (byggður einu sinni)
+    const optsHtml = '<option value="">🆕 Búa til nýja vöru</option>' +
+      ALL.slice().sort((a,b)=>String(a.nafn||'').localeCompare(String(b.nafn||''),'is'))
+        .map(p=>`<option value="${p.id}">${esc(p.nafn||'(nafnlaus)')}${p.flokkur?' · '+esc(p.flokkur):''}${Number(p.kostnadarverd)>0?' · kaupv '+kr(p.kostnadarverd):''}</option>`).join('');
+
+    let PARSED = [];
+    function renderRows(){
+      const $rows = $('#vb-imp-rows');
+      if(!PARSED.length){ $rows.innerHTML=''; updateSave(); return; }
+      $rows.innerHTML = `<div class="vb-imp-tblwrap"><table class="vb-imp-tbl"><thead><tr>`+
+        `<th class="c">✓</th><th>Lýsing</th><th class="r">Kaupv. án vsk</th><th>Tengja við vöru</th><th>Flokkur (ef ný)</th>`+
+        `</tr></thead><tbody>`+
+        PARSED.map((row,i)=>{
+          const sel = row.match_id!=null ? String(row.match_id) : '';
+          return `<tr data-i="${i}">`+
+            `<td class="c"><input type="checkbox" class="vb-imp-inc" ${row.include?'checked':''}></td>`+
+            `<td><input type="text" class="vb-imp-lys" value="${esc(row.lysing)}">`+
+              `${row.nr?`<div class="vb-desc">birgja-vnr ${esc(row.nr)}${row.unit!=null?' · ein.verð '+kr(row.unit)+(row.disc?' · −'+row.disc+'%':''):''}</div>`:''}</td>`+
+            `<td class="r"><input type="number" class="vb-imp-net" step="1" value="${row.net!=null?row.net:''}"></td>`+
+            `<td><select class="vb-imp-sel">${optsHtml.replace('value="'+sel+'"','value="'+sel+'" selected')}</select></td>`+
+            `<td><input type="text" class="vb-imp-flok" list="vb-catlist-imp" value="${esc(row.flokkur||'')}" placeholder="—" ${sel?'disabled':''}></td>`+
+          `</tr>`;
+        }).join('')+
+        `</tbody></table></div><datalist id="vb-catlist-imp">${CATS.map(c=>`<option value="${esc(c)}">`).join('')}</datalist>`;
+      $rows.querySelectorAll('tr[data-i]').forEach(tr=>{
+        const i = +tr.getAttribute('data-i');
+        tr.querySelector('.vb-imp-inc').addEventListener('change', e=>{ PARSED[i].include=e.target.checked; updateSave(); });
+        tr.querySelector('.vb-imp-lys').addEventListener('input', e=>{ PARSED[i].lysing=e.target.value; });
+        tr.querySelector('.vb-imp-net').addEventListener('input', e=>{ PARSED[i].net = e.target.value===''?null:Number(e.target.value); });
+        tr.querySelector('.vb-imp-flok').addEventListener('input', e=>{ PARSED[i].flokkur=e.target.value; });
+        tr.querySelector('.vb-imp-sel').addEventListener('change', e=>{
+          const v = e.target.value;
+          PARSED[i].match_id = v || null;
+          tr.querySelector('.vb-imp-flok').disabled = !!v;
+        });
+      });
+      updateSave();
+    }
+    function updateSave(){
+      const n = PARSED.filter(r=>r.include && r.net!=null).length;
+      const btn = $('#vb-imp-save');
+      btn.disabled = n===0; btn.textContent = '💾 Vista ('+n+')';
+    }
+    $('#vb-imp-parse').onclick = ()=>{
+      const raw = $('#vb-imp-raw').value || '';
+      const lines = raw.split(/\r?\n/);
+      PARSED = [];
+      for(const ln of lines){
+        const p = parseLine(ln);
+        if(!p) continue;
+        const match = bestMatch(p.lysing);
+        PARSED.push({ nr:p.nr, lysing:p.lysing, unit:p.unit, disc:p.disc, net:p.net,
+                      match_id: match?String(match.id):null, flokkur:'', include:true });
+      }
+      const msg = $('#vb-imp-msg');
+      if(!PARSED.length){ msg.className='vb-msg bad'; msg.textContent='Engar línur þáttaðar — athugaðu að hver vörulína sé á sinni línu.'; }
+      else { msg.className='vb-msg'; msg.textContent=PARSED.length+' línur þáttaðar. 🆕 = ný vara (falin frá Sölu þar til verðlögð).'; }
+      renderRows();
+    };
+    $('#vb-imp-save').onclick = async ()=>{
+      const btn = $('#vb-imp-save'), msg = $('#vb-imp-msg');
+      const birgir = $('#vb-imp-birgi').value.trim();
+      const overwrite = $('#vb-imp-ow').checked;
+      const rows = PARSED.filter(r=>r.include && r.net!=null).map(r=>({
+        match_id: r.match_id || undefined,
+        net: r.net,
+        nafn: r.lysing,
+        lysing: r.nr ? ('birgja-vnr '+r.nr) : undefined,
+        flokkur: r.match_id ? undefined : (r.flokkur||undefined),
+      }));
+      if(!rows.length) return;
+      btn.disabled=true; msg.className='vb-msg'; msg.textContent='Vista '+rows.length+' línur…';
+      try{
+        const r = await fetch('/api/vorubirgdir', { method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ action:'import', birgir, overwrite, rows }) });
+        const j = await r.json();
+        if(!r.ok || j.error) throw new Error(j.error||('HTTP '+r.status));
+        const s = j.summary||{};
+        msg.className='vb-msg ok';
+        msg.textContent = `✅ ${s.created||0} nýjar · ${s.updated||0} uppfærðar · ${s.skipped||0} sleppt${s.failed?' · '+s.failed+' villur':''}.`;
+        await load();
+        setTimeout(close, 1600);
+      }catch(e){ btn.disabled=false; msg.className='vb-msg bad'; msg.textContent='Villa: '+(e.message||e); }
+    };
+  }
+
+  document.getElementById('vb-refresh').addEventListener('click', load);
+  document.getElementById('vb-import').addEventListener('click', openImport);
+  document.getElementById('vb-new').addEventListener('click', ()=> openEditor(null));
+  $q.addEventListener('input', e=>{ state.q = e.target.value; paintTable(); });
+  $cat.addEventListener('change', e=>{ state.cat = e.target.value; paintTable(); });
+  document.querySelectorAll('#vb-segs .vb-seg').forEach(b=> b.addEventListener('click', ()=>{
+    state.view = b.getAttribute('data-v');
+    document.querySelectorAll('#vb-segs .vb-seg').forEach(x=> x.classList.toggle('is-on', x===b));
+    paintTable();
+  }));
+
+  load();
 }
 
 async function renderSjalfvirkni(t){
