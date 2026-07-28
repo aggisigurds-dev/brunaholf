@@ -2029,7 +2029,7 @@ function clearDataCache(){
 function ensureNewTabs(s){
   if(!s || !Array.isArray(s.tabs)) return;
   if(!Array.isArray(s.bakendiLinks)) s.bakendiLinks = BAKENDI_LINK_SEED.map(x=>({...x}));
-  ['verkkaupar','dagurinn','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','tvmaeting','verdsamanburdur','verkstadir','skuldunautar','krofuyfirlit','krofur','hreyfingaryfirlit','nlsh','spurningar','sjalfvirkni','vefryni','skodanir','verkfaeri','multitool','bakendi'].forEach(id=>{
+  ['verkkaupar','dagurinn','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','vorubirgdir','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','tvmaeting','verdsamanburdur','verkstadir','skuldunautar','krofuyfirlit','krofur','hreyfingaryfirlit','nlsh','spurningar','sjalfvirkni','vefryni','skodanir','verkfaeri','multitool','bakendi'].forEach(id=>{
     if(!s.tabs.find(t=>t.id===id)){
       const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
       if(d){
