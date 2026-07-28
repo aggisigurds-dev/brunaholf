@@ -212,7 +212,30 @@ function totalFrom(text) {
   const re = /\b\d{1,3}(?:\.\d{3})+\b/g; let m; while ((m = re.exec(String(text)))) { const n = parseInt(m[0].replace(/\./g, ''), 10); if (n > best) best = n; }
   return best || null;
 }
+// Kaupanda-félag úr INNIHALDI: „Nafn: <félag>  kt: …"-blokkin (samningur/reikningur).
+// Nafnið endar við kt/kennitala/Heimilisfang/línulok. Sleppir útgefandanum sjálfum
+// (Slökkvitæki). Notað fyrir hráskönnuð skjöl þar sem skráarheitið er „Scan…".
+function companyFromContent(text) {
+  const t = String(text || '');
+  const m = t.match(/\bNafn\s*:?\s*([^\n]+?)\s*(?:\bkt\b|\bkennitala\b|\bheimilisf|\d{6}\s*-?\s*\d{4}|$)/im);
+  if (!m) return '';
+  const c = m[1].replace(/\s+/g, ' ').trim().replace(/[.,;:]+$/, '').trim();
+  if (c.length < 2 || c.length > 60) return '';
+  if (!/[A-Za-zÁÉÍÓÚÝÆÖÞÐáéíóúýæöþð]/.test(c)) return '';
+  if (/sl[öo]kkvit[æa]ki/i.test(c)) return '';   // útgefandinn, ekki kaupandinn
+  return c;
+}
+// Kaupanda-félag: hráskannað skráarheiti („Scan2026-…", „IMG_…") → nota „Nafn:"
+// úr innihaldi; annars endurnefnt/alvöru skráarheiti fyrst, svo innihaldið.
 function companyFrom(text, name) {
+  const fromContent = companyFromContent(text);
+  const fromName = companyFromStem(name);
+  const nameIsScan = /^(?:scan|img|image|document|dokument|skjal|photo|mynd)[\s_\-]?\d/i.test(cleanStem(name));
+  if (fromName && !nameIsScan) return fromName;  // endurnefnt/alvöru heiti ræður
+  return fromContent || fromName || '';          // hráskann/tómt → „Nafn:" úr innihaldi
+}
+// Kaupanda-félag úr SKRÁARHEITI (endurnefnd skjöl bera „Fyrirtæki - kt - …").
+function companyFromStem(name) {
   // Strjúka dkPlus/bókhalds-forskeyti sem lauma sér fremst í nafnið þegar kt
   // leysist EKKI í base („2024-03-22-bokhald-Ölfusborgir 2024", „bokhald-Nóta",
   // „Stolpi_Invoice_104702"): leiðandi ISO-dagsetning, „bokhald", Stolpi/Nóta-tákn.
@@ -416,10 +439,15 @@ function reportAddr(text) {
   }
   return addrFromContent(t);
 }
-// Samningur: Fyrirtæki - kt - (þjónustusamningur|brunakerfissamningur) - ár gerður.
-function nameSamningur(co, ktd, yr, kind) {
+// Samningur: Fyrirtæki - [Heimilisfang] - kt - (þjónustusamningur|brunakerfissamningur)
+// - ár. Heimilisfangið bætt við (Agnar 2026-07-28) — samningurinn ber „Heimilisfang:"
+// línu; deduppað gegn félagsnafni eins og í reikningum/skýrslum.
+function nameSamningur(co, ktd, yr, kind, addr) {
   const label = kind === 'brunakerfi' ? 'brunakerfissamningur' : 'þjónustusamningur';
-  return [sanitize(co) || 'Óþekkt', ktd || '', label, yr || ''].filter(Boolean).join(' - ') + '.pdf';
+  const c = sanitize(co) || 'Óþekkt';
+  let a = addr ? sanitize(addr).replace(/\s+-\s+/g, ' ').replace(/^[\s,-]+|[\s,-]+$/g, '') : '';
+  if (a) { a = siteMinusCo(a, c); a = addrMinusCoTail(a, c); if (a && foldWord(c).indexOf(foldWord(a)) !== -1) a = ''; }
+  return [c, a, ktd || '', label, yr || ''].filter(Boolean).join(' - ') + '.pdf';
 }
 
 // ── Supabase (les eingöngu) ─────────────────────────────────────────────────
@@ -555,7 +583,12 @@ async function previewFile(token, f) {
     const siteIsHq = !!(site && isHqSite(site.nafn));
     proposed_name = nameReport(coName, ktd, year, siteDesc, cls.doc_type === 'brunakerfi' ? 'brunakerfi' : 'úttektarskýrsla', multiSite, siteIsHq);
   }
-  else if (cls.doc_type === 'samningur') proposed_name = nameSamningur(coName, ktd, year, cls.sub_hint);
+  else if (cls.doc_type === 'samningur') {
+    // Heimilisfang úr „Heimilisfang:" línu samningsins fyrst (reportAddr strýkur
+    // „Vegna"-forskeytið), svo skráarheiti / haus; annars leystur staður.
+    const samAddr = cleanAddr(reportAddr(text) || addrFromName(f.name) || addrFromReportHeader(text, coName)) || (site ? site.nafn : '');
+    proposed_name = nameSamningur(coName, ktd, year, cls.sub_hint, samAddr);
+  }
 
   // Þegar tengt?
   let existing_doc_id = null;
