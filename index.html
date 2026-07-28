@@ -4022,18 +4022,22 @@ function renderBakendi(t){
             <span style="${iconSq};${ICON.teal}">✂️</span>
             <div style="flex:1">
               <div style="${titleStyle}">Skipta PDF í stakar síður</div>
-              <p style="${descStyle};margin-top:4px">Stór PDF (t.d. 70 síður) → <b>ein PDF á hverja síðu</b>. Úr <b>Google Drive</b> → skrifast til baka í nýja <b>„&lt;nafn&gt; - stakar"</b> undirmöppu við hlið skrárinnar. (Eða veldu skrá úr tölvu og fáðu ZIP.)</p>
+              <p style="${descStyle};margin-top:4px">Stór PDF (t.d. 70 síður) → <b>ein PDF á hverja síðu</b>. Úr <b>Google Drive</b> → skrifast til baka í nýja <b>„&lt;nafn&gt; - stakar"</b> undirmöppu við hlið skrárinnar. <b>Líka hægt að líma heila MÖPPU</b> → splittar allar PDF-skrárnar í henni, eina í einu. (Eða veldu skrá úr tölvu og fáðu ZIP.)</p>
             </div>
             <span style="${chipStyle('#cffafe','#0c4a6e')}">Drive</span>
           </div>
           <div>
-            <label style="${labelStyle}">Google Drive — PDF (skrár-ID eða hlekkur)</label>
-            <input id="bk-ps-drive-file" placeholder="1AbC… eða https://drive.google.com/file/d/…" style="${inpMono};width:100%;box-sizing:border-box;height:40px">
+            <label style="${labelStyle}">Google Drive — PDF eða MAPPA (ID eða hlekkur)</label>
+            <input id="bk-ps-drive-file" placeholder="Skrá 1AbC…/file/d/…  —  eða mappa …/folders/…" style="${inpMono};width:100%;box-sizing:border-box;height:40px">
           </div>
           <div>
             <label style="${labelStyle}">Áfangamappa (valfrjálst — tómt = við hlið upprunaskrár)</label>
             <input id="bk-ps-drive-dest" placeholder="folder-id / hlekkur (tómt = sama mappa og skráin)" style="${inpMono};width:100%;box-sizing:border-box;height:40px">
           </div>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#334155;cursor:pointer;user-select:none">
+            <input id="bk-ps-drive-inplace" type="checkbox" style="width:16px;height:16px">
+            Skrifa síðurnar í <b>sömu möppu</b> (engar „- stakar" undirmöppur)
+          </label>
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
             <button id="bk-ps-drive-run" class="btn primary">☁️ Skipta í Drive</button>
             <span id="bk-ps-drive-status" style="font-size:12.5px;color:#64748b"></span>
@@ -5503,6 +5507,7 @@ function renderBakendi(t){
   (function wirePdfSplitDrive(){
     const $file = document.getElementById('bk-ps-drive-file');
     const $dest = document.getElementById('bk-ps-drive-dest');
+    const $inplace = document.getElementById('bk-ps-drive-inplace');
     const $run = document.getElementById('bk-ps-drive-run');
     const $status = document.getElementById('bk-ps-drive-status');
     const $out = document.getElementById('bk-ps-drive-out');
@@ -5511,25 +5516,58 @@ function renderBakendi(t){
     const idFrom = s => { const m = String(s || '').match(/[-\w]{25,}/); return m ? m[0] : ''; };
     $run.onclick = async () => {
       const source = idFrom($file.value);
-      if (!source) { $status.textContent = 'Límdu inn Drive-skrár-ID eða hlekk.'; return; }
+      if (!source) { $status.textContent = 'Límdu inn Drive-skrár- eða möppu-ID/hlekk.'; return; }
       const dest = idFrom($dest.value);
+      const inplace = $inplace && $inplace.checked;
       $run.disabled = true; $out.innerHTML = ''; $status.textContent = 'Byrja…';
-      let offset = 0, folder = '', total = 0, folderLink = '', folderName = '';
+      // Generic loop for BOTH file mode and folder mode. The endpoint returns
+      // nextFi/nextOffset/nextFolder + done; we just thread them back.
+      let fi = 0, offset = 0, folder = '';
+      let mode = 'file', fileCount = 1, pagesWritten = 0;
+      const folders = [];        // per-file output folders {name, link}
+      const errors = [];         // skipped/unreadable files
       try {
-        for (let guard = 0; guard < 500; guard++) {
-          const qs = new URLSearchParams({ file: source, offset: String(offset), limit: '8' });
+        for (let guard = 0; guard < 4000; guard++) {
+          const qs = new URLSearchParams({ file: source, fi: String(fi), offset: String(offset), limit: '8' });
+          if (inplace) qs.set('inplace', '1');
           if (folder) qs.set('folder', folder); else if (dest) qs.set('dest', dest);
           const r = await fetch('/api/pdf-split?' + qs.toString());
           const d = await r.json().catch(() => ({}));
           if (!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));
-          folder = d.folder; total = d.total; folderLink = d.folderLink; folderName = d.folderName;
-          offset = d.nextOffset;
-          $status.textContent = 'Bý til síður í Drive… ' + Math.min(offset, total) + '/' + total;
+          mode = d.mode || 'file'; fileCount = d.fileCount || 1;
+          pagesWritten += (d.processed || 0);
+          if (d.fileError) errors.push((d.fileName || ('skrá ' + ((d.fi || 0) + 1))) + ': ' + d.fileError);
+          if (d.folderLink && (d.processed || d.total)) {
+            if (!folders.some(f => f.link === d.folderLink)) folders.push({ name: d.folderName || '', link: d.folderLink });
+          }
+          fi = (d.nextFi != null ? d.nextFi : 0);
+          offset = d.nextOffset || 0;
+          folder = (d.nextFolder != null ? d.nextFolder : (d.folder || ''));
+          if (mode === 'folder') {
+            $status.textContent = 'Skrá ' + Math.min((d.fi || 0) + 1, fileCount) + '/' + fileCount +
+              (d.fileName ? ' — ' + d.fileName : '') +
+              ' · síða ' + Math.min(d.to || 0, d.total || 0) + '/' + (d.total || 0) +
+              ' · alls ' + pagesWritten + ' síður';
+          } else {
+            $status.textContent = 'Bý til síður í Drive… ' + Math.min(d.to || 0, d.total || 0) + '/' + (d.total || 0);
+          }
           if (d.done) break;
         }
-        $status.textContent = '✓ Búið — ' + total + ' síður.';
-        $out.innerHTML = '<div style="color:#16a34a">Skrifaði <b>' + total + '</b> stakar PDF í Drive-möppuna <b>' + esc(folderName) + '</b>. ' +
-          (folderLink ? '<a href="' + esc(folderLink) + '" target="_blank" rel="noopener" style="color:#2563eb">Opna möppu ↗</a>' : '') + '</div>';
+        if (mode === 'folder') {
+          $status.textContent = '✓ Búið — ' + fileCount + ' skrár, ' + pagesWritten + ' síður.';
+          $out.innerHTML = '<div style="color:#16a34a">Splittaði <b>' + fileCount + '</b> PDF-skrár (' + pagesWritten + ' síður alls)' +
+            (inplace ? ' beint í sömu möppu.' : ' í sér „- stakar" undirmöppur.') +
+            (folders.length ? '<div style="margin-top:6px">' + folders.slice(0, 30).map(f => '<a href="' + esc(f.link) + '" target="_blank" rel="noopener" style="color:#2563eb;display:block">📁 ' + esc(f.name || 'mappa') + ' ↗</a>').join('') +
+              (folders.length > 30 ? '<div style="color:#64748b">…+' + (folders.length - 30) + ' fleiri</div>' : '') + '</div>' : '') +
+            (errors.length ? '<div style="margin-top:6px;color:#b45309">⚠ ' + errors.length + ' skrá(r) sleppt: ' + esc(errors.join(' · ')) + '</div>' : '') +
+            '</div>';
+        } else {
+          const f0 = folders[0] || {};
+          $status.textContent = '✓ Búið — ' + pagesWritten + ' síður.';
+          $out.innerHTML = '<div style="color:#16a34a">Skrifaði <b>' + pagesWritten + '</b> stakar PDF ' +
+            (inplace ? 'í sömu möppu. ' : 'í Drive-möppuna <b>' + esc(f0.name || '') + '</b>. ') +
+            (f0.link ? '<a href="' + esc(f0.link) + '" target="_blank" rel="noopener" style="color:#2563eb">Opna möppu ↗</a>' : '') + '</div>';
+        }
       } catch (e) { $status.textContent = 'Villa: ' + (e && e.message || e); }
       finally { $run.disabled = false; }
     };
