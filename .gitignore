@@ -5,3 +5,9 @@ node_modules/
 *.log
 .DS_Store
 deploy.bat
+
+# Stadbundid session-minni (memsearch) - inniheldur vinnugogn, ALDREI i git
+.memsearch/
+
+# Stadbundid session-minni (memsearch) - inniheldur vinnugogn, ALDREI i git
+.memsearch/
