@@ -59,6 +59,13 @@ bokhald@eldklar.is SENT). Könnun á Stolpi-gögnunum sjálfum er skráð á Ver
   framtíðar-UI: skýrslu-veljarar, Bílstjóri/vakt-sýnir og starfsmannaflæði mega
   aðeins sýna skýrslur SÍNS kerfis.
 - Bæði öpp deila EINUM Supabase (`osfdzskyvisifcwyjkuk`).
+- **Vélaflotinn (Agnar 2026-07-30) — FIMM tölvur:** fjórar hjá Slökkvitækjum —
+  **afgreiðsla** (þar lifir Stolpi) · **stærri** · **laptop** · **verkstæði** —
+  plús **heimaskrifstofa** heima hjá Agnari. Claude Code-uppsetningin (setja-upp.py
+  + athuga-uppsetningu.sh, sjá Verkefnalistann) á að fara á þær allar; EIN var
+  kláruð aðfaranótt 2026-07-30 (Windows-notandi „Slokkvitaeki", repo-in í
+  `Desktop\Claude workshop` — óstaðfest hvaða vél af fjórum það er). Ósvarað:
+  hvaða vél er „bridge-tölvan" sem keyrir luna-bridge Task Scheduler-scripturnar.
 
 ## 1. Viðskiptavina-líkanið — hver tafla er hvað
 
