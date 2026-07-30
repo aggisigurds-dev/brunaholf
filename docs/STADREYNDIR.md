@@ -103,6 +103,14 @@ og Hamraborg 7 ≠ Hamraborg ehf ruglingurinn).
 - ÞRJÁR innsogs-leiðir, allar jafngildar (dedup á `message_id`): luna-bridge
   (desktop/Thunderbird) · gmail-ingest (ský) · Chrome-viðbót (browser-bridge).
 - SENT-raðir bera `folder='SENT'` — innhólfs-lesarar sía `folder=neq.SENT`.
+- **Virku pósthólfin NÚNA (Agnar 2026-07-30):** Slökkvitæki = **eldklar@eldklar.is**
+  + **bokhald@eldklar.is** · Brunahólf = **brunaholf@brunaholf.is** +
+  **bokhald@brunaholf.is**. Önnur hólf í digest eru persónuleg (aggisigurds@gmail.com)
+  eða legacy (brunaholfehf@gmail.com, staðnað 9.7.).
+- **⚠️ GLOPPA (fundin við sannreyn 2026-07-30): `bokhald@eldklar.is` er EKKI í
+  `email_digest`** — eitt af fjórum virkum hólfum er ekki innsogað (gmail-ingest
+  hefur aðeins tekið SENT-möppuna þess í eitt skipti skv. skjölun, aldrei INBOX
+  reglulega). Þarf tengingu í gmail-ingest fjöl-aðganga (`google_oauth` röð per hólf).
 - **aggisigurds@gmail.com = Claude-aðgangurinn** (innskráning, Drive-deiling);
   eldklar@eldklar.is er VIÐSKIPTA-pósthólf, ekki Claude-aðgangur.
 - **Þráður = nýjasta skilaboðið (Agnar 2026-07-30):** við mat á stöðu póstsamtals
