@@ -118,6 +118,20 @@ og Hamraborg 7 ≠ Hamraborg ehf ruglingurinn).
 
 ## 2. Skjöl viðskiptavina (`customer_documents`) *(DB 2026-07-30)*
 
+**📌 VEIÐI-GRUNNLÍNAN (tekin 2026-07-30, fyrir veiðina):** framvinda veiðinnar
+mælist gegn þessum tölum — sbr. `ar_checkpoints`-mynstrið.
+
+| Ár | Úttektarskýrslur (staðir) | Reikningar (staðir) | Brunakerfi |
+|---|---|---|---|
+| 2026 | 294 (252 staðir · 42 tvítök) | 588 (336) | 18 |
+| 2025 | 415 (283 · 125 tvítök) | 325 (215) | 19 |
+| 2024 | 513 (360 · 152 tvítök) | 283 (206) | 24 |
+| 2023 | 493 (364 · 103 tvítök) | 81 (69) | 11 |
+
+Þekja 655 þjónustustaða: **243 með 2026-skýrslu (37%) · 274 með 2025-skýrslu (42%)
+· 250 staðir með HVORUGT ÁRIÐ (38%)** — það er aðal-skotmark veiðinnar. Auk þess
+336 skjöl ÁN ÁRS í trackernum (skyrslu-ar/felag-endurlestur laga).
+
 | doc_type | Fjöldi | Án base | Án staðar | Tvítök-flögguð |
 |---|---:|---:|---:|---:|
 | uttektarskyrsla | 1.726 | 51 | 13 | 423 |
