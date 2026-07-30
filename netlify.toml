@@ -118,18 +118,28 @@
 [functions."timavera-maeting"]
   schedule = "*/10 * * * *"
 
+# ⚠️ ALDREI setja `schedule` á föllu sem VAFRINN kallar á.
+# Netlify svarar hverri HTTP-beiðni á áætlaða föllu með 403. Frá 2026-07-24 til
+# 2026-07-30 stóðu áætlanirnar hér að neðan á `timavera-pull` og `payday-pull`
+# sjálfum, sem drap alla samstillingartakkana í viðmótinu (Mæting „🔄 Samstilla",
+# Bakendi „🕒 Tímavera API" — líka „💾 Vista lykil" — og Kröfu yfirlit
+# „🔄 Uppfæra Payday stöðu"). Og áætlunin keyrði samt ekki, því Netlify ræsir með
+# POST og bæði föllin höfnuðu POST. Þess vegna sitja áætlanirnar núna á
+# `-background` tvíburunum og HTTP-endapunktarnir eru aftur frjálsir.
+
 # Tímavera beintenging (API) — nú AÐAL-heimild vinnufærslna (2026-07-15). Sækir
 # beint úr Tímavera Customer API á 2 tíma fresti; dedupe á entry_key svo endur-pull
 # er skaðlaus. Leysir af desktop-xlsx-brúna (luna-bridge/timavera-bridge.js RETIRED)
 # + Drive-xlsx innsog. Lykill í app_kv['timavera_api_key'] (Agnar setti 2026-07-15).
-[functions."timavera-pull"]
+# Umgjörðin kallar á sama handler með GET, svo rökfræðin er ein og hin sama.
+[functions."timavera-pull-background"]
   schedule = "15 */2 * * *"
 
 # Payday reikningar → invoices (Brunahólf AR). Tvisvar á dag (07/15). Upsert á
 # (tilvisun, source='payday') með dedupe — sama lykill og xlsx-leiðin, engin tvítök.
 # Staðfest 2026-07-15: probe OK, dry mappar 345 raðir rétt (kt/hofudstoll/upphaed_total/
 # gjalddagi/status, kredit meðhöndlað). Heldur Skuldunautum/Krófum ferskum án handvirkni.
-[functions."payday-pull"]
+[functions."payday-pull-background"]
   schedule = "0 7,15 * * *"
 
 # Nightly (03:00 UTC) append-only backup of the Supabase document PDFs
