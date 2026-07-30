@@ -133,7 +133,9 @@ mælist gegn þessum tölum — sbr. `ar_checkpoints`-mynstrið. **Lifandi mæla
 · 250 staðir með HVORUGT ÁRIÐ (38%)** — það er aðal-skotmark veiðinnar. Auk þess
 336 skjöl ÁN ÁRS í trackernum (skyrslu-ar/felag-endurlestur laga).
 
-*2026-borun:* 238 félög með 2026-skoðun á tækjum · 237 með 2026-skýrslu · 210 með
+*2026-borun (leiðrétt við smíði Veiðinnar — fyrri „~80 rukkuð án skýrslu" taldi
+alla staði; rétt skilgreining er ÞJÓNUSTUstaðir):* **45 þjónustustaðir rukkaðir
+2026 án 2026-skýrslu.**  238 félög með 2026-skoðun á tækjum · 237 með 2026-skýrslu · 210 með
 bæði · **28 félög með skoðun EN ENGA skýrslu** (amber „tekið út — skjöl eftir" =
 auðveldustu veiði-vinningarnir) · 76 merkt „Tekið út" í Bílstjóra. Fact-check
 (`reviewed` í Skýrslu-stöð): **14 af 294 2026-skýrslum (5%)**, 57 alls. Skýrsla↔

@@ -22,7 +22,7 @@ const BASELINE = {
   stadir_med_2025_skyrslu: 274,
   engin_skyrsla_25_26: 250,
   amber_felog: 28,
-  rukkud_an_skyrslu: 84,          // ~staðir með 2026-reikning en enga 2026-skýrslu
+  rukkud_an_skyrslu: 45,          // þjónustustaðir með 2026-reikning en enga 2026-skýrslu
   stadir_med_samning: 144,
   felog_med_netfang: 409,
   skjol_an_ars: 336,
