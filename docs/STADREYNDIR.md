@@ -23,6 +23,17 @@ Speglað í báðum repo-um (slokkvitaeki + brunaholf) því gagnalíkanið er s
   Slökkvitæki: byrja í Brunahólfs-hubbnum**, ekki slokkvitaeki-appinu.
 - **slokkvitaeki.netlify.app er daglegi reksturs-appið** Slökkvitækja (Sala/POS,
   tæki, þjónusta, bílstjórar).
+- **Áhorfendur appanna (Agnar 2026-07-30):** brunaholf-hubburinn er **stjórn- og
+  greiningartól AGNARS** (control & analysis); slokkvitaeki-appið er **starfsmanna-/
+  vinnustaðaapp** (staff worksite app). Ný stjórn-/greiningarvirkni á heima
+  brunaholf-megin; starfsmanna-flæði slokkvitaeki-megin.
+- **⚠️ AÐSKILNAÐUR ÞJÓNUSTUKERFA (Agnar 2026-07-30): brunakerfis-þjónusta og
+  slökkvitækja-þjónusta hafa AÐSKILDA starfsmannahópa — skýrslur mega ALDREI leka
+  milli kerfanna.** Gagnahliðin er þegar aðskilin (`doc_type='brunakerfi'` vs
+  `'uttektarskyrsla'`; skýrslu-lesarar sía á uttektarskyrsla; multitool hefur SÉR
+  markmöppur fyrir brunakerfis-skýrslur/-reikninga) — reglan gildir líka um ALLA
+  framtíðar-UI: skýrslu-veljarar, Bílstjóri/vakt-sýnir og starfsmannaflæði mega
+  aðeins sýna skýrslur SÍNS kerfis.
 - Bæði öpp deila EINUM Supabase (`osfdzskyvisifcwyjkuk`).
 
 ## 1. Viðskiptavina-líkanið — hver tafla er hvað
