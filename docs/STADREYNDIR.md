@@ -140,6 +140,14 @@ og Hamraborg 7 ≠ Hamraborg ehf ruglingurinn).
   aðgerðinni, EKKI fullbúin skjalasöfn: skjöl bætast enn við (drive-sort,
   uttekt-upload, multitool, reikningar-read mata þær), svo talningar úr þeim eru
   augnabliksmynd, ekki heild.
+- **Virk skjala-söfnun (Agnar 2026-07-30):** þegar þjónustuskjal (úttektarskýrsla/
+  reikningur/samningur/brunakerfisskjal) FINNST hvar sem er — Drive, póstur,
+  tölvurnar, Stolpi — skal það VIRKT tekið upp og keyrt gegnum
+  **multitool-verklagið**: (1) endurnefnt í kanóníska nafnasniðið (skýrsla:
+  `Fyrirtæki - kt - Heimilisfang - Ár - Mánuður [ - #site]` · reikningur:
+  `Fyrirtæki - kt - R nr - dags - upphæð`), (2) FÆRT í réttu master-möppuna (sjá
+  að ofan — brunakerfi í SÍNA), (3) TENGT í `customer_documents` með sönnun
+  (linkMode `warn`, Tengireglan). Aldrei látið liggja þar sem það fannst.
 - EIN úttektarskýrsla per (staður, ár); reikningar dedup á R-númer.
 - `is_duplicate` er afturkræft flagg — skjali er ALDREI eytt.
 - **Tengireglan** (`_spine.js`): `fyrirtaeki_id` AÐEINS með sönnun (#id-stimpill í
