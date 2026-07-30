@@ -129,12 +129,17 @@ og Hamraborg 7 ≠ Hamraborg ehf ruglingurinn).
   úttektarskýrslur fyrirtækja í þjónustu → **`1VSRRw6O8U6lU8WzZxA8CkLtrAmiU07mg`**
   („Úttektarskýrslur") · reikningar → **`1FHHX99LRB_9w_LqwHIY57T4l9mLMID7p`**
   („Reikningar - Invoices") · **brunakerfis-úttektir →
-  `1OtsCTzM6FEQbaKBrQ7SqEU6xFKGBWICu`** (SÉR master — aðskilnaðarreglan í §0:
-  brunakerfis-skýrslur blandast ALDREI við slökkvitækja-skýrslurnar; þetta er
-  markmappan sem multitool „brunakerfisskýrslur"-reiturinn á að fá). Hluti af
-  endurheimtar-aðgerðinni, EKKI fullbúin skjalasöfn: skjöl bætast enn við
-  (drive-sort, uttekt-upload, multitool, reikningar-read mata þær), svo talningar
-  úr þeim eru augnabliksmynd, ekki heild.
+  `1OtsCTzM6FEQbaKBrQ7SqEU6xFKGBWICu`** · **brunakerfis-reikningar →
+  `1Qp5TogjHhszE_4hfMW5ebGKLDHk5iqEV`**. Brunakerfis-möppurnar tvær eru SÉR
+  masterar (aðskilnaðarreglan í §0: brunakerfis-skjöl blandast ALDREI við
+  slökkvitækja-skjölin) — þetta eru markmöppurnar sem multitool
+  „brunakerfisskýrslur"/„brunakerfis reikningar"-reitirnir eiga að fá.
+  **⚠️ Innihald brunakerfis-mappanna er EKKI enn fact-checkað (Agnar 2026-07-30)**
+  — safnað en óyfirfarið; ekki treysta flokkun/tengingum þar fyrr en yfirferð
+  hefur farið fram. Allar fjórar í virkri söfnun — hluti af endurheimtar-
+  aðgerðinni, EKKI fullbúin skjalasöfn: skjöl bætast enn við (drive-sort,
+  uttekt-upload, multitool, reikningar-read mata þær), svo talningar úr þeim eru
+  augnabliksmynd, ekki heild.
 - EIN úttektarskýrsla per (staður, ár); reikningar dedup á R-númer.
 - `is_duplicate` er afturkræft flagg — skjali er ALDREI eytt.
 - **Tengireglan** (`_spine.js`): `fyrirtaeki_id` AÐEINS með sönnun (#id-stimpill í
