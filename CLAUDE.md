@@ -118,6 +118,16 @@ to anon`) + endpoint **`/api/kerfi-kort`** (`kerfi-kort.js`: default=all ·
 in the Bakendi tools: 🔗 Skýrslu-stöð (doc→site), 🧩 Kt-samræming (kt/base on
 sites), 🧽 Hreinsi-borð (batch doc reconnect), 🧹 Drive-flokkun + 🗜️ Fletja (Drive).
 
+**🎯 Veiðin** (`veidin.html` at `brunaholf.netlify.app/veidin.html`, 2026-07-30) —
+live mælaborð endurheimtar-aðgerðarinnar. Hvert skotmark sýnir NÚNA-tölu (lifandi)
+gegn FASTRI veiði-grunnlínunni 2026-07-30 (STAÐREYNDIR §2) + delta: engin skýrsla
+25/26 · amber (skoðuð en engin skýrsla, m/félagalista) · rukkuð án skýrslu ·
+gleymd félög · samningar · netföng · fact-check · skjöl án árs. Endpoint
+**`/api/veidin`** (`veidin.js`, service role, BASELINE fasti þar — ekki uppfæra);
+les fjögur Postgres-sýni **`v_veidin_tolur` · `v_veidin_amber` ·
+`v_veidin_engin_skyrsla` · `v_veidin_rukkud_an_skyrslu`** (migration
+`veidin_views`, grant select to anon). Listarnir þrír eru útvíkkanlegir á síðunni.
+
 ## Tabs (current)
 
 Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:

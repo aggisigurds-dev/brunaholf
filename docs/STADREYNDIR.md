@@ -118,6 +118,38 @@ og Hamraborg 7 ≠ Hamraborg ehf ruglingurinn).
 
 ## 2. Skjöl viðskiptavina (`customer_documents`) *(DB 2026-07-30)*
 
+**📌 VEIÐI-GRUNNLÍNAN (tekin 2026-07-30, fyrir veiðina):** framvinda veiðinnar
+mælist gegn þessum tölum — sbr. `ar_checkpoints`-mynstrið. **Lifandi mælaborð:
+`brunaholf.netlify.app/veidin.html`** (nuna vs grunnlína vs delta + skotmarks-listar).
+
+| Ár | Úttektarskýrslur (staðir) | Reikningar (staðir) | Brunakerfi |
+|---|---|---|---|
+| 2026 | 294 (252 staðir · 42 tvítök) | 588 (336) | 18 |
+| 2025 | 415 (283 · 125 tvítök) | 325 (215) | 19 |
+| 2024 | 513 (360 · 152 tvítök) | 283 (206) | 24 |
+| 2023 | 493 (364 · 103 tvítök) | 81 (69) | 11 |
+
+Þekja 655 þjónustustaða: **243 með 2026-skýrslu (37%) · 274 með 2025-skýrslu (42%)
+· 250 staðir með HVORUGT ÁRIÐ (38%)** — það er aðal-skotmark veiðinnar. Auk þess
+336 skjöl ÁN ÁRS í trackernum (skyrslu-ar/felag-endurlestur laga).
+
+*2026-borun (leiðrétt við smíði Veiðinnar — fyrri „~80 rukkuð án skýrslu" taldi
+alla staði; rétt skilgreining er ÞJÓNUSTUstaðir):* **45 þjónustustaðir rukkaðir
+2026 án 2026-skýrslu.**  238 félög með 2026-skoðun á tækjum · 237 með 2026-skýrslu · 210 með
+bæði · **28 félög með skoðun EN ENGA skýrslu** (amber „tekið út — skjöl eftir" =
+auðveldustu veiði-vinningarnir) · 76 merkt „Tekið út" í Bílstjóra. Fact-check
+(`reviewed` í Skýrslu-stöð): **14 af 294 2026-skýrslum (5%)**, 57 alls. Skýrsla↔
+prófíl-tæki: 496/506 félög passa nákvæmlega (98% — NB tækin eru GENERUÐ úr
+skýrslunum svo þetta mælir innra samræmi; 10 frávik = skýrsla propagaðist ekki).
+
+*Skjala-heild per stað (öll ár):* öll þrjú skjölin (skýrsla+reikningur+samningur)
+**90 staðir (14%)** · með samning yfirhöfuð aðeins **144 (22%) — samningar eru
+veikasta hliðin**. *Tæki:* 593 staðir eiga report-facts (`total_devices`, 546
+hreinar þáttanir) — það ER tækjatalan; uttaeki-raðir eru ótengdar (589/593 núll)
+og skipta ekki máli skv. reglu. *Tengiliðir:* netfang á 457/655 stöðum (70%) og
+409/601 félögum — **~192 þjónustufélög ÁN netfangs** (skotmark tengiliða-veiðinnar);
+sími aðeins á 188 stöðum (29%).
+
 | doc_type | Fjöldi | Án base | Án staðar | Tvítök-flögguð |
 |---|---:|---:|---:|---:|
 | uttektarskyrsla | 1.726 | 51 | 13 | 423 |
@@ -229,7 +261,10 @@ og Hamraborg 7 ≠ Hamraborg ehf ruglingurinn).
   HANDSKRIFAÐRI nótu sem Agnar sendir (lesa hana og beina innihaldinu í réttan
   farveg: tengiliðir → prófíll · skjöl → multitool · verk → Verkefnalisti ·
   staðreyndir → þessi skrá · byggingar-uppl. → prófíll) skal um leið leitað að
-  (1) tengiliðaupplýsingum félaga og (2)
+  (1) tengiliðaupplýsingum félaga, (2) **NÝJUM tækifærum — skátun (Agnar
+  2026-07-30):** nýjar þjónustubeiðnir (Verkborð `nytt` + ósvaraður póstur),
+  tilboðs-beiðnir sem enginn svaraði, og óskráðar sölur (unnið verk án
+  solur-raðar, drög >7 daga) — og (3)
   **byggingar-upplýsingum staða**: hvar tækin eru (inni í herbergjum eða í
   SAMEIGN), skipulag hússins, og aðgangs-/hurðakóðar til að komast inn. Allt á
   að safnast og vera SÝNILEGT á prófíl félagsins (sbr. minnispunkta-mynstrið
