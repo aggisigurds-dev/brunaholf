@@ -109,6 +109,19 @@
   body.hide-images .card .imgs, body.hide-images .card .bk-link img{display:none}
   body.hide-tags .card .meta{display:none}
   body.title-only .card .body, body.title-only .card .ck-list, body.title-only .card .ck-progress, body.title-only .card .imgs, body.title-only .card .bk-link img, body.title-only .card .co-block, body.title-only .card .meta{display:none}
+  /* Quick-filter chip bar (always visible) — surfaces tags + colors +
+     type filters on mobile + desktop without diving into the sidebar. */
+  .qf-bar{margin:0 6px 10px;padding:8px 10px;background:#fff;border:1px solid var(--border);border-radius:10px;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+  .qf-bar .qf-lbl{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-right:2px}
+  .qf-bar .qf-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;font-size:12px;font-weight:600;border-radius:99px;background:#f1f4f7;color:#374151;border:1px solid #d8dee7;cursor:pointer;white-space:nowrap}
+  .qf-bar .qf-chip:hover{background:#e2e8f0}
+  .qf-bar .qf-chip.sel{background:#1f2933;color:#fff;border-color:#1f2933}
+  .qf-bar .qf-color{display:inline-block;width:18px;height:18px;border-radius:50%;border:1.5px solid rgba(0,0,0,.1);cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
+  .qf-bar .qf-color.sel{outline:2px solid #1f2933;outline-offset:1px}
+  .qf-bar .qf-sep{width:1px;height:18px;background:var(--border);margin:0 2px}
+  body.dark .qf-bar{background:#161c23;border-color:#1f2733}
+  body.dark .qf-bar .qf-chip{background:#1a2129;color:#cbd5e0;border-color:#2a3340}
+  body.dark .qf-bar .qf-chip.sel{background:#e6e8eb;color:#1f2933;border-color:#e6e8eb}
   /* Active filters bar */
   .af-bar{margin:0 6px 10px;padding:8px 10px;background:#fff;border:1px solid var(--border);border-radius:10px;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
   .af-bar .af-lbl{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-right:2px}
@@ -158,6 +171,10 @@
   .card .actions{position:absolute;top:6px;right:6px;display:flex;gap:2px;opacity:0;transition:opacity .12s;background:rgba(255,255,255,.92);border:1px solid var(--border);border-radius:7px;padding:2px;box-shadow:0 1px 4px rgba(0,0,0,.1)}
   .card:hover .actions{opacity:1}
   .card.pinned .actions{opacity:1}
+  /* Touch devices have no hover → always show actions so cards are
+     actionable on phones/tablets (the original opacity:0 → :hover trick
+     made them invisible on mobile). */
+  @media (hover: none){.card .actions{opacity:1}}
   .mini{width:26px;height:26px;border-radius:5px;border:0;background:transparent;cursor:pointer;font-size:12.5px;line-height:1;padding:0;color:var(--ink)}
   .mini:hover{background:#eef2f7}
   .pin-badge{position:absolute;top:6px;left:6px;font-size:11px;background:rgba(0,0,0,.06);padding:2px 6px;border-radius:6px;color:var(--muted);font-weight:700}
@@ -167,8 +184,9 @@
   .composer input.cmp{flex:1;border:0;font:600 14.5px/1.4 inherit;background:transparent;outline:none;color:var(--ink);padding:6px 0}
   .composer textarea{display:none;width:100%;border:0;background:transparent;font:inherit;resize:vertical;min-height:48px;outline:none;padding:6px 0}
   .composer.expanded textarea{display:block}
-  .composer .opts{display:none;align-items:center;gap:8px;justify-content:space-between;margin-top:8px;padding-top:6px;border-top:1px solid #f1f4f7;flex-wrap:wrap}
-  .composer.expanded .opts{display:flex}
+  /* Opts row (merki + image + type + save) is ALWAYS visible so users
+     don't have to discover the expand action just to add a tag. */
+  .composer .opts{display:flex;align-items:center;gap:8px;justify-content:space-between;margin-top:8px;padding-top:6px;border-top:1px solid #f1f4f7;flex-wrap:wrap}
   .composer .opts-left{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
   .composer .tag-in{flex:1;border:0;background:transparent;font:inherit;font-size:12.5px;color:var(--muted);outline:none;padding:4px 6px;min-width:120px}
   .composer .img-preview{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
@@ -275,7 +293,17 @@
 
 <!-- Saved views chip row (under the topbar) -->
 <div id="viewChipsBar" style="display:flex;gap:6px;align-items:center;padding:8px 14px 0;flex-wrap:wrap;background:var(--bg)">
-  <span style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-right:2px">Útlit:</span>
+  <!-- Front-page layout switcher (works on mobile where the topbar buttons get pushed off-screen) -->
+  <select id="layoutPick" title="Skipta um útlit" style="font-size:12.5px;font-weight:700;color:var(--ink);background:#fff;border:1.5px solid var(--border);padding:5px 9px;border-radius:99px;margin-right:6px;font-family:inherit;cursor:pointer;outline:none">
+    <option value="masonry">▦ Masonry</option>
+    <option value="grid">▣ Hnit</option>
+    <option value="list">☰ Listi</option>
+    <option value="table">📊 Tafla</option>
+    <option value="timeline">📅 Tímalína</option>
+    <option value="kanban-type">📋 Kanban — tegund</option>
+    <option value="kanban-color">🎨 Kanban — litur</option>
+  </select>
+  <span style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-right:2px">Sýnir:</span>
   <div id="viewChips" style="display:flex;gap:5px;flex-wrap:wrap"></div>
   <button class="btn" id="saveViewBtn" style="padding:5px 10px;font-size:11.5px" title="Vista núverandi sýn">+ Vista sýn</button>
   <span id="viewActive" style="font-size:11px;color:var(--muted);margin-left:6px"></span>
@@ -308,6 +336,10 @@
   </aside>
 
   <main class="main" id="mainArea">
+    <!-- Quick-filter bar: status + colors + known tags, always visible
+         so adding/clearing filters is one tap (mobile-friendly). -->
+    <div id="quickFilters" class="qf-bar"></div>
+
     <!-- Active filters bar (auto-shown when any filter is on) -->
     <div id="activeFilters" class="af-bar" style="display:none"></div>
 
@@ -451,6 +483,7 @@ const DEFAULT_STATE = {
     filter:{kind:'all', val:'all'}, q:'', dark:false, colorFilter:'', tagFilter:'', tagFilters:[], companyFilter:'',
     settings:{ layout:'masonry', cols:4, density:'', fontSize:'', defType:'note', defColor:'',
                titleOnly:false, hideImgs:false, hideTags:false },
+    knownTags:[],  // user-created tags that haven't been attached to any card yet
     sort:'created-desc',
     savedViews: [],   // [{id,name,layout,sort,filter,colorFilter,tagFilter,companyFilter,settings}]
     activeView: '',
@@ -471,6 +504,7 @@ function load(){
     // Migrate single tagFilter → tagFilters array (kept tagFilter as alias)
     if(!Array.isArray(s.ui.tagFilters)) s.ui.tagFilters = s.ui.tagFilter ? [s.ui.tagFilter] : [];
     if(!Array.isArray(s.ui.savedViews))  s.ui.savedViews = [];
+    if(!Array.isArray(s.ui.knownTags))   s.ui.knownTags  = [];
     return s;
   } catch(_) { return clone(DEFAULT_STATE); }
 }
@@ -511,6 +545,10 @@ function applySettings(){
   else                            main.classList.add('layout-masonry');
   // Highlight in segmented control
   document.querySelectorAll('#layoutSeg button').forEach(b => b.classList.toggle('sel', b.dataset.lay===(s.layout||'masonry')));
+  // Make the layout switcher more obvious — show the active layout name
+  // next to it so the user sees their click landed.
+  const $pick = document.getElementById('layoutPick');
+  if($pick) $pick.value = s.layout || 'masonry';
   // Sort selector
   const $ss = document.getElementById('sortSel'); if($ss) $ss.value = state.ui.sort || 'created-desc';
 }
@@ -559,9 +597,20 @@ let composerPinned = false, composerColor = '';
 
 function expandComposer(){ $cmp.classList.add('expanded'); }
 $cmpTitle.addEventListener('focus', expandComposer);
+// URL detector: accepts http(s)://… OR any "looks like a domain" string
+// (with dashes, dots, slashes, query strings). The previous regex (\w+\.\w{2,})
+// missed deploy-preview-NNN--brunaholf.netlify.app because it required \w
+// at the start (no dashes allowed before the first dot).
+function looksLikeUrl(s){
+  s = String(s||'').trim();
+  if(!s) return false;
+  if(/^https?:\/\//i.test(s)) return true;
+  // Must contain a dot, no spaces, at least one alphanumeric on each side
+  // of the (first) dot, and a TLD of 2+ alphanumeric chars somewhere.
+  return /^[a-z0-9][a-z0-9.\-_]*\.[a-z]{2,}(?:[\/?#][^\s]*)?$/i.test(s);
+}
 $cmpTitle.addEventListener('input', () => {
-  const v = $cmpTitle.value.trim();
-  if(/^https?:\/\//i.test(v) || /^\w+\.\w{2,}\/?/.test(v)) $cmpType.value = 'bookmark';
+  if(looksLikeUrl($cmpTitle.value)) $cmpType.value = 'bookmark';
 });
 document.getElementById('cmpExpand').onclick = expandComposer;
 document.getElementById('cmpPin').onclick = e => { composerPinned = !composerPinned; e.currentTarget.style.color = composerPinned ? '#d14528' : ''; };
@@ -612,14 +661,27 @@ document.getElementById('cmpSave').onclick = async () => {
     items: type==='checklist' ? body.split(/\n/).map(s=>s.trim()).filter(Boolean).map(t=>({text:t, done:false})) : [],
     created_at: nowStr(), updated_at: nowStr(),
   };
-  if(type==='bookmark'){
-    card.url = /^https?:\/\//i.test(title) ? title : (title.match(/^\w+\.\w/) ? 'https://'+title : '');
+  // Promote to bookmark if user typed a URL but didn't switch type.
+  // Auto-saves the hassle of changing the dropdown for a paste-and-go flow.
+  if(card.type === 'note' && looksLikeUrl(title)) card.type = 'bookmark';
+  if(card.type === 'bookmark'){
+    card.url = /^https?:\/\//i.test(title) ? title : (looksLikeUrl(title) ? 'https://'+title : '');
     if(card.url){
       try {
         const r = await fetch('/api/bookmark-preview?url='+encodeURIComponent(card.url));
         const d = await r.json();
         if(d && d.ok){ card.title = d.title || card.url; card.og_image = d.image || ''; card.favicon = d.favicon || d.google_favicon || ''; }
       } catch(_){}
+      // Auto-fallback: no og:image returned → render a real headless
+      // screenshot so the card always has an actual picture (user asked
+      // for AUTO preview, not a "click 📸 to get one" two-step).
+      if(!card.og_image){
+        try {
+          const r2 = await fetch('/api/bookmark-preview?screenshot=1&url='+encodeURIComponent(card.url));
+          const d2 = await r2.json();
+          if(d2 && d2.ok && d2.screenshot) card.og_image = d2.screenshot;
+        } catch(_){}
+      }
     }
   }
   state.cards.unshift(card);
@@ -737,9 +799,11 @@ function render(){
     save(); render();
   });
 
-  // Tag list (multi-select with ⋯ rename/delete menu, populates datalist)
+  // Tag list (multi-select with ⋯ rename/delete menu, populates datalist).
+  // Includes user-defined knownTags that haven't been attached to any card yet.
   const tagCounts = {};
   state.cards.filter(c=>!c.archived).forEach(c => (c.tags||[]).forEach(t => tagCounts[t]=(tagCounts[t]||0)+1));
+  (state.ui.knownTags || []).forEach(t => { if(!(t in tagCounts)) tagCounts[t] = 0; });
   const tags = Object.keys(tagCounts).sort();
   document.getElementById('tagsHd').style.display = tags.length ? '' : 'none';
   document.getElementById('tagListDL').innerHTML = tags.map(t => `<option value="${esc(t)}">`).join('');
@@ -767,20 +831,27 @@ function render(){
   $col.innerHTML = coIds.map(id => `<div class="row ${state.ui.companyFilter===id?'sel':''}" data-co="${esc(id)}"><span>🏢</span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(coMap[id].name)}</span><span class="ct">${coMap[id].n}</span></div>`).join('');
   $col.querySelectorAll('.row').forEach(r => r.onclick = () => { state.ui.companyFilter = (state.ui.companyFilter===r.dataset.co ? '' : r.dataset.co); save(); render(); });
 
-  // View chips + active filters
+  // View chips + active filters + quick filter chips
   renderViewChips();
   renderActiveFilters();
+  renderQuickFilters();
 
   // Cards — filter, then sort
   const visible = sortCards(state.cards.filter(passFilter));
-  const pinned = visible.filter(c=>c.pinned && state.ui.filter.kind!=='archived');
-  const others = visible.filter(c=>!(c.pinned && state.ui.filter.kind!=='archived'));
+  // Table / Tímalína / Kanban have their own structure that pinned cards
+  // would break if rendered as standalone cards on top — so in those
+  // layouts we MERGE pinned into the main list (pin badge still shows
+  // they're pinned) and skip the separate pinned section.
+  const lay = state.ui.settings.layout || 'masonry';
+  const mergedLayouts = lay==='table' || lay==='timeline' || lay.startsWith('kanban');
+  const pinned = mergedLayouts ? [] : visible.filter(c=>c.pinned && state.ui.filter.kind!=='archived');
+  const others = mergedLayouts ? visible.slice().sort((a,b) => (b.pinned?1:0) - (a.pinned?1:0))
+                               : visible.filter(c=>!(c.pinned && state.ui.filter.kind!=='archived'));
   document.getElementById('pinnedTitle').style.display = pinned.length ? '' : 'none';
   document.getElementById('othersTitle').style.display = (pinned.length && others.length) ? '' : 'none';
   document.getElementById('pinnedGrid').innerHTML = pinned.map(cardHtml).join('');
 
   const $host = document.getElementById('gridHost');
-  const lay = state.ui.settings.layout || 'masonry';
   if(lay==='kanban-type' || lay==='kanban-color'){
     const groups = groupCards(others, lay==='kanban-type' ? 'type' : 'color');
     $host.innerHTML = '<div class="grid">' + groups.map(([key,label,arr]) =>
@@ -1072,6 +1143,88 @@ function fileToDownscaled(file, maxSide, quality){
   });
 }
 
+// ───── Quick filter chip bar (always visible) ─────
+// Lists 3 status chips + every color in use + every tag in use as
+// togglable chips. One-tap filter add/remove — no need to find the
+// sidebar (which is collapsed on mobile by default).
+function renderQuickFilters(){
+  const $b = document.getElementById('quickFilters');
+  const cards = state.cards.filter(c => !c.archived);
+  // Status chips (always show)
+  const statusChips = [
+    {k:'flt-pin',   lbl:'📌 Pinnað',   on: state.ui.filter.kind==='pinned'},
+    {k:'flt-bk',    lbl:'🔖 Bókmerki', on: state.ui.filter.kind==='type' && state.ui.filter.val==='bookmark'},
+    {k:'flt-note',  lbl:'📝 Glósur',   on: state.ui.filter.kind==='type' && state.ui.filter.val==='note'},
+    {k:'flt-list',  lbl:'☑️ Listar',   on: state.ui.filter.kind==='type' && state.ui.filter.val==='checklist'},
+    {k:'flt-co',    lbl:'🏢 Fyrirtæki', on: state.ui.filter.kind==='type' && state.ui.filter.val==='company'},
+  ];
+  // Colors actually in use
+  const colorsUsed = [...new Set(cards.map(c => c.color || ''))].filter(c => c !== '');
+  // Tags: every tag in use on a card, PLUS user-defined "ghost" tags
+  // (knownTags) that haven't been attached to anything yet — so you can
+  // build out your tag taxonomy without first creating a card to host them.
+  const tagCounts = {};
+  cards.forEach(c => (c.tags||[]).forEach(t => tagCounts[t] = (tagCounts[t]||0) + 1));
+  (state.ui.knownTags || []).forEach(t => { if(!(t in tagCounts)) tagCounts[t] = 0; });
+  const tags = Object.keys(tagCounts).sort();
+  const tf = state.ui.tagFilters || [];
+
+  let html = '<span class="qf-lbl">Sía:</span>';
+  html += statusChips.map(c => `<span class="qf-chip ${c.on?'sel':''}" data-flt="${c.k}">${esc(c.lbl)}</span>`).join('');
+  if(colorsUsed.length){
+    html += '<span class="qf-sep"></span>';
+    html += colorsUsed.map(c => `<span class="qf-color ${state.ui.colorFilter===c?'sel':''}" data-col="${esc(c)}" style="background:${colorHex(c)}" title="${esc(colorName(c))}"></span>`).join('');
+  }
+  html += '<span class="qf-sep"></span>';
+  if(tags.length){
+    html += tags.map(t => `<span class="qf-chip ${tf.includes(t)?'sel':''}" data-tag="${esc(t)}">#${esc(t)}${tagCounts[t]?` <small style="opacity:.7;font-weight:400">${tagCounts[t]}</small>`:''}</span>`).join('');
+  }
+  // Always-visible "+ Nýtt merki" so users can create a tag without first
+  // having to make a card to attach it to.
+  html += `<button class="qf-chip" id="qfAddTag" style="background:#fff;border-color:var(--accent);color:var(--accent);cursor:pointer">+ Nýtt merki</button>`;
+  $b.innerHTML = html;
+
+  $b.querySelectorAll('.qf-chip[data-flt]').forEach(ch => ch.onclick = () => {
+    const k = ch.dataset.flt;
+    // Toggle off if already selected, else set.
+    if(k==='flt-pin'){
+      state.ui.filter = state.ui.filter.kind==='pinned' ? {kind:'all',val:'all'} : {kind:'pinned',val:'1'};
+    } else {
+      const type = {'flt-bk':'bookmark','flt-note':'note','flt-list':'checklist','flt-co':'company'}[k];
+      const same = state.ui.filter.kind==='type' && state.ui.filter.val===type;
+      state.ui.filter = same ? {kind:'all',val:'all'} : {kind:'type',val:type};
+    }
+    state.ui.activeView = '';
+    save(); render();
+  });
+  $b.querySelectorAll('.qf-color').forEach(s => s.onclick = () => {
+    state.ui.colorFilter = state.ui.colorFilter===s.dataset.col ? '' : s.dataset.col;
+    state.ui.activeView = '';
+    save(); render();
+  });
+  $b.querySelectorAll('.qf-chip[data-tag]').forEach(c => c.onclick = () => {
+    const t = c.dataset.tag;
+    const arr = state.ui.tagFilters = state.ui.tagFilters || [];
+    const i = arr.indexOf(t);
+    if(i >= 0) arr.splice(i,1); else arr.push(t);
+    state.ui.tagFilter = arr[0] || '';
+    state.ui.activeView = '';
+    save(); render();
+  });
+  // + Nýtt merki: prompt for a tag name, add to knownTags, immediately
+  // surface as a chip in the filter bar AND in the datalist autocomplete.
+  const $addBtn = document.getElementById('qfAddTag');
+  if($addBtn) $addBtn.onclick = () => {
+    const v = prompt('Heiti á nýju merki:\n(birtist strax sem sía + í völstu lista í spjaldi-formi)');
+    if(!v) return;
+    const name = String(v).trim().replace(/^#/,'');
+    if(!name) return;
+    state.ui.knownTags = state.ui.knownTags || [];
+    if(!state.ui.knownTags.includes(name) && !tags.includes(name)) state.ui.knownTags.push(name);
+    save(); render();
+  };
+}
+
 // ───── Active filters bar ─────
 // One pill per active filter (search, status, type, color, tag(s), company).
 // Click × to clear that single dimension; "Hreinsa allt" wipes everything.
@@ -1227,6 +1380,13 @@ document.getElementById('menuBtn').onclick = () => document.getElementById('layo
 document.getElementById('darkBtn').onclick = () => { state.ui.dark = !state.ui.dark; save(); render(); };
 document.getElementById('search').oninput = e => { state.ui.q = e.target.value; save(); render(); };
 document.querySelectorAll('#layoutSeg button').forEach(b => b.onclick = () => { state.ui.settings.layout = b.dataset.lay; save(); render(); });
+// Front-page layout dropdown — easy to find on mobile where the topbar
+// segmented buttons can scroll off-screen.
+document.getElementById('layoutPick').onchange = e => {
+  state.ui.settings.layout = e.target.value;
+  state.ui.activeView = '';
+  save(); render();
+};
 
 // ───── Settings drawer ─────
 const $drw = document.getElementById('drawer'), $drwBg = document.getElementById('drawerBg');
