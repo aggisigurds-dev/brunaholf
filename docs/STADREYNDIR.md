@@ -223,8 +223,13 @@ og Hamraborg 7 ≠ Hamraborg ehf ruglingurinn).
   prófíl félagsins um leið (`fyrirtaeki`/`customers_base`: sími/netfang/tengiliður)
   — ekki láta fljóta hjá. NB `fyrirtaeki` ber tvítekna dálkinn
   `tengiliður`/`tengilidur` (sjá Bakendi-skema) — skrifa í þann sem röðin notar.
-- **VIRK VEIÐI — hunt, ekki bara grípa (Agnar 2026-07-30):** ekki aðeins skrá það
-  sem sést, heldur LEITA virkt að (1) tengiliðaupplýsingum félaga og (2)
+- **VIRK VEIÐI — hunt, ekki bara grípa (Agnar 2026-07-30):** veiðin er HAMUR, ekki
+  verkefni — hún keyrir SAMHLIÐA annarri vinnu, alltaf. Í hvert sinn sem session
+  snertir póst (`email_digest`), nótur á Verkborði (`thjonustubeidni`), eða mynd af
+  HANDSKRIFAÐRI nótu sem Agnar sendir (lesa hana og beina innihaldinu í réttan
+  farveg: tengiliðir → prófíll · skjöl → multitool · verk → Verkefnalisti ·
+  staðreyndir → þessi skrá · byggingar-uppl. → prófíll) skal um leið leitað að
+  (1) tengiliðaupplýsingum félaga og (2)
   **byggingar-upplýsingum staða**: hvar tækin eru (inni í herbergjum eða í
   SAMEIGN), skipulag hússins, og aðgangs-/hurðakóðar til að komast inn. Allt á
   að safnast og vera SÝNILEGT á prófíl félagsins (sbr. minnispunkta-mynstrið
