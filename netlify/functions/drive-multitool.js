@@ -805,6 +805,14 @@ async function applyFile(token, body) {
     customer_name: base_nafn || null,
     notes: 'drive-multitool' + (invoice_number ? (' · ' + invoice_number) : '') + (year ? (' · ' + year) : '') + (base_id ? '' : ' · RESOLVE'),
   };
+  // „Aldrei núllað"-vörnin (2026-07-30): merge-duplicates SKRIFAR hvern dálk sem
+  // er í body-inu — apply án base_id/base_nafn/year núllaði því fyrirliggjandi
+  // customer_base_id/customer_name/year á tengdri röð (gerðist live á doc 1497).
+  // Óþekkt gildi (null) eru því FELLD ÚR upsert-inu svo fyrirliggjandi tenging
+  // stendur; undantekning: samningur á VILJANDI year=null (CHECK-reglan).
+  if (docRow.customer_base_id == null) delete docRow.customer_base_id;
+  if (docRow.customer_name == null) delete docRow.customer_name;
+  if (docRow.year == null && doc_type !== 'samningur') delete docRow.year;
   if (site && await siteWriteAllowed(id, site)) docRow.fyrirtaeki_id = site.id;
 
   let linked = false, linkAction = '', conflict = false, doc_id = null;
