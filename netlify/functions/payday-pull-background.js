@@ -47,7 +47,12 @@ const BATCH = 200;
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors(), body: '' };
-  if (event.httpMethod !== 'GET') return json(405, { error: 'GET only' });
+  // POST er LEYFT af því að þetta er nú ÁÆTLAÐA (scheduled) útgáfan — Netlify
+  // ræsir áætlaðar föllur með POST. Áður stóð hér `!== 'GET'`, svo hefði
+  // áætlunin verið sett á þetta fall hefði hún fengið 405 og aldrei keyrt.
+  if (event.httpMethod !== 'GET' && event.httpMethod !== 'POST') {
+    return json(405, { error: 'GET/POST only' });
+  }
 
   if (!CLIENT_ID || !CLIENT_SECRET) {
     return json(500, { error: 'PAYDAY_CLIENT_ID / PAYDAY_CLIENT_SECRET vantar í Netlify env vars.' });
