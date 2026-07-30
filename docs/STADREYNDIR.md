@@ -27,6 +27,14 @@ eiga þjónustuskjöl en ENGINN staður þeirra er í þjónustu** (líklega tý
 → `thjonusta-gloppur.html`) · skýrslu-þekja staða í þjónustu: 366 ok · 180 gömul ·
 62 ENGIN skýrsla · 47 ólesanleg (→ Skýrslu-vakt/Skýrslu-stöð).
 
+**Stolpi — gamla kerfið, ókannaður endurheimtarbrunnur (Agnar 2026-07-30):**
+gamla forritið félagsins heitir **Stolpi** — old-school, erfitt í notkun, **lifir á
+afgreiðslutölvu Slökkvitækja** og gæti geymt MEIRI upplýsingar (kúnnar, reikninga-
+sögu) sem ekki hafa verið endurheimtar. Þekkt spor í gögnunum: `Stolpi_Invoice_
+10xxxx.pdf` / `…bokhald-Nóta.pdf` skrár í Drive (multitool greinir þær sem OKKAR
+reikninga) og „týndu Stólpa-reikningarnir feb–mars 2026" (fundnir gegnum
+bokhald@eldklar.is SENT). Könnun á Stolpi-gögnunum sjálfum er skráð á Verkefnalistann.
+
 
 - **Brunahólf ehf Á Slökkvitæki ehf** (kt 600508-0400) — móður-/eigendafélag
   (Agnar 2026-07-30). Eldri skjölun sagði „sister business" — eignarhald er rétta
