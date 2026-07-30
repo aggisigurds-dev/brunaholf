@@ -156,6 +156,10 @@ og Hamraborg 7 ≠ Hamraborg ehf ruglingurinn).
   mörgum nöfnum (Fjarðagata = Fjörður/Fjörðurinn/Strandgata/Fjarðargata). Bæta við
   alias þegar nýtt afbrigði sést, ekki harðkóða.
 - Innri tímar (Slökkvitæki ehf í Tímaveru) eru EKKI rukkaðir (NON_BILLABLE).
+- **Ókláruð kóðavinna → Verkefnalisti (Agnar 2026-07-30):** vinna sem skilin er
+  eftir hálfnuð/óhafin skal SKRÁÐ á Verkefnalistann (`verkefnalisti.html` +
+  `POST /api/verkefnalisti {action:'add', title, description}`) svo hún gufi ekki
+  upp með session-inu. Gildir um Claude-sessions jafnt sem menn.
 - **Tengiliðaupplýsingar — virk söfnun (Agnar 2026-07-30):** þegar sími, netfang
   eða tengiliður sést HVAR SEM ER (póstur, PDF, skýrsla, samtal) skal skrá það á
   prófíl félagsins um leið (`fyrirtaeki`/`customers_base`: sími/netfang/tengiliður)
