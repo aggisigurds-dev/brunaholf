@@ -229,6 +229,22 @@ sími aðeins á 188 stöðum (29%).
   gildir NÝJASTA skilaboðið í þræðinum — EKKI gömul stjörnumerkt skilaboð í miðjum
   þræði (sbr. `threadLatest`-lógík Verkborðs; SENT-raðir teljast með í svarað-mati).
 
+## 4b. Kúnna-þjónustuborð — stefnan (Agnar 2026-07-30)
+
+Samskipta-summurnar eru FYRSTU pústarnir í stærra **multi-funct kúnna-þjónustuborði**
+sem tengist tölvupósti beint. Stefnan (byggt stig af stigi):
+- **Summa per kúnna/félag** — lítil, ALLTAF sýnileg (staða · tengiliðir · nýjast · opin mál),
+  útvíkkanleg í fulla póstsögu + aðgerðir. Geymt í `app_settings.rekstrarfelag_notes[merki]`
+  (rekstrarfélög) — sömu leið má nota per `fyrirtaeki_id` fyrir staka kúnna.
+- **Póst-tengingin** er þegar til: sýnin `rekstrarfelag_samskipti` (merki→póstar gegnum
+  base+staða-netföng+lén) og `fyrirtaeki_samskipti` (per stað). Patch 286 birtir hráa listann;
+  næsta skref er að birta CURATED summuna ofan á honum.
+- **Framtíð = eitt þjónustuborð** sem sameinar: summu, póstsögu, svör beint (240 `replyTo`
+  Resend-uppkast), NÝTT/flögg (281), beiðnir (Verkborð `thjonustubeidni`), tilboð/samninga.
+  Þ.e. hvert kúnna-spjald verður full CRM-eining með lifandi póst-tengingu — ekki bara lesin saga.
+- Hlið-varúð: NÝ sameiginleg þjónustuborðs-tafla (ef byggð) á að virða aðskilnað brunakerfis/
+  slökkvitækja (§0) og lifa Brunahólf-megin ef hún er stjórn-/greiningartól.
+
 ## 5. Fastar vinnureglur (brotnar oftast — þess vegna hér)
 
 - **ALLTAF LEYFA VISTUN** — enginn Vista-hnappur má blokka á validation/undirskrift.
