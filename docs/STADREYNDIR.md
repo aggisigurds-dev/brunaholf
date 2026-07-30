@@ -261,7 +261,10 @@ sími aðeins á 188 stöðum (29%).
   HANDSKRIFAÐRI nótu sem Agnar sendir (lesa hana og beina innihaldinu í réttan
   farveg: tengiliðir → prófíll · skjöl → multitool · verk → Verkefnalisti ·
   staðreyndir → þessi skrá · byggingar-uppl. → prófíll) skal um leið leitað að
-  (1) tengiliðaupplýsingum félaga og (2)
+  (1) tengiliðaupplýsingum félaga, (2) **NÝJUM tækifærum — skátun (Agnar
+  2026-07-30):** nýjar þjónustubeiðnir (Verkborð `nytt` + ósvaraður póstur),
+  tilboðs-beiðnir sem enginn svaraði, og óskráðar sölur (unnið verk án
+  solur-raðar, drög >7 daga) — og (3)
   **byggingar-upplýsingum staða**: hvar tækin eru (inni í herbergjum eða í
   SAMEIGN), skipulag hússins, og aðgangs-/hurðakóðar til að komast inn. Allt á
   að safnast og vera SÝNILEGT á prófíl félagsins (sbr. minnispunkta-mynstrið
