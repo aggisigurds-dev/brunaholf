@@ -3,6 +3,9 @@
 This file is read on every session. Read it first before exploring code.
 For customer/data questions, **`docs/STADREYNDIR.md`** is the verified fact
 ledger (sannreyndar grunnstaðreyndir) — it overrides stale numbers here.
+**Í upphafi vinnu-session:** líta á opin verk á Verkefnalistanum —
+`GET /api/verkefnalisti` (beidni/i_vinnu) — áður en nýtt verk er hafið
+(Agnar 2026-07-30).
 It tells you what this app is, how it's wired, where the data lives, and
 what we're building next so you don't restart from scratch.
 

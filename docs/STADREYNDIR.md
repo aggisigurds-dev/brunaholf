@@ -160,6 +160,10 @@ og Hamraborg 7 ≠ Hamraborg ehf ruglingurinn).
   eftir hálfnuð/óhafin skal SKRÁÐ á Verkefnalistann (`verkefnalisti.html` +
   `POST /api/verkefnalisti {action:'add', title, description}`) svo hún gufi ekki
   upp með session-inu. Gildir um Claude-sessions jafnt sem menn.
+- **Verkefnalisti skoðaður í UPPHAFI samtals (Agnar 2026-07-30):** spegilreglan —
+  við upphaf vinnu-session skal líta á opin verk
+  (`GET https://brunaholf.netlify.app/api/verkefnalisti`, staðir beidni/i_vinnu)
+  áður en nýtt verk er hafið; hálfnuð verk og feedback frá Agnari ganga fyrir.
 - **Tengiliðaupplýsingar — virk söfnun (Agnar 2026-07-30):** þegar sími, netfang
   eða tengiliður sést HVAR SEM ER (póstur, PDF, skýrsla, samtal) skal skrá það á
   prófíl félagsins um leið (`fyrirtaeki`/`customers_base`: sími/netfang/tengiliður)
