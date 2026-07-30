@@ -132,6 +132,13 @@ mælist gegn þessum tölum — sbr. `ar_checkpoints`-mynstrið.
 · 250 staðir með HVORUGT ÁRIÐ (38%)** — það er aðal-skotmark veiðinnar. Auk þess
 336 skjöl ÁN ÁRS í trackernum (skyrslu-ar/felag-endurlestur laga).
 
+*2026-borun:* 238 félög með 2026-skoðun á tækjum · 237 með 2026-skýrslu · 210 með
+bæði · **28 félög með skoðun EN ENGA skýrslu** (amber „tekið út — skjöl eftir" =
+auðveldustu veiði-vinningarnir) · 76 merkt „Tekið út" í Bílstjóra. Fact-check
+(`reviewed` í Skýrslu-stöð): **14 af 294 2026-skýrslum (5%)**, 57 alls. Skýrsla↔
+prófíl-tæki: 496/506 félög passa nákvæmlega (98% — NB tækin eru GENERUÐ úr
+skýrslunum svo þetta mælir innra samræmi; 10 frávik = skýrsla propagaðist ekki).
+
 *Skjala-heild per stað (öll ár):* öll þrjú skjölin (skýrsla+reikningur+samningur)
 **90 staðir (14%)** · með samning yfirhöfuð aðeins **144 (22%) — samningar eru
 veikasta hliðin**. *Tæki:* 593 staðir eiga report-facts (`total_devices`, 546
