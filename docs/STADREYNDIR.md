@@ -125,12 +125,12 @@ og Hamraborg 7 ≠ Hamraborg ehf ruglingurinn).
 | samningur | 336 | 83 | 81 | 48 |
 | brunakerfi | 75 | 3 | 1 | 7 |
 
-- **Kanónískar Drive-möppur:** úttektarskýrslur fyrirtækja í þjónustu →
-  **`1VSRRw6O8U6lU8WzZxA8CkLtrAmiU07mg`** („Úttektarskýrslur") · reikningar →
-  `1FHHX99LRB_9w_LqwHIY57T4l9mLMID7p` („Reikningar - Invoices"). **Skýrslu-mappan
-  er Í VIRKRI SÖFNUN (Agnar 2026-07-30)** — hluti af endurheimtar-aðgerðinni,
-  EKKI fullbúið skjalasafn: skýrslur bætast enn við (drive-sort, uttekt-upload,
-  multitool mata hana), svo talningar úr henni eru augnabliksmynd, ekki heild.
+- **Kanónískar Drive-möppur — BÁÐAR Í VIRKRI SÖFNUN (Agnar 2026-07-30):**
+  úttektarskýrslur fyrirtækja í þjónustu → **`1VSRRw6O8U6lU8WzZxA8CkLtrAmiU07mg`**
+  („Úttektarskýrslur") · reikningar → **`1FHHX99LRB_9w_LqwHIY57T4l9mLMID7p`**
+  („Reikningar - Invoices"). Hluti af endurheimtar-aðgerðinni, EKKI fullbúin
+  skjalasöfn: skjöl bætast enn við (drive-sort, uttekt-upload, multitool,
+  reikningar-read mata þær), svo talningar úr þeim eru augnabliksmynd, ekki heild.
 - EIN úttektarskýrsla per (staður, ár); reikningar dedup á R-númer.
 - `is_duplicate` er afturkræft flagg — skjali er ALDREI eytt.
 - **Tengireglan** (`_spine.js`): `fyrirtaeki_id` AÐEINS með sönnun (#id-stimpill í
