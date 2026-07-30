@@ -132,6 +132,14 @@ mælist gegn þessum tölum — sbr. `ar_checkpoints`-mynstrið.
 · 250 staðir með HVORUGT ÁRIÐ (38%)** — það er aðal-skotmark veiðinnar. Auk þess
 336 skjöl ÁN ÁRS í trackernum (skyrslu-ar/felag-endurlestur laga).
 
+*Skjala-heild per stað (öll ár):* öll þrjú skjölin (skýrsla+reikningur+samningur)
+**90 staðir (14%)** · með samning yfirhöfuð aðeins **144 (22%) — samningar eru
+veikasta hliðin**. *Tæki:* 593 staðir eiga report-facts (`total_devices`, 546
+hreinar þáttanir) — það ER tækjatalan; uttaeki-raðir eru ótengdar (589/593 núll)
+og skipta ekki máli skv. reglu. *Tengiliðir:* netfang á 457/655 stöðum (70%) og
+409/601 félögum — **~192 þjónustufélög ÁN netfangs** (skotmark tengiliða-veiðinnar);
+sími aðeins á 188 stöðum (29%).
+
 | doc_type | Fjöldi | Án base | Án staðar | Tvítök-flögguð |
 |---|---:|---:|---:|---:|
 | uttektarskyrsla | 1.726 | 51 | 13 | 423 |
