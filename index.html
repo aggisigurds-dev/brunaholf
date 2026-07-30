@@ -14295,7 +14295,9 @@ async function renderDagurinn(t){
         // Heiðarlegur úrskurður — alltaf byggt á age_days/status úr gagnagrunni.
         let verdict;
         if(s.key === 'email' && age != null && age >= 2){
-          verdict = '🔴 Tölvupóstur hefur ekki samstillst í '+age+' daga — líklega er bridge-tölvan (Windows) ekki í gangi.';
+          // 2026-07-30: Google-hólfin sækjast núna beint úr skýi (gmail-ingest)
+          // — bridge-tölvan á aðeins við um Office365-hólfin (@brunaholf.is).
+          verdict = '🔴 Tölvupóstur hefur ekki samstillst í '+age+' daga — sæktu í Bakendi „☁️ Gmail úr skýi"; @brunaholf.is hólfin þurfa bridge-tölvuna.';
         } else if(st === 'fresh'){
           verdict = '✓ Í lagi';
         } else if(st === 'aging'){
@@ -14343,7 +14345,7 @@ async function renderDagurinn(t){
           if(st==='fresh')           line = 'Tengt ✓ — nýjast '+esc(relTime(a.newest));
           else if(st==='aging')      line = esc(relTime(a.newest));
           else if(st==='stale')      line = '🔴 Ekki samstillt í '+esc(a.age_days)+' daga';
-          else                       line = '🔴 Ekki tengt — bæta við í Thunderbird';
+          else                       line = '🔴 Ekki tengt — tengja í Bakendi „☁️ Gmail úr skýi" (Google) eða Thunderbird (Office365)';
           return `<div class="dg-mbox${bad?' bad':''}">
             <span class="dg-dot ${dotCls}" title="${esc(st)}"></span>
             <span class="dg-mbox-acct">${esc(a.account)}</span>
@@ -14368,11 +14370,17 @@ async function renderDagurinn(t){
       // Uppfærslu-ábendingar úr ferskleika
       sources.filter(s=>s.status==='aging' || s.status==='stale').forEach(s=>{
         const when = s.newest_real ? relTime(s.newest_real) : (s.last_import ? relTime(s.last_import) : 'óþekkt');
+        // 2026-07-30: vísanir uppfærðar á LIFANDI leiðirnar (sync-úttekt).
+        // Gamla sjálfgefna vísunin benti á Drive-xlsx leiðina sem er RETIRED
+        // fyrir Tímaveru, póstur benti á bridge-tölvuna þótt Gmail-ský sé til,
+        // og Redder benti á ranga síðu.
         let hint = '→ Bakendi „🔄 Gagna-uppfærslur úr Drive"';
-        if(s.key === 'ajour') hint = '→ Landsspítalinn „🔄 Uppfæra gögn úr Drive"';
-        else if(s.key === 'email') hint = '→ kveiktu á bridge-tölvunni (Windows)';
-        else if(s.key === 'bank') hint = '→ flyttu inn Landsbankinn xlsx';
-        else if(s.key === 'redder') hint = '→ Bakendi / Drive efnisreikninga';
+        if(s.key === 'timavera') hint = '→ Bakendi „🕒 Tímavera API" eða Mæting „🔄 Samstilla"';
+        else if(s.key === 'invoices') hint = '→ Kröfu yfirlit „🔄 Uppfæra Payday stöðu"';
+        else if(s.key === 'ajour') hint = '→ Landsspítalinn „🔄 Uppfæra gögn úr Drive" (athuga líka hvort nýr CSV-export sé til)';
+        else if(s.key === 'email') hint = '→ Bakendi „☁️ Gmail úr skýi" — „⬇️ Sækja núna"';
+        else if(s.key === 'bank') hint = '→ Bakendi „🏦 Landsbanki" — keyra 👁 Prufa FYRST og staðfesta rétta skrá';
+        else if(s.key === 'redder') hint = '→ Efniskostnaður „🔍 Lesa Redder úr Drive"';
         recs.push(`Uppfæra <b>${esc(s.label||s.key)}</b> (nýjustu gögn ${esc(when)}) <span class="dg-li-sub">${esc(hint)}</span>`);
       });
       // Verkstaðir án reiknings (sama endapunktur og Yfirlit notar)
@@ -17428,11 +17436,31 @@ function renderYfirlit(t){
   // ----- async: pull mæting -----
   const maetingTab = state.tabs.find(x=>x.id==='maeting');
   if(maetingTab && maetingTab.sheetCsv){
-    // 2026-05-20: call our own /api/maeting endpoint instead of the raw Sheet.
-    // The function does the CSV parsing + staleness math + (eventually)
-    // hits the Timavera API directly. Frontend just consumes JSON.
-    fetch('/api/maeting',{cache:'no-store'})
-      .then(r=>r.json()).then(data=>{
+    // 2026-07-30: /api/maeting var kallað hér en FALLAN ER EKKI TIL í repo-inu
+    // — svarið var alltaf 403 og bandið gat aðeins prentað „Tókst ekki að sækja
+    // mætingu." Nú les það /api/timavera-dagar (sama og Mæting·verkstaðir flipinn
+    // og Fjármál-appið nota), sem stendur á timavera_entries — fyllt af Tímavera
+    // API beintengingunni. Sniðið er varpað yfir í gamla records-formið svo
+    // teikningin fyrir neðan haldist óbreytt.
+    fetch('/api/timavera-dagar?days=3',{cache:'no-store'})
+      .then(r=>r.json()).then(raw=>{
+        const day = (raw && Array.isArray(raw.days) && raw.days[0]) || null;
+        const today = new Date().toISOString().slice(0,10);
+        const ageDaysReal = day ? Math.max(0, Math.round((Date.parse(today)-Date.parse(day.date))/864e5)) : null;
+        const data = day ? {
+          records: (day.staff||[]).map(e=>({
+            name: e.employee,
+            project: (e.projects&&e.projects[0]&&e.projects[0].project)||'',
+            // hours VERÐUR að vera strengur — escapeHtml síðunnar gerir
+            // (s||"").replace(…) og kastar á tölu (rótin að því að bandið féll
+            // í catch þótt sóknin skilaði 200: TypeError í Array.map).
+            inn: e.in||'', ut: e.out||'', hours: e.hours != null ? String(e.hours) : '',
+            status: (e.in && !e.out && day.date===today) ? 'mætt' : 'hætt'
+          })),
+          last_scrape: raw.last_import || null,
+          age_hours: ageDaysReal!=null ? ageDaysReal*24 : null,
+          stale: ageDaysReal!=null && ageDaysReal >= 2
+        } : null;
         if(!data || !data.records || data.records.length===0){
           document.getElementById('yf-maeting-list').innerHTML = '<div class="empty">Engar færslur enn í dag.</div>';
           document.getElementById('yf-maett').textContent = '0';
@@ -17474,8 +17502,7 @@ function renderYfirlit(t){
         const sectionLabel = mætt.length ? 'Núna í vinnu' : 'Hættu í dag';
         const staleBanner = stale
           ? `<div style="background:#FFF5E6;border:1px solid #FFB74D;color:#7A3E10;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12.5px;font-weight:500">
-              ⚠ Gögnin eru ${Math.floor(ageHours/24)} daga gömul — Tímavera scraper er ekki að uppfæra.
-              <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vRXUTGE4Ui3eadS0kGX0d-5LvFbyt5SNWD6ToeRRn1MJ6zoiGng7RK5ZJOVEq6s_x8wkiNLpgU8nHJk/pub?output=csv" target="_blank" style="color:#7A3E10;text-decoration:underline">Skoða CSV</a>
+              ⚠ Gögnin eru ${Math.floor(ageHours/24)} daga gömul — samstilltu í Bakendi „🕒 Tímavera API" eða á Mæting-flipanum („🔄 Samstilla").
             </div>` : '';
         document.getElementById('yf-maeting-list').innerHTML = staleBanner + `
           <div class="helprow" style="margin-bottom:8px">${sectionLabel} — ${show.length} ${mætt.length?'mætt':'færslur'} ${lastScrape?'· síðast '+lastScrape.toLocaleDateString('is-IS'):''}</div>
@@ -17491,7 +17518,7 @@ function renderYfirlit(t){
             `).join('')}
           </div>`;
       }).catch(()=>{
-        document.getElementById('yf-maeting-list').innerHTML = '<div class="empty">Tókst ekki að sækja mætingu.</div>';
+        document.getElementById('yf-maeting-list').innerHTML = '<div class="empty">Tókst ekki að sækja mætingu — sjá Mæting·verkstaðir flipann.</div>';
         document.getElementById('yf-maett').textContent = '—';
       });
   } else {
