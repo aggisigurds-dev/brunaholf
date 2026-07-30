@@ -45,7 +45,15 @@ gilda. Sama gildir um „95+ companies" í gömlu schema-lýsingunni (nú 1.214)
 
 **`uttaeki` (tæki): 5.843, þar af 5.648 án staðar** *(DB 2026-07-30)* — þau eru
 **auto-generuð placeholder og „án staðar" er EKKI vandamál** (Agnar 2026-07-12).
-Ekki flagga sem heilsubrest, má eyða/endurgera.
+Ekki flagga sem heilsubrest, má eyða/endurgera. **Ótengd tæki eru ALDREI verkefni
+(Agnar 2026-07-30)** — sannleikurinn um tækjafjölda staðar er **NÝJASTA
+úttektarskýrslan** (`arsskodun_report_facts`, PK per stað, aldrei yfirskrifað með
+eldri skýrslu); uttaeki-raðir mega fylgja henni með eyðslu/endurgerð að vild.
+
+**Skráningarregla bygginga (Agnar 2026-07-30):** hver bygging/staður skal skráð á
+sitt rekstrarfélag — og við tengingu skal sannreyna **BÆÐI staðsetningu
+(heimilisfang) OG kennitölu**; nafn eitt og sér er ekki sönnun (sbr. Tengireglan,
+og Hamraborg 7 ≠ Hamraborg ehf ruglingurinn).
 
 **Opnar gloppur** *(DB 2026-07-30)*: 179 lifandi `fyrirtaeki` ótengd base · 29
 `vidskiptavinir` ótengd · 8 kt aðeins í vidskiptavinir. Verkfærin: Sameining
@@ -97,6 +105,9 @@ Ekki flagga sem heilsubrest, má eyða/endurgera.
 - SENT-raðir bera `folder='SENT'` — innhólfs-lesarar sía `folder=neq.SENT`.
 - **aggisigurds@gmail.com = Claude-aðgangurinn** (innskráning, Drive-deiling);
   eldklar@eldklar.is er VIÐSKIPTA-pósthólf, ekki Claude-aðgangur.
+- **Þráður = nýjasta skilaboðið (Agnar 2026-07-30):** við mat á stöðu póstsamtals
+  gildir NÝJASTA skilaboðið í þræðinum — EKKI gömul stjörnumerkt skilaboð í miðjum
+  þræði (sbr. `threadLatest`-lógík Verkborðs; SENT-raðir teljast með í svarað-mati).
 
 ## 5. Fastar vinnureglur (brotnar oftast — þess vegna hér)
 
@@ -111,6 +122,11 @@ Ekki flagga sem heilsubrest, má eyða/endurgera.
   mörgum nöfnum (Fjarðagata = Fjörður/Fjörðurinn/Strandgata/Fjarðargata). Bæta við
   alias þegar nýtt afbrigði sést, ekki harðkóða.
 - Innri tímar (Slökkvitæki ehf í Tímaveru) eru EKKI rukkaðir (NON_BILLABLE).
+- **Tengiliðaupplýsingar — virk söfnun (Agnar 2026-07-30):** þegar sími, netfang
+  eða tengiliður sést HVAR SEM ER (póstur, PDF, skýrsla, samtal) skal skrá það á
+  prófíl félagsins um leið (`fyrirtaeki`/`customers_base`: sími/netfang/tengiliður)
+  — ekki láta fljóta hjá. NB `fyrirtaeki` ber tvítekna dálkinn
+  `tengiliður`/`tengilidur` (sjá Bakendi-skema) — skrifa í þann sem röðin notar.
 
 ## 6. Öryggi — staða og lærdómar
 
