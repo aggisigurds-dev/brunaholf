@@ -1,6 +1,11 @@
 # Brunahólf hub — project guide for Claude
 
 This file is read on every session. Read it first before exploring code.
+For customer/data questions, **`docs/STADREYNDIR.md`** is the verified fact
+ledger (sannreyndar grunnstaðreyndir) — it overrides stale numbers here.
+**Í upphafi vinnu-session:** líta á opin verk á Verkefnalistanum —
+`GET /api/verkefnalisti` (beidni/i_vinnu) — áður en nýtt verk er hafið
+(Agnar 2026-07-30).
 It tells you what this app is, how it's wired, where the data lives, and
 what we're building next so you don't restart from scratch.
 
@@ -68,6 +73,11 @@ spine — one canonical customer, then its sites, then its equipment:
   are sent via Payday out of Kröfu yfirlit; patch 199 (slökkvitæki) surfaces them
   on the company profile.
 - **Conventions:** walk-in / anonymous sale = kt `999999-9999`.
+- **Forgangsröð (Agnar 2026-07-30):** the customers that matter are `customers_base`
+  ("Allir viðskiptavinir", the canonical spine) and `fyrirtaeki` with
+  `er_i_thjonustu=true` ("Fyrirtæki í þjónustu"). The Slökkvitæki-side
+  `vidskiptavinir` table is the LOWEST grade (individuals/legacy) — never treat it
+  as the primary customer lookup.
 
 **Tengireglan (2026-07-15, `netlify/functions/_spine.js`)** — EIN sameiginleg regla
 fyrir hvernig skjal tengist hryggnum, notuð af öllum tengjurum (doc-index,
