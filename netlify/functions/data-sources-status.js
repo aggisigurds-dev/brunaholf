@@ -130,7 +130,7 @@ exports.handler = async (event) => {
   const sources = [
     {
       key: 'timavera', label: 'Tímavera klst',
-      file_hint: 'Tímaveru vinnufærslur*.xlsx',
+      file_hint: 'Tímavera API beintenging (timavera-pull)',
       icon: '⏱',
       // Freshness is based on the newest REAL workday, not the file-import stamp
       // (the file can be re-imported "today" while the newest entry is older).
@@ -174,7 +174,7 @@ exports.handler = async (event) => {
     },
     {
       key: 'email', label: 'Email digest',
-      file_hint: 'luna-bridge (Thunderbird mbox sync)',
+      file_hint: 'Gmail úr skýi (gmail-ingest) + luna-bridge fyrir @brunaholf.is',
       icon: '📧',
       last_import: edTs, newest_real: edReal,
       age_days: ageDays(edReal), status: statusFor(ageDays(edReal)),
