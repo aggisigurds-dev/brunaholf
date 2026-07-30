@@ -12,6 +12,22 @@ Speglað í báðum repo-um (slokkvitaeki + brunaholf) því gagnalíkanið er s
 
 ## 0. Fyrirtækin og öppin — hvað á hvað, hvar býr hvað
 
+**⭐ SAMHENGIÐ SEM ÚTSKÝRIR ALLT (Agnar 2026-07-30):** Slökkvitæki ehf var **keypt
+fyrir ~3 mánuðum** (vor 2026) og skipulagið sem fylgdi var HRÆÐILEGT. Síðustu 3
+mánuðir — og áfram — eru **endurheimtar-aðgerð: finna ALLA þjónustukúnna félagsins
+og endurheimta þá.** Þetta er ástæðan fyrir öllu Bakendi-tólasettinu (Skýrslu-stöð,
+Hreinsi-borð, Drive-flokkun, Kt-samræming, Skýrslu-vakt, Þjónustu-gloppur…): það er
+ekki ofur-verkfræði heldur björgunarbúnaður. Þess vegna er skráarheitum ekki
+treystandi, þess vegna er allt tengt með sönnun (Tengireglan), og þess vegna er
+„fyrirtæki með skjöl en ekki merkt í þjónustu" = líklega TÝNDUR kúnni, ekki
+gagnavilla. **Öll forgangsröðun tóla og verka á að þjóna þessari endurheimt.**
+
+*Endurheimtar-staðan (DB 2026-07-30):* 655 staðir merktir í þjónustu · **56 félög
+eiga þjónustuskjöl en ENGINN staður þeirra er í þjónustu** (líklega týndir kúnnar
+→ `thjonusta-gloppur.html`) · skýrslu-þekja staða í þjónustu: 366 ok · 180 gömul ·
+62 ENGIN skýrsla · 47 ólesanleg (→ Skýrslu-vakt/Skýrslu-stöð).
+
+
 - **Brunahólf ehf Á Slökkvitæki ehf** (kt 600508-0400) — móður-/eigendafélag
   (Agnar 2026-07-30). Eldri skjölun sagði „sister business" — eignarhald er rétta
   sambandið. Brunahólf = brunavarnir í sameign/verktakahlið; Slökkvitæki =
