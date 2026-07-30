@@ -1,6 +1,8 @@
 # Brunahólf hub — project guide for Claude
 
 This file is read on every session. Read it first before exploring code.
+For customer/data questions, **`docs/STADREYNDIR.md`** is the verified fact
+ledger (sannreyndar grunnstaðreyndir) — it overrides stale numbers here.
 It tells you what this app is, how it's wired, where the data lives, and
 what we're building next so you don't restart from scratch.
 
