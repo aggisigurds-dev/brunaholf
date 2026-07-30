@@ -10,6 +10,21 @@ Speglað í báðum repo-um (slokkvitaeki + brunaholf) því gagnalíkanið er s
 
 ---
 
+## 0. Fyrirtækin og öppin — hvað á hvað, hvar býr hvað
+
+- **Brunahólf ehf Á Slökkvitæki ehf** (kt 600508-0400) — móður-/eigendafélag
+  (Agnar 2026-07-30). Eldri skjölun sagði „sister business" — eignarhald er rétta
+  sambandið. Brunahólf = brunavarnir í sameign/verktakahlið; Slökkvitæki =
+  slökkvitækjaþjónusta.
+- **brunaholf.netlify.app er STJÓRNSTÖÐIN/bakendinn** — geymir dýpri bakenda-
+  upplýsingar og -tól fyrir BÆÐI félögin, líka um Slökkvitæki: skjala-/Drive-tólin,
+  Skýrslu-stöð, Kt-samræming, Hreinsi-borð, Kerfis-kort, gmail-ingest, dkPlus/
+  Payday-functions. **Þegar leitað er að ítarlegri/bakenda-upplýsingum um
+  Slökkvitæki: byrja í Brunahólfs-hubbnum**, ekki slokkvitaeki-appinu.
+- **slokkvitaeki.netlify.app er daglegi reksturs-appið** Slökkvitækja (Sala/POS,
+  tæki, þjónusta, bílstjórar).
+- Bæði öpp deila EINUM Supabase (`osfdzskyvisifcwyjkuk`).
+
 ## 1. Viðskiptavina-líkanið — hver tafla er hvað
 
 **Þrjár „viðskiptavina-töflur" eru til, en þær eru EITT kerfi, ekki þrjú:**
