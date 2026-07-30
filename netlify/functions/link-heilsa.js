@@ -65,10 +65,58 @@ async function inChunks(items, size, fn) {
   return out;
 }
 
+// POST {action:'restore', ids:[…]} — ENDURHEIMTA úr Drive-ruslinu.
+// Þröngt afmarkað viljandi: gerir AÐEINS trashed=false, aldrei trashed=true,
+// og aðeins fyrir skjöl sem GRUNNURINN segir vera í rusli (listinn frá
+// biðlaranum er ALDREI treyst — hann er síaður gegn link_status='trashed').
+// Google tæmir ruslið eftir ~30 daga, svo þetta er tímabundinn gluggi.
+async function restore(ids) {
+  const wanted = (Array.isArray(ids) ? ids : []).map(Number).filter(Number.isFinite);
+  if (!wanted.length) return { ok: false, error: 'engin gild id' };
+
+  // Server-megin staðfesting: aðeins raðir sem eru MERKTAR trashed
+  const rows = await sbGet('customer_documents?select=id,drive_file_id,doc_type,year' +
+    `&link_status=eq.trashed&id=in.(${wanted.join(',')})`);
+  if (!rows.length) return { ok: true, restored: 0, results: [], note: 'engin þeirra er merkt trashed' };
+
+  const token = await freshAccessToken();
+  const nu = new Date().toISOString();
+  const results = await inChunks(rows, 5, async (r) => {
+    try {
+      const up = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(r.drive_file_id)}?supportsAllDrives=true`,
+        { method: 'PATCH',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ trashed: false }) });
+      if (!up.ok) return { id: r.id, ok: false, error: `drive ${up.status}` };
+      const v = await probe(token, r.drive_file_id);          // sannreyna strax
+      await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?id=eq.${r.id}`, {
+        method: 'PATCH', headers: sbHeaders({ Prefer: 'return=minimal' }),
+        body: JSON.stringify({ link_ok: v.ok, link_checked_at: nu, link_status: v.status }),
+      }).catch(() => null);
+      // rekjanleiki
+      await fetch(`${SUPABASE_URL}/rest/v1/override_log`, {
+        method: 'POST', headers: sbHeaders({ Prefer: 'return=minimal' }),
+        body: JSON.stringify({ field: 'link_restore', old_value: 'trashed',
+          new_value: `${r.drive_file_id} → ${v.status}`, note: `doc ${r.id} ${r.doc_type} ${r.year || ''}` }),
+      }).catch(() => null);
+      return { id: r.id, ok: v.ok === true, status: v.status };
+    } catch (e) { return { id: r.id, ok: false, error: String((e && e.message) || e) }; }
+  });
+  return { ok: true, reyndi: rows.length, restored: results.filter(r => r.ok).length, results };
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors(), body: '' };
-  if (event.httpMethod !== 'GET') return json(405, { error: 'GET only' });
   if (!SUPABASE_URL || !SUPABASE_KEY) return json(500, { error: 'Supabase env vantar' });
+
+  if (event.httpMethod === 'POST') {
+    let b = {}; try { b = JSON.parse(event.body || '{}'); } catch (_) {}
+    if (b.action !== 'restore') return json(400, { error: "aðeins action:'restore'" });
+    try { return json(200, await restore(b.ids)); }
+    catch (e) { return json(500, { error: String((e && e.message) || e) }); }
+  }
+  if (event.httpMethod !== 'GET') return json(405, { error: 'GET/POST only' });
 
   const p = event.queryStringParameters || {};
 
