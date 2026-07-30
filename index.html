@@ -17451,7 +17451,10 @@ function renderYfirlit(t){
           records: (day.staff||[]).map(e=>({
             name: e.employee,
             project: (e.projects&&e.projects[0]&&e.projects[0].project)||'',
-            inn: e.in||'', ut: e.out||'', hours: e.hours,
+            // hours VERÐUR að vera strengur — escapeHtml síðunnar gerir
+            // (s||"").replace(…) og kastar á tölu (rótin að því að bandið féll
+            // í catch þótt sóknin skilaði 200: TypeError í Array.map).
+            inn: e.in||'', ut: e.out||'', hours: e.hours != null ? String(e.hours) : '',
             status: (e.in && !e.out && day.date===today) ? 'mætt' : 'hætt'
           })),
           last_scrape: raw.last_import || null,
