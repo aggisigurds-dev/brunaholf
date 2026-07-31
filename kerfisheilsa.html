@@ -191,13 +191,14 @@ async function sakja(test, btn){
       .filter(k=>c[k]).map(k=>'<span class="cnt">'+LJOS[k]+' '+c[k]+'</span>').join('');
     // Aðgreint: bilud TENGING og gomul GOGN eru ekki sami hluturinn.
     const erGogn = s => s.hopur.indexOf('ferskleiki') > 0;
-    const teng = SIDAST.filter(s => !erGogn(s)), gogn = SIDAST.filter(erGogn);
+    // NB `gogn` er þegar tekið hér að ofan (svarið úr data-sources-status).
+    const teng = SIDAST.filter(s => !erGogn(s)), bol = SIDAST.filter(erGogn);
     const rautt = n => n.filter(s=>s.status==='raudt').length;
     const gult  = n => n.filter(s=>s.status==='gult').length;
     const bitar = [];
     if(rautt(teng)) bitar.push(rautt(teng)+' tenging'+(rautt(teng)>1?'ar':'')+' ótengd'+(rautt(teng)>1?'ar':''));
     if(gult(teng))  bitar.push(gult(teng)+' að athuga');
-    if(rautt(gogn)) bitar.push(rautt(gogn)+' gagnaleiðsl'+(rautt(gogn)>1?'ur':'a')+' stöðnuð'+(rautt(gogn)>1?'ar':''));
+    if(rautt(bol)) bitar.push(rautt(bol)+' gagnaleiðsl'+(rautt(bol)>1?'ur':'a')+' stöðnuð'+(rautt(bol)>1?'ar':''));
     $('#sub').textContent = (bitar.join(' · ') || 'Allt í lagi') +
       ' · uppfært ' + new Date().toLocaleTimeString('is-IS',{hour:'2-digit',minute:'2-digit'});
   }catch(e){
