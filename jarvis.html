@@ -89,17 +89,23 @@
   .straumur .ok{color:var(--ok)} .straumur .vara{color:var(--var)} .straumur .hae{color:var(--hae)}
 
   /* miðjan */
+  /* Kjarninn: hvarfið fyllir efri hlutann, stjórntækin sitja NEÐST (flex-end)
+     svo ekkert liggi ofan á miðjunni. Striginn teiknar miðjuna í 40% hæð. */
   .kjarni{border:1px solid var(--cy-dim);position:relative;min-height:430px;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
-    background:radial-gradient(circle at 50% 45%,rgba(29,127,168,.2),transparent 62%)}
+    display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+    background:radial-gradient(circle at 50% 38%,rgba(29,127,168,.2),transparent 62%)}
   #kjarna-canvas{position:absolute;inset:0;width:100%;height:100%}
-  .mid{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:12px;padding:16px}
-  #hnappur{width:126px;height:126px;border-radius:50%;cursor:pointer;
+  .mid{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;
+    gap:10px;padding:14px 16px 16px;width:100%}
+  /* Málrofinn fer út í hornið: hann er stilling, ekki aðgerð, og mátti ekki
+     ýta TALA-hnappinum út af miðásnum (kjarni → texti → hnappur). */
+  .kjarni>.malrofi{position:absolute;top:10px;right:10px;z-index:3}
+  #hnappur{width:98px;height:98px;border-radius:50%;cursor:pointer;
     background:radial-gradient(circle at 50% 40%,rgba(79,216,255,.24),rgba(2,12,25,.85));
-    border:1px solid var(--cy);color:var(--cy);font:inherit;font-size:11px;letter-spacing:.2em;
-    text-transform:uppercase;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+    border:1px solid var(--cy);color:var(--cy);font:inherit;font-size:10.5px;letter-spacing:.2em;
+    text-transform:uppercase;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
     box-shadow:0 0 34px rgba(79,216,255,.3),inset 0 0 28px rgba(79,216,255,.16)}
-  #hnappur .ic{font-size:32px}
+  #hnappur .ic{font-size:26px}
   #hnappur.on{border-color:var(--hae);color:var(--hae);
     box-shadow:0 0 46px rgba(255,90,110,.45),inset 0 0 30px rgba(255,90,110,.2)}
   .heyri{font-size:10.5px;letter-spacing:.2em;color:var(--ink3);text-transform:uppercase;min-height:14px}
@@ -178,15 +184,17 @@
     <div class="dalkur">
       <div class="kjarni">
         <canvas id="kjarna-canvas"></canvas>
+        <!-- Stjórntækin sitja NEÐST, ekki ofan í kjarnanum: miðjan er hvarfið
+             sjálft og á að sjást óskert (Agnar 2026-07-31). -->
+        <div class="malrofi">
+          <button data-mal="is" class="on">ÍSL</button>
+          <button data-mal="en">ENG</button>
+        </div>
         <div class="mid">
-          <div class="malrofi">
-            <button data-mal="is" class="on">ÍSL</button>
-            <button data-mal="en">ENG</button>
-          </div>
-          <button id="hnappur"><span class="ic">◉</span><span id="hlbl">Tala</span></button>
-          <div class="heyri" id="heyri">Ýttu og talaðu</div>
           <div class="talid" id="talid"></div>
           <div class="svar" id="svar" hidden></div>
+          <div class="heyri" id="heyri">Ýttu og talaðu</div>
+          <button id="hnappur"><span class="ic">◉</span><span id="hlbl">Tala</span></button>
         </div>
       </div>
 
@@ -250,8 +258,27 @@ document.querySelectorAll('.malrofi button').forEach(b =>
 
 /* ── kjarninn: hringur sem bregst við RAUNVERULEGU hljóði og
       raunverulegri kerfisstöðu (grænn = allt í lagi, rauður = eitthvað niðri) ── */
-const kc = $('#kjarna-canvas'), kx = kc.getContext('2d');
+const kc = $('#kjarna-canvas'), kx = kc.getContext('2d'), hnapp = $('#hnappur');
 let orka = 0, markOrka = 0, heilsulitur = [79,216,255], fasi = 0;
+// Bassi/diskant úr TÍÐNIGREININGU (ekki bara styrk) — bassinn ýfir yfirborð
+// kjarnans, diskantinn kveikir í ögnunum. Núll þegar hljóðneminn er ekki á.
+let bassi = 0, diskant = 0;
+let tS = 0;              // tímastimpill síðasta ramma (ms)
+let snuningur = 0;       // sporbrautar-horn agnanna — SITT EIGIÐ, hægt
+let fyrri = 0;           // orka síðasta ramma → greinir RÍS (högg)
+const hogg = [];         // höggbylgjur sem ganga út frá kjarnanum
+
+// Sporbrautirnar eru reiknaðar EINU SINNI: hver ögn fær sitt horn, radíus,
+// stefnu og hraða. Áður deildu allar agnirnar einum `fasi`, sem lét þær
+// hreyfast í takt eins og eitt hjól; sitt hvor brautin gefur atóm-tilfinninguna.
+const AGNIR = Array.from({length:74}, (_,i) => ({
+  horn : Math.random()*Math.PI*2,
+  rad  : .70 + Math.random()*.62,
+  hradi: (Math.random()<.42 ? -1 : 1) * (.45 + Math.random()*.85),
+  f    : Math.random()*Math.PI*2,
+  st   : Math.random()<.16 ? 1.9 : 1,
+}));
+
 function staerd(){
   [kc, $('#ratsja-canvas'), $('#bylgja')].forEach(c => {
     const r = c.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio||1);
@@ -260,24 +287,45 @@ function staerd(){
 }
 addEventListener('resize', staerd);
 
-function teiknaKjarna(){
-  const w = kc.width, h = kc.height, cx = w/2, cy = h/2;
+function teiknaKjarna(nu){
+  const w = kc.width, h = kc.height, cx = w/2, cy = h*.40;
   const dpr = Math.min(2, devicePixelRatio||1);
+  // TÍMABUNDIÐ, ekki rammabundið. Áður taldi hreyfingin ramma, svo á 120Hz
+  // skjá gekk allt tvöfalt hraðar en á 60Hz — „hægt" varð merkingarlaust.
+  // Þakið (50ms) ver okkur á því að flipinn hafi legið í dvala.
+  const dt = tS ? Math.min(.05, ((nu||0) - tS)/1000) : 0;
+  tS = nu || 0;
   kx.clearRect(0,0,w,h);
-  orka += (markOrka - orka) * .12;
-  fasi += .004;
+
+  // ── Orku-umslagið: SNÖGG ÁRÁS, HÆG DVÍNUN. Kjarninn tekur við hljóðinu
+  //    samstundis og glóir svo niður — það er munurinn á lampa sem er kveikt
+  //    á og hvarfi sem tekur við höggi.
+  orka += (markOrka - orka) * Math.min(1, (markOrka > orka ? 15 : 1.7) * dt);
+  fasi += dt * .5;
+  // Andardráttur í þögn — kjarninn er aldrei alveg dauður.
+  const E = Math.max(orka, .07 + .05*Math.sin(fasi*.9));
+  // Rís yfir þröskuld = högg gengur út frá kjarnanum.
+  if(orka - fyrri > .16 && hogg.length < 6) hogg.push({ r:.4, a:1 });
+  fyrri = orka;
+
   const R = Math.min(w,h)*.30;
   const [r,g,b] = heilsulitur;
   const lit = (a) => `rgba(${r},${g},${b},${a})`;
+  // Litur hitnar með orkunni — en AÐEINS hálfa leið. Fyrri stilling (E*1.15)
+  // hvítaði allan hnöttinn í hávaða og hann las sem teiknuð sól; hvíti liturinn
+  // á heima í hjartanu einu, bolurinn heldur kerfisliti sínum.
+  const hiti = Math.min(.55, E*.6);
+  const heitt = (a) => `rgba(${Math.round(r+(255-r)*hiti)},${Math.round(g+(255-g)*hiti)},` +
+                       `${Math.round(b+(255-b)*hiti)},${a})`;
 
   // ytri hringir
   for(let i=0;i<3;i++){
-    const rr = R*(1.18 + i*.14) + orka*R*.10;
+    const rr = R*(1.18 + i*.14) + E*R*.10;
     kx.beginPath(); kx.arc(cx,cy,rr,0,Math.PI*2);
     kx.strokeStyle = lit(.10 + i*.04); kx.lineWidth = 1*dpr; kx.stroke();
   }
-  // strikaður hringur sem snýst
-  kx.save(); kx.translate(cx,cy); kx.rotate(fasi*2);
+  // strikaður hringur sem snýst — hægur, herðir örlítið á sér með orkunni
+  kx.save(); kx.translate(cx,cy); kx.rotate(fasi*.55 + snuningur*.25);
   kx.beginPath();
   for(let i=0;i<72;i++){
     const a = i/72*Math.PI*2, r1 = R*1.42, r2 = r1 + (i%6===0 ? 9 : 4)*dpr;
@@ -285,26 +333,113 @@ function teiknaKjarna(){
   }
   kx.strokeStyle = lit(.30); kx.lineWidth = 1*dpr; kx.stroke(); kx.restore();
 
-  // kjarninn — púlsar með hljóðinu
-  const kR = R*(.55 + orka*.5);
-  const gr = kx.createRadialGradient(cx,cy,0,cx,cy,kR);
-  gr.addColorStop(0, lit(.95)); gr.addColorStop(.35, lit(.35)); gr.addColorStop(1, lit(0));
-  kx.beginPath(); kx.arc(cx,cy,kR,0,Math.PI*2); kx.fillStyle = gr; kx.fill();
+  // ── Héðan í frá er teiknað SAMLEGGJANDI ('lighter'): þar sem lögin skarast
+  //    leggjast birturnar saman og miðjan brennur út í hvítt af sjálfu sér.
+  //    Það er þessi útbruni sem les sem „gríðarleg orka", ekki stærri hringur.
+  kx.globalCompositeOperation = 'lighter';
 
-  // agnir — þéttleikinn fylgir hljóðstyrknum
-  const n = 90;
-  for(let i=0;i<n;i++){
-    const a = i/n*Math.PI*2 + fasi*(i%3?1:-1)*1.6;
-    const rad = R*(.62 + .5*Math.sin(i*2.3 + fasi*7) + orka*.45);
-    kx.beginPath(); kx.arc(cx+Math.cos(a)*rad, cy+Math.sin(a)*rad, (i%7?1:1.8)*dpr, 0, Math.PI*2);
-    kx.fillStyle = lit(.25 + .5*Math.abs(Math.sin(i+fasi*4))); kx.fill();
+  // Höggbylgjur — ganga út, þynnast, hverfa.
+  for(let i=hogg.length-1;i>=0;i--){
+    const s = hogg[i];
+    s.r += dt*1.9; s.a -= dt*1.15;
+    if(s.a <= 0){ hogg.splice(i,1); continue; }
+    kx.beginPath(); kx.arc(cx,cy,R*s.r,0,Math.PI*2);
+    kx.strokeStyle = heitt(s.a*.5); kx.lineWidth = (1+2*s.a)*dpr; kx.stroke();
+  }
+
+  // Miðjan er FRÍ (stjórntækin voru færð neðst), svo hvarfið er teiknað í
+  // heilu lagi: hjúpur → ólgandi yfirborð → hvítglóandi hjarta → neistar.
+  const kR = R*(.44 + E*.17);
+  const olga = (.015 + .05*E + .09*bassi);
+  // Yfirtónarnir eru vísvitandi vegnir í átt að HÁUM tíðnum: lágtíðnin ein
+  // (sin 3a) gerði hnöttinn skakkan eins og kartöflu; margar smáar gárur lesast
+  // sem ólgandi yfirborð.
+  const brun = (a) => kR*(1 + olga*(.45*Math.sin(a*3 + fasi*1.8) + .80*Math.sin(a*5 - fasi*2.6)
+                                  + .70*Math.sin(a*8 + fasi*3.4) + .40*Math.sin(a*13 - fasi*4.3))/2.35);
+
+  // Ljóshjúpur — þröngur og hófstilltur. (Fyrri útgáfa var 2,6× breiðari og
+  // mun sterkari; hún lagðist yfir allt spjaldið og varð að mjólkurmóðu í stað
+  // þess að lesast sem glóð.)
+  const hR = kR*(1.9+E*.7);
+  const hjupur = kx.createRadialGradient(cx,cy,kR*.55,cx,cy,hR);
+  hjupur.addColorStop(0, heitt(.16+.26*E)); hjupur.addColorStop(.40, lit(.06+.11*E));
+  hjupur.addColorStop(1, lit(0));
+  kx.beginPath(); kx.arc(cx,cy,hR,0,Math.PI*2); kx.fillStyle = hjupur; kx.fill();
+
+  // Yfirborðið ÝFIST: sléttur hringur í þögn, ólgandi í hávaða. Bassinn ræður
+  // ólgunni — lögunin fylgir raunverulegu hljóði en ekki klukku.
+  kx.beginPath();
+  for(let i=0;i<=120;i++){
+    const a = i/120*Math.PI*2, rr = brun(a);
+    i ? kx.lineTo(cx+Math.cos(a)*rr, cy+Math.sin(a)*rr)
+      : kx.moveTo(cx+Math.cos(a)*rr, cy+Math.sin(a)*rr);
+  }
+  kx.closePath();
+  const gr = kx.createRadialGradient(cx,cy,0,cx,cy,kR*1.06);
+  gr.addColorStop(0, heitt(.34+.26*E)); gr.addColorStop(.45, heitt(.15+.20*E));
+  gr.addColorStop(.85, heitt(.09+.16*E)); gr.addColorStop(1, heitt(.04+.10*E));
+  kx.fillStyle = gr; kx.fill();
+  // Brúnin er skýr og björt — það er hún sem les sem innilokað hvarf.
+  kx.strokeStyle = heitt(.40+.50*E); kx.lineWidth = (1+1.6*E)*dpr; kx.stroke();
+
+  // Hvítglóandi hjartað — harði punkturinn sem allt annað hverfist um. Hvíti
+  // liturinn er BUNDINN við hann; bolurinn í kring heldur kerfislitnum.
+  const hjR = kR*(.30+.16*E);
+  const hjarta = kx.createRadialGradient(cx,cy,0,cx,cy,hjR);
+  hjarta.addColorStop(0, `rgba(255,255,255,${(.55+.40*E).toFixed(2)})`);
+  hjarta.addColorStop(.45, `rgba(${Math.round(r+(255-r)*.7)},${Math.round(g+(255-g)*.7)},${Math.round(b+(255-b)*.7)},${(.22+.34*E).toFixed(2)})`);
+  hjarta.addColorStop(1, 'rgba(255,255,255,0)');
+  kx.beginPath(); kx.arc(cx,cy,hjR,0,Math.PI*2); kx.fillStyle = hjarta; kx.fill();
+
+  // Neistar út úr brúninni — fjöldi og lengd fylgja orkunni. Þeir DOFNA út í
+  // oddinn (línustrikull); jafnbjartar, jafnlangar línur lásust sem teiknuð
+  // sólargeisla-stjarna, ekki sem útstreymi.
+  const nNeistar = Math.round(4 + E*16);
+  for(let i=0;i<nNeistar;i++){
+    const a = (i*2.39996 + fasi*.3) % (Math.PI*2);        // gullna hornið = jöfn dreifing
+    const breidd = .35 + .65*Math.abs(Math.sin(i*1.7 + fasi*2.2));
+    const r1 = brun(a)*1.01, r2 = r1 + kR*(.12 + .85*E)*breidd;
+    const x1 = cx+Math.cos(a)*r1, y1 = cy+Math.sin(a)*r1;
+    const x2 = cx+Math.cos(a)*r2, y2 = cy+Math.sin(a)*r2;
+    const g2 = kx.createLinearGradient(x1,y1,x2,y2);
+    g2.addColorStop(0, heitt(.18+.50*E)); g2.addColorStop(1, lit(0));
+    kx.beginPath(); kx.moveTo(x1,y1); kx.lineTo(x2,y2);
+    kx.strokeStyle = g2; kx.lineWidth = (.7+.9*E)*dpr; kx.stroke();
+  }
+
+  // ── Agnirnar: HÆGT reik á eigin sporbrautum. Grunnhraðinn er ~1/6 af því
+  //    sem hann var; orkan flýtir þeim aðeins lítillega (þær eru ekki mælirinn
+  //    — kjarninn er það). Diskantinn lætur þær tindra.
+  snuningur += dt * (.085 + .16*E);
+  for(const p of AGNIR){
+    const a = p.horn + snuningur*p.hradi;
+    const rad = R*(p.rad + .045*Math.sin(fasi*.7 + p.f) + E*.26);
+    const x = cx+Math.cos(a)*rad, y = cy+Math.sin(a)*rad;
+    const tindr = .5 + .5*Math.sin(fasi*1.1 + p.f);
+    kx.beginPath(); kx.arc(x, y, p.st*(1+.5*diskant)*dpr, 0, Math.PI*2);
+    kx.fillStyle = heitt(.16 + .34*tindr + .30*E); kx.fill();
+  }
+
+  kx.globalCompositeOperation = 'source-over';
+
+  // Hnappurinn situr ofan á miðjunni og myndi annars vera eini dauði bletturinn
+  // á borðinu. Hann fær því sömu orku: glóðin í kringum hann og innri birtan
+  // fylgja `E`. Skrifað beint á style (ekki klasa) svo þetta sé samfellt.
+  // GILDRA: inline-stíll slær út `#hnappur.on` regluna í CSS, svo rauði liturinn
+  // í hlustun VERÐUR að vera valinn hér líka — annars yrði hnappurinn blár um
+  // leið og byrjað er að hlusta.
+  if(hnapp){
+    const [hr,hg,hb] = hnapp.classList.contains('on') ? [255,90,110] : heilsulitur;
+    hnapp.style.boxShadow =
+      `0 0 ${Math.round(26+70*E)}px rgba(${hr},${hg},${hb},${(.26+.45*E).toFixed(2)}),` +
+      `inset 0 0 ${Math.round(24+46*E)}px rgba(${hr},${hg},${hb},${(.14+.40*E).toFixed(2)})`;
   }
   requestAnimationFrame(teiknaKjarna);
 }
 
 /* ── hljóðnemi: alvöru bylgja, ekki hreyfimynd ── */
 const bc = $('#bylgja'), bx = bc.getContext('2d');
-let greinir = null, gognBuffer = null;
+let greinir = null, gognBuffer = null, tidniBuffer = null;
 function teiknaBylgju(){
   const w = bc.width, h = bc.height;
   bx.clearRect(0,0,w,h);
@@ -320,8 +455,21 @@ function teiknaBylgju(){
       i ? bx.lineTo(x,y) : bx.moveTo(x,y);
     }
     markOrka = Math.min(1, (summa/gognBuffer.length)*7);
+    // Tíðnirófið: neðsti áttundi = bassi (ýfir kjarnann), efsti þriðjungur =
+    // diskant (kveikir í ögnunum). Mýkt með lágsíu svo þetta titri ekki.
+    if(tidniBuffer){
+      greinir.getByteFrequencyData(tidniBuffer);
+      const N = tidniBuffer.length;
+      let lag = 0, har = 0;
+      const lagN = Math.max(1, N>>3), harFra = Math.floor(N*.66);
+      for(let i=0;i<lagN;i++) lag += tidniBuffer[i];
+      for(let i=harFra;i<N;i++) har += tidniBuffer[i];
+      bassi   += (Math.min(1, lag/lagN/190) - bassi) * .18;
+      diskant += (Math.min(1, har/(N-harFra)/150) - diskant) * .18;
+    }
   }else{
     bx.moveTo(0,h/2); bx.lineTo(w,h/2); markOrka = 0;
+    bassi += (0-bassi)*.05; diskant += (0-diskant)*.05;
   }
   bx.stroke();
   requestAnimationFrame(teiknaBylgju);
@@ -374,6 +522,7 @@ async function byrjaTal(){
     const ac = new (window.AudioContext||window.webkitAudioContext)();
     greinir = ac.createAnalyser(); greinir.fftSize = 1024;
     gognBuffer = new Uint8Array(greinir.fftSize);
+    tidniBuffer = new Uint8Array(greinir.frequencyBinCount);
     ac.createMediaStreamSource(s).connect(greinir);
   }catch(e){ $('#heyri').innerHTML = '<span class="villa">Kemst ekki í hljóðnemann</span>'; return false; }
 
@@ -396,7 +545,7 @@ async function byrjaTal(){
 function haettaTal(){
   if(sr){ try{ sr.onend=null; sr.stop(); }catch(_){} sr=null; }
   if(straumur){ straumur.getTracks().forEach(t=>t.stop()); straumur=null; }
-  greinir = null; gognBuffer = null; markOrka = 0;
+  greinir = null; gognBuffer = null; tidniBuffer = null; markOrka = 0;
 }
 function tala(t, mal){
   sidastaSvar = t;
