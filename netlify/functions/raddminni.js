@@ -206,19 +206,41 @@ async function spyrja(b) {
   }
 }
 
+// Fellir broddstafi og sérstafi burt: „Steypustöðin" og „Steypustodin" verða
+// sami lykill. NAUÐSYNLEGT hér — enska talgreiningin skrifar íslensk nöfn án
+// broddstafa, og þú slærð þau oft þannig inn sjálfur. Bein `ilike`-leit í
+// grunninum fann því ekkert („Steypustodin" → 0 niðurstöður í prófun).
+function fold(s) {
+  return String(s || '').toLowerCase()
+    .replace(/æ/g, 'ae').replace(/þ/g, 'th').replace(/ð/g, 'd').replace(/ö/g, 'o')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]/g, '');
+}
+
 // Leitar að fyrirtæki sem nefnt er í spurningunni. Þröngt viljandi: aðeins orð
 // með stórum staf og >3 stafi, annars fæst rusl-match á algeng orð.
+let _felagsCache = null, _felagsTs = 0;
 async function finnaFelag(q) {
   const ord = (q.match(/[A-ZÁÉÍÓÚÝÞÆÖÐ][\wáéíóúýþæöðÁÉÍÓÚÝÞÆÖÐ-]{3,}/g) || []).slice(0, 4);
   if (!ord.length) return [];
-  const ut = [];
-  for (const o of ord) {
-    const r = await sbGet('fyrirtaeki?select=nafn,kennitala,heimilisfang,er_i_thjonustu,athugasemdir' +
-      `&nafn=ilike.*${encodeURIComponent(o)}*&deleted_at=is.null&limit=3`);
-    (r || []).forEach(x => { if (!ut.some(y => y.nafn === x.nafn)) ut.push(x); });
-    if (ut.length >= 5) break;
+  // Nöfnin eru sótt í einu lagi og fold-uð hér — PostgREST getur ekki fellt
+  // broddstafi sjálft. ~1.400 raðir, geymt í 5 mín milli kalla.
+  if (!_felagsCache || Date.now() - _felagsTs > 300000) {
+    _felagsCache = await sbGet('fyrirtaeki?select=nafn,kennitala,heimilisfang,er_i_thjonustu,athugasemdir' +
+      '&deleted_at=is.null&limit=2000') || [];
+    _felagsTs = Date.now();
   }
-  return ut.slice(0, 5);
+  const leit = ord.map(fold).filter(x => x.length > 3);
+  const ut = [];
+  for (const f of _felagsCache) {
+    const n = fold(f.nafn);
+    if (!n) continue;
+    if (leit.some(l => n.includes(l) || l.includes(n))) {
+      if (!ut.some(y => y.nafn === f.nafn)) ut.push(f);
+      if (ut.length >= 5) break;
+    }
+  }
+  return ut;
 }
 
 /* Endur-greining: keyra skilninginn aftur á texta sem er þegar geymdur — t.d.
