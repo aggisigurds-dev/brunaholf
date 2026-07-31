@@ -141,35 +141,55 @@ async function probeGoogle(a) {
   return 'aðgangslykill fékkst' + (vantar.length ? ' · NB heimildir vantar: ' + vantar.join(', ') : '');
 }
 
+// NB: NÁKVÆMLEGA sama handaband og payday-pull.js gerir — POST /auth/token með
+// `Api-Version` haus. (Fyrsta útgáfa notaði slóðina úr gamalli athugasemd og
+// gleymdi hausnum → 404 sem leit út eins og Payday væri niðri. Prófunin verður
+// að spegla raunverulegu leiðina, annars mælir hún sjálfa sig.)
 async function probePayday() {
   const id = process.env.PAYDAY_CLIENT_ID, secret = process.env.PAYDAY_CLIENT_SECRET;
   if (!id || !secret) throw new Error('PAYDAY_CLIENT_ID/SECRET vantar í umhverfið');
-  const base = process.env.PAYDAY_API_BASE || 'https://api.payday.is';
-  const path = process.env.PAYDAY_TOKEN_PATH || '/api/v1/oauth/token';
+  const base = (process.env.PAYDAY_API_BASE || 'https://api.payday.is').replace(/\/+$/, '');
+  const path = process.env.PAYDAY_TOKEN_PATH || '/auth/token';
   const r = await fetch(base + path, {
-    method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ clientId: id, clientSecret: secret, grantType: 'client_credentials' }),
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json', Accept: 'application/json',
+      'Api-Version': process.env.PAYDAY_API_VERSION || 'alpha',
+    },
+    body: JSON.stringify({ clientId: id, clientSecret: secret }),
   });
   const t = await r.text();
   if (!r.ok) throw new Error('HTTP ' + r.status + ' ' + t.slice(0, 120));
   let j = {}; try { j = JSON.parse(t); } catch (_) {}
-  if (!(j.access_token || j.accessToken || j.token)) throw new Error('svar án aðgangslykils');
+  if (!(j.accessToken || j.access_token || j.token)) throw new Error('svar án aðgangslykils');
   return 'aðgangslykill fékkst';
 }
 
+// dkPlus tekur API-lykilinn BEINT á gagnaköllum (`auth_mode: direct-key` í
+// dkplus.js) — /Token-smíðin er aðeins vara-leið og svarar 401 í þessari
+// uppsetningu. Prófum því ódýrt les-kall, sömu leið og appið fer.
 async function probeDkPlus() {
-  const key = process.env.DKPLUS_API_KEY, company = process.env.DKPLUS_COMPANY;
+  const key = process.env.DKPLUS_API_KEY;
   if (!key) throw new Error('DKPLUS_API_KEY vantar í umhverfið');
-  if (!company) return 'lykill til staðar (DKPLUS_COMPANY ekki sett — beinn lykill notaður)';
-  const base = process.env.DKPLUS_BASE || 'https://api.dkplus.is/api/v1';
-  const r = await fetch(base + '/Token', {
-    method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + key },
+  const base = (process.env.DKPLUS_BASE || 'https://api.dkplus.is/api/v1').replace(/\/+$/, '');
+  const header = process.env.DKPLUS_AUTH_HEADER || 'Authorization';
+  const prefix = process.env.DKPLUS_AUTH_PREFIX != null ? process.env.DKPLUS_AUTH_PREFIX : 'Bearer ';
+  const r = await fetch(base + '/general/payment/term', {
+    headers: { [header]: prefix + key, Accept: 'application/json' },
+  });
+  if (r.ok) return 'beinn lykill samþykktur';
+  const beint = 'HTTP ' + r.status;
+  // Vara-leið: lotu-lykill (virkar í uppsetningum þar sem beini lykillinn dugar ekki).
+  const company = process.env.DKPLUS_COMPANY;
+  if (!company) throw new Error(beint + ' (og DKPLUS_COMPANY ekki sett fyrir lotu-lykil)');
+  const r2 = await fetch(base + '/Token', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + key, 'content-type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify({ Company: company, Description: 'kerfisheilsa' }),
   });
-  const t = await r.text();
-  if (!r.ok) throw new Error('HTTP ' + r.status + ' ' + t.slice(0, 120));
-  let j = {}; try { j = JSON.parse(t); } catch (_) {}
-  if (!j.Token) throw new Error('svar án Token');
+  const t2 = await r2.text();
+  let j = {}; try { j = JSON.parse(t2); } catch (_) {}
+  if (!r2.ok || !j.Token) throw new Error(beint + ' á gagnakalli, ' + r2.status + ' á /Token');
   return 'lotu-lykill fékkst';
 }
 
