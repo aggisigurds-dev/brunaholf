@@ -127,6 +127,17 @@ gleymd félög · samningar · netföng · fact-check · skjöl án árs. Endpoi
 les fjögur Postgres-sýni **`v_veidin_tolur` · `v_veidin_amber` ·
 `v_veidin_engin_skyrsla` · `v_veidin_rukkud_an_skyrslu`** (migration
 `veidin_views`, grant select to anon). Listarnir þrír eru útvíkkanlegir á síðunni.
+**📦 Bundle-pör (2026-07-31):** nýtt skotmark „skýrsla + reikningur per ári" — bakað
+á Postgres-sýnina **`v_bundle_coverage`** (migration `v_bundle_coverage`, grant select
+to anon): EIN röð per `(customer_base_id, year, kind∈uttekt/brunakerfi)` þar sem skýrsla
+(`customer_documents`) OG/EÐA app-reikningur (`solur.source`) er til, með `has_report`/
+`has_invoice`/`billed_payday` + `stada∈klarad·vantar_reikning·vantar_skyrslu·reikn_payday`.
+Þetta er **skráningar-reglan** sem sjálf-matchar áfram eftir því sem skýrslur og reikningar
+verða til (sami lykill og 📦 Pör-send-takkinn í Slökkvitæki-appinu: Sala → Fyrri viðskipti
++ brunakerfis-síðan). `veidin.js` les `v_bundle_coverage?yr=eq.<þetta ár>` og bætir
+`bundle_por` (klárað) · `bundle_reikn_vantar` · `bundle_skyrsla_vantar` við `nuna` +
+`listar.bundle_gloppur` (ókláruð pör). Grunnlína 2026-07-31: 69 klárað · 153 vantar
+reikning · 7 vantar skýrslu.
 
 **🛡️ Kerfisheilsa** (`kerfisheilsa.html` + hero-spjald efst í Bakendi, 2026-07-31) —
 **eitt ljósaborð yfir allar TENGINGAR og lykla** (öryggisborðs-útlit). Tengi-takkarnir

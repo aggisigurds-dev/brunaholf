@@ -29,6 +29,12 @@ const BASELINE = {
   skyrslur_2026: 294,
   skyrslur_2026_reviewed: 14,
   gleymd_felog: 56,
+  // 📦 Bundle-pör (skýrsla + reikningur per ári) — grunnlína tekin 2026-07-31 við
+  // stofnun skotmarksins úr v_bundle_coverage (yr=2026). Reglan sjálf-matchar áfram
+  // eftir því sem skýrslur (customer_documents) og reikningar (solur.source) verða til.
+  bundle_por: 69,               // 2026 pör KLÁRUÐ (skýrsla + app-reikningur bæði til)
+  bundle_reikn_vantar: 153,     // 2026 skýrslur með ENGAN reikning (hvorki app né Payday)
+  bundle_skyrsla_vantar: 7,     // 2026 app-reikningar með enga skýrslu á skrá
 };
 
 function cors(){ return { 'Access-Control-Allow-Origin':'*', 'Access-Control-Allow-Headers':'Content-Type', 'Access-Control-Allow-Methods':'GET,OPTIONS' }; }
@@ -49,13 +55,21 @@ exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors() };
   if (event.httpMethod !== 'GET') return json(405, { error: 'GET only' });
   try {
-    const [tolur, amber, enginSk, rukkud] = await Promise.all([
+    const curYear = new Date().getFullYear();
+    const [tolur, amber, enginSk, rukkud, bundle] = await Promise.all([
       sbGet('v_veidin_tolur?select=*'),
       sbGet('v_veidin_amber?select=*&order=taeki_skodud.desc'),
       sbGet('v_veidin_engin_skyrsla?select=*&order=felag.asc.nullslast'),
       sbGet('v_veidin_rukkud_an_skyrslu?select=*&order=felag.asc.nullslast'),
+      sbGet('v_bundle_coverage?yr=eq.' + curYear + '&select=*'),
     ]);
     const t = tolur[0] || {};
+    // 📦 Bundle-pör þessa árs — sjá v_bundle_coverage. „gloppur" = ókláruð pör
+    // (vantar reikning fyrst, svo vantar skýrslu, svo billed-via-Payday).
+    const gOrder = { vantar_reikning: 0, vantar_skyrslu: 1, reikn_payday: 2 };
+    const bundleGloppur = bundle.filter(b => b.stada !== 'klarad')
+      .sort((a, b) => (gOrder[a.stada] - gOrder[b.stada])
+        || String(a.felag || '').localeCompare(String(b.felag || ''), 'is'));
     const nuna = {
       dags: new Date().toISOString().slice(0, 10),
       stadir_i_thjonustu: t.stadir_i_thjonustu,
@@ -71,6 +85,9 @@ exports.handler = async (event) => {
       skyrslur_2026: t.skyrslur_2026,
       skyrslur_2026_reviewed: t.skyrslur_2026_reviewed,
       gleymd_felog: t.gleymd_felog,
+      bundle_por: bundle.filter(b => b.stada === 'klarad').length,
+      bundle_reikn_vantar: bundle.filter(b => b.stada === 'vantar_reikning').length,
+      bundle_skyrsla_vantar: bundle.filter(b => b.stada === 'vantar_skyrslu').length,
     };
     const delta = {};
     for (const k of Object.keys(BASELINE)) {
@@ -78,7 +95,7 @@ exports.handler = async (event) => {
       if (typeof nuna[k] === 'number') delta[k] = nuna[k] - BASELINE[k];
     }
     return json(200, { baseline: BASELINE, nuna, delta,
-      listar: { amber, engin_skyrsla: enginSk, rukkud_an_skyrslu: rukkud } });
+      listar: { amber, engin_skyrsla: enginSk, rukkud_an_skyrslu: rukkud, bundle_gloppur: bundleGloppur } });
   } catch (e) {
     return json(500, { error: String(e.message || e) });
   }

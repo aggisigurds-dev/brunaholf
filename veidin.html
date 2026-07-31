@@ -59,13 +59,18 @@
     <div class="scroll"><table id="t-engin"><thead><tr><th>Staður</th><th>Heimilisfang</th><th>Félag</th><th>Rekstrarfélag</th></tr></thead><tbody></tbody></table></div>
   </details>
 
+  <details id="d-bundle"><summary>📦 Ókláruð pör 2026 — <b>skýrsla vantar reikning</b> (eða öfugt) <span class="n" id="n-bundle">…</span></summary>
+    <div class="scroll"><table id="t-bundle"><thead><tr><th>Félag</th><th>Kt</th><th>Tegund</th><th>Ár</th><th>Staða</th></tr></thead><tbody></tbody></table></div>
+  </details>
+
   <p class="foot">
     Verkfærin: <a href="/#bakendi">🔗 Skýrslu-stöð</a> (tengja skjal á stað) ·
     <a href="/multitool.html">🧰 Skjala-multitool</a> (endurnefna + færa + tengja) ·
     <a href="/thjonusta-gloppur.html">🕵️ Þjónustu-gloppur</a> (56 gleymd félög) ·
     <a href="/kerfiskort.html">🗺️ Kerfis-kort</a>.
     Grunnlínan og veiði-reglurnar: <code>docs/STADREYNDIR.md</code> §2.
-    Sýnin: <code>v_veidin_*</code> · endapunktur <code>/api/veidin</code>.
+    Sýnin: <code>v_veidin_*</code> + <code>v_bundle_coverage</code> · endapunktur <code>/api/veidin</code>.
+    📦 Pörin er hægt að senda beint í appinu (Sala → Fyrri viðskipti · brunakerfis-síðan).
   </p>
 </div>
 
@@ -83,6 +88,8 @@ const KORT = [
   { k:'felog_med_netfang',     t:'Félög með netfang',            laegra:false, markAf:'felog_i_thjonustu' },
   { k:'skyrslur_2026_reviewed',t:'2026-skýrslur fact-checkaðar', laegra:false, markAf:'skyrslur_2026' },
   { k:'skjol_an_ars',          t:'Skjöl án árs',                 laegra:true,  mark:0 },
+  { k:'bundle_por',            t:'📦 Pör klárað (skýrsla+reikn.)', laegra:false, markAf:'skyrslur_2026' },
+  { k:'bundle_reikn_vantar',   t:'📦 Skýrsla 2026 án reiknings', laegra:true,  mark:0 },
 ];
 
 function deltaChip(d, laegra){
@@ -124,6 +131,19 @@ async function saekja(){
     fylla('amber',  g.listar.amber,             ['nafn','kennitala','taeki_skodud','sidasta_skodun']);
     fylla('rukkud', g.listar.rukkud_an_skyrslu, ['nafn','heimilisfang','felag']);
     fylla('engin',  g.listar.engin_skyrsla,     ['nafn','heimilisfang','felag','rekstrarfelag']);
+
+    // 📦 Bundle-gloppur — kind/staða þýtt í læsileg merki (STADA_LBL ber HTML, ekki esc-að).
+    const KIND_LBL = { uttekt:'🧯 Úttekt', brunakerfi:'🔥 Brunakerfi' };
+    const STADA_LBL = {
+      vantar_reikning:'<span class="amber">vantar reikning</span>',
+      vantar_skyrslu:'vantar skýrslu',
+      reikn_payday:'reikn. í Payday (ekki paraður)',
+    };
+    const bg = g.listar.bundle_gloppur || [];
+    document.getElementById('n-bundle').textContent = bg.length;
+    document.querySelector('#t-bundle tbody').innerHTML =
+      bg.map(x => `<tr><td>${esc(x.felag)}</td><td>${esc(x.kt)}</td><td>${KIND_LBL[x.kind] || esc(x.kind)}</td><td>${esc(x.yr)}</td><td>${STADA_LBL[x.stada] || esc(x.stada)}</td></tr>`).join('') ||
+      '<tr><td colspan="5">🎉 Öll pör klárað!</td></tr>';
   } catch (e) {
     stada.textContent = 'villa';
     const v = document.getElementById('villa');
