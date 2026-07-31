@@ -70,6 +70,17 @@
   .tag{background:#111a24;border:1px solid #223040;color:var(--ink2);border-radius:99px;
     padding:1px 8px;font-size:10.5px;font-weight:600}
 
+  /* Bensínmælir fyrir allt sem er TÍMABUNDIÐ — hve mikið er eftir á tanknum
+     (lykill að renna út, tími frá síðasta lífsmarki, aldur gagna). Fyllingin
+     minnkar og litast frá grænu í rautt. */
+  .maelir{margin-top:2px}
+  .maelir .bar{height:7px;border-radius:99px;background:#0b1118;border:1px solid #1b2530;
+    overflow:hidden;position:relative}
+  .maelir .fill{height:100%;border-radius:99px;transition:width .5s ease}
+  .maelir .ticks{display:flex;justify-content:space-between;color:var(--ink3);
+    font-size:9.5px;letter-spacing:.08em;margin-top:2px;font-weight:700}
+  .maelir .txt{color:var(--ink3);font-size:10.5px;font-variant-numeric:tabular-nums}
+
   .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:4px}
   .abtn{background:#1c2734;border:1px solid var(--brd2);color:var(--ink2);border-radius:8px;
     padding:5px 10px;font-size:11.5px;font-weight:600;text-decoration:none;white-space:nowrap}
@@ -162,6 +173,7 @@ function fraGognum(d){
         s.status==='stale' ? 'ekkert nýtt í '+dagar+' daga — uppfærslan er líklega stöðvuð' :
         String(s.status),
       hvernig: HVERNIG_GOGN[s.key] || null,
+      dagar: dagar,
       meta: [s.newest_real?('nýjustu gögn '+String(s.newest_real).slice(0,10)):'',
              s.last_import?('síðast samstillt '+relTimi(s.last_import)):'',
              s.count!=null?(s.count.toLocaleString('is-IS')+' færslur'):''].filter(Boolean).join(' · ')
@@ -189,10 +201,51 @@ function fraVelum(d){
       v.aldur_min<=1440 ? 'ekkert lífsmark í '+Math.round(v.aldur_min/60)+' klst — líklega slökkt' :
       'ekkert lífsmark í '+Math.round(v.aldur_min/1440)+' daga — DOTTIN ÚR SAMBANDI',
     hvernig: v.athugasemd || null,
+    aldur_min: v.aldur_min,
     repos: v.repos || [],
     tags: (v.verkfaeri||[]).concat((v.verk||[]).map(x=>'▶ '+x)),
     meta: 'fyrst séð '+(v.first_seen?relTimi(v.first_seen):'—'),
   }));
+}
+
+/* Hvaða kort eiga mæli — allt sem er TÍMABUNDIÐ:
+   · lykill með útrunatíma (Payday-lyklaskyndiminni, líftími 60 mín)
+   · tölva: 90 mín gluggi frá síðasta lífsmarki
+   · gagnaból: 14 daga gluggi frá nýjustu gögnum. */
+function maelirAf(s){
+  if(s.talning && s.talning.minutur!=null){
+    const m = s.talning.minutur;
+    return { pct: m/60, txt: m>0 ? m+' mín eftir' : 'endurnýjast við næstu notkun',
+             tomur:'RENNUR ÚT', fullur:'NÝR' };
+  }
+  if(s.aldur_min!=null){
+    return { pct: 1 - s.aldur_min/90,
+             txt: s.aldur_min<60 ? s.aldur_min+' mín frá lífsmarki'
+                                 : Math.round(s.aldur_min/60)+' klst frá lífsmarki',
+             tomur:'ÚR SAMBANDI', fullur:'Í SAMBANDI' };
+  }
+  if(s.dagar!=null){
+    return { pct: 1 - s.dagar/14,
+             txt: s.dagar===0 ? 'gögn frá í dag' : s.dagar+' daga gömul gögn',
+             tomur:'STAÐNAÐ', fullur:'FERSKT' };
+  }
+  return null;
+}
+
+/* Bensínmælir: pct 1 = fullur tankur, 0 = tómur. Liturinn fylgir stöðunni sem
+   kortið er þegar komið með, svo mælirinn og ljósið segja alltaf það sama. */
+function maelirHtml(m){
+  if(!m || m.pct==null) return '';
+  const pct = Math.max(0, Math.min(1, m.pct));
+  const litur = pct>.5 ? 'linear-gradient(90deg,#15803d,#22c55e)'
+              : pct>.2 ? 'linear-gradient(90deg,#b45309,#f59e0b)'
+                       : 'linear-gradient(90deg,#991b1b,#ef4444)';
+  return '<div class="maelir">'+
+    '<div class="bar"><div class="fill" style="width:'+(pct*100).toFixed(1)+'%;background:'+litur+'"></div></div>'+
+    '<div class="ticks"><span>'+esc(m.tomur||'TÓMT')+'</span>'+
+      (m.txt?'<span class="txt">'+esc(m.txt)+'</span>':'')+
+      '<span>'+esc(m.fullur||'FULLT')+'</span></div>'+
+  '</div>';
 }
 
 function rada(services){
@@ -228,6 +281,7 @@ function kortHtml(s){
       (s.undir?'<div class="undir">'+esc(s.undir)+'</div>':'')+
     '</div></div>'+
     (s.detail?'<div class="detail">'+esc(s.detail)+'</div>':'')+
+    maelirHtml(s.maelir || maelirAf(s))+
     (meta?'<div class="meta">'+esc(meta)+'</div>':'')+
     repos + tags +
     (s.hvernig?'<div class="hvernig">'+s.hvernig+'</div>':'')+   /* skjalfestur texti — leyfir <b>/<code> */
