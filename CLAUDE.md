@@ -178,6 +178,16 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   **📧 Nýjustu póstar** (`recent_emails`), **✅ Verkefni** (open to-dos read from
   `state` — `minverkefni.checklist` + `okkarVerkefni.twoCol`). Buttons switch
   tabs via `state.ui.activeTab=…; save(); render()`.
+- `jarvis` — **🧠 J.A.R.V.I.S.** (renderJarvis; situr beint undir Deginum). HUD-ið
+  yfir allt kerfið, innfellt sem full-hæðar iframe á `/jarvis.html` — sama mynstur og
+  `multitool` (eitt `<iframe>` í `#view`, hæð stillt af `window.innerHeight`, endur-passað
+  við `resize`), svo síðan er EIN og enginn tvíverknaður. Iframe-ið ber
+  **`allow="microphone"`** — án þess þagnar kjarninn (HUD-ið notar `getUserMedia` +
+  talgreiningu og bregst við raunverulegu hljóðstigi). `body[data-tab="jarvis"] main`
+  fær `max-width:none;padding:0;background:#020814` svo hvítt blikki ekki í gegn meðan
+  iframe-ið hleðst. Spjaldið í Bakendi opnar hana áfram á **sérskjá** (`target=_blank`)
+  — ætlunin er að hún standi opin á sínum skjá; flipinn er fyrir fljóta kíkið.
+  Deep-link `#jarvis` virkar sjálfkrafa (`applyDeepLinkTab` les `state.tabs`).
 - `yfirlit` — front page / dashboard. Includes an **Útistandandi** band
   (óinnheimt + verkstaðir án reiknings) pulling `summary.total_unpaid` +
   `summary.worksites_with_no_invoice` live from `/api/worksites?year=combined`;

@@ -492,6 +492,9 @@ body[data-tab="vinnubok"] main,
 body[data-tab="reikningar"] main{max-width:none;padding:14px 24px}
 /* Skjala-multitool fyllir alla breidd (iframe með eigin útliti) — engin padding/hámark */
 body[data-tab="multitool"] main{max-width:none;padding:0}
+/* J.A.R.V.I.S. er dökkt HUD — full breidd og dökkur bakgrunnur svo hvítt blikki ekki
+   í gegn meðan iframe-ið hleðst. */
+body[data-tab="jarvis"] main{max-width:none;padding:0;background:#020814}
 .section{margin-bottom:18px}
 .section h2{font-size:15px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin:6px 4px 10px;font-weight:700}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
@@ -1736,6 +1739,7 @@ const DEFAULT_STATE = {
   tabs: [
     {id:'verkkaupar', label:'Verkkaupar', icon:'🤝', url:'/verkkaupar.html', external:true},
     {id:'dagurinn',   label:'Dagurinn',   icon:'🌅'},
+    {id:'jarvis',     label:'J.A.R.V.I.S.', icon:'🧠'},
     {id:'yfirlit',    label:'Yfirlit',    icon:'🏠'},
     {id:'stjornbord', label:'Stjórnborð', icon:'🎛'},
     {id:'leidsogn',   label:'Leiðsögn',   icon:'🧭'},
@@ -2030,7 +2034,7 @@ function clearDataCache(){
 function ensureNewTabs(s){
   if(!s || !Array.isArray(s.tabs)) return;
   if(!Array.isArray(s.bakendiLinks)) s.bakendiLinks = BAKENDI_LINK_SEED.map(x=>({...x}));
-  ['verkkaupar','dagurinn','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','vorubirgdir','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','tvmaeting','verdsamanburdur','verkstadir','skuldunautar','krofuyfirlit','krofur','hreyfingaryfirlit','nlsh','spurningar','sjalfvirkni','vefryni','skodanir','verkfaeri','multitool','bakendi'].forEach(id=>{
+  ['verkkaupar','dagurinn','jarvis','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','vorubirgdir','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','tvmaeting','verdsamanburdur','verkstadir','skuldunautar','krofuyfirlit','krofur','hreyfingaryfirlit','nlsh','spurningar','sjalfvirkni','vefryni','skodanir','verkfaeri','multitool','bakendi'].forEach(id=>{
     if(!s.tabs.find(t=>t.id===id)){
       const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
       if(d){
@@ -2042,6 +2046,10 @@ function ensureNewTabs(s){
         } else if(id === 'dagurinn'){
           // Dagurinn is the landing page — pin it to the very front.
           target = 0;
+        } else if(id === 'jarvis'){
+          // J.A.R.V.I.S. situr beint undir Dagurinn — yfirlitsborðið yfir allt.
+          const idx = s.tabs.findIndex(t=>t.id==='dagurinn');
+          target = idx >= 0 ? idx + 1 : 0;
         } else if(id === 'stjornbord'){
           // Stjórnborð sits right under Yfirlit (top of the sidebar).
           const idx = s.tabs.findIndex(t=>t.id==='yfirlit');
@@ -2514,6 +2522,7 @@ function render(){
   if(t.id==='vefryni') return renderVefryni(t);
   if(t.id==='skodanir') return renderSkodanir(t);
   if(t.id==='multitool') return renderMultitool(t);
+  if(t.id==='jarvis') return renderJarvis(t);
   if(t.id==='bakendi') return renderBakendi(t);
   if(t.id==='sjalfvirkni') return renderSjalfvirkni(t);
   if(t.id==='vorubirgdir') return renderVorubirgdir(t);
@@ -2802,6 +2811,17 @@ function renderMultitool(t){
   fit();
   // Endur-passa hæð við gluggabreytingu (bindst aðeins einu sinni).
   if(!window.__mtFitBound){ window.__mtFitBound = true; window.addEventListener('resize', () => { if(document.getElementById('mt-embed')) fit(); }); }
+}
+// 🧠 J.A.R.V.I.S. — HUD-ið innfellt sem full-hæðar síða (endurnýtir /jarvis.html,
+// nákvæmlega eins og Skjala-multitool). `allow="microphone"` af því HUD-ið hlustar
+// (getUserMedia + talgreining) — án þess þagnar kjarninn inni í iframe.
+function renderJarvis(t){
+  $view.innerHTML =
+    '<iframe id="jv-embed" src="/jarvis.html" title="J.A.R.V.I.S." allow="microphone"' +
+    ' style="width:100%;border:0;display:block;background:#020814"></iframe>';
+  const fit = () => { const f = document.getElementById('jv-embed'); if(!f) return; const top = f.getBoundingClientRect().top; f.style.height = Math.max(460, window.innerHeight - top - 12) + 'px'; };
+  fit();
+  if(!window.__jvFitBound){ window.__jvFitBound = true; window.addEventListener('resize', () => { if(document.getElementById('jv-embed')) fit(); }); }
 }
 function renderVefryni(t){
   const esc = s => escapeHtml(String(s==null?'':s));
@@ -3618,7 +3638,7 @@ function renderBakendi(t){
           <span style="${iconSq};background:linear-gradient(135deg,#0ea5e9,#0c4a6e)">◉</span>
           <div style="flex:1">
             <div style="${titleStyle};color:#cfeeff">J.A.R.V.I.S. — stjórnstöðin á einum skjá</div>
-            <p style="${descStyle};margin-top:4px;color:#8fc7e6">Allt kerfið í einni mynd: tengingar, vélar, gagnaleiðslur og <b style="color:#cfeeff">skýrsluþekjan</b> — með hljóðnemanum í miðjunni. Talaðu og fáðu svar upphátt. Ætlað á skjá sem stendur opinn.</p>
+            <p style="${descStyle};margin-top:4px;color:#8fc7e6">Allt kerfið í einni mynd: tengingar, vélar, gagnaleiðslur og <b style="color:#cfeeff">skýrsluþekjan</b> — með hljóðnemanum í miðjunni. Talaðu og fáðu svar upphátt. Ætlað á skjá sem stendur opinn — þessi hlekkur opnar hann á sérskjá; hann er líka flipi í hliðarstikunni (🧠 J.A.R.V.I.S., undir Deginum).</p>
           </div>
           <span style="${chipStyle('#0c4a6e','#cfeeff')}">Nýtt</span>
         </div>
