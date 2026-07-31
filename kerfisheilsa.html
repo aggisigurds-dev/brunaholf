@@ -251,6 +251,7 @@ function fraVelum(d){
       'ekkert lífsmark í '+Math.round(v.aldur_min/1440)+' daga — DOTTIN ÚR SAMBANDI',
     hvernig: v.athugasemd || null,
     aldur_min: v.aldur_min,
+    vel_nafn: v.vel || v.hostname,
     repos: v.repos || [],
     tags: (v.verkfaeri||[]).concat((v.verk||[]).map(x=>'▶ '+x)),
     meta: 'fyrst séð '+(v.first_seen?relTimi(v.first_seen):'—'),
@@ -328,6 +329,23 @@ function kortHtml(s){
         (r.hreint===false?' · <span style="color:#fbbf24">óvistaðar breytingar</span>':'')+
         '<br>'+esc(r.slod)+'</div>').join('') + '</div>'
     : '';
+  // Skipana-hólfið: uppskriftirnar sem má senda á ÞESSA vél + það sem hefur
+  // verið sent nýlega. Aðeins á tölvu-kortum.
+  let hol = '';
+  if(s.vel_nafn){
+    const minar = SKIPANIR.filter(x => x.vel === s.vel_nafn).slice(0,4);
+    hol = '<div class="hol">'+
+      '<div class="hol-h">SENDA SKIPUN — vélin sækir við næsta lífsmark</div>'+
+      '<div class="hol-b">'+ UPPSKRIFTIR.map(u =>
+        '<button class="ubtn" data-vel="'+esc(s.vel_nafn)+'" data-upp="'+esc(u.id)+'" title="'+esc(u.lysing)+'">'+
+        esc(u.heiti)+'</button>').join('') +'</div>'+
+      (minar.length ? '<div class="hol-s">'+ minar.map(x =>
+        '<div class="skipun '+esc(x.stada)+'"><span>'+esc(x.heiti)+'</span>'+
+        '<span class="st">'+({bid:'bíður',sott:'í keyrslu',lokid:'✓ búið',villa:'✗ villa'}[x.stada]||x.stada)+
+        (x.lokid_at?' · '+relTimi(x.lokid_at):'')+'</span>'+
+        (x.utkoma?'<pre>'+esc(String(x.utkoma).slice(-700))+'</pre>':'')+'</div>').join('') +'</div>' : '')+
+    '</div>';
+  }
   const tags = (s.tags && s.tags.length)
     ? '<div class="taglist">'+s.tags.map(t=>'<span class="tag">'+esc(t)+'</span>').join('')+'</div>' : '';
 
@@ -339,7 +357,7 @@ function kortHtml(s){
     (s.detail?'<div class="detail">'+esc(s.detail)+'</div>':'')+
     maelirHtml(s.maelir || maelirAf(s))+
     (meta?'<div class="meta">'+esc(meta)+'</div>':'')+
-    repos + tags +
+    repos + tags + hol +
     (s.hvernig?'<div class="hvernig">'+s.hvernig+'</div>':'')+   /* skjalfestur texti — leyfir <b>/<code> */
     (acts?'<div class="acts">'+acts+'</div>':'')+
   '</div>';
@@ -350,6 +368,16 @@ function teikna(services){
   $('#body').innerHTML = Object.keys(grps).map(g =>
     '<div class="grp"><h2>'+esc(g)+'</h2><div class="grid">' +
     grps[g].map(kortHtml).join('') + '</div></div>').join('');
+  $('#body').querySelectorAll('[data-upp]').forEach(b =>
+    b.addEventListener('click', async () => {
+      b.disabled = true; const g = b.textContent; b.textContent = '⏳ …';
+      try{
+        await fetch('/api/vel-skipun', { method:'POST', headers:{'content-type':'application/json'},
+          body: JSON.stringify({ action:'senda', vel:b.dataset.vel, uppskrift:b.dataset.upp,
+            beidandi: localStorage.getItem('ky_me')||null }) });
+      }catch(_){}
+      b.textContent = '✓ Í röð'; setTimeout(()=>{ b.textContent = g; b.disabled = false; sakja(''); }, 1400);
+    }));
   $('#body').querySelectorAll('[data-test]').forEach(b =>
     b.addEventListener('click', () => sakja(b.dataset.test, b)));
   // „Merkja endurnýjað" skráir AÐEINS tímastimpil — lykillinn sjálfur kemur
@@ -366,17 +394,23 @@ function teikna(services){
     }));
 }
 
-let SIDAST = [];
+let SIDAST = [], UPPSKRIFTIR = [], SKIPANIR = [];
 async function sakja(test, btn){
   if(btn){ btn.disabled = true; btn.textContent = '⏳ …'; }
   const t = $('#test'); if(!btn){ t.disabled = true; t.textContent = '⏳ Prófa…'; }
   $('#sub').textContent = test ? 'Prófa tengingu…' : 'Sæki stöðu…';
   try{
-    const [heilsa, gogn, velar] = await Promise.all([
+    const [heilsa, gogn, velar, skip] = await Promise.all([
       fetch('/api/kerfisheilsa' + (test ? '?test='+encodeURIComponent(test) : ''), {cache:'no-store'}).then(r=>r.json()),
       fetch('/api/data-sources-status', {cache:'no-store'}).then(r=>r.json()).catch(()=>null),
       fetch('/api/vel-heartbeat', {cache:'no-store'}).then(r=>r.json()).catch(()=>null),
+      Promise.all([
+        fetch('/api/vel-skipun?uppskriftir=1',{cache:'no-store'}).then(r=>r.json()).catch(()=>null),
+        fetch('/api/vel-skipun?limit=25',{cache:'no-store'}).then(r=>r.json()).catch(()=>null),
+      ]),
     ]);
+    UPPSKRIFTIR = (skip && skip[0] && skip[0].uppskriftir) || [];
+    SKIPANIR    = (skip && skip[1] && skip[1].skipanir) || [];
     if(heilsa.error) throw new Error(heilsa.error);
     SIDAST = (heilsa.services||[]).concat(fraVelum(velar), fraGognum(gogn));
     teikna(SIDAST);
