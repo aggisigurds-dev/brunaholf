@@ -61,6 +61,12 @@
       sample: "Hi. It's just me. Everything's under control — three sales to invoice, and I've tidied your day. Shall we?",
       fb: { lang: "en-US", rate: 0.98, pitch: 1.06, pref: /samantha|ava|allison|google us english|female/i }
     },
+    natalie: {
+      name: "Natalie", emoji: "🌸", role: "Hlý & róleg",
+      voice_id: "9154a623447644788ce990c64e0f235a",   // Fish — Natalie Portman (calm, warm, empathetic)
+      sample: "Hey Agnar. No rush — just so you know, three sales are ready to invoice whenever you are. You've got this.",
+      fb: { lang: "en-US", rate: 0.95, pitch: 1.04, pref: /samantha|ava|allison|google us english|female/i }
+    },
     dolly: {
       name: "Dolly", emoji: "🤠", role: "Hvatningin (kvenrödd)",
       voice_id: "",   // TODO: velja kvenrödd — t.d. Fish Taylor Swift / Kim K, eða „southern/country"
