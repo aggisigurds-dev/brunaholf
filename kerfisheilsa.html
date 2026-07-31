@@ -236,7 +236,8 @@ function maelirAf(s){
    kortið er þegar komið með, svo mælirinn og ljósið segja alltaf það sama. */
 function maelirHtml(m){
   if(!m || m.pct==null) return '';
-  const pct = Math.max(0, Math.min(1, m.pct));
+  // Tómur tankur fær örlitla rauða nöf svo mælirinn líti ekki út fyrir að vanta.
+  const pct = Math.max(.025, Math.min(1, m.pct));
   const litur = pct>.5 ? 'linear-gradient(90deg,#15803d,#22c55e)'
               : pct>.2 ? 'linear-gradient(90deg,#b45309,#f59e0b)'
                        : 'linear-gradient(90deg,#991b1b,#ef4444)';
