@@ -1004,6 +1004,18 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   recent_emails, per-account status). `email-ingest-browser.js` additionally
   rejects content-less extension rows (no subject AND no snippet → counted as
   `skipped_empty`, never upserted).
+- `company-mail.js` — **`GET /api/company-mail[?days=365]`** (service role, CORS *):
+  per SERVICE company (`fyrirtaeki` `er_i_thjonustu=true`), the newest INBOUND email
+  and whether it is **unreplied**. Powers the Slökkvitæki „Fyrirtæki í þjónustu"
+  red-envelope badge (patch 295) so an email from months ago is not forgotten
+  between annual visits. Matching is CONSERVATIVE — exact sender address only
+  (`fyrirtaeki.netfang`, or a single-live-site base's `customers_base` netfang/
+  contact_email); an address shared by two companies is dropped (a wrong red
+  envelope is worse than a missing one). `unreplied` = matched inbound exists AND no
+  SENT email addressed to that company after the newest inbound. Returns
+  `{byId:{<fyrirtaeki_id>:{from,subject,snippet,received_at,is_question,unreplied}},
+  generated_at, scanned}`. Rides the `/api/*` catch-all. Muting the badge is
+  client-side (`arsskodun_customers[id].mail_off`), not in this endpoint.
 
 ### Sjálfvirkni (automation registry + run log)
 - `automation_jobs` — one row per registered automation: `name` (UNIQUE), `label`,
