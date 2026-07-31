@@ -89,17 +89,21 @@
   .straumur .ok{color:var(--ok)} .straumur .vara{color:var(--var)} .straumur .hae{color:var(--hae)}
 
   /* miðjan */
-  .kjarni{border:1px solid var(--cy-dim);position:relative;min-height:430px;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
-    background:radial-gradient(circle at 50% 45%,rgba(29,127,168,.2),transparent 62%)}
+  /* Hnötturinn á efri hlutann, stjórntækin neðst (flex-end) — ekkert liggur
+     ofan á miðjunni. Striginn teiknar miðju hnattarins í 42% hæð. */
+  .kjarni{border:1px solid var(--cy-dim);position:relative;min-height:520px;
+    display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+    background:radial-gradient(circle at 50% 40%,rgba(29,127,168,.16),transparent 62%)}
   #kjarna-canvas{position:absolute;inset:0;width:100%;height:100%}
-  .mid{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:12px;padding:16px}
-  #hnappur{width:126px;height:126px;border-radius:50%;cursor:pointer;
+  .kjarni>.malrofi{position:absolute;top:10px;right:10px;z-index:3}
+  .mid{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;
+    gap:10px;padding:12px 16px 16px;width:100%}
+  #hnappur{width:96px;height:96px;border-radius:50%;cursor:pointer;
     background:radial-gradient(circle at 50% 40%,rgba(79,216,255,.24),rgba(2,12,25,.85));
-    border:1px solid var(--cy);color:var(--cy);font:inherit;font-size:11px;letter-spacing:.2em;
-    text-transform:uppercase;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+    border:1px solid var(--cy);color:var(--cy);font:inherit;font-size:10.5px;letter-spacing:.2em;
+    text-transform:uppercase;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
     box-shadow:0 0 34px rgba(79,216,255,.3),inset 0 0 28px rgba(79,216,255,.16)}
-  #hnappur .ic{font-size:32px}
+  #hnappur .ic{font-size:25px}
   #hnappur.on{border-color:var(--hae);color:var(--hae);
     box-shadow:0 0 46px rgba(255,90,110,.45),inset 0 0 30px rgba(255,90,110,.2)}
   .heyri{font-size:10.5px;letter-spacing:.2em;color:var(--ink3);text-transform:uppercase;min-height:14px}
@@ -178,15 +182,17 @@
     <div class="dalkur">
       <div class="kjarni">
         <canvas id="kjarna-canvas"></canvas>
+        <!-- Málrofinn er STILLING → út í hornið. Aðgerðin (TALA) er neðst á
+             miðásnum, svo agnahnötturinn í miðjunni sé óskertur. -->
+        <div class="malrofi">
+          <button data-mal="is" class="on">ÍSL</button>
+          <button data-mal="en">ENG</button>
+        </div>
         <div class="mid">
-          <div class="malrofi">
-            <button data-mal="is" class="on">ÍSL</button>
-            <button data-mal="en">ENG</button>
-          </div>
-          <button id="hnappur"><span class="ic">◉</span><span id="hlbl">Tala</span></button>
-          <div class="heyri" id="heyri">Ýttu og talaðu</div>
           <div class="talid" id="talid"></div>
           <div class="svar" id="svar" hidden></div>
+          <div class="heyri" id="heyri">Ýttu og talaðu</div>
+          <button id="hnappur"><span class="ic">◉</span><span id="hlbl">Tala</span></button>
         </div>
       </div>
 
@@ -248,10 +254,42 @@ function settMal(m){
 document.querySelectorAll('.malrofi button').forEach(b =>
   b.addEventListener('click', () => settMal(b.dataset.mal)));
 
-/* ── kjarninn: hringur sem bregst við RAUNVERULEGU hljóði og
-      raunverulegri kerfisstöðu (grænn = allt í lagi, rauður = eitthvað niðri) ── */
-const kc = $('#kjarna-canvas'), kx = kc.getContext('2d');
+/* ── kjarninn: AGNAHNÖTTUR sem snýst hægt, með pínulitlum hvítglóandi punkti
+      í miðjunni og mælitækja-hringjum utan um (Agnar 2026-07-31, eftir mynd).
+      Bregst við RAUNVERULEGU hljóði; kerfisstaðan litar mælihringina. ── */
+const kc = $('#kjarna-canvas'), kx = kc.getContext('2d'), hnapp = $('#hnappur');
 let orka = 0, markOrka = 0, heilsulitur = [79,216,255], fasi = 0;
+let tS = 0, snun = 0;          // tímastimpill · snúningshorn hnattarins
+
+// Agnirnar liggja á KÚLUSKEL og eru varpaðar flatt. Fibonacci-dreifing gefur
+// jafnt bil (ekki klasa eins og Math.random á kúlu); flöt vörpun þéttir þær
+// sjálfkrafa við jaðarinn, sem er einmitt það sem gefur hnattarformið.
+// Þröng skel (0,68–1,0): innstreymið sést, EN limbið helst skýrt og miðjan
+// opin fyrir punktinn. Breið skel gerði hnöttinn að fylltri kúlu — þá hverfur
+// hnattarformið sem verður til við að agnirnar þéttist á jaðrinum.
+const YSTA = 1.0, INNSTA = .68;
+
+// Jöfn dreifing á kúlu: z jafndreift á [-1,1] + jafndreift lengdarhorn. (Að
+// draga x/y/z hvert í sínu lagi hnappar agnirnar á hornin.)
+function stefna(){
+  const z = Math.random()*2-1, t = Math.random()*Math.PI*2, r = Math.sqrt(Math.max(0,1-z*z));
+  return { x:Math.cos(t)*r, y:z, z:Math.sin(t)*r };
+}
+const HNOTTUR = (() => {
+  const N = 1400, ut = [], gullna = Math.PI*(3-Math.sqrt(5));
+  for(let i=0;i<N;i++){
+    // Byrjað á Fibonacci-dreifingu (jafnt bil, engir klasar) og hnikað
+    // lítillega — hrein Fibonacci sýnir sig annars sem spíral-moiré.
+    const y = 1 - (i/(N-1))*2, r = Math.sqrt(Math.max(0,1-y*y)), th = i*gullna;
+    const j = () => (Math.random()-.5)*.07;
+    ut.push({ x:Math.cos(th)*r + j(), y:y + j(), z:Math.sin(th)*r + j(),
+              r: INNSTA + Math.random()*(YSTA-INNSTA),   // staða á leiðinni inn
+              v: .012 + Math.random()*.016,              // ~12–27 s ferð inn skelina
+              strik: Math.random() < .10,                // fá örstutt strik innan um
+              f: Math.random()*6.283 });                 // eigin fasi → tindr í ótakt
+  }
+  return ut;
+})();
 function staerd(){
   [kc, $('#ratsja-canvas'), $('#bylgja')].forEach(c => {
     const r = c.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio||1);
@@ -260,44 +298,129 @@ function staerd(){
 }
 addEventListener('resize', staerd);
 
-function teiknaKjarna(){
-  const w = kc.width, h = kc.height, cx = w/2, cy = h/2;
+function teiknaKjarna(nu){
+  const w = kc.width, h = kc.height, cx = w/2, cy = h*.385;
   const dpr = Math.min(2, devicePixelRatio||1);
+  // TÍMABUNDIÐ, ekki rammabundið — annars snýst hnötturinn tvöfalt hraðar á
+  // 120Hz skjá en 60Hz. Þakið ver okkur á flipa sem lá í dvala.
+  const dt = tS ? Math.min(.05, ((nu||0)-tS)/1000) : 0;
+  tS = nu || 0;
   kx.clearRect(0,0,w,h);
-  orka += (markOrka - orka) * .12;
-  fasi += .004;
-  const R = Math.min(w,h)*.30;
-  const [r,g,b] = heilsulitur;
-  const lit = (a) => `rgba(${r},${g},${b},${a})`;
 
-  // ytri hringir
-  for(let i=0;i<3;i++){
-    const rr = R*(1.18 + i*.14) + orka*R*.10;
-    kx.beginPath(); kx.arc(cx,cy,rr,0,Math.PI*2);
-    kx.strokeStyle = lit(.10 + i*.04); kx.lineWidth = 1*dpr; kx.stroke();
-  }
-  // strikaður hringur sem snýst
-  kx.save(); kx.translate(cx,cy); kx.rotate(fasi*2);
+  // Snögg árás, hæg dvínun: hnötturinn tekur við hljóðinu strax og sígur niður.
+  orka += (markOrka - orka) * Math.min(1, (markOrka>orka ? 14 : 1.8)*dt);
+  fasi += dt*.6;
+  const E = Math.max(orka, .05);
+  snun += dt*(.055 + .07*E);            // ~3–7°/s — hægt reik, ekki hjól
+
+  const R = Math.min(w, h*.86)*.25;
+  const [hr,hg,hb] = heilsulitur;
+  // Hnötturinn heldur ALLTAF köldum kerfislit (eins og fyrirmyndin); stöðuliturinn
+  // fær mælihringina, svo rautt kerfi máli ekki alla myndina.
+  const kalt = (a) => `rgba(150,205,255,${a})`;
+  const stada = (a) => `rgba(${hr},${hg},${hb},${a})`;
+
+  // ── Mælitækin ────────────────────────────────────────────────────────────
+  // Punktahringur næst hnettinum
   kx.beginPath();
-  for(let i=0;i<72;i++){
-    const a = i/72*Math.PI*2, r1 = R*1.42, r2 = r1 + (i%6===0 ? 9 : 4)*dpr;
-    kx.moveTo(Math.cos(a)*r1, Math.sin(a)*r1); kx.lineTo(Math.cos(a)*r2, Math.sin(a)*r2);
+  for(let i=0;i<150;i++){
+    const a = i/150*Math.PI*2, rr = R*1.12;
+    kx.moveTo(cx+Math.cos(a)*rr, cy+Math.sin(a)*rr);
+    kx.arc(cx+Math.cos(a)*rr, cy+Math.sin(a)*rr, .9*dpr, 0, Math.PI*2);
   }
-  kx.strokeStyle = lit(.30); kx.lineWidth = 1*dpr; kx.stroke(); kx.restore();
+  kx.fillStyle = stada(.34); kx.fill();
 
-  // kjarninn — púlsar með hljóðinu
-  const kR = R*(.55 + orka*.5);
-  const gr = kx.createRadialGradient(cx,cy,0,cx,cy,kR);
-  gr.addColorStop(0, lit(.95)); gr.addColorStop(.35, lit(.35)); gr.addColorStop(1, lit(0));
-  kx.beginPath(); kx.arc(cx,cy,kR,0,Math.PI*2); kx.fillStyle = gr; kx.fill();
+  // Bogar með opum — snúast mjög hægt á móti hnettinum
+  kx.save(); kx.translate(cx,cy); kx.rotate(-snun*.45);
+  kx.lineWidth = 1.6*dpr; kx.strokeStyle = stada(.62);
+  [[-.28,1.42],[1.30,2.55]].forEach(([f,t]) => {
+    kx.beginPath(); kx.arc(0,0,R*1.24, f*Math.PI, t*Math.PI); kx.stroke();
+  });
+  kx.restore();
 
-  // agnir — þéttleikinn fylgir hljóðstyrknum
-  const n = 90;
-  for(let i=0;i<n;i++){
-    const a = i/n*Math.PI*2 + fasi*(i%3?1:-1)*1.6;
-    const rad = R*(.62 + .5*Math.sin(i*2.3 + fasi*7) + orka*.45);
-    kx.beginPath(); kx.arc(cx+Math.cos(a)*rad, cy+Math.sin(a)*rad, (i%7?1:1.8)*dpr, 0, Math.PI*2);
-    kx.fillStyle = lit(.25 + .5*Math.abs(Math.sin(i+fasi*4))); kx.fill();
+  // Ytri gráðuhringur: strik á 5°, lengri á 30°, og gráðutölur (000…330)
+  kx.font = `${Math.round(7.5*dpr)}px ui-monospace,Menlo,Consolas,monospace`;
+  kx.textAlign = 'center'; kx.textBaseline = 'middle';
+  for(let d=0; d<360; d+=5){
+    const a = (d-90)*Math.PI/180, langt = d%30===0;
+    const r1 = R*1.36, r2 = r1 + (langt?6:3)*dpr;
+    kx.beginPath();
+    kx.moveTo(cx+Math.cos(a)*r1, cy+Math.sin(a)*r1);
+    kx.lineTo(cx+Math.cos(a)*r2, cy+Math.sin(a)*r2);
+    kx.strokeStyle = stada(langt?.55:.26); kx.lineWidth = 1*dpr; kx.stroke();
+    if(langt){
+      const rt = r2 + 8*dpr;
+      kx.fillStyle = stada(.5);
+      kx.fillText(String(d).padStart(3,'0'), cx+Math.cos(a)*rt, cy+Math.sin(a)*rt);
+    }
+  }
+
+  // ── Hnötturinn ───────────────────────────────────────────────────────────
+  // Samleggjandi teikning: þar sem agnirnar þéttast leggst birtan saman og
+  // jaðarinn glóir af sjálfu sér — það er þéttleikinn sem býr til formið.
+  kx.globalCompositeOperation = 'lighter';
+
+  // Dauf innri glóð svo hnötturinn sé fylltur en ekki hol skel
+  const innri = kx.createRadialGradient(cx,cy,0,cx,cy,R);
+  innri.addColorStop(0, kalt(.30+.20*E)); innri.addColorStop(.55, kalt(.11+.10*E));
+  innri.addColorStop(1, kalt(0));
+  kx.beginPath(); kx.arc(cx,cy,R,0,Math.PI*2); kx.fillStyle = innri; kx.fill();
+
+  const Rs = R*(.95 + .05*E), co = Math.cos(snun), si = Math.sin(snun);
+  for(const p of HNOTTUR){
+    // ── Innstreymið: hver ögn sígur hægt inn að kjarnanum og fæðist aftur
+    //    yst þegar hún nær honum. Hljóðið herðir á soginu.
+    p.r -= p.v * (1 + 1.5*E) * dt;
+    if(p.r <= INNSTA){
+      const s = stefna();                    // ný stefna → skelin helst jöfn
+      p.x = s.x; p.y = s.y; p.z = s.z; p.r = YSTA; p.f = Math.random()*6.283;
+    }
+    // Silhúettan andar: lágtíðni bylgja eftir stefnu agnarinnar gerir brúnina
+    // lífræna í stað fullkominnar kúlu.
+    const rf = p.r * (1 + .055*Math.sin(p.x*3.1 + fasi*1.1)*Math.sin(p.y*2.4 - fasi*.8));
+    const x =  (p.x*co + p.z*si) * rf;
+    const z = (-p.x*si + p.z*co) * rf;       // >0 = framhlið
+    const sx = cx + x*Rs, sy = cy + p.y*rf*Rs;
+    const d  = (z/Math.max(.2,rf) + 1)/2;    // 0 aftast … 1 fremst
+    const tindr = .72 + .28*Math.sin(fasi*1.2 + p.f);
+    // Þéttist og skerpist eftir því sem hún nálgast kjarnann.
+    const nalaegd = 1 - (p.r-INNSTA)/(YSTA-INNSTA);
+    const a = (.20 + .62*d) * tindr * (.85 + .5*E) * (.86 + .28*nalaegd);
+    kx.strokeStyle = kx.fillStyle = kalt(a);
+    if(p.strik){
+      // örstutt strik EFTIR stefnunni INN — sýnir áttina án þess að hraða neinu
+      const n = Math.hypot(x, sy-cy) || 1;
+      const L = (1.6 + 1.6*d)*dpr, ux = x/n, uy = (sy-cy)/n;
+      kx.lineWidth = .9*dpr; kx.beginPath();
+      kx.moveTo(sx + ux*L, sy + uy*L); kx.lineTo(sx - ux*L, sy - uy*L);
+      kx.stroke();
+    }else{
+      const rr = (.50 + .85*d)*dpr;
+      kx.beginPath(); kx.arc(sx, sy, rr, 0, Math.PI*2); kx.fill();
+    }
+  }
+
+  // ── Punkturinn í miðjunni: LÍTILL og hvítglóandi, ekki stór hnöttur.
+  const bR = R*(.30 + .14*E);
+  const blomi = kx.createRadialGradient(cx,cy,0,cx,cy,bR);
+  blomi.addColorStop(0, `rgba(255,255,255,${(.70+.28*E).toFixed(2)})`);
+  blomi.addColorStop(.16, `rgba(210,238,255,${(.34+.30*E).toFixed(2)})`);
+  blomi.addColorStop(.55, kalt(.10+.16*E));
+  blomi.addColorStop(1, kalt(0));
+  kx.beginPath(); kx.arc(cx,cy,bR,0,Math.PI*2); kx.fillStyle = blomi; kx.fill();
+  kx.beginPath(); kx.arc(cx,cy,(1.5+1.6*E)*dpr,0,Math.PI*2);
+  kx.fillStyle = 'rgba(255,255,255,.95)'; kx.fill();
+
+  kx.globalCompositeOperation = 'source-over';
+
+  // Hnappurinn er neðst og fengi annars enga hlutdeild í orkunni.
+  // GILDRA: inline-stíll slær út `#hnappur.on` í CSS, svo rauði hlustunar-
+  // liturinn verður að vera valinn hér líka.
+  if(hnapp){
+    const [br,bg,bb] = hnapp.classList.contains('on') ? [255,90,110] : [79,216,255];
+    hnapp.style.boxShadow =
+      `0 0 ${Math.round(28+56*E)}px rgba(${br},${bg},${bb},${(.26+.36*E).toFixed(2)}),` +
+      `inset 0 0 ${Math.round(24+38*E)}px rgba(${br},${bg},${bb},${(.14+.32*E).toFixed(2)})`;
   }
   requestAnimationFrame(teiknaKjarna);
 }
