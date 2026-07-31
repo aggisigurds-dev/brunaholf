@@ -40,6 +40,8 @@ exports.handler = async (event) => {
       let b = {}; try { b = JSON.parse(event.body || '{}'); } catch (_) { return json(400, { error: 'Ógilt JSON' }); }
       if (b.action === 'unnid') return await merkja(b);
       if (b.action === 'save') return await vista(b);
+      if (b.action === 'spyrja') return await spyrja(b);
+      if (b.action === 'greina') return await greina(b);
       return json(400, { error: 'Óþekkt action' });
     }
     return json(405, { error: 'Method not allowed' });
@@ -146,6 +148,95 @@ async function stofnaVerkefni(s, texti) {
     const j = await r.json().catch(() => ({}));
     return j && j.task ? j.task : null;
   } catch (_) { return null; }
+}
+
+/* ─────────────── SPYRJA — talað svar til baka ───────────────
+   Fyrsta lagið af „Jarvis": þú talar, hann svarar. Svarið er stutt af því það
+   er LESIÐ UPPHÁTT í símanum — ekki lesið af skjá. Málið fylgir því sem þú
+   baðst um (íslenska inn, hvaða mál sem er út).
+   Samhengið er sótt LIFANDI en HALDIÐ ÞRÖNGU: opin verk, nýjustu raddpunktar
+   og fyrirtækið sem þú nefndir. Ekki allt kerfið — bara það sem svarar. */
+async function spyrja(b) {
+  const q = String(b.spurning || '').trim();
+  if (!q) return json(400, { error: 'Engin spurning' });
+  if (!ANTHROPIC) return json(503, { error: 'ANTHROPIC_API_KEY vantar' });
+  const mal = b.mal === 'en' ? 'en' : 'is';
+
+  const [verk, punktar, felog] = await Promise.all([
+    sbGet('verkefnalisti?select=title,status,priority&status=in.(beidni,i_vinnu)&order=created_at.desc&limit=25'),
+    sbGet('raddminni?select=titill,flokkur,fyrirtaeki,created_at&order=created_at.desc&limit=10'),
+    finnaFelag(q),
+  ]);
+
+  const samhengi = [
+    'OPIN VERK: ' + ((verk || []).map(v => '· ' + v.title).join('\n') || 'engin'),
+    'NÝJUSTU RADDPUNKTAR: ' + ((punktar || []).map(p =>
+      '· ' + (p.titill || '') + (p.fyrirtaeki ? ' [' + p.fyrirtaeki + ']' : '')).join('\n') || 'engir'),
+    felog.length ? 'FYRIRTÆKI SEM NEFNT VAR:\n' + felog.map(f =>
+      `· ${f.nafn} · kt ${f.kennitala || '—'} · ${f.heimilisfang || ''}` +
+      (f.er_i_thjonustu ? ' · Í ÞJÓNUSTU' : '') +
+      (f.athugasemdir ? '\n  punktar: ' + String(f.athugasemdir).slice(0, 400) : '')).join('\n') : '',
+  ].filter(Boolean).join('\n\n');
+
+  const kerfi =
+    (mal === 'en'
+      ? 'Answer in ENGLISH. '
+      : 'Svaraðu á ÍSLENSKU. ') +
+    'You are the assistant for Brunahólf ehf / Slökkvitæki ehf (fire protection, Iceland). ' +
+    'The question was SPOKEN and your answer will be READ ALOUD — so: 1-3 short sentences, ' +
+    'no lists, no markdown, no URLs, plain spoken language. ' +
+    'Answer ONLY from the context below. If the answer is not there, say plainly that you ' +
+    'do not have it and name what would be needed. NEVER invent a number, date or name.';
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-api-key': ANTHROPIC, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({
+        model: 'claude-opus-4-7', max_tokens: 350, system: kerfi,
+        messages: [{ role: 'user', content: 'SAMHENGI:\n' + samhengi + '\n\nSPURNING:\n' + q }],
+      }),
+    });
+    const j = await r.json();
+    const svar = ((j.content || []).map(c => c.text || '').join('') || '').trim();
+    if (!svar) return json(502, { error: 'Ekkert svar frá Claude' });
+    return json(200, { ok: true, svar, mal, studdist_vid: { verk: (verk || []).length, punktar: (punktar || []).length, felog: felog.length } });
+  } catch (e) {
+    return json(502, { error: String((e && e.message) || e) });
+  }
+}
+
+// Leitar að fyrirtæki sem nefnt er í spurningunni. Þröngt viljandi: aðeins orð
+// með stórum staf og >3 stafi, annars fæst rusl-match á algeng orð.
+async function finnaFelag(q) {
+  const ord = (q.match(/[A-ZÁÉÍÓÚÝÞÆÖÐ][\wáéíóúýþæöðÁÉÍÓÚÝÞÆÖÐ-]{3,}/g) || []).slice(0, 4);
+  if (!ord.length) return [];
+  const ut = [];
+  for (const o of ord) {
+    const r = await sbGet('fyrirtaeki?select=nafn,kennitala,heimilisfang,er_i_thjonustu,athugasemdir' +
+      `&nafn=ilike.*${encodeURIComponent(o)}*&deleted_at=is.null&limit=3`);
+    (r || []).forEach(x => { if (!ut.some(y => y.nafn === x.nafn)) ut.push(x); });
+    if (ut.length >= 5) break;
+  }
+  return ut.slice(0, 5);
+}
+
+/* Endur-greining: keyra skilninginn aftur á texta sem er þegar geymdur — t.d.
+   eftir að þú lagaðir talgreiningarvillu, eða þegar betri vél er komin.
+   Hljóðið er þegar í geymslu, svo ekkert glatast við að endurtaka. */
+async function greina(b) {
+  if (!b.id) return json(400, { error: 'id vantar' });
+  const rows = await sbGet(`raddminni?id=eq.${+b.id}&select=id,texti`);
+  const row = rows && rows[0];
+  if (!row) return json(404, { error: 'Punktur fannst ekki' });
+  const texti = String(b.texti || row.texti || '').trim();
+  if (!texti) return json(400, { error: 'Enginn texti til að greina' });
+  const s = await skilja(texti);
+  await sbPatch(`raddminni?id=eq.${row.id}`, {
+    texti, flokkur: s.flokkur || null, titill: s.titill || null,
+    samantekt: s.samantekt || null, fyrirtaeki: s.fyrirtaeki || null,
+  });
+  return json(200, { ok: true, skilningur: s });
 }
 
 /* ───────────────────────── lestur ───────────────────────── */
