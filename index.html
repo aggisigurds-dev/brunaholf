@@ -495,6 +495,15 @@ body[data-tab="multitool"] main{max-width:none;padding:0}
 /* J.A.R.V.I.S. er dökkt HUD — full breidd og dökkur bakgrunnur svo hvítt blikki ekki
    í gegn meðan iframe-ið hleðst. */
 body[data-tab="jarvis"] main{max-width:none;padding:0;background:#020814}
+/* Borðið á að fylla skjáinn: fánamyndin (banner.png) og hvíta Kerfisheilsu-spjaldið
+   átu 315 px ofan af HUD-inu — og spjaldið sýndi sömu tölur og HUD-ið sjálft beint
+   fyrir neðan. Hvort tveggja fer HÉR OG AÐEINS HÉR (öðrum flipum óbreytt).
+   GILDRA: topbar-inn sjálfur má ALDREI hverfa — ☰-hnappurinn í honum er eina leiðin
+   í valmyndina á síma, svo hann verður eftir sem mjó dökk ræma (56 px > 12 px toppur
+   + 36 px hnappur, því .topbar er overflow:hidden og klippir annars hnappana af). */
+body[data-tab="jarvis"] .topbar .banner-img{display:none}
+body[data-tab="jarvis"] .topbar{min-height:56px;background:#020814;box-shadow:none}
+body[data-tab="jarvis"] #_kh-card{display:none}
 .section{margin-bottom:18px}
 .section h2{font-size:15px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin:6px 4px 10px;font-weight:700}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
