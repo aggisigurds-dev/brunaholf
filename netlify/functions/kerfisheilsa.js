@@ -3,13 +3,13 @@
 //
 //   GET /api/kerfisheilsa            → ÓDÝRT: staða úr grunni + geymdum prófunum.
 //                                      ENGIN köll út úr húsi, svarar á ~200ms.
-//   GET /api/kerfisheilsa?test=1     → PRÓFAR í alvöru (Google/Payday/dkPlus/
-//                                      Tímavera) og geymir niðurstöðuna.
+//   GET /api/kerfisheilsa?test=1     → PRÓFAR í alvöru (Google/Payday/Tímavera)
+//                                      og geymir niðurstöðuna.
 //   GET /api/kerfisheilsa?test=<id>  → prófar EINA tengingu.
 //
 // AF HVERJU ÞETTA ER TIL (2026-07-31, ósk Agnars)
 // Tengi-takkarnir voru dreifðir um allt: Gmail í Bakendanum, Tímavera-lykillinn
-// í öðru korti, Payday/dkPlus hvergi sýnileg. Þegar tenging dettur út (lykill
+// í öðru korti, Payday hvergi sýnilegt. Þegar tenging dettur út (lykill
 // rennur út, aðgangur afturkallaður) sást það ekki fyrr en gögn hættu að berast
 // — oft dögum seinna. Hér er EITT borð: grænt = prófað og virkar, gult = tengt
 // en eitthvað að athuga, rautt = ótengt eða prófun féll.
@@ -117,7 +117,6 @@ async function runProbes(which, accounts, kv) {
 
   accounts.forEach(a => add('google:' + a.email, () => probeGoogle(a)));
   add('payday', () => probePayday());
-  add('dkplus', () => probeDkPlus());
   add('timavera', () => probeTimavera(kv));
 
   const res = await Promise.all(jobs);
@@ -177,34 +176,6 @@ async function probePayday() {
   let j = {}; try { j = JSON.parse(t); } catch (_) {}
   if (!(j.accessToken || j.access_token || j.token)) throw new Error('svar án aðgangslykils');
   return 'aðgangslykill fékkst';
-}
-
-// dkPlus tekur API-lykilinn BEINT á gagnaköllum (`auth_mode: direct-key` í
-// dkplus.js) — /Token-smíðin er aðeins vara-leið og svarar 401 í þessari
-// uppsetningu. Prófum því ódýrt les-kall, sömu leið og appið fer.
-async function probeDkPlus() {
-  const key = process.env.DKPLUS_API_KEY;
-  if (!key) throw new Error('DKPLUS_API_KEY vantar í umhverfið');
-  const base = (process.env.DKPLUS_BASE || 'https://api.dkplus.is/api/v1').replace(/\/+$/, '');
-  const header = process.env.DKPLUS_AUTH_HEADER || 'Authorization';
-  const prefix = process.env.DKPLUS_AUTH_PREFIX != null ? process.env.DKPLUS_AUTH_PREFIX : 'Bearer ';
-  const r = await fetch(base + '/general/payment/term', {
-    headers: { [header]: prefix + key, Accept: 'application/json' },
-  });
-  if (r.ok) return 'beinn lykill samþykktur';
-  const beint = 'HTTP ' + r.status;
-  // Vara-leið: lotu-lykill (virkar í uppsetningum þar sem beini lykillinn dugar ekki).
-  const company = process.env.DKPLUS_COMPANY;
-  if (!company) throw new Error(beint + ' (og DKPLUS_COMPANY ekki sett fyrir lotu-lykil)');
-  const r2 = await fetch(base + '/Token', {
-    method: 'POST',
-    headers: { Authorization: 'Bearer ' + key, 'content-type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify({ Company: company, Description: 'kerfisheilsa' }),
-  });
-  const t2 = await r2.text();
-  let j = {}; try { j = JSON.parse(t2); } catch (_) {}
-  if (!r2.ok || !j.Token) throw new Error(beint + ' á gagnakalli, ' + r2.status + ' á /Token');
-  return 'lotu-lykill fékkst';
 }
 
 async function probeTimavera(kv) {
@@ -289,12 +260,6 @@ function build(accounts, kv, mailFresh, runs, probes) {
       hvernig: 'Í SKÝINU. `/api/payday-pull-slokk` speglar ALLA Payday-reikninga Slökkvitækja í `payday_invoices_slokk` (aðskilið frá Brunahólfs-tölunum). Keyrir sjálfkrafa kl. 10 og 15 gegnum payday-sync-cron.',
       adgerdir: [{ label: '📥 Sækja núna', url: '/api/payday-pull-slokk' }],
     }));
-  S.push(svc('dkplus', 'Greiðslur & bókhald', 'dkPlus', 'Bókhaldskerfi Slökkvitækja',
-    pr('dkplus'), env('DKPLUS_API_KEY'), 'DKPLUS_API_KEY vantar', null, null, {
-      hvernig: 'Í SKÝINU gegnum `/api/dkplus` (API-lykill í Netlify env). api.dkplus.is næst EKKI úr vafranum — öll köll fara gegnum Netlify-fall. Skrifar ekkert nema beðið sé sérstaklega um það.',
-      tenglar: [{ label: 'dkPlus ↗', url: 'https://dkplus.is' }],
-    }));
-
   // ── Gagnaleiðslur ────────────────────────────────────────
   S.push(svc('timavera', 'Gagnaleiðslur', 'Tímavera API', 'Vinnufærslur beint úr Tímaveru',
     pr('timavera'), env('TIMAVERA_API_KEY') || !!kv['timavera_api_key'],
@@ -321,7 +286,7 @@ function build(accounts, kv, mailFresh, runs, probes) {
    Geymir ALDREI lykil — aðeins hvar hann er og hvenær hann var endurnýjaður. */
 const SKRA = [
   { id: 'l:google', heiti: 'Google OAuth', hvar: 'Netlify env — GOOGLE_OAUTH_CLIENT_ID/SECRET',
-    opnar: 'Drive, Sheets, Gmail (öll pósthólfin og skjalatólin)',
+    opnar: 'Drive, Sheets, Gmail — bæði póst-innsogið OG alla útsenda pósta (gmail-send). Resend var lagt af 2026-07-20 því eldklar.is fékkst aldrei staðfest þar.',
     endurnyja: 'Google Cloud Console → Credentials → OAuth client. Eftir skipti þarf að TENGJA hvert pósthólf upp á nýtt.',
     slod: 'https://console.cloud.google.com/apis/credentials', env: 'GOOGLE_OAUTH_CLIENT_SECRET', bil_dagar: 730 },
   { id: 'l:supabase', heiti: 'Supabase service role', hvar: 'Netlify env — SUPABASE_SERVICE_ROLE_KEY',
@@ -340,18 +305,12 @@ const SKRA = [
   { id: 'l:payday', heiti: 'Payday client secret', hvar: 'Netlify env — PAYDAY_CLIENT_ID/SECRET',
     opnar: 'Reikninga og kröfur beggja félaga', endurnyja: 'Payday → stillingar → API-aðgangur.',
     slod: 'https://app.payday.is', env: 'PAYDAY_CLIENT_SECRET', bil_dagar: 365 },
-  { id: 'l:dkplus', heiti: 'dkPlus auðkennislykill', hvar: 'Netlify env — DKPLUS_API_KEY',
-    opnar: 'Bókhald Slökkvitækja', endurnyja: 'dkPlus → auðkennislyklar. NB þessi lykill barst í tölvupósti á sínum tíma — vert að skipta.',
-    slod: 'https://dkplus.is', env: 'DKPLUS_API_KEY', bil_dagar: 365 },
   { id: 'l:timavera', heiti: 'Tímavera API-lykill', hvar: 'Gagnagrunnur (app_kv) — límdur inn í Bakendi',
     opnar: 'Vinnufærslur', endurnyja: 'Tímavera sendir nýjan lykil í tölvupósti (1Password-hlekkur). Líma inn í Bakendi-kortið „🕒 Tímavera API".',
     slod: '/#bakendi', bil_dagar: 365 },
   { id: 'l:anthropic', heiti: 'Claude (Anthropic)', hvar: 'Netlify env — ANTHROPIC_API_KEY',
     opnar: 'Svar-uppköst og samantektir', endurnyja: 'console.anthropic.com → API keys.',
     slod: 'https://console.anthropic.com/settings/keys', env: 'ANTHROPIC_API_KEY', bil_dagar: 365 },
-  { id: 'l:resend', heiti: 'Resend', hvar: 'Netlify env — RESEND_API_KEY',
-    opnar: 'Allan póst sem kerfið SENDIR', endurnyja: 'resend.com → API keys. Lénið eldklar.is verður að vera staðfest.',
-    slod: 'https://resend.com/api-keys', env: 'RESEND_API_KEY', bil_dagar: 365 },
   { id: 'l:365', heiti: 'Microsoft 365 (Entra)', hvar: 'HVERGI — ekki sett upp',
     opnar: 'Myndi opna @brunaholf.is pósthólfin úr skýinu í stað Thunderbird-tölvunnar',
     endurnyja: 'Óunnið verk: skrá app í Entra ID, veita Mail.Read og geyma client-secret í Netlify env.',
