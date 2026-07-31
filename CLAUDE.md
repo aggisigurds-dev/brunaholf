@@ -149,6 +149,19 @@ gagnaleiðslanna er lesinn úr `/api/data-sources-status` óbreyttum (ein regla,
 staður) og **textinn er leiddur af `status`, ekki af eigin dagaþröskuldum** (annars
 rautt ljós með gulum texta — endapunkturinn reiknar stöðuna af nákvæmari aldri en
 heilu dagana sem hann birtir).
+**v2 (2026-07-31):** SPJALDARIST í stað lista · nýr hópur **💻 Tölvur** úr
+**`/api/vel-heartbeat`** (tafla `vel_heartbeat`, **RLS ON — aðeins service role**, svo
+vélanöfn/skráaslóðir fara aldrei gegnum anon-lykilinn; POST ver sig með
+`VEL_HEARTBEAT_TOKEN` þegar hann er settur). Hver vél sendir sig sjálf með
+**`luna-bridge/heartbeat.js`** (+ `run-heartbeat.bat` í Task Scheduler á 30 mín fresti,
+engar aukapakkanir): hostname/OS/notandi, **repo-slóðir + grein + commit + óvistað**,
+uppsett verkfæri og `run*.bat` keyrslur. Grænt ≤90 mín · gult ≤24 klst · rautt eldra.
+Hvert kort ber líka **„hvernig virkar þetta"** — hvar keyrslan á heima (**skýið** vs
+**luna-bridge-tölvan**), hvað er handvirkt og hver vara-leiðin er (Ajour-CSV,
+@brunaholf.is-pósturinn gegnum Thunderbird, Landsbanki-xlsx …) — svarið við „man aldrei
+hvernig Ajour-tengingin virkar". **WIP (Agnar 2026-07-31):** halda áfram að draga ALLT
+inn á þetta borð eftir því sem tengingum fjölgar — Chrome Remote-vélarnar, Cowork-vélar,
+graphify/memory-tólin á Slökkvitæki-vélinni. Vél sem sendir lífsmark birtist sjálfkrafa.
 
 ## Tabs (current)
 

@@ -6,67 +6,95 @@
 <title>Kerfisheilsa — Brunahólf</title>
 <style>
   :root{
-    --bg:#0b0f14; --panel:#121820; --panel2:#0e141b; --brd:#1e2833;
-    --ink:#e6edf3; --ink2:#93a4b5; --ink3:#5d6f80;
+    --bg:#0b0f14; --card:#141b24; --card2:#0f151d; --brd:#1f2a36; --brd2:#2b3846;
+    --ink:#e6edf3; --ink2:#93a4b5; --ink3:#63788c;
     --green:#22c55e; --amber:#f59e0b; --red:#ef4444; --grey:#475569;
   }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);
-    font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-  .wrap{max-width:1000px;margin:0 auto;padding:20px 16px 60px}
+  body{margin:0;background:
+      radial-gradient(1200px 500px at 50% -10%,#16202c,transparent),var(--bg);
+    color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:1240px;margin:0 auto;padding:20px 16px 70px}
 
-  header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
-    padding:16px 18px;background:linear-gradient(160deg,#141c26,#0d1319);
-    border:1px solid var(--brd);border-radius:14px;
-    box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 6px 20px rgba(0,0,0,.35)}
+  header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:16px 18px;
+    background:linear-gradient(160deg,#18222e,#0d1319);border:1px solid var(--brd);
+    border-radius:16px;box-shadow:0 1px 0 rgba(255,255,255,.05) inset,0 8px 26px rgba(0,0,0,.4)}
   h1{margin:0;font-size:19px;letter-spacing:.02em}
   .sub{color:var(--ink3);font-size:12.5px;margin-top:2px}
   .spacer{flex:1}
   .counts{display:flex;gap:8px;flex-wrap:wrap}
-  .cnt{display:flex;align-items:center;gap:6px;background:var(--panel2);
-    border:1px solid var(--brd);border-radius:99px;padding:5px 12px;font-size:13px;font-weight:700}
+  .cnt{display:flex;align-items:center;gap:6px;background:#0d1319;border:1px solid var(--brd);
+    border-radius:99px;padding:5px 12px;font-size:13px;font-weight:700}
   button{font:inherit;cursor:pointer}
-  .btn{background:#1b2531;border:1px solid #2b3846;color:var(--ink);
-    border-radius:9px;padding:8px 14px;font-size:13.5px;font-weight:600}
-  .btn:hover{background:#232f3d}
+  .btn{background:#1c2734;border:1px solid var(--brd2);color:var(--ink);border-radius:10px;
+    padding:8px 14px;font-size:13.5px;font-weight:600}
+  .btn:hover{background:#243141}
   .btn--go{background:linear-gradient(160deg,#1f7a46,#14532d);border-color:#166534;color:#dcfce7}
   .btn:disabled{opacity:.5;cursor:default}
 
-  .grp{margin-top:22px}
-  .grp h2{font-size:12px;letter-spacing:.12em;text-transform:uppercase;
-    color:var(--ink3);margin:0 0 8px 3px;font-weight:800}
-  .rows{border:1px solid var(--brd);border-radius:14px;overflow:hidden;background:var(--panel)}
-  .row{display:flex;align-items:center;gap:14px;padding:13px 16px;border-top:1px solid var(--brd)}
-  .row:first-child{border-top:0}
-  .row:nth-child(even){background:var(--panel2)}
+  .grp{margin-top:26px}
+  .grp h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);
+    margin:0 0 10px 3px;font-weight:800}
+  .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(330px,1fr))}
 
-  .led{width:13px;height:13px;border-radius:50%;flex:none;position:relative}
-  .led::after{content:"";position:absolute;inset:-5px;border-radius:50%;opacity:.32}
-  .led.graent{background:var(--green)}   .led.graent::after{background:var(--green);animation:pulse 2.6s infinite}
-  .led.gult{background:var(--amber)}     .led.gult::after{background:var(--amber);animation:pulse 1.6s infinite}
-  .led.raudt{background:var(--red)}      .led.raudt::after{background:var(--red);animation:pulse 1s infinite}
-  .led.graat{background:var(--grey)}
-  @keyframes pulse{0%,100%{transform:scale(.75);opacity:.30}50%{transform:scale(1.12);opacity:0}}
+  .kort{background:linear-gradient(170deg,var(--card),var(--card2));border:1px solid var(--brd);
+    border-radius:14px;padding:13px 15px 12px;display:flex;flex-direction:column;gap:7px;
+    box-shadow:0 4px 14px rgba(0,0,0,.28);position:relative;overflow:hidden}
+  .kort::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--grey)}
+  .kort.graent::before{background:var(--green);box-shadow:0 0 14px 1px rgba(34,197,94,.55)}
+  .kort.gult::before{background:var(--amber);box-shadow:0 0 14px 1px rgba(245,158,11,.5)}
+  .kort.raudt::before{background:var(--red);box-shadow:0 0 14px 1px rgba(239,68,68,.55)}
+  .kort.raudt{border-color:#5b2020}
 
-  .main{flex:1;min-width:0}
-  .nafn{font-weight:700;font-size:14.5px}
-  .undir{color:var(--ink3);font-size:11.5px;margin-top:1px}
-  .detail{color:var(--ink2);font-size:12.5px;margin-top:3px;word-break:break-word}
-  .meta{color:var(--ink3);font-size:11px;margin-top:3px;font-variant-numeric:tabular-nums}
-  .acts{display:flex;gap:7px;flex:none;flex-wrap:wrap;justify-content:flex-end}
-  .abtn{background:#1b2531;border:1px solid #2b3846;color:var(--ink2);
-    border-radius:8px;padding:6px 11px;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap}
-  .abtn:hover{background:#232f3d;color:var(--ink)}
+  .top{display:flex;align-items:flex-start;gap:10px}
+  .led{width:11px;height:11px;border-radius:50%;flex:none;margin-top:4px;position:relative;background:var(--grey)}
+  .led::after{content:"";position:absolute;inset:-5px;border-radius:50%;opacity:.3}
+  .graent .led{background:var(--green)} .graent .led::after{background:var(--green);animation:pulse 2.8s infinite}
+  .gult .led{background:var(--amber)}   .gult .led::after{background:var(--amber);animation:pulse 1.7s infinite}
+  .raudt .led{background:var(--red)}    .raudt .led::after{background:var(--red);animation:pulse 1.1s infinite}
+  @keyframes pulse{0%,100%{transform:scale(.7);opacity:.3}50%{transform:scale(1.15);opacity:0}}
+
+  .nafn{font-weight:700;font-size:14.5px;line-height:1.3;word-break:break-word}
+  .undir{color:var(--ink3);font-size:11px;margin-top:1px}
+  .detail{color:var(--ink2);font-size:12.5px}
+  .meta{color:var(--ink3);font-size:10.5px;font-variant-numeric:tabular-nums}
+
+  .hvernig{background:#0c1219;border:1px solid #1b2530;border-left:2px solid #2f6f8f;
+    border-radius:8px;padding:8px 10px;color:#9fb3c6;font-size:11.5px;line-height:1.5}
+  .hvernig b{color:#cfe0ee}
+  .repos{display:flex;flex-direction:column;gap:3px}
+  .repo{background:#0c1219;border:1px solid #1b2530;border-radius:7px;padding:5px 8px;
+    font:11.5px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#9fb3c6;word-break:break-all}
+  .repo b{color:#e6edf3;font-weight:700}
+  .taglist{display:flex;gap:5px;flex-wrap:wrap}
+  .tag{background:#111a24;border:1px solid #223040;color:var(--ink2);border-radius:99px;
+    padding:1px 8px;font-size:10.5px;font-weight:600}
+
+  /* Bensínmælir fyrir allt sem er TÍMABUNDIÐ — hve mikið er eftir á tanknum
+     (lykill að renna út, tími frá síðasta lífsmarki, aldur gagna). Fyllingin
+     minnkar og litast frá grænu í rautt. */
+  .maelir{margin-top:2px}
+  .maelir .bar{height:7px;border-radius:99px;background:#0b1118;border:1px solid #1b2530;
+    overflow:hidden;position:relative}
+  .maelir .fill{height:100%;border-radius:99px;transition:width .5s ease}
+  .maelir .ticks{display:flex;justify-content:space-between;color:var(--ink3);
+    font-size:9.5px;letter-spacing:.08em;margin-top:2px;font-weight:700}
+  .maelir .txt{color:var(--ink3);font-size:10.5px;font-variant-numeric:tabular-nums}
+
+  .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:4px}
+  .abtn{background:#1c2734;border:1px solid var(--brd2);color:var(--ink2);border-radius:8px;
+    padding:5px 10px;font-size:11.5px;font-weight:600;text-decoration:none;white-space:nowrap}
+  .abtn:hover{background:#243141;color:var(--ink)}
   .abtn--fix{border-color:#7f1d1d;background:#2a1417;color:#fecaca}
+  .abtn--ut{border-style:dashed;color:var(--ink3)}
 
-  .note{color:var(--ink3);font-size:12px;margin-top:26px;line-height:1.6;
+  .note{color:var(--ink3);font-size:12px;margin-top:30px;line-height:1.65;
     border-top:1px solid var(--brd);padding-top:14px}
+  .note b{color:var(--ink2)}
   .load{color:var(--ink3);padding:30px 4px}
   a{color:#7dd3fc}
-  @media(max-width:640px){
-    .row{flex-wrap:wrap}
-    .acts{width:100%;justify-content:flex-start;padding-left:27px}
-  }
+  code{background:#0c1219;border:1px solid #1b2530;border-radius:5px;padding:1px 5px;
+    font:11.5px ui-monospace,Menlo,Consolas,monospace;color:#a5c9e0}
 </style>
 </head>
 <body>
@@ -85,12 +113,14 @@
   <div id="body"><div class="load">Sæki stöðu…</div></div>
 
   <div class="note">
-    <b>Hvað ljósin þýða.</b> 🟢 prófað héðan og virkar · 🟡 tengt en eitthvað að athuga
-    (aldrei prófað, gögn gömul eða síðasta keyrsla féll) · 🔴 ótengt eða prófun féll ·
-    ⚪ á ekki við enn.<br>
-    „⏱ Prófa" gerir raunverulegt auðkennis-handaband við þjónustuna — les-aðgerð sem
-    skrifar hvergi. Þessi síða sýnir <b>aldrei</b> lyklana sjálfa, aðeins hvort þeir séu
-    til og hvort þeir virki.
+    <b>Ljósin.</b> 🟢 prófað héðan og virkar · 🟡 tengt en eitthvað að athuga (aldrei prófað,
+    gögn gömul, síðasta keyrsla féll) · 🔴 ótengt eða prófun féll · ⚪ á ekki við enn.<br>
+    <b>„⏱ Prófa"</b> gerir raunverulegt auðkennis-handaband við þjónustuna — les-aðgerð sem
+    skrifar hvergi. Síðan sýnir <b>aldrei</b> lyklana sjálfa, aðeins hvort þeir séu til og virki.<br>
+    <b>Tölvur.</b> Vél birtist hér um leið og hún sendir lífsmark. Sækja
+    <code>luna-bridge</code> repo-ið á vélina og skrá <code>run-heartbeat.bat</code> í Task
+    Scheduler á 30 mín fresti — þá sést strax ef hún dettur út, og repo-slóðirnar á henni
+    birtast sjálfkrafa.
   </div>
 </div>
 
@@ -114,11 +144,19 @@ function talningTexti(t){
   return '';
 }
 
-// Gagnaleiðslurnar eiga sinn eigin endapunkt (data-sources-status) — hann er
-// notaður óbreyttur svo ferskleika-reglan sé á EINUM stað, ekki tveimur.
+/* Hvernig hver gagnaleiðsla virkar — svarið við „man aldrei hvernig Ajour-
+   tengingin virkar". Skjalfest hér svo það sé á sama stað og ljósið. */
+const HVERNIG_GOGN = {
+  timavera: 'Í SKÝINU núna (`/api/timavera-pull`, API-lykill). Eldri leiðir enn til: xlsx í Drive („Tímavera úr Drive" í Bakenda) eða <b>timavera-bridge.js</b> á luna-bridge-tölvunni sem les nýjustu „vinnufærslur"-skrána úr Downloads.',
+  ajour:    'HANDVIRKT + TÖLVA. Flytja út CSV á ajoursoftware.com → annaðhvort (a) setja í Drive og ýta á „🔄 Uppfæra gögn úr Drive" á NLSH-síðunni (skýið sér um restina), eða (b) <b>run-ajour.bat</b> á luna-bridge-tölvunni sem les nýjustu AjourRegistrationData*.csv úr Downloads.',
+  bank:     'HANDVIRKT. Flytja út hreyfingar úr Landsbankanum (xlsx) → í Drive → „Landsbanki úr Drive" í Bakenda. Ekkert sjálfvirkt — bankinn býður enga tengingu.',
+  invoices: 'Í SKÝINU. `/api/payday-pull` sækir beint úr Payday-API.',
+  redder:   'Í SKÝINU. Redder-reikningar (PDF) lenda í Drive-möppunni „Reikningar — Redder" og `/api/redder-read` les þá (líka vörulínurnar). Tvíburi á tölvunni les sömu reikninga úr pósthólfi.',
+  email:    'ÞRJÁR leiðir í sama pott: (1) skýið — `gmail-ingest` fyrir Google-hólfin, (2) <b>bridge.js</b> á luna-bridge-tölvunni les Thunderbird-mbox á 15 mín fresti (þar koma @brunaholf.is hólfin), (3) Mail Pulse Chrome-viðbótin. Ef pósturinn staðnar og hólfið er @brunaholf.is þá er tölvan slökkt.',
+};
+
 function fraGognum(d){
   const out=[];
-  // status úr endapunktinum: fresh (≤2 d) · aging (≤14 d) · stale (>14 d).
   const LIT = { fresh:'graent', aging:'gult', stale:'raudt' };
   (d && d.sources || []).forEach(s=>{
     const dagar = s.age_days;
@@ -134,6 +172,8 @@ function fraGognum(d){
         s.status==='aging' ? 'nýjustu gögn eru '+dagar+' daga gömul' :
         s.status==='stale' ? 'ekkert nýtt í '+dagar+' daga — uppfærslan er líklega stöðvuð' :
         String(s.status),
+      hvernig: HVERNIG_GOGN[s.key] || null,
+      dagar: dagar,
       meta: [s.newest_real?('nýjustu gögn '+String(s.newest_real).slice(0,10)):'',
              s.last_import?('síðast samstillt '+relTimi(s.last_import)):'',
              s.count!=null?(s.count.toLocaleString('is-IS')+' færslur'):''].filter(Boolean).join(' · ')
@@ -142,33 +182,119 @@ function fraGognum(d){
   return out;
 }
 
+/* Tölvurnar — lífsmark + hvar repo-in liggja á hverri vél. */
+function fraVelum(d){
+  const velar = (d && d.velar) || [];
+  if(!velar.length) return [{
+    hopur:'💻 Tölvur', heiti:'Engin vél hefur sent lífsmark', undir:'vel_heartbeat',
+    status:'graat',
+    detail:'Um leið og fyrsta vélin sendir lífsmark birtist hún hér með repo-slóðum og því sem hún keyrir.',
+    hvernig:'Á hverri tölvu: sækja <b>luna-bridge</b> repo-ið, keyra <code>node heartbeat.js</code> einu sinni til að prófa og skrá svo <b>run-heartbeat.bat</b> í Task Scheduler á 30 mín fresti. Valfrjálst: <code>set VEL_NAFN=heimaskrifstofa</code>.',
+  }];
+  return velar.map(v => ({
+    hopur:'💻 Tölvur',
+    heiti:(v.vel||v.hostname||'óþekkt vél'),
+    undir:[v.os, v.notendanafn].filter(Boolean).join(' · '),
+    status:v.status,
+    detail: v.aldur_min==null ? 'ekkert lífsmark' :
+      v.aldur_min<=90 ? 'í sambandi · sást '+relTimi(v.at) :
+      v.aldur_min<=1440 ? 'ekkert lífsmark í '+Math.round(v.aldur_min/60)+' klst — líklega slökkt' :
+      'ekkert lífsmark í '+Math.round(v.aldur_min/1440)+' daga — DOTTIN ÚR SAMBANDI',
+    hvernig: v.athugasemd || null,
+    aldur_min: v.aldur_min,
+    repos: v.repos || [],
+    tags: (v.verkfaeri||[]).concat((v.verk||[]).map(x=>'▶ '+x)),
+    meta: 'fyrst séð '+(v.first_seen?relTimi(v.first_seen):'—'),
+  }));
+}
+
+/* Hvaða kort eiga mæli — allt sem er TÍMABUNDIÐ:
+   · lykill með útrunatíma (Payday-lyklaskyndiminni, líftími 60 mín)
+   · tölva: 90 mín gluggi frá síðasta lífsmarki
+   · gagnaból: 14 daga gluggi frá nýjustu gögnum. */
+function maelirAf(s){
+  if(s.talning && s.talning.minutur!=null){
+    const m = s.talning.minutur;
+    return { pct: m/60, txt: m>0 ? m+' mín eftir' : 'endurnýjast við næstu notkun',
+             tomur:'RENNUR ÚT', fullur:'NÝR' };
+  }
+  if(s.aldur_min!=null){
+    return { pct: 1 - s.aldur_min/90,
+             txt: s.aldur_min<60 ? s.aldur_min+' mín frá lífsmarki'
+                                 : Math.round(s.aldur_min/60)+' klst frá lífsmarki',
+             tomur:'ÚR SAMBANDI', fullur:'Í SAMBANDI' };
+  }
+  if(s.dagar!=null){
+    return { pct: 1 - s.dagar/14,
+             txt: s.dagar===0 ? 'gögn frá í dag' : s.dagar+' daga gömul gögn',
+             tomur:'STAÐNAÐ', fullur:'FERSKT' };
+  }
+  return null;
+}
+
+/* Bensínmælir: pct 1 = fullur tankur, 0 = tómur. Liturinn fylgir stöðunni sem
+   kortið er þegar komið með, svo mælirinn og ljósið segja alltaf það sama. */
+function maelirHtml(m){
+  if(!m || m.pct==null) return '';
+  // Tómur tankur fær örlitla rauða nöf svo mælirinn líti ekki út fyrir að vanta.
+  const pct = Math.max(.025, Math.min(1, m.pct));
+  const litur = pct>.5 ? 'linear-gradient(90deg,#15803d,#22c55e)'
+              : pct>.2 ? 'linear-gradient(90deg,#b45309,#f59e0b)'
+                       : 'linear-gradient(90deg,#991b1b,#ef4444)';
+  return '<div class="maelir">'+
+    '<div class="bar"><div class="fill" style="width:'+(pct*100).toFixed(1)+'%;background:'+litur+'"></div></div>'+
+    '<div class="ticks"><span>'+esc(m.tomur||'TÓMT')+'</span>'+
+      (m.txt?'<span class="txt">'+esc(m.txt)+'</span>':'')+
+      '<span>'+esc(m.fullur||'FULLT')+'</span></div>'+
+  '</div>';
+}
+
 function rada(services){
   const grps = {};
   services.forEach(s=>{ (grps[s.hopur] = grps[s.hopur] || []).push(s); });
   return grps;
 }
 
+function kortHtml(s){
+  const meta = [ s.meta || talningTexti(s.talning),
+    s.profad ? 'prófað '+relTimi(s.profad) : '',
+    s.sidasta_keyrsla && s.sidasta_keyrsla.at ? 'síðasta keyrsla '+relTimi(s.sidasta_keyrsla.at) : ''
+  ].filter(Boolean).join(' · ');
+
+  const acts = (s.adgerdir||[]).map(a =>
+    a.url ? '<a class="abtn'+(s.status==='raudt'?' abtn--fix':'')+'" href="'+esc(a.url)+'" target="_blank" rel="noopener">'+esc(a.label)+'</a>'
+          : '<button class="abtn" data-test="'+esc(a.test)+'">'+esc(a.label)+'</button>').join('')
+    + (s.tenglar||[]).map(t =>
+      '<a class="abtn abtn--ut" href="'+esc(t.url)+'" target="_blank" rel="noopener">'+esc(t.label)+'</a>').join('');
+
+  const repos = (s.repos && s.repos.length)
+    ? '<div class="repos">' + s.repos.map(r =>
+        '<div class="repo"><b>'+esc(r.nafn)+'</b> · '+esc(r.grein||'?')+
+        (r.hreint===false?' · <span style="color:#fbbf24">óvistaðar breytingar</span>':'')+
+        '<br>'+esc(r.slod)+'</div>').join('') + '</div>'
+    : '';
+  const tags = (s.tags && s.tags.length)
+    ? '<div class="taglist">'+s.tags.map(t=>'<span class="tag">'+esc(t)+'</span>').join('')+'</div>' : '';
+
+  return '<div class="kort '+esc(s.status)+'">'+
+    '<div class="top"><span class="led"></span><div style="min-width:0">'+
+      '<div class="nafn">'+esc(s.heiti)+'</div>'+
+      (s.undir?'<div class="undir">'+esc(s.undir)+'</div>':'')+
+    '</div></div>'+
+    (s.detail?'<div class="detail">'+esc(s.detail)+'</div>':'')+
+    maelirHtml(s.maelir || maelirAf(s))+
+    (meta?'<div class="meta">'+esc(meta)+'</div>':'')+
+    repos + tags +
+    (s.hvernig?'<div class="hvernig">'+s.hvernig+'</div>':'')+   /* skjalfestur texti — leyfir <b>/<code> */
+    (acts?'<div class="acts">'+acts+'</div>':'')+
+  '</div>';
+}
+
 function teikna(services){
   const grps = rada(services);
   $('#body').innerHTML = Object.keys(grps).map(g =>
-    '<div class="grp"><h2>'+esc(g)+'</h2><div class="rows">' +
-    grps[g].map(s=>{
-      const meta = [ s.meta || talningTexti(s.talning),
-        s.profad ? 'prófað '+relTimi(s.profad) : '',
-        s.sidasta_keyrsla && s.sidasta_keyrsla.at ? 'síðasta keyrsla '+relTimi(s.sidasta_keyrsla.at) : ''
-      ].filter(Boolean).join(' · ');
-      const acts = (s.adgerdir||[]).map(a =>
-        a.url ? '<a class="abtn'+(s.status==='raudt'?' abtn--fix':'')+'" href="'+esc(a.url)+'">'+esc(a.label)+'</a>'
-              : '<button class="abtn" data-test="'+esc(a.test)+'">'+esc(a.label)+'</button>').join('');
-      return '<div class="row">'+
-        '<span class="led '+esc(s.status)+'" title="'+esc(s.status)+'"></span>'+
-        '<div class="main"><div class="nafn">'+esc(s.heiti)+'</div>'+
-        (s.undir?'<div class="undir">'+esc(s.undir)+'</div>':'')+
-        (s.detail?'<div class="detail">'+esc(s.detail)+'</div>':'')+
-        (meta?'<div class="meta">'+esc(meta)+'</div>':'')+
-        '</div><div class="acts">'+acts+'</div></div>';
-    }).join('') + '</div></div>').join('');
-
+    '<div class="grp"><h2>'+esc(g)+'</h2><div class="grid">' +
+    grps[g].map(kortHtml).join('') + '</div></div>').join('');
   $('#body').querySelectorAll('[data-test]').forEach(b =>
     b.addEventListener('click', () => sakja(b.dataset.test, b)));
 }
@@ -179,26 +305,25 @@ async function sakja(test, btn){
   const t = $('#test'); if(!btn){ t.disabled = true; t.textContent = '⏳ Prófa…'; }
   $('#sub').textContent = test ? 'Prófa tengingu…' : 'Sæki stöðu…';
   try{
-    const [heilsa, gogn] = await Promise.all([
+    const [heilsa, gogn, velar] = await Promise.all([
       fetch('/api/kerfisheilsa' + (test ? '?test='+encodeURIComponent(test) : ''), {cache:'no-store'}).then(r=>r.json()),
       fetch('/api/data-sources-status', {cache:'no-store'}).then(r=>r.json()).catch(()=>null),
+      fetch('/api/vel-heartbeat', {cache:'no-store'}).then(r=>r.json()).catch(()=>null),
     ]);
     if(heilsa.error) throw new Error(heilsa.error);
-    SIDAST = (heilsa.services||[]).concat(fraGognum(gogn));
+    SIDAST = (heilsa.services||[]).concat(fraVelum(velar), fraGognum(gogn));
     teikna(SIDAST);
     const c = SIDAST.reduce((a,s)=>(a[s.status]=(a[s.status]||0)+1,a),{});
     $('#counts').innerHTML = ['graent','gult','raudt','graat']
       .filter(k=>c[k]).map(k=>'<span class="cnt">'+LJOS[k]+' '+c[k]+'</span>').join('');
-    // Aðgreint: bilud TENGING og gomul GOGN eru ekki sami hluturinn.
-    const erGogn = s => s.hopur.indexOf('ferskleiki') > 0;
-    // NB `gogn` er þegar tekið hér að ofan (svarið úr data-sources-status).
-    const teng = SIDAST.filter(s => !erGogn(s)), bol = SIDAST.filter(erGogn);
-    const rautt = n => n.filter(s=>s.status==='raudt').length;
-    const gult  = n => n.filter(s=>s.status==='gult').length;
+    // Aðgreint: biluð TENGING, sofandi VÉL og gömul GÖGN eru ekki sami hluturinn.
+    const hopur = s => s.hopur.indexOf('ferskleiki')>0 ? 'gogn' : s.hopur.indexOf('Tölvur')>=0 ? 'vel' : 'teng';
+    const telja = (h,st) => SIDAST.filter(s=>hopur(s)===h && s.status===st).length;
     const bitar = [];
-    if(rautt(teng)) bitar.push(rautt(teng)+' tenging'+(rautt(teng)>1?'ar':'')+' ótengd'+(rautt(teng)>1?'ar':''));
-    if(gult(teng))  bitar.push(gult(teng)+' að athuga');
-    if(rautt(bol)) bitar.push(rautt(bol)+' gagnaleiðsl'+(rautt(bol)>1?'ur':'a')+' stöðnuð'+(rautt(bol)>1?'ar':''));
+    if(telja('teng','raudt')) bitar.push(telja('teng','raudt')+' tenging'+(telja('teng','raudt')>1?'ar':'')+' ótengd'+(telja('teng','raudt')>1?'ar':''));
+    if(telja('teng','gult'))  bitar.push(telja('teng','gult')+' að athuga');
+    if(telja('vel','raudt'))  bitar.push(telja('vel','raudt')+' tölv'+(telja('vel','raudt')>1?'ur':'a')+' úr sambandi');
+    if(telja('gogn','raudt')) bitar.push(telja('gogn','raudt')+' gagnaleiðsl'+(telja('gogn','raudt')>1?'ur':'a')+' stöðnuð'+(telja('gogn','raudt')>1?'ar':''));
     $('#sub').textContent = (bitar.join(' · ') || 'Allt í lagi') +
       ' · uppfært ' + new Date().toLocaleTimeString('is-IS',{hour:'2-digit',minute:'2-digit'});
   }catch(e){
