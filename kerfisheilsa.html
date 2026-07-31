@@ -126,10 +126,14 @@ function fraGognum(d){
       hopur:'Gagnaleiðslur — ferskleiki',
       heiti:(s.icon?s.icon+' ':'')+(s.label||s.key), undir:s.file_hint||s.key,
       status: LIT[s.status] || 'graat',
-      detail: dagar==null ? 'engin gögn' :
-        (dagar<=2 ? 'nýjustu gögn eru fersk' :
-         dagar<=14 ? 'nýjustu gögn eru '+dagar+' daga gömul' :
-         'ekkert nýtt í '+dagar+' daga — uppfærslan er líklega stöðvuð'),
+      // Textinn er leiddur af STÖÐUNNI sem endapunkturinn gefur, ekki af eigin
+      // dagaþröskuldum — annars fæst rautt ljós með gulum texta (endapunkturinn
+      // reiknar stöðuna af nákvæmari aldri en heilu dagarnir sem hann birtir).
+      detail: !s.status ? 'engin gögn' :
+        s.status==='fresh' ? 'nýjustu gögn eru fersk' :
+        s.status==='aging' ? 'nýjustu gögn eru '+dagar+' daga gömul' :
+        s.status==='stale' ? 'ekkert nýtt í '+dagar+' daga — uppfærslan er líklega stöðvuð' :
+        String(s.status),
       meta: [s.newest_real?('nýjustu gögn '+String(s.newest_real).slice(0,10)):'',
              s.last_import?('síðast samstillt '+relTimi(s.last_import)):'',
              s.count!=null?(s.count.toLocaleString('is-IS')+' færslur'):''].filter(Boolean).join(' · ')
@@ -185,9 +189,16 @@ async function sakja(test, btn){
     const c = SIDAST.reduce((a,s)=>(a[s.status]=(a[s.status]||0)+1,a),{});
     $('#counts').innerHTML = ['graent','gult','raudt','graat']
       .filter(k=>c[k]).map(k=>'<span class="cnt">'+LJOS[k]+' '+c[k]+'</span>').join('');
-    const vandi = (c.raudt||0), athuga = (c.gult||0);
-    $('#sub').textContent = (vandi ? vandi+' tenging'+(vandi>1?'ar':') ')+' í vanda' :
-      athuga ? athuga+' atriði til að athuga' : 'Allt í lagi') +
+    // Aðgreint: bilud TENGING og gomul GOGN eru ekki sami hluturinn.
+    const erGogn = s => s.hopur.indexOf('ferskleiki') > 0;
+    const teng = SIDAST.filter(s => !erGogn(s)), gogn = SIDAST.filter(erGogn);
+    const rautt = n => n.filter(s=>s.status==='raudt').length;
+    const gult  = n => n.filter(s=>s.status==='gult').length;
+    const bitar = [];
+    if(rautt(teng)) bitar.push(rautt(teng)+' tenging'+(rautt(teng)>1?'ar':'')+' ótengd'+(rautt(teng)>1?'ar':''));
+    if(gult(teng))  bitar.push(gult(teng)+' að athuga');
+    if(rautt(gogn)) bitar.push(rautt(gogn)+' gagnaleiðsl'+(rautt(gogn)>1?'ur':'a')+' stöðnuð'+(rautt(gogn)>1?'ar':''));
+    $('#sub').textContent = (bitar.join(' · ') || 'Allt í lagi') +
       ' · uppfært ' + new Date().toLocaleTimeString('is-IS',{hour:'2-digit',minute:'2-digit'});
   }catch(e){
     $('#sub').textContent = 'Villa: ' + (e && e.message || e);
