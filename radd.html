@@ -80,6 +80,20 @@
   .abtn{border-radius:8px;padding:6px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;
     color:var(--ink2);background:linear-gradient(180deg,#3d434a,#22262b);border:1px solid var(--brd);
     margin-top:9px}
+  .mal{display:flex;gap:8px;justify-content:center;margin-top:16px}
+  .malbtn{border-radius:99px;padding:7px 15px;font:inherit;font-size:13px;font-weight:700;
+    cursor:pointer;color:var(--ink3);background:linear-gradient(180deg,#2c3137,#1a1d21);
+    border:1px solid var(--brd);box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+  .malbtn.on{color:var(--ink);background:linear-gradient(180deg,#454b52,#23272c);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 2px 4px rgba(0,0,0,.5)}
+  .btn--spyr{background:linear-gradient(180deg,#2b5f8f,#123a5c);color:#d7ecff}
+  .svar{margin-top:16px;padding:13px 15px;border-radius:11px;
+    background:var(--burst),linear-gradient(180deg,#1d2a35,#111a22);
+    border:1px solid #0a0b0d;box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 6px 16px rgba(0,0,0,.5)}
+  .svar-haus{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);font-weight:800}
+  .svar-haus .abtn{margin-top:0}
+  #svartexti{margin-top:8px;font-size:16px;line-height:1.6;color:var(--ink)}
   .note{color:var(--ink3);font-size:12px;line-height:1.6;margin-top:26px;
     border-top:1px solid #2a2f35;padding-top:14px}
   .villa{color:#ffb4b4}
@@ -95,9 +109,19 @@
     <a class="til" href="/verkefnalisti.html">Verkefnalisti ↗</a>
   </header>
 
+  <div class="mal">
+    <button class="malbtn on" data-mal="is">🇮🇸 Íslenska</button>
+    <button class="malbtn" data-mal="en">🇬🇧 English</button>
+  </div>
+
   <div class="midja">
     <button id="rec"><span class="ic">🎙️</span><span id="reclbl">TALA</span></button>
     <div class="klukka" id="klukka">00:00</div>
+  </div>
+
+  <div class="svar" id="svar" hidden>
+    <div class="svar-haus"><span>💬 Svar</span><button class="abtn" id="lesa">🔊 Lesa aftur</button></div>
+    <div id="svartexti"></div>
   </div>
 
   <div class="reitur">
@@ -105,7 +129,8 @@
   </div>
   <div class="radir">
     <button class="btn" id="hreinsa">Hreinsa</button>
-    <button class="btn btn--go" id="vista">💾 Vista punkt</button>
+    <button class="btn btn--spyr" id="spyrja">❓ Spyrja</button>
+    <button class="btn btn--go" id="vista">💾 Vista</button>
   </div>
 
   <h2>Síðustu punktar</h2>
@@ -126,6 +151,37 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 let rec = null, chunks = [], sr = null, t0 = 0, tikk = null, lokaTexti = '', bidTexti = '';
+let MAL = localStorage.getItem('radd_mal') || 'is';
+
+/* Talgreiningin tekur EITT mál í einu — hún giskar ekki. Rofinn segir henni
+   hvort þú talar íslensku eða ensku, og sama val ræður málinu á svarinu. */
+function settMal(m){
+  MAL = m; localStorage.setItem('radd_mal', m);
+  document.querySelectorAll('.malbtn').forEach(b => b.classList.toggle('on', b.dataset.mal===m));
+  if(sr) sr.lang = (m==='en' ? 'en-US' : 'is-IS');
+}
+document.querySelectorAll('.malbtn').forEach(b =>
+  b.addEventListener('click', () => settMal(b.dataset.mal)));
+settMal(MAL);
+
+/* Svar er LESIÐ UPPHÁTT — síminn á íslenska rödd, og ensk rödd ef beðið er um
+   ensku. Ef ekkert svar-hljóð er til stendur textinn eftir sem er. */
+let sidastaSvar = '';
+function tala(texti, mal){
+  sidastaSvar = texti;
+  try{
+    if(!window.speechSynthesis) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(texti);
+    const kodi = mal==='en' ? 'en' : 'is';
+    u.lang = kodi==='en' ? 'en-US' : 'is-IS';
+    const raddir = speechSynthesis.getVoices() || [];
+    const v = raddir.find(x => (x.lang||'').toLowerCase().startsWith(kodi));
+    if(v) u.voice = v;
+    u.rate = 1.0;
+    speechSynthesis.speak(u);
+  }catch(_){}
+}
 
 /* Tvennt gerist í einu þegar ýtt er á hnappinn:
    1) MediaRecorder tekur upp HLJÓÐIÐ (það er minnið — glatast aldrei)
@@ -145,7 +201,8 @@ async function byrja(){
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if(SR){
-    sr = new SR(); sr.lang = 'is-IS'; sr.continuous = true; sr.interimResults = true;
+    sr = new SR(); sr.lang = (MAL==='en' ? 'en-US' : 'is-IS');
+    sr.continuous = true; sr.interimResults = true;
     lokaTexti = ($('#texti').value ? $('#texti').value.trim()+' ' : '');
     sr.onresult = e => {
       let bid = '';
@@ -195,6 +252,28 @@ $('#hreinsa').addEventListener('click', () => {
   haetta(); $('#rec').classList.remove('on'); $('#reclbl').textContent='TALA';
   $('#texti').value=''; lokaTexti=''; bidTexti=''; chunks=[]; $('#klukka').textContent='00:00';
   $('#staða').textContent='Ýttu og talaðu';
+});
+
+$('#lesa').addEventListener('click', () => { if(sidastaSvar) tala(sidastaSvar, MAL); });
+
+$('#spyrja').addEventListener('click', async () => {
+  if($('#rec').classList.contains('on')){ $('#rec').click(); await bida(400); }
+  const q = $('#texti').value.trim();
+  if(!q){ $('#staða').textContent = 'Spurðu fyrst — talaðu eða skrifaðu'; return; }
+  const b = $('#spyrja'); b.disabled = true; b.textContent = '⏳ …';
+  $('#staða').textContent = 'Hugsa…';
+  try{
+    const r = await fetch('/api/raddminni', { method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ action:'spyrja', spurning:q, mal:MAL }) });
+    const j = await r.json();
+    if(j.error) throw new Error(j.error);
+    $('#svartexti').textContent = j.svar;
+    $('#svar').hidden = false;
+    $('#staða').textContent = 'Svarað';
+    tala(j.svar, j.mal || MAL);
+  }catch(e){
+    $('#staða').innerHTML = '<span class="villa">'+esc(e.message)+'</span>';
+  }finally{ b.disabled=false; b.textContent='❓ Spyrja'; }
 });
 
 $('#vista').addEventListener('click', async () => {
@@ -249,12 +328,20 @@ async function sakja(){
         (x.texti?'<div class="kx">'+esc(x.texti)+'</div>':'')+
         (x.audio_url?'<audio controls preload="none" src="'+esc(x.audio_url)+'"></audio>':'')+
         '<button class="abtn" data-unnid="'+x.id+'" data-stada="'+(x.unnid?1:0)+'">'+
-          (x.unnid?'↩ Opna aftur':'✓ Afgreitt')+'</button>'+
+          (x.unnid?'↩ Opna aftur':'✓ Afgreitt')+'</button> '+
+        '<button class="abtn" data-greina="'+x.id+'">🔁 Greina aftur</button>'+
       '</div>').join('') : '<div style="color:#6f7c88;padding:10px 2px">Engir punktar enn.</div>';
     $('#listi').querySelectorAll('[data-unnid]').forEach(b => b.addEventListener('click', async () => {
       b.disabled=true;
       await fetch('/api/raddminni',{method:'POST',headers:{'content-type':'application/json'},
         body:JSON.stringify({action:'unnid', id:+b.dataset.unnid, unnid:b.dataset.stada!=='1'})});
+      sakja();
+    }));
+    // Endur-greining: gagnleg þegar talgreiningin misheyrði og þú lagaðir textann.
+    $('#listi').querySelectorAll('[data-greina]').forEach(b => b.addEventListener('click', async () => {
+      b.disabled=true; b.textContent='⏳ …';
+      await fetch('/api/raddminni',{method:'POST',headers:{'content-type':'application/json'},
+        body:JSON.stringify({action:'greina', id:+b.dataset.greina})});
       sakja();
     }));
   }catch(e){ $('#listi').innerHTML = '<div class="villa">Náði ekki í punkta: '+esc(e.message)+'</div>'; }
