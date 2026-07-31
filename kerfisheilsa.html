@@ -267,6 +267,11 @@ function maelirAf(s){
     return { pct: m/60, txt: m>0 ? m+' mín eftir' : 'endurnýjast við næstu notkun',
              tomur:'RENNUR ÚT', fullur:'NÝR' };
   }
+  if(s.talning && s.talning.dagar!=null && /rennur/.test(s.talning.label||'')){
+    const d = s.talning.dagar;
+    return { pct: d/365, txt: d>0 ? d+' dagar eftir' : 'ÚTRUNNINN',
+             tomur:'RENNUR ÚT', fullur:'GILDUR' };
+  }
   if(s.aldur_min!=null){
     return { pct: 1 - s.aldur_min/90,
              txt: s.aldur_min<60 ? s.aldur_min+' mín frá lífsmarki'
@@ -312,6 +317,7 @@ function kortHtml(s){
 
   const acts = (s.adgerdir||[]).map(a =>
     a.url ? '<a class="abtn'+(s.status==='raudt'?' abtn--fix':'')+'" href="'+esc(a.url)+'" target="_blank" rel="noopener">'+esc(a.label)+'</a>'
+    : a.rotate ? '<button class="abtn" data-rotate="'+esc(a.rotate)+'">'+esc(a.label)+'</button>'
           : '<button class="abtn" data-test="'+esc(a.test)+'">'+esc(a.label)+'</button>').join('')
     + (s.tenglar||[]).map(t =>
       '<a class="abtn abtn--ut" href="'+esc(t.url)+'" target="_blank" rel="noopener">'+esc(t.label)+'</a>').join('');
@@ -346,6 +352,18 @@ function teikna(services){
     grps[g].map(kortHtml).join('') + '</div></div>').join('');
   $('#body').querySelectorAll('[data-test]').forEach(b =>
     b.addEventListener('click', () => sakja(b.dataset.test, b)));
+  // „Merkja endurnýjað" skráir AÐEINS tímastimpil — lykillinn sjálfur kemur
+  // hvergi nálægt vafranum.
+  $('#body').querySelectorAll('[data-rotate]').forEach(b =>
+    b.addEventListener('click', async () => {
+      const note = prompt('Minnispunktur (valfrjálst) — t.d. „nýr lykill, gamla eytt":') ?? '';
+      b.disabled = true; b.textContent = '⏳ …';
+      try{
+        await fetch('/api/kerfisheilsa', { method:'POST', headers:{'content-type':'application/json'},
+          body: JSON.stringify({ action:'rotated', id:b.dataset.rotate, note }) });
+      }catch(_){}
+      sakja('');
+    }));
 }
 
 let SIDAST = [];

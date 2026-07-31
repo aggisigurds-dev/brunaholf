@@ -21,13 +21,26 @@
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const KV_PROBES = 'kerfisheilsa_probes';
+const KV_LYKLAR = 'kerfisheilsa_lyklar';
 
 const GREEN = 'graent', AMBER = 'gult', RED = 'raudt', GREY = 'graat';
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return resp(204, '', cors());
-  if (event.httpMethod !== 'GET') return json(405, { error: 'Method not allowed' });
   if (!SUPABASE_URL || !SUPABASE_KEY) return json(500, { error: 'Supabase env missing' });
+
+  // POST {action:'rotated', id, note} — skrá að lykill hafi verið endurnýjaður.
+  // Geymir EKKERT nema tímastimpil + minnispunkt; aldrei lykilinn sjálfan.
+  if (event.httpMethod === 'POST') {
+    let b = {}; try { b = JSON.parse(event.body || '{}'); } catch (_) {}
+    if (b.action !== 'rotated' || !b.id) return json(400, { error: "Vantar {action:'rotated', id}" });
+    const kv = await kvAll();
+    const skra = (kv[KV_LYKLAR] && typeof kv[KV_LYKLAR] === 'object') ? kv[KV_LYKLAR] : {};
+    skra[b.id] = { at: new Date().toISOString(), note: (b.note || '').slice(0, 200) };
+    await kvSet(KV_LYKLAR, skra);
+    return json(200, { ok: true, id: b.id, at: skra[b.id].at });
+  }
+  if (event.httpMethod !== 'GET') return json(405, { error: 'Method not allowed' });
 
   const p = event.queryStringParameters || {};
   const test = (p.test || '').trim();
@@ -44,7 +57,8 @@ exports.handler = async (event) => {
       await kvSet(KV_PROBES, probes);
     }
 
-    const services = build(accounts, kv, mailFresh, runs, probes);
+    const services = build(accounts, kv, mailFresh, runs, probes)
+      .concat(lyklaskra(kv));
     const counts = services.reduce((a, s) => (a[s.status] = (a[s.status] || 0) + 1, a), {});
     return json(200, {
       ok: true,
@@ -289,23 +303,113 @@ function build(accounts, kv, mailFresh, runs, probes) {
       adgerdir: [{ label: '📥 Sækja núna', url: '/api/timavera-pull?days=14' }],
     }));
 
-  // ── Lyklar (bara til/ekki til — aldrei gildin) ────────────
-  const NETLIFY_ENV = 'https://app.netlify.com/projects/brunaholf/configuration/env';
-  [['ANTHROPIC_API_KEY', 'Claude (AI-svör og samantektir)', 'Knýr 🤖 svar-uppköst í Reikninga-pósti og samantektir á Verkborðinu.'],
-   ['RESEND_API_KEY', 'Resend (útsendur póstur)', 'Allur póstur sem kerfið SENDIR fer gegnum Resend. Sendandi verður að vera á staðfesta léninu eldklar.is.'],
-   ['EXTENSION_INGEST_TOKEN', 'Mail Pulse vafra-viðbót', 'Chrome-viðbótin sem skrapar opna Gmail/Outlook flipa og POSTar í `/api/email-ingest-browser`. Þriðja leiðin inn í email_digest (á eftir skýinu og luna-bridge).'],
-   ['GOOGLE_OAUTH_CLIENT_ID', 'Google OAuth-auðkenni', 'Auðkennið sem allar Google-tengingar hér að ofan byggja á. Ef þetta vantar virkar engin Tengja-hnappur.']]
-    .forEach(([n, heiti, hvernig]) => {
-    S.push({
-      id: 'env:' + n, hopur: 'Lyklar', heiti, undir: n,
-      status: env(n) ? GREEN : RED,
-      detail: env(n) ? 'lykill til staðar' : 'vantar í umhverfið',
-      hvernig: hvernig + ' Lykillinn er settur í Netlify → Environment variables (aldrei í kóðann).',
-      tenglar: [{ label: 'Netlify · lyklar ↗', url: NETLIFY_ENV }],
-    });
-  });
+  // NB gamli „Lyklar"-hópurinn (bara til/ekki til) var hér — hann er felldur
+  // inn í LYKLASKRÁNA að neðan, sem segir það sama PLÚS hvar lykillinn býr,
+  // hvað hann opnar og hvernig honum er skipt. Tveir hópar um sömu lyklana
+  // hefðu bara verið tvær útgáfur af sannleikanum.
 
   return S;
+}
+
+/* ─────────────────── 🔑 LYKLASKRÁIN ───────────────────
+   „Gríðarlega mikið af alls kyns tokens, auth og öðru sem ég veit ekki af …
+   alltaf eitthvað token-vesen" (Agnar 2026-07-31). Vandinn er ekki að lyklarnir
+   klikki heldur að enginn man HVAR þeir búa, HVAÐ þeir opna og HVERNIG þeir eru
+   endurnýjaðir. Hér er ein skrá yfir hvert einasta auðkenni sem kerfið stendur
+   á — líka þau sem ekki er hægt að prófa héðan (þau eru þá heiðarlega merkt
+   „handvirkt", ekki gefið grænt ljós að ástæðulausu).
+   Geymir ALDREI lykil — aðeins hvar hann er og hvenær hann var endurnýjaður. */
+const SKRA = [
+  { id: 'l:google', heiti: 'Google OAuth', hvar: 'Netlify env — GOOGLE_OAUTH_CLIENT_ID/SECRET',
+    opnar: 'Drive, Sheets, Gmail (öll pósthólfin og skjalatólin)',
+    endurnyja: 'Google Cloud Console → Credentials → OAuth client. Eftir skipti þarf að TENGJA hvert pósthólf upp á nýtt.',
+    slod: 'https://console.cloud.google.com/apis/credentials', env: 'GOOGLE_OAUTH_CLIENT_SECRET', bil_dagar: 730 },
+  { id: 'l:supabase', heiti: 'Supabase service role', hvar: 'Netlify env — SUPABASE_SERVICE_ROLE_KEY',
+    opnar: 'ALLT í gagnagrunninum, framhjá RLS. Hættulegasti lykillinn.',
+    endurnyja: 'Supabase → Project Settings → API → rotate. Uppfæra svo í Netlify env og keyra deploy.',
+    slod: 'https://supabase.com/dashboard/project/osfdzskyvisifcwyjkuk/settings/api', env: 'SUPABASE_SERVICE_ROLE_KEY', bil_dagar: 730 },
+  { id: 'l:netlify', heiti: 'Netlify aðgangslykill (PAT)', hvar: 'GitHub Actions secret — NETLIFY_TOKEN (slokkvitaeki)',
+    opnar: 'Útgáfur á slokkvitaeki.netlify.app',
+    endurnyja: 'Netlify → User settings → Applications → Personal access tokens: búa til nýjan, eyða þeim gamla, uppfæra GitHub secret.',
+    slod: 'https://app.netlify.com/user/applications#personal-access-tokens', bil_dagar: 365,
+    vidvorun: 'Þessi lykill LAK opinberlega (var í CLAUDE.md sem vefurinn birti) og hefur EKKI verið endurnýjaður. Gera það sem fyrst.' },
+  { id: 'l:github', heiti: 'GitHub', hvar: 'GitHub App / Actions secrets í hverju repo',
+    opnar: 'Útgáfur, PR-ar og sjálfvirkni á öllum þremur repo-unum',
+    endurnyja: 'GitHub → Settings → Developer settings (PAT) eða repo → Settings → Secrets.',
+    slod: 'https://github.com/settings/tokens', bil_dagar: 365 },
+  { id: 'l:payday', heiti: 'Payday client secret', hvar: 'Netlify env — PAYDAY_CLIENT_ID/SECRET',
+    opnar: 'Reikninga og kröfur beggja félaga', endurnyja: 'Payday → stillingar → API-aðgangur.',
+    slod: 'https://app.payday.is', env: 'PAYDAY_CLIENT_SECRET', bil_dagar: 365 },
+  { id: 'l:dkplus', heiti: 'dkPlus auðkennislykill', hvar: 'Netlify env — DKPLUS_API_KEY',
+    opnar: 'Bókhald Slökkvitækja', endurnyja: 'dkPlus → auðkennislyklar. NB þessi lykill barst í tölvupósti á sínum tíma — vert að skipta.',
+    slod: 'https://dkplus.is', env: 'DKPLUS_API_KEY', bil_dagar: 365 },
+  { id: 'l:timavera', heiti: 'Tímavera API-lykill', hvar: 'Gagnagrunnur (app_kv) — límdur inn í Bakendi',
+    opnar: 'Vinnufærslur', endurnyja: 'Tímavera sendir nýjan lykil í tölvupósti (1Password-hlekkur). Líma inn í Bakendi-kortið „🕒 Tímavera API".',
+    slod: '/#bakendi', bil_dagar: 365 },
+  { id: 'l:anthropic', heiti: 'Claude (Anthropic)', hvar: 'Netlify env — ANTHROPIC_API_KEY',
+    opnar: 'Svar-uppköst og samantektir', endurnyja: 'console.anthropic.com → API keys.',
+    slod: 'https://console.anthropic.com/settings/keys', env: 'ANTHROPIC_API_KEY', bil_dagar: 365 },
+  { id: 'l:resend', heiti: 'Resend', hvar: 'Netlify env — RESEND_API_KEY',
+    opnar: 'Allan póst sem kerfið SENDIR', endurnyja: 'resend.com → API keys. Lénið eldklar.is verður að vera staðfest.',
+    slod: 'https://resend.com/api-keys', env: 'RESEND_API_KEY', bil_dagar: 365 },
+  { id: 'l:365', heiti: 'Microsoft 365 (Entra)', hvar: 'HVERGI — ekki sett upp',
+    opnar: 'Myndi opna @brunaholf.is pósthólfin úr skýinu í stað Thunderbird-tölvunnar',
+    endurnyja: 'Óunnið verk: skrá app í Entra ID, veita Mail.Read og geyma client-secret í Netlify env.',
+    slod: 'https://entra.microsoft.com', vantar: true },
+  { id: 'l:extension', heiti: 'Mail Pulse tákn', hvar: 'Netlify env — EXTENSION_INGEST_TOKEN',
+    opnar: 'Póst-innsog úr Chrome-viðbótinni', endurnyja: 'Velja nýtt gildi í Netlify env og setja sama gildi í viðbótina.',
+    env: 'EXTENSION_INGEST_TOKEN', bil_dagar: 365 },
+  { id: 'l:vel', heiti: 'Lífsmarks-tákn véla', hvar: 'Netlify env — VEL_HEARTBEAT_TOKEN (valfrjálst)',
+    opnar: 'Hver má senda lífsmark inn á Kerfisheilsu', endurnyja: 'Setja gildi í Netlify env og sama gildi á vélarnar (VEL_HEARTBEAT_TOKEN).',
+    env: 'VEL_HEARTBEAT_TOKEN', bil_dagar: 730, valfrjalst: true,
+    an_texti: 'ekki sett — hver sem er getur sent lífsmark. Í lagi meðan aðeins okkar vélar vita af slóðinni; setja tákn ef það á að herða.' },
+];
+
+function lyklaskra(kv) {
+  const skradar = (kv[KV_LYKLAR] && typeof kv[KV_LYKLAR] === 'object') ? kv[KV_LYKLAR] : {};
+  const nu = Date.now();
+  return SKRA.map(l => {
+    const r = skradar[l.id] || null;
+    const dagar = r ? Math.floor((nu - new Date(r.at).getTime()) / 86400000) : null;
+    const til = l.env ? !!process.env[l.env] : null;
+
+    let status, detail;
+    if (l.vantar) { status = GREY; detail = 'ekki sett upp'; }
+    else if (til === false && l.valfrjalst) { status = AMBER; detail = l.an_texti || 'valfrjálst — ekki sett'; }
+    else if (til === false) { status = RED; detail = 'lykill vantar í umhverfið'; }
+    else if (l.vidvorun && !r) { status = RED; detail = l.vidvorun; }
+    else if (!r) { status = AMBER; detail = til ? 'lykill til staðar — endurnýjun aldrei skráð' : 'endurnýjun aldrei skráð'; }
+    else if (l.bil_dagar && dagar > l.bil_dagar) { status = AMBER; detail = 'endurnýjaður fyrir ' + dagar + ' dögum — kominn tími á nýjan'; }
+    else { status = GREEN; detail = 'endurnýjaður fyrir ' + dagar + ' dögum' + (r.note ? ' · ' + r.note : ''); }
+
+    // Sérstakt: Supabase-lykillinn er JWT með útrunatíma — hann er lesinn beint
+    // úr lyklinum sjálfum (aðeins hausinn afkóðaður, gildið fer hvergi).
+    let talning = null;
+    if (l.id === 'l:supabase') {
+      const exp = jwtExp(process.env.SUPABASE_SERVICE_ROLE_KEY);
+      if (exp) talning = { label: 'lykillinn rennur út', dagar: Math.round((exp - nu) / 86400000) };
+      else detail += ' · lykillinn ber engan útrunatíma (nýja sb_-sniðið) — rennur ekki út af sjálfu sér';
+    }
+
+    return {
+      id: l.id, hopur: '🔑 Auðkenni & lyklar', heiti: l.heiti, undir: l.hvar,
+      status, detail, talning,
+      hvernig: '<b>Opnar:</b> ' + l.opnar + '<br><b>Endurnýjun:</b> ' + l.endurnyja,
+      adgerdir: l.vantar ? [] : [{ label: '✅ Merkja endurnýjað', rotate: l.id }],
+      tenglar: l.slod ? [{ label: 'Opna ↗', url: l.slod }] : null,
+    };
+  });
+}
+
+// Les `exp` úr JWT ÁN þess að staðfesta undirskrift — við erum ekki að treysta
+// honum, aðeins að lesa hvenær hann rennur út. Skilar ms eða null.
+function jwtExp(t) {
+  try {
+    const p = String(t || '').split('.')[1];
+    if (!p) return null;
+    const j = JSON.parse(Buffer.from(p.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8'));
+    return j && j.exp ? j.exp * 1000 : null;
+  } catch (_) { return null; }
 }
 
 function svc(id, hopur, heiti, undir, t, hasKey, vantarTexti, run, expiresAt, auka) {
@@ -359,7 +463,7 @@ function cors() {
   return {
     'access-control-allow-origin': '*',
     'access-control-allow-headers': 'content-type',
-    'access-control-allow-methods': 'GET,OPTIONS',
+    'access-control-allow-methods': 'GET,POST,OPTIONS',
   };
 }
 function resp(code, body, headers) { return { statusCode: code, headers: headers || {}, body }; }
