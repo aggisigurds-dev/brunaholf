@@ -36,7 +36,7 @@ exports.handler = async (event) => {
     if (b.action !== 'rotated' || !b.id) return json(400, { error: "Vantar {action:'rotated', id}" });
     const kv = await kvAll();
     const skra = (kv[KV_LYKLAR] && typeof kv[KV_LYKLAR] === 'object') ? kv[KV_LYKLAR] : {};
-    skra[b.id] = { at: new Date().toISOString(), note: (b.note || '').slice(0, 200) };
+    skra[b.id] = { at: new Date().toISOString(), note: (b.note || '').slice(0, 200), baseline: !!b.baseline };
     await kvSet(KV_LYKLAR, skra);
     return json(200, { ok: true, id: b.id, at: skra[b.id].at });
   }
@@ -305,6 +305,10 @@ const SKRA = [
   { id: 'l:payday', heiti: 'Payday client secret', hvar: 'Netlify env — PAYDAY_CLIENT_ID/SECRET',
     opnar: 'Reikninga og kröfur beggja félaga', endurnyja: 'Payday → stillingar → API-aðgangur.',
     slod: 'https://app.payday.is', env: 'PAYDAY_CLIENT_SECRET', bil_dagar: 365 },
+  { id: 'l:dkplus', heiti: 'dkPlus (bókhald/reikningar)', hvar: 'Netlify env — DKPLUS_API_KEY + DKPLUS_COMPANY',
+    opnar: 'Reikningagerð Slökkvitækja í dkPlus — token-skipti (POST /api/v1/Token) og sölureikningar/kröfur gegnum /api/dkplus*.',
+    endurnyja: 'dkPlus → API-aðgangur → nýr auðkennislykill; uppfæra DKPLUS_API_KEY í Netlify env og keyra deploy.',
+    slod: 'https://api.dkplus.is/swagger', env: 'DKPLUS_API_KEY', bil_dagar: 365 },
   { id: 'l:timavera', heiti: 'Tímavera API-lykill', hvar: 'Gagnagrunnur (app_kv) — límdur inn í Bakendi',
     opnar: 'Vinnufærslur', endurnyja: 'Tímavera sendir nýjan lykil í tölvupósti (1Password-hlekkur). Líma inn í Bakendi-kortið „🕒 Tímavera API".',
     slod: '/#bakendi', bil_dagar: 365 },
@@ -338,8 +342,8 @@ function lyklaskra(kv) {
     else if (til === false) { status = RED; detail = 'lykill vantar í umhverfið'; }
     else if (l.vidvorun && !r) { status = RED; detail = l.vidvorun; }
     else if (!r) { status = AMBER; detail = til ? 'lykill til staðar — endurnýjun aldrei skráð' : 'endurnýjun aldrei skráð'; }
-    else if (l.bil_dagar && dagar > l.bil_dagar) { status = AMBER; detail = 'endurnýjaður fyrir ' + dagar + ' dögum — kominn tími á nýjan'; }
-    else { status = GREEN; detail = 'endurnýjaður fyrir ' + dagar + ' dögum' + (r.note ? ' · ' + r.note : ''); }
+    else if (l.bil_dagar && dagar > l.bil_dagar) { status = AMBER; detail = (r.baseline ? 'grunnlína skráð fyrir ' : 'endurnýjaður fyrir ') + dagar + ' dögum — kominn tími á nýjan'; }
+    else { status = GREEN; detail = (r.baseline ? 'grunnlína staðfest fyrir ' : 'endurnýjaður fyrir ') + dagar + ' dögum' + (r.note ? ' · ' + r.note : ''); }
 
     // Sérstakt: Supabase-lykillinn er JWT með útrunatíma — hann er lesinn beint
     // úr lyklinum sjálfum (aðeins hausinn afkóðaður, gildið fer hvergi).
