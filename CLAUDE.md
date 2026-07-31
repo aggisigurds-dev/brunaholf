@@ -188,6 +188,17 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   iframe-ið hleðst. Spjaldið í Bakendi opnar hana áfram á **sérskjá** (`target=_blank`)
   — ætlunin er að hún standi opin á sínum skjá; flipinn er fyrir fljóta kíkið.
   Deep-link `#jarvis` virkar sjálfkrafa (`applyDeepLinkTab` les `state.tabs`).
+  **Kjarninn (2026-07-31):** miðja spjaldsins er hvarfið sjálft — TALA-hnappurinn
+  var færður NEÐST og málrofinn út í hornið svo ekkert liggi ofan á því (striginn
+  teiknar miðjuna í 40% hæð). Hreyfingin er **tímabundin (dt), ekki rammabundin**
+  — annars gengur allt tvöfalt hraðar á 120Hz skjá. Agnirnar hafa hver sína
+  sporbraut (`AGNIR`, fast horn/radíus/stefna/hraði) og reika hægt (~9°/s grunnur);
+  orkan (`E`) er sýnd í KJARNANUM, ekki í hraða agnanna. Orku-umslagið er **snögg
+  árás / hæg dvínun**, með andardrætti í þögn svo hann sé aldrei dauður. Bassi og
+  diskant koma úr `getByteFrequencyData` (ólga yfirborðs / tindr agna). Teiknað
+  samleggjandi (`globalCompositeOperation='lighter'`) — miðjan brennur út af
+  sjálfu sér. GILDRA: inline-glóðin á `#hnappur` slær út `.on`-regluna í CSS, svo
+  rauði hlustunarliturinn er valinn í JS líka.
 - `yfirlit` — front page / dashboard. Includes an **Útistandandi** band
   (óinnheimt + verkstaðir án reiknings) pulling `summary.total_unpaid` +
   `summary.worksites_with_no_invoice` live from `/api/worksites?year=combined`;
