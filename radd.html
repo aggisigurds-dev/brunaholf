@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0f14">
+<title>🎙️ Raddminni — Brunahólf</title>
+<style>
+  /* Sama grásvarta málm-þema og Kerfisheilsa — þetta er sama stjórnborðið. */
+  :root{
+    --stal1:#3a3f45; --stal2:#23272c; --stal3:#15181c; --brd:#0a0b0d;
+    --brd-ljos:rgba(255,255,255,.09); --ink:#e8edf2; --ink2:#a3aeb9; --ink3:#6f7c88;
+    --green:#3ddc7f; --amber:#f5b301; --red:#ff4d4d;
+    --burst:repeating-linear-gradient(90deg,rgba(255,255,255,.022) 0 1px,transparent 1px 3px);
+    --plata:linear-gradient(180deg,var(--stal1) 0%,var(--stal2) 38%,var(--stal3) 100%);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;color:var(--ink);
+    background:radial-gradient(900px 420px at 50% -8%,rgba(255,255,255,.05),transparent 70%),
+      var(--burst),linear-gradient(180deg,#1b1e22,#101316 55%,#0a0c0e);
+    background-attachment:fixed;
+    font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    padding-bottom:env(safe-area-inset-bottom)}
+  .wrap{max-width:640px;margin:0 auto;padding:18px 14px 40px}
+
+  header{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:12px;
+    background:var(--burst),var(--plata);border:1px solid var(--brd);
+    box-shadow:inset 0 1px 0 var(--brd-ljos),0 8px 22px rgba(0,0,0,.5)}
+  h1{margin:0;font-size:17px;letter-spacing:.05em;text-transform:uppercase;font-weight:800;
+    text-shadow:0 1px 0 #000}
+  .sub{color:var(--ink3);font-size:12px;margin-top:2px}
+  a.til{margin-left:auto;color:var(--ink2);text-decoration:none;font-size:12.5px;font-weight:700}
+
+  /* Hnappurinn: stór, í þumal-svæðinu, ómögulegt að missa af. */
+  .midja{display:flex;flex-direction:column;align-items:center;gap:12px;margin:26px 0 18px}
+  #rec{width:150px;height:150px;border-radius:50%;border:1px solid var(--brd);cursor:pointer;
+    background:linear-gradient(180deg,#454b52,#23272c);color:var(--ink);font:inherit;
+    font-size:15px;font-weight:800;letter-spacing:.04em;
+    box-shadow:inset 0 2px 0 rgba(255,255,255,.16),inset 0 -3px 6px rgba(0,0,0,.5),0 8px 20px rgba(0,0,0,.55);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+  #rec .ic{font-size:40px;line-height:1}
+  #rec.on{background:linear-gradient(180deg,#b8322f,#6f1512);color:#ffe4e4;
+    animation:pulsa 1.5s infinite}
+  @keyframes pulsa{0%,100%{box-shadow:inset 0 2px 0 rgba(255,255,255,.2),0 0 0 0 rgba(255,77,77,.45)}
+    50%{box-shadow:inset 0 2px 0 rgba(255,255,255,.2),0 0 0 22px rgba(255,77,77,0)}}
+  .klukka{font-variant-numeric:tabular-nums;color:var(--ink2);font-size:13px;letter-spacing:.06em}
+
+  .reitur{background:linear-gradient(180deg,#0e1013,#141719);border:1px solid var(--brd);
+    border-radius:10px;box-shadow:inset 0 2px 5px rgba(0,0,0,.8);padding:12px 14px;margin-top:14px}
+  textarea{width:100%;min-height:130px;background:transparent;border:0;color:var(--ink);
+    font:inherit;font-size:16px;resize:vertical;outline:none}
+  textarea::placeholder{color:#54636f}
+  .radir{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .btn{border-radius:10px;padding:12px 18px;font:inherit;font-size:14.5px;font-weight:700;
+    cursor:pointer;color:var(--ink);background:linear-gradient(180deg,#454b52,#23272c);
+    border:1px solid var(--brd);box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 2px 4px rgba(0,0,0,.5);
+    min-height:48px;flex:1}
+  .btn--go{background:linear-gradient(180deg,#2f8f57,#155c33);color:#dcfce7}
+  .btn:active{transform:translateY(1px);box-shadow:inset 0 2px 6px rgba(0,0,0,.8)}
+  .btn:disabled{opacity:.45}
+
+  h2{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3);
+    margin:30px 0 10px 3px;font-weight:800}
+  .kort{background:var(--burst),var(--plata);border:1px solid var(--brd);border-radius:11px;
+    padding:12px 14px;margin-bottom:10px;position:relative;overflow:hidden;
+    box-shadow:inset 0 1px 0 var(--brd-ljos),0 5px 14px rgba(0,0,0,.45)}
+  .kort::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:#39424b}
+  .kort.verkefni::before{background:linear-gradient(180deg,#5ef39a,#1f9c5b);box-shadow:0 0 12px 1px rgba(61,220,127,.45)}
+  .kort.spurning::before{background:linear-gradient(180deg,#ffd35c,#c07f00);box-shadow:0 0 12px 1px rgba(245,179,1,.4)}
+  .kort.unnid{opacity:.5}
+  .kt{font-weight:700;font-size:14.5px;text-shadow:0 1px 0 rgba(0,0,0,.8)}
+  .km{color:var(--ink3);font-size:11px;margin-top:2px}
+  .ks{color:var(--ink2);font-size:13px;margin-top:5px}
+  .kx{color:#93a3b0;font-size:12.5px;margin-top:6px;white-space:pre-wrap;
+    background:#0e1013;border:1px solid #1b2530;border-radius:7px;padding:7px 9px;
+    box-shadow:inset 0 2px 5px rgba(0,0,0,.7);max-height:150px;overflow:auto}
+  audio{width:100%;margin-top:8px;height:34px}
+  .merki{display:inline-block;border-radius:99px;padding:1px 9px;font-size:10.5px;font-weight:800;
+    background:linear-gradient(180deg,#3a4046,#22262b);border:1px solid var(--brd);color:var(--ink2)}
+  .abtn{border-radius:8px;padding:6px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;
+    color:var(--ink2);background:linear-gradient(180deg,#3d434a,#22262b);border:1px solid var(--brd);
+    margin-top:9px}
+  .note{color:var(--ink3);font-size:12px;line-height:1.6;margin-top:26px;
+    border-top:1px solid #2a2f35;padding-top:14px}
+  .villa{color:#ffb4b4}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>🎙️ Raddminni</h1>
+      <div class="sub" id="staða">Ýttu og talaðu</div>
+    </div>
+    <a class="til" href="/verkefnalisti.html">Verkefnalisti ↗</a>
+  </header>
+
+  <div class="midja">
+    <button id="rec"><span class="ic">🎙️</span><span id="reclbl">TALA</span></button>
+    <div class="klukka" id="klukka">00:00</div>
+  </div>
+
+  <div class="reitur">
+    <textarea id="texti" placeholder="…það sem þú segir birtist hér. Þú mátt laga það áður en þú vistar."></textarea>
+  </div>
+  <div class="radir">
+    <button class="btn" id="hreinsa">Hreinsa</button>
+    <button class="btn btn--go" id="vista">💾 Vista punkt</button>
+  </div>
+
+  <h2>Síðustu punktar</h2>
+  <div id="listi"><div style="color:#6f7c88;padding:10px 2px">Sæki…</div></div>
+
+  <div class="note">
+    <b>Hljóðið er alltaf geymt</b> — líka þegar talgreiningin misheyrir. Upptakan er sönnunin og
+    má endur-greina síðar með betri vél.<br>
+    <b>Verkefni</b> fara sjálfkrafa á Verkefnalistann. Minnispunktar og spurningar bíða hér
+    svo listinn fyllist ekki af hugleiðingum.<br>
+    Talgreiningin notar innbyggða íslensku símans (<code>is-IS</code>) — ekkert sent neitt fyrr
+    en þú ýtir á Vista.
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+let rec = null, chunks = [], sr = null, t0 = 0, tikk = null, lokaTexti = '', bidTexti = '';
+
+/* Tvennt gerist í einu þegar ýtt er á hnappinn:
+   1) MediaRecorder tekur upp HLJÓÐIÐ (það er minnið — glatast aldrei)
+   2) SpeechRecognition skrifar textann jafnóðum (þægindin — má vera ófullkomið) */
+async function byrja(){
+  try{
+    const straumur = await navigator.mediaDevices.getUserMedia({ audio:true });
+    chunks = [];
+    rec = new MediaRecorder(straumur, MediaRecorder.isTypeSupported('audio/webm') ? {mimeType:'audio/webm'} : undefined);
+    rec.ondataavailable = e => { if(e.data && e.data.size) chunks.push(e.data); };
+    rec.onstop = () => straumur.getTracks().forEach(t=>t.stop());
+    rec.start();
+  }catch(e){
+    $('#staða').innerHTML = '<span class="villa">Kemst ekki í hljóðnemann: '+esc(e.message)+'</span>';
+    return false;
+  }
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(SR){
+    sr = new SR(); sr.lang = 'is-IS'; sr.continuous = true; sr.interimResults = true;
+    lokaTexti = ($('#texti').value ? $('#texti').value.trim()+' ' : '');
+    sr.onresult = e => {
+      let bid = '';
+      for(let i=e.resultIndex;i<e.results.length;i++){
+        const r = e.results[i];
+        if(r.isFinal) lokaTexti += r[0].transcript.trim()+' '; else bid += r[0].transcript;
+      }
+      bidTexti = bid;
+      $('#texti').value = (lokaTexti + bid).trim();
+    };
+    sr.onerror = e => { if(e.error!=='no-speech') $('#staða').textContent = 'Talgreining: '+e.error; };
+    sr.onend = () => { if(rec && rec.state==='recording'){ try{ sr.start(); }catch(_){} } };  // sum tæki slíta sjálf
+    try{ sr.start(); }catch(_){}
+  }else{
+    $('#staða').textContent = 'Þetta tæki styður ekki talgreiningu — hljóðið geymist samt';
+  }
+
+  t0 = Date.now();
+  tikk = setInterval(()=>{
+    const s = Math.floor((Date.now()-t0)/1000);
+    $('#klukka').textContent = String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  }, 250);
+  return true;
+}
+
+function haetta(){
+  if(sr){ try{ sr.onend=null; sr.stop(); }catch(_){} sr=null; }
+  if(rec && rec.state!=='inactive') rec.stop();
+  clearInterval(tikk);
+}
+
+$('#rec').addEventListener('click', async () => {
+  const b = $('#rec');
+  if(b.classList.contains('on')){
+    haetta();
+    b.classList.remove('on'); $('#reclbl').textContent='TALA';
+    $('#staða').textContent = 'Yfirfarðu textann og vistaðu';
+  }else{
+    if(await byrja()){
+      b.classList.add('on'); $('#reclbl').textContent='STOPP';
+      $('#staða').textContent = 'Hlusta…'; $('#klukka').textContent='00:00';
+    }
+  }
+});
+
+$('#hreinsa').addEventListener('click', () => {
+  haetta(); $('#rec').classList.remove('on'); $('#reclbl').textContent='TALA';
+  $('#texti').value=''; lokaTexti=''; bidTexti=''; chunks=[]; $('#klukka').textContent='00:00';
+  $('#staða').textContent='Ýttu og talaðu';
+});
+
+$('#vista').addEventListener('click', async () => {
+  if($('#rec').classList.contains('on')){ $('#rec').click(); await bida(400); }  // stoppa fyrst
+  const texti = $('#texti').value.trim();
+  if(!texti && !chunks.length){ $('#staða').textContent='Ekkert að vista'; return; }
+  const b = $('#vista'); b.disabled = true; b.textContent='⏳ Vista…';
+  $('#staða').textContent = 'Sendi og læt Claude lesa…';
+  try{
+    let audio_b64 = null, seconds = Math.round((Date.now()-t0)/1000);
+    if(chunks.length){
+      const blob = new Blob(chunks, { type: chunks[0].type || 'audio/webm' });
+      audio_b64 = await b64(blob);
+    }
+    const r = await fetch('/api/raddminni', { method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ action:'save', texti, audio_b64, seconds, notandi: localStorage.getItem('ky_me')||null }) });
+    const j = await r.json();
+    if(j.error) throw new Error(j.error);
+    $('#texti').value=''; lokaTexti=''; chunks=[]; $('#klukka').textContent='00:00';
+    $('#staða').textContent = j.verkefni ? '✅ Skráð sem verkefni á listann' : '✅ Vistað';
+    sakja();
+  }catch(e){
+    $('#staða').innerHTML = '<span class="villa">Vistun féll: '+esc(e.message)+'</span>';
+  }finally{ b.disabled=false; b.textContent='💾 Vista punkt'; }
+});
+
+function bida(ms){ return new Promise(r=>setTimeout(r,ms)); }
+function b64(blob){
+  return new Promise((ok,nei)=>{ const fr=new FileReader(); fr.onload=()=>ok(fr.result); fr.onerror=nei; fr.readAsDataURL(blob); });
+}
+function relTimi(iso){
+  const s = Math.floor((Date.now()-new Date(iso).getTime())/1000);
+  if(s<60) return 'rétt í þessu';
+  if(s<3600) return Math.floor(s/60)+' mín síðan';
+  if(s<86400) return Math.floor(s/3600)+' klst síðan';
+  return Math.floor(s/86400)+' daga síðan';
+}
+
+async function sakja(){
+  try{
+    const j = await (await fetch('/api/raddminni?limit=30',{cache:'no-store'})).json();
+    const p = j.punktar || [];
+    $('#listi').innerHTML = p.length ? p.map(x =>
+      '<div class="kort '+esc(x.flokkur||'')+(x.unnid?' unnid':'')+'">'+
+        '<div class="kt">'+esc(x.titill || (x.texti||'').slice(0,70) || '(án texta)')+'</div>'+
+        '<div class="km">'+relTimi(x.created_at)+
+          (x.flokkur?' · <span class="merki">'+esc(x.flokkur)+'</span>':'')+
+          (x.fyrirtaeki?' · '+esc(x.fyrirtaeki):'')+
+          (x.seconds?' · '+x.seconds+' sek':'')+
+          (x.verkefni_id?' · <span class="merki">á verkefnalista</span>':'')+'</div>'+
+        (x.samantekt?'<div class="ks">'+esc(x.samantekt)+'</div>':'')+
+        (x.texti?'<div class="kx">'+esc(x.texti)+'</div>':'')+
+        (x.audio_url?'<audio controls preload="none" src="'+esc(x.audio_url)+'"></audio>':'')+
+        '<button class="abtn" data-unnid="'+x.id+'" data-stada="'+(x.unnid?1:0)+'">'+
+          (x.unnid?'↩ Opna aftur':'✓ Afgreitt')+'</button>'+
+      '</div>').join('') : '<div style="color:#6f7c88;padding:10px 2px">Engir punktar enn.</div>';
+    $('#listi').querySelectorAll('[data-unnid]').forEach(b => b.addEventListener('click', async () => {
+      b.disabled=true;
+      await fetch('/api/raddminni',{method:'POST',headers:{'content-type':'application/json'},
+        body:JSON.stringify({action:'unnid', id:+b.dataset.unnid, unnid:b.dataset.stada!=='1'})});
+      sakja();
+    }));
+  }catch(e){ $('#listi').innerHTML = '<div class="villa">Náði ekki í punkta: '+esc(e.message)+'</div>'; }
+}
+sakja();
+</script>
+</body>
+</html>
