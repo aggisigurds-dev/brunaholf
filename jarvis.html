@@ -9,6 +9,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#020814">
+<!-- Uppsetjanlegt app: opnaðu jarvis.html í Chrome á tölvunni/símanum → „Setja
+     upp" → fæst sem SÉR-tákn sem opnast í fullum skjá með hljóðnemann munaðan.
+     Ætlað að standa opið á sínum skjá. Eigin manifest (id=/jarvis.html) svo það
+     setjist upp sem sjálfstætt app, aðskilið frá hub-appinu. Þessi haus-atriði
+     hafa ENGIN áhrif þegar síðan er innfelld sem iframe í hubbinu — manifest
+     efsta ramma ræður, svo hub-appið helst óbreytt. -->
+<link rel="manifest" href="/manifest-jarvis.json?v=1">
+<link rel="icon" type="image/png" sizes="192x192" href="/img/brunaholf-icon-192.png?v=flame1">
+<link rel="icon" type="image/png" sizes="512x512" href="/img/brunaholf-icon-512.png?v=flame1">
+<link rel="apple-touch-icon" sizes="180x180" href="/img/brunaholf-apple-180.png?v=flame1">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="J.A.R.V.I.S.">
 <title>J.A.R.V.I.S. — Brunahólf</title>
 <style>
   /* ══════════════════════════════════════════════════════════════════
@@ -250,6 +264,9 @@
     <a href="/verkefnalisti.html">📋 Verkefnalisti</a>
     <a href="/veidin.html">🎯 Veiðin</a>
     <a href="/">← Hubbið</a>
+    <!-- Birtist AÐEINS þegar vafrinn býður uppsetningu (top-level, ekki uppsett
+         þegar). Í iframe/uppsettu appi fellur beforeinstallprompt aldrei. -->
+    <a href="#" id="setja-upp" style="display:none;color:var(--cy);border-color:var(--cy-dim)">⬇ Setja upp á þessa tölvu</a>
   </div>
 </div>
 
@@ -257,6 +274,29 @@
 const $ = s => document.querySelector(s);
 const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pad = n => String(n).padStart(2,'0');
+
+/* ── „Setja upp app" ────────────────────────────────────────────────────
+   Chrome geymir uppsetningar-boðið í `beforeinstallprompt`; við grípum það,
+   sýnum hnappinn og köllum prompt() við smell. Fellur AÐEINS í efsta ramma
+   sem er ekki þegar uppsettur — svo hnappurinn birtist ekki í hubbinu
+   (iframe) né í þegar-uppsettu appi. Ef vafrinn býður ekki (t.d. Safari) er
+   uppsetning samt til í valmyndinni — hnappurinn er bara flýtileið. */
+let uppsetningarbod = null;
+addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); uppsetningarbod = e;
+  const b = $('#setja-upp'); if (b) b.style.display = '';
+});
+addEventListener('appinstalled', () => { const b = $('#setja-upp'); if (b) b.style.display = 'none'; });
+(function () {
+  const b = $('#setja-upp'); if (!b) return;
+  b.addEventListener('click', async ev => {
+    ev.preventDefault();
+    if (!uppsetningarbod) return;
+    uppsetningarbod.prompt();
+    try { await uppsetningarbod.userChoice; } catch (_) {}
+    uppsetningarbod = null; b.style.display = 'none';
+  });
+})();
 
 /* ── klukka ─────────────────────────────────────────────── */
 setInterval(() => {
