@@ -578,20 +578,30 @@ function teiknaRatsja(){
 
 /* ── tal ────────────────────────────────────────────────── */
 let sr = null, straumur = null, sidastaSvar = '';
+const erFarsimi = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent||'');
 async function byrjaTal(){
-  try{
-    const s = await navigator.mediaDevices.getUserMedia({audio:true});
-    straumur = s;
-    const ac = new (window.AudioContext||window.webkitAudioContext)();
-    greinir = ac.createAnalyser(); greinir.fftSize = 1024;
-    gognBuffer = new Uint8Array(greinir.fftSize);
-    ac.createMediaStreamSource(s).connect(greinir);
-  }catch(e){ $('#heyri').innerHTML = '<span class="villa">Kemst ekki í hljóðnemann</span>'; return false; }
+  // Hljóðnema-mælirinn (bylgjan) opnar sinn eigin getUserMedia-straum. Á SÍMA
+  // getur það stolið hljóðnemanum frá talgreiningunni (webkitSpeechRecognition)
+  // svo hún fær enga hljóð → „Ekkert heyrðist". Því sleppum við mælinum á síma;
+  // þá á talgreiningin hljóðnemann ein. Á tölvu virka báðir saman (fínn mælir).
+  if(!erFarsimi){
+    try{
+      const s = await navigator.mediaDevices.getUserMedia({audio:true});
+      straumur = s;
+      const ac = new (window.AudioContext||window.webkitAudioContext)();
+      greinir = ac.createAnalyser(); greinir.fftSize = 1024;
+      gognBuffer = new Uint8Array(greinir.fftSize);
+      ac.createMediaStreamSource(s).connect(greinir);
+    }catch(e){ /* mælirinn er valfrjáls — höldum samt áfram í talgreiningu */ }
+  }
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if(!SR){ $('#heyri').textContent = 'Tækið styður ekki talgreiningu'; return true; }
-  sr = new SR(); sr.lang = MAL==='en'?'en-US':'is-IS'; sr.continuous = true; sr.interimResults = true;
-  let loka = '';
+  sr = new SR();
+  sr.lang = MAL==='en'?'en-US':'is-IS';
+  sr.continuous = !erFarsimi;        // „continuous" er óáreiðanlegt á síma
+  sr.interimResults = true;
+  let loka = '', skiptiMal = false;
   sr.onresult = e => {
     let bid = '';
     for(let i=e.resultIndex;i<e.results.length;i++){
@@ -599,6 +609,26 @@ async function byrjaTal(){
       if(r.isFinal) loka += r[0].transcript.trim()+' '; else bid += r[0].transcript;
     }
     $('#talid').textContent = (loka+bid).trim();
+  };
+  // ÁÐUR: engin onerror → sérhver villa (íslenska óstudd, hljóðnemi upptekinn,
+  // ekkert tal) þagnaði og skildi eftir tómt → „Ekkert heyrðist". Nú birtist
+  // raunástæðan, og ef íslensk talgreining er óstudd skiptum við sjálfkrafa í ensku.
+  sr.onerror = ev => {
+    const c = (ev && ev.error) || '';
+    if(c==='no-speech' || c==='aborted') return;   // saklaust; onend endurræsir meðan 'on'
+    if((c==='language-not-supported'||c==='bad-grammar') && sr.lang!=='en-US' && !skiptiMal){
+      skiptiMal = true; sr.lang = 'en-US';
+      $('#heyri').textContent = 'Íslensk talgreining óstudd hér — skipti í ensku';
+      try{ sr.stop(); }catch(_){}   // onend endurræsir með ensku
+      return;
+    }
+    const skb = {
+      'not-allowed':'Hljóðnemi ekki leyfður í vafranum',
+      'service-not-allowed':'Hljóðnemi ekki leyfður í vafranum',
+      'audio-capture':'Kemst ekki í hljóðnema (í notkun annars staðar?)',
+      'network':'Talgreiningar-þjónusta ónáanleg'
+    };
+    $('#heyri').innerHTML = '<span class="villa">'+esc(skb[c]||('Villa: '+(c||'óþekkt')))+'</span>';
   };
   sr.onend = () => { if($('#hnappur').classList.contains('on')){ try{sr.start();}catch(_){}} };
   try{ sr.start(); }catch(_){}
