@@ -188,6 +188,21 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   iframe-ið hleðst. Spjaldið í Bakendi opnar hana áfram á **sérskjá** (`target=_blank`)
   — ætlunin er að hún standi opin á sínum skjá; flipinn er fyrir fljóta kíkið.
   Deep-link `#jarvis` virkar sjálfkrafa (`applyDeepLinkTab` les `state.tabs`).
+  **Kjarninn = AGNAHNÖTTUR (2026-07-31, eftir mynd frá Agnari; fyrri „plasma-
+  hnöttur" var hafnað og bakfærður í #338 — ekki endurvekja hann).** ~1400 agnir
+  á kúluskel, varpaðar flatt: það er ÞÉTTINGIN við jaðarinn sem býr til
+  hnattarformið, ekki teiknaður hringur. Fibonacci-dreifing (jafnt bil) + hnik,
+  annars sést spíral-**moiré**. Agnirnar **streyma INN** (`p.r` minnkar, ný
+  stefna yst þegar þær ná `INNSTA`) — skelin er þröng (0,68–1,0) VILJANDI: breið
+  skel fyllir miðjuna og hnattarformið hverfur. Í miðju er **pínulítill
+  hvítglóandi punktur**, ekki stór hnöttur. Utan um: punktahringur · bogar með
+  opum · gráðuhringur 000–330 (5°/30° strik). Snýst á **~5°/s** — hægt.
+  Hreyfingin er **tímabundin (dt)**, annars tvöfalt hraðar á 120Hz skjá.
+  Hnötturinn heldur ALLTAF köldum lit; `heilsulitur` fær mælihringina eina, svo
+  rautt kerfi máli ekki alla myndina. Teiknað samleggjandi (`lighter`).
+  TALA-hnappurinn er NEÐST og málrofinn út í horn — miðjan má ekki hafa neitt
+  ofan á sér. GILDRA: inline-glóðin á `#hnappur` slær út `.on`-regluna í CSS, svo
+  rauði hlustunarliturinn er valinn í JS líka.
 - `yfirlit` — front page / dashboard. Includes an **Útistandandi** band
   (óinnheimt + verkstaðir án reiknings) pulling `summary.total_unpaid` +
   `summary.worksites_with_no_invoice` live from `/api/worksites?year=combined`;
