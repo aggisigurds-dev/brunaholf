@@ -1,6 +1,11 @@
 <!doctype html>
 <html lang="is">
 <head>
+<!-- Villuvöktun: FYRST og ÓSEINKAÐ, svo hún grípi líka villur í
+     boot-kóðanum. `defer` hefði látið hana ræsast Á EFTIR inline-
+     scriptunum og þá sæist einmitt versta tegundin ekki. -->
+<script src="/js/villuvakt.js?v=1"></script>
+
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Kerfisheilsa — Brunahólf</title>
@@ -158,6 +163,10 @@
     <button class="btn btn--go" id="test">⏱ Prófa allar tengingar</button>
     <button class="btn" id="refresh">↻ Sækja</button>
   </header>
+
+  <!-- Villuvöktun efst: JS-villa í appinu sást áður AÐEINS ef einhver hafði
+       console-ið opið. Þetta er borðið sem gerir hana sýnilega. -->
+  <div id="villur-kort"></div>
 
   <div id="body"><div class="load">Sæki stöðu…</div></div>
 
@@ -362,6 +371,59 @@ function kortHtml(s){
     (acts?'<div class="acts">'+acts+'</div>':'')+
   '</div>';
 }
+
+
+/* ── 🐞 Villuvöktun ────────────────────────────────────────────────────────
+   Les /api/villur (RLS-varin tafla, service role hinum megin). Sýnir AÐEINS
+   ÓLEYSTAR villur — borð sem safnar gömlum, þekktum villum hættir að vera
+   viðvörun og verður veggfóður. „✓ Leyst" tekur línuna af; sjáist villan aftur
+   opnast hún sjálfkrafa (hún var greinilega ekki leyst). */
+async function saekjaVillur(){
+  const h = document.getElementById('villur-kort'); if(!h) return;
+  let d = null;
+  try{ const r = await fetch('/api/villur?dagar=7'); if(r.ok) d = await r.json(); }catch(_){}
+  if(!d || !d.ok){ h.innerHTML = ''; return; }
+  const c = d.counts || {}, v = d.villur || [];
+  const kort = (status, nafn, undir, detail, acts) =>
+    '<div class="kort '+status+'"><div class="top"><span class="led"></span><div style="min-width:0">'+
+    '<div class="nafn">'+nafn+'</div>'+(undir?'<div class="undir">'+undir+'</div>':'')+'</div></div>'+
+    (detail?'<div class="detail">'+detail+'</div>':'')+(acts?'<div class="acts">'+acts+'</div>':'')+'</div>';
+
+  if(!v.length){
+    h.innerHTML = '<div class="grp"><h2>🐞 Villuvöktun</h2><div class="grid">'+
+      kort('graent','Engin óleyst villa','síðustu 7 daga',
+           'Ekkert JS-hrun skráð í hvorugu appinu. Vaktin er virk á öllum síðum sem hlaða villuvakt.js.','')+
+      '</div></div>';
+    return;
+  }
+  h.innerHTML = '<div class="grp"><h2>🐞 Villuvöktun · '+c.opnar+' óleystar · '+c.atvik+' atvik'+
+    (c.nytt ? ' · '+c.nytt+' NÝ í dag' : '')+'</h2><div class="grid">'+
+    v.map(function(x){
+      const nytt = Date.parse(x.fyrst_at) > Date.now()-864e5;
+      return kort(nytt ? 'raudt' : 'gult',
+        esc((x.skilabod||'').slice(0,120)),
+        esc(x.uppruni)+' · '+esc(x.slod||'—')+' · '+(x.fjoldi||1)+'× · síðast '+nyl(x.sidast_at),
+        x.skra ? esc(String(x.skra).slice(0,160)) : '',
+        '<button class="abtn" data-leysa="'+x.id+'">✓ Leyst</button>');
+    }).join('')+'</div></div>';
+  h.querySelectorAll('[data-leysa]').forEach(function(b){
+    b.addEventListener('click', async function(){
+      b.disabled = true; b.textContent = '⏳';
+      try{ await fetch('/api/villur', { method:'POST', headers:{'content-type':'application/json'},
+        body: JSON.stringify({ action:'leysa', id:+b.dataset.leysa }) }); }catch(_){}
+      saekjaVillur();
+    });
+  });
+}
+function nyl(t){
+  const m = Math.round((Date.now()-Date.parse(t))/60000);
+  if(!isFinite(m)) return '—';
+  if(m < 60) return m + ' mín';
+  if(m < 1440) return Math.round(m/60) + ' klst';
+  return Math.round(m/1440) + ' d';
+}
+setInterval(saekjaVillur, 120000);
+saekjaVillur();
 
 function teikna(services){
   const grps = rada(services);
