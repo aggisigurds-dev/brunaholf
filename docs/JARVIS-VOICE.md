@@ -36,14 +36,16 @@ undan (functionið er óvirkt þangað til).
    ```
 
 ## Áhöfnin (raddir = `/m/<id>` af fish.audio)
-| Agent | Rödd | Fish `voice_id` |
+| Agent (`id`) | Rödd | Fish `voice_id` |
 |---|---|---|
-| 🎩 Jarvis | J.A.R.V.I.S. (MCU) | `612b878b113047d9a770c069c8b4fdfe` |
-| 🍀 Hunter | Gruff Irish | `880fb671ebcb446dbc0d5fc99baf909e` |
-| 🃏 Harley | Harley Quinn | `e723d4c8547d4552af98ded15728cfbd` |
-| 🌿 Náttúran | David Attenborough | `eabac87f2d8b47f1b174e7d2f685618a` |
-| 🤖 GLaDOS | GLaDOS | `ee885900b0874d12b1c3439d1e56cc95` |
-| 🤠 Dolly | *(vantar)* | — velja Fish „southern/country" eða tengja ElevenLabs „Aunt Shirley" |
+| 🎩 Jarvis (`jarvis`) | J.A.R.V.I.S. (MCU) — dagleg yfirsýn | `612b878b113047d9a770c069c8b4fdfe` |
+| 🔥 Gordon Ramsay (`ramsay`) | nöldrar um ósend drög/reikninga | `e605a2a42b0a44ccb7af2e42e1676c92` |
+| 🎙️ Morgan Freeman (`freeman`) | sögumaður — les skuldalistann | `76bb6ae7b26c41fbbd484514fdb014c2` |
+| 💪 Arnold (`arnold`) | hvatning — „do it now" | `2270085c19e14054b63e0e451593e0f0` |
+| 🃏 Harley (`harley`) | ringulreiðs-áminningar | `e723d4c8547d4552af98ded15728cfbd` |
+| 🤠 Dolly (`dolly`) | *(vantar kvenrödd)* | — t.d. Fish Taylor Swift / Kim K, eða ElevenLabs „Aunt Shirley" |
+
+Hver agent ber líka `sample`-línu (í karakter) svo HUD/prufa getur talað sjálfgefið.
 
 Skiptu um rödd hvenær sem er: `Jarvis.setVoice('jarvis', '<nýtt-id>')`, eða breyttu
 `AGENTS` í `js/jarvis-voice.js`.
