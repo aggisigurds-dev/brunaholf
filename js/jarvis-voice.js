@@ -43,6 +43,12 @@
       sample: "Agnar. Three invoices, still drafts. Stop whining and send them. Do it. Do it now!",
       fb: { lang: "en-US", rate: 0.92, pitch: 0.58, pref: /alex|david|aaron|rishi/i }
     },
+    trump: {
+      name: "Trump", emoji: "🇺🇸", role: "Hype-man",
+      voice_id: "5dcaea7bfca74256bdbafc77593a8770",   // Fish — President Trump (in-house parody)
+      sample: "Nobody sells fire extinguishers like Agnar. Nobody. Tremendous sales, the best. But those invoices — send them. Believe me.",
+      fb: { lang: "en-US", rate: 0.92, pitch: 0.8, pref: /alex|david|aaron|google us english/i }
+    },
     harley: {
       name: "Harley", emoji: "🃏", role: "Ringulreiðs-áminningar",
       voice_id: "e723d4c8547d4552af98ded15728cfbd",   // Fish — Harley Quinn
