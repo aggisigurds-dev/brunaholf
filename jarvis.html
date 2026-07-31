@@ -258,8 +258,9 @@ document.querySelectorAll('.malrofi button').forEach(b =>
       í miðjunni og mælitækja-hringjum utan um (Agnar 2026-07-31, eftir mynd).
       Bregst við RAUNVERULEGU hljóði; kerfisstaðan litar mælihringina. ── */
 const kc = $('#kjarna-canvas'), kx = kc.getContext('2d'), hnapp = $('#hnappur');
-let orka = 0, markOrka = 0, heilsulitur = [79,216,255], fasi = 0;
+let orka = 0, markOrka = 0, fasi = 0;
 let tS = 0, snun = 0;          // tímastimpill · snúningshorn hnattarins
+let hrA = 0, hrB = 0, hrC = 0; // hringirnir ÞRÍR — hver á sínum hraða og átt
 
 // Agnirnar liggja á KÚLUSKEL og eru varpaðar flatt. Fibonacci-dreifing gefur
 // jafnt bil (ekki klasa eins og Math.random á kúlu); flöt vörpun þéttir þær
@@ -286,6 +287,7 @@ const HNOTTUR = (() => {
               r: INNSTA + Math.random()*(YSTA-INNSTA),   // staða á leiðinni inn
               v: .012 + Math.random()*.016,              // ~12–27 s ferð inn skelina
               strik: Math.random() < .10,                // fá örstutt strik innan um
+              blossi: 0,                                 // 0..1 — skammlífur neisti
               f: Math.random()*6.283 });                 // eigin fasi → tindr í ótakt
   }
   return ut;
@@ -312,45 +314,59 @@ function teiknaKjarna(nu){
   fasi += dt*.6;
   const E = Math.max(orka, .05);
   snun += dt*(.055 + .07*E);            // ~3–7°/s — hægt reik, ekki hjól
+  hrA += dt*.030; hrB -= dt*.021; hrC += dt*.013;   // ~0,7–1,7°/s, sitt á hvað
+  // GUSTURINN: margfeldi tveggja ósammælanlegra sveiflna → hviður sem
+  // endurtaka sig aldrei sýnilega. Þetta er það sem gerir streymið
+  // ójafnt („streaming inconstantly") í stað jafns straums.
+  const gustur = Math.max(.15, .55 + .45*Math.sin(fasi*.63)*Math.sin(fasi*.29+1.3));
 
   const R = Math.min(w, h*.86)*.25;
-  const [hr,hg,hb] = heilsulitur;
-  // Hnötturinn heldur ALLTAF köldum kerfislit (eins og fyrirmyndin); stöðuliturinn
-  // fær mælihringina, svo rautt kerfi máli ekki alla myndina.
-  const kalt = (a) => `rgba(150,205,255,${a})`;
-  const stada = (a) => `rgba(${hr},${hg},${hb},${a})`;
+  // ALLT er kalt. Stöðuliturinn (`heilsulitur`) var áður á mælihringjunum og
+  // gerði þá RAUÐA um leið og tenging datt út — Agnar: „not a red ring".
+  // Kerfisstaðan sést í pillunum efst og í KERFIS-VITALS, hún þarf ekki að
+  // mála myndina.
+  const kalt  = (a) => `rgba(150,205,255,${a})`;
+  const maeli = (a) => `rgba(120,205,255,${a})`;
 
-  // ── Mælitækin ────────────────────────────────────────────────────────────
-  // Punktahringur næst hnettinum
+  // ── Mælitækin: ÞRÍR hringir, hver á sínum hraða og átt ──────────────────
+  // 1) Punktahringur innst — réttsælis
   kx.beginPath();
   for(let i=0;i<150;i++){
-    const a = i/150*Math.PI*2, rr = R*1.12;
-    kx.moveTo(cx+Math.cos(a)*rr, cy+Math.sin(a)*rr);
-    kx.arc(cx+Math.cos(a)*rr, cy+Math.sin(a)*rr, .9*dpr, 0, Math.PI*2);
-  }
-  kx.fillStyle = stada(.34); kx.fill();
+    const a = i/150*Math.PI*2 + hrA, rr = R*1.10;
+    const px = cx+Math.cos(a)*rr, py = cy+Math.sin(a)*rr;
+    kx.moveTo(px + .9*dpr, py);                 // færa á JAÐAR punktsins, ekki
+    kx.arc(px, py, .9*dpr, 0, Math.PI*2);       // miðju — annars tengist hann
+  }                                             // þeim næsta með strik
+  kx.fillStyle = maeli(.36); kx.fill();
 
-  // Bogar með opum — snúast mjög hægt á móti hnettinum
-  kx.save(); kx.translate(cx,cy); kx.rotate(-snun*.45);
-  kx.lineWidth = 1.6*dpr; kx.strokeStyle = stada(.62);
+  // 2) Heilir bogar með opum — rangsælis
+  kx.save(); kx.translate(cx,cy); kx.rotate(hrB);
+  kx.lineWidth = 1.6*dpr; kx.strokeStyle = maeli(.62);
   [[-.28,1.42],[1.30,2.55]].forEach(([f,t]) => {
-    kx.beginPath(); kx.arc(0,0,R*1.24, f*Math.PI, t*Math.PI); kx.stroke();
+    kx.beginPath(); kx.arc(0,0,R*1.22, f*Math.PI, t*Math.PI); kx.stroke();
   });
   kx.restore();
 
-  // Ytri gráðuhringur: strik á 5°, lengri á 30°, og gráðutölur (000…330)
+  // 3) Ytri STRIKAHRINGUR (eins og á fyrirmyndinni) — réttsælis, hægast
+  kx.save(); kx.translate(cx,cy); kx.rotate(hrC);
+  kx.setLineDash([7*dpr, 7*dpr]); kx.lineWidth = 1.2*dpr; kx.strokeStyle = maeli(.50);
+  kx.beginPath(); kx.arc(0,0,R*1.30,0,Math.PI*2); kx.stroke();
+  kx.setLineDash([]); kx.restore();
+
+  // Strik + gráðutölur fylgja ystu hringnum. TEXTINN er teiknaður óhreyfður —
+  // snúinn texti stendur á hvolfi neðst og verður ólæsilegur.
   kx.font = `${Math.round(7.5*dpr)}px ui-monospace,Menlo,Consolas,monospace`;
   kx.textAlign = 'center'; kx.textBaseline = 'middle';
-  for(let d=0; d<360; d+=5){
-    const a = (d-90)*Math.PI/180, langt = d%30===0;
-    const r1 = R*1.36, r2 = r1 + (langt?6:3)*dpr;
+  for(let d=0; d<360; d+=10){
+    const a = (d-90)*Math.PI/180 + hrC, langt = d%30===0;
+    const r1 = R*1.35, r2 = r1 + (langt?6:3)*dpr;
     kx.beginPath();
     kx.moveTo(cx+Math.cos(a)*r1, cy+Math.sin(a)*r1);
     kx.lineTo(cx+Math.cos(a)*r2, cy+Math.sin(a)*r2);
-    kx.strokeStyle = stada(langt?.55:.26); kx.lineWidth = 1*dpr; kx.stroke();
+    kx.strokeStyle = maeli(langt?.55:.24); kx.lineWidth = 1*dpr; kx.stroke();
     if(langt){
-      const rt = r2 + 8*dpr;
-      kx.fillStyle = stada(.5);
+      const rt = R*1.35 + 14*dpr;
+      kx.fillStyle = maeli(.5);
       kx.fillText(String(d).padStart(3,'0'), cx+Math.cos(a)*rt, cy+Math.sin(a)*rt);
     }
   }
@@ -370,7 +386,12 @@ function teiknaKjarna(nu){
   for(const p of HNOTTUR){
     // ── Innstreymið: hver ögn sígur hægt inn að kjarnanum og fæðist aftur
     //    yst þegar hún nær honum. Hljóðið herðir á soginu.
-    p.r -= p.v * (1 + 1.5*E) * dt;
+    // Blossi: einstaka ögn kviknar skarpt, hleypur inn á við og dofnar.
+    // Kveikjan er GUSTBUNDIN svo neistarnir komi í hviðum, ekki jafnt.
+    if(p.blossi > 0) p.blossi = Math.max(0, p.blossi - dt*1.7);
+    else if(Math.random() < (.03 + .15*E) * gustur * dt) p.blossi = 1;
+    // Sjálft streymið andar líka með gustinum — jafn hraði las sem færiband.
+    p.r -= p.v * (.45 + 1.1*gustur) * (1 + 1.5*E) * (1 + 2.2*p.blossi) * dt;
     if(p.r <= INNSTA){
       const s = stefna();                    // ný stefna → skelin helst jöfn
       p.x = s.x; p.y = s.y; p.z = s.z; p.r = YSTA; p.f = Math.random()*6.283;
@@ -385,30 +406,32 @@ function teiknaKjarna(nu){
     const tindr = .72 + .28*Math.sin(fasi*1.2 + p.f);
     // Þéttist og skerpist eftir því sem hún nálgast kjarnann.
     const nalaegd = 1 - (p.r-INNSTA)/(YSTA-INNSTA);
-    const a = (.20 + .62*d) * tindr * (.85 + .5*E) * (.86 + .28*nalaegd);
+    const a = (.20 + .62*d) * tindr * (.85 + .5*E) * (.86 + .28*nalaegd) + p.blossi*.55;
     kx.strokeStyle = kx.fillStyle = kalt(a);
     if(p.strik){
       // örstutt strik EFTIR stefnunni INN — sýnir áttina án þess að hraða neinu
       const n = Math.hypot(x, sy-cy) || 1;
-      const L = (1.6 + 1.6*d)*dpr, ux = x/n, uy = (sy-cy)/n;
+      const L = (1.6 + 1.6*d + 3.2*p.blossi)*dpr, ux = x/n, uy = (sy-cy)/n;
       kx.lineWidth = .9*dpr; kx.beginPath();
       kx.moveTo(sx + ux*L, sy + uy*L); kx.lineTo(sx - ux*L, sy - uy*L);
       kx.stroke();
     }else{
-      const rr = (.50 + .85*d)*dpr;
+      const rr = (.50 + .85*d + 1.1*p.blossi)*dpr;
       kx.beginPath(); kx.arc(sx, sy, rr, 0, Math.PI*2); kx.fill();
     }
   }
 
   // ── Punkturinn í miðjunni: LÍTILL og hvítglóandi, ekki stór hnöttur.
-  const bR = R*(.30 + .14*E);
+  // Flökt: hraður titringur með orkunni + hægari andardráttur með gustinum.
+  const flokt = 1 + .16*Math.sin(fasi*7.3)*E + .12*(gustur-.55);
+  const bR = R*(.30 + .14*E) * flokt;
   const blomi = kx.createRadialGradient(cx,cy,0,cx,cy,bR);
   blomi.addColorStop(0, `rgba(255,255,255,${(.70+.28*E).toFixed(2)})`);
   blomi.addColorStop(.16, `rgba(210,238,255,${(.34+.30*E).toFixed(2)})`);
   blomi.addColorStop(.55, kalt(.10+.16*E));
   blomi.addColorStop(1, kalt(0));
   kx.beginPath(); kx.arc(cx,cy,bR,0,Math.PI*2); kx.fillStyle = blomi; kx.fill();
-  kx.beginPath(); kx.arc(cx,cy,(1.5+1.6*E)*dpr,0,Math.PI*2);
+  kx.beginPath(); kx.arc(cx,cy,(1.5+1.6*E)*flokt*dpr,0,Math.PI*2);
   kx.fillStyle = 'rgba(255,255,255,.95)'; kx.fill();
 
   kx.globalCompositeOperation = 'source-over';
@@ -636,9 +659,8 @@ async function sakja(){
     }
 
     baetaStraum('kerfisstaða uppfærð','');
-    // kjarnaliturinn fylgir raunverulegri stöðu
-    const raudt = (h&&h.counts&&h.counts.raudt)||0, gult=(h&&h.counts&&h.counts.gult)||0;
-    heilsulitur = raudt ? [255,90,110] : gult ? [255,199,70] : [79,216,255];
+    // NB kjarninn/hringirnir taka EKKI lit af stöðunni lengur (Agnar: „not a
+    // red ring") — staðan sést í pillunum efst og í KERFIS-VITALS.
   }catch(e){
     baetaStraum('villa við lestur: '+e.message,'hae');
   }

@@ -198,8 +198,14 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   hvítglóandi punktur**, ekki stór hnöttur. Utan um: punktahringur · bogar með
   opum · gráðuhringur 000–330 (5°/30° strik). Snýst á **~5°/s** — hægt.
   Hreyfingin er **tímabundin (dt)**, annars tvöfalt hraðar á 120Hz skjá.
-  Hnötturinn heldur ALLTAF köldum lit; `heilsulitur` fær mælihringina eina, svo
-  rautt kerfi máli ekki alla myndina. Teiknað samleggjandi (`lighter`).
+  **Hringirnir ÞRÍR snúast hver á sínum hraða og átt** (punktar +2°/s · bogar
+  −1,4°/s · strikahringur +0,9°/s); gráðutextinn er teiknaður ÓHREYFÐUR svo hann
+  standi ekki á hvolfi neðst. **ALLT er kalt á litinn** — `heilsulitur` var tekinn
+  af hringjunum (Agnar: „not a red ring"), staðan sést í pillunum efst og í
+  KERFIS-VITALS. Agnirnar **blossa** (skammlífir neistar) og streymið er
+  **hviðukennt**: `gustur` = margfeldi tveggja ósammælanlegra sveiflna, svo hviður
+  endurtaki sig aldrei sýnilega — jafn hraði las sem færiband. Teiknað
+  samleggjandi (`lighter`).
   TALA-hnappurinn er NEÐST og málrofinn út í horn — miðjan má ekki hafa neitt
   ofan á sér. GILDRA: inline-glóðin á `#hnappur` slær út `.on`-regluna í CSS, svo
   rauði hlustunarliturinn er valinn í JS líka.
