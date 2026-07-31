@@ -229,6 +229,20 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   TALA-hnappurinn er NEÐST og málrofinn út í horn — miðjan má ekki hafa neitt
   ofan á sér. GILDRA: inline-glóðin á `#hnappur` slær út `.on`-regluna í CSS, svo
   rauði hlustunarliturinn er valinn í JS líka.
+  **Raddir (2026-07-31, `js/jarvis-voice.js` + `netlify/functions/jarvis-tts.js`):**
+  Jarvis getur TALAÐ með karakter-röddum. `jarvis.html` hleður `jarvis-voice.js`
+  (ein `<script defer>` lína) sem gefur `window.Jarvis.say(agentId, text)` og
+  sprautar sjálf-innihaldið 🎙️ **radd-prufu** (fljótandi „Raddir"-hnappur → spjald
+  með áhöfninni + textareit; stöðu-lína segir 🐟 Fish vs 🔊 vafra-rödd; slökkt með
+  `window.JARVIS_VOICE_NO_TESTER=true`). 8 raddir (Jarvis MCU · Ramsay · Freeman ·
+  Arnold · Trump[in-house parody] · Harley · Samantha/Her · Natalie), hver með Fish
+  `voice_id` + túnaðri vafra-rödd sem varaleið. Raunraddir fara gegnum
+  **`/api/jarvis-tts`** (`jarvis-tts.js` — Fish Audio S2.1 Pro proxy, `FISH_API_KEY`
+  server-megin, valkv. Supabase `jarvis-tts` bucket-skyndiminni sem endur-rukkar
+  ekki; 503 þegar lykil vantar → client fellur á vafra-rödd). `say()` sendir
+  `jarvis:speak`/`jarvis:done` atburði svo HUD geti glóað með röddinni. Birtist líka
+  í Slökkvitæki Fjármála-appinu (br-jarvis = `jarvis.html?embed=1`). Sjá
+  `docs/JARVIS-VOICE.md`.
 - `yfirlit` — front page / dashboard. Includes an **Útistandandi** band
   (óinnheimt + verkstaðir án reiknings) pulling `summary.total_unpaid` +
   `summary.worksites_with_no_invoice` live from `/api/worksites?year=combined`;

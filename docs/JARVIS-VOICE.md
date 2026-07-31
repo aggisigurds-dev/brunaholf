@@ -1,8 +1,10 @@
 # J.A.R.V.I.S. — talandi raddir (Fish Audio)
 
-Skafald til að láta Jarvis-HUD-ið **tala** með karakter-röddum. Ekkert er lifandi
-fyrr en `FISH_API_KEY` er sett + `jarvis-voice.js` tengt inn — óhætt að deploya á
-undan (functionið er óvirkt þangað til).
+Skafald til að láta Jarvis-HUD-ið **tala** með karakter-röddum. `jarvis-voice.js`
+er ÞEGAR tengt í `jarvis.html` (ein `<script defer>` lína) og sprautar sjálf-
+innihaldna 🎙️ **radd-prufu** — svo það talar strax í dag með ókeypis vafra-rödd.
+Fish-raunraddirnar kvikna þegar `FISH_API_KEY` er sett (þangað til skilar
+`/api/jarvis-tts` 503 og client-inn fellur mjúklega á vafra-röddina).
 
 ## Skrárnar
 | Skrá | Hlutverk |
