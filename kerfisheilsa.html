@@ -5,96 +5,145 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Kerfisheilsa — Brunahólf</title>
 <style>
+  /* ══ BRUNASTÁL — grásvart burstað málm-þema ═══════════════════════════
+     Iðnaðar-stjórnborð frekar en vefsíða: burstaður stálflötur, upphleyptir
+     kantar (ljós rönd að ofan, skuggi að neðan), greypt letur og innfelldir
+     mælar. Allt gert með CSS-halla — engar myndir. */
   :root{
-    --bg:#0b0f14; --card:#141b24; --card2:#0f151d; --brd:#1f2a36; --brd2:#2b3846;
-    --ink:#e6edf3; --ink2:#93a4b5; --ink3:#63788c;
-    --green:#22c55e; --amber:#f59e0b; --red:#ef4444; --grey:#475569;
+    --stal1:#3a3f45; --stal2:#23272c; --stal3:#15181c; --stal4:#0c0e11;
+    --brd:#0a0b0d; --brd-ljos:rgba(255,255,255,.09);
+    --ink:#e8edf2; --ink2:#a3aeb9; --ink3:#6f7c88;
+    --green:#3ddc7f; --amber:#f5b301; --red:#ff4d4d; --grey:#5a646e;
+    /* Burstinn: örfínar lóðréttar rákir sem liggja yfir alla málmfleti. */
+    --burst:repeating-linear-gradient(90deg,rgba(255,255,255,.022) 0 1px,transparent 1px 3px);
+    --plata:linear-gradient(180deg,var(--stal1) 0%,var(--stal2) 38%,var(--stal3) 100%);
   }
   *{box-sizing:border-box}
-  body{margin:0;background:
-      radial-gradient(1200px 500px at 50% -10%,#16202c,transparent),var(--bg);
-    color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  body{margin:0;color:var(--ink);
+    background:
+      radial-gradient(900px 420px at 50% -8%,rgba(255,255,255,.05),transparent 70%),
+      var(--burst),
+      linear-gradient(180deg,#1b1e22 0%,#101316 55%,#0a0c0e 100%);
+    background-attachment:fixed;
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
   .wrap{max-width:1240px;margin:0 auto;padding:20px 16px 70px}
 
-  header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:16px 18px;
-    background:linear-gradient(160deg,#18222e,#0d1319);border:1px solid var(--brd);
-    border-radius:16px;box-shadow:0 1px 0 rgba(255,255,255,.05) inset,0 8px 26px rgba(0,0,0,.4)}
-  h1{margin:0;font-size:19px;letter-spacing:.02em}
+  /* Haus = framplata með boltum í hornunum. */
+  header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:16px 20px;
+    background:var(--burst),var(--plata);border:1px solid var(--brd);border-radius:12px;
+    box-shadow:inset 0 1px 0 var(--brd-ljos),inset 0 -1px 0 rgba(0,0,0,.6),
+      0 10px 26px rgba(0,0,0,.55);position:relative}
+  header::before,header::after{content:"";position:absolute;top:9px;width:7px;height:7px;
+    border-radius:50%;background:radial-gradient(circle at 35% 30%,#8a949e,#2e3338 60%,#14171a);
+    box-shadow:inset 0 1px 1px rgba(255,255,255,.35),0 1px 2px rgba(0,0,0,.7)}
+  header::before{left:9px} header::after{right:9px}
+  h1{margin:0;font-size:19px;letter-spacing:.06em;text-transform:uppercase;font-weight:800;
+    text-shadow:0 1px 0 #000,0 -1px 0 rgba(255,255,255,.10)}
   .sub{color:var(--ink3);font-size:12.5px;margin-top:2px}
   .spacer{flex:1}
   .counts{display:flex;gap:8px;flex-wrap:wrap}
-  .cnt{display:flex;align-items:center;gap:6px;background:#0d1319;border:1px solid var(--brd);
-    border-radius:99px;padding:5px 12px;font-size:13px;font-weight:700}
+  .cnt{display:flex;align-items:center;gap:6px;border-radius:99px;padding:5px 12px;
+    font-size:13px;font-weight:700;color:var(--ink2);
+    background:linear-gradient(180deg,#16191d,#0d0f12);border:1px solid var(--brd);
+    box-shadow:inset 0 2px 5px rgba(0,0,0,.75),0 1px 0 var(--brd-ljos)}
   button{font:inherit;cursor:pointer}
-  .btn{background:#1c2734;border:1px solid var(--brd2);color:var(--ink);border-radius:10px;
-    padding:8px 14px;font-size:13.5px;font-weight:600}
-  .btn:hover{background:#243141}
-  .btn--go{background:linear-gradient(160deg,#1f7a46,#14532d);border-color:#166534;color:#dcfce7}
-  .btn:disabled{opacity:.5;cursor:default}
+  /* Takkar: upphleyptur málmur sem sest niður við smell. */
+  .btn{border-radius:9px;padding:8px 15px;font-size:13.5px;font-weight:700;color:var(--ink);
+    background:linear-gradient(180deg,#454b52,#23272c);border:1px solid var(--brd);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 -2px 3px rgba(0,0,0,.5),
+      0 2px 4px rgba(0,0,0,.5);text-shadow:0 -1px 0 rgba(0,0,0,.6)}
+  .btn:hover{background:linear-gradient(180deg,#4e555d,#282d33)}
+  .btn:active{box-shadow:inset 0 2px 6px rgba(0,0,0,.8);transform:translateY(1px)}
+  .btn--go{background:linear-gradient(180deg,#2f8f57,#155c33);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -2px 3px rgba(0,0,0,.45),0 2px 4px rgba(0,0,0,.5)}
+  .btn--go:hover{background:linear-gradient(180deg,#37a664,#186a3b)}
+  .btn:disabled{opacity:.45;cursor:default}
 
   .grp{margin-top:26px}
-  .grp h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);
-    margin:0 0 10px 3px;font-weight:800}
+  .grp h2{font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink3);
+    margin:0 0 10px 4px;font-weight:800;text-shadow:0 1px 0 #000}
   .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(330px,1fr))}
 
-  .kort{background:linear-gradient(170deg,var(--card),var(--card2));border:1px solid var(--brd);
-    border-radius:14px;padding:13px 15px 12px;display:flex;flex-direction:column;gap:7px;
-    box-shadow:0 4px 14px rgba(0,0,0,.28);position:relative;overflow:hidden}
-  .kort::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--grey)}
-  .kort.graent::before{background:var(--green);box-shadow:0 0 14px 1px rgba(34,197,94,.55)}
-  .kort.gult::before{background:var(--amber);box-shadow:0 0 14px 1px rgba(245,158,11,.5)}
-  .kort.raudt::before{background:var(--red);box-shadow:0 0 14px 1px rgba(239,68,68,.55)}
-  .kort.raudt{border-color:#5b2020}
+  /* Kort = stálplata. Ljósröndin er greypt rauf vinstra megin sem lýsir út. */
+  .kort{background:var(--burst),var(--plata);border:1px solid var(--brd);border-radius:11px;
+    padding:13px 15px 12px;display:flex;flex-direction:column;gap:7px;position:relative;
+    overflow:hidden;
+    box-shadow:inset 0 1px 0 var(--brd-ljos),inset 0 -1px 0 rgba(0,0,0,.55),0 6px 16px rgba(0,0,0,.5)}
+  .kort::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:#0a0b0d;
+    box-shadow:inset -1px 0 2px rgba(0,0,0,.9)}
+  .kort.graent::before{background:linear-gradient(180deg,#5ef39a,#1f9c5b);
+    box-shadow:0 0 12px 1px rgba(61,220,127,.5),inset -1px 0 2px rgba(0,0,0,.5)}
+  .kort.gult::before{background:linear-gradient(180deg,#ffd35c,#c07f00);
+    box-shadow:0 0 12px 1px rgba(245,179,1,.45),inset -1px 0 2px rgba(0,0,0,.5)}
+  .kort.raudt::before{background:linear-gradient(180deg,#ff7a7a,#b81c1c);
+    box-shadow:0 0 12px 1px rgba(255,77,77,.5),inset -1px 0 2px rgba(0,0,0,.5)}
+  .kort.raudt{border-color:#3a1414}
 
+  /* Perur með krómhring — eins og á alvöru stjórnborði. */
   .top{display:flex;align-items:flex-start;gap:10px}
-  .led{width:11px;height:11px;border-radius:50%;flex:none;margin-top:4px;position:relative;background:var(--grey)}
-  .led::after{content:"";position:absolute;inset:-5px;border-radius:50%;opacity:.3}
-  .graent .led{background:var(--green)} .graent .led::after{background:var(--green);animation:pulse 2.8s infinite}
-  .gult .led{background:var(--amber)}   .gult .led::after{background:var(--amber);animation:pulse 1.7s infinite}
-  .raudt .led{background:var(--red)}    .raudt .led::after{background:var(--red);animation:pulse 1.1s infinite}
+  .led{width:12px;height:12px;border-radius:50%;flex:none;margin-top:4px;position:relative;
+    background:radial-gradient(circle at 35% 30%,#6b757f,#2b3036);
+    box-shadow:inset 0 1px 1px rgba(255,255,255,.25),0 0 0 1px #0a0b0d,0 1px 2px rgba(0,0,0,.8)}
+  .led::after{content:"";position:absolute;inset:-6px;border-radius:50%;opacity:.28}
+  .graent .led{background:radial-gradient(circle at 35% 30%,#b6ffd4,var(--green) 55%,#137a41)}
+  .gult .led{background:radial-gradient(circle at 35% 30%,#ffe8a8,var(--amber) 55%,#8a6400)}
+  .raudt .led{background:radial-gradient(circle at 35% 30%,#ffc2c2,var(--red) 55%,#8f1616)}
+  .graent .led::after{background:var(--green);animation:pulse 2.8s infinite}
+  .gult .led::after{background:var(--amber);animation:pulse 1.7s infinite}
+  .raudt .led::after{background:var(--red);animation:pulse 1.1s infinite}
   @keyframes pulse{0%,100%{transform:scale(.7);opacity:.3}50%{transform:scale(1.15);opacity:0}}
 
-  .nafn{font-weight:700;font-size:14.5px;line-height:1.3;word-break:break-word}
-  .undir{color:var(--ink3);font-size:11px;margin-top:1px}
+  .nafn{font-weight:700;font-size:14.5px;line-height:1.3;word-break:break-word;
+    text-shadow:0 1px 0 rgba(0,0,0,.8)}
+  .undir{color:var(--ink3);font-size:11px;margin-top:1px;letter-spacing:.03em}
   .detail{color:var(--ink2);font-size:12.5px}
   .meta{color:var(--ink3);font-size:10.5px;font-variant-numeric:tabular-nums}
 
-  .hvernig{background:#0c1219;border:1px solid #1b2530;border-left:2px solid #2f6f8f;
-    border-radius:8px;padding:8px 10px;color:#9fb3c6;font-size:11.5px;line-height:1.5}
-  .hvernig b{color:#cfe0ee}
-  .repos{display:flex;flex-direction:column;gap:3px}
-  .repo{background:#0c1219;border:1px solid #1b2530;border-radius:7px;padding:5px 8px;
-    font:11.5px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#9fb3c6;word-break:break-all}
-  .repo b{color:#e6edf3;font-weight:700}
+  /* Innfelldir reitir: greyptir ofan í plötuna. */
+  .hvernig,.repo,.maelir .bar{
+    background:linear-gradient(180deg,#0e1013,#141719);border:1px solid #05060700;
+    box-shadow:inset 0 2px 5px rgba(0,0,0,.8),0 1px 0 var(--brd-ljos)}
+  .hvernig{border-radius:8px;padding:8px 10px;color:#a9b6c2;font-size:11.5px;line-height:1.5;
+    border-left:2px solid #5c6b78}
+  .hvernig b{color:#dbe6ef}
+  .repos{display:flex;flex-direction:column;gap:4px}
+  .repo{border-radius:7px;padding:5px 8px;color:#9fb0bf;word-break:break-all;
+    font:11.5px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .repo b{color:#e8edf2;font-weight:700}
   .taglist{display:flex;gap:5px;flex-wrap:wrap}
-  .tag{background:#111a24;border:1px solid #223040;color:var(--ink2);border-radius:99px;
-    padding:1px 8px;font-size:10.5px;font-weight:600}
+  .tag{border-radius:99px;padding:1px 9px;font-size:10.5px;font-weight:700;color:var(--ink2);
+    background:linear-gradient(180deg,#3a4046,#22262b);border:1px solid var(--brd);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.10)}
 
-  /* Bensínmælir fyrir allt sem er TÍMABUNDIÐ — hve mikið er eftir á tanknum
-     (lykill að renna út, tími frá síðasta lífsmarki, aldur gagna). Fyllingin
-     minnkar og litast frá grænu í rautt. */
+  /* Bensínmælir: rauf greypt í plötuna með gljáandi nál. */
   .maelir{margin-top:2px}
-  .maelir .bar{height:7px;border-radius:99px;background:#0b1118;border:1px solid #1b2530;
-    overflow:hidden;position:relative}
-  .maelir .fill{height:100%;border-radius:99px;transition:width .5s ease}
+  .maelir .bar{height:9px;border-radius:99px;overflow:hidden;position:relative}
+  .maelir .fill{height:100%;border-radius:99px;transition:width .5s ease;position:relative;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -2px 3px rgba(0,0,0,.35)}
   .maelir .ticks{display:flex;justify-content:space-between;color:var(--ink3);
-    font-size:9.5px;letter-spacing:.08em;margin-top:2px;font-weight:700}
-  .maelir .txt{color:var(--ink3);font-size:10.5px;font-variant-numeric:tabular-nums}
+    font-size:9.5px;letter-spacing:.1em;margin-top:3px;font-weight:800;text-shadow:0 1px 0 #000}
+  .maelir .txt{color:var(--ink2);font-size:10.5px;font-variant-numeric:tabular-nums;letter-spacing:0}
 
-  .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:4px}
-  .abtn{background:#1c2734;border:1px solid var(--brd2);color:var(--ink2);border-radius:8px;
-    padding:5px 10px;font-size:11.5px;font-weight:600;text-decoration:none;white-space:nowrap}
-  .abtn:hover{background:#243141;color:var(--ink)}
-  .abtn--fix{border-color:#7f1d1d;background:#2a1417;color:#fecaca}
-  .abtn--ut{border-style:dashed;color:var(--ink3)}
+  .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:5px}
+  .abtn{border-radius:8px;padding:5px 11px;font-size:11.5px;font-weight:700;
+    text-decoration:none;white-space:nowrap;color:var(--ink2);
+    background:linear-gradient(180deg,#3d434a,#22262b);border:1px solid var(--brd);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.13),0 1px 2px rgba(0,0,0,.5);
+    text-shadow:0 -1px 0 rgba(0,0,0,.5)}
+  .abtn:hover{background:linear-gradient(180deg,#474e56,#272c32);color:var(--ink)}
+  .abtn:active{box-shadow:inset 0 2px 5px rgba(0,0,0,.8);transform:translateY(1px)}
+  .abtn--fix{background:linear-gradient(180deg,#7d2020,#4a1212);color:#ffd9d9;border-color:#2a0c0c}
+  .abtn--fix:hover{background:linear-gradient(180deg,#932828,#571616)}
+  .abtn--ut{background:linear-gradient(180deg,#2c3137,#1a1d21);color:var(--ink3);border-style:dashed}
 
   .note{color:var(--ink3);font-size:12px;margin-top:30px;line-height:1.65;
-    border-top:1px solid var(--brd);padding-top:14px}
+    border-top:1px solid #2a2f35;padding-top:14px}
   .note b{color:var(--ink2)}
   .load{color:var(--ink3);padding:30px 4px}
-  a{color:#7dd3fc}
-  code{background:#0c1219;border:1px solid #1b2530;border-radius:5px;padding:1px 5px;
-    font:11.5px ui-monospace,Menlo,Consolas,monospace;color:#a5c9e0}
+  a{color:#8fd3f4}
+  code{border-radius:5px;padding:1px 6px;background:#0e1013;border:1px solid #2a2f35;
+    box-shadow:inset 0 1px 3px rgba(0,0,0,.7);
+    font:11.5px ui-monospace,Menlo,Consolas,monospace;color:#a9c9dd}
 </style>
 </head>
 <body>
