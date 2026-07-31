@@ -55,6 +55,12 @@
       sample: "Heyyy puddin'! Ya got four overdue reminders and I am NOT gonna quit singin' about 'em!",
       fb: { lang: "en-US", rate: 1.12, pitch: 1.46, pref: /samantha|zira|google us english|female/i }
     },
+    scarlett: {
+      name: "Samantha", emoji: "💫", role: "Blíð aðstoð (Her)",
+      voice_id: "474887f7949b4d1ab3e626cddf82613a",   // Fish — OS1 Samantha (Scarlett Johansson, Her)
+      sample: "Hi. It's just me. Everything's under control — three sales to invoice, and I've tidied your day. Shall we?",
+      fb: { lang: "en-US", rate: 0.98, pitch: 1.06, pref: /samantha|ava|allison|google us english|female/i }
+    },
     dolly: {
       name: "Dolly", emoji: "🤠", role: "Hvatningin (kvenrödd)",
       voice_id: "",   // TODO: velja kvenrödd — t.d. Fish Taylor Swift / Kim K, eða „southern/country"
