@@ -230,7 +230,16 @@ async function finnaFelag(q) {
       '&deleted_at=is.null&limit=2000') || [];
     _felagsTs = Date.now();
   }
-  const leit = ord.map(fold).filter(x => x.length > 3);
+  // ÍSLENSK BEYGING: þú segir „segðu mér frá Heimaleigu" en félagið heitir
+  // „Heimaleiga". Beinn samanburður fellur á endingunni einni. Því er borinn
+  // saman STOFN — orðið og það stytt um einn og tvo stafi (a/u/i/ar/um/inn
+  // endingarnar) — og krafist a.m.k. 5 stafa svo stuttur stofn grípi ekki allt.
+  const leit = [];
+  ord.map(fold).filter(x => x.length > 3).forEach(o => {
+    [o, o.slice(0, -1), o.slice(0, -2)].forEach(s => {
+      if (s.length >= 5 && !leit.includes(s)) leit.push(s);
+    });
+  });
   const ut = [];
   for (const f of _felagsCache) {
     const n = fold(f.nafn);
