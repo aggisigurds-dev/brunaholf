@@ -148,7 +148,23 @@
   .tenglar a{text-decoration:none;color:var(--ink3);border-bottom:1px solid transparent}
   .tenglar a:hover{color:var(--cy);border-color:var(--cy-dim)}
   @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+  /* ── App-hamur (?embed=1) ────────────────────────────────────────────────
+     Síðan er felld inn í Fjármála-appið (Slökkvitæki patch 261) sem iframe.
+     Þar er hún EKIN í símaramma, svo ytri spássíur eru þrengdar — og KJARNINN
+     settur efst. Í appinu er hann erindið; mælaborðs-dálkarnir eru það sem
+     maður skrunar NIÐUR í. Í venjulegri sýn (án ?embed=1) er röðin óbreytt. */
+  html.embedded .hud{padding:8px 9px 22px}
+  html.embedded .haus{padding:8px 10px}
+  html.embedded .klukka .t{font-size:22px}
+  @media(max-width:960px){
+    html.embedded .grind>.dalkur:nth-child(2){order:-1}
+  }
 </style>
+<!-- Sett á <html> STRAX (ekki í enda body) svo app-hamurinn sé kominn áður en
+     fyrsta málningin verður til — annars blikkar venjulega útlitið fyrst.
+     Sami eins-línu rofi og index.html notar. -->
+<script>try{if(new URLSearchParams(location.search).get('embed')==='1')document.documentElement.classList.add('embedded');}catch(_){}</script>
 </head>
 <body>
 <div class="hud">
