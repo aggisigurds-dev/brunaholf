@@ -163,6 +163,26 @@ hvernig Ajour-tengingin virkar". **WIP (Agnar 2026-07-31):** halda áfram að dr
 inn á þetta borð eftir því sem tengingum fjölgar — Chrome Remote-vélarnar, Cowork-vélar,
 graphify/memory-tólin á Slökkvitæki-vélinni. Vél sem sendir lífsmark birtist sjálfkrafa.
 
+**🐞 Villuvöktun** (`villur.js` + `js/villuvakt.js` + spjald efst í Kerfisheilsu,
+2026-07-31) — JS-villa í öppunum sást ÁÐUR aðeins ef einhver hafði console-ið
+opið; síða gat verið biluð dögum saman án þess að nokkur vissi. `js/villuvakt.js`
+er sjálf-innihaldið (einn `<script src>`, ENGIN `defer` og FYRST í `<head>` svo
+hún grípi líka boot-villur — `defer` hefði ræst hana á eftir inline-scriptunum)
+og er í BÁÐUM öppunum; `uppruni` ræðst af léninu og slökkvitæki-hliðin sendir á
+Brunahólfs-endapunktinn (CORS `*`) svo borðið sé EITT, ekki tvö sem enginn les.
+Grípur `error` (líka auðlindir), `unhandledrejection` og `Villuvakt.skra(...)`.
+**Hemlar:** sama villa send einu sinni per lotu, þak 12 sendingar per lotu, og
+sending sem fellur kastar ALDREI (annars sendir villulykkja þúsundir beiðna).
+Endapunktur **`/api/villur`** (`villur.js`, service role): `POST` skráir —
+samsöfnun á `fingrafar` = `uppruni|skilaboð|skrá` (EKKI slóð/tími), svo
+endurtekning hækkar `fjoldi` í stað þess að fjölga röðum, og villa sem sést aftur
+**opnast sjálfkrafa** þótt hún hafi verið merkt leyst. `GET ?dagar=7` skilar
+AÐEINS óleystum (borð fullt af gömlum þekktum villum hættir að vera viðvörun);
+`POST {action:'leysa'|'opna', id}`. Tafla **`villur`** — **RLS Á, engar
+anon-reglur** (villuboð bera slóðir, notendanöfn og stafla). NB Sentry var
+upphaflega beiðnin en þarf aðgang + DSN sem er ekki til; þetta virkar strax og
+útilokar hann ekki — `villuvakt.js` sendir í `window.Sentry` líka ef hann er til.
+
 ## Tabs (current)
 
 Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
