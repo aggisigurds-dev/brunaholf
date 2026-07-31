@@ -612,6 +612,13 @@ function haettaTal(){
 function tala(t, mal){
   sidastaSvar = t;
   try{
+    // Aðalröddin (Fish — t.d. Jarvis eða Natalie, valin með ★ í radd-prufunni)
+    // les svarið; jarvis-voice.js fellur sjálft á vafra-rödd ef Fish er óvirkt.
+    if(window.Jarvis && typeof Jarvis.sayMain==='function'){
+      Jarvis.sayMain(t, { lang: mal==='en'?'en-US':'is-IS' });
+      return;
+    }
+    // Varaleið ef jarvis-voice.js er ekki hlaðið: bein vafra-rödd.
     if(!window.speechSynthesis) return;
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(t);

@@ -115,18 +115,38 @@
     }
 
     // 2) free browser fallback, tuned per character
-    browserSay(a, agentId, text);
+    browserSay(a, agentId, text, opts);
   }
 
-  function browserSay(a, agentId, text) {
+  function browserSay(a, agentId, text, opts) {
+    opts = opts || {};
     if (!window.speechSynthesis || typeof SpeechSynthesisUtterance === "undefined") return;
-    var u = new SpeechSynthesisUtterance(text);
     var vs = speechSynthesis.getVoices() || [];
-    u.voice = vs.find(function (v) { return a.fb.pref.test(v.name); })
-           || vs.find(function (v) { return (v.lang || "").toLowerCase().indexOf(a.fb.lang.toLowerCase()) === 0; })
+    // Voices load ASYNC — on the very first call the list is often empty, which
+    // is why a first reply can come out silent or with a robotic default voice.
+    // Wait once for them to arrive (voiceschanged OR a short timeout), then retry.
+    if (!vs.length && !opts._retried) {
+      var done = false;
+      var retry = function () {
+        if (done) return; done = true;
+        browserSay(a, agentId, text, Object.assign({}, opts, { _retried: true }));
+      };
+      try { window.speechSynthesis.addEventListener("voiceschanged", retry, { once: true }); } catch (e) {}
+      setTimeout(retry, 300);
+      return;
+    }
+    var u = new SpeechSynthesisUtterance(text);
+    // opts.lang (set when answering a spoken question) forces the reply language
+    // so an Icelandic answer isn't read by an English voice; otherwise use the
+    // agent's own character preference.
+    var langPref = opts.lang || a.fb.lang;
+    var two = langPref.toLowerCase().slice(0, 2);
+    var byLang = function () { return vs.find(function (v) { return (v.lang || "").toLowerCase().indexOf(two) === 0; }); };
+    u.voice = (opts.lang ? byLang() : vs.find(function (v) { return a.fb.pref.test(v.name); }))
+           || byLang()
            || vs.find(function (v) { return /^en/i.test(v.lang || ""); })
            || vs[0] || null;
-    if (u.voice) u.lang = u.voice.lang;
+    u.lang = u.voice ? u.voice.lang : langPref;
     u.rate = a.fb.rate; u.pitch = a.fb.pitch;
     emit("jarvis:speak", { agent: agentId, text: text, source: "browser" });
     u.onend = u.onerror = function () { emit("jarvis:done", { agent: agentId }); };
@@ -140,11 +160,31 @@
     agents: AGENTS,
     setEndpoint: function (u) { endpoint = u; },
     setVoice: function (id, refId) { if (AGENTS[id]) AGENTS[id].voice_id = refId; },
+    // main assistant voice — the HUD's spoken replies (tala) use sayMain()
+    getMain: getMain,
+    setMain: setMain,
+    sayMain: sayMain,
     // voice tester (the floating 🎙️ panel) — see below
     openTester: openTester,
     closeTester: closeTester,
     toggleTester: toggleTester
   });
+
+  /* ── Main assistant voice (persisted) ──────────────────────────────────────
+   * Which agent answers when you TALK to Jarvis. Switch it from the 🎙️ tester
+   * (tap the ★ on any agent) — e.g. flip the main between Natalie and Jarvis.
+   * The HUD's tala() calls Jarvis.sayMain(text, {lang}) so replies use this. */
+  var MAIN_KEY = "jarvis_main_voice";
+  function getMain() {
+    try { var m = localStorage.getItem(MAIN_KEY); return (m && AGENTS[m]) ? m : "jarvis"; }
+    catch (e) { return "jarvis"; }
+  }
+  function setMain(id) {
+    if (!AGENTS[id]) return;
+    try { localStorage.setItem(MAIN_KEY, id); } catch (e) {}
+    reflectMain();
+  }
+  function sayMain(text, opts) { return say(getMain(), text, opts); }
 
   /* ══ Radd-prufa: self-contained floating 🎙️ panel ══════════════════════════
    * Auto-injects a small launcher on DOM-ready so the whole tester ships with
@@ -186,10 +226,17 @@
       "  -webkit-tap-highlight-color:transparent;transition:border-color .12s,box-shadow .12s,background .12s}",
       "#" + PANEL_ID + " .jvt-ag:hover{border-color:#1d7fa8}",
       "#" + PANEL_ID + " .jvt-ag.on{border-color:#4fd8ff;background:#0a2740;box-shadow:0 0 0 1px #4fd8ff,0 0 16px rgba(79,216,255,.35)}",
+      "#" + PANEL_ID + " .jvt-ag.ismain{border-color:#2f5a3a}",
+      "#" + PANEL_ID + " .jvt-play{display:flex;align-items:center;gap:10px;flex:1 1 auto;min-width:0;background:transparent;border:0;color:inherit;font:inherit;text-align:left;cursor:pointer;padding:0}",
+      "#" + PANEL_ID + " .jvt-star{flex:0 0 auto;background:transparent;border:0;color:#2a4c60;font-size:17px;line-height:1;cursor:pointer;padding:4px 2px 4px 8px}",
+      "#" + PANEL_ID + " .jvt-star:hover{color:#ffd873}",
+      "#" + PANEL_ID + " .jvt-ag.ismain .jvt-star{color:#ffc746}",
       "#" + PANEL_ID + " .jvt-ag .em{font-size:20px;flex:0 0 auto;width:24px;text-align:center}",
-      "#" + PANEL_ID + " .jvt-ag>span+span{min-width:0}",
+      "#" + PANEL_ID + " .jvt-play>span+span{min-width:0}",
       "#" + PANEL_ID + " .jvt-ag .nm{display:block;font-weight:700;font-size:13px}",
       "#" + PANEL_ID + " .jvt-ag .rl{display:block;font-size:10.5px;color:#79b4d0;margin-top:1px}",
+      "#" + PANEL_ID + " .jvt-main{font-size:10.5px;color:#79b4d0;margin:-1px 0 2px;letter-spacing:.02em}",
+      "#" + PANEL_ID + " .jvt-main b{color:#ffc746;font-weight:700}",
       "#" + PANEL_ID + " .jvt-ft{display:flex;align-items:center;gap:8px}",
       "#" + PANEL_ID + " .jvt-stop{background:#1a0a10;border:1px solid #5a2530;color:#ff8a98;border-radius:8px;padding:7px 11px;",
       "  font:700 12px system-ui;cursor:pointer}",
@@ -225,16 +272,20 @@
     var rows = "";
     Object.keys(AGENTS).forEach(function (id) {
       var a = AGENTS[id];
-      rows += '<button type="button" class="jvt-ag" data-agent="' + id + '">'
-            +   '<span class="em">' + esc(a.emoji || "🗣") + "</span>"
-            +   "<span><span class='nm'>" + esc(a.name || id) + "</span>"
-            +     "<span class='rl'>" + esc(a.role || "") + "</span></span>"
-            + "</button>";
+      rows += '<div class="jvt-ag" data-agent="' + id + '">'
+            +   '<button type="button" class="jvt-play" data-play="' + id + '">'
+            +     '<span class="em">' + esc(a.emoji || "🗣") + "</span>"
+            +     "<span><span class='nm'>" + esc(a.name || id) + "</span>"
+            +       "<span class='rl'>" + esc(a.role || "") + "</span></span>"
+            +   "</button>"
+            +   '<button type="button" class="jvt-star" data-star="' + id + '" title="Gera að aðalrödd" aria-label="Aðalrödd">★</button>'
+            + "</div>";
     });
 
     panel.innerHTML =
       '<div class="jvt-hd"><b>🎙️ Radd-prufa</b>'
     +   '<button type="button" class="jvt-x" aria-label="Loka">×</button></div>'
+    + '<div class="jvt-main">Aðalrödd (svör): <b id="jvt-main-name">—</b> <span style="color:#3f7391">· ★ velur</span></div>'
     + '<textarea rows="2" placeholder="Skrifaðu texta til að lesa… (annars les sýnishorn)"></textarea>'
     + '<div class="jvt-list">' + rows + "</div>"
     + '<div class="jvt-ft"><button type="button" class="jvt-stop">⏹ Stöðva</button>'
@@ -251,8 +302,16 @@
       stop(); setStatus("stöðvað"); clearSpeaking();
     });
     panel.querySelector(".jvt-list").addEventListener("click", function (e) {
-      var btn = e.target.closest(".jvt-ag"); if (!btn) return;
-      var id = btn.getAttribute("data-agent"), a = AGENTS[id] || {};
+      // ★ → set as the main assistant voice (used for spoken replies); no speak
+      var star = e.target.closest(".jvt-star");
+      if (star) {
+        var sid = star.getAttribute("data-star");
+        setMain(sid);
+        setStatus("Aðalrödd: " + ((AGENTS[sid] && AGENTS[sid].name) || sid));
+        return;
+      }
+      var btn = e.target.closest(".jvt-play"); if (!btn) return;
+      var id = btn.getAttribute("data-play"), a = AGENTS[id] || {};
       var txt = (taEl && taEl.value.trim()) || a.sample || "Halló, þetta er prufa.";
       setStatus("… " + (a.name || id));
       say(id, txt);
@@ -267,6 +326,7 @@
     });
     window.addEventListener("jarvis:done", function () { clearSpeaking(); });
 
+    reflectMain();
     testerBuilt = true;
   }
 
@@ -280,6 +340,15 @@
   function clearSpeaking() {
     if (!panelEl) return;
     panelEl.querySelectorAll(".jvt-ag.on").forEach(function (b) { b.classList.remove("on"); });
+  }
+  function reflectMain() {
+    if (!panelEl) return;
+    var main = getMain();
+    panelEl.querySelectorAll(".jvt-ag").forEach(function (row) {
+      row.classList.toggle("ismain", row.getAttribute("data-agent") === main);
+    });
+    var lbl = panelEl.querySelector("#jvt-main-name");
+    if (lbl) lbl.textContent = (AGENTS[main] && AGENTS[main].name) || main;
   }
 
   function openTester()  { buildTester(); if (panelEl) panelEl.classList.add("open"); }
