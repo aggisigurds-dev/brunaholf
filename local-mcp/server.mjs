@@ -1,14 +1,14 @@
 #!/usr/bin/env node
-// server.mjs — Brunahólf local MCP server.
+// server.mjs — Brunahólf local MCP server. ("skýja tengill" fyrir Claude local)
 //
 // Runs on the heimaskrifstofa tölva, exposes a small set of safe tools that
-// let Claude (cloud-side) do things on the machine: read local files, hit
-// any URL (incl. brunaholf.netlify.app which Claude can't reach directly
-// because of egress policy), open URLs in the default browser, upload files
-// to Google Drive via brunahólf's existing OAuth.
+// let Claude (running locally in Claude Code on that machine) do things it
+// otherwise can't: read local files, hit any URL (incl. brunaholf.netlify.app
+// which the cloud egress policy blocks), open URLs in the default browser, and
+// upload files to Google Drive via brunahólf's existing OAuth.
 //
-// Stdio MCP transport — register with:
-//   claude mcp add brunaholf-local node /full/path/local-mcp/server.mjs
+// Stdio MCP transport — register once per machine (see setja-upp-local-mcp.bat):
+//   claude mcp add brunaholf-local -- node /full/path/local-mcp/server.mjs
 //
 // Tools exposed
 //   list_dir(path)                       → list files + sizes in a directory
@@ -25,6 +25,10 @@
 //   - Confined to safe operations only — no shell, no arbitrary file write.
 //   - Filesystem reads are unrestricted by default (you trust who you give
 //     this MCP to); upload tool calls go via brunaholf's signed endpoint.
+//
+// The tool implementations are exported so they can be unit-tested directly
+// (see test.mjs); the stdio server only starts when this file is run as the
+// main entry point.
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
@@ -39,11 +43,18 @@ import { resolve, basename, join } from 'node:path';
 import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
 import { platform } from 'node:os';
+import { fileURLToPath } from 'node:url';
 
 const execP = promisify(exec);
 
+// Default brunahólf endpoint that mints a Google Drive resumable-upload session.
+// Overridable per call or via env, so a different site/tunnel can be pointed at.
+const DEFAULT_UPLOAD_ENDPOINT =
+  process.env.BRUNAHOLF_UPLOAD_ENDPOINT ||
+  'https://brunaholf.netlify.app/api/drive-upload-session';
+
 // ─── Tool schemas ─────────────────────────────────────────────────────────
-const tools = [
+export const tools = [
   {
     name: 'list_dir',
     description: 'List entries in a directory on the heimaskrifstofa tölva. Returns name, kind (file|dir), size_bytes, modified.',
@@ -68,12 +79,12 @@ const tools = [
   },
   {
     name: 'http_fetch',
-    description: 'Fetch a URL from this machine. Useful for hitting brunaholf.netlify.app endpoints that Claude can\'t reach directly. Body is sent as-is (string).',
+    description: 'Fetch a URL from this machine. Useful for hitting brunaholf.netlify.app endpoints that Claude can\'t reach directly. Body is sent as-is (string); ignored for GET/HEAD.',
     inputSchema: z.object({
       url: z.string().describe('Full URL incl. protocol.'),
       method: z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE']).optional().default('GET'),
       headers: z.record(z.string()).optional().describe('Header key/value pairs.'),
-      body: z.string().optional().describe('Request body string (JSON or form-encoded).'),
+      body: z.string().optional().describe('Request body string (JSON or form-encoded). Ignored for GET/HEAD.'),
       timeout_ms: z.number().int().min(1000).max(120000).optional().default(30000),
     }),
   },
@@ -86,20 +97,20 @@ const tools = [
   },
   {
     name: 'upload_to_drive_via_brunaholf',
-    description: 'Stream a local file via brunaholf\'s Drive-proxy endpoint (uses existing OAuth, no new auth on this machine). Returns the new Drive fileId.',
+    description: 'Stream a local file via brunaholf\'s Drive-proxy endpoint (uses existing OAuth, no new auth on this machine). Returns the new Drive fileId. Needs the shared LOCAL_UPLOAD_TOKEN (env or arg).',
     inputSchema: z.object({
       local_path: z.string().describe('Absolute path to the local file.'),
       drive_folder_id: z.string().describe('Target Google Drive folder ID.'),
       name: z.string().optional().describe('Name in Drive (defaults to local filename).'),
-      upload_endpoint: z.string().optional().default('https://brunaholf.netlify.app/api/drive-upload-session')
-        .describe('The brunahólf endpoint that initiates a Drive resumable upload session.'),
-      token: z.string().optional().describe('X-Brunaholf-Token header value (matches LOCAL_UPLOAD_TOKEN env on brunaholf).'),
+      upload_endpoint: z.string().optional()
+        .describe('The brunahólf endpoint that initiates a Drive resumable upload session. Defaults to env BRUNAHOLF_UPLOAD_ENDPOINT or the production URL.'),
+      token: z.string().optional().describe('X-Brunaholf-Token header value (matches LOCAL_UPLOAD_TOKEN env on brunaholf). Defaults to the LOCAL_UPLOAD_TOKEN env var on this machine.'),
     }),
   },
 ];
 
 // ─── Implementation ───────────────────────────────────────────────────────
-async function listDir({ path }) {
+export async function listDir({ path }) {
   const p = resolve(path);
   const entries = await readdir(p, { withFileTypes: true });
   const out = [];
@@ -119,7 +130,7 @@ async function listDir({ path }) {
   return { path: p, entries: out };
 }
 
-async function fileInfo({ path }) {
+export async function fileInfo({ path }) {
   const p = resolve(path);
   const s = await stat(p);
   return {
@@ -131,7 +142,7 @@ async function fileInfo({ path }) {
   };
 }
 
-async function readFileText({ path, max_kb = 200 }) {
+export async function readFileText({ path, max_kb = 200 }) {
   const p = resolve(path);
   const limit = max_kb * 1024;
   const buf = await readFile(p);
@@ -140,11 +151,15 @@ async function readFileText({ path, max_kb = 200 }) {
   return { path: p, total_bytes: buf.length, returned_bytes: Math.min(buf.length, limit), truncated, text };
 }
 
-async function httpFetch({ url, method = 'GET', headers = {}, body, timeout_ms = 30000 }) {
+export async function httpFetch({ url, method = 'GET', headers = {}, body, timeout_ms = 30000 }) {
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), timeout_ms);
   try {
-    const res = await fetch(url, { method, headers, body, signal: controller.signal });
+    const opts = { method, headers, signal: controller.signal };
+    // fetch() throws "Request with GET/HEAD method cannot have body" — only
+    // attach a body when the method allows one.
+    if (body != null && method !== 'GET' && method !== 'HEAD') opts.body = body;
+    const res = await fetch(url, opts);
     const text = await res.text();
     const ct = res.headers.get('content-type') || '';
     let parsed = null;
@@ -163,7 +178,7 @@ async function httpFetch({ url, method = 'GET', headers = {}, body, timeout_ms =
   }
 }
 
-async function openInBrowser({ url }) {
+export async function openInBrowser({ url }) {
   const p = platform();
   const cmd =
     p === 'win32' ? `start "" "${url}"` :
@@ -173,18 +188,19 @@ async function openInBrowser({ url }) {
   return { ok: true, opened: url };
 }
 
-async function uploadToDriveViaBrunaholf({ local_path, drive_folder_id, name, upload_endpoint, token }) {
+export async function uploadToDriveViaBrunaholf({ local_path, drive_folder_id, name, upload_endpoint, token }) {
   const p = resolve(local_path);
   const s = await stat(p);
   const fileName = name || basename(p);
+  const sessionEndpoint = upload_endpoint || DEFAULT_UPLOAD_ENDPOINT;
+  const authToken = token || process.env.LOCAL_UPLOAD_TOKEN || '';
 
   // Step 1: ask brunaholf to initiate a Drive resumable upload session.
-  const sessionEndpoint = (upload_endpoint || 'https://brunaholf.netlify.app/api/drive-upload-session');
   const initRes = await fetch(sessionEndpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { 'X-Brunaholf-Token': token } : {}),
+      ...(authToken ? { 'X-Brunaholf-Token': authToken } : {}),
     },
     body: JSON.stringify({
       folderId: drive_folder_id,
@@ -226,55 +242,26 @@ async function uploadToDriveViaBrunaholf({ local_path, drive_folder_id, name, up
   };
 }
 
-// ─── MCP server wiring ────────────────────────────────────────────────────
-const server = new Server(
-  { name: 'brunaholf-local', version: '0.1.0' },
-  { capabilities: { tools: {} } }
-);
-
-server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: tools.map(t => ({
-    name: t.name,
-    description: t.description,
-    inputSchema: zodToJsonSchema(t.inputSchema),
-  })),
-}));
-
-server.setRequestHandler(CallToolRequestSchema, async (req) => {
-  const name = req.params.name;
-  const argsRaw = req.params.arguments || {};
+// Single dispatch path used by BOTH the MCP server and the test harness, so
+// what gets tested is exactly what runs live (args are validated the same way).
+export async function callTool(name, argsRaw = {}) {
   const tool = tools.find(t => t.name === name);
-  if (!tool) return errReply(`Unknown tool: ${name}`);
-  let args;
-  try { args = tool.inputSchema.parse(argsRaw); }
-  catch (e) { return errReply(`Invalid arguments for ${name}: ${e.message}`); }
-
-  try {
-    let result;
-    switch (name) {
-      case 'list_dir':  result = await listDir(args); break;
-      case 'file_info': result = await fileInfo(args); break;
-      case 'read_file_text': result = await readFileText(args); break;
-      case 'http_fetch': result = await httpFetch(args); break;
-      case 'open_in_browser': result = await openInBrowser(args); break;
-      case 'upload_to_drive_via_brunaholf':
-        result = await uploadToDriveViaBrunaholf(args); break;
-      default: return errReply(`Unhandled tool: ${name}`);
-    }
-    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
-  } catch (e) {
-    return errReply(String(e?.message || e));
+  if (!tool) throw new Error(`Unknown tool: ${name}`);
+  const args = tool.inputSchema.parse(argsRaw);
+  switch (name) {
+    case 'list_dir': return listDir(args);
+    case 'file_info': return fileInfo(args);
+    case 'read_file_text': return readFileText(args);
+    case 'http_fetch': return httpFetch(args);
+    case 'open_in_browser': return openInBrowser(args);
+    case 'upload_to_drive_via_brunaholf': return uploadToDriveViaBrunaholf(args);
+    default: throw new Error(`Unhandled tool: ${name}`);
   }
-});
-
-function errReply(msg) {
-  return { content: [{ type: 'text', text: `ERROR: ${msg}` }], isError: true };
 }
 
 // Minimal zod → JSON Schema conversion (enough for primitive shapes we use).
-function zodToJsonSchema(z) {
-  // Object root
-  const def = z._def;
+export function zodToJsonSchema(schema) {
+  const def = schema._def;
   if (def.typeName === 'ZodObject') {
     const shape = def.shape();
     const properties = {};
@@ -297,6 +284,41 @@ function zodToJsonSchema(z) {
   return { type: 'string', description: def.description };
 }
 
-const transport = new StdioServerTransport();
-await server.connect(transport);
-console.error('[brunaholf-local-mcp] ready on stdio');
+function errReply(msg) {
+  return { content: [{ type: 'text', text: `ERROR: ${msg}` }], isError: true };
+}
+
+// ─── MCP server wiring (only when run directly, not when imported) ──────────
+export async function startServer() {
+  const server = new Server(
+    { name: 'brunaholf-local', version: '0.1.0' },
+    { capabilities: { tools: {} } }
+  );
+
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({
+    tools: tools.map(t => ({
+      name: t.name,
+      description: t.description,
+      inputSchema: zodToJsonSchema(t.inputSchema),
+    })),
+  }));
+
+  server.setRequestHandler(CallToolRequestSchema, async (req) => {
+    try {
+      const result = await callTool(req.params.name, req.params.arguments || {});
+      return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+    } catch (e) {
+      return errReply(String(e?.message || e));
+    }
+  });
+
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  console.error('[brunaholf-local-mcp] ready on stdio');
+  return server;
+}
+
+const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isMain) {
+  await startServer();
+}

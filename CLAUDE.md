@@ -1426,6 +1426,36 @@ The brunaholf drop-zone parser should reuse the exact same column
 mapping and dedupe keys so files can be uploaded via the web UI
 **or** via the local scripts interchangeably.
 
+### Local MCP connector — `local-mcp/` (skýja tengill, 2026-07-31)
+
+`local-mcp/server.mjs` is a small **stdio MCP server that runs on the
+heimaskrifstofa tölva** (or any machine) and is the *connector* between the
+**local Claude** (Claude Code on that machine) and the cloud. It gives local
+Claude on-machine reach it otherwise lacks — read local files
+(`list_dir`/`file_info`/`read_file_text`), `http_fetch` **any** URL incl.
+`brunaholf.netlify.app` (which cloud Claude can't reach due to egress policy),
+`open_in_browser`, and `upload_to_drive_via_brunaholf`. Read-only FS, **no shell,
+no file-write** — safe-by-design. `type:module`, deps `@modelcontextprotocol/sdk`
++ `zod`.
+- **Register per machine:** double-click `local-mcp/setja-upp-local-mcp.bat`
+  (npm install → `npm test` → `claude mcp add brunaholf-local -s user -- node
+  <abs>\server.mjs`; user-scope so it's available in every Claude Code session on
+  the machine). Manual/`.mcp.json` project-scope alternatives are in
+  `local-mcp/README.md` — don't do both (double-registration). Mirrors the
+  `luna-bridge/setja-upp-desktop-commander.bat` pattern.
+- **Uploads:** `upload_to_drive_via_brunaholf` calls **`/api/drive-upload-session`**
+  (`drive-upload-session.js`) which mints a Google Drive **resumable** upload
+  session with brunahólf's OAuth and returns `{uploadUrl}`; the MCP then PUTs the
+  bytes straight to Google (no bytes through Netlify — handles multi-GB). Locked
+  with `X-Brunaholf-Token` = env **`LOCAL_UPLOAD_TOKEN`** (set the SAME value on
+  Netlify and on the machine; the tool reads it from env or a `token` arg). The
+  read/fetch/browser tools need no token. Covered by the generic `/api/*` redirect;
+  `local-mcp/*` is 404-forced off the web (internal files stay off the site).
+- **Tests:** `cd local-mcp && npm test` (`test.mjs`) — offline suite (FS tools,
+  the zod→JSON-schema converter's required-args, and the `http_fetch` GET+body
+  regression) run against a throwaway localhost server, so it passes anywhere.
+- v2 (unbuilt): resumable-resume on rupt, Chrome DevTools bridge, extension control.
+
 ## DK Plus (accounting) integration
 
 Slökkvitæki ehf is set up in **dkPlus** (dk hugbúnaður) — the accounting
