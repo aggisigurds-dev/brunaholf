@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kerfisheilsa — Brunahólf</title>
+<style>
+  :root{
+    --bg:#0b0f14; --panel:#121820; --panel2:#0e141b; --brd:#1e2833;
+    --ink:#e6edf3; --ink2:#93a4b5; --ink3:#5d6f80;
+    --green:#22c55e; --amber:#f59e0b; --red:#ef4444; --grey:#475569;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:1000px;margin:0 auto;padding:20px 16px 60px}
+
+  header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    padding:16px 18px;background:linear-gradient(160deg,#141c26,#0d1319);
+    border:1px solid var(--brd);border-radius:14px;
+    box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 6px 20px rgba(0,0,0,.35)}
+  h1{margin:0;font-size:19px;letter-spacing:.02em}
+  .sub{color:var(--ink3);font-size:12.5px;margin-top:2px}
+  .spacer{flex:1}
+  .counts{display:flex;gap:8px;flex-wrap:wrap}
+  .cnt{display:flex;align-items:center;gap:6px;background:var(--panel2);
+    border:1px solid var(--brd);border-radius:99px;padding:5px 12px;font-size:13px;font-weight:700}
+  button{font:inherit;cursor:pointer}
+  .btn{background:#1b2531;border:1px solid #2b3846;color:var(--ink);
+    border-radius:9px;padding:8px 14px;font-size:13.5px;font-weight:600}
+  .btn:hover{background:#232f3d}
+  .btn--go{background:linear-gradient(160deg,#1f7a46,#14532d);border-color:#166534;color:#dcfce7}
+  .btn:disabled{opacity:.5;cursor:default}
+
+  .grp{margin-top:22px}
+  .grp h2{font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--ink3);margin:0 0 8px 3px;font-weight:800}
+  .rows{border:1px solid var(--brd);border-radius:14px;overflow:hidden;background:var(--panel)}
+  .row{display:flex;align-items:center;gap:14px;padding:13px 16px;border-top:1px solid var(--brd)}
+  .row:first-child{border-top:0}
+  .row:nth-child(even){background:var(--panel2)}
+
+  .led{width:13px;height:13px;border-radius:50%;flex:none;position:relative}
+  .led::after{content:"";position:absolute;inset:-5px;border-radius:50%;opacity:.32}
+  .led.graent{background:var(--green)}   .led.graent::after{background:var(--green);animation:pulse 2.6s infinite}
+  .led.gult{background:var(--amber)}     .led.gult::after{background:var(--amber);animation:pulse 1.6s infinite}
+  .led.raudt{background:var(--red)}      .led.raudt::after{background:var(--red);animation:pulse 1s infinite}
+  .led.graat{background:var(--grey)}
+  @keyframes pulse{0%,100%{transform:scale(.75);opacity:.30}50%{transform:scale(1.12);opacity:0}}
+
+  .main{flex:1;min-width:0}
+  .nafn{font-weight:700;font-size:14.5px}
+  .undir{color:var(--ink3);font-size:11.5px;margin-top:1px}
+  .detail{color:var(--ink2);font-size:12.5px;margin-top:3px;word-break:break-word}
+  .meta{color:var(--ink3);font-size:11px;margin-top:3px;font-variant-numeric:tabular-nums}
+  .acts{display:flex;gap:7px;flex:none;flex-wrap:wrap;justify-content:flex-end}
+  .abtn{background:#1b2531;border:1px solid #2b3846;color:var(--ink2);
+    border-radius:8px;padding:6px 11px;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap}
+  .abtn:hover{background:#232f3d;color:var(--ink)}
+  .abtn--fix{border-color:#7f1d1d;background:#2a1417;color:#fecaca}
+
+  .note{color:var(--ink3);font-size:12px;margin-top:26px;line-height:1.6;
+    border-top:1px solid var(--brd);padding-top:14px}
+  .load{color:var(--ink3);padding:30px 4px}
+  a{color:#7dd3fc}
+  @media(max-width:640px){
+    .row{flex-wrap:wrap}
+    .acts{width:100%;justify-content:flex-start;padding-left:27px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>🛡️ Kerfisheilsa</h1>
+      <div class="sub" id="sub">Sæki stöðu…</div>
+    </div>
+    <div class="spacer"></div>
+    <div class="counts" id="counts"></div>
+    <button class="btn btn--go" id="test">⏱ Prófa allar tengingar</button>
+    <button class="btn" id="refresh">↻ Sækja</button>
+  </header>
+
+  <div id="body"><div class="load">Sæki stöðu…</div></div>
+
+  <div class="note">
+    <b>Hvað ljósin þýða.</b> 🟢 prófað héðan og virkar · 🟡 tengt en eitthvað að athuga
+    (aldrei prófað, gögn gömul eða síðasta keyrsla féll) · 🔴 ótengt eða prófun féll ·
+    ⚪ á ekki við enn.<br>
+    „⏱ Prófa" gerir raunverulegt auðkennis-handaband við þjónustuna — les-aðgerð sem
+    skrifar hvergi. Þessi síða sýnir <b>aldrei</b> lyklana sjálfa, aðeins hvort þeir séu
+    til og hvort þeir virki.
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const LJOS = { graent:'🟢', gult:'🟡', raudt:'🔴', graat:'⚪' };
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function relTimi(iso){
+  if(!iso) return '';
+  const s = Math.floor((Date.now()-new Date(iso).getTime())/1000);
+  if(s<60) return 'rétt í þessu';
+  if(s<3600) return Math.floor(s/60)+' mín síðan';
+  if(s<86400) return Math.floor(s/3600)+' klst síðan';
+  return Math.floor(s/86400)+' daga síðan';
+}
+function talningTexti(t){
+  if(!t) return '';
+  if(t.minutur!=null) return t.minutur>0 ? t.label+' eftir '+t.minutur+' mín' : t.label+' — útrunninn';
+  if(t.dagar!=null)   return t.label+': '+(t.dagar===0?'í dag':t.dagar+' daga gamall');
+  return '';
+}
+
+// Gagnaleiðslurnar eiga sinn eigin endapunkt (data-sources-status) — hann er
+// notaður óbreyttur svo ferskleika-reglan sé á EINUM stað, ekki tveimur.
+function fraGognum(d){
+  const out=[];
+  // status úr endapunktinum: fresh (≤2 d) · aging (≤14 d) · stale (>14 d).
+  const LIT = { fresh:'graent', aging:'gult', stale:'raudt' };
+  (d && d.sources || []).forEach(s=>{
+    const dagar = s.age_days;
+    out.push({
+      hopur:'Gagnaleiðslur — ferskleiki',
+      heiti:(s.icon?s.icon+' ':'')+(s.label||s.key), undir:s.file_hint||s.key,
+      status: LIT[s.status] || 'graat',
+      // Textinn er leiddur af STÖÐUNNI sem endapunkturinn gefur, ekki af eigin
+      // dagaþröskuldum — annars fæst rautt ljós með gulum texta (endapunkturinn
+      // reiknar stöðuna af nákvæmari aldri en heilu dagarnir sem hann birtir).
+      detail: !s.status ? 'engin gögn' :
+        s.status==='fresh' ? 'nýjustu gögn eru fersk' :
+        s.status==='aging' ? 'nýjustu gögn eru '+dagar+' daga gömul' :
+        s.status==='stale' ? 'ekkert nýtt í '+dagar+' daga — uppfærslan er líklega stöðvuð' :
+        String(s.status),
+      meta: [s.newest_real?('nýjustu gögn '+String(s.newest_real).slice(0,10)):'',
+             s.last_import?('síðast samstillt '+relTimi(s.last_import)):'',
+             s.count!=null?(s.count.toLocaleString('is-IS')+' færslur'):''].filter(Boolean).join(' · ')
+    });
+  });
+  return out;
+}
+
+function rada(services){
+  const grps = {};
+  services.forEach(s=>{ (grps[s.hopur] = grps[s.hopur] || []).push(s); });
+  return grps;
+}
+
+function teikna(services){
+  const grps = rada(services);
+  $('#body').innerHTML = Object.keys(grps).map(g =>
+    '<div class="grp"><h2>'+esc(g)+'</h2><div class="rows">' +
+    grps[g].map(s=>{
+      const meta = [ s.meta || talningTexti(s.talning),
+        s.profad ? 'prófað '+relTimi(s.profad) : '',
+        s.sidasta_keyrsla && s.sidasta_keyrsla.at ? 'síðasta keyrsla '+relTimi(s.sidasta_keyrsla.at) : ''
+      ].filter(Boolean).join(' · ');
+      const acts = (s.adgerdir||[]).map(a =>
+        a.url ? '<a class="abtn'+(s.status==='raudt'?' abtn--fix':'')+'" href="'+esc(a.url)+'">'+esc(a.label)+'</a>'
+              : '<button class="abtn" data-test="'+esc(a.test)+'">'+esc(a.label)+'</button>').join('');
+      return '<div class="row">'+
+        '<span class="led '+esc(s.status)+'" title="'+esc(s.status)+'"></span>'+
+        '<div class="main"><div class="nafn">'+esc(s.heiti)+'</div>'+
+        (s.undir?'<div class="undir">'+esc(s.undir)+'</div>':'')+
+        (s.detail?'<div class="detail">'+esc(s.detail)+'</div>':'')+
+        (meta?'<div class="meta">'+esc(meta)+'</div>':'')+
+        '</div><div class="acts">'+acts+'</div></div>';
+    }).join('') + '</div></div>').join('');
+
+  $('#body').querySelectorAll('[data-test]').forEach(b =>
+    b.addEventListener('click', () => sakja(b.dataset.test, b)));
+}
+
+let SIDAST = [];
+async function sakja(test, btn){
+  if(btn){ btn.disabled = true; btn.textContent = '⏳ …'; }
+  const t = $('#test'); if(!btn){ t.disabled = true; t.textContent = '⏳ Prófa…'; }
+  $('#sub').textContent = test ? 'Prófa tengingu…' : 'Sæki stöðu…';
+  try{
+    const [heilsa, gogn] = await Promise.all([
+      fetch('/api/kerfisheilsa' + (test ? '?test='+encodeURIComponent(test) : ''), {cache:'no-store'}).then(r=>r.json()),
+      fetch('/api/data-sources-status', {cache:'no-store'}).then(r=>r.json()).catch(()=>null),
+    ]);
+    if(heilsa.error) throw new Error(heilsa.error);
+    SIDAST = (heilsa.services||[]).concat(fraGognum(gogn));
+    teikna(SIDAST);
+    const c = SIDAST.reduce((a,s)=>(a[s.status]=(a[s.status]||0)+1,a),{});
+    $('#counts').innerHTML = ['graent','gult','raudt','graat']
+      .filter(k=>c[k]).map(k=>'<span class="cnt">'+LJOS[k]+' '+c[k]+'</span>').join('');
+    // Aðgreint: bilud TENGING og gomul GOGN eru ekki sami hluturinn.
+    const erGogn = s => s.hopur.indexOf('ferskleiki') > 0;
+    // NB `gogn` er þegar tekið hér að ofan (svarið úr data-sources-status).
+    const teng = SIDAST.filter(s => !erGogn(s)), bol = SIDAST.filter(erGogn);
+    const rautt = n => n.filter(s=>s.status==='raudt').length;
+    const gult  = n => n.filter(s=>s.status==='gult').length;
+    const bitar = [];
+    if(rautt(teng)) bitar.push(rautt(teng)+' tenging'+(rautt(teng)>1?'ar':'')+' ótengd'+(rautt(teng)>1?'ar':''));
+    if(gult(teng))  bitar.push(gult(teng)+' að athuga');
+    if(rautt(bol)) bitar.push(rautt(bol)+' gagnaleiðsl'+(rautt(bol)>1?'ur':'a')+' stöðnuð'+(rautt(bol)>1?'ar':''));
+    $('#sub').textContent = (bitar.join(' · ') || 'Allt í lagi') +
+      ' · uppfært ' + new Date().toLocaleTimeString('is-IS',{hour:'2-digit',minute:'2-digit'});
+  }catch(e){
+    $('#sub').textContent = 'Villa: ' + (e && e.message || e);
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = '⏱ Prófa'; }
+    t.disabled = false; t.textContent = '⏱ Prófa allar tengingar';
+  }
+}
+
+$('#test').addEventListener('click', () => sakja('1'));
+$('#refresh').addEventListener('click', () => sakja(''));
+sakja('');                       // fyrsta hleðsla: ÓDÝRT, engin ytri köll
+setInterval(() => sakja(''), 120000);
+</script>
+</body>
+</html>

@@ -128,6 +128,28 @@ les fjögur Postgres-sýni **`v_veidin_tolur` · `v_veidin_amber` ·
 `v_veidin_engin_skyrsla` · `v_veidin_rukkud_an_skyrslu`** (migration
 `veidin_views`, grant select to anon). Listarnir þrír eru útvíkkanlegir á síðunni.
 
+**🛡️ Kerfisheilsa** (`kerfisheilsa.html` + hero-spjald efst í Bakendi, 2026-07-31) —
+**eitt ljósaborð yfir allar TENGINGAR og lykla** (öryggisborðs-útlit). Tengi-takkarnir
+voru dreifðir um allt og útdottin tenging sást ekki fyrr en gögn hættu að berast.
+Hópar: Pósthólf (hver Google-tenging + nýjasti póstur) · Greiðslur & bókhald (Payday
+×2, dkPlus) · Gagnaleiðslur (Tímavera API) · Lyklar (Claude/Resend/Mail Pulse/OAuth) ·
+Gagnaleiðslur — ferskleiki. Ljós: 🟢 prófað og virkar · 🟡 tengt en athuga (aldrei
+prófað / gögn gömul / síðasta keyrsla féll) · 🔴 ótengt eða prófun féll (+ **Tengja**-
+hnappur → `/api/google-auth?account=…`) · ⚪ á ekki við (Office 365 → Graph óskrifað).
+Endapunktur **`/api/kerfisheilsa`** (`kerfisheilsa.js`, service role): `GET` = ÓDÝRT
+(engin ytri köll — staða úr `google_oauth`/`app_kv`/`automation_runs`/`email_digest` +
+geymdum prófunum í `app_kv['kerfisheilsa_probes']`) · `GET ?test=1` = RAUNPRÓFAR
+(Google refresh→access · Payday `POST /auth/token` **með `Api-Version` haus** · dkPlus
+**direct-key** `GET general/payment/term` með `/Token` sem varaleið · Tímavera
+`/employees`) · `?test=<id>` fyrir eina. **Prófanirnar VERÐA að spegla raunverulegu
+leiðina sem appið fer** — fyrsta útgáfan notaði slóð úr gamalli athugasemd og
+`/Token`-varaleiðina og sagði Payday/dkPlus niðri þótt hvort tveggja virkaði.
+**Skilar ALDREI lyklum** — aðeins hvort þeir séu til og hvort þeir virki. Ferskleiki
+gagnaleiðslanna er lesinn úr `/api/data-sources-status` óbreyttum (ein regla, einn
+staður) og **textinn er leiddur af `status`, ekki af eigin dagaþröskuldum** (annars
+rautt ljós með gulum texta — endapunkturinn reiknar stöðuna af nákvæmari aldri en
+heilu dagana sem hann birtir).
+
 ## Tabs (current)
 
 Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
