@@ -129,8 +129,11 @@
   .mrein{height:9px;background:rgba(79,216,255,.1);margin-top:9px;position:relative;overflow:hidden}
   .mrein i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,var(--cy2),var(--cy));
     box-shadow:0 0 14px rgba(79,216,255,.55)}
+  /* Prósentan situr yfir MIÐJUNNI en fyllingin nær aðeins 37% — dökkur texti
+     hvarf því ofan í bakgrunninn. Ljós texti með skugga les á báðum hlutum. */
   .mrein span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-    font-size:9px;letter-spacing:.2em;color:#021019;font-weight:700}
+    font-size:9px;letter-spacing:.2em;color:#eaf8ff;font-weight:700;
+    text-shadow:0 0 6px rgba(2,16,25,.95),0 1px 2px rgba(2,16,25,.9)}
   .mfotur{display:flex;justify-content:space-between;color:var(--ink3);font-size:10px;margin-top:5px;
     letter-spacing:.1em}
 
