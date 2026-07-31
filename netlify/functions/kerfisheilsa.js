@@ -230,25 +230,32 @@ function build(accounts, kv, mailFresh, runs, probes) {
       id, hopur: 'Pósthólf', heiti: a.email,
       undir: a.id === 1 ? 'Aðal-aðgangur · Drive + Sheets + Gmail' : 'Gmail-innsog',
       status, detail,
+      hvernig: a.id === 1
+        ? 'Þessi aðgangur keyrir ALLT Drive- og Sheets-dótið (skjalalestur, möppuflokkun, Sheet-smíði) auk Gmail. Í skýinu — engin tölva þarf að vera í gangi.'
+        : 'Gmail API úr skýi (`/api/gmail-ingest?account=…`) sækir póstinn beint frá Google inn í email_digest. Engin tölva þarf að vera í gangi.',
       talning: fersk ? { label: 'nýjasti póstur', dagar: aldur } : null,
       profad: t ? t.at : null,
       adgerdir: [
         { label: '⏱ Prófa', test: id },
         { label: '🔌 Tengja aftur', url: '/api/google-auth?account=' + encodeURIComponent(a.email) },
+        { label: '📥 Sækja póst núna', url: '/api/gmail-ingest?account=' + encodeURIComponent(a.email) + '&days=10' },
       ],
+      tenglar: [{ label: 'Google · aðgangsheimildir ↗', url: 'https://myaccount.google.com/permissions' }],
     });
   });
   VAENT.filter(e => !accounts.some(a => (a.email || '').toLowerCase() === e)).forEach(e => {
     S.push({
       id: 'google:' + e, hopur: 'Pósthólf', heiti: e, undir: 'Gmail-innsog',
       status: RED, detail: 'ekki tengt',
+      hvernig: 'Smelltu á Tengja og skráðu þig inn SEM ÞETTA netfang (Google forvelur það). Eftir það sækir skýið póstinn sjálft.',
       adgerdir: [{ label: '🔌 Tengja', url: '/api/google-auth?account=' + encodeURIComponent(e) }],
     });
   });
   S.push({
     id: 'graph', hopur: 'Pósthólf', heiti: '@brunaholf.is (Office 365)',
     undir: 'Microsoft Graph', status: GREY,
-    detail: 'ekki útfært enn — þessi pósthólf berast gegnum luna-bridge tölvuna',
+    detail: 'ekki útfært enn',
+    hvernig: 'Þessi pósthólf koma EKKI úr skýinu heldur gegnum Thunderbird á luna-bridge-tölvunni (bridge.js les mbox-skrárnar á 15 mín fresti). Ef sú tölva er slökkt hættir póstur að berast. Microsoft Graph-tenging myndi leysa það.',
   });
 
   // ── Greiðslur & bókhald ──────────────────────────────────
@@ -256,35 +263,52 @@ function build(accounts, kv, mailFresh, runs, probes) {
   const pdExp = pdTok && (pdTok.expires_at || pdTok.expiresAt);
   S.push(svc('payday', 'Greiðslur & bókhald', 'Payday — Brunahólf', 'Reikningar og kröfur',
     pr('payday'), env('PAYDAY_CLIENT_ID') && env('PAYDAY_CLIENT_SECRET'),
-    'PAYDAY_CLIENT_ID/SECRET vantar', runs['payday-pull'], pdExp));
-  S.push(svc('payday-slokk', 'Greiðslur & bókhald', 'Payday — Slökkvitæki', 'Sami aðgangur, eigin lyklaskyndiminni',
+    'PAYDAY_CLIENT_ID/SECRET vantar', runs['payday-pull'], pdExp, {
+      hvernig: 'Í SKÝINU. `/api/payday-pull` skráir sig inn með client-lyklum (Netlify env) og sækir reikninga → `invoices`. Engin tölva, engin xlsx-skrá. Vara-leið ef API dettur: flytja út „Reikningar" xlsx í Drive og keyra „Payday úr Drive" í Bakenda.',
+      adgerdir: [{ label: '📥 Sækja núna', url: '/api/payday-pull' }],
+      tenglar: [{ label: 'Payday ↗', url: 'https://app.payday.is' }],
+    }));
+  S.push(svc('payday-slokk', 'Greiðslur & bókhald', 'Payday — Slökkvitæki', 'Sami aðgangur, eigin spegill',
     pr('payday'), env('PAYDAY_CLIENT_ID') && env('PAYDAY_CLIENT_SECRET'),
     'PAYDAY_CLIENT_ID/SECRET vantar', runs['payday-pull-slokk'],
-    (kv['payday_oauth_slokk'] || {}).expires_at));
+    (kv['payday_oauth_slokk'] || {}).expires_at, {
+      hvernig: 'Í SKÝINU. `/api/payday-pull-slokk` speglar ALLA Payday-reikninga Slökkvitækja í `payday_invoices_slokk` (aðskilið frá Brunahólfs-tölunum). Keyrir sjálfkrafa kl. 10 og 15 gegnum payday-sync-cron.',
+      adgerdir: [{ label: '📥 Sækja núna', url: '/api/payday-pull-slokk' }],
+    }));
   S.push(svc('dkplus', 'Greiðslur & bókhald', 'dkPlus', 'Bókhaldskerfi Slökkvitækja',
-    pr('dkplus'), env('DKPLUS_API_KEY'), 'DKPLUS_API_KEY vantar', null, null));
+    pr('dkplus'), env('DKPLUS_API_KEY'), 'DKPLUS_API_KEY vantar', null, null, {
+      hvernig: 'Í SKÝINU gegnum `/api/dkplus` (API-lykill í Netlify env). api.dkplus.is næst EKKI úr vafranum — öll köll fara gegnum Netlify-fall. Skrifar ekkert nema beðið sé sérstaklega um það.',
+      tenglar: [{ label: 'dkPlus ↗', url: 'https://dkplus.is' }],
+    }));
 
   // ── Gagnaleiðslur ────────────────────────────────────────
   S.push(svc('timavera', 'Gagnaleiðslur', 'Tímavera API', 'Vinnufærslur beint úr Tímaveru',
     pr('timavera'), env('TIMAVERA_API_KEY') || !!kv['timavera_api_key'],
-    'enginn API-lykill', runs['timavera-pull'], null));
+    'enginn API-lykill', runs['timavera-pull'], null, {
+      hvernig: 'Í SKÝINU. `/api/timavera-pull` sækir vinnufærslur beint úr Tímaveru-API. Lykillinn (tv_live_…) er límdur inn í Bakendi-kortið „🕒 Tímavera API" og geymist í gagnagrunni — ekki í vafranum. Þetta leysti af hólmi skrap-forritið á borðtölvunni.',
+      adgerdir: [{ label: '📥 Sækja núna', url: '/api/timavera-pull?days=14' }],
+    }));
 
   // ── Lyklar (bara til/ekki til — aldrei gildin) ────────────
-  [['ANTHROPIC_API_KEY', 'Claude (AI-svör og samantektir)'],
-   ['RESEND_API_KEY', 'Resend (útsendur póstur)'],
-   ['EXTENSION_INGEST_TOKEN', 'Mail Pulse vafra-viðbót'],
-   ['GOOGLE_OAUTH_CLIENT_ID', 'Google OAuth-auðkenni']].forEach(([n, heiti]) => {
+  const NETLIFY_ENV = 'https://app.netlify.com/projects/brunaholf/configuration/env';
+  [['ANTHROPIC_API_KEY', 'Claude (AI-svör og samantektir)', 'Knýr 🤖 svar-uppköst í Reikninga-pósti og samantektir á Verkborðinu.'],
+   ['RESEND_API_KEY', 'Resend (útsendur póstur)', 'Allur póstur sem kerfið SENDIR fer gegnum Resend. Sendandi verður að vera á staðfesta léninu eldklar.is.'],
+   ['EXTENSION_INGEST_TOKEN', 'Mail Pulse vafra-viðbót', 'Chrome-viðbótin sem skrapar opna Gmail/Outlook flipa og POSTar í `/api/email-ingest-browser`. Þriðja leiðin inn í email_digest (á eftir skýinu og luna-bridge).'],
+   ['GOOGLE_OAUTH_CLIENT_ID', 'Google OAuth-auðkenni', 'Auðkennið sem allar Google-tengingar hér að ofan byggja á. Ef þetta vantar virkar engin Tengja-hnappur.']]
+    .forEach(([n, heiti, hvernig]) => {
     S.push({
       id: 'env:' + n, hopur: 'Lyklar', heiti, undir: n,
       status: env(n) ? GREEN : RED,
-      detail: env(n) ? 'lykill til staðar' : 'vantar í umhverfið (Netlify → Environment variables)',
+      detail: env(n) ? 'lykill til staðar' : 'vantar í umhverfið',
+      hvernig: hvernig + ' Lykillinn er settur í Netlify → Environment variables (aldrei í kóðann).',
+      tenglar: [{ label: 'Netlify · lyklar ↗', url: NETLIFY_ENV }],
     });
   });
 
   return S;
 }
 
-function svc(id, hopur, heiti, undir, t, hasKey, vantarTexti, run, expiresAt) {
+function svc(id, hopur, heiti, undir, t, hasKey, vantarTexti, run, expiresAt, auka) {
   let status, detail;
   if (!hasKey) { status = RED; detail = vantarTexti; }
   else if (!t) { status = AMBER; detail = 'lykill til staðar — aldrei prófaður héðan'; }
@@ -298,11 +322,14 @@ function svc(id, hopur, heiti, undir, t, hasKey, vantarTexti, run, expiresAt) {
     talning = { label: 'lykill rennur út', minutur: min };
     if (status === GREEN && min <= 0) { status = AMBER; detail += ' · lyklaskyndiminni útrunnið (endurnýjast sjálft)'; }
   }
+  const a = auka || {};
   return {
     id, hopur, heiti, undir, status, detail, talning,
+    hvernig: a.hvernig || null,
     profad: t ? t.at : null,
     sidasta_keyrsla: run ? { status: run.status, detail: run.detail, at: run.finished_at } : null,
-    adgerdir: [{ label: '⏱ Prófa', test: id }],
+    adgerdir: [{ label: '⏱ Prófa', test: id }].concat(a.adgerdir || []),
+    tenglar: a.tenglar || null,
   };
 }
 
