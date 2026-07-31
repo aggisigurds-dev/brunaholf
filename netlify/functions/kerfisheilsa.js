@@ -372,7 +372,8 @@ const SKRA = [
     env: 'EXTENSION_INGEST_TOKEN', bil_dagar: 365 },
   { id: 'l:vel', heiti: 'Lífsmarks-tákn véla', hvar: 'Netlify env — VEL_HEARTBEAT_TOKEN (valfrjálst)',
     opnar: 'Hver má senda lífsmark inn á Kerfisheilsu', endurnyja: 'Setja gildi í Netlify env og sama gildi á vélarnar (VEL_HEARTBEAT_TOKEN).',
-    env: 'VEL_HEARTBEAT_TOKEN', bil_dagar: 730 },
+    env: 'VEL_HEARTBEAT_TOKEN', bil_dagar: 730, valfrjalst: true,
+    an_texti: 'ekki sett — hver sem er getur sent lífsmark. Í lagi meðan aðeins okkar vélar vita af slóðinni; setja tákn ef það á að herða.' },
 ];
 
 function lyklaskra(kv) {
@@ -385,6 +386,7 @@ function lyklaskra(kv) {
 
     let status, detail;
     if (l.vantar) { status = GREY; detail = 'ekki sett upp'; }
+    else if (til === false && l.valfrjalst) { status = AMBER; detail = l.an_texti || 'valfrjálst — ekki sett'; }
     else if (til === false) { status = RED; detail = 'lykill vantar í umhverfið'; }
     else if (l.vidvorun && !r) { status = RED; detail = l.vidvorun; }
     else if (!r) { status = AMBER; detail = til ? 'lykill til staðar — endurnýjun aldrei skráð' : 'endurnýjun aldrei skráð'; }
@@ -397,6 +399,7 @@ function lyklaskra(kv) {
     if (l.id === 'l:supabase') {
       const exp = jwtExp(process.env.SUPABASE_SERVICE_ROLE_KEY);
       if (exp) talning = { label: 'lykillinn rennur út', dagar: Math.round((exp - nu) / 86400000) };
+      else detail += ' · lykillinn ber engan útrunatíma (nýja sb_-sniðið) — rennur ekki út af sjálfu sér';
     }
 
     return {
