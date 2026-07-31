@@ -42,8 +42,10 @@ undan (functionið er óvirkt þangað til).
 | 🔥 Gordon Ramsay (`ramsay`) | nöldrar um ósend drög/reikninga | `e605a2a42b0a44ccb7af2e42e1676c92` |
 | 🎙️ Morgan Freeman (`freeman`) | sögumaður — les skuldalistann | `76bb6ae7b26c41fbbd484514fdb014c2` |
 | 💪 Arnold (`arnold`) | hvatning — „do it now" | `2270085c19e14054b63e0e451593e0f0` |
+| 🇺🇸 Trump (`trump`) | hype-man (in-house parody) | `5dcaea7bfca74256bdbafc77593a8770` |
 | 🃏 Harley (`harley`) | ringulreiðs-áminningar | `e723d4c8547d4552af98ded15728cfbd` |
-| 🤠 Dolly (`dolly`) | *(vantar kvenrödd)* | — t.d. Fish Taylor Swift / Kim K, eða ElevenLabs „Aunt Shirley" |
+| 💫 Samantha (`scarlett`) | blíð kven-aðstoð (Her) | `474887f7949b4d1ab3e626cddf82613a` |
+| 🌸 Natalie (`natalie`) | hlý & róleg kvenrödd | `9154a623447644788ce990c64e0f235a` |
 
 Hver agent ber líka `sample`-línu (í karakter) svo HUD/prufa getur talað sjálfgefið.
 
