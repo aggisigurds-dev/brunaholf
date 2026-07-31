@@ -303,21 +303,10 @@ function build(accounts, kv, mailFresh, runs, probes) {
       adgerdir: [{ label: '📥 Sækja núna', url: '/api/timavera-pull?days=14' }],
     }));
 
-  // ── Lyklar (bara til/ekki til — aldrei gildin) ────────────
-  const NETLIFY_ENV = 'https://app.netlify.com/projects/brunaholf/configuration/env';
-  [['ANTHROPIC_API_KEY', 'Claude (AI-svör og samantektir)', 'Knýr 🤖 svar-uppköst í Reikninga-pósti og samantektir á Verkborðinu.'],
-   ['RESEND_API_KEY', 'Resend (útsendur póstur)', 'Allur póstur sem kerfið SENDIR fer gegnum Resend. Sendandi verður að vera á staðfesta léninu eldklar.is.'],
-   ['EXTENSION_INGEST_TOKEN', 'Mail Pulse vafra-viðbót', 'Chrome-viðbótin sem skrapar opna Gmail/Outlook flipa og POSTar í `/api/email-ingest-browser`. Þriðja leiðin inn í email_digest (á eftir skýinu og luna-bridge).'],
-   ['GOOGLE_OAUTH_CLIENT_ID', 'Google OAuth-auðkenni', 'Auðkennið sem allar Google-tengingar hér að ofan byggja á. Ef þetta vantar virkar engin Tengja-hnappur.']]
-    .forEach(([n, heiti, hvernig]) => {
-    S.push({
-      id: 'env:' + n, hopur: 'Lyklar', heiti, undir: n,
-      status: env(n) ? GREEN : RED,
-      detail: env(n) ? 'lykill til staðar' : 'vantar í umhverfið',
-      hvernig: hvernig + ' Lykillinn er settur í Netlify → Environment variables (aldrei í kóðann).',
-      tenglar: [{ label: 'Netlify · lyklar ↗', url: NETLIFY_ENV }],
-    });
-  });
+  // NB gamli „Lyklar"-hópurinn (bara til/ekki til) var hér — hann er felldur
+  // inn í LYKLASKRÁNA að neðan, sem segir það sama PLÚS hvar lykillinn býr,
+  // hvað hann opnar og hvernig honum er skipt. Tveir hópar um sömu lyklana
+  // hefðu bara verið tvær útgáfur af sannleikanum.
 
   return S;
 }
