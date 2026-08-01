@@ -23,6 +23,7 @@ const SVID = {
     name: 'Sara', emoji: '🗂️', agent: 'sara-organizer',
     rodd: 'sara',                                       // lykill í js/jarvis-voice.js
     voice_id: '4575dfa5b64148ad8b48542a5ebd0749',      // Margot Robbie
+    kyn: 'kvk',                                         // kvenrödd → ávarpar Anni sem "Annthor"
     still_en: 'Organised, warm and to the point. You tidy things up and say what is still outstanding. No drama.',
     safna: safnaPor,
   },
@@ -30,10 +31,21 @@ const SVID = {
     name: 'Samuel L. Jackson', emoji: '😤', agent: 'tengingar',
     rodd: 'sam',                                        // lykill í js/jarvis-voice.js
     voice_id: 'ce67291306284add89ad9e3db6249ad9',
+    kyn: 'kk',                                          // karlrödd → ávarpar Anni sem "Big Boss Anni"
     still_en: 'Direct and emphatic, no filler. States what is fine and what needs fixing NOW. Never rude.',
     safna: safnaTengingar,
   },
 };
+
+// Hvernig á að ávarpa notandann UPPHÁTT.
+//   Agnar → alltaf "Agnar".
+//   Annþór → fer eftir KYNI raddarinnar (ósk Agnars 2026-08-01):
+//     karlraddir kalla hann "Big Boss Anni", kvenraddir "Annthor"
+//     (stafað hljóðrétt svo ensk TTS-rödd beri það rétt fram).
+function avarp(notandi, kyn) {
+  if (notandi === 'anni') return kyn === 'kk' ? 'Big Boss Anni' : 'Annthor';
+  return 'Agnar';
+}
 
 /* ── gagnasöfnun (aðeins tölur — aldrei heilar töflur til Claude) ─────────── */
 
@@ -80,6 +92,8 @@ exports.handler = async (event) => {
   const lykill = String(p.svid || '').trim();
   const s = SVID[lykill];
   if (!s) return json(400, { error: 'Óþekkt svið', i_bodi: Object.keys(SVID) });
+  const notandi = String(p.notandi || 'agnar').trim().toLowerCase();
+  const nafn = avarp(notandi, s.kyn);
 
   let tolur;
   try { tolur = await withTimeout(s.safna(), 12000); }
@@ -114,14 +128,15 @@ exports.handler = async (event) => {
         model: 'claude-sonnet-5',
         max_tokens: 220,
         system:
-          `You are ${s.name}, a specialist in Agnar's fire-safety business system ` +
+          `You are ${s.name}, a specialist in a fire-safety business system ` +
           `(Brunahólf ehf / Slökkvitæki ehf, Iceland).\n` +
           `Style: ${s.still_en}\n\n` +
+          `The person you are talking to is "${nafn}". Address them by that exact name ` +
+          'if you address them at all — do not change or translate it.\n' +
           'Write 2-3 short sentences in ENGLISH that will be READ ALOUD by a voice. ' +
           'Lead with the number that matters most. No headings, no bullet points, no ' +
-          'markdown, no emoji — just natural spoken English. Address Agnar by name if ' +
-          'it fits. If something needs action, say so plainly in the last sentence. ' +
-          'Keep Icelandic place and company names as they are.',
+          'markdown, no emoji — just natural spoken English. If something needs action, ' +
+          'say so plainly in the last sentence. Keep Icelandic place and company names as they are.',
         messages: [{ role: 'user', content: "Today's numbers:\n" + JSON.stringify(tolur, null, 1) }],
       }),
     });
