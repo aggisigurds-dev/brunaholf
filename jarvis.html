@@ -231,6 +231,17 @@
   cursor:pointer;transition:all .15s}
 .nbtn:hover{border-color:#2d6d9e;color:#a8cbe8}
 .nbtn.virkt{border-color:#2d9bf0;color:#fff;background:rgba(45,155,240,.16)}
+
+/* -- Þrýstimælar (2026-08-01) -- */
+#perf-btn{background:rgba(45,155,240,.14);border:1px solid #1d3a55;color:#8fc4f0;border-radius:6px;
+  width:22px;height:22px;font-size:13px;line-height:1;cursor:pointer;padding:0;vertical-align:middle}
+#perf-btn:hover{border-color:#3d8fd0;color:#fff}
+.maelagrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.maelir{background:rgba(8,16,26,.5);border:1px solid #14283c;border-radius:9px;padding:5px 4px 7px;text-align:center}
+.maelir svg{width:100%;height:auto;display:block}
+.mlabel{font-size:10.5px;color:var(--ink3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mval{font-size:13px;font-weight:800;letter-spacing:.02em}
+.mbase{font-size:9px;color:#5f7690;margin-top:-1px}
 </style>
 <!-- Sett á <html> STRAX (ekki í enda body) svo app-hamurinn sé kominn áður en
      fyrsta málningin verður til — annars blikkar venjulega útlitið fyrst.
@@ -352,6 +363,10 @@
       <div class="spjald" data-spjald="gloppur">
         <h2>Þjónustu-gloppur <span id="gl-uppf">—</span></h2>
         <div id="gl-efni"><div style="color:var(--ink3)">sæki…</div></div>
+      </div>
+      <div class="spjald" data-spjald="perf">
+        <h2>Þrýstingur — frammistaða <button id="perf-btn" title="Mæla aftur">↻</button> <span id="perf-uppf">—</span></h2>
+        <div id="perf-efni"><div style="color:var(--ink3)">mæli…</div></div>
       </div>
     </div>
   </div>
@@ -907,7 +922,7 @@ setInterval(sakja, 60000);
 (function(){
   var UTLIT = {
     adal:      { heiti:'Adal',      spjold:['vitals','fjarskipti','velar','hljod','gogn','markmid'] },
-    kerfi:     { heiti:'Kerfi',     spjold:['vitals','fjarskipti','velar','gogn'] },
+    kerfi:     { heiti:'Kerfi',     spjold:['vitals','perf','fjarskipti','velar','gogn'] },
     thjonusta: { heiti:'Thjonusta', spjold:['thekja','gloppur','verk','markmid'] },
     fjarmal:   { heiti:'Fjarmal',   spjold:['krofur','thekja','markmid'] }
   };
@@ -1009,11 +1024,59 @@ setInterval(sakja, 60000);
     }catch(e){ villa('vk-efni'); }
   }
 
+
+  /* -- Þrýstimælar: SVG-hálfhringur með grunnlínu-striki -- */
+  function _pt(cx,cy,r,f){ var a=Math.PI*(1-Math.min(Math.max(f,0),1)); return [cx+r*Math.cos(a), cy-r*Math.sin(a)]; }
+  function _arc(cx,cy,r,f0,f1,col,w){
+    if(f1<=f0) return '';
+    var A=_pt(cx,cy,r,f0), B=_pt(cx,cy,r,f1);
+    return '<path d="M'+A[0].toFixed(1)+' '+A[1].toFixed(1)+' A'+r+' '+r+' 0 0 1 '+B[0].toFixed(1)+' '+B[1].toFixed(1)+'" fill="none" stroke="'+col+'" stroke-width="'+w+'" stroke-linecap="round"/>';
+  }
+  function _gauge(g){
+    var cx=60, cy=56, r=46, max=g.base*2.5;
+    var fB=g.base/max, fC=g.ceiling/max, fV=Math.min(g.ms/max,1);
+    var svg='<svg viewBox="0 0 120 64">'
+      + _arc(cx,cy,r,0,1,'#16283b',9)
+      + _arc(cx,cy,r,0,fB,'#34c759',9)
+      + _arc(cx,cy,r,fB,Math.min(fC,1),'#ffb340',9)
+      + _arc(cx,cy,r,Math.min(fC,1),1,'#ff5d5d',9);
+    // grunnlínu-strik
+    var T0=_pt(cx,cy,r-9,fB), T1=_pt(cx,cy,r+3,fB);
+    svg += '<line x1="'+T0[0].toFixed(1)+'" y1="'+T0[1].toFixed(1)+'" x2="'+T1[0].toFixed(1)+'" y2="'+T1[1].toFixed(1)+'" stroke="#cfe0f0" stroke-width="1.6"/>';
+    // vísir
+    var N=_pt(cx,cy,r-5,fV);
+    svg += '<line x1="'+cx+'" y1="'+cy+'" x2="'+N[0].toFixed(1)+'" y2="'+N[1].toFixed(1)+'" stroke="#e8eaed" stroke-width="2.2"/><circle cx="'+cx+'" cy="'+cy+'" r="3.2" fill="#e8eaed"/></svg>';
+    var col = g.status==='ok'?'#34c759':g.status==='alag'?'#ffb340':'#ff5d5d';
+    var val = g.code!==200 ? 'NIÐRI' : (g.ms+' ms');
+    return '<div class="maelir">'+svg+'<div class="mlabel">'+g.label+'</div>'
+      +'<div class="mval" style="color:'+col+'">'+val+'</div>'
+      +'<div class="mbase">grunnl. '+g.base+'</div></div>';
+  }
+  var _perfBusy=false;
+  async function saekjaPerf(){
+    if(_perfBusy) return; _perfBusy=true;
+    var box=document.getElementById('perf-efni');
+    try{
+      var j = await (await fetch('/api/perf',{cache:'no-store'})).json();
+      var g = (j.targets||[]).map(_gauge).join('');
+      box.innerHTML = '<div class="maelagrid">'+g+'</div>';
+      var y=j.yfirlit||{};
+      var e=document.getElementById('perf-uppf');
+      if(e) e.textContent = (y.alag||0)+y.nidri > 0 ? ('⚠ '+(y.alag||0)+' í álagi') : '✓ allt í lagi';
+      stimp('perf-uppf');
+    }catch(e){ box.innerHTML='<div style="color:#ff8f6b;font-size:12px">næ ekki mælingu</div>'; }
+    finally{ _perfBusy=false; }
+  }
+  window.__perfRefresh = saekjaPerf;
+  (function(){ var b=document.getElementById('perf-btn');
+    if(b) b.addEventListener('click', function(ev){ ev.stopPropagation(); saekjaPerf(); }); })();
+
   function saekjaSyn(syn){
     if(syn.indexOf('krofur')  !== -1) saekjaKrofur();
     if(syn.indexOf('thekja')  !== -1) saekjaThekja();
     if(syn.indexOf('gloppur') !== -1) saekjaGloppur();
     if(syn.indexOf('verk')    !== -1) saekjaVerk();
+    if(syn.indexOf('perf')    !== -1) saekjaPerf();
   }
   setInterval(function(){ saekjaSyn(spjoldFyrir(nuv)); }, 300000);
   beita();
@@ -1026,7 +1089,7 @@ setInterval(sakja, 60000);
     vitals:'◆ Kerfis-vitals', fjarskipti:'◆ Fjarskipti', velar:'◆ Velar',
     hljod:'◆ Hljodnemi', gogn:'◆ Gagnaleidslur', markmid:'◆ Meginmarkmid',
     krofur:'◆ Krofur & utistandandi', thekja:'◆ Thekja — por',
-    gloppur:'◆ Thjonustu-gloppur', verk:'◆ Verkefni'
+    gloppur:'◆ Thjonustu-gloppur', verk:'◆ Verkefni', perf:'◆ Thrystingur (frammistada)'
   };
   var ov = document.getElementById('svalmynd');
   var listi = document.getElementById('svallisti');
