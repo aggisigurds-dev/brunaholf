@@ -66,6 +66,53 @@
       voice_id: "9154a623447644788ce990c64e0f235a",   // Fish — Natalie Portman (calm, warm, empathetic)
       sample: "Hey Agnar. No rush — just so you know, three sales are ready to invoice whenever you are. You've got this.",
       fb: { lang: "en-US", rate: 0.95, pitch: 1.04, pref: /samantha|ava|allison|google us english|female/i }
+    },
+
+    /* ── 2026-08-01: áhöfnin stækkuð (val Agnars). Hver þessara á sér SVIÐ, ekki
+     * bara rödd — sjá Miro-kortið „Sérfræðingarnir". Röddin er útrásin; sjálf
+     * þekkingin á að búa í .claude/agents/ + sameiginlega staðreyndasafninu.
+     * Öll voice_id staðfest á fish.audio og prófuð á ÍSLENSKU 2026-08-01. ── */
+    house: {
+      name: "Dr. House", emoji: "🩺", role: "Kerfisheilsa — greiningin",
+      voice_id: "0de22bbc814e4857a1558b46ba7e7817",   // Fish — Dr. House
+      sample: "It's never Netlify. It's never the app. It's the database — it's always the database. Stop guessing and read the logs.",
+      fb: { lang: "en-US", rate: 0.98, pitch: 0.92, pref: /alex|david|aaron|google us english/i }
+    },
+    statham: {
+      name: "Jason Statham", emoji: "🥊", role: "Rukkarinn — ógreitt",
+      voice_id: "656b4b83522644d9b1d11e31afb90cfd",   // Fish — Jason Statham
+      sample: "Three invoices. Forty days overdue. I know exactly where they are. Consider it handled.",
+      fb: { lang: "en-GB", rate: 1.00, pitch: 0.82, pref: /daniel|arthur|george|uk english male|ryan/i }
+    },
+    sara: {
+      name: "Sara", emoji: "🗂️", role: "Organizer — pör og skjöl",
+      voice_id: "4575dfa5b64148ad8b48542a5ebd0749",   // Fish — Margot Robbie
+      sample: "Okay! Every report is filed, every invoice is paired, and I flagged the gaps for you. You're welcome.",
+      fb: { lang: "en-AU", rate: 1.02, pitch: 1.10, pref: /karen|samantha|ava|female/i }
+    },
+    devito: {
+      name: "Danny DeVito", emoji: "🦞", role: "Bókarinn",
+      voice_id: "17b88cf496b9495298a10f1b7eada19a",   // Fish — Danny DeVito
+      sample: "You wanna know where the money went? Nowhere! It's still sitting there, because nobody sent the invoice!",
+      fb: { lang: "en-US", rate: 1.05, pitch: 0.90, pref: /alex|david|aaron|google us english/i }
+    },
+    sam: {
+      name: "Samuel L. Jackson", emoji: "😤", role: "Áríðandi",
+      voice_id: "ce67291306284add89ad9e3db6249ad9",   // Fish — Samuel L. Jackson
+      sample: "Listen up. That report is missing, the customer is waiting, and this is not a drill. Handle it.",
+      fb: { lang: "en-US", rate: 1.02, pitch: 0.80, pref: /alex|david|aaron|google us english/i }
+    },
+    willis: {
+      name: "Bruce Willis", emoji: "💥", role: "Neyðarástand",
+      voice_id: "87efb8f2ec4f4b3b8ed9f3fd64a3ab4b",   // Fish — Bruce Willis
+      sample: "Database is back on its feet. Sixteen hours down, everything's green again. Yippee-ki-yay.",
+      fb: { lang: "en-US", rate: 0.96, pitch: 0.85, pref: /alex|david|aaron|google us english/i }
+    },
+    charlize: {
+      name: "Charlize Theron", emoji: "❄️", role: "Verkstaðir",
+      voice_id: "97f77cf6e657419ab543e9d94dcf10a0",   // Fish — Charlize Theron
+      sample: "Landspítalinn is on schedule. Four hundred holes closed this month. No mistakes, no excuses.",
+      fb: { lang: "en-US", rate: 0.97, pitch: 1.00, pref: /samantha|ava|allison|female/i }
     }
   };
 
