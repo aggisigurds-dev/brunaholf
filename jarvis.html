@@ -251,6 +251,10 @@
 #svidreload.spin{animation:ringSpin .8s linear infinite}
 .svidbtn.svidreload{font-size:16px;padding:8px 12px;color:#3ecf8e;border-color:#1d4a38}
 .svidbtn.svidreload:hover{border-color:#3ecf8e;color:#b5f5da}
+
+.svidbtn.svidall{color:#8fc4f0;border-color:#2d6d9e}
+.svidbtn.svidall:hover{border-color:#3d8fd0;color:#fff}
+.svidbtn.svidall.virk{color:#fff;border-color:#ff5d5d;background:rgba(255,93,93,.14)}
 </style>
 <!-- Sett á <html> STRAX (ekki í enda body) svo app-hamurinn sé kominn áður en
      fyrsta málningin verður til — annars blikkar venjulega útlitið fyrst.
@@ -345,6 +349,7 @@
         <button class="svidbtn" data-svid="hradi">💥 Hraði</button>
         <button class="svidbtn" data-svid="tengingar">😤 Tengingar</button>
         <button class="svidbtn" data-svid="yfirlit">🇺🇸 Yfirlit</button>
+        <button class="svidbtn svidall" id="svidall" title="Spila allar raddir í röð">▶ Öll</button>
         <button class="svidbtn svidreload" id="svidreload" title="Hlaða ferskri samantekt">↻</button>
         <span class="svidsvar" id="svidsvar"></span>
       </div>
@@ -1200,11 +1205,23 @@ setInterval(sakja, 60000);
   function esc2(x){ return String(x).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}); }
   function stimp(iso){ if(!iso) return ''; try{ var d=new Date(iso), p=function(n){return String(n).padStart(2,'0');};
     return p(d.getHours())+':'+p(d.getMinutes()); }catch(e){ return ''; } }
+  var playing = false;
+  function _sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+  // bíður eftir að rödd klári (jarvis:done) — með timeout-varaleið svo raðspilun hangi aldrei
+  function _waitDone(ms){
+    return new Promise(function(resolve){
+      var done=false;
+      function fin(){ if(done) return; done=true; window.removeEventListener('jarvis:done', fin); clearTimeout(t); resolve(); }
+      window.addEventListener('jarvis:done', fin);
+      var t = setTimeout(fin, ms||28000);
+    });
+  }
+  function _lockBtns(on){ rod.querySelectorAll('.svidbtn').forEach(function(x){ if(x.id!=='svidall') x.disabled = on; }); }
+
   async function syncSvid(svid, fresh){
     if(!svid) return;
     curSvid = svid;
-    rod.querySelectorAll('.svidbtn').forEach(function(x){ x.disabled = true; });
-    if(reload) reload.classList.add('spin');
+    if(!playing){ _lockBtns(true); if(reload) reload.classList.add('spin'); }
     ut.textContent = fresh ? 'Hleð fersku…' : 'Sæki…';
     try{
       var nt = (window.__jarvisNotandi && __jarvisNotandi.lykill()) || 'agnar';
@@ -1219,17 +1236,43 @@ setInterval(sakja, 60000);
     }catch(e){
       ut.textContent = 'Náði ekki samantekt: '+(e.message||e);
     }finally{
-      rod.querySelectorAll('.svidbtn').forEach(function(x){ x.disabled = false; });
-      if(reload) reload.classList.remove('spin');
+      if(!playing){ _lockBtns(false); if(reload) reload.classList.remove('spin'); }
     }
   }
+
+  // ── ▶ Öll: raðspilar hverja rödd, bíður eftir að hún klári áður en næsta byrjar ──
+  var allBtn = document.getElementById('svidall');
+  var PLAY_ORDER = ['yfirlit','fjarmal','por','kunnar','skjol','gogn','hradi','tengingar'];
+  async function playAll(){
+    if(playing){ stopAll(); return; }
+    playing = true;
+    if(allBtn){ allBtn.textContent = '⏸ Stöðva'; allBtn.classList.add('virk'); }
+    _lockBtns(true);
+    for(var i=0;i<PLAY_ORDER.length && playing;i++){
+      await syncSvid(PLAY_ORDER[i], false);   // sækir + sýnir + segir
+      if(!playing) break;
+      await _waitDone(28000);                 // bíður eftir að röddin klári
+      if(!playing) break;
+      await _sleep(350);                      // lítið bil á milli
+    }
+    stopAll();
+  }
+  function stopAll(){
+    playing = false;
+    try{ if(window.Jarvis && typeof Jarvis.stop==='function') Jarvis.stop(); }catch(e){}
+    if(allBtn){ allBtn.textContent = '▶ Öll'; allBtn.classList.remove('virk'); }
+    _lockBtns(false);
+  }
+
   rod.querySelectorAll('.svidbtn').forEach(function(b){
-    if(b.id==='svidreload') return;
-    b.addEventListener('click', function(){ syncSvid(b.dataset.svid, false); });
+    if(b.id==='svidreload' || b.id==='svidall') return;
+    b.addEventListener('click', function(){ if(playing) stopAll(); syncSvid(b.dataset.svid, false); });
   });
   if(reload) reload.addEventListener('click', function(){
+    if(playing) stopAll();
     if(curSvid) syncSvid(curSvid, true); else ut.textContent = 'Veldu svið fyrst.';
   });
+  if(allBtn) allBtn.addEventListener('click', playAll);
 })();
 
 </script>
