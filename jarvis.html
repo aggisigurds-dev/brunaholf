@@ -907,10 +907,11 @@ setInterval(sakja, 60000);
     agnar: { skra:'Agnar',  avarp:'Agnar' },
     anni:  { skra:'Annthor', avarp:'Big Boss Anni' }
   };
-  var LYKILL = 'jarvis_notandi_v1';
+  // v2: sjálfgefið Annþór (Anni) — ný lykil-útgáfa svo gamalt Agnar-val yfirskrifi ekki.
+  var LYKILL = 'jarvis_notandi_v2';
   var nuv;
-  try { nuv = localStorage.getItem(LYKILL) || 'agnar'; } catch(e) { nuv = 'agnar'; }
-  if(!NOTENDUR[nuv]) nuv = 'agnar';
+  try { nuv = localStorage.getItem(LYKILL) || 'anni'; } catch(e) { nuv = 'anni'; }
+  if(!NOTENDUR[nuv]) nuv = 'anni';
 
   function beita(){
     document.querySelectorAll('.nbtn').forEach(function(b){
