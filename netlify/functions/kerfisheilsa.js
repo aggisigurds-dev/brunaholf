@@ -118,6 +118,7 @@ async function runProbes(which, accounts, kv) {
   accounts.forEach(a => add('google:' + a.email, () => probeGoogle(a)));
   add('payday', () => probePayday());
   add('timavera', () => probeTimavera(kv));
+  add('claude-status', () => probeClaudeStatus());
 
   const res = await Promise.all(jobs);
   const out = {};
@@ -188,6 +189,22 @@ async function probeTimavera(kv) {
   if (r.status === 401 || r.status === 403) throw new Error('lykill hafnað (' + r.status + ') — líklega útrunninn');
   if (!r.ok) throw new Error('HTTP ' + r.status);
   return 'lykill gildur';
+}
+
+// Claude/Anthropic — les-eingöngu ping á status.claude.com (Statuspage.io, sama
+// kerfi og status.supabase.com). ENGINN API-lykill þarf og EKKERT kostar — þetta
+// er EKKI próf á ANTHROPIC_API_KEY (sjá l:anthropic í lyklaskránni fyrir það),
+// heldur á sjálfa þjónustuna sem tv-summary.js/postur-reply.js standa á: er
+// Claude niðri/skert núna (t.d. álagstoppar)? 2026-08-01 (ósk Agnars, eftir að
+// Supabase-niðurtími í kvöld var ranglega grunaður að vera Claude).
+async function probeClaudeStatus() {
+  const r = await fetch('https://status.claude.com/api/v2/status.json');
+  if (!r.ok) throw new Error('status.claude.com svaraði HTTP ' + r.status);
+  const j = await r.json().catch(() => ({}));
+  const ind = (j.status && j.status.indicator) || 'unknown';
+  const desc = (j.status && j.status.description) || 'óþekkt staða';
+  if (ind === 'major' || ind === 'critical') throw new Error('Claude er skert/niðri: ' + desc);
+  return desc + (ind === 'minor' ? ' (minniháttar — fylgjast með)' : '');
 }
 
 /* ───────────────────────── ljósin ───────────────────────── */
@@ -266,6 +283,17 @@ function build(accounts, kv, mailFresh, runs, probes) {
     'enginn API-lykill', runs['timavera-pull'], null, {
       hvernig: 'Í SKÝINU. `/api/timavera-pull` sækir vinnufærslur beint úr Tímaveru-API. Lykillinn (tv_live_…) er límdur inn í Bakendi-kortið „🕒 Tímavera API" og geymist í gagnagrunni — ekki í vafranum. Þetta leysti af hólmi skrap-forritið á borðtölvunni.',
       adgerdir: [{ label: '📥 Sækja núna', url: '/api/timavera-pull?days=14' }],
+    }));
+  // 2026-08-01 (ósk Agnars, eftir Supabase-niðurtíma sem leit út eins og appið
+  // væri „bilað"): er Claude sjálft niðri/skert núna? Les-eingöngu ping á
+  // status.claude.com — ENGINN lykill, kostar EKKERT. Sjá l:anthropic fyrir
+  // hvort ANTHROPIC_API_KEY sé til (annað mál — það er lykil-tilvist, þetta er
+  // LIFANDI þjónustustaða).
+  S.push(svc('claude-status', 'Gagnaleiðslur', 'Claude (Anthropic) — þjónustustaða', 'status.claude.com',
+    pr('claude-status'), true, null, null, null, {
+      hvernig: 'Ping á opinberu status-síðu Anthropic (sama kerfi og status.supabase.com). Segir til um niðurtíma/álagstoppa hjá Claude sjálfu — EKKI hvort ANTHROPIC_API_KEY okkar virki (sjá lykla-kortið fyrir það). Ef þetta er grænt en appið samt hægt/frosið er sökudólgurinn annars staðar (oftast Supabase).',
+      adgerdir: [],
+      tenglar: [{ label: 'status.claude.com ↗', url: 'https://status.claude.com' }],
     }));
 
   // NB gamli „Lyklar"-hópurinn (bara til/ekki til) var hér — hann er felldur
