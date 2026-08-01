@@ -1052,19 +1052,46 @@ setInterval(sakja, 60000);
       +'<div class="mval" style="color:'+col+'">'+val+'</div>'
       +'<div class="mbase">grunnl. '+g.base+'</div></div>';
   }
+  // Grunnlínur mældar 2026-08-01 (curl, best af 2, luna-bridge slökkt).
+  var PERF_TARGETS = [
+    { key:'data',      label:'Supabase Data API', url:'https://osfdzskyvisifcwyjkuk.supabase.co/rest/v1/app_settings?select=id&limit=1', apikey:'sb_publishable_YVpznM5EK01qOdevQwOcIg_rMjTkT7f', base:200 },
+    { key:'heilsa',    label:'Kerfisheilsa',      url:'/api/kerfisheilsa',        base:650 },
+    { key:'veidin',    label:'Veiðin',            url:'/api/veidin',              base:700 },
+    { key:'worksites', label:'Verkstaðir',        url:'/api/worksites',           base:3100 },
+    { key:'debtors',   label:'Skuldunautar',      url:'/api/debtors',             base:1150 },
+    { key:'krofur',    label:'Kröfur',            url:'/api/krofur-yfirlit',      base:1800 },
+    { key:'dss',       label:'Gagnalindir',       url:'/api/data-sources-status', base:3100 }
+  ];
+  async function _measure(t){
+    var t0 = (window.performance && performance.now) ? performance.now() : Date.now();
+    var code = 0;
+    try{
+      var ctrl = new AbortController(), to = setTimeout(function(){ ctrl.abort(); }, 12000);
+      var h = t.apikey ? { apikey: t.apikey } : {};
+      var r = await fetch(t.url, { headers:h, cache:'no-store', signal:ctrl.signal });
+      clearTimeout(to); code = r.status; await r.arrayBuffer();
+    }catch(e){ code = 0; }
+    var ms = Math.round(((window.performance && performance.now) ? performance.now() : Date.now()) - t0);
+    var ceiling = Math.round(t.base * 1.4);
+    var status = code !== 200 ? 'nidri' : (ms > ceiling ? 'alag' : 'ok');
+    return { key:t.key, label:t.label, ms:ms, base:t.base, ceiling:ceiling, status:status, code:code };
+  }
   var _perfBusy=false;
   async function saekjaPerf(){
     if(_perfBusy) return; _perfBusy=true;
     var box=document.getElementById('perf-efni');
+    var e=document.getElementById('perf-uppf');
+    var res=[];
+    box.innerHTML='<div style="color:var(--ink3);font-size:12px">mæli hvern fyrir sig…</div>';
     try{
-      var j = await (await fetch('/api/perf',{cache:'no-store'})).json();
-      var g = (j.targets||[]).map(_gauge).join('');
-      box.innerHTML = '<div class="maelagrid">'+g+'</div>';
-      var y=j.yfirlit||{};
-      var e=document.getElementById('perf-uppf');
-      if(e) e.textContent = (y.alag||0)+y.nidri > 0 ? ('⚠ '+(y.alag||0)+' í álagi') : '✓ allt í lagi';
+      for(var i=0;i<PERF_TARGETS.length;i++){
+        res.push(await _measure(PERF_TARGETS[i]));      // RAÐBUNDIÐ — einn í einu, engin sprengja
+        box.innerHTML='<div class="maelagrid">'+res.map(_gauge).join('')+'</div>';
+      }
+      var slaemt=res.filter(function(r){ return r.status!=='ok'; }).length;
+      if(e) e.textContent = slaemt ? ('⚠ '+slaemt+' yfir grunnlínu') : '✓ allt í lagi';
       stimp('perf-uppf');
-    }catch(e){ box.innerHTML='<div style="color:#ff8f6b;font-size:12px">næ ekki mælingu</div>'; }
+    }catch(err){ if(!res.length) box.innerHTML='<div style="color:#ff8f6b;font-size:12px">næ ekki mælingu</div>'; }
     finally{ _perfBusy=false; }
   }
   window.__perfRefresh = saekjaPerf;
