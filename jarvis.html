@@ -247,6 +247,10 @@
   font-size:12.5px;font-weight:600;letter-spacing:.03em;color:#8fc4f0;text-decoration:none;
   background:rgba(10,20,32,.75);border:1px solid #1d3a55;border-radius:9px;padding:8px 13px;transition:border-color .15s,color .15s}
 #velarrymi:hover{border-color:#3d8fd0;color:#fff}
+
+#svidreload.spin{animation:ringSpin .8s linear infinite}
+.svidbtn.svidreload{font-size:16px;padding:8px 12px;color:#3ecf8e;border-color:#1d4a38}
+.svidbtn.svidreload:hover{border-color:#3ecf8e;color:#b5f5da}
 </style>
 <!-- Sett á <html> STRAX (ekki í enda body) svo app-hamurinn sé kominn áður en
      fyrsta málningin verður til — annars blikkar venjulega útlitið fyrst.
@@ -340,6 +344,7 @@
         <button class="svidbtn" data-svid="gogn">🔌 Gagnaleiðslur</button>
         <button class="svidbtn" data-svid="hradi">💥 Hraði</button>
         <button class="svidbtn" data-svid="tengingar">😤 Tengingar</button>
+        <button class="svidbtn svidreload" id="svidreload" title="Hlaða ferskri samantekt">↻</button>
         <span class="svidsvar" id="svidsvar"></span>
       </div>
 
@@ -1183,34 +1188,45 @@ setInterval(sakja, 60000);
 })();
 
 
-/* ── SVIÐ-hnappar: sækja samantekt og láta rétta rödd lesa hana ──────────── */
+/* ── SVIÐ-hnappar: geymd samantekt STRAX (skyndiminni) + ↻ ferskt + tímastimpill ── */
 (function(){
   var rod = document.getElementById('svidrod');
   if(!rod) return;
   var ut = document.getElementById('svidsvar');
+  var reload = document.getElementById('svidreload');
+  var curSvid = null;
+  function esc2(x){ return String(x).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}); }
+  function stimp(iso){ if(!iso) return ''; try{ var d=new Date(iso), p=function(n){return String(n).padStart(2,'0');};
+    return p(d.getHours())+':'+p(d.getMinutes()); }catch(e){ return ''; } }
+  async function syncSvid(svid, fresh){
+    if(!svid) return;
+    curSvid = svid;
+    rod.querySelectorAll('.svidbtn').forEach(function(x){ x.disabled = true; });
+    if(reload) reload.classList.add('spin');
+    ut.textContent = fresh ? 'Hleð fersku…' : 'Sæki…';
+    try{
+      var nt = (window.__jarvisNotandi && __jarvisNotandi.lykill()) || 'agnar';
+      var r = await fetch('/api/svid-status?svid='+encodeURIComponent(svid)+'&notandi='+nt+(fresh?'&fresh=1':''), {cache:'no-store'});
+      var j = await r.json();
+      if(j.error) throw new Error(j.error);
+      var ts = stimp(j.generated_at);
+      var merki = ts ? ('🕒 '+ts+(j.cached?'':' · ferskt')) : (j.cached?'geymt':'ferskt');
+      ut.innerHTML = (j.emoji?j.emoji+' ':'')+'<b>'+esc2(j.name||'')+'</b> <span style="color:#5f829f">· '+merki+'</span><br>'+esc2(j.text||'');
+      if(window.Jarvis && typeof Jarvis.say==='function' && j.rodd){ Jarvis.say(j.rodd, j.text); }
+      if(typeof baetaStraum==='function') baetaStraum(svid+' samantekt'+(fresh?' (ferskt)':''), 'ok');
+    }catch(e){
+      ut.textContent = 'Náði ekki samantekt: '+(e.message||e);
+    }finally{
+      rod.querySelectorAll('.svidbtn').forEach(function(x){ x.disabled = false; });
+      if(reload) reload.classList.remove('spin');
+    }
+  }
   rod.querySelectorAll('.svidbtn').forEach(function(b){
-    b.addEventListener('click', async function(){
-      var svid = b.dataset.svid;
-      rod.querySelectorAll('.svidbtn').forEach(function(x){ x.disabled = true; });
-      ut.textContent = 'Sæki…';
-      try{
-        var nt = (window.__jarvisNotandi && __jarvisNotandi.lykill()) || 'agnar';
-        var r = await fetch('/api/svid-status?svid=' + encodeURIComponent(svid) + '&notandi=' + nt, {cache:'no-store'});
-        var j = await r.json();
-        if(j.error) throw new Error(j.error);
-        ut.textContent = (j.emoji ? j.emoji + ' ' : '') + j.text;
-        // Röddin sem á sviðið les samantektina; jarvis-voice fellur sjálft á
-        // vafra-rödd ef Fish er óvirkt.
-        if(window.Jarvis && typeof Jarvis.say === 'function' && j.rodd){
-          Jarvis.say(j.rodd, j.text);
-        }
-        if(typeof baetaStraum === 'function') baetaStraum(svid + ' samantekt', 'ok');
-      }catch(e){
-        ut.textContent = 'Náði ekki samantekt: ' + (e.message || e);
-      }finally{
-        rod.querySelectorAll('.svidbtn').forEach(function(x){ x.disabled = false; });
-      }
-    });
+    if(b.id==='svidreload') return;
+    b.addEventListener('click', function(){ syncSvid(b.dataset.svid, false); });
+  });
+  if(reload) reload.addEventListener('click', function(){
+    if(curSvid) syncSvid(curSvid, true); else ut.textContent = 'Veldu svið fyrst.';
   });
 })();
 
