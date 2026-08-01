@@ -65,6 +65,12 @@ const SVID = {
     still_en: 'Blunt, action-hero calm about system speed — what is fast and what is dragging.',
     safna: safnaHradi,
   },
+  yfirlit: {
+    name: 'Trump', emoji: '🇺🇸', agent: '',
+    rodd: 'trump', voice_id: '5dcaea7bfca74256bdbafc77593a8770', kyn: 'kk',
+    still_en: 'Big, confident hype-man energy — superlatives, short punchy sentences. Celebrate the wins, call out what still needs doing. Never crude.',
+    safna: safnaYfirlit,
+  },
 };
 
 // Hvernig á að ávarpa notandann UPPHÁTT.
@@ -181,6 +187,21 @@ async function safnaHradi() {
   const kerfisheilsa_ms = await ms('/api/kerfisheilsa');
   const verkstadir_ms = await ms('/api/worksites');
   return { kerfisheilsa_ms, verkstadir_ms };
+}
+// ── 🇺🇸 Yfirlit (Trump) — heildarmynd rekstursins til að hæpa ──────────────
+async function safnaYfirlit() {
+  const [deb, base, thjon] = await Promise.all([
+    apiGet('/api/debtors').catch(() => ({ totals: {} })),
+    sbCount('customers_base'),
+    sbCount('fyrirtaeki?er_i_thjonustu=eq.true&deleted_at=is.null'),
+  ]);
+  const t = (deb && deb.totals) || {};
+  return {
+    vidskiptavinir_alls: base,
+    fyrirtaeki_i_thjonustu: thjon,
+    utistandandi_kr: Math.round(t.outstanding_kr || 0),
+    skuldunautar: t.debtor_count || 0,
+  };
 }
 
 /* ── skyndiminni (app_kv, ein færsla per sviði) ───────────────────────────── */
