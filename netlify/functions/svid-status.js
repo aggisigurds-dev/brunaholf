@@ -89,6 +89,12 @@ exports.handler = async (event) => {
     villa: String(e.message || e), tolur: null,
   }); }
 
+  // ?tolur=1 → AÐEINS tölur, ekkert Claude-kall. Notað af HUD-spjöldum sem
+  // uppfærast reglulega; þau mega ALDREI kosta pening.
+  if (String(p.tolur || '') === '1') {
+    return json(200, { ok: true, svid: lykill, name: s.name, emoji: s.emoji, tolur });
+  }
+
   // Engin Claude-lykill → skilaðu samt tölunum með einfaldri setningu.
   if (!ANTHROPIC) {
     return json(200, { ok: true, svid: lykill, name: s.name, emoji: s.emoji, rodd: s.rodd,
