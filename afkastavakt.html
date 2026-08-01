@@ -295,7 +295,7 @@ async function runMeasure(calibrate){
     tasks.push({uid:uid,host:s.host,cross:s.cross,path:pg[0],label:pg[1]}); }); });
   recount();
   var q=tasks.slice(), fail=0;
-  await Promise.all([1,2,3].map(async function(){           // 3 samhliða — engin sprengja
+  await Promise.all([1,2].map(async function(){           // 3 samhliða — engin sprengja
     while(q.length){ var t=q.shift(); var r=await measure(t);
       if(r.fail) fail++;
       readings[t.uid]=r; paint(t.uid,r); recount();
@@ -359,7 +359,8 @@ var E={ chOk:document.getElementById('chOk'), chWarn:document.getElementById('ch
 window.AV=AV;
 renderPanels();
 tick(); setInterval(tick,1000);
-setTimeout(function(){ AV.runAll(); }, 600);
+/* 2026-08-01: ENGIN sjálfvirk mæling — hún hamraði á þungu föllunum í
+   hvert sinn sem síðan hlóðst og fraus appið. Notandi ýtir á MÆLA. */
 })();
 </script>
 </body>
