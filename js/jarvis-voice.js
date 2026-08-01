@@ -71,12 +71,14 @@
 
   var endpoint = "/api/jarvis-tts";
   var current = null;              // current HTMLAudioElement
+  var sayToken = 0;                // ticket bumped on every stop()/say() → cancels in-flight requests
 
   function emit(name, detail) {
     try { window.dispatchEvent(new CustomEvent(name, { detail: detail })); } catch (e) {}
   }
 
   function stop() {
+    sayToken++;                    // invalidate anything still loading (prevents two voices at once)
     try {
       if (current) { current.pause(); current.currentTime = 0; current = null; }
       if (window.speechSynthesis) speechSynthesis.cancel();
@@ -89,6 +91,7 @@
     text = String(text || "").trim();
     if (!text) return;
     stop();
+    var myToken = sayToken;        // this call's ticket; a newer say()/stop() bumps sayToken past it
 
     // 1) real character voice via the serverless proxy (if the agent has one)
     if (a.voice_id) {
@@ -98,13 +101,17 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text: text, voice_id: a.voice_id, format: "mp3" })
         });
+        if (myToken !== sayToken) return;          // a newer tap superseded us while fetching → drop
         var d = await r.json().catch(function () { return null; });
+        if (myToken !== sayToken) return;
         if (d && d.ok && (d.url || d.audio)) {
+          if (current) { try { current.pause(); } catch (e2) {} current = null; }  // belt & suspenders
           var src = d.url || ("data:" + (d.mime || "audio/mpeg") + ";base64," + d.audio);
-          current = new Audio(src);
+          var audio = new Audio(src);
+          current = audio;
           emit("jarvis:speak", { agent: agentId, text: text, source: "fish" });
-          current.onended = current.onerror = function () { current = null; emit("jarvis:done", { agent: agentId }); };
-          await current.play();
+          audio.onended = audio.onerror = function () { if (current === audio) current = null; emit("jarvis:done", { agent: agentId }); };
+          try { await audio.play(); } catch (e3) {}
           return;
         }
         // API not ready (no key etc.) → fall through to the browser voice
@@ -115,12 +122,14 @@
     }
 
     // 2) free browser fallback, tuned per character
-    browserSay(a, agentId, text, opts);
+    if (myToken !== sayToken) return;              // superseded before we reached the fallback
+    browserSay(a, agentId, text, Object.assign({}, opts, { _tok: myToken }));
   }
 
   function browserSay(a, agentId, text, opts) {
     opts = opts || {};
     if (!window.speechSynthesis || typeof SpeechSynthesisUtterance === "undefined") return;
+    var tok = (opts._tok !== undefined) ? opts._tok : sayToken;   // honour the say() ticket
     var vs = speechSynthesis.getVoices() || [];
     // Voices load ASYNC — on the very first call the list is often empty, which
     // is why a first reply can come out silent or with a robotic default voice.
@@ -129,12 +138,13 @@
       var done = false;
       var retry = function () {
         if (done) return; done = true;
-        browserSay(a, agentId, text, Object.assign({}, opts, { _retried: true }));
+        browserSay(a, agentId, text, Object.assign({}, opts, { _retried: true, _tok: tok }));
       };
       try { window.speechSynthesis.addEventListener("voiceschanged", retry, { once: true }); } catch (e) {}
       setTimeout(retry, 300);
       return;
     }
+    if (tok !== sayToken) return;   // a newer voice took over while we waited
     var u = new SpeechSynthesisUtterance(text);
     // opts.lang (set when answering a spoken question) forces the reply language
     // so an Icelandic answer isn't read by an English voice; otherwise use the
@@ -151,7 +161,7 @@
     emit("jarvis:speak", { agent: agentId, text: text, source: "browser" });
     u.onend = u.onerror = function () { emit("jarvis:done", { agent: agentId }); };
     speechSynthesis.cancel();
-    setTimeout(function () { speechSynthesis.speak(u); }, 40);
+    setTimeout(function () { if (tok !== sayToken) return; speechSynthesis.speak(u); }, 40);
   }
 
   window.Jarvis = Object.assign(window.Jarvis || {}, {
@@ -226,6 +236,8 @@
       "  -webkit-tap-highlight-color:transparent;transition:border-color .12s,box-shadow .12s,background .12s}",
       "#" + PANEL_ID + " .jvt-ag:hover{border-color:#1d7fa8}",
       "#" + PANEL_ID + " .jvt-ag.on{border-color:#4fd8ff;background:#0a2740;box-shadow:0 0 0 1px #4fd8ff,0 0 16px rgba(79,216,255,.35)}",
+      "#" + PANEL_ID + " .jvt-ag.loading{border-color:#1d7fa8;animation:jvtPulse 1s ease-in-out infinite}",
+      "@keyframes jvtPulse{0%,100%{opacity:.5}50%{opacity:1}}",
       "#" + PANEL_ID + " .jvt-ag.ismain{border-color:#2f5a3a}",
       "#" + PANEL_ID + " .jvt-play{display:flex;align-items:center;gap:10px;flex:1 1 auto;min-width:0;background:transparent;border:0;color:inherit;font:inherit;text-align:left;cursor:pointer;padding:0}",
       "#" + PANEL_ID + " .jvt-star{flex:0 0 auto;background:transparent;border:0;color:#2a4c60;font-size:17px;line-height:1;cursor:pointer;padding:4px 2px 4px 8px}",
@@ -313,7 +325,8 @@
       var btn = e.target.closest(".jvt-play"); if (!btn) return;
       var id = btn.getAttribute("data-play"), a = AGENTS[id] || {};
       var txt = (taEl && taEl.value.trim()) || a.sample || "Halló, þetta er prufa.";
-      setStatus("… " + (a.name || id));
+      markLoading(id);
+      setStatus("⏳ sæki " + (a.name || id) + "…");
       say(id, txt);
     });
 
@@ -331,16 +344,25 @@
   }
 
   function setStatus(t) { if (statusEl) statusEl.textContent = t || ""; }
+  function clearRowStates() {
+    if (!panelEl) return;
+    panelEl.querySelectorAll(".jvt-ag.on,.jvt-ag.loading").forEach(function (b) {
+      b.classList.remove("on"); b.classList.remove("loading");
+    });
+  }
+  function markLoading(id) {
+    if (!panelEl) return;
+    clearRowStates();
+    var b = panelEl.querySelector('.jvt-ag[data-agent="' + id + '"]');
+    if (b) b.classList.add("loading");
+  }
   function markSpeaking(id) {
     if (!panelEl) return;
-    clearSpeaking();
+    clearRowStates();
     var b = panelEl.querySelector('.jvt-ag[data-agent="' + id + '"]');
     if (b) b.classList.add("on");
   }
-  function clearSpeaking() {
-    if (!panelEl) return;
-    panelEl.querySelectorAll(".jvt-ag.on").forEach(function (b) { b.classList.remove("on"); });
-  }
+  function clearSpeaking() { clearRowStates(); }
   function reflectMain() {
     if (!panelEl) return;
     var main = getMain();
