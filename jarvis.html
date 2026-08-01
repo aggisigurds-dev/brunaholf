@@ -191,6 +191,13 @@
 .svidbtn:active{transform:translateY(1px)}
 .svidbtn[disabled]{opacity:.5;cursor:progress}
 .svidsvar{font-size:13px;color:#8fb4d4;max-width:100%;flex-basis:100%;text-align:center;min-height:18px;line-height:1.45}
+
+/* ── Fullskjá-hnappur (2026-08-01) ── */
+#fskjar{position:absolute;top:14px;right:14px;z-index:40;width:38px;height:38px;border-radius:10px;
+  background:rgba(10,20,32,.75);border:1px solid #1d3a55;color:#8fc4f0;font-size:17px;line-height:1;
+  cursor:pointer;transition:border-color .15s,color .15s}
+#fskjar:hover{border-color:#3d8fd0;color:#fff}
+:fullscreen #fskjar{background:rgba(10,20,32,.9)}
 </style>
 <!-- Sett á <html> STRAX (ekki í enda body) svo app-hamurinn sé kominn áður en
      fyrsta málningin verður til — annars blikkar venjulega útlitið fyrst.
@@ -231,6 +238,10 @@
         <canvas id="kjarna-canvas"></canvas>
         <!-- Málrofinn er STILLING → út í hornið. Aðgerðin (TALA) er neðst á
              miðásnum, svo agnahnötturinn í miðjunni sé óskertur. -->
+        <!-- 2026-08-01: fullur skjár — felur vafra-krómið OG hliðarstikuna
+             (HUD-ið er hannað til að fylla skjáinn). Virkar líka innfellt því
+             iframe-ið fékk allowfullscreen í index.html. -->
+        <button id="fskjar" title="Fullur skjár">⛶</button>
         <div class="malrofi">
           <button data-mal="is" class="on">ÍSL</button>
           <button data-mal="en">ENG</button>
@@ -790,6 +801,27 @@ settMal(MAL);
 baetaStraum('stjórnstöð ræst','ok');
 sakja();
 setInterval(sakja, 60000);
+
+/* ── Fullur skjár ────────────────────────────────────────────────────────── */
+(function(){
+  var b = document.getElementById('fskjar');
+  if(!b) return;
+  function ifs(){ return document.fullscreenElement || document.webkitFullscreenElement; }
+  function synca(){ b.textContent = ifs() ? '⤡' : '⛶'; b.title = ifs() ? 'Loka fullum skjá (Esc)' : 'Fullur skjár'; }
+  b.addEventListener('click', function(){
+    try{
+      if(ifs()){ (document.exitFullscreen || document.webkitExitFullscreen).call(document); }
+      else {
+        var el = document.documentElement;
+        (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
+      }
+    }catch(e){ /* sumir vafrar hafna utan notenda-aðgerðar */ }
+  });
+  document.addEventListener('fullscreenchange', synca);
+  document.addEventListener('webkitfullscreenchange', synca);
+  synca();
+})();
+
 
 /* ── SVIÐ-hnappar: sækja samantekt og láta rétta rödd lesa hana ──────────── */
 (function(){
