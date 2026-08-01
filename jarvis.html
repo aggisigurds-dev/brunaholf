@@ -497,6 +497,7 @@ function staerd(){
 addEventListener('resize', staerd);
 
 function teiknaKjarna(nu){
+  requestAnimationFrame(teiknaKjarna);   // raða næsta ramma FYRST → stök teikni-villa frystir aldrei hnöttinn
   const w = kc.width, h = kc.height, cx = w/2, cy = h*.385;
   const dpr = Math.min(2, devicePixelRatio||1);
   // TÍMABUNDIÐ, ekki rammabundið — annars snýst hnötturinn tvöfalt hraðar á
@@ -508,7 +509,7 @@ function teiknaKjarna(nu){
   // Snögg árás, hæg dvínun: hnötturinn tekur við hljóðinu strax og sígur niður.
   orka += (markOrka - orka) * Math.min(1, (markOrka>orka ? 14 : 1.8)*dt);
   fasi += dt*.6;
-  const E = Math.max(orka, .05);
+  const E = Math.max(.05, Math.min(1, orka));   // KLEMMT við [0,1]: hávær rödd gerði E>1 → flokt/radíus neikvæður → arc kastaði (IndexSizeError)
   snun += dt*(.055 + .07*E);            // ~3–7°/s — hægt reik, ekki hjól
   hrA += dt*.030; hrB -= dt*.021; hrC += dt*.013;   // ~0,7–1,7°/s, sitt á hvað
   // GUSTURINN: margfeldi tveggja ósammælanlegra sveiflna → hviður sem
@@ -620,14 +621,14 @@ function teiknaKjarna(nu){
   // ── Punkturinn í miðjunni: LÍTILL og hvítglóandi, ekki stór hnöttur.
   // Flökt: hraður titringur með orkunni + hægari andardráttur með gustinum.
   const flokt = 1 + .16*Math.sin(fasi*7.3)*E + .12*(gustur-.55);
-  const bR = R*(.30 + .14*E) * flokt;
+  const bR = Math.max(0, R*(.30 + .14*E) * flokt);
   const blomi = kx.createRadialGradient(cx,cy,0,cx,cy,bR);
   blomi.addColorStop(0, `rgba(255,255,255,${(.70+.28*E).toFixed(2)})`);
   blomi.addColorStop(.16, `rgba(210,238,255,${(.34+.30*E).toFixed(2)})`);
   blomi.addColorStop(.55, kalt(.10+.16*E));
   blomi.addColorStop(1, kalt(0));
   kx.beginPath(); kx.arc(cx,cy,bR,0,Math.PI*2); kx.fillStyle = blomi; kx.fill();
-  kx.beginPath(); kx.arc(cx,cy,(1.5+1.6*E)*flokt*dpr,0,Math.PI*2);
+  kx.beginPath(); kx.arc(cx,cy,Math.max(0,(1.5+1.6*E)*flokt*dpr),0,Math.PI*2);
   kx.fillStyle = 'rgba(255,255,255,.95)'; kx.fill();
 
   kx.globalCompositeOperation = 'source-over';
@@ -641,7 +642,6 @@ function teiknaKjarna(nu){
       `0 0 ${Math.round(28+56*E)}px rgba(${br},${bg},${bb},${(.26+.36*E).toFixed(2)}),` +
       `inset 0 0 ${Math.round(24+38*E)}px rgba(${br},${bg},${bb},${(.14+.32*E).toFixed(2)})`;
   }
-  requestAnimationFrame(teiknaKjarna);
 }
 
 /* ── hljóðnemi: alvöru bylgja, ekki hreyfimynd ── */
