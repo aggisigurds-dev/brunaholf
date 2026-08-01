@@ -183,6 +183,14 @@
   @media(max-width:960px){
     html.embedded .grind>.dalkur:nth-child(2){order:-1}
   }
+
+/* ── Svið-hnappar (2026-08-01) ── */
+.svidrod{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;margin:18px auto 6px;max-width:900px;padding:0 12px}
+.svidbtn{font:inherit;font-size:14px;font-weight:600;letter-spacing:.02em;color:#cfe6ff;background:linear-gradient(180deg,rgba(20,32,48,.9),rgba(10,18,28,.9));border:1px solid #1d3a55;border-radius:11px;padding:10px 16px;cursor:pointer;min-height:44px;transition:border-color .15s,transform .1s}
+.svidbtn:hover{border-color:#3d8fd0;color:#fff}
+.svidbtn:active{transform:translateY(1px)}
+.svidbtn[disabled]{opacity:.5;cursor:progress}
+.svidsvar{font-size:13px;color:#8fb4d4;max-width:100%;flex-basis:100%;text-align:center;min-height:18px;line-height:1.45}
 </style>
 <!-- Sett á <html> STRAX (ekki í enda body) svo app-hamurinn sé kominn áður en
      fyrsta málningin verður til — annars blikkar venjulega útlitið fyrst.
@@ -233,6 +241,15 @@
           <div class="heyri" id="heyri">Ýttu og talaðu</div>
           <button id="hnappur"><span class="ic">◉</span><span id="hlbl">Tala</span></button>
         </div>
+      </div>
+
+      <!-- 2026-08-01: SVIÐ-hnappar. Hvert svið á sérfræðing í .claude/agents/
+           (þekkinguna) og rödd í js/jarvis-voice.js (útrásina). Smellur sækir
+           LIFANDI tölur úr /api/svid-status og lætur þá rödd lesa samantektina. -->
+      <div class="svidrod" id="svidrod">
+        <button class="svidbtn" data-svid="por">🗂️ Pör</button>
+        <button class="svidbtn" data-svid="tengingar">😤 Tengingar</button>
+        <span class="svidsvar" id="svidsvar"></span>
       </div>
 
       <div class="markmid">
@@ -773,6 +790,37 @@ settMal(MAL);
 baetaStraum('stjórnstöð ræst','ok');
 sakja();
 setInterval(sakja, 60000);
+
+/* ── SVIÐ-hnappar: sækja samantekt og láta rétta rödd lesa hana ──────────── */
+(function(){
+  var rod = document.getElementById('svidrod');
+  if(!rod) return;
+  var ut = document.getElementById('svidsvar');
+  rod.querySelectorAll('.svidbtn').forEach(function(b){
+    b.addEventListener('click', async function(){
+      var svid = b.dataset.svid;
+      rod.querySelectorAll('.svidbtn').forEach(function(x){ x.disabled = true; });
+      ut.textContent = 'Sæki…';
+      try{
+        var r = await fetch('/api/svid-status?svid=' + encodeURIComponent(svid), {cache:'no-store'});
+        var j = await r.json();
+        if(j.error) throw new Error(j.error);
+        ut.textContent = (j.emoji ? j.emoji + ' ' : '') + j.text;
+        // Röddin sem á sviðið les samantektina; jarvis-voice fellur sjálft á
+        // vafra-rödd ef Fish er óvirkt.
+        if(window.Jarvis && typeof Jarvis.say === 'function' && j.rodd){
+          Jarvis.say(j.rodd, j.text);
+        }
+        if(typeof baetaStraum === 'function') baetaStraum(svid + ' samantekt', 'ok');
+      }catch(e){
+        ut.textContent = 'Náði ekki samantekt: ' + (e.message || e);
+      }finally{
+        rod.querySelectorAll('.svidbtn').forEach(function(x){ x.disabled = false; });
+      }
+    });
+  });
+})();
+
 </script>
 </body>
 </html>
