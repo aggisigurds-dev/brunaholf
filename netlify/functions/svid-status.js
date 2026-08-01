@@ -183,6 +183,24 @@ async function safnaHradi() {
   return { kerfisheilsa_ms, verkstadir_ms };
 }
 
+/* ── skyndiminni (app_kv, ein færsla per sviði) ───────────────────────────── */
+const cacheKey = (svid) => `svid_cache_${svid}`;
+async function readCache(svid) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/app_kv?key=eq.${cacheKey(svid)}&select=value`, {
+    headers: { apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}` } });
+  if (!r.ok) return null;
+  const rows = await r.json();
+  return (rows[0] && rows[0].value) || null;
+}
+async function writeCache(svid, entry) {
+  await fetch(`${SUPABASE_URL}/rest/v1/app_kv`, {
+    method: 'POST',
+    headers: { apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}`,
+      'content-type': 'application/json', Prefer: 'resolution=merge-duplicates' },
+    body: JSON.stringify({ key: cacheKey(svid), value: entry, updated_at: new Date().toISOString() }),
+  });
+}
+
 /* ── handler ──────────────────────────────────────────────────────────────── */
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors(), body: '' };
@@ -195,6 +213,27 @@ exports.handler = async (event) => {
   const notandi = String(p.notandi || 'agnar').trim().toLowerCase();
   const nafn = avarp(notandi, s.kyn);
 
+  // ── tölu-hamur (HUD-spjöld): lifandi tölur, ekkert Claude/skyndiminni ──────
+  if (String(p.tolur || '') === '1') {
+    let tolur;
+    try { tolur = await withTimeout(s.safna(), 12000); }
+    catch (e) { return json(200, { ok: true, svid: lykill, name: s.name, emoji: s.emoji, tolur: null, villa: String(e.message || e) }); }
+    return json(200, { ok: true, svid: lykill, name: s.name, emoji: s.emoji, tolur });
+  }
+
+  const ferskt = String(p.fresh || '') === '1';
+
+  // ── SKYNDIMINNI: sjálfgefið skilar GEYMDRI samantekt STRAX (engin safna/Claude
+  //    → hröð hleðsla, engin hik). ?fresh=1 endurreiknar. Geymt í app_kv per sviði.
+  if (!ferskt) {
+    const c = await readCache(lykill).catch(() => null);
+    if (c && c.text) {
+      return json(200, { ok: true, svid: lykill, name: s.name, emoji: s.emoji, rodd: s.rodd,
+        voice_id: s.voice_id, text: c.text, tolur: c.tolur || null, generated_at: c.generated_at, cached: true });
+    }
+  }
+
+  // ── FERSKT: sæki tölur (+ Claude) og geymi í skyndiminni ──────────────────
   let tolur;
   try { tolur = await withTimeout(s.safna(), 12000); }
   catch (e) { return json(200, {
@@ -203,49 +242,38 @@ exports.handler = async (event) => {
     villa: String(e.message || e), tolur: null,
   }); }
 
-  // ?tolur=1 → AÐEINS tölur, ekkert Claude-kall. Notað af HUD-spjöldum sem
-  // uppfærast reglulega; þau mega ALDREI kosta pening.
-  if (String(p.tolur || '') === '1') {
-    return json(200, { ok: true, svid: lykill, name: s.name, emoji: s.emoji, tolur });
-  }
-
-  // Engin Claude-lykill → skilaðu samt tölunum með einfaldri setningu.
-  if (!ANTHROPIC) {
-    return json(200, { ok: true, svid: lykill, name: s.name, emoji: s.emoji, rodd: s.rodd,
-      voice_id: s.voice_id, text: einfold(lykill, tolur), tolur });
-  }
-
   let text;
-  try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-api-key': ANTHROPIC, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({
-        // Sonnet en ekki Haiku, og ENSKA en ekki íslenska (ósk Agnars 2026-08-01):
-        // Haiku bjó til orð sem eru ekki til í íslensku („blikra fyrir reikninga"),
-        // og raddirnar eru enskar stjörnuraddir — enskur texti hljómar eðlilega í
-        // þeim, íslenskur ekki. Textinn er stuttur svo kostnaðarmunurinn er hverfandi.
-        model: 'claude-sonnet-5',
-        max_tokens: 220,
-        system:
-          `You are ${s.name}, a specialist in a fire-safety business system ` +
-          `(Brunahólf ehf / Slökkvitæki ehf, Iceland).\n` +
-          `Style: ${s.still_en}\n\n` +
-          `The person you are talking to is "${nafn}". Address them by that exact name ` +
-          'if you address them at all — do not change or translate it.\n' +
-          'Write 2-3 short sentences in ENGLISH that will be READ ALOUD by a voice. ' +
-          'Lead with the number that matters most. No headings, no bullet points, no ' +
-          'markdown, no emoji — just natural spoken English. If something needs action, ' +
-          'say so plainly in the last sentence. Keep Icelandic place and company names as they are.',
-        messages: [{ role: 'user', content: "Today's numbers:\n" + JSON.stringify(tolur, null, 1) }],
-      }),
-    });
-    const j = await r.json();
-    text = (j && j.content && j.content[0] && j.content[0].text || '').trim();
-  } catch (_) { /* fellur á einföldu útgáfuna */ }
+  if (ANTHROPIC) {
+    try {
+      const r = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-api-key': ANTHROPIC, 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-5',
+          max_tokens: 220,
+          system:
+            `You are ${s.name}, a specialist in a fire-safety business system ` +
+            `(Brunahólf ehf / Slökkvitæki ehf, Iceland).\n` +
+            `Style: ${s.still_en}\n\n` +
+            `The person you are talking to is "${nafn}". Address them by that exact name ` +
+            'if you address them at all — do not change or translate it.\n' +
+            'Write 2-3 short sentences in ENGLISH that will be READ ALOUD by a voice. ' +
+            'Lead with the number that matters most. No headings, no bullet points, no ' +
+            'markdown, no emoji — just natural spoken English. If something needs action, ' +
+            'say so plainly in the last sentence. Keep Icelandic place and company names as they are.',
+          messages: [{ role: 'user', content: "Today's numbers:\n" + JSON.stringify(tolur, null, 1) }],
+        }),
+      });
+      const j = await r.json();
+      text = (j && j.content && j.content[0] && j.content[0].text || '').trim();
+    } catch (_) { /* fellur á einföldu útgáfuna */ }
+  }
+  text = text || einfold(lykill, tolur);
+  const generated_at = new Date().toISOString();
+  await writeCache(lykill, { text, tolur, generated_at }).catch(() => {});
 
   return json(200, { ok: true, svid: lykill, name: s.name, emoji: s.emoji, rodd: s.rodd,
-    voice_id: s.voice_id, agent: s.agent, text: text || einfold(lykill, tolur), tolur });
+    voice_id: s.voice_id, agent: s.agent, text, tolur, generated_at, cached: false });
 };
 
 /* ── varaleið án Claude ───────────────────────────────────────────────────── */
