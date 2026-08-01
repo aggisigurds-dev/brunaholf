@@ -217,7 +217,7 @@
 #svalmynd .loka:hover{border-color:#3d8fd0;color:#fff}
 
 /* -- Utlits-rofi (2026-08-01) -- */
-.utlitsrod{position:relative;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:0 0 14px;padding:0 54px}
+.utlitsrod{position:relative;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:0 0 14px;padding:0 130px}
 .ubtn{font:inherit;font-size:13px;font-weight:600;letter-spacing:.03em;color:#7fa3c4;
   background:rgba(10,20,32,.6);border:1px solid #17304a;border-radius:9px;padding:8px 15px;
   cursor:pointer;min-height:38px;transition:all .15s}
@@ -242,6 +242,11 @@
 .mlabel{font-size:10.5px;color:var(--ink3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mval{font-size:13px;font-weight:800;letter-spacing:.02em}
 .mbase{font-size:9px;color:#5f7690;margin-top:-1px}
+
+#velarrymi{position:absolute;left:12px;top:50%;transform:translateY(-50%);z-index:40;
+  font-size:12.5px;font-weight:600;letter-spacing:.03em;color:#8fc4f0;text-decoration:none;
+  background:rgba(10,20,32,.75);border:1px solid #1d3a55;border-radius:9px;padding:8px 13px;transition:border-color .15s,color .15s}
+#velarrymi:hover{border-color:#3d8fd0;color:#fff}
 </style>
 <!-- Sett á <html> STRAX (ekki í enda body) svo app-hamurinn sé kominn áður en
      fyrsta málningin verður til — annars blikkar venjulega útlitið fyrst.
@@ -260,6 +265,7 @@
 
 <div class="hud">
     <div class="utlitsrod" id="utlitsrod">
+      <a id="velarrymi" href="/afkastavakt.html" target="_blank" title="Afkastavakt — vélarrými (fullur skjár)">🔧 Vélarrými</a>
       <button id="spjaldval" title="Velja spjöld">⚙</button>
       <button id="fskjar" title="Fullur skjár">⛶</button>
       <button class="ubtn" data-utlit="adal">◈ Aðal</button>
