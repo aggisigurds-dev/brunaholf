@@ -35,6 +35,36 @@ const SVID = {
     still_en: 'Direct and emphatic, no filler. States what is fine and what needs fixing NOW. Never rude.',
     safna: safnaTengingar,
   },
+  fjarmal: {
+    name: 'Samantha', emoji: '💰', agent: 'bokari',
+    rodd: 'scarlett', voice_id: '474887f7949b4d1ab3e626cddf82613a', kyn: 'kvk',
+    still_en: 'Warm, calm and precise about money — what is outstanding and what is ready to invoice. No drama.',
+    safna: safnaFjarmal,
+  },
+  kunnar: {
+    name: 'Charlize Theron', emoji: '👥', agent: 'kunnaskra',
+    rodd: 'charlize', voice_id: '97f77cf6e657419ab543e9d94dcf10a0', kyn: 'kvk',
+    still_en: 'Cool, composed and factual about the customer base.',
+    safna: safnaKunnar,
+  },
+  gogn: {
+    name: 'Jason Statham', emoji: '🔌', agent: 'gagnaleidslur',
+    rodd: 'statham', voice_id: '656b4b83522644d9b1d11e31afb90cfd', kyn: 'kk',
+    still_en: 'Direct, no nonsense about whether the data pipelines are flowing or stalled.',
+    safna: safnaGogn,
+  },
+  skjol: {
+    name: 'Morgan Freeman', emoji: '📄', agent: 'skjol',
+    rodd: 'freeman', voice_id: '76bb6ae7b26c41fbbd484514fdb014c2', kyn: 'kk',
+    still_en: "Measured, with a narrator's gravitas, about documents and how they are filed.",
+    safna: safnaSkjol,
+  },
+  hradi: {
+    name: 'Bruce Willis', emoji: '💥', agent: 'hradi',
+    rodd: 'willis', voice_id: '87efb8f2ec4f4b3b8ed9f3fd64a3ab4b', kyn: 'kk',
+    still_en: 'Blunt, action-hero calm about system speed — what is fast and what is dragging.',
+    safna: safnaHradi,
+  },
 };
 
 // Hvernig á að ávarpa notandann UPPHÁTT.
@@ -81,6 +111,76 @@ async function safnaTengingar() {
     raud_heiti: raud.slice(0, 5),
     gul_heiti:  gul.slice(0, 5),
   };
+}
+
+// ── létt hjálpartól ────────────────────────────────────────────────────────
+async function apiGet(path) {
+  const r = await fetch(`${SELF}${path}`, { headers: { accept: 'application/json' } });
+  if (!r.ok) throw new Error(path + ' svaraði ' + r.status);
+  return r.json();
+}
+async function sbCount(path) {
+  const sep = path.indexOf('?') >= 0 ? '&' : '?';
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}${sep}select=id`, {
+    headers: { apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}`, Prefer: 'count=exact', Range: '0-0' },
+  });
+  const cr = r.headers.get('content-range') || '';   // t.d. "0-0/1082"
+  return parseInt((cr.split('/')[1] || '0'), 10) || 0;
+}
+
+// ── 💰 Fjármál (Samantha) — útistandandi / til að rukka ────────────────────
+async function safnaFjarmal() {
+  const j = await apiGet('/api/debtors');
+  const t = j.totals || {};
+  return {
+    utistandandi_kr: Math.round(t.outstanding_kr || 0),
+    fjoldi_reikninga: t.outstanding_n || 0,
+    skuldunautar: t.debtor_count || 0,
+    greitt_i_banka_kr: Math.round(t.bank_paid_kr || 0),
+  };
+}
+// ── 👥 Kúnnar (Charlize) — stærð viðskiptamannagrunns ─────────────────────
+async function safnaKunnar() {
+  const [base, thjon] = await Promise.all([
+    sbCount('customers_base'),
+    sbCount('fyrirtaeki?er_i_thjonustu=eq.true&deleted_at=is.null'),
+  ]);
+  return { vidskiptavinir_alls: base, fyrirtaeki_i_thjonustu: thjon };
+}
+// ── 🔌 Gagnaleiðslur (Statham) — ferskleiki linda ─────────────────────────
+async function safnaGogn() {
+  const j = await apiGet('/api/data-sources-status');
+  const arr = [];
+  (function walk(o) {
+    if (Array.isArray(o)) return o.forEach(walk);
+    if (o && typeof o === 'object') {
+      const nafn = o.name || o.heiti || o.key || o.id;
+      if (nafn && o.status) arr.push({ nafn, status: String(o.status) });
+      Object.values(o).forEach(v => { if (v && typeof v === 'object') walk(v); });
+    }
+  })(j);
+  const ferskar = arr.filter(x => /fersk|fresh|ok/i.test(x.status)).length;
+  const eldast  = arr.filter(x => !/fersk|fresh|ok/i.test(x.status));
+  return { lindir_alls: arr.length, ferskar, ad_eldast: eldast.length,
+    ekki_ferskar_heiti: eldast.map(x => x.nafn).slice(0, 6) };
+}
+// ── 📄 Skjöl (Freeman) — tengd vs ótengd ──────────────────────────────────
+async function safnaSkjol() {
+  const j = await apiGet('/api/service-gaps');
+  const c = j.counts || {};
+  return { tengd_skjol: c.linked_total || 0, med_stad: c.med_stad || 0,
+    an_stadar: c.an_stadar || 0, otengd: c.unlinked || 0 };
+}
+// ── 💥 Hraði (Willis) — mælir 2 lykil-endapunkta raðbundið (engin sprengja) ─
+async function safnaHradi() {
+  async function ms(path) {
+    const t0 = Date.now();
+    try { const r = await fetch(`${SELF}${path}`); await r.arrayBuffer(); return Date.now() - t0; }
+    catch (e) { return -1; }
+  }
+  const kerfisheilsa_ms = await ms('/api/kerfisheilsa');
+  const verkstadir_ms = await ms('/api/worksites');
+  return { kerfisheilsa_ms, verkstadir_ms };
 }
 
 /* ── handler ──────────────────────────────────────────────────────────────── */
