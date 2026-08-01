@@ -60,3 +60,161 @@ mál — en staðir rekstrarfélags eru **ekki** tvítök þótt kt sé eins.
 - **Aldrei sameina, eyða eða skrifa yfir** kúnnaröð án skýrrar staðfestingar frá Agnari.
 - Þegar þú tengir: sýndu **kt, bæði nöfnin og hvers vegna** þú telur þau sama aðilann.
 - Óviss? Skilaðu lista til handvirkrar yfirferðar. Það er rétta svarið, ekki uppgjöf.
+
+
+---
+
+# 📚 Þekkingargrunnur — ÓBREYTTUR texti úr CLAUDE.md
+
+> Fluttur hingað 2026-08-01 við uppskiptingu CLAUDE.md (31k tokens hlóðust í HVERRI
+> lotu). Engu breytt, engu sleppt — aðeins fært svo það hleðst aðeins þegar þessi
+> sérfræðingur er kallaður til.
+
+## Gagnalíkan viðskiptavina (the customer spine) + 🗺️ Kerfis-kort
+
+**Read this before touching customer / document / equipment data in either app.**
+Slökkvitæki + Brunahólf share ONE Supabase project, and the customer model is a
+spine — one canonical customer, then its sites, then its equipment:
+
+- **`customers_base`** — the *canonical* customer, **one row per kennitala**
+  ("Allir viðskiptavinir"). Carries `rekstrarfelag`.
+- **`fyrirtaeki`** — **sites / starfsstöðvar**, linked to base via
+  `customer_base_id`. **One kt can own many sites = rekstrarfélag** (Pizzan 11,
+  Colas 3). `er_i_thjonustu` = in service (this IS the "þjónustuflokkur" signal —
+  there is no separate category column). `deleted_at` = soft-deleted.
+  **NEVER merge/delete a rekstrarfélag's sites** (Agnar, standing rule).
+- **`uttaeki`** — equipment, linked via `customer_base_id` + `worksite_id`→site.
+  **Auto-generated PLACEHOLDERS — they don't matter; may be deleted / regenerated.
+  "Equipment without a site" (`worksite_id` null) is NOT a problem** (Agnar
+  2026-07-12) — do not surface it as a health flag.
+- **`customer_documents`** — úttektarskýrslur / reikningar / samningar indexed from
+  Google Drive. Keyed `customer_base_id` + `fyrirtaeki_id` (site) + `year`;
+  `drive_file_id` = the file in the master folder. **One úttektarskýrsla per
+  (site, year); reikningar deduped by R-number.** `is_duplicate=true` = flagged
+  copy (reversible, never deleted).
+- **`solur`** (POS/Slökkvitæki invoices) + **`payday_invoices_slokk`** (Payday
+  krófur, kt stored **digits-only**) link by **kt**, not a base FK. ~120 krófur
+  are sent via Payday out of Kröfu yfirlit; patch 199 (slökkvitæki) surfaces them
+  on the company profile.
+- **Conventions:** walk-in / anonymous sale = kt `999999-9999`.
+- **Forgangsröð (Agnar 2026-07-30):** the customers that matter are `customers_base`
+  ("Allir viðskiptavinir", the canonical spine) and `fyrirtaeki` with
+  `er_i_thjonustu=true` ("Fyrirtæki í þjónustu"). The Slökkvitæki-side
+  `vidskiptavinir` table is the LOWEST grade (individuals/legacy) — never treat it
+  as the primary customer lookup.
+
+**Tengireglan (2026-07-15, `netlify/functions/_spine.js`)** — EIN sameiginleg regla
+fyrir hvernig skjal tengist hryggnum, notuð af öllum tengjurum (doc-index,
+reikningar-read, samningar-read, drive-sort): `customer_base_id` kemur úr
+kennitölunni; `fyrirtaeki_id` (STAÐURINN — það sem skiptir máli fyrir
+rekstrarfélög eins og Center Hótel) AÐEINS með sönnun, í röð: (1) „` - #<id>`"
+stimpill í skráarheiti → sá staður (eina sönnunin sem má yfirskrifa fyrirliggjandi
+fyrirtaeki_id), (2) félagið á nákvæmlega EINN lifandi stað, (3) heimilisfang í
+skráarheiti (heild + per „ - " bút) eða PDF-innihaldi passar við nákvæmlega EINN
+lifandi stað (`addrKeyLoose`: götu-forskeyti + húsnúmer; tveir staðir á sama
+lykli → óvíst), (4) annars ÓSNERT — aldrei giskað, aldrei núllað.
+API: `siteStampFromName · addrKeyLoose · sitesByBases · sitesForBase ·
+resolveSite(fileName, sites, extraAddr) → {id,nafn,via:'stamp'|'single'|'addr'}|null ·
+siteWriteAllowed(drive_file_id, site)` (varðar merge-upsert gegn yfirskrift).
+Framleiðendahliðin: `uttekt-rename` og `drive-sort` (skýrslur) skeyta #id-stimplinum
+aftan á kanónísk nöfn þegar staðurinn er þekktur, svo framtíðar-lesarar tengja beint.
+**Nafnavenja staða (Agnar 2026-07-15) + nafna-sönnun `via:'name'`:** staðanöfn
+fylgja „Rekstrarfélag - Sérkenni" („Aðalskoðun - Skeifan", „Heimaleiga -
+Laugavegi 18", „Center Hótel - Arnarhvoll") — „ - " á eftir félagsnafni merkir
+að næsti bútur sé AÐGREINIR staðarins (útibú/undirfang) og skal reyndur sem
+staðar-sönnun úr skráarheiti/innihaldi. Endandi „ehf."/„hf." = eins-staðar félag
+eða höfuðstöð rekstrarfélagsins sjálfs — EKKI útibú (fær engan nafna-lykil).
+Samanburður er fold-aður (án broddstafa/hástafa/greinarmerkja) svo „Center Hótel
+Arnarhvoll" og „Center Hótel - Arnarhvoll" eru jafngild. Útfært í
+`felag-endurlestur.js` (`resolveByName`: sameiginlegt forskeyti + ehf/hf klippt,
+HQ-lykill sem er forskeyti að útibús-lykli felldur; nákvæmlega EITT aðgreinandi
+nafn í skjali = sönnun, 0 eða 2+ = ekki snert).
+
+**🗺️ Kerfis-kort** (`kerfiskort.html` at `brunaholf.netlify.app/kerfiskort.html`
++ hero card at the top of Bakendi) is the **live single-page map of the whole
+customer DB** — one row per customer with kt · service · rekstrarfélag · sites ·
+equipment · master-folder docs · 2023–2026 skýrsla/reikningur/Payday per year ·
+health flags (unlinked docs, dups, no-kt/base). Expand a row → sites + all docs
+(Drive links) + Payday + a link to Skýrslu-stöð. It reads live every time (no
+cache). Backed by Postgres view **`v_kerfi_kort`** (rollup per base, `grant select
+to anon`) + endpoint **`/api/kerfi-kort`** (`kerfi-kort.js`: default=all ·
+`?base=ID`=detail · `?counts=1`=schema/health). **Fixing connection gaps** is done
+in the Bakendi tools: 🔗 Skýrslu-stöð (doc→site), 🧩 Kt-samræming (kt/base on
+sites), 🧽 Hreinsi-borð (batch doc reconnect), 🧹 Drive-flokkun + 🗜️ Fletja (Drive).
+
+**🎯 Veiðin** (`veidin.html` at `brunaholf.netlify.app/veidin.html`, 2026-07-30) —
+live mælaborð endurheimtar-aðgerðarinnar. Hvert skotmark sýnir NÚNA-tölu (lifandi)
+gegn FASTRI veiði-grunnlínunni 2026-07-30 (STAÐREYNDIR §2) + delta: engin skýrsla
+25/26 · amber (skoðuð en engin skýrsla, m/félagalista) · rukkuð án skýrslu ·
+gleymd félög · samningar · netföng · fact-check · skjöl án árs. Endpoint
+**`/api/veidin`** (`veidin.js`, service role, BASELINE fasti þar — ekki uppfæra);
+les fjögur Postgres-sýni **`v_veidin_tolur` · `v_veidin_amber` ·
+`v_veidin_engin_skyrsla` · `v_veidin_rukkud_an_skyrslu`** (migration
+`veidin_views`, grant select to anon). Listarnir þrír eru útvíkkanlegir á síðunni.
+**📦 Bundle-pör (2026-07-31):** nýtt skotmark „skýrsla + reikningur per ári" — bakað
+á Postgres-sýnina **`v_bundle_coverage`** (migration `v_bundle_coverage`, grant select
+to anon): EIN röð per `(customer_base_id, year, kind∈uttekt/brunakerfi)` þar sem skýrsla
+(`customer_documents`) OG/EÐA app-reikningur (`solur.source`) er til, með `has_report`/
+`has_invoice`/`billed_payday` + `stada∈klarad·vantar_reikning·vantar_skyrslu·reikn_payday`.
+Þetta er **skráningar-reglan** sem sjálf-matchar áfram eftir því sem skýrslur og reikningar
+verða til (sami lykill og 📦 Pör-send-takkinn í Slökkvitæki-appinu: Sala → Fyrri viðskipti
++ brunakerfis-síðan). `veidin.js` les `v_bundle_coverage?yr=eq.<þetta ár>` og bætir
+`bundle_por` (klárað) · `bundle_reikn_vantar` · `bundle_skyrsla_vantar` við `nuna` +
+`listar.bundle_gloppur` (ókláruð pör). Grunnlína 2026-07-31: 69 klárað · 153 vantar
+reikning · 7 vantar skýrslu.
+
+**🛡️ Kerfisheilsa** (`kerfisheilsa.html` + hero-spjald efst í Bakendi, 2026-07-31) —
+**eitt ljósaborð yfir allar TENGINGAR og lykla** (öryggisborðs-útlit). Tengi-takkarnir
+voru dreifðir um allt og útdottin tenging sást ekki fyrr en gögn hættu að berast.
+Hópar: Pósthólf (hver Google-tenging + nýjasti póstur) · Greiðslur & bókhald (Payday
+×2, dkPlus) · Gagnaleiðslur (Tímavera API) · Lyklar (Claude/Resend/Mail Pulse/OAuth) ·
+Gagnaleiðslur — ferskleiki. Ljós: 🟢 prófað og virkar · 🟡 tengt en athuga (aldrei
+prófað / gögn gömul / síðasta keyrsla féll) · 🔴 ótengt eða prófun féll (+ **Tengja**-
+hnappur → `/api/google-auth?account=…`) · ⚪ á ekki við (Office 365 → Graph óskrifað).
+Endapunktur **`/api/kerfisheilsa`** (`kerfisheilsa.js`, service role): `GET` = ÓDÝRT
+(engin ytri köll — staða úr `google_oauth`/`app_kv`/`automation_runs`/`email_digest` +
+geymdum prófunum í `app_kv['kerfisheilsa_probes']`) · `GET ?test=1` = RAUNPRÓFAR
+(Google refresh→access · Payday `POST /auth/token` **með `Api-Version` haus** · dkPlus
+**direct-key** `GET general/payment/term` með `/Token` sem varaleið · Tímavera
+`/employees`) · `?test=<id>` fyrir eina. **Prófanirnar VERÐA að spegla raunverulegu
+leiðina sem appið fer** — fyrsta útgáfan notaði slóð úr gamalli athugasemd og
+`/Token`-varaleiðina og sagði Payday/dkPlus niðri þótt hvort tveggja virkaði.
+**Skilar ALDREI lyklum** — aðeins hvort þeir séu til og hvort þeir virki. Ferskleiki
+gagnaleiðslanna er lesinn úr `/api/data-sources-status` óbreyttum (ein regla, einn
+staður) og **textinn er leiddur af `status`, ekki af eigin dagaþröskuldum** (annars
+rautt ljós með gulum texta — endapunkturinn reiknar stöðuna af nákvæmari aldri en
+heilu dagana sem hann birtir).
+**v2 (2026-07-31):** SPJALDARIST í stað lista · nýr hópur **💻 Tölvur** úr
+**`/api/vel-heartbeat`** (tafla `vel_heartbeat`, **RLS ON — aðeins service role**, svo
+vélanöfn/skráaslóðir fara aldrei gegnum anon-lykilinn; POST ver sig með
+`VEL_HEARTBEAT_TOKEN` þegar hann er settur). Hver vél sendir sig sjálf með
+**`luna-bridge/heartbeat.js`** (+ `run-heartbeat.bat` í Task Scheduler á 30 mín fresti,
+engar aukapakkanir): hostname/OS/notandi, **repo-slóðir + grein + commit + óvistað**,
+uppsett verkfæri og `run*.bat` keyrslur. Grænt ≤90 mín · gult ≤24 klst · rautt eldra.
+Hvert kort ber líka **„hvernig virkar þetta"** — hvar keyrslan á heima (**skýið** vs
+**luna-bridge-tölvan**), hvað er handvirkt og hver vara-leiðin er (Ajour-CSV,
+@brunaholf.is-pósturinn gegnum Thunderbird, Landsbanki-xlsx …) — svarið við „man aldrei
+hvernig Ajour-tengingin virkar". **WIP (Agnar 2026-07-31):** halda áfram að draga ALLT
+inn á þetta borð eftir því sem tengingum fjölgar — Chrome Remote-vélarnar, Cowork-vélar,
+graphify/memory-tólin á Slökkvitæki-vélinni. Vél sem sendir lífsmark birtist sjálfkrafa.
+
+**🐞 Villuvöktun** (`villur.js` + `js/villuvakt.js` + spjald efst í Kerfisheilsu,
+2026-07-31) — JS-villa í öppunum sást ÁÐUR aðeins ef einhver hafði console-ið
+opið; síða gat verið biluð dögum saman án þess að nokkur vissi. `js/villuvakt.js`
+er sjálf-innihaldið (einn `<script src>`, ENGIN `defer` og FYRST í `<head>` svo
+hún grípi líka boot-villur — `defer` hefði ræst hana á eftir inline-scriptunum)
+og er í BÁÐUM öppunum; `uppruni` ræðst af léninu og slökkvitæki-hliðin sendir á
+Brunahólfs-endapunktinn (CORS `*`) svo borðið sé EITT, ekki tvö sem enginn les.
+Grípur `error` (líka auðlindir), `unhandledrejection` og `Villuvakt.skra(...)`.
+**Hemlar:** sama villa send einu sinni per lotu, þak 12 sendingar per lotu, og
+sending sem fellur kastar ALDREI (annars sendir villulykkja þúsundir beiðna).
+Endapunktur **`/api/villur`** (`villur.js`, service role): `POST` skráir —
+samsöfnun á `fingrafar` = `uppruni|skilaboð|skrá` (EKKI slóð/tími), svo
+endurtekning hækkar `fjoldi` í stað þess að fjölga röðum, og villa sem sést aftur
+**opnast sjálfkrafa** þótt hún hafi verið merkt leyst. `GET ?dagar=7` skilar
+AÐEINS óleystum (borð fullt af gömlum þekktum villum hættir að vera viðvörun);
+`POST {action:'leysa'|'opna', id}`. Tafla **`villur`** — **RLS Á, engar
+anon-reglur** (villuboð bera slóðir, notendanöfn og stafla). NB Sentry var
+upphaflega beiðnin en þarf aðgang + DSN sem er ekki til; þetta virkar strax og
+útilokar hann ekki — `villuvakt.js` sendir í `window.Sentry` líka ef hann er til.
+
