@@ -509,6 +509,10 @@ body[data-tab="jarvis"] main{max-width:none;padding:0;background:#020814}
 body[data-tab="jarvis"] .topbar .banner-img{display:none}
 body[data-tab="jarvis"] .topbar{min-height:56px;background:#020814;box-shadow:none}
 body[data-tab="jarvis"] #_kh-card{display:none}
+/* 2026-08-01 (ósk Agnars): fljótandi + og 📷 takkarnir átu hornið á HUD-inu.
+   Faldir HÉR OG AÐEINS HÉR — þeir eru notaðir í JS ($fab, fabSs.onclick) svo
+   þeir mega ekki hverfa úr DOM-inu; aðrir flipar óbreyttir. */
+body[data-tab="jarvis"] #fab,body[data-tab="jarvis"] #fabSs{display:none}
 .section{margin-bottom:18px}
 .section h2{font-size:15px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin:6px 4px 10px;font-weight:700}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
