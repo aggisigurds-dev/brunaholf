@@ -11,3 +11,6 @@ deploy.bat
 
 # Stadbundid session-minni (memsearch) - inniheldur vinnugogn, ALDREI i git
 .memsearch/
+
+# Sjalfgeneradur graphify-cache (~432k tokens) - ALDREI i git, keyrir a sto. velinni
+graphify-out/
