@@ -23,14 +23,14 @@ const SVID = {
     name: 'Sara', emoji: '🗂️', agent: 'sara-organizer',
     rodd: 'sara',                                       // lykill í js/jarvis-voice.js
     voice_id: '4575dfa5b64148ad8b48542a5ebd0749',      // Margot Robbie
-    still: 'Skipulögð, hlý og hnitmiðuð. Þú raðar hlutum og segir hvað stendur út af. Engin dramatík.',
+    still_en: 'Organised, warm and to the point. You tidy things up and say what is still outstanding. No drama.',
     safna: safnaPor,
   },
   tengingar: {
     name: 'Samuel L. Jackson', emoji: '😤', agent: 'tengingar',
     rodd: 'sam',                                        // lykill í js/jarvis-voice.js
     voice_id: 'ce67291306284add89ad9e3db6249ad9',
-    still: 'Beinskeyttur og ákveðinn, engin uppfylling. Segir hvað er í lagi og hvað þarf að laga NÚNA. Ekki dónalegur.',
+    still_en: 'Direct and emphatic, no filler. States what is fine and what needs fixing NOW. Never rude.',
     safna: safnaTengingar,
   },
 };
@@ -85,7 +85,7 @@ exports.handler = async (event) => {
   try { tolur = await withTimeout(s.safna(), 12000); }
   catch (e) { return json(200, {
     ok: true, svid: lykill, name: s.name, emoji: s.emoji, rodd: s.rodd, voice_id: s.voice_id,
-    text: 'Ég næ ekki í tölurnar núna — gagnagrunnurinn svarar ekki.',
+    text: 'I cannot reach the numbers right now. The database is not responding.',
     villa: String(e.message || e), tolur: null,
   }); }
 
@@ -101,16 +101,22 @@ exports.handler = async (event) => {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-api-key': ANTHROPIC, 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        // Sonnet en ekki Haiku, og ENSKA en ekki íslenska (ósk Agnars 2026-08-01):
+        // Haiku bjó til orð sem eru ekki til í íslensku („blikra fyrir reikninga"),
+        // og raddirnar eru enskar stjörnuraddir — enskur texti hljómar eðlilega í
+        // þeim, íslenskur ekki. Textinn er stuttur svo kostnaðarmunurinn er hverfandi.
+        model: 'claude-sonnet-5',
         max_tokens: 220,
         system:
-          `Þú ert ${s.name}, sérfræðingur í rekstrarkerfi Brunahólfs/Slökkvitækja. ` +
-          `Stíll: ${s.still}\n\n` +
-          'Skrifaðu 2–3 stuttar setningar á ÍSLENSKU sem verða LESNAR UPPHÁTT. ' +
-          'Nefndu mikilvægustu tölurnar. Engin fyrirsögn, engin upptalning, engin ' +
-          'greinarmerkja-skraut — bara talað mál. Ávarpaðu Agnar ef við á. ' +
-          'Ef eitthvað krefst aðgerðar, segðu það skýrt í lokin.',
-        messages: [{ role: 'user', content: 'Tölur dagsins:\n' + JSON.stringify(tolur, null, 1) }],
+          `You are ${s.name}, a specialist in Agnar's fire-safety business system ` +
+          `(Brunahólf ehf / Slökkvitæki ehf, Iceland).\n` +
+          `Style: ${s.still_en}\n\n` +
+          'Write 2-3 short sentences in ENGLISH that will be READ ALOUD by a voice. ' +
+          'Lead with the number that matters most. No headings, no bullet points, no ' +
+          'markdown, no emoji — just natural spoken English. Address Agnar by name if ' +
+          'it fits. If something needs action, say so plainly in the last sentence. ' +
+          'Keep Icelandic place and company names as they are.',
+        messages: [{ role: 'user', content: "Today's numbers:\n" + JSON.stringify(tolur, null, 1) }],
       }),
     });
     const j = await r.json();
@@ -124,14 +130,14 @@ exports.handler = async (event) => {
 /* ── varaleið án Claude ───────────────────────────────────────────────────── */
 function einfold(lykill, t) {
   if (lykill === 'por') {
-    return `Þekja ${t.ar}: ${t.klarad} pör kláruð. ${t.vantar_reikning} staði vantar reikning ` +
-           `og ${t.vantar_skyrslu} vantar skýrslu.`;
+    return `Coverage ${t.ar}: ${t.klarad} bundles complete. ${t.vantar_reikning} sites need an ` +
+           `invoice and ${t.vantar_skyrslu} need a report.`;
   }
   if (lykill === 'tengingar') {
-    return `${t.graent} tengingar í lagi af ${t.alls}. ` +
-           (t.raudt ? `${t.raudt} eru rauðar: ${t.raud_heiti.join(', ')}.` : 'Engin rauð.');
+    return `${t.graent} of ${t.alls} connections are healthy. ` +
+           (t.raudt ? `${t.raudt} are red: ${t.raud_heiti.join(', ')}.` : 'None are red.');
   }
-  return 'Engin samantekt í boði.';
+  return 'No summary available.';
 }
 
 /* ── verkfæri ─────────────────────────────────────────────────────────────── */
