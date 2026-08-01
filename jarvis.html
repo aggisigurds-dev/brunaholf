@@ -198,6 +198,34 @@
   cursor:pointer;transition:border-color .15s,color .15s}
 #fskjar:hover{border-color:#3d8fd0;color:#fff}
 :fullscreen #fskjar{background:rgba(10,20,32,.9)}
+
+/* ── Spjaldaval (2026-08-01) ── */
+#spjaldval{position:absolute;top:14px;right:60px;z-index:40;width:38px;height:38px;border-radius:10px;
+  background:rgba(10,20,32,.75);border:1px solid #1d3a55;color:#8fc4f0;font-size:16px;line-height:1;
+  cursor:pointer;transition:border-color .15s,color .15s}
+#spjaldval:hover{border-color:#3d8fd0;color:#fff}
+#svalmynd{position:fixed;inset:0;z-index:120;background:rgba(2,8,20,.72);display:none;
+  align-items:center;justify-content:center;padding:20px}
+#svalmynd.opin{display:flex}
+#svalmynd .kort{background:#0b1420;border:1px solid #1d3a55;border-radius:16px;max-width:420px;width:100%;
+  padding:20px 22px;box-shadow:0 24px 70px rgba(0,0,0,.6)}
+#svalmynd h3{margin:0 0 4px;font-size:16px;color:#dff0ff;letter-spacing:.04em}
+#svalmynd .undir{margin:0 0 14px;font-size:12.5px;color:#7fa3c4;line-height:1.5}
+#svalmynd label{display:flex;align-items:center;gap:11px;padding:10px 8px;border-radius:9px;
+  cursor:pointer;font-size:14.5px;color:#cfe6ff}
+#svalmynd label:hover{background:rgba(45,155,240,.08)}
+#svalmynd input{width:18px;height:18px;accent-color:#2d9bf0;flex:none}
+#svalmynd .loka{margin-top:14px;width:100%;font:inherit;font-size:14px;font-weight:600;padding:11px;
+  border-radius:10px;border:1px solid #1d3a55;background:rgba(20,32,48,.9);color:#cfe6ff;cursor:pointer;min-height:44px}
+#svalmynd .loka:hover{border-color:#3d8fd0;color:#fff}
+
+/* -- Utlits-rofi (2026-08-01) -- */
+.utlitsrod{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:0 0 14px;padding:0 12px}
+.ubtn{font:inherit;font-size:13px;font-weight:600;letter-spacing:.03em;color:#7fa3c4;
+  background:rgba(10,20,32,.6);border:1px solid #17304a;border-radius:9px;padding:8px 15px;
+  cursor:pointer;min-height:38px;transition:all .15s}
+.ubtn:hover{border-color:#2d6d9e;color:#cfe6ff}
+.ubtn.virkt{border-color:#2d9bf0;color:#fff;background:rgba(45,155,240,.14);box-shadow:0 0 14px rgba(45,155,240,.18)}
 </style>
 <!-- Sett á <html> STRAX (ekki í enda body) svo app-hamurinn sé kominn áður en
      fyrsta málningin verður til — annars blikkar venjulega útlitið fyrst.
@@ -205,7 +233,22 @@
 <script>try{if(new URLSearchParams(location.search).get('embed')==='1')document.documentElement.classList.add('embedded');}catch(_){}</script>
 </head>
 <body>
+<div id="svalmynd">
+  <div class="kort">
+    <h3>⚙ Spjöld á borðinu</h3>
+    <p class="undir">Veldu hverju þú fylgist með í ÞESSU útliti. Hvert útlit man sitt eigið val (geymist á þessu tæki).</p>
+    <div id="svallisti"></div>
+    <button class="loka" id="svalloka">Loka</button>
+  </div>
+</div>
+
 <div class="hud">
+    <div class="utlitsrod" id="utlitsrod">
+      <button class="ubtn" data-utlit="adal">◈ Aðal</button>
+      <button class="ubtn" data-utlit="kerfi">⚡ Kerfi</button>
+      <button class="ubtn" data-utlit="thjonusta">🗂️ Þjónusta</button>
+      <button class="ubtn" data-utlit="fjarmal">💰 Fjármál</button>
+    </div>
 
   <div class="haus">
     <div>
@@ -222,13 +265,21 @@
   <div class="grind">
     <!-- ── vinstri ── -->
     <div class="dalkur">
-      <div class="spjald">
+      <div class="spjald" data-spjald="vitals">
         <h2>Kerfis-vitals <span id="k-uppf">—</span></h2>
         <div id="vitals"><div style="color:var(--ink3)">sæki…</div></div>
       </div>
-      <div class="spjald">
+      <div class="spjald" data-spjald="fjarskipti">
         <h2>Fjarskipti</h2>
         <div class="straumur" id="straumur"><div style="color:var(--ink3)">sæki…</div></div>
+      </div>
+      <div class="spjald" data-spjald="krofur">
+        <h2>Kröfur &amp; útistandandi <span id="kr-uppf">—</span></h2>
+        <div id="kr-efni"><div style="color:var(--ink3)">sæki…</div></div>
+      </div>
+      <div class="spjald" data-spjald="verk">
+        <h2>Verkefni <span id="vk-uppf">—</span></h2>
+        <div id="vk-efni"><div style="color:var(--ink3)">sæki…</div></div>
       </div>
     </div>
 
@@ -241,6 +292,7 @@
         <!-- 2026-08-01: fullur skjár — felur vafra-krómið OG hliðarstikuna
              (HUD-ið er hannað til að fylla skjáinn). Virkar líka innfellt því
              iframe-ið fékk allowfullscreen í index.html. -->
+        <button id="spjaldval" title="Velja spjöld">⚙</button>
         <button id="fskjar" title="Fullur skjár">⛶</button>
         <div class="malrofi">
           <button data-mal="is" class="on">ÍSL</button>
@@ -263,7 +315,7 @@
         <span class="svidsvar" id="svidsvar"></span>
       </div>
 
-      <div class="markmid">
+      <div class="markmid" data-spjald="markmid">
         <div class="mtitill"><span>Meginmarkmið — skýrsluþekja 2026</span><span id="m-dags">—</span></div>
         <div class="mtala" id="m-tala">—</div>
         <div class="mtexti" id="m-texti">sæki…</div>
@@ -274,18 +326,26 @@
 
     <!-- ── hægri ── -->
     <div class="dalkur">
-      <div class="spjald">
+      <div class="spjald" data-spjald="velar">
         <h2>Vélar <span id="v-fjoldi">—</span></h2>
         <div class="ratsja"><canvas id="ratsja-canvas"></canvas></div>
         <div id="velalisti" style="margin-top:8px"></div>
       </div>
-      <div class="spjald">
+      <div class="spjald" data-spjald="hljod">
         <h2>Hljóðnemi</h2>
         <canvas id="bylgja" style="width:100%;height:56px;display:block"></canvas>
       </div>
-      <div class="spjald">
+      <div class="spjald" data-spjald="gogn">
         <h2>Gagnaleiðslur</h2>
         <div id="gogn"><div style="color:var(--ink3)">sæki…</div></div>
+      </div>
+      <div class="spjald" data-spjald="thekja">
+        <h2>Þekja — pör <span id="th-uppf">—</span></h2>
+        <div id="th-efni"><div style="color:var(--ink3)">sæki…</div></div>
+      </div>
+      <div class="spjald" data-spjald="gloppur">
+        <h2>Þjónustu-gloppur <span id="gl-uppf">—</span></h2>
+        <div id="gl-efni"><div style="color:var(--ink3)">sæki…</div></div>
       </div>
     </div>
   </div>
@@ -802,6 +862,164 @@ baetaStraum('stjórnstöð ræst','ok');
 sakja();
 setInterval(sakja, 60000);
 
+/* -- Utlit (4 forstillingar) + gogn i nyju spjoldin --------------------- */
+(function(){
+  var UTLIT = {
+    adal:      { heiti:'Adal',      spjold:['vitals','fjarskipti','velar','hljod','gogn','markmid'] },
+    kerfi:     { heiti:'Kerfi',     spjold:['vitals','fjarskipti','velar','gogn'] },
+    thjonusta: { heiti:'Thjonusta', spjold:['thekja','gloppur','verk','markmid'] },
+    fjarmal:   { heiti:'Fjarmal',   spjold:['krofur','thekja','markmid'] }
+  };
+  var L_VAL = 'jarvis_utlit_v1', L_SER = 'jarvis_utlit_sersnid_v1';
+  var nuv;
+  try { nuv = localStorage.getItem(L_VAL) || 'adal'; } catch(e) { nuv = 'adal'; }
+  if(!UTLIT[nuv]) nuv = 'adal';
+
+  function sersnid(){ try{ return JSON.parse(localStorage.getItem(L_SER)) || {}; }catch(e){ return {}; } }
+  function spjoldFyrir(u){ var x = sersnid(); return (x[u] && x[u].length) ? x[u] : UTLIT[u].spjold; }
+
+  function beita(){
+    var syn = spjoldFyrir(nuv);
+    document.querySelectorAll('[data-spjald]').forEach(function(el){
+      el.style.display = (syn.indexOf(el.dataset.spjald) !== -1) ? '' : 'none';
+    });
+    document.querySelectorAll('.ubtn').forEach(function(b){
+      b.classList.toggle('virkt', b.dataset.utlit === nuv);
+    });
+    saekjaSyn(syn);
+  }
+
+  window.__jarvisUtlit = {
+    beita: beita,
+    nuv: function(){ return nuv; },
+    spjold: spjoldFyrir,
+    allt: UTLIT,
+    vista: function(u, arr){
+      var x = sersnid(); x[u] = arr;
+      try{ localStorage.setItem(L_SER, JSON.stringify(x)); }catch(e){}
+      beita();
+    }
+  };
+
+  document.querySelectorAll('.ubtn').forEach(function(b){
+    b.addEventListener('click', function(){
+      nuv = b.dataset.utlit;
+      try{ localStorage.setItem(L_VAL, nuv); }catch(e){}
+      beita();
+    });
+  });
+
+  var kr = function(n){ return (Math.round(n||0)).toLocaleString('is-IS') + ' kr'; };
+  function lina(m, g, l){
+    return '<div style="display:flex;justify-content:space-between;gap:10px;padding:3px 0;font-size:13px">'
+      + '<span style="color:var(--ink3)">' + m + '</span>'
+      + '<span style="font-weight:700' + (l ? ';color:' + l : '') + '">' + g + '</span></div>';
+  }
+  function stimp(id){ var e = document.getElementById(id); if(e) e.textContent = new Date().toTimeString().slice(0,5); }
+  function villa(id){ var e = document.getElementById(id); if(e) e.innerHTML = '<div style="color:#ff8f6b;font-size:12px">nae ekki sambandi</div>'; }
+
+  async function saekjaKrofur(){
+    try{
+      var j = await (await fetch('/api/debtors',{cache:'no-store'})).json();
+      var t = j.totals || {};
+      document.getElementById('kr-efni').innerHTML =
+        lina('Utistandandi', kr(t.outstanding_kr), '#ff8f6b') +
+        lina('Fjoldi reikninga', (t.outstanding_n||0)) +
+        lina('Skuldunautar', (t.debtor_count||0)) +
+        lina('Greitt i banka?', kr(t.bank_paid_kr), '#5fd39a');
+      stimp('kr-uppf');
+    }catch(e){ villa('kr-efni'); }
+  }
+  async function saekjaThekja(){
+    try{
+      var j = await (await fetch('/api/svid-status?svid=por&tolur=1',{cache:'no-store'})).json();
+      var t = j.tolur || {};
+      document.getElementById('th-efni').innerHTML =
+        lina('Klarud por', (t.klarad||0), '#5fd39a') +
+        lina('Vantar reikning', (t.vantar_reikning||0), '#ffb84d') +
+        lina('Vantar skyrslu', (t.vantar_skyrslu||0), '#ffb84d') +
+        lina('I Payday', (t.reikn_payday||0));
+      stimp('th-uppf');
+    }catch(e){ villa('th-efni'); }
+  }
+  async function saekjaGloppur(){
+    try{
+      var j = await (await fetch('/api/service-gaps',{cache:'no-store'})).json();
+      var c = j.counts || {};
+      document.getElementById('gl-efni').innerHTML =
+        lina('Tengd skjol', (c.linked_total||0), '#5fd39a') +
+        lina('Med stad', (c.med_stad||0)) +
+        lina('An stadar', (c.an_stadar||0), '#ffb84d') +
+        lina('Otengd', (c.unlinked||0), '#ff8f6b');
+      stimp('gl-uppf');
+    }catch(e){ villa('gl-efni'); }
+  }
+  async function saekjaVerk(){
+    try{
+      var j = await (await fetch('/api/verkefnalisti',{cache:'no-store'})).json();
+      var t = j.tasks || {}, arr = Array.isArray(t) ? t : [];
+      var eftir = {};
+      arr.forEach(function(x){ var st = x.status || '?'; eftir[st] = (eftir[st]||0) + 1; });
+      var h = lina('Verkefni alls', arr.length);
+      Object.keys(eftir).sort(function(a,b){ return eftir[b] - eftir[a]; }).slice(0,4)
+        .forEach(function(k){ h += lina(k, eftir[k]); });
+      document.getElementById('vk-efni').innerHTML = h;
+      stimp('vk-uppf');
+    }catch(e){ villa('vk-efni'); }
+  }
+
+  function saekjaSyn(syn){
+    if(syn.indexOf('krofur')  !== -1) saekjaKrofur();
+    if(syn.indexOf('thekja')  !== -1) saekjaThekja();
+    if(syn.indexOf('gloppur') !== -1) saekjaGloppur();
+    if(syn.indexOf('verk')    !== -1) saekjaVerk();
+  }
+  setInterval(function(){ saekjaSyn(spjoldFyrir(nuv)); }, 300000);
+  beita();
+})();
+
+
+/* -- Spjaldaval: ritar sersnid a VIRKA utlitid ------------------------- */
+(function(){
+  var HEITI = {
+    vitals:'◆ Kerfis-vitals', fjarskipti:'◆ Fjarskipti', velar:'◆ Velar',
+    hljod:'◆ Hljodnemi', gogn:'◆ Gagnaleidslur', markmid:'◆ Meginmarkmid',
+    krofur:'◆ Krofur & utistandandi', thekja:'◆ Thekja — por',
+    gloppur:'◆ Thjonustu-gloppur', verk:'◆ Verkefni'
+  };
+  var ov = document.getElementById('svalmynd');
+  var listi = document.getElementById('svallisti');
+  var b = document.getElementById('spjaldval');
+  var l = document.getElementById('svalloka');
+  if(!ov || !listi) return;
+
+  function U(){ return window.__jarvisUtlit; }
+
+  function teikna(){
+    var u = U(); if(!u) return;
+    var virk = u.spjold(u.nuv());
+    var haus = ov.querySelector('h3');
+    if(haus) haus.textContent = '⚙ Spjold — ' + (u.allt[u.nuv()] || {}).heiti;
+    listi.innerHTML = Object.keys(HEITI).map(function(k){
+      return '<label><input type="checkbox" data-s="' + k + '"' +
+             (virk.indexOf(k) !== -1 ? ' checked' : '') + '><span>' + HEITI[k] + '</span></label>';
+    }).join('');
+  }
+
+  listi.addEventListener('change', function(){
+    var u = U(); if(!u) return;
+    var valid = Array.prototype.slice.call(listi.querySelectorAll('input:checked'))
+      .map(function(i){ return i.dataset.s; });
+    if(!valid.length) return;                       // alltaf a.m.k. eitt spjald
+    u.vista(u.nuv(), valid);                        // sersnid a VIRKA utlitid
+  });
+
+  if(b) b.addEventListener('click', function(){ teikna(); ov.classList.add('opin'); });
+  if(l) l.addEventListener('click', function(){ ov.classList.remove('opin'); });
+  ov.addEventListener('click', function(e){ if(e.target === ov) ov.classList.remove('opin'); });
+})();
+
+
 /* ── Fullur skjár ────────────────────────────────────────────────────────── */
 (function(){
   var b = document.getElementById('fskjar');
@@ -834,7 +1052,7 @@ setInterval(sakja, 60000);
       rod.querySelectorAll('.svidbtn').forEach(function(x){ x.disabled = true; });
       ut.textContent = 'Sæki…';
       try{
-        var r = await fetch('/api/svid-status?svid=' + encodeURIComponent(svid), {cache:'no-store'});
+        var r = await fetch('/api/svid-status?svid=' + encodeURIComponent(svid) + '&mal=' + (typeof MAL!=='undefined'?MAL:'is'), {cache:'no-store'});
         var j = await r.json();
         if(j.error) throw new Error(j.error);
         ut.textContent = (j.emoji ? j.emoji + ' ' : '') + j.text;
