@@ -184,20 +184,20 @@ async function safnaHradi() {
 }
 
 /* ── skyndiminni (app_kv, ein færsla per sviði) ───────────────────────────── */
-const cacheKey = (svid) => `svid_cache_${svid}`;
-async function readCache(svid) {
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/app_kv?key=eq.${cacheKey(svid)}&select=value`, {
+const cacheKey = (svid, notandi) => `svid_cache_${svid}_${notandi}`;
+async function readCache(svid, notandi) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/app_kv?key=eq.${cacheKey(svid, notandi)}&select=value`, {
     headers: { apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}` } });
   if (!r.ok) return null;
   const rows = await r.json();
   return (rows[0] && rows[0].value) || null;
 }
-async function writeCache(svid, entry) {
+async function writeCache(svid, notandi, entry) {
   await fetch(`${SUPABASE_URL}/rest/v1/app_kv`, {
     method: 'POST',
     headers: { apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}`,
       'content-type': 'application/json', Prefer: 'resolution=merge-duplicates' },
-    body: JSON.stringify({ key: cacheKey(svid), value: entry, updated_at: new Date().toISOString() }),
+    body: JSON.stringify({ key: cacheKey(svid, notandi), value: entry, updated_at: new Date().toISOString() }),
   });
 }
 
@@ -226,7 +226,7 @@ exports.handler = async (event) => {
   // ── SKYNDIMINNI: sjálfgefið skilar GEYMDRI samantekt STRAX (engin safna/Claude
   //    → hröð hleðsla, engin hik). ?fresh=1 endurreiknar. Geymt í app_kv per sviði.
   if (!ferskt) {
-    const c = await readCache(lykill).catch(() => null);
+    const c = await readCache(lykill, notandi).catch(() => null);
     if (c && c.text) {
       return json(200, { ok: true, svid: lykill, name: s.name, emoji: s.emoji, rodd: s.rodd,
         voice_id: s.voice_id, text: c.text, tolur: c.tolur || null, generated_at: c.generated_at, cached: true });
@@ -270,7 +270,7 @@ exports.handler = async (event) => {
   }
   text = text || einfold(lykill, tolur);
   const generated_at = new Date().toISOString();
-  await writeCache(lykill, { text, tolur, generated_at }).catch(() => {});
+  await writeCache(lykill, notandi, { text, tolur, generated_at }).catch(() => {});
 
   return json(200, { ok: true, svid: lykill, name: s.name, emoji: s.emoji, rodd: s.rodd,
     voice_id: s.voice_id, agent: s.agent, text, tolur, generated_at, cached: false });
