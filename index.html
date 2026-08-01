@@ -2835,7 +2835,7 @@ function renderMultitool(t){
 // (getUserMedia + talgreining) — án þess þagnar kjarninn inni í iframe.
 function renderJarvis(t){
   $view.innerHTML =
-    '<iframe id="jv-embed" src="/jarvis.html" title="J.A.R.V.I.S." allow="microphone"' +
+    '<iframe id="jv-embed" src="/jarvis.html" title="J.A.R.V.I.S." allow="microphone; fullscreen" allowfullscreen' +
     ' style="width:100%;border:0;display:block;background:#020814"></iframe>';
   const fit = () => { const f = document.getElementById('jv-embed'); if(!f) return; const top = f.getBoundingClientRect().top; f.style.height = Math.max(460, window.innerHeight - top - 12) + 'px'; };
   fit();
