@@ -193,17 +193,14 @@
 .svidsvar{font-size:13px;color:#8fb4d4;max-width:100%;flex-basis:100%;text-align:center;min-height:18px;line-height:1.45}
 
 /* ── Fullskjá-hnappur (2026-08-01) ── */
-#fskjar{position:absolute;top:14px;right:14px;z-index:40;width:38px;height:38px;border-radius:10px;
-  background:rgba(10,20,32,.75);border:1px solid #1d3a55;color:#8fc4f0;font-size:17px;line-height:1;
-  cursor:pointer;transition:border-color .15s,color .15s}
-#fskjar:hover{border-color:#3d8fd0;color:#fff}
-:fullscreen #fskjar{background:rgba(10,20,32,.9)}
+#fskjar,#spjaldval{position:absolute;top:50%;transform:translateY(-50%);z-index:40;width:36px;height:36px;
+  border-radius:9px;background:rgba(10,20,32,.75);border:1px solid #1d3a55;color:#8fc4f0;font-size:16px;
+  line-height:1;cursor:pointer;transition:border-color .15s,color .15s}
+#fskjar{right:12px}
+#fskjar:hover,#spjaldval:hover{border-color:#3d8fd0;color:#fff}
 
 /* ── Spjaldaval (2026-08-01) ── */
-#spjaldval{position:absolute;top:14px;right:60px;z-index:40;width:38px;height:38px;border-radius:10px;
-  background:rgba(10,20,32,.75);border:1px solid #1d3a55;color:#8fc4f0;font-size:16px;line-height:1;
-  cursor:pointer;transition:border-color .15s,color .15s}
-#spjaldval:hover{border-color:#3d8fd0;color:#fff}
+#spjaldval{right:54px}
 #svalmynd{position:fixed;inset:0;z-index:120;background:rgba(2,8,20,.72);display:none;
   align-items:center;justify-content:center;padding:20px}
 #svalmynd.opin{display:flex}
@@ -220,12 +217,20 @@
 #svalmynd .loka:hover{border-color:#3d8fd0;color:#fff}
 
 /* -- Utlits-rofi (2026-08-01) -- */
-.utlitsrod{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:0 0 14px;padding:0 12px}
+.utlitsrod{position:relative;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:0 0 14px;padding:0 54px}
 .ubtn{font:inherit;font-size:13px;font-weight:600;letter-spacing:.03em;color:#7fa3c4;
   background:rgba(10,20,32,.6);border:1px solid #17304a;border-radius:9px;padding:8px 15px;
   cursor:pointer;min-height:38px;transition:all .15s}
 .ubtn:hover{border-color:#2d6d9e;color:#cfe6ff}
 .ubtn.virkt{border-color:#2d9bf0;color:#fff;background:rgba(45,155,240,.14);box-shadow:0 0 14px rgba(45,155,240,.18)}
+
+/* -- Notenda-rofi (2026-08-01) -- */
+.notandarod{display:flex;gap:6px;justify-content:flex-end;margin-top:7px}
+.nbtn{font:inherit;font-size:11.5px;font-weight:600;letter-spacing:.05em;color:#5f829f;
+  background:rgba(10,20,32,.5);border:1px solid #152c44;border-radius:7px;padding:5px 11px;
+  cursor:pointer;transition:all .15s}
+.nbtn:hover{border-color:#2d6d9e;color:#a8cbe8}
+.nbtn.virkt{border-color:#2d9bf0;color:#fff;background:rgba(45,155,240,.16)}
 </style>
 <!-- Sett á <html> STRAX (ekki í enda body) svo app-hamurinn sé kominn áður en
      fyrsta málningin verður til — annars blikkar venjulega útlitið fyrst.
@@ -244,6 +249,8 @@
 
 <div class="hud">
     <div class="utlitsrod" id="utlitsrod">
+      <button id="spjaldval" title="Velja spjöld">⚙</button>
+      <button id="fskjar" title="Fullur skjár">⛶</button>
       <button class="ubtn" data-utlit="adal">◈ Aðal</button>
       <button class="ubtn" data-utlit="kerfi">⚡ Kerfi</button>
       <button class="ubtn" data-utlit="thjonusta">🗂️ Þjónusta</button>
@@ -259,6 +266,10 @@
     <div class="klukka">
       <div class="t" id="klukka">--:--:--</div>
       <div class="d" id="dags">—</div>
+      <div class="notandarod" id="notandarod">
+        <button class="nbtn" data-n="agnar">Agnar</button>
+        <button class="nbtn" data-n="anni">Annþór</button>
+      </div>
     </div>
   </div>
 
@@ -289,11 +300,6 @@
         <canvas id="kjarna-canvas"></canvas>
         <!-- Málrofinn er STILLING → út í hornið. Aðgerðin (TALA) er neðst á
              miðásnum, svo agnahnötturinn í miðjunni sé óskertur. -->
-        <!-- 2026-08-01: fullur skjár — felur vafra-krómið OG hliðarstikuna
-             (HUD-ið er hannað til að fylla skjáinn). Virkar líka innfellt því
-             iframe-ið fékk allowfullscreen í index.html. -->
-        <button id="spjaldval" title="Velja spjöld">⚙</button>
-        <button id="fskjar" title="Fullur skjár">⛶</button>
         <div class="malrofi">
           <button data-mal="is" class="on">ÍSL</button>
           <button data-mal="en">ENG</button>
@@ -862,6 +868,41 @@ baetaStraum('stjórnstöð ræst','ok');
 sakja();
 setInterval(sakja, 60000);
 
+/* -- Notandi: hver situr vid bordid? ------------------------------------ */
+(function(){
+  // skra  = formlegt nafn i skyrslur/skraningar
+  // avarp = hvernig agentarnir avarpa hann upphatt
+  var NOTENDUR = {
+    agnar: { skra:'Agnar',  avarp:'Agnar' },
+    anni:  { skra:'Annthor', avarp:'Big Boss Anni' }
+  };
+  var LYKILL = 'jarvis_notandi_v1';
+  var nuv;
+  try { nuv = localStorage.getItem(LYKILL) || 'agnar'; } catch(e) { nuv = 'agnar'; }
+  if(!NOTENDUR[nuv]) nuv = 'agnar';
+
+  function beita(){
+    document.querySelectorAll('.nbtn').forEach(function(b){
+      b.classList.toggle('virkt', b.dataset.n === nuv);
+    });
+  }
+  window.__jarvisNotandi = {
+    lykill: function(){ return nuv; },
+    skra:   function(){ return NOTENDUR[nuv].skra; },
+    avarp:  function(){ return NOTENDUR[nuv].avarp; }
+  };
+  document.querySelectorAll('.nbtn').forEach(function(b){
+    b.addEventListener('click', function(){
+      nuv = b.dataset.n;
+      try{ localStorage.setItem(LYKILL, nuv); }catch(e){}
+      beita();
+      if(typeof baetaStraum === 'function') baetaStraum('notandi: ' + NOTENDUR[nuv].skra, 'ok');
+    });
+  });
+  beita();
+})();
+
+
 /* -- Utlit (4 forstillingar) + gogn i nyju spjoldin --------------------- */
 (function(){
   var UTLIT = {
@@ -1052,7 +1093,8 @@ setInterval(sakja, 60000);
       rod.querySelectorAll('.svidbtn').forEach(function(x){ x.disabled = true; });
       ut.textContent = 'Sæki…';
       try{
-        var r = await fetch('/api/svid-status?svid=' + encodeURIComponent(svid) + '&mal=' + (typeof MAL!=='undefined'?MAL:'is'), {cache:'no-store'});
+        var nt = (window.__jarvisNotandi && __jarvisNotandi.lykill()) || 'agnar';
+        var r = await fetch('/api/svid-status?svid=' + encodeURIComponent(svid) + '&notandi=' + nt, {cache:'no-store'});
         var j = await r.json();
         if(j.error) throw new Error(j.error);
         ut.textContent = (j.emoji ? j.emoji + ' ' : '') + j.text;
