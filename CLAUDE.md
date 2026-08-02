@@ -188,6 +188,27 @@ samþykkir) → klarad. GET skilar öllu; POST `{action:'update', id, …}`.
   command:'/api/payday-pull', url:'/api/payday-pull?probe=1', schedule:'Daglega'}`.
 
 
+## Skýrslur-flipi + CG (Calculation Group) — 2026-08-02
+
+Nýr flipi **`skyrslur`** (fyrir ofan `krofuyfirlit`) — samantektir yfir óinnheimtar
+tekjur (klárað en ógreitt). `renderSkyrslur(t)` í `index.html`.
+
+- **CG-id kerfi**: hver samantektar-/heildartölu-gluggi fær fast CG-id. Innbyggð:
+  `CG-01` Ógreitt · `CG-02` Ósent · `CG-03` Tími eftir · `CG-04` Samtals í pípunni
+  (öll á Kröfu yfirlit KPI-spjöldunum gegnum `cgBadge(id,value)`).
+- **Gildi** vistuð í `localStorage.cg_values` (`cgRecord`); Skýrslur les þau.
+  `CG_BUILTINS` = föst, `CG_REGISTRY` = builtins + notenda-CG.
+- **Handvalin CG** (`localStorage.cg_user`): „🎯 Bæta við CG" → `cgCaptureOn()`
+  kveikir upptökuham (borði neðst + `document`-smellhlustari í fanga-fasa). Notandi
+  flettir að glugga, smellir á töluna → `cgFindContainer`/`cgExtractKr`/`cgExtractLabel`
+  → modal → `cgSaveCaptured` gefur næsta id (CG-05+). Handvalin CG geyma snapshot
+  (ekki live) — taka upp aftur til að uppfæra.
+- **Skýrslur** (`localStorage.cg_reports`): notandi leggur saman CG-id (`➕ Ný skýrsla`).
+  Hvert spjald tengir á aðgerðasíðuna (uppruna) svo hægt sé að breyta þar (greitt/fela).
+- `cgSyncBanner()` er kallað efst í `render()` svo upptöku-borðinn lifir milli flipa.
+- **Eftir**: merkja fleiri innbyggða glugga (Krófur & Tekjur, Slökkvitæki „í vinnslu");
+  „Admin mode" takki við klukkuna (báðar síður) fyrir handvirkar leiðréttingar í summum.
+
 ## graphify
 
 Þekkingargraf **aðeins uppsett á stóru vélinni** — `graphify`-skipunin er EKKI til á

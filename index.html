@@ -2516,6 +2516,7 @@ function render(){
   const t = activeTab();
   $brandTitle.textContent = t.label;
   document.body.dataset.tab = t.id;
+  try{ if(window.cgSyncBanner) window.cgSyncBanner(); }catch(_){}
   if(t.id==='dagurinn') return renderDagurinn(t);
   if(t.id==='yfirlit') return renderYfirlit(t);
   if(t.id==='stjornbord') return renderStjornbord(t);
@@ -13005,6 +13006,129 @@ window.cgOpen = function(id){
   (document.head||document.documentElement).appendChild(st);
 })();
 
+/* ── CG-upptaka: notandi bætir við eigin reikni-gluggum ──────────────────
+   „Bæta við CG" kveikir upptökuham (localStorage.cg_capture). Þá birtist borði
+   neðst; notandinn flettir að hvaða glugga sem er í appinu og smellir á töluna —
+   glugginn er tekinn upp sem nýtt CG-id (CG-05, CG-06 …) með heiti + gildi (sem
+   má lagfæra). Notenda-CG geymast í localStorage.cg_user og bætast í CG_REGISTRY.
+   Beiðni: „bæta við CG … flip through pages … add this window to CG group". */
+window.CG_BUILTINS = (window.CG_REGISTRY||[]).slice();
+window.cgUserObj = function(){ try{ return JSON.parse(localStorage.getItem('cg_user')||'{}'); }catch(_){ return {}; } };
+window.cgRefreshRegistry = function(){
+  const u = window.cgUserObj();
+  window.CG_REGISTRY = window.CG_BUILTINS.concat(Object.keys(u).sort().map(function(k){return u[k];}));
+};
+window.cgIsUser = function(id){ return !!window.cgUserObj()[id]; };
+window.cgRefreshRegistry();
+window.cgNextId = function(){
+  const u = window.cgUserObj();
+  let n = 1 + window.CG_BUILTINS.length;
+  const mk = x => 'CG-'+String(x).padStart(2,'0');
+  while( window.CG_BUILTINS.some(c=>c.id===mk(n)) || u[mk(n)] ) n++;
+  return mk(n);
+};
+window.cgCaptureActive = function(){ try{ return localStorage.getItem('cg_capture')==='1'; }catch(_){ return false; } };
+window.cgCaptureOn  = function(){ try{ localStorage.setItem('cg_capture','1'); }catch(_){} window.cgSyncBanner(); };
+window.cgCaptureOff = function(){ try{ localStorage.removeItem('cg_capture'); }catch(_){} window.cgSyncBanner(); try{ render(); }catch(_){} };
+
+// Borði + smellhlustari meðan upptaka er virk. Kallað úr render() í hverri teikningu.
+window.cgSyncBanner = function(){
+  if(typeof document==='undefined') return;
+  const on = window.cgCaptureActive();
+  let b = document.getElementById('cg-capture-banner');
+  if(on && !b){
+    b = document.createElement('div'); b.id='cg-capture-banner';
+    b.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:2147483000;background:linear-gradient(180deg,#2f5fe0,#183a8c);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;justify-content:center;flex-wrap:wrap;font:600 13.5px system-ui,-apple-system,sans-serif;box-shadow:0 -8px 24px -10px rgba(0,0,0,.5)';
+    b.innerHTML='<span>🎯 <b>CG-upptaka virk</b> — flettu að glugga og smelltu á töluna sem þú vilt bæta við.</span>'+
+      '<button id="cg-cap-stop" type="button" style="border:1px solid rgba(255,255,255,.6);background:rgba(255,255,255,.16);color:#fff;border-radius:9px;padding:7px 14px;font:inherit;font-weight:700;cursor:pointer">✓ Hætta upptöku</button>';
+    document.body.appendChild(b);
+    const stop=document.getElementById('cg-cap-stop'); if(stop) stop.onclick=window.cgCaptureOff;
+    document.addEventListener('click', window.cgCaptureClick, true);
+  } else if(!on && b){
+    b.remove();
+    document.removeEventListener('click', window.cgCaptureClick, true);
+    const m=document.getElementById('cg-cap-modal'); if(m) m.remove();
+  }
+};
+window.cgCaptureClick = function(e){
+  const tgt = e.target;
+  if(!tgt || !tgt.closest) return;
+  if(tgt.closest('#cg-capture-banner') || tgt.closest('#cg-cap-modal')) return;
+  // Hunsa navigation/inntak svo hægt sé að fletta milli síðna og hætta.
+  if(tgt.closest('.tab,.tab-v,[data-id],nav,aside,header,a,button,select,input,textarea')) return;
+  const cont = window.cgFindContainer(tgt);
+  if(!cont) return;
+  const value = window.cgExtractKr(cont);
+  if(value==null) return; // engin króna hér → leyfa venjulegan smell
+  e.preventDefault(); e.stopPropagation();
+  window.cgCaptureModal(window.cgExtractLabel(cont), value);
+};
+window.cgFindContainer = function(el){
+  let node=el, best=null;
+  for(let i=0;i<7 && node && node!==document.body;i++, node=node.parentElement){
+    const txt=(node.textContent||'');
+    if(/\d[\d.  ]*\s*kr\b/.test(txt) && txt.replace(/\s+/g,' ').length<600) best=node;
+  }
+  return best;
+};
+window.cgExtractKr = function(cont){
+  const m=(cont.textContent||'').match(/[\d][\d.  ]*\s*kr\b/g); if(!m) return null;
+  const nums=m.map(function(s){return parseInt(String(s).replace(/[^\d]/g,''),10)||0;}).filter(function(n){return n>0;});
+  return nums.length ? Math.max.apply(null,nums) : null;
+};
+window.cgExtractLabel = function(cont){
+  const t=(cont.textContent||'').replace(/\s+/g,' ').trim();
+  const m=t.match(/^([^\d]{2,}?)\s*\d/);
+  let lab=(m?m[1]:t).trim().replace(/[·:|\-]+$/,'').trim();
+  return (lab||'Handvalinn gluggi').slice(0,44);
+};
+window.cgCaptureModal = function(label, value){
+  const old=document.getElementById('cg-cap-modal'); if(old) old.remove();
+  const tab=(typeof activeTab==='function'?(activeTab()||{}).id:'') || '';
+  const tabLbl=String((((window.state||{}).tabs||[]).find(function(x){return x.id===tab;})||{}).label || tab || '—').replace(/[<>&]/g,'');
+  const fmt = n => (Math.round(Number(n)||0)).toLocaleString('is-IS').replace(/,/g,'.');
+  const wrap=document.createElement('div'); wrap.id='cg-cap-modal';
+  wrap.style.cssText='position:fixed;inset:0;z-index:2147483600;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:20px';
+  wrap.innerHTML='<div style="background:#fff;border-radius:16px;max-width:420px;width:100%;padding:22px;box-shadow:0 30px 60px -20px rgba(0,0,0,.5);font:14px system-ui,-apple-system,sans-serif">'+
+    '<div style="font-size:17px;font-weight:800;color:#11141c;margin-bottom:4px">➕ Bæta glugga við CG</div>'+
+    '<div style="font-size:12.5px;color:#8a93a5;margin-bottom:16px">Tekið af: '+tabLbl+'</div>'+
+    '<label style="display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#8a93a5;margin-bottom:5px">Heiti</label>'+
+    '<input id="cg-cap-name" value="'+String(label).replace(/"/g,'&quot;')+'" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #d5dbe6;border-radius:10px;font:inherit;margin-bottom:14px">'+
+    '<label style="display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#8a93a5;margin-bottom:5px">Gildi (kr) — má lagfæra</label>'+
+    '<input id="cg-cap-val" value="'+fmt(value)+'" inputmode="numeric" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #d5dbe6;border-radius:10px;font:inherit;margin-bottom:18px">'+
+    '<div style="display:flex;gap:10px;justify-content:flex-end">'+
+      '<button id="cg-cap-cancel" type="button" style="border:1px solid #d5dbe6;background:#fff;border-radius:10px;padding:9px 16px;font:inherit;font-weight:700;color:#334155;cursor:pointer">Hætta við</button>'+
+      '<button id="cg-cap-save" type="button" style="border:1px solid #2f5fe0;background:linear-gradient(180deg,#4f7bff,#2f5fe0);color:#fff;border-radius:10px;padding:9px 16px;font:inherit;font-weight:700;cursor:pointer">Vista sem CG</button>'+
+    '</div></div>';
+  document.body.appendChild(wrap);
+  const close=function(){ wrap.remove(); };
+  wrap.addEventListener('click',function(ev){ if(ev.target===wrap) close(); });
+  document.getElementById('cg-cap-cancel').onclick=close;
+  document.getElementById('cg-cap-save').onclick=function(){
+    const nm=(document.getElementById('cg-cap-name').value||'').trim()||'Handvalinn gluggi';
+    const vv=parseInt((document.getElementById('cg-cap-val').value||'').replace(/[^\d]/g,''),10)||0;
+    window.cgSaveCaptured(nm, vv, tab); close();
+  };
+};
+window.cgSaveCaptured = function(label, value, tab){
+  const u=window.cgUserObj();
+  const id=window.cgNextId();
+  const tabLbl=(((window.state||{}).tabs||[]).find(function(x){return x.id===tab;})||{}).label || tab || '—';
+  u[id]={id:id, label:label, tab:tab||'', match:label, formula:'Handvalinn gluggi — tekið af '+tabLbl, user:true, capturedAt:Date.now()};
+  try{ localStorage.setItem('cg_user', JSON.stringify(u)); }catch(_){}
+  window.cgRecord(id, value, {snapshot:true, tab:tab||''});
+  window.cgRefreshRegistry();
+  const b=document.getElementById('cg-capture-banner');
+  if(b){ const s=b.querySelector('span'); if(s){ const o=s.innerHTML; s.innerHTML='✓ <b>'+id+' bætt við</b> — '+String(label).replace(/[<>&]/g,'')+'. Haltu áfram eða ✓ Hættu upptöku.'; setTimeout(function(){ if(s) s.innerHTML=o; },2800); } }
+};
+window.cgDeleteUserCG = function(id){
+  if(typeof confirm==='function' && !confirm('Eyða '+id+'?')) return;
+  const u=window.cgUserObj(); delete u[id];
+  try{ localStorage.setItem('cg_user', JSON.stringify(u)); }catch(_){}
+  window.cgRefreshRegistry();
+  try{ render(); }catch(_){}
+};
+
 async function renderSkyrslur(t){
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fmtKr = n => (Math.round(Number(n)||0)).toLocaleString('is-IS').replace(/,/g,'.') + ' kr';
@@ -13063,7 +13187,9 @@ async function renderSkyrslur(t){
       +'<td style="padding:11px 12px;font-size:12.5px;color:#6b7280">'+esc(c.formula)+'</td>'
       +'<td style="padding:11px 12px;text-align:right;font-weight:800;white-space:nowrap;color:'+(ok?'#11141c':'#b45309')+'">'+(ok?fmtKr(rec.value):'⏳ —')+'</td>'
       +'<td style="padding:11px 12px;font-size:11px;color:#9098a6;white-space:nowrap">'+esc(ago(rec.ts))+'</td>'
-      +'<td style="padding:11px 12px;text-align:right"><button type="button" onclick="state.ui.activeTab=\''+esc(c.tab)+'\';save();render()" style="border:1px solid #d5dbe6;background:#fff;border-radius:9px;padding:6px 11px;font:inherit;font-size:12px;font-weight:700;color:#334155;cursor:pointer;white-space:nowrap">Opna uppruna →</button></td>'
+      +'<td style="padding:11px 12px;text-align:right;white-space:nowrap">'
+        +(window.cgIsUser&&window.cgIsUser(c.id)?'<button type="button" title="Eyða handvöldu CG" onclick="cgDeleteUserCG(\''+esc(c.id)+'\')" style="border:1px solid #fecdd3;background:#fff;border-radius:9px;padding:6px 9px;font:inherit;font-size:12px;font-weight:700;color:#be123c;cursor:pointer;margin-right:6px">✕</button>':'')
+        +'<button type="button" onclick="state.ui.activeTab=\''+esc(c.tab)+'\';save();render()" style="border:1px solid #d5dbe6;background:#fff;border-radius:9px;padding:6px 11px;font:inherit;font-size:12px;font-weight:700;color:#334155;cursor:pointer;white-space:nowrap">Opna uppruna →</button></td>'
       +'</tr>';
   }).join('');
 
@@ -13078,8 +13204,10 @@ async function renderSkyrslur(t){
       +'Hér má leggja þau saman í skýrslur — t.d. ósendar/ógreiddar upphæðir — og smella á CG-id eða „Opna uppruna" til að fara á staðinn þar sem talan verður til. '
       +'Þessi síða er <b>samantekt</b> — allar breytingar (merkja greitt, fela, eða ef eitthvað var greitt/sent á annan hátt) eru gerðar á upprunasíðunni og talan hér fylgir sjálfkrafa. '
       +'Gildin uppfærast í hvert sinn sem upprunasíðan er opnuð.</p>'
-    +'<div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 12px"><h2 style="margin:0;font-size:16px;font-weight:800;color:#334155">Skýrslur</h2>'
-      +'<button type="button" onclick="cgAddReport()" style="border:1px solid #2f5fe0;background:linear-gradient(180deg,#4f7bff,#2f5fe0);color:#fff;border-radius:10px;padding:8px 14px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer">➕ Ný skýrsla</button></div>'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 12px"><h2 style="margin:0;font-size:16px;font-weight:800;color:#334155">Skýrslur</h2>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
+      +'<button type="button" onclick="cgCaptureOn()" title="Kveiktu á upptöku, flettu að hvaða glugga sem er og smelltu á töluna til að bæta honum við" style="border:1px solid #b45309;background:linear-gradient(180deg,#fbbf24,#d97706);color:#fff;border-radius:10px;padding:8px 14px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer">🎯 Bæta við CG</button>'
+      +'<button type="button" onclick="cgAddReport()" style="border:1px solid #2f5fe0;background:linear-gradient(180deg,#4f7bff,#2f5fe0);color:#fff;border-radius:10px;padding:8px 14px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer">➕ Ný skýrsla</button></div></div>'
     +'<div style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:30px">'+reports.map(reportCard).join('')+'</div>'
     +'<h2 style="margin:0 0 12px;font-size:16px;font-weight:800;color:#334155">CG-skrá — merktir reikni-gluggar</h2>'
     +(staleAny?'<div style="font-size:12.5px;color:#b45309;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:9px 13px;margin-bottom:12px">⏳ Sum gildi vantar — opnaðu viðkomandi upprunasíðu einu sinni svo talan sækist í localStorage.</div>':'')
@@ -13089,8 +13217,8 @@ async function renderSkyrslur(t){
         +'<th style="padding:10px 12px">CG-id</th><th style="padding:10px 12px">Heiti</th><th style="padding:10px 12px">Útreikningur</th>'
         +'<th style="padding:10px 12px;text-align:right">Gildi</th><th style="padding:10px 12px">Uppfært</th><th style="padding:10px 12px"></th></tr></thead>'
       +'<tbody>'+regRows+'</tbody></table></div>'
-    +'<p style="margin:18px 2px 0;font-size:12px;color:#9098a6;line-height:1.5">Fleiri gluggar fá CG-id smám saman (Krófur &amp; Tekjur, Slökkvitæki „áætlað virði" o.fl.). '
-      +'Þegar gluggi er merktur birtist hann sjálfkrafa hér.</p>'
+    +'<p style="margin:18px 2px 0;font-size:12px;color:#9098a6;line-height:1.5">💡 Smelltu á <b>🎯 Bæta við CG</b> til að taka upp hvaða glugga sem er: flettu að honum í appinu og smelltu á töluna — hann verður að nýju CG-id sem þú getur sett í skýrslur hér. '
+      +'Innbyggð CG (CG-01–04) uppfærast sjálfkrafa; handvalin CG geyma síðasta gildi (taktu upp aftur til að uppfæra).</p>'
     +'</div>';
 
   if(focus){ const el=document.getElementById('cgrow-'+focus); if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); setTimeout(()=>{ el.classList.remove('cg-row-focus'); },2600); } }
