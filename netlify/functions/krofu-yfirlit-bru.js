@@ -43,7 +43,7 @@ exports.handler = async (event) => {
       'select=id,tilvisun,kt_greidanda,customer_name,gjalddagi,eindagi,hofudstoll,upphaed_total,status,source');
     // invoice_drafts feed the „Ósendar kröfur" (tier2) totals — a failure hides real drafts.
     drafts = await fetchAll('invoice_drafts',
-      'select=worksite_name,work_month,total_m_vsk,customer_name,kennitala')
+      'select=worksite_name,work_month,total_m_vsk,customer_name,kennitala,status')
       .catch(() => { warnings.push('invoice_drafts lestur mistókst — ósendar drög gætu vantað í þrep 2'); return []; });
     // meta carries the manual greitt/falið/staðfest flags — without it, hidden or
     // paid krófur reappear and the outstanding totals are wrong.
@@ -137,6 +137,10 @@ exports.handler = async (event) => {
   for (const d of drafts) {
     const wm = String(d.work_month || '');
     if (d.worksite_name && wm) draftKeys.push(`${d.worksite_name}|${wm}`);
+    // Sameinað (Kröfu yfirlit „🔗 Sameina valdar") → drögin lifa áfram í töflunni
+    // (draftKeys held óbreytt svo þrep 3 áætli ekki tímana aftur) en detta úr
+    // þrepi 2 sjálfu svo upphæðin tvítelst ekki með nýja sameinaða drögunum.
+    if (d.status === 'skipped') continue;
     const amt = +d.total_m_vsk || 0;
     if (amt <= 0 || wm < cutoff) continue;
     const key = `draftinv|${d.worksite_name}|${wm}`;
