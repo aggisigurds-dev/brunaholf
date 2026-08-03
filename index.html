@@ -13322,6 +13322,9 @@ async function renderKrofuyfirlit(t){
   }
 
   const state = { data:null, tier3:null, sort:'amount_desc', search:'', tierFilter:'company', newest:null, showHidden:false, pgFailed:false, wsFailed:false };
+  // ── Sameina drög (tier 2): valstaða ──────────────────────────────────────
+  let t2SelectMode = false;
+  const t2Selected = new Map();  // inv_key → invoice object (tier-2 gerd-drög only)
   // Efnislisti/Tímaskjal Drive-tenglar per „<verkstaður>|<mánuður>" (fyllt í load()).
   let EFDOCS = {};
   // Tímavera-tímar + Redder-efniskostnaður per „<verkstaður>|<mánuður>" (fyrir Ósendar-reitina).
@@ -13377,6 +13380,11 @@ async function renderKrofuyfirlit(t){
       <div class="kyf-warn"></div>
       <div class="kyf-lp-banner"></div>
 
+      <div class="kyf-t2-bar" style="display:none;position:sticky;bottom:12px;background:linear-gradient(135deg,#1d4ed8,#2563eb);color:#fff;border-radius:12px;padding:10px 16px;margin-bottom:8px;z-index:200;align-items:center;gap:12px;box-shadow:0 8px 20px -6px rgba(29,78,216,.5)">
+        <span class="kyf-t2-bar-lbl" style="flex:1;font-size:13.5px;font-weight:700"></span>
+        <button class="kyf-t2-combine-btn" type="button" style="padding:8px 16px;border-radius:8px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.15);color:#fff;font:inherit;font-size:13px;font-weight:700;cursor:pointer">🔗 Sameina valdar →</button>
+        <button class="kyf-t2-clear-btn" type="button" style="padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:rgba(255,255,255,.8);font:inherit;font-size:12px;cursor:pointer">✗ Hreinsa</button>
+      </div>
       <div class="kyf-list"></div>
     </div>
     <style>
@@ -13852,10 +13860,16 @@ async function renderKrofuyfirlit(t){
       const bankDetail = (inv.bank)
         ? `<div style="margin-top:9px;color:#0f7a43;font-size:11px;font-weight:600;line-height:1.4">🏦 Banki: ${fmtKr(inv.bank.amount)} · ${esc(inv.bank.date||'—')}${inv.bank.text?' · '+esc(inv.bank.text):''}${inv.bank.extra>0?' <span style="color:#b45309">(+'+fmtKr(inv.bank.extra)+' vextir)</span>':''}</div>`
         : '';
+      // Gátmerki í velstillu (tier 2 / sameina-hamur) — aðeins á gerd-drög (invoice_drafts-
+      // studdar raðir með sitt eigið worksite_name+work_month), EKKI Payday-drög (engin
+      // (worksite_name,work_month) einkilykill til að sameina undir).
+      const t2chk = (tier===2 && t2SelectMode && inv.source==='gerd-drög' && inv.worksite && inv.work_month)
+        ? `<input type="checkbox" class="kyf-t2-chk" data-key="${esc(inv.inv_key)}" ${t2Selected.has(inv.inv_key)?'checked':''} onclick="event.stopPropagation()" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;accent-color:#1d4ed8;margin-right:2px">`
+        : '';
       return `
         <div class="ky-invrow${tier===2?' ky-t2':''}">
           <div class="ky-row${lp?' ky-likely':''}" data-key="${esc(inv.inv_key)}" style="display:flex;align-items:center;gap:11px;padding:9px 18px;border-bottom:1px solid #f3f5f9;font-size:12.5px;cursor:pointer;${inv._hidden?'opacity:.5':''}">
-            <span class="ky-caret2" style="width:11px;flex-shrink:0;color:#b6c0cc;font-size:11px;user-select:none">▸</span>
+            ${t2chk}<span class="ky-caret2" style="width:11px;flex-shrink:0;color:#b6c0cc;font-size:11px;user-select:none">▸</span>
             <div style="width:200px;flex-shrink:0;line-height:1.2">
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                 <span class="ky-num" style="color:#1d4ed8;font-weight:700">${rnum}</span>
@@ -13910,8 +13924,12 @@ async function renderKrofuyfirlit(t){
   function section(tier, icon, title, subtitle, live){
     const disp = searchSort(live);
     const total = sumKr(live), n = countN(live);
+    const selBtn = tier===2
+      ? `<button class="kyf-t2-sel-toggle" type="button" style="padding:4px 12px;border-radius:7px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;border:1px solid ${t2SelectMode?'#1d4ed8':'#cbd5e1'};background:${t2SelectMode?'#eff6ff':'#fff'};color:${t2SelectMode?'#1d4ed8':'#475569'}">${t2SelectMode?'✗ Hætta':'☑ Sameina'}</button>`
+      : '';
     const header = `<div class="ky-sec"><h2>${icon} ${esc(title)}</h2>`+
       `<span style="font-size:12px;color:#64748b">${n} ${n===1?'liður':'liðir'} · ${live.length} ${live.length===1?'aðili':'aðilar'}</span>`+
+      selBtn+
       `<span style="margin-left:auto;font-weight:800;font-size:15px;color:#11141c" class="ky-num">${fmtKr(total)}</span></div>`+
       (subtitle?`<div style="font-size:11.5px;color:#8a93a5;margin:-4px 0 10px">${esc(subtitle)}</div>`:'');
     const body = disp.length
@@ -13932,6 +13950,108 @@ async function renderKrofuyfirlit(t){
     box.innerHTML = '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;padding:11px 15px;background:#fffbeb;border:1px solid #fde68a;border-radius:14px;color:#92400e;font-size:12.5px;line-height:1.5">'
       + msgs.map(m=>'<div style="display:flex;gap:8px;align-items:flex-start"><span style="font-size:15px;flex-shrink:0">⚠</span><span>'+esc(m)+'</span></div>').join('')
       + '</div>';
+  }
+
+  // ── Sameina drög (tier 2, rautt-depill nr.2) ────────────────────────────
+  // Sticky borði (fastur hluti af $view.innerHTML, ekki endur-teiknaður af
+  // renderList) sem sýnir fjölda/upphæð valinna gerd-drög og opnar staðfestingar-
+  // gluggann. Kallað bæði úr checkbox-change og úr renderList() sjálfu.
+  function updateCombineBar(){
+    const bar = $view.querySelector('.kyf-t2-bar'); if(!bar) return;
+    const show = t2SelectMode && t2Selected.size>0;
+    bar.style.display = show ? 'flex' : 'none';
+    if(!show) return;
+    const lbl = bar.querySelector('.kyf-t2-bar-lbl');
+    const total = [...t2Selected.values()].reduce((a,iv)=>a+(Number(iv.amount)||0),0);
+    if(lbl) lbl.textContent = t2Selected.size+' drög valin · samtals '+fmtKr(total);
+  }
+
+  // Staðfestingar-gluggi: sýnir valin drög + samtölu, lætur notanda breyta heiti/
+  // mánuði nýja sameinaða draganna. Á „🔗 Sameina": býr til EITT nýtt invoice_drafts
+  // (worksite_name,work_month) drög með samtölunni, merkir svo öll upprunalegu
+  // drögin status:'skipped' (þau lifa áfram — bara hverfa úr Ósendar-þrepi 2, sjá
+  // krofu-yfirlit-bru.js) svo upphæðin tvítelst ekki.
+  function openCombineModal(invs){
+    if(!invs || invs.length<2) return;
+    const total = invs.reduce((a,iv)=>a+(Number(iv.amount)||0),0);
+    const months = [...new Set(invs.map(iv=>iv.work_month).filter(Boolean))].sort();
+    const defMonth = months[months.length-1] || CUR_MONTH;
+    const names = [...new Set(invs.map(iv=>iv.worksite||iv.customer).filter(Boolean))];
+    const defName = 'Sameinað: ' + names.join(' + ');
+    const custs = [...new Set(invs.map(iv=>iv.customer).filter(Boolean))];
+    const defCust = custs.length===1 ? custs[0] : custs.join(' / ');
+    const kts = [...new Set(invs.map(iv=>iv.kt).filter(Boolean))];
+    const defKt = kts.length===1 ? kts[0] : '';
+
+    const bg=document.createElement('div');
+    bg.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px';
+    const rowsHtml = invs.map(iv=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #f1f5f9;font-size:12.5px">
+        <span style="color:#334155">${esc(iv.worksite||iv.customer||'—')} <span style="color:#94a3b8">· ${esc(monthLbl(iv.work_month))}</span></span>
+        <span class="ky-num" style="font-weight:700;color:#11141c">${fmtKr(iv.amount)}</span>
+      </div>`).join('');
+    bg.innerHTML=`<div style="background:#fff;border-radius:14px;padding:20px 22px;width:min(460px,96vw);max-height:88vh;overflow:auto;box-shadow:0 24px 60px -14px rgba(0,0,0,.45)">
+      <div style="font-weight:800;font-size:16px;color:#0f172a;margin-bottom:2px">🔗 Sameina ${invs.length} drög</div>
+      <div style="font-size:12px;color:#94a3b8;margin-bottom:12px">Býr til eitt nýtt drög með samtals upphæð — upprunalegu drögin eru merkt „sameinað" og hverfa úr Ósendar-listanum.</div>
+      <div style="background:#fafbfe;border:1px solid #eef1f6;border-radius:10px;padding:8px 12px;margin-bottom:14px">${rowsHtml}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 2px 14px;border-bottom:1px solid #eef1f6;margin-bottom:14px">
+        <span style="font-weight:700;color:#475569;font-size:13px">Samtals</span>
+        <span class="ky-num" style="font-weight:800;font-size:18px;color:#1d4ed8">${fmtKr(total)}</span>
+      </div>
+      <label style="display:block;font-size:12px;font-weight:700;color:#475569;margin:0 0 3px">Heiti nýja draganna</label>
+      <input id="_cmb-name" value="${esc(defName)}" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;font-size:14px;box-sizing:border-box">
+      <label style="display:block;font-size:12px;font-weight:700;color:#475569;margin:12px 0 3px">Mánuður</label>
+      <input id="_cmb-month" type="month" value="${esc(defMonth)}" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;font-size:14px;box-sizing:border-box">
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:18px">
+        <button id="_cmb-cancel" type="button" style="padding:9px 16px;border:1px solid #cbd5e1;background:#fff;border-radius:9px;cursor:pointer;font:inherit;font-weight:700;color:#475569">Hætta</button>
+        <button id="_cmb-confirm" type="button" style="padding:9px 18px;border:none;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border-radius:9px;cursor:pointer;font:inherit;font-weight:700">🔗 Sameina</button>
+      </div>
+    </div>`;
+    document.body.appendChild(bg);
+    const close=()=>bg.remove();
+    bg.addEventListener('mousedown', e=>{ if(e.target===bg) close(); });
+    document.getElementById('_cmb-cancel').onclick = close;
+    document.getElementById('_cmb-confirm').onclick = async ()=>{
+      const name = document.getElementById('_cmb-name').value.trim();
+      const month = document.getElementById('_cmb-month').value.trim();
+      if(!name || !/^\d{4}-\d{2}$/.test(month)){ alert('Heiti og gildur mánuður (ÁÁÁÁ-MM) þarf að fylla út.'); return; }
+      const btn = document.getElementById('_cmb-confirm');
+      btn.disabled = true; btn.textContent = '⏳ Sameinar…';
+      // Skref 1 — búa til nýja sameinaða drögið. Mistakist þetta hefur EKKERT
+      // breyst enn (glugginn helst opinn svo notandi geti reynt aftur).
+      try{
+        const vsk = 24;
+        const net = Math.round(total/(1+vsk/100));
+        const r1 = await fetch('/api/invoice-drafts', {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({
+          worksite_name: name, work_month: month, customer_name: defCust||undefined, kennitala: defKt||undefined,
+          source: 'combined', status: 'draft',
+          total_m_vsk: total, net_an_vsk: net, vsk_amount: total-net,
+          notes: 'Sameinað úr: '+invs.map(iv=>(iv.worksite||iv.customer||'—')+' '+(iv.work_month||'')).join('; '),
+        })});
+        const j1 = await r1.json().catch(()=>({}));
+        if(!r1.ok || j1.error) throw new Error((j1&&j1.error) || ('HTTP '+r1.status));
+      }catch(err){
+        alert('Sameining mistókst: '+((err&&err.message)||err));
+        btn.disabled = false; btn.textContent = '🔗 Sameina';
+        return;
+      }
+      // Skref 2 — merkja upprunalegu drögin „sameinað" (best-effort; nýja drögið
+      // er þegar til, svo héðan í frá lokum við glugganum sama hvað gerist).
+      const failed = [];
+      for(const iv of invs){
+        if(!iv.worksite || !iv.work_month) continue;
+        try{
+          const rr = await fetch('/api/invoice-drafts', {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({
+            worksite_name: iv.worksite, work_month: iv.work_month, status: 'skipped',
+            notes: 'Sameinað í: '+name+' ('+month+')',
+          })});
+          if(!rr.ok) failed.push(iv.worksite);
+        }catch(_){ failed.push(iv.worksite); }
+      }
+      close();
+      t2Selected.clear(); t2SelectMode = false;
+      try{ await load(true); }catch(_){ /* handvirk „↻ Sækja" nær í nýjustu stöðu ef þetta klikkar */ }
+      if(failed.length) alert('Nýja sameinaða drögin voru vistuð, en '+failed.length+' upprunaleg drög náðust ekki að merkja „sameinað": '+failed.join(', ')+'. Þau gætu því sýnst tvítalin — reyndu aftur eða merktu þau handvirkt.');
+    };
   }
   function renderList(){
     const listEl = $view.querySelector('.kyf-list');
@@ -14056,6 +14176,23 @@ async function renderKrofuyfirlit(t){
       inp.addEventListener('change', save);
       inp.addEventListener('blur', save);
     });
+    // ── Sameina drög (tier 2) — ☑ Sameina haus-takki + gátmerki á röðum ─────
+    listEl.querySelectorAll('.kyf-t2-sel-toggle').forEach(b=>b.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      t2SelectMode = !t2SelectMode;
+      if(!t2SelectMode) t2Selected.clear();
+      renderList();
+    }));
+    listEl.querySelectorAll('.kyf-t2-chk').forEach(chk=>{
+      const stop=e=>e.stopPropagation(); chk.addEventListener('click',stop); chk.addEventListener('mousedown',stop);
+      chk.addEventListener('change', ()=>{
+        const key = chk.dataset.key; if(!key) return;
+        if(chk.checked){ const iv=findInv(key); if(iv) t2Selected.set(key, iv); }
+        else t2Selected.delete(key);
+        updateCombineBar();
+      });
+    });
+    updateCombineBar();
     // 2026-07-08: .ky-act + .ky-bx fara gegnum EINN delegated listener á
     // listEl (festur einu sinni, lifir öll innerHTML-re-render af) — á síma
     // Agnars gerðu takkarnir stundum ekkert, sem bendir til að per-takka
@@ -14281,6 +14418,14 @@ async function renderKrofuyfirlit(t){
   $view.querySelector('.kyf-refresh').addEventListener('click', ()=>load(true));
   const hidToggle = $view.querySelector('.kyf-hidden-toggle');
   if(hidToggle) hidToggle.addEventListener('click', ()=>{ state.showHidden = !state.showHidden; renderList(); });
+  // Sameina-borði (fastur hluti af $view — lifir renderList()-endurteikningu af).
+  const t2CombineBtn = $view.querySelector('.kyf-t2-combine-btn');
+  if(t2CombineBtn) t2CombineBtn.addEventListener('click', ()=>{
+    if(!t2Selected.size) return;
+    openCombineModal([...t2Selected.values()]);
+  });
+  const t2ClearBtn = $view.querySelector('.kyf-t2-clear-btn');
+  if(t2ClearBtn) t2ClearBtn.addEventListener('click', ()=>{ t2Selected.clear(); renderList(); });
   // „👤 Ég" — hver notandinn er (skráð á vinnuflæði-skref). Smellur → breyta.
   const meBtn = $view.querySelector('.kyf-me');
   const KY_TEAM = ['Annþór','Agnar','Andri','Hákon','Elías'];
@@ -18723,6 +18868,7 @@ async function openTimabok(name, month){
     <div style="font-size:12px;color:#64748b;margin:2px 0 8px">Mæting starfsmanna — fylgiskjal með reikningi. Breyttu tímum beint í töflunni; „💾 Vista" geymir breytingar (samstillt milli tækja), „📄 Vista PDF" geymir á Supabase (engin innskráning).</div>
     <div id="tbk-body"><div class="gr-loading">Sæki tímafærslur…</div></div>
     <div class="gr-actions" style="margin-top:10px">
+      <button class="gr-btn" id="tbk-refetch" type="button" title="Sækja tímafærslur aftur úr Tímaveru fyrir þennan mánuð (les gögnin sem þegar eru komin inn — sama uppspretta og efnislistinn, engin ný lifandi Tímavera-sókn). Hendir handvirkum breytingum mánaðarins.">🔄 Endursækja úr tímaveru.is</button>
       <button class="gr-btn" id="tbk-add" type="button">＋ Bæta línu</button>
       <button class="gr-btn gr-btn-primary" id="tbk-save" type="button">💾 Vista</button>
       <button class="gr-btn" id="tbk-pdf" type="button">📄 Vista PDF</button>
@@ -18822,6 +18968,28 @@ async function openTimabok(name, month){
   }
 
   document.getElementById('tbk-add').onclick = ()=>{ rows.unshift({ date:month+'-01', employee:'', time_in:'', time_out:'', hours:0 }); paint(); };
+  document.getElementById('tbk-refetch').onclick = async ()=>{
+    const btn = document.getElementById('tbk-refetch');
+    if(!name || !/^\d{4}-\d{2}$/.test(String(month))){ st.textContent = 'Vantar verkstað/mánuð'; return; }
+    if(!confirm('Endursækja tímafærslur úr gagnagrunni og henda handvirkum breytingum þessa mánaðar?')) return;
+    btn.disabled = true; const old = btn.textContent; btn.textContent = '⏳ Sæki…';
+    try{
+      const ctrl = new AbortController(); const to = setTimeout(()=>ctrl.abort(), 15000);
+      const resp = await fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&month=${encodeURIComponent(month)}`, { signal: ctrl.signal });
+      clearTimeout(to);
+      const data = await resp.json().catch(()=>({}));
+      if(!resp.ok) throw new Error(data.error||('HTTP '+resp.status));
+      rows = (data.rows||[]).map(r=>({ date:r.date||'', employee:r.employee||'', time_in:r.time_in||'', time_out:r.time_out||'', hours:Number(r.hours)||0 }));
+      // Clear saved local edits so the modal no longer shows "breytt eintak"
+      if(state.ui && state.ui.timabok_edits) delete state.ui.timabok_edits[key];
+      save();
+      sortRows(); paint();
+      st.textContent = '✓ endursótt'; setTimeout(()=>{ st.textContent=''; }, 2500);
+    }catch(e){
+      if(!bg.isConnected) return;
+      st.textContent = 'Villa: '+(e&&e.name==='AbortError'?'timeout':escapeHtml(String(e&&e.message||e)));
+    }finally{ btn.textContent=old; btn.disabled=false; }
+  };
   document.getElementById('tbk-save').onclick = ()=>{
     state.ui = state.ui||{}; state.ui.timabok_edits = state.ui.timabok_edits||{};
     state.ui.timabok_edits[key] = { rows: rows.map(r=>({...r})), yfirvinna:{ on:yf.on, thr:yf.thr }, saved_at: new Date().toISOString() };
