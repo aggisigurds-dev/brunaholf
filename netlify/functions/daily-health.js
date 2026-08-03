@@ -18,15 +18,18 @@
 //     age_days/status). Reiknað server-hlið; sótt hér yfir HTTP.
 //   • automation_runs / automation_jobs — nýjasta keyrsla per starf: villa eða
 //     ekkert í >24 klst = flöggun.
-//   • /api/email-send  — Resend proxy (POST from/to/subject/html) fyrir ?send=1.
+//   • /api/gmail-send  — sendir gegnum tengt Gmail-pósthólf (POST account/to/
+//     subject/html) fyrir ?send=1. (Var /api/email-send/Resend — 403 á
+//     eldklar.is-léninu sem er óstaðfest hjá Resend, sjá gmail-send.js.)
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 // Móttakandi + sendandi eru env-stýrðir; sjálfgildi eru ekki leyndarmál.
 const ALERT_TO = process.env.HEALTH_ALERT_TO || 'brunaholf@brunaholf.is';
-// Sendandi VERÐUR að vera á staðfestu Resend-léni (eldklar.is).
-const ALERT_FROM = process.env.HEALTH_ALERT_FROM || 'Brunahólf <reikningar@eldklar.is>';
+// account = tengda Gmail-pósthólfið sem SENDIR (verður að hafa gmail.send heimild).
+const ALERT_ACCOUNT = process.env.HEALTH_ALERT_ACCOUNT || 'eldklar@eldklar.is';
+const ALERT_FROM = process.env.HEALTH_ALERT_FROM || 'Brunahólf <eldklar@eldklar.is>';
 
 // Starf telst „gamalt" ef nýjasta keyrsla er eldri en þetta (klst).
 const STALE_JOB_HOURS = 24;
@@ -121,10 +124,10 @@ exports.handler = async (event) => {
   const html = buildHtml({ ok, alerts, sources, checked_at });
 
   try {
-    const r = await fetch(`${origin}/api/email-send`, {
+    const r = await fetch(`${origin}/api/gmail-send`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from: ALERT_FROM, to: ALERT_TO, subject, html }),
+      body: JSON.stringify({ account: ALERT_ACCOUNT, from: ALERT_FROM, to: ALERT_TO, subject, html }),
     });
     const data = await r.json().catch(() => ({}));
     if (!r.ok || data.error) {
