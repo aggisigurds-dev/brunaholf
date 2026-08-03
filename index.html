@@ -14321,7 +14321,7 @@ async function renderKrofuyfirlit(t){
         const subject = 'Efnislisti/Tímaskýrsla — '+(cust||ws||'')+(wm?(' '+wm):'');
         const html = '<p>Sæl(l),</p><p>Meðfylgjandi Efnislisti/Tímaskýrsla fyrir <b>'+esc(cust||ws||'')+'</b>'+(wm?(' ('+esc(wm)+')'):'')+' til skráningar í Payday.</p>'+docLinks+'<p>Kveðja,<br>Brunahólf</p>';
         try{
-          const r=await fetch('/api/email-send',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({ from:'Brunahólf <eldklar@eldklar.is>', to:[to], subject, html, attachments })});
+          const r=await fetch('/api/gmail-send',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({ account:'eldklar@eldklar.is', from:'Brunahólf <eldklar@eldklar.is>', to:[to], subject, html, attachments })});
           const j=await r.json().catch(()=>({}));
           if(!r.ok || j.error) throw new Error((j&&(j.message||j.error))||('HTTP '+r.status));
           await fetch('/api/krofur-yfirlit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'save', inv_key:key, sent:true, by})}).catch(()=>{});
