@@ -206,6 +206,16 @@ tekjur (klárað en ógreitt). `renderSkyrslur(t)` í `index.html`.
 - **Skýrslur** (`localStorage.cg_reports`): notandi leggur saman CG-id (`➕ Ný skýrsla`).
   Hvert spjald tengir á aðgerðasíðuna (uppruna) svo hægt sé að breyta þar (greitt/fela).
 - `cgSyncBanner()` er kallað efst í `render()` svo upptöku-borðinn lifir milli flipa.
+- **Cross-app capture (2026-08-05)**: `localStorage` deilist ALDREI milli léna, svo tölur
+  á slokkvitaeki.netlify.app náðust ekki hingað með gamla upptökukerfinu (verkefnalisti
+  664205fc feedback). Nýtt: tafla `cg_entries` í sama Supabase-verkefni + fall
+  `netlify/functions/cg-entries.js` (`GET` listar, `POST {action:'record',…}` vistar/
+  uppfærir, eigið id-nafnrými `CG-Sxx` svo það rekist ekki á staðbundna `cg_user` teljara).
+  `window.cgFetchShared()` (kallað við ræsingu) sækir þessar færslur og bætir í
+  `CG_SHARED`/`CG_REGISTRY`/`CG_VALUES`. Á Slökkvitæki-hliðinni: `js/patches/
+  296-cg-capture.js` — fljótandi „🎯 CG" takki neðst t.v. á ÖLLUM síðum, sami
+  smell-á-töluna-flæði, POSTar beint á `https://brunaholf.netlify.app/api/cg-entries`
+  með `source_app:'slokkvitaeki'`.
 - **Eftir**: merkja fleiri innbyggða glugga (Krófur & Tekjur, Slökkvitæki „í vinnslu");
   „Admin mode" takki við klukkuna (báðar síður) fyrir handvirkar leiðréttingar í summum.
 

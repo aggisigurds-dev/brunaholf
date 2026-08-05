@@ -13014,12 +13014,32 @@ window.cgOpen = function(id){
    Beiðni: „bæta við CG … flip through pages … add this window to CG group". */
 window.CG_BUILTINS = (window.CG_REGISTRY||[]).slice();
 window.cgUserObj = function(){ try{ return JSON.parse(localStorage.getItem('cg_user')||'{}'); }catch(_){ return {}; } };
+window.CG_SHARED = [];   // entries captured on OTHER apps (t.d. slokkvitaeki.netlify.app) — see cgFetchShared
 window.cgRefreshRegistry = function(){
   const u = window.cgUserObj();
-  window.CG_REGISTRY = window.CG_BUILTINS.concat(Object.keys(u).sort().map(function(k){return u[k];}));
+  window.CG_REGISTRY = window.CG_BUILTINS.concat(Object.keys(u).sort().map(function(k){return u[k];}), window.CG_SHARED);
 };
 window.cgIsUser = function(id){ return !!window.cgUserObj()[id]; };
 window.cgRefreshRegistry();
+// 2026-08-05: pull in CG entries captured from OTHER apps/origins (t.d. Slökkvitæki
+// — cg-capture.js þar POSTar hingað) svo Skýrslur sjái þau án þess að localStorage
+// deilist milli léna (sem það gerir aldrei). Kallað við ræsingu + þegar Skýrslur opnast.
+window.cgFetchShared = function(){
+  return fetch('/api/cg-entries').then(function(r){ return r.json(); }).then(function(d){
+    const rows = (d && d.entries) || [];
+    window.CG_SHARED = rows.map(function(row){
+      return {id:row.id, label:row.label, tab:row.tab||'', url:row.url||'', match:row.label,
+        formula:row.formula || ('Handvirkt CG — ' + (row.source_app||'')), user:true, manual:!!row.manual,
+        sourceApp:row.source_app||''};
+    });
+    rows.forEach(function(row){
+      window.CG_VALUES[row.id] = Object.assign({}, window.CG_VALUES[row.id], {
+        value:Number(row.value)||0, ts:new Date(row.updated_at||row.captured_at||Date.now()).getTime(), snapshot:true});
+    });
+    window.cgRefreshRegistry();
+  }).catch(function(){});
+};
+window.cgFetchShared();
 window.cgNextId = function(){
   const u = window.cgUserObj();
   let n = 1 + window.CG_BUILTINS.length;
