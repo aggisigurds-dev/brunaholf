@@ -219,6 +219,41 @@ tekjur (klárað en ógreitt). `renderSkyrslur(t)` í `index.html`.
 - **Eftir**: merkja fleiri innbyggða glugga (Krófur & Tekjur, Slökkvitæki „í vinnslu");
   „Admin mode" takki við klukkuna (báðar síður) fyrir handvirkar leiðréttingar í summum.
 
+## Pörun — document_pairs (2026-08-05)
+
+Skýrsla↔reikningur pörun (verkefnalisti 94295522). `customer_documents` hefur ENGA
+FK milli skýrslu- og reikningsraða (`doc_type` ∈ `samningur|uttektarskyrsla|reikningur|
+brunakerfi`; `invoice_number` er bara sett á `reikningur`-raðir). `v_bundle_coverage`
+(`sql/2026-07-31_v_bundle_coverage.sql`) er lifandi kt+ár+kind heurística (engin
+geymd tengsl) sem `veidin.js`/`svid-status.js` lesa — hún nær EKKI utan um það þegar
+ein úttektarskýrsla dekkar bæði Úttekt- OG Brunakerfi-parið sama ár (t.d. E
+Fasteignafélag / Norðurhella 17: R-000652 = úttekt, R-000651 = brunakerfi, EIN
+skýrslu-röð).
+
+`document_pairs` (`sql/2026-08-05_document_pairs.sql`) er ný, viðbótar (ekki í stað
+`v_bundle_coverage`) tafla með `customer_base_id, year, service_type ('uttekt'|
+'brunakerfi'), report_doc_id, invoice_doc_id, solur_id, status, matched_by`. Ein-
+skipta bakfylling keyrð 2026-08-05 (91 klarad þ.m.t. 1 `shared_report`, 1085
+vantar_reikning, 5 vantar_skyrslu) — `on conflict do nothing` gerir endurkeyrslu
+óhætta. `matched_by='shared_report'` = sama skýrslu-röðin endurnýtt fyrir hitt
+kind-ið þegar það á enga eigin.
+
+Slökkvitæki-hliðin: núverandi „📦 Pör" bandið (`js/patches/253-sala-customer-
+history.js`, Sala → 🧾 Fyrri viðskipti) er ÓBREYTT í grunninn (les enn `customer_
+documents`+`solur` beint, alltaf ferskt) en spyr núna líka `document_pairs` til að
+fylla inn skýrslu sem vantaði bara vegna shared_report-tilviksins, og til að láta
+kind-röð birtast yfirhöfuð þegar reikningur er til en engin doc_type-röð flokkast
+undir það kind. Sendingin sjálf (`sendBundle`) sendi nú þegar bæði skjölin saman —
+ekkert nýtt þurfti þar.
+
+**Vísvitandi sleppt** (sjá verkefnalisti-athugasemd): full endursköpun „Skjöl &
+Viðhengi"-síðunnar sem flipuðum árs-bundlum, og að BLOKKA sendingu ef parið er
+ófullkomið — `sendBundle` sendir nú þegar það sem er til án þess að neita, sem er
+skárra en að læsa notandann úti vegna heimtu-galla í parningar-rökfræðinni.
+`document_pairs` er ekki sjálfvirkt viðhaldið (engin trigger) — bakfyllingin er
+ein-skipta; ný gögn sjást samt strax gegnum core kt+source-flæðið í patch 253, bara
+ekki gegnum `document_pairs`-lagið fyrr en bakfyllt er aftur.
+
 ## graphify
 
 Þekkingargraf **aðeins uppsett á stóru vélinni** — `graphify`-skipunin er EKKI til á
