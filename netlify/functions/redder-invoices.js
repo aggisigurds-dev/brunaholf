@@ -48,6 +48,38 @@ exports.handler = async (event) => {
     let body;
     try { body = JSON.parse(event.body || '{}'); }
     catch { return json(400, { error: 'Invalid JSON' }); }
+
+    // Bulk rename (verkefnalisti a12d429a — misspelled worksite variants that
+    // never grouped together, e.g. "Fjörður" vs "Fjarðagata"): retag every
+    // Redder invoice currently under `from` to `to` in one PATCH, and optionally
+    // teach the alias so future PDF reads normalise straight to `to`.
+    if (body.action === 'rename_worksite') {
+      const from = String(body.from || '').trim();
+      const to = String(body.to || '').trim();
+      if (!from || !to) return json(400, { error: 'from og to vantar' });
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/redder_invoices?worksite_match=eq.${encodeURIComponent(from)}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json', 'Prefer': 'return=representation',
+        },
+        body: JSON.stringify({ worksite_match: to }),
+      });
+      if (!r.ok) return json(r.status, { error: (await r.text()).slice(0, 300) });
+      const updated = await r.json();
+      if (body.learn_alias && from !== to) {
+        await fetch(`${SUPABASE_URL}/rest/v1/project_aliases?on_conflict=alias`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates',
+          },
+          body: JSON.stringify({ alias: from, canonical_name: to, source: 'manual-redder-link' }),
+        }).catch(() => {});
+      }
+      return json(200, { ok: true, updated: updated.length });
+    }
+
     if (!body.invoice_nr) return json(400, { error: 'invoice_nr required' });
 
     const { line_items, redder_line_items: _unused, ...invFields } = body;

@@ -38,6 +38,7 @@ exports.handler = async (event) => {
   let token;
   try { token = await freshAccessToken(); }
   catch (e) { return json(401, { error: e.message }); }
+  await loadAliasesFromDb();
 
   const stats = { folder, dry, scanned: 0, indexed: 0, dupSkip: 0, notInvoice: 0, errors: 0, rows: [] };
 
@@ -337,11 +338,27 @@ const ALIAS = {
   'nlsh': 'Landsspítalinn', 'nlsh 5-6. hæð': 'Landsspítalinn', 'nlsh 5-6': 'Landsspítalinn',
   'orkureitur': 'Orkureitur', 'fjallaböðin': 'Fjallaböðin Þjórsárdal', 'fjallaböð': 'Fjallaböðin Þjórsárdal',
 };
+// DB-backed aliases (verkefnalisti a12d429a): manual worksite renames made in
+// the Efniskostnaður tab write into `project_aliases` (POST /api/redder-invoices
+// {action:'rename_worksite', learn_alias:true}) — loaded once per invocation so
+// future PDF reads normalise straight to the canonical name without a code
+// change. DB aliases win over the hardcoded ALIAS map (they're user-curated).
+let ALIAS_DB = {};
+async function loadAliasesFromDb() {
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/project_aliases?select=alias,canonical_name`, { headers: sbHeaders() });
+    if (!r.ok) return;
+    const rows = await r.json();
+    for (const row of rows) if (row.alias && row.canonical_name) ALIAS_DB[String(row.alias).toLowerCase().trim()] = row.canonical_name;
+  } catch (_) {}
+}
 function normWorksite(name) {
   const n = String(name || '').trim();
   if (!n) return null;
   const key = n.toLowerCase().replace(/\s+/g, ' ').trim();
+  if (ALIAS_DB[key]) return ALIAS_DB[key];
   if (ALIAS[key]) return ALIAS[key];
+  for (const a in ALIAS_DB) if (key.indexOf(a) >= 0) return ALIAS_DB[a];
   for (const a in ALIAS) if (key.indexOf(a) >= 0) return ALIAS[a];
   return n;   // keep the cleaned raw name so it still groups; user can retie later
 }

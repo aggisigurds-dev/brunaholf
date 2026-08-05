@@ -16880,16 +16880,29 @@ async function renderEfniskostnadur(t){
 
       <div id="ef-table-host"></div>
     </div>
+    <datalist id="ef-ws-datalist"></datalist>
   `;
 
   const readBtn = document.getElementById('ef-read-btn');
   if (readBtn) readBtn.onclick = () => efReadRedder(t, readBtn);
 
   try {
-    const r = await fetch('/api/redder-invoices');
+    const [r, wsR] = await Promise.all([
+      fetch('/api/redder-invoices'),
+      fetch('/api/worksites?year=combined').catch(()=>null),
+    ]);
     if(!r.ok) throw new Error('HTTP '+r.status);
     const { rows, summary } = await r.json();
     const fmt = n => Math.round(n||0).toLocaleString('is-IS');
+
+    // Master worksite-name list (verkefnalisti a12d429a — manual linking picker),
+    // union of the app-wide worksite grid and whatever's already used here so
+    // renaming/relinking always offers at least the names already in use.
+    let wsNames = [];
+    try { const wsd = wsR && wsR.ok ? await wsR.json() : {worksites:[]}; wsNames = (wsd.worksites||[]).map(w=>w.project).filter(Boolean); } catch(_){}
+    const invWsRaw = inv => inv.worksite_match || null;
+    wsNames = [...new Set(wsNames.concat(rows.map(invWsRaw).filter(Boolean)))].sort((a,b)=>a.localeCompare(b,'is'));
+    document.getElementById('ef-ws-datalist').innerHTML = wsNames.map(n=>`<option value="${escapeAttr(n)}">`).join('');
 
     // Normalised month/worksite per invoice (reused for filtering + grouping).
     const invMonth = inv => inv.dagsetning ? String(inv.dagsetning).slice(0,7) : '(óþekkt)';
@@ -16902,6 +16915,75 @@ async function renderEfniskostnadur(t){
     const $fWs = document.getElementById('ef-f-ws');
     $fMonth.insertAdjacentHTML('beforeend', months.map(m=>`<option value="${escapeAttr(m)}">${escapeHtml(monthLabelStatic(m))}</option>`).join(''));
     $fWs.insertAdjacentHTML('beforeend', sites.map(s=>`<option value="${escapeAttr(s)}">${escapeHtml(s)}</option>`).join(''));
+
+    // Manual worksite linking (verkefnalisti a12d429a): "🔗 Tengja" on an invoice
+    // sets JUST that invoice's worksite_match (no aliasing — the raw text on
+    // unlinked invoices is often just a contact tag, not a real site-name
+    // variant, so learning an alias from it would misfile future invoices).
+    // "✏️" on a GROUP header bulk-renames every invoice currently under that
+    // worksite name AND teaches project_aliases, since that name already
+    // passed through the parser as a real (if misspelled) site name.
+    async function efSetInvoiceWorksite(invoiceNr, newName){
+      const resp = await fetch('/api/redder-invoices', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ invoice_nr: invoiceNr, worksite_match: newName }),
+      });
+      if(!resp.ok) throw new Error('HTTP '+resp.status+': '+(await resp.text()).slice(0,150));
+      const inv = rows.find(x=>x.invoice_nr===invoiceNr);
+      if(inv) inv.worksite_match = newName;
+    }
+    async function efRenameGroup(oldName, newName){
+      const resp = await fetch('/api/redder-invoices', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ action:'rename_worksite', from: oldName, to: newName, learn_alias: true }),
+      });
+      if(!resp.ok) throw new Error('HTTP '+resp.status+': '+(await resp.text()).slice(0,150));
+      for(const inv of rows) if(inv.worksite_match === oldName) inv.worksite_match = newName;
+    }
+    // One inline "picker" open at a time — replaces the trigger's slot with a
+    // datalist-backed text input + ✓/✕, restores the button on cancel/error.
+    function efOpenPicker(slot, current, onSave){
+      slot.innerHTML = `<span style="display:inline-flex;gap:4px;align-items:center" onclick="event.stopPropagation()">
+        <input type="text" list="ef-ws-datalist" value="${escapeAttr(current||'')}" placeholder="Verkstaður…"
+          style="font-size:11px;padding:3px 6px;width:170px;border:1px solid var(--border);border-radius:4px" class="ef-ws-input">
+        <button type="button" class="rg-tool ef-ws-ok" style="padding:2px 8px;font-size:11px">✓</button>
+        <button type="button" class="rg-tool ef-ws-x" style="padding:2px 8px;font-size:11px">✕</button>
+      </span>`;
+      const $inp = slot.querySelector('.ef-ws-input');
+      $inp.focus(); $inp.select();
+      const restore = (label) => { slot.innerHTML = `<button type="button" class="rg-tool ef-ws-trigger" style="padding:2px 8px;font-size:11px">${label}</button>`; };
+      slot.querySelector('.ef-ws-x').onclick = (e) => { e.stopPropagation(); restore(slot.dataset.efLabel); };
+      const commit = async () => {
+        const val = $inp.value.trim();
+        if(!val || val===current){ restore(slot.dataset.efLabel); return; }
+        const $ok = slot.querySelector('.ef-ws-ok');
+        $ok.disabled = true; $ok.textContent = '⏳';
+        try{
+          await onSave(val);
+          if(!wsNames.includes(val)){ wsNames.push(val); wsNames.sort((a,b)=>a.localeCompare(b,'is')); document.getElementById('ef-ws-datalist').innerHTML = wsNames.map(n=>`<option value="${escapeAttr(n)}">`).join(''); }
+          renderTable();
+        }
+        catch(e){ alert('Villa: '+(e.message||e)); restore(slot.dataset.efLabel); }
+      };
+      slot.querySelector('.ef-ws-ok').onclick = (e) => { e.stopPropagation(); commit(); };
+      $inp.addEventListener('keydown', e => { if(e.key==='Enter') commit(); if(e.key==='Escape') restore(slot.dataset.efLabel); });
+    }
+    // Delegated (host element survives re-renders — only its innerHTML changes
+    // on filter/save) so this binds once regardless of how many times renderTable() runs.
+    document.getElementById('ef-table-host').addEventListener('click', (e) => {
+      const trigger = e.target.closest('.ef-ws-trigger');
+      if(!trigger) return;
+      e.preventDefault(); e.stopPropagation();   // don't toggle the parent <details>
+      const slot = trigger.closest('.ef-ws-slot');
+      if(!slot) return;
+      const old = slot.dataset.efOld || '';
+      if(slot.dataset.efSlot === 'group'){
+        efOpenPicker(slot, old, (newVal) => efRenameGroup(old, newVal));
+      } else if(slot.dataset.efSlot === 'inv'){
+        const nr = slot.dataset.efInvoice;
+        efOpenPicker(slot, old, (newVal) => efSetInvoiceWorksite(nr, newVal));
+      }
+    });
 
     const renderTable = () => {
     const fMonth = $fMonth.value, fWs = $fWs.value;
@@ -16944,6 +17026,7 @@ async function renderEfniskostnadur(t){
                 <summary>
                   <span class="rg-fc-tag" style="background:#DBE9F8;color:#0F3B6E">${escapeHtml(monthLabelStatic(g.month))}</span>
                   <span class="rg-fc-item-name">${escapeHtml(g.worksite)}</span>
+                  ${g.worksite!=='(ótengt)' ? `<span class="ef-ws-slot" data-ef-slot="group" data-ef-old="${escapeAttr(g.worksite)}" data-ef-label="✏️" title="Endurnefna þennan verkstað alls staðar (t.d. sameina misstafaða tvítöku)"><button type="button" class="rg-tool ef-ws-trigger" style="padding:2px 6px;font-size:11px">✏️</button></span>` : ''}
                   <span class="rg-fc-item-cust">${g.invoices.length} reikningur${g.invoices.length>1?'ar':''}</span>
                   <span class="rg-fc-item-month"></span>
                   <span class="rg-fc-item-hrs"></span>
@@ -16952,8 +17035,10 @@ async function renderEfniskostnadur(t){
                 <div class="rg-fc-math">
                   ${g.invoices.map(inv => `
                     <div style="margin:8px 0;padding:10px;background:#fff;border-radius:6px;border:1px solid var(--border)">
-                      <div style="display:flex;justify-content:space-between;font-weight:600;font-size:12px">
-                        <span>Reikningur #${escapeHtml(inv.invoice_nr)} · ${inv.dagsetning || '—'}</span>
+                      <div style="display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:12px">
+                        <span>Reikningur #${escapeHtml(inv.invoice_nr)} · ${inv.dagsetning || '—'}
+                          <span class="ef-ws-slot" data-ef-slot="inv" data-ef-invoice="${escapeAttr(inv.invoice_nr)}" data-ef-old="${escapeAttr(inv.worksite_match||'')}" data-ef-label="${inv.worksite_match?'↪ Breyta':'🔗 Tengja við verkstað'}" style="margin-left:8px;font-weight:400"><button type="button" class="rg-tool ef-ws-trigger" style="padding:2px 6px;font-size:11px" title="${inv.worksite_match?'Færa þennan reikning á annan verkstað':'Tengja við verkstað handvirkt'}">${inv.worksite_match?'↪ Breyta':'🔗 Tengja við verkstað'}</button></span>
+                        </span>
                         <span>${fmt(inv.m_vsk)} kr m. vsk</span>
                       </div>
                       <div style="font-size:11px;color:var(--muted);margin-top:2px">${escapeHtml(inv.worksite_raw || '')} · seljandi: ${escapeHtml(inv.salesperson || '—')}</div>
