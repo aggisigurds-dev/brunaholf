@@ -111,6 +111,11 @@
   .cat-chip.active { background:var(--fg); color:#fff; border-color:var(--fg); }
   .cat-chip .cnt { font-variant-numeric:tabular-nums; opacity:.7; font-size:11px; }
 
+  /* Short request-id badge — so a project can be pointed at directly ("check #94295522")
+     instead of describing it in prose. Click to copy the full id. */
+  .id-badge { display:inline-block; padding:1px 6px; border-radius:5px; font:700 10.5px ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.02em; background:#f1f5f9; color:#475569; border:1px solid #e2e8f0; cursor:pointer; }
+  .id-badge:hover { background:#e2e8f0; color:#1e293b; }
+
   /* Category badge on task row */
   .cat-badge { display:inline-block; padding:1.5px 7px; border-radius:99px; font-size:10px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; margin-right:6px; vertical-align:middle; }
   .cat-utlit    { background:#fce7f3; color:#9d174d; }
@@ -406,7 +411,9 @@ function renderTask(t) {
           notes +
           fb +
           (imgs.length ? '<div class="imgs">' + imgs.join('') + '</div>' : '') +
-          '<div class="meta">' + fmtTime(t.created_at) +
+          '<div class="meta">' +
+            '<span class="id-badge" title="Fullt id: ' + esc(t.id) + ' — smelltu til að afrita" onclick="copyTaskId(event,\'' + t.id + '\')">#' + esc(String(t.id).slice(0, 8)) + '</span> · ' +
+            fmtTime(t.created_at) +
             (t.completed_at ? ' · klárað ' + fmtTime(t.completed_at) : '') +
           '</div>' +
         '</div>' +
@@ -414,6 +421,18 @@ function renderTask(t) {
       '<div class="ops">' + ops.join('') + '</div>' +
     '</div>'
   );
+}
+
+function copyTaskId(ev, id) {
+  ev.stopPropagation();
+  const el = ev.currentTarget;
+  const restore = el.textContent;
+  const done = () => { el.textContent = '✓ afritað'; setTimeout(() => { el.textContent = restore; }, 1200); };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(id).then(done).catch(() => window.prompt('Afritaðu id:', id));
+  } else {
+    window.prompt('Afritaðu id:', id);
+  }
 }
 
 // Category metadata — labels rendered on chips + row badges. Add a new key

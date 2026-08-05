@@ -1769,6 +1769,7 @@ const DEFAULT_STATE = {
     {id:'verkstadir',  label:'Verkstaðir',  icon:'🏗'},
     {id:'skuldunautar', label:'Skuldunautar', icon:'💸'},
     {id:'skyrslur', label:'Skýrslur', icon:'📊'},
+    {id:'afkost', label:'Afköst', icon:'📈'},
     {id:'krofuyfirlit', label:'Kröfu yfirlit', icon:'📄'},
     {id:'krofur', label:'Krófur & Tekjur', icon:'📊'},
     {id:'hreyfingaryfirlit', label:'Hreyfingaryfirlit', icon:'📒'},
@@ -2534,6 +2535,7 @@ function render(){
   if(t.id==='verkstadir') return renderWorksites(t);
   if(t.id==='skuldunautar') return renderSkuldunautar(t);
   if(t.id==='skyrslur') return renderSkyrslur(t);
+  if(t.id==='afkost') return renderAfkost(t);
   if(t.id==='krofuyfirlit') return renderKrofuyfirlit(t);
   if(t.id==='krofur') return renderKrofur(t);
   if(t.id==='hreyfingaryfirlit') return renderHreyfingar(t);
@@ -13276,6 +13278,90 @@ window.cgDeleteReport = function(i){
   if(!confirm('Eyða þessari skýrslu?')) return;
   if(window.__cgReports){ window.__cgReports.splice(i,1); if(window.__cgSaveReports) window.__cgSaveReports(); render(); }
 };
+
+// ── Afköst — performance dashboard (verkefnalisti add5560a / ea76fd48) ──────
+// 14-day work-order/workshop/inspection throughput, weekly sales by channel,
+// 3-month macro trend vs the prior 3 months. Reads /api/afkost (aggregates
+// solur/verkbeidnir/uttaeki server-side — no new tables).
+async function renderAfkost(t){
+  const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const fmtKr = n => (Math.round(Number(n)||0)).toLocaleString('is-IS').replace(/,/g,'.') + ' kr';
+  const fmtDay = iso => { const d=new Date(iso+'T00:00:00'); return isNaN(d)?iso:(String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')); };
+  const pct = (now,prev) => { if(!prev) return now?'+∞':'±0%'; const p=Math.round((now-prev)/prev*100); return (p>0?'+':'')+p+'%'; };
+
+  $view.innerHTML = `
+    <div style="max-width:1100px;margin:0 auto;padding:4px">
+      <h1 style="margin:0 0 4px;font-size:24px;font-weight:800;color:#0f172a;display:flex;align-items:center;gap:10px">📈 Afköst</h1>
+      <div id="ak-meta" style="font-size:12px;color:#64748b;margin-bottom:18px">Sækir…</div>
+      <div id="ak-body"></div>
+    </div>`;
+
+  function barsHtml(rows, keys, title){
+    const max = Math.max(1, ...rows.flatMap(r=>keys.map(k=>+r[k.key]||0)));
+    return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:800;color:#0f172a;margin-bottom:12px">${esc(title)}</div>
+      <div style="display:flex;align-items:flex-end;gap:6px;height:120px">
+        ${rows.map(r => `
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0">
+            <div style="flex:1;display:flex;align-items:flex-end;gap:2px;width:100%;justify-content:center">
+              ${keys.map(k => `<div title="${esc(k.label)}: ${r[k.key]}" style="width:${Math.floor(60/keys.length)}%;height:${Math.max(2,(+r[k.key]||0)/max*100)}%;background:${k.color};border-radius:2px 2px 0 0"></div>`).join('')}
+            </div>
+            <div style="font-size:9.5px;color:#94a3b8;white-space:nowrap">${esc(r._label)}</div>
+          </div>`).join('')}
+      </div>
+      <div style="display:flex;gap:14px;margin-top:10px;flex-wrap:wrap">
+        ${keys.map(k=>`<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#475569"><span style="width:9px;height:9px;border-radius:2px;background:${k.color};display:inline-block"></span>${esc(k.label)}</div>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  function card(label, value, sub){
+    return `<div style="flex:1 1 180px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px">
+      <div style="font-size:10.5px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.04em">${esc(label)}</div>
+      <div style="font-size:22px;font-weight:800;color:#0f172a;margin-top:4px">${esc(value)}</div>
+      ${sub?`<div style="font-size:11px;color:#94a3b8;margin-top:2px">${esc(sub)}</div>`:''}
+    </div>`;
+  }
+
+  try{
+    const r = await fetch('/api/afkost', {cache:'no-store'});
+    const d = await r.json();
+    if(!r.ok || d.error) throw new Error(d.error || ('HTTP '+r.status));
+    const meta = $view.querySelector('#ak-meta');
+    if(meta) meta.textContent = 'Síðast sótt ' + new Date(d.generated_at).toLocaleString('is-IS');
+
+    const m = d.macro3m || {};
+    const p = m.prev_period || {};
+    const body = $view.querySelector('#ak-body');
+    body.innerHTML = `
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px">
+        ${card('Innkomnar verkbeiðnir · 3 mán', m.verkbeidnir_in||0, pct(m.verkbeidnir_in,p.verkbeidnir_in)+' frá fyrri 3 mán')}
+        ${card('Verkbeiðnum lokið · 3 mán', m.verkbeidnir_done||0, pct(m.verkbeidnir_done,p.verkbeidnir_done)+' frá fyrri 3 mán')}
+        ${card('Úttektir/brunakerfi · 3 mán', m.uttektir||0, pct(m.uttektir,p.uttektir)+' frá fyrri 3 mán')}
+        ${card('Sala samtals · 3 mán', fmtKr(m.sala_kr), pct(m.sala_kr,p.sala_kr)+' frá fyrri 3 mán')}
+      </div>
+
+      ${barsHtml((d.daily14||[]).map(x=>({...x, _label:fmtDay(x.date)})),
+        [{key:'verkbeidnir_in',label:'Innkomið',color:'#2563eb'},{key:'verkbeidnir_done',label:'Klárað á verkstæði',color:'#16a34a'}],
+        '🛠 Verkbeiðnir — síðustu 14 daga')}
+
+      ${barsHtml((d.daily14||[]).map(x=>({...x, _label:fmtDay(x.date)})),
+        [{key:'uttektir',label:'Úttektarskýrslur',color:'#dc2626'},{key:'taeki_i_uttektum',label:'Tæki skoðuð',color:'#f59e0b'}],
+        '🧯 Úttektir í vettvangsþjónustu — síðustu 14 daga')}
+
+      ${barsHtml((d.weekly_sales||[]).map(x=>({...x, _label:fmtDay(x.week_start)})),
+        [{key:'i_verslun_count',label:'Í verslun (fjöldi)',color:'#0369a1'},{key:'i_thjonustuferdum_count',label:'Í þjónustuferðum (fjöldi)',color:'#7c3aed'}],
+        '💰 Sölur eftir sölurás — vikulega, síðustu ~3 mánuði')}
+
+      <div style="font-size:11px;color:#94a3b8;margin-top:4px">
+        "Í verslun" = sölur með uppruna <code>pos</code> · "Í þjónustuferðum" = <code>uttekt</code>/<code>brunakerfi</code> (sama flokkun og notuð er í Pörun/v_bundle_coverage).
+        Verkbeiðni-teljarar miðast við <code>dropoff</code>/<code>pickup</code> dagsetningar á verkbeiðnum; úttektar-tækjafjöldi miðast við tæki með <code>last_insp</code> þann dag.
+      </div>`;
+  }catch(e){
+    const body = $view.querySelector('#ak-body');
+    if(body) body.innerHTML = '<div style="padding:20px;text-align:center;color:#dc2626">Villa: '+esc(e.message||e)+'</div>';
+  }
+}
 
 async function renderKrofuyfirlit(t){
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
