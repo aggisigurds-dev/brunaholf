@@ -10292,17 +10292,34 @@ async function renderGerdReikninga(t){
     if(!dvEl) return;
     dvEl.textContent = 'Ber saman við tímabók…';
     try{
-      const resp = await fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&month=${encodeURIComponent(month)}`);
-      const data = await resp.json();
-      if(!resp.ok) throw new Error(data.error || ('HTTP '+resp.status));
-      const sp = data.split || {};
-      const tbDv = Math.round((Number(sp.hours_dagvinna)||0)*100)/100;
-      const tbEv = Math.round((Number(sp.hours_eftirvinna)||0)*100)/100;
+      // Kröfuyfirlit's Tímaskýrsla lets Agnar hand-correct hours (state.ui.timabok_edits) —
+      // that edited split is the "current tímabók" from his point of view. Only fall back to
+      // a live /api/timabok fetch (raw Tímavera) when no such edit exists for this month, else
+      // this would flag a false mismatch against numbers he deliberately overrode, and miss
+      // the real case Agnar reported: Efnislisti happening to match raw while Tímabók (edited)
+      // disagrees — exactly the "two different numbers" risk.
+      const key = name+'|'+month;
+      const savedEdit = (state.ui && state.ui.timabok_edits && state.ui.timabok_edits[key]) || null;
+      let tbDv, tbEv, source;
+      if (savedEdit && Array.isArray(savedEdit.rows)) {
+        const t = tbkYfSplit(savedEdit.rows, savedEdit.yfirvinna || {on:false, thr:8});
+        tbDv = Math.round((Number(t.dv)||0)*100)/100;
+        tbEv = Math.round((Number(t.yf)||0)*100)/100;
+        source = 'breytt tímabók';
+      } else {
+        const resp = await fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&month=${encodeURIComponent(month)}`);
+        const data = await resp.json();
+        if(!resp.ok) throw new Error(data.error || ('HTTP '+resp.status));
+        const sp = data.split || {};
+        tbDv = Math.round((Number(sp.hours_dagvinna)||0)*100)/100;
+        tbEv = Math.round((Number(sp.hours_eftirvinna)||0)*100)/100;
+        source = 'tímaveru.is';
+      }
       const dvOk = Math.abs(tbDv - (Number(curDvh)||0)) < 0.01;
       const evOk = Math.abs(tbEv - (Number(curEvh)||0)) < 0.01;
       dvEl.innerHTML = dvOk
         ? '<span style="color:#16a34a">✓ í takt við tímabók</span>'
-        : `<span style="color:#dc2626;font-weight:700" title="Tímabók fyrir ${escapeAttr(name)} · ${escapeAttr(month)} sýnir ${tbDv} klst dagvinnu núna">⚠️ tímabók: ${tbDv} klst — 📥 til að uppfæra</span>`;
+        : `<span style="color:#dc2626;font-weight:700" title="Tímabók (${escapeAttr(source)}) fyrir ${escapeAttr(name)} · ${escapeAttr(month)} sýnir ${tbDv} klst dagvinnu núna">⚠️ tímabók: ${tbDv} klst — 📥 til að uppfæra</span>`;
       if(evEl) evEl.innerHTML = evOk
         ? '<span style="color:#16a34a">✓ í takt</span>'
         : `<span style="color:#dc2626;font-weight:700">⚠️ tímabók: ${tbEv} klst</span>`;
