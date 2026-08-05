@@ -93,8 +93,8 @@ exports.handler = async (event) => {
 
     // 1) Base + sites in parallel
     const [baseRes, sitesRes] = await Promise.all([
-      sbGet(`customers_base?id=eq.${baseId}&select=id,kennitala,nafn,heimilisfang,rekstrarfelag,greidsluskilmali,payment_method,retention_pct,retention_notes,contact_email,contact_phone,general_notes,last_payment_at&limit=1`),
-      sbGet(`fyrirtaeki?customer_base_id=eq.${baseId}&deleted_at=is.null&select=id,nafn,heimilisfang,er_i_thjonustu,status,banner_note,review_flag,kennitala`),
+      sbGet(`customers_base?id=eq.${baseId}&select=id,kennitala,nafn,heimilisfang,rekstrarfelag,greidsluskilmali,payment_method,retention_pct,retention_notes,contact_email,contact_phone,general_notes,last_payment_at,netfang&limit=1`),
+      sbGet(`fyrirtaeki?customer_base_id=eq.${baseId}&deleted_at=is.null&select=id,nafn,heimilisfang,er_i_thjonustu,status,banner_note,review_flag,kennitala,netfang`),
     ]);
     const baseRows = await baseRes.json();
     if (!baseRows.length) return json(404, { error: `Engin customers_base.id=${baseId}` });
@@ -148,17 +148,69 @@ exports.handler = async (event) => {
     // 4) Summary aggregates
     const summary = buildSummary(docs, invoices);
 
+    // 4b) Last email contact (verkefnalisti aaaa0cb6 — "síðasti samskipti" per
+    // kúnna). Matches the SAME conservative exact-address logic as
+    // /api/company-mail (Slökkvitæki's envelope badge) — newest inbound email
+    // from base.contact_email or any live site's netfang, plus whether it's
+    // been replied to (a SENT email addressed to it since).
+    const last_contact = await fetchLastContact(base, sites);
+
     // 5) AI flags (heuristic — no AI call)
-    const ai_flags = computeFlags({ base, sites, docs, invoices, summary });
+    const ai_flags = computeFlags({ base, sites, docs, invoices, summary, last_contact });
 
     return json(200, {
       generated_at: new Date().toISOString(),
-      base, sites, docs, invoices, summary, ai_flags,
+      base, sites, docs, invoices, summary, ai_flags, last_contact,
     });
   } catch (e) {
     return json(500, { error: String(e.message || e) });
   }
 };
+
+// Newest inbound email from this customer (base.contact_email or any live
+// site's netfang) + whether it's been replied to. Exact-address match only —
+// same conservative approach as /api/company-mail (which does this across ALL
+// companies for Slökkvitæki's "Fyrirtæki í þjónustu" list); here it's scoped
+// to one customer so no cross-customer ambiguity tracking is needed.
+async function fetchLastContact(base, sites) {
+  const clean = (v) => {
+    if (!v) return '';
+    let s = String(v).trim().toLowerCase();
+    const m = s.match(/<([^>]+)>/); if (m) s = m[1].trim();
+    return s.replace(/[),;]+$/, '');
+  };
+  const emails = [...new Set([base.contact_email, base.netfang, ...sites.map(s => s.netfang)]
+    .map(clean).filter(e => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)))];
+  if (!emails.length) return null;
+  try {
+    const inList = emails.map(e => `"${e}"`).join(',');
+    const rows = await sbGet(
+      `email_digest?select=sender_email,to_addresses,subject,snippet,received_at,folder` +
+      `&sender_email=in.(${inList})&order=received_at.desc&limit=200`
+    ).then(r => r.ok ? r.json() : []);
+    let inbound = null;
+    for (const m of rows) {
+      if (String(m.folder || '').toUpperCase() === 'SENT') continue;
+      if (!emails.includes(clean(m.sender_email))) continue;
+      inbound = m; break; // rows are received_at desc → first match is newest
+    }
+    if (!inbound) return null;
+    // Was there a SENT reply addressed to that same sender, at/after the inbound?
+    const sentRows = await sbGet(
+      `email_digest?select=to_addresses,received_at&folder=eq.SENT` +
+      `&received_at=gte.${encodeURIComponent(inbound.received_at || '')}&order=received_at.desc&limit=200`
+    ).then(r => r.ok ? r.json() : []);
+    const from = clean(inbound.sender_email);
+    const replied = sentRows.some(s => {
+      const to = Array.isArray(s.to_addresses) ? s.to_addresses : String(s.to_addresses || '').split(/[,;]/);
+      return to.some(t => clean(t) === from);
+    });
+    return {
+      from, subject: inbound.subject || '', snippet: (inbound.snippet || '').slice(0, 240),
+      received_at: inbound.received_at || null, unreplied: !replied,
+    };
+  } catch (_) { return null; }
+}
 
 function buildSummary(docs, invoices) {
   const by_type = { uttektarskyrsla: 0, reikningur: 0, samningur: 0, annad: 0 };
@@ -219,9 +271,21 @@ function buildSummary(docs, invoices) {
   };
 }
 
-function computeFlags({ base, sites, docs, invoices, summary }) {
+function computeFlags({ base, sites, docs, invoices, summary, last_contact }) {
   const f = [];
   const yearNow = new Date().getUTCFullYear();
+
+  // Email — unreplied inbound message (verkefnalisti aaaa0cb6: "flagar 'enginn
+  // svarað í 3 daga'"). Shown as soon as it's unreplied (a fresh unread message
+  // is still worth surfacing), escalated to warn once it's been 3+ days.
+  if (last_contact && last_contact.unreplied) {
+    const days = last_contact.received_at ? Math.floor((Date.now() - new Date(last_contact.received_at).getTime()) / 86400000) : null;
+    f.push({
+      severity: (days != null && days >= 3) ? 'warn' : 'info',
+      msg: `✉️ Ósvarað póstsamskipti${days != null ? ` (${days} ${days === 1 ? 'dagur' : 'dagar'} síðan)` : ''}`,
+      hint: `${last_contact.from}${last_contact.subject ? ' — "' + last_contact.subject + '"' : ''}`,
+    });
+  }
 
   // Missing yearly inspection
   if (base.er_i_thjonustu) {

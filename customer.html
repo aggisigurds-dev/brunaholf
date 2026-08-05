@@ -164,7 +164,7 @@ const DOC_TYPE_LABEL = { uttektarskyrsla: 'Úttekt', reikningur: 'Reikningur', s
 
 function render(d) {
   LAST_DATA = d;
-  const { base, sites, docs, invoices, summary, ai_flags } = d;
+  const { base, sites, docs, invoices, summary, ai_flags, last_contact } = d;
   let html = '';
 
   // Header card
@@ -186,6 +186,11 @@ function render(d) {
   if (slReikThisYear.length) {
     const sum = slReikThisYear.reduce((s, x) => s + (Number(x.amount) || 0), 0);
     html += '<span class="b sys">' + yearNow + ': ' + slReikThisYear.length + ' reikn · ' + fmtKr(sum) + ' kr</span>';
+  }
+  // Síðasta póstsamskipti (verkefnalisti aaaa0cb6) — sýnt óháð svar-stöðu; ósvarað fær sér lit.
+  if (last_contact && last_contact.received_at) {
+    const cls = last_contact.unreplied ? 'due' : 'ok';
+    html += `<span class="b ${cls}" title="${esc(last_contact.from || '')}${last_contact.subject ? ' — ' + esc(last_contact.subject) : ''}">✉️ Síðast í sambandi: ${esc(fmtDate(last_contact.received_at))}${last_contact.unreplied ? ' (ósvarað)' : ''}</span>`;
   }
   html += '</div></div>';
 

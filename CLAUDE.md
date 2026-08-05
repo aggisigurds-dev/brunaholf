@@ -306,6 +306,18 @@ Verkefnalisti 3af766ff, sex smærri fix á `renderNLSH` í index.html + `netlify
   töflunum (tooltip + undirtexti).
 - **Lokuð göt per viku**: pakkað í `<details>` svo hægt sé að fella út/inn.
 
+## customer.html — síðasta póstsamskipti (2026-08-05)
+
+Verkefnalisti aaaa0cb6. Slökkvitæki-hliðin (unreplied-envelope á „Fyrirtæki í þjónustu",
+`/api/company-mail` + patch 295) var þegar til (2026-07-31) — vantaði bara sama upplýsingu
+á Brunahólfs kúnna-síðuna sjálfa. `netlify/functions/customer.js` reiknar núna
+`last_contact` (nýjasti INN-pósturinn frá `base.contact_email`/`netfang` eða einhverju
+lifandi `fyrirtaeki.netfang`, + hvort honum sé svarað — sama varfærna nákvæma-netfangs-
+mátun og company-mail.js, bara á einn kúnna í einu). Birtist sem badge í haus-kortinu
+(`customer.html`) ALLTAF þegar til er samskipti, og sem `🤖 AI Ráðgjafi`-flagg (info fyrstu
+2 daga, warn frá 3 dögum) þegar ósvarað — bein ósk verkefnalistans um „flagar 'enginn
+svarað í 3 daga'".
+
 ## graphify
 
 Þekkingargraf **aðeins uppsett á stóru vélinni** — `graphify`-skipunin er EKKI til á
