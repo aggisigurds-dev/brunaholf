@@ -23,7 +23,7 @@ and `multitool.html`, so treat them as fixed:
 |---|---|---|
 | Reikningar - Invoices | `1FHHX99LRB_9w_LqwHIY57T4l9mLMID7p` | Slökkvitæki-issued invoices (master) |
 | Úttektarskýrslur | `1VSRRw6O8U6lU8WzZxA8CkLtrAmiU07mg` | Fire-extinguisher inspection reports |
-| Slökkvitæki - Þjónustusamningar - Master | `1f2kzXhbkU0xJ0MFPxRpWjoPmWZBlm1zZ` | Service contracts |
+| Þjónustusamningar | `1hu405fCw01mYtYSn4BqIPvhtPCPuzmwM` | Service contracts (canonical — see note below) |
 | Brunakerfisúttektir | `1OtsCTzM6FEQbaKBrQ7SqEU6xFKGBWICu` | Fire-alarm inspection reports |
 | Brunakerfis reikningar | `1Qp5TogjHhszE_4hfMW5ebGKLDHk5iqEV` | Fire-alarm invoices |
 | Annað | `1H6izhb24L5Rp2m7XMgt1ss-MkcLltf5O` | Vendor / bókhald / unrelated (never linked to a customer) |
@@ -35,12 +35,13 @@ Scope every search to a folder — `parentId = '<id>'` — rather than searching
 of Drive. An unscoped `title contains` search reaches personal files and the
 `Annað` junk drawer and will surface the wrong document.
 
-**Two samningar folders exist.** All code points at
-`1f2kzXh…` ("Slökkvitæki - Þjónustusamningar - Master"), but a newer plain
-"Þjónustusamningar" folder (`1hu405fCw01mYtYSn4BqIPvhtPCPuzmwM`, created
-2026-07-26) sits beside it and is referenced by nothing. When a contract is
-missing, check both, and ask Agnar which is canonical before writing anything
-into either.
+**Two samningar folders exist — resolved 2026-08-05.** The old "Slökkvitæki -
+Þjónustusamningar - Master" folder (`1f2kzXhbkU0xJ0MFPxRpWjoPmWZBlm1zZ`) turned
+out to be empty; all 264 real contracts live in the plain "Þjónustusamningar"
+folder (`1hu405fCw01mYtYSn4BqIPvhtPCPuzmwM`, created 2026-07-26), which Agnar
+confirmed is canonical. Code (`relink-docs.js`, `samningar-read.js`,
+`samningar-sheet.js`, `multitool.html`, `index.html`) now points at it. The old
+"Master" folder is retired — don't write into it.
 
 ## Filename conventions
 

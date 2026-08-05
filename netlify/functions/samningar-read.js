@@ -19,7 +19,9 @@ const { sitesForBase, resolveSite, siteWriteAllowed } = require('./_spine');
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ISSUER_KT = '6005080400';
-const DEFAULT_FOLDER = '1f2kzXhbkU0xJ0MFPxRpWjoPmWZBlm1zZ'; // Slökkvitæki - Þjónustusamningar - Master
+// 2026-08-05 (Agnar confirmed): the old "Master" folder is empty — all 264
+// real contracts live in the plain "Þjónustusamningar" folder, now canonical.
+const DEFAULT_FOLDER = '1hu405fCw01mYtYSn4BqIPvhtPCPuzmwM'; // Þjónustusamningar
 
 const MONTHS = { 'januar':1,'janúar':1,'jan':1,'februar':2,'febrúar':2,'feb':2,'mars':3,'mar':3,
   'april':4,'apríl':4,'apr':4,'mai':5,'maí':5,'juni':6,'júní':6,'jun':6,'jún':6,
