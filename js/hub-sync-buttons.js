@@ -129,6 +129,9 @@
           dot.className = "dot done"; el.classList.add("ok"); setTxt("✓ samstillt núna · " + detail);
           _dss = null;                                       // þvinga ferska freshness við næstu lestur
           el._quiet = Date.now() + 8000;                     // haltu „✓" í 8s, sýndu svo raun-ferskleika
+          // Láttu síður sem eiga eigin gögn háð þessum workflow vita (t.d. Kröfu
+          // yfirlit endurhleður þrepin sín þegar Payday er samstillt — sjá index.html).
+          try { document.dispatchEvent(new CustomEvent("hub-sync-done", { detail: { wf, label, detail } })); } catch (_) {}
         } catch (e) {
           dot.className = "dot error"; el.classList.add("err"); setTxt("✗ " + (e.message || e));
           el._quiet = Date.now() + 8000;
