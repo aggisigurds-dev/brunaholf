@@ -10278,6 +10278,37 @@ async function renderGerdReikninga(t){
     });
   }
 
+  // 2026-08-05 (verkefnalisti 0138d239): Efnislistinn's dagvinna/eftirvinna
+  // fields are only ever pulled from Tímabók when "📥 Fylla úr tímabók" is
+  // clicked — the initial value (new draft) comes from monthHours(), a
+  // cached Tímavera total that can silently drift out of sync with whatever
+  // Tímabók has been edited to since. Rather than guess and auto-overwrite
+  // (risking clobbering an intentional manual override), surface the
+  // mismatch so it's visible instead of silently shipping two different
+  // numbers on the invoice vs. Kröfuyfirlit's tímabók.
+  async function checkTimabokSync(name, month, curDvh, curEvh){
+    const dvEl = document.getElementById('gr-dvh-sync');
+    const evEl = document.getElementById('gr-evh-sync');
+    if(!dvEl) return;
+    dvEl.textContent = 'Ber saman við tímabók…';
+    try{
+      const resp = await fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&month=${encodeURIComponent(month)}`);
+      const data = await resp.json();
+      if(!resp.ok) throw new Error(data.error || ('HTTP '+resp.status));
+      const sp = data.split || {};
+      const tbDv = Math.round((Number(sp.hours_dagvinna)||0)*100)/100;
+      const tbEv = Math.round((Number(sp.hours_eftirvinna)||0)*100)/100;
+      const dvOk = Math.abs(tbDv - (Number(curDvh)||0)) < 0.01;
+      const evOk = Math.abs(tbEv - (Number(curEvh)||0)) < 0.01;
+      dvEl.innerHTML = dvOk
+        ? '<span style="color:#16a34a">✓ í takt við tímabók</span>'
+        : `<span style="color:#dc2626;font-weight:700" title="Tímabók fyrir ${escapeAttr(name)} · ${escapeAttr(month)} sýnir ${tbDv} klst dagvinnu núna">⚠️ tímabók: ${tbDv} klst — 📥 til að uppfæra</span>`;
+      if(evEl) evEl.innerHTML = evOk
+        ? '<span style="color:#16a34a">✓ í takt</span>'
+        : `<span style="color:#dc2626;font-weight:700">⚠️ tímabók: ${tbEv} klst</span>`;
+    }catch(_){ dvEl.textContent = ''; }
+  }
+
   // ===== Efnislisti editor (prefilled, editable, savable) =====
   function openEditor(name){
     const month = state.ui.gr_month;
@@ -10338,9 +10369,9 @@ async function renderGerdReikninga(t){
           <div class="gr-r2"><div class="gr-f"><label>Frá</label><input type="date" id="gr-fra" value="${fra}"></div><div class="gr-f"><label>Til</label><input type="date" id="gr-til" value="${til}"></div></div>
           <div class="gr-f" style="margin-top:2px"><label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-weight:600"><input type="checkbox" id="gr-datemode" ${dateText?'checked':''}> Skrifa dagsetningu sjálf/ur á reikninginn (t.d. „Maí 2026")</label><input type="text" id="gr-datetext" value="${escapeAttr(dateText)}" placeholder="t.d. Maí 2026" style="margin-top:6px;${dateText?'':'display:none'}"></div>
           <div class="gr-st">Tími <button type="button" id="gr-fill-hours" class="gr-btn" style="float:right;padding:3px 9px;font-size:11px" title="Fylla dagvinnu/yfirvinnu úr tímabók (yfirvinna eftir 8 klst/dag — 8,5 hjá Fjarðagötu; helgar (lau/sun) allar yfirvinna)">📥 Fylla úr tímabók</button></div>
-          <div class="gr-r3"><div class="gr-f"><label>Dagvinna</label><div style="font-size:11px;color:#94a3b8;padding:6px 0">klst úr Tímavera</div></div>
+          <div class="gr-r3"><div class="gr-f"><label>Dagvinna</label><div id="gr-dvh-sync" style="font-size:11px;color:#94a3b8;padding:6px 0">—</div></div>
             <div class="gr-f"><label style="font-size:11px;color:#475569;font-weight:600">klst (breyta hér)</label><input type="text" inputmode="decimal" id="gr-dvh" value="${dvH}" style="background:#fffbeb;border-color:#fcd34d"></div><div class="gr-f"><label style="font-size:11px;color:#94a3b8">kr/klst</label><input type="text" inputmode="decimal" id="gr-dvr" value="${dvR}"></div></div>
-          <div class="gr-r3"><div class="gr-f"><label>Yfirvinna</label></div>
+          <div class="gr-r3"><div class="gr-f"><label>Yfirvinna</label><div id="gr-evh-sync" style="font-size:11px;color:#94a3b8;padding:6px 0"></div></div>
             <div class="gr-f"><label style="font-size:11px;color:#475569;font-weight:600">klst (breyta hér)</label><input type="text" inputmode="decimal" id="gr-evh" value="${evH}" style="background:#fffbeb;border-color:#fcd34d"></div><div class="gr-f"><label style="font-size:11px;color:#94a3b8">kr/klst</label><input type="text" inputmode="decimal" id="gr-evr" value="${evR}"></div></div>
           <div class="gr-st">Akstur</div>
           <div class="gr-r2"><div class="gr-f"><label>km × ${r.km}</label><input type="number" id="gr-km" value="${km}" step="10"></div><div class="gr-f"><label>ferðir × ${fmt(r.ferd)}</label><input type="number" id="gr-ferd" value="${fr}" step="1"></div></div>
@@ -10372,6 +10403,7 @@ async function renderGerdReikninga(t){
     bg.addEventListener('click', e=>{ if(e.target===bg) close(); });
     document.getElementById('gr-close').onclick = close;
     document.getElementById('gr-close2').onclick = close;
+    checkTimabokSync(name, month, dvH, evH);
     document.getElementById('gr-manual-btn').onclick = () => {
       const m = document.getElementById('gr-manual');
       const show = m.style.display === 'none';
@@ -10609,15 +10641,21 @@ async function renderGerdReikninga(t){
         if(!resp.ok) throw new Error(data.error || ('HTTP '+resp.status));
         const sp = data.split;
         if(!sp || (!sp.hours_dagvinna && !sp.hours_eftirvinna)){ alert(`Engar tímafærslur fyrir ${name} í ${monthLabel(month)}.`); return; }
-        document.getElementById('gr-dvh').value = Math.round((Number(sp.hours_dagvinna)||0)*100)/100;
-        document.getElementById('gr-evh').value = Math.round((Number(sp.hours_eftirvinna)||0)*100)/100;
+        const newDvh = Math.round((Number(sp.hours_dagvinna)||0)*100)/100;
+        const newEvh = Math.round((Number(sp.hours_eftirvinna)||0)*100)/100;
+        document.getElementById('gr-dvh').value = newDvh;
+        document.getElementById('gr-evh').value = newEvh;
         draw();
+        checkTimabokSync(name, month, newDvh, newEvh);
       } catch(e){ alert('Gat ekki sótt tímabók: '+(e.message||e)); }
       finally { btn.textContent = old; btn.disabled = false; }
     };
 
     // Tímaskýrsla: open the editable staff-attendance sheet (edit hours → save + PDF).
     document.getElementById('gr-timabok').onclick = () => openTimabok(name, month);
+    // Re-check sync status if the operator edits the hours by hand too.
+    ['gr-dvh','gr-evh'].forEach(id => document.getElementById(id).addEventListener('change', () =>
+      checkTimabokSync(name, month, numv('gr-dvh'), numv('gr-evh'))));
   }
 
   // ===== Gata (Ajour) uppgjör =====
