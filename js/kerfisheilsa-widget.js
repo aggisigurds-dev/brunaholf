@@ -62,13 +62,20 @@
     document.body.appendChild(m);
   }
   async function render() {
+    // 2026-08-05 (ósk Agnars: „geturðu tekið burtu þetta efsta á brunaholf
+    // síðunni"): spjaldið féll aftur á `document.body` þegar Dagurinn-sýnin
+    // fannst ekki og sat þá EFST á hverri einustu síðu — 182 px fyrir ofan
+    // borðann, á undan öllu öðru. Nú birtist það aðeins þar sem það á heima:
+    // á Dagurinn. Finnist sú sýn ekki er ekkert sett upp (og eldra spjald
+    // hreinsað) í stað þess að troða sér efst.
     let host = document.querySelector('#view-dagurinn, [data-view="dagurinn"]');
     let card = document.getElementById('_kh-card');
+    if (!host) { if (card) card.remove(); return; }
     if (!card) {
       card = document.createElement('div');
       card.id = '_kh-card';
       card.style.cssText = 'margin:12px auto;max-width:1100px;background:#fff;border:1px solid #e2e8f0;border-left:4px solid #10b981;border-radius:14px;padding:13px 16px;font-size:13.5px;font-family:inherit;position:relative;z-index:50';
-      (host || document.body).insertBefore(card, (host || document.body).firstChild);
+      host.insertBefore(card, host.firstChild);
     }
     card.innerHTML = '<div style="font-weight:800;font-size:12px;letter-spacing:.06em;color:#334155;margin-bottom:8px">🩺 KERFISHEILSA <span style="font-weight:400;color:#94a3b8">— smelltu á lið til að sjá lagfæringu</span></div><div id="_kh-rows">Athuga…</div>';
     const rows = card.querySelector('#_kh-rows');
