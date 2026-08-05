@@ -282,6 +282,30 @@ við annan verkstað en restina af reikningnum) — `redder_line_items` hefur en
 `worksite`-dálk, og öll skoðuð dæmi af ólæstum reikningum voru heilir reikningar sem
 vantaði verkstað, ekki blönduð fjölverkstaða-reikningar. Bæta við ef alvöru þörf kemur upp.
 
+## Landsspítalinn (NLSH) dashboard — mánaðar-bakfylling + þrepað markmið (2026-08-05)
+
+Verkefnalisti 3af766ff, sex smærri fix á `renderNLSH` í index.html + `netlify/functions/nlsh-dashboard.js`:
+
+- **Samningsstaða per verkliður**: markmiðið (`target`) er PER TÍMABIL — þegar
+  BÚIÐ (stakar) fer yfir það þýðir það nýtt tímabil er hafið, ekki 150%+ að
+  eilífu. `byVerk` reiknar núna `tier = ceil(stakar/target)`, sýnir
+  "Markmið" sem `target–target×tier` þegar tier>1, og % miðað við það þrep.
+- **Handvirk leiðrétting**: nýr dálkur á sömu töflu — talnareitur per verkliður
+  leiðréttir `stakar` (t.d. -50/+50 þegar Ajour-flokkun er röng). Vistast í
+  `app_kv['nlsh_verk_overrides']` (`{verk_nr: delta}`) gegnum nýja
+  `POST /api/nlsh-dashboard {verk_nr, delta}` — lifir þar til sett á 0/tómt.
+- **Göt kláruð per dag**: hætti að vera fastur 14-daga gluggi — `?range=
+  this_week|last_week|this_month|last_month` stýrir `dayRangeBounds()` í
+  bakenda; framendinn er með takka-röð, sjálfgefið "Þessi vika".
+- **Mánaðaruppgjör**: „📸 Loka" er núna á HVERJUM ólæstum mánuði í listanum
+  (ekki bara núverandi) — notar `byMonth[].cum_revenue_m_vsk` (þegar reiknað
+  úr Ajour) sem gildið, svo gleymda mánuði (t.d. júní/júlí) má festa
+  afturvirkt án þess að giska á töluna.
+- **Vika-dagsetningar**: `isoWeekRange(weekKey)` breytir "2025-W38" í
+  "15.09–21.09" — notað í "Lokuð göt per viku" og "Frammistaða per starfsmann"
+  töflunum (tooltip + undirtexti).
+- **Lokuð göt per viku**: pakkað í `<details>` svo hægt sé að fella út/inn.
+
 ## graphify
 
 Þekkingargraf **aðeins uppsett á stóru vélinni** — `graphify`-skipunin er EKKI til á

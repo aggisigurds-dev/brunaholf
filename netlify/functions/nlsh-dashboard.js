@@ -101,18 +101,24 @@ function isoWeek(d) {
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return resp(204, '', cors());
   if (!SUPABASE_URL || !SUPABASE_KEY) return json(500, { error: 'Supabase env missing' });
+
+  // Handvirk leiðrétting per verkliður (verkefnalisti 3af766ff) — Agnar getur
+  // leiðrétt BÚIÐ-töluna (stakar) þegar Ajour-flokkun er röng, án þess að
+  // breyta grunngögnunum sjálfum. Geymt í app_kv, lifir þar til fjarlægt.
+  if (event.httpMethod === 'POST') return saveVerkOverride(event);
   if (event.httpMethod !== 'GET') return json(405, { error: 'Method not allowed' });
 
   const qs = event.queryStringParameters || {};
   const onlyDone = qs.include_open !== '1'; // default: only finished (Done) holes
 
-  let ajour, hours;
+  let ajour, hours, overrides;
   try {
     let q = `select=serial_number,category_group,category,checked_date,execution_date,registration_status&project_name=eq.${encodeURIComponent(NLSH_AJOUR)}`;
     if (onlyDone) q += `&registration_status=eq.Done`;
     ajour = await fetchAll('ajour_registrations', q);
     const tvIn = NLSH_TIMAVERA.map(n => `"${n}"`).join(',');
     hours = await fetchAll('timavera_entries', `select=date,hours,employee,project&project=in.(${tvIn})`);
+    overrides = await fetchVerkOverrides();
   } catch (e) { return json(502, { error: e.message }); }
 
   // ---- holes: dedupe by serial (a serial may appear on multiple checklist rows) ----
@@ -141,11 +147,19 @@ exports.handler = async (event) => {
     verkAgg.set(v.verk_nr, (verkAgg.get(v.verk_nr) || 0) + 1);
   }
   const byVerk = VERK.map(v => {
-    const stakar = verkAgg.get(v.verk_nr) || 0;
+    const override = overrides[v.verk_nr] || 0;
+    const stakar = (verkAgg.get(v.verk_nr) || 0) + override;
     const heilar = v.full ? stakar : stakar / 2;
-    return { verk_nr: v.verk_nr, label: v.label, target: v.target, stakar, heilar,
+    // Samningsmarkmiðið (target) er PER TÍMABIL — þegar búið fer yfir það þýðir
+    // það að nýtt tímabil er hafið, ekki að markmiðið sé "yfirfyllt" að eilífu.
+    // Sýna þrepað markmið (target × tier) og % miðað við ÞAÐ (ósk Agnars:
+    // "600 x 2 = 1200 svo það sýni 600-1200 og % sé 917 af 1200").
+    const tier = v.target ? Math.max(1, Math.ceil(stakar / v.target)) : 1;
+    const effTarget = v.target * tier;
+    return { verk_nr: v.verk_nr, label: v.label, target: v.target, tier, eff_target: effTarget,
+      stakar, heilar, override,
       rate_m_vsk: v.rate, amount_m_vsk: Math.round(heilar * v.rate),
-      pct: v.target ? Math.round(stakar / v.target * 100) : null };
+      pct: effTarget ? Math.round(stakar / effTarget * 100) : null };
   });
   const totalRevenue = byVerk.reduce((a, x) => a + x.amount_m_vsk, 0);
   const totalHeilar = byVerk.reduce((a, x) => a + x.heilar, 0);
@@ -197,8 +211,11 @@ exports.handler = async (event) => {
       cum_revenue_m_vsk: cumR, hours: Math.round((hoursByWeek[wk] || 0) * 10) / 10 };
   });
 
-  // ---- byDay (holes completed per calendar day — continuous last-14-day window) ----
+  // ---- byDay (holes completed per calendar day) ----
   // "Jobs completed per day" = distinct finished holes on their effective (execution) date.
+  // Window is selectable (verkefnalisti 3af766ff: "this month, last month, this
+  // week, last week — default this week"); ?range= unset keeps the original
+  // continuous last-14-day view other callers may still rely on.
   const dayHoles = {}, dayRev = {};
   for (const { group, date } of serialInfo.values()) {
     if (!date) continue;
@@ -206,14 +223,11 @@ exports.handler = async (event) => {
     dayHoles[d] = (dayHoles[d] || 0) + 1;
     dayRev[d] = (dayRev[d] || 0) + serialAmount(group);
   }
+  const [dayFrom, dayTo] = dayRangeBounds(qs.range);
   const byDay = [];
-  {
-    const now = new Date();
-    for (let i = 13; i >= 0; i--) {
-      const dt = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - i));
-      const key = dt.toISOString().slice(0, 10);
-      byDay.push({ date: key, holes: dayHoles[key] || 0, revenue_m_vsk: Math.round(dayRev[key] || 0) });
-    }
+  for (let dt = new Date(dayFrom); dt <= dayTo; dt.setUTCDate(dt.getUTCDate() + 1)) {
+    const key = dt.toISOString().slice(0, 10);
+    byDay.push({ date: key, holes: dayHoles[key] || 0, revenue_m_vsk: Math.round(dayRev[key] || 0) });
   }
   const byDayTotal = byDay.reduce((a, x) => a + x.holes, 0);
   const byDayRevTotal = byDay.reduce((a, x) => a + x.revenue_m_vsk, 0);
@@ -286,9 +300,53 @@ exports.handler = async (event) => {
       unmapped_stakar: unmappedStakar,
     },
     byMonth, byWeek, byDay, byDayTotal, byDayRevTotal, byStaff, byStaffWeek, byStaffDay, byVerk,
+    day_range: qs.range || 'last14',
     note: 'Áætlun byggð á Ajour (stakir SerialNumber, kláraðir) + Tímavera. Göt á starfsmann koma úr Ajour „category“ = Starfsmaður N.',
   });
 };
+
+// ---- byDay window (verkefnalisti 3af766ff) --------------------------------
+// 'this_week'/'last_week' = Mon–Sun of the ISO week; 'this_month'/'last_month'
+// = full calendar month; unset/'last14' keeps the original rolling window.
+function dayRangeBounds(range) {
+  const now = new Date();
+  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const mondayOf = (d) => { const wd = (d.getUTCDay() + 6) % 7; return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - wd)); };
+  if (range === 'this_week') { const mon = mondayOf(today); return [mon, new Date(Date.UTC(mon.getUTCFullYear(), mon.getUTCMonth(), mon.getUTCDate() + 6))]; }
+  if (range === 'last_week') { const mon = mondayOf(new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - 7))); return [mon, new Date(Date.UTC(mon.getUTCFullYear(), mon.getUTCMonth(), mon.getUTCDate() + 6))]; }
+  if (range === 'this_month') return [new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1)), today];
+  if (range === 'last_month') { const first = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - 1, 1)); return [first, new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 0))]; }
+  // default: continuous last-14-day window (original behaviour)
+  return [new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - 13)), today];
+}
+
+// ---- verk-overrides (app_kv) ------------------------------------------------
+const VERK_OVERRIDE_KEY = 'nlsh_verk_overrides';
+async function fetchVerkOverrides() {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/app_kv?key=eq.${VERK_OVERRIDE_KEY}&select=value`, {
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
+  });
+  if (!r.ok) return {};
+  const rows = await r.json().catch(() => []);
+  return (rows[0] && rows[0].value) || {};
+}
+async function saveVerkOverride(event) {
+  let body;
+  try { body = JSON.parse(event.body || '{}'); } catch { return json(400, { error: 'Invalid JSON' }); }
+  const verk_nr = String(body.verk_nr || '').trim();
+  if (!verk_nr) return json(400, { error: 'verk_nr vantar' });
+  const overrides = await fetchVerkOverrides();
+  if (body.delta === null || body.delta === undefined || body.delta === 0) delete overrides[verk_nr];
+  else overrides[verk_nr] = Math.round(Number(body.delta) || 0);
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/app_kv?on_conflict=key`, {
+    method: 'POST',
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`,
+      'content-type': 'application/json', Prefer: 'resolution=merge-duplicates' },
+    body: JSON.stringify({ key: VERK_OVERRIDE_KEY, value: overrides }),
+  });
+  if (!r.ok) return json(502, { error: (await r.text()).slice(0, 200) });
+  return json(200, { ok: true, overrides });
+}
 
 async function fetchAll(table, qs) {
   const out = []; let from = 0;
@@ -305,6 +363,6 @@ async function fetchAll(table, qs) {
   }
   return out;
 }
-function cors() { return { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET, OPTIONS', 'access-control-allow-headers': 'content-type' }; }
+function cors() { return { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET, POST, OPTIONS', 'access-control-allow-headers': 'content-type' }; }
 function json(s, p) { return resp(s, JSON.stringify(p), { 'content-type': 'application/json', ...cors() }); }
 function resp(statusCode, body, headers) { return { statusCode, headers, body }; }

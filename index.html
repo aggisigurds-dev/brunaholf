@@ -16205,7 +16205,10 @@ async function renderNLSH(t){
         </div>
       </div>
       <div id="nl-cards" class="nl-cards"></div>
-      <h3 class="nl-h3">📅 Göt kláruð per dag <span class="nl-note">(síðustu 2 vikur)</span></h3>
+      <h3 class="nl-h3">📅 Göt kláruð per dag <span class="nl-note" id="nl-day-label"></span></h3>
+      <div class="nl-day-range">
+        ${[['this_week','Þessi vika'],['last_week','Síðasta vika'],['this_month','Þessi mánuður'],['last_month','Síðasti mánuður']].map(([k,l])=>`<button type="button" class="nl-range-btn" data-range="${k}">${l}</button>`).join('')}
+      </div>
       <div id="nl-day" class="nl-tw"></div>
       <h3 class="nl-h3">📈 Þróun per viku</h3>
       <div id="nl-charts" class="nl-charts"></div>
@@ -16215,8 +16218,10 @@ async function renderNLSH(t){
         <div class="nl-col">
           <h3 class="nl-h3">📅 Tekjur &amp; göt per mánuð</h3>
           <div id="nl-month" class="nl-tw"></div>
-          <h3 class="nl-h3">📆 Lokuð göt per viku</h3>
-          <div id="nl-week" class="nl-tw"></div>
+          <details class="nl-week-details">
+            <summary class="nl-h3" style="cursor:pointer;display:inline-block">📆 Lokuð göt per viku</summary>
+            <div id="nl-week" class="nl-tw"></div>
+          </details>
         </div>
         <div class="nl-col">
           <h3 class="nl-h3">👷 Per starfsmann <span class="nl-note">(smelltu á starfsmann fyrir viku/dag sundurliðun)</span></h3>
@@ -16280,6 +16285,13 @@ async function renderNLSH(t){
       .nl-note-author{padding:7px 10px;border:1px solid var(--border,#cbd5e1);border-radius:7px;font:inherit;font-size:13px;max-width:220px}
       .nl-note-body{padding:9px 11px;border:1px solid var(--border,#cbd5e1);border-radius:8px;font:inherit;font-size:13px;resize:vertical;min-height:70px}
       .nl-note-send{align-self:flex-start}
+      .nl-day-range{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 10px}
+      .nl-range-btn{padding:5px 12px;border-radius:7px;border:1px solid var(--border,#d8dee9);background:var(--card-bg,#fff);color:var(--text,#1f2933);font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+      .nl-range-btn.active{background:var(--accent,#0a84ff);color:#fff;border-color:var(--accent,#0a84ff)}
+      .nl-week-details summary::-webkit-details-marker{display:none}
+      .nl-week-details summary:before{content:'▸ ';color:var(--text-dim,#7a8493)}
+      .nl-week-details[open] summary:before{content:'▾ '}
+      .nl-verk-ov{width:64px;padding:4px 6px;border:1px solid var(--border,#cbd5e1);border-radius:6px;font:inherit;font-size:12px;text-align:right}
     </style>`;
   const num = n => (Math.round(n||0)).toLocaleString('is-IS');
   const kr  = n => num(n) + ' kr';
@@ -16312,34 +16324,60 @@ async function renderNLSH(t){
     const week=1+Math.round(((dt-firstThu)/86400000-3+((firstThu.getUTCDay()+6)%7))/7);
     return dt.getUTCFullYear()+'-W'+String(week).padStart(2,'0');
   }
+  // Monday–Sunday date range for an ISO week key ("2025-W38" → "15.09–21.09") —
+  // ósk Agnars: sjá dagsetningar við hlið vikunúmera, ekki bara "v38".
+  function isoWeekRange(weekKey){
+    const m = /^(\d+)-W(\d+)$/.exec(weekKey||''); if(!m) return '';
+    const y=+m[1], w=+m[2];
+    const jan4=new Date(Date.UTC(y,0,4));
+    const day0=(jan4.getUTCDay()+6)%7;
+    const week1Mon=new Date(Date.UTC(y,0,4-day0));
+    const mon=new Date(Date.UTC(week1Mon.getUTCFullYear(),week1Mon.getUTCMonth(),week1Mon.getUTCDate()+(w-1)*7));
+    const sun=new Date(Date.UTC(mon.getUTCFullYear(),mon.getUTCMonth(),mon.getUTCDate()+6));
+    const f=d=>String(d.getUTCDate()).padStart(2,'0')+'.'+String(d.getUTCMonth()+1).padStart(2,'0');
+    return f(mon)+'–'+f(sun);
+  }
+  let nlDayRange = 'this_week';
 
   // --- Mánaðaruppgjör: month-end cumulative snapshots → charge = delta ---
-  async function loadMonthly(currentCum, canLock){
+  // byMonth (úr /api/nlsh-dashboard) gefur lifandi uppsafnaða stöðu FYRIR HVERN
+  // mánuð sem til er gögn um — svo hægt er að festa (loka) HVAÐA fyrri mánuð
+  // sem er, ekki bara núverandi, sem bakfyllir mánuði sem gleymdist að loka
+  // (t.d. júní/júlí — ósk Agnars) án þess að þurfa að giska á töluna.
+  async function loadMonthly(currentCum, canLock, byMonth){
     const box=document.getElementById('nl-monthly'); if(!box) return;
     const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     let snaps=[];
     try{ const r=await fetch('/api/nlsh-monthly'); const j=await r.json(); snaps=j.snapshots||[]; }catch(_){}
+    const lockedMonths=new Set(snaps.map(s=>s.month));
     const now=new Date(), curM=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
     const rows=snaps.map(s=>({month:s.month,cum:+s.cumulative_m_vsk,note:s.note,locked:true}));
-    if(currentCum!=null && !rows.find(r=>r.month===curM)) rows.push({month:curM,cum:Math.round(currentCum),note:'lifandi staða',locked:false});
+    // Bæta við ÖLLUM mánuðum úr byMonth sem eiga enga föstu (locked) færslu enn —
+    // ekki bara núverandi mánuð — svo eldri ólokaðir mánuðir birtist líka.
+    for(const m of (byMonth||[])){
+      if(lockedMonths.has(m.month)) continue;
+      rows.push({month:m.month, cum:Math.round(m.cum_revenue_m_vsk), note:m.month===curM?'lifandi staða':'ólokað — smelltu til að festa', locked:false});
+    }
+    // Núverandi mánuður án nokkurra kláraðra gata enn (byMonth tómt) — sýna samt.
+    if(currentCum!=null && !lockedMonths.has(curM) && !rows.find(r=>r.month===curM)) rows.push({month:curM,cum:Math.round(currentCum),note:'lifandi staða',locked:false});
     rows.sort((a,b)=>a.month.localeCompare(b.month));
     const ML=['jan','feb','mar','apr','maí','jún','júl','ágú','sep','okt','nóv','des'];
     const ml=m=>{const p=m.split('-');return ML[+p[1]-1]+'. '+p[0];};
     let prev=null;
     const trs=rows.map(r=>{ const delta=prev==null?null:r.cum-prev; prev=r.cum;
-      return `<tr><td>${ml(r.month)}</td><td>${r.locked?num(r.cum):('<b>'+num(r.cum)+'</b> <span style=\"color:#94a3b8;font-size:11px\">(lifandi)</span>')}</td><td style="font-weight:700">${delta==null?'<span style=\"color:#94a3b8\">—</span>':kr(delta)}</td><td style="color:#94a3b8;font-size:11px;text-align:left">${esc(r.note||'')}</td></tr>`;
+      const lockBtn=r.locked?'':`<button type="button" class="tv-btn nl-lock-month" data-month="${r.month}" data-cum="${r.cum}" style="padding:2px 9px;font-size:11px">📸 Loka</button>`;
+      return `<tr><td>${ml(r.month)}</td><td>${r.locked?num(r.cum):('<b>'+num(r.cum)+'</b> <span style=\"color:#94a3b8;font-size:11px\">(ólæst)</span>')}</td><td style="font-weight:700">${delta==null?'<span style=\"color:#94a3b8\">—</span>':kr(delta)}</td><td style="color:#94a3b8;font-size:11px;text-align:left">${esc(r.note||'')}</td><td>${lockBtn}</td></tr>`;
     }).join('');
     box.innerHTML=`<div class="nl-tw"><table class="nl-t">
-      <thead><tr><th>Mánuður</th><th>Heildarstaða m.vsk</th><th>Til að rukka (Δ)</th><th>Athugasemd</th></tr></thead>
+      <thead><tr><th>Mánuður</th><th>Heildarstaða m.vsk</th><th>Til að rukka (Δ)</th><th>Athugasemd</th><th></th></tr></thead>
       <tbody>${trs}</tbody></table></div>
-      ${(canLock&&currentCum!=null)?`<div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <button id="nl-lock" class="tv-btn" type="button">📸 Loka ${ml(curM)} (staða ${num(Math.round(currentCum))} m.vsk)</button>
-        <span class="nl-note">Smelltu í lok mánaðar til að festa stöðuna — rukkun reiknast sem breyting frá fyrri mánuði. Sjálfvirk leiðrétting á endurflokkun.</span></div>`:''}`;
-    const lock=box.querySelector('#nl-lock');
-    if(lock) lock.onclick=async()=>{ lock.disabled=true; lock.textContent='Vista…';
-      try{ await fetch('/api/nlsh-monthly',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({month:curM,cumulative_m_vsk:Math.round(currentCum),note:'Lokað af notanda'})}); }catch(_){}
-      loadMonthly(currentCum,canLock);
-    };
+      <span class="nl-note">Smelltu „📸 Loka" á hvaða ólæstan mánuð sem er (líka eldri, gleymda) til að festa stöðuna — rukkun reiknast sem breyting frá fyrri mánuði.</span>`;
+    box.querySelectorAll('.nl-lock-month').forEach(btn=>{
+      btn.onclick=async()=>{ btn.disabled=true; btn.textContent='Vista…';
+        try{ await fetch('/api/nlsh-monthly',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({month:btn.dataset.month,cumulative_m_vsk:Math.round(Number(btn.dataset.cum)),note:'Lokað af notanda'})}); }catch(_){}
+        loadMonthly(currentCum,canLock,byMonth);
+      };
+    });
   }
 
   // --- shared notes / messages (manager ↔ staff) ---
@@ -16371,9 +16409,12 @@ async function renderNLSH(t){
   async function load(){
     const meta=document.getElementById('nl-meta'); meta.textContent='Sækir…';
     let d;
-    try{ const r=await fetch('/api/nlsh-dashboard'); d=await r.json(); if(d.error) throw new Error(d.error); }
+    try{ const r=await fetch('/api/nlsh-dashboard?range='+encodeURIComponent(nlDayRange)); d=await r.json(); if(d.error) throw new Error(d.error); }
     catch(e){ meta.textContent='Villa: '+e.message; return; }
     meta.textContent = d.only_done ? 'aðeins kláruð göt' : 'öll göt';
+    document.querySelectorAll('.nl-range-btn').forEach(b=>b.classList.toggle('active', b.dataset.range===nlDayRange));
+    const dayLbl={this_week:'þessa viku',last_week:'síðustu viku',this_month:'þennan mánuð',last_month:'síðasta mánuð'}[nlDayRange]||'síðustu 2 vikur';
+    const dlEl=document.getElementById('nl-day-label'); if(dlEl) dlEl.textContent='('+dayLbl+')';
 
     document.getElementById('nl-cards').innerHTML = [
       card('Heildartekjur (m. vsk)', kr(d.totals.revenue_m_vsk), num(d.totals.heilar)+' heildir'),
@@ -16405,7 +16446,7 @@ async function renderNLSH(t){
       <tfoot><tr><td>Samtals (14 dagar)</td><td>${num(d.byDayTotal||0)}</td><td></td><td>${kr(d.byDayRevTotal||0)}</td></tr></tfoot></table>`;
 
     // Mánaðaruppgjör (snapshot-delta billing) — uses the live cumulative
-    loadMonthly(d.totals.revenue_m_vsk, true);
+    loadMonthly(d.totals.revenue_m_vsk, true, d.byMonth);
 
     // Per month
     document.getElementById('nl-month').innerHTML = `<table class="nl-t">
@@ -16416,7 +16457,7 @@ async function renderNLSH(t){
     const wMax=Math.max(1,...d.byWeek.map(w=>w.holes));
     document.getElementById('nl-week').innerHTML = `<table class="nl-t">
       <thead><tr><th>Vika</th><th>Göt</th><th></th><th>Uppsafnað</th><th>Klst</th></tr></thead>
-      <tbody>${d.byWeek.map(w=>`<tr><td>${w.week.replace('-W','&nbsp;v')}</td><td>${num(w.holes)}</td><td style="text-align:left">${bar(w.holes,wMax)}</td><td>${num(w.cum_holes)}</td><td>${num(w.hours)}</td></tr>`).join('')}</tbody></table>`;
+      <tbody>${d.byWeek.map(w=>`<tr><td>${w.week.replace('-W','&nbsp;v')} <span style="color:#94a3b8;font-weight:400">${isoWeekRange(w.week)}</span></td><td>${num(w.holes)}</td><td style="text-align:left">${bar(w.holes,wMax)}</td><td>${num(w.cum_holes)}</td><td>${num(w.hours)}</td></tr>`).join('')}</tbody></table>`;
 
     // Per staff (clickable rows → per-week + per-day drill-down)
     document.getElementById('nl-staff').innerHTML = `<table class="nl-t">
@@ -16464,7 +16505,7 @@ async function renderNLSH(t){
     document.getElementById('nl-perf-label').textContent='— '+MONL[wstart.getMonth()]+' & '+MONL[_now.getMonth()]+' · göt / klst í hverri viku';
     const winTot = staffRows.reduce((a,[,o])=>{a.holes+=o.tot.holes;a.hours+=o.tot.hours;return a;},{holes:0,hours:0});
     document.getElementById('nl-perf').innerHTML = staffRows.length ? `<table class="nl-t">
-      <thead><tr><th>Starfsmaður</th>${wkeys.map(w=>`<th>${w.replace(/^\d+-W/,'v')}</th>`).join('')}<th>Samtals</th><th>Göt/klst</th></tr></thead>
+      <thead><tr><th>Starfsmaður</th>${wkeys.map(w=>`<th title="${isoWeekRange(w)}">${w.replace(/^\d+-W/,'v')}<br><span style="font-weight:400;font-size:9px;color:#94a3b8;text-transform:none">${isoWeekRange(w)}</span></th>`).join('')}<th>Samtals</th><th>Göt/klst</th></tr></thead>
       <tbody>${staffRows.map(([nr,o])=>`<tr><td>${nameByNr[nr]||('Starfsmaður '+nr)}</td>${
         wkeys.map(w=>{ const c=o.wks[w];
           if(!c||(!c.holes&&!c.hours)) return '<td style="color:#d3d9e0">·</td>';
@@ -16477,13 +16518,28 @@ async function renderNLSH(t){
       }).join('')}<td><b>${winTot.holes}</b><span style="color:#94a3b8">/${Math.round(winTot.hours)}</span></td><td>${winTot.hours?Math.round(winTot.holes/winTot.hours*100)/100:'—'}</td></tr></tfoot></table>`
       : '<div style="padding:14px;color:#94a3b8;font-size:13px">Engin gögn í þessum mánuðum.</div>';
 
-    // Per verkliður (contract status)
+    // Per verkliður (contract status) — markmiðið er PER TÍMABIL: þegar búið fer
+    // yfir target sýnir "Markmið" þrepað (target–target×tier), ekki bara >100%
+    // endalaust (ósk Agnars: "600x2=1200, % sé 917 af 1200"). "Handvirk
+    // leiðrétting" leyfir að stilla stakar-töluna handvirkt (t.d. röng Ajour-
+    // flokkun) — vistast í app_kv þar til hún er fjarlægð (sett á 0/tómt).
     document.getElementById('nl-verk').innerHTML = `<table class="nl-t">
-      <thead><tr><th>Verk</th><th>Verkliður</th><th>Búið</th><th>Markmið</th><th>%</th><th>Heildir</th><th>Verð/heild</th><th>Tekjur m.vsk</th></tr></thead>
-      <tbody>${d.byVerk.map(v=>`<tr><td>${v.verk_nr}</td><td style="text-align:left">${v.label}</td><td>${num(v.stakar)}</td><td>${num(v.target)}</td><td style="text-align:left"><span class="nl-pct">${v.pct==null?'—':v.pct+'%'}</span></td><td>${v.heilar}</td><td>${kr(v.rate_m_vsk)}</td><td>${kr(v.amount_m_vsk)}</td></tr>`).join('')}</tbody>
-      <tfoot><tr><td colspan="5">Samtals</td><td>${num(d.totals.heilar)}</td><td></td><td>${kr(d.totals.revenue_m_vsk)}</td></tr></tfoot></table>`;
+      <thead><tr><th>Verk</th><th>Verkliður</th><th>Búið</th><th>Markmið</th><th>%</th><th>Heildir</th><th>Verð/heild</th><th>Tekjur m.vsk</th><th>Handvirk leiðr.</th></tr></thead>
+      <tbody>${d.byVerk.map(v=>`<tr><td>${v.verk_nr}</td><td style="text-align:left">${v.label}</td><td>${num(v.stakar)}</td><td>${v.tier>1?(num(v.target)+'–'+num(v.eff_target)):num(v.target)}</td><td style="text-align:left"><span class="nl-pct">${v.pct==null?'—':v.pct+'%'}</span></td><td>${v.heilar}</td><td>${kr(v.rate_m_vsk)}</td><td>${kr(v.amount_m_vsk)}</td><td><input type="number" class="nl-verk-ov" data-verk="${v.verk_nr}" value="${v.override||''}" placeholder="0" title="Leiðréttir BÚIÐ (stakar) — t.d. -50 eða +50. Tómt/0 = engin leiðrétting."></td></tr>`).join('')}</tbody>
+      <tfoot><tr><td colspan="5">Samtals</td><td>${num(d.totals.heilar)}</td><td></td><td>${kr(d.totals.revenue_m_vsk)}</td><td></td></tr></tfoot></table>`;
+    document.querySelectorAll('.nl-verk-ov').forEach(inp=>{
+      inp.addEventListener('change', async ()=>{
+        const verk_nr=inp.dataset.verk, delta=Number(inp.value)||0;
+        inp.disabled=true;
+        try{
+          await fetch('/api/nlsh-dashboard',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({verk_nr,delta})});
+          await load();
+        }catch(_){ inp.disabled=false; }
+      });
+    });
   }
   document.getElementById('nl-refresh').onclick=load;
+  document.querySelectorAll('.nl-range-btn').forEach(b=>{ b.onclick=()=>{ nlDayRange=b.dataset.range; load(); }; });
   // 🔄 Uppfæra gögn úr Drive: finna nýjustu Ajour-skrána → background-innlestur
   // → polla stöðuna → endurhlaða talnaefnið þegar state=done.
   const updBtn=document.getElementById('nl-update');
