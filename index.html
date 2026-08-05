@@ -13354,7 +13354,7 @@ async function renderKrofuyfirlit(t){
           <h1 style="margin:0;font-size:24px;font-weight:800;color:#0f172a;display:flex;align-items:center;gap:10px">📄 Kröfu yfirlit</h1>
           <div style="font-size:12px;color:#64748b;margin-top:2px" id="kyf-meta">Þrepaskipt kröfu-yfirlit — ógreitt → ósent → tími eftir · Sækir…</div>
           <div style="font-size:11px;color:#94a3b8;margin-top:3px" id="kyf-fresh">Síðasta uppfærsla: …</div>
-          <div style="margin-top:8px;display:flex;gap:14px;flex-wrap:wrap"><span data-sync-workflow="timavera" data-sync-label="Tímavera"></span><span data-sync-workflow="ajour" data-sync-label="Ajour"></span><span data-sync-workflow="redder" data-sync-label="Redder"></span></div>
+          <div style="margin-top:8px;display:flex;gap:14px;flex-wrap:wrap"><span data-sync-workflow="timavera" data-sync-label="Tímavera"></span><span data-sync-workflow="ajour" data-sync-label="Ajour"></span><span data-sync-workflow="redder" data-sync-label="Redder"></span><span data-sync-workflow="payday" data-sync-label="Payday"></span></div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <select class="kyf-sort" title="Raða" style="padding:7px 9px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;font:inherit;font-size:12.5px;font-weight:600;color:#475569;cursor:pointer">
@@ -13373,8 +13373,7 @@ async function renderKrofuyfirlit(t){
           const on = k==='company';
           return `<button class="kyf-vf" data-vf="${k}" type="button" style="padding:7px 14px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;${on?'border:1px solid #1d4ed8;background:#1d4ed8;color:#fff':'border:1px solid #cbd5e1;background:#fff;color:#475569'}">${label}</button>`;
         }).join('')}
-        <button class="kyf-payday" type="button" style="margin-left:auto;padding:7px 14px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;border:1px solid #cbd5e1;background:#fff;color:#475569">🔄 Uppfæra Payday stöðu</button>
-        <button class="kyf-refresh" type="button" style="padding:7px 14px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;border:1px solid #cbd5e1;background:#fff;color:#475569">↻ Sækja</button>
+        <button class="kyf-refresh" type="button" style="margin-left:auto;padding:7px 14px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;border:1px solid #cbd5e1;background:#fff;color:#475569">↻ Sækja</button>
         <button class="kyf-hidden-toggle" type="button" title="Sýna/fela faldar kröfur" style="display:none;padding:7px 14px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;border:1px solid #cbd5e1;background:#fff;color:#475569"></button>
       </div>
 
@@ -14330,17 +14329,16 @@ async function renderKrofuyfirlit(t){
   window.__kyfFocus = ()=>{ if(!$view.querySelector('.kyf-wrap')) return; const now=+new Date(); if(now-_lastFocusReval < 20000) return; _lastFocusReval=now;
     (async()=>{ try{ await fetchAll(); metaFromState(); renderList(); }catch(_){} })(); };
   window.addEventListener('focus', window.__kyfFocus);
-  $view.querySelector('.kyf-payday').addEventListener('click', async(e)=>{
-    const b = e.currentTarget; const orig = b.textContent;
-    b.disabled = true; b.style.opacity = '.6'; b.textContent = '⏳ Sæki úr Payday…';
-    try{
-      const r = await fetch('/api/payday-pull',{cache:'no-store'});
-      const d = await r.json().catch(()=>({}));
-      if(!r.ok || d.error) throw new Error(d.error || ('HTTP '+r.status));
-    }catch(err){ alert('Ekki tókst að uppfæra Payday stöðu: '+(err.message||err)); }
-    finally{ b.disabled = false; b.style.opacity = ''; b.textContent = orig; }
-    await load(true);   // newly-paid invoices drop out of þrep 1 + summur uppfærast (ferskt)
-  });
+  // 2026-08-05: "🔄 Uppfæra Payday stöðu" var sér-hnappur, úr takti við hina
+  // þrjá samstillingar-hnappana (verkefnalisti 9ce102b7) — Payday er núna
+  // bara enn eitt <span data-sync-workflow="payday"> í röðinni að ofan (sömu
+  // "nýjast · sótt" ferskleikalínu og hin fá, sjá hub-sync-buttons.js). Sá
+  // takki keyrir /api/payday-pull sjálfur og útvarpar 'hub-sync-done' þegar
+  // lokið — hlustum á það hér til að endurhlaða þrepin (newly-paid invoices
+  // detta út úr þrepi 1), nákvæmlega eins og gamli kyf-payday gerði.
+  if(window.__kyfPaydaySync) document.removeEventListener('hub-sync-done', window.__kyfPaydaySync);
+  window.__kyfPaydaySync = (e)=>{ if(!$view.querySelector('.kyf-wrap')) return; if(e.detail && e.detail.wf==='payday') load(true); };
+  document.addEventListener('hub-sync-done', window.__kyfPaydaySync);
 
   // Síðasta uppfærsla — Tímavera · Ajour · Redder (prefer newest_real).
   (async function loadFreshness(){
@@ -14350,7 +14348,7 @@ async function renderKrofuyfirlit(t){
       const d = await r.json();
       const by = {}; for(const s of (d.sources||[])) by[s.key] = s;
       const pick = k => { const s = by[k]; if(!s) return '—'; const v = s.newest_real || s.last_import; return v ? dayMon(v) : '—'; };
-      el.textContent = 'Síðasta uppfærsla — Tímavera: '+pick('timavera')+' · Ajour: '+pick('ajour')+' · Redder: '+pick('redder');
+      el.textContent = 'Síðasta uppfærsla — Tímavera: '+pick('timavera')+' · Ajour: '+pick('ajour')+' · Redder: '+pick('redder')+' · Payday: '+pick('invoices');
     }catch(_){ el.textContent = ''; }
   })();
 
@@ -14777,7 +14775,7 @@ async function renderDagurinn(t){
         // og Redder benti á ranga síðu.
         let hint = '→ Bakendi „🔄 Gagna-uppfærslur úr Drive"';
         if(s.key === 'timavera') hint = '→ Bakendi „🕒 Tímavera API" eða Mæting „🔄 Samstilla"';
-        else if(s.key === 'invoices') hint = '→ Kröfu yfirlit „🔄 Uppfæra Payday stöðu"';
+        else if(s.key === 'invoices') hint = '→ Kröfu yfirlit „🔄 Samstilla Payday"';
         else if(s.key === 'ajour') hint = '→ Landsspítalinn „🔄 Uppfæra gögn úr Drive" (athuga líka hvort nýr CSV-export sé til)';
         else if(s.key === 'email') hint = '→ Bakendi „☁️ Gmail úr skýi" — „⬇️ Sækja núna"';
         else if(s.key === 'bank') hint = '→ Bakendi „🏦 Landsbanki" — keyra 👁 Prufa FYRST og staðfesta rétta skrá';
