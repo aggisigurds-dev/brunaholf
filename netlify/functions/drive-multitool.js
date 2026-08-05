@@ -752,12 +752,30 @@ async function applyFile(token, body) {
   // vendor/other: sjálfgefið EKKERT gert; aðeins fært ef UI sendir markmöppu; aldrei tengt.
   if (!isOurs && !targetFolder) return { ok: true, id, skipped: 'not-ours', renamed: false, moved: false, linked: false, linkAction: 'not-ours' };
 
+  // 2026-08-05 (Agnar: „ég spenti huga tíma í að endurnefna... en multitool og
+  // cowork tóku út nafnið"): þessi skrá er ÞEGAR tengd customer_documents
+  // (drive_file_id) frá fyrra sweep — endurnefna/notes-stimpla hana AFTUR
+  // þýðir að handvirkt nafn sem Agnar/Cowork setti EFTIR fyrstu tengingu tapast
+  // þegjandi í næsta sweep. Sleppa endurnefningu+notes alveg fyrir þegar-tengd
+  // skjöl nema kallandinn biðji BEINT um það (body.force) — engu er breytt í
+  // tengingunni sjálfri (hvaða kúnna/byggingu/ári skjalið tilheyrir), aðeins
+  // nafn+notes-stimplun sleppt.
+  let alreadyLinked = null;
+  if (isOurs) {
+    try {
+      const exr = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?drive_file_id=eq.${id}&select=id&limit=1`, { headers: sbHeaders() });
+      const exRows = await exr.json().catch(() => []);
+      alreadyLinked = (Array.isArray(exRows) && exRows[0]) ? exRows[0] : null;
+    } catch (_) {}
+  }
+  const skipRename = !!(alreadyLinked && !body.force);
+
   // ── Drive: endurnefna + færa (idempotent) ──
   let cur;
   try { cur = await getFile(token, id); } catch (e) { return { ok: false, id, error: 'get: ' + (e.message || e) }; }
   const origName = cur.name || '';
   const parents = cur.parents || [];
-  const needRename = !!(proposed_name && proposed_name !== origName);
+  const needRename = !!(proposed_name && proposed_name !== origName) && !skipRename;
   const inTarget = targetFolder ? parents.includes(targetFolder) : true;
   const needMove = !!(targetFolder && !inTarget);
   let renamed = false, moved = false;
@@ -813,6 +831,10 @@ async function applyFile(token, body) {
   if (docRow.customer_base_id == null) delete docRow.customer_base_id;
   if (docRow.customer_name == null) delete docRow.customer_name;
   if (docRow.year == null && doc_type !== 'samningur') delete docRow.year;
+  // Sama vörn og needRename hér að ofan: þegar-tengt skjal heldur núverandi
+  // notes-gildi sínu (t.d. handvirkt breytt heiti) í stað þess að fá aftur
+  // sjálfvirka „drive-multitool · …" stimpilinn á hverju sweep-i.
+  if (skipRename) delete docRow.notes;
   if (site && await siteWriteAllowed(id, site)) docRow.fyrirtaeki_id = site.id;
 
   let linked = false, linkAction = '', conflict = false, doc_id = null;
