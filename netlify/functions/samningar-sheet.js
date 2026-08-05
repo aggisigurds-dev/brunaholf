@@ -7,7 +7,9 @@
 
 const { freshAccessToken, json, cors } = require('./_google');
 
-const DEFAULT_FOLDER = '1f2kzXhbkU0xJ0MFPxRpWjoPmWZBlm1zZ';
+// 2026-08-05 (Agnar confirmed): the old "Master" folder is empty — all real
+// contracts live in the plain "Þjónustusamningar" folder, now canonical.
+const DEFAULT_FOLDER = '1hu405fCw01mYtYSn4BqIPvhtPCPuzmwM';
 const SHEET_TITLE = 'Þjónustusamningar – gagnayfirlit';
 
 exports.handler = async (event) => {

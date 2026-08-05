@@ -30,7 +30,10 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const DEFAULTS = {
   reikningar: '1FHHX99LRB_9w_LqwHIY57T4l9mLMID7p',
   skyrslur:   '1VSRRw6O8U6lU8WzZxA8CkLtrAmiU07mg',
-  samningar:  '1f2kzXhbkU0xJ0MFPxRpWjoPmWZBlm1zZ',   // Þjónustusamningar - Master
+  // 2026-08-05 (Agnar confirmed): the "Master" folder below is empty — all
+  // 264 real contracts live in the plain "Þjónustusamningar" folder, which
+  // is now canonical.
+  samningar:  '1hu405fCw01mYtYSn4BqIPvhtPCPuzmwM',   // Þjónustusamningar
 };
 const FOLDER_MIME = 'application/vnd.google-apps.folder';
 
