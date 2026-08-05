@@ -254,6 +254,70 @@ skárra en að læsa notandann úti vegna heimtu-galla í parningar-rökfræðin
 ein-skipta; ný gögn sjást samt strax gegnum core kt+source-flæðið í patch 253, bara
 ekki gegnum `document_pairs`-lagið fyrr en bakfyllt er aftur.
 
+## Efniskostnaður — handvirk verkstaða-tenging (2026-08-05)
+
+Verkefnalisti a12d429a: Redder-reikningar sem `redder-read.js` gat ekki tengt sjálfkrafa
+(`worksite_match IS NULL` — oftast af því engin verkstaðar-tilvísun fannst í PDF-inu
+sjálfu, bara tengiliða-merki eins og „umb Lukas") sátu áður sem varanlega ólæsanleg
+„Án verkstaðs"-hrúga. Efniskostnaður-flipinn hefur núna:
+- **„🔗 Tengja við verkstað" á hverjum reikningi** — setur `worksite_match` á ÞANN eina
+  reikning (POST `/api/redder-invoices {invoice_nr, worksite_match}` — endapunkturinn
+  studdi þetta nú þegar, bara enga UI). Engin sjálfvirk `project_aliases`-lærdómur hér,
+  af því hrátextinn á ólæstum reikningum er oftast bara tengiliðs-nafn, ekki alvöru
+  verkstaðar-afbrigði — að læra af honum myndi ranglega flokka næsta reikning með sama
+  tengilið en ANNAN verkstað.
+- **„✏️" á hverjum verkstaða-hóp** — endurnefnir ALLA reikninga undir því nafni í einu
+  (nýtt `POST /api/redder-invoices {action:'rename_worksite', from, to, learn_alias:true}`)
+  OG skrifar `project_aliases(alias=from, canonical_name=to)` — því hér ER `worksite_match`
+  þegar alvöru (þótt misstafað) verkstaðarnafn. `redder-read.js` sækir núna
+  `project_aliases` úr gagnagrunni (`loadAliasesFromDb()`, keyrt einu sinni per innlestur,
+  DB-gildi vinna umfram hardcoded `ALIAS`-kortið) svo ný PDF-innlestur nýtir handvirku
+  leiðréttinguna sjálfkrafa — `ALIAS`-kortið í kóðanum er ekki lengur eina uppsprettan.
+- Verkstaða-listinn í tengi-reitnum (`<datalist>`) er sambland af `/api/worksites?year=
+  combined` og því sem þegar er notað í `redder_invoices` — alltaf a.m.k. þau nöfn sem
+  eru í notkun nú þegar.
+
+**Vísvitandi sleppt**: línu-stigs tenging (að taka STAKA vörulínu úr reikningi og tengja
+við annan verkstað en restina af reikningnum) — `redder_line_items` hefur engan eigin
+`worksite`-dálk, og öll skoðuð dæmi af ólæstum reikningum voru heilir reikningar sem
+vantaði verkstað, ekki blönduð fjölverkstaða-reikningar. Bæta við ef alvöru þörf kemur upp.
+
+## Landsspítalinn (NLSH) dashboard — mánaðar-bakfylling + þrepað markmið (2026-08-05)
+
+Verkefnalisti 3af766ff, sex smærri fix á `renderNLSH` í index.html + `netlify/functions/nlsh-dashboard.js`:
+
+- **Samningsstaða per verkliður**: markmiðið (`target`) er PER TÍMABIL — þegar
+  BÚIÐ (stakar) fer yfir það þýðir það nýtt tímabil er hafið, ekki 150%+ að
+  eilífu. `byVerk` reiknar núna `tier = ceil(stakar/target)`, sýnir
+  "Markmið" sem `target–target×tier` þegar tier>1, og % miðað við það þrep.
+- **Handvirk leiðrétting**: nýr dálkur á sömu töflu — talnareitur per verkliður
+  leiðréttir `stakar` (t.d. -50/+50 þegar Ajour-flokkun er röng). Vistast í
+  `app_kv['nlsh_verk_overrides']` (`{verk_nr: delta}`) gegnum nýja
+  `POST /api/nlsh-dashboard {verk_nr, delta}` — lifir þar til sett á 0/tómt.
+- **Göt kláruð per dag**: hætti að vera fastur 14-daga gluggi — `?range=
+  this_week|last_week|this_month|last_month` stýrir `dayRangeBounds()` í
+  bakenda; framendinn er með takka-röð, sjálfgefið "Þessi vika".
+- **Mánaðaruppgjör**: „📸 Loka" er núna á HVERJUM ólæstum mánuði í listanum
+  (ekki bara núverandi) — notar `byMonth[].cum_revenue_m_vsk` (þegar reiknað
+  úr Ajour) sem gildið, svo gleymda mánuði (t.d. júní/júlí) má festa
+  afturvirkt án þess að giska á töluna.
+- **Vika-dagsetningar**: `isoWeekRange(weekKey)` breytir "2025-W38" í
+  "15.09–21.09" — notað í "Lokuð göt per viku" og "Frammistaða per starfsmann"
+  töflunum (tooltip + undirtexti).
+- **Lokuð göt per viku**: pakkað í `<details>` svo hægt sé að fella út/inn.
+
+## customer.html — síðasta póstsamskipti (2026-08-05)
+
+Verkefnalisti aaaa0cb6. Slökkvitæki-hliðin (unreplied-envelope á „Fyrirtæki í þjónustu",
+`/api/company-mail` + patch 295) var þegar til (2026-07-31) — vantaði bara sama upplýsingu
+á Brunahólfs kúnna-síðuna sjálfa. `netlify/functions/customer.js` reiknar núna
+`last_contact` (nýjasti INN-pósturinn frá `base.contact_email`/`netfang` eða einhverju
+lifandi `fyrirtaeki.netfang`, + hvort honum sé svarað — sama varfærna nákvæma-netfangs-
+mátun og company-mail.js, bara á einn kúnna í einu). Birtist sem badge í haus-kortinu
+(`customer.html`) ALLTAF þegar til er samskipti, og sem `🤖 AI Ráðgjafi`-flagg (info fyrstu
+2 daga, warn frá 3 dögum) þegar ósvarað — bein ósk verkefnalistans um „flagar 'enginn
+svarað í 3 daga'".
+
 ## graphify
 
 Þekkingargraf **aðeins uppsett á stóru vélinni** — `graphify`-skipunin er EKKI til á
