@@ -13400,13 +13400,23 @@ async function renderAfkost(t){
 
     const m = d.macro3m || {};
     const p = m.prev_period || {};
+    // 2026-08-06 (Agnar: "thought it was done" — samanburðurinn við fyrri 3
+    // mánuði sýndi rugl eins og +∞% því verkbeidnir/solur eiga bara sögu
+    // aftur til apríl/maí — fyrra 3-mánaða tímabilið er að mestu leyti FYRIR
+    // að gögnin voru til, ekki raunverulegur samanburður). Bakendinn merkir
+    // þetta núna (`prev_period_insufficient`) — sýnum þá skýringu í stað
+    // villandi prósentu.
+    const cmpSub = m.prev_period_insufficient
+      ? 'Ekki nóg saga enn til samanburðar'
+      : null;
+    const cmp = (now, prev) => cmpSub || (pct(now, prev) + ' frá fyrri 3 mán');
     const body = $view.querySelector('#ak-body');
     body.innerHTML = `
       <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px">
-        ${card('Innkomnar verkbeiðnir · 3 mán', m.verkbeidnir_in||0, pct(m.verkbeidnir_in,p.verkbeidnir_in)+' frá fyrri 3 mán')}
-        ${card('Verkbeiðnum lokið · 3 mán', m.verkbeidnir_done||0, pct(m.verkbeidnir_done,p.verkbeidnir_done)+' frá fyrri 3 mán')}
-        ${card('Úttektir/brunakerfi · 3 mán', m.uttektir||0, pct(m.uttektir,p.uttektir)+' frá fyrri 3 mán')}
-        ${card('Sala samtals · 3 mán', fmtKr(m.sala_kr), pct(m.sala_kr,p.sala_kr)+' frá fyrri 3 mán')}
+        ${card('Innkomnar verkbeiðnir · 3 mán', m.verkbeidnir_in||0, cmp(m.verkbeidnir_in,p.verkbeidnir_in))}
+        ${card('Verkbeiðnum lokið · 3 mán', m.verkbeidnir_done||0, cmp(m.verkbeidnir_done,p.verkbeidnir_done))}
+        ${card('Úttektir/brunakerfi · 3 mán', m.uttektir||0, cmp(m.uttektir,p.uttektir))}
+        ${card('Sala samtals · 3 mán', fmtKr(m.sala_kr), cmp(m.sala_kr,p.sala_kr))}
       </div>
 
       ${barsHtml((d.daily14||[]).map(x=>({...x, _label:fmtDay(x.date)})),
