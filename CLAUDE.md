@@ -318,6 +318,50 @@ mátun og company-mail.js, bara á einn kúnna í einu). Birtist sem badge í ha
 2 daga, warn frá 3 dögum) þegar ósvarað — bein ósk verkefnalistans um „flagar 'enginn
 svarað í 3 daga'".
 
+## Eyðublöð — skjalasmiðja með útgáfusögu (2026-08-06)
+
+Nýr flipi **`eydublod`** + sjálfstæð síða `eydublod.html` (sama iframe-mynstur og
+`multitool`/`pdftools`; `renderEydublod(t)` í index.html). Býr til útprentanleg
+skjöl til verkkaupa. Fyrsta eyðublaðið: **„Yfirlýsing vegna brunalokana"**.
+
+- **Stafrétt eftirmynd af Word-frumritinu.** Uppsetningin er lesin beint úr
+  `Staðfesting_Keldur31072026.docx` — ekki ágiskuð: US Letter 8,5×11in, spássía
+  1in, grunnletur Aptos 11pt (`docDefaults`), meginmál **Calibri 12pt** (sz 24),
+  fyrirsögn Calibri 14pt feitletruð miðjuð (sz 28), línubil 1,15 (`line 276`),
+  bil á eftir málsgrein 0, punktar `●` með 0,5in inndrætti og 0,25in hangandi,
+  haus með merki 2,04×0,49in miðjuðu og línu undir, undirskrift 4,39×1,06in.
+  ATH: þrjár „Hvað var gert"-línurnar eru á grunnletrinu (11pt) í frumritinu, ekki
+  Calibri 12pt — það er hermt eftir viljandi.
+- **Myndirnar eru úr frumritinu**: `img/yfirlysing-logo.jpg` (merkið, `word/media/
+  image2.jpg`) og `img/undirskrift-annthor.png` (undirskrift Annþórs, `image1.png`).
+  ⚠️ Báðar eru sóttanlegar opinberlega því `publish = "."` — loka má á þær með
+  redirect-reglu þegar innskráningin kemur (sjá „Open work").
+- **Ritað BEINT ofan í skjalið** (`contenteditable` per svæði). Hliðarstikan geymir
+  aðeins það sem er ekki í skjalinu: dagsetningarval, `byggingar`, `sveitarfelag`
+  og undirskriftarflötinn. Sjálfvirku setningarnar tvær („Um ræðir…" og
+  niðurstaðan) skrifa sig út frá byggingunum og hætta því um leið og notandinn
+  skrifar ofan í þær. Vantar byggingarnúmer (t.d. „Rekstrarfélag Kringlunnar,
+  Útisvæði – Kúmen 07-009-222") er efnið sótt í fyrirsögnina á eftir kommunni.
+- **Gulu svæðin** = nákvæmlega þau sem Agnar strikaði gul á fyrirmyndinni. Rofinn
+  „Sýna breytileg svæði" kveikir/slekkur; prentast aldrei.
+- **PDF**: `js/jspdf.umd.min.js` (vistað í repo-inu, EKKI cdnjs — PDF-inn er
+  afurðin og má ekki detta út þótt CDN sé niðri) + `fonts/carlito-*.ttf`
+  (OFL, málsamhæft við Calibri, hlutmengjað í latínu+íslensku svo hver PDF er
+  ~140 KB). Vektor, leitanlegur texti, réttir íslenskir stafir.
+  ⚠️ Google Fonts skilar Carlito-skránum í röðinni *italic, bold-italic, regular,
+  bold* — bold/italic víxluðust í fyrstu atrennu. Staðfestu alltaf með
+  `TTFont(p)['name'].getDebugName(4)` ef skipt er um leturskrár.
+- **Geymsla + útgáfur**: tafla `eydublod_skjol` + public fatan `eydublod`
+  (`sql/2026-08-06_eydublod.sql`), endapunktur `netlify/functions/eydublod.js`
+  (`/api/eydublod`, ríður `/api/*` catch-all). `gogn` (jsonb) geymir REITAGILDIN —
+  þau eru uppspretta sannleikans, svo hægt er að opna skjal, breyta og vista sem
+  NÝJA útgáfu. `skjal_id` heldur útgáfunum saman, `utgafa` telur upp; hver útgáfa
+  fær sinn eigin storage-hlut svo eldri PDF (þegar farinn til verkkaupa) er
+  ALDREI skrifaður yfir. GET skilar nýjustu útgáfu per skjal (`?all=1` fyrir allar).
+- **Nýtt eyðublað** = einn hlutur í `FORMS`-fylkinu í `eydublod.html`
+  (`id/titill/lysing/sections/doc(v,E)/pdf(v,P)`) — sjá leiðbeiningarnar í
+  haus-athugasemdinni þar. Engin bakenda-breyting þarf; `form_id` er frjálst.
+
 ## graphify
 
 Þekkingargraf **aðeins uppsett á stóru vélinni** — `graphify`-skipunin er EKKI til á

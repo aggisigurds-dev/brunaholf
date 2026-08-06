@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0f172a">
+<title>Eyðublöð · Brunahólf</title>
+<link rel="icon" href="/img/brunaholf-favicon-32.png">
+<style>
+  :root{
+    --bg:#f1f5f9; --panel:#fff; --line:#e2e8f0; --line2:#eef2f7;
+    --text:#0f172a; --muted:#64748b; --accent:#0f172a; --good:#15803d;
+    --bad:#b91c1c; --soft:#f8fafc; --shadow:0 1px 2px rgba(15,23,42,.05);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:15px; line-height:1.5;
+  }
+
+  /* ── Toppstika ───────────────────────────────────────────────────── */
+  .topbar{
+    background:var(--panel); border-bottom:1px solid var(--line);
+    padding:12px 18px; display:flex; align-items:center; gap:14px;
+    position:sticky; top:0; z-index:30;
+  }
+  .topbar .home{text-decoration:none; color:var(--muted); font-size:13px; font-weight:600; white-space:nowrap}
+  .topbar .home:hover{color:var(--text)}
+  .topbar h1{font-size:17px; margin:0; font-weight:750; flex:1}
+  .topbar h1 .sub{font-weight:500; color:var(--muted); font-size:13px; margin-left:8px}
+
+  /* ── Forsíða ─────────────────────────────────────────────────────── */
+  .wrap{max-width:1000px; margin:0 auto; padding:22px 16px 60px}
+  .cards{display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px}
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    padding:18px; box-shadow:var(--shadow); cursor:pointer; text-align:left;
+    font-family:inherit; font-size:inherit; color:inherit; display:block; width:100%;
+    transition:border-color .12s, transform .12s, box-shadow .12s;
+  }
+  .card:hover{border-color:#cbd5e1; transform:translateY(-1px); box-shadow:0 4px 14px rgba(15,23,42,.08)}
+  .card .ico{font-size:26px; line-height:1; margin-bottom:10px}
+  .card h3{margin:0 0 5px; font-size:15px; font-weight:750}
+  .card p{margin:0; font-size:13px; color:var(--muted); line-height:1.45}
+  .card .tag{
+    display:inline-block; margin-top:11px; font-size:11px; font-weight:700;
+    background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; padding:2px 8px; border-radius:999px;
+  }
+  .intro{color:var(--muted); font-size:13.5px; margin:0 0 18px; max-width:640px}
+  .sect-h{font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.06em;
+    color:var(--muted); margin:30px 0 10px}
+
+  /* ── Skjalasafn ──────────────────────────────────────────────────── */
+  .docs{background:var(--panel); border:1px solid var(--line); border-radius:12px; overflow:hidden}
+  .docrow{display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid var(--line2); font-size:13px}
+  .docrow:last-child{border-bottom:none}
+  .docrow .t{flex:1; min-width:0}
+  .docrow .t b{display:block; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .docrow .t span{color:var(--muted); font-size:11.5px}
+  .docrow a, .docrow button{
+    border:1px solid var(--line); background:#fff; border-radius:7px; padding:5px 9px;
+    font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; color:var(--text);
+    text-decoration:none; white-space:nowrap;
+  }
+  .docrow a:hover, .docrow button:hover{background:var(--soft)}
+  .docrow .del{color:var(--bad); border-color:transparent}
+  .vbadge{background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; border-radius:999px;
+    padding:1px 7px; font-size:11px; font-weight:800; white-space:nowrap}
+  .empty{padding:16px 12px; color:var(--muted); font-size:13px}
+
+  /* ── Ritill + skjal ──────────────────────────────────────────────── */
+  .layout{display:grid; grid-template-columns:330px 1fr; align-items:start}
+  .editor{
+    background:var(--panel); border-right:1px solid var(--line);
+    padding:16px 14px 80px; height:calc(100vh - 53px); overflow-y:auto;
+    position:sticky; top:53px;
+  }
+  .preview{padding:22px; overflow-x:auto; background:var(--bg)}
+  @media (max-width:900px){
+    .layout{grid-template-columns:1fr}
+    .editor{height:auto; position:static; border-right:none; border-bottom:1px solid var(--line); padding-bottom:20px}
+    .preview{padding:10px}
+  }
+
+  fieldset{border:none; margin:0 0 16px; padding:0}
+  fieldset legend{
+    font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.06em;
+    color:var(--muted); padding:0 0 8px; display:block; width:100%;
+    border-bottom:1px solid var(--line2); margin-bottom:11px;
+  }
+  .fld{margin-bottom:11px}
+  .fld label{display:block; font-size:12px; color:var(--muted); margin-bottom:4px; font-weight:650}
+  .fld .hint{font-size:11px; color:#94a3b8; font-weight:500; margin-top:3px; display:block}
+  input[type=text], input[type=date]{
+    width:100%; border:1px solid var(--line); border-radius:8px; padding:9px 10px;
+    font-size:14px; font-family:inherit; background:#fff; color:var(--text);
+  }
+  input:focus{outline:none; border-color:#94a3b8; box-shadow:0 0 0 3px rgba(15,23,42,.07)}
+
+  .sig-wrap{border:1px solid var(--line); border-radius:10px; background:#fff; overflow:hidden}
+  .sig-wrap canvas{display:block; width:100%; height:110px; touch-action:none; cursor:crosshair; background:#fff}
+  .sig-actions{display:flex; justify-content:space-between; align-items:center; gap:6px; padding:6px 8px;
+    background:var(--soft); border-top:1px solid var(--line); font-size:11.5px; color:var(--muted); flex-wrap:wrap}
+  .sig-actions button{border:none; background:transparent; color:var(--accent); font-size:12px;
+    cursor:pointer; font-weight:700; padding:3px 5px; font-family:inherit}
+  .sig-actions button:hover{text-decoration:underline}
+
+  .toolbar{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:14px;
+    padding-bottom:12px; border-bottom:1px solid var(--line2)}
+  .btn{border:1px solid var(--line); background:#fff; border-radius:9px; padding:9px 13px;
+    font-size:13.5px; cursor:pointer; font-weight:700; font-family:inherit; color:var(--text)}
+  .btn:hover{background:var(--soft)}
+  .btn:disabled{opacity:.55; cursor:progress}
+  .btn-primary{background:var(--accent); color:#fff; border-color:var(--accent)}
+  .btn-primary:hover{background:#1e293b}
+  .btn-ghost{border-color:transparent; color:var(--muted)}
+  .btn-ghost:hover{color:var(--text); background:var(--soft)}
+  .switch{display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--muted);
+    font-weight:650; cursor:pointer; user-select:none; margin-left:auto}
+  .switch input{width:15px; height:15px; accent-color:#eab308; cursor:pointer}
+  .saved{font-size:11.5px; color:var(--good); font-weight:700}
+  .status{font-size:12px; font-weight:700; padding:6px 0}
+  .status.err{color:var(--bad)}
+  .status.ok{color:var(--good)}
+  .editing{background:#eff6ff; border:1px solid #bfdbfe; color:#1e3a8a; border-radius:9px;
+    padding:8px 10px; font-size:12px; font-weight:650; margin-bottom:12px}
+
+  /* ═══════════════════════════════════════════════════════════════════
+     SKJALIÐ — spegilmynd af Word-frumritinu (Staðfesting_Keldur.docx).
+     Tölurnar hér að neðan eru lesnar beint úr docx-inu:
+       Blaðsíða   US Letter 8,5×11in · spássía 1in
+       Grunnletur Aptos 11pt (docDefaults)
+       Meginmál   Calibri 12pt (sz 24) · línubil 1,15 (line 276) · bil eftir 0
+       Fyrirsögn  Calibri 14pt feitletruð (sz 28), miðjuð
+       Punktar    ● · inndráttur 0,5in, hangandi 0,25in
+       Haus       merki 2,04×0,49in miðjað, texti sitt hvorum megin, lína undir
+       Undirskrift 4,39×1,06in, 0,754in undir upphafi „Með kveðju"-greinar
+     ═══════════════════════════════════════════════════════════════════ */
+  .doc{
+    background:#fff; margin:0 auto; width:8.5in; padding:1in;
+    box-shadow:0 2px 18px rgba(15,23,42,.10); border:1px solid var(--line);
+    font-family:Aptos,Calibri,Carlito,"Segoe UI",Candara,Arial,sans-serif;
+    font-size:11pt; line-height:1.15; color:#000;
+  }
+  .doc p{margin:0}
+  .doc .p12{font-family:Calibri,Carlito,"Segoe UI",Candara,Arial,sans-serif; font-size:12pt; line-height:1.15}
+  .doc .b{font-weight:bold}
+  .doc .bi{font-weight:bold; font-style:italic}
+
+  .doc-head{position:relative; border-bottom:0.5pt solid #000; padding-bottom:1pt}
+  .doc-head .hrow{display:flex; justify-content:space-between; align-items:flex-end; gap:12px; font-size:11pt; line-height:1.15}
+  .doc-head .hrow.r1{height:.49in}
+  .doc-head .hrow span{white-space:nowrap}
+  .doc-head img.logo{position:absolute; left:50%; transform:translateX(-50%); top:0; width:2.04in; height:.49in}
+
+  .doc-title{text-align:center; font-family:Calibri,Carlito,"Segoe UI",Candara,Arial,sans-serif;
+    font-size:14pt; font-weight:bold; line-height:1.15}
+  .doc-center{text-align:center}
+
+  .doc ul{list-style:none; margin:0; padding:0}
+  .doc li{font-family:Calibri,Carlito,"Segoe UI",Candara,Arial,sans-serif; font-size:12pt;
+    line-height:1.15; padding-left:.5in; text-indent:-.25in}
+  .doc li::before{content:"\25CF"; display:inline-block; width:.25in; text-indent:0; font-size:10pt}
+  .doc .sigimg{display:block; width:4.39in; height:1.06in; margin-top:.18in}
+
+  /* ── Bein ritun ofan í skjalið ───────────────────────────────────── */
+  .ed{outline:none}
+  .ed:focus{background:#e0f2fe; box-shadow:0 0 0 2px #7dd3fc; border-radius:2px}
+  body.show-vars .vf{background:#fef08a; box-shadow:0 0 0 1px #fde047; border-radius:2px}
+  body.show-vars .vf:focus{background:#e0f2fe; box-shadow:0 0 0 2px #7dd3fc}
+  .doc [contenteditable]:empty::before{content:attr(data-ph); color:#9ca3af}
+
+  @media (max-width:900px){
+    .preview .doc{transform:scale(var(--zoom,.46)); transform-origin:top left; margin:0}
+    .preview .zoomwrap{height:calc(11in * var(--zoom,.46)); overflow:hidden}
+  }
+
+  /* ── Prentun / Vista sem PDF ─────────────────────────────────────── */
+  @page{size:letter; margin:1in}
+  @media print{
+    html,body{background:#fff !important}
+    .topbar, .editor, .no-print{display:none !important}
+    .layout{display:block !important}
+    .preview{padding:0 !important; overflow:visible !important; background:#fff !important}
+    .preview .zoomwrap{height:auto !important; overflow:visible !important}
+    .doc{box-shadow:none !important; border:none !important; width:auto !important;
+      padding:0 !important; margin:0 !important; transform:none !important}
+    .vf, .ed:focus{background:none !important; box-shadow:none !important}
+    .doc-head, .sign{break-inside:avoid; page-break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="home" href="/" id="homeLink">← Hubbið</a>
+  <h1 id="pageTitle">Eyðublöð<span class="sub">Brunahólf ehf.</span></h1>
+</div>
+
+<div id="root"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════
+   EYÐUBLÖÐ — Brunahólf ehf.        brunaholf.netlify.app/eydublod.html
+   ───────────────────────────────────────────────────────────────────────
+   Sjálfstæð síða (ekkert build-þrep). Skjalið sjálft er ritillinn: allur
+   texti er skrifaður BEINT ofan í skjalið (contenteditable). Hliðarstikan
+   geymir aðeins það sem er ekki í skjalinu — dagsetningarval, sjálfvirkni-
+   reitir, undirskrift og skjalasafnið.
+
+   Fyrsta eyðublaðið, „Yfirlýsing vegna brunalokana", er stafrétt eftirmynd
+   af Word-frumritinu (Staðfesting_Keldur31072026.docx): letur, leturstærðir,
+   línubil, spássíur, haus, punktar og myndir lesin beint úr docx-inu.
+
+   VISTUN OG ÚTGÁFUR
+   „Vista í skjalasafn" býr til vektor-PDF (jsPDF + Carlito, sama málsetning
+   og Calibri) og sendir hann á /api/eydublod → Supabase Storage (fatan
+   `eydublod`) + töfluna `eydublod_skjol`. REITAGILDIN fylgja með (`gogn`),
+   svo hægt er að opna skjal aftur, breyta og vista sem NÝJA útgáfu — eldri
+   PDF stendur óhreyfður því hann er mögulega farinn til verkkaupa.
+
+   ➕ SVONA BÆTIRÐU VIÐ NÝJU EYÐUBLAÐI
+   Bættu einum hlut í FORMS-fylkið:
+
+     {
+       id:'einkvaemt-id',                  // ratar í ?form=einkvaemt-id
+       titill:'Nafn eyðublaðs',
+       lysing:'Ein setning fyrir spjaldið á forsíðunni',
+       icon:'📄',
+       skra: v => 'Skraarnafn_' + v.eitthvad,
+       sections:[ { titill:'…', fields:[ …hliðarstiku-reitir… ] } ],
+       doc: (v, E) => `…HTML skjalsins (E.line/E.para/E.list gera það ritanlegt)…`,
+       pdf: (v, P) => { …teiknar sama skjal í PDF með P-hjálpartólunum… }
+     }
+
+   Hliðarstiku-reitir (`type`): 'text' · 'date' · 'sig'.
+   • `auto:(v)=>'…'` reiknar texta út frá öðrum reitum og heldur áfram að
+     uppfæra hann þar til notandinn skrifar sjálfur ofan í hann.
+   • `gult:true` merkir svæði sem breytist milli verka — það lýsist gult í
+     skjalinu, eins og yfirstrikanirnar á fyrirmyndinni frá Agnari.
+
+   Vinnureglan „ALLTAF LEYFA VISTUN": ekkert hér stoppar notandann. Engar
+   skyldur, engin validering sem lokar á prentun eða vistun.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const esc = s => String(s == null ? '' : s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+const lines = s => String(s || '').split('\n').map(x => x.trim()).filter(Boolean);
+
+function fmtDate(iso){
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+  return m ? `${m[3]}.${m[2]}.${m[1]}` : (iso || '');
+}
+function parseDate(txt){
+  const m = /^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})$/.exec(String(txt || '').trim());
+  if(!m) return '';
+  const p = n => String(n).padStart(2,'0');
+  return `${m[3]}-${p(m[2])}-${p(m[1])}`;
+}
+function todayIso(){
+  const d = new Date(), p = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+}
+
+const byggList = s => String(s || '')
+  .split(/\s*(?:-|–|,|\/|\bog\b)\s*/i).map(x => x.trim()).filter(Boolean);
+
+function joinIs(a){
+  if(!a.length) return '';
+  return a.length === 1 ? a[0] : a.slice(0,-1).join(', ') + ' og ' + a[a.length-1];
+}
+
+const SVEITARFELOG = [
+  'Reykjavíkurborgar','Kópavogsbæjar','Hafnarfjarðarbæjar','Garðabæjar',
+  'Mosfellsbæjar','Seltjarnarnesbæjar','Reykjanesbæjar','Hveragerðisbæjar',
+  'Akureyrarbæjar','Árborgar','Akraneskaupstaðar','Suðurnesjabæjar',
+  'Grindavíkurbæjar','Borgarbyggðar','Fjarðabyggðar','Múlaþings',
+  'Vestmannaeyjabæjar','Ísafjarðarbæjar','Skagafjarðar'
+];
+
+/* Umfjöllunarefnið — það sem sjálfvirku setningarnar eiga að fjalla um:
+     1. byggingarnar ef þær eru gefnar   („3-5-7")
+     2. annars afgangurinn af fyrirsögninni á eftir fyrsta kommunni
+        („Rekstrarfélag Kringlunnar, Útisvæði – Kúmen 07-009-222." → útisvæðið)
+   Sum verk eru einfaldlega ekki númeraðar byggingar. */
+function efni(v){
+  const b = byggList(v.byggingar);
+  if(b.length) return { tegund:'bygg', list:b, texti:(v.byggingar || '').trim() };
+  const hreinsa = s => String(s || '').trim().replace(/[.,]+$/,'').trim();
+  const eftirKommu = hreinsa(String(v.stadur || '').split(',').slice(1).join(','));
+  if(eftirKommu) return { tegund:'annad', list:[], texti:eftirKommu };
+  return { tegund:'ekkert', list:[], texti:'' };
+}
+
+/* ═════════════════ EYÐUBLAÐA-SKRÁIN ═════════════════ */
+const FORMS = [
+{
+  id:'yfirlysing-brunalokana',
+  titill:'Yfirlýsing vegna brunalokana',
+  lysing:'Staðfesting til verkkaupa um að brunahólfun og eldvarnarhurðir standist kröfur HMS og gildandi reglugerðir.',
+  icon:'🔥',
+  merki:'Skjal til verkkaupa',
+  skra: v => 'Stadfesting_' + ((v.stadur || 'Brunalokanir').split(',')[0]) + '_' + fmtDate(v.dagsetning),
+
+  /* Hliðarstikan — aðeins það sem er EKKI ritað beint í skjalið. */
+  sections:[
+    { titill:'Verkið',
+      fields:[
+        { key:'dagsetning', type:'date', label:'Dagsetning', def:todayIso() },
+        { key:'byggingar', type:'text', label:'Byggingar',
+          hint:'T.d. „3-5-7". Skrifar sjálfkrafa setningarnar tvær í skjalinu. Tómt ef verkið er ekki númeraðar byggingar.',
+          def:'', placeholder:'3-5-7' },
+        { key:'sveitarfelag', type:'text', list:SVEITARFELOG, label:'Teikningar af vef (eignarfall)',
+          def:'Reykjavíkurborgar', placeholder:'Reykjavíkurborgar' }
+      ] },
+    { titill:'Undirritun',
+      fields:[
+        { key:'sig', type:'sig', label:'Undirskrift',
+          hint:'Undirskrift Annþórs úr frumritinu er sjálfgefin. Teiknaðu yfir ef annar skrifar undir.' }
+      ] }
+  ],
+
+  /* Sjálfvirku setningarnar — ritanlegar í skjalinu, en skrifa sig sjálfar
+     þar til notandinn tekur þær yfir. */
+  autos:{
+    umraedir: v => {
+      const e = efni(v), vefur = v.sveitarfelag || 'sveitarfélagsins';
+      if(e.tegund === 'bygg')
+        return `Um ræðir ${e.list.length === 1 ? 'byggingu' : 'byggingar'} ${e.texti} samkvæmt teikningum af vef ${vefur}.`;
+      if(e.tegund === 'annad')
+        return `Um ræðir ${e.texti} samkvæmt teikningum af vef ${vefur}.`;
+      return `Um ræðir húsnæðið samkvæmt teikningum af vef ${vefur}.`;
+    },
+    nidurstada: v => {
+      const e = efni(v);
+      const hvar = e.tegund === 'bygg'
+        ? (e.list.length === 1 ? ` í byggingu ${e.list[0]}` : ` í byggingum ${joinIs(e.list)}`)
+        : (e.tegund === 'annad' ? ` á svæðinu ${e.texti}` : '');
+      return 'Að loknum framangreindum lagfæringum er það mat Brunahólfs ehf. að brunahólfun og '
+        + `eldvarnarhurðir${hvar} séu í samræmi við gildandi kröfur og reglugerðir, að því marki `
+        + 'sem yfirferð og framkvæmdir Brunahólfs ehf. náðu til.';
+    }
+  },
+
+  /* Sjálfgefinn texti skjalsins. */
+  defaults:{
+    stadur:'',
+    hausTitill:'Yfirlýsing vegna Brunalokana',
+    hausAbyrgd:'Ábyrgðarmaður: ',
+    abyrgdarmadur:'Annþór Kristján Karlsson',
+    leyfisnumer:'202209-0174',
+    inngangur:['Brunahólf ehf. lýsir yfir að öll vinna og efni standist kröfur og reglugerðir samkvæmt leiðbeiningum Húsnæðis- og mannvirkjastofnunar (HMS) og öðrum viðeigandi reglugerðum.',
+               'Eftirfarandi var unnið:'].join('\n'),
+    h1:'Hvað var gert',
+    hvadVarGert:[
+      'Farið var yfir brunahólfun og lagt mat á endurbætur.',
+      'Lagfæringar voru gerðar þar sem þörf var á, byggt á sjónrænu mati.',
+      'Farið var yfir allar eldvarnarhurðir. Lokunarbúnaður var settur á þær hurðir sem skorti slíkan búnað og aðrar hurðir yfirfarnar og lagfærðar eftir því sem þörf var á.'
+    ].join('\n'),
+    h2:'Framkvæmd og gæðaviðmið',
+    gaedavidmid:[
+      'Merkingar með dagsetningu, leyfisnúmeri og ábyrgðaraðila (Brunahólf ehf.) voru límdir við hverja brunalokun.',
+      'Notuð efni uppfylla íslenskar reglugerðir, ESB-staðla og önnur lög sem á við.',
+      'Gæðakerfi hefur verið uppfært með myndum af hverri brunalokun, og hlekkur á myndir getur verið sendur samkvæmt beiðni verkkaupa og/eða yfirvalds.'
+    ].join('\n'),
+    h3:'Lög og reglugerðir sem unnið er eftir',
+    login:[
+      'Lög um brunavarnir nr. 75/2000',
+      'Lög um mannvirki nr. 160/2010',
+      'Reglugerð um þjónustuaðila brunavarna nr. 1067/2011',
+      'Byggingarreglugerð nr. 112/2012'
+    ].join('\n'),
+    h4:'Eftirlit og gæðaeftirlit',
+    eftirlit:[
+      'Leyfishafi framkvæmir handahófskenndar úttektir á brunalokunum, án vitundar starfsmanna.',
+      'Ef brunalokanir uppfylla ekki kröfur HMS og ESB eru athugasemdir gerðar og skýrsla samin um nauðsynlegar úrbætur og breytingar á verklagi.'
+    ].join('\n'),
+    kvedja:'Með fyrirfram þökk og von um að þjónustan uppfylli ykkar væntingar.',
+    kvedja2:'Með kveðju,',
+    fyrirhond:'FH. Brunahólf ehf.'
+  },
+
+  /* ── Skjalið á skjánum. E gerir svæði ritanleg beint í skjalinu. ── */
+  doc: (v, E) => `
+    <div class="doc-head">
+      <img class="logo" src="/img/yfirlysing-logo.jpg" alt="Brunahólf" onerror="this.style.display='none'">
+      <div class="hrow r1">
+        <span><b>BRUNAHÓLF EHF.</b></span>
+        <span>${E.line('hausTitill', v.hausTitill)}</span>
+      </div>
+      <div class="hrow">
+        <span>Leyfisnúmer ${E.line('leyfisnumer', v.leyfisnumer)}</span>
+        <span>${esc(v.hausAbyrgd)}${E.line('abyrgdarmadur', v.abyrgdarmadur)}</span>
+      </div>
+    </div>
+
+    <p class="doc-title">${E.line('stadur', v.stadur, {gult:true, ph:'Staður, heimilisfang, byggingar'})}</p>
+    <p class="p12">&nbsp;</p>
+    <p class="p12 doc-center">Dagsetning: ${E.line('dagsetningTexti', v.dagsetningRaw || fmtDate(v.dagsetning), {gult:true})}</p>
+
+    ${E.para('inngangur', v.inngangur, 'p12')}
+
+    <p class="p12 b">${E.line('h1', v.h1)}</p>
+    ${E.para('hvadVarGert', v.hvadVarGert, '')}
+    <p class="p12">${E.line('umraedir', v.umraedir, {gult:true})}</p>
+    <p class="p12 bi">${E.line('nidurstada', v.nidurstada, {gult:true})}</p>
+
+    <p class="p12 b">${E.line('h2', v.h2)}</p>
+    ${E.list('gaedavidmid', v.gaedavidmid)}
+
+    <p class="p12 b">${E.line('h3', v.h3)}</p>
+    ${E.list('login', v.login)}
+
+    <p class="p12 b">${E.line('h4', v.h4)}</p>
+    ${E.list('eftirlit', v.eftirlit)}
+
+    ${E.para('kvedja', v.kvedja, 'p12')}
+
+    <div class="sign">
+      <p class="p12">${E.line('kvedja2', v.kvedja2)}</p>
+      <p class="p12 b">${E.line('fyrirhond', v.fyrirhond)}</p>
+      <p class="p12">${esc(v.abyrgdarmadur)}</p>
+      ${v.sig ? `<img class="sigimg" src="${esc(v.sig)}" alt="Undirskrift">` : ''}
+    </div>`,
+
+  /* ── Sama skjal teiknað í PDF (vektor). P = hjálpartólin neðar. ── */
+  pdf: async (v, P) => {
+    // Haus: merki miðjað, texti sitt hvorum megin, lína undir.
+    const logo = await P.image('/img/yfirlysing-logo.jpg');
+    P.setY(36);
+    const headTop = P.getY();
+    if(logo) P.drawImage(logo, 'JPEG', P.M + (P.CW - 146.9)/2, headTop, 146.9, 35.3);
+
+    // Lína 1 situr á botni merkisins (grunnlínu-jöfnun eins og í Word).
+    P.textAt('BRUNAHÓLF EHF.', P.M, headTop + 35.3, {size:11, style:'bold'});
+    P.textAt(v.hausTitill, P.M + P.CW, headTop + 35.3, {size:11, align:'right'});
+    const r2 = headTop + 35.3 + 12.65;
+    P.textAt('Leyfisnúmer ' + v.leyfisnumer, P.M, r2, {size:11});
+    P.textAt((v.hausAbyrgd || '') + v.abyrgdarmadur, P.M + P.CW, r2, {size:11, align:'right'});
+    P.rule(r2 + 3);
+    P.setY(r2 + 9);
+
+    P.para(v.stadur, {size:14, style:'bold', align:'center'});
+    P.gap(13.8);
+    P.para('Dagsetning: ' + (v.dagsetningRaw || fmtDate(v.dagsetning)), {size:12, align:'center'});
+
+    P.paras(v.inngangur, {size:12});
+    P.para(v.h1, {size:12, style:'bold'});
+    P.paras(v.hvadVarGert, {size:11});         // frumritið notar grunnletrið hér
+    P.para(v.umraedir, {size:12});
+    P.para(v.nidurstada, {size:12, style:'bolditalic'});
+
+    P.para(v.h2, {size:12, style:'bold'});
+    P.bullets(v.gaedavidmid);
+    P.para(v.h3, {size:12, style:'bold'});
+    P.bullets(v.login);
+    P.para(v.h4, {size:12, style:'bold'});
+    P.bullets(v.eftirlit);
+
+    P.paras(v.kvedja, {size:12});
+    P.para(v.kvedja2, {size:12});
+    P.para(v.fyrirhond, {size:12, style:'bold'});
+    P.para(v.abyrgdarmadur, {size:12});
+
+    if(v.sig){
+      const sig = await P.image(v.sig);
+      if(sig){
+        P.gap(13);                              // 0,18in undir nafninu
+        P.need(76.3);
+        P.drawImage(sig, 'PNG', P.M, P.getY(), 316, 76.3);
+        P.gap(76.3);
+      }
+    }
+  }
+}
+];
+
+/* Sjálfgefin undirskrift: Annþór, úr frumritinu (word/media/image1.png). */
+const SIG_SJALFGEFIN = '/img/undirskrift-annthor.png';
+
+/* ═════════════════ ÁSTAND ═════════════════ */
+let form = null, values = {}, autoOn = {}, sigPad = null, saveTimer = null;
+let skjalId = '', utgafa = 0;          // sett þegar vistað skjal er opnað
+let safn = [];                          // skjalasafnið (nýjasta útgáfa per skjal)
+
+const $root = document.getElementById('root');
+const lsKey = id => 'bh_eydublad_' + id;
+
+if(window.self !== window.top){
+  const h = document.getElementById('homeLink');
+  if(h) h.style.display = 'none';
+}
+
+function route(){
+  const id = new URLSearchParams(location.search).get('form');
+  form = FORMS.find(f => f.id === id) || null;
+  form ? openForm() : listForms();
+}
+window.addEventListener('popstate', route);
+
+function go(id){
+  history.pushState({}, '', id ? ('?form=' + encodeURIComponent(id)) : location.pathname);
+  route();
+}
+
+/* ── Forsíða ───────────────────────────────────────────────────────── */
+async function listForms(){
+  document.getElementById('pageTitle').innerHTML = 'Eyðublöð<span class="sub">Brunahólf ehf.</span>';
+  document.body.classList.remove('show-vars');
+  $root.innerHTML = `
+    <div class="wrap">
+      <p class="intro">
+        Veldu eyðublað, skrifaðu beint ofan í skjalið og vistaðu það sem PDF í skjalasafnið.
+        Vistuð skjöl má sækja, opna aftur og gefa út í nýrri útgáfu.
+      </p>
+      <div class="cards">
+        ${FORMS.map(f => `
+          <button class="card" onclick="go('${f.id}')">
+            <div class="ico">${f.icon}</div>
+            <h3>${esc(f.titill)}</h3>
+            <p>${esc(f.lysing)}</p>
+            ${f.merki ? `<span class="tag">${esc(f.merki)}</span>` : ''}
+          </button>`).join('')}
+      </div>
+      <div class="sect-h">Skjalasafn</div>
+      <div class="docs" id="safnBox"><div class="empty">Sæki…</div></div>
+    </div>`;
+  await loadSafn();
+  renderSafn('safnBox', true);
+}
+
+async function loadSafn(formId){
+  try{
+    const q = formId ? ('?form_id=' + encodeURIComponent(formId)) : '';
+    const r = await fetch('/api/eydublod' + q);
+    const j = await r.json();
+    safn = (j && j.docs) || [];
+  }catch(e){ safn = []; }
+}
+
+function renderSafn(boxId, medNafni){
+  const box = document.getElementById(boxId);
+  if(!box) return;
+  if(!safn.length){ box.innerHTML = '<div class="empty">Ekkert vistað enn.</div>'; return; }
+  box.innerHTML = safn.map(d => `
+    <div class="docrow">
+      <div class="t">
+        <b>${esc(d.stadur || d.titill || d.skra_nafn || 'Skjal')}</b>
+        <span>${d.dagsetning ? fmtDate(d.dagsetning) : ''}${medNafni && d.titill ? ' · ' + esc(d.titill) : ''}
+          · ${new Date(d.created_at).toLocaleDateString('is-IS')}</span>
+      </div>
+      <span class="vbadge">v${d.utgafa}</span>
+      ${d.public_url ? `<a href="${esc(d.public_url)}" target="_blank" rel="noopener">⬇︎ PDF</a>` : ''}
+      <button onclick="opnaSkjal('${d.id}')">✎ Breyta</button>
+      <button class="del" onclick="eydaSkjali('${d.id}')" title="Eyða þessari útgáfu">✕</button>
+    </div>`).join('');
+}
+
+async function opnaSkjal(id){
+  const d = safn.find(x => x.id === id);
+  if(!d) return;
+  if(!form || form.id !== d.form_id){
+    sessionStorage.setItem('bh_opna_skjal', id);
+    sessionStorage.setItem('bh_opna_gogn', JSON.stringify(d));
+    go(d.form_id);
+    return;
+  }
+  applySaved(d);
+}
+
+function applySaved(d){
+  values = Object.assign({}, formDefaults(), d.gogn || {});
+  autoOn = {};                       // vistað skjal er fast — engin sjálfvirk yfirskrift
+  skjalId = d.skjal_id; utgafa = d.utgafa;
+  try{ localStorage.removeItem(lsKey(form.id)); }catch(e){}
+  paintForm();
+}
+
+async function eydaSkjali(id){
+  const d = safn.find(x => x.id === id);
+  if(!d) return;
+  if(!confirm(`Eyða útgáfu ${d.utgafa} af „${d.stadur || d.titill || 'skjali'}"?`)) return;
+  try{
+    await fetch('/api/eydublod', { method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ action:'delete', id }) });
+  }catch(e){}
+  await loadSafn(form ? form.id : undefined);
+  renderSafn(form ? 'safnList' : 'safnBox', !form);
+}
+
+/* ── Gildi ─────────────────────────────────────────────────────────── */
+const allFields = () => form.sections.flatMap(s => s.fields);
+
+function formDefaults(){
+  const d = Object.assign({}, form.defaults || {});
+  allFields().forEach(f => { if(d[f.key] === undefined) d[f.key] = f.def != null ? f.def : ''; });
+  return d;
+}
+
+function loadValues(){
+  values = formDefaults();
+  autoOn = {};
+  Object.keys(form.autos || {}).forEach(k => { autoOn[k] = true; });
+
+  let hadDraft = false;
+  try{
+    const raw = localStorage.getItem(lsKey(form.id));
+    if(raw){
+      const saved = JSON.parse(raw);
+      Object.assign(values, saved.values || {});
+      if(saved.autoOn) autoOn = saved.autoOn;
+      skjalId = saved.skjalId || ''; utgafa = saved.utgafa || 0;
+      hadDraft = true;
+    }
+  }catch(e){ /* skemmd drög mega ekki fella síðuna */ }
+
+  if(!hadDraft && !values.sig){
+    let eigin = '';
+    try{ eigin = localStorage.getItem('bh_undirskrift_sjalfgefin') || ''; }catch(e){}
+    values.sig = eigin || SIG_SJALFGEFIN;
+  }
+  recalcAuto();
+}
+
+function recalcAuto(){
+  Object.entries(form.autos || {}).forEach(([k, fn]) => { if(autoOn[k]) values[k] = fn(values); });
+}
+
+function saveDraft(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try{
+      localStorage.setItem(lsKey(form.id), JSON.stringify({ values, autoOn, skjalId, utgafa }));
+      flash('savedFlag', '✓ Vistað');
+    }catch(e){}
+  }, 400);
+}
+
+function flash(id, txt){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.textContent = txt;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.textContent = ''; }, 1800);
+}
+
+/* ── Ritill ────────────────────────────────────────────────────────── */
+async function openForm(){
+  loadValues();
+
+  // Skjal sem var opnað af forsíðunni (annað eyðublað) — sækjum það inn.
+  const pending = sessionStorage.getItem('bh_opna_skjal');
+  if(pending){
+    const raw = sessionStorage.getItem('bh_opna_gogn');
+    sessionStorage.removeItem('bh_opna_skjal'); sessionStorage.removeItem('bh_opna_gogn');
+    try{ const d = JSON.parse(raw); if(d && d.form_id === form.id){ applySaved(d); return; } }catch(e){}
+  }
+  paintForm();
+  await loadSafn(form.id);
+  renderSafn('safnList', false);
+}
+
+function paintForm(){
+  document.getElementById('pageTitle').innerHTML = `${esc(form.titill)}<span class="sub">Brunahólf ehf.</span>`;
+  const showVars = localStorage.getItem('bh_eydublad_gult') !== '0';
+  document.body.classList.toggle('show-vars', showVars);
+
+  $root.innerHTML = `
+    <div class="layout">
+      <div class="editor">
+        <div class="toolbar no-print">
+          <button class="btn btn-ghost" onclick="go('')">← Öll eyðublöð</button>
+          <span id="savedFlag" class="saved"></span>
+        </div>
+        ${skjalId ? `<div class="editing">✎ Opið úr skjalasafni — útgáfa ${utgafa}.
+          „Vista" býr til útgáfu ${utgafa + 1}; eldri PDF stendur óhreyfður.</div>` : ''}
+        <form id="fields" autocomplete="off">${form.sections.map(sectionHtml).join('')}</form>
+        <fieldset>
+          <legend>Skjalasafn</legend>
+          <div class="toolbar" style="border-bottom:none;padding-bottom:0;margin-bottom:8px">
+            <button class="btn btn-primary" id="btnSave" onclick="vista()">💾 ${skjalId ? 'Vista sem útgáfu ' + (utgafa + 1) : 'Vista í skjalasafn'}</button>
+            ${skjalId ? '<button class="btn btn-ghost" onclick="nyttSkjal()">Nýtt skjal</button>' : ''}
+          </div>
+          <div id="saveStatus" class="status"></div>
+          <div class="docs" id="safnList"><div class="empty">Sæki…</div></div>
+        </fieldset>
+        <div class="toolbar" style="border-bottom:none;padding-top:6px;margin-bottom:0">
+          <button class="btn btn-ghost" onclick="resetForm()">Hreinsa allt</button>
+        </div>
+      </div>
+
+      <div class="preview">
+        <div class="toolbar no-print">
+          <button class="btn btn-primary" onclick="printDoc()">🖨️ Prenta</button>
+          <button class="btn" id="btnDl" onclick="saekjaPdf()">⬇︎ Sækja PDF</button>
+          <label class="switch">
+            <input type="checkbox" id="varsToggle" ${showVars ? 'checked' : ''}>
+            Sýna breytileg svæði
+          </label>
+        </div>
+        <div class="zoomwrap"><div class="doc" id="doc"></div></div>
+      </div>
+    </div>`;
+
+  document.getElementById('fields').addEventListener('input', onFieldInput);
+  document.getElementById('varsToggle').addEventListener('change', e => {
+    document.body.classList.toggle('show-vars', e.target.checked);
+    localStorage.setItem('bh_eydublad_gult', e.target.checked ? '1' : '0');
+  });
+
+  fitPreview();
+  initSig();
+  renderDoc();
+  renderSafn('safnList', false);
+}
+
+function sectionHtml(sec){
+  return `<fieldset><legend>${esc(sec.titill)}</legend>${sec.fields.map(fieldHtml).join('')}</fieldset>`;
+}
+
+function fieldHtml(f){
+  const id = 'f_' + f.key, val = values[f.key] || '';
+  let input = '';
+  if(f.type === 'sig'){
+    input = `
+      <div class="sig-wrap">
+        <canvas id="sigCanvas"></canvas>
+        <div class="sig-actions">
+          <span>Skrifaðu hér</span>
+          <span>
+            <button type="button" onclick="useDefaultSig()">Annþór</button>
+            <button type="button" onclick="saveSigDefault()">Vista sjálfgefna</button>
+            <button type="button" onclick="clearSig()">Hreinsa</button>
+          </span>
+        </div>
+      </div>`;
+  } else if(f.type === 'date'){
+    input = `<input type="date" id="${id}" name="${f.key}" value="${esc(val)}">`;
+  } else {
+    const listId = id + '_list';
+    input = `<input type="text" id="${id}" name="${f.key}" value="${esc(val)}"
+        placeholder="${esc(f.placeholder || '')}" ${f.list ? `list="${listId}"` : ''}>`
+      + (f.list ? `<datalist id="${listId}">${f.list.map(o => `<option value="${esc(o)}">`).join('')}</datalist>` : '');
+  }
+  return `<div class="fld"><label for="${id}">${esc(f.label)}</label>${input}
+    ${f.hint ? `<span class="hint">${esc(f.hint)}</span>` : ''}</div>`;
+}
+
+/* Hliðarstikan → gildi → endurteikna skjalið (enginn bendill í hættu). */
+function onFieldInput(e){
+  const key = e.target.name;
+  if(!key) return;
+  values[key] = e.target.value;
+  if(key === 'dagsetning') values.dagsetningRaw = '';
+  recalcAuto();
+  renderDoc();
+  saveDraft();
+}
+
+/* ── Ritanleg svæði BEINT í skjalinu ───────────────────────────────── */
+const E = {
+  line: (key, txt, o) => {
+    o = o || {};
+    return `<span class="ed${o.gult ? ' vf' : ''}" data-f="${key}" data-kind="line"
+      contenteditable="true" data-ph="${esc(o.ph || '')}">${esc(txt || '')}</span>`;
+  },
+  para: (key, txt, cls) =>
+    `<div class="ed" data-f="${key}" data-kind="multi" contenteditable="true">${
+      lines(txt).map(x => `<p class="${cls}">${esc(x)}</p>`).join('') || `<p class="${cls}"><br></p>`}</div>`,
+  list: (key, txt) =>
+    `<ul class="ed" data-f="${key}" data-kind="multi" contenteditable="true">${
+      lines(txt).map(x => `<li>${esc(x)}</li>`).join('') || '<li><br></li>'}</ul>`
+};
+
+function renderDoc(){
+  const el = document.getElementById('doc');
+  el.innerHTML = form.doc(values, E);
+  if(!el._bound){
+    el._bound = true;
+    el.addEventListener('input', onDocInput);
+    // Enter í eins-línu svæði á ekki að búa til nýja línu.
+    el.addEventListener('keydown', ev => {
+      const t = ev.target.closest('[data-kind="line"]');
+      if(t && ev.key === 'Enter'){ ev.preventDefault(); t.blur(); }
+    });
+  }
+}
+
+function onDocInput(ev){
+  const el = ev.target.closest('[data-f]');
+  if(!el) return;
+  const key = el.dataset.f;
+  const txt = el.innerText.replace(/\u00a0/g, ' ');   // contenteditable skilar hörðum bilum
+
+  if(key === 'dagsetningTexti'){
+    const iso = parseDate(txt);
+    if(iso){ values.dagsetning = iso; values.dagsetningRaw = ''; const d = document.getElementById('f_dagsetning'); if(d) d.value = iso; }
+    else values.dagsetningRaw = txt.trim();
+  } else {
+    values[key] = el.dataset.kind === 'line' ? txt.trim() : txt;
+  }
+
+  // Notandinn tók sjálfvirkan texta yfir → hættum að skrifa hann.
+  if(autoOn[key]) autoOn[key] = false;
+
+  refreshAutoRegions();
+  saveDraft();
+}
+
+/* Uppfærir sjálfvirku svæðin í skjalinu án þess að endurteikna (bendillinn lifir). */
+function refreshAutoRegions(){
+  recalcAuto();
+  Object.keys(form.autos || {}).forEach(k => {
+    if(!autoOn[k]) return;
+    const el = document.querySelector(`#doc [data-f="${k}"]`);
+    if(el && el !== document.activeElement) el.textContent = values[k];
+  });
+}
+
+function fitPreview(){
+  const prev = document.querySelector('.preview');
+  if(!prev) return;
+  if(window.innerWidth > 900) prev.style.removeProperty('--zoom');
+  else prev.style.setProperty('--zoom', Math.min(1, (prev.clientWidth - 4) / (8.5 * 96)).toFixed(3));
+  if(!window.__fitBound){
+    window.__fitBound = true;
+    window.addEventListener('resize', () => { if(document.querySelector('.preview')) fitPreview(); });
+  }
+}
+
+function resetForm(){
+  if(!confirm('Hreinsa allt og byrja upp á nýtt?')) return;
+  try{ localStorage.removeItem(lsKey(form.id)); }catch(e){}
+  skjalId = ''; utgafa = 0;
+  loadValues();
+  paintForm();
+}
+
+function nyttSkjal(){
+  skjalId = ''; utgafa = 0;
+  saveDraft();
+  paintForm();
+}
+
+/* ── Undirskrift ───────────────────────────────────────────────────── */
+function initSig(){
+  const canvas = document.getElementById('sigCanvas');
+  if(!canvas) return;
+  const ratio = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = Math.round(rect.width * ratio);
+  canvas.height = Math.round(rect.height * ratio);
+  const ctx = canvas.getContext('2d');
+  ctx.scale(ratio, ratio);
+  ctx.lineWidth = 2.2; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#1d4ed8';
+  sigPad = { canvas, ctx, w:rect.width, h:rect.height, drawing:false, ink:false };
+
+  if(values.sig) showSigOnPad(values.sig);
+
+  const pos = e => {
+    const r = canvas.getBoundingClientRect();
+    const t = e.touches && e.touches.length ? e.touches[0] : e;
+    return [t.clientX - r.left, t.clientY - r.top];
+  };
+  const start = (x,y) => { sigPad.drawing = true; ctx.beginPath(); ctx.moveTo(x,y); };
+  const move  = (x,y) => { if(sigPad.drawing){ ctx.lineTo(x,y); ctx.stroke(); sigPad.ink = true; } };
+  const end   = () => { if(sigPad.drawing){ sigPad.drawing = false; commitSig(); } };
+
+  canvas.addEventListener('mousedown', e => { const [x,y]=pos(e); start(x,y); });
+  canvas.addEventListener('mousemove', e => { const [x,y]=pos(e); move(x,y); });
+  canvas.addEventListener('mouseup', end);
+  canvas.addEventListener('mouseleave', end);
+  canvas.addEventListener('touchstart', e => { e.preventDefault(); const [x,y]=pos(e); start(x,y); }, {passive:false});
+  canvas.addEventListener('touchmove',  e => { e.preventDefault(); const [x,y]=pos(e); move(x,y); },  {passive:false});
+  canvas.addEventListener('touchend',   e => { e.preventDefault(); end(); }, {passive:false});
+}
+
+function showSigOnPad(src){
+  if(!sigPad) return;
+  const img = new Image();
+  img.onload = () => {
+    const s = Math.min(sigPad.w / img.width, sigPad.h / img.height);
+    const w = img.width * s, h = img.height * s;
+    sigPad.ctx.clearRect(0, 0, sigPad.w, sigPad.h);
+    sigPad.ctx.drawImage(img, (sigPad.w - w)/2, (sigPad.h - h)/2, w, h);
+    sigPad.ink = true;
+  };
+  img.src = src;
+}
+
+function commitSig(){
+  if(!sigPad) return;
+  values.sig = sigPad.ink ? sigPad.canvas.toDataURL('image/png') : '';
+  renderDoc(); saveDraft();
+}
+function clearSig(){
+  if(!sigPad) return;
+  sigPad.ctx.clearRect(0, 0, sigPad.canvas.width, sigPad.canvas.height);
+  sigPad.ink = false; values.sig = '';
+  renderDoc(); saveDraft();
+}
+function useDefaultSig(){
+  let eigin = '';
+  try{ eigin = localStorage.getItem('bh_undirskrift_sjalfgefin') || ''; }catch(e){}
+  values.sig = eigin || SIG_SJALFGEFIN;
+  showSigOnPad(values.sig); renderDoc(); saveDraft();
+}
+function saveSigDefault(){
+  if(!values.sig){ alert('Teiknaðu undirskrift fyrst.'); return; }
+  try{
+    localStorage.setItem('bh_undirskrift_sjalfgefin', values.sig);
+    alert('Undirskriftin er vistuð og birtist sjálfkrafa á næsta eyðublaði.');
+  }catch(e){ alert('Tókst ekki að vista undirskriftina í þessum vafra.'); }
+}
+
+/* ═════════════════ PDF (vektor, jsPDF + Carlito) ═════════════════ */
+/* Carlito er málsamhæft við Calibri (sömu breiddir) og OFL-leyfi, svo
+   vistaði PDF-inn málsetur sig eins og Word-frumritið. */
+const CARLITO = {
+  normal:     '/fonts/carlito-regular.ttf',
+  bold:       '/fonts/carlito-bold.ttf',
+  italic:     '/fonts/carlito-italic.ttf',
+  bolditalic: '/fonts/carlito-bolditalic.ttf'
+};
+
+/* jsPDF liggur í repo-inu (js/jspdf.umd.min.js) en ekki á CDN — eyðublöðin eiga
+   að virka þótt cdnjs sé lokað/niðri, því PDF-inn ER afurðin hér. */
+let _jspdf = null;
+function loadJsPdf(){
+  if(_jspdf) return _jspdf;
+  _jspdf = new Promise((res, rej) => {
+    if(window.jspdf && window.jspdf.jsPDF) return res(window.jspdf);
+    const s = document.createElement('script');
+    s.src = '/js/jspdf.umd.min.js';
+    s.onload = () => (window.jspdf && window.jspdf.jsPDF)
+      ? res(window.jspdf) : rej(new Error('jsPDF hlóðst ekki rétt'));
+    s.onerror = () => rej(new Error('Náði ekki í jsPDF (/js/jspdf.umd.min.js)'));
+    document.head.appendChild(s);
+  });
+  return _jspdf;
+}
+
+async function fetchB64(url){
+  const r = await fetch(url);
+  if(!r.ok) throw new Error(url + ' → ' + r.status);
+  const bytes = new Uint8Array(await r.arrayBuffer());
+  let bin = '';
+  const chunk = 0x8000;
+  for(let i = 0; i < bytes.length; i += chunk) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  return btoa(bin);
+}
+
+const _imgCache = new Map();
+async function imageData(src){
+  if(_imgCache.has(src)) return _imgCache.get(src);
+  let out = null;
+  try{
+    out = src.startsWith('data:') ? src
+      : 'data:' + (src.endsWith('.jpg') || src.endsWith('.jpeg') ? 'image/jpeg' : 'image/png')
+        + ';base64,' + await fetchB64(src);
+  }catch(e){ out = null; }
+  _imgCache.set(src, out);
+  return out;
+}
+
+/* Umbúðir utan um jsPDF sem tala í punktum og halda utan um y-stöðuna. */
+function pdfTools(doc){
+  const M = 72, PW = 612, PH = 792, CW = PW - 2*M;
+  let y = M;
+  const lh = size => size * 1.15;
+  const set = (size, style) => { doc.setFont('carlito', style || 'normal'); doc.setFontSize(size); };
+  const need = h => { if(y + h > PH - M){ doc.addPage(); y = M; } };
+
+  function textAt(txt, x, baseline, o){
+    o = o || {};
+    set(o.size || 12, o.style);
+    doc.text(String(txt == null ? '' : txt), x, baseline, o.align ? { align:o.align } : undefined);
+  }
+  function para(txt, o){
+    o = o || {};
+    if(txt == null || txt === '') return;
+    const size = o.size || 12, style = o.style, w = o.w || CW;
+    set(size, style);
+    for(const l of doc.splitTextToSize(String(txt), w)){
+      need(lh(size));
+      if(o.align === 'center') doc.text(l, M + w/2, y + size*0.86, { align:'center' });
+      else doc.text(l, M, y + size*0.86);
+      y += lh(size);
+    }
+  }
+  const paras = (txt, o) => lines(txt).forEach(l => para(l, o));
+  function bullets(txt, o){
+    o = o || {};
+    const size = o.size || 12, w = CW - 36;
+    for(const item of lines(txt)){
+      set(size, 'normal');
+      doc.splitTextToSize(item, w).forEach((l, i) => {
+        need(lh(size));
+        if(i === 0){ doc.setFontSize(10); doc.text('●', M + 18, y + size*0.86); doc.setFontSize(size); }
+        doc.text(l, M + 36, y + size*0.86);
+        y += lh(size);
+      });
+    }
+  }
+  function rule(at){ doc.setLineWidth(0.5); doc.setDrawColor(0); doc.line(M, at, M + CW, at); }
+
+  return {
+    doc, M, PW, PH, CW,
+    getY: () => y, setY: v => { y = v; }, gap: h => { y += h; }, need,
+    textAt, para, paras, bullets, rule,
+    image: imageData,
+    drawImage: (data, fmt, x, yy, w, h) => { try{ doc.addImage(data, fmt, x, yy, w, h); }catch(e){} }
+  };
+}
+
+async function buildPdf(){
+  const lib = await loadJsPdf();
+  const doc = new lib.jsPDF({ unit:'pt', format:'letter', compress:true });
+
+  // Carlito í fjórum stílum — sótt einu sinni og geymt í VFS skjalsins.
+  for(const [style, url] of Object.entries(CARLITO)){
+    const file = 'carlito-' + style + '.ttf';
+    doc.addFileToVFS(file, await fetchB64(url));
+    doc.addFont(file, 'carlito', style);
+  }
+  doc.setFont('carlito', 'normal');
+
+  await form.pdf(values, pdfTools(doc));
+  return doc;
+}
+
+function pdfName(){
+  let n = '';
+  try{ n = form.skra ? form.skra(values) : form.titill; }catch(e){ n = form.titill; }
+  return String(n || form.titill).replace(/[\\/:*?"<>|]+/g,'')
+    .replace(/\s+/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'');
+}
+
+async function saekjaPdf(){
+  const btn = document.getElementById('btnDl');
+  if(btn){ btn.disabled = true; btn.textContent = '⏳ Bý til PDF…'; }
+  try{
+    const doc = await buildPdf();
+    doc.save(pdfName() + '.pdf');
+  }catch(e){ alert('Tókst ekki að búa til PDF: ' + e.message); }
+  finally{ if(btn){ btn.disabled = false; btn.textContent = '⬇︎ Sækja PDF'; } }
+}
+
+/* ── Vistun í skjalasafn (ný útgáfa) ───────────────────────────────── */
+async function vista(){
+  const btn = document.getElementById('btnSave');
+  const st = document.getElementById('saveStatus');
+  if(btn) btn.disabled = true;
+  if(st){ st.className = 'status'; st.textContent = '⏳ Bý til PDF og vista…'; }
+  try{
+    const doc = await buildPdf();
+    const b64 = doc.output('datauristring').split(',')[1];
+    const body = {
+      action:'save', form_id:form.id, titill:form.titill,
+      stadur: values.stadur || '', dagsetning: values.dagsetning || null,
+      gogn: values, fileName: pdfName() + '.pdf', contentBase64: b64
+    };
+    if(skjalId) body.skjal_id = skjalId;
+
+    const r = await fetch('/api/eydublod', { method:'POST',
+      headers:{'content-type':'application/json'}, body: JSON.stringify(body) });
+    const j = await r.json();
+    if(!r.ok || !j.ok) throw new Error(j.error || ('HTTP ' + r.status));
+
+    skjalId = j.skjal_id; utgafa = j.utgafa;
+    saveDraft();
+    await loadSafn(form.id);
+    paintForm();
+    const st2 = document.getElementById('saveStatus');
+    if(st2){ st2.className = 'status ok'; st2.textContent = `✓ Vistað sem útgáfa ${j.utgafa}.`; }
+  }catch(e){
+    if(st){ st.className = 'status err'; st.textContent = '✗ ' + e.message; }
+  }finally{ const b = document.getElementById('btnSave'); if(b) b.disabled = false; }
+}
+
+/* ── Prentun ───────────────────────────────────────────────────────── */
+function printDoc(){
+  const prev = document.title;
+  document.title = pdfName();
+  window.addEventListener('afterprint', function once(){
+    document.title = prev;
+    window.removeEventListener('afterprint', once);
+  });
+  window.print();
+}
+
+route();
+</script>
+</body>
+</html>
