@@ -109,6 +109,10 @@
     frameWrap.style.cssText = 'flex:1 1 auto;width:min(' + w + 'px,96vw);max-width:96vw;display:flex';
     var ifr = document.createElement('iframe');
     ifr.src = framedUrl();
+    // Án þessa blokkar Permissions Policy hljóðnemann fyrir ALLT sem er innan
+    // í rammanum (t.d. Jarvis-flipann, sem sjálfur setur allow="microphone"
+    // rétt á SÍNUM iframe) — foreldrarammi sem sleppir þessu læsir samt.
+    ifr.setAttribute('allow', 'microphone; fullscreen');
     ifr.style.cssText = 'flex:1 1 auto;width:100%;border:0;border-radius:22px;background:#fff;box-shadow:0 30px 80px -20px rgba(0,0,0,.7),0 0 0 10px #0b1220,0 0 0 12px #1e293b';
     frameWrap.appendChild(ifr);
     overlay.appendChild(frameWrap);
