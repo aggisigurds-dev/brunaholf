@@ -104,6 +104,27 @@ exports.handler = async () => {
     const macro3m = periodSummary(since3m, day0);
     macro3m.prev_period = periodSummary(sincePrev3m, since3m);
 
+    // 2026-08-06 (Agnar: "thought it was done" — the % vs. prior-3-months
+    // comparison was showing nonsense like +∞% / a ~106.000 kr prior period
+    // against a ~13m kr current one). Root cause: verkbeidnir/solur only go
+    // back to 2026-04-20/2026-05-04 — the "prior 3 months" window (180→90
+    // days ago) mostly predates BOTH tables, so it's comparing real data
+    // against a near-empty sliver, not measuring real growth. Rather than
+    // fix the date math (there's nothing wrong with it — the data just isn't
+    // there yet), flag it so the UI can say so instead of showing a bogus %.
+    // earliestDataDate = earliest real row already in memory from the two
+    // fetches above — no extra query needed.
+    let earliestDataDate = null;
+    verkbeidnir.forEach(v => { const d = v.dropoff || v.pickup; if (d && (!earliestDataDate || d < earliestDataDate)) earliestDataDate = d; });
+    solur3m.forEach(s => { const d = String(s.created_at).slice(0, 10); if (!earliestDataDate || d < earliestDataDate) earliestDataDate = d; });
+    const earliest = earliestDataDate ? new Date(earliestDataDate + 'T00:00:00Z') : sincePrev3m;
+    const prevPeriodStart = earliest > sincePrev3m ? earliest : sincePrev3m;
+    const prevPeriodCoverageDays = Math.max(0, Math.round((since3m - prevPeriodStart) / 86400000));
+    macro3m.prev_period_coverage_days = prevPeriodCoverageDays;
+    // Prior period is 90 days wide — under half real coverage means the
+    // comparison isn't meaningful yet.
+    macro3m.prev_period_insufficient = prevPeriodCoverageDays < 45;
+
     return json(200, { generated_at: now.toISOString(), daily14, weekly_sales, macro3m });
   } catch (e) {
     return json(500, { error: String(e.message || e) });
