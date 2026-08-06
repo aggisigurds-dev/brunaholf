@@ -13461,7 +13461,11 @@ async function renderKrofuyfirlit(t){
   const _now = new Date();
   const CUR_MONTH = isoM(_now);
   const PREV_MONTH = isoM(new Date(_now.getFullYear(), _now.getMonth()-1, 1));
-  const WINDOW = [PREV_MONTH, CUR_MONTH];
+  // Sýna núverandi + 3 aftari mánuði af óinnheimtri vinnu (ekki bara 2) svo eldri
+  // óreikningaðir mánuðir (t.d. júní) detti ekki þögult út — „Kröfur í vinnslu"
+  // eiga að sýna öll verk með tímavera-tíma, líka eldri en fyrri mánuður.
+  const MONTHS_BACK = 3;
+  const WINDOW = Array.from({length: MONTHS_BACK + 1}, (_, k) => isoM(new Date(_now.getFullYear(), _now.getMonth() - k, 1)));
 
   // Falin/greidd merki — lifa í krofur_yfirlit_meta (bakendi). hiddenSet er líka
   // afritað í localStorage svo þrep-3 raðir (reiknaðar í vafra) haldast faldar
@@ -16190,6 +16194,27 @@ async function renderSjalfvirkni(t){
 }
 
 async function renderNLSH(t){
+  // Fella-saman gluggana (ósk Agnars: „make every window collapsable"). Smellur á
+  // <h3 class="nl-h3"> víxlar .nl-collapsed; ástand geymt í localStorage per fyrirsögn.
+  if(!window.__nlCollapseWired){
+    window.__nlCollapseWired = true;
+    let store; try{ store = JSON.parse(localStorage.getItem('nl_collapsed')||'{}'); }catch(_){ store={}; }
+    window.__nlCollapsed = store;
+    document.addEventListener('click', function(e){
+      const h = e.target.closest && e.target.closest('h3.nl-h3');
+      if(!h) return;
+      const on = h.classList.toggle('nl-collapsed');
+      const key = (h.textContent||'').trim().slice(0,60);
+      try{ window.__nlCollapsed[key]=on; localStorage.setItem('nl_collapsed', JSON.stringify(window.__nlCollapsed)); }catch(_){}
+    }, false);
+  }
+  // Endurheimta samanfelld ástand eftir að NLSH-DOM er teiknað.
+  setTimeout(function(){
+    try{ document.querySelectorAll('h3.nl-h3').forEach(function(h){
+      const key=(h.textContent||'').trim().slice(0,60);
+      if(window.__nlCollapsed && window.__nlCollapsed[key]) h.classList.add('nl-collapsed');
+    }); }catch(_){}
+  }, 60);
   $view.innerHTML = `
     <div class="rg-wrap">
       <div class="rg-header">
@@ -16256,6 +16281,11 @@ async function renderNLSH(t){
       .nl-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:8px}
       @media (max-width:980px){.nl-grid{grid-template-columns:1fr}}
       .nl-h3{font-size:14px;font-weight:700;margin:16px 0 8px;color:var(--text,#1f2933)}
+      /* Fella glugga saman: smellur á fyrirsögn víxlar .nl-collapsed sem felur næsta stykki. */
+      h3.nl-h3{cursor:pointer;user-select:none}
+      h3.nl-h3::before{content:"▾ ";color:#94a3b8;font-size:11px;font-weight:400}
+      h3.nl-h3.nl-collapsed::before{content:"▸ "}
+      h3.nl-h3.nl-collapsed + *{display:none!important}
       .nl-note{font-size:11px;font-weight:400;color:var(--text-dim,#7a8493)}
       .nl-tw{overflow-x:auto;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
       table.nl-t{width:100%;border-collapse:collapse;font-size:13px;background:var(--card-bg,#fff)}
