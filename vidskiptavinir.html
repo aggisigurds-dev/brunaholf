@@ -1,0 +1,121 @@
+<!doctype html><html lang=is><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
+<title>Viðskiptavinir — Brunahólf</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+*{box-sizing:border-box}body{font:13px/1.5 -apple-system,'Segoe UI',Roboto,Arial,sans-serif;color:#1a2233;margin:0;background:#0b1f42}
+a{color:inherit}
+.top{background:#0b1f42;color:#fff;padding:12px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;position:sticky;top:0;z-index:20}
+.top h1{font-size:17px;margin:0;color:#fff}.top .m{color:#93c5fd;font-size:12.5px}.top .m b{color:#fff}
+.back{color:#93c5fd;text-decoration:none;font-size:12.5px}
+.wrap{display:flex;height:calc(100vh - 49px);background:#eef1f6}
+.list{width:330px;min-width:280px;overflow:auto;background:#0e254e;border-right:1px solid #16305a}
+.li{padding:10px 14px;border-bottom:1px solid #16305a;cursor:pointer;color:#e2e8f0}
+.li:hover{background:#16305a}.li.on{background:#1d3a6b;border-left:3px solid #60a5fa;padding-left:11px}
+.li .nm{font-weight:700;font-size:13px;color:#fff}
+.li .rr{display:flex;justify-content:space-between;align-items:center;margin-top:3px}
+.li .kr{font-variant-numeric:tabular-nums;font-weight:700;color:#93c5fd}
+.b{display:inline-block;font-size:9.5px;font-weight:700;border-radius:9px;padding:1px 7px;white-space:nowrap}
+.b.o{background:#fee2e2;color:#991b1b}.b.y{background:#fef9c3;color:#854d0e}.b.g{background:#dcfce7;color:#166534}.b.p{background:#e2e8f0;color:#475569}.b.blue{background:#dbeafe;color:#1e40af}
+.detail{flex:1;overflow:auto;padding:20px 26px}
+.ph{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:2px}
+.ph h2{font-size:20px;margin:0;color:#0b1f42}.ph .kt{color:#64748b;font-size:12.5px;font-variant-numeric:tabular-nums}
+.meta{color:#475569;font-size:12.5px;margin-bottom:14px}.meta a{color:#2563eb}
+.kpi{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.kpi .c{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:9px 14px;min-width:130px}
+.kpi .c .l{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8;font-weight:700}
+.kpi .c .v{font-size:16px;font-weight:800;color:#0b1f42;font-variant-numeric:tabular-nums}
+.fld{margin-bottom:13px}
+.fld .l{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#64748b;margin-bottom:3px;display:flex;align-items:center;gap:6px}
+.fld textarea{width:100%;border:1px solid #d7dee8;border-radius:8px;padding:8px 10px;font:inherit;font-size:12.5px;line-height:1.5;resize:vertical;background:#fff;min-height:38px}
+.fld textarea:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.fld.draft textarea{min-height:120px;background:#fffdf5;border-color:#fde68a}
+.save{position:sticky;bottom:0;background:linear-gradient(180deg,rgba(238,241,246,0),#eef1f6 30%);padding:12px 0 4px;display:flex;gap:10px;align-items:center}
+.save button{background:linear-gradient(150deg,#2bbf6c,#0f6e3a);color:#fff;border:1px solid #156e3a;border-radius:9px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer}
+.save .st{font-size:12px;color:#64748b}
+.mails{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:4px 0;margin-top:4px}
+.mail{padding:7px 13px;border-bottom:1px solid #f1f5f9}.mail:last-child{border-bottom:0}
+.mail .h{font-size:11px;color:#64748b;display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.mail .s{font-weight:600;font-size:12.5px;margin-top:1px}
+.dir{font-size:9.5px;font-weight:700;border-radius:8px;padding:0 6px}
+.dir.inn{background:#fef2f2;color:#b91c1c}.dir.ut{background:#eff6ff;color:#1d4ed8}
+.sec{font-size:12px;font-weight:800;letter-spacing:.05em;color:#4f46e5;margin:18px 0 6px;text-transform:uppercase}
+.empty{color:#94a3b8;padding:40px;text-align:center}
+.loading{color:#94a3b8;padding:20px}
+</style></head><body>
+<div class=top>
+ <a class=back href="./">&larr; Bakendi</a>
+ <h1>🤝 Viðskiptavinir — Brunahólf</h1>
+ <div class=m id=sub>Sæki…</div>
+</div>
+<div class=wrap>
+ <div class=list id=list><div class=loading>Hleð…</div></div>
+ <div class=detail id=detail><div class=empty>Veldu fyrirtæki til vinstri.</div></div>
+</div>
+<script>
+var SB=window.supabase.createClient("https://osfdzskyvisifcwyjkuk.supabase.co","sb_publishable_YVpznM5EK01qOdevQwOcIg_rMjTkT7f");
+var DATA=[],curKt=null;
+function kr(v){return v?(""+v).replace(/\B(?=(\d{3})+(?!\d))/g,".")+" kr":"–";}
+function esc(s){return (s==null?"":""+s).replace(/[&<>]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});}
+function stadaBadge(s){var m={'ógreitt':'o','ósent':'y','órukkað':'p'};return '<span class="b '+(m[s]||'p')+'">'+esc(s||'')+'</span>';}
+function svarBadge(s){if(s==='ósvarað')return '<span class="b o">● ósvarað</span>';if(s==='engin póstur')return '';return '<span class="b g">✓ í lagi</span>';}
+async function load(){
+ var r=await SB.from('verkkaupi_crm').select('*').eq('i_vidskiptaskra',true);
+ if(r.error){document.getElementById('list').innerHTML='<div class=loading>Villa: '+r.error.message+'</div>';return;}
+ DATA=(r.data||[]).sort(function(a,b){return (b.krafa_kr||0)-(a.krafa_kr||0);});
+ var tot=DATA.reduce(function(s,c){return s+(c.krafa_kr||0);},0);
+ document.getElementById('sub').innerHTML='<b>'+DATA.length+'</b> fyrirtæki · útistandandi <b>'+kr(tot)+'</b>';
+ renderList();
+ if(DATA.length)select(DATA[0].kt);
+}
+function renderList(){
+ var h='';
+ DATA.forEach(function(c){
+  h+='<div class="li'+(c.kt===curKt?' on':'')+'" onclick="select(\''+c.kt+'\')">'
+   +'<div class=nm>'+esc(c.nafn)+'</div>'
+   +'<div class=rr><span class=kr>'+kr(c.krafa_kr)+'</span> <span>'+stadaBadge(c.krafa_stada)+' '+svarBadge(c.svar_stada)+'</span></div></div>';
+ });
+ document.getElementById('list').innerHTML=h;
+}
+function field(id,label,val,icon){
+ return '<div class=fld><div class=l>'+(icon||'')+' '+label+'</div><textarea id="f_'+id+'">'+esc(val||'')+'</textarea></div>';
+}
+function select(kt){
+ surKt=kt;renderList();
+ var c=DATA.find(function(x){return x.kt===kt;});if(!c)return;
+ var mails=(c.recent_mails||[]);
+ var mailsH=mails.length?('<div class=mails>'+mails.map(function(m){
+   var dir=m.ut?'<span class="dir ut">→ frá okkur</span>':'<span class="dir inn">← frá kúnna</span>';
+   var q=m.q&&!m.ut?' <span class="b o">spurning</span>':'';
+   var reply=(!m.ut&&m.net)?' · <a href="mailto:'+esc(m.net)+'">↩︎ svara</a>':'';
+   return '<div class=mail><div class=h>'+esc(m.d)+' '+dir+q+' · '+esc(m.nafn||'')+reply+'</div><div class=s>'+esc(m.s||'(ekkert efni)')+'</div></div>';
+ }).join('')+'</div>'):'<div class=empty style="padding:14px">Engir póstar í snapshotinu.</div>';
+ var teng=[c.tengilidur,c.netfang?'<a href="mailto:'+esc(c.netfang)+'">'+esc(c.netfang)+'</a>':'',c.simi].filter(Boolean).join(' · ');
+ var d=document.getElementById('detail');
+ d.innerHTML=
+  '<div class=ph><h2>'+esc(c.nafn)+'</h2><span class=kt>'+(/^VERK-/.test(c.kt)?'(órukkað verk)':'kt '+esc(c.kt))+'</span> '+svarBadge(c.svar_stada)+'</div>'
+  +'<div class=meta>'+(teng||'<i>engin tengiliður skráður</i>')+(c.stadsetning?' · 📍 '+esc(c.stadsetning):'')+'</div>'
+  +'<div class=kpi>'
+    +'<div class=c><div class=l>Útistandandi</div><div class=v>'+kr(c.krafa_kr)+'</div></div>'
+    +'<div class=c><div class=l>Staða</div><div class=v style="font-size:13px">'+stadaBadge(c.krafa_stada)+'</div></div>'
+    +'<div class=c><div class=l>Tímagjald</div><div class=v>'+(c.timagjald?kr(c.timagjald):'–')+'</div></div>'
+  +'</div>'
+  +field('verk_lysing','Verk / verkefni',c.verk_lysing,'🔧')
+  +field('tilbod_info','Tilboð / samningur',c.tilbod_info,'📄')
+  +field('work_arrangement','Samningsstaða / hvernig gengur',c.work_arrangement,'🤝')
+  +field('vandamal','Vandamál / óklárað',c.vandamal,'⚠️')
+  +field('next_action','Næsta aðgerð',c.next_action,'➡️')
+  +'<div class="fld draft"><div class=l>✍️ DRAFT — drög að svari / samningi</div><textarea id="f_draft">'+esc(c.draft||'')+'</textarea></div>'
+  +'<div class=save><button onclick="saveCur()">💾 Vista</button><span class=st id=savest></span></div>'
+  +'<div class=sec>✉️ Póstsamskipti (brunaholf@brunaholf.is)</div>'+mailsH;
+}
+async function saveCur(){
+ var c=DATA.find(function(x){return x.kt===curKt;});if(!c)return;
+ var fields=['verk_lysing','tilbod_info','work_arrangement','vandamal','next_action','draft'];
+ var patch={};fields.forEach(function(f){var el=document.getElementById('f_'+f);if(el)patch[f]=el.value;});
+ var st=document.getElementById('savest');st.textContent='Vista…';
+ var r=await SB.from('verkkaupi_crm').update(patch).eq('kt',curKt);
+ if(r.error){st.textContent='Villa: '+r.error.message;return;}
+ Object.assign(c,patch);st.textContent='✓ Vistað '+new Date().toLocaleTimeString('is-IS');
+}
+load();
+</script></body></html>
