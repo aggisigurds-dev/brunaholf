@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>📄 PDF verkfæri — Brunahólf</title>
+<style>
+  :root{ --ink:#0f172a; --sub:#64748b; --line:#e2e8f0; --indigo:#4f46e5; --bg:#f1f5f9; }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; }
+  body{ font-family:'Space Grotesk',system-ui,-apple-system,Segoe UI,Roboto,sans-serif; color:var(--ink); background:var(--bg); }
+  a{ color:#1d4ed8; }
+  .top{ background:#0b1220; color:#fff; padding:12px 18px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .top h1{ font-size:17px; margin:0; font-weight:800; letter-spacing:.2px; }
+  .top .badge{ background:#e0e7ff; color:#3730a3; font-size:11px; font-weight:800; padding:3px 9px; border-radius:99px; }
+  input,button,select,textarea{ font-family:inherit; }
+  .btn{ border:1px solid rgba(0,0,0,.15); background:#fff; color:#1e293b; padding:9px 15px; border-radius:9px; font-weight:700; cursor:pointer; font-size:13px; }
+  .btn:disabled{ opacity:.5; cursor:default; }
+  .btn.primary{ background:linear-gradient(180deg,#4f46e5,#4338ca); color:#fff; border-color:rgba(0,0,0,.2); }
+  .btn.sm{ padding:6px 10px; font-size:12px; }
+  .muted{ color:var(--sub); font-size:12.5px; }
+  .wrap{ display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:16px; padding:18px; max-width:1400px; margin:0 auto; }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:16px 18px; }
+  .card h2{ font-size:14.5px; margin:0 0 4px; }
+  .card .hint{ font-size:12px; color:var(--sub); margin:0 0 12px; }
+  .card input[type=text], .card input[type=url], .card textarea{
+    width:100%; border:1px solid #cbd5e1; border-radius:8px; padding:9px 11px; font-size:13.5px; margin-bottom:8px; box-sizing:border-box;
+  }
+  .card textarea{ min-height:90px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12.5px; resize:vertical; }
+  .row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .out{ margin-top:12px; border-top:1px dashed var(--line); padding-top:12px; font-size:13px; }
+  .out.err{ color:#b91c1c; }
+  .inv-card{ display:flex; gap:12px; align-items:flex-start; background:#f8fafc; border:1px solid var(--line); border-radius:10px; padding:12px; margin-top:8px; }
+  .inv-card .ico{ font-size:26px; line-height:1; }
+  .inv-card .meta{ flex:1; min-width:0; }
+  .inv-card .meta .nm{ font-weight:700; word-break:break-word; }
+  .inv-card .meta .sub{ color:var(--sub); font-size:12px; margin-top:2px; }
+  .file-drop{ border:1px dashed #cbd5e1; border-radius:10px; padding:14px; text-align:center; color:var(--sub); font-size:12.5px; cursor:pointer; margin-bottom:8px; }
+  .file-drop:hover{ background:#f8fafc; }
+  .file-list{ font-size:12.5px; margin:6px 0 10px; }
+  .file-list div{ padding:3px 0; display:flex; justify-content:space-between; gap:8px; }
+  .spin{ display:inline-block; width:12px; height:12px; border:2px solid rgba(255,255,255,.4); border-top-color:#fff; border-radius:50%; animation:sp .7s linear infinite; vertical-align:-2px; }
+  .btn .spin{ border-color:rgba(0,0,0,.2); border-top-color:#1e293b; }
+  @keyframes sp{ to{ transform:rotate(360deg); } }
+  pre.extracted{ white-space:pre-wrap; word-break:break-word; max-height:320px; overflow:auto; background:#0b1220; color:#e5eefb; padding:12px; border-radius:8px; font-size:12px; }
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>📄 PDF verkfæri</h1>
+  <span class="badge">Brunahólf</span>
+  <span class="muted" style="color:#94a3b8">Finna vistaða reikninga/skýrslur · sameina PDF · ná í texta</span>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <h2>🧾 Finna reikning</h2>
+    <p class="hint">Sláðu inn reikningsnúmer (t.d. R-000697) — sækir vistaða skrá beint úr Slökkvitæki, sömu skrá og var send viðskiptavininum. Ef engin er vistuð er sagt til um það, ekki giskað.</p>
+    <div class="row">
+      <input type="text" id="inv-num" placeholder="R-000697" style="flex:1;margin-bottom:0">
+      <button class="btn primary" id="inv-go">Leita</button>
+    </div>
+    <div id="inv-out" class="out" style="display:none"></div>
+  </div>
+
+  <div class="card">
+    <h2>🔗 Sameina PDF</h2>
+    <p class="hint">Ein slóð per línu (t.d. skýrsla + reikningur fyrir sama viðskiptavin) — skilar einni sameinaðri skrá í réttri röð.</p>
+    <textarea id="merge-urls" placeholder="https://…/skyrsla.pdf&#10;https://…/reikningur.pdf"></textarea>
+    <div class="row">
+      <button class="btn primary" id="merge-go">Sameina</button>
+    </div>
+    <div id="merge-out" class="out" style="display:none"></div>
+  </div>
+
+  <div class="card">
+    <h2>📖 Ná í texta</h2>
+    <p class="hint">Límdu slóð á PDF-skjal — dregur út textann (t.d. til að athuga hvað stendur í skönnuðum samningi).</p>
+    <div class="row">
+      <input type="url" id="ext-url" placeholder="https://…/skjal.pdf" style="flex:1;margin-bottom:0">
+      <button class="btn primary" id="ext-go">Ná í texta</button>
+    </div>
+    <div id="ext-out" class="out" style="display:none"></div>
+  </div>
+
+  <div class="card">
+    <h2>✂️ Kljúfa PDF</h2>
+    <p class="hint">Límdu slóð á fjölsíðu PDF — skilar hverri síðu sem eigin skrá (mest 60 síður).</p>
+    <div class="row">
+      <input type="url" id="spl-url" placeholder="https://…/skjal.pdf" style="flex:1;margin-bottom:0">
+      <button class="btn primary" id="spl-go">Kljúfa</button>
+    </div>
+    <div id="spl-out" class="out" style="display:none"></div>
+  </div>
+
+  <div class="card">
+    <h2>🖼→📄 Búa til PDF úr myndum</h2>
+    <p class="hint">Veldu myndir (JPG/PNG) — ein mynd á síðu, í þeirri röð sem þær eru valdar, miðjuð á A4.</p>
+    <div class="file-drop" id="cmp-drop">Smelltu til að velja myndir…</div>
+    <input type="file" id="cmp-files" accept="image/png,image/jpeg" multiple style="display:none">
+    <div class="file-list" id="cmp-list"></div>
+    <div class="row">
+      <button class="btn primary" id="cmp-go" disabled>Búa til PDF</button>
+    </div>
+    <div id="cmp-out" class="out" style="display:none"></div>
+  </div>
+
+  <div class="card" style="grid-column:1/-1">
+    <h2>✂️ Klippa mynd úr PDF (hágæði)</h2>
+    <p class="hint">Birtir eina síðu í hárri upplausn (4× skala) — dragðu til að velja svæði, vistaðu sem PNG. Keyrir alfarið í vafranum (pdf.js), engin skjöl fara á netþjón.</p>
+    <div class="row">
+      <input type="url" id="crop-url" placeholder="https://…/skjal.pdf" style="flex:1 1 320px;margin-bottom:0">
+      <input type="text" id="crop-page" placeholder="Síða (t.d. 1)" value="1" style="width:110px;margin-bottom:0">
+      <button class="btn primary" id="crop-show">Birta síðu</button>
+      <button class="btn" id="crop-save" disabled>Vista úrklippu sem PNG</button>
+      <span class="muted" id="crop-status"></span>
+    </div>
+    <div id="crop-wrap" style="margin-top:10px;max-height:75vh;overflow:auto;border:1px solid var(--line);border-radius:8px;display:none;background:#0b1220">
+      <canvas id="crop-canvas" style="display:block;cursor:crosshair;max-width:none"></canvas>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+const API = '/api/pdf-tools';
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmtSize(b){ if(!b) return '—'; if(b<1024) return b+' B'; if(b<1024*1024) return (b/1024).toFixed(1)+' KB'; return (b/1024/1024).toFixed(1)+' MB'; }
+function fmtDate(iso){ if(!iso) return ''; const d=new Date(iso); if(isNaN(d)) return ''; return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear(); }
+function b64ToBlob(b64, type){
+  const bin = atob(b64); const bytes = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
+  return new Blob([bytes], {type: type||'application/pdf'});
+}
+function downloadBlob(blob, filename){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
+}
+async function setBusy(btn, busy, label){
+  if(!btn) return;
+  if(busy){ btn.dataset.orig = btn.dataset.orig || btn.textContent; btn.disabled = true; btn.innerHTML = '<span class="spin"></span> ' + (label||'…'); }
+  else { btn.disabled = false; btn.textContent = btn.dataset.orig || label; }
+}
+
+// ── Finna reikning ──────────────────────────────────────────────────────────
+document.getElementById('inv-go').onclick = async () => {
+  const btn = document.getElementById('inv-go');
+  const out = document.getElementById('inv-out');
+  const num = document.getElementById('inv-num').value.trim();
+  if(!num){ document.getElementById('inv-num').focus(); return; }
+  out.style.display = 'block'; out.className = 'out'; out.textContent = 'Leita…';
+  setBusy(btn, true, 'Leita…');
+  try{
+    const r = await fetch(API + '?action=invoice-lookup&num=' + encodeURIComponent(num));
+    const j = await r.json();
+    if(!r.ok || j.error) throw new Error(j.error || ('HTTP ' + r.status));
+    if(!j.sale){ out.className = 'out err'; out.textContent = 'Engin sala með þessu númeri fannst.'; }
+    else if(!j.found){
+      out.innerHTML = '<div><strong>' + esc(j.sale.customer_nafn||'') + '</strong> · ' + esc(j.sale.samtals ? Math.round(j.sale.samtals).toLocaleString('is-IS')+' kr' : '') + '</div>'
+        + '<div class="muted" style="margin-top:6px">' + esc(j.message || 'Engin vistuð skrá fannst.') + '</div>';
+    } else {
+      const a = j.attachment;
+      out.innerHTML = '<div class="inv-card">'
+        + '<div class="ico">📄</div>'
+        + '<div class="meta"><div class="nm">' + esc(a.name) + '</div>'
+        + '<div class="sub">' + esc(j.sale.customer_nafn||'') + ' · ' + fmtSize(a.size) + ' · vistað ' + fmtDate(a.uploaded_at) + '</div></div>'
+        + '<div><a class="btn sm" href="' + esc(a.url) + '" target="_blank" rel="noopener">Opna</a></div>'
+        + '</div>';
+    }
+  } catch(e){ out.className = 'out err'; out.textContent = 'Villa: ' + (e.message || e); }
+  setBusy(btn, false);
+};
+document.getElementById('inv-num').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('inv-go').click(); });
+
+// ── Sameina PDF ─────────────────────────────────────────────────────────────
+document.getElementById('merge-go').onclick = async () => {
+  const btn = document.getElementById('merge-go');
+  const out = document.getElementById('merge-out');
+  const urls = document.getElementById('merge-urls').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  if(!urls.length){ document.getElementById('merge-urls').focus(); return; }
+  out.style.display = 'block'; out.className = 'out'; out.textContent = 'Sameina ' + urls.length + ' skjöl…';
+  setBusy(btn, true, 'Sameina…');
+  try{
+    const r = await fetch(API, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'merge', files: urls.map(u=>({url:u})) }) });
+    const j = await r.json();
+    if(!r.ok || j.error) throw new Error(j.error || ('HTTP ' + r.status));
+    const blob = b64ToBlob(j.base64, 'application/pdf');
+    downloadBlob(blob, j.filename);
+    out.innerHTML = '✓ Sameinað í eina skrá (' + j.pageCount + ' síður) — niðurhal hófst.'
+      + (j.errors ? '<div class="muted" style="margin-top:6px;color:#b45309">' + j.errors.map(esc).join('<br>') + '</div>' : '');
+  } catch(e){ out.className = 'out err'; out.textContent = 'Villa: ' + (e.message || e); }
+  setBusy(btn, false);
+};
+
+// ── Ná í texta ──────────────────────────────────────────────────────────────
+document.getElementById('ext-go').onclick = async () => {
+  const btn = document.getElementById('ext-go');
+  const out = document.getElementById('ext-out');
+  const url = document.getElementById('ext-url').value.trim();
+  if(!url){ document.getElementById('ext-url').focus(); return; }
+  out.style.display = 'block'; out.className = 'out'; out.textContent = 'Les…';
+  setBusy(btn, true, 'Les…');
+  try{
+    const r = await fetch(API, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'extract', url }) });
+    const j = await r.json();
+    if(!r.ok || j.error) throw new Error(j.error || ('HTTP ' + r.status));
+    out.innerHTML = '<div class="muted" style="margin-bottom:6px">' + (j.pages||'?') + ' síður</div><pre class="extracted">' + esc(j.text || '(enginn texti fannst)') + '</pre>';
+  } catch(e){ out.className = 'out err'; out.textContent = 'Villa: ' + (e.message || e); }
+  setBusy(btn, false);
+};
+
+// ── Kljúfa PDF ──────────────────────────────────────────────────────────────
+document.getElementById('spl-go').onclick = async () => {
+  const btn = document.getElementById('spl-go');
+  const out = document.getElementById('spl-out');
+  const url = document.getElementById('spl-url').value.trim();
+  if(!url){ document.getElementById('spl-url').focus(); return; }
+  out.style.display = 'block'; out.className = 'out'; out.textContent = 'Kljúfa…';
+  setBusy(btn, true, 'Kljúfa…');
+  try{
+    const r = await fetch(API, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'split', url }) });
+    const j = await r.json();
+    if(!r.ok || j.error) throw new Error(j.error || ('HTTP ' + r.status));
+    const blobUrls = j.pages.map(p => ({ page: p.page, url: URL.createObjectURL(b64ToBlob(p.base64,'application/pdf')) }));
+    out.innerHTML = '<div class="muted" style="margin-bottom:6px">✓ ' + j.pageCount + ' síður</div>'
+      + '<div class="row" style="gap:6px">' + blobUrls.map(p =>
+        '<a class="btn sm" href="' + p.url + '" download="bls-' + String(p.page).padStart(2,'0') + '.pdf">Síða ' + p.page + '</a>').join('') + '</div>';
+  } catch(e){ out.className = 'out err'; out.textContent = 'Villa: ' + (e.message || e); }
+  setBusy(btn, false);
+};
+
+// ── Búa til PDF úr myndum ────────────────────────────────────────────────────
+let cmpFiles = [];
+function cmpRenderList(){
+  const list = document.getElementById('cmp-list');
+  list.innerHTML = cmpFiles.map((f,i) => '<div><span>' + esc(f.name) + '</span><span class="muted">' + fmtSize(f.size) + ' <a href="#" data-rm="' + i + '" style="color:#b91c1c">✕</a></span></div>').join('');
+  list.querySelectorAll('[data-rm]').forEach(a => a.addEventListener('click', e => {
+    e.preventDefault(); cmpFiles.splice(+a.dataset.rm, 1); cmpRenderList();
+    document.getElementById('cmp-go').disabled = !cmpFiles.length;
+  }));
+  document.getElementById('cmp-go').disabled = !cmpFiles.length;
+}
+document.getElementById('cmp-drop').onclick = () => document.getElementById('cmp-files').click();
+document.getElementById('cmp-files').addEventListener('change', e => {
+  cmpFiles = cmpFiles.concat(Array.from(e.target.files || []));
+  cmpRenderList();
+});
+function fileToBase64(file){
+  return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = rej; r.readAsDataURL(file); });
+}
+document.getElementById('cmp-go').onclick = async () => {
+  const btn = document.getElementById('cmp-go');
+  const out = document.getElementById('cmp-out');
+  if(!cmpFiles.length) return;
+  out.style.display = 'block'; out.className = 'out'; out.textContent = 'Býr til PDF…';
+  setBusy(btn, true, 'Býr til…');
+  try{
+    const images = await Promise.all(cmpFiles.map(async f => ({ base64: await fileToBase64(f), type: f.type.includes('png') ? 'png' : 'jpg', name: f.name })));
+    const r = await fetch(API, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'compose', images }) });
+    const j = await r.json();
+    if(!r.ok || j.error) throw new Error(j.error || ('HTTP ' + r.status));
+    downloadBlob(b64ToBlob(j.base64,'application/pdf'), j.filename);
+    out.innerHTML = '✓ PDF búið til (' + j.pageCount + ' síður) — niðurhal hófst.'
+      + (j.errors ? '<div class="muted" style="margin-top:6px;color:#b45309">' + j.errors.map(esc).join('<br>') + '</div>' : '');
+  } catch(e){ out.className = 'out err'; out.textContent = 'Villa: ' + (e.message || e); }
+  setBusy(btn, false);
+};
+
+// ── Klippa mynd úr PDF (hágæði, client-side pdf.js) ──────────────────────────
+if (window['pdfjsLib']) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const CROP_SCALE = 4; // "hágæði" — 4× render scale, cropped region exported 1:1 from that canvas
+let cropSel = null; // {x,y,w,h} in canvas pixels
+
+document.getElementById('crop-show').onclick = async () => {
+  const btn = document.getElementById('crop-show');
+  const status = document.getElementById('crop-status');
+  const url = document.getElementById('crop-url').value.trim();
+  const pageNum = Math.max(1, parseInt(document.getElementById('crop-page').value, 10) || 1);
+  if(!url){ document.getElementById('crop-url').focus(); return; }
+  setBusy(btn, true, 'Hleð…'); status.textContent = '';
+  document.getElementById('crop-save').disabled = true;
+  cropSel = null;
+  try{
+    if(!window.pdfjsLib) throw new Error('pdf.js hlóðst ekki.');
+    const loadingTask = pdfjsLib.getDocument(url);
+    const doc = await loadingTask.promise;
+    if(pageNum > doc.numPages) throw new Error('Skjalið er aðeins með ' + doc.numPages + ' síður.');
+    const page = await doc.getPage(pageNum);
+    const viewport = page.getViewport({ scale: CROP_SCALE });
+    const canvas = document.getElementById('crop-canvas');
+    canvas.width = viewport.width; canvas.height = viewport.height;
+    canvas.style.width = Math.min(viewport.width / CROP_SCALE * 1.3, viewport.width) + 'px'; // sýnd smærra, en úrklippa er samt í fullri upplausn
+    const ctx = canvas.getContext('2d');
+    await page.render({ canvasContext: ctx, viewport }).promise;
+    document.getElementById('crop-wrap').style.display = 'block';
+    status.textContent = doc.numPages + ' síður alls · ' + viewport.width + '×' + viewport.height + ' px í ' + CROP_SCALE + '× upplausn';
+    wireCropDrag(canvas);
+  } catch(e){ status.textContent = 'Villa: ' + (e.message || e); }
+  setBusy(btn, false);
+};
+
+function wireCropDrag(canvas){
+  let dragging = false, start = null;
+  const toCanvasXY = (e) => {
+    const r = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / r.width, scaleY = canvas.height / r.height;
+    return { x: (e.clientX - r.left) * scaleX, y: (e.clientY - r.top) * scaleY };
+  };
+  const ctxOverlay = () => canvas.getContext('2d');
+  let baseImage = null;
+  canvas.onmousedown = (e) => {
+    dragging = true; start = toCanvasXY(e); cropSel = null;
+    baseImage = ctxOverlay().getImageData(0, 0, canvas.width, canvas.height);
+    document.getElementById('crop-save').disabled = true;
+  };
+  canvas.onmousemove = (e) => {
+    if(!dragging) return;
+    const p = toCanvasXY(e);
+    const x = Math.min(start.x, p.x), y = Math.min(start.y, p.y), w = Math.abs(p.x - start.x), h = Math.abs(p.y - start.y);
+    const ctx = ctxOverlay();
+    ctx.putImageData(baseImage, 0, 0);
+    ctx.save(); ctx.strokeStyle = '#4f46e5'; ctx.lineWidth = 2 * CROP_SCALE / 4; ctx.setLineDash([8,6]);
+    ctx.strokeRect(x, y, w, h);
+    ctx.fillStyle = 'rgba(79,70,229,.12)'; ctx.fillRect(x, y, w, h);
+    ctx.restore();
+    cropSel = { x, y, w, h };
+  };
+  const finish = () => {
+    if(!dragging) return; dragging = false;
+    document.getElementById('crop-save').disabled = !(cropSel && cropSel.w > 4 && cropSel.h > 4);
+  };
+  canvas.onmouseup = finish;
+  canvas.onmouseleave = finish;
+}
+
+document.getElementById('crop-save').onclick = () => {
+  if(!cropSel || cropSel.w <= 4 || cropSel.h <= 4) return;
+  const src = document.getElementById('crop-canvas');
+  const out = document.createElement('canvas');
+  out.width = Math.round(cropSel.w); out.height = Math.round(cropSel.h);
+  out.getContext('2d').drawImage(src, cropSel.x, cropSel.y, cropSel.w, cropSel.h, 0, 0, out.width, out.height);
+  out.toBlob(blob => downloadBlob(blob, 'urklippa-' + Date.now() + '.png'), 'image/png');
+};
+</script>
+</body>
+</html>

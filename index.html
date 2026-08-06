@@ -1815,6 +1815,7 @@ const DEFAULT_STATE = {
     {id:'kvittanir',  label:'Kvittanir & PDF', icon:'📷'},
     {id:'tenglar',    label:'Tenglar',    icon:'🔗'},
     {id:'reikningatenglar', label:'Reikningatenglar', icon:'📨'},
+    {id:'pdftools',   label:'PDF verkfæri', icon:'📄'},
     {id:'reikningar', label:'Reikningagerð', icon:'💳'},
     {id:'gerdreikninga', label:'Gerð Reikninga', icon:'🧾'},
     {id:'tilbunirReikningar', label:'Tilbúnir reikningar', icon:'✅'},
@@ -2550,6 +2551,7 @@ function render(){
   if(t.id==='vefryni') return renderVefryni(t);
   if(t.id==='skodanir') return renderSkodanir(t);
   if(t.id==='multitool') return renderMultitool(t);
+  if(t.id==='pdftools') return renderPdfTools(t);
   if(t.id==='jarvis') return renderJarvis(t);
   if(t.id==='bakendi') return renderBakendi(t);
   if(t.id==='sjalfvirkni') return renderSjalfvirkni(t);
@@ -2839,6 +2841,17 @@ function renderMultitool(t){
   fit();
   // Endur-passa hæð við gluggabreytingu (bindst aðeins einu sinni).
   if(!window.__mtFitBound){ window.__mtFitBound = true; window.addEventListener('resize', () => { if(document.getElementById('mt-embed')) fit(); }); }
+}
+// 📄 PDF verkfæri — innfellt sem full-breidd síða (endurnýtir /pdftools.html).
+// 2026-08-06: finna vistaðan reikning/skýrslu (patch 233/111 á slokkvitaeki-hliðinni
+// — sama skrá og viðskiptavinurinn fékk send, ekki endursmíðuð), sameina PDF, ná í
+// texta. Sjá netlify/functions/pdf-tools.js fyrir af hverju þetta endursmíðar EKKI
+// reikninga/skýrslur sjálft (drift-áhætta milli tveggja aðskilinna renderera).
+function renderPdfTools(t){
+  $view.innerHTML = '<iframe id="pt-embed" src="/pdftools.html" title="PDF verkfæri" style="width:100%;border:0;display:block;background:#f1f5f9"></iframe>';
+  const fit = () => { const f = document.getElementById('pt-embed'); if(!f) return; const top = f.getBoundingClientRect().top; f.style.height = Math.max(460, window.innerHeight - top - 12) + 'px'; };
+  fit();
+  if(!window.__ptFitBound){ window.__ptFitBound = true; window.addEventListener('resize', () => { if(document.getElementById('pt-embed')) fit(); }); }
 }
 // 🧠 J.A.R.V.I.S. — HUD-ið innfellt sem full-hæðar síða (endurnýtir /jarvis.html,
 // nákvæmlega eins og Skjala-multitool). `allow="microphone"` af því HUD-ið hlustar
