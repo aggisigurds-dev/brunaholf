@@ -793,7 +793,7 @@ function onDocInput(ev){
   const el = ev.target.closest('[data-f]');
   if(!el) return;
   const key = el.dataset.f;
-  const txt = el.innerText.replace(/ /g, ' ');
+  const txt = el.innerText.replace(/\u00a0/g, ' ');   // contenteditable skilar hörðum bilum
 
   if(key === 'dagsetningTexti'){
     const iso = parseDate(txt);
