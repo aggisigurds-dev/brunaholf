@@ -318,6 +318,40 @@ mátun og company-mail.js, bara á einn kúnna í einu). Birtist sem badge í ha
 2 daga, warn frá 3 dögum) þegar ósvarað — bein ósk verkefnalistans um „flagar 'enginn
 svarað í 3 daga'".
 
+## customer.html — skjalatenglar benda á Supabase (2026-08-07)
+
+`/api/customer` byggði `view_url` EINGÖNGU úr `drive_file_id`, þótt röðin ætti
+`storage_path`. Mælt á lifandi gögnum 2026-08-07 (alls 3.590 raðir):
+
+| | |
+|---|---|
+| Aðeins Drive | 2.626 |
+| **Aðeins Storage** | **241** ← sýndust „án Drive-tengingar", skráin samt til |
+| Bæði | 287 |
+| **Hvorugt** (draugaraðir) | **436** |
+
+Nýtt `docViewUrl(d)` í `customer.js` — sama rökfræði og `openUrl` í
+`service-gaps.js` en með **Supabase á undan Drive**: `storage_path` er stöðug slóð
+sem rofnar ekki við endurnefningu og krefst engrar Google-innskráningar, á meðan
+Drive-hlekkur er skráarauðkenni sem rofnar (793 mældir dauðir — sjá
+`docs/SKJALA-FLUTNINGUR.md`). Þau 287 sem eiga BÁÐA opnast því á örugga eintakinu.
+Ekkert er flutt eða endurnefnt og engu eytt í Drive; `drive_file_id` stendur áfram
+í svarinu. `link_source` (`'storage'|'drive'|null`) fylgir með svo viðmótið geti
+sagt hvaðan skráin kemur (birt í `title` á tenglinum).
+
+⚠️ `storage_path` ber bucket-nafnið sjálft (allar 528 raðir byrja á `samningar/`,
+sem er public bucket) — ALDREI bæta bucket-forskeyti við slóðina.
+
+`summary.missing_drive_file_id` → **`summary.missing_file`**, og telur nú aðeins
+raðir með HVORUGA uppsprettu (draugaraðirnar, varnagli 3 í SKJALA-FLUTNINGUR).
+Gamla talan gaf falskt viðvörunarflagg á skjöl sem áttu fína Supabase-skrá.
+Sama leiðrétting í `docLink()` í `customer.html`: „engin Drive-tenging" →
+„engin skrá".
+
+Þetta er hlekkja-lagfæring á framsetningu, ekki Fasi 0 — hún nær aðeins til raða
+sem ERU í `customer_documents`. Þau ~1.534 storage-hlutir sem eiga enga röð eru
+enn ósóttir (Fasi 0 í `docs/SKJALA-FLUTNINGUR.md`).
+
 ## Eyðublöð — skjalasmiðja með útgáfusögu (2026-08-06)
 
 Nýr flipi **`eydublod`** + sjálfstæð síða `eydublod.html` (sama iframe-mynstur og

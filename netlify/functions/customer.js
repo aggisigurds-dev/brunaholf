@@ -7,14 +7,14 @@
 //   {
 //     base:    { id, kennitala, nafn, heimilisfang, ... },
 //     sites:   [ { id, nafn, heimilisfang, er_i_thjonustu, ... } ],
-//     docs:    [ { id, doc_type, year, doc_date, drive_file_id, view_url,
-//                  invoice_number, amount, customer_name, fyrirtaeki_id,
-//                  site_nafn, is_duplicate, dup_of, reviewed, reviewed_at,
-//                  source, found_at } ],
+//     docs:    [ { id, doc_type, year, doc_date, drive_file_id, storage_path,
+//                  view_url, link_source, invoice_number, amount, customer_name,
+//                  fyrirtaeki_id, site_nafn, is_duplicate, dup_of, reviewed,
+//                  reviewed_at, source, found_at } ],
 //     invoices:[ { tilvisun, gjalddagi, hofudstoll, upphaed_total, status,
 //                  greidsla_date, customer_name, ... } ],
 //     summary: { docs_total, by_type, by_year_type, dup_count,
-//                unreviewed_count, missing_doc_date, missing_drive_file_id,
+//                unreviewed_count, missing_doc_date, missing_file,
 //                has_2026_uttekt, last_uttekt_year, last_reikningur_year,
 //                reikningur_amount_total, ar_open_kr, ar_oldest_due },
 //     ai_flags: [ { severity:'warn'|'info'|'error', msg, hint? } ]
@@ -29,6 +29,25 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const EDITABLE_DOC_FIELDS = ['doc_type', 'amount', 'invoice_number', 'doc_date', 'customer_name', 'notes'];
+
+// Opnanlegur tengill á skjal — SAMA rökfræði og /api/service-gaps `openUrl`,
+// með einni breytingu: Supabase gengur FYRIR Drive.
+//
+// Af hverju sú röð: Drive-hlekkur er skráarauðkenni sem rofnar við endurnefningu/
+// færslu (sjá docs/SKJALA-FLUTNINGUR.md — 793 mældir dauðir hlekkir), og í símum
+// með marga Google-reikninga birtir hann „Select an account" í hvert sinn.
+// `storage_path` er stöðug slóð í public `samningar`-fatinu — hún getur ekki
+// rofnað og krefst engrar innskráningar. 287 raðir eiga BÁÐA; þær opnast núna á
+// eintakinu sem er öruggt. Drive-skránum er ALDREI eytt — `drive_file_id` stendur
+// áfram í svarinu sem aukatilvísun.
+//
+// ⚠️ Slóðin ber bucket-nafnið sjálf („samningar/…"), svo hún má ALDREI fá bucket
+// forskeyti hér — sannreynt: allar 528 storage_path-raðir byrja á `samningar/`.
+function docViewUrl(d) {
+  if (d.storage_path) return `${SUPABASE_URL}/storage/v1/object/public/${d.storage_path}`;
+  if (d.drive_file_id) return `https://drive.google.com/file/d/${d.drive_file_id}/view`;
+  return null;
+}
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors(), body: '' };
@@ -122,7 +141,8 @@ exports.handler = async (event) => {
     // Decorate docs with view_url + site nafn
     const siteById = new Map(sites.map(s => [s.id, s]));
     for (const d of docs) {
-      d.view_url = d.drive_file_id ? `https://drive.google.com/file/d/${d.drive_file_id}/view` : null;
+      d.view_url = docViewUrl(d);
+      d.link_source = d.storage_path ? 'storage' : (d.drive_file_id ? 'drive' : null);
       d.site_nafn = d.fyrirtaeki_id ? (siteById.get(d.fyrirtaeki_id)?.nafn || null) : null;
     }
     // Sort: newest first (doc_date → year-jan → created_at)
@@ -215,7 +235,7 @@ async function fetchLastContact(base, sites) {
 function buildSummary(docs, invoices) {
   const by_type = { uttektarskyrsla: 0, reikningur: 0, samningur: 0, annad: 0 };
   const by_year_type = {};
-  let dup_count = 0, unreviewed_count = 0, missing_doc_date = 0, missing_drive_file_id = 0;
+  let dup_count = 0, unreviewed_count = 0, missing_doc_date = 0, missing_file = 0;
   let last_uttekt_year = null, last_reikningur_year = null;
   let reikningur_amount_total = 0;
   let has_2026_uttekt = false;
@@ -237,7 +257,10 @@ function buildSummary(docs, invoices) {
     if (d.is_duplicate) dup_count++;
     if (!d.reviewed) unreviewed_count++;
     if (!d.doc_date) missing_doc_date++;
-    if (!d.drive_file_id) missing_drive_file_id++;
+    // Draugaröð = HVORKI Drive né Storage. Áður taldist `!drive_file_id` sem
+    // gloppa, sem gaf falskt viðvörunarflagg á þau 241 skjöl sem eiga fína
+    // Supabase-skrá en engan Drive-hlekk.
+    if (!d.drive_file_id && !d.storage_path) missing_file++;
     if (t === 'reikningur' && d.amount) reikningur_amount_total += Number(d.amount) || 0;
   }
 
@@ -261,7 +284,7 @@ function buildSummary(docs, invoices) {
   return {
     docs_total: docs.length,
     by_type, by_year_type,
-    dup_count, unreviewed_count, missing_doc_date, missing_drive_file_id,
+    dup_count, unreviewed_count, missing_doc_date, missing_file,
     has_2026_uttekt, last_uttekt_year, last_reikningur_year,
     reikningur_amount_total,
     invoices_total: invoices.length,
@@ -310,11 +333,11 @@ function computeFlags({ base, sites, docs, invoices, summary, last_contact }) {
   }
 
   // Missing metadata
-  if (summary.missing_drive_file_id > 0) {
+  if (summary.missing_file > 0) {
     f.push({
       severity: 'warn',
-      msg: `${summary.missing_drive_file_id} skjöl án Drive-tengingar`,
-      hint: 'Skjölin eru í gagnagrunninum en án drive_file_id — líklega tapast við index-keyrslu.',
+      msg: `${summary.missing_file} skjöl án skráar`,
+      hint: 'Raðirnar segjast þekja árið en eiga hvorki drive_file_id né storage_path — engin skrá er að baki þeim.',
     });
   }
   if (summary.missing_doc_date > docs.length * 0.5 && docs.length > 5) {
