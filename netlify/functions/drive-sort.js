@@ -161,10 +161,23 @@ function invNum(text, name) {
   m = String(text).match(/Reikningur\s*nr\.?\s*:?\s*(\d{4,7})\b/i); if (m) return 'R-' + m[1];
   return '';
 }
+// 2026-08-07: bar áður sama galla og drive-multitool.js var þegar búið að laga —
+// kennitala endar oft á „20xx" (500993-2009, 440398-2019) og var lesin sem ÁRIÐ.
+// Það skiptir meira máli hér en annars staðar: þetta fall stýrir því í hvaða
+// ár-möppu skrá er FÆRÐ, svo röng lesning færir skjalið á rangan stað. Mælt á
+// lifandi gögnum: 12 fyrirtæki eiga slíka kt, þar af 6 í þjónustu.
+// Þrennt lagað í einu, í sömu röð og multitool gerir: kt burt fyrst, `_` telst
+// sem bil (sjá drive-count.js), og árið verður að vera á viti bornu bili.
 function yearFrom(s) {
-  let m = String(s).match(/^(\d{4})-\d{2}-\d{2}/); if (m) return parseInt(m[1], 10);   // filename date prefix
-  m = String(s).match(/\b\d{1,2}\.\d{1,2}\.(\d{2})\b/); if (m) return 2000 + parseInt(m[1], 10);
-  m = String(s).match(/\b(20\d{2})\b/); return m ? parseInt(m[1], 10) : null;
+  const str = String(s);
+  let m = str.match(/^(\d{4})-\d{2}-\d{2}/); if (m) return parseInt(m[1], 10);   // filename date prefix
+  m = str.match(/\b\d{1,2}\.\d{1,2}\.(\d{2})\b/); if (m) return 2000 + parseInt(m[1], 10);
+  const maxY = new Date().getFullYear() + 1;
+  const noKt = str.replace(/(?<!\d)\d{6}\s?-?\s?\d{4}(?!\d)/g, ' ').replace(/_/g, ' ');
+  m = noKt.match(/\b(20\d{2})\b/);
+  if (!m) return null;
+  const y = parseInt(m[1], 10);
+  return (y >= 2008 && y <= maxY) ? y : null;
 }
 function totalFrom(text) {
   const kw = text.match(/Til\s*greiðslu\s*:?\s*(?:kr\.?)?\s*([\d.]{4,})/i); let best = 0;

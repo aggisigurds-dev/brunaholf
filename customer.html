@@ -367,14 +367,20 @@ async function saveDocEdit(id) {
 }
 
 function docLink(doc) {
+  // „engin skrá" — EKKI „engin Drive-tenging". Skjal sem á storage_path en engan
+  // drive_file_id er fullkomlega opnanlegt (bakendinn setur view_url á Supabase);
+  // gamli textinn kallaði 241 slíkt skjal tengingarlaust að ósekju. Grátt merki
+  // hér þýðir núna: HVORUG uppspretta á skrá.
   if (!doc.view_url) {
-    return `<span class="doc-link" style="background:#f1f5f9;color:#94a3b8">(${esc(doc.doc_type)} — engin Drive-tenging)</span>`;
+    return `<span class="doc-link" style="background:#f1f5f9;color:#94a3b8" title="Hvorki Drive-skrá né Supabase-skrá að baki þessari röð">(${esc(doc.doc_type)} — engin skrá)</span>`;
   }
   const cls = doc.reviewed ? 'doc-link reviewed' : (doc.is_duplicate ? 'doc-link dup' : 'doc-link');
   let label = doc.doc_type;
   if (doc.invoice_number) label = doc.invoice_number;
   else if (doc.amount) label = fmtKr(doc.amount) + ' kr';
-  return `<a class="${cls}" href="${esc(doc.view_url)}" target="_blank" rel="noopener" title="${esc((doc.customer_name || '') + ' ' + (doc.doc_date || ''))}">${esc(label)}</a>`;
+  const src = doc.link_source === 'storage' ? 'Supabase' : 'Drive';
+  const tip = [doc.customer_name || '', doc.doc_date || '', '· ' + src].join(' ').trim();
+  return `<a class="${cls}" href="${esc(doc.view_url)}" target="_blank" rel="noopener" title="${esc(tip)}">${esc(label)}</a>`;
 }
 
 function yearMatrix(docs, expected) {

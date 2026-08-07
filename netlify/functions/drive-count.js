@@ -26,7 +26,12 @@ function folderId(raw) { const s = String(raw || '').trim(); const m = s.match(/
 //  3) else a standalone 20xx bounded by whitespace (never a „-2049" kt tail).
 // All gated to a sane range [2008 .. current+1] so kt suffixes 20yy fall out.
 function yearFrom(name) {
-  const stem = String(name || '').replace(/\.[a-z0-9]+$/i, '');
+  // Undirstrik telst sem bil. Innsogsleiðir sem koma ekki frá Drive-flokkuninni
+  // (t.d. uttekt-upload og eldri Supabase-vistun) skrifa „Tangarbryggja_2024.pdf"
+  // — ártalið ER í nafninu en hvorki bandstriks-liðurinn né „stakt 20xx umlukið
+  // bilum" sá það, því `_` er orðstafur. Mælt 2026-08-07: 31 af 56 ártalslausum
+  // skrám í Úttektarskýrslur-möppunni lagast við þessa einu línu, þar af 4 frá 2026.
+  const stem = String(name || '').replace(/\.[a-z0-9]+$/i, '').replace(/_/g, ' ');
   const maxY = new Date().getFullYear() + 1;
   const ok = (y) => y >= 2008 && y <= maxY;
   for (const seg of stem.split(/\s+-\s+/)) {
