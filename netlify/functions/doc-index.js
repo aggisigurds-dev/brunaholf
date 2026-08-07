@@ -205,10 +205,18 @@ function classifyDoc(s, name) {
   if (/samning/i.test(String(name || ''))) return 'samningur';
   return 'uttektarskyrsla';
 }
-function yearFromName(name) { const m = String(name || '').match(/\b(20\d{2})\b/); return m ? parseInt(m[1], 10) : null; }
+// 2026-08-07: kennitala burt ÁÐUR en ártal er lesið, og þak á árið — sama og
+// drive-sort/drive-multitool fengu. Alvarlegast hér af öllum fimm stöðunum því
+// `year` héðan er SKRIFAÐ beint í customer_documents (sjá :299), svo röng lesning
+// býr til röð undir röngu ári sem þekjan telur svo með. Kt endar oft á gildu
+// ártali — Tor ehf er 471195-2009 og hefði lesist sem árið 2009.
+// `_` telst sem bil, sbr. drive-count.js.
+const stripKt = (s) => String(s || '').replace(/(?<!\d)\d{6}\s?-?\s?\d{4}(?!\d)/g, ' ').replace(/_/g, ' ');
+const sane = (y) => (y >= 2008 && y <= new Date().getFullYear() + 1) ? y : null;
+function yearFromName(name) { const m = stripKt(name).match(/\b(20\d{2})\b/); return m ? sane(parseInt(m[1], 10)) : null; }
 function extractYear(s) {
-  let m = s.match(/\b\d{2}\.\d{2}\.(\d{2})\b/); if (m) return 2000 + parseInt(m[1], 10);
-  m = s.match(/\b(20\d{2})\b/); if (m) return parseInt(m[1], 10);
+  let m = String(s).match(/\b\d{2}\.\d{2}\.(\d{2})\b/); if (m) return sane(2000 + parseInt(m[1], 10));
+  m = stripKt(s).match(/\b(20\d{2})\b/); if (m) return sane(parseInt(m[1], 10));
   return null;
 }
 function extractAmount(s) {
