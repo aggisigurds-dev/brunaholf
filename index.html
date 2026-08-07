@@ -2847,8 +2847,11 @@ const INBOX_ACCOUNTS = [
 // Skjalasmiðja: „Yfirlýsing vegna brunalokana" er stafrétt eftirmynd af Word-
 // frumritinu; textinn er skrifaður BEINT ofan í skjalið og vistast sem PDF í
 // Supabase (`eydublod`-fatan + `eydublod_skjol`) með útgáfusögu.
+// ?v= er ALLTAF ferskt: iframe-ar endurnýta vistað eintak án þess að spyrja
+// þjóninn, svo Agnar sat fastur á gamalli útgáfu eftir deploy (2026-08-07).
+// Síðan er ~60 KB — þungu skrárnar (letur, jsPDF) cachast áfram eðlilega.
 function renderEydublod(t){
-  $view.innerHTML = '<iframe id="ey-embed" src="/eydublod.html" title="Eyðublöð" style="width:100%;border:0;display:block;background:#f1f5f9"></iframe>';
+  $view.innerHTML = '<iframe id="ey-embed" src="/eydublod.html?v=' + Date.now() + '" title="Eyðublöð" style="width:100%;border:0;display:block;background:#f1f5f9"></iframe>';
   const fit = () => { const f = document.getElementById('ey-embed'); if(!f) return; const top = f.getBoundingClientRect().top; f.style.height = Math.max(460, window.innerHeight - top - 12) + 'px'; };
   fit();
   if(!window.__eyFitBound){ window.__eyFitBound = true; window.addEventListener('resize', () => { if(document.getElementById('ey-embed')) fit(); }); }

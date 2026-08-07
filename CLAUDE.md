@@ -373,6 +373,12 @@ skjöl til verkkaupa. Fyrsta eyðublaðið: **„Yfirlýsing vegna brunalokana"*
 - **Kveðjublokkin er ein heild**: „Með kveðju / FH. Brunahólf ehf. / nafn /
   undirskrift" fær `P.need(...)` á undan sér svo undirskriftin slitni ALDREI
   frá nafninu yfir á næstu síðu.
+- **Cache-gildra (2026-08-07)**: iframe-ar endurnýta vistað eintak án þess að
+  spyrja þjóninn, svo Agnar sat fastur á gamalli útgáfu eftir deploy og hélt að
+  breytingarnar virkuðu ekki. Hub-inn hleður núna `/eydublod.html?v=<Date.now()>`
+  (alltaf ferskt; síðan er ~60 KB, þungu skrárnar cachast áfram). Síðan sýnir
+  líka `UTGAFA` í hausnum — **bumpaðu því við hverja breytingu**, það er eina
+  leiðin til að sjá strax hvort vafrinn situr á gömlu eintaki.
 - **Nýtt eyðublað** = einn hlutur í `FORMS`-fylkinu í `eydublod.html`
   (`id/titill/lysing/sections/doc(v,E)/pdf(v,P)`) — sjá leiðbeiningarnar í
   haus-athugasemdinni þar. Engin bakenda-breyting þarf; `form_id` er frjálst.
