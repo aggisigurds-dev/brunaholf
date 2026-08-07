@@ -352,6 +352,29 @@ Sama leiðrétting í `docLink()` í `customer.html`: „engin Drive-tenging" �
 sem ERU í `customer_documents`. Þau ~1.534 storage-hlutir sem eiga enga röð eru
 enn ósóttir (Fasi 0 í `docs/SKJALA-FLUTNINGUR.md`).
 
+## Ártals-lesarinn í Drive-föllunum (2026-08-07)
+
+`yearFrom`/`yearFromName` er afritað í FIMM skrár (`drive-count`, `skyrslu-ar`,
+`drive-sort`, `drive-multitool`, `doc-index`) og útgáfurnar höfðu rekið í sundur.
+Tvennt lagað — báðar breytingar eru á lestri, engin skrá hreyfð:
+
+- **`_` telst nú sem bil.** Innsog sem kemur ekki frá Drive-flokkuninni skrifar
+  `Tangarbryggja_2024.pdf`; `_` er orðstafur svo hvorki bandstriks-liðurinn né
+  „stakt 20xx umlukið bilum" sá ártalið. Mælt: **31 af 56** ártalslausum skrám í
+  Úttektarskýrslur-möppunni lagast, þar af 4 frá 2026 (einstök 2026-skjöl 243 → 247).
+- **`drive-sort` fjarlægir nú kennitölu fyrst**, eins og `drive-multitool` gerði
+  þegar. Kt endar oft á gildu ártali (`500993-2009`) og var lesin sem ÁRIÐ. Það var
+  verst í `drive-sort` af öllum stöðunum, því þar ræður talan í hvaða ár-möppu skrá
+  er FÆRÐ. Mælt: 12 fyrirtæki eiga slíka kt, 6 þeirra í þjónustu. Bæði föllin fengu
+  líka þak (`2008..nú+1`) sem `drive-multitool` vantaði.
+
+⚠️ Eftir stendur meðvitað frávik: `drive-sort`/`drive-multitool` lesa
+dagsetningarforskeyti (`2024-03-11 nóta.pdf`), `drive-count`/`skyrslu-ar` ekki.
+Það er eldra en þessi lagfæring og snertir reikninganöfn, ekki skýrslur.
+
+**Ef þú breytir einu þeirra, breyttu hinum.** Ósamræmi milli `skyrslu-ar` og
+`drive-count` þýðir að skrá sem á ártal fyrir fer samt í endurnefningu.
+
 ## Eyðublöð — skjalasmiðja með útgáfusögu (2026-08-06)
 
 Nýr flipi **`eydublod`** + sjálfstæð síða `eydublod.html` (sama iframe-mynstur og

@@ -23,7 +23,10 @@ function folderId(raw) { const s = String(raw || '').trim(); const m = s.match(/
 
 // same year-from-name test the counter uses — a file "has a year" when this ≠ null
 function yearFromName(name) {
-  const stem = String(name || '').replace(/\.[a-z0-9]+$/i, '');
+  // `_` telst sem bil — sjá skýringu í drive-count.js. Verður að haldast í takt
+  // við hana: þetta fall ræður hvaða skrár teljast „ártalslausar" og fara í
+  // endurnefningu, svo ósamræmi hér myndi endurnefna skrá sem á ártal fyrir.
+  const stem = String(name || '').replace(/\.[a-z0-9]+$/i, '').replace(/_/g, ' ');
   const maxY = new Date().getFullYear() + 1;
   const ok = (y) => y >= 2008 && y <= maxY;
   for (const seg of stem.split(/\s+-\s+/)) { const mm = seg.trim().match(/^(20\d{2})$/); if (mm && ok(+mm[1])) return +mm[1]; }

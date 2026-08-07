@@ -203,8 +203,13 @@ function yearFrom(s) {
   // MIKILVÆGT: fjarlægja kennitölur fyrst — kt endar oft á „20xx" (500993-2009,
   // 481205-2040) og var ranglega lesið sem árið. Póstnúmer eru 3 stafir (101/201)
   // svo þau rugla ekki „20\d\d".
-  const noKt = s.replace(/(?<!\d)\d{6}\s?-?\s?\d{4}(?!\d)/g, ' ');
-  m = noKt.match(/\b(20\d{2})\b/); return m ? parseInt(m[1], 10) : null;
+  // 2026-08-07: `_` telst líka sem bil (sjá drive-count.js), og árið verður að
+  // vera á viti bornu bili — án þaksins gat stök tala í nafni skilað t.d. 2099.
+  const noKt = s.replace(/(?<!\d)\d{6}\s?-?\s?\d{4}(?!\d)/g, ' ').replace(/_/g, ' ');
+  m = noKt.match(/\b(20\d{2})\b/);
+  if (!m) return null;
+  const y = parseInt(m[1], 10);
+  return (y >= 2008 && y <= new Date().getFullYear() + 1) ? y : null;
 }
 function totalFrom(text) {
   const kw = String(text).match(/Til\s*greiðslu\s*:?\s*(?:kr\.?)?\s*([\d.]{4,})/i); let best = 0;
