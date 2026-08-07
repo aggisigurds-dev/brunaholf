@@ -358,6 +358,21 @@ skjöl til verkkaupa. Fyrsta eyðublaðið: **„Yfirlýsing vegna brunalokana"*
   NÝJA útgáfu. `skjal_id` heldur útgáfunum saman, `utgafa` telur upp; hver útgáfa
   fær sinn eigin storage-hlut svo eldri PDF (þegar farinn til verkkaupa) er
   ALDREI skrifaður yfir. GET skilar nýjustu útgáfu per skjal (`?all=1` fyrir allar).
+- **A4, ekki Letter (2026-08-07)**: frumritið var US Letter (Word-sjálfgildi) en
+  hér er prentað á A4 — `@page{size:A4}`, `.doc{width:210mm}` og jsPDF
+  `format:'a4'` (595,28×841,89pt). Spássían er áfram 1in.
+- **Línubil er stillanlegt (2026-08-07)**: Agnar bað um rýmra bil en frumritsins
+  1,15. Sjálfgefið **1,5**, geymt í `values.linubil` svo það fylgi skjalinu og
+  vistist með því. Stillt á EINUM stað — `--lh` (CSS) og `LH` (PDF) lesa bæði
+  sama gildi; ekki hardkóða línubil aftur.
+  **„📄 Passa á eina síðu"** (`passaEinaSidu()`) prófar bilið frá völdu gildi
+  niður í 1,0 í 0,05-þrepum og velur það STÆRSTA sem heldur skjalinu á einni
+  síðu — byggir PDF í hverri umferð því það er eina örugga mælingin (HTML-
+  forskoðunin brýtur línur ekki alltaf eins). Leturskrárnar eru í `_fontCache`
+  svo umferðirnar séu ódýrar. Dæmi: Kringlan-skjalið fer úr 2 síðum í 1 við 1,35.
+- **Kveðjublokkin er ein heild**: „Með kveðju / FH. Brunahólf ehf. / nafn /
+  undirskrift" fær `P.need(...)` á undan sér svo undirskriftin slitni ALDREI
+  frá nafninu yfir á næstu síðu.
 - **Nýtt eyðublað** = einn hlutur í `FORMS`-fylkinu í `eydublod.html`
   (`id/titill/lysing/sections/doc(v,E)/pdf(v,P)`) — sjá leiðbeiningarnar í
   haus-athugasemdinni þar. Engin bakenda-breyting þarf; `form_id` er frjálst.
