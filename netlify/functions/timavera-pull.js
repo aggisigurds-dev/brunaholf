@@ -1,20 +1,40 @@
 // timavera-pull.js — pull work logs STRAIGHT from the Tímavera Customer API
-// (api.timavera.is/api/v1, read-only Bearer key) and upsert them into
+// (api.timavera.is/api/v1, read-only Bearer key) and mirror them into
 // `timavera_entries` — the CLOUD replacement for the desktop scraper +
 // xlsx-from-Drive paths. Same dedupe key as luna-bridge/timavera-bridge.js
 // (`date|employee.toLowerCase()|project.toLowerCase()|time_in`), so all three
 // ingest paths are interchangeable with no duplicate rows.
+//
+// ⚠️ SNAPSHOT-REGLAN (2026-08-07, beiðni 0138d239 — „Efnislisti passar ekki við
+// tímabók"). `entry_key` inniheldur `time_in`. Þegar vinnufærslu er BREYTT í
+// tímaveru.is (t.d. innstimplun snyrt 07:28 → 07:30) reiknast NÝR entry_key, svo
+// upsertið bjó til AÐRA röð og gamla sat eftir að eilífu — draugatímar sem
+// tvítöldust í Efnislista/Kröfuyfirliti. Staðfest á Orkureit í júlí 2026:
+// Tímavera sagði 61,46 klst, taflan sagði 84,25 (4 draugaraðir = 22,79 klst).
+//
+// Sóttur gluggi er því ekki lengur bara „bætt við" heldur SPEGLAÐUR: eftir
+// upsertið er hverri `timavera-api`-röð innan gluggans sem er EKKI í svarinu
+// eytt. Þar með gildir reglan sem Agnar setti — „miðast bara við núverandi stöðu
+// í tímaveru þegar það er sótt". Breyting færir röð, eyðing í Tímaveru eyðir röð,
+// og engir draugar verða eftir. Aðeins HEILIR dagar innan [from,to] eru speglaðir
+// (hálfur dagur á jaðrinum gæti annars misst færslur sem svarið náði ekki yfir).
 //
 //   GET /api/timavera-pull?probe=1
 //     → auth check only: GET /employees + /projects, returns counts + names,
 //       NO DB write. Run this first after setting the key.
 //
 //   GET /api/timavera-pull?dry=1[&days=N]
-//     → fetch + map worklogs (default 14 days back), return rows, NO upsert.
+//     → fetch + map worklogs (default 14 days back), return rows + what the
+//       reconcile WOULD delete, NO write of any kind.
 //
 //   GET /api/timavera-pull[?days=N|&from=YYYY-MM-DD&to=YYYY-MM-DD]
-//     → real run: fetch → map → upsert on_conflict=entry_key, stamp
-//       timavera_meta, log automation_runs(job_name='timavera-pull').
+//     → real run: fetch → map → upsert on_conflict=entry_key → spegla gluggann,
+//       stamp timavera_meta, log automation_runs(job_name='timavera-pull').
+//       &reconcile=0  slekkur á speglun (hreint viðbótar-upsert, gamla hegðunin).
+//       &scope=all    speglar ALLAR raðir í glugganum, líka gömlu xlsx/Drive
+//                     raðirnar — notist handvirkt til að hreinsa skörunina
+//                     maí–júní 2026 þar sem báðar leiðirnar skrifuðu.
+//       &force=1      hunsar öryggisþakið á fjölda eyddra raða.
 //
 //   POST /api/timavera-pull {action:'set-key', key:'tv_live_…'}
 //     → store the API key server-side in app_kv['timavera_api_key'] (the
@@ -81,19 +101,40 @@ exports.handler = async (event) => {
 
     let openSkipped = 0, badSkipped = 0;
     const byKey = new Map();
+    const openGuards = new Set();
     for (const w of logs) {
       const row = mapWorkLog(w);
-      if (row === 'open') { openSkipped++; continue; }
+      if (row && row.open) {
+        openSkipped++;
+        if (row.guard) openGuards.add(row.guard);
+        continue;
+      }
       if (!row) { badSkipped++; continue; }
       byKey.set(row.entry_key, row); // in-batch dedupe, last wins (same as bridge)
     }
     const rows = Array.from(byKey.values());
 
+    // Speglunargluggi: aðeins dagar sem liggja HEILIR innan [from,to].
+    const win = wholeDayWindow(from, to);
+    const doReconcile = p.reconcile !== '0' && p.reconcile !== 'false' && !!win;
+    const scopeAll = p.scope === 'all';
+    const force = p.force === '1' || p.force === 'true';
+
     if (isDry) {
+      const preview = doReconcile
+        ? await findStale({ win, keys: byKey, openGuards, scopeAll })
+        : null;
       return json(200, {
         ok: true, dry: true, from, to,
         fetched: logs.length, mapped: rows.length,
         open_skipped: openSkipped, bad_skipped: badSkipped,
+        reconcile_window: win,
+        would_delete: preview ? preview.stale.length : 0,
+        // Samantekt per verkstað/mánuð — þetta er talan sem Efnislisti/tímabók
+        // sýna, svo hana má bera beint saman við tímaveru.is áður en keyrt er í alvöru.
+        would_delete_by_project: preview ? summarise(preview.stale) : [],
+        would_delete_rows: preview ? preview.stale : [],
+        window_rows: preview ? preview.total : 0,
         sample: rows.slice(0, 12),
       });
     }
@@ -113,6 +154,19 @@ exports.handler = async (event) => {
       upserted += slice.length;
     }
 
+    // Speglun: hendum þeim `timavera-api` röðum í glugganum sem Tímavera skilaði
+    // EKKI — það eru breyttar/eyddar færslur sem entry_key-upsertið nær aldrei.
+    let reconciled = 0, reconcileBlocked = null;
+    if (doReconcile) {
+      const { stale, total } = await findStale({ win, keys: byKey, openGuards, scopeAll });
+      // Öryggisþak: hálfsótt eða tómt API-svar má ALDREI tæma glugga af gögnum.
+      if (stale.length > 20 && stale.length > total * 0.3 && !force) {
+        reconcileBlocked = `${stale.length} af ${total} röðum í glugganum hefðu verið eyddar (>30%) — sleppt. Keyrðu með &force=1 ef þetta er raunverulega rétt.`;
+      } else if (stale.length) {
+        reconciled = await deleteByIds(stale.map(s => s.id));
+      }
+    }
+
     // Stamp timavera_meta like the desktop bridge + Drive path do.
     await fetch(`${SUPABASE_URL}/rest/v1/timavera_meta?on_conflict=id`, {
       method: 'POST',
@@ -123,8 +177,15 @@ exports.handler = async (event) => {
       body: JSON.stringify({ id: 1, last_import: new Date().toISOString(), source_file: 'timavera-api' }),
     }).catch(() => {});
 
-    await logRun({ status: 'success', detail: upserted + ' færslur (' + from.slice(0, 10) + '→' + to.slice(0, 10) + ')', started_at: started });
-    return json(200, { ok: true, from, to, fetched: logs.length, upserted, open_skipped: openSkipped, bad_skipped: badSkipped });
+    const detail = upserted + ' færslur (' + from.slice(0, 10) + '→' + to.slice(0, 10) + ')'
+      + (reconciled ? ', ' + reconciled + ' úreltar hreinsaðar' : '')
+      + (reconcileBlocked ? ', SPEGLUN STÖÐVUÐ' : '');
+    await logRun({ status: reconcileBlocked ? 'warning' : 'success', detail, started_at: started });
+    return json(200, {
+      ok: true, from, to, fetched: logs.length, upserted,
+      open_skipped: openSkipped, bad_skipped: badSkipped,
+      reconcile_window: win, reconciled, reconcile_blocked: reconcileBlocked,
+    });
   } catch (e) {
     const msg = String(e.message || e);
     if (!isProbe && !isDry) await logRun({ status: 'error', detail: msg.slice(0, 300), started_at: new Date().toISOString() }).catch(() => {});
@@ -200,10 +261,13 @@ async function tvGet(apiKey, path) {
 }
 
 // Map one API work log → a timavera_entries row (bridge-compatible).
-// Returns 'open' for still-running entries, null for unusable ones.
+// Returns { open: true, guard } for still-running entries (guard = the
+// date|employee|project prefix whose rows the reconcile must NOT delete — the
+// closed row from an earlier run is the only copy we have while the entry is
+// being re-opened/edited), and null for unusable ones.
 function mapWorkLog(w) {
   if (!w || typeof w !== 'object') return null;
-  if (!w.end_time || w.total_time == null) return 'open';
+  if (!w.end_time || w.total_time == null) return { open: true, guard: guardKey(w) };
   const employee = String((w.employee && w.employee.name) || '').trim();
   const project = String((w.project && w.project.name) || '').trim();
   if (!employee || !project) return null;
@@ -229,6 +293,16 @@ function mapWorkLog(w) {
   };
 }
 
+// date|employee|project of a raw work log — the entry_key without `time_in`.
+// Used to shield a group from the reconcile while one of its logs is open.
+function guardKey(w) {
+  const employee = String((w.employee && w.employee.name) || '').trim().toLowerCase();
+  const project = String((w.project && w.project.name) || '').trim().toLowerCase();
+  const start = new Date(w.start_time);
+  if (!employee || !project || isNaN(start.getTime())) return null;
+  return `${utcDate(start)}|${employee}|${project}`;
+}
+
 function utcDate(d) {
   const p = n => String(n).padStart(2, '0');
   return `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())}`;
@@ -236,6 +310,84 @@ function utcDate(d) {
 function utcHm(d) {
   const p = n => String(n).padStart(2, '0');
   return `${p(d.getUTCHours())}:${p(d.getUTCMinutes())}`;
+}
+
+// ---- Speglun (snapshot reconcile) ----------------------------------------------
+
+// Þeir dagar sem liggja HEILIR innan [from,to], sem `{ start, end }` (báðir
+// innifaldir, YYYY-MM-DD). Jaðardagur sem er aðeins hálf-sóttur er skilinn eftir:
+// svarið nær ekki yfir hann allan, svo við megum ekki dæma raðir hans úreltar.
+// Sjálfvirka keyrslan (days=3, á 2 tíma fresti) speglar þannig í gær og fyrradag,
+// og dagurinn í dag hreinsast við fyrstu keyrslu á morgun.
+function wholeDayWindow(fromIso, toIso) {
+  const f = new Date(fromIso), t = new Date(toIso);
+  if (isNaN(f.getTime()) || isNaN(t.getTime())) return null;
+  const midnight = d => Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+  // Fyrsti heili dagur: dagur `from` ef hann byrjar á miðnætti, annars næsti.
+  const fMid = midnight(f);
+  const startMs = fMid === f.getTime() ? fMid : fMid + 86400e3;
+  // Síðasti heili dagur: alltaf dagurinn á undan degi `to` — dagur `to` telst
+  // aðeins heill ef `to` er miðnætti, og þá er það einmitt dagurinn á undan.
+  const endMs = midnight(t) - 86400e3;
+  if (endMs < startMs) return null;
+  return { start: ymd(startMs), end: ymd(endMs) };
+}
+
+function ymd(ms) {
+  const d = new Date(ms), p = n => String(n).padStart(2, '0');
+  return `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())}`;
+}
+
+// Raðir í glugganum sem Tímavera skilaði EKKI — þ.e. færslur sem hefur verið
+// breytt (nýr entry_key) eða eytt þar. Hlífir hópum með opna færslu í gangi.
+async function findStale({ win, keys, openGuards, scopeAll }) {
+  const scope = scopeAll ? '' : '&source_file=eq.timavera-api';
+  const r = await fetch(
+    `${SUPABASE_URL}/rest/v1/timavera_entries` +
+    `?select=id,entry_key,date,employee,project,time_in,hours,source_file` +
+    `&date=gte.${win.start}&date=lte.${win.end}${scope}&limit=20000`,
+    { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } },
+  );
+  if (!r.ok) throw new Error('Speglunarlestur ' + r.status + ': ' + (await r.text()).slice(0, 200));
+  const existing = await r.json();
+  const stale = existing.filter(row => {
+    if (keys.has(row.entry_key)) return false;
+    const guard = `${row.date}|${String(row.employee || '').toLowerCase()}|${String(row.project || '').toLowerCase()}`;
+    return !openGuards.has(guard);
+  });
+  return { stale, total: existing.length };
+}
+
+// Úreltu raðirnar dregnar saman per verkstað + mánuð, þyngsta fyrst.
+function summarise(stale) {
+  const by = new Map();
+  for (const r of stale) {
+    const k = `${r.project}|${String(r.date).slice(0, 7)}`;
+    const cur = by.get(k) || { project: r.project, month: String(r.date).slice(0, 7), rows: 0, hours: 0 };
+    cur.rows++;
+    cur.hours += Number(r.hours) || 0;
+    by.set(k, cur);
+  }
+  return Array.from(by.values())
+    .map(v => ({ ...v, hours: Math.round(v.hours * 1000) / 1000 }))
+    .sort((a, b) => b.hours - a.hours);
+}
+
+async function deleteByIds(ids) {
+  let done = 0;
+  for (let i = 0; i < ids.length; i += BATCH) {
+    const slice = ids.slice(i, i + BATCH);
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/timavera_entries?id=in.(${slice.join(',')})`, {
+      method: 'DELETE',
+      headers: {
+        apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`,
+        Prefer: 'return=minimal',
+      },
+    });
+    if (!r.ok) throw new Error('Speglunareyðing ' + r.status + ': ' + (await r.text()).slice(0, 200));
+    done += slice.length;
+  }
+  return done;
 }
 
 // ---- Automation logging --------------------------------------------------------
