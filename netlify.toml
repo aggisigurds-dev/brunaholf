@@ -138,8 +138,19 @@
 # er skaðlaus. Leysir af desktop-xlsx-brúna (luna-bridge/timavera-bridge.js RETIRED)
 # + Drive-xlsx innsog. Lykill í app_kv['timavera_api_key'] (Agnar setti 2026-07-15).
 # Umgjörðin kallar á sama handler með GET, svo rökfræðin er ein og hin sama.
+# Frá 2026-08-07 speglar keyrslan gluggann líka (eyðir röðum sem Tímavera skilar
+# ekki lengur) — með days=3 nær það yfir tvo síðustu heilu dagana.
 [functions."timavera-pull-background"]
   schedule = "15 */2 * * *"
+
+# Nætur-speglun 60 daga aftur (2026-08-07, beiðni 0138d239). Tíða keyrslan að ofan
+# speglar aðeins síðustu tvo heilu dagana, en vinnufærslum er breytt í tímaveru.is
+# löngu eftir á (staðfest: keyrsla 31.7 sótti leiðréttar færslur frá 13.7). Þessi
+# þekur allan undanfarandi mánuð svo breyttar færslur skilji ekki eftir draugaraðir
+# sem tvítelja tíma í Efnislista/Kröfuyfirliti. Sér function svo villa í breiða
+# glugganum felli ekki 2-tíma ferskleikakeyrsluna.
+[functions."timavera-reconcile-background"]
+  schedule = "40 4 * * *"
 
 # Payday reikningar → invoices (Brunahólf AR). Tvisvar á dag (07/15). Upsert á
 # (tilvisun, source='payday') með dedupe — sama lykill og xlsx-leiðin, engin tvítök.
