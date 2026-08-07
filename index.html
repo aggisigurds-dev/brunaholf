@@ -2058,7 +2058,7 @@ function clearDataCache(){
 function ensureNewTabs(s){
   if(!s || !Array.isArray(s.tabs)) return;
   if(!Array.isArray(s.bakendiLinks)) s.bakendiLinks = BAKENDI_LINK_SEED.map(x=>({...x}));
-  ['verkkaupar','dagurinn','jarvis','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','vorubirgdir','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','tvmaeting','verdsamanburdur','verkstadir','skuldunautar','skyrslur','krofuyfirlit','krofur','hreyfingaryfirlit','nlsh','spurningar','sjalfvirkni','vefryni','skodanir','verkfaeri','eydublod','multitool','bakendi'].forEach(id=>{
+  ['verkkaupar','dagurinn','jarvis','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','vorubirgdir','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','tvmaeting','verdsamanburdur','verkstadir','skuldunautar','skyrslur','afkost','krofuyfirlit','krofur','hreyfingaryfirlit','nlsh','pdftools','spurningar','sjalfvirkni','vefryni','skodanir','verkfaeri','eydublod','multitool','bakendi'].forEach(id=>{
     if(!s.tabs.find(t=>t.id===id)){
       const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
       if(d){
@@ -2147,6 +2147,11 @@ function ensureNewTabs(s){
         } else if(id === 'reikningatenglar'){
           const idx = s.tabs.findIndex(t=>t.id==='tenglar');
           target = idx >= 0 ? idx + 1 : -1;
+        } else if(id === 'pdftools'){
+          // PDF verkfæri situr beint á eftir Reikningatenglum, fyrir ofan Reikningagerð.
+          const idx = s.tabs.findIndex(t=>t.id==='reikningatenglar');
+          const idx2 = s.tabs.findIndex(t=>t.id==='reikningar');
+          target = idx >= 0 ? idx + 1 : (idx2 >= 0 ? idx2 : -1);
         } else if(id === 'skuldunautar'){
           // Skuldunautar right after Verkstaðir.
           const idx = s.tabs.findIndex(t=>t.id==='verkstadir');
@@ -2156,6 +2161,12 @@ function ensureNewTabs(s){
           const idx = s.tabs.findIndex(t=>t.id==='krofuyfirlit');
           const idx2 = s.tabs.findIndex(t=>t.id==='skuldunautar');
           target = idx >= 0 ? idx : (idx2 >= 0 ? idx2 + 1 : -1);
+        } else if(id === 'afkost'){
+          // Afköst (afkastadashboard) situr beint á eftir Skýrslum, fyrir ofan Kröfu yfirlit.
+          const idx = s.tabs.findIndex(t=>t.id==='skyrslur');
+          const idx2 = s.tabs.findIndex(t=>t.id==='krofuyfirlit');
+          const idx3 = s.tabs.findIndex(t=>t.id==='skuldunautar');
+          target = idx >= 0 ? idx + 1 : (idx2 >= 0 ? idx2 : (idx3 >= 0 ? idx3 + 1 : -1));
         } else if(id === 'krofuyfirlit'){
           // Kröfu yfirlit right after Skuldunautar.
           const idx = s.tabs.findIndex(t=>t.id==='skuldunautar');
