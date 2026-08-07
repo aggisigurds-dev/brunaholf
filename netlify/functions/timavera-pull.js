@@ -130,7 +130,10 @@ exports.handler = async (event) => {
         open_skipped: openSkipped, bad_skipped: badSkipped,
         reconcile_window: win,
         would_delete: preview ? preview.stale.length : 0,
-        would_delete_sample: preview ? preview.stale.slice(0, 12) : [],
+        // Samantekt per verkstað/mánuð — þetta er talan sem Efnislisti/tímabók
+        // sýna, svo hana má bera beint saman við tímaveru.is áður en keyrt er í alvöru.
+        would_delete_by_project: preview ? summarise(preview.stale) : [],
+        would_delete_rows: preview ? preview.stale : [],
         window_rows: preview ? preview.total : 0,
         sample: rows.slice(0, 12),
       });
@@ -353,6 +356,21 @@ async function findStale({ win, keys, openGuards, scopeAll }) {
     return !openGuards.has(guard);
   });
   return { stale, total: existing.length };
+}
+
+// Úreltu raðirnar dregnar saman per verkstað + mánuð, þyngsta fyrst.
+function summarise(stale) {
+  const by = new Map();
+  for (const r of stale) {
+    const k = `${r.project}|${String(r.date).slice(0, 7)}`;
+    const cur = by.get(k) || { project: r.project, month: String(r.date).slice(0, 7), rows: 0, hours: 0 };
+    cur.rows++;
+    cur.hours += Number(r.hours) || 0;
+    by.set(k, cur);
+  }
+  return Array.from(by.values())
+    .map(v => ({ ...v, hours: Math.round(v.hours * 1000) / 1000 }))
+    .sort((a, b) => b.hours - a.hours);
 }
 
 async function deleteByIds(ids) {
