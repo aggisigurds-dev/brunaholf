@@ -130,22 +130,27 @@
   /* ═══════════════════════════════════════════════════════════════════
      SKJALIÐ — spegilmynd af Word-frumritinu (Staðfesting_Keldur.docx).
      Tölurnar hér að neðan eru lesnar beint úr docx-inu:
-       Blaðsíða   US Letter 8,5×11in · spássía 1in
+       Blaðsíða   A4 210×297mm · spássía 1in (frumritið var US Letter — Word-
+                  sjálfgildi; á Íslandi er prentað á A4, leiðrétt 2026-08-07)
        Grunnletur Aptos 11pt (docDefaults)
-       Meginmál   Calibri 12pt (sz 24) · línubil 1,15 (line 276) · bil eftir 0
+       Meginmál   Calibri 12pt (sz 24) · bil eftir málsgrein 0
+       Línubil    1,5 — ATH: frumritið er 1,15 (line 276). Agnar bað um rýmra
+                  bil 2026-08-07 því skjalið var of þétt. Stillt á EINUM stað:
+                  `--lh` hér að neðan og `LH` í PDF-hlutanum; haldið í takt.
        Fyrirsögn  Calibri 14pt feitletruð (sz 28), miðjuð
        Punktar    ● · inndráttur 0,5in, hangandi 0,25in
        Haus       merki 2,04×0,49in miðjað, texti sitt hvorum megin, lína undir
        Undirskrift 4,39×1,06in, 0,754in undir upphafi „Með kveðju"-greinar
      ═══════════════════════════════════════════════════════════════════ */
   .doc{
-    background:#fff; margin:0 auto; width:8.5in; padding:1in;
+    background:#fff; margin:0 auto; width:210mm; padding:1in;
     box-shadow:0 2px 18px rgba(15,23,42,.10); border:1px solid var(--line);
     font-family:Aptos,Calibri,Carlito,"Segoe UI",Candara,Arial,sans-serif;
-    font-size:11pt; line-height:1.15; color:#000;
+    font-size:11pt; line-height:var(--lh); color:#000;
+    --lh:1.5;                 /* línubil meginmáls (frumritið var 1,15) */
   }
   .doc p{margin:0}
-  .doc .p12{font-family:Calibri,Carlito,"Segoe UI",Candara,Arial,sans-serif; font-size:12pt; line-height:1.15}
+  .doc .p12{font-family:Calibri,Carlito,"Segoe UI",Candara,Arial,sans-serif; font-size:12pt; line-height:var(--lh)}
   .doc .b{font-weight:bold}
   .doc .bi{font-weight:bold; font-style:italic}
 
@@ -156,12 +161,12 @@
   .doc-head img.logo{position:absolute; left:50%; transform:translateX(-50%); top:0; width:2.04in; height:.49in}
 
   .doc-title{text-align:center; font-family:Calibri,Carlito,"Segoe UI",Candara,Arial,sans-serif;
-    font-size:14pt; font-weight:bold; line-height:1.15}
+    font-size:14pt; font-weight:bold; line-height:var(--lh)}
   .doc-center{text-align:center}
 
   .doc ul{list-style:none; margin:0; padding:0}
   .doc li{font-family:Calibri,Carlito,"Segoe UI",Candara,Arial,sans-serif; font-size:12pt;
-    line-height:1.15; padding-left:.5in; text-indent:-.25in}
+    line-height:var(--lh); padding-left:.5in; text-indent:-.25in}
   .doc li::before{content:"\25CF"; display:inline-block; width:.25in; text-indent:0; font-size:10pt}
   .doc .sigimg{display:block; width:4.39in; height:1.06in; margin-top:.18in}
 
@@ -174,11 +179,11 @@
 
   @media (max-width:900px){
     .preview .doc{transform:scale(var(--zoom,.46)); transform-origin:top left; margin:0}
-    .preview .zoomwrap{height:calc(11in * var(--zoom,.46)); overflow:hidden}
+    .preview .zoomwrap{height:calc(297mm * var(--zoom,.46)); overflow:hidden}
   }
 
   /* ── Prentun / Vista sem PDF ─────────────────────────────────────── */
-  @page{size:letter; margin:1in}
+  @page{size:A4; margin:1in}
   @media print{
     html,body{background:#fff !important}
     .topbar, .editor, .no-print{display:none !important}
@@ -316,6 +321,12 @@ const FORMS = [
         { key:'sveitarfelag', type:'text', list:SVEITARFELOG, label:'Teikningar af vef (eignarfall)',
           def:'Reykjavíkurborgar', placeholder:'Reykjavíkurborgar' }
       ] },
+    { titill:'Útlit',
+      fields:[
+        { key:'linubil', type:'number', label:'Línubil', def:1.5, min:1, max:2, step:0.05,
+          hint:'1,5 er rúmt; frumritið var 1,15. „Passa á eina síðu" finnur stærsta bilið sem kemst fyrir.' },
+        { key:'einsidu', type:'fitbtn', label:'' }
+      ] },
     { titill:'Undirritun',
       fields:[
         { key:'sig', type:'sig', label:'Undirskrift',
@@ -397,6 +408,7 @@ const FORMS = [
       </div>
     </div>
 
+    <p class="p12">&nbsp;</p>
     <p class="doc-title">${E.line('stadur', v.stadur, {gult:true, ph:'Staður, heimilisfang, byggingar'})}</p>
     <p class="p12">&nbsp;</p>
     <p class="p12 doc-center">Dagsetning: ${E.line('dagsetningTexti', v.dagsetningRaw || fmtDate(v.dagsetning), {gult:true})}</p>
@@ -443,8 +455,9 @@ const FORMS = [
     P.rule(r2 + 3);
     P.setY(r2 + 9);
 
+    P.gap(12 * P.LH);                          // auð lína fyrir ofan fyrirsögn
     P.para(v.stadur, {size:14, style:'bold', align:'center'});
-    P.gap(13.8);
+    P.gap(12 * P.LH);
     P.para('Dagsetning: ' + (v.dagsetningRaw || fmtDate(v.dagsetning)), {size:12, align:'center'});
 
     P.paras(v.inngangur, {size:12});
@@ -461,18 +474,19 @@ const FORMS = [
     P.bullets(v.eftirlit);
 
     P.paras(v.kvedja, {size:12});
+
+    // Kveðjan, fyrirtækjanafnið, nafn ábyrgðarmanns og undirskriftin mynda EINA
+    // heild — undirskrift má aldrei slitna frá nafninu yfir á næstu síðu.
+    const sig = v.sig ? await P.image(v.sig) : null;
+    P.need(3 * 12 * P.LH + (sig ? 13 + 76.3 : 0));
+
     P.para(v.kvedja2, {size:12});
     P.para(v.fyrirhond, {size:12, style:'bold'});
     P.para(v.abyrgdarmadur, {size:12});
-
-    if(v.sig){
-      const sig = await P.image(v.sig);
-      if(sig){
-        P.gap(13);                              // 0,18in undir nafninu
-        P.need(76.3);
-        P.drawImage(sig, 'PNG', P.M, P.getY(), 316, 76.3);
-        P.gap(76.3);
-      }
+    if(sig){
+      P.gap(13);                                // 0,18in undir nafninu
+      P.drawImage(sig, 'PNG', P.M, P.getY(), 316, 76.3);
+      P.gap(76.3);
     }
   }
 }
@@ -737,6 +751,13 @@ function fieldHtml(f){
           </span>
         </div>
       </div>`;
+  } else if(f.type === 'fitbtn'){
+    input = `<button type="button" class="btn" id="btnFit" onclick="passaEinaSidu()"
+        style="width:100%">📄 Passa á eina síðu</button>
+      <div id="fitStatus" class="status"></div>`;
+  } else if(f.type === 'number'){
+    input = `<input type="number" id="${id}" name="${f.key}" value="${esc(val)}"
+        min="${f.min}" max="${f.max}" step="${f.step}">`;
   } else if(f.type === 'date'){
     input = `<input type="date" id="${id}" name="${f.key}" value="${esc(val)}">`;
   } else {
@@ -777,6 +798,7 @@ const E = {
 
 function renderDoc(){
   const el = document.getElementById('doc');
+  el.style.setProperty('--lh', linubil());
   el.innerHTML = form.doc(values, E);
   if(!el._bound){
     el._bound = true;
@@ -824,7 +846,7 @@ function fitPreview(){
   const prev = document.querySelector('.preview');
   if(!prev) return;
   if(window.innerWidth > 900) prev.style.removeProperty('--zoom');
-  else prev.style.setProperty('--zoom', Math.min(1, (prev.clientWidth - 4) / (8.5 * 96)).toFixed(3));
+  else prev.style.setProperty('--zoom', Math.min(1, (prev.clientWidth - 4) / (210 / 25.4 * 96)).toFixed(3));
   if(!window.__fitBound){
     window.__fitBound = true;
     window.addEventListener('resize', () => { if(document.querySelector('.preview')) fitPreview(); });
@@ -953,7 +975,14 @@ async function fetchB64(url){
   return btoa(bin);
 }
 
+const _fontCache = new Map();
 const _imgCache = new Map();
+
+/* Valið línubil (fylgir skjalinu og vistast með því). */
+function linubil(){
+  const n = parseFloat(values.linubil);
+  return (isFinite(n) && n >= 1 && n <= 3) ? n : 1.5;
+}
 async function imageData(src){
   if(_imgCache.has(src)) return _imgCache.get(src);
   let out = null;
@@ -967,10 +996,10 @@ async function imageData(src){
 }
 
 /* Umbúðir utan um jsPDF sem tala í punktum og halda utan um y-stöðuna. */
-function pdfTools(doc){
-  const M = 72, PW = 612, PH = 792, CW = PW - 2*M;
+function pdfTools(doc, LH){
+  const M = 72, PW = 595.28, PH = 841.89, CW = PW - 2*M;   // A4, 1in spássía
   let y = M;
-  const lh = size => size * 1.15;
+  const lh = size => size * LH;
   const set = (size, style) => { doc.setFont('carlito', style || 'normal'); doc.setFontSize(size); };
   const need = h => { if(y + h > PH - M){ doc.addPage(); y = M; } };
 
@@ -1008,7 +1037,7 @@ function pdfTools(doc){
   function rule(at){ doc.setLineWidth(0.5); doc.setDrawColor(0); doc.line(M, at, M + CW, at); }
 
   return {
-    doc, M, PW, PH, CW,
+    doc, M, PW, PH, CW, LH,
     getY: () => y, setY: v => { y = v; }, gap: h => { y += h; }, need,
     textAt, para, paras, bullets, rule,
     image: imageData,
@@ -1016,19 +1045,22 @@ function pdfTools(doc){
   };
 }
 
-async function buildPdf(){
+async function buildPdf(lhOverride){
   const lib = await loadJsPdf();
-  const doc = new lib.jsPDF({ unit:'pt', format:'letter', compress:true });
+  const doc = new lib.jsPDF({ unit:'pt', format:'a4', compress:true });
+  const lh = lhOverride != null ? lhOverride : linubil();
 
-  // Carlito í fjórum stílum — sótt einu sinni og geymt í VFS skjalsins.
+  // Carlito í fjórum stílum — sótt EINU SINNI og geymt, því sjálfvirka
+  // eins-síðu pössunin byggir skjalið margoft í röð.
   for(const [style, url] of Object.entries(CARLITO)){
     const file = 'carlito-' + style + '.ttf';
-    doc.addFileToVFS(file, await fetchB64(url));
+    if(!_fontCache.has(url)) _fontCache.set(url, await fetchB64(url));
+    doc.addFileToVFS(file, _fontCache.get(url));
     doc.addFont(file, 'carlito', style);
   }
   doc.setFont('carlito', 'normal');
 
-  await form.pdf(values, pdfTools(doc));
+  await form.pdf(values, pdfTools(doc, lh));
   return doc;
 }
 
@@ -1047,6 +1079,43 @@ async function saekjaPdf(){
     doc.save(pdfName() + '.pdf');
   }catch(e){ alert('Tókst ekki að búa til PDF: ' + e.message); }
   finally{ if(btn){ btn.disabled = false; btn.textContent = '⬇︎ Sækja PDF'; } }
+}
+
+/* ── „Passa á eina síðu" ───────────────────────────────────────────────
+   Prófar línubil frá því sem er valið og niður í 1,0 og velur STÆRSTA bilið
+   sem heldur skjalinu á einni A4-síðu. Byggir PDF-inn í hvert sinn — það er
+   eina örugga mælingin, því vafrinn og PDF-inn brjóta línur eins en ekki
+   endilega á sama stað og HTML-forskoðunin. Leturskrárnar eru í minni svo
+   hver umferð kostar lítið. */
+async function passaEinaSidu(){
+  const btn = document.getElementById('btnFit');
+  const st  = document.getElementById('fitStatus');
+  if(btn) btn.disabled = true;
+  if(st){ st.className = 'status'; st.textContent = '⏳ Leita að réttu bili…'; }
+  try{
+    const byrjun = Math.min(2, Math.max(1, linubil()));
+    let fannst = null;
+    for(let lh = byrjun; lh >= 0.995; lh -= 0.05){
+      const rounded = Math.round(lh * 100) / 100;
+      const doc = await buildPdf(rounded);
+      if(doc.getNumberOfPages() === 1){ fannst = rounded; break; }
+    }
+    if(fannst == null){
+      if(st){ st.className = 'status err';
+        st.textContent = '✗ Kemst ekki á eina síðu jafnvel við 1,0 — styttu textann.'; }
+      return;
+    }
+    values.linubil = fannst;
+    const inp = document.getElementById('f_linubil');
+    if(inp) inp.value = fannst;
+    renderDoc(); saveDraft();
+    if(st){ st.className = 'status ok';
+      st.textContent = fannst >= byrjun - 0.001
+        ? `✓ Kemst þegar á eina síðu (${String(fannst).replace('.', ',')}).`
+        : `✓ Línubil stillt á ${String(fannst).replace('.', ',')} — kemst á eina síðu.`; }
+  }catch(e){
+    if(st){ st.className = 'status err'; st.textContent = '✗ ' + e.message; }
+  }finally{ const b = document.getElementById('btnFit'); if(b) b.disabled = false; }
 }
 
 /* ── Vistun í skjalasafn (ný útgáfa) ───────────────────────────────── */
