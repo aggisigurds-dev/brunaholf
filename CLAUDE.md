@@ -200,11 +200,17 @@ með símann (The Big Boss appið á slokkvitaeki). Flæðið:
   yfirliti (`index.html`, birtist aðeins ef drög eru til). Kveikja setur
   `review_requested`; slökkva hreinsar líka staðfestinguna. `REVIEWS`-mappið
   (ws|wm → drög) er sótt í `fetchAll()` með `/api/invoice-drafts`.
-- **Yfirferð**: `yfirferd.html` — símavæn síða (svart/gull), listar flögguð
-  drög; +/− steppers á klst/km/ferðir/magn efnislína, athugasemd, endurreiknar
-  eins og Gerð Reikninga (`compute()`). Takkar: 💾 Vista · ✓ Staðfesta ·
-  ↶ Hætta við (afturkallar óvistaðar breytingar). Staðfesta vistar OG setur
-  `review_confirmed_at/_by`. Nafn úr `localStorage.bh_me` (sama og hub).
+- **Yfirferð**: `yfirferd.html` — símavæn síða (svart/gull) sem listar flögguð
+  drög með beinum hlekk „🧾 Opna Efnislista" á ALVÖRU Efnislista-formið (ósk
+  Agnars 2026-08-08 — enginn sér-ritill lengur, formið er eitt). Hlekkurinn er
+  `/?embed=1&grws=<verkstaður>&grwm=<YYYY-MM>&review=1#gerdreikninga` —
+  `renderGerdReikninga` les `grws/grwm/review` (einu sinni, `__grDeepDone`) og
+  opnar ritilinn sjálfkrafa. Í yfirferðar-ham (review=1 EÐA drögin flögguð)
+  fær ritillinn ✓ Staðfesta (vistar + `review_confirmed_at/_by`) og ↶ Hætta við
+  (skrifar snapshot frá opnun til baka — afturkallar líka það sem var ÞEGAR
+  vistað í þessari opnun; PATCH-leiðin í `invoice-drafts.js` gerir hlutauppfærslu
+  örugga). Báðir fara `history.back()` á yfirferðar-listann; `pageshow` þar
+  endurhleður. Nafn úr `localStorage.bh_me` (sama lén og hub → deilist).
 - **Staða til baka**: Kröfu yfirlit sýnir „👔 Í yfirferð" (gult) eða
   „👔 Staðfest · nafn dags." (grænt) undir takkaröðinni. Staðfesting yfirmanns
   er AÐSKILIN frá ✓ Staðfest/📤 Senda vinnuflæðinu — skrifstofan sendir áfram.
