@@ -14489,10 +14489,16 @@ async function renderKrofuyfirlit(t){
       const bankDetail = (inv.bank)
         ? `<div style="margin-top:9px;color:#0f7a43;font-size:11px;font-weight:600;line-height:1.4">🏦 Banki: ${fmtKr(inv.bank.amount)} · ${esc(inv.bank.date||'—')}${inv.bank.text?' · '+esc(inv.bank.text):''}${inv.bank.extra>0?' <span style="color:#b45309">(+'+fmtKr(inv.bank.extra)+' vextir)</span>':''}</div>`
         : '';
-      // Gátmerki í velstillu (tier 2 / sameina-hamur) — aðeins á gerd-drög (invoice_drafts-
+      // Gátmerki lengst til vinstri á tier-2 drögum — aðeins á gerd-drög (invoice_drafts-
       // studdar raðir með sitt eigið worksite_name+work_month), EKKI Payday-drög (engin
       // (worksite_name,work_month) einkilykill til að sameina undir).
-      const t2chk = (tier===2 && t2SelectMode && inv.source==='gerd-drög' && inv.worksite && inv.work_month)
+      //
+      // 2026-08-08: `t2SelectMode &&` fjarlægt úr skilyrðinu. Hakið var áður falið þar til
+      // kveikt væri á „☑ Sameina" hamnum — en sá rofi er EINGÖNGU teiknaður í per-þrep
+      // yfirlitinu (selBtn), ekki í „🏢 Per fyrirtæki" yfirlitinu sem er sjálfgefið.
+      // Þar sást því hvorki rofi né hak, og sameining var ómöguleg þótt allur kóðinn
+      // (borði, modal, fast verð, sjálfvirk felun) væri til staðar og virkur.
+      const t2chk = (tier===2 && inv.source==='gerd-drög' && inv.worksite && inv.work_month)
         ? `<input type="checkbox" class="kyf-t2-chk" data-key="${esc(inv.inv_key)}" ${t2Selected.has(inv.inv_key)?'checked':''} onclick="event.stopPropagation()" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;accent-color:#1d4ed8;margin-right:2px">`
         : '';
       return `
@@ -14588,7 +14594,10 @@ async function renderKrofuyfirlit(t){
   // gluggann. Kallað bæði úr checkbox-change og úr renderList() sjálfu.
   function updateCombineBar(){
     const bar = $view.querySelector('.kyf-t2-bar'); if(!bar) return;
-    const show = t2SelectMode && t2Selected.size>0;
+    // Borðinn birtist um leið og eitthvað er valið — óháð sameina-hamnum, því hakið
+    // er núna alltaf sýnilegt (sjá t2chk). Hann er sjálfur „glugginn" sem spyr hvort
+    // eigi að sameina: sýnir fjölda + samtölu og býður 🔗 Sameina valdar.
+    const show = t2Selected.size>0;
     bar.style.display = show ? 'flex' : 'none';
     if(!show) return;
     const lbl = bar.querySelector('.kyf-t2-bar-lbl');
