@@ -19,6 +19,7 @@
     background:linear-gradient(180deg,#fffbe8 0%,#f9e29a 12%,#e0ad3f 26%,#96631a 40%,#6e4a11 46%,
       #c99a3f 54%,#f6dd8f 64%,#d3a63f 78%,#8a5c17 90%,#f3dd97 100%);
     -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; }
+  .fy-goldbar{ vertical-align:-4px; margin-right:2px; }
   .sub{ color:var(--ink3); font-size:12.5px; margin:0; }
   .syncbar{ display:flex; gap:7px; flex-wrap:wrap; align-items:center; margin:0 0 16px; }
   .grand{ background:linear-gradient(120deg,#0c1018,#13203f 55%,var(--hero)); border:1px solid #2c4a86;
@@ -59,7 +60,20 @@
 </head>
 <body>
   <div class="fy-titlebar">
-    <h1>💰 Fjármála-yfirlit</h1>
+    <h1><svg class="fy-goldbar" width="30" height="21" viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <linearGradient id="fyBarTop" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#fff6d2"/><stop offset="45%" stop-color="#f3d582"/><stop offset="100%" stop-color="#d3a63f"/>
+        </linearGradient>
+        <linearGradient id="fyBarFront" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#f6dd8f"/><stop offset="22%" stop-color="#e0ad3f"/><stop offset="46%" stop-color="#96631a"/>
+          <stop offset="60%" stop-color="#c99a3f"/><stop offset="80%" stop-color="#f3dd97"/><stop offset="100%" stop-color="#8a5c17"/>
+        </linearGradient>
+      </defs>
+      <polygon points="15,20 65,8 90,22 40,34" fill="url(#fyBarTop)" stroke="#6e4a11" stroke-width="1.4" stroke-linejoin="round"/>
+      <polygon points="40,34 90,22 83,52 33,64" fill="url(#fyBarFront)" stroke="#5c3d0a" stroke-width="1.4" stroke-linejoin="round"/>
+      <line x1="47" y1="40" x2="76" y2="30" stroke="#fff6d2" stroke-width="2.4" opacity="0.5" stroke-linecap="round"/>
+    </svg> Fjármála-yfirlit</h1>
     <p class="sub">Peningapípan þvert á Slökkvitæki + Brunahólf · staðan núna · <a class="refresh" href="#" id="refresh">↻ uppfæra</a></p>
   </div>
   <div class="syncbar">
