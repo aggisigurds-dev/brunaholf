@@ -59,6 +59,10 @@ exports.handler = async (event) => {
       // reconstructed from the CURRENT UI state (state.ui.gr_discount), so a
       // changed/unsyncced pct printed a sheet that didn't add up.
       'discount_pct',
+      // 2026-08-08 (yfirferðar-flæði): skrifstofan flaggar drög til yfirferðar
+      // hjá yfirmanni (yfirferd.html / The Big Boss app); hann vistar + staðfestir.
+      'review_requested', 'review_requested_at', 'review_requested_by',
+      'review_confirmed_at', 'review_confirmed_by',
     ];
     const payload = { updated_at: new Date().toISOString() };
     for (const k of allowed) if (body[k] !== undefined) payload[k] = body[k];

@@ -7,9 +7,10 @@
 //        · Ógreiddar í Payday (dk_invoice_id sett) · Ósendar kröfur (aldrei sendar)
 //   B) Raun-ógreitt í Payday hjá Brunahólf (úr `invoices`, óborgaðir, sama tier-1
 //      regla og krofu-yfirlit-bru: non-credit, ekki greitt, ekki falið).
-//   C) Óinnheimt eldra:
-//        · Eldri Tímavera-mánuðir (áunnið: klst fyrri mánaða × dagvinnutaxti m/vsk)
-//        · Ósendir reikningar hjá Brunahólf (invoice_drafts, síðustu 3 mán, ósend)
+//   C) Ósent — SAMA tala og „Ósent" KPI-spjaldið (CG-02) á Kröfu yfirliti
+//      (drög úr invoice_drafts + draft-invoices, mínus falin/greitt/skipped).
+//      (Eldri Tímavera-mánuðir eru áfram reiknaðir til upplýsinga en hvorki
+//      birtir né í grand_total — sjá athugasemd við timavera_eldri.)
 //   D) Áunnið Tímavera-tímagjald ÞESSA mánaðar (klst × dagvinnutaxti m/vsk).
 //
 //   grand_total = A.heildar + B + C(osendar) + D
@@ -75,7 +76,7 @@ exports.handler = async (event) => {
     invoices = await sbAll('invoices', 'select=upphaed_total,hofudstoll,status,source,tilvisun,id,kt_greidanda,customer_name');
   } catch (e) { warnings.push('invoices lestur mistókst — Brunahólf Payday-ógreitt gæti vantað: ' + e.message); }
   try {
-    drafts = await sbAll('invoice_drafts', 'select=worksite_name,work_month,total_m_vsk');
+    drafts = await sbAll('invoice_drafts', 'select=worksite_name,work_month,total_m_vsk,status');
   } catch (e) { warnings.push('invoice_drafts lestur mistókst — ósendir reikningar gætu vantað'); }
   try {
     meta = await sbAll('krofur_yfirlit_meta', 'select=inv_key,hidden,paid');
@@ -117,27 +118,46 @@ exports.handler = async (event) => {
   const metaBy = new Map(meta.map((m) => [m.inv_key, m]));
   const PAID = new Set(['greitt', 'paid', 'greiddur', 'greidd']);
   const CREDIT = new Set(['kredit', 'kreditfært', 'credit', 'cancelled', 'ógilt']);
+  const DRAFT_ST = new Set(['drög', 'drog', 'draft']);
   const B = n0();
   for (const r of invoices) {
     const st = lc(r.status);
     const amt = +r.upphaed_total || +r.hofudstoll || 0;
     if (amt <= 0 || CREDIT.has(st)) continue;
+    if (DRAFT_ST.has(st)) continue;             // drög fara í C (Ósent) — ekki tvítalin hér
     const mt = metaBy.get(`${r.source || 'x'}|${r.tilvisun || r.id}`) || {};
     if (PAID.has(st) || mt.paid) continue;
     if (mt.hidden) continue;
     add(B, amt, { label: r.customer_name || '—', sub: r.tilvisun != null ? String(r.tilvisun) : '', kr: Math.round(amt) });
   }
 
-  // ── C1) Ósendir reikningar hjá Brunahólf (invoice_drafts, síðustu 3 mán) ──
+  // ── C1) Ósent — SAMA skilgreining og „Ósent" KPI-spjaldið (CG-02) á Kröfu
+  // yfirliti (ósk Agnars 8.8.: tölurnar eiga að vera tengdar saman). Kröfu
+  // yfirlit = krofu-yfirlit-bru þrep 2 mínus faldar raðir:
+  //   · invoice_drafts: status≠skipped, work_month ≥ 3-mán cutoff, upphæð>0,
+  //     meta(draftinv|ws|wm) hvorki paid né hidden
+  //   · invoices-raðir með status 'drög/draft': hvorki kredit/paid/hidden
+  // Engin NON_BILLABLE-sía hér lengur — CG-02 hefur hana ekki, og talan á að
+  // stemma við spjaldið uppá krónu. Ef önnur hlið breytist, breyttu hinni.
   const cutoff = ymOf(addMonths(now, -3));
   const C_osendar = n0();
   for (const d of drafts) {
     const wm = String(d.work_month || '');
     const amt = +d.total_m_vsk || 0;
+    if (lc(d.status) === 'skipped') continue;
     if (amt <= 0 || wm < cutoff) continue;
-    if (NON_BILLABLE.test(d.worksite_name || '')) continue; // sleppa innri + Ajour-verkefnum (annars tvítalið)
-    if ((metaBy.get(`draftinv|${d.worksite_name}|${wm}`) || {}).paid) continue;
+    const mt = metaBy.get(`draftinv|${d.worksite_name}|${wm}`) || {};
+    if (mt.paid || mt.hidden) continue;
     add(C_osendar, amt, { label: d.worksite_name || '—', sub: wm, kr: Math.round(amt) });
+  }
+  for (const r of invoices) {
+    const st = lc(r.status);
+    if (!DRAFT_ST.has(st)) continue;
+    const amt = +r.upphaed_total || +r.hofudstoll || 0;
+    if (amt <= 0) continue;
+    const mt = metaBy.get(`${r.source || 'x'}|${r.tilvisun || r.id}`) || {};
+    if (mt.paid || mt.hidden) continue;
+    add(C_osendar, amt, { label: r.customer_name || '—', sub: r.tilvisun != null ? 'drög ' + r.tilvisun : 'drög', kr: Math.round(amt) });
   }
 
   // ── C2/D) Tímavera-áunnið (klst × taxti) — rukkanlegir verkstaðir ─────────

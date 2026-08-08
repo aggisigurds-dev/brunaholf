@@ -188,6 +188,29 @@ samþykkir) → klarad. GET skilar öllu; POST `{action:'update', id, …}`.
   command:'/api/payday-pull', url:'/api/payday-pull?probe=1', schedule:'Daglega'}`.
 
 
+## Yfirferð efnislista (👔) — 2026-08-08
+
+Skrifstofan flaggar Efnislista til yfirferðar hjá yfirmanni sem er á ferðinni
+með símann (The Big Boss appið á slokkvitaeki). Flæðið:
+
+- **Gögn**: `review_requested/_at/_by` + `review_confirmed_at/_by` dálkar á
+  `invoice_drafts` (`sql/2026-08-08_invoice_drafts_review.sql`); allir í
+  allowed-whitelistanum í `invoice-drafts.js`.
+- **Flagga**: 👔 Yfirferð-takki í `wfStrip` á Ósendar/Tími-eftir-röðum í Kröfu
+  yfirliti (`index.html`, birtist aðeins ef drög eru til). Kveikja setur
+  `review_requested`; slökkva hreinsar líka staðfestinguna. `REVIEWS`-mappið
+  (ws|wm → drög) er sótt í `fetchAll()` með `/api/invoice-drafts`.
+- **Yfirferð**: `yfirferd.html` — símavæn síða (svart/gull), listar flögguð
+  drög; +/− steppers á klst/km/ferðir/magn efnislína, athugasemd, endurreiknar
+  eins og Gerð Reikninga (`compute()`). Takkar: 💾 Vista · ✓ Staðfesta ·
+  ↶ Hætta við (afturkallar óvistaðar breytingar). Staðfesta vistar OG setur
+  `review_confirmed_at/_by`. Nafn úr `localStorage.bh_me` (sama og hub).
+- **Staða til baka**: Kröfu yfirlit sýnir „👔 Í yfirferð" (gult) eða
+  „👔 Staðfest · nafn dags." (grænt) undir takkaröðinni. Staðfesting yfirmanns
+  er AÐSKILIN frá ✓ Staðfest/📤 Senda vinnuflæðinu — skrifstofan sendir áfram.
+- **Í appinu**: síðan er `br-yfirferd` í PAGES/boss-defaults í slokkvitaeki
+  patch 261.
+
 ## Fjármála-yfirlit-flipi — 2026-08-08
 
 Nýr flipi **`fjarmalyfirlit`** (💰 Fjármála-yfirlit, beint á eftir `krofuyfirlit`) —
