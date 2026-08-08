@@ -14649,11 +14649,38 @@ async function renderKrofuyfirlit(t){
       // Skref 1 — búa til nýja sameinaða drögið. Mistakist þetta hefur EKKERT
       // breyst enn (glugginn helst opinn svo notandi geti reynt aftur).
       try{
+        // Sækja fulla draft-hlutinn (með klst, efni o.fl.) úr REVIEWS-kortinu.
+        const fullDrafts = invs.map(iv => REVIEWS[(iv.worksite||'')+'|'+(iv.work_month||'')]).filter(Boolean);
+        const sumDvH = fullDrafts.reduce((a,d)=>a+(Number(d.hours_dagvinna)||0),0);
+        const sumEvH = fullDrafts.reduce((a,d)=>a+(Number(d.hours_eftirvinna)||0),0);
+        const sumKm  = fullDrafts.reduce((a,d)=>a+(Number(d.akstur_km)||0),0);
+        const sumFr  = fullDrafts.reduce((a,d)=>a+(Number(d.akstur_ferdir)||0),0);
+        const sumSma = fullDrafts.reduce((a,d)=>a+(Number(d.smahlutagjald)||0),0);
+        const sumStadf = fullDrafts.reduce((a,d)=>a+(Number(d.stadfesting)||0),0);
+        const firstRated = fullDrafts.find(d=>Number(d.rate_dagvinna)>0) || {};
+        // Sameina efnislista: leggja saman magn per nafni, endurkeyra verð × magn.
+        const matMap = new Map();
+        for(const d of fullDrafts){
+          for(const m of (Array.isArray(d.materials_jsonb)?d.materials_jsonb:[])){
+            if(!m.label) continue;
+            const ex=matMap.get(m.label);
+            if(ex){ ex.qty=(ex.qty||0)+(Number(m.qty)||0); ex.total=Math.round(ex.price*ex.qty); }
+            else matMap.set(m.label,{label:m.label,price:Number(m.price)||0,qty:Number(m.qty)||0,total:Number(m.total)||0});
+          }
+        }
+        const mergedMats=[...matMap.values()].filter(m=>m.qty>0||m.total>0);
+        const matSum=mergedMats.reduce((a,m)=>a+m.total,0);
         const vsk = 24;
         const net = Math.round(total/(1+vsk/100));
         const r1 = await fetch('/api/invoice-drafts', {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({
           worksite_name: name, work_month: month, customer_name: defCust||undefined, kennitala: defKt||undefined,
           source: 'combined', status: 'draft',
+          hours_dagvinna: sumDvH||undefined, hours_eftirvinna: sumEvH||undefined,
+          rate_dagvinna: Number(firstRated.rate_dagvinna)||undefined,
+          rate_eftirvinna: Number(firstRated.rate_eftirvinna)||undefined,
+          akstur_km: sumKm||undefined, akstur_ferdir: sumFr||undefined,
+          smahlutagjald: sumSma||undefined, stadfesting: sumStadf||undefined,
+          materials_jsonb: mergedMats.length?mergedMats:undefined, materials_total: matSum||undefined,
           total_m_vsk: total, net_an_vsk: net, vsk_amount: total-net,
           notes: 'Sameinað úr: '+invs.map(iv=>(iv.worksite||iv.customer||'—')+' '+(iv.work_month||'')).join('; '),
         })});
