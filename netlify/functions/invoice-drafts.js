@@ -67,6 +67,25 @@ exports.handler = async (event) => {
     const payload = { updated_at: new Date().toISOString() };
     for (const k of allowed) if (body[k] !== undefined) payload[k] = body[k];
 
+    // PATCH fyrst ef röðin er til: upsert-INSERT myndar heila nýja tuple-röð og
+    // NOT NULL-tékkin keyra á henni ÁÐUR en conflict-uppfærslan tekur við — svo
+    // hlutauppfærsla án `source` (👔 yfirferðar-togglinn, yfirferd.html vistun)
+    // féll á 23502 þótt röðin ætti gilt source-gildi nú þegar.
+    const filter = `worksite_name=eq.${encodeURIComponent(body.worksite_name)}&work_month=eq.${encodeURIComponent(body.work_month)}`;
+    const pr = await fetch(`${SUPABASE_URL}/rest/v1/invoice_drafts?${filter}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation',
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!pr.ok) return json(pr.status, { error: (await pr.text()).slice(0, 300) });
+    const patched = await pr.json();
+    if (patched.length) return json(200, patched[0]);
+
     const r = await fetch(`${SUPABASE_URL}/rest/v1/invoice_drafts?on_conflict=worksite_name,work_month`, {
       method: 'POST',
       headers: {
