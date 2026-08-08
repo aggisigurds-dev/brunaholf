@@ -64,7 +64,7 @@ exports.handler = async (event) => {
   const mEnd = ymOf(addMonths(new Date(month + '-01T00:00:00Z'), 1)) + '-01';
 
   const warnings = [];
-  let solur = [], invoices = [], drafts = [], meta = [], tv = [];
+  let solur = [], invoices = [], drafts = [], meta = [], tv = [], verk = [], fjLive = [];
   try {
     solur = await sbAll('solur', 'select=samtals,greitt_med,paid_at,krafa_sent_at,invoiced_at,dk_invoice_id,is_credit,created_at,status,num,customer_nafn&greitt_med=eq.reikningur');
   } catch (e) { warnings.push('solur lestur mistókst — Slökkvitæki-kröfur gætu vantað: ' + e.message); }
@@ -82,6 +82,16 @@ exports.handler = async (event) => {
     const from = ymOf(addMonths(new Date(month + '-01T00:00:00Z'), -4)) + '-01';
     tv = await sbAll('timavera_entries', `select=date,hours,project&date=gte.${from}&date=lt.${mEnd}`);
   } catch (e) { warnings.push('timavera_entries lestur mistókst — áunnið tímagjald gæti vantað'); }
+  try {
+    // Verkstæðið + Afgreiðslan (ósk Agnars 8.8.): opin verk beint úr verkbeidnir.
+    verk = await sbAll('verkbeidnir', 'select=id,num,status,customer,verd&status=in.(received,inprogress,ready)');
+  } catch (e) { warnings.push('verkbeidnir lestur mistókst — verkstæði/afgreiðsla gæti vantað: ' + e.message); }
+  try {
+    // Skýrslur í vinnslu: reiknað CLIENT-megin í slokkvitaeki-appinu (patch 304 —
+    // verðvélin (153) býr þar; endursmíði hér væri drift-gildra) og gefið út í
+    // fjarmal_live. Hér er talan aðeins LESIN.
+    fjLive = await sbAll('fjarmal_live', 'select=key,kr,n,n2,list,updated_at');
+  } catch (e) { warnings.push('fjarmal_live lestur mistókst — skýrslur í vinnslu gæti vantað'); }
 
   // ── A) Slökkvitæki-kröfur ────────────────────────────────────────────────
   const A = { thessi_manudur: n0(), eldri: n0(), heildar: n0(), ogreitt_payday: n0(), osendar: n0() };
@@ -154,8 +164,59 @@ exports.handler = async (event) => {
     per_month: tvEldriMonths.map((m) => ({ month: m, klst: Math.round(tvByMonth[m] * 100) / 100, kr: Math.round(tvByMonth[m] * taxti), list: projList(m) })),
   };
 
+  // ── A3) Verkstæðið (Verkröð) + Afgreiðslan (tilbúið ósótt) ────────────────
+  // Verk = verkbeidnir; tæki = lifandi verklidur (status≠'eytt' — sama regla og
+  // Verkröðin telur, patch 78). Virði per verk: samtals á tengdu sölunni
+  // (num án -V-viðskeytis, sama parent-regla og pickup-checkout patch 121),
+  // annars verkbeidnir.verd. AÐEINS til sýnis — fer EKKI í grand_total (ósótt
+  // reikningssala er þegar inni í A.heildar, annað væri tvítalið).
+  const VERKST = { kr: 0, n: 0, n2: 0, list: [] };
+  const AFGR = { kr: 0, n: 0, n2: 0, list: [] };
+  if (verk.length) {
+    const ids = verk.map((j) => j.id).filter((x) => x != null);
+    const liveUnits = {}; // job_id → n
+    for (let i = 0; i < ids.length; i += 80) {
+      try {
+        const chunk = await sbAll('verklidur', `select=job_id,status&job_id=in.(${ids.slice(i, i + 80).join(',')})`);
+        for (const u of chunk) { if (lc(u.status) !== 'eytt') liveUnits[u.job_id] = (liveUnits[u.job_id] || 0) + 1; }
+      } catch (e) { warnings.push('verklidur lestur mistókst — tækjafjöldi gæti vantað'); break; }
+    }
+    const parentNum = (n) => String(n || '').replace(/-V\d+$/, '');
+    const nums = [...new Set(verk.map((j) => parentNum(j.num)).filter(Boolean))];
+    const saleByNum = new Map();
+    for (let i = 0; i < nums.length; i += 60) {
+      try {
+        // encodeURIComponent á hvert gildi — verk-númer geta borið '#' sem
+        // myndi annars klippa query-strenginn í sundur.
+        const chunk = await sbAll('solur', `select=num,samtals&num=in.(${nums.slice(i, i + 60).map((n) => encodeURIComponent('"' + n + '"')).join(',')})`);
+        for (const s of chunk) saleByNum.set(String(s.num), +s.samtals || 0);
+      } catch (e) { /* verd-fallback dugar */ }
+    }
+    // verd = HLUTUR þessa verks (sannreynt 8.8.: R-000663-V1+V2 verd 8410+5200
+    // = samtals 13610 á foreldrasölunni). Salan sjálf (samtals) er heild allra
+    // systkiniverkanna — hún er aðeins notuð sem fallback, deilt jafnt, þegar
+    // verd vantar. Annars tvíteldist salan á hverju verki.
+    const sibs = {}; // parent → fjöldi verka
+    for (const j of verk) { const p = parentNum(j.num); sibs[p] = (sibs[p] || 0) + 1; }
+    for (const j of verk) {
+      const target = lc(j.status) === 'ready' ? AFGR : VERKST;
+      const taeki = liveUnits[j.id] || 0;
+      if (lc(j.status) !== 'ready' && taeki === 0) continue; // öll tæki eydd → dettur af borðinu (regla Verkraðar)
+      const p = parentNum(j.num);
+      const kr = +j.verd > 0 ? +j.verd : (saleByNum.get(p) || 0) / (sibs[p] || 1);
+      target.n += 1; target.n2 += taeki; target.kr += Math.round(kr);
+      target.list.push({ label: j.customer || j.num || '—', sub: taeki + ' tæki', kr: Math.round(kr) });
+    }
+  }
+
+  // ── A4) Skýrslur í vinnslu (úr fjarmal_live, gefið út af patch 304) ───────
+  const fjRow = fjLive.find((r) => r.key === 'skyrslur_i_vinnslu');
+  const SKYRSLUR = fjRow
+    ? { kr: Math.round(+fjRow.kr || 0), n: +fjRow.n || 0, list: Array.isArray(fjRow.list) ? fjRow.list : [], updated_at: fjRow.updated_at || null }
+    : null;
+
   // Raða + cap-a alla bucket-lista (kr desc, max 300).
-  [A.thessi_manudur, A.eldri, A.heildar, A.ogreitt_payday, A.osendar, B, C_osendar].forEach(finalize);
+  [A.thessi_manudur, A.eldri, A.heildar, A.ogreitt_payday, A.osendar, B, C_osendar, VERKST, AFGR].forEach(finalize);
 
   const grand_total = A.heildar.kr + B.kr + C_osendar.kr + timavera_eldri.kr + D.kr;
 
@@ -163,6 +224,9 @@ exports.handler = async (event) => {
     generated_at: new Date().toISOString(),
     month, taxti_mvsk: taxti,
     slokk: A,
+    slokk_verkstaedi: VERKST,
+    slokk_afgreidsla_osott: AFGR,
+    skyrslur_i_vinnslu: SKYRSLUR,
     bru_payday_ogreitt: B,
     bru_osendar: C_osendar,
     timavera_eldri,

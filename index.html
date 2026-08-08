@@ -499,6 +499,10 @@ body[data-tab="reikningar"] main{max-width:none;padding:14px 24px}
 body[data-tab="multitool"] main{max-width:none;padding:0}
 /* Eyðublöð fylla líka alla breidd (iframe með eigin útliti) */
 body[data-tab="eydublod"] main{max-width:none;padding:0}
+/* Fjármála-yfirlit fyllir alla breidd upp að hliðarstiku og topborða (ósk
+   Agnars 8.8.) — iframe með eigin útliti og dökkum grunni svo hvítt blikki
+   ekki í gegn meðan það hleðst. */
+body[data-tab="fjarmalyfirlit"] main{max-width:none;padding:0;background:#0b1220}
 /* J.A.R.V.I.S. er dökkt HUD — full breidd og dökkur bakgrunnur svo hvítt blikki ekki
    í gegn meðan iframe-ið hleðst. */
 body[data-tab="jarvis"] main{max-width:none;padding:0;background:#020814}
@@ -2884,7 +2888,7 @@ function renderEydublod(t){
 // Eyðublöð lentu í 7.8.: iframe endurnýtti vistað eintak eftir deploy).
 function renderFjarmalyfirlit(t){
   $view.innerHTML = '<iframe id="fjy-embed" src="/fjarmalyfirlit.html?v=' + Date.now() + '" title="Fjármála-yfirlit" style="width:100%;border:0;display:block;background:#0b1220"></iframe>';
-  const fit = () => { const f = document.getElementById('fjy-embed'); if(!f) return; const top = f.getBoundingClientRect().top; f.style.height = Math.max(460, window.innerHeight - top - 12) + 'px'; };
+  const fit = () => { const f = document.getElementById('fjy-embed'); if(!f) return; const top = f.getBoundingClientRect().top; f.style.height = Math.max(460, window.innerHeight - top) + 'px'; };
   fit();
   if(!window.__fjyFitBound){ window.__fjyFitBound = true; window.addEventListener('resize', () => { if(document.getElementById('fjy-embed')) fit(); }); }
 }
