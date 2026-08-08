@@ -5415,12 +5415,12 @@ function renderBakendi(t){
              + '📌 ' + escapeHtml(g.name) + ' <span style="font-weight:500;color:#64748b">— held eftir 1, færi ' + g.dupes.length + '</span></td></tr>';
         rows += '<tr style="color:#16a34a"><td style="padding:4px 10px;width:28px">✅</td>'
              + '<td style="padding:4px 10px"><a href="' + g.keeper.viewUrl + '" target="_blank" rel="noopener" style="color:#0f172a">' + escapeHtml(g.keeper.name) + '</a></td>'
-             + '<td style="padding:4px 10px;color:#64748b;font-size:11.5px">' + (g.keeper.createdTime||'').slice(0,10) + '</td>'
+             + '<td style="padding:4px 10px;color:#64748b;font-size:11.5px">' + (g.keeper.createdTime ? g.keeper.createdTime.slice(0,10).split('-').reverse().join('.') : '') + '</td>'
              + '<td style="padding:4px 10px;color:#64748b;font-size:11.5px">held eftir</td></tr>';
         g.dupes.forEach(f => {
           rows += '<tr><td style="padding:4px 10px"><input type="checkbox" class="_dd-cb" value="' + f.id + '" checked></td>'
                + '<td style="padding:4px 10px"><a href="' + f.viewUrl + '" target="_blank" rel="noopener" style="color:#475569">' + escapeHtml(f.name) + '</a></td>'
-               + '<td style="padding:4px 10px;color:#94a3b8;font-size:11.5px">' + (f.createdTime||'').slice(0,10) + '</td>'
+               + '<td style="padding:4px 10px;color:#94a3b8;font-size:11.5px">' + (f.createdTime ? f.createdTime.slice(0,10).split('-').reverse().join('.') : '') + '</td>'
                + '<td style="padding:4px 10px;color:#b45309;font-size:11.5px">' + fmtBytes(f.size) + ' → rusl</td></tr>';
         });
       });
@@ -9662,7 +9662,7 @@ async function renderVinnustofa(t){
                   </div>
                   <div class="vs-item-body">
                     <div class="vs-item-num"><div class="vs-item-num-l">Skuld</div><div class="vs-item-num-v vs-item-num-amount" style="color:#9B1A0F">${fmt(unpaid)}</div></div>
-                    <div class="vs-item-num"><div class="vs-item-num-l">Elsti gjalddagi</div><div class="vs-item-num-v">${oldest || '—'}</div></div>
+                    <div class="vs-item-num"><div class="vs-item-num-l">Elsti gjalddagi</div><div class="vs-item-num-v">${oldest ? oldest.split('-').reverse().join('.') : '—'}</div></div>
                   </div>
                   <div class="vs-item-actions">
                     <a class="vs-btn vs-btn-primary" href="${gmailUrl}" target="_blank" rel="noopener">📧 Senda áminningu</a>
@@ -9691,7 +9691,7 @@ async function renderVinnustofa(t){
     recent.sort((a,b) => String(b.date).localeCompare(String(a.date)));
     $activity.innerHTML = recent.length === 0 ? '<div class="vs-empty">Engin starfsemi.</div>' : recent.slice(0, 12).map(e => `
       <div class="vs-event">
-        <span class="vs-event-date">${e.date}</span>
+        <span class="vs-event-date">${e.date ? e.date.split('-').reverse().join('.') : ''}</span>
         <span class="vs-event-icon">${e.kind === 'paid' ? '✅' : '📤'}</span>
         <span class="vs-event-text">
           ${e.kind === 'paid' ? 'Greitt' : 'Sent'} — <strong>${escapeHtml(e.worksite)}</strong>
@@ -12774,7 +12774,7 @@ async function renderHreyfingar(t){
         const label=isBank?'🏦 Innborgun (banki)':isPay?'💰 Greitt (Payday)':(KIND[m.kind]||m.kind);
         const ref=isBank?`<span class="hy-hint">${esc(m.text||'banki')} · upplýsing</span>`:(m.ref?((isPay?'R-':'')+esc(m.ref)):'');
         return `<tr${isBank?' style="opacity:.5"':''}>
-          <td>${m.date||''}</td>
+          <td>${m.date ? m.date.split('-').reverse().join('.') : ''}</td>
           <td>${label}</td>
           <td>${ref}</td>
           <td class="hy-deb">${m.delta>0?kr(m.delta):''}</td>
@@ -12785,7 +12785,7 @@ async function renderHreyfingar(t){
       return `<div class="hy-c${isHid?' hid':''}" data-kt="${c.kt}" data-name="${esc((c.name||'').toLowerCase())} ${c.kt}" data-hidden="${isHid?1:0}">
         <div class="hy-ch">
           <div><div class="hy-nm">${esc(c.name)}<span class="kt">${c.kt}</span></div>
-            <div class="hy-sub">${c.n_invoices} reikningar · ${c.n_payments} greiðslur · ${c.first_date||''} → ${c.last_date||''}</div></div>
+            <div class="hy-sub">${c.n_invoices} reikningar · ${c.n_payments} greiðslur · ${c.first_date ? c.first_date.split('-').reverse().join('.') : ''} → ${c.last_date ? c.last_date.split('-').reverse().join('.') : ''}</div></div>
           <div class="hy-stat">
             <div><div class="l">Reikningað</div><div class="v">${krM(c.invoiced)}</div></div>
             <div><div class="l">Greitt</div><div class="v" style="color:#067647">${krM(c.paid)}</div></div>
@@ -13038,7 +13038,7 @@ async function renderKrofur(t){
     const title = {open:'Útistandandi — ógreiddar krófur',overdue:'Útrunnið — komnar fram yfir gjalddaga',paid:'Greitt',flag:'Til skoðunar'}[filter]||'Krófur';
     const tag = r => r.paid ? '<span style="color:#067647;font-weight:700">✓ greitt</span>'
       : (r.gjalddagi&&r.gjalddagi<today ? '<span style="color:#b42318;font-weight:700">● útrunnið</span>' : '<span style="color:#b54708;font-weight:700">● ógreitt</span>');
-    const list = rows.length ? rows.map(r=>`<div class="kf-mod-r"><span>${esc(r.customer_name||'—')} — ${tag(r)} <small>${esc(r.source||'')} ${esc(String(r.tilvisun||''))} · gjalddagi ${esc(r.gjalddagi||'—')}${r.kt?(' · '+esc(r.kt)):''}${r.bank_paid?' · 🏦 e.t.v. greitt í banka':''}</small></span><b>${kr(r.amount)}</b></div>`).join('') : '<div class="kf-note">Engar krófur.</div>';
+    const list = rows.length ? rows.map(r=>`<div class="kf-mod-r"><span>${esc(r.customer_name||'—')} — ${tag(r)} <small>${esc(r.source||'')} ${esc(String(r.tilvisun||''))} · gjalddagi ${r.gjalddagi ? r.gjalddagi.split('-').reverse().join('.') : '—'}${r.kt?(' · '+esc(r.kt)):''}${r.bank_paid?' · 🏦 e.t.v. greitt í banka':''}</small></span><b>${kr(r.amount)}</b></div>`).join('') : '<div class="kf-note">Engar krófur.</div>';
     host.innerHTML = `<div class="kf-mod"><h4>${title} <span class="kf-note">(${rows.length} krófur · smelltu aftur á spjaldið til að loka)</span></h4>
       <div class="kf-note" style="margin-bottom:4px">✓ greitt / ● ógreitt / ● útrunnið sýnir stöðu hverrar krófu · smelltu á nafn til að fletta í krófulistanum að neðan</div>
       ${list}<div class="kf-mod-tot"><span>Samtals</span><span>${kr(tot)}</span></div></div>`;
@@ -13083,7 +13083,7 @@ async function renderKrofur(t){
     if(!vis.length){ $('kf-uncollected').innerHTML='<div class="kf-note" style="padding:8px">Engar óinnheimtar reikningssölur.</div>'; return; }
     $('kf-uncollected').innerHTML = vis.map(r=>`<div class="kf-row ${r.flagged?'flag-r':''}" data-k="${esc(r.inv_key)}">
       <div class="kf-rn">${esc(r.customer_name)} ${r.flagged?'<span class="kf-badge kf-b-flag">⚠️ Skoða</span>':''}
-        <small>R-${esc(String(r.num||''))} · ${esc(r.created_at||'')}${r.kt?(' · '+esc(r.kt)):''} · ${r.sent_to_dk?'✓ í dkPlus':'ekki í dkPlus'}</small>
+        <small>R-${esc(String(r.num||''))} · ${String(r.created_at||'').slice(0,10).split('-').reverse().join('.')}${r.kt?(' · '+esc(r.kt)):''} · ${r.sent_to_dk?'✓ í dkPlus':'ekki í dkPlus'}</small>
         ${r.note?`<div class="kf-note-l">📝 ${esc(r.note)}</div>`:''}
       </div>
       <div class="kf-amt"><input type="text" value="${num(r.amount)}" data-amt></div>
@@ -13103,7 +13103,7 @@ async function renderKrofur(t){
       const veryOld = r.elsta && r.elsta < (today.slice(0,4)-1)+today.slice(4); // >~1 ár
       return `<div class="kf-row ${r.flagged?'flag-r':''}" data-k="${esc(r.inv_key)}">
       <div class="kf-rn">${esc(r.client)} ${r.flagged?'<span class="kf-badge kf-b-flag">⚠️ Skoða</span>':''}${veryOld?'<span class="kf-badge kf-b-overdue">>1 ár</span>':''}
-        <small>${r.overdue_equip} tæki yfir skoðun · elsti gjalddagi ${esc(r.elsta||'—')}${r.sidasta?(' · síðast skoðað '+esc(r.sidasta)):''}</small>
+        <small>${r.overdue_equip} tæki yfir skoðun · elsti gjalddagi ${r.elsta ? r.elsta.split('-').reverse().join('.') : '—'}${r.sidasta?(' · síðast skoðað '+r.sidasta.split('-').reverse().join('.')):''}</small>
         ${r.note?`<div class="kf-note-l">📝 ${esc(r.note)}</div>`:''}
       </div>
       <div class="kf-amt" style="min-width:70px"><b>${r.overdue_equip}</b><small>tæki</small></div>
@@ -13148,7 +13148,7 @@ async function renderKrofur(t){
     $('kf-wsbill-note').textContent=`${billed.length} reikningað · ${unbilled.length} bara klst (≈ ${kr(estU)} óreikningað)`+(hiddenWs.length?` · ${hiddenWs.length} falið`:'');
     const acts=w=>`<span class="kf-wsact"><button class="kf-btn" data-ws-note="${esc(w.project)}" title="Minnispunktur">📝</button><button class="kf-btn" data-ws-hide="${esc(w.project)}" title="Fela / fjarlægja úr yfirliti">🙈</button></span>`;
     const noteL=w=> w._meta.note?`<div class="kf-note-l">📝 ${esc(w._meta.note)}</div>`:'';
-    const uRow=w=>`<div class="kf-mod-r"><span>${esc(w.project)} <small>${(w.hours||0).toFixed(0)} klst${w.last?(' · síðast '+esc(String(w.last).slice(0,10))):''}${w._meta.amount_override!=null?' · leiðrétt':''}</small>${noteL(w)}</span><span class="kf-wsright"><b>≈ <input class="kf-wsamt" type="text" value="${num(estOf(w))}" data-ws-amt="${esc(w.project)}"> kr</b>${acts(w)}</span></div>`;
+    const uRow=w=>`<div class="kf-mod-r"><span>${esc(w.project)} <small>${(w.hours||0).toFixed(0)} klst${w.last?(' · síðast '+String(w.last).slice(0,10).split('-').reverse().join('.')):''}${w._meta.amount_override!=null?' · leiðrétt':''}</small>${noteL(w)}</span><span class="kf-wsright"><b>≈ <input class="kf-wsamt" type="text" value="${num(estOf(w))}" data-ws-amt="${esc(w.project)}"> kr</b>${acts(w)}</span></div>`;
     const bRow=w=>`<div class="kf-mod-r"><span>${esc(w.project)} <small>${(w.hours||0).toFixed(0)} klst · ${w.invoice_count} reikn.</small>${noteL(w)}</span><span class="kf-wsright"><b>${kr(w._t)}</b>${acts(w)}</span></div>`;
     const hRow=w=>`<div class="kf-mod-r" style="opacity:.6"><span>${esc(w.project)} <small>${(w.invoice_count||0)>0?w.invoice_count+' reikn.':(w.hours||0).toFixed(0)+' klst'}</small></span><span class="kf-wsright"><button class="kf-btn" data-ws-show="${esc(w.project)}" title="Sýna aftur">👁 Sýna</button></span></div>`;
     host.innerHTML=`<div class="kf-mod"><div class="kf-mod-cols">
@@ -13213,8 +13213,8 @@ async function renderKrofur(t){
     const METH = {reikningur:'reikningur',stadgreitt:'staðgreitt',greitt_sidar:'greitt síðar'};
     // Clear paid/unpaid tag so you can see who has paid.
     const tag = (r)=> r.paid ? '<span style="color:#067647;font-weight:700">✓ greitt</span>' : '<span style="color:#b42318;font-weight:700">● ógreitt</span>';
-    const bhList = bhRows.length ? bhRows.map(r=>`<div class="kf-mod-r"><span>${esc(r.customer_name||'—')} — ${tag(r)} <small>${esc(r.source||'')} ${esc(String(r.tilvisun||''))} · ${rec?('greitt '+esc(r.greidsla_date||'')):('gjalddagi '+esc(r.gjalddagi||''))}</small></span><b>${kr(r.amount)}</b></div>`).join('') : '<div class="kf-note">Engar krófur.</div>';
-    const slList = slRows.length ? slRows.map(r=>`<div class="kf-mod-r"><span>${esc(r.customer||'—')} <small>R-${esc(String(r.num||''))} · ${METH[r.method]||esc(r.method||'')} · ${esc(r.date||'')}</small></span><b>${kr(r.amount)}</b></div>`).join('') : '<div class="kf-note">Engar sölur.</div>';
+    const bhList = bhRows.length ? bhRows.map(r=>`<div class="kf-mod-r"><span>${esc(r.customer_name||'—')} — ${tag(r)} <small>${esc(r.source||'')} ${esc(String(r.tilvisun||''))} · ${rec?('greitt '+(r.greidsla_date ? r.greidsla_date.split('-').reverse().join('.') : '')):('gjalddagi '+(r.gjalddagi ? r.gjalddagi.split('-').reverse().join('.') : ''))}</small></span><b>${kr(r.amount)}</b></div>`).join('') : '<div class="kf-note">Engar krófur.</div>';
+    const slList = slRows.length ? slRows.map(r=>`<div class="kf-mod-r"><span>${esc(r.customer||'—')} <small>R-${esc(String(r.num||''))} · ${METH[r.method]||esc(r.method||'')} · ${r.date ? r.date.split('-').reverse().join('.') : ''}</small></span><b>${kr(r.amount)}</b></div>`).join('') : '<div class="kf-note">Engar sölur.</div>';
     host.innerHTML = `<div class="kf-mod">
       <h4>${esc(mlabel(mo))} — ${rec?'innkomið (greitt í mánuðinum)':unp?'ógreitt (bíður greiðslu)':'útgefið'}</h4>
       <div class="kf-note">${rec?'Eftir greiðsludegi · Slökkvitæki staðgreitt':unp?'Ógreiddar krófur mánaðarins · Slökkvitæki reikningssölur (bíða dkPlus)':'Brunahólf eftir gjalddaga · Slökkvitæki eftir söludegi'} · ✓ greitt / ● ógreitt sýnir hver hefur borgað</div>
@@ -13237,9 +13237,9 @@ async function renderKrofur(t){
     const ov = r.amount_override!=null;
     return `<div class="kf-row ${r.hidden?'hidden-r':''} ${r.flagged?'flag-r':''}" data-k="${esc(r.inv_key)}">
       <div class="kf-rn">${esc(r.customer_name||'—')}
-        <small>${esc(r.source||'')} nr. ${esc(r.tilvisun||'')} · gjalddagi ${esc(r.gjalddagi||'—')}${r.kt?(' · '+esc(r.kt)):''}</small>
+        <small>${esc(r.source||'')} nr. ${esc(r.tilvisun||'')} · gjalddagi ${r.gjalddagi ? r.gjalddagi.split('-').reverse().join('.') : '—'}${r.kt?(' · '+esc(r.kt)):''}</small>
         ${r.note?`<div class="kf-note-l">📝 ${esc(r.note)}</div>`:''}
-        ${r.bank_text?`<div class="kf-src">🏦 ${esc(r.bank_text)} (${esc(r.bank_date||'')})</div>`:''}
+        ${r.bank_text?`<div class="kf-src">🏦 ${esc(r.bank_text)} (${r.bank_date ? r.bank_date.split('-').reverse().join('.') : ''})</div>`:''}
         ${r.draft_match?`<div class="kf-draft">✓ passar við Reikningagerð: ${esc(r.draft_match.worksite||'')} ${kr(r.draft_match.total)}</div>`:''}
       </div>
       <div>${badges.join(' ')}</div>
@@ -13862,7 +13862,7 @@ async function renderKrofuyfirlit(t){
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fmtKr = n => (Math.round(Number(n)||0)).toLocaleString('is-IS').replace(/,/g,'.') + ' kr';
   const fmtDate = iso => { if(!iso) return '—'; const d=new Date(iso); if(isNaN(d)) return '—';
-    return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear(); };
+    return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear(); };
   const ktDigits = s => String(s||'').replace(/\D+/g,'');
 
   // Aging pill: green ≤30d · amber 31–60d · red >60d (ported verbatim).
@@ -14316,7 +14316,7 @@ async function renderKrofuyfirlit(t){
         <input class="ky-note" data-key="${esc(inv.inv_key)}" value="${esc(note)}" placeholder="minnispunktur…" style="width:150px;background:transparent;border:0;border-bottom:1px dashed #cbd5e1;color:#334155;font:inherit;font-size:10.5px;padding:1px 2px;outline:none">
       </div>` : '';
       const detailCells = [
-        ['Gjalddagi', esc(inv.gjalddagi||'—')],
+        ['Gjalddagi', inv.gjalddagi ? inv.gjalddagi.split('-').reverse().join('.') : '—'],
         ['Eindagi', esc(inv.eindagi||'—')],
         ['Uppruni', esc(inv.source||'—')],
         ['Upphæð', fmtKr(inv.amount)],
@@ -14335,7 +14335,7 @@ async function renderKrofuyfirlit(t){
                 ${mtagHtml}
                 ${tier===1?agingPill(inv.days_overdue):''}
               </div>
-              <div style="color:#b6c0cc;font-size:10.5px;margin-top:3px">${tier===1&&inv.gjalddagi?`<span class="ky-num" style="color:#8a93a5">${esc(inv.gjalddagi)}</span> &nbsp;·&nbsp; `:''}${sub}</div>
+              <div style="color:#b6c0cc;font-size:10.5px;margin-top:3px">${tier===1&&inv.gjalddagi?`<span class="ky-num" style="color:#8a93a5">${inv.gjalddagi.split('-').reverse().join('.')}</span> &nbsp;·&nbsp; `:''}${sub}</div>
               ${bankLine}
               ${tier===2?noteInline:''}
             </div>
@@ -14480,7 +14480,7 @@ async function renderKrofuyfirlit(t){
       </div>` : '';
       // Sundurliðun (Feature 1) — opnast við smell á röð.
       const detailCells = [
-        ['Gjalddagi', esc(inv.gjalddagi||'—')],
+        ['Gjalddagi', inv.gjalddagi ? inv.gjalddagi.split('-').reverse().join('.') : '—'],
         ['Eindagi', esc(inv.eindagi||'—')],
         ['Uppruni', esc(inv.source||'—')],
         ['Upphæð', fmtKr(inv.amount)],
@@ -14505,7 +14505,7 @@ async function renderKrofuyfirlit(t){
                 ${mtagHtml}
                 ${tier===1?agingPill(inv.days_overdue):''}
               </div>
-              <div style="color:#b6c0cc;font-size:10.5px;margin-top:3px">${tier===1&&inv.gjalddagi?`<span class="ky-num" style="color:#8a93a5">${esc(inv.gjalddagi)}</span> &nbsp;·&nbsp; `:''}${sub}</div>
+              <div style="color:#b6c0cc;font-size:10.5px;margin-top:3px">${tier===1&&inv.gjalddagi?`<span class="ky-num" style="color:#8a93a5">${inv.gjalddagi.split('-').reverse().join('.')}</span> &nbsp;·&nbsp; `:''}${sub}</div>
               ${bankLine}
               ${tier===2?noteInline:''}
             </div>
@@ -14534,7 +14534,7 @@ async function renderKrofuyfirlit(t){
               <div style="font-weight:800;color:#11141c;font-size:16px">${esc(nm)}</div>
               ${metaHtml}
               ${agBar}
-              <div style="font-size:11px;color:#8a93a5;margin-top:4px">${(db.invoices||[]).length} ${tier===3?'liðir':(tier===2?'drög':'reikningar')}${tier===1?' · elsti gjalddagi '+esc(db.oldest_due||'—'):''}</div>
+              <div style="font-size:11px;color:#8a93a5;margin-top:4px">${(db.invoices||[]).length} ${tier===3?'liðir':(tier===2?'drög':'reikningar')}${tier===1?' · elsti gjalddagi '+(db.oldest_due ? db.oldest_due.split('-').reverse().join('.') : '—'):''}</div>
             </div>
           </div>
           <div style="display:flex;gap:10px;align-items:center">
@@ -15288,7 +15288,7 @@ async function renderSkuldunautar(t){
       return `<div class="sk-d" data-i="${i}" data-name="${esc((db.customer||'').toLowerCase())} ${db.kt||''}">
         <div class="sk-dh">
           <div><div class="sk-dn">${esc(db.customer)}${db.kt?`<span class="sk-kt">${db.kt}</span>`:''}</div>
-            <div class="sk-dm">${db.invoices.length} reikningar · elsti gjalddagi ${db.oldest_due||'—'}</div></div>
+            <div class="sk-dm">${db.invoices.length} reikningar · elsti gjalddagi ${db.oldest_due ? db.oldest_due.split('-').reverse().join('.') : '—'}</div></div>
           <div class="sk-bank">${bankLine}</div>
           <div class="sk-dv">${kr(db.outstanding_kr)}<small>útistandandi</small></div>
           <div class="sk-caret">▸</div>
@@ -15766,7 +15766,7 @@ function renderVerkefnaskra(t){
     if(days===1) return 'á morgun';
     if(days===-1) return 'í gær';
     if(days>1 && days<8) return 'eftir '+days+' daga';
-    return d;
+    const p = d.split('-'); return p.length === 3 ? p.reverse().join('.') : d;
   };
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
@@ -19750,7 +19750,7 @@ async function openTimabok(name, month){
   // svo hægt kall eða teikni-villa festi ekki gluggann á „Sæki tímafærslur…".
   if(saved && Array.isArray(saved.rows)){
     rows = saved.rows.map(r=>({...r}));
-    st.textContent = 'breytt eintak (vistað ' + (saved.saved_at? String(saved.saved_at).slice(0,10):'') + ')';
+    st.textContent = 'breytt eintak (vistað ' + (saved.saved_at? String(saved.saved_at).slice(0,10).split('-').reverse().join('.') : '') + ')';
     sortRows(); paint();
   } else if(!name || !/^\d{4}-\d{2}$/.test(String(month))){
     // Vantar verkstað/mánuð (t.d. Payday-drög án verkstaðar) → ekkert að sækja.
