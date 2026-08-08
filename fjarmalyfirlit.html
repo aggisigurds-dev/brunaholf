@@ -19,9 +19,9 @@
   .grand .lbl{ color:#bcd0f5; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
   .grand .val{ font-size:30px; font-weight:800; margin-top:3px; font-variant-numeric:tabular-nums; }
   section{ margin:0 0 18px; }
-  .sh{ display:flex; align-items:baseline; gap:8px; margin:0 0 9px; }
-  .sh h2{ font-size:14px; margin:0; letter-spacing:.02em; }
-  .sh .st{ margin-left:auto; font-size:15px; font-weight:800; font-variant-numeric:tabular-nums; }
+  .sh{ display:flex; align-items:baseline; gap:10px; margin:0 0 9px; }
+  .sh h2{ font-size:28px; margin:0; letter-spacing:.02em; }
+  .sh .st{ margin-left:0; font-size:15px; font-weight:800; font-variant-numeric:tabular-nums; }
   .grid{ display:grid; grid-template-columns:1fr 1fr; gap:9px; }
   .card{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 13px; }
   .card.full{ grid-column:1/-1; }
@@ -112,8 +112,6 @@
     var nlshList = nlshBy.slice().reverse().map(function(m){ return { label: mlabel(m.month), sub: (m.holes||0)+' göt', kr: +m.revenue_m_vsk||0 }; });
     var grandDisp = (+d.grand_total||0) + nlshMonthKr;
     var A=d.slokk, warnHtml = (d.warnings&&d.warnings.length)? '<div class="warn">⚠ '+d.warnings.map(function(w){return w.replace(/</g,'&lt;');}).join('<br>')+'</div>' : '';
-    var eldriRows = (d.timavera_eldri.per_month||[]).slice().reverse().map(function(r){
-      return '<div class="mrow"><span class="mm">'+mlabel(r.month)+' · '+r.klst+' klst</span><span class="mk">'+kr(r.kr)+'</span></div>'; }).join('') || '<div class="mrow"><span class="mm">engir eldri mánuðir</span></div>';
     document.getElementById('app').innerHTML =
       warnHtml +
       '<div class="grand"><div class="lbl">Heildar-pípa (allt óinnheimt/óuppgert)</div><div class="val">'+kr(grandDisp)+'</div></div>' +
@@ -150,13 +148,10 @@
         '<div class="grid">' + card('card--hero full', 'Þessi mánuður (Ajour · samningstaxti m/vsk)', nlshMonthKr, 'uppsafnað í ár '+kr(nlshCumKr)+' · smelltu fyrir mánuði', nlshList) + '</div></section>'
        : '') +
 
-      '<section><div class="sh"><h2>📤 Óinnheimt eldra</h2><span class="st">'+kr(d.bru_osendar.kr + d.timavera_eldri.kr)+'</span></div>' +
+      '<section><div class="sh"><h2>📤 Óinnheimt eldra</h2><span class="st">'+kr(d.bru_osendar.kr)+'</span></div>' +
         '<div class="grid">' +
           card('card--blue full', 'Ósendir reikningar (Brunahólf drög)', d.bru_osendar.kr, d.bru_osendar.n+' drög · síðustu 3 mán', d.bru_osendar.list, LINK_BRU) +
-          '<div class="card full"><div class="l">Eldri Tímavera-mánuðir — áunnið virði (' + d.timavera_eldri.klst + ' klst)</div>' +
-            '<div class="v" style="color:#fbbf6b">'+kr(d.timavera_eldri.kr)+'</div>' + eldriRows + LINK_TIMI + '</div>' +
         '</div>' +
-        '<div class="note">⚠ „Áunnið virði" er brúttó (klst × taxti) — ekki er dregið frá það sem er nú þegar rukkað/sent. Nota sem vísbendingu, ekki nákvæma útistandandi upphæð. Brunahólf-drög geta líka skarast við senda reikninga.</div>' +
       '</section>' +
       '<div class="note">Uppfært '+new Date(d.generated_at).toLocaleString('is-IS')+'. Taxti '+kr(d.taxti_mvsk)+'/klst m/vsk (9.951 × 1,24). Rukkanlegir Tímavera-verkstaðir (án Slökkvitæki-innri / NLSH).</div>';
   }
