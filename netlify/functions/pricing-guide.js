@@ -41,6 +41,9 @@ exports.handler = async (event) => {
       'stadfesting_default', 'stadfesting_amount', 'vsk_pct',
       'source', 'fixed_amount', 'retention_pct', 'payment_terms_days',
       'notes', 'effective_from', 'updated_by',
+      // 2026-08-08 (viðskiptavinir-flipi): customer identity + extra billing settings
+      'eftirvinna_leyfid', 'eftirvinna_threshold_per_day', 'verkfaeragjald',
+      'kennitala', 'heimilisfang', 'lunch_fradrattur_h',
     ];
     const payload = { updated_at: new Date().toISOString() };
     for (const k of allowed) if (body[k] !== undefined) payload[k] = body[k];
@@ -60,13 +63,25 @@ exports.handler = async (event) => {
     return json(200, arr[0] || { ok: true });
   }
 
+  if (event.httpMethod === 'DELETE') {
+    const q = event.queryStringParameters || {};
+    const worksite = (q.worksite || '').trim();
+    if (!worksite) return json(400, { error: 'worksite required' });
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/pricing_guide?worksite_name=eq.${encodeURIComponent(worksite)}`, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Prefer': 'return=minimal' },
+    });
+    if (!r.ok) return json(r.status, { error: (await r.text()).slice(0, 300) });
+    return json(200, { ok: true, deleted: worksite });
+  }
+
   return json(405, { error: 'Method not allowed' });
 };
 
 function cors() {
   return {
     'access-control-allow-origin': '*',
-    'access-control-allow-methods': 'GET, POST, OPTIONS',
+    'access-control-allow-methods': 'GET, POST, DELETE, OPTIONS',
     'access-control-allow-headers': 'content-type',
   };
 }
