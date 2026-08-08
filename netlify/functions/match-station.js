@@ -12,9 +12,10 @@
 //   POST /api/match-station {action:'save',   id, fyrirtaeki_id, year, is_duplicate, reviewed}
 //   POST /api/match-station {action:'add-site', base_id, nafn, heimilisfang}
 //
-// Pure Supabase REST — no Google Drive, no PDF parsing. Safe + always-on.
+// Pure Supabase REST + EIN létt Drive-aðgerð (2026-08-07): files.get á NAFNI
+// skjals. Engin PDF-þáttun, ekkert fært, ekkert endurnefnt í Drive.
 
-const { json, cors } = require('./_google');
+const { json, cors, freshAccessToken } = require('./_google');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -89,11 +90,47 @@ async function listCompanies() {
 }
 
 // ── One company: its sites + every report, with a (non-authoritative) suggestion ─
+// ── Raunnöfn í stað innsogs-stimpla (2026-08-07, ósk Agnars) ──────────────────
+// Fjöldi raða ber UPPRUNA-STIMPIL í notes („drive-multitool · 2024", „Sjálfvirkt
+// úr appi 2026-08-03") í stað skráarheitis — stöðin sýndi þá stimpilinn og
+// notandinn varð að opna hvert einasta PDF til að vita hvað það var. Hér eru
+// alvöru Drive-nöfnin sótt í hóp (files.get, AÐEINS nafnið — ekkert fært né
+// endurnefnt) og VISTUÐ yfir hreina stimpla í notes. Þar með lagast dálkurinn
+// hér, chip-in í Slökkvitæki (patch 199 les sömu notes) — og þetta þarf aldrei
+// að sækjast aftur. Notes með raunverulegu innihaldi (skráarheiti, dauða-hlekks
+// skýringar) eru ALDREI snert. Þak per hleðslu svo fallið tímist ekki út;
+// endurtekin „Sækja" klárar afganginn.
+const STAMP_RE = /^\s*(drive-multitool|doc-index|relink(-docs)?|skjalavarsla|uttekt-upload|fasi0|sj[áa]lfvirkt\s+[úu]r\s+appi)\b/i;
+function isStampOnly(notes) { const s = String(notes || '').trim(); return !s || (STAMP_RE.test(s) && !/\.pdf/i.test(s)); }
+async function enrichNames(rows, cap) {
+  const cand = rows.filter(d => d.drive_file_id && isStampOnly(d.notes)).slice(0, cap || 60);
+  if (!cand.length) return 0;
+  let token; try { token = await freshAccessToken(); } catch { return 0; }
+  let fixed = 0;
+  for (let i = 0; i < cand.length; i += 8) {
+    await Promise.all(cand.slice(i, i + 8).map(async d => {
+      try {
+        const r = await fetch('https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(d.drive_file_id) + '?fields=name&supportsAllDrives=true', { headers: { Authorization: 'Bearer ' + token } });
+        if (!r.ok) return;
+        const name = String(((await r.json()) || {}).name || '').trim();
+        if (!name) return;
+        await patchDoc(d.id, { notes: name });
+        d.notes = name; fixed++;
+      } catch {}
+    }));
+  }
+  return fixed;
+}
+// Storage-raðir eiga ekkert Drive-nafn — basename slóðarinnar (án tímastimpils,
+// `_` sem bil) er skásta raunnafnið sem til er.
+function storageName(p) { return String(p || '').split('/').pop().replace(/^\d{10,}_/, '').replace(/_/g, ' ').trim(); }
+
 async function companyDetail(baseId) {
   baseId = parseInt(baseId, 10);
   const base = (await sbGet(`customers_base?id=eq.${baseId}&select=id,nafn,kennitala`))[0] || { id: baseId, nafn: '#' + baseId, kennitala: '' };
   const locations = await sbGet(`fyrirtaeki?customer_base_id=eq.${baseId}&select=id,nafn,heimilisfang,er_i_thjonustu&deleted_at=is.null&order=heimilisfang`);
-  const raw = await sbGet(`customer_documents?customer_base_id=eq.${baseId}&select=id,drive_file_id,doc_type,year,fyrirtaeki_id,is_duplicate,reviewed,notes,doc_date,amount,invoice_number`);
+  const raw = await sbGet(`customer_documents?customer_base_id=eq.${baseId}&select=id,drive_file_id,storage_path,doc_type,year,fyrirtaeki_id,is_duplicate,reviewed,notes,doc_date,amount,invoice_number`);
+  const names_fixed = await enrichNames(raw, 60);
 
   const docs = raw.map(d => {
     const seg = String(d.notes || '').split(' · ');
@@ -101,12 +138,14 @@ async function companyDetail(baseId) {
     // for multi-site rekstrarfélög — show the site so the human can tell branches
     // apart, and feed the WHOLE notes to the suggester so its address match works.
     const site = (seg[1] && !/^(úttektarsk|reikningur|kt\b|R-|RESOLVE)/i.test(seg[1])) ? seg[1] : '';
-    const filename = (seg[0] || '(óþekkt skrá)') + (site ? ' — ' + site : '');
+    let filename = (seg[0] || '(óþekkt skrá)') + (site ? ' — ' + site : '');
+    if (isStampOnly(d.notes) && d.storage_path) filename = storageName(d.storage_path);
     const sug = suggestLoc(d.notes || filename, locations);
     return {
       id: d.id,
       drive_file_id: d.drive_file_id || null,
-      view_url: d.drive_file_id ? `https://drive.google.com/file/d/${d.drive_file_id}/view` : null,
+      view_url: d.drive_file_id ? `https://drive.google.com/file/d/${d.drive_file_id}/view`
+              : d.storage_path ? `${SUPABASE_URL}/storage/v1/object/public/${d.storage_path}` : null,
       doc_type: d.doc_type, year: d.year, fyrirtaeki_id: d.fyrirtaeki_id,
       is_duplicate: !!d.is_duplicate, reviewed: !!d.reviewed,
       invoice_number: d.invoice_number || null, amount: d.amount || null,
@@ -120,7 +159,7 @@ async function companyDetail(baseId) {
     Number(a.fyrirtaeki_id != null) - Number(b.fyrirtaeki_id != null) || // unmatched first
     (a.year || 0) - (b.year || 0));
 
-  return { company: base, locations, docs };
+  return { company: base, locations, docs, names_fixed };
 }
 
 // ── Global worklists: ALL unconnected docs / ALL flagged duplicates ────────────
@@ -143,13 +182,15 @@ async function globalList(scope) {
   const filt = scope === 'dups' ? 'is_duplicate=eq.true' : 'fyrirtaeki_id=is.null&is_duplicate=eq.false';
   const raw = [];
   for (let i = 0; i < baseIds.length; i += 200) {
-    raw.push(...await sbGet(`customer_documents?customer_base_id=in.${inList(baseIds.slice(i, i + 200))}&${filt}&select=id,customer_base_id,drive_file_id,doc_type,year,fyrirtaeki_id,is_duplicate,reviewed,notes,doc_date,amount,invoice_number`));
+    raw.push(...await sbGet(`customer_documents?customer_base_id=in.${inList(baseIds.slice(i, i + 200))}&${filt}&select=id,customer_base_id,drive_file_id,storage_path,doc_type,year,fyrirtaeki_id,is_duplicate,reviewed,notes,doc_date,amount,invoice_number`));
   }
+  await enrichNames(raw, 60);
 
   const docs = raw.map(d => {
     const seg = String(d.notes || '').split(' · ');
     const site = (seg[1] && !/^(úttektarsk|reikningur|kt\b|R-|RESOLVE)/i.test(seg[1])) ? seg[1] : '';
-    const filename = (seg[0] || '(óþekkt skrá)') + (site ? ' — ' + site : '');
+    let filename = (seg[0] || '(óþekkt skrá)') + (site ? ' — ' + site : '');
+    if (isStampOnly(d.notes) && d.storage_path) filename = storageName(d.storage_path);
     const b = bases[d.customer_base_id] || {};
     const sites = sitesByBase[d.customer_base_id] || [];
     const sug = suggestLoc(d.notes || filename, sites);
@@ -157,7 +198,8 @@ async function globalList(scope) {
       id: d.id, base_id: d.customer_base_id, base_nafn: b.nafn || ('#' + d.customer_base_id), kennitala: b.kennitala || '',
       multi_site: sites.length > 1, sites,
       drive_file_id: d.drive_file_id || null,
-      view_url: d.drive_file_id ? `https://drive.google.com/file/d/${d.drive_file_id}/view` : null,
+      view_url: d.drive_file_id ? `https://drive.google.com/file/d/${d.drive_file_id}/view`
+              : d.storage_path ? `${SUPABASE_URL}/storage/v1/object/public/${d.storage_path}` : null,
       doc_type: d.doc_type, year: d.year, fyrirtaeki_id: d.fyrirtaeki_id,
       is_duplicate: !!d.is_duplicate, reviewed: !!d.reviewed,
       invoice_number: d.invoice_number || null, amount: d.amount || null,
@@ -229,6 +271,9 @@ async function saveDoc(body) {
   if ('fyrirtaeki_id' in body) patch.fyrirtaeki_id = body.fyrirtaeki_id === '' ? null : body.fyrirtaeki_id;
   if ('year' in body)         patch.year = body.year === '' ? null : parseInt(body.year, 10);
   if ('is_duplicate' in body) patch.is_duplicate = !!body.is_duplicate;
+  // 2026-08-07 (Agnar): BRUNA-hakið á stöðinni — víxlar úttektarskýrslu ⇄
+  // brunakerfi á skýrslu-röð. Hvítlisti því doc_type ber CHECK-reglu í grunni.
+  if ('doc_type' in body && ['uttektarskyrsla', 'brunakerfi', 'reikningur', 'samningur'].includes(body.doc_type)) patch.doc_type = body.doc_type;
   if ('reviewed' in body)     { patch.reviewed = !!body.reviewed; patch.reviewed_at = body.reviewed ? new Date().toISOString() : null; }
   const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?id=eq.${id}`, {
     method: 'PATCH', headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }), body: JSON.stringify(patch),

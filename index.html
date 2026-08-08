@@ -4468,7 +4468,14 @@ function renderBakendi(t){
       const suggested = sHigh || sLow;
       const selVal = d.fyrirtaeki_id || (suggested ? d.suggest_loc_id : '');
       const locStyle = 'min-width:170px;padding:4px 6px;border:' + (sLow ? '1px dashed #94a3b8' : '1px solid ' + (sHigh ? '#fbbf24' : '#cbd5e1')) + ';border-radius:6px;font:inherit;font-size:12px' + (sHigh ? ';background:#fffbeb' : (sLow ? ';background:#f8fafc' : ''));
-      const icon = d.doc_type === 'reikningur' ? '🧾' : (d.doc_type === 'samningur' ? '📜' : '📄');
+      const icon = d.doc_type === 'reikningur' ? '🧾' : (d.doc_type === 'samningur' ? '📜' : (d.doc_type === 'brunakerfi' ? '🔥' : '📄'));
+      // BRUNA-hak (2026-08-07, Agnar): skýrslu-raðir fá hak sem víxlar
+      // úttektarskýrsla ⇄ brunakerfi — annars sat allt í einni bendu og engin
+      // leið að merkja brunakerfisúttekt án þess að fara í gagnagrunninn.
+      const isRep = d.doc_type === 'uttektarskyrsla' || d.doc_type === 'brunakerfi';
+      const brunaCell = isRep
+        ? '<input type="checkbox" class="st-bruna"' + (d.doc_type === 'brunakerfi' ? ' checked' : '') + ' title="Haka við ef þetta er BRUNAKERFIS-úttekt (ekki slökkvitækja)">'
+        : '<span style="color:#e2e8f0">—</span>';
       const cell = 'padding:6px 8px';
       return '<tr data-id="' + d.id + '" style="border-top:1px solid #eef2f7' + (d.reviewed ? ';background:#f0fdf4' : '') + '">'
         + '<td style="' + cell + ';white-space:nowrap">' + (d.view_url
@@ -4476,6 +4483,7 @@ function renderBakendi(t){
             : '<span style="color:#cbd5e1">engin skrá</span>') + '</td>'
         + '<td style="' + cell + ';font-size:12px;color:' + (d.mangled ? '#b45309' : '#334155') + '">' + (d.mangled ? '⚠ ' : '') + esc(d.filename) + '</td>'
         + '<td style="' + cell + ';text-align:center">' + icon + '</td>'
+        + '<td style="' + cell + ';text-align:center">' + brunaCell + '</td>'
         + '<td style="' + cell + '"><input class="st-year" value="' + esc(d.year) + '" style="width:60px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:12px"></td>'
         + '<td style="' + cell + '"><select class="st-loc" style="' + locStyle + '">' + locOptions(selVal) + '</select>'
           + (sHigh ? ' <span style="font-size:10.5px;color:#b45309" title="Sjálfvirk tillaga (heimilisfang passar)">tillaga</span>'
@@ -4486,7 +4494,7 @@ function renderBakendi(t){
     }
     const THEAD = '<thead><tr style="background:#f8fafc;color:#475569;font-size:11px;text-transform:uppercase;letter-spacing:.03em">'
       + '<th style="padding:7px 8px;text-align:left">PDF</th><th style="padding:7px 8px;text-align:left">Skrá (nafn — getur verið rangt)</th>'
-      + '<th style="padding:7px 8px">Teg</th><th style="padding:7px 8px;text-align:left">Ár</th>'
+      + '<th style="padding:7px 8px">Teg</th><th style="padding:7px 8px" title="Brunakerfis-úttekt?">🔥 Bruna</th><th style="padding:7px 8px;text-align:left">Ár</th>'
       + '<th style="padding:7px 8px;text-align:left">Staður</th><th style="padding:7px 8px">Tvítak</th><th style="padding:7px 8px">Staðfest</th></tr></thead>';
     function sectionHtml(title, docs){
       if (!docs.length) return '';
@@ -4644,6 +4652,10 @@ function renderBakendi(t){
         is_duplicate: tr.querySelector('.st-dup').checked,
         reviewed: tr.querySelector('.st-rev').checked,
       };
+      // BRUNA-hakið er aðeins á skýrslu-röðum — reikningar/samningar sleppa
+      // doc_type úr patchinu svo tegundin þeirra haggist aldrei héðan.
+      const bruna = tr.querySelector('.st-bruna');
+      if (bruna) patch.doc_type = bruna.checked ? 'brunakerfi' : 'uttektarskyrsla';
       const d = DOCS.find(x => String(x.id) === String(id));
       if (d) Object.assign(d, patch);
       tr.style.transition = 'background .15s';            // flash so it's obvious it saved (no button needed)
