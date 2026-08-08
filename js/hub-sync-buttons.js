@@ -90,7 +90,7 @@
 
   const CSS = `
     .hub-sync{display:inline-flex;flex-direction:column;align-items:flex-start;gap:3px;font-size:12px}
-    .hub-sync button{background:#e8590c;color:#fff;border:0;border-radius:8px;padding:6px 11px;font-weight:600;font-size:12px;cursor:pointer}
+    .hub-sync button{background:linear-gradient(160deg,#3a3a3e 0%,#18181b 55%,#000000 100%);color:#f3dd97;border:1px solid #4a4a4e;border-radius:8px;padding:6px 11px;font-weight:600;font-size:12px;cursor:pointer}
     .hub-sync button:disabled{opacity:.7;cursor:default}
     .hub-sync .d{color:#64748b;font-weight:600;font-size:11px;padding-left:2px}
     .hub-sync.fresh .d{color:#16a34a}
