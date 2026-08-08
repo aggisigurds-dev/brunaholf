@@ -5415,12 +5415,12 @@ function renderBakendi(t){
              + '📌 ' + escapeHtml(g.name) + ' <span style="font-weight:500;color:#64748b">— held eftir 1, færi ' + g.dupes.length + '</span></td></tr>';
         rows += '<tr style="color:#16a34a"><td style="padding:4px 10px;width:28px">✅</td>'
              + '<td style="padding:4px 10px"><a href="' + g.keeper.viewUrl + '" target="_blank" rel="noopener" style="color:#0f172a">' + escapeHtml(g.keeper.name) + '</a></td>'
-             + '<td style="padding:4px 10px;color:#64748b;font-size:11.5px">' + (g.keeper.createdTime||'').slice(0,10) + '</td>'
+             + '<td style="padding:4px 10px;color:#64748b;font-size:11.5px">' + (g.keeper.createdTime ? g.keeper.createdTime.slice(0,10).split('-').reverse().join('.') : '') + '</td>'
              + '<td style="padding:4px 10px;color:#64748b;font-size:11.5px">held eftir</td></tr>';
         g.dupes.forEach(f => {
           rows += '<tr><td style="padding:4px 10px"><input type="checkbox" class="_dd-cb" value="' + f.id + '" checked></td>'
                + '<td style="padding:4px 10px"><a href="' + f.viewUrl + '" target="_blank" rel="noopener" style="color:#475569">' + escapeHtml(f.name) + '</a></td>'
-               + '<td style="padding:4px 10px;color:#94a3b8;font-size:11.5px">' + (f.createdTime||'').slice(0,10) + '</td>'
+               + '<td style="padding:4px 10px;color:#94a3b8;font-size:11.5px">' + (f.createdTime ? f.createdTime.slice(0,10).split('-').reverse().join('.') : '') + '</td>'
                + '<td style="padding:4px 10px;color:#b45309;font-size:11.5px">' + fmtBytes(f.size) + ' → rusl</td></tr>';
         });
       });
@@ -9662,7 +9662,7 @@ async function renderVinnustofa(t){
                   </div>
                   <div class="vs-item-body">
                     <div class="vs-item-num"><div class="vs-item-num-l">Skuld</div><div class="vs-item-num-v vs-item-num-amount" style="color:#9B1A0F">${fmt(unpaid)}</div></div>
-                    <div class="vs-item-num"><div class="vs-item-num-l">Elsti gjalddagi</div><div class="vs-item-num-v">${oldest || '—'}</div></div>
+                    <div class="vs-item-num"><div class="vs-item-num-l">Elsti gjalddagi</div><div class="vs-item-num-v">${oldest ? oldest.split('-').reverse().join('.') : '—'}</div></div>
                   </div>
                   <div class="vs-item-actions">
                     <a class="vs-btn vs-btn-primary" href="${gmailUrl}" target="_blank" rel="noopener">📧 Senda áminningu</a>
@@ -9691,7 +9691,7 @@ async function renderVinnustofa(t){
     recent.sort((a,b) => String(b.date).localeCompare(String(a.date)));
     $activity.innerHTML = recent.length === 0 ? '<div class="vs-empty">Engin starfsemi.</div>' : recent.slice(0, 12).map(e => `
       <div class="vs-event">
-        <span class="vs-event-date">${e.date}</span>
+        <span class="vs-event-date">${e.date ? e.date.split('-').reverse().join('.') : ''}</span>
         <span class="vs-event-icon">${e.kind === 'paid' ? '✅' : '📤'}</span>
         <span class="vs-event-text">
           ${e.kind === 'paid' ? 'Greitt' : 'Sent'} — <strong>${escapeHtml(e.worksite)}</strong>
@@ -10714,6 +10714,7 @@ async function renderGerdReikninga(t){
     const dateText = (state.ui && state.ui.gr_date_text && state.ui.gr_date_text[name+'|'+month]) || '';
     const smaOn = !(state.ui && state.ui.gr_sma_off && state.ui.gr_sma_off[name+'|'+month]);
     const discPct = (state.ui && state.ui.gr_discount && state.ui.gr_discount[name+'|'+month]) || '';
+    const fixedTotal = d && d.fixed_total ? Number(d.fixed_total) : 0;
     // Prefill: saved draft wins; else compute from Tímavera + pricing-guide; materials from draft or Redder.
     const dvH = Math.round((d ? Number(d.hours_dagvinna)||0 : (monthHours(wObj)||0))*100)/100;
     const dvR = d && d.rate_dagvinna ? Number(d.rate_dagvinna) : r.dv;
@@ -10782,6 +10783,8 @@ async function renderGerdReikninga(t){
           <div class="gr-f"><label style="cursor:pointer"><input type="checkbox" id="gr-sma-on" ${smaOn?'checked':''}> Smáhlutagjald = hanskar, þurrkur o.fl. (${r.sma} kr × dagvinnu + yfirvinnu klst, sjálfvirkt) — taktu hakið af til að sleppa</label><div style="font-size:11px;color:#64748b" id="gr-sma-hint">—</div></div>
           <div class="gr-st">Afsláttur</div>
           <div class="gr-f"><label>Afsláttur af öllum reikningnum (%)</label><input type="text" inputmode="decimal" id="gr-disc" value="${escapeAttr(String(discPct))}" placeholder="0" style="max-width:130px"><div style="font-size:11px;color:#64748b;margin-top:3px">t.d. 10 = 10% — birtist sem lína á reikningnum</div></div>
+          <div class="gr-st">Fast verð</div>
+          <div class="gr-f"><label>Fast heildarverð með vsk (samningaverð)</label><input type="text" inputmode="numeric" id="gr-fix" value="${escapeAttr(fixedTotal>0?String(Math.round(fixedTotal)):'')" placeholder="—" style="max-width:180px"><div style="font-size:11px;color:#64748b;margin-top:3px">Ef sett — yfirristir útreiknað verð. Notið þegar verð hefur verið samið (t.d. 1250000).</div></div>
           <div class="gr-st">Athugasemd</div>
           <div class="gr-f"><textarea id="gr-notes" rows="2" placeholder="Birtist neðst á reikningi">${escapeHtml(notes)}</textarea></div>
           <div class="gr-actions">
@@ -10891,7 +10894,10 @@ async function renderGerdReikninga(t){
       const net = net0 - disc;
       const vsk = Math.round(net*r.vsk/100);
       const total = net+vsk;
-      return {dvH,dvR,evH,evR,km,fr,stadf,sma,matLines,matSum,dvAmt,evAmt,kmAmt,frAmt,net0,discPct,disc,net,vsk,total};
+      const fixedEl = document.getElementById('gr-fix');
+      const fixed = fixedEl ? parseNum(fixedEl.value) : 0;
+      const displayTotal = fixed > 0 ? Math.round(fixed) : total;
+      return {dvH,dvR,evH,evR,km,fr,stadf,sma,matLines,matSum,dvAmt,evAmt,kmAmt,frAmt,net0,discPct,disc,net,vsk,total,fixed,displayTotal};
     }
 
     function draw(){
@@ -10930,7 +10936,7 @@ async function renderGerdReikninga(t){
             ${c.disc>0?`<tr><td class="l">Afsláttur (${c.discPct%1?c.discPct.toFixed(1):c.discPct}%)</td><td class="p"></td><td class="m"></td><td class="t">−${kr(c.disc)}</td></tr>`:''}
             <tr class="sub"><td colspan="3">Samtals án vsk</td><td class="t">${kr(c.net)}</td></tr>
             <tr class="sub"><td colspan="3">vsk (${r.vsk}%)</td><td class="t">${kr(c.vsk)}</td></tr>
-            <tr class="grand"><td colspan="3">samtals með vsk</td><td class="t">${kr(c.total)}</td></tr>
+            <tr class="grand"><td colspan="3">samtals með vsk${c.fixed>0?' <span style="font-size:10px;background:#fef3c7;color:#92400e;padding:1px 5px;border-radius:3px;font-weight:normal">fast verð</span>':''}</td><td class="t">${kr(c.displayTotal)}</td></tr>
           </tbody>
         </table>
         ${notes?`<p style="font-size:12px;color:#555;margin-top:16px;font-style:italic">${escapeHtml(notes)}</p>`:''}`;
@@ -10961,10 +10967,11 @@ async function renderGerdReikninga(t){
             akstur_km: c.km, akstur_ferdir: c.fr,
             smahlutagjald: c.sma, stadfesting: c.stadf,
             materials_jsonb: c.matLines, materials_total: c.matSum,
-            net_an_vsk: c.net, vsk_amount: c.vsk, total_m_vsk: c.total,
+            net_an_vsk: c.net, vsk_amount: c.vsk, total_m_vsk: c.displayTotal,
             // afsláttur vistast Á drögunum (ekki bara í UI-state) svo
             // endurprentun stemmi á öllum tækjum.
             discount_pct: (state.ui.gr_discount||{})[name+'|'+month] || 0,
+            fixed_total: numv('gr-fix') || null,
             status: existing?.status || 'draft',
             notes: document.getElementById('gr-notes').value.trim() || null,
             updated_by: 'gerd-reikninga',
@@ -11007,7 +11014,7 @@ async function renderGerdReikninga(t){
         // getur breytt (PATCH-leiðin í invoice-drafts.js snertir ekkert annað).
         const flds = ['customer_name','kennitala','heimilisfang','hours_dagvinna','hours_eftirvinna',
           'rate_dagvinna','rate_eftirvinna','akstur_km','akstur_ferdir','smahlutagjald','stadfesting',
-          'materials_jsonb','materials_total','net_an_vsk','vsk_amount','total_m_vsk','discount_pct','status','notes'];
+          'materials_jsonb','materials_total','net_an_vsk','vsk_amount','total_m_vsk','discount_pct','fixed_total','status','notes'];
         const body = { worksite_name: revSnap.worksite_name, work_month: revSnap.work_month, updated_by:'yfirferd-revert' };
         for(const f of flds) if(revSnap[f] !== undefined) body[f] = revSnap[f];
         const rr = await fetch('/api/invoice-drafts', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
@@ -12767,7 +12774,7 @@ async function renderHreyfingar(t){
         const label=isBank?'🏦 Innborgun (banki)':isPay?'💰 Greitt (Payday)':(KIND[m.kind]||m.kind);
         const ref=isBank?`<span class="hy-hint">${esc(m.text||'banki')} · upplýsing</span>`:(m.ref?((isPay?'R-':'')+esc(m.ref)):'');
         return `<tr${isBank?' style="opacity:.5"':''}>
-          <td>${m.date||''}</td>
+          <td>${m.date ? m.date.split('-').reverse().join('.') : ''}</td>
           <td>${label}</td>
           <td>${ref}</td>
           <td class="hy-deb">${m.delta>0?kr(m.delta):''}</td>
@@ -12778,7 +12785,7 @@ async function renderHreyfingar(t){
       return `<div class="hy-c${isHid?' hid':''}" data-kt="${c.kt}" data-name="${esc((c.name||'').toLowerCase())} ${c.kt}" data-hidden="${isHid?1:0}">
         <div class="hy-ch">
           <div><div class="hy-nm">${esc(c.name)}<span class="kt">${c.kt}</span></div>
-            <div class="hy-sub">${c.n_invoices} reikningar · ${c.n_payments} greiðslur · ${c.first_date||''} → ${c.last_date||''}</div></div>
+            <div class="hy-sub">${c.n_invoices} reikningar · ${c.n_payments} greiðslur · ${c.first_date ? c.first_date.split('-').reverse().join('.') : ''} → ${c.last_date ? c.last_date.split('-').reverse().join('.') : ''}</div></div>
           <div class="hy-stat">
             <div><div class="l">Reikningað</div><div class="v">${krM(c.invoiced)}</div></div>
             <div><div class="l">Greitt</div><div class="v" style="color:#067647">${krM(c.paid)}</div></div>
@@ -13031,7 +13038,7 @@ async function renderKrofur(t){
     const title = {open:'Útistandandi — ógreiddar krófur',overdue:'Útrunnið — komnar fram yfir gjalddaga',paid:'Greitt',flag:'Til skoðunar'}[filter]||'Krófur';
     const tag = r => r.paid ? '<span style="color:#067647;font-weight:700">✓ greitt</span>'
       : (r.gjalddagi&&r.gjalddagi<today ? '<span style="color:#b42318;font-weight:700">● útrunnið</span>' : '<span style="color:#b54708;font-weight:700">● ógreitt</span>');
-    const list = rows.length ? rows.map(r=>`<div class="kf-mod-r"><span>${esc(r.customer_name||'—')} — ${tag(r)} <small>${esc(r.source||'')} ${esc(String(r.tilvisun||''))} · gjalddagi ${esc(r.gjalddagi||'—')}${r.kt?(' · '+esc(r.kt)):''}${r.bank_paid?' · 🏦 e.t.v. greitt í banka':''}</small></span><b>${kr(r.amount)}</b></div>`).join('') : '<div class="kf-note">Engar krófur.</div>';
+    const list = rows.length ? rows.map(r=>`<div class="kf-mod-r"><span>${esc(r.customer_name||'—')} — ${tag(r)} <small>${esc(r.source||'')} ${esc(String(r.tilvisun||''))} · gjalddagi ${r.gjalddagi ? r.gjalddagi.split('-').reverse().join('.') : '—'}${r.kt?(' · '+esc(r.kt)):''}${r.bank_paid?' · 🏦 e.t.v. greitt í banka':''}</small></span><b>${kr(r.amount)}</b></div>`).join('') : '<div class="kf-note">Engar krófur.</div>';
     host.innerHTML = `<div class="kf-mod"><h4>${title} <span class="kf-note">(${rows.length} krófur · smelltu aftur á spjaldið til að loka)</span></h4>
       <div class="kf-note" style="margin-bottom:4px">✓ greitt / ● ógreitt / ● útrunnið sýnir stöðu hverrar krófu · smelltu á nafn til að fletta í krófulistanum að neðan</div>
       ${list}<div class="kf-mod-tot"><span>Samtals</span><span>${kr(tot)}</span></div></div>`;
@@ -13076,7 +13083,7 @@ async function renderKrofur(t){
     if(!vis.length){ $('kf-uncollected').innerHTML='<div class="kf-note" style="padding:8px">Engar óinnheimtar reikningssölur.</div>'; return; }
     $('kf-uncollected').innerHTML = vis.map(r=>`<div class="kf-row ${r.flagged?'flag-r':''}" data-k="${esc(r.inv_key)}">
       <div class="kf-rn">${esc(r.customer_name)} ${r.flagged?'<span class="kf-badge kf-b-flag">⚠️ Skoða</span>':''}
-        <small>R-${esc(String(r.num||''))} · ${esc(r.created_at||'')}${r.kt?(' · '+esc(r.kt)):''} · ${r.sent_to_dk?'✓ í dkPlus':'ekki í dkPlus'}</small>
+        <small>R-${esc(String(r.num||''))} · ${String(r.created_at||'').slice(0,10).split('-').reverse().join('.')}${r.kt?(' · '+esc(r.kt)):''} · ${r.sent_to_dk?'✓ í dkPlus':'ekki í dkPlus'}</small>
         ${r.note?`<div class="kf-note-l">📝 ${esc(r.note)}</div>`:''}
       </div>
       <div class="kf-amt"><input type="text" value="${num(r.amount)}" data-amt></div>
@@ -13096,7 +13103,7 @@ async function renderKrofur(t){
       const veryOld = r.elsta && r.elsta < (today.slice(0,4)-1)+today.slice(4); // >~1 ár
       return `<div class="kf-row ${r.flagged?'flag-r':''}" data-k="${esc(r.inv_key)}">
       <div class="kf-rn">${esc(r.client)} ${r.flagged?'<span class="kf-badge kf-b-flag">⚠️ Skoða</span>':''}${veryOld?'<span class="kf-badge kf-b-overdue">>1 ár</span>':''}
-        <small>${r.overdue_equip} tæki yfir skoðun · elsti gjalddagi ${esc(r.elsta||'—')}${r.sidasta?(' · síðast skoðað '+esc(r.sidasta)):''}</small>
+        <small>${r.overdue_equip} tæki yfir skoðun · elsti gjalddagi ${r.elsta ? r.elsta.split('-').reverse().join('.') : '—'}${r.sidasta?(' · síðast skoðað '+r.sidasta.split('-').reverse().join('.')):''}</small>
         ${r.note?`<div class="kf-note-l">📝 ${esc(r.note)}</div>`:''}
       </div>
       <div class="kf-amt" style="min-width:70px"><b>${r.overdue_equip}</b><small>tæki</small></div>
@@ -13141,7 +13148,7 @@ async function renderKrofur(t){
     $('kf-wsbill-note').textContent=`${billed.length} reikningað · ${unbilled.length} bara klst (≈ ${kr(estU)} óreikningað)`+(hiddenWs.length?` · ${hiddenWs.length} falið`:'');
     const acts=w=>`<span class="kf-wsact"><button class="kf-btn" data-ws-note="${esc(w.project)}" title="Minnispunktur">📝</button><button class="kf-btn" data-ws-hide="${esc(w.project)}" title="Fela / fjarlægja úr yfirliti">🙈</button></span>`;
     const noteL=w=> w._meta.note?`<div class="kf-note-l">📝 ${esc(w._meta.note)}</div>`:'';
-    const uRow=w=>`<div class="kf-mod-r"><span>${esc(w.project)} <small>${(w.hours||0).toFixed(0)} klst${w.last?(' · síðast '+esc(String(w.last).slice(0,10))):''}${w._meta.amount_override!=null?' · leiðrétt':''}</small>${noteL(w)}</span><span class="kf-wsright"><b>≈ <input class="kf-wsamt" type="text" value="${num(estOf(w))}" data-ws-amt="${esc(w.project)}"> kr</b>${acts(w)}</span></div>`;
+    const uRow=w=>`<div class="kf-mod-r"><span>${esc(w.project)} <small>${(w.hours||0).toFixed(0)} klst${w.last?(' · síðast '+String(w.last).slice(0,10).split('-').reverse().join('.')):''}${w._meta.amount_override!=null?' · leiðrétt':''}</small>${noteL(w)}</span><span class="kf-wsright"><b>≈ <input class="kf-wsamt" type="text" value="${num(estOf(w))}" data-ws-amt="${esc(w.project)}"> kr</b>${acts(w)}</span></div>`;
     const bRow=w=>`<div class="kf-mod-r"><span>${esc(w.project)} <small>${(w.hours||0).toFixed(0)} klst · ${w.invoice_count} reikn.</small>${noteL(w)}</span><span class="kf-wsright"><b>${kr(w._t)}</b>${acts(w)}</span></div>`;
     const hRow=w=>`<div class="kf-mod-r" style="opacity:.6"><span>${esc(w.project)} <small>${(w.invoice_count||0)>0?w.invoice_count+' reikn.':(w.hours||0).toFixed(0)+' klst'}</small></span><span class="kf-wsright"><button class="kf-btn" data-ws-show="${esc(w.project)}" title="Sýna aftur">👁 Sýna</button></span></div>`;
     host.innerHTML=`<div class="kf-mod"><div class="kf-mod-cols">
@@ -13206,8 +13213,8 @@ async function renderKrofur(t){
     const METH = {reikningur:'reikningur',stadgreitt:'staðgreitt',greitt_sidar:'greitt síðar'};
     // Clear paid/unpaid tag so you can see who has paid.
     const tag = (r)=> r.paid ? '<span style="color:#067647;font-weight:700">✓ greitt</span>' : '<span style="color:#b42318;font-weight:700">● ógreitt</span>';
-    const bhList = bhRows.length ? bhRows.map(r=>`<div class="kf-mod-r"><span>${esc(r.customer_name||'—')} — ${tag(r)} <small>${esc(r.source||'')} ${esc(String(r.tilvisun||''))} · ${rec?('greitt '+esc(r.greidsla_date||'')):('gjalddagi '+esc(r.gjalddagi||''))}</small></span><b>${kr(r.amount)}</b></div>`).join('') : '<div class="kf-note">Engar krófur.</div>';
-    const slList = slRows.length ? slRows.map(r=>`<div class="kf-mod-r"><span>${esc(r.customer||'—')} <small>R-${esc(String(r.num||''))} · ${METH[r.method]||esc(r.method||'')} · ${esc(r.date||'')}</small></span><b>${kr(r.amount)}</b></div>`).join('') : '<div class="kf-note">Engar sölur.</div>';
+    const bhList = bhRows.length ? bhRows.map(r=>`<div class="kf-mod-r"><span>${esc(r.customer_name||'—')} — ${tag(r)} <small>${esc(r.source||'')} ${esc(String(r.tilvisun||''))} · ${rec?('greitt '+(r.greidsla_date ? r.greidsla_date.split('-').reverse().join('.') : '')):('gjalddagi '+(r.gjalddagi ? r.gjalddagi.split('-').reverse().join('.') : ''))}</small></span><b>${kr(r.amount)}</b></div>`).join('') : '<div class="kf-note">Engar krófur.</div>';
+    const slList = slRows.length ? slRows.map(r=>`<div class="kf-mod-r"><span>${esc(r.customer||'—')} <small>R-${esc(String(r.num||''))} · ${METH[r.method]||esc(r.method||'')} · ${r.date ? r.date.split('-').reverse().join('.') : ''}</small></span><b>${kr(r.amount)}</b></div>`).join('') : '<div class="kf-note">Engar sölur.</div>';
     host.innerHTML = `<div class="kf-mod">
       <h4>${esc(mlabel(mo))} — ${rec?'innkomið (greitt í mánuðinum)':unp?'ógreitt (bíður greiðslu)':'útgefið'}</h4>
       <div class="kf-note">${rec?'Eftir greiðsludegi · Slökkvitæki staðgreitt':unp?'Ógreiddar krófur mánaðarins · Slökkvitæki reikningssölur (bíða dkPlus)':'Brunahólf eftir gjalddaga · Slökkvitæki eftir söludegi'} · ✓ greitt / ● ógreitt sýnir hver hefur borgað</div>
@@ -13230,9 +13237,9 @@ async function renderKrofur(t){
     const ov = r.amount_override!=null;
     return `<div class="kf-row ${r.hidden?'hidden-r':''} ${r.flagged?'flag-r':''}" data-k="${esc(r.inv_key)}">
       <div class="kf-rn">${esc(r.customer_name||'—')}
-        <small>${esc(r.source||'')} nr. ${esc(r.tilvisun||'')} · gjalddagi ${esc(r.gjalddagi||'—')}${r.kt?(' · '+esc(r.kt)):''}</small>
+        <small>${esc(r.source||'')} nr. ${esc(r.tilvisun||'')} · gjalddagi ${r.gjalddagi ? r.gjalddagi.split('-').reverse().join('.') : '—'}${r.kt?(' · '+esc(r.kt)):''}</small>
         ${r.note?`<div class="kf-note-l">📝 ${esc(r.note)}</div>`:''}
-        ${r.bank_text?`<div class="kf-src">🏦 ${esc(r.bank_text)} (${esc(r.bank_date||'')})</div>`:''}
+        ${r.bank_text?`<div class="kf-src">🏦 ${esc(r.bank_text)} (${r.bank_date ? r.bank_date.split('-').reverse().join('.') : ''})</div>`:''}
         ${r.draft_match?`<div class="kf-draft">✓ passar við Reikningagerð: ${esc(r.draft_match.worksite||'')} ${kr(r.draft_match.total)}</div>`:''}
       </div>
       <div>${badges.join(' ')}</div>
@@ -13855,7 +13862,7 @@ async function renderKrofuyfirlit(t){
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fmtKr = n => (Math.round(Number(n)||0)).toLocaleString('is-IS').replace(/,/g,'.') + ' kr';
   const fmtDate = iso => { if(!iso) return '—'; const d=new Date(iso); if(isNaN(d)) return '—';
-    return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear(); };
+    return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear(); };
   const ktDigits = s => String(s||'').replace(/\D+/g,'');
 
   // Aging pill: green ≤30d · amber 31–60d · red >60d (ported verbatim).
@@ -14309,7 +14316,7 @@ async function renderKrofuyfirlit(t){
         <input class="ky-note" data-key="${esc(inv.inv_key)}" value="${esc(note)}" placeholder="minnispunktur…" style="width:150px;background:transparent;border:0;border-bottom:1px dashed #cbd5e1;color:#334155;font:inherit;font-size:10.5px;padding:1px 2px;outline:none">
       </div>` : '';
       const detailCells = [
-        ['Gjalddagi', esc(inv.gjalddagi||'—')],
+        ['Gjalddagi', inv.gjalddagi ? inv.gjalddagi.split('-').reverse().join('.') : '—'],
         ['Eindagi', esc(inv.eindagi||'—')],
         ['Uppruni', esc(inv.source||'—')],
         ['Upphæð', fmtKr(inv.amount)],
@@ -14328,7 +14335,7 @@ async function renderKrofuyfirlit(t){
                 ${mtagHtml}
                 ${tier===1?agingPill(inv.days_overdue):''}
               </div>
-              <div style="color:#b6c0cc;font-size:10.5px;margin-top:3px">${tier===1&&inv.gjalddagi?`<span class="ky-num" style="color:#8a93a5">${esc(inv.gjalddagi)}</span> &nbsp;·&nbsp; `:''}${sub}</div>
+              <div style="color:#b6c0cc;font-size:10.5px;margin-top:3px">${tier===1&&inv.gjalddagi?`<span class="ky-num" style="color:#8a93a5">${inv.gjalddagi.split('-').reverse().join('.')}</span> &nbsp;·&nbsp; `:''}${sub}</div>
               ${bankLine}
               ${tier===2?noteInline:''}
             </div>
@@ -14473,7 +14480,7 @@ async function renderKrofuyfirlit(t){
       </div>` : '';
       // Sundurliðun (Feature 1) — opnast við smell á röð.
       const detailCells = [
-        ['Gjalddagi', esc(inv.gjalddagi||'—')],
+        ['Gjalddagi', inv.gjalddagi ? inv.gjalddagi.split('-').reverse().join('.') : '—'],
         ['Eindagi', esc(inv.eindagi||'—')],
         ['Uppruni', esc(inv.source||'—')],
         ['Upphæð', fmtKr(inv.amount)],
@@ -14498,7 +14505,7 @@ async function renderKrofuyfirlit(t){
                 ${mtagHtml}
                 ${tier===1?agingPill(inv.days_overdue):''}
               </div>
-              <div style="color:#b6c0cc;font-size:10.5px;margin-top:3px">${tier===1&&inv.gjalddagi?`<span class="ky-num" style="color:#8a93a5">${esc(inv.gjalddagi)}</span> &nbsp;·&nbsp; `:''}${sub}</div>
+              <div style="color:#b6c0cc;font-size:10.5px;margin-top:3px">${tier===1&&inv.gjalddagi?`<span class="ky-num" style="color:#8a93a5">${inv.gjalddagi.split('-').reverse().join('.')}</span> &nbsp;·&nbsp; `:''}${sub}</div>
               ${bankLine}
               ${tier===2?noteInline:''}
             </div>
@@ -14527,7 +14534,7 @@ async function renderKrofuyfirlit(t){
               <div style="font-weight:800;color:#11141c;font-size:16px">${esc(nm)}</div>
               ${metaHtml}
               ${agBar}
-              <div style="font-size:11px;color:#8a93a5;margin-top:4px">${(db.invoices||[]).length} ${tier===3?'liðir':(tier===2?'drög':'reikningar')}${tier===1?' · elsti gjalddagi '+esc(db.oldest_due||'—'):''}</div>
+              <div style="font-size:11px;color:#8a93a5;margin-top:4px">${(db.invoices||[]).length} ${tier===3?'liðir':(tier===2?'drög':'reikningar')}${tier===1?' · elsti gjalddagi '+(db.oldest_due ? db.oldest_due.split('-').reverse().join('.') : '—'):''}</div>
             </div>
           </div>
           <div style="display:flex;gap:10px;align-items:center">
@@ -14599,8 +14606,10 @@ async function renderKrofuyfirlit(t){
     const total = invs.reduce((a,iv)=>a+(Number(iv.amount)||0),0);
     const months = [...new Set(invs.map(iv=>iv.work_month).filter(Boolean))].sort();
     const defMonth = months[months.length-1] || CUR_MONTH;
+    const wsNames = [...new Set(invs.map(iv=>iv.worksite).filter(Boolean))];
     const names = [...new Set(invs.map(iv=>iv.worksite||iv.customer).filter(Boolean))];
-    const defName = 'Sameinað: ' + names.join(' + ');
+    // If all drafts share one worksite, keep that name (no "Sameinað:" prefix).
+    const defName = wsNames.length===1 ? wsNames[0] : 'Sameinað: ' + names.join(' + ');
     const custs = [...new Set(invs.map(iv=>iv.customer).filter(Boolean))];
     const defCust = custs.length===1 ? custs[0] : custs.join(' / ');
     const kts = [...new Set(invs.map(iv=>iv.kt).filter(Boolean))];
@@ -14616,9 +14625,13 @@ async function renderKrofuyfirlit(t){
       <div style="font-weight:800;font-size:16px;color:#0f172a;margin-bottom:2px">🔗 Sameina ${invs.length} drög</div>
       <div style="font-size:12px;color:#94a3b8;margin-bottom:12px">Býr til eitt nýtt drög með samtals upphæð — upprunalegu drögin eru merkt „sameinað" og hverfa úr Ósendar-listanum.</div>
       <div style="background:#fafbfe;border:1px solid #eef1f6;border-radius:10px;padding:8px 12px;margin-bottom:14px">${rowsHtml}</div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 2px 14px;border-bottom:1px solid #eef1f6;margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 2px 10px;border-bottom:1px solid #eef1f6;margin-bottom:10px">
         <span style="font-weight:700;color:#475569;font-size:13px">Samtals</span>
         <span class="ky-num" style="font-weight:800;font-size:18px;color:#1d4ed8">${fmtKr(total)}</span>
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-size:12px;font-weight:700;color:#475569;margin:0 0 3px">Yfirrita heildarverð <span style="font-weight:400;color:#94a3b8">(valkvætt — ef samningsverð er annað en summan)</span></label>
+        <input id="_cmb-fixed" type="number" min="0" placeholder="t.d. 1500000" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;font-size:14px;box-sizing:border-box">
       </div>
       <label style="display:block;font-size:12px;font-weight:700;color:#475569;margin:0 0 3px">Heiti nýja draganna</label>
       <input id="_cmb-name" value="${esc(defName)}" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;font-size:14px;box-sizing:border-box">
@@ -14636,18 +14649,49 @@ async function renderKrofuyfirlit(t){
     document.getElementById('_cmb-confirm').onclick = async ()=>{
       const name = document.getElementById('_cmb-name').value.trim();
       const month = document.getElementById('_cmb-month').value.trim();
+      const fixedRaw = document.getElementById('_cmb-fixed').value.trim();
+      const fixedTotal = fixedRaw ? Math.round(Number(fixedRaw)) : 0;
       if(!name || !/^\d{4}-\d{2}$/.test(month)){ alert('Heiti og gildur mánuður (ÁÁÁÁ-MM) þarf að fylla út.'); return; }
       const btn = document.getElementById('_cmb-confirm');
       btn.disabled = true; btn.textContent = '⏳ Sameinar…';
       // Skref 1 — búa til nýja sameinaða drögið. Mistakist þetta hefur EKKERT
       // breyst enn (glugginn helst opinn svo notandi geti reynt aftur).
       try{
+        // Sækja fulla draft-hlutinn (með klst, efni o.fl.) úr REVIEWS-kortinu.
+        const fullDrafts = invs.map(iv => REVIEWS[(iv.worksite||'')+'|'+(iv.work_month||'')]).filter(Boolean);
+        const sumDvH = fullDrafts.reduce((a,d)=>a+(Number(d.hours_dagvinna)||0),0);
+        const sumEvH = fullDrafts.reduce((a,d)=>a+(Number(d.hours_eftirvinna)||0),0);
+        const sumKm  = fullDrafts.reduce((a,d)=>a+(Number(d.akstur_km)||0),0);
+        const sumFr  = fullDrafts.reduce((a,d)=>a+(Number(d.akstur_ferdir)||0),0);
+        const sumSma = fullDrafts.reduce((a,d)=>a+(Number(d.smahlutagjald)||0),0);
+        const sumStadf = fullDrafts.reduce((a,d)=>a+(Number(d.stadfesting)||0),0);
+        const firstRated = fullDrafts.find(d=>Number(d.rate_dagvinna)>0) || {};
+        // Sameina efnislista: leggja saman magn per nafni, endurkeyra verð × magn.
+        const matMap = new Map();
+        for(const d of fullDrafts){
+          for(const m of (Array.isArray(d.materials_jsonb)?d.materials_jsonb:[])){
+            if(!m.label) continue;
+            const ex=matMap.get(m.label);
+            if(ex){ ex.qty=(ex.qty||0)+(Number(m.qty)||0); ex.total=Math.round(ex.price*ex.qty); }
+            else matMap.set(m.label,{label:m.label,price:Number(m.price)||0,qty:Number(m.qty)||0,total:Number(m.total)||0});
+          }
+        }
+        const mergedMats=[...matMap.values()].filter(m=>m.qty>0||m.total>0);
+        const matSum=mergedMats.reduce((a,m)=>a+m.total,0);
         const vsk = 24;
-        const net = Math.round(total/(1+vsk/100));
+        const usedTotal = fixedTotal || total;
+        const net = Math.round(usedTotal/(1+vsk/100));
         const r1 = await fetch('/api/invoice-drafts', {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({
           worksite_name: name, work_month: month, customer_name: defCust||undefined, kennitala: defKt||undefined,
           source: 'combined', status: 'draft',
-          total_m_vsk: total, net_an_vsk: net, vsk_amount: total-net,
+          hours_dagvinna: sumDvH||undefined, hours_eftirvinna: sumEvH||undefined,
+          rate_dagvinna: Number(firstRated.rate_dagvinna)||undefined,
+          rate_eftirvinna: Number(firstRated.rate_eftirvinna)||undefined,
+          akstur_km: sumKm||undefined, akstur_ferdir: sumFr||undefined,
+          smahlutagjald: sumSma||undefined, stadfesting: sumStadf||undefined,
+          materials_jsonb: mergedMats.length?mergedMats:undefined, materials_total: matSum||undefined,
+          total_m_vsk: usedTotal, net_an_vsk: net, vsk_amount: usedTotal-net,
+          fixed_total: fixedTotal || null,
           notes: 'Sameinað úr: '+invs.map(iv=>(iv.worksite||iv.customer||'—')+' '+(iv.work_month||'')).join('; '),
         })});
         const j1 = await r1.json().catch(()=>({}));
@@ -14659,9 +14703,12 @@ async function renderKrofuyfirlit(t){
       }
       // Skref 2 — merkja upprunalegu drögin „sameinað" (best-effort; nýja drögið
       // er þegar til, svo héðan í frá lokum við glugganum sama hvað gerist).
+      // Sleppum sameinuðu dragunum sjálfu (same worksite+month = combined target)
+      // svo við yfirskrifum það ekki með 'skipped'.
       const failed = [];
       for(const iv of invs){
         if(!iv.worksite || !iv.work_month) continue;
+        if(iv.worksite===name && iv.work_month===month) continue;
         try{
           const rr = await fetch('/api/invoice-drafts', {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({
             worksite_name: iv.worksite, work_month: iv.work_month, status: 'skipped',
@@ -15254,7 +15301,7 @@ async function renderSkuldunautar(t){
       return `<div class="sk-d" data-i="${i}" data-name="${esc((db.customer||'').toLowerCase())} ${db.kt||''}">
         <div class="sk-dh">
           <div><div class="sk-dn">${esc(db.customer)}${db.kt?`<span class="sk-kt">${db.kt}</span>`:''}</div>
-            <div class="sk-dm">${db.invoices.length} reikningar · elsti gjalddagi ${db.oldest_due||'—'}</div></div>
+            <div class="sk-dm">${db.invoices.length} reikningar · elsti gjalddagi ${db.oldest_due ? db.oldest_due.split('-').reverse().join('.') : '—'}</div></div>
           <div class="sk-bank">${bankLine}</div>
           <div class="sk-dv">${kr(db.outstanding_kr)}<small>útistandandi</small></div>
           <div class="sk-caret">▸</div>
@@ -15732,7 +15779,7 @@ function renderVerkefnaskra(t){
     if(days===1) return 'á morgun';
     if(days===-1) return 'í gær';
     if(days>1 && days<8) return 'eftir '+days+' daga';
-    return d;
+    const p = d.split('-'); return p.length === 3 ? p.reverse().join('.') : d;
   };
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
@@ -19716,7 +19763,7 @@ async function openTimabok(name, month){
   // svo hægt kall eða teikni-villa festi ekki gluggann á „Sæki tímafærslur…".
   if(saved && Array.isArray(saved.rows)){
     rows = saved.rows.map(r=>({...r}));
-    st.textContent = 'breytt eintak (vistað ' + (saved.saved_at? String(saved.saved_at).slice(0,10):'') + ')';
+    st.textContent = 'breytt eintak (vistað ' + (saved.saved_at? String(saved.saved_at).slice(0,10).split('-').reverse().join('.') : '') + ')';
     sortRows(); paint();
   } else if(!name || !/^\d{4}-\d{2}$/.test(String(month))){
     // Vantar verkstað/mánuð (t.d. Payday-drög án verkstaðar) → ekkert að sækja.
@@ -19992,7 +20039,7 @@ async function buildAndSaveEfnislistiPdf(name, month, data, overwrite){
   const foot = [
     [{content:'Samtals án vsk', colSpan:3, styles:{halign:'right',fontStyle:'italic'}}, {content:kr(c.net), styles:{halign:'right'}}],
     [{content:'vsk ('+rt.vsk+'%)', colSpan:3, styles:{halign:'right',fontStyle:'italic'}}, {content:kr(c.vsk), styles:{halign:'right'}}],
-    [{content:'Samtals með vsk', colSpan:3, styles:{halign:'right',fontStyle:'bold'}}, {content:kr(c.total), styles:{halign:'right',fontStyle:'bold'}}],
+    [{content:'Samtals með vsk'+(c.fixed>0?' (fast verð)':''), colSpan:3, styles:{halign:'right',fontStyle:'bold'}}, {content:kr(c.displayTotal), styles:{halign:'right',fontStyle:'bold'}}],
   ];
   doc.autoTable({
     startY: Math.max(by+8, y+40),
