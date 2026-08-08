@@ -12,8 +12,11 @@
 //        · Ósendir reikningar hjá Brunahólf (invoice_drafts, síðustu 3 mán, ósend)
 //   D) Áunnið Tímavera-tímagjald ÞESSA mánaðar (klst × dagvinnutaxti m/vsk).
 //
-//   grand_total = A.heildar + B + C(osendar) + C(timavera_eldri) + D
+//   grand_total = A.heildar + B + C(osendar) + D
 //   (A.heildar inniheldur nú þegar payday+osendar undirmengin — ekki tvítalið.)
+//   C(timavera_eldri) er reiknað og skilað í svarinu til upplýsinga en EKKI
+//   summað inn — brúttó tala sem dregur ekki frá þegar rukkað, gaf ranga
+//   (of háa) heildar-pípu (sjá verkefnalisti 2026-08-08).
 //
 // GET /api/fjarmal-yfirlit[?month=YYYY-MM]  → JSON (service role, read-only).
 
@@ -218,7 +221,10 @@ exports.handler = async (event) => {
   // Raða + cap-a alla bucket-lista (kr desc, max 300).
   [A.thessi_manudur, A.eldri, A.heildar, A.ogreitt_payday, A.osendar, B, C_osendar, VERKST, AFGR].forEach(finalize);
 
-  const grand_total = A.heildar.kr + B.kr + C_osendar.kr + timavera_eldri.kr + D.kr;
+  // timavera_eldri er brúttó (klst × taxti) og dregur ekki frá það sem þegar er
+  // rukkað/sent — gaf ranga (of háa) mynd í Heildar-pípunni, því tekið út 2026-08-08.
+  // Áfram skilað í svarinu til upplýsinga, bara ekki summað inn í grand_total.
+  const grand_total = A.heildar.kr + B.kr + C_osendar.kr + D.kr;
 
   return json(200, {
     generated_at: new Date().toISOString(),
