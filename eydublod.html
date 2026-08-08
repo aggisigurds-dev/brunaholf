@@ -181,7 +181,23 @@
   @media (max-width:900px){
     .preview .doc{transform:scale(var(--zoom,.46)); transform-origin:top left; margin:0}
     .preview .zoomwrap{height:calc(297mm * var(--zoom,.46)); overflow:hidden}
+    /* Á farsíma er forskoðunin falin — formið og skjalasafnið nægja */
+    .preview{display:none !important}
+    body.has-appbar{padding-bottom:76px}
   }
+
+  /* ── App-stika — sticky Vista/Staðfesta/Senda á farsíma ─────────── */
+  #appBar{
+    position:fixed;bottom:0;left:0;right:0;z-index:100;
+    background:var(--panel);border-top:1px solid var(--line);
+    padding:10px 14px;gap:8px;align-items:stretch;display:none;
+    box-shadow:0 -2px 14px rgba(15,23,42,.12);
+    padding-bottom:max(10px,env(safe-area-inset-bottom));
+  }
+  #appBar .ab{flex:1;font-size:14px;padding:11px 6px;text-align:center;border-radius:9px}
+  @media (max-width:900px){#appBar{display:flex}}
+  .stadfest-badge{background:#dcfce7;color:#15803d;border:1px solid #86efac;
+    border-radius:999px;padding:1px 7px;font-size:11px;font-weight:800;white-space:nowrap}
 
   /* ── Prentun / Vista sem PDF ─────────────────────────────────────── */
   @page{size:A4; margin:1in}
@@ -207,6 +223,7 @@
 </div>
 
 <div id="root"></div>
+<div id="appBar"></div>
 
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
@@ -255,7 +272,10 @@
 /* Útgáfa síðunnar. BUMPAÐU þessu við hverja breytingu — merkið í hausnum er
    eina leiðin fyrir Agnar til að sjá strax hvort vafrinn situr á gamalli
    vistaðri útgáfu (það gerðist 2026-08-07 og kostaði drjúgan tíma). */
-const UTGAFA = '2026-08-07.2';
+const UTGAFA = '2026-08-08.1';
+
+let currentRowId = null;   // id á þeirri DB-röð sem er opin (til staðfestingar)
+let lastPublicUrl = null;  // public_url nýjasta vistunarins — til sendingar
 
 const esc = s => String(s == null ? '' : s)
   .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -529,6 +549,8 @@ function go(id){
 
 /* ── Forsíða ───────────────────────────────────────────────────────── */
 async function listForms(){
+  currentRowId = null; lastPublicUrl = null;
+  updateAppBar(false);
   document.getElementById('pageTitle').innerHTML = 'Eyðublöð<span class="sub">Brunahólf ehf.</span>';
   document.body.classList.remove('show-vars');
   $root.innerHTML = `
@@ -566,18 +588,24 @@ function renderSafn(boxId, medNafni){
   const box = document.getElementById(boxId);
   if(!box) return;
   if(!safn.length){ box.innerHTML = '<div class="empty">Ekkert vistað enn.</div>'; return; }
-  box.innerHTML = safn.map(d => `
-    <div class="docrow">
+  box.innerHTML = safn.map(d => {
+    const stadfest = d.gogn && d.gogn._stadfest;
+    const stadfestBy = stadfest ? (d.gogn._stadfest_by || '') : '';
+    const stadfestDate = stadfest ? (d.gogn._stadfest_at || '').slice(0,10) : '';
+    return `<div class="docrow">
       <div class="t">
         <b>${esc(d.stadur || d.titill || d.skra_nafn || 'Skjal')}</b>
         <span>${d.dagsetning ? fmtDate(d.dagsetning) : ''}${medNafni && d.titill ? ' · ' + esc(d.titill) : ''}
           · ${new Date(d.created_at).toLocaleDateString('is-IS')}</span>
       </div>
       <span class="vbadge">v${d.utgafa}</span>
+      ${stadfest ? `<span class="stadfest-badge" title="Staðfest ${stadfestBy ? 'af ' + stadfestBy + ' ' : ''}${stadfestDate}">✓ Staðfest</span>` : ''}
       ${d.public_url ? `<a href="${esc(d.public_url)}" target="_blank" rel="noopener">⬇︎ PDF</a>` : ''}
+      ${d.public_url ? `<button onclick="sendaById('${d.id}')">📤 Senda</button>` : ''}
       <button onclick="opnaSkjal('${d.id}')">✎ Breyta</button>
       <button class="del" onclick="eydaSkjali('${d.id}')" title="Eyða þessari útgáfu">✕</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 async function opnaSkjal(id){
@@ -596,6 +624,8 @@ function applySaved(d){
   values = Object.assign({}, formDefaults(), d.gogn || {});
   autoOn = {};                       // vistað skjal er fast — engin sjálfvirk yfirskrift
   skjalId = d.skjal_id; utgafa = d.utgafa;
+  currentRowId = d.id || null;
+  lastPublicUrl = d.public_url || null;
   try{ localStorage.removeItem(lsKey(form.id)); }catch(e){}
   paintForm();
 }
@@ -610,6 +640,74 @@ async function eydaSkjali(id){
   }catch(e){}
   await loadSafn(form ? form.id : undefined);
   renderSafn(form ? 'safnList' : 'safnBox', !form);
+}
+
+/* ── App-stika (sticky bottom) ──────────────────────────────────────── */
+function updateAppBar(show) {
+  var bar = document.getElementById('appBar');
+  if (!bar) return;
+  if (show === false || !form) {
+    bar.innerHTML = '';
+    document.body.classList.remove('has-appbar');
+    return;
+  }
+  document.body.classList.add('has-appbar');
+  var url = lastPublicUrl || (safn[0] && safn[0].public_url) || '';
+  var isStadfest = currentRowId && safn.length &&
+    (function(){ var d = safn.find(function(x){ return x.id === currentRowId; }); return d && d.gogn && d.gogn._stadfest; })();
+  bar.innerHTML =
+    '<button class="btn btn-primary ab" onclick="vista()">💾 Vista</button>' +
+    (currentRowId
+      ? '<button class="btn ab" onclick="stadfesta()" style="' + (isStadfest ? 'background:#dcfce7;color:#15803d;border-color:#86efac' : '') + '">' +
+          (isStadfest ? '✓ Staðfest' : '✅ Staðfesta') + '</button>'
+      : '') +
+    (url ? '<button class="btn ab" onclick="sendaLast()">📤 Senda</button>' : '');
+}
+
+async function stadfesta() {
+  if (!currentRowId) { alert('Vista skjalið fyrst.'); return; }
+  var me = '';
+  try { me = localStorage.getItem('bh_me') || ''; } catch(_) {}
+  var btn = document.querySelector('#appBar .ab:nth-child(2)');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳…'; }
+  try {
+    var r = await fetch('/api/eydublod', { method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ action:'confirm', id: currentRowId, by: me }) });
+    var j = await r.json();
+    if (!r.ok || !j.ok) throw new Error(j.error || 'Villa');
+    await loadSafn(form.id);
+    renderSafn('safnList', false);
+    updateAppBar();
+    flash('savedFlag', '✓ Staðfest');
+  } catch(e) {
+    alert('Staðfesting mistókst: ' + e.message);
+    if (btn) { btn.disabled = false; }
+    updateAppBar();
+  }
+}
+
+function sendaLast() {
+  var url = lastPublicUrl || (safn[0] && safn[0].public_url) || '';
+  if (!url) { alert('Vista skjalið fyrst til að geta sent það.'); return; }
+  sendaSkjal(url, form && form.titill);
+}
+
+function sendaById(id) {
+  var d = safn.find(function(x){ return x.id === id; });
+  if (!d || !d.public_url) { alert('PDF er ekki til — vista skjalið fyrst.'); return; }
+  sendaSkjal(d.public_url, d.stadur || d.titill);
+}
+
+async function sendaSkjal(url, titill) {
+  if (!url) return;
+  if (navigator.share) {
+    try { await navigator.share({ title: titill || 'Yfirlýsing vegna brunalokana', url: url }); } catch(_) {}
+  } else {
+    try {
+      await navigator.clipboard.writeText(url);
+      flash('savedFlag', '✓ Hlekkur afritaður');
+    } catch(_) { prompt('Afritaðu hlekkinn:', url); }
+  }
 }
 
 /* ── Gildi ─────────────────────────────────────────────────────────── */
@@ -736,6 +834,7 @@ function paintForm(){
   initSig();
   renderDoc();
   renderSafn('safnList', false);
+  updateAppBar();
 }
 
 function sectionHtml(sec){
@@ -1147,6 +1246,8 @@ async function vista(){
     if(!r.ok || !j.ok) throw new Error(j.error || ('HTTP ' + r.status));
 
     skjalId = j.skjal_id; utgafa = j.utgafa;
+    currentRowId = j.id || null;
+    lastPublicUrl = j.public_url || null;
     saveDraft();
     await loadSafn(form.id);
     paintForm();
@@ -1172,6 +1273,16 @@ const _um = document.getElementById('utgafuMerki');
 if(_um) _um.textContent = 'útg. ' + UTGAFA;
 
 route();
+
+// Þegar síðan er í iframe (t.d. The Big Boss app): „← Hubbið" leiðir af stað
+// úr appinu — breyta í „← Eyðublöð" sem fer aftur á forsíðu síðunnar.
+(function(){
+  var hl = document.getElementById('homeLink');
+  if (hl && window.parent !== window) {
+    hl.href = '#'; hl.textContent = '← Eyðublöð';
+    hl.addEventListener('click', function(e){ e.preventDefault(); go(''); });
+  }
+})();
 </script>
 </body>
 </html>

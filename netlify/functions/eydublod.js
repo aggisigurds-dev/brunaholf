@@ -40,6 +40,7 @@ exports.handler = async (event) => {
       catch { return json(400, { error: 'Invalid JSON' }); }
 
       if (body.action === 'delete') return await del(body);
+      if (body.action === 'confirm') return await confirm_(body);
       return await save(body);                       // sjálfgefið: vista
     }
     return json(405, { error: 'GET eða POST' });
@@ -145,6 +146,31 @@ async function save(body) {
   }
   const saved = (await rec.json())[0] || {};
   return json(200, { ok: true, ...saved, skjal_id, utgafa, public_url });
+}
+
+/* ── Staðfesting (patch gogn, engin ný útgáfa) ────────────────────────── */
+async function confirm_(body) {
+  const id = String(body.id || '').trim();
+  if (!id) return json(400, { error: 'id vantar' });
+  const by = String(body.by || '').slice(0, 100);
+  const at = new Date().toISOString();
+  const rows = await sbAll(
+    `${SUPABASE_URL}/rest/v1/${TABLE}?select=gogn&id=eq.${encodeURIComponent(id)}`);
+  if (!rows[0]) return json(404, { error: 'Skjal fannst ekki' });
+  const gogn = Object.assign({}, rows[0].gogn || {},
+    { _stadfest: true, _stadfest_at: at, _stadfest_by: by });
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?id=eq.${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=representation',
+    },
+    body: JSON.stringify({ gogn }),
+  });
+  if (!r.ok) return json(r.status, { error: (await r.text()).slice(0, 300) });
+  return json(200, { ok: true, id, stadfest_at: at });
 }
 
 /* ── Eyðing (ein útgáfa) ──────────────────────────────────────────────── */
