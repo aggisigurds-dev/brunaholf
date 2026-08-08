@@ -59,6 +59,9 @@ exports.handler = async (event) => {
       // reconstructed from the CURRENT UI state (state.ui.gr_discount), so a
       // changed/unsyncced pct printed a sheet that didn't add up.
       'discount_pct',
+      // 2026-08-08 (fast verð): samningaverð þegar verð er samið beint (t.d. 1.250.000 kr).
+      // Yfirristir útreiknað verð í Efnislista — geymist og prentast rétt á öllum tækjum.
+      'fixed_total',
       // 2026-08-08 (yfirferðar-flæði): skrifstofan flaggar drög til yfirferðar
       // hjá yfirmanni (yfirferd.html / The Big Boss app); hann vistar + staðfestir.
       'review_requested', 'review_requested_at', 'review_requested_by',

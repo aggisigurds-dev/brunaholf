@@ -10714,6 +10714,7 @@ async function renderGerdReikninga(t){
     const dateText = (state.ui && state.ui.gr_date_text && state.ui.gr_date_text[name+'|'+month]) || '';
     const smaOn = !(state.ui && state.ui.gr_sma_off && state.ui.gr_sma_off[name+'|'+month]);
     const discPct = (state.ui && state.ui.gr_discount && state.ui.gr_discount[name+'|'+month]) || '';
+    const fixedTotal = d && d.fixed_total ? Number(d.fixed_total) : 0;
     // Prefill: saved draft wins; else compute from Tímavera + pricing-guide; materials from draft or Redder.
     const dvH = Math.round((d ? Number(d.hours_dagvinna)||0 : (monthHours(wObj)||0))*100)/100;
     const dvR = d && d.rate_dagvinna ? Number(d.rate_dagvinna) : r.dv;
@@ -10782,6 +10783,8 @@ async function renderGerdReikninga(t){
           <div class="gr-f"><label style="cursor:pointer"><input type="checkbox" id="gr-sma-on" ${smaOn?'checked':''}> Smáhlutagjald = hanskar, þurrkur o.fl. (${r.sma} kr × dagvinnu + yfirvinnu klst, sjálfvirkt) — taktu hakið af til að sleppa</label><div style="font-size:11px;color:#64748b" id="gr-sma-hint">—</div></div>
           <div class="gr-st">Afsláttur</div>
           <div class="gr-f"><label>Afsláttur af öllum reikningnum (%)</label><input type="text" inputmode="decimal" id="gr-disc" value="${escapeAttr(String(discPct))}" placeholder="0" style="max-width:130px"><div style="font-size:11px;color:#64748b;margin-top:3px">t.d. 10 = 10% — birtist sem lína á reikningnum</div></div>
+          <div class="gr-st">Fast verð</div>
+          <div class="gr-f"><label>Fast heildarverð með vsk (samningaverð)</label><input type="text" inputmode="numeric" id="gr-fix" value="${escapeAttr(fixedTotal>0?String(Math.round(fixedTotal)):'')" placeholder="—" style="max-width:180px"><div style="font-size:11px;color:#64748b;margin-top:3px">Ef sett — yfirristir útreiknað verð. Notið þegar verð hefur verið samið (t.d. 1250000).</div></div>
           <div class="gr-st">Athugasemd</div>
           <div class="gr-f"><textarea id="gr-notes" rows="2" placeholder="Birtist neðst á reikningi">${escapeHtml(notes)}</textarea></div>
           <div class="gr-actions">
@@ -10891,7 +10894,10 @@ async function renderGerdReikninga(t){
       const net = net0 - disc;
       const vsk = Math.round(net*r.vsk/100);
       const total = net+vsk;
-      return {dvH,dvR,evH,evR,km,fr,stadf,sma,matLines,matSum,dvAmt,evAmt,kmAmt,frAmt,net0,discPct,disc,net,vsk,total};
+      const fixedEl = document.getElementById('gr-fix');
+      const fixed = fixedEl ? parseNum(fixedEl.value) : 0;
+      const displayTotal = fixed > 0 ? Math.round(fixed) : total;
+      return {dvH,dvR,evH,evR,km,fr,stadf,sma,matLines,matSum,dvAmt,evAmt,kmAmt,frAmt,net0,discPct,disc,net,vsk,total,fixed,displayTotal};
     }
 
     function draw(){
@@ -10930,7 +10936,7 @@ async function renderGerdReikninga(t){
             ${c.disc>0?`<tr><td class="l">Afsláttur (${c.discPct%1?c.discPct.toFixed(1):c.discPct}%)</td><td class="p"></td><td class="m"></td><td class="t">−${kr(c.disc)}</td></tr>`:''}
             <tr class="sub"><td colspan="3">Samtals án vsk</td><td class="t">${kr(c.net)}</td></tr>
             <tr class="sub"><td colspan="3">vsk (${r.vsk}%)</td><td class="t">${kr(c.vsk)}</td></tr>
-            <tr class="grand"><td colspan="3">samtals með vsk</td><td class="t">${kr(c.total)}</td></tr>
+            <tr class="grand"><td colspan="3">samtals með vsk${c.fixed>0?' <span style="font-size:10px;background:#fef3c7;color:#92400e;padding:1px 5px;border-radius:3px;font-weight:normal">fast verð</span>':''}</td><td class="t">${kr(c.displayTotal)}</td></tr>
           </tbody>
         </table>
         ${notes?`<p style="font-size:12px;color:#555;margin-top:16px;font-style:italic">${escapeHtml(notes)}</p>`:''}`;
@@ -10961,10 +10967,11 @@ async function renderGerdReikninga(t){
             akstur_km: c.km, akstur_ferdir: c.fr,
             smahlutagjald: c.sma, stadfesting: c.stadf,
             materials_jsonb: c.matLines, materials_total: c.matSum,
-            net_an_vsk: c.net, vsk_amount: c.vsk, total_m_vsk: c.total,
+            net_an_vsk: c.net, vsk_amount: c.vsk, total_m_vsk: c.displayTotal,
             // afsláttur vistast Á drögunum (ekki bara í UI-state) svo
             // endurprentun stemmi á öllum tækjum.
             discount_pct: (state.ui.gr_discount||{})[name+'|'+month] || 0,
+            fixed_total: numv('gr-fix') || null,
             status: existing?.status || 'draft',
             notes: document.getElementById('gr-notes').value.trim() || null,
             updated_by: 'gerd-reikninga',
@@ -11007,7 +11014,7 @@ async function renderGerdReikninga(t){
         // getur breytt (PATCH-leiðin í invoice-drafts.js snertir ekkert annað).
         const flds = ['customer_name','kennitala','heimilisfang','hours_dagvinna','hours_eftirvinna',
           'rate_dagvinna','rate_eftirvinna','akstur_km','akstur_ferdir','smahlutagjald','stadfesting',
-          'materials_jsonb','materials_total','net_an_vsk','vsk_amount','total_m_vsk','discount_pct','status','notes'];
+          'materials_jsonb','materials_total','net_an_vsk','vsk_amount','total_m_vsk','discount_pct','fixed_total','status','notes'];
         const body = { worksite_name: revSnap.worksite_name, work_month: revSnap.work_month, updated_by:'yfirferd-revert' };
         for(const f of flds) if(revSnap[f] !== undefined) body[f] = revSnap[f];
         const rr = await fetch('/api/invoice-drafts', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
@@ -19992,7 +19999,7 @@ async function buildAndSaveEfnislistiPdf(name, month, data, overwrite){
   const foot = [
     [{content:'Samtals án vsk', colSpan:3, styles:{halign:'right',fontStyle:'italic'}}, {content:kr(c.net), styles:{halign:'right'}}],
     [{content:'vsk ('+rt.vsk+'%)', colSpan:3, styles:{halign:'right',fontStyle:'italic'}}, {content:kr(c.vsk), styles:{halign:'right'}}],
-    [{content:'Samtals með vsk', colSpan:3, styles:{halign:'right',fontStyle:'bold'}}, {content:kr(c.total), styles:{halign:'right',fontStyle:'bold'}}],
+    [{content:'Samtals með vsk'+(c.fixed>0?' (fast verð)':''), colSpan:3, styles:{halign:'right',fontStyle:'bold'}}, {content:kr(c.displayTotal), styles:{halign:'right',fontStyle:'bold'}}],
   ];
   doc.autoTable({
     startY: Math.max(by+8, y+40),
