@@ -9803,6 +9803,21 @@ function grOpenWorksite(worksite, month){
   save(); render();
 }
 async function renderGerdReikninga(t){
+  // Deep-link beint í Efnislista-ritilinn — ?grws=<verkstaður>&grwm=<YYYY-MM>[&review=1]#gerdreikninga.
+  // Notað af yfirferd.html (Big Boss appinu): yfirmaður fær beinan hlekk á alvöru
+  // formið í stað sér-ritils. review=1 kveikir ✓ Staðfesta / ↶ Hætta við í ritlinum.
+  if(!window.__grDeepDone){
+    window.__grDeepDone = true;
+    try{
+      const sp = new URLSearchParams(location.search);
+      const dws = sp.get('grws'), dwm = sp.get('grwm');
+      if(dws){
+        window.__grPendingOpen = dws;
+        window.__grReviewMode = sp.get('review') === '1';
+        if(dwm && /^\d{4}-\d{2}$/.test(dwm)){ state.ui = state.ui || {}; state.ui.gr_month = dwm; }
+      }
+    }catch(_){}
+  }
   // ===== Verðskrá efnis (same price list as /reikningur) — used for quick-add =====
   const GR_MATERIALS = [
     { section:'Almennt', items:[
@@ -10450,6 +10465,13 @@ async function renderGerdReikninga(t){
     }
     const redderTotal = (REDDER[`${name}|${month}`]||{}).an_vsk || 0;
 
+    // Yfirferðar-hamur: opnað gegnum yfirferðar-hlekkinn (review=1) EÐA drögin
+    // eru flögguð til yfirferðar. Snapshot af vistuðu drögunum tekið við opnun
+    // svo ↶ Hætta við geti afturkallað ALLT sem gerðist í þessari opnun
+    // (líka það sem var þegar 💾 vistað).
+    const reviewOn = !!window.__grReviewMode || !!(d && d.review_requested);
+    const revSnap = reviewOn && d ? JSON.parse(JSON.stringify(d)) : null;
+
     const bg = document.createElement('div');
     bg.className = 'gr-modal-bg';
     const matSelect = `<select id="gr-mat-pick"><option value="">+ bæta efni úr Verðskrá…</option>${
@@ -10492,6 +10514,8 @@ async function renderGerdReikninga(t){
             <button class="gr-btn" id="gr-print" type="button">🖨 Prenta / PDF</button>
             <button class="gr-btn" id="gr-manual-btn" type="button" title="Opna handvirka stillingu — kennitala og heimilisfang verkkaupa á reikning">✏️ Handvirkt</button>
             <button class="gr-btn" id="gr-timabok" type="button" title="Prenta tímabók (mæting starfsmanna) til að senda með reikningi">🕒 Tímabók</button>
+            ${reviewOn ? `<button class="gr-btn" id="gr-confirm" type="button" style="background:#059669;border-color:#059669;color:#fff" title="Vista breytingarnar OG staðfesta yfirferðina — skrifstofan sér grænt „👔 Staðfest" á Kröfu yfirliti">✓ Staðfesta</button>
+            <button class="gr-btn" id="gr-revert" type="button" style="border-color:#b91c1c;color:#b91c1c" title="Afturkalla ALLAR breytingar úr þessari opnun (líka vistaðar) — drögin fara aftur í það sem þau voru þegar formið opnaðist">↶ Hætta við</button>` : ''}
             <button class="gr-btn" id="gr-close2" type="button">Loka</button>
             <span id="gr-save-st" style="font-size:12px;color:#64748b;align-self:center"></span>
           </div>
@@ -10640,7 +10664,7 @@ async function renderGerdReikninga(t){
     (function(){ const _dm=document.getElementById('gr-datemode'), _dt=document.getElementById('gr-datetext'); if(_dm&&_dt) _dm.addEventListener('change', ()=>{ _dt.style.display=_dm.checked?'':'none'; if(_dm.checked){ _dt.focus(); } draw(); }); })();
 
     // ----- Save -----
-    document.getElementById('gr-save').onclick = async () => {
+    const doSave = async (extra) => {
       const c = compute();
       { const _k=name+'|'+month, _dm=document.getElementById('gr-datemode'), _dtv=(document.getElementById('gr-datetext').value||'').trim(); state.ui=state.ui||{}; state.ui.gr_date_text=state.ui.gr_date_text||{}; if(_dm&&_dm.checked&&_dtv) state.ui.gr_date_text[_k]=_dtv; else delete state.ui.gr_date_text[_k]; state.ui.gr_sma_off=state.ui.gr_sma_off||{}; const _so=document.getElementById('gr-sma-on'); if(_so&&!_so.checked) state.ui.gr_sma_off[_k]=true; else delete state.ui.gr_sma_off[_k]; state.ui.gr_discount=state.ui.gr_discount||{}; const _dp=document.getElementById('gr-disc')?Math.max(0,Math.min(100,parseNum(document.getElementById('gr-disc').value))):0; if(_dp>0) state.ui.gr_discount[_k]=_dp; else delete state.ui.gr_discount[_k]; save(); }
       const $st = document.getElementById('gr-save-st');
@@ -10649,7 +10673,7 @@ async function renderGerdReikninga(t){
       try{
         const rr = await fetch('/api/invoice-drafts', {
           method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({
+          body: JSON.stringify(Object.assign({
             worksite_name: document.getElementById('gr-ws').value.trim(),
             work_month: month,
             customer_name: document.getElementById('gr-cust').value.trim() || null,
@@ -10668,14 +10692,54 @@ async function renderGerdReikninga(t){
             status: existing?.status || 'draft',
             notes: document.getElementById('gr-notes').value.trim() || null,
             updated_by: 'gerd-reikninga',
-          }),
+          }, extra || {})),
         });
         if(!rr.ok) throw new Error('HTTP '+rr.status+': '+(await rr.text()).slice(0,120));
         const saved = await rr.json();
         DRAFTS[`${name}|${month}`] = saved;
         $st.textContent = '✓ Vistað';
         renderList();
-      }catch(e){ $st.textContent = '✗ '+(e.message||e); }
+        return true;
+      }catch(e){ $st.textContent = '✗ '+(e.message||e); return false; }
+    };
+    document.getElementById('gr-save').onclick = () => doSave();
+    // Yfirferðar-takkarnir (sjá reviewOn/revSnap að ofan). Eftir Staðfesta /
+    // Hætta við í appinu (review=1 hlekkur) er farið TIL BAKA á yfirferðar-
+    // listann (history.back) svo yfirmaðurinn lendi ekki í Gerð Reikninga.
+    const revDone = () => {
+      if(window.__grReviewMode && history.length > 1){ history.back(); return; }
+      close();
+    };
+    const $conf = document.getElementById('gr-confirm');
+    if($conf) $conf.onclick = async () => {
+      $conf.disabled = true;
+      const ok = await doSave({
+        review_confirmed_at: new Date().toISOString(),
+        review_confirmed_by: bhMe() || 'yfirmaður',
+      });
+      $conf.disabled = false;
+      if(ok) revDone();
+    };
+    const $revert = document.getElementById('gr-revert');
+    if($revert) $revert.onclick = async () => {
+      if(!revSnap){ revDone(); return; }   // engin vistuð drög við opnun — ekkert að afturkalla
+      $revert.disabled = true;
+      const $st = document.getElementById('gr-save-st');
+      $st.textContent = 'Afturkallar…';
+      try{
+        // Skrifa snapshotið frá opnun til baka — aðeins reitirnir sem ritillinn
+        // getur breytt (PATCH-leiðin í invoice-drafts.js snertir ekkert annað).
+        const flds = ['customer_name','kennitala','heimilisfang','hours_dagvinna','hours_eftirvinna',
+          'rate_dagvinna','rate_eftirvinna','akstur_km','akstur_ferdir','smahlutagjald','stadfesting',
+          'materials_jsonb','materials_total','net_an_vsk','vsk_amount','total_m_vsk','discount_pct','status','notes'];
+        const body = { worksite_name: revSnap.worksite_name, work_month: revSnap.work_month, updated_by:'yfirferd-revert' };
+        for(const f of flds) if(revSnap[f] !== undefined) body[f] = revSnap[f];
+        const rr = await fetch('/api/invoice-drafts', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+        if(!rr.ok) throw new Error('HTTP '+rr.status);
+        DRAFTS[`${revSnap.worksite_name}|${revSnap.work_month}`] = await rr.json();
+        renderList();
+        revDone();
+      }catch(e){ $st.textContent = '✗ '+(e.message||e); $revert.disabled = false; }
     };
 
     // ----- Print (open clean window) -----

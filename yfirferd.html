@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Yfirferð efnislista</title>
 <style>
-  /* UTGAFA 1 — sjá haus-badge. Bumpaðu við hverja breytingu (cache-gildran). */
+  /* UTGAFA 2 — sjá haus-badge. Bumpaðu við hverja breytingu (cache-gildran). */
   :root{ --bg:#0b1220; --card:#111a2e; --line:#1f2b45; --ink:#e8edf7; --ink2:#9fb0cc; --ink3:#6b7d9c; }
   *{ box-sizing:border-box; }
   body{ margin:0; font-family:"Space Grotesk",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
@@ -30,33 +30,15 @@
   .badge{ display:inline-block; font-size:11px; font-weight:700; border-radius:99px; padding:3px 10px; margin-top:7px; }
   .badge.pending{ background:#2a1508; border:1px solid #5a3f16; color:#fcd9a6; }
   .badge.ok{ background:#0f1e14; border:1px solid #1f5233; color:#7ff0b0; }
-  .sec{ font-size:11px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--ink3); margin:15px 0 7px; }
-  .line{ display:flex; align-items:center; gap:9px; padding:8px 0; border-bottom:1px solid var(--line); }
-  .line:last-child{ border-bottom:0; }
-  .line .lbl{ flex:1; font-size:14px; min-width:0; overflow-wrap:anywhere; }
-  .line .lbl small{ display:block; color:var(--ink3); font-size:11px; margin-top:1px; }
-  .stepper{ display:flex; align-items:center; gap:6px; flex-shrink:0; }
-  .stepper button{ width:42px; height:42px; border-radius:10px; border:1px solid #35415f; background:#182544;
-    color:#e8edf7; font-size:20px; font-weight:700; cursor:pointer; touch-action:manipulation; }
-  .stepper button:active{ background:#22315c; }
-  .stepper input{ width:64px; height:42px; text-align:center; font:inherit; font-size:16px; font-weight:700;
-    background:#0d1526; border:1px solid #35415f; border-radius:10px; color:#e8edf7; }
-  .totals{ margin-top:13px; border-top:2px solid var(--line); padding-top:9px; font-size:13px; }
-  .totals .trow{ display:flex; justify-content:space-between; padding:3px 0; color:var(--ink2); }
-  .totals .trow.grand{ font-size:17px; font-weight:800; color:#f3dd97; padding-top:6px; }
-  .acts{ display:flex; gap:9px; margin-top:14px; flex-wrap:wrap; align-items:center; }
+  .total{ font-size:19px; font-weight:800; color:#f3dd97; margin-top:10px; }
+  .total small{ display:block; font-size:11px; font-weight:400; color:var(--ink3); margin-top:1px; }
+  .acts{ display:flex; gap:9px; margin-top:13px; flex-wrap:wrap; align-items:center; }
   .btn{ font:inherit; font-size:15px; font-weight:700; padding:13px 20px; border-radius:11px; cursor:pointer;
-    border:1px solid #35415f; background:#182544; color:#e8edf7; min-height:50px; touch-action:manipulation; }
+    border:1px solid #35415f; background:#182544; color:#e8edf7; min-height:50px; touch-action:manipulation;
+    text-decoration:none; display:inline-flex; align-items:center; gap:7px; }
   .btn.gold{ border:1px solid #6e4a11; color:#1a1200;
     background:linear-gradient(180deg,#f9e29a 0%,#e0ad3f 45%,#c99a3f 55%,#f3dd97 100%); }
-  .btn.green{ border:1px solid #1f5233; background:linear-gradient(160deg,#1d7a44,#0f5230); color:#eafff3; }
-  .btn:disabled{ opacity:.55; cursor:default; }
-  .st{ font-size:12.5px; color:var(--ink2); }
-  .st.ok{ color:#7ff0b0; } .st.err{ color:#fca5a5; }
-  .conftrail{ font-size:12px; color:#7ff0b0; margin-top:9px; }
   .loading,.empty{ text-align:center; color:var(--ink3); padding:60px 12px; font-size:14px; line-height:1.6; }
-  .notes{ width:100%; min-height:54px; font:inherit; font-size:14px; background:#0d1526; color:#e8edf7;
-    border:1px solid #35415f; border-radius:10px; padding:9px 11px; }
   a.refresh{ color:var(--ink2); font-size:12px; text-decoration:none; }
 </style>
 </head>
@@ -64,28 +46,22 @@
   <div class="titlebar">
     <h1>👔 Yfirferð efnislista</h1>
     <button class="me" id="me" type="button" title="Hver ert þú? Nafnið skráist á staðfestinguna">👤 <span id="me-lbl">…</span></button>
-    <span class="ver">v1</span>
+    <span class="ver">v2</span>
   </div>
-  <p class="sub">Efnislistar sem skrifstofan bað um yfirferð á. Breyttu tímum/magni ef þarf, ýttu á <b>💾 Vista</b> — og <b>✓ Staðfesta</b> þegar listinn er réttur. Staðan birtist strax í Kröfu yfirlitinu. · <a class="refresh" href="#" id="refresh">↻ uppfæra</a></p>
+  <p class="sub">Efnislistar sem skrifstofan bað um yfirferð á. Ýttu á <b>🧾 Opna Efnislista</b> — þar breytir þú tölum í ALVÖRU forminu og ýtir á <b>✓ Staðfesta</b> (eða <b>↶ Hætta við</b> til að afturkalla allt). · <a class="refresh" href="#" id="refresh">↻ uppfæra</a></p>
   <div id="app"><div class="loading">Sæki efnislista…</div></div>
 
 <script>
   var TEAM = ['Annþór','Agnar','Andri','Hákon','Elías'];
-  var GR_KM = 186, GR_FERD = 4000, GR_SMA = 137, GR_STADF = 20000;
   var MONTHS = ['janúar','febrúar','mars','apríl','maí','júní','júlí','ágúst','september','október','nóvember','desember'];
-  var PG = {};           // worksite_name → pricing_guide röð
-  var ROWS = [];         // drög til yfirferðar
 
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
   function fmt(n){ return (Math.round(n||0)).toLocaleString('is-IS').replace(/,/g,'.'); }
   function mlabel(m){ var p=String(m||'').split('-'); return (MONTHS[(+p[1])-1]||'')+' '+p[0]; }
-  function parseNum(v){ var s=String(v==null?'':v).trim().replace(/\s/g,'');
-    if(s.indexOf(',')>-1&&s.indexOf('.')>-1) s=s.replace(/\./g,'').replace(',','.'); else s=s.replace(',','.');
-    s=s.replace(/[^0-9.\-]/g,''); var n=parseFloat(s); return isFinite(n)?n:0; }
   function dtIs(s){ try{ return new Date(s).toLocaleString('is-IS',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(_){ return ''; } }
 
-  // Sama auðkennis-mynstur og hub-ið (bh_me í localStorage) — deilist EKKI milli
-  // léna, en Annþór velur sig einu sinni í appinu og það festist á símanum hans.
+  // Sama auðkenni og hub-ið (bh_me í localStorage) — SAMA lén, svo nafnið sem er
+  // valið hér gildir líka inni í Efnislista-forminu (review_confirmed_by).
   function me(){ try{ return (localStorage.getItem('bh_me')||'').trim(); }catch(_){ return ''; } }
   function setMe(n){ try{ localStorage.setItem('bh_me', n); }catch(_){} paintMe(); }
   function paintMe(){ document.getElementById('me-lbl').textContent = me() || 'velja nafn'; }
@@ -96,189 +72,43 @@
   };
   paintMe();
 
-  function rateFor(ws){
-    var pg = PG[ws] || {};
-    return {
-      km: Number(pg.akstur_km_rate)||GR_KM,
-      ferd: Number(pg.akstur_ferd_rate)||GR_FERD,
-      sma: (pg.smahlutagjald_per_h == null ? GR_SMA : Number(pg.smahlutagjald_per_h)),
-      vsk: Number(pg.vsk_pct)||24,
-    };
+  // Beinn hlekkur á ALVÖRU Efnislista-formið (Gerð Reikninga í hub-num) fyrir
+  // þennan verkstað/mánuð. review=1 kveikir ✓ Staðfesta / ↶ Hætta við þar, og
+  // eftir hvorn takkann sem er kemur history.back() með þig aftur hingað.
+  function formUrl(d){
+    return '/?embed=1&grws='+encodeURIComponent(d.worksite_name)
+      + '&grwm='+encodeURIComponent(d.work_month)+'&review=1#gerdreikninga';
   }
 
-  // Sami útreikningur og Gerð Reikninga (compute() í index.html) — verður að
-  // stemma við það sem skrifstofan sér, annars birtast tvær ólíkar tölur.
-  function compute(d, r){
-    var dvH=+d.hours_dagvinna||0, dvR=+d.rate_dagvinna||0, evH=+d.hours_eftirvinna||0, evR=+d.rate_eftirvinna||0;
-    var km=+d.akstur_km||0, fr=+d.akstur_ferdir||0;
-    var stadf = +d.stadfesting||0;
-    var smaOff = d.__smaOff!=null ? d.__smaOff : !(+d.smahlutagjald>0) && (dvH+evH)>0 && r.sma>0 && (+d.total_m_vsk>0);
-    var sma = smaOff ? 0 : Math.round(r.sma*(dvH+evH));
-    var mats = Array.isArray(d.materials_jsonb)?d.materials_jsonb:[];
-    var matSum = 0;
-    mats.forEach(function(m){ m.total = Math.round((+m.price||0)*(+m.qty||0)); matSum += m.total; });
-    var net0 = dvR*dvH + evR*evH + km*r.km + fr*r.ferd + sma + stadf + matSum;
-    var discPct = Math.max(0, Math.min(100, +d.discount_pct||0));
-    var disc = discPct>0 ? Math.round(net0*discPct/100) : 0;
-    var net = net0-disc, vsk = Math.round(net*r.vsk/100);
-    return { sma:sma, matSum:matSum, discPct:discPct, disc:disc, net:net, vsk:vsk, total:net+vsk };
-  }
-
-  function stepper(id, val, step, dec){
-    return '<span class="stepper">'
-      + '<button type="button" data-step="'+id+'" data-d="-1">−</button>'
-      + '<input inputmode="decimal" data-inp="'+id+'" value="'+esc(dec?String(val).replace('.',','):String(val))+'">'
-      + '<button type="button" data-step="'+id+'" data-d="1">+</button></span>';
-  }
-
-  function cardHtml(d, i){
-    var r = rateFor(d.worksite_name);
-    var c = compute(d, r);
+  function cardHtml(d){
     var confirmed = !!d.review_confirmed_at;
-    var mats = Array.isArray(d.materials_jsonb)?d.materials_jsonb:[];
-    var matRows = mats.map(function(m,mi){
-      return '<div class="line"><div class="lbl">'+esc(m.label||'—')+'<small>'+fmt(m.price)+' kr/stk · samtals '+fmt((+m.price||0)*(+m.qty||0))+' kr</small></div>'
-        + stepper(i+':mat:'+mi, +m.qty||0, 1) + '</div>';
-    }).join('') || '<div class="line"><div class="lbl" style="color:var(--ink3)">Engar efnislínur</div></div>';
-    return '<div class="card'+(confirmed?' confirmed':'')+'" data-card="'+i+'">'
+    return '<div class="card'+(confirmed?' confirmed':'')+'">'
       + '<h2>'+esc(d.worksite_name)+'</h2>'
       + '<div class="cmeta">'+esc(mlabel(d.work_month))+(d.customer_name?' · '+esc(d.customer_name):'')
       + (d.review_requested_by?' · beðið af '+esc(d.review_requested_by)+(d.review_requested_at?' '+dtIs(d.review_requested_at):''):'')+'</div>'
       + (confirmed
           ? '<span class="badge ok">✓ Staðfest · '+esc(d.review_confirmed_by||'')+' · '+dtIs(d.review_confirmed_at)+'</span>'
           : '<span class="badge pending">Bíður yfirferðar</span>')
-      + '<div class="sec">Tími</div>'
-      + '<div class="line"><div class="lbl">Dagvinna<small>'+fmt(d.rate_dagvinna)+' kr/klst</small></div>'+stepper(i+':dvh', +d.hours_dagvinna||0, 1, true)+'</div>'
-      + '<div class="line"><div class="lbl">Yfirvinna<small>'+fmt(d.rate_eftirvinna)+' kr/klst</small></div>'+stepper(i+':evh', +d.hours_eftirvinna||0, 1, true)+'</div>'
-      + '<div class="sec">Akstur</div>'
-      + '<div class="line"><div class="lbl">km<small>× '+fmt(r.km)+' kr</small></div>'+stepper(i+':km', +d.akstur_km||0, 10)+'</div>'
-      + '<div class="line"><div class="lbl">ferðir<small>× '+fmt(r.ferd)+' kr</small></div>'+stepper(i+':fr', +d.akstur_ferdir||0, 1)+'</div>'
-      + '<div class="sec">Efni</div>' + matRows
-      + '<div class="sec">Athugasemd (birtist neðst á reikningi)</div>'
-      + '<textarea class="notes" data-notes="'+i+'" placeholder="t.d. leiðrétting eða skilaboð">'+esc(d.notes||'')+'</textarea>'
-      + '<div class="totals">'
-      + (c.sma>0?'<div class="trow"><span>Smáhlutagjald</span><span>'+fmt(c.sma)+' kr</span></div>':'')
-      + ((+d.stadfesting||0)>0?'<div class="trow"><span>Staðfesting brunaþéttinga</span><span>'+fmt(d.stadfesting)+' kr</span></div>':'')
-      + (c.disc>0?'<div class="trow"><span>Afsláttur ('+c.discPct+'%)</span><span>−'+fmt(c.disc)+' kr</span></div>':'')
-      + '<div class="trow"><span>Samtals án vsk</span><span>'+fmt(c.net)+' kr</span></div>'
-      + '<div class="trow"><span>vsk</span><span>'+fmt(c.vsk)+' kr</span></div>'
-      + '<div class="trow grand"><span>Samtals m/vsk</span><span data-total="'+i+'">'+fmt(c.total)+' kr</span></div>'
-      + '</div>'
-      + '<div class="acts">'
-      + '<button class="btn gold" type="button" data-save="'+i+'">💾 Vista</button>'
-      + '<button class="btn green" type="button" data-confirm="'+i+'">✓ Staðfesta</button>'
-      + '<button class="btn" type="button" data-revert="'+i+'" title="Afturkalla óvistaðar breytingar — kortið fer aftur í síðast vistaða útgáfu">↶ Hætta við</button>'
-      + '<span class="st" data-st="'+i+'"></span>'
-      + '</div>'
-      + (confirmed?'<div class="conftrail">Þegar staðfest — Vista/Staðfesta aftur uppfærir.</div>':'')
+      + '<div class="total">'+fmt(d.total_m_vsk)+' kr <small>samtals m/vsk · síðast vistað '+dtIs(d.updated_at)+'</small></div>'
+      + '<div class="acts"><a class="btn gold" href="'+esc(formUrl(d))+'">🧾 Opna Efnislista</a></div>'
       + '</div>';
   }
 
-  function render(){
+  function render(rows){
     var app = document.getElementById('app');
-    if(!ROWS.length){
+    if(!rows.length){
       app.innerHTML = '<div class="empty">🎉 Ekkert bíður yfirferðar.<br>Skrifstofan flaggar Efnislista með 👔-takkanum í Kröfu yfirlitinu — þeir birtast hér.</div>';
       return;
     }
-    app.innerHTML = ROWS.map(cardHtml).join('');
-  }
-
-  // Ein delegated hlustun — lifir re-render af.
-  document.getElementById('app').addEventListener('click', function(e){
-    var b = e.target.closest('button'); if(!b) return;
-    if(b.dataset.step!=null){
-      var id=b.dataset.step, dir=+b.dataset.d;
-      var inp=document.querySelector('[data-inp="'+id+'"]'); if(!inp) return;
-      var parts=id.split(':'), i=+parts[0], d=ROWS[i];
-      var step = (parts[1]==='km')?10:1;
-      var v = Math.max(0, parseNum(inp.value) + dir*step);
-      v = Math.round(v*100)/100;
-      inp.value = String(v).replace('.',',');
-      applyField(i, parts, v); redraw(i);
-      return;
-    }
-    if(b.dataset.save!=null){ save(+b.dataset.save, false, b); return; }
-    if(b.dataset.confirm!=null){ save(+b.dataset.confirm, true, b); return; }
-    if(b.dataset.revert!=null){ revert(+b.dataset.revert); return; }
-  });
-  document.getElementById('app').addEventListener('change', function(e){
-    var inp=e.target.closest('[data-inp]');
-    if(inp){ var parts=inp.dataset.inp.split(':'); applyField(+parts[0], parts, Math.max(0,parseNum(inp.value))); redraw(+parts[0]); return; }
-    var nt=e.target.closest('[data-notes]');
-    if(nt){ ROWS[+nt.dataset.notes].notes = nt.value; }
-  });
-
-  function applyField(i, parts, v){
-    var d = ROWS[i]; if(!d) return;
-    if(parts[1]==='dvh') d.hours_dagvinna = v;
-    else if(parts[1]==='evh') d.hours_eftirvinna = v;
-    else if(parts[1]==='km') d.akstur_km = v;
-    else if(parts[1]==='fr') d.akstur_ferdir = v;
-    else if(parts[1]==='mat'){ var m=(d.materials_jsonb||[])[+parts[2]]; if(m) m.qty = v; }
-  }
-  function redraw(i){
-    // Uppfæra bara samtöluna (ekki allt kortið — þá týnist fókus í reitum).
-    var d=ROWS[i], r=rateFor(d.worksite_name), c=compute(d,r);
-    var el=document.querySelector('[data-total="'+i+'"]'); if(el) el.textContent = fmt(c.total)+' kr';
-  }
-
-  // ↶ Hætta við — afturkallar ÓVISTAÐAR breytingar (aftur í síðast vistaða
-  // útgáfu úr gagnagrunni; snertir hvorki vistun né staðfestingar-stöðu).
-  var ORIG = [];
-  function snap(d){ try{ return JSON.parse(JSON.stringify(d)); }catch(_){ return d; } }
-  function revert(i){
-    if(ORIG[i]){ ROWS[i] = snap(ORIG[i]); render(); }
-    var st = document.querySelector('[data-st="'+i+'"]');
-    if(st){ st.className='st'; st.textContent='↶ Breytingar afturkallaðar'; }
-  }
-
-  async function save(i, confirm, btn){
-    var d = ROWS[i]; if(!d) return;
-    var st = document.querySelector('[data-st="'+i+'"]');
-    var who = me();
-    if(confirm && !who){ document.getElementById('me').click(); who = me(); if(!who) return; }
-    btn.disabled = true; if(st){ st.className='st'; st.textContent='Vista…'; }
-    var r = rateFor(d.worksite_name), c = compute(d, r);
-    var payload = {
-      worksite_name: d.worksite_name, work_month: d.work_month,
-      hours_dagvinna: +d.hours_dagvinna||0, hours_eftirvinna: +d.hours_eftirvinna||0,
-      akstur_km: +d.akstur_km||0, akstur_ferdir: +d.akstur_ferdir||0,
-      smahlutagjald: c.sma,
-      materials_jsonb: (d.materials_jsonb||[]).map(function(m){ return { label:m.label||'', price:+m.price||0, qty:+m.qty||0, cost:+m.cost||0, total:Math.round((+m.price||0)*(+m.qty||0)) }; }),
-      materials_total: c.matSum,
-      net_an_vsk: c.net, vsk_amount: c.vsk, total_m_vsk: c.total,
-      notes: (d.notes||'').trim() || null,
-      updated_by: 'yfirferd' + (who?':'+who:''),
-    };
-    if(confirm){
-      payload.review_confirmed_at = new Date().toISOString();
-      payload.review_confirmed_by = who;
-    }
-    try{
-      var rr = await fetch('/api/invoice-drafts', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
-      if(!rr.ok) throw new Error('HTTP '+rr.status);
-      var saved = await rr.json();
-      ROWS[i] = Object.assign({}, d, saved, { __smaOff: d.__smaOff });
-      ORIG[i] = snap(ROWS[i]);   // ný grunnlína — ↶ fer aftur hingað
-      render();
-      var st2 = document.querySelector('[data-st="'+i+'"]');
-      if(st2){ st2.className='st ok'; st2.textContent = confirm ? '✓ Staðfest og vistað' : '✓ Vistað'; }
-    }catch(err){
-      if(st){ st.className='st err'; st.textContent='✗ '+(err.message||err); }
-      btn.disabled = false;
-    }
+    app.innerHTML = rows.map(cardHtml).join('');
   }
 
   async function load(){
     document.getElementById('app').innerHTML = '<div class="loading">Sæki efnislista…</div>';
     try{
-      var res = await Promise.all([
-        fetch('/api/invoice-drafts').then(function(r){ return r.json(); }),
-        fetch('/api/pricing-guide').then(function(r){ return r.ok?r.json():{rows:[]}; }).catch(function(){ return {rows:[]}; }),
-      ]);
-      PG = {}; (res[1].rows||[]).forEach(function(p){ PG[p.worksite_name]=p; });
+      var res = await fetch('/api/invoice-drafts').then(function(r){ return r.json(); });
       var cutoff = new Date(Date.now() - 60*864e5).toISOString();
-      ROWS = (res[0].rows||[]).filter(function(d){
+      var rows = (res.rows||[]).filter(function(d){
         if(!d.review_requested) return false;
         // Staðfestir listar hverfa af borðinu eftir 60 daga (sagan lifir í töflunni).
         if(d.review_confirmed_at && d.review_confirmed_at < cutoff) return false;
@@ -288,13 +118,15 @@
         if(ac!==bc) return ac-bc;   // óstaðfest fyrst
         return String(b.review_requested_at||'').localeCompare(String(a.review_requested_at||''));
       });
-      ORIG = ROWS.map(snap);
-      render();
+      render(rows);
     }catch(e){
       document.getElementById('app').innerHTML = '<div class="empty">Villa: '+esc(e.message||e)+'</div>';
     }
   }
   document.getElementById('refresh').onclick = function(e){ e.preventDefault(); load(); };
+  // Endurhlaða þegar komið er TIL BAKA úr forminu (bfcache skilar annars gömlu
+  // stöðunni og staðfestingin sæist ekki fyrr en eftir handvirkt ↻).
+  window.addEventListener('pageshow', function(ev){ if(ev.persisted) load(); });
   load();
 </script>
 </body>
