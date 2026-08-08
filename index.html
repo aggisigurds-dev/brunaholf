@@ -14606,8 +14606,10 @@ async function renderKrofuyfirlit(t){
     const total = invs.reduce((a,iv)=>a+(Number(iv.amount)||0),0);
     const months = [...new Set(invs.map(iv=>iv.work_month).filter(Boolean))].sort();
     const defMonth = months[months.length-1] || CUR_MONTH;
+    const wsNames = [...new Set(invs.map(iv=>iv.worksite).filter(Boolean))];
     const names = [...new Set(invs.map(iv=>iv.worksite||iv.customer).filter(Boolean))];
-    const defName = 'Sameinað: ' + names.join(' + ');
+    // If all drafts share one worksite, keep that name (no "Sameinað:" prefix).
+    const defName = wsNames.length===1 ? wsNames[0] : 'Sameinað: ' + names.join(' + ');
     const custs = [...new Set(invs.map(iv=>iv.customer).filter(Boolean))];
     const defCust = custs.length===1 ? custs[0] : custs.join(' / ');
     const kts = [...new Set(invs.map(iv=>iv.kt).filter(Boolean))];
@@ -14623,9 +14625,13 @@ async function renderKrofuyfirlit(t){
       <div style="font-weight:800;font-size:16px;color:#0f172a;margin-bottom:2px">🔗 Sameina ${invs.length} drög</div>
       <div style="font-size:12px;color:#94a3b8;margin-bottom:12px">Býr til eitt nýtt drög með samtals upphæð — upprunalegu drögin eru merkt „sameinað" og hverfa úr Ósendar-listanum.</div>
       <div style="background:#fafbfe;border:1px solid #eef1f6;border-radius:10px;padding:8px 12px;margin-bottom:14px">${rowsHtml}</div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 2px 14px;border-bottom:1px solid #eef1f6;margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 2px 10px;border-bottom:1px solid #eef1f6;margin-bottom:10px">
         <span style="font-weight:700;color:#475569;font-size:13px">Samtals</span>
         <span class="ky-num" style="font-weight:800;font-size:18px;color:#1d4ed8">${fmtKr(total)}</span>
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-size:12px;font-weight:700;color:#475569;margin:0 0 3px">Yfirrita heildarverð <span style="font-weight:400;color:#94a3b8">(valkvætt — ef samningsverð er annað en summan)</span></label>
+        <input id="_cmb-fixed" type="number" min="0" placeholder="t.d. 1500000" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;font-size:14px;box-sizing:border-box">
       </div>
       <label style="display:block;font-size:12px;font-weight:700;color:#475569;margin:0 0 3px">Heiti nýja draganna</label>
       <input id="_cmb-name" value="${esc(defName)}" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;font-size:14px;box-sizing:border-box">
@@ -14643,6 +14649,8 @@ async function renderKrofuyfirlit(t){
     document.getElementById('_cmb-confirm').onclick = async ()=>{
       const name = document.getElementById('_cmb-name').value.trim();
       const month = document.getElementById('_cmb-month').value.trim();
+      const fixedRaw = document.getElementById('_cmb-fixed').value.trim();
+      const fixedTotal = fixedRaw ? Math.round(Number(fixedRaw)) : 0;
       if(!name || !/^\d{4}-\d{2}$/.test(month)){ alert('Heiti og gildur mánuður (ÁÁÁÁ-MM) þarf að fylla út.'); return; }
       const btn = document.getElementById('_cmb-confirm');
       btn.disabled = true; btn.textContent = '⏳ Sameinar…';
@@ -14671,7 +14679,8 @@ async function renderKrofuyfirlit(t){
         const mergedMats=[...matMap.values()].filter(m=>m.qty>0||m.total>0);
         const matSum=mergedMats.reduce((a,m)=>a+m.total,0);
         const vsk = 24;
-        const net = Math.round(total/(1+vsk/100));
+        const usedTotal = fixedTotal || total;
+        const net = Math.round(usedTotal/(1+vsk/100));
         const r1 = await fetch('/api/invoice-drafts', {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({
           worksite_name: name, work_month: month, customer_name: defCust||undefined, kennitala: defKt||undefined,
           source: 'combined', status: 'draft',
@@ -14681,7 +14690,8 @@ async function renderKrofuyfirlit(t){
           akstur_km: sumKm||undefined, akstur_ferdir: sumFr||undefined,
           smahlutagjald: sumSma||undefined, stadfesting: sumStadf||undefined,
           materials_jsonb: mergedMats.length?mergedMats:undefined, materials_total: matSum||undefined,
-          total_m_vsk: total, net_an_vsk: net, vsk_amount: total-net,
+          total_m_vsk: usedTotal, net_an_vsk: net, vsk_amount: usedTotal-net,
+          fixed_total: fixedTotal || null,
           notes: 'Sameinað úr: '+invs.map(iv=>(iv.worksite||iv.customer||'—')+' '+(iv.work_month||'')).join('; '),
         })});
         const j1 = await r1.json().catch(()=>({}));
@@ -14693,9 +14703,12 @@ async function renderKrofuyfirlit(t){
       }
       // Skref 2 — merkja upprunalegu drögin „sameinað" (best-effort; nýja drögið
       // er þegar til, svo héðan í frá lokum við glugganum sama hvað gerist).
+      // Sleppum sameinuðu dragunum sjálfu (same worksite+month = combined target)
+      // svo við yfirskrifum það ekki með 'skipped'.
       const failed = [];
       for(const iv of invs){
         if(!iv.worksite || !iv.work_month) continue;
+        if(iv.worksite===name && iv.work_month===month) continue;
         try{
           const rr = await fetch('/api/invoice-drafts', {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({
             worksite_name: iv.worksite, work_month: iv.work_month, status: 'skipped',
