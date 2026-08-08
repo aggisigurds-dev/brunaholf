@@ -9815,6 +9815,19 @@ async function renderGerdReikninga(t){
         window.__grPendingOpen = dws;
         window.__grReviewMode = sp.get('review') === '1';
         if(dwm && /^\d{4}-\d{2}$/.test(dwm)){ state.ui = state.ui || {}; state.ui.gr_month = dwm; }
+        // Hleðslu-yfirlag: ritillinn opnast fyrst þegar load() hefur sótt gögnin
+        // (nokkrar sekúndur) — án yfirlagsins blasir Gerð Reikninga-listinn við á
+        // meðan og lítur út eins og rangur skjár (ábending Agnars 2026-08-08).
+        // Fjarlægt í pending-open hooknum í load(); 20s öryggisnet ef eitthvað klikkar.
+        const ov = document.createElement('div');
+        ov.id = 'gr-deep-wait';
+        ov.style.cssText = 'position:fixed;inset:0;z-index:8999;background:rgba(248,250,252,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font-weight:700;font-size:16px;color:#334155';
+        ov.innerHTML = '<style>@keyframes grdwspin{to{transform:rotate(360deg)}}</style>'
+          + '<div style="width:36px;height:36px;border-radius:50%;border:4px solid #cbd5e1;border-top-color:#0f172a;animation:grdwspin .8s linear infinite"></div>'
+          + '<div>Sæki Efnislista…</div>'
+          + `<div style="font-size:13px;font-weight:400;color:#64748b">${escapeHtml(dws)} · ${escapeHtml(dwm||'')}</div>`;
+        document.body.appendChild(ov);
+        setTimeout(()=>{ ov.remove(); }, 20000);
       }
     }catch(_){}
   }
@@ -10228,7 +10241,9 @@ async function renderGerdReikninga(t){
       renderList();
       // Re-open editor directly when arriving from the "Tilbúnir reikningar" page.
       if(window.__grPendingOpen){ const pe = window.__grPendingOpen; window.__grPendingOpen = null; try{ openEditor(pe); }catch(_e){} }
+      document.getElementById('gr-deep-wait')?.remove();
     }catch(e){
+      document.getElementById('gr-deep-wait')?.remove();
       if(!painted){
         $host.innerHTML = `<div class="gr-loading">Villa: ${escapeHtml(e.message||String(e))}</div>`;
         $meta.textContent = 'Villa';
