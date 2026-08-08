@@ -13585,6 +13585,9 @@ async function renderKrofuyfirlit(t){
   const t2Selected = new Map();  // inv_key → invoice object (tier-2 gerd-drög only)
   // Efnislisti/Tímaskjal Drive-tenglar per „<verkstaður>|<mánuður>" (fyllt í load()).
   let EFDOCS = {};
+  // invoice_drafts-raðir per „<verkstaður>|<mánuður>" — yfirferðar-staða (👔):
+  // review_requested/review_confirmed_* dálkarnir, sjá yfirferd.html.
+  let REVIEWS = {};
   // Tímavera-tímar + Redder-efniskostnaður per „<verkstaður>|<mánuður>" (fyrir Ósendar-reitina).
   let HOURS = {}, REDDER = {};
 
@@ -13886,6 +13889,11 @@ async function renderKrofuyfirlit(t){
     const _docs = (n.ws&&n.wm) ? (EFDOCS[n.ws+'|'+n.wm]||[]) : [];
     const timDoc = _docs.find(d=>d.doc_type==='timabok_pdf'), efnDoc = _docs.find(d=>d.doc_type!=='timabok_pdf');
     const conf = !!n.wf.confirmed;
+    // 👔 Yfirferð — flagga drögin til yfirferðar hjá yfirmanni (yfirferd.html /
+    // The Big Boss appið). Aðeins á röðum sem eiga invoice_drafts-röð (REVIEWS).
+    const rv = (n.ws&&n.wm) ? REVIEWS[n.ws+'|'+n.wm] : null;
+    const rvOn = !!(rv && rv.review_requested);
+    const rvConf = !!(rv && rv.review_confirmed_at);
     // INLINE á sömu línu og upphæðin — eins og Greitt/Fela chipparnir í þrepi 1
     // og 6-takka röðin í Slökkvitæki-viðmiðinu. Chipparnir fara gegnum SAMA
     // kyAbtn-smiðinn og actChips svo þeir eru pixel-eins (46×42 .ky-abtn).
@@ -13904,16 +13912,21 @@ async function renderKrofuyfirlit(t){
     const numHtml = hasNums
       ? `<span style="font-size:9.5px;color:#64748b;font-weight:700;white-space:nowrap" title="Tímar · Redder-efni · Efnislisti m.vsk">🕒 ${hoursDisp} · 🧱 ${numIS(n.redder)} · 📄 ${numIS(n.total)}</span>`
       : '';
+    const rvHtml = rvConf
+      ? `<span style="font-size:9.5px;color:#047857;font-weight:700;white-space:nowrap" title="Yfirmaður staðfesti í yfirferð">👔 Staðfest · ${esc(rv.review_confirmed_by||'')} ${rv.review_confirmed_at?esc(fmtDate(rv.review_confirmed_at)):''}</span>`
+      : rvOn ? `<span style="font-size:9.5px;color:#b45309;font-weight:700;white-space:nowrap" title="Bíður yfirferðar yfirmanns (The Big Boss appið)">👔 Í yfirferð</span>` : '';
     return `<span class="ky-wf-boxes" style="display:inline-flex;flex:0 0 auto;flex-direction:column;align-items:center;gap:3px">
       <span style="display:inline-flex;align-items:center;gap:6px;flex-wrap:nowrap">
         ${wfBtn('tim','opentim','🕒','Tímask.','#2563eb','Opna Tímaskýrslu',!!timDoc)}${pdfLink(timDoc?bhDocUrl(timDoc):null,'Opna Tímaskýrslu PDF')}
         ${wfBtn('efn','openefn','📄','Efnisl.','#0f766e','Opna Efnislista í Gerð Reikninga',!!efnDoc)}${pdfLink(efnDoc?bhDocUrl(efnDoc):null,'Opna Efnislista PDF')}
+        ${rv?wfBtn('rev','review','👔','Yfirferð','#7c3aed',rvOn?'Taka úr yfirferð (afturkalla beiðni)':'Senda Efnislistann í yfirferð til yfirmanns (birtist í The Big Boss appinu)',rvOn):''}
         ${wfBtn('conf','confirm','✓','Staðfest','#16a34a','Staðfesta',conf)}
         ${conf?wfBtn('conf','breyta','✏️','Breyta','#ea580c','Breyta (af-staðfesta)',false):''}
         ${wfBtn('send','send','📤',inv.sent?'Sent ✓':'Senda','#16a34a',inv.sent?'Þegar sent':'Senda á bókara',!!inv.sent)}
         ${sentTrail}
       </span>
       ${numHtml}
+      ${rvHtml}
     </span>`;
   }
 
@@ -14559,6 +14572,27 @@ async function renderKrofuyfirlit(t){
       if(act==='opentim'){ if(typeof openTimabok==='function') openTimabok(iv.worksite, iv.work_month); return; }
       // 📄 Efnisl. → opnar Gerð Reikninga fyrir þennan verkstað/mánuð (þú vistar ÞAR).
       if(act==='openefn'){ if(typeof grOpenWorksite==='function') grOpenWorksite(iv.worksite, iv.work_month); return; }
+      // 👔 Yfirferð — flagga/af-flagga drögin til yfirferðar hjá yfirmanni.
+      // Skrifar á invoice_drafts (review_*-dálkana) sem yfirferd.html les.
+      if(act==='review'){
+        const ws=iv.worksite, wm=iv.work_month;
+        const k=(ws||'')+'|'+(wm||''); const rv=REVIEWS[k];
+        if(!rv){ alert('Enginn vistaður Efnislisti fyrir '+(ws||'—')+' '+(wm||'')+' — vistaðu fyrst í Gerð Reikninga (📄 Efnisl.).'); return; }
+        const turnOn = !rv.review_requested;
+        const undo = spinBtn(b);
+        try{
+          const body = turnOn
+            ? { worksite_name: ws, work_month: wm, review_requested: true,
+                review_requested_at: new Date().toISOString(), review_requested_by: bhMe()||null,
+                review_confirmed_at: null, review_confirmed_by: null }
+            : { worksite_name: ws, work_month: wm, review_requested: false,
+                review_confirmed_at: null, review_confirmed_by: null };
+          const r = await fetch('/api/invoice-drafts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+          if(!r.ok) throw new Error('HTTP '+r.status);
+          REVIEWS[k] = await r.json(); cacheStore();
+        }catch(e){ alert('Tókst ekki að merkja í yfirferð: '+(e.message||e)); }
+        undo(); renderList(); return;
+      }
       // ✓ Staðfest / ✏️ Breyta — merking á Ósendar-röðina í Kröfu yfirliti.
       if(act==='breyta'){ iv.wf.confirmed=false; wfPatchLocal(key,{wf:iv.wf}); await persistWf(key, iv.wf); renderList(); return; }
       if(act==='confirm'){ const by=bhMe(); iv.wf.confirmed=true; iv.wf.confirmed_by=by; iv.wf.confirmed_at=new Date().toISOString(); wfPatchLocal(key,{wf:iv.wf}); await persistWf(key, iv.wf, by); renderList(); return; }
@@ -14607,23 +14641,26 @@ async function renderKrofuyfirlit(t){
   // ~mín bið) og gögnin uppfærast hljóðlega í bakgrunni. TTL 5 mín; eldra en það
   // → sýnum cache samt en revalidate-um. „↻ Sækja" þvingar ferskt (force=true).
   const KYF_TTL = 5*60*1000;
-  function cacheStore(){ try{ window.__KYF_CACHE = { data:state.data, tier3:state.tier3, efdocs:EFDOCS, pg:PG, hours:HOURS, redder:REDDER, ts:Date.now() }; }catch(_){} }
+  function cacheStore(){ try{ window.__KYF_CACHE = { data:state.data, tier3:state.tier3, efdocs:EFDOCS, reviews:REVIEWS, pg:PG, hours:HOURS, redder:REDDER, ts:Date.now() }; }catch(_){} }
   function metaFromState(){
     const meta = $view.querySelector('#kyf-meta'); if(!meta || !state.data) return;
     const t1n=(state.data.tier1||{}).n||0, t2n=(state.data.tier2||{}).n||0, t3n=(state.tier3||{}).n||0;
     meta.textContent = t1n+' ógreiddar · '+t2n+' ósendar · '+t3n+' tími eftir · '+new Date(state.data.generated_at).toLocaleString('is-IS');
   }
   async function fetchAll(){
-    // krofu-yfirlit-bru + efnislisti-docs eru óháð → samhliða (áður í röð).
-    const [bruR, efR] = await Promise.all([
+    // krofu-yfirlit-bru + efnislisti-docs + invoice-drafts eru óháð → samhliða.
+    const [bruR, efR, drR] = await Promise.all([
       fetch('/api/krofu-yfirlit-bru',{cache:'no-store'}).then(r=>r.json()),
       fetch('/api/efnislisti-docs').then(r=>r.ok?r.json():{rows:[]}).catch(()=>({rows:[]})),
+      fetch('/api/invoice-drafts').then(r=>r.ok?r.json():{rows:[]}).catch(()=>({rows:[]})),
     ]);
     if(bruR && bruR.error) throw new Error(bruR.error);
     state.data = bruR; state.newest = bruR.newest_timavera || null;
     const idx = {};
     for(const d of (efR.rows||[])){ const k=(d.worksite_name||'')+'|'+(d.work_month||''); (idx[k]=idx[k]||[]).push(d); }
     EFDOCS = idx;
+    REVIEWS = {};
+    for(const d of (drR.rows||[])) REVIEWS[(d.worksite_name||'')+'|'+(d.work_month||'')] = d;
     // FYRSTA MÁLNING STRAX með þrep 1+2 (+Ósendar-borðið) — ekki bíða eftir þunga
     // þrep-3 útreikningnum (worksites/nlsh/redder). Notandi sér listann miklu fyrr.
     metaFromState(); renderList();
@@ -14637,7 +14674,7 @@ async function renderKrofuyfirlit(t){
     const cache = (!force && window.__KYF_CACHE) || null;
     if(cache && cache.data){
       // Sýnum síðustu útgáfu STRAX.
-      state.data = cache.data; state.tier3 = cache.tier3; EFDOCS = cache.efdocs||{}; PG = cache.pg||PG;
+      state.data = cache.data; state.tier3 = cache.tier3; EFDOCS = cache.efdocs||{}; REVIEWS = cache.reviews||{}; PG = cache.pg||PG;
       HOURS = cache.hours||{}; REDDER = cache.redder||{};
       state.newest = cache.data.newest_timavera || null;
       metaFromState(); renderList();
