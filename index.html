@@ -14162,6 +14162,18 @@ async function renderKrofuyfirlit(t){
       hero('Samtals í pípunni', tot1+tot2+tot3, 'ógreitt + ósent + áætlaðar tekjur', '💰', 'linear-gradient(150deg,#6f97ff 0%,#2f5fe0 34%,#1c3d8c 60%,#0b1838 100%)', '0 26px 46px -20px rgba(20,40,120,.5)', 'CG-04');
   }
 
+  // „🔗 Sameina" — gulur hnappur á þrep-2 fyrirtækja-kort: sameinar ALLA mánuði
+  // eins verkstaðar í einn efnislista og felur upprunalegu drögin (status:'skipped').
+  function sameinaBtn(t2inv){
+    const invs = (t2inv||[]).filter(i => !i._hidden && i.source==='gerd-drög' && i.worksite && i.work_month);
+    if(invs.length < 2) return '';
+    const keys = invs.map(i => esc(i.inv_key)).join('~');
+    return '<button class="kyf-sameina-all" data-keys="'+keys+'" type="button" '
+      +'title="Sameina alla mánuði í einn efnislista — upprunalegu drögin eru falin" '
+      +'style="display:inline-flex;align-items:center;gap:6px;padding:10px 15px;border-radius:11px;border:1px solid #b7861a;background:linear-gradient(150deg,#f6da79,#d4a017);color:#1a0f00;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 3px 8px -3px rgba(183,134,26,.4)"'
+      +' onmouseover="this.style.filter=\'brightness(1.07)\'" onmouseout="this.style.filter=\'\'">🔗 Sameina</button>';
+  }
+
   // „✓ Allar greiddar" — grænn fjöldasend-hnappur á fyrirtækja-kort (eins og
   // Slökkvitæki #166): merkir ALLAR ógreiddu (þrep-1) kröfur fyrirtækisins greiddar
   // í einu — heimabanka-verkflæðið („settu í heimabanka → hreinsaðu út").
@@ -14262,7 +14274,7 @@ async function renderKrofuyfirlit(t){
         ${rv?wfBtn('rev','review','👔','Yfirferð','#7c3aed',rvOn?'Taka úr yfirferð (afturkalla beiðni)':'Senda Efnislistann í yfirferð til yfirmanns (birtist í The Big Boss appinu)',rvOn):''}
         ${wfBtn('conf','confirm','✓','Staðfest','#16a34a','Staðfesta',conf)}
         ${conf?wfBtn('conf','breyta','✏️','Breyta','#ea580c','Breyta (af-staðfesta)',false):''}
-        ${wfBtn('send','send','📤',inv.sent?'Sent ✓':'Senda','#16a34a',inv.sent?'Þegar sent':'Senda á bókara',!!inv.sent)}
+        ${wfBtn('send','send','📤',inv.sent?'Krafa send':'Senda Kröfu','#16a34a',inv.sent?'Þegar sent':'Senda á bókara',!!inv.sent)}
         ${sentTrail}
       </span>
       ${numHtml}
@@ -14520,6 +14532,7 @@ async function renderKrofuyfirlit(t){
           </div>
           <div style="display:flex;gap:10px;align-items:center">
             ${tier===1?allPaidBtn(db.invoices):''}
+            ${tier===2?sameinaBtn(db.invoices):''}
             <div style="text-align:right">
               <div style="font-size:10px;color:#8a93a5;text-transform:uppercase;letter-spacing:.1em;font-weight:700">${tier===3?'Áætlað':(tier===2?'Ósent':'Útistandandi')}</div>
               <div class="ky-num" style="font-size:22px;font-weight:700;color:#2f5fe0">${fmtKr(db.outstanding_kr)}</div>
@@ -14757,6 +14770,14 @@ async function renderKrofuyfirlit(t){
         paidSet.add(k);
       }
       renderList();
+    }));
+    listEl.querySelectorAll('.kyf-sameina-all').forEach(b=>b.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      const keys=(b.dataset.keys||'').split('~').filter(Boolean);
+      if(!keys.length) return;
+      const invs=keys.map(k=>findInv(k)).filter(Boolean);
+      if(invs.length<2){ alert('Þarf a.m.k. 2 drög til að sameina.'); return; }
+      openCombineModal(invs);
     }));
     // Feature 1 — smellur á röð opnar/lokar sundurliðun (ekki á reit/aðgerð).
     listEl.querySelectorAll('.ky-row').forEach(r=>r.addEventListener('click',(e)=>{
