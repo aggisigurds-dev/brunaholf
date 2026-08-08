@@ -217,6 +217,30 @@ með símann (The Big Boss appið á slokkvitaeki). Flæðið:
 - **Í appinu**: síðan er `br-yfirferd` í PAGES/boss-defaults í slokkvitaeki
   patch 261.
 
+## Viðskiptavinir-flipi — 2026-08-08
+
+Nýr flipi **`vidskiptavinir`** (🏢 Viðskiptavinir) — per-verkstað greiðslureglur og
+viðskiptavinargögn sem Efnislisti-formið les sjálfkrafa.
+
+- **Gögn**: `pricing_guide` tafla (lykill: `worksite_name`). Nýir dálkar bætt við
+  2026-08-08: `eftirvinna_leyfid` (bool, default true), `verkfaeragjald` (bool),
+  `kennitala` (text), `heimilisfang` (text), `lunch_fradrattur_h` (numeric, default 0).
+  Migration: `sql/2026-08-08_pricing_guide_customer_settings.sql`.
+- **API**: `GET/POST/DELETE /api/pricing-guide` — `pricing-guide.js` whitelist nú með
+  öllum 6 nýjum dálkum. DELETE tekur `?worksite=NAME`.
+- **Efnislisti-tenging** (`renderGerdReikninga`): `rateFor(name)` skilar nú
+  `evOk` (yfirvinna leyfð), `evThreshold` (klst/dag fyrir yfirvinna, sjálfgefið 8),
+  `lunch` (hádegismatsfrádrátt klst/dag), `vf` (verkfæragjald). Þegar `evOk=false`
+  birtist „— ekki leyfð" merki við Yfirvinna í ritlinum. Tooltip „📥 Fylla úr tímabók"
+  sýnir núverandi threshold og lunch. `kennitala`/`heimilisfang` er forútfyllt
+  sjálfkrafa úr `pricing_guide` þegar nýtt drög er opnað (fellur aftur á `PAYER_OVERRIDE`).
+- **Viðskiptavinir UI**: `renderVidskiptavinir(t)` — spjöld flokkuð eftir
+  `customer_name`, með breyta/eyða modal. Kt./heimilisfang breytist á öllum
+  verkstöðum sama viðskiptavinar í einu (sibling propagation).
+- **Frumgögn (seed)**: 5 lykilviðskiptavinir seyddir 2026-08-08:
+  Orkureitur (SAFÍR), Fjallaböðin Þjórsárdal (JÁVERK, 9300/13950, sma=0),
+  Fjarðagata (GG verk, lunch=0.5), Dalvegur 30 (Eykt), Landsspitalinn (ÞG verktakar).
+
 ## Fjármála-yfirlit-flipi — 2026-08-08
 
 Nýr flipi **`fjarmalyfirlit`** (💰 Fjármála-yfirlit, beint á eftir `krofuyfirlit`) —

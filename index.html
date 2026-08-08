@@ -1826,6 +1826,7 @@ const DEFAULT_STATE = {
     {id:'eydublod',   label:'Eyðublöð',   icon:'📝'},
     {id:'reikningar', label:'Reikningagerð', icon:'💳'},
     {id:'gerdreikninga', label:'Gerð Reikninga', icon:'🧾'},
+    {id:'vidskiptavinir', label:'Viðskiptavinir', icon:'🏢'},
     {id:'tilbunirReikningar', label:'Tilbúnir reikningar', icon:'✅'},
     {id:'vinnubok', label:'Vinnubók', icon:'📝'},
     {id:'vinnustofa', label:'Vinnustofa', icon:'🎯'},
@@ -2575,6 +2576,7 @@ function render(){
   if(t.id==='hreyfingaryfirlit') return renderHreyfingar(t);
   if(t.id==='reikningar') return renderReikningagerd(t);
   if(t.id==='gerdreikninga') return renderGerdReikninga(t);
+  if(t.id==='vidskiptavinir') return renderVidskiptavinir(t);
   if(t.id==='tilbunirReikningar') return renderTilbunirReikningar(t);
   if(t.id==='vinnubok') return renderVinnubok(t);
   if(t.id==='vinnustofa') return renderVinnustofa(t);
@@ -2891,6 +2893,260 @@ function renderFjarmalyfirlit(t){
   const fit = () => { const f = document.getElementById('fjy-embed'); if(!f) return; const top = f.getBoundingClientRect().top; f.style.height = Math.max(460, window.innerHeight - top) + 'px'; };
   fit();
   if(!window.__fjyFitBound){ window.__fjyFitBound = true; window.addEventListener('resize', () => { if(document.getElementById('fjy-embed')) fit(); }); }
+}
+// 🏢 Viðskiptavinir — per-viðskiptavin reikningsstillingar (pricing_guide). 2026-08-08.
+function renderVidskiptavinir(t) {
+  if (!document.getElementById('vk-css')) {
+    const s = document.createElement('style');
+    s.id = 'vk-css';
+    s.textContent = `
+      .vk-wrap{max-width:860px;margin:0 auto;padding:18px 14px 40px}
+      .vk-head{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+      .vk-h1{font-size:22px;font-weight:800;margin:0;flex:1}
+      .vk-btn-add{font:inherit;font-size:13px;font-weight:700;padding:9px 16px;border:1px solid #3b5275;border-radius:9px;background:#182544;color:#e8edf7;cursor:pointer}
+      .vk-cust-card{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:14px;overflow:hidden}
+      .vk-cust-head{padding:12px 16px;border-bottom:1px solid var(--line)}
+      .vk-cust-name{font-size:15px;font-weight:700;color:var(--ink)}
+      .vk-cust-meta{font-size:12px;color:var(--ink3);margin-top:2px}
+      .vk-ws-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;padding:12px 14px}
+      .vk-ws-item{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:11px 13px}
+      .vk-ws-name{font-size:13px;font-weight:700;margin-bottom:6px;color:var(--ink)}
+      .vk-rate-row{font-size:12px;color:var(--ink2);margin:3px 0;display:flex;gap:6px;align-items:center}
+      .vk-tag{display:inline-block;font-size:10.5px;font-weight:700;border-radius:99px;padding:2px 8px;margin:3px 3px 0 0}
+      .vk-tag-green{background:#0f2d18;border:1px solid #1f5233;color:#7ff0b0}
+      .vk-tag-red{background:#2d0f0f;border:1px solid #5a2020;color:#fca5a5}
+      .vk-tag-blue{background:#0f1e2d;border:1px solid #1f3a5a;color:#93c5fd}
+      .vk-edit-btn{font:inherit;font-size:11px;padding:4px 10px;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--ink2);cursor:pointer;margin-top:8px}
+      .vk-ws-add{padding:6px 14px 12px}
+      .vk-add-ws-btn{font:inherit;font-size:12px;padding:6px 12px;border:1px dashed #3b5275;border-radius:8px;background:transparent;color:var(--ink3);cursor:pointer}
+      .vk-ov{position:fixed;inset:0;z-index:7100;background:rgba(6,8,16,.78);display:flex;align-items:flex-end;justify-content:center}
+      @media(min-width:600px){.vk-ov{align-items:center}}
+      .vk-mod{background:#0e1830;border:1px solid var(--line);border-radius:18px 18px 0 0;padding:22px 18px;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;box-sizing:border-box}
+      @media(min-width:600px){.vk-mod{border-radius:18px}}
+      .vk-mod h3{font-size:17px;font-weight:800;margin:0 0 16px;color:var(--ink)}
+      .vk-sect-lbl{font-size:11px;font-weight:700;color:var(--ink3);letter-spacing:.05em;text-transform:uppercase;border-top:1px solid var(--line);padding-top:10px;margin:14px 0 10px}
+      .vk-field{margin-bottom:11px}
+      .vk-field label{display:block;font-size:11.5px;color:var(--ink3);margin-bottom:4px;font-weight:600}
+      .vk-field input,.vk-field select{width:100%;box-sizing:border-box;padding:9px 11px;background:#111a2e;border:1px solid #2a3a54;border-radius:8px;color:var(--ink);font:inherit;font-size:14px}
+      .vk-field input:read-only{background:#0b1220;color:var(--ink3)}
+      .vk-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+      .vk-toggle{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+      .vk-toggle label{font-size:13px;color:var(--ink2);flex:1;cursor:pointer}
+      .vk-actions{display:flex;gap:9px;margin-top:20px;flex-wrap:wrap}
+      .vk-save{flex:1;padding:13px;background:linear-gradient(180deg,#f9e29a,#e0ad3f 45%,#c99a3f 55%,#f3dd97);color:#1a1200;border:none;border-radius:10px;font:inherit;font-weight:700;font-size:14px;cursor:pointer;min-width:120px}
+      .vk-cancel{padding:13px;background:transparent;color:var(--ink2);border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14px;cursor:pointer}
+      .vk-del{padding:13px;background:transparent;color:#fca5a5;border:1px solid #5a2020;border-radius:10px;font:inherit;font-size:14px;cursor:pointer}
+    `;
+    document.head.appendChild(s);
+  }
+
+  $view.innerHTML = '<div class="vk-wrap"><p style="color:var(--ink3)">Sæki…</p></div>';
+  const wrap = $view.querySelector('.vk-wrap');
+  let allRows = [];
+
+  const fmtKr = n => Math.round(n||0).toLocaleString('is-IS');
+
+  function wsCard(w) {
+    const evOk = w.eftirvinna_leyfid !== false;
+    const threshold = w.eftirvinna_threshold_per_day != null ? Number(w.eftirvinna_threshold_per_day) : 8;
+    const lunch = Number(w.lunch_fradrattur_h || 0);
+    const srcLabel = w.source === 'ajour' ? 'Ajour' : w.source === 'fixed' ? 'Fast' : 'Tímavera';
+    return `<div class="vk-ws-item">
+      <div class="vk-ws-name">${escapeHtml(w.worksite_name)}</div>
+      <div class="vk-rate-row"><span style="color:var(--ink3)">Dagvinna</span><b>${fmtKr(w.dagvinna_rate)} kr/klst</b></div>
+      ${evOk ? `<div class="vk-rate-row"><span style="color:var(--ink3)">Yfirvinna</span><b>${fmtKr(w.eftirvinna_rate)} kr/klst</b> · þröskuldur ${threshold}klst</div>` : ''}
+      <div style="margin-top:5px">
+        ${!evOk ? '<span class="vk-tag vk-tag-red">Engin yfirvinna</span>' : ''}
+        ${lunch > 0 ? `<span class="vk-tag vk-tag-blue">-${lunch}klst hádegi/dag</span>` : ''}
+        ${w.verkfaeragjald ? '<span class="vk-tag vk-tag-green">Verkfæragjald</span>' : ''}
+        <span class="vk-tag vk-tag-blue">${srcLabel}</span>
+      </div>
+      <button class="vk-edit-btn" data-vk-edit="${escapeAttr(w.worksite_name)}">✏️ Breyta</button>
+    </div>`;
+  }
+
+  function renderList(rows) {
+    const grouped = {};
+    for (const r of rows) {
+      const k = r.customer_name || '(Óþekktur)';
+      if (!grouped[k]) grouped[k] = [];
+      grouped[k].push(r);
+    }
+    const names = Object.keys(grouped).sort((a,b) => a.localeCompare(b,'is'));
+    wrap.innerHTML = `
+      <div class="vk-head">
+        <h1 class="vk-h1">🏢 Viðskiptavinir</h1>
+        <button class="vk-btn-add" id="vk-new">+ Bæta við verkstað</button>
+      </div>
+      ${names.map(name => {
+        const wsList = grouped[name];
+        const kt = wsList.find(w => w.kennitala)?.kennitala || '';
+        const addr = wsList.find(w => w.heimilisfang)?.heimilisfang || '';
+        return `<div class="vk-cust-card">
+          <div class="vk-cust-head">
+            <div class="vk-cust-name">${escapeHtml(name)}</div>
+            ${(kt||addr) ? `<div class="vk-cust-meta">${kt?'Kt. '+escapeHtml(kt):''}${kt&&addr?' · ':''}${escapeHtml(addr)}</div>` : ''}
+          </div>
+          <div class="vk-ws-grid">${wsList.map(wsCard).join('')}</div>
+          <div class="vk-ws-add"><button class="vk-add-ws-btn" data-vk-addws="${escapeAttr(name)}">＋ Bæta við verkstað hér</button></div>
+        </div>`;
+      }).join('')}
+      ${!names.length ? '<p style="color:var(--ink3);text-align:center;padding:40px">Engar stillingar skráðar. Ýttu á <b>+ Bæta við verkstað</b> til að byrja.</p>' : ''}
+    `;
+    wrap.querySelector('#vk-new')?.addEventListener('click', () => openModal(null, null));
+    wrap.querySelectorAll('[data-vk-edit]').forEach(btn => {
+      const ws = allRows.find(r => r.worksite_name === btn.dataset.vkEdit);
+      if (ws) btn.addEventListener('click', () => openModal(ws, null));
+    });
+    wrap.querySelectorAll('[data-vk-addws]').forEach(btn => {
+      btn.addEventListener('click', () => openModal(null, btn.dataset.vkAddws));
+    });
+  }
+
+  function openModal(w, defaultCustomer) {
+    const isNew = !w;
+    const d = w || {
+      worksite_name:'', customer_name: defaultCustomer||'',
+      kennitala:'', heimilisfang:'',
+      dagvinna_rate:9951, eftirvinna_rate:14927,
+      eftirvinna_leyfid:true, eftirvinna_threshold_per_day:8,
+      lunch_fradrattur_h:0, verkfaeragjald:false,
+      smahlutagjald_per_h:137, vsk_pct:24, source:'timavera', notes:''
+    };
+    if (isNew && defaultCustomer) {
+      const sib = allRows.find(r => r.customer_name === defaultCustomer && r.kennitala);
+      if (sib) { d.kennitala = sib.kennitala||''; d.heimilisfang = sib.heimilisfang||''; }
+    }
+    const lunch = Number(d.lunch_fradrattur_h||0);
+    const evOk = d.eftirvinna_leyfid !== false;
+
+    const ov = document.createElement('div');
+    ov.className = 'vk-ov';
+    ov.innerHTML = `<div class="vk-mod">
+      <h3>${isNew ? '+ Nýr verkstaður' : '✏️ ' + escapeHtml(d.worksite_name)}</h3>
+      <div class="vk-sect-lbl">Viðskiptavinur</div>
+      <div class="vk-field"><label>Nafn</label><input id="vkm-cn" value="${escapeHtml(d.customer_name||'')}"></div>
+      <div class="vk-row2">
+        <div class="vk-field"><label>Kennitala</label><input id="vkm-kt" value="${escapeHtml(d.kennitala||'')}" placeholder="000000-0000"></div>
+        <div class="vk-field"><label>Heimilisfang</label><input id="vkm-addr" value="${escapeHtml(d.heimilisfang||'')}" placeholder="Gata 4, 200 Bær"></div>
+      </div>
+      ${!isNew ? '<p style="font-size:11px;color:var(--ink3);margin:0 0 6px">Kt. og heimilisfang uppfærist á öllum verkstöðum þessa viðskiptavinar.</p>' : ''}
+      <div class="vk-sect-lbl">Verkstaður</div>
+      <div class="vk-field"><label>Heiti verkstað${isNew?'ar':' (lykill)'}</label><input id="vkm-ws" value="${escapeHtml(d.worksite_name||'')}" ${!isNew?'readonly':''} placeholder="t.d. Fjarðagata"></div>
+      <div class="vk-field"><label>Uppspretta</label><select id="vkm-src">
+        <option value="timavera" ${d.source==='timavera'?'selected':''}>Tímavera (klst-miðað)</option>
+        <option value="ajour" ${d.source==='ajour'?'selected':''}>Ajour (gata-miðað)</option>
+        <option value="fixed" ${d.source==='fixed'?'selected':''}>Fast upphæð</option>
+      </select></div>
+      <div class="vk-sect-lbl">Taxtasetning</div>
+      <div class="vk-row2">
+        <div class="vk-field"><label>Dagvinna (kr/klst)</label><input id="vkm-dv" type="number" value="${d.dagvinna_rate||9951}"></div>
+        <div class="vk-field"><label>VSK %</label><input id="vkm-vsk" type="number" value="${d.vsk_pct||24}"></div>
+      </div>
+      <div class="vk-toggle">
+        <input type="checkbox" id="vkm-evok" ${evOk?'checked':''}>
+        <label for="vkm-evok">Yfirvinna leyfð</label>
+      </div>
+      <div id="vkm-ev-wrap" ${!evOk?'style="display:none"':''}>
+        <div class="vk-row2">
+          <div class="vk-field"><label>Yfirvinna (kr/klst)</label><input id="vkm-ev" type="number" value="${d.eftirvinna_rate||14927}"></div>
+          <div class="vk-field"><label>Þröskuldur klst/dag (sjálfgefið 8)</label><input id="vkm-evth" type="number" step="0.5" value="${d.eftirvinna_threshold_per_day!=null?d.eftirvinna_threshold_per_day:8}"></div>
+        </div>
+      </div>
+      <div class="vk-toggle">
+        <input type="checkbox" id="vkm-lunchon" ${lunch>0?'checked':''}>
+        <label for="vkm-lunchon">Hádegisfrádráttur á heilan vinnudag</label>
+        <input type="number" id="vkm-lunch" step="0.25" min="0.25" value="${lunch>0?lunch:0.5}" style="width:70px;padding:5px 8px;background:#111a2e;border:1px solid #2a3a54;border-radius:6px;color:var(--ink);font:inherit;${lunch>0?'':'display:none'}">
+        <span id="vkm-lunchlbl" style="font-size:12px;color:var(--ink3);${lunch>0?'':'display:none'}">klst/dag</span>
+      </div>
+      <div class="vk-toggle">
+        <input type="checkbox" id="vkm-vf" ${d.verkfaeragjald?'checked':''}>
+        <label for="vkm-vf">Verkfæragjald (smáhlutagjald á klst)</label>
+      </div>
+      <div class="vk-actions">
+        <button class="vk-save" id="vkm-save">💾 Vista</button>
+        ${!isNew?'<button class="vk-del" id="vkm-del">🗑 Eyða</button>':''}
+        <button class="vk-cancel" id="vkm-cancel">Hætta við</button>
+      </div>
+    </div>`;
+    document.body.appendChild(ov);
+
+    ov.querySelector('#vkm-evok').onchange = e => {
+      ov.querySelector('#vkm-ev-wrap').style.display = e.target.checked ? '' : 'none';
+    };
+    const lunchCb = ov.querySelector('#vkm-lunchon');
+    const lunchIn = ov.querySelector('#vkm-lunch');
+    const lunchLbl = ov.querySelector('#vkm-lunchlbl');
+    lunchCb.onchange = e => {
+      lunchIn.style.display = e.target.checked ? '' : 'none';
+      lunchLbl.style.display = e.target.checked ? '' : 'none';
+    };
+
+    ov.querySelector('#vkm-cancel').onclick = () => ov.remove();
+    ov.addEventListener('click', e => { if(e.target===ov) ov.remove(); });
+
+    ov.querySelector('#vkm-save').onclick = async () => {
+      const wsName = ov.querySelector('#vkm-ws').value.trim();
+      const cName = ov.querySelector('#vkm-cn').value.trim();
+      if (!wsName || !cName) { alert('Nafn viðskiptavinar og heiti verkstaðar er skylda'); return; }
+      const kt = ov.querySelector('#vkm-kt').value.trim();
+      const addr = ov.querySelector('#vkm-addr').value.trim();
+      const evChecked = ov.querySelector('#vkm-evok').checked;
+      const lOn = ov.querySelector('#vkm-lunchon').checked;
+      const payload = {
+        worksite_name: wsName, customer_name: cName,
+        kennitala: kt, heimilisfang: addr,
+        dagvinna_rate: Number(ov.querySelector('#vkm-dv').value)||null,
+        eftirvinna_rate: evChecked ? (Number(ov.querySelector('#vkm-ev').value)||null) : null,
+        eftirvinna_leyfid: evChecked,
+        eftirvinna_threshold_per_day: evChecked ? (Number(ov.querySelector('#vkm-evth').value)||8) : null,
+        lunch_fradrattur_h: lOn ? (Number(ov.querySelector('#vkm-lunch').value)||0.5) : 0,
+        verkfaeragjald: ov.querySelector('#vkm-vf').checked,
+        vsk_pct: Number(ov.querySelector('#vkm-vsk').value)||24,
+        source: ov.querySelector('#vkm-src').value,
+      };
+      const btn = ov.querySelector('#vkm-save');
+      btn.textContent = 'Vista…'; btn.disabled = true;
+      try {
+        let r = await fetch('/api/pricing-guide', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+        if (!r.ok) throw new Error((await r.json()).error || 'HTTP '+r.status);
+        // Propagate kt/heimilisfang to siblings of same customer
+        if (!isNew && (kt !== (d.kennitala||'') || addr !== (d.heimilisfang||''))) {
+          const siblings = allRows.filter(row => row.customer_name === d.customer_name && row.worksite_name !== wsName);
+          await Promise.all(siblings.map(sib => fetch('/api/pricing-guide', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ worksite_name: sib.worksite_name, kennitala: kt, heimilisfang: addr }),
+          })));
+        }
+        ov.remove(); load();
+      } catch(e) {
+        btn.textContent = '⚠ Villa: '+(e.message||e); btn.disabled = false;
+      }
+    };
+
+    ov.querySelector('#vkm-del')?.addEventListener('click', async () => {
+      if (!confirm('Eyða "'+d.worksite_name+'" úr Viðskiptavinir? Þetta eyðir aðeins stillingum, ekki reikningadrögunum.')) return;
+      try {
+        const r = await fetch('/api/pricing-guide?worksite='+encodeURIComponent(d.worksite_name), { method:'DELETE' });
+        if (!r.ok) throw new Error('HTTP '+r.status);
+        ov.remove(); load();
+      } catch(e) { alert('Villa: '+e.message); }
+    });
+  }
+
+  async function load() {
+    try {
+      const res = await fetch('/api/pricing-guide');
+      if (!res.ok) throw new Error('HTTP '+res.status);
+      const data = await res.json();
+      allRows = data.rows || [];
+      renderList(allRows);
+    } catch(e) {
+      wrap.innerHTML = '<p style="color:#fca5a5;padding:20px">Villa: '+escapeHtml(String(e.message||e))+'</p>';
+    }
+  }
+
+  load();
 }
 // 🗂️ Skjala-multitool — innfellt sem full-breidd síða (endurnýtir /multitool.html).
 function renderMultitool(t){
@@ -10177,6 +10433,10 @@ async function renderGerdReikninga(t){
       vsk: Number(pg.vsk_pct)||24,
       stadf: pg.stadfesting_default !== false,
       customer: pg.customer_name || '',
+      evOk: pg.eftirvinna_leyfid !== false,
+      evThreshold: pg.eftirvinna_threshold_per_day != null ? Number(pg.eftirvinna_threshold_per_day) : 8,
+      lunch: Number(pg.lunch_fradrattur_h || 0),
+      vf: !!pg.verkfaeragjald,
     };
   }
   const monthHours = (w) => (w.monthly||{})[state.ui.gr_month] || 0;
@@ -10446,10 +10706,11 @@ async function renderGerdReikninga(t){
     const { fra, til } = monthRange(month);
     const d = draftFor(name);
     const wObj = WS.find(w=>w.project===name) || {};
+    const pgRow = PG[name] || {};
     const ov = PAYER_OVERRIDE[name] || {};
     const cust = (d && d.customer_name) || r.customer || ov.name || (wObj.mapped_customers||[])[0] || '';
-    const custKt = (d && d.kennitala) || ov.kt || '';
-    const custAddr = (d && d.heimilisfang) || ov.addr || '';
+    const custKt = (d && d.kennitala) || pgRow.kennitala || ov.kt || '';
+    const custAddr = (d && d.heimilisfang) || pgRow.heimilisfang || ov.addr || '';
     const dateText = (state.ui && state.ui.gr_date_text && state.ui.gr_date_text[name+'|'+month]) || '';
     const smaOn = !(state.ui && state.ui.gr_sma_off && state.ui.gr_sma_off[name+'|'+month]);
     const discPct = (state.ui && state.ui.gr_discount && state.ui.gr_discount[name+'|'+month]) || '';
@@ -10505,11 +10766,11 @@ async function renderGerdReikninga(t){
           </div>
           <div class="gr-r2"><div class="gr-f"><label>Frá</label><input type="date" id="gr-fra" value="${fra}"></div><div class="gr-f"><label>Til</label><input type="date" id="gr-til" value="${til}"></div></div>
           <div class="gr-f" style="margin-top:2px"><label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-weight:600"><input type="checkbox" id="gr-datemode" ${dateText?'checked':''}> Skrifa dagsetningu sjálf/ur á reikninginn (t.d. „Maí 2026")</label><input type="text" id="gr-datetext" value="${escapeAttr(dateText)}" placeholder="t.d. Maí 2026" style="margin-top:6px;${dateText?'':'display:none'}"></div>
-          <div class="gr-st">Tími <button type="button" id="gr-fill-hours" class="gr-btn" style="float:right;padding:3px 9px;font-size:11px" title="Fylla dagvinnu/yfirvinnu úr tímabók (yfirvinna eftir 8 klst/dag — 8,5 hjá Fjarðagötu; helgar (lau/sun) allar yfirvinna)">📥 Fylla úr tímabók</button></div>
+          <div class="gr-st">Tími <button type="button" id="gr-fill-hours" class="gr-btn" style="float:right;padding:3px 9px;font-size:11px" title="Fylla dagvinnu/yfirvinnu úr tímabók (yfirvinna eftir ${r.evThreshold} klst/dag${r.lunch>0?' — '+r.lunch+' klst hádegismatur frádreginn':''}; helgar (lau/sun) allar yfirvinna)">📥 Fylla úr tímabók</button></div>
           <div class="gr-r3"><div class="gr-f"><label>Dagvinna</label><div id="gr-dvh-sync" style="font-size:11px;color:#94a3b8;padding:6px 0">—</div></div>
             <div class="gr-f"><label style="font-size:11px;color:#475569;font-weight:600">klst (breyta hér)</label><input type="text" inputmode="decimal" id="gr-dvh" value="${dvH}" style="background:#fffbeb;border-color:#fcd34d"></div><div class="gr-f"><label style="font-size:11px;color:#94a3b8">kr/klst</label><input type="text" inputmode="decimal" id="gr-dvr" value="${dvR}"></div></div>
-          <div class="gr-r3"><div class="gr-f"><label>Yfirvinna</label><div id="gr-evh-sync" style="font-size:11px;color:#94a3b8;padding:6px 0"></div></div>
-            <div class="gr-f"><label style="font-size:11px;color:#475569;font-weight:600">klst (breyta hér)</label><input type="text" inputmode="decimal" id="gr-evh" value="${evH}" style="background:#fffbeb;border-color:#fcd34d"></div><div class="gr-f"><label style="font-size:11px;color:#94a3b8">kr/klst</label><input type="text" inputmode="decimal" id="gr-evr" value="${evR}"></div></div>
+          <div class="gr-r3"><div class="gr-f"><label>Yfirvinna${r.evOk?'':'<span style="font-size:10px;color:#b45309;font-weight:400"> — ekki leyfð</span>'}</label><div id="gr-evh-sync" style="font-size:11px;color:#94a3b8;padding:6px 0"></div></div>
+            <div class="gr-f"><label style="font-size:11px;color:#475569;font-weight:600">klst (breyta hér)</label><input type="text" inputmode="decimal" id="gr-evh" value="${evH}" style="background:#fffbeb;border-color:#fcd34d"${r.evOk?'':' title="Yfirvinna ekki leyfð samkvæmt verðskrá"'}></div><div class="gr-f"><label style="font-size:11px;color:#94a3b8">kr/klst</label><input type="text" inputmode="decimal" id="gr-evr" value="${evR}"${r.evOk?'':' disabled style="opacity:.5"'}></div></div>
           <div class="gr-st">Akstur</div>
           <div class="gr-r2"><div class="gr-f"><label>km × ${r.km}</label><input type="number" id="gr-km" value="${km}" step="10"></div><div class="gr-f"><label>ferðir × ${fmt(r.ferd)}</label><input type="number" id="gr-ferd" value="${fr}" step="1"></div></div>
           <div class="gr-st">Efni (Redder / handvirkt)</div>
