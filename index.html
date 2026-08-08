@@ -499,6 +499,10 @@ body[data-tab="reikningar"] main{max-width:none;padding:14px 24px}
 body[data-tab="multitool"] main{max-width:none;padding:0}
 /* Eyðublöð fylla líka alla breidd (iframe með eigin útliti) */
 body[data-tab="eydublod"] main{max-width:none;padding:0}
+/* Fjármála-yfirlit fyllir alla breidd upp að hliðarstiku og topborða (ósk
+   Agnars 8.8.) — iframe með eigin útliti og dökkum grunni svo hvítt blikki
+   ekki í gegn meðan það hleðst. */
+body[data-tab="fjarmalyfirlit"] main{max-width:none;padding:0;background:#0b1220}
 /* J.A.R.V.I.S. er dökkt HUD — full breidd og dökkur bakgrunnur svo hvítt blikki ekki
    í gegn meðan iframe-ið hleðst. */
 body[data-tab="jarvis"] main{max-width:none;padding:0;background:#020814}
@@ -1773,6 +1777,7 @@ const DEFAULT_STATE = {
     {id:'skyrslur', label:'Skýrslur', icon:'📊'},
     {id:'afkost', label:'Afköst', icon:'📈'},
     {id:'krofuyfirlit', label:'Kröfu yfirlit', icon:'📄'},
+    {id:'fjarmalyfirlit', label:'Fjármála-yfirlit', icon:'💰'},
     {id:'krofur', label:'Krófur & Tekjur', icon:'📊'},
     {id:'hreyfingaryfirlit', label:'Hreyfingaryfirlit', icon:'📒'},
     {id:'nlsh',        label:'Landsspítalinn', icon:'🏥'},
@@ -2058,7 +2063,7 @@ function clearDataCache(){
 function ensureNewTabs(s){
   if(!s || !Array.isArray(s.tabs)) return;
   if(!Array.isArray(s.bakendiLinks)) s.bakendiLinks = BAKENDI_LINK_SEED.map(x=>({...x}));
-  ['verkkaupar','dagurinn','jarvis','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','vorubirgdir','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','tvmaeting','verdsamanburdur','verkstadir','skuldunautar','skyrslur','afkost','krofuyfirlit','krofur','hreyfingaryfirlit','nlsh','pdftools','spurningar','sjalfvirkni','vefryni','skodanir','verkfaeri','eydublod','multitool','bakendi'].forEach(id=>{
+  ['verkkaupar','dagurinn','jarvis','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','vorubirgdir','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','tvmaeting','verdsamanburdur','verkstadir','skuldunautar','skyrslur','afkost','krofuyfirlit','fjarmalyfirlit','krofur','hreyfingaryfirlit','nlsh','pdftools','spurningar','sjalfvirkni','vefryni','skodanir','verkfaeri','eydublod','multitool','bakendi'].forEach(id=>{
     if(!s.tabs.find(t=>t.id===id)){
       const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
       if(d){
@@ -2172,12 +2177,19 @@ function ensureNewTabs(s){
           const idx = s.tabs.findIndex(t=>t.id==='skuldunautar');
           const idx2 = s.tabs.findIndex(t=>t.id==='verkstadir');
           target = idx >= 0 ? idx + 1 : (idx2 >= 0 ? idx2 + 1 : -1);
-        } else if(id === 'krofur'){
-          // Krófur & Tekjur right after Kröfu yfirlit (else Skuldunautar).
+        } else if(id === 'fjarmalyfirlit'){
+          // Fjármála-yfirlit (app-síðan /fjarmalyfirlit.html sem hub-flipi)
+          // situr beint á eftir Kröfu yfirliti (else Skuldunautar).
           const idx = s.tabs.findIndex(t=>t.id==='krofuyfirlit');
           const idx0 = s.tabs.findIndex(t=>t.id==='skuldunautar');
+          target = idx >= 0 ? idx + 1 : (idx0 >= 0 ? idx0 + 1 : -1);
+        } else if(id === 'krofur'){
+          // Krófur & Tekjur right after Kröfu yfirlit (else Skuldunautar).
+          const idx = s.tabs.findIndex(t=>t.id==='fjarmalyfirlit');
+          const idx1 = s.tabs.findIndex(t=>t.id==='krofuyfirlit');
+          const idx0 = s.tabs.findIndex(t=>t.id==='skuldunautar');
           const idx2 = s.tabs.findIndex(t=>t.id==='verkstadir');
-          target = idx >= 0 ? idx + 1 : (idx0 >= 0 ? idx0 + 1 : (idx2 >= 0 ? idx2 + 1 : -1));
+          target = idx >= 0 ? idx + 1 : (idx1 >= 0 ? idx1 + 1 : (idx0 >= 0 ? idx0 + 1 : (idx2 >= 0 ? idx2 + 1 : -1)));
         } else if(id === 'hreyfingaryfirlit'){
           // Hreyfingaryfirlit right after Skuldunautar (else after Verkstaðir).
           const idx = s.tabs.findIndex(t=>t.id==='skuldunautar');
@@ -2428,6 +2440,7 @@ function renderTabs(){
       vinnubok:   ['/api/worksites?year=combined','/api/invoice-drafts','/api/efnislisti-docs'],
       gerdreikninga: ['/api/worksites?year=combined','/api/pricing-guide','/api/invoice-drafts','/api/redder-invoices'],
       krofuyfirlit: ['/api/debtors'],
+      fjarmalyfirlit: ['/api/fjarmal-yfirlit'],
       reikningar: ['/api/worksites?year=combined','/api/invoice-drafts','/api/efnislisti-docs','/api/redder-invoices','/api/pricing-guide','/api/unbilled-hours'],
       verdskra:   ['/api/pricing-guide','/api/hole-rates'],
       vinnustofa: ['/api/worksites?year=combined','/api/unbilled-hours','/api/invoice-drafts'],
@@ -2557,6 +2570,7 @@ function render(){
   if(t.id==='skyrslur') return renderSkyrslur(t);
   if(t.id==='afkost') return renderAfkost(t);
   if(t.id==='krofuyfirlit') return renderKrofuyfirlit(t);
+  if(t.id==='fjarmalyfirlit') return renderFjarmalyfirlit(t);
   if(t.id==='krofur') return renderKrofur(t);
   if(t.id==='hreyfingaryfirlit') return renderHreyfingar(t);
   if(t.id==='reikningar') return renderReikningagerd(t);
@@ -2866,6 +2880,17 @@ function renderEydublod(t){
   const fit = () => { const f = document.getElementById('ey-embed'); if(!f) return; const top = f.getBoundingClientRect().top; f.style.height = Math.max(460, window.innerHeight - top - 12) + 'px'; };
   fit();
   if(!window.__eyFitBound){ window.__eyFitBound = true; window.addEventListener('resize', () => { if(document.getElementById('ey-embed')) fit(); }); }
+}
+// 💰 Fjármála-yfirlit — app-síðan /fjarmalyfirlit.html sem alvöru hub-flipi
+// (ósk Agnars 8.8.). Sama mynstur og Eyðublöð/Multitool: innfellt í iframe svo
+// síðan á sér EINN sannleik — hún lifir áfram óbreytt sem app-síða í
+// slökkvitæki-öppunum og sem sjálfstæð slóð. ?v= alltaf ferskt (sama gildra og
+// Eyðublöð lentu í 7.8.: iframe endurnýtti vistað eintak eftir deploy).
+function renderFjarmalyfirlit(t){
+  $view.innerHTML = '<iframe id="fjy-embed" src="/fjarmalyfirlit.html?v=' + Date.now() + '" title="Fjármála-yfirlit" style="width:100%;border:0;display:block;background:#0b1220"></iframe>';
+  const fit = () => { const f = document.getElementById('fjy-embed'); if(!f) return; const top = f.getBoundingClientRect().top; f.style.height = Math.max(460, window.innerHeight - top) + 'px'; };
+  fit();
+  if(!window.__fjyFitBound){ window.__fjyFitBound = true; window.addEventListener('resize', () => { if(document.getElementById('fjy-embed')) fit(); }); }
 }
 // 🗂️ Skjala-multitool — innfellt sem full-breidd síða (endurnýtir /multitool.html).
 function renderMultitool(t){

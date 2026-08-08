@@ -97,6 +97,9 @@
   var LINK_SLOKK = '<a class="worklink" href="https://slokkvitaeki.netlify.app/reikningar-bid.html" target="_blank" rel="noopener" onclick="event.stopPropagation()">✏️ Vinna kröfur →</a>';
   var LINK_BRU = '<a class="worklink" href="https://brunaholf.netlify.app/#gerdreikninga" target="_blank" rel="noopener" onclick="event.stopPropagation()">✏️ Vinna drög →</a>';
   var LINK_TIMI = '<a class="worklink" href="https://brunaholf.netlify.app/#gerdreikninga" target="_blank" rel="noopener" onclick="event.stopPropagation()">✏️ Laga tíma →</a>';
+  var LINK_VERKST = '<a class="worklink" href="https://slokkvitaeki.netlify.app/#thjonustu-verkstaedi" target="_blank" rel="noopener" onclick="event.stopPropagation()">🔧 Opna Þjónustuverkstæði →</a>';
+  var LINK_VERKROD = '<a class="worklink" href="https://slokkvitaeki.netlify.app/#verkstaedi" target="_blank" rel="noopener" onclick="event.stopPropagation()">🔧 Opna Verkröðina →</a>';
+  var LINK_AFGR = '<a class="worklink" href="https://slokkvitaeki.netlify.app/#afgreidsla" target="_blank" rel="noopener" onclick="event.stopPropagation()">🛎️ Opna Afgreiðsluna →</a>';
 
   function render(d, nlsh){
     // Áunnið NLSH (Landsspítalinn) úr Ajour-samningi (/api/nlsh-dashboard byMonth).
@@ -120,6 +123,20 @@
           card('card--amber', 'Ógreiddar í Payday', A.ogreitt_payday.kr, A.ogreitt_payday.n+' kröfur', A.ogreitt_payday.list) +
           card('card--blue', 'Ósendar kröfur', A.osendar.kr, A.osendar.n+' kröfur', A.osendar.list, LINK_SLOKK) +
           card('card--sub full', 'Heildarkröfur (millisamtala)', A.heildar.kr, A.heildar.n+' sölur', A.heildar.list) +
+          // Vinnan sem er ekki orðin að kröfum enn (ósk Agnars 8.8.) — til sýnis,
+          // EKKI inni í heildar-pípunni (skarast við ósendar/Payday þegar rukkað er):
+          (d.skyrslur_i_vinnslu
+            ? card('card--blue', 'Skýrslur í vinnslu (áætlað virði)', d.skyrslur_i_vinnslu.kr,
+                d.skyrslur_i_vinnslu.n+' verk á borðinu', d.skyrslur_i_vinnslu.list, LINK_VERKST)
+            : '') +
+          (d.slokk_verkstaedi
+            ? card('', 'Á verkstæði (Verkröð)', d.slokk_verkstaedi.kr,
+                d.slokk_verkstaedi.n+' verk · '+d.slokk_verkstaedi.n2+' tæki', d.slokk_verkstaedi.list, LINK_VERKROD)
+            : '') +
+          (d.slokk_afgreidsla_osott
+            ? card('card--green', 'Tilbúið ósótt í Afgreiðslu', d.slokk_afgreidsla_osott.kr,
+                d.slokk_afgreidsla_osott.n+' verk · '+d.slokk_afgreidsla_osott.n2+' tæki', d.slokk_afgreidsla_osott.list, LINK_AFGR)
+            : '') +
         '</div></section>' +
 
       '<section><div class="sh"><h2>🏦 Brunahólf — raun-ógreitt í Payday</h2><span class="st">'+kr(d.bru_payday_ogreitt.kr)+'</span></div>' +

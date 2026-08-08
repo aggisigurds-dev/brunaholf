@@ -188,6 +188,17 @@ samþykkir) → klarad. GET skilar öllu; POST `{action:'update', id, …}`.
   command:'/api/payday-pull', url:'/api/payday-pull?probe=1', schedule:'Daglega'}`.
 
 
+## Fjármála-yfirlit-flipi — 2026-08-08
+
+Nýr flipi **`fjarmalyfirlit`** (💰 Fjármála-yfirlit, beint á eftir `krofuyfirlit`) —
+app-síðan `/fjarmalyfirlit.html` (peningapípan þvert á Slökkvitæki + Brunahólf,
+les `/api/fjarmal-yfirlit` + `/api/nlsh-dashboard`) er nú líka alvöru hub-flipi.
+`renderFjarmalyfirlit(t)` í `index.html` fellir hana inn í iframe með
+`?v=Date.now()` — sama mynstur og Eyðublöð/Multitool, svo síðan á sér einn
+sannleik og lifir áfram óbreytt sem sjálfstæð slóð og app-síða í
+slökkvitæki-öppunum (`br-fjarmalyfirlit` í patch 261). Deep-link:
+`/#fjarmalyfirlit` (líka í `?embed=1`).
+
 ## Skýrslur-flipi + CG (Calculation Group) — 2026-08-02
 
 Nýr flipi **`skyrslur`** (fyrir ofan `krofuyfirlit`) — samantektir yfir óinnheimtar
