@@ -314,9 +314,44 @@ ekkert nýtt þurfti þar.
 Viðhengi"-síðunnar sem flipuðum árs-bundlum, og að BLOKKA sendingu ef parið er
 ófullkomið — `sendBundle` sendir nú þegar það sem er til án þess að neita, sem er
 skárra en að læsa notandann úti vegna heimtu-galla í parningar-rökfræðinni.
-`document_pairs` er ekki sjálfvirkt viðhaldið (engin trigger) — bakfyllingin er
-ein-skipta; ný gögn sjást samt strax gegnum core kt+source-flæðið í patch 253, bara
-ekki gegnum `document_pairs`-lagið fyrr en bakfyllt er aftur.
+### Sjálfvirk pörun — biðstaða (2026-08-08)
+
+`document_pairs` er **núna sjálfvirkt viðhaldið**. Áður þurfti Agnar að tengja í
+höndunum í hvert sinn: opna fellilistann „— hvaða reikningur?", force-reseta til að
+sjá nýja reikninginn, fara á Sölu-síðuna, finna fyrirtækið, staðfesta að númerið væri
+rétt, og smella á „Tengja". Bakfyllingin frá 2026-08-05 var ein-skipta, svo hvert nýtt
+skjal datt strax út fyrir.
+
+Trigger `trg_auto_pair_customer_document` á `customer_documents` (fall
+`auto_pair_customer_document()`) sér um þetta núna. Tvær leiðir:
+
+- **Biðstaða (INSERT).** Bíði par eftir hinni hliðinni grípur það NÆSTA skjal sem
+  verður til fyrir sama `customer_base_id` + ár. Þetta er vinnuflæðið sjálft:
+  skýrsla klárast → tengill bíður → reikningurinn sem þú býrð til næst tengist
+  sjálfkrafa. `matched_by='auto_standby'`.
+- **Varfærna leiðin (UPDATE / INSERT sem biðstaðan tók ekki).** Tengir aðeins þegar
+  nákvæmlega EITT óafritað skjal af þeirri tegund er til á fyrirtæki+ári, og býr til
+  nýtt par ef ekkert er fyrir. `matched_by='auto_trigger'`.
+
+⚠️ **Tvær skorður sem má ekki fjarlægja:**
+
+1. **Biðstaðan er AÐEINS framvirk (`TG_OP='INSERT'`).** Mælt 2026-08-08: 56 bíðandi
+   pör áttu 126 mögulega lausa reikninga — fjóra hvert. Afturvirk „gríptu einhvern
+   lausan" hefði því giskað rangt oftar en rétt. Tímaröðin sjálf ber ætlunina:
+   reikningurinn sem verður til næst ER reikningur skýrslunnar. Ekki keyra
+   biðstöðuna sem bakfyllingu.
+2. **Talið er yfir ALLAR þjónustutegundir, ekki bara `uttekt`.** Bíði bæði úttektar-
+   OG brunakerfis-par eftir reikningi er ómögulegt að vita hvoru hann tilheyrir, svo
+   þá er ekki giskað og fellilistinn stendur eftir. Fyrsta útgáfan síaði á
+   `service_type='uttekt'` og hefði rænt brunakerfis-parinu í hljóði — prófun greip það.
+
+Prófað 2026-08-08 í transaction sem var rúllað til baka: eitt par bíður → tengist;
+tvö pör bíða → **0 rangar tengingar**. Bakfylling á 2026 með sömu vörðu rökfræði
+færði `klarad` úr 96 í 203. Afrit: `backup_20260808_document_pairs`.
+
+Ath. að tengingin gerist í gagnagrunninum, óháð því hvaða app skrifaði skjalið
+(Sala, Drive-innsog, POS, appið) — en gömul opin síða þarf samt endurhleðslu til að
+**sjá** hana. Cache-hliðin er óleyst.
 
 ## Efniskostnaður — handvirk verkstaða-tenging (2026-08-05)
 
