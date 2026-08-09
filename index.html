@@ -1827,6 +1827,7 @@ const DEFAULT_STATE = {
     {id:'eydublod',   label:'Eyðublöð',   icon:'📝'},
     {id:'reikningar', label:'Reikningagerð', icon:'💳'},
     {id:'gerdreikninga', label:'Gerð Reikninga', icon:'🧾'},
+    {id:'vidskiptavinir', label:'Viðskiptavinir', icon:'🏢'},
     {id:'tilbunirReikningar', label:'Tilbúnir reikningar', icon:'✅'},
     {id:'vinnubok', label:'Vinnubók', icon:'📝'},
     {id:'vinnustofa', label:'Vinnustofa', icon:'🎯'},
@@ -10790,7 +10791,7 @@ async function renderGerdReikninga(t){
           <div class="gr-st">Afsláttur</div>
           <div class="gr-f"><label>Afsláttur af öllum reikningnum (%)</label><input type="text" inputmode="decimal" id="gr-disc" value="${escapeAttr(String(discPct))}" placeholder="0" style="max-width:130px"><div style="font-size:11px;color:#64748b;margin-top:3px">t.d. 10 = 10% — birtist sem lína á reikningnum</div></div>
           <div class="gr-st">Fast verð</div>
-          <div class="gr-f"><label>Fast heildarverð með vsk (samningaverð)</label><input type="text" inputmode="numeric" id="gr-fix" value="${escapeAttr(fixedTotal>0?String(Math.round(fixedTotal)):'')" placeholder="—" style="max-width:180px"><div style="font-size:11px;color:#64748b;margin-top:3px">Ef sett — yfirristir útreiknað verð. Notið þegar verð hefur verið samið (t.d. 1250000).</div></div>
+          <div class="gr-f"><label>Fast heildarverð með vsk (samningaverð)</label><input type="text" inputmode="numeric" id="gr-fix" value="${escapeAttr(fixedTotal>0?String(Math.round(fixedTotal)):'')}" placeholder="—" style="max-width:180px"><div style="font-size:11px;color:#64748b;margin-top:3px">Ef sett — yfirristir útreiknað verð. Notið þegar verð hefur verið samið (t.d. 1250000).</div></div>
           <div class="gr-st">Athugasemd</div>
           <div class="gr-f"><textarea id="gr-notes" rows="2" placeholder="Birtist neðst á reikningi">${escapeHtml(notes)}</textarea></div>
           <div class="gr-actions">
