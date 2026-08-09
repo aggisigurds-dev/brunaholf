@@ -70,7 +70,7 @@ exports.handler = async (event) => {
   const warnings = [];
   let solur = [], invoices = [], drafts = [], meta = [], tv = [], verk = [], fjLive = [];
   try {
-    solur = await sbAll('solur', 'select=samtals,greitt_med,paid_at,krafa_sent_at,invoiced_at,dk_invoice_id,is_credit,created_at,status,num,customer_nafn&greitt_med=eq.reikningur');
+    solur = await sbAll('solur', 'select=id,samtals,greitt_med,paid_at,krafa_sent_at,invoiced_at,dk_invoice_id,is_credit,credit_of,created_at,status,num,customer_nafn&greitt_med=eq.reikningur');
   } catch (e) { warnings.push('solur lestur mistókst — Slökkvitæki-kröfur gætu vantað: ' + e.message); }
   try {
     invoices = await sbAll('invoices', 'select=upphaed_total,hofudstoll,status,source,tilvisun,id,kt_greidanda,customer_name');
@@ -98,10 +98,14 @@ exports.handler = async (event) => {
   } catch (e) { warnings.push('fjarmal_live lestur mistókst — skýrslur í vinnslu gæti vantað'); }
 
   // ── A) Slökkvitæki-kröfur ────────────────────────────────────────────────
+  // Reikningar sem á móti þeim hefur verið gefið kredit-nóta eru ekki lengur
+  // óuppgerðar kröfur — sía þá út þótt paid_at sé tómt.
+  const creditedSolurIds = new Set(solur.filter(s => s.is_credit && s.credit_of).map(s => s.credit_of));
   const A = { thessi_manudur: n0(), eldri: n0(), heildar: n0(), ogreitt_payday: n0(), osendar: n0() };
   for (const s of solur) {
     if (s.paid_at) continue;
     if (s.is_credit) continue;
+    if (creditedSolurIds.has(s.id)) continue; // bakfærður með kredit-nótu
     if (s.status && !['final', 'sent'].includes(lc(s.status)) && lc(s.status) !== '') continue; // sleppa void/draft
     const amt = +s.samtals || 0;
     if (amt <= 0) continue;
