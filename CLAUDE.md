@@ -353,6 +353,20 @@ Ath. að tengingin gerist í gagnagrunninum, óháð því hvaða app skrifaði 
 (Sala, Drive-innsog, POS, appið) — en gömul opin síða þarf samt endurhleðslu til að
 **sjá** hana. Cache-hliðin er óleyst.
 
+**2026-08-09 — pörin eru núna PER STAÐ (`fyrirtaeki_id`), ekki bara per lögaðila.**
+Gamla `UNIQUE (customer_base_id, year, service_type)` skorðan þýddi að fjölstaða-
+viðskiptavinur gat aðeins átt EITT par per ár: hjá Heimaleigu (12 staðir á base 293)
+tók Dalbrekka sætið 3. ágúst og Urðarhvarf 2 gat því ALDREI tengst — sama hvað var
+reynt í fellilistanum. Breytt: nýr dálkur `document_pairs.fyrirtaeki_id` (backfyllt
+úr skjölum paranna, 1.273/1.281), einkvæmnin er nú
+`(customer_base_id, year, service_type, coalesce(fyrirtaeki_id,0))`, og triggerinn
+skalar bæði talningar og pörun á staðinn þegar skjalið ber `fyrirtaeki_id`. Skjal
+MEÐ stað parast aðeins við pör SAMA staðar (aldrei við null-staðar pör — það væri
+ágiskun); skjal ÁN staðar hegðar sér eins og áður gegn null-staðar pörum. Prófað:
+reikningur á þriðja systkinastað bjó til sitt eigið par án þess að snerta hin.
+Afrit: `backup_20260809_document_pairs`. Sama lexía og annars staðar í skjalinu:
+**kennitala/base svarar „hver borgar", aldrei „hvar unnum við".**
+
 ## Efniskostnaður — handvirk verkstaða-tenging (2026-08-05)
 
 Verkefnalisti a12d429a: Redder-reikningar sem `redder-read.js` gat ekki tengt sjálfkrafa
