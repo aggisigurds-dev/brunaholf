@@ -122,6 +122,13 @@ samþykkir) → klarad. GET skilar öllu; POST `{action:'update', id, …}`.
   `i_yfirferd` skal fylgja skjámynd af breytingunni (Playwright-skot af
   síðunni eftir breytingu) gegnum `result_image_b64` í sama update-kalli —
   Agnar yfirfer af símanum og á að geta séð útkomuna án þess að opna appið.
+  **Í Claude Code web/remote session:** plain `playwright` `chromium.launch()`
+  brotnar þar (`net::ERR_CONNECTION_RESET`) — egress-proxy þess umhverfis RSTar
+  Chromium's ECH GREASE TLS-viðbót. Notaðu `tools/bh-browser.cjs`
+  (`require('./tools/bh-browser.cjs').launch()`, keyrt með
+  `NODE_PATH=/opt/node22/lib/node_modules`) í staðinn — sjá haus-athugasemdina
+  í þeirri skrá fyrir fulla greiningu og hvernig á að endurgreina ef þetta
+  brotnar aftur á nýrri Chromium-útgáfu.
 - **Lesa `feedback` þegar verk kemur aftur í vinnu.** „↶ Aftur í vinnu" úr
   yfirferð opnar athugasemdabox hjá Agnari; textinn bætist tímastimplaður í
   `feedback`-dálkinn (birtist sem 📣 á síðunni). Nýjasta línan segir hverju á
