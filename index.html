@@ -67,12 +67,14 @@ button{cursor:pointer}
 /* ======= Header ======= */
 .topbar{
   position:sticky;top:0;z-index:30;
-  background:var(--navy-dark);
-  color:#fff;padding:0;display:block;
-  box-shadow:0 4px 14px rgba(0,0,0,.25);
+  background:#fff;
+  color:var(--ink);padding:0;display:flex;align-items:center;
+  min-height:64px;
+  border-bottom:1px solid #E9E2D2;
+  box-shadow:0 1px 0 rgba(15,17,23,.05);
   overflow:hidden;
 }
-.banner-img{display:block;width:100%;height:auto;max-height:none;object-fit:contain}
+.banner-img{display:block;width:auto;height:34px;max-height:34px;object-fit:contain;margin-left:56px}
 .topbar .brand,.topbar .brand-divider,.topbar .brand-slk{display:none}
 .topbar .editToggle{position:absolute;top:12px;right:14px;z-index:5;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);color:#fff}
 .topbar .editToggle.on{background:var(--gold);color:#1A1A1F}
@@ -1431,7 +1433,7 @@ html.embedded .vb-scroll-wrap .vb-th-sum{font-size:17px !important}
 </style>
 
 <header class="topbar">
-  <img src="banner.png" alt="Brunahólf — Slökkvitæki ehf" class="banner-img" onerror="this.onerror=null;this.src='banner.png.png';this.addEventListener('error',()=>{this.style.display='none';this.parentNode.style.minHeight='60px';this.parentNode.style.background='linear-gradient(180deg, var(--navy) 0%, var(--navy-dark) 100%)'})">
+  <img src="assets/brunaholf-logo.png" alt="Brunahólf" class="banner-img" onerror="this.onerror=null;this.style.display='none'">
   <button class="menu-btn" id="menuBtn" title="Valmynd">☰</button>
   <button class="editToggle" id="editToggle" title="Breyta">✎ Breyta</button>
   <span class="sync-badge" id="sync-badge" title="Vistun á milli tækja">☁ …</span>
