@@ -108,6 +108,15 @@
   .dupbar{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; background:#fff7ed; border:1px solid #fed7aa; border-radius:10px; padding:10px 14px; }
   .dupbar .t{ flex:1; font-size:13px; color:#9a3412; font-weight:600; }
   .dupbar .btn.warn{ background:#ea580c; color:#fff; border-color:#c2410c; }
+  /* 🆕 Fyrirtæki sem eru ekki í kerfinu (2025/2026) — blátt, aðgreint frá appelsínugulu tvítaka-bandinu */
+  .newcobar{ background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:10px 14px; margin-bottom:8px; }
+  .newcobar .t{ font-size:13px; color:#1e40af; font-weight:600; margin-bottom:8px; }
+  .newco-list{ display:flex; flex-direction:column; gap:6px; }
+  .newco-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:#fff; border:1px solid #dbeafe; border-radius:8px; padding:6px 10px; }
+  .newco-nafn{ font-weight:700; font-size:13px; color:#0f172a; flex:1; min-width:140px; }
+  .newco-kt{ font-family:ui-monospace,Consolas,monospace; font-size:12px; color:#475569; }
+  .newco-meta{ font-size:11.5px; color:#64748b; }
+  .newco-msg{ font-size:12px; }
   .item.dupe{ border-left-color:#ea580c !important; }
   .badge-dupe{ display:inline-block; background:#ffedd5; color:#9a3412; font-size:10.5px; font-weight:800; padding:1px 7px; border-radius:99px; }
   .item.edited{ border-left-color:#0f7a43 !important; }
@@ -166,6 +175,7 @@
       </select></label>
       <span id="status" class="muted"></span>
     </div>
+    <div id="newcobar"></div>
     <div id="dupbar"></div>
     <div id="results"></div>
 
@@ -438,6 +448,81 @@
   function recount(){ counts={}; rows.forEach(function(x){ counts[x.doc_type]=(counts[x.doc_type]||0)+1; }); }
 
   // ── tvítök: hópa eftir tillögu-nafni; halda einu (helst þegar-tengda), rest = aukaeintök ──
+  // 🆕 Fyrirtæki sem eru EKKI í kerfinu (2026-08-11, ósk Agnars: „let me know if
+  // it finds companies that are not in our system with date 2025 and 2026 and it
+  // would offer me to create a new fyrirtæki").
+  // Skilyrði: OKKAR skjalategund · base_id vantar (kt leystist ekki í
+  // customers_base) · kennitala LAS þó úr skjalinu · ár 2025/2026.
+  // Kennitalan er skilyrði — án hennar væri stofnun hrein ágiskun, og
+  // /api/kt-create er einkvæmt á kennitölu (stofnar aldrei tvítak).
+  var NEW_CO_YEARS = [2025, 2026];
+  function newCoInfo(){
+    var byKt = {};
+    rows.forEach(function(r, i){
+      if (r.__done || !OURS[r.doc_type]) return;
+      if (r.base_id) return;                                   // þekkt fyrirtæki
+      var kt = String(r.kt || '').replace(/\D/g, '');
+      if (kt.length !== 10) return;                            // engin kt → ekki giskað
+      if (NEW_CO_YEARS.indexOf(+r.year) === -1) return;         // aðeins 2025/2026
+      (byKt[kt] = byKt[kt] || { kt: kt, nafn: '', idxs: [], years: {} });
+      byKt[kt].idxs.push(i);
+      byKt[kt].years[r.year] = 1;
+      // Besta nafnið: lengsta ó-tóma base_nafn (les-niðurstaða úr skjalinu).
+      var n = String(r.base_nafn || '').trim();
+      if (n && n.length > byKt[kt].nafn.length) byKt[kt].nafn = n;
+    });
+    var list = Object.keys(byKt).map(function(k){ return byKt[k]; });
+    list.sort(function(a, b){ return b.idxs.length - a.idxs.length; });
+    return { list: list, count: list.length,
+             docs: list.reduce(function(s, x){ return s + x.idxs.length; }, 0) };
+  }
+  function renderNewCoBar(){
+    var bar = $('newcobar'); if (!bar) return;
+    var info = newCoInfo();
+    if (!info.count) { bar.innerHTML = ''; return; }
+    bar.innerHTML = '<div class="newcobar">'
+      + '<div class="t">🆕 <b>' + info.count + '</b> fyrirtæki sem eru EKKI í kerfinu '
+      +   '(' + info.docs + ' skjöl, ' + NEW_CO_YEARS.join('/') + ') — kennitala fannst í skjalinu.</div>'
+      + '<div class="newco-list">'
+      + info.list.map(function(x, n){
+          var ktD = x.kt.slice(0,6) + '-' + x.kt.slice(6);
+          var yrs = Object.keys(x.years).sort().join(', ');
+          return '<div class="newco-row" data-newco="' + n + '">'
+            + '<span class="newco-nafn">' + esc(x.nafn || '(nafn ólesið)') + '</span>'
+            + '<span class="newco-kt">kt ' + esc(ktD) + '</span>'
+            + '<span class="newco-meta">' + x.idxs.length + ' skjöl · ' + esc(yrs) + '</span>'
+            + '<button class="btn primary sm newco-add" data-kt="' + esc(x.kt) + '" '
+            +   'data-nafn="' + esc(x.nafn || '') + '" data-nostop="1">➕ Stofna fyrirtæki</button>'
+            + '<span class="newco-msg"></span>'
+          + '</div>';
+        }).join('')
+      + '</div></div>';
+  }
+  // ➕ Stofna — /api/kt-create er idempotent á kennitölu (skilar existed:true ef
+  // hún er þegar til), svo endurtekinn smellur býr aldrei til tvítak.
+  document.addEventListener('click', async function(e){
+    var b = e.target.closest && e.target.closest('.newco-add'); if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    var msg = b.parentElement.querySelector('.newco-msg');
+    b.disabled = true; if (msg) msg.textContent = ' … stofna';
+    try {
+      var r = await fetch('/api/kt-create', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kt: b.getAttribute('data-kt'), nafn: b.getAttribute('data-nafn') })
+      });
+      var d = await r.json().catch(function(){ return {}; });
+      if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+      if (msg) msg.innerHTML = d.existed
+        ? ' <b style="color:#b45309">var þegar til</b> (id ' + d.id + ')'
+        : ' <b style="color:#0f7a43">✓ stofnað</b> (id ' + d.id + ')';
+      b.textContent = '✓ Stofnað';
+      // Keyra forskoðun aftur svo skjölin tengist nýja fyrirtækinu.
+      if (msg) msg.innerHTML += ' — keyrðu forskoðun aftur til að tengja skjölin.';
+    } catch (err) {
+      b.disabled = false;
+      if (msg) msg.innerHTML = ' <b style="color:#b91c1c">villa: ' + esc(err.message || String(err)) + '</b>';
+    }
+  });
   function dupInfo(){
     var byName={};
     rows.forEach(function(r,i){ if(!r.proposed_name||!OURS[r.doc_type]||r.__done) return; var k=r.proposed_name.toLowerCase(); (byName[k]=byName[k]||[]).push(i); });
@@ -576,6 +661,7 @@
       b.addEventListener('click', function(e){ e.stopPropagation(); removeToAnnad(+b.dataset.rm); });
     });
     renderDupbar(dup);
+    renderNewCoBar();
     updateSelCount();
   }
 
