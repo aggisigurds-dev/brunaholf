@@ -677,7 +677,15 @@ async function findExistingLink({ doc_type, invoice_number, base_id, year, site_
     if ((doc_type === 'uttektarskyrsla' || doc_type === 'brunakerfi') && !year) return null;
     if (multiSite && !site_id) return null;   // of óvíst til að fullyrða tvítak
     let url = `${SUPABASE_URL}/rest/v1/customer_documents?doc_type=eq.${encodeURIComponent(doc_type)}&customer_base_id=eq.${base_id}&drive_file_id=not.is.null&select=id,drive_file_id&limit=1`;
-    if (year) url += `&year=eq.${year}`;
+    // 2026-08-11: samningar sem voru skráðir FYRIR `allow_year_on_samningur` eiga
+    // year=NULL (reglan bannaði ár). Hrein `year=eq.<ár>`-sía sæi þá ekki og
+    // multitoolið byggi til NÝJA röð — það var einmitt uppspretta tvítakanna.
+    // Fyrir samninga leyfum við því BÆÐI rétt ár og eldri NULL-röð.
+    if (year) {
+      url += (doc_type === 'samningur')
+        ? `&or=(year.eq.${year},year.is.null)`
+        : `&year=eq.${year}`;
+    }
     if (multiSite && site_id) url += `&fyrirtaeki_id=eq.${site_id}`;
     const r = await fetch(url, { headers: sbHeaders() });
     const rows = await r.json().catch(() => []); return (Array.isArray(rows) && rows[0]) ? rows[0] : null;
@@ -817,10 +825,17 @@ async function applyFile(token, body) {
     const viaStamp = (siteStampFromName(proposed_name) === site_id) || (siteStampFromName(origName) === site_id);
     site = { id: site_id, via: viaStamp ? 'stamp' : 'addr' };
   }
-  // CHECK-reglan `customer_documents_year_shape`: samningur VERÐUR að hafa year=NULL
-  // (uttektarskyrsla/reikningur verða að hafa ár). Ár samnings má standa í nafninu en
-  // ekki í year-dálki → annars 23514 check_violation.
-  const rowYear = doc_type === 'samningur' ? null : (year || null);
+  // 2026-08-11: samningur MÁ nú bera ár (CHECK-reglan `customer_documents_year_shape`
+  // rýmkuð — sjá migration `allow_year_on_samningur`). Áður VARÐ hann að hafa
+  // year=NULL, svo árið sem lesið var úr heitinu („… - þjónustusamningur - 2026.pdf")
+  // var hent í notes og glataðist sem gagn. Þrennt bilaði af því:
+  //   • `findExistingLink` síar á year → fann ALDREI geymdan samning (allir NULL)
+  //     → tvítök hlóðust upp (Thai Lindin 5 raðir, Center Hótel 4, Prikið 3).
+  //   • `samningar-read.js` sendir year á samning → 23514 → skráðist ekki.
+  //   • match-station deduppar samninga á (staður, ár) — með ár alltaf NULL
+  //     féllu ALLIR samningar staðarins í einn hóp.
+  // Árið er endurnýjunarár samningsins og er nú geymt þar sem það á heima.
+  const rowYear = year || null;
   const docRow = {
     customer_base_id: base_id, doc_type, year: rowYear, drive_file_id: id,
     source: 'gdrive', found_by: 'drive-multitool',
@@ -832,10 +847,12 @@ async function applyFile(token, body) {
   // er í body-inu — apply án base_id/base_nafn/year núllaði því fyrirliggjandi
   // customer_base_id/customer_name/year á tengdri röð (gerðist live á doc 1497).
   // Óþekkt gildi (null) eru því FELLD ÚR upsert-inu svo fyrirliggjandi tenging
-  // stendur; undantekning: samningur á VILJANDI year=null (CHECK-reglan).
+  // stendur. 2026-08-11: undantekningin fyrir samning fjarlægð — hann ber nú ár
+  // eins og aðrar tegundir, svo óþekkt ár (null) á að víkja fyrir því sem er
+  // þegar skráð í stað þess að núlla það.
   if (docRow.customer_base_id == null) delete docRow.customer_base_id;
   if (docRow.customer_name == null) delete docRow.customer_name;
-  if (docRow.year == null && doc_type !== 'samningur') delete docRow.year;
+  if (docRow.year == null) delete docRow.year;
   // Sama vörn og needRename hér að ofan: þegar-tengt skjal heldur núverandi
   // notes-gildi sínu (t.d. handvirkt breytt heiti) í stað þess að fá aftur
   // sjálfvirka „drive-multitool · …" stimpilinn á hverju sweep-i.
