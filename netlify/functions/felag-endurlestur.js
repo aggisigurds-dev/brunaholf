@@ -219,8 +219,10 @@ exports.handler = async (event) => {
         const changed = {};
         if (apply && readable && verdict !== 'óviss'){
           const patch = {};
-          // year: aldrei á samning (year_shape check krefst null þar)
-          if (di.year && di.year !== d.year && d.doc_type !== 'samningur'){ patch.year = di.year; changed.year = { from: d.year, to: di.year }; }
+          // year: 2026-08-11 — samningur MÁ nú bera ár (year_shape rýmkuð, sjá
+          // migration allow_year_on_samningur). Undanþágan hér var eina ástæðan
+          // fyrir því að endurlestur gat ekki leiðrétt ártal á samningi.
+          if (di.year && di.year !== d.year){ patch.year = di.year; changed.year = { from: d.year, to: di.year }; }
           // doc_type: aðeins leiðrétt þegar innihaldið stangast á við skráninguna.
           const wantType = verdict === 'reikningur' ? 'reikningur' : verdict === 'brunakerfi' ? 'brunakerfi' : 'uttektarskyrsla';
           const yearAfter = patch.year != null ? patch.year : d.year;

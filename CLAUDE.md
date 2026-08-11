@@ -560,6 +560,42 @@ skjöl til verkkaupa. Fyrsta eyðublaðið: **„Yfirlýsing vegna brunalokana"*
   (`id/titill/lysing/sections/doc(v,E)/pdf(v,P)`) — sjá leiðbeiningarnar í
   haus-athugasemdinni þar. Engin bakenda-breyting þarf; `form_id` er frjálst.
 
+## Samningar mega bera ár (2026-08-11)
+
+Agnar: „multitool use the year in the name that I want — to have when it was
+registered.. but something in the system dont want files with years within the
+filename." **„Eitthvað í kerfinu" var CHECK-reglan `customer_documents_year_shape`**,
+sem krafðist `year IS NULL` á `doc_type='samningur'`.
+
+Samningar BERA ártal í raunveruleikanum (endurnýjunarár — sjá Samningar-möppuna:
+„… - þjónustusamningur - 2026.pdf"). Reglan var því röng forsenda, ekki vörn, og
+braut þrennt í hljóði:
+
+1. **`samningar-read.js`** sendir `year` á samning → `23514 check_violation` →
+   samningurinn skráðist ALDREI þegar heitið bar ártal.
+2. **`drive-multitool.js`** neyddist til að henda árinu (`rowYear = null`) og
+   geyma það í `notes` í staðinn. Mælt: **146 af 204** multitool-samningum báru
+   ártal í notes, **0** í `year`-dálknum.
+3. **`findExistingLink`** síar á `year=eq.<ár>`. Þar sem hver geymdur samningur
+   hafði `year=NULL` fann sú fyrirspurn ALDREI fyrirliggjandi samning → hvert
+   sweep bjó til NÝJA röð. Tvítök: Thai Lindin 5 raðir, Center Hótel 4,
+   Húsfélagið Stakkholt 2-4 4, Prikið 3, Suðurhella 9 3.
+4. **`match-station`** deduppar samninga á `(staður, ár)`; með ár alltaf NULL
+   féllu ALLIR samningar staðarins í einn hóp.
+
+Migration `allow_year_on_samningur` rýmkar regluna: samningur MÁ hafa ár (áfram
+valfrjálst svo eldri NULL-raðir standist). Vörnin sem skiptir máli heldur —
+`uttektarskyrsla`/`reikningur` VERÐA áfram að hafa ár (prófað: innsetning án árs
+er enn hafnað).
+
+Bakfyllt: 146 ártöl endurheimt úr `notes` (2008–2026). 212 samningar eru enn án
+árs — nöfn þeirra bera ekkert ártal.
+
+⚠️ **`findExistingLink` leyfir `year.is.null` LÍKA fyrir samninga.** Samningar
+skráðir fyrir þessa breytingu eiga `year=NULL`; hrein árs-sía sæi þá ekki og
+byggi til nýja röð — sama tvítaka-hegðun og var verið að laga. Ekki herða þetta
+í hreina árs-jöfnun fyrr en bakfyllingin nær til allra.
+
 ## graphify
 
 Þekkingargraf **aðeins uppsett á stóru vélinni** — `graphify`-skipunin er EKKI til á
