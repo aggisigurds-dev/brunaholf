@@ -67,21 +67,24 @@ async function listChildren(token, folder) {
 //   'name-desc'         = öfug stafrófsröð (síðustu nöfn fyrst) ·
 //   'new'               = nýjast BÆTT við fyrst (createdTime desc) — best til að
 //                         lesa bara „100 nýju" án þess að fara aftur í gegnum 1000.
+// Skilar { files, folderNames } — `folderNames` er id→nafn kort yfir möppurnar sem
+// gengið var um, svo forskoðunin geti þekkt möppuheiti sem lauma sér inn í skráarnöfn
+// (lotu-skönnun: „<möppuheiti> - bls NNN.pdf"). Sjá `sameAsFolder`.
 async function listPdfs(token, root, recurse, order) {
-  const out = [], queue = [root], seen = new Set();
+  const out = [], queue = [root], seen = new Set(), folderNames = {};
   while (queue.length) {
     const folder = queue.shift();
     if (seen.has(folder)) continue; seen.add(folder);
     let kids; try { kids = await listChildren(token, folder); } catch (e) { throw e; }
     for (const c of kids) {
-      if (c.mimeType === FOLDER_MIME) { if (recurse) queue.push(c.id); continue; }
+      if (c.mimeType === FOLDER_MIME) { folderNames[c.id] = c.name || ''; if (recurse) queue.push(c.id); continue; }
       if (/pdf$/i.test(c.name || '') || /pdf/i.test(c.mimeType || '')) out.push(c);
     }
   }
   if (order === 'new') out.sort((a, b) => String(b.createdTime || '').localeCompare(String(a.createdTime || '')));
   else if (order === 'name-desc') out.sort((a, b) => String(b.name).localeCompare(String(a.name), 'is'));
   else out.sort((a, b) => String(a.name).localeCompare(String(b.name), 'is'));
-  return out;
+  return { files: out, folderNames };
 }
 // DEEP-READ a file via Drive OCR (Google-Doc extraction) as PRIMARY path, with
 // pdf-parse as fallback — the reliable reader for dkPlus PDFs (copied verbatim
@@ -186,6 +189,34 @@ function isAlarmReport(text) {
 function hasExtinguisherCounts(text) {
   return /Fjöldi\s*:|handsl[öo]kkvit|dufttæki|kols[ýy]ru|l[ée]ttvatn|CO2|slökkvit[æa]ki\s+\d/i.test(text || '');
 }
+// ── Staðgreitt: búðarsala yfir borðið, ekki úttektarreikningur ──────────────
+// Agnar 2026-08-12 (leiðréttingaskrá): „ef greiðsl.skilm. er staðgreiðsla þá er
+// þetta ekki reikningur fyrir úttektir" + „Staðgreitt - 999999-9999 - ef staðgreitt
+// eða 999999-9999". Tvö merki, sama niðurstaða: skjalið á hvorki heima í
+// reikningar-master né í customer_documents — kt 999999-9999 er walk-in
+// staðgengillinn (customers_base 870 „Staðgreitt"), ekki alvöru viðskiptavinur.
+const WALKIN_KT = '9999999999';
+function stadgreittSignal(text, kt) {
+  if (String(kt || '').replace(/\D/g, '') === WALKIN_KT) return 'kt 999999-9999';
+  // OCR ruglar dálkunum á dkPlus-reikningi — merkimiðinn („Greiðsl.skilm.:") og
+  // gildið („Staðgreiðsla") lenda á sitt hvorri línunni, svo það er EKKI hægt að
+  // festa regluna við merkimiðann. Leitum að orðinu sjálfu: „Staðgreiðsla" stendur
+  // aldrei á reikningi sem er gefinn út með greiðslufresti.
+  if (/sta[ðd]grei[ðd]sl|sta[ðd]greitt/i.test(text || '')) return 'staðgreiðsla';
+  return '';
+}
+// YFIRSKRIFT (Agnar 2026-08-12, með skjáskoti af R-108017 — Álfaskeið 104, húsfélag,
+// Greiðsl.skilm. Staðgreiðsla): „ef það les Akstur og skýrslugerð og vottun í
+// einhverjum reikningi og líka staðgreiðsla — þá yfirskrifa Akstur og skýrslugerð
+// og vottun staðgreiðsluna og hann telst reikningur fyrir úttektarskýrslu."
+// Rökin: þessar tvær vörulínur (200 Akstur + 060 Skýrslugerð og vottun) þýða að við
+// keyrðum á staðinn og skrifuðum skýrslu — það er úttekt, hvernig sem hún var greidd.
+// Búðarsala yfir borðið ber hvoruga (sbr. R-107962: bara „Hleðsla Léttvatn").
+// „og vottun" er hluti af sama vöruheiti og því ekki krafist — OCR sleppir því stundum.
+function uttektServiceLines(text) {
+  const t = text || '';
+  return /\bakstur\b/i.test(t) && /sk[ýy]rslu\s*-?\s*g?j?er[ðd]/i.test(t);
+}
 // Þjónustusamningur.
 function isSamningur(text) {
   return /þj[óo]nustusamning|samningur\s+um\s+þj[óo]nustu/i.test(text || '');
@@ -230,14 +261,73 @@ function companyFromContent(text) {
   if (/sl[öo]kkvit[æa]ki/i.test(c)) return '';   // útgefandinn, ekki kaupandinn
   return c;
 }
-// Kaupanda-félag: hráskannað skráarheiti („Scan2026-…", „IMG_…") → nota „Nafn:"
-// úr innihaldi; annars endurnefnt/alvöru skráarheiti fyrst, svo innihaldið.
-function companyFrom(text, name) {
+// Kaupanda-félag úr HAUSNUM á reikningi, þar sem það stendur BERT (engin „Nafn:"
+// merking): dkPlus/Stolpi prentar kaupandann efst og kennitöluna beint undir —
+//   „Live production ehf. / 500920-1650 / Reikningur …"
+// og bréfsefnis-útgáfan skýtur heimilisfangi á milli —
+//   „Álfaskeið 104,húsfélag / Álfaskeiði 104 / 220 Hafnarfjörður / 430680-0139".
+// Þess vegna er tekin FYRSTA línan í blokkinni á undan kennitölunni, ekki sú síðasta
+// (sú síðasta er póstnúmerið). Útgefanda-blokkin efst (Slökkvitæki/Brunakerfi með
+// kt 600508-0400) er síuð burt svo VIÐ verðum ekki lesin sem kaupandinn.
+//
+// Notað EINGÖNGU sem varaskeifa fyrir `base_nafn` (þ.e. „🆕 stofna fyrirtæki"-
+// tillöguna) — ALDREI í `proposed_name`. Nafngiftin sjálf stendur óbreytt eins og
+// Agnar leiðrétti hana (heimilisfangið leiðir þegar félag vantar); þetta er hér til
+// að þurfa ekki að slá inn nafnið í höndunum á hverju óþekktu fyrirtæki.
+function companyFromHeader(text) {
+  const lines = String(text || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  let ktAt = -1;
+  for (let i = 0; i < lines.length && i < 40; i++) {
+    const kts = allKts(lines[i]);
+    if (kts.length && !kts.includes(ISSUER_KT)) { ktAt = i; break; }
+  }
+  if (ktAt <= 0) return '';
+  for (const raw of lines.slice(0, ktAt)) {
+    const c = raw.replace(/\s+/g, ' ').trim().replace(/[.,;:]+$/, '').trim();
+    if (c.length < 2 || c.length > 60) continue;
+    if (!/[A-Za-zÁÉÍÓÚÝÆÖÞÐáéíóúýæöþð]/.test(c)) continue;
+    if (/sl[öo]kkvit[æa]ki|brunakerfi|helluhraun|vsk\s*nr|^kt\.?\s*:/i.test(c)) continue;  // útgefandinn
+    if (/^(reikningur|kreditreikningur|dagsetning|grei[ðd]sl|afh\.?skilm|ra[ðd]nr|starfsma[ðd]ur|tilv[íi]sun|v[öo]run[úu]mer)/i.test(c)) continue;
+    if (/^\d{3}\s/.test(c)) continue;                       // póstnúmer + staður
+    return c;
+  }
+  return '';
+}
+// Lotu-skönnun: „<möppuheiti> - bls NNN.pdf" (t.d. „mars-mai stolpi 2026 - bls 037").
+// Slíkt heiti ber ENGA kaupanda-vísbendingu — það er blaðsíðunúmer í bunka — svo það
+// á að hegða sér eins og „Scan…"-heiti og víkja fyrir innihaldinu.
+function isBatchPageName(name) {
+  return /[\s\-_]\s*(?:bls|bl|s[íi][ðd]a|page|pg)\.?\s*\d{1,4}$/i.test(cleanStem(name));
+}
+// Er nafn-tillagan bara MÖPPUHEITIÐ? (Agnar 2026-08-12: „take out of the name
+// mars-mai stolpi that comes in front of the renaming, but that is the name of the
+// folder".) Lotu-skönnun skrifar möppuheitið fremst í hverja síðu, svo companyFromStem
+// las möppuna sem kaupandann á HVERJUM einasta reikningi í bunkanum.
+// Aðeins hafnað þegar frambjóðandinn er FORSKEYTI möppuheitisins (eða jafn því) —
+// mappa sem heitir eftir fyrirtækinu sínu heldur því áfram.
+function sameAsFolder(cand, folderNames) {
+  const c = foldWord(String(cand || '').replace(/\s+(?:19|20)\d{2}$/, ''));
+  if (!c) return false;
+  return (folderNames || []).some(fn => {
+    const f = foldWord(String(fn || '').replace(/\s+(?:19|20)\d{2}$/, ''));
+    return !!f && f.indexOf(c) === 0;
+  });
+}
+// Kaupanda-félag: hráskannað skráarheiti („Scan2026-…", „IMG_…", „… - bls 037") →
+// nota „Nafn:" úr innihaldi; annars endurnefnt/alvöru skráarheiti fyrst, svo innihaldið.
+// `opts.folderNames` (mappan sem skráin liggur í + lesmappan) hafnar möppuheiti sem
+// félagsnafni þegar `opts.stripFolder` er á.
+function companyFrom(text, name, opts) {
+  opts = opts || {};
   const fromContent = companyFromContent(text);
   const fromName = companyFromStem(name);
-  const nameIsScan = /^(?:scan|img|image|document|dokument|skjal|photo|mynd)[\s_\-]?\d/i.test(cleanStem(name));
-  if (fromName && !nameIsScan) return fromName;  // endurnefnt/alvöru heiti ræður
-  return fromContent || fromName || '';          // hráskann/tómt → „Nafn:" úr innihaldi
+  const nameIsScan = /^(?:scan|img|image|document|dokument|skjal|photo|mynd)[\s_\-]?\d/i.test(cleanStem(name)) || isBatchPageName(name);
+  const nameIsFolder = !!(opts.stripFolder !== false && fromName && sameAsFolder(fromName, opts.folderNames));
+  if (fromName && !nameIsScan && !nameIsFolder) return fromName;  // endurnefnt/alvöru heiti ræður
+  // hráskann/möppuheiti/tómt → „Nafn:" úr innihaldi. Möppuheitið er ALDREI notað sem
+  // varaskeifa (þá væri það aftur komið fremst í nafnið) — betra að skila engu félagi
+  // og láta heimilisfangið leiða nafnið (sjá nameInvoice).
+  return fromContent || (nameIsFolder ? '' : fromName) || '';
 }
 // Kaupanda-félag úr SKRÁARHEITI (endurnefnd skjöl bera „Fyrirtæki - kt - …").
 function companyFromStem(name) {
@@ -300,10 +390,14 @@ function cleanCompany(s) {
 // bætt við (Agnar 2026-07-27 — var handvirkt bætt á nær hvern reikning). Deduppað
 // gegn félagsnafni eins og í skýrslum (rekstrarfélag-forskeyti / húsfélags-gata).
 function nameInvoice(co, addr, ktd, inv, yr, tot) {
-  const c = sanitize(co) || 'Óþekkt';
+  const c = sanitize(co);
   let a = addr ? sanitize(addr).replace(/\s+-\s+/g, ' ').replace(/^[\s,-]+|[\s,-]+$/g, '') : '';
-  if (a) { a = siteMinusCo(a, c); a = addrMinusCoTail(a, c); if (a && foldWord(c).indexOf(foldWord(a)) !== -1) a = ''; }
-  return [c, a, ktd || '', inv || '', yr || '', (tot != null ? fmtIsk(tot) + ' kr' : '')].filter(Boolean).join(' - ') + '.pdf';
+  if (a) { a = siteMinusCo(a, c); a = addrMinusCoTail(a, c); if (a && c && foldWord(c).indexOf(foldWord(a)) !== -1) a = ''; }
+  // Ekkert félagsnafn EN heimilisfang til → láta heimilisfangið leiða í stað þess að
+  // stimpla „Óþekkt" fremst (Agnar 2026-08-12: „Skeiðarvogi 159, 104 Reykjavík -
+  // 500920-1650 - R-107973 - …"). „Óþekkt" er aðeins fyrir raðir sem hafa hvorugt.
+  const head = c || (a ? '' : 'Óþekkt');
+  return [head, a, ktd || '', inv || '', yr || '', (tot != null ? fmtIsk(tot) + ' kr' : '')].filter(Boolean).join(' - ') + '.pdf';
 }
 // Fold-a orð til samanburðar (án broddstafa/hástafa/greinarmerkja).
 function foldWord(w) { return String(w || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, ''); }
@@ -493,9 +587,22 @@ async function existingDocId({ cls, inv, baseId, year, siteId, multiSite }) {
 // (þjónustusamningar + skoðunar-/úttektarskýrslur) eru ALLTAF okkar — OCR-villa
 // á útgefanda á ekki að henda þeim í vendor/other. issuer_ours er aðeins notað
 // til að greina OKKAR reikning frá reikningi frá öðrum (báðir bera „reikningur").
-function classify(text, name, inv, total, issuerOurs, invInName) {
+function classify(text, name, inv, total, issuerOurs, invInName, opts) {
   const t = text || '';
   const nm = name || '';
+  opts = opts || {};
+  // Reikningur → hvaða reikningur? Staðgreitt-vaktin situr hér svo BÁÐAR
+  // reikninga-leiðirnar (með og án lesanlegs R-númers) fari í gegnum hana.
+  const asInvoice = (sub) => {
+    if (opts.stadgreitt !== false) {
+      const sig = stadgreittSignal(t, opts.kt);
+      // Akstur + Skýrslugerð yfirskrifa staðgreiðsluna → venjulegur úttektarreikningur.
+      if (sig && !uttektServiceLines(t)) return { doc_type: 'stadgreitt', sub_hint: sig, target: 'staðgreitt' };
+    }
+    // brunakerfis-reikningur fær sína eigin markmöppu-merkingu (aðskilin frá
+    // almenna reikningar-master) svo UI geti beint honum í brunakerfi-reikninga.
+    return { doc_type: 'reikningur', sub_hint: sub, target: sub === 'brunakerfi-reikningur' ? 'brunakerfi-reikningar' : 'reikningar-master' };
+  };
   // 1) Þjónustusamningur — sérkennandi orðalag, ekkert R-númer.
   if ((isSamningur(t) || /þj[óo]nustusamning/i.test(nm)) && !inv) {
     const sub = /brunakerfi|brunavi[ðd]v[öo]run/i.test(t + ' ' + nm) ? 'brunakerfi' : 'slökkvitæki';
@@ -514,9 +621,7 @@ function classify(text, name, inv, total, issuerOurs, invInName) {
     // „brunakerfi"-orð (líka í hausum/línum) beindi öllu í brunakerfi-möppuna.
     if (/brunavi[ðd]v[öo]runarkerfi|[áa]rssko[ðd]un\s+brunakerfis|brunakerfis(?:reikning|samning|sk[oó][ðd]un|þj[óo]nust)/i.test(t)) sub = 'brunakerfi-reikningur';
     else if (total && total < 5000) sub = 'úttektar-reikningur';
-    // brunakerfis-reikningur fær sína eigin markmöppu-merkingu (aðskilin frá
-    // almenna reikningar-master) svo UI geti beint honum í brunakerfi-reikninga.
-    return { doc_type: 'reikningur', sub_hint: sub, target: sub === 'brunakerfi-reikningur' ? 'brunakerfi-reikningar' : 'reikningar-master' };
+    return asInvoice(sub);
   }
   // 2b) OKKAR reikningur án lesanlegs númers: issuerOurs (seljanda-merki/þjónustulínur)
   //     + „reikningur"-orðalag EN R-nr misfórst í OCR (gamlir Stolpi-reikningar með
@@ -526,7 +631,7 @@ function classify(text, name, inv, total, issuerOurs, invInName) {
   if (!inv && issuerOurs && /(?:kredit)?reikningur/i.test(t) && !isReport(t)) {
     const sub = /brunavi[ðd]v[öo]runarkerfi|[áa]rssko[ðd]un\s+brunakerfis|brunakerfis(?:reikning|samning|sk[oó][ðd]un|þj[óo]nust)/i.test(t) ? 'brunakerfi-reikningur'
       : (total && total < 5000 ? 'úttektar-reikningur' : '');
-    return { doc_type: 'reikningur', sub_hint: sub, target: sub === 'brunakerfi-reikningur' ? 'brunakerfi-reikningar' : 'reikningar-master' };
+    return asInvoice(sub);
   }
   // 3) Hrein brunakerfis-skýrsla: brunaviðvörunar-orðalag OG engar slökkvitækja-talningar.
   if (isAlarmReport(t) && !hasExtinguisherCounts(t)) {
@@ -541,7 +646,8 @@ function classify(text, name, inv, total, issuerOurs, invInName) {
 }
 
 // Forskoðun EINS skjals — les innihald, flokkar, byggir tengi-tillögu. ENGIN skrif.
-async function previewFile(token, f) {
+async function previewFile(token, f, opts) {
+  opts = opts || {};
   const text = await readContent(f.id, token);
   const issuerOurs = slokkviIssuer(text);
   const kt = customerKt(text) || customerKt(f.name);
@@ -553,7 +659,12 @@ async function previewFile(token, f) {
   const year = yearFrom(f.name) || yearFrom(text);
   const total = totalFrom(text);
 
-  const cls = classify(text, f.name, inv, total, issuerOurs, invInName);
+  const cls = classify(text, f.name, inv, total, issuerOurs, invInName, { kt, stadgreitt: opts.stadgreitt });
+  // Rökstuðningur staðgreitt-vaktarinnar, sendur með í viðmótið svo Agnar sjái BEINT
+  // í listanum af hverju hver nóta lenti sínum megin (ósk 2026-08-12) — í stað þess
+  // að þurfa að opna PDF-ið til að giska á hvað tólið las.
+  const stad_signal = stadgreittSignal(text, kt);
+  const stad_override = !!(stad_signal && uttektServiceLines(text));
 
   // Hryggur: base úr kt; staður AÐEINS með sönnun (_spine.resolveSite).
   let base = null, sites = [], site = null, multiSite = false;
@@ -568,12 +679,14 @@ async function previewFile(token, f) {
     try { site = resolveSite(f.name, sites, addr); } catch (_) { site = null; }
   }
 
-  const coName = cleanCompany((base && base.nafn) || companyFrom(text, f.name) || '');
+  const coName = cleanCompany((base && base.nafn) || companyFrom(text, f.name, { stripFolder: opts.stripFolder, folderNames: opts.folderNames }) || '');
 
   // proposed_name — kanóníska endurnefningin (aðeins fyrir reikninga + skýrslur;
-  // Fasi 1 NEFNIR bara, færir/endurnefnir ekki).
+  // Fasi 1 NEFNIR bara, færir/endurnefnir ekki). Staðgreitt fær SAMA reiknings-nafn
+  // (Agnar samþykkti „Staðgreitt - 999999-9999 - R-107962 - 2026 - 7.569 kr.pdf"
+  // óbreytt í leiðréttingaskránni) — það er flokkunin og tengingin sem er önnur.
   let proposed_name = null;
-  if (cls.doc_type === 'reikningur') {
+  if (cls.doc_type === 'reikningur' || cls.doc_type === 'stadgreitt') {
     // Heimilisfang kúnnans: hreint skráarheiti > innihald > staðar-aðgreinir
     // (rekstrarfélag). Sama regla og skýrslu-nöfnin nota.
     const invAddr = cleanAddr(addrFromName(f.name) || addrFromReportHeader(text, coName) || reportAddr(text)) || (site ? site.nafn : '');
@@ -610,12 +723,16 @@ async function previewFile(token, f) {
     issuer_ours: !!issuerOurs,
     kt: ktd || '',
     base_id: base ? base.id : null,
-    base_nafn: base ? base.nafn : (coName || null),
+    // Óþekkt kt → besta nafn-tillagan fyrir „🆕 stofna fyrirtæki" (haus-nafnið er
+    // varaskeifa; það fer ALDREI í proposed_name).
+    base_nafn: base ? base.nafn : (coName || cleanCompany(companyFromHeader(text)) || null),
     site_id: site ? site.id : null,
     site_nafn: site ? site.nafn : null,
     site_via: site ? site.via : null,
     year: year || null,
     invoice_number: inv || '',
+    stad_signal,
+    stad_override,
     proposed_name,
     target: cls.target,
     already_linked: !!existing_doc_id,
@@ -645,6 +762,63 @@ async function movePatch(token, id, { addParents, removeParents, name }) {
   if (!r.ok) throw new Error('move ' + r.status + ': ' + (await r.text()).slice(0, 160));
   return r.json();
 }
+// ── Sóttkví: undirmöppur INNI Í lesmöppunni ─────────────────────────────────
+// Agnar 2026-08-12: „I want the ability so it output for skýrslur will be in extra
+// folder inside the folder I am scanning, and staðgreitt will go to its own folder
+// inside reading folder and rest uncertain will go to annad folder inside reading
+// folder … so I can overview before I connect it to the main multitool function."
+// Sóttkví = endurnefna + færa í undirmöppu lesmöppunnar og TENGJA EKKERT
+// (`noLink`) — millistopp til yfirferðar áður en skjölin fara í meistaramöppurnar
+// og í customer_documents. Ekkert er eytt og allt er afturkræft (skrárnar eru enn
+// í sama tré). Þetta er EINA staðurinn í Fasa 1-flæðinu sem býr til möppu.
+const QUARANTINE_FOLDERS = [
+  { key: 'tf-skyr',       name: '📄 Úttektarskýrslur' },
+  { key: 'tf-bruna',      name: '🔔 Brunakerfisskýrslur' },
+  { key: 'tf-reik',       name: '🧾 Reikningar' },
+  { key: 'tf-bruna-reik', name: '🔔 Brunakerfis reikningar' },
+  { key: 'tf-samn',       name: '📝 Samningar' },
+  { key: 'tf-stad',       name: '💵 Staðgreitt' },
+  { key: 'tf-annad',      name: '📦 Annað — óvíst' },
+];
+// Reikninga-forflokkun (Agnar 2026-08-12: „betra að gera annan valhnapp ef um
+// reikninga-forflokkun sé að ræða, svo hann reyni frekar að flokka staðgreiðslu-
+// nótur frá úttektarnótum"). Heill bunki af nótum → AÐEINS tvær hrúgur (+ afgangur),
+// svo hægt sé að renna yfir skiptinguna sjálfa í stað sjö mappa.
+const PRESORT_FOLDERS = [
+  { key: 'tf-stad',  name: '💵 Staðgreiðslunótur' },
+  { key: 'tf-reik',  name: '📄 Úttektarnótur' },
+  { key: 'tf-annad', name: '📦 Annað — óvíst' },
+];
+// Finnur möppu með þessu nafni undir `parent`, býr hana til ef hún vantar.
+// Idempotent: endurkeyrsla skilar sömu möppu, býr aldrei til tvítak.
+async function ensureFolder(token, parent, name) {
+  const q = `'${parent.replace(/'/g, "\\'")}' in parents and name = '${name.replace(/'/g, "\\'")}' and mimeType = '${FOLDER_MIME}' and trashed = false`;
+  const params = new URLSearchParams({ q, fields: 'files(id,name)', pageSize: '10', supportsAllDrives: 'true', includeItemsFromAllDrives: 'true', corpora: 'allDrives' });
+  const r = await fetch('https://www.googleapis.com/drive/v3/files?' + params, { headers: { Authorization: `Bearer ${token}` } });
+  if (r.ok) { const d = await r.json().catch(() => ({})); if (d.files && d.files[0]) return { id: d.files[0].id, name, created: false }; }
+  const cr = await fetch('https://www.googleapis.com/drive/v3/files?supportsAllDrives=true&fields=id', {
+    method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, mimeType: FOLDER_MIME, parents: [parent] }),
+  });
+  if (!cr.ok) throw new Error('mkdir ' + cr.status + ': ' + (await cr.text()).slice(0, 160));
+  const d = await cr.json();
+  return { id: d.id, name, created: true };
+}
+async function quarantineFolders(token, src, mode) {
+  if (!src) return { ok: false, error: 'src required' };
+  const set = mode === 'presort' ? PRESORT_FOLDERS : QUARANTINE_FOLDERS;
+  const res = await Promise.all(set.map(f => ensureFolder(token, src, f.name)
+    .then(r => ({ key: f.key, id: r.id, name: r.name, created: r.created }))
+    .catch(e => ({ key: f.key, name: f.name, error: String(e.message || e) }))));
+  const folders = {}, created = [], errors = [];
+  for (const r of res) {
+    if (r.error) { errors.push(r.name + ': ' + r.error); continue; }
+    folders[r.key] = r.id;
+    if (r.created) created.push(r.name);
+  }
+  return { ok: !errors.length, src, mode: mode === 'presort' ? 'presort' : 'full', folders, created, errors };
+}
+
 // Upsert customer_documents á drive_file_id (sama og drive-sort.upsertDoc) —
 // idempotent: sama skrá → sama röð uppfærð, aldrei tvítekin.
 async function upsertDoc(row) {
@@ -760,6 +934,7 @@ async function applyFile(token, body) {
   const proposed_name = body.proposed_name ? String(body.proposed_name).trim() : null;
   const targetFolder = folderId(body.targetFolder);
   const linkMode = ['overwrite', 'if_empty', 'warn'].includes(body.linkMode) ? body.linkMode : 'warn';
+  const noLink = !!body.noLink;              // sóttkví — færa/endurnefna en ekki tengja
   const isOurs = LINKABLE.has(doc_type);
 
   // vendor/other: sjálfgefið EKKERT gert; aðeins fært ef UI sendir markmöppu; aldrei tengt.
@@ -804,10 +979,20 @@ async function applyFile(token, body) {
   } catch (e) { return { ok: false, id, renamed: false, moved: false, error: 'move/rename: ' + (e.message || e) }; }
   const moveSkipped = (isOurs && !targetFolder) ? 'no-target' : null;
 
-  // vendor/other MEÐ markmöppu: fært (relocate) en ALDREI tengt í customer_documents.
+  // vendor/other/staðgreitt MEÐ markmöppu: fært (relocate) en ALDREI tengt í
+  // customer_documents. Staðgreitt á hér heima af ásettu ráði — kt 999999-9999 er
+  // walk-in staðgengill, ekki viðskiptavinur sem á að fá skjal í skrána sína.
   if (!isOurs) {
     await logApply({ base_id, base_nafn, origName, proposed_name, doc_type, targetFolder, linkAction: 'not-ours', conflict: false });
     return { ok: true, id, renamed, moved, linked: false, linkAction: 'not-ours', doc_id: null, moveSkipped };
+  }
+
+  // Sóttkví: endurnefnt + fært, en EKKERT skrifað í customer_documents. Skjalið bíður
+  // yfirferðar í undirmöppunni; næsta keyrsla (á sóttkvíar-möppuna, með meistara-
+  // möppum) tengir það. Vörnin er í því að GERA EKKERT í gagnagrunninum hér.
+  if (noLink) {
+    await logApply({ base_id, base_nafn, origName, proposed_name, doc_type, targetFolder, linkAction: 'sóttkví (ótengt)', conflict: false });
+    return { ok: true, id, renamed, moved, linked: false, linkAction: 'quarantined', doc_id: null, moveSkipped };
   }
 
   // ── Tengja customer_documents eftir linkMode ──
@@ -929,7 +1114,14 @@ exports.handler = async (event) => {
       try { return json(200, await logCorrection(b)); }
       catch (e) { return json(200, { ok: false, error: String(e.message || e) }); }
     }
-    if (b.action !== 'apply' && b.action !== 'move-dupe' && b.action !== 'move-annad' && b.action !== 'trash') return json(400, { error: "action must be 'apply', 'move-dupe', 'move-annad', 'trash' or 'log-correction'" });
+    // quarantine-folders: býr til (eða finnur) sóttkvíar-undirmöppurnar í lesmöppunni.
+    // Eina skrifið er möppu-stofnun — engin skrá hreyfð, ekkert tengt.
+    if (b.action === 'quarantine-folders') {
+      let tk; try { tk = await freshAccessToken(); } catch (e) { return json(401, { error: e.message }); }
+      try { return json(200, await quarantineFolders(tk, folderId(b.src), b.mode)); }
+      catch (e) { return json(200, { ok: false, error: String(e.message || e) }); }
+    }
+    if (b.action !== 'apply' && b.action !== 'move-dupe' && b.action !== 'move-annad' && b.action !== 'trash') return json(400, { error: "action must be 'apply', 'move-dupe', 'move-annad', 'trash', 'quarantine-folders' or 'log-correction'" });
     if (!b.id) return json(400, { error: 'id required' });
     let token; try { token = await freshAccessToken(); } catch (e) { return json(401, { error: e.message }); }
     try {
@@ -955,20 +1147,31 @@ exports.handler = async (event) => {
     const limit = Math.min(Math.max(parseInt(p.limit || '3', 10) || 3, 1), 5);
     const offset = Math.max(parseInt(p.offset || '0', 10) || 0, 0);
     const order = (p.order === 'new' || p.order === 'name-desc') ? p.order : 'name';
+    // Stillingar (⚙️ Stillingar í viðmótinu) — báðar sjálfgefið ON.
+    const optStad = p.stadgreitt !== '0' && p.stadgreitt !== 'false';       // staðgreitt-flokkun
+    const optStripFolder = p.folderprefix !== '0' && p.folderprefix !== 'false'; // möppuheiti burt úr nafni
 
     let token;
     try { token = await freshAccessToken(); }
     catch (e) { return json(401, { error: e.message }); }
 
-    const files = await listPdfs(token, src, recurse, order);
+    const { files, folderNames } = await listPdfs(token, src, recurse, order);
     const total = files.length;
     const slice = files.slice(offset, offset + limit);
+    // Lesmappan sjálf ber oft heitið sem lekur í skráarnöfnin („mars-mai stolpi 2026
+    // - stakar" → „mars-mai stolpi 2026 - bls 037.pdf"), svo hún fylgir alltaf með.
+    let srcName = '';
+    if (optStripFolder) { try { srcName = (await getFile(token, src)).name || ''; } catch (_) {} }
 
     const rows = [];
     const counts = {};
     for (const f of slice) {
       try {
-        const row = await previewFile(token, f);
+        const row = await previewFile(token, f, {
+          stadgreitt: optStad,
+          stripFolder: optStripFolder,
+          folderNames: [folderNames[(f.parents || [])[0]] || '', srcName].filter(Boolean),
+        });
         rows.push(row);
         counts[row.doc_type] = (counts[row.doc_type] || 0) + 1;
       } catch (e) {

@@ -191,6 +191,7 @@ body[data-tab="vinnubok"] main,
 body[data-tab="reikningar"] main{max-width:none;padding:14px 24px}
 /* Skjala-multitool fyllir alla breidd (iframe með eigin útliti) — engin padding/hámark */
 body[data-tab="multitool"] main{max-width:none;padding:0}
+body[data-tab="skraalisti"] main{max-width:none;padding:0}
 /* Eyðublöð fylla líka alla breidd (iframe með eigin útliti) */
 body[data-tab="eydublod"] main{max-width:none;padding:0}
 /* Fjármála-yfirlit fyllir alla breidd upp að hliðarstiku og topborða (ósk
@@ -1542,6 +1543,7 @@ const DEFAULT_STATE = {
     {id:'skodanir',   label:'Skoðanir',   icon:'📋'},
     {id:'verkfaeri',  label:'Verkfæri',   icon:'🧰', url:'https://verkfaeri.netlify.app', external:true},
     {id:'multitool',  label:'Skjala-multitool', icon:'🗂️'},
+    {id:'skraalisti', label:'Skráalisti', icon:'📋'},
     {id:'bakendi',    label:'Bakendi',    icon:'🗄'},
     {id:'stillingar', label:'Stillingar', icon:'⚙️'}
   ],
@@ -1767,7 +1769,7 @@ function clearDataCache(){
 function ensureNewTabs(s){
   if(!s || !Array.isArray(s.tabs)) return;
   if(!Array.isArray(s.bakendiLinks)) s.bakendiLinks = BAKENDI_LINK_SEED.map(x=>({...x}));
-  ['verkkaupar','dagurinn','jarvis','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','vorubirgdir','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','tvmaeting','verdsamanburdur','verkstadir','skuldunautar','skyrslur','afkost','krofuyfirlit','fjarmalyfirlit','vidskiptavinir','krofur','hreyfingaryfirlit','nlsh','pdftools','spurningar','sjalfvirkni','vefryni','skodanir','verkfaeri','eydublod','multitool','bakendi'].forEach(id=>{
+  ['verkkaupar','dagurinn','jarvis','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','vorubirgdir','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','tvmaeting','verdsamanburdur','verkstadir','skuldunautar','skyrslur','afkost','krofuyfirlit','fjarmalyfirlit','vidskiptavinir','krofur','hreyfingaryfirlit','nlsh','pdftools','spurningar','sjalfvirkni','vefryni','skodanir','verkfaeri','eydublod','multitool','skraalisti','bakendi'].forEach(id=>{
     if(!s.tabs.find(t=>t.id===id)){
       const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
       if(d){
@@ -1822,6 +1824,13 @@ function ensureNewTabs(s){
           const idx = s.tabs.findIndex(t=>t.id==='bakendi');
           const idx2 = s.tabs.findIndex(t=>t.id==='stillingar');
           target = idx >= 0 ? idx : (idx2 >= 0 ? idx2 : -1);
+        } else if(id === 'skraalisti'){
+          // Skráalisti situr rétt á eftir Skjala-multitool (systurtól — sama mappa,
+          // önnur spurning: „hvað er þarna og hvað vantar" í stað „flokkaðu þetta").
+          const idx = s.tabs.findIndex(t=>t.id==='multitool');
+          const bIdx = s.tabs.findIndex(t=>t.id==='bakendi');
+          const sIdx = s.tabs.findIndex(t=>t.id==='stillingar');
+          target = idx >= 0 ? idx + 1 : (bIdx >= 0 ? bIdx : (sIdx >= 0 ? sIdx : -1));
         } else if(id === 'vorubirgdir'){
           // Vörubirgðir situr rétt á eftir Efniskostnaði (annars fyrir ofan Bakendi).
           const idx = s.tabs.findIndex(t=>t.id==='efniskostnadur');
@@ -2295,6 +2304,7 @@ function render(){
   if(t.id==='vefryni') return renderVefryni(t);
   if(t.id==='skodanir') return renderSkodanir(t);
   if(t.id==='multitool') return renderMultitool(t);
+  if(t.id==='skraalisti') return renderSkraalisti(t);
   if(t.id==='pdftools') return renderPdfTools(t);
   if(t.id==='eydublod') return renderEydublod(t);
   if(t.id==='jarvis') return renderJarvis(t);
@@ -2855,6 +2865,16 @@ function renderVidskiptavinir(t) {
 
   load();
 }
+// 📋 Skráalisti — innfellt sem full-breidd síða (endurnýtir /skraalisti.html).
+// Systurtól multitoolsins: sama Drive-mappa, önnur spurning — „hvað er þarna og
+// hvað vantar" (talning + samanburður + útflutningur) í stað flokkunar.
+function renderSkraalisti(t){
+  $view.innerHTML = '<iframe id="sl-embed" src="/skraalisti.html?v='+Date.now()+'" title="Skráalisti" style="width:100%;border:0;display:block;background:#f1f5f9"></iframe>';
+  const fit = () => { const f = document.getElementById('sl-embed'); if(!f) return; const top = f.getBoundingClientRect().top; f.style.height = Math.max(460, window.innerHeight - top - 12) + 'px'; };
+  fit();
+  if(!window.__slFitBound){ window.__slFitBound = true; window.addEventListener('resize', () => { if(document.getElementById('sl-embed')) fit(); }); }
+}
+
 // 🗂️ Skjala-multitool — innfellt sem full-breidd síða (endurnýtir /multitool.html).
 function renderMultitool(t){
   $view.innerHTML = '<iframe id="mt-embed" src="/multitool.html" title="Skjala-multitool" style="width:100%;border:0;display:block;background:#f1f5f9"></iframe>';
@@ -3929,6 +3949,18 @@ function renderBakendi(t){
             <span id="bk-ds-flat-status" style="font-size:12px;color:#64748b"></span>
           </div>
           <div id="bk-ds-results"></div>
+        </div>
+
+        <!-- 📋 Skráalisti — telja, flytja út, bera saman (ENGIN OCR, ekkert fært) -->
+        <div style="${card};border-color:#bfdbfe">
+          <div style="display:flex;align-items:center;gap:14px">
+            <span style="${iconSq};${ICON.blue}">📋</span>
+            <div style="flex:1">
+              <div style="${titleStyle}">Skráalisti — telja möppu og bera saman</div>
+              <p style="${descStyle};margin-top:4px">Velur Drive-möppu og skilar <b>öllum skráarheitum + heildarfjölda</b>. Berðu <b>tvær möppur saman</b> (eftir heiti, reikningsnúmeri eða kennitölu) til að sjá hvað vantar hvorum megin — og fluttu út í <b>Excel (CSV)</b> eða <b>Google Sheets</b>. Les aðeins nöfn: engin OCR, ekkert fært, ekkert tengt.</p>
+            </div>
+            <a onclick="state.ui.activeTab='skraalisti';save();render()" style="${chipStyle('#2563eb','#fff')};text-decoration:none;font-weight:800;cursor:pointer">📋 Opna →</a>
+          </div>
         </div>
 
         <!-- 🧰 Skjala-multitool (Fasi 1 — AÐEINS forskoðun, ekkert fært/skrifað) -->

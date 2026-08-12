@@ -12,6 +12,7 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ALLOWED_KEYS = new Set([
   'hub_state',         // tabs + buttons + ui
   'kvittanir_templates',
+  'multitool_settings', // ⚙️ Stillingar í Skjala-multitool (deilast milli vélanna 4)
 ]);
 
 exports.handler = async (event) => {

@@ -78,8 +78,9 @@
   .fchip .del:hover{ color:#dc2626; }
   .fb-add{ border:1px dashed #cbd5e1; background:#fff; color:#475569; border-radius:99px; padding:5px 12px; font-size:12.5px; cursor:pointer; }
   /* folder input + pick button */
-  .tf-row{ display:flex; gap:6px; }
-  .tf-name{ font-size:11px; margin-top:3px; min-height:14px; word-break:break-word; line-height:1.2; }
+  .tf-row{ display:flex; gap:6px; flex-wrap:wrap; }
+  /* nafn-vísbendingin er sett inn Í .tf-row af JS — full breidd svo hún kremji ekki reitinn */
+  .tf-name{ flex-basis:100%; font-size:11px; margin-top:3px; min-height:14px; word-break:break-word; line-height:1.2; }
   .tf-row input{ flex:1; }
   .pick{ border:1px solid #cbd5e1; background:#fff; color:#334155; border-radius:8px; padding:0 10px; cursor:pointer; font-size:14px; height:36px; }
   .pick.top{ height:38px; background:#1e293b; color:#e5eefb; border-color:#334155; }
@@ -114,9 +115,14 @@
   .newco-list{ display:flex; flex-direction:column; gap:6px; }
   .newco-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:#fff; border:1px solid #dbeafe; border-radius:8px; padding:6px 10px; }
   .newco-nafn{ font-weight:700; font-size:13px; color:#0f172a; flex:1; min-width:140px; }
+  input.newco-input{ background:#fff; border:1px solid #93c5fd; border-radius:7px; height:30px; padding:0 8px; font-weight:600; }
   .newco-kt{ font-family:ui-monospace,Consolas,monospace; font-size:12px; color:#475569; }
   .newco-meta{ font-size:11.5px; color:#64748b; }
   .newco-msg{ font-size:12px; }
+  .newco-docs{ flex-basis:100%; display:flex; flex-wrap:wrap; gap:4px 10px; padding-top:5px; margin-top:4px; border-top:1px dashed #dbeafe; }
+  .newco-doc{ font-size:11.5px; color:#1d4ed8; cursor:pointer; text-decoration:none; }
+  .newco-doc:hover{ text-decoration:underline; }
+  .newco-open{ font-size:11.5px; color:#4f46e5; text-decoration:none; margin-left:-6px; }
   .item.dupe{ border-left-color:#ea580c !important; }
   .badge-dupe{ display:inline-block; background:#ffedd5; color:#9a3412; font-size:10.5px; font-weight:800; padding:1px 7px; border-radius:99px; }
   .item.edited{ border-left-color:#0f7a43 !important; }
@@ -135,6 +141,30 @@
   .editor .ed-name{ font-weight:600; }
   .editor .ed-btns{ display:flex; gap:9px; align-items:center; margin-top:11px; flex-wrap:wrap; }
   .editor .ed-msg{ font-size:12px; }
+  /* ⚙️ Stillingar */
+  .modal.wide{ width:min(760px,96vw); }
+  .set-body{ overflow:auto; padding:4px 16px 14px; }
+  .set-sec{ border-top:1px solid var(--line); padding:14px 0 4px; }
+  .set-sec:first-child{ border-top:0; }
+  .set-sec h3{ font-size:13px; margin:0 0 3px; display:flex; align-items:center; gap:7px; }
+  .set-sec .hint{ font-size:11.5px; color:var(--sub); line-height:1.45; margin:0 0 10px; }
+  .set-row{ display:flex; gap:14px; align-items:center; flex-wrap:wrap; font-size:12.5px; margin-bottom:8px; }
+  .set-row label{ display:flex; align-items:center; gap:6px; }
+  .set-row input[type=number]{ width:76px; background:#fff; color:#0f172a; border-color:#cbd5e1; height:32px; }
+  .set-row select{ height:32px; background:#fff; color:#0f172a; border:1px solid #cbd5e1; border-radius:8px; padding:0 7px; font-size:12.5px; }
+  .set-opt{ display:grid; grid-template-columns:auto 1fr; gap:1px 9px; align-items:start;
+            border:1px solid var(--line); border-radius:9px; padding:9px 11px; margin-bottom:7px; cursor:pointer; font-size:12.5px; }
+  .set-opt:hover{ background:#f8fafc; }
+  .set-opt.on{ border-color:#c7d2fe; background:#eef2ff; }
+  .set-opt input{ grid-row:1/span 2; margin:3px 0 0; }
+  .set-opt b{ grid-column:2; }
+  .set-opt .d{ grid-column:2; color:var(--sub); font-size:11.5px; line-height:1.45; }
+  .set-sub{ margin:8px 0 0 22px; padding-left:11px; border-left:2px solid #e2e8f0; }
+  .set-note{ background:#fff7ed; border:1px solid #fed7aa; border-radius:8px; padding:8px 11px; font-size:11.5px; color:#9a3412; line-height:1.45; margin-top:8px; }
+  .set-ok{ background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:8px 11px; font-size:11.5px; color:#166534; line-height:1.45; margin-top:8px; }
+  #applysum{ font-size:12px; color:var(--sub); margin-bottom:10px; line-height:1.5; }
+  #applysum b{ color:#0f172a; }
+  #applysum .q{ color:#3730a3; font-weight:700; }
   /* corrections log modal */
   .clist{ overflow:auto; padding:6px 4px 12px; }
   .crow{ border-bottom:1px solid var(--line); padding:9px 6px; font-size:12.5px; }
@@ -157,6 +187,7 @@
     <button id="save-folder" class="btn sm" title="Vista þessa möppu sem tengil">💾 Vista möppu</button>
     <button id="show-corr" class="btn sm" title="Skoða leiðréttingaskrána (villuskýrslu)">📋 Leiðréttingaskrá</button>
     <button id="dedup-btn" class="btn sm" title="Fljót tvítekninga-leit — les BARA nöfn (engin OCR), strípar (1)/(2)">🗂️ Tvítök (nöfn)</button>
+    <button id="show-set" class="btn sm" title="Stillingar — lestur, flokkun, hvert skjölin fara">⚙️ Stillingar</button>
   </div>
   <a href="/#bakendi" target="_top" class="muted" style="color:#93c5fd">← Bakendi</a>
 </div>
@@ -166,13 +197,8 @@
   <div class="pane left">
     <div id="folderbar" class="folderbar"></div>
     <div class="controls">
-      <label><input type="checkbox" id="recurse" checked> Lesa undirmöppur líka</label>
-      <label>Stöðva eftir <input type="number" id="cap" value="100" min="1" step="10"> skjöl</label>
-      <label>Röð <select id="order" style="height:34px;background:#fff;color:#0f172a;border:1px solid #cbd5e1;border-radius:8px;padding:0 6px">
-        <option value="name">A→Ö (nafn)</option>
-        <option value="new">🆕 Nýjustu fyrst (nýbætt)</option>
-        <option value="name-desc">Ö→A (öfug nöfn)</option>
-      </select></label>
+      <button class="btn sm" id="set-open2" title="Lestur · flokkun · hvert skjölin fara">⚙️ Stillingar</button>
+      <span class="muted" id="setsum"></span>
       <span id="status" class="muted"></span>
     </div>
     <div id="newcobar"></div>
@@ -180,24 +206,17 @@
     <div id="results"></div>
 
     <div class="applybox" id="applybox" style="display:none">
-      <h3>Fasi 2 — keyra valdar raðir (LIFANDI: endurnefnir · færir · tengir)</h3>
-      <div class="radios">
+      <h3 id="applyhead">Fasi 2 — keyra valdar raðir (LIFANDI: endurnefnir · færir · tengir)</h3>
+      <div id="applysum"></div>
+      <div class="radios" id="linkmoderow">
         <label><input type="radio" name="linkmode" value="warn" checked> 🟠 Vara við árekstra (öruggast)</label>
         <label><input type="radio" name="linkmode" value="if_empty"> ➕ Bæta við ef tómt</label>
         <label><input type="radio" name="linkmode" value="overwrite"> ♻️ Yfirskrifa</label>
       </div>
-      <div class="folders">
-        <div><label>🧾 Reikningar (master)</label><div class="tf-row"><input id="tf-reik" value="1FHHX99LRB_9w_LqwHIY57T4l9mLMID7p"><button class="pick" data-for="tf-reik">📁</button></div></div>
-        <div><label>📄 Úttektarskýrslur</label><div class="tf-row"><input id="tf-skyr" value="1VSRRw6O8U6lU8WzZxA8CkLtrAmiU07mg"><button class="pick" data-for="tf-skyr">📁</button></div></div>
-        <div><label>📝 Samningar</label><div class="tf-row"><input id="tf-samn" value="1hu405fCw01mYtYSn4BqIPvhtPCPuzmwM"><button class="pick" data-for="tf-samn">📁</button></div></div>
-        <div><label>🔔 Brunakerfisskýrslur</label><div class="tf-row"><input id="tf-bruna" value="1OtsCTzM6FEQbaKBrQ7SqEU6xFKGBWICu"><button class="pick" data-for="tf-bruna">📁</button></div></div>
-        <div><label>🔔 Brunakerfis reikningar</label><div class="tf-row"><input id="tf-bruna-reik" value="1Qp5TogjHhszE_4hfMW5ebGKLDHk5iqEV"><button class="pick" data-for="tf-bruna-reik">📁</button></div></div>
-        <div><label>📦 Annað / óflokkað (docs · sheets · innkaup)</label><div class="tf-row"><input id="tf-annad" value="1H6izhb24L5Rp2m7XMgt1ss-MkcLltf5O"><button class="pick" data-for="tf-annad">📁</button></div></div>
-        <div><label>🗑 Tvítök / rusl</label><div class="tf-row"><input id="tf-dupes" value="1CnnNHm1xCukiTs806z9Ha1nZnSELM9k8"><button class="pick" data-for="tf-dupes">📁</button></div></div>
-      </div>
       <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:12px">
         <button id="apply-run" class="btn primary">▶️ Keyra valið (0)</button>
         <button id="apply-stop" class="btn" disabled>⏸ Stöðva</button>
+        <button id="apply-settings" class="btn sm">⚙️ Stillingar</button>
         <span id="apply-status" class="muted"></span>
       </div>
     </div>
@@ -235,6 +254,107 @@
   </div>
 </div>
 
+<!-- ⚙️ Stillingar -->
+<div class="modal-bg" id="set-bg">
+  <div class="modal wide">
+    <div class="mh"><h2>⚙️ Stillingar — Skjala-multitool</h2><button class="x" id="set-x">×</button></div>
+    <div class="set-body">
+
+      <div class="set-sec">
+        <h3>👁 Lestur</h3>
+        <p class="hint">Hvað er lesið í hverri forskoðun. OCR er dýrasta skrefið — lægra þak les hraðar.</p>
+        <div class="set-row">
+          <label><input type="checkbox" id="s-recurse" checked> Lesa undirmöppur líka</label>
+          <label>Stöðva eftir <input type="number" id="s-cap" value="100" min="1" step="10"> skjöl</label>
+          <label>Röð
+            <select id="s-order">
+              <option value="name">A→Ö (nafn)</option>
+              <option value="new">🆕 Nýjustu fyrst (nýbætt)</option>
+              <option value="name-desc">Ö→A (öfug nöfn)</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="set-sec">
+        <h3>💵 Staðgreitt — búðarsala, ekki úttektarreikningur</h3>
+        <p class="hint">
+          Reikningur sem ber <b>kt 999999-9999</b> eða <b>Greiðsl.skilm.: Staðgreiðsla</b> er sala yfir
+          borðið — hann á hvorki heima í reikningar-master né í skjalaskrá viðskiptavinar.
+          <b>Yfirskrift:</b> beri hann samt <b>Akstur</b> OG <b>Skýrslugerð og vottun</b> þá keyrðum við á
+          staðinn og skrifuðum skýrslu — þá telst hann venjulegur úttektarreikningur þrátt fyrir staðgreiðsluna.
+        </p>
+        <div class="set-row"><label><input type="checkbox" id="s-stadgreitt" checked> Flokka staðgreitt sérstaklega (💵 Staðgreitt)</label></div>
+      </div>
+
+      <div class="set-sec">
+        <h3>✏️ Nafngift</h3>
+        <p class="hint">
+          Lotu-skönnun skrifar möppuheitið fremst í hverja síðu („<i>mars-mai stolpi 2026 - bls 037.pdf</i>“),
+          og þá las tólið möppuna sem kaupandann á hverjum einasta reikningi í bunkanum.
+          Með þetta á er möppuheitið aldrei notað sem félagsnafn — heimilisfangið leiðir nafnið í staðinn.
+        </p>
+        <div class="set-row"><label><input type="checkbox" id="s-folderprefix" checked> Sleppa möppuheiti fremst í nafni</label></div>
+      </div>
+
+      <div class="set-sec">
+        <h3>📂 Hvert fara skjölin?</h3>
+        <p class="hint">Þetta ræður hvað „▶️ Keyra valið“ gerir — hvert skjalið er fært og hvort það tengist gagnagrunninum.</p>
+
+        <label class="set-opt" id="opt-master">
+          <input type="radio" name="outmode" value="master" checked>
+          <b>🗄️ Meistaramöppur — fullur frágangur</b>
+          <span class="d">Endurnefnir, færir í föstu möppurnar hér að neðan og tengir í <code>customer_documents</code>. Þetta er venjulega keyrslan.</span>
+        </label>
+
+        <label class="set-opt" id="opt-quar">
+          <input type="radio" name="outmode" value="quarantine">
+          <b>🚧 Sóttkví — undirmöppur inni í lesmöppunni</b>
+          <span class="d">Endurnefnir og raðar í undirmöppur <b>inni í möppunni sem verið er að lesa</b>
+            (📄 Úttektarskýrslur · 🔔 Brunakerfisskýrslur · 🧾 Reikningar · 📝 Samningar · 💵 Staðgreitt · 📦 Annað&nbsp;— óvíst).
+            Ekkert fer í meistaramöppurnar og — sjálfgefið — ekkert er tengt. Yfirfarðu, keyrðu svo
+            multitoolið á undirmöppuna í „Meistaramöppur“-ham til að klára.</span>
+        </label>
+
+        <label class="set-opt" id="opt-presort">
+          <input type="radio" name="outmode" value="presort">
+          <b>🧾 Reikninga-forflokkun — staðgreiðslunótur frá úttektarnótum</b>
+          <span class="d">Fyrir heilan bunka af nótum. Skiptir AÐEINS í tvennt inni í lesmöppunni —
+            <b>💵 Staðgreiðslunótur</b> og <b>📄 Úttektarnótur</b> (+ 📦 Annað&nbsp;— óvíst fyrir það sem er ekki nóta) —
+            og tengir ekkert. Hver röð sýnir <b>af hverju</b> hún lenti sínum megin, svo þú sérð strax í listanum
+            hvort flokkunin er rétt áður en nokkuð er fært.</span>
+        </label>
+
+        <div class="set-sub" id="quar-sub" style="display:none">
+          <div class="set-row"><label><input type="checkbox" id="s-nolink" checked> Tengja EKKI við gagnagrunn</label></div>
+          <div class="set-row">
+            <button class="btn sm" id="s-mkquar">📂 Búa til möppurnar í lesmöppunni</button>
+            <span class="muted" id="s-mkquar-msg"></span>
+          </div>
+          <div class="set-note">Möppurnar eru búnar til í möppunni sem stendur í „Drive-mappa“ reitnum efst. Ekkert er eytt — skrárnar færast bara innar í sama tré og má draga til baka.</div>
+        </div>
+      </div>
+
+      <div class="set-sec" id="master-sec">
+        <h3>🗄️ Meistaramöppur</h3>
+        <p class="hint">Föstu áfangastaðirnir. Notaðir í „Meistaramöppur“-ham; í sóttkví er skrifað yfir þá með undirmöppunum.</p>
+        <div class="folders">
+          <div><label>🧾 Reikningar (master)</label><div class="tf-row"><input id="tf-reik" value="1FHHX99LRB_9w_LqwHIY57T4l9mLMID7p"><button class="pick" data-for="tf-reik">📁</button></div></div>
+          <div><label>📄 Úttektarskýrslur</label><div class="tf-row"><input id="tf-skyr" value="1VSRRw6O8U6lU8WzZxA8CkLtrAmiU07mg"><button class="pick" data-for="tf-skyr">📁</button></div></div>
+          <div><label>📝 Samningar</label><div class="tf-row"><input id="tf-samn" value="1hu405fCw01mYtYSn4BqIPvhtPCPuzmwM"><button class="pick" data-for="tf-samn">📁</button></div></div>
+          <div><label>🔔 Brunakerfisskýrslur</label><div class="tf-row"><input id="tf-bruna" value="1OtsCTzM6FEQbaKBrQ7SqEU6xFKGBWICu"><button class="pick" data-for="tf-bruna">📁</button></div></div>
+          <div><label>🔔 Brunakerfis reikningar</label><div class="tf-row"><input id="tf-bruna-reik" value="1Qp5TogjHhszE_4hfMW5ebGKLDHk5iqEV"><button class="pick" data-for="tf-bruna-reik">📁</button></div></div>
+          <div><label>💵 Staðgreitt</label><div class="tf-row"><input id="tf-stad" value=""><button class="pick" data-for="tf-stad">📁</button></div></div>
+          <div><label>📦 Annað / óflokkað (docs · sheets · innkaup)</label><div class="tf-row"><input id="tf-annad" value="1H6izhb24L5Rp2m7XMgt1ss-MkcLltf5O"><button class="pick" data-for="tf-annad">📁</button></div></div>
+          <div><label>🗑 Tvítök / rusl</label><div class="tf-row"><input id="tf-dupes" value="1CnnNHm1xCukiTs806z9Ha1nZnSELM9k8"><button class="pick" data-for="tf-dupes">📁</button></div></div>
+        </div>
+      </div>
+
+    </div>
+    <div class="mfoot"><span class="cur" id="set-msg">Stillingar vistast sjálfkrafa og fylgja þér milli tölvanna.</span><button class="btn primary" id="set-close">Loka</button></div>
+  </div>
+</div>
+
 <!-- Leiðréttingaskrá (villuskýrsla) -->
 <div class="modal-bg" id="corr-bg">
   <div class="modal">
@@ -265,41 +385,160 @@
     brunakerfi:      { lbl:'🔔 Brunakerfi',      col:'#7c3aed' },
     reikningur:      { lbl:'🧾 Reikningur',       col:'#1d4ed8' },
     samningur:       { lbl:'📝 Samningur',        col:'#0f7a43' },
+    stadgreitt:      { lbl:'💵 Staðgreitt',       col:'#b45309' },
     vendor:          { lbl:'📦 Vendor',           col:'#94a3b8' },
     other:           { lbl:'· Annað',             col:'#94a3b8' },
     error:           { lbl:'⚠️ Villa',            col:'#dc2626' },
   };
   var OURS = { reikningur:1, uttektarskyrsla:1, brunakerfi:1, samningur:1 };
   // tegundir í valmynd leiðréttingar + samsvarandi mappa-merki (til birtingar)
-  var DT_ORDER = ['uttektarskyrsla','brunakerfi','reikningur','samningur','vendor','other'];
-  var DT_NAME = { uttektarskyrsla:'Úttektarskýrsla', brunakerfi:'Brunakerfi', reikningur:'Reikningur', samningur:'Samningur', vendor:'Vendor (birgir)', other:'Annað' };
-  var TARGET_LBL = { uttektarskyrsla:'skýrslur-reports', brunakerfi:'brunakerfi-skýrslur', reikningur:'reikningar-master', samningur:'samningar', vendor:'óflokkað', other:'óflokkað' };
+  var DT_ORDER = ['uttektarskyrsla','brunakerfi','reikningur','samningur','stadgreitt','vendor','other'];
+  var DT_NAME = { uttektarskyrsla:'Úttektarskýrsla', brunakerfi:'Brunakerfi', reikningur:'Reikningur', samningur:'Samningur', stadgreitt:'Staðgreitt (búðarsala)', vendor:'Vendor (birgir)', other:'Annað' };
+  var TARGET_LBL = { uttektarskyrsla:'skýrslur-reports', brunakerfi:'brunakerfi-skýrslur', reikningur:'reikningar-master', samningur:'samningar', stadgreitt:'staðgreitt', vendor:'óflokkað', other:'óflokkað' };
 
   function val(id){ var el=$(id); return el ? String(el.value||'').trim() : ''; }
+  // ── Sóttkví: markmöppurnar sem /api/drive-multitool {action:'quarantine-folders'}
+  //    bjó til inni í lesmöppunni. Lifa aðeins fyrir ÞÁ lesmöppu (lykill = src-id)
+  //    svo þær fylgi ekki með þegar skipt er um möppu.
+  var QUAR = { src:'', mode:'', folders:null };
+  function outMode(){ var el=document.querySelector('input[name=outmode]:checked'); return el?el.value:'master'; }
+  function quarOn(){ var m=outMode(); return m==='quarantine'||m==='presort'; }
+  function presortOn(){ return outMode()==='presort'; }
+  function quarMode(){ return presortOn()?'presort':'full'; }
+  function quarReady(){ return !!(QUAR.folders && QUAR.src===folderId($('src').value) && QUAR.mode===quarMode()); }
+  function noLink(){ return quarOn() && $('s-nolink') && $('s-nolink').checked; }
+  // Markmappa fyrir reit-lykil — undirmöppur lesmöppunnar ráða þegar sóttkví/
+  // forflokkun er virk og möppurnar eru til; annars föstu meistaramöppurnar.
+  function tf(key, fallbackKey){
+    if (quarOn() && quarReady()){ var q=QUAR.folders[key]||(fallbackKey?QUAR.folders[fallbackKey]:''); if(q) return q; }
+    if (quarOn()) return '';   // sóttkví valin en möppur ekki til → engin markmappa (ekkert fært)
+    return val(key) || (fallbackKey?val(fallbackKey):'');
+  }
   // röð → markmöppu-reitur. Brunakerfi: skýrslur vs reikningar (fellur á reikningar-master).
   function targetFor(r){
     var dt=(r&&r.doc_type)||'', sub=(r&&r.sub_hint)||'';
-    if (dt==='reikningur'){ if (sub==='brunakerfi-reikningur') return val('tf-bruna-reik')||val('tf-reik'); return val('tf-reik'); }
-    if (dt==='uttektarskyrsla') return val('tf-skyr');
-    if (dt==='brunakerfi') return val('tf-bruna');
-    if (dt==='samningur') return val('tf-samn');
-    if (dt==='vendor' || dt==='other') return val('tf-annad');   // óskyld skjöl → Annað-mappa
+    // Forflokkun: aðeins tvær hrúgur — staðgreiðslunótur vs úttektarnótur. Allt
+    // annað (skýrslur, samningar, vendor) er ekki nóta og fer í Annað.
+    if (presortOn()){
+      if (dt==='stadgreitt') return tf('tf-stad');
+      if (dt==='reikningur') return tf('tf-reik');
+      return tf('tf-annad');
+    }
+    if (dt==='reikningur'){ if (sub==='brunakerfi-reikningur') return tf('tf-bruna-reik','tf-reik'); return tf('tf-reik'); }
+    if (dt==='uttektarskyrsla') return tf('tf-skyr');
+    if (dt==='brunakerfi') return tf('tf-bruna');
+    if (dt==='samningur') return tf('tf-samn');
+    if (dt==='stadgreitt') return tf('tf-stad','tf-annad');       // búðarsala → eigin mappa (fellur á Annað)
+    if (dt==='vendor' || dt==='other') return tf('tf-annad');     // óskyld skjöl → Annað-mappa
     return '';
   }
+  // Merkið sem birtist á röðinni: hvert fer hún RAUNVERULEGA í þessum ham.
+  function targetLabel(r){
+    if (presortOn()) return (r.doc_type==='stadgreitt') ? '💵 staðgreiðslunótur' : (r.doc_type==='reikningur' ? '📄 úttektarnótur' : '📦 annað');
+    return r.target||'';
+  }
   function linkMode(){ var el=document.querySelector('input[name=linkmode]:checked'); return el?el.value:'warn'; }
-  // ── muna tengihaminn (warn/if_empty/overwrite) milli heimsókna ──
-  var LMKEY='multitool_linkmode_v1';
-  try{ var lm=localStorage.getItem(LMKEY); if(lm){ var el=document.querySelector('input[name=linkmode][value="'+lm+'"]'); if(el) el.checked=true; } }catch(_){}
-  Array.prototype.forEach.call(document.querySelectorAll('input[name=linkmode]'), function(r){
-    r.addEventListener('change', function(){ try{ localStorage.setItem(LMKEY, linkMode()); }catch(_){} });
-  });
 
   var rows=[], counts={}, running=false, applying=false, sel=-1;
 
-  // ── muna röðunar-val (nafn / nýjustu fyrst / öfug) milli heimsókna ──
-  var ORDERKEY='multitool_order_v1';
-  try{ var ov=localStorage.getItem(ORDERKEY); if(ov && $('order')) $('order').value=ov; }catch(_){}
-  if($('order')) $('order').addEventListener('change', function(){ try{ localStorage.setItem(ORDERKEY, $('order').value); }catch(_){} });
+  // ── ⚙️ Stillingar ────────────────────────────────────────────────────────
+  // EINN staður fyrir hverja stillingu (engir tvítaka-reitir á aðal-skjánum).
+  // Vistast strax í localStorage (svo þær lifi endurhleðslu) OG í app_kv gegnum
+  // /api/app-state svo þær fylgi Agnari milli tölvanna fjögurra.
+  var SETKEY='multitool_settings_v1';
+  var SET_FIELDS=[
+    { id:'s-recurse',      type:'bool',   def:true },
+    { id:'s-cap',          type:'num',    def:100 },
+    { id:'s-order',        type:'str',    def:'name' },
+    { id:'s-stadgreitt',   type:'bool',   def:true },
+    { id:'s-folderprefix', type:'bool',   def:true },
+    { id:'s-nolink',       type:'bool',   def:true },
+    { id:'outmode',        type:'radio',  def:'master' },
+    { id:'linkmode',       type:'radio',  def:'warn' },
+  ];
+  function readSettings(){
+    var o={};
+    SET_FIELDS.forEach(function(f){
+      if(f.type==='radio'){ var el=document.querySelector('input[name='+f.id+']:checked'); o[f.id]=el?el.value:f.def; return; }
+      var el2=$(f.id); if(!el2){ o[f.id]=f.def; return; }
+      o[f.id] = f.type==='bool' ? !!el2.checked : (f.type==='num' ? (parseInt(el2.value,10)||f.def) : el2.value);
+    });
+    TF_IDS.forEach(function(id){ o[id]=val(id); });
+    return o;
+  }
+  function applySettings(o){
+    if(!o) return;
+    SET_FIELDS.forEach(function(f){
+      if(o[f.id]==null) return;
+      if(f.type==='radio'){ var el=document.querySelector('input[name='+f.id+'][value="'+o[f.id]+'"]'); if(el) el.checked=true; return; }
+      var el2=$(f.id); if(!el2) return;
+      if(f.type==='bool') el2.checked=!!o[f.id]; else el2.value=o[f.id];
+    });
+    TF_IDS.forEach(function(id){ if(o[id]!=null && $(id)){ $(id).value=o[id]; } });
+  }
+  var setTimer=null;
+  function saveSettings(){
+    var o=readSettings();
+    try{ localStorage.setItem(SETKEY, JSON.stringify(o)); }catch(_){}
+    syncSetUi();
+    // app_kv-vistun er kæfð (debounce) svo hver stafur í talnareit sendi ekki kall.
+    clearTimeout(setTimer);
+    setTimer=setTimeout(function(){
+      fetch('/api/app-state',{ method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ key:'multitool_settings', value:o }) })
+        .then(function(r){ if($('set-msg')) $('set-msg').textContent = r.ok ? '✓ Vistað — fylgir þér milli tölvanna.' : 'Vistað hér (skýjavistun brást).'; })
+        .catch(function(){ if($('set-msg')) $('set-msg').textContent='Vistað hér (engin nettenging).'; });
+    }, 800);
+  }
+  // Samantekt efst + í keyrslu-boxinu, svo hamurinn sé aldrei falinn inni í modal.
+  function syncSetUi(){
+    var m=outMode(), q=quarOn(), ps=presortOn();
+    var lbl = ps?'🧾 <b>Reikninga-forflokkun</b>' : (q?'🚧 <b>Sóttkví</b>':'🗄️ Meistaramöppur');
+    var sub=$('quar-sub'); if(sub) sub.style.display=q?'block':'none';
+    var ms=$('master-sec'); if(ms) ms.style.opacity=q?'.55':'';
+    ['opt-master','opt-quar','opt-presort'].forEach(function(id,i){
+      var el=$(id); if(el) el.classList.toggle('on', ['master','quarantine','presort'][i]===m);
+    });
+    var lr=$('linkmoderow'); if(lr) lr.style.display=(q&&noLink())?'none':'';
+    var sum=$('setsum');
+    if(sum) sum.innerHTML = lbl
+      + ' · ' + ($('s-cap')?($('s-cap').value+' skjöl'):'')
+      + ($('s-recurse')&&$('s-recurse').checked?' · undirmöppur':'')
+      + ($('s-stadgreitt')&&$('s-stadgreitt').checked?' · 💵 staðgreitt sér':'');
+    var head=$('applyhead');
+    if(head) head.textContent = ps
+      ? ('Fasi 2 — forflokkun: endurnefnir · skiptir í staðgreiðslu- og úttektarnótur' + (noLink()?' · tengir EKKI':' · tengir'))
+      : (q ? ('Fasi 2 — sóttkví: endurnefnir · færir í undirmöppur lesmöppunnar' + (noLink()?' · tengir EKKI':' · tengir'))
+           : 'Fasi 2 — keyra valdar raðir (LIFANDI: endurnefnir · færir · tengir)');
+    var as=$('applysum');
+    if(!as) return;
+    if(!q){ as.innerHTML=''; return; }
+    if(!quarReady()){
+      as.innerHTML='<span style="color:#b45309;font-weight:700">'+(ps?'🧾 Forflokkun':'🚧 Sóttkví')+' valin en möppurnar eru ekki til enn</span>'
+        + ' — opnaðu ⚙️ Stillingar og ýttu „📂 Búa til möppurnar í lesmöppunni“.';
+      return;
+    }
+    // Í forflokkun: sýna skiptinguna sjálfa (talninguna) — það er útkoman sem skiptir máli.
+    if(ps){
+      var nS=0,nU=0,nA=0;
+      rows.forEach(function(r){ if(r.__done) return; if(r.doc_type==='stadgreitt') nS++; else if(r.doc_type==='reikningur') nU++; else nA++; });
+      as.innerHTML='<span class="q">🧾 Forflokkun virk</span> — '
+        + '💵 <b>'+nS+'</b> staðgreiðslunótur · 📄 <b>'+nU+'</b> úttektarnótur · 📦 <b>'+nA+'</b> annað.'
+        + (noLink()?' <b>Ekkert tengist</b> gagnagrunninum.':'')
+        + ' Hver röð sýnir af hverju hún lenti sínum megin — leiðréttu með ✏️ áður en þú keyrir.';
+      return;
+    }
+    as.innerHTML='<span class="q">🚧 Sóttkví virk</span> — skjölin fara í undirmöppur inni í lesmöppunni og'
+      + (noLink()?' <b>ekkert er tengt</b> við gagnagrunninn.':' tengjast venjulega.')
+      + ' Yfirfarðu þar, keyrðu svo á undirmöppuna í „Meistaramöppur“-ham.';
+  }
+  // Hlaða: localStorage strax (engin bið), svo app_kv ofan á ef það er nýrra.
+  function loadSettings(){
+    try{ var s=localStorage.getItem(SETKEY); if(s) applySettings(JSON.parse(s)); }catch(_){}
+    syncSetUi();
+    fetch('/api/app-state?key=multitool_settings').then(function(r){ return r.ok?r.json():null; })
+      .then(function(d){ if(d&&d.value){ applySettings(d.value); TF_IDS.forEach(resolveTfName); syncSetUi(); } }).catch(function(){});
+  }
 
   // ── remember source folder ──
   var MTKEY='multitool_src_v1';
@@ -314,7 +553,7 @@
 
   // ── ALLAR markmöppur: muna gildi + SÝNA nafn (svo þær detti ekki út og maður sjái
   //    hvaða möppu hver reitur er / hvort id-ið sé enn til) ──
-  var TF_IDS=['tf-reik','tf-skyr','tf-samn','tf-bruna','tf-bruna-reik','tf-annad','tf-dupes'];
+  var TF_IDS=['tf-reik','tf-skyr','tf-samn','tf-bruna','tf-bruna-reik','tf-stad','tf-annad','tf-dupes'];
   function tfValKey(id){ return id==='tf-annad'?ANNADKEY:('mt_tf_'+id); }
   function tfNmKey(id){ return 'mt_tfnm_'+id; }
   function setTfName(id,name){
@@ -344,6 +583,7 @@
       try{ localStorage.removeItem(tfNmKey(id)); }catch(_){}
       setTfName(id,'');
       resolveTfName(id);
+      saveSettings();   // markmöppurnar eru stillingar — fylgja með milli tölvanna
     });
     resolveTfName(id);   // staðfesta nafn úr Drive við opnun
   });
@@ -464,7 +704,8 @@
       var kt = String(r.kt || '').replace(/\D/g, '');
       if (kt.length !== 10) return;                            // engin kt → ekki giskað
       if (NEW_CO_YEARS.indexOf(+r.year) === -1) return;         // aðeins 2025/2026
-      (byKt[kt] = byKt[kt] || { kt: kt, nafn: '', idxs: [], years: {} });
+      (byKt[kt] = byKt[kt] || { kt: kt, nafn: '', idxs: [], years: {}, files: [] });
+      byKt[kt].files.push({ i: i, id: r.id, name: r.name || '' });
       byKt[kt].idxs.push(i);
       byKt[kt].years[r.year] = 1;
       // Besta nafnið: lengsta ó-tóma base_nafn (les-niðurstaða úr skjalinu).
@@ -487,17 +728,49 @@
       + info.list.map(function(x, n){
           var ktD = x.kt.slice(0,6) + '-' + x.kt.slice(6);
           var yrs = Object.keys(x.years).sort().join(', ');
+          // Skjölin sjálf sýnileg (ósk Agnars 2026-08-12: „allow me to see the file
+          // that with kennitala fannst í skjalinu") — smellur forskoðar í hægri
+          // glugganum, ↗ opnar í Drive. Án þess þurfti að leita að skránni í listanum
+          // til að sjá hvort kennitalan væri raunverulega rétt lesin.
+          var docs = (x.files || []).map(function(f){
+            return '<a class="newco-doc" data-see="' + f.i + '" data-nostop="1" '
+              + 'title="Forskoða þessa skrá">' + esc(f.name) + '</a>'
+              + '<a class="newco-open" href="https://drive.google.com/file/d/' + esc(f.id) + '/view" '
+              + 'target="_blank" rel="noopener" data-nostop="1" title="Opna í Drive">↗</a>';
+          }).join('');
+          // Nafnið er ekki alltaf lesanlegt (t.d. lotu-skönnun þar sem möppuheitið er
+          // ekki lengur notað sem félagsnafn). Þá er reitur í staðinn — ALDREI stofnað
+          // nafnlaust fyrirtæki: skjölin hér að neðan sýna hvað á að standa þar.
+          var named = !!x.nafn;
           return '<div class="newco-row" data-newco="' + n + '">'
-            + '<span class="newco-nafn">' + esc(x.nafn || '(nafn ólesið)') + '</span>'
+            + (named
+                ? '<span class="newco-nafn">' + esc(x.nafn) + '</span>'
+                : '<input class="newco-nafn newco-input" placeholder="Nafn fyrirtækis — lestu það af skjalinu hér að neðan" data-nostop="1">')
             + '<span class="newco-kt">kt ' + esc(ktD) + '</span>'
             + '<span class="newco-meta">' + x.idxs.length + ' skjöl · ' + esc(yrs) + '</span>'
             + '<button class="btn primary sm newco-add" data-kt="' + esc(x.kt) + '" '
-            +   'data-nafn="' + esc(x.nafn || '') + '" data-nostop="1">➕ Stofna fyrirtæki</button>'
+            +   'data-nafn="' + esc(x.nafn || '') + '" data-nostop="1"' + (named ? '' : ' disabled')
+            +   '>➕ Stofna fyrirtæki</button>'
             + '<span class="newco-msg"></span>'
+            + '<span class="newco-docs">' + docs + '</span>'
           + '</div>';
         }).join('')
       + '</div></div>';
   }
+  // Nafn slegið inn í 🆕-bandinu → „Stofna" verður virkt (aldrei nafnlaust fyrirtæki).
+  document.addEventListener('input', function(e){
+    var inp = e.target.closest && e.target.closest('.newco-input'); if(!inp) return;
+    var row = inp.closest('.newco-row'); if(!row) return;
+    var btn = row.querySelector('.newco-add'); if(!btn) return;
+    var v = (inp.value||'').trim();
+    btn.disabled = !v; btn.setAttribute('data-nafn', v);
+  });
+  // Smellur á skráarheiti í 🆕-bandinu → forskoða hana í hægri glugganum.
+  document.addEventListener('click', function(e){
+    var a = e.target.closest && e.target.closest('.newco-doc'); if(!a) return;
+    e.preventDefault(); e.stopPropagation();
+    showPreview(+a.getAttribute('data-see'));
+  });
   // ➕ Stofna — /api/kt-create er idempotent á kennitölu (skilar existed:true ef
   // hún er þegar til), svo endurtekinn smellur býr aldrei til tvítak.
   document.addEventListener('click', async function(e){
@@ -583,17 +856,25 @@
       var linked=r.already_linked?'<span class="pill amber">þegar tengt</span>':'<span class="pill red">⛔ ekki tengt</span>';
       // vendor/other má SÓPA í „Annað"-möppuna EF hún er fyllt (opt-in — sjálfgefið óvalið)
       var isMisc=(r.doc_type==='vendor'||r.doc_type==='other');
-      var hasAnnad=!!val('tf-annad');
-      var canApply=(ours && r.doc_type!=='error') || (isMisc && hasAnnad);
-      var autoCheck=ours && r.doc_type!=='error';   // okkar tegundir sjálfvaldar; vendor/other óvalið
+      var hasAnnad=!!targetFor({doc_type:'other'});
+      // Staðgreitt er OKKAR skjal en aldrei tengt — það þarf bara markmöppu til að færast.
+      var isStad=(r.doc_type==='stadgreitt');
+      var canApply=(ours && r.doc_type!=='error') || ((isMisc||isStad) && !!targetFor(r)) || (isMisc && hasAnnad);
+      // Í forflokkun eru nóturnar sjálfvaldar (það er verkið); annars okkar tegundir.
+      var autoCheck=(ours || (presortOn() && isStad)) && r.doc_type!=='error';
       var chk='<input type="checkbox" class="chk" data-idx="'+i+'"'+(r.__done?' disabled':(canApply?'':' disabled'))+((canApply&&autoCheck&&!r.__done)?' checked':'')+' data-nostop="1">';
       var res=r.__res||'';
       // Línu 2 bútar (birtast aðeins þegar til)
       var bits=[];
       if(co||site) bits.push('<span>🏢 '+[co,site].filter(Boolean).join(' · ')+'</span>');
       if(r.proposed_name) bits.push('<span><span class="k">→ nafn:</span><span class="prop">'+esc(r.proposed_name)+'</span></span>');
-      if(r.target) bits.push('<span><span class="k">mappa:</span><span class="tgt">'+esc(r.target)+'</span></span>');
-      bits.push('<span>'+linked+'</span>');
+      var tlbl=targetLabel(r);
+      if(tlbl) bits.push('<span><span class="k">mappa:</span><span class="tgt">'+esc(tlbl)+'</span></span>');
+      // AF HVERJU lenti nótan sínum megin — sýnilegt strax, án þess að opna PDF-ið.
+      if(r.stad_override) bits.push('<span class="pill amber" title="Greiðsl.skilm. sögðu staðgreiðsla EN nótan ber Akstur + Skýrslugerð og vottun — þá er þetta úttekt.">🚗 '+esc(r.stad_signal||'staðgreiðsla')+' → úttekt (Akstur + Skýrslugerð)</span>');
+      else if(r.stad_signal) bits.push('<span class="pill amber" title="Búðarsala — hvorki reikningar-master né skjalaskrá viðskiptavinar.">💵 '+esc(r.stad_signal)+'</span>');
+      // Í sóttkví/forflokkun er ekkert tengt — „ekki tengt"-merkið væri villandi þar.
+      if(!noLink()) bits.push('<span>'+linked+'</span>');
       // ✏️ Leiðrétta — opnar innfelldan ritil (data-nostop svo röð-smellur opni ekki forskoðun)
       if(r.doc_type!=='error' && !r.__done) bits.push('<button class="edit-btn" data-edit="'+i+'" data-nostop="1" title="Leiðrétta tillögu — vistast í villuskýrslu">✏️ Leiðrétta</button>');
       if(res) bits.push('<span class="res">'+res+'</span>'); else bits.push('<span class="res" style="display:none"></span>');
@@ -663,6 +944,7 @@
     renderDupbar(dup);
     renderNewCoBar();
     updateSelCount();
+    syncSetUi();   // forflokkunar-talningin lifir með listanum
   }
 
   // ── 🗑 Eyða röð: setja skrána í ruslafötu Drive (trashed=true) + taka af listanum.
@@ -725,16 +1007,17 @@
   async function runLoop(){
     var src=folderId($('src').value); if(!src){ $('status').textContent='Settu inn möppu.'; return; }
     try{ localStorage.setItem(MTKEY, src); }catch(_){}
-    var cap=Math.max(parseInt($('cap').value||'100',10)||100,1);
-    var recurse=$('recurse').checked?'1':'0';
-    var order=($('order')&&$('order').value)||'name';
+    var cap=Math.max(parseInt($('s-cap').value||'100',10)||100,1);
+    var recurse=$('s-recurse').checked?'1':'0';
+    var order=($('s-order')&&$('s-order').value)||'name';
+    var qs='&stadgreitt='+($('s-stadgreitt').checked?'1':'0')+'&folderprefix='+($('s-folderprefix').checked?'1':'0');
     rows=[]; counts={}; sel=-1; running=true;
     $('run').disabled=true; $('stop').disabled=false;
     $('pv-empty').style.display='flex'; $('pv-frame').style.display='none'; $('pv-name').textContent='Veldu skrá til að forskoða'; $('pv-open').style.display='none'; $('pv-counter').textContent='';
     var offset=0;
     try{
       while(running && rows.length<cap){
-        var url='/api/drive-multitool?src='+encodeURIComponent(src)+'&recurse='+recurse+'&order='+order+'&limit=3&offset='+offset;
+        var url='/api/drive-multitool?src='+encodeURIComponent(src)+'&recurse='+recurse+'&order='+order+qs+'&limit=3&offset='+offset;
         var r=await fetch(url); var d=await r.json();
         if(!r.ok) throw new Error(d.error||('HTTP '+r.status));
         (d.rows||[]).forEach(function(x){ x.__orig={ doc_type:x.doc_type, proposed_name:x.proposed_name, year:x.year, base_id:x.base_id, site_id:x.site_id, target:x.target }; rows.push(x); counts[x.doc_type]=(counts[x.doc_type]||0)+1; });
@@ -754,7 +1037,7 @@
     var r=rows[i]; setRes(i,'<span style="color:#64748b">… vinn</span>');
     var body={ action:'apply', id:r.id, doc_type:r.doc_type, base_id:r.base_id, base_nafn:r.base_nafn,
       year:r.year, invoice_number:r.invoice_number, site_id:r.site_id, proposed_name:r.proposed_name,
-      targetFolder:targetFor(r), linkMode:linkMode() };
+      targetFolder:targetFor(r), linkMode:linkMode(), noLink:noLink() };
     try{
       var rr=await fetch('/api/drive-multitool',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
       var d=await rr.json().catch(function(){ return {ok:false,error:'HTTP '+rr.status}; });
@@ -772,7 +1055,11 @@
   }
   async function runApply(){
     var idxs=selectedIdxs(); if(!idxs.length) return;
-    var cap=Math.max(parseInt($('cap').value||'100',10)||100,1);
+    if(quarOn() && !quarReady()){
+      alert((presortOn()?'Reikninga-forflokkun':'Sóttkví')+' er valin en undirmöppurnar eru ekki til enn.\n\nOpnaðu ⚙️ Stillingar og ýttu „📂 Búa til möppurnar í lesmöppunni".');
+      return;
+    }
+    var cap=Math.max(parseInt($('s-cap').value||'100',10)||100,1);
     var todo=idxs.slice(0,cap);
     applying=true; $('apply-stop').disabled=false; $('apply-run').disabled=true; $('run').disabled=true; $('stop').disabled=true;
     document.querySelectorAll('.chk').forEach(function(c){ c.disabled=true; });
@@ -821,6 +1108,45 @@
   $('show-corr').onclick=openCorrections;
   $('corr-x').onclick=closeCorr; $('corr-close').onclick=closeCorr;
   $('corr-bg').addEventListener('click', function(e){ if(e.target===$('corr-bg')) closeCorr(); });
+
+  // ── ⚙️ Stillingar: opna/loka + möppu-stofnun ──
+  function openSet(){ $('set-bg').classList.add('on'); syncSetUi(); }
+  function closeSet(){ $('set-bg').classList.remove('on'); syncSetUi(); paint(!running); }
+  $('show-set').onclick=openSet;
+  if($('set-open2')) $('set-open2').onclick=openSet;
+  if($('apply-settings')) $('apply-settings').onclick=openSet;
+  $('set-x').onclick=closeSet; $('set-close').onclick=closeSet;
+  $('set-bg').addEventListener('click', function(e){ if(e.target===$('set-bg')) closeSet(); });
+  // Hver stilling vistast um leið og henni er breytt (ekkert „Vista"-þrep).
+  ['s-recurse','s-cap','s-order','s-stadgreitt','s-folderprefix','s-nolink'].forEach(function(id){
+    var el=$(id); if(el) el.addEventListener('change', saveSettings);
+  });
+  if($('s-cap')) $('s-cap').addEventListener('input', saveSettings);
+  Array.prototype.forEach.call(document.querySelectorAll('input[name=outmode],input[name=linkmode]'), function(r){
+    r.addEventListener('change', function(){ QUAR={src:'',mode:'',folders:null}; saveSettings(); paint(!running); });
+  });
+  // 📂 Búa til undirmöppurnar í lesmöppunni (idempotent — endurkeyrsla skilar sömu möppum).
+  async function makeQuarFolders(){
+    var src=folderId($('src').value);
+    var msg=$('s-mkquar-msg'), btn=$('s-mkquar');
+    if(!src){ if(msg){ msg.style.color='#dc2626'; msg.textContent='Settu inn Drive-möppu efst fyrst.'; } return; }
+    if(btn) btn.disabled=true;
+    if(msg){ msg.style.color='#64748b'; msg.textContent='… bý til möppur'; }
+    try{
+      var r=await fetch('/api/drive-multitool',{ method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ action:'quarantine-folders', src:src, mode:quarMode() }) });
+      var d=await r.json().catch(function(){ return {ok:false,error:'HTTP '+r.status}; });
+      if(!d.ok) throw new Error((d.errors&&d.errors.join('; '))||d.error||'villa');
+      QUAR={ src:src, mode:(d.mode==='presort'?'presort':'full'), folders:d.folders };
+      if(msg){ msg.style.color='#166534';
+        msg.textContent='✓ '+(d.created&&d.created.length?('bjó til '+d.created.length+' möppur'):'möppurnar voru þegar til')+' — tilbúið.'; }
+    }catch(e){ if(msg){ msg.style.color='#dc2626'; msg.textContent='✗ '+(e&&e.message||e); } }
+    finally{ if(btn) btn.disabled=false; syncSetUi(); paint(!running); }
+  }
+  if($('s-mkquar')) $('s-mkquar').onclick=makeQuarFolders;
+  // Skipt um lesmöppu → sóttkvíar-möppurnar eiga ekki lengur við.
+  $('src').addEventListener('change', function(){ QUAR={src:'',mode:'',folders:null}; syncSetUi(); });
+  loadSettings();
 
   // ── 🗂️ Tvítök eftir nafni (fljót — les bara nöfn, engin OCR) ──
   var DEDUP=null;
