@@ -12570,33 +12570,33 @@ async function renderKrofur(t){
         </div>
       </div>
 
-      <h3 class="kf-sec" data-sec="months">📈 Mánaðartekjur ${esc(YEAR)} <span class="kf-note">(smelltu á mánuð til að sjá hvaðan talan kemur)</span></h3>
+      <h3 class="kf-sec" data-sec="months">Mánaðartekjur ${esc(YEAR)} <span class="kf-note">(smelltu á mánuð til að sjá hvaðan talan kemur)</span></h3>
       <div class="kf-chips" id="kf-motoggle" style="margin-bottom:10px"></div>
       <div id="kf-months" class="kf-months"></div>
       <div id="kf-mo-detail"></div>
 
-      <h3 class="kf-sec" data-sec="bh">🔥 Brunahólf — krófur <span class="kf-note">(Payday + Landsbanki · gjalddagi ${esc(YEAR)})</span></h3>
+      <h3 class="kf-sec" data-sec="bh">Brunahólf — krófur <span class="kf-note">(Payday + Landsbanki · gjalddagi ${esc(YEAR)})</span></h3>
       <div id="kf-bh-cards" class="kf-cards"></div>
       <div id="kf-bh-detail"></div>
 
-      <h3 class="kf-sec" data-sec="wsbill">🏗️ Brunahólf verkstaðir — reikningsstaða <span class="kf-note" id="kf-wsbill-note"></span></h3>
+      <h3 class="kf-sec" data-sec="wsbill">Brunahólf verkstaðir — reikningsstaða <span class="kf-note" id="kf-wsbill-note"></span></h3>
       <div id="kf-wsbill"></div>
 
-      <h3 class="kf-sec" data-sec="sl">🧯 Slökkvitæki — krófur &amp; sala <span class="kf-note">(POS · dkPlus)</span></h3>
+      <h3 class="kf-sec" data-sec="sl">Slökkvitæki — krófur &amp; sala <span class="kf-note">(POS · dkPlus)</span></h3>
       <div id="kf-sl-cards" class="kf-cards"></div>
 
-      <h3 class="kf-sec" data-sec="daily">🛠️ Dagleg afgreiðsla — staðgreitt <span class="kf-note" id="kf-daily-note"></span></h3>
+      <h3 class="kf-sec" data-sec="daily">Dagleg afgreiðsla — staðgreitt <span class="kf-note" id="kf-daily-note"></span></h3>
       <div id="kf-daily"></div>
 
-      <h3 class="kf-sec" data-sec="unc">🧾 Óinnheimt í afgreiðslu <span class="kf-note" id="kf-unc-note"></span>
+      <h3 class="kf-sec" data-sec="unc">Óinnheimt í afgreiðslu <span class="kf-note" id="kf-unc-note"></span>
         <a class="kf-golink" href="https://slokkvitaeki.netlify.app/#krofu-yfirlit" target="_blank" rel="noopener">📤 Senda kröfur í heimabanka →</a></h3>
       <div id="kf-uncollected"></div>
 
-      <h3 class="kf-sec" data-sec="ins">🔧 Ókláraðar ársskoðanir <span class="kf-note" id="kf-ins-note"></span>
+      <h3 class="kf-sec" data-sec="ins">Ókláraðar ársskoðanir <span class="kf-note" id="kf-ins-note"></span>
         <a class="kf-golink" href="https://slokkvitaeki.netlify.app/#bilstjori" target="_blank" rel="noopener">🚗 Keyra / skoða í Slökkvitæki →</a></h3>
       <div id="kf-inspections"></div>
 
-      <h3 class="kf-sec" data-sec="list">🧾 Krófulisti Brunahólf <span class="kf-note" id="kf-list-note"></span></h3>
+      <h3 class="kf-sec" data-sec="list">Krófulisti Brunahólf <span class="kf-note" id="kf-list-note"></span></h3>
       <div class="kf-listctrl">
         <input id="kf-search" type="search" placeholder="🔍 Leita (kúnni, kt, nr)…" style="padding:8px 11px;border:1px solid var(--border,#cbd5e1);border-radius:8px;font:inherit;font-size:13px;min-width:220px">
         <div class="kf-chips" id="kf-chips"></div>
@@ -12604,29 +12604,39 @@ async function renderKrofur(t){
       <div id="kf-list"></div>
     </div>
     <style>
-      .kf-sec{margin:22px 0 10px;font-size:15px;font-weight:800;color:var(--text,#1f2933)}
+      .kf-sec{margin:22px 0 10px;font-family:var(--font-display);font-size:17px;font-weight:600;letter-spacing:.2px;color:var(--ink)}
       .kf-sec[data-sec]{cursor:pointer;user-select:none}
       .kf-caret{display:inline-block;width:15px;color:#9aa3b0;font-size:12px;transition:transform .12s}
       .kf-sec.collapsed .kf-caret{transform:rotate(-90deg)}
       .kf-note{font-weight:400;font-size:12px;color:var(--text-dim,#8a93a2)}
-      .kf-golink{font-size:12.5px;font-weight:700;color:#fff;background:var(--accent,#0a84ff);padding:5px 12px;border-radius:8px;text-decoration:none;margin-left:10px;white-space:nowrap;display:inline-block}
-      .kf-golink:hover{filter:brightness(1.08)}
+      .kf-golink{font-size:12px;font-weight:600;color:#fff;background:var(--navy-dark);padding:5px 12px;border-radius:var(--radius-sm);text-decoration:none;margin-left:10px;white-space:nowrap;display:inline-block;font-family:var(--font-ui)}
+      .kf-golink:hover{background:var(--navy-2)}
       .kf-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
-      .kf-card{background:var(--card-bg,#fff);border:1px solid var(--border,#e3e7ec);border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.05);cursor:pointer;transition:transform .08s,box-shadow .08s;position:relative}
-      .kf-card:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.09)}
-      .kf-card.on{outline:2px solid var(--accent,#0a84ff);outline-offset:1px}
+      .kf-card{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--line-2);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow-sm);cursor:pointer;transition:border-color .08s;position:relative}
+      .kf-card:hover{transform:none;border-color:var(--gold-deep);box-shadow:var(--shadow)}
+      .kf-card.on{outline:2px solid var(--gold-deep);outline-offset:1px}
       .kf-card.static{cursor:default}
       .kf-card.static:hover{transform:none;box-shadow:0 1px 3px rgba(0,0,0,.05)}
-      .kf-cl{font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim,#7a8493)}
-      .kf-cv{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:5px}
-      .kf-cx{font-size:11px;color:var(--text-dim,#8a93a2);margin-top:3px}
-      .kf-cv.red{color:#b42318}.kf-cv.green{color:#067647}.kf-cv.amber{color:#b54708}.kf-cv.blue{color:#0a5ad6}
+      .kf-cl{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:2px;color:var(--muted-2)}
+      .kf-cv{font-family:var(--font-display);font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:6px;color:var(--ink)}
+      .kf-cx{font-size:11px;color:var(--muted-2);margin-top:3px}
+      .kf-cv.red{color:var(--red)}.kf-cv.green{color:var(--green)}.kf-cv.amber{color:var(--warn)}.kf-cv.blue{color:var(--blue)}
       .kf-card .kf-exp{position:absolute;top:10px;right:12px;font-size:11px;color:#b6c0cc}
       .kf-detail{background:var(--card-bg,#fff);border:1px solid var(--border,#e3e7ec);border-radius:12px;margin-top:12px;padding:6px 4px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
-      .kf-months{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
-      .kf-mo{background:var(--card-bg,#fff);border:1px solid var(--border,#e3e7ec);border-radius:10px;padding:10px 12px;cursor:pointer;transition:box-shadow .08s,border-color .08s}
-      .kf-mo:hover{box-shadow:0 3px 12px rgba(0,0,0,.09)}
-      .kf-mo.on{border-color:var(--accent,#0a84ff);box-shadow:0 0 0 1px var(--accent,#0a84ff) inset}
+      /* Mockup 08: mánaðar-TAFLA í stað spjalda — flex-raðir með klofinni súlu */
+      .kf-months{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm)}
+      .kf-motbl{min-width:560px}
+      .kf-mohead{display:flex;gap:14px;align-items:center;padding:8px 20px;background:var(--tbl-header);border-bottom:1px solid var(--line);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+      .kf-mohead .kf-monum,.kf-mohead .kf-mo-l{font-size:9.5px;color:var(--muted);font-weight:600}
+      .kf-mo{display:flex;gap:14px;align-items:center;padding:11px 20px;border-bottom:1px solid var(--line);cursor:pointer;background:var(--card);transition:background .08s}
+      .kf-mo:hover{background:var(--row-hover)}
+      .kf-mo.on{background:var(--bg-2)}
+      .kf-mobar{flex:1 1 120px;min-width:80px;height:8px;border-radius:4px;background:var(--bg-2);overflow:hidden;display:flex}
+      .kf-mobar i{display:block;height:100%}
+      .kf-monum{width:110px;flex:0 0 auto;text-align:right;font-variant-numeric:tabular-nums;font-weight:600;font-size:12.5px;color:var(--ink);white-space:nowrap}
+      .kf-mo-un{color:var(--red)}
+      .kf-mototals{display:flex;gap:14px;align-items:center;padding:12px 20px;background:var(--navy-dark)}
+      .kf-mototals .kf-monum{color:#fff;font-family:var(--font-display);font-size:14px}
       #kf-mo-detail{margin-top:10px}
       .kf-mod{background:var(--card-bg,#fff);border:1px solid var(--border,#e3e7ec);border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
       .kf-mod h4{margin:0 0 4px;font-size:14px;font-weight:800}
@@ -12653,11 +12663,7 @@ async function renderKrofur(t){
       .kf-dmut{color:var(--text-dim,#9aa3b0)}
       @media(max-width:700px){.kf-dhead,.kf-drow{grid-template-columns:1.4fr 1fr 1fr}
         .kf-dhead span:nth-child(3),.kf-drow span:nth-child(3),.kf-dhead span:nth-child(5),.kf-drow span:nth-child(5),.kf-dhead span:nth-child(6),.kf-drow span:nth-child(6){display:none}}
-      .kf-mo-l{font-size:11.5px;font-weight:700;color:var(--text,#1f2933);text-transform:capitalize}
-      .kf-mo-sub{color:#b42318;font-weight:600;text-transform:none}
-      .kf-mo-r{font-size:11px;margin-top:5px;display:flex;justify-content:space-between}
-      .kf-mo-r span:first-child{color:var(--text-dim,#8a93a2)}
-      .kf-mo-r b{font-variant-numeric:tabular-nums}
+      .kf-mo-l{width:74px;flex:0 0 auto;font-size:12.5px;font-weight:600;color:var(--ink);text-transform:capitalize;white-space:nowrap}
       .kf-listctrl{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
       .kf-chips{display:flex;gap:6px;flex-wrap:wrap}
       .kf-chip{font-size:12px;font-weight:600;padding:5px 11px;border-radius:20px;border:1px solid var(--border,#cbd5e1);background:var(--card-bg,#fff);color:var(--text-dim,#5a6473);cursor:pointer}
@@ -12881,7 +12887,7 @@ async function renderKrofur(t){
   }
 
   function months(){
-    $('kf-motoggle').innerHTML = [['invoiced','📄 Útgefið'],['received','💰 Innkomið'],['unpaid','🔴 Ógreitt']].map(([k,l])=>`<span class="kf-chip ${moMode===k?'on':''}" data-mm="${k}">${l}</span>`).join('');
+    $('kf-motoggle').innerHTML = [['invoiced','Útgefið'],['received','Innkomið'],['unpaid','Ógreitt']].map(([k,l])=>`<span class="kf-chip ${moMode===k?'on':''}" data-mm="${k}">${l}</span>`).join('');
     $('kf-motoggle').querySelectorAll('[data-mm]').forEach(c=> c.onclick=()=>{ moMode=c.dataset.mm; months(); });
     const bh = new Map((DATA.byMonth||[]).map(m=>[m.month,m]));
     const sl = new Map(((DATA.slokk&&DATA.slokk.byMonth)||[]).map(m=>[m.month,m]));
@@ -12890,15 +12896,40 @@ async function renderKrofur(t){
     const pick = (b,s)=> moMode==='received' ? [b.received||0, s.stadgreitt||0]
                        : moMode==='unpaid'   ? [b.outstanding||0, s.reikningur||0]
                        : [b.invoiced||0, s.revenue||0];
-    const red = moMode==='unpaid';
-    $('kf-months').innerHTML = all.map(m=>{
+    // Mockup 08: „mánaðarspjöldin verða tafla" — raðir: mánuður · klofin súla
+    // (navy Brunahólf / gull Slökkvitæki) · Brunahólf · Slökkvitæki · ógreitt,
+    // og dálkasamtölur í navy röð neðst. Smell-á-mánuð drilldown helst óbreytt.
+    let tBh=0, tSl=0, tUn=0;
+    const rows = all.map(m=>{
       const b = bh.get(m)||{}, s = sl.get(m)||{};
       const [bhV, slV] = pick(b,s);
-      const sub = moMode==='invoiced' ? ` <small class="kf-mo-sub">ógr. ${kr(b.outstanding||0)}</small>` : '';
-      return `<div class="kf-mo ${moSel===m?'on':''}" data-mo="${m}"><div class="kf-mo-l">${esc(mlabel(m))}${sub}</div>
-        <div class="kf-mo-r"><span>🔥 Brunahólf</span><b${red?' style="color:#b42318"':''}>${kr(bhV)}</b></div>
-        <div class="kf-mo-r"><span>🧯 Slökkvitæki</span><b${red?' style="color:#b42318"':''}>${kr(slV)}</b></div></div>`;
+      const un = (b.outstanding||0) + (s.reikningur||0);
+      tBh+=bhV; tSl+=slV; tUn+=un;
+      const sum = bhV+slV;
+      const bhPct = sum>0 ? Math.round(bhV/sum*100) : 0;
+      return `<div class="kf-mo ${moSel===m?'on':''}" data-mo="${m}" title="Smelltu til að sjá hvaðan talan kemur">
+        <span class="kf-mo-l">${esc(mlabel(m))}</span>
+        <span class="kf-mobar">${sum>0?`<i style="width:${bhPct}%;background:var(--navy)"></i><i style="width:${100-bhPct}%;background:var(--gold)"></i>`:''}</span>
+        <span class="kf-monum ky-num">${bhV?kr(bhV):'—'}</span>
+        <span class="kf-monum ky-num">${slV?kr(slV):'—'}</span>
+        <span class="kf-monum kf-mo-un ky-num">${un?kr(un):'—'}</span>
+      </div>`;
     }).join('');
+    const head = `<div class="kf-mohead">
+        <span class="kf-mo-l">Mánuður</span>
+        <span class="kf-mobar" style="height:auto;background:none">Hlutfall félaga</span>
+        <span class="kf-monum">Brunahólf</span>
+        <span class="kf-monum">Slökkvitæki</span>
+        <span class="kf-monum">Ógreitt</span>
+      </div>`;
+    const totals = `<div class="kf-mototals">
+        <span class="kf-mo-l" style="color:var(--gold)">Samtals</span>
+        <span class="kf-mobar" style="background:none"></span>
+        <span class="kf-monum ky-num">${kr(tBh)}</span>
+        <span class="kf-monum ky-num">${kr(tSl)}</span>
+        <span class="kf-monum ky-num">${tUn?kr(tUn):'—'}</span>
+      </div>`;
+    $('kf-months').innerHTML = `<div class="kf-motbl">${head}${rows}${totals}</div>`;
     $('kf-months').querySelectorAll('.kf-mo').forEach(el=> el.onclick=()=>{ moSel = (moSel===el.dataset.mo)?null:el.dataset.mo; months(); });
     moDetail();
   }
