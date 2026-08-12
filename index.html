@@ -10562,6 +10562,17 @@ async function renderGerdReikninga(t){
             <button class="gr-btn" id="gr-close2" type="button">Loka</button>
             <span id="gr-save-st" style="font-size:12px;color:#64748b;align-self:center"></span>
           </div>
+          <div class="gr-tbk" id="gr-tbk-panel">
+            <div class="gr-tbk-head">
+              <span class="gr-tbk-title">🕒 Tímaskýrsla <span class="gr-tbk-sum" id="gr-tbk-sum">—</span></span>
+              <span class="gr-tbk-tools">
+                <button type="button" class="gr-tbk-ic" id="gr-tbk-add" title="Bæta línu">＋</button>
+                <button type="button" class="gr-tbk-ic" id="gr-tbk-refetch" title="Endursækja úr tímaveru.is (hendir handvirkum breytingum)">🔄</button>
+                <button type="button" class="gr-tbk-ic" id="gr-tbk-expand" title="Stækka til hægri / minnka">⤢</button>
+              </span>
+            </div>
+            <div class="gr-tbk-body" id="gr-tbk-body"><div class="gr-tbk-empty">Sæki tímafærslur…</div></div>
+          </div>
         </div>
         <div class="gr-prev"><div class="gr-doc" id="gr-doc"></div></div>
       </div>`;
@@ -10887,6 +10898,40 @@ async function renderGerdReikninga(t){
     // Re-check sync status if the operator edits the hours by hand too.
     ['gr-dvh','gr-evh'].forEach(id => document.getElementById(id).addEventListener('change', () =>
       checkTimabokSync(name, month, numv('gr-dvh'), numv('gr-evh'))));
+
+    // ── Innfelld, lifandi-tengd Tímaskýrsla (compact + ⤢ stækkun til hægri) ──────
+    // Breyti ég tíma í töflunni → tbkYfSplit reiknar dagvinnu/yfirvinnu → Dagvinna/
+    // Yfirvinna-reitirnir uppfærast → draw() endurteiknar reikninginn samstundis.
+    // Sami geymslustaður og Tímaskýrslu-modalinn (state.ui.timabok_edits[key]).
+    try {
+      ensureTbkPanelCss();
+      let tbkRows = [];
+      let tbkYf = (savedEdit && savedEdit.yfirvinna)
+        ? { on:!!savedEdit.yfirvinna.on, thr:(Number(savedEdit.yfirvinna.thr)>0?Number(savedEdit.yfirvinna.thr):8) }
+        : { on:false, thr:8 };
+      const tbkNum = s => Number(String(s).replace(',','.').replace(/[^\d.]/g,''))||0;
+      const tbkSort = () => tbkRows.sort((a,b)=> String(b.date).localeCompare(String(a.date)) || String(a.employee).localeCompare(String(b.employee),'is'));
+      const tbkPersist = () => { state.ui=state.ui||{}; state.ui.timabok_edits=state.ui.timabok_edits||{}; state.ui.timabok_edits[key]={ rows:tbkRows.map(r=>({...r})), yfirvinna:{on:tbkYf.on,thr:tbkYf.thr}, saved_at:new Date().toISOString() }; save(); };
+      const tbkSync = persist => { const t=tbkYfSplit(tbkRows,tbkYf); const dv=document.getElementById('gr-dvh'), ev=document.getElementById('gr-evh'); if(dv) dv.value=Math.round(t.dv*100)/100; if(ev) ev.value=Math.round(t.yf*100)/100; if(typeof draw==='function') draw(); if(typeof checkTimabokSync==='function') try{ checkTimabokSync(name, month, numv('gr-dvh'), numv('gr-evh')); }catch(_e){} if(persist) tbkPersist(); };
+      function paintTbk(){
+        const body=document.getElementById('gr-tbk-body'); if(!body) return;
+        const t=tbkYfSplit(tbkRows,tbkYf), rs=tbkRowSplit(tbkRows,tbkYf);
+        const sum=document.getElementById('gr-tbk-sum'); if(sum) sum.textContent = tbkRows.length ? (_phr(t.total)+' klst'+(t.on?' · dv '+_phr(t.dv)+' · yf '+_phr(t.yf):'')) : 'engar línur';
+        const rowsHtml = tbkRows.map((r,i)=>`<div class="gr-tbk-r${t.on?' on':''}"><input type="date" value="${escapeAttr(r.date)}" data-tf="date" data-ti="${i}"><input type="text" value="${escapeAttr(r.employee)}" data-tf="employee" data-ti="${i}" placeholder="Nafn"><input type="text" value="${escapeAttr(r.time_in)}" data-tf="time_in" data-ti="${i}" placeholder="08:00"><input type="text" value="${escapeAttr(r.time_out)}" data-tf="time_out" data-ti="${i}" placeholder="16:00"><input type="text" inputmode="decimal" value="${escapeAttr(String(r.hours))}" data-tf="hours" data-ti="${i}" class="num">${t.on?`<span class="dv">${_phr(rs[i].dv)}</span><span class="yf">${rs[i].yf>0?_phr(rs[i].yf):''}</span>`:''}<button class="gr-tbk-del" data-td="${i}" title="Fjarlægja">✕</button></div>`).join('');
+        body.innerHTML = `<div class="gr-tbk-tbl${t.on?' on':''}"><div class="gr-tbk-r head${t.on?' on':''}"><span>Dags.</span><span>Starfsm.</span><span>Inn</span><span>Út</span><span>Tímar</span>${t.on?'<span class="r">Dagv.</span><span class="r">Yfirv.</span>':''}<span></span></div>${rowsHtml||'<div class="gr-tbk-empty">Engar línur — bættu við með ＋.</div>'}</div><div class="gr-tbk-foot"><label><input type="checkbox" id="gr-tbk-yf" ${t.on?'checked':''}> Yfirvinna</label><input type="text" inputmode="decimal" id="gr-tbk-thr" value="${escapeAttr(tbkThrTxt(tbkYf.thr))}" ${t.on?'':'disabled'} title="klst/dag — umfram = yfirvinna"><span class="tot">Σ ${_phr(t.total)} klst${t.on?` → dagv <b>${_phr(t.dv)}</b> · yfirv <b>${_phr(t.yf)}</b>`:''}</span></div>`;
+        body.querySelectorAll('input[data-ti]').forEach(inp=> inp.addEventListener('change', ()=>{ const i=+inp.dataset.ti, f=inp.dataset.tf; tbkRows[i][f]= f==='hours'? tbkNum(inp.value) : inp.value; tbkSync(true); paintTbk(); }));
+        body.querySelectorAll('[data-td]').forEach(b=> b.onclick=()=>{ tbkRows.splice(+b.dataset.td,1); tbkSync(true); paintTbk(); });
+        const yfc=body.querySelector('#gr-tbk-yf'), thr=body.querySelector('#gr-tbk-thr');
+        if(yfc) yfc.onchange=()=>{ tbkYf.on=yfc.checked; tbkSync(true); paintTbk(); };
+        if(thr) thr.addEventListener('change', ()=>{ const v=tbkNum(thr.value); tbkYf.thr=v>0?v:8; tbkSync(true); paintTbk(); });
+      }
+      if(savedEdit && Array.isArray(savedEdit.rows)){ tbkRows=savedEdit.rows.map(r=>({...r})); tbkSort(); paintTbk(); }
+      else if(name && /^\d{4}-\d{2}$/.test(String(month))){ fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&month=${encodeURIComponent(month)}`).then(r=>r.json()).then(d=>{ tbkRows=(d.rows||[]).map(r=>({date:r.date||'',employee:r.employee||'',time_in:r.time_in||'',time_out:r.time_out||'',hours:Number(r.hours)||0})); tbkSort(); paintTbk(); }).catch(()=>{ const b=document.getElementById('gr-tbk-body'); if(b) b.innerHTML='<div class="gr-tbk-empty">Gat ekki sótt Tímaveru — bættu við með ＋.</div>'; }); }
+      else { paintTbk(); }
+      { const a=document.getElementById('gr-tbk-add'); if(a) a.onclick=()=>{ tbkRows.unshift({date:(/^\d{4}-\d{2}$/.test(String(month))?month:'')+'-01',employee:'',time_in:'',time_out:'',hours:0}); paintTbk(); }; }
+      { const rf=document.getElementById('gr-tbk-refetch'); if(rf) rf.onclick=()=>{ if(!name||!/^\d{4}-\d{2}$/.test(String(month))) return; if(!confirm('Endursækja tímafærslur og henda handvirkum breytingum þessa mánaðar?')) return; fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&month=${encodeURIComponent(month)}`).then(r=>r.json()).then(d=>{ tbkRows=(d.rows||[]).map(r=>({date:r.date||'',employee:r.employee||'',time_in:r.time_in||'',time_out:r.time_out||'',hours:Number(r.hours)||0})); tbkSort(); tbkSync(true); paintTbk(); }).catch(()=>{}); }; }
+      { const ex=document.getElementById('gr-tbk-expand'); if(ex) ex.onclick=()=>{ const m=bg.querySelector('.gr-modal'); if(m) m.classList.toggle('gr-tbk-open'); }; }
+    } catch(_tbkErr){ /* innfellda tímaskýrslan mistókst — ritillinn virkar samt */ }
   }
 
   // ===== Gata (Ajour) uppgjör =====
@@ -19461,6 +19506,39 @@ const _phr = n => (Number(n)||0).toLocaleString('is-IS',{minimumFractionDigits:2
 // opnuð beint úr Kröfu yfirliti (án þess að gerd hafi verið opnað) birtist
 // modalið ÓSTÍLAÐ neðst í skjalinu — ósýnilegt ("takkinn virkar ekki").
 // Þessi injector tryggir lágmarks-CSS-ið alltaf, einu sinni.
+function ensureTbkPanelCss(){
+  if(document.getElementById('_gr-tbk-css')) return;
+  const st = document.createElement('style'); st.id = '_gr-tbk-css';
+  st.textContent = `
+    .gr-modal{position:relative}
+    .gr-tbk{margin-top:14px;border-top:1px solid var(--line-2,#e5e0d6);padding-top:10px}
+    .gr-tbk-head{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--ink-2,#334155)}
+    .gr-tbk-sum{font-weight:500;color:#94a3b8;font-size:11px}
+    .gr-tbk-tools{display:flex;gap:4px}
+    .gr-tbk-ic{border:1px solid var(--line-2,#cbd5e1);background:var(--card,#fff);border-radius:7px;width:26px;height:26px;cursor:pointer;font-size:13px;line-height:1;color:#475569}
+    .gr-tbk-ic:hover{background:#f1f5f9}
+    .gr-tbk-body{margin-top:8px;max-height:240px;overflow:auto}
+    .gr-tbk-r{display:grid;grid-template-columns:104px 1fr 50px 50px 54px 24px;gap:4px;align-items:center;padding:2px 0}
+    .gr-tbk-r.on{grid-template-columns:100px 1fr 46px 46px 48px 44px 44px 22px}
+    .gr-tbk-r.head{font-weight:700;color:#94a3b8;font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;padding-bottom:3px}
+    .gr-tbk-r.head .r{text-align:right}
+    .gr-tbk-r input{width:100%;box-sizing:border-box;padding:3px 5px;border:1px solid var(--line-2,#e2e8f0);border-radius:5px;font:inherit;font-size:11.5px;background:var(--input-bg,#fff);min-width:0}
+    .gr-tbk-r input.num{background:#fffbeb;border-color:#fcd34d;text-align:right}
+    .gr-tbk-r .dv,.gr-tbk-r .yf{text-align:right;font-variant-numeric:tabular-nums;color:#475569;font-size:11px}
+    .gr-tbk-r .yf{color:#b45309}
+    .gr-tbk-del{border:0;background:none;color:#cbd5e1;cursor:pointer;font-size:12px;padding:0}
+    .gr-tbk-del:hover{color:#ef4444}
+    .gr-tbk-empty{padding:10px;color:#94a3b8;font-size:12px}
+    .gr-tbk-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:11.5px;color:#475569}
+    .gr-tbk-foot input[type=text]{width:52px;padding:3px 5px;border:1px solid var(--line-2,#cbd5e1);border-radius:5px;font:inherit}
+    .gr-tbk-foot .tot{margin-left:auto;color:#0f172a}
+    .gr-modal.gr-tbk-open .gr-tbk{position:absolute;top:0;right:0;bottom:0;width:calc(100% - 380px);margin:0;border-top:0;border-left:1px solid var(--line-2,#e5e0d6);background:var(--card,#fff);padding:16px 18px;overflow:auto;z-index:3;box-shadow:-8px 0 24px -18px rgba(0,0,0,.3)}
+    .gr-modal.gr-tbk-open .gr-tbk-body{max-height:none}
+    .gr-modal.gr-tbk-open .gr-prev{visibility:hidden}
+    @media(max-width:860px){.gr-modal.gr-tbk-open .gr-tbk{position:static;width:auto;border-left:0}}
+  `;
+  document.head.appendChild(st);
+}
 function ensureGrModalCss(){
   if(document.getElementById('_gr-modal-css')) return;
   const st = document.createElement('style');
