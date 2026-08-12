@@ -22,7 +22,7 @@
 <link rel="manifest" href="/manifest.json?v=flame1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,500;1,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/theme.css?v=1">
 <style>
 *{box-sizing:border-box}
@@ -143,7 +143,7 @@ button{cursor:pointer}
   display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:6px;
   color:#A8B3C9;background:transparent;border:1px solid transparent;
   /* 2026-05-28: Inter for a cleaner, more workplace-professional feel */
-  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  font-family:var(--font-ui);
   font-weight:500;font-size:13.5px;letter-spacing:-.005em;
   width:100%;text-align:left;cursor:pointer;margin-bottom:1px;
   transition:background .14s ease, color .14s ease, padding-left .14s ease;
@@ -155,12 +155,12 @@ button{cursor:pointer}
   box-shadow:none;
 }
 .tab-v.active:hover{padding-left:12px}
-.tab-v .ti{font-size:15px;line-height:1;opacity:.85;font-family:'Inter',sans-serif}
+.tab-v .ti{font-size:15px;line-height:1;opacity:.85;font-family:var(--font-ui)}
 .tab-v.active .ti{opacity:1}
 .tab-v .ti{display:none}
 .tab-v .tn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .nav-section-label{
-  font-family:'Inter',sans-serif;font-weight:600;
+  font-family:var(--font-ui);font-weight:600;
   font-size:10px;color:#6B7896;letter-spacing:.1em;text-transform:uppercase;
   padding:14px 12px 6px;margin:0;
 }
@@ -397,7 +397,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
   padding:18px 20px;border-radius:var(--radius);box-shadow:var(--shadow);color:#fff;
   background:linear-gradient(135deg, #4A1F3D 0%, #6B2A47 60%, #7E3055 100%);
 }
-.sp-h1{margin:0;font-family:'Fraunces',serif;font-weight:600;font-size:24px;color:#fff;letter-spacing:-.01em}
+.sp-h1{margin:0;font-family:var(--font-display);font-weight:600;font-size:24px;color:#fff;letter-spacing:-.01em}
 .sp-sub{margin-top:6px;font-size:12px;color:#E8C7DA}
 .sp-controls{display:flex;gap:8px;align-items:center}
 
@@ -462,7 +462,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
   padding:18px 20px;background:linear-gradient(135deg, var(--navy-dark) 0%, var(--navy) 60%, var(--navy-2) 100%);
   color:#fff;border-radius:var(--radius);box-shadow:var(--shadow);
 }
-.tv-h1{margin:0;font-family:'Fraunces',serif;font-weight:600;font-size:24px;letter-spacing:-.01em;line-height:1.1;color:#fff}
+.tv-h1{margin:0;font-family:var(--font-display);font-weight:600;font-size:24px;letter-spacing:-.01em;line-height:1.1;color:#fff}
 .tv-h1-year{color:var(--gold);font-weight:500;margin-left:6px;font-size:20px}
 .tv-sub{margin-top:6px;font-size:12px;color:#9BA3AF;letter-spacing:.01em}
 .tv-controls{display:flex;gap:8px;align-items:center}
@@ -493,7 +493,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 }
 .tv-kpi:hover{transform:translateY(-1px);box-shadow:var(--shadow);border-color:var(--line-2)}
 .tv-kpi-l{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.4px;color:var(--muted)}
-.tv-kpi-v{font-family:'Fraunces',serif;font-weight:600;font-size:30px;color:var(--ink);line-height:1.05;letter-spacing:-.02em}
+.tv-kpi-v{font-family:var(--font-display);font-weight:600;font-size:30px;color:var(--ink);line-height:1.05;letter-spacing:-.02em}
 .tv-kpi-x{font-size:11px;color:var(--muted);font-weight:500;letter-spacing:.02em}
 
 .tv-card{
@@ -545,7 +545,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
   padding:18px 20px;background:linear-gradient(135deg,#1A2244 0%, #2B1A52 60%, #401C4A 100%);
   color:#fff;border-radius:var(--radius);box-shadow:var(--shadow);
 }
-.cmp-h1{margin:0;font-family:'Fraunces',serif;font-weight:600;font-size:24px;letter-spacing:-.01em;color:#fff}
+.cmp-h1{margin:0;font-family:var(--font-display);font-weight:600;font-size:24px;letter-spacing:-.01em;color:#fff}
 .cmp-sub{margin-top:6px;font-size:12px;color:#C7CCDB;letter-spacing:.01em}
 .cmp-controls{display:flex;gap:8px;align-items:center}
 
@@ -606,7 +606,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 
 /* Section headings between cards */
 .cmp-section-h{
-  font-family:'Fraunces',serif;font-weight:600;font-size:18px;
+  font-family:var(--font-display);font-weight:600;font-size:18px;
   color:var(--ink);margin:16px 0 4px;letter-spacing:-.01em;
 }
 
@@ -663,7 +663,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
   padding:18px 20px;border-radius:var(--radius);box-shadow:var(--shadow);color:#fff;
   background:linear-gradient(135deg, #1f3a5f 0%, #234164 60%, #2b4576 100%);
 }
-.ws-h1{margin:0;font-family:'Fraunces',serif;font-weight:600;font-size:24px;letter-spacing:-.01em;color:#fff}
+.ws-h1{margin:0;font-family:var(--font-display);font-weight:600;font-size:24px;letter-spacing:-.01em;color:#fff}
 .ws-h1-year{color:var(--gold);font-weight:500;margin-left:6px;font-size:20px}
 .ws-sub{margin-top:6px;font-size:12px;color:#9BA3AF}
 .ws-controls{display:flex;gap:8px;align-items:center}
@@ -869,7 +869,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 .rg-grid .rg-row-gata:hover{background:var(--hover)}
 .rg-month-amt{transition:all 100ms ease}
 .rg-month:hover .rg-month-amt{transform:scale(1.04)}
-.rg-section-row td{background:var(--bg);font-weight:700;font-family:'Source Serif 4',Georgia,serif;font-size:14px;padding:10px 8px}
+.rg-section-row td{background:var(--bg);font-weight:700;font-family:var(--font-display);font-size:14px;padding:10px 8px}
 .rg-col-drive{width:34px;text-align:center}
 .rg-drive{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:4px;text-decoration:none;font-size:14px;color:var(--muted-2)}
 .rg-drive:hover{background:var(--bg-2);color:var(--text)}
@@ -884,7 +884,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 /* ===== Workcenter modal — modern workspace ===== */
 .wc-wrap{width:100%;font-size:13px}
 .wc-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#FFF 0%,#FAFAF6 100%);margin:-28px -32px 22px;padding:24px 32px 18px;border-radius:18px 18px 0 0;border-bottom:2px solid var(--text-2)}
-.wc-title{font-family:'Source Serif 4',Georgia,serif;font-size:28px;font-weight:600;letter-spacing:-.015em;line-height:1.1}
+.wc-title{font-family:var(--font-display);font-size:28px;font-weight:600;letter-spacing:-.015em;line-height:1.1}
 .wc-sub{color:var(--muted);font-size:13px;margin-top:6px}
 .wc-sub a{color:var(--blue,#2563eb);text-decoration:none;font-weight:500}
 .wc-sub a:hover{text-decoration:underline}
@@ -893,7 +893,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 .wc-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px 20px;box-shadow:0 1px 2px rgba(0,0,0,0.03),0 2px 8px rgba(0,0,0,0.04);transition:box-shadow 120ms ease}
 .wc-card:hover{box-shadow:0 1px 2px rgba(0,0,0,0.05),0 4px 16px rgba(0,0,0,0.06)}
 .wc-card-full{grid-column:1 / -1}
-.wc-card h3{font-size:14px;font-weight:600;margin:0 0 16px;color:var(--text);font-family:'Source Serif 4',Georgia,serif;padding-bottom:8px;border-bottom:1px solid var(--bg-2);letter-spacing:-.005em}
+.wc-card h3{font-size:14px;font-weight:600;margin:0 0 16px;color:var(--text);font-family:var(--font-display);padding-bottom:8px;border-bottom:1px solid var(--bg-2);letter-spacing:-.005em}
 .wc-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;font-size:12px}
 .wc-row.wc-row-full{grid-template-columns:1fr}
 .wc-row label{display:flex;flex-direction:column;gap:4px;color:var(--muted-2);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em}
@@ -997,7 +997,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 /* Data sources freshness strip */
 .rg-sources{background:#FAFAF7;border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:16px;box-shadow:0 1px 2px rgba(0,0,0,0.03)}
 .rg-sources-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:12px}
-.rg-sources-title{font-family:'Source Serif 4',Georgia,serif;font-size:15px;font-weight:600;letter-spacing:-.005em}
+.rg-sources-title{font-family:var(--font-display);font-size:15px;font-weight:600;letter-spacing:-.005em}
 .rg-sources-sub{font-size:11.5px;color:var(--muted);margin-top:2px}
 .rg-sources-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
 .rg-source{background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 12px;transition:all 100ms ease}
@@ -1014,7 +1014,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
    ============================================================ */
 .vs-wrap{padding:8px 0 40px;max-width:1280px;margin:0 auto}
 .vs-hero{margin-bottom:22px}
-.vs-hero h1{font-family:'Source Serif 4',Georgia,serif;font-size:36px;font-weight:600;letter-spacing:-.02em;margin:0;line-height:1.1}
+.vs-hero h1{font-family:var(--font-display);font-size:36px;font-weight:600;letter-spacing:-.02em;margin:0;line-height:1.1}
 .vs-tag{color:var(--muted);font-size:14px;margin:6px 0 0;font-weight:400}
 .vs-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:24px}
 .vs-kpi{padding:18px 20px;border-radius:14px;border:1px solid var(--border);background:#fff;box-shadow:0 1px 2px rgba(0,0,0,0.03),0 4px 14px rgba(0,0,0,0.04);position:relative;overflow:hidden}
@@ -1024,12 +1024,12 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 .vs-kpi-blue{--bar:#2E6BD4}
 .vs-kpi-green{--bar:#2E8C5B}
 .vs-kpi-l{font-size:11px;color:var(--muted-2);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
-.vs-kpi-v{font-family:'Source Serif 4',Georgia,serif;font-size:30px;font-weight:700;color:var(--text);margin:6px 0 2px;font-variant-numeric:tabular-nums;letter-spacing:-.015em;line-height:1.1}
+.vs-kpi-v{font-family:var(--font-display);font-size:30px;font-weight:700;color:var(--text);margin:6px 0 2px;font-variant-numeric:tabular-nums;letter-spacing:-.015em;line-height:1.1}
 .vs-kpi-x{font-size:11px;color:var(--muted);font-weight:500}
 
 .vs-cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:24px}
 .vs-col{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px 20px;box-shadow:0 1px 2px rgba(0,0,0,0.03),0 4px 12px rgba(0,0,0,0.04)}
-.vs-h2{font-family:'Source Serif 4',Georgia,serif;font-size:18px;font-weight:600;letter-spacing:-.01em;margin:0 0 4px}
+.vs-h2{font-family:var(--font-display);font-size:18px;font-weight:600;letter-spacing:-.01em;margin:0 0 4px}
 .vs-h2-sub{color:var(--muted);font-size:11.5px;font-weight:400;margin:0 0 14px;text-transform:uppercase;letter-spacing:.05em}
 .vs-items{display:flex;flex-direction:column;gap:10px}
 .vs-item{background:#FAFAF7;border:1px solid var(--border);border-radius:10px;padding:12px 14px;transition:all 100ms ease}
@@ -1043,7 +1043,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 .vs-item-body{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:10px;padding:6px 0;border-top:1px dashed var(--border);border-bottom:1px dashed var(--border)}
 .vs-item-num-l{font-size:10px;color:var(--muted-2);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
 .vs-item-num-v{font-size:14px;font-weight:600;margin-top:2px;font-variant-numeric:tabular-nums}
-.vs-item-num-amount{font-family:'Source Serif 4',Georgia,serif;font-size:17px;font-weight:700;letter-spacing:-.005em}
+.vs-item-num-amount{font-family:var(--font-display);font-size:17px;font-weight:700;letter-spacing:-.005em}
 .vs-item-actions{display:flex;gap:8px;flex-wrap:wrap}
 .vs-btn{padding:6px 12px;border-radius:6px;font-size:12px;font-weight:500;text-decoration:none;border:1px solid var(--border);background:#fff;color:var(--text);transition:all 100ms ease;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
 .vs-btn:hover{background:#FAFAF7;border-color:var(--text-2);transform:translateY(-1px)}
@@ -1075,9 +1075,9 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 .vs-eq{display:grid;grid-template-columns:1fr auto 1fr auto 1.2fr;gap:14px;align-items:center;padding:18px 22px;background:linear-gradient(135deg,#FAFAF7 0%,#F4F2EA 100%);border-radius:14px;margin-bottom:18px;border:1px solid var(--border)}
 .vs-eq-cell{text-align:center}
 .vs-eq-l{font-size:10.5px;color:var(--muted-2);text-transform:uppercase;letter-spacing:.05em;font-weight:600;margin-bottom:6px}
-.vs-eq-v{font-family:'Source Serif 4',Georgia,serif;font-size:36px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1}
+.vs-eq-v{font-family:var(--font-display);font-size:36px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1}
 .vs-eq-sub{font-size:11px;color:var(--muted);margin-top:4px;font-style:italic}
-.vs-eq-op{font-family:'Source Serif 4',Georgia,serif;font-size:36px;font-weight:400;color:var(--muted-2);letter-spacing:.05em;line-height:1}
+.vs-eq-op{font-family:var(--font-display);font-size:36px;font-weight:400;color:var(--muted-2);letter-spacing:.05em;line-height:1}
 .vs-eq-result{padding:12px 14px;border-radius:10px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,0.05)}
 .vs-eq-red .vs-eq-l{color:#8C2510}
 .vs-eq-red .vs-eq-v{color:#9B1A0F}
@@ -1115,7 +1115,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 .modal:has(#efni-body){max-width:880px}
 .efni-totals{display:flex;justify-content:space-between;align-items:baseline;padding:14px 18px;background:linear-gradient(135deg,#F0F6FC 0%,#E2EDF7 100%);border-radius:10px;margin-bottom:14px;border:1px solid #B6CFE8}
 .efni-totals span{font-size:12px;color:#3A6296;font-weight:500;text-transform:uppercase;letter-spacing:.05em}
-.efni-totals strong{font-family:'Source Serif 4',Georgia,serif;font-size:24px;font-weight:700;color:#0F3B6E;font-variant-numeric:tabular-nums}
+.efni-totals strong{font-family:var(--font-display);font-size:24px;font-weight:700;color:#0F3B6E;font-variant-numeric:tabular-nums}
 .efni-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,0.03)}
 .efni-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:8px}
 .efni-inv-nr{font-weight:600;font-size:13px;color:var(--text)}
@@ -1144,7 +1144,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 /* ===== Invoice calculator modal ===== */
 .rg-calc-wrap{max-width:680px;font-size:13px}
 .rg-calc-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:12px}
-.rg-calc-title{font-family:'Source Serif 4',Georgia,serif;font-size:22px;font-weight:600;letter-spacing:-.01em}
+.rg-calc-title{font-family:var(--font-display);font-size:22px;font-weight:600;letter-spacing:-.01em}
 .rg-calc-sub{color:var(--muted);font-size:12px;margin-top:2px}
 .rg-calc-close{background:none;border:1px solid var(--border);border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:14px}
 .rg-calc-close:hover{background:var(--bg-2)}
@@ -1159,7 +1159,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 .rg-calc-table input[type="number"]{width:80px;padding:4px 6px;border:1px solid var(--border);border-radius:4px;font:inherit;text-align:right;font-variant-numeric:tabular-nums}
 .rg-calc-amt{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;width:100px;color:var(--text)}
 .rg-calc-sub-row td{border-top:2px solid var(--border);font-weight:600;background:var(--bg-2)}
-.rg-calc-total-row td{font-family:'Source Serif 4',Georgia,serif;font-size:16px;font-weight:700;background:#F4FBF4;color:#1B5E20;border-top:2px solid var(--green)}
+.rg-calc-total-row td{font-family:var(--font-display);font-size:16px;font-weight:700;background:#F4FBF4;color:#1B5E20;border-top:2px solid var(--green)}
 .rg-calc-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
 .rg-calc-hint{font-size:11px;color:var(--muted);font-style:italic;margin-top:10px;padding:6px 8px;background:var(--bg-2);border-radius:4px}
 
@@ -1173,23 +1173,23 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 }
 @media(max-width:720px){.yf-hero{grid-template-columns:1fr}}
 .yf-hero .greet{
-  background:linear-gradient(135deg, #FFFFFF 0%, #FBF8F2 100%);
-  border:1px solid var(--line);border-radius:16px;padding:22px 24px;
+  background:var(--card);
+  border:1px solid var(--line);border-radius:var(--radius);padding:22px 24px;
   display:flex;flex-direction:column;justify-content:center;
   position:relative;overflow:hidden;box-shadow:var(--shadow-sm);
 }
 .yf-hero .greet::before{
   content:"";position:absolute;left:-30px;top:-30px;width:160px;height:160px;
-  background:radial-gradient(circle, rgba(201,60,29,.08) 0%, transparent 70%);
+  background:radial-gradient(circle, rgba(201,164,92,.12) 0%, transparent 70%);
   pointer-events:none;
 }
 .yf-hero .greet .eyebrow{
-  font-family:'Fraunces',Georgia,serif;font-style:italic;font-weight:500;
+  font-family:var(--font-display);font-style:italic;font-weight:500;
   font-size:13px;color:var(--red);letter-spacing:.02em;margin-bottom:6px;
 }
 .yf-hero .greet .headline{
-  font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:34px;
-  line-height:1.05;color:var(--navy);letter-spacing:-.015em;
+  font-family:var(--font-display);font-weight:600;font-size:34px;
+  line-height:1.05;color:var(--ink);letter-spacing:.2px;
   font-variation-settings:'opsz' 96, 'SOFT' 80;
 }
 .yf-hero .greet .headline em{font-style:italic;font-weight:500;color:var(--red);font-variation-settings:'opsz' 144}
@@ -1206,11 +1206,11 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
   pointer-events:none;
 }
 .yf-hero .stat-card .stat-label{
-  font-family:'Fraunces',Georgia,serif;font-style:italic;font-weight:500;
+  font-family:var(--font-display);font-style:italic;font-weight:500;
   font-size:13.5px;letter-spacing:.01em;color:rgba(255,255,255,.78);
 }
 .yf-hero .stat-card .stat-num{
-  font-family:'Fraunces',Georgia,serif;font-weight:700;
+  font-family:var(--font-display);font-weight:700;
   font-size:72px;line-height:.95;letter-spacing:-.04em;
   font-variation-settings:'opsz' 144, 'SOFT' 0;
   background:linear-gradient(180deg, #FFFFFF 0%, #E8D9B0 100%);
@@ -1224,12 +1224,12 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
   display:flex;align-items:baseline;gap:14px;margin:6px 2px 12px;
 }
 .section-head .num{
-  font-family:'Fraunces',Georgia,serif;font-style:italic;font-weight:600;
+  font-family:var(--font-display);font-style:italic;font-weight:600;
   font-size:13px;color:var(--red);letter-spacing:.04em;
   font-variation-settings:'opsz' 14;
 }
 .section-head .title{
-  font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:21px;
+  font-family:var(--font-display);font-weight:600;font-size:21px;
   color:var(--navy);letter-spacing:-.015em;line-height:1;
   font-variation-settings:'opsz' 48, 'SOFT' 50;
 }
@@ -1250,12 +1250,12 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
   box-shadow:var(--shadow-sm);
 }
 .yf-band .panel h3{
-  font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:15px;
+  font-family:var(--font-display);font-weight:600;font-size:15px;
   color:var(--navy);margin:0 0 10px;letter-spacing:-.01em;
   display:flex;align-items:center;justify-content:space-between;gap:8px;
 }
 .yf-band .panel h3 .badge{
-  font-family:'Inter',sans-serif;font-size:10px;font-weight:700;
+  font-family:var(--font-ui);font-size:10px;font-weight:700;
   text-transform:uppercase;letter-spacing:.08em;padding:3px 8px;border-radius:99px;
   background:var(--green);color:#fff;
 }
@@ -1264,14 +1264,14 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 .tile.tile-refined{padding:18px 18px 16px}
 .tile.tile-refined::before{display:none}
 .tile.tile-refined .num{
-  font-family:'Fraunces',Georgia,serif;font-weight:600;
+  font-family:var(--font-display);font-weight:600;
   font-size:38px;line-height:1;letter-spacing:-.03em;color:var(--navy);
   font-variation-settings:'opsz' 96, 'SOFT' 30;
   margin-top:6px;
 }
-.tile.tile-refined .num small{font-family:'Inter',sans-serif;font-weight:600;font-size:13px;color:var(--muted);letter-spacing:-.01em}
+.tile.tile-refined .num small{font-family:var(--font-ui);font-weight:600;font-size:13px;color:var(--muted);letter-spacing:-.01em}
 .tile.tile-refined .lbl{
-  font-family:'Inter',sans-serif;text-transform:uppercase;font-size:10px;
+  font-family:var(--font-ui);text-transform:uppercase;font-size:10px;
   letter-spacing:.18em;font-weight:700;color:var(--red);
 }
 .tile.tile-refined .ft{font-size:11.5px;color:var(--muted);font-weight:500;margin-top:6px}
@@ -1281,7 +1281,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 /* Sub-block inside the "Hraðaðgangur" section */
 .yf-quick{margin-bottom:18px}
 .yf-quick .sub-label{
-  font-family:'Fraunces',Georgia,serif;font-style:italic;font-weight:500;
+  font-family:var(--font-display);font-style:italic;font-weight:500;
   font-size:12.5px;color:var(--navy-2);margin:4px 2px 8px;letter-spacing:.01em;
   display:flex;align-items:center;gap:10px;
 }
@@ -3597,7 +3597,7 @@ function renderBakendi(t){
   const FOLDER_KEY = 'bakendi_doc_folder';
   const DEFAULT_FOLDER = '1ApVH4kzbZ4SmwXsLtFqUOn3hotSNECTk';
   const folder = localStorage.getItem(FOLDER_KEY) || DEFAULT_FOLDER;
-  const inp = 'padding:9px 11px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;font-size:13px';
+  const inp = 'padding:9px 11px;border:1px solid var(--line-2);border-radius:var(--radius-sm);font:inherit;font-size:13px;background:var(--input-bg);color:var(--ink)';
   const hint = 'font-size:11.5px;color:#64748b;margin-top:5px';
 
   // Card-grid layout — tools grouped into themed sections with subtle headers.
@@ -3608,10 +3608,10 @@ function renderBakendi(t){
   const titleStyle = 'font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--ink);line-height:1.3;letter-spacing:.2px';
   const descStyle = 'font-size:13px;color:var(--muted);line-height:1.6;margin:0';
   const labelStyle = 'font-size:10.5px;font-weight:600;color:var(--gold-deep);letter-spacing:.14em;text-transform:uppercase;display:block;margin-bottom:6px';
-  const inp2 = 'padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;font:inherit;font-size:13px;background:#fff';
+  const inp2 = 'padding:10px 12px;border:1px solid var(--line-2);border-radius:var(--radius-sm);font:inherit;font-size:13px;background:var(--input-bg);color:var(--ink)';
   const inpMono = inp2 + ';font-family:"Space Mono","SF Mono",Consolas,monospace;font-size:12.5px';
   const chipStyle = (bg, fg) => 'display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:' + bg + ';color:' + fg;
-  const dropZone = 'border:1.5px dashed #c7d2fe;background:linear-gradient(180deg,#f5f7ff,#fbfcff);border-radius:14px;padding:14px';
+  const dropZone = 'border:1.5px dashed var(--line-2);background:var(--bg-2);border-radius:var(--radius);padding:14px';
   // Section header: small icon-tile + Icelandic title + thin descriptive sub
   const sectionHeader = (icon, title, sub) =>
     '<div style="display:flex;align-items:flex-end;gap:14px;margin:34px 0 16px;padding-bottom:12px;border-bottom:1px solid var(--line)">'
@@ -3648,13 +3648,13 @@ function renderBakendi(t){
       </div>
 
       <!-- ── Vefrýni callout (top) ────────────────────────────────────────── -->
-      <div onclick="state.ui.activeTab='vefryni';save();render()" style="margin:18px 0 28px;padding:14px 18px;border-radius:14px;cursor:pointer;display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#fef3c7,#fef9c3);border:1px solid #fde68a;box-shadow:0 8px 24px -16px rgba(120,53,15,.4)">
+      <div onclick="state.ui.activeTab='vefryni';save();render()" style="margin:18px 0 28px;padding:14px 18px;border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;gap:14px;background:var(--warn-bg);border:1px solid var(--line-2);border-top:3px solid var(--gold);box-shadow:var(--shadow-sm)">
         <span style="${iconSq};${ICON.amber}">🔎</span>
         <div style="flex:1">
-          <div style="font-weight:700;color:#0f172a;font-size:14.5px">Vefrýni — myndayfirferð á slökkvitæki-appinu</div>
-          <div style="font-size:12.5px;color:#713f12;margin-top:3px">Settu gula punkta á skjámyndir, skrifaðu hvað á að breyta og sendu mér í viðgerð. →</div>
+          <div style="font-family:var(--font-display);font-weight:600;color:var(--ink);font-size:15px;letter-spacing:.2px">Vefrýni — myndayfirferð á slökkvitæki-appinu</div>
+          <div style="font-size:12.5px;color:var(--warn);margin-top:3px">Settu gula punkta á skjámyndir, skrifaðu hvað á að breyta og sendu mér í viðgerð. →</div>
         </div>
-        <span style="${chipStyle('#fde68a','#7c2d12')}">Skjár-yfirferð</span>
+        <span style="${chipStyle('rgba(201,164,92,.18)','var(--gold-deep)')}">Skjár-yfirferð</span>
       </div>
 
       <!-- ══════════════════════════════════════════════════════════════════
@@ -9936,7 +9936,7 @@ async function renderGerdReikninga(t){
       .grp-badge{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:20px}
       .grp-badge.ef{background:#e0edff;color:#1d4ed8}.grp-badge.tb{background:#fef3c7;color:#92400e}
       .gr-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:18px;flex-wrap:wrap}
-      .gr-h1{font-family:'Source Serif 4',Georgia,serif;font-size:30px;font-weight:600;letter-spacing:-.02em;margin:0}
+      .gr-h1{font-family:var(--font-display);font-size:30px;font-weight:600;letter-spacing:-.02em;margin:0}
       .gr-sub{font-size:13px;color:var(--muted,#64748b);font-weight:400}
       .gr-sub-line{color:var(--muted,#64748b);font-size:12.5px;margin-top:4px;max-width:760px}
       .gr-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -9957,9 +9957,9 @@ async function renderGerdReikninga(t){
       .gr-summary{display:flex;gap:14px;flex-wrap:wrap;background:linear-gradient(135deg,#101d2e 0%,#3b82f6 100%);color:#fff;border-radius:14px;padding:16px 20px;margin-bottom:6px;box-shadow:0 4px 14px rgba(15,23,42,.12)}
       .gr-sum-cell{display:flex;flex-direction:column;gap:3px;min-width:140px}
       .gr-sum-l{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:rgba(255,255,255,.8);font-weight:600}
-      .gr-sum-v{font-family:'Source Serif 4',Georgia,serif;font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+      .gr-sum-v{font-family:var(--font-display);font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
       .gr-sum-v.gr-sum-warn{color:#fde68a}
-      .gr-section-h{font-family:'Source Serif 4',Georgia,serif;font-size:18px;font-weight:600;margin:22px 0 10px;display:flex;align-items:center;gap:8px}
+      .gr-section-h{font-family:var(--font-display);font-size:18px;font-weight:600;margin:22px 0 10px;display:flex;align-items:center;gap:8px}
       .gr-section-h .gr-count{font-size:12px;color:var(--muted,#64748b);font-weight:400}
       .gr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
       .gr-card{background:#fff;border:1px solid var(--border,#e2e8f0);border-radius:12px;padding:14px 16px;box-shadow:0 1px 2px rgba(15,23,42,.04);display:flex;flex-direction:column;gap:8px}
@@ -9993,7 +9993,7 @@ async function renderGerdReikninga(t){
       .gr-form{padding:16px 18px;border-right:1px solid var(--border,#e2e8f0);overflow-y:auto;max-height:88vh}
       .gr-prev{padding:18px;overflow-y:auto;max-height:88vh;background:#f8fafc}
       .gr-mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-      .gr-mh h2{margin:0;font-size:17px;font-family:'Source Serif 4',Georgia,serif}
+      .gr-mh h2{margin:0;font-size:17px;font-family:var(--font-display)}
       .gr-x{border:none;background:transparent;font-size:24px;cursor:pointer;color:#64748b;line-height:1}
       .gr-st{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#64748b;font-weight:600;margin:14px 0 6px;border-bottom:1px solid var(--border,#e2e8f0);padding-bottom:3px}
       .gr-st:first-of-type{margin-top:0}
@@ -11099,7 +11099,7 @@ async function renderVinnubok(t){
       </div>
     </div>
     <style>
-      .vb-grid{width:100%;border-collapse:separate;border-spacing:6px;font-size:12px;background:transparent;font-family:'Inter','SF Pro Display','Segoe UI',system-ui,sans-serif}
+      .vb-grid{width:100%;border-collapse:separate;border-spacing:6px;font-size:12px;background:transparent;font-family:var(--font-ui)}
       .vb-grid th,.vb-grid td{padding:0;vertical-align:top;border-radius:12px}
       .vb-grid th{background:linear-gradient(180deg,#f8fafc 0%,#eef2f7 100%);font-weight:700;padding:12px 16px;font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:#64748b;text-align:center;border:1px solid #e2e8f0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
       .vb-row-name{padding:13px 16px;font-weight:700;background:var(--navy);min-width:175px;max-width:230px;line-height:1.3;position:sticky;left:0;z-index:5;color:#fff;font-size:13px;border:1px solid #101d2e;box-shadow:2px 0 5px -2px rgba(15,23,42,.18)}
@@ -13505,8 +13505,9 @@ async function renderAfkost(t){
 
   $view.innerHTML = `
     <div style="max-width:1100px;margin:0 auto;padding:4px">
-      <h1 style="margin:0 0 4px;font-size:24px;font-weight:800;color:#0f172a;display:flex;align-items:center;gap:10px">📈 Afköst</h1>
-      <div id="ak-meta" style="font-size:12px;color:#64748b;margin-bottom:18px">Sækir…</div>
+      <div style="font-size:10.5px;font-weight:600;letter-spacing:2.5px;color:var(--gold-deep);text-transform:uppercase;margin-bottom:6px">AFKASTA-YFIRLIT · 14 DAGAR</div>
+      <h1 style="margin:0 0 4px;font-family:var(--font-display);font-size:30px;font-weight:700;letter-spacing:.2px;color:var(--ink)">Afköst</h1>
+      <div id="ak-meta" style="font-size:12px;color:var(--muted);margin-bottom:18px">Sækir…</div>
       <div id="ak-body"></div>
     </div>`;
 
@@ -13680,14 +13681,14 @@ async function renderKrofuyfirlit(t){
           <div style="margin-top:8px;display:flex;gap:14px;flex-wrap:wrap"><span data-sync-workflow="timavera" data-sync-label="Tímavera"></span><span data-sync-workflow="ajour" data-sync-label="Ajour"></span><span data-sync-workflow="redder" data-sync-label="Redder"></span><span data-sync-workflow="payday" data-sync-label="Payday"></span></div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <select class="kyf-sort" title="Raða" style="padding:7px 9px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;font:inherit;font-size:12.5px;font-weight:600;color:#475569;cursor:pointer">
+          <select class="kyf-sort" title="Raða" style="padding:7px 9px;border:1px solid var(--line-2);border-radius:var(--radius-sm);background:var(--card);font:inherit;font-size:12.5px;font-weight:600;color:var(--ink-2);cursor:pointer">
             <option value="amount_desc">💰 Upphæð hæst</option>
             <option value="amount_asc">💰 Upphæð lægst</option>
             <option value="oldest_due">📅 Elsti gjalddagi</option>
             <option value="name">🔤 Nafn A–Ö</option>
           </select>
-          <input class="kyf-search" type="search" placeholder="🔍 Leita (nafn · kt · R-nr)…" style="padding:7px 11px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;font:inherit;font-size:13px;min-width:210px">
-          <button class="kyf-me" type="button" title="Hver ert þú? — nafnið er skráð á vinnuflæði-skref (staðfest/sent/klárt) svo hinn sér hver gerði hvað" style="padding:7px 11px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;font:inherit;font-size:12.5px;font-weight:700;color:#475569;cursor:pointer;white-space:nowrap">👤 <span class="kyf-me-lbl"></span></button>
+          <input class="kyf-search" type="search" placeholder="Leita (nafn · kt · R-nr)…" style="padding:7px 11px;border:1px solid var(--line-2);border-radius:var(--radius-sm);background:var(--input-bg);color:var(--ink);font:inherit;font-size:13px;min-width:210px">
+          <button class="kyf-me" type="button" title="Hver ert þú? — nafnið er skráð á vinnuflæði-skref (staðfest/sent/klárt) svo hinn sér hver gerði hvað" style="padding:7px 11px;border:1px solid var(--line-2);border-radius:var(--radius-sm);background:var(--card);font:inherit;font-size:12.5px;font-weight:600;color:var(--ink-2);cursor:pointer;white-space:nowrap">👤 <span class="kyf-me-lbl"></span></button>
         </div>
       </div>
 
@@ -13696,15 +13697,15 @@ async function renderKrofuyfirlit(t){
           const on = k==='company';
           return `<button class="kyf-vf" data-vf="${k}" type="button" style="padding:7px 14px;border-radius:var(--radius-sm);cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;${on?'border:1px solid var(--navy-dark);background:var(--navy-dark);color:#fff':'border:1px solid var(--line-2);background:var(--card);color:var(--ink-2)'}">${label}</button>`;
         }).join('')}
-        <button class="kyf-refresh" type="button" style="margin-left:auto;padding:7px 14px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;border:1px solid #cbd5e1;background:#fff;color:#475569">↻ Sækja</button>
-        <button class="kyf-hidden-toggle" type="button" title="Sýna/fela faldar kröfur" style="display:none;padding:7px 14px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;border:1px solid #cbd5e1;background:#fff;color:#475569"></button>
+        <button class="kyf-refresh" type="button" style="margin-left:auto;padding:7px 14px;border-radius:var(--radius-sm);cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;border:1px solid var(--line-2);background:var(--card);color:var(--ink-2)">↻ Sækja</button>
+        <button class="kyf-hidden-toggle" type="button" title="Sýna/fela faldar kröfur" style="display:none;padding:7px 14px;border-radius:var(--radius-sm);cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;border:1px solid var(--line-2);background:var(--card);color:var(--ink-2)"></button>
       </div>
 
       <div class="kyf-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-bottom:16px"></div>
 
       <details class="kyf-help">
-        <summary style="cursor:pointer;font-size:12.5px;font-weight:700;color:#334155;padding:11px 15px;background:#fff;border:1px solid rgba(20,24,34,.08);border-radius:14px;box-shadow:0 8px 22px -16px rgba(25,35,60,.18);list-style:none;user-select:none">❓ Hvað þýðir þetta? <span style="font-weight:500;color:#94a3b8">— smelltu til að opna skýringu</span></summary>
-        <div style="font-size:12.5px;color:#475569;margin-top:8px;padding:14px 16px;background:#fff;border:1px solid rgba(20,24,34,.08);border-radius:14px;box-shadow:0 8px 22px -16px rgba(25,35,60,.18);line-height:1.7">
+        <summary style="cursor:pointer;font-size:12.5px;font-weight:600;color:var(--ink-2);padding:11px 15px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm);list-style:none;user-select:none">❓ Hvað þýðir þetta? <span style="font-weight:500;color:#94a3b8">— smelltu til að opna skýringu</span></summary>
+        <div style="font-size:12.5px;color:var(--ink-2);margin-top:8px;padding:14px 16px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm);line-height:1.7">
           <div style="font-weight:700;color:#0f172a;margin-bottom:4px">Þrepin þrjú</div>
           <div><b>🔴 Ógreiddar</b> — reikningar sem eru <b>sendir</b> en enn óborgaðir (Payday SENT + Landsbanki + handvirkir).</div>
           <div><b>🟡 Ósendar</b> — <b>drög</b> sem á eftir að senda (enginn gjalddagi enn).</div>
@@ -18894,10 +18895,10 @@ function renderOkkarVerkefni(t){
       <div style="flex:1;min-width:280px">
         <div class="card" style="border-top:3px solid ${headerCol};margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04),0 4px 12px rgba(0,0,0,0.05)">
           <div style="display:flex;align-items:center;gap:14px">
-            <div style="width:44px;height:44px;border-radius:50%;background:${headerBg};color:${headerCol};display:flex;align-items:center;justify-content:center;font-family:'Source Serif 4',Georgia,serif;font-size:20px;font-weight:700">${initials}</div>
+            <div style="width:44px;height:44px;border-radius:50%;background:${headerBg};color:${headerCol};display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:20px;font-weight:700">${initials}</div>
             <div style="flex:1">
               <div style="font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:600">${escapeHtml(p)}</div>
-              <div style="font-family:'Source Serif 4',Georgia,serif;font-size:22px;font-weight:600;color:var(--ink);margin-top:2px;letter-spacing:-.01em">${stat.done} <span style="color:var(--muted-2);font-weight:400">/ ${stat.total}</span> <span style="font-size:12px;color:var(--muted);font-weight:400;font-family:'Inter',sans-serif">kláruð</span></div>
+              <div style="font-family:var(--font-display);font-size:22px;font-weight:600;color:var(--ink);margin-top:2px;letter-spacing:-.01em">${stat.done} <span style="color:var(--muted-2);font-weight:400">/ ${stat.total}</span> <span style="font-size:12px;color:var(--muted);font-weight:400;font-family:var(--font-ui)">kláruð</span></div>
             </div>
             <div style="font-weight:700;color:${headerCol};font-size:20px;font-variant-numeric:tabular-nums">${pct}%</div>
           </div>
