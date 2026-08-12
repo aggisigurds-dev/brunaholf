@@ -13049,13 +13049,14 @@ async function renderTvMaeting(t){
     <div style="max-width:860px">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:6px">
         <div>
-          <h1 style="margin:0;font-size:24px;font-weight:800;color:#0f172a">🕒 Mæting · verkstaðir</h1>
-          <div style="font-size:12px;color:#64748b;margin-top:2px" id="tvm-meta">Hvenær starfsmenn mættu og hættu — beint úr Tímaveru · Sæki…</div>
+          <div style="font-size:10.5px;font-weight:600;letter-spacing:2.5px;color:var(--gold-deep);text-transform:uppercase;margin-bottom:6px">TÍMAVERA · SÍÐUSTU ${state.ui.tvm_days} DAGAR</div>
+          <h1 style="margin:0;font-family:var(--font-display);font-size:30px;font-weight:700;letter-spacing:.2px;color:var(--ink)">Mæting · verkstaðir</h1>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px" id="tvm-meta">Hvenær starfsmenn mættu og hættu — beint úr Tímaveru · Sæki…</div>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap" id="tvm-range">
-          ${[3,8,14,31].map(n=>`<button data-d="${n}" type="button" style="padding:7px 13px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;${n===state.ui.tvm_days?'border:1px solid #1d4ed8;background:#1d4ed8;color:#fff':'border:1px solid #cbd5e1;background:#fff;color:#475569'}">${n} d.</button>`).join('')}
-          <button id="tvm-sync" type="button" title="Sækja nýjustu tímafærslur beint úr Tímaveru API" style="padding:7px 13px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;border:1px solid #047857;background:#059669;color:#fff">🔄 Samstilla</button>
-          <button id="tvm-refresh" type="button" style="padding:7px 13px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;border:1px solid #cbd5e1;background:#fff;color:#475569">↻</button>
+          ${[3,8,14,31].map(n=>`<button data-d="${n}" type="button" style="padding:7px 13px;border-radius:var(--radius-sm);cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;${n===state.ui.tvm_days?'border:1px solid var(--navy-dark);background:var(--navy-dark);color:#fff':'border:1px solid var(--line-2);background:var(--card);color:var(--ink-2)'}">${n} d.</button>`).join('')}
+          <button id="tvm-sync" type="button" title="Sækja nýjustu tímafærslur beint úr Tímaveru API" style="padding:7px 13px;border-radius:var(--radius-sm);cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;border:1px solid var(--navy-dark);background:var(--navy-dark);color:#fff">↻ Samstilla</button>
+          <button id="tvm-refresh" type="button" style="padding:7px 13px;border-radius:var(--radius-sm);cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;border:1px solid var(--line-2);background:var(--card);color:var(--ink-2)">↻</button>
         </div>
       </div>
       <div id="tvm-list"><div style="padding:32px;text-align:center;color:#94a3b8">Sæki mætingu…</div></div>
@@ -13083,40 +13084,29 @@ async function renderTvMaeting(t){
         }
       }
       if(!(d.days||[]).length){ list.innerHTML = staleBanner + '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:26px;text-align:center;color:#94a3b8;font-style:italic">Engar tímafærslur á tímabilinu</div>'; return; }
+      // Gull þema (mockup 05): fasta taflan → flex-wrap raðir — nafn ·
+      // „07:51 → 15:31 · 4,09 klst" (mætti grænt, hætti rautt á tímanum
+      // sjálfum) · verkstaðapillur undir. Engin lárétt rennsla lengur.
       list.innerHTML = staleBanner + d.days.map(day=>`
-        <div style="background:#fff;border:1px solid rgba(20,24,34,.08);border-radius:16px;margin-bottom:14px;overflow:hidden;box-shadow:0 10px 28px -16px rgba(25,35,60,.16)">
-          <div style="padding:12px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid #eef1f6;background:#fafbfe">
-            <div style="font-weight:800;color:#11141c;font-size:15px">${esc(dayLbl(day.date))}</div>
-            <div style="font-size:12px;color:#64748b;font-weight:700">${day.staff.length} starfsm. · <span style="color:#11141c">${hf(day.total_hours)} klst</span></div>
+        <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow-sm)">
+          <div style="padding:11px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--line);background:var(--tbl-header)">
+            <div style="font-family:var(--font-display);font-weight:600;color:var(--ink);font-size:15px;letter-spacing:.2px">${esc(dayLbl(day.date))}</div>
+            <div style="font-size:12px;color:var(--muted);font-weight:600" class="ky-num">${day.staff.length} starfsm. · <span style="color:var(--ink)">${hf(day.total_hours)} klst</span></div>
           </div>
-          <div style="overflow-x:auto">
-            <table style="width:100%;border-collapse:collapse;font-size:13px;min-width:520px">
-              <thead><tr style="color:#8a93a5;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em">
-                <th style="text-align:left;padding:7px 10px 7px 18px">Starfsmaður</th>
-                <th style="text-align:left;padding:7px 10px">🟢 Mætti</th>
-                <th style="text-align:left;padding:7px 10px">🔴 Hætti</th>
-                <th style="text-align:right;padding:7px 10px">Klst</th>
-                <th style="text-align:left;padding:7px 18px 7px 10px">Verkstaðir</th>
-              </tr></thead>
-              <tbody>${day.staff.map(s=>`
-                <tr style="border-top:1px solid #f3f5f9">
-                  <td style="padding:8px 10px 8px 18px;font-weight:700;color:#0f172a;white-space:nowrap;text-transform:capitalize">${esc(s.employee)}</td>
-                  <td style="padding:8px 10px;font-weight:700;color:#047857;white-space:nowrap" class="ky-num">${esc(s.in||'—')}</td>
-                  <td style="padding:8px 10px;font-weight:700;color:#be123c;white-space:nowrap" class="ky-num">${esc(s.out||'—')}</td>
-                  <td style="padding:8px 10px;text-align:right;font-weight:700;color:#11141c;white-space:nowrap" class="ky-num">${hf(s.hours)}</td>
-                  <td style="padding:8px 18px 8px 10px;color:#475569">${s.projects.map(p=>{
-                    // Lita-kóðun verkstaða (ósk Agnars 2026-07-17): himinblátt =
-                    // Slökkvitæki, rautt = veikindi/sick leave, blátt = allt annað.
-                    const pn = String(p.project||'');
-                    const c = /veikindi|sick/i.test(pn) ? ['#fee2e2','#b91c1c','#fecaca']
-                          : /slökkvit|slokkvit/i.test(pn) ? ['#e0f2fe','#0369a1','#bae6fd']
-                          : ['#dbeafe','#1e40af','#bfdbfe'];
-                    return `<span style="display:inline-block;background:${c[0]};color:${c[1]};border:1px solid ${c[2]};border-radius:99px;padding:1px 9px;margin:1px 3px 1px 0;font-size:11.5px;white-space:nowrap;font-weight:600">${esc(pn)} <span style="opacity:.65">${hf(p.hours)}klst${p.in?' · '+esc(p.in)+'–'+esc(p.out||'?'):''}</span></span>`;
-                  }).join('')}</td>
-                </tr>`).join('')}
-              </tbody>
-            </table>
-          </div>
+          ${day.staff.map(s=>`
+            <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;padding:9px 18px;border-top:1px solid var(--line)">
+              <span style="font-weight:600;color:var(--ink);text-transform:capitalize;min-width:140px">${esc(s.employee)}</span>
+              <span class="ky-num" style="white-space:nowrap;font-weight:600"><span style="color:var(--green)">${esc(s.in||'—')}</span> <span style="color:var(--muted-2)">→</span> <span style="color:var(--red)">${esc(s.out||'—')}</span> <span style="color:var(--muted);font-weight:500"> · ${hf(s.hours)} klst</span></span>
+              <span style="flex:1 1 100%;display:flex;flex-wrap:wrap;gap:3px;margin-top:1px">${s.projects.map(p=>{
+                // Lita-kóðun verkstaða (ósk Agnars 2026-07-17): Slökkvitæki sér,
+                // veikindi rautt, annað hlutlaust — nú á þemabreytum.
+                const pn = String(p.project||'');
+                const c = /veikindi|sick/i.test(pn) ? ['var(--red-bg)','var(--red)']
+                      : /slökkvit|slokkvit/i.test(pn) ? ['var(--info-bg)','var(--blue)']
+                      : ['var(--bg-2)','var(--ink-2)'];
+                return `<span style="display:inline-block;background:${c[0]};color:${c[1]};border-radius:3px;padding:2px 9px;margin:1px 3px 1px 0;font-size:11.5px;white-space:nowrap;font-weight:600">${esc(pn)} <span style="opacity:.65" class="ky-num">${hf(p.hours)}klst${p.in?' · '+esc(p.in)+'–'+esc(p.out||'?'):''}</span></span>`;
+              }).join('')}</span>
+            </div>`).join('')}
         </div>`).join('');
     }catch(e){
       list.innerHTML = '<div style="padding:26px;color:#dc2626;background:#fff;border:1px solid #fecaca;border-radius:12px">Gat ekki sótt mætingu: '+esc(e.message||String(e))+'</div>';
@@ -13130,7 +13120,7 @@ async function renderTvMaeting(t){
   const sy = $view.querySelector('#tvm-sync');
   if (sy) sy.addEventListener('click', async () => {
     const orig = sy.textContent;
-    sy.disabled = true; sy.textContent = '⏳ Samstilli…';
+    sy.disabled = true; sy.textContent = '… Samstilli';
     try {
       const days = Math.max(state.ui.tvm_days || 8, 8);
       const r = await fetch('/api/timavera-pull?days=' + days, { cache: 'no-store' });
