@@ -13670,36 +13670,39 @@ async function renderKrofuyfirlit(t){
 
   $view.innerHTML = `
     <div class="kyf-wrap">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px;margin-bottom:18px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px;margin-bottom:16px">
         <div>
-          <div style="font-size:11px;font-weight:700;letter-spacing:.16em;color:#C6A15A;text-transform:uppercase;margin-bottom:7px">FJÁRMÁL · ${(()=>{try{return new Date((state.data&&state.data.generated_at)||Date.now()).toLocaleDateString('is-IS',{month:'long',year:'numeric'}).toUpperCase();}catch(_){return '';}})()}</div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:.16em;color:#C6A15A;text-transform:uppercase;margin-bottom:7px">FJÁRMÁL · ${(()=>{const M=['JANÚAR','FEBRÚAR','MARS','APRÍL','MAÍ','JÚNÍ','JÚLÍ','ÁGÚST','SEPTEMBER','OKTÓBER','NÓVEMBER','DESEMBER'];const d=new Date((state.data&&state.data.generated_at)||Date.now());return (M[d.getMonth()]||'')+' '+d.getFullYear();})()}</div>
           <h1 style="margin:0;font-family:'Fraunces',serif;font-size:30px;font-weight:600;color:#14233B;letter-spacing:-.01em">Kröfu yfirlit</h1>
           <div style="font-size:12.5px;color:#64748b;margin-top:6px" id="kyf-meta">Þrepaskipt kröfu-yfirlit — ógreitt → ósent → tími eftir · Sækir…</div>
           <div style="font-size:11px;color:#94a3b8;margin-top:3px" id="kyf-fresh">Síðasta uppfærsla: …</div>
-          <div style="margin-top:8px;display:flex;gap:14px;flex-wrap:wrap"><span data-sync-workflow="timavera" data-sync-label="Tímavera"></span><span data-sync-workflow="ajour" data-sync-label="Ajour"></span><span data-sync-workflow="redder" data-sync-label="Redder"></span><span data-sync-workflow="payday" data-sync-label="Payday"></span></div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <select class="kyf-sort" title="Raða" style="padding:7px 9px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;font:inherit;font-size:12.5px;font-weight:600;color:#475569;cursor:pointer">
+          <button class="kyf-refresh" type="button" style="padding:8px 15px;border-radius:9px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;border:1px solid #cbd5e1;background:#fff;color:#475569">↻ Sækja</button>
+          <button class="kyf-hidden-toggle" type="button" title="Sýna/fela faldar kröfur" style="display:none;padding:8px 15px;border-radius:9px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;border:1px solid #cbd5e1;background:#fff;color:#475569"></button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px;display:flex;gap:12px;flex-wrap:wrap"><span data-sync-workflow="timavera" data-sync-label="Tímavera"></span><span data-sync-workflow="ajour" data-sync-label="Ajour"></span><span data-sync-workflow="redder" data-sync-label="Redder"></span><span data-sync-workflow="payday" data-sync-label="Payday"></span></div>
+
+      <div class="kyf-cards" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px"></div>
+
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:16px">
+        ${[['company','🏢 Fyrirtæki'],['all','📚 Allt'],['t1','🔴 Ógreiddar'],['likely','🏦 Líklega greitt'],['t2','🟡 Ósendar'],['t3','⚪ Tími eftir']].map(([k,label])=>{
+          const on = k==='company';
+          return `<button class="kyf-vf" data-vf="${k}" type="button" style="padding:7px 14px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;${on?'border:1px solid #14233B;background:#14233B;color:#fff':'border:1px solid #cbd5e1;background:#fff;color:#475569'}">${label}</button>`;
+        }).join('')}
+        <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input class="kyf-search" type="search" placeholder="🔍 Leita (nafn · kt · R-nr)…" style="padding:7px 11px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;font:inherit;font-size:13px;min-width:200px">
+          <select class="kyf-sort" title="Raða" style="padding:7px 9px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;font:inherit;font-size:12.5px;font-weight:600;color:#475569;cursor:pointer">
             <option value="amount_desc">💰 Upphæð hæst</option>
             <option value="amount_asc">💰 Upphæð lægst</option>
             <option value="oldest_due">📅 Elsti gjalddagi</option>
             <option value="name">🔤 Nafn A–Ö</option>
           </select>
-          <input class="kyf-search" type="search" placeholder="🔍 Leita (nafn · kt · R-nr)…" style="padding:7px 11px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;font:inherit;font-size:13px;min-width:210px">
-          <button class="kyf-me" type="button" title="Hver ert þú? — nafnið er skráð á vinnuflæði-skref (staðfest/sent/klárt) svo hinn sér hver gerði hvað" style="padding:7px 11px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;font:inherit;font-size:12.5px;font-weight:700;color:#475569;cursor:pointer;white-space:nowrap">👤 <span class="kyf-me-lbl"></span></button>
+          <button class="kyf-me" type="button" title="Hver ert þú? — nafnið er skráð á vinnuflæði-skref (staðfest/sent/klárt) svo hinn sér hver gerði hvað" style="padding:7px 11px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;font:inherit;font-size:12.5px;font-weight:700;color:#475569;cursor:pointer;white-space:nowrap">👤 <span class="kyf-me-lbl"></span></button>
         </div>
       </div>
-
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
-        ${[['company','🏢 Fyrirtæki'],['all','📚 Allt'],['t1','🔴 Ógreiddar'],['likely','🏦 Líklega greitt'],['t2','🟡 Ósendar'],['t3','⚪ Tími eftir']].map(([k,label])=>{
-          const on = k==='company';
-          return `<button class="kyf-vf" data-vf="${k}" type="button" style="padding:7px 14px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;${on?'border:1px solid #1d4ed8;background:#1d4ed8;color:#fff':'border:1px solid #cbd5e1;background:#fff;color:#475569'}">${label}</button>`;
-        }).join('')}
-        <button class="kyf-refresh" type="button" style="margin-left:auto;padding:7px 14px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;border:1px solid #cbd5e1;background:#fff;color:#475569">↻ Sækja</button>
-        <button class="kyf-hidden-toggle" type="button" title="Sýna/fela faldar kröfur" style="display:none;padding:7px 14px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;border:1px solid #cbd5e1;background:#fff;color:#475569"></button>
-      </div>
-
-      <div class="kyf-cards" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px"></div>
 
       <details class="kyf-help">
         <summary style="cursor:pointer;font-size:12.5px;font-weight:700;color:#334155;padding:11px 15px;background:#fff;border:1px solid rgba(20,24,34,.08);border-radius:14px;box-shadow:0 8px 22px -16px rgba(25,35,60,.18);list-style:none;user-select:none">❓ Hvað þýðir þetta? <span style="font-weight:500;color:#94a3b8">— smelltu til að opna skýringu</span></summary>

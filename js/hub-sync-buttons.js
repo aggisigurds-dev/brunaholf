@@ -89,12 +89,13 @@
   };
 
   const CSS = `
-    .hub-sync{display:inline-flex;flex-direction:column;align-items:flex-start;gap:3px;font-size:12px}
-    .hub-sync button{background:linear-gradient(160deg,#3a3a3e 0%,#18181b 55%,#000000 100%);color:#f3dd97;border:1px solid #4a4a4e;border-radius:8px;padding:6px 11px;font-weight:600;font-size:12px;cursor:pointer}
+    .hub-sync{display:inline-flex;flex-direction:row;align-items:center;gap:9px;font-size:12px;background:#fff;border:1px solid #EAE4D6;border-radius:999px;padding:5px 14px 5px 6px;box-shadow:0 1px 2px rgba(15,18,30,.05),0 8px 20px -17px rgba(25,35,60,.3)}
+    .hub-sync button{background:#14233B;color:#fff;border:0;border-radius:999px;padding:6px 12px;font-weight:700;font-size:11.5px;cursor:pointer;white-space:nowrap}
+    .hub-sync button:hover{background:#20375a}
     .hub-sync button:disabled{opacity:.7;cursor:default}
-    .hub-sync .d{color:#64748b;font-weight:600;font-size:11px;padding-left:2px}
-    .hub-sync.fresh .d{color:#16a34a}
-    .hub-sync.ok .d{color:#16a34a}
+    .hub-sync .d{color:#8a93a5;font-weight:600;font-size:11px;white-space:nowrap}
+    .hub-sync.fresh .d{color:#3a9d6a}
+    .hub-sync.ok .d{color:#3a9d6a}
     .hub-sync.err .d{color:#e03131}
     .hub-sync .dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px;background:#adb5bd;vertical-align:middle}
     .hub-sync .dot.done{background:#2f9e44}.hub-sync .dot.running{background:#1c7ed6}.hub-sync .dot.pending{background:#f59f00}.hub-sync .dot.error{background:#e03131}`;
@@ -104,7 +105,7 @@
     const wf = el.getAttribute("data-sync-workflow");
     const label = el.getAttribute("data-sync-label") || wf;
     el.classList.add("hub-sync");
-    el.innerHTML = `<button type="button">🔄 Samstilla ${label}</button><span class="d"><span class="dot"></span><span class="txt">…</span></span>`;
+    el.innerHTML = `<button type="button">🔄 ${label}</button><span class="d"><span class="dot"></span><span class="txt">…</span></span>`;
     const btn = el.querySelector("button"), dot = el.querySelector(".dot"), txt = el.querySelector(".txt");
     const setTxt = (t) => { txt.textContent = t; };
 
@@ -135,14 +136,14 @@
         } catch (e) {
           dot.className = "dot error"; el.classList.add("err"); setTxt("✗ " + (e.message || e));
           el._quiet = Date.now() + 8000;
-        } finally { btn.disabled = false; btn.textContent = `🔄 Samstilla ${label}`; }
+        } finally { btn.disabled = false; btn.textContent = `🔄 ${label}`; }
         return;
       }
       // Fallback: enginn ský-endapunktur → biðja brúna (gamla hegðunin).
       const ok = await trigger(wf, (location.hash || "hub").replace("#", ""));
       setTxt(ok ? "samstilling beðin…" : "villa — reyndu aftur"); dot.className = "dot pending";
       el._quiet = Date.now() + 5000;
-      setTimeout(async () => { btn.disabled = false; btn.textContent = `🔄 Samstilla ${label}`; await refresh(); }, 5000);
+      setTimeout(async () => { btn.disabled = false; btn.textContent = `🔄 ${label}`; await refresh(); }, 5000);
     };
     refresh();
     if (!el._t) el._t = setInterval(refresh, 15000);
