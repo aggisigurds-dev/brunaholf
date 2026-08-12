@@ -10905,13 +10905,15 @@ async function renderGerdReikninga(t){
     // Sami geymslustaður og Tímaskýrslu-modalinn (state.ui.timabok_edits[key]).
     try {
       ensureTbkPanelCss();
+      const tbkKey = name+'|'+month;
+      const tbkSaved = (state.ui && state.ui.timabok_edits && state.ui.timabok_edits[tbkKey]) || null;
       let tbkRows = [];
-      let tbkYf = (savedEdit && savedEdit.yfirvinna)
-        ? { on:!!savedEdit.yfirvinna.on, thr:(Number(savedEdit.yfirvinna.thr)>0?Number(savedEdit.yfirvinna.thr):8) }
+      let tbkYf = (tbkSaved && tbkSaved.yfirvinna)
+        ? { on:!!tbkSaved.yfirvinna.on, thr:(Number(tbkSaved.yfirvinna.thr)>0?Number(tbkSaved.yfirvinna.thr):8) }
         : { on:false, thr:8 };
       const tbkNum = s => Number(String(s).replace(',','.').replace(/[^\d.]/g,''))||0;
       const tbkSort = () => tbkRows.sort((a,b)=> String(b.date).localeCompare(String(a.date)) || String(a.employee).localeCompare(String(b.employee),'is'));
-      const tbkPersist = () => { state.ui=state.ui||{}; state.ui.timabok_edits=state.ui.timabok_edits||{}; state.ui.timabok_edits[key]={ rows:tbkRows.map(r=>({...r})), yfirvinna:{on:tbkYf.on,thr:tbkYf.thr}, saved_at:new Date().toISOString() }; save(); };
+      const tbkPersist = () => { state.ui=state.ui||{}; state.ui.timabok_edits=state.ui.timabok_edits||{}; state.ui.timabok_edits[tbkKey]={ rows:tbkRows.map(r=>({...r})), yfirvinna:{on:tbkYf.on,thr:tbkYf.thr}, saved_at:new Date().toISOString() }; save(); };
       const tbkSync = persist => { const t=tbkYfSplit(tbkRows,tbkYf); const dv=document.getElementById('gr-dvh'), ev=document.getElementById('gr-evh'); if(dv) dv.value=Math.round(t.dv*100)/100; if(ev) ev.value=Math.round(t.yf*100)/100; if(typeof draw==='function') draw(); if(typeof checkTimabokSync==='function') try{ checkTimabokSync(name, month, numv('gr-dvh'), numv('gr-evh')); }catch(_e){} if(persist) tbkPersist(); };
       function paintTbk(){
         const body=document.getElementById('gr-tbk-body'); if(!body) return;
@@ -10925,7 +10927,7 @@ async function renderGerdReikninga(t){
         if(yfc) yfc.onchange=()=>{ tbkYf.on=yfc.checked; tbkSync(true); paintTbk(); };
         if(thr) thr.addEventListener('change', ()=>{ const v=tbkNum(thr.value); tbkYf.thr=v>0?v:8; tbkSync(true); paintTbk(); });
       }
-      if(savedEdit && Array.isArray(savedEdit.rows)){ tbkRows=savedEdit.rows.map(r=>({...r})); tbkSort(); paintTbk(); }
+      if(tbkSaved && Array.isArray(tbkSaved.rows)){ tbkRows=tbkSaved.rows.map(r=>({...r})); tbkSort(); paintTbk(); }
       else if(name && /^\d{4}-\d{2}$/.test(String(month))){ fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&month=${encodeURIComponent(month)}`).then(r=>r.json()).then(d=>{ tbkRows=(d.rows||[]).map(r=>({date:r.date||'',employee:r.employee||'',time_in:r.time_in||'',time_out:r.time_out||'',hours:Number(r.hours)||0})); tbkSort(); paintTbk(); }).catch(()=>{ const b=document.getElementById('gr-tbk-body'); if(b) b.innerHTML='<div class="gr-tbk-empty">Gat ekki sótt Tímaveru — bættu við með ＋.</div>'; }); }
       else { paintTbk(); }
       { const a=document.getElementById('gr-tbk-add'); if(a) a.onclick=()=>{ tbkRows.unshift({date:(/^\d{4}-\d{2}$/.test(String(month))?month:'')+'-01',employee:'',time_in:'',time_out:'',hours:0}); paintTbk(); }; }
