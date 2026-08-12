@@ -10459,6 +10459,9 @@ async function renderGerdReikninga(t){
 
   // ===== Efnislisti editor (prefilled, editable, savable) =====
   function openEditor(name){
+    // dd.mm.áááá ↔ ISO. Frá/Til reitirnir sýna íslenskt dagsetningarsnið; native
+    // <input type="date"> sýnir US MM/DD/YYYY á en-US vöfrum. Gildin geymast ISO.
+    const ymd = s => { const p=String(s||'').trim().split('.'); if(p.length===3){ const d=p[0].padStart(2,'0'), m=p[1].padStart(2,'0'), y=p[2]; if(/^\d{4}$/.test(y)&&+m>=1&&+m<=12&&+d>=1&&+d<=31) return `${y}-${m}-${d}`; } return ''; };
     const month = state.ui.gr_month;
     const r = rateFor(name);
     const { fra, til } = monthRange(month);
@@ -10523,7 +10526,7 @@ async function renderGerdReikninga(t){
             <div style="font-size:11px;color:#64748b;margin-bottom:6px">Handvirkar upplýsingar verkkaupa — birtast á reikningi (t.d. þegar fletta þarf upp kennitölu eða skipta reikningi handvirkt).</div>
             <div class="gr-r2"><div class="gr-f"><label>Kennitala</label><input id="gr-kt" value="${escapeAttr(custKt)}" placeholder="000000-0000"></div><div class="gr-f"><label>Heimilisfang</label><input id="gr-addr" value="${escapeAttr(custAddr)}" placeholder="Heimilisfang verkkaupa"></div></div>
           </div>
-          <div class="gr-r2"><div class="gr-f"><label>Frá</label><input type="date" id="gr-fra" value="${fra}"></div><div class="gr-f"><label>Til</label><input type="date" id="gr-til" value="${til}"></div></div>
+          <div class="gr-r2"><div class="gr-f"><label>Frá</label><div style="display:flex;align-items:center;gap:5px"><input type="text" id="gr-fra" value="${dmy(fra)}" placeholder="dd.mm.áááá" inputmode="numeric" maxlength="10" style="flex:1;min-width:0"><button type="button" class="gr-datepick" data-for="gr-fra" title="Veldu dagsetningu" style="flex:0 0 auto;border:1px solid var(--line-2,#cbd5e1);background:var(--card,#fff);border-radius:8px;padding:6px 9px;cursor:pointer;font-size:14px;line-height:1">📅</button></div></div><div class="gr-f"><label>Til</label><div style="display:flex;align-items:center;gap:5px"><input type="text" id="gr-til" value="${dmy(til)}" placeholder="dd.mm.áááá" inputmode="numeric" maxlength="10" style="flex:1;min-width:0"><button type="button" class="gr-datepick" data-for="gr-til" title="Veldu dagsetningu" style="flex:0 0 auto;border:1px solid var(--line-2,#cbd5e1);background:var(--card,#fff);border-radius:8px;padding:6px 9px;cursor:pointer;font-size:14px;line-height:1">📅</button></div></div></div>
           <div class="gr-f" style="margin-top:2px"><label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-weight:600"><input type="checkbox" id="gr-datemode" ${dateText?'checked':''}> Skrifa dagsetningu sjálf/ur á reikninginn (t.d. „Maí 2026")</label><input type="text" id="gr-datetext" value="${escapeAttr(dateText)}" placeholder="t.d. Maí 2026" style="margin-top:6px;${dateText?'':'display:none'}"></div>
           <div class="gr-st">Tími <button type="button" id="gr-fill-hours" class="gr-btn" style="float:right;padding:3px 9px;font-size:11px" title="Fylla dagvinnu/yfirvinnu úr tímabók (yfirvinna eftir ${r.evThreshold} klst/dag${r.lunch>0?' — '+r.lunch+' klst hádegismatur frádreginn':''}; helgar (lau/sun) allar yfirvinna)">📥 Fylla úr tímabók</button></div>
           <div class="gr-r3"><div class="gr-f"><label>Dagvinna</label><div id="gr-dvh-sync" style="font-size:11px;color:#94a3b8;padding:6px 0">—</div></div>
@@ -10573,6 +10576,17 @@ async function renderGerdReikninga(t){
     bg.addEventListener('click', e=>{ if(e.target===bg) close(); });
     document.getElementById('gr-close').onclick = close;
     document.getElementById('gr-close2').onclick = close;
+    // Frá/Til: 📅 opnar native dagsetningarval (skilar dd.mm.áááá); snyrtir reitinn við blur.
+    bg.querySelectorAll('.gr-datepick').forEach(b=>{
+      b.onclick = () => {
+        const t = document.getElementById(b.dataset.for); if(!t) return;
+        const p = document.createElement('input'); p.type = 'date'; p.value = ymd(t.value) || '';
+        p.style.cssText = 'position:fixed;left:-9999px;opacity:0'; document.body.appendChild(p);
+        p.addEventListener('change', () => { if(p.value) t.value = dmy(p.value); p.remove(); }, { once:true });
+        try{ p.showPicker(); }catch(_){ p.remove(); }
+      };
+    });
+    ['gr-fra','gr-til'].forEach(id => { const t = document.getElementById(id); if(t) t.addEventListener('blur', () => { const iso = ymd(t.value); if(iso) t.value = dmy(iso); }); });
     checkTimabokSync(name, month, dvH, evH);
     document.getElementById('gr-manual-btn').onclick = () => {
       const m = document.getElementById('gr-manual');
@@ -10672,7 +10686,7 @@ async function renderGerdReikninga(t){
       document.getElementById('gr-sma-hint').textContent = (document.getElementById('gr-sma-on') && !document.getElementById('gr-sma-on').checked) ? 'Sleppt — ekki á reikningi' : `${r.sma} × ${(c.dvH+c.evH).toFixed(1)} (dv+ev) = ${fmt(c.sma)} kr`;
       const kr = n => fmt(n)+' kr.';
       const ws = document.getElementById('gr-ws').value.trim();
-      const fra = document.getElementById('gr-fra').value, til = document.getElementById('gr-til').value;
+      const fra = ymd(document.getElementById('gr-fra').value), til = ymd(document.getElementById('gr-til').value);
       const pCust = document.getElementById('gr-cust').value.trim();
       const pKt   = (document.getElementById('gr-kt')   || {}).value ? document.getElementById('gr-kt').value.trim()   : '';
       const pAddr = (document.getElementById('gr-addr') || {}).value ? document.getElementById('gr-addr').value.trim() : '';
@@ -10834,7 +10848,7 @@ async function renderGerdReikninga(t){
           cust: document.getElementById('gr-cust').value.trim(),
           kt: (document.getElementById('gr-kt')||{}).value ? document.getElementById('gr-kt').value.trim() : '',
           addr: (document.getElementById('gr-addr')||{}).value ? document.getElementById('gr-addr').value.trim() : '',
-          fra: document.getElementById('gr-fra').value, til: document.getElementById('gr-til').value,
+          fra: ymd(document.getElementById('gr-fra').value), til: ymd(document.getElementById('gr-til').value),
           dateText, notes: document.getElementById('gr-notes').value.trim(),
           rate: { km:r.km, ferd:r.ferd, vsk:r.vsk, sma:r.sma, stadf:GR_STADF }, c,
         };
