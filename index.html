@@ -9793,7 +9793,26 @@ async function renderTilbunirReikningar(t){
 function grOpenWorksite(worksite, month){
   window.__grPendingOpen = worksite;
   state.ui = state.ui || {};
+  // Muna hvaðan Efnislistinn var opnaður svo „Loka"/„×" skili notandanum til baka
+  // (t.d. á Kröfu yfirlit) í stað þess að skilja hann eftir á Gerð Reikninga.
+  // grOpenWorksite er AÐEINS kallað af Kröfu yfirlit „📄 Efnisl."-hnappinum.
+  if(state.ui.activeTab && state.ui.activeTab !== 'gerdreikninga') state.ui.grReturnTo = state.ui.activeTab;
   if(month && /^\d{4}-\d{2}$/.test(month)) state.ui.gr_month = month;
+  // Hleðslu-yfirlag strax svo Gerð Reikninga-listinn blikki EKKI áður en ritillinn
+  // opnast (sama yfirlag og djúptengingin notar; fjarlægt í pending-open hooknum í load()).
+  try{
+    if(!document.getElementById('gr-deep-wait')){
+      const ov = document.createElement('div');
+      ov.id = 'gr-deep-wait';
+      ov.style.cssText = 'position:fixed;inset:0;z-index:8999;background:rgba(248,250,252,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font-weight:700;font-size:16px;color:#334155';
+      ov.innerHTML = '<style>@keyframes grdwspin{to{transform:rotate(360deg)}}</style>'
+        + '<div style="width:36px;height:36px;border-radius:50%;border:4px solid #cbd5e1;border-top-color:#0f172a;animation:grdwspin .8s linear infinite"></div>'
+        + '<div>Sæki Efnislista…</div>'
+        + '<div style="font-size:13px;font-weight:400;color:#64748b">'+escapeHtml(worksite||'')+(month?' · '+escapeHtml(month):'')+'</div>';
+      document.body.appendChild(ov);
+      setTimeout(()=>{ document.getElementById('gr-deep-wait')?.remove(); }, 20000);
+    }
+  }catch(_){}
   state.ui.activeTab = 'gerdreikninga';
   save(); render();
 }
@@ -10365,7 +10384,7 @@ async function renderGerdReikninga(t){
       ${sectionBody(gata, true)}
     `;
     $meta.textContent = `${monthLabel(month)} · ${fmt(savedTotal)} kr vistað · ${pending} eftir`;
-    $host.querySelectorAll('[data-gr-edit]').forEach(b=> b.onclick = ()=> openEditor(b.dataset.grEdit));
+    $host.querySelectorAll('[data-gr-edit]').forEach(b=> b.onclick = ()=> { if(state.ui) state.ui.grReturnTo = null; openEditor(b.dataset.grEdit); });
     $host.querySelectorAll('[data-gr-gata]').forEach(b=> b.onclick = ()=> openGata(b.dataset.grGata));
     // Per-worksite note box (saved to app-state, persists across months + devices).
     $host.querySelectorAll('[data-gr-note]').forEach(ta=> ta.addEventListener('change', ()=>{
@@ -10541,7 +10560,16 @@ async function renderGerdReikninga(t){
         <div class="gr-prev"><div class="gr-doc" id="gr-doc"></div></div>
       </div>`;
     document.body.appendChild(bg);
-    const close = () => bg.remove();
+    const close = () => {
+      bg.remove();
+      // Skila notandanum þangað sem hann opnaði Efnislistann (t.d. Kröfu yfirlit) svo
+      // „Loka"/„×" skilji hann ekki eftir á Gerð Reikninga. grReturnTo er aðeins sett
+      // þegar opnað er af öðrum flipa (grOpenWorksite) — annars stöndum við kyrr hér.
+      if(state.ui && state.ui.grReturnTo){
+        const rt = state.ui.grReturnTo; state.ui.grReturnTo = null;
+        state.ui.activeTab = rt; save(); render();
+      }
+    };
     bg.addEventListener('click', e=>{ if(e.target===bg) close(); });
     document.getElementById('gr-close').onclick = close;
     document.getElementById('gr-close2').onclick = close;
