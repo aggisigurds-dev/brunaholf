@@ -40,20 +40,23 @@ button{cursor:pointer}
 .topbar{
   position:sticky;top:0;z-index:30;
   background:var(--navy-dark);
-  color:#fff;padding:0;display:block;
-  box-shadow:0 4px 14px rgba(0,0,0,.25);
-  overflow:hidden;
+  color:#fff;display:flex;align-items:center;gap:8px;
+  height:66px;padding:0 18px;
+  box-shadow:inset 0 -1px 0 rgba(201,164,92,.28);
 }
-.banner-img{display:block;width:100%;height:auto;max-height:none;object-fit:contain}
+.banner-img{display:none}
+/* Flat navy topbar — Brunahólf wordmark left, controls right (fire banner retired) */
+.bh-logo{order:-1;margin-right:auto;font-family:var(--font-display);font-weight:700;font-size:21px;letter-spacing:.2px;color:#fff;display:flex;align-items:center;white-space:nowrap}
+.bh-logo .bh-flame{color:var(--gold)}
 .topbar .brand,.topbar .brand-divider,.topbar .brand-slk{display:none}
-.topbar .editToggle{position:absolute;top:12px;right:14px;z-index:5;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);color:#fff}
-.topbar .editToggle.on{background:var(--gold);color:#1A1A1F}
-
-
-.topbar .sync-badge{position:absolute;top:14px;right:180px;z-index:5;font-size:11px;color:#fff;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);padding:4px 8px;border-radius:6px;font-weight:500;letter-spacing:.02em}
-.topbar .sync-badge.sync-ok{background:rgba(76,175,80,.55)}
-.topbar .sync-badge.sync-warn{background:rgba(255,152,0,.55)}
-.topbar .menu-btn{position:absolute;top:12px;left:14px;z-index:5;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);color:#fff}
+.topbar .menu-btn{position:static;order:-2;background:rgba(255,255,255,.12);backdrop-filter:none;color:#fff}
+.topbar .editToggle{position:static;order:1;background:rgba(255,255,255,.1);backdrop-filter:none;color:#fff;border:1px solid rgba(255,255,255,.16);border-radius:var(--radius-sm);height:34px;padding:0 12px;font-size:13px;font-weight:600}
+.topbar .editToggle.on{background:var(--gold);color:var(--navy-dark);border-color:var(--gold)}
+.topbar .themeToggle{order:1;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.16);border-radius:var(--radius-sm);height:34px;padding:0 12px;font-size:13px;font-weight:600;cursor:pointer}
+.topbar .themeToggle:hover{background:rgba(255,255,255,.18)}
+.topbar .sync-badge{position:static;order:1;font-size:11px;color:#cbd5e1;background:rgba(255,255,255,.08);padding:5px 10px;border-radius:99px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
+.topbar .sync-badge.sync-ok{background:rgba(76,175,80,.22);color:#a7f3c0}
+.topbar .sync-badge.sync-warn{background:rgba(255,152,0,.22);color:#fcd8a0}
 #brandTitle{display:none}
 .topbar .spacer{display:none}
 .brand{display:flex;align-items:center;gap:12px;font-weight:700;letter-spacing:.3px;position:relative;z-index:2;}
@@ -118,16 +121,9 @@ button{cursor:pointer}
 .sidebar{
   position:sticky;top:66px;align-self:flex-start;height:calc(100vh - 66px);
   width:230px;flex:0 0 230px;
-  /* 2026-05-28: cleaner professional gradient — near-black at top
-     transitioning to dark navy. Pairs with Inter labels for a more
-     workplace / dashboard feel. */
-  background:#0A0E1A;
-  background-image:
-    radial-gradient(ellipse 100% 25% at 50% 0%, rgba(64,140,255,.06) 0%, transparent 70%),
-    linear-gradient(180deg, #0A0E1A 0%, #0F1B2E 60%, #14233B 100%);
-  border-right:1px solid #1F2B40;padding:16px 10px;overflow-y:auto;z-index:15;
-  scrollbar-width:thin;scrollbar-color:#2A3850 transparent;
-  box-shadow:inset -1px 0 0 rgba(0,0,0,.5);
+  background:var(--navy);
+  border-right:1px solid var(--navy-2);padding:16px 10px;overflow-y:auto;z-index:15;
+  scrollbar-width:thin;scrollbar-color:var(--navy-2) transparent;
 }
 .sidebar::-webkit-scrollbar{width:6px}
 .sidebar::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
@@ -1405,7 +1401,7 @@ html.embedded .vb-scroll-wrap .vb-th-sum{font-size:17px !important}
 </style>
 
 <header class="topbar">
-  <img src="banner.png" alt="Brunahólf — Slökkvitæki ehf" class="banner-img" onerror="this.onerror=null;this.src='banner.png.png';this.addEventListener('error',()=>{this.style.display='none';this.parentNode.style.minHeight='60px';this.parentNode.style.background='linear-gradient(180deg, var(--navy) 0%, var(--navy-dark) 100%)'})">
+  <span class="bh-logo">Brunah<span class="bh-flame">ó</span>lf</span>
   <button class="menu-btn" id="menuBtn" title="Valmynd">☰</button>
   <button class="editToggle" id="editToggle" title="Breyta">✎ Breyta</button>
   <button class="themeToggle" id="themeToggle" onclick="this.textContent=({light:'☀ Ljóst',dark:'🌙 Dökkt',auto:'◐ Sjálfvirkt'})[cycleTheme()]" title="Útlit: ljóst / dökkt / sjálfvirkt">◐ Sjálfvirkt</button>
