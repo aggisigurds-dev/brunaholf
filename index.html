@@ -11040,6 +11040,7 @@ async function renderVinnubok(t){
     <div class="rg-wrap">
       <div class="rg-header">
         <div>
+          <div style="font-size:10.5px;font-weight:600;letter-spacing:2.5px;color:var(--gold-deep);text-transform:uppercase;margin-bottom:6px">VERKSTAÐIR · MÁNUÐIR</div>
           <h1 class="rg-h1">Vinnubók <span class="rg-sub" id="vb-meta">Sækir…</span></h1>
           <div class="rg-sub-line">Manual vinnusíða · breyttu reikningsupphæð per glugga, tengdu hvaða skjal sem er úr Drive (mappa verkstaðarins eða leit), fela verkstaði sem þú þarft ekki að skoða.</div>
           <div style="margin-top:8px"><span data-sync-workflow="timavera" data-sync-label="Tímavera"></span></div>
@@ -11101,7 +11102,7 @@ async function renderVinnubok(t){
       .vb-grid{width:100%;border-collapse:separate;border-spacing:6px;font-size:12px;background:transparent;font-family:'Inter','SF Pro Display','Segoe UI',system-ui,sans-serif}
       .vb-grid th,.vb-grid td{padding:0;vertical-align:top;border-radius:12px}
       .vb-grid th{background:linear-gradient(180deg,#f8fafc 0%,#eef2f7 100%);font-weight:700;padding:12px 16px;font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:#64748b;text-align:center;border:1px solid #e2e8f0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
-      .vb-row-name{padding:13px 16px;font-weight:700;background:linear-gradient(180deg,#3a5578 0%,#22354f 42%,#132234 100%);min-width:175px;max-width:230px;line-height:1.3;position:sticky;left:0;z-index:5;color:#fff;font-size:13px;border:1px solid #101d2e;box-shadow:2px 0 5px -2px rgba(15,23,42,.18)}
+      .vb-row-name{padding:13px 16px;font-weight:700;background:var(--navy);min-width:175px;max-width:230px;line-height:1.3;position:sticky;left:0;z-index:5;color:#fff;font-size:13px;border:1px solid #101d2e;box-shadow:2px 0 5px -2px rgba(15,23,42,.18)}
       .vb-row-name small{display:block;font-weight:500;color:rgba(255,255,255,.78);font-size:11px;margin-top:4px;letter-spacing:.01em}
       /* Larger, prominent worksite name + Drive-folder icon in the name cell */
       .vb-ws-name{display:block;font-size:16px;font-weight:800;line-height:1.25;letter-spacing:-.01em}
@@ -11121,11 +11122,11 @@ async function renderVinnubok(t){
       .vb-suggest-no:hover{background:#fef2f2;border-color:#fca5a5;color:#b91c1c}
       .vb-row-name .vb-hide-btn{color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.08)}
       .vb-row-name .vb-hide-btn:hover{background:rgba(255,255,255,.18);color:#fff;border-color:rgba(255,255,255,.6)}
-      .vb-cell{min-width:155px;max-width:205px;padding:0;background:linear-gradient(135deg,#ffffff 0%,#f8fafc 100%);overflow:hidden;border:1px solid #e2e8f0;transition:box-shadow .15s,transform .1s;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+      .vb-cell{min-width:155px;max-width:205px;padding:0;background:var(--card);overflow:hidden;border:1px solid var(--line);transition:box-shadow .15s,transform .1s;box-shadow:0 1px 2px rgba(15,23,42,.04)}
       .vb-cell:hover{box-shadow:0 4px 12px rgba(15,23,42,.08)}
-      .vb-cell-has-hours{background:linear-gradient(135deg,#ffffff 0%,#f0f9ff 100%);border-color:#bae6fd}
-      .vb-cell-has-invoice{background:linear-gradient(135deg,#ffffff 0%,#ecfdf5 100%);border-color:#a7f3d0}
-      .vb-cell-mismatch{background:linear-gradient(135deg,#fffaf0 0%,#fef3c7 100%);border-color:#fcd34d}
+      .vb-cell-has-hours{background:var(--red-bg);border-color:var(--line-2)}
+      .vb-cell-has-invoice{background:var(--card);border-color:var(--green)}
+      .vb-cell-mismatch{background:var(--warn-bg);border-color:var(--gold)}
       .vb-cell-corners{display:flex;justify-content:space-between;align-items:center;padding:6px 12px 2px;gap:6px;min-height:22px}
       .vb-corner{display:flex;flex-direction:row;align-items:baseline;gap:5px}
       .vb-corner-r{justify-content:flex-end}
@@ -11136,7 +11137,7 @@ async function renderVinnubok(t){
       .vb-cell-main{padding:2px 12px 3px;display:flex;flex-direction:column;align-items:center;gap:0}
       .vb-amount-input{width:100%;padding:5px 10px;border:1.5px solid #cbd5e1;border-radius:6px;font-family:'SF Mono','JetBrains Mono','Roboto Mono',Menlo,monospace;font-feature-settings:'tnum' 1;font-size:14.5px;font-weight:700;text-align:center;background:#fff;color:#0f172a;transition:all .15s;letter-spacing:-.01em;height:32px;line-height:1}
       .vb-amount-input:hover{border-color:#94a3b8}
-      .vb-amount-input:focus{border-color:#3b82f6;outline:none;box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+      .vb-amount-input:focus{border-color:var(--gold-deep);outline:none;box-shadow:0 0 0 3px rgba(180,141,76,.15)}
       .vb-amount-input::placeholder{color:#cbd5e1;font-weight:500;font-size:12px;letter-spacing:0}
       .vb-amount-currency{display:none}
       .vb-save-status{font-size:9.5px;color:#94a3b8;text-align:center;height:0;font-weight:500;overflow:hidden;transition:height .15s}
@@ -11147,8 +11148,8 @@ async function renderVinnubok(t){
       .vb-cell-bottom a,.vb-cell-bottom button{padding:3px 7px !important;font-size:11px !important;line-height:1.3 !important}
 
       /* Blue divider between worksite rows — clear visual separation */
-      .vb-grid tbody tr + tr > td{border-top:3px solid #3b82f6 !important}
-      [data-vb-layout="cards"] .vb-grid tbody tr + tr > td{border-top:3px solid #93c5fd !important}
+      .vb-grid tbody tr + tr > td{border-top:3px solid var(--line-2) !important}
+      [data-vb-layout="cards"] .vb-grid tbody tr + tr > td{border-top:3px solid var(--line-2) !important}
       [data-vb-layout="minimal"] .vb-grid tbody tr + tr > td{border-top:2px solid #cbd5e1 !important}
 
       /* Month header with sum below name — sticky at top */
@@ -11158,13 +11159,13 @@ async function renderVinnubok(t){
       .vb-th-sum{font-family:'SF Mono','JetBrains Mono','Roboto Mono',Menlo,monospace;font-feature-settings:'tnum' 1;font-size:13px;font-weight:700;margin-top:3px;letter-spacing:0;text-transform:none;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
       [data-vb-layout="cards"] .vb-th-sum,
       [data-vb-layout="table"] .vb-th-sum{color:#fff}
-      [data-vb-layout="cards"] .vb-grid thead th{background:linear-gradient(180deg,#3a5578 0%,#22354f 42%,#132234 100%);color:#fff;border-color:#101d2e;border-radius:8px}
+      [data-vb-layout="cards"] .vb-grid thead th{background:var(--navy);color:#fff;border-color:#101d2e;border-radius:8px}
       [data-vb-layout="minimal"] .vb-th-sum{color:#0f172a}
       .vb-grid thead .vb-row-name{z-index:6}
 
       /* Totals row in tfoot — sticky at bottom of scroll container so always visible */
-      .vb-totals-row td{background:linear-gradient(180deg,#3a5578 0%,#22354f 42%,#132234 100%);color:#fff;font-weight:700;border-color:#101d2e;box-shadow:0 -4px 10px -2px rgba(15,23,42,.18);position:sticky;bottom:0;z-index:4}
-      .vb-totals-row .vb-row-name{background:linear-gradient(180deg,#0f172a 0%,#1e293b 100%);color:#fff;font-weight:800;text-transform:uppercase;letter-spacing:.05em;font-size:11px;border-color:#0f172a;left:0;z-index:6}
+      .vb-totals-row td{background:var(--navy);color:#fff;font-weight:700;border-color:#101d2e;box-shadow:0 -4px 10px -2px rgba(15,23,42,.18);position:sticky;bottom:0;z-index:4}
+      .vb-totals-row .vb-row-name{background:var(--navy-dark);color:#fff;font-weight:800;text-transform:uppercase;letter-spacing:.05em;font-size:11px;border-color:#0f172a;left:0;z-index:6}
       .vb-totals-row .vb-total-cell{padding:10px 12px;text-align:center;font-family:'SF Mono','JetBrains Mono','Roboto Mono',Menlo,monospace;font-feature-settings:'tnum' 1;font-size:13.5px;letter-spacing:-.01em}
       .vb-totals-row .vb-total-sub{display:block;font-size:9.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-top:2px}
       [data-vb-layout="minimal"] .vb-totals-row td{background:#0f172a !important;color:#fff !important;border-radius:0;border:none;border-top:2px solid #0f172a}
@@ -11183,27 +11184,27 @@ async function renderVinnubok(t){
       .vb-layout-btn{border:none;background:transparent;padding:7px 12px;cursor:pointer;font-size:14px;color:#64748b;border-right:1px solid #e2e8f0}
       .vb-layout-btn:last-child{border-right:none}
       .vb-layout-btn:hover{background:#f1f5f9}
-      .vb-layout-btn.active{background:linear-gradient(180deg,#3b82f6 0%,#1d4ed8 100%);color:#fff;font-weight:600}
+      .vb-layout-btn.active{background:var(--navy-dark);color:#fff;font-weight:600}
       /* Review-dot filter chips */
       .vb-filter{display:inline-flex;border:1px solid #cbd5e1;border-radius:8px;overflow:hidden;background:#fff;margin-left:8px}
       .vb-filter-btn{border:none;background:transparent;padding:7px 10px;cursor:pointer;font-size:13px;color:#64748b;border-right:1px solid #e2e8f0;line-height:1}
       .vb-filter-btn:last-child{border-right:none}
       .vb-filter-btn:hover{background:#f1f5f9}
-      .vb-filter-btn.active{background:linear-gradient(180deg,#3b82f6 0%,#1d4ed8 100%);color:#fff;font-weight:600}
+      .vb-filter-btn.active{background:var(--navy-dark);color:#fff;font-weight:600}
 
       /* === Layout: TABLE === single rounded card, gradient header, zebra rows */
-      [data-vb-layout="table"] .vb-grid{border-collapse:separate;border-spacing:0;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 16px rgba(15,23,42,.08);border:1px solid #e2e8f0}
+      [data-vb-layout="table"] .vb-grid{border-collapse:separate;border-spacing:0;background:var(--card);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm);border:1px solid var(--line)}
       [data-vb-layout="table"] .vb-grid th,
       [data-vb-layout="table"] .vb-grid td{border:none;border-bottom:1px solid #f1f5f9;border-radius:0;box-shadow:none}
-      [data-vb-layout="table"] .vb-grid th{background:linear-gradient(180deg,#3a5578 0%,#22354f 42%,#132234 100%);color:#fff;font-weight:700;padding:14px 12px}
-      [data-vb-layout="table"] .vb-row-name{background:linear-gradient(180deg,#3a5578 0%,#22354f 42%,#132234 100%);color:#fff;border-right:2px solid #101d2e;box-shadow:2px 0 5px -2px rgba(15,23,42,.18)}
+      [data-vb-layout="table"] .vb-grid th{background:var(--navy);color:#fff;font-weight:700;padding:14px 12px}
+      [data-vb-layout="table"] .vb-row-name{background:var(--navy);color:#fff;border-right:2px solid #101d2e;box-shadow:2px 0 5px -2px rgba(15,23,42,.18)}
       [data-vb-layout="table"] .vb-row-name small{color:rgba(255,255,255,.78)}
       [data-vb-layout="table"] .vb-grid tbody tr:nth-child(even) .vb-cell{background:#f8fafc}
-      [data-vb-layout="table"] .vb-grid tbody tr:nth-child(even) .vb-row-name{background:linear-gradient(180deg,#1e40af 0%,#2563eb 100%)}
+      [data-vb-layout="table"] .vb-grid tbody tr:nth-child(even) .vb-row-name{background:var(--navy-2)}
       [data-vb-layout="table"] .vb-cell{background:#fff;border-right:1px solid #f1f5f9}
       [data-vb-layout="table"] .vb-cell-has-invoice .vb-amount-input{color:#059669;border-color:#a7f3d0}
       [data-vb-layout="table"] .vb-cell-mismatch{background:#fffbeb !important}
-      [data-vb-layout="table"] .vb-cell:hover{box-shadow:none;background:#eff6ff !important}
+      [data-vb-layout="table"] .vb-cell:hover{box-shadow:none;background:var(--hover) !important}
 
       /* === Layout: MINIMAL === no backgrounds, just lines and text */
       [data-vb-layout="minimal"] .vb-grid{border-collapse:collapse;background:transparent;border-spacing:0}
@@ -11266,13 +11267,13 @@ async function renderVinnubok(t){
       .vb-layout-btn{border:none;background:transparent;padding:7px 12px;cursor:pointer;font-size:14px;color:#64748b;transition:all .15s;border-right:1px solid #e2e8f0}
       .vb-layout-btn:last-child{border-right:none}
       .vb-layout-btn:hover{background:#f1f5f9;color:#0f172a}
-      .vb-layout-btn.active{background:linear-gradient(180deg,#3b82f6 0%,#1d4ed8 100%);color:#fff;font-weight:600}
+      .vb-layout-btn.active{background:var(--navy-dark);color:#fff;font-weight:600}
 
       /* ===== Layout: TABLE (single card, gradient header, zebra rows) ===== */
       [data-layout="table"] .vb-grid{border-collapse:separate;border-spacing:0;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 16px rgba(15,23,42,.08);border:1px solid #e2e8f0}
       [data-layout="table"] .vb-grid th,
       [data-layout="table"] .vb-grid td{border:none;border-bottom:1px solid #f1f5f9;border-radius:0;box-shadow:none}
-      [data-layout="table"] .vb-grid th{background:linear-gradient(180deg,#3a5578 0%,#22354f 42%,#132234 100%);color:#fff;font-weight:700;padding:14px 12px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;border-bottom:none}
+      [data-layout="table"] .vb-grid th{background:var(--navy);color:#fff;font-weight:700;padding:14px 12px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;border-bottom:none}
       [data-layout="table"] .vb-row-name{background:#f8fafc;color:#0f172a;font-weight:700;font-size:13px;border-right:2px solid #e2e8f0;box-shadow:none}
       [data-layout="table"] .vb-grid tbody tr:nth-child(odd) .vb-cell{background:#fff}
       [data-layout="table"] .vb-grid tbody tr:nth-child(even) .vb-cell{background:#f8fafc}
@@ -11282,7 +11283,7 @@ async function renderVinnubok(t){
       [data-layout="table"] .vb-cell-has-invoice .vb-amount-input{color:#059669;border-color:#a7f3d0}
       [data-layout="table"] .vb-cell-mismatch{background:#fffbeb !important}
       [data-layout="table"] .vb-cell:hover{box-shadow:none;transform:none;background:#eff6ff !important}
-      [data-layout="table"] .vb-year-collapsed{background:linear-gradient(180deg,#3a5578 0%,#22354f 42%,#132234 100%) !important;color:#fff !important;border:none}
+      [data-layout="table"] .vb-year-collapsed{background:var(--navy) !important;color:#fff !important;border:none}
 
       /* ===== Layout: MINIMAL (no colors, just lines and text) ===== */
       [data-layout="minimal"] .vb-grid{border-collapse:collapse;background:transparent;border-spacing:0}
@@ -11304,9 +11305,9 @@ async function renderVinnubok(t){
       [data-layout="minimal"] .vb-cell-bottom{padding:4px 0 0;border-top:none;background:transparent;font-size:10px;opacity:.7}
       [data-layout="minimal"] .vb-cell:hover{box-shadow:none;transform:none;background:#fafafa !important}
       [data-layout="minimal"] .vb-year-collapsed{background:transparent !important;color:#9ca3af;border:none}
-      .vb-cell-has-hours{background:#fbfcfd}
-      .vb-cell-has-invoice{background:#f3faf3}
-      .vb-cell-mismatch{background:#fff4e0}
+      .vb-cell-has-hours{background:var(--red-bg)}
+      .vb-cell-has-invoice{background:var(--card)}
+      .vb-cell-mismatch{background:var(--warn-bg)}
       .vb-line{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;font-size:11.5px;color:var(--text-dim,#5a6473);gap:6px}
       .vb-line:last-of-type{margin-bottom:5px}
       .vb-line b{color:var(--text,#1f2933);font-weight:600;font-size:12.5px}
