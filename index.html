@@ -13756,7 +13756,7 @@ async function renderKrofuyfirlit(t){
           <div style="font-size:11px;color:#94a3b8;margin-top:3px" id="kyf-fresh">Síðasta uppfærsla: …</div>
           <div style="margin-top:8px;display:flex;gap:14px;flex-wrap:wrap"><span data-sync-workflow="timavera" data-sync-label="Tímavera"></span><span data-sync-workflow="ajour" data-sync-label="Ajour"></span><span data-sync-workflow="redder" data-sync-label="Redder"></span><span data-sync-workflow="payday" data-sync-label="Payday"></span></div>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div class="kyf-print-hide" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <select class="kyf-sort" title="Raða" style="padding:7px 9px;border:1px solid var(--line-2);border-radius:var(--radius-sm);background:var(--card);font:inherit;font-size:12.5px;font-weight:600;color:var(--ink-2);cursor:pointer">
             <option value="amount_desc">💰 Upphæð hæst</option>
             <option value="amount_asc">💰 Upphæð lægst</option>
@@ -13768,12 +13768,13 @@ async function renderKrofuyfirlit(t){
         </div>
       </div>
 
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+      <div class="kyf-print-hide" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
         ${[['company','Fyrirtæki'],['all','Allt'],['t1','Ógreiddar'],['likely','Líklega greitt'],['t2','Ósendar'],['t3','Tími eftir']].map(([k,label])=>{
           const on = k==='company';
           return `<button class="kyf-vf" data-vf="${k}" type="button" style="padding:7px 14px;border-radius:var(--radius-sm);cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;${on?'border:1px solid var(--navy-dark);background:var(--navy-dark);color:#fff':'border:1px solid var(--line-2);background:var(--card);color:var(--ink-2)'}">${label}</button>`;
         }).join('')}
-        <button class="kyf-refresh" type="button" style="margin-left:auto;padding:7px 14px;border-radius:var(--radius-sm);cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;border:1px solid var(--line-2);background:var(--card);color:var(--ink-2)">↻ Sækja</button>
+        <button class="kyf-print" type="button" title="Prenta stílhreint yfirlit (án stjórntækja)" style="margin-left:auto;padding:7px 14px;border-radius:var(--radius-sm);cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;border:1px solid var(--line-2);background:var(--card);color:var(--ink-2)">🖨 Prenta</button>
+        <button class="kyf-refresh" type="button" style="padding:7px 14px;border-radius:var(--radius-sm);cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;border:1px solid var(--line-2);background:var(--card);color:var(--ink-2)">↻ Sækja</button>
         <button class="kyf-hidden-toggle" type="button" title="Sýna/fela faldar kröfur" style="display:none;padding:7px 14px;border-radius:var(--radius-sm);cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;border:1px solid var(--line-2);background:var(--card);color:var(--ink-2)"></button>
       </div>
 
@@ -13809,6 +13810,24 @@ async function renderKrofuyfirlit(t){
       .kyf-wrap .ky-abtn{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:46px;height:42px;padding:0 7px;border-radius:var(--radius-sm);border:1px solid var(--line-2);background:var(--card);box-shadow:none;cursor:default;font:inherit}
       .kyf-wrap .ky-abtn.on{background:var(--green-bg);border-color:var(--green);box-shadow:none}
       .kyf-wrap .ky-act,.kyf-wrap .ky-bx{cursor:pointer}
+      /* 🖨 Prenta (.kyf-print): stílhreint yfirlit — felur stjórntæki, hjálp,
+         aðgerðahnappa og app-umgjörð en heldur haus + KPI + fyrirtækjasundurliðun.
+         Aðeins virkt meðan body.kyf-printing er sett (á meðan prentun stendur), svo
+         prentun á öðrum flipum er óbreytt. */
+      @media print {
+        body.kyf-printing .topbar, body.kyf-printing .sidebar, body.kyf-printing #tabs { display:none !important; }
+        body.kyf-printing .layout { display:block !important; }
+        body.kyf-printing #view { margin:0 !important; padding:0 !important; }
+        body.kyf-printing .kyf-print-hide,
+        body.kyf-printing #kyf-fresh,
+        body.kyf-printing .kyf-wrap .hub-sync,
+        body.kyf-printing .kyf-wrap .kyf-help,
+        body.kyf-printing .kyf-wrap .ky-abtn { display:none !important; }
+        body.kyf-printing .kyf-wrap{ max-width:none !important; }
+        body.kyf-printing, body.kyf-printing *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+        body.kyf-printing .kyf-cards > *{ break-inside:avoid; }
+        @page{ margin:14mm; }
+      }
       .kyf-wrap .ky-act:hover,.kyf-wrap .ky-bx:hover{border-color:var(--gold-deep);box-shadow:none}
       .kyf-wrap .ky-act:disabled{opacity:.55;cursor:default}
       .kyf-wrap .ky-row.ky-likely{background:linear-gradient(90deg,rgba(16,185,129,.09),rgba(16,185,129,.03))}
@@ -14927,6 +14946,12 @@ async function renderKrofuyfirlit(t){
     renderList();
   }));
   $view.querySelector('.kyf-refresh').addEventListener('click', ()=>load(true));
+  { const pb = $view.querySelector('.kyf-print'); if(pb) pb.addEventListener('click', ()=>{
+    document.body.classList.add('kyf-printing');
+    const done = ()=>{ document.body.classList.remove('kyf-printing'); window.removeEventListener('afterprint', done); };
+    window.addEventListener('afterprint', done);
+    setTimeout(()=>{ try{ window.print(); }catch(_){ done(); } }, 50);
+  }); }
   const hidToggle = $view.querySelector('.kyf-hidden-toggle');
   if(hidToggle) hidToggle.addEventListener('click', ()=>{ state.showHidden = !state.showHidden; renderList(); });
   // Sameina-borði (fastur hluti af $view — lifir renderList()-endurteikningu af).
