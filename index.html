@@ -228,7 +228,7 @@ body[data-tab="jarvis"] #fab,body[data-tab="jarvis"] #fabSs{display:none}
   box-shadow:var(--shadow-sm);min-height:64px;width:100%;
   transition:transform .12s cubic-bezier(.4,0,.2,1), border-color .15s ease, box-shadow .2s ease;
 }
-.kbtn:hover{transform:translateY(-2px);border-color:var(--red);box-shadow:var(--shadow-red),0 12px 28px rgba(15,17,23,.08)}
+.kbtn:hover{transform:none;border-color:var(--gold-deep);box-shadow:var(--shadow)}
 .kbtn:active{transform:translateY(0)}
 /* size variants — span columns / heights */
 .kbtn.size-s{min-height:48px;padding:8px 10px}
@@ -308,7 +308,7 @@ body[data-tab="tenglar"] #luna-fab,
 body[data-tab="reikningatenglar"] #fabSs,
 body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 .rt-group-head{display:flex;align-items:center;gap:10px;margin:18px 2px 12px}
-.rt-group-head strong{font-size:11px;text-transform:uppercase;letter-spacing:1.6px;color:var(--muted);font-weight:700}
+.rt-group-head strong{font-size:10.5px;text-transform:uppercase;letter-spacing:2px;color:var(--gold-deep);font-weight:600}
 .rt-count{font-size:11px;color:var(--muted);background:var(--input-bg);border-radius:99px;padding:1px 8px;font-weight:700}
 .rt-openall{font-size:11px;color:var(--blue);background:none;border:0;cursor:pointer;font-weight:700}
 .rt-line{flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
@@ -1365,7 +1365,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 
 /* group divider */
 .group-title{display:flex;align-items:center;gap:12px;margin:18px 2px 12px}
-.group-title strong{font-size:11px;text-transform:uppercase;letter-spacing:1.6px;color:var(--muted);font-weight:700;display:inline-flex;align-items:center;gap:6px}
+.group-title strong{font-size:10.5px;text-transform:uppercase;letter-spacing:2px;color:var(--gold-deep);font-weight:600;display:inline-flex;align-items:center;gap:6px}
 .group-title .line{flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
 .section h2{font-size:11px;text-transform:uppercase;letter-spacing:1.6px;color:var(--muted);font-weight:700}
 
@@ -2360,7 +2360,6 @@ function buttonHtml(btn){
       <div class="ico ${icoIsEmoji?'ico-emoji':''}">${escapeHtml(ico)}</div>
       <div style="min-width:0;flex:1">
         <div class="lbl">${escapeHtml(btn.label)}</div>
-        ${sub?`<div class="sub">${escapeHtml(sub)}</div>`:''}
       </div>
       <button class="edit" title="Breyta" data-edit="${btn.id}">✎</button>
     </a>
@@ -2457,7 +2456,6 @@ function rtTile(btn){
       <div class="ico ${icoIsEmoji?'ico-emoji':''}">${escapeHtml(ico)}</div>
       <div style="min-width:0;flex:1">
         <div class="lbl">${escapeHtml(btn.label)}</div>
-        ${sub?`<div class="sub">${escapeHtml(sub)}</div>`:''}
       </div>
       <button class="edit" title="Breyta" data-edit="${btn.id}">✎</button>
       <button class="copy" title="Afrita hlekk" data-copy="${btn.id}">⧉</button>
