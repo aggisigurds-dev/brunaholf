@@ -3598,33 +3598,33 @@ function renderBakendi(t){
   // Card-grid layout — tools grouped into themed sections with subtle headers.
   // Each tool is a self-contained card; all element ids preserved so the handler
   // wiring further down keeps working unchanged. Mobile: stacks to 1 column < 768px.
-  const card = 'border-radius:16px;border:1px solid rgba(15,23,42,.07);background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.04),0 12px 28px -22px rgba(15,23,42,.22);padding:22px;display:flex;flex-direction:column;gap:16px;transition:box-shadow .2s,border-color .2s';
-  const iconSq = 'width:48px;height:48px;border-radius:14px;display:inline-flex;align-items:center;justify-content:center;font-size:22px;color:#fff;flex-shrink:0;box-shadow:0 6px 18px -10px rgba(15,23,42,.45)';
-  const titleStyle = 'font-size:16px;font-weight:700;color:#0f172a;line-height:1.3;letter-spacing:-.01em';
-  const descStyle = 'font-size:13px;color:#64748b;line-height:1.6;margin:0';
-  const labelStyle = 'font-size:10.5px;font-weight:700;color:#94a3b8;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:6px';
+  const card = 'border-radius:var(--radius);border:1px solid var(--line);background:var(--card);box-shadow:var(--shadow-sm);padding:22px;display:flex;flex-direction:column;gap:16px;transition:box-shadow .2s,border-color .2s';
+  const iconSq = 'width:44px;height:44px;border-radius:var(--radius-sm);display:inline-flex;align-items:center;justify-content:center;font-size:20px;color:#fff;flex-shrink:0';
+  const titleStyle = 'font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--ink);line-height:1.3;letter-spacing:.2px';
+  const descStyle = 'font-size:13px;color:var(--muted);line-height:1.6;margin:0';
+  const labelStyle = 'font-size:10.5px;font-weight:600;color:var(--gold-deep);letter-spacing:.14em;text-transform:uppercase;display:block;margin-bottom:6px';
   const inp2 = 'padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;font:inherit;font-size:13px;background:#fff';
   const inpMono = inp2 + ';font-family:"Space Mono","SF Mono",Consolas,monospace;font-size:12.5px';
   const chipStyle = (bg, fg) => 'display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:' + bg + ';color:' + fg;
   const dropZone = 'border:1.5px dashed #c7d2fe;background:linear-gradient(180deg,#f5f7ff,#fbfcff);border-radius:14px;padding:14px';
   // Section header: small icon-tile + Icelandic title + thin descriptive sub
   const sectionHeader = (icon, title, sub) =>
-    '<div style="display:flex;align-items:flex-end;gap:14px;margin:34px 0 16px;padding-bottom:12px;border-bottom:1px solid rgba(15,23,42,.08)">'
+    '<div style="display:flex;align-items:flex-end;gap:14px;margin:34px 0 16px;padding-bottom:12px;border-bottom:1px solid var(--line)">'
       + '<div style="display:flex;align-items:center;gap:11px">'
-        + '<span style="width:34px;height:34px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-size:17px;background:#0f172a;color:#fff;box-shadow:0 6px 16px -10px rgba(15,23,42,.6)">' + icon + '</span>'
-        + '<h2 style="font-size:16px;font-weight:700;color:#0f172a;margin:0;letter-spacing:-.01em">' + title + '</h2>'
+        + '<span style="width:34px;height:34px;border-radius:var(--radius-sm);display:inline-flex;align-items:center;justify-content:center;font-size:17px;background:var(--navy-dark);color:var(--gold)">' + icon + '</span>'
+        + '<h2 style="font-family:var(--font-display);font-size:17px;font-weight:600;color:var(--ink);margin:0;letter-spacing:.2px">' + title + '</h2>'
       + '</div>'
-      + '<span style="flex:1;font-size:12px;color:#94a3b8;line-height:1.55;padding-bottom:2px">' + (sub || '') + '</span>'
+      + '<span style="flex:1;font-size:12px;color:var(--muted-2);line-height:1.55;padding-bottom:2px">' + (sub || '') + '</span>'
     + '</div>';
   const ICON = {
-    red:    'background:linear-gradient(150deg,#ff897e,#df2c2c 55%,#8a1414)',
-    blue:   'background:linear-gradient(150deg,#8fb0ff,#2f5fe0 55%,#15306f)',
-    green:  'background:linear-gradient(150deg,#6fe2a2,#22b063 55%,#0c5d32)',
-    black:  'background:linear-gradient(145deg,#08080a,#26262c 26%,#3a3a41 50%,#19191d 74%,#070709)',
-    purple: 'background:linear-gradient(150deg,#c084fc,#7c3aed 55%,#3b1078)',
-    amber:  'background:linear-gradient(150deg,#fbbf24,#d97706 55%,#7c2d12)',
-    teal:   'background:linear-gradient(150deg,#7dd3fc,#0891b2 55%,#0c4a6e)',
-    indigo: 'background:linear-gradient(150deg,#a5b4fc,#4f46e5 55%,#1e1b4b)',
+    red:    'background:var(--red)',
+    blue:   'background:var(--blue)',
+    green:  'background:var(--green)',
+    black:  'background:var(--navy-dark)',
+    purple: 'background:#7c3aed',
+    amber:  'background:var(--gold-deep)',
+    teal:   'background:#0891b2',
+    indigo: 'background:#4f46e5',
   };
   // Tool-grid wrapper — collapses to one column on narrow screens
   const toolGrid = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:20px';
@@ -3634,9 +3634,9 @@ function renderBakendi(t){
 
       <!-- ── Page hero ──────────────────────────────────────────────────── -->
       <div style="margin:0 0 8px">
-        <div style="font-size:10.5px;font-weight:700;color:#dc2626;letter-spacing:.18em;text-transform:uppercase">Brunahólf · Stjórnborð</div>
-        <h1 style="font-size:26px;font-weight:700;color:#0f172a;margin:6px 0 6px;letter-spacing:-.02em">Bakendi</h1>
-        <p style="font-size:13.5px;color:#64748b;line-height:1.6;margin:0;max-width:760px">
+        <div style="font-size:10.5px;font-weight:600;color:var(--gold-deep);letter-spacing:2.5px;text-transform:uppercase">Brunahólf · Stjórnborð</div>
+        <h1 style="font-family:var(--font-display);font-size:30px;font-weight:700;color:var(--ink);margin:6px 0 6px;letter-spacing:.2px">Bakendi</h1>
+        <p style="font-size:13.5px;color:var(--muted);line-height:1.6;margin:0;max-width:760px">
           Stjórntæki yfir gögn úr Drive, Gmail og PDF-skjölum — keyrt í skýinu og endurkeyrslur óhætt að nota.
           <span style="color:#94a3b8">Sjálfgefin mappa: <code style="font-family:'Space Mono','SF Mono',Consolas,monospace;font-size:11.5px;color:#475569">${escapeHtml(folder.slice(0,40))}${folder.length>40?'…':''}</code></span>
         </p>
@@ -3690,47 +3690,47 @@ function renderBakendi(t){
            ══════════════════════════════════════════════════════════════════ -->
       ${sectionHeader('🔍', 'Yfirferð', 'Handvirk pörun á skýrslum við réttan stað — Claude þarf staðfest tengingar')}
 
-      <a href="/jarvis.html" target="_blank" rel="noopener" style="${card};text-decoration:none;color:inherit;border-color:#0c4a6e;background:linear-gradient(135deg,#0b1a2b,#0e2a44);color:#cfeeff">
+      <a href="/jarvis.html" target="_blank" rel="noopener" style="${card};text-decoration:none;color:inherit;border-color:var(--navy-2);border-top:3px solid var(--gold);background:var(--navy-dark);color:#e8edf4">
         <div style="display:flex;align-items:center;gap:14px">
-          <span style="${iconSq};background:linear-gradient(135deg,#0ea5e9,#0c4a6e)">◉</span>
+          <span style="${iconSq};background:rgba(255,255,255,.1)">◉</span>
           <div style="flex:1">
-            <div style="${titleStyle};color:#cfeeff">J.A.R.V.I.S. — stjórnstöðin á einum skjá</div>
-            <p style="${descStyle};margin-top:4px;color:#8fc7e6">Allt kerfið í einni mynd: tengingar, vélar, gagnaleiðslur og <b style="color:#cfeeff">skýrsluþekjan</b> — með hljóðnemanum í miðjunni. Talaðu og fáðu svar upphátt. Ætlað á skjá sem stendur opinn — þessi hlekkur opnar hann á sérskjá; hann er líka flipi í hliðarstikunni (🧠 J.A.R.V.I.S., undir Deginum).</p>
+            <div style="${titleStyle};color:#fff">J.A.R.V.I.S. — stjórnstöðin á einum skjá</div>
+            <p style="${descStyle};margin-top:4px;color:#93a1b5">Allt kerfið í einni mynd: tengingar, vélar, gagnaleiðslur og skýrsluþekjan — með hljóðnemanum í miðjunni. Talaðu og fáðu svar upphátt. Ætlað á skjá sem stendur opinn — þessi hlekkur opnar hann á sérskjá; hann er líka flipi í hliðarstikunni (J.A.R.V.I.S., undir Deginum).</p>
           </div>
-          <span style="${chipStyle('#0c4a6e','#cfeeff')}">Nýtt</span>
+          <span style="${chipStyle('rgba(201,164,92,.18)','var(--gold)')}">Nýtt</span>
         </div>
       </a>
 
-      <a href="/radd.html" target="_blank" rel="noopener" style="${card};text-decoration:none;color:inherit;border-color:#7c2d12;background:linear-gradient(135deg,#fff7ed,#ffedd5)">
+      <a href="/radd.html" target="_blank" rel="noopener" style="${card};text-decoration:none;color:inherit;border-color:var(--line);border-top:3px solid var(--gold);background:var(--warn-bg)">
         <div style="display:flex;align-items:center;gap:14px">
-          <span style="${iconSq};background:linear-gradient(135deg,#ea580c,#7c2d12)">🎙️</span>
+          <span style="${iconSq};${ICON.amber}">🎙️</span>
           <div style="flex:1">
             <div style="${titleStyle}">Raddminni — talaðu, og það ratar á réttan stað</div>
-            <p style="${descStyle};margin-top:4px">Eitt tapp í símanum: <b>talaðu</b> og hugmyndin er skráð áður en þú leggur símann frá þér. Hljóðið geymist alltaf (líka þegar talgreiningin misheyrir), Claude les textann og <b>verkefni fara sjálfkrafa á Verkefnalistann</b> — minnispunktar bíða yfirferðar.</p>
+            <p style="${descStyle};margin-top:4px">Eitt tapp í símanum: talaðu og hugmyndin er skráð áður en þú leggur símann frá þér. Hljóðið geymist alltaf (líka þegar talgreiningin misheyrir), Claude les textann og verkefni fara sjálfkrafa á Verkefnalistann — minnispunktar bíða yfirferðar.</p>
           </div>
-          <span style="${chipStyle('#ffedd5','#7c2d12')}">Nýtt · sími</span>
+          <span style="${chipStyle('rgba(201,164,92,.18)','var(--gold-deep)')}">Nýtt · sími</span>
         </div>
       </a>
 
-      <a href="/kerfisheilsa.html" target="_blank" rel="noopener" style="${card};text-decoration:none;color:inherit;border-color:#0f172a;background:linear-gradient(135deg,#e2e8f0,#f1f5f9)">
+      <a href="/kerfisheilsa.html" target="_blank" rel="noopener" style="${card};text-decoration:none;color:inherit;border-color:var(--line);border-top:3px solid var(--green);background:var(--green-bg)">
         <div style="display:flex;align-items:center;gap:14px">
-          <span style="${iconSq};background:linear-gradient(135deg,#0f172a,#334155)">🛡️</span>
+          <span style="${iconSq};${ICON.green}">🛡️</span>
           <div style="flex:1">
             <div style="${titleStyle}">Kerfisheilsa — eru tengingarnar lifandi?</div>
-            <p style="${descStyle};margin-top:4px">Eitt ljósaborð yfir <b>alla lykla og aðganga</b>: pósthólfin (Gmail), Payday, dkPlus, Tímavera-API, Claude, Resend — <b>grænt</b> prófað og virkar · <b>gult</b> athuga · <b>rautt</b> ótengt, með Tengja-hnappi á staðnum. Neðst ferskleiki gagnaleiðslanna.</p>
+            <p style="${descStyle};margin-top:4px">Eitt ljósaborð yfir alla lykla og aðganga: pósthólfin (Gmail), Payday, dkPlus, Tímavera-API, Claude, Resend — <span style="color:var(--green);font-weight:600">grænt</span> prófað og virkar · <span style="color:var(--warn);font-weight:600">gult</span> athuga · <span style="color:var(--red);font-weight:600">rautt</span> ótengt, með Tengja-hnappi á staðnum. Neðst ferskleiki gagnaleiðslanna.</p>
           </div>
-          <span style="${chipStyle('#e2e8f0','#0f172a')}">Nýtt · vaktin</span>
+          <span style="${chipStyle('rgba(46,125,67,.14)','var(--green)')}">Nýtt · vaktin</span>
         </div>
       </a>
 
-      <a href="/kerfiskort.html" target="_blank" rel="noopener" style="${card};text-decoration:none;color:inherit;border-color:#312e81;background:linear-gradient(135deg,#eef2ff,#faf5ff)">
+      <a href="/kerfiskort.html" target="_blank" rel="noopener" style="${card};text-decoration:none;color:inherit;border-color:var(--line);border-top:3px solid var(--blue);background:var(--info-bg)">
         <div style="display:flex;align-items:center;gap:14px">
-          <span style="${iconSq};background:linear-gradient(135deg,#6366f1,#8b5cf6)">🗺️</span>
+          <span style="${iconSq};${ICON.blue}">🗺️</span>
           <div style="flex:1">
             <div style="${titleStyle}">Kerfis-kort — öll viðskiptavina-gagnaskrá á einum stað</div>
-            <p style="${descStyle};margin-top:4px">Ein öflug lifandi tafla: hver viðskiptavinur · kt · þjónustuflokkur · rekstrarfélag · staðir · tæki · <b>2023–2026 skjalatengingar</b> · staða í master-möppu · heilsu-flögg (ótengd skjöl, tæki án staðar, tvítök). Efst: <b>graf yfir hvernig kerfið er tengt</b> með lifandi tölum. Allt útvíkkanlegt.</p>
+            <p style="${descStyle};margin-top:4px">Ein öflug lifandi tafla: hver viðskiptavinur · kt · þjónustuflokkur · rekstrarfélag · staðir · tæki · 2023–2026 skjalatengingar · staða í master-möppu · heilsu-flögg (ótengd skjöl, tæki án staðar, tvítök). Efst: graf yfir hvernig kerfið er tengt með lifandi tölum. Allt útvíkkanlegt.</p>
           </div>
-          <span style="${chipStyle('#e0e7ff','#3730a3')}">Nýtt · lifandi</span>
+          <span style="${chipStyle('rgba(37,99,235,.12)','var(--blue)')}">Nýtt · lifandi</span>
         </div>
       </a>
 
