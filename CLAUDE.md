@@ -596,6 +596,65 @@ skráðir fyrir þessa breytingu eiga `year=NULL`; hrein árs-sía sæi þá ekk
 byggi til nýja röð — sama tvítaka-hegðun og var verið að laga. Ekki herða þetta
 í hreina árs-jöfnun fyrr en bakfyllingin nær til allra.
 
+## Skjala-multitool — ⚙️ Stillingar, staðgreitt og sóttkví (2026-08-12)
+
+**⚙️ Stillingar** (modal í `multitool.html`) er nú EINI staðurinn fyrir lestrar-
+stillingar (undirmöppur/þak/röð) og markmöppurnar — þær voru áður á aðal-skjánum og
+í keyrslu-boxinu. Vistast í `localStorage.multitool_settings_v1` OG í `app_kv`
+gegnum `/api/app-state` (`multitool_settings` bætt í `ALLOWED_KEYS`) svo þær fylgi
+milli vélanna fjögurra. **Bættu nýrri stillingu við á EINUM stað** — `SET_FIELDS`
+fylkið sér um lestur/vistun/endurheimt sjálfkrafa.
+
+**💵 Staðgreitt.** Nóta með kt `999999-9999` EÐA „Greiðsl.skilm.: Staðgreiðsla" fær
+eigin `doc_type='stadgreitt'`, eigin möppu, og er **aldrei** tengd í
+`customer_documents` (hún er ekki í `LINKABLE`) — kt 999999-9999 er walk-in
+staðgengillinn (`customers_base` 870 „Staðgreitt"), ekki viðskiptavinur.
+
+⚠️ **Yfirskriftin má ekki hverfa:** beri nótan **Akstur** OG **Skýrslugerð (og
+vottun)** er hún úttektarreikningur þrátt fyrir staðgreiðsluna — við keyrðum á
+staðinn og skrifuðum skýrslu (Agnar 2026-08-12, R-108017 Álfaskeið 104). Búðarsala
+yfir borðið ber hvoruga línuna (R-107962: bara „Hleðsla Léttvatn").
+
+⚠️ **Merkið er lesið úr ORÐINU, ekki merkimiðanum.** OCR ruglar dálkunum á dkPlus-
+nótu svo „Greiðsl.skilm.:" og „Staðgreiðsla" lenda á sitt hvorri línunni — regla sem
+festir sig við merkimiðann finnur ekkert. Staðfest á hráum OCR-texta R-107962.
+
+**✏️ Möppuheitið er ekki félagsnafn.** Lotu-skönnun skrifar „`<möppuheiti> - bls
+NNN.pdf`" á hverja síðu; `companyFromStem` las því möppuna sem kaupandann á HVERJUM
+reikningi í bunkanum („mars-mai stolpi - Skeiðarvogi 159 - …"). `sameAsFolder` hafnar
+nú möppuheiti sem félagsnafni og `nameInvoice` lætur heimilisfangið leiða þegar félag
+vantar. „Óþekkt" stendur aðeins eftir þegar hvorugt er til.
+
+**📂 Þrír útkomu-hamir** (radio `outmode`):
+- `master` — óbreytt: endurnefnir, færir í meistaramöppurnar, tengir.
+- `quarantine` — **sóttkví**: raðar í undirmöppur INNI Í lesmöppunni og tengir ekkert.
+- `presort` — **reikninga-forflokkun**: skiptir bunka af nótum AÐEINS í tvennt
+  (💵 Staðgreiðslunótur / 📄 Úttektarnótur + 📦 Annað) og telur skiptinguna.
+
+`POST {action:'quarantine-folders', src, mode}` býr möppurnar til (idempotent);
+`noLink` í `apply` sleppir gagnagrunns-skrefinu. Hver röð sýnir `stad_signal` /
+`stad_override` sem merki, svo flokkunin sé sannreynanleg í listanum án þess að opna
+PDF-ið. Sóttkví/forflokkun færa ALDREI út fyrir lesmöppuna — vantar möppurnar er
+markmappan tóm og ekkert færist.
+
+## 📋 Skráalisti (2026-08-12)
+
+`skraalisti.html` + `netlify/functions/drive-filelist.js` + flipi `skraalisti`.
+Telur Drive-möppu, listar öll skráarheiti, flytur út í CSV/Google Sheets og ber
+**tvær möppur saman** til að finna hvað vantar. **Engin OCR, engin flokkun, engin
+tenging** — þess vegna ræður það við möppur með þúsundum skráa (multitoolið er
+mínútur á sama gagni) og þess vegna er GET-ið hættulaust.
+
+⚠️ **Samanburðurinn stendur og fellur með lyklinum.** Sama skjal ber sjaldnast sama
+heiti í tveimur möppum. Reikningsnúmera-lykillinn les því ÞRJÁR ritvenjur — `R-107962`,
+`Stolpi_Invoice_107962` og bert `1xxxxx` — af því samanburðurinn sem raunverulega er
+gerður er hrátt dkPlus-heiti á móti endurnefndu. Læsi hann aðeins „R-"-formið teldist
+hvert óendurnefnt skjal „vantar". Kennitölur eru teknar út ÁÐUR en bert númer er lesið,
+en með þéttri reglu (`\d{6}-\d{4}` eða `\d{10}`) — lausari regla gleypti „R-106741 -
+2025" sem kennitölu og skildi merkta númerið eftir ólesið.
+
+Skrár án lykils eru merktar „lykil vantar" og taldar **hvorki** samsvörun né mismunur.
+
 ## graphify
 
 Þekkingargraf **aðeins uppsett á stóru vélinni** — `graphify`-skipunin er EKKI til á
