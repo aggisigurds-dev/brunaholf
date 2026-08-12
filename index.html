@@ -10484,7 +10484,10 @@ async function renderGerdReikninga(t){
     const km  = d ? Number(d.akstur_km)||0 : 0;
     const fr  = d ? Number(d.akstur_ferdir)||0 : 0;
     const stadfOn = d ? Number(d.stadfesting)>0 : r.stadf;
-    const notes = d ? (d.notes||'') : '';
+    // Aldrei sýna sjálfvirkar kerfis-athugasemdir á reikningi/skjali sem fer til
+    // verkkaupa. „Handvirkt skráð í Vinnubók (…)" er audit-lína (updated_by/at geymir
+    // það); hún er hreinsuð úr nótureitnum svo hún birtist hvorki í ritli, skjali né PDF.
+    const notes = d ? String(d.notes||'').replace(/Handvirkt skráð í Vinn[au]bók\s*\([^)]*\)/gi,'').replace(/\n{2,}/g,'\n').trim() : '';
     let mats = [];
     if(d && Array.isArray(d.materials_jsonb) && d.materials_jsonb.length){
       mats = d.materials_jsonb.map(m=>({label:m.label||'', price:Number(m.price)||0, qty:Number(m.qty)||0, cost:Number(m.cost)||0}));
@@ -11948,7 +11951,6 @@ async function renderVinnubok(t){
           total_m_vsk: newAmount,
           source: source,
           status: existing?.status || 'draft',
-          notes: `Handvirkt skráð í Vinnubók (${new Date().toLocaleString('is-IS')})`,
           updated_by: 'vinnubok',
         }),
       });
