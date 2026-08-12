@@ -15770,7 +15770,8 @@ async function renderVorubirgdir(t){
     <div class="rg-wrap">
       <div class="rg-header">
         <div>
-          <h1 class="rg-h1">🏷️ Vörubirgðir <span class="rg-sub" id="vb-meta">Sækir…</span></h1>
+          <div style="font-size:10.5px;font-weight:600;letter-spacing:2.5px;color:var(--gold-deep);text-transform:uppercase;margin-bottom:6px">LAGER · INN- OG SÖLUVERÐ</div>
+          <h1 class="rg-h1">Vörubirgðir <span class="rg-sub" id="vb-meta">Sækir…</span></h1>
           <div class="rg-sub-line">Allar vörur sem við seljum — inn- og söluverð á einum stað. Deilir <b>sömu vörulista og Slökkvitæki Sala</b>; hér má líka bæta við brunakerfis-búnaði (skynjarar, tæki, sensorar) sem brunakerfis-verk geta síðar sótt eftir flokki.</div>
         </div>
         <div class="rg-controls">
@@ -15787,19 +15788,23 @@ async function renderVorubirgdir(t){
         <select id="vb-cat" class="vb-in vb-sel"><option value="">Allir flokkar</option></select>
         <div class="vb-segs" id="vb-segs">
           <button class="vb-seg is-on" data-v="allar" type="button">Allar</button>
-          <button class="vb-seg" data-v="slokkvitaeki" type="button">🧯 Slökkvitæki</button>
-          <button class="vb-seg" data-v="brunakerfi" type="button">🚨 Brunakerfi</button>
+          <button class="vb-seg" data-v="slokkvitaeki" type="button">Slökkvitæki</button>
+          <button class="vb-seg" data-v="brunakerfi" type="button">Brunakerfi</button>
           <button class="vb-seg" data-v="virkar" type="button">Aðeins virkar</button>
+          <button class="vb-seg" data-v="vantar" type="button" title="Vörur án kaupverðs — álagningin er óþekkt">Vantar innverð</button>
         </div>
       </div>
 
       <div id="vb-tblwrap" class="vb-tblwrap"><div class="vb-loading">Sækir…</div></div>
     </div>
     <style>
-      .vb-stats{display:flex;gap:10px;flex-wrap:wrap;margin:4px 0 14px}
-      .vb-stat{background:var(--card-bg,#fff);border:1px solid var(--border,#e3e7ec);border-radius:11px;padding:10px 14px;min-width:120px}
-      .vb-stat b{display:block;font-size:19px;font-weight:800;color:var(--text,#1f2933);font-variant-numeric:tabular-nums}
-      .vb-stat span{font-size:11.5px;color:var(--text-dim,#7a8493)}
+      .vb-stats{margin:4px 0 14px}
+      .vb-warnband{background:var(--warn-bg);border:1px solid var(--line-2);color:var(--warn);border-radius:var(--radius-sm);padding:10px 14px;font-size:12.5px;margin-bottom:10px;line-height:1.5}
+      .vb-warnband b{font-weight:600}
+      .vb-warnband-go{border:0;background:transparent;color:var(--warn);font:inherit;font-size:12px;font-weight:600;cursor:pointer;text-decoration:underline;padding:0 2px}
+      .vb-statline{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+      .vb-stockval{font-family:var(--font-display);font-size:24px;font-weight:600;color:var(--ink);white-space:nowrap}
+      .vb-statmeta{font-size:12px;color:var(--muted)}
       .vb-toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
       .vb-in{font-size:13px;padding:8px 11px;border:1px solid var(--border,#d6dbe1);border-radius:8px;background:var(--card-bg,#fff);color:var(--text,#1f2933)}
       #vb-q{flex:1 1 260px;min-width:180px}
@@ -15807,7 +15812,7 @@ async function renderVorubirgdir(t){
       .vb-segs{display:inline-flex;gap:0;border:1px solid var(--border,#d6dbe1);border-radius:9px;overflow:hidden}
       .vb-seg{font-size:12.5px;font-weight:600;border:0;background:var(--card-bg,#fff);color:var(--text,#1f2933);padding:8px 12px;cursor:pointer;border-right:1px solid var(--border,#e3e7ec)}
       .vb-seg:last-child{border-right:0}
-      .vb-seg.is-on{background:#274a9e;color:#fff}
+      .vb-seg.is-on{background:var(--navy-dark);color:#fff}
       .vb-tblwrap{overflow-x:auto;background:var(--card-bg,#fff);border:1px solid var(--border,#e3e7ec);border-radius:12px}
       .vb-loading,.vb-empty,.vb-err{padding:16px;font-size:13px}
       .vb-empty{color:var(--text-dim,#7a8493)} .vb-err{color:#c40000}
@@ -15879,15 +15884,21 @@ async function renderVorubirgdir(t){
   }
 
   function paintStats(){
+    // Mockup 10: fjögur KPI-spjöld → ein undirtitilslína (aðeins lagervirðið
+    // á skilið stærð) + EINN borði fyrir vantandi kaupverð — það er sagan.
     const n = ALL.length;
     const withBuy = ALL.filter(p=>Number(p.kostnadarverd)>0).length;
+    const missing = n - withBuy;
     const bruna = ALL.filter(p=>isBruna(p.flokkur)).length;
     const stockVal = ALL.reduce((s,p)=> s + (Number(p.kostnadarverd)>0 && Number(p.birgdir)>0 ? Number(p.kostnadarverd)*Number(p.birgdir) : 0), 0);
-    $stats.innerHTML =
-      `<div class="vb-stat"><b>${n}</b><span>vörur alls</span></div>`+
-      `<div class="vb-stat"><b>${withBuy}</b><span>með kaupverði</span></div>`+
-      `<div class="vb-stat"><b>${bruna}</b><span>brunakerfis-vörur</span></div>`+
-      `<div class="vb-stat"><b>${kr(stockVal)}</b><span>lagervirði (kaupv. × lager)</span></div>`;
+    const pct = n ? Math.round(missing/n*100) : 0;
+    const banner = missing > 0
+      ? `<div class="vb-warnband"><b>${missing} vörur vantar kaupverð</b> — álagning er óþekkt á ${pct}% af vörulistanum. <button type="button" class="vb-warnband-go" id="vb-go-vantar">Sýna þær →</button></div>`
+      : '';
+    $stats.innerHTML = banner +
+      `<div class="vb-statline"><span class="vb-stockval ky-num">${kr(stockVal)} kr</span><span class="vb-statmeta">lagervirði (kaupv. × lager) · ${n} vörur alls · ${withBuy} með kaupverði · ${bruna} brunakerfis-vörur</span></div>`;
+    const go = document.getElementById('vb-go-vantar');
+    if(go) go.addEventListener('click', ()=>{ const b=document.querySelector('#vb-segs [data-v="vantar"]'); if(b) b.click(); });
   }
 
   function filtered(){
@@ -15896,6 +15907,7 @@ async function renderVorubirgdir(t){
       if(state.view==='virkar' && p.virkt===false) return false;
       if(state.view==='brunakerfi' && !isBruna(p.flokkur)) return false;
       if(state.view==='slokkvitaeki' && isBruna(p.flokkur)) return false;
+      if(state.view==='vantar' && Number(p.kostnadarverd)>0) return false;
       if(state.cat && (p.flokkur||'')!==state.cat) return false;
       if(q){
         const hay = ((p.nafn||'')+' '+(p.flokkur||'')+' '+(p.birgi||'')+' '+(p.lysing||'')).toLowerCase();
@@ -15915,7 +15927,7 @@ async function renderVorubirgdir(t){
         : `<td class="r vb-marg na">—</td>`;
       const buyCell = Number(p.kostnadarverd)>0
         ? `<td class="r vb-mono">${kr(p.kostnadarverd)}</td>`
-        : `<td class="r vb-nobuy" title="Kaupverð vantar">vantar</td>`;
+        : `<td class="r vb-mono" style="color:var(--muted-2)" title="Kaupverð vantar">—</td>`;
       const catCls = isBruna(p.flokkur) ? 'vb-cat bruna' : 'vb-cat';
       return `<tr class="${p.virkt===false?'off':''}" data-id="${p.id}">`+
         `<td><div class="vb-name">${esc(p.nafn||'(nafnlaus)')}</div>${p.lysing?`<div class="vb-desc">${esc(p.lysing)}</div>`:''}</td>`+
@@ -15924,8 +15936,8 @@ async function renderVorubirgdir(t){
         buyCell+
         `<td class="r vb-mono">${kr(p.verd_an_vsk)}</td>`+
         mCell+
-        `<td class="c vb-mono">${p.vsk_prosenta!=null?esc(p.vsk_prosenta)+'%':''}</td>`+
-        `<td class="c vb-mono">${p.birgdir!=null?esc(p.birgdir):''}</td>`+
+        `<td class="c vb-mono">${p.vsk_prosenta!=null?esc(p.vsk_prosenta)+'%':'—'}</td>`+
+        `<td class="c vb-mono" style="${Number(p.birgdir)>0?'color:var(--green);font-weight:700':'color:var(--muted-2)'}">${p.birgdir!=null?esc(p.birgdir):'—'}</td>`+
         `<td class="c">${p.virkt===false?'—':'✓'}</td>`+
         `<td class="r" style="white-space:nowrap"><button class="vb-act" data-edit="${p.id}" type="button">✏️ Breyta</button></td>`+
       `</tr>`;
