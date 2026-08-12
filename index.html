@@ -1408,7 +1408,7 @@ html.embedded .vb-scroll-wrap .vb-th-sum{font-size:17px !important}
   <img src="banner.png" alt="Brunahólf — Slökkvitæki ehf" class="banner-img" onerror="this.onerror=null;this.src='banner.png.png';this.addEventListener('error',()=>{this.style.display='none';this.parentNode.style.minHeight='60px';this.parentNode.style.background='linear-gradient(180deg, var(--navy) 0%, var(--navy-dark) 100%)'})">
   <button class="menu-btn" id="menuBtn" title="Valmynd">☰</button>
   <button class="editToggle" id="editToggle" title="Breyta">✎ Breyta</button>
-  <button class="themeToggle" id="themeToggle" title="Skipta yfir í nýja Brunastáls-útlitið">🔥 Nýtt</button>
+  <button class="themeToggle" id="themeToggle" onclick="this.textContent=({light:'☀ Ljóst',dark:'🌙 Dökkt',auto:'◐ Sjálfvirkt'})[cycleTheme()]" title="Útlit: ljóst / dökkt / sjálfvirkt">◐ Sjálfvirkt</button>
   <span class="sync-badge" id="sync-badge" title="Vistun á milli tækja">☁ …</span>
   <span id="brandTitle" style="display:none"></span>
 </header>
@@ -20420,36 +20420,9 @@ if($menuBtn) $menuBtn.onclick = ()=>{
 // Theme toggle — cycles 'classic' ↔ 'modern', persists in state (so it
 // follows the user across devices via app_kv sync). Apply chosen theme
 // before first render so initial paint is in the right look.
-// One-tap "old ↔ new" switch: flips between the Brunastál (new) look and
-// whichever non-Brunastál look was last active (classic or modern). The 🎨
-// dropdown in Stillingar still lets power users pick modern explicitly; this
-// button just gives Aggi a clear gamalt/nýtt toggle by the banner.
-function applyTheme(t){
-  document.body.classList.remove('theme-classic','theme-modern','theme-brunastal');
-  const name = ['classic','modern','brunastal'].includes(t) ? t : 'classic';
-  document.body.classList.add('theme-' + name);
-  const tt = document.getElementById('themeToggle');
-  if(tt){
-    const isNew = name === 'brunastal';
-    tt.textContent = isNew ? '☀️ Gamla' : '🔥 Nýtt';
-    tt.title = isNew ? 'Til baka í gamla útlitið' : 'Skipta yfir í nýja Brunastáls-útlitið';
-    tt.classList.toggle('on', isNew);
-  }
-}
-applyTheme(state?.ui?.theme || 'classic');
-const $themeToggle = document.getElementById('themeToggle');
-if($themeToggle) $themeToggle.onclick = () => {
-  state.ui = state.ui || {};
-  const cur = state.ui.theme || 'classic';
-  if(cur === 'brunastal'){
-    state.ui.theme = state.ui.prevTheme || 'classic';   // back to the old look
-  } else {
-    state.ui.prevTheme = cur;                            // remember gamalt (classic/modern)
-    state.ui.theme = 'brunastal';                        // switch to nýtt
-  }
-  applyTheme(state.ui.theme);
-  save();
-};
+// Þema: gamla applyTheme/toggle-JS fjarlægt. theme.js (í <head>) stýrir
+// light/dark/auto gegnum data-theme + localStorage 'bh-theme'. themeToggle
+// takkinn kallar cycleTheme() inline (sjá markúp).
 
 // Expose render() so the cross-device sync can call it after replacing state.
 window.__renderTab = render;
