@@ -1,0 +1,105 @@
+/* ============================================================
+   fjarmalyfirlit.html — síðu-sértækur stíll
+   Kemur Í STAÐINN fyrir alla inline <style> blokkina á þeirri síðu.
+   Síðan er sjálfstætt skjal í iframe, svo hún hleður theme.css sjálf
+   (sjá HANDOFF.md kafla 4.7) og notar sömu breytur og aðalappið.
+   Enginn eigin :root hér — það var einmitt vandamálið.
+   ============================================================ */
+*{box-sizing:border-box}
+body{
+  margin:0;padding:16px 14px calc(28px + env(safe-area-inset-bottom));
+  background:var(--bg);color:var(--ink);
+  font-family:var(--font-ui);
+  -webkit-text-size-adjust:100%;
+}
+
+/* Titilborði — flatur navy, gullhárlína í stað gradient-textans */
+.fy-titlebar{
+  background:var(--navy-dark);border:1px solid var(--line);border-radius:var(--radius);
+  padding:16px 18px;margin:0 0 14px;position:relative;
+}
+.fy-titlebar::after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:2px;
+  background:var(--gold);border-radius:0 0 var(--radius) var(--radius);
+}
+h1{
+  font-family:var(--font-display);font-size:24px;font-weight:600;
+  letter-spacing:.2px;margin:0 0 4px;color:#fff;
+  -webkit-text-fill-color:currentColor;background:none;
+}
+.fy-goldbar{vertical-align:-4px;margin-right:4px}
+.sub{color:#93a1b5;font-size:12.5px;margin:0}
+a.refresh{color:var(--gold);font-size:12px;text-decoration:none;font-weight:600}
+a.refresh:hover{color:#fff}
+
+.syncbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 16px}
+
+/* Heildar-pípa — eina „stóra" spjaldið, flatt navy með gulli */
+.grand{
+  background:var(--navy-dark);border:1px solid var(--navy-2);
+  border-top:3px solid var(--gold);border-radius:var(--radius);
+  padding:18px 20px;margin-bottom:18px;box-shadow:var(--shadow-sm);
+}
+.grand .lbl{color:var(--gold);font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.18em}
+.grand .val{
+  font-family:var(--font-display);font-size:30px;font-weight:600;
+  margin-top:6px;color:#fff;font-variant-numeric:tabular-nums;
+}
+
+/* Kaflaskil */
+section{margin:0 0 20px}
+.sh{display:flex;align-items:baseline;gap:10px;margin:0 0 10px}
+.sh h2{
+  font-family:var(--font-display);font-size:20px;font-weight:600;
+  margin:0;letter-spacing:.2px;color:var(--ink);
+}
+.sh .st{
+  font-family:var(--font-display);font-size:16px;font-weight:600;
+  color:var(--muted);font-variant-numeric:tabular-nums;
+}
+
+/* Spjöld — hlutlaus, litur aðeins sem topp-hárlína og á tölunni */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.card{
+  background:var(--card);border:1px solid var(--line);border-top:3px solid var(--line-2);
+  border-radius:var(--radius);padding:14px 15px;box-shadow:var(--shadow-sm);
+}
+.card.full{grid-column:1/-1}
+.card .l{color:var(--muted);font-size:11.5px;font-weight:600;line-height:1.25}
+.card .v{
+  font-family:var(--font-display);font-size:20px;font-weight:600;
+  margin-top:6px;color:var(--ink);font-variant-numeric:tabular-nums;
+}
+.card .n{color:var(--muted-2);font-size:10.5px;margin-top:2px}
+
+.card--amber{border-top-color:var(--warn)}    .card--amber .v{color:var(--warn)}
+.card--green{border-top-color:var(--green)}   .card--green .v{color:var(--green)}
+.card--blue{border-top-color:var(--blue)}     .card--blue .v{color:var(--blue)}
+.card--sub{background:var(--bg-2);border-top-color:var(--green)} .card--sub .v{color:var(--green);font-size:22px}
+.card--hero{background:var(--bg-2);border-top-color:var(--gold)} .card--hero .v{color:var(--gold-deep);font-size:22px}
+
+.card.expandable{position:relative}
+.card.expandable .cardbtn{all:unset;display:block;width:100%;cursor:pointer}
+.card.expandable .cardbtn:focus-visible{outline:2px solid var(--gold-deep);outline-offset:2px;border-radius:var(--radius-sm)}
+.card .chev{color:var(--muted-2);font-size:10px;margin-left:6px;font-weight:700}
+.card .detail{margin-top:10px;border-top:1px solid var(--line);padding-top:4px}
+.card .worklink{
+  display:inline-block;margin-top:10px;color:var(--gold-deep);
+  font-size:11.5px;text-decoration:none;font-weight:600;
+}
+.card .worklink:hover{color:var(--ink)}
+
+.mrow{
+  display:flex;justify-content:space-between;gap:12px;padding:7px 0;
+  border-bottom:1px solid var(--line);font-size:12.5px;
+}
+.mrow:last-child{border-bottom:0}
+.mrow .mm{color:var(--muted);font-variant-numeric:tabular-nums}
+.mrow .mk{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--ink)}
+
+.note{color:var(--muted-2);font-size:11px;margin:8px 2px 0;line-height:1.45}
+.warn{
+  background:var(--warn-bg);border:1px solid var(--line-2);color:var(--warn);
+  border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;margin:0 0 14px;
+}
+.loading{text-align:center;color:var(--muted-2);padding:60px 0}

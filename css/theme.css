@@ -1,0 +1,229 @@
+/* ============================================================
+   BRUNAHÓLF — ÞEMAKERFI (hreint upphaf, 2026-08-11)
+   Kemur í stað theme-modern / theme-brunastal / themeToggle.
+
+   Uppbygging:
+     :root                → Gull (ljóst) = sjálfgefið, eina "alvöru" þemað
+     [data-theme="dark"]  → eitt dökkt þema, AÐEINS breytu-yfirskriftir
+   Engar per-þema component-reglur. Ef eitthvað lítur rangt út í dökku
+   er lausnin að laga component-inn til að nota breytu — ekki að bæta
+   við .theme-x reglu. Það var nákvæmlega meshið sem við erum að fjarlægja.
+
+   Fontar (bæta í Google Fonts <link>):
+     family=Playfair+Display:wght@600;700
+     family=IBM+Plex+Sans:wght@400;500;600
+   ============================================================ */
+
+:root{
+  /* --- grunnflötur --- */
+  --bg:#f6f4f0;
+  --bg-2:#efece5;
+  --card:#ffffff;
+  --card-bg:#ffffff;
+  --input-bg:#faf9f5;
+  --tbl-header:#faf9f5;
+  --header-bg:#faf9f5;
+
+  /* --- línur --- */
+  --line:#e5e0d6;
+  --line-2:#d9d4c9;
+  --border:#e5e0d6;
+
+  /* --- texti --- */
+  --ink:#16222f;
+  --ink-2:#2c3a49;
+  --text:#16222f;
+  --muted:#5f6b78;
+  --muted-2:#8b95a1;
+  --text-dim:#8b95a1;
+
+  /* --- navy (topbar, sidebar, primary takkar) --- */
+  --navy:#1d2b3f;
+  --navy-2:#26364e;
+  --navy-dark:#101c29;
+
+  /* --- accentar --- */
+  --gold:#c9a45c;          /* virkur flipi, labels, áherslur */
+  --gold-deep:#b48d4c;     /* hover + gulur texti á ljósu */
+  --accent:#b48d4c;
+  --ember:#ff4a17;         /* lógó-logi. AÐEINS lógó. */
+
+  /* --- merkingarlitir --- */
+  --red:#a8442c;           /* ógreitt / villa */
+  --red-2:#c25a3e;
+  --red-dark:#7c2f1d;
+  --green:#2e7d43;         /* greitt / staðfest */
+  --blue:#2563eb;
+  --warn:#8a6a1f;          /* ósent / bíður */
+  --warn-bg:#f6efdd;
+  --red-bg:#f7ece8;
+  --green-bg:#e9f4ec;
+  --info-bg:rgba(37,99,235,.06);
+
+  /* --- ástand --- */
+  --row-hover:#faf9f6;
+  --hover:#f1efe9;
+
+  /* --- form --- */
+  --radius:6px;
+  --radius-sm:4px;
+  --shadow-sm:0 1px 2px rgba(22,34,47,.04);
+  --shadow:0 1px 3px rgba(22,34,47,.05);
+  --shadow-lg:0 4px 18px rgba(22,34,47,.08);
+  --shadow-red:0 2px 10px rgba(168,68,44,.18);
+
+  /* --- týpógrafía --- */
+  --font-ui:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --font-display:'Playfair Display',Georgia,serif;
+  --font-mono:'JetBrains Mono',ui-monospace,monospace;
+}
+
+/* ------------------------------------------------------------
+   DÖKKT ÞEMA — aðeins breytur. Engar component-reglur hér.
+   Kveikt með <html data-theme="dark"> (sjá theme.js).
+   ------------------------------------------------------------ */
+[data-theme="dark"]{
+  --bg:#0d1420;
+  --bg-2:#131c2b;
+  --card:#16202f;
+  --card-bg:#16202f;
+  --input-bg:#101825;
+  --tbl-header:#1b2637;
+  --header-bg:#1b2637;
+
+  --line:#24334a;
+  --line-2:#2f4059;
+  --border:#24334a;
+
+  --ink:#e8edf4;
+  --ink-2:#c3cddb;
+  --text:#e8edf4;
+  --muted:#8e9bad;
+  --muted-2:#6f7d90;
+  --text-dim:#8e9bad;
+
+  --navy:#0a111c;
+  --navy-2:#16202f;
+  --navy-dark:#070d16;
+
+  --gold:#d4b16a;
+  --gold-deep:#e0c185;
+  --accent:#d4b16a;
+
+  --red:#d4674a;
+  --red-2:#e07f63;
+  --red-dark:#a8442c;
+  --green:#4caf6d;
+  --blue:#6b95f5;
+  --warn:#d9b45f;
+  --warn-bg:rgba(217,180,95,.12);
+  --red-bg:rgba(212,103,74,.12);
+  --green-bg:rgba(76,175,109,.12);
+  --info-bg:rgba(107,149,245,.10);
+
+  --row-hover:rgba(255,255,255,.035);
+  --hover:rgba(255,255,255,.05);
+
+  --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+  --shadow:0 1px 3px rgba(0,0,0,.45);
+  --shadow-lg:0 6px 24px rgba(0,0,0,.55);
+  --shadow-red:0 2px 10px rgba(212,103,74,.25);
+}
+
+/* ------------------------------------------------------------
+   GRUNNSTÍLL — það sem áður var dreift um þrjú þemu
+   ------------------------------------------------------------ */
+html,body{
+  margin:0;padding:0;background:var(--bg);color:var(--ink);
+  font-family:var(--font-ui);
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+}
+h1,h2,h3,.rg-h1,.tv-h1,.sp-h1,.cmp-h1,.wc-title,.rg-forecast-title{
+  font-family:var(--font-display);font-weight:600;letter-spacing:.2px;color:var(--ink);
+}
+.section h2{
+  font-family:var(--font-ui);font-size:11px;font-weight:600;
+  letter-spacing:2px;text-transform:uppercase;color:var(--gold-deep);
+}
+.tv-kpi-v,.rg-kpi-v,.rg-fc-v,.tile .num{
+  font-family:var(--font-display);font-weight:600;letter-spacing:0;color:var(--ink);
+}
+
+/* Topbar / sidebar */
+.topbar{background:var(--navy-dark);box-shadow:0 1px 0 rgba(201,164,92,.25);border-bottom:none}
+.sidebar{
+  background:var(--navy);background-image:none;
+  border-right:1px solid var(--navy-2);box-shadow:none;padding:18px 12px;
+}
+.tab-v{
+  color:#b9c2cd;font-family:var(--font-ui);font-size:13.5px;font-weight:500;
+  padding:9px 12px;border-radius:var(--radius-sm);margin-bottom:2px;border:1px solid transparent;
+}
+.tab-v:hover{background:var(--navy-2);color:#fff;padding-left:12px}
+.tab-v.active{background:var(--gold);color:var(--navy-dark);font-weight:600;box-shadow:none}
+.tab-v.active:hover{background:var(--gold);padding-left:12px}
+.nav-section-label{color:var(--gold);font-size:10px;font-weight:600;letter-spacing:.18em;padding:16px 12px 6px}
+.nav-sep{height:1px;background:var(--navy-2);margin:8px 4px}
+
+/* Fletir */
+.card,.kbtn,.rg-grid,.wc-card,.rg-kpi,.rg-forecast,.efni-card,.tv-card,.tv-kpi,.tile{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm);
+}
+.tile::before{background:var(--gold);opacity:1;height:3px}
+.card:hover,.kbtn:hover,.tile:hover{transform:none;border-color:var(--gold-deep);box-shadow:var(--shadow)}
+
+/* Töflur */
+.rg-grid thead th,table thead th,.tbl th,.tv-table thead th{
+  background:var(--tbl-header);color:var(--muted);font-weight:600;
+  font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--line);
+}
+.rg-grid tbody tr:hover,table tbody tr:hover,.tv-table tbody tr:hover{background:var(--row-hover)}
+.rg-grid td,.rg-grid th,table td,table th,.tbl td,.tbl th{border-color:var(--line)}
+
+/* Takkar — þrjú stig, ekkert annað */
+.btn,.rg-tool,.ky-abtn,.sp-act-btn{
+  background:var(--card);color:var(--ink);border:1px solid var(--line-2);
+  border-radius:var(--radius-sm);box-shadow:none;font-weight:500;
+}
+.btn:hover,.rg-tool:hover,.ky-abtn:hover,.sp-act-btn:hover{
+  border-color:var(--gold-deep);color:var(--gold-deep);background:var(--card);transform:none;box-shadow:none;
+}
+.btn.primary,.tv-btn,.rt-add,.rg-link-pill{
+  background:var(--navy-dark);color:#fff;border:1px solid var(--navy-dark);
+  border-radius:var(--radius-sm);box-shadow:none;font-weight:600;
+}
+.btn.primary:hover,.tv-btn:hover,.rt-add:hover,.rg-link-pill:hover{background:var(--navy-2);color:#fff;filter:none}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink-2)}
+.btn.ok{border-color:var(--green);color:var(--green);background:var(--card)}
+
+/* Chips */
+.chip,.inbox-controls .chip{
+  background:var(--card);border:1px solid var(--line-2);color:var(--ink-2);border-radius:var(--radius-sm);
+}
+.chip:hover,.inbox-controls .chip:hover{border-color:var(--gold-deep)}
+.chip.active,.inbox-controls .chip.active{background:var(--navy-dark);border-color:var(--navy-dark);color:#fff}
+
+/* Form */
+input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=range]),
+select,textarea{
+  background:var(--input-bg);border:1px solid var(--line-2);color:var(--ink);
+  border-radius:var(--radius-sm);box-shadow:none;
+}
+input:focus,select:focus,textarea:focus{
+  outline:none;border-color:var(--gold-deep);box-shadow:0 0 0 3px rgba(180,141,76,.15);
+}
+input[type=checkbox],input[type=radio]{accent-color:var(--gold-deep)}
+
+/* Hero-hausar (Tímavera / Spurningar / Verðsamanburður) — flatir, engir gradientar */
+.tv-header,.sp-header,.cmp-header{
+  background:var(--navy-dark);color:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);
+}
+.tv-h1,.sp-h1,.cmp-h1{color:#fff}
+.tv-sub,.sp-sub,.cmp-sub{color:#93a1b5}
+.tv-h1-year{color:var(--gold)}
+
+/* Merkimiðar (ógreitt / ósent / greitt) */
+.badge-unpaid{background:var(--red-bg);color:var(--red);border-radius:3px;padding:3px 9px;font-size:11.5px;font-weight:600}
+.badge-unsent{background:var(--warn-bg);color:var(--warn);border-radius:3px;padding:3px 9px;font-size:11.5px;font-weight:600}
+.badge-ok{background:var(--green-bg);color:var(--green);border-radius:3px;padding:3px 9px;font-size:11.5px;font-weight:600}
+.notice{background:var(--warn-bg);border:1px solid var(--line-2);color:var(--warn);border-radius:var(--radius-sm)}
