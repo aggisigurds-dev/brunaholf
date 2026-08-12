@@ -935,7 +935,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 .rg-link{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;font-size:13px;border-radius:4px;text-decoration:none;color:var(--muted-2);margin-right:2px}
 .rg-link:hover{background:var(--bg-2);color:var(--text)}
 .rg-link[disabled],.rg-link.rg-link-empty{opacity:.2;pointer-events:none}
-.rg-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.rg-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-bottom:14px}
 
 /* ===== Forecast banner — bluish workplace palette ===== */
 /* Gull þema (mockup 04): samantektarborðinn er navy með gullu topp-borði —
@@ -977,12 +977,17 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 .rg-fc-math-todo{color:var(--muted);font-style:italic}
 .rg-fc-math-note{margin-top:10px;padding:8px;background:#fff;border-left:3px solid var(--gold);font-size:11px;color:var(--muted-2);font-style:italic}
 .rg-fc-more{text-align:center;padding:8px;color:var(--muted);font-size:11px;font-style:italic}
-.rg-kpi{background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 14px}
-.rg-kpi-l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
-.rg-kpi-v{font-family:'Source Serif 4',Georgia,serif;font-size:22px;font-weight:600;margin-top:2px;font-variant-numeric:tabular-nums}
+.rg-kpi{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--line-2);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow-sm)}
+.rg-kpi-l{font-size:10.5px;color:var(--muted-2);text-transform:uppercase;letter-spacing:2px;font-weight:600}
+.rg-kpi-v{font-family:var(--font-display);font-size:22px;font-weight:600;margin-top:6px;font-variant-numeric:tabular-nums;color:var(--ink)}
 .rg-kpi-x{font-size:11px;color:var(--muted-2);margin-top:2px}
-.rg-kpi-warn{border-color:#FFC7B0;background:#FFF6F2}
-.rg-kpi-warn .rg-kpi-v{color:#8C2510}
+.rg-kpi-warn{border-color:var(--line);border-top-color:var(--gold);background:var(--card)}
+.rg-kpi-warn .rg-kpi-v{color:var(--warn)}
+/* navy hetju-KPI (mockup 11: „talan sem leiðir") */
+.rg-kpi-hero{background:var(--navy-dark);border-color:var(--navy-dark);border-top-color:var(--gold)}
+.rg-kpi-hero .rg-kpi-l{color:var(--gold)}
+.rg-kpi-hero .rg-kpi-v{color:#fff}
+.rg-kpi-hero .rg-kpi-x{color:#93a1b5}
 .rg-kpi-good{border-color:#C8E6C9;background:#F4FBF4}
 .rg-totals-row td{background:var(--bg-2);font-weight:700;border-top:2px solid var(--text-2)}
 /* Eftirstöðvar klst column */
@@ -12364,7 +12369,7 @@ async function renderHreyfingar(t){
     <div class="rg-wrap">
       <div class="rg-header">
         <div>
-          <h1 class="rg-h1">📒 Hreyfingaryfirlit <span class="rg-sub" id="hy-meta">Sækir…</span></h1>
+          <h1 class="rg-h1">Hreyfingaryfirlit <span class="rg-sub" id="hy-meta">Sækir…</span></h1>
           <div class="rg-sub-line">Viðskiptareikningur per fyrirtæki — reikningar (debet, m.vsk) og greiðslur (kredit). Staða = ógreiddir reikningar, eins og bókhaldið (Viðskiptakröfur). Bankainnborganir eru sýndar með til upplýsinga (breyta ekki stöðu).</div>
         </div>
         <div class="rg-controls">
@@ -12554,7 +12559,7 @@ async function renderKrofur(t){
     <div class="rg-wrap kf-wrap">
       <div class="rg-header">
         <div>
-          <h1 class="rg-h1">📊 Krófur &amp; Tekjur <span class="rg-sub" id="kf-meta">Sækir…</span></h1>
+          <h1 class="rg-h1">Krófur &amp; Tekjur <span class="rg-sub" id="kf-meta">Sækir…</span></h1>
           <div class="rg-sub-line">Yfirlit yfir krófur beggja félaga — Payday + Landsbanki krossvísað við bankafærslur (eldri CSV) og það sem skráð er í Vinnubók/Reikningagerð. Smelltu á tölu til að sjá hvaðan hún kemur; fela eða leiðrétta má hverja krófu.</div>
         </div>
         <div class="rg-controls">
@@ -14887,7 +14892,7 @@ async function renderSkuldunautar(t){
     <div class="rg-wrap">
       <div class="rg-header">
         <div>
-          <h1 class="rg-h1">💸 Skuldunautar — hreyfingalisti <span class="rg-sub" id="sk-meta">Sækir…</span></h1>
+          <h1 class="rg-h1">Skuldunautar — hreyfingalisti <span class="rg-sub" id="sk-meta">Sækir…</span></h1>
           <div class="rg-sub-line">Ógreiddir reikningar (verk skráð í Payday + Landsbankakröfur) krossvísað við bankafærslur — bein bankainnborgun sem skilur eftir „Ógreitt“ er merkt sérstaklega.</div>
         </div>
         <div class="rg-controls">
@@ -16262,7 +16267,7 @@ async function renderSjalfvirkni(t){
     <div class="rg-wrap">
       <div class="rg-header">
         <div>
-          <h1 class="rg-h1">⚙️ Sjálfvirkni <span class="rg-sub" id="sv-meta">Sækir…</span></h1>
+          <h1 class="rg-h1">Sjálfvirkni <span class="rg-sub" id="sv-meta">Sækir…</span></h1>
           <div class="rg-sub-line">Stjórnborð fyrir sjálfvirknina — hvaða ferli eru skráð, hvenær þau keyrðu síðast og með hvaða árangri. Afritaðu keyrsluskipun eða hlekk til að deila.</div>
         </div>
         <div class="rg-controls">
@@ -16472,7 +16477,7 @@ async function renderNLSH(t){
     <div class="rg-wrap">
       <div class="rg-header">
         <div>
-          <h1 class="rg-h1">🏥 Landsspítalinn (NLSH) <span class="rg-sub" id="nl-meta">Sækir…</span></h1>
+          <h1 class="rg-h1">Landsspítalinn (NLSH) <span class="rg-sub" id="nl-meta">Sækir…</span></h1>
           <div class="rg-sub-line">Tekjur, lokuð göt per viku, vinnustundir og afköst per starfsmann — úr Ajour (samningsverð per heild) + Tímavera.</div>
           <div style="margin-top:8px;display:flex;gap:14px;flex-wrap:wrap"><span data-sync-workflow="timavera" data-sync-label="Tímavera"></span><span data-sync-workflow="ajour" data-sync-label="Ajour"></span></div>
         </div>
@@ -17198,7 +17203,8 @@ async function renderEfniskostnadur(t){
     <div class="rg-wrap">
       <div class="rg-header">
         <div>
-          <h1 class="rg-h1">📦 Efniskostnaður <span class="rg-sub" id="ef-meta">Sækir…</span></h1>
+          <div style="font-size:10.5px;font-weight:600;letter-spacing:2.5px;color:var(--gold-deep);text-transform:uppercase;margin-bottom:6px">REDDER · ENDURKRÖFNUN</div>
+          <h1 class="rg-h1">Efniskostnaður <span class="rg-sub" id="ef-meta">Sækir…</span></h1>
           <div class="rg-sub" style="margin-top:4px">Redder reikningar — efni sem fer á reikning hjá verkkaupa</div>
         </div>
         <div class="rg-controls">
@@ -17212,7 +17218,7 @@ async function renderEfniskostnadur(t){
 
       <div class="rg-kpis">
         <div class="rg-kpi"><div class="rg-kpi-l">Reikningar í gagnagrunni</div><div class="rg-kpi-v" id="ef-k-count">—</div><div class="rg-kpi-x">Redder PDFs vistaðir</div></div>
-        <div class="rg-kpi"><div class="rg-kpi-l">Heildarefniskostnaður m. vsk</div><div class="rg-kpi-v" id="ef-k-total">—</div><div class="rg-kpi-x">til endurkrafninga</div></div>
+        <div class="rg-kpi rg-kpi-hero"><div class="rg-kpi-l">Heildarefniskostnaður m. vsk</div><div class="rg-kpi-v" id="ef-k-total">—</div><div class="rg-kpi-x">til endurkrafninga</div></div>
         <div class="rg-kpi rg-kpi-warn"><div class="rg-kpi-l">Án verkstaðs</div><div class="rg-kpi-v" id="ef-k-noworksite">—</div><div class="rg-kpi-x">þarf að tengja</div></div>
         <div class="rg-kpi"><div class="rg-kpi-l">Verkstaðir með efnisinnkaup</div><div class="rg-kpi-v" id="ef-k-sites">—</div><div class="rg-kpi-x">unique worksites</div></div>
       </div>
