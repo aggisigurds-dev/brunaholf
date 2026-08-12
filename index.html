@@ -67,14 +67,13 @@ button{cursor:pointer}
 /* ======= Header ======= */
 .topbar{
   position:sticky;top:0;z-index:30;
-  background:#fff;
-  color:var(--ink);padding:0;display:flex;align-items:center;
+  background:var(--navy-dark);
+  color:#fff;padding:0;display:flex;align-items:center;
   min-height:64px;
-  border-bottom:1px solid #E9E2D2;
-  box-shadow:0 1px 0 rgba(15,17,23,.05);
+  box-shadow:0 4px 14px rgba(0,0,0,.25);
   overflow:hidden;
 }
-.banner-img{display:block;width:auto;height:34px;max-height:34px;object-fit:contain;margin-left:56px}
+.banner-img{display:block;width:auto;height:34px;max-height:34px;object-fit:contain;margin-left:56px;filter:brightness(0) invert(1)}
 .topbar .brand,.topbar .brand-divider,.topbar .brand-slk{display:none}
 .topbar .editToggle{position:absolute;top:12px;right:14px;z-index:5;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);color:#fff}
 .topbar .editToggle.on{background:var(--gold);color:#1A1A1F}
@@ -13673,8 +13672,9 @@ async function renderKrofuyfirlit(t){
     <div class="kyf-wrap">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px;margin-bottom:18px">
         <div>
-          <h1 style="margin:0;font-size:24px;font-weight:800;color:#0f172a;display:flex;align-items:center;gap:10px">📄 Kröfu yfirlit</h1>
-          <div style="font-size:12px;color:#64748b;margin-top:2px" id="kyf-meta">Þrepaskipt kröfu-yfirlit — ógreitt → ósent → tími eftir · Sækir…</div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:.16em;color:#C6A15A;text-transform:uppercase;margin-bottom:7px">FJÁRMÁL · ${(()=>{try{return new Date((state.data&&state.data.generated_at)||Date.now()).toLocaleDateString('is-IS',{month:'long',year:'numeric'}).toUpperCase();}catch(_){return '';}})()}</div>
+          <h1 style="margin:0;font-family:'Fraunces',serif;font-size:30px;font-weight:600;color:#14233B;letter-spacing:-.01em">Kröfu yfirlit</h1>
+          <div style="font-size:12.5px;color:#64748b;margin-top:6px" id="kyf-meta">Þrepaskipt kröfu-yfirlit — ógreitt → ósent → tími eftir · Sækir…</div>
           <div style="font-size:11px;color:#94a3b8;margin-top:3px" id="kyf-fresh">Síðasta uppfærsla: …</div>
           <div style="margin-top:8px;display:flex;gap:14px;flex-wrap:wrap"><span data-sync-workflow="timavera" data-sync-label="Tímavera"></span><span data-sync-workflow="ajour" data-sync-label="Ajour"></span><span data-sync-workflow="redder" data-sync-label="Redder"></span><span data-sync-workflow="payday" data-sync-label="Payday"></span></div>
         </div>
@@ -13872,32 +13872,26 @@ async function renderKrofuyfirlit(t){
 
   function renderCards(l1,l2,l3){
     const CS = '0 1px 1px rgba(15,23,42,.05),0 8px 16px -8px rgba(15,23,42,.15),0 24px 44px -20px rgba(15,23,42,.3),inset 0 2px 0 rgba(255,255,255,.95),inset 0 -10px 20px -14px rgba(15,23,42,.14)';
-    const light = (label,value,sub,ic,icbg,glow,cg)=>
-      `<div style="position:relative;flex:1 1 220px;min-width:220px;border-radius:18px;padding:15px 17px;display:flex;align-items:center;gap:13px;background:linear-gradient(180deg,#ffffff,#eef1f6);box-shadow:${CS}">${cg?cgBadge(cg,value):''}
-        <div style="width:46px;height:46px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;background:${icbg};box-shadow:inset 0 1.5px 0 rgba(255,255,255,.5),inset 0 -3px 6px rgba(0,0,0,.25),0 4px 10px -3px ${glow}">${ic}</div>
-        <div style="min-width:0">
-          <div style="font-size:10.5px;font-weight:700;letter-spacing:.14em;color:#8a93a5;text-transform:uppercase">${esc(label)}</div>
-          <div class="ky-num" style="font-size:24px;font-weight:700;color:#11141c;margin-top:2px;white-space:nowrap">${fmtKr(value)}</div>
-          <div style="font-size:11px;color:#9098a6;margin-top:1px">${esc(sub)}</div>
-        </div>
+    const light = (label,value,sub,topColor,cg)=>
+      `<div style="position:relative;flex:1 1 220px;min-width:220px;border-radius:16px;padding:15px 18px 16px;background:#fff;border:1px solid #EAE4D6;border-top:3px solid ${topColor};box-shadow:0 1px 2px rgba(15,18,30,.04),0 12px 26px -20px rgba(25,35,60,.28)">${cg?cgBadge(cg,value):''}
+        <div style="font-size:10.5px;font-weight:700;letter-spacing:.14em;color:#8a93a5;text-transform:uppercase">${esc(label)}</div>
+        <div class="ky-num" style="font-family:'Fraunces',serif;font-size:28px;font-weight:600;color:#14233B;margin-top:7px;white-space:nowrap;letter-spacing:-.01em">${fmtKr(value)}</div>
+        <div style="font-size:11.5px;color:#9098a6;margin-top:5px">${esc(sub)}</div>
       </div>`;
-    const hero = (label,value,sub,ic,grad,glowShadow,cg)=>
-      `<div class="cg-hero" style="position:relative;flex:1 1 240px;min-width:240px;border-radius:18px;padding:15px 17px;display:flex;align-items:center;gap:13px;background:${grad};box-shadow:0 1px 1px rgba(15,23,42,.05),0 10px 20px -8px rgba(15,23,42,.25),${glowShadow},inset 0 1px 0 rgba(255,255,255,.45)">${cg?cgBadge(cg,value):''}
-        <div style="width:46px;height:46px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;background:rgba(255,255,255,.16);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.5),inset 0 -3px 6px rgba(0,0,0,.2)">${ic}</div>
-        <div style="min-width:0">
-          <div style="font-size:10.5px;font-weight:700;letter-spacing:.14em;color:#E9CE86;text-transform:uppercase">${esc(label)}</div>
-          <div class="ky-num" style="font-size:24px;font-weight:700;color:#fff;margin-top:2px;white-space:nowrap">${fmtKr(value)}</div>
-          <div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:1px">${esc(sub)}</div>
-        </div>
+    const hero = (label,value,sub,cg)=>
+      `<div class="cg-hero" style="position:relative;flex:1 1 240px;min-width:240px;border-radius:16px;padding:15px 18px 16px;background:linear-gradient(155deg,#1d2f4d 0%,#122340 55%,#0a1730 100%);border:1px solid #0a1730;border-top:3px solid #C6A15A;box-shadow:0 1px 2px rgba(15,23,42,.1),0 18px 32px -20px rgba(9,20,45,.6)">${cg?cgBadge(cg,value):''}
+        <div style="font-size:10.5px;font-weight:700;letter-spacing:.14em;color:#E9CE86;text-transform:uppercase">${esc(label)}</div>
+        <div class="ky-num" style="font-family:'Fraunces',serif;font-size:28px;font-weight:600;color:#fff;margin-top:7px;white-space:nowrap;letter-spacing:-.01em">${fmtKr(value)}</div>
+        <div style="font-size:11.5px;color:rgba(255,255,255,.66);margin-top:5px">${esc(sub)}</div>
       </div>`;
     const n1=countN(l1), n2=countN(l2), n3=countN(l3);
     const tot1=sumKr(l1), tot2=sumKr(l2), tot3=sumKr(l3);
     const t3sub = state.newest ? ('til '+dayMon(state.newest)+' · '+n3+' liðir') : (n3+' liðir');
     $view.querySelector('.kyf-cards').innerHTML =
-      light('Ógreitt', tot1, n1+' '+(n1===1?'krafa':'kröfur')+' · '+l1.length+' aðilar', '🔴', 'linear-gradient(180deg,#ef6060,#c0342f)', 'rgba(192,52,47,.45)', 'CG-01') +
-      light('Ósent', tot2, n2+' '+(n2===1?'drög':'drög')+' · '+l2.length+' aðilar', '🟡', 'linear-gradient(180deg,#e6b23c,#b7861a)', 'rgba(183,134,26,.45)', 'CG-02') +
-      light('Tími eftir', tot3, t3sub, '⚪', 'linear-gradient(180deg,#9aa4b3,#6b7482)', 'rgba(107,116,130,.4)', 'CG-03') +
-      hero('Samtals í pípunni', tot1+tot2+tot3, 'ógreitt + ósent + áætlaðar tekjur', '💰', 'linear-gradient(150deg,#20344f 0%,#132540 45%,#0b1830 100%)', '0 26px 46px -20px rgba(9,24,49,.55)', 'CG-04');
+      light('Ógreitt', tot1, n1+' '+(n1===1?'krafa':'kröfur')+' · '+l1.length+' aðilar', '#C0342F', 'CG-01') +
+      light('Ósent', tot2, n2+' '+(n2===1?'drög':'drög')+' · '+l2.length+' aðilar', '#C6A15A', 'CG-02') +
+      light('Tími eftir', tot3, t3sub, '#94A3B3', 'CG-03') +
+      hero('Samtals í pípunni', tot1+tot2+tot3, 'ógreitt + ósent + áætlaðar tekjur', 'CG-04');
   }
 
   // „🔗 Sameina" — gulur hnappur á þrep-2 fyrirtækja-kort: sameinar ALLA mánuði
