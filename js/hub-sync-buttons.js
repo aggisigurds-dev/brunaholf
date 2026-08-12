@@ -89,22 +89,24 @@
   };
 
   const CSS = `
-    .hub-sync{display:inline-flex;flex-direction:column;align-items:flex-start;gap:3px;font-size:12px}
-    .hub-sync button{background:linear-gradient(160deg,#3a3a3e 0%,#18181b 55%,#000000 100%);color:#f3dd97;border:1px solid #4a4a4e;border-radius:8px;padding:6px 11px;font-weight:600;font-size:12px;cursor:pointer}
+    /* Gull þema: lítill ljós chip-hnappur — punktur + nafn + „sótt <dags>" (SCREENS.md) */
+    .hub-sync{display:inline-flex;flex-direction:row;align-items:center;gap:2px;font-size:12px;background:var(--card,#fff);border:1px solid var(--line-2,#d9d4c9);border-radius:var(--radius-sm,4px);padding:3px 10px 3px 4px}
+    .hub-sync button{background:transparent;color:var(--ink-2,#2c3a49);border:0;border-radius:var(--radius-sm,4px);padding:4px 7px;font-weight:600;font-size:12px;cursor:pointer;font-family:inherit}
+    .hub-sync button:hover{color:var(--gold-deep,#b48d4c)}
     .hub-sync button:disabled{opacity:.7;cursor:default}
-    .hub-sync .d{color:#64748b;font-weight:600;font-size:11px;padding-left:2px}
-    .hub-sync.fresh .d{color:#16a34a}
-    .hub-sync.ok .d{color:#16a34a}
-    .hub-sync.err .d{color:#e03131}
-    .hub-sync .dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px;background:#adb5bd;vertical-align:middle}
-    .hub-sync .dot.done{background:#2f9e44}.hub-sync .dot.running{background:#1c7ed6}.hub-sync .dot.pending{background:#f59f00}.hub-sync .dot.error{background:#e03131}`;
+    .hub-sync .d{color:var(--muted-2,#8b95a1);font-weight:500;font-size:11px;white-space:nowrap}
+    .hub-sync.fresh .d{color:var(--green,#2e7d43)}
+    .hub-sync.ok .d{color:var(--green,#2e7d43)}
+    .hub-sync.err .d{color:var(--red,#a8442c)}
+    .hub-sync .dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px;background:var(--muted-2,#adb5bd);vertical-align:middle}
+    .hub-sync .dot.done{background:var(--green,#2e7d43)}.hub-sync .dot.running{background:var(--blue,#2563eb)}.hub-sync .dot.pending{background:var(--warn,#8a6a1f)}.hub-sync .dot.error{background:var(--red,#a8442c)}`;
   function injectCss() { if (document.getElementById("hub-sync-css")) return; const s = document.createElement("style"); s.id = "hub-sync-css"; s.textContent = CSS; document.head.appendChild(s); }
 
   function render(el) {
     const wf = el.getAttribute("data-sync-workflow");
     const label = el.getAttribute("data-sync-label") || wf;
     el.classList.add("hub-sync");
-    el.innerHTML = `<button type="button">🔄 Samstilla ${label}</button><span class="d"><span class="dot"></span><span class="txt">…</span></span>`;
+    el.innerHTML = `<button type="button">↻ Samstilla ${label}</button><span class="d"><span class="dot"></span><span class="txt">…</span></span>`;
     const btn = el.querySelector("button"), dot = el.querySelector(".dot"), txt = el.querySelector(".txt");
     const setTxt = (t) => { txt.textContent = t; };
 
@@ -120,7 +122,7 @@
       el.classList.remove("ok", "err"); el.classList.toggle("fresh", st === "fresh");
     }
     btn.onclick = async () => {
-      btn.disabled = true; btn.textContent = "⏳ Samstilli…"; el.classList.remove("fresh", "ok", "err");
+      btn.disabled = true; btn.textContent = "… Samstilli"; el.classList.remove("fresh", "ok", "err");
       dot.className = "dot running"; el._quiet = Date.now() + 3600e3;   // frysta freshness-línuna á meðan
       if (CLOUD[wf]) {                                       // BEIN ský-samstilling (engin brú)
         setTxt("samstilli…");
@@ -135,14 +137,14 @@
         } catch (e) {
           dot.className = "dot error"; el.classList.add("err"); setTxt("✗ " + (e.message || e));
           el._quiet = Date.now() + 8000;
-        } finally { btn.disabled = false; btn.textContent = `🔄 Samstilla ${label}`; }
+        } finally { btn.disabled = false; btn.textContent = `↻ Samstilla ${label}`; }
         return;
       }
       // Fallback: enginn ský-endapunktur → biðja brúna (gamla hegðunin).
       const ok = await trigger(wf, (location.hash || "hub").replace("#", ""));
       setTxt(ok ? "samstilling beðin…" : "villa — reyndu aftur"); dot.className = "dot pending";
       el._quiet = Date.now() + 5000;
-      setTimeout(async () => { btn.disabled = false; btn.textContent = `🔄 Samstilla ${label}`; await refresh(); }, 5000);
+      setTimeout(async () => { btn.disabled = false; btn.textContent = `↻ Samstilla ${label}`; await refresh(); }, 5000);
     };
     refresh();
     if (!el._t) el._t = setInterval(refresh, 15000);
