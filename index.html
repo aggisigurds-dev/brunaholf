@@ -851,7 +851,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 /* ======= Reikningagerð (invoicing prep grid) ======= */
 .rg-wrap{padding:8px 0 24px}
 .rg-header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:16px}
-.rg-h1{font-family:'Source Serif 4',Georgia,serif;font-size:28px;font-weight:600;letter-spacing:-.01em;margin:0}
+.rg-h1{font-family:var(--font-display);font-size:28px;font-weight:600;letter-spacing:.2px;margin:0}
 .rg-sub{color:var(--muted);font-size:13px;margin-top:4px}
 .rg-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .rg-toolbar{display:flex;gap:6px;flex-wrap:wrap;padding:10px 12px;background:var(--bg-2);border:1px solid var(--border);border-radius:10px;margin-bottom:12px}
@@ -860,13 +860,13 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 .rg-tool-icon{font-size:14px}
 .ef-filter{padding:6px 10px;font-size:12px;border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--text);cursor:pointer;max-width:200px}
 .ef-filter:hover{border-color:var(--text-2)}
-.rg-grid{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;font-size:12.5px;box-shadow:0 1px 3px rgba(0,0,0,0.04),0 4px 12px rgba(0,0,0,0.03)}
-.rg-grid th,.rg-grid td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle;text-align:left}
-.rg-grid thead th{position:sticky;top:0;background:linear-gradient(180deg,#F8F6F0 0%,#F1EDE3 100%);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted-2);z-index:1;border-bottom:2px solid var(--text-2)}
+.rg-grid{width:100%;border-collapse:separate;border-spacing:0;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;font-size:12.5px;box-shadow:var(--shadow-sm)}
+.rg-grid th,.rg-grid td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle;text-align:left}
+.rg-grid thead th{position:sticky;top:0;background:var(--tbl-header);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);z-index:1;border-bottom:1px solid var(--line-2)}
 .rg-grid tbody tr{transition:background 80ms ease}
-.rg-grid tbody tr:hover{background:#F7F6F1}
-.rg-grid .rg-row-gata{background:linear-gradient(90deg,#EAF3FB 0%,#F4F8FC 100%)}
-.rg-grid .rg-row-gata:hover{background:#DDEAF6}
+.rg-grid tbody tr:hover{background:var(--row-hover)}
+.rg-grid .rg-row-gata{background:var(--bg-2)}
+.rg-grid .rg-row-gata:hover{background:var(--hover)}
 .rg-month-amt{transition:all 100ms ease}
 .rg-month:hover .rg-month-amt{transform:scale(1.04)}
 .rg-section-row td{background:var(--bg);font-weight:700;font-family:'Source Serif 4',Georgia,serif;font-size:14px;padding:10px 8px}
@@ -938,19 +938,22 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 .rg-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
 
 /* ===== Forecast banner — bluish workplace palette ===== */
-.rg-forecast{background:linear-gradient(135deg,#F0F6FC 0%,#E2EDF7 100%);border:1px solid #B6CFE8;border-radius:14px;padding:18px 22px;margin-bottom:18px;box-shadow:0 1px 3px rgba(0,0,0,0.04),0 4px 16px rgba(15,75,140,0.07)}
+/* Gull þema (mockup 04): samantektarborðinn er navy með gullu topp-borði —
+   gull-labels + hvítar Playfair-tölur, engir sér-litaðir reitir. */
+.rg-forecast{background:var(--navy-dark);border:1px solid var(--navy-2);border-top:3px solid var(--gold);border-radius:var(--radius);padding:18px 22px;margin-bottom:18px;box-shadow:var(--shadow-sm)}
 .rg-forecast-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:14px}
-.rg-forecast-title{font-family:'Source Serif 4',Georgia,serif;font-size:18px;font-weight:600;color:#0F3B6E;letter-spacing:-.005em}
-.rg-forecast-sub{font-size:12px;color:#3A6296;margin-top:3px}
-.rg-forecast-totals{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
-.rg-fc-cell{background:rgba(255,255,255,.8);border:1px solid rgba(15,75,140,.08);border-radius:10px;padding:12px 14px}
-.rg-fc-cell.rg-fc-overdue{background:rgba(255,225,210,.6);border-color:rgba(180,80,30,.25)}
-.rg-fc-cell.rg-fc-draft{background:rgba(214,234,250,.7);border-color:rgba(15,75,140,.22)}
-.rg-fc-cell.rg-fc-total{background:#FFF;border-color:rgba(15,75,140,.18);box-shadow:0 1px 3px rgba(15,75,140,0.09)}
-.rg-fc-l{font-size:10.5px;color:var(--muted-2);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
-.rg-fc-v{font-family:'Source Serif 4',Georgia,serif;font-size:22px;font-weight:700;margin-top:3px;font-variant-numeric:tabular-nums;color:var(--text)}
-.rg-fc-cell.rg-fc-total .rg-fc-v{color:#0F3B6E;font-size:24px}
-.rg-fc-x{font-size:11px;color:var(--muted);margin-top:2px}
+.rg-forecast-title{font-family:var(--font-display);font-size:18px;font-weight:600;color:#fff;letter-spacing:.2px}
+.rg-forecast-sub{font-size:12px;color:#93a1b5;margin-top:3px}
+.rg-forecast-totals{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+.rg-fc-cell{background:transparent;border:0;border-left:1px solid rgba(255,255,255,.14);border-radius:0;padding:2px 0 2px 14px}
+.rg-fc-cell:first-child{border-left:0;padding-left:0}
+.rg-fc-cell.rg-fc-overdue{background:transparent;border-color:rgba(255,255,255,.14)}
+.rg-fc-cell.rg-fc-draft{background:transparent;border-color:rgba(255,255,255,.14)}
+.rg-fc-cell.rg-fc-total{background:transparent;border-color:rgba(255,255,255,.14);box-shadow:none}
+.rg-fc-l{font-size:10.5px;color:var(--gold);text-transform:uppercase;letter-spacing:.14em;font-weight:600}
+.rg-fc-v{font-family:var(--font-display);font-size:22px;font-weight:600;margin-top:4px;font-variant-numeric:tabular-nums;color:#fff}
+.rg-fc-cell.rg-fc-total .rg-fc-v{color:#fff;font-size:24px}
+.rg-fc-x{font-size:11px;color:#93a1b5;margin-top:2px}
 .rg-forecast-list{margin-top:16px;max-height:480px;overflow-y:auto}
 .rg-fc-item{background:#fff;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden;transition:box-shadow 100ms ease}
 .rg-fc-item[open]{box-shadow:0 2px 8px rgba(0,0,0,0.06)}
@@ -959,8 +962,8 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 .rg-fc-item summary::-webkit-details-marker{display:none}
 .rg-fc-item summary:hover{background:#FAFAF6}
 .rg-fc-tag{font-size:9.5px;font-weight:700;padding:2px 6px;border-radius:3px;text-transform:uppercase;letter-spacing:.04em}
-.rg-fc-tag-over{background:#FFE0D5;color:#8C2510}
-.rg-fc-tag-draft{background:#DBE9F8;color:#0F3B6E}
+.rg-fc-tag-over{background:var(--red-bg);color:var(--red)}
+.rg-fc-tag-draft{background:var(--info-bg);color:var(--blue)}
 .rg-fc-item-name{font-weight:600;color:var(--text)}
 .rg-fc-item-cust{font-size:11px;color:var(--muted-2)}
 .rg-fc-item-month{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
@@ -8488,7 +8491,7 @@ function renderReikningagerd(t){
       <div class="rg-forecast" id="rg-forecast">
         <div class="rg-forecast-head">
           <div>
-            <div class="rg-forecast-title">📈 Spá um tekjur úr óbilluðum tímum</div>
+            <div class="rg-forecast-title">Spá um tekjur úr óbilluðum tímum</div>
             <div class="rg-forecast-sub">Klst úr Tímavera × verðtaxti × 24% vsk — sjá hvernig reiknað er með því að smella á línu</div>
           </div>
           <button type="button" class="rg-tool" id="rg-forecast-toggle">Sýna sundurliðun ▾</button>
