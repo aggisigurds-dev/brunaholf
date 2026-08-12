@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>📋 Skráalisti — Brunahólf</title>
+<!--
+  Skráalisti — velur Drive-möppu, telur og listar allar skrár, flytur út í Excel
+  eða Google Sheets, og ber tvær möppur saman til að finna hvað VANTAR.
+
+  Ósk Agnars 2026-08-12: „choose folder and get a list with all the names of files
+  in that folder and total count, exportable to excel or into google sheets …
+  this will help finding missing files and compare 2 lists together."
+
+  Vísvitandi AÐSKILIÐ frá Skjala-multitoolinu: hér er ENGIN OCR, engin flokkun og
+  engin tenging — bara nöfnin eins og þau standa. Þess vegna er þetta hratt á
+  möppum með þúsundum skráa þar sem multitoolið væri margar mínútur.
+
+  Samanburðurinn stendur og fellur með SAMANBURÐARLYKLINUM: sömu skrá er sjaldnast
+  gefið sama nafn í tveimur möppum (endingar, „(1)", broddstafir, dagsetningar-
+  forskeyti). Þess vegna má velja lykil — reikningsnúmer og kennitala eru
+  áreiðanlegustu lyklarnir á okkar skjölum, ekki heitið sjálft.
+-->
+<style>
+  :root{ --ink:#0f172a; --sub:#64748b; --line:#e2e8f0; --indigo:#4f46e5; --bg:#f1f5f9; }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; height:100%; }
+  body{ font-family:'Space Grotesk',system-ui,-apple-system,Segoe UI,Roboto,sans-serif; color:var(--ink); background:var(--bg); }
+  a{ color:#1d4ed8; }
+  .top{ background:#0b1220; color:#fff; padding:12px 18px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .top h1{ font-size:17px; margin:0; font-weight:800; letter-spacing:.2px; }
+  .top .badge{ background:#e0e7ff; color:#3730a3; font-size:11px; font-weight:800; padding:3px 9px; border-radius:99px; }
+  .top .sp{ flex:1; }
+  input,button,select{ font-family:inherit; }
+  .btn{ border:1px solid rgba(0,0,0,.15); background:#fff; color:#1e293b; padding:9px 15px; border-radius:9px; font-weight:700; cursor:pointer; font-size:13px; }
+  .btn:disabled{ opacity:.45; cursor:default; }
+  .btn.primary{ background:linear-gradient(180deg,#4f46e5,#4338ca); color:#fff; border-color:rgba(0,0,0,.2); }
+  .btn.sm{ padding:6px 10px; font-size:12px; }
+  .btn.dark{ background:#1e293b; color:#e5eefb; border-color:#334155; }
+  .btn.dark:hover{ background:#334155; }
+  .muted{ color:var(--sub); font-size:12.5px; }
+  .wrap{ padding:16px 18px 28px; }
+  /* stjórnborð */
+  .bar{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:14px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  .bar label{ font-size:12.5px; color:var(--sub); display:flex; align-items:center; gap:6px; }
+  .bar select,.bar input[type=search]{ height:34px; background:#fff; color:#0f172a; border:1px solid #cbd5e1; border-radius:8px; padding:0 9px; font-size:13px; }
+  .bar input[type=search]{ min-width:220px; }
+  /* listaspjöld */
+  .cols{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media(max-width:980px){ .cols{ grid-template-columns:1fr; } }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:12px; display:flex; flex-direction:column; min-height:220px; }
+  .card.b{ border-style:dashed; }
+  .card .ch{ padding:11px 14px; border-bottom:1px solid var(--line); display:flex; gap:9px; align-items:center; flex-wrap:wrap; }
+  .card .ch .tag{ font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:#94a3b8; }
+  .card .ch .fname{ flex:1; min-width:120px; font-weight:700; font-size:13.5px; word-break:break-word; }
+  .card .ch .cnt{ font-size:12px; font-weight:800; background:#eef2ff; color:#3730a3; padding:2px 9px; border-radius:99px; white-space:nowrap; }
+  .card .cl{ overflow:auto; max-height:min(58vh,560px); padding:4px 0 8px; }
+  .row{ display:flex; align-items:baseline; gap:9px; padding:4px 14px; font-size:12.5px; border-left:3px solid transparent; }
+  .row:nth-child(odd){ background:#fafbfc; }
+  .row .n{ flex:1; word-break:break-word; }
+  .row .n a{ color:inherit; text-decoration:none; }
+  .row .n a:hover{ color:#1d4ed8; text-decoration:underline; }
+  .row .k{ font-family:ui-monospace,Menlo,monospace; font-size:11px; color:#94a3b8; white-space:nowrap; }
+  .row.only{ border-left-color:#dc2626; background:#fef2f2; }
+  .row.both{ border-left-color:#16a34a; }
+  .empty{ padding:26px 16px; text-align:center; color:#94a3b8; font-size:13px; line-height:1.6; }
+  /* samanburðar-borði */
+  .cmp{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:14px; }
+  .cmp .t{ font-size:13px; font-weight:700; margin-bottom:9px; }
+  .cmp .pills{ display:flex; gap:9px; flex-wrap:wrap; }
+  .pill{ font-size:12.5px; font-weight:700; padding:5px 11px; border-radius:99px; border:1px solid; }
+  .pill.both{ background:#f0fdf4; color:#166534; border-color:#bbf7d0; }
+  .pill.a{ background:#fef2f2; color:#b91c1c; border-color:#fecaca; }
+  .pill.b{ background:#fff7ed; color:#9a3412; border-color:#fed7aa; }
+  .cmp .hint{ font-size:11.5px; color:var(--sub); margin-top:9px; line-height:1.5; }
+  .warn{ background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; border-radius:9px; padding:9px 12px; font-size:12.5px; margin-bottom:12px; }
+  /* möppuveljari (sama og í multitool) */
+  .modal-bg{ position:fixed; inset:0; background:rgba(2,6,23,.55); display:none; align-items:center; justify-content:center; z-index:50; padding:16px; }
+  .modal-bg.on{ display:flex; }
+  .modal{ background:#fff; color:#0f172a; border-radius:14px; width:min(640px,96vw); max-height:86vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 24px 60px -20px rgba(2,6,23,.6); }
+  .modal .mh{ padding:14px 16px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:10px; }
+  .modal .mh h2{ font-size:15px; margin:0; flex:1; }
+  .modal .mh .x{ border:0; background:none; font-size:20px; cursor:pointer; color:#64748b; }
+  .modal .mtool{ padding:10px 16px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; border-bottom:1px solid var(--line); }
+  .modal .mtool input{ flex:1; min-width:160px; background:#fff; color:#0f172a; border:1px solid #cbd5e1; border-radius:8px; height:36px; padding:0 10px; }
+  .crumb{ font-size:12px; color:#64748b; padding:6px 16px; }
+  .crumb b{ color:#0f172a; cursor:pointer; }
+  .mlist{ overflow:auto; padding:6px 8px 12px; }
+  .frow{ display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:8px; cursor:pointer; }
+  .frow:hover{ background:#f1f5f9; }
+  .frow .nm{ flex:1; font-size:13.5px; font-weight:600; }
+  .frow .pickone{ border:1px solid #4f46e5; color:#4f46e5; background:#eef2ff; border-radius:7px; padding:4px 10px; font-size:12px; font-weight:700; cursor:pointer; }
+  .mfoot{ padding:12px 16px; border-top:1px solid var(--line); display:flex; gap:10px; align-items:center; }
+  .mfoot .cur{ flex:1; font-size:12px; color:#64748b; word-break:break-all; }
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>📋 Skráalisti</h1>
+  <span class="badge">telja · flytja út · bera saman</span>
+  <span class="sp"></span>
+  <button class="btn dark sm" id="ex-csv" disabled title="UTF-8 með BOM, semíkomma — opnast rétt í íslensku Excel">⬇️ Excel (CSV)</button>
+  <button class="btn dark sm" id="ex-sheet" disabled title="Býr til nýtt Google Sheet með listunum">📊 Google Sheets</button>
+  <a href="/#bakendi" target="_top" class="muted" style="color:#93c5fd">← Bakendi</a>
+</div>
+
+<div class="wrap">
+  <div class="bar">
+    <label><input type="checkbox" id="recurse"> Telja undirmöppur líka</label>
+    <label>Bera saman eftir
+      <select id="matchkey">
+        <option value="name">Heiti (nákvæmt)</option>
+        <option value="stem" selected>Heiti án skráarendingar</option>
+        <option value="loose">Einfaldað heiti (lágstafir · án broddstafa · án „(1)“)</option>
+        <option value="inv">Reikningsnúmer (R-000000)</option>
+        <option value="kt">Kennitala</option>
+      </select>
+    </label>
+    <input type="search" id="q" placeholder="🔎 Sía nöfn í báðum listum…">
+    <label><input type="checkbox" id="onlydiff"> Sýna aðeins það sem vantar</label>
+    <span class="muted" id="status"></span>
+  </div>
+
+  <div id="warn"></div>
+  <div id="cmp"></div>
+
+  <div class="cols">
+    <div class="card" id="card-a">
+      <div class="ch">
+        <span class="tag">Listi A</span>
+        <span class="fname" id="a-name">Engin mappa valin</span>
+        <span class="cnt" id="a-cnt">0</span>
+        <button class="btn sm" id="a-pick">📁 Velja möppu</button>
+        <a class="btn sm" id="a-open" target="_blank" rel="noopener" style="display:none">↗</a>
+      </div>
+      <div class="cl" id="a-list"><div class="empty">Veldu möppu til að telja skrárnar í henni.</div></div>
+    </div>
+    <div class="card b" id="card-b">
+      <div class="ch">
+        <span class="tag">Listi B — valkvætt</span>
+        <span class="fname" id="b-name">Engin mappa valin</span>
+        <span class="cnt" id="b-cnt">0</span>
+        <button class="btn sm" id="b-pick">📁 Velja möppu</button>
+        <a class="btn sm" id="b-open" target="_blank" rel="noopener" style="display:none">↗</a>
+        <button class="btn sm" id="b-clear" style="display:none">✕</button>
+      </div>
+      <div class="cl" id="b-list"><div class="empty">Veldu aðra möppu til að bera saman —<br>þá sést strax hvað er í annarri en ekki hinni.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Google Drive möppuveljari -->
+<div class="modal-bg" id="pk-bg">
+  <div class="modal">
+    <div class="mh"><h2>📂 Veldu Drive-möppu</h2><button class="x" id="pk-x">×</button></div>
+    <div class="mtool">
+      <input id="pk-q" placeholder="🔎 Leita að möppu…">
+      <button class="btn sm" id="pk-home">🏠 Allt</button>
+    </div>
+    <div class="crumb" id="pk-crumb"></div>
+    <div class="mlist" id="pk-list"><div class="muted" style="padding:16px">…</div></div>
+    <div class="mfoot">
+      <span class="cur" id="pk-cur"></span>
+      <button class="btn" id="pk-cancel">Hætta við</button>
+      <button class="btn primary" id="pk-choose" disabled>✓ Velja þessa möppu</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
+
+  // A og B: { id, name, files:[], total, truncated }
+  var A={id:'',name:'',files:[],total:0,truncated:false},
+      B={id:'',name:'',files:[],total:0,truncated:false};
+
+  // ── samanburðarlyklar ─────────────────────────────────────────────────────
+  // Heitið sjálft er lélegur lykill milli mappa (endingar, „(1)", broddstafir).
+  // Reikningsnúmer/kennitala eru það sem raunverulega auðkennir OKKAR skjöl —
+  // þess vegna eru þeir í boði. Skila '' þegar lykilinn er ekki að finna; slíkar
+  // skrár lenda í „lykil vantar" og eru ALDREI taldar sem samsvörun (það væri
+  // ágiskun sem fæli einmitt þau skjöl sem verið er að leita að).
+  function fold(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
+  // Reikningsnúmer úr skráarheiti. Þrjár ritvenjur, því það er EINMITT samanburður
+  // milli þeirra sem tólið er til fyrir: hrátt dkPlus-útflutt heiti
+  // („Stolpi_Invoice_107962.pdf") á móti endurnefndu („… - R-107962 - …"). Ef aðeins
+  // „R-"-formið væri lesið teldist hvert einasta óendurnefnt skjal „vantar", sem er
+  // öfug niðurstaða við þá sem verið er að leita að.
+  function invKey(name){
+    var n=String(name||'');
+    // Merkt form fyrst, á ÓSNERTU heitinu: „R-"/„Invoice_" er ótvírætt.
+    var m=n.match(/\bR[\s\-_]?(\d{5,7})\b/i);                        // „R-107962" / „R 107962"
+    if(!m) m=n.match(/(?:invoice|creditnote|reikningur|n[óo]ta)[_\-\s]*(\d{5,7})\b/i);  // „Stolpi_Invoice_107962"
+    if(m) return 'R-'+m[1];
+    // Bert númer: hér VERÐUR að taka kennitölur út fyrst, annars les „500920-1650"
+    // sem reikningsnúmer. Kennitalan er þéttur bandstrikur (500920-1650) eða 10
+    // samfelldir tölustafir — EKKI „106741 - 2025" (reikningsnúmer + ár með bilum),
+    // sem lausari regla gleypti og skildi merkta númerið eftir ólesið.
+    var s=n.replace(/(?<!\d)(?:\d{6}-\d{4}|\d{10})(?!\d)/g,' ');
+    m=s.match(/(?<!\d)(1\d{5})(?!\d)/);                              // bert 6-stafa númer (1xxxxx)
+    return m ? ('R-'+m[1]) : '';
+  }
+  function keyOf(f, mode){
+    var n=f.name||'', st=f.stem||'';
+    if(mode==='name') return n.trim();
+    if(mode==='stem') return st.trim();
+    if(mode==='loose') return fold(st).replace(/\(\d+\)\s*$/,'').replace(/[^a-z0-9]+/g,' ').trim();
+    if(mode==='inv') return invKey(n);
+    if(mode==='kt'){ var k=n.match(/(?<!\d)(\d{6})\s?-?\s?(\d{4})(?!\d)/); return k?(k[1]+'-'+k[2]):''; }
+    return st.trim();
+  }
+  function keyMode(){ return $('matchkey').value; }
+  function indexBy(list, mode){
+    var m={}; (list||[]).forEach(function(f){ var k=keyOf(f,mode); if(!k) return; (m[k]=m[k]||[]).push(f); });
+    return m;
+  }
+  function cmpOn(){ return !!(A.files.length && B.files.length); }
+
+  // ── flokkun raða fyrir birtingu ───────────────────────────────────────────
+  // Skilar { rows:[{f,cls}], nOnly, nBoth, nNoKey } fyrir annan hvorn listann.
+  function classify(mine, other){
+    var mode=keyMode(), idx=indexBy(other,mode);
+    var q=fold($('q').value||'').trim();
+    var onlyDiff=$('onlydiff').checked, cmp=cmpOn();
+    var rows=[], nOnly=0, nBoth=0, nNoKey=0;
+    (mine||[]).forEach(function(f){
+      var k=keyOf(f,mode);
+      var cls='';
+      if(cmp){
+        if(!k){ nNoKey++; cls='nokey'; }
+        else if(idx[k]){ nBoth++; cls='both'; }
+        else { nOnly++; cls='only'; }
+      }
+      if(q && fold(f.name).indexOf(q)===-1) return;
+      if(cmp && onlyDiff && cls!=='only' && cls!=='nokey') return;
+      rows.push({ f:f, cls:cls, k:k });
+    });
+    return { rows:rows, nOnly:nOnly, nBoth:nBoth, nNoKey:nNoKey };
+  }
+
+  function renderList(el, res, side){
+    if(!res.rows.length){
+      el.innerHTML='<div class="empty">'+(side.files.length
+        ? 'Ekkert passar við síuna.'
+        : (side===A?'Veldu möppu til að telja skrárnar í henni.'
+                   :'Veldu aðra möppu til að bera saman —<br>þá sést strax hvað er í annarri en ekki hinni.'))+'</div>';
+      return;
+    }
+    var mode=keyMode();
+    el.innerHTML=res.rows.map(function(r){
+      var showKey=(mode==='inv'||mode==='kt');
+      return '<div class="row '+esc(r.cls)+'">'
+        + '<span class="n"><a href="https://drive.google.com/file/d/'+esc(r.f.id)+'/view" target="_blank" rel="noopener">'+esc(r.f.name)+'</a></span>'
+        + (showKey?'<span class="k">'+esc(r.k||'— lykil vantar')+'</span>':'')
+        + (r.f.folder_name && r.f.folder_id!==side.id ? '<span class="k">📁 '+esc(r.f.folder_name)+'</span>' : '')
+        + '</div>';
+    }).join('');
+  }
+
+  function paint(){
+    var ra=classify(A.files,B.files), rb=classify(B.files,A.files);
+    renderList($('a-list'), ra, A);
+    renderList($('b-list'), rb, B);
+    $('a-cnt').textContent=A.total; $('b-cnt').textContent=B.total;
+    $('a-name').textContent=A.name||'Engin mappa valin';
+    $('b-name').textContent=B.name||'Engin mappa valin';
+    ['a','b'].forEach(function(s){
+      var side=(s==='a'?A:B), op=$(s+'-open');
+      if(side.id){ op.style.display=''; op.href='https://drive.google.com/drive/folders/'+encodeURIComponent(side.id); op.title='Opna '+side.name+' í Drive'; }
+      else op.style.display='none';
+    });
+    $('b-clear').style.display = B.id ? '' : 'none';
+
+    // Samanburðar-borði
+    var c=$('cmp');
+    if(!cmpOn()){ c.innerHTML=''; }
+    else {
+      var lbl={name:'nákvæmt heiti',stem:'heiti án endingar',loose:'einfaldað heiti',inv:'reikningsnúmer',kt:'kennitölu'}[keyMode()];
+      c.innerHTML='<div class="cmp">'
+        + '<div class="t">🔍 Samanburður eftir '+esc(lbl)+'</div>'
+        + '<div class="pills">'
+        +   '<span class="pill both">✓ '+ra.nBoth+' í báðum</span>'
+        +   '<span class="pill a">◀ '+ra.nOnly+' aðeins í A'+(A.name?(' ('+esc(A.name)+')'):'')+'</span>'
+        +   '<span class="pill b">▶ '+rb.nOnly+' aðeins í B'+(B.name?(' ('+esc(B.name)+')'):'')+'</span>'
+        +   ((ra.nNoKey||rb.nNoKey)?('<span class="pill" style="background:#f8fafc;color:#64748b;border-color:#e2e8f0">⚠ '+(ra.nNoKey+rb.nNoKey)+' án lykils</span>'):'')
+        + '</div>'
+        + ((ra.nNoKey||rb.nNoKey)
+            ? '<div class="hint">⚠ Skrár „án lykils“ bera ekki '+esc(lbl)+' í heitinu og eru <b>hvorki</b> taldar samsvörun né mismunur — þær eru merktar sérstaklega í listunum. Veldu annan lykil til að ná þeim með.</div>'
+            : '')
+        + '</div>';
+    }
+
+    var n=A.files.length+B.files.length;
+    $('ex-csv').disabled=!n; $('ex-sheet').disabled=!n;
+    var w=[];
+    if(A.truncated) w.push('Listi A var stöðvaður við þakið — talan er lágmark, ekki heildarfjöldi.');
+    if(B.truncated) w.push('Listi B var stöðvaður við þakið — talan er lágmark, ekki heildarfjöldi.');
+    $('warn').innerHTML = w.length ? '<div class="warn">⚠ '+w.map(esc).join(' ')+'</div>' : '';
+  }
+
+  // ── sækja möppu ───────────────────────────────────────────────────────────
+  async function load(side, id, name){
+    var S=(side==='a'?A:B);
+    S.id=id; S.name=name||id; S.files=[]; S.total=0; S.truncated=false;
+    $(side+'-list').innerHTML='<div class="empty">Sæki skrár…</div>';
+    $('status').textContent='Sæki '+(side==='a'?'A':'B')+'…';
+    paint();
+    try{
+      var u='/api/drive-filelist?folder='+encodeURIComponent(id)+'&recurse='+($('recurse').checked?'1':'0');
+      var r=await fetch(u); var d=await r.json();
+      if(!r.ok||d.error) throw new Error(d.error||('HTTP '+r.status));
+      S.files=d.files||[]; S.total=d.total||S.files.length; S.truncated=!!d.truncated;
+      if(d.folder_name) S.name=d.folder_name;
+      $('status').textContent='✓ '+S.total+' skrár í '+S.name+(d.folders?(' · '+d.folders+' undirmöppur'):'');
+    }catch(e){
+      $(side+'-list').innerHTML='<div class="empty" style="color:#dc2626">Villa: '+esc(e&&e.message||e)+'</div>';
+      $('status').textContent='';
+      return;
+    }
+    paint();
+  }
+
+  // ── útflutningur ──────────────────────────────────────────────────────────
+  // Raðirnar sem fara út eru ÞÆR SÖMU og sjást (sama sía, sama lykill) — annars
+  // væri skráin ekki svarið við spurningunni sem verið var að skoða.
+  function exportRows(side, other){
+    var res=classify(side.files, other.files), cmp=cmpOn(), mode=keyMode();
+    var head=['Skráarheiti','Mappa','Lykill ('+mode+')','Stærð (bæti)','Breytt','Drive-slóð'];
+    if(cmp) head.splice(3,0,'Staða');
+    var rows=[head];
+    res.rows.forEach(function(r){
+      var st = r.cls==='both' ? 'Í báðum' : (r.cls==='only' ? 'Aðeins hér' : (r.cls==='nokey' ? 'Lykil vantar' : ''));
+      var line=[ r.f.name, r.f.folder_name||'', r.k||'', (r.f.size==null?'':r.f.size),
+                 (r.f.modified||'').slice(0,10), 'https://drive.google.com/file/d/'+r.f.id+'/view' ];
+      if(cmp) line.splice(3,0,st);
+      rows.push(line);
+    });
+    return rows;
+  }
+  function csvCell(v){
+    var s=String(v==null?'':v);
+    return /[";\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+  }
+  function downloadCsv(){
+    var parts=[];
+    function block(title, rows){ parts.push(title); rows.forEach(function(r){ parts.push(r.map(csvCell).join(';')); }); parts.push(''); }
+    block('LISTI A — '+(A.name||'')+' ('+A.total+' skrár)', exportRows(A,B));
+    if(B.files.length) block('LISTI B — '+(B.name||'')+' ('+B.total+' skrár)', exportRows(B,A));
+    // UTF-8 BOM + semíkomma → opnast rétt í íslensku Excel (sama og aðrir útflutningar í hubbinu).
+    var blob=new Blob(['﻿'+parts.join('\r\n')], {type:'text/csv;charset=utf-8;'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='skraalisti-'+(A.name||'mappa').replace(/[\\/:*?"<>|]/g,' ').trim().slice(0,50)+'.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+  }
+  async function toSheets(){
+    var btn=$('ex-sheet'); btn.disabled=true; var old=btn.textContent; btn.textContent='… bý til';
+    try{
+      var tabs=[{ title:('A — '+(A.name||'listi')).slice(0,90), rows:exportRows(A,B) }];
+      if(B.files.length) tabs.push({ title:('B — '+(B.name||'listi')).slice(0,90), rows:exportRows(B,A) });
+      var r=await fetch('/api/drive-filelist',{ method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ action:'sheet', title:'Skráalisti — '+(A.name||'')+(B.name?(' vs '+B.name):''), tabs:tabs }) });
+      var d=await r.json().catch(function(){ return {ok:false,error:'HTTP '+r.status}; });
+      if(!d.ok) throw new Error(d.error||'villa');
+      window.open(d.url,'_blank','noopener');
+      $('status').innerHTML='✓ Sheet búið til — <a href="'+esc(d.url)+'" target="_blank" rel="noopener">opna</a>';
+    }catch(e){ $('status').textContent='✗ '+(e&&e.message||e); }
+    finally{ btn.textContent=old; btn.disabled=false; }
+  }
+
+  // ── Drive möppuveljari (sama og í multitool.html) ─────────────────────────
+  var pkCb=null, pkStack=[{id:null,name:'Allt'}], pkSel=null, pkTimer=null;
+  function openPicker(cb){ pkCb=cb; pkStack=[{id:null,name:'Allt'}]; pkSel=null; $('pk-q').value=''; $('pk-bg').classList.add('on'); pkLoad(); $('pk-q').focus(); }
+  function closePicker(){ $('pk-bg').classList.remove('on'); pkCb=null; }
+  function pkCrumb(){
+    $('pk-crumb').innerHTML = pkStack.map(function(c,i){ return (i?' › ':'') + '<b data-crumb="'+i+'">'+esc(c.name)+'</b>'; }).join('');
+    Array.prototype.forEach.call($('pk-crumb').querySelectorAll('[data-crumb]'), function(el){
+      el.onclick=function(){ pkStack=pkStack.slice(0,+el.dataset.crumb+1); var top=pkStack[pkStack.length-1]; pkSel=top.id?{id:top.id,name:top.name}:null; setChoose(); pkLoad(); };
+    });
+  }
+  function setChoose(){
+    var b=$('pk-choose'); b.disabled=!pkSel;
+    b.textContent = pkSel ? ('✓ Velja „'+(pkSel.name.length>22?pkSel.name.slice(0,22)+'…':pkSel.name)+'"') : '✓ Velja þessa möppu';
+    $('pk-cur').textContent = pkSel ? ('Valið: '+pkSel.name) : 'Smelltu á möppu-nafn til að opna hana, eða „Velja" til að taka hana.';
+  }
+  async function pkLoad(){
+    var q=($('pk-q').value||'').trim();
+    var parent = q ? '' : (pkStack[pkStack.length-1].id || '');
+    $('pk-list').innerHTML='<div class="muted" style="padding:16px">Sæki möppur…</div>';
+    pkCrumb(); setChoose();
+    try{
+      var u='/api/drive-folders?limit=100' + (q?('&q='+encodeURIComponent(q)):(parent?('&parent='+encodeURIComponent(parent)):'&roots=1'));
+      var r=await fetch(u); var d=await r.json();
+      if(!r.ok) throw new Error(d.error||('HTTP '+r.status));
+      var folders=(d.files||[]).filter(function(f){ return f.is_folder; });
+      if(!folders.length){ $('pk-list').innerHTML='<div class="muted" style="padding:16px">Engar möppur'+(q?' fundust fyrir „'+esc(q)+'"':'')+'.</div>'; return; }
+      $('pk-list').innerHTML=folders.map(function(f){
+        return '<div class="frow" data-id="'+esc(f.id)+'" data-name="'+esc(f.name)+'">'
+          + '<span style="font-size:16px">📁</span><span class="nm" data-open="1">'+esc(f.name)+'</span>'
+          + '<button class="pickone" data-take="1">Velja</button></div>';
+      }).join('');
+      Array.prototype.forEach.call($('pk-list').querySelectorAll('.frow'), function(row){
+        var id=row.dataset.id, name=row.dataset.name;
+        row.querySelector('[data-open]').onclick=function(){ $('pk-q').value=''; pkStack.push({id:id,name:name}); pkSel={id:id,name:name}; setChoose(); pkLoad(); };
+        row.querySelector('[data-take]').onclick=function(){ if(pkCb) pkCb(id,name); closePicker(); };
+      });
+    }catch(e){ $('pk-list').innerHTML='<div class="muted" style="padding:16px;color:#dc2626">Villa: '+esc(e&&e.message||e)+'</div>'; }
+  }
+  $('pk-q').addEventListener('input', function(){ clearTimeout(pkTimer); pkTimer=setTimeout(pkLoad,300); });
+  $('pk-home').onclick=function(){ $('pk-q').value=''; pkStack=[{id:null,name:'Allt'}]; pkSel=null; pkLoad(); };
+  $('pk-x').onclick=closePicker; $('pk-cancel').onclick=closePicker;
+  $('pk-bg').addEventListener('click', function(e){ if(e.target===$('pk-bg')) closePicker(); });
+  $('pk-choose').onclick=function(){ if(pkSel&&pkCb) pkCb(pkSel.id,pkSel.name); closePicker(); };
+
+  // ── muna valdar möppur milli heimsókna ───────────────────────────────────
+  var KEY='skraalisti_v1';
+  function remember(){ try{ localStorage.setItem(KEY, JSON.stringify({
+    a:{id:A.id,name:A.name}, b:{id:B.id,name:B.name},
+    recurse:$('recurse').checked, matchkey:$('matchkey').value })); }catch(_){}
+  }
+
+  $('a-pick').onclick=function(){ openPicker(function(id,name){ load('a',id,name).then(remember); }); };
+  $('b-pick').onclick=function(){ openPicker(function(id,name){ load('b',id,name).then(remember); }); };
+  $('b-clear').onclick=function(){ B={id:'',name:'',files:[],total:0,truncated:false}; remember(); paint(); };
+  $('recurse').onchange=function(){ remember(); if(A.id) load('a',A.id,A.name); if(B.id) load('b',B.id,B.name); };
+  $('matchkey').onchange=function(){ remember(); paint(); };
+  $('q').addEventListener('input', paint);
+  $('onlydiff').onchange=paint;
+  $('ex-csv').onclick=downloadCsv;
+  $('ex-sheet').onclick=toSheets;
+
+  (function init(){
+    var s=null; try{ s=JSON.parse(localStorage.getItem(KEY)||'null'); }catch(_){}
+    if(s){
+      if(typeof s.recurse==='boolean') $('recurse').checked=s.recurse;
+      if(s.matchkey) $('matchkey').value=s.matchkey;
+      if(s.a&&s.a.id) load('a',s.a.id,s.a.name);
+      if(s.b&&s.b.id) load('b',s.b.id,s.b.name);
+    }
+    paint();
+  })();
+})();
+</script>
+</body>
+</html>
