@@ -261,6 +261,38 @@ function companyFromContent(text) {
   if (/sl[öo]kkvit[æa]ki/i.test(c)) return '';   // útgefandinn, ekki kaupandinn
   return c;
 }
+// Kaupanda-félag úr HAUSNUM á reikningi, þar sem það stendur BERT (engin „Nafn:"
+// merking): dkPlus/Stolpi prentar kaupandann efst og kennitöluna beint undir —
+//   „Live production ehf. / 500920-1650 / Reikningur …"
+// og bréfsefnis-útgáfan skýtur heimilisfangi á milli —
+//   „Álfaskeið 104,húsfélag / Álfaskeiði 104 / 220 Hafnarfjörður / 430680-0139".
+// Þess vegna er tekin FYRSTA línan í blokkinni á undan kennitölunni, ekki sú síðasta
+// (sú síðasta er póstnúmerið). Útgefanda-blokkin efst (Slökkvitæki/Brunakerfi með
+// kt 600508-0400) er síuð burt svo VIÐ verðum ekki lesin sem kaupandinn.
+//
+// Notað EINGÖNGU sem varaskeifa fyrir `base_nafn` (þ.e. „🆕 stofna fyrirtæki"-
+// tillöguna) — ALDREI í `proposed_name`. Nafngiftin sjálf stendur óbreytt eins og
+// Agnar leiðrétti hana (heimilisfangið leiðir þegar félag vantar); þetta er hér til
+// að þurfa ekki að slá inn nafnið í höndunum á hverju óþekktu fyrirtæki.
+function companyFromHeader(text) {
+  const lines = String(text || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  let ktAt = -1;
+  for (let i = 0; i < lines.length && i < 40; i++) {
+    const kts = allKts(lines[i]);
+    if (kts.length && !kts.includes(ISSUER_KT)) { ktAt = i; break; }
+  }
+  if (ktAt <= 0) return '';
+  for (const raw of lines.slice(0, ktAt)) {
+    const c = raw.replace(/\s+/g, ' ').trim().replace(/[.,;:]+$/, '').trim();
+    if (c.length < 2 || c.length > 60) continue;
+    if (!/[A-Za-zÁÉÍÓÚÝÆÖÞÐáéíóúýæöþð]/.test(c)) continue;
+    if (/sl[öo]kkvit[æa]ki|brunakerfi|helluhraun|vsk\s*nr|^kt\.?\s*:/i.test(c)) continue;  // útgefandinn
+    if (/^(reikningur|kreditreikningur|dagsetning|grei[ðd]sl|afh\.?skilm|ra[ðd]nr|starfsma[ðd]ur|tilv[íi]sun|v[öo]run[úu]mer)/i.test(c)) continue;
+    if (/^\d{3}\s/.test(c)) continue;                       // póstnúmer + staður
+    return c;
+  }
+  return '';
+}
 // Lotu-skönnun: „<möppuheiti> - bls NNN.pdf" (t.d. „mars-mai stolpi 2026 - bls 037").
 // Slíkt heiti ber ENGA kaupanda-vísbendingu — það er blaðsíðunúmer í bunka — svo það
 // á að hegða sér eins og „Scan…"-heiti og víkja fyrir innihaldinu.
@@ -691,7 +723,9 @@ async function previewFile(token, f, opts) {
     issuer_ours: !!issuerOurs,
     kt: ktd || '',
     base_id: base ? base.id : null,
-    base_nafn: base ? base.nafn : (coName || null),
+    // Óþekkt kt → besta nafn-tillagan fyrir „🆕 stofna fyrirtæki" (haus-nafnið er
+    // varaskeifa; það fer ALDREI í proposed_name).
+    base_nafn: base ? base.nafn : (coName || cleanCompany(companyFromHeader(text)) || null),
     site_id: site ? site.id : null,
     site_nafn: site ? site.nafn : null,
     site_via: site ? site.via : null,
