@@ -13569,16 +13569,18 @@ async function renderKrofuyfirlit(t){
   // Aging pill: green ≤30d · amber 31–60d · red >60d (ported verbatim).
   function agingPill(days){
     if(days==null) return '';
-    const p = days>60 ? {bg:'#fff1f2',tx:'#be123c',bd:'#fecdd3'}
-            : days>30 ? {bg:'#fffbeb',tx:'#b45309',bd:'#fde68a'}
-            : {bg:'#ecfdf5',tx:'#047857',bd:'#a7f3d0'};
-    return '<span class="ky-num" style="background:'+p.bg+';color:'+p.tx+';border:1px solid '+p.bd+';padding:2px 8px;border-radius:99px;font-size:10.5px;font-weight:700;white-space:nowrap">'+days+' d.</span>';
+    const p = days>60 ? {bg:'var(--red-bg)',tx:'var(--red)'}
+            : days>30 ? {bg:'var(--warn-bg)',tx:'var(--warn)'}
+            : {bg:'var(--green-bg)',tx:'var(--green)'};
+    return '<span class="ky-num" style="background:'+p.bg+';color:'+p.tx+';padding:2px 8px;border-radius:3px;font-size:10.5px;font-weight:600;white-space:nowrap">'+days+' d.</span>';
   }
   // Light-metallic labelled chip (icon + tiny colored label). filled=true → dark green.
   function kyAbtn(cls,extra,glyph,label,color,title,filled){
+    // Gull þema: .on er grænt útlínu-ástand (ljós bakgrunnur) — innihaldið
+    // notar merkingarlitinn sjálfan, ekki hvítt (var á fylltum grænum).
     return '<button class="'+cls+' ky-abtn'+(filled?' on':'')+'" '+extra+' type="button" title="'+esc(title)+'">'+
-      '<span style="font-size:14px;line-height:1;color:'+(filled?'#fff':color)+'">'+glyph+'</span>'+
-      '<span style="font-size:8.5px;font-weight:700;letter-spacing:.02em;color:'+(filled?'#fff':color)+'">'+esc(label)+'</span>'+
+      '<span style="font-size:14px;line-height:1;color:'+(filled?'var(--green)':color)+'">'+glyph+'</span>'+
+      '<span style="font-size:8.5px;font-weight:700;letter-spacing:.02em;color:'+(filled?'var(--green)':color)+'">'+esc(label)+'</span>'+
     '</button>';
   }
 
@@ -13697,10 +13699,12 @@ async function renderKrofuyfirlit(t){
       <div class="kyf-list"></div>
     </div>
     <style>
-      .kyf-wrap .ky-abtn{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:46px;height:42px;padding:0 7px;border-radius:9px;border:1px solid rgba(20,24,34,.2);background:linear-gradient(180deg,#ffffff,#dbe0e9);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.95),0 3px 6px -3px rgba(20,30,60,.3);cursor:default;font:inherit}
-      .kyf-wrap .ky-abtn.on{background:linear-gradient(150deg,#2bbf6c,#0f6e3a);border-color:#156e3a;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 3px 7px -3px rgba(15,110,58,.5)}
+      /* Gull þema: flatir hljóðlátir aðgerðatakkar (mockup 01) — merkingarlitur
+         sem borði+texti, ekki fylling. .on = grænt útlínu-ástand. */
+      .kyf-wrap .ky-abtn{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:46px;height:42px;padding:0 7px;border-radius:var(--radius-sm);border:1px solid var(--line-2);background:var(--card);box-shadow:none;cursor:default;font:inherit}
+      .kyf-wrap .ky-abtn.on{background:var(--green-bg);border-color:var(--green);box-shadow:none}
       .kyf-wrap .ky-act,.kyf-wrap .ky-bx{cursor:pointer}
-      .kyf-wrap .ky-act:hover,.kyf-wrap .ky-bx:hover{filter:brightness(1.03);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.95),0 4px 9px -3px rgba(20,30,60,.4)}
+      .kyf-wrap .ky-act:hover,.kyf-wrap .ky-bx:hover{border-color:var(--gold-deep);box-shadow:none}
       .kyf-wrap .ky-act:disabled{opacity:.55;cursor:default}
       .kyf-wrap .ky-row.ky-likely{background:linear-gradient(90deg,rgba(16,185,129,.09),rgba(16,185,129,.03))}
       .kyf-wrap .ky-row.ky-likely:hover{background:linear-gradient(90deg,rgba(16,185,129,.15),rgba(16,185,129,.06))}
@@ -14029,7 +14033,7 @@ async function renderKrofuyfirlit(t){
             <span class="ky-caret2" style="width:11px;flex-shrink:0;color:#b6c0cc;font-size:11px;user-select:none">▸</span>
             <div style="width:200px;flex-shrink:0;line-height:1.2">
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                <span class="ky-num" style="color:#1d4ed8;font-weight:700">${rnum}</span>
+                <span class="ky-num" style="color:var(--ink);font-weight:600">${rnum}</span>
                 ${mtagHtml}
                 ${tier===1?agingPill(inv.days_overdue):''}
               </div>
@@ -14039,7 +14043,7 @@ async function renderKrofuyfirlit(t){
             </div>
             ${tier===2?'<span style="flex:1 1 0;min-width:0"></span>':''}
             ${noteHtml}
-            <span class="ky-num" style="width:104px;text-align:right;font-weight:700;color:#11141c;white-space:nowrap;flex-shrink:0">${fmtKr(inv.amount)}</span>
+            <span class="ky-num" style="width:104px;text-align:right;font-weight:600;color:var(--ink);white-space:nowrap;flex-shrink:0">${fmtKr(inv.amount)}</span>
             ${(tier===2||tier===3)?wfStrip(inv, tier):''}
             <div style="display:flex;gap:6px;flex-shrink:0">${actChips(inv, tier)}</div>
           </div>
@@ -14084,41 +14088,42 @@ async function renderKrofuyfirlit(t){
       `<span style="margin-left:auto;font-weight:800;font-size:15px;color:#11141c" class="ky-num">${fmtKr(total)}</span></div>`+
       `<div style="font-size:11.5px;color:#8a93a5;margin:-4px 0 10px">Ógreitt + ósent + tímauppsöfnun saman á hvert fyrirtæki.</div>`;
     if(!companies.length) return head + `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:26px;text-align:center;color:#94a3b8;font-style:italic">${state.search?'Ekkert passar við leit':'Engin fyrirtæki 🎉'}</div>`;
-    const mini=(ic,label,val,col)=> `<span class="ky-num" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:${col};background:${col}14;border:1px solid ${col}33;border-radius:99px;padding:2px 9px">${ic} ${label} ${fmtKr(val)}</span>`;
+    const mini=(label,val,bg,tx)=> `<span class="ky-num" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:${tx};background:${bg};border-radius:3px;padding:2px 9px">${label} ${fmtKr(val)}</span>`;
     const tierBlock=(d,tier,ic,title,col)=> !d ? '' : `
-      <div class="${tier===2?'ky-tblock2':''}" style="border-top:1px solid #eef1f6">
-        <div style="display:flex;align-items:center;gap:8px;padding:8px 18px;background:#fafbfe;font-size:11px;font-weight:800;letter-spacing:.02em;color:${col}">
-          <span>${ic} ${title}</span>
-          <span class="ky-num" style="margin-left:auto;color:#11141c">${fmtKr(d.outstanding_kr)}</span>
+      <div class="${tier===2?'ky-tblock2':''}" style="border-top:1px solid var(--line)">
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 18px;background:var(--tbl-header);font-size:11px;font-weight:600;letter-spacing:.02em;color:var(--ink-2)">
+          <span style="width:7px;height:7px;border-radius:50%;background:${col};flex:0 0 auto"></span>
+          <span>${title}</span>
+          <span class="ky-num" style="margin-left:auto;color:var(--ink)">${fmtKr(d.outstanding_kr)}</span>
         </div>
         ${buildInvoiceRows(d.invoices||[], tier)}
       </div>`;
     const body = companies.map(c=>`
-      <div style="background:#fff;border:1px solid rgba(20,24,34,.08);border-radius:16px;margin-bottom:14px;overflow:hidden;box-shadow:0 10px 28px -16px rgba(25,35,60,.16)">
+      <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow-sm)">
         <div class="ky-card-head" role="button" tabindex="0" title="Smelltu til að opna/loka" style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;cursor:pointer">
           <div style="display:flex;align-items:flex-start;gap:10px">
-            <span class="ky-caret" style="font-size:13px;color:#94a3b8;line-height:1.6;user-select:none">▾</span>
+            <span class="ky-caret" style="font-size:13px;color:var(--muted-2);line-height:1.6;user-select:none">▾</span>
             <div>
-              <div style="font-weight:800;color:#11141c;font-size:16px">${esc(c.customer||'(óþekkt)')}</div>
-              ${c.kt?`<div style="font-size:11px;color:#8a93a5;margin-top:2px">kt ${esc(c.kt)}</div>`:''}
+              <div style="font-family:var(--font-display);font-weight:700;color:var(--ink);font-size:16px;letter-spacing:.2px">${esc(c.customer||'(óþekkt)')}</div>
+              ${c.kt?`<div style="font-size:11px;color:var(--muted-2);margin-top:2px">kt ${esc(c.kt)}</div>`:''}
               <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
-                ${c.s1?mini('🔴','Ógreitt',c.s1,'#c0342f'):''}
-                ${c.s2?mini('🟡','Ósent',c.s2,'#b7861a'):''}
-                ${c.s3?mini('⚪','Tími',c.s3,'#6b7482'):''}
+                ${c.s1?mini('Ógreitt',c.s1,'var(--red-bg)','var(--red)'):''}
+                ${c.s2?mini('Ósent',c.s2,'var(--warn-bg)','var(--warn)'):''}
+                ${c.s3?mini('Tími',c.s3,'var(--bg-2)','var(--muted)'):''}
               </div>
             </div>
           </div>
           <div style="display:flex;gap:10px;align-items:center">
             <div style="text-align:right">
-              <div style="font-size:10px;color:#8a93a5;text-transform:uppercase;letter-spacing:.1em;font-weight:700">Samtals</div>
-              <div class="ky-num" style="font-size:22px;font-weight:700;color:#2f5fe0">${fmtKr(c.total)}</div>
+              <div style="font-size:10px;color:var(--muted-2);text-transform:uppercase;letter-spacing:.1em;font-weight:600">Samtals</div>
+              <div class="ky-num" style="font-family:var(--font-display);font-size:21px;font-weight:600;color:var(--ink)">${fmtKr(c.total)}</div>
             </div>
           </div>
         </div>
         <div class="ky-card-rows" style="display:block">
-          ${tierBlock(c.t[1],1,'🔴','Ógreiddar','#c0342f')}
-          ${tierBlock(c.t[2],2,'🟡','Ósendar','#b7861a')}
-          ${tierBlock(c.t[3],3,'⚪','Tími eftir','#6b7482')}
+          ${tierBlock(c.t[1],1,'','Ógreiddar','var(--red)')}
+          ${tierBlock(c.t[2],2,'','Ósendar','var(--gold)')}
+          ${tierBlock(c.t[3],3,'','Tími eftir','var(--muted-2)')}
         </div>
       </div>`).join('');
     return head + body;
@@ -14141,10 +14146,10 @@ async function renderKrofuyfirlit(t){
       (db.invoices||[]).forEach(inv=>{ const d=inv.days_overdue; const amt=inv.amount||0;
         if(d==null){ agG+=amt; } else if(d>90){ agR+=amt; } else if(d>30){ agA+=amt; } else { agG+=amt; } });
       const agTot = agG+agA+agR || 1;
-      agBar = '<div style="height:6px;border-radius:99px;overflow:hidden;display:flex;background:#eef1f6;width:180px;max-width:44vw;margin-top:6px">'+
-        (agG?'<div style="width:'+(agG/agTot*100)+'%;background:#22c55e"></div>':'')+
-        (agA?'<div style="width:'+(agA/agTot*100)+'%;background:#f59e0b"></div>':'')+
-        (agR?'<div style="width:'+(agR/agTot*100)+'%;background:#ef4444"></div>':'')+
+      agBar = '<div style="height:6px;border-radius:99px;overflow:hidden;display:flex;background:var(--bg-2);width:180px;max-width:44vw;margin-top:6px">'+
+        (agG?'<div style="width:'+(agG/agTot*100)+'%;background:var(--green)"></div>':'')+
+        (agA?'<div style="width:'+(agA/agTot*100)+'%;background:var(--warn)"></div>':'')+
+        (agR?'<div style="width:'+(agR/agTot*100)+'%;background:var(--red)"></div>':'')+
       '</div>';
     }
 
@@ -14199,7 +14204,7 @@ async function renderKrofuyfirlit(t){
             ${t2chk}<span class="ky-caret2" style="width:11px;flex-shrink:0;color:#b6c0cc;font-size:11px;user-select:none">▸</span>
             <div style="width:200px;flex-shrink:0;line-height:1.2">
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                <span class="ky-num" style="color:#1d4ed8;font-weight:700">${rnum}</span>
+                <span class="ky-num" style="color:var(--ink);font-weight:600">${rnum}</span>
                 ${mtagHtml}
                 ${tier===1?agingPill(inv.days_overdue):''}
               </div>
@@ -14209,7 +14214,7 @@ async function renderKrofuyfirlit(t){
             </div>
             ${tier===2?'<span style="flex:1 1 0;min-width:0"></span>':''}
             ${noteHtml}
-            <span class="ky-num" style="width:104px;text-align:right;font-weight:700;color:#11141c;white-space:nowrap;flex-shrink:0">${fmtKr(inv.amount)}</span>
+            <span class="ky-num" style="width:104px;text-align:right;font-weight:600;color:var(--ink);white-space:nowrap;flex-shrink:0">${fmtKr(inv.amount)}</span>
             ${(tier===2||tier===3)?wfStrip(inv, tier):''}
             <div style="display:flex;gap:6px;flex-shrink:0">${actChips(inv, tier)}</div>
           </div>
@@ -14224,12 +14229,12 @@ async function renderKrofuyfirlit(t){
     // collapsed by default so they don't clutter the list; nonzero = expanded.
     const collapsed = (db.outstanding_kr||0) === 0;
     return `
-      <div style="background:#fff;border:1px solid rgba(20,24,34,.08);border-radius:16px;margin-bottom:12px;overflow:hidden;box-shadow:0 10px 28px -16px rgba(25,35,60,.16)">
-        <div class="ky-card-head" role="button" tabindex="0" title="Smelltu til að opna/loka" style="padding:14px 18px;border-bottom:1px solid #eef1f6;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;cursor:pointer">
+      <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow-sm)">
+        <div class="ky-card-head" role="button" tabindex="0" title="Smelltu til að opna/loka" style="padding:14px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;cursor:pointer">
           <div style="display:flex;align-items:flex-start;gap:10px">
-            <span class="ky-caret" style="font-size:13px;color:#94a3b8;line-height:1.6;user-select:none">${collapsed?'▸':'▾'}</span>
+            <span class="ky-caret" style="font-size:13px;color:var(--muted-2);line-height:1.6;user-select:none">${collapsed?'▸':'▾'}</span>
             <div>
-              <div style="font-weight:800;color:#11141c;font-size:16px">${esc(nm)}</div>
+              <div style="font-family:var(--font-display);font-weight:700;color:var(--ink);font-size:16px;letter-spacing:.2px">${esc(nm)}</div>
               ${metaHtml}
               ${agBar}
               <div style="font-size:11px;color:#8a93a5;margin-top:4px">${(db.invoices||[]).length} ${tier===3?'liðir':(tier===2?'drög':'reikningar')}${tier===1?' · elsti gjalddagi '+(db.oldest_due ? db.oldest_due.split('-').reverse().join('.') : '—'):''}</div>
@@ -14253,16 +14258,17 @@ async function renderKrofuyfirlit(t){
     const disp = searchSort(live);
     const total = sumKr(live), n = countN(live);
     const selBtn = tier===2
-      ? `<button class="kyf-t2-sel-toggle" type="button" style="padding:4px 12px;border-radius:7px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;border:1px solid ${t2SelectMode?'#1d4ed8':'#cbd5e1'};background:${t2SelectMode?'#eff6ff':'#fff'};color:${t2SelectMode?'#1d4ed8':'#475569'}">${t2SelectMode?'✗ Hætta':'☑ Sameina'}</button>`
+      ? `<button class="kyf-t2-sel-toggle" type="button" style="padding:4px 12px;border-radius:var(--radius-sm);font:inherit;font-size:12px;font-weight:600;cursor:pointer;border:1px solid ${t2SelectMode?'var(--navy-dark)':'var(--line-2)'};background:${t2SelectMode?'var(--navy-dark)':'var(--card)'};color:${t2SelectMode?'#fff':'var(--ink-2)'}">${t2SelectMode?'✗ Hætta':'☑ Sameina'}</button>`
       : '';
-    const header = `<div class="ky-sec"><h2>${icon} ${esc(title)}</h2>`+
-      `<span style="font-size:12px;color:#64748b">${n} ${n===1?'liður':'liðir'} · ${live.length} ${live.length===1?'aðili':'aðilar'}</span>`+
+    const dotCol = tier===1?'var(--red)':tier===2?'var(--gold)':'var(--muted-2)';
+    const header = `<div class="ky-sec"><span style="width:8px;height:8px;border-radius:50%;background:${dotCol};flex:0 0 auto;align-self:center"></span><h2>${esc(title)}</h2>`+
+      `<span style="font-size:12px;color:var(--muted)">${n} ${n===1?'liður':'liðir'} · ${live.length} ${live.length===1?'aðili':'aðilar'}</span>`+
       selBtn+
-      `<span style="margin-left:auto;font-weight:800;font-size:15px;color:#11141c" class="ky-num">${fmtKr(total)}</span></div>`+
-      (subtitle?`<div style="font-size:11.5px;color:#8a93a5;margin:-4px 0 10px">${esc(subtitle)}</div>`:'');
+      `<span style="margin-left:auto;font-family:var(--font-display);font-weight:600;font-size:16px;color:var(--ink)" class="ky-num">${fmtKr(total)}</span></div>`+
+      (subtitle?`<div style="font-size:11.5px;color:var(--muted-2);margin:-4px 0 10px">${esc(subtitle)}</div>`:'');
     const body = disp.length
       ? disp.map(d=>renderDebtor(d, tier)).join('')
-      : `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:26px;text-align:center;color:#94a3b8;font-style:italic">${state.search?'Ekkert passar við leit':'Engar kröfur 🎉'}</div>`;
+      : `<div style="background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:26px;text-align:center;color:var(--muted-2);font-style:italic">${state.search?'Ekkert passar við leit':'Engar kröfur 🎉'}</div>`;
     return header + body;
   }
 
