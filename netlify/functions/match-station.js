@@ -71,10 +71,10 @@ async function listCompanies() {
 
   const docs = [];
   for (let i = 0; i < baseIds.length; i += 200)
-    docs.push(...await sbGet(`customer_documents?customer_base_id=in.${inList(baseIds.slice(i, i + 200))}&select=customer_base_id,fyrirtaeki_id,is_duplicate,reviewed,doc_type`));
+    docs.push(...await sbGet(`customer_documents?customer_base_id=in.${inList(baseIds.slice(i, i + 200))}&select=customer_base_id,fyrirtaeki_id,is_duplicate,reviewed,doc_type,needs_site`));
 
   const agg = {};
-  baseIds.forEach(id => { agg[id] = { base_id: id, nafn: (baseById[id] || {}).nafn || ('#' + id), kennitala: (baseById[id] || {}).kennitala || '', locations: 0, docs: 0, reviewed: 0, unmatched: 0, dups: 0 }; });
+  baseIds.forEach(id => { agg[id] = { base_id: id, nafn: (baseById[id] || {}).nafn || ('#' + id), kennitala: (baseById[id] || {}).kennitala || '', locations: 0, docs: 0, reviewed: 0, unmatched: 0, dups: 0, needs_site: 0 }; });
   locs.forEach(l => { if (agg[l.customer_base_id]) agg[l.customer_base_id].locations++; });
   docs.forEach(d => {
     const a = agg[d.customer_base_id]; if (!a) return;
@@ -82,6 +82,8 @@ async function listCompanies() {
     if (d.reviewed) a.reviewed++;
     if (d.is_duplicate) a.dups++;
     else if (d.fyrirtaeki_id == null) a.unmatched++;
+    // 🏷 multitool merkti: fjölstaða-kt án staðar-sönnunar — yfirferðarlistinn.
+    if (d.needs_site === true && !d.is_duplicate) a.needs_site++;
   });
   // most work first: unconfirmed-but-present, then by name
   const companies = Object.values(agg).sort((x, y) =>
@@ -129,7 +131,7 @@ async function companyDetail(baseId) {
   baseId = parseInt(baseId, 10);
   const base = (await sbGet(`customers_base?id=eq.${baseId}&select=id,nafn,kennitala`))[0] || { id: baseId, nafn: '#' + baseId, kennitala: '' };
   const locations = await sbGet(`fyrirtaeki?customer_base_id=eq.${baseId}&select=id,nafn,heimilisfang,er_i_thjonustu&deleted_at=is.null&order=heimilisfang`);
-  const raw = await sbGet(`customer_documents?customer_base_id=eq.${baseId}&select=id,drive_file_id,storage_path,doc_type,year,fyrirtaeki_id,is_duplicate,reviewed,notes,doc_date,amount,invoice_number`);
+  const raw = await sbGet(`customer_documents?customer_base_id=eq.${baseId}&select=id,drive_file_id,storage_path,doc_type,year,fyrirtaeki_id,is_duplicate,reviewed,notes,doc_date,amount,invoice_number,needs_site`);
   const names_fixed = await enrichNames(raw, 60);
 
   const docs = raw.map(d => {
@@ -148,6 +150,7 @@ async function companyDetail(baseId) {
               : d.storage_path ? `${SUPABASE_URL}/storage/v1/object/public/${d.storage_path}` : null,
       doc_type: d.doc_type, year: d.year, fyrirtaeki_id: d.fyrirtaeki_id,
       is_duplicate: !!d.is_duplicate, reviewed: !!d.reviewed,
+      needs_site: d.needs_site === true,
       invoice_number: d.invoice_number || null, amount: d.amount || null,
       filename,
       suggest_loc_id: sug ? sug.id : null,
@@ -182,7 +185,7 @@ async function globalList(scope) {
   const filt = scope === 'dups' ? 'is_duplicate=eq.true' : 'fyrirtaeki_id=is.null&is_duplicate=eq.false';
   const raw = [];
   for (let i = 0; i < baseIds.length; i += 200) {
-    raw.push(...await sbGet(`customer_documents?customer_base_id=in.${inList(baseIds.slice(i, i + 200))}&${filt}&select=id,customer_base_id,drive_file_id,storage_path,doc_type,year,fyrirtaeki_id,is_duplicate,reviewed,notes,doc_date,amount,invoice_number`));
+    raw.push(...await sbGet(`customer_documents?customer_base_id=in.${inList(baseIds.slice(i, i + 200))}&${filt}&select=id,customer_base_id,drive_file_id,storage_path,doc_type,year,fyrirtaeki_id,is_duplicate,reviewed,notes,doc_date,amount,invoice_number,needs_site`));
   }
   await enrichNames(raw, 60);
 
@@ -202,6 +205,7 @@ async function globalList(scope) {
               : d.storage_path ? `${SUPABASE_URL}/storage/v1/object/public/${d.storage_path}` : null,
       doc_type: d.doc_type, year: d.year, fyrirtaeki_id: d.fyrirtaeki_id,
       is_duplicate: !!d.is_duplicate, reviewed: !!d.reviewed,
+      needs_site: d.needs_site === true,
       invoice_number: d.invoice_number || null, amount: d.amount || null,
       filename,
       suggest_loc_id: sug ? sug.id : null, suggest_conf: sug ? sug.conf : null,
@@ -268,7 +272,13 @@ async function saveDoc(body) {
   const id = parseInt(body.id, 10);
   if (!id) throw new Error('vantar id');
   const patch = { found_by: 'manual' };
-  if ('fyrirtaeki_id' in body) patch.fyrirtaeki_id = body.fyrirtaeki_id === '' ? null : body.fyrirtaeki_id;
+  if ('fyrirtaeki_id' in body) {
+    patch.fyrirtaeki_id = body.fyrirtaeki_id === '' ? null : body.fyrirtaeki_id;
+    // Staður valinn af manneskju → yfirferðarmerkið (needs_site, sett af
+    // drive-multitool á fjölstaða-kt án sönnunar) hreinsast. Hreinsun á vali
+    // (null) lætur merkið standa — skjalið er þá aftur staðar-laust.
+    if (patch.fyrirtaeki_id != null) patch.needs_site = false;
+  }
   if ('year' in body)         patch.year = body.year === '' ? null : parseInt(body.year, 10);
   if ('is_duplicate' in body) patch.is_duplicate = !!body.is_duplicate;
   // 2026-08-07 (Agnar): BRUNA-hakið á stöðinni — víxlar úttektarskýrslu ⇄
@@ -351,7 +361,7 @@ async function consolidate(baseId, apply, overwrite) {
 
   if (!apply) return { sites: locations.length, relink_count: relink.length, dup_count: dups.length, relink, dups };
 
-  for (const r of relink) await patchDoc(r.id, { fyrirtaeki_id: r.to, found_by: 'match-station-auto' });
+  for (const r of relink) await patchDoc(r.id, { fyrirtaeki_id: r.to, found_by: 'match-station-auto', needs_site: false });
   for (const id of dups) await patchDoc(id, { is_duplicate: true });
   return { ok: true, sites: locations.length, relinked: relink.length, duped: dups.length };
 }

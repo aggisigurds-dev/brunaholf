@@ -4483,7 +4483,8 @@ function renderBakendi(t){
           const left = c.docs - c.reviewed;
           return '<option value="' + c.base_id + '">' + esc(c.nafn) + ' — ' + c.docs + ' skjöl'
             + (left ? (' · ' + left + ' óstaðfest') : ' · ✓')
-            + (c.unmatched ? (' · ' + c.unmatched + ' ótengd') : '') + '</option>';
+            + (c.unmatched ? (' · ' + c.unmatched + ' ótengd') : '')
+            + (c.needs_site ? (' · 🏷 ' + c.needs_site + ' vantar stað') : '') + '</option>';
         }).join('');
         setSt(cs.length + ' fyrirtæki í þjónustu', '#16a34a');
         // Deep-link from slökkvitæki: /#bakendi/<base_id> preselects that company.
@@ -4528,7 +4529,8 @@ function renderBakendi(t){
         + '<td style="' + cell + ';white-space:nowrap">' + (d.view_url
             ? '<a href="' + d.view_url + '" target="_blank" rel="noopener" class="btn" style="padding:3px 8px;text-decoration:none">📄 Opna</a>'
             : '<span style="color:#cbd5e1">engin skrá</span>') + '</td>'
-        + '<td style="' + cell + ';font-size:12px;color:' + (d.mangled ? '#b45309' : '#334155') + '">' + (d.mangled ? '⚠ ' : '') + esc(d.filename) + '</td>'
+        + '<td style="' + cell + ';font-size:12px;color:' + (d.mangled ? '#b45309' : '#334155') + '">' + (d.mangled ? '⚠ ' : '') + esc(d.filename)
+          + (d.needs_site ? ' <span style="display:inline-block;padding:1px 7px;border-radius:99px;background:#fee2e2;color:#b91c1c;font-size:10.5px;font-weight:700" title="Multitool: fjölstaða-kt án staðar-sönnunar (vegna-lína/heimilisfang/#stimpill fannst ekki) — veldu stað hér og merkið hreinsast.">🏷 vantar stað</span>' : '') + '</td>'
         + '<td style="' + cell + ';text-align:center">' + icon + '</td>'
         + '<td style="' + cell + ';text-align:center">' + brunaCell + '</td>'
         + '<td style="' + cell + '"><input class="st-year" value="' + esc(d.year) + '" style="width:60px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:12px"></td>'
