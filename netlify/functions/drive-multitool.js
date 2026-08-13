@@ -938,7 +938,10 @@ async function applyFile(token, body) {
   const isOurs = LINKABLE.has(doc_type);
 
   // vendor/other: sjálfgefið EKKERT gert; aðeins fært ef UI sendir markmöppu; aldrei tengt.
-  if (!isOurs && !targetFolder) return { ok: true, id, skipped: 'not-ours', renamed: false, moved: false, linked: false, linkAction: 'not-ours' };
+  // 2026-08-13: „↩︎ Endurnefna á staðnum" (body.inplace) er undantekningin —
+  // þar á að ENDURNEFNA allt sem á sér tillögunafn, líka vendor/other/staðgreitt,
+  // án markmöppu og án tengingar. Fellur áfram á sleppt-hegðun í öllum öðrum hömum.
+  if (!isOurs && !targetFolder && !body.inplace) return { ok: true, id, skipped: 'not-ours', renamed: false, moved: false, linked: false, linkAction: 'not-ours' };
 
   // 2026-08-05 (Agnar: „ég spenti huga tíma í að endurnefna... en multitool og
   // cowork tóku út nafnið"): þessi skrá er ÞEGAR tengd customer_documents
