@@ -10568,7 +10568,7 @@ async function renderGerdReikninga(t){
               <span class="gr-tbk-tools">
                 <button type="button" class="gr-tbk-ic" id="gr-tbk-add" title="Bæta línu">＋</button>
                 <button type="button" class="gr-tbk-ic" id="gr-tbk-refetch" title="Endursækja úr tímaveru.is (hendir handvirkum breytingum)">🔄</button>
-                <button type="button" class="gr-tbk-ic" id="gr-tbk-expand" title="Stækka til hægri / minnka">⤢</button>
+                <button type="button" class="gr-tbk-ic" id="gr-tbk-expand" title="Stækka tímaskýrsluna / minnka (Efnislistinn helst sýnilegur)">⤢</button>
               </span>
             </div>
             <div class="gr-tbk-body" id="gr-tbk-body"><div class="gr-tbk-empty">Sæki tímafærslur…</div></div>
@@ -19520,11 +19520,12 @@ function ensureTbkPanelCss(){
     .gr-tbk-ic{border:1px solid var(--line-2,#cbd5e1);background:var(--card,#fff);border-radius:7px;width:26px;height:26px;cursor:pointer;font-size:13px;line-height:1;color:#475569}
     .gr-tbk-ic:hover{background:#f1f5f9}
     .gr-tbk-body{margin-top:8px;max-height:240px;overflow:auto}
-    .gr-tbk-r{display:grid;grid-template-columns:104px 1fr 50px 50px 54px 24px;gap:4px;align-items:center;padding:2px 0}
-    .gr-tbk-r.on{grid-template-columns:100px 1fr 46px 46px 48px 44px 44px 22px}
-    .gr-tbk-r.head{font-weight:700;color:#94a3b8;font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;padding-bottom:3px}
+    .gr-tbk-tbl{width:max-content;max-width:100%}
+    .gr-tbk-r{display:grid;grid-template-columns:100px minmax(56px,132px) 42px 42px 48px 20px;gap:3px;align-items:center;padding:2px 0}
+    .gr-tbk-r.on{grid-template-columns:92px minmax(50px,112px) 38px 38px 42px 38px 38px 16px}
+    .gr-tbk-r.head{font-weight:700;color:#94a3b8;font-size:9px;text-transform:uppercase;letter-spacing:.03em;padding-bottom:3px}
     .gr-tbk-r.head .r{text-align:right}
-    .gr-tbk-r input{width:100%;box-sizing:border-box;padding:3px 5px;border:1px solid var(--line-2,#e2e8f0);border-radius:5px;font:inherit;font-size:11.5px;background:var(--input-bg,#fff);min-width:0}
+    .gr-tbk-r input{width:100%;box-sizing:border-box;padding:2px 4px;border:1px solid var(--line-2,#e2e8f0);border-radius:5px;font:inherit;font-size:11px;background:var(--input-bg,#fff);min-width:0}
     .gr-tbk-r input.num{background:#fffbeb;border-color:#fcd34d;text-align:right}
     .gr-tbk-r .dv,.gr-tbk-r .yf{text-align:right;font-variant-numeric:tabular-nums;color:#475569;font-size:11px}
     .gr-tbk-r .yf{color:#b45309}
@@ -19534,10 +19535,11 @@ function ensureTbkPanelCss(){
     .gr-tbk-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:11.5px;color:#475569}
     .gr-tbk-foot input[type=text]{width:52px;padding:3px 5px;border:1px solid var(--line-2,#cbd5e1);border-radius:5px;font:inherit}
     .gr-tbk-foot .tot{margin-left:auto;color:#0f172a}
-    .gr-modal.gr-tbk-open .gr-tbk{position:absolute;top:0;right:0;bottom:0;width:calc(100% - 380px);margin:0;border-top:0;border-left:1px solid var(--line-2,#e5e0d6);background:var(--card,#fff);padding:16px 18px;overflow:auto;z-index:3;box-shadow:-8px 0 24px -18px rgba(0,0,0,.3)}
+    .gr-modal.gr-tbk-open{width:min(1280px,97vw);grid-template-columns:600px 1fr}
     .gr-modal.gr-tbk-open .gr-tbk-body{max-height:none}
-    .gr-modal.gr-tbk-open .gr-prev{visibility:hidden}
-    @media(max-width:860px){.gr-modal.gr-tbk-open .gr-tbk{position:static;width:auto;border-left:0}}
+    .gr-modal.gr-tbk-open .gr-tbk-r{grid-template-columns:120px minmax(140px,1fr) 62px 62px 70px 24px}
+    .gr-modal.gr-tbk-open .gr-tbk-r.on{grid-template-columns:112px minmax(120px,1fr) 56px 56px 62px 56px 56px 20px}
+    @media(max-width:900px){.gr-modal.gr-tbk-open{grid-template-columns:1fr;width:min(1080px,96vw)}}
   `;
   document.head.appendChild(st);
 }
