@@ -306,24 +306,45 @@ async function sb(path) {
 }
 
 async function fetchAllPages(path) {
-  const out = [];
+  // 2026-08-13 afkastalagfæring: síðurnar voru sóttar Í RÖÐ (email_digest í
+  // ársglugganum er ~9.200 raðir = ~10 síður × RTT ≈ meirihluti 5,5s
+  // svartíma /api/worksites). Fyrsta síðan biður nú um count=exact og
+  // afgangurinn er sóttur SAMHLIÐA — sama niðurstaða, ~2×RTT í stað N×RTT.
   const pageSize = 1000;
-  let from = 0;
-  while (true) {
+  const fetchPage = async (from, withCount) => {
     const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
       headers: {
         'apikey': SUPABASE_KEY,
         'Authorization': `Bearer ${SUPABASE_KEY}`,
         'Range': `${from}-${from + pageSize - 1}`,
         'Range-Unit': 'items',
+        ...(withCount ? { 'Prefer': 'count=exact' } : {}),
       },
     });
     if (!r.ok) throw new Error(`Supabase ${r.status}: ${(await r.text()).slice(0, 200)}`);
-    const page = await r.json();
-    out.push(...page);
-    if (page.length < pageSize) break;
-    from += pageSize;
+    return { rows: await r.json(), contentRange: r.headers.get('content-range') || '' };
+  };
+  const first = await fetchPage(0, true);
+  const out = first.rows.slice();
+  // Content-Range: "0-999/9199" → heildarfjöldi á eftir skástrikinu.
+  const total = parseInt((first.contentRange.split('/')[1] || ''), 10);
+  if (!Number.isFinite(total) || total <= pageSize) {
+    // Óþekkt heild (ólíklegt) → gamla röð-hegðunin sem öryggisnet.
+    if (first.rows.length === pageSize) {
+      let from = pageSize;
+      while (true) {
+        const p = await fetchPage(from, false);
+        out.push(...p.rows);
+        if (p.rows.length < pageSize) break;
+        from += pageSize;
+      }
+    }
+    return out;
   }
+  const rest = [];
+  for (let from = pageSize; from < total; from += pageSize) rest.push(from);
+  const pages = await Promise.all(rest.map((f) => fetchPage(f, false)));
+  for (const p of pages) out.push(...p.rows);
   return out;
 }
 
