@@ -165,3 +165,28 @@
 # store. Background function (15-min budget) → handles the full backfill.
 [functions."storage-backup-background"]
   schedule = "0 3 * * *"
+
+# ── Afkasta-caching (2026-08-13) ─────────────────────────────────────────────
+# Allar <script>/<link> tilvísanir nota ?v= útgáfustimpil, svo það er óhætt að
+# leyfa vafranum að endurnota skrárnar án 304-umferðar í klukkustund — og
+# stale-while-revalidate uppfærir í bakgrunni. HTML-síðurnar sjálfar halda
+# sjálfgefna must-revalidate (þær eru inngangurinn og mega aldrei vera gamlar).
+[[headers]]
+  for = "/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600, stale-while-revalidate=86400"
+
+[[headers]]
+  for = "/css/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600, stale-while-revalidate=86400"
+
+[[headers]]
+  for = "/img/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400, stale-while-revalidate=604800"
+
+[[headers]]
+  for = "/fonts/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, immutable"

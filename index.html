@@ -6,6 +6,32 @@
      scriptunum og þá sæist einmitt versta tegundin ekki. -->
 <script src="/js/villuvakt.js?v=1"></script>
 <script src="/js/theme.js?v=1"></script>
+<script>
+/* Afkasta-lagfæring 2026-08-13: sameina samhliða EINS GET-köll á /api/*.
+   Mælt við ræsingu: /api/worksites?year=combined (11,1s!) og
+   /api/data-sources-status og /api/invoice-drafts voru öll sótt TVISVAR
+   samtímis af óskyldum einingum. Þessi vafningur lætur seinni kallarann
+   deila svari þess fyrri — AÐEINS á meðan kallið er í flugi (engin
+   eftir-á-skyndminni, svo ferskleiki og GET-með-hliðarverkun, t.d.
+   /api/timavera-pull, hegða sér eins og áður: tvö samtímis eins köll
+   hefðu hvort eð er skilað sama svari). response.clone() per neytanda. */
+(function(){
+  var origFetch = window.fetch.bind(window);
+  var inflight = new Map();
+  window.fetch = function(input, init){
+    try {
+      var url = (typeof input === 'string') ? input : (input && input.url) || '';
+      var method = ((init && init.method) || (input && input.method) || 'GET').toUpperCase();
+      var isApiGet = method === 'GET' && /^(\/api\/|https?:\/\/[^/]*brunaholf\.netlify\.app\/api\/)/.test(url);
+      if (!isApiGet) return origFetch(input, init);
+      if (inflight.has(url)) return inflight.get(url).then(function(r){ return r.clone(); });
+      var p = origFetch(input, init).finally(function(){ inflight.delete(url); });
+      inflight.set(url, p);
+      return p.then(function(r){ return r.clone(); });
+    } catch (e) { return origFetch(input, init); }
+  };
+})();
+</script>
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
@@ -22,6 +48,7 @@
 <link rel="manifest" href="/manifest.json?v=flame1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://osfdzskyvisifcwyjkuk.supabase.co">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,500;1,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/theme.css?v=1">
 <style>
