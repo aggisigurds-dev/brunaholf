@@ -87,6 +87,78 @@ function resolveSite(fileName, sites, extraAddr) {
   return null;   // margir staðir, engin (einkvæm) sönnun → EKKI snert
 }
 
+// ── Vegna-/Tilvísunar-línan (2026-08-13, Agnar) ─────────────────────────────
+// Reikningar til rekstrarfélaga nefna staðinn EKKI í hausnum — hann stendur í
+// frítexta neðst: „Vegna Plaza", „vegna Center Hótel Grandi / ný álma",
+// „Tilvísun: brunakerfi Centerhotels Klapparstíg 26". Þessi lína er fjórða
+// sönnunartegundin (via 'vegna') á eftir stamp/single/addr — og eins og hinar
+// verður hún að benda á nákvæmlega EINN stað, annars ekkert (aldrei giskað;
+// það var ágiskunin sem tengdi R-105528 við rangt hótel).
+
+// Dregur vegna-/tilvísunar-línur úr PDF-texta. Skilar lista strengja (0-2).
+function vegnaFrom(text) {
+  const t = String(text || '');
+  const out = [];
+  const v = t.match(/\bvegna:?[ \t]+(.+)$/im);
+  if (v) out.push(v[1]);
+  const tv = t.match(/\btilv[íi]sun:?[ \t]*(.+)$/im);
+  if (tv) out.push(tv[1]);
+  return out.map(s => s.replace(/\s+/g, ' ').trim().replace(/[.,;:]+$/, ''))
+    .filter(s => s.length >= 3 && s.length <= 120);
+}
+
+function foldText(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
+
+// Sameiginlegt forskeyti tveggja orða — þolir íslenskar beygingar
+// („grandi"/„granda", „arnarhvoll"/„arnarhvoli") án þess að opna fyrir
+// almennt substring-suð.
+function _pfxHit(a, b) {
+  let n = 0; while (n < a.length && n < b.length && a[n] === b[n]) n++;
+  return n >= Math.max(4, Math.min(a.length, b.length) - 1);
+}
+
+// Staðar-samsvörun úr vegna-línum: borin saman við NÖFN og HEIMILISFÖNG allra
+// staða undir sama base + project_aliases fyrir stytt nöfn („Plaza" →
+// „Center Hótel Plaza"). Skilar { id, nafn, via:'vegna', hint } eða null.
+// AÐEINS þegar nákvæmlega einn staður passar — annars null.
+function matchSiteByVegna(vegnaLines, sites, aliases) {
+  if (!Array.isArray(sites) || sites.length < 2) return null;
+  const lines = (vegnaLines || []).filter(Boolean);
+  if (!lines.length) return null;
+  // Aðgreinandi nafn-orð hvers staðar: orð (≥4 stafir) sem koma EKKI fyrir í
+  // nafni neins systur-staðar („center"/„hotel" detta út, „plaza" stendur).
+  const wordsOf = s => (foldText(s).match(/[a-z0-9]{4,}/g) || []);
+  const siteWords = sites.map(s => wordsOf(s.nafn));
+  const distinct = sites.map((s, i) => siteWords[i].filter(w =>
+    siteWords.every((ws, j) => j === i || !ws.some(o => _pfxHit(w, o)))));
+  const matched = new Map();   // site.id → site
+  for (const line of lines) {
+    let lw = wordsOf(line);
+    // project_aliases: alias í línunni → orð kanóníska nafnsins bætast við.
+    for (const a of (aliases || [])) {
+      const al = foldText(a.alias || '');
+      if (al.length >= 3 && foldText(line).includes(al)) lw = lw.concat(wordsOf(a.canonical_name));
+    }
+    // 1) nafn-sönnun: aðgreinandi orð staðar finnst í línunni
+    sites.forEach((s, i) => {
+      if (distinct[i].some(tok => lw.some(w => _pfxHit(w, tok)))) matched.set(s.id, s);
+    });
+    // 2) heimilisfangs-sönnun: „gata + númer" pör í línunni → addrkey staðar
+    const fl = foldText(line);
+    let pm; const pairRe = /([a-z]{3,})[ \t]+(\d{1,4})/g;
+    while ((pm = pairRe.exec(fl))) {
+      const key = pm[1].slice(0, 6) + '|' + pm[2];
+      const hits = sites.filter(s => s.addrkey && s.addrkey === key);
+      if (hits.length === 1) matched.set(hits[0].id, hits[0]);
+    }
+  }
+  if (matched.size === 1) {
+    const hit = [...matched.values()][0];
+    return { id: hit.id, nafn: hit.nafn, via: 'vegna', hint: lines[0] };
+  }
+  return null;   // enginn eða fleiri en einn → ekkert giskað
+}
+
 // Má skrifa site.id á skjalið með þessu drive_file_id? Fyrirliggjandi ≠ null
 // fyrirtaeki_id má aðeins víkja fyrir #id-stimplinum (via 'stamp').
 async function siteWriteAllowed(driveFileId, site) {
@@ -100,4 +172,4 @@ async function siteWriteAllowed(driveFileId, site) {
   } catch (_) { return false; }                                           // óvissa → ekki skrifa
 }
 
-module.exports = { siteStampFromName, addrKeyLoose, sitesByBases, sitesForBase, resolveSite, siteWriteAllowed };
+module.exports = { siteStampFromName, addrKeyLoose, sitesByBases, sitesForBase, resolveSite, siteWriteAllowed, vegnaFrom, matchSiteByVegna };

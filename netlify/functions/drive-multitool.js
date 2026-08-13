@@ -31,7 +31,20 @@
 
 const pdf = require('pdf-parse');
 const { freshAccessToken, json, cors } = require('./_google');
-const { sitesForBase, resolveSite, siteWriteAllowed, siteStampFromName } = require('./_spine');
+const { sitesForBase, resolveSite, siteWriteAllowed, siteStampFromName, vegnaFrom, matchSiteByVegna } = require('./_spine');
+
+// project_aliases (stytt nöfn → kanónísk: „Plaza" → „Center Hótel Plaza") —
+// notað í vegna-línu staðargreiningunni. Skyndiminni per lambda-instance.
+let _aliasCache = null;
+async function loadAliases() {
+  if (_aliasCache) return _aliasCache;
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/project_aliases?select=canonical_name,alias`, { headers: sbHeaders() });
+    _aliasCache = await r.json().catch(() => []);
+    if (!Array.isArray(_aliasCache)) _aliasCache = [];
+  } catch (_) { _aliasCache = []; }
+  return _aliasCache;
+}
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -689,6 +702,17 @@ async function previewFile(token, f, opts) {
     const addr = cleanAddr(reportAddr(text) || addrFromContent(text) || siteFrom(text) || '') || null;
     try { site = resolveSite(f.name, sites, addr); } catch (_) { site = null; }
   }
+  // Vegna-/Tilvísunar-línan (2026-08-13): staðurinn í frítexta neðst á
+  // reikningum rekstrarfélaga („Vegna Plaza", „Tilvísun: … Klapparstíg 26").
+  // Fjórða sönnunartegundin — reynd þegar stamp/single/addr skiluðu engu.
+  // Greiningin sjálf (vegna[0]) fer með í svarið svo hún sjáist í töflunni
+  // ÁÐUR en ýtt er á Keyra. Klikki hún vistast skjalið samt (ALLTAF LEYFA
+  // VISTUN) — bara ótengt við stað og merkt needs_site í apply.
+  let vegna = [];
+  try { vegna = vegnaFrom(text); } catch (_) { vegna = []; }
+  if (!site && multiSite && vegna.length) {
+    try { site = matchSiteByVegna(vegna, sites, await loadAliases()); } catch (_) {}
+  }
 
   const coName = cleanCompany((base && base.nafn) || companyFrom(text, f.name, { stripFolder: opts.stripFolder, folderNames: opts.folderNames }) || '');
 
@@ -740,6 +764,10 @@ async function previewFile(token, f, opts) {
     site_id: site ? site.id : null,
     site_nafn: site ? site.nafn : null,
     site_via: site ? site.via : null,
+    // Greining: vegna-/tilvísunar-línan eins og hún las úr skjalinu (sýnd í
+    // töflunni), og needs_site-tillagan: fjölstaða-kt án nokkurrar sönnunar.
+    vegna: vegna[0] || '',
+    needs_site: !!(multiSite && !site),
     year: year || null,
     invoice_number: inv || '',
     stad_signal,
@@ -965,7 +993,7 @@ async function applyFile(token, body) {
   let alreadyLinked = null;
   if (isOurs) {
     try {
-      const exr = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?drive_file_id=eq.${id}&select=id&limit=1`, { headers: sbHeaders() });
+      const exr = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?drive_file_id=eq.${id}&select=id,fyrirtaeki_id&limit=1`, { headers: sbHeaders() });
       const exRows = await exr.json().catch(() => []);
       alreadyLinked = (Array.isArray(exRows) && exRows[0]) ? exRows[0] : null;
     } catch (_) {}
@@ -1057,6 +1085,13 @@ async function applyFile(token, body) {
   // sjálfvirka „drive-multitool · …" stimpilinn á hverju sweep-i.
   if (skipRename) delete docRow.notes;
   if (site && await siteWriteAllowed(id, site)) docRow.fyrirtaeki_id = site.id;
+  // needs_site (2026-08-13): fjölstaða-kt án staðar-sönnunar → skjalið vistast
+  // SAMT (ALLTAF LEYFA VISTUN), tengt base-inu einu, en merkt í yfirferð.
+  // Aldrei giskað á stað (R-105528 lexían). Fái röðin stað (nú eða var þegar
+  // með) hreinsast merkið; annars ósnert svo fyrirliggjandi staða standi.
+  const hasSiteAlready = !!(alreadyLinked && alreadyLinked.fyrirtaeki_id != null);
+  if (docRow.fyrirtaeki_id != null || hasSiteAlready) docRow.needs_site = false;
+  else if (multiSite && !site_id) docRow.needs_site = true;
 
   let linked = false, linkAction = '', conflict = false, doc_id = null;
   try {
