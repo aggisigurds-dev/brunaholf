@@ -223,7 +223,13 @@ function isSamningur(text) {
 }
 function invNum(text, name) {
   let m = String(name).match(/\bR[\s\-_]?(\d{5,7})\b/i); if (m) return 'R-' + m[1];
-  m = String(text).match(/(?:kredit)?reikningur\s*(?:nr\.?\s*:?\s*)?(1\d{5})\b/i); if (m) return 'R-' + m[1];
+  // 2026-08-13 (rukkunarkeðju-rannsókn, liður 0): reglan sem greip HVAÐA
+  // 1-byrjandi sextölustaf sem er í grennd við orðið „reikningur" — án nr.-
+  // akkeris — er FJARLÆGÐ. Hún bjó til R-114922/24/25/26 árekstrana þar sem
+  // fjögur ÓLÍK félög deildu sama númeri (stakur tölustafur úr dagsetningu/
+  // símanúmeri o.þ.h. varð að „reikningsnúmeri") og rangt PDF gat farið á
+  // rangan kúnna. Rangt númer er verra en ekkert: NULL þegar lesarinn er
+  // ekki viss — aðeins skýrt akkeri („Reikningur nr. …" eða R-nr í skráarnafni).
   m = String(text).match(/Reikningur\s*nr\.?\s*:?\s*(\d{4,7})\b/i); if (m) return 'R-' + m[1];
   return '';
 }
@@ -565,7 +571,12 @@ async function existingDocId({ cls, inv, baseId, year, siteId, multiSite }) {
   try {
     if (cls === 'reikningur') {
       if (!inv) return null;
-      const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?doc_type=eq.reikningur&invoice_number=eq.${encodeURIComponent(inv)}&drive_file_id=not.is.null&select=id&limit=1`, { headers: sbHeaders() });
+      // 2026-08-13 (liður 0): invoice_number EITT er EKKI einkvæmt — mislesin
+      // númer (R-114922/24/25/26) lágu á fjórum ÓLÍKUM kennitölum og uppfletting
+      // án kúnna-krossins gat parað skjal ANNARS félags. Krossum ALLTAF á
+      // customer_base_id; án baseId er engin örugg samsvörun til.
+      if (!baseId) return null;
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?doc_type=eq.reikningur&invoice_number=eq.${encodeURIComponent(inv)}&customer_base_id=eq.${encodeURIComponent(baseId)}&drive_file_id=not.is.null&select=id&limit=1`, { headers: sbHeaders() });
       const rows = await r.json().catch(() => []); return (Array.isArray(rows) && rows[0]) ? rows[0].id : null;
     }
     if (cls === 'uttektarskyrsla' || cls === 'brunakerfi') {
