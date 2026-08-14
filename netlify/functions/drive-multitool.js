@@ -877,6 +877,21 @@ async function budFlutningur(token, b) {
   // hver flutt skrá sannprófuð með files.get (link_ok) — færslan breytir
   // engu id-i en það er ódýrt að SANNA það.
   if (b.src === 'cowork') {
+    // verify_only: files.get á cowork-bud ids í skömmtum (offset/limit) —
+    // sannar að drive_file_id svari enn eftir færslu, innan tímamarka fallsins.
+    if (b.verify_only) {
+      const ids = (await sbqAll('cowork_reikn_flokkun_20260814?select=drive_file_id&tegund=eq.bud&drive_file_id=not.is.null&order=drive_file_id'))
+        .map(r => String(r.drive_file_id));
+      const off = Math.max(0, parseInt(b.offset || '0', 10) || 0);
+      const lim = Math.min(70, Math.max(1, parseInt(b.limit || '70', 10) || 70));
+      const slice = ids.slice(off, off + lim);
+      const out = { verify_only: true, total: ids.length, offset: off, checked: slice.length, link_ok: 0, link_fail: [] };
+      for (const id of slice) {
+        try { await getFile(token, id); out.link_ok++; }
+        catch (e) { out.link_fail.push(id); }
+      }
+      return out;
+    }
     const cw = await sbqAll('cowork_reikn_flokkun_20260814?select=drive_file_id,tegund,invoice_number&tegund=eq.bud&drive_file_id=not.is.null');
     const budIds = new Set(cw.map(r => String(r.drive_file_id)));
     const facts2 = await sbqAll('uttekt_reikningur_facts?select=doc_id&doc_id=not.is.null');
