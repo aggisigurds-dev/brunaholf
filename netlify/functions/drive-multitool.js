@@ -31,7 +31,7 @@
 
 const pdf = require('pdf-parse');
 const { freshAccessToken, json, cors } = require('./_google');
-const { sitesForBase, resolveSite, siteWriteAllowed, siteStampFromName, vegnaFrom, matchSiteByVegna } = require('./_spine');
+const { sitesForBase, resolveSite, siteWriteAllowed, siteStampFromName, vegnaFrom, matchSiteByVegna, vidskiptategundSkjals } = require('./_spine');
 
 // project_aliases (stytt nöfn → kanónísk: „Plaza" → „Center Hótel Plaza") —
 // notað í vegna-línu staðargreiningunni. Skyndiminni per lambda-instance.
@@ -580,17 +580,26 @@ async function matchBase(kt) {
 //   brunakerfi              rekstrarfélag með >1 lifandi stað BÆTIST fyrirtaeki_id
 //                           við (annars gæti önnur starfsstöð litið út sem tvítak).
 // Skilar existing_doc_id eða null.
-async function existingDocId({ cls, inv, baseId, year, siteId, multiSite }) {
+async function existingDocId({ cls, inv, baseId, year, siteId, multiSite, total }) {
   try {
     if (cls === 'reikningur') {
-      if (!inv) return null;
       // 2026-08-13 (liður 0): invoice_number EITT er EKKI einkvæmt — mislesin
       // númer (R-114922/24/25/26) lágu á fjórum ÓLÍKUM kennitölum og uppfletting
       // án kúnna-krossins gat parað skjal ANNARS félags. Krossum ALLTAF á
       // customer_base_id; án baseId er engin örugg samsvörun til.
       if (!baseId) return null;
-      const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?doc_type=eq.reikningur&invoice_number=eq.${encodeURIComponent(inv)}&customer_base_id=eq.${encodeURIComponent(baseId)}&drive_file_id=not.is.null&select=id&limit=1`, { headers: sbHeaders() });
-      const rows = await r.json().catch(() => []); return (Array.isArray(rows) && rows[0]) ? rows[0].id : null;
+      if (inv) {
+        const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?doc_type=eq.reikningur&invoice_number=eq.${encodeURIComponent(inv)}&customer_base_id=eq.${encodeURIComponent(baseId)}&drive_file_id=not.is.null&select=id&limit=1`, { headers: sbHeaders() });
+        const rows = await r.json().catch(() => []); return (Array.isArray(rows) && rows[0]) ? rows[0].id : null;
+      }
+      // Pakki 8 varaleið: Stólpa-skann án lesanlegs númers → samsetti lykillinn
+      // kt(base)+upphæð+ár — nánast einkvæmur á þessu safni. Án upphæðar+árs
+      // er engin örugg samsvörun (null = ekkert fullyrt).
+      if (total && year) {
+        const r2 = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?doc_type=eq.reikningur&customer_base_id=eq.${encodeURIComponent(baseId)}&amount=eq.${encodeURIComponent(total)}&year=eq.${encodeURIComponent(year)}&invoice_number=is.null&drive_file_id=not.is.null&select=id&limit=1`, { headers: sbHeaders() });
+        const rows2 = await r2.json().catch(() => []); return (Array.isArray(rows2) && rows2[0]) ? rows2[0].id : null;
+      }
+      return null;
     }
     if (cls === 'uttektarskyrsla' || cls === 'brunakerfi') {
       if (!baseId || !year) return null;
@@ -746,13 +755,22 @@ async function previewFile(token, f, opts) {
   // Þegar tengt?
   let existing_doc_id = null;
   if (cls.doc_type === 'reikningur' || cls.doc_type === 'uttektarskyrsla' || cls.doc_type === 'brunakerfi') {
-    existing_doc_id = await existingDocId({ cls: cls.doc_type, inv, baseId: base ? base.id : null, year, siteId: site ? site.id : null, multiSite });
+    existing_doc_id = await existingDocId({ cls: cls.doc_type, inv, baseId: base ? base.id : null, year, siteId: site ? site.id : null, multiSite, total });
+  }
+
+  // vidskiptategund (Pakki 8): reiknuð í forskoðun (sala → línur → búðarmappa
+  // → ovisst) og send með í apply svo hún stimplist á skjalaröðina.
+  let vidskiptategund = null;
+  if (cls.doc_type === 'reikningur' || cls.doc_type === 'stadgreitt') {
+    try { vidskiptategund = await vidskiptategundSkjals({ inv, text, folderIds: f.parents || [] }); } catch (_) { vidskiptategund = 'ovisst'; }
   }
 
   return {
     id: f.id,
     name: f.name,
     parents: f.parents || [],
+    vidskiptategund,
+    total: total || null,
     doc_type: cls.doc_type,
     sub_hint: cls.sub_hint || '',
     issuer_ours: !!issuerOurs,
@@ -1005,12 +1023,19 @@ async function patchDocById(docId, row) {
 //   brunakerfi/samningur       fyrir rekstrarfélag með >1 lifandi stað]
 // Skilar {id, drive_file_id} eða null. Fyrir report-family án árs (nema samningur)
 // → null (of óvíst til að fullyrða tvítak). Multi-site án staðar-sönnunar → null.
-async function findExistingLink({ doc_type, invoice_number, base_id, year, site_id, multiSite }) {
+async function findExistingLink({ doc_type, invoice_number, base_id, year, site_id, multiSite, amount }) {
   try {
     if (doc_type === 'reikningur') {
-      if (!invoice_number) return null;
-      const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?doc_type=eq.reikningur&invoice_number=eq.${encodeURIComponent(invoice_number)}&drive_file_id=not.is.null&select=id,drive_file_id&limit=1`, { headers: sbHeaders() });
-      const rows = await r.json().catch(() => []); return (Array.isArray(rows) && rows[0]) ? rows[0] : null;
+      if (invoice_number) {
+        const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?doc_type=eq.reikningur&invoice_number=eq.${encodeURIComponent(invoice_number)}&drive_file_id=not.is.null&select=id,drive_file_id&limit=1`, { headers: sbHeaders() });
+        const rows = await r.json().catch(() => []); return (Array.isArray(rows) && rows[0]) ? rows[0] : null;
+      }
+      // Pakki 8 varaleið: án númers → kt(base)+upphæð+ár samsetti lykillinn.
+      if (base_id && amount && year) {
+        const r2 = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?doc_type=eq.reikningur&customer_base_id=eq.${encodeURIComponent(base_id)}&amount=eq.${encodeURIComponent(amount)}&year=eq.${encodeURIComponent(year)}&invoice_number=is.null&drive_file_id=not.is.null&select=id,drive_file_id&limit=1`, { headers: sbHeaders() });
+        const rows2 = await r2.json().catch(() => []); return (Array.isArray(rows2) && rows2[0]) ? rows2[0] : null;
+      }
+      return null;
     }
     if (!base_id) return null;
     if ((doc_type === 'uttektarskyrsla' || doc_type === 'brunakerfi') && !year) return null;
@@ -1119,7 +1144,7 @@ async function applyFile(token, body) {
   let alreadyLinked = null;
   if (isOurs) {
     try {
-      const exr = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?drive_file_id=eq.${id}&select=id,fyrirtaeki_id&limit=1`, { headers: sbHeaders() });
+      const exr = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?drive_file_id=eq.${id}&select=id,fyrirtaeki_id,vidskiptategund&limit=1`, { headers: sbHeaders() });
       const exRows = await exr.json().catch(() => []);
       alreadyLinked = (Array.isArray(exRows) && exRows[0]) ? exRows[0] : null;
     } catch (_) {}
@@ -1167,7 +1192,7 @@ async function applyFile(token, body) {
   let sites = []; try { if (base_id) sites = await sitesForBase(base_id); } catch (_) {}
   const multiSite = sites.length > 1;
   let existing = null;
-  try { existing = await findExistingLink({ doc_type, invoice_number, base_id, year, site_id, multiSite }); } catch (_) {}
+  try { existing = await findExistingLink({ doc_type, invoice_number, base_id, year, site_id, multiSite, amount: body.amount != null && body.amount !== '' ? Number(body.amount) : null }); } catch (_) {}
   const conflictRow = !!(existing && existing.drive_file_id !== id);   // önnur skrá heldur lyklinum
 
   // Staðar-heimild: #id-stimpill í nafni er einа sönnunin sem má yfirskrifa
@@ -1196,6 +1221,18 @@ async function applyFile(token, body) {
     customer_name: base_nafn || null,
     notes: 'drive-multitool' + (invoice_number ? (' · ' + invoice_number) : '') + (year ? (' · ' + year) : '') + (base_id ? '' : ' · RESOLVE'),
   };
+  // vidskiptategund (Pakki 8): úr forskoðuninni (body) þegar hún fylgir, annars
+  // reiknuð hér (sala-erfð + búðarmöppur; enginn texti á apply-stigi). Sett
+  // gildi á fyrirliggjandi röð er ALDREI yfirskrifað.
+  let vt = ['uttekt', 'bud', 'ovisst'].includes(body.vidskiptategund) ? body.vidskiptategund : null;
+  if (!vt && doc_type === 'reikningur') {
+    try { vt = await vidskiptategundSkjals({ inv: invoice_number, folderIds: parents }); } catch (_) { vt = 'ovisst'; }
+  }
+  if (vt && !(alreadyLinked && alreadyLinked.vidskiptategund)) docRow.vidskiptategund = vt;
+  // Upphæðin fylgir (samsetti tvítakalykillinn kt+upphæð+ár þarf hana) — aldrei núlluð.
+  if (body.amount != null && body.amount !== '') docRow.amount = Number(body.amount) || null;
+  if (docRow.amount == null) delete docRow.amount;
+
   // „Aldrei núllað"-vörnin (2026-07-30): merge-duplicates SKRIFAR hvern dálk sem
   // er í body-inu — apply án base_id/base_nafn/year núllaði því fyrirliggjandi
   // customer_base_id/customer_name/year á tengdri röð (gerðist live á doc 1497).

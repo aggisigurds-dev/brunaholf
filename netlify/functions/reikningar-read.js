@@ -15,7 +15,7 @@
 
 const pdf = require('pdf-parse');
 const { freshAccessToken, json, cors } = require('./_google');
-const { sitesForBase, resolveSite, siteWriteAllowed } = require('./_spine');
+const { sitesForBase, resolveSite, siteWriteAllowed, vidskiptategundSkjals } = require('./_spine');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -39,14 +39,24 @@ exports.handler = async (event) => {
     if (!body.drive_file_id) return json(400, { error: 'drive_file_id required' });
     const yr = body.year || (body.doc_date ? parseInt(String(body.doc_date).slice(0, 4), 10) : null);
     try {
-      await upsertDoc({
+      const row = {
         customer_base_id: body.customer_base_id || null,
         doc_type: 'reikningur', year: yr, drive_file_id: body.drive_file_id,
         source: 'gdrive', found_by: 'manual',
         amount: body.total || null, invoice_number: body.invoice_number || null,
         doc_date: body.doc_date || null, customer_name: body.customer_name || null,
         notes: (body.customer_base_id ? 'Handvirk tenging' : 'Handvirkt: aftengt') + (body.invoice_number ? (' · ' + body.invoice_number) : ''),
-      });
+      };
+      // vidskiptategund (Pakki 8): handvirka leiðin stimplar líka — sölu-erfð
+      // eftir númeri; sett gildi aldrei yfirskrifað.
+      try {
+        const exT = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?drive_file_id=eq.${encodeURIComponent(body.drive_file_id)}&select=vidskiptategund&limit=1`, { headers: sbHeaders() });
+        const exRows = await exT.json().catch(() => []);
+        if (!(Array.isArray(exRows) && exRows[0] && exRows[0].vidskiptategund)) {
+          row.vidskiptategund = await vidskiptategundSkjals({ inv: body.invoice_number });
+        }
+      } catch (_) {}
+      await upsertDoc(row);
       return json(200, { ok: true });
     } catch (e) { return json(500, { error: String(e.message || e) }); }
   }
@@ -118,6 +128,17 @@ exports.handler = async (event) => {
           // fyrirtaeki_id fylgir AÐEINS þegar hann er sannaður OG má skrifast
           // (merge-upsert má aldrei núlla/yfirskrifa stað sem er þegar réttur).
           if (site && await siteWriteAllowed(f.id, site)) docRow.fyrirtaeki_id = site.id;
+          // vidskiptategund (Pakki 8): stimpluð við innlestur — sala → línur →
+          // búðarmappa (folder-inn sem verið er að lesa) → ovisst. Sett gildi
+          // á fyrirliggjandi röð er ALDREI yfirskrifað (merge-upsert skrifar
+          // hvern sendan dálk, svo dálkurinn er felldur úr þegar gildi er til).
+          try {
+            const exT = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?drive_file_id=eq.${encodeURIComponent(f.id)}&select=vidskiptategund&limit=1`, { headers: sbHeaders() });
+            const exRows = await exT.json().catch(() => []);
+            if (!(Array.isArray(exRows) && exRows[0] && exRows[0].vidskiptategund)) {
+              docRow.vidskiptategund = await vidskiptategundSkjals({ inv: invoice_number, text: norm, folderIds: [folder] });
+            }
+          } catch (_) {}
           await upsertDoc(docRow);
           stats.indexed++;
         }

@@ -172,4 +172,43 @@ async function siteWriteAllowed(driveFileId, site) {
   } catch (_) { return false; }                                           // óvissa → ekki skrifa
 }
 
-module.exports = { siteStampFromName, addrKeyLoose, sitesByBases, sitesForBase, resolveSite, siteWriteAllowed, vegnaFrom, matchSiteByVegna };
+// ── vidskiptategund skjals (Pakki 8, 2026-08-14) ────────────────────────────
+// Sama flokkun og solur.vidskiptategund — reiknuð VIÐ HVERJA VISTUN skjals,
+// annars rekur dálkurinn í sundur í næsta innlestri. Forgangsröð:
+//   1) sala með sama invoice_number  → erfa solur.vidskiptategund
+//   2) línulestur á PDF-textanum     → skýrslugerð+akstur = uttekt · aðeins tæki = bud
+//   3) búðarmappa (áfanga- eða upprunamappa) → bud
+//   4) annars 'ovisst' — gilt ástand sem á að sjást, aldrei giskað.
+// ALLTAF LEYFA VISTUN: fallið kastar aldrei — óvissa skilar 'ovisst'.
+const BUD_FOLDERS = new Set([
+  '1pMagde63IhF7DtGWrLmhx32HCVxsCQX9',  // Búðarreikningar (áfangamappa í reikninga-master)
+  '17IvVazsVeAGsSiwZ0TVidB0JFCYdtWpz',  // stolpi jan-feb 2026 - stakar (upprunamappa)
+  '1XLSoqJM-UDwJIArfeyuBy9SgX-3EPL4V',  // vidskiptavina nótur 2025 (upprunamappa)
+]);
+async function vidskiptategundSkjals(opts) {
+  const o = opts || {};
+  try {
+    const inv = String(o.inv || '').trim();
+    if (inv) {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/solur?num=eq.${encodeURIComponent(inv)}&select=vidskiptategund&limit=1`, { headers: sbHeaders() });
+      const rows = await r.json().catch(() => []);
+      if (Array.isArray(rows) && rows[0] && rows[0].vidskiptategund) return rows[0].vidskiptategund;
+    }
+  } catch (_) {}
+  try {
+    const t = String(o.text || '');
+    if (t) {
+      const skyrsla = /skýrslugerð|skyrslugerd/i.test(t);
+      const akstur = /\bakstur/i.test(t);
+      const taeki = /yfirferð|yfirferd|hleðsla|hledsla|slökkvitæki|slokkvitaeki|reykskynjar|léttvatn|lettvatn|\bduft |co₂|co2/i.test(t);
+      if (skyrsla && akstur) return 'uttekt';
+      if (taeki && !skyrsla && !akstur) return 'bud';
+    }
+  } catch (_) {}
+  try {
+    if ((o.folderIds || []).some(p => BUD_FOLDERS.has(String(p)))) return 'bud';
+  } catch (_) {}
+  return 'ovisst';
+}
+
+module.exports = { siteStampFromName, addrKeyLoose, sitesByBases, sitesForBase, resolveSite, siteWriteAllowed, vegnaFrom, matchSiteByVegna, vidskiptategundSkjals, BUD_FOLDERS };

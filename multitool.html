@@ -965,6 +965,9 @@
       // vistast samt (tengt kúnnanum einum) og fer merkt í yfirferð.
       if(r.vegna) bits.push('<span title="Vegna-/Tilvísunar-línan úr skjalinu — grunnur staðargreiningarinnar"><span class="k">Greining:</span> „'+esc(r.vegna)+'"'+(r.site_via==='vegna'?' <span class="pill" style="background:#dcfce7;color:#166534;border-color:#bbf7d0">→ 📍 '+esc(r.site_nafn||'')+'</span>':'')+'</span>');
       if(r.needs_site && !r.__done) bits.push('<span class="pill red" title="Rekstrarfélag með marga staði en engin staðar-sönnun (vegna-lína / heimilisfang / #stimpill). Vistast tengt kúnnanum EINUM — aldrei giskað á stað — og merkist needs_site í yfirferð.">🏷 vantar stað → yfirferð</span>');
+      // Pakki 8: vidskiptategund úr forskoðuninni (sala→línur→búðarmappa→óvíst)
+      // — stimplast á skjalaröðina við Keyra.
+      if(r.vidskiptategund) bits.push('<span class="pill" title="Úttekt eða búðarsala — stimplast á skjalaröðina við Keyra (sala → línur → búðarmappa → óvíst)">'+(r.vidskiptategund==='uttekt'?'🧯 úttekt':(r.vidskiptategund==='bud'?'🛒 búð':'❓ óvíst'))+'</span>');
       // Í sóttkví/forflokkun er ekkert tengt — „ekki tengt"-merkið væri villandi þar.
       if(!noLink()) bits.push('<span>'+linked+'</span>');
       // ✏️ Leiðrétta — opnar innfelldan ritil (data-nostop svo röð-smellur opni ekki forskoðun)
@@ -1130,6 +1133,9 @@
     var body={ action:'apply', id:r.id, doc_type:r.doc_type, base_id:r.base_id, base_nafn:r.base_nafn,
       year:r.year, invoice_number:r.invoice_number, site_id:r.site_id,
       proposed_name:(r.__finalName || r.proposed_name),
+      // Pakki 8: tegundin úr forskoðuninni (sala→línur→búðarmappa) og upphæðin
+      // (samsetti tvítakalykillinn kt+upphæð+ár þegar númer vantar) fylgja með.
+      vidskiptategund:r.vidskiptategund||null, amount:(r.total!=null?r.total:null),
       targetFolder:targetFor(r), linkMode:linkMode(), noLink:noLink(), inplace:inplaceOn() };
     try{
       var rr=await fetch('/api/drive-multitool',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
