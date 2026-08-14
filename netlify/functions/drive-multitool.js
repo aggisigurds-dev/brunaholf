@@ -843,6 +843,73 @@ async function ensureFolder(token, parent, name) {
   const d = await cr.json();
   return { id: d.id, name, created: true };
 }
+// ── Pakki 7 (Verk 5, 2026-08-14): SANNAÐIR búðarreikningar úr reikninga-
+// masternum í undirmöppuna „Búðarreikningar" INNI í masternum (þá telur
+// /api/drive-count þá áfram með, recurse:true). Sönnun = tengd sala með
+// solur.vidskiptategund='bud' (invoice_number ↔ num). Sannaðar úttektir
+// (uttekt_reikningur_facts.doc_id) hreyfast ALDREI — mótsögn (sala segir búð
+// EN facts segja úttekt) telst árekstur og skjalið stendur kyrrt. ovisst og
+// sölulausir án sönnunar sitja líka kyrrir — ATH frávik frá brief-i: engin
+// lína-tafla er til fyrir sölulausu PDF-in (greiningin á 522 reikningum býr
+// ekki í grunninum), svo „línu-reglan fyrir skrár án sölu" bíður þess.
+// FÆRSLA, ekki afritun (addParents/removeParents) — drive_file_id helst
+// óbreytt svo öll customer_documents-gildi virka áfram. EKKERT eyðist.
+// Sjálfgefið DRY (b.dry !== false) — skilar talningu án þess að hreyfa neitt.
+async function budFlutningur(token, b) {
+  const MASTER = folderId(b.master || '1FHHX99LRB_9w_LqwHIY57T4l9mLMID7p');
+  const dry = b.dry !== false;
+  const sbqAll = async (path) => {
+    let out = [], off = 0;
+    for (;;) {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}&offset=${off}&limit=1000`, { headers: sbHeaders() });
+      if (!r.ok) throw new Error('sb ' + path.split('?')[0] + ' ' + r.status);
+      const rows = await r.json();
+      out = out.concat(rows);
+      if (!Array.isArray(rows) || rows.length < 1000) break;
+      off += 1000;
+    }
+    return out;
+  };
+  const sales = await sbqAll('solur?select=num,vidskiptategund&num=not.is.null');
+  const tegByNum = {};
+  sales.forEach(s => { const n = String(s.num || '').trim().toUpperCase(); if (n) tegByNum[n] = s.vidskiptategund || 'ovisst'; });
+  const facts = await sbqAll('uttekt_reikningur_facts?select=doc_id&doc_id=not.is.null');
+  const uttektDocIds = new Set(facts.map(f => String(f.doc_id)));
+  const docs = await sbqAll('customer_documents?doc_type=eq.reikningur&drive_file_id=not.is.null&select=id,drive_file_id,invoice_number');
+  const byFileId = {};
+  docs.forEach(d => { byFileId[String(d.drive_file_id)] = d; });
+
+  const children = await listChildren(token, MASTER);
+  const files = children.filter(c => c.mimeType !== FOLDER_MIME);
+  let target = children.find(c => c.mimeType === FOLDER_MIME && c.name === 'Búðarreikningar') || null;
+  const counts = { dry, master_files: files.length, bud: 0, uttekt_stadfest: 0, ovisst: 0, engin_sonnun: 0, arekstur: 0, moved: 0, errors: [] };
+  const toMove = [];
+  for (const f of files) {
+    const doc = byFileId[String(f.id)];
+    if (!doc) { counts.engin_sonnun++; continue; }
+    const teg = tegByNum[String(doc.invoice_number || '').trim().toUpperCase()];
+    const erUttektDoc = uttektDocIds.has(String(doc.id));
+    if (teg === 'bud' && erUttektDoc) { counts.arekstur++; continue; }
+    if (erUttektDoc || teg === 'uttekt') { counts.uttekt_stadfest++; continue; }
+    if (teg === 'bud') { counts.bud++; toMove.push(f); continue; }
+    if (teg === 'ovisst') { counts.ovisst++; continue; }
+    counts.engin_sonnun++;
+  }
+  if (!dry && toMove.length) {
+    if (!target) target = await ensureFolder(token, MASTER, 'Búðarreikningar');
+    for (const f of toMove) {
+      try {
+        await movePatch(token, f.id, { addParents: target.id, removeParents: MASTER });
+        counts.moved++;
+        await logApply({ base_id: null, base_nafn: null, origName: f.name, proposed_name: null, doc_type: 'búðarreikningur', targetFolder: 'Búðarreikningar', linkAction: 'bud-flutningur', conflict: false });
+      } catch (e) { counts.errors.push(f.name + ': ' + String(e.message || e)); }
+    }
+  }
+  counts.target = target ? target.id : null;
+  counts.to_move_daemi = toMove.slice(0, 12).map(f => f.name);
+  return counts;
+}
+
 async function quarantineFolders(token, src, mode) {
   if (!src) return { ok: false, error: 'src required' };
   const set = mode === 'presort' ? PRESORT_FOLDERS : QUARANTINE_FOLDERS;
@@ -1165,6 +1232,12 @@ exports.handler = async (event) => {
     }
     // quarantine-folders: býr til (eða finnur) sóttkvíar-undirmöppurnar í lesmöppunni.
     // Eina skrifið er möppu-stofnun — engin skrá hreyfð, ekkert tengt.
+    // Pakki 7 verk 5: búðarreikningar úr masternum (sjálfgefið DRY).
+    if (b.action === 'bud-flutningur') {
+      let tk5; try { tk5 = await freshAccessToken(); } catch (e) { return json(401, { error: e.message }); }
+      try { return json(200, await budFlutningur(tk5, b)); }
+      catch (e) { return json(500, { error: String(e.message || e) }); }
+    }
     if (b.action === 'quarantine-folders') {
       let tk; try { tk = await freshAccessToken(); } catch (e) { return json(401, { error: e.message }); }
       try { return json(200, await quarantineFolders(tk, folderId(b.src), b.mode)); }
