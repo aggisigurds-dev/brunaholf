@@ -870,6 +870,50 @@ async function budFlutningur(token, b) {
     }
     return out;
   };
+  // ── Cowork-hamur (framhald 14.08): 177 sölulausir gamlir reikningar sem
+  // Cowork línulas úr PDF-unum sjálfum — flokkunin býr í töflunni
+  // cowork_reikn_flokkun_20260814 (bud=129/ovisst=48). Sama færslu-vél,
+  // önnur sönnunar-uppspretta. ovisst fer HVERGI. Eftir live-færslu er
+  // hver flutt skrá sannprófuð með files.get (link_ok) — færslan breytir
+  // engu id-i en það er ódýrt að SANNA það.
+  if (b.src === 'cowork') {
+    const cw = await sbqAll('cowork_reikn_flokkun_20260814?select=drive_file_id,tegund,invoice_number&tegund=eq.bud&drive_file_id=not.is.null');
+    const budIds = new Set(cw.map(r => String(r.drive_file_id)));
+    const facts2 = await sbqAll('uttekt_reikningur_facts?select=doc_id&doc_id=not.is.null');
+    const cwDocs = await sbqAll('cowork_reikn_flokkun_20260814?select=doc_id,drive_file_id&tegund=eq.bud');
+    const factsDocIds = new Set(facts2.map(f => String(f.doc_id)));
+    const conflictIds = new Set(cwDocs.filter(d => factsDocIds.has(String(d.doc_id))).map(d => String(d.drive_file_id)));
+    const children2 = await listChildren(token, MASTER);
+    const files2 = children2.filter(c => c.mimeType !== FOLDER_MIME);
+    let target2 = children2.find(c => c.mimeType === FOLDER_MIME && c.name === 'Búðarreikningar') || null;
+    const toMove2 = files2.filter(f => budIds.has(String(f.id)) && !conflictIds.has(String(f.id)));
+    const out = {
+      dry, src: 'cowork', cowork_bud: budIds.size,
+      i_master: toMove2.length,
+      ekki_i_master: budIds.size - toMove2.length - [...conflictIds].filter(id => files2.some(f => String(f.id) === id)).length,
+      arekstur_facts: conflictIds.size,
+      moved: 0, link_ok: 0, link_fail: [], errors: [],
+      to_move_daemi: toMove2.slice(0, 10).map(f => f.name),
+    };
+    if (!dry && toMove2.length) {
+      if (!target2) target2 = await ensureFolder(token, MASTER, 'Búðarreikningar');
+      for (const f of toMove2) {
+        try {
+          await movePatch(token, f.id, { addParents: target2.id, removeParents: MASTER });
+          out.moved++;
+          await logApply({ base_id: null, base_nafn: null, origName: f.name, proposed_name: null, doc_type: 'búðarreikningur', targetFolder: 'Búðarreikningar', linkAction: 'bud-flutningur-cowork', conflict: false });
+        } catch (e) { out.errors.push(f.name + ': ' + String(e.message || e)); }
+      }
+      // link_ok: hver flutt skrá svarar enn á SAMA drive_file_id
+      for (const f of toMove2) {
+        try { await getFile(token, f.id); out.link_ok++; }
+        catch (e) { out.link_fail.push(f.id); }
+      }
+    }
+    out.target = target2 ? target2.id : null;
+    return out;
+  }
+
   const sales = await sbqAll('solur?select=num,vidskiptategund&num=not.is.null');
   const tegByNum = {};
   sales.forEach(s => { const n = String(s.num || '').trim().toUpperCase(); if (n) tegByNum[n] = s.vidskiptategund || 'ovisst'; });
