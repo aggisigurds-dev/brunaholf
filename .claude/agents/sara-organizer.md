@@ -158,3 +158,91 @@ reikningar for customer + kt + amount) and fill the matching `vantar`
 cell. Add new service customers as they sign up. Surface (don't drop)
 anything undated.
 
+---
+
+*Kaflarnir hér fyrir neðan voru fluttir orðrétt úr `CLAUDE.md` 2026-08-19
+(verkefnalisti 22a44bdc) — sama efni, nýr staður.*
+
+## Pörun — document_pairs (2026-08-05)
+
+Skýrsla↔reikningur pörun (verkefnalisti 94295522). `customer_documents` hefur ENGA
+FK milli skýrslu- og reikningsraða (`doc_type` ∈ `samningur|uttektarskyrsla|reikningur|
+brunakerfi`; `invoice_number` er bara sett á `reikningur`-raðir). `v_bundle_coverage`
+(`sql/2026-07-31_v_bundle_coverage.sql`) er lifandi kt+ár+kind heurística (engin
+geymd tengsl) sem `veidin.js`/`svid-status.js` lesa — hún nær EKKI utan um það þegar
+ein úttektarskýrsla dekkar bæði Úttekt- OG Brunakerfi-parið sama ár (t.d. E
+Fasteignafélag / Norðurhella 17: R-000652 = úttekt, R-000651 = brunakerfi, EIN
+skýrslu-röð).
+
+`document_pairs` (`sql/2026-08-05_document_pairs.sql`) er ný, viðbótar (ekki í stað
+`v_bundle_coverage`) tafla með `customer_base_id, year, service_type ('uttekt'|
+'brunakerfi'), report_doc_id, invoice_doc_id, solur_id, status, matched_by`. Ein-
+skipta bakfylling keyrð 2026-08-05 (91 klarad þ.m.t. 1 `shared_report`, 1085
+vantar_reikning, 5 vantar_skyrslu) — `on conflict do nothing` gerir endurkeyrslu
+óhætta. `matched_by='shared_report'` = sama skýrslu-röðin endurnýtt fyrir hitt
+kind-ið þegar það á enga eigin.
+
+Slökkvitæki-hliðin: núverandi „📦 Pör" bandið (`js/patches/253-sala-customer-
+history.js`, Sala → 🧾 Fyrri viðskipti) er ÓBREYTT í grunninn (les enn `customer_
+documents`+`solur` beint, alltaf ferskt) en spyr núna líka `document_pairs` til að
+fylla inn skýrslu sem vantaði bara vegna shared_report-tilviksins, og til að láta
+kind-röð birtast yfirhöfuð þegar reikningur er til en engin doc_type-röð flokkast
+undir það kind. Sendingin sjálf (`sendBundle`) sendi nú þegar bæði skjölin saman —
+ekkert nýtt þurfti þar.
+
+**Vísvitandi sleppt** (sjá verkefnalisti-athugasemd): full endursköpun „Skjöl &
+Viðhengi"-síðunnar sem flipuðum árs-bundlum, og að BLOKKA sendingu ef parið er
+ófullkomið — `sendBundle` sendir nú þegar það sem er til án þess að neita, sem er
+skárra en að læsa notandann úti vegna heimtu-galla í parningar-rökfræðinni.
+### Sjálfvirk pörun — biðstaða (2026-08-08)
+
+`document_pairs` er **núna sjálfvirkt viðhaldið**. Áður þurfti Agnar að tengja í
+höndunum í hvert sinn: opna fellilistann „— hvaða reikningur?", force-reseta til að
+sjá nýja reikninginn, fara á Sölu-síðuna, finna fyrirtækið, staðfesta að númerið væri
+rétt, og smella á „Tengja". Bakfyllingin frá 2026-08-05 var ein-skipta, svo hvert nýtt
+skjal datt strax út fyrir.
+
+Trigger `trg_auto_pair_customer_document` á `customer_documents` (fall
+`auto_pair_customer_document()`) sér um þetta núna. Tvær leiðir:
+
+- **Biðstaða (INSERT).** Bíði par eftir hinni hliðinni grípur það NÆSTA skjal sem
+  verður til fyrir sama `customer_base_id` + ár. Þetta er vinnuflæðið sjálft:
+  skýrsla klárast → tengill bíður → reikningurinn sem þú býrð til næst tengist
+  sjálfkrafa. `matched_by='auto_standby'`.
+- **Varfærna leiðin (UPDATE / INSERT sem biðstaðan tók ekki).** Tengir aðeins þegar
+  nákvæmlega EITT óafritað skjal af þeirri tegund er til á fyrirtæki+ári, og býr til
+  nýtt par ef ekkert er fyrir. `matched_by='auto_trigger'`.
+
+⚠️ **Tvær skorður sem má ekki fjarlægja:**
+
+1. **Biðstaðan er AÐEINS framvirk (`TG_OP='INSERT'`).** Mælt 2026-08-08: 56 bíðandi
+   pör áttu 126 mögulega lausa reikninga — fjóra hvert. Afturvirk „gríptu einhvern
+   lausan" hefði því giskað rangt oftar en rétt. Tímaröðin sjálf ber ætlunina:
+   reikningurinn sem verður til næst ER reikningur skýrslunnar. Ekki keyra
+   biðstöðuna sem bakfyllingu.
+2. **Talið er yfir ALLAR þjónustutegundir, ekki bara `uttekt`.** Bíði bæði úttektar-
+   OG brunakerfis-par eftir reikningi er ómögulegt að vita hvoru hann tilheyrir, svo
+   þá er ekki giskað og fellilistinn stendur eftir. Fyrsta útgáfan síaði á
+   `service_type='uttekt'` og hefði rænt brunakerfis-parinu í hljóði — prófun greip það.
+
+Prófað 2026-08-08 í transaction sem var rúllað til baka: eitt par bíður → tengist;
+tvö pör bíða → **0 rangar tengingar**. Bakfylling á 2026 með sömu vörðu rökfræði
+færði `klarad` úr 96 í 203. Afrit: `backup_20260808_document_pairs`.
+
+Ath. að tengingin gerist í gagnagrunninum, óháð því hvaða app skrifaði skjalið
+(Sala, Drive-innsog, POS, appið) — en gömul opin síða þarf samt endurhleðslu til að
+**sjá** hana. Cache-hliðin er óleyst.
+
+**2026-08-09 — pörin eru núna PER STAÐ (`fyrirtaeki_id`), ekki bara per lögaðila.**
+Gamla `UNIQUE (customer_base_id, year, service_type)` skorðan þýddi að fjölstaða-
+viðskiptavinur gat aðeins átt EITT par per ár: hjá Heimaleigu (12 staðir á base 293)
+tók Dalbrekka sætið 3. ágúst og Urðarhvarf 2 gat því ALDREI tengst — sama hvað var
+reynt í fellilistanum. Breytt: nýr dálkur `document_pairs.fyrirtaeki_id` (backfyllt
+úr skjölum paranna, 1.273/1.281), einkvæmnin er nú
+`(customer_base_id, year, service_type, coalesce(fyrirtaeki_id,0))`, og triggerinn
+skalar bæði talningar og pörun á staðinn þegar skjalið ber `fyrirtaeki_id`. Skjal
+MEÐ stað parast aðeins við pör SAMA staðar (aldrei við null-staðar pör — það væri
+ágiskun); skjal ÁN staðar hegðar sér eins og áður gegn null-staðar pörum. Prófað:
+reikningur á þriðja systkinastað bjó til sitt eigið par án þess að snerta hin.
+Afrit: `backup_20260809_document_pairs`. Sama lexía og annars staðar í skjalinu:
+**kennitala/base svarar „hver borgar", aldrei „hvar unnum við".**
