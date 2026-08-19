@@ -14,10 +14,13 @@ Agnar queues work for Claude on a shared board. **Standing instruction (2026-07-
 at the start of a work session, look at open work before starting anything new.**
 
 - **Read the board:** `GET https://brunaholf.netlify.app/api/verkefnalisti` — returns
-  everything; the ones that matter are `stada` in `beidni` (requested) and `i_vinnu`
+  everything; the ones that matter are `status` in `beidni` (requested) and `i_vinnu`
   (in progress).
 - **States:** `beidni` → `i_vinnu` → `i_yfirferd` (Agnar approves) → `klarad`.
-- **Move a task:** `POST /api/verkefnalisti { action:'update', id, stada, … }`.
+- **Move a task:** `POST /api/verkefnalisti { action:'update', id, status, … }`.
+  ⚠️ The field is `status` (English), NOT `stada` — and the API **silently
+  ignores unknown fields**, so a `stada` update returns ok:true while the
+  status stays put (bit for real 2026-08-19).
 - **`claude_notes`** is Claude's reply text on the task.
 
 ## A screenshot of the result is part of finishing
@@ -26,7 +29,7 @@ review from his phone without opening the app — pass it as `result_image_b64` 
 **same** update call:
 ```
 POST /api/verkefnalisti
-{ "action":"update", "id":<id>, "stada":"i_yfirferd",
+{ "action":"update", "id":<id>, "status":"i_yfirferd",
   "result_image_b64":"<base64 png>", "claude_notes":"hvað var gert" }
 ```
 In a Claude Code web/remote session, take that screenshot with `tools/bh-browser.cjs`
