@@ -231,3 +231,49 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
 > `renderReikningagerd` (full invoicing-prep view). The remaining Reikningagerð
 > ambitions live under Open work below.
 
+---
+
+*Kaflarnir hér fyrir neðan voru fluttir orðrétt úr `CLAUDE.md` 2026-08-19
+(verkefnalisti 22a44bdc) — sama efni, nýr staður.*
+
+## Fjármála-yfirlit-flipi — 2026-08-08
+
+Nýr flipi **`fjarmalyfirlit`** (💰 Fjármála-yfirlit, beint á eftir `krofuyfirlit`) —
+app-síðan `/fjarmalyfirlit.html` (peningapípan þvert á Slökkvitæki + Brunahólf,
+les `/api/fjarmal-yfirlit` + `/api/nlsh-dashboard`) er nú líka alvöru hub-flipi.
+`renderFjarmalyfirlit(t)` í `index.html` fellir hana inn í iframe með
+`?v=Date.now()` — sama mynstur og Eyðublöð/Multitool, svo síðan á sér einn
+sannleik og lifir áfram óbreytt sem sjálfstæð slóð og app-síða í
+slökkvitæki-öppunum (`br-fjarmalyfirlit` í patch 261). Deep-link:
+`/#fjarmalyfirlit` (líka í `?embed=1`).
+
+## Skýrslur-flipi + CG (Calculation Group) — 2026-08-02
+
+Nýr flipi **`skyrslur`** (fyrir ofan `krofuyfirlit`) — samantektir yfir óinnheimtar
+tekjur (klárað en ógreitt). `renderSkyrslur(t)` í `index.html`.
+
+- **CG-id kerfi**: hver samantektar-/heildartölu-gluggi fær fast CG-id. Innbyggð:
+  `CG-01` Ógreitt · `CG-02` Ósent · `CG-03` Tími eftir · `CG-04` Samtals í pípunni
+  (öll á Kröfu yfirlit KPI-spjöldunum gegnum `cgBadge(id,value)`).
+- **Gildi** vistuð í `localStorage.cg_values` (`cgRecord`); Skýrslur les þau.
+  `CG_BUILTINS` = föst, `CG_REGISTRY` = builtins + notenda-CG.
+- **Handvalin CG** (`localStorage.cg_user`): „🎯 Bæta við CG" → `cgCaptureOn()`
+  kveikir upptökuham (borði neðst + `document`-smellhlustari í fanga-fasa). Notandi
+  flettir að glugga, smellir á töluna → `cgFindContainer`/`cgExtractKr`/`cgExtractLabel`
+  → modal → `cgSaveCaptured` gefur næsta id (CG-05+). Handvalin CG geyma snapshot
+  (ekki live) — taka upp aftur til að uppfæra.
+- **Skýrslur** (`localStorage.cg_reports`): notandi leggur saman CG-id (`➕ Ný skýrsla`).
+  Hvert spjald tengir á aðgerðasíðuna (uppruna) svo hægt sé að breyta þar (greitt/fela).
+- `cgSyncBanner()` er kallað efst í `render()` svo upptöku-borðinn lifir milli flipa.
+- **Cross-app capture (2026-08-05)**: `localStorage` deilist ALDREI milli léna, svo tölur
+  á slokkvitaeki.netlify.app náðust ekki hingað með gamla upptökukerfinu (verkefnalisti
+  664205fc feedback). Nýtt: tafla `cg_entries` í sama Supabase-verkefni + fall
+  `netlify/functions/cg-entries.js` (`GET` listar, `POST {action:'record',…}` vistar/
+  uppfærir, eigið id-nafnrými `CG-Sxx` svo það rekist ekki á staðbundna `cg_user` teljara).
+  `window.cgFetchShared()` (kallað við ræsingu) sækir þessar færslur og bætir í
+  `CG_SHARED`/`CG_REGISTRY`/`CG_VALUES`. Á Slökkvitæki-hliðinni: `js/patches/
+  296-cg-capture.js` — fljótandi „🎯 CG" takki neðst t.v. á ÖLLUM síðum, sami
+  smell-á-töluna-flæði, POSTar beint á `https://brunaholf.netlify.app/api/cg-entries`
+  með `source_app:'slokkvitaeki'`.
+- **Eftir**: merkja fleiri innbyggða glugga (Krófur & Tekjur, Slökkvitæki „í vinnslu");
+  „Admin mode" takki við klukkuna (báðar síður) fyrir handvirkar leiðréttingar í summum.

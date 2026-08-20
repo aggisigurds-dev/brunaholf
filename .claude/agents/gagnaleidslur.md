@@ -156,3 +156,35 @@ no file-write** — safe-by-design. `type:module`, deps `@modelcontextprotocol/s
   regression) run against a throwaway localhost server, so it passes anywhere.
 - v2 (unbuilt): resumable-resume on rupt, Chrome DevTools bridge, extension control.
 
+---
+
+*Kaflarnir hér fyrir neðan voru fluttir orðrétt úr `CLAUDE.md` 2026-08-19
+(verkefnalisti 22a44bdc) — sama efni, nýr staður.*
+
+## Efniskostnaður — handvirk verkstaða-tenging (2026-08-05)
+
+Verkefnalisti a12d429a: Redder-reikningar sem `redder-read.js` gat ekki tengt sjálfkrafa
+(`worksite_match IS NULL` — oftast af því engin verkstaðar-tilvísun fannst í PDF-inu
+sjálfu, bara tengiliða-merki eins og „umb Lukas") sátu áður sem varanlega ólæsanleg
+„Án verkstaðs"-hrúga. Efniskostnaður-flipinn hefur núna:
+- **„🔗 Tengja við verkstað" á hverjum reikningi** — setur `worksite_match` á ÞANN eina
+  reikning (POST `/api/redder-invoices {invoice_nr, worksite_match}` — endapunkturinn
+  studdi þetta nú þegar, bara enga UI). Engin sjálfvirk `project_aliases`-lærdómur hér,
+  af því hrátextinn á ólæstum reikningum er oftast bara tengiliðs-nafn, ekki alvöru
+  verkstaðar-afbrigði — að læra af honum myndi ranglega flokka næsta reikning með sama
+  tengilið en ANNAN verkstað.
+- **„✏️" á hverjum verkstaða-hóp** — endurnefnir ALLA reikninga undir því nafni í einu
+  (nýtt `POST /api/redder-invoices {action:'rename_worksite', from, to, learn_alias:true}`)
+  OG skrifar `project_aliases(alias=from, canonical_name=to)` — því hér ER `worksite_match`
+  þegar alvöru (þótt misstafað) verkstaðarnafn. `redder-read.js` sækir núna
+  `project_aliases` úr gagnagrunni (`loadAliasesFromDb()`, keyrt einu sinni per innlestur,
+  DB-gildi vinna umfram hardcoded `ALIAS`-kortið) svo ný PDF-innlestur nýtir handvirku
+  leiðréttinguna sjálfkrafa — `ALIAS`-kortið í kóðanum er ekki lengur eina uppsprettan.
+- Verkstaða-listinn í tengi-reitnum (`<datalist>`) er sambland af `/api/worksites?year=
+  combined` og því sem þegar er notað í `redder_invoices` — alltaf a.m.k. þau nöfn sem
+  eru í notkun nú þegar.
+
+**Vísvitandi sleppt**: línu-stigs tenging (að taka STAKA vörulínu úr reikningi og tengja
+við annan verkstað en restina af reikningnum) — `redder_line_items` hefur engan eigin
+`worksite`-dálk, og öll skoðuð dæmi af ólæstum reikningum voru heilir reikningar sem
+vantaði verkstað, ekki blönduð fjölverkstaða-reikningar. Bæta við ef alvöru þörf kemur upp.
