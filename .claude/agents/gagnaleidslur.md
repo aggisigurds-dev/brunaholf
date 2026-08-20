@@ -227,6 +227,11 @@ vantaði verkstað, ekki blönduð fjölverkstaða-reikningar. Bæta við ef alv
   502 → tóm merki. Lagað: **`fetchAllParallel`** (count-first, allar síður `Promise.all`
   → ~1,5s) + **felag-RPC í `Promise.race` með 6s þaki** (spike getur ekki ýtt fallinu
   yfir; grænt fellur á in-JS fallback ef felag svarar ekki í tíma). Nú ~3–4s, 200 áreiðanlega.
+  📜 **Full póstsaga per kúnna (2026-08-20):** `GET /api/company-mail?co=<fyrirtaeki_id>`
+  → `{fyrirtaeki_id, base_id, mails:[…]}` (öll samskipti, nýjast fyrst, deduppað á email).
+  Knúið af `tv_company_history(fyrirtaeki_id)` RPC (`sql/2026-08-20_tv_company_history.sql`,
+  SECURITY DEFINER, 15s timeout, bundið við EINN base → hratt, t.d. Center Hótel = 139 póstar).
+  Notað af „📜 Sjá alla póstsöguna"-modal í slokkvitaeki patch 295.
 - **`public.tv_postar_list()` RPC (`sql/2026-08-19_tv_postar_list.sql`):** SECURITY DEFINER
   + `set statement_timeout='25s'`; hópar in-service kúnna + pósta þeirra fyrir Þjónustuver
   póstar (slokkvitaeki patch 309) — því `felag_samskipti`-viewið er dýrt og fellur á

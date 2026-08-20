@@ -44,6 +44,18 @@ exports.handler = async (event) => {
 
   try {
     const q = event.queryStringParameters || {};
+
+    // ── Single-company FULL history mode (on-demand, from the badge popover) ──
+    //   GET /api/company-mail?co=<fyrirtaeki_id>
+    //     → { fyrirtaeki_id, base_id, mails:[{id,subject,snippet,sender_name,
+    //         sender_email,is_question,fra_okkur,received_at,via}] }  (all-time, desc)
+    if (q.co) {
+      const coId = parseInt(q.co, 10);
+      if (!Number.isFinite(coId)) return json(400, { error: 'bad co id' });
+      const hist = await rpcCompanyHistory(coId);
+      return json(200, hist || { fyrirtaeki_id: coId, mails: [] });
+    }
+
     let days = parseInt(q.days, 10);
     if (!Number.isFinite(days) || days <= 0) days = 365;
     days = Math.min(days, 730);
@@ -391,6 +403,18 @@ async function rpcHistorySites(days) {
   });
   if (!r.ok) throw new Error(`tv_history_sites: ${r.status} ${(await r.text()).slice(0, 160)}`);
   return r.json(); // { ids:[bigint], detail:{ "<site_id>": {from, subject, received_at} } }
+}
+
+// Full communication history for ONE company (all-time), for the popover expander.
+async function rpcCompanyHistory(coId) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/tv_company_history`, {
+    method: 'POST',
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`,
+      'content-type': 'application/json' },
+    body: JSON.stringify({ p_fyrirtaeki_id: coId }),
+  });
+  if (!r.ok) throw new Error(`tv_company_history: ${r.status} ${(await r.text()).slice(0, 160)}`);
+  return r.json(); // { fyrirtaeki_id, base_id, mails:[…] }
 }
 
 // Like fetchAll but fires all pages CONCURRENTLY (count-first), for the heavy
