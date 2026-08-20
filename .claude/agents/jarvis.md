@@ -28,12 +28,14 @@ Jarvis-síðuna sjálfa (`jarvis.html`) — svið, raddir, TTS og cache.
 | Skrá | Hvað | Fjöldi |
 |---|---|---|
 | `js/jarvis-voice.js:21-117` | `AGENTS` — raddirnar (Fish voice_id + fallback) | 14 |
-| `netlify/functions/svid-status.js:21-74` | `SVID` — takkarnir/sviðin með söfnurum | 8 |
-| `jarvis.html:324` | Roster-HTML-ið (handskrifað, bara útlit) | 10 |
+| `netlify/functions/svid-status.js` | `SVID` — takkarnir/sviðin með söfnurum | 12 |
+| `jarvis.html:324` | Roster-HTML-ið (handskrifað, bara útlit) | 13 |
 
-`jarvis` og `house` eru AÐEINS raddir — ekkert svið. **„Dagleg yfirsýn" er því
-ekki til sem takki** — vilji maður hann þarf `SVID.jarvis` + `safnaJarvis()`
-safnara. (`daily-health.js` er ÓTENGD pípu-heilsu-emailvakt, ekki Jarvis.)
+2026-08-20 fengu `jarvis` (safnaJarvis: opin verk, rauð kerfi, útistandandi,
+vantar_reikning), `oryggi` (RPC `oryggi_counts()`, rödd Arnold), `prentun`
+(DeVito) og `kort` (Ramsay) eigin svið; `yfirlit` fékk `agent:'hype'`.
+`house` er áfram AÐEINS rödd — ekkert svið. (`daily-health.js` er ÓTENGD
+pípu-heilsu-emailvakt, ekki Jarvis.)
 
 ## Svið-flæðið (takkasmell → rödd)
 
