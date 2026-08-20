@@ -53,7 +53,13 @@ exports.handler = async (event) => {
     // póstar uses) in PARALLEL with our own reads. It is ~3.4s server-side, so total
     // time ≈ max(this, the email_digest scan), not the sum. Never throws into the
     // response: on any failure green just falls back to the exact/single-site matches.
-    const histPromise = rpcHistorySites(days).catch(() => null);
+    // Cap felag so a slow view can never push the whole function past Netlify's
+    // ~10s limit — if it doesn't answer in time, green falls back to the in-JS
+    // single-site matches below (function stays fast and always returns 200).
+    const histPromise = Promise.race([
+      rpcHistorySites(days),
+      new Promise((res) => setTimeout(() => res(null), 6000)),
+    ]).catch(() => null);
 
     // ---- service companies (live sites in service) ----
     const sites = await fetchAll('fyrirtaeki',
@@ -128,8 +134,11 @@ exports.handler = async (event) => {
         scanned: { emails: 0, companies: sites.length, matched: 0 } });
     }
 
-    // ---- read recent email_digest (inbound + sent) ----
-    const rows = await fetchAll('email_digest',
+    // ---- read recent email_digest (inbound + sent) — PARALLEL pages ----
+    // This is the heavy read (~7k rows). Sequential paging cost ~9s and pushed
+    // the function to Netlify's 10s cliff (→ 502 → empty badges). Parallel paging
+    // brings it to ~1.5s. See fetchAllParallel.
+    const rows = await fetchAllParallel('email_digest',
       'select=sender_email,to_addresses,subject,snippet,body_preview,is_question,received_at,folder' +
       `&received_at=gte.${encodeURIComponent(sinceIso)}&order=received_at.desc`);
 
@@ -382,6 +391,32 @@ async function rpcHistorySites(days) {
   });
   if (!r.ok) throw new Error(`tv_history_sites: ${r.status} ${(await r.text()).slice(0, 160)}`);
   return r.json(); // { ids:[bigint], detail:{ "<site_id>": {from, subject, received_at} } }
+}
+
+// Like fetchAll but fires all pages CONCURRENTLY (count-first), for the heavy
+// email_digest read. Preserves order: page 0 (newest), then 1, 2, … in sequence,
+// so the desc ordering the matching relies on is intact.
+async function fetchAllParallel(table, qs) {
+  const PAGE = 1000;
+  const url = `${SUPABASE_URL}/rest/v1/${table}?${qs}`;
+  const headersFor = (from) => ({ apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`,
+    Range: `${from}-${from + PAGE - 1}`, 'Range-Unit': 'items' });
+  const r0 = await fetch(url, { headers: { ...headersFor(0), Prefer: 'count=exact' } });
+  if (!r0.ok) throw new Error(`${table}: ${r0.status} ${(await r0.text()).slice(0, 160)}`);
+  const first = await r0.json();
+  const total = parseInt(((r0.headers.get('content-range') || '').split('/')[1] || '').trim(), 10);
+  if (!Number.isFinite(total) || total <= first.length) return first;
+  const jobs = [];
+  for (let from = PAGE; from < total && from <= 60000; from += PAGE) {
+    jobs.push(fetch(url, { headers: headersFor(from) }).then(async (r) => {
+      if (!r.ok) throw new Error(`${table}: ${r.status}`);
+      return r.json();
+    }));
+  }
+  const rest = await Promise.all(jobs);
+  const out = first.slice();
+  for (const p of rest) out.push(...p);
+  return out;
 }
 
 async function fetchAll(table, qs) {
