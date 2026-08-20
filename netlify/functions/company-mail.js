@@ -2,19 +2,33 @@
 //
 //   GET /api/company-mail[?days=365]
 //     → { byId: { <fyrirtaeki_id>: {from, subject, snippet, received_at,
-//                                   is_question, unreplied} },
-//         generated_at, scanned:{emails, companies, matched} }
+//                                   is_question, unreplied, important,
+//                                   signals[], history} },
+//         generated_at, scanned:{emails, companies, matched, exact, history, green} }
 //
 // Purpose: on the Slökkvitæki "Fyrirtæki í þjónustu" list we only visit a
 // customer once a year, so an email from months ago is easily forgotten. This
 // surfaces, per company, the newest INBOUND email and whether we have replied
 // to it — the UI shows a red envelope when a company has an unanswered message.
 //
-// Matching is DELIBERATELY conservative (exact email address only, unambiguous):
-//   • fyrirtaeki.netfang  → that site
-//   • customers_base email → the base's sole live service site (skipped if the
-//     base spans several live sites — a rekstrarfélag — to avoid mis-attribution)
-// No kt/domain guessing: a wrong red envelope is worse than a missing one.
+// Three states drive the traffic-light on "Fyrirtæki í þjónustu":
+//   🔴 unreplied — matched INBOUND email with no later SENT reply (strict, exact
+//        address only — a wrong red envelope is worse than a missing one).
+//   🟡 important — a "signal" (uppsögn/flutt/eigandi/gjaldþrot/…) seen anywhere
+//        in the window; matched exact per-building OR broad per-base (a loose
+//        "go check" flag, never drives red).
+//   🟢 history  — we simply have correspondence with the customer (inbound OR
+//        outbound, either direction, in the window). Base-level but SINGLE-SITE
+//        only: the lone in-service building is unambiguous; multi-site
+//        rekstrarfélög fall back to exact per-building matches so a sibling is
+//        never wrongly lit. Never sets unreplied/important.
+//
+// Address maps (all ambiguity-guarded — an address shared by two customers is
+// dropped, never guessed):
+//   • fyrirtaeki.netfang   → that site        (exact → red/green + signals)
+//   • customers_base email → single-site base (exact, since it is the sole site)
+//   • any of the above     → base → its in-service sites (broad → yellow/green)
+// No kt/domain guessing.
 //
 // "unreplied" = there is a matched inbound email AND no SENT email addressed to
 // that company address with received_at >= the newest inbound's received_at.
@@ -122,18 +136,31 @@ exports.handler = async (event) => {
     const sigByEmail = {}; // email → { <type>: {subject, received_at} } — EXACT
     const sigByIdBroad = {};// fyrirtaeki_id → { <type>: {subject, received_at} } — BROAD (yellow)
     const broadMail = {};  // fyrirtaeki_id → newest signal-bearing mail (fyrir popover)
+    const baseHist = {};   // base_id → newest correspondence, any direction — BROAD (green/history)
+    const noteHist = (baseId, custAddr, m) => {
+      if (!baseId) return;
+      const cur = baseHist[baseId];
+      if (cur && (cur.received_at || '') >= (m.received_at || '')) return;
+      baseHist[baseId] = {
+        from: custAddr || (cur && cur.from) || null,
+        subject: m.subject || '',
+        snippet: (m.snippet || m.body_preview || '').slice(0, 240),
+        received_at: m.received_at || null,
+      };
+    };
     for (const m of rows) {
       const isSent = String(m.folder || '').toUpperCase() === 'SENT';
       if (isSent) {
         const recips = recipientsOf(m.to_addresses);
         for (const r of recips) {
-          if (!companyEmails.has(r)) continue;
-          if (!sentTo[r] || (m.received_at || '') > sentTo[r]) sentTo[r] = m.received_at || '';
+          if (companyEmails.has(r) && (!sentTo[r] || (m.received_at || '') > sentTo[r])) sentTo[r] = m.received_at || '';
+          noteHist(emailToBase[r], r, m); // outbound TO a customer address → correspondence (green)
         }
         continue;
       }
       const from = cleanEmail(m.sender_email);
       if (!from) continue;
+      noteHist(emailToBase[from], from, m); // inbound FROM a customer address → correspondence (green)
       const types = detectSignals(m.subject, m.snippet, m.body_preview);
       // EXACT per-building match (red/green + exact signals)
       if (companyEmails.has(from)) {
@@ -217,10 +244,43 @@ exports.handler = async (event) => {
       e.important = e.signals.length > 0;
     }
 
+    // ---- merge BROAD base-level HISTORY (green) ----
+    // "We have correspondence with this customer" — a calm green dot on the
+    // list. SINGLE-SITE bases only: the lone in-service building is unambiguous.
+    // Multi-site rekstrarfélög are deliberately left to the exact per-building
+    // matches above, so we never claim history on a sibling building we never
+    // actually wrote to. Never sets unreplied/important → can only ADD green.
+    let historyAdded = 0;
+    for (const baseId in baseHist) {
+      const siteList = baseToSites[baseId] || [];
+      if (siteList.length !== 1) continue;      // single in-service site only
+      const sid = siteList[0];
+      if (byId[sid]) continue;                  // already red/yellow/green(exact) — keep the stronger entry
+      const hm = baseHist[baseId];
+      byId[sid] = {
+        from: hm.from || null,
+        subject: hm.subject || '',
+        snippet: hm.snippet || '',
+        received_at: hm.received_at || null,
+        is_question: false,
+        unreplied: false,
+        important: false,
+        signals: [],
+        match: 'history',
+        history: true,
+      };
+      historyAdded++;
+    }
+
     return json(200, {
       byId,
       generated_at: new Date().toISOString(),
-      scanned: { emails: rows.length, companies: sites.length, matched: Object.keys(byId).length, exact: exactMatched, with_signals: Object.values(byId).filter(v => v.signals && v.signals.length).length },
+      scanned: {
+        emails: rows.length, companies: sites.length, matched: Object.keys(byId).length,
+        exact: exactMatched, with_signals: Object.values(byId).filter(v => v.signals && v.signals.length).length,
+        history: historyAdded,
+        green: Object.values(byId).filter(v => !v.unreplied && !(v.signals && v.signals.length)).length,
+      },
     });
   } catch (e) {
     return json(500, { error: String(e && e.message || e) });
