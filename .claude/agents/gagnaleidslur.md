@@ -210,14 +210,18 @@ vantaði verkstað, ekki blönduð fjölverkstaða-reikningar. Bæta við ef alv
   leitarorð eru MJÖG hávær (fundarafbókanir/áskriftir/söluaðilar); raun-mátaðir lífsferils-
   pósta á kúnna ~2/ár (felag_samskipti, 185 lögaðilar). Framendi: slokkvitaeki patch 295 v2.
   **Grænt (history) víkkað 2026-08-20:** `byId`-færsla með `unreplied:false`+engin signals =
-  🟢 „í sambandi". Nú skráð fyrir HVERN kúnna sem við eigum póstsögu við — INN eða ÚT-póst
-  (`noteHist(emailToBase[…])` bæði á sender_email OG to_addresses-viðtakendur). **Base-level
-  en AÐEINS single-site** (`baseToSites[base].length===1`) svo eina in-service byggingin er
-  ótvíræð; multi-site rekstrarfélög (~15, mest 13 byggingar) fá grænt EINGÖNGU af nákvæmri
-  per-bygginga-mátun — sibling er aldrei ranglega kveiktur. Engin ný DB-köll (reiknað úr
-  `rows` sem fallið sækir hvort eð er). Mælt: 660 in-service byggingar → ~178 lögaðilar með
-  póstsögu (365d) → ~217 byggingar ef allar systur; single-site-reglan heldur því nálægt
-  raun-fjölda án oflýsingar. `scanned` fékk `history` + `green` teljara.
+  🟢 „í sambandi". Tvær uppsprettur sameinaðar: **(1) `tv_history_sites(days)` RPC**
+  (`sql/2026-08-20_tv_history_sites.sql`, SECURITY DEFINER, `statement_timeout='20s'`) —
+  leiðir grænu byggingarnar út úr **`felag_samskipti`-viewinu SJÁLFU** (sama mátun og
+  Þjónustuver póstar sér, svo skjáirnir reka aldrei í sundur): leyst bygging þar sem felag
+  festir hana, single-site fallback annars — rekstrarfélags-systir ALDREI ranglega. Kallað
+  **í parallel** (`histPromise`, `.catch(()=>null)`) við eigin lestur svo heildartími ≈ max,
+  ekki summa (~3.4s RPC ‖ ~5s scan). **(2) in-JS fallback** — `noteHist(emailToBase[…])` á
+  bæði `sender_email` (INN) OG `to_addresses` (ÚT), single-site, svo grænt birtist samt þótt
+  RPC bregðist. ⚠️ **Leiðrétting:** „185 lögaðilar" er ALL-TIME (tv_postar_list hefur enga
+  dagsetningarsíu); í 365-daga glugga á felag AÐEINS ~96 byggingar með póstsögu — hitt
+  („178") var `ILIKE '%addr%'`-substring-tálmynd í mælingu, ekki raun. `scanned` fékk
+  `history` (+`history_felag`) og `green` teljara.
 - **`public.tv_postar_list()` RPC (`sql/2026-08-19_tv_postar_list.sql`):** SECURITY DEFINER
   + `set statement_timeout='25s'`; hópar in-service kúnna + pósta þeirra fyrir Þjónustuver
   póstar (slokkvitaeki patch 309) — því `felag_samskipti`-viewið er dýrt og fellur á
