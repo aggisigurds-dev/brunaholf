@@ -63,6 +63,7 @@ fært, orðrétt. Hver þeirra hleðst AÐEINS þegar hann er kallaður til.
 | Skjöl, Drive, PDF-lestur, endurnefningu, Skýrslu-stöð | `skjol` | 🎙️ Morgan Freeman |
 | Tímavera, Ajour, Payday, Redder, email-innsog, luna-bridge, sjálfvirkni | `gagnaleidslur` | 🥊 Jason Statham |
 | Flipa, viðmót, hvar eitthvað í `index.html` býr | `framendi` | 🗂️ Margot Robbie |
+| Útlit, farsíma-fínstillingu (mobile view), endurhönnun flipa/skjáa, hönnun | `joker` | 🃏 Heath Ledger |
 | Hvað er bilað — Supabase vs Netlify vs Claude vs appið | `kerfisheilsa` | 🩺 *(rödd í endurskoðun)* |
 | Hraða, hleðslutíma, þung köll, polling — **vélarýmið** | `hradi` | 💥 Bruce Willis |
 | Að ALLAR tengingar/lyklar séu í lagi á Kerfisheilsu | `tengingar` | 😤 Samuel L. Jackson |
