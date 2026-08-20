@@ -2,19 +2,34 @@
 //
 //   GET /api/company-mail[?days=365]
 //     → { byId: { <fyrirtaeki_id>: {from, subject, snippet, received_at,
-//                                   is_question, unreplied} },
-//         generated_at, scanned:{emails, companies, matched} }
+//                                   is_question, unreplied, important,
+//                                   signals[], history} },
+//         generated_at, scanned:{emails, companies, matched, exact, history, green} }
 //
 // Purpose: on the Slökkvitæki "Fyrirtæki í þjónustu" list we only visit a
 // customer once a year, so an email from months ago is easily forgotten. This
 // surfaces, per company, the newest INBOUND email and whether we have replied
 // to it — the UI shows a red envelope when a company has an unanswered message.
 //
-// Matching is DELIBERATELY conservative (exact email address only, unambiguous):
-//   • fyrirtaeki.netfang  → that site
-//   • customers_base email → the base's sole live service site (skipped if the
-//     base spans several live sites — a rekstrarfélag — to avoid mis-attribution)
-// No kt/domain guessing: a wrong red envelope is worse than a missing one.
+// Three states drive the traffic-light on "Fyrirtæki í þjónustu":
+//   🔴 unreplied — matched INBOUND email with no later SENT reply (strict, exact
+//        address only — a wrong red envelope is worse than a missing one).
+//   🟡 important — a "signal" (uppsögn/flutt/eigandi/gjaldþrot/…) seen anywhere
+//        in the window; matched exact per-building OR broad per-base (a loose
+//        "go check" flag, never drives red).
+//   🟢 history  — we simply have correspondence with the customer in the window.
+//        Two sources, unioned: (1) felag_samskipti via the tv_history_sites RPC
+//        (the SAME matcher Þjónustuver póstar uses — resolves WHICH building each
+//        mail belongs to, so a rekstrarfélag sibling is never lit); (2) a cheap
+//        in-JS fallback marking single-site bases with any inbound/outbound mail,
+//        so green still shows if the RPC ever fails. Never sets unreplied/important.
+//
+// Address maps (all ambiguity-guarded — an address shared by two customers is
+// dropped, never guessed):
+//   • fyrirtaeki.netfang   → that site        (exact → red/green + signals)
+//   • customers_base email → single-site base (exact, since it is the sole site)
+//   • any of the above     → base → its in-service sites (broad → yellow/green)
+// No kt/domain guessing.
 //
 // "unreplied" = there is a matched inbound email AND no SENT email addressed to
 // that company address with received_at >= the newest inbound's received_at.
@@ -33,6 +48,12 @@ exports.handler = async (event) => {
     if (!Number.isFinite(days) || days <= 0) days = 365;
     days = Math.min(days, 730);
     const sinceIso = new Date(Date.now() - days * 86400000).toISOString();
+
+    // Fire the felag-derived history set (broad green — the SAME source Þjónustuver
+    // póstar uses) in PARALLEL with our own reads. It is ~3.4s server-side, so total
+    // time ≈ max(this, the email_digest scan), not the sum. Never throws into the
+    // response: on any failure green just falls back to the exact/single-site matches.
+    const histPromise = rpcHistorySites(days).catch(() => null);
 
     // ---- service companies (live sites in service) ----
     const sites = await fetchAll('fyrirtaeki',
@@ -122,18 +143,31 @@ exports.handler = async (event) => {
     const sigByEmail = {}; // email → { <type>: {subject, received_at} } — EXACT
     const sigByIdBroad = {};// fyrirtaeki_id → { <type>: {subject, received_at} } — BROAD (yellow)
     const broadMail = {};  // fyrirtaeki_id → newest signal-bearing mail (fyrir popover)
+    const baseHist = {};   // base_id → newest correspondence, any direction — BROAD (green/history)
+    const noteHist = (baseId, custAddr, m) => {
+      if (!baseId) return;
+      const cur = baseHist[baseId];
+      if (cur && (cur.received_at || '') >= (m.received_at || '')) return;
+      baseHist[baseId] = {
+        from: custAddr || (cur && cur.from) || null,
+        subject: m.subject || '',
+        snippet: (m.snippet || m.body_preview || '').slice(0, 240),
+        received_at: m.received_at || null,
+      };
+    };
     for (const m of rows) {
       const isSent = String(m.folder || '').toUpperCase() === 'SENT';
       if (isSent) {
         const recips = recipientsOf(m.to_addresses);
         for (const r of recips) {
-          if (!companyEmails.has(r)) continue;
-          if (!sentTo[r] || (m.received_at || '') > sentTo[r]) sentTo[r] = m.received_at || '';
+          if (companyEmails.has(r) && (!sentTo[r] || (m.received_at || '') > sentTo[r])) sentTo[r] = m.received_at || '';
+          noteHist(emailToBase[r], r, m); // outbound TO a customer address → correspondence (green)
         }
         continue;
       }
       const from = cleanEmail(m.sender_email);
       if (!from) continue;
+      noteHist(emailToBase[from], from, m); // inbound FROM a customer address → correspondence (green)
       const types = detectSignals(m.subject, m.snippet, m.body_preview);
       // EXACT per-building match (red/green + exact signals)
       if (companyEmails.has(from)) {
@@ -217,10 +251,71 @@ exports.handler = async (event) => {
       e.important = e.signals.length > 0;
     }
 
+    // ---- merge BROAD base-level HISTORY (green) ----
+    // "We have correspondence with this customer" — a calm green dot on the
+    // list. SINGLE-SITE bases only: the lone in-service building is unambiguous.
+    // Multi-site rekstrarfélög are deliberately left to the exact per-building
+    // matches above, so we never claim history on a sibling building we never
+    // actually wrote to. Never sets unreplied/important → can only ADD green.
+    let historyAdded = 0;
+    for (const baseId in baseHist) {
+      const siteList = baseToSites[baseId] || [];
+      if (siteList.length !== 1) continue;      // single in-service site only
+      const sid = siteList[0];
+      if (byId[sid]) continue;                  // already red/yellow/green(exact) — keep the stronger entry
+      const hm = baseHist[baseId];
+      byId[sid] = {
+        from: hm.from || null,
+        subject: hm.subject || '',
+        snippet: hm.snippet || '',
+        received_at: hm.received_at || null,
+        is_question: false,
+        unreplied: false,
+        important: false,
+        signals: [],
+        match: 'history',
+        history: true,
+      };
+      historyAdded++;
+    }
+
+    // ---- merge felag-derived HISTORY ids (broad green, matches Þjónustuver) ----
+    // The RPC resolves which building each mail belongs to (single-site → lone
+    // building; multi-site → the evidence-matched building only), so a sibling of
+    // a rekstrarfélag is never lit. Only ADDS green — a stronger red/yellow or a
+    // richer single-site green entry above always wins (guarded by byId[sid]).
+    const hist = await histPromise;
+    let felagGreen = 0;
+    if (hist && Array.isArray(hist.ids)) {
+      const detail = hist.detail || {};
+      for (const sid of hist.ids) {
+        if (byId[sid]) continue;
+        const dt = detail[String(sid)] || null;
+        byId[sid] = {
+          from: (dt && dt.from) || null,
+          subject: (dt && dt.subject) || '',
+          snippet: '',
+          received_at: (dt && dt.received_at) || null,
+          is_question: false,
+          unreplied: false,
+          important: false,
+          signals: [],
+          match: 'history',
+          history: true,
+        };
+        felagGreen++;
+      }
+    }
+
     return json(200, {
       byId,
       generated_at: new Date().toISOString(),
-      scanned: { emails: rows.length, companies: sites.length, matched: Object.keys(byId).length, exact: exactMatched, with_signals: Object.values(byId).filter(v => v.signals && v.signals.length).length },
+      scanned: {
+        emails: rows.length, companies: sites.length, matched: Object.keys(byId).length,
+        exact: exactMatched, with_signals: Object.values(byId).filter(v => v.signals && v.signals.length).length,
+        history: historyAdded + felagGreen, history_felag: felagGreen,
+        green: Object.values(byId).filter(v => !v.unreplied && !(v.signals && v.signals.length)).length,
+      },
     });
   } catch (e) {
     return json(500, { error: String(e && e.message || e) });
@@ -274,6 +369,19 @@ function detectSignals(subject, snippet, body) {
     if (SIGNALS[type].some(k => hay.indexOf(k) !== -1)) out.push(type);
   }
   return out;
+}
+
+// Broad green: in-service building ids we have email history with, resolved by
+// felag_samskipti via the SECURITY DEFINER RPC (sql/2026-08-20_tv_history_sites.sql).
+async function rpcHistorySites(days) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/tv_history_sites`, {
+    method: 'POST',
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`,
+      'content-type': 'application/json' },
+    body: JSON.stringify({ days }),
+  });
+  if (!r.ok) throw new Error(`tv_history_sites: ${r.status} ${(await r.text()).slice(0, 160)}`);
+  return r.json(); // { ids:[bigint], detail:{ "<site_id>": {from, subject, received_at} } }
 }
 
 async function fetchAll(table, qs) {
