@@ -92,9 +92,14 @@ exports.handler = async (event) => {
       'select=sender_email,to_addresses,subject,snippet,body_preview,is_question,received_at,folder' +
       `&received_at=gte.${encodeURIComponent(sinceIso)}&order=received_at.desc`);
 
-    // newest INBOUND per company email + collect SENT recipients timeline
+    // newest INBOUND per company email + collect SENT recipients timeline, and
+    // scan ALL inbound in the window for "signals" (uppsögn/flutt/eigendaskipti/
+    // gjaldþrot/kvörtun/bilun/áríðandi). A status-change email from months ago is
+    // easily buried behind newer mail — but it's exactly what we must NOT forget
+    // before the yearly visit, so we look across the whole window, not just newest.
     const inbound = {};   // email → newest inbound row
     const sentTo = {};    // email → newest SENT received_at addressed to it
+    const sigByEmail = {};// email → { <type>: {subject, received_at} } (newest per type)
     for (const m of rows) {
       const isSent = String(m.folder || '').toUpperCase() === 'SENT';
       if (isSent) {
@@ -109,6 +114,11 @@ exports.handler = async (event) => {
       if (!from || !companyEmails.has(from)) continue;
       // rows are ordered received_at desc → first hit is newest
       if (!inbound[from]) inbound[from] = m;
+      const types = detectSignals(m.subject, m.snippet, m.body_preview);
+      if (types.length) {
+        const bag = sigByEmail[from] || (sigByEmail[from] = {});
+        for (const t of types) if (!bag[t]) bag[t] = { subject: m.subject || '', received_at: m.received_at || null };
+      }
     }
 
     // ---- assemble per-company result ----
@@ -123,6 +133,10 @@ exports.handler = async (event) => {
       const cur = byId[id];
       // if a site somehow maps from two addresses, keep the newest inbound
       if (cur && (cur.received_at || '') >= (m.received_at || '')) continue;
+      const bag = sigByEmail[email] || {};
+      const signals = Object.keys(bag)
+        .map(t => ({ type: t, subject: bag[t].subject, received_at: bag[t].received_at }))
+        .sort((a, b) => String(b.received_at || '').localeCompare(String(a.received_at || '')));
       byId[id] = {
         from: email,
         subject: m.subject || '',
@@ -130,6 +144,8 @@ exports.handler = async (event) => {
         received_at: m.received_at || null,
         is_question: !!m.is_question,
         unreplied,
+        important: signals.length > 0,   // gult merki = eitthvað sem kallar á athygli
+        signals,                          // [{type, subject, received_at}] — lífsferill fyrst
       };
       matched++;
     }
@@ -165,6 +181,30 @@ function recipientsOf(to) {
   for (const p of parts) {
     const e = cleanEmail(p);
     if (e && e.indexOf('@') > 0) out.push(e);
+  }
+  return out;
+}
+
+// ── "signals" í pósti (gult merki) ─────────────────────────────────────────
+// Íhaldssamir frasar sem benda STERKT á breytingu/vandamál — betra að sleppa
+// óvissu en að flagga rangt. Lífsferils-merkin (uppsogn/flutt/eigandi/gjaldthrot)
+// eru þau sem má ALLS EKKI gleyma áður en farið er í árlega heimsókn: ef kúnninn
+// sendi „við erum hætt / flutt / gjaldþrota" fyrir mörgum mánuðum má það ekki
+// grafast. Notað á subject + snippet + body_preview (lágstafað).
+const SIGNALS = {
+  uppsogn:    ['sagði upp', 'segja upp', 'segjum upp', 'sagt upp', 'uppsögn', 'uppsagn', 'viljum hætta', 'óska eftir að hætta', 'hætta þjónust', 'hætt þjónust', 'afþökk', 'afpant', 'cancel', 'terminate', 'discontinue', 'no longer need', 'end the contract', 'end our contract'],
+  flutt:      ['erum flutt', 'vorum flutt', 'fluttum', 'nýtt heimilisfang', 'breytt heimilisfang', 'ný staðsetning', 'we have moved', 'have relocated', 'new address'],
+  eigandi:    ['eigendaskipt', 'nýr eigandi', 'nýir eigend', 'ný eigandi', 'nýtt rekstrarfélag', 'nýr rekstraraðil', 'new owner', 'change of ownership', 'under new management', 'sold the company', 'sold to'],
+  gjaldthrot: ['gjaldþrot', 'þrotabú', 'gjaldþrota', 'bankrupt', 'insolven', 'liquidat'],
+  kvortun:    ['kvörtun', 'kvarta', 'óánæg', 'ósátt', 'vonbrigð', 'léleg þjónust', 'complaint', 'unhappy', 'disappointed', 'not satisfied'],
+  bilun:      ['bilað', 'biluð', 'bilun', 'fer í gang', 'fara í gang', 'ónýt', 'leki', 'lekur', 'sprungið', 'virkar ekki', 'virkar ekkert', 'false alarm', 'malfunction', 'not working', 'emergency', 'eldsvoð', 'kviknaði'],
+  aridandi:   ['áríðandi', 'brýnt', 'sem fyrst', 'hið fyrsta', 'urgent', 'asap', 'immediately', 'as soon as possible'],
+};
+function detectSignals(subject, snippet, body) {
+  const hay = ((subject || '') + ' ' + (snippet || '') + ' ' + (body || '')).toLowerCase();
+  const out = [];
+  for (const type in SIGNALS) {
+    if (SIGNALS[type].some(k => hay.indexOf(k) !== -1)) out.push(type);
   }
   return out;
 }
