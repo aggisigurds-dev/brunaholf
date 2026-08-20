@@ -111,5 +111,5 @@ function parseName(name, id){
   const ys = base.match(/\b(20[12]\d)\b/g); const year = ys ? ys[ys.length-1] : '';
   let mon='', monnum='';
   for (const p of tail.concat(parts)) { const k = p.toLowerCase().replace(/\.$/,''); if (MONTHS[k]) { mon=p; monnum=MONTHS[k]; break; } }
-  return [company, address, kt, year, monnum, mon, nm, 'https://drive.google.com/file/d/'+id+'/view'];
+  return [company, address, kt, year, monnum, mon, nm, 'https://brunaholf.netlify.app/api/skjal?id='+id];
 }

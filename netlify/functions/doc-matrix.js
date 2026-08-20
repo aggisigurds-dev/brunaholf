@@ -46,7 +46,7 @@ exports.handler = async (event) => {
     // Pull all docs in window.
     const docs = await fetchAll(
       'customer_documents',
-      `select=id,customer_base_id,doc_type,year,doc_date,drive_file_id,is_duplicate&` +
+      `select=id,customer_base_id,doc_type,year,doc_date,drive_file_id,storage_path,is_duplicate&` +
       `year=gte.${from}&year=lte.${to}&order=year.asc`
     );
 
@@ -56,7 +56,7 @@ exports.handler = async (event) => {
       if (d.is_duplicate) continue;
       const key = `${d.customer_base_id}:${d.year}:${d.doc_type}`;
       const arr = bucket.get(key) || [];
-      arr.push(d.drive_file_id || `db:${d.id}`);
+      arr.push(d.storage_path ? `${SUPABASE_URL}/storage/v1/object/public/${d.storage_path}` : ((d.drive_file_id && !String(d.drive_file_id).startsWith('sb:')) ? `/api/skjal?id=${encodeURIComponent(d.drive_file_id)}` : ''));
       bucket.set(key, arr);
     }
 

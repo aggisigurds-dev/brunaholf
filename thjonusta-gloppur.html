@@ -58,7 +58,7 @@
   var API='/api/service-gaps';
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
   function pill(lbl,n,cls){ return '<span class="pill '+cls+'">'+lbl+' · '+n+'</span>'; }
-  function driveLink(id){ return id? ('https://drive.google.com/file/d/'+encodeURIComponent(id)+'/view') : null; }
+  function driveLink(id){ return (id && String(id).indexOf('sb:')!==0)? ('/api/skjal?id='+encodeURIComponent(id)) : null; }
   var DT={uttektarskyrsla:'Úttektarskýrsla',brunakerfi:'Brunakerfi',samningur:'Samningur',reikningur:'Reikningur'};
 
   async function post(body){ var r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); var d=await r.json(); if(!r.ok||!d.ok) throw new Error(d.error||('HTTP '+r.status)); return d; }

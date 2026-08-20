@@ -127,7 +127,7 @@ function render() {
       const n = arr.length;
       let cell = '<td class="y' + (n ? ' has' : '') + '"';
       if (n) {
-        const driveLinks = arr.filter(id => id && !id.startsWith('db:')).map(id => 'https://drive.google.com/file/d/' + id + '/view');
+        const driveLinks = arr.filter(u => u);
         cell += ' data-links=\'' + JSON.stringify(driveLinks).replace(/'/g, "&#39;") + '\'';
         cell += ' onclick="openCell(this)"';
       }

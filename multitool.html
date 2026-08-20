@@ -1215,7 +1215,7 @@
           + '<div class="cf">'+esc(c.orig_name||'')+(c.applied?' <span class="badge-edit">keyrt</span>':'')+'</div>'
           + (pn!==cn ? '<div class="cprop">'+esc(pn)+'</div><div class="ccorr">→ '+esc(cn)+'</div>' : '')
           + (c.note?'<div class="cnote">📝 '+esc(c.note)+'</div>':'')
-          + '<div class="cmeta">'+fmtDate(c.created_at)+dtLine+yrLine+(c.drive_file_id?(' · <a href="https://drive.google.com/file/d/'+esc(c.drive_file_id)+'/view" target="_blank" rel="noopener">opna PDF ↗</a>'):'')+'</div>'
+          + '<div class="cmeta">'+fmtDate(c.created_at)+dtLine+yrLine+(c.drive_file_id?(' · <a href="/api/skjal?id='+encodeURIComponent(c.drive_file_id)+'" target="_blank" rel="noopener">opna PDF ↗</a>'):'')+'</div>'
           + '</div>';
       }).join('');
     }catch(e){ $('corr-list').innerHTML='<div class="muted" style="padding:16px;color:#dc2626">Villa: '+esc(e&&e.message||e)+'</div>'; }
