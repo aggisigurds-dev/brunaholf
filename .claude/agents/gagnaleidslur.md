@@ -188,3 +188,29 @@ sjálfu, bara tengiliða-merki eins og „umb Lukas") sátu áður sem varanlega
 við annan verkstað en restina af reikningnum) — `redder_line_items` hefur engan eigin
 `worksite`-dálk, og öll skoðuð dæmi af ólæstum reikningum voru heilir reikningar sem
 vantaði verkstað, ekki blönduð fjölverkstaða-reikningar. Bæta við ef alvöru þörf kemur upp.
+
+## Póst-hub viðbætur (2026-08-20)
+
+Þrennt bættist við póst-/kúnnaþjónustu-pípuna (live í PR #401 + slokkvitaeki #657):
+
+- **Sjálfvirkt gmail-innsog — `gmail-ingest-background.js` (áætlað á 2t):** ÁÐUR var
+  EKKERT áætlað fall að sækja eldklar-póst (aðeins handvirkt/Kerfisheilsu-hnappur), svo
+  SENT-hólfið sat eftir (mælt: fraus 6.8.). Nú `[functions."gmail-ingest-background"]
+  schedule = "35 */2 * * *"` (netlify.toml) sem endurnýtir `gmail-ingest` handler BEINT
+  (`require`, GET) fyrir eldklar INBOX **og** SENT, `DAYS=3`, upsert á `message_id`.
+  ENGIN AI/tókn. Skráir í `automation_runs(job_name='gmail-ingest', source='schedule')`.
+  Fleiri pósthólf = einn hlutur í `JOBS`-fylkinu. ⚠️ áætlun á -background tvíbura því
+  Netlify svarar áætluðu falli með 403 á HTTP; `gmail-ingest` sjálft verður að vera frjálst.
+- **`company-mail.js` — stöðumerki/signals (umferðarljós á Slökkvitæki):** skilar nú
+  `important` + `signals[]` ({type,subject,received_at}) auk `unreplied`. `detectSignals()`
+  (leitarorð, engin AI) skannar ALLA innkomna í glugganum eftir uppsogn/flutt/eigandi/
+  gjaldthrot/kvortun/bilun/aridandi. **Rautt (unreplied) er strangt** (nákvæmt netfang per
+  bygging). **Gult (signals) er víðara** — `emailToBase`→`baseToSites` (netfang lögaðilans/
+  bygginga → allar in-service byggingar hans), knýr ALDREI rautt. ⚠️ Hrá „cancel/uppsögn"-
+  leitarorð eru MJÖG hávær (fundarafbókanir/áskriftir/söluaðilar); raun-mátaðir lífsferils-
+  pósta á kúnna ~2/ár (felag_samskipti, 185 lögaðilar). Framendi: slokkvitaeki patch 295 v2.
+- **`public.tv_postar_list()` RPC (`sql/2026-08-19_tv_postar_list.sql`):** SECURITY DEFINER
+  + `set statement_timeout='25s'`; hópar in-service kúnna + pósta þeirra fyrir Þjónustuver
+  póstar (slokkvitaeki patch 309) — því `felag_samskipti`-viewið er dýrt og fellur á
+  timeout í full-scan úr anon. Kallað `sb.rpc('tv_postar_list')`. `postur-triage.js`
+  (slokkvitaeki) fékk líka `mode:'thjonustuver'` (ríkari AI-útdráttur; borð-hamur óbreyttur).
