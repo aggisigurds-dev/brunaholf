@@ -150,10 +150,14 @@ async function apiGet(path) {
   return r.json();
 }
 async function sbCount(path) {
+  // select=* svo talningin virki á töflur OG view án tillits til dálkaheita —
+  // select=id skilaði 400 (og þar með ÞÖGLU 0-i) á geocode_cache og
+  // v_bundle_coverage, sem eiga engan id-dálk (beit 2026-08-20).
   const sep = path.indexOf('?') >= 0 ? '&' : '?';
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}${sep}select=id`, {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}${sep}select=*`, {
     headers: { apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}`, Prefer: 'count=exact', Range: '0-0' },
   });
+  if (!r.ok) throw new Error(path.split('?')[0] + ' taldi ekki: ' + r.status);
   const cr = r.headers.get('content-range') || '';   // t.d. "0-0/1082"
   return parseInt((cr.split('/')[1] || '0'), 10) || 0;
 }
