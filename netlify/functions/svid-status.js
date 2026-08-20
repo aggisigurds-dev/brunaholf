@@ -235,12 +235,16 @@ async function safnaYfirlit() {
 // ── 🎩 Jarvis — dagleg yfirsýn þvert á sviðin (aðeins lykiltölurnar) ────────
 async function safnaJarvis() {
   const ar = new Date().getFullYear();
+  // 4s þak PER undirkall (ekki bara 12s heild): kerfisheilsa/debtors spike-a
+  // stundum og Netlify drepur fallið á 10s — betri ein tala sem vantar en
+  // ekkert svar (beit á preview 2026-08-20: annað hvert kall dó á 11s).
+  const q = (p, fb) => withTimeout(p, 4000).catch(() => fb);
   const [beidni, i_vinnu, heilsa, deb, vantar_reikning] = await Promise.all([
-    sbCount('verkefnalisti?status=eq.beidni'),
-    sbCount('verkefnalisti?status=eq.i_vinnu'),
-    apiGet('/api/kerfisheilsa').catch(() => ({ counts: {}, services: [] })),
-    apiGet('/api/debtors').catch(() => ({ totals: {} })),
-    sbCount(`v_bundle_coverage?yr=eq.${ar}&stada=eq.vantar_reikning`),
+    q(sbCount('verkefnalisti?status=eq.beidni'), null),
+    q(sbCount('verkefnalisti?status=eq.i_vinnu'), null),
+    q(apiGet('/api/kerfisheilsa'), { counts: {}, services: [] }),
+    q(apiGet('/api/debtors'), { totals: {} }),
+    q(sbCount(`v_bundle_coverage?yr=eq.${ar}&stada=eq.vantar_reikning`), null),
   ]);
   const hc = heilsa.counts || {};
   const t = (deb && deb.totals) || {};
