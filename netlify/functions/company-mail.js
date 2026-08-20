@@ -4,7 +4,11 @@
 //     → { byId: { <fyrirtaeki_id>: {from, subject, snippet, received_at,
 //                                   is_question, unreplied, important,
 //                                   signals[], history} },
-//         generated_at, scanned:{emails, companies, matched, exact, history, green} }
+//         histIds: [<fyrirtaeki_id>, …],   // EVERY in-service building we have any
+//                                          // email history with (recent OR older,
+//                                          // up to ~1095d) — availability set for
+//                                          // the list's sort + grey „eldri" marker.
+//         generated_at, scanned:{emails, companies, matched, exact, history, availability, green} }
 //
 // Purpose: on the Slökkvitæki "Fyrirtæki í þjónustu" list we only visit a
 // customer once a year, so an email from months ago is easily forgotten. This
@@ -71,6 +75,17 @@ exports.handler = async (event) => {
     const histPromise = Promise.race([
       rpcHistorySites(days),
       new Promise((res) => setTimeout(() => res(null), 6000)),
+    ]).catch(() => null);
+
+    // ALL-TIME availability set (up to tv_history_sites' own 1095-day ceiling — a
+    // SUPERSET of the recent green above). Drives the „email-availability" sort +
+    // grey „eldri póstsaga" marker on Slökkvitæki's list, so the ~100 in-service
+    // customers whose history is older than the green window (or matched a sibling)
+    // stop being invisible. Separate + capped + best-effort: if it doesn't answer
+    // in time we just omit histIds and the client falls back to the recent set.
+    const histAllPromise = Promise.race([
+      rpcHistorySites(1095),
+      new Promise((res) => setTimeout(() => res(null), 6500)),
     ]).catch(() => null);
 
     // ---- service companies (live sites in service) ----
@@ -328,13 +343,25 @@ exports.handler = async (event) => {
       }
     }
 
+    // ---- availability set: EVERY in-service building we have any email history
+    // with (recent OR older). Superset of byId's history ids; the client uses it
+    // for the „póstsaga til" sort + the grey marker on rows without a recent flag.
+    const histIdSet = new Set(Object.keys(byId).filter(id => byId[id] && byId[id].history).map(Number));
+    try {
+      const ha = await histAllPromise;
+      if (ha && Array.isArray(ha.ids)) ha.ids.forEach(id => histIdSet.add(Number(id)));
+    } catch (_) { /* best-effort — omit older ids on failure */ }
+    const histIds = [...histIdSet];
+
     return json(200, {
       byId,
+      histIds,
       generated_at: new Date().toISOString(),
       scanned: {
         emails: rows.length, companies: sites.length, matched: Object.keys(byId).length,
         exact: exactMatched, with_signals: Object.values(byId).filter(v => v.signals && v.signals.length).length,
         history: historyAdded + felagGreen, history_felag: felagGreen,
+        availability: histIds.length,
         green: Object.values(byId).filter(v => !v.unreplied && !(v.signals && v.signals.length)).length,
       },
     });
