@@ -38,9 +38,9 @@
   --text-dim:#8b95a1;
 
   /* --- navy (topbar, sidebar, primary takkar) --- */
-  --navy:#1d2b3f;
-  --navy-2:#26364e;
-  --navy-dark:#101c29;
+  --navy:#2a2723;
+  --navy-2:#38332c;
+  --navy-dark:#1a1714;
 
   /* --- accentar --- */
   --gold:#c9a45c;          /* virkur flipi, labels, áherslur */
@@ -53,12 +53,12 @@
   --red-2:#c25a3e;
   --red-dark:#7c2f1d;
   --green:#2e7d43;         /* greitt / staðfest */
-  --blue:#2563eb;
+  --blue:#b48d4c;
   --warn:#8a6a1f;          /* ósent / bíður */
   --warn-bg:#f6efdd;
   --red-bg:#f7ece8;
   --green-bg:#e9f4ec;
-  --info-bg:rgba(37,99,235,.06);
+  --info-bg:rgba(180,141,76,.08);
 
   /* --- ástand --- */
   --row-hover:#faf9f6;
@@ -83,17 +83,17 @@
    Kveikt með <html data-theme="dark"> (sjá theme.js).
    ------------------------------------------------------------ */
 [data-theme="dark"]{
-  --bg:#0d1420;
-  --bg-2:#131c2b;
-  --card:#16202f;
-  --card-bg:#16202f;
-  --input-bg:#101825;
-  --tbl-header:#1b2637;
-  --header-bg:#1b2637;
+  --bg:#12100e;
+  --bg-2:#1b1815;
+  --card:#1c1815;
+  --card-bg:#1c1815;
+  --input-bg:#16130f;
+  --tbl-header:#221e18;
+  --header-bg:#221e18;
 
-  --line:#24334a;
-  --line-2:#2f4059;
-  --border:#24334a;
+  --line:#2f2a22;
+  --line-2:#3a3328;
+  --border:#2f2a22;
 
   --ink:#e8edf4;
   --ink-2:#c3cddb;
@@ -102,9 +102,9 @@
   --muted-2:#6f7d90;
   --text-dim:#8e9bad;
 
-  --navy:#0a111c;
-  --navy-2:#16202f;
-  --navy-dark:#070d16;
+  --navy:#14110d;
+  --navy-2:#221e18;
+  --navy-dark:#0e0b08;
 
   --gold:#d4b16a;
   --gold-deep:#e0c185;
@@ -114,12 +114,12 @@
   --red-2:#e07f63;
   --red-dark:#a8442c;
   --green:#4caf6d;
-  --blue:#6b95f5;
+  --blue:#d4b16a;
   --warn:#d9b45f;
   --warn-bg:rgba(217,180,95,.12);
   --red-bg:rgba(212,103,74,.12);
   --green-bg:rgba(76,175,109,.12);
-  --info-bg:rgba(107,149,245,.10);
+  --info-bg:rgba(212,177,106,.10);
 
   --row-hover:rgba(255,255,255,.035);
   --hover:rgba(255,255,255,.05);
