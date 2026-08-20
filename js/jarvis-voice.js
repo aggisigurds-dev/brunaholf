@@ -26,7 +26,7 @@
       fb: { lang: "en-GB", rate: 0.96, pitch: 0.92, pref: /daniel|arthur|uk english male|ryan|george/i }
     },
     ramsay: {
-      name: "Gordon Ramsay", emoji: "🔥", role: "Enginn afsláttur",
+      name: "Gordon Ramsay", emoji: "🔥", role: "Kort & geocode",
       voice_id: "e605a2a42b0a44ccb7af2e42e1676c92",   // Fish — Gordon Ramsay
       sample: "This sölunóta has been sitting as a draft for EIGHT days. It's RAW! Send the invoice — now!",
       fb: { lang: "en-GB", rate: 1.08, pitch: 0.85, pref: /daniel|arthur|george|uk english male|ryan/i }
@@ -38,7 +38,7 @@
       fb: { lang: "en-US", rate: 0.84, pitch: 0.68, pref: /alex|aaron|arthur|david|google us english/i }
     },
     arnold: {
-      name: "Arnold", emoji: "💪", role: "Hvatning",
+      name: "Arnold", emoji: "💪", role: "Öryggisvörðurinn — RLS & lyklar",
       voice_id: "2270085c19e14054b63e0e451593e0f0",   // Fish — Arnold Schwarzenegger
       sample: "Agnar. Three invoices, still drafts. Stop whining and send them. Do it. Do it now!",
       fb: { lang: "en-US", rate: 0.92, pitch: 0.58, pref: /alex|david|aaron|rishi/i }
@@ -91,7 +91,7 @@
       fb: { lang: "en-AU", rate: 1.02, pitch: 1.10, pref: /karen|samantha|ava|female/i }
     },
     devito: {
-      name: "Danny DeVito", emoji: "🦞", role: "Bókarinn",
+      name: "Danny DeVito", emoji: "🦞", role: "Prentun & QR-merki",
       voice_id: "17b88cf496b9495298a10f1b7eada19a",   // Fish — Danny DeVito
       sample: "You wanna know where the money went? Nowhere! It's still sitting there, because nobody sent the invoice!",
       fb: { lang: "en-US", rate: 1.05, pitch: 0.90, pref: /alex|david|aaron|google us english/i }

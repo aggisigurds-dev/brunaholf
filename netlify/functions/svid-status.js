@@ -1,6 +1,6 @@
 // svid-status.js — „ýttu á svið, fáðu samantekt frá þeirri rödd".
 //
-//   GET /api/svid-status?svid=por|tengingar
+//   GET /api/svid-status?svid=<lykill>     (sjá SVID-skrána fyrir sviðin í boði)
 //     → { ok, svid, name, emoji, voice_id, text, tolur }
 //
 // Hvert svið á sér SÉRFRÆÐING í .claude/agents/ (þekkingin) og RÖDD í
@@ -65,8 +65,32 @@ const SVID = {
     still_en: 'Blunt, action-hero calm about system speed — what is fast and what is dragging.',
     safna: safnaHradi,
   },
+  jarvis: {
+    name: 'Jarvis', emoji: '🎩', agent: 'jarvis',
+    rodd: 'jarvis', voice_id: '612b878b113047d9a770c069c8b4fdfe', kyn: 'kk',
+    still_en: 'Impeccably composed English butler — a crisp, courteous morning briefing of the whole operation, with a touch of dry wit. End with the single most useful thing to do first.',
+    safna: safnaJarvis,
+  },
+  oryggi: {
+    name: 'Arnold', emoji: '🔒', agent: 'oryggi',
+    rodd: 'arnold', voice_id: '2270085c19e14054b63e0e451593e0f0', kyn: 'kk',
+    still_en: 'The security guardian. Terse, protective, no-nonsense — state what is exposed and what is locked down, then order the next fix. Never alarmist.',
+    safna: safnaOryggi,
+  },
+  prentun: {
+    name: 'Danny DeVito', emoji: '🏷️', agent: 'prentun',
+    rodd: 'devito', voice_id: '17b88cf496b9495298a10f1b7eada19a', kyn: 'kk',
+    still_en: 'Fast-talking, wisecracking shop-floor energy about labels and QR codes — what is tagged and what is still missing a serial. Funny but factual.',
+    safna: safnaPrentun,
+  },
+  kort: {
+    name: 'Gordon Ramsay', emoji: '🗺️', agent: 'kort',
+    rodd: 'ramsay', voice_id: 'e605a2a42b0a44ccb7af2e42e1676c92', kyn: 'kk',
+    still_en: 'Fiery chef energy about the map — praise what is geocoded, roast the messy addresses that will not resolve. Sharp, never crude.',
+    safna: safnaKort,
+  },
   yfirlit: {
-    name: 'Trump', emoji: '🇺🇸', agent: '',
+    name: 'Trump', emoji: '🇺🇸', agent: 'hype',
     rodd: 'trump', voice_id: '5dcaea7bfca74256bdbafc77593a8770', kyn: 'kk',
     still_en: 'Big, confident hype-man energy — superlatives, short punchy sentences. Celebrate the wins, call out what still needs doing. Never crude.',
     safna: safnaYfirlit,
@@ -126,10 +150,14 @@ async function apiGet(path) {
   return r.json();
 }
 async function sbCount(path) {
+  // select=* svo talningin virki á töflur OG view án tillits til dálkaheita —
+  // select=id skilaði 400 (og þar með ÞÖGLU 0-i) á geocode_cache og
+  // v_bundle_coverage, sem eiga engan id-dálk (beit 2026-08-20).
   const sep = path.indexOf('?') >= 0 ? '&' : '?';
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}${sep}select=id`, {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}${sep}select=*`, {
     headers: { apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}`, Prefer: 'count=exact', Range: '0-0' },
   });
+  if (!r.ok) throw new Error(path.split('?')[0] + ' taldi ekki: ' + r.status);
   const cr = r.headers.get('content-range') || '';   // t.d. "0-0/1082"
   return parseInt((cr.split('/')[1] || '0'), 10) || 0;
 }
@@ -202,6 +230,62 @@ async function safnaYfirlit() {
     utistandandi_kr: Math.round(t.outstanding_kr || 0),
     skuldunautar: t.debtor_count || 0,
   };
+}
+
+// ── 🎩 Jarvis — dagleg yfirsýn þvert á sviðin (aðeins lykiltölurnar) ────────
+async function safnaJarvis() {
+  const ar = new Date().getFullYear();
+  // 4s þak PER undirkall (ekki bara 12s heild): kerfisheilsa/debtors spike-a
+  // stundum og Netlify drepur fallið á 10s — betri ein tala sem vantar en
+  // ekkert svar (beit á preview 2026-08-20: annað hvert kall dó á 11s).
+  const q = (p, fb) => withTimeout(p, 4000).catch(() => fb);
+  const [beidni, i_vinnu, heilsa, deb, vantar_reikning] = await Promise.all([
+    q(sbCount('verkefnalisti?status=eq.beidni'), null),
+    q(sbCount('verkefnalisti?status=eq.i_vinnu'), null),
+    q(apiGet('/api/kerfisheilsa'), { counts: {}, services: [] }),
+    q(apiGet('/api/debtors'), { totals: {} }),
+    q(sbCount(`v_bundle_coverage?yr=eq.${ar}&stada=eq.vantar_reikning`), null),
+  ]);
+  const hc = heilsa.counts || {};
+  const t = (deb && deb.totals) || {};
+  return {
+    opin_verk_beidni: beidni,
+    verk_i_vinnu: i_vinnu,
+    kerfi_raud: hc.raudt || 0,
+    kerfi_gul: hc.gult || 0,
+    utistandandi_kr: Math.round(t.outstanding_kr || 0),
+    vantar_reikning_i_ar: vantar_reikning,
+  };
+}
+// ── 🔒 Öryggi (Arnold) — RLS-staða + buckets gegnum oryggi_counts() RPC ─────
+//    (SECURITY DEFINER fall, aðeins service_role má keyra — sjá
+//     sql/2026-08-20_oryggi_counts.sql og oryggi-sérfræðinginn)
+async function safnaOryggi() {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/oryggi_counts`, {
+    method: 'POST',
+    headers: { apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}`,
+      'content-type': 'application/json' },
+    body: '{}',
+  });
+  if (!r.ok) throw new Error('oryggi_counts svaraði ' + r.status);
+  return r.json();
+}
+// ── 🏷️ Prentun (DeVito) — merkt tæki og raðnúmeralaus ──────────────────────
+async function safnaPrentun() {
+  const [taeki, radnr_vantar, lanstaeki] = await Promise.all([
+    sbCount('uttaeki'),
+    sbCount('uttaeki?serial=is.null'),
+    sbCount('lanstaeki'),
+  ]);
+  return { taeki_alls: taeki, radnr_vantar, lanstaeki_alls: lanstaeki };
+}
+// ── 🗺️ Kort (Ramsay) — geocode-þekjan ──────────────────────────────────────
+async function safnaKort() {
+  const [adressur, i_cache] = await Promise.all([
+    sbCount('fyrirtaeki?heimilisfang=not.is.null&deleted_at=is.null'),
+    sbCount('geocode_cache'),
+  ]);
+  return { adressur_alls: adressur, i_geocode_cache: i_cache };
 }
 
 /* ── skyndiminni (app_kv, ein færsla per sviði) ───────────────────────────── */
@@ -306,6 +390,25 @@ function einfold(lykill, t) {
   if (lykill === 'tengingar') {
     return `${t.graent} of ${t.alls} connections are healthy. ` +
            (t.raudt ? `${t.raudt} are red: ${t.raud_heiti.join(', ')}.` : 'None are red.');
+  }
+  if (lykill === 'jarvis') {
+    return `Good morning. ${t.opin_verk_beidni} tasks are waiting and ${t.verk_i_vinnu} are in progress. ` +
+           `${t.kerfi_raud} systems are red. ${t.vantar_reikning_i_ar} sites still need an invoice this year.`;
+  }
+  if (lykill === 'oryggi') {
+    return `${t.rls_af} of ${t.toflur_alls} tables have row level security off, and ` +
+           `${t.buckets_public} of ${t.buckets_alls} storage buckets are public. Lock down the backups first.`;
+  }
+  if (lykill === 'prentun') {
+    return `${t.taeki_alls} units are registered and ${t.radnr_vantar} are missing a serial number. ` +
+           `${t.lanstaeki_alls} loaner units on file.`;
+  }
+  if (lykill === 'kort') {
+    return `${t.i_geocode_cache} addresses are in the geocode cache, out of ${t.adressur_alls} on file.`;
+  }
+  if (lykill === 'yfirlit') {
+    return `${t.fyrirtaeki_i_thjonustu} companies in service, ${t.vidskiptavinir_alls} customers total. ` +
+           `${Math.round((t.utistandandi_kr || 0) / 1000)} thousand krónur outstanding from ${t.skuldunautar} debtors.`;
   }
   return 'No summary available.';
 }

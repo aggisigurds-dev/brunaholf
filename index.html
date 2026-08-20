@@ -6,6 +6,32 @@
      scriptunum og þá sæist einmitt versta tegundin ekki. -->
 <script src="/js/villuvakt.js?v=1"></script>
 <script src="/js/theme.js?v=1"></script>
+<script>
+/* Afkasta-lagfæring 2026-08-13: sameina samhliða EINS GET-köll á /api/*.
+   Mælt við ræsingu: /api/worksites?year=combined (11,1s!) og
+   /api/data-sources-status og /api/invoice-drafts voru öll sótt TVISVAR
+   samtímis af óskyldum einingum. Þessi vafningur lætur seinni kallarann
+   deila svari þess fyrri — AÐEINS á meðan kallið er í flugi (engin
+   eftir-á-skyndminni, svo ferskleiki og GET-með-hliðarverkun, t.d.
+   /api/timavera-pull, hegða sér eins og áður: tvö samtímis eins köll
+   hefðu hvort eð er skilað sama svari). response.clone() per neytanda. */
+(function(){
+  var origFetch = window.fetch.bind(window);
+  var inflight = new Map();
+  window.fetch = function(input, init){
+    try {
+      var url = (typeof input === 'string') ? input : (input && input.url) || '';
+      var method = ((init && init.method) || (input && input.method) || 'GET').toUpperCase();
+      var isApiGet = method === 'GET' && /^(\/api\/|https?:\/\/[^/]*brunaholf\.netlify\.app\/api\/)/.test(url);
+      if (!isApiGet) return origFetch(input, init);
+      if (inflight.has(url)) return inflight.get(url).then(function(r){ return r.clone(); });
+      var p = origFetch(input, init).finally(function(){ inflight.delete(url); });
+      inflight.set(url, p);
+      return p.then(function(r){ return r.clone(); });
+    } catch (e) { return origFetch(input, init); }
+  };
+})();
+</script>
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
@@ -22,6 +48,7 @@
 <link rel="manifest" href="/manifest.json?v=flame1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://osfdzskyvisifcwyjkuk.supabase.co">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,500;1,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/theme.css?v=1">
 <style>
@@ -1231,7 +1258,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 }
 .section-head .title{
   font-family:var(--font-display);font-weight:600;font-size:21px;
-  color:var(--navy);letter-spacing:-.015em;line-height:1;
+  color:var(--ink);letter-spacing:-.015em;line-height:1;
   font-variation-settings:'opsz' 48, 'SOFT' 50;
 }
 .section-head .rule{flex:1;height:1px;background:linear-gradient(90deg, var(--line) 0%, transparent 100%);margin-bottom:2px}
@@ -1252,7 +1279,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 }
 .yf-band .panel h3{
   font-family:var(--font-display);font-weight:600;font-size:15px;
-  color:var(--navy);margin:0 0 10px;letter-spacing:-.01em;
+  color:var(--ink);margin:0 0 10px;letter-spacing:-.01em;
   display:flex;align-items:center;justify-content:space-between;gap:8px;
 }
 .yf-band .panel h3 .badge{
@@ -1266,7 +1293,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 .tile.tile-refined::before{display:none}
 .tile.tile-refined .num{
   font-family:var(--font-display);font-weight:600;
-  font-size:38px;line-height:1;letter-spacing:-.03em;color:var(--navy);
+  font-size:38px;line-height:1;letter-spacing:-.03em;color:var(--ink);
   font-variation-settings:'opsz' 96, 'SOFT' 30;
   margin-top:6px;
 }
@@ -4456,7 +4483,8 @@ function renderBakendi(t){
           const left = c.docs - c.reviewed;
           return '<option value="' + c.base_id + '">' + esc(c.nafn) + ' — ' + c.docs + ' skjöl'
             + (left ? (' · ' + left + ' óstaðfest') : ' · ✓')
-            + (c.unmatched ? (' · ' + c.unmatched + ' ótengd') : '') + '</option>';
+            + (c.unmatched ? (' · ' + c.unmatched + ' ótengd') : '')
+            + (c.needs_site ? (' · 🏷 ' + c.needs_site + ' vantar stað') : '') + '</option>';
         }).join('');
         setSt(cs.length + ' fyrirtæki í þjónustu', '#16a34a');
         // Deep-link from slökkvitæki: /#bakendi/<base_id> preselects that company.
@@ -4501,7 +4529,8 @@ function renderBakendi(t){
         + '<td style="' + cell + ';white-space:nowrap">' + (d.view_url
             ? '<a href="' + d.view_url + '" target="_blank" rel="noopener" class="btn" style="padding:3px 8px;text-decoration:none">📄 Opna</a>'
             : '<span style="color:#cbd5e1">engin skrá</span>') + '</td>'
-        + '<td style="' + cell + ';font-size:12px;color:' + (d.mangled ? '#b45309' : '#334155') + '">' + (d.mangled ? '⚠ ' : '') + esc(d.filename) + '</td>'
+        + '<td style="' + cell + ';font-size:12px;color:' + (d.mangled ? '#b45309' : '#334155') + '">' + (d.mangled ? '⚠ ' : '') + esc(d.filename)
+          + (d.needs_site ? ' <span style="display:inline-block;padding:1px 7px;border-radius:99px;background:#fee2e2;color:#b91c1c;font-size:10.5px;font-weight:700" title="Multitool: fjölstaða-kt án staðar-sönnunar (vegna-lína/heimilisfang/#stimpill fannst ekki) — veldu stað hér og merkið hreinsast.">🏷 vantar stað</span>' : '') + '</td>'
         + '<td style="' + cell + ';text-align:center">' + icon + '</td>'
         + '<td style="' + cell + ';text-align:center">' + brunaCell + '</td>'
         + '<td style="' + cell + '"><input class="st-year" value="' + esc(d.year) + '" style="width:60px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:12px"></td>'
@@ -5447,7 +5476,7 @@ function renderBakendi(t){
         const resCell = r.__res || '<span style="color:#cbd5e1">—</span>';
         body += '<tr data-row="'+i+'" style="'+(muted?'opacity:.62;':'')+'border-top:1px solid #eef2f7">'
           + '<td style="padding:5px 6px;text-align:center">'+chk+'</td>'
-          + '<td style="padding:5px 8px;max-width:200px;word-break:break-word"><a href="https://drive.google.com/file/d/'+esc(r.id)+'/view" target="_blank" rel="noopener" title="Opna skjalið í Drive" style="color:#1d4ed8;text-decoration:none">'+esc(r.name)+' <span style="color:#94a3b8">↗</span></a></td>'
+          + '<td style="padding:5px 8px;max-width:200px;word-break:break-word"><a href="/api/skjal?id='+encodeURIComponent(r.id)+'" target="_blank" rel="noopener" title="Opna skjalið í Drive" style="color:#1d4ed8;text-decoration:none">'+esc(r.name)+' <span style="color:#94a3b8">↗</span></a></td>'
           + '<td style="padding:5px 8px;white-space:nowrap;color:'+dt.col+';font-weight:700">'+dt.lbl+(r.sub_hint?('<div style="font-size:10.5px;color:#94a3b8;font-weight:400">'+esc(r.sub_hint)+'</div>'):'')+'</td>'
           + '<td style="padding:5px 8px">'+co+'</td>'
           + '<td style="padding:5px 8px;text-align:center">'+linked+'</td>'
@@ -6284,7 +6313,7 @@ function renderBakendi(t){
         const cands = (it.candidates || []);
         const candHtml = cands.length
           ? cands.map(c => '<span style="display:inline-flex;align-items:center;gap:5px;margin:3px 6px 0 0;padding:3px 7px;border:1px solid #e2e8f0;border-radius:8px;font-size:11.5px;background:#f8fafc">' +
-              '<a href="https://drive.google.com/file/d/' + esc(c.id) + '/view" target="_blank" rel="noopener" style="color:#1d4ed8;text-decoration:none;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📄 ' + esc(c.name) + '</a>' +
+              '<a href="/api/skjal?id=' + encodeURIComponent(c.id) + '" target="_blank" rel="noopener" style="color:#1d4ed8;text-decoration:none;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📄 ' + esc(c.name) + '</a>' +
               '<button class="_rl-pick" data-id="' + esc(it.id) + '" data-fid="' + esc(c.id) + '" style="font:inherit;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;border:1px solid #16a34a;background:#16a34a;color:#fff;cursor:pointer">✓ Velja</button></span>').join('')
           : '<span style="color:#94a3b8;font-size:11.5px">engin master-skrá fannst — skráin þarf að komast í master-möppuna fyrst (eða þetta er samningur úr annarri möppu)</span>';
         return '<div data-row="' + esc(it.id) + '" style="border:1px solid #eef2f7;border-radius:10px;padding:8px 11px;margin-bottom:7px">' +
@@ -10005,7 +10034,7 @@ async function renderGerdReikninga(t){
       .gr-logo-btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border:1px solid var(--border,#cbd5e1);border-radius:8px;cursor:pointer;font-size:13px;background:#fff}
       .gr-logo-btn:hover{background:#f1f5f9}
       .gr-loading{padding:30px;color:var(--muted,#64748b);font-style:italic}
-      .gr-summary{display:flex;gap:14px;flex-wrap:wrap;background:linear-gradient(135deg,#101d2e 0%,#3b82f6 100%);color:#fff;border-radius:14px;padding:16px 20px;margin-bottom:6px;box-shadow:0 4px 14px rgba(15,23,42,.12)}
+      .gr-summary{display:flex;gap:14px;flex-wrap:wrap;background:var(--navy-dark);color:#fff;border-radius:14px;padding:16px 20px;margin-bottom:6px;box-shadow:0 4px 14px rgba(0,0,0,.22)}
       .gr-sum-cell{display:flex;flex-direction:column;gap:3px;min-width:140px}
       .gr-sum-l{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:rgba(255,255,255,.8);font-weight:600}
       .gr-sum-v{font-family:var(--font-display);font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
@@ -19493,7 +19522,7 @@ function bhDocUrl(d){
   const u = d.public_url || d.url; if(u) return u;
   const fid = d.drive_file_id || d.id || '';
   if(!fid || String(fid).startsWith('sb:')) return '';
-  return 'https://drive.google.com/file/d/'+fid+'/view';
+  return '/api/skjal?id='+encodeURIComponent(fid);
 }
 // Icelandic number/króna formatting for PDFs.
 const _pkr = n => (Math.round(Number(n)||0)).toLocaleString('is-IS')+' kr';

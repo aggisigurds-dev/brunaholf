@@ -533,3 +533,224 @@ brenglaði um þriðjung heitanna, svo staðfestu alltaf innihald skjalsins sjá
   Bakendi card also has a **local browser mode** (úr tölvu → ZIP) via client-side
   `pdf-lib`+`JSZip` — no Drive, nothing sent to the server.
 
+---
+
+*Kaflarnir hér fyrir neðan voru fluttir orðrétt úr `CLAUDE.md` 2026-08-19
+(verkefnalisti 22a44bdc) — sama efni, nýr staður.*
+
+## customer.html — skjalatenglar benda á Supabase (2026-08-07)
+
+`/api/customer` byggði `view_url` EINGÖNGU úr `drive_file_id`, þótt röðin ætti
+`storage_path`. Mælt á lifandi gögnum 2026-08-07 (alls 3.590 raðir):
+
+| | |
+|---|---|
+| Aðeins Drive | 2.626 |
+| **Aðeins Storage** | **241** ← sýndust „án Drive-tengingar", skráin samt til |
+| Bæði | 287 |
+| **Hvorugt** (draugaraðir) | **436** |
+
+Nýtt `docViewUrl(d)` í `customer.js` — sama rökfræði og `openUrl` í
+`service-gaps.js` en með **Supabase á undan Drive**: `storage_path` er stöðug slóð
+sem rofnar ekki við endurnefningu og krefst engrar Google-innskráningar, á meðan
+Drive-hlekkur er skráarauðkenni sem rofnar (793 mældir dauðir — sjá
+`docs/SKJALA-FLUTNINGUR.md`). Þau 287 sem eiga BÁÐA opnast því á örugga eintakinu.
+Ekkert er flutt eða endurnefnt og engu eytt í Drive; `drive_file_id` stendur áfram
+í svarinu. `link_source` (`'storage'|'drive'|null`) fylgir með svo viðmótið geti
+sagt hvaðan skráin kemur (birt í `title` á tenglinum).
+
+⚠️ `storage_path` ber bucket-nafnið sjálft (allar 528 raðir byrja á `samningar/`,
+sem er public bucket) — ALDREI bæta bucket-forskeyti við slóðina.
+
+`summary.missing_drive_file_id` → **`summary.missing_file`**, og telur nú aðeins
+raðir með HVORUGA uppsprettu (draugaraðirnar, varnagli 3 í SKJALA-FLUTNINGUR).
+Gamla talan gaf falskt viðvörunarflagg á skjöl sem áttu fína Supabase-skrá.
+Sama leiðrétting í `docLink()` í `customer.html`: „engin Drive-tenging" →
+„engin skrá".
+
+Þetta er hlekkja-lagfæring á framsetningu, ekki Fasi 0 — hún nær aðeins til raða
+sem ERU í `customer_documents`. Þau ~1.534 storage-hlutir sem eiga enga röð eru
+enn ósóttir (Fasi 0 í `docs/SKJALA-FLUTNINGUR.md`).
+
+## Ártals-lesarinn í Drive-föllunum (2026-08-07)
+
+`yearFrom`/`yearFromName` er afritað í FIMM skrár (`drive-count`, `skyrslu-ar`,
+`drive-sort`, `drive-multitool`, `doc-index`) og útgáfurnar höfðu rekið í sundur.
+Tvennt lagað — báðar breytingar eru á lestri, engin skrá hreyfð:
+
+- **`_` telst nú sem bil.** Innsog sem kemur ekki frá Drive-flokkuninni skrifar
+  `Tangarbryggja_2024.pdf`; `_` er orðstafur svo hvorki bandstriks-liðurinn né
+  „stakt 20xx umlukið bilum" sá ártalið. Mælt: **31 af 56** ártalslausum skrám í
+  Úttektarskýrslur-möppunni lagast, þar af 4 frá 2026 (einstök 2026-skjöl 243 → 247).
+- **`drive-sort` fjarlægir nú kennitölu fyrst**, eins og `drive-multitool` gerði
+  þegar. Kt endar oft á gildu ártali (`500993-2009`) og var lesin sem ÁRIÐ. Það var
+  verst í `drive-sort` af öllum stöðunum, því þar ræður talan í hvaða ár-möppu skrá
+  er FÆRÐ. Mælt: 12 fyrirtæki eiga slíka kt, 6 þeirra í þjónustu. Bæði föllin fengu
+  líka þak (`2008..nú+1`) sem `drive-multitool` vantaði.
+
+⚠️ Eftir stendur meðvitað frávik: `drive-sort`/`drive-multitool` lesa
+dagsetningarforskeyti (`2024-03-11 nóta.pdf`), `drive-count`/`skyrslu-ar` ekki.
+Það er eldra en þessi lagfæring og snertir reikninganöfn, ekki skýrslur.
+
+**Ef þú breytir einu þeirra, breyttu hinum.** Ósamræmi milli `skyrslu-ar` og
+`drive-count` þýðir að skrá sem á ártal fyrir fer samt í endurnefningu.
+
+## Eyðublöð — skjalasmiðja með útgáfusögu (2026-08-06)
+
+Nýr flipi **`eydublod`** + sjálfstæð síða `eydublod.html` (sama iframe-mynstur og
+`multitool`/`pdftools`; `renderEydublod(t)` í index.html). Býr til útprentanleg
+skjöl til verkkaupa. Fyrsta eyðublaðið: **„Yfirlýsing vegna brunalokana"**.
+
+- **Stafrétt eftirmynd af Word-frumritinu.** Uppsetningin er lesin beint úr
+  `Staðfesting_Keldur31072026.docx` — ekki ágiskuð: US Letter 8,5×11in, spássía
+  1in, grunnletur Aptos 11pt (`docDefaults`), meginmál **Calibri 12pt** (sz 24),
+  fyrirsögn Calibri 14pt feitletruð miðjuð (sz 28), línubil 1,15 (`line 276`),
+  bil á eftir málsgrein 0, punktar `●` með 0,5in inndrætti og 0,25in hangandi,
+  haus með merki 2,04×0,49in miðjuðu og línu undir, undirskrift 4,39×1,06in.
+  ATH: þrjár „Hvað var gert"-línurnar eru á grunnletrinu (11pt) í frumritinu, ekki
+  Calibri 12pt — það er hermt eftir viljandi.
+- **Myndirnar eru úr frumritinu**: `img/yfirlysing-logo.jpg` (merkið, `word/media/
+  image2.jpg`) og `img/undirskrift-annthor.png` (undirskrift Annþórs, `image1.png`).
+  ⚠️ Báðar eru sóttanlegar opinberlega því `publish = "."` — loka má á þær með
+  redirect-reglu þegar innskráningin kemur (sjá „Open work").
+- **Ritað BEINT ofan í skjalið** (`contenteditable` per svæði). Hliðarstikan geymir
+  aðeins það sem er ekki í skjalinu: dagsetningarval, `byggingar`, `sveitarfelag`
+  og undirskriftarflötinn. Sjálfvirku setningarnar tvær („Um ræðir…" og
+  niðurstaðan) skrifa sig út frá byggingunum og hætta því um leið og notandinn
+  skrifar ofan í þær. Vantar byggingarnúmer (t.d. „Rekstrarfélag Kringlunnar,
+  Útisvæði – Kúmen 07-009-222") er efnið sótt í fyrirsögnina á eftir kommunni.
+- **Gulu svæðin** = nákvæmlega þau sem Agnar strikaði gul á fyrirmyndinni. Rofinn
+  „Sýna breytileg svæði" kveikir/slekkur; prentast aldrei.
+- **PDF**: `js/jspdf.umd.min.js` (vistað í repo-inu, EKKI cdnjs — PDF-inn er
+  afurðin og má ekki detta út þótt CDN sé niðri) + `fonts/carlito-*.ttf`
+  (OFL, málsamhæft við Calibri, hlutmengjað í latínu+íslensku svo hver PDF er
+  ~140 KB). Vektor, leitanlegur texti, réttir íslenskir stafir.
+  ⚠️ Google Fonts skilar Carlito-skránum í röðinni *italic, bold-italic, regular,
+  bold* — bold/italic víxluðust í fyrstu atrennu. Staðfestu alltaf með
+  `TTFont(p)['name'].getDebugName(4)` ef skipt er um leturskrár.
+- **Geymsla + útgáfur**: tafla `eydublod_skjol` + public fatan `eydublod`
+  (`sql/2026-08-06_eydublod.sql`), endapunktur `netlify/functions/eydublod.js`
+  (`/api/eydublod`, ríður `/api/*` catch-all). `gogn` (jsonb) geymir REITAGILDIN —
+  þau eru uppspretta sannleikans, svo hægt er að opna skjal, breyta og vista sem
+  NÝJA útgáfu. `skjal_id` heldur útgáfunum saman, `utgafa` telur upp; hver útgáfa
+  fær sinn eigin storage-hlut svo eldri PDF (þegar farinn til verkkaupa) er
+  ALDREI skrifaður yfir. GET skilar nýjustu útgáfu per skjal (`?all=1` fyrir allar).
+- **A4, ekki Letter (2026-08-07)**: frumritið var US Letter (Word-sjálfgildi) en
+  hér er prentað á A4 — `@page{size:A4}`, `.doc{width:210mm}` og jsPDF
+  `format:'a4'` (595,28×841,89pt). Spássían er áfram 1in.
+- **Línubil er stillanlegt (2026-08-07)**: Agnar bað um rýmra bil en frumritsins
+  1,15. Sjálfgefið **1,5**, geymt í `values.linubil` svo það fylgi skjalinu og
+  vistist með því. Stillt á EINUM stað — `--lh` (CSS) og `LH` (PDF) lesa bæði
+  sama gildi; ekki hardkóða línubil aftur.
+  **„📄 Passa á eina síðu"** (`passaEinaSidu()`) prófar bilið frá völdu gildi
+  niður í 1,0 í 0,05-þrepum og velur það STÆRSTA sem heldur skjalinu á einni
+  síðu — byggir PDF í hverri umferð því það er eina örugga mælingin (HTML-
+  forskoðunin brýtur línur ekki alltaf eins). Leturskrárnar eru í `_fontCache`
+  svo umferðirnar séu ódýrar. Dæmi: Kringlan-skjalið fer úr 2 síðum í 1 við 1,35.
+- **Kveðjublokkin er ein heild**: „Með kveðju / FH. Brunahólf ehf. / nafn /
+  undirskrift" fær `P.need(...)` á undan sér svo undirskriftin slitni ALDREI
+  frá nafninu yfir á næstu síðu.
+- **Cache-gildra (2026-08-07)**: iframe-ar endurnýta vistað eintak án þess að
+  spyrja þjóninn, svo Agnar sat fastur á gamalli útgáfu eftir deploy og hélt að
+  breytingarnar virkuðu ekki. Hub-inn hleður núna `/eydublod.html?v=<Date.now()>`
+  (alltaf ferskt; síðan er ~60 KB, þungu skrárnar cachast áfram). Síðan sýnir
+  líka `UTGAFA` í hausnum — **bumpaðu því við hverja breytingu**, það er eina
+  leiðin til að sjá strax hvort vafrinn situr á gömlu eintaki.
+- **Nýtt eyðublað** = einn hlutur í `FORMS`-fylkinu í `eydublod.html`
+  (`id/titill/lysing/sections/doc(v,E)/pdf(v,P)`) — sjá leiðbeiningarnar í
+  haus-athugasemdinni þar. Engin bakenda-breyting þarf; `form_id` er frjálst.
+
+## Samningar mega bera ár (2026-08-11)
+
+Agnar: „multitool use the year in the name that I want — to have when it was
+registered.. but something in the system dont want files with years within the
+filename." **„Eitthvað í kerfinu" var CHECK-reglan `customer_documents_year_shape`**,
+sem krafðist `year IS NULL` á `doc_type='samningur'`.
+
+Samningar BERA ártal í raunveruleikanum (endurnýjunarár — sjá Samningar-möppuna:
+„… - þjónustusamningur - 2026.pdf"). Reglan var því röng forsenda, ekki vörn, og
+braut þrennt í hljóði:
+
+1. **`samningar-read.js`** sendir `year` á samning → `23514 check_violation` →
+   samningurinn skráðist ALDREI þegar heitið bar ártal.
+2. **`drive-multitool.js`** neyddist til að henda árinu (`rowYear = null`) og
+   geyma það í `notes` í staðinn. Mælt: **146 af 204** multitool-samningum báru
+   ártal í notes, **0** í `year`-dálknum.
+3. **`findExistingLink`** síar á `year=eq.<ár>`. Þar sem hver geymdur samningur
+   hafði `year=NULL` fann sú fyrirspurn ALDREI fyrirliggjandi samning → hvert
+   sweep bjó til NÝJA röð. Tvítök: Thai Lindin 5 raðir, Center Hótel 4,
+   Húsfélagið Stakkholt 2-4 4, Prikið 3, Suðurhella 9 3.
+4. **`match-station`** deduppar samninga á `(staður, ár)`; með ár alltaf NULL
+   féllu ALLIR samningar staðarins í einn hóp.
+
+Migration `allow_year_on_samningur` rýmkar regluna: samningur MÁ hafa ár (áfram
+valfrjálst svo eldri NULL-raðir standist). Vörnin sem skiptir máli heldur —
+`uttektarskyrsla`/`reikningur` VERÐA áfram að hafa ár (prófað: innsetning án árs
+er enn hafnað).
+
+Bakfyllt: 146 ártöl endurheimt úr `notes` (2008–2026). 212 samningar eru enn án
+árs — nöfn þeirra bera ekkert ártal.
+
+⚠️ **`findExistingLink` leyfir `year.is.null` LÍKA fyrir samninga.** Samningar
+skráðir fyrir þessa breytingu eiga `year=NULL`; hrein árs-sía sæi þá ekki og
+byggi til nýja röð — sama tvítaka-hegðun og var verið að laga. Ekki herða þetta
+í hreina árs-jöfnun fyrr en bakfyllingin nær til allra.
+
+## Skjala-multitool — ⚙️ Stillingar, staðgreitt og sóttkví (2026-08-12)
+
+**⚙️ Stillingar** (modal í `multitool.html`) er nú EINI staðurinn fyrir lestrar-
+stillingar (undirmöppur/þak/röð) og markmöppurnar — þær voru áður á aðal-skjánum og
+í keyrslu-boxinu. Vistast í `localStorage.multitool_settings_v1` OG í `app_kv`
+gegnum `/api/app-state` (`multitool_settings` bætt í `ALLOWED_KEYS`) svo þær fylgi
+milli vélanna fjögurra. **Bættu nýrri stillingu við á EINUM stað** — `SET_FIELDS`
+fylkið sér um lestur/vistun/endurheimt sjálfkrafa.
+
+**💵 Staðgreitt.** Nóta með kt `999999-9999` EÐA „Greiðsl.skilm.: Staðgreiðsla" fær
+eigin `doc_type='stadgreitt'`, eigin möppu, og er **aldrei** tengd í
+`customer_documents` (hún er ekki í `LINKABLE`) — kt 999999-9999 er walk-in
+staðgengillinn (`customers_base` 870 „Staðgreitt"), ekki viðskiptavinur.
+
+⚠️ **Yfirskriftin má ekki hverfa:** beri nótan **Akstur** OG **Skýrslugerð (og
+vottun)** er hún úttektarreikningur þrátt fyrir staðgreiðsluna — við keyrðum á
+staðinn og skrifuðum skýrslu (Agnar 2026-08-12, R-108017 Álfaskeið 104). Búðarsala
+yfir borðið ber hvoruga línuna (R-107962: bara „Hleðsla Léttvatn").
+
+⚠️ **Merkið er lesið úr ORÐINU, ekki merkimiðanum.** OCR ruglar dálkunum á dkPlus-
+nótu svo „Greiðsl.skilm.:" og „Staðgreiðsla" lenda á sitt hvorri línunni — regla sem
+festir sig við merkimiðann finnur ekkert. Staðfest á hráum OCR-texta R-107962.
+
+**✏️ Möppuheitið er ekki félagsnafn.** Lotu-skönnun skrifar „`<möppuheiti> - bls
+NNN.pdf`" á hverja síðu; `companyFromStem` las því möppuna sem kaupandann á HVERJUM
+reikningi í bunkanum („mars-mai stolpi - Skeiðarvogi 159 - …"). `sameAsFolder` hafnar
+nú möppuheiti sem félagsnafni og `nameInvoice` lætur heimilisfangið leiða þegar félag
+vantar. „Óþekkt" stendur aðeins eftir þegar hvorugt er til.
+
+**📂 Þrír útkomu-hamir** (radio `outmode`):
+- `master` — óbreytt: endurnefnir, færir í meistaramöppurnar, tengir.
+- `quarantine` — **sóttkví**: raðar í undirmöppur INNI Í lesmöppunni og tengir ekkert.
+- `presort` — **reikninga-forflokkun**: skiptir bunka af nótum AÐEINS í tvennt
+  (💵 Staðgreiðslunótur / 📄 Úttektarnótur + 📦 Annað) og telur skiptinguna.
+
+`POST {action:'quarantine-folders', src, mode}` býr möppurnar til (idempotent);
+`noLink` í `apply` sleppir gagnagrunns-skrefinu. Hver röð sýnir `stad_signal` /
+`stad_override` sem merki, svo flokkunin sé sannreynanleg í listanum án þess að opna
+PDF-ið. Sóttkví/forflokkun færa ALDREI út fyrir lesmöppuna — vantar möppurnar er
+markmappan tóm og ekkert færist.
+
+## 📋 Skráalisti (2026-08-12)
+
+`skraalisti.html` + `netlify/functions/drive-filelist.js` + flipi `skraalisti`.
+Telur Drive-möppu, listar öll skráarheiti, flytur út í CSV/Google Sheets og ber
+**tvær möppur saman** til að finna hvað vantar. **Engin OCR, engin flokkun, engin
+tenging** — þess vegna ræður það við möppur með þúsundum skráa (multitoolið er
+mínútur á sama gagni) og þess vegna er GET-ið hættulaust.
+
+⚠️ **Samanburðurinn stendur og fellur með lyklinum.** Sama skjal ber sjaldnast sama
+heiti í tveimur möppum. Reikningsnúmera-lykillinn les því ÞRJÁR ritvenjur — `R-107962`,
+`Stolpi_Invoice_107962` og bert `1xxxxx` — af því samanburðurinn sem raunverulega er
+gerður er hrátt dkPlus-heiti á móti endurnefndu. Læsi hann aðeins „R-"-formið teldist
+hvert óendurnefnt skjal „vantar". Kennitölur eru teknar út ÁÐUR en bert númer er lesið,
+en með þéttri reglu (`\d{6}-\d{4}` eða `\d{10}`) — lausari regla gleypti „R-106741 -
+2025" sem kennitölu og skildi merkta númerið eftir ólesið.
+
+Skrár án lykils eru merktar „lykil vantar" og taldar **hvorki** samsvörun né mismunur.

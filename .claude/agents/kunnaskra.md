@@ -218,3 +218,19 @@ anon-reglur** (villuboð bera slóðir, notendanöfn og stafla). NB Sentry var
 upphaflega beiðnin en þarf aðgang + DSN sem er ekki til; þetta virkar strax og
 útilokar hann ekki — `villuvakt.js` sendir í `window.Sentry` líka ef hann er til.
 
+---
+
+*Kaflarnir hér fyrir neðan voru fluttir orðrétt úr `CLAUDE.md` 2026-08-19
+(verkefnalisti 22a44bdc) — sama efni, nýr staður.*
+
+## customer.html — síðasta póstsamskipti (2026-08-05)
+
+Verkefnalisti aaaa0cb6. Slökkvitæki-hliðin (unreplied-envelope á „Fyrirtæki í þjónustu",
+`/api/company-mail` + patch 295) var þegar til (2026-07-31) — vantaði bara sama upplýsingu
+á Brunahólfs kúnna-síðuna sjálfa. `netlify/functions/customer.js` reiknar núna
+`last_contact` (nýjasti INN-pósturinn frá `base.contact_email`/`netfang` eða einhverju
+lifandi `fyrirtaeki.netfang`, + hvort honum sé svarað — sama varfærna nákvæma-netfangs-
+mátun og company-mail.js, bara á einn kúnna í einu). Birtist sem badge í haus-kortinu
+(`customer.html`) ALLTAF þegar til er samskipti, og sem `🤖 AI Ráðgjafi`-flagg (info fyrstu
+2 daga, warn frá 3 dögum) þegar ósvarað — bein ósk verkefnalistans um „flagar 'enginn
+svarað í 3 daga'".

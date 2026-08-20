@@ -185,6 +185,9 @@
     <button id="run" class="btn primary">👁 Forskoða</button>
     <button id="stop" class="btn" disabled>⏸ Stöðva</button>
     <button id="save-folder" class="btn sm" title="Vista þessa möppu sem tengil">💾 Vista möppu</button>
+    <button id="save-report" class="btn sm" title="Vista skönnunina sem JSON-skrá (lyklað á Drive-id)">💾 Vista skýrslu</button>
+    <button id="cmp-report" class="btn sm" title="Bera núverandi skönnun saman við eldri vistaða skýrslu">🔀 Bera saman</button>
+    <input type="file" id="cmp-file" accept="application/json,.json" style="display:none">
     <button id="show-corr" class="btn sm" title="Skoða leiðréttingaskrána (villuskýrslu)">📋 Leiðréttingaskrá</button>
     <button id="dedup-btn" class="btn sm" title="Fljót tvítekninga-leit — les BARA nöfn (engin OCR), strípar (1)/(2)">🗂️ Tvítök (nöfn)</button>
     <button id="show-set" class="btn sm" title="Stillingar — lestur, flokkun, hvert skjölin fara">⚙️ Stillingar</button>
@@ -325,6 +328,14 @@
             hvort flokkunin er rétt áður en nokkuð er fært.</span>
         </label>
 
+        <label class="set-opt" id="opt-inplace">
+          <input type="radio" name="outmode" value="inplace">
+          <b>↩︎ Endurnefna á staðnum</b>
+          <span class="d">Endurnefnir skrárnar og skilur þær eftir <b>nákvæmlega þar sem þær voru</b>.
+            Ekkert fært, ekkert tengt. Renndu svo sömu möppu aftur í „Meistaramöppur“-ham til að tengja.
+            Samnefnur eru varðar — fái tvær skrár sama nafn bætist (2), (3)… aftan við.</span>
+        </label>
+
         <div class="set-sub" id="quar-sub" style="display:none">
           <div class="set-row"><label><input type="checkbox" id="s-nolink" checked> Tengja EKKI við gagnagrunn</label></div>
           <div class="set-row">
@@ -406,7 +417,8 @@
   function presortOn(){ return outMode()==='presort'; }
   function quarMode(){ return presortOn()?'presort':'full'; }
   function quarReady(){ return !!(QUAR.folders && QUAR.src===folderId($('src').value) && QUAR.mode===quarMode()); }
-  function noLink(){ return quarOn() && $('s-nolink') && $('s-nolink').checked; }
+  function inplaceOn(){ return outMode()==='inplace'; }
+  function noLink(){ if(inplaceOn()) return true; return quarOn() && $('s-nolink') && $('s-nolink').checked; }
   // Markmappa fyrir reit-lykil — undirmöppur lesmöppunnar ráða þegar sóttkví/
   // forflokkun er virk og möppurnar eru til; annars föstu meistaramöppurnar.
   function tf(key, fallbackKey){
@@ -416,6 +428,7 @@
   }
   // röð → markmöppu-reitur. Brunakerfi: skýrslur vs reikningar (fellur á reikningar-master).
   function targetFor(r){
+    if(inplaceOn()) return '';   // ↩︎ á staðnum: engin markmappa, viljandi — apply endurnefnir án þess að færa
     var dt=(r&&r.doc_type)||'', sub=(r&&r.sub_hint)||'';
     // Forflokkun: aðeins tvær hrúgur — staðgreiðslunótur vs úttektarnótur. Allt
     // annað (skýrslur, samningar, vendor) er ekki nóta og fer í Annað.
@@ -434,6 +447,7 @@
   }
   // Merkið sem birtist á röðinni: hvert fer hún RAUNVERULEGA í þessum ham.
   function targetLabel(r){
+    if (inplaceOn()) return '↩︎ sama mappa';
     if (presortOn()) return (r.doc_type==='stadgreitt') ? '💵 staðgreiðslunótur' : (r.doc_type==='reikningur' ? '📄 úttektarnótur' : '📦 annað');
     return r.target||'';
   }
@@ -492,26 +506,33 @@
   }
   // Samantekt efst + í keyrslu-boxinu, svo hamurinn sé aldrei falinn inni í modal.
   function syncSetUi(){
-    var m=outMode(), q=quarOn(), ps=presortOn();
-    var lbl = ps?'🧾 <b>Reikninga-forflokkun</b>' : (q?'🚧 <b>Sóttkví</b>':'🗄️ Meistaramöppur');
+    var m=outMode(), q=quarOn(), ps=presortOn(), ip=inplaceOn();
+    var lbl = ip?'↩︎ <b>Endurnefna á staðnum</b>' : (ps?'🧾 <b>Reikninga-forflokkun</b>' : (q?'🚧 <b>Sóttkví</b>':'🗄️ Meistaramöppur'));
     var sub=$('quar-sub'); if(sub) sub.style.display=q?'block':'none';
-    var ms=$('master-sec'); if(ms) ms.style.opacity=q?'.55':'';
-    ['opt-master','opt-quar','opt-presort'].forEach(function(id,i){
-      var el=$(id); if(el) el.classList.toggle('on', ['master','quarantine','presort'][i]===m);
+    var ms=$('master-sec'); if(ms) ms.style.opacity=(q||ip)?'.55':'';
+    ['opt-master','opt-quar','opt-presort','opt-inplace'].forEach(function(id,i){
+      var el=$(id); if(el) el.classList.toggle('on', ['master','quarantine','presort','inplace'][i]===m);
     });
-    var lr=$('linkmoderow'); if(lr) lr.style.display=(q&&noLink())?'none':'';
+    var lr=$('linkmoderow'); if(lr) lr.style.display=((q||ip)&&noLink())?'none':'';
     var sum=$('setsum');
     if(sum) sum.innerHTML = lbl
       + ' · ' + ($('s-cap')?($('s-cap').value+' skjöl'):'')
       + ($('s-recurse')&&$('s-recurse').checked?' · undirmöppur':'')
       + ($('s-stadgreitt')&&$('s-stadgreitt').checked?' · 💵 staðgreitt sér':'');
     var head=$('applyhead');
-    if(head) head.textContent = ps
+    if(head) head.textContent = ip
+      ? 'Fasi 2 — á staðnum: endurnefnir · EKKERT fært · EKKERT tengt'
+      : (ps
       ? ('Fasi 2 — forflokkun: endurnefnir · skiptir í staðgreiðslu- og úttektarnótur' + (noLink()?' · tengir EKKI':' · tengir'))
       : (q ? ('Fasi 2 — sóttkví: endurnefnir · færir í undirmöppur lesmöppunnar' + (noLink()?' · tengir EKKI':' · tengir'))
-           : 'Fasi 2 — keyra valdar raðir (LIFANDI: endurnefnir · færir · tengir)');
+           : 'Fasi 2 — keyra valdar raðir (LIFANDI: endurnefnir · færir · tengir)'));
     var as=$('applysum');
     if(!as) return;
+    if(ip){
+      as.innerHTML='<span class="q">↩︎ Endurnefna á staðnum</span> — skrárnar fá ný nöfn en sitja kyrrar í lesmöppunni.'
+        + ' <b>Ekkert fært, ekkert tengt.</b> Samnefnur fá sjálfkrafa (2), (3)… Renndu möppunni svo aftur í „Meistaramöppur“-ham til að tengja.';
+      return;
+    }
     if(!q){ as.innerHTML=''; return; }
     if(!quarReady()){
       as.innerHTML='<span style="color:#b45309;font-weight:700">'+(ps?'🧾 Forflokkun':'🚧 Sóttkví')+' valin en möppurnar eru ekki til enn</span>'
@@ -610,6 +631,69 @@
   function saveShortcut(id,label){ id=folderId(id); if(!id) return; var a=loadFolders(); a.push({label:label||id, id:id}); saveFolders(a); renderFolders(); }
   function openPickerSave(){ openDrivePicker(function(id,name){ saveShortcut(id,name); }); }
   $('save-folder').onclick=openPickerSave;
+
+  // ── 💾 Vista skýrslu / 🔀 Bera saman ─────────────────────────────────────
+  // Skýrslan er JSON yfir núverandi rows[] — LYKLUÐ Á DRIVE-ID, aldrei á
+  // skráarnafninu (nafnið er einmitt það sem endurnefningin breytir; nafn-
+  // lyklun sýndi allt sem „nýtt"). Bera saman les eldri skýrslu og sýnir
+  // nýjar / breyttar / horfnar raðir í status-reitnum.
+  function reportRow(r){
+    return { id:r.id, name:r.name||'', doc_type:r.doc_type||'', year:(r.year!=null?r.year:null),
+      proposed_name:r.proposed_name||'', base_id:(r.base_id!=null?r.base_id:null), base_nafn:r.base_nafn||'',
+      site_id:(r.site_id!=null?r.site_id:null), invoice_number:r.invoice_number||'',
+      target:targetLabel(r)||'', edited:!!r.__edited };
+  }
+  function saveReport(){
+    if(!rows.length){ alert('Engin skönnun til að vista — keyrðu fyrst.'); return; }
+    var d=new Date(), p=function(n){return String(n).padStart(2,'0');};
+    var stamp=d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes());
+    var payload={ tool:'drive-multitool', version:1, generated_at:d.toISOString(),
+      src:folderId($('src').value), mode:outMode(), counts:counts, row_count:rows.length,
+      rows:rows.map(reportRow) };
+    var blob=new Blob([JSON.stringify(payload,null,1)],{type:'application/json'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='multitool-skyrsla-'+stamp+'.json';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500);
+    $('status').innerHTML='💾 Skýrsla vistuð — <b>'+rows.length+'</b> raðir ('+esc(a.download)+').';
+  }
+  function compareReport(file){
+    var rd=new FileReader();
+    rd.onload=function(){
+      var old; try{ old=JSON.parse(rd.result); }catch(_){ $('status').innerHTML='<span style="color:#dc2626">🔀 Ógild JSON-skrá.</span>'; return; }
+      var oldRows=(old&&old.rows)||[];
+      if(!rows.length){ $('status').innerHTML='<span style="color:#b45309">🔀 Engin núverandi skönnun — keyrðu fyrst, berðu svo saman.</span>'; return; }
+      var oldById={}; oldRows.forEach(function(r){ if(r&&r.id) oldById[r.id]=r; });
+      var curById={}; rows.forEach(function(r){ if(r&&r.id) curById[r.id]=reportRow(r); });
+      var added=[], changed=[], gone=[];
+      Object.keys(curById).forEach(function(id){
+        var c=curById[id], o=oldById[id];
+        if(!o){ added.push(c); return; }
+        var diffs=[];
+        ['proposed_name','doc_type','year','base_id','site_id','invoice_number','name'].forEach(function(f){
+          var a=(o[f]==null?'':String(o[f])), b=(c[f]==null?'':String(c[f]));
+          if(a!==b) diffs.push(f+': „'+a+'" → „'+b+'"');
+        });
+        if(diffs.length) changed.push({row:c, diffs:diffs});
+      });
+      Object.keys(oldById).forEach(function(id){ if(!curById[id]) gone.push(oldById[id]); });
+      var when=old.generated_at?new Date(old.generated_at).toLocaleString('is-IS'):'?';
+      var html='🔀 <b>Samanburður</b> við skýrslu frá '+esc(when)+' ('+oldRows.length+' raðir → '+rows.length+' nú): '
+        + '<b style="color:#0f7a43">'+added.length+' nýjar</b> · <b style="color:#b45309">'+changed.length+' breyttar</b> · <b style="color:#dc2626">'+gone.length+' horfnar</b>.';
+      var det=[];
+      added.slice(0,8).forEach(function(r){ det.push('<span style="color:#0f7a43">＋ '+esc(r.name||r.id)+'</span>'); });
+      changed.slice(0,8).forEach(function(c){ det.push('<span style="color:#b45309">≠ '+esc(c.row.name||c.row.id)+'</span> <span class="muted">('+esc(c.diffs.join(' · '))+')</span>'); });
+      gone.slice(0,8).forEach(function(r){ det.push('<span style="color:#dc2626">－ '+esc(r.name||r.id)+'</span>'); });
+      var more=(added.length>8?added.length-8:0)+(changed.length>8?changed.length-8:0)+(gone.length>8?gone.length-8:0);
+      if(det.length) html+='<div style="margin-top:6px;line-height:1.7">'+det.join('<br>')+(more?('<br><span class="muted">… og '+more+' til viðbótar</span>'):'')+'</div>';
+      $('status').innerHTML=html;
+    };
+    rd.readAsText(file);
+  }
+  $('save-report').onclick=saveReport;
+  $('cmp-report').onclick=function(){ $('cmp-file').value=''; $('cmp-file').click(); };
+  $('cmp-file').addEventListener('change',function(){ if(this.files&&this.files[0]) compareReport(this.files[0]); });
   renderFolders();
 
   // ── Google Drive folder-picker (browse + search, engin ID-innsláttur) ──
@@ -859,7 +943,9 @@
       var hasAnnad=!!targetFor({doc_type:'other'});
       // Staðgreitt er OKKAR skjal en aldrei tengt — það þarf bara markmöppu til að færast.
       var isStad=(r.doc_type==='stadgreitt');
-      var canApply=(ours && r.doc_type!=='error') || ((isMisc||isStad) && !!targetFor(r)) || (isMisc && hasAnnad);
+      // ↩︎ á staðnum: allt sem á sér tillögunafn má keyra (endurnefning án færslu/tengingar)
+      var canApply=(inplaceOn() && r.doc_type!=='error' && !!r.proposed_name)
+        || (ours && r.doc_type!=='error') || ((isMisc||isStad) && !!targetFor(r)) || (isMisc && hasAnnad);
       // Í forflokkun eru nóturnar sjálfvaldar (það er verkið); annars okkar tegundir.
       var autoCheck=(ours || (presortOn() && isStad)) && r.doc_type!=='error';
       var chk='<input type="checkbox" class="chk" data-idx="'+i+'"'+(r.__done?' disabled':(canApply?'':' disabled'))+((canApply&&autoCheck&&!r.__done)?' checked':'')+' data-nostop="1">';
@@ -873,6 +959,15 @@
       // AF HVERJU lenti nótan sínum megin — sýnilegt strax, án þess að opna PDF-ið.
       if(r.stad_override) bits.push('<span class="pill amber" title="Greiðsl.skilm. sögðu staðgreiðsla EN nótan ber Akstur + Skýrslugerð og vottun — þá er þetta úttekt.">🚗 '+esc(r.stad_signal||'staðgreiðsla')+' → úttekt (Akstur + Skýrslugerð)</span>');
       else if(r.stad_signal) bits.push('<span class="pill amber" title="Búðarsala — hvorki reikningar-master né skjalaskrá viðskiptavinar.">💵 '+esc(r.stad_signal)+'</span>');
+      // Greining (2026-08-13): vegna-/tilvísunar-línan sem staðargreiningin las
+      // úr skjalinu — sýnileg HÉR, áður en ýtt er á Keyra. Grænt = hún leysti
+      // staðinn; rautt merki = fjölstaða-kúnni án staðar-sönnunar → skjalið
+      // vistast samt (tengt kúnnanum einum) og fer merkt í yfirferð.
+      if(r.vegna) bits.push('<span title="Vegna-/Tilvísunar-línan úr skjalinu — grunnur staðargreiningarinnar"><span class="k">Greining:</span> „'+esc(r.vegna)+'"'+(r.site_via==='vegna'?' <span class="pill" style="background:#dcfce7;color:#166534;border-color:#bbf7d0">→ 📍 '+esc(r.site_nafn||'')+'</span>':'')+'</span>');
+      if(r.needs_site && !r.__done) bits.push('<span class="pill red" title="Rekstrarfélag með marga staði en engin staðar-sönnun (vegna-lína / heimilisfang / #stimpill). Vistast tengt kúnnanum EINUM — aldrei giskað á stað — og merkist needs_site í yfirferð.">🏷 vantar stað → yfirferð</span>');
+      // Pakki 8: vidskiptategund úr forskoðuninni (sala→línur→búðarmappa→óvíst)
+      // — stimplast á skjalaröðina við Keyra.
+      if(r.vidskiptategund) bits.push('<span class="pill" title="Úttekt eða búðarsala — stimplast á skjalaröðina við Keyra (sala → línur → búðarmappa → óvíst)">'+(r.vidskiptategund==='uttekt'?'🧯 úttekt':(r.vidskiptategund==='bud'?'🛒 búð':'❓ óvíst'))+'</span>');
       // Í sóttkví/forflokkun er ekkert tengt — „ekki tengt"-merkið væri villandi þar.
       if(!noLink()) bits.push('<span>'+linked+'</span>');
       // ✏️ Leiðrétta — opnar innfelldan ritil (data-nostop svo röð-smellur opni ekki forskoðun)
@@ -1036,8 +1131,12 @@
   async function applyOne(i){
     var r=rows[i]; setRes(i,'<span style="color:#64748b">… vinn</span>');
     var body={ action:'apply', id:r.id, doc_type:r.doc_type, base_id:r.base_id, base_nafn:r.base_nafn,
-      year:r.year, invoice_number:r.invoice_number, site_id:r.site_id, proposed_name:r.proposed_name,
-      targetFolder:targetFor(r), linkMode:linkMode(), noLink:noLink() };
+      year:r.year, invoice_number:r.invoice_number, site_id:r.site_id,
+      proposed_name:(r.__finalName || r.proposed_name),
+      // Pakki 8: tegundin úr forskoðuninni (sala→línur→búðarmappa) og upphæðin
+      // (samsetti tvítakalykillinn kt+upphæð+ár þegar númer vantar) fylgja með.
+      vidskiptategund:r.vidskiptategund||null, amount:(r.total!=null?r.total:null),
+      targetFolder:targetFor(r), linkMode:linkMode(), noLink:noLink(), inplace:inplaceOn() };
     try{
       var rr=await fetch('/api/drive-multitool',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
       var d=await rr.json().catch(function(){ return {ok:false,error:'HTTP '+rr.status}; });
@@ -1048,7 +1147,7 @@
       var bits=[]; if(d.moved) bits.push('fært'); if(d.renamed) bits.push('endurnefnt');
       if(d.linkAction==='skipped_exists') bits.push('tengill til (ósnert)');
       else if(d.linked) bits.push('tengt'+(d.linkAction&&d.linkAction!=='linked'?(' ('+d.linkAction+')'):''));
-      if(d.moveSkipped==='no-target') bits.push('engin markmappa');
+      if(d.moveSkipped==='no-target') bits.push(inplaceOn()?'↩︎ á staðnum':'engin markmappa');
       setRes(i,'<span style="color:#0f7a43;font-weight:700">✓ '+esc(bits.join(' + ')||'engin breyting')+'</span>');
       return {res:'ok'};
     }catch(e){ r.__done=true; setRes(i,'<span style="color:#dc2626;font-weight:700">✗ '+esc(e&&e.message||e)+'</span>'); return {res:'err'}; }
@@ -1061,6 +1160,23 @@
     }
     var cap=Math.max(parseInt($('s-cap').value||'100',10)||100,1);
     var todo=idxs.slice(0,cap);
+    // ↩︎ á staðnum: Drive leyfir samnefndar skrár í sömu möppu, svo tvær raðir
+    // með sama tillögunafni myndu enda samnefndar hlið við hlið. Lesmappan er
+    // öll í rows[], svo nafnasafnið hér nær líka yfir skrár sem ekki er verið
+    // að endurnefna. Samnefnur fá " (2)", " (3)"… á undan endingunni.
+    if(inplaceOn()){
+      var taken={};
+      rows.forEach(function(r,ri){ if(todo.indexOf(ri)<0){ taken[(r.name||'').toLowerCase()]=1; } });
+      todo.forEach(function(ri){
+        var r=rows[ri]; var want=(r.proposed_name||r.name||'').trim(); if(!want) return;
+        var dot=want.lastIndexOf('.');
+        var stem=dot>0?want.slice(0,dot):want, ext=dot>0?want.slice(dot):'';
+        var name=want, n=2;
+        while(taken[name.toLowerCase()]){ name=stem+' ('+(n++)+')'+ext; }
+        taken[name.toLowerCase()]=1;
+        r.__finalName=name;
+      });
+    }
     applying=true; $('apply-stop').disabled=false; $('apply-run').disabled=true; $('run').disabled=true; $('stop').disabled=true;
     document.querySelectorAll('.chk').forEach(function(c){ c.disabled=true; });
     var done=0,ok=0,conflict=0,err=0,skip=0, total=todo.length;
@@ -1099,7 +1215,7 @@
           + '<div class="cf">'+esc(c.orig_name||'')+(c.applied?' <span class="badge-edit">keyrt</span>':'')+'</div>'
           + (pn!==cn ? '<div class="cprop">'+esc(pn)+'</div><div class="ccorr">→ '+esc(cn)+'</div>' : '')
           + (c.note?'<div class="cnote">📝 '+esc(c.note)+'</div>':'')
-          + '<div class="cmeta">'+fmtDate(c.created_at)+dtLine+yrLine+(c.drive_file_id?(' · <a href="https://drive.google.com/file/d/'+esc(c.drive_file_id)+'/view" target="_blank" rel="noopener">opna PDF ↗</a>'):'')+'</div>'
+          + '<div class="cmeta">'+fmtDate(c.created_at)+dtLine+yrLine+(c.drive_file_id?(' · <a href="/api/skjal?id='+encodeURIComponent(c.drive_file_id)+'" target="_blank" rel="noopener">opna PDF ↗</a>'):'')+'</div>'
           + '</div>';
       }).join('');
     }catch(e){ $('corr-list').innerHTML='<div class="muted" style="padding:16px;color:#dc2626">Villa: '+esc(e&&e.message||e)+'</div>'; }

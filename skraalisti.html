@@ -252,7 +252,7 @@
     el.innerHTML=res.rows.map(function(r){
       var showKey=(mode==='inv'||mode==='kt');
       return '<div class="row '+esc(r.cls)+'">'
-        + '<span class="n"><a href="https://drive.google.com/file/d/'+esc(r.f.id)+'/view" target="_blank" rel="noopener">'+esc(r.f.name)+'</a></span>'
+        + '<span class="n"><a href="/api/skjal?id='+encodeURIComponent(r.f.id)+'" target="_blank" rel="noopener">'+esc(r.f.name)+'</a></span>'
         + (showKey?'<span class="k">'+esc(r.k||'— lykil vantar')+'</span>':'')
         + (r.f.folder_name && r.f.folder_id!==side.id ? '<span class="k">📁 '+esc(r.f.folder_name)+'</span>' : '')
         + '</div>';
@@ -333,7 +333,7 @@
     res.rows.forEach(function(r){
       var st = r.cls==='both' ? 'Í báðum' : (r.cls==='only' ? 'Aðeins hér' : (r.cls==='nokey' ? 'Lykil vantar' : ''));
       var line=[ r.f.name, r.f.folder_name||'', r.k||'', (r.f.size==null?'':r.f.size),
-                 (r.f.modified||'').slice(0,10), 'https://drive.google.com/file/d/'+r.f.id+'/view' ];
+                 (r.f.modified||'').slice(0,10), 'https://brunaholf.netlify.app/api/skjal?id='+r.f.id ];
       if(cmp) line.splice(3,0,st);
       rows.push(line);
     });

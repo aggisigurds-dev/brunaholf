@@ -156,3 +156,84 @@ no file-write** — safe-by-design. `type:module`, deps `@modelcontextprotocol/s
   regression) run against a throwaway localhost server, so it passes anywhere.
 - v2 (unbuilt): resumable-resume on rupt, Chrome DevTools bridge, extension control.
 
+---
+
+*Kaflarnir hér fyrir neðan voru fluttir orðrétt úr `CLAUDE.md` 2026-08-19
+(verkefnalisti 22a44bdc) — sama efni, nýr staður.*
+
+## Efniskostnaður — handvirk verkstaða-tenging (2026-08-05)
+
+Verkefnalisti a12d429a: Redder-reikningar sem `redder-read.js` gat ekki tengt sjálfkrafa
+(`worksite_match IS NULL` — oftast af því engin verkstaðar-tilvísun fannst í PDF-inu
+sjálfu, bara tengiliða-merki eins og „umb Lukas") sátu áður sem varanlega ólæsanleg
+„Án verkstaðs"-hrúga. Efniskostnaður-flipinn hefur núna:
+- **„🔗 Tengja við verkstað" á hverjum reikningi** — setur `worksite_match` á ÞANN eina
+  reikning (POST `/api/redder-invoices {invoice_nr, worksite_match}` — endapunkturinn
+  studdi þetta nú þegar, bara enga UI). Engin sjálfvirk `project_aliases`-lærdómur hér,
+  af því hrátextinn á ólæstum reikningum er oftast bara tengiliðs-nafn, ekki alvöru
+  verkstaðar-afbrigði — að læra af honum myndi ranglega flokka næsta reikning með sama
+  tengilið en ANNAN verkstað.
+- **„✏️" á hverjum verkstaða-hóp** — endurnefnir ALLA reikninga undir því nafni í einu
+  (nýtt `POST /api/redder-invoices {action:'rename_worksite', from, to, learn_alias:true}`)
+  OG skrifar `project_aliases(alias=from, canonical_name=to)` — því hér ER `worksite_match`
+  þegar alvöru (þótt misstafað) verkstaðarnafn. `redder-read.js` sækir núna
+  `project_aliases` úr gagnagrunni (`loadAliasesFromDb()`, keyrt einu sinni per innlestur,
+  DB-gildi vinna umfram hardcoded `ALIAS`-kortið) svo ný PDF-innlestur nýtir handvirku
+  leiðréttinguna sjálfkrafa — `ALIAS`-kortið í kóðanum er ekki lengur eina uppsprettan.
+- Verkstaða-listinn í tengi-reitnum (`<datalist>`) er sambland af `/api/worksites?year=
+  combined` og því sem þegar er notað í `redder_invoices` — alltaf a.m.k. þau nöfn sem
+  eru í notkun nú þegar.
+
+**Vísvitandi sleppt**: línu-stigs tenging (að taka STAKA vörulínu úr reikningi og tengja
+við annan verkstað en restina af reikningnum) — `redder_line_items` hefur engan eigin
+`worksite`-dálk, og öll skoðuð dæmi af ólæstum reikningum voru heilir reikningar sem
+vantaði verkstað, ekki blönduð fjölverkstaða-reikningar. Bæta við ef alvöru þörf kemur upp.
+
+## Póst-hub viðbætur (2026-08-20)
+
+Þrennt bættist við póst-/kúnnaþjónustu-pípuna (live í PR #401 + slokkvitaeki #657):
+
+- **Sjálfvirkt gmail-innsog — `gmail-ingest-background.js` (áætlað á 2t):** ÁÐUR var
+  EKKERT áætlað fall að sækja eldklar-póst (aðeins handvirkt/Kerfisheilsu-hnappur), svo
+  SENT-hólfið sat eftir (mælt: fraus 6.8.). Nú `[functions."gmail-ingest-background"]
+  schedule = "35 */2 * * *"` (netlify.toml) sem endurnýtir `gmail-ingest` handler BEINT
+  (`require`, GET) fyrir eldklar INBOX **og** SENT, `DAYS=3`, upsert á `message_id`.
+  ENGIN AI/tókn. Skráir í `automation_runs(job_name='gmail-ingest', source='schedule')`.
+  Fleiri pósthólf = einn hlutur í `JOBS`-fylkinu. ⚠️ áætlun á -background tvíbura því
+  Netlify svarar áætluðu falli með 403 á HTTP; `gmail-ingest` sjálft verður að vera frjálst.
+- **`company-mail.js` — stöðumerki/signals (umferðarljós á Slökkvitæki):** skilar nú
+  `important` + `signals[]` ({type,subject,received_at}) auk `unreplied`. `detectSignals()`
+  (leitarorð, engin AI) skannar ALLA innkomna í glugganum eftir uppsogn/flutt/eigandi/
+  gjaldthrot/kvortun/bilun/aridandi. **Rautt (unreplied) er strangt** (nákvæmt netfang per
+  bygging). **Gult (signals) er víðara** — `emailToBase`→`baseToSites` (netfang lögaðilans/
+  bygginga → allar in-service byggingar hans), knýr ALDREI rautt. ⚠️ Hrá „cancel/uppsögn"-
+  leitarorð eru MJÖG hávær (fundarafbókanir/áskriftir/söluaðilar); raun-mátaðir lífsferils-
+  pósta á kúnna ~2/ár (felag_samskipti, 185 lögaðilar). Framendi: slokkvitaeki patch 295 v2.
+  **Grænt (history) víkkað 2026-08-20:** `byId`-færsla með `unreplied:false`+engin signals =
+  🟢 „í sambandi". Tvær uppsprettur sameinaðar: **(1) `tv_history_sites(days)` RPC**
+  (`sql/2026-08-20_tv_history_sites.sql`, SECURITY DEFINER, `statement_timeout='20s'`) —
+  leiðir grænu byggingarnar út úr **`felag_samskipti`-viewinu SJÁLFU** (sama mátun og
+  Þjónustuver póstar sér, svo skjáirnir reka aldrei í sundur): leyst bygging þar sem felag
+  festir hana, single-site fallback annars — rekstrarfélags-systir ALDREI ranglega. Kallað
+  **í parallel** (`histPromise`, `.catch(()=>null)`) við eigin lestur svo heildartími ≈ max,
+  ekki summa (~3.4s RPC ‖ ~5s scan). **(2) in-JS fallback** — `noteHist(emailToBase[…])` á
+  bæði `sender_email` (INN) OG `to_addresses` (ÚT), single-site, svo grænt birtist samt þótt
+  RPC bregðist. ⚠️ **Leiðrétting:** „185 lögaðilar" er ALL-TIME (tv_postar_list hefur enga
+  dagsetningarsíu); í 365-daga glugga á felag AÐEINS ~96 byggingar með póstsögu — hitt
+  („178") var `ILIKE '%addr%'`-substring-tálmynd í mælingu, ekki raun. `scanned` fékk
+  `history` (+`history_felag`) og `green` teljara.
+  ⚡ **Hraði (2026-08-20, eftir að merki hurfu hjá Agnari):** fallið var komið í ~7–9s
+  (raðlestur á ~7k `email_digest`-röðum, 7 síður í röð) og lá við Netlify 10s-þakið →
+  502 → tóm merki. Lagað: **`fetchAllParallel`** (count-first, allar síður `Promise.all`
+  → ~1,5s) + **felag-RPC í `Promise.race` með 6s þaki** (spike getur ekki ýtt fallinu
+  yfir; grænt fellur á in-JS fallback ef felag svarar ekki í tíma). Nú ~3–4s, 200 áreiðanlega.
+  📜 **Full póstsaga per kúnna (2026-08-20):** `GET /api/company-mail?co=<fyrirtaeki_id>`
+  → `{fyrirtaeki_id, base_id, mails:[…]}` (öll samskipti, nýjast fyrst, deduppað á email).
+  Knúið af `tv_company_history(fyrirtaeki_id)` RPC (`sql/2026-08-20_tv_company_history.sql`,
+  SECURITY DEFINER, 15s timeout, bundið við EINN base → hratt, t.d. Center Hótel = 139 póstar).
+  Notað af „📜 Sjá alla póstsöguna"-modal í slokkvitaeki patch 295.
+- **`public.tv_postar_list()` RPC (`sql/2026-08-19_tv_postar_list.sql`):** SECURITY DEFINER
+  + `set statement_timeout='25s'`; hópar in-service kúnna + pósta þeirra fyrir Þjónustuver
+  póstar (slokkvitaeki patch 309) — því `felag_samskipti`-viewið er dýrt og fellur á
+  timeout í full-scan úr anon. Kallað `sb.rpc('tv_postar_list')`. `postur-triage.js`
+  (slokkvitaeki) fékk líka `mode:'thjonustuver'` (ríkari AI-útdráttur; borð-hamur óbreyttur).

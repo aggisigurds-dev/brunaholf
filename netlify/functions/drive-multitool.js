@@ -31,7 +31,20 @@
 
 const pdf = require('pdf-parse');
 const { freshAccessToken, json, cors } = require('./_google');
-const { sitesForBase, resolveSite, siteWriteAllowed, siteStampFromName } = require('./_spine');
+const { sitesForBase, resolveSite, siteWriteAllowed, siteStampFromName, vegnaFrom, matchSiteByVegna, vidskiptategundSkjals } = require('./_spine');
+
+// project_aliases (stytt nöfn → kanónísk: „Plaza" → „Center Hótel Plaza") —
+// notað í vegna-línu staðargreiningunni. Skyndiminni per lambda-instance.
+let _aliasCache = null;
+async function loadAliases() {
+  if (_aliasCache) return _aliasCache;
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/project_aliases?select=canonical_name,alias`, { headers: sbHeaders() });
+    _aliasCache = await r.json().catch(() => []);
+    if (!Array.isArray(_aliasCache)) _aliasCache = [];
+  } catch (_) { _aliasCache = []; }
+  return _aliasCache;
+}
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -223,7 +236,13 @@ function isSamningur(text) {
 }
 function invNum(text, name) {
   let m = String(name).match(/\bR[\s\-_]?(\d{5,7})\b/i); if (m) return 'R-' + m[1];
-  m = String(text).match(/(?:kredit)?reikningur\s*(?:nr\.?\s*:?\s*)?(1\d{5})\b/i); if (m) return 'R-' + m[1];
+  // 2026-08-13 (rukkunarkeðju-rannsókn, liður 0): reglan sem greip HVAÐA
+  // 1-byrjandi sextölustaf sem er í grennd við orðið „reikningur" — án nr.-
+  // akkeris — er FJARLÆGÐ. Hún bjó til R-114922/24/25/26 árekstrana þar sem
+  // fjögur ÓLÍK félög deildu sama númeri (stakur tölustafur úr dagsetningu/
+  // símanúmeri o.þ.h. varð að „reikningsnúmeri") og rangt PDF gat farið á
+  // rangan kúnna. Rangt númer er verra en ekkert: NULL þegar lesarinn er
+  // ekki viss — aðeins skýrt akkeri („Reikningur nr. …" eða R-nr í skráarnafni).
   m = String(text).match(/Reikningur\s*nr\.?\s*:?\s*(\d{4,7})\b/i); if (m) return 'R-' + m[1];
   return '';
 }
@@ -561,12 +580,26 @@ async function matchBase(kt) {
 //   brunakerfi              rekstrarfélag með >1 lifandi stað BÆTIST fyrirtaeki_id
 //                           við (annars gæti önnur starfsstöð litið út sem tvítak).
 // Skilar existing_doc_id eða null.
-async function existingDocId({ cls, inv, baseId, year, siteId, multiSite }) {
+async function existingDocId({ cls, inv, baseId, year, siteId, multiSite, total }) {
   try {
     if (cls === 'reikningur') {
-      if (!inv) return null;
-      const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?doc_type=eq.reikningur&invoice_number=eq.${encodeURIComponent(inv)}&drive_file_id=not.is.null&select=id&limit=1`, { headers: sbHeaders() });
-      const rows = await r.json().catch(() => []); return (Array.isArray(rows) && rows[0]) ? rows[0].id : null;
+      // 2026-08-13 (liður 0): invoice_number EITT er EKKI einkvæmt — mislesin
+      // númer (R-114922/24/25/26) lágu á fjórum ÓLÍKUM kennitölum og uppfletting
+      // án kúnna-krossins gat parað skjal ANNARS félags. Krossum ALLTAF á
+      // customer_base_id; án baseId er engin örugg samsvörun til.
+      if (!baseId) return null;
+      if (inv) {
+        const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?doc_type=eq.reikningur&invoice_number=eq.${encodeURIComponent(inv)}&customer_base_id=eq.${encodeURIComponent(baseId)}&drive_file_id=not.is.null&select=id&limit=1`, { headers: sbHeaders() });
+        const rows = await r.json().catch(() => []); return (Array.isArray(rows) && rows[0]) ? rows[0].id : null;
+      }
+      // Pakki 8 varaleið: Stólpa-skann án lesanlegs númers → samsetti lykillinn
+      // kt(base)+upphæð+ár — nánast einkvæmur á þessu safni. Án upphæðar+árs
+      // er engin örugg samsvörun (null = ekkert fullyrt).
+      if (total && year) {
+        const r2 = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?doc_type=eq.reikningur&customer_base_id=eq.${encodeURIComponent(baseId)}&amount=eq.${encodeURIComponent(total)}&year=eq.${encodeURIComponent(year)}&invoice_number=is.null&drive_file_id=not.is.null&select=id&limit=1`, { headers: sbHeaders() });
+        const rows2 = await r2.json().catch(() => []); return (Array.isArray(rows2) && rows2[0]) ? rows2[0].id : null;
+      }
+      return null;
     }
     if (cls === 'uttektarskyrsla' || cls === 'brunakerfi') {
       if (!baseId || !year) return null;
@@ -678,6 +711,17 @@ async function previewFile(token, f, opts) {
     const addr = cleanAddr(reportAddr(text) || addrFromContent(text) || siteFrom(text) || '') || null;
     try { site = resolveSite(f.name, sites, addr); } catch (_) { site = null; }
   }
+  // Vegna-/Tilvísunar-línan (2026-08-13): staðurinn í frítexta neðst á
+  // reikningum rekstrarfélaga („Vegna Plaza", „Tilvísun: … Klapparstíg 26").
+  // Fjórða sönnunartegundin — reynd þegar stamp/single/addr skiluðu engu.
+  // Greiningin sjálf (vegna[0]) fer með í svarið svo hún sjáist í töflunni
+  // ÁÐUR en ýtt er á Keyra. Klikki hún vistast skjalið samt (ALLTAF LEYFA
+  // VISTUN) — bara ótengt við stað og merkt needs_site í apply.
+  let vegna = [];
+  try { vegna = vegnaFrom(text); } catch (_) { vegna = []; }
+  if (!site && multiSite && vegna.length) {
+    try { site = matchSiteByVegna(vegna, sites, await loadAliases()); } catch (_) {}
+  }
 
   const coName = cleanCompany((base && base.nafn) || companyFrom(text, f.name, { stripFolder: opts.stripFolder, folderNames: opts.folderNames }) || '');
 
@@ -711,13 +755,22 @@ async function previewFile(token, f, opts) {
   // Þegar tengt?
   let existing_doc_id = null;
   if (cls.doc_type === 'reikningur' || cls.doc_type === 'uttektarskyrsla' || cls.doc_type === 'brunakerfi') {
-    existing_doc_id = await existingDocId({ cls: cls.doc_type, inv, baseId: base ? base.id : null, year, siteId: site ? site.id : null, multiSite });
+    existing_doc_id = await existingDocId({ cls: cls.doc_type, inv, baseId: base ? base.id : null, year, siteId: site ? site.id : null, multiSite, total });
+  }
+
+  // vidskiptategund (Pakki 8): reiknuð í forskoðun (sala → línur → búðarmappa
+  // → ovisst) og send með í apply svo hún stimplist á skjalaröðina.
+  let vidskiptategund = null;
+  if (cls.doc_type === 'reikningur' || cls.doc_type === 'stadgreitt') {
+    try { vidskiptategund = await vidskiptategundSkjals({ inv, text, folderIds: f.parents || [] }); } catch (_) { vidskiptategund = 'ovisst'; }
   }
 
   return {
     id: f.id,
     name: f.name,
     parents: f.parents || [],
+    vidskiptategund,
+    total: total || null,
     doc_type: cls.doc_type,
     sub_hint: cls.sub_hint || '',
     issuer_ours: !!issuerOurs,
@@ -729,6 +782,10 @@ async function previewFile(token, f, opts) {
     site_id: site ? site.id : null,
     site_nafn: site ? site.nafn : null,
     site_via: site ? site.via : null,
+    // Greining: vegna-/tilvísunar-línan eins og hún las úr skjalinu (sýnd í
+    // töflunni), og needs_site-tillagan: fjölstaða-kt án nokkurrar sönnunar.
+    vegna: vegna[0] || '',
+    needs_site: !!(multiSite && !site),
     year: year || null,
     invoice_number: inv || '',
     stad_signal,
@@ -804,6 +861,132 @@ async function ensureFolder(token, parent, name) {
   const d = await cr.json();
   return { id: d.id, name, created: true };
 }
+// ── Pakki 7 (Verk 5, 2026-08-14): SANNAÐIR búðarreikningar úr reikninga-
+// masternum í undirmöppuna „Búðarreikningar" INNI í masternum (þá telur
+// /api/drive-count þá áfram með, recurse:true). Sönnun = tengd sala með
+// solur.vidskiptategund='bud' (invoice_number ↔ num). Sannaðar úttektir
+// (uttekt_reikningur_facts.doc_id) hreyfast ALDREI — mótsögn (sala segir búð
+// EN facts segja úttekt) telst árekstur og skjalið stendur kyrrt. ovisst og
+// sölulausir án sönnunar sitja líka kyrrir — ATH frávik frá brief-i: engin
+// lína-tafla er til fyrir sölulausu PDF-in (greiningin á 522 reikningum býr
+// ekki í grunninum), svo „línu-reglan fyrir skrár án sölu" bíður þess.
+// FÆRSLA, ekki afritun (addParents/removeParents) — drive_file_id helst
+// óbreytt svo öll customer_documents-gildi virka áfram. EKKERT eyðist.
+// Sjálfgefið DRY (b.dry !== false) — skilar talningu án þess að hreyfa neitt.
+async function budFlutningur(token, b) {
+  const MASTER = folderId(b.master || '1FHHX99LRB_9w_LqwHIY57T4l9mLMID7p');
+  const dry = b.dry !== false;
+  const sbqAll = async (path) => {
+    let out = [], off = 0;
+    for (;;) {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}&offset=${off}&limit=1000`, { headers: sbHeaders() });
+      if (!r.ok) throw new Error('sb ' + path.split('?')[0] + ' ' + r.status);
+      const rows = await r.json();
+      out = out.concat(rows);
+      if (!Array.isArray(rows) || rows.length < 1000) break;
+      off += 1000;
+    }
+    return out;
+  };
+  // ── Cowork-hamur (framhald 14.08): 177 sölulausir gamlir reikningar sem
+  // Cowork línulas úr PDF-unum sjálfum — flokkunin býr í töflunni
+  // cowork_reikn_flokkun_20260814 (bud=129/ovisst=48). Sama færslu-vél,
+  // önnur sönnunar-uppspretta. ovisst fer HVERGI. Eftir live-færslu er
+  // hver flutt skrá sannprófuð með files.get (link_ok) — færslan breytir
+  // engu id-i en það er ódýrt að SANNA það.
+  if (b.src === 'cowork') {
+    // verify_only: files.get á cowork-bud ids í skömmtum (offset/limit) —
+    // sannar að drive_file_id svari enn eftir færslu, innan tímamarka fallsins.
+    if (b.verify_only) {
+      const ids = (await sbqAll('cowork_reikn_flokkun_20260814?select=drive_file_id&tegund=eq.bud&drive_file_id=not.is.null&order=drive_file_id'))
+        .map(r => String(r.drive_file_id));
+      const off = Math.max(0, parseInt(b.offset || '0', 10) || 0);
+      const lim = Math.min(70, Math.max(1, parseInt(b.limit || '70', 10) || 70));
+      const slice = ids.slice(off, off + lim);
+      const out = { verify_only: true, total: ids.length, offset: off, checked: slice.length, link_ok: 0, link_fail: [] };
+      for (const id of slice) {
+        try { await getFile(token, id); out.link_ok++; }
+        catch (e) { out.link_fail.push(id); }
+      }
+      return out;
+    }
+    const cw = await sbqAll('cowork_reikn_flokkun_20260814?select=drive_file_id,tegund,invoice_number&tegund=eq.bud&drive_file_id=not.is.null');
+    const budIds = new Set(cw.map(r => String(r.drive_file_id)));
+    const facts2 = await sbqAll('uttekt_reikningur_facts?select=doc_id&doc_id=not.is.null');
+    const cwDocs = await sbqAll('cowork_reikn_flokkun_20260814?select=doc_id,drive_file_id&tegund=eq.bud');
+    const factsDocIds = new Set(facts2.map(f => String(f.doc_id)));
+    const conflictIds = new Set(cwDocs.filter(d => factsDocIds.has(String(d.doc_id))).map(d => String(d.drive_file_id)));
+    const children2 = await listChildren(token, MASTER);
+    const files2 = children2.filter(c => c.mimeType !== FOLDER_MIME);
+    let target2 = children2.find(c => c.mimeType === FOLDER_MIME && c.name === 'Búðarreikningar') || null;
+    const toMove2 = files2.filter(f => budIds.has(String(f.id)) && !conflictIds.has(String(f.id)));
+    const out = {
+      dry, src: 'cowork', cowork_bud: budIds.size,
+      i_master: toMove2.length,
+      ekki_i_master: budIds.size - toMove2.length - [...conflictIds].filter(id => files2.some(f => String(f.id) === id)).length,
+      arekstur_facts: conflictIds.size,
+      moved: 0, link_ok: 0, link_fail: [], errors: [],
+      to_move_daemi: toMove2.slice(0, 10).map(f => f.name),
+    };
+    if (!dry && toMove2.length) {
+      if (!target2) target2 = await ensureFolder(token, MASTER, 'Búðarreikningar');
+      for (const f of toMove2) {
+        try {
+          await movePatch(token, f.id, { addParents: target2.id, removeParents: MASTER });
+          out.moved++;
+          await logApply({ base_id: null, base_nafn: null, origName: f.name, proposed_name: null, doc_type: 'búðarreikningur', targetFolder: 'Búðarreikningar', linkAction: 'bud-flutningur-cowork', conflict: false });
+        } catch (e) { out.errors.push(f.name + ': ' + String(e.message || e)); }
+      }
+      // link_ok: hver flutt skrá svarar enn á SAMA drive_file_id
+      for (const f of toMove2) {
+        try { await getFile(token, f.id); out.link_ok++; }
+        catch (e) { out.link_fail.push(f.id); }
+      }
+    }
+    out.target = target2 ? target2.id : null;
+    return out;
+  }
+
+  const sales = await sbqAll('solur?select=num,vidskiptategund&num=not.is.null');
+  const tegByNum = {};
+  sales.forEach(s => { const n = String(s.num || '').trim().toUpperCase(); if (n) tegByNum[n] = s.vidskiptategund || 'ovisst'; });
+  const facts = await sbqAll('uttekt_reikningur_facts?select=doc_id&doc_id=not.is.null');
+  const uttektDocIds = new Set(facts.map(f => String(f.doc_id)));
+  const docs = await sbqAll('customer_documents?doc_type=eq.reikningur&drive_file_id=not.is.null&select=id,drive_file_id,invoice_number');
+  const byFileId = {};
+  docs.forEach(d => { byFileId[String(d.drive_file_id)] = d; });
+
+  const children = await listChildren(token, MASTER);
+  const files = children.filter(c => c.mimeType !== FOLDER_MIME);
+  let target = children.find(c => c.mimeType === FOLDER_MIME && c.name === 'Búðarreikningar') || null;
+  const counts = { dry, master_files: files.length, bud: 0, uttekt_stadfest: 0, ovisst: 0, engin_sonnun: 0, arekstur: 0, moved: 0, errors: [] };
+  const toMove = [];
+  for (const f of files) {
+    const doc = byFileId[String(f.id)];
+    if (!doc) { counts.engin_sonnun++; continue; }
+    const teg = tegByNum[String(doc.invoice_number || '').trim().toUpperCase()];
+    const erUttektDoc = uttektDocIds.has(String(doc.id));
+    if (teg === 'bud' && erUttektDoc) { counts.arekstur++; continue; }
+    if (erUttektDoc || teg === 'uttekt') { counts.uttekt_stadfest++; continue; }
+    if (teg === 'bud') { counts.bud++; toMove.push(f); continue; }
+    if (teg === 'ovisst') { counts.ovisst++; continue; }
+    counts.engin_sonnun++;
+  }
+  if (!dry && toMove.length) {
+    if (!target) target = await ensureFolder(token, MASTER, 'Búðarreikningar');
+    for (const f of toMove) {
+      try {
+        await movePatch(token, f.id, { addParents: target.id, removeParents: MASTER });
+        counts.moved++;
+        await logApply({ base_id: null, base_nafn: null, origName: f.name, proposed_name: null, doc_type: 'búðarreikningur', targetFolder: 'Búðarreikningar', linkAction: 'bud-flutningur', conflict: false });
+      } catch (e) { counts.errors.push(f.name + ': ' + String(e.message || e)); }
+    }
+  }
+  counts.target = target ? target.id : null;
+  counts.to_move_daemi = toMove.slice(0, 12).map(f => f.name);
+  return counts;
+}
+
 async function quarantineFolders(token, src, mode) {
   if (!src) return { ok: false, error: 'src required' };
   const set = mode === 'presort' ? PRESORT_FOLDERS : QUARANTINE_FOLDERS;
@@ -840,12 +1023,19 @@ async function patchDocById(docId, row) {
 //   brunakerfi/samningur       fyrir rekstrarfélag með >1 lifandi stað]
 // Skilar {id, drive_file_id} eða null. Fyrir report-family án árs (nema samningur)
 // → null (of óvíst til að fullyrða tvítak). Multi-site án staðar-sönnunar → null.
-async function findExistingLink({ doc_type, invoice_number, base_id, year, site_id, multiSite }) {
+async function findExistingLink({ doc_type, invoice_number, base_id, year, site_id, multiSite, amount }) {
   try {
     if (doc_type === 'reikningur') {
-      if (!invoice_number) return null;
-      const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?doc_type=eq.reikningur&invoice_number=eq.${encodeURIComponent(invoice_number)}&drive_file_id=not.is.null&select=id,drive_file_id&limit=1`, { headers: sbHeaders() });
-      const rows = await r.json().catch(() => []); return (Array.isArray(rows) && rows[0]) ? rows[0] : null;
+      if (invoice_number) {
+        const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?doc_type=eq.reikningur&invoice_number=eq.${encodeURIComponent(invoice_number)}&drive_file_id=not.is.null&select=id,drive_file_id&limit=1`, { headers: sbHeaders() });
+        const rows = await r.json().catch(() => []); return (Array.isArray(rows) && rows[0]) ? rows[0] : null;
+      }
+      // Pakki 8 varaleið: án númers → kt(base)+upphæð+ár samsetti lykillinn.
+      if (base_id && amount && year) {
+        const r2 = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?doc_type=eq.reikningur&customer_base_id=eq.${encodeURIComponent(base_id)}&amount=eq.${encodeURIComponent(amount)}&year=eq.${encodeURIComponent(year)}&invoice_number=is.null&drive_file_id=not.is.null&select=id,drive_file_id&limit=1`, { headers: sbHeaders() });
+        const rows2 = await r2.json().catch(() => []); return (Array.isArray(rows2) && rows2[0]) ? rows2[0] : null;
+      }
+      return null;
     }
     if (!base_id) return null;
     if ((doc_type === 'uttektarskyrsla' || doc_type === 'brunakerfi') && !year) return null;
@@ -938,7 +1128,10 @@ async function applyFile(token, body) {
   const isOurs = LINKABLE.has(doc_type);
 
   // vendor/other: sjálfgefið EKKERT gert; aðeins fært ef UI sendir markmöppu; aldrei tengt.
-  if (!isOurs && !targetFolder) return { ok: true, id, skipped: 'not-ours', renamed: false, moved: false, linked: false, linkAction: 'not-ours' };
+  // 2026-08-13: „↩︎ Endurnefna á staðnum" (body.inplace) er undantekningin —
+  // þar á að ENDURNEFNA allt sem á sér tillögunafn, líka vendor/other/staðgreitt,
+  // án markmöppu og án tengingar. Fellur áfram á sleppt-hegðun í öllum öðrum hömum.
+  if (!isOurs && !targetFolder && !body.inplace) return { ok: true, id, skipped: 'not-ours', renamed: false, moved: false, linked: false, linkAction: 'not-ours' };
 
   // 2026-08-05 (Agnar: „ég spenti huga tíma í að endurnefna... en multitool og
   // cowork tóku út nafnið"): þessi skrá er ÞEGAR tengd customer_documents
@@ -951,7 +1144,7 @@ async function applyFile(token, body) {
   let alreadyLinked = null;
   if (isOurs) {
     try {
-      const exr = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?drive_file_id=eq.${id}&select=id&limit=1`, { headers: sbHeaders() });
+      const exr = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?drive_file_id=eq.${id}&select=id,fyrirtaeki_id,vidskiptategund&limit=1`, { headers: sbHeaders() });
       const exRows = await exr.json().catch(() => []);
       alreadyLinked = (Array.isArray(exRows) && exRows[0]) ? exRows[0] : null;
     } catch (_) {}
@@ -999,7 +1192,7 @@ async function applyFile(token, body) {
   let sites = []; try { if (base_id) sites = await sitesForBase(base_id); } catch (_) {}
   const multiSite = sites.length > 1;
   let existing = null;
-  try { existing = await findExistingLink({ doc_type, invoice_number, base_id, year, site_id, multiSite }); } catch (_) {}
+  try { existing = await findExistingLink({ doc_type, invoice_number, base_id, year, site_id, multiSite, amount: body.amount != null && body.amount !== '' ? Number(body.amount) : null }); } catch (_) {}
   const conflictRow = !!(existing && existing.drive_file_id !== id);   // önnur skrá heldur lyklinum
 
   // Staðar-heimild: #id-stimpill í nafni er einа sönnunin sem má yfirskrifa
@@ -1024,10 +1217,27 @@ async function applyFile(token, body) {
   const docRow = {
     customer_base_id: base_id, doc_type, year: rowYear, drive_file_id: id,
     source: 'gdrive', found_by: 'drive-multitool',
+    // Original Drive filename — structured "Fyrirtæki - Heimilisfang - kt - tegund - ár".
+    // Sýnt í UI í stað „drive-multitool"-merkisins OG lesið til að fact-checka
+    // heimilisfang/kt á kúnnanum. Samningar eru EKKI endurnefndir svo origName er
+    // notandans rétta heiti; reikn./skýrslur bera kanóníska heitið eftir apply.
+    file_name: origName || proposed_name || null,
     invoice_number: doc_type === 'reikningur' ? invoice_number : null,
     customer_name: base_nafn || null,
     notes: 'drive-multitool' + (invoice_number ? (' · ' + invoice_number) : '') + (year ? (' · ' + year) : '') + (base_id ? '' : ' · RESOLVE'),
   };
+  // vidskiptategund (Pakki 8): úr forskoðuninni (body) þegar hún fylgir, annars
+  // reiknuð hér (sala-erfð + búðarmöppur; enginn texti á apply-stigi). Sett
+  // gildi á fyrirliggjandi röð er ALDREI yfirskrifað.
+  let vt = ['uttekt', 'bud', 'ovisst'].includes(body.vidskiptategund) ? body.vidskiptategund : null;
+  if (!vt && doc_type === 'reikningur') {
+    try { vt = await vidskiptategundSkjals({ inv: invoice_number, folderIds: parents }); } catch (_) { vt = 'ovisst'; }
+  }
+  if (vt && !(alreadyLinked && alreadyLinked.vidskiptategund)) docRow.vidskiptategund = vt;
+  // Upphæðin fylgir (samsetti tvítakalykillinn kt+upphæð+ár þarf hana) — aldrei núlluð.
+  if (body.amount != null && body.amount !== '') docRow.amount = Number(body.amount) || null;
+  if (docRow.amount == null) delete docRow.amount;
+
   // „Aldrei núllað"-vörnin (2026-07-30): merge-duplicates SKRIFAR hvern dálk sem
   // er í body-inu — apply án base_id/base_nafn/year núllaði því fyrirliggjandi
   // customer_base_id/customer_name/year á tengdri röð (gerðist live á doc 1497).
@@ -1043,6 +1253,13 @@ async function applyFile(token, body) {
   // sjálfvirka „drive-multitool · …" stimpilinn á hverju sweep-i.
   if (skipRename) delete docRow.notes;
   if (site && await siteWriteAllowed(id, site)) docRow.fyrirtaeki_id = site.id;
+  // needs_site (2026-08-13): fjölstaða-kt án staðar-sönnunar → skjalið vistast
+  // SAMT (ALLTAF LEYFA VISTUN), tengt base-inu einu, en merkt í yfirferð.
+  // Aldrei giskað á stað (R-105528 lexían). Fái röðin stað (nú eða var þegar
+  // með) hreinsast merkið; annars ósnert svo fyrirliggjandi staða standi.
+  const hasSiteAlready = !!(alreadyLinked && alreadyLinked.fyrirtaeki_id != null);
+  if (docRow.fyrirtaeki_id != null || hasSiteAlready) docRow.needs_site = false;
+  else if (multiSite && !site_id) docRow.needs_site = true;
 
   let linked = false, linkAction = '', conflict = false, doc_id = null;
   try {
@@ -1116,6 +1333,12 @@ exports.handler = async (event) => {
     }
     // quarantine-folders: býr til (eða finnur) sóttkvíar-undirmöppurnar í lesmöppunni.
     // Eina skrifið er möppu-stofnun — engin skrá hreyfð, ekkert tengt.
+    // Pakki 7 verk 5: búðarreikningar úr masternum (sjálfgefið DRY).
+    if (b.action === 'bud-flutningur') {
+      let tk5; try { tk5 = await freshAccessToken(); } catch (e) { return json(401, { error: e.message }); }
+      try { return json(200, await budFlutningur(tk5, b)); }
+      catch (e) { return json(500, { error: String(e.message || e) }); }
+    }
     if (b.action === 'quarantine-folders') {
       let tk; try { tk = await freshAccessToken(); } catch (e) { return json(401, { error: e.message }); }
       try { return json(200, await quarantineFolders(tk, folderId(b.src), b.mode)); }

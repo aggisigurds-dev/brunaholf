@@ -45,7 +45,7 @@ const EDITABLE_DOC_FIELDS = ['doc_type', 'amount', 'invoice_number', 'doc_date',
 // forskeyti hér — sannreynt: allar 528 storage_path-raðir byrja á `samningar/`.
 function docViewUrl(d) {
   if (d.storage_path) return `${SUPABASE_URL}/storage/v1/object/public/${d.storage_path}`;
-  if (d.drive_file_id) return `https://drive.google.com/file/d/${d.drive_file_id}/view`;
+  if (d.drive_file_id && !String(d.drive_file_id).startsWith('sb:')) return `/api/skjal?id=${encodeURIComponent(d.drive_file_id)}`;
   return null;
 }
 

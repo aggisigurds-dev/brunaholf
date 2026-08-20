@@ -38,7 +38,7 @@ exports.handler = async (event) => {
       r.year || (r.date ? r.date.slice(0, 4) : ''),
       r.base_name || (r.base_id ? '#' + r.base_id : ''),
       r.file || '',
-      r.fileId ? 'https://drive.google.com/file/d/' + r.fileId + '/view' : '',
+      r.fileId ? 'https://brunaholf.netlify.app/api/skjal?id=' + r.fileId : '',
     ]));
 
     let id = await findSheet(folder, title, token);

@@ -515,3 +515,84 @@ Slökkvitæki Sala/POS) connects via the dkPlus REST/JSON API.
 - Phases: (1) connect + read. (2) push invoices into dk+ from POS sales /
   yearly brunakerfi úttektir. (3) customer/vörur sync + payment status back.
 
+---
+
+*Kaflarnir hér fyrir neðan voru fluttir orðrétt úr `CLAUDE.md` 2026-08-19
+(verkefnalisti 22a44bdc) — sama efni, nýr staður.*
+
+## Yfirferð efnislista (👔) — 2026-08-08
+
+Skrifstofan flaggar Efnislista til yfirferðar hjá yfirmanni sem er á ferðinni
+með símann (The Big Boss appið á slokkvitaeki). Flæðið:
+
+- **Gögn**: `review_requested/_at/_by` + `review_confirmed_at/_by` dálkar á
+  `invoice_drafts` (`sql/2026-08-08_invoice_drafts_review.sql`); allir í
+  allowed-whitelistanum í `invoice-drafts.js`.
+- **Flagga**: 👔 Yfirferð-takki í `wfStrip` á Ósendar/Tími-eftir-röðum í Kröfu
+  yfirliti (`index.html`, birtist aðeins ef drög eru til). Kveikja setur
+  `review_requested`; slökkva hreinsar líka staðfestinguna. `REVIEWS`-mappið
+  (ws|wm → drög) er sótt í `fetchAll()` með `/api/invoice-drafts`.
+- **Yfirferð**: `yfirferd.html` — símavæn síða (svart/gull) sem listar flögguð
+  drög með beinum hlekk „🧾 Opna Efnislista" á ALVÖRU Efnislista-formið (ósk
+  Agnars 2026-08-08 — enginn sér-ritill lengur, formið er eitt). Hlekkurinn er
+  `/?embed=1&grws=<verkstaður>&grwm=<YYYY-MM>&review=1#gerdreikninga` —
+  `renderGerdReikninga` les `grws/grwm/review` (einu sinni, `__grDeepDone`) og
+  opnar ritilinn sjálfkrafa. Í yfirferðar-ham (review=1 EÐA drögin flögguð)
+  fær ritillinn ✓ Staðfesta (vistar + `review_confirmed_at/_by`) og ↶ Hætta við
+  (skrifar snapshot frá opnun til baka — afturkallar líka það sem var ÞEGAR
+  vistað í þessari opnun; PATCH-leiðin í `invoice-drafts.js` gerir hlutauppfærslu
+  örugga). Báðir fara `history.back()` á yfirferðar-listann; `pageshow` þar
+  endurhleður. Nafn úr `localStorage.bh_me` (sama lén og hub → deilist).
+- **Staða til baka**: Kröfu yfirlit sýnir „👔 Í yfirferð" (gult) eða
+  „👔 Staðfest · nafn dags." (grænt) undir takkaröðinni. Staðfesting yfirmanns
+  er AÐSKILIN frá ✓ Staðfest/📤 Senda vinnuflæðinu — skrifstofan sendir áfram.
+- **Í appinu**: síðan er `br-yfirferd` í PAGES/boss-defaults í slokkvitaeki
+  patch 261.
+
+## Viðskiptavinir-flipi — 2026-08-08
+
+Nýr flipi **`vidskiptavinir`** (🏢 Viðskiptavinir) — per-verkstað greiðslureglur og
+viðskiptavinargögn sem Efnislisti-formið les sjálfkrafa.
+
+- **Gögn**: `pricing_guide` tafla (lykill: `worksite_name`). Nýir dálkar bætt við
+  2026-08-08: `eftirvinna_leyfid` (bool, default true), `verkfaeragjald` (bool),
+  `kennitala` (text), `heimilisfang` (text), `lunch_fradrattur_h` (numeric, default 0).
+  Migration: `sql/2026-08-08_pricing_guide_customer_settings.sql`.
+- **API**: `GET/POST/DELETE /api/pricing-guide` — `pricing-guide.js` whitelist nú með
+  öllum 6 nýjum dálkum. DELETE tekur `?worksite=NAME`.
+- **Efnislisti-tenging** (`renderGerdReikninga`): `rateFor(name)` skilar nú
+  `evOk` (yfirvinna leyfð), `evThreshold` (klst/dag fyrir yfirvinna, sjálfgefið 8),
+  `lunch` (hádegismatsfrádrátt klst/dag), `vf` (verkfæragjald). Þegar `evOk=false`
+  birtist „— ekki leyfð" merki við Yfirvinna í ritlinum. Tooltip „📥 Fylla úr tímabók"
+  sýnir núverandi threshold og lunch. `kennitala`/`heimilisfang` er forútfyllt
+  sjálfkrafa úr `pricing_guide` þegar nýtt drög er opnað (fellur aftur á `PAYER_OVERRIDE`).
+- **Viðskiptavinir UI**: `renderVidskiptavinir(t)` — spjöld flokkuð eftir
+  `customer_name`, með breyta/eyða modal. Kt./heimilisfang breytist á öllum
+  verkstöðum sama viðskiptavinar í einu (sibling propagation).
+- **Frumgögn (seed)**: 5 lykilviðskiptavinir seyddir 2026-08-08:
+  Orkureitur (SAFÍR), Fjallaböðin Þjórsárdal (JÁVERK, 9300/13950, sma=0),
+  Fjarðagata (GG verk, lunch=0.5), Dalvegur 30 (Eykt), Landsspitalinn (ÞG verktakar).
+
+## Landsspítalinn (NLSH) dashboard — mánaðar-bakfylling + þrepað markmið (2026-08-05)
+
+Verkefnalisti 3af766ff, sex smærri fix á `renderNLSH` í index.html + `netlify/functions/nlsh-dashboard.js`:
+
+- **Samningsstaða per verkliður**: markmiðið (`target`) er PER TÍMABIL — þegar
+  BÚIÐ (stakar) fer yfir það þýðir það nýtt tímabil er hafið, ekki 150%+ að
+  eilífu. `byVerk` reiknar núna `tier = ceil(stakar/target)`, sýnir
+  "Markmið" sem `target–target×tier` þegar tier>1, og % miðað við það þrep.
+- **Handvirk leiðrétting**: nýr dálkur á sömu töflu — talnareitur per verkliður
+  leiðréttir `stakar` (t.d. -50/+50 þegar Ajour-flokkun er röng). Vistast í
+  `app_kv['nlsh_verk_overrides']` (`{verk_nr: delta}`) gegnum nýja
+  `POST /api/nlsh-dashboard {verk_nr, delta}` — lifir þar til sett á 0/tómt.
+- **Göt kláruð per dag**: hætti að vera fastur 14-daga gluggi — `?range=
+  this_week|last_week|this_month|last_month` stýrir `dayRangeBounds()` í
+  bakenda; framendinn er með takka-röð, sjálfgefið "Þessi vika".
+- **Mánaðaruppgjör**: „📸 Loka" er núna á HVERJUM ólæstum mánuði í listanum
+  (ekki bara núverandi) — notar `byMonth[].cum_revenue_m_vsk` (þegar reiknað
+  úr Ajour) sem gildið, svo gleymda mánuði (t.d. júní/júlí) má festa
+  afturvirkt án þess að giska á töluna.
+- **Vika-dagsetningar**: `isoWeekRange(weekKey)` breytir "2025-W38" í
+  "15.09–21.09" — notað í "Lokuð göt per viku" og "Frammistaða per starfsmann"
+  töflunum (tooltip + undirtexti).
+- **Lokuð göt per viku**: pakkað í `<details>` svo hægt sé að fella út/inn.

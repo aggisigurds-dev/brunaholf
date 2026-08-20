@@ -14,7 +14,7 @@
 
 const pdf = require('pdf-parse');
 const { freshAccessToken, json, cors } = require('./_google');
-const { sitesByBases, sitesForBase, resolveSite, siteWriteAllowed } = require('./_spine');
+const { sitesByBases, sitesForBase, resolveSite, siteWriteAllowed, vidskiptategundSkjals } = require('./_spine');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -115,6 +115,11 @@ exports.handler = async (event) => {
             customer_base_id: base ? base.id : null,
             fyrirtaeki_id: siteOk ? site.id : null,
             doc_type, year, drive_file_id: f.id, source: 'gdrive', found_by: 'code', amount,
+            // vidskiptategund (Pakki 8): stimpluð við innlestur — sala → línur
+            // (PDF-textinn) → búðarmappa (mappan sem verið er að skanna) → ovisst.
+            vidskiptategund: doc_type === 'reikningur'
+              ? await vidskiptategundSkjals({ text: norm, folderIds: [folder] }).catch(() => 'ovisst')
+              : undefined,
             notes: f.name.replace(/\.pdf$/i, '') + ' · kt ' + dash(kt) + (base ? '' : ' · RESOLVE'),
           });
         }
