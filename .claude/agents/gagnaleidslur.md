@@ -222,6 +222,11 @@ vantaði verkstað, ekki blönduð fjölverkstaða-reikningar. Bæta við ef alv
   dagsetningarsíu); í 365-daga glugga á felag AÐEINS ~96 byggingar með póstsögu — hitt
   („178") var `ILIKE '%addr%'`-substring-tálmynd í mælingu, ekki raun. `scanned` fékk
   `history` (+`history_felag`) og `green` teljara.
+  ⚡ **Hraði (2026-08-20, eftir að merki hurfu hjá Agnari):** fallið var komið í ~7–9s
+  (raðlestur á ~7k `email_digest`-röðum, 7 síður í röð) og lá við Netlify 10s-þakið →
+  502 → tóm merki. Lagað: **`fetchAllParallel`** (count-first, allar síður `Promise.all`
+  → ~1,5s) + **felag-RPC í `Promise.race` með 6s þaki** (spike getur ekki ýtt fallinu
+  yfir; grænt fellur á in-JS fallback ef felag svarar ekki í tíma). Nú ~3–4s, 200 áreiðanlega.
 - **`public.tv_postar_list()` RPC (`sql/2026-08-19_tv_postar_list.sql`):** SECURITY DEFINER
   + `set statement_timeout='25s'`; hópar in-service kúnna + pósta þeirra fyrir Þjónustuver
   póstar (slokkvitaeki patch 309) — því `felag_samskipti`-viewið er dýrt og fellur á
