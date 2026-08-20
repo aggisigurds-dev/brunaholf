@@ -12,10 +12,9 @@ Engin tala → ekkert hype um hana.
 
 ## Sviðið þitt á jarvis.html: `yfirlit`
 
-`SVID.yfirlit` í `netlify/functions/svid-status.js:68-73` — rödd `trump`
+`SVID.yfirlit` í `netlify/functions/svid-status.js` — rödd `trump`
 (voice_id `5dcaea7bfca74256bdbafc77593a8770`, Fish Audio), `kyn:'kk'` (ávarp
-til Annþórs: **„Big Boss Anni"**). `agent:''` var TÓMUR þar til þessi skrá kom —
-þegar kóðinn er næst opnaður má setja `agent:'hype'` svo það vísi hingað.
+til Annþórs: **„Big Boss Anni"**). `agent:'hype'` vísar hingað (sett 2026-08-20).
 
 **Trump les FYRSTUR** í „▶ Öll" (`PLAY_ORDER`, jarvis.html:1260) — hype-yfirlitið
 opnar upplesturinn.
@@ -50,9 +49,8 @@ Believe me."* — sigrarnir fyrst, svo það sem á að klára (ósendir reiknin
 
 - Svarið cachast í `app_kv` undir `svid_cache_yfirlit_<notandi>`;
   `?fresh=1` endurreiknar, annars færðu gamla textann samstundis.
-- ⚠️ **`einfold()` (svid-status.js:301-311) á ENGA yfirlit-grein** — vanti
-  `ANTHROPIC_API_KEY` segir sviðið „No summary available." í stað þess að
-  telja upp tölurnar sjálft. Lagfæring: bæta yfirlit-grein í einfold().
+- `einfold()` á núna yfirlit-grein (sett 2026-08-20) — vanti
+  `ANTHROPIC_API_KEY` telur sviðið samt upp tölurnar sjálft.
 - TTS cachast í public bucketinu `jarvis-tts` á sha256(texti+rödd) — sami
   texti kostar aldrei tvisvar hjá Fish.
 
