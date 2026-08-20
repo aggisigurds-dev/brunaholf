@@ -1217,6 +1217,11 @@ async function applyFile(token, body) {
   const docRow = {
     customer_base_id: base_id, doc_type, year: rowYear, drive_file_id: id,
     source: 'gdrive', found_by: 'drive-multitool',
+    // Original Drive filename — structured "Fyrirtæki - Heimilisfang - kt - tegund - ár".
+    // Sýnt í UI í stað „drive-multitool"-merkisins OG lesið til að fact-checka
+    // heimilisfang/kt á kúnnanum. Samningar eru EKKI endurnefndir svo origName er
+    // notandans rétta heiti; reikn./skýrslur bera kanóníska heitið eftir apply.
+    file_name: origName || proposed_name || null,
     invoice_number: doc_type === 'reikningur' ? invoice_number : null,
     customer_name: base_nafn || null,
     notes: 'drive-multitool' + (invoice_number ? (' · ' + invoice_number) : '') + (year ? (' · ' + year) : '') + (base_id ? '' : ' · RESOLVE'),
