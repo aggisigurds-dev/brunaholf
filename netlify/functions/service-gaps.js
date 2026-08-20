@@ -23,8 +23,8 @@ const SVC_DOCS = "('uttektarskyrsla','brunakerfi','samningur')";
 // Opnanlegur tengill á skjal: Drive-view ef drive_file_id, annars Supabase public URL
 // (storage_path byrjar á bucket-nafni, t.d. „samningar/…"; samningar-bucket er public).
 function openUrl(d) {
-  if (d.drive_file_id) return 'https://drive.google.com/file/d/' + d.drive_file_id + '/view';
   if (d.storage_path) return SUPABASE_URL + '/storage/v1/object/public/' + d.storage_path;
+  if (d.drive_file_id && String(d.drive_file_id).indexOf('sb:') !== 0) return '/api/skjal?id=' + encodeURIComponent(d.drive_file_id);
   return null;
 }
 

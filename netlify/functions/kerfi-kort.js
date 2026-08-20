@@ -80,7 +80,8 @@ exports.handler = async (event) => {
       const bid = parseInt(p.base,10);
       const base = (await sbGet(`customers_base?id=eq.${bid}&select=id,nafn,kennitala,rekstrarfelag,netfang,simi,heimilisfang,general_notes`))[0] || null;
       const sites = await sbGet(`fyrirtaeki?customer_base_id=eq.${bid}&select=id,nafn,heimilisfang,kennitala,er_i_thjonustu,deleted_at,banner_note&order=deleted_at.nullsfirst,heimilisfang`);
-      const docs = await sbGet(`customer_documents?customer_base_id=eq.${bid}&select=id,doc_type,year,drive_file_id,invoice_number,amount,fyrirtaeki_id,is_duplicate,notes&order=doc_type,year.desc`);
+      const docs = await sbGet(`customer_documents?customer_base_id=eq.${bid}&select=id,doc_type,year,drive_file_id,storage_path,invoice_number,amount,fyrirtaeki_id,is_duplicate,notes&order=doc_type,year.desc`);
+      docs.forEach(x=>{ x.open_url = x.storage_path ? SUPABASE_URL+'/storage/v1/object/public/'+x.storage_path : (x.drive_file_id && !String(x.drive_file_id).startsWith('sb:') ? '/api/skjal?id='+encodeURIComponent(x.drive_file_id) : null); });
       let payday=[];
       if(base && base.kennitala){ const d=dash(base.kennitala), dd=digits(base.kennitala);
         if(dd.length===10) payday = await sbGet(`payday_invoices_slokk?or=(kt.eq.${d},kt.eq.${dd})&select=number,amount_total,created_date,due_date,paid_date,status&order=created_date.desc`);

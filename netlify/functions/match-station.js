@@ -146,8 +146,8 @@ async function companyDetail(baseId) {
     return {
       id: d.id,
       drive_file_id: d.drive_file_id || null,
-      view_url: d.drive_file_id ? `https://drive.google.com/file/d/${d.drive_file_id}/view`
-              : d.storage_path ? `${SUPABASE_URL}/storage/v1/object/public/${d.storage_path}` : null,
+      view_url: d.storage_path ? `${SUPABASE_URL}/storage/v1/object/public/${d.storage_path}`
+              : (d.drive_file_id && !String(d.drive_file_id).startsWith('sb:')) ? `/api/skjal?id=${encodeURIComponent(d.drive_file_id)}` : null,
       doc_type: d.doc_type, year: d.year, fyrirtaeki_id: d.fyrirtaeki_id,
       is_duplicate: !!d.is_duplicate, reviewed: !!d.reviewed,
       needs_site: d.needs_site === true,
@@ -201,8 +201,8 @@ async function globalList(scope) {
       id: d.id, base_id: d.customer_base_id, base_nafn: b.nafn || ('#' + d.customer_base_id), kennitala: b.kennitala || '',
       multi_site: sites.length > 1, sites,
       drive_file_id: d.drive_file_id || null,
-      view_url: d.drive_file_id ? `https://drive.google.com/file/d/${d.drive_file_id}/view`
-              : d.storage_path ? `${SUPABASE_URL}/storage/v1/object/public/${d.storage_path}` : null,
+      view_url: d.storage_path ? `${SUPABASE_URL}/storage/v1/object/public/${d.storage_path}`
+              : (d.drive_file_id && !String(d.drive_file_id).startsWith('sb:')) ? `/api/skjal?id=${encodeURIComponent(d.drive_file_id)}` : null,
       doc_type: d.doc_type, year: d.year, fyrirtaeki_id: d.fyrirtaeki_id,
       is_duplicate: !!d.is_duplicate, reviewed: !!d.reviewed,
       needs_site: d.needs_site === true,

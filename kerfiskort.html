@@ -285,7 +285,7 @@ async function openDetail(id){
       const t=x.doc_type==='uttektarskyrsla'?'rep':(x.doc_type==='reikningur'?'inv':'samn');
       const tl=x.doc_type==='uttektarskyrsla'?'skýrsla':(x.doc_type==='reikningur'?'reikn':'samn');
       const nm=String(x.notes||'').split(' · ')[0]||x.invoice_number||'skjal';
-      const url=x.drive_file_id?('https://drive.google.com/file/d/'+x.drive_file_id+'/view'):null;
+      const url=x.open_url||null;
       return '<div class="doc"><span class="t '+t+'">'+tl+(x.year?(' '+x.year):'')+'</span>'
         +(url?'<a href="'+url+'" target="_blank" rel="noopener">'+esc(nm.slice(0,40))+'</a>':'<span>'+esc(nm.slice(0,40))+'</span>')
         +(x.doc_type==='uttektarskyrsla'&&x.drive_file_id?' <button class="btn" style="padding:1px 7px;font-size:10.5px" data-bun-file="'+esc(x.drive_file_id)+'" title="Lesa búnað úr þessari skýrslu">🧯 búnaður</button>':'')

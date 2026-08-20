@@ -276,7 +276,7 @@ function isDue(c){ return c.next && c.next <= TODAY; }
 function hasType(c,t){ return c.files.some(f=>f.t===t); }
 const MONTHS=['','jan','feb','mar','apr','maí','jún','júl','ágú','sep','okt','nóv','des'];
 function fmtYm(ym){ if(!ym) return ''; const [y,m]=ym.split('-'); return MONTHS[+m]+' '+y; }
-function driveLink(id, text){ const t=esc(text); return id?`<a href="https://drive.google.com/file/d/${esc(id)}/view" target="_blank" rel="noopener">${t}</a>`:t; }
+function driveLink(id, text){ const t=esc(text); return id?`<a href="/api/skjal?id=${encodeURIComponent(id)}" target="_blank" rel="noopener">${t}</a>`:t; }
 
 // Markmið: per fyrirtæki, per ár → Samningur / Úttektarskýrsla / Reikningur.
 const TARGET_YEARS=[2026,2025,2024];        // áherslan er 2024–2026
