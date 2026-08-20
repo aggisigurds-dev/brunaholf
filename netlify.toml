@@ -166,6 +166,16 @@
 [functions."storage-backup-background"]
   schedule = "0 3 * * *"
 
+# eldklar póst-innsog (inbox + sent) á 2 tíma fresti (2026-08-19). ENGIN
+# gervigreind — hrein Gmail API → Supabase upsert (dedupe á message_id) svo
+# svarstaðan á Þjónustuver póstum / company-mail helst fersk án handvirkni.
+# Áður var ekkert áætlað fall að sækja póst; sent-hólfið sat eftir frá 6.8.
+# Áætlunin situr á -background tvíbura því Netlify svarar HTTP á áætluð föll með
+# 403 — gmail-ingest sjálft er áfram frjálst (Kerfisheilsu-hnappur, bakfylling).
+# Mínúta 35 svo það rekist ekki á timavera (:15) né payday (:00).
+[functions."gmail-ingest-background"]
+  schedule = "35 */2 * * *"
+
 # ── Afkasta-caching (2026-08-13) ─────────────────────────────────────────────
 # Allar <script>/<link> tilvísanir nota ?v= útgáfustimpil, svo það er óhætt að
 # leyfa vafranum að endurnota skrárnar án 304-umferðar í klukkustund — og

@@ -81,6 +81,26 @@ exports.handler = async (event) => {
     // drop ambiguous
     Object.keys(emailToId).forEach(e => { if (emailToId[e] === AMBIG) delete emailToId[e]; });
 
+    // ---- BROAD email → base map (for the yellow "signals" ONLY) ----
+    // Red (unreplied) stays strict per-building above. Yellow may match looser:
+    // any address of any building of a base, or the base's own email → that base
+    // → ALL its in-service buildings. A "possible change — go check" flag is worth
+    // a looser match; worst case is a glance at mail that turns out fine. (Red is
+    // never driven this way, so a loose match can't produce a wrong "you owe a reply".)
+    const emailToBase = {};
+    const AMBIG_B = Symbol('ambigBase');
+    const claimBase = (email, baseId) => {
+      const e = cleanEmail(email);
+      if (!e || FREE_OK(e) === null || !baseId) return;
+      if (!(e in emailToBase)) emailToBase[e] = baseId;
+      else if (emailToBase[e] !== baseId) emailToBase[e] = AMBIG_B; // two bases, same address → drop
+    };
+    sites.forEach(s => { if (s.customer_base_id) claimBase(s.netfang, s.customer_base_id); });
+    bases.forEach(b => { claimBase(b.netfang, b.id); claimBase(b.contact_email, b.id); });
+    Object.keys(emailToBase).forEach(e => { if (emailToBase[e] === AMBIG_B) delete emailToBase[e]; });
+    const baseToSites = {}; // base_id → [in-service fyrirtaeki_id]
+    sites.forEach(s => { if (s.customer_base_id) (baseToSites[s.customer_base_id] = baseToSites[s.customer_base_id] || []).push(s.id); });
+
     const companyEmails = new Set(Object.keys(emailToId));
     if (!companyEmails.size) {
       return json(200, { byId: {}, generated_at: new Date().toISOString(),
@@ -92,9 +112,16 @@ exports.handler = async (event) => {
       'select=sender_email,to_addresses,subject,snippet,body_preview,is_question,received_at,folder' +
       `&received_at=gte.${encodeURIComponent(sinceIso)}&order=received_at.desc`);
 
-    // newest INBOUND per company email + collect SENT recipients timeline
-    const inbound = {};   // email → newest inbound row
-    const sentTo = {};    // email → newest SENT received_at addressed to it
+    // newest INBOUND per company email + collect SENT recipients timeline, and
+    // scan ALL inbound in the window for "signals" (uppsögn/flutt/eigendaskipti/
+    // gjaldþrot/kvörtun/bilun/áríðandi). A status-change email from months ago is
+    // easily buried behind newer mail — but it's exactly what we must NOT forget
+    // before the yearly visit, so we look across the whole window, not just newest.
+    const inbound = {};    // email → newest inbound row
+    const sentTo = {};     // email → newest SENT received_at addressed to it
+    const sigByEmail = {}; // email → { <type>: {subject, received_at} } — EXACT
+    const sigByIdBroad = {};// fyrirtaeki_id → { <type>: {subject, received_at} } — BROAD (yellow)
+    const broadMail = {};  // fyrirtaeki_id → newest signal-bearing mail (fyrir popover)
     for (const m of rows) {
       const isSent = String(m.folder || '').toUpperCase() === 'SENT';
       if (isSent) {
@@ -106,9 +133,30 @@ exports.handler = async (event) => {
         continue;
       }
       const from = cleanEmail(m.sender_email);
-      if (!from || !companyEmails.has(from)) continue;
-      // rows are ordered received_at desc → first hit is newest
-      if (!inbound[from]) inbound[from] = m;
+      if (!from) continue;
+      const types = detectSignals(m.subject, m.snippet, m.body_preview);
+      // EXACT per-building match (red/green + exact signals)
+      if (companyEmails.has(from)) {
+        if (!inbound[from]) inbound[from] = m; // rows desc → first hit is newest
+        if (types.length) {
+          const bag = sigByEmail[from] || (sigByEmail[from] = {});
+          for (const t of types) if (!bag[t]) bag[t] = { subject: m.subject || '', received_at: m.received_at || null };
+        }
+      }
+      // BROAD base match — signals only (yellow). Attaches to ALL in-service
+      // buildings of the base (over-flags multi-site rekstrarfélög, acceptable
+      // for a "go check" flag; single-site bases — the majority — are precise).
+      if (types.length) {
+        const baseId = emailToBase[from];
+        if (baseId) {
+          for (const sid of (baseToSites[baseId] || [])) {
+            const bag = sigByIdBroad[sid] || (sigByIdBroad[sid] = {});
+            for (const t of types) if (!bag[t]) bag[t] = { subject: m.subject || '', received_at: m.received_at || null };
+            const bm = broadMail[sid];
+            if (!bm || (m.received_at || '') > (bm.received_at || '')) broadMail[sid] = { from, subject: m.subject || '', snippet: (m.snippet || m.body_preview || '').slice(0, 240), received_at: m.received_at || null };
+          }
+        }
+      }
     }
 
     // ---- assemble per-company result ----
@@ -123,6 +171,10 @@ exports.handler = async (event) => {
       const cur = byId[id];
       // if a site somehow maps from two addresses, keep the newest inbound
       if (cur && (cur.received_at || '') >= (m.received_at || '')) continue;
+      const bag = sigByEmail[email] || {};
+      const signals = Object.keys(bag)
+        .map(t => ({ type: t, subject: bag[t].subject, received_at: bag[t].received_at }))
+        .sort((a, b) => String(b.received_at || '').localeCompare(String(a.received_at || '')));
       byId[id] = {
         from: email,
         subject: m.subject || '',
@@ -130,14 +182,45 @@ exports.handler = async (event) => {
         received_at: m.received_at || null,
         is_question: !!m.is_question,
         unreplied,
+        important: signals.length > 0,   // gult merki = eitthvað sem kallar á athygli
+        signals,                          // [{type, subject, received_at}] — lífsferill fyrst
       };
       matched++;
+    }
+
+    const exactMatched = Object.keys(byId).length;
+
+    // ---- merge BROAD base-level signals (yellow) ----
+    // Attaches signals to sibling in-service buildings too. Never sets unreplied
+    // (so this can't produce a red). Creates a signals-only entry when the
+    // building had no exact mail match, so the yellow badge still shows.
+    for (const sid in sigByIdBroad) {
+      const bag = sigByIdBroad[sid];
+      let e = byId[sid];
+      if (!e) {
+        const bm = broadMail[sid] || {};
+        e = byId[sid] = {
+          from: bm.from || null,
+          subject: bm.subject || '',
+          snippet: bm.snippet || '',
+          received_at: bm.received_at || null,
+          is_question: false,
+          unreplied: false,   // broad match is signals-only — never drives RED
+          important: false,
+          signals: [],
+          match: 'broad',
+        };
+      }
+      const seen = new Set((e.signals || []).map(s => s.type));
+      for (const t in bag) if (!seen.has(t)) e.signals.push({ type: t, subject: bag[t].subject, received_at: bag[t].received_at });
+      e.signals.sort((a, b) => String(b.received_at || '').localeCompare(String(a.received_at || '')));
+      e.important = e.signals.length > 0;
     }
 
     return json(200, {
       byId,
       generated_at: new Date().toISOString(),
-      scanned: { emails: rows.length, companies: sites.length, matched: Object.keys(byId).length },
+      scanned: { emails: rows.length, companies: sites.length, matched: Object.keys(byId).length, exact: exactMatched, with_signals: Object.values(byId).filter(v => v.signals && v.signals.length).length },
     });
   } catch (e) {
     return json(500, { error: String(e && e.message || e) });
@@ -165,6 +248,30 @@ function recipientsOf(to) {
   for (const p of parts) {
     const e = cleanEmail(p);
     if (e && e.indexOf('@') > 0) out.push(e);
+  }
+  return out;
+}
+
+// ── "signals" í pósti (gult merki) ─────────────────────────────────────────
+// Íhaldssamir frasar sem benda STERKT á breytingu/vandamál — betra að sleppa
+// óvissu en að flagga rangt. Lífsferils-merkin (uppsogn/flutt/eigandi/gjaldthrot)
+// eru þau sem má ALLS EKKI gleyma áður en farið er í árlega heimsókn: ef kúnninn
+// sendi „við erum hætt / flutt / gjaldþrota" fyrir mörgum mánuðum má það ekki
+// grafast. Notað á subject + snippet + body_preview (lágstafað).
+const SIGNALS = {
+  uppsogn:    ['sagði upp', 'segja upp', 'segjum upp', 'sagt upp', 'uppsögn', 'uppsagn', 'viljum hætta', 'óska eftir að hætta', 'hætta þjónust', 'hætt þjónust', 'afþökk', 'afpant', 'cancel', 'terminate', 'discontinue', 'no longer need', 'end the contract', 'end our contract'],
+  flutt:      ['erum flutt', 'vorum flutt', 'fluttum', 'nýtt heimilisfang', 'breytt heimilisfang', 'ný staðsetning', 'we have moved', 'have relocated', 'new address'],
+  eigandi:    ['eigendaskipt', 'nýr eigandi', 'nýir eigend', 'ný eigandi', 'nýtt rekstrarfélag', 'nýr rekstraraðil', 'new owner', 'change of ownership', 'under new management', 'sold the company', 'sold to'],
+  gjaldthrot: ['gjaldþrot', 'þrotabú', 'gjaldþrota', 'bankrupt', 'insolven', 'liquidat'],
+  kvortun:    ['kvörtun', 'kvarta', 'óánæg', 'ósátt', 'vonbrigð', 'léleg þjónust', 'complaint', 'unhappy', 'disappointed', 'not satisfied'],
+  bilun:      ['bilað', 'biluð', 'bilun', 'fer í gang', 'fara í gang', 'ónýt', 'leki', 'lekur', 'sprungið', 'virkar ekki', 'virkar ekkert', 'false alarm', 'malfunction', 'not working', 'emergency', 'eldsvoð', 'kviknaði'],
+  aridandi:   ['áríðandi', 'brýnt', 'sem fyrst', 'hið fyrsta', 'urgent', 'asap', 'immediately', 'as soon as possible'],
+};
+function detectSignals(subject, snippet, body) {
+  const hay = ((subject || '') + ' ' + (snippet || '') + ' ' + (body || '')).toLowerCase();
+  const out = [];
+  for (const type in SIGNALS) {
+    if (SIGNALS[type].some(k => hay.indexOf(k) !== -1)) out.push(type);
   }
   return out;
 }
