@@ -155,6 +155,30 @@ exports.handler = async (event) => {
     const baseToSites = {}; // base_id → [in-service fyrirtaeki_id]
     sites.forEach(s => { if (s.customer_base_id) (baseToSites[s.customer_base_id] = baseToSites[s.customer_base_id] || []).push(s.id); });
 
+    // ---- ALSO honour the Charlize tengiliðir links (charlize_contacts) ----
+    // We linked ~300 contact addresses to a company kennitala; feed them into the
+    // SAME maps so a company's mail connects on the list even when the address is
+    // not on its own fyrirtaeki/base record — the whole point of the tengiliðaskrá.
+    // A linked address whose kennitala maps to exactly ONE in-service site → strict
+    // claim (drives red/green + the „Póst-staða" sort); it also gets the broad
+    // per-base claim (yellow/signals) and marks the site as „has history" so the
+    // „Póstsaga til" sort covers it. Best-effort — never breaks the endpoint.
+    const charlizeSiteIds = new Set();
+    try {
+      const ktToSites = {};
+      sites.forEach(s => { const k = String(s.kennitala || '').replace(/\D/g, ''); if (k) (ktToSites[k] = ktToSites[k] || []).push(s); });
+      const contacts = await fetchAll('charlize_contacts', 'netfang,kennitala', '&kennitala=not.is.null&status=neq.rejected');
+      contacts.forEach(c => {
+        const k = String(c.kennitala || '').replace(/\D/g, ''); const ss = ktToSites[k];
+        if (!ss || !ss.length) return;
+        if (ss.length === 1) { claim(c.netfang, ss[0].id); charlizeSiteIds.add(ss[0].id); }
+        else ss.forEach(s => charlizeSiteIds.add(s.id)); // shared base → all its in-service sites count as "has history"
+        if (ss[0].customer_base_id) claimBase(c.netfang, ss[0].customer_base_id);
+      });
+      Object.keys(emailToId).forEach(e => { if (emailToId[e] === AMBIG) delete emailToId[e]; });
+      Object.keys(emailToBase).forEach(e => { if (emailToBase[e] === AMBIG_B) delete emailToBase[e]; });
+    } catch (e) { /* charlize_contacts optional — never break the endpoint */ }
+
     const companyEmails = new Set(Object.keys(emailToId));
     if (!companyEmails.size) {
       return json(200, { byId: {}, generated_at: new Date().toISOString(),
@@ -351,6 +375,7 @@ exports.handler = async (event) => {
       const ha = await histAllPromise;
       if (ha && Array.isArray(ha.ids)) ha.ids.forEach(id => histIdSet.add(Number(id)));
     } catch (_) { /* best-effort — omit older ids on failure */ }
+    charlizeSiteIds.forEach(id => histIdSet.add(Number(id))); // tengiliðaskrá links → „has history"
     const histIds = [...histIdSet];
 
     return json(200, {
