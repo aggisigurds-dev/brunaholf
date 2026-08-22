@@ -141,6 +141,6 @@ module.exports = {
   COOKIE, TTL_SECONDS,
   signToken, verifyToken, hashPassword, verifyPassword,
   parseCookies, sessionCookie, clearCookie, getSession,
-  sbGet, sbPatch, sbPost, json, secHeaders, envReady,
+  sbGet, sbPatch, sbPost, json, secHeaders, envReady, dbReady,
   SUPABASE_URL, SUPABASE_KEY,
 };
