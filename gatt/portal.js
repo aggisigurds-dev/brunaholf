@@ -57,8 +57,13 @@
       { nr: 'R-107261', dags: '2025', bygging: 'Þingholt', lysing: 'Úttekt', upphaed: null },
       { nr: 'R-107053', dags: '2025', bygging: 'Skjaldbreið', lysing: 'Þjónusta', upphaed: null },
     ],
+    messages: [
+      { sender: 'starf', author_name: 'Slökkvitæki', body: 'Sæl! Úttekt á Klöpp er lokið og skýrslan komin inn.', created_at: '2026-08-03T10:12:00' },
+      { sender: 'kunni', author_name: 'Center Hótel', body: 'Takk fyrir! Getið þið sent afrit af reikningi fyrir Skjaldbreið?', created_at: '2026-08-04T09:20:00' },
+    ],
   };
 
+  var SLUG = (function () { var m = /[?&]c=([^&]+)/.exec(location.search); return m ? decodeURIComponent(m[1]) : ''; })();
   var state = { data: null, demo: false };
 
   /* ── boot ── */
@@ -67,11 +72,29 @@
     if (demo) { state.demo = true; renderPortal(DEMO); showDemoRibbon(); return; }
     fetch('/api/gatt', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
       .then(function (r) {
-        if (!r.ok) { showLogin(); return null; }  // 401/503/o.fl. → hreint innskráningarform
-        return r.json();
+        if (r.ok) return r.json().then(function (d) { renderPortal(normalize(d)); });
+        return gateBySlug();   // ekki innskráð → athuga slug-stöðu
       })
-      .then(function (d) { if (d) renderPortal(normalize(d)); })
+      .catch(function () { gateBySlug(); });
+  }
+
+  // Ekki innskráð: innskráningarglugginn opnast AÐEINS ef félags-URL er virkt
+  // (aðgangsorð+lykilorð sett). Annars „vefurinn ekki virkur enn".
+  function gateBySlug() {
+    if (!SLUG) { showLogin(); return; }
+    return fetch('/api/gatt-status?c=' + encodeURIComponent(SLUG), { headers: { Accept: 'application/json' } })
+      .then(function (r) { return r.json(); })
+      .then(function (s) {
+        if (s && s.active) { if (s.theme) document.documentElement.setAttribute('data-theme', s.theme); showLogin(); }
+        else showNotReady(s && s.name);
+      })
       .catch(function () { showLogin(); });
+  }
+  function showNotReady(name) {
+    $('#login').classList.add('hidden');
+    $('#portal').classList.add('hidden');
+    if (name) $('#notready-name').textContent = 'Aðgangur fyrir ' + name + ' hefur ekki verið virkjaður enn.';
+    $('#notready').classList.remove('hidden');
   }
 
   /* Map API-svar → sama form og DEMO */
@@ -96,6 +119,7 @@
       invoices: (d.invoices || []).map(function (i) {
         return { docId: i.docId, nr: i.nr, dags: i.dags || i.ar, bygging: i.bygging, lysing: '', upphaed: i.upphaed };
       }),
+      messages: d.messages || [],
     };
   }
   function yearsFromStatus(b) {
@@ -110,6 +134,7 @@
   /* ── LOGIN ── */
   function showLogin(msg) {
     $('#portal').classList.add('hidden');
+    $('#notready').classList.add('hidden');
     $('#login').classList.remove('hidden');
     if (msg) $('#lerr').textContent = msg;
   }
@@ -144,7 +169,23 @@
     renderChips('#re-chips', data.invoices, renderReikningar);
     renderSkyrslur('');
     renderReikningar('');
+    renderMessages(data.messages);
     wireNav();
+  }
+
+  function renderMessages(msgs) {
+    msgs = msgs || [];
+    var box = $('#msg-thread');
+    if (!msgs.length) { box.innerHTML = '<div class="msg-empty">Engin skilaboð enn. Sendu okkur fyrirspurn hér að neðan.</div>'; }
+    else {
+      box.innerHTML = msgs.map(function (m) {
+        var who = m.sender === 'kunni' ? (m.author_name || 'Þú') : 'Slökkvitæki ehf.';
+        return '<div class="msg-bubble ' + (m.sender === 'kunni' ? 'kunni' : 'starf') + '">' +
+          '<div class="who">' + esc(who) + '</div>' + esc(m.body) +
+          '<div class="t">' + esc(fmtDate(m.created_at)) + '</div></div>';
+      }).join('');
+      box.scrollTop = box.scrollHeight;
+    }
   }
 
   function renderCards(stats) {
@@ -241,7 +282,7 @@
         document.querySelectorAll('nav .tab').forEach(function (x) { x.classList.remove('on'); });
         t.classList.add('on');
         var v = t.getAttribute('data-view');
-        ['yfirlit', 'skyrslur', 'reikningar'].forEach(function (name) {
+        ['yfirlit', 'skyrslur', 'reikningar', 'skilabod'].forEach(function (name) {
           $('#v-' + name).classList.toggle('hidden', name !== v);
         });
       };
@@ -252,6 +293,24 @@
         .then(function () { location.reload(); });
     };
     $('#langBtn').onclick = function () { /* EN/IS þýðingar koma síðar */ };
+    $('#msg-form').onsubmit = function (e) {
+      e.preventDefault();
+      var inp = $('#msg-input'), text = inp.value.trim();
+      if (!text) return;
+      if (state.demo) {
+        state.data.messages.push({ sender: 'kunni', author_name: 'Þú', body: text, created_at: new Date().toISOString() });
+        renderMessages(state.data.messages); inp.value = ''; return;
+      }
+      var btn = e.target.querySelector('button'); btn.disabled = true;
+      fetch('/api/gatt', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ body: text }) })
+        .then(function (r) { return r.json(); })
+        .then(function () {
+          state.data.messages.push({ sender: 'kunni', author_name: state.data.account.name || 'Þú', body: text, created_at: new Date().toISOString() });
+          renderMessages(state.data.messages); inp.value = '';
+        })
+        .catch(function () {})
+        .then(function () { btn.disabled = false; });
+    };
   }
 
   function showDemoRibbon() {

@@ -110,6 +110,22 @@
   .chip.on{background:var(--dark);color:var(--accent);border-color:var(--dark)}
   .empty{padding:34px 14px;text-align:center;color:var(--faint);font-style:italic}
   .demo-ribbon{position:fixed;top:0;right:0;background:var(--accent);color:#fff;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:4px 40px;transform:rotate(45deg) translate(28px,-6px);transform-origin:center;z-index:50;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+
+  /* ekki-virkur skjár (sama útlit og innskráning) */
+  #notready{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--dark);padding:24px}
+  /* skilaboð */
+  .nbadge{display:inline-block;min-width:16px;height:16px;line-height:16px;padding:0 4px;margin-left:5px;border-radius:99px;background:var(--accent);color:#fff;font-size:10px;text-align:center;vertical-align:middle}
+  .msg-thread{display:flex;flex-direction:column;gap:10px;padding:16px;max-height:52vh;overflow-y:auto}
+  .msg-bubble{max-width:74%;padding:11px 14px;font-size:13.5px;line-height:1.5;border:1px solid var(--line)}
+  .msg-bubble .who{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--faint);margin-bottom:3px}
+  .msg-bubble .t{font-size:10.5px;color:var(--faint);margin-top:4px}
+  .msg-bubble.kunni{align-self:flex-end;background:#f6e6d8;border-color:#e6c9ad}
+  .msg-bubble.starf{align-self:flex-start;background:var(--white)}
+  .msg-empty{color:var(--faint);font-style:italic;padding:22px;text-align:center}
+  .msg-compose{display:flex;gap:10px;margin-top:14px;align-items:flex-end}
+  .msg-compose textarea{flex:1;border:1px solid var(--line2);background:var(--white);padding:11px 13px;font-family:var(--ui);font-size:14px;color:var(--ink);resize:vertical}
+  .msg-compose button{background:var(--dark);color:var(--accent);border:0;padding:12px 20px;font-family:var(--ui);font-weight:600;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;white-space:nowrap}
+  .msg-compose button:hover{background:var(--dark2)}
   @media(max-width:760px){
     .cards{grid-template-columns:repeat(2,1fr)}
     .hin{flex-wrap:wrap;gap:12px}
@@ -135,6 +151,17 @@
   </form>
 </section>
 
+<!-- ══ EKKI VIRKUR ══ -->
+<section id="notready" class="hidden">
+  <div class="lcard" style="text-align:center">
+    <div class="logo"><b>BRUNAHÓLF</b><span class="s">Slökkvitæki ehf.</span><span class="k">Brunavarnir &amp; eftirlit</span></div>
+    <div class="lrule"></div>
+    <h1 style="font-size:25px">Vefurinn er ekki virkur enn</h1>
+    <div class="sub" id="notready-name">Aðgangur að þessum þjónustuvef hefur ekki verið virkjaður.</div>
+    <div class="lhelp">Hafðu samband: <a href="mailto:eldklar@eldklar.is">eldklar@eldklar.is</a></div>
+  </div>
+</section>
+
 <!-- ══ PORTAL ══ -->
 <div id="portal" class="hidden">
   <header>
@@ -145,6 +172,7 @@
         <a class="tab on" data-view="yfirlit">Yfirlit</a>
         <a class="tab" data-view="skyrslur">Skýrslur</a>
         <a class="tab" data-view="reikningar">Reikningar</a>
+        <a class="tab" data-view="skilabod">Skilaboð<span class="nbadge hidden" id="msgBadge"></span></a>
         <span class="hbtn en" id="langBtn">EN</span>
         <span class="hbtn" id="logoutBtn">Útskrá</span>
       </nav>
@@ -170,6 +198,16 @@
         <thead><tr><th>Dagsetning</th><th>Bygging</th><th>Heimilisfang</th><th>Tegund</th><th>Magn</th><th>Ár</th><th class="r">Skýrsla</th></tr></thead>
         <tbody id="sk-body"></tbody>
       </table></div>
+    </section>
+    <!-- SKILABOÐ -->
+    <section id="v-skilabod" class="hidden">
+      <div class="kicker">Fyrirspurnir til Slökkvitækja ehf.</div>
+      <h2 class="page">Skilaboð</h2>
+      <div class="tbl-wrap" style="padding:6px 0"><div id="msg-thread" class="msg-thread"></div></div>
+      <form id="msg-form" class="msg-compose">
+        <textarea id="msg-input" rows="3" placeholder="Skrifaðu fyrirspurn…"></textarea>
+        <button type="submit">Senda fyrirspurn</button>
+      </form>
     </section>
     <!-- REIKNINGAR -->
     <section id="v-reikningar" class="hidden">

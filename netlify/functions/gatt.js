@@ -14,12 +14,25 @@ const REPORT_TYPES = ['uttektarskyrsla', 'brunakerfi'];
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: P.secHeaders(), body: '' };
-  if (event.httpMethod !== 'GET') return P.json(405, { error: 'GET only' });
+  if (event.httpMethod !== 'GET' && event.httpMethod !== 'POST') return P.json(405, { error: 'GET/POST only' });
   if (!P.envReady()) return P.json(503, { error: 'Þjónustuvefur ekki uppsettur' });
 
   const session = P.getSession(event);
   if (!session) return P.json(401, { error: 'Ekki innskráð(ur)' });
   const baseId = session.base_id;
+
+  // POST → viðskiptavinur sendir fyrirspurn (skilaboð)
+  if (event.httpMethod === 'POST') {
+    let b; try { b = JSON.parse(event.body || '{}'); } catch { return P.json(400, { error: 'Ógilt JSON' }); }
+    const text = String(b.body || '').trim();
+    if (!text) return P.json(400, { error: 'Tómt skeyti' });
+    if (text.length > 4000) return P.json(400, { error: 'Skeyti of langt' });
+    try {
+      const ins = await P.sbPost('portal_messages', { base_id: baseId, sender: 'kunni', body: text, author_name: session.name || '' });
+      if (!ins.ok) return P.json(ins.status, { error: 'Villa', detail: await ins.text() });
+      return P.json(200, { ok: true, row: (await ins.json())[0] });
+    } catch (e) { return P.json(500, { error: String((e && e.message) || e) }); }
+  }
 
   try {
     // 1) Endurnýta customer.js-samsetninguna (base + sites + docs + invoices)
@@ -84,9 +97,17 @@ exports.handler = async (event) => {
       taeki_alls: buildings.reduce((n, b) => n + (b.taeki || 0), 0),
     };
 
+    // 7) Skilaboð (fyrirspurna-þráður félagsins) + merkja starfs-skilaboð lesin
+    let messages = [];
+    try {
+      const mr = await P.sbGet(`portal_messages?base_id=eq.${baseId}&select=sender,body,author_name,created_at&order=created_at.asc`);
+      if (mr.ok) messages = await mr.json();
+      await P.sbPatch(`portal_messages?base_id=eq.${baseId}&sender=eq.starf`, { read_by_customer: true });
+    } catch (_) {}
+
     return P.json(200, {
       account: { name: session.name || data.base?.nafn || '', theme: session.theme || 'steel' },
-      stats, buildings, reports, invoices,
+      stats, buildings, reports, invoices, messages,
     });
   } catch (e) {
     return P.json(500, { error: String((e && e.message) || e) });

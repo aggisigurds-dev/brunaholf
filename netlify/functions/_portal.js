@@ -113,6 +113,16 @@ function sbPatch(qs, body) {
     body: JSON.stringify(body),
   });
 }
+function sbPost(table, body) {
+  return fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json', Prefer: 'return=representation',
+    },
+    body: JSON.stringify(body),
+  });
+}
 
 // ── HTTP svör ────────────────────────────────────────────────────────────────
 // Kúndavefurinn og /api/* eru SAMA uppruni (brunaholf.netlify.app) svo við
@@ -124,12 +134,13 @@ function json(code, body, extraHeaders) {
   return { statusCode: code, headers: secHeaders(extraHeaders), body: JSON.stringify(body) };
 }
 
-function envReady() { return !!(SUPABASE_URL && SUPABASE_KEY && JWT_SECRET); }
+function envReady() { return !!(SUPABASE_URL && SUPABASE_KEY && JWT_SECRET); } // login/session (þarf JWT)
+function dbReady() { return !!(SUPABASE_URL && SUPABASE_KEY); }                 // stjórnsíða/status (aðeins DB)
 
 module.exports = {
   COOKIE, TTL_SECONDS,
   signToken, verifyToken, hashPassword, verifyPassword,
   parseCookies, sessionCookie, clearCookie, getSession,
-  sbGet, sbPatch, json, secHeaders, envReady,
+  sbGet, sbPatch, sbPost, json, secHeaders, envReady,
   SUPABASE_URL, SUPABASE_KEY,
 };

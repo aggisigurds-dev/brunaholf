@@ -10,8 +10,9 @@
 create table if not exists portal_users (
   id              uuid primary key default gen_random_uuid(),
   base_id         integer not null,            -- → customers_base.id (rekstrarfélag)
-  email           text    not null,            -- innskráningarnetfang (geymt lowercase)
-  pass_hash       text,                        -- scrypt$salt$hash — null þar til aðgangur stofnaður
+  slug            text,                        -- URL-auðkenni félags (/gatt/?c=<slug>)
+  email           text,                        -- aðgangsorð/innskráning (lowercase); tómt þar til stofnað
+  pass_hash       text,                        -- scrypt$salt$hash — null þar til lykilorð virkjað
   active          boolean not null default true,
   theme           text    not null default 'steel',   -- þema per viðskiptahóp
   display_name    text,                        -- t.d. "Center Hótel" (fyrir hausinn)
@@ -22,9 +23,13 @@ create table if not exists portal_users (
   created_by      text                         -- hver stofnaði (starfsmaður)
 );
 
--- eitt netfang = einn aðgangur
+-- eitt netfang = einn aðgangur (aðeins þegar netfang er sett)
 create unique index if not exists portal_users_email_key
-  on portal_users (lower(email));
+  on portal_users (lower(email)) where email is not null and email <> '';
+
+-- eitt slug = einn félags-URL
+create unique index if not exists portal_users_slug_key
+  on portal_users (slug) where slug is not null;
 
 -- fljótleg uppfletting per félagi (stjórnsíðan listar aðganga per base)
 create index if not exists portal_users_base_idx
