@@ -67,8 +67,7 @@
     if (demo) { state.demo = true; renderPortal(DEMO); showDemoRibbon(); return; }
     fetch('/api/gatt', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
       .then(function (r) {
-        if (r.status === 401) { showLogin(); return null; }
-        if (!r.ok) { showLogin('Gögn ekki tiltæk í augnablikinu.'); return null; }
+        if (!r.ok) { showLogin(); return null; }  // 401/503/o.fl. → hreint innskráningarform
         return r.json();
       })
       .then(function (d) { if (d) renderPortal(normalize(d)); })
@@ -136,7 +135,8 @@
     document.documentElement.setAttribute('data-theme', (data.account && data.account.theme) || 'steel');
     $('#login').classList.add('hidden');
     $('#portal').classList.remove('hidden');
-    var today = new Date().toLocaleDateString('is-IS');
+    var d = new Date();
+    var today = ('0' + d.getDate()).slice(-2) + '.' + ('0' + (d.getMonth() + 1)).slice(-2) + '.' + d.getFullYear();
     $('#yf-kicker').textContent = 'Staða brunavarna · uppfært ' + today;
     renderCards(data.stats);
     renderYfirlit(data.buildings);
