@@ -4516,7 +4516,12 @@ function renderBakendi(t){
       const suggested = sHigh || sLow;
       const selVal = d.fyrirtaeki_id || (suggested ? d.suggest_loc_id : '');
       const locStyle = 'min-width:170px;padding:4px 6px;border:' + (sLow ? '1px dashed #94a3b8' : '1px solid ' + (sHigh ? '#fbbf24' : '#cbd5e1')) + ';border-radius:6px;font:inherit;font-size:12px' + (sHigh ? ';background:#fffbeb' : (sLow ? ';background:#f8fafc' : ''));
-      const icon = d.doc_type === 'reikningur' ? '🧾' : (d.doc_type === 'samningur' ? '📜' : (d.doc_type === 'brunakerfi' ? '🔥' : '📄'));
+      // Reikninga-tegund (2026-08-22, Agnar): Teg-táknið á reikningaröð fylgir
+      // vidskiptategund — 🧯 slökkvitæki · 🔥 brunakerfi · 🏪 almennt/búð (in-store).
+      const vt = d.vidskiptategund || '';
+      const vtIcon = { uttekt: '🧯', brunakerfi: '🔥', bud: '🏪' }[vt] || '🧾';
+      const icon = d.doc_type === 'reikningur' ? vtIcon
+        : (d.doc_type === 'samningur' ? '📜' : (d.doc_type === 'brunakerfi' ? '🔥' : '📄'));
       // BRUNA-hak (2026-08-07, Agnar): skýrslu-raðir fá hak sem víxlar
       // úttektarskýrsla ⇄ brunakerfi — annars sat allt í einni bendu og engin
       // leið að merkja brunakerfisúttekt án þess að fara í gagnagrunninn.
@@ -4524,6 +4529,13 @@ function renderBakendi(t){
       const brunaCell = isRep
         ? '<input type="checkbox" class="st-bruna"' + (d.doc_type === 'brunakerfi' ? ' checked' : '') + ' title="Haka við ef þetta er BRUNAKERFIS-úttekt (ekki slökkvitækja)">'
         : '<span style="color:#e2e8f0">—</span>';
+      // Reikningar: þrír tegundar-hakreitir (víxla vidskiptategund; ein í einu).
+      const vtBox = (val, ic, lbl) => '<label style="cursor:pointer;display:inline-flex;align-items:center;gap:2px" title="' + lbl + '"><input type="checkbox" class="st-vt-box" value="' + val + '"' + (vt === val ? ' checked' : '') + '>' + ic + '</label>';
+      const typeCell = d.doc_type === 'reikningur'
+        ? '<span style="display:inline-flex;gap:10px;align-items:center;justify-content:center;white-space:nowrap;font-size:14px">'
+          + vtBox('uttekt', '🧯', 'Slökkvitæki') + vtBox('brunakerfi', '🔥', 'Brunakerfi') + vtBox('bud', '🏪', 'Almennt / búð (in-store)')
+          + '</span>'
+        : brunaCell;
       const cell = 'padding:6px 8px';
       return '<tr data-id="' + d.id + '" style="border-top:1px solid #eef2f7' + (d.reviewed ? ';background:#f0fdf4' : '') + '">'
         + '<td style="' + cell + ';white-space:nowrap">' + (d.view_url
@@ -4531,8 +4543,8 @@ function renderBakendi(t){
             : '<span style="color:#cbd5e1">engin skrá</span>') + '</td>'
         + '<td style="' + cell + ';font-size:12px;color:' + (d.mangled ? '#b45309' : '#334155') + '">' + (d.mangled ? '⚠ ' : '') + esc(d.filename)
           + (d.needs_site ? ' <span style="display:inline-block;padding:1px 7px;border-radius:99px;background:#fee2e2;color:#b91c1c;font-size:10.5px;font-weight:700" title="Multitool: fjölstaða-kt án staðar-sönnunar (vegna-lína/heimilisfang/#stimpill fannst ekki) — veldu stað hér og merkið hreinsast.">🏷 vantar stað</span>' : '') + '</td>'
-        + '<td style="' + cell + ';text-align:center">' + icon + '</td>'
-        + '<td style="' + cell + ';text-align:center">' + brunaCell + '</td>'
+        + '<td class="st-teg" style="' + cell + ';text-align:center">' + icon + '</td>'
+        + '<td style="' + cell + ';text-align:center">' + typeCell + '</td>'
         + '<td style="' + cell + '"><input class="st-year" value="' + esc(d.year) + '" style="width:60px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:12px"></td>'
         + '<td style="' + cell + '"><select class="st-loc" style="' + locStyle + '">' + locOptions(selVal) + '</select>'
           + (sHigh ? ' <span style="font-size:10.5px;color:#b45309" title="Sjálfvirk tillaga (heimilisfang passar)">tillaga</span>'
@@ -4545,11 +4557,14 @@ function renderBakendi(t){
       + '<th style="padding:7px 8px;text-align:left">PDF</th><th style="padding:7px 8px;text-align:left">Skrá (nafn — getur verið rangt)</th>'
       + '<th style="padding:7px 8px">Teg</th><th style="padding:7px 8px" title="Brunakerfis-úttekt?">🔥 Bruna</th><th style="padding:7px 8px;text-align:left">Ár</th>'
       + '<th style="padding:7px 8px;text-align:left">Staður</th><th style="padding:7px 8px">Tvítak</th><th style="padding:7px 8px">Staðfest</th></tr></thead>';
-    function sectionHtml(title, docs){
+    // Reikningar nota „Tegund"-dálk (🧯/🔥/🏪 hakreitir) í stað 🔥 Bruna-dálksins.
+    const THEAD_INV = THEAD.replace('title="Brunakerfis-úttekt?">🔥 Bruna</th>',
+      'title="Reikninga-tegund: 🧯 slökkvitæki · 🔥 brunakerfi · 🏪 almennt/búð (in-store)">Tegund</th>');
+    function sectionHtml(title, docs, thead){
       if (!docs.length) return '';
       return '<div style="margin:16px 0 6px;font-weight:700;font-size:12.5px;color:#334155">' + title + ' (' + docs.length + ')</div>'
         + '<div style="overflow:auto;border:1px solid #e2e8f0;border-radius:10px"><table style="width:100%;border-collapse:collapse;font-size:13px">'
-        + THEAD + '<tbody>' + docs.map(docRow).join('') + '</tbody></table></div>';
+        + (thead || THEAD) + '<tbody>' + docs.map(docRow).join('') + '</tbody></table></div>';
     }
     function renderBoard(){
       if (!COMPANY) { $board.innerHTML = ''; return; }
@@ -4571,7 +4586,7 @@ function renderBakendi(t){
       // Keep the two document kinds apart so reports and invoices never get mixed up.
       const reports = DOCS.filter(d => d.doc_type !== 'reikningur');
       const invoices = DOCS.filter(d => d.doc_type === 'reikningur');
-      $board.innerHTML = head + sectionHtml('📄 Úttektarskýrslur', reports) + sectionHtml('🧾 Reikningar', invoices);
+      $board.innerHTML = head + sectionHtml('📄 Úttektarskýrslur', reports) + sectionHtml('🧾 Reikningar', invoices, THEAD_INV);
       wireHead();
     }
     function wireHead(){
@@ -4705,6 +4720,14 @@ function renderBakendi(t){
       // doc_type úr patchinu svo tegundin þeirra haggist aldrei héðan.
       const bruna = tr.querySelector('.st-bruna');
       if (bruna) patch.doc_type = bruna.checked ? 'brunakerfi' : 'uttektarskyrsla';
+      // Reikninga-tegund: hakreitirnir þrír eru gagnkvæmt útilokandi — einn valinn
+      // setur vidskiptategund, enginn valinn ⇒ 'ovisst'. Teg-táknið uppfærist strax.
+      if (e.target.classList && e.target.classList.contains('st-vt-box')) {
+        tr.querySelectorAll('.st-vt-box').forEach(b => { if (b !== e.target) b.checked = false; });
+        patch.vidskiptategund = e.target.checked ? e.target.value : 'ovisst';
+        const teg = tr.querySelector('.st-teg');
+        if (teg) teg.textContent = { uttekt: '🧯', brunakerfi: '🔥', bud: '🏪' }[patch.vidskiptategund] || '🧾';
+      }
       const d = DOCS.find(x => String(x.id) === String(id));
       if (d) Object.assign(d, patch);
       tr.style.transition = 'background .15s';            // flash so it's obvious it saved (no button needed)
@@ -4735,7 +4758,8 @@ function renderBakendi(t){
         '<option value="' + l.id + '"' + (String(l.id) === String(sel) ? ' selected' : '') + '>' + esc(l.heimilisfang || l.nafn) + '</option>').join('');
     }
     function gRow(d){
-      const icon = d.doc_type === 'reikningur' ? '🧾' : (d.doc_type === 'samningur' ? '📜' : '📄');
+      const gvt = d.vidskiptategund || '';
+      const icon = d.doc_type === 'reikningur' ? ({ uttekt: '🧯', brunakerfi: '🔥', bud: '🏪' }[gvt] || '🧾') : (d.doc_type === 'samningur' ? '📜' : '📄');
       const cell = 'padding:6px 8px';
       const warn = d.multi_site ? ' <span title="rekstrarfélag — margir staðir; opnaðu PDF og staðfestu réttan" style="color:#b45309;font-weight:600">⚠ ' + d.sites.length + '</span>' : '';
       return '<tr data-id="' + d.id + '" style="border-top:1px solid #eef2f7' + (d.reviewed ? ';background:#f0fdf4' : '') + '">'
