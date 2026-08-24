@@ -50,9 +50,9 @@ exports.handler = async (event) => {
     } catch (_) {}
 
     // 2b) Brunaslöngur per byggingu (fyrirtaeki_id = site_id í fyrirtaeki-töflunni)
+    const siteIds = sites.map((s) => s.id).filter(Boolean);
     const sloById = {};
     try {
-      const siteIds = sites.map((s) => s.id).filter(Boolean);
       if (siteIds.length) {
         const ar = await P.sbGet(`arsskodun_report_facts?fyrirtaeki_id=in.(${siteIds.join(',')})&select=fyrirtaeki_id,report_year,equipment&order=report_year.desc`);
         if (ar.ok) {
@@ -66,10 +66,11 @@ exports.handler = async (event) => {
     } catch (_) {}
 
     // 2c) Brunakerfi — næsta skoðun og fjöldi staðsetning í þjónustu
+    // customer_base_id er null í öllum línum — filter á fyrirtaeki_id í staðinn
     const bkById = {};
     const bkSiteIds = new Set();
     try {
-      const kr = await P.sbGet(`brunakerfi_skyrslur?customer_base_id=eq.${baseId}&select=fyrirtaeki_id,year,data&order=year.desc`);
+      const kr = siteIds.length ? await P.sbGet(`brunakerfi_skyrslur?fyrirtaeki_id=in.(${siteIds.join(',')})&select=fyrirtaeki_id,year,data&order=year.desc`) : { ok: false };
       if (kr.ok) {
         (await kr.json()).forEach((r) => {
           bkSiteIds.add(r.fyrirtaeki_id);
