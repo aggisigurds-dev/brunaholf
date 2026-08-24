@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="is" data-theme="steel">
+<head>
+<meta charset="utf-8">
+<title>Þjónustuvefur — Brunahólf / Slökkvitæki ehf.</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Jost:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#e9eaec; --card:#f7f7f7; --white:#fff;
+    --ink:#161616; --ink2:#3f4247; --dim:#7b7f86; --faint:#9aa0a8;
+    --dark:#141414; --dark2:#20211f;
+    --accent:#c8642a; --accent-soft:#e7a074; --ontime:#f6e6d8;
+    --line:#d9dade; --line2:#c9cbcf;
+    --good:#1f7a44; --serif:"Cormorant Garamond",Georgia,serif;
+    --ui:"Jost",system-ui,sans-serif;
+  }
+  /* önnur þemu bætast við hér síðar, t.d. :root[data-theme="cream"]{ --bg:#efe7db; --accent:#8a6d2f; ... } */
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--ink2);font-family:var(--ui);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none}
+  .hidden{display:none!important}
+
+  /* ── LOGIN ── */
+  #login{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--dark);padding:24px}
+  .lcard{background:var(--card);width:100%;max-width:410px;padding:40px 44px 30px}
+  .logo b{font-family:var(--ui);font-weight:600;font-size:22px;letter-spacing:1px;color:var(--ink);display:block}
+  .logo .s{display:block;font-weight:600;font-size:13px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-top:2px}
+  .logo .k{display:block;font-size:10px;letter-spacing:2.5px;color:var(--faint);text-transform:uppercase;margin-top:8px}
+  .lrule{height:1px;background:var(--ink);margin:20px 0 22px}
+  #login h1{font-family:var(--serif);font-weight:600;font-size:30px;color:var(--ink);margin:0 0 6px}
+  #login .sub{font-size:13px;color:var(--dim);margin-bottom:22px}
+  .fld{margin-bottom:16px}
+  .fld label{display:block;font-size:10.5px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+  .fld input{width:100%;border:1px solid var(--line2);background:var(--white);padding:12px 14px;font-family:var(--ui);font-size:14px;color:var(--ink)}
+  .fld input:focus{outline:none;border-color:var(--accent)}
+  #login button{width:100%;background:var(--dark);color:var(--accent);border:0;padding:14px;font-family:var(--ui);font-weight:600;font-size:12.5px;letter-spacing:2.5px;text-transform:uppercase;cursor:pointer;margin-top:4px}
+  #login button:hover{background:var(--dark2)}
+  .lerr{color:#b3261e;font-size:12.5px;margin:2px 0 12px;min-height:16px}
+  .lhelp{text-align:center;font-size:12px;color:var(--faint);margin-top:16px}
+
+  /* ── HEADER ── */
+  header{background:var(--dark);border-bottom:3px solid var(--accent);position:sticky;top:0;z-index:10}
+  .hin{max-width:1180px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:22px}
+  .brand b{font-family:var(--ui);font-weight:600;font-size:16px;letter-spacing:1px;color:#fff;display:block;line-height:1.1}
+  .brand .s{font-size:10px;letter-spacing:2px;color:var(--accent);text-transform:uppercase}
+  .htag{font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;color:#8a8f96;flex:1;padding-left:6px}
+  nav{display:flex;align-items:center;gap:22px}
+  nav a.tab{font-size:12px;letter-spacing:1.4px;text-transform:uppercase;color:#9aa0a8;cursor:pointer;padding:4px 0;border-bottom:2px solid transparent}
+  nav a.tab.on{color:var(--accent);border-bottom-color:var(--accent)}
+  nav a.tab:hover{color:#d9dce0}
+  .hbtn{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#c9cdd2;border:1px solid #3a3b39;padding:7px 12px;cursor:pointer;background:transparent}
+  .hbtn.en{color:var(--accent);border-color:var(--accent)}
+  .hbtn:hover{background:#232420}
+
+  main{max-width:1180px;margin:0 auto;padding:34px 24px 70px}
+  .kicker{font-size:11px;letter-spacing:2.2px;text-transform:uppercase;color:var(--accent)}
+  h2.page{font-family:var(--serif);font-weight:600;font-size:40px;color:var(--ink);margin:5px 0 24px;line-height:1}
+
+  /* stat cards */
+  .cards{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:26px}
+  .sc{background:var(--card);border-top:2px solid var(--accent);padding:15px 16px}
+  .sc .k{font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:var(--dim)}
+  .sc .v{font-family:var(--serif);font-size:32px;font-weight:600;color:var(--ink);line-height:1.05;margin-top:4px}
+  .sc .v small{font-family:var(--ui);font-size:13px;color:var(--dim);font-weight:400}
+  .sc.dark{background:var(--dark);border-top-color:var(--accent)}
+  .sc.dark .k{color:#c99}
+  .sc.dark .k{color:#b98a6a}
+  .sc.dark .v{color:var(--accent)}
+
+  /* tables */
+  .tbl-wrap{background:var(--card);overflow-x:auto}
+  table{width:100%;border-collapse:collapse;min-width:720px}
+  thead th{text-align:left;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--dim);font-weight:600;padding:14px 14px;border-bottom:2px solid var(--ink)}
+  thead th.r{text-align:right}
+  tbody td{padding:15px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+  tbody td.r{text-align:right}
+  tbody tr:hover{background:#eef0f1}
+  tbody tr.ontime{background:var(--ontime)}
+  tbody tr.ontime:hover{background:#f0dcc9}
+  .bname{font-family:var(--serif);font-size:19px;font-weight:600;color:var(--ink);line-height:1.1}
+  .baddr{font-size:12px;color:var(--faint);margin-top:1px}
+  .num{font-variant-numeric:tabular-nums}
+  .dim{color:var(--dim)}
+  a.pdf{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--accent);border-bottom:1px solid var(--accent);padding-bottom:1px}
+  .kt{font-family:var(--ui);font-size:12px;color:var(--dim)}
+
+  /* year boxes */
+  .yrs{display:flex;gap:6px}
+  .yb{width:36px;border:1px solid var(--line2);background:var(--white);text-align:center;padding:3px 0 4px}
+  .yb .yy{font-size:9px;letter-spacing:.5px;color:var(--faint)}
+  .yb .mk{font-size:11px;line-height:1.15;color:var(--ink)}
+  .mk .no{color:var(--line2)}
+  .mk .due{color:var(--accent)}
+  .badge{display:inline-block;font-size:9px;letter-spacing:1px;text-transform:uppercase;background:var(--accent);color:#fff;padding:2px 7px;margin-left:7px;vertical-align:middle}
+  .next{font-size:12.5px;color:var(--ink2);white-space:nowrap}
+  .next b{color:#6e3d16}
+  .next .lbl{color:var(--faint)}
+
+  /* type badge (reports) */
+  .tb{display:inline-block;font-size:10px;letter-spacing:1px;text-transform:uppercase;border:1px solid var(--line2);color:var(--ink2);padding:4px 9px}
+
+  /* chips */
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+  .chip{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;border:1px solid var(--ink);color:var(--ink);background:transparent;padding:8px 14px;cursor:pointer}
+  .chip.on{background:var(--dark);color:var(--accent);border-color:var(--dark)}
+  .empty{padding:34px 14px;text-align:center;color:var(--faint);font-style:italic}
+  .demo-ribbon{position:fixed;top:0;right:0;background:var(--accent);color:#fff;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:4px 40px;transform:rotate(45deg) translate(28px,-6px);transform-origin:center;z-index:50;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+
+  /* ekki-virkur skjár (sama útlit og innskráning) */
+  #notready{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--dark);padding:24px}
+  /* skilaboð */
+  .nbadge{display:inline-block;min-width:16px;height:16px;line-height:16px;padding:0 4px;margin-left:5px;border-radius:99px;background:var(--accent);color:#fff;font-size:10px;text-align:center;vertical-align:middle}
+  .msg-thread{display:flex;flex-direction:column;gap:10px;padding:16px;max-height:52vh;overflow-y:auto}
+  .msg-bubble{max-width:74%;padding:11px 14px;font-size:13.5px;line-height:1.5;border:1px solid var(--line)}
+  .msg-bubble .who{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--faint);margin-bottom:3px}
+  .msg-bubble .t{font-size:10.5px;color:var(--faint);margin-top:4px}
+  .msg-bubble.kunni{align-self:flex-end;background:#f6e6d8;border-color:#e6c9ad}
+  .msg-bubble.starf{align-self:flex-start;background:var(--white)}
+  .msg-empty{color:var(--faint);font-style:italic;padding:22px;text-align:center}
+  .msg-compose{display:flex;gap:10px;margin-top:14px;align-items:flex-end}
+  .msg-compose textarea{flex:1;border:1px solid var(--line2);background:var(--white);padding:11px 13px;font-family:var(--ui);font-size:14px;color:var(--ink);resize:vertical}
+  .msg-compose button{background:var(--dark);color:var(--accent);border:0;padding:12px 20px;font-family:var(--ui);font-weight:600;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;white-space:nowrap}
+  .msg-compose button:hover{background:var(--dark2)}
+  @media(max-width:760px){
+    .cards{grid-template-columns:repeat(2,1fr)}
+    .hin{flex-wrap:wrap;gap:12px}
+    .htag{display:none}
+    h2.page{font-size:32px}
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN ══ -->
+<section id="login" class="hidden">
+  <form class="lcard" id="loginForm" autocomplete="on">
+    <div class="logo"><b>BRUNAHÓLF</b><span class="s">Slökkvitæki ehf.</span><span class="k">Brunavarnir &amp; eftirlit</span></div>
+    <div class="lrule"></div>
+    <h1>Innskráning</h1>
+    <div class="sub">Þjónustuvefur Slökkvitækja ehf. — skoðanastaða, úttektarskýrslur og reikningar.</div>
+    <div class="fld"><label>Netfang</label><input type="email" id="email" placeholder="nafn@centerhotels.com" autocomplete="username"></div>
+    <div class="fld"><label>Lykilorð</label><input type="password" id="password" autocomplete="current-password"></div>
+    <div class="lerr" id="lerr"></div>
+    <button type="submit">Innskrá</button>
+    <div class="lhelp">Vantar aðgang? <a href="mailto:eldklar@eldklar.is">eldklar@eldklar.is</a></div>
+  </form>
+</section>
+
+<!-- ══ EKKI VIRKUR ══ -->
+<section id="notready" class="hidden">
+  <div class="lcard" style="text-align:center">
+    <div class="logo"><b>BRUNAHÓLF</b><span class="s">Slökkvitæki ehf.</span><span class="k">Brunavarnir &amp; eftirlit</span></div>
+    <div class="lrule"></div>
+    <h1 style="font-size:25px">Vefurinn er ekki virkur enn</h1>
+    <div class="sub" id="notready-name">Aðgangur að þessum þjónustuvef hefur ekki verið virkjaður.</div>
+    <div class="lhelp">Hafðu samband: <a href="mailto:eldklar@eldklar.is">eldklar@eldklar.is</a></div>
+  </div>
+</section>
+
+<!-- ══ PORTAL ══ -->
+<div id="portal" class="hidden">
+  <header>
+    <div class="hin">
+      <div class="brand"><b>BRUNAHÓLF</b><span class="s">Slökkvitæki ehf.</span></div>
+      <div class="htag">Brunavarnir · Þjónustuvefur Brunahólf Slökkvitæki ehf.</div>
+      <nav>
+        <a class="tab on" data-view="yfirlit">Yfirlit</a>
+        <a class="tab" data-view="skyrslur">Skýrslur</a>
+        <a class="tab" data-view="reikningar">Reikningar</a>
+        <a class="tab" data-view="skilabod">Skilaboð<span class="nbadge hidden" id="msgBadge"></span></a>
+        <span class="hbtn en" id="langBtn">EN</span>
+        <span class="hbtn" id="logoutBtn">Útskrá</span>
+      </nav>
+    </div>
+  </header>
+  <main>
+    <!-- YFIRLIT -->
+    <section id="v-yfirlit">
+      <div class="kicker" id="yf-kicker">Staða brunavarna</div>
+      <h2 class="page">Yfirlit</h2>
+      <div class="cards" id="cards"></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Hótel</th><th>Slökkvit.</th><th>Slöngur</th><th>Brunak.</th><th>Skoðanir '23–'26</th><th>Næsta skoðun</th></tr></thead>
+        <tbody id="yf-body"></tbody>
+      </table></div>
+    </section>
+    <!-- SKÝRSLUR -->
+    <section id="v-skyrslur" class="hidden">
+      <div class="kicker">Allar úttektir á einum stað</div>
+      <h2 class="page">Úttektarskýrslur</h2>
+      <div class="chips" id="sk-chips"></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Dagsetning</th><th>Bygging</th><th>Heimilisfang</th><th>Tegund</th><th>Magn</th><th>Ár</th><th class="r">Skýrsla</th></tr></thead>
+        <tbody id="sk-body"></tbody>
+      </table></div>
+    </section>
+    <!-- SKILABOÐ -->
+    <section id="v-skilabod" class="hidden">
+      <div class="kicker">Fyrirspurnir til Slökkvitækja ehf.</div>
+      <h2 class="page">Skilaboð</h2>
+      <div class="tbl-wrap" style="padding:6px 0"><div id="msg-thread" class="msg-thread"></div></div>
+      <form id="msg-form" class="msg-compose">
+        <textarea id="msg-input" rows="3" placeholder="Skrifaðu fyrirspurn…"></textarea>
+        <button type="submit">Senda fyrirspurn</button>
+      </form>
+    </section>
+    <!-- REIKNINGAR -->
+    <section id="v-reikningar" class="hidden">
+      <div class="kicker">Reikningar frá Slökkvitækjum ehf.</div>
+      <h2 class="page">Reikningar</h2>
+      <div class="chips" id="re-chips"></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Nr.</th><th>Dagsetning</th><th>Bygging</th><th>Lýsing</th><th class="r">Upphæð</th><th class="r">Reikningur</th></tr></thead>
+        <tbody id="re-body"></tbody>
+      </table></div>
+    </section>
+  </main>
+</div>
+
+<script src="/gatt/portal.js"></script>
+</body>
+</html>
