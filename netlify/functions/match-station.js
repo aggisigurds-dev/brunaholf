@@ -131,7 +131,7 @@ async function companyDetail(baseId) {
   baseId = parseInt(baseId, 10);
   const base = (await sbGet(`customers_base?id=eq.${baseId}&select=id,nafn,kennitala`))[0] || { id: baseId, nafn: '#' + baseId, kennitala: '' };
   const locations = await sbGet(`fyrirtaeki?customer_base_id=eq.${baseId}&select=id,nafn,heimilisfang,er_i_thjonustu&deleted_at=is.null&order=heimilisfang`);
-  const raw = await sbGet(`customer_documents?customer_base_id=eq.${baseId}&select=id,drive_file_id,storage_path,doc_type,year,fyrirtaeki_id,is_duplicate,reviewed,notes,doc_date,amount,invoice_number,needs_site`);
+  const raw = await sbGet(`customer_documents?customer_base_id=eq.${baseId}&select=id,drive_file_id,storage_path,doc_type,year,fyrirtaeki_id,is_duplicate,reviewed,notes,doc_date,amount,invoice_number,needs_site,vidskiptategund`);
   const names_fixed = await enrichNames(raw, 60);
 
   const docs = raw.map(d => {
@@ -155,6 +155,7 @@ async function companyDetail(baseId) {
       filename,
       suggest_loc_id: sug ? sug.id : null,
       suggest_conf: sug ? sug.conf : null,
+      vidskiptategund: d.vidskiptategund || null,
       mangled: /uttekt-master|MATCH\s*\d/i.test(filename),
     };
   }).sort((a, b) =>
@@ -185,7 +186,7 @@ async function globalList(scope) {
   const filt = scope === 'dups' ? 'is_duplicate=eq.true' : 'fyrirtaeki_id=is.null&is_duplicate=eq.false';
   const raw = [];
   for (let i = 0; i < baseIds.length; i += 200) {
-    raw.push(...await sbGet(`customer_documents?customer_base_id=in.${inList(baseIds.slice(i, i + 200))}&${filt}&select=id,customer_base_id,drive_file_id,storage_path,doc_type,year,fyrirtaeki_id,is_duplicate,reviewed,notes,doc_date,amount,invoice_number,needs_site`));
+    raw.push(...await sbGet(`customer_documents?customer_base_id=in.${inList(baseIds.slice(i, i + 200))}&${filt}&select=id,customer_base_id,drive_file_id,storage_path,doc_type,year,fyrirtaeki_id,is_duplicate,reviewed,notes,doc_date,amount,invoice_number,needs_site,vidskiptategund`));
   }
   await enrichNames(raw, 60);
 
@@ -208,6 +209,7 @@ async function globalList(scope) {
       needs_site: d.needs_site === true,
       invoice_number: d.invoice_number || null, amount: d.amount || null,
       filename,
+      vidskiptategund: d.vidskiptategund || null,
       suggest_loc_id: sug ? sug.id : null, suggest_conf: sug ? sug.conf : null,
     };
   }).sort((a, b) =>
@@ -285,6 +287,13 @@ async function saveDoc(body) {
   // brunakerfi á skýrslu-röð. Hvítlisti því doc_type ber CHECK-reglu í grunni.
   if ('doc_type' in body && ['uttektarskyrsla', 'brunakerfi', 'reikningur', 'samningur'].includes(body.doc_type)) patch.doc_type = body.doc_type;
   if ('reviewed' in body)     { patch.reviewed = !!body.reviewed; patch.reviewed_at = body.reviewed ? new Date().toISOString() : null; }
+  // Reikninga-tegund (2026-08-22, Agnar): þrír hakreitir á reikningaröð víxla
+  // vidskiptategund milli slökkvitæki (uttekt) · brunakerfi · almennt/búð (bud).
+  // Tómt val ⇒ 'ovisst'. Aðeins þessi gildi leyfð.
+  if ('vidskiptategund' in body) {
+    patch.vidskiptategund = ['uttekt', 'brunakerfi', 'bud', 'ovisst'].includes(body.vidskiptategund)
+      ? body.vidskiptategund : null;
+  }
   const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?id=eq.${id}`, {
     method: 'PATCH', headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }), body: JSON.stringify(patch),
   });

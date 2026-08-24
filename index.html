@@ -1434,6 +1434,44 @@ html.embedded #view:has(.vb-scroll-wrap){zoom:1 !important}
 html.embedded .vb-scroll-wrap .vb-row-name{min-width:118px !important;max-width:150px !important}
 html.embedded .vb-scroll-wrap .vb-th-name{font-size:15.5px !important}
 html.embedded .vb-scroll-wrap .vb-th-sum{font-size:17px !important}
+/* ── Skýrslu-stöð á síma/þröngt (docRow/gRow) — 2026-08-24 (joker) ─────────────
+   Innfellt í Fjármál-appið gegnum /?embed=1#skyrslustod. Í embed hélst hliðar-
+   rögóðin + 1.32-súmið svo efnis-súlan kramdist í ~160px: 8-dálka borðið flaut
+   út af, skjalaheitið braut sig EITT-ORÐ-Á-LÍNU og öll hægri-stýrin (Tegund-val,
+   Staður-val, hakreitir) klipptust af hægri kanti. Lagfæring AÐEINS þröngt/embed —
+   skjáborðs- og spjaldtölvu-borðið (>700/560px) er ósnert. */
+@media (max-width:700px){
+  /* Embed: fela hliðar-rögóðina + núlla 1.32-súmið svo Skýrslu-stöðin fái fulla
+     breidd (~160px → ~340px). Scope-að við hana eina (:has(#bk-st-board)). */
+  html.embedded .layout:has(#bk-st-board) .sidebar{display:none!important}
+  html.embedded #view:has(#bk-st-board){zoom:1!important}
+  html.embedded #view:has(#bk-st-board) .section{max-width:none!important;padding:12px 10px!important}
+  html.embedded #view:has(#bk-st-board) .section>div:last-child{padding:12px!important}
+}
+@media (max-width:560px){
+  /* Fyrirtækjavalið fyllir línuna (min-width:300px klippti á 340px). */
+  #bk-st-company{min-width:0!important}
+  /* Borðin → stöfluð spjöld: hvert skjal er kort með merktum reitum, ekkert
+     lárétt-skrun, öll stýri sýnileg og ≥40px há (snerti-væn). */
+  #bk-st-board > div{overflow:visible!important;border:0!important}
+  #bk-st-board table{display:block;width:100%;font-size:13px}
+  #bk-st-board thead{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  #bk-st-board tbody{display:block}
+  #bk-st-board tr[data-id]{display:block;border:1px solid #e2e8f0;border-radius:12px;background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.05);padding:6px 12px 8px;margin:0 0 10px}
+  #bk-st-board tr[data-id] td{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:40px;padding:5px 0!important;border:0!important;text-align:left!important}
+  #bk-st-board tr[data-id] td::before{content:attr(data-label);flex:0 0 auto;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.03em}
+  /* Skráarheitið + fyrirtækjanafnið: eigin lína, heitið styttist snyrtilega
+     (fulla heitið í title/langsmelli). */
+  #bk-st-board tr[data-id] td.st-stack{display:block;padding-top:2px!important}
+  #bk-st-board tr[data-id] td.st-stack::before{display:block;margin-bottom:3px}
+  #bk-st-board tr[data-id] td.st-stack .st-fname{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;color:#334155}
+  /* Stýrin: gildið hægra megin, þægileg snerti-stærð. */
+  #bk-st-board .st-loc,#bk-st-board .st-teg-sel{min-width:0!important;max-width:66%!important;width:auto;font-size:14px!important;padding:9px 8px!important}
+  #bk-st-board .st-year{width:88px!important;font-size:14px!important;padding:9px 8px!important;text-align:center}
+  #bk-st-board td .btn{padding:8px 12px!important;font-size:13px}
+  #bk-st-board .st-dup,#bk-st-board .st-rev{width:22px;height:22px}
+  #bk-st-board .st-del{font-size:18px!important;padding:6px!important}
+}
 </style>
 
 <header class="topbar">
@@ -1505,6 +1543,7 @@ const DEFAULT_STATE = {
     {id:'verkstadir',  label:'Verkstaðir',  icon:'🏗'},
     {id:'skuldunautar', label:'Skuldunautar', icon:'💸'},
     {id:'skyrslur', label:'Skýrslur', icon:'📊'},
+    {id:'skyrslustod', label:'Skýrslu-stöð', icon:'📊'},
     {id:'afkost', label:'Afköst', icon:'📈'},
     {id:'krofuyfirlit', label:'Kröfu yfirlit', icon:'📄'},
     {id:'fjarmalyfirlit', label:'Fjármála-yfirlit', icon:'💰'},
@@ -1796,7 +1835,7 @@ function clearDataCache(){
 function ensureNewTabs(s){
   if(!s || !Array.isArray(s.tabs)) return;
   if(!Array.isArray(s.bakendiLinks)) s.bakendiLinks = BAKENDI_LINK_SEED.map(x=>({...x}));
-  ['verkkaupar','dagurinn','jarvis','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','vorubirgdir','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','tvmaeting','verdsamanburdur','verkstadir','skuldunautar','skyrslur','afkost','krofuyfirlit','fjarmalyfirlit','vidskiptavinir','krofur','hreyfingaryfirlit','nlsh','pdftools','spurningar','sjalfvirkni','vefryni','skodanir','verkfaeri','eydublod','multitool','skraalisti','bakendi'].forEach(id=>{
+  ['verkkaupar','dagurinn','jarvis','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','vorubirgdir','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','tvmaeting','verdsamanburdur','verkstadir','skuldunautar','skyrslur','skyrslustod','afkost','krofuyfirlit','fjarmalyfirlit','vidskiptavinir','krofur','hreyfingaryfirlit','nlsh','pdftools','spurningar','sjalfvirkni','vefryni','skodanir','verkfaeri','eydublod','multitool','skraalisti','bakendi'].forEach(id=>{
     if(!s.tabs.find(t=>t.id===id)){
       const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
       if(d){
@@ -1945,6 +1984,11 @@ function ensureNewTabs(s){
           // Landsspítalinn sits right after Verkstaðir.
           const idx = s.tabs.findIndex(t=>t.id==='verkstadir');
           target = idx >= 0 ? idx + 1 : -1;
+        } else if(id === 'skyrslustod'){
+          // Skýrslu-stöð situr beint á eftir Skýrslum (einangraður systurflipi, embed-hæfur).
+          const idx = s.tabs.findIndex(t=>t.id==='skyrslur');
+          const idx2 = s.tabs.findIndex(t=>t.id==='krofuyfirlit');
+          target = idx >= 0 ? idx + 1 : (idx2 >= 0 ? idx2 : -1);
         } else {
           target = s.tabs.findIndex(t=>t.id==='tenglar');
         }
@@ -2336,6 +2380,7 @@ function render(){
   if(t.id==='eydublod') return renderEydublod(t);
   if(t.id==='jarvis') return renderJarvis(t);
   if(t.id==='bakendi') return renderBakendi(t);
+  if(t.id==='skyrslustod') return renderSkyrslustod(t);
   if(t.id==='sjalfvirkni') return renderSjalfvirkni(t);
   if(t.id==='vorubirgdir') return renderVorubirgdir(t);
   if(t.id==='verkefnaskra') return renderVerkefnaskra(t);
@@ -3640,6 +3685,407 @@ function renderSkodanir(t){
   load();
 }
 
+// ── Skýrslu-stöð sem sinn eigin, einangraði flipi ────────────────────────────
+// Fellur EIN inn í Slökkvitæki-appið gegnum /?embed=1#skyrslustod (embed-CSS felur
+// topbar/tabs/fab sjálfkrafa). Endurnýtir NÁKVÆMLEGA sama borð og Bakendi með því
+// að birta sömu element-id (bk-st-*) og kalla svo wireStation().
+function renderSkyrslustod(t){
+  const inpSel = 'padding:10px 12px;border:1px solid var(--line-2,#cbd5e1);border-radius:8px;font:inherit;font-size:13px;background:var(--input-bg,#fff);color:var(--ink,#0f172a)';
+  $view.innerHTML = `
+    <div class="section" style="max-width:1180px;padding:18px 20px">
+      <div style="margin:0 0 14px">
+        <div style="font-size:10.5px;font-weight:600;color:#0891b2;letter-spacing:2.5px;text-transform:uppercase">Brunahólf · Yfirferð</div>
+        <h1 style="font-family:var(--font-display,inherit);font-size:26px;font-weight:700;color:var(--ink,#0f172a);margin:6px 0 6px;letter-spacing:.2px">📊 Skýrslu-stöð</h1>
+        <p style="font-size:13.5px;color:var(--muted,#64748b);line-height:1.6;margin:0;max-width:760px">
+          Veldu fyrirtæki í þjónustu, opnaðu hverja <b>skýrslu/reikning</b> (📄) og settu <b>réttan stað + ár</b> — ýttu svo á <b>✓ Staðfest</b>. <b>PDF-ið ræður — ekki nafnið.</b> Augljós pörun er forfyllt sem gul tillaga.</p>
+      </div>
+
+      <div style="border-radius:12px;border:1px solid var(--line,#e2e8f0);background:var(--card,#fff);box-shadow:0 1px 3px rgba(0,0,0,.05);padding:20px;display:flex;flex-direction:column;gap:16px">
+        <div style="display:flex;gap:9px;flex-wrap:wrap;align-items:center">
+          <select id="bk-st-company" style="${inpSel};min-width:300px;flex:1"><option value="">— sæki fyrirtæki… —</option></select>
+          <button id="bk-st-reload" class="btn">↻ Sækja</button>
+          <span style="width:1px;height:22px;background:#e2e8f0;margin:0 2px"></span>
+          <button id="bk-st-all-unmatched" class="btn" title="Sjá ALLAR ótengdar skýrslur/reikninga á einum stað (þvert á öll fyrirtæki)">🌍 Allar ótengdar</button>
+          <button id="bk-st-all-dups" class="btn" title="Sjá öll skjöl sem eru flögguð sem tvítök — til að yfirfara">📑 Tvítök</button>
+          <span id="bk-st-status" style="font-size:12.5px;color:#64748b"></span>
+        </div>
+        <div id="bk-st-board"></div>
+      </div>
+    </div>`;
+  wireStation();
+}
+
+// ── Skýrslu-stöð (report → site matching board) — wiring shared by Bakendi + Skýrslu-stöð flipi.
+// Extracted from renderBakendi so renderSkyrslustod (einangraður flipi, embed-hæfur) getur endurnýtt
+// nákvæmlega sama borð. Notar aðeins global (escapeHtml, fetch, location.hash) — engar renderBakendi-locals.
+function wireStation(){
+    const $co = document.getElementById('bk-st-company');
+    const $reload = document.getElementById('bk-st-reload');
+    const $st = document.getElementById('bk-st-status');
+    const $board = document.getElementById('bk-st-board');
+    if (!$co || !$board) return;
+    let LOCS = [], DOCS = [], COMPANY = null, GLOBAL = null;
+    const esc = s => escapeHtml(String(s == null ? '' : s));
+    const rerender = () => { if (GLOBAL) renderGlobal(); else renderBoard(); };
+    const setSt = (m, c) => { $st.textContent = m || ''; $st.style.color = c || '#64748b'; };
+
+    async function loadCompanies(){
+      setSt('Sæki fyrirtæki…');
+      try {
+        const r = await fetch('/api/match-station');
+        const d = await r.json(); if (!r.ok) throw new Error(d.error || r.status);
+        const cs = d.companies || [];
+        $co.innerHTML = '<option value="">— veldu fyrirtæki (' + cs.length + ') —</option>' + cs.map(c => {
+          const left = c.docs - c.reviewed;
+          return '<option value="' + c.base_id + '">' + esc(c.nafn) + ' — ' + c.docs + ' skjöl'
+            + (left ? (' · ' + left + ' óstaðfest') : ' · ✓')
+            + (c.unmatched ? (' · ' + c.unmatched + ' ótengd') : '')
+            + (c.needs_site ? (' · 🏷 ' + c.needs_site + ' vantar stað') : '') + '</option>';
+        }).join('');
+        setSt(cs.length + ' fyrirtæki í þjónustu', '#16a34a');
+        // Deep-link from slökkvitæki: /#bakendi/<base_id> preselects that company.
+        const want = (location.hash || '').replace(/^#\/?/, '').split('/')[1];
+        if (want && cs.some(c => String(c.base_id) === String(want))) { $co.value = want; loadBoard(want); }
+      } catch (e) { setSt('Villa: ' + e.message, '#dc2626'); }
+    }
+
+    async function loadBoard(baseId){
+      if (!baseId) { $board.innerHTML = ''; setSt(''); return; }
+      setSt('Sæki skjöl…'); $board.innerHTML = '<div style="color:#64748b;font-size:13px;padding:10px">…</div>';
+      try {
+        const r = await fetch('/api/match-station?base=' + encodeURIComponent(baseId));
+        const d = await r.json(); if (!r.ok) throw new Error(d.error || r.status);
+        LOCS = d.locations || []; DOCS = d.docs || []; COMPANY = d.company;
+        renderBoard();
+        setSt(DOCS.length + ' skjöl · ' + LOCS.length + ' staðir', '#16a34a');
+      } catch (e) { setSt('Villa: ' + e.message, '#dc2626'); $board.innerHTML = ''; }
+    }
+
+    function locOptions(sel){
+      return '<option value="">—</option>' + LOCS.map(l =>
+        '<option value="' + l.id + '"' + (String(l.id) === String(sel) ? ' selected' : '') + '>'
+        + esc(l.heimilisfang || l.nafn) + '</option>').join('');
+    }
+    // ── Skjal-tegund (2026-08-24, Agnar): eitt fellival á Teg-dálknum setur BÆÐI
+    // doc_type OG vidskiptategund — leysir af hólmi 🔥-hakið og reikninga-hakreitina.
+    // Sjálfvirka valið má yfirskrifa handvirkt í hverri röð (skýrsla · reikningur ·
+    // þjónustusamningur, hvort sem er slökkvitækja- eða brunakerfis-megin).
+    var TEG_OPTS = [
+      { v:'us-uttekt', t:'🧯 Slökkvitækjaþjónustu skýrsla',    dt:'uttektarskyrsla', vt:'uttekt' },
+      { v:'sk-bruna',  t:'🔥 Brunakerfisskýrsla',              dt:'brunakerfi',      vt:'brunakerfi' },
+      { v:'rk-uttekt', t:'🧾 Slökkvitækjaþjónustu reikningur', dt:'reikningur',      vt:'uttekt' },
+      { v:'rk-bruna',  t:'🧾 Brunakerfis reikningur',          dt:'reikningur',      vt:'brunakerfi' },
+      { v:'rk-bud',    t:'🏪 Walk-in sala (búð)',              dt:'reikningur',      vt:'bud' },
+      { v:'sa-uttekt', t:'📜 Þjónustusamningur — slökkvitæki', dt:'samningur',       vt:'uttekt' },
+      { v:'sa-bruna',  t:'📜 Þjónustusamningur — brunakerfi',  dt:'samningur',       vt:'brunakerfi' },
+    ];
+    var TEG_MAP = {}; TEG_OPTS.forEach(function(o){ TEG_MAP[o.v] = o; });
+    function tegVal(d){
+      var dt = d.doc_type, vt = d.vidskiptategund || '';
+      if (dt === 'reikningur') return vt === 'brunakerfi' ? 'rk-bruna' : (vt === 'bud' ? 'rk-bud' : (vt === 'uttekt' ? 'rk-uttekt' : ''));
+      if (dt === 'samningur')  return vt === 'brunakerfi' ? 'sa-bruna' : (vt === 'uttekt' ? 'sa-uttekt' : '');
+      if (dt === 'brunakerfi') return 'sk-bruna';
+      if (dt === 'uttektarskyrsla') return 'us-uttekt';
+      return '';   // óþekkt / óflokkað → placeholder sem biður um val
+    }
+    function tegSelect(d){
+      var cur = tegVal(d);
+      var opts = '<option value="" disabled' + (cur === '' ? ' selected' : '') + '>— Velja —</option>'
+        + TEG_OPTS.map(function(o){ return '<option value="' + o.v + '"' + (o.v === cur ? ' selected' : '') + '>' + o.t + '</option>'; }).join('');
+      return '<select class="st-teg-sel" title="Tegund skjals — yfirskrifa sjálfvirka valið" style="max-width:210px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:11.5px;background:#fff">' + opts + '</select>';
+    }
+    function docRow(d){
+      const sHigh = !d.fyrirtaeki_id && d.suggest_loc_id && d.suggest_conf === 'high';
+      const sLow  = !d.fyrirtaeki_id && d.suggest_loc_id && d.suggest_conf === 'low';
+      const suggested = sHigh || sLow;
+      const selVal = d.fyrirtaeki_id || (suggested ? d.suggest_loc_id : '');
+      const locStyle = 'min-width:170px;padding:4px 6px;border:' + (sLow ? '1px dashed #94a3b8' : '1px solid ' + (sHigh ? '#fbbf24' : '#cbd5e1')) + ';border-radius:6px;font:inherit;font-size:12px' + (sHigh ? ';background:#fffbeb' : (sLow ? ';background:#f8fafc' : ''));
+      const cell = 'padding:6px 8px';
+      return '<tr data-id="' + d.id + '" style="border-top:1px solid #eef2f7' + (d.reviewed ? ';background:#f0fdf4' : '') + '">'
+        + '<td data-label="Skjal" style="' + cell + ';white-space:nowrap">' + (d.view_url
+            ? '<a href="' + d.view_url + '" target="_blank" rel="noopener" class="btn" style="padding:3px 8px;text-decoration:none">📄 Opna</a>'
+            : '<span style="color:#cbd5e1">engin skrá</span>') + '</td>'
+        + '<td data-label="Skrá" class="st-stack" style="' + cell + ';font-size:12px;color:' + (d.mangled ? '#b45309' : '#334155') + '"><span class="st-fname" title="' + esc(d.filename) + '">' + (d.mangled ? '⚠ ' : '') + esc(d.filename) + '</span>'
+          + (d.needs_site ? ' <span style="display:inline-block;padding:1px 7px;border-radius:99px;background:#fee2e2;color:#b91c1c;font-size:10.5px;font-weight:700" title="Multitool: fjölstaða-kt án staðar-sönnunar (vegna-lína/heimilisfang/#stimpill fannst ekki) — veldu stað hér og merkið hreinsast.">🏷 vantar stað</span>' : '') + '</td>'
+        + '<td data-label="Tegund" style="' + cell + ';text-align:center">' + tegSelect(d) + '</td>'
+        + '<td data-label="Ár" style="' + cell + '"><input class="st-year" value="' + esc(d.year) + '" style="width:60px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:12px"></td>'
+        + '<td data-label="Staður" style="' + cell + '"><select class="st-loc" style="' + locStyle + '">' + locOptions(selVal) + '</select>'
+          + (sHigh ? ' <span style="font-size:10.5px;color:#b45309" title="Sjálfvirk tillaga (heimilisfang passar)">tillaga</span>'
+             : (sLow ? ' <span style="font-size:10.5px;color:#64748b" title="Veik tillaga út frá nafni — opnaðu PDF og staðfestu">tillaga?</span>' : '')) + '</td>'
+        + '<td data-label="Tvítak" style="' + cell + ';text-align:center"><input type="checkbox" class="st-dup"' + (d.is_duplicate ? ' checked' : '') + ' title="Tvítak"></td>'
+        + '<td data-label="Staðfest" style="' + cell + ';text-align:center;white-space:nowrap"><input type="checkbox" class="st-rev"' + (d.reviewed ? ' checked' : '') + ' title="Staðfest"> <button class="st-del" type="button" title="Fjarlægja skráningu (PDF helst í Drive)" style="border:0;background:none;cursor:pointer;color:#cbd5e1;font-size:13px;padding:0 2px">🗑</button></td>'
+        + '</tr>';
+    }
+    const THEAD = '<thead><tr style="background:#f8fafc;color:#475569;font-size:11px;text-transform:uppercase;letter-spacing:.03em">'
+      + '<th style="padding:7px 8px;text-align:left">PDF</th><th style="padding:7px 8px;text-align:left">Skrá (nafn — getur verið rangt)</th>'
+      + '<th style="padding:7px 8px;text-align:left">Tegund</th><th style="padding:7px 8px;text-align:left">Ár</th>'
+      + '<th style="padding:7px 8px;text-align:left">Staður</th><th style="padding:7px 8px">Tvítak</th><th style="padding:7px 8px">Staðfest</th></tr></thead>';
+    // Reikningar og skýrslur nota nú SAMA haus — Tegund-fellivalið á Teg-dálknum
+    // ber bæði doc_type og vidskiptategund, svo sér-dálkur fyrir reikninga þarf ekki.
+    const THEAD_INV = THEAD;
+    function sectionHtml(title, docs, thead){
+      if (!docs.length) return '';
+      return '<div style="margin:16px 0 6px;font-weight:700;font-size:12.5px;color:#334155">' + title + ' (' + docs.length + ')</div>'
+        + '<div style="overflow:auto;border:1px solid #e2e8f0;border-radius:10px"><table style="width:100%;border-collapse:collapse;font-size:13px">'
+        + (thead || THEAD) + '<tbody>' + docs.map(docRow).join('') + '</tbody></table></div>';
+    }
+    function renderBoard(){
+      if (!COMPANY) { $board.innerHTML = ''; return; }
+      const unmatched = DOCS.filter(d => !d.fyrirtaeki_id && !d.is_duplicate).length;
+      const nConnect = DOCS.filter(d => !d.fyrirtaeki_id && d.suggest_loc_id && d.suggest_conf === 'high').length;
+      const nConfirm = DOCS.filter(d => d.fyrirtaeki_id && !d.reviewed).length;
+      const head = '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 8px">'
+        + '<strong style="font-size:14px">' + esc(COMPANY.nafn) + '</strong>'
+        + '<span style="font-size:12px;color:#64748b">' + esc(COMPANY.kennitala) + '</span>'
+        + (unmatched ? ('<span style="font-size:12px;color:#b45309">· ' + unmatched + ' ótengd</span>') : '')
+        + '<span style="margin-left:auto"></span>'
+        + (nConnect ? '<button id="bk-st-connect" class="btn primary" style="padding:4px 10px;font-size:12px" title="Tengja allar gular tillögur">🔗 Tengja öll augljós (' + nConnect + ')</button>' : '')
+        + (nConfirm ? '<button id="bk-st-confirm" class="btn" style="padding:4px 10px;font-size:12px" title="Merkja öll tengd skjöl staðfest">✓ Staðfesta öll tengd (' + nConfirm + ')</button>' : '')
+        + '<button id="bk-st-consolidate" class="btn" style="padding:4px 10px;font-size:12px" title="Endurtengja augljós skjöl við réttan stað (yfirskrifar óstaðfestar tengingar) og merkja tvítök: ein ársskýrsla per staður+ár; reikningar aðeins tvítök ef sama R-númer. Rekstrarfélög: hver staður sér. Forsýn fyrst; ekkert eytt.">🧹 Sameina í eitt per ár</button>'
+        + '<button id="bk-st-reread" class="btn" style="padding:4px 10px;font-size:12px" title="Les hvert PDF félagsins úr Drive (innihald, ekki skráarheiti), leiðréttir ár/tegund/stað (aðeins með sönnun: stimpill · einn staður · heimilisfang · staðar-nafn) og uppfærir búnaðar-facts nýjustu skýrslu hvers staðar">🔁 Endurlesa öll skjöl (innihald)</button>'
+        + '<button id="bk-st-addsite" class="btn" style="padding:4px 10px;font-size:12px">➕ Nýr staður</button></div>'
+        + '<div id="bk-st-reread-out"></div>';
+      if (!DOCS.length) { $board.innerHTML = head + '<div style="color:#64748b;font-size:13px;padding:10px">Engin skjöl.</div>'; wireHead(); return; }
+      // Keep the two document kinds apart so reports and invoices never get mixed up.
+      const reports = DOCS.filter(d => d.doc_type !== 'reikningur');
+      const invoices = DOCS.filter(d => d.doc_type === 'reikningur');
+      $board.innerHTML = head + sectionHtml('📄 Úttektarskýrslur', reports) + sectionHtml('🧾 Reikningar', invoices, THEAD_INV);
+      wireHead();
+    }
+    function wireHead(){
+      const a = document.getElementById('bk-st-addsite'); if (a) a.addEventListener('click', addSite);
+      const c = document.getElementById('bk-st-connect'); if (c) c.addEventListener('click', connectObvious);
+      const f = document.getElementById('bk-st-confirm'); if (f) f.addEventListener('click', confirmLinked);
+      const g = document.getElementById('bk-st-consolidate'); if (g) g.addEventListener('click', consolidateCo);
+      const rr = document.getElementById('bk-st-reread'); if (rr) rr.addEventListener('click', rereadFelag);
+    }
+    // 🔁 Endurlesa öll skjöl félagsins úr INNIHALDI (felag-endurlestur) — lykkjar
+    // batchað með lifandi log-línum + teljara; framvinda vistuð per base í
+    // localStorage svo endur-smellur heldur áfram þar sem frá var horfið
+    // (sama mynstur og scanUttektRename / bh_uttekt_progress).
+    async function rereadFelag(){
+      if (!COMPANY) return;
+      const btn = document.getElementById('bk-st-reread'); if (btn) btn.disabled = true;
+      const $out = document.getElementById('bk-st-reread-out');
+      const PROG_KEY = 'bh_felag_endurlestur';
+      const acc = { read: 0, updated: 0, oviss: 0, errors: 0, facts: 0, total: 0 };
+      let offset = 0;
+      try {
+        const saved = JSON.parse(localStorage.getItem(PROG_KEY) || 'null');
+        if (saved && String(saved.base) === String(COMPANY.id) && typeof saved.offset === 'number') { offset = saved.offset; Object.assign(acc, saved.acc || {}); }
+      } catch (_) {}
+      $out.innerHTML = '<div id="bk-rr-count" style="font-size:12.5px;font-weight:600;color:#334155;margin:6px 0"></div>'
+        + '<div id="bk-rr-log" style="max-height:220px;overflow:auto;font-size:11.5px;font-family:ui-monospace,monospace;color:#475569;border:1px solid #e2e8f0;border-radius:8px;padding:6px 8px;margin-bottom:8px"></div>';
+      const $log = document.getElementById('bk-rr-log');
+      const $count = document.getElementById('bk-rr-count');
+      const updCount = () => { $count.textContent = 'Lesið ' + acc.read + (acc.total ? '/' + acc.total : '') + ' · leiðrétt ' + acc.updated + ' · óviss ' + acc.oviss + ' · villur ' + acc.errors + ' · facts ' + acc.facts; };
+      const logLine = (html) => { const div = document.createElement('div'); div.innerHTML = html; $log.appendChild(div); while ($log.children.length > 200) $log.removeChild($log.firstChild); $log.scrollTop = $log.scrollHeight; };
+      if (offset > 0) logLine('<span style="color:#2563eb">↻ Held áfram frá skjali ' + (offset + 1) + '…</span>');
+      const VIA = { stamp: '#stimpill', single: 'einn staður', addr: 'heimilisfang', name: 'staðar-nafn' };
+      updCount();
+      let guard = 0;
+      do {
+        setSt('Endurles… ' + acc.read + (acc.total ? '/' + acc.total : '') + ' skjöl');
+        let d = null;
+        for (let attempt = 0; attempt < 2 && !d; attempt++) {
+          try {
+            const r = await fetch('/api/felag-endurlestur?base=' + encodeURIComponent(COMPANY.id) + '&offset=' + offset + '&limit=2&apply=1');
+            const j = await r.json(); if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+            d = j;
+          } catch (e) { if (attempt === 1) { acc.errors++; logLine('<span style="color:#dc2626">✗ lota féll (offset ' + offset + '): ' + escapeHtml(String(e.message || e)) + '</span>'); offset += 2; } }
+        }
+        if (!d) { localStorage.setItem(PROG_KEY, JSON.stringify({ base: COMPANY.id, offset, acc })); continue; }
+        acc.total = d.total || acc.total;
+        (d.rows || []).forEach(row => {
+          acc.read++;
+          const ch = row.changed || {};
+          const chTxt = Object.keys(ch).map(k => k + (ch[k].via ? ' (' + (VIA[ch[k].via] || ch[k].via) + ')' : '') + ': ' + (ch[k].from == null ? '—' : ch[k].from) + '→' + ch[k].to).join(' · ');
+          if (row.verdict === 'villa') { acc.errors++; logLine('<span style="color:#dc2626">✗ villa</span> ' + escapeHtml(row.file || '') + ' — ' + escapeHtml(row.error || '')); }
+          else if (row.verdict === 'óviss') { acc.oviss++; logLine('<span style="color:#b45309">? óviss</span> ' + escapeHtml(row.file || '') + (row.readable === false ? ' <span style="color:#94a3b8">(ólesanlegt PDF)</span>' : '')); }
+          else {
+            if (chTxt) acc.updated++;
+            logLine((chTxt ? '<span style="color:#15803d">✓ ' : '<span style="color:#64748b">· ') + escapeHtml(row.verdict) + '</span> '
+              + escapeHtml(row.file || '') + (row.site ? ' <span style="color:#2563eb">→ ' + escapeHtml(row.site) + (row.via ? ' (' + (VIA[row.via] || row.via) + ')' : '') + '</span>' : '')
+              + (chTxt ? ' <b>' + escapeHtml(chTxt) + '</b>' : ' <span style="color:#94a3b8">(óbreytt)</span>'));
+          }
+        });
+        acc.facts += d.facts_updated || 0;
+        updCount();
+        offset = d.nextOffset;
+        if (offset != null) localStorage.setItem(PROG_KEY, JSON.stringify({ base: COMPANY.id, offset, acc }));
+        else localStorage.removeItem(PROG_KEY);
+      } while (offset != null && ++guard < 2000);
+      setSt((offset == null ? '✓ Endurlestri lokið. ' : '⏸ Stöðvað — smelltu aftur til að halda áfram. ')
+        + acc.updated + ' leiðrétt · ' + acc.oviss + ' óviss · ' + acc.errors + ' villur · ' + acc.facts + ' búnaðar-facts', offset == null ? '#16a34a' : '#b45309');
+      if (btn) btn.disabled = false;
+      if (offset == null) await loadBoard(COMPANY.id);
+    }
+    async function consolidateCo(){
+      if (!COMPANY) return;
+      setSt('Reikna forsýn…');
+      try {
+        const r = await fetch('/api/match-station?consolidate=1&overwrite=1&base=' + encodeURIComponent(COMPANY.id));
+        const d = await r.json(); if (!r.ok) throw new Error(d.error || r.status);
+        if (!d.relink_count && !d.dup_count) { setSt('Ekkert að sameina — þegar eitt eintak per stað/ár ✓', '#16a34a'); return; }
+        if (!confirm('Sameina „' + COMPANY.nafn + '" (' + d.sites + ' staðir):\n\n'
+          + '• Endurtengja ' + d.relink_count + ' skjöl við réttan stað\n'
+          + '   (yfirskrifar gamlar ÓSTAÐFESTAR tengingar; staðfestar halda sér)\n'
+          + '• Merkja ' + d.dup_count + ' skjöl sem tvítök\n'
+          + '   (afturkræft — ekkert eytt; hver staður er sér, ólíkir staðir aldrei sameinaðir)\n\nHalda áfram?')) { setSt(''); return; }
+        setSt('Sameina…');
+        const a = await fetch('/api/match-station', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'consolidate', base_id: COMPANY.id, overwrite: true }) });
+        const ad = await a.json(); if (!a.ok) throw new Error(ad.error || a.status);
+        await loadBoard(COMPANY.id);
+        setSt('Endurtengdi ' + ad.relinked + ' · merkti ' + ad.duped + ' tvítök ✓ — yfirfaraðu', '#16a34a');
+      } catch (e) { setSt('Villa: ' + e.message, '#dc2626'); }
+    }
+    async function batchSave(items){
+      setSt('Vista ' + items.length + '…');
+      for (let i = 0; i < items.length; i += 6)
+        await Promise.all(items.slice(i, i + 6).map(it => fetch('/api/match-station', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(Object.assign({ action: 'save', id: it.id }, it.patch)) })));
+    }
+    async function connectObvious(){
+      if (!COMPANY) return;
+      const items = DOCS.filter(d => !d.fyrirtaeki_id && d.suggest_loc_id && d.suggest_conf === 'high').map(d => ({ id: d.id, patch: { fyrirtaeki_id: d.suggest_loc_id } }));
+      if (!items.length) return;
+      try { await batchSave(items); await loadBoard(COMPANY.id); setSt('Tengdi ' + items.length + ' skjöl ✓ — yfirfaraðu og staðfestu', '#16a34a'); }
+      catch (e) { setSt('Villa: ' + e.message, '#dc2626'); }
+    }
+    async function confirmLinked(){
+      if (!COMPANY) return;
+      const items = DOCS.filter(d => d.fyrirtaeki_id && !d.reviewed).map(d => ({ id: d.id, patch: { reviewed: true } }));
+      if (!items.length) return;
+      try { await batchSave(items); await loadBoard(COMPANY.id); setSt('Staðfesti ' + items.length + ' skjöl ✓', '#16a34a'); }
+      catch (e) { setSt('Villa: ' + e.message, '#dc2626'); }
+    }
+
+    async function save(id, patch){
+      try {
+        const r = await fetch('/api/match-station', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(Object.assign({ action: 'save', id }, patch)) });
+        const d = await r.json(); if (!r.ok) throw new Error(d.error || r.status);
+        setSt('Vistað ✓', '#16a34a');
+      } catch (e) { setSt('Villa við vistun: ' + e.message, '#dc2626'); }
+    }
+    $board.addEventListener('change', (e) => {
+      const tr = e.target.closest('tr[data-id]'); if (!tr) return;
+      const id = tr.getAttribute('data-id');
+      const patch = {
+        fyrirtaeki_id: tr.querySelector('.st-loc').value || null,
+        year: tr.querySelector('.st-year').value || null,
+        is_duplicate: tr.querySelector('.st-dup').checked,
+        reviewed: tr.querySelector('.st-rev').checked,
+      };
+      // Tegund-fellivalið (2026-08-24, Agnar): eitt val á Teg-dálknum setur BÆÐI
+      // doc_type OG vidskiptategund. Aðeins þegar fellivalið sjálft breytist (ekki
+      // við ár/stað/tvítak/staðfest-breytingu) svo tegundin haggist aldrei óvart.
+      if (e.target.classList && e.target.classList.contains('st-teg-sel')) {
+        const m = TEG_MAP[e.target.value];
+        if (m) { patch.doc_type = m.dt; patch.vidskiptategund = m.vt; }
+      }
+      const d = DOCS.find(x => String(x.id) === String(id));
+      if (d) Object.assign(d, patch);
+      tr.style.transition = 'background .15s';            // flash so it's obvious it saved (no button needed)
+      tr.style.background = '#dbeafe';
+      setTimeout(() => { tr.style.background = patch.reviewed ? '#f0fdf4' : ''; }, 450);
+      save(id, patch);
+    });
+    $board.addEventListener('click', async (e) => {
+      const del = e.target.closest('.st-del'); if (!del) return;
+      const tr = del.closest('tr[data-id]'); if (!tr) return;
+      const id = tr.getAttribute('data-id');
+      if (!confirm('Fjarlægja þessa skráningu af listanum?\n(PDF-ið helst í Google Drive)')) return;
+      try {
+        const r = await fetch('/api/match-station', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete', id }) });
+        const d = await r.json(); if (!r.ok) throw new Error(d.error || r.status);
+        DOCS = DOCS.filter(x => String(x.id) !== String(id)); rerender(); setSt('Fjarlægt ✓', '#16a34a');
+      } catch (e) { setSt('Villa: ' + e.message, '#dc2626'); }
+    });
+
+    // ── Global worklists: ALL unmatched / ALL dups across every company ────────
+    const THEAD_G = '<thead><tr style="background:#f8fafc;color:#475569;font-size:11px;text-transform:uppercase;letter-spacing:.03em">'
+      + '<th style="padding:7px 8px;text-align:left">PDF</th><th style="padding:7px 8px;text-align:left">Fyrirtæki</th>'
+      + '<th style="padding:7px 8px;text-align:left">Skrá</th><th style="padding:7px 8px">Teg</th><th style="padding:7px 8px;text-align:left">Ár</th>'
+      + '<th style="padding:7px 8px;text-align:left">Staður</th><th style="padding:7px 8px">Tvítak</th><th style="padding:7px 8px">Staðfest</th></tr></thead>';
+    function gLocOptions(d){
+      const sel = d.fyrirtaeki_id || '';
+      return '<option value="">—</option>' + (d.sites || []).map(l =>
+        '<option value="' + l.id + '"' + (String(l.id) === String(sel) ? ' selected' : '') + '>' + esc(l.heimilisfang || l.nafn) + '</option>').join('');
+    }
+    function gRow(d){
+      const cell = 'padding:6px 8px';
+      const warn = d.multi_site ? ' <span title="rekstrarfélag — margir staðir; opnaðu PDF og staðfestu réttan" style="color:#b45309;font-weight:600">⚠ ' + d.sites.length + '</span>' : '';
+      return '<tr data-id="' + d.id + '" style="border-top:1px solid #eef2f7' + (d.reviewed ? ';background:#f0fdf4' : '') + '">'
+        + '<td data-label="Skjal" style="' + cell + ';white-space:nowrap">' + (d.view_url
+            ? '<a href="' + d.view_url + '" target="_blank" rel="noopener" class="btn" style="padding:3px 8px;text-decoration:none">📄 Opna</a>'
+            : '<span style="color:#cbd5e1">engin skrá</span>') + '</td>'
+        + '<td data-label="Fyrirtæki" class="st-stack" style="' + cell + ';font-size:12px"><div style="font-weight:600;color:#0f172a">' + esc(d.base_nafn) + warn + '</div><div style="color:#94a3b8;font-size:11px;font-family:monospace">' + esc(d.kennitala || '') + '</div></td>'
+        + '<td data-label="Skrá" class="st-stack" style="' + cell + ';font-size:12px;color:#334155"><span class="st-fname" title="' + esc(d.filename) + '">' + esc(d.filename) + '</span></td>'
+        + '<td data-label="Tegund" style="' + cell + ';text-align:center">' + tegSelect(d) + '</td>'
+        + '<td data-label="Ár" style="' + cell + '"><input class="st-year" value="' + esc(d.year) + '" style="width:56px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:12px"></td>'
+        + '<td data-label="Staður" style="' + cell + '"><select class="st-loc" style="min-width:170px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:12px">' + gLocOptions(d) + '</select></td>'
+        + '<td data-label="Tvítak" style="' + cell + ';text-align:center"><input type="checkbox" class="st-dup"' + (d.is_duplicate ? ' checked' : '') + ' title="Tvítak"></td>'
+        + '<td data-label="Staðfest" style="' + cell + ';text-align:center;white-space:nowrap"><input type="checkbox" class="st-rev"' + (d.reviewed ? ' checked' : '') + ' title="Staðfest"> <button class="st-del" type="button" title="Fjarlægja skráningu (PDF helst í Drive)" style="border:0;background:none;cursor:pointer;color:#cbd5e1;font-size:13px;padding:0 2px">🗑</button></td>'
+        + '</tr>';
+    }
+    function renderGlobal(){
+      const isDup = GLOBAL === 'dups';
+      const title = isDup ? '📑 Öll flögguð tvítök' : '🌍 Allar ótengdar skýrslur/reikningar';
+      const note = isDup
+        ? 'Hakaðu AF „Tvítak" til að af-flagga · 🗑 fjarlægir skráninguna (PDF helst í Drive). Ólíkir staðir rekstrarfélags eru EKKI tvítök.'
+        : 'Veldu stað í fellilistanum (aðeins staðir viðkomandi fyrirtækis birtast). ⚠ = rekstrarfélag með marga staði → opnaðu PDF og staðfestu réttan stað.';
+      const head = '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 4px">'
+        + '<strong style="font-size:14px">' + title + '</strong>'
+        + '<span style="font-size:12px;color:#64748b">' + DOCS.length + ' skjöl · þvert á öll fyrirtæki</span>'
+        + '<span style="margin-left:auto"></span>'
+        + '<button id="bk-st-back" class="btn" style="padding:4px 10px;font-size:12px">← Til baka</button></div>'
+        + '<div style="font-size:12px;color:#64748b;margin:0 0 8px">' + note + '</div>';
+      const secG = (t, docs) => !docs.length ? '' :
+        '<div style="margin:16px 0 6px;font-weight:700;font-size:12.5px;color:#334155">' + t + ' (' + docs.length + ')</div>'
+        + '<div style="overflow:auto;border:1px solid #e2e8f0;border-radius:10px"><table style="width:100%;border-collapse:collapse;font-size:13px">'
+        + THEAD_G + '<tbody>' + docs.map(gRow).join('') + '</tbody></table></div>';
+      if (!DOCS.length) { $board.innerHTML = head + '<div style="color:#16a34a;font-size:13px;padding:10px">Ekkert ' + (isDup ? 'flaggað sem tvítak' : 'ótengt') + ' — allt í lagi ✓</div>'; }
+      else {
+        const reports = DOCS.filter(d => d.doc_type !== 'reikningur');
+        const invoices = DOCS.filter(d => d.doc_type === 'reikningur');
+        $board.innerHTML = head + secG('📄 Úttektarskýrslur', reports) + secG('🧾 Reikningar', invoices);
+      }
+      const b = document.getElementById('bk-st-back'); if (b) b.addEventListener('click', () => { GLOBAL = null; $board.innerHTML = ''; setSt(''); if ($co.value) loadBoard($co.value); });
+    }
+    async function loadGlobal(scope){
+      GLOBAL = scope; COMPANY = null; $co.value = '';
+      setSt('Sæki ' + (scope === 'dups' ? 'tvítök' : 'ótengd') + '…'); $board.innerHTML = '<div style="color:#64748b;font-size:13px;padding:10px">…</div>';
+      try {
+        const r = await fetch('/api/match-station?scope=' + scope);
+        const d = await r.json(); if (!r.ok) throw new Error(d.error || r.status);
+        DOCS = d.docs || []; renderGlobal();
+        setSt(d.count + ' skjöl', '#16a34a');
+      } catch (e) { setSt('Villa: ' + e.message, '#dc2626'); $board.innerHTML = ''; }
+    }
+
+    async function addSite(){
+      if (!COMPANY) return;
+      const nafn = prompt('Nafn nýs staðar (t.d. „Pizzan Hverafold"):'); if (!nafn) return;
+      const heim = prompt('Heimilisfang (t.d. „Hverafold 1-3, 112 Reykjavík"):') || '';
+      setSt('Bæti við stað…');
+      try {
+        const r = await fetch('/api/match-station', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'add-site', base_id: COMPANY.id, nafn, heimilisfang: heim }) });
+        const d = await r.json(); if (!r.ok) throw new Error(d.error || r.status);
+        await loadBoard(COMPANY.id); setSt('Staður bætt við ✓', '#16a34a');
+      } catch (e) { setSt('Villa: ' + e.message, '#dc2626'); }
+    }
+
+    $co.addEventListener('change', () => { GLOBAL = null; loadBoard($co.value); });
+    $reload.addEventListener('click', () => GLOBAL ? loadGlobal(GLOBAL) : ($co.value ? loadBoard($co.value) : loadCompanies()));
+    const $allUn = document.getElementById('bk-st-all-unmatched'); if ($allUn) $allUn.addEventListener('click', () => loadGlobal('unmatched'));
+    const $allDup = document.getElementById('bk-st-all-dups'); if ($allDup) $allDup.addEventListener('click', () => loadGlobal('dups'));
+    loadCompanies();
+}
+
 function renderBakendi(t){
   const FOLDER_KEY = 'bakendi_doc_folder';
   const DEFAULT_FOLDER = '1ApVH4kzbZ4SmwXsLtFqUOn3hotSNECTk';
@@ -4462,349 +4908,7 @@ function renderBakendi(t){
     </div>`;
 
   // ── Skýrslu-stöð (report → site matching board) ──────────────────────────
-  (function stationWire(){
-    const $co = document.getElementById('bk-st-company');
-    const $reload = document.getElementById('bk-st-reload');
-    const $st = document.getElementById('bk-st-status');
-    const $board = document.getElementById('bk-st-board');
-    if (!$co || !$board) return;
-    let LOCS = [], DOCS = [], COMPANY = null, GLOBAL = null;
-    const esc = s => escapeHtml(String(s == null ? '' : s));
-    const rerender = () => { if (GLOBAL) renderGlobal(); else renderBoard(); };
-    const setSt = (m, c) => { $st.textContent = m || ''; $st.style.color = c || '#64748b'; };
-
-    async function loadCompanies(){
-      setSt('Sæki fyrirtæki…');
-      try {
-        const r = await fetch('/api/match-station');
-        const d = await r.json(); if (!r.ok) throw new Error(d.error || r.status);
-        const cs = d.companies || [];
-        $co.innerHTML = '<option value="">— veldu fyrirtæki (' + cs.length + ') —</option>' + cs.map(c => {
-          const left = c.docs - c.reviewed;
-          return '<option value="' + c.base_id + '">' + esc(c.nafn) + ' — ' + c.docs + ' skjöl'
-            + (left ? (' · ' + left + ' óstaðfest') : ' · ✓')
-            + (c.unmatched ? (' · ' + c.unmatched + ' ótengd') : '')
-            + (c.needs_site ? (' · 🏷 ' + c.needs_site + ' vantar stað') : '') + '</option>';
-        }).join('');
-        setSt(cs.length + ' fyrirtæki í þjónustu', '#16a34a');
-        // Deep-link from slökkvitæki: /#bakendi/<base_id> preselects that company.
-        const want = (location.hash || '').replace(/^#\/?/, '').split('/')[1];
-        if (want && cs.some(c => String(c.base_id) === String(want))) { $co.value = want; loadBoard(want); }
-      } catch (e) { setSt('Villa: ' + e.message, '#dc2626'); }
-    }
-
-    async function loadBoard(baseId){
-      if (!baseId) { $board.innerHTML = ''; setSt(''); return; }
-      setSt('Sæki skjöl…'); $board.innerHTML = '<div style="color:#64748b;font-size:13px;padding:10px">…</div>';
-      try {
-        const r = await fetch('/api/match-station?base=' + encodeURIComponent(baseId));
-        const d = await r.json(); if (!r.ok) throw new Error(d.error || r.status);
-        LOCS = d.locations || []; DOCS = d.docs || []; COMPANY = d.company;
-        renderBoard();
-        setSt(DOCS.length + ' skjöl · ' + LOCS.length + ' staðir', '#16a34a');
-      } catch (e) { setSt('Villa: ' + e.message, '#dc2626'); $board.innerHTML = ''; }
-    }
-
-    function locOptions(sel){
-      return '<option value="">—</option>' + LOCS.map(l =>
-        '<option value="' + l.id + '"' + (String(l.id) === String(sel) ? ' selected' : '') + '>'
-        + esc(l.heimilisfang || l.nafn) + '</option>').join('');
-    }
-    function docRow(d){
-      const sHigh = !d.fyrirtaeki_id && d.suggest_loc_id && d.suggest_conf === 'high';
-      const sLow  = !d.fyrirtaeki_id && d.suggest_loc_id && d.suggest_conf === 'low';
-      const suggested = sHigh || sLow;
-      const selVal = d.fyrirtaeki_id || (suggested ? d.suggest_loc_id : '');
-      const locStyle = 'min-width:170px;padding:4px 6px;border:' + (sLow ? '1px dashed #94a3b8' : '1px solid ' + (sHigh ? '#fbbf24' : '#cbd5e1')) + ';border-radius:6px;font:inherit;font-size:12px' + (sHigh ? ';background:#fffbeb' : (sLow ? ';background:#f8fafc' : ''));
-      const icon = d.doc_type === 'reikningur' ? '🧾' : (d.doc_type === 'samningur' ? '📜' : (d.doc_type === 'brunakerfi' ? '🔥' : '📄'));
-      // BRUNA-hak (2026-08-07, Agnar): skýrslu-raðir fá hak sem víxlar
-      // úttektarskýrsla ⇄ brunakerfi — annars sat allt í einni bendu og engin
-      // leið að merkja brunakerfisúttekt án þess að fara í gagnagrunninn.
-      const isRep = d.doc_type === 'uttektarskyrsla' || d.doc_type === 'brunakerfi';
-      const brunaCell = isRep
-        ? '<input type="checkbox" class="st-bruna"' + (d.doc_type === 'brunakerfi' ? ' checked' : '') + ' title="Haka við ef þetta er BRUNAKERFIS-úttekt (ekki slökkvitækja)">'
-        : '<span style="color:#e2e8f0">—</span>';
-      const cell = 'padding:6px 8px';
-      return '<tr data-id="' + d.id + '" style="border-top:1px solid #eef2f7' + (d.reviewed ? ';background:#f0fdf4' : '') + '">'
-        + '<td style="' + cell + ';white-space:nowrap">' + (d.view_url
-            ? '<a href="' + d.view_url + '" target="_blank" rel="noopener" class="btn" style="padding:3px 8px;text-decoration:none">📄 Opna</a>'
-            : '<span style="color:#cbd5e1">engin skrá</span>') + '</td>'
-        + '<td style="' + cell + ';font-size:12px;color:' + (d.mangled ? '#b45309' : '#334155') + '">' + (d.mangled ? '⚠ ' : '') + esc(d.filename)
-          + (d.needs_site ? ' <span style="display:inline-block;padding:1px 7px;border-radius:99px;background:#fee2e2;color:#b91c1c;font-size:10.5px;font-weight:700" title="Multitool: fjölstaða-kt án staðar-sönnunar (vegna-lína/heimilisfang/#stimpill fannst ekki) — veldu stað hér og merkið hreinsast.">🏷 vantar stað</span>' : '') + '</td>'
-        + '<td style="' + cell + ';text-align:center">' + icon + '</td>'
-        + '<td style="' + cell + ';text-align:center">' + brunaCell + '</td>'
-        + '<td style="' + cell + '"><input class="st-year" value="' + esc(d.year) + '" style="width:60px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:12px"></td>'
-        + '<td style="' + cell + '"><select class="st-loc" style="' + locStyle + '">' + locOptions(selVal) + '</select>'
-          + (sHigh ? ' <span style="font-size:10.5px;color:#b45309" title="Sjálfvirk tillaga (heimilisfang passar)">tillaga</span>'
-             : (sLow ? ' <span style="font-size:10.5px;color:#64748b" title="Veik tillaga út frá nafni — opnaðu PDF og staðfestu">tillaga?</span>' : '')) + '</td>'
-        + '<td style="' + cell + ';text-align:center"><input type="checkbox" class="st-dup"' + (d.is_duplicate ? ' checked' : '') + ' title="Tvítak"></td>'
-        + '<td style="' + cell + ';text-align:center;white-space:nowrap"><input type="checkbox" class="st-rev"' + (d.reviewed ? ' checked' : '') + ' title="Staðfest"> <button class="st-del" type="button" title="Fjarlægja skráningu (PDF helst í Drive)" style="border:0;background:none;cursor:pointer;color:#cbd5e1;font-size:13px;padding:0 2px">🗑</button></td>'
-        + '</tr>';
-    }
-    const THEAD = '<thead><tr style="background:#f8fafc;color:#475569;font-size:11px;text-transform:uppercase;letter-spacing:.03em">'
-      + '<th style="padding:7px 8px;text-align:left">PDF</th><th style="padding:7px 8px;text-align:left">Skrá (nafn — getur verið rangt)</th>'
-      + '<th style="padding:7px 8px">Teg</th><th style="padding:7px 8px" title="Brunakerfis-úttekt?">🔥 Bruna</th><th style="padding:7px 8px;text-align:left">Ár</th>'
-      + '<th style="padding:7px 8px;text-align:left">Staður</th><th style="padding:7px 8px">Tvítak</th><th style="padding:7px 8px">Staðfest</th></tr></thead>';
-    function sectionHtml(title, docs){
-      if (!docs.length) return '';
-      return '<div style="margin:16px 0 6px;font-weight:700;font-size:12.5px;color:#334155">' + title + ' (' + docs.length + ')</div>'
-        + '<div style="overflow:auto;border:1px solid #e2e8f0;border-radius:10px"><table style="width:100%;border-collapse:collapse;font-size:13px">'
-        + THEAD + '<tbody>' + docs.map(docRow).join('') + '</tbody></table></div>';
-    }
-    function renderBoard(){
-      if (!COMPANY) { $board.innerHTML = ''; return; }
-      const unmatched = DOCS.filter(d => !d.fyrirtaeki_id && !d.is_duplicate).length;
-      const nConnect = DOCS.filter(d => !d.fyrirtaeki_id && d.suggest_loc_id && d.suggest_conf === 'high').length;
-      const nConfirm = DOCS.filter(d => d.fyrirtaeki_id && !d.reviewed).length;
-      const head = '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 8px">'
-        + '<strong style="font-size:14px">' + esc(COMPANY.nafn) + '</strong>'
-        + '<span style="font-size:12px;color:#64748b">' + esc(COMPANY.kennitala) + '</span>'
-        + (unmatched ? ('<span style="font-size:12px;color:#b45309">· ' + unmatched + ' ótengd</span>') : '')
-        + '<span style="margin-left:auto"></span>'
-        + (nConnect ? '<button id="bk-st-connect" class="btn primary" style="padding:4px 10px;font-size:12px" title="Tengja allar gular tillögur">🔗 Tengja öll augljós (' + nConnect + ')</button>' : '')
-        + (nConfirm ? '<button id="bk-st-confirm" class="btn" style="padding:4px 10px;font-size:12px" title="Merkja öll tengd skjöl staðfest">✓ Staðfesta öll tengd (' + nConfirm + ')</button>' : '')
-        + '<button id="bk-st-consolidate" class="btn" style="padding:4px 10px;font-size:12px" title="Endurtengja augljós skjöl við réttan stað (yfirskrifar óstaðfestar tengingar) og merkja tvítök: ein ársskýrsla per staður+ár; reikningar aðeins tvítök ef sama R-númer. Rekstrarfélög: hver staður sér. Forsýn fyrst; ekkert eytt.">🧹 Sameina í eitt per ár</button>'
-        + '<button id="bk-st-reread" class="btn" style="padding:4px 10px;font-size:12px" title="Les hvert PDF félagsins úr Drive (innihald, ekki skráarheiti), leiðréttir ár/tegund/stað (aðeins með sönnun: stimpill · einn staður · heimilisfang · staðar-nafn) og uppfærir búnaðar-facts nýjustu skýrslu hvers staðar">🔁 Endurlesa öll skjöl (innihald)</button>'
-        + '<button id="bk-st-addsite" class="btn" style="padding:4px 10px;font-size:12px">➕ Nýr staður</button></div>'
-        + '<div id="bk-st-reread-out"></div>';
-      if (!DOCS.length) { $board.innerHTML = head + '<div style="color:#64748b;font-size:13px;padding:10px">Engin skjöl.</div>'; wireHead(); return; }
-      // Keep the two document kinds apart so reports and invoices never get mixed up.
-      const reports = DOCS.filter(d => d.doc_type !== 'reikningur');
-      const invoices = DOCS.filter(d => d.doc_type === 'reikningur');
-      $board.innerHTML = head + sectionHtml('📄 Úttektarskýrslur', reports) + sectionHtml('🧾 Reikningar', invoices);
-      wireHead();
-    }
-    function wireHead(){
-      const a = document.getElementById('bk-st-addsite'); if (a) a.addEventListener('click', addSite);
-      const c = document.getElementById('bk-st-connect'); if (c) c.addEventListener('click', connectObvious);
-      const f = document.getElementById('bk-st-confirm'); if (f) f.addEventListener('click', confirmLinked);
-      const g = document.getElementById('bk-st-consolidate'); if (g) g.addEventListener('click', consolidateCo);
-      const rr = document.getElementById('bk-st-reread'); if (rr) rr.addEventListener('click', rereadFelag);
-    }
-    // 🔁 Endurlesa öll skjöl félagsins úr INNIHALDI (felag-endurlestur) — lykkjar
-    // batchað með lifandi log-línum + teljara; framvinda vistuð per base í
-    // localStorage svo endur-smellur heldur áfram þar sem frá var horfið
-    // (sama mynstur og scanUttektRename / bh_uttekt_progress).
-    async function rereadFelag(){
-      if (!COMPANY) return;
-      const btn = document.getElementById('bk-st-reread'); if (btn) btn.disabled = true;
-      const $out = document.getElementById('bk-st-reread-out');
-      const PROG_KEY = 'bh_felag_endurlestur';
-      const acc = { read: 0, updated: 0, oviss: 0, errors: 0, facts: 0, total: 0 };
-      let offset = 0;
-      try {
-        const saved = JSON.parse(localStorage.getItem(PROG_KEY) || 'null');
-        if (saved && String(saved.base) === String(COMPANY.id) && typeof saved.offset === 'number') { offset = saved.offset; Object.assign(acc, saved.acc || {}); }
-      } catch (_) {}
-      $out.innerHTML = '<div id="bk-rr-count" style="font-size:12.5px;font-weight:600;color:#334155;margin:6px 0"></div>'
-        + '<div id="bk-rr-log" style="max-height:220px;overflow:auto;font-size:11.5px;font-family:ui-monospace,monospace;color:#475569;border:1px solid #e2e8f0;border-radius:8px;padding:6px 8px;margin-bottom:8px"></div>';
-      const $log = document.getElementById('bk-rr-log');
-      const $count = document.getElementById('bk-rr-count');
-      const updCount = () => { $count.textContent = 'Lesið ' + acc.read + (acc.total ? '/' + acc.total : '') + ' · leiðrétt ' + acc.updated + ' · óviss ' + acc.oviss + ' · villur ' + acc.errors + ' · facts ' + acc.facts; };
-      const logLine = (html) => { const div = document.createElement('div'); div.innerHTML = html; $log.appendChild(div); while ($log.children.length > 200) $log.removeChild($log.firstChild); $log.scrollTop = $log.scrollHeight; };
-      if (offset > 0) logLine('<span style="color:#2563eb">↻ Held áfram frá skjali ' + (offset + 1) + '…</span>');
-      const VIA = { stamp: '#stimpill', single: 'einn staður', addr: 'heimilisfang', name: 'staðar-nafn' };
-      updCount();
-      let guard = 0;
-      do {
-        setSt('Endurles… ' + acc.read + (acc.total ? '/' + acc.total : '') + ' skjöl');
-        let d = null;
-        for (let attempt = 0; attempt < 2 && !d; attempt++) {
-          try {
-            const r = await fetch('/api/felag-endurlestur?base=' + encodeURIComponent(COMPANY.id) + '&offset=' + offset + '&limit=2&apply=1');
-            const j = await r.json(); if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
-            d = j;
-          } catch (e) { if (attempt === 1) { acc.errors++; logLine('<span style="color:#dc2626">✗ lota féll (offset ' + offset + '): ' + escapeHtml(String(e.message || e)) + '</span>'); offset += 2; } }
-        }
-        if (!d) { localStorage.setItem(PROG_KEY, JSON.stringify({ base: COMPANY.id, offset, acc })); continue; }
-        acc.total = d.total || acc.total;
-        (d.rows || []).forEach(row => {
-          acc.read++;
-          const ch = row.changed || {};
-          const chTxt = Object.keys(ch).map(k => k + (ch[k].via ? ' (' + (VIA[ch[k].via] || ch[k].via) + ')' : '') + ': ' + (ch[k].from == null ? '—' : ch[k].from) + '→' + ch[k].to).join(' · ');
-          if (row.verdict === 'villa') { acc.errors++; logLine('<span style="color:#dc2626">✗ villa</span> ' + escapeHtml(row.file || '') + ' — ' + escapeHtml(row.error || '')); }
-          else if (row.verdict === 'óviss') { acc.oviss++; logLine('<span style="color:#b45309">? óviss</span> ' + escapeHtml(row.file || '') + (row.readable === false ? ' <span style="color:#94a3b8">(ólesanlegt PDF)</span>' : '')); }
-          else {
-            if (chTxt) acc.updated++;
-            logLine((chTxt ? '<span style="color:#15803d">✓ ' : '<span style="color:#64748b">· ') + escapeHtml(row.verdict) + '</span> '
-              + escapeHtml(row.file || '') + (row.site ? ' <span style="color:#2563eb">→ ' + escapeHtml(row.site) + (row.via ? ' (' + (VIA[row.via] || row.via) + ')' : '') + '</span>' : '')
-              + (chTxt ? ' <b>' + escapeHtml(chTxt) + '</b>' : ' <span style="color:#94a3b8">(óbreytt)</span>'));
-          }
-        });
-        acc.facts += d.facts_updated || 0;
-        updCount();
-        offset = d.nextOffset;
-        if (offset != null) localStorage.setItem(PROG_KEY, JSON.stringify({ base: COMPANY.id, offset, acc }));
-        else localStorage.removeItem(PROG_KEY);
-      } while (offset != null && ++guard < 2000);
-      setSt((offset == null ? '✓ Endurlestri lokið. ' : '⏸ Stöðvað — smelltu aftur til að halda áfram. ')
-        + acc.updated + ' leiðrétt · ' + acc.oviss + ' óviss · ' + acc.errors + ' villur · ' + acc.facts + ' búnaðar-facts', offset == null ? '#16a34a' : '#b45309');
-      if (btn) btn.disabled = false;
-      if (offset == null) await loadBoard(COMPANY.id);
-    }
-    async function consolidateCo(){
-      if (!COMPANY) return;
-      setSt('Reikna forsýn…');
-      try {
-        const r = await fetch('/api/match-station?consolidate=1&overwrite=1&base=' + encodeURIComponent(COMPANY.id));
-        const d = await r.json(); if (!r.ok) throw new Error(d.error || r.status);
-        if (!d.relink_count && !d.dup_count) { setSt('Ekkert að sameina — þegar eitt eintak per stað/ár ✓', '#16a34a'); return; }
-        if (!confirm('Sameina „' + COMPANY.nafn + '" (' + d.sites + ' staðir):\n\n'
-          + '• Endurtengja ' + d.relink_count + ' skjöl við réttan stað\n'
-          + '   (yfirskrifar gamlar ÓSTAÐFESTAR tengingar; staðfestar halda sér)\n'
-          + '• Merkja ' + d.dup_count + ' skjöl sem tvítök\n'
-          + '   (afturkræft — ekkert eytt; hver staður er sér, ólíkir staðir aldrei sameinaðir)\n\nHalda áfram?')) { setSt(''); return; }
-        setSt('Sameina…');
-        const a = await fetch('/api/match-station', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'consolidate', base_id: COMPANY.id, overwrite: true }) });
-        const ad = await a.json(); if (!a.ok) throw new Error(ad.error || a.status);
-        await loadBoard(COMPANY.id);
-        setSt('Endurtengdi ' + ad.relinked + ' · merkti ' + ad.duped + ' tvítök ✓ — yfirfaraðu', '#16a34a');
-      } catch (e) { setSt('Villa: ' + e.message, '#dc2626'); }
-    }
-    async function batchSave(items){
-      setSt('Vista ' + items.length + '…');
-      for (let i = 0; i < items.length; i += 6)
-        await Promise.all(items.slice(i, i + 6).map(it => fetch('/api/match-station', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(Object.assign({ action: 'save', id: it.id }, it.patch)) })));
-    }
-    async function connectObvious(){
-      if (!COMPANY) return;
-      const items = DOCS.filter(d => !d.fyrirtaeki_id && d.suggest_loc_id && d.suggest_conf === 'high').map(d => ({ id: d.id, patch: { fyrirtaeki_id: d.suggest_loc_id } }));
-      if (!items.length) return;
-      try { await batchSave(items); await loadBoard(COMPANY.id); setSt('Tengdi ' + items.length + ' skjöl ✓ — yfirfaraðu og staðfestu', '#16a34a'); }
-      catch (e) { setSt('Villa: ' + e.message, '#dc2626'); }
-    }
-    async function confirmLinked(){
-      if (!COMPANY) return;
-      const items = DOCS.filter(d => d.fyrirtaeki_id && !d.reviewed).map(d => ({ id: d.id, patch: { reviewed: true } }));
-      if (!items.length) return;
-      try { await batchSave(items); await loadBoard(COMPANY.id); setSt('Staðfesti ' + items.length + ' skjöl ✓', '#16a34a'); }
-      catch (e) { setSt('Villa: ' + e.message, '#dc2626'); }
-    }
-
-    async function save(id, patch){
-      try {
-        const r = await fetch('/api/match-station', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(Object.assign({ action: 'save', id }, patch)) });
-        const d = await r.json(); if (!r.ok) throw new Error(d.error || r.status);
-        setSt('Vistað ✓', '#16a34a');
-      } catch (e) { setSt('Villa við vistun: ' + e.message, '#dc2626'); }
-    }
-    $board.addEventListener('change', (e) => {
-      const tr = e.target.closest('tr[data-id]'); if (!tr) return;
-      const id = tr.getAttribute('data-id');
-      const patch = {
-        fyrirtaeki_id: tr.querySelector('.st-loc').value || null,
-        year: tr.querySelector('.st-year').value || null,
-        is_duplicate: tr.querySelector('.st-dup').checked,
-        reviewed: tr.querySelector('.st-rev').checked,
-      };
-      // BRUNA-hakið er aðeins á skýrslu-röðum — reikningar/samningar sleppa
-      // doc_type úr patchinu svo tegundin þeirra haggist aldrei héðan.
-      const bruna = tr.querySelector('.st-bruna');
-      if (bruna) patch.doc_type = bruna.checked ? 'brunakerfi' : 'uttektarskyrsla';
-      const d = DOCS.find(x => String(x.id) === String(id));
-      if (d) Object.assign(d, patch);
-      tr.style.transition = 'background .15s';            // flash so it's obvious it saved (no button needed)
-      tr.style.background = '#dbeafe';
-      setTimeout(() => { tr.style.background = patch.reviewed ? '#f0fdf4' : ''; }, 450);
-      save(id, patch);
-    });
-    $board.addEventListener('click', async (e) => {
-      const del = e.target.closest('.st-del'); if (!del) return;
-      const tr = del.closest('tr[data-id]'); if (!tr) return;
-      const id = tr.getAttribute('data-id');
-      if (!confirm('Fjarlægja þessa skráningu af listanum?\n(PDF-ið helst í Google Drive)')) return;
-      try {
-        const r = await fetch('/api/match-station', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete', id }) });
-        const d = await r.json(); if (!r.ok) throw new Error(d.error || r.status);
-        DOCS = DOCS.filter(x => String(x.id) !== String(id)); rerender(); setSt('Fjarlægt ✓', '#16a34a');
-      } catch (e) { setSt('Villa: ' + e.message, '#dc2626'); }
-    });
-
-    // ── Global worklists: ALL unmatched / ALL dups across every company ────────
-    const THEAD_G = '<thead><tr style="background:#f8fafc;color:#475569;font-size:11px;text-transform:uppercase;letter-spacing:.03em">'
-      + '<th style="padding:7px 8px;text-align:left">PDF</th><th style="padding:7px 8px;text-align:left">Fyrirtæki</th>'
-      + '<th style="padding:7px 8px;text-align:left">Skrá</th><th style="padding:7px 8px">Teg</th><th style="padding:7px 8px;text-align:left">Ár</th>'
-      + '<th style="padding:7px 8px;text-align:left">Staður</th><th style="padding:7px 8px">Tvítak</th><th style="padding:7px 8px">Staðfest</th></tr></thead>';
-    function gLocOptions(d){
-      const sel = d.fyrirtaeki_id || '';
-      return '<option value="">—</option>' + (d.sites || []).map(l =>
-        '<option value="' + l.id + '"' + (String(l.id) === String(sel) ? ' selected' : '') + '>' + esc(l.heimilisfang || l.nafn) + '</option>').join('');
-    }
-    function gRow(d){
-      const icon = d.doc_type === 'reikningur' ? '🧾' : (d.doc_type === 'samningur' ? '📜' : '📄');
-      const cell = 'padding:6px 8px';
-      const warn = d.multi_site ? ' <span title="rekstrarfélag — margir staðir; opnaðu PDF og staðfestu réttan" style="color:#b45309;font-weight:600">⚠ ' + d.sites.length + '</span>' : '';
-      return '<tr data-id="' + d.id + '" style="border-top:1px solid #eef2f7' + (d.reviewed ? ';background:#f0fdf4' : '') + '">'
-        + '<td style="' + cell + ';white-space:nowrap">' + (d.view_url
-            ? '<a href="' + d.view_url + '" target="_blank" rel="noopener" class="btn" style="padding:3px 8px;text-decoration:none">📄 Opna</a>'
-            : '<span style="color:#cbd5e1">engin skrá</span>') + '</td>'
-        + '<td style="' + cell + ';font-size:12px"><div style="font-weight:600;color:#0f172a">' + esc(d.base_nafn) + warn + '</div><div style="color:#94a3b8;font-size:11px;font-family:monospace">' + esc(d.kennitala || '') + '</div></td>'
-        + '<td style="' + cell + ';font-size:12px;color:#334155">' + esc(d.filename) + '</td>'
-        + '<td style="' + cell + ';text-align:center">' + icon + '</td>'
-        + '<td style="' + cell + '"><input class="st-year" value="' + esc(d.year) + '" style="width:56px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:12px"></td>'
-        + '<td style="' + cell + '"><select class="st-loc" style="min-width:170px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:12px">' + gLocOptions(d) + '</select></td>'
-        + '<td style="' + cell + ';text-align:center"><input type="checkbox" class="st-dup"' + (d.is_duplicate ? ' checked' : '') + ' title="Tvítak"></td>'
-        + '<td style="' + cell + ';text-align:center;white-space:nowrap"><input type="checkbox" class="st-rev"' + (d.reviewed ? ' checked' : '') + ' title="Staðfest"> <button class="st-del" type="button" title="Fjarlægja skráningu (PDF helst í Drive)" style="border:0;background:none;cursor:pointer;color:#cbd5e1;font-size:13px;padding:0 2px">🗑</button></td>'
-        + '</tr>';
-    }
-    function renderGlobal(){
-      const isDup = GLOBAL === 'dups';
-      const title = isDup ? '📑 Öll flögguð tvítök' : '🌍 Allar ótengdar skýrslur/reikningar';
-      const note = isDup
-        ? 'Hakaðu AF „Tvítak" til að af-flagga · 🗑 fjarlægir skráninguna (PDF helst í Drive). Ólíkir staðir rekstrarfélags eru EKKI tvítök.'
-        : 'Veldu stað í fellilistanum (aðeins staðir viðkomandi fyrirtækis birtast). ⚠ = rekstrarfélag með marga staði → opnaðu PDF og staðfestu réttan stað.';
-      const head = '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 4px">'
-        + '<strong style="font-size:14px">' + title + '</strong>'
-        + '<span style="font-size:12px;color:#64748b">' + DOCS.length + ' skjöl · þvert á öll fyrirtæki</span>'
-        + '<span style="margin-left:auto"></span>'
-        + '<button id="bk-st-back" class="btn" style="padding:4px 10px;font-size:12px">← Til baka</button></div>'
-        + '<div style="font-size:12px;color:#64748b;margin:0 0 8px">' + note + '</div>';
-      const secG = (t, docs) => !docs.length ? '' :
-        '<div style="margin:16px 0 6px;font-weight:700;font-size:12.5px;color:#334155">' + t + ' (' + docs.length + ')</div>'
-        + '<div style="overflow:auto;border:1px solid #e2e8f0;border-radius:10px"><table style="width:100%;border-collapse:collapse;font-size:13px">'
-        + THEAD_G + '<tbody>' + docs.map(gRow).join('') + '</tbody></table></div>';
-      if (!DOCS.length) { $board.innerHTML = head + '<div style="color:#16a34a;font-size:13px;padding:10px">Ekkert ' + (isDup ? 'flaggað sem tvítak' : 'ótengt') + ' — allt í lagi ✓</div>'; }
-      else {
-        const reports = DOCS.filter(d => d.doc_type !== 'reikningur');
-        const invoices = DOCS.filter(d => d.doc_type === 'reikningur');
-        $board.innerHTML = head + secG('📄 Úttektarskýrslur', reports) + secG('🧾 Reikningar', invoices);
-      }
-      const b = document.getElementById('bk-st-back'); if (b) b.addEventListener('click', () => { GLOBAL = null; $board.innerHTML = ''; setSt(''); if ($co.value) loadBoard($co.value); });
-    }
-    async function loadGlobal(scope){
-      GLOBAL = scope; COMPANY = null; $co.value = '';
-      setSt('Sæki ' + (scope === 'dups' ? 'tvítök' : 'ótengd') + '…'); $board.innerHTML = '<div style="color:#64748b;font-size:13px;padding:10px">…</div>';
-      try {
-        const r = await fetch('/api/match-station?scope=' + scope);
-        const d = await r.json(); if (!r.ok) throw new Error(d.error || r.status);
-        DOCS = d.docs || []; renderGlobal();
-        setSt(d.count + ' skjöl', '#16a34a');
-      } catch (e) { setSt('Villa: ' + e.message, '#dc2626'); $board.innerHTML = ''; }
-    }
-
-    async function addSite(){
-      if (!COMPANY) return;
-      const nafn = prompt('Nafn nýs staðar (t.d. „Pizzan Hverafold"):'); if (!nafn) return;
-      const heim = prompt('Heimilisfang (t.d. „Hverafold 1-3, 112 Reykjavík"):') || '';
-      setSt('Bæti við stað…');
-      try {
-        const r = await fetch('/api/match-station', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'add-site', base_id: COMPANY.id, nafn, heimilisfang: heim }) });
-        const d = await r.json(); if (!r.ok) throw new Error(d.error || r.status);
-        await loadBoard(COMPANY.id); setSt('Staður bætt við ✓', '#16a34a');
-      } catch (e) { setSt('Villa: ' + e.message, '#dc2626'); }
-    }
-
-    $co.addEventListener('change', () => { GLOBAL = null; loadBoard($co.value); });
-    $reload.addEventListener('click', () => GLOBAL ? loadGlobal(GLOBAL) : ($co.value ? loadBoard($co.value) : loadCompanies()));
-    const $allUn = document.getElementById('bk-st-all-unmatched'); if ($allUn) $allUn.addEventListener('click', () => loadGlobal('unmatched'));
-    const $allDup = document.getElementById('bk-st-all-dups'); if ($allDup) $allDup.addEventListener('click', () => loadGlobal('dups'));
-    loadCompanies();
-  })();
+  wireStation();
 
   // ── Mínir Sheet-tenglar (vistaðir tenglar, samstilltir á öll tæki) ────────
   const $links = document.getElementById('bk-links');
