@@ -65,25 +65,25 @@ exports.handler = async (event) => {
       }
     } catch (_) {}
 
-    // 2c) Brunakerfi — næsta skoðun og fjöldi staðsetning í þjónustu
-    // customer_base_id er null í öllum línum — filter á fyrirtaeki_id í staðinn
+    // 2c) Brunakerfi — næsta skoðun úr brunakerfi-SKJÖLUM (customer_documents,
+    // doc_type='brunakerfi'). Brunakerfis-skoðanir eru skráðar sem skjöl (sótt úr
+    // Drive), EKKI í brunakerfi_skyrslur (sú tafla er nánast tóm — 3 óskyldar
+    // línur). Nýjasta skoðun per byggingu → næsta = sami mánuður, ár+1 (sama
+    // regla og Tæki-skoðun). `docs` eru þegar raðuð nýjast-fyrst (customer.js),
+    // svo fyrsta brunakerfi-skjal hverrar byggingar er það nýjasta.
     const bkById = {};
     const bkSiteIds = new Set();
-    try {
-      const kr = siteIds.length ? await P.sbGet(`brunakerfi_skyrslur?fyrirtaeki_id=in.(${siteIds.join(',')})&select=fyrirtaeki_id,year,data&order=year.desc`) : { ok: false };
-      if (kr.ok) {
-        (await kr.json()).forEach((r) => {
-          bkSiteIds.add(r.fyrirtaeki_id);
-          if (bkById[r.fyrirtaeki_id]) return;
-          const d2 = (typeof r.data === 'string') ? JSON.parse(r.data) : (r.data || {});
-          const dags = d2.meta && d2.meta.dags;
-          if (dags) {
-            const m = /^(\d{4})-(\d{2})/.exec(String(dags));
-            if (m) bkById[r.fyrirtaeki_id] = '01.' + m[2] + '.' + (Number(m[1]) + 1);
-          }
-        });
-      }
-    } catch (_) {}
+    docs.forEach((d) => {
+      if (d.doc_type !== 'brunakerfi' || d.is_duplicate) return;
+      const sid = d.fyrirtaeki_id;
+      if (sid == null) return;
+      bkSiteIds.add(sid);
+      if (bkById[sid]) return;                 // þegar með nýjustu (raðað nýjast-fyrst)
+      const ds = d.doc_date || (d.year ? d.year + '-01-01' : null);
+      if (!ds) return;                         // án dags — reyna næsta (eldra) skjal
+      const m = /^(\d{4})-(\d{2})/.exec(String(ds));
+      if (m) bkById[sid] = '01.' + m[2] + '.' + (Number(m[1]) + 1);
+    });
 
     // 3) Byggingar — hvítlistaðir reitir
     const buildings = sites.map((s) => {
