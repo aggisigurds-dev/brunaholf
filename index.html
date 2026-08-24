@@ -1434,6 +1434,44 @@ html.embedded #view:has(.vb-scroll-wrap){zoom:1 !important}
 html.embedded .vb-scroll-wrap .vb-row-name{min-width:118px !important;max-width:150px !important}
 html.embedded .vb-scroll-wrap .vb-th-name{font-size:15.5px !important}
 html.embedded .vb-scroll-wrap .vb-th-sum{font-size:17px !important}
+/* ── Skýrslu-stöð á síma/þröngt (docRow/gRow) — 2026-08-24 (joker) ─────────────
+   Innfellt í Fjármál-appið gegnum /?embed=1#skyrslustod. Í embed hélst hliðar-
+   rögóðin + 1.32-súmið svo efnis-súlan kramdist í ~160px: 8-dálka borðið flaut
+   út af, skjalaheitið braut sig EITT-ORÐ-Á-LÍNU og öll hægri-stýrin (Tegund-val,
+   Staður-val, hakreitir) klipptust af hægri kanti. Lagfæring AÐEINS þröngt/embed —
+   skjáborðs- og spjaldtölvu-borðið (>700/560px) er ósnert. */
+@media (max-width:700px){
+  /* Embed: fela hliðar-rögóðina + núlla 1.32-súmið svo Skýrslu-stöðin fái fulla
+     breidd (~160px → ~340px). Scope-að við hana eina (:has(#bk-st-board)). */
+  html.embedded .layout:has(#bk-st-board) .sidebar{display:none!important}
+  html.embedded #view:has(#bk-st-board){zoom:1!important}
+  html.embedded #view:has(#bk-st-board) .section{max-width:none!important;padding:12px 10px!important}
+  html.embedded #view:has(#bk-st-board) .section>div:last-child{padding:12px!important}
+}
+@media (max-width:560px){
+  /* Fyrirtækjavalið fyllir línuna (min-width:300px klippti á 340px). */
+  #bk-st-company{min-width:0!important}
+  /* Borðin → stöfluð spjöld: hvert skjal er kort með merktum reitum, ekkert
+     lárétt-skrun, öll stýri sýnileg og ≥40px há (snerti-væn). */
+  #bk-st-board > div{overflow:visible!important;border:0!important}
+  #bk-st-board table{display:block;width:100%;font-size:13px}
+  #bk-st-board thead{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  #bk-st-board tbody{display:block}
+  #bk-st-board tr[data-id]{display:block;border:1px solid #e2e8f0;border-radius:12px;background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.05);padding:6px 12px 8px;margin:0 0 10px}
+  #bk-st-board tr[data-id] td{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:40px;padding:5px 0!important;border:0!important;text-align:left!important}
+  #bk-st-board tr[data-id] td::before{content:attr(data-label);flex:0 0 auto;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.03em}
+  /* Skráarheitið + fyrirtækjanafnið: eigin lína, heitið styttist snyrtilega
+     (fulla heitið í title/langsmelli). */
+  #bk-st-board tr[data-id] td.st-stack{display:block;padding-top:2px!important}
+  #bk-st-board tr[data-id] td.st-stack::before{display:block;margin-bottom:3px}
+  #bk-st-board tr[data-id] td.st-stack .st-fname{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;color:#334155}
+  /* Stýrin: gildið hægra megin, þægileg snerti-stærð. */
+  #bk-st-board .st-loc,#bk-st-board .st-teg-sel{min-width:0!important;max-width:66%!important;width:auto;font-size:14px!important;padding:9px 8px!important}
+  #bk-st-board .st-year{width:88px!important;font-size:14px!important;padding:9px 8px!important;text-align:center}
+  #bk-st-board td .btn{padding:8px 12px!important;font-size:13px}
+  #bk-st-board .st-dup,#bk-st-board .st-rev{width:22px;height:22px}
+  #bk-st-board .st-del{font-size:18px!important;padding:6px!important}
+}
 </style>
 
 <header class="topbar">
@@ -3764,18 +3802,18 @@ function wireStation(){
       const locStyle = 'min-width:170px;padding:4px 6px;border:' + (sLow ? '1px dashed #94a3b8' : '1px solid ' + (sHigh ? '#fbbf24' : '#cbd5e1')) + ';border-radius:6px;font:inherit;font-size:12px' + (sHigh ? ';background:#fffbeb' : (sLow ? ';background:#f8fafc' : ''));
       const cell = 'padding:6px 8px';
       return '<tr data-id="' + d.id + '" style="border-top:1px solid #eef2f7' + (d.reviewed ? ';background:#f0fdf4' : '') + '">'
-        + '<td style="' + cell + ';white-space:nowrap">' + (d.view_url
+        + '<td data-label="Skjal" style="' + cell + ';white-space:nowrap">' + (d.view_url
             ? '<a href="' + d.view_url + '" target="_blank" rel="noopener" class="btn" style="padding:3px 8px;text-decoration:none">📄 Opna</a>'
             : '<span style="color:#cbd5e1">engin skrá</span>') + '</td>'
-        + '<td style="' + cell + ';font-size:12px;color:' + (d.mangled ? '#b45309' : '#334155') + '">' + (d.mangled ? '⚠ ' : '') + esc(d.filename)
+        + '<td data-label="Skrá" class="st-stack" style="' + cell + ';font-size:12px;color:' + (d.mangled ? '#b45309' : '#334155') + '"><span class="st-fname" title="' + esc(d.filename) + '">' + (d.mangled ? '⚠ ' : '') + esc(d.filename) + '</span>'
           + (d.needs_site ? ' <span style="display:inline-block;padding:1px 7px;border-radius:99px;background:#fee2e2;color:#b91c1c;font-size:10.5px;font-weight:700" title="Multitool: fjölstaða-kt án staðar-sönnunar (vegna-lína/heimilisfang/#stimpill fannst ekki) — veldu stað hér og merkið hreinsast.">🏷 vantar stað</span>' : '') + '</td>'
-        + '<td style="' + cell + ';text-align:center">' + tegSelect(d) + '</td>'
-        + '<td style="' + cell + '"><input class="st-year" value="' + esc(d.year) + '" style="width:60px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:12px"></td>'
-        + '<td style="' + cell + '"><select class="st-loc" style="' + locStyle + '">' + locOptions(selVal) + '</select>'
+        + '<td data-label="Tegund" style="' + cell + ';text-align:center">' + tegSelect(d) + '</td>'
+        + '<td data-label="Ár" style="' + cell + '"><input class="st-year" value="' + esc(d.year) + '" style="width:60px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:12px"></td>'
+        + '<td data-label="Staður" style="' + cell + '"><select class="st-loc" style="' + locStyle + '">' + locOptions(selVal) + '</select>'
           + (sHigh ? ' <span style="font-size:10.5px;color:#b45309" title="Sjálfvirk tillaga (heimilisfang passar)">tillaga</span>'
              : (sLow ? ' <span style="font-size:10.5px;color:#64748b" title="Veik tillaga út frá nafni — opnaðu PDF og staðfestu">tillaga?</span>' : '')) + '</td>'
-        + '<td style="' + cell + ';text-align:center"><input type="checkbox" class="st-dup"' + (d.is_duplicate ? ' checked' : '') + ' title="Tvítak"></td>'
-        + '<td style="' + cell + ';text-align:center;white-space:nowrap"><input type="checkbox" class="st-rev"' + (d.reviewed ? ' checked' : '') + ' title="Staðfest"> <button class="st-del" type="button" title="Fjarlægja skráningu (PDF helst í Drive)" style="border:0;background:none;cursor:pointer;color:#cbd5e1;font-size:13px;padding:0 2px">🗑</button></td>'
+        + '<td data-label="Tvítak" style="' + cell + ';text-align:center"><input type="checkbox" class="st-dup"' + (d.is_duplicate ? ' checked' : '') + ' title="Tvítak"></td>'
+        + '<td data-label="Staðfest" style="' + cell + ';text-align:center;white-space:nowrap"><input type="checkbox" class="st-rev"' + (d.reviewed ? ' checked' : '') + ' title="Staðfest"> <button class="st-del" type="button" title="Fjarlægja skráningu (PDF helst í Drive)" style="border:0;background:none;cursor:pointer;color:#cbd5e1;font-size:13px;padding:0 2px">🗑</button></td>'
         + '</tr>';
     }
     const THEAD = '<thead><tr style="background:#f8fafc;color:#475569;font-size:11px;text-transform:uppercase;letter-spacing:.03em">'
@@ -3981,16 +4019,16 @@ function wireStation(){
       const cell = 'padding:6px 8px';
       const warn = d.multi_site ? ' <span title="rekstrarfélag — margir staðir; opnaðu PDF og staðfestu réttan" style="color:#b45309;font-weight:600">⚠ ' + d.sites.length + '</span>' : '';
       return '<tr data-id="' + d.id + '" style="border-top:1px solid #eef2f7' + (d.reviewed ? ';background:#f0fdf4' : '') + '">'
-        + '<td style="' + cell + ';white-space:nowrap">' + (d.view_url
+        + '<td data-label="Skjal" style="' + cell + ';white-space:nowrap">' + (d.view_url
             ? '<a href="' + d.view_url + '" target="_blank" rel="noopener" class="btn" style="padding:3px 8px;text-decoration:none">📄 Opna</a>'
             : '<span style="color:#cbd5e1">engin skrá</span>') + '</td>'
-        + '<td style="' + cell + ';font-size:12px"><div style="font-weight:600;color:#0f172a">' + esc(d.base_nafn) + warn + '</div><div style="color:#94a3b8;font-size:11px;font-family:monospace">' + esc(d.kennitala || '') + '</div></td>'
-        + '<td style="' + cell + ';font-size:12px;color:#334155">' + esc(d.filename) + '</td>'
-        + '<td style="' + cell + ';text-align:center">' + tegSelect(d) + '</td>'
-        + '<td style="' + cell + '"><input class="st-year" value="' + esc(d.year) + '" style="width:56px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:12px"></td>'
-        + '<td style="' + cell + '"><select class="st-loc" style="min-width:170px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:12px">' + gLocOptions(d) + '</select></td>'
-        + '<td style="' + cell + ';text-align:center"><input type="checkbox" class="st-dup"' + (d.is_duplicate ? ' checked' : '') + ' title="Tvítak"></td>'
-        + '<td style="' + cell + ';text-align:center;white-space:nowrap"><input type="checkbox" class="st-rev"' + (d.reviewed ? ' checked' : '') + ' title="Staðfest"> <button class="st-del" type="button" title="Fjarlægja skráningu (PDF helst í Drive)" style="border:0;background:none;cursor:pointer;color:#cbd5e1;font-size:13px;padding:0 2px">🗑</button></td>'
+        + '<td data-label="Fyrirtæki" class="st-stack" style="' + cell + ';font-size:12px"><div style="font-weight:600;color:#0f172a">' + esc(d.base_nafn) + warn + '</div><div style="color:#94a3b8;font-size:11px;font-family:monospace">' + esc(d.kennitala || '') + '</div></td>'
+        + '<td data-label="Skrá" class="st-stack" style="' + cell + ';font-size:12px;color:#334155"><span class="st-fname" title="' + esc(d.filename) + '">' + esc(d.filename) + '</span></td>'
+        + '<td data-label="Tegund" style="' + cell + ';text-align:center">' + tegSelect(d) + '</td>'
+        + '<td data-label="Ár" style="' + cell + '"><input class="st-year" value="' + esc(d.year) + '" style="width:56px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:12px"></td>'
+        + '<td data-label="Staður" style="' + cell + '"><select class="st-loc" style="min-width:170px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:12px">' + gLocOptions(d) + '</select></td>'
+        + '<td data-label="Tvítak" style="' + cell + ';text-align:center"><input type="checkbox" class="st-dup"' + (d.is_duplicate ? ' checked' : '') + ' title="Tvítak"></td>'
+        + '<td data-label="Staðfest" style="' + cell + ';text-align:center;white-space:nowrap"><input type="checkbox" class="st-rev"' + (d.reviewed ? ' checked' : '') + ' title="Staðfest"> <button class="st-del" type="button" title="Fjarlægja skráningu (PDF helst í Drive)" style="border:0;background:none;cursor:pointer;color:#cbd5e1;font-size:13px;padding:0 2px">🗑</button></td>'
         + '</tr>';
     }
     function renderGlobal(){
