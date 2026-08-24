@@ -49,9 +49,48 @@ exports.handler = async (event) => {
       if (sr.ok) (await sr.json()).forEach((r) => { stById[r.site_id] = r; });
     } catch (_) {}
 
+    // 2b) Brunaslöngur per byggingu (fyrirtaeki_id = site_id í fyrirtaeki-töflunni)
+    const sloById = {};
+    try {
+      const siteIds = sites.map((s) => s.id).filter(Boolean);
+      if (siteIds.length) {
+        const ar = await P.sbGet(`arsskodun_report_facts?fyrirtaeki_id=in.(${siteIds.join(',')})&select=fyrirtaeki_id,report_year,equipment&order=report_year.desc`);
+        if (ar.ok) {
+          (await ar.json()).forEach((r) => {
+            if (sloById[r.fyrirtaeki_id] !== undefined) return;
+            const eq = (typeof r.equipment === 'string') ? JSON.parse(r.equipment) : (r.equipment || {});
+            sloById[r.fyrirtaeki_id] = eq.brunaslongur != null ? Number(eq.brunaslongur) : null;
+          });
+        }
+      }
+    } catch (_) {}
+
+    // 2c) Brunakerfi — næsta skoðun og fjöldi staðsetning í þjónustu
+    const bkById = {};
+    const bkSiteIds = new Set();
+    try {
+      const kr = await P.sbGet(`brunakerfi_skyrslur?customer_base_id=eq.${baseId}&select=fyrirtaeki_id,year,data&order=year.desc`);
+      if (kr.ok) {
+        (await kr.json()).forEach((r) => {
+          bkSiteIds.add(r.fyrirtaeki_id);
+          if (bkById[r.fyrirtaeki_id]) return;
+          const d2 = (typeof r.data === 'string') ? JSON.parse(r.data) : (r.data || {});
+          const dags = d2.meta && d2.meta.dags;
+          if (dags) {
+            const m = /^(\d{4})-(\d{2})/.exec(String(dags));
+            if (m) bkById[r.fyrirtaeki_id] = '01.' + m[2] + '.' + (Number(m[1]) + 1);
+          }
+        });
+      }
+    } catch (_) {}
+
     // 3) Byggingar — hvítlistaðir reitir
     const buildings = sites.map((s) => {
       const st = stById[s.id] || {};
+      let slNext = '—';
+      if (st.report_year && st.inspect_month) {
+        slNext = '01.' + String(st.inspect_month).padStart(2, '0') + '.' + (st.report_year + 1);
+      }
       return {
         id: s.id,
         nafn: s.nafn,
@@ -60,6 +99,8 @@ exports.handler = async (event) => {
         stada: st.stada || (s.er_i_thjonustu === false ? 'ekki_i_thjonustu' : 'engin_skyrsla'),
         sidasta_ar: st.report_year || null,
         taeki: st.total_devices != null ? st.total_devices : null,
+        slo: sloById[s.id] != null ? sloById[s.id] : null,
+        nt: 'Tæki: ' + slNext + '|Kerfi: ' + (bkById[s.id] || '—'),
       };
     });
 
@@ -95,6 +136,8 @@ exports.handler = async (event) => {
       i_lagi: buildings.filter((b) => b.stada === 'ok').length,
       vantar: buildings.filter((b) => b.stada === 'engin_skyrsla').length,
       taeki_alls: buildings.reduce((n, b) => n + (b.taeki || 0), 0),
+      brunaslongur_alls: buildings.reduce((n, b) => n + (b.slo || 0), 0),
+      brunakerfi_stk: bkSiteIds.size,
     };
 
     // 7) Skilaboð (fyrirspurna-þráður félagsins) + merkja starfs-skilaboð lesin

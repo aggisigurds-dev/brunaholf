@@ -105,13 +105,13 @@
       stats: [
         { k: 'Byggingar', v: s.byggingar != null ? String(s.byggingar) : '—' },
         { k: 'Slökkvitæki', v: s.taeki_alls != null ? String(s.taeki_alls) : '—' },
-        { k: 'Brunaslöngur', v: '—' },
-        { k: 'Brunakerfi', v: '—' },
+        { k: 'Brunaslöngur', v: s.brunaslongur_alls != null ? String(s.brunaslongur_alls) : '—' },
+        { k: 'Brunakerfi', v: s.brunakerfi_stk != null ? String(s.brunakerfi_stk) : '—', s: 'hús' },
         { k: 'Skoðun á tíma', v: s.i_lagi != null ? String(s.i_lagi) : '—', s: 'hús', dark: true },
       ],
       buildings: (d.buildings || []).map(function (b) {
-        return { nafn: b.nafn, heimilisfang: b.heimilisfang, sl: b.taeki, slo: null, br: b.i_thjonustu,
-          y: yearsFromStatus(b), nt: '', docId: null, stada: b.stada };
+        return { nafn: b.nafn, heimilisfang: b.heimilisfang, sl: b.taeki, slo: b.slo, br: b.i_thjonustu,
+          y: yearsFromStatus(b), nt: b.nt || '', docId: null, stada: b.stada };
       }),
       reports: (d.reports || []).map(function (r) {
         return { docId: r.docId, dags: r.dags || r.ar, bygging: r.bygging, heimilisfang: '', tegund: TYPE_LABEL[r.tegund] || r.tegund, magn: r.magn, ar: r.ar };
@@ -222,8 +222,8 @@
         '<td>' + (b.br ? 'Já' : '—') + '</td>' +
         '<td><div class="yrs">' + boxes + '</div></td>' +
         '<td><div class="next">' + (next || '<span class="dim">—</span>') + '</div></td>' +
-        '<td class="r">' + docLink('Skjöl', b.docId) + '</td></tr>';
-    }).join('') || '<tr><td colspan="7" class="empty">Engar byggingar skráðar</td></tr>';
+        '</tr>';
+    }).join('') || '<tr><td colspan="6" class="empty">Engar byggingar skráðar</td></tr>';
   }
 
   function docLink(label, docId) {
