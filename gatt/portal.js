@@ -22,14 +22,14 @@
       { k: 'Brunakerfi', v: '10', s: 'hús' }, { k: 'Skoðun á tíma', v: '1', s: 'hús', dark: true },
     ],
     buildings: [
-      { nafn: 'Arnarhvoll', heimilisfang: 'Ingólfsstræti 1, 101 Reykjavík', sl: 13, slo: 8, br: true, y: [['no', 'ok'], ['ok', 'ok'], ['ok', 'ok'], ['ok', 'ok']], nt: 'Tæki: 01.01.2027|Kerfi: 01.05.2027' },
-      { nafn: 'Grandi', heimilisfang: 'Seljavegur 2, 101 Reykjavík', sl: 14, slo: 11, br: true, y: [['ok', 'ok'], ['ok', 'ok'], ['ok', 'ok'], ['ok', 'ok']], nt: 'Tæki: 01.01.2027|Kerfi: 01.03.2027' },
-      { nafn: 'Hlaðvarpinn', heimilisfang: 'Aðalstræti 4, 101 Reykjavík', sl: null, slo: null, br: true, y: [['no', 'no'], ['no', 'ok'], ['no', 'ok'], ['no', 'ok']], nt: 'Tæki: —|Kerfi: 01.06.2027' },
-      { nafn: 'Klöpp', heimilisfang: 'Klapparstígur 26, 101 Reykjavík', sl: 18, slo: 10, br: true, y: [['no', 'ok'], ['ok', 'ok'], ['ok', 'ok'], ['ok', 'ok']], nt: 'Tæki: 01.07.2027|Kerfi: 01.10.2026' },
-      { nafn: 'Laugavegur', heimilisfang: 'Laugavegur 95–99, 101 Reykjavík', sl: 15, slo: null, br: true, y: [['ok', 'no'], ['ok', 'ok'], ['ok', 'ok'], ['ok', 'ok']], nt: 'Tæki: 01.08.2027|Kerfi: 01.09.2027' },
-      { nafn: 'Miðgarður', heimilisfang: 'Laugavegur 120, 101 Reykjavík', sl: 31, slo: null, br: true, y: [['ok', 'no'], ['ok', 'ok'], ['ok', 'ok'], ['due', 'ok']], nt: 'Tæki: 01.09.2026|Kerfi: 01.09.2027', ontime: '01.09.2026' },
-      { nafn: 'Plaza', heimilisfang: 'Aðalstræti 4–6, 101 Reykjavík', sl: 44, slo: 39, br: true, y: [['ok', 'no'], ['ok', 'ok'], ['ok', 'ok'], ['ok', 'due']], nt: 'Tæki: 01.08.2027|Kerfi: 01.12.2026' },
-      { nafn: 'Skjaldbreið', heimilisfang: 'Laugavegur 16, 101 Reykjavík', sl: 3, slo: null, br: true, y: [['no', 'no'], ['no', 'ok'], ['ok', 'ok'], ['ok', 'ok']], nt: 'Tæki: 01.07.2027|Kerfi: 01.09.2027' },
+      { nafn: 'Arnarhvoll', heimilisfang: 'Ingólfsstræti 1, 101 Reykjavík', sl: 13, slo: 8, br: true, y: [['no', 'ok'], ['ok', 'ok'], ['ok', 'ok'], ['ok', 'ok']], nt: 'Slökkvit.: 01.01.2027|Brunak.: 01.05.2027' },
+      { nafn: 'Grandi', heimilisfang: 'Seljavegur 2, 101 Reykjavík', sl: 14, slo: 11, br: true, y: [['ok', 'ok'], ['ok', 'ok'], ['ok', 'ok'], ['ok', 'ok']], nt: 'Slökkvit.: 01.01.2027|Brunak.: 01.03.2027' },
+      { nafn: 'Hlaðvarpinn', heimilisfang: 'Aðalstræti 4, 101 Reykjavík', sl: null, slo: null, br: true, y: [['no', 'no'], ['no', 'ok'], ['no', 'ok'], ['no', 'ok']], nt: 'Slökkvit.: —|Brunak.: 01.06.2027' },
+      { nafn: 'Klöpp', heimilisfang: 'Klapparstígur 26, 101 Reykjavík', sl: 18, slo: 10, br: true, y: [['no', 'ok'], ['ok', 'ok'], ['ok', 'ok'], ['ok', 'ok']], nt: 'Slökkvit.: 01.07.2027|Brunak.: 01.10.2026' },
+      { nafn: 'Laugavegur', heimilisfang: 'Laugavegur 95–99, 101 Reykjavík', sl: 15, slo: null, br: true, y: [['ok', 'no'], ['ok', 'ok'], ['ok', 'ok'], ['ok', 'ok']], nt: 'Slökkvit.: 01.08.2027|Brunak.: 01.09.2027' },
+      { nafn: 'Miðgarður', heimilisfang: 'Laugavegur 120, 101 Reykjavík', sl: 31, slo: null, br: true, y: [['ok', 'no'], ['ok', 'ok'], ['ok', 'ok'], ['due', 'ok']], nt: 'Slökkvit.: 01.09.2026|Brunak.: 01.09.2027', ontime: '01.09.2026' },
+      { nafn: 'Plaza', heimilisfang: 'Aðalstræti 4–6, 101 Reykjavík', sl: 44, slo: 39, br: true, y: [['ok', 'no'], ['ok', 'ok'], ['ok', 'ok'], ['ok', 'due']], nt: 'Slökkvit.: 01.08.2027|Brunak.: 01.12.2026' },
+      { nafn: 'Skjaldbreið', heimilisfang: 'Laugavegur 16, 101 Reykjavík', sl: 3, slo: null, br: true, y: [['no', 'no'], ['no', 'ok'], ['ok', 'ok'], ['ok', 'ok']], nt: 'Slökkvit.: 01.07.2027|Brunak.: 01.09.2027' },
     ],
     reports: [
       { dags: '2026-08-03', bygging: 'Klöpp', heimilisfang: 'Klapparstígur 26', tegund: 'Slökkvitæki og slöngur', magn: '18 + 10', ar: 2026 },
@@ -212,7 +212,7 @@
           var kv = line.split(':');
           var lbl = kv.shift(), val = kv.join(':').trim();
           var isOn = b.ontime && val.indexOf(b.ontime) > -1;
-          return '<div><span class="lbl">' + esc(lbl) + ':</span> ' + (isOn ? '<b>' + esc(val) + '</b><span class="badge">Á tíma</span>' : esc(val)) + '</div>';
+          return '<div><span class="lbl">' + esc(lbl) + '</span> ' + (isOn ? '<b>' + esc(val) + '</b><span class="badge">Á tíma</span>' : esc(val)) + '</div>';
         }).join('');
       }
       return '<tr' + (b.ontime ? ' class="ontime"' : '') + '>' +

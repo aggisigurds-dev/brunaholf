@@ -101,7 +101,7 @@ exports.handler = async (event) => {
         sidasta_ar: st.report_year || null,
         taeki: st.total_devices != null ? st.total_devices : null,
         slo: sloById[s.id] != null ? sloById[s.id] : null,
-        nt: 'Tæki: ' + slNext + '|Kerfi: ' + (bkById[s.id] || '—'),
+        nt: 'Slökkvit.: ' + slNext + '|Brunak.: ' + (bkById[s.id] || '—'),
       };
     });
 
