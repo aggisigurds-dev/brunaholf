@@ -15,8 +15,8 @@
     --chip:#eef2f7;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:14px;line-height:1.45}
-  .wrap{max-width:1280px;margin:0 auto;padding:18px 16px 48px}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:14px;line-height:1.45;overflow-x:hidden}
+  .wrap{max-width:1280px;margin:0 auto;padding:18px 16px 48px;min-width:0}
   h1{font-size:22px;margin:0 0 4px;font-weight:760;letter-spacing:-.02em}
   .lead{color:var(--muted);font-size:13.5px;margin:0 0 14px;max-width:72ch}
   .lead b{color:var(--text);font-weight:650}
@@ -65,10 +65,31 @@
   .empty{padding:28px;text-align:center;color:var(--muted)}
   .note{font-size:12px;color:var(--muted);margin-top:14px}
   .err{background:var(--duebg);color:var(--due);border:1px solid var(--duebd);border-radius:10px;padding:10px 12px}
-  @media (max-width:640px){
+  .phone{display:none}
+  .cardlist{flex-direction:column;gap:8px}
+  .pcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 13px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+  .pcard-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .pcard-top .name{font-size:16px;line-height:1.3;min-width:0}
+  .pcard-top .badge{flex-shrink:0;margin-top:2px}
+  .pcard-meta{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:8px;font-size:13px;color:var(--muted)}
+  .pcard-meta b{color:var(--text);font-weight:650}
+  .pcard .yrs{margin-top:8px}
+  @media (max-width:720px){
     .wrap{padding:12px 10px 36px}
     h1{font-size:19px}
-    th,td{padding:8px 7px}
+    .lead{font-size:13px}
+    .search{min-width:0;width:100%;font-size:16px}
+    .newbtn{width:100%;justify-content:center;min-height:44px}
+    .toolbar{flex-direction:column;align-items:stretch}
+    .stats{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+    .stat{min-width:0}
+    .months{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;margin-right:-10px;padding-right:10px}
+    .mchip{flex:0 0 auto;min-height:44px;padding:8px 12px}
+    .desk{display:none}
+    .phone.cardlist{display:flex}
+    .pcard .yr{width:36px;height:36px;font-size:12px}
+    th:first-child,td:first-child,th:last-child,td:last-child{position:static;min-width:0;box-shadow:none}
+    table{min-width:0}
   }
 </style>
 </head>
@@ -164,26 +185,49 @@ function render(){
     document.getElementById('list').innerHTML='<div class="scroller"><div class="empty">Ekkert fannst.</div></div>';
     return;
   }
-  const body=rows.map(r=>{
+  const parts=rows.map(r=>{
     const href=custHref(r);
     const name=href?`<a href="${esc(href)}">${esc(r.nafn)}</a>`:esc(r.nafn);
     let hint='';
     if(r.false_if_uttekt) hint=`<span class="hint warn">slökkvitæki skoðað ${r.uttekt_year} — telst ekki hér</span>`;
     else if(r.false_if_kt) hint=`<span class="hint warn">systkinahús á sömu kt á skýrslu ${d.year} — telst ekki hér</span>`;
-    return `<tr>
+    const badge = `<span class="badge ${esc(r.stada)}">${esc(r.stada_label)}</span>`;
+    const addr = esc(r.heimilisfang||'—');
+    const mon = r.last_month?esc(MONTHS[r.last_month]):'—';
+    const last = esc(lastTxt(r));
+    const docs = r.docs||0;
+    return {
+      tr: `<tr>
       <td><div class="name">${name}</div>${hint}</td>
       <td>${yearCells(r)}</td>
-      <td class="addr">${esc(r.heimilisfang||'—')}</td>
-      <td class="mon">${r.last_month?esc(MONTHS[r.last_month]):'—'}</td>
-      <td class="last">${esc(lastTxt(r))}</td>
-      <td class="docs">${r.docs||0}</td>
-      <td><span class="badge ${esc(r.stada)}">${esc(r.stada_label)}</span></td>
-    </tr>`;
-  }).join('');
+      <td class="addr">${addr}</td>
+      <td class="mon">${mon}</td>
+      <td class="last">${last}</td>
+      <td class="docs">${docs}</td>
+      <td>${badge}</td>
+    </tr>`,
+      card: `<article class="pcard">
+      <div class="pcard-top">
+        <div class="name">${name}${hint}</div>
+        ${badge}
+      </div>
+      ${yearCells(r)}
+      <div class="pcard-meta">
+        <span>${addr}</span>
+        <span>Mán <b>${mon}</b></span>
+        <span>Síðast <b>${last}</b></span>
+        <span>Skjöl <b>${docs}</b></span>
+      </div>
+    </article>`
+    };
+  });
+  const body = parts.map(p=>p.tr).join('');
+  const cards = parts.map(p=>p.card).join('');
   document.getElementById('list').innerHTML =
-    `<div class="scroller"><table><thead><tr>
+    `<div class="scroller desk"><table><thead><tr>
       <th>Fyrirtæki</th><th>'23–'26</th><th>Heimilisfang</th><th>Mánuður</th><th>Síðast</th><th>Skjöl</th><th>Staða</th>
-    </tr></thead><tbody>${body}</tbody></table></div>`;
+    </tr></thead><tbody>${body}</tbody></table></div>
+    <div class="phone cardlist">${cards}</div>`;
 }
 
 async function load(){
