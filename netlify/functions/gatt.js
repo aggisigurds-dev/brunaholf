@@ -85,6 +85,28 @@ exports.handler = async (event) => {
       if (m) bkById[sid] = '01.' + m[2] + '.' + (Number(m[1]) + 1);
     });
 
+    // Ársdótar '23–'26: AÐEINS skjöl á þessum fyrirtaeki_id. Charlize: aldrei
+    // mála öll hús rekstrarfélags græn af einni skýrslu / stada='ok'. Óstaðsett
+    // skjal (fyrirtaeki_id null) telst aðeins ef félagið á nákvæmlega einn stað.
+    const liveCount = sites.filter((s) => s.er_i_thjonustu === true).length;
+    const YEAR_BOXES = [2023, 2024, 2025, 2026];
+    function yearsForSite(siteId) {
+      const u = {}, b = {};
+      YEAR_BOXES.forEach((y) => { u[y] = false; b[y] = false; });
+      docs.forEach((d) => {
+        if (d.is_duplicate) return;
+        const sid = d.fyrirtaeki_id;
+        if (sid == null) {
+          if (liveCount !== 1) return;
+        } else if (Number(sid) !== Number(siteId)) return;
+        const y = Number(d.year || (d.doc_date ? String(d.doc_date).slice(0, 4) : 0));
+        if (!YEAR_BOXES.includes(y)) return;
+        if (d.doc_type === 'uttektarskyrsla') u[y] = true;
+        if (d.doc_type === 'brunakerfi') b[y] = true;
+      });
+      return YEAR_BOXES.map((y) => [u[y] ? 'ok' : 'no', b[y] ? 'ok' : 'no']);
+    }
+
     // 3) Byggingar — hvítlistaðir reitir
     const buildings = sites.map((s) => {
       const st = stById[s.id] || {};
@@ -101,6 +123,9 @@ exports.handler = async (event) => {
         sidasta_ar: st.report_year || null,
         taeki: st.total_devices != null ? st.total_devices : null,
         slo: sloById[s.id] != null ? sloById[s.id] : null,
+        y: yearsForSite(s.id),
+        // Brunak. dálkur: á skjal á ÞESSUM stað, ekki „í þjónustu".
+        br: bkSiteIds.has(s.id),
         nt: 'Slökkvit.: ' + slNext + '|Brunak.: ' + (bkById[s.id] || '—'),
       };
     });

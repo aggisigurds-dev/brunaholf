@@ -64,6 +64,10 @@
   .site:last-child { border-bottom:0; }
   .site .n { font-weight:600; }
   .site .a { color:var(--muted); font-size:12px; margin-top:2px; }
+  .site-mx { margin:12px 0 18px; padding-top:8px; border-top:1px solid #f1f5f9; }
+  .site-mx:first-of-type { border-top:0; padding-top:0; }
+  .site-mx .n { font-weight:600; margin-bottom:6px; }
+  .site-mx .a { font-weight:400; color:var(--muted); }
 
   /* AR / invoices */
   table.inv { width:100%; border-collapse:collapse; font-size:12.5px; }
@@ -177,8 +181,16 @@ function render(d) {
   const yearNow = new Date().getUTCFullYear();
   html += '<div class="badges">';
   if (base.er_i_thjonustu) html += '<span class="b ok">✓ Í þjónustu</span>';
-  if (summary.has_2026_uttekt) html += '<span class="b ok">' + yearNow + ' skýrsla komin</span>';
-  else if (base.er_i_thjonustu) html += '<span class="b due">⚠ Vantar ' + yearNow + ' skýrslu</span>';
+  const nLive = summary.sites_in_service || ((sites || []).filter(s => s.er_i_thjonustu).length);
+  const nOk = summary.sites_with_2026_uttekt;
+  if (nLive > 1 && nOk != null) {
+    if (nOk === nLive) html += '<span class="b ok">' + yearNow + ' skýrsla á öllum ' + nLive + ' stöðum</span>';
+    else html += '<span class="b due">' + nOk + '/' + nLive + ' staðir með ' + yearNow + ' skýrslu</span>';
+  } else if (summary.has_2026_uttekt) {
+    html += '<span class="b ok">' + yearNow + ' skýrsla komin</span>';
+  } else if (base.er_i_thjonustu) {
+    html += '<span class="b due">⚠ Vantar ' + yearNow + ' skýrslu</span>';
+  }
   if (summary.ar_open_kr > 0) html += '<span class="b due">' + fmtKr(summary.ar_open_kr) + ' kr óinnheimt</span>';
   if (summary.dup_count > 0) html += '<span class="b vantar">' + summary.dup_count + ' tvítak</span>';
   const slReikThisYear = docs.filter(d => d.doc_type === 'reikningur' &&
@@ -217,15 +229,21 @@ function render(d) {
 
   // Year matrix
   html += '<div class="card"><h2>📊 Ár-grid</h2>';
-  html += yearMatrix(docs, base.er_i_thjonustu);
+  html += yearMatrix(docs, base.er_i_thjonustu, sites);
   html += '</div>';
 
   // Sites (only if >0)
   if (sites && sites.length) {
     html += '<div class="card"><h2>📍 Staðsettningar (' + sites.length + ')</h2>';
     for (const s of sites) {
+      const siteUt = docs.filter(d => d.fyrirtaeki_id === s.id && d.doc_type === 'uttektarskyrsla' && !d.is_duplicate);
+      const years = siteUt.map(d => d.year || (d.doc_date ? Number(String(d.doc_date).slice(0, 4)) : null)).filter(Boolean);
+      const last = years.length ? Math.max.apply(null, years) : null;
+      let cov = '<span class="b vantar">engin skýrsla</span>';
+      if (last >= yearNow) cov = '<span class="b ok">skýrsla ' + last + '</span>';
+      else if (last) cov = '<span class="b due">síðast ' + last + '</span>';
       html += '<div class="site">';
-      html += '<div class="n">' + esc(s.nafn || '?') + (s.er_i_thjonustu ? ' <span class="b ok" style="font-size:10px">í þjón.</span>' : '') + '</div>';
+      html += '<div class="n">' + esc(s.nafn || '?') + (s.er_i_thjonustu ? ' <span class="b ok" style="font-size:10px">í þjón.</span>' : '') + ' ' + cov + '</div>';
       if (s.heimilisfang) html += '<div class="a">' + esc(s.heimilisfang) + '</div>';
       html += '</div>';
     }
@@ -383,11 +401,32 @@ function docLink(doc) {
   return `<a class="${cls}" href="${esc(doc.view_url)}" target="_blank" rel="noopener" title="${esc(tip)}">${esc(label)}</a>`;
 }
 
-function yearMatrix(docs, expected) {
+function yearMatrix(docs, expected, sites) {
+  const live = (sites || []).filter(s => s.er_i_thjonustu === true);
+  if (live.length > 1) {
+    let html = '<p class="lead" style="margin:0 0 10px">Per stað — skýrsla á einu húsi telst ekki á hinum.</p>';
+    for (const s of live) {
+      const siteDocs = docs.filter(d => d.fyrirtaeki_id === s.id);
+      html += '<div class="site-mx"><div class="n">' + esc(s.nafn || '?') + (s.heimilisfang ? ' <span class="a">· ' + esc(s.heimilisfang) + '</span>' : '') + '</div>';
+      html += yearMatrixTable(siteDocs, !!s.er_i_thjonustu);
+      html += '</div>';
+    }
+    const loose = docs.filter(d => !d.fyrirtaeki_id && (d.doc_type === 'uttektarskyrsla' || d.doc_type === 'reikningur') && !d.is_duplicate);
+    if (loose.length) {
+      html += '<div class="site-mx"><div class="n">Óstaðsett skjöl (' + loose.length + ') — ekki talin sem þekja</div>';
+      html += yearMatrixTable(loose, false);
+      html += '</div>';
+    }
+    return html;
+  }
+  return yearMatrixTable(docs, expected);
+}
+
+function yearMatrixTable(docs, expected) {
   // Determine year range
   const years = new Set();
   for (const d of docs) {
-    const y = d.year || (d.doc_date ? Number(d.doc_date.slice(0, 4)) : null);
+    const y = Number(d.year || (d.doc_date ? String(d.doc_date).slice(0, 4) : 0)) || null;
     if (y) years.add(y);
   }
   const cy = new Date().getUTCFullYear();
@@ -399,8 +438,8 @@ function yearMatrix(docs, expected) {
 
   let html = '<table class="matrix"><thead><tr><th>Ár</th><th>📄 Úttektarskýrsla</th><th>🧾 Reikningar</th></tr></thead><tbody>';
   for (const y of sorted) {
-    const u = docs.filter(d => (d.year || (d.doc_date ? Number(d.doc_date.slice(0, 4)) : null)) === y && d.doc_type === 'uttektarskyrsla');
-    const r = docs.filter(d => (d.year || (d.doc_date ? Number(d.doc_date.slice(0, 4)) : null)) === y && d.doc_type === 'reikningur');
+    const u = docs.filter(d => (Number(d.year || (d.doc_date ? String(d.doc_date).slice(0, 4) : 0)) || null) === y && d.doc_type === 'uttektarskyrsla');
+    const r = docs.filter(d => (Number(d.year || (d.doc_date ? String(d.doc_date).slice(0, 4) : 0)) || null) === y && d.doc_type === 'reikningur');
     html += `<tr><td class="yr">${y}</td>`;
     html += '<td>' + (u.length ? u.map(docLink).join(' ') : (expected ? '<span class="b vantar">vantar</span>' : '<span class="cell-empty">—</span>')) + '</td>';
     html += '<td>' + (r.length ? r.map(docLink).join(' ') : '<span class="cell-empty">—</span>') + '</td>';
