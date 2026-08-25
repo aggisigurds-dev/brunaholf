@@ -143,20 +143,14 @@ repeatable Athugasemdir tables per device group, Ábendingar, signature canvas.
 localStorage draft autosave (no required fields — ALLTAF LEYFA VISTUN), 🖨 print
 CSS for a clean PDF. Linked from `brunakerfi.html` („🧯 Ný skoðunarskýrsla…").
 
-`brunakerfi.html` is a per-customer ledger for the brunakerfi /
-slökkvitæki **service customers** (fyrirtæki í þjónustu): a one-time
-þjónustusamningur + a yearly úttektarskýrsla + reikningur (2024–2026),
-each linked to Google Drive. Data is hand-encoded in `CUSTOMERS` /
-`INVOICES_2026` / `FILE_IDS`, cross-linked to `rekstrarfelog.html` by kt.
+`brunakerfi.html` er **lifandi yfirlit** (`GET /api/brunakerfi-yfirlit`): ein röð
+per stað (`fyrirtaeki_id`), ár-dótar og STAÐA úr `customer_documents` með
+`doc_type=brunakerfi`. Handskráði `CUSTOMERS` / `FILE_IDS` listinn (eitt spjald
+fyrir „Center Hotels (8 hótel)") er aflagður — hann blandaði 2026-skýrslum
+Granda/Arnarhvolls yfir á Klöpp. Hub-flipi: `#brunayfirlit`.
 
-**Standing instruction:** whenever new docs/PDFs surface — in the Drive
-`Brunakerfi\{Skýrslur,Samningar,Reikningar}` folders, the top-level
-`Skýrslur` slökkvitæki-inspection archive, or the `bokhald@eldklar.is` /
-`eldklar.is` mail — link them into this ledger: add the file to the right
-customer/year (resolve its Drive fileId into `FILE_IDS`; OCR scanned
-reikningar for customer + kt + amount) and fill the matching `vantar`
-cell. Add new service customers as they sign up. Surface (don't drop)
-anything undated.
+**Standing instruction:** ný brunakerfi-PDF eiga að lenda í `customer_documents`
+með rétt `fyrirtaeki_id` (Tengireglan). Ekki bæta við handvirkum færslum í HTML.
 
 ---
 

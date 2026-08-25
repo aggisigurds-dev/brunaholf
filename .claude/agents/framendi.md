@@ -247,6 +247,15 @@ sannleik og lifir áfram óbreytt sem sjálfstæð slóð og app-síða í
 slökkvitæki-öppunum (`br-fjarmalyfirlit` í patch 261). Deep-link:
 `/#fjarmalyfirlit` (líka í `?embed=1`).
 
+## Brunakerfi yfirlit — 2026-08-25
+
+Flipi **`brunayfirlit`** (🔔 Brunakerfi yfirlit, rétt á eftir `skodanir`) —
+`/brunakerfi.html` innfellt í iframe (`renderBrunakerfiYfirlit`, `?v=Date.now()`).
+Les `/api/brunakerfi-yfirlit`. Ein röð per stað; **Skoðað YYYY** aðeins ef
+brunakerfi-PDF er á þessum `fyrirtaeki_id`. Deep-link: `/#brunayfirlit`.
+Eldri handskráði `CUSTOMERS`-listinn (eitt spjald fyrir alla Center Hótel-keðjuna)
+var fjarlægður — hann málaði 2026-skýrslu Granda/Arnarhvolls á Klöpp.
+
 ## Skýrslur-flipi + CG (Calculation Group) — 2026-08-02
 
 Nýr flipi **`skyrslur`** (fyrir ofan `krofuyfirlit`) — samantektir yfir óinnheimtar
