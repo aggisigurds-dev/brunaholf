@@ -52,6 +52,12 @@ mál — en staðir rekstrarfélags eru **ekki** tvítök þótt kt sé eins.
 - **`fyrirtaeki` hefur TVO tengiliða-dálka:** `tengiliður` (með broddstaf) OG
   `tengilidur` (ascii). Bæði til, bæði í notkun. Athugaðu hvorn tveggja.
 - **`fyrirtaeki_id` er innra staðar-id, ekki kennitala.** Aldrei rugla saman.
+- **Þekja (skýrsla/ársskoðun) er ALLTAF á stað.** `has_2026_uttekt` á kúnna-síðu og
+  ársdótar Þjónustuvefs (`gatt.js`) telja aðeins `customer_documents.fyrirtaeki_id`
+  = þessi staður. Ein 2026-skýrsla á Center Hótel Grandi málar EKKI Klöpp/Arnarhvoll.
+  Óstaðsett skjal (`fyrirtaeki_id` null) telst aðeins ef félagið á nákvæmlega einn
+  lifandi stað. Rangt grænt er verra en autt.
+
 - Kúnnar eru til í bæði Supabase og Bakskjali (Google Sheet) — **þau eru ekki samstillt.**
   Supabase er sannleikurinn fyrir öppin.
 

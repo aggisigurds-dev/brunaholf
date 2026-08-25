@@ -110,8 +110,8 @@
         { k: 'Skoðun á tíma', v: s.i_lagi != null ? String(s.i_lagi) : '—', s: 'hús', dark: true },
       ],
       buildings: (d.buildings || []).map(function (b) {
-        return { nafn: b.nafn, heimilisfang: b.heimilisfang, sl: b.taeki, slo: b.slo, br: b.i_thjonustu,
-          y: yearsFromStatus(b), nt: b.nt || '', docId: null, stada: b.stada };
+        return { nafn: b.nafn, heimilisfang: b.heimilisfang, sl: b.taeki, slo: b.slo, br: !!b.br,
+          y: Array.isArray(b.y) ? b.y : yearsFromStatus(b), nt: b.nt || '', docId: null, stada: b.stada };
       }),
       reports: (d.reports || []).map(function (r) {
         return { docId: r.docId, dags: r.dags || r.ar, bygging: r.bygging, heimilisfang: '', tegund: TYPE_LABEL[r.tegund] || r.tegund, magn: r.magn, ar: r.ar };
@@ -123,11 +123,12 @@
     };
   }
   function yearsFromStatus(b) {
-    // Einföld nálgun þar til full 4-ára tafla er reiknuð server-megin.
+    // Fallback ef bakendinn sendir ekki `y`. Aðeins raunverulegt síðasta ár —
+    // aldrei mála 2023–N græn af stada='ok' (það var false-grænt á rekstrarfélögum).
     var cur = b.sidasta_ar || 0;
     return ['2023', '2024', '2025', '2026'].map(function (y) {
-      var on = b.stada === 'ok' && Number(y) <= cur ? 'ok' : (b.stada === 'engin_skyrsla' ? 'no' : (Number(y) <= cur ? 'ok' : 'no'));
-      return [on, on];
+      var on = Number(y) === cur ? 'ok' : 'no';
+      return [on, 'no'];
     });
   }
 

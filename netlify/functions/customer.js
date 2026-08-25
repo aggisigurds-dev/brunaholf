@@ -16,6 +16,7 @@
 //     summary: { docs_total, by_type, by_year_type, dup_count,
 //                unreviewed_count, missing_doc_date, missing_file,
 //                has_2026_uttekt, last_uttekt_year, last_reikningur_year,
+//                sites_in_service, sites_with_2026_uttekt,
 //                reikningur_amount_total, ar_open_kr, ar_oldest_due },
 //     ai_flags: [ { severity:'warn'|'info'|'error', msg, hint? } ]
 //   }
@@ -166,7 +167,7 @@ exports.handler = async (event) => {
     }
 
     // 4) Summary aggregates
-    const summary = buildSummary(docs, invoices);
+    const summary = buildSummary(docs, invoices, sites);
 
     // 4b) Last email contact (verkefnalisti aaaa0cb6 — "síðasti samskipti" per
     // kúnna). Matches the SAME conservative exact-address logic as
@@ -232,13 +233,15 @@ async function fetchLastContact(base, sites) {
   } catch (_) { return null; }
 }
 
-function buildSummary(docs, invoices) {
+function buildSummary(docs, invoices, sites) {
   const by_type = { uttektarskyrsla: 0, reikningur: 0, samningur: 0, annad: 0 };
   const by_year_type = {};
   let dup_count = 0, unreviewed_count = 0, missing_doc_date = 0, missing_file = 0;
   let last_uttekt_year = null, last_reikningur_year = null;
   let reikningur_amount_total = 0;
-  let has_2026_uttekt = false;
+  const yearNow = new Date().getUTCFullYear();
+  const liveSites = (sites || []).filter(s => s.er_i_thjonustu === true);
+  const covered = new Set();
 
   for (const d of docs) {
     const t = d.doc_type || 'annad';
@@ -247,9 +250,12 @@ function buildSummary(docs, invoices) {
     if (y) {
       by_year_type[y] = by_year_type[y] || { uttektarskyrsla: 0, reikningur: 0, samningur: 0 };
       by_year_type[y][t] = (by_year_type[y][t] || 0) + 1;
-      if (t === 'uttektarskyrsla') {
-        if (y >= 2026) has_2026_uttekt = true;
+      if (t === 'uttektarskyrsla' && !d.is_duplicate) {
         if (!last_uttekt_year || y > last_uttekt_year) last_uttekt_year = y;
+        if (y >= yearNow) {
+          if (d.fyrirtaeki_id) covered.add(Number(d.fyrirtaeki_id));
+          else if (liveSites.length === 1) covered.add(Number(liveSites[0].id));
+        }
       } else if (t === 'reikningur') {
         if (!last_reikningur_year || y > last_reikningur_year) last_reikningur_year = y;
       }
@@ -281,11 +287,18 @@ function buildSummary(docs, invoices) {
     ? ar_open.map(i => i.gjalddagi).filter(Boolean).sort()[0] || null
     : null;
 
+  const sites_in_service = liveSites.length;
+  const sites_with_2026_uttekt = liveSites.filter(s => covered.has(Number(s.id))).length;
+  // Charlize: grænt á félaginu aðeins ef ALLIR þjónustustaðir eiga skýrslu þessa árs
+  // á sínu fyrirtaeki_id. Ein skýrsla á Grandi málar ekki Klöpp.
+  const has_2026_uttekt = sites_in_service > 0 && sites_with_2026_uttekt === sites_in_service;
+
   return {
     docs_total: docs.length,
     by_type, by_year_type,
     dup_count, unreviewed_count, missing_doc_date, missing_file,
     has_2026_uttekt, last_uttekt_year, last_reikningur_year,
+    sites_in_service, sites_with_2026_uttekt,
     reikningur_amount_total,
     invoices_total: invoices.length,
     ar_open_count: ar_open.length,
@@ -310,9 +323,17 @@ function computeFlags({ base, sites, docs, invoices, summary, last_contact }) {
     });
   }
 
-  // Missing yearly inspection
+  // Missing yearly inspection — per STAÐUR, ekki per kennitala
   if (base.er_i_thjonustu) {
-    if (!summary.has_2026_uttekt && (summary.last_uttekt_year || 0) < yearNow) {
+    const nLive = summary.sites_in_service || 0;
+    const nOk = summary.sites_with_2026_uttekt || 0;
+    if (nLive > 1 && nOk < nLive) {
+      f.push({
+        severity: 'warn',
+        msg: `${nLive - nOk} af ${nLive} stöðum vantar úttektarskýrslu ${yearNow}`,
+        hint: 'Þekja er per stað — skýrsla á einu húsi rekstrarfélags telst ekki á hinum.',
+      });
+    } else if (!summary.has_2026_uttekt && (summary.last_uttekt_year || 0) < yearNow) {
       f.push({
         severity: 'warn',
         msg: `Vantar úttektarskýrslu ${yearNow}`,
