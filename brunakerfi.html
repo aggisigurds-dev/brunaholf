@@ -3,432 +3,207 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#ffffff">
-<title>Brunakerfi — þjónusta &amp; skýrslur</title>
+<meta name="theme-color" content="#f4f6f9">
+<title>Brunakerfi — yfirlit</title>
 <style>
-  :root{ --bg:#f4f6f9; --panel:#fff; --line:#e2e6ec; --line2:#eef1f5; --text:#0b1220; --muted:#5c6b7d; --accent:#2563eb; --accent2:#1d4ed8; --soft:#f7f9fc; --okbg:#eef7f1; --duebg:#fdecec; --duefg:#b42318; --warnbg:#fff7e6; --warnfg:#9a6400; }
-  *{box-sizing:border-box;}
-  body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:15px;line-height:1.5;}
-  .wrap{max-width:960px;margin:0 auto;padding:22px 18px 60px;}
-  h1{font-size:22px;margin:0 0 2px;font-weight:750;}
-  .lead{color:var(--muted);font-size:14px;margin:0 0 16px;}
-  .stats{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
-  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:9px 14px;}
-  .stat b{font-size:18px;font-weight:760;display:block;}
-  .stat span{font-size:12px;color:var(--muted);}
-  .searchbar{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-size:14px;margin-bottom:8px;}
-  .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
-  .chip{border:1px solid var(--line);background:var(--panel);border-radius:20px;padding:5px 13px;font-size:13px;cursor:pointer;color:var(--muted);}
-  .chip.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;}
-  .firm{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px 17px;margin-bottom:12px;box-shadow:0 1px 2px rgba(16,24,40,.04);}
-  .fhead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;cursor:pointer;}
-  .fname{font-size:16.5px;font-weight:700;}
-  .fmeta{font-size:12.5px;color:var(--muted);margin-top:3px;}
-  .badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;}
-  .b{display:inline-block;border-radius:6px;padding:1px 8px;font-size:11px;font-weight:600;border:1px solid var(--line);background:var(--soft);color:var(--muted);}
-  .b.sys{background:#eef4ff;border-color:#d7e3ff;color:var(--accent);}
-  .b.mgr{background:#f3eeff;border-color:#e0d4ff;color:#6b3fd4;}
-  .b.due{background:var(--duebg);border-color:#f4c7c2;color:var(--duefg);}
-  .b.ok{background:var(--okbg);border-color:#cfe6d2;color:#1f7a4d;}
-  .count{flex:none;display:flex;gap:5px;align-items:center;white-space:nowrap;}
-  .count .n{background:#eef4ff;color:var(--accent);border-radius:20px;padding:3px 10px;font-size:12.5px;font-weight:700;}
-  .blds{margin-top:11px;border-top:1px solid var(--line2);padding-top:9px;display:none;}
-  .firm.open .blds{display:block;}
-  table{width:100%;border-collapse:collapse;font-size:13px;}
-  th{text-align:left;color:var(--muted);font-weight:600;font-size:11.5px;padding:4px 6px;border-bottom:1px solid var(--line2);}
-  td{padding:5px 6px;border-bottom:1px solid var(--line2);vertical-align:top;}
-  tr:last-child td{border-bottom:none;}
-  .yr{color:var(--muted);font-variant-numeric:tabular-nums;width:48px;}
-  .tg{width:96px;}
-  .tg i{font-style:normal;border-radius:5px;padding:1px 6px;font-size:10.5px;font-weight:600;}
-  .tg .skyrsla{background:#eef4ff;color:var(--accent);}
-  .tg .samningur{background:#f3eeff;color:#6b3fd4;}
-  .tg .reikningur{background:var(--okbg);color:#1f7a4d;}
-  .fn{word-break:break-word;}
-  .fn a{color:var(--accent);text-decoration:none;}
-  .fn a:hover{text-decoration:underline;}
-  .fn a::after{content:" ↗";font-size:10px;color:var(--muted);}
-  .matrix td{vertical-align:top;}
-  .matrix th{font-weight:700;}
-  .matrix a{color:var(--accent);text-decoration:none;}
-  .matrix a:hover{text-decoration:underline;}
-  .matrix a::after{content:" ↗";font-size:9px;color:var(--muted);}
-  .matrix .lk{margin:2px 0;line-height:1.35;}
-  .matrix tr.tgt td{background:#fcfdff;}
-  .vantar{display:inline-block;color:var(--warnfg);background:var(--warnbg);border:1px solid #f0e2bf;border-radius:5px;padding:0 6px;font-size:11px;}
-  .dash{color:#c4ccd6;}
-  .contracts{font-size:13px;margin-bottom:8px;}
-  .contracts a{color:#6b3fd4;}
-  .mxlabel{font-size:11.5px;color:var(--muted);margin-bottom:4px;}
-  .empty{color:var(--muted);font-size:13px;padding:6px;}
-  .note{font-size:12px;color:var(--muted);margin-top:20px;border-top:1px solid var(--line);padding-top:10px;}
-  .kt{color:var(--muted);font-variant-numeric:tabular-nums;}
-  .sec{font-size:13px;font-weight:700;color:var(--muted);margin:22px 0 8px;text-transform:uppercase;letter-spacing:.04em;}
+  :root{
+    --bg:#f3f5f8; --panel:#fff; --line:#e4e8ee; --line2:#eef1f5;
+    --text:#0b1220; --muted:#5c6b7d; --accent:#1d4ed8;
+    --ok:#157a45; --okbg:#e8f6ee; --okbd:#c6e6d2;
+    --warn:#9a6400; --warnbg:#fff6e0; --warnbd:#f0e0b0;
+    --due:#b42318; --duebg:#fdecec; --duebd:#f4c7c2;
+    --chip:#eef2f7;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:14px;line-height:1.45}
+  .wrap{max-width:1280px;margin:0 auto;padding:18px 16px 48px}
+  h1{font-size:22px;margin:0 0 4px;font-weight:760;letter-spacing:-.02em}
+  .lead{color:var(--muted);font-size:13.5px;margin:0 0 14px;max-width:72ch}
+  .lead b{color:var(--text);font-weight:650}
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+  .search{flex:1;min-width:220px;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font:inherit;background:#fff}
+  .newbtn{display:inline-flex;align-items:center;gap:6px;background:#b91c1c;color:#fff;text-decoration:none;font-weight:700;font-size:13px;padding:9px 14px;border-radius:10px;box-shadow:0 1px 4px rgba(185,28,28,.22)}
+  .stats{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:8px 12px;min-width:92px}
+  .stat b{display:block;font-size:18px;font-weight:760;font-variant-numeric:tabular-nums}
+  .stat span{font-size:11.5px;color:var(--muted)}
+  .stat.ok b{color:var(--ok)} .stat.warn b{color:var(--warn)} .stat.due b{color:var(--due)}
+  .months{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
+  .mchip{border:1px solid var(--line);background:#fff;border-radius:18px;padding:4px 10px;font-size:12.5px;color:var(--muted);cursor:pointer}
+  .mchip.on{background:#0f172a;border-color:#0f172a;color:#fff;font-weight:650}
+  .mchip .n{font-variant-numeric:tabular-nums;opacity:.75;margin-left:3px}
+  .rule{font-size:12.5px;color:var(--muted);background:#fff;border:1px dashed #d7deea;border-radius:10px;padding:8px 12px;margin-bottom:12px}
+  .scroller{overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:860px}
+  th{text-align:left;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:700;padding:9px 10px;border-bottom:1px solid var(--line);background:#fafbfc;white-space:nowrap;position:sticky;top:0;z-index:1}
+  td{padding:8px 10px;border-bottom:1px solid var(--line2);vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:#f7f9fc}
+  .name{font-weight:700}
+  .name a{color:inherit;text-decoration:none}
+  .name a:hover{color:var(--accent);text-decoration:underline}
+  .hint{display:block;font-size:11px;color:var(--muted);font-weight:500;margin-top:1px}
+  .hint.warn{color:var(--warn)}
+  .addr,.kt{color:var(--muted);font-size:12.5px}
+  .kt{font-variant-numeric:tabular-nums}
+  .yrs{display:flex;gap:4px}
+  .yr{width:28px;height:22px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;background:var(--chip);color:#94a3b8;text-decoration:none;border:1px solid transparent}
+  .yr.ok{background:var(--okbg);color:var(--ok);border-color:var(--okbd)}
+  .yr.ok:hover{filter:brightness(.96)}
+  .mon{font-weight:650;text-transform:lowercase}
+  .last{font-variant-numeric:tabular-nums;white-space:nowrap}
+  .docs{font-variant-numeric:tabular-nums;color:var(--muted)}
+  .badge{display:inline-block;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:700;border:1px solid transparent;white-space:nowrap}
+  .badge.skodad{background:var(--okbg);color:var(--ok);border-color:var(--okbd)}
+  .badge.vantar{background:var(--warnbg);color:var(--warn);border-color:var(--warnbd)}
+  .badge.engin{background:#f1f4f8;color:#64748b;border-color:#e2e8f0}
+  .empty{padding:28px;text-align:center;color:var(--muted)}
+  .note{font-size:12px;color:var(--muted);margin-top:14px}
+  .err{background:var(--duebg);color:var(--due);border:1px solid var(--duebd);border-radius:10px;padding:10px 12px}
+  @media (max-width:640px){
+    .wrap{padding:12px 10px 36px}
+    h1{font-size:19px}
+    th,td{padding:8px 7px}
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>Brunakerfi — þjónusta &amp; skýrslur</h1>
-  <p class="lead">Rekstrarfélög og fyrirtæki í brunakerfisþjónustu (Slökkvitæki / Brunakerfi ehf). Þjónustusamningar, ársskoðunarskýrslur og reikningar úr Drive-möppunni <code>Brunakerfi</code>. Smelltu á viðskiptavin til að sjá skrár. &nbsp;·&nbsp; <a href="rekstrarfelog.html" style="color:var(--accent)">Rekstrarfélög →</a></p>
+  <h1>Brunakerfi — yfirlit</h1>
+  <p class="lead">Ein röð per <b>stað</b>. <b>Skoðað</b> þýðir brunakerfisskýrsla þessa árs á þessu húsi — ekki slökkvitækja-úttekt, ekki systkinahús á sömu kennitölu.</p>
 
-  <a href="brunakerfi-skodun.html" style="display:inline-flex;align-items:center;gap:8px;background:#b91c1c;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:11px 18px;border-radius:10px;margin:2px 0 16px;box-shadow:0 2px 8px rgba(185,28,28,.25)">🧯 Ný skoðunarskýrsla brunaviðvörunarkerfis</a>
-
-  <div id="stats" class="stats"></div>
-  <input id="q" class="searchbar" placeholder="🔎 Leita að viðskiptavini, kennitölu, byggingu eða skrá…">
-  <div class="filters" id="filters">
-    <span class="chip on" data-f="all">Allir</span>
-    <span class="chip" data-f="due">Skoðun komin á tíma</span>
-    <span class="chip" data-f="skyrsla">Með skýrslu</span>
-    <span class="chip" data-f="reikningur">Með reikning</span>
-    <span class="chip" data-f="mgr">Hjá rekstrarfélagi</span>
+  <div class="toolbar">
+    <input id="q" class="search" placeholder="🔎 Leita að stað, kennitölu eða heimilisfangi…" autocomplete="off">
+    <a class="newbtn" href="brunakerfi-skodun.html">🧯 Ný skoðunarskýrsla</a>
   </div>
-  <div id="list"></div>
-
-  <div class="sec" id="unidsec" style="display:none">Óauðkenndir reikningar (2026)</div>
-  <div id="unid"></div>
-
+  <div id="stats" class="stats"></div>
+  <div id="months" class="months"></div>
+  <div class="rule" id="rule">Skoðað YYYY = PDF með <code>doc_type=brunakerfi</code> á <code>fyrirtaeki_id</code> þessa staðar.</div>
+  <div id="list"><div class="empty">Hleður…</div></div>
   <div class="note" id="note"></div>
 </div>
 <script>
-// Today, for "inspection due" logic.
-const TODAY = "2026-06";
+function yearShort(y){ return "'" + String(y).slice(-2); }
+const MONTHS = ['','jan','feb','mar','apr','maí','jún','júl','ágú','sep','okt','nóv','des'];
+let DATA = null;
+let monthFilter = 'all';
 
-// Brunakerfi service customers, compiled from the Drive "Brunakerfi" master
-// index (test_upload.csv) + the "Brunakerfi & Þjónustusamningar — Viðskiptavinir"
-// status sheet. kt = staðfest kennitala. manager = rekstrarfélag sem heldur utan
-// um bygginguna (kross-vísun við Rekstrarfélög síðuna eftir kennitölu).
-// files: { y: ár, t: skyrsla|samningur|reikningur, n: skráarnafn }
-const CUSTOMERS = [
-  { name:"Center Hotels (8 hótel)", kt:"4509051430", addr:"Laugavegur 16, 101 Rvk", sys:"Brunakerfi", cover:"Brunakerfi, Slökkvitæki, Brunaslöngur", contact:"Melissa", simi:"595 8500", insp:20, last:"2024-08", next:"2025-08", files:[
-    { y:2023, t:"skyrsla", n:"Center Hotels Skjaldbreið - Brunaviðvörunarkerfi - Des 2023.pdf" },
-    { y:2023, t:"skyrsla", n:"Ársskoðun Brunakerfa desember Skjaldbreið 2023.pdf" },
-    { y:2023, t:"skyrsla", n:"Verkkaupi Center Hótel Þingholt - Brunaviðvörunarkerfi - sept 2023.pdf" },
-    { y:2023, t:"skyrsla", n:"brunakerfi Center Klöpp 2023.pdf" },
-    { y:2022, t:"samningur", n:"samningur brunakerfi Center Hótel 2022.pdf" },
-    { y:2024, t:"skyrsla", n:"Center Hótel Plaza 2024 brunakerfi.pdf" },
-    { y:2025, t:"skyrsla", n:"Center Hótel Arnarhvoll brunakerfi 2025.pdf" },
-    { y:2025, t:"skyrsla", n:"Center Hótel Miðgarður brunakerfi 2025.pdf" },
-    { y:2025, t:"skyrsla", n:"Center Grandi brunakerfi 2025.pdf" },
-    { y:2025, t:"skyrsla", n:"Center Hótel klöpp brunakerfi 2025.pdf" },
-    { y:2025, t:"skyrsla", n:"Center Hótel Plaza 2025 brunakerfi.pdf" },
-    { y:2026, t:"samningur", n:"Centerhótels þjónustusamningur (1).pdf" },
-    { y:2026, t:"skyrsla", n:"Center ArnarHvoll brunakerfi 2026.pdf" },
-    { y:2026, t:"skyrsla", n:"Grandi Center Hótel brunakerfi 2026.pdf" },
-  ]},
-  { name:"Sveitahótelið Brú (Borealis)", kt:"6904250920", addr:"Borealis Hótel, 805", sys:"JUNO NET", cover:"Brunakerfi, Slökkvitæki, Reykskynjarar", insp:1, last:"2025-06", next:"2026-06", files:[
-    { y:2025, t:"samningur", n:"Þjónustusamningur brunakerfi Hótel Borealis 2025.pdf" },
-    { y:2025, t:"skyrsla", n:"Ársskoðun Brunakerfa Borealis 2025.pdf" },
-  ]},
-  { name:"G14 ehf", kt:"5108090170", addr:"Grensásvegur 14", sys:"C-Tec", cover:"Brunakerfi", contact:"Björn", simi:"699 0018", insp:3, last:"2026-02", next:"2027-02", files:[
-    { y:2024, t:"skyrsla", n:"G 14 ehf brunakerfi 2024.pdf" },
-    { y:2026, t:"skyrsla", n:"G14 ársskoðun á brunakerfi 2026.pdf" },
-  ]},
-  { name:"Heilsustofnun NLFÍ", kt:"4802696919", addr:"Grænamörk 10, Hveragerði", sys:"FireFinder", cover:"Brunakerfi", insp:2, last:"2024-05", next:"2025-05", files:[
-    { y:2023, t:"skyrsla", n:"ársskoðun brunakerfi Heilsustofnun 2023.pdf" },
-  ]},
-  { name:"Húsfélag 17. júnítorg 1-7", kt:"5007070110", addr:"17. júnítorg 1-7, 101 Rvk", sys:"Juno-Net", cover:"Brunakerfi", manager:"Eignaumsjón", insp:3, last:"2025-10", next:"2026-10", files:[
-    { y:2025, t:"skyrsla", n:"17 júnítorg brunakerfi 2025.pdf" },
-  ]},
-  { name:"Húsfélag Hlíðasmára 17", kt:"6511993019", addr:"Hlíðasmári 17", sys:"Juno Net", cover:"Brunakerfi", insp:2, last:"2024-05", next:"2025-05", files:[
-    { y:2023, t:"skyrsla", n:"Ársskoðun Brunakerfi Hlíðasmára 17 2023.pdf" },
-  ]},
-  { name:"Húsfélagið Hlíðasmára 19", kt:"5401992059", addr:"Hlíðasmári 19, 201 Kóp", sys:"Juno Net", cover:"Brunakerfi, Reykskynjarar", insp:1, last:"2024-09", next:"2025-09", files:[
-    { y:2025, t:"samningur", n:"2025 Apr Slökkvitæki ehf, þjónustusamningur Hlíðasmári 19 brunaviðvörunarkerfi.pdf" },
-    { y:2024, t:"skyrsla", n:"Hlíðasmári 19 brunakerfi 2024.pdf" },
-    { y:2026, t:"skyrsla", n:"Hlíðasmári 19 - Brunaviðvörunarkerfi úttekt Maí 2026.pdf" },
-  ]},
-  { name:"Húsfélagið Hlíðasmára 15", kt:"5306003780", addr:"Hlíðasmári 15", sys:"Eltek", cover:"Brunakerfi", insp:1, last:"2025-09", next:"2026-09", files:[
-    { y:2025, t:"skyrsla", n:"Hlíðasmári 15 brunakerfi 2025.pdf" },
-    { y:2025, t:"reikningur", n:"Húsfélagið Hlíðasmára 15 - Brunakerfi - Reikningur - 2025.pdf" },
-  ]},
-  { name:"Lindaberg ehf (T-10)", kt:"6712220240", addr:"Trönuhraun 10", sys:"Notifire ID-50", cover:"Slökkvitæki, Brunaslöngur", insp:1, last:"2024-09", next:"2025-09", files:[
-    { y:2025, t:"skyrsla", n:"T-10 slökkvitæki,brunaslöngur 2025.pdf" },
-  ]},
-  { name:"Rétt Mál verkstæði", kt:"4701200370", addr:"Hvaleyrarbraut 41", cover:"Brunakerfi", insp:1, last:"2023-12", next:"2024-12", files:[
-    { y:2023, t:"skyrsla", n:"Rétt Mál brunakerfi 2023.pdf" },
-  ]},
-  { name:"Stöff ehf (220 BAR)", kt:"5703201220", addr:"Flatahraun 5a", sys:"C-TEC", cover:"Brunakerfi", insp:1, last:"2023-03", next:"2024-03", files:[
-    { y:2023, t:"skyrsla", n:"brunakerfi 220 BAR 2023.pdf" },
-  ]},
-  { name:"Three Sisters (Ránargata 16)", kt:"6607160330", addr:"Ránargata 16", cover:"Brunakerfi", insp:1, last:"2024-10", next:"2025-10", files:[
-    { y:2024, t:"skyrsla", n:"Ránargata 16. Brunaviðvörunarkerfis 2024.pdf" },
-  ]},
-  { name:"Ægisgata 4", kt:null, addr:"Ægisgata 4", cover:"Brunakerfi", files:[
-    { y:2024, t:"skyrsla", n:"Brunakerfi Ægisgata 4 2024.pdf" },
-  ]},
-  { name:"Kef Ölhúsið", kt:null, addr:"Keflavík", cover:"Brunakerfi", files:[
-    { y:2023, t:"skyrsla", n:"Ársskoðun Brunakerfa Kef Ölhúsið 2023.pdf" },
-  ]},
-  { name:"Hlaðvarpinn", kt:null, cover:"Brunakerfi", files:[
-    { y:2024, t:"skyrsla", n:"brunakerfi Hlaðvarpinn 2024.docx" },
-  ]},
-  { name:"Hótel Norðurey ehf", kt:"4308720289", addr:"Hrísateig 14, 105 Rvk", cover:"Slökkvitæki, Brunaslöngur", files:[
-    { y:2025, t:"samningur", n:"Hótel Norðurey þjónustusamningur 2025.pdf" },
-  ]},
-  { name:"Einhella 4 rekstrarfélag", kt:"4301250600", addr:"Einhella 4, 221 Hfj", cover:"Slökkvitæki", files:[
-    { y:2025, t:"samningur", n:"Þjónustusamningur Einhella 4 2025.pdf" },
-  ]},
-  { name:"Thai Lindin ehf", kt:"4504241290", addr:"Háaleitisbraut 58, 108 Rvk", cover:"Slökkvitæki", files:[
-    { y:2026, t:"samningur", n:"Þjónustusamningur Thai Lindin 2026.pdf" },
-  ]},
-  { name:"Prikið ehf", kt:"7110032070", addr:"Bankastræti 12, 101 Rvk", cover:"Slökkvitæki, Brunaslöngur", files:[
-    { y:2026, t:"samningur", n:"Þjónustusamningur Prikið ehf 2026.pdf" },
-  ]},
-  { name:"Suðurhella 9 ehf", kt:"5406222050", addr:"Suðurhellu 9, 221 Hfj", cover:"Slökkvitæki, Brunaslöngur", files:[
-    { y:2025, t:"samningur", n:"Þjónustusamningur Suðurhellu 9.pdf" },
-  ]},
-  { name:"Indverska matarfélagið ehf", kt:null, cover:"Slökkvitæki", files:[
-    { y:2025, t:"samningur", n:"Þjónustusamningur Indverska matarfélagið ehf 2025.pdf" },
-  ]},
-  { name:"Kirkjulundur 12-14, húsfélag", kt:"6105140300", addr:"Kirkjulundur 12-14", cover:"Slökkvitæki", manager:"Eignaumsjón", files:[
-    { y:2024, t:"samningur", n:"Þjónustusamningur Kirkjulundur 12-14.docx" },
-  ]},
-  { name:"Bílaleiga Flugleiða (Hertz)", kt:null, cover:"Slökkvitæki", files:[
-    { y:2024, t:"samningur", n:"Þjónustusamningur Hertz bílaleiga 2024.pdf" },
-  ]},
-  { name:"Húsfélagið Bæjarlind 12", kt:"6301032310", addr:"Bæjarlind 12", cover:"Brunakerfi", manager:"Eignarekstur", files:[
-    { y:null, t:"reikningur", n:"Húsfélagið Bæjarlind 12 - reikningur -.pdf" },
-  ]},
-  { name:"Árskógar 6-8, húsfélag", kt:"5102932079", addr:"Árskógar 6-8", cover:"Brunakerfi", manager:"Eignarekstur", files:[
-    { y:null, t:"reikningur", n:"Árskógar 6-8,húsfélag_Invoice_107128.pdf" },
-  ]},
-  { name:"Húsf. Stóragerði 20", kt:null, addr:"Stóragerði 20", cover:"Brunakerfi", files:[
-    { y:2022, t:"reikningur", n:"Stóragerði 20 - Reikningur 2022.pdf" },
-  ]},
-];
-
-// Scanned reikningar from Brunakerfi\Reikningar\2026 (scanned 24.04.2026),
-// auðkennt með OCR. invoice_no = reikningsnr, kt = greiðandi, amount = m. vsk.
-// site = verkstaður/hótel þar sem það á við. One file (120038) reyndist
-// handskrifaður verklisti, ekki reikningur (worklist:true).
-const INVOICES_2026 = [
-  { n:"Scan_20260424_114654.jpg", id:"1DrRr2Ozs4NrBvD6LDUSiAXEk1WdfIDBr", customer:"Center Hotels", site:"Grandi", kt:"4509051430", invoice_no:"108001", date:"2026-03-12", amount_m_vsk:579424 },
-  { n:"Scan_20260424_114713.jpg", id:"1Yema5x_RyQRMFHhRA_EHrqsY3wjutxxo", customer:"G14 ehf", site:"Grensásvegur 14", kt:"5108090170", invoice_no:"107992", date:"2026-03-10", amount_m_vsk:80487 },
-  { n:"Scan_20260424_114730.jpg", id:"1WvM9yCuhonbCp8q05K8bHPOiJh1Tkm3b", customer:"Fasteignin T10 ehf", site:"Reykjavíkurvegur 68", kt:"6712220240", invoice_no:"107591", date:"2025-12-08", amount_m_vsk:86490 },
-  { n:"Scan_20260424_114751.jpg", id:"1RQFG8vVl2-lXPYrl2b16erVCtfX59LGf", customer:"Center Hotels", kt:"4509051430", invoice_no:"107592", date:"2025-12-08", amount_m_vsk:404381 },
-  { n:"Scan_20260424_114806.jpg", id:"1quFGQSXgA4V0mw2NfpQS3IDaWI5QlD9x", customer:"Center Hotels", site:"Klapparstíg 26", kt:"4509051430", invoice_no:"107466", date:"2025-10-30", amount_m_vsk:134606 },
-  { n:"Scan_20260424_114824.jpg", id:"12wmywUCol5AfPSkmhs7T8dOMsv5J33Sb", customer:"17. júnítorg 1-7, húsfélag", kt:"5007070110", invoice_no:"107465", date:"2025-10-30", amount_m_vsk:266779 },
-  { n:"Scan_20260424_114838.jpg", id:"1TCybMqincvYNAsgbFVq5JqakOcYieqDF", customer:"Center Hotels", site:"Laugavegi 95-99", kt:"4509051430", invoice_no:"107337", date:"2025-09-19", amount_m_vsk:404381 },
-  { n:"Scan_20260424_114854.jpg", id:"1AdTvaX6ehEN4BX8OTQEYQDuRQN5t3pU5", customer:"Center Hotels", kt:"4509051430", invoice_no:"107336", date:"2025-09-19", amount_m_vsk:236093 },
-  { n:"Scan_20260424_114909.jpg", id:"16wRQoKCeNLt2nJXNV5hEP6YIL5WJhq5U", customer:"Center Hotels", kt:"4509051430", invoice_no:"107333", date:"2025-09-19", amount_m_vsk:102490 },
-  { n:"Scan_20260424_114926.jpg", id:"1MxvUjt3saz_8cM6YHJzJCi3ASJYfhZY_", customer:"Center Hotels", kt:"4509051430", invoice_no:"107312", date:"2025-09-11", amount_m_vsk:89331 },
-  { n:"Scan_20260424_114940.jpg", id:"1gw6Ii7wqrQVO36OfHIP7qYGjnF8oSCxz", customer:"Center Hotels", site:"Miðgarður", kt:"4509051430", invoice_no:"107311", date:"2025-09-11", amount_m_vsk:451302 },
-  { n:"Scan_20260424_114954.jpg", id:"1PW6i9Mvpwk-pCwaMDQlL4YQmJV9Rg99e", customer:"Center Hotels", site:"Arnarhvoll", kt:"4509051430", invoice_no:"107310", date:"2025-09-11", amount_m_vsk:158263 },
-  { n:"Scan_20260424_115006.jpg", id:"1ei29KTNqQxunAUaECQR0tPq39GELls8J", customer:"Húsfélagið Hlíðasmára 15", kt:"5306003780", invoice_no:"107340", date:"2025-09-19", amount_m_vsk:261321 },
-  { n:"Scan_20260424_115022.jpg", id:"1ylRj35x2GBaWXAVv29jH3-ByRfeN3hFq", customer:"Húsfélagið Hlíðasmára 17", kt:"6511993019", invoice_no:"107308", date:"2025-09-11", amount_m_vsk:261971 },
-  { n:"Scan_20260424_115409.jpg", id:"1YGmLkeGxfbFLBWX-ie57DqGaRfmKj6Oq", customer:"Center Hotels", site:"Grandi", kt:"4509051430", invoice_no:"106498", date:"2025-03-17", amount_m_vsk:575360 },
-  { n:"Scan_20260424_120038.jpg", id:"1YC9X6aABsg1u6D9gw4KZWPbMPrun0cdU", customer:null, date:"2026-04-01", worklist:true },
-];
-
-// Google Drive fileId per skráarnafn (skýrslur / samningar / reikningar).
-// driveLink() byggir slóðina drive.google.com/file/d/<id>/view úr þessu.
-const FILE_IDS = {
-  "Center Hotels Skjaldbreið - Brunaviðvörunarkerfi - Des 2023.pdf":"1uL-Py6AK3xq8pynVrLIrZ-9OLJNFgNli",
-  "Ársskoðun Brunakerfa desember Skjaldbreið 2023.pdf":"1198aNqMW1ZHQbFL-E-6oXoizQfrEEEt_",
-  "Verkkaupi Center Hótel Þingholt - Brunaviðvörunarkerfi - sept 2023.pdf":"1cSKJH2ZQlkpik2ZGgz6gKBPuJc_hD04F",
-  "brunakerfi Center Klöpp 2023.pdf":"1dSa2rCYSslsbe2GJTQGcB8EsjQFiuo88",
-  "samningur brunakerfi Center Hótel 2022.pdf":"12A47D8LhoOekcHv9qZmsGu3uJuSOMLY0",
-  "Center Hótel Plaza 2024 brunakerfi.pdf":"1fqtz4S4SP2SUGONFQrudNaZtqhDNpMMf",
-  "Center Hótel Arnarhvoll brunakerfi 2025.pdf":"1OieRP_h8TbZX4M9waHDv6NBraAfWuvpn",
-  "Center Hótel Miðgarður brunakerfi 2025.pdf":"10vU3h9t8hGhjMY5JFo15bQDKHf_tFzP7",
-  "Center Grandi brunakerfi 2025.pdf":"1RR3BOB1ltGMmKBB4BZnnXqLkR-GE9LHh",
-  "Center Hótel klöpp brunakerfi 2025.pdf":"1OiQy0ADKkqiq7TTn6zUYuin64bQW18_P",
-  "Center Hótel Plaza 2025 brunakerfi.pdf":"1XmfaZHZ_2_F7PvjDWcNk8iCU38Kfwpnk",
-  "Centerhótels þjónustusamningur (1).pdf":"1O8TUohSExYqe85ZNLlkX0MGEGWy31yot",
-  "Center ArnarHvoll brunakerfi 2026.pdf":"1WEhrv4dSzmYZT6OVN9LIfs59bVYsYsli",
-  "Grandi Center Hótel brunakerfi 2026.pdf":"1aeffWMvl_LokZziP7QaoDr295aq9JfS6",
-  "Þjónustusamningur brunakerfi Hótel Borealis 2025.pdf":"1LzJTC2GfEUno6MRTykGC9Pl8l4drj47e",
-  "Ársskoðun Brunakerfa Borealis 2025.pdf":"1-Q_7CPhTH1IivCueDo9-FvnVBWbYFTub",
-  "G 14 ehf brunakerfi 2024.pdf":"150Hce9eO_O6Ld2sbh-G5RW82mHI6DDuF",
-  "G14 ársskoðun á brunakerfi 2026.pdf":"10sQYv_IO3_uD41m4oquAvRb7HqHH6QUg",
-  "ársskoðun brunakerfi Heilsustofnun 2023.pdf":"1-qs_P7aZ7glcJvbNqi2e-U17rsxZPBpV",
-  "17 júnítorg brunakerfi 2025.pdf":"162qtIzyBhgzIL1hnv06v3w-8DFInfePZ",
-  "Ársskoðun Brunakerfi Hlíðasmára 17 2023.pdf":"1AgGxJSfYqpzRCQeeZkCrMbgonauAk5Jo",
-  "2025 Apr Slökkvitæki ehf, þjónustusamningur Hlíðasmári 19 brunaviðvörunarkerfi.pdf":"1meDxgoN3KfVxU9LGoT35sCo6CVM-QScT",
-  "Hlíðasmári 19 brunakerfi 2024.pdf":"1xdv4GJYMUm0pk1NUQYIvdkZRxf0P1BFs",
-  "Hlíðasmári 19 - Brunaviðvörunarkerfi úttekt Maí 2026.pdf":"1xW6swq8fxh4BskbdXIN-vnLXG3k-eCJ_",
-  "Hlíðasmári 15 brunakerfi 2025.pdf":"1qYVcG9IVoUJpBV0J174RbghgJqhwZME7",
-  "Húsfélagið Hlíðasmára 15 - Brunakerfi - Reikningur - 2025.pdf":"1oGusND5YAJxtk-D_lCTnKTBj2zfUX08T",
-  "T-10 slökkvitæki,brunaslöngur 2025.pdf":"1okItMLdbISG0QuRRApgsqCElaCM5cFWx",
-  "Rétt Mál brunakerfi 2023.pdf":"1f31Z4ugPqMj0Fb0sJVG5t2x4qO3ien4v",
-  "brunakerfi 220 BAR 2023.pdf":"1oGJM4BFyZEIYBppiMZ1vvjWYrh1-I7iw",
-  "Ránargata 16. Brunaviðvörunarkerfis 2024.pdf":"1bfqjwEVfV0l3gTv6i8rry2GqnRhUdEQU",
-  "Brunakerfi Ægisgata 4 2024.pdf":"1SWXG_r9PljCyEnwhV9uwCqKEWw-pLY4u",
-  "Ársskoðun Brunakerfa Kef Ölhúsið 2023.pdf":"1lWQh2w4pIe7sbjscrDfuDes4toiaUVwi",
-  "brunakerfi Hlaðvarpinn 2024.docx":"1pnLZsWUvLUV09JeyvWGFK1gzrVerV69D",
-  "Hótel Norðurey þjónustusamningur 2025.pdf":"10jH5_h3ZmTI2tRVvGJaNuecaBEa9F3I2",
-  "Þjónustusamningur Einhella 4 2025.pdf":"19EICqBXs3iyTtYb-3Xz_vTIFQPp3bZdQ",
-  "Þjónustusamningur Thai Lindin 2026.pdf":"1IZwUxxxaqh1D_O6BV9U6-WApnPHwNQgM",
-  "Þjónustusamningur Prikið ehf 2026.pdf":"18Kr5z9jB0vMuU4llrh9g2elbGFKuZAFj",
-  "Þjónustusamningur Suðurhellu 9.pdf":"1gDpUJ6KI0P83nM-L9C88YHkKs3bMUcn0",
-  "Þjónustusamningur Indverska matarfélagið ehf 2025.pdf":"15KY1zIwBRbLhGNDgDQjKbUbCIDaA6bJI",
-  "Þjónustusamningur Kirkjulundur 12-14.docx":"1BISBTu-r8a2gMEMoUFCfeor9Hd8ynDAx",
-  "Þjónustusamningur Hertz bílaleiga 2024.pdf":"1O1Lc3bv1YwERNn6a2v4KTetqxKsW_QrU",
-  "Húsfélagið Bæjarlind 12 - reikningur -.pdf":"1iYb0AUUxaYK-zep-QuiuD5G1MJGQAR2f",
-  "Árskógar 6-8,húsfélag_Invoice_107128.pdf":"1lfMq9Ooc700V2zGx88wvfPF02jdzoXSy",
-  "Stóragerði 20 - Reikningur 2022.pdf":"1VQluZ36wEupqdSw3NjfqkBmD9rIldjrm",
-};
-
-const $ = id => document.getElementById(id);
-function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-function fmtKt(k){ return (k && k.length===10) ? k.slice(0,6)+'-'+k.slice(6) : (k||''); }
-function isDue(c){ return c.next && c.next <= TODAY; }
-function hasType(c,t){ return c.files.some(f=>f.t===t); }
-const MONTHS=['','jan','feb','mar','apr','maí','jún','júl','ágú','sep','okt','nóv','des'];
-function fmtYm(ym){ if(!ym) return ''; const [y,m]=ym.split('-'); return MONTHS[+m]+' '+y; }
-function driveLink(id, text){ const t=esc(text); return id?`<a href="/api/skjal?id=${encodeURIComponent(id)}" target="_blank" rel="noopener">${t}</a>`:t; }
-
-// Markmið: per fyrirtæki, per ár → Samningur / Úttektarskýrsla / Reikningur.
-const TARGET_YEARS=[2026,2025,2024];        // áherslan er 2024–2026
-const TYPE_LABEL={samningur:'Samningur', skyrsla:'Skýrsla', reikningur:'Reikningur'};
-// Reikningar (skannaðir) raðaðir á fyrirtæki eftir kennitölu.
-const INV_BY_KT={};
-INVOICES_2026.forEach(i=>{ if(i.worklist||!i.kt) return; (INV_BY_KT[i.kt]=INV_BY_KT[i.kt]||[]).push(i); });
-function invList(c){ return c.kt?(INV_BY_KT[c.kt]||[]):[]; }
-function hasInvoice(c){ return c.files.some(f=>f.t==='reikningur') || invList(c).length>0; }
-function docCount(c){ return c.files.length + invList(c).length; }
-// Samningur er einskiptis (við skráningu í þjónustu) — sýndur efst, ekki per ár.
-function contracts(c){
-  return c.files.filter(f=>f.t==='samningur').sort((a,b)=>(b.y||0)-(a.y||0))
-    .map(f=>({ id:f.id||FILE_IDS[f.n], y:f.y, n:f.n }));
+function esc(s){
+  return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
-// Fyrsta árið sem fyrirtæki er í þjónustu (elsta skjal: samningur/skýrsla/reikn.).
-function allYears(c){
-  const ys=[]; c.files.forEach(f=>{ if(f.y) ys.push(f.y); });
-  invList(c).forEach(i=>{ if(i.date) ys.push(+i.date.slice(0,4)); });
-  return ys;
+function fmtKt(k){
+  const d=String(k||'').replace(/\D/g,'');
+  return d.length===10 ? d.slice(0,6)+'-'+d.slice(6) : (k||'');
 }
-function activeFrom(c){ const ys=allYears(c); return ys.length?Math.min(...ys):null; }
-// Árleg skylda (skýrsla + reikningur) gildir frá skráningarári til 2026.
-function expectedYear(c,y){ const af=activeFrom(c); return af!=null && y>=Math.max(2024,af) && y<=2026; }
-// Ár sem birtast í árlegu töflunni: raunár skýrslna/reikninga + væntanleg ár.
-function matrixYears(c){
-  const ys=new Set();
-  c.files.forEach(f=>{ if(f.y && f.t!=='samningur') ys.add(f.y); });
-  invList(c).forEach(i=>{ if(i.date) ys.add(+i.date.slice(0,4)); });
-  const af=activeFrom(c);
-  if(af!=null){ for(let y=Math.max(2024,af); y<=2026; y++) ys.add(y); }
-  return [...ys].sort((a,b)=>b-a);
+function lastTxt(r){
+  if(!r.last_year) return '—';
+  const m = r.last_month ? MONTHS[r.last_month] : '';
+  return m ? (r.last_year+' · '+m) : String(r.last_year);
 }
-// Skýrslur/reikningar án ártals (t.d. ódagsettir skannar) — sýndir í sér röð.
-function undatedDocs(c){ return c.files.filter(f=>f.t!=='samningur' && !f.y); }
-function filesOf(c,y,t){ return c.files.filter(f=>f.t===t && f.y===y).map(f=>({id:f.id||FILE_IDS[f.n], label:TYPE_LABEL[t], n:f.n})); }
-function reikningarOf(c,y){
-  const fromFiles=filesOf(c,y,'reikningur');
-  const fromScans=invList(c).filter(i=>+i.date.slice(0,4)===y)
-    .map(i=>({id:i.id, label:'Reikn. '+(i.invoice_no||'')+(i.site?' · '+i.site:''), n:i.n}));
-  return fromFiles.concat(fromScans);
-}
-function cell(items, targetYear){
-  if(items.length) return items.map(it=>`<div class="lk">${driveLink(it.id, it.label)}</div>`).join('');
-  return targetYear ? '<span class="vantar">vantar</span>' : '<span class="dash">—</span>';
+function custHref(r){
+  if(r.base_id) return 'customer.html?base='+encodeURIComponent(r.base_id);
+  if(r.kennitala) return 'customer.html?kt='+encodeURIComponent(String(r.kennitala).replace(/\D/g,''));
+  return '';
 }
 
-let activeFilter='all';
-
-function passesFilter(c){
-  if(activeFilter==='all') return true;
-  if(activeFilter==='due') return isDue(c);
-  if(activeFilter==='mgr') return !!c.manager;
-  if(activeFilter==='reikningur') return hasInvoice(c);
-  return hasType(c, activeFilter); // skyrsla
+function renderStats(d, shown){
+  const c=d.counts||{};
+  const leak=d.leaks||{};
+  document.getElementById('stats').innerHTML =
+    `<div class="stat"><b>${shown}</b><span>sýndir staðir</span></div>`+
+    `<div class="stat ok"><b>${c.skodad||0}</b><span>Skoðað ${d.year}</span></div>`+
+    `<div class="stat warn"><b>${c.vantar||0}</b><span>Vantar ${d.year}</span></div>`+
+    `<div class="stat due"><b>${c.engin||0}</b><span>Engin skýrsla</span></div>`+
+    (leak.uttekt_would_paint ? `<div class="stat warn"><b>${leak.uttekt_would_paint}</b><span>væru false ef slökkvit. teldist</span></div>` : '')+
+    (leak.kt_sibling_would_paint ? `<div class="stat warn"><b>${leak.kt_sibling_would_paint}</b><span>væru false ef kt teldist</span></div>` : '');
 }
 
-function renderStats(){
-  const nC=CUSTOMERS.length;
-  const nR=CUSTOMERS.reduce((a,c)=>a+c.files.filter(f=>f.t==='skyrsla').length,0);
-  const nInv=CUSTOMERS.reduce((a,c)=>a+c.files.filter(f=>f.t==='reikningur').length,0)+INVOICES_2026.filter(i=>!i.worklist).length;
-  const nDue=CUSTOMERS.filter(isDue).length;
-  $('stats').innerHTML=[
-    ['Viðskiptavinir',nC],['Skýrslur',nR],['Reikningar',nInv],['Skoðun komin á tíma',nDue],
-  ].map(([l,n])=>`<div class="stat"><b>${n}</b><span>${esc(l)}</span></div>`).join('');
+function renderMonths(d){
+  const months=d.months||{};
+  const all=d.counts.all||0;
+  const chips=[{k:'all',l:'Allir mán.',n:all}];
+  for(let m=1;m<=12;m++) chips.push({k:String(m),l:MONTHS[m],n:months[m]||0});
+  if(months[0]) chips.push({k:'0',l:'án mánaðar',n:months[0]});
+  document.getElementById('months').innerHTML = chips.map(c=>
+    `<button type="button" class="mchip${monthFilter===c.k?' on':''}" data-m="${c.k}">${esc(c.l)} <span class="n">${c.n}</span></button>`
+  ).join('');
 }
 
-function render(filter){
-  const f=(filter||'').toLowerCase().trim();
-  const list=$('list'); list.innerHTML='';
-  let shown=0;
-  CUSTOMERS.slice().sort((a,b)=>(isDue(b)-isDue(a))||a.name.localeCompare(b.name,'is')).forEach(c=>{
-    if(!passesFilter(c)) return;
-    const hay=(c.name+' '+(c.kt||'')+' '+(c.addr||'')+' '+(c.manager||'')+' '+c.files.map(x=>x.n).join(' ')).toLowerCase();
-    if(f && !hay.includes(f) && !(c.kt||'').includes(f.replace(/\D/g,''))) return;
-    shown++;
-    const due=isDue(c);
-    const badges=[];
-    if(c.sys) badges.push(`<span class="b sys">${esc(c.sys)}</span>`);
-    if(c.manager) badges.push(`<span class="b mgr">⌂ ${esc(c.manager)}</span>`);
-    if(c.next) badges.push(`<span class="b ${due?'due':'ok'}">Næsta skoðun: ${esc(fmtYm(c.next))}${due?' ⚠':''}</span>`);
-    let rows=matrixYears(c).map(y=>{
-      const exp=expectedYear(c,y);
-      return `<tr class="${exp?'tgt':''}"><td class="yr">${y}</td>`
-        +`<td>${cell(filesOf(c,y,'skyrsla'), exp)}</td>`
-        +`<td>${cell(reikningarOf(c,y), exp)}</td></tr>`;
-    }).join('');
-    const und=undatedDocs(c);
-    if(und.length){
-      const usk=und.filter(f=>f.t==='skyrsla').map(f=>({id:f.id||FILE_IDS[f.n], label:TYPE_LABEL.skyrsla, n:f.n}));
-      const ure=und.filter(f=>f.t==='reikningur').map(f=>({id:f.id||FILE_IDS[f.n], label:TYPE_LABEL.reikningur, n:f.n}));
-      rows+=`<tr><td class="yr">óþekkt</td><td>${cell(usk,false)}</td><td>${cell(ure,false)}</td></tr>`;
-    }
-    if(!rows) rows='<tr><td colspan="3" class="empty">Engin árleg skjöl.</td></tr>';
-    const cs=contracts(c);
-    const conHtml = cs.length
-      ? `📝 Þjónustusamningur: ${cs.map(x=>driveLink(x.id, 'Samningur'+(x.y?' '+x.y:''))).join(' · ')}`
-      : `<span class="vantar">Enginn samningur skráður</span>`;
-    const div=document.createElement('div');
-    div.className='firm'+(f?' open':'');
-    div.innerHTML=`
-      <div class="fhead"><div>
-        <div class="fname">${esc(c.name)}</div>
-        <div class="fmeta">${c.kt?`<span class="kt">${fmtKt(c.kt)}</span> · `:''}${esc(c.addr||'')}${c.cover?` · ${esc(c.cover)}`:''}${c.contact?` · 👤 ${esc(c.contact)}${c.simi?' '+esc(c.simi):''}`:''}</div>
-        <div class="badges">${badges.join('')}</div>
-      </div><div class="count"><span class="n">${docCount(c)} skjöl</span></div></div>
-      <div class="blds">
-        <div class="contracts">${conHtml}</div>
-        <div class="mxlabel">Árlega (sama mánuð ár hvert): úttektarskýrsla + reikningur</div>
-        <table class="matrix"><thead><tr><th>Ár</th><th>Úttektarskýrsla</th><th>Reikningur</th></tr></thead><tbody>${rows}</tbody></table>
-      </div>`;
-    const head=div.querySelector('.fhead');
-    head.addEventListener('click',()=>div.classList.toggle('open'));
-    list.appendChild(div);
-  });
-  if(!shown) list.innerHTML='<div class="firm"><div class="empty">Ekkert fannst.</div></div>';
+function passes(r, q){
+  if(monthFilter!=='all'){
+    const want = Number(monthFilter);
+    if((r.last_month||0)!==want) return false;
+  }
+  if(!q) return true;
+  const hay = ((r.nafn||'')+' '+(r.heimilisfang||'')+' '+(r.kennitala||'')+' '+String(r.kennitala||'').replace(/\D/g,'')).toLowerCase();
+  return hay.includes(q);
 }
 
-function renderUnidentified(){
-  if(!INVOICES_2026.length){ return; }
-  const inv=INVOICES_2026.filter(i=>!i.worklist);
-  const total=inv.reduce((a,i)=>a+(i.amount_m_vsk||0),0);
-  $('unidsec').style.display='block';
-  $('unidsec').textContent=`Reikningar — Brunakerfi\\Reikningar (auðkennt úr skönnum)`;
-  let html='<div class="firm"><table><thead><tr><th>Reikn.nr</th><th>Dags.</th><th>Viðskiptavinur</th><th>Kennitala</th><th style="text-align:right">Upphæð m. vsk</th><th>Skrá</th></tr></thead><tbody>';
-  INVOICES_2026.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).forEach(i=>{
-    if(i.worklist){
-      html+=`<tr><td>—</td><td class="yr">${esc(i.date||'')}</td><td colspan="3" class="empty">Handskrifaður verklisti (ekki reikningur)</td><td class="fn">${driveLink(i.id, i.n)}</td></tr>`;
-      return;
-    }
-    const who=esc(i.customer)+(i.site?` <span class="muted" style="color:var(--muted)">· ${esc(i.site)}</span>`:'');
-    html+=`<tr><td class="kt">${esc(i.invoice_no||'')}</td><td class="yr">${esc(i.date||'')}</td>`
-      +`<td>${who}</td><td class="kt">${fmtKt(i.kt)}</td>`
-      +`<td style="text-align:right;font-variant-numeric:tabular-nums">${i.amount_m_vsk?i.amount_m_vsk.toLocaleString('is-IS')+' kr':''}</td>`
-      +`<td class="fn">${driveLink(i.id, i.n)}</td></tr>`;
-  });
-  html+=`</tbody><tfoot><tr><td colspan="4" style="text-align:right;font-weight:700;border-top:1px solid var(--line)">Samtals (${inv.length} reikn.)</td>`
-    +`<td style="text-align:right;font-weight:700;font-variant-numeric:tabular-nums;border-top:1px solid var(--line)">${total.toLocaleString('is-IS')} kr</td><td style="border-top:1px solid var(--line)"></td></tr></tfoot>`;
-  html+='</table></div>';
-  $('unid').innerHTML=html;
+function yearCells(r){
+  const uniq = Object.keys(r.years||{}).map(Number).filter(Boolean).sort();
+  return `<div class="yrs">`+uniq.map(y=>{
+    const url=r.years[y];
+    const short=yearShort(y);
+    if(url) return `<a class="yr ok" href="${esc(url)}" target="_blank" rel="noopener" title="${y}">${short}</a>`;
+    return `<span class="yr" title="${y} — ekkert PDF">${short}</span>`;
+  }).join('')+`</div>`;
 }
 
-$('q').addEventListener('input', e=>render(e.target.value));
-$('filters').addEventListener('click', e=>{
-  const chip=e.target.closest('.chip'); if(!chip) return;
-  activeFilter=chip.dataset.f;
-  [...$('filters').children].forEach(ch=>ch.classList.toggle('on',ch===chip));
-  render($('q').value);
+function render(){
+  const d=DATA; if(!d) return;
+  const q=(document.getElementById('q').value||'').trim().toLowerCase();
+  const rows=(d.rows||[]).filter(r=>passes(r,q));
+  renderStats(d, rows.length);
+  renderMonths(d);
+  if(!rows.length){
+    document.getElementById('list').innerHTML='<div class="scroller"><div class="empty">Ekkert fannst.</div></div>';
+    return;
+  }
+  const body=rows.map(r=>{
+    const href=custHref(r);
+    const name=href?`<a href="${esc(href)}">${esc(r.nafn)}</a>`:esc(r.nafn);
+    let hint='';
+    if(r.false_if_uttekt) hint=`<span class="hint warn">slökkvitæki skoðað ${r.uttekt_year} — telst ekki hér</span>`;
+    else if(r.false_if_kt) hint=`<span class="hint warn">systkinahús á sömu kt á skýrslu ${d.year} — telst ekki hér</span>`;
+    return `<tr>
+      <td><div class="name">${name}</div>${hint}</td>
+      <td>${yearCells(r)}</td>
+      <td class="addr">${esc(r.heimilisfang||'—')}</td>
+      <td class="mon">${r.last_month?esc(MONTHS[r.last_month]):'—'}</td>
+      <td class="last">${esc(lastTxt(r))}</td>
+      <td class="docs">${r.docs||0}</td>
+      <td><span class="badge ${esc(r.stada)}">${esc(r.stada_label)}</span></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('list').innerHTML =
+    `<div class="scroller"><table><thead><tr>
+      <th>Fyrirtæki</th><th>'23–'26</th><th>Heimilisfang</th><th>Mánuður</th><th>Síðast</th><th>Skjöl</th><th>Staða</th>
+    </tr></thead><tbody>${body}</tbody></table></div>`;
+}
+
+async function load(){
+  try{
+    const r=await fetch('/api/brunakerfi-yfirlit');
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.error||('HTTP '+r.status));
+    DATA=d;
+    document.getElementById('rule').textContent = d.rule || document.getElementById('rule').textContent;
+    const when=d.generated_at? new Date(d.generated_at).toLocaleString('is-IS') : '';
+    document.getElementById('note').textContent =
+      (when?('Sótt '+when+' · '):'')+(d.counts.all||0)+' staðir · óstaðsett brunakerfi-skjöl: '+(d.leaks&&d.leaks.unplaced_brunakerfi||0);
+    render();
+  }catch(e){
+    document.getElementById('list').innerHTML='<div class="err">Gat ekki hlaðið yfirlit: '+esc(e.message||e)+'</div>';
+  }
+}
+
+document.getElementById('q').addEventListener('input', render);
+document.getElementById('months').addEventListener('click', e=>{
+  const b=e.target.closest('.mchip'); if(!b) return;
+  monthFilter=b.dataset.m;
+  render();
 });
-$('note').innerHTML='Sjálfvirkt tekið saman úr Drive-möppunni <code>Brunakerfi</code> (skýrslur, samningar, reikningar) og stöðublaðinu „Brunakerfi &amp; Þjónustusamningar“. Útgefandi: Slökkvitæki / Brunakerfi ehf (bokhald@eldklar.is). Kennitölur staðfestar úr stöðublaði. Uppfærið eftir þörfum.';
-
-renderStats(); render(''); renderUnidentified();
+load();
 </script>
 </body>
 </html>

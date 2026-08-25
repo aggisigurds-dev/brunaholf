@@ -57,6 +57,10 @@ mál — en staðir rekstrarfélags eru **ekki** tvítök þótt kt sé eins.
   = þessi staður. Ein 2026-skýrsla á Center Hótel Grandi málar EKKI Klöpp/Arnarhvoll.
   Óstaðsett skjal (`fyrirtaeki_id` null) telst aðeins ef félagið á nákvæmlega einn
   lifandi stað. Rangt grænt er verra en autt.
+- **Brunakerfi-yfirlit STAÐA** (`/api/brunakerfi-yfirlit`, `/brunakerfi.html`,
+  hub-flipi `#brunayfirlit`): „Skoðað YYYY" er AÐEINS `doc_type=brunakerfi` PDF á
+  þessum `fyrirtaeki_id`. Slökkvitækja-úttekt, `document_pairs` og kt-systkini
+  mála ekki. Klöpp með úttekt 2026-08 og brunakerfi 2025-10 = **Vantar 2026**.
 
 - Kúnnar eru til í bæði Supabase og Bakskjali (Google Sheet) — **þau eru ekki samstillt.**
   Supabase er sannleikurinn fyrir öppin.
