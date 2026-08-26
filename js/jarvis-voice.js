@@ -38,7 +38,7 @@
       fb: { lang: "en-US", rate: 0.84, pitch: 0.68, pref: /alex|aaron|arthur|david|google us english/i }
     },
     arnold: {
-      name: "Arnold", emoji: "💪", role: "Öryggisvörðurinn — RLS & lyklar",
+      name: "Arnold", emoji: "💪", role: "Slökkvitækja-layout á teikningar (í þjálfun) · öryggið — RLS & lyklar",
       voice_id: "2270085c19e14054b63e0e451593e0f0",   // Fish — Arnold Schwarzenegger
       sample: "Agnar. Three invoices, still drafts. Stop whining and send them. Do it. Do it now!",
       fb: { lang: "en-US", rate: 0.92, pitch: 0.58, pref: /alex|david|aaron|rishi/i }
@@ -62,7 +62,7 @@
       fb: { lang: "en-US", rate: 0.98, pitch: 1.06, pref: /samantha|ava|allison|google us english|female/i }
     },
     natalie: {
-      name: "Natalie", emoji: "🌸", role: "Hlý & róleg",
+      name: "Natalie", emoji: "🌸", role: "Factcheck 2025–26 — staðreyndayfirferð",
       voice_id: "9154a623447644788ce990c64e0f235a",   // Fish — Natalie Portman (calm, warm, empathetic)
       sample: "Hey Agnar. No rush — just so you know, three sales are ready to invoice whenever you are. You've got this.",
       fb: { lang: "en-US", rate: 0.95, pitch: 1.04, pref: /samantha|ava|allison|google us english|female/i }
@@ -85,7 +85,7 @@
       fb: { lang: "en-GB", rate: 1.00, pitch: 0.82, pref: /daniel|arthur|george|uk english male|ryan/i }
     },
     sara: {
-      name: "Sara", emoji: "🗂️", role: "Organizer — pör og skjöl",
+      name: "Sara", emoji: "🗂️", role: "Skýrslugerð & texta-innfylling — úttektarskýrslur LIVE",
       voice_id: "4575dfa5b64148ad8b48542a5ebd0749",   // Fish — Margot Robbie
       sample: "Okay! Every report is filed, every invoice is paired, and I flagged the gaps for you. You're welcome.",
       fb: { lang: "en-AU", rate: 1.02, pitch: 1.10, pref: /karen|samantha|ava|female/i }
