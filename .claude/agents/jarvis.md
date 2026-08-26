@@ -27,15 +27,36 @@ Jarvis-síðuna sjálfa (`jarvis.html`) — svið, raddir, TTS og cache.
 
 | Skrá | Hvað | Fjöldi |
 |---|---|---|
-| `js/jarvis-voice.js:21-117` | `AGENTS` — raddirnar (Fish voice_id + fallback) | 14 |
+| `js/jarvis-voice.js:21-117` | `AGENTS` — raddirnar (Fish voice_id + fallback) | 15 |
 | `netlify/functions/svid-status.js` | `SVID` — takkarnir/sviðin með söfnurum | 12 |
-| `jarvis.html:324` | Roster-HTML-ið (handskrifað, bara útlit) | 13 |
+| `jarvis.html:324` | Roster-HTML-ið (handskrifað, bara útlit) | 16 |
 
 2026-08-20 fengu `jarvis` (safnaJarvis: opin verk, rauð kerfi, útistandandi,
 vantar_reikning), `oryggi` (RPC `oryggi_counts()`, rödd Arnold), `prentun`
 (DeVito) og `kort` (Ramsay) eigin svið; `yfirlit` fékk `agent:'hype'`.
 `house` er áfram AÐEINS rödd — ekkert svið. (`daily-health.js` er ÓTENGD
 pípu-heilsu-emailvakt, ekki Jarvis.)
+
+**2026-08-26 (Agnar) — hlutverkin uppfærð** (roster :324 + `role`-reitir í
+jarvis-voice.js; svið/raddir ÓBREYTT):
+- **Sara** 🗂️ = skýrslugerð & texta-innfylling — fyllir úttektarskýrslur út
+  LIVE (slokkvitaeki `sara-coworker`; Coworker-merkið stendur).
+- **Arnold** 💪 = að læra að teikna slökkvitækja-layout inn á
+  húsnæðisteikningar (TurboPaint í kjarna, `/kjarni/turbopaint`) · heldur
+  öryggis-hlutverkinu og er áfram röddin á `oryggi`-sviðinu. Roster-emoji
+  fylgir nú röddinni (💪, var 🔒 — svið-takkinn er áfram 🔒).
+- **Elon Musk** ⚡ = innra tengikerfið / as-built (slokkvitaeki `elon-musk`,
+  `docs/RAFKERFI.md`, data-elon rekjarinn). NÝR á roster; á ENGA rödd í
+  AGENTS enn — voice_id þarf að staðfesta á fish.audio áður en henni er bætt
+  við (reglan: öll voice_id staðfest).
+- **Natalie** 🌸 = Factcheck 2025–26 hjálpari (með charlize + söru;
+  `factcheck_bord`-taflan — sjá Charlize `topic='factcheck'`). Átti rödd en
+  ekkert roster-sæti; komin á roster.
+- **Joker** 🃏 = útlit & farsímahönnun — allar síðubreytingar fara gegnum
+  Stílstjóra-breytingakerfið (regla Agnars 26.08, sjá slokkvitaeki
+  `joker.md` + Charlize `topic='stilstjori'`). NÝR á roster; engin rödd
+  (Harley 🃏 í AGENTS er önnur persóna — áminningarnar).
+(Talningar leiðréttar um leið: AGENTS voru 15, ekki 14; roster fór 13 → 16.)
 
 ## Svið-flæðið (takkasmell → rödd)
 
