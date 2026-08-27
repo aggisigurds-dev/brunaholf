@@ -103,6 +103,23 @@ exports.handler = async (event) => {
     } catch (e) { warnings.push(name + ': ' + String((e && e.message) || e)); }
   }
 
+  // 2026-08-27 — VÖRN GEGN TÓMUM REIKNINGI (öryggisnet Slökkvitækis: „No blank
+  // invoice can be emailed to a customer"). Kallandinn bað um viðhengi en eitt
+  // eða fleiri leystust ekki (Drive 404/heimild, dauð slóð). Klientinn getur
+  // ekki sannreynt driveId/url sjálfur — hann sendir aðeins tilvísunina — svo
+  // neitunin verður að vera HÉR. Áður fór pósturinn samt af stað og kúnninn fékk
+  // reikningslausan póst á meðan skrifstofan sá „✅ Sent" (aðeins mjúk viðvörun).
+  // `allowPartial: true` er flóttaleið fyrir kallendur sem þola vöntun viðhengja.
+  const _asked = (Array.isArray(body.attachments) ? body.attachments : []).filter(Boolean).length;
+  if (_asked && atts.length < _asked && !body.allowPartial) {
+    return json(422, {
+      error: 'ATTACHMENTS_FAILED',
+      message: 'Viðhengi leystist ekki (' + atts.length + ' af ' + _asked + ' tilbúin) — pósturinn var EKKI sendur.'
+        + (warnings.length ? ' ' + warnings.join('; ') : ''),
+      warnings,
+    });
+  }
+
   const mime = buildMime({
     from: body.from || account,       // má vera „Nafn <netfang>" — verður að vera pósthólfið eða alias þess
     to, cc: [].concat(body.cc || []).filter(Boolean),
