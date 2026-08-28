@@ -20,3 +20,6 @@ _responsive-preview.html
 
 # remember-plugin session memory (staðbundið, aldrei í Git)
 .remember/
+
+# Netlify Edge Functions bootstrap lockfile (staðbundið build-artefakt)
+deno.lock
