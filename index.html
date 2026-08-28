@@ -14344,7 +14344,7 @@ async function renderKrofuyfirlit(t){
         : '';
       return `
         <div class="ky-invrow${tier===2?' ky-t2':''}">
-          <div class="ky-row${lp?' ky-likely':''}" data-key="${esc(inv.inv_key)}" style="display:flex;align-items:center;gap:11px;padding:9px 18px;border-bottom:1px solid #f3f5f9;font-size:12.5px;cursor:pointer;${inv._hidden?'opacity:.5':''}">
+          <div class="ky-row${lp?' ky-likely':''}" data-key="${esc(inv.inv_key)}" style="display:flex;align-items:center;gap:11px;padding:9px 18px 9px 42px;border-bottom:1px solid #f3f5f9;font-size:12.5px;cursor:pointer;${inv._hidden?'opacity:.5':''}">
             <span class="ky-caret2" style="width:11px;flex-shrink:0;color:#b6c0cc;font-size:11px;user-select:none">▸</span>
             <div style="width:200px;flex-shrink:0;line-height:1.2">
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -14362,7 +14362,7 @@ async function renderKrofuyfirlit(t){
             ${(tier===2||tier===3)?wfStrip(inv, tier):''}
             <div style="display:flex;gap:6px;flex-shrink:0">${actChips(inv, tier)}</div>
           </div>
-          <div class="ky-detail" style="display:none;padding:11px 18px 14px 41px;background:#fafbfe;border-bottom:1px solid #f3f5f9">
+          <div class="ky-detail" style="display:none;padding:11px 18px 14px 65px;background:#fafbfe;border-bottom:1px solid #f3f5f9">
             <div style="display:flex;flex-wrap:wrap;gap:12px 28px">${detailCells}</div>
             ${bankDetail}
           </div>
@@ -14406,7 +14406,7 @@ async function renderKrofuyfirlit(t){
     const mini=(label,val,bg,tx)=> `<span class="ky-num" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:${tx};background:${bg};border-radius:3px;padding:2px 9px">${label} ${fmtKr(val)}</span>`;
     const tierBlock=(d,tier,ic,title,col)=> !d ? '' : `
       <div class="${tier===2?'ky-tblock2':''}" style="border-top:1px solid var(--line)">
-        <div style="display:flex;align-items:center;gap:8px;padding:8px 18px;background:var(--tbl-header);font-size:11px;font-weight:600;letter-spacing:.02em;color:var(--ink-2)">
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 18px 8px 30px;background:var(--tbl-header);font-size:11px;font-weight:600;letter-spacing:.02em;color:var(--ink-2)">
           <span style="width:7px;height:7px;border-radius:50%;background:${col};flex:0 0 auto"></span>
           <span>${title}</span>
           <span class="ky-num" style="margin-left:auto;color:var(--ink)">${fmtKr(d.outstanding_kr)}</span>
@@ -14514,7 +14514,7 @@ async function renderKrofuyfirlit(t){
         : '';
       return `
         <div class="ky-invrow${tier===2?' ky-t2':''}">
-          <div class="ky-row${lp?' ky-likely':''}" data-key="${esc(inv.inv_key)}" style="display:flex;align-items:center;gap:11px;padding:9px 18px;border-bottom:1px solid #f3f5f9;font-size:12.5px;cursor:pointer;${inv._hidden?'opacity:.5':''}">
+          <div class="ky-row${lp?' ky-likely':''}" data-key="${esc(inv.inv_key)}" style="display:flex;align-items:center;gap:11px;padding:9px 18px 9px 42px;border-bottom:1px solid #f3f5f9;font-size:12.5px;cursor:pointer;${inv._hidden?'opacity:.5':''}">
             ${t2chk}<span class="ky-caret2" style="width:11px;flex-shrink:0;color:#b6c0cc;font-size:11px;user-select:none">▸</span>
             <div style="width:200px;flex-shrink:0;line-height:1.2">
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -14532,7 +14532,7 @@ async function renderKrofuyfirlit(t){
             ${(tier===2||tier===3)?wfStrip(inv, tier):''}
             <div style="display:flex;gap:6px;flex-shrink:0">${actChips(inv, tier)}</div>
           </div>
-          <div class="ky-detail" style="display:none;padding:11px 18px 14px 41px;background:#fafbfe;border-bottom:1px solid #f3f5f9">
+          <div class="ky-detail" style="display:none;padding:11px 18px 14px 65px;background:#fafbfe;border-bottom:1px solid #f3f5f9">
             <div style="display:flex;flex-wrap:wrap;gap:12px 28px">${detailCells}</div>
             ${bankDetail}
           </div>
