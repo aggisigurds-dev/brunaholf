@@ -15007,7 +15007,7 @@ async function renderKrofuyfirlit(t){
         if(iv.sent && !confirm('Þegar sent. Senda aftur?')) return;
         const ws=iv.worksite||'', wm=iv.work_month||'', cust=iv.customer||ws;
         let to='bokhald@brunaholf.is'; try{ to=localStorage.getItem('email_to')||to; }catch(_){}
-        const toInp = b.closest('.ky-box') && b.closest('.ky-box').querySelector('input[data-f="to"]'); if(toInp && toInp.value.trim()) to=toInp.value.trim();
+        if(cust){ try{ const ci=await fetch('/api/customer-info?name='+encodeURIComponent(cust)).then(r=>r.ok?r.json():null); if(ci&&ci.rows&&ci.rows[0]&&ci.rows[0].contact_email) to=ci.rows[0].contact_email; }catch(_){} }
         const docs=((ws&&wm)?(EFDOCS[ws+'|'+wm]||[]):[]).filter(d=>d.drive_file_id);
         if(!docs.length && !confirm('Ekkert vistað Efnislisti/Tímaskýrsla PDF fyrir '+(ws||'—')+' '+(wm||'')+'.\nVista fyrst með „💾 Vista PDF". Senda samt án viðhengja?')) return;
         // Senda er óafturkræft (póstur út) — ein staðfesting svo óvart-smellur sendi ekki.
