@@ -17,3 +17,6 @@ graphify-out/
 
 # responsive-craft live preview artifact (auto-copied into serve dir)
 _responsive-preview.html
+
+# remember-plugin session memory (staðbundið, aldrei í Git)
+.remember/
