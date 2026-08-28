@@ -241,7 +241,18 @@ function mapInvoice(raw) {
   if (!raw || typeof raw !== 'object') return null;
   // Try a wide range of field names — Payday's exact shape varies and we want
   // this to work without per-deploy tweaks. Inspect raw via ?probe=1 first.
-  const number = pickStr(raw, 'number', 'invoiceNumber', 'invoice_number', 'no', 'nr', 'reference', 'tilvisun');
+  // ⚠️ 'reference'/'tilvisun' MEGA EKKI vera í þessari keðju.
+  // Þau eru FRJÁLS TEXTI („Landsspítalinn", „Húsaleiga/húsgjöld") en ekki
+  // auðkenni — og `tilvisun` er upsert-lykillinn. Reikningur sem er sóttur
+  // ÁÐUR en Payday gefur honum númer datt því niður í reference og vistaðist
+  // sem t.d. „Landsspítalinn"; þegar hann fékk svo númerið 352 varð til ÖNNUR
+  // röð og sú gamla sat eftir ógreidd að eilífu. Kröfuyfirlitið las gömlu
+  // röðina og sýndi 10.044.433 kr sem ógreiddar þótt Payday segði Greitt
+  // (Agnar 28.08). Númerslaus reikningur fær nú stöðugt auðkenni af Payday-id
+  // í staðinn, svo hann rekist aldrei á tilvísunartexta.
+  const pdId = pickStr(raw, 'id', 'invoiceId', 'invoice_id', 'uuid', 'guid');
+  let number = pickStr(raw, 'number', 'invoiceNumber', 'invoice_number', 'no', 'nr');
+  if (!number && pdId) number = 'PD-' + pdId;
   if (!number) return null;
 
   const customer = raw.customer || raw.client || raw.recipient || {};
@@ -262,6 +273,11 @@ function mapInvoice(raw) {
 
   return {
     tilvisun: String(number).trim(),
+    // Stöðugt Payday-auðkenni. Dálkurinn var til en ALDREI fylltur (359/359
+    // NULL, staðfest 28.08) — án hans er ekki hægt að para röð við reikning
+    // þegar tilvisun breytist. Þetta er undirstaðan undir að færa
+    // upsert-lykilinn af tilvisun yfir á payday_invoice_id.
+    payday_invoice_id: /^[0-9]+$/.test(String(pdId||'')) ? Number(pdId) : null,
     customer_name: name || null,
     kt_greidanda: fmtKt(kt),
     hofudstoll: Math.round(exVat || 0),
