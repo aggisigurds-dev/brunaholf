@@ -14,3 +14,6 @@ deploy.bat
 
 # Sjalfgeneradur graphify-cache (~432k tokens) - ALDREI i git, keyrir a sto. velinni
 graphify-out/
+
+# responsive-craft live preview artifact (auto-copied into serve dir)
+_responsive-preview.html
