@@ -332,7 +332,7 @@
 
 <header>
   <div class="brand">
-    <img class="logo" src="logo.png" width="180" height="60" alt="Slökkvitæki Brunahólf" />
+    <img class="logo" src="logo.png?v=2" width="180" height="60" alt="Slökkvitæki Brunahólf" />
     <div class="brand-text">
       <h1>Tilboðsgerð</h1>
       <div class="tag">Sjálfvirk skýringarmynd og tilboðsskjal fyrir brunavarnir í sameign</div>
@@ -891,7 +891,7 @@ function fmtDags(d) {
 
 function previewHeader(f, fyr, dagsFmt) {
   return `
-    <img class="doc-logo" src="logo.png" width="260" height="87" alt="Slökkvitæki Brunahólf" />
+    <img class="doc-logo" src="logo.png?v=2" width="260" height="87" alt="Slökkvitæki Brunahólf" />
     <div class="briefhaus">
       <strong>${fyr}</strong>
       ${escape(f.kt || '[Kt.]')} · ${escape(f.fyrirtAdr || '[Heimilisfang]')}<br>
@@ -1182,7 +1182,7 @@ async function svgToPng(svgEl, width) {
 
 async function fetchLogoBuffer() {
   try {
-    const res = await fetch('logo.png');
+    const res = await fetch('logo.png?v=2');
     if (!res.ok) return null;
     return await res.arrayBuffer();
   } catch (e) { return null; }

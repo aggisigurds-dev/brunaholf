@@ -16,7 +16,8 @@ ok('loadDocxLib helper exists', /function loadDocxLib\(/.test(html));
 ok('click handler awaits loadDocxLib', /const docxLib = await loadDocxLib\(\)/.test(html));
 ok('docx is still pinned to 9.1.0', html.includes('docx@9.1.0/build/index.umd.js'));
 ok('logo has width/height (CLS)',
-  /<img class="logo" src="logo.png" width="180" height="60"/.test(html));
+  /<img class="logo" src="logo\.png\?v=2" width="180" height="60"/.test(html));
+ok('logo fetch uses the same cache-bust query', /fetch\('logo\.png\?v=2'\)/.test(html));
 
 const toml = fs.readFileSync(path.join(dir, 'netlify.toml'), 'utf8');
 ok('HTML / revalidates', /for = "\/"/.test(toml) && /max-age=0, must-revalidate/.test(toml));
