@@ -332,7 +332,7 @@
 
 <header>
   <div class="brand">
-    <img class="logo" src="logo.png" alt="Slökkvitæki Brunahólf" />
+    <img class="logo" src="logo.png" width="180" height="60" alt="Slökkvitæki Brunahólf" />
     <div class="brand-text">
       <h1>Tilboðsgerð</h1>
       <div class="tag">Sjálfvirk skýringarmynd og tilboðsskjal fyrir brunavarnir í sameign</div>
@@ -453,9 +453,8 @@
 
 </div>
 
-<!-- docx library for .docx download -->
-<script src="https://unpkg.com/docx@9.1.0/build/index.umd.js"></script>
-
+<!-- docx UMD is loaded on "Sækja .docx" click (~147 KB gzip). Putting it here
+     on every visit competed with the page's own HTML+logo for first paint. -->
 <script>
 // ============================================================
 // State management
@@ -892,7 +891,7 @@ function fmtDags(d) {
 
 function previewHeader(f, fyr, dagsFmt) {
   return `
-    <img class="doc-logo" src="logo.png" alt="Slökkvitæki Brunahólf" />
+    <img class="doc-logo" src="logo.png" width="260" height="87" alt="Slökkvitæki Brunahólf" />
     <div class="briefhaus">
       <strong>${fyr}</strong>
       ${escape(f.kt || '[Kt.]')} · ${escape(f.fyrirtAdr || '[Heimilisfang]')}<br>
@@ -1189,14 +1188,38 @@ async function fetchLogoBuffer() {
   } catch (e) { return null; }
 }
 
+const DOCX_UMD = 'https://unpkg.com/docx@9.1.0/build/index.umd.js';
+let _docxLoading = null;
+function loadDocxLib() {
+  if (window.docx) return Promise.resolve(window.docx);
+  if (_docxLoading) return _docxLoading;
+  _docxLoading = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = DOCX_UMD;
+    s.async = true;
+    s.onload = () => {
+      if (window.docx) resolve(window.docx);
+      else { _docxLoading = null; reject(new Error('docx-safnið fannst ekki eftir hleðslu')); }
+    };
+    s.onerror = () => {
+      _docxLoading = null;
+      reject(new Error('gat ekki hlaðið docx-safninu'));
+    };
+    document.head.appendChild(s);
+  });
+  return _docxLoading;
+}
+
 document.getElementById('btn-docx').addEventListener('click', async () => {
   const btn = document.getElementById('btn-docx');
+  if (btn.disabled) return;
+  btn.disabled = true;
   btn.textContent = 'Bý til skjal...';
   try {
     const svgEl = document.querySelector('#preview svg');
     const png = await svgToPng(svgEl, 1400);
     const logoBuf = await fetchLogoBuffer();
-    const docxLib = window.docx;
+    const docxLib = await loadDocxLib();
     const p = computePricing();
     const f = state;
     const fyr = f.fyrirtaeki || '[NAFN FYRIRTÆKIS]';
@@ -1612,6 +1635,8 @@ document.getElementById('btn-docx').addEventListener('click', async () => {
     btn.textContent = 'Villa kom upp';
     setTimeout(() => btn.textContent = 'Sækja .docx', 2000);
     alert('Villa við að búa til skjal: ' + err.message);
+  } finally {
+    btn.disabled = false;
   }
 });
 
