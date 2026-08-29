@@ -769,8 +769,13 @@ function openEdit(id) {
 document.getElementById('stats').addEventListener('click', e => {
   const b = e.target.closest('[data-go]'); if (!b) return;
   const sec = document.getElementById(b.dataset.go); if (!sec) return;
+  // Mælt í vafra 29.08: síðan er ~72.000 px há og „Í yfirferð" situr í 50.427 px.
+  // Mjúkt skrun þangað tekur MARGAR sekúndur — það er nákvæmlega bið, ekki flýtileið.
+  // Því: stutt stökk mjúk, löng samstundis.
   const soft = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  sec.scrollIntoView({ behavior: soft ? 'auto' : 'smooth', block: 'start' });
+  const dist = Math.abs(sec.getBoundingClientRect().top);
+  const far = dist > window.innerHeight * 3;
+  sec.scrollIntoView({ behavior: (soft || far) ? 'auto' : 'smooth', block: 'start' });
   sec.classList.remove('hit');
   void sec.offsetWidth;          // þvinga endurræsingu á animation
   sec.classList.add('hit');
