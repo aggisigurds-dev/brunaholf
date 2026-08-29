@@ -200,3 +200,11 @@
   for = "/fonts/*"
   [headers.values]
     Cache-Control = "public, max-age=604800, immutable"
+
+# Tilboðsgerð lives at /public/tilbod/ on this host (the dedicated
+# brunaholf-tilbod.netlify.app site uses public/tilbod/netlify.toml).
+# HTML under that path still revalidates; the logo may be cached.
+[[headers]]
+  for = "/public/tilbod/*.png"
+  [headers.values]
+    Cache-Control = "public, max-age=86400, stale-while-revalidate=604800"
