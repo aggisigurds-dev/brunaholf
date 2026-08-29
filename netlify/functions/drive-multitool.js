@@ -1236,6 +1236,37 @@ async function applyFile(token, body) {
   if (vt && !(alreadyLinked && alreadyLinked.vidskiptategund)) docRow.vidskiptategund = vt;
   // Upphæðin fylgir (samsetti tvítakalykillinn kt+upphæð+ár þarf hana) — aldrei núlluð.
   if (body.amount != null && body.amount !== '') docRow.amount = Number(body.amount) || null;
+  // 2026-08-29 — BAKVÖRÐUR við upphæðina (verkefnalisti a8ec1b9c).
+  //
+  // Mælt í gögnunum: af reikningsskjölum sem þessi leið stofnaði voru 3 (1%) án
+  // upphæðar í júní, 56 (12%) í júlí og 278 (100%) í ágúst. Upphæð OG dagsetning
+  // hurfu saman — einkenni þess að PDF-ið hafi aldrei verið lesið. Fjöldatenging
+  // 03.–13.08 las reikningsnúmerið af SKRÁARHEITINU og sótti aldrei innihaldið,
+  // svo r.total var null og ekkert barst í body.amount. Viðskiptavinurinn sá
+  // „—" í upphæðardálki á þjónustuvefnum.
+  //
+  // Heitið sjálft ber hins vegar upphæðina: drive-sort endurnefnir reikninga í
+  // „Fyrirtæki - heimilisfang - kt - R-nnnnnn - ár - N.NNN kr.pdf" (nameInvoice)
+  // og skrifaði þá tölu ÞEGAR það hafði lesið PDF-ið rétt. Hún er því ekki
+  // ágiskun heldur gildi sem kerfið reiknaði áður. `origName` liggur þegar fyrir
+  // hér (files.get) — enginn aukakostnaður, ekkert niðurhal.
+  //
+  // Þrjár varnir, allar nauðsynlegar (staðfest á raunverulegum gögnum):
+  //   • R-númerið í heitinu VERÐUR að stemma við invoice_number — annars gæti
+  //     skjalið verið tengt rangri skrá (doc 2879 bar upphæð af öðrum reikningi).
+  //   • KREDITREIKNINGAR eru undanskildir: þeir eru geymdir NEIKVÆÐIR í grunni
+  //     en heitið ber jákvæða tölu (R-107266, R-107299).
+  //   • Skynsemismörk, svo kennitala eða ártal rati aldrei inn sem upphæð.
+  if (docRow.amount == null && doc_type === 'reikningur' && invoice_number) {
+    const nm = String(origName || '');
+    const am = nm.match(/ - ([0-9]{1,3}(?:\.[0-9]{3})+|[0-9]{4,9}) kr/);
+    const nr = nm.match(/\b(R-\d{5,7})\b/);
+    const kredit = /kredit/i.test(nm);
+    if (am && nr && nr[1] === invoice_number && !kredit) {
+      const v = parseInt(am[1].replace(/\./g, ''), 10);
+      if (Number.isFinite(v) && v >= 1000 && v <= 50000000) docRow.amount = v;
+    }
+  }
   if (docRow.amount == null) delete docRow.amount;
 
   // „Aldrei núllað"-vörnin (2026-07-30): merge-duplicates SKRIFAR hvern dálk sem
