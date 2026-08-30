@@ -1542,6 +1542,7 @@ const DEFAULT_STATE = {
     {id:'verkkaupar', label:'Verkkaupar', icon:'🤝', url:'/verkkaupar.html', external:true},
     {id:'dagurinn',   label:'Dagurinn',   icon:'🌅'},
     {id:'jarvis',     label:'J.A.R.V.I.S.', icon:'🧠'},
+    {id:'turbopaint', label:'TurboPaint', icon:'📐'},
     {id:'yfirlit',    label:'Yfirlit',    icon:'🏠'},
     {id:'stjornbord', label:'Stjórnborð', icon:'🎛'},
     {id:'leidsogn',   label:'Leiðsögn',   icon:'🧭'},
@@ -1561,7 +1562,6 @@ const DEFAULT_STATE = {
     {id:'krofur', label:'Krófur & Tekjur', icon:'📊'},
     {id:'hreyfingaryfirlit', label:'Hreyfingaryfirlit', icon:'📒'},
     {id:'nlsh',        label:'Landsspítalinn', icon:'🏥'},
-    {id:'turbopaint', label:'TurboPaint', icon:'📐'},
     {id:'maeting',    label:'Mæting', icon:'👥', sheetCsv:'https://docs.google.com/spreadsheets/d/e/2PACX-1vRXUTGE4Ui3eadS0kGX0d-5LvFbyt5SNWD6ToeRRn1MJ6zoiGng7RK5ZJOVEq6s_x8wkiNLpgU8nHJk/pub?output=csv'},
     {id:'verkefnastada', label:'Verkefnastaða', icon:'📊', sheetCsv:''},
     {id:'april',      label:'Apríl reikningar', icon:'📋'},
@@ -1894,9 +1894,10 @@ function ensureNewTabs(s){
           const sIdx = s.tabs.findIndex(t=>t.id==='stillingar');
           target = idx >= 0 ? idx + 1 : (bIdx >= 0 ? bIdx : (sIdx >= 0 ? sIdx : -1));
         } else if(id === 'turbopaint'){
-          // TurboPaint (teikningar, iframe á kjarni.vercel.app) situr rétt á eftir NLSH.
-          const idx = s.tabs.findIndex(t=>t.id==='nlsh');
-          target = idx >= 0 ? idx + 1 : -1;
+          // TurboPaint (teikningar, iframe á kjarni.vercel.app) situr með daglegum tólum.
+          const idx = s.tabs.findIndex(t=>t.id==='jarvis');
+          const dIdx = s.tabs.findIndex(t=>t.id==='dagurinn');
+          target = idx >= 0 ? idx + 1 : (dIdx >= 0 ? dIdx + 1 : -1);
         } else if(id === 'verkfaeri'){
           // Verkfæri (ytri tengill á verkfaeri.netlify.app) situr fyrir ofan Bakendi.
           const idx = s.tabs.findIndex(t=>t.id==='bakendi');
@@ -2046,6 +2047,19 @@ function ensureNewTabs(s){
     const tp = s.tabs.find(t=>t.id==='turbopaint');
     if(tp){ delete tp.url; delete tp.external; }
     s.ui._tpInAppV1 = true;
+  }
+  // One-time: pin TurboPaint with daily tools (after Jarvis / Dagurinn),
+  // not down by NLSH — it will be used a lot from this hub.
+  if(!s.ui._tpPinV1){
+    const i = s.tabs.findIndex(t=>t.id==='turbopaint');
+    if(i>=0){
+      const [tab] = s.tabs.splice(i,1);
+      const j = s.tabs.findIndex(t=>t.id==='jarvis');
+      const d = s.tabs.findIndex(t=>t.id==='dagurinn');
+      const target = j>=0 ? j+1 : (d>=0 ? d+1 : 1);
+      s.tabs.splice(target, 0, tab);
+    }
+    s.ui._tpPinV1 = true;
   }
 }
 
