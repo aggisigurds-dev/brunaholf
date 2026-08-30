@@ -129,8 +129,11 @@ for several Supabase tables this app reads:
 ### NLSH 8 svæði (teikning, ekki herbergi)
 - `GET/POST /api/nlsh-section-progress` — 8 cells (4H S1–S4, 5H S1–S4).
   `done` = distinct `serial_number` with `registration_status='Done'`
-  mapped from `drawing_name`. Dual drawings (`S4+S5`, `4H 51-52`) count
-  **once** on the first matching wing (`primary-only`). `SH` = 5H.
+  mapped from `drawing_name`. Dual drawings (`S4+S5`, `1S og 2S`,
+  `5H1S`/`5H2S`, `4H 51-52`) count **once** on the first matching wing
+  (`primary-only`); the sibling cell names the drawing. `SH` = 5H.
+  Floor-wide `5H. Ceiling` maps to all 5H wings, counted on 5H S1.
+  `Rafmagnsbættingar` is a category drawing and is **not** leftover holes.
   Áætlað lives in `app_kv['nlsh_section_planned']`. Until drawing is
   backfilled by a fresh ingest, `done` is null. Not a per-room join.
 

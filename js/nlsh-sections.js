@@ -30,6 +30,7 @@
       .nl-sec-copy{margin-top:8px;padding:5px 8px;border:1px solid var(--border,#d8dee9);background:#fff;border-radius:7px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;width:100%}
       .nl-sec-copy:hover{background:#eef2f7}
       .nl-sec-sub{font-size:10.5px;color:var(--text-dim,#7a8493);margin-top:6px;line-height:1.35}
+      .nl-sec-cat{font-size:11.5px;color:var(--text-dim,#5a6473);margin:8px 0 0;max-width:720px;line-height:1.45}
       .nl-sec-save{font-size:11px;color:var(--text-dim,#7a8493);margin:0 0 8px}
       .nl-sec-save.ok{color:#0a8a00}
       .nl-sec-save.err{color:#c40000}
@@ -60,8 +61,9 @@
 
   function cellHtml(s) {
     const st = STATUS[s.status] || STATUS.oskrad;
+    const sharedDrawings = (s.shared_drawings || []).map((n) => escapeHtml(n)).join(', ');
     const shared = s.shared_from
-      ? `Tvíteikning talin á ${escapeHtml(s.shared_from)}.`
+      ? `Tvíteikning talin á ${escapeHtml(s.shared_from)}${sharedDrawings ? ' (' + sharedDrawings + ')' : ''}.`
       : '';
     const drawings = (s.drawings || []).map((d) => escapeHtml(d.name)).join(', ');
     return `<div class="nl-sec-cell" style="border-top-color:${st.col}" data-sec="${escapeAttr(s.id)}">
@@ -104,6 +106,10 @@
       return;
     }
     const floors = ['4H', '5H'];
+    const cat = (data.category || []).filter((c) => c.serials > 0);
+    const catLine = cat.length
+      ? `<p class="nl-sec-cat">Flokkateikningar teljast ekki með í gataeftirstöðvum: ${cat.map((c) => escapeHtml(c.drawing) + ' (' + num(c.serials) + ')').join(', ')}.</p>`
+      : '';
     root.innerHTML = `
       <p class="nl-sec-note">${escapeHtml(data.note || '')} Áætlað vistast strax. Þetta er ekki herbergjastyring og ekki 95% úr Ajour-lista.</p>
       <div class="nl-sec-save" id="nl-sec-save">${data.drawing_backfilled ? '' : 'Áætlað má fylla inn núna. Lokið fyllist við næsta Ajour-innsog.'}</div>
@@ -112,6 +118,7 @@
           ${(data.sections || []).filter((s) => s.floor === f).map(cellHtml).join('')}
         </div>
       `).join('')}
+      ${catLine}
     `;
     root.querySelectorAll('.nl-sec-cell').forEach((cell) => {
       const id = cell.getAttribute('data-sec');
