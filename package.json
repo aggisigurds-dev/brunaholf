@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "description": "Netlify function dependencies for the Brunahólf hub (Efnislisti amount parsing).",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
   "dependencies": {
     "mailparser": "^3.7.1",
     "pdf-lib": "^1.17.1",
