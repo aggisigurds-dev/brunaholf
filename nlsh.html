@@ -82,6 +82,8 @@
     <div><button id="nl-refresh" class="tv-btn" type="button">↻ Sækja</button></div>
   </div>
   <div id="nl-cards" class="nl-cards"></div>
+  <h3 class="nl-h3">Svæði — áætlað vs Ajour (4.–5. hæð × S1–S4)</h3>
+  <div id="nl-sections"></div>
   <h3 class="nl-h3">📅 Göt kláruð per dag <span class="nl-note">(síðustu 2 vikur)</span></h3>
   <div id="nl-day" class="nl-tw"></div>
   <h3 class="nl-h3">📈 Þróun per viku</h3>
@@ -109,6 +111,7 @@
   <div id="nl-notes" class="nl-notes"></div>
   <div class="foot">Brunahólf ehf · gögn úr Ajour + Tímavera</div>
 </div>
+<script src="/js/nlsh-sections.js?v=20260830a"></script>
 <script>
 (function(){
   const num = n => (Math.round(n||0)).toLocaleString('is-IS');
@@ -194,6 +197,7 @@
       card('Vinnustundir', num(d.totals.hours)+' klst', ''),
       card('Afköst', (d.totals.holes_per_hour??'—')+' göt/klst', '')
     ].join('');
+    if (typeof window.mountNlshSections === 'function') window.mountNlshSections();
     const wk = d.byWeek || [];
     document.getElementById('nl-charts').innerHTML =
       chartCard('Göt per viku', '▮ vikuleg · — uppsafnað (<b>'+num(d.totals.holes)+'</b>)',

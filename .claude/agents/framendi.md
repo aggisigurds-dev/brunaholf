@@ -150,7 +150,9 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   reason.
 - `nlsh` — Landsspítalinn (NLSH) dashboard (renderNLSH): tekjur/mánuð
   (contract heildir × taxti, uppsafnað), lokuð göt per viku, vinnustundir +
-  göt per starfsmann, samningsstaða per verkliður. Data: `/api/nlsh-dashboard`
+  göt per starfsmann, samningsstaða per verkliður. Data: `/api/nlsh-dashboard`.
+  **8 svæði** (4H/5H × S1–S4): áætlað vs Ajour-lokið per teikningu —
+  `/api/nlsh-section-progress` + `js/nlsh-sections.js`. Ekki herbergi.
 - `maeting`, `verkefnastada` — sheet-CSV-backed generic tabs
 - `verdskra` — Verðskrá (rate editor for pricing_guide + hole_size_rates + read-only NLSH contract)
 - `april` — Apríl reikningar punch list
