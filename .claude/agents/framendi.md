@@ -152,7 +152,9 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   (contract heildir × taxti, uppsafnað), lokuð göt per viku, vinnustundir +
   göt per starfsmann, samningsstaða per verkliður. Data: `/api/nlsh-dashboard`.
   **8 svæði** (4H/5H × S1–S4): áætlað vs Ajour-lokið per teikningu —
-  `/api/nlsh-section-progress` + `js/nlsh-sections.js`. Ekki herbergi.
+  `/api/nlsh-section-progress` + `js/nlsh-sections.js`. Tvíteikning
+  (1S og 2S o.fl.) sýnir teikningarnafn á systurreit. Rafmagnsbættingar
+  er flokkateikning, ekki göt. Ekki herbergi.
 - `maeting`, `verkefnastada` — sheet-CSV-backed generic tabs
 - `verdskra` — Verðskrá (rate editor for pricing_guide + hole_size_rates + read-only NLSH contract)
 - `april` — Apríl reikningar punch list

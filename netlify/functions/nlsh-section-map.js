@@ -1,14 +1,22 @@
 // 8-section leftover map for NLSH 4.–5. hæð (not per-room, not 9738-row import).
 //
-// Ajour stores pins on a *drawing* (e.g. "SH S4 + S5 Ceiling.pdf"). That is the
-// finest spatial key we ingest. Crew dispatch is 4H×S1–S4 + 5H×S1–S4.
+// Ajour stores pins on a *drawing*. Real titles from the Registration drawings
+// list (2026-08-30) include:
+//   "5H 1S og 2S.jpg"          — one sheet covering S1 and S2 (count once)
+//   "5H. Ceiling" / "5H Ceiling"
+//   "5H S4 + S5.pdf"           — map even when pin count is 0
+//   "5H1S OG 5H2S - Rafmagnsbættingar.jpg" — category, NOT leftover holes
+// Older aliases still seen: "SH S4 + S5 Ceiling.pdf", "4H 45 + 55 Ceiling.pdf",
+// "4H, 51-52.jpg". SH is Ajour's 5H shorthand (list says SH, popup says 5H).
 //
-// Dual drawings (S4+S5, 51-52): COUNT ONCE on the first matching wing in grid
-// order. Sibling wings get shared_from so the UI can say "sjá 4H S1". Counting
-// toward both would double leftover vs the 9738 hole register.
+// Dual drawings (S4+S5, 1S og 2S, 51-52): COUNT ONCE on the first matching wing
+// in grid order. Sibling wings get shared_from + the drawing title so the UI
+// can say the pins live on "5H 1S og 2S". Counting toward both would double
+// leftover vs the 9738 hole register.
 //
-// SH in filenames is Ajour's 5H shorthand (list says SH, popup says 5H).
 // S5 is not its own cell in the 8-grid — it folds into S4 (the S4+S5 teikning).
+// Floor-wide ceiling with no wing ("5H. Ceiling") maps to all four wings of
+// that floor, still counted once on the first.
 
 const SECTIONS = [
   { id: '4h-s1', label: '4H S1', floor: '4H' },
@@ -23,10 +31,23 @@ const SECTIONS = [
 
 const DUAL_POLICY = 'primary-only';
 
+// Electrical-addition / sealing sheets sit on the same Ajour list as hole
+// drawings. They must not inflate S1/S2 leftover.
+const CATEGORY_DRAWING_RE = /rafmagns?\s*(bættingar|baettingar|þéttingar|thettingar|þettingar)/i;
+
+function isCategoryDrawing(name) {
+  return CATEGORY_DRAWING_RE.test(String(name || ''));
+}
+
 function normalizeDrawing(name) {
   let s = String(name || '').trim().toLowerCase();
-  s = s.replace(/[_.,;]+/g, ' ');
+  // SH → 5H, including glued SH1S / SHS4
+  s = s.replace(/\bsh(?=\d|s\b)/g, '5h');
   s = s.replace(/\bsh\b/g, '5h');
+  // Glued 5H1S / 5h2s and 5HS1 / 5hs2
+  s = s.replace(/\b([45])h([1-5])s\b/g, '$1h $2s');
+  s = s.replace(/\b([45])hs([1-5])\b/g, '$1h s$2');
+  s = s.replace(/[_.,;:+\-–—]+/g, ' ');
   s = s.replace(/\s+/g, ' ');
   return s;
 }
@@ -37,22 +58,31 @@ function floorOf(norm) {
   return null;
 }
 
-/** Wing tokens 1–5. S5 folds to 4. 51/52 on a 4H drawing are S1/S2. 45/55 → S4. */
+/** Wing tokens 1–5. S5 folds to 4. Accepts S1 and 1S. 51/52 on a 4H drawing are S1/S2. 45/55 → S4. */
 function wingTokens(norm, floor) {
   const wings = new Set();
-  const reS = /\bs\s*([1-5])\b/g;
+  const add = (n) => wings.add(+n === 5 ? 4 : +n);
   let m;
-  while ((m = reS.exec(norm))) wings.add(+m[1] === 5 ? 4 : +m[1]);
+  const reS = /\bs\s*([1-5])\b/g;
+  while ((m = reS.exec(norm))) add(m[1]);
+  // Ajour "5H 1S og 2S" / "4H 1S og 2S" — number then S
+  const reNS = /\b([1-5])\s*s\b/g;
+  while ((m = reNS.exec(norm))) add(m[1]);
   if (floor === '4h') {
-    if (/\b51\b/.test(norm) || /\b51-52\b/.test(norm)) wings.add(1);
-    if (/\b52\b/.test(norm) || /\b51-52\b/.test(norm)) wings.add(2);
-    if (/\b53\b/.test(norm)) wings.add(3);
-    if (/\b54\b/.test(norm) || /\b45\b/.test(norm) || /\b55\b/.test(norm)) wings.add(4);
+    if (/\b51\b/.test(norm)) add(1);
+    if (/\b52\b/.test(norm)) add(2);
+    if (/\b53\b/.test(norm)) add(3);
+    if (/\b54\b/.test(norm) || /\b45\b/.test(norm) || /\b55\b/.test(norm)) add(4);
+  }
+  // "5H. Ceiling" / "5H Ceiling" / "4H Ceiling" — no wing in the title
+  if (!wings.size && /\bceiling\b|\bloft\b/.test(norm)) {
+    add(1); add(2); add(3); add(4);
   }
   return [...wings].sort((a, b) => a - b);
 }
 
 function matchSectionIds(drawingName) {
+  if (isCategoryDrawing(drawingName)) return [];
   const norm = normalizeDrawing(drawingName);
   if (!norm) return [];
   const floor = floorOf(norm);
@@ -78,6 +108,7 @@ function emptyBucket() {
     openSerials: new Set(),
     drawings: {},
     sharedFrom: null,
+    sharedDrawings: [],
   };
 }
 
@@ -108,8 +139,14 @@ function tallyBySection(rows) {
   const byId = {};
   for (const s of SECTIONS) byId[s.id] = emptyBucket();
   const unmapped = {};
+  const category = {};
 
   for (const [sn, info] of serials) {
+    if (isCategoryDrawing(info.drawing)) {
+      const key = info.drawing || '(flokkateikning)';
+      category[key] = (category[key] || 0) + 1;
+      continue;
+    }
     const ids = matchSectionIds(info.drawing);
     const primary = ids[0] || null;
     if (!primary) {
@@ -125,7 +162,9 @@ function tallyBySection(rows) {
     if (info.done) drow.done++;
     else drow.open++;
     for (const id of ids.slice(1)) {
-      if (!byId[id].sharedFrom) byId[id].sharedFrom = primary;
+      const sib = byId[id];
+      if (!sib.sharedFrom) sib.sharedFrom = primary;
+      if (d && !sib.sharedDrawings.includes(d)) sib.sharedDrawings.push(d);
     }
   }
 
@@ -136,6 +175,7 @@ function tallyBySection(rows) {
     drawingBackfilled: withDrawing > 0,
     byId,
     unmapped,
+    category,
   };
 }
 
@@ -163,6 +203,8 @@ function crewCopy(label, planned, done, left) {
 module.exports = {
   SECTIONS,
   DUAL_POLICY,
+  CATEGORY_DRAWING_RE,
+  isCategoryDrawing,
   normalizeDrawing,
   matchSectionIds,
   primarySectionId,

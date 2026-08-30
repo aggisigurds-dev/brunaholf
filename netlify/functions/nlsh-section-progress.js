@@ -80,12 +80,16 @@ exports.handler = async (event) => {
       status: sectionStatus(plannedN, done),
       drawings,
       shared_from: sharedFrom,
+      shared_drawings: bucket.sharedDrawings || [],
       copy: crewCopy(s.label, plannedN, done, left),
     };
   });
 
   const unmapped = Object.entries(tally.unmapped)
     .map(([drawing, n]) => ({ drawing, serials: n }))
+    .sort((a, b) => b.serials - a.serials);
+  const category = Object.entries(tally.category || {})
+    .map(([drawing, n]) => ({ drawing, serials: n, reason: 'rafmagnsbættingar' }))
     .sort((a, b) => b.serials - a.serials);
 
   return json(200, {
@@ -95,10 +99,11 @@ exports.handler = async (event) => {
     dual_policy: DUAL_POLICY,
     serials: tally.serials,
     note: backfilled
-      ? 'Lokið = distinct Ajour-serial á teikningu, kortlagt á 8 svæði. Tvíteikning (S4+S5, 51-52) telst einu sinni á fyrra vængnum. Ekki herbergi.'
+      ? 'Lokið = distinct Ajour-serial á teikningu, kortlagt á 8 svæði. Tvíteikning (S4+S5, 1S og 2S, 51-52) telst einu sinni á fyrra vængnum. Flokkateikningar (Rafmagnsbættingar) eru ekki göt. Ekki herbergi.'
       : 'Teikningarnöfn eru ekki komin inn í ajour_registrations enn — keyrðu Ajour-innsog aftur eftir ALTER. Áætlað má samt vista.',
     sections,
     unmapped: backfilled ? unmapped.filter((u) => u.drawing !== '(engin teikning)') : [],
+    category: backfilled ? category : [],
   });
 };
 
