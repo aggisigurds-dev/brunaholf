@@ -65,10 +65,11 @@
   ready(function () {
     var m = mode();
     var target = WIDTHS[m] || 0;
-    // Ramma AÐEINS á tölvu-skjá (mús + nóg breidd). Snertiskjár → fullur skjár.
+    // Ramma AÐEINS á tölvu-skjá (mús + nóg breidd). Snertiskjár → fullur skjár
+    // og ENGINN fljótandi Sími/Spjaldtölva/Tölva-rofi (hann át teikniborðið).
     if ((m === 'mobile' || m === 'tablet') && !isRealTouchDevice() && window.innerWidth >= target + 80) {
       buildFrame(m);
-    } else {
+    } else if (!isRealTouchDevice()) {
       buildFloatingToggle(m);
     }
   });

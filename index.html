@@ -230,6 +230,19 @@ body[data-tab="eydublod"] main{max-width:none;padding:0}
 body[data-tab="brunayfirlit"] main{max-width:none;padding:0}
 /* TurboPaint (kjarni.vercel.app iframe) fyllir alla breidd */
 body[data-tab="turbopaint"] main{max-width:none;padding:0;background:#0f1117}
+/* TurboPaint á síma: fela hub-rusl sem lagðist ofan á teikniborðið
+   (fljótandi +, 📷, Luna, Sími/Spjaldtölva/Tölva). ☰-valmyndin verður eftir. */
+body[data-tab="turbopaint"]{padding-bottom:0}
+body[data-tab="turbopaint"] #fab,
+body[data-tab="turbopaint"] #fabSs,
+body[data-tab="turbopaint"] #luna-fab,
+body[data-tab="turbopaint"] #_bh-viewmode{display:none !important}
+@media (pointer: coarse), (max-width: 767px){
+  body[data-tab="turbopaint"] .editToggle,
+  body[data-tab="turbopaint"] .themeToggle,
+  body[data-tab="turbopaint"] .sync-badge{display:none !important}
+  body[data-tab="turbopaint"] .topbar{height:52px;padding:0 12px}
+}
 /* Fjármála-yfirlit fyllir alla breidd upp að hliðarstiku og topborða (ósk
    Agnars 8.8.) — iframe með eigin útliti og dökkum grunni svo hvítt blikki
    ekki í gegn meðan það hleðst. */
@@ -1415,7 +1428,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
 <script src="/js/hub-sync-buttons.js?v=20260812gull" defer></script>
 <script src="/js/nlsh-sections.js?v=20260830b" defer></script>
-<script src="/js/viewmode.js?v=2" defer></script>
+<script src="/js/viewmode.js?v=3" defer></script>
 <script src="/js/kerfisheilsa-widget.js?v=20260805a" defer></script>
 </head>
 <body>
