@@ -1,3 +1,7 @@
+// Lives outside netlify/functions/ on purpose. A file named *.test.js in the
+// functions directory is packaged as a function named "….test" — Netlify
+// rejects names with a period (422 Incorrect function names) and the deploy
+// preview fails in ~18s. Run: node --test test/nlsh-section-map.test.js
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const {
@@ -9,7 +13,7 @@ const {
   tallyBySection,
   sectionStatus,
   crewCopy,
-} = require('./nlsh-section-map');
+} = require('../netlify/functions/nlsh-section-map');
 
 test('eight named wings, S4 cell is the S4+S5 pair', () => {
   assert.equal(SECTIONS.length, 8);
