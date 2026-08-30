@@ -1,0 +1,8 @@
+---
+description: Icelandic UI and always-allow-save
+alwaysApply: true
+---
+
+UI text is Icelandic. New labels stay Icelandic unless the field is intrinsically English (column names).
+
+Never block Vista/save on validation, required fields, or missing signatures. Drafts always persist. Required-state checks belong on the review side, not as a hard stop on save.

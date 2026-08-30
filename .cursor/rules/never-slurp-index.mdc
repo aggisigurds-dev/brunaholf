@@ -1,0 +1,6 @@
+---
+description: Never slurp index.html or graphify-out
+alwaysApply: true
+---
+
+Never read `index.html` or anything under `graphify-out/` in one shot. Grep first, then Read with offset and limit. Same for any generated graph dump.

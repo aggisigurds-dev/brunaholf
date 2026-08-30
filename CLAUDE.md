@@ -207,3 +207,19 @@ samþykkir) → klarad. GET skilar öllu; POST `{action:'update', id, …}`.
 
 `graphify-out/` á að vera í `.gitignore` (eins og `.memsearch/`) — hún er sjálfgerð og
 392.000 tokens að stærð.
+
+## Cursor Cloud specific instructions
+
+Cloud Agents see this repo at `/agent/repos/brunaholf`. Open that folder. Daily work is one repo per window; the 8-root workspace is only when the task crosses repos.
+
+**Verkefnalisti** still applies: `GET https://brunaholf.netlify.app/api/verkefnalisti` (beidni/i_vinnu) before starting new work.
+
+**Charlize** still applies when the work touches the shared DB, deploy, or Drive: read `v_charlize_active` (scope `kerfi`/`baedi`/`slokkvitaeki`) first. The standing rule lives with slokkvitaeki ops.
+
+**Screenshots / browser:** use Cursor Playwright MCP or computer use. `tools/bh-browser.cjs` is a Claude Code remote-egress workaround (see `docs/BROWSER-MCP-SETUP.md`). Do not use bh-browser unless Playwright fails.
+
+Never read `index.html` or `graphify-out/` whole. Grep first, then Read with offset/limit.
+
+No build step: edit `index.html` and Netlify functions directly. Always-allow-save (Vista never blocks on validation). UI text is Icelandic.
+
+graphify hooks in `.claude/settings.json` will not exist on most Cloud VMs. Ignore them; do not install graphify here.
