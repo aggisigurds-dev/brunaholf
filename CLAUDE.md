@@ -210,11 +210,15 @@ samþykkir) → klarad. GET skilar öllu; POST `{action:'update', id, …}`.
 
 ## Cursor Cloud specific instructions
 
-Cloud Agents see this repo at `/agent/repos/brunaholf`. Open that folder. Daily work is one repo per window; the 8-root workspace is only when the task crosses repos.
+Brunahólf ehf (brunavarnir í sameign) is the parent. It bought Slökkvitæki ehf a few months ago. This repo is the hub / stjórnstöð (`brunaholf.netlify.app`) and a backend for the acquired app as well as Brunahólf’s own ops. Same Supabase `osfdzskyvisifcwyjkuk`. The owner mesh (kúnnar, rekstrarfélög, kennitölur, hver á hvað) is still being organized — not a clean parent/child tree, and this hub is not "just an API."
+
+Cloud paths: this repo `/agent/repos/brunaholf`, sibling app `/agent/repos/slokkvitaeki`. Prefer a two-repo Cloud environment (brunaholf + slokkvitaeki). Do not treat the 8-repo dump, or slokkvitaeki-alone, as the long-term default.
+
+Use a cross-repo window for shared DB, kúnnar, reikningar, Drive, póstur, Payday, Verkefnalisti, or öryggisnet. One-repo window only when the change is truly local to this hub.
+
+Before merging customers, moving a kennitala, or assuming who owns a record: read Charlize (`v_charlize_active`, scope `kerfi`/`baedi`/`slokkvitaeki`) and `docs/STADREYNDIR.md`, then call `kunnaskra`. Never invent a parent/child company link.
 
 **Verkefnalisti** still applies: `GET https://brunaholf.netlify.app/api/verkefnalisti` (beidni/i_vinnu) before starting new work.
-
-**Charlize** still applies when the work touches the shared DB, deploy, or Drive: read `v_charlize_active` (scope `kerfi`/`baedi`/`slokkvitaeki`) first. The standing rule lives with slokkvitaeki ops.
 
 **Screenshots / browser:** use Cursor Playwright MCP or computer use. `tools/bh-browser.cjs` is a Claude Code remote-egress workaround (see `docs/BROWSER-MCP-SETUP.md`). Do not use bh-browser unless Playwright fails.
 

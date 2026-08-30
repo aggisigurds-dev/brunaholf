@@ -1,0 +1,10 @@
+---
+description: Parent hub vs acquired Slökkvitæki app
+alwaysApply: true
+---
+
+Brunahólf ehf is the parent (brunavarnir í sameign). This repo is the hub / stjórnstöð. Slökkvitæki ehf is the acquired extinguisher app (`/agent/repos/slokkvitaeki`). Same Supabase.
+
+Before assuming a table or API lives only here, check the sibling app.
+
+The owner mesh is unfinished. Before merging customers, moving a kennitala, or assuming who owns a record: Charlize (`v_charlize_active`), `docs/STADREYNDIR.md`, then `kunnaskra`. Never invent a parent/child company link.
