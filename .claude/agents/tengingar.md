@@ -69,3 +69,32 @@ lykill sannanlega virkar en hefur ekki verið skipt út.
 - **Ekki keyra `?test=1` í lykkju** — hver keyrsla kallar út úr húsi.
 - Ef eitthvað er rautt: athugaðu fyrst hvort þjónustan sjálf sé niðri (→ `kerfisheilsa`
   agentinn) áður en þú ferð að endurnýja lykla að óþörfu.
+
+## Supabase-lyklarnir — kynslóðaskipti fyrir árslok 2026
+
+Supabase er að leggja niður gömlu lyklana. Þetta á beinlínis við okkur:
+
+| Kynslóð | Form | Staða |
+|---|---|---|
+| Gamli | `anon` / `service_role` — JWT sem byrjar á `eyJhbGciOiJIUzI1NiIs…` | **fellur úr gildi fyrir árslok 2026** |
+| Nýi | `sb_publishable_…` (framendi) · `sb_secret_…` (bakendi) | í notkun hjá okkur |
+
+**Mælt 30.08.2026:** 11 skrár nota nýja formið. **Ein situr eftir á gamla
+JWT-lyklinum: `brunaholf/verkkaupar.html:308`.** Þegar Supabase slekkur á gömlu
+lyklunum hættir sú síða að virka og engin önnur. Þetta er lítið verk núna og
+bilun í desember.
+
+### Hvað er í lagi að sjást og hvað ekki
+
+- **`sb_publishable_` má liggja í vafranum.** Hann er ekki leyndarmál — hann
+  auðkennir verkefnið. Öryggið kemur frá RLS, ekki frá því að fela hann.
+- **`sb_secret_` / `service_role` má ALDREI fara í framenda.** Þeir fara
+  framhjá RLS algjörlega. Bakendi eingöngu (Netlify env).
+- **En:** vörnin sem publishable-lykillinn treystir á er RLS — og hér eru
+  **226 töflur án RLS** (mælt 19.08, sjá `oryggi`). Þess vegna kemst
+  vafra-lykillinn í bókhaldsgögnin. Að lykillinn sé „óhætt að sýna" er satt
+  almennt og **ekki satt hjá okkur enn**. Segðu það þannig þegar spurt er.
+
+**Heimildir:**
+[Supabase API keys](https://supabase.com/docs/guides/getting-started/api-keys) ·
+[Securing your data](https://supabase.com/docs/guides/database/secure-data)

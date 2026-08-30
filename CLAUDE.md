@@ -71,6 +71,7 @@ fært, orðrétt. Hver þeirra hleðst AÐEINS þegar hann er kallaður til.
 | Dagleg yfirsýn + jarvis.html sjálf — svið, raddir, TTS, cache | `jarvis` | 🎩 Jarvis |
 | RLS, policies, lyklar/tokens, public buckets — öryggið | `oryggi` | 🔒 *(rödd óvalin)* |
 | Hype-yfirlitið — sigrarnir fyrst, svo það sem á að klára | `hype` | 🇺🇸 Trump |
+| Staðreyndayfirferð — kerfið segir eitt, gögnin annað (factcheck_bord) | `natalie` | 🌸 Natalie |
 
 **Notkun:** kallaðu á sérfræðinginn með Agent-tólinu (`subagent_type`), eða lestu skrána
 hans beint þegar þú þarft bara þekkinguna. **Ekki afrita innihald þeirra hingað** — ein

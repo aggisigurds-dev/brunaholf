@@ -67,3 +67,30 @@ grep -n -A3 "setInterval" <síða>.html      # …og hvað kallar það á?
 - **Ekki hamra á gagnagrunninum meðan þú mælir** — þú verður þá sjálfur hluti af vandanum.
 - **Hægt ≠ bilað.** Athugaðu fyrst hvort gagnahliðið svari yfirleitt → `kerfisheilsa`.
 - Leggðu til **eina breytingu í einu** og mældu hana. Fjórar samtímis segja ekkert um hvað virkaði.
+
+## Ytri mælikvarðinn — Core Web Vitals
+
+TTFB-viðmiðin hér að ofan eru okkar eigin. Þegar spurt er „er síðan hæg" í
+almennum skilningi er svarið mælt með **Core Web Vitals**, og þau eru metin á
+**75. hundraðshluta raunverulegra heimsókna** — ekki á þinni vél, ekki að
+meðaltali.
+
+| Mæling | Hvað hún mælir | Gott | Þarf bætingar | Lélegt |
+|---|---|---|---|---|
+| **LCP** | hleðsla — stærsta efnið á skjá | ≤ 2,5 s | 2,5–4 s | > 4 s |
+| **INP** | viðbragð — smellur → svörun | ≤ 200 ms | 200–500 ms | > 500 ms |
+| **CLS** | stöðugleiki — hopp í útliti | ≤ 0,1 | 0,1–0,25 | > 0,25 |
+
+INP leysti FID af hólmi í mars 2024; þröskuldarnir hafa staðið óbreyttir síðan.
+Til að standast þarf **75 % heimsókna** að vera í græna flokknum.
+
+**Af hverju þetta á sérstaklega við hér:** `brunaholf/index.html` er 1,29 MB í
+einni skrá og slokkvitaeki hleður 964 KB af JS í sex bundlum. Það er LCP-vandi,
+ekki TTFB-vandi — endapunkturinn getur svarað á 200 ms og síðan samt verið
+fjórar sekúndur að teiknast á síma yfir 5G. **Mældu á síma, ekki á PC-inum.**
+Agnar vinnur á Samsung S26 úti á vettvangi; það er viðmiðunartækið.
+
+CLS er sá sem oftast gleymist og pirrar mest: mynd eða flís sem hleðst seint
+og ýtir hnappinum sem verið var að ýta á. Gefðu myndum og kortum fasta stærð.
+
+**Heimild:** [Core Web Vitals þröskuldar](https://www.corewebvitals.io/core-web-vitals)
