@@ -228,6 +228,8 @@ body[data-tab="skraalisti"] main{max-width:none;padding:0}
 /* Eyðublöð fylla líka alla breidd (iframe með eigin útliti) */
 body[data-tab="eydublod"] main{max-width:none;padding:0}
 body[data-tab="brunayfirlit"] main{max-width:none;padding:0}
+/* TurboPaint (kjarni.vercel.app iframe) fyllir alla breidd */
+body[data-tab="turbopaint"] main{max-width:none;padding:0;background:#0f1117}
 /* Fjármála-yfirlit fyllir alla breidd upp að hliðarstiku og topborða (ósk
    Agnars 8.8.) — iframe með eigin útliti og dökkum grunni svo hvítt blikki
    ekki í gegn meðan það hleðst. */
@@ -1540,6 +1542,7 @@ const DEFAULT_STATE = {
     {id:'verkkaupar', label:'Verkkaupar', icon:'🤝', url:'/verkkaupar.html', external:true},
     {id:'dagurinn',   label:'Dagurinn',   icon:'🌅'},
     {id:'jarvis',     label:'J.A.R.V.I.S.', icon:'🧠'},
+    {id:'turbopaint', label:'TurboPaint', icon:'📐'},
     {id:'yfirlit',    label:'Yfirlit',    icon:'🏠'},
     {id:'stjornbord', label:'Stjórnborð', icon:'🎛'},
     {id:'leidsogn',   label:'Leiðsögn',   icon:'🧭'},
@@ -1844,7 +1847,7 @@ function clearDataCache(){
 function ensureNewTabs(s){
   if(!s || !Array.isArray(s.tabs)) return;
   if(!Array.isArray(s.bakendiLinks)) s.bakendiLinks = BAKENDI_LINK_SEED.map(x=>({...x}));
-  ['verkkaupar','dagurinn','jarvis','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','vorubirgdir','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','tvmaeting','verdsamanburdur','verkstadir','skuldunautar','skyrslur','skyrslustod','afkost','krofuyfirlit','fjarmalyfirlit','vidskiptavinir','krofur','hreyfingaryfirlit','nlsh','pdftools','spurningar','sjalfvirkni','vefryni','skodanir','brunayfirlit','verkfaeri','eydublod','multitool','skraalisti','bakendi'].forEach(id=>{
+  ['verkkaupar','dagurinn','jarvis','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','vorubirgdir','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','tvmaeting','verdsamanburdur','verkstadir','skuldunautar','skyrslur','skyrslustod','afkost','krofuyfirlit','fjarmalyfirlit','vidskiptavinir','krofur','hreyfingaryfirlit','nlsh','turbopaint','pdftools','spurningar','sjalfvirkni','vefryni','skodanir','brunayfirlit','verkfaeri','eydublod','multitool','skraalisti','bakendi'].forEach(id=>{
     if(!s.tabs.find(t=>t.id===id)){
       const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
       if(d){
@@ -1890,6 +1893,11 @@ function ensureNewTabs(s){
           const bIdx = s.tabs.findIndex(t=>t.id==='bakendi');
           const sIdx = s.tabs.findIndex(t=>t.id==='stillingar');
           target = idx >= 0 ? idx + 1 : (bIdx >= 0 ? bIdx : (sIdx >= 0 ? sIdx : -1));
+        } else if(id === 'turbopaint'){
+          // TurboPaint (teikningar, iframe á kjarni.vercel.app) situr með daglegum tólum.
+          const idx = s.tabs.findIndex(t=>t.id==='jarvis');
+          const dIdx = s.tabs.findIndex(t=>t.id==='dagurinn');
+          target = idx >= 0 ? idx + 1 : (dIdx >= 0 ? dIdx + 1 : -1);
         } else if(id === 'verkfaeri'){
           // Verkfæri (ytri tengill á verkfaeri.netlify.app) situr fyrir ofan Bakendi.
           const idx = s.tabs.findIndex(t=>t.id==='bakendi');
@@ -2032,6 +2040,26 @@ function ensureNewTabs(s){
     const i = s.tabs.findIndex(t=>t.id==='verkkaupar');
     if(i>0){ const [tab] = s.tabs.splice(i,1); s.tabs.unshift(tab); }
     s.ui._verkkauparPinV1 = true;
+  }
+  // One-time: TurboPaint used to be an external new-tab. Strip url/external
+  // so the existing saved tab opens in-app (iframe), same as Eyðublöð.
+  if(!s.ui._tpInAppV1){
+    const tp = s.tabs.find(t=>t.id==='turbopaint');
+    if(tp){ delete tp.url; delete tp.external; }
+    s.ui._tpInAppV1 = true;
+  }
+  // One-time: pin TurboPaint with daily tools (after Jarvis / Dagurinn),
+  // not down by NLSH — it will be used a lot from this hub.
+  if(!s.ui._tpPinV1){
+    const i = s.tabs.findIndex(t=>t.id==='turbopaint');
+    if(i>=0){
+      const [tab] = s.tabs.splice(i,1);
+      const j = s.tabs.findIndex(t=>t.id==='jarvis');
+      const d = s.tabs.findIndex(t=>t.id==='dagurinn');
+      const target = j>=0 ? j+1 : (d>=0 ? d+1 : 1);
+      s.tabs.splice(target, 0, tab);
+    }
+    s.ui._tpPinV1 = true;
   }
 }
 
@@ -2386,6 +2414,7 @@ function render(){
   if(t.id==='vinnustofa') return renderVinnustofa(t);
   if(t.id==='verdskra') return renderVerdskra(t);
   if(t.id==='nlsh') return renderNLSH(t);
+  if(t.id==='turbopaint') return renderTurbopaint(t);
   if(t.id==='efniskostnadur') return renderEfniskostnadur(t);
   if(t.id==='vefryni') return renderVefryni(t);
   if(t.id==='skodanir') return renderSkodanir(t);
@@ -2682,6 +2711,13 @@ const INBOX_ACCOUNTS = [
 // ?v= er ALLTAF ferskt: iframe-ar endurnýta vistað eintak án þess að spyrja
 // þjóninn, svo Agnar sat fastur á gamalli útgáfu eftir deploy (2026-08-07).
 // Síðan er ~60 KB — þungu skrárnar (letur, jsPDF) cachast áfram eðlilega.
+function renderTurbopaint(t){
+  const src = 'https://kjarni.vercel.app/kjarni/turbopaint';
+  $view.innerHTML = '<iframe id="tp-embed" src="' + src + '" title="TurboPaint" allow="clipboard-read; clipboard-write" style="width:100%;border:0;display:block;background:#0f1117"></iframe>';
+  const fit = () => { const f = document.getElementById('tp-embed'); if(!f) return; const top = f.getBoundingClientRect().top; f.style.height = Math.max(460, window.innerHeight - top) + 'px'; };
+  fit();
+  if(!window.__tpFitBound){ window.__tpFitBound = true; window.addEventListener('resize', () => { if(document.getElementById('tp-embed')) fit(); }); }
+}
 function renderEydublod(t){
   $view.innerHTML = '<iframe id="ey-embed" src="/eydublod.html?v=' + Date.now() + '" title="Eyðublöð" style="width:100%;border:0;display:block;background:#f1f5f9"></iframe>';
   const fit = () => { const f = document.getElementById('ey-embed'); if(!f) return; const top = f.getBoundingClientRect().top; f.style.height = Math.max(460, window.innerHeight - top - 12) + 'px'; };

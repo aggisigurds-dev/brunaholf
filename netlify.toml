@@ -59,6 +59,17 @@
   status = 404
   force = true
 
+# TurboPaint lives on the Kjarni Vercel app.
+[[redirects]]
+  from = "/kjarni"
+  to = "https://kjarni.vercel.app/kjarni"
+  status = 302
+
+[[redirects]]
+  from = "/kjarni/*"
+  to = "https://kjarni.vercel.app/kjarni/:splat"
+  status = 302
+
 # Ship pdf-parse / xlsx as real node_modules (not esbuild-bundled) so the
 # Efnislisti amount parser loads reliably in the function runtime.
 [functions]
