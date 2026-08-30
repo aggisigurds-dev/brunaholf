@@ -8,8 +8,9 @@
 // Background functions return 202 immediately and may run up to 15 min, so this
 // can stream a 69 MB export, parse it semicolon-delimited, dedupe per
 // (serial_number, project_name, execution_date), and upsert in batches of 500.
-// Progress + final summary are written to app_kv key 'ajour_ingest_status' so
-// the caller can poll the DB.
+// The ~53-col AjourRegistrationData CSV includes DrawingName / Subject (UI:
+// "Drawing/drawingname"). Older ingest dropped them. drawing_name is required
+// for leftover-per-section; subject is stored when the header exists.
 
 const { freshAccessToken } = require('./_google');
 
@@ -40,6 +41,8 @@ exports.handler = async (event) => {
     let header = null;
     let idx = {};
     let batch = [];
+    const DRAWING_ALIASES = ['DrawingName', 'Drawing/drawingname', 'drawingname', 'Drawing', 'DrawingFileName', 'RegistrationDrawing', 'Tegning'];
+    const SUBJECT_ALIASES = ['Subject', 'RegistrationSubject', 'Emne'];
 
     const flush = async () => {
       if (!batch.length) return;
@@ -59,11 +62,18 @@ exports.handler = async (event) => {
       if (header === null) {
         header = parseCsvLine(line);
         header.forEach((h, i) => { idx[h.trim()] = i; });
+        status.csv_headers = header.map((h) => h.trim()).filter(Boolean);
+        status.drawing_header = detectHeader(idx, DRAWING_ALIASES);
+        status.subject_header = detectHeader(idx, SUBJECT_ALIASES);
         return;
       }
       if (!line.trim()) return;
       const c = parseCsvLine(line);
       const get = (name) => { const i = idx[name]; return i == null ? '' : (c[i] || ''); };
+      const getAlias = (aliases) => {
+        const i = aliasIndex(idx, aliases);
+        return i == null ? '' : (c[i] || '');
+      };
       const project_name = get('ProjectName').trim();
       if (!project_name) return;
       const execution_date = parseDate(get('ExecutionDateFrom'));
@@ -85,6 +95,8 @@ exports.handler = async (event) => {
         longitude: numOrNull(get('Longitude')),
         latitude: numOrNull(get('Latitude')),
         registration_created_date: parseTs(get('RegistrationCreatedDate')),
+        drawing_name: getAlias(DRAWING_ALIASES).trim() || null,
+        subject: getAlias(SUBJECT_ALIASES).trim() || null,
       });
       if (batch.length >= BATCH) await flush();
     };
@@ -154,6 +166,24 @@ function numOrNull(s) {
   if (!s) return null;
   const n = Number(String(s).replace(',', '.'));
   return isFinite(n) ? n : null;
+}
+function normHeader(h) {
+  return String(h || '').trim().toLowerCase().replace(/[\s/_-]+/g, '');
+}
+function aliasIndex(idx, aliases) {
+  const byNorm = {};
+  for (const k of Object.keys(idx)) byNorm[normHeader(k)] = idx[k];
+  for (const a of aliases) {
+    if (idx[a] != null) return idx[a];
+    const n = byNorm[normHeader(a)];
+    if (n != null) return n;
+  }
+  return null;
+}
+function detectHeader(idx, aliases) {
+  const i = aliasIndex(idx, aliases);
+  if (i == null) return null;
+  return Object.keys(idx).find((k) => idx[k] === i) || null;
 }
 
 async function upsert(rows) {

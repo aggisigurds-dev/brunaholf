@@ -120,7 +120,19 @@ for several Supabase tables this app reads:
   `CheckListItem`, `CheckListItemCheckedDate`,
   `CheckListItemCheckedByUser`, `ExecutionDateFrom`,
   `ReceiverCompany`, `Longitude`, `Latitude`,
-  `RegistrationCreatedDate`.
+  `RegistrationCreatedDate`, plus (2026-08-30) **`DrawingName`**
+  (aliases: `Drawing/drawingname`, `drawingname`, `Drawing`,
+  `DrawingFileName`, `Tegning`) → `drawing_name` and **`Subject`**
+  (`RegistrationSubject`, `Emne`) → `subject` when those headers exist.
+  The 53-col export always had drawing; older ingest dropped it.
+
+### NLSH 8 svæði (teikning, ekki herbergi)
+- `GET/POST /api/nlsh-section-progress` — 8 cells (4H S1–S4, 5H S1–S4).
+  `done` = distinct `serial_number` with `registration_status='Done'`
+  mapped from `drawing_name`. Dual drawings (`S4+S5`, `4H 51-52`) count
+  **once** on the first matching wing (`primary-only`). `SH` = 5H.
+  Áætlað lives in `app_kv['nlsh_section_planned']`. Until drawing is
+  backfilled by a fresh ingest, `done` is null. Not a per-room join.
 
 The brunaholf drop-zone parser should reuse the exact same column
 mapping and dedupe keys so files can be uploaded via the web UI
