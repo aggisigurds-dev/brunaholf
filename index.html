@@ -1559,6 +1559,7 @@ const DEFAULT_STATE = {
     {id:'krofur', label:'Krófur & Tekjur', icon:'📊'},
     {id:'hreyfingaryfirlit', label:'Hreyfingaryfirlit', icon:'📒'},
     {id:'nlsh',        label:'Landsspítalinn', icon:'🏥'},
+    {id:'turbopaint', label:'TurboPaint', icon:'📐', url:'https://kjarni.vercel.app/kjarni/turbopaint', external:true},
     {id:'maeting',    label:'Mæting', icon:'👥', sheetCsv:'https://docs.google.com/spreadsheets/d/e/2PACX-1vRXUTGE4Ui3eadS0kGX0d-5LvFbyt5SNWD6ToeRRn1MJ6zoiGng7RK5ZJOVEq6s_x8wkiNLpgU8nHJk/pub?output=csv'},
     {id:'verkefnastada', label:'Verkefnastaða', icon:'📊', sheetCsv:''},
     {id:'april',      label:'Apríl reikningar', icon:'📋'},
@@ -1844,7 +1845,7 @@ function clearDataCache(){
 function ensureNewTabs(s){
   if(!s || !Array.isArray(s.tabs)) return;
   if(!Array.isArray(s.bakendiLinks)) s.bakendiLinks = BAKENDI_LINK_SEED.map(x=>({...x}));
-  ['verkkaupar','dagurinn','jarvis','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','vorubirgdir','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','tvmaeting','verdsamanburdur','verkstadir','skuldunautar','skyrslur','skyrslustod','afkost','krofuyfirlit','fjarmalyfirlit','vidskiptavinir','krofur','hreyfingaryfirlit','nlsh','pdftools','spurningar','sjalfvirkni','vefryni','skodanir','brunayfirlit','verkfaeri','eydublod','multitool','skraalisti','bakendi'].forEach(id=>{
+  ['verkkaupar','dagurinn','jarvis','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','vorubirgdir','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','tvmaeting','verdsamanburdur','verkstadir','skuldunautar','skyrslur','skyrslustod','afkost','krofuyfirlit','fjarmalyfirlit','vidskiptavinir','krofur','hreyfingaryfirlit','nlsh','turbopaint','pdftools','spurningar','sjalfvirkni','vefryni','skodanir','brunayfirlit','verkfaeri','eydublod','multitool','skraalisti','bakendi'].forEach(id=>{
     if(!s.tabs.find(t=>t.id===id)){
       const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
       if(d){
@@ -1890,6 +1891,10 @@ function ensureNewTabs(s){
           const bIdx = s.tabs.findIndex(t=>t.id==='bakendi');
           const sIdx = s.tabs.findIndex(t=>t.id==='stillingar');
           target = idx >= 0 ? idx + 1 : (bIdx >= 0 ? bIdx : (sIdx >= 0 ? sIdx : -1));
+        } else if(id === 'turbopaint'){
+          // TurboPaint (ytri tengill á kjarni.vercel.app) situr rétt á eftir NLSH.
+          const idx = s.tabs.findIndex(t=>t.id==='nlsh');
+          target = idx >= 0 ? idx + 1 : -1;
         } else if(id === 'verkfaeri'){
           // Verkfæri (ytri tengill á verkfaeri.netlify.app) situr fyrir ofan Bakendi.
           const idx = s.tabs.findIndex(t=>t.id==='bakendi');
