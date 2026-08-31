@@ -239,15 +239,17 @@ async function safnaJarvis() {
   // stundum og Netlify drepur fallið á 10s — betri ein tala sem vantar en
   // ekkert svar (beit á preview 2026-08-20: annað hvert kall dó á 11s).
   const q = (p, fb) => withTimeout(p, 4000).catch(() => fb);
-  const [beidni, i_vinnu, heilsa, deb, vantar_reikning] = await Promise.all([
+  const [beidni, i_vinnu, heilsa, deb, vantar_reikning, huntTolur] = await Promise.all([
     q(sbCount('verkefnalisti?status=eq.beidni'), null),
     q(sbCount('verkefnalisti?status=eq.i_vinnu'), null),
     q(apiGet('/api/kerfisheilsa'), { counts: {}, services: [] }),
     q(apiGet('/api/debtors'), { totals: {} }),
     q(sbCount(`v_bundle_coverage?yr=eq.${ar}&stada=eq.vantar_reikning`), null),
+    q(sb('v_veidin_hunt_tolur?select=*').then(r => (r && r[0]) || {}), {}),
   ]);
   const hc = heilsa.counts || {};
   const t = (deb && deb.totals) || {};
+  const hunt = huntTolur || {};
   return {
     opin_verk_beidni: beidni,
     verk_i_vinnu: i_vinnu,
@@ -255,6 +257,10 @@ async function safnaJarvis() {
     kerfi_gul: hc.gult || 0,
     utistandandi_kr: Math.round(t.outstanding_kr || 0),
     vantar_reikning_i_ar: vantar_reikning,
+    systkini_kt: hunt.systkini_kt,
+    blob_graen_an_skyrslu: hunt.blob_graen_an_skyrslu,
+    hud_buid_vs_skyrsla: hunt.hud_buid_vs_skyrsla,
+    grunnlinan: '2026-07-30 er staða um mánuði síðan, ekki í dag',
   };
 }
 // ── 🔒 Öryggi (Arnold) — RLS-staða + buckets gegnum oryggi_counts() RPC ─────
@@ -393,7 +399,8 @@ function einfold(lykill, t) {
   }
   if (lykill === 'jarvis') {
     return `Good morning. ${t.opin_verk_beidni} tasks are waiting and ${t.verk_i_vinnu} are in progress. ` +
-           `${t.kerfi_raud} systems are red. ${t.vantar_reikning_i_ar} sites still need an invoice this year.`;
+           `${t.kerfi_raud} systems are red. ${t.systkini_kt || 0} sibling-kt sites still lack their own 2026 report. ` +
+           `The July 30 line is a month-ago baseline, not today.`;
   }
   if (lykill === 'oryggi') {
     return `${t.rls_af} of ${t.toflur_alls} tables have row level security off, and ` +

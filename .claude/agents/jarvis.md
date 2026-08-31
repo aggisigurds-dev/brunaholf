@@ -59,12 +59,13 @@ jarvis-voice.js; svið/raddir ÓBREYTT):
   (Harley 🃏 í AGENTS er önnur persóna — áminningarnar).
 (Talningar leiðréttar um leið: AGENTS voru 15, ekki 14; roster fór 13 → 16.)
 
-**2026-08-31 — Agentaskrá synchuð á HUD** (án nýrra sviða/radda, án
-KPI-reiknings): disk-listi undir 16 HUD-sætum sýnir `adstod`, `bord-flettur`,
-`netvordur`, `sala-reikningar`, `thema`, `framendi` + skill `villuleit`
-(hindra klúður). Veiði-kortin fimm (297/145/407/39/1) eru birt úr sama
-`/api/veidin` og Veiðin; grunnlínan 2026-07-30 er samanburður. Skrá:
-`docs/AGENTASKRA.md` · kveikjur: `docs/TRIGGERS.md`. **153/187 óbreytt.**
+**2026-08-31 — Agentaskrá + hunt.** Áhöfnin er tveir opnir hópar (16 raddir /
+6 lén). Villuleit er `data-spjald="villuleit"` með grep-kveikjum
+(`docs/TRIGGERS.md`) — skill, ekki Fish-rödd. `/api/veidin` les
+`v_veidin_hunt_*` (systkini-kt, blob-græn, HUD Búið vs
+`customer_documents`, Drive-tvítök, skjöl án árs). Grunnlínan
+**2026-07-30** er **staða um mánuði síðan** (upphaf veiðarinnar), ekki dagsins tala. Hunt-kort
+fá enga nýja grunnlínu. **153/187 óbreytt.**
 
 ## Svið-flæðið (takkasmell → rödd)
 
@@ -105,8 +106,10 @@ leitað). Kerfisreglan: 1-3 setningar, aldrei fundin upp tala/dagsetning/nafn.
 `radd_mal` (is|en) · `jarvis_notandi_v2` (agnar|anni, sjálfg. anni) ·
 `jarvis_utlit_v1` (adal|kerfi|thjonusta|fjarmal) · `jarvis_utlit_sersnid_v1`
 (spjaldaval per útlit; spjöld = `data-spjald`: vitals, fjarskipti, serfraedingar,
-krofur, verk, velar, hljod, gogn, thekja, gloppur, perf, markmid — veiði-kortin
-fimm sitja inni í `markmid`, sama `/api/veidin`) ·
+krofur, verk, velar, hljod, gogn, thekja, gloppur, perf, markmid, villuleit —
+veiði-kortin og hunt-listarnir sitja inni í `markmid`, sama `/api/veidin`;
+grunnlína 2026-07-30 er staða um mánuði síðan; ný hunt-kort fá enga nýja
+grunnlínu) ·
 `jarvis_main_voice`.
 
 ## Nýtt svið/rödd — 6 snertifletir, í þessari röð

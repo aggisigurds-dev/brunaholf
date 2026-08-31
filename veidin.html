@@ -47,8 +47,9 @@
 <div class="wrap">
   <h1>🎯 Veiðin</h1>
   <p class="sub">Endurheimtar-aðgerðin í rauntíma: finna alla þjónustukúnna, skýrslur þeirra,
-  samninga og tengiliði. Hver tala ber <b>grunnlínuna 30.7.2026</b> — breytingin síðan þá er
-  framvinda veiðarinnar. <span id="stada" class="pill">sæki…</span></p>
+    samninga og tengiliði. Efri kortin bera <b>grunnlínuna 30.7.2026</b> —
+    <b>staða um mánuði síðan</b>, ekki dagsins tala. Hunt-kortin fyrir neðan eru ný
+    skotmörk úr lifandi SQL (engin ný grunnlína). <span id="stada" class="pill">sæki…</span></p>
 
   <div id="villa" class="err" style="display:none"></div>
   <div class="grid" id="kort"></div>
@@ -69,12 +70,38 @@
     <div class="scroll"><table id="t-bundle"><thead><tr><th>Félag</th><th>Kt</th><th>Tegund</th><th>Ár</th><th>Staða</th></tr></thead><tbody></tbody></table></div>
   </details>
 
+  <h2 style="font-size:.95rem;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin:28px 0 8px">Hunt — ný skotmörk (lifandi SQL)</h2>
+  <p class="sub" style="margin-top:0">Ekki í grunnlínu 30.7. Tölurnar eru dagsins. Blob/HUD er <i>ekki</i> sönnun — `customer_documents` er.</p>
+  <div class="grid" id="huntkort"></div>
+
+  <details id="d-systkini"><summary>👥 Systkini-kt — deila kt, <b>engin eigin 2026-skýrsla</b> á fid <span class="n" id="n-systkini">…</span></summary>
+    <div class="scroll"><table id="t-systkini"><thead><tr><th>Staður</th><th>Kt</th><th>Heimilisfang</th></tr></thead><tbody></tbody></table></div>
+  </details>
+
+  <details id="d-blob"><summary>🟢 Blob-græn án skýrslu — systkini merkt Búið 2026 í Ársskoðun-blob <span class="n" id="n-blob">…</span></summary>
+    <div class="scroll"><table id="t-blob"><thead><tr><th>Staður</th><th>Kt</th><th>Heimilisfang</th></tr></thead><tbody></tbody></table></div>
+  </details>
+
+  <details id="d-hud"><summary>📊 HUD Búið vs skýrsla — blob <code>last_year_inspected=2026</code> minus raunveruleg skýrsla <span class="n" id="n-hud">…</span></summary>
+    <div class="scroll"><table id="t-hud"><thead><tr><th>Staður</th><th>Kt</th><th>Heimilisfang</th></tr></thead><tbody></tbody></table></div>
+  </details>
+
+  <details id="d-drive"><summary>📁 Drive-tvítök — 2026-skýrslur merktar <code>is_duplicate</code> <span class="n" id="n-drive">…</span></summary>
+    <div class="scroll"><table id="t-drive"><thead><tr><th>Doc</th><th>Félag</th><th>Skrá</th></tr></thead><tbody></tbody></table></div>
+  </details>
+
+  <details id="d-anars"><summary>📄 Skjöl án árs — það sem eftir er <span class="n" id="n-anars">…</span></summary>
+    <div class="scroll"><table id="t-anars"><thead><tr><th>Doc</th><th>Tegund</th><th>Nafn</th></tr></thead><tbody></tbody></table></div>
+  </details>
+
   <p class="foot">
     Verkfærin: <a href="/#bakendi">🔗 Skýrslu-stöð</a> (tengja skjal á stað) ·
     <a href="/multitool.html">🧰 Skjala-multitool</a> (endurnefna + færa + tengja) ·
     <a href="/thjonusta-gloppur.html">🕵️ Þjónustu-gloppur</a> (56 gleymd félög) ·
     <a href="/kerfiskort.html">🗺️ Kerfis-kort</a>.
-    Grunnlínan og veiði-reglurnar: <code>docs/STADREYNDIR.md</code> §2.
+    Grunnlínan 30.7.2026 er <b>staða um mánuði síðan</b> (upphaf veiðarinnar), ekki „núna". Aldrei færa.
+    Hunt-sýnir: <code>v_veidin_systkini_kt</code> · <code>v_veidin_blob_graen</code> ·
+    <code>v_veidin_hud_buid_gloppa</code>. Sjá <code>docs/STADREYNDIR.md</code> §2.
     Sýnin: <code>v_veidin_*</code> + <code>v_bundle_coverage</code> · endapunktur <code>/api/veidin</code>.
     📦 Pörin er hægt að senda beint í appinu (Sala → Fyrri viðskipti · brunakerfis-síðan).
   </p>
@@ -96,6 +123,7 @@ const KORT = [
   { k:'skjol_an_ars',          t:'Skjöl án árs',                 laegra:true,  mark:0 },
   { k:'bundle_por',            t:'📦 Pör klárað (skýrsla+reikn.)', laegra:false, markAf:'skyrslur_2026' },
   { k:'bundle_reikn_vantar',   t:'📦 Skýrsla 2026 án reiknings', laegra:true,  mark:0 },
+  { k:'bundle_skyrsla_vantar', t:'📦 Reikningur 2026 án skýrslu', laegra:true,  mark:0 },
 ];
 
 function deltaChip(d, laegra){
@@ -137,6 +165,37 @@ async function saekja(){
     fylla('amber',  g.listar.amber,             ['nafn','kennitala','taeki_skodud','sidasta_skodun']);
     fylla('rukkud', g.listar.rukkud_an_skyrslu, ['nafn','heimilisfang','felag']);
     fylla('engin',  g.listar.engin_skyrsla,     ['nafn','heimilisfang','felag','rekstrarfelag']);
+
+    const hn = g.nuna || {};
+    const HUNT = [
+      { k:'systkini_kt', t:'Systkini-kt án eigin 2026-skýrslu', skyr:'deila kt, skýrslan situr á öðrum stað' },
+      { k:'blob_graen_an_skyrslu', t:'Blob-græn án skýrslu', skyr:'systkini + last_year_inspected=2026 í blob' },
+      { k:'hud_buid_vs_skyrsla', t:'HUD Búið vs skýrsla', skyr:'blob Búið '+esc(hn.hud_buid_2026)+' minus skýrslur '+esc(hn.stadir_med_2026_skyrslu)+' (customer_documents)' },
+      { k:'drive_tvitok', t:'Drive-tvítök 2026', skyr:esc(hn.drive_2026_radir)+' raðir · '+esc(hn.drive_2026_distinct)+' með Drive · '+esc(hn.drive_tvitok)+' merkt is_duplicate' },
+      { k:'skjol_an_ars', t:'Skjöl án árs', skyr:'það sem eftir er (doc 9233 ef einn)' },
+    ];
+    const hk = document.getElementById('huntkort');
+    if (hk) {
+      hk.innerHTML = HUNT.map(c => {
+        const nu = hn[c.k];
+        return `<div class="card"><h3>${esc(c.t)}</h3>
+          <div class="row"><span class="big">${nu ?? '—'}</span></div>
+          <div class="base">nýtt skotmark · ${c.skyr}</div></div>`;
+      }).join('');
+    }
+    fylla('systkini', g.listar.systkini_kt || [], ['nafn','kennitala','heimilisfang']);
+    fylla('blob',     g.listar.blob_graen || [],  ['nafn','kennitala','heimilisfang']);
+    fylla('hud',      g.listar.hud_buid_gloppa || [], ['nafn','kennitala','heimilisfang']);
+    const drv = g.listar.drive_tvitok || [];
+    document.getElementById('n-drive').textContent = drv.length;
+    document.querySelector('#t-drive tbody').innerHTML =
+      drv.map(x => `<tr><td>${esc(x.doc_id)}</td><td>${esc(x.felag || x.customer_name)}</td><td>${esc(x.file_name || x.drive_file_id)}</td></tr>`).join('') ||
+      '<tr><td colspan="3">🎉 Ekkert eftir — skotmarkið er hreinsað!</td></tr>';
+    const sa = g.listar.skjol_an_ars || [];
+    document.getElementById('n-anars').textContent = sa.length;
+    document.querySelector('#t-anars tbody').innerHTML =
+      sa.map(x => `<tr><td>${esc(x.doc_id)}</td><td>${esc(x.doc_type)}</td><td>${esc(x.file_name || x.customer_name)}</td></tr>`).join('') ||
+      '<tr><td colspan="3">🎉 Ekkert eftir — skotmarkið er hreinsað!</td></tr>';
 
     // 📦 Bundle-gloppur — kind/staða þýtt í læsileg merki (STADA_LBL ber HTML, ekki esc-að).
     const KIND_LBL = { uttekt:'🧯 Úttekt', brunakerfi:'🔥 Brunakerfi' };

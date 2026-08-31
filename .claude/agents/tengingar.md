@@ -12,6 +12,10 @@ er að allt sé grænt — **og að grænt þýði eitthvað.**
 > **Grænt fæst aldrei að ástæðulausu.** Betra er heiðarlegt gult með skýringu en falskt
 > grænt. Ef þú getur ekki prófað eitthvað héðan, merktu það „handvirkt" — ekki giska.
 
+Veiði-grunnlínan 30.7.2026 er **staða um mánuði síðan**, ekki „núna". Ársskoðun
+„Búið 2026" í blob er HUD-merki — sönnunin er 2026-skýrsla á `fyrirtaeki_id`
+í `customer_documents`.
+
 ## Borðið
 
 ```

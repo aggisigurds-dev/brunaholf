@@ -11,6 +11,9 @@ einhver eyðir tíma í rangan stað.
 ## Grunnreglan
 
 > **Prófaðu leiðina sem raunverulega er notuð — ekki status-síðu, ekki stjórnborð.**
+>
+> Veiði-grunnlínan 30.7.2026 er **staða um mánuði síðan**. Ef Claude les hana
+> sem „núna" er greiningin úrelt — sækja `/api/veidin` fyrir dagsins tölur.
 
 Status-síður ljúga með þögn. Stjórnborð ljúga með bjartsýni. Eina sanna svarið er að
 senda alvöru beiðni eftir sömu leið og appið gerir.

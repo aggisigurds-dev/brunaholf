@@ -119,8 +119,11 @@ og Hamraborg 7 ≠ Hamraborg ehf ruglingurinn).
 ## 2. Skjöl viðskiptavina (`customer_documents`) *(DB 2026-07-30)*
 
 **📌 VEIÐI-GRUNNLÍNAN (tekin 2026-07-30, fyrir veiðina):** framvinda veiðinnar
-mælist gegn þessum tölum — sbr. `ar_checkpoints`-mynstrið. **Lifandi mælaborð:
-`brunaholf.netlify.app/veidin.html`** (nuna vs grunnlína vs delta + skotmarks-listar).
+mælist gegn þessum tölum — sbr. `ar_checkpoints`-mynstrið. Þetta er
+**staða um mánuði síðan** (upphaf veiðarinnar), ekki dagsins tala — aldrei færa. **Lifandi mælaborð:
+`brunaholf.netlify.app/veidin.html`** og HUD á `jarvis.html` (nuna vs
+grunnlína vs delta + hunt-listar: systkini-kt, blob-græn, HUD Búið vs
+`customer_documents`, Drive-tvítök).
 
 | Ár | Úttektarskýrslur (staðir) | Reikningar (staðir) | Brunakerfi |
 |---|---|---|---|

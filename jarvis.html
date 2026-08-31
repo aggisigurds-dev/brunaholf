@@ -263,17 +263,32 @@
 .svidbtn.svidall.virk{color:#fff;border-color:#ff5d5d;background:rgba(255,93,93,.14)}
 
 .sfr-listi{display:flex;flex-direction:column;gap:1px}
-.sfr-rod{display:grid;grid-template-columns:20px 82px 1fr;gap:6px;align-items:baseline;padding:3px 0;border-bottom:1px solid rgba(90,190,255,.06)}
+.sfr-rod{display:grid;grid-template-columns:22px minmax(70px,92px) 1fr;gap:6px;align-items:baseline;padding:5px 0;border-bottom:1px solid rgba(90,190,255,.06)}
 .sfr-e{font-size:13px;text-align:center}
 .sfr-n{font-size:12px;font-weight:700;color:#cfe6ff;white-space:nowrap}
 .sfr-r{font-size:10.5px;color:#6fa9cf;line-height:1.35}
-.sfr-fot{margin-top:7px;font-size:9.5px;letter-spacing:.04em;color:#4d84ad;text-align:center}
-.sfr-disk{margin:10px 0 4px;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#3f7391}
-.sfr-rod.sfr-dim .sfr-n{color:#7aa3c2;font-weight:600}
-.sfr-rod.sfr-dim .sfr-r{color:#4d84ad}
+.sfr-fot{margin-top:7px;font-size:9.5px;letter-spacing:.04em;color:#4d84ad;text-align:center;line-height:1.45}
+.sfr-hop{border:1px solid rgba(79,216,255,.12);margin:8px 0 0;padding:0 8px 4px;background:rgba(79,216,255,.03)}
+.sfr-hop>summary{cursor:pointer;list-style:none;padding:8px 2px;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--cy2);font-weight:700}
+.sfr-hop>summary::-webkit-details-marker{display:none}
+.sfr-hop>summary::after{content:" ▾";color:var(--ink3)}
+.sfr-hop:not([open])>summary::after{content:" ▸"}
+.sfr-rod.sfr-dim .sfr-n{color:#9ec4e0;font-weight:600}
+.sfr-rod.sfr-dim .sfr-r{color:#6fa9cf}
+.sfr-rod.sfr-vl{border-left:2px solid var(--var);padding-left:5px;margin-left:-7px}
+.kveikjur{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.kveikjur span{border:1px solid var(--cy-dim);padding:2px 7px;font-size:10px;color:var(--ink2);letter-spacing:.04em}
+.huntlisti{margin-top:10px}
+.huntlisti details{border:1px solid var(--cy-dim);margin:6px 0;padding:0;background:rgba(79,216,255,.04)}
+.huntlisti summary{cursor:pointer;padding:8px 10px;font-size:10.5px;color:var(--ink2);display:flex;gap:8px;align-items:center}
+.huntlisti summary b{color:var(--cy);margin-left:auto;font-variant-numeric:tabular-nums}
+.huntlisti ul{margin:0;padding:0 12px 10px 28px;font-size:11px;color:var(--ink);line-height:1.45}
+.huntlisti .ath{padding:0 12px 10px;font-size:10px;color:var(--ink3);line-height:1.4}
 
-.veidikort{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:8px;margin-top:12px}
+.veidikort{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:8px;margin-top:6px}
+.veidikort-heiti{margin:14px 0 4px;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3)}
 .vkort{border:1px solid var(--cy-dim);padding:8px 10px;background:rgba(79,216,255,.05)}
+.vkort.jakt{border-color:rgba(255,179,64,.38);background:rgba(255,179,64,.05)}
 .vkort h3{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin:0 0 4px;font-weight:600}
 .vkort .big{font-size:22px;color:var(--cy);font-variant-numeric:tabular-nums;letter-spacing:.02em}
 .vkort .dlt{font-size:11px;margin-left:6px;font-weight:700}
@@ -282,6 +297,15 @@
 
 .sfr-rod.sfr-cw{border-left:2px solid #3ecf8e;padding-left:5px;margin-left:-7px}
 .sfr-badge{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.02em;color:#0a3d28;background:#3ecf8e;border-radius:6px;padding:1px 6px;margin-left:4px;white-space:nowrap}
+@media(max-width:640px){
+  .sfr-rod{grid-template-columns:24px 1fr;gap:2px 8px;padding:8px 0}
+  .sfr-n{grid-column:2;grid-row:1;white-space:normal}
+  .sfr-r{grid-column:2;grid-row:2}
+  .sfr-e{grid-row:1 / span 2;align-self:center}
+  .veidikort{grid-template-columns:1fr 1fr}
+  .svidrod{gap:8px}
+  .svidbtn{min-height:42px;padding:8px 12px}
+}
 </style>
 <!-- Sett á <html> STRAX (ekki í enda body) svo app-hamurinn sé kominn áður en
      fyrsta málningin verður til — annars blikkar venjulega útlitið fyrst.
@@ -337,19 +361,51 @@
         <div class="straumur" id="straumur"><div style="color:var(--ink3)">sæki…</div></div>
       </div>
       <div class="spjald" data-spjald="serfraedingar">
-        <h2>Sérfræðingar <span style="color:#4d84ad;font-size:.8em">áhöfnin · 23 á diski</span></h2>
-        <div class="sfr-listi"><div class="sfr-rod"><span class="sfr-e">🎩</span><span class="sfr-n">Jarvis</span><span class="sfr-r">Dagleg yfirsýn</span></div><div class="sfr-rod"><span class="sfr-e">💰</span><span class="sfr-n">Samantha</span><span class="sfr-r">Fjármál &amp; bókhald</span></div><div class="sfr-rod sfr-cw"><span class="sfr-e">🗂️</span><span class="sfr-n">Sara</span><span class="sfr-r">Skýrslugerð &amp; texta-innfylling — fyllir úttektarskýrslur út LIVE <b class="sfr-badge">🤝 Coworker · live MCP</b></span></div><div class="sfr-rod"><span class="sfr-e">❄️</span><span class="sfr-n">Charlize</span><span class="sfr-r">Kúnnaskrá &amp; kennitölur</span></div><div class="sfr-rod"><span class="sfr-e">🎙️</span><span class="sfr-n">Freeman</span><span class="sfr-r">Skjöl &amp; Drive</span></div><div class="sfr-rod"><span class="sfr-e">🥊</span><span class="sfr-n">Statham</span><span class="sfr-r">Gagnaleiðslur / rukkun</span></div><div class="sfr-rod"><span class="sfr-e">💥</span><span class="sfr-n">Willis</span><span class="sfr-r">Hraði &amp; afköst</span></div><div class="sfr-rod"><span class="sfr-e">😤</span><span class="sfr-n">Samuel L. J.</span><span class="sfr-r">Tengingar &amp; lyklar</span></div><div class="sfr-rod"><span class="sfr-e">🩺</span><span class="sfr-n">Dr. House</span><span class="sfr-r">Kerfisheilsa — greiningin</span></div><div class="sfr-rod"><span class="sfr-e">🇺🇸</span><span class="sfr-n">Trump</span><span class="sfr-r">Hype-yfirlit</span></div><div class="sfr-rod"><span class="sfr-e">💪</span><span class="sfr-n">Arnold</span><span class="sfr-r">Teiknar slökkvitækja-layout á hústeikningar (í þjálfun — TurboPaint) · öryggið — RLS &amp; lyklar</span></div><div class="sfr-rod"><span class="sfr-e">🏷️</span><span class="sfr-n">DeVito</span><span class="sfr-r">Prentun &amp; QR-merki</span></div><div class="sfr-rod"><span class="sfr-e">🗺️</span><span class="sfr-n">Ramsay</span><span class="sfr-r">Kort &amp; geocode</span></div><div class="sfr-rod"><span class="sfr-e">⚡</span><span class="sfr-n">Elon Musk</span><span class="sfr-r">Innra tengikerfið — as-built yfir borð, útreikninga &amp; skjala-lykla (RAFKERFI)</span></div><div class="sfr-rod"><span class="sfr-e">🌸</span><span class="sfr-n">Natalie</span><span class="sfr-r">Factcheck 2025–26 — staðreyndayfirferð með Charlize &amp; Söru</span></div><div class="sfr-rod"><span class="sfr-e">🃏</span><span class="sfr-n">Joker</span><span class="sfr-r">Útlit &amp; farsímahönnun — allar síðubreytingar gegnum Stílstjórann</span></div></div>
-        <div class="sfr-disk">á disk · ekki HUD-sæti</div>
-        <div class="sfr-listi">
-          <div class="sfr-rod sfr-dim"><span class="sfr-e">🛡️</span><span class="sfr-n">netvörður</span><span class="sfr-r">Öryggisnet — SAFE / CUTS-A-WIRE áður en lagað er</span></div>
-          <div class="sfr-rod sfr-dim"><span class="sfr-e">🆘</span><span class="sfr-n">aðstoð</span><span class="sfr-r">Watchlist, banner, aðstoðarmiðstöð</span></div>
-          <div class="sfr-rod sfr-dim"><span class="sfr-e">📋</span><span class="sfr-n">borð-flettur</span><span class="sfr-r">Flipar, nav, bílstjóri, bakk</span></div>
-          <div class="sfr-rod sfr-dim"><span class="sfr-e">🧾</span><span class="sfr-n">sala</span><span class="sfr-r">POS, Payday, dkPlus, afsláttur — alltaf leyfa vistun</span></div>
-          <div class="sfr-rod sfr-dim"><span class="sfr-e">🎨</span><span class="sfr-n">þema</span><span class="sfr-r">theme.css · Brunastál (frosið 17.08.2026)</span></div>
-          <div class="sfr-rod sfr-dim"><span class="sfr-e">🖥️</span><span class="sfr-n">framendi</span><span class="sfr-r">Hub-flipar — hvar eitthvað í index.html býr</span></div>
-          <div class="sfr-rod sfr-dim"><span class="sfr-e">🔍</span><span class="sfr-n">villuleit</span><span class="sfr-r">Hindra klúður — sama mynstur, systkini-kt, falskt grænt. Ekki laga fyrsta hitt</span></div>
+        <h2>Sérfræðingar <span>23 á diski</span></h2>
+        <details class="sfr-hop" open>
+          <summary>Raddir á HUD · 16</summary>
+          <div class="sfr-listi">
+            <div class="sfr-rod"><span class="sfr-e">🎩</span><span class="sfr-n">Jarvis</span><span class="sfr-r">Dagleg yfirsýn</span></div>
+            <div class="sfr-rod"><span class="sfr-e">💰</span><span class="sfr-n">Samantha</span><span class="sfr-r">Fjármál og bókhald</span></div>
+            <div class="sfr-rod sfr-cw"><span class="sfr-e">🗂️</span><span class="sfr-n">Sara</span><span class="sfr-r">Skýrslur LIVE <b class="sfr-badge">Coworker</b></span></div>
+            <div class="sfr-rod"><span class="sfr-e">❄️</span><span class="sfr-n">Charlize</span><span class="sfr-r">Kúnnaskrá og kennitölur</span></div>
+            <div class="sfr-rod"><span class="sfr-e">🎙️</span><span class="sfr-n">Freeman</span><span class="sfr-r">Skjöl og Drive</span></div>
+            <div class="sfr-rod"><span class="sfr-e">🥊</span><span class="sfr-n">Statham</span><span class="sfr-r">Gagnaleiðslur / rukkun</span></div>
+            <div class="sfr-rod"><span class="sfr-e">💥</span><span class="sfr-n">Willis</span><span class="sfr-r">Hraði og afköst</span></div>
+            <div class="sfr-rod"><span class="sfr-e">😤</span><span class="sfr-n">Samuel L. J.</span><span class="sfr-r">Tengingar og lyklar</span></div>
+            <div class="sfr-rod"><span class="sfr-e">🩺</span><span class="sfr-n">Dr. House</span><span class="sfr-r">Kerfisheilsa</span></div>
+            <div class="sfr-rod"><span class="sfr-e">🇺🇸</span><span class="sfr-n">Trump</span><span class="sfr-r">Hype-yfirlit</span></div>
+            <div class="sfr-rod"><span class="sfr-e">💪</span><span class="sfr-n">Arnold</span><span class="sfr-r">TurboPaint + RLS</span></div>
+            <div class="sfr-rod"><span class="sfr-e">🏷️</span><span class="sfr-n">DeVito</span><span class="sfr-r">Prentun og QR</span></div>
+            <div class="sfr-rod"><span class="sfr-e">🗺️</span><span class="sfr-n">Ramsay</span><span class="sfr-r">Kort og geocode</span></div>
+            <div class="sfr-rod"><span class="sfr-e">⚡</span><span class="sfr-n">Elon Musk</span><span class="sfr-r">As-built / RAFKERFI</span></div>
+            <div class="sfr-rod"><span class="sfr-e">🌸</span><span class="sfr-n">Natalie</span><span class="sfr-r">Factcheck 2025–26</span></div>
+            <div class="sfr-rod"><span class="sfr-e">🃏</span><span class="sfr-n">Joker</span><span class="sfr-r">Útlit, sími, Stílstjóri</span></div>
+          </div>
+        </details>
+        <details class="sfr-hop" open>
+          <summary>Lén á diski · 6 + villuleit</summary>
+          <div class="sfr-listi">
+            <div class="sfr-rod sfr-dim"><span class="sfr-e">🛡️</span><span class="sfr-n">netvörður</span><span class="sfr-r">SAFE / CUTS-A-WIRE áður en lagað er</span></div>
+            <div class="sfr-rod sfr-dim"><span class="sfr-e">🆘</span><span class="sfr-n">aðstoð</span><span class="sfr-r">Watchlist, banner, aðstoðarmiðstöð</span></div>
+            <div class="sfr-rod sfr-dim"><span class="sfr-e">📋</span><span class="sfr-n">borð-flettur</span><span class="sfr-r">Flipar, nav, bílstjóri, bakk</span></div>
+            <div class="sfr-rod sfr-dim"><span class="sfr-e">🧾</span><span class="sfr-n">sala</span><span class="sfr-r">POS, Payday, dkPlus — alltaf leyfa vistun</span></div>
+            <div class="sfr-rod sfr-dim"><span class="sfr-e">🎨</span><span class="sfr-n">þema</span><span class="sfr-r">Brunastál frosið 17.08.2026</span></div>
+            <div class="sfr-rod sfr-dim"><span class="sfr-e">🖥️</span><span class="sfr-n">framendi</span><span class="sfr-r">Hub-flipar í index.html</span></div>
+            <div class="sfr-rod sfr-vl"><span class="sfr-e">🔍</span><span class="sfr-n">villuleit</span><span class="sfr-r">Skill, ekki rödd. Grep-kveikjur hér fyrir neðan. Laga ekki fyrsta hitt.</span></div>
+          </div>
+        </details>
+        <div class="sfr-fot">Smelltu á svið neðst → röddin les. Villuleit á ekkert Fish-sæti — hún er grep-vörnin.</div>
+      </div>
+      <div class="spjald" data-spjald="villuleit">
+        <h2>Villuleit <span>hindra klúður</span></h2>
+        <div class="mtexti" style="margin-bottom:6px">Eitt staðfest dæmi → leitaðu að afritum. Byrja á rót, svo grep, svo triage. Ekki nýtt app. Vörðu leið → netvörður á undan lagfæringu.</div>
+        <div class="kveikjur">
+          <span>villuleit</span><span>variant</span><span>sama mynstur</span>
+          <span>systkini-kt</span><span>fölsk staðreynd</span><span>röng join</span>
+          <span>hits[0]</span><span>Tengireglan</span>
         </div>
-        <div class="sfr-fot">23 agentar á diski · 16 á HUD · kveikjuorð: villuleit · factcheck · kt<br>Smelltu á svið neðst → röddin les stöðuna</div>
+        <div class="ath" style="margin-top:8px;font-size:10px;color:var(--ink3);line-height:1.45">Þekkt: Plaza, Center/Pizzan, Hotel Grandi, Heimaleiga 293, Hlaðvarpinn, Steypustöðin 2026. Límsetning: <code>villuleit: sama mynstur og Plaza</code>. Sjá <code>docs/TRIGGERS.md</code>.</div>
       </div>
       <div class="spjald" data-spjald="krofur">
         <h2>Kröfur &amp; útistandandi <span id="kr-uppf">—</span></h2>
@@ -406,8 +462,9 @@
         <div class="mtexti" id="m-texti">sæki…</div>
         <div class="mrein"><i id="m-rein" style="width:0%"></i><span id="m-pct"></span></div>
         <div class="mfotur"><span id="m-vinstri">—</span><span id="m-haegri">—</span></div>
-        <div class="veidikort" id="veidikort"></div>
-        <div class="mtexti" id="m-grunn" style="margin-top:8px">Grunnlínan 2026-07-30 er samanburður, ekki dagsins tala. <a href="/veidin.html">Veiðin →</a></div>
+        <div id="veidikort"></div>
+        <div class="huntlisti" id="huntlisti"></div>
+        <div class="mtexti" id="m-grunn" style="margin-top:8px">Grunnlínan 2026-07-30 er <b>staða um mánuði síðan</b> — núna vs start, ekki dagsins tala. Hunt-kortin eru ný skotmörk án nýrrar grunnlínu. <a href="/veidin.html">Veiðin →</a></div>
       </div>
     </div>
 
@@ -938,24 +995,72 @@ async function sakja(){
       $('#m-vinstri').textContent = (dd>0?'+':'')+dd+' frá grunnlínu';
       $('#m-haegri').textContent = n.rukkud_an_skyrslu+' rukkuð án skýrslu';
       const b = ve.baseline || {};
-      const kort = [
+      // FAST: 2026-07-30 er staða um mánuði síðan. Núna vs start — svo sést hvort veiðin virkar.
+      // Aldrei færa þessa dagsetningu yfir á í dag — þá hverfur framvindan.
+      const GRUNN_DAGS = '2026-07-30';
+      const skotmork = [
+        { k:'engin_skyrsla_25_26', t:'Hvorki 2025 né 2026 skýrsla', laegra:true },
+        { k:'amber_felog', t:'Skoðuð en engin skýrsla', laegra:true },
+        { k:'rukkud_an_skyrslu', t:'Rukkuð 2026 án skýrslu', laegra:true },
+        { k:'gleymd_felog', t:'Gleymd félög', laegra:true },
+        { k:'bundle_reikn_vantar', t:'Skýrsla 2026 án reiknings', laegra:true },
+        { k:'bundle_skyrsla_vantar', t:'Reikningur 2026 án skýrslu', laegra:true },
+        { k:'skjol_an_ars', t:'Skjöl án árs', laegra:true }
+      ];
+      const thekja = [
         { k:'stadir_med_2026_skyrslu', t:'Staðir með 2026-skýrslu', laegra:false, af:'stadir_i_thjonustu' },
         { k:'stadir_med_samning', t:'Staðir með þjónustusamning', laegra:false, af:'stadir_i_thjonustu' },
         { k:'felog_med_netfang', t:'Félög með netfang', laegra:false, af:'felog_i_thjonustu' },
         { k:'skyrslur_2026_reviewed', t:'2026-skýrslur fact-checkaðar', laegra:false, af:'skyrslur_2026' },
-        { k:'skjol_an_ars', t:'Skjöl án árs', laegra:true }
+        { k:'bundle_por', t:'Pör kláruð (skýrsla+reikn.)', laegra:false, af:'skyrslur_2026' }
       ];
+      const nyHunt = [
+        { k:'systkini_kt', t:'Systkini-kt án eigin skýrslu', skyr:'deila kt, skýrslan situr á öðrum stað' },
+        { k:'blob_graen_an_skyrslu', t:'Blob-græn án skýrslu', skyr:'systkini merkt Búið 2026 í blob' },
+        { k:'hud_buid_vs_skyrsla', t:'HUD Búið vs skýrsla', skyr:'blob Búið '+(n.hud_buid_2026??'—')+' minus skýrslur '+(n.stadir_med_2026_skyrslu??'—') },
+        { k:'drive_tvitok', t:'Drive-tvítök 2026', skyr:(n.drive_2026_radir??'—')+' raðir · '+(n.drive_2026_distinct??'—')+' Drive · '+(n.drive_tvitok??'—')+' is_duplicate' }
+      ];
+      function veidiKortHtml(c, jakt){
+        const nu = n[c.k], grunn = b[c.k], dv = d[c.k];
+        const good = c.laegra ? (dv||0) < 0 : (dv||0) > 0;
+        const cls = (dv==null || dv===0) ? 'zero' : (good ? 'good' : 'bad');
+        const dlt = (dv==null || dv===0) ? '±0' : ((dv>0?'+':'')+dv);
+        let extra = '';
+        if (!c.laegra && c.af && n[c.af]!=null) extra = nu+' af '+n[c.af];
+        else if (c.laegra) extra = 'markmið: 0';
+        if (c.k==='skjol_an_ars' && nu===1 && (ve.listar||{}).skjol_an_ars && ve.listar.skjol_an_ars[0])
+          extra += (extra?' · ':'')+'doc '+ve.listar.skjol_an_ars[0].doc_id;
+        return '<div class="vkort'+(jakt?' jakt':'')+'"><h3>'+esc(c.t)+'</h3><div class="big">'+esc(nu)+' <span class="dlt '+cls+'">'+dlt+'</span></div>'+
+          '<div class="base">grunnlína '+(b.dags||GRUNN_DAGS)+' (staða um mánuði síðan): '+esc(grunn)+(extra?('<br>'+esc(extra)):'')+'</div></div>';
+      }
+      function huntKortHtml(c){
+        const nu = n[c.k];
+        return '<div class="vkort jakt"><h3>'+esc(c.t)+'</h3><div class="big">'+(nu==null?'—':esc(nu))+'</div>'+
+          '<div class="base">nýtt skotmark · '+esc(c.skyr)+'</div></div>';
+      }
       const box = $('#veidikort');
       if (box) {
-        box.innerHTML = kort.map(c => {
-          const nu = n[c.k], grunn = b[c.k], dv = d[c.k];
-          const good = c.laegra ? (dv||0) < 0 : (dv||0) > 0;
-          const cls = (dv==null || dv===0) ? 'zero' : (good ? 'good' : 'bad');
-          const dlt = (dv==null || dv===0) ? '±0' : ((dv>0?'+':'')+dv);
-          const af = (!c.laegra && c.af && n[c.af]!=null) ? (nu+' af '+n[c.af]) : '';
-          return '<div class="vkort"><h3>'+esc(c.t)+'</h3><div class="big">'+esc(nu)+' <span class="dlt '+cls+'">'+dlt+'</span></div>'+
-            '<div class="base">grunnlína '+(b.dags||'2026-07-30')+': '+esc(grunn)+(af?('<br>'+esc(af)):'')+'</div></div>';
-        }).join('');
+        box.innerHTML =
+          '<div class="veidikort-heiti">Skotmörk veiðinnar — núna vs '+GRUNN_DAGS+' (staða um mánuði síðan)</div>'+
+          '<div class="veidikort">'+skotmork.map(c => veidiKortHtml(c, true)).join('')+'</div>'+
+          '<div class="veidikort-heiti">Hunt — ný skotmörk, lifandi SQL (engin grunnlína)</div>'+
+          '<div class="veidikort">'+nyHunt.map(huntKortHtml).join('')+'</div>'+
+          '<div class="veidikort-heiti">Þekja — núna vs '+GRUNN_DAGS+'</div>'+
+          '<div class="veidikort">'+thekja.map(c => veidiKortHtml(c, false)).join('')+'</div>';
+      }
+      const L = ve.listar || {};
+      const lis = (rows, cols) => (rows||[]).map(x => '<li>'+cols.map(c => esc(x[c])).filter(Boolean).join(' · ')+'</li>').join('')
+        || '<li>hreinsað</li>';
+      const hl = $('#huntlisti');
+      if (hl) {
+        hl.innerHTML =
+          '<details open><summary>Systkini-kt <b>'+esc((L.systkini_kt||[]).length)+'</b></summary><ul>'+lis(L.systkini_kt,['nafn','kennitala'])+'</ul></details>'+
+          '<details><summary>Blob-græn án skýrslu <b>'+esc((L.blob_graen||[]).length)+'</b></summary><ul>'+lis(L.blob_graen,['nafn','kennitala'])+'</ul>'+
+            '<div class="ath">Plaza, Colas HQ, Slippurinn, Heimaleiga HQ, Midtown, bílageymsla, Borgarnes, Pizzan Strandgata, Benna Fiskislóð — ef listinn stemmir.</div></details>'+
+          '<details><summary>HUD Búið án skýrslu <b>'+esc((L.hud_buid_gloppa||[]).length)+'</b></summary>'+
+            '<div class="ath">Ársskoðun-blob vs customer_documents. Ekki sama tala.</div><ul>'+lis(L.hud_buid_gloppa,['nafn'])+'</ul></details>'+
+          '<details><summary>Drive-tvítök <b>'+esc((L.drive_tvitok||[]).length)+'</b></summary><ul>'+lis(L.drive_tvitok,['doc_id','felag'])+'</ul></details>'+
+          '<details><summary>Skjöl án árs <b>'+esc((L.skjol_an_ars||[]).length)+'</b></summary><ul>'+lis(L.skjol_an_ars,['doc_id','doc_type','file_name'])+'</ul></details>';
       }
     }
 
@@ -1012,9 +1117,9 @@ setInterval(sakja, 60000);
 /* -- Utlit (4 forstillingar) + gogn i nyju spjoldin --------------------- */
 (function(){
   var UTLIT = {
-    adal:      { heiti:'Adal',      spjold:['vitals','serfraedingar','fjarskipti','velar','hljod','gogn','markmid'] },
+    adal:      { heiti:'Adal',      spjold:['vitals','serfraedingar','villuleit','fjarskipti','velar','hljod','gogn','markmid'] },
     kerfi:     { heiti:'Kerfi',     spjold:['vitals','perf','fjarskipti','velar','gogn'] },
-    thjonusta: { heiti:'Thjonusta', spjold:['thekja','gloppur','verk','markmid'] },
+    thjonusta: { heiti:'Thjonusta', spjold:['thekja','gloppur','verk','markmid','villuleit'] },
     fjarmal:   { heiti:'Fjarmal',   spjold:['krofur','thekja','markmid'] }
   };
   var L_VAL = 'jarvis_utlit_v1', L_SER = 'jarvis_utlit_sersnid_v1';
@@ -1206,6 +1311,7 @@ setInterval(sakja, 60000);
   var HEITI = {
     vitals:'◆ Kerfis-vitals', fjarskipti:'◆ Fjarskipti', velar:'◆ Velar',
     hljod:'◆ Hljodnemi', gogn:'◆ Gagnaleidslur', markmid:'◆ Meginmarkmid', serfraedingar:'◆ Serfraedingar',
+    villuleit:'◆ Villuleit (hindra kludur)',
     krofur:'◆ Krofur & utistandandi', thekja:'◆ Thekja — por',
     gloppur:'◆ Thjonustu-gloppur', verk:'◆ Verkefni', perf:'◆ Thrystingur (frammistada)'
   };
