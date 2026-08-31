@@ -3,6 +3,8 @@
 This file is read on every session. Read it first before exploring code.
 For customer/data questions, **`docs/STADREYNDIR.md`** is the verified fact
 ledger (sannreyndar grunnstaðreyndir) — it overrides stale numbers here.
+Áhöfnin (23 agentar, villuleit, kveikjuorð): **`docs/AGENTASKRA.md`** +
+**`docs/TRIGGERS.md`**. Teljarinn 153/187 er **óbreyttur**.
 **Í upphafi vinnu-session:** líta á opin verk á Verkefnalistanum —
 `GET /api/verkefnalisti` (beidni/i_vinnu) — áður en nýtt verk er hafið
 (Agnar 2026-07-30).
