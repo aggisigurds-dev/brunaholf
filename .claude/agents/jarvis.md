@@ -29,7 +29,8 @@ Jarvis-síðuna sjálfa (`jarvis.html`) — svið, raddir, TTS og cache.
 |---|---|---|
 | `js/jarvis-voice.js:21-117` | `AGENTS` — raddirnar (Fish voice_id + fallback) | 15 |
 | `netlify/functions/svid-status.js` | `SVID` — takkarnir/sviðin með söfnurum | 12 |
-| `jarvis.html:324` | Roster-HTML-ið (handskrifað, bara útlit) | 16 |
+| `jarvis.html` roster | HUD-sæti (handskrifað, útlit) + disk-listi 31.08.2026 | 16 HUD + 6 án sætis + villuleit |
+| `docs/AGENTASKRA.md` | Kanónísk áhöfn (spegluð úr slokkvitaeki) | 23 |
 
 2026-08-20 fengu `jarvis` (safnaJarvis: opin verk, rauð kerfi, útistandandi,
 vantar_reikning), `oryggi` (RPC `oryggi_counts()`, rödd Arnold), `prentun`
@@ -57,6 +58,13 @@ jarvis-voice.js; svið/raddir ÓBREYTT):
   `joker.md` + Charlize `topic='stilstjori'`). NÝR á roster; engin rödd
   (Harley 🃏 í AGENTS er önnur persóna — áminningarnar).
 (Talningar leiðréttar um leið: AGENTS voru 15, ekki 14; roster fór 13 → 16.)
+
+**2026-08-31 — Agentaskrá synchuð á HUD** (án nýrra sviða/radda, án
+KPI-reiknings): disk-listi undir 16 HUD-sætum sýnir `adstod`, `bord-flettur`,
+`netvordur`, `sala-reikningar`, `thema`, `framendi` + skill `villuleit`
+(hindra klúður). Veiði-kortin fimm (297/145/407/39/1) eru birt úr sama
+`/api/veidin` og Veiðin; grunnlínan 2026-07-30 er samanburður. Skrá:
+`docs/AGENTASKRA.md` · kveikjur: `docs/TRIGGERS.md`. **153/187 óbreytt.**
 
 ## Svið-flæðið (takkasmell → rödd)
 
@@ -97,7 +105,8 @@ leitað). Kerfisreglan: 1-3 setningar, aldrei fundin upp tala/dagsetning/nafn.
 `radd_mal` (is|en) · `jarvis_notandi_v2` (agnar|anni, sjálfg. anni) ·
 `jarvis_utlit_v1` (adal|kerfi|thjonusta|fjarmal) · `jarvis_utlit_sersnid_v1`
 (spjaldaval per útlit; spjöld = `data-spjald`: vitals, fjarskipti, serfraedingar,
-krofur, verk, velar, hljod, gogn, thekja, gloppur, perf, markmid) ·
+krofur, verk, velar, hljod, gogn, thekja, gloppur, perf, markmid — veiði-kortin
+fimm sitja inni í `markmid`, sama `/api/veidin`) ·
 `jarvis_main_voice`.
 
 ## Nýtt svið/rödd — 6 snertifletir, í þessari röð

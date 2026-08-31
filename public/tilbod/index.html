@@ -63,6 +63,21 @@
   }
   header button:hover { filter: brightness(1.1); }
 
+  .stjornstod {
+    background: #111;
+    color: #b8b8b8;
+    font-size: 12px;
+    padding: 8px 24px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    align-items: center;
+    border-bottom: 1px solid #333;
+  }
+  .stjornstod a { color: #fff; text-decoration: none; }
+  .stjornstod a:hover { color: var(--accent); }
+  .stjornstod .muted { color: #888; }
+
   .layout {
     display: grid;
     grid-template-columns: 380px 1fr;
@@ -345,6 +360,14 @@
     <button id="btn-docx">Sækja .docx</button>
   </div>
 </header>
+
+<nav class="stjornstod" aria-label="Stjórnstöð">
+  <a href="https://brunaholf.netlify.app/jarvis.html">Jarvis</a>
+  <a href="https://brunaholf.netlify.app/veidin.html">Veiðin</a>
+  <a href="https://brunaholf.netlify.app/kerfisheilsa.html">Kerfisheilsa</a>
+  <a href="https://brunaholf.netlify.app/kerfiskort.html">Tengingar</a>
+  <span class="muted">Áhöfn: 23 agentar · villuleit / hindra klúður · grunnlína 2026-07-30 er samanburður</span>
+</nav>
 
 <div class="layout">
 

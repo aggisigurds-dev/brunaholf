@@ -268,6 +268,17 @@
 .sfr-n{font-size:12px;font-weight:700;color:#cfe6ff;white-space:nowrap}
 .sfr-r{font-size:10.5px;color:#6fa9cf;line-height:1.35}
 .sfr-fot{margin-top:7px;font-size:9.5px;letter-spacing:.04em;color:#4d84ad;text-align:center}
+.sfr-disk{margin:10px 0 4px;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#3f7391}
+.sfr-rod.sfr-dim .sfr-n{color:#7aa3c2;font-weight:600}
+.sfr-rod.sfr-dim .sfr-r{color:#4d84ad}
+
+.veidikort{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:8px;margin-top:12px}
+.vkort{border:1px solid var(--cy-dim);padding:8px 10px;background:rgba(79,216,255,.05)}
+.vkort h3{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin:0 0 4px;font-weight:600}
+.vkort .big{font-size:22px;color:var(--cy);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.vkort .dlt{font-size:11px;margin-left:6px;font-weight:700}
+.vkort .dlt.good{color:var(--ok)} .vkort .dlt.bad{color:var(--hae)} .vkort .dlt.zero{color:var(--ink3)}
+.vkort .base{font-size:9px;color:var(--ink3);margin-top:3px;line-height:1.35}
 
 .sfr-rod.sfr-cw{border-left:2px solid #3ecf8e;padding-left:5px;margin-left:-7px}
 .sfr-badge{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.02em;color:#0a3d28;background:#3ecf8e;border-radius:6px;padding:1px 6px;margin-left:4px;white-space:nowrap}
@@ -326,9 +337,19 @@
         <div class="straumur" id="straumur"><div style="color:var(--ink3)">sæki…</div></div>
       </div>
       <div class="spjald" data-spjald="serfraedingar">
-        <h2>Sérfræðingar <span style="color:#4d84ad;font-size:.8em">áhöfnin</span></h2>
+        <h2>Sérfræðingar <span style="color:#4d84ad;font-size:.8em">áhöfnin · 23 á diski</span></h2>
         <div class="sfr-listi"><div class="sfr-rod"><span class="sfr-e">🎩</span><span class="sfr-n">Jarvis</span><span class="sfr-r">Dagleg yfirsýn</span></div><div class="sfr-rod"><span class="sfr-e">💰</span><span class="sfr-n">Samantha</span><span class="sfr-r">Fjármál &amp; bókhald</span></div><div class="sfr-rod sfr-cw"><span class="sfr-e">🗂️</span><span class="sfr-n">Sara</span><span class="sfr-r">Skýrslugerð &amp; texta-innfylling — fyllir úttektarskýrslur út LIVE <b class="sfr-badge">🤝 Coworker · live MCP</b></span></div><div class="sfr-rod"><span class="sfr-e">❄️</span><span class="sfr-n">Charlize</span><span class="sfr-r">Kúnnaskrá &amp; kennitölur</span></div><div class="sfr-rod"><span class="sfr-e">🎙️</span><span class="sfr-n">Freeman</span><span class="sfr-r">Skjöl &amp; Drive</span></div><div class="sfr-rod"><span class="sfr-e">🥊</span><span class="sfr-n">Statham</span><span class="sfr-r">Gagnaleiðslur / rukkun</span></div><div class="sfr-rod"><span class="sfr-e">💥</span><span class="sfr-n">Willis</span><span class="sfr-r">Hraði &amp; afköst</span></div><div class="sfr-rod"><span class="sfr-e">😤</span><span class="sfr-n">Samuel L. J.</span><span class="sfr-r">Tengingar &amp; lyklar</span></div><div class="sfr-rod"><span class="sfr-e">🩺</span><span class="sfr-n">Dr. House</span><span class="sfr-r">Kerfisheilsa — greiningin</span></div><div class="sfr-rod"><span class="sfr-e">🇺🇸</span><span class="sfr-n">Trump</span><span class="sfr-r">Hype-yfirlit</span></div><div class="sfr-rod"><span class="sfr-e">💪</span><span class="sfr-n">Arnold</span><span class="sfr-r">Teiknar slökkvitækja-layout á hústeikningar (í þjálfun — TurboPaint) · öryggið — RLS &amp; lyklar</span></div><div class="sfr-rod"><span class="sfr-e">🏷️</span><span class="sfr-n">DeVito</span><span class="sfr-r">Prentun &amp; QR-merki</span></div><div class="sfr-rod"><span class="sfr-e">🗺️</span><span class="sfr-n">Ramsay</span><span class="sfr-r">Kort &amp; geocode</span></div><div class="sfr-rod"><span class="sfr-e">⚡</span><span class="sfr-n">Elon Musk</span><span class="sfr-r">Innra tengikerfið — as-built yfir borð, útreikninga &amp; skjala-lykla (RAFKERFI)</span></div><div class="sfr-rod"><span class="sfr-e">🌸</span><span class="sfr-n">Natalie</span><span class="sfr-r">Factcheck 2025–26 — staðreyndayfirferð með Charlize &amp; Söru</span></div><div class="sfr-rod"><span class="sfr-e">🃏</span><span class="sfr-n">Joker</span><span class="sfr-r">Útlit &amp; farsímahönnun — allar síðubreytingar gegnum Stílstjórann</span></div></div>
-        <div class="sfr-fot">Smelltu á svið neðst → röddin les stöðuna</div>
+        <div class="sfr-disk">á disk · ekki HUD-sæti</div>
+        <div class="sfr-listi">
+          <div class="sfr-rod sfr-dim"><span class="sfr-e">🛡️</span><span class="sfr-n">netvörður</span><span class="sfr-r">Öryggisnet — SAFE / CUTS-A-WIRE áður en lagað er</span></div>
+          <div class="sfr-rod sfr-dim"><span class="sfr-e">🆘</span><span class="sfr-n">aðstoð</span><span class="sfr-r">Watchlist, banner, aðstoðarmiðstöð</span></div>
+          <div class="sfr-rod sfr-dim"><span class="sfr-e">📋</span><span class="sfr-n">borð-flettur</span><span class="sfr-r">Flipar, nav, bílstjóri, bakk</span></div>
+          <div class="sfr-rod sfr-dim"><span class="sfr-e">🧾</span><span class="sfr-n">sala</span><span class="sfr-r">POS, Payday, dkPlus, afsláttur — alltaf leyfa vistun</span></div>
+          <div class="sfr-rod sfr-dim"><span class="sfr-e">🎨</span><span class="sfr-n">þema</span><span class="sfr-r">theme.css · Brunastál (frosið 17.08.2026)</span></div>
+          <div class="sfr-rod sfr-dim"><span class="sfr-e">🖥️</span><span class="sfr-n">framendi</span><span class="sfr-r">Hub-flipar — hvar eitthvað í index.html býr</span></div>
+          <div class="sfr-rod sfr-dim"><span class="sfr-e">🔍</span><span class="sfr-n">villuleit</span><span class="sfr-r">Hindra klúður — sama mynstur, systkini-kt, falskt grænt. Ekki laga fyrsta hitt</span></div>
+        </div>
+        <div class="sfr-fot">23 agentar á diski · 16 á HUD · kveikjuorð: villuleit · factcheck · kt<br>Smelltu á svið neðst → röddin les stöðuna</div>
       </div>
       <div class="spjald" data-spjald="krofur">
         <h2>Kröfur &amp; útistandandi <span id="kr-uppf">—</span></h2>
@@ -385,6 +406,8 @@
         <div class="mtexti" id="m-texti">sæki…</div>
         <div class="mrein"><i id="m-rein" style="width:0%"></i><span id="m-pct"></span></div>
         <div class="mfotur"><span id="m-vinstri">—</span><span id="m-haegri">—</span></div>
+        <div class="veidikort" id="veidikort"></div>
+        <div class="mtexti" id="m-grunn" style="margin-top:8px">Grunnlínan 2026-07-30 er samanburður, ekki dagsins tala. <a href="/veidin.html">Veiðin →</a></div>
       </div>
     </div>
 
@@ -914,6 +937,26 @@ async function sakja(){
       const dd = d.stadir_med_2026_skyrslu||0;
       $('#m-vinstri').textContent = (dd>0?'+':'')+dd+' frá grunnlínu';
       $('#m-haegri').textContent = n.rukkud_an_skyrslu+' rukkuð án skýrslu';
+      const b = ve.baseline || {};
+      const kort = [
+        { k:'stadir_med_2026_skyrslu', t:'Staðir með 2026-skýrslu', laegra:false, af:'stadir_i_thjonustu' },
+        { k:'stadir_med_samning', t:'Staðir með þjónustusamning', laegra:false, af:'stadir_i_thjonustu' },
+        { k:'felog_med_netfang', t:'Félög með netfang', laegra:false, af:'felog_i_thjonustu' },
+        { k:'skyrslur_2026_reviewed', t:'2026-skýrslur fact-checkaðar', laegra:false, af:'skyrslur_2026' },
+        { k:'skjol_an_ars', t:'Skjöl án árs', laegra:true }
+      ];
+      const box = $('#veidikort');
+      if (box) {
+        box.innerHTML = kort.map(c => {
+          const nu = n[c.k], grunn = b[c.k], dv = d[c.k];
+          const good = c.laegra ? (dv||0) < 0 : (dv||0) > 0;
+          const cls = (dv==null || dv===0) ? 'zero' : (good ? 'good' : 'bad');
+          const dlt = (dv==null || dv===0) ? '±0' : ((dv>0?'+':'')+dv);
+          const af = (!c.laegra && c.af && n[c.af]!=null) ? (' · '+nu+' af '+n[c.af]) : '';
+          return '<div class="vkort"><h3>'+esc(c.t)+'</h3><div class="big">'+esc(nu)+' <span class="dlt '+cls+'">'+dlt+'</span></div>'+
+            '<div class="base">grunnlína '+(b.dags||'2026-07-30')+': '+esc(grunn)+af+'</div></div>';
+        }).join('');
+      }
     }
 
     baetaStraum('kerfisstaða uppfærð','');
