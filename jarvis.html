@@ -464,7 +464,7 @@
         <div class="mfotur"><span id="m-vinstri">—</span><span id="m-haegri">—</span></div>
         <div id="veidikort"></div>
         <div class="huntlisti" id="huntlisti"></div>
-        <div class="mtexti" id="m-grunn" style="margin-top:8px">Grunnlínan 2026-07-30 er <b>upphaf Agnars</b> — núna vs start, ekki dagsins tala. Hunt-kortin eru ný skotmörk án nýrrar grunnlínu. <a href="/veidin.html">Veiðin →</a></div>
+        <div class="mtexti" id="m-grunn" style="margin-top:8px">Grunnlínan 2026-07-30 er <b>staða um mánuði síðan</b> — núna vs start, ekki dagsins tala. Hunt-kortin eru ný skotmörk án nýrrar grunnlínu. <a href="/veidin.html">Veiðin →</a></div>
       </div>
     </div>
 
@@ -995,7 +995,7 @@ async function sakja(){
       $('#m-vinstri').textContent = (dd>0?'+':'')+dd+' frá grunnlínu';
       $('#m-haegri').textContent = n.rukkud_an_skyrslu+' rukkuð án skýrslu';
       const b = ve.baseline || {};
-      // FAST: 2026-07-30 er upphaf Agnars. Núna vs start — svo sést hvort veiðin virkar.
+      // FAST: 2026-07-30 er staða um mánuði síðan. Núna vs start — svo sést hvort veiðin virkar.
       // Aldrei færa þessa dagsetningu yfir á í dag — þá hverfur framvindan.
       const GRUNN_DAGS = '2026-07-30';
       const skotmork = [
@@ -1031,7 +1031,7 @@ async function sakja(){
         if (c.k==='skjol_an_ars' && nu===1 && (ve.listar||{}).skjol_an_ars && ve.listar.skjol_an_ars[0])
           extra += (extra?' · ':'')+'doc '+ve.listar.skjol_an_ars[0].doc_id;
         return '<div class="vkort'+(jakt?' jakt':'')+'"><h3>'+esc(c.t)+'</h3><div class="big">'+esc(nu)+' <span class="dlt '+cls+'">'+dlt+'</span></div>'+
-          '<div class="base">grunnlína '+(b.dags||GRUNN_DAGS)+' (upphaf Agnars): '+esc(grunn)+(extra?('<br>'+esc(extra)):'')+'</div></div>';
+          '<div class="base">grunnlína '+(b.dags||GRUNN_DAGS)+' (staða um mánuði síðan): '+esc(grunn)+(extra?('<br>'+esc(extra)):'')+'</div></div>';
       }
       function huntKortHtml(c){
         const nu = n[c.k];
@@ -1041,7 +1041,7 @@ async function sakja(){
       const box = $('#veidikort');
       if (box) {
         box.innerHTML =
-          '<div class="veidikort-heiti">Skotmörk veiðinnar — núna vs '+GRUNN_DAGS+' (upphaf Agnars)</div>'+
+          '<div class="veidikort-heiti">Skotmörk veiðinnar — núna vs '+GRUNN_DAGS+' (staða um mánuði síðan)</div>'+
           '<div class="veidikort">'+skotmork.map(c => veidiKortHtml(c, true)).join('')+'</div>'+
           '<div class="veidikort-heiti">Hunt — ný skotmörk, lifandi SQL (engin grunnlína)</div>'+
           '<div class="veidikort">'+nyHunt.map(huntKortHtml).join('')+'</div>'+
