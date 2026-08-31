@@ -952,9 +952,9 @@ async function sakja(){
           const good = c.laegra ? (dv||0) < 0 : (dv||0) > 0;
           const cls = (dv==null || dv===0) ? 'zero' : (good ? 'good' : 'bad');
           const dlt = (dv==null || dv===0) ? '±0' : ((dv>0?'+':'')+dv);
-          const af = (!c.laegra && c.af && n[c.af]!=null) ? (' · '+nu+' af '+n[c.af]) : '';
+          const af = (!c.laegra && c.af && n[c.af]!=null) ? (nu+' af '+n[c.af]) : '';
           return '<div class="vkort"><h3>'+esc(c.t)+'</h3><div class="big">'+esc(nu)+' <span class="dlt '+cls+'">'+dlt+'</span></div>'+
-            '<div class="base">grunnlína '+(b.dags||'2026-07-30')+': '+esc(grunn)+af+'</div></div>';
+            '<div class="base">grunnlína '+(b.dags||'2026-07-30')+': '+esc(grunn)+(af?('<br>'+esc(af)):'')+'</div></div>';
         }).join('');
       }
     }
