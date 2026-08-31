@@ -62,9 +62,12 @@ jarvis-voice.js; svið/raddir ÓBREYTT):
 **2026-08-31 — Agentaskrá synchuð á HUD** (án nýrra sviða/radda, án
 KPI-reiknings): disk-listi undir 16 HUD-sætum sýnir `adstod`, `bord-flettur`,
 `netvordur`, `sala-reikningar`, `thema`, `framendi` + skill `villuleit`
-(hindra klúður). Veiði-kortin fimm (297/145/407/39/1) eru birt úr sama
-`/api/veidin` og Veiðin; grunnlínan 2026-07-30 er samanburður. Skrá:
-`docs/AGENTASKRA.md` · kveikjur: `docs/TRIGGERS.md`. **153/187 óbreytt.**
+(hindra klúður). Veiði-kortin (skotmörk + þekja + ný hunt-kort) eru birt
+úr sama `/api/veidin` og Veiðin. Grunnlínan **2026-07-30** er upphaf
+Agnars — föst samanburðartala, aldrei færð á í dag. Ný hunt-kort
+(systkini-kt, blob-græn, HUD vs skýrsla, Drive-tvítök) fá **enga** nýja
+grunnlínu. Skrá: `docs/AGENTASKRA.md` · kveikjur: `docs/TRIGGERS.md`.
+**153/187 óbreytt.**
 
 ## Svið-flæðið (takkasmell → rödd)
 
@@ -106,7 +109,8 @@ leitað). Kerfisreglan: 1-3 setningar, aldrei fundin upp tala/dagsetning/nafn.
 `jarvis_utlit_v1` (adal|kerfi|thjonusta|fjarmal) · `jarvis_utlit_sersnid_v1`
 (spjaldaval per útlit; spjöld = `data-spjald`: vitals, fjarskipti, serfraedingar,
 krofur, verk, velar, hljod, gogn, thekja, gloppur, perf, markmid — veiði-kortin
-fimm sitja inni í `markmid`, sama `/api/veidin`) ·
+(skotmörk + þekja + ný hunt-kort) sitja inni í `markmid`, sama `/api/veidin`;
+grunnlína 2026-07-30 er föst; ný hunt-kort fá enga nýja grunnlínu) ·
 `jarvis_main_voice`.
 
 ## Nýtt svið/rödd — 6 snertifletir, í þessari röð

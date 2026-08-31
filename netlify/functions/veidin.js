@@ -1,19 +1,21 @@
 // veidin.js — 🎯 Veiðin: lifandi mælaborð endurheimtar-aðgerðarinnar.
-// Backs veidin.html.
+// Backs veidin.html + hunt-kortin á jarvis.html.
 //
 //   GET /api/veidin  →  { baseline, nuna, delta, listar:{ amber, engin_skyrsla,
-//                          rukkud_an_skyrslu } }
+//                          rukkud_an_skyrslu, bundle_gloppur,
+//                          systkini_kt, blob_graen, hud_buid_gloppa,
+//                          drive_tvitok, skjol_an_ars } }
 //
-// „nuna" les lifandi úr fjórum Postgres-sýnum (v_veidin_tolur · v_veidin_amber ·
-// v_veidin_engin_skyrsla · v_veidin_rukkud_an_skyrslu — sjá migration
-// veidin_views 2026-07-30). „baseline" er FÖST veiði-grunnlínan 2026-07-30 úr
-// docs/STADREYNDIR.md §2 — framvinda veiðarinnar = nuna − baseline.
-// Read-only, service role.
+// „nuna" les lifandi úr v_veidin_tolur · amber · engin_skyrsla · rukkud +
+// hunt-sýnunum (sql/2026-08-31_v_veidin_hunt.sql). „baseline" er FÖST
+// veiði-grunnlínan 2026-07-30 — upphaf Agnars, EKKI dagsins tala.
+// Hunt-tölur eiga ENGA grunnlínu (nýtt skotmark). Read-only, service role.
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-// Veiði-grunnlínan, tekin 2026-07-30 fyrir veiðina (STAÐREYNDIR §2). FAST — ekki uppfæra.
+// Veiði-grunnlínan, tekin 2026-07-30 fyrir veiðina (STAÐREYNDIR §2).
+// FAST — upphaf Agnars. Aldrei færa dags yfir á í dag; ný kort bætast við, grunnlínan stendur.
 const BASELINE = {
   dags: '2026-07-30',
   stadir_i_thjonustu: 655,
@@ -64,6 +66,21 @@ exports.handler = async (event) => {
       sbGet('v_bundle_coverage?yr=eq.' + curYear + '&select=*'),
     ]);
     const t = tolur[0] || {};
+    // Hunt-listar: einangrað svo gamla veiðin brotni ekki ef sýn vantar.
+    let hunt = {};
+    let systkini = [], blobGraen = [], hudGloppa = [], driveTv = [], skjolAnArs = [];
+    try {
+      const [huntRows, sy, bl, hg, dt, sa] = await Promise.all([
+        sbGet('v_veidin_hunt_tolur?select=*'),
+        sbGet('v_veidin_systkini_kt?select=*&order=kennitala.asc,nafn.asc'),
+        sbGet('v_veidin_blob_graen?select=*&order=nafn.asc'),
+        sbGet('v_veidin_hud_buid_gloppa?select=*&order=nafn.asc'),
+        sbGet('v_veidin_drive_tvitok?select=*&order=felag.asc.nullslast'),
+        sbGet('v_veidin_skjol_an_ars?select=*&order=doc_id.asc'),
+      ]);
+      hunt = huntRows[0] || {};
+      systkini = sy; blobGraen = bl; hudGloppa = hg; driveTv = dt; skjolAnArs = sa;
+    } catch (_) { /* hunt er viðbót — eldri lyklar standa */ }
     // 📦 Bundle-pör þessa árs — sjá v_bundle_coverage. „gloppur" = ókláruð pör
     // (vantar reikning fyrst, svo vantar skýrslu, svo billed-via-Payday).
     const gOrder = { vantar_reikning: 0, vantar_skyrslu: 1, reikn_payday: 2 };
@@ -88,6 +105,13 @@ exports.handler = async (event) => {
       bundle_por: bundle.filter(b => b.stada === 'klarad').length,
       bundle_reikn_vantar: bundle.filter(b => b.stada === 'vantar_reikning').length,
       bundle_skyrsla_vantar: bundle.filter(b => b.stada === 'vantar_skyrslu').length,
+      systkini_kt: hunt.systkini_kt != null ? hunt.systkini_kt : systkini.length,
+      blob_graen_an_skyrslu: hunt.blob_graen_an_skyrslu != null ? hunt.blob_graen_an_skyrslu : blobGraen.length,
+      hud_buid_2026: hunt.hud_buid_2026,
+      hud_buid_vs_skyrsla: hunt.hud_buid_vs_skyrsla != null ? hunt.hud_buid_vs_skyrsla : hudGloppa.length,
+      drive_2026_radir: hunt.drive_2026_radir,
+      drive_2026_distinct: hunt.drive_2026_distinct,
+      drive_tvitok: hunt.drive_tvitok != null ? hunt.drive_tvitok : driveTv.length,
     };
     const delta = {};
     for (const k of Object.keys(BASELINE)) {
@@ -95,7 +119,11 @@ exports.handler = async (event) => {
       if (typeof nuna[k] === 'number') delta[k] = nuna[k] - BASELINE[k];
     }
     return json(200, { baseline: BASELINE, nuna, delta,
-      listar: { amber, engin_skyrsla: enginSk, rukkud_an_skyrslu: rukkud, bundle_gloppur: bundleGloppur } });
+      listar: {
+        amber, engin_skyrsla: enginSk, rukkud_an_skyrslu: rukkud, bundle_gloppur: bundleGloppur,
+        systkini_kt: systkini, blob_graen: blobGraen, hud_buid_gloppa: hudGloppa,
+        drive_tvitok: driveTv, skjol_an_ars: skjolAnArs,
+      } });
   } catch (e) {
     return json(500, { error: String(e.message || e) });
   }

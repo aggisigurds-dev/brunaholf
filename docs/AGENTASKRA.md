@@ -84,7 +84,7 @@ Teljarinn **153/187** (tilbúið-staða) er **óbreyttur**. Hann er ekki hluti a
 
 Sæti: Jarvis · Samantha · Sara · Charlize · Freeman · Statham · Willis · Samuel L. J. · Dr. House · Trump · Arnold · DeVito · Ramsay · Elon Musk · Natalie · Joker.
 
-Veiði-KPI á HUD (297 / 145 / 407 / 39 / 1) koma úr `/api/veidin`. Grunnlínan **2026-07-30** er föst samanburðartala, ekki dagsins tala. `153/187` er óbreytt.
+Veiði-kort á HUD koma úr `/api/veidin`: skotmörk og þekja sem bera grunnlínuna **2026-07-30** (upphaf Agnars — núna vs start, aldrei færð) og ný hunt-kort án grunnlínu (systkini-kt, blob-græn, HUD Búið vs skýrsla, Drive-tvítök). `153/187` er óbreytt.
 
 Aðrar Jarvis-tölur sem `jarvis.md` telur ósamræmdar (ekki lagaðar hér): `js/jarvis-voice.js` AGENTS = 15 raddir; `svid-status.js` SVID = 12 svið. Roster er útlit, ekki loader.
 
