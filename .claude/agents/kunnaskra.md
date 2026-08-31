@@ -154,7 +154,7 @@ sites), 🧽 Hreinsi-borð (batch doc reconnect), 🧹 Drive-flokkun + 🗜️ F
 
 **🎯 Veiðin** (`veidin.html` at `brunaholf.netlify.app/veidin.html`, 2026-07-30) —
 live mælaborð endurheimtar-aðgerðarinnar. Hvert eldra skotmark sýnir NÚNA-tölu
-gegn FASTRI veiði-grunnlínunni 2026-07-30 (**staða um mánuði síðan**, STAÐREYNDIR
+gegn FASTRI veiði-grunnlínunni 2026-07-30 (**upphaf Agnars**, STAÐREYNDIR
 §2) + delta. Hunt-kortin (systkini-kt, blob-græn, HUD Búið vs skýrsla,
 Drive-tvítök) eiga enga grunnlínu — þau eru lifandi SQL. Endpoint
 **`/api/veidin`** (`veidin.js`, service role, BASELINE fasti þar — ekki uppfæra);

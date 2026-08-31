@@ -260,7 +260,7 @@ async function safnaJarvis() {
     systkini_kt: hunt.systkini_kt,
     blob_graen_an_skyrslu: hunt.blob_graen_an_skyrslu,
     hud_buid_vs_skyrsla: hunt.hud_buid_vs_skyrsla,
-    grunnlinan: '2026-07-30 er staða um mánuði síðan, ekki í dag',
+    grunnlinan: '2026-07-30 er upphaf Agnars, ekki í dag',
   };
 }
 // ── 🔒 Öryggi (Arnold) — RLS-staða + buckets gegnum oryggi_counts() RPC ─────

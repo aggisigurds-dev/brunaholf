@@ -8,14 +8,14 @@
 //
 // „nuna" les lifandi úr v_veidin_tolur · amber · engin_skyrsla · rukkud +
 // hunt-sýnunum (sql/2026-08-31_v_veidin_hunt.sql). „baseline" er FÖST
-// veiði-grunnlínan 2026-07-30 — staða um mánuði síðan, EKKI dagsins tala.
+// veiði-grunnlínan 2026-07-30 — upphaf Agnars, EKKI dagsins tala.
 // Hunt-tölur eiga ENGA grunnlínu (nýtt skotmark). Read-only, service role.
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 // Veiði-grunnlínan, tekin 2026-07-30 fyrir veiðina (STAÐREYNDIR §2).
-// FAST — staða um mánuði síðan. Aldrei færa dags yfir á í dag; ný kort bætast við, grunnlínan stendur.
+// FAST — upphaf Agnars. Aldrei færa dags yfir á í dag; ný kort bætast við, grunnlínan stendur.
 const BASELINE = {
   dags: '2026-07-30',
   stadir_i_thjonustu: 655,

@@ -64,7 +64,7 @@ jarvis-voice.js; svið/raddir ÓBREYTT):
 (`docs/TRIGGERS.md`) — skill, ekki Fish-rödd. `/api/veidin` les
 `v_veidin_hunt_*` (systkini-kt, blob-græn, HUD Búið vs
 `customer_documents`, Drive-tvítök, skjöl án árs). Grunnlínan
-**2026-07-30** er **staða um mánuði síðan** (upphaf veiðarinnar), ekki dagsins tala. Hunt-kort
+**2026-07-30** er **upphaf Agnars** (upphaf veiðarinnar), ekki dagsins tala. Hunt-kort
 fá enga nýja grunnlínu. **153/187 óbreytt.**
 
 ## Svið-flæðið (takkasmell → rödd)
@@ -108,7 +108,7 @@ leitað). Kerfisreglan: 1-3 setningar, aldrei fundin upp tala/dagsetning/nafn.
 (spjaldaval per útlit; spjöld = `data-spjald`: vitals, fjarskipti, serfraedingar,
 krofur, verk, velar, hljod, gogn, thekja, gloppur, perf, markmid, villuleit —
 veiði-kortin og hunt-listarnir sitja inni í `markmid`, sama `/api/veidin`;
-grunnlína 2026-07-30 er staða um mánuði síðan; ný hunt-kort fá enga nýja
+grunnlína 2026-07-30 er upphaf Agnars; ný hunt-kort fá enga nýja
 grunnlínu) ·
 `jarvis_main_voice`.
 
