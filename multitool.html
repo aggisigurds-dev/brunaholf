@@ -1106,7 +1106,7 @@
 
   // ── preview run loop ──
   async function runLoop(){
-    var src=folderId($('src').value); if(!src){ $('status').textContent='Settu inn möppu.'; return; }
+    var src=folderId($('src').value); if(!src || src.length < 20){ $('status').textContent='Vantar gilda Drive-möppu-auðkenni — límdu inn möppu-URL eða folder-id.'; return; }
     try{ localStorage.setItem(MTKEY, src); }catch(_){}
     var cap=Math.max(parseInt($('s-cap').value||'100',10)||100,1);
     var recurse=$('s-recurse').checked?'1':'0';
