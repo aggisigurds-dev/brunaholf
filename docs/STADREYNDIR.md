@@ -486,27 +486,52 @@ inn. Aðeins `docs/` breytist.
 §0 skilgreinir „félag með þjónustuskjöl en enginn staður í þjónustu" sem líklega
 TÝNDAN kúnna. **Sama rökfærsla gildir um tvö önnur merki**, og þau finna aðra staði:
 
-- **virk tæki skráð** (`uttaeki.status='active'`) en `er_i_thjonustu = false`
-- **úttekt síðan 2025** (`solur.source='uttekt'`) en `er_i_thjonustu = false`
+- **tæki Í NOTKUN skráð** (`uttaeki.status != 'urelt'`) en `er_i_thjonustu = false`
+- **úttekt síðan 2025** (`solur.source='uttekt'`, tengt á **`customer_id`**) en
+  `er_i_thjonustu = false`
 
-*Staðan 01.09.2026:* 11 félög með virk tæki og 8 með úttekt, þar af **þrjú á báðum
-listum** — Þangbakki 8-10 húsfélag (55 virk tæki, úttekt 07.08.2026), Húsfélagið
-Strandasel 9-11 (7 tæki, 08.08.2026), Sjúkraþjálfun Grafarvogs (1 tæki, 16.06.2026).
-Stærstu tækjaskrárnar án þjónustumerkingar: Þangbakki 55 · Ásholt 2 34 ·
-Réttingaverkstæði Jóa 13.
+*Staðan 01.09.2026, endurmæld:* **12** félög með tæki í notkun og **4** með úttekt,
+þar af **þrjú á báðum listum** — Þangbakki 8-10 húsfélag (55 tæki), Húsfélagið
+Strandasel 9-11 (7), Sjúkraþjálfun Grafarvogs (1). Stærstu tækjaskrárnar án
+þjónustumerkingar: Þangbakki 55 · Ásholt 2 34 · Réttingaverkstæði Jóa 13.
 
-Þjónustu-gloppu-tólið á að nota ÖLL þrjú merkin, ekki bara skjölin.
+⚠️ *Leiðrétt 01.09.2026 — tvennt í upphaflegu mælingunni:*
 
-### 8.4 Úttekt án tækjaskrár er sitt eigið ósamræmi
-`Center Hótel — Þverholt 14` (fyrirtaeki **1627**, kt 450905-1430) er með **7 úttektir**
-frá 2025, þá nýjustu **31.08.2026**, en `er_i_thjonustu = false` OG **núll tæki skráð**
-(hvorki virk né úrelt). Úttekt hefur því verið framkvæmd og rukkuð án þess að
-tækjaskrá yrði til.
+1. Fyrra merkið síaði á `status='active'` — sama gildran og §7.9 lagfærði. Í notkun
+   er allt NEMA `urelt`; talan fór úr 11 í **12** (viðbótin er `Test fyrirtæki`,
+   fid 1404, svo raunbreytingin er engin — en sían var samt röng).
+2. Seinna merkið var tengt á **kennitölu**. Það eignar hverri starfsstöð
+   rekstrarfélags allt sem félagið selur — einmitt það sem §0 og
+   `audit-stadur-nr.cjs` banna. Tengt á `customer_id` eru félögin **4**, ekki 8;
+   kt-tengingin bætti ranglega við `Center Hótel — Þverholt 14` og `Pumpingiron`.
+   Skurðpunkturinn — þau þrjú sem eru á báðum listum — stóðst óbreyttur.
 
-Þetta mynstur — sala með `source='uttekt'` en engin `uttaeki`-röð — er sjálfstætt
+Þjónustu-gloppu-tólið á að nota ÖLL þrjú merkin, ekki bara skjölin — og tengja á
+`customer_id`, aldrei á kennitölu eina
+
+4 Úttekt án tækjaskrár er sitt eigið ósamræmi
+Mynstrið — sala með `source='uttekt'` en engin `uttaeki`-röð — er sjálfstætt
 heilsucheck-merki og á að vera mælt, ekki fundið fyrir tilviljun.
 
-### 8.5 Þemasnyrting er TVÍSKRÁÐ á sömu kennitölu
+*Mælt 01.09.2026 (tengt á `customer_id`, úttektir frá 2025):* **fjögur félög**, öll
+með eina úttekt hvert — Þemasnyrting ehf (fid 1262, 19.06.2026) · Ellý Ósk
+Erlingsd. (162, 24.06.2026) · Suðurvangur 23b húsfélag (1497, 26.06.2026) ·
+Bílaverk ehf (674, 01.07.2026).
+
+⚠️ *Leiðrétt 01.09.2026 — dæmið sem hér stóð var rangt.* Áður sagði kaflinn að
+`Center Hótel — Þverholt 14` (fid 1627) væri með **7 úttektir** en núll tæki.
+Fid 1627 á **NÚLL úttektir**. Þessar sjö tilheyra sjö ÖÐRUM Center-húsum sem deila
+kennitölunni 450905-1430, hvert með sitt eigið `customer_id`: Klöpp (196),
+Skjaldbreið (198), Laugavegur (201), Miðgarður (192), Þingholt (199), Arnarhvoll
+(195) og Plaza (193). Fullyrðingin varð til við að tengja á kennitölu í stað
+`customer_id`. Þverholt 14 er einfaldlega staður án tækja sem er ekki í þjónustu —
+ekkert ósamræmi þar.
+
+**Reglan sem þetta staðfestir:** hjá rekstrarfélagi er kennitalan sameiginleg öllum
+stöðum. Tenging á kennitölu eina eignar hverjum stað allt sem félagið gerir.
+Sjá §0 og `tools/audit-stadur-nr.cjs`
+
+5 Þemasnyrting er TVÍSKRÁÐ á sömu kennitölu
 `fyrirtaeki` **151** („Þemasnyrting") og **1262** („Þemasnyrting ehf"), báðar á kt
 **450106-1860**, báðar með núll tæki og hvorug í þjónustu. Úttektin 19.06.2026
 birtist á BÁÐUM þegar tengt er á `solur.customer_kt`.
@@ -515,3 +540,9 @@ birtist á BÁÐUM þegar tengt er á `solur.customer_kt`.
 **Ekki sameina blint** — §0-reglan um rekstrarfélög gildir: staðir rekstrarfélags má
 aldrei sameina. Hér er þó um sama nafn og sömu kt að ræða, svo þetta er tvískráning
 en ekki tveir starfsstaðir; Agnar staðfestir áður en nokkuð er sameinað.
+
+⚠️ *Leiðrétt 01.09.2026:* **fid 151 er þegar mjúk-eytt** (`deleted_at`
+2026-07-12T23:57:38Z) og telst því ekki með í lifandi gagnasettinu — eftir stendur
+EIN lifandi röð, fid 1262. Tvískráningin er þegar leyst og þetta er ekki opið verk.
+Fid 1262 birtist hins vegar í mælingunni í §8.4: hann ber úttekt frá 19.06.2026 en
+enga `uttaeki`-röð.
