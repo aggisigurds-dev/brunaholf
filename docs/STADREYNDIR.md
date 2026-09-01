@@ -303,3 +303,153 @@ sem tengist tölvupósti beint. Stefnan (byggt stig af stigi):
 - Leyndarmál eiga heima í Netlify env vars — ALDREI í CLAUDE.md/repo.
 - 19 töflur með RLS af (anon-lykill les/skrifar) — þekkt, bíður sér verkefnis með
   stefnum per töflu.
+
+---
+
+## 7. Lærdómar úr yfirferðinni 30.08–01.09.2026 (Claude/Cowork-lota)
+
+Allt hér var sannreynt gegn lifandi Supabase eða leiðrétt af Agnari í lotunni.
+Bakgrunnur: kröfu-yfirferð fyrir sendingu, tvítekin tæki, Kirkjuvellir-upphæðin,
+kennitöluflakk og Google Workspace-greining.
+
+### 7.1 `source` er ÚRSKURÐARDÁLKURINN þegar leitað er að tvítekningum
+`solur.source` skilur að tvo heima og RANGT er að beita sömu reglu á báða:
+
+- `source='uttekt'` → **ein heimsókn = EIN skýrslugerð + EINN akstur.** Endurtekning
+  á þeim línum er tvíýtingar-bögg, ekki eðlileg sala.
+- `source='pos'` (líka `vidskiptategund='bud'`, `starfsmadur='Kassi'`) → **endurtekning
+  er EÐLILEG.** Fjórir eins kolsýrukútar með fjórum byrjunargjöldum á sama nótu er
+  rétt afgreiðsla, ekki tvítekning.
+
+*Þetta kostaði TVÆR falskar viðvaranir í kröfu-yfirferðinni 31.08:* Probygg
+R-000798/R-000829 (Agnar: „probygg er med 2 eins pantanir. þad er i lagi") og
+Blikksmiðurinn R-000781 (Agnar: „gæti verid bara 4 mismunandi kolsyrukutar" —
+staðfest rétt, reikningurinn stemmdi upp á krónu). **Rótin var að úttektar-rökum
+var beitt á búðarsölu.** Athuga `source` ÁÐUR en tvítekning er kölluð villa.
+
+### 7.2 Tvítekin tæki finnast ekki með `fyrirtaeki_id` einu saman
+TMP-raðir sem verða til við innslátt geta haft `fyrirtaeki_id = NULL` þótt þær séu
+sannarlega skráðar á félagið. Leit sem síar bara á `fyrirtaeki_id` **missir þær** og
+þá bætir næsti maður sömu tækjunum við aftur.
+
+**Reglan:** telja á BÁÐUM — `fyrirtaeki_id` OG nafni (`client`) — og skoða
+`created_at` síðustu klukkustund áður en tæki er bætt við.
+
+*Viðbót 01.09.2026:* nafn-helmingur reglunnar brestur þegar `uttaeki.client`
+rekur frá `fyrirtaeki.nafn`. Samfellan í `14:209` / `157:922` / `00-legacy:2655`
+hangir á UI-flæðinu, svo endurnefning beint í gagnagrunninum (REST, MCP, SQL)
+sneiðir hjá henni. Bríetartún var endurnefnt þannig og 48 tæki báru áfram
+gamla nafnið. Vörður: `tools/audit-rename-cascade.cjs`.
+
+*Dæmi (Metal 30.08.2026, endurtekning á Kirkjuvellir-atvikinu):* Agnar skráði 2
+léttvatn kl. 14:46:56 og gaf út R-000847 kl. 14:48; fyrirspurn mín sá þau ekki
+(fyrirtaeki_id NULL) og ég bætti 2 við kl. 15:25. Lagað: 24625/24626 eytt,
+24604/24605 tengd. Afrit til.
+
+### 7.3 Stærðarreglur gilda AÐEINS á nýjan innslátt — aldrei aftur í tímann
+Regla Agnars (30.08.2026): **þegar stærð er ekki skráð á vinnublaði er hún alltaf
+6 kg; 9 kg fer líka undir 6 kg.** Sú regla má ALDREI breyta tæki sem þegar er komið
+á útgefinn reikning.
+
+*Villa sem ég gerði:* breytti duft 2 kg → 6 kg hjá Pumping Iron EFTIR að R-000848
+var gefinn út með línunni „Duft 2 kg — 2.903 kr". Afturkallað.
+
+⚠️ **`sara/references/verd.md` hefur SANNANLEGA RANGA línu:** „Duft yfirferð: aðeins
+6 kg og 9 kg. 2 kg yfirferð verðlagast ekki." — R-000848 verðlagði 2 kg á 2.903 kr.
+Laga þarf skrána.
+
+### 7.4 Rafræn krafa fer á KENNITÖLU — netfang er ekki skilyrði
+Agnar (31.08.2026): „rafrænt þydir ad kennitala fyrirtækis mottekur i heimabanka".
+Netfang er **tilkynning**, ekki forsenda þess að krafa sé send. Að stöðva sendingu
+af því netfang vantar er rangt — það lækkaði sendanlegar kröfur úr 27 í 20 hjá mér
+þar til Agnar leiðrétti.
+
+### 7.5 Afsláttar-bögginn: 24% frávik, alltaf nákvæmlega
+`solur.afslattur` er geymdur MEÐ vsk á meðan línur og haus eru ÁN vsk. Þess vegna
+er frávikið nákvæmlega 24% í hvert sinn. **Peningarnir eru réttir — skjalið stemmir
+ekki.** Þetta er birtingar-/geymslubögg, ekki upphæðabögg.
+
+### 7.6 Leiðréttur reikningur ógildir EKKI skjölin sem þegar voru skrifuð
+Kirkjuvellir-atvikið: PDF-arnir voru skrifaðir 19 og 31 sekúndum ÁÐUR en `solur`-röðin
+varð til; reikningurinn var svo leiðréttur 2 mínútum síðar og **ekkert ógilti PDF-ana**.
+Ranga talan (152.880/154.000 í stað 121.713) lifði á FJÓRUM stöðum í ÞREMUR kerfum:
+2 PDF í Drive · 2 PDF í Supabase Storage (tengdir gegnum `company_attachments["708"]`)
+· raðir í `customer_documents` · `arsskodun_customers["708"].equipment`.
+
+**Reglan:** þegar upphæð er leiðrétt þarf að elta öll fjögur og hreinsa/endurgera.
+
+### 7.7 Kennitöluflakk — þrjár aðskildar orsakir
+1. **Röng kt geymd á stað** — SS greiddi 185.003 fyrir Interroll; Hreyfill greiddi
+   102.000 fyrir Höldur (rétt kt Hölduns er 651174-0239).
+2. **Endurnýting reikningsnúmera.**
+3. **Prufu-/staðgengilsgögn í rekstrargrunni.**
+
+Þetta skýrir símtölin frá fólki sem fékk reikning en var aldrei viðskiptavinur.
+
+### 7.8 `payday_invoices_slokk` er EKKI trúr spegill af Payday
+Taflan víkur frá raunverulegri Payday-útflutningsskrá (m.a. á kt Þemasnyrtingar) og
+sýnir DRÖG sem útflutningurinn hefur ekki. **Ekki nota hana sem sannleik um Payday** —
+sækja útflutninginn þegar svarið skiptir máli.
+
+*Afstemming 30.08:* 4.101.944 ógreitt alls = 1.610.301 aldrei sent + 2.491.643
+raunverulega sent; Payday sagði 2.237.627; mismunurinn nákvæmlega 254.016 á fjórum
+nafngreindum reikningum.
+
+### 7.9 Skema-gildrur sem stöðvuðu SQL í lotunni
+- `uttaeki.status` hefur FJÖGUR gildi: `active` 4891 · `urelt` 482 · `Í lagi` 154 ·
+  `ok` 74. **Í NOTKUN = allt NEMA `urelt` — ALDREI bara `active`.**
+  ⚠️ *Leiðrétt 01.09.2026.* Þessi punktur sagði upphaflega „aðeins `active`
+  telur". Það var lýsing á KÓÐANUM eins og hann var — ekki regla — og hann var
+  rangur. Tuttugu og tveir kóðastaðir síuðu á `active` einu og földu **228 tæki
+  á 17 fyrirtækjum**; fjórtán þeirra áttu ekkert `active` og litu út fyrir að vera
+  ALVEG TÓM (Bríetartún 48 tæki, Dalbrekka 48, Dra ehf 37). Sönnunin var mæld:
+  hjá SEX þeirra fer afleidda talan að stemma við `arsskodun`-blobbinn sem þegar
+  var réttur. Vörður: `tools/audit-status-gildi.cjs` fellur rautt bæði á NÝJU
+  stöðugildi og á AFTURFÖR í kóða.
+- `solur` hefur `customer_kt`, **ekki** `kennitala`.
+- `uttaeki` hefur **engan `updated_at`**.
+- `google_oauth` notar `granted_at`.
+- `document_pairs.status` leyfir aðeins `klarad` / `vantar_reikning` /
+  `vantar_skyrslu` / `reikn_payday`.
+- `charlize_knowledge.confidence` er `confirmed` / `likely` / `unverified` — ekki tala.
+- `storage.protect_delete()` stöðvar SQL-eyðingu úr `storage.objects`.
+- `app_settings` er EIN röð (~405 kB) með **59 lyklum** — m.a. `inspection_trips`,
+  `company_attachments`, `arsskodun_customers`, `uttekt_files`.
+  ⚠️ *Leiðrétt 01.09.2026:* punkturinn taldi upp fjóra eins og listinn væri
+  tæmandi. Hann er það ekki, og þetta er EIN röð — sá sem les fjóra lykla og
+  skrifar `settings` til baka **eyðir hinum 55**. Lestu röðina, bræddu inn í
+  hana, skrifaðu hana svo aftur.
+
+### 7.10 Heilsucheck — tveir nýir mælaflokkar (30.08.2026)
+Bætt við: `heilsucheck_kt(k)` (7 mælingar á kennitölum) og `heilsucheck_rukkun(k)`
+(4 mælingar á rukkun). `heilsucheck_keyra_allt()` keyrir nú allt sex:
+`keyra` → `reikniprof` → `tengsl` → `solur` → `kt` → `rukkun`.
+
+*Kennitölu-gildisprófið* (`kt_gild(text)`) notar vigtir 3,2,7,6,5,4,3,2 á stafi 1–8;
+vartala = 11 − (summa mod 11); **dagur + 40 = félag**.
+
+*Keyrsla 8 (31.08 11:57) á móti 7 (30.08 18:55):* ósendar kröfur 1.509.726 → 409.884,
+munaðarleysingjar 26 → 0, EN ný afturför: `taeki_an_customer_base_id` 0 → 13
+(Norðurbrú 1, id 24644–24656) — **TMP-lagfæringin setur `fyrirtaeki_id` en sleppir
+`customer_base_id`.**
+
+### 7.11 Google Workspace á eldklar.is — engin virk áskrift síðan 2022
+eldklar.is var á **G Suite legacy free edition**. Google lagði hana niður 2022
+(„Upgrade your G Suite legacy free edition… by June 27, 2022", 25.05.2022) og gaf
+35 daga til að setja upp greiðslumáta fyrir Business Starter (póstur 01.08.2022,
+áframsendur af Óla G. Þorsteinssyni 01. og 02.08.2022). **Greiðslumátinn var aldrei
+settur upp.**
+
+Þess vegna: `/ac/users` sýnir 6 virka notendur (notendaskráin lifir) en `/ac/apps`
+er TÓM og `/ac/billing/subscriptions` gefur **403** úr tveimur mismunandi reikningum.
+Lénið sjálft er í lagi hjá ISNIC (til 11.01.2027) og MX/SPF vísa enn á Google.
+IMAP-tengingar sem eru þegar skráðar inn (sími, Thunderbird) halda áfram að virka —
+það er „að hluta lokað"-tilfinningin.
+
+⚠️ **Rautt síld:** póstar frá „The Google Workspace Team" 18.08.2023 / 12.09.2023 /
+31.10.2023 um „account will soon be deleted / has been closed" eru um **JH-Verk ehf**,
+lén **jhverk.is**, Customer ID `03zv116j` — ÓTENGT eldklar.is.
+
+Annað: `brunaholf@brunaholf.is` er endurheimtunetfang eldklar@eldklar.is, og
+brunaholf.is er á **Microsoft 365** (Outlook MX, hysingar.is NS, `MS=ms30625527`)
+þótt lénið sé enn skráð á Google-reikninginn.
