@@ -8,6 +8,18 @@ beint úr Supabase þann dag — þær eldast; reglurnar sjálfar eldast ekki.
 
 Speglað í báðum repo-um (slokkvitaeki + brunaholf) því gagnalíkanið er sameiginlegt.
 
+> **⚠️ LESTU ÞETTA FYRST — skjalið er safnað úr mörgum lotum yfir mánuði.**
+> Sumt í því er úrelt og sumt hefur verið AFSANNAÐ. Yfirferð 01.09.2026 mældi
+> allar mælanlegar tölur upp á nýtt: 8 stóðust, 20 höfðu rekið lítillega, og
+> **8 höfðu rekið svo mikið að ályktun byggð á þeim yrði röng**. Fjögur atriði
+> voru ekki bara gömul heldur ósönn — þau bera nú ⚠️-merki með réttri tölu.
+>
+> **Áður en þú byggir á tölu héðan: `node tools/stadreyndir-yfirferd.cjs`.**
+> Hún mælir hverja tölu upp á nýtt gegn lifandi Supabase og prentar
+> skjalið vs núna vs dóm. Það tekur nokkrar sekúndur og sparar ranga ályktun.
+>
+> Reglurnar og verklagið eldast ekki eins — þær standa þar til Agnar breytir þeim.
+
 ---
 
 ## 0. Fyrirtækin og öppin — hvað á hvað, hvar býr hvað
@@ -22,10 +34,20 @@ treystandi, þess vegna er allt tengt með sönnun (Tengireglan), og þess vegna
 „fyrirtæki með skjöl en ekki merkt í þjónustu" = líklega TÝNDUR kúnni, ekki
 gagnavilla. **Öll forgangsröðun tóla og verka á að þjóna þessari endurheimt.**
 
-*Endurheimtar-staðan (DB 2026-07-30):* 655 staðir merktir í þjónustu · **56 félög
-eiga þjónustuskjöl en ENGINN staður þeirra er í þjónustu** (líklega týndir kúnnar
-→ `thjonusta-gloppur.html`) · skýrslu-þekja staða í þjónustu: 366 ok · 180 gömul ·
-62 ENGIN skýrsla · 47 ólesanleg (→ Skýrslu-vakt/Skýrslu-stöð).
+*Endurheimtar-staðan — ENDURMÆLD 01.09.2026:* **650 staðir** merktir í þjónustu ·
+**247 félög eiga þjónustuskjöl en ENGINN staður þeirra er í þjónustu**
+(líklega týndir kúnnar → `thjonusta-gloppur.html`).
+
+⚠️ **Sú tala stóð í 56 og er fjórfalt hærri núna.** Hún er load-bearing — hún er
+skotmark endurheimtar-aðgerðarinnar sem allur §0 hvílir á — svo hún var mæld tvisvar
+með óháðum aðferðum (lyklað á `customers_base` gaf 247, á kennitölu 243).
+Skýringin er tvíþætt og hvorug er villa: skjölum hefur fjölgað mikið (Drive-söfnunin
+tengir sífellt fleiri félög) á meðan stöðum í þjónustu fækkaði lítillega. Hvort
+þetta þýðir 191 nýja týnda kúnna eða betri sýn á þá sem alltaf voru týndir er
+ekki hægt að lesa úr tölunni einni.
+
+*Söguleg mynd (DB 2026-07-30):* 655 staðir í þjónustu · 56 félög með skjöl en engan
+stað í þjónustu · skýrslu-þekja: 366 ok · 180 gömul · 62 ENGIN skýrsla · 47 ólesanleg.
 
 **Stolpi — gamla kerfið, ókannaður endurheimtarbrunnur (Agnar 2026-07-30):**
 gamla forritið félagsins heitir **Stolpi** — old-school, erfitt í notkun, **lifir á
@@ -83,7 +105,7 @@ bokhald@eldklar.is SENT). Könnun á Stolpi-gögnunum sjálfum er skráð á Ver
 - Hjálpartöflur (ekki kúnnalistar): `customer_worksite_map` (119 — greiðandi→verkstaður
   í Brunahólfi) og `customer_info` (33 — greiðsluhegðunar-nótur).
 
-**Rekstrarfélög — einn kt á marga staði. ALDREI sameina/eyða stöðum rekstrarfélags** (Agnar, standandi regla). Stærstu *(DB 2026-07-30)*:
+**Rekstrarfélög — einn kt á marga staði. ALDREI sameina/eyða stöðum rekstrarfélags** (Agnar, standandi regla). Auðkenni staðar er **kennitala + `stadur_nr`** (Agnar 2026-08-25) — nr. eitt er ekki nóg (Plaza nr. 2 hjá Center Hótel er ekki Máni nr. 2 hjá Heimaleigu). Innri lykill er samt `fyrirtaeki.id`. Stærstu *(DB 2026-07-30)*:
 
 | Merki/félag | Staðir |
 |---|---:|
@@ -99,12 +121,24 @@ bokhald@eldklar.is SENT). Könnun á Stolpi-gögnunum sjálfum er skráð á Ver
 NB eldri skjölun sagði „Colas 3 staðir" og „Eignaumsjón 59+" — lifandi tölur að ofan
 gilda. Sama gildir um „95+ companies" í gömlu schema-lýsingunni (nú 1.214).
 
-**`uttaeki` (tæki): 5.843, þar af 5.648 án staðar** *(DB 2026-07-30)* — þau eru
-**auto-generuð placeholder og „án staðar" er EKKI vandamál** (Agnar 2026-07-12).
-Ekki flagga sem heilsubrest, má eyða/endurgera. **Ótengd tæki eru ALDREI verkefni
-(Agnar 2026-07-30)** — sannleikurinn um tækjafjölda staðar er **NÝJASTA
-úttektarskýrslan** (`arsskodun_report_facts`, PK per stað, aldrei yfirskrifað með
-eldri skýrslu); uttaeki-raðir mega fylgja henni með eyðslu/endurgerð að vild.
+**`uttaeki` (tæki): 5.601, þar af FJÖGUR án staðar** *(mælt 01.09.2026)*.
+
+⚠️ **AFSANNAÐ — þetta var stærsta úrelta fullyrðingin í skjalinu.** Hér stóð að
+tækin væru 5.843 og að **5.648 þeirra (96,7%) væru „án staðar"**, að þau væru
+auto-generuð placeholder, að ótengd tæki væru ALDREI verkefni og að
+`uttaeki`-raðir „skiptu ekki máli". Sá heimur er horfinn: **5.597 af 5.601 tækjum
+eru nú tengd stað** — 0,1% eru ótengd, ekki 96,7%. Staðfest með tveimur óháðum
+talningum 01.09.2026.
+
+Þetta skipti raunverulegu máli. Sama dag fundust **22 kóðastaðir sem síuðu tæki á
+`status='active'`** og földu 228 tæki á 17 fyrirtækjum (sjá §7.1) — sú vinna hefði
+verið afgreidd sem tilgangslaus af hverjum þeim sem las hér að `uttaeki` skipti
+ekki máli. **`uttaeki` er núna raunveruleg tækjaskrá og á að meðhöndlast þannig.**
+
+Reglur Agnars sem stóðu að baki gömlu tölunni bíða hans staðfestingar: hvort
+„ótengd tæki eru ALDREI verkefni" (2026-07-30) eigi enn við þegar þau eru fjögur
+en ekki 5.648, og hvort `arsskodun_report_facts` sé enn EINI sannleikurinn um
+tækjafjölda þegar tríó-mælirinn ber nú saman þrjár heimildir (§9).
 
 **Skráningarregla bygginga (Agnar 2026-07-30):** hver bygging/staður skal skráð á
 sitt rekstrarfélag — og við tengingu skal sannreyna **BÆÐI staðsetningu
@@ -191,7 +225,12 @@ sími aðeins á 188 stöðum (29%).
 
 - **`solur`** (Slökkvitæki POS): 575 *(DB 2026-07-30)*. **`payday_invoices_slokk`**:
   171 — kt geymt STAFATÖLUR EINGÖNGU, tengist eftir kt (ekki FK).
-- **`invoices`** (Brunahólf AR): 435. **⚠️ `status` er BLANDAÐUR orðaforði** —
+- **`invoices`** (Brunahólf AR): skjalið sagði 435 *(DB 2026-07-30)*.
+  ⚠️ **Taflan skilar NÚLL röðum með anon-lyklinum 01.09.2026** (HTTP 200, tómt
+  svar). Annaðhvort var hún tæmd eða RLS lokaðist á hana; anon-lykillinn getur
+  ekki greint þar á milli. **Ekki byggja á 435 og ekki gera ráð fyrir að lestur
+  virki** — staðfestu með service-role áður en þú notar hana.
+  **⚠️ `status` er BLANDAÐUR orðaforði** —
   Payday-API skrifar enska HÁSTAFI (PAID/SENT/CANCELLED/CREDIT/DRAFT), Landsbanki+
   handvirkt íslensku (Greidd/Ógreidd/…). **Lesa ALLTAF með substring-match** og
   „ó/o"-forskeyti = neitun. Opið AR = FYLLIMENGIÐ (ekki paid/draft/cancelled/credit).
@@ -204,7 +243,13 @@ sími aðeins á 188 stöðum (29%).
 
 ## 4. Tölvupóstur (`email_digest`) *(DB 2026-07-30)*
 
-30.724 raðir, 5 pósthólf:
+⚠️ **AFSANNAÐ 01.09.2026: taflan hér að neðan lýsir ekki lengur `email_digest`.**
+Mælt núna: **5.576 raðir og EITT pósthólf — `eldklar@eldklar.is`.** Hin fjögur eru
+horfin úr töflunni, þar á meðal aggisigurds@gmail.com sem bar 22.552 raðir. Hvort
+hún var tæmd og endurbyggð eða hólfin fjarlægð er óstaðfest. Taflan er skilin eftir
+sem söguleg heimild um hvað VAR sogað inn, ekki sem lýsing á núinu.
+
+*Söguleg mynd (DB 2026-07-30) — 30.724 raðir, 5 pósthólf:*
 
 | Pósthólf | Raðir | Nýjast | SENT |
 |---|---:|---|---:|
