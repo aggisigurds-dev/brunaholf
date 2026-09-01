@@ -81,8 +81,15 @@ exports.handler = async (event) => {
   }
   const atts = [];
   const warnings = [];
+  // Talið INNI í lykkjunni, á færslum sem lifa af `if (!a) continue` að neðan.
+  // ALDREI `body.attachments.length`: null-færsla (sem er viljandi sleppt) myndi
+  // þá blása upp N og framkalla falskt 422 sem stöðvar fullgilda sendingu.
+  // 254-receipt-sender.js:246 síar ekki null og 166-krofu-yfirlit.js:1282 getur
+  // skilað null, svo þetta er raunveruleg leið, ekki fræðileg.
+  let requested = 0;
   for (const a of (Array.isArray(body.attachments) ? body.attachments : [])) {
     if (!a) continue;
+    requested++;
     const name = a.filename || 'skjal.pdf';
     try {
       if (a.content) {
@@ -99,24 +106,42 @@ exports.handler = async (event) => {
         if (!r.ok) { warnings.push(name + ': HTTP ' + r.status); continue; }
         const buf = Buffer.from(await r.arrayBuffer());
         atts.push({ filename: name, content: buf.toString('base64'), type: a.contentType || guessType(name) });
+      } else {
+        // Færsla sem ber ekkert af formunum þremur — t.d. `content:''` (falsy,
+        // dettur fram hjá öllum greinum) eða `{filename, path}` sem
+        // 254-receipt-sender.js:32 skjalfestir en þjónninn útfærði aldrei. Án
+        // þessarar línu félli hún ÞEGJANDI í gegn og 422-ið að neðan skytist með
+        // TÓMUM `warnings` — notandinn sæi „0 af 1" án nokkurrar ástæðu.
+        // `warnings` má aldrei vera tómt þegar vörnin skýtur.
+        warnings.push(name + ': ekkert innihald (content/driveId/url vantar)');
       }
     } catch (e) { warnings.push(name + ': ' + String((e && e.message) || e)); }
   }
 
-  // 2026-08-27 — VÖRN GEGN TÓMUM REIKNINGI (öryggisnet Slökkvitækis: „No blank
-  // invoice can be emailed to a customer"). Kallandinn bað um viðhengi en eitt
-  // eða fleiri leystust ekki (Drive 404/heimild, dauð slóð). Klientinn getur
-  // ekki sannreynt driveId/url sjálfur — hann sendir aðeins tilvísunina — svo
-  // neitunin verður að vera HÉR. Áður fór pósturinn samt af stað og kúnninn fékk
-  // reikningslausan póst á meðan skrifstofan sá „✅ Sent" (aðeins mjúk viðvörun).
-  // `allowPartial: true` er flóttaleið fyrir kallendur sem þola vöntun viðhengja.
-  const _asked = (Array.isArray(body.attachments) ? body.attachments : []).filter(Boolean).length;
-  if (_asked && atts.length < _asked && !body.allowPartial) {
+  // ── Óleyst viðhengi STÖÐVA sendinguna ──────────────────────────────────────
+  // Vörnin sjálf kom 2026-08-27 (68c7a66): kallandinn bað um viðhengi, eitt eða
+  // fleiri leystust ekki (Drive 404/heimild, dauð slóð), og pósturinn fór samt
+  // af stað — kúnninn fékk póst sem segir „Meðfylgjandi er reikningur" með ENGU
+  // viðhengi meðan Kröfu yfirlit POSTaði `sent:true`. Klientinn getur ekki
+  // sannreynt driveId/url sjálfur (hann sendir bara tilvísunina), svo neitunin
+  // verður að vera HÉR.
+  //
+  // 2026-09-01 hert á þrennu sem upphaflega útgáfan hafði ekki:
+  //   • `requested` talið inni í lykkjunni (var `.filter(Boolean).length` — sami
+  //     fjöldi í dag, en tvær talningarleiðir sem geta rekið í sundur);
+  //   • `!== true` í stað `!body.allowPartial`, svo `allowPartial:'nei'` (truthy
+  //     strengur) slökkvi ekki óvart á vörninni;
+  //   • bilunin SKRÁÐ í `app_problems` — sjá logAttachmentFailure að neðan.
+  //     Upphaflega útgáfan var þögul og brunahólf skrifaði ekkert í registry-ið,
+  //     svo 3×/dag sópunin hefði aldrei séð stöðvaða sendingu.
+  if (requested > atts.length && body.allowPartial !== true) {
+    await logAttachmentFailure(requested, atts.length, warnings);
     return json(422, {
       error: 'ATTACHMENTS_FAILED',
-      message: 'Viðhengi leystist ekki (' + atts.length + ' af ' + _asked + ' tilbúin) — pósturinn var EKKI sendur.'
-        + (warnings.length ? ' ' + warnings.join('; ') : ''),
-      warnings,
+      message: 'Aðeins ' + atts.length + ' af ' + requested + ' viðhengjum leystust. '
+             + 'Pósturinn var EKKI sendur — kúnninn hefði fengið hann án skjalsins. '
+             + (warnings.length ? '(' + warnings.join('; ') + ')' : ''),
+      requested, resolved: atts.length, warnings,
     });
   }
 
@@ -149,6 +174,67 @@ exports.handler = async (event) => {
   }
   return json(200, { ok: true, id: j.id, threadId: j.threadId, warnings });
 };
+
+// ── Bilanaskráning fyrir stöðvaða sendingu ──────────────────────────────────
+// Stöðvunin að ofan er nýr bilunar-punktur, og regla 3 í docs/ORYGGISNET.md
+// segir að nýr bilunar-punktur megi ekki vera þögull. Klientmegin endar hún í
+// `alert()` og hvergi annars staðar: `app_problems` er 100% `source_app=
+// 'slokkvitaeki'` — brunahólf skrifar ekkert í registry-ið, svo 3×/dag sópunin
+// sæi þetta aldrei. Þess vegna er skráð HÉR, þjónsmegin, þar sem bilunin er í
+// raun þekkt og báðir kallendur (Kröfu yfirlit og AppMail) fara um sama stað.
+//
+// Fire-and-forget: skráning má ALDREI fella sendinguna eða breyta svarinu.
+// PERSÓNUGREINANLEGT FER EKKI HÉR INN (regla 6): ekkert netfang viðtakanda,
+// engin kennitala. Skráarnöfn geta borið kennitölu, svo þau eru hreinsuð.
+// MÆLT á 3.755 röðum í `customer_documents`: 1.533 skráanöfn (41%) bera
+// kennitölu, svo þetta er meginreglan en ekki jaðartilvik.
+// `\b` DUGAR EKKI: undirstrik er orðstafur, svo `Reikningur_120380-4569.pdf`
+// slapp óhreinsað í gegn (og `_`-sniðið er nafnasniðmát, ekki tilviljun).
+// Lookbehind/lookahead á tölustaf í staðinn — grípur `_`, bil, bandstrik og
+// stafi sem skilstafi.
+function scrubDetail(s) {
+  return String(s == null ? '' : s)
+    // Slóðir fyrst: `catch (e)` bergmálar undici-villur sem bera fulla slóð
+    // með `?token=…`. Þær eiga ekkert erindi í registry sem allur hópurinn les.
+    .replace(/\S*(?:https?:\/\/|\?|token=)\S*/gi, '<slóð>')
+    .replace(/(?<!\d)\d{6}[-\s_]?\d{4}(?!\d)/g, '<kt>');
+}
+
+async function logAttachmentFailure(requested, resolved, warnings) {
+  try {
+    const url = process.env.SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!url || !key) return;
+    const detail = scrubDetail(
+      resolved + ' af ' + requested + ' viðhengjum leystust — sending stöðvuð. '
+      + (warnings || []).join('; ')
+    ).slice(0, 2000);
+    const fingerprint = ('attachments_failed|' + detail).slice(0, 200);
+    await fetch(url.replace(/\/$/, '') + '/rest/v1/app_problems', {
+      method: 'POST',
+      headers: {
+        apikey: key,
+        Authorization: 'Bearer ' + key,
+        'content-type': 'application/json',
+        Prefer: 'return=minimal',
+      },
+      // Án timeout gæti hangandi Supabase breytt 422-inu í Netlify-502 (sjálfgefin
+      // 10 s keyrsla). Sendingin er þegar stöðvuð á þessum punkti, svo hér má
+      // ekkert bíða: skráningin er aukaatriði, svarið til notandans er það ekki.
+      signal: AbortSignal.timeout(2500),
+      body: JSON.stringify([{
+        source_app: 'brunaholf',
+        kind: 'attachments_failed',
+        severity: 'error',
+        detail,
+        page: 'gmail-send',
+        who: 'gmail-send',
+        ua: 'netlify-function',
+        fingerprint,
+      }]),
+    });
+  } catch (_) { /* swallow — skráning má aldrei brjóta sendinguna */ }
+}
 
 // ── MIME-smíði ──────────────────────────────────────────────────────────────
 // Haus-gildi með íslenskum stöfum verða að fara í RFC 2047 (=?UTF-8?B?…?=),
