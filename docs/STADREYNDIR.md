@@ -453,3 +453,65 @@ lén **jhverk.is**, Customer ID `03zv116j` — ÓTENGT eldklar.is.
 Annað: `brunaholf@brunaholf.is` er endurheimtunetfang eldklar@eldklar.is, og
 brunaholf.is er á **Microsoft 365** (Outlook MX, hysingar.is NS, `MS=ms30625527`)
 þótt lénið sé enn skráð á Google-reikninginn.
+
+---
+
+## 8. Vinnureglur og gloppur — viðbót 01.09.2026
+
+### 8.1 Cowork-lotur hafa LESAÐGANG að repo-unum en ekki push
+Git-proxyinn í Cowork-lotum leyfir `git clone` (báðum repo-um) en hafnar `git push`:
+
+```
+remote: access denied by the git proxy: aggisigurds-dev/brunaholf is not in
+this session's authorized repository set
+fatal: … The requested URL returned error: 403
+```
+
+**Ekki reyna að fara framhjá því.** Leiðin er þá: commit á branch, `git format-patch`
+í spjallið, og verk á Verkefnalistann (`assigned_agent: claude-code`) með ÖLLUM
+textanum í lýsingunni svo Code geti sett hann inn og pushað.
+
+Varanleg lagfæring: bæta repo-unum við heimildir Cowork-lotanna.
+
+### 8.2 Skill `lotulok-stadreyndir` (Agnar 01.09.2026)
+Sett upp svo staðreyndir rati sjálfkrafa hingað í stað þess að deyja með lotunni.
+Kveikir í lok hverrar lotu, þegar Agnar leiðréttir staðreynd eða vinnureglu, þegar
+eitthvað brotnar og orsökin finnst, og þegar beðið er um samantekt úr eldri lotu.
+
+**Skilyrði skillsins:** hvert atriði verður að bera sönnun — reikningsnúmer, id,
+dagsetningu, kt eða fyrirspurn. Án hennar er það skoðun, ekki staðreynd, og fer ekki
+inn. Aðeins `docs/` breytist.
+
+### 8.3 Þjónustu-gloppur — víkka leitina út fyrir skjöl
+§0 skilgreinir „félag með þjónustuskjöl en enginn staður í þjónustu" sem líklega
+TÝNDAN kúnna. **Sama rökfærsla gildir um tvö önnur merki**, og þau finna aðra staði:
+
+- **virk tæki skráð** (`uttaeki.status='active'`) en `er_i_thjonustu = false`
+- **úttekt síðan 2025** (`solur.source='uttekt'`) en `er_i_thjonustu = false`
+
+*Staðan 01.09.2026:* 11 félög með virk tæki og 8 með úttekt, þar af **þrjú á báðum
+listum** — Þangbakki 8-10 húsfélag (55 virk tæki, úttekt 07.08.2026), Húsfélagið
+Strandasel 9-11 (7 tæki, 08.08.2026), Sjúkraþjálfun Grafarvogs (1 tæki, 16.06.2026).
+Stærstu tækjaskrárnar án þjónustumerkingar: Þangbakki 55 · Ásholt 2 34 ·
+Réttingaverkstæði Jóa 13.
+
+Þjónustu-gloppu-tólið á að nota ÖLL þrjú merkin, ekki bara skjölin.
+
+### 8.4 Úttekt án tækjaskrár er sitt eigið ósamræmi
+`Center Hótel — Þverholt 14` (fyrirtaeki **1627**, kt 450905-1430) er með **7 úttektir**
+frá 2025, þá nýjustu **31.08.2026**, en `er_i_thjonustu = false` OG **núll tæki skráð**
+(hvorki virk né úrelt). Úttekt hefur því verið framkvæmd og rukkuð án þess að
+tækjaskrá yrði til.
+
+Þetta mynstur — sala með `source='uttekt'` en engin `uttaeki`-röð — er sjálfstætt
+heilsucheck-merki og á að vera mælt, ekki fundið fyrir tilviljun.
+
+### 8.5 Þemasnyrting er TVÍSKRÁÐ á sömu kennitölu
+`fyrirtaeki` **151** („Þemasnyrting") og **1262** („Þemasnyrting ehf"), báðar á kt
+**450106-1860**, báðar með núll tæki og hvorug í þjónustu. Úttektin 19.06.2026
+birtist á BÁÐUM þegar tengt er á `solur.customer_kt`.
+
+⚠️ Þetta er sama kennitalan og vék milli kerfisins og Payday-útflutningsins (§7.8).
+**Ekki sameina blint** — §0-reglan um rekstrarfélög gildir: staðir rekstrarfélags má
+aldrei sameina. Hér er þó um sama nafn og sömu kt að ræða, svo þetta er tvískráning
+en ekki tveir starfsstaðir; Agnar staðfestir áður en nokkuð er sameinað.
