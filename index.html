@@ -10012,7 +10012,7 @@ async function renderTilbunirReikningar(t){
   }
   paint();
 
-  function printSavedInvoice(d){
+  async function printSavedInvoice(d){
     const kr = n => fmt(n)+' kr.';
     const row = (l,p,m,tot)=>`<tr><td class="l">${esc(l)}</td><td class="p">${p!=null?kr(p):''}</td><td class="m">${m!=null&&m!==''?m:''}</td><td class="t">${kr(tot)}</td></tr>`;
     const dvH=Number(d.hours_dagvinna)||0, dvR=Number(d.rate_dagvinna)||0, evH=Number(d.hours_eftirvinna)||0, evR=Number(d.rate_eftirvinna)||0;
@@ -10033,8 +10033,11 @@ async function renderTilbunirReikningar(t){
     if(stadf>0) body += row('Staðfesting brunaþéttinga', null, '1', stadf);
     const net=Number(d.net_an_vsk)||0, vsk=Number(d.vsk_amount)||0, total=Number(d.total_m_vsk)||0;
     const payer = [d.customer_name, d.kennitala?('kt. '+d.kennitala):'', d.heimilisfang].filter(Boolean).map(esc).join('<br>');
-    let logo; try{ logo=localStorage.getItem('brunaholfReikningurLogo')||'/public/reikningur/brunaholf-logo.png'; }catch{ logo='/public/reikningur/brunaholf-logo.png'; } if(logo[0]==='/') logo=location.origin+logo;
     const w = window.open('','_blank'); if(!w){ alert('Leyfðu sprettiglugga til að prenta.'); return; }
+    // Lógóið fer inn sem data-URL (2026-09-02): sprettiglugginn hlóð myndinni
+    // ekki alltaf eftir slóð og skjalið prentaðist þá án lógós — innfellt er
+    // það alltaf með. Glugginn er opnaður FYRIR await svo sprettivörn grípi ekki.
+    const logo = await bhLogoDataUrl();
     w.document.write(`<!DOCTYPE html><html lang="is"><head><meta charset="utf-8"><title>Efnislisti — ${esc(d.worksite_name)} — ${esc(mlabel(d.work_month))}</title>
       <style>body{font-family:'Times New Roman',Times,serif;color:#000;margin:32px 40px}
         .top{display:grid;grid-template-columns:180px 1fr;gap:20px;align-items:center;margin-bottom:24px}
@@ -10047,7 +10050,7 @@ async function renderTilbunirReikningar(t){
         tr.sub td{border-top:1px solid #000;padding-top:4px;text-align:right;font-style:italic;color:#555}tr.sub td.t{font-style:normal;color:#000}
         tr.grand td{border-top:1px solid #000;border-bottom:3px double #000;padding:6px 4px;text-align:right}tr.grand td.t{font-weight:700}
       </style></head><body>
-      <div class="top"><img src="${esc(logo)}" class="logo" alt="" onerror="this.style.display='none'"><div><h1>Brunahólf ehf.</h1><div class="sub">Verðskrá / tilboð</div></div></div>
+      <div class="top">${logo?'<img src="'+logo+'" class="logo" alt="">':''}<div><h1>Brunahólf ehf.</h1><div class="sub">Verðskrá / tilboð</div></div></div>
       <div class="meta"><div>${(()=>{const _k=(d.worksite_name||'')+'|'+(d.work_month||''),_t=(state.ui&&state.ui.gr_date_text&&state.ui.gr_date_text[_k])||'';return _t?esc(_t):(dmy(fra)+' til '+dmy(til));})()}</div><div class="ws">${esc(d.worksite_name)}</div>${payer?`<div class="cust">${payer}</div>`:''}</div>
       <table><thead><tr><td></td><td class="p">án vsk</td><td class="m">magn</td><td class="t">samtals</td></tr></thead><tbody>
         ${body}
@@ -11095,10 +11098,17 @@ async function renderGerdReikninga(t){
     };
 
     // ----- Print (open clean window) -----
-    document.getElementById('gr-print').onclick = () => {
-      const docHtml = document.getElementById('gr-doc').innerHTML;
+    document.getElementById('gr-print').onclick = async () => {
       const w = window.open('', '_blank');
       if(!w){ alert('Leyfðu sprettiglugga til að prenta.'); return; }
+      // Lógóið innfellt sem data-URL (2026-09-02): afrit forskoðunarinnar bar
+      // slóð sem sprettiglugginn hlóð ekki alltaf (og display:none ef hún hafði
+      // brugðist í forskoðun) — skjalið prentaðist þá lógólaust.
+      const logo = await bhLogoDataUrl();
+      const clone = document.getElementById('gr-doc').cloneNode(true);
+      const im = clone.querySelector('.gr-doc-logo');
+      if(im){ if(logo){ im.removeAttribute('style'); im.removeAttribute('onerror'); im.src = logo; } else im.remove(); }
+      const docHtml = clone.innerHTML;
       w.document.write(`<!DOCTYPE html><html lang="is"><head><meta charset="utf-8"><title>Efnislisti — ${escapeHtml(name)} — ${monthLabel(month)}</title>
         <style>
           body{font-family:'Times New Roman',Times,serif;color:#000;margin:32px 40px}
@@ -19699,18 +19709,26 @@ function loadJsPdf(){
 }
 // Brunahólf logo as a data URL (for jsPDF addImage). Cached. Resolves '' on failure.
 let _bhLogoData = null;
+// 2026-09-02: sérsniðið lógó (localStorage) sem bregst fellur nú aftur á
+// innbyggða Brunahólf-lógóið í stað þess að skila '' (skjalið prentaðist þá
+// lógólaust). Notað af jsPDF-smiðunum OG prent-sprettigluggunum (innfellt).
 async function bhLogoDataUrl(){
   if(_bhLogoData!==null) return _bhLogoData;
-  let url=''; try{ url = localStorage.getItem('brunaholfReikningurLogo') || ''; }catch{}
-  if(!url) url = '/public/reikningur/brunaholf-logo.png';
-  if(url[0]==='/') url = location.origin + url;
-  try{
+  const DEF = location.origin + '/public/reikningur/brunaholf-logo.png';
+  let custom=''; try{ custom = localStorage.getItem('brunaholfReikningurLogo') || ''; }catch{}
+  if(custom && custom[0]==='/') custom = location.origin + custom;
+  const load = async url => {
     const r = await fetch(url); if(!r.ok) throw 0;
-    const blob = await r.blob();
-    _bhLogoData = await new Promise((res)=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=()=>res(''); fr.readAsDataURL(blob); });
-  }catch{ _bhLogoData=''; }
-  return _bhLogoData;
+    const blob = await r.blob(); if(!/^image\//.test(blob.type||'')) throw 0;
+    return await new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=()=>rej(0); fr.readAsDataURL(blob); });
+  };
+  let out='';
+  for(const u of [custom, DEF].filter(Boolean)){ try{ out = await load(u); if(out) break; }catch{} }
+  _bhLogoData = out;
+  return out;
 }
+// jsPDF addImage þarf rétt snið — sérsniðið lógó getur verið JPEG.
+function bhLogoFmt(d){ return /^data:image\/jpe?g/i.test(d||'') ? 'JPEG' : 'PNG'; }
 // Upload a jsPDF doc to Drive + record it. Returns {drive_file_id, webViewLink, downloadUrl}.
 async function bhSavePdfToDrive(doc, meta){
   const b64 = doc.output('datauristring').split(',')[1];   // strip "data:application/pdf;base64,"
@@ -20156,7 +20174,7 @@ async function buildAndSaveTimabokPdf(name, month, rows, overwrite, yfCfg){
   const doc = new lib.jsPDF({ unit:'pt', format:'a4', compress:true });
   const W = doc.internal.pageSize.getWidth();
   let y = 40;
-  if(logo){ try{ doc.addImage(logo, 'PNG', 40, y, 150, 46); }catch{} }
+  if(logo){ try{ doc.addImage(logo, bhLogoFmt(logo), 40, y, 150, 46); }catch{} }
   doc.setFont('helvetica','bold'); doc.setFontSize(20); doc.text('Tímaskýrsla', W-40, y+16, {align:'right'});
   doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(90);
   doc.text('Mæting starfsmanna — fylgiskjal með reikningi', W-40, y+32, {align:'right'});
@@ -20217,7 +20235,7 @@ async function buildAndSaveEfnislistiPdf(name, month, data, overwrite){
   const W = doc.internal.pageSize.getWidth();
   const dmy = s => { const p=String(s||'').split('-'); return p.length===3? `${p[2]}.${p[1]}.${p[0]}` : (s||''); };
   let y = 40;
-  if(logo){ try{ doc.addImage(logo, 'PNG', 40, y, 150, 46); }catch{} }
+  if(logo){ try{ doc.addImage(logo, bhLogoFmt(logo), 40, y, 150, 46); }catch{} }
   doc.setFont('helvetica','bold'); doc.setFontSize(20); doc.text('Brunahólf ehf.', W-40, y+14, {align:'right'});
   doc.setFont('helvetica','italic'); doc.setFontSize(10); doc.setTextColor(90); doc.text('Verðskrá / tilboð', W-40, y+30, {align:'right'});
   doc.setTextColor(20); doc.setFont('helvetica','normal');
@@ -20266,7 +20284,7 @@ async function buildAndSaveEfnislistiPdf(name, month, data, overwrite){
 }
 
 // Print the (possibly edited) tímaskýrsla as HTML.
-function printTimabok(name, month, rows, yfCfg){
+async function printTimabok(name, month, rows, yfCfg){
   const hr = n => _phr(n);
   const dmy = s => { const p=String(s||'').split('-'); return p.length===3? `${p[2]}.${p[1]}.${p[0]}` : (s||''); };
   if(yfCfg === undefined) yfCfg = tbkSavedYf(name, month);
@@ -20299,8 +20317,8 @@ function printTimabok(name, month, rows, yfCfg){
       ? `<tr><td>${escapeHtml(e)}</td><td class="r">${m.days.size}</td><td class="r">${hr(m.dv)}</td><td class="r">${hr(m.yf)}</td><td class="r">${hr(m.hours)}</td></tr>`
       : `<tr><td>${escapeHtml(e)}</td><td class="r">${m.days.size}</td><td class="r">${hr(m.hours)}</td></tr>`;
   }).join('');
-  let logo=''; try{ logo = localStorage.getItem('brunaholfReikningurLogo')||''; }catch{} if(!logo) logo='/public/reikningur/brunaholf-logo.png'; if(logo[0]==='/') logo=location.origin+logo;
   const win = window.open('', '_blank'); if(!win){ alert('Leyfðu sprettiglugga til að prenta.'); return; }
+  const logo = await bhLogoDataUrl();   // innfellt data-URL (2026-09-02), sjá printSavedInvoice
   win.document.write(`<!DOCTYPE html><html lang="is"><head><meta charset="utf-8"><title>Tímaskýrsla — ${escapeHtml(name)} — ${monthLabelStatic(month)}</title>
     <style>body{font-family:'Times New Roman',Times,serif;color:#000;margin:30px 38px}
     .tb-top{display:flex;gap:20px;align-items:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:16px}
