@@ -1459,8 +1459,13 @@ html.embedded .vb-scroll-wrap .vb-th-sum{font-size:17px !important}
   html.embedded #view:has(#bk-st-board) .section>div:last-child{padding:12px!important}
 }
 @media (max-width:560px){
-  /* Fyrirtækjavalið fyllir línuna (min-width:300px klippti á 340px). */
-  #bk-st-company{min-width:0!important}
+  /* Fyrirtækjavalið + leitin fylla línuna (min-width:300px klippti á 340px).
+     Leitin fær sína eigin línu — hún er slegin inn á undan valinu. */
+  #bk-st-company,#bk-st-search{min-width:0!important}
+  /* Sitt hvor línan. Mælt á 390px: valið kramdist í 78px við hliðina á
+     „↻ Sækja" (og gerði það líka fyrir leitina — flex:1 með min-width:0 gefur
+     eftir alla breidd), svo fyrirtækjaheitið sást aldrei í lokaða valinu. */
+  #bk-st-search,#bk-st-company{flex:1 1 100%!important}
   /* Borðin → stöfluð spjöld: hvert skjal er kort með merktum reitum, ekkert
      lárétt-skrun, öll stýri sýnileg og ≥40px há (snerti-væn). */
   #bk-st-board > div{overflow:visible!important;border:0!important}
@@ -3762,6 +3767,7 @@ function renderSkyrslustod(t){
 
       <div style="border-radius:12px;border:1px solid var(--line,#e2e8f0);background:var(--card,#fff);box-shadow:0 1px 3px rgba(0,0,0,.05);padding:20px;display:flex;flex-direction:column;gap:16px">
         <div style="display:flex;gap:9px;flex-wrap:wrap;align-items:center">
+          <input id="bk-st-search" type="search" inputmode="search" autocomplete="off" placeholder="🔎 Leita að fyrirtæki eða kt…" style="${inpSel};min-width:190px;flex:1 1 190px">
           <select id="bk-st-company" style="${inpSel};min-width:300px;flex:1"><option value="">— sæki fyrirtæki… —</option></select>
           <button id="bk-st-reload" class="btn">↻ Sækja</button>
           <span style="width:1px;height:22px;background:#e2e8f0;margin:0 2px"></span>
@@ -3781,6 +3787,7 @@ function renderSkyrslustod(t){
 function wireStation(){
     const $co = document.getElementById('bk-st-company');
     const $reload = document.getElementById('bk-st-reload');
+    const $search = document.getElementById('bk-st-search');
     const $st = document.getElementById('bk-st-status');
     const $board = document.getElementById('bk-st-board');
     if (!$co || !$board) return;
@@ -3789,23 +3796,76 @@ function wireStation(){
     const rerender = () => { if (GLOBAL) renderGlobal(); else renderBoard(); };
     const setSt = (m, c) => { $st.textContent = m || ''; $st.style.color = c || '#64748b'; };
 
+    // ── Leit í fyrirtækjavalinu (2026-09-02, ósk Agnars) ──────────────────────
+    // Innbyggt <select> með ~600 færslum er ónothæft á síma: valgluggi símans er
+    // hrein skrunlist ÁN leitar. Reiturinn síar því OPTIONS-in sjálf — sama
+    // native-fellivalið, bara stutt. Ekkert nýtt viðmót að læra.
+    //
+    // Samanburður er BRODDLAUS: „husfelagid" á að finna „Húsfélagið". NFD strípar
+    // brodda af á/é/í/ó/ú/ý og tvípunkt af ö — en ð/þ/æ eru SJÁLFSTÆÐIR bókstafir
+    // sem NFD leysir ekki upp, svo þeir þurfa sína eigin vörpun. Kennitalan er
+    // borin saman tölustaf-hrein svo bæði „5501" og „550169-0159" finni félagið.
+    const fold = s => String(s == null ? '' : s).normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/ð/gi, 'd').replace(/þ/gi, 'th').replace(/æ/gi, 'ae').replace(/ø/gi, 'o')
+      .toLowerCase();
+    let COMPANIES = [];
+
+    function companyLabel(c){
+      const left = c.docs - c.reviewed;
+      return esc(c.nafn) + ' — ' + c.docs + ' skjöl'
+        + (left ? (' · ' + left + ' óstaðfest') : ' · ✓')
+        + (c.unmatched ? (' · ' + c.unmatched + ' ótengd') : '')
+        + (c.needs_site ? (' · 🏷 ' + c.needs_site + ' vantar stað') : '');
+    }
+    // Öll orð verða að finnast (í hvaða röð sem er) — „endur reykja" finnur
+    // „Endurvinnslan Reykjavík". Kennitölu-leit krefst ≥3 tölustafa svo stakur
+    // stafur í nafni breytist ekki í kt-leit.
+    function matchCompanies(q){
+      const terms = fold(q).split(/\s+/).filter(Boolean);
+      if (!terms.length) return COMPANIES.slice();
+      const digits = String(q).replace(/\D/g, '');
+      return COMPANIES.filter(c => {
+        const hay = fold(c.nafn);
+        if (terms.every(t => hay.includes(t))) return true;
+        const kt = String(c.kennitala || '').replace(/\D/g, '');
+        return digits.length >= 3 && kt.includes(digits);
+      });
+    }
+    // Endurteiknar fellivalið. Valið fyrirtæki HELDUR SÉR ef það passar enn við
+    // síuna — innsláttur í leitina má ekki henda út borðinu sem þegar er opið
+    // (innerHTML-skrif núllstilla value þegjandi).
+    function paintCompanies(){
+      const q = $search ? $search.value.trim() : '';
+      const hits = matchCompanies(q);
+      const keep = $co.value;
+      // Það sem BORÐIÐ sýnir verður að vera valið í fellivalinu. Detti opna
+      // félagið út úr síunni er því haldið eftir, fremst og merkt 📂 — annars
+      // stendur „ekkert passar" í valinu meðan borðið undir sýnir fyrirtæki.
+      const pinned = (keep && !hits.some(c => String(c.base_id) === String(keep)))
+        ? COMPANIES.filter(c => String(c.base_id) === String(keep)) : [];
+      const head = !q
+        ? '<option value="">— veldu fyrirtæki (' + COMPANIES.length + ') —</option>'
+        : (hits.length
+            ? '<option value="">— ' + hits.length + ' af ' + COMPANIES.length + ' fyrirtækjum —</option>'
+            : '<option value="">— ekkert fyrirtæki passar við „' + esc(q) + '" —</option>');
+      const opt = (c, pre) => '<option value="' + c.base_id + '">' + (pre || '') + companyLabel(c) + '</option>';
+      $co.innerHTML = head + pinned.map(c => opt(c, '📂 ')).join('') + hits.map(c => opt(c)).join('');
+      if (keep && (pinned.length || hits.some(c => String(c.base_id) === String(keep)))) $co.value = keep;
+      return hits;
+    }
+
     async function loadCompanies(){
       setSt('Sæki fyrirtæki…');
       try {
         const r = await fetch('/api/match-station');
         const d = await r.json(); if (!r.ok) throw new Error(d.error || r.status);
-        const cs = d.companies || [];
-        $co.innerHTML = '<option value="">— veldu fyrirtæki (' + cs.length + ') —</option>' + cs.map(c => {
-          const left = c.docs - c.reviewed;
-          return '<option value="' + c.base_id + '">' + esc(c.nafn) + ' — ' + c.docs + ' skjöl'
-            + (left ? (' · ' + left + ' óstaðfest') : ' · ✓')
-            + (c.unmatched ? (' · ' + c.unmatched + ' ótengd') : '')
-            + (c.needs_site ? (' · 🏷 ' + c.needs_site + ' vantar stað') : '') + '</option>';
-        }).join('');
-        setSt(cs.length + ' fyrirtæki í þjónustu', '#16a34a');
+        COMPANIES = d.companies || [];
+        paintCompanies();
+        setSt(COMPANIES.length + ' fyrirtæki í þjónustu', '#16a34a');
         // Deep-link from slökkvitæki: /#bakendi/<base_id> preselects that company.
         const want = (location.hash || '').replace(/^#\/?/, '').split('/')[1];
-        if (want && cs.some(c => String(c.base_id) === String(want))) { $co.value = want; loadBoard(want); }
+        if (want && COMPANIES.some(c => String(c.base_id) === String(want))) { $co.value = want; loadBoard(want); }
       } catch (e) { setSt('Villa: ' + e.message, '#dc2626'); }
     }
 
@@ -4140,6 +4200,26 @@ function wireStation(){
     }
 
     $co.addEventListener('change', () => { GLOBAL = null; loadBoard($co.value); });
+    if ($search) {
+      let searchT = null;
+      // Passi nákvæmlega EITT fyrirtæki er það valið og borðið sótt strax — það
+      // sparar smell í feltvinnu. Skilyrðið „annað en það sem er þegar valið"
+      // heldur hverjum innslegnum staf frá því að kalla á netið aftur.
+      const pick = (c) => { $co.value = String(c.base_id); GLOBAL = null; loadBoard($co.value); };
+      $search.addEventListener('input', () => {
+        clearTimeout(searchT);
+        searchT = setTimeout(() => {
+          const hits = paintCompanies();
+          if (hits.length === 1 && String($co.value) !== String(hits[0].base_id)) pick(hits[0]);
+        }, 220);
+      });
+      $search.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter') return;
+        e.preventDefault(); clearTimeout(searchT);
+        const hits = paintCompanies();
+        if (hits.length) { pick(hits[0]); $search.blur(); }
+      });
+    }
     $reload.addEventListener('click', () => GLOBAL ? loadGlobal(GLOBAL) : ($co.value ? loadBoard($co.value) : loadCompanies()));
     const $allUn = document.getElementById('bk-st-all-unmatched'); if ($allUn) $allUn.addEventListener('click', () => loadGlobal('unmatched'));
     const $allDup = document.getElementById('bk-st-all-dups'); if ($allDup) $allDup.addEventListener('click', () => loadGlobal('dups'));
@@ -4302,6 +4382,7 @@ function renderBakendi(t){
           <span style="${chipStyle('#cffafe','#155e75')}">Yfirferð</span>
         </div>
         <div style="display:flex;gap:9px;flex-wrap:wrap;align-items:center">
+          <input id="bk-st-search" type="search" inputmode="search" autocomplete="off" placeholder="🔎 Leita að fyrirtæki eða kt…" style="${inp2};min-width:190px;flex:1 1 190px">
           <select id="bk-st-company" style="${inp2};min-width:300px;flex:1"><option value="">— sæki fyrirtæki… —</option></select>
           <button id="bk-st-reload" class="btn">↻ Sækja</button>
           <span style="width:1px;height:22px;background:#e2e8f0;margin:0 2px"></span>
