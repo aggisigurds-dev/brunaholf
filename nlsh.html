@@ -69,6 +69,8 @@
   .nl-note-author{padding:7px 10px;border:1px solid var(--border);border-radius:7px;font:inherit;font-size:13px;max-width:220px}
   .nl-note-body{padding:9px 11px;border:1px solid var(--border);border-radius:8px;font:inherit;font-size:13px;resize:vertical;min-height:70px}
   .nl-note-send{align-self:flex-start}
+  .nl-stada-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:8px;font-size:13px}
+  .nl-stada-bar select{padding:6px 8px;border:1px solid var(--border);border-radius:7px;font:inherit;font-size:13px;margin-left:4px}
   .foot{margin-top:30px;font-size:11px;color:#9aa3b2;text-align:center}
 </style>
 </head>
@@ -90,6 +92,8 @@
   <div id="nl-charts" class="nl-charts"></div>
   <h3 class="nl-h3">💰 Mánaðaruppgjör — rukkun per mánuð <span class="nl-note">(staða mánaðamóta − fyrri mánuður)</span></h3>
   <div id="nl-monthly"></div>
+  <h3 class="nl-h3">📌 Staða í lok mánaðar <span class="nl-note">(uppsafnað Done per verkliður — talan sem límd er í samningsblaðið, það reiknar restina)</span></h3>
+  <div id="nl-stada"></div>
   <div class="nl-grid">
     <div>
       <h3 class="nl-h3">📅 Tekjur &amp; göt per mánuð</h3>
@@ -185,6 +189,55 @@
       box.querySelector('#nl-note-body').value=''; loadNotes();
     };
   }
+  // ── Staða í lok mánaðar — talningin sem límd er inn í samningsblaðið ────────
+  // Agnar 02.09.2026: „þarf eiginlega bara total stöðuna í lok mánaðar af hvað
+  // er búið mikið af hverri tegund og setja það inní töfluna sem reiknar rest."
+  // Veljarinn og takkarnir eru teiknaðir EINU SINNI; aðeins taflan endurnýjast
+  // við mánaðarskipti — annars lokast <select> undir fingrinum (sbr. borð #350).
+  let stadaGogn=null;
+  function stadaManudir(){
+    const out=[], now=new Date();
+    for(let d=new Date(2025,8,1); d<=now; d.setMonth(d.getMonth()+1)) out.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));
+    return out;
+  }
+  function stadaSjalfgefid(){ const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()-1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+  function stadaGrind(){
+    const box=document.getElementById('nl-stada'); if(!box||box.dataset.grind) return;
+    box.dataset.grind='1';
+    const man=stadaManudir(), val=stadaSjalfgefid();
+    box.innerHTML=`<div class="nl-stada-bar">
+        <label>Lok mánaðar<select id="nl-stada-man">${man.map(m=>`<option value="${m}"${m===val?' selected':''}>${mLabel(m)}</option>`).join('')}</select></label>
+        <button id="nl-stada-afrita" class="tv-btn" type="button" title="Dálkurinn „Búið alls" í verkliðaröð — límist beint í blaðið">📋 Afrita tölur</button>
+        <button id="nl-stada-afrita2" class="tv-btn" type="button" title="Verkliður + tala, tab-aðskilið">📋 Afrita með númerum</button>
+        <span id="nl-stada-msg" class="nl-note"></span>
+      </div><div id="nl-stada-t" class="nl-tw"></div>`;
+    box.querySelector('#nl-stada-man').addEventListener('change', loadStada);
+    box.querySelector('#nl-stada-afrita').onclick=()=>stadaAfrita(false);
+    box.querySelector('#nl-stada-afrita2').onclick=()=>stadaAfrita(true);
+  }
+  async function stadaAfrita(medNr){
+    const msg=document.getElementById('nl-stada-msg');
+    if(!stadaGogn){ msg.textContent='Engin gögn enn'; return; }
+    const txt=stadaGogn.lines.map(l=>medNr?(l.verk_nr+'\t'+l.stakar_alls):String(l.stakar_alls)).join('\n');
+    try{ await navigator.clipboard.writeText(txt); msg.textContent='Afritað ✓ '+stadaGogn.lines.length+' línur · '+mLabel(stadaGogn.month); }
+    catch(_){ msg.textContent='Klippiborð lokað — veldu tölurnar í töflunni'; }
+  }
+  async function loadStada(){
+    stadaGrind();
+    const sel=document.getElementById('nl-stada-man'), t=document.getElementById('nl-stada-t'); if(!sel||!t) return;
+    const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    t.innerHTML='<div style="padding:10px;color:#94a3b8;font-size:12px">Sækir…</div>';
+    let d;
+    try{ const r=await fetch('/api/nlsh-stada?til='+encodeURIComponent(sel.value)); d=await r.json(); if(d.error) throw new Error(d.error); }
+    catch(e){ t.innerHTML='<div style="padding:10px;color:#b91c1c;font-size:12px">Villa: '+esc(e.message)+'</div>'; stadaGogn=null; return; }
+    stadaGogn=d;
+    const hf=n=>Number.isInteger(n)?num(n):n.toLocaleString('is-IS',{minimumFractionDigits:1,maximumFractionDigits:1});
+    t.innerHTML=`<table class="nl-t" id="nl-stada-tafla">
+      <thead><tr><th>Verk</th><th>Verkliður</th><th>Ajour-flokkar</th><th>Búið alls (stakar)</th><th>Í ${esc(mLabel(d.month))}</th><th>Heildir</th></tr></thead>
+      <tbody>${d.lines.map(l=>`<tr><td>${esc(l.verk_nr)}</td><td style="text-align:left">${esc(l.label)}</td><td style="text-align:left;color:#94a3b8;font-size:11px">${l.groups.map(esc).join(', ')||'—'}</td><td><b>${num(l.stakar_alls)}</b></td><td>${l.stakar_manudur?'+'+num(l.stakar_manudur):'<span style="color:#b6c0cc">·</span>'}</td><td>${hf(l.heilar_alls)}</td></tr>`).join('')}</tbody>
+      <tfoot><tr><td colspan="3">Samtals samningsliðir</td><td>${num(d.totals.stakar_alls)}</td><td>+${num(d.totals.stakar_manudur)}</td><td>${hf(d.totals.heilar_alls)}</td></tr></tfoot></table>
+      <div class="nl-note" style="padding:6px 2px">${d.unmapped.length?'Utan samnings: '+d.unmapped.map(u=>esc(u.category_group)+' '+num(u.stakar_alls)).join(' · ')+'. ':''}Ekki merkt Done í Ajour núna: <b>${num(d.ekki_done)}</b> göt — koma inn þegar þau klárast, þess vegna stemmir talan ekki upp á stak við blaðið.</div>`;
+  }
   async function load(){
     const meta=document.getElementById('nl-meta'); meta.textContent='Sækir…';
     let d;
@@ -275,8 +328,9 @@
       <tbody>${d.byVerk.map(v=>`<tr><td>${v.verk_nr}</td><td style="text-align:left">${v.label}</td><td>${num(v.stakar)}</td><td>${num(v.target)}</td><td style="text-align:left"><span class="nl-pct">${v.pct==null?'—':v.pct+'%'}</span></td><td>${v.heilar}</td><td>${kr(v.rate_m_vsk)}</td><td>${kr(v.amount_m_vsk)}</td></tr>`).join('')}</tbody>
       <tfoot><tr><td colspan="5">Samtals</td><td>${num(d.totals.heilar)}</td><td></td><td>${kr(d.totals.revenue_m_vsk)}</td></tr></tfoot></table>`;
   }
-  document.getElementById('nl-refresh').onclick=load;
+  document.getElementById('nl-refresh').onclick=()=>{ load(); loadStada(); };
   load();
+  loadStada();
   loadNotes();
   setInterval(loadNotes,15000);
 })();

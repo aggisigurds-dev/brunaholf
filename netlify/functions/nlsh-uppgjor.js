@@ -127,3 +127,7 @@ function cors() {
 }
 function json(statusCode, payload) { return resp(statusCode, JSON.stringify(payload), { 'content-type': 'application/json', ...cors() }); }
 function resp(statusCode, body, headers) { return { statusCode, headers, body }; }
+
+// Deilt með nlsh-stada.js svo kortlagningin flokkur→verkliður eigi sér EINN stað.
+exports.VERK = VERK;
+exports.NLSH_NAMES = NLSH_NAMES;
