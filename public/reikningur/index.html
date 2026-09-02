@@ -89,19 +89,16 @@
     font-family: "Times New Roman", Times, serif;
     color: #000; font-size: 13px;
   }
-  .doc-top {
-    display: grid; grid-template-columns: 200px 1fr;
-    gap: 24px; align-items: center; margin-bottom: 28px;
-  }
+  .doc-top { margin-bottom: 28px; }
   .doc-logo { width: 180px; height: auto; display: block; }
   .doc-title-block { text-align: left; }
   .doc-title-block h1 {
     font-size: 26px; margin: 0; font-weight: 700;
     font-family: "Times New Roman", Times, serif; letter-spacing: 0.5px;
   }
-  .doc-title-block .doc-subtitle {
+  .doc-subtitle {
     font-size: 13px; font-style: italic; color: #555;
-    margin: 4px 0 0; font-weight: 400;
+    margin: 6px 0 0; font-weight: 400;
   }
   .doc-meta { margin-bottom: 16px; font-size: 13px; }
   .doc-meta .period { color: #000; }
@@ -159,6 +156,7 @@
 
   /* Print + saved version */
   @media print {
+    @page { size: A4 portrait; margin: 14mm; }
     body { background: #fff; }
     header, .form-panel { display: none !important; }
     .layout { grid-template-columns: 1fr !important; }
@@ -508,10 +506,7 @@ function render(){
   $preview.innerHTML = `
     <div class="doc-top">
       <img src="brunaholf-logo.png" class="doc-logo" alt="" onerror="this.style.display='none'" />
-      <div class="doc-title-block">
-        <h1>Brunahólf ehf.</h1>
-        <p class="doc-subtitle">Verðskrá / tilboð</p>
-      </div>
+      <p class="doc-subtitle">Verðskrá / tilboð</p>
     </div>
 
     <div class="doc-meta">

@@ -10040,8 +10040,9 @@ async function renderTilbunirReikningar(t){
     const logo = await bhLogoDataUrl();
     w.document.write(`<!DOCTYPE html><html lang="is"><head><meta charset="utf-8"><title>Efnislisti — ${esc(d.worksite_name)} — ${esc(mlabel(d.work_month))}</title>
       <style>body{font-family:'Times New Roman',Times,serif;color:#000;margin:32px 40px}
-        .top{display:grid;grid-template-columns:180px 1fr;gap:20px;align-items:center;margin-bottom:24px}
-        .logo{max-width:170px;max-height:90px;object-fit:contain}h1{font-size:24px;margin:0}.sub{font-style:italic;color:#555;margin:3px 0 0}
+        @page{size:A4 portrait;margin:14mm}
+        .top{margin-bottom:24px}
+        .logo{width:170px;height:auto;display:block}.sub{font-style:italic;color:#555;margin:6px 0 0}
         .meta{margin-bottom:14px}.ws{font-weight:700}.cust{font-size:12px;margin-top:4px;line-height:1.45;color:#222}
         table{width:100%;border-collapse:collapse;font-size:13px}td{padding:3px 4px}
         thead td{font-style:italic;color:#555;text-align:right}thead td:first-child{text-align:left}
@@ -10050,7 +10051,7 @@ async function renderTilbunirReikningar(t){
         tr.sub td{border-top:1px solid #000;padding-top:4px;text-align:right;font-style:italic;color:#555}tr.sub td.t{font-style:normal;color:#000}
         tr.grand td{border-top:1px solid #000;border-bottom:3px double #000;padding:6px 4px;text-align:right}tr.grand td.t{font-weight:700}
       </style></head><body>
-      <div class="top">${logo?'<img src="'+logo+'" class="logo" alt="">':''}<div><h1>Brunahólf ehf.</h1><div class="sub">Verðskrá / tilboð</div></div></div>
+      <div class="top">${logo?'<img src="'+logo+'" class="logo" alt="">':''}<div class="sub">Verðskrá / tilboð</div></div>
       <div class="meta"><div>${(()=>{const _k=(d.worksite_name||'')+'|'+(d.work_month||''),_t=(state.ui&&state.ui.gr_date_text&&state.ui.gr_date_text[_k])||'';return _t?esc(_t):(dmy(fra)+' til '+dmy(til));})()}</div><div class="ws">${esc(d.worksite_name)}</div>${payer?`<div class="cust">${payer}</div>`:''}</div>
       <table><thead><tr><td></td><td class="p">án vsk</td><td class="m">magn</td><td class="t">samtals</td></tr></thead><tbody>
         ${body}
@@ -10358,10 +10359,11 @@ async function renderGerdReikninga(t){
       .tbk-eh{background:#f8fafc;font-size:10.5px;text-transform:uppercase;color:#64748b;font-weight:600}
       /* Efnislisti document preview (mirrors /reikningur) */
       .gr-doc{background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.08);max-width:720px;margin:0 auto;padding:44px 50px;font-family:'Times New Roman',Times,serif;color:#000;font-size:13px}
-      .gr-doc-top{display:grid;grid-template-columns:180px 1fr;gap:20px;align-items:center;margin-bottom:24px}
-      .gr-doc-logo{max-width:170px;max-height:90px;width:auto;height:auto;object-fit:contain;display:block}
+      /* Haus (2026-09-02, ósk Agnars): aðeins lógó + „Verðskrá / tilboð" undir því — enginn „Brunahólf ehf." texti. */
+      .gr-doc-top{margin-bottom:24px}
+      .gr-doc-logo{width:170px;height:auto;display:block}
       .gr-doc h1{font-size:24px;margin:0;font-weight:700}
-      .gr-doc .gr-doc-sub{font-size:13px;font-style:italic;color:#555;margin:3px 0 0}
+      .gr-doc .gr-doc-sub{font-size:13px;font-style:italic;color:#555;margin:6px 0 0}
       .gr-doc .gr-doc-meta{margin-bottom:14px}
       .gr-doc .gr-doc-ws{font-weight:700}
       table.gr-efni{width:100%;border-collapse:collapse;font-size:12.5px}
@@ -10990,7 +10992,7 @@ async function renderGerdReikninga(t){
       document.getElementById('gr-doc').innerHTML = `
         <div class="gr-doc-top">
           <img src="${escapeAttr(getLogo())}" class="gr-doc-logo" alt="" onerror="this.style.display='none'">
-          <div><h1>Brunahólf ehf.</h1><div class="gr-doc-sub">Verðskrá / tilboð</div></div>
+          <div class="gr-doc-sub">Verðskrá / tilboð</div>
         </div>
         <div class="gr-doc-meta"><div>${(()=>{const _dm=document.getElementById('gr-datemode'),_dt=document.getElementById('gr-datetext');return (_dm&&_dm.checked&&_dt&&(_dt.value||'').trim())?escapeHtml((_dt.value||'').trim()):(dmy(fra)+' til '+dmy(til));})()}</div><div class="gr-doc-ws">${escapeHtml(ws)}</div>${payerBlock}</div>
         <table class="gr-efni">
@@ -11112,9 +11114,10 @@ async function renderGerdReikninga(t){
       w.document.write(`<!DOCTYPE html><html lang="is"><head><meta charset="utf-8"><title>Efnislisti — ${escapeHtml(name)} — ${monthLabel(month)}</title>
         <style>
           body{font-family:'Times New Roman',Times,serif;color:#000;margin:32px 40px}
-          .gr-doc-top{display:grid;grid-template-columns:180px 1fr;gap:20px;align-items:center;margin-bottom:24px}
-          .gr-doc-logo{max-width:170px;max-height:90px;object-fit:contain}
-          h1{font-size:24px;margin:0}.gr-doc-sub{font-style:italic;color:#555;margin:3px 0 0}
+          @page{size:A4 portrait;margin:14mm}
+          .gr-doc-top{margin-bottom:24px}
+          .gr-doc-logo{width:170px;height:auto;display:block}
+          .gr-doc-sub{font-style:italic;color:#555;margin:6px 0 0}
           .gr-doc-meta{margin-bottom:14px}.gr-doc-ws{font-weight:700}.gr-doc-cust{font-size:12px;margin-top:4px;line-height:1.45;color:#222}
           table.gr-efni{width:100%;border-collapse:collapse;font-size:13px}
           table.gr-efni td{padding:3px 4px}
@@ -20235,11 +20238,11 @@ async function buildAndSaveEfnislistiPdf(name, month, data, overwrite){
   const W = doc.internal.pageSize.getWidth();
   const dmy = s => { const p=String(s||'').split('-'); return p.length===3? `${p[2]}.${p[1]}.${p[0]}` : (s||''); };
   let y = 40;
+  // Haus (2026-09-02, ósk Agnars): aðeins lógóið og „Verðskrá / tilboð" undir því — enginn „Brunahólf ehf." texti.
   if(logo){ try{ doc.addImage(logo, bhLogoFmt(logo), 40, y, 150, 46); }catch{} }
-  doc.setFont('helvetica','bold'); doc.setFontSize(20); doc.text('Brunahólf ehf.', W-40, y+14, {align:'right'});
-  doc.setFont('helvetica','italic'); doc.setFontSize(10); doc.setTextColor(90); doc.text('Verðskrá / tilboð', W-40, y+30, {align:'right'});
+  doc.setFont('helvetica','italic'); doc.setFontSize(10); doc.setTextColor(90); doc.text('Verðskrá / tilboð', 40, y+60);
   doc.setTextColor(20); doc.setFont('helvetica','normal');
-  y += 66;
+  y += 80;
   doc.setFontSize(11); doc.text(data.dateText || (dmy(data.fra)+' til '+dmy(data.til)), 40, y);
   doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.text(data.ws||'', 40, y+18);
   doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(60);
