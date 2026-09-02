@@ -10837,6 +10837,7 @@ async function renderGerdReikninga(t){
             <button class="gr-btn" id="gr-vinnuskjal" type="button" title="Vinnuskjal — efnislistinn OG tímaskýrslan á sama blaði, þjappað á eina A4-síðu">📋 Vinnuskjal</button>
             <button class="gr-btn" id="gr-manual-btn" type="button" title="Opna handvirka stillingu — kennitala og heimilisfang verkkaupa á reikning">✏️ Handvirkt</button>
             <button class="gr-btn" id="gr-timabok" type="button" title="Prenta tímabók (mæting starfsmanna) til að senda með reikningi">🕒 Tímabók</button>
+            <button class="gr-btn" id="gr-pdf2" type="button" title="Vista EITT PDF: Efnislisti á síðu 1 og Tímaskýrsla á síðu 2 (geymt á Supabase, birtist í „Vistuð PDF-skjöl")">📑 PDF + Tímaskýrsla</button>
             ${reviewOn ? `<button class="gr-btn" id="gr-confirm" type="button" style="background:#059669;border-color:#059669;color:#fff" title="Vista breytingarnar OG staðfesta yfirferðina — skrifstofan sér grænt „👔 Staðfest" á Kröfu yfirliti">✓ Staðfesta</button>
             <button class="gr-btn" id="gr-revert" type="button" style="border-color:#b91c1c;color:#b91c1c" title="Afturkalla ALLAR breytingar úr þessari opnun (líka vistaðar) — drögin fara aftur í það sem þau voru þegar formið opnaðist">↶ Hætta við</button>` : ''}
             <button class="gr-btn" id="gr-close2" type="button">Loka</button>
@@ -11167,25 +11168,43 @@ async function renderGerdReikninga(t){
     };
 
     // ----- Save as PDF (vector) → Google Drive → shows in "Vistuð PDF-skjöl" -----
+    // Gögnin sem PDF-smiðirnir fá — sama fyrir „Vista PDF" og „PDF + Tímaskýrsla".
+    const grPdfData = () => {
+      const c = compute();
+      const _dm=document.getElementById('gr-datemode'), _dt=document.getElementById('gr-datetext');
+      const dateText = (_dm&&_dm.checked&&_dt&&(_dt.value||'').trim()) ? _dt.value.trim() : '';
+      return {
+        ws: document.getElementById('gr-ws').value.trim() || name,
+        cust: document.getElementById('gr-cust').value.trim(),
+        kt: (document.getElementById('gr-kt')||{}).value ? document.getElementById('gr-kt').value.trim() : '',
+        addr: (document.getElementById('gr-addr')||{}).value ? document.getElementById('gr-addr').value.trim() : '',
+        fra: ymd(document.getElementById('gr-fra').value), til: ymd(document.getElementById('gr-til').value),
+        dateText, notes: document.getElementById('gr-notes').value.trim(),
+        rate: { km:r.km, ferd:r.ferd, vsk:r.vsk, sma:r.sma, stadf:GR_STADF }, c,
+      };
+    };
     document.getElementById('gr-savepdf').onclick = async () => {
       const btn = document.getElementById('gr-savepdf'); const old = btn.textContent;
       btn.textContent = '⏳ Bý til PDF…'; btn.disabled = true;
       const $st = document.getElementById('gr-save-st');
       try {
-        const c = compute();
-        const _dm=document.getElementById('gr-datemode'), _dt=document.getElementById('gr-datetext');
-        const dateText = (_dm&&_dm.checked&&_dt&&(_dt.value||'').trim()) ? _dt.value.trim() : '';
-        const data = {
-          ws: document.getElementById('gr-ws').value.trim() || name,
-          cust: document.getElementById('gr-cust').value.trim(),
-          kt: (document.getElementById('gr-kt')||{}).value ? document.getElementById('gr-kt').value.trim() : '',
-          addr: (document.getElementById('gr-addr')||{}).value ? document.getElementById('gr-addr').value.trim() : '',
-          fra: ymd(document.getElementById('gr-fra').value), til: ymd(document.getElementById('gr-til').value),
-          dateText, notes: document.getElementById('gr-notes').value.trim(),
-          rate: { km:r.km, ferd:r.ferd, vsk:r.vsk, sma:r.sma, stadf:GR_STADF }, c,
-        };
-        const res = await buildAndSaveEfnislistiPdf(name, month, data);
+        const res = await buildAndSaveEfnislistiPdf(name, month, grPdfData());
         $st.innerHTML = `✓ PDF vistað — <a href="${res.webViewLink}" target="_blank" rel="noopener">opna</a> · <a href="${res.downloadUrl}" target="_blank" rel="noopener">sækja</a>`;
+        if(typeof window.__grReloadPdfList==='function') window.__grReloadPdfList();
+      } catch(e){ $st.textContent = '✗ '+(e.message||e); alert('Gat ekki vistað PDF: '+(e.message||e)); }
+      finally { btn.textContent = old; btn.disabled = false; }
+    };
+    // 📑 PDF + Tímaskýrsla (ósk Agnars 2026-09-02): EITT skjal — Efnislisti á
+    // síðu 1, Tímaskýrsla (vistað eintak ef til, annars Tímavera) á síðu 2.
+    document.getElementById('gr-pdf2').onclick = async () => {
+      const btn = document.getElementById('gr-pdf2'); const old = btn.textContent;
+      btn.textContent = '⏳ Bý til PDF…'; btn.disabled = true;
+      const $st = document.getElementById('gr-save-st');
+      try {
+        const tb = await tbkLoadRows(name, month);
+        if(!tb.rows.length && !confirm('Engar tímafærslur fundust fyrir þennan mánuð — búa samt til PDF með tómri Tímaskýrslu á síðu 2?')) return;
+        const res = await buildAndSaveCombinedPdf(name, month, grPdfData(), tb.rows, tb.yf);
+        $st.innerHTML = `✓ PDF (2 síður) vistað — <a href="${res.webViewLink}" target="_blank" rel="noopener">opna</a> · <a href="${res.downloadUrl}" target="_blank" rel="noopener">sækja</a>`;
         if(typeof window.__grReloadPdfList==='function') window.__grReloadPdfList();
       } catch(e){ $st.textContent = '✗ '+(e.message||e); alert('Gat ekki vistað PDF: '+(e.message||e)); }
       finally { btn.textContent = old; btn.disabled = false; }
@@ -20207,6 +20226,14 @@ async function buildAndSaveTimabokPdf(name, month, rows, overwrite, yfCfg){
   const lib = await loadJsPdf();
   const logo = await bhLogoDataUrl();
   const doc = new lib.jsPDF({ unit:'pt', format:'a4', compress:true });
+  drawTimabokPage(doc, logo, name, month, rows, yfCfg);
+  const fileName = bhPdfName('Tímaskýrsla', { ws:name, month });
+  // Geymt á Supabase (ekkert Google-innskráning) — sést strax í „Vistuð PDF-skjöl".
+  return bhSavePdfToSupabase(doc, { fileName, worksite_name:name, work_month:month, doc_type:'timabok_pdf', overwrite });
+}
+// Teiknar Tímaskýrsluna á NÚVERANDI síðu skjalsins — deilt með samsetta PDF-inu
+// (buildAndSaveCombinedPdf) svo ein teikning gildi fyrir bæði.
+function drawTimabokPage(doc, logo, name, month, rows, yfCfg){
   const W = doc.internal.pageSize.getWidth();
   let y = 40;
   if(logo){ try{ doc.addImage(logo, bhLogoFmt(logo), 40, y, 150, 46); }catch{} }
@@ -20256,17 +20283,49 @@ async function buildAndSaveTimabokPdf(name, month, rows, overwrite, yfCfg){
     styles:{ font:'helvetica', fontSize:9, cellPadding:3 }, headStyles:{ fillColor:[30,30,30], textColor:255, fontSize:8 },
     columnStyles: t.on ? { 1:{halign:'right'}, 2:{halign:'right'}, 3:{halign:'right'}, 4:{halign:'right'} } : { 1:{halign:'right'}, 2:{halign:'right'} },
     margin:{ left:40, right:40 }, tableWidth: t.on ? 420 : 320 });
-  const fileName = bhPdfName('Tímaskýrsla', { ws:name, month });
-  // Geymt á Supabase (ekkert Google-innskráning) — sést strax í „Vistuð PDF-skjöl".
-  return bhSavePdfToSupabase(doc, { fileName, worksite_name:name, work_month:month, doc_type:'timabok_pdf', overwrite });
 }
 
 // Build the Efnislisti (invoice prep) PDF from the editor's computed numbers, upload to Drive.
 async function buildAndSaveEfnislistiPdf(name, month, data, overwrite){
   const lib = await loadJsPdf();
   const logo = await bhLogoDataUrl();
-  const c = data.c, rt = data.rate;
   const doc = new lib.jsPDF({ unit:'pt', format:'a4', compress:true });
+  drawEfnislistiPage(doc, logo, data);
+  const fileName = bhPdfName('Efnislisti', { payer:data.cust, ws:data.ws||name, kt:data.kt, month });
+  return bhSavePdfToSupabase(doc, { fileName, worksite_name:name, work_month:month, doc_type:'efnislisti_pdf', overwrite });
+}
+
+// Samsett PDF (ósk Agnars 2026-09-02): Efnislisti á síðu 1, Tímaskýrsla á síðu 2.
+// Geymt sem efnislisti_pdf (pdf-store þekkir aðeins tvær tegundir) undir eigin
+// titli — fer með í „Senda kröfu" viðhengin og birtist í „Vistuð PDF-skjöl".
+async function buildAndSaveCombinedPdf(name, month, data, rows, yfCfg, overwrite){
+  const lib = await loadJsPdf();
+  const logo = await bhLogoDataUrl();
+  const doc = new lib.jsPDF({ unit:'pt', format:'a4', compress:true });
+  drawEfnislistiPage(doc, logo, data);
+  doc.addPage();
+  drawTimabokPage(doc, logo, name, month, rows, yfCfg);
+  const fileName = bhPdfName('Efnislisti + Tímaskýrsla', { payer:data.cust, ws:data.ws||name, kt:data.kt, month });
+  return bhSavePdfToSupabase(doc, { fileName, worksite_name:name, work_month:month, doc_type:'efnislisti_pdf', overwrite });
+}
+// Tímaskýrslu-raðir fyrir samsetta PDF-ið: vistað eintak (timabok_edits, sama
+// og Tímabókar-glugginn sýnir) ef til, annars beint úr Tímaveru.
+async function tbkLoadRows(name, month){
+  const saved = (state.ui && state.ui.timabok_edits && state.ui.timabok_edits[name+'|'+month]) || null;
+  const yf = (saved && saved.yfirvinna)
+    ? { on: !!saved.yfirvinna.on, thr: (Number(saved.yfirvinna.thr) > 0 ? Number(saved.yfirvinna.thr) : 8) }
+    : { on:false, thr:8 };
+  if(saved && Array.isArray(saved.rows)) return { rows: saved.rows.map(r=>({...r})), yf };
+  if(!name || !/^\d{4}-\d{2}$/.test(String(month))) return { rows:[], yf };
+  const resp = await fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&month=${encodeURIComponent(month)}`);
+  const j = await resp.json().catch(()=>({}));
+  if(!resp.ok) throw new Error(j.error || ('HTTP '+resp.status));
+  const rows = (j.rows||[]).map(r=>({ date:r.date||'', employee:r.employee||'', time_in:r.time_in||'', time_out:r.time_out||'', hours:Number(r.hours)||0 }));
+  return { rows, yf };
+}
+// Teiknar Efnislistann á NÚVERANDI síðu skjalsins (deilt með samsetta PDF-inu).
+function drawEfnislistiPage(doc, logo, data){
+  const c = data.c, rt = data.rate;
   const W = doc.internal.pageSize.getWidth();
   const dmy = s => { const p=String(s||'').split('-'); return p.length===3? `${p[2]}.${p[1]}.${p[0]}` : (s||''); };
   let y = 40;
@@ -20314,8 +20373,6 @@ async function buildAndSaveEfnislistiPdf(name, month, data, overwrite){
     margin:{ left:40, right:40 },
   });
   if(data.notes){ let ny=(doc.lastAutoTable?doc.lastAutoTable.finalY:y)+18; doc.setFont('helvetica','italic'); doc.setFontSize(10); doc.setTextColor(85); doc.text(doc.splitTextToSize(data.notes, W-80), 40, ny); }
-  const fileName = bhPdfName('Efnislisti', { payer:data.cust, ws:data.ws||name, kt:data.kt, month });
-  return bhSavePdfToSupabase(doc, { fileName, worksite_name:name, work_month:month, doc_type:'efnislisti_pdf', overwrite });
 }
 
 // Print the (possibly edited) tímaskýrsla as HTML.
