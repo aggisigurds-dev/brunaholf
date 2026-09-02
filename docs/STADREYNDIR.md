@@ -707,3 +707,482 @@ beint eftir endurræsingu, sama villa. `device_stage_files`/`device_commit_files
 segja notanda strax að skráafærslu-tólin (stage/commit) virki samt fyrir stakar
 skrár, en `git status`/`pull`/`push` á tölvu notanda krefjast þess að skelin sjálf
 náist aftur upp fyrst.
+
+---
+
+## 10. Útlit og CSS — gildrur sem kostuðu tíma
+
+*Sameinað úr sjö ólokuðum lotu-verkum (2026-08-17 → 09-01) sem öll báðu um að bæta
+lærdómi í þetta skjal. Þau voru unnin í EINU lagi með einni númeraröð, endurtekningar
+felldar saman — sbr. árekstrarviðvörunina sem eitt þeirra bar. Hvert atriði ber
+**sönnunina** sem staðfesti það: reglan stendur, dæmið eldist.*
+
+### 10.1 Cascade og sértækni
+
+- **Falsk-id sértækni (`:not(#_pNNN)`) er HÚSSTÍLLINN og hún slær `!important` OG
+  röð í `<head>`.** Pappi sem skrifar venjulega valla tapar þegjandi fyrir pappa sem
+  ber tvö id-vægi úr `:not()`. *Sönnun:* fyrsta útgáfa botnstiku-pappans notaði
+  venjulega valla og fyllingin mældist ÓBREYTT; 330 vann með
+  `:not(#_p330a):not(#_p330b)`. Að endur-tengja stílblaðið aftast í `<head>` dugði
+  EKKI — sex stílblöð sátu fyrir aftan það því þau gera nákvæmlega það sama.
+
+- **Sérhæfni-gildra MEÐAL `!important`:** `.view h1{…!important}` (0,0,2) slær út bert
+  `h1,h2,h3{…!important}` (0,0,1). Hærri sértækni vinnur líka innan `!important`.
+  *Sönnun:* Playfair var skilgreint globalt í patch 213 en 240 pinnaði
+  `.view h1/h2/h3` á Space Grotesk; computed-style var Space Grotesk þar til
+  240-pinninn var líka umbreyttur.
+
+- **Inline-stíll með `!important` slær ÖLL stílblöð** — það er cascade-origin, ekki
+  sértækni. Í slokkvitaeki eru 33 slík kallstæði í 8 skrám. Eigi CSS að vinna verður
+  inline-stíllinn að fara úr JS-inu. *Sönnun:* `.rf-eqtrio` bar `margin-left:7px`
+  inline; akreina-lagfæringin í 175 varð að fjarlægja hann, ekki yfirskrifa.
+
+### 10.2 Klipping, flæði og skrun
+
+- **`overflow-x:auto` þvingar `overflow-y` líka í `auto`.** CSS leyfir ekki að klippa
+  annan ásinn og hafa hinn `visible`. Popup sem hangir undir skrun-strimli (t.d.
+  `position:absolute;top:100%`) klippist því í ekkert þótt aðeins lárétt skrun hafi
+  verið ætlunin. *Sönnun:* Númer-glugginn í Ársskoðun — hnappurinn virkaði,
+  `aria-expanded` fór í `true`, glugginn VAR í DOM, en `elementFromPoint` yfir miðju
+  hans skilaði honum ekki. Mælt eins á skjá og síma; aldrei farsíma-vandamál.
+  **Lausn:** `position:fixed` + hnit reiknuð úr `getBoundingClientRect()` hnappsins.
+  ⚠️ Til að AF-gera skrunkassa meðan `overflow-y:hidden` stendur: `overflow-x:clip`,
+  ekki `visible`.
+
+- **`white-space:nowrap` á foreldri ERFIST niður allt undirtréð.** Popup inni í
+  nowrap-strimli getur hvorki brotið hausinn sinn né skroppið saman. *Sönnun:* haus
+  Númer-gluggans þurfti 415px í 376px, svo „✓ Loka" lá 38px utan gluggans og mældist
+  ósmellanlegur. **Lausn:** `white-space:normal` á glugganum + `flex-wrap:wrap`.
+  ⚠️ Sama strimlar-regla olli BÁÐUM göllunum — sá seinni var ósýnilegur meðan sá
+  fyrri var óleystur.
+
+- **Í tveggja-dálka skjá er þvingunin SPJALDBREIDDIN, ekki gluggabreiddin.**
+  `@media` mælir þá vitlausan hlut og slær aldrei inn. *Sönnun:* úttektarlistinn —
+  breiður gluggi, mjótt spjald af því „Upplýsingar um úttekt" situr við hliðina;
+  tækjaheitið kramdist í 3px meðan glugginn var 1440px. **Lausn:** `@container` á
+  listann (fyrsta `@container`-notkun í repo-inu).
+
+- **Flex-stika þar sem miðhópur er `flex:1;overflow-x:auto` og hægri hópur
+  `margin-left:auto` VEFST ALDREI eftir innihaldi — hún minnkar og KLIPPIR.**
+  Breakpoint sem staflar hægri hópnum verður að miðast við RAUN-einnar-línu breidd
+  (mæld summa allra barna), ekki ágiskaðan farsíma-breakpoint. *Sönnun:*
+  kjarni-toppstikan þurfti ~1356px en staflaði aðeins undir 900px → allt bilið
+  901–1356px kramdist og öftustu kaflarnir klipptust bak við þema-pillurnar.
+
+- **Miðjað PAR í töflufrumu gefur ALDREI beina lóðrétta línu.** X-staða fyrri hlutans
+  ræðst af því hvort sá seinni er til staðar í þeirri röð. **Lausn:** fastar akreinar
+  (`grid-template-columns` með föstum px á hvorn hluta) og fyrri hlutinn `width:100%`
+  svo hann fylli sína akrein. Athugaðu um leið hvort parið KOMIST FYRIR í frumunni.
+  *Sönnun:* Rekstrarfélög Tæki-dálkur — 8 x-stöður og 39px flakk á 71 röð, og 120px
+  efni í 85px frumu flæddi inn í næsta dálk (11 af 18 frumum á Heimaleigu).
+
+### 10.3 Töflur í Sími-/app-ham
+
+- **`263-mobile-baseline` brýtur HVERJA slétta `<table>` í Sími-/app-ham.** Undir
+  `html[data-viewmode="mobile"]` OG `body.appmode` beitir hann
+  `V table{display:block}` + `V table>thead{display:table}` — `<thead>` verður sín
+  eigin tafla, klofin frá `<tbody>`, hausar staflast fullbreiðir og dálkar hætta að
+  standa saman (notandinn sér dálk „hverfa"). **Regla:** hver NÝ tafla sem á að lifa
+  í Sími/app þarf sömu vörn og `rf-tbl`/`rf-ovtbl` — þvinga `display:table` +
+  `table-header-group`/`table-row-group`/`table-row`/`table-cell` undir BÁÐUM
+  veljurum, og skruna lárétt í `overflow-x:auto` umgjörð.
+  *Sönnun:* `263-mobile-baseline.js:67-68`; `bd568b3` varði `rf-tbl`, PR #771
+  `rf-ovtbl`. Mælt: 9× `<th>` = `display:block`/370px FYRIR → `table-cell` EFTIR.
+
+- **HAUS-SÆTI ER EKKI DÁLK-SÆTI.** Þegar haus spannar fleiri dálka (`colspan`) vísa
+  `th:nth-child(n)` og `td:nth-child(n)` á sitthvorn dálkinn. Geymdu felun á
+  HAUS-númeri og smíðaðu CSS á dálkabili hópsins. *Sönnun:* `7e581a7` — Ársskoðun
+  hefur 10 `<th>` en 13 dálka; „Skoðanir · skjöl" er `colspan=4`.
+
+- **Akkeraðu eftir KLASA, aldrei eftir STÖÐU reits.** Að bæta við/færa/fjarlægja dálk
+  brýtur hvern patch sem festir sig á `children[N]`, `td:first-child`,
+  `nth-child(N)`. Notaðu `th[data-notacol]`, `td._ars-notacell`, `td._ars-namecell`,
+  `td._ars-mailcol`. *Sönnun:* nýr póst-stöðu dálkur (295) braut TVO neytendur — 187
+  sprautaði árs-dálkunum á `children[1]` (samhaus hvarf, nafnadálkur féll í 64px) og
+  222 festi „⚠ grunsamlegt" á fyrsta `<td>` (lenti ofan í póstmerkinu).
+  `tools/audit-ars-column-shift.cjs` læsir nú röðina og öll þrjú akkerin.
+
+### 10.4 Skölun og zoom
+
+- **Þegar innihald er skalað með CSS `zoom` verða breidd OG fylling undir föstu
+  chrome-i að deilast með skalanum.** Annars (a) kemur dautt bil því `width:100vw`
+  margfaldast með skalanum, og (b) hverfur síðasta röðin undir fasta stiku því
+  fyllingin skalast en stikan ekki. Skala EKKI á `html`/`body` — það skilur eftir
+  dauðan viewport. *Sönnun:* app-hamur neglir `width:100vw`; við skala 0,7 hefði
+  sýnin orðið 70vw.
+
+- **Zoom-takkar sem skrifa `initial-scale` í viewport-taggið gera SAMA og
+  fingraklípan** og bæta engu við hana. Vilji notandinn „stækka/minnka efni" er það
+  innihalds-skölun, sem er annað verkfæri. *Sönnun:* takkarnir skrifuðu
+  `initial-scale`, og `MIN` var 1 svo „−" komst aldrei niður fyrir 100%.
+
+### 10.5 Grey-on-grey = Force Dark (RÓTIN)
+
+- **Sími Agnars (Samsung) keyrir Chrome Android „Force Dark Pages" sem EKKI er hægt
+  að slökkva á** (skjalfest í `318-color-scheme-light.js`). Force Dark bjagar ólitaðan
+  texta/kassa-par í grátt-á-gráu.
+- **Patch 313 (CONTRAST CLARITY) endur-litar AÐEINS innan `.view.active`** — gluggar
+  sem hengjast á `document.body` sleppa alveg. Hver body-gluggi verður því að pinna
+  skýra þema-liti (`var(--ink)` / `var(--ink3)`) á BÆÐI ílátið OG textann.
+  *Sönnun:* 310-tengiliða-glugginn var eini body-glugginn án skýrs litar → eini
+  raunverulegi grár-á-gráu gallinn; allir aðrir (306/307/308/311/321/302/303) setja hann.
+- **Headless Chromium sýnir EKKI Force Dark sjálfgefið** og FELUR því gallann. Til að
+  endurgera: CDP `Emulation.setAutoDarkModeOverride({enabled:true})` áður en skjámynd
+  er tekin.
+
+### 10.6 Leturkerfið (hússtíll beggja appa)
+
+- **Þrjú letur, föst hlutverk:** `--font-display` = **Playfair Display** á ALLAR
+  fyrirsagnir · `--font`/`--ui` = **IBM Plex Sans** á megintexta/labels/takka/inntak ·
+  `--mono` = **JetBrains Mono** á tölur/kt/upphæðir/badges.
+- **Ritstjórnar-mynstrið:** auga-lína (UPPHÁSTAFA, letter-spaced, accent) → Playfair
+  fyrirsögn → deyfð IBM Plex Sans stuðningslína með **feitletruðum** lykil-staðreyndum
+  → JetBrains Mono tölur → pillu-labels → accent-tala efst-hægri → ríflegt hvítt rými.
+- **Prentflötur heldur einföldu letri — ALDREI Playfair.** POS-kvittun
+  (`js/pos.js` showReceipt) og QR-miðar (`js/qrbulkprint.js`) nota Arial/Helvetica
+  viljandi.
+- **Slokkvitaeki-leturkerfið býr í FJÓRUM lögum** — `css/app.css`,
+  `css/theme-handoff/theme.css` → sjálfgert `css/theme-scoped.css`, Brunastál-skinnin
+  `245-*`/`240-*`, og `213-theme-inspection.js` sem pinnar letur GLOBALT með
+  `!important`. Fjarlægir þú letur án þess að umbreyta HVERJUM pinna falla þau element
+  á `system-ui`/`monospace` — ekki á nýja letrið. `theme-scoped.css` er SJÁLF-GENERAÐ;
+  haltu því og handoff-uppsprettunni samstilltum.
+
+---
+
+## 11. Hvað telst sannreynt — mælingar sem ljúga
+
+- **Klipping breytir ekki `getBoundingClientRect`, aðeins málun og hit-test.**
+  Glugginn mældist með trúverðuga hæð meðan hann var gjörsamlega ónothæfur.
+  **`elementFromPoint` er eina áreiðanlega prófunin á „sést þetta og má smella á það".**
+
+- **Mælihýsill sem er flex-barn skilar breiddinni sem INNIHALDIÐ vildi, ekki þeirri
+  sem sett var.** *Sönnun:* hýsill stilltur á 820px mældist 490px, og A/B-prófun
+  snerist við — „lagfæringin" leit út fyrir að hafa eyðilagt útlitið þegar hún hafði
+  það ekki. **Notaðu `position:fixed` hýsil svo breiddin sé afgerandi.**
+
+- **Occlusion mælist AÐEINS við enda skruns og í RÉTTA skrunkassanum.** Þrjár
+  tilraunir mældu vitlausan hlut: efni undir brotinu, hæð umlykjandi kassa, og
+  `window.scrollTo` þegar raunverulegi skrunkassinn var annar. **Finndu skrunandi
+  forföðurinn, skrunaðu HONUM, og mældu raunverulega efnisröð — ekki umlykjandi `div`.**
+
+- **⚠️ A/B-mæling á vefsíðu er ÓGILD nema báðir leggir beri fram NÁKVÆMLEGA sama tré
+  nema skrána sem er prófuð.** Mirror sem symlinkar bara sumar möppur skilar 404 á
+  `/css/theme.css`, síðan fellur í Times New Roman, og ALLIR textareitir mælast mjórri
+  — A/B-ið ber þá saman LETUR en ekki breytinguna. *Sönnun:* toppstiku-yfirflæði
+  virtist stafa af breytingu; `getComputedStyle().fontFamily` + `document.fonts` í
+  báðum leggjum sýndi FYRIR = Times New Roman/engin letur hlaðin, EFTIR = IBM Plex
+  Sans + Playfair. Þegar FYRIR-leggnum var breytt í sama tré nema einni skrá mældust
+  báðir eins, í báðum keyrsluröðum. Tilgátan „tímasetningarvilla í letur-hleðslu" var
+  RÖNG — textinn var eins í öllum sýnum; það þurfti letur-mælinguna til að skera úr.
+
+- **`audit-all.cjs` prófar GAGNA-invarianta, ekki DOM-útlit.** Dálka-hliðrun,
+  klipping, z-index og skörun renna grænt í gegn. Hver töflu-uppbyggingar-breyting
+  þarf því (a) sér-audit sem greppar akkerin í source og (b) render-staðfestingu í
+  vafra. *Sönnun:* bæði 187- og 222-brotin voru ósýnileg audit-all.
+
+- **Sannprófun á lifandi síðu ER möguleg fyrir merge.** Netlify deploy-preview er til
+  fyrir hverja PR (`deploy-preview-<N>--<síða>.netlify.app`) þótt `deploy.yml` deployi
+  framleiðslu aðeins við push á `master`. Anon (publishable) lykillinn LES gögnin
+  (RLS af á þessum töflum), svo höfuðlaus render fær RAUNVERULEG gögn — forsendan
+  „gagnasíður render-a tómar án innskráningar" er RÖNG. `sw.js` er viljandi no-op
+  (network passthrough), svo „gamalt cache" er aldrei skýringin.
+  ⚠️ Vercel PR-preview kjarna eru hins vegar LÆST bak við Deployment Protection
+  (redirect á `vercel.com/sso-api`) — `bh-browser` kemst ekki inn; staðfestu þar með
+  sjálfstæðri endurgerð á raun-CSS, eða á FRAMLEIÐSLU eftir merge.
+
+- **Höfuðlaus render á Rekstrarfélög:** sýnin er patch-innsprautuð (175) og
+  `App.switchView('rekstrarfelog')` mountar hana EKKI. Nota `window.openRekstrarfelog()`
+  eða smella á `.vnav-btn[data-view="rekstrarfelog"]` — hnappurinn ER smiðurinn.
+  Félaga-listinn opnast fyrst; byggingatöflan með Tæki-dálknum verður til við smell á
+  `._rf_head` (eitt félag) eða `#_rf_m_all` („📋 Allar byggingar", önnur tafla:
+  `rf-ovtbl`). Síðan lazy-loadar efni sem getur gefið *„An SSL certificate error
+  occurred when fetching the script"* gegnum relay-ið og drepið render-ferlið → verðu
+  ferlið og taktu skjáskot SNEMMA.
+
+---
+
+## 12. Audit, git og verðir — hvenær er rautt raunverulega rautt
+
+- **⚠️ RAUTT AUDIT ER EKKI STAÐREYND UM `main` FYRR EN VINNUTRÉÐ ER FERSKT.**
+  *Sönnun:* audit sagði að vörn vantaði; vörnin hafði verið í `main` frá upphafi —
+  greinin var 32 commit á eftir og `grep` fann 0 tilvik Á ÞEIRRI GREIN. A/B með
+  `git stash` mælir líka bara greinina sem staðið er á. **`git fetch` +
+  `git status -sb` er FYRSTA prófunin þegar audit er rautt, ekki sú síðasta.**
+  (Regla 2 í CLAUDE.md, sannreynd enn einu sinni.)
+
+- **Áður en RAUÐUR audit er meðhöndlaður sem ÞÍN breyting: staðfestu hvort hann sé
+  fyrirliggjandi.** `git stash && node tools/audit-all.cjs` — birtist sama RED á
+  hreinum grunni er hann ekki þér að kenna. *Sönnun:* `audit-arsskodun-inv-dot` var
+  RED á hreinu master (horfin DB-fixtura, óskyld); `audit-attachment-forms` sömuleiðis;
+  `audit-para-tegund` sömuleiðis (gagna-audit sem les Supabase — fjórar walk-in sölur
+  paraðar sem úttekt án skýrslu, eins með og án kóðabreytingar).
+
+- **Audit sem greppar aðeins strengi helst grænt þótt vörðurinn sé fjarlægður.** Tvær
+  leiðir mældar: (a) dauður tvífari með sama nafni uppfyllti greppið meðan virki
+  vörðurinn hefði mátt eyða; (b) nafna-grepp hélst grænt þegar fúnksjónin var
+  endurnefnd í `_disabled_<nafn>`. **Sannaðu KALLSTAÐINN (`await <nafn>(`), hvert
+  atriði fyrir sig, og sannreyndu ALLTAF að prófið FELLI þegar vírinn er slitinn.**
+
+- **Úttekt sem getur ekki fallið er einskis virði — keyrðu hana ALLTAF á brotna
+  kóðanum líka.** Ný úttekt telst ekki tilbúin fyrr en sannað er að hún verði rauð á
+  veilunni sem hún á að grípa.
+
+- **Vörður sem ÞRENGIR gilt inntak þarf úttekt á KÓÐA-forminu, ekki bara
+  gagna-talningu.** *Sönnun:* blank-invoice vörðurinn var aðeins mældur með því að
+  telja tómar sölur í gögnum, svo kóða-afturför (hafnaði Drive-viðhengjum) lifði viku
+  óséð.
+
+- **Úttekt má ALDREI krefjast þess að ein tiltekin VINNU-röð sé til.** *Sönnun:*
+  ársskoðunar-úttektin krafðist reiknings sem hvarf þegar Agnar var ekki búinn með
+  staðinn → allt öryggisnetið varð rautt af VENJULEGRI VINNU. Rautt net sem stafar af
+  venjulegri vinnu kennir fólki að líta undan — verra en ekkert net. Prófaðu REGLUNA á
+  öllum röðum sem uppfylla skilyrðin; finnist engin er ekkert að prófa (hlutlaus lína,
+  ekki rautt).
+
+- **Vörn á heima þar sem SANNLEIKURINN er.** Klientinn sendir aðeins tilvísun og getur
+  ekki vitað hvort hún leysist — því verður neitunin að liggja ÞJÓNSMEGIN. *Sönnun:*
+  póstþjónninn sendi samt með mjúkri viðvörun þótt viðhengi leystist ekki; kúnni gat
+  fengið reikningslausan póst merktan „Sent".
+
+- **Viðhengja-samningur `gmail-send`: ÞRJÚ gild form — `content` (base64), `driveId`,
+  `url`.** Öll klient-staðfesting verður að samþykkja öll þrjú. *Sönnun:* reikningur
+  stöðvaður sem „tómur" þótt salan væri heil — PDF-ið bjó bara á Drive.
+
+- **`git checkout -- <skrá>` / `git stash` hjá samhliða agent þurrkar út ÓCOMMITTAÐAR
+  systkina-breytingar** í sömu repo. Vinni tvö actor sömu repo samtímis: commit-aðu
+  eða feldu eignarhald hverrar skráar til EINS actors.
+
+- **Vinnu-greinin getur verið ÚRELT eða EYDD eftir að PR hennar var merged** — og
+  squash-merge gefur ANNAN SHA, svo `git merge-base --is-ancestor` segir „ekki í
+  main" þótt innihaldið sé þar. **Staðfestu eftir INNIHALDI** (`git diff <grein>:<skrá>
+  origin/main:<skrá>`), ekki eftir SHA. Sé greinin aðeins með þegar-mergaða sögu má
+  endurræsa hana frá default (`git checkout -B <grein> origin/<default>`); þurfi
+  force-with-lease og það sé lokað, **merge-aðu fjargreinina inn í staðinn** — það er
+  efnislega núll-aðgerð og gerir ýtinguna fast-forward. Force-with-lease bregst með
+  „stale info" þegar remote-greinin var EYDD við merge → `git remote prune origin` og
+  ýttu svo PLAIN.
+
+---
+
+## 13. Skema-, API- og gagna-gildrur
+
+- **⚠️ `/api/verkefnalisti`: reiturinn heitir `status`, EKKI `stada` — og API-ið hunsar
+  óþekkta reiti HLJÓÐLAUST** (skilar ok:true þótt ekkert breytist). `action:'add'`
+  byggir HVÍTLISTAÐA röð: aðeins `title`, `description`, myndir, `priority`,
+  `category` komast inn, `status` er alltaf `beidni`, og **`assigned_agent` kemst
+  EKKI inn** — hann verður að setjast með sérstöku `action:'update'` kalli á eftir,
+  og staðfestast með lestri. Svarið er undir `tasks`. *Sönnun:* verkefnalisti.js les
+  `body.status` (:138) og `assigned_agent` aðeins í update-grein (:161); verk
+  22a44bdc sat fast í beidni eftir TVÆR „stada"-uppfærslur sem báðar skiluðu ok:true.
+
+- **⚠️ PostgREST-talning: harðkóðað `select=id` + `Prefer: count=exact` skilar
+  HLJÓÐLAUSU 0-i á hverja töflu/view sem á engan `id`-dálk** — 400-svarið ber ekkert
+  content-range og parsast sem 0. Teldu með `select=*` og láttu `!r.ok` KASTA. Þekkt
+  id-laus: `geocode_cache` (PK er `query`), `v_bundle_coverage`. *Sönnun:* kort-sviðið
+  sýndi 0 þar sem SQL taldi 1.509; vantar_reikning 0 í stað 150.
+
+- **⚠️ Netlify sync-fall er drepið á 10s — innri timeout YFIR 10s er gagnslaus vörn**
+  (fallið deyr áður en varaleiðin svarar → tómt svar, engin villa). Safnari með mörg
+  undirköll þarf þak PER undirkall (t.d. 4s) með varagildi. *Sönnun:* jarvis-sviðið
+  (12s heildar) svaraði tómu á ~11s annað hvert kall; 4s per undirkall lagaði.
+
+- **Nýr bilunarpunktur ÞJÓNSMEGIN verður að skrá í `app_problems` þjónsmegin.**
+  *Sönnun:* `app_problems` innihélt engar raðir með `source_app='brunaholf'` — hub-inn
+  hafði aldrei skrifað í registry-ið, svo 3×/dag sópunin hefði aldrei séð stöðvaða
+  sendingu. Klientmegin `alert()` er ekki skráning.
+
+- **Skráanöfn bera kennitölur, og `\b` bregst á undirstriki.**
+  `Reikningur_120380-4569.pdf` slapp óhreinsað gegnum `\b\d{6}-?\d{4}\b` því `_` er
+  orðstafur. *Mælt 2026-09-01:* 1.533 af 3.755 skráanöfnum í `customer_documents`
+  (41%) báru kennitölu — meginregla, ekki jaðartilvik. **Notaðu
+  `(?<!\d)\d{6}[-\s_]?\d{4}(?!\d)`** og prófaðu ALLAR gerðirnar (bil, undirstrik,
+  bandstrik, staf-límt). ⚠️ `catch (e)` getur borið fulla slóð með `?token=` inn í
+  registry sem allur hópurinn les — strípaðu slóðir líka, ekki bara kennitölur.
+
+- **slokkvitaeki OG brunahólf deila SAMA Supabase-verkefni (`osfdzskyvisifcwyjkuk`).**
+  Að endurmóta sameiginlega view/töflu fyrir annað appið getur brotið hitt Í HLJÓÐI.
+  Athugaðu báða notendur áður en view/tafla er breytt.
+
+- **Útlits-/dálkastillingar lifa server-side og HREINSAST EKKI við kóðalagfæringu.**
+  Faldir/breyttir dálkar búa í `app_settings` (id=1, JSONB): `slokk_coldrag_v1`
+  (dálkabreiddir + `hide`, patch 319) og `page_editor_v1_json` (Stílstjóri, patch 262).
+  „Hverfi" dálkur og kóðinn er réttur → athugaðu þessa geymslu FYRST. Lagfæring á kóða
+  eyðir EKKI þegar-vistaðri rangri færslu.
+
+- **Kerfislesandi RPC eru læst á service_role:** `oryggi_counts()` er mynstrið —
+  SECURITY DEFINER + `search_path=''` + execute afturkallað frá public/anon/
+  authenticated, veitt AÐEINS service_role. Hver ný tafla/bucket fæðist OPIN — RLS-
+  ákvörðun á að vera hluti af stofnun hverrar töflu.
+
+- **Soft-delete, aldrei DELETE-policy** á notendagögnum. Geymsluhlutum í Supabase
+  Storage verður EKKI eytt með SQL — `storage.protect_delete()` kastar villu.
+
+- **`updatedAt` má ALDREI stimplast við ýtingu — aðeins við EFNISbreytingu.** Iðjulaus
+  flipi sem ýtir gömlu efni fær annars nýjasta stimpilinn og étur nýja vinnu hins
+  tækisins við næsta pull. *Sönnun:* „þetta datt allt út og fór aftur á byrjunarreit".
+  **Gamlir flipar eru varanleg ógn í fjöltækja-appi — kóða-lagfæring ein dugar ekki:**
+  útgáfu-merki í skjalinu (pull hunsar skjöl frá klientum án þess) OG saga þjónsmegin.
+  **Hydration má aldrei bíða á neti án tímamarka** — vistunar-áskrift sem tengist fyrst
+  eftir hydration þýðir að EKKERT vistast á meðan.
+
+### 13.1 Árs-pillur og hvað „grænt" ÞÝÐIR
+
+- **⭐ GRÆNT ER UNDIRSKRIFT, EKKI ÚTREIKNINGUR.** Árs-pillan (`sk-pill`) og
+  árs-dálkarnir lesa `year_factcheck` (`co_id, year, status`) — ekki skjölin:
+  `human` = manneskja tvísmellti og staðfesti (glóandi grænt) · `claude` = Claude
+  yfirfór, bíður staðfestingar (blátt) · `gap` = skýrsla vantar (gult). **Ekkert í
+  kóðanum setur `human` sjálfkrafa — það er eina stigið sem krefst manneskju, og það
+  er allur tilgangur þess.** *Sönnun:* `199-doc-year-grid.js` — `fcStatus()` les
+  eingöngu `year_factcheck`; `fcToggle()` er eina leiðin í `human`.
+- **Pillan les ALDREI reikninginn; þjónustuspjaldið gerir það.** Tvö ólík merki sem
+  svara ólíkum spurningum: `pill(y, repByY…)` ← skýrslan ein ·
+  `hasRep && hasInv ? '✓ FULLBÚIÐ'` ← þekjan.
+- **⚠️ `gap` VERÐUR að yfirgnæfa hvaða sjálfvirku grænu sem er.** Skjöl á röngu ári/
+  röngum stað ERU til, svo þekju-útreikningur myndi endurlita árið og flaggið yrði
+  gagnslaust.
+- **⚠️ Agnar HAFNAÐI sjálfvirku grænu.** Mattgrænt „skjöl fullbúin" stig var smíðað,
+  prófað og lagt fram — **og PR-inu lokað án merge.** Ekki endurbyggja óumbeðið.
+- **Röð-gildra:** `pills` er reiknað Á UNDAN `resolved`. Vilji einhver nota
+  skýrslu↔reikningur pörunina í pillunum þarf að færa útreikninginn NEÐAR í `render()`.
+- **Listinn og kúnnasíðan hafa ÓLÍKA nákvæmni.** 187 (listinn) hefur aðeins
+  `invMap[coId][year]` — árs-stig. 199 (kúnnasíðan) leysir per þjónustu.
+  **Kúnnasíðan er nákvæmari heimildin** og listinn á ekki að láta eins og hann sé það.
+- **Tóm þjónusta má ALDREI fella árið** (flestir kaupa aðeins slökkvitækjaþjónustu).
+  Þjónusta sem á AÐRA hliðina (skýrslu en engan reikning) fellir árið hins vegar.
+
+### 13.2 Skjala-líkanið (Skýrslu-stöð / match-station)
+
+- **Eitt `save` setur BÆÐI svið:** `customer_documents.doc_type ∈ {uttektarskyrsla,
+  brunakerfi, reikningur, samningur}` og `.vidskiptategund ∈ {uttekt, brunakerfi, bud,
+  ovisst}` — bæði í EINU kalli `POST /api/match-station {action:'save', …}`.
+  Vörpunin: úttektarskýrsla = uttektarskyrsla·uttekt · brunakerfisskýrsla =
+  brunakerfi·brunakerfi · reikningur = reikningur·(uttekt|brunakerfi|bud) ·
+  þjónustusamningur = samningur·(uttekt|brunakerfi).
+
+---
+
+## 14. Umhverfi, verkfæri og aðflutt efni
+
+- **⚠️ `codecs.decode(s,'unicode_escape')` BROTNAR á build-dist bundle.** esbuild
+  skrifar broddstafi sem `\uXXXX`, en heildar-afkóðun deyr á
+  `UnicodeDecodeError: truncated \uXXXX escape` því bundleinn inniheldur líka bakstrik
+  sem eru ekki escape-sekvensar. **Notaðu escape-fyrir-escape:**
+  `re.sub(r'\\u([0-9a-fA-F]{4})', lambda m: chr(int(m.group(1),16)), s)`.
+  ASCII-tókenar (`br-skyrslustod`, `Playfair`, `grid-template-columns`) greppast beint.
+
+- **ECH/Chromium-gildran á AÐEINS við um útleið gegnum proxy.** `tools/bh-browser.cjs`
+  þarf fyrir vefsíður á internetinu, en **`file://` og `http://localhost` virka með
+  óbreyttu `playwright`** — loopback er undanskilið í proxy-stillingunni.
+
+- **Web Worker af ÖÐRU LÉNI er bannaður.** `new Worker('https://cdn…')` kastar
+  „Script … cannot be accessed from origin" og deyr HLJÓÐLEGA. *Sönnun:* tesseract-OCR
+  hafði aldrei keyrt í framleiðslu; tvær „ótengdar" veilur voru sama rótin. Lausn:
+  sjálfhýsa worker + core + traineddata (og endurafrita við uppfærslu safnsins).
+
+- **`getImageData` á fullri upplausn frystir vafrann.** Skala niður fyrir greiningu,
+  losa frumritið STRAX, keyra þungar lykkjur í bútum með yield, og hafa
+  re-entrancy vörð.
+
+- **Minifierinn endurskírir breytur** — leitaðu í lifandi búntum að EIGINDA-aðgangi
+  (`.driveId`), aldrei að breytunafni. *Sönnun:* leit að `a.driveId||a.url` fann
+  ekkert; kóðinn var þar sem `r.driveId||r.url`.
+
+- **base-ui DropdownMenu er `modal` sjálfgefið** → ósýnilegt bakdrop yfir ÖLLU appinu,
+  svo fyrsti smellur annars staðar „deyr". Nota `modal={false}`. Og base-ui skilar
+  fókus á valmyndar-takkann þegar valmynd lokast, tímasett af exit-animasjón — eitt
+  `focus()`-skot tapar kapphlaupinu.
+
+- **Konva `Line` fyllist ALDREI án `closed`.** **Grid-snap verður að deila sama bili
+  og SÝNILEGA grindin** (bilið tvöfaldast við útzoom).
+
+- **⚠️ CRLF-gildran:** skrár af Windows-vélunum eru CRLF; forritsleg endurskrifun sem
+  normaliserar í LF lætur git sjá ALLA skrána sem breytta. Python les/skrifar með
+  `newline=''`, og `git diff --stat` skal sanngirnisprófast eftir hverja forritslega
+  breytingu — heil skrá „breytt" fyrir litla lagfæringu = línuendingar flippuðust.
+
+- **Íslenskar gæsalappir „ " slíta strengi í heredoc-skriftum.** Skrifaðu íslenskan
+  texta í JSON-skrá og lestu hana.
+
+- **`npm run build` í rót kjarna keyrir turbo yfir ÖLL öpp** og hefur eytt `next` úr
+  node_modules — byggðu í `apps/slokkvitaeki`. **`pkill -f "next start"` drepur þína
+  eigin skel** (mynstrið passar við skipanatexta kallandans); sama gildir um
+  `pkill -f <skrá>` þegar skráarheitið stendur í þinni eigin skipanalínu.
+
+- **Netlify-checkið „Pages changed" = `neutral` er RÉTT niðurstaða** þegar breytingin
+  snertir aðeins `.claude/` eða annað utan síðanna — ekki bilun.
+
+- **Kjarni Stjórnstöðin býr í `apps/slokkvitaeki/app/kjarni/`** (MasterClient.tsx,
+  StationChrome.tsx, skins.ts + `apps/slokkvitaeki/app/globals.css`) — EKKI í
+  `apps/web`. `stn-*` toppstikan er `StationChrome`; skinnin eru þema-veljarar.
+
+### 14.1 Skills og aðflutt efni
+
+- **`claude skills install <nafn>` er EKKI til.** Skill er mappa undir
+  `.claude/skills/<nafn>/` með `SKILL.md` — virkt um leið og mappan er committuð.
+- **`aiskill.market` er skrásetning, ekki uppspretta** („No automatic installation
+  available"). Uppsprettan er **ClawHub**; skipunin sem þar stendur
+  (`openclaw skills install …`) tilheyrir ÖÐRU CLI.
+- **⚠️ ClawHub REST tekur BERT slug — aldrei eiganda:**
+  `/api/v1/packages/<slug>` = 200 · `/…/<eigandi>/<slug>` = „Package not found" ·
+  `/…/<slug>/versions/<ver>` = skráalisti með sha256 · `/…/<slug>/download` = ZIP ·
+  `/api/v1/search?q=` finnur slug. Breytist slóðatáknmálið:
+  `npm view openclaw dist.tarball` → `grep -oE '"/api/v1/[^"]*"' dist`.
+- **Aðflutt skill VERÐUR haus-aðlögun:** `name:` lágstafa og eins og möppuheitið.
+  Meginmálinu má ALDREI breyta. Sannreyndu sha256 og skimaðu fyrir leyndarmálum
+  (`nfp_…`, `eyJ…`, `SERVICE_ROLE`, `client_secret`) ÁÐUR en það fer í repo.
+- **Sama skill í mörgum repo-um á að vera BYTE-EINS.** Afritaðu, ekki endurskrifaðu —
+  sannreyndu með sha256. Sama regla og gildir um ÞETTA skjal.
+- **CLAUDE.md-reglan: yfir 40k stafir flaggar Claude Code og HVERT session les allt.**
+  Efnisbundnir kaflar eiga heima hjá eigandi sérfræðingi í `.claude/agents/`;
+  CLAUDE.md heldur kjarna + HVER KANN HVAÐ-routing þar sem töfluraðirnar bera
+  LEITARORÐIN. Fært ORÐRÉTT, aldrei afritað. Við nafnaárekstur gildir eigandi lénsins
+  (`kunnaskra` = brunaholf, því brunaholf á kúnna-líkanið).
+
+---
+
+## 15. App-arkitektúr og fagreglur
+
+### 15.1 Slokkvitaeki app-hamur
+
+- **`?app=<lykill>` er RAUNVERULEGA innleiðin í app-ham.** Að setja `body.appmode` +
+  `data-app` handvirkt byggir EKKI botnstikuna. *Sönnun:* `AppProfiles.reload()` eitt
+  og sér skildi `#_app-nav` eftir ótilbúið; `?app=boss` ræsti hana strax.
+- **~40 pappar vefja `App.switchView` og sumir stytta sér leið fyrir SÍNA sýn án þess
+  að kalla áfram.** Treystu ekki vafningakeðjunni — **lestu DOM-inn: `.view.active`**.
+  *Sönnun:* fjórar sýnir skildu slóðina eftir á fyrri sýn, svo refresh skilaði
+  notandanum á ranga síðu.
+- **Sumar sýnir eru búnar til á KEYRSLUTÍMA, og sumar LATT.** Þær eru hvorki í
+  ALIAS-töflu beinisins né í `index.html`. **Endurheimt sem BÍÐUR eftir að elementið
+  birtist er eilíf bið; smiðurinn (`switchView`, eða nav-hnappurinn) verður að vera
+  kallaður.**
+- **Deep-linkar milli appa: merge-röð skiptir máli.** Öpp-flís sem opnar
+  `https://brunaholf.netlify.app/?embed=1#<flipi>` bendir á PRODUCTION. Sé flipinn
+  ómergaður fellur `applyDeepLinkTab()` ÞÖGULT á sjálfgefna flipann — engin villa,
+  bara röng síða. **Mergaðu ALLTAF mark-flipann á undan flísinni sem tengir í hann.**
+- **jarvis.html: ÞRJÁR skrár sem stemma EKKI sjálfkrafa saman** — raddirnar
+  (`js/jarvis-voice.js` AGENTS), sviðin (`netlify/functions/svid-status.js` SVID) og
+  roster-HTML-ið. Nýtt svið = **6 snertifletir** (AGENTS-rödd · SVID-færsla · safnari ·
+  svidbtn · PLAY_ORDER · roster-röð) **+ `einfold()`-grein**. Svið utan PLAY_ORDER er
+  HLJÓÐLEGA sleppt í „▶ Öll". Ný rödd krefst alvöru fish.audio voice_id.
+
+### 15.2 Fagreglur sem Agnar leiðrétti (brunavarnir / teikningar)
+
+- **Eldveggja-litir: EI-60 = appelsínugult · E-30 = blátt · EI/E30-CS hurðir =
+  ljósblátt.** *(Agnar 2026-08-26.)*
+- **ÚTVEGGIR teljast hluti brunahólfs en á ALDREI að merkja eða þétta** — reykur á að
+  komast út. Sjálfvirk veggja-greining má ekki merkja ytri útlínu hússins sem eldvegg.
+- **Byggingamál eru í MILLIMETRUM** (4.280 mm), ekki metrum með kommu.
+- **Innslegin mæling verður að LIFA á teikningunni.** Kvarða-tól sem hendir línunni
+  eftir innslátt eyðir vinnu notandans.
+- **Nettó og brúttó eru sitt hvor talan** — sýna BÆÐI, aldrei aðeins aðra.
+
+### 15.3 Vinnureglur sem Agnar leiðrétti
+
+- **Prófaðu í ALVÖRU vafra áður en þú segir að eitthvað sé klárt.** *(Agnar
+  2026-08-26: „hver einasti takki þarf ég að eyða klukkutíma til að prófa fram og til
+  baka".)* TurboPaint hefur `tools/turbopaint-smoke.cjs`.
+- **Sending á pósti er út á við og þarf grænt ljós.** Sannprófun sem setur alvöru póst
+  af stað er ekki keyrð óumbeðið — ekki einu sinni á eigið pósthólf.
+- **`node tools/audit-all.cjs` FYRIR og EFTIR breytingu á vörðum leiðum**
+  (ORYGGISNET.md regla 0), og ný trygging fær ALLTAF sína `tools/audit-<nafn>.cjs`.
