@@ -10834,6 +10834,7 @@ async function renderGerdReikninga(t){
             <button class="gr-btn gr-btn-primary" id="gr-save" type="button">💾 Vista</button>
             <button class="gr-btn" id="gr-savepdf" type="button" title="Vista sem PDF (geymt á Supabase, engin innskráning) — birtist neðst í „Vistuð PDF-skjöl" til að opna/sækja/senda">📄 Vista PDF</button>
             <button class="gr-btn" id="gr-print" type="button">🖨 Prenta / PDF</button>
+            <button class="gr-btn" id="gr-vinnuskjal" type="button" title="Vinnuskjal — efnislistinn OG tímaskýrslan á sama blaði, þjappað á eina A4-síðu">📋 Vinnuskjal</button>
             <button class="gr-btn" id="gr-manual-btn" type="button" title="Opna handvirka stillingu — kennitala og heimilisfang verkkaupa á reikning">✏️ Handvirkt</button>
             <button class="gr-btn" id="gr-timabok" type="button" title="Prenta tímabók (mæting starfsmanna) til að senda með reikningi">🕒 Tímabók</button>
             ${reviewOn ? `<button class="gr-btn" id="gr-confirm" type="button" style="background:#059669;border-color:#059669;color:#fff" title="Vista breytingarnar OG staðfesta yfirferðina — skrifstofan sér grænt „👔 Staðfest" á Kröfu yfirliti">✓ Staðfesta</button>
@@ -11099,6 +11100,9 @@ async function renderGerdReikninga(t){
       }catch(e){ $st.textContent = '✗ '+(e.message||e); $revert.disabled = false; }
     };
 
+    // Innfellda Tímaskýrslan setur þetta þegar hún er komin upp — Vinnuskjalið les
+    // þá LIFANDI línurnar (líka óvistaðar handvirkar breytingar) í stað þeirra vistuðu.
+    let grTbkLive = null;
     // ----- Print (open clean window) -----
     document.getElementById('gr-print').onclick = async () => {
       const w = window.open('', '_blank');
@@ -11133,6 +11137,33 @@ async function renderGerdReikninga(t){
           table.gr-efni tr.grand td.t{font-weight:700}
         </style></head><body>${docHtml}<script>window.onload=function(){window.print();}<\/script></body></html>`);
       w.document.close();
+    };
+
+    // ----- Vinnuskjal: efnislisti + tímaskýrsla á einu blaði -----
+    // Tímalínurnar eiga að vera ÞÆR SÖMU og sjást í innfelldu Tímaskýrslunni —
+    // líka handvirkar breytingar sem eru ekki vistaðar. Panellinn setur því
+    // grTbkLive hér að neðan. Bregðist hann (hann er í try/catch) lesum við
+    // vistaða eintakið úr state, og sé ekkert vistað sækjum við beint úr
+    // /api/timabok svo takkinn skili aldrei tómu blaði að óþörfu.
+    document.getElementById('gr-vinnuskjal').onclick = async () => {
+      const btn = document.getElementById('gr-vinnuskjal'); const old = btn.textContent;
+      try {
+        const live  = (typeof grTbkLive === 'function') ? grTbkLive() : null;
+        const saved = ((state.ui||{}).timabok_edits||{})[name+'|'+month] || null;
+        let rows = live ? live.rows : (saved && Array.isArray(saved.rows) ? saved.rows : null);
+        let yf   = live ? live.yf   : (saved && saved.yfirvinna ? saved.yfirvinna : undefined);
+        if(!rows && name && /^\d{4}-\d{2}$/.test(String(month))){
+          btn.textContent = '⏳ Sæki tíma…'; btn.disabled = true;
+          try {
+            const ctrl = new AbortController(); const to = setTimeout(()=>ctrl.abort(), 15000);
+            const resp = await fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&month=${encodeURIComponent(month)}`, { signal: ctrl.signal });
+            clearTimeout(to);
+            const d = await resp.json().catch(()=>({}));
+            if(resp.ok) rows = (d.rows||[]).map(r=>({ date:r.date||'', employee:r.employee||'', time_in:r.time_in||'', time_out:r.time_out||'', hours:Number(r.hours)||0 }));
+          } catch(_e){ /* engir tímar — vinnuskjalið prentast samt með efnislistanum */ }
+        }
+        printVinnuskjal(name, month, document.getElementById('gr-doc').innerHTML, rows||[], yf);
+      } finally { btn.textContent = old; btn.disabled = false; }
     };
 
     // ----- Save as PDF (vector) → Google Drive → shows in "Vistuð PDF-skjöl" -----
@@ -11199,6 +11230,7 @@ async function renderGerdReikninga(t){
         ? { on:!!tbkSaved.yfirvinna.on, thr:(Number(tbkSaved.yfirvinna.thr)>0?Number(tbkSaved.yfirvinna.thr):8) }
         : { on:false, thr:8 };
       const tbkNum = s => Number(String(s).replace(',','.').replace(/[^\d.]/g,''))||0;
+      grTbkLive = () => ({ rows: tbkRows, yf: { on: tbkYf.on, thr: tbkYf.thr } });
       const tbkSort = () => tbkRows.sort((a,b)=> String(b.date).localeCompare(String(a.date)) || String(a.employee).localeCompare(String(b.employee),'is'));
       const tbkPersist = () => { state.ui=state.ui||{}; state.ui.timabok_edits=state.ui.timabok_edits||{}; state.ui.timabok_edits[tbkKey]={ rows:tbkRows.map(r=>({...r})), yfirvinna:{on:tbkYf.on,thr:tbkYf.thr}, saved_at:new Date().toISOString() }; save(); };
       const tbkSync = persist => { const t=tbkYfSplit(tbkRows,tbkYf); const dv=document.getElementById('gr-dvh'), ev=document.getElementById('gr-evh'); if(dv) dv.value=Math.round(t.dv*100)/100; if(ev) ev.value=Math.round(t.yf*100)/100; if(typeof draw==='function') draw(); if(typeof checkTimabokSync==='function') try{ checkTimabokSync(name, month, numv('gr-dvh'), numv('gr-evh')); }catch(_e){} if(persist) tbkPersist(); };
@@ -20342,6 +20374,135 @@ async function printTimabok(name, month, rows, yfCfg){
     ${totHtml}
     <div class="tb-emp"><h2>Samantekt á starfsmann</h2><table><thead>${empHead}</thead><tbody>${empRows}</tbody></table></div>
     <script>window.onload=function(){window.print();}<\/script></body></html>`);
+  win.document.close();
+}
+
+// ── Vinnuskjal: efnislisti + tímaskýrsla á EINU blaði (beiðni Agnars 2026-09-02)
+// „🖨 Prenta / PDF" gefur efnislistann einan og „🖨 Prenta" í Tímaskýrslu-glugganum
+// gefur tímana eina — starfsmaður á staðnum þurfti því tvö blöð. Vinnuskjalið setur
+// bæði á sama blaðið og reynir að þjappa því á eina A4-síðu í tveimur þrepum:
+//   1) tímalínurnar dreifast á 1–3 dálka eftir fjölda, svo langur listi verði
+//      breiður í stað þess að verða langur,
+//   2) fitOnePage() í prentglugganum mælir hæðina og minnkar allt með `zoom`
+//      þar til það passar. `zoom` (ekki `transform:scale`) er notað VILJANDI:
+//      það hefur áhrif á umbrotið sjálft, svo hæð síðunnar minnkar með efninu.
+//      transform skilur eftir upphaflegu hæðina og býr þá til auða aukasíðu.
+// Skalinn stoppar í 0,45 — neðar er þetta hvort eð er ólæsilegt og þá er réttara
+// að leyfa annarri síðu að fljóta með en að prenta eitthvað sem enginn les.
+function printVinnuskjal(name, month, docHtml, rows, yfCfg){
+  const hr = n => _phr(n);
+  const dmy = s => { const p=String(s||'').split('-'); return p.length===3? `${p[2]}.${p[1]}.${p[0]}` : (s||''); };
+  if(yfCfg === undefined) yfCfg = tbkSavedYf(name, month);
+  // Í tímaröð (öfugt við gluggann sem sýnir nýjast efst) — fylgiskjal sem er
+  // lesið ofan frá og niður með mánuðinum.
+  const sorted = (rows||[]).slice().sort((a,b)=> String(a.date).localeCompare(String(b.date)) || String(a.employee).localeCompare(String(b.employee),'is'));
+  const t  = tbkYfSplit(sorted, yfCfg);
+  const rs = tbkRowSplit(sorted, { on: t.on, thr: t.thr });
+  const nCol = sorted.length > 44 ? 3 : sorted.length > 20 ? 2 : 1;
+  const per  = Math.ceil(sorted.length / nCol) || 1;
+  const thead = `<tr><th>Dags.</th><th>Starfsm.</th><th class="c">Inn</th><th class="c">Út</th>${t.on?'<th class="r">Dagv.</th><th class="r">Yfirv.</th>':''}<th class="r">Tímar</th></tr>`;
+  const tables = [];
+  for(let ci=0; ci<nCol; ci++){
+    const slice = sorted.slice(ci*per, (ci+1)*per);
+    if(!slice.length) continue;
+    const body = slice.map((r,i)=>{
+      const s = rs[ci*per + i] || { dv:0, yf:0 };
+      // Dagsetning aðeins á fyrstu línu hvers dags — en alltaf efst í dálki.
+      const showD = i===0 || String(r.date) !== String(slice[i-1].date);
+      return `<tr><td class="d">${showD?dmy(r.date):''}</td><td>${escapeHtml(r.employee||'')}</td><td class="c">${escapeHtml(r.time_in||'')}</td><td class="c">${escapeHtml(r.time_out||'')}</td>${t.on?`<td class="r">${hr(s.dv)}</td><td class="r">${s.yf>0?hr(s.yf):''}</td>`:''}<td class="r">${hr(r.hours)}</td></tr>`;
+    }).join('');
+    tables.push(`<table class="vs-t"><thead>${thead}</thead><tbody>${body}</tbody></table>`);
+  }
+  const empHead = t.on
+    ? `<tr><th>Starfsmaður</th><th class="r">Dagar</th><th class="r">Dagv.</th><th class="r">Yfirv.</th><th class="r">Tímar</th></tr>`
+    : `<tr><th>Starfsmaður</th><th class="r">Dagar</th><th class="r">Tímar</th></tr>`;
+  const empRows = Object.keys(t.byEmp).sort((a,b)=>a.localeCompare(b,'is')).map(e=>{
+    const m = t.byEmp[e];
+    return t.on
+      ? `<tr><td>${escapeHtml(e)}</td><td class="r">${m.days.size}</td><td class="r">${hr(m.dv)}</td><td class="r">${hr(m.yf)}</td><td class="r">${hr(m.hours)}</td></tr>`
+      : `<tr><td>${escapeHtml(e)}</td><td class="r">${m.days.size}</td><td class="r">${hr(m.hours)}</td></tr>`;
+  }).join('');
+  const totTxt = t.on
+    ? `Dagvinna <b>${hr(t.dv)}</b> · Yfirvinna (yfir ${tbkThrTxt(t.thr)} klst/dag) <b>${hr(t.yf)}</b> · Tímar alls <b>${hr(t.total)}</b>`
+    : `Tímar alls <b>${hr(t.total)}</b>`;
+  const tbkBlock = sorted.length
+    ? `<div class="vs-h2">Tímaskýrsla — mæting starfsmanna</div>
+       <div class="vs-cols" style="grid-template-columns:repeat(${tables.length},1fr)">${tables.join('')}</div>
+       <div class="vs-foot"><div class="vs-tot">${totTxt}</div>${empRows?`<table class="vs-emp"><thead>${empHead}</thead><tbody>${empRows}</tbody></table>`:''}</div>`
+    : `<div class="vs-h2">Tímaskýrsla</div><div class="vs-none">Engar tímafærslur skráðar fyrir ${escapeHtml(monthLabelStatic(month))}.</div>`;
+  // Sami haus og á efnislistanum, önnur undirlína — svo blaðið segi hvað það er.
+  // Finnist undirlínan ekki (breyttist markupið?) stendur skjalið samt óskaddað.
+  const efni = String(docHtml||'').replace(/(<div class="gr-doc-sub">)[^<]*(<\/div>)/, '$1Vinnuskjal — efnislisti og tímaskýrsla$2');
+  const win = window.open('', '_blank'); if(!win){ alert('Leyfðu sprettiglugga til að prenta.'); return; }
+  win.document.write(`<!DOCTYPE html><html lang="is"><head><meta charset="utf-8"><title>Vinnuskjal — ${escapeHtml(name)} — ${monthLabelStatic(month)}</title>
+    <style>
+      @page{size:A4 portrait;margin:10mm}
+      html,body{margin:0;padding:0;background:#fff}
+      body{font-family:'Times New Roman',Times,serif;color:#000}
+      #vs-page{width:190mm;margin:0 auto}
+      @media screen{ #vs-page{overflow:hidden;box-shadow:0 0 0 1px #ddd;margin:10mm auto} }
+      /* Efnislistinn — sama útlit og „🖨 Prenta / PDF", örlítið þéttara. */
+      .gr-doc-top{display:grid;grid-template-columns:150px 1fr;gap:16px;align-items:center;margin-bottom:14px}
+      .gr-doc-logo{max-width:150px;max-height:74px;object-fit:contain}
+      h1{font-size:21px;margin:0}.gr-doc-sub{font-style:italic;color:#555;margin:2px 0 0}
+      .gr-doc-meta{margin-bottom:10px}.gr-doc-ws{font-weight:700}
+      .gr-doc-cust{font-size:11px;margin-top:3px;line-height:1.4;color:#222}
+      table.gr-efni{width:100%;border-collapse:collapse;font-size:12px}
+      table.gr-efni td{padding:2px 4px}
+      table.gr-efni thead td{font-style:italic;color:#555;text-align:right}
+      table.gr-efni thead td:first-child{text-align:left}
+      table.gr-efni td.l{text-align:left}
+      table.gr-efni td.p,table.gr-efni td.m,table.gr-efni td.t{text-align:right;white-space:nowrap}
+      table.gr-efni td.m{border-bottom:1px solid #000}
+      table.gr-efni tr.sec td{font-weight:700;padding-top:8px}
+      table.gr-efni tr.sub td{border-top:1px solid #000;padding-top:3px;text-align:right;font-style:italic;color:#555}
+      table.gr-efni tr.sub td.t{font-style:normal;color:#000}
+      table.gr-efni tr.grand td{border-top:1px solid #000;border-bottom:3px double #000;padding:4px;text-align:right}
+      table.gr-efni tr.grand td.t{font-weight:700}
+      /* Tímaskýrslan */
+      .vs-h2{margin:16px 0 5px;font-size:13px;font-weight:700;border-bottom:2px solid #000;padding-bottom:3px}
+      .vs-cols{display:grid;gap:14px;align-items:start}
+      table.vs-t{width:100%;border-collapse:collapse;font-size:10.5px}
+      table.vs-t th{text-align:left;border-bottom:1px solid #000;padding:2px 4px;font-size:9px;text-transform:uppercase;color:#444;white-space:nowrap}
+      table.vs-t td{padding:1.5px 4px;border-bottom:1px solid #eee}
+      table.vs-t td.d{font-weight:700;white-space:nowrap}
+      .vs-t th.r,.vs-t td.r,.vs-emp th.r,.vs-emp td.r{text-align:right;white-space:nowrap}
+      .vs-t th.c,.vs-t td.c{text-align:center;white-space:nowrap}
+      .vs-foot{display:flex;gap:20px;align-items:flex-start;justify-content:space-between;margin-top:8px;border-top:1px solid #000;padding-top:5px}
+      .vs-tot{font-size:12px}.vs-tot b{font-size:13px}
+      table.vs-emp{border-collapse:collapse;font-size:10px;min-width:230px}
+      table.vs-emp th{text-align:left;border-bottom:1px solid #000;padding:1px 5px;font-size:9px;text-transform:uppercase;color:#444}
+      table.vs-emp td{padding:1px 5px}
+      .vs-none{font-style:italic;color:#555;font-size:12px}
+    </style></head><body>
+    <div id="vs-page"><div id="vs-in">${efni}${tbkBlock}</div></div>
+    <script>
+    (function(){
+      var page=document.getElementById('vs-page'), inn=document.getElementById('vs-in');
+      // Nothæf hæð A4 að frádregnum 10mm spássíum, með 2mm öryggisbili svo
+      // námundun ýti okkur ekki yfir á blaðsíðu tvö. 1mm = 96/25.4 CSS px.
+      var avail = 275 * (96/25.4);
+      function hAt(k){ inn.style.zoom = k; return page.getBoundingClientRect().height; }
+      function fitOnePage(){
+        var full = hAt(1);
+        if(full <= avail) return;                  // passar óskalað — snertum ekkert
+        // Helmingunarleit: lo = minnkun sem VITAÐ er að passar, hi = sem passar ekki.
+        // Hlutfallsleg fyrsta ágiskun styttir leitina (hæð og zoom eru nær línuleg),
+        // og helmingunin skilar svo STÆRSTA skala sem kemst á blaðið — hrein
+        // hlutfallsreikning ein og sér undirskýtur um ~10% og prentar óþarflega smátt.
+        var lo=0.45, hi=1, k=Math.max(lo, Math.min(0.999, (avail/full)*0.99));
+        for(var i=0;i<7;i++){
+          if(hAt(k) <= avail) lo=k; else hi=k;
+          k=(lo+hi)/2;
+        }
+        inn.style.zoom = lo;                       // lo passar alltaf (eða er gólfið)
+      }
+      window.onload = function(){
+        try{ fitOnePage(); }catch(e){}
+        setTimeout(function(){ window.print(); }, 80);
+      };
+    })();
+    <\/script></body></html>`);
   win.document.close();
 }
 
