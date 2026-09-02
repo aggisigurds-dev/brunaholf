@@ -1,0 +1,23 @@
+# Þáttunarpróf á inline <script> blokkum.
+#
+# Netlify byggir EKKERT fyrir þetta repo — index.html er borin fram eins og hún
+# er. Deploy-preview verður því „grænn" um leið og afritun tekst; að skráin KEYRI
+# ekki er ekki mælt. 2026-08-08 fór ein vantandi `}` í loftið og allur hubbinn
+# varð tómur. Þetta er eina prófið sem hefði stöðvað það.
+name: Inline JS
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  parse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Þátta allar inline <script> blokkir
+        run: node tools/check-inline-js.cjs
