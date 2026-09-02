@@ -219,8 +219,20 @@
     const msg=document.getElementById('nl-stada-msg');
     if(!stadaGogn){ msg.textContent='Engin gögn enn'; return; }
     const txt=stadaGogn.lines.map(l=>medNr?(l.verk_nr+'\t'+l.stakar_alls):String(l.stakar_alls)).join('\n');
-    try{ await navigator.clipboard.writeText(txt); msg.textContent='Afritað ✓ '+stadaGogn.lines.length+' línur · '+mLabel(stadaGogn.month); }
-    catch(_){ msg.textContent='Klippiborð lokað — veldu tölurnar í töflunni'; }
+    const ok=await klippibord(txt);
+    msg.textContent = ok ? 'Afritað ✓ '+stadaGogn.lines.length+' línur · '+mLabel(stadaGogn.month)
+                         : 'Klippiborð lokað — veldu tölurnar í töflunni og afritaðu handvirkt';
+  }
+  // Fyrst nýja API-ið (þarf HTTPS + fókus + leyfi), annars gamla execCommand-leiðin
+  // gegnum falinn textareit — hún virkar í gluggum þar sem nýja API-ið er lokað.
+  async function klippibord(txt){
+    try{ await navigator.clipboard.writeText(txt); return true; }catch(_){}
+    try{
+      const ta=document.createElement('textarea'); ta.value=txt; ta.setAttribute('readonly','');
+      ta.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:0';
+      document.body.appendChild(ta); ta.focus(); ta.select(); ta.setSelectionRange(0,txt.length);
+      const ok=document.execCommand('copy'); ta.remove(); return !!ok;
+    }catch(_){ return false; }
   }
   async function loadStada(){
     stadaGrind();
