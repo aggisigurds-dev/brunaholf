@@ -14140,6 +14140,19 @@ async function renderKrofuyfirlit(t){
           <div style="font-size:12px;color:var(--muted);margin-top:4px" id="kyf-meta">Þrepaskipt kröfu-yfirlit — ógreitt → ósent → tími eftir · Sækir…</div>
           <div style="font-size:11px;color:#94a3b8;margin-top:3px" id="kyf-fresh">Síðasta uppfærsla: …</div>
           <div style="margin-top:8px;display:flex;gap:14px;flex-wrap:wrap"><span data-sync-workflow="timavera" data-sync-label="Tímavera"></span><span data-sync-workflow="ajour" data-sync-label="Ajour"></span><span data-sync-workflow="redder" data-sync-label="Redder"></span><span data-sync-workflow="payday" data-sync-label="Payday"></span></div>
+          <div class="kyf-print-hide" style="margin-top:6px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <span class="hub-sync kyf-deep" title="Djúp-samstilling: sækir ALLAR vinnufærslur valda tímabilsins beint úr Tímaveru og speglar þær — færslur sem er breytt eða eytt í tímaveru.is uppfærast hér líka.&#10;&#10;Venjulegi „Samstilla Tímavera" takkinn nær 30 daga aftur og sjálfvirka keyrslan 2 síðustu daga (á 2 tíma fresti) + 60 daga á nóttunni. Breytingar á eldri mánuðum (t.d. júlí lagaður í september) nást ÞVÍ AÐEINS með þessum takka.&#10;&#10;Öryggisþak: ef yfir 30% raða gluggans myndu eyðast er speglun stöðvuð og það sýnt hér.">
+              <select id="kyf-deep-days" title="Hve langt aftur á að spegla" style="font:inherit;font-size:12px;font-weight:600;color:var(--ink-2);background:transparent;border:0;padding:4px 2px;cursor:pointer">
+                <option value="31">1 mánuður</option>
+                <option value="62">2 mánuðir</option>
+                <option value="92" selected>3 mánuðir</option>
+                <option value="183">6 mánuðir</option>
+                <option value="366">12 mánuðir</option>
+              </select>
+              <button type="button" id="kyf-deep-btn">⏬ Djúp-samstilla Tímaveru</button>
+              <span class="d"><span class="dot"></span><span class="txt" id="kyf-deep-txt">nær líka í breyttar eldri færslur</span></span>
+            </span>
+          </div>
         </div>
         <div class="kyf-print-hide" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <select class="kyf-sort" title="Raða" style="padding:7px 9px;border:1px solid var(--line-2);border-radius:var(--radius-sm);background:var(--card);font:inherit;font-size:12.5px;font-weight:600;color:var(--ink-2);cursor:pointer">
@@ -15377,6 +15390,38 @@ async function renderKrofuyfirlit(t){
   if(window.__kyfPaydaySync) document.removeEventListener('hub-sync-done', window.__kyfPaydaySync);
   window.__kyfPaydaySync = (e)=>{ if(!$view.querySelector('.kyf-wrap')) return; if(e.detail && e.detail.wf==='payday') load(true); };
   document.addEventListener('hub-sync-done', window.__kyfPaydaySync);
+
+  // ⏬ Djúp-samstilling Tímaveru (ósk Agnars 2026-09-02). Venjulegi „Samstilla
+  // Tímavera" takkinn (hub-sync-buttons.js) nær 30 daga aftur og sjálfvirka
+  // speglunin 2 daga (á 2 tíma fresti) / 60 daga (nóttin). Færslum sem er BREYTT
+  // í tímaveru.is lengra aftur náðist því aldrei í — Orkureitur júlí sat í 61,46
+  // klst meðan Tímavera sýndi 76,14. Hér velur maður hve langt aftur er speglað
+  // (allt að 12 mán.) og svarlínan sýnir glugga · fjölda · eyðingar · öryggisþak.
+  (function wireDeepPull(){
+    const btn = $view.querySelector('#kyf-deep-btn'); if(!btn) return;
+    const sel = $view.querySelector('#kyf-deep-days'), txt = $view.querySelector('#kyf-deep-txt');
+    const wrap = btn.closest('.kyf-deep'), dot = wrap.querySelector('.dot');
+    btn.onclick = async ()=>{
+      const days = parseInt(sel.value,10) || 92;
+      const lbl = sel.options[sel.selectedIndex].textContent;
+      if(!confirm('Djúp-samstilla Tímaveru '+lbl+' aftur?\n\nSækir allar vinnufærslur tímabilsins beint úr Tímaveru og speglar: breyttar færslur uppfærast, færslur sem er eytt þar hverfa hér. Tekur nokkrar sekúndur — lengri gluggar geta tekið lengri tíma.')) return;
+      btn.disabled = true; const old = btn.textContent; btn.textContent = '… Samstilli '+lbl;
+      dot.className = 'dot running'; wrap.classList.remove('ok','err'); txt.textContent = 'sæki '+days+' daga úr Tímaveru…';
+      try{
+        const r = await fetch('/api/timavera-pull?days='+days, {cache:'no-store'});
+        const d = await r.json().catch(()=>({}));
+        if(!r.ok || d.error) throw new Error(d.error || ('HTTP '+r.status));
+        const w = d.reconcile_window;
+        const win = w ? (w.start.split('-').reverse().join('.')+' → '+w.end.split('-').reverse().join('.')) : (String(d.from||'').slice(0,10)+' → '+String(d.to||'').slice(0,10));
+        txt.textContent = '✓ '+win+' · '+(d.upserted||0)+' færslur'+(d.reconciled?' · '+d.reconciled+' úreltar eytt':'')+(d.reconcile_blocked?' · ⚠ speglun stöðvuð (öryggisþak)':'');
+        dot.className = 'dot done'; wrap.classList.add('ok');
+        if(d.reconcile_blocked) alert('Speglun stöðvuð (öryggisþak):\n\n'+d.reconcile_blocked);
+        try{ document.dispatchEvent(new CustomEvent('hub-sync-done',{ detail:{ wf:'timavera-deep', label:'Tímavera', detail:txt.textContent } })); }catch(_){}
+        load(true);
+      }catch(e){ dot.className = 'dot error'; wrap.classList.add('err'); txt.textContent = '✗ '+(e.message||e); }
+      finally{ btn.disabled = false; btn.textContent = old; }
+    };
+  })();
 
   // Síðasta uppfærsla — Tímavera · Ajour · Redder (prefer newest_real).
   (async function loadFreshness(){
