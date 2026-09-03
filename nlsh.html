@@ -239,7 +239,7 @@
     document.querySelectorAll('#nl-stada-t tr[data-verk]').forEach(tr=>{
       const i=tr.querySelector('input.nl-lok'); const lok=lokGildi(i); const ajour=+i.dataset.ajour; const st=lok==null?ajour:lok;
       const full=tr.dataset.full==='1', metrar=tr.dataset.metrar==='1', rate=+tr.dataset.rate, prevSt=+tr.dataset.prevstada, prevH=+tr.dataset.prevheilar;
-      const heilar=(full||metrar)?st:st/2, upphaed=Math.round(heilar*rate), delta=st-prevSt, dH=heilar-prevH, um=Math.round(dH*rate);
+      const heilar=full?st:st/2, upphaed=Math.round(heilar*rate), delta=st-prevSt, dH=heilar-prevH, um=Math.round(dH*rate);
       tr.querySelector('.c-heilar').textContent=nf1(heilar); tr.querySelector('.c-upphaed').textContent=kr(upphaed);
       tr.querySelector('.c-delta').textContent=(delta>=0?'+':'')+nf1(delta); tr.querySelector('.c-um').textContent=kr(um);
       tr.classList.toggle('nl-diff', lok!=null && lok!==ajour);
