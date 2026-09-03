@@ -53,6 +53,7 @@ async function baseNames(ids) {
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: P.secHeaders(), body: '' };
   if (!P.dbReady()) return P.json(503, { error: 'Supabase env vantar' });
+  const _g = P.requireStaff(event); if (_g) return _g;
 
   try {
     // ── GET ──

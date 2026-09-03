@@ -137,7 +137,59 @@ function json(code, body, extraHeaders) {
 function envReady() { return !!(SUPABASE_URL && SUPABASE_KEY && JWT_SECRET); } // login/session (þarf JWT)
 function dbReady() { return !!(SUPABASE_URL && SUPABASE_KEY); }                 // stjórnsíða/status (aðeins DB)
 
+// ── Starfsmanna-hlið (hub) — EIN sameiginleg innskráning fyrir innri tólin ────
+// Virkjast AÐEINS þegar HUB_STAFF_PASSWORD er sett í Netlify-env. Meðan hún er
+// ekki sett skilar requireStaff null (hleypir öllu í gegn) svo EKKERT brotni —
+// staðuppsetning fyrir áfanga-útrás (Agnar 02.09.2026: „viðbótar auth á öllum
+// stöðum"). Cookie-lykillinn ER lykilorðið sjálft: að skipta um
+// HUB_STAFF_PASSWORD ógildir öll starfsmanna-session sjálfkrafa.
+const HUB_PW = process.env.HUB_STAFF_PASSWORD || '';
+const STAFF_COOKIE = 'hub_session';
+const STAFF_TTL = 60 * 60 * 10; // 10 klst
+
+function hubConfigured() { return !!HUB_PW; }
+function signStaff(ttl = STAFF_TTL) {
+  const now = Math.floor(Date.now() / 1000);
+  const data = b64urlJson({ alg: 'HS256', typ: 'JWT' }) + '.' + b64urlJson({ role: 'staff', iat: now, exp: now + ttl });
+  const sig = b64url(crypto.createHmac('sha256', HUB_PW).update(data).digest());
+  return data + '.' + sig;
+}
+function verifyStaff(token) {
+  if (!HUB_PW || !token || typeof token !== 'string') return null;
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+  const data = parts[0] + '.' + parts[1];
+  const expected = crypto.createHmac('sha256', HUB_PW).update(data).digest();
+  let given;
+  try { given = fromB64url(parts[2]); } catch { return null; }
+  if (given.length !== expected.length || !crypto.timingSafeEqual(given, expected)) return null;
+  let p;
+  try { p = JSON.parse(fromB64url(parts[1]).toString('utf8')); } catch { return null; }
+  if (!p || p.role !== 'staff' || typeof p.exp !== 'number' || p.exp < Math.floor(Date.now() / 1000)) return null;
+  return p;
+}
+function staffFromEvent(event) { return verifyStaff(parseCookies(event)[STAFF_COOKIE]); }
+function staffCookie(token) {
+  return `${STAFF_COOKIE}=${encodeURIComponent(token)}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${STAFF_TTL}`;
+}
+function clearStaffCookie() {
+  return `${STAFF_COOKIE}=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0`;
+}
+function checkStaffPassword(pw) {
+  if (!HUB_PW) return false;
+  const a = crypto.createHash('sha256').update(String(pw)).digest();
+  const b = crypto.createHash('sha256').update(HUB_PW).digest();
+  return crypto.timingSafeEqual(a, b);
+}
+// Setjið FREMST í handler (á eftir OPTIONS): const g = P.requireStaff(event); if (g) return g;
+function requireStaff(event) {
+  if (!HUB_PW) return null;                 // óvirkt þar til lykilorð er sett — brýtur ekkert
+  if (staffFromEvent(event)) return null;   // gilt starfsmanna-session
+  return json(401, { error: 'Innskráning starfsmanns vantar', need_login: true });
+}
+
 module.exports = {
+  hubConfigured, signStaff, verifyStaff, staffFromEvent, staffCookie, clearStaffCookie, checkStaffPassword, requireStaff, STAFF_COOKIE,
   COOKIE, TTL_SECONDS,
   signToken, verifyToken, hashPassword, verifyPassword,
   parseCookies, sessionCookie, clearCookie, getSession,
