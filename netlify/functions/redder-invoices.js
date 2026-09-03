@@ -15,12 +15,12 @@ exports.handler = async (event) => {
     const q = event.queryStringParameters || {};
     const params = ['select=*,redder_line_items(*)', 'order=dagsetning.desc.nullslast'];
     if (q.worksite) params.push(`worksite_match=eq.${encodeURIComponent(q.worksite)}`);
+    // month=YYYY-MM → dagsetningarmánuður, EÐA month_override þegar reikningur hefur
+    // verið færður á annan mánuð (efni keypt í lok mánaðar fyrir verk næsta mánaðar).
     if (q.month) {
-      // month=YYYY-MM → filter by dagsetning month
-      params.push(`dagsetning=gte.${q.month}-01`);
       const [yr, mo] = q.month.split('-').map(Number);
       const last = new Date(yr, mo, 0).getDate();
-      params.push(`dagsetning=lte.${q.month}-${String(last).padStart(2,'0')}`);
+      params.push(`or=(and(dagsetning.gte.${q.month}-01,dagsetning.lte.${q.month}-${String(last).padStart(2, '0')},month_override.is.null),month_override.eq.${q.month})`);
     }
     const r = await fetch(`${SUPABASE_URL}/rest/v1/redder_invoices?${params.join('&')}`, {
       headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` },
@@ -47,7 +47,7 @@ exports.handler = async (event) => {
     for (const inv of rows) {
       grandTotal += Number(inv.effective_m_vsk || 0);
       if (!inv.dagsetning) continue;
-      const month = String(inv.dagsetning).slice(0, 7);
+      const month = String(inv.month_override || inv.dagsetning).slice(0, 7);
       const base = inv.worksite_match || '(óþekkt)';
       const an = Number(inv.an_vsk) || 0, mv = Number(inv.m_vsk) || 0;
       const factor = an > 0 ? mv / an : 1.24;
@@ -149,6 +149,33 @@ exports.handler = async (event) => {
       const rows = await r.json();
       if (!rows.length) return json(404, { error: 'reikningur fannst ekki' });
       return json(200, { ok: true, invoice: rows[0] });
+    }
+
+    // Mánuður sem reikningurinn telst í (efni keypt 28.08 fyrir verk sem er reikningsfært
+    // í september) og „samstæða" — nokkrir reikningar birtast sem ein færsla. Bæði má
+    // setja á marga reikninga í einu (invoice_ids) og hvorugt hreyfir bókhaldsdagsetninguna.
+    if (body.action === 'set_month' || body.action === 'set_bundle' || body.action === 'bulk_worksite') {
+      const ids = (Array.isArray(body.invoice_ids) ? body.invoice_ids : [body.invoice_id])
+        .map((x) => parseInt(x, 10)).filter(Number.isFinite);
+      if (!ids.length) return json(400, { error: 'invoice_id(s) vantar' });
+      const patch = {};
+      if (body.action === 'set_month') {
+        const m = String(body.month || '').trim();
+        if (m && !/^\d{4}-\d{2}$/.test(m)) return json(400, { error: 'month á að vera ÁÁÁÁ-MM' });
+        patch.month_override = m || null;
+      } else if (body.action === 'set_bundle') {
+        patch.bundle_label = String(body.bundle || '').trim() || null;
+      } else {
+        patch.worksite_match = String(body.worksite || '').trim() || null;
+      }
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/redder_invoices?id=in.(${ids.join(',')})`, {
+        method: 'PATCH',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+        body: JSON.stringify(patch),
+      });
+      if (!r.ok) return json(r.status, { error: (await r.text()).slice(0, 300) });
+      const rows2 = await r.json();
+      return json(200, { ok: true, updated: rows2.length, invoices: rows2 });
     }
 
     // Verkstaður á EINA LÍNU — skiptir safnreikningi („ýmis verk") á raunverulega

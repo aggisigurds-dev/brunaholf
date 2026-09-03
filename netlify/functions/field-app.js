@@ -86,7 +86,7 @@ async function handleGet(event) {
     const [tv, aliases, redder, entries, shares, recent] = await Promise.all([
       allPages(`timavera_entries?select=project,hours,date,employee&date=gte.${from}&date=lte.${to}&order=date.asc`),
       all('project_aliases?select=canonical_name,alias').catch(() => []),
-      all(`redder_invoices?select=worksite_match,dagsetning,an_vsk,redder_line_items(item_name,magn,upphaed,ein_verd,excluded,worksite_override)&dagsetning=gte.${from}&dagsetning=lte.${to}`).catch(() => []),
+      all(`redder_invoices?select=worksite_match,dagsetning,month_override,an_vsk,redder_line_items(item_name,magn,upphaed,ein_verd,excluded,worksite_override)&dagsetning=gte.${from}&dagsetning=lte.${to}`).catch(() => []),
       allPages(`field_entries?select=*&work_month=eq.${month}&order=created_at.desc`),
       all('field_shares?select=*&active=is.true&order=created_at.desc').catch(() => []),
       allPages(`timavera_entries?select=employee&date=gte.${since}`).catch(() => []),
