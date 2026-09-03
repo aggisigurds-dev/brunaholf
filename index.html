@@ -11550,7 +11550,15 @@ async function renderGerdReikninga(t){
             if(resp.ok) rows = (d.rows||[]).map(r=>({ date:r.date||'', employee:r.employee||'', time_in:r.time_in||'', time_out:r.time_out||'', hours:Number(r.hours)||0 }));
           } catch(_e){ /* engir tímar — vinnuskjalið prentast samt með efnislistanum */ }
         }
-        printVinnuskjal(name, month, document.getElementById('gr-doc').innerHTML, rows||[], yf);
+        // Lógóið innfellt sem data-URL, sama og „🖨 Prenta / PDF" gerir: afrit
+        // forskoðunarinnar ber slóð sem sprettiglugginn hlóð ekki alltaf (og
+        // display:none ef hún hafði brugðist í forskoðun) — annars prentast
+        // vinnuskjalið lógólaust.
+        const logo = await bhLogoDataUrl();
+        const clone = document.getElementById('gr-doc').cloneNode(true);
+        const im = clone.querySelector('.gr-doc-logo');
+        if(im){ if(logo){ im.removeAttribute('style'); im.removeAttribute('onerror'); im.src = logo; } else im.remove(); }
+        printVinnuskjal(name, month, clone.innerHTML, rows||[], yf);
       } finally { btn.textContent = old; btn.disabled = false; }
     };
 
@@ -21169,9 +21177,9 @@ function printVinnuskjal(name, month, docHtml, rows, yfCfg){
       #vs-page{width:190mm;margin:0 auto}
       @media screen{ #vs-page{overflow:hidden;box-shadow:0 0 0 1px #ddd;margin:10mm auto} }
       /* Efnislistinn — sama útlit og „🖨 Prenta / PDF", örlítið þéttara. */
-      .gr-doc-top{display:grid;grid-template-columns:150px 1fr;gap:16px;align-items:center;margin-bottom:14px}
-      .gr-doc-logo{max-width:150px;max-height:74px;object-fit:contain}
-      h1{font-size:21px;margin:0}.gr-doc-sub{font-style:italic;color:#555;margin:2px 0 0}
+      .gr-doc-top{margin-bottom:14px}
+      .gr-doc-logo{width:150px;height:auto;display:block}
+      .gr-doc-sub{font-style:italic;color:#555;margin:5px 0 0}
       .gr-doc-meta{margin-bottom:10px}.gr-doc-ws{font-weight:700}
       .gr-doc-cust{font-size:11px;margin-top:3px;line-height:1.4;color:#222}
       table.gr-efni{width:100%;border-collapse:collapse;font-size:12px}
