@@ -94,9 +94,11 @@ async function handleGet(event) {
     const amap = {};
     for (const a of aliases) if (a && a.alias) amap[a.alias] = a.canonical_name;
     // Verkstaðir mánaðarins úr Tímaveru — sama alias-samruni og Kröfuyfirlit/worksites.js
+    // Gervi-verkefni Tímaveru (veikindi, frí, eigin vinna Slökkvitækis) eru ekki verkstaðir
+    const SKIP = /veikindi|sick|orlof|\bfr[ií]\b|^slökkvitæki|^slokkvitaeki|^brunahólf$|^brunaholf$/i;
     const ws = new Map();
     for (const r of tv) {
-      const p = amap[r.project] || r.project; if (!p) continue;
+      const p = amap[r.project] || r.project; if (!p || SKIP.test(p)) continue;
       let w = ws.get(p); if (!w) ws.set(p, w = { name: p, hours: 0, days: new Set(), employees: {}, last_date: '' });
       const h = Number(r.hours) || 0; w.hours += h; w.days.add(r.date);
       const e = String(r.employee || '').trim(); if (e) w.employees[e] = (w.employees[e] || 0) + h;
