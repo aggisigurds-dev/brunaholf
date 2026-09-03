@@ -110,6 +110,9 @@ ALDREI í heilu lagi — `grep` fyrst, svo `offset`/`limit`. Sama gildir um
   any cross-source matching, and add new aliases when you spot
   them rather than hard-coding string lists.
 - **Co-authored commits**: include the Co-Authored-By line for Claude.
+- **Boss-útlit (svart stál · rjómapappír · gull):** skill `boss-theme` (.claude/skills/boss-theme — tokens,
+  gullrecipes, .boss-* klasar, viðmiðunarskjár) og `css/theme.css`. Lesa `brunaholf-layout` á undan CSS-breytingum.
+  Fyrstu útfærslur: Þjónustuborð, Efnislista-ritillinn í Gerð reikninga (03.09.2026).
 
 ## Security note
 
