@@ -20722,9 +20722,9 @@ function drawTimabokPage(doc, logo, name, month, rows, yfCfg){
   let y = 40;
   if(logo){ try{ doc.addImage(logo, bhLogoFmt(logo), 40, y, 150, 46); }catch{} }
   doc.setFont('helvetica','bold'); doc.setFontSize(20); doc.text('Tímaskýrsla', W-40, y+16, {align:'right'});
-  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(90);
+  doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(90);
   doc.text('Mæting starfsmanna — fylgiskjal með reikningi', W-40, y+32, {align:'right'});
-  doc.setTextColor(20); doc.setFont('helvetica','bold'); doc.setFontSize(12);
+  doc.setTextColor(20); doc.setFont('helvetica','bold'); doc.setFontSize(13.5);
   doc.text(`${name} · ${monthLabelStatic(month)}`, W-40, y+48, {align:'right'});
   y += 70;
   const sorted = rows.slice().sort((a,b)=> String(a.date).localeCompare(String(b.date)) || String(a.employee).localeCompare(String(b.employee),'is'));
@@ -20746,9 +20746,10 @@ function drawTimabokPage(doc, logo, name, month, rows, yfCfg){
       ? [dmy(r.date), r.employee||'', r.time_in||'', r.time_out||'', _phr(rsPdf[i].dv), rsPdf[i].yf>0?_phr(rsPdf[i].yf):'', _phr(r.hours)]
       : [dmy(r.date), r.employee||'', r.time_in||'', r.time_out||'', _phr(r.hours)]),
     foot,
-    styles:{ font:'helvetica', fontSize:9, cellPadding:3 },
-    headStyles:{ fillColor:[30,30,30], textColor:255, fontSize:8 },
-    footStyles:{ fillColor:[240,240,240], textColor:20, fontStyle:'bold' },
+    // Leturstærð hækkuð 03.09.2026 (Agnar: „sést varla" á síma) — 9 → 11,5 pt.
+    styles:{ font:'helvetica', fontSize:11.5, cellPadding:4 },
+    headStyles:{ fillColor:[30,30,30], textColor:255, fontSize:10 },
+    footStyles:{ fillColor:[240,240,240], textColor:20, fontStyle:'bold', fontSize:11.5 },
     columnStyles: t.on
       ? { 2:{halign:'center'}, 3:{halign:'center'}, 4:{halign:'right'}, 5:{halign:'right'}, 6:{halign:'right'} }
       : { 2:{halign:'center'}, 3:{halign:'center'}, 4:{halign:'right'} },
@@ -20760,13 +20761,13 @@ function drawTimabokPage(doc, logo, name, month, rows, yfCfg){
     return t.on ? [e, String(m.days.size), _phr(m.dv), _phr(m.yf), _phr(m.hours)] : [e, String(m.days.size), _phr(m.hours)];
   });
   let y2 = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y) + 22;
-  doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.text('Samantekt á starfsmann', 40, y2);
-  doc.autoTable({ startY: y2+6,
+  doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.text('Samantekt á starfsmann', 40, y2);
+  doc.autoTable({ startY: y2+8,
     head: t.on ? [['Starfsmaður','Dagar','Dagvinna','Yfirvinna','Tímar']] : [['Starfsmaður','Dagar','Tímar']],
     body: empRows,
-    styles:{ font:'helvetica', fontSize:9, cellPadding:3 }, headStyles:{ fillColor:[30,30,30], textColor:255, fontSize:8 },
+    styles:{ font:'helvetica', fontSize:11.5, cellPadding:4 }, headStyles:{ fillColor:[30,30,30], textColor:255, fontSize:10 },
     columnStyles: t.on ? { 1:{halign:'right'}, 2:{halign:'right'}, 3:{halign:'right'}, 4:{halign:'right'} } : { 1:{halign:'right'}, 2:{halign:'right'} },
-    margin:{ left:40, right:40 }, tableWidth: t.on ? 420 : 320 });
+    margin:{ left:40, right:40 }, tableWidth: t.on ? 470 : 360 });
 }
 
 // Build the Efnislisti (invoice prep) PDF from the editor's computed numbers, upload to Drive.
@@ -20815,16 +20816,16 @@ function drawEfnislistiPage(doc, logo, data){
   let y = 40;
   // Haus (2026-09-02, ósk Agnars): aðeins lógóið og „Verðskrá / tilboð" undir því — enginn „Brunahólf ehf." texti.
   if(logo){ try{ doc.addImage(logo, bhLogoFmt(logo), 40, y, 150, 46); }catch{} }
-  doc.setFont('helvetica','italic'); doc.setFontSize(10); doc.setTextColor(90); doc.text('Verðskrá / tilboð', 40, y+60);
+  doc.setFont('helvetica','italic'); doc.setFontSize(11); doc.setTextColor(90); doc.text('Verðskrá / tilboð', 40, y+60);
   doc.setTextColor(20); doc.setFont('helvetica','normal');
   y += 80;
-  doc.setFontSize(11); doc.text(data.dateText || (dmy(data.fra)+' til '+dmy(data.til)), 40, y);
-  doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.text(data.ws||'', 40, y+18);
-  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(60);
-  let by = y+34;
-  if(data.cust){ doc.text(data.cust, 40, by); by+=13; }
-  if(data.kt){ doc.text('kt. '+data.kt, 40, by); by+=13; }
-  if(data.addr){ doc.text(data.addr, 40, by); by+=13; }
+  doc.setFontSize(12.5); doc.text(data.dateText || (dmy(data.fra)+' til '+dmy(data.til)), 40, y);
+  doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.text(data.ws||'', 40, y+20);
+  doc.setFont('helvetica','normal'); doc.setFontSize(11.5); doc.setTextColor(60);
+  let by = y+38;
+  if(data.cust){ doc.text(data.cust, 40, by); by+=15; }
+  if(data.kt){ doc.text('kt. '+data.kt, 40, by); by+=15; }
+  if(data.addr){ doc.text(data.addr, 40, by); by+=15; }
   doc.setTextColor(20);
   const kr = n => _pkr(n);
   const sec = t => [{ content:t, colSpan:4, styles:{ fontStyle:'bold', fillColor:[245,245,245], textColor:20 } }];
@@ -20850,9 +20851,10 @@ function drawEfnislistiPage(doc, logo, data){
     startY: Math.max(by+8, y+40),
     head: [[ '', {content:'án vsk',styles:{halign:'right'}}, {content:'magn',styles:{halign:'right'}}, {content:'samtals',styles:{halign:'right'}} ]],
     body: bodyRows, foot,
-    styles:{ font:'helvetica', fontSize:9.5, cellPadding:3 },
-    headStyles:{ fillColor:[255,255,255], textColor:90, fontStyle:'italic', lineWidth:{bottom:0.5}, lineColor:[180,180,180] },
-    footStyles:{ fillColor:[255,255,255], textColor:20 },
+    // Leturstærð hækkuð 03.09.2026 (Agnar: „mjög svo litlir stafir, sést varla") — 9,5 → 12 pt.
+    styles:{ font:'helvetica', fontSize:12, cellPadding:4.5 },
+    headStyles:{ fillColor:[255,255,255], textColor:90, fontStyle:'italic', fontSize:10.5, lineWidth:{bottom:0.5}, lineColor:[180,180,180] },
+    footStyles:{ fillColor:[255,255,255], textColor:20, fontSize:12 },
     columnStyles:{ 1:{halign:'right'}, 2:{halign:'right'}, 3:{halign:'right'} },
     margin:{ left:40, right:40 },
   });
