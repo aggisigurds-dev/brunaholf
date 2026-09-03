@@ -11195,9 +11195,9 @@ async function renderGerdReikninga(t){
         sub('01', wsv.trim() + ' · ' + monthLabelStatic(month) + (custv.trim() ? ' · ' + custv.trim() : ' · verkkaupi vantar'));
         const fh = n => String(Math.round((n || 0) * 100) / 100).replace('.', ',');
         sub('02', fh(c.dvH) + ' klst dv · ' + fh(c.evH) + ' ev · ' + (c.km || 0) + ' km');
-        const SS = (id, v) => { const e = K(id); if(e) e.textContent = v; };
+        const SS = (id, v) => { const e = K(id); if(e && e.textContent !== v) e.textContent = v; };
         SS('gr-dv-sum', fmt(c.dvAmt)); SS('gr-ev-sum', fmt(c.evAmt)); SS('gr-akstur-sum', fmt(c.kmAmt + c.frAmt));
-        bg.querySelectorAll('#gr-mats .gr-mat-line').forEach(l => { const p = Number((l.querySelector('.m-price') || {}).value) || 0, q = Number((l.querySelector('.m-qty') || {}).value) || 0; const e = l.querySelector('.m-sum'); if(e) e.textContent = p && q ? fmt(p * q) : '—'; });
+        bg.querySelectorAll('#gr-mats .gr-mat-line').forEach(l => { const p = Number((l.querySelector('.m-price') || {}).value) || 0, q = Number((l.querySelector('.m-qty') || {}).value) || 0; const e = l.querySelector('.m-sum'); const v = p && q ? fmt(p * q) : '—'; if(e && e.textContent !== v) e.textContent = v; });
         const stOn = K('gr-stadf') && K('gr-stadf').checked; SS('gr-stadf-amt', stOn ? fmt(typeof GR_STADF !== 'undefined' ? GR_STADF : 0) : '0');
         const smOn = K('gr-sma-on') && K('gr-sma-on').checked; SS('gr-sma-amt', smOn ? fmt(c.sma) : '0');
         // Tímabókar-strimillinn: ein setning úr sync-textanum sem checkTimabokSync skrifar
@@ -11223,6 +11223,7 @@ async function renderGerdReikninga(t){
         if(box){ box.classList.toggle('on', warns.length > 0); box.innerHTML = warns.length ? '<div class="t">ATHUGA · ' + warns.length + '</div>' + warns.map(w => '<div class="w" data-sec="' + w.sec + '"><span class="boss-plate" style="font-size:9px">' + w.sec + '</span><span>' + escapeHtml(w.t) + '</span></div>').join('') : ''; }
         const chip = K('gr-warn-n'); if(chip){ chip.textContent = warns.length ? String(warns.length) : ''; chip.style.display = warns.length ? '' : 'none'; }
       }
+      const bossSums0 = bossSums; let bsBusy = false; bossSums = function(){ if(bsBusy) return; bsBusy = true; try{ bossSums0(); } finally { bsBusy = false; } };
       bg.__bossSums = bossSums; bossSums();
       const mo = new MutationObserver(() => { try{ bossSums(); }catch(_){} }); const mats = K('gr-mats'); if(mats) mo.observe(mats, { childList: true, subtree: true, characterData: true });
       ['gr-dvh-sync','gr-evh-sync'].forEach(id => { const e = K(id); if(e) mo.observe(e, { childList: true, subtree: true, characterData: true }); });
