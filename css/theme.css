@@ -359,15 +359,17 @@ header.topbar .sync-badge.sync-warn::before{background:radial-gradient(circle at
 header.topbar .bh-lcd{order:0;margin-left:auto;margin-right:0}
 header.topbar .brand, header.topbar .brand-divider, header.topbar .brand-slk, #brandTitle, header.topbar .spacer, .banner-img{display:none}
 @media(max-width:780px){
-  .topbar{padding:0 10px;gap:6px}
-  .topbar .bh-lcd,.topbar .themeToggle{display:none}
-  .topbar .bh-brand{gap:8px}
-  .topbar .bh-brand .bh-logo{font-size:22px}
-  .topbar .bh-brand .boss-wordmark-sub{display:none}
-  .topbar .bh-brand .boss-medallion{width:36px;height:36px;font-size:16px}
-  .topbar .editToggle{padding:0 10px;font-size:12px}
-  .topbar .sync-badge{padding:0 9px;font-size:11px}
-  .topbar .menu-btn{width:36px;height:36px}
+  /* Húsreglan: ekkert lárétt skrun á líkamanum. Hausinn þjappast — merkið styttist,
+     samstillingar-pillan verður ljós-punktur — svo hann rúmist á 375px. */
+  header.topbar{padding:0 10px;gap:6px;flex-wrap:nowrap}
+  header.topbar .bh-lcd,header.topbar .themeToggle{display:none}
+  header.topbar .bh-brand{gap:8px;min-width:0;flex:0 1 auto;overflow:hidden}
+  header.topbar .bh-brand .bh-logo{font-size:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  header.topbar .bh-brand .boss-wordmark-sub{display:none}
+  header.topbar .bh-brand .boss-medallion{width:34px;height:34px;font-size:15px;flex:none}
+  header.topbar .editToggle{padding:0 10px;font-size:12px;flex:none}
+  header.topbar .sync-badge{padding:0 8px;font-size:0;gap:0;flex:none}
+  header.topbar .menu-btn{width:34px;height:34px;flex:none}
 }
 
 /* Hliðarstika: stál-stigull, VALMYND-haus, gull-síða á virkri línu, fótur með plötu */
@@ -552,30 +554,41 @@ body .hub-sync select{background:transparent;border:0;box-shadow:none;padding:2p
 .ky-tier .s .boss-kr{font-size:10px;color:var(--muted);opacity:1;margin-left:3px}
 /* Kröfu-röð */
 .ky-card-rows{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.ky-card-rows > div{min-width:max-content}
-.ky-invrow{min-width:max-content}
-.ky-row{display:flex;align-items:center;gap:14px;padding:10px 18px 10px 52px;border-bottom:1px solid var(--line);font-size:12.5px;cursor:pointer;background:transparent;transition:background .12s;position:relative}
+.ky-card-rows > div{min-width:0}
+.ky-invrow{min-width:0}
+.ky-row{display:flex;align-items:center;gap:10px;padding:10px 18px 10px 52px;border-bottom:1px solid var(--line);font-size:12.5px;cursor:pointer;background:transparent;transition:background .12s;position:relative}
 .ky-row::before{content:"";position:absolute;left:34px;top:0;bottom:0;width:1px;background:var(--line-2)}
 .ky-row:hover{background:var(--row-hover)}
 .ky-row.ky-likely{background:linear-gradient(90deg,rgba(47,122,74,.09),rgba(47,122,74,.03))}
 .ky-row.ky-likely:hover{background:linear-gradient(90deg,rgba(47,122,74,.15),rgba(47,122,74,.06))}
 .ky-row .ky-caret2{width:8px;flex-shrink:0;color:var(--muted-2);font-size:9px;user-select:none;transition:transform .12s ease;display:inline-block}
 .ky-invrow.open .ky-caret2{transform:rotate(90deg)}
-.ky-row .ky-main{width:230px;flex-shrink:0;line-height:1.3}
-.ky-row.ky-t2 .ky-main,.ky-t2 .ky-main{width:340px}
+.ky-row .ky-main{flex:0 0 190px;width:190px;min-width:0;line-height:1.3}
+.ky-row.ky-t2 .ky-main,.ky-t2 .ky-main{flex:1 1 340px;width:auto;min-width:190px}
 .ky-row .ky-main .ky-ws{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .ky-row .ky-main .ky-ws .n{font-size:13px;font-weight:700;color:var(--ink)}
 .ky-row .ky-main .ky-sub{font-size:11.5px;color:var(--muted);margin-top:2px}
 .ky-row .ky-main .ky-sub .ky-num{color:var(--muted)}
-.ky-row .ky-amt{width:120px;font-family:var(--font-mono);font-size:13.5px;font-weight:600;text-align:right;color:var(--ink);white-space:nowrap;flex-shrink:0}
+.ky-row .ky-amt{flex:0 0 110px;width:110px;font-family:var(--font-mono);font-size:13.5px;font-weight:600;text-align:right;color:var(--ink);white-space:nowrap;flex-shrink:0}
 .ky-row .ky-amt .boss-kr{font-size:10px;color:var(--muted);opacity:1;margin-left:3px}
-.ky-row .ky-notewrap{width:300px;display:flex;align-items:center;gap:8px;font-size:12px;color:#a39b8a;flex-shrink:0}
+.ky-row .ky-notewrap{flex:1 1 150px;min-width:0;display:flex;align-items:center;gap:8px;font-size:12px;color:#a39b8a}
 .ky-row .ky-notewrap .ky-note-ic{font-size:13px;flex-shrink:0}
 .ky-note{flex:1;min-width:0;background:transparent;border:0 !important;border-bottom:1px dashed var(--border) !important;color:var(--ink-2);font:inherit;font-size:12px;padding:2px 3px 3px;outline:none;box-shadow:none !important;border-radius:0 !important}
 .ky-note:focus{border-bottom-color:var(--gold-500) !important;color:var(--ink);box-shadow:none !important}
 .ky-note::placeholder{color:#a39b8a}
-textarea.ky-note{display:block;resize:none;overflow:hidden;line-height:1.35;white-space:pre-wrap;overflow-wrap:anywhere;min-height:0;box-sizing:border-box}
+textarea.ky-note{display:block;resize:none;overflow-x:hidden;overflow-y:auto;max-height:44px;line-height:1.35;white-space:pre-wrap;overflow-wrap:anywhere;min-height:0;box-sizing:border-box}
 .ky-row .ky-acts{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+/* Takkasúlan hægra megin (ósk Agnars 2026-09-03): allir takkar í beinni röð
+   niður. Aðgerðareiturinn er FASTUR dálkur lengst til hægri og vinnuflæðis-
+   takkarnir sitja í föstum dálki við hliðina — raðir með færri takka skilja
+   eftir autt pláss vinstra megin í stað þess að hliðrast til.
+   ATH: engin margin-left:auto/justify-content INNI í wfStrip-markup-inu (sjá
+   GILDRA-athugasemdina þar) — þetta er allt gert utan frá með klasa. */
+.ky-row > .ky-wf-boxes{margin-left:auto}
+.ky-row > .ky-wf-boxes > span:first-child{justify-content:flex-end}
+.ky-row > .ky-actrow{margin-left:auto;flex:0 0 98px;width:98px;justify-content:flex-end}
+.ky-row > .ky-wf-boxes ~ .ky-actrow{margin-left:14px}
+
 .ky-row .ky-acts .ky-actrow{display:flex;gap:6px;align-items:center}
 .ky-row .ky-acts .ky-actrow .ky-gap{width:6px}
 .ky-bank{color:var(--green);font-size:10.5px;font-weight:600;margin-top:2px;line-height:1.35}
@@ -621,6 +634,9 @@ textarea.ky-note{display:block;resize:none;overflow:hidden;line-height:1.35;whit
   @page{margin:14mm}
 }
 @media(max-width:780px){
+  .kyf-toolbar{overflow-x:auto;flex-wrap:nowrap}
+  .kyf-toolbar > *{flex:0 0 auto}
+  .kyf-toolbar .kyf-right{margin-left:0}
   .kyf-syncs .hub-sync{height:auto;min-height:34px;flex-wrap:wrap;padding:4px 10px 4px 4px}
   .kyf-head{align-items:flex-start}
   .kyf-head .kyf-actions{margin-left:0}
