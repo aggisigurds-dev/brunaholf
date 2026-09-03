@@ -10529,7 +10529,9 @@ async function renderGerdReikninga(t){
     try{
       const r = await fetch('/api/efnislisti-docs');
       const j = r.ok ? await r.json() : { rows: [] };
-      rows = (j.rows||[]).filter(d => d.doc_type==='efnislisti_pdf' || d.doc_type==='timabok_pdf' || d.doc_type==='innra');
+      // 'vidhengi'/'efnislisti' = aðsend skjöl sem hengd eru á mánuðinn (t.d. Landsspítala-uppgjörið
+      // sem er reikningurinn fyrir verkið) — þau vantaði í listann og sáust hvergi (lagað 03.09.2026).
+      rows = (j.rows||[]).filter(d => ['efnislisti_pdf','timabok_pdf','innra','vidhengi','efnislisti'].includes(d.doc_type));
       // 🔒 innra viðhengi: sýnt hér (opna/sækja/eyða) en merkt — fer aldrei út.
       rows.forEach(d => {
         if(d.doc_type==='innra' && !/^🔒/.test(d.title||'')) d.title = '🔒 Innra (sendist ekki) · ' + (d.title||'');
@@ -10543,8 +10545,8 @@ async function renderGerdReikninga(t){
     if(!rows.length){ box.innerHTML = head + `<div class="gr-loading" style="padding:14px">Engin vistuð PDF enn. Búðu til PDF með „📄 Vista PDF" í Efnislista eða Tímaskýrslu.</div>`; return; }
     box.innerHTML = head + `<table class="grp-tbl"><thead><tr>
         <th>Skjal</th><th>Verkstaður</th><th>Mánuður</th><th>Gert</th><th></th></tr></thead><tbody>
-      ${rows.map(d=>{ const tb=d.doc_type==='timabok_pdf'; const url=bhDocUrl(d); const view=url; const dl=d.public_url?(d.public_url+(d.public_url.includes('?')?'&':'?')+'download='+encodeURIComponent(String(d.title||'skjal').replace(/\.pdf$/i,'')+'.pdf')):(d.drive_file_id&&!String(d.drive_file_id).startsWith('sb:')?`https://drive.google.com/uc?export=download&id=${d.drive_file_id}`:url); return `<tr data-fid="${escapeHtml(d.drive_file_id)}">
-        <td><span class="grp-badge ${tb?'tb':'ef'}">${tb?'Tímaskýrsla':'Efnislisti'}</span> ${escapeHtml(d.title||'')}</td>
+      ${rows.map(d=>{ const tb=d.doc_type==='timabok_pdf'; const att=(d.doc_type==='vidhengi'||d.doc_type==='efnislisti'); const url=bhDocUrl(d); const view=url; const dl=d.public_url?(d.public_url+(d.public_url.includes('?')?'&':'?')+'download='+encodeURIComponent(String(d.title||'skjal').replace(/\.pdf$/i,'')+'.pdf')):(d.drive_file_id&&!String(d.drive_file_id).startsWith('sb:')?`https://drive.google.com/uc?export=download&id=${d.drive_file_id}`:url); return `<tr data-fid="${escapeHtml(d.drive_file_id)}">
+        <td><span class="grp-badge ${tb?'tb':'ef'}">${tb?'Tímaskýrsla':att?'Viðhengi':'Efnislisti'}</span> ${escapeHtml(d.title||'')}</td>
         <td>${escapeHtml(d.worksite_name||'—')}</td>
         <td>${escapeHtml(d.work_month?monthLabel(d.work_month):'—')}</td>
         <td style="white-space:nowrap;color:var(--muted)">${dt(d.added_at)}</td>
