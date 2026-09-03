@@ -9457,6 +9457,13 @@ function monthLabelStatic(ym){
   const [y,m] = ym.split('-');
   return `${names[parseInt(m,10)-1]} ${y.slice(2)}`;
 }
+// Fullt mánaðarnafn + 4 stafa ár fyrir skráarnöfn: '2026-07' → 'Júlí 2026'.
+function monthLabelFull(ym){
+  const names = ['Janúar','Febrúar','Mars','Apríl','Maí','Júní','Júlí','Ágúst','September','Október','Nóvember','Desember'];
+  const [y,m] = String(ym||'').split('-');
+  const n = names[parseInt(m,10)-1];
+  return n ? `${n} ${y}` : String(ym||'');
+}
 
 /* ====================== VINNUSTOFA — action-first dashboard ====================== */
 async function renderVinnustofa(t){
@@ -10358,7 +10365,7 @@ async function renderGerdReikninga(t){
     if(!rows.length){ box.innerHTML = head + `<div class="gr-loading" style="padding:14px">Engin vistuð PDF enn. Búðu til PDF með „📄 Vista PDF" í Efnislista eða Tímaskýrslu.</div>`; return; }
     box.innerHTML = head + `<table class="grp-tbl"><thead><tr>
         <th>Skjal</th><th>Verkstaður</th><th>Mánuður</th><th>Gert</th><th></th></tr></thead><tbody>
-      ${rows.map(d=>{ const tb=d.doc_type==='timabok_pdf'; const url=bhDocUrl(d); const view=url; const dl=d.public_url?d.public_url:(d.drive_file_id&&!String(d.drive_file_id).startsWith('sb:')?`https://drive.google.com/uc?export=download&id=${d.drive_file_id}`:url); return `<tr data-fid="${escapeHtml(d.drive_file_id)}">
+      ${rows.map(d=>{ const tb=d.doc_type==='timabok_pdf'; const url=bhDocUrl(d); const view=url; const dl=d.public_url?(d.public_url+(d.public_url.includes('?')?'&':'?')+'download='+encodeURIComponent(String(d.title||'skjal').replace(/\.pdf$/i,'')+'.pdf')):(d.drive_file_id&&!String(d.drive_file_id).startsWith('sb:')?`https://drive.google.com/uc?export=download&id=${d.drive_file_id}`:url); return `<tr data-fid="${escapeHtml(d.drive_file_id)}">
         <td><span class="grp-badge ${tb?'tb':'ef'}">${tb?'Tímaskýrsla':'Efnislisti'}</span> ${escapeHtml(d.title||'')}</td>
         <td>${escapeHtml(d.worksite_name||'—')}</td>
         <td>${escapeHtml(d.work_month?monthLabel(d.work_month):'—')}</td>
@@ -19752,22 +19759,18 @@ async function bhSavePdfToSupabase(doc, meta){
     body: JSON.stringify({ fileName: meta.fileName, contentBase64: b64, worksite_name: meta.worksite_name, work_month: meta.work_month, doc_type: meta.doc_type, overwrite: !!meta.overwrite }) });
   const j = await r.json().catch(()=>({}));
   if(!r.ok) throw new Error(j.error || ('HTTP '+r.status));
-  return Object.assign({ webViewLink: j.public_url, downloadUrl: j.public_url }, j);
+  return Object.assign({ webViewLink: j.public_url, downloadUrl: j.download_url || j.public_url }, j);
 }
-// Accurate, consistent PDF filename: "<Tegund> - <greiðandi> - <verkstaður> -
-// kt NNNNNN-NNNN - <Mánuður Ár>.pdf". Greiðandi er sleppt ef hann er sami og
-// verkstaðurinn; kt bætt við þegar það er þekkt (á brunahólf-forminu).
+// PDF-skráarnafn (Agnar 03.09.2026): "<Verkstaður> - <Tegund> - <Mánuður Ár>.pdf",
+// t.d. „Fjallaböðin Þjórsárdal - Efnislisti - Júlí 2026.pdf". Greiðanda og kt er
+// SLEPPT (voru í eldra nafninu). Vanti verkstað: "<Tegund> - <Mánuður Ár>.pdf".
 function bhPdfName(kind, o){
   o = o || {};
-  const ws = String(o.ws||'').trim(), payer = String(o.payer||'').trim();
-  const norm = s => s.toLowerCase().replace(/\s+/g,' ').trim();
-  const parts = [kind];
-  if(payer && (!ws || norm(payer)!==norm(ws))){ parts.push(payer); if(ws) parts.push(ws); }
-  else if(ws){ parts.push(ws); }
-  const ktd = String(o.kt||'').replace(/\D/g,'');
-  if(ktd.length===10) parts.push('kt '+ktd.slice(0,6)+'-'+ktd.slice(6));
-  else if(o.kt) parts.push('kt '+String(o.kt).trim());
-  if(o.month) parts.push(monthLabelStatic(o.month));
+  const ws = String(o.ws||'').trim();
+  const parts = [];
+  if(ws) parts.push(ws);
+  parts.push(String(kind||'Skjal').trim());
+  if(o.month) parts.push(monthLabelFull(o.month));
   return (parts.join(' - ')+'.pdf').replace(/[\\/:*?"<>|]/g,'-').replace(/\s{2,}/g,' ');
 }
 // „Hver er ég" — nafn notanda (Aggi/Anni …) geymt í localStorage, skráð á
@@ -20242,7 +20245,7 @@ async function buildAndSaveEfnislistiPdf(name, month, data, overwrite){
   const logo = await bhLogoDataUrl();
   const doc = new lib.jsPDF({ unit:'pt', format:'a4', compress:true });
   drawEfnislistiPage(doc, logo, data);
-  const fileName = bhPdfName('Efnislisti', { payer:data.cust, ws:data.ws||name, kt:data.kt, month });
+  const fileName = bhPdfName('Efnislisti', { ws:data.ws||name, month });
   return bhSavePdfToSupabase(doc, { fileName, worksite_name:name, work_month:month, doc_type:'efnislisti_pdf', overwrite });
 }
 
@@ -20256,7 +20259,7 @@ async function buildAndSaveCombinedPdf(name, month, data, rows, yfCfg, overwrite
   drawEfnislistiPage(doc, logo, data);
   doc.addPage();
   drawTimabokPage(doc, logo, name, month, rows, yfCfg);
-  const fileName = bhPdfName('Efnislisti + Tímaskýrsla', { payer:data.cust, ws:data.ws||name, kt:data.kt, month });
+  const fileName = bhPdfName('Efnislisti', { ws:data.ws||name, month }); // nafnið sem Agnar bað um — 2 síður samt
   return bhSavePdfToSupabase(doc, { fileName, worksite_name:name, work_month:month, doc_type:'efnislisti_pdf', overwrite });
 }
 // Tímaskýrslu-raðir fyrir samsetta PDF-ið: vistað eintak (timabok_edits, sama

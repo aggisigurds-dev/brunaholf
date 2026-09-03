@@ -69,6 +69,9 @@ exports.handler = async (event) => {
   // Cache-buster (?v=) svo yfirskrifað PDF birtist strax þrátt fyrir CDN-cache.
   const ver = Date.now();
   const public_url = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${encodeURI(storage_path)}?v=${ver}`;
+  // Niðurhal með RÉTTU skráarnafni: vafrinn nefnir annars eftir slóðinni
+  // (efnislisti_pdf-xxxx.pdf). Supabase Storage styður ?download=<nafn>.
+  const download_url = `${public_url}&download=${encodeURIComponent(fileName)}`;
   const drive_file_id = 'sb:' + storage_path;
 
   // 2) Record it so the "Vistuð PDF-skjöl" list + send flow can find it.
@@ -86,7 +89,7 @@ exports.handler = async (event) => {
   // A recording failure shouldn't lose the uploaded file — return it either way.
   const recErr = rec.ok ? null : (await rec.text()).slice(0, 200);
 
-  return json(200, { ok: true, id: drive_file_id, storage_path, public_url, title: fileName, recErr });
+  return json(200, { ok: true, id: drive_file_id, storage_path, public_url, download_url, title: fileName, recErr });
 };
 
 function cors() {
