@@ -43,8 +43,13 @@ exports.handler = async (event) => {
   const stats = { folder, dry, scanned: 0, indexed: 0, dupSkip: 0, notInvoice: 0, errors: 0, rows: [] };
 
   try {
-    const files = await listPdfs(folder, token);
+    let files = await listPdfs(folder, token);
+    // ?only=<reikningsnr eða hluti úr skráarnafni> — endurlesa EINN reikning eftir
+    // lagfæringu á lesaranum án þess að skrifa yfir alla möppuna (03.09.2026).
+    const only = (p.only || '').trim();
+    if (only) files = files.filter((f) => String(f.name || '').toLowerCase().includes(only.toLowerCase()));
     stats.total = files.length;
+    if (only) stats.only = only;
     stats.offset = offset;
     const slice = files.slice(offset, offset + limit);
     for (const f of slice) {
@@ -191,15 +196,35 @@ function extractSalesperson(norm) {
   return m[1].replace(/\s+(Dagsetning|Eindagi|Kt|Vegna|Reikningur).*$/i, '').replace(/\s+/g, ' ').trim() || null;
 }
 // "Vegna <verkstaður> umb <tengiliður>" — the green-box reference line.
+//
+// 03.09.2026: varaleiðin var ólæst — `norm` er hvítbils-þjappaður svo `\s{2,}`
+// small aldrei, og fyndist hvorugt stopporðið hljóp `.+?` alla leið í enda
+// skjalsins. Reikningur 0142980 (01.09.2026, 419.021 kr) fékk þannig 285 stafa
+// slitur úr vörulínunum í verkstaðarreitinn og lenti hvergi. Nú stoppar lesturinn
+// á fyrsta vörunúmeri (t.d. „FSI FS310HPE", „PIC 150/40", „POL PRO059") eða
+// hausorði, og of langt gildi er hent (verkstaðarnöfn eru stutt).
+const VEGNA_STOP = 'Vörunr|Vöruheiti|Sölumaður|Dagsetning|Eindagi|Gjalddagi|Reikningur|Pöntun|Tilvísun|Kt\\.|Sími|Netfang|Heimilisfang|Upphæð|Vsk|Samtals|Afgreiðsl|Móttakandi|Sótt';
+const VEGNA_CODE = '[A-ZÁÉÍÓÚÝÆÖÞÐ]{2,4}\\s?[A-Z0-9]*\\d{2,}';   // vörunúmer Redder
+function cleanVegna(s) {
+  let v = String(s || '').replace(/\s+/g, ' ').trim();
+  v = v.split(new RegExp('\\s+(?:' + VEGNA_STOP + ')', 'i'))[0];
+  v = v.split(new RegExp('\\s+(?=' + VEGNA_CODE + ')'))[0];
+  v = v.replace(/[\s:;,.-]+$/, '').trim();
+  if (v.length > 60) v = '';                    // lengra en verkstaðarnafn → ónothæft
+  if (/\d[.,]\d{2}\b/.test(v)) v = '';          // upphæð/magn slæddist með → ónothæft
+  return v;
+}
 function extractVegna(norm) {
   let m = norm.match(/Vegna\s+(.+?)\s+umb\.?\s+([A-Za-zÁÉÍÓÚÝÆÖÞÐáéíóúýæöþð .'-]{2,40})/i);
   if (m) {
-    const worksite = m[1].replace(/\s+/g, ' ').trim();
+    const worksite = cleanVegna(m[1]);
     const contact = m[2].replace(/\s+(Sölumaður|Dagsetning|Reikningur|Kt|Upphæð|Vsk|Samtals).*$/i, '').replace(/\s+/g, ' ').trim();
-    return { worksite, contact, raw: (worksite + (contact ? ' umb ' + contact : '')).trim() };
+    if (worksite) return { worksite, contact, raw: (worksite + (contact ? ' umb ' + contact : '')).trim() };
   }
-  m = norm.match(/Vegna\s+(.+?)(?:\s{2,}|Sölumaður|Dagsetning|Reikningur|$)/i);
-  if (m) { const worksite = m[1].replace(/\s+/g, ' ').trim(); return { worksite, contact: '', raw: worksite }; }
+  // Taka rúman bút og láta cleanVegna klippa — að krefjast stopporðs í regexinu
+  // sjálfu felldi lesturinn þegar ekkert þeirra fylgdi (0142980).
+  m = norm.match(/Vegna\s*:?\s+(.{2,200})/i);
+  if (m) { const worksite = cleanVegna(m[1]); if (worksite) return { worksite, contact: '', raw: worksite }; }
   return { worksite: '', contact: '', raw: '' };
 }
 function matchNum(norm, re) { const m = norm.match(re); return m ? m[1] : null; }
@@ -355,6 +380,10 @@ async function loadAliasesFromDb() {
 function normWorksite(name) {
   const n = String(name || '').trim();
   if (!n) return null;
+  // Öryggisventill (03.09.2026): rusl úr lesaranum má ALDREI lenda sem verkstaður —
+  // slík röð hverfur úr Efniskostnaði og efnið ratar hvergi. Betra að skila null
+  // (birtist sem „óparað" og er hægt að tengja handvirkt).
+  if (n.length > 60 || /\d[.,]\d{2}\b/.test(n)) return null;
   const key = n.toLowerCase().replace(/\s+/g, ' ').trim();
   if (ALIAS_DB[key]) return ALIAS_DB[key];
   if (ALIAS[key]) return ALIAS[key];
