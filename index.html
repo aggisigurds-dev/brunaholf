@@ -34,6 +34,7 @@
 </script>
 
 <meta charset="utf-8">
+<script src="/js/gr-materials.js?v=20260903"></script>
 <meta name="color-scheme" content="light"/>
 <!-- Chrome Android Force Dark endurlitar síður sjálfkrafa og gerði sumar
      hub-síður ólæsilegar í síma Agnars. `only light` er opt-out Blink.
@@ -1454,6 +1455,7 @@ const DEFAULT_STATE = {
     {id:'spurningar', label:'Spurningar', icon:'⚠'},
     {id:'timavera',   label:'Tímavera',   icon:'⏱'},
     {id:'tvmaeting',  label:'Mæting · verkstaðir', icon:'🕒'},
+    {id:'verkstadapostur', label:'Frá verkstað', icon:'🧰'},
     {id:'verdsamanburdur', label:'Verðsamanburður', icon:'⚖️'},
     {id:'verkstadir',  label:'Verkstaðir',  icon:'🏗'},
     {id:'skuldunautar', label:'Skuldunautar', icon:'💸'},
@@ -1751,7 +1753,7 @@ function clearDataCache(){
 function ensureNewTabs(s){
   if(!s || !Array.isArray(s.tabs)) return;
   if(!Array.isArray(s.bakendiLinks)) s.bakendiLinks = BAKENDI_LINK_SEED.map(x=>({...x}));
-  ['verkkaupar','dagurinn','jarvis','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','vorubirgdir','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','tvmaeting','verdsamanburdur','verkstadir','skuldunautar','skyrslur','skyrslustod','afkost','krofuyfirlit','fjarmalyfirlit','vidskiptavinir','krofur','hreyfingaryfirlit','nlsh','turbopaint','pdftools','spurningar','sjalfvirkni','vefryni','skodanir','brunayfirlit','verkfaeri','eydublod','multitool','skraalisti','bakendi'].forEach(id=>{
+  ['verkkaupar','dagurinn','jarvis','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','vorubirgdir','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','tvmaeting','verkstadapostur','verdsamanburdur','verkstadir','skuldunautar','skyrslur','skyrslustod','afkost','krofuyfirlit','fjarmalyfirlit','vidskiptavinir','krofur','hreyfingaryfirlit','nlsh','turbopaint','pdftools','spurningar','sjalfvirkni','vefryni','skodanir','brunayfirlit','verkfaeri','eydublod','multitool','skraalisti','bakendi'].forEach(id=>{
     if(!s.tabs.find(t=>t.id===id)){
       const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
       if(d){
@@ -1797,6 +1799,11 @@ function ensureNewTabs(s){
           const bIdx = s.tabs.findIndex(t=>t.id==='bakendi');
           const sIdx = s.tabs.findIndex(t=>t.id==='stillingar');
           target = idx >= 0 ? idx + 1 : (bIdx >= 0 ? bIdx : (sIdx >= 0 ? sIdx : -1));
+        } else if(id === 'verkstadapostur'){
+          // Frá verkstað (Brunaþéttingar-appið) situr beint á eftir Mæting · verkstaðir.
+          const idx = s.tabs.findIndex(t=>t.id==='tvmaeting');
+          const idx2 = s.tabs.findIndex(t=>t.id==='timavera');
+          target = idx >= 0 ? idx + 1 : (idx2 >= 0 ? idx2 + 1 : -1);
         } else if(id === 'turbopaint'){
           // TurboPaint (teikningar, iframe á kjarni.vercel.app) situr með daglegum tólum.
           const idx = s.tabs.findIndex(t=>t.id==='jarvis');
@@ -2324,6 +2331,7 @@ function render(){
   if(t.id==='spurningar') return renderSpurningar(t);
   if(t.id==='timavera') return renderTimavera(t);
   if(t.id==='tvmaeting') return renderTvMaeting(t);
+  if(t.id==='verkstadapostur') return renderVerkstadapostur(t);
   if(t.id==='verdsamanburdur') return renderCompetitors(t);
   if(t.id==='verkstadir') return renderWorksites(t);
   if(t.id==='skuldunautar') return renderSkuldunautar(t);
@@ -10084,31 +10092,8 @@ async function renderGerdReikninga(t){
     }catch(_){}
   }
   // ===== Verðskrá efnis (same price list as /reikningur) — used for quick-add =====
-  const GR_MATERIALS = [
-    { section:'Almennt', items:[
-      {label:'Eldvarnar akríl',unit:'stk',price:1624},{label:'Eldvarnar Akríl 5kg',unit:'stk',price:14400},
-      {label:'Háþennslukítti',unit:'stk',price:4489},{label:'Eldvarnar silikon',unit:'stk',price:2220},
-      {label:'Eldvarnar steinull',unit:'plata',price:10703},{label:'Eldvarnar málning',unit:'líter',price:2500},
-      {label:'Eldvarnar rúlla 55mm',unit:'stk',price:53574},
-    ]},
-    { section:'Eldvarnar band (mm)', items:[
-      {label:'Band 55mm',unit:'stk',price:1621},{label:'Band 63mm',unit:'stk',price:3590},{label:'Band 75mm',unit:'stk',price:1236},
-      {label:'Band 82mm',unit:'stk',price:1287},{label:'Band 90mm',unit:'stk',price:1556},{label:'Band 110mm',unit:'stk',price:2047},
-      {label:'Band 125mm',unit:'stk',price:2628},{label:'Band 160mm',unit:'stk',price:4780},{label:'Band 200mm',unit:'stk',price:6025},
-    ]},
-    { section:'Eldvarnar kragi (mm)', items:[
-      {label:'Kragi 32mm',unit:'stk',price:2821},{label:'Kragi 40mm',unit:'stk',price:3205},{label:'Kragi 55mm',unit:'stk',price:3308},
-      {label:'Kragi 63mm',unit:'stk',price:3590},{label:'Kragi 75mm',unit:'stk',price:4103},{label:'Kragi 82mm',unit:'stk',price:4174},
-      {label:'Kragi 90mm',unit:'stk',price:4719},{label:'Kragi 110mm',unit:'stk',price:4915},{label:'Kragi 125mm',unit:'stk',price:6260},
-      {label:'Kragi 140mm',unit:'stk',price:8052},{label:'Kragi 160mm',unit:'stk',price:10191},{label:'Kragi 200mm',unit:'stk',price:18021},
-      {label:'Kragi 250mm',unit:'stk',price:26792},{label:'Kragi 315mm',unit:'stk',price:151754},
-    ]},
-    { section:'Brunaþéttirör', items:[
-      {label:'Brunaþéttirör 16mm',unit:'stk',price:6426},{label:'Brunaþéttirör 20mm',unit:'stk',price:6426},
-      {label:'Brunaþéttirör 32mm',unit:'stk',price:8044},{label:'Brunaþéttirör 50mm',unit:'stk',price:9012},
-      {label:'Brunaþéttirör PVC 32mm',unit:'stk',price:2498},{label:'Brunaþéttirör PVC 50mm',unit:'stk',price:2970},
-    ]},
-  ];
+  // Verðskrá efnis býr nú í js/gr-materials.js (sama listi í Brunaþéttingar-appinu og /api/field-app).
+  const GR_MATERIALS = window.GR_MATERIALS || [];
   const GR_FLAT = GR_MATERIALS.flatMap(s=>s.items);
   // Autofill from Redder should bill the customer our SALE price, not the buy-in
   // cost. Match each Redder line to a Verðskrá item → bill that sale price.
@@ -10445,6 +10430,11 @@ async function renderGerdReikninga(t){
       .gr-modal-bg.boss .gb-notes-grow{margin-left:auto;width:28px;height:24px;padding:0;border:1px solid var(--edge,#c9c2b3);border-bottom-color:#a89f8c;border-radius:4px;background:linear-gradient(180deg,#fff,#efeae0);box-shadow:var(--key-shadow,inset 0 1px 0 #fff,0 2px 0 #cfc8b9);font:inherit;font-size:14px;line-height:1;color:var(--ink,#161513);cursor:pointer;text-transform:none;letter-spacing:0}
       .gr-modal-bg.boss .gb-notes-grow.more{border-color:#5a4410;background:var(--gold-face,linear-gradient(180deg,#f3dc95,#b8892e));color:#161513;font-weight:800}
       .gr-modal-bg.boss #gr-notes.big{min-height:160px;resize:vertical}
+      .gr-modal-bg.boss .gb-field{margin:0 0 10px;padding:10px 12px;border:1px solid #d9b25a;border-radius:5px;background:linear-gradient(180deg,#fbf3d9,#f4e6b8);box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(22,21,19,.08);font-size:12.5px;color:#3e2c06}
+      .gb-field .k{font-family:var(--font-mono,ui-monospace,monospace);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#8f6a1c;margin-bottom:6px;display:flex;gap:8px;align-items:center}.gb-field .k .n{margin-left:auto;letter-spacing:0;text-transform:none;font-size:11px}
+      .gb-field .fl{padding:3px 0;border-top:1px dashed rgba(143,106,28,.35)}.gb-field .fl small{color:#8f6a1c;margin-left:6px;font-size:11px}.gb-field .fl.p{white-space:pre-wrap}
+      .gb-field .fb{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}.gb-field .fb .h{font-size:10.5px;color:#8f6a1c;flex:1 1 100%}.gb-field .fb .h a{color:#8f6a1c}
+      .gb-field-btn{height:30px;padding:0 10px;border:1px solid #5a4410;border-top-color:#f7e6b8;border-bottom-color:#2e2004;border-radius:4px;background:var(--gold-face,linear-gradient(180deg,#f3dc95,#b8892e));font:inherit;font-size:12px;font-weight:800;color:#161513;cursor:pointer}.gb-field-btn.ivory{border-color:var(--edge,#c9c2b3);border-bottom-color:#a89f8c;background:linear-gradient(180deg,#fff,#efeae0);font-weight:700}.gb-field-btn[disabled]{opacity:.6;cursor:default}
       .gb-hours{margin-top:2px}
       .gb-hrow{display:grid;grid-template-columns:92px 1fr 1fr 96px;gap:10px;align-items:center;padding:5px 0}
       .gb-hrow b{font-size:13px;color:var(--ink,#161513)}.gb-hrow b span{display:block;font-size:10px;color:var(--warn,#8a6a1c);font-weight:400}
@@ -10607,12 +10597,13 @@ async function renderGerdReikninga(t){
     }
     if(!painted) $meta.textContent = 'Sækir…';
     try{
-      const [wsR, pgR, drR, rdR, nlR] = await Promise.all([
+      const [wsR, pgR, drR, rdR, nlR, fdR] = await Promise.all([
         cachedFetch('/api/worksites?year=combined', {force:!!force}),
         cachedFetch('/api/pricing-guide', {force:!!force}).catch(()=>null),
         cachedFetch('/api/invoice-drafts', {force:true}).catch(()=>null),
         cachedFetch('/api/redder-invoices', {force:!!force}).catch(()=>null),
         cachedFetch('/api/nlsh-dashboard', {force:!!force}).catch(()=>null),
+        cachedFetch('/api/field-app?op=entries&days=400&shares=0', {force:true}).catch(()=>null),
       ]);
       const ws = wsR ? await wsR.json() : {worksites:[]};
       // Fail (net-villa → pgR null, eða HTTP-villa → !pgR.ok) er AÐGREINT frá
@@ -10646,6 +10637,8 @@ async function renderGerdReikninga(t){
           REDDER[k].lines.push({ label: li.item_name||'Efni', cost, qty });
         }
       }
+      // Frá verkstað (Brunaþéttingar-appið): efni af lager + punktar per verkstað|mánuður → window.__FIELD
+      try{ const fd = fdR && fdR.ok ? await fdR.json() : {rows:[]}; const F = {}; for(const e of (fd.rows||[])){ if(!e.worksite_name || !e.work_month) continue; const k = e.worksite_name+'|'+e.work_month; (F[k] = F[k] || {efni:[], punktar:[]}); if(e.kind==='efni') F[k].efni.push(e); else if(e.kind==='punktur') F[k].punktar.push(e); } window.__FIELD = F; }catch(_){ window.__FIELD = window.__FIELD || {}; }
       // Persist a snapshot so the next open paints instantly (stale-while-revalidate).
       try{ localStorage.setItem('gr_snapshot_v1', JSON.stringify({WS,PG,DRAFTS,REDDER,NLSH_MONTHLY,ts:Date.now()})); }catch(_){}
       renderList();
@@ -10895,8 +10888,17 @@ async function renderGerdReikninga(t){
           return m ? { label:l.label, price:m.price, qty:l.qty, cost:l.cost } : null;
         }).filter(Boolean);
       }
+      // Efni af lager sem starfsmenn skráðu í Brunaþéttingar-appinu — á söluverði Verðskrár, eins og Redder
+      const fld0 = (window.__FIELD||{})[`${name}|${month}`];
+      if(fld0 && fld0.efni.length){ for(const e of fld0.efni){ const ex = mats.find(m=>m.label===e.item_label); if(ex) ex.qty += Number(e.qty)||0; else mats.push({label:e.item_label, price:Number(e.unit_price)||0, qty:Number(e.qty)||0, cost:0}); } }
     }
     const redderTotal = (REDDER[`${name}|${month}`]||{}).an_vsk || 0;
+    // 🧰 Frá verkstað — kassi í 03 með því sem starfsmenn skráðu í appinu (efni + punktar)
+    const fieldBoxHtml = () => { const F = (window.__FIELD||{})[name+'|'+month]; if(!F || (!F.efni.length && !F.punktar.length)) return ''; const dm = d => String(d||'').slice(8,10)+'.'+String(d||'').slice(5,7);
+      return '<div class="gb-field" id="gr-field-box"><div class="k">🧰 Frá verkstað <span class="n">' + F.efni.length + ' efni · ' + F.punktar.length + ' punktar</span></div>'
+        + F.efni.map(e => '<div class="fl">' + escapeHtml(e.item_label||'') + ' <b>× ' + escapeHtml(String(e.qty||0)) + ' ' + escapeHtml(e.unit||'') + '</b><small>' + escapeHtml(e.author||'') + ' · ' + dm(e.entry_date) + (e.note ? ' · ' + escapeHtml(e.note) : '') + '</small></div>').join('')
+        + F.punktar.map(p => '<div class="fl p">📝 ' + escapeHtml(p.note||'') + '<small>' + escapeHtml(p.author||'') + ' · ' + dm(p.entry_date) + '</small></div>').join('')
+        + '<div class="fb">' + (F.efni.length ? '<button type="button" class="gb-field-btn" id="gr-field-add">➕ Setja efnið í listann</button>' : '') + (F.punktar.length ? '<button type="button" class="gb-field-btn ivory" id="gr-field-notes">📝 Punktar í athugasemd</button>' : '') + '<span class="h">efnið fór sjálfkrafa í fyrstu forútfyllingu · úr <a href="/brunathettingar" target="_blank" rel="noopener">Brunaþéttingar-appinu</a></span></div></div>'; };
 
     // Yfirferðar-hamur: opnað gegnum yfirferðar-hlekkinn (review=1) EÐA drögin
     // eru flögguð til yfirferðar. Snapshot af vistuðu drögunum tekið við opnun
@@ -10976,6 +10978,7 @@ async function renderGerdReikninga(t){
             <div class="gb-sec-h"><span class="boss-plate">03</span><span class="gb-sec-t">Efni</span><span class="gb-sec-sub" id="gr-sub-03"></span><b class="gb-sec-sum" id="gr-sum-03"></b><span class="gb-caret">›</span></div>
             <div class="gb-sec-b">
           ${redderTotal>0?`<div class="gr-redder-note gb-redder"><span class="k">Redder innkaup þennan mánuð</span><b class="v">${fmt(redderTotal)} kr</b><span class="d">án vsk · forútfyllt á söluverði Verðskrár · smávara fellur undir smáhlutagjald</span><button type="button" class="gb-redder-open" id="gr-redder-open" title="Opna Redder-innkaup mánaðarins (Efniskostnaður)">Sýna innkaup ›</button></div>`:''}
+          ${fieldBoxHtml()}
           <div class="gb-mhead"><span>Vara</span><span>Söluverð</span><span>Magn</span><span class="r">Samtals</span><span></span></div>
           <div id="gr-mats"></div>
           <div class="gr-mat-add">${matSelect} <button type="button" id="gr-mat-custom" class="gr-btn" title="Bæta við handvirkri efnislínu">✎ Sérlína</button></div>
@@ -11321,6 +11324,9 @@ async function renderGerdReikninga(t){
         if(ntGrow){ const more = !big && ntTa.scrollHeight > ntTa.clientHeight + 2; ntGrow.classList.toggle('more', more); ntGrow.textContent = big ? '⤡' : '⤢'; ntGrow.title = big ? 'Minnka reitinn aftur' : (more ? 'Það er meira í reitnum en sést — stækka' : 'Stækka reitinn'); }
       }
       if(ntGrow && ntTa){ ntGrow.onclick = () => { ntTa.classList.toggle('big'); ntFit(); if(ntTa.classList.contains('big')) ntTa.focus(); }; ntTa.addEventListener('input', ntFit); setTimeout(ntFit, 80); }
+      // 🧰 Frá verkstað: efni í listann (leggst við sömu línu ef hún er til) / punktar í innri athugasemd
+      const fAdd = K('gr-field-add'); if(fAdd) fAdd.onclick = () => { const F = (window.__FIELD||{})[name+'|'+month]; if(!F) return; let n = 0; for(const e of F.efni){ const rows = [...bg.querySelectorAll('#gr-mats .gr-mat-line')]; const ex = rows.find(r => ((r.querySelector('.m-label')||{}).value||'') === e.item_label); if(ex){ const q = ex.querySelector('.m-qty'); q.value = (Number(q.value)||0) + (Number(e.qty)||0); } else { addMat({label:e.item_label, price:Number(e.unit_price)||0, qty:Number(e.qty)||0, cost:0}); } n++; } draw(); fAdd.textContent = '✓ ' + n + ' línur í listanum'; fAdd.disabled = true; };
+      const fNotes = K('gr-field-notes'); if(fNotes) fNotes.onclick = () => { const F = (window.__FIELD||{})[name+'|'+month]; if(!F) return; const ta = K('gr-notes'); if(!ta) return; const dm = d => String(d||'').slice(8,10)+'.'+String(d||'').slice(5,7); const add = F.punktar.map(p => '• ' + (p.note||'') + ' (' + (p.author||'') + ' ' + dm(p.entry_date) + ')').join('\n'); ta.value = (ta.value.trim() ? ta.value.trim() + '\n' : '') + add; ta.dispatchEvent(new Event('input')); fNotes.textContent = '✓ í athugasemd'; fNotes.disabled = true; };
       ntLoad();
       tvLoad();
     })();
@@ -13994,6 +14000,94 @@ async function renderKrofur(t){
 // ── 🕒 Mæting · verkstaðir — hvenær starfsmenn mættu/hættu síðustu daga ──────
 // Les /api/timavera-dagar (timavera_entries). Eitt spjald per dag, röð per
 // starfsmann: 🟢 mætti (fyrsta inn) · 🔴 hætti (síðasta út) · klst · verkstaðir.
+// ===== Frá verkstað — allt sem starfsmenn skrá í Brunaþéttingar-appinu (/brunathettingar) =====
+// Efni af lager · punktar úr verkinu · mætingar-athugasemdir · beiðnir (field_entries) og
+// „Deilt með verkstað" (field_shares: TurboPaint-borð, hlekkir). Staða: nýtt → 👁 séð → ✓ lokið.
+async function renderVerkstadapostur(t){
+  const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const MN = ['janúar','febrúar','mars','apríl','maí','júní','júlí','ágúst','september','október','nóvember','desember'];
+  const pad = n => String(n).padStart(2,'0');
+  const nowYM = () => { const d = new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1); };
+  state.ui.fv_month = /^\d{4}-\d{2}$/.test(state.ui.fv_month||'') ? state.ui.fv_month : nowYM();
+  const ml = ym => { const [y,m] = ym.split('-').map(Number); return (MN[m-1]||ym)+' '+y; };
+  const shift = (ym,d) => { const [y,m] = ym.split('-').map(Number); const x = new Date(y, m-1+d, 1); return x.getFullYear()+'-'+pad(x.getMonth()+1); };
+  const dmy = v => { const m = String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3]+'.'+m[2]+'.'+m[1] : ''; };
+  const hhmm = v => { const d = new Date(v); return isNaN(d) ? '' : pad(d.getHours())+':'+pad(d.getMinutes()); };
+  const hf = n => (Math.round((Number(n)||0)*100)/100).toLocaleString('is-IS');
+  const fmt = n => Math.round(Number(n)||0).toLocaleString('is-IS');
+  const CARD = 'background:var(--card);border:1px solid var(--line-2);border-radius:6px;box-shadow:var(--panel-shadow,0 1px 2px rgba(22,21,19,.12));margin-bottom:12px;overflow:hidden';
+  const HEAD = 'display:flex;align-items:center;gap:10px;padding:10px 14px;background:linear-gradient(180deg,#faf8f3,#ece7dc);border-bottom:1px solid var(--line-2)';
+  const PLATE = 'display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:20px;padding:0 6px;border-radius:2px;border:1px solid #5a4410;background:var(--gold-face,linear-gradient(180deg,#f3dc95,#b8892e));color:#2e2004;font-family:var(--font-mono);font-size:10px;font-weight:700';
+  const TITLE = 'font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--ink)';
+  const KEY = 'height:30px;padding:0 10px;border:1px solid var(--edge);border-bottom-color:#a89f8c;border-radius:4px;background:linear-gradient(180deg,#fff,#efeae0);box-shadow:inset 0 1px 0 #fff,0 2px 0 #cfc8b9;font:inherit;font-size:12px;font-weight:700;color:var(--ink);cursor:pointer;white-space:nowrap';
+  const chipCss = kind => kind==='red' ? 'background:var(--red-bg);color:var(--red);border:1px solid var(--red-line)' : kind==='green' ? 'background:var(--green-bg,#dfeee4);color:var(--green);border:1px solid #bfd9c8' : kind==='blue' ? 'background:var(--info-bg,#e3ebf7);color:var(--blue);border:1px solid #b9c9df' : 'background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-line)';
+  const chip = (txt, kind) => '<span style="display:inline-block;border-radius:3px;padding:2px 8px;font-size:11.5px;font-weight:600;white-space:nowrap;'+chipCss(kind)+'">'+esc(txt)+'</span>';
+  $view.innerHTML = '<div style="max-width:980px">'
+    + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px">'
+    + '<div><div style="font-size:10.5px;font-weight:600;letter-spacing:2.5px;color:var(--gold-deep);text-transform:uppercase;margin-bottom:6px">BRUNAÞÉTTINGAR · VERKSTAÐA-APPIÐ</div>'
+    + '<h1 style="margin:0;font-family:var(--font-display);font-size:30px;font-weight:700;color:var(--ink)">Frá verkstað</h1>'
+    + '<div style="font-size:12px;color:var(--muted);margin-top:4px">Efni af lager, punktar, mætingar-athugasemdir og beiðnir sem starfsmenn skrá í appinu · <a href="/brunathettingar" target="_blank" rel="noopener" style="color:var(--gold-deep);font-weight:700">opna appið ↗</a> · slóð fyrir starfsmenn: <b style="font-family:var(--font-mono);font-size:11.5px">brunaholf.netlify.app/brunathettingar</b></div></div>'
+    + '<div style="display:flex;gap:6px;align-items:center"><button id="fv-prev" type="button" style="'+KEY+'">‹</button><b id="fv-ml" style="font-family:var(--font-display);font-size:18px;min-width:160px;text-align:center">'+esc(ml(state.ui.fv_month))+'</b><button id="fv-next" type="button" style="'+KEY+'">›</button><button id="fv-refresh" type="button" style="'+KEY+'" title="Sækja aftur">↻</button></div></div>'
+    + '<div id="fv-body"><div style="padding:32px;text-align:center;color:var(--muted-2)">Sæki…</div></div></div>';
+  const post = body => fetch('/api/field-app', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(body) }).then(async r => { const j = await r.json().catch(()=>({})); if(!r.ok || j.error) throw new Error(j.error||('HTTP '+r.status)); return j; });
+  const entryRow = (e, main) => {
+    const st = e.status || 'new';
+    return '<div data-id="'+e.id+'" style="display:flex;gap:10px;align-items:flex-start;padding:8px 14px;border-top:1px solid var(--line);'+(st==='done'?'opacity:.55':'')+'">'
+      + '<div style="flex:1;min-width:0">'+main+'<div style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted);margin-top:3px">'+esc(dmy(e.entry_date))+' '+esc(hhmm(e.created_at))+' · '+esc(e.author||'')+(st!=='new'?' · '+(st==='done'?'✓ lokið':'👁 séð'):'')+'</div></div>'
+      + '<div style="display:flex;gap:4px;flex:none">'+(st==='new'?'<button type="button" data-st="seen" style="'+KEY+'" title="Merkja séð">👁</button>':'')+(st!=='done'?'<button type="button" data-st="done" style="'+KEY+'" title="Merkja lokið">✓</button>':'')+'<button type="button" data-del="'+e.id+'" style="'+KEY+';color:var(--red)" title="Eyða">×</button></div></div>';
+  };
+  async function load(){
+    const body = $view.querySelector('#fv-body'); if(!body) return;
+    const month = state.ui.fv_month;
+    try{
+      const r = await fetch('/api/field-app?op=entries&month='+month, {cache:'no-store'});
+      const d = await r.json(); if(!r.ok || d.error) throw new Error(d.error||('HTTP '+r.status));
+      const rows = d.rows||[], shares = d.shares||[];
+      const efni = rows.filter(e=>e.kind==='efni'), punktar = rows.filter(e=>e.kind==='punktur'), maet = rows.filter(e=>e.kind==='maeting'), beid = rows.filter(e=>e.kind==='beidni');
+      const byWs = list => { const m = {}; for(const e of list){ const k = e.worksite_name||'—'; (m[k] = m[k]||[]).push(e); } return m; };
+      const efniWs = byWs(efni), punktWs = byWs(punktar);
+      const wsNames = [...new Set([...Object.keys(efniWs), ...Object.keys(punktWs)])].sort((a,b)=>a.localeCompare(b,'is'));
+      const nNew = rows.filter(e=>(e.status||'new')==='new').length;
+      let h = '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">'+[['🧰 Efni af lager',efni.length],['📝 Punktar',punktar.length],['💬 Mæting',maet.length],['📨 Beiðnir',beid.length],['🆕 Ólesið',nNew]].map(([l,n])=>'<div style="flex:1;min-width:120px;'+CARD+';margin:0;padding:10px 12px"><div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)">'+l+'</div><div style="font-family:var(--font-mono);font-size:20px;font-weight:600;color:var(--ink)">'+n+'</div></div>').join('')+'</div>';
+      // 03 Efni + punktar per verkstað
+      h += '<div style="'+CARD+'"><div style="'+HEAD+'"><span style="'+PLATE+'">01</span><span style="'+TITLE+'">Efni af lager & punktar</span><span style="margin-left:auto;font-size:12px;color:var(--muted)">per verkstað · fer sjálfkrafa í Efnislistann</span></div>';
+      if(!wsNames.length) h += '<div style="padding:22px;text-align:center;color:var(--muted-2);font-style:italic">Ekkert skráð í '+esc(ml(month))+'</div>';
+      for(const ws of wsNames){
+        const ef = efniWs[ws]||[], pk = punktWs[ws]||[];
+        const sum = ef.reduce((a,e)=>a+(Number(e.qty)||0)*(Number(e.unit_price)||0),0);
+        h += '<div style="padding:10px 14px 4px;border-top:1px solid var(--line-2);display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--bg)"><b style="font-size:14px">'+esc(ws)+'</b><span style="font-family:var(--font-mono);font-size:11.5px;color:var(--muted)">'+ef.length+' efni · '+fmt(sum)+' kr · '+pk.length+' punktar</span><button type="button" data-ws="'+esc(ws)+'" class="fv-open" style="'+KEY+';margin-left:auto">📄 Opna Efnislista</button></div>';
+        for(const e of ef) h += entryRow(e, '<b>'+esc(e.item_label)+'</b> <span class="ky-num">× '+hf(e.qty)+' '+esc(e.unit||'')+'</span> <span style="color:var(--muted)">· '+fmt(e.unit_price)+' kr</span>'+(e.note?'<div style="color:var(--ink-2);white-space:pre-wrap">'+esc(e.note)+'</div>':''));
+        for(const e of pk) h += entryRow(e, '📝 <span style="white-space:pre-wrap">'+esc(e.note||'')+'</span>');
+      }
+      h += '</div>';
+      // 02 Mæting
+      h += '<div style="'+CARD+'"><div style="'+HEAD+'"><span style="'+PLATE+'">02</span><span style="'+TITLE+'">Mætingar-athugasemdir</span><span style="margin-left:auto;font-size:12px;color:var(--muted)">birtast líka í Mæting · verkstaðir</span></div>';
+      h += maet.length ? maet.map(e => entryRow(e, '<b style="text-transform:capitalize">'+esc(e.employee||'')+'</b> '+chip(e.category||'athugasemd', /veik/i.test(e.category||'')?'red':'warn')+(e.note?' <span style="color:var(--ink-2)">'+esc(e.note)+'</span>':''))).join('') : '<div style="padding:18px;text-align:center;color:var(--muted-2);font-style:italic">Engar athugasemdir</div>';
+      h += '</div>';
+      // 03 Beiðnir
+      h += '<div style="'+CARD+'"><div style="'+HEAD+'"><span style="'+PLATE+'">03</span><span style="'+TITLE+'">Beiðnir til skrifstofu</span></div>';
+      h += beid.length ? beid.map(e => entryRow(e, chip(e.category||'beiðni','blue')+(e.worksite_name?' '+chip(e.worksite_name,'muted'):'')+'<div style="color:var(--ink-2);white-space:pre-wrap;margin-top:2px">'+esc(e.note||'')+'</div>')).join('') : '<div style="padding:18px;text-align:center;color:var(--muted-2);font-style:italic">Engar beiðnir</div>';
+      h += '</div>';
+      // 04 Deilt með verkstað
+      h += '<div style="'+CARD+'"><div style="'+HEAD+'"><span style="'+PLATE+'">04</span><span style="'+TITLE+'">Deilt með verkstað</span><span style="margin-left:auto;font-size:12px;color:var(--muted)">TurboPaint-borð, teikningar, hlekkir — birtast í appinu undir „Deilt"</span></div>';
+      h += shares.map(sh => '<div style="display:flex;gap:10px;align-items:center;padding:8px 14px;border-top:1px solid var(--line)"><span>'+(sh.kind==='turbopaint'?'📐':'🔗')+'</span><div style="flex:1;min-width:0"><a href="'+esc(sh.url)+'" target="_blank" rel="noopener" style="font-weight:700;color:var(--gold-deep)">'+esc(sh.title)+'</a>'+(sh.note?'<div style="color:var(--ink-2);font-size:12.5px">'+esc(sh.note)+'</div>':'')+'<div style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">'+esc(dmy(sh.created_at))+' · '+esc(sh.url).slice(0,80)+'</div></div><button type="button" data-shdel="'+sh.id+'" style="'+KEY+';color:var(--red)" title="Taka úr deilingu">×</button></div>').join('');
+      h += '<div style="padding:12px 14px;border-top:1px solid var(--line-2);background:var(--bg);display:grid;grid-template-columns:1fr 1.6fr auto;gap:8px;align-items:end">'
+        + '<label style="font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">Heiti<input id="fv-sh-title" placeholder="t.d. Stórhöfði 29 — 2. hæð" style="display:block;width:100%;height:36px;margin-top:4px;padding:0 10px;border:1px solid var(--edge);border-radius:4px;background:var(--input-bg,#f6f3ec);font:inherit;font-size:13px"></label>'
+        + '<label style="font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">Slóð (TurboPaint-borð / hlekkur)<input id="fv-sh-url" placeholder="https://kjarni.vercel.app/kjarni/turbopaint…" style="display:block;width:100%;height:36px;margin-top:4px;padding:0 10px;border:1px solid var(--edge);border-radius:4px;background:var(--input-bg,#f6f3ec);font:inherit;font-size:13px"></label>'
+        + '<button type="button" id="fv-sh-add" style="'+KEY+';height:36px;border-color:#5a4410;background:var(--gold-face,linear-gradient(180deg,#f3dc95,#b8892e));font-weight:800">📎 Deila</button></div></div>';
+      body.innerHTML = h;
+      body.querySelectorAll('.fv-open').forEach(b => b.addEventListener('click', () => grOpenWorksite(b.dataset.ws, month)));
+      body.querySelectorAll('[data-st]').forEach(b => b.addEventListener('click', async () => { const id = Number(b.closest('[data-id]').dataset.id); try{ await post({ action:'update', id, status: b.dataset.st }); load(); }catch(e){ alert('Villa: '+e.message); } }));
+      body.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', async () => { if(!confirm('Eyða þessari skráningu?')) return; try{ await post({ action:'delete', id: Number(b.dataset.del) }); load(); }catch(e){ alert('Villa: '+e.message); } }));
+      body.querySelectorAll('[data-shdel]').forEach(b => b.addEventListener('click', async () => { if(!confirm('Taka úr deilingu?')) return; try{ await post({ action:'share_delete', id: Number(b.dataset.shdel) }); load(); }catch(e){ alert('Villa: '+e.message); } }));
+      const shAdd = body.querySelector('#fv-sh-add'); if(shAdd) shAdd.onclick = async () => { const title = body.querySelector('#fv-sh-title').value.trim(), url = body.querySelector('#fv-sh-url').value.trim(); if(!title || !url){ alert('Heiti og slóð vantar'); return; } try{ await post({ action:'share_add', title, url, kind: /turbopaint|kjarni/i.test(url) ? 'turbopaint' : 'link' }); load(); }catch(e){ alert('Villa: '+e.message); } };
+    }catch(e){ body.innerHTML = '<div style="padding:24px;text-align:center;color:var(--red)">Villa: '+esc(e.message)+'</div>'; }
+  }
+  $view.querySelector('#fv-prev').onclick = () => { state.ui.fv_month = shift(state.ui.fv_month, -1); save(); $view.querySelector('#fv-ml').textContent = ml(state.ui.fv_month); load(); };
+  $view.querySelector('#fv-next').onclick = () => { state.ui.fv_month = shift(state.ui.fv_month, 1); save(); $view.querySelector('#fv-ml').textContent = ml(state.ui.fv_month); load(); };
+  $view.querySelector('#fv-refresh').onclick = load;
+  load();
+}
 async function renderTvMaeting(t){
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const WD = ['Sunnudagur','Mánudagur','Þriðjudagur','Miðvikudagur','Fimmtudagur','Föstudagur','Laugardagur'];
@@ -14028,6 +14122,11 @@ async function renderTvMaeting(t){
     try{
       const r = await fetch('/api/timavera-dagar?days='+state.ui.tvm_days, {cache:'no-store'});
       const d = await r.json();
+      // 💬 Athugasemdir úr Brunaþéttingar-appinu (veikur / seint / fjarverandi) per dag+starfsmaður
+      const fr = await fetch('/api/field-app?op=entries&days='+(state.ui.tvm_days+1)+'&kind=maeting&shares=0', {cache:'no-store'}).catch(()=>null);
+      const fj = fr && fr.ok ? await fr.json().catch(()=>({rows:[]})) : {rows:[]};
+      const FM = {}; for(const e of (fj.rows||[])){ const k = e.entry_date+'|'+String(e.employee||'').toLowerCase(); (FM[k] = FM[k]||[]).push(e); }
+      const fmChip = e => { const sick = /veik/i.test(e.category||''); return '<span style="display:inline-block;background:'+(sick?'var(--red-bg)':'var(--warn-bg)')+';color:'+(sick?'var(--red)':'var(--warn)')+';border:1px solid '+(sick?'var(--red-line)':'var(--warn-line)')+';border-radius:3px;padding:2px 9px;margin:2px 3px 0 0;font-size:11.5px;font-weight:600">💬 '+esc(e.category||'athugasemd')+(e.note?': '+esc(e.note):'')+' <span style="opacity:.65">· '+esc(e.author||'')+'</span></span>'; };
       if(!r.ok || d.error) throw new Error(d.error||('HTTP '+r.status));
       if(meta) meta.textContent = 'Hvenær starfsmenn mættu og hættu — beint úr Tímaveru · síðustu '+d.days_back+' dagar';
       // Ferskleika-viðvörun: gögnin ná bara að lokum nýjustu útflutningsskrárinnar
@@ -14067,6 +14166,13 @@ async function renderTvMaeting(t){
                       : ['var(--bg-2)','var(--ink-2)'];
                 return `<span style="display:inline-block;background:${c[0]};color:${c[1]};border-radius:3px;padding:2px 9px;margin:1px 3px 1px 0;font-size:11.5px;white-space:nowrap;font-weight:600">${esc(pn)} <span style="opacity:.65" class="ky-num">${hf(p.hours)}klst${p.in?' · '+esc(p.in)+'–'+esc(p.out||'?'):''}</span></span>`;
               }).join('')}</span>
+              ${(FM[day.date+'|'+String(s.employee).toLowerCase()]||[]).length ? '<span style="flex:1 1 100%;display:flex;flex-wrap:wrap">'+(FM[day.date+'|'+String(s.employee).toLowerCase()]||[]).map(fmChip).join('')+'</span>' : ''}
+            </div>`).join('')}
+          ${[...new Set((fj.rows||[]).filter(e=>e.entry_date===day.date && !day.staff.some(s=>String(s.employee).toLowerCase()===String(e.employee||'').toLowerCase())).map(e=>String(e.employee||'')))].map(n=>`
+            <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;padding:9px 18px;border-top:1px solid var(--line)">
+              <span style="font-weight:600;color:var(--ink);text-transform:capitalize;min-width:140px">${esc(n)}</span>
+              <span style="font-size:12px;color:var(--red);font-weight:600">ekki í Tímaveru</span>
+              <span style="flex:1 1 100%;display:flex;flex-wrap:wrap">${(FM[day.date+'|'+n.toLowerCase()]||[]).map(fmChip).join('')}</span>
             </div>`).join('')}
         </div>`).join('');
     }catch(e){
