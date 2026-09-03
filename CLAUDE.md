@@ -48,6 +48,17 @@ data from Ajour, Google Drive/Sheets/Gmail integration, and a tilbod
 - **Auth**: Google OAuth (tokens in `google_oauth` table), used for
   Drive/Sheets/Gmail. See `netlify/functions/_google.js`.
 - **Static site**: `public/tilbod/` is the standalone tilbod generator.
+- **Brunaþéttingar — verkstaða-appið (`brunathettingar.html`, `/brunathettingar`, 03.09.2026):**
+  sér-PWA fyrir starfsmenn á verkstað (Boss-þema, `manifest-brunathettingar.json`). Fjórir flipar:
+  Verkstaðir (úr Tímaveru + Redder-innkaup → skrá **efni af lager** úr Verðskrá og **punkta**),
+  Mæting (💬 veikur/seint/fjarverandi, líka starfsmaður sem er ekki í Tímaveru), Beiðnir
+  (teikningar/efni/verkfæri), Deilt (það sem Agnar deilir + Landsspítali/Mæting/TurboPaint).
+  Bakendi `netlify/functions/field-app.js` (töflur `field_entries`, `field_shares`,
+  `sql/2026-09-03_field_entries.sql`); vistar STRAX, biðröð í localStorage ef net dettur út
+  (`client_id` UNIQUE ver gegn tvítökum), samstillt milli tækja. Hub-hliðin: flipinn
+  **Frá verkstað** (`renderVerkstadapostur`) og 🧰-kassinn í Efnislistanum (efni af lager
+  forútfyllist eins og Redder). Verðskrá efnis er nú **ein heimild** í `js/gr-materials.js`
+  (hub + app + fall lesa hana). `FIELD_APP_TOKEN` (env) lokar appinu þegar það er sett.
 
 
 ---
