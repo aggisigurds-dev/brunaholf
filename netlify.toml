@@ -78,6 +78,22 @@
 # Friendly URL for the Mæting bridge:
 #   /api/maeting  →  /.netlify/functions/timavera-maeting
 
+# Landsspítalinn — slóðin sem Agnar notar (öll rithætti) → NLSH-síðan (skýrslan efst).
+[[redirects]]
+  from = "/Landsspitalinn"
+  to = "/nlsh.html"
+  status = 200
+
+[[redirects]]
+  from = "/landsspitalinn"
+  to = "/nlsh.html"
+  status = 200
+
+[[redirects]]
+  from = "/Landsspítalinn"
+  to = "/nlsh.html"
+  status = 200
+
 [[redirects]]
   from = "/api/maeting"
   to = "/.netlify/functions/timavera-maeting"

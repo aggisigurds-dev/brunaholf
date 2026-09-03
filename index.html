@@ -17613,6 +17613,18 @@ async function renderVerdskra(t){
 
   function renderNlsh(){
     const $p = document.getElementById('vs-panel-nlsh');
+    // 2026-09-03 (Agnar: „Ég sé samt ekki landsspitala útreikningasíðuna" — hann var hér,
+    // á #nlsh): flipinn sýnir nú sjálfa NLSH-síðuna innfellda — mánaðarlokaskýrsluna
+    // efst (lokatölur per verklið), mælaborðið og samningsstöðuna þar fyrir neðan.
+    // Gamla lesa-eingöngu taxtataflan hér á eftir er ekki teiknuð lengur (sagði
+    // „1 heild = 2 stakar" án undantekninganna 2.2/1.2 og var orðin villandi).
+    $p.innerHTML = `
+      <div class="vs-help" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+        <span><b>Landsspítalinn 5.–6. hæð</b> — mánaðarlokaskýrsla (lokatölur per verklið), mælaborð og samningsstaða.</span>
+        <a href="/nlsh.html#skyrsla" target="_blank" rel="noopener" style="white-space:nowrap;padding:7px 12px;border:1px solid var(--border,#d6dae0);border-radius:8px;text-decoration:none;color:inherit;font-weight:600">↗ Opna í eigin flipa</a>
+      </div>
+      <iframe id="nlsh-frame" src="/nlsh.html?v=${Date.now()}#skyrsla" title="Landsspítalinn — NLSH" style="width:100%;height:calc(100vh - 170px);min-height:760px;border:0;border-radius:10px;background:#fff"></iframe>`;
+    return;
     // NLSH contract rates from CLAUDE.md — display-only; sit in code rather than a table.
     const rates = [
       { nr:'1.1', label:'Ø100-150 Golf/Hæðarskil', target:50,  verd:38806 },
