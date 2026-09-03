@@ -8802,6 +8802,7 @@ function renderReikningagerd(t){
         const { rows } = await efR.json();
         for (const row of (rows||[])) {
           if (row.doc_type === 'invoice') continue;  // invoices have their own slot in Vinnubók
+          if (row.doc_type === 'innra') continue;    // 🔒 innra viðhengi — ekki kúnna-skjal
           const k = `${row.worksite_name}|${row.work_month}`;
           if (!lastData.efnislisti[k]) lastData.efnislisti[k] = [];
           lastData.efnislisti[k].push({ id: row.drive_file_id, title: row.title, url: row.public_url || null });
@@ -10020,7 +10021,6 @@ async function renderTilbunirReikningar(t){
         <tr class="sub"><td colspan="3">vsk</td><td class="t">${kr(vsk)}</td></tr>
         <tr class="grand"><td colspan="3">samtals með vsk</td><td class="t">${kr(total)}</td></tr>
       </tbody></table>
-      ${d.notes?`<p style="font-size:12px;color:#555;margin-top:16px;font-style:italic">${esc(d.notes)}</p>`:''}
       <script>window.onload=function(){window.print();}<\/script></body></html>`);
     w.document.close();
   }
@@ -10389,7 +10389,9 @@ async function renderGerdReikninga(t){
     try{
       const r = await fetch('/api/efnislisti-docs');
       const j = r.ok ? await r.json() : { rows: [] };
-      rows = (j.rows||[]).filter(d => d.doc_type==='efnislisti_pdf' || d.doc_type==='timabok_pdf');
+      rows = (j.rows||[]).filter(d => d.doc_type==='efnislisti_pdf' || d.doc_type==='timabok_pdf' || d.doc_type==='innra');
+      // 🔒 innra viðhengi: sýnt hér (opna/sækja/eyða) en merkt — fer aldrei út.
+      rows.forEach(d => { if(d.doc_type==='innra' && !/^🔒/.test(d.title||'')) d.title = '🔒 Innra (sendist ekki) · ' + (d.title||''); });
     }catch(e){ box.innerHTML = `<div class="gr-section-h">📄 Vistuð PDF-skjöl</div><div class="gr-loading">Villa: ${escapeHtml(e.message||String(e))}</div>`; return; }
     rows.sort((a,b)=> String(b.added_at||'').localeCompare(String(a.added_at||'')));
     const dt = s => { if(!s) return '—'; const d=new Date(s); return isNaN(d)?String(s).slice(0,10):(String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear()); };
@@ -10789,8 +10791,8 @@ async function renderGerdReikninga(t){
           <div class="gr-f"><label>Afsláttur af öllum reikningnum (%)</label><input type="text" inputmode="decimal" id="gr-disc" value="${escapeAttr(String(discPct))}" placeholder="0" style="max-width:130px"><div style="font-size:11px;color:var(--muted);margin-top:3px">t.d. 10 = 10% — birtist sem lína á reikningnum</div></div>
           <div class="gr-st">Fast verð</div>
           <div class="gr-f"><label>Fast heildarverð með vsk (samningaverð)</label><input type="text" inputmode="numeric" id="gr-fix" value="${escapeAttr(fixedTotal>0?String(Math.round(fixedTotal)):'')}" placeholder="—" style="max-width:180px"><div style="font-size:11px;color:var(--muted);margin-top:3px">Ef sett — yfirristir útreiknað verð. Notið þegar verð hefur verið samið (t.d. 1250000).</div></div>
-          <div class="gr-st">Athugasemd</div>
-          <div class="gr-f"><textarea id="gr-notes" rows="2" placeholder="Birtist neðst á reikningi">${escapeHtml(notes)}</textarea></div>
+          <div class="gr-st">Athugasemd <span style="font-weight:400;color:var(--muted-2)">(innri — birtist EKKI á skýrslu/PDF)</span></div>
+          <div class="gr-f"><textarea id="gr-notes" rows="2" placeholder="Innri minnispunktur — fer hvorki á reikning né PDF">${escapeHtml(notes)}</textarea></div>
           <div class="gr-actions">
             <button class="gr-btn gr-btn-primary" id="gr-save" type="button">💾 Vista</button>
             <button class="gr-btn" id="gr-savepdf" type="button" title="Vista sem PDF (geymt á Supabase, engin innskráning) — birtist neðst í „Vistuð PDF-skjöl" til að opna/sækja/senda">📄 Vista PDF</button>
@@ -10799,6 +10801,7 @@ async function renderGerdReikninga(t){
             <button class="gr-btn" id="gr-manual-btn" type="button" title="Opna handvirka stillingu — kennitala og heimilisfang verkkaupa á reikning">✏️ Handvirkt</button>
             <button class="gr-btn" id="gr-timabok" type="button" title="Prenta tímabók (mæting starfsmanna) til að senda með reikningi">🕒 Tímabók</button>
             <button class="gr-btn" id="gr-pdf2" type="button" title="Vista EITT PDF: Efnislisti á síðu 1 og Tímaskýrsla á síðu 2 (geymt á Supabase, birtist í „Vistuð PDF-skjöl")">📑 PDF + Tímaskýrsla</button>
+            <button class="gr-btn" id="gr-innra" type="button" title="Skrá sem er BARA fyrir okkur (mynd, PDF, hvað sem er, allt að 4 MB) — vistast með mánuðinum en sendist ALDREI með skýrslu eða kröfu">🔒 Innra viðhengi</button><input type="file" id="gr-innra-file" style="display:none">
             ${reviewOn ? `<button class="gr-btn" id="gr-confirm" type="button" style="background:var(--green);border-color:var(--green);color:#fff" title="Vista breytingarnar OG staðfesta yfirferðina — skrifstofan sér grænt „👔 Staðfest" á Kröfu yfirliti">✓ Staðfesta</button>
             <button class="gr-btn" id="gr-revert" type="button" style="border-color:var(--red-dark);color:var(--red-dark)" title="Afturkalla ALLAR breytingar úr þessari opnun (líka vistaðar) — drögin fara aftur í það sem þau voru þegar formið opnaðist">↶ Hætta við</button>` : ''}
             <button class="gr-btn" id="gr-close2" type="button">Loka</button>
@@ -11154,6 +11157,23 @@ async function renderGerdReikninga(t){
         if(typeof window.__grReloadPdfList==='function') window.__grReloadPdfList();
       } catch(e){ $st.textContent = '✗ '+(e.message||e); alert('Gat ekki vistað PDF: '+(e.message||e)); }
       finally { btn.textContent = old; btn.disabled = false; }
+    };
+    // 🔒 Innra viðhengi (Agnar 03.09.2026): skrá sem er BARA fyrir okkur — vistuð með
+    // mánaðardrögunum (efnislisti_documents, doc_type 'innra') en sendist ALDREI með
+    // skýrslu/kröfu (sendiflæðið, Reikningagrid-📎 og Vinnubók sleppa 'innra').
+    document.getElementById('gr-innra').onclick = () => document.getElementById('gr-innra-file').click();
+    document.getElementById('gr-innra-file').onchange = async (e) => {
+      const f = e.target.files && e.target.files[0]; if(!f) return;
+      const $st = document.getElementById('gr-save-st'); $st.textContent = '⏳ Hleð innra viðhengi…';
+      try{
+        if(f.size > 4*1024*1024) throw new Error('Skráin er stærri en 4 MB — minnkaðu myndina');
+        const b64 = await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(',')[1]); fr.onerror = () => rej(new Error('Gat ekki lesið skrána')); fr.readAsDataURL(f); });
+        const r = await fetch('/api/pdf-store', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ fileName: f.name, contentBase64: b64, mimeType: f.type || 'application/octet-stream', worksite_name: name, work_month: month, doc_type: 'innra' }) });
+        const j = await r.json().catch(()=>({})); if(!r.ok || j.error) throw new Error(j.error || ('HTTP '+r.status));
+        $st.innerHTML = `🔒 Innra viðhengi vistað — <a href="${j.public_url}" target="_blank" rel="noopener">opna</a> · sendist ekki með skýrslu`;
+        if(typeof window.__grReloadPdfList==='function') window.__grReloadPdfList();
+      }catch(err){ $st.textContent = '✗ '+(err.message||err); }
+      e.target.value = '';
     };
     // 📑 PDF + Tímaskýrsla (ósk Agnars 2026-09-02): EITT skjal — Efnislisti á
     // síðu 1, Tímaskýrsla (vistað eintak ef til, annars Tímavera) á síðu 2.
@@ -11893,6 +11913,7 @@ async function renderVinnubok(t){
     // rows ordered added_at desc → first per cell+type is the most recent
     for(const e of (ef.rows || [])){
       const k = `${e.worksite_name}|${e.work_month}`;
+      if(e.doc_type === 'innra') continue; // 🔒 innra viðhengi — ekki kúnna-skjal
       const slot = e.doc_type === 'invoice' ? data.invoices : data.efnislisti;
       if(!slot[k]) slot[k] = { id: e.drive_file_id, title: e.title, url: e.public_url || null };
     }
@@ -15170,7 +15191,7 @@ async function renderKrofuyfirlit(t){
         const ws=iv.worksite||'', wm=iv.work_month||'', cust=iv.customer||ws;
         let to='bokhald@brunaholf.is'; try{ to=localStorage.getItem('email_to')||to; }catch(_){}
         if(cust){ try{ const ci=await fetch('/api/customer-info?name='+encodeURIComponent(cust)).then(r=>r.ok?r.json():null); if(ci&&ci.rows&&ci.rows[0]&&ci.rows[0].contact_email) to=ci.rows[0].contact_email; }catch(_){} }
-        const docs=((ws&&wm)?(EFDOCS[ws+'|'+wm]||[]):[]).filter(d=>d.drive_file_id);
+        const docs=((ws&&wm)?(EFDOCS[ws+'|'+wm]||[]):[]).filter(d=>d.drive_file_id && d.doc_type!=='innra'); // 🔒 innri viðhengi fara ALDREI með
         if(!docs.length && !confirm('Ekkert vistað Efnislisti/Tímaskýrsla PDF fyrir '+(ws||'—')+' '+(wm||'')+'.\nVista fyrst með „💾 Vista PDF". Senda samt án viðhengja?')) return;
         // Senda er óafturkræft (póstur út) — ein staðfesting svo óvart-smellur sendi ekki.
         if(docs.length && !confirm('Senda '+docs.length+' skjal á '+to+'?')) return;
@@ -20363,7 +20384,7 @@ function drawEfnislistiPage(doc, logo, data){
     columnStyles:{ 1:{halign:'right'}, 2:{halign:'right'}, 3:{halign:'right'} },
     margin:{ left:40, right:40 },
   });
-  if(data.notes){ let ny=(doc.lastAutoTable?doc.lastAutoTable.finalY:y)+18; doc.setFont('helvetica','italic'); doc.setFontSize(10); doc.setTextColor(85); doc.text(doc.splitTextToSize(data.notes, W-80), 40, ny); }
+  // Athugasemdin er INNRI (Agnar 03.09.2026) — prentast EKKI á PDF né forskoðun.
 }
 
 // Print the (possibly edited) tímaskýrsla as HTML.

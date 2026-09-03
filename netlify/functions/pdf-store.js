@@ -5,7 +5,8 @@
 //
 //   POST /api/pdf-store
 //     body { fileName, contentBase64, worksite_name, work_month, doc_type }
-//        doc_type: 'efnislisti_pdf' | 'timabok_pdf'
+//        doc_type: 'efnislisti_pdf' | 'timabok_pdf' | 'innra' (innra viðhengi — hvaða skrá sem er,
+//                  mimeType fylgir; sendist aldrei með skýrslu, sjá index.html)
 //     → 200 { ok, id, storage_path, public_url, title }
 //
 // Twin of `efnislisti-pdf.js` (the Drive path) but with NO Google OAuth — service
@@ -35,12 +36,17 @@ exports.handler = async (event) => {
   const b64 = String(body.contentBase64 || '');
   const worksite_name = String(body.worksite_name || '').trim();
   const work_month = String(body.work_month || '').trim();
-  const doc_type = body.doc_type === 'timabok_pdf' ? 'timabok_pdf' : 'efnislisti_pdf';
+  const doc_type = (body.doc_type === 'timabok_pdf' || body.doc_type === 'innra') ? body.doc_type : 'efnislisti_pdf';
   if (!fileName || !b64) return json(400, { error: 'fileName + contentBase64 required' });
   if (!worksite_name || !work_month) return json(400, { error: 'worksite_name + work_month required' });
 
   const pdfBuf = Buffer.from(b64, 'base64');
   if (!pdfBuf.length) return json(400, { error: 'contentBase64 decoded to 0 bytes' });
+  // 🔒 innra: hvaða skrá sem er — ending úr nafni, mime úr beiðni (hvítlisti, annars octet-stream).
+  const MIME_OK = new Set(['application/pdf','image/jpeg','image/png','image/webp','image/gif','image/heic','text/plain','text/csv',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','application/vnd.openxmlformats-officedocument.wordprocessingml.document']);
+  const ext = doc_type === 'innra' ? ((fileName.match(/\.([A-Za-z0-9]{1,5})$/) || [null, 'bin'])[1].toLowerCase()) : 'pdf';
+  const contentType = doc_type === 'innra' ? (MIME_OK.has(String(body.mimeType || '')) ? body.mimeType : 'application/octet-stream') : 'application/pdf';
 
   // Deterministic-ish object path: <ascii-worksite>/<month>/<doc_type>-<rand>.pdf
   const slug = worksite_name.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -49,8 +55,8 @@ exports.handler = async (event) => {
   // SKRIFAR YFIR fyrra PDF (sami storage-hlutur + sama efnislisti_documents röð).
   // Annars random slóð (mörg söguleg eintök leyfð).
   const storage_path = body.overwrite
-    ? `${slug}/${work_month}/${doc_type}.pdf`
-    : `${slug}/${work_month}/${doc_type}-${Math.random().toString(36).slice(2, 10)}.pdf`;
+    ? `${slug}/${work_month}/${doc_type}.${ext}`
+    : `${slug}/${work_month}/${doc_type}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
 
   // 1) Upload to Supabase Storage (service role → no auth flow for the user).
   const up = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeURI(storage_path)}`, {
@@ -58,7 +64,7 @@ exports.handler = async (event) => {
     headers: {
       'apikey': SUPABASE_KEY,
       'Authorization': `Bearer ${SUPABASE_KEY}`,
-      'Content-Type': 'application/pdf',
+      'Content-Type': contentType,
       'x-upsert': 'true',
       'Cache-Control': 'max-age=31536000',
     },
