@@ -10850,7 +10850,10 @@ async function renderGerdReikninga(t){
   // (risking clobbering an intentional manual override), surface the
   // mismatch so it's visible instead of silently shipping two different
   // numbers on the invoice vs. Kröfuyfirlit's tímabók.
-  async function checkTimabokSync(name, month, curDvh, curEvh){
+  // periodQS (03.09.2026): samreikningur ber saman við ALLT tímabilið; annars mánuðinn.
+  // ATH fallið er UTAN openEditor — það má ekki lesa grPeriodQS beint (þá kastar það og
+  // ATHUGA-viðvörunin þagnar), tímabilið kemur sem viðfang frá ritlinum.
+  async function checkTimabokSync(name, month, curDvh, curEvh, periodQS){
     const dvEl = document.getElementById('gr-dvh-sync');
     const evEl = document.getElementById('gr-evh-sync');
     if(!dvEl) return;
@@ -10871,7 +10874,7 @@ async function renderGerdReikninga(t){
         tbEv = Math.round((Number(t.yf)||0)*100)/100;
         source = 'breytt tímabók';
       } else {
-        const resp = await fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&${grPeriodQS}`);
+        const resp = await fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&${periodQS || ('month=' + encodeURIComponent(month))}`);
         const data = await resp.json();
         if(!resp.ok) throw new Error(data.error || ('HTTP '+resp.status));
         const sp = data.split || {};
@@ -11124,7 +11127,7 @@ async function renderGerdReikninga(t){
       };
     });
     ['gr-fra','gr-til'].forEach(id => { const t = document.getElementById(id); if(t) t.addEventListener('blur', () => { const iso = ymd(t.value); if(iso) t.value = dmy(iso); }); });
-    checkTimabokSync(name, month, dvH, evH);
+    checkTimabokSync(name, month, dvH, evH, grPeriodQS);
     document.getElementById('gr-manual-btn').onclick = () => {
       const m = document.getElementById('gr-manual');
       const show = m.style.display === 'none';
@@ -11643,7 +11646,7 @@ async function renderGerdReikninga(t){
         document.getElementById('gr-dvh').value = newDvh;
         document.getElementById('gr-evh').value = newEvh;
         draw();
-        checkTimabokSync(name, month, newDvh, newEvh);
+        checkTimabokSync(name, month, newDvh, newEvh, grPeriodQS);
       } catch(e){ alert('Gat ekki sótt tímabók: '+(e.message||e)); }
       finally { btn.textContent = old; btn.disabled = false; }
     };
@@ -11652,7 +11655,7 @@ async function renderGerdReikninga(t){
     document.getElementById('gr-timabok').onclick = () => openTimabok(name, month);
     // Re-check sync status if the operator edits the hours by hand too.
     ['gr-dvh','gr-evh'].forEach(id => document.getElementById(id).addEventListener('change', () =>
-      checkTimabokSync(name, month, numv('gr-dvh'), numv('gr-evh'))));
+      checkTimabokSync(name, month, numv('gr-dvh'), numv('gr-evh'), grPeriodQS)));
 
     // ── Innfelld, lifandi-tengd Tímaskýrsla (compact + ⤢ stækkun til hægri) ──────
     // Breyti ég tíma í töflunni → tbkYfSplit reiknar dagvinnu/yfirvinnu → Dagvinna/
@@ -11670,7 +11673,7 @@ async function renderGerdReikninga(t){
       grTbkLive = () => ({ rows: tbkRows, yf: { on: tbkYf.on, thr: tbkYf.thr } });
       const tbkSort = () => tbkRows.sort((a,b)=> String(b.date).localeCompare(String(a.date)) || String(a.employee).localeCompare(String(b.employee),'is'));
       const tbkPersist = () => { state.ui=state.ui||{}; state.ui.timabok_edits=state.ui.timabok_edits||{}; state.ui.timabok_edits[tbkKey]={ rows:tbkRows.map(r=>({...r})), yfirvinna:{on:tbkYf.on,thr:tbkYf.thr}, saved_at:new Date().toISOString() }; save(); };
-      const tbkSync = persist => { const t=tbkYfSplit(tbkRows,tbkYf); const dv=document.getElementById('gr-dvh'), ev=document.getElementById('gr-evh'); if(dv) dv.value=Math.round(t.dv*100)/100; if(ev) ev.value=Math.round(t.yf*100)/100; if(typeof draw==='function') draw(); if(typeof checkTimabokSync==='function') try{ checkTimabokSync(name, month, numv('gr-dvh'), numv('gr-evh')); }catch(_e){} if(persist) tbkPersist(); };
+      const tbkSync = persist => { const t=tbkYfSplit(tbkRows,tbkYf); const dv=document.getElementById('gr-dvh'), ev=document.getElementById('gr-evh'); if(dv) dv.value=Math.round(t.dv*100)/100; if(ev) ev.value=Math.round(t.yf*100)/100; if(typeof draw==='function') draw(); if(typeof checkTimabokSync==='function') try{ checkTimabokSync(name, month, numv('gr-dvh'), numv('gr-evh'), grPeriodQS); }catch(_e){} if(persist) tbkPersist(); };
       function paintTbk(){
         const body=document.getElementById('gr-tbk-body'); if(!body) return;
         const t=tbkYfSplit(tbkRows,tbkYf), rs=tbkRowSplit(tbkRows,tbkYf);
