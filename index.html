@@ -10438,6 +10438,7 @@ async function renderGerdReikninga(t){
       .gb-notes-imgs figcaption{font-family:var(--font-mono,ui-monospace,monospace);font-size:9.5px;color:var(--muted,#6f685c);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       .gb-notes-imgs .x{position:absolute;top:-7px;right:-7px;width:20px;height:20px;border-radius:50%;border:1px solid #5a2f22;background:var(--red,#b5522a);color:#fff;font-size:13px;line-height:18px;padding:0;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.4)}
       .gr-modal-bg.boss #gr-notes.drop{outline:2px dashed var(--gold,#c9a54a);outline-offset:2px}
+      .gr-modal-bg.boss .gb-manual-link,.gr-modal-bg.boss .gb-manual-link.gr-btn-primary{display:inline-block;background:none;border:0;box-shadow:none;padding:0;margin:-2px 0 8px;font:inherit;font-size:11.5px;color:var(--muted,#6f685c);text-decoration:underline dotted;cursor:pointer;text-align:left}.gr-modal-bg.boss .gb-manual-link.gr-btn-primary{color:var(--gold-deep,#8f6a1c);font-weight:700}.gr-modal-bg.boss .gb-manual-link .gb-lbl{font-weight:700}
       .gb-hours{margin-top:2px}
       .gb-hrow{display:grid;grid-template-columns:92px 1fr 1fr 96px;gap:10px;align-items:center;padding:5px 0}
       .gb-hrow b{font-size:13px;color:var(--ink,#161513)}.gb-hrow b span{display:block;font-size:10px;color:var(--warn,#8a6a1c);font-weight:400}
@@ -10929,7 +10930,7 @@ async function renderGerdReikninga(t){
           <div class="gr-f"><label>Verkstaður</label><input id="gr-ws" value="${escapeAttr(name)}"></div>
           <div class="gr-f"><label>Verkkaupi</label><input id="gr-cust" placeholder="Veldu verkkaupa…" autocomplete="off" value="${escapeAttr(cust)}"></div>
           </div>
-          <div id="gr-manual" style="display:none;border:1px dashed var(--border,var(--edge));border-radius:8px;padding:8px 10px;margin:2px 0 4px">
+          <button class="gb-manual-link" id="gr-manual-btn" type="button" title="Opna handvirka stillingu — kennitala og heimilisfang verkkaupa á reikning">✏️ <span class="gb-lbl">Handvirkt</span> — kt. og heimilisfang verkkaupa á reikning</button><div id="gr-manual" style="display:none;border:1px dashed var(--border,var(--edge));border-radius:8px;padding:8px 10px;margin:2px 0 4px">
             <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Handvirkar upplýsingar verkkaupa — birtast á reikningi (t.d. þegar fletta þarf upp kennitölu eða skipta reikningi handvirkt).</div>
             <div class="gr-r2"><div class="gr-f"><label>Kennitala</label><input id="gr-kt" value="${escapeAttr(custKt)}" placeholder="000000-0000"></div><div class="gr-f"><label>Heimilisfang</label><input id="gr-addr" value="${escapeAttr(custAddr)}" placeholder="Heimilisfang verkkaupa"></div></div>
           </div>
@@ -10997,14 +10998,13 @@ async function renderGerdReikninga(t){
           <div class="gr-actions">
             <div class="gb-grp">
               <button class="gr-btn" id="gr-savepdf" type="button" title="Vista sem PDF (geymt á Supabase, engin innskráning) — birtist neðst í „Vistuð PDF-skjöl" til að opna/sækja/senda">PDF</button>
-              <button class="gr-btn" id="gr-print" type="button">Prenta</button>
+              <button class="gr-btn" id="gr-print" type="button" hidden>Prenta</button>
               <button class="gr-btn" id="gr-pdf2" type="button" title="Vista EITT PDF: Efnislisti á síðu 1 og Tímaskýrsla á síðu 2 (geymt á Supabase, birtist í „Vistuð PDF-skjöl")">PDF + Tímask.</button>
-              <button class="gr-btn" id="gr-vinnuskjal" type="button" title="Vinnuskjal — efnislistinn OG tímaskýrslan á sama blaði, þjappað á eina A4-síðu">Vinnuskjal</button>
+              <button class="gr-btn" id="gr-vinnuskjal" type="button" title="Vinnuskjal — efnislistinn OG tímaskýrslan á sama blaði, þjappað á eina A4-síðu" hidden>Vinnuskjal</button>
             </div>
             <div class="gb-row2">
               <button class="gr-btn gr-btn-primary" id="gr-save" type="button">💾 Vista</button>
               <div class="gb-grp dark">
-                <button class="gr-btn" id="gr-manual-btn" type="button" title="Opna handvirka stillingu — kennitala og heimilisfang verkkaupa á reikning">✏️ <span class="gb-lbl">Handvirkt</span></button>
                 <button class="gr-btn" id="gr-timabok" type="button" title="Prenta tímabók (mæting starfsmanna) til að senda með reikningi">🕒 <span class="gb-lbl">Tímabók</span></button>
               </div>
             </div>
