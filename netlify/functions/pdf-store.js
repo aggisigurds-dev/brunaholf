@@ -49,8 +49,8 @@ exports.handler = async (event) => {
   // 🔒 innra: hvaða skrá sem er — ending úr nafni, mime úr beiðni (hvítlisti, annars octet-stream).
   const MIME_OK = new Set(['application/pdf','image/jpeg','image/png','image/webp','image/gif','image/heic','text/plain','text/csv',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','application/vnd.openxmlformats-officedocument.wordprocessingml.document']);
-  const ext = doc_type === 'innra' ? ((fileName.match(/\.([A-Za-z0-9]{1,5})$/) || [null, 'bin'])[1].toLowerCase()) : 'pdf';
-  const contentType = doc_type === 'innra' ? (MIME_OK.has(String(body.mimeType || '')) ? body.mimeType : 'application/octet-stream') : 'application/pdf';
+  const ext = ANY_FILE.has(doc_type) ? ((fileName.match(/\.([A-Za-z0-9]{1,5})$/) || [null, 'bin'])[1].toLowerCase()) : 'pdf';
+  const contentType = ANY_FILE.has(doc_type) ? (MIME_OK.has(String(body.mimeType || '')) ? body.mimeType : 'application/octet-stream') : 'application/pdf';
 
   // Deterministic-ish object path: <ascii-worksite>/<month>/<doc_type>-<rand>.pdf
   const slug = worksite_name.normalize('NFD').replace(/[\u0300-\u036f]/g, '')

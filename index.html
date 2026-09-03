@@ -10531,7 +10531,11 @@ async function renderGerdReikninga(t){
       const j = r.ok ? await r.json() : { rows: [] };
       rows = (j.rows||[]).filter(d => d.doc_type==='efnislisti_pdf' || d.doc_type==='timabok_pdf' || d.doc_type==='innra');
       // 🔒 innra viðhengi: sýnt hér (opna/sækja/eyða) en merkt — fer aldrei út.
-      rows.forEach(d => { if(d.doc_type==='innra' && !/^🔒/.test(d.title||'')) d.title = '🔒 Innra (sendist ekki) · ' + (d.title||''); });
+      rows.forEach(d => {
+        if(d.doc_type==='innra' && !/^🔒/.test(d.title||'')) d.title = '🔒 Innra (sendist ekki) · ' + (d.title||'');
+        // Viðhengi og aðsend uppgjörsskjöl fara MEÐ skýrslu/kröfu — merkt svo það sjáist í listanum.
+        else if((d.doc_type==='vidhengi' || d.doc_type==='efnislisti') && !/^📎/.test(d.title||'')) d.title = '📎 Viðhengi (fer með) · ' + (d.title||'');
+      });
     }catch(e){ box.innerHTML = `<div class="gr-section-h">📄 Vistuð PDF-skjöl</div><div class="gr-loading">Villa: ${escapeHtml(e.message||String(e))}</div>`; return; }
     rows.sort((a,b)=> String(b.added_at||'').localeCompare(String(a.added_at||'')));
     const dt = s => { if(!s) return '—'; const d=new Date(s); return isNaN(d)?String(s).slice(0,10):(String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear()); };
@@ -11018,6 +11022,7 @@ async function renderGerdReikninga(t){
               </div>
             </div>
             <div class="gb-more">
+              <button class="gr-btn" id="gr-vidhengi" type="button" title="Hengja skjal við mánuðinn sem FER MEÐ skýrslu/kröfu — t.d. uppgjörsskjal sem er reikningurinn fyrir verkið (PDF, mynd, xlsx … allt að 4 MB)">📎 Viðhengi</button><input type="file" id="gr-vidhengi-file" style="display:none">
               <button class="gr-btn" id="gr-innra" type="button" title="Skrá sem er BARA fyrir okkur (mynd, PDF, hvað sem er, allt að 4 MB) — vistast með mánuðinum en sendist ALDREI með skýrslu eða kröfu">🔒 Innra viðhengi</button><input type="file" id="gr-innra-file" style="display:none">
             ${reviewOn ? `<button class="gr-btn" id="gr-confirm" type="button" style="background:var(--green);border-color:var(--green);color:#fff" title="Vista breytingarnar OG staðfesta yfirferðina — skrifstofan sér grænt „👔 Staðfest" á Kröfu yfirliti">✓ Staðfesta</button>
             <button class="gr-btn" id="gr-revert" type="button" style="border-color:var(--red-dark);color:var(--red-dark)" title="Afturkalla ALLAR breytingar úr þessari opnun (líka vistaðar) — drögin fara aftur í það sem þau voru þegar formið opnaðist">↶ Hætta við</button>` : ''}
@@ -11505,6 +11510,23 @@ async function renderGerdReikninga(t){
         if(typeof window.__grReloadPdfList==='function') window.__grReloadPdfList();
       } catch(e){ $st.textContent = '✗ '+(e.message||e); alert('Gat ekki vistað PDF: '+(e.message||e)); }
       finally { btn.textContent = old; btn.disabled = false; }
+    };
+    // 📎 Viðhengi (Agnar 03.09.2026: „festa uppgjörsskjalið inn á Landsspítala-efnislistann
+    // sem reikninginn fyrir verkið"): skjal sem FER MEÐ skýrslu/kröfu — doc_type 'vidhengi',
+    // sama fata og PDF-in, birtist í „Vistuð PDF-skjöl" og fylgir sendingu (ólíkt 'innra').
+    document.getElementById('gr-vidhengi').onclick = () => document.getElementById('gr-vidhengi-file').click();
+    document.getElementById('gr-vidhengi-file').onchange = async (e) => {
+      const f = e.target.files && e.target.files[0]; if(!f) return;
+      const $st = document.getElementById('gr-save-st'); $st.textContent = '⏳ Hleð viðhengi…';
+      try{
+        if(f.size > 4*1024*1024) throw new Error('Skráin er stærri en 4 MB — minnkaðu hana');
+        const b64 = await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(',')[1]); fr.onerror = () => rej(new Error('Gat ekki lesið skrána')); fr.readAsDataURL(f); });
+        const r = await fetch('/api/pdf-store', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ fileName: f.name, contentBase64: b64, mimeType: f.type || 'application/octet-stream', worksite_name: name, work_month: month, doc_type: 'vidhengi' }) });
+        const j = await r.json().catch(()=>({})); if(!r.ok || j.error) throw new Error(j.error || ('HTTP '+r.status));
+        $st.innerHTML = `📎 Viðhengi vistað — <a href="${j.public_url}" target="_blank" rel="noopener">opna</a> · fer með skýrslu/kröfu`;
+        if(typeof window.__grReloadPdfList==='function') window.__grReloadPdfList();
+      }catch(err){ $st.textContent = '✗ '+(err.message||err); }
+      e.target.value = '';
     };
     // 🔒 Innra viðhengi (Agnar 03.09.2026): skrá sem er BARA fyrir okkur — vistuð með
     // mánaðardrögunum (efnislisti_documents, doc_type 'innra') en sendist ALDREI með
