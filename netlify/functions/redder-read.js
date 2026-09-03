@@ -190,10 +190,16 @@ function extractDate(norm, labelRe) {
   const y = m[3].length === 2 ? '20' + m[3] : m[3];
   return `${y}-${String(m[2]).padStart(2, '0')}-${String(m[1]).padStart(2, '0')}`;
 }
+const VEGNA_STOP = 'Vörunr|Vöruheiti|Sölumaður|Dagsetning|Eindagi|Gjalddagi|Reikningur|Pöntun|Tilvísun|Kt\\.|Sími|Netfang|Heimilisfang|Upphæð|Vsk|Samtals|Afgreiðsl|Móttakandi|Sótt';
+const VEGNA_CODE = '[A-ZÁÉÍÓÚÝÆÖÞÐ]{2,4}\\s?[A-Z0-9]*\\d{2,}';   // vörunúmer Redder
 function extractSalesperson(norm) {
   const m = norm.match(/Sölumaður\s*:?\s*([A-Za-zÁÉÍÓÚÝÆÖÞÐáéíóúýæöþð][A-Za-zÁÉÍÓÚÝÆÖÞÐáéíóúýæöþð .'-]{1,38})/i);
   if (!m) return null;
-  return m[1].replace(/\s+(Dagsetning|Eindagi|Kt|Vegna|Reikningur).*$/i, '').replace(/\s+/g, ' ').trim() || null;
+  // 03.09.2026: á 0142980 rann dálkahaus vörulínanna aftan í nafnið („Óli
+  // Vörunr.VöruheitiMagnEin.verðAfsl"). Sömu stopporð og í Vegna-lestrinum.
+  let s = m[1].replace(new RegExp('\\s*(?:' + VEGNA_STOP + '|Vöruheiti|Magn|Ein\\.?verð|Afsl).*$', 'i'), '');
+  s = s.replace(/\s+/g, ' ').replace(/[\s.:;,-]+$/, '').trim();
+  return s.length > 30 ? s.slice(0, 30).trim() : (s || null);
 }
 // "Vegna <verkstaður> umb <tengiliður>" — the green-box reference line.
 //
@@ -203,8 +209,6 @@ function extractSalesperson(norm) {
 // slitur úr vörulínunum í verkstaðarreitinn og lenti hvergi. Nú stoppar lesturinn
 // á fyrsta vörunúmeri (t.d. „FSI FS310HPE", „PIC 150/40", „POL PRO059") eða
 // hausorði, og of langt gildi er hent (verkstaðarnöfn eru stutt).
-const VEGNA_STOP = 'Vörunr|Vöruheiti|Sölumaður|Dagsetning|Eindagi|Gjalddagi|Reikningur|Pöntun|Tilvísun|Kt\\.|Sími|Netfang|Heimilisfang|Upphæð|Vsk|Samtals|Afgreiðsl|Móttakandi|Sótt';
-const VEGNA_CODE = '[A-ZÁÉÍÓÚÝÆÖÞÐ]{2,4}\\s?[A-Z0-9]*\\d{2,}';   // vörunúmer Redder
 function cleanVegna(s) {
   let v = String(s || '').replace(/\s+/g, ' ').trim();
   v = v.split(new RegExp('\\s+(?:' + VEGNA_STOP + ')', 'i'))[0];
