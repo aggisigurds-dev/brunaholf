@@ -1,0 +1,31 @@
+/* Boss — spacing & geometry. Slightly softer than the flat Slökkvitæki system:
+   radius 4–5px because the bevels need a corner to turn on. */
+
+:root {
+  --boss-space-1: 4px;
+  --boss-space-2: 6px;
+  --boss-space-3: 9px;
+  --boss-space-4: 12px;
+  --boss-space-5: 14px;
+  --boss-space-6: 16px;
+  --boss-space-7: 18px;
+  --boss-space-8: 26px;
+  --boss-space-9: 30px;
+
+  --boss-radius-xs: 2px;   /* plates, chips */
+  --boss-radius-sm: 4px;   /* buttons, fields, KPI cards */
+  --boss-radius:    5px;   /* panels, dark cards, header controls */
+  --boss-radius-pill: 14px;
+
+  --boss-header-h:  78px;
+  --boss-sidebar-w: 196px;
+  --boss-panel-header-h: 44px;
+  --boss-btn-h:     36px;
+  --boss-btn-h-sm:  30px;
+  --boss-btn-h-lg:  42px;
+  --boss-field-h:   36px;
+  --boss-band-h:    4px;   /* gold header rule */
+  --boss-top-rule:  3px;   /* KPI / dark card top rule */
+  --boss-medallion: 46px;
+  --boss-medallion-sm: 40px;
+}

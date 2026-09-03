@@ -55,8 +55,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://osfdzskyvisifcwyjkuk.supabase.co">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,500;1,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/theme.css?v=1">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/theme.css?v=2">
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
@@ -69,156 +69,37 @@ a{color:inherit}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 
-/* ======= Header ======= */
-.topbar{
-  position:sticky;top:0;z-index:30;
-  background:var(--navy-dark);
-  color:#fff;display:flex;align-items:center;gap:8px;
-  height:66px;padding:0 18px;
-  box-shadow:inset 0 -1px 0 rgba(201,164,92,.28);
-}
-.banner-img{display:none}
-/* Flat navy topbar — Brunahólf wordmark left, controls right (fire banner retired) */
-.bh-logo{order:-1;margin-right:auto;font-family:var(--font-display);font-weight:700;font-size:21px;letter-spacing:.2px;color:#fff;display:flex;align-items:center;white-space:nowrap}
-.bh-logo .bh-flame{color:var(--gold)}
-.topbar .brand,.topbar .brand-divider,.topbar .brand-slk{display:none}
-.topbar .menu-btn{position:static;order:-2;background:rgba(255,255,255,.12);backdrop-filter:none;color:#fff}
-.topbar .editToggle{position:static;order:1;background:rgba(255,255,255,.1);backdrop-filter:none;color:#fff;border:1px solid rgba(255,255,255,.16);border-radius:var(--radius-sm);height:34px;padding:0 12px;font-size:13px;font-weight:600}
-.topbar .editToggle.on{background:var(--gold);color:var(--navy-dark);border-color:var(--gold)}
-.topbar .themeToggle{order:1;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.16);border-radius:var(--radius-sm);height:34px;padding:0 12px;font-size:13px;font-weight:600;cursor:pointer}
-.topbar .themeToggle:hover{background:rgba(255,255,255,.18)}
-.topbar .sync-badge{position:static;order:1;font-size:11px;color:#cbd5e1;background:rgba(255,255,255,.08);padding:5px 10px;border-radius:99px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
-.topbar .sync-badge.sync-ok{background:rgba(76,175,80,.22);color:#a7f3c0}
-.topbar .sync-badge.sync-warn{background:rgba(255,152,0,.22);color:#fcd8a0}
-#brandTitle{display:none}
-.topbar .spacer{display:none}
-.brand{display:flex;align-items:center;gap:12px;font-weight:700;letter-spacing:.3px;position:relative;z-index:2;}
-.brand .mark{
-  width:42px;height:42px;border-radius:50%;
-  background:var(--gold);
-  color:#fff;display:grid;place-items:center;font-weight:900;font-size:22px;
-  box-shadow:0 0 0 2px rgba(255,180,40,.45), 0 4px 14px rgba(209,69,40,.6), inset 0 2px 0 rgba(255,255,255,.25);
-}
-.brand-logo{height:38px;width:auto;display:block;filter:drop-shadow(0 2px 4px rgba(0,0,0,.7))}
-.brand small{display:block;font-weight:400;font-size:11px;opacity:.95;letter-spacing:1.5px;text-transform:uppercase;text-shadow:0 1px 2px rgba(0,0,0,.6)}
-.brand strong{display:block;font-size:16px;line-height:1.1;text-shadow:0 1px 3px rgba(0,0,0,.7)}
-.brand-divider{
-  width:1px;height:34px;background:linear-gradient(180deg,transparent,rgba(255,200,80,.6),transparent);
-  margin:0 4px;flex:0 0 auto;
-}
-.brand-slk{
-  display:flex;align-items:center;gap:8px;position:relative;z-index:2;
-  color:#fff;font-weight:800;letter-spacing:.4px;font-size:14px;
-  text-shadow:0 1px 3px rgba(0,0,0,.7);
-}
-.brand-slk .mark{
-  width:34px;height:34px;border-radius:50%;
-  background:radial-gradient(circle at 30% 30%, #FFE08A, var(--red) 55%, #8A1A0A 100%);
-  display:grid;place-items:center;font-size:18px;
-  box-shadow:0 0 0 2px rgba(255,180,40,.4), 0 3px 10px rgba(209,69,40,.55);
-}
-@media(max-width:580px){
-  .brand-slk{display:none}
-}
-.spacer{flex:1}
-.iconbtn{
-  width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.14);
-  border:0;color:#fff;display:grid;place-items:center;
-}
+/* ======= Header / Sidebar =======
+   Útlitið sjálft (Boss-þemað: svart stál, gullband, hliðarstika, virk lína)
+   býr í css/theme.css (2026-09-03). Hér eru AÐEINS hegðunarreglur:
+   farsíma-skúffa, compact/horizontal hamir, skil í hliðarstiku. */
+.iconbtn{width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.14);border:0;color:#fff;display:grid;place-items:center}
 .iconbtn:hover{background:rgba(255,255,255,.22)}
-
-/* ======= Sidebar brand header ======= */
-.sb-brand{
-  display:flex;align-items:center;gap:10px;padding:14px 12px 16px;margin:0 0 10px;
-  border-bottom:1px solid rgba(255,255,255,.08);
-}
-.sb-brand .logo{
-  width:32px;height:32px;border-radius:50%;flex:0 0 auto;
-  background:var(--gold);
-  display:grid;place-items:center;font-size:16px;
-  box-shadow:0 2px 8px rgba(201,60,29,.4), inset 0 1px 0 rgba(255,255,255,.2);
-}
-.sb-brand .txt strong{display:block;color:#fff;font-size:13px;font-weight:700;letter-spacing:-.01em}
-.sb-brand .txt small{display:block;color:#9BA3AF;font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-top:2px}
-
-/* ======= Sidebar dividers (dauf lína / skil, notandi-stillanleg) ======= */
-.tab-sep{display:flex;align-items:center;gap:8px;padding:9px 14px 5px;margin-top:4px;user-select:none;color:#94a3b8}
+.tab-sep{display:flex;align-items:center;gap:8px;user-select:none}
 .tab-sep .sep-line{flex:1;height:1px;background:currentColor;opacity:.18}
-.tab-sep .sep-label{font-size:9.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;opacity:.6;white-space:nowrap}
+.tab-sep .sep-label{font-size:9.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;white-space:nowrap}
 .tab-sep-h{display:inline-block;width:1px;height:20px;background:currentColor;color:#94a3b8;opacity:.25;margin:0 6px;align-self:center;flex:0 0 auto}
-.tab-addsep{display:block;width:calc(100% - 20px);margin:8px 10px 4px;padding:7px 8px;border:1px dashed currentColor;border-radius:8px;background:none;color:#94a3b8;font:inherit;font-size:11.5px;cursor:pointer;opacity:.7;transition:opacity .15s}
+.tab-addsep{display:block;width:calc(100% - 20px);margin:8px 10px 4px;padding:7px 8px;border:1px dashed currentColor;border-radius:8px;background:none;color:#94a3b8;font:inherit;font-size:11.5px;cursor:pointer;opacity:.7;transition:opacity .15s;box-shadow:none}
 .tab-addsep:hover{opacity:1}
-
-/* ======= Sidebar Nav (vertical) ======= */
-.layout{display:flex;align-items:flex-start;gap:0;min-height:calc(100vh - 66px);}
-.sidebar{
-  position:sticky;top:66px;align-self:flex-start;height:calc(100vh - 66px);
-  width:230px;flex:0 0 230px;
-  background:var(--navy);
-  border-right:1px solid var(--navy-2);padding:16px 10px;overflow-y:auto;z-index:15;
-  scrollbar-width:thin;scrollbar-color:var(--navy-2) transparent;
-}
-.sidebar::-webkit-scrollbar{width:6px}
-.sidebar::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
-/* horizontal mode override */
-.sidebar.layout-h{
-  position:sticky;top:62px;left:0;right:0;height:auto;width:100%;flex:none;
-  display:flex;gap:6px;overflow-x:auto;padding:10px 12px;border-right:0;border-bottom:1px solid var(--line);
-  scrollbar-width:none;background:var(--bg);
-}
+.layout{display:flex;align-items:flex-start;gap:0}
+.sidebar.layout-h{position:sticky;left:0;right:0;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
 .sidebar.layout-h::-webkit-scrollbar{display:none}
-.sidebar.layout-h .tab{flex:0 0 auto;padding:8px 14px;border-radius:999px;background:var(--card);color:var(--ink-2);
-  border:1px solid var(--line);font-weight:600;font-size:13px;white-space:nowrap;display:flex;align-items:center;gap:6px;}
-.sidebar.layout-h .tab.active{background:var(--red);color:#fff;border-color:var(--red);box-shadow:0 2px 8px rgba(209,69,40,.45)}
+.sidebar.layout-h .tab{flex:0 0 auto;padding:8px 14px;font-weight:600;font-size:13px;white-space:nowrap;display:flex;align-items:center;gap:6px}
 .layout.horizontal{flex-direction:column}
-
-.tab-v{
-  display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:6px;
-  color:#A8B3C9;background:transparent;border:1px solid transparent;
-  /* 2026-05-28: Inter for a cleaner, more workplace-professional feel */
-  font-family:var(--font-ui);
-  font-weight:500;font-size:13.5px;letter-spacing:-.005em;
-  width:100%;text-align:left;cursor:pointer;margin-bottom:1px;
-  transition:background .14s ease, color .14s ease, padding-left .14s ease;
-}
-.tab-v:hover{background:rgba(255,255,255,.04);color:#E6EBF5;padding-left:14px}
-.tab-v.active{
-  background:var(--gold);
-  color:var(--navy-dark);border-color:transparent;font-weight:600;
-  box-shadow:none;
-}
-.tab-v.active:hover{padding-left:12px}
-.tab-v .ti{font-size:15px;line-height:1;opacity:.85;font-family:var(--font-ui)}
-.tab-v.active .ti{opacity:1}
-.tab-v .ti{display:none}
-.tab-v .tn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.nav-section-label{
-  font-family:var(--font-ui);font-weight:600;
-  font-size:10px;color:#6B7896;letter-spacing:.1em;text-transform:uppercase;
-  padding:14px 12px 6px;margin:0;
-}
-.nav-sep{height:1px;background:rgba(255,255,255,.05);margin:8px 4px}
-
-/* compact sidebar (icons-only) */
-.layout.compact .sidebar{width:64px;flex:0 0 64px;padding:14px 6px}
 .layout.compact .tab-v .tn{display:none}
-.layout.compact .tab-v{justify-content:center;padding:11px 6px}
-.layout.compact .tab-v .ti{width:auto;font-size:19px}
-.layout.compact .sb-brand{display:none}
-
-/* sidebar collapse on mobile */
-.menu-btn{display:none;width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.14);border:0;color:#fff;font-size:18px}
+.menu-btn{display:none}
 @media(max-width:780px){
   .menu-btn{display:grid;place-items:center}
   .layout .sidebar{position:fixed;top:0;left:0;height:100vh;width:80%;max-width:300px;
-    transform:translateX(-105%);transition:transform .22s ease;box-shadow:8px 0 24px rgba(0,0,0,.55);padding-top:74px}
+    transform:translateX(-105%);transition:transform .22s ease;box-shadow:8px 0 24px rgba(0,0,0,.55)}
   .layout.open .sidebar{transform:translateX(0)}
   .layout.open::before{content:"";position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:14}
   main{min-width:0;width:100%}
 }
 
 /* ======= Layout ======= */
-main{padding:14px;max-width:1100px;margin:0 auto;flex:1;min-width:0;width:100%}
+main{padding:26px 30px 28px;max-width:1240px;margin:0 auto;flex:1;min-width:0;width:100%}
+@media(max-width:780px){ main{padding:14px 12px 24px} }
 /* Wide tabs (Vinnubók / Reikningagerð) get the full sidebar-to-edge width */
 body[data-tab="vinnubok"] main,
 body[data-tab="reikningar"] main{max-width:none;padding:14px 24px}
@@ -233,7 +114,7 @@ body[data-tab="turbopaint"] main{max-width:none;padding:0;background:#0f1117}
 /* Fjármála-yfirlit fyllir alla breidd upp að hliðarstiku og topborða (ósk
    Agnars 8.8.) — iframe með eigin útliti og dökkum grunni svo hvítt blikki
    ekki í gegn meðan það hleðst. */
-body[data-tab="fjarmalyfirlit"] main{max-width:none;padding:0;background:#0b1220}
+body[data-tab="fjarmalyfirlit"] main{max-width:none;padding:0;background:var(--bg)}
 /* J.A.R.V.I.S. er dökkt HUD — full breidd og dökkur bakgrunnur svo hvítt blikki ekki
    í gegn meðan iframe-ið hleðst. */
 body[data-tab="jarvis"] main{max-width:none;padding:0;background:#020814}
@@ -1490,13 +1371,30 @@ html.embedded .vb-scroll-wrap .vb-th-sum{font-size:17px !important}
 </style>
 
 <header class="topbar">
-  <span class="bh-logo">Brunah<span class="bh-flame">ó</span>lf</span>
   <button class="menu-btn" id="menuBtn" title="Valmynd">☰</button>
+  <a class="bh-brand" href="#" onclick="return false" title="Brunahólf — stjórnstöð">
+    <span class="boss-medallion">🔥</span>
+    <span style="line-height:1"><span class="bh-logo">Brunahólf</span><span class="boss-wordmark-sub">Stjórnstöð · Slökkvitæki ehf.</span></span>
+  </a>
+  <div class="boss-lcd bh-lcd" title="Klukka · dagur · hver þú ert"><div class="boss-lcd-time" id="bh-lcd-time">--:--</div><div class="boss-lcd-sub" id="bh-lcd-sub"></div></div>
   <button class="editToggle" id="editToggle" title="Breyta">✎ Breyta</button>
   <button class="themeToggle" id="themeToggle" onclick="this.textContent=({light:'☀ Ljóst',dark:'🌙 Dökkt',auto:'◐ Sjálfvirkt'})[cycleTheme()]" title="Útlit: ljóst / dökkt / sjálfvirkt">◐ Sjálfvirkt</button>
   <span class="sync-badge" id="sync-badge" title="Vistun á milli tækja">☁ …</span>
   <span id="brandTitle" style="display:none"></span>
 </header>
+<script>
+/* LCD-klukkan í topbar (Boss-þema): HH:MM + „MIÐ 2. SEP · AGNAR". Uppfærist á 15 s. */
+(function(){
+  var WD=['SUN','MÁN','ÞRI','MIÐ','FIM','FÖS','LAU'], MN=['JAN','FEB','MAR','APR','MAÍ','JÚN','JÚL','ÁGÚ','SEP','OKT','NÓV','DES'];
+  function tick(){
+    var t=document.getElementById('bh-lcd-time'), sub=document.getElementById('bh-lcd-sub'); if(!t||!sub) return;
+    var d=new Date(); t.textContent=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+    var me=''; try{ me=(localStorage.getItem('bh_me')||'').trim(); }catch(_){}
+    sub.textContent=WD[d.getDay()]+' '+d.getDate()+'. '+MN[d.getMonth()]+(me?' · '+me.toUpperCase():'');
+  }
+  tick(); setInterval(tick,15000); window.bhLcdTick=tick;
+})();
+</script>
 
 <div class="layout" id="layout">
   <aside class="sidebar" id="tabs"></aside>
@@ -2248,8 +2146,13 @@ function renderTabs(){
   const brand = (lay!=='horizontal' && lay!=='compact') ? `
     <div class="sb-brand">
       <div class="logo">🔥</div>
-      <div class="txt"><strong>Brunahólf</strong><small>Stjórnstöð</small></div>
+      <div class="txt"><strong>Brunahólf</strong><small>Valmynd</small></div>
     </div>` : '';
+  // Fótur hliðarstiku (Boss-þema): plata með upphafsstöfum + nafn notandans
+  // (bh_me — sama gildi og „👤 Ég" á Kröfu yfirliti). Smellur → breyta nafni.
+  const _me = (typeof bhMe==='function' ? bhMe() : '') || '';
+  const _ini = _me ? _me.split(/\s+/).map(w=>w[0]||'').join('').slice(0,2).toUpperCase() : '?';
+  const foot = lay==='horizontal' ? '' : `<div class="sb-foot" id="sb-foot" title="Hver ert þú? Smelltu til að breyta"><span class="ini">${escapeHtml(_ini)}</span><span class="nm">${_me?escapeHtml(_me):'velja nafn'}</span></div>`;
   const visible = state.tabs.filter(t => state.ui.editMode || !t.hidden || t.id==='stillingar');
   if(lay==='horizontal'){
     $tabs.innerHTML = visible.map(t=> t.sep
@@ -2264,8 +2167,12 @@ function renderTabs(){
       : `<button class="tab-v ${state.ui.activeTab===t.id?'active':''}" data-id="${t.id}" title="${escapeAttr(t.label)}">
         <span class="ti">${t.icon||'•'}</span><span class="tn">${escapeHtml(t.label)}</span>
       </button>
-    `).join('');
+    `).join('') + foot;
   }
+  { const sf = document.getElementById('sb-foot'); if(sf) sf.addEventListener('click', ()=>{
+      const v = prompt('Hver ert þú? (nafnið skráist á vinnuflæði-skref)', (typeof bhMe==='function'?bhMe():'')||'');
+      if(v==null) return; if(typeof bhSetMe==='function') bhSetMe(v); renderTabs(); if(window.bhLcdTick) window.bhLcdTick();
+    }); }
   $tabs.querySelectorAll('[data-id]:not([data-sep])').forEach(el=>{
     el.addEventListener('click',()=>{
       const _lt = state.tabs.find(x=>x.id===el.dataset.id);
@@ -11500,18 +11407,19 @@ async function renderGerdReikninga(t){
 async function renderVinnubok(t){
   $view.innerHTML = `
     <div class="rg-wrap">
-      <div class="rg-header">
+      <div class="rg-header kyf-head">
         <div>
-          <div style="font-size:10.5px;font-weight:600;letter-spacing:2.5px;color:var(--gold-deep);text-transform:uppercase;margin-bottom:6px">VERKSTAÐIR · MÁNUÐIR</div>
-          <h1 class="rg-h1">Vinnubók <span class="rg-sub" id="vb-meta">Sækir…</span></h1>
-          <div class="rg-sub-line">Manual vinnusíða · breyttu reikningsupphæð per glugga, tengdu hvaða skjal sem er úr Drive (mappa verkstaðarins eða leit), fela verkstaði sem þú þarft ekki að skoða.</div>
-          <div style="margin-top:8px"><span data-sync-workflow="timavera" data-sync-label="Tímavera"></span></div>
+          <div class="boss-kicker">Reikningagerð · ${new Date().getFullYear()}</div>
+          <h1 class="boss-h1" style="margin-top:6px">Vinnubók</h1>
+          <div class="boss-sub">Verkstaðir × mánuðir · reikningur sendur · greitt · upphæð m/vsk · fylgiskjöl · <span class="rg-sub" id="vb-meta" style="display:inline;margin:0;font-size:inherit">Sækir…</span></div>
+          <div class="boss-meta">Manual vinnusíða · breyttu reikningsupphæð per glugga, tengdu hvaða skjal sem er úr Drive (mappa verkstaðarins eða leit), fela verkstaði sem þú þarft ekki að skoða.</div>
         </div>
-        <div class="rg-controls">
-          <button id="vb-refresh" class="tv-btn" type="button"><span class="tv-refresh-icon">↻</span> Sækja</button>
-          <button id="vb-month-back" class="tv-btn" type="button" title="Bæta við eldri mánuði">← mánuður</button>
-          <button id="vb-month-fwd" class="tv-btn" type="button" title="Bæta við nýrri mánuði">mánuður →</button>
-          <button id="vb-collapse-2025" class="tv-btn" type="button" title="Fela 2025 mánuði">📅 Fela 2025</button>
+        <div class="rg-controls kyf-actions">
+          <span data-sync-workflow="timavera" data-sync-label="Tímavera"></span>
+          <button id="vb-refresh" class="boss-btn ivory" type="button"><span class="tv-refresh-icon">↻</span> Sækja</button>
+          <button id="vb-month-back" class="boss-btn ivory" type="button" title="Bæta við eldri mánuði">← mánuður</button>
+          <button id="vb-month-fwd" class="boss-btn ivory" type="button" title="Bæta við nýrri mánuði">mánuður →</button>
+          <button id="vb-collapse-2025" class="boss-btn ivory" type="button" title="Fela 2025 mánuði">📅 Fela 2025</button>
           <span id="vb-hidden-inline" class="vb-hidden-inline" hidden></span>
           <div class="vb-layout-switch" role="group" aria-label="Velja útlit">
             <button type="button" class="vb-layout-btn" data-vb-layout="cards"   title="Spjöld">🃏</button>
@@ -11524,6 +11432,7 @@ async function renderVinnubok(t){
             <button type="button" class="vb-filter-btn" data-vb-filter="yellow" title="Aðeins gulir punktar">🟡</button>
             <button type="button" class="vb-filter-btn" data-vb-filter="red" title="Aðeins rauðir punktar">🔴</button>
           </div>
+          <button class="boss-btn obsidian vb-go-gerd" type="button" title="Opna Gerð Reikninga">🧾 Gerð Reikninga</button>
         </div>
       </div>
       <div id="vb-grid-host"></div>
@@ -11807,6 +11716,91 @@ async function renderVinnubok(t){
       .vb-file-li{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:1px solid var(--border,#e3e6ea);border-radius:5px;margin-bottom:6px;cursor:pointer;background:#fff;color:inherit}
       .vb-file-li:hover{background:var(--header-bg,#f5f7fa);border-color:var(--accent,#0a84ff)}
       .vb-file-li small{color:var(--text-dim,#5a6473);font-size:11px;display:block;margin-top:3px}
+
+      /* ═══ Boss-þema (2026-09-03) — fyrirmynd docs/design-boss/pages/vinnubok-boss.html ═══
+         Taflan situr í panel með strip-haus („01 Verkstaðir × mánuðir" + litaskýring),
+         rjóma-hausar í mono, hvítur frosinn nafndálkur með skugga, mono-upphæðir,
+         hljóðlátir reitir; merkingarlitir: blár = rei sendur, grænn = greitt. */
+      .rg-wrap .vb-panel{overflow:hidden}
+      .rg-wrap .vb-panel-meta{font-size:12.5px;color:var(--ink-2)}
+      .rg-wrap .vb-legend{margin-left:auto;display:flex;align-items:center;gap:14px;font-size:11px;color:var(--muted);flex-wrap:wrap}
+      .rg-wrap .vb-legend span{display:flex;align-items:center;gap:5px}
+      .rg-wrap .vb-legend i{width:14px;height:14px;border-radius:2px;border:1px solid var(--edge);background:#fff;font-style:normal;display:inline-block}
+      .rg-wrap .vb-legend i.rei{border-color:#3c5f80;background:#5980a6}
+      .rg-wrap .vb-legend i.paid{border-color:#0a2a15;background:#2f7a4a}
+      .rg-wrap .vb-legend i.mis{border-color:var(--warn-line);background:var(--warn-bg)}
+      .rg-wrap .vb-scroll-wrap{max-height:none !important}
+      .rg-wrap [data-vb-layout="table"] .vb-grid{border:0;border-radius:0;box-shadow:none;background:transparent}
+      .rg-wrap [data-vb-layout="table"] .vb-grid th{background:#faf8f4;color:var(--muted);font-family:var(--font-mono);font-size:9.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:0 12px;height:40px;border-bottom:1px solid var(--line);border-left:1px solid var(--line);text-align:right}
+      .rg-wrap [data-vb-layout="table"] .vb-th-name{font-size:9.5px;font-weight:700;letter-spacing:.14em}
+      .rg-wrap [data-vb-layout="table"] .vb-th-sum{font-family:var(--font-mono);font-size:10px;color:var(--gold-deep);letter-spacing:0;text-transform:none;margin-top:3px}
+      .rg-wrap [data-vb-layout="table"] .vb-row-name{background:#fff;color:var(--ink);border:0;border-right:1px solid var(--line-2);border-bottom:1px solid var(--line);box-shadow:3px 0 8px -6px rgba(0,0,0,.35);padding:10px 16px}
+      .rg-wrap [data-vb-layout="table"] .vb-grid thead .vb-row-name{background:#faf8f4;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.14em;color:var(--muted);text-align:left}
+      .rg-wrap [data-vb-layout="table"] .vb-ws-name{font-size:13px;font-weight:700;color:var(--ink)}
+      .rg-wrap [data-vb-layout="table"] .vb-row-name small{color:var(--muted);font-family:var(--font-mono);font-size:11px}
+      .rg-wrap [data-vb-layout="table"] .vb-row-name .vb-hide-btn{color:var(--muted);border-color:var(--edge);background:transparent}
+      .rg-wrap [data-vb-layout="table"] .vb-grid tbody tr:nth-child(even) .vb-cell,.rg-wrap [data-vb-layout="table"] .vb-grid tbody tr:nth-child(even) .vb-row-name{background:#fff}
+      .rg-wrap [data-vb-layout="table"] .vb-cell{border-right:0;border-left:1px solid var(--line);border-bottom:1px solid var(--line);background:#fff}
+      .rg-wrap [data-vb-layout="table"] .vb-cell:hover{background:var(--row-hover) !important;box-shadow:none}
+      .rg-wrap [data-vb-layout="table"] .vb-cell-has-invoice .vb-amount-input{color:var(--green);border-color:transparent}
+      .rg-wrap [data-vb-layout="table"] .vb-cell-mismatch{background:var(--warn-bg) !important}
+      .rg-wrap .vb-amount-input{font-family:var(--font-mono);font-size:12.5px;font-weight:600;text-align:right;border:1px solid transparent;background:transparent;box-shadow:none;color:var(--ink);height:28px;border-radius:2px}
+      .rg-wrap .vb-amount-input:hover{border-color:var(--edge)}
+      .rg-wrap .vb-amount-input:focus{border-color:var(--gold-500);box-shadow:0 0 0 3px rgba(201,165,74,.22);background:#fff}
+      .rg-wrap .vb-corner-label{color:var(--muted);letter-spacing:.14em;font-size:9px}
+      .rg-wrap .vb-corner-val{font-family:var(--font-mono);color:var(--ink)}
+      .rg-wrap .vb-corner-val.dim{color:var(--muted-2)}
+      .rg-wrap .vb-corner-sep{color:var(--line-2)}
+      .rg-wrap .vb-cell-bottom{background:transparent;border-top:1px solid var(--line)}
+      .rg-wrap .vb-totals-row td{background:#faf8f4;color:var(--ink);border-color:var(--line);box-shadow:0 -1px 0 var(--line-2)}
+      .rg-wrap .vb-totals-row .vb-row-name{background:#faf8f4;color:var(--muted);font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;border-right:1px solid var(--line-2)}
+      .rg-wrap .vb-totals-row .vb-total-sub,.rg-wrap .vb-totals-row .vb-row-name .vb-total-sub{color:var(--muted) !important}
+      .rg-wrap .vb-totals-row .vb-total-cell{font-family:var(--font-mono);color:var(--ink);text-align:right}
+      .rg-wrap .vb-year-collapsed{background:var(--strip-bg) !important;color:var(--muted) !important;border:1px solid var(--line)}
+      .rg-wrap .vb-review-btn{border-color:var(--edge)}
+      .rg-wrap .vb-review-btn.state-green{background:var(--green);border-color:#1e5a33;box-shadow:0 0 5px rgba(47,122,74,.5)}
+      .rg-wrap .vb-review-btn.state-yellow{background:var(--gold-500);border-color:var(--gold-800);box-shadow:0 0 5px rgba(201,165,74,.5)}
+      .rg-wrap .vb-review-btn.state-red{background:var(--red);border-color:#8a3d1e;box-shadow:0 0 5px rgba(181,82,42,.5)}
+      .rg-wrap .vb-layout-switch{border:1px solid var(--line-2);border-radius:3px;background:var(--card);margin-left:0;overflow:hidden}
+      .rg-wrap .vb-layout-btn{border-right:1px solid var(--line-2);color:var(--ink-2);padding:6px 12px;background:transparent}
+      .rg-wrap .vb-layout-btn:hover{background:var(--hover);color:var(--ink)}
+      .rg-wrap .vb-layout-btn.active{background:var(--ink);color:var(--on-dark)}
+      .rg-wrap .vb-filter{display:inline-flex;border:1px solid var(--line-2);border-radius:3px;overflow:hidden;background:var(--card)}
+      .rg-wrap .vb-filter-btn{border:0;border-left:1px solid var(--line-2);background:transparent;padding:6px 12px;cursor:pointer;color:var(--ink-2);font:inherit;font-size:12.5px;font-weight:600;box-shadow:none;border-radius:0}
+      .rg-wrap .vb-filter-btn:first-child{border-left:0}
+      .rg-wrap .vb-filter-btn.active{background:var(--ink);color:var(--on-dark)}
+      .rg-wrap .vb-scratchpad{border-top:0;padding-top:0;margin-top:14px}
+      .rg-wrap .vb-pad-card,.rg-wrap .vb-calc-card,.rg-wrap .vb-style-card{background:var(--panel-bg);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--panel-shadow);padding:14px 16px}
+      .rg-wrap .vb-pad-head h3{font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--ink);text-shadow:0 1px 0 #fff}
+      .rg-wrap .vb-pad-hint{color:var(--muted)}
+      .rg-wrap .vb-pad-hint code{background:#ebe6db;color:var(--ink-2);font-family:var(--font-mono)}
+      .rg-wrap .vb-pad-btn{padding:0 11px;height:30px;font-size:12px;color:var(--ink)}
+      .rg-wrap .vb-pad-table,.rg-wrap .vb-calc-input,.rg-wrap .vb-calc-result,.rg-wrap .vb-calc-history li,.rg-wrap .vb-style-row .val{font-family:var(--font-mono)}
+      .rg-wrap .vb-pad-table td{border-color:var(--line)}
+      .rg-wrap .vb-pad-table td:hover{background:var(--row-hover)}
+      .rg-wrap .vb-pad-cell{color:var(--ink)}
+      .rg-wrap .vb-pad-cell:focus{background:var(--info-bg);box-shadow:inset 0 0 0 2px var(--gold-500)}
+      .rg-wrap .vb-pad-cell.is-formula,.rg-wrap .vb-calc-result,.rg-wrap .vb-calc-history li .res{color:var(--green)}
+      .rg-wrap .vb-pad-cell.is-error,.rg-wrap .vb-calc-result.is-error{color:var(--red)}
+      .rg-wrap .vb-calc-input{color:var(--ink)}
+      .rg-wrap .vb-calc-input:focus{border-color:var(--gold-500);box-shadow:0 0 0 3px rgba(201,165,74,.22)}
+      .rg-wrap .vb-calc-history{border-top-color:var(--line)}
+      .rg-wrap .vb-calc-history li{border-bottom-color:var(--line)}
+      .rg-wrap .vb-calc-history li .expr{color:var(--muted)}
+      .rg-wrap .vb-style-row label{color:var(--ink-2)}
+      .rg-wrap .vb-style-row input[type=range]{accent-color:var(--gold-600)}
+      .rg-wrap .vb-style-row .val{background:#ebe6db;color:var(--ink)}
+      .rg-wrap .vb-hidden-bar{background:var(--strip-bg);border:1px solid var(--line-2);border-radius:var(--radius-sm);color:var(--muted)}
+      .rg-wrap .vb-suggest{background:var(--info-bg);border-color:var(--warn-line);color:#7a5a12}
+      .rg-wrap .vb-suggest-yes{background:var(--green)}
+      .rg-wrap .vb-pick-tab.is-active{background:var(--ink);border-color:var(--ink)}
+      .rg-wrap .vb-attach a,.rg-wrap .vb-crumb{color:var(--gold-deep)}
+      .rg-wrap .vb-input:focus{border-color:var(--gold-500);box-shadow:0 0 0 2px rgba(201,165,74,.2)}
+      .rg-wrap .vb-attach-btn{border-color:var(--edge);background:var(--key-bg);color:var(--ink);border-radius:var(--radius-sm);box-shadow:var(--key-shadow);font-weight:600}
+      .rg-wrap .vb-attach-btn[style*="dashed"]{background:var(--well-bg) !important;border:1px dashed #bfb7a6 !important;box-shadow:var(--well-shadow);color:var(--muted) !important}
+      .rg-wrap .vb-cell{border-color:var(--line)}
+      .rg-wrap .vb-cell-has-hours{background:var(--warn-bg)}
+      .rg-wrap .vb-cell-has-invoice{border-color:var(--green-line)}
     </style>
   `;
 
@@ -11815,6 +11809,7 @@ async function renderVinnubok(t){
   const $back = document.getElementById('vb-month-back');
   const $fwd = document.getElementById('vb-month-fwd');
   const $host = document.getElementById('vb-grid-host');
+  { const g = document.querySelector('.vb-go-gerd'); if(g) g.addEventListener('click', ()=>{ state.ui.activeTab='gerdreikninga'; save({nav:true}); render(); }); }
   let data = null;
 
   // persisted state for vinnubok grid (month window, hidden worksites)
@@ -12045,6 +12040,13 @@ async function renderVinnubok(t){
 
     const html = `
       ${hiddenBar}
+      <div class="boss-panel vb-panel">
+        <div class="boss-panel-head">
+          <span class="boss-plate">01</span>
+          <span class="boss-panel-title">Verkstaðir × mánuðir</span>
+          <span class="vb-panel-meta">${sites.length} verkstaðir</span>
+          <span class="vb-legend"><span><i></i>óunnið</span><span><i class="rei"></i>rei sendur</span><span><i class="paid"></i>greitt</span><span><i class="mis"></i>misræmi</span></span>
+        </div>
       <div class="vb-scroll-wrap" data-vb-layout="${state.ui.vb_layout || 'cards'}" style="overflow-x:auto;max-height:calc(100vh - 220px);overflow-y:auto">
         <table class="vb-grid">
           <thead>
@@ -12074,6 +12076,7 @@ async function renderVinnubok(t){
             </tr>
           </tfoot>
         </table>
+      </div>
       </div>
     `;
     $host.innerHTML = html;
@@ -12265,8 +12268,8 @@ async function renderVinnubok(t){
           <div class="vb-corner vb-corner-r">
             <button type="button" class="vb-review-btn ${reviewState ? 'state-'+reviewState : ''}" data-vb-review="${escapeAttr(draftKey)}" title="${reviewLabel}"></button>
             ${hasInvoice
-              ? `<span style="background:#10b981;color:#fff;font-size:9px;padding:1px 5px;border-radius:99px;font-weight:700;letter-spacing:.05em;text-transform:uppercase">✓</span>`
-              : (hours > 0 ? `<span style="background:#fef3c7;color:#92400e;font-size:9px;padding:1px 5px;border-radius:99px;font-weight:700;letter-spacing:.05em;text-transform:uppercase">eftir</span>` : '')
+              ? `<span style="background:var(--green);color:var(--card);font-size:9px;padding:1px 5px;border-radius:99px;font-weight:700;letter-spacing:.05em;text-transform:uppercase">✓</span>`
+              : (hours > 0 ? `<span style="background:var(--warn-bg);color:var(--warn);font-size:9px;padding:1px 5px;border-radius:99px;font-weight:700;letter-spacing:.05em;text-transform:uppercase">eftir</span>` : '')
             }
           </div>
         </div>
@@ -12288,17 +12291,17 @@ async function renderVinnubok(t){
         <div class="vb-cell-bottom">
           ${ef
             ? `<div style="display:flex;align-items:center;gap:6px;font-size:11px">
-                 <a href="${escapeAttr(bhDocUrl(ef))}" target="_blank" rel="noopener" title="${escapeAttr(ef.title || '')}" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#3b82f6;text-decoration:none;font-weight:500">📎 ${escapeHtml((ef.title || 'Efnislisti').replace(/\.(xlsx|pdf|docx)$/i, ''))}</a>
-                 <button type="button" class="vb-attach-btn" data-vb-attach="${escapeAttr(draftKey)}" title="Skipta um skjal" style="padding:3px 7px;font-size:11px;border:1px solid #cbd5e1;background:#fff;border-radius:5px;cursor:pointer;color:#64748b">↻</button>
+                 <a href="${escapeAttr(bhDocUrl(ef))}" target="_blank" rel="noopener" title="${escapeAttr(ef.title || '')}" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--gold-deep);text-decoration:none;font-weight:500">📎 ${escapeHtml((ef.title || 'Efnislisti').replace(/\.(xlsx|pdf|docx)$/i, ''))}</a>
+                 <button type="button" class="vb-attach-btn" data-vb-attach="${escapeAttr(draftKey)}" title="Skipta um skjal" style="padding:3px 7px;font-size:11px;border:1px solid var(--edge);background:var(--card);border-radius:5px;cursor:pointer;color:#64748b">↻</button>
                </div>`
-            : `<button type="button" class="vb-attach-btn" data-vb-attach="${escapeAttr(draftKey)}" style="width:100%;padding:7px 10px;font-size:11px;border:1.5px dashed #cbd5e1;background:transparent;border-radius:6px;cursor:pointer;color:#64748b;font-weight:500;transition:all .15s">+ Tengja skjal</button>`
+            : `<button type="button" class="vb-attach-btn" data-vb-attach="${escapeAttr(draftKey)}" style="width:100%;padding:7px 10px;font-size:11px;border:1.5px dashed var(--edge);background:transparent;border-radius:6px;cursor:pointer;color:#64748b;font-weight:500;transition:all .15s">+ Tengja skjal</button>`
           }
           ${inv
             ? `<div style="display:flex;align-items:center;gap:6px;font-size:11px;margin-top:5px">
-                 <a href="${escapeAttr(bhDocUrl(inv))}" target="_blank" rel="noopener" title="Reikningur: ${escapeAttr(inv.title || '')}" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#059669;text-decoration:none;font-weight:600">🧾 ${escapeHtml((inv.title || 'Reikningur').replace(/\.(xlsx|pdf|docx)$/i, ''))}</a>
-                 <button type="button" class="vb-attach-btn" data-vb-attach-inv="${escapeAttr(draftKey)}" title="Skipta um reikning" style="padding:3px 7px;font-size:11px;border:1px solid #cbd5e1;background:#fff;border-radius:5px;cursor:pointer;color:#64748b">↻</button>
+                 <a href="${escapeAttr(bhDocUrl(inv))}" target="_blank" rel="noopener" title="Reikningur: ${escapeAttr(inv.title || '')}" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--green);text-decoration:none;font-weight:600">🧾 ${escapeHtml((inv.title || 'Reikningur').replace(/\.(xlsx|pdf|docx)$/i, ''))}</a>
+                 <button type="button" class="vb-attach-btn" data-vb-attach-inv="${escapeAttr(draftKey)}" title="Skipta um reikning" style="padding:3px 7px;font-size:11px;border:1px solid var(--edge);background:var(--card);border-radius:5px;cursor:pointer;color:#64748b">↻</button>
                </div>`
-            : `<button type="button" class="vb-attach-btn" data-vb-attach-inv="${escapeAttr(draftKey)}" style="width:100%;margin-top:5px;padding:6px 10px;font-size:11px;border:1.5px dashed #a7f3d0;background:transparent;border-radius:6px;cursor:pointer;color:#059669;font-weight:600;transition:all .15s">+ Tengja reikning</button>`
+            : `<button type="button" class="vb-attach-btn" data-vb-attach-inv="${escapeAttr(draftKey)}" style="width:100%;margin-top:5px;padding:6px 10px;font-size:11px;border:1.5px dashed var(--green-line);background:transparent;border-radius:6px;cursor:pointer;color:var(--green);font-weight:600;transition:all .15s">+ Tengja reikning</button>`
           }
         </div>
       </td>
@@ -14052,26 +14055,24 @@ async function renderAfkost(t){
 async function renderKrofuyfirlit(t){
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fmtKr = n => (Math.round(Number(n)||0)).toLocaleString('is-IS').replace(/,/g,'.') + ' kr';
+  // Boss-þema: talan sjálf í mono/Playfair, „kr" sem lítill hali (.boss-kr).
+  const fmtNum = n => (Math.round(Number(n)||0)).toLocaleString('is-IS').replace(/,/g,'.');
+  const emptyBox = txt => `<div class="boss-panel kyf-empty"><span class="boss-medallion ghost">🔥</span><span>${esc(txt)}</span></div>`;
   const fmtDate = iso => { if(!iso) return '—'; const d=new Date(iso); if(isNaN(d)) return '—';
     return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear(); };
   const ktDigits = s => String(s||'').replace(/\D+/g,'');
 
-  // Aging pill: green ≤30d · amber 31–60d · red >60d (ported verbatim).
+  // Aldurs-tákn: grænt ≤30d · gull-blek 31–60d · terra >60d — mono „31D" (Boss).
   function agingPill(days){
     if(days==null) return '';
-    const p = days>60 ? {bg:'var(--red-bg)',tx:'var(--red)'}
-            : days>30 ? {bg:'var(--warn-bg)',tx:'var(--warn)'}
-            : {bg:'var(--green-bg)',tx:'var(--green)'};
-    return '<span class="ky-num" style="background:'+p.bg+';color:'+p.tx+';padding:2px 8px;border-radius:3px;font-size:10.5px;font-weight:600;white-space:nowrap">'+days+' d.</span>';
+    const cls = days>60 ? 'ogreitt' : days>30 ? 'osent' : 'greitt';
+    return '<span class="boss-badge '+cls+' ky-num" style="padding:1px 7px;font-size:10.5px">'+days+'D</span>';
   }
-  // Light-metallic labelled chip (icon + tiny colored label). filled=true → dark green.
+  // Aðgerðatakki 46×42 (Boss): fílabeins-lykill; filled=true → grænn lykill
+  // (staðfest/sent/skjal til). Liturinn (color) er ekki notaður lengur — CSS ræður.
   function kyAbtn(cls,extra,glyph,label,color,title,filled){
-    // Gull þema: .on er grænt útlínu-ástand (ljós bakgrunnur) — innihaldið
-    // notar merkingarlitinn sjálfan, ekki hvítt (var á fylltum grænum).
     return '<button class="'+cls+' ky-abtn'+(filled?' on':'')+'" '+extra+' type="button" title="'+esc(title)+'">'+
-      '<span style="font-size:14px;line-height:1;color:'+(filled?'var(--green)':color)+'">'+glyph+'</span>'+
-      '<span style="font-size:8.5px;font-weight:700;letter-spacing:.02em;color:'+(filled?'var(--green)':color)+'">'+esc(label)+'</span>'+
-    '</button>';
+      '<span>'+glyph+'</span><span>'+esc(label)+'</span></button>';
   }
 
   // ── Þrepaskipt (stepped) útgáfa: 3 þrep top→bottom + lifandi summu-spjöld ──
@@ -14133,61 +14134,69 @@ async function renderKrofuyfirlit(t){
 
   $view.innerHTML = `
     <div class="kyf-wrap">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px;margin-bottom:18px">
+      <div class="kyf-head">
         <div>
-          <div style="font-size:10.5px;font-weight:600;letter-spacing:2.5px;color:var(--gold-deep);text-transform:uppercase;margin-bottom:6px">FJÁRMÁL · ${FULLMON[_now.getMonth()].toUpperCase()} ${_now.getFullYear()}</div>
-          <h1 style="margin:0;font-family:var(--font-display);font-size:30px;font-weight:700;letter-spacing:.2px;color:var(--ink)">Kröfu yfirlit</h1>
-          <div style="font-size:12px;color:var(--muted);margin-top:4px" id="kyf-meta">Þrepaskipt kröfu-yfirlit — ógreitt → ósent → tími eftir · Sækir…</div>
-          <div style="font-size:11px;color:#94a3b8;margin-top:3px" id="kyf-fresh">Síðasta uppfærsla: …</div>
-          <div style="margin-top:8px;display:flex;gap:14px;flex-wrap:wrap"><span data-sync-workflow="timavera" data-sync-label="Tímavera"></span><span data-sync-workflow="ajour" data-sync-label="Ajour"></span><span data-sync-workflow="redder" data-sync-label="Redder"></span><span data-sync-workflow="payday" data-sync-label="Payday"></span></div>
-          <div class="kyf-print-hide" style="margin-top:6px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-            <span class="hub-sync kyf-deep" title="Djúp-samstilling: sækir ALLAR vinnufærslur valda tímabilsins beint úr Tímaveru og speglar þær — færslur sem er breytt eða eytt í tímaveru.is uppfærast hér líka.&#10;&#10;Venjulegi „Samstilla Tímavera" takkinn nær 30 daga aftur og sjálfvirka keyrslan 2 síðustu daga (á 2 tíma fresti) + 60 daga á nóttunni. Breytingar á eldri mánuðum (t.d. júlí lagaður í september) nást ÞVÍ AÐEINS með þessum takka.&#10;&#10;Öryggisþak: ef yfir 30% raða gluggans myndu eyðast er speglun stöðvuð og það sýnt hér.">
-              <select id="kyf-deep-days" title="Hve langt aftur á að spegla" style="font:inherit;font-size:12px;font-weight:600;color:var(--ink-2);background:transparent;border:0;padding:4px 2px;cursor:pointer">
-                <option value="31">1 mánuður</option>
-                <option value="62">2 mánuðir</option>
-                <option value="92" selected>3 mánuðir</option>
-                <option value="183">6 mánuðir</option>
-                <option value="366">12 mánuðir</option>
-              </select>
-              <button type="button" id="kyf-deep-btn">⏬ Djúp-samstilla Tímaveru</button>
-              <span class="d"><span class="dot"></span><span class="txt" id="kyf-deep-txt">nær líka í breyttar eldri færslur</span></span>
-            </span>
-          </div>
+          <div class="boss-kicker">Innheimta · ${FULLMON[_now.getMonth()]} ${_now.getFullYear()}</div>
+          <h1 class="boss-h1" style="margin-top:6px">Kröfu yfirlit</h1>
+          <div class="boss-sub" id="kyf-meta">Þrepaskipt kröfu-yfirlit — ógreitt → ósent → tími eftir · Sækir…</div>
+          <div class="boss-meta" id="kyf-fresh">Síðasta uppfærsla: …</div>
         </div>
-        <div class="kyf-print-hide" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <select class="kyf-sort" title="Raða" style="padding:7px 9px;border:1px solid var(--line-2);border-radius:var(--radius-sm);background:var(--card);font:inherit;font-size:12.5px;font-weight:600;color:var(--ink-2);cursor:pointer">
+        <div class="kyf-actions kyf-print-hide">
+          <div class="boss-labeled"><span class="lbl">Sýn</span><button class="val kyf-me" type="button" title="Hver ert þú? — nafnið er skráð á vinnuflæði-skref (staðfest/sent/klárt) svo hinn sér hver gerði hvað">👤 <span class="kyf-me-lbl"></span><span style="color:var(--muted);font-size:11px">▾</span></button></div>
+          <button class="boss-btn ivory kyf-go-fjarmal" type="button" title="Opna Fjármála-yfirlit">💰 Fjármála-yfirlit</button>
+          <button class="boss-btn obsidian kyf-go-gerd" type="button" title="Opna Gerð Reikninga">🧾 Gerð Reikninga</button>
+        </div>
+      </div>
+
+      <div class="kyf-syncs kyf-print-hide">
+        <span data-sync-workflow="payday" data-sync-label="Payday"></span>
+        <span data-sync-workflow="timavera" data-sync-label="Tímavera"></span>
+        <span data-sync-workflow="ajour" data-sync-label="Ajour"></span>
+        <span data-sync-workflow="redder" data-sync-label="Redder"></span>
+        <span class="hub-sync kyf-deep" title="Djúp-samstilling: sækir ALLAR vinnufærslur valda tímabilsins beint úr Tímaveru og speglar þær — færslur sem er breytt eða eytt í tímaveru.is uppfærast hér líka.&#10;&#10;Venjulegi „Samstilla Tímavera" takkinn nær 30 daga aftur og sjálfvirka keyrslan 2 síðustu daga (á 2 tíma fresti) + 60 daga á nóttunni. Breytingar á eldri mánuðum (t.d. júlí lagaður í september) nást ÞVÍ AÐEINS með þessum takka.&#10;&#10;Öryggisþak: ef yfir 30% raða gluggans myndu eyðast er speglun stöðvuð og það sýnt hér.">
+          <select id="kyf-deep-days" title="Hve langt aftur á að spegla">
+            <option value="31">1 mánuður</option>
+            <option value="62">2 mánuðir</option>
+            <option value="92" selected>3 mánuðir</option>
+            <option value="183">6 mánuðir</option>
+            <option value="366">12 mánuðir</option>
+          </select>
+          <button type="button" id="kyf-deep-btn">⏬ Djúp-samstilla Tímaveru</button>
+          <span class="d"><span class="dot"></span><span class="txt" id="kyf-deep-txt">nær líka í breyttar eldri færslur</span></span>
+        </span>
+      </div>
+
+      <div class="kyf-cards"></div>
+
+      <div class="boss-panel kyf-toolbar kyf-print-hide">
+        <input class="kyf-search boss-field" type="search" placeholder="Leita (viðskiptavinur · kt · R-nr)…">
+        <div class="boss-seg kyf-vfs">
+          ${[['company','🏢 Fyrirtæki'],['all','Allt'],['t1','Ógreitt'],['likely','🏦 Líklega greitt'],['t2','Ósent'],['t3','Tími eftir']].map(([k,label])=>
+            `<button class="kyf-vf${k==='company'?' active':''}" data-vf="${k}" type="button">${label}</button>`).join('')}
+        </div>
+        <div class="kyf-right">
+          <select class="kyf-sort boss-btn ivory sm" title="Raða">
             <option value="amount_desc">💰 Upphæð hæst</option>
             <option value="amount_asc">💰 Upphæð lægst</option>
             <option value="oldest_due">📅 Elsti gjalddagi</option>
             <option value="name">🔤 Nafn A–Ö</option>
           </select>
-          <input class="kyf-search" type="search" placeholder="Leita (nafn · kt · R-nr)…" style="padding:7px 11px;border:1px solid var(--line-2);border-radius:var(--radius-sm);background:var(--input-bg);color:var(--ink);font:inherit;font-size:13px;min-width:210px">
-          <button class="kyf-me" type="button" title="Hver ert þú? — nafnið er skráð á vinnuflæði-skref (staðfest/sent/klárt) svo hinn sér hver gerði hvað" style="padding:7px 11px;border:1px solid var(--line-2);border-radius:var(--radius-sm);background:var(--card);font:inherit;font-size:12.5px;font-weight:600;color:var(--ink-2);cursor:pointer;white-space:nowrap">👤 <span class="kyf-me-lbl"></span></button>
+          <button class="kyf-print boss-btn ivory sm" type="button" title="Prenta stílhreint yfirlit (án stjórntækja)">🖨 Prenta</button>
+          <button class="kyf-refresh boss-btn ivory sm" type="button">↻ Sækja</button>
+          <button class="kyf-hidden-toggle boss-btn outline-gold sm" type="button" title="Sýna/fela faldar kröfur" style="display:none"></button>
         </div>
       </div>
 
-      <div class="kyf-print-hide" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
-        ${[['company','Fyrirtæki'],['all','Allt'],['t1','Ógreiddar'],['likely','Líklega greitt'],['t2','Ósendar'],['t3','Tími eftir']].map(([k,label])=>{
-          const on = k==='company';
-          return `<button class="kyf-vf" data-vf="${k}" type="button" style="padding:7px 14px;border-radius:var(--radius-sm);cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;${on?'border:1px solid var(--navy-dark);background:var(--navy-dark);color:#fff':'border:1px solid var(--line-2);background:var(--card);color:var(--ink-2)'}">${label}</button>`;
-        }).join('')}
-        <button class="kyf-print" type="button" title="Prenta stílhreint yfirlit (án stjórntækja)" style="margin-left:auto;padding:7px 14px;border-radius:var(--radius-sm);cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;border:1px solid var(--line-2);background:var(--card);color:var(--ink-2)">🖨 Prenta</button>
-        <button class="kyf-refresh" type="button" style="padding:7px 14px;border-radius:var(--radius-sm);cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;border:1px solid var(--line-2);background:var(--card);color:var(--ink-2)">↻ Sækja</button>
-        <button class="kyf-hidden-toggle" type="button" title="Sýna/fela faldar kröfur" style="display:none;padding:7px 14px;border-radius:var(--radius-sm);cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;border:1px solid var(--line-2);background:var(--card);color:var(--ink-2)"></button>
-      </div>
-
-      <div class="kyf-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-bottom:16px"></div>
-
-      <details class="kyf-help">
-        <summary style="cursor:pointer;font-size:12.5px;font-weight:600;color:var(--ink-2);padding:11px 15px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm);list-style:none;user-select:none">❓ Hvað þýðir þetta? <span style="font-weight:500;color:#94a3b8">— smelltu til að opna skýringu</span></summary>
-        <div style="font-size:12.5px;color:var(--ink-2);margin-top:8px;padding:14px 16px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm);line-height:1.7">
-          <div style="font-weight:700;color:#0f172a;margin-bottom:4px">Þrepin þrjú</div>
+      <details class="kyf-help boss-panel">
+        <summary>❓ Hvað þýðir þetta? <span style="font-weight:500;color:var(--muted)">— smelltu til að opna skýringu</span></summary>
+        <div class="kyf-help-body">
+          <div style="font-weight:700;color:var(--ink);margin-bottom:4px">Þrepin þrjú</div>
           <div><b>🔴 Ógreiddar</b> — reikningar sem eru <b>sendir</b> en enn óborgaðir (Payday SENT + Landsbanki + handvirkir).</div>
           <div><b>🟡 Ósendar</b> — <b>drög</b> sem á eftir að senda (enginn gjalddagi enn).</div>
           <div><b>⚪ Tími eftir</b> — vinna sem er unnin en <b>óinnvoiceað</b> (Tímavera-tímar × dagvinnutaxti m.vsk = áætlaðar tekjur í pípunni).</div>
-          <div style="font-weight:700;color:#0f172a;margin:10px 0 4px">Aldurs-litir (gjalddagi)</div>
-          <div><span style="background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;padding:1px 7px;border-radius:99px;font-size:10.5px;font-weight:700">grænt ≤30 d.</span> &nbsp;<span style="background:#fffbeb;color:#b45309;border:1px solid #fde68a;padding:1px 7px;border-radius:99px;font-size:10.5px;font-weight:700">gult 31–90 d.</span> &nbsp;<span style="background:#fff1f2;color:#be123c;border:1px solid #fecdd3;padding:1px 7px;border-radius:99px;font-size:10.5px;font-weight:700">rautt &gt;90 d.</span> — hve langt síðan gjalddagi rann út.</div>
-          <div style="font-weight:700;color:#0f172a;margin:10px 0 4px">🏦 Líklega þegar greitt</div>
+          <div style="font-weight:700;color:var(--ink);margin:10px 0 4px">Aldurs-litir (gjalddagi)</div>
+          <div><span class="boss-badge greitt">grænt ≤30D</span> &nbsp;<span class="boss-badge osent">gull 31–60D</span> &nbsp;<span class="boss-badge ogreitt">terra &gt;60D</span> — hve langt síðan gjalddagi rann út.</div>
+          <div style="font-weight:700;color:var(--ink);margin:10px 0 4px">🏦 Líklega þegar greitt</div>
           <div>Reikningur sem er enn „ógreiddur" í Payday <b>en fannst greiddur beint í banka</b> (sama kt + upphæð). Yfirfarðu og smelltu <b>✓ Greitt</b> til að staðfesta. „<b>+vextir</b>" = bankagreiðslan var hærri (dráttarvextir).</div>
         </div>
       </details>
@@ -14195,75 +14204,13 @@ async function renderKrofuyfirlit(t){
       <div class="kyf-warn"></div>
       <div class="kyf-lp-banner"></div>
 
-      <div class="kyf-t2-bar" style="display:none;position:sticky;bottom:12px;background:linear-gradient(135deg,#1d4ed8,#2563eb);color:#fff;border-radius:12px;padding:10px 16px;margin-bottom:8px;z-index:200;align-items:center;gap:12px;box-shadow:0 8px 20px -6px rgba(29,78,216,.5)">
-        <span class="kyf-t2-bar-lbl" style="flex:1;font-size:13.5px;font-weight:700"></span>
-        <button class="kyf-t2-combine-btn" type="button" style="padding:8px 16px;border-radius:8px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.15);color:#fff;font:inherit;font-size:13px;font-weight:700;cursor:pointer">🔗 Sameina valdar →</button>
-        <button class="kyf-t2-clear-btn" type="button" style="padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:rgba(255,255,255,.8);font:inherit;font-size:12px;cursor:pointer">✗ Hreinsa</button>
+      <div class="kyf-t2-bar">
+        <span class="kyf-t2-bar-lbl"></span>
+        <button class="kyf-t2-combine-btn boss-btn gold sm" type="button">🔗 Sameina valdar →</button>
+        <button class="kyf-t2-clear-btn boss-btn header sm" type="button">✗ Hreinsa</button>
       </div>
       <div class="kyf-list"></div>
-    </div>
-    <style>
-      /* Gull þema: flatir hljóðlátir aðgerðatakkar (mockup 01) — merkingarlitur
-         sem borði+texti, ekki fylling. .on = grænt útlínu-ástand. */
-      .kyf-wrap .ky-abtn{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:46px;height:42px;padding:0 7px;border-radius:var(--radius-sm);border:1px solid var(--line-2);background:var(--card);box-shadow:none;cursor:default;font:inherit}
-      .kyf-wrap .ky-abtn.on{background:var(--green-bg);border-color:var(--green);box-shadow:none}
-      .kyf-wrap .ky-act,.kyf-wrap .ky-bx{cursor:pointer}
-      /* 🖨 Prenta (.kyf-print): stílhreint yfirlit — felur stjórntæki, hjálp,
-         aðgerðahnappa og app-umgjörð en heldur haus + KPI + fyrirtækjasundurliðun.
-         Aðeins virkt meðan body.kyf-printing er sett (á meðan prentun stendur), svo
-         prentun á öðrum flipum er óbreytt. */
-      @media print {
-        body.kyf-printing .topbar, body.kyf-printing .sidebar, body.kyf-printing #tabs { display:none !important; }
-        body.kyf-printing .layout { display:block !important; }
-        body.kyf-printing #view { margin:0 !important; padding:0 !important; }
-        body.kyf-printing .kyf-print-hide,
-        body.kyf-printing #kyf-fresh,
-        body.kyf-printing .kyf-wrap .hub-sync,
-        body.kyf-printing .kyf-wrap .kyf-help,
-        body.kyf-printing .kyf-wrap .ky-abtn,
-        body.kyf-printing .fab, body.kyf-printing .fab-screenshot,
-        body.kyf-printing #_bh-viewmode, body.kyf-printing #luna-fab { display:none !important; }
-        body.kyf-printing .kyf-wrap{ max-width:none !important; }
-        body.kyf-printing, body.kyf-printing *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
-        body.kyf-printing .kyf-cards > *{ break-inside:avoid; }
-        @page{ margin:14mm; }
-      }
-      .kyf-wrap .ky-act:hover,.kyf-wrap .ky-bx:hover{border-color:var(--gold-deep);box-shadow:none}
-      .kyf-wrap .ky-act:disabled{opacity:.55;cursor:default}
-      .kyf-wrap .ky-row.ky-likely{background:linear-gradient(90deg,rgba(16,185,129,.09),rgba(16,185,129,.03))}
-      .kyf-wrap .ky-row.ky-likely:hover{background:linear-gradient(90deg,rgba(16,185,129,.15),rgba(16,185,129,.06))}
-      .kyf-wrap .ky-act.ky-nudge{border-color:#22c55e;box-shadow:inset 0 1.5px 0 rgba(255,255,255,.95),0 0 0 3px rgba(34,197,94,.28),0 3px 6px -3px rgba(20,30,60,.3);animation:kyPulse 1.8s ease-in-out infinite}
-      @keyframes kyPulse{0%,100%{box-shadow:inset 0 1.5px 0 rgba(255,255,255,.95),0 0 0 3px rgba(34,197,94,.28),0 3px 6px -3px rgba(20,30,60,.3)}50%{box-shadow:inset 0 1.5px 0 rgba(255,255,255,.95),0 0 0 5px rgba(34,197,94,.14),0 3px 6px -3px rgba(20,30,60,.3)}}
-      .kyf-wrap details.kyf-help{margin-bottom:14px}
-      .kyf-wrap details.kyf-help summary::-webkit-details-marker{display:none}
-      .kyf-wrap .ky-num{font-variant-numeric:tabular-nums}
-      .kyf-wrap .ky-row:hover{background:#f7f9fd}
-      .kyf-wrap .ky-invrow.open .ky-caret2{transform:rotate(90deg)}
-      .kyf-wrap .ky-caret2{transition:transform .12s ease;display:inline-block}
-      .kyf-wrap .kd-l{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;font-weight:700}
-      .kyf-wrap .kd-v{font-size:12px;font-weight:600;color:#1f2937;margin-top:2px}
-      .kyf-wrap .ky-note:focus{border-bottom-color:#2f5fe0;color:#0f172a}
-      .kyf-wrap .ky-note::placeholder{color:#cbd5e1}
-      .kyf-wrap .ky-wf-cap{position:absolute;top:100%;left:1px;margin-top:3px;font-size:9.5px;line-height:1.2;color:#64748b;font-weight:700;white-space:nowrap;pointer-events:none}
-      /* Minnispunktur er textarea sem vex með innihaldinu (2026-09-02): 150px
-         einlínu-reiturinn rúmaði ~20 stafi. Nú fyllir hann nafna-blokkina
-         (340px á þrepi 2) og brýtur í fleiri línur. Enter vistar, Shift+Enter
-         nýja línu. */
-      .kyf-wrap textarea.ky-note{display:block;resize:none;overflow:hidden;line-height:1.35;white-space:pre-wrap;overflow-wrap:anywhere;min-height:0;box-sizing:border-box}
-      .kyf-wrap .ky-sec{display:flex;align-items:baseline;gap:10px;margin:24px 0 12px;flex-wrap:wrap}
-      .kyf-wrap .ky-sec h2{margin:0;font-family:var(--font-display);font-size:20px;font-weight:600;letter-spacing:.2px;color:var(--ink)}
-      /* Kröfu-raðirnar geta orðið breiðari en birtingarsvæðið (nafn+dags+upphæð+
-         aðgerðir+Ósendar-takkar) — leyfa lárétta rennu á ÖLLUM breiddum, ekki
-         bara ≤760px: í Fjármál-app embed-inu (~1000px iframe) klipptust
-         Staðfest/Senda af því media-reglan kviknaði ekki. Á breiðum skjá þar
-         sem röðin passar sést engin renna (engin sjónræn breyting). Þrep-2
-         (Ósendar) fylgir sama mynstri og þrep 1: min-width:max-content →
-         takkarnir sitja inline á sömu línu og upphæðin og maður svæpar að þeim. */
-      .kyf-wrap .ky-card-rows{overflow-x:auto;-webkit-overflow-scrolling:touch}
-      .kyf-wrap .ky-card-rows > div{min-width:max-content}
-      .kyf-wrap .ky-invrow{min-width:max-content}
-      .kyf-wrap .ky-detail{min-width:100%}
-    </style>`;
+    </div>`;
 
   // Group flat tier-3 rows into debtor-cards { customer, kt, invoices, outstanding_kr, oldest_due }.
   function groupTier3(rows){
@@ -14376,29 +14323,22 @@ async function renderKrofuyfirlit(t){
   }
 
   function renderCards(l1,l2,l3){
-    // Gull þema (mockup 01): flöt hvít spjöld með 3px lituðu topp-borði í stað
-    // gljá-spjalda með tákn-hringjum. Litur segir stöðuna: rautt ógreitt,
-    // gull ósent, grátt tími eftir; fjórða spjaldið er navy „hetjuspjald".
-    const light = (label,value,sub,accent,valColor,cg)=>
-      `<div style="position:relative;background:var(--card);border:1px solid var(--line);border-top:3px solid ${accent};border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow-sm)">${cg?cgBadge(cg,value):''}
-        <div style="font-size:10.5px;font-weight:600;letter-spacing:2px;color:var(--muted-2);text-transform:uppercase">${esc(label)}</div>
-        <div class="ky-num" style="font-family:var(--font-display);font-size:23px;font-weight:600;color:${valColor};margin-top:8px;white-space:nowrap">${fmtKr(value)}</div>
-        <div style="font-size:11px;color:var(--muted-2);margin-top:3px">${esc(sub)}</div>
-      </div>`;
-    const hero = (label,value,sub,cg)=>
-      `<div class="cg-hero" style="position:relative;background:var(--navy-dark);border:1px solid var(--navy-dark);border-top:3px solid var(--gold);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow-sm)">${cg?cgBadge(cg,value):''}
-        <div style="font-size:10.5px;font-weight:600;letter-spacing:2px;color:var(--gold);text-transform:uppercase">${esc(label)}</div>
-        <div class="ky-num" style="font-family:var(--font-display);font-size:23px;font-weight:600;color:#fff;margin-top:8px;white-space:nowrap">${fmtKr(value)}</div>
-        <div style="font-size:11px;color:rgba(255,255,255,.65);margin-top:3px">${esc(sub)}</div>
+    // Boss-þema: KPI-spjöld með gull-línu efst, CG-plata í horni, Playfair-tala;
+    // fjórða spjaldið er dökk slab með gulltölu. Litur segir stöðuna (terra ógreitt).
+    const kpi = (label,value,sub,numColor,cg,dark)=>
+      `<div class="boss-kpi${dark?' dark cg-hero':''}">${cg?cgBadge(cg,value):''}
+        <div class="k-head"><span class="k-label">${esc(label)}</span></div>
+        <div class="k-num ky-num"${numColor?' style="color:'+numColor+'"':''}>${fmtNum(value)}<span class="boss-kr">kr</span></div>
+        <div class="k-meta">${esc(sub)}</div>
       </div>`;
     const n1=countN(l1), n2=countN(l2), n3=countN(l3);
     const tot1=sumKr(l1), tot2=sumKr(l2), tot3=sumKr(l3);
     const t3sub = state.newest ? ('til '+dayMon(state.newest)+' · '+n3+' liðir') : (n3+' liðir');
     $view.querySelector('.kyf-cards').innerHTML =
-      light('Ógreitt', tot1, n1+' '+(n1===1?'krafa':'kröfur')+' · '+l1.length+' aðilar', 'var(--red)', 'var(--red)', 'CG-01') +
-      light('Ósent', tot2, n2+' '+(n2===1?'drög':'drög')+' · '+l2.length+' aðilar', 'var(--gold)', 'var(--ink)', 'CG-02') +
-      light('Tími eftir', tot3, t3sub, 'var(--muted-2)', 'var(--ink)', 'CG-03') +
-      hero('Samtals í pípunni', tot1+tot2+tot3, 'ógreitt + ósent + áætlaðar tekjur', 'CG-04');
+      kpi('Ógreitt', tot1, n1+' '+(n1===1?'krafa':'kröfur')+' · '+l1.length+' aðilar', 'var(--red)', 'CG-01') +
+      kpi('Ósent', tot2, n2+' drög · '+l2.length+' aðilar', '', 'CG-02') +
+      kpi('Tími eftir', tot3, t3sub, '', 'CG-03') +
+      kpi('Samtals í pípunni', tot1+tot2+tot3, 'ógreitt + ósent + áætlaðar tekjur', '', 'CG-04', true);
   }
 
   // „🔗 Sameina" — gulur hnappur á þrep-2 fyrirtækja-kort: sameinar ALLA mánuði
@@ -14407,10 +14347,8 @@ async function renderKrofuyfirlit(t){
     const invs = (t2inv||[]).filter(i => !i._hidden && i.source==='gerd-drög' && i.worksite && i.work_month);
     if(invs.length < 2) return '';
     const keys = invs.map(i => esc(i.inv_key)).join('~');
-    return '<button class="kyf-sameina-all" data-keys="'+keys+'" type="button" '
-      +'title="Sameina alla mánuði í einn efnislista — upprunalegu drögin eru falin" '
-      +'style="display:inline-flex;align-items:center;gap:6px;padding:10px 15px;border-radius:11px;border:1px solid #b7861a;background:linear-gradient(150deg,#f6da79,#d4a017);color:#1a0f00;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 3px 8px -3px rgba(183,134,26,.4)"'
-      +' onmouseover="this.style.filter=\'brightness(1.07)\'" onmouseout="this.style.filter=\'\'">🔗 Sameina</button>';
+    return '<button class="kyf-sameina-all boss-btn gold sm" data-keys="'+keys+'" type="button" '
+      +'title="Sameina alla mánuði í einn efnislista — upprunalegu drögin eru falin">🔗 Sameina</button>';
   }
 
   // „✓ Allar greiddar" — fjarlægt 2026-08-25 (verkefnalisti e66c62e2, Agnar:
@@ -14485,7 +14423,7 @@ async function renderKrofuyfirlit(t){
     // (það var rótin að öllum fyrri umkvörtunum).
     const wfBtn=(box,act,icon,label,col,title,on)=>kyAbtn('ky-bx','data-box="'+box+'" data-act="'+act+'" data-key="'+key+'"',icon,label,col,title,on);
     const pdfLink=(url,t)=> url ? `<a href="${esc(url)}" target="_blank" rel="noopener" title="${t}" style="flex:0 0 auto;font-size:14px;text-decoration:none;align-self:center">📄</a>` : '';
-    const sentTrail = inv.sent ? `<span style="flex:0 0 auto;align-self:center;font-size:9.5px;color:#047857;white-space:nowrap">${(inv.sent_by?esc(inv.sent_by)+' · ':'')}${inv.sent_at?esc(fmtDate(inv.sent_at)):''}</span>` : '';
+    const sentTrail = inv.sent ? `<span class="ky-rv ok" style="flex:0 0 auto;align-self:center">${(inv.sent_by?esc(inv.sent_by)+' · ':'')}${inv.sent_at?esc(fmtDate(inv.sent_at)):''}</span>` : '';
     // Litlu tölurnar (klst · efni · heild) — AÐEINS þegar eitthvað er reiknað;
     // annars bara takkar eins og í viðmiðinu (núll-línan var hávaði).
     const hasNums = (n.hours>0 || n.redder>0 || n.total>0);
@@ -14500,8 +14438,8 @@ async function renderKrofuyfirlit(t){
     const timCap = cap(`🕒 ${hoursDisp}`, 'Tímar úr Tímaveru');
     const efnCap = cap(`🧱 ${numIS(n.redder)} · 📄 ${numIS(n.total)}`, 'Redder-efni · Efnislisti m.vsk');
     const rvHtml = rvConf
-      ? `<span style="font-size:9.5px;color:#047857;font-weight:700;white-space:nowrap" title="Yfirmaður staðfesti í yfirferð">👔 Staðfest · ${esc(rv.review_confirmed_by||'')} ${rv.review_confirmed_at?esc(fmtDate(rv.review_confirmed_at)):''}</span>`
-      : rvOn ? `<span style="font-size:9.5px;color:#b45309;font-weight:700;white-space:nowrap" title="Bíður yfirferðar yfirmanns (The Big Boss appið)">👔 Í yfirferð</span>` : '';
+      ? `<span class="ky-rv ok" title="Yfirmaður staðfesti í yfirferð">👔 Staðfest · ${esc(rv.review_confirmed_by||'')} ${rv.review_confirmed_at?esc(fmtDate(rv.review_confirmed_at)):''}</span>`
+      : rvOn ? `<span class="ky-rv wait" title="Bíður yfirferðar yfirmanns (The Big Boss appið)">👔 Í yfirferð</span>` : '';
     return `<span class="ky-wf-boxes" style="display:inline-flex;flex:0 0 auto;flex-direction:column;align-items:center;gap:3px">
       <span style="display:inline-flex;align-items:center;gap:6px;flex-wrap:nowrap;${hasNums?'margin-bottom:14px':''}">
         ${withCap(wfBtn('tim','opentim','🕒','Tímask.','#2563eb','Opna Tímaskýrslu',!!timDoc), timCap)}${pdfLink(timDoc?bhDocUrl(timDoc):null,'Opna Tímaskýrslu PDF')}
@@ -14516,68 +14454,69 @@ async function renderKrofuyfirlit(t){
     </span>`;
   }
 
-  function buildInvoiceRows(invoices, tier){
-    return (invoices||[]).map(inv=>{
-      const rnum = inv.tilvisun ? ('R-'+esc(inv.tilvisun)) : (inv.worksite ? esc(inv.worksite) : ('#'+esc(inv.id||'')));
-      let sub;
-      if(tier===3){
-        sub = esc(monthLbl(inv.work_month)) + (inv.hours!=null ? ' · '+inv.hours.toFixed(0)+'t' : '') + (inv.partial && state.newest ? ' · til '+esc(dayMon(state.newest)) : '');
-      } else {
-        sub = esc(inv.source||'');
-      }
-      const lp = tier===1 && inv.likely_paid && inv.bank;
-      const bankLine = lp
-        ? `<div style="color:#0f7a43;font-size:10.5px;font-weight:600;margin-top:2px;line-height:1.35">🏦 Líklega þegar greitt — ${fmtKr(inv.bank.amount)} í banka ${esc(inv.bank.date||'')}${inv.bank.extra>0?' (+'+fmtKr(inv.bank.extra)+' vextir)':''}</div>`
-        : '';
-      const mtag = monthTag(inv.gjalddagi || inv.work_month);
-      const mtagHtml = mtag ? `<span class="ky-num" style="font-size:9.5px;font-weight:700;color:#64748b;background:#eef2f7;border-radius:6px;padding:1px 7px;white-space:nowrap">${esc(mtag)}</span>` : '';
-      const note = inv.note || '';
-      const noteHtml = tier===2 ? '' : `<div style="flex:1;display:flex;align-items:center;gap:5px;min-width:80px">
-        <span class="ky-note-ic" style="font-size:11px;flex-shrink:0;${note?'':'opacity:.22'}">📝</span>
-        <textarea class="ky-note" rows="1" data-key="${esc(inv.inv_key)}" placeholder="minnispunktur…" style="flex:1;min-width:160px;background:transparent;border:0;border-bottom:1px dashed #cbd5e1;color:#334155;font:inherit;font-size:11.5px;padding:2px 3px;outline:none">${esc(note)}</textarea>
+  // ── Kröfu-röð (þrep 1/2/3) — EIN smíð fyrir fyrirtækja-spjöld OG þrepa-lista (Boss) ──
+  // ▸ · verkstaður/R-nr + mánaðar-plata (+ aldur á þrepi 1) · undirlína · minnispunktur
+  // · mono-upphæð · vinnuflæðis-lyklar (þrep 2/3) · Greitt/Fela. Sundurliðun undir.
+  function invRow(inv, tier, t2chk){
+    const rnum = inv.tilvisun ? ('R-'+esc(inv.tilvisun)) : (inv.worksite ? esc(inv.worksite) : ('#'+esc(inv.id||'')));
+    let sub;
+    if(tier===3){
+      sub = esc(monthLbl(inv.work_month)) + (inv.hours!=null ? ' · '+inv.hours.toFixed(0)+'t' : '') + (inv.partial && state.newest ? ' · til '+esc(dayMon(state.newest)) : '');
+    } else {
+      sub = esc(inv.source||'');
+    }
+    // Líklega-greitt vísbending (banka-krossvísun): grænn blær + skýringarlína.
+    const lp = tier===1 && inv.likely_paid && inv.bank;
+    const bankLine = lp
+      ? `<div class="ky-bank">🏦 Líklega þegar greitt — ${fmtKr(inv.bank.amount)} í banka ${esc(inv.bank.date||'')}${inv.bank.extra>0?' (+'+fmtKr(inv.bank.extra)+' vextir)':''}</div>`
+      : '';
+    // Mánaðar-plata (skönnun eftir mánuði) — úr gjalddaga, annars vinnumánuði (þrep 3).
+    const mtag = monthTag(inv.gjalddagi || inv.work_month);
+    const mtagHtml = mtag ? `<span class="boss-monotag">${esc(mtag)}</span>` : '';
+    // Minnispunktur — dauf-strikaður reitur; 📝 fyllist þegar punktur er til.
+    // Þrep 2: í EFRI línuna (inni í nafna-blokkinni) svo röðin styttist og takkarnir komist á skjáinn.
+    const note = inv.note || '';
+    const noteHtml = tier===2 ? '' : `<div class="ky-notewrap"><span class="ky-note-ic" style="${note?'':'opacity:.35'}">📝</span><textarea class="ky-note" rows="1" data-key="${esc(inv.inv_key)}" placeholder="minnispunktur…">${esc(note)}</textarea></div>`;
+    const noteInline = tier===2 ? `<div class="ky-notewrap" style="width:auto;margin-top:3px"><span class="ky-note-ic" style="font-size:10px;${note?'':'opacity:.35'}">📝</span><textarea class="ky-note" rows="1" data-key="${esc(inv.inv_key)}" placeholder="minnispunktur…" style="font-size:10.5px">${esc(note)}</textarea></div>` : '';
+    // Sundurliðun — opnast við smell á röð.
+    const detailCells = [
+      ['Gjalddagi', inv.gjalddagi ? inv.gjalddagi.split('-').reverse().join('.') : '—'],
+      ['Eindagi', esc(inv.eindagi||'—')],
+      ['Uppruni', esc(inv.source||'—')],
+      ['Upphæð', fmtKr(inv.amount)],
+      ['Tímabil', esc(monthPeriod(inv.gjalddagi || inv.work_month))],
+    ].map(([l,v])=>`<div><div class="kd-l">${l}</div><div class="kd-v">${v}</div></div>`).join('');
+    const bankDetail = (inv.bank)
+      ? `<div class="ky-bank" style="margin-top:9px;font-size:11px">🏦 Banki: ${fmtKr(inv.bank.amount)} · ${esc(inv.bank.date||'—')}${inv.bank.text?' · '+esc(inv.bank.text):''}${inv.bank.extra>0?' <span style="color:var(--warn)">(+'+fmtKr(inv.bank.extra)+' vextir)</span>':''}</div>`
+      : '';
+    const gj = (tier===1&&inv.gjalddagi) ? `<span class="ky-num">${inv.gjalddagi.split('-').reverse().join('.')}</span> &nbsp;·&nbsp; ` : '';
+    return `
+      <div class="ky-invrow${tier===2?' ky-t2':''}">
+        <div class="ky-row${lp?' ky-likely':''}" data-key="${esc(inv.inv_key)}"${inv._hidden?' style="opacity:.5"':''}>
+          ${t2chk||''}<span class="ky-caret2">▸</span>
+          <div class="ky-main">
+            <div class="ky-ws"><span class="n">${rnum}</span>${mtagHtml}${tier===1?agingPill(inv.days_overdue):''}</div>
+            <div class="ky-sub">${gj}${sub}</div>
+            ${bankLine}
+            ${noteInline}
+          </div>
+          ${tier===2?'<span style="flex:1 1 0;min-width:0"></span>':''}
+          ${noteHtml}
+          <span class="ky-amt ky-num">${fmtNum(inv.amount)}<span class="boss-kr">kr</span></span>
+          ${(tier===2||tier===3)?wfStrip(inv, tier):''}
+          <div class="ky-actrow" style="display:flex;gap:6px;flex-shrink:0">${actChips(inv, tier)}</div>
+        </div>
+        <div class="ky-detail" style="display:none">
+          <div style="display:flex;flex-wrap:wrap;gap:12px 28px">${detailCells}</div>
+          ${bankDetail}
+        </div>
       </div>`;
-      // Þrep 2: minnispunkturinn í EFRI línuna (inni í nafna-blokkinni) svo röðin
-      // styttist og takkarnir komist á skjáinn (ósk Agnars 2026-07-08).
-      const noteInline = tier===2 ? `<div style="display:flex;align-items:center;gap:4px;margin-top:3px">
-        <span class="ky-note-ic" style="font-size:10px;flex-shrink:0;${note?'':'opacity:.22'}">📝</span>
-        <textarea class="ky-note" rows="1" data-key="${esc(inv.inv_key)}" placeholder="minnispunktur…" style="flex:1;min-width:0;background:transparent;border:0;border-bottom:1px dashed #cbd5e1;color:#334155;font:inherit;font-size:10.5px;padding:1px 2px;outline:none">${esc(note)}</textarea>
-      </div>` : '';
-      const detailCells = [
-        ['Gjalddagi', inv.gjalddagi ? inv.gjalddagi.split('-').reverse().join('.') : '—'],
-        ['Eindagi', esc(inv.eindagi||'—')],
-        ['Uppruni', esc(inv.source||'—')],
-        ['Upphæð', fmtKr(inv.amount)],
-        ['Tímabil', esc(monthPeriod(inv.gjalddagi || inv.work_month))],
-      ].map(([l,v])=>`<div><div class="kd-l">${l}</div><div class="kd-v">${v}</div></div>`).join('');
-      const bankDetail = (inv.bank)
-        ? `<div style="margin-top:9px;color:#0f7a43;font-size:11px;font-weight:600;line-height:1.4">🏦 Banki: ${fmtKr(inv.bank.amount)} · ${esc(inv.bank.date||'—')}${inv.bank.text?' · '+esc(inv.bank.text):''}${inv.bank.extra>0?' <span style="color:#b45309">(+'+fmtKr(inv.bank.extra)+' vextir)</span>':''}</div>`
-        : '';
-      return `
-        <div class="ky-invrow${tier===2?' ky-t2':''}">
-          <div class="ky-row${lp?' ky-likely':''}" data-key="${esc(inv.inv_key)}" style="display:flex;align-items:center;gap:11px;padding:9px 18px 9px 42px;border-bottom:1px solid #f3f5f9;font-size:12.5px;cursor:pointer;${inv._hidden?'opacity:.5':''}">
-            <span class="ky-caret2" style="width:11px;flex-shrink:0;color:#b6c0cc;font-size:11px;user-select:none">▸</span>
-            <div style="width:${tier===2?340:200}px;flex-shrink:0;line-height:1.2">
-              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                <span class="ky-num" style="color:var(--ink);font-weight:600">${rnum}</span>
-                ${mtagHtml}
-                ${tier===1?agingPill(inv.days_overdue):''}
-              </div>
-              <div style="color:#b6c0cc;font-size:10.5px;margin-top:3px">${tier===1&&inv.gjalddagi?`<span class="ky-num" style="color:#8a93a5">${inv.gjalddagi.split('-').reverse().join('.')}</span> &nbsp;·&nbsp; `:''}${sub}</div>
-              ${bankLine}
-              ${tier===2?noteInline:''}
-            </div>
-            ${tier===2?'<span style="flex:1 1 0;min-width:0"></span>':''}
-            ${noteHtml}
-            <span class="ky-num" style="width:104px;text-align:right;font-weight:600;color:var(--ink);white-space:nowrap;flex-shrink:0">${fmtKr(inv.amount)}</span>
-            ${(tier===2||tier===3)?wfStrip(inv, tier):''}
-            <div style="display:flex;gap:6px;flex-shrink:0">${actChips(inv, tier)}</div>
-          </div>
-          <div class="ky-detail" style="display:none;padding:11px 18px 14px 65px;background:#fafbfe;border-bottom:1px solid #f3f5f9">
-            <div style="display:flex;flex-wrap:wrap;gap:12px 28px">${detailCells}</div>
-            ${bankDetail}
-          </div>
-        </div>`;
-    }).join('');
+  }
+  // 2026-07-07: Per-fyrirtæki view — build ONLY the invoice-rows for a set of
+  // invoices (reused by the company cards so the class-based click/note/action
+  // wiring below picks them up automatically).
+  function buildInvoiceRows(invoices, tier){
+    return (invoices||[]).map(inv=>invRow(inv, tier, '')).join('');
   }
 
   // Per-fyrirtæki: eitt spjald per greiðanda með öll þrjú þrepin saman
@@ -14608,47 +14547,29 @@ async function renderKrofuyfirlit(t){
       return b.total-a.total;
     });
     const total = companies.reduce((a,c)=>a+c.total,0);
-    const head = `<div class="ky-sec"><h2>Per fyrirtæki</h2>`+
-      `<span style="font-size:12px;color:#64748b">${companies.length} ${companies.length===1?'fyrirtæki':'fyrirtæki'}</span>`+
-      `<span style="margin-left:auto;font-weight:800;font-size:15px;color:#11141c" class="ky-num">${fmtKr(total)}</span></div>`+
-      `<div style="font-size:11.5px;color:#8a93a5;margin:-4px 0 10px">Ógreitt + ósent + tímauppsöfnun saman á hvert fyrirtæki.</div>`;
-    if(!companies.length) return head + `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:26px;text-align:center;color:#94a3b8;font-style:italic">${state.search?'Ekkert passar við leit':'Engin fyrirtæki 🎉'}</div>`;
-    const mini=(label,val,bg,tx)=> `<span class="ky-num" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:${tx};background:${bg};border-radius:3px;padding:2px 9px">${label} ${fmtKr(val)}</span>`;
-    const tierBlock=(d,tier,ic,title,col)=> !d ? '' : `
-      <div class="${tier===2?'ky-tblock2':''}" style="border-top:1px solid var(--line)">
-        <div style="display:flex;align-items:center;gap:8px;padding:8px 18px 8px 30px;background:var(--tbl-header);font-size:11px;font-weight:600;letter-spacing:.02em;color:var(--ink-2)">
-          <span style="width:7px;height:7px;border-radius:50%;background:${col};flex:0 0 auto"></span>
-          <span>${title}</span>
-          <span class="ky-num" style="margin-left:auto;color:var(--ink)">${fmtKr(d.outstanding_kr)}</span>
-        </div>
+    const head = `<div class="ky-sec"><h2>Per fyrirtæki</h2><span class="ky-sec-n">${companies.length} fyrirtæki</span><span class="ky-sec-total ky-num">${fmtNum(total)} <span class="boss-kr">kr</span></span></div>`+
+      `<div class="ky-sec-sub">Ógreitt + ósent + tímauppsöfnun saman á hvert fyrirtæki.</div>`;
+    if(!companies.length) return head + emptyBox(state.search?'Ekkert passar við leit':'Engin fyrirtæki');
+    const badge=(cls,label,val)=> `<span class="boss-badge ${cls} ky-num">${label} ${fmtNum(val)} kr</span>`;
+    const tierBlock=(d,tier,title,led)=> !d ? '' : `
+      <div class="${tier===2?'ky-tblock2':''}">
+        <div class="ky-tier"><i class="boss-led" style="--led:${led}"></i><span class="t">${title}</span><span class="s ky-num">${fmtNum(d.outstanding_kr)}<span class="boss-kr">kr</span></span></div>
         ${buildInvoiceRows(d.invoices||[], tier)}
       </div>`;
     const body = companies.map(c=>`
-      <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow-sm)">
-        <div class="ky-card-head" role="button" tabindex="0" title="Smelltu til að opna/loka" style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;cursor:pointer">
-          <div style="display:flex;align-items:flex-start;gap:10px">
-            <span class="ky-caret" style="font-size:13px;color:var(--muted-2);line-height:1.6;user-select:none">▾</span>
-            <div>
-              <div style="font-family:var(--font-display);font-weight:700;color:var(--ink);font-size:16px;letter-spacing:.2px">${esc(c.customer||'(óþekkt)')}</div>
-              ${c.kt?`<div style="font-size:11px;color:var(--muted-2);margin-top:2px">kt ${esc(c.kt)}</div>`:''}
-              <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
-                ${c.s1?mini('Ógreitt',c.s1,'var(--red-bg)','var(--red)'):''}
-                ${c.s2?mini('Ósent',c.s2,'var(--warn-bg)','var(--warn)'):''}
-                ${c.s3?mini('Tími',c.s3,'var(--bg-2)','var(--muted)'):''}
-              </div>
-            </div>
+      <div class="ky-card">
+        <div class="ky-card-head" role="button" tabindex="0" title="Smelltu til að opna/loka">
+          <span class="ky-caret">▾</span>
+          <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+            <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span class="ky-name">${esc(c.customer||'(óþekkt)')}</span>${c.kt?`<span class="ky-kt">kt ${esc(c.kt)}</span>`:''}</div>
+            <div class="ky-tags" style="margin-top:0">${c.s1?badge('ogreitt','Ógreitt',c.s1):''}${c.s2?badge('osent','Ósent',c.s2):''}${c.s3?badge('','Tími',c.s3):''}</div>
           </div>
-          <div style="display:flex;gap:10px;align-items:center">
-            <div style="text-align:right">
-              <div style="font-size:10px;color:var(--muted-2);text-transform:uppercase;letter-spacing:.1em;font-weight:600">Samtals</div>
-              <div class="ky-num" style="font-family:var(--font-display);font-size:21px;font-weight:600;color:var(--ink)">${fmtKr(c.total)}</div>
-            </div>
-          </div>
+          <div class="ky-total"><div class="l">Samtals</div><div class="v ky-num">${fmtNum(c.total)} <span class="boss-kr">kr</span></div></div>
         </div>
         <div class="ky-card-rows" style="display:block">
-          ${tierBlock(c.t[1],1,'','Ógreiddar','var(--red)')}
-          ${tierBlock(c.t[2],2,'','Ósendar','var(--gold)')}
-          ${tierBlock(c.t[3],3,'','Tími eftir','var(--muted-2)')}
+          ${tierBlock(c.t[1],1,'Ógreitt','#b5522a')}
+          ${tierBlock(c.t[2],2,'Ósendar','#c9a54a')}
+          ${tierBlock(c.t[3],3,'Tími eftir','#8f8776')}
         </div>
       </div>`).join('');
     return head + body;
@@ -14656,120 +14577,48 @@ async function renderKrofuyfirlit(t){
 
   function renderDebtor(db, tier){
     const nm = db.customer || '(óþekkt)';
-    const meta = db.kt ? 'kt '+esc(db.kt) : '';
     // Þrep 3: titillinn er greiðandinn → sýnum verkstað(i) sem undirlínu (úr gögnum).
-    let metaHtml = meta ? `<div style="font-size:11px;color:#8a93a5;margin-top:2px">${meta}</div>` : '';
+    let metaHtml = db.kt ? `<span class="ky-kt">kt ${esc(db.kt)}</span>` : '';
     if(tier===3){
       const ws = [...new Set((db.invoices||[]).map(i=>i.worksite).filter(Boolean))];
-      if(ws.length) metaHtml = `<div style="font-size:11px;color:#8a93a5;margin-top:2px">📍 ${ws.map(esc).join(' · ')}</div>`;
+      if(ws.length) metaHtml = `<span class="ky-kt">📍 ${ws.map(esc).join(' · ')}</span>`;
     }
-
     let agBar = '';
     if(tier===1){
       let agG=0, agA=0, agR=0;
       (db.invoices||[]).forEach(inv=>{ const d=inv.days_overdue; const amt=inv.amount||0;
         if(d==null){ agG+=amt; } else if(d>90){ agR+=amt; } else if(d>30){ agA+=amt; } else { agG+=amt; } });
       const agTot = agG+agA+agR || 1;
-      agBar = '<div style="height:6px;border-radius:99px;overflow:hidden;display:flex;background:var(--bg-2);width:180px;max-width:44vw;margin-top:6px">'+
+      agBar = '<div class="ky-agebar">'+
         (agG?'<div style="width:'+(agG/agTot*100)+'%;background:var(--green)"></div>':'')+
-        (agA?'<div style="width:'+(agA/agTot*100)+'%;background:var(--warn)"></div>':'')+
+        (agA?'<div style="width:'+(agA/agTot*100)+'%;background:var(--gold-500)"></div>':'')+
         (agR?'<div style="width:'+(agR/agTot*100)+'%;background:var(--red)"></div>':'')+
       '</div>';
     }
-
     const rows = (db.invoices||[]).map(inv=>{
-      const rnum = inv.tilvisun ? ('R-'+esc(inv.tilvisun)) : (inv.worksite ? esc(inv.worksite) : ('#'+esc(inv.id||'')));
-      let sub;
-      if(tier===3){
-        sub = esc(monthLbl(inv.work_month)) + (inv.hours!=null ? ' · '+inv.hours.toFixed(0)+'t' : '') + (inv.partial && state.newest ? ' · til '+esc(dayMon(state.newest)) : '');
-      } else {
-        sub = esc(inv.source||'');
-      }
-      // Líklega-greitt vísbending (banka-krossvísun): grænn blær + skýringarlína.
-      const lp = tier===1 && inv.likely_paid && inv.bank;
-      const bankLine = lp
-        ? `<div style="color:#0f7a43;font-size:10.5px;font-weight:600;margin-top:2px;line-height:1.35">🏦 Líklega þegar greitt — ${fmtKr(inv.bank.amount)} í banka ${esc(inv.bank.date||'')}${inv.bank.extra>0?' (+'+fmtKr(inv.bank.extra)+' vextir)':''}</div>`
-        : '';
-      // Mánaðar-stimpill (skönnun eftir mánuði) — úr gjalddaga, annars vinnumánuði (þrep 3).
-      const mtag = monthTag(inv.gjalddagi || inv.work_month);
-      const mtagHtml = mtag ? `<span class="ky-num" style="font-size:9.5px;font-weight:700;color:#64748b;background:#eef2f7;border-radius:6px;padding:1px 7px;white-space:nowrap">${esc(mtag)}</span>` : '';
-      // Minnispunktur (Feature 2) — dauf-strikaður reitur; 📝 fyllist þegar punktur er til.
-      const note = inv.note || '';
-      const noteHtml = tier===2 ? '' : `<div style="flex:1;display:flex;align-items:center;gap:5px;min-width:80px">
-        <span class="ky-note-ic" style="font-size:11px;flex-shrink:0;${note?'':'opacity:.22'}">📝</span>
-        <textarea class="ky-note" rows="1" data-key="${esc(inv.inv_key)}" placeholder="minnispunktur…" style="flex:1;min-width:160px;background:transparent;border:0;border-bottom:1px dashed #cbd5e1;color:#334155;font:inherit;font-size:11.5px;padding:2px 3px;outline:none">${esc(note)}</textarea>
-      </div>`;
-      // Þrep 2: minnispunkturinn í EFRI línuna (inni í nafna-blokkinni) svo röðin
-      // styttist og takkarnir komist á skjáinn (ósk Agnars 2026-07-08).
-      const noteInline = tier===2 ? `<div style="display:flex;align-items:center;gap:4px;margin-top:3px">
-        <span class="ky-note-ic" style="font-size:10px;flex-shrink:0;${note?'':'opacity:.22'}">📝</span>
-        <textarea class="ky-note" rows="1" data-key="${esc(inv.inv_key)}" placeholder="minnispunktur…" style="flex:1;min-width:0;background:transparent;border:0;border-bottom:1px dashed #cbd5e1;color:#334155;font:inherit;font-size:10.5px;padding:1px 2px;outline:none">${esc(note)}</textarea>
-      </div>` : '';
-      // Sundurliðun (Feature 1) — opnast við smell á röð.
-      const detailCells = [
-        ['Gjalddagi', inv.gjalddagi ? inv.gjalddagi.split('-').reverse().join('.') : '—'],
-        ['Eindagi', esc(inv.eindagi||'—')],
-        ['Uppruni', esc(inv.source||'—')],
-        ['Upphæð', fmtKr(inv.amount)],
-        ['Tímabil', esc(monthPeriod(inv.gjalddagi || inv.work_month))],
-      ].map(([l,v])=>`<div><div class="kd-l">${l}</div><div class="kd-v">${v}</div></div>`).join('');
-      const bankDetail = (inv.bank)
-        ? `<div style="margin-top:9px;color:#0f7a43;font-size:11px;font-weight:600;line-height:1.4">🏦 Banki: ${fmtKr(inv.bank.amount)} · ${esc(inv.bank.date||'—')}${inv.bank.text?' · '+esc(inv.bank.text):''}${inv.bank.extra>0?' <span style="color:#b45309">(+'+fmtKr(inv.bank.extra)+' vextir)</span>':''}</div>`
-        : '';
       // Gátmerki í velstillu (tier 2 / sameina-hamur) — aðeins á gerd-drög (invoice_drafts-
-      // studdar raðir með sitt eigið worksite_name+work_month), EKKI Payday-drög (engin
-      // (worksite_name,work_month) einkilykill til að sameina undir).
+      // studdar raðir með sitt eigið worksite_name+work_month), EKKI Payday-drög.
       const t2chk = (tier===2 && t2SelectMode && inv.source==='gerd-drög' && inv.worksite && inv.work_month)
-        ? `<input type="checkbox" class="kyf-t2-chk" data-key="${esc(inv.inv_key)}" ${t2Selected.has(inv.inv_key)?'checked':''} onclick="event.stopPropagation()" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;accent-color:#1d4ed8;margin-right:2px">`
+        ? `<input type="checkbox" class="kyf-t2-chk" data-key="${esc(inv.inv_key)}" ${t2Selected.has(inv.inv_key)?'checked':''} onclick="event.stopPropagation()" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;accent-color:var(--gold-600);margin-right:2px">`
         : '';
-      return `
-        <div class="ky-invrow${tier===2?' ky-t2':''}">
-          <div class="ky-row${lp?' ky-likely':''}" data-key="${esc(inv.inv_key)}" style="display:flex;align-items:center;gap:11px;padding:9px 18px 9px 42px;border-bottom:1px solid #f3f5f9;font-size:12.5px;cursor:pointer;${inv._hidden?'opacity:.5':''}">
-            ${t2chk}<span class="ky-caret2" style="width:11px;flex-shrink:0;color:#b6c0cc;font-size:11px;user-select:none">▸</span>
-            <div style="width:${tier===2?340:200}px;flex-shrink:0;line-height:1.2">
-              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                <span class="ky-num" style="color:var(--ink);font-weight:600">${rnum}</span>
-                ${mtagHtml}
-                ${tier===1?agingPill(inv.days_overdue):''}
-              </div>
-              <div style="color:#b6c0cc;font-size:10.5px;margin-top:3px">${tier===1&&inv.gjalddagi?`<span class="ky-num" style="color:#8a93a5">${inv.gjalddagi.split('-').reverse().join('.')}</span> &nbsp;·&nbsp; `:''}${sub}</div>
-              ${bankLine}
-              ${tier===2?noteInline:''}
-            </div>
-            ${tier===2?'<span style="flex:1 1 0;min-width:0"></span>':''}
-            ${noteHtml}
-            <span class="ky-num" style="width:104px;text-align:right;font-weight:600;color:var(--ink);white-space:nowrap;flex-shrink:0">${fmtKr(inv.amount)}</span>
-            ${(tier===2||tier===3)?wfStrip(inv, tier):''}
-            <div style="display:flex;gap:6px;flex-shrink:0">${actChips(inv, tier)}</div>
-          </div>
-          <div class="ky-detail" style="display:none;padding:11px 18px 14px 65px;background:#fafbfe;border-bottom:1px solid #f3f5f9">
-            <div style="display:flex;flex-wrap:wrap;gap:12px 28px">${detailCells}</div>
-            ${bankDetail}
-          </div>
-        </div>`;
+      return invRow(inv, tier, t2chk);
     }).join('');
-
     // Zero-balance debtors (e.g. everything netted to 0 after mark-paid) render
     // collapsed by default so they don't clutter the list; nonzero = expanded.
     const collapsed = (db.outstanding_kr||0) === 0;
+    const cnt = `${(db.invoices||[]).length} ${tier===3?'liðir':(tier===2?'drög':'reikningar')}${tier===1?' · elsti gjalddagi '+(db.oldest_due ? db.oldest_due.split('-').reverse().join('.') : '—'):''}`;
     return `
-      <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow-sm)">
-        <div class="ky-card-head" role="button" tabindex="0" title="Smelltu til að opna/loka" style="padding:14px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;cursor:pointer">
-          <div style="display:flex;align-items:flex-start;gap:10px">
-            <span class="ky-caret" style="font-size:13px;color:var(--muted-2);line-height:1.6;user-select:none">${collapsed?'▸':'▾'}</span>
-            <div>
-              <div style="font-family:var(--font-display);font-weight:700;color:var(--ink);font-size:16px;letter-spacing:.2px">${esc(nm)}</div>
-              ${metaHtml}
-              ${agBar}
-              <div style="font-size:11px;color:#8a93a5;margin-top:4px">${(db.invoices||[]).length} ${tier===3?'liðir':(tier===2?'drög':'reikningar')}${tier===1?' · elsti gjalddagi '+(db.oldest_due ? db.oldest_due.split('-').reverse().join('.') : '—'):''}</div>
-            </div>
+      <div class="ky-card">
+        <div class="ky-card-head" role="button" tabindex="0" title="Smelltu til að opna/loka">
+          <span class="ky-caret">${collapsed?'▸':'▾'}</span>
+          <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+            <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span class="ky-name">${esc(nm)}</span>${metaHtml}</div>
+            ${agBar}
+            <div class="ky-kt">${cnt}</div>
           </div>
-          <div style="display:flex;gap:10px;align-items:center">
+          <div style="margin-left:auto;display:flex;gap:10px;align-items:center">
             ${tier===2?sameinaBtn(db.invoices):''}
-            <div style="text-align:right">
-              <div style="font-size:10px;color:#8a93a5;text-transform:uppercase;letter-spacing:.1em;font-weight:700">${tier===3?'Áætlað':(tier===2?'Ósent':'Útistandandi')}</div>
-              <div class="ky-num" style="font-size:22px;font-weight:700;color:#2f5fe0">${fmtKr(db.outstanding_kr)}</div>
-            </div>
+            <div class="ky-total" style="margin-left:0"><div class="l">${tier===3?'Áætlað':(tier===2?'Ósent':'Útistandandi')}</div><div class="v ky-num">${fmtNum(db.outstanding_kr)} <span class="boss-kr">kr</span></div></div>
           </div>
         </div>
         <div class="ky-card-rows" style="display:${collapsed?'none':'block'}">${rows}</div>
@@ -14780,17 +14629,17 @@ async function renderKrofuyfirlit(t){
     const disp = searchSort(live);
     const total = sumKr(live), n = countN(live);
     const selBtn = tier===2
-      ? `<button class="kyf-t2-sel-toggle" type="button" style="padding:4px 12px;border-radius:var(--radius-sm);font:inherit;font-size:12px;font-weight:600;cursor:pointer;border:1px solid ${t2SelectMode?'var(--navy-dark)':'var(--line-2)'};background:${t2SelectMode?'var(--navy-dark)':'var(--card)'};color:${t2SelectMode?'#fff':'var(--ink-2)'}">${t2SelectMode?'✗ Hætta':'☑ Sameina'}</button>`
+      ? `<button class="kyf-t2-sel-toggle boss-btn ${t2SelectMode?'obsidian':'ivory'} sm" type="button">${t2SelectMode?'✗ Hætta':'☑ Sameina'}</button>`
       : '';
-    const dotCol = tier===1?'var(--red)':tier===2?'var(--gold)':'var(--muted-2)';
-    const header = `<div class="ky-sec"><span style="width:8px;height:8px;border-radius:50%;background:${dotCol};flex:0 0 auto;align-self:center"></span><h2>${esc(title)}</h2>`+
-      `<span style="font-size:12px;color:var(--muted)">${n} ${n===1?'liður':'liðir'} · ${live.length} ${live.length===1?'aðili':'aðilar'}</span>`+
+    const led = tier===1?'#b5522a':tier===2?'#c9a54a':'#8f8776';
+    const header = `<div class="ky-sec"><i class="boss-led" style="--led:${led};align-self:center"></i><h2>${esc(title)}</h2>`+
+      `<span class="ky-sec-n">${n} ${n===1?'liður':'liðir'} · ${live.length} ${live.length===1?'aðili':'aðilar'}</span>`+
       selBtn+
-      `<span style="margin-left:auto;font-family:var(--font-display);font-weight:600;font-size:16px;color:var(--ink)" class="ky-num">${fmtKr(total)}</span></div>`+
-      (subtitle?`<div style="font-size:11.5px;color:var(--muted-2);margin:-4px 0 10px">${esc(subtitle)}</div>`:'');
+      `<span class="ky-sec-total ky-num">${fmtNum(total)} <span class="boss-kr">kr</span></span></div>`+
+      (subtitle?`<div class="ky-sec-sub">${esc(subtitle)}</div>`:'');
     const body = disp.length
       ? disp.map(d=>renderDebtor(d, tier)).join('')
-      : `<div style="background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:26px;text-align:center;color:var(--muted-2);font-style:italic">${state.search?'Ekkert passar við leit':'Engar kröfur 🎉'}</div>`;
+      : emptyBox(state.search?'Ekkert passar við leit':'Engar kröfur');
     return header + body;
   }
 
@@ -14803,7 +14652,7 @@ async function renderKrofuyfirlit(t){
     if(state.pgFailed) msgs.push('Verðskrá náðist ekki — sjálfgefnir taxtar (9.951/14.927) hefðu verið notaðir, svo „Tími eftir"-áætlanir eru faldar því þær gætu verið rangar.');
     else if(state.wsFailed) msgs.push('Verkstaða-gögn náðust ekki — „Tími eftir"-áætlanir gætu verið ófullkomnar.');
     if(!msgs.length){ box.innerHTML = ''; return; }
-    box.innerHTML = '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;padding:11px 15px;background:#fffbeb;border:1px solid #fde68a;border-radius:14px;color:#92400e;font-size:12.5px;line-height:1.5">'
+    box.innerHTML = '<div class="kyf-warnbox">'
       + msgs.map(m=>'<div style="display:flex;gap:8px;align-items:flex-start"><span style="font-size:15px;flex-shrink:0">⚠</span><span>'+esc(m)+'</span></div>').join('')
       + '</div>';
   }
@@ -14951,7 +14800,7 @@ async function renderKrofuyfirlit(t){
   }
   function renderList(){
     const listEl = $view.querySelector('.kyf-list');
-    if(!state.data){ listEl.innerHTML = '<div style="padding:32px;text-align:center;color:#94a3b8">Hleður kröfum…</div>'; return; }
+    if(!state.data){ listEl.innerHTML = emptyBox('Hleður kröfum…'); return; }
     renderMoneyWarn();
     // serverHidden endurnýjast í hverri hleðslu úr bakenda-meta (authoritative).
     serverHidden = new Set(state.data.hidden_keys || []);
@@ -14966,9 +14815,7 @@ async function renderKrofuyfirlit(t){
       btn.style.display='';
       const on = state.showHidden;
       btn.textContent = on ? ('🙈 Fela aftur ('+hc+')') : ('👁 Sýna falin ('+hc+')');
-      btn.style.borderColor = on ? '#1d4ed8' : '#cbd5e1';
-      btn.style.background   = on ? '#eff6ff' : '#fff';
-      btn.style.color        = on ? '#1d4ed8' : '#475569';
+      btn.classList.toggle('on', on);
     })();
     const l1 = liveDebtors(((state.data.tier1)||{}).debtors || []);
     const l2 = liveDebtors(((state.data.tier2)||{}).debtors || []);
@@ -14981,10 +14828,10 @@ async function renderKrofuyfirlit(t){
     const banner = $view.querySelector('.kyf-lp-banner');
     if(banner){
       banner.innerHTML = lpN>0
-        ? `<div style="display:flex;align-items:center;gap:10px;font-size:12.5px;color:#065f46;margin-bottom:14px;padding:11px 15px;background:linear-gradient(90deg,#ecfdf5,#f0fdf4);border:1px solid #a7f3d0;border-radius:14px;box-shadow:0 8px 22px -16px rgba(16,90,60,.3);line-height:1.5">
+        ? `<div class="kyf-lpbox">
             <span style="font-size:18px">🏦</span>
             <span><b>${lpN} ${lpN===1?'krafa líklega þegar greidd':'kröfur líklega þegar greiddar'} (${fmtKr(lpKr)})</b> — fundust í banka en enn ógreiddar í Payday. Yfirfarðu og merktu greitt.
-            <button class="kyf-show-likely" type="button" style="margin-left:6px;padding:3px 10px;border-radius:7px;border:1px solid #10b981;background:#fff;color:#047857;font:inherit;font-size:11.5px;font-weight:700;cursor:pointer">Sýna þessar →</button></span>
+            <button class="kyf-show-likely boss-btn ivory sm" type="button" style="margin-left:6px">Sýna þessar →</button></span>
           </div>`
         : '';
     }
@@ -15012,10 +14859,7 @@ async function renderKrofuyfirlit(t){
     const showLikelyBtn = banner && banner.querySelector('.kyf-show-likely');
     if(showLikelyBtn) showLikelyBtn.addEventListener('click', ()=>{
       state.tierFilter = 'likely';
-      $view.querySelectorAll('.kyf-vf').forEach(x=>{
-        const on = x.dataset.vf===state.tierFilter;
-        x.style.cssText = 'padding:7px 14px;border-radius:var(--radius-sm);cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;'+(on?'border:1px solid var(--navy-dark);background:var(--navy-dark);color:#fff':'border:1px solid var(--line-2);background:var(--card);color:var(--ink-2)');
-      });
+      $view.querySelectorAll('.kyf-vf').forEach(x=> x.classList.toggle('active', x.dataset.vf===state.tierFilter));
       renderList();
     });
 
@@ -15313,7 +15157,7 @@ async function renderKrofuyfirlit(t){
       await fetchAll();
     }catch(e){
       if(meta) meta.textContent = 'Villa: '+e.message;
-      const lst = $view.querySelector('.kyf-list'); if(lst) lst.innerHTML = '<div style="padding:32px;color:#dc2626">Villa við að sækja kröfur: '+esc(e.message)+'</div>';
+      const lst = $view.querySelector('.kyf-list'); if(lst) lst.innerHTML = '<div class="kyf-warnbox">Villa við að sækja kröfur: '+esc(e.message)+'</div>';
       return;
     }
     metaFromState();
@@ -15328,13 +15172,15 @@ async function renderKrofuyfirlit(t){
   $view.querySelectorAll('.kyf-vf').forEach(b=>b.addEventListener('click',()=>{
     if(state.tierFilter===b.dataset.vf) return;
     state.tierFilter = b.dataset.vf;
-    $view.querySelectorAll('.kyf-vf').forEach(x=>{
-      const on = x.dataset.vf===state.tierFilter;
-      x.style.cssText = 'padding:7px 14px;border-radius:var(--radius-sm);cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;'+(on?'border:1px solid var(--navy-dark);background:var(--navy-dark);color:#fff':'border:1px solid var(--line-2);background:var(--card);color:var(--ink-2)');
-    });
+    $view.querySelectorAll('.kyf-vf').forEach(x=> x.classList.toggle('active', x.dataset.vf===state.tierFilter));
     renderList();
   }));
   $view.querySelector('.kyf-refresh').addEventListener('click', ()=>load(true));
+  // Flakk-lyklar í hausnum (Boss): 💰 Fjármála-yfirlit (fílabein) · 🧾 Gerð Reikninga (obsidian).
+  [['.kyf-go-fjarmal','fjarmalyfirlit'],['.kyf-go-gerd','gerdreikninga']].forEach(([sel,id])=>{
+    const b = $view.querySelector(sel); if(b) b.addEventListener('click', ()=>{ state_ui_go(id); });
+  });
+  function state_ui_go(id){ try{ window.state.ui.activeTab = id; save({nav:true}); render(); }catch(_){ location.hash = '#'+id; } }
   { const pb = $view.querySelector('.kyf-print'); if(pb) pb.addEventListener('click', ()=>{
     document.body.classList.add('kyf-printing');
     const done = ()=>{ document.body.classList.remove('kyf-printing'); window.removeEventListener('afterprint', done); };

@@ -1,0 +1,64 @@
+/* Boss — gold. The material that makes the theme. Four recipes, nothing else:
+   a LINE (thin rules), a FACE (buttons, plates, chips), a SIDE (active nav /
+   view switch — a quieter face), and a COIN (the medallion). Gold is always
+   decorative; status and age never depend on it. */
+
+:root {
+  /* Solid stops — use only inside the recipes below or for text */
+  --gold-100: #fff3b0;   /* specular */
+  --gold-200: #f5d76e;   /* 24k */
+  --gold-300: #e8cb7a;
+  --gold-400: #d9b25a;
+  --gold-500: #c9a54a;   /* base */
+  --gold-600: #b8892e;
+  --gold-700: #a87b1f;
+  --gold-800: #8f6a1c;   /* bronze; gold-as-text on cream (4.6:1) */
+  --gold-900: #5a4410;
+  --gold-950: #3e2c06;
+
+  /* Thin rules: header hairlines, top rules, kicker, sidebar footer */
+  --gold-line: linear-gradient(90deg,
+    #7a5a12 0%, #c9a54a 18%, #f5d76e 38%, #fff3b0 47%,
+    #f5d76e 56%, #c9a54a 78%, #7a5a12 100%);
+
+  /* Button / plate / chip face: specular sweep + brushed grain + bronze body */
+  --gold-face:
+    linear-gradient(115deg, rgba(255,255,255,0) 30%, rgba(255,255,255,.55) 45%, rgba(255,255,255,0) 52%),
+    repeating-linear-gradient(180deg, rgba(255,255,255,.08) 0 1px, rgba(0,0,0,0) 1px 3px),
+    linear-gradient(180deg, #f3dc95 0%, #d9b25a 14%, #b8892e 46%, #8f6a1c 52%, #a87b1f 74%, #cfa54a 92%, #e8cb7a 100%);
+
+  /* Active nav / view switch: same build, quieter sweep */
+  --gold-side:
+    linear-gradient(115deg, rgba(255,255,255,0) 30%, rgba(255,255,255,.4) 46%, rgba(255,255,255,0) 54%),
+    repeating-linear-gradient(180deg, rgba(255,255,255,.07) 0 1px, rgba(0,0,0,0) 1px 3px),
+    linear-gradient(180deg, #e8cb7a 0%, #c9a54a 45%, #9c7422 55%, #b8892e 100%);
+
+  /* Medallion: lathe-turned conic grain over a lit sphere */
+  --gold-coin:
+    repeating-conic-gradient(from 0deg, rgba(255,255,255,.09) 0 1.5deg, rgba(0,0,0,0) 1.5deg 4deg),
+    radial-gradient(circle at 32% 28%, #fff3d0 0%, #e8cb7a 16%, #b8892e 46%, #7a5a12 76%, #3e2c06 100%);
+
+  /* Header band (4px): brushed grain over a saturated 24k body */
+  --gold-band:
+    repeating-linear-gradient(90deg, rgba(255,255,255,.12) 0 1px, rgba(0,0,0,0) 1px 4px),
+    linear-gradient(90deg, #5a4410 0%, #c9a54a 12%, #f5d76e 24%, #fff3b0 30%, #d4a92a 44%, #f5d76e 60%, #fff3b0 68%, #c9a54a 84%, #5a4410 100%);
+
+  /* Gold text (wordmark) — background-clip:text */
+  --gold-text: linear-gradient(180deg, #f7e6b8 0%, #e8cb7a 28%, #b8892e 52%, #8f6a1c 66%, #d9b25a 100%);
+
+  /* Bevel for gold faces */
+  --gold-bevel-border: 1px solid #5a4410;
+  --gold-bevel-top:    #f7e6b8;
+  --gold-bevel-bottom: #2e2004;
+  --gold-bevel-shadow:
+    inset 0 1px 0 rgba(255,255,255,.55),
+    inset 0 -2px 3px rgba(60,40,0,.45),
+    0 3px 6px rgba(22,21,19,.45),
+    0 0 12px rgba(184,137,46,.35);
+  --gold-bevel-shadow-lg:
+    inset 0 1px 0 rgba(255,255,255,.6),
+    inset 0 -3px 4px rgba(60,40,0,.5),
+    0 4px 10px rgba(0,0,0,.65),
+    0 0 18px rgba(184,137,46,.4);
+  --gold-glow: 0 0 6px rgba(240,215,138,.9), 0 0 18px rgba(240,215,138,.45), 0 0 32px rgba(226,196,111,.25);
+}

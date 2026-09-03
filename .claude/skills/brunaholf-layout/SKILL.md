@@ -45,23 +45,37 @@ Rules:
 - If asked to standardise them repo-wide, treat it as its own project with a
   before/after check per page - not a side effect of another task.
 
-## 3. Theme: gold + navy, shipped
+## 3. Theme: "Boss" (black steel · cream paper · gold), shipped 2026-09-03
 
-The gold theme is live (all screens plus a dark pass). Tokens in `css/theme.css`:
+The Boss theme is live in `css/theme.css` (v2). Source of truth for the design
+system (tokens, gold recipes, elevation objects, page mockups): `docs/design-boss/`
+— read `docs/design-boss/README.md` first. Core tokens:
 
 ```
---bg:#f6f4f0     --bg-2:#efece5      --card:#ffffff    --input-bg:#faf9f5
---line:#e5e0d6   --line-2:#d9d4c9
---ink:#16222f    --ink-2:#2c3a49     --muted:#5f6b78   --muted-2:#8b95a1
---navy:#2a2723   --navy-2:#38332c    --navy-dark:#1a1714
---gold:#c9a45c   --gold-deep:#b48d4c --accent:#b48d4c
+--bg:#f4f1ea      --bg-2:#ece7dc      --card:#ffffff     --input-bg:#f6f3ec
+--line:#e6e1d6    --line-2:#d9d3c6    --border:#cfc8b9   --edge:#c9c2b3
+--ink:#161513     --ink-2:#4a463f     --muted:#6f685c    --muted-2:#8f8776 (placeholders only)
+--navy:#161513    --navy-2:#2a2823    --navy-dark:#0a0a09   (steel ladder aliases)
+--gold:#c9a54a    --gold-deep:#8f6a1c (gold as TEXT)      --accent:#b8892e
+--red:#b5522a (terra)  --green:#2f7a4a  --blue:#5980a6  --warn:#8a6a1c
+--font-display: Playfair Display 700/800   --font-mono: IBM Plex Mono 500/600   --font-ui: system-ui
 ```
 
-On the 30 pages that do not link `theme.css`, these tokens are **undefined** -
-`var(--gold)` silently falls back to nothing. Either link `theme.css` on that
+Gold recipes (never author a new gold gradient): `--gold-line`, `--gold-face`,
+`--gold-side`, `--gold-coin`, `--gold-band`, `--gold-text`. Depth objects, one
+shadow each: `--panel-shadow`, `--key-shadow`, `--obsidian-shadow`, `--well-shadow`,
+`--slab-shadow`, `--kpi-shadow`. Component classes: `.boss-panel`, `.boss-panel-head`,
+`.boss-plate`, `.boss-kpi(.dark)`, `.boss-slab`, `.boss-btn.ivory|.obsidian|.gold`,
+`.boss-field`, `.boss-seg`, `.boss-labeled`, `.boss-badge`, `.boss-led`, `.boss-kicker`,
+`.boss-h1`. Header/sidebar CSS lives in theme.css; index.html keeps only behaviour.
+
+The old variable names (`--navy`, `--gold-deep`, …) still exist and are remapped,
+so tabs using `var(--…)` picked the theme up automatically. On the 30 pages that
+do not link `theme.css`, these tokens are **undefined** - link `theme.css` on that
 page or copy the tokens into its `<style>` block. Check before using a token.
 
-Known remaining tail: `fjarmalyfirlit` detailing, mobile bottom tabs.
+Runtime-injected `<style>` (js/hub-sync-buttons.js, `.cg-badge`) lands after
+theme.css; theme.css raises specificity with a `body ` prefix for those.
 
 ## 4. Constraints
 

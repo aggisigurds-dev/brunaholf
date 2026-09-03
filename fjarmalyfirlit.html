@@ -13,27 +13,24 @@
 <script src="/js/theme.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/theme.css">
-<link rel="stylesheet" href="/css/fjarmalyfirlit.css">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/theme.css?v=2">
+<link rel="stylesheet" href="/css/fjarmalyfirlit.css?v=2">
 </head>
 <body>
-  <div class="fy-titlebar">
-    <h1><svg class="fy-goldbar" width="30" height="21" viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <defs>
-        <linearGradient id="fyBarTop" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#fff6d2"/><stop offset="45%" stop-color="#f3d582"/><stop offset="100%" stop-color="#d3a63f"/>
-        </linearGradient>
-        <linearGradient id="fyBarFront" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#f6dd8f"/><stop offset="22%" stop-color="#e0ad3f"/><stop offset="46%" stop-color="#96631a"/>
-          <stop offset="60%" stop-color="#c99a3f"/><stop offset="80%" stop-color="#f3dd97"/><stop offset="100%" stop-color="#8a5c17"/>
-        </linearGradient>
-      </defs>
-      <polygon points="15,20 65,8 90,22 40,34" fill="url(#fyBarTop)" stroke="#6e4a11" stroke-width="1.4" stroke-linejoin="round"/>
-      <polygon points="40,34 90,22 83,52 33,64" fill="url(#fyBarFront)" stroke="#5c3d0a" stroke-width="1.4" stroke-linejoin="round"/>
-      <line x1="47" y1="40" x2="76" y2="30" stroke="#fff6d2" stroke-width="2.4" opacity="0.5" stroke-linecap="round"/>
-    </svg> Fjármála-yfirlit</h1>
-    <p class="sub">Peningapípan þvert á Slökkvitæki + Brunahólf · staðan núna · <a class="refresh" href="#" id="refresh">↻ uppfæra</a></p>
+<!-- Boss-þema (2026-09-03) — fyrirmynd: docs/design-boss/pages/fjarmala-yfirlit-boss.html -->
+<div class="fy">
+  <div class="fy-head">
+    <div>
+      <div class="boss-kicker" id="fy-kicker">Fjármál</div>
+      <h1 class="boss-h1">Fjármála-yfirlit</h1>
+      <div class="boss-sub sub">Peningapípan þvert á Slökkvitæki + Brunahólf · staðan núna · <a class="refresh" href="#" id="refresh">↻ uppfæra</a></div>
+      <div class="boss-meta" id="fy-meta">Sæki tölur…</div>
+    </div>
+    <div class="fy-actions">
+      <a class="boss-btn ivory" href="/#krofuyfirlit" target="_top" title="Opna Kröfu yfirlit">📋 Kröfu yfirlit</a>
+      <a class="boss-btn obsidian" href="/#gerdreikninga" target="_top" title="Opna Gerð Reikninga">🧾 Gerð Reikninga</a>
+    </div>
   </div>
   <div class="syncbar">
     <span data-sync-workflow="timavera" data-sync-label="Tímavera"></span>
@@ -41,14 +38,19 @@
     <span data-sync-workflow="redder" data-sync-label="Redder"></span>
     <span data-sync-workflow="payday" data-sync-label="Payday"></span>
   </div>
-  <div id="app"><div class="loading">Sæki tölur…</div></div>
+  <div id="app"><div class="loading"><span class="boss-medallion ghost">🔥</span><span>Sæki tölur…</span></div></div>
+</div>
 
 <script>
   var API = '/api/fjarmal-yfirlit';
   var MONTHS = ['janúar','febrúar','mars','apríl','maí','júní','júlí','ágúst','september','október','nóvember','desember'];
-  function kr(n){ return (Math.round(n||0)).toLocaleString('is-IS').replace(/,/g,'.') + ' kr'; }
+  var MON3 = ['JAN','FEB','MAR','APR','MAÍ','JÚN','JÚL','ÁGÚ','SEP','OKT','NÓV','DES'];
+  function num(n){ return (Math.round(n||0)).toLocaleString('is-IS').replace(/,/g,'.'); }
+  function kr(n){ return num(n) + ' kr'; }
+  function krHtml(n){ return num(n) + '<span class="kr">kr</span>'; }
   function mlabel(m){ var p=String(m||'').split('-'); return MONTHS[(+p[1])-1]+' '+p[0]; }
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  (function(){ var d=new Date(); var k=document.getElementById('fy-kicker'); if(k) k.textContent='Fjármál · '+MONTHS[d.getMonth()]+' '+d.getFullYear(); })();
 
   var _cid = 0;
   function detailRows(list){
@@ -62,7 +64,7 @@
     var hasList = list && list.length;
     var id = 'd'+(++_cid);
     var chev = hasList ? '<span class="chev">▸</span>' : '';
-    var head = '<div class="l">'+l+chev+'</div><div class="v">'+kr(v)+'</div>'+(n!=null?'<div class="n">'+n+'</div>':'');
+    var head = '<div class="l">'+l+chev+'</div><div class="v">'+krHtml(v)+'</div>'+(n!=null?'<div class="n">'+n+'</div>':'');
     var inner = hasList
       ? '<button type="button" class="cardbtn" aria-expanded="false" aria-controls="'+id+'" onclick="toggleCard(this)">'+head+'</button>'
       : head;
@@ -76,6 +78,12 @@
     if(det) det.hidden = open;
     var chev = btn.querySelector('.chev'); if(chev) chev.textContent = open?'▸':'▾';
   }
+  // Kaflahaus: gull-plata með númeri · Playfair heiti · samtala · gull-hárlína.
+  var _sec = 0;
+  function sh(title, total){
+    var n = String(++_sec).padStart(2,'0');
+    return '<div class="sh"><span class="boss-plate">'+n+'</span><h2>'+title+'</h2><span class="st">'+kr(total)+'</span><span class="hair"></span></div>';
+  }
   var LINK_SLOKK = '<a class="worklink" href="https://slokkvitaeki.netlify.app/reikningar-bid.html" target="_blank" rel="noopener" onclick="event.stopPropagation()">✏️ Vinna kröfur →</a>';
   var LINK_BRU = '<a class="worklink" href="https://brunaholf.netlify.app/#gerdreikninga" target="_blank" rel="noopener" onclick="event.stopPropagation()">✏️ Vinna drög →</a>';
   var LINK_TIMI = '<a class="worklink" href="https://brunaholf.netlify.app/#gerdreikninga" target="_blank" rel="noopener" onclick="event.stopPropagation()">✏️ Laga tíma →</a>';
@@ -84,6 +92,7 @@
   var LINK_AFGR = '<a class="worklink" href="https://slokkvitaeki.netlify.app/#afgreidsla" target="_blank" rel="noopener" onclick="event.stopPropagation()">🛎️ Opna Afgreiðsluna →</a>';
 
   function render(d, nlsh){
+    _cid = 0; _sec = 0;
     // Áunnið NLSH (Landsspítalinn) úr Ajour-samningi (/api/nlsh-dashboard byMonth).
     // AÐEINS þessi mánuður fer í pípuna — eldri NLSH-mánuðir eru þegar rukkaðir í
     // Payday (invoices) svo þeir mega ekki tvítaljast.
@@ -94,11 +103,28 @@
     var nlshList = nlshBy.slice().reverse().map(function(m){ return { label: mlabel(m.month), sub: (m.holes||0)+' göt', kr: +m.revenue_m_vsk||0 }; });
     var grandDisp = (+d.grand_total||0) + nlshMonthKr;
     var A=d.slokk, warnHtml = (d.warnings&&d.warnings.length)? '<div class="warn">⚠ '+d.warnings.map(function(w){return w.replace(/</g,'&lt;');}).join('<br>')+'</div>' : '';
+    var mon3 = MON3[(+String(d.month||'').split('-')[1])-1] || '';
+    var meta = document.getElementById('fy-meta');
+    if(meta) meta.textContent = 'Uppfært '+new Date(d.generated_at).toLocaleString('is-IS')+' · taxti '+kr(d.taxti_mvsk)+'/klst m/vsk (9.951 × 1,24) · rukkanlegir Tímavera-verkstaðir án Slökkvitæki-innri / NLSH';
+
+    // Pípu-dálkarnir á dökku slab-inu: það sem myndar heildar-pípuna.
+    var pipe = [
+      ['Slökkvitæki', A.heildar.kr, ''],
+      ['Brunahólf Payday', d.bru_payday_ogreitt.kr, ''],
+      ['Tímavera · '+mon3, d.timavera_manudur.kr, 'gold'],
+      (nlshBy.length ? ['NLSH · '+mon3, nlshMonthKr, 'gold'] : null),
+      ['Ósent', d.bru_osendar.kr, '']
+    ].filter(Boolean).map(function(p){ return '<div><div class="pl">'+esc(p[0])+'</div><div class="pv '+p[2]+'">'+num(p[1])+'</div></div>'; }).join('');
+
     document.getElementById('app').innerHTML =
       warnHtml +
-      '<div class="grand"><div class="lbl">Heildar-pípa (allt óinnheimt/óuppgert)</div><div class="val">'+kr(grandDisp)+'</div></div>' +
+      '<div class="boss-slab grand"><span class="coin"></span>' +
+        '<div><div class="lbl"><span class="boss-plate dark">00</span><span class="t">Heildar-pípa · allt óinnheimt / óuppgert</span></div>' +
+        '<div class="val">'+num(grandDisp)+'<span class="kr">kr</span></div></div>' +
+        '<div class="pipe">'+pipe+'</div>' +
+      '</div>' +
 
-      '<section><div class="sh"><h2>🧯 Slökkvitæki — kröfur</h2><span class="st">'+kr(A.heildar.kr)+'</span></div>' +
+      '<section>'+sh('🧯 Slökkvitæki — kröfur', A.heildar.kr) +
         '<div class="grid">' +
           card('card--amber', 'Ógreiddar í Payday', A.ogreitt_payday.kr, A.ogreitt_payday.n+' kröfur', A.ogreitt_payday.list) +
           card('card--blue', 'Ósendar kröfur', A.osendar.kr, A.osendar.n+' kröfur', A.osendar.list, LINK_SLOKK) +
@@ -119,18 +145,18 @@
             : '') +
         '</div></section>' +
 
-      '<section><div class="sh"><h2>🏦 Brunahólf — raun-ógreitt í Payday</h2><span class="st">'+kr(d.bru_payday_ogreitt.kr)+'</span></div>' +
-        '<div class="grid">' + card('card--green full', 'Útistandandi krófur (óborgaðar)', d.bru_payday_ogreitt.kr, d.bru_payday_ogreitt.n+' krófur', d.bru_payday_ogreitt.list) + '</div></section>' +
+      '<section>'+sh('🏦 Brunahólf — raun-ógreitt í Payday', d.bru_payday_ogreitt.kr) +
+        '<div class="grid">' + card('card--green full', 'Útistandandi kröfur (óborgaðar)', d.bru_payday_ogreitt.kr, d.bru_payday_ogreitt.n+' kröfur', d.bru_payday_ogreitt.list) + '</div></section>' +
 
-      '<section><div class="sh"><h2>🕒 Áunnið Tímavera — '+mlabel(d.month)+'</h2><span class="st">'+kr(d.timavera_manudur.kr)+'</span></div>' +
+      '<section>'+sh('🕒 Áunnið Tímavera — '+mlabel(d.month), d.timavera_manudur.kr) +
         '<div class="grid">' + card('card--hero full', 'Þessi mánuður (klst × dagvinnutaxti m/vsk)', d.timavera_manudur.kr, d.timavera_manudur.klst+' klst · taxti '+kr(d.taxti_mvsk)+'/klst', d.timavera_manudur.list, LINK_TIMI) + '</div></section>' +
 
       (nlshBy.length ?
-       '<section><div class="sh"><h2>🏥 Áunnið NLSH (Landsspítalinn)</h2><span class="st">'+kr(nlshMonthKr)+'</span></div>' +
+       '<section>'+sh('🏥 Áunnið NLSH (Landsspítalinn)', nlshMonthKr) +
         '<div class="grid">' + card('card--hero full', 'Þessi mánuður (Ajour · samningstaxti m/vsk)', nlshMonthKr, 'uppsafnað í ár '+kr(nlshCumKr)+' · smelltu fyrir mánuði', nlshList) + '</div></section>'
        : '') +
 
-      '<section><div class="sh"><h2>🟡 Ósent</h2><span class="st">'+kr(d.bru_osendar.kr)+'</span></div>' +
+      '<section>'+sh('🟡 Ósent', d.bru_osendar.kr) +
         '<div class="grid">' +
           card('card--amber full', 'Ósent — sama tala og „Ósent" spjaldið á Kröfu yfirliti (CG-02)', d.bru_osendar.kr, d.bru_osendar.n+' drög · bíður sendingar', d.bru_osendar.list, LINK_BRU) +
         '</div>' +
@@ -139,7 +165,7 @@
   }
 
   function load(){
-    document.getElementById('app').innerHTML = '<div class="loading">Sæki tölur…</div>';
+    document.getElementById('app').innerHTML = '<div class="loading"><span class="boss-medallion ghost">🔥</span><span>Sæki tölur…</span></div>';
     Promise.all([
       fetch(API).then(function(r){ return r.json(); }),
       fetch('/api/nlsh-dashboard').then(function(r){ return r.json(); }).catch(function(){ return null; })

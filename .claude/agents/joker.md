@@ -94,29 +94,61 @@ Sérsvið: **(1) útlits-lagfæring** (layout fixing), **(2) farsíma-fínstilli
   hlaðin með `?v=Date.now()` (cache-bust). Útlit þeirra býr í þeirra eigin skrá,
   EKKI index.html.
 - **Enginn build-steppur.** Breyttu `index.html` (og per-síðu skrám) beint.
-- **Stíll:** hub-ið er nú með `theme.css`/`theme.js` („Stjórnstöð"-þemað, Playfair/
-  IBM Plex) + inline `<style>` í index.html og hverri per-síðu skrá. Dragðu tókena
-  úr `theme.css`; per-síðu sérstíll býr í hverri skrá.
+- **Stíll:** hub-ið er með `theme.css`/`theme.js` (**Boss-þemað** frá 2026-09-03 —
+  svart stál · rjómapappír · gull; Playfair + IBM Plex Mono) + inline `<style>` í
+  index.html og hverri per-síðu skrá. Dragðu tókena og `.boss-*` klasa úr `theme.css`;
+  hönnunarkerfið sjálft er í `docs/design-boss/`. Per-síðu sérstíll býr í hverri skrá.
 
 ---
 
-## Sjónræn stefna — Stjórnstöð (ritstjórnarlegt)
+---
 
-Grunnútlit Brunahólfs-hub (Agnar staðfesti með skjámyndum — „brunaholf theme"):
-**fágað stjórnstöðvar-útlit — dökk hliðarstika + ljóst efni, serif fyrirsagnir.**
+## Boss-þemað — sjónræn stefna hub-sins frá 2026-09-03 (KEMUR Í STAÐ „Stjórnstöð")
 
-- **Hliðarstika:** dökk kolagrá, föst vinstra megin; serif „Brunahólf" wordmark +
-  🔥 + „STJÓRNSTÖÐ"; rúmar nav-línur, gyllt/ólífu-áhersla á virka línu.
-- **Efnissvæði:** rjóma/off-white (ljóst), mikið hvítt rými, þunnar deililínur.
-- **Fyrirsagnir:** stórar **serif** (Playfair, ritstjórnarlegar). Meginmál: hreint sans.
-- **KPI-spjöld:** hvít, rúnnuð, þunn LITUÐ efri-lína (rautt ÓGREITT o.s.frv.),
-  lítið hástafa-merki + CG-chip, stór tala, smátt undirlínu.
-- **Hero/summu-spjald:** dökkt (nær-svart) með **gylltum** tölustöfum.
-- **Kaflafyrirsagnir:** emoji + serif heiti + ljósgrátt heildartala.
-- **Tilfinning:** rólegt, premium, ritstjórnarlegt — „stjórnstöð".
-- ⚠️ **Blátt/navy er EKKI hluti af grunninum** — accent er GYLLT (+ status rautt/
-  grænt). Nýleg „flatt navy" breyting læddi bláu inn; markmiðið er að halda serif-
-  grunninum en fjarlægja navy-ið. Nákvæmir tókenar búa í `theme.css`.
+Agnar hannaði nýja útlitið í Claude Design og valdi það með skjámyndum:
+**svart stál · rjómapappír · gullmálmur** — „Boss". Allt hönnunarkerfið er vistað
+í **`docs/design-boss/`** (lestu `docs/design-boss/README.md` fyrst) og útfært í
+**`css/theme.css`** (v2). Kröfu yfirlit, Fjármála-yfirlit og Vinnubók eru
+þegar skinnuð eftir fyrirmyndunum í `docs/design-boss/pages/`.
+
+**Hvernig þú vinnur með það:**
+
+1. **Opnaðu fyrirmyndina fyrst.** `docs/design-boss/pages/<síða>-boss.html` — allir
+   stílar eru inline, hvert gildi má afrita orðrétt. Ef síðan á enga fyrirmynd,
+   speglaðu þá sem er líkust (Kröfu yfirlit = listi með röðum og lyklum;
+   Fjármála = spjöld og kaflar; Vinnubók = tafla; Þjónustuborð v4 = borð með spjöldum).
+2. **Notaðu tókenana og `.boss-*` klasana í `css/theme.css`** — engin ný hex-gildi,
+   engir nýir gull-gradientar (fjórar uppskriftir: `--gold-line`, `--gold-face`,
+   `--gold-side`, `--gold-coin`; band + text fyrir hausinn). Skuggar eru
+   dýptarhlutir (`--panel-shadow`, `--key-shadow`, `--obsidian-shadow`,
+   `--slab-shadow`, `--well-shadow`) — veldu hlutinn, ekki semja skugga.
+3. **Þrennt gerir síðu að Boss:** gullbandið undir stál-hausnum (er í topbar),
+   **plata** (`01` / `CG-01`, `.boss-plate`) við hvern panel-titil með gull-hárlínu
+   í strip-hausnum (`.boss-panel-head`), og **einn gull-takki á panel**
+   (`.boss-btn.gold`) — hitt fílabein (`.ivory`) eða obsidian (`.obsidian`).
+4. **Týpa:** Playfair 800 síðutitill (`.boss-h1`, 44px), Playfair 700 panel-titlar
+   (`.boss-panel-title`), Playfair 800 KPI-tölur (`.boss-kpi .k-num`); **allar
+   tölur, merki, klukkur, kt í IBM Plex Mono** (`.ky-num` / `.boss-mono`); meginmál
+   kerfis-sans. Kicker (`.boss-kicker`) yfir h1 með 28px gull-striki.
+5. **Gull er skraut, aldrei upplýsingar.** Staða les úr eigin lit: grænt `--green`,
+   terra `--red`, gull-blek `--warn`; LED-punktar `.boss-led` (on/warn/err/off).
+   Ekkert undir `#6f685c` (5.3:1) ber gögn; `#8f8776` er aðeins placeholder.
+6. **Runtime-innspýtt CSS** (`js/hub-sync-buttons.js`, `.cg-badge` í index.html)
+   lendir Á EFTIR theme.css — theme.css hækkar sérhæfni með `body `-forskeyti.
+   Ef eitthvað „hlýðir ekki", athugaðu hvort inline `<style>` í index.html eða
+   síðu-skrá yfirskrifi; færðu regluna í theme.css frekar en að bæta `!important`.
+7. **Hausinn og hliðarstikan** eru í theme.css (`.topbar`, `.sidebar`, `.tab-v`,
+   `.sb-foot`); index.html hefur AÐEINS hegðun (farsíma-skúffa, compact/horizontal).
+   LCD-klukkan (`#bh-lcd-time`) og nafnið á plötunni koma úr `bh_me`.
+8. **Gömlu breytunöfnin lifa** (`--bg`, `--card`, `--ink`, `--gold`, `--navy` …)
+   endurstillt á Boss-gildin — flipar sem nota `var(--…)` skipta sjálfkrafa. Harðkóðuð
+   Tailwind-hex (`#94a3b8`, `#2f5fe0`, `#e2e8f0` …) í öðrum flipum eru leifar —
+   skiptu þeim út fyrir tókena þegar þú snertir flipann.
+
+**Þjónustuborð boss v4** (`pages/thjonustubord-boss-v4.html`) er viðmiðunarskjárinn
+sem allt kerfið er mælt úr og er ætlaður **slokkvitaeki.netlify.app** — ekki
+útfæra hann hér nema Agnar biðji um það; joker-inn í slokkvitaeki á kaflann um
+hvernig hann er aðlagaður þar.
 
 ---
 

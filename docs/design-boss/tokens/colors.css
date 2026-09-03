@@ -1,0 +1,52 @@
+/* Boss — colour. Three materials: black steel chrome, cream paper, gold metal.
+   Measured from Þjónustuborð boss v4 (02.09.2026). Gold lives in gold.css. */
+
+:root {
+  /* ── Chrome (black steel) ─────────────────────────────── */
+  --boss-black-950: #050505;
+  --boss-black-900: #0a0a09;
+  --boss-black-800: #0f0f0e;
+  --boss-black-700: #161513;   /* ink, dark card base */
+  --boss-black-600: #1c1b18;
+  --boss-black-500: #23211e;
+  --boss-black-400: #2a2823;   /* dark hairline */
+  --boss-black-300: #3a3732;   /* dark button top */
+  --boss-black-200: #4a463f;
+
+  /* ── Paper (cream) ────────────────────────────────────── */
+  --boss-paper:       #f4f1ea;   /* page ground */
+  --boss-paper-deep:  #ece7dc;   /* ground vignette edge */
+  --boss-cream:       #faf8f4;   /* panel header strip top */
+  --boss-cream-deep:  #f1ede4;   /* panel header strip bottom, button base */
+  --boss-cream-well:  #eee9df;   /* inset tray */
+  --boss-white:       #ffffff;
+  --boss-rule:        #d9d3c6;   /* panel divider */
+  --boss-rule-soft:   #e6e1d6;   /* row divider */
+  --boss-rule-strong: #cfc8b9;   /* panel border */
+  --boss-edge:        #c9c2b3;   /* button/field border */
+  --boss-edge-deep:   #a89f8c;   /* button bottom edge */
+
+  /* ── Text ─────────────────────────────────────────────── */
+  --boss-ink:        #161513;   /* 15.6:1 on paper */
+  --boss-ink-soft:   #4a463f;   /* body */
+  --boss-ink-mute:   #6f685c;   /* 5.3:1 — floor for data text */
+  --boss-ink-faint:  #8f8776;   /* placeholders only, never data */
+  --boss-on-dark:    #f4f1ea;
+  --boss-on-dark-soft: #c8c1b1;
+  --boss-on-dark-mute: #8f8776;
+
+  /* ── Status ───────────────────────────────────────────── */
+  --boss-green:      #2f7a4a;
+  --boss-green-lit:  #4fc47a;   /* LED on dark */
+  --boss-terra:      #b5522a;   /* overdue / age hot */
+  --boss-gold-ink:   #8a6a1c;   /* age warm, gold text on cream */
+
+  /* ── Semantic aliases ─────────────────────────────────── */
+  --surface-page:   var(--boss-paper);
+  --surface-panel:  var(--boss-white);
+  --surface-chrome: var(--boss-black-700);
+  --text-body:      var(--boss-ink);
+  --text-muted:     var(--boss-ink-mute);
+  --border-panel:   var(--boss-rule-strong);
+  --border-row:     var(--boss-rule-soft);
+}

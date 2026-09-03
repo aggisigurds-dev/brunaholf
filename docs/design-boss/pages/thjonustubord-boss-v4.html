@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet"><style>html,body{margin:0;background:#0f0f0f;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}a{color:#8a6a1c}a:hover{color:#b8892e}button{font-family:inherit;cursor:pointer}button:focus-visible{outline:2px solid #b8892e;outline-offset:2px}@keyframes bossGlow{0%,100%{text-shadow:0 0 6px rgba(240,215,138,.9),0 0 18px rgba(240,215,138,.45),0 0 32px rgba(226,196,111,.25)}50%{text-shadow:0 0 8px rgba(240,215,138,1),0 0 26px rgba(240,215,138,.7),0 0 44px rgba(226,196,111,.4)}}
+</style></helmet>
+<div style="width:1440px;display:flex;flex-direction:column;background:radial-gradient(ellipse at 50% 0%,#faf8f3 0%,#f4f1ea 55%,#ece7dc 100%);color:#161513">
+
+  <div style="flex:none;height:78px;background:linear-gradient(180deg,#242320 0%,#141312 48%,#0a0a09 52%,#111110 100%);display:flex;align-items:center;gap:20px;padding:0 26px;position:relative;border-bottom:1px solid #000;box-shadow:inset 0 1px 0 rgba(255,255,255,.12),inset 0 -1px 0 rgba(0,0,0,.9),0 10px 28px -10px rgba(0,0,0,.85)">
+    <span style="position:absolute;left:0;right:0;bottom:0;height:4px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.12) 0 1px,rgba(0,0,0,0) 1px 4px),linear-gradient(90deg,#5a4410 0%,#c9a54a 12%,#f5d76e 24%,#fff3b0 30%,#d4a92a 44%,#f5d76e 60%,#fff3b0 68%,#c9a54a 84%,#5a4410 100%);box-shadow:0 -1px 0 rgba(0,0,0,.9),0 1px 0 rgba(255,255,255,.12),0 2px 8px rgba(184,137,46,.45)"></span><span style="position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.25),transparent)"></span>
+    <span style="position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 1px,rgba(255,255,255,.018) 1px 2px),repeating-linear-gradient(0deg,transparent 0 3px,rgba(0,0,0,.12) 3px 4px);pointer-events:none;mix-blend-mode:overlay"></span>
+    <div style="position:relative;display:flex;align-items:center;gap:12px">
+      <span style="width:46px;height:46px;border-radius:50%;background:repeating-conic-gradient(from 0deg,rgba(255,255,255,.09) 0 1.5deg,rgba(0,0,0,0) 1.5deg 4deg),radial-gradient(circle at 32% 28%,#fff3d0 0%,#e8cb7a 16%,#b8892e 46%,#7a5a12 76%,#3e2c06 100%);box-shadow:0 0 0 2px #0a0a09,0 0 0 3px rgba(184,137,46,.7),0 4px 10px rgba(0,0,0,.75),inset 0 2px 1px rgba(255,255,255,.7),inset 0 -3px 5px rgba(0,0,0,.45);display:inline-flex;align-items:center;justify-content:center;font-size:20px;filter:drop-shadow(0 0 6px rgba(240,215,138,.35))">🔥</span>
+      <div style="line-height:1">
+        <span style="font-family:'Playfair Display',serif;font-size:27px;font-weight:800;letter-spacing:-.01em;background:linear-gradient(180deg,#f7e6b8 0%,#e8cb7a 28%,#b8892e 52%,#8f6a1c 66%,#d9b25a 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 1px 0 rgba(0,0,0,.9)) drop-shadow(0 0 10px rgba(226,196,111,.25))">Brunahólf</span>
+        <div style="font-size:9.5px;font-weight:700;letter-spacing:.24em;color:#c9a54a;margin-top:4px">STJÓRNSTÖÐ · SLÖKKVITÆKI EHF.</div>
+      </div>
+    </div>
+    <div style="position:relative;display:flex;border:1px solid #000;border-radius:5px;overflow:hidden;margin-left:18px;background:linear-gradient(180deg,#0e0e0d,#1a1917);box-shadow:inset 0 2px 5px rgba(0,0,0,.9),inset 0 -1px 0 rgba(255,255,255,.06),0 1px 0 rgba(255,255,255,.08)">
+      <sc-for list="{{ views }}" as="v" hint-placeholder-count="3">
+        <span style="height:32px;padding:0 14px;display:inline-flex;align-items:center;border-left:1px solid #3a372f;background:{{ v.bg }};color:{{ v.fg }};font-size:12px;font-weight:700;box-shadow:{{ v.sh }}">{{ v.label }}</span>
+      </sc-for>
+    </div>
+    <div style="position:relative;margin-left:auto;display:flex;align-items:center;gap:10px">
+      <div style="text-align:right;line-height:1;margin-right:10px;padding:8px 14px;border:1px solid #000;border-radius:5px;background:linear-gradient(180deg,#050505,#121110 60%,#0a0a09);box-shadow:inset 0 3px 8px rgba(0,0,0,.95),inset 0 -1px 0 rgba(255,255,255,.05),0 1px 0 rgba(255,255,255,.08),0 0 0 1px #2a2823">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:21px;font-weight:600;color:#fbf1d2;animation:bossGlow 4s ease-in-out infinite">16:21</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;color:#c9a54a;margin-top:3px">MIÐ 2. SEP · AGNAR</div>
+      </div>
+      <button style="height:36px;padding:0 15px;border:1px solid #000;border-radius:5px;background:linear-gradient(180deg,#3a3732 0%,#23211e 50%,#161513 51%,#1d1b18 100%);color:#f4f1ea;font-size:12.5px;font-weight:700;text-shadow:0 -1px 0 rgba(0,0,0,.9);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 -1px 0 rgba(0,0,0,.6),0 3px 6px rgba(0,0,0,.7),0 1px 0 rgba(255,255,255,.06)">✎ Breyta</button>
+      <button style="height:36px;padding:0 15px;border:1px solid #000;border-radius:5px;background:linear-gradient(180deg,#3a3732 0%,#23211e 50%,#161513 51%,#1d1b18 100%);color:#f4f1ea;font-size:12.5px;font-weight:700;text-shadow:0 -1px 0 rgba(0,0,0,.9);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 -1px 0 rgba(0,0,0,.6),0 3px 6px rgba(0,0,0,.7),0 1px 0 rgba(255,255,255,.06)">◐ Sjálfvirkt</button>
+      <span style="height:28px;padding:0 12px;display:inline-flex;align-items:center;gap:7px;background:linear-gradient(180deg,#2a7a45 0%,#174a2a 50%,#0f3a1f 51%,#144424 100%);border:1px solid #0a2a15;border-radius:14px;color:#c6f5d3;font-size:11.5px;font-weight:700;text-shadow:0 -1px 0 rgba(0,0,0,.8);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -1px 0 rgba(0,0,0,.5),0 2px 5px rgba(0,0,0,.7),0 0 12px rgba(79,196,122,.2)"><i style="width:8px;height:8px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#d8ffe4,#4fc47a 45%,#1e7a3f);box-shadow:0 0 4px #4fc47a,0 0 12px #4fc47a,inset 0 0 0 1px rgba(0,0,0,.35);font-style:normal"></i>synced</span>
+    </div>
+  </div>
+
+  <div style="flex:1;display:flex">
+    <div style="flex:none;width:196px;background:linear-gradient(90deg,#0d0d0c 0%,#161513 60%,#111110 100%);display:flex;flex-direction:column;min-height:1560px;border-right:1px solid #000;box-shadow:inset -1px 0 0 rgba(255,255,255,.06),inset 1px 0 0 rgba(0,0,0,.8),8px 0 24px -10px rgba(0,0,0,.8)">
+      <div style="padding:14px 18px;border-bottom:1px solid #000;box-shadow:0 1px 0 rgba(255,255,255,.05)">
+        <div style="font-size:9.5px;font-weight:700;letter-spacing:.2em;color:#c9a54a;text-shadow:0 0 8px rgba(201,165,74,.35)">VALMYND</div>
+      </div>
+      <div style="padding:10px 0;display:flex;flex-direction:column">
+        <sc-for list="{{ nav }}" as="n" hint-placeholder-count="12">
+          <div style="display:flex;align-items:center;gap:8px;padding:9px 18px;margin:0 8px;border-radius:3px;font-size:13px;font-weight:{{ n.w }};background:{{ n.bg }};color:{{ n.fg }};box-shadow:{{ n.sh }}"><span>{{ n.label }}</span><span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:{{ n.nfg }}">{{ n.n }}</span></div>
+        </sc-for>
+      </div>
+      <div style="margin-top:auto;padding:14px 18px;border-top:1px solid #000;box-shadow:inset 0 1px 0 rgba(255,255,255,.07);background:linear-gradient(180deg,#1a1917,#0d0d0c);display:flex;align-items:center;gap:9px;position:relative"><span style="position:absolute;left:0;right:0;top:0;height:2px;background:linear-gradient(90deg,#7a5a12 0%,#c9a54a 18%,#f5d76e 38%,#fff3b0 47%,#f5d76e 56%,#c9a54a 78%,#7a5a12 100%)"></span>
+        <span style="width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#3a3732,#1a1917 70%);border:1px solid #000;box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 0 0 1px #8a6a1c,0 2px 4px rgba(0,0,0,.7);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#e2c46f">JS</span>
+        <span style="font-size:12.5px;color:#c8c1b1">Jón S.</span>
+      </div>
+    </div>
+
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:14px;padding:26px 30px 28px">
+
+      <div style="display:flex;align-items:flex-end;gap:14px">
+        <div>
+          <div style="display:flex;align-items:center;gap:10px;font-size:11px;font-weight:700;letter-spacing:.2em;color:#8a6a1c"><span style="width:28px;height:2px;background:linear-gradient(90deg,#7a5a12 0%,#c9a54a 18%,#f5d76e 38%,#fff3b0 47%,#f5d76e 56%,#c9a54a 78%,#7a5a12 100%);box-shadow:0 1px 0 #fff"></span>ÞJÓNUSTA · SEPTEMBER 2026</div>
+          <h1 style="margin:6px 0 0;font-family:'Playfair Display',serif;font-size:44px;font-weight:800;letter-spacing:-.02em;line-height:1;color:#161513;text-shadow:0 1px 0 #fff,0 2px 2px rgba(22,21,19,.18)">Þjónustuborð</h1>
+          <div style="font-size:13px;color:#4a463f;margin-top:8px">16 mál í röð · 2 ómerkt · 2 eldri en 5 daga · 9/2/2026, 4:21 PM</div>
+          <div style="font-size:11.5px;color:#6f685c;margin-top:3px">Síðasta uppfærsla — Tímavera: 2. sept. · Ajour: 2. sept. · Payday: 26. ágúst</div>
+        </div>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:9px">
+          <div style="display:flex;align-items:stretch;border:1px solid #d9d3c6;border-radius:3px;overflow:hidden;background:#fff">
+            <span style="display:flex;align-items:center;padding:0 10px;background:#ebe6db;font-size:9.5px;font-weight:700;letter-spacing:.14em;color:#6f685c">BORÐ</span>
+            <span style="display:flex;align-items:center;gap:8px;padding:0 12px;height:36px;border-left:1px solid #d9d3c6;font-size:13px;font-weight:600">Bjarndís <span style="color:#6f685c;font-size:11px">▾</span></span>
+          </div>
+          <button style="height:36px;padding:0 14px;border:1px solid #c9c2b3;border-bottom-color:#a89f8c;background:linear-gradient(180deg,#ffffff,#f1ede4);border-radius:4px;font-size:12.5px;font-weight:600;box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(22,21,19,.18),0 2px 0 rgba(22,21,19,.06);color:#161513">🔑 Viðskiptavinavefir</button>
+          <button style="height:36px;padding:0 16px;border:1px solid #000;border-radius:5px;background:linear-gradient(180deg,#3a3732 0%,#23211e 50%,#161513 51%,#1d1b18 100%);font-size:12.5px;font-weight:700;color:#f4f1ea;text-shadow:0 -1px 0 rgba(0,0,0,.9);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 -1px 0 rgba(0,0,0,.6),0 3px 6px rgba(22,21,19,.45),0 1px 0 rgba(255,255,255,.5)">+ Nýtt mál</button>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:9px;flex-wrap:wrap">
+        <sc-for list="{{ syncs }}" as="s" hint-placeholder-count="4">
+          <span style="display:inline-flex;align-items:center;gap:9px;height:34px;padding:0 12px;background:linear-gradient(180deg,#ffffff,#f1ede4);border:1px solid #c9c2b3;border-bottom-color:#a89f8c;border-radius:4px;font-size:12px;box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(22,21,19,.18),0 2px 0 rgba(22,21,19,.06)"><strong style="font-weight:700">↻ {{ s.label }}</strong><i style="width:8px;height:8px;border-radius:50%;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.85),{{ s.dot }} 45%,rgba(0,0,0,.25));box-shadow:0 0 6px {{ s.dot }},inset 0 0 0 1px rgba(0,0,0,.25);font-style:normal"></i><span style="color:#6f685c">{{ s.meta }}</span></span>
+        </sc-for>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+        <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+          <div style="position:relative;padding:16px 18px 15px;background:{{ k.bg }};border:1px solid {{ k.brd }};border-top:3px solid transparent;border-image:linear-gradient(90deg,#7a5a12 0%,#c9a54a 18%,#f5d76e 38%,#fff3b0 47%,#f5d76e 56%,#c9a54a 78%,#7a5a12 100%) 1;border-image-width:3px 0 0 0;border-radius:4px;box-shadow:{{ k.sh }}">
+            <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:10.5px;font-weight:700;letter-spacing:.16em;color:{{ k.kick }}">{{ k.label }}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;padding:2px 6px;border:1px solid {{ k.tagBrd }};border-radius:2px;color:{{ k.tagFg }}">{{ k.tag }}</span></div>
+            <div style="font-family:'Playfair Display',serif;font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1;margin-top:14px;color:{{ k.num }};text-shadow:0 1px 0 rgba(255,255,255,.6),0 2px 3px rgba(22,21,19,.15)">{{ k.value }}</div>
+            <div style="font-size:11.5px;color:{{ k.sub }};margin-top:8px">{{ k.meta }}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="background:#fff;border:1px solid #cfc8b9;border-radius:5px;background:linear-gradient(180deg,#ffffff 0%,#fbf9f5 100%);box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(255,255,255,.6),inset 0 -1px 0 rgba(22,21,19,.06),0 1px 2px rgba(22,21,19,.1),0 6px 10px -6px rgba(22,21,19,.18),0 18px 36px -18px rgba(22,21,19,.4)">
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid #d9d3c6;background:linear-gradient(180deg,#faf8f4,#f1ede4);box-shadow:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(255,255,255,.7);border-bottom:1px solid transparent;border-image:linear-gradient(90deg,#7a5a12 0%,#c9a54a 18%,#f5d76e 38%,#fff3b0 47%,#f5d76e 56%,#c9a54a 78%,#7a5a12 100%) 1;border-image-width:0 0 1px 0;border-radius:5px 5px 0 0">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;padding:2px 7px;border:1px solid #7a5a12;border-radius:2px;background:linear-gradient(115deg,rgba(255,255,255,0) 35%,rgba(255,255,255,.6) 48%,rgba(255,255,255,0) 56%),linear-gradient(180deg,#f0d78a,#c9a54a 60%,#a87b1f);color:#3e2c06;text-shadow:0 1px 0 rgba(255,255,255,.45);box-shadow:inset 0 1px 0 rgba(255,255,255,.8),inset 0 -1px 0 rgba(60,40,0,.4),0 1px 2px rgba(60,40,0,.3)">01</span><span style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;letter-spacing:-.01em;text-shadow:0 1px 0 #fff">Dagskrá</span>
+          <span style="font-size:12.5px;color:#4a463f">2.–8. september 2026</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6f685c">· næstu 7 dagar</span>
+          <span style="margin-left:auto;display:flex;gap:6px">
+            <button style="height:30px;width:30px;border:1px solid #d9d3c6;background:#fff;border-radius:3px;font-size:12px">‹</button>
+            <button style="height:30px;padding:0 11px;border:1px solid #c9c2b3;border-bottom-color:#a89f8c;background:linear-gradient(180deg,#ffffff,#f1ede4);border-radius:4px;font-size:12px;font-weight:600;box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(22,21,19,.18),0 2px 0 rgba(22,21,19,.06)">Í dag</button>
+            <button style="height:30px;padding:0 11px;border:1px solid #c9c2b3;border-bottom-color:#a89f8c;background:linear-gradient(180deg,#ffffff,#f1ede4);border-radius:4px;font-size:12px;font-weight:600;box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(22,21,19,.18),0 2px 0 rgba(22,21,19,.06)">Áfram ›</button>
+            <button style="height:30px;padding:0 12px;border:1px solid #5a4410;border-top-color:#f7e6b8;border-bottom-color:#2e2004;border-radius:5px;background:linear-gradient(115deg,rgba(255,255,255,0) 30%,rgba(255,255,255,.55) 45%,rgba(255,255,255,0) 52%),repeating-linear-gradient(180deg,rgba(255,255,255,.08) 0 1px,rgba(0,0,0,0) 1px 3px),linear-gradient(180deg,#f3dc95 0%,#d9b25a 14%,#b8892e 46%,#8f6a1c 52%,#a87b1f 74%,#cfa54a 92%,#e8cb7a 100%);font-size:12px;font-weight:800;color:#161513;text-shadow:0 1px 0 rgba(255,255,255,.35);box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -2px 3px rgba(60,40,0,.45),0 3px 6px rgba(22,21,19,.45),0 0 12px rgba(184,137,46,.35)">+ Skrá verk</button>
+          </span>
+        </div>
+        <div style="padding:14px 18px 10px;display:grid;grid-template-columns:repeat(6,1fr);gap:10px">
+          <sc-for list="{{ dayCols }}" as="d" hint-placeholder-count="6">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <sc-for list="{{ d.cells }}" as="c" hint-placeholder-count="1">
+                <div style="height:{{ c.h }};border:1px solid {{ c.brd }};border-top:2px solid {{ c.top }};background:{{ c.bg }};border-radius:3px;padding:9px 11px;display:flex;flex-direction:column;gap:6px">
+                  <div style="display:flex;align-items:baseline;gap:6px">
+                    <span style="font-size:10px;font-weight:700;letter-spacing:.12em;color:{{ c.fg }}">{{ c.label }}</span>
+                    <span style="font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:{{ c.fg }}">{{ c.num }}</span>
+                    <sc-if value="{{ c.cnt }}" hint-placeholder-val="{{ false }}">
+                      <span style="margin-left:auto;min-width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(115deg,rgba(255,255,255,0) 30%,rgba(255,255,255,.55) 45%,rgba(255,255,255,0) 52%),repeating-linear-gradient(180deg,rgba(255,255,255,.08) 0 1px,rgba(0,0,0,0) 1px 3px),linear-gradient(180deg,#f3dc95 0%,#d9b25a 14%,#b8892e 46%,#8f6a1c 52%,#a87b1f 74%,#cfa54a 92%,#e8cb7a 100%);color:#2e2004;font-weight:600;font-family:'IBM Plex Mono',monospace;font-size:11px;border-radius:2px;border:1px solid #5a4410;box-shadow:inset 0 1px 0 rgba(255,255,255,.6)">{{ c.cnt }}</span>
+                    </sc-if>
+                  </div>
+                  <sc-for list="{{ c.jobs }}" as="j" hint-placeholder-count="0">
+                    <div style="display:flex;align-items:center;gap:6px;padding:5px 8px;background:linear-gradient(180deg,#fff,#faf8f4);border:1px solid #d9d3c6;border-left:3px solid {{ j.kind }};border-radius:3px;box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(22,21,19,.14);font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span style="font-family:'IBM Plex Mono',monospace;font-weight:500;color:#6f685c;font-size:10.5px">{{ j.t }}</span>{{ j.co }}</div>
+                  </sc-for>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+        <div style="padding:0 18px 13px;display:flex;gap:16px">
+          <sc-for list="{{ legend }}" as="l" hint-placeholder-count="5">
+            <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:#4a463f"><i style="width:8px;height:8px;background:{{ l.c }};font-style:normal;border-radius:1px"></i>{{ l.label }}</span>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="background:#fff;border:1px solid #cfc8b9;border-radius:5px;background:linear-gradient(180deg,#ffffff 0%,#fbf9f5 100%);box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(255,255,255,.6),inset 0 -1px 0 rgba(22,21,19,.06),0 1px 2px rgba(22,21,19,.1),0 6px 10px -6px rgba(22,21,19,.18),0 18px 36px -18px rgba(22,21,19,.4)">
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid #d9d3c6;background:linear-gradient(180deg,#faf8f4,#f1ede4);box-shadow:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(255,255,255,.7);border-bottom:1px solid transparent;border-image:linear-gradient(90deg,#7a5a12 0%,#c9a54a 18%,#f5d76e 38%,#fff3b0 47%,#f5d76e 56%,#c9a54a 78%,#7a5a12 100%) 1;border-image-width:0 0 1px 0;border-radius:5px 5px 0 0">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;padding:2px 7px;border:1px solid #7a5a12;border-radius:2px;background:linear-gradient(115deg,rgba(255,255,255,0) 35%,rgba(255,255,255,.6) 48%,rgba(255,255,255,0) 56%),linear-gradient(180deg,#f0d78a,#c9a54a 60%,#a87b1f);color:#3e2c06;text-shadow:0 1px 0 rgba(255,255,255,.45);box-shadow:inset 0 1px 0 rgba(255,255,255,.8),inset 0 -1px 0 rgba(60,40,0,.4),0 1px 2px rgba(60,40,0,.3)">02</span><span style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;letter-spacing:-.01em;text-shadow:0 1px 0 #fff">Skipulagsborð</span>
+          <span style="font-size:12.5px;color:#4a463f">Dragðu spjöld á dagskrárröður</span>
+          <span style="margin-left:auto;display:flex;align-items:center;gap:9px">
+            <span style="font-size:12px;color:#4a463f">Markmið <strong style="font-family:'IBM Plex Mono',monospace">0 / 5</strong></span>
+            <span style="width:90px;height:4px;background:#e6e1d6;border-radius:2px;overflow:hidden;display:inline-block"><span style="display:block;width:0%;height:100%;background:linear-gradient(115deg,rgba(255,255,255,0) 30%,rgba(255,255,255,.55) 45%,rgba(255,255,255,0) 52%),repeating-linear-gradient(180deg,rgba(255,255,255,.08) 0 1px,rgba(0,0,0,0) 1px 3px),linear-gradient(180deg,#f3dc95 0%,#d9b25a 14%,#b8892e 46%,#8f6a1c 52%,#a87b1f 74%,#cfa54a 92%,#e8cb7a 100%)"></span></span>
+            <button style="height:30px;padding:0 11px;border:1px solid #c9c2b3;border-bottom-color:#a89f8c;background:linear-gradient(180deg,#ffffff,#f1ede4);border-radius:4px;font-size:12px;font-weight:600;box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(22,21,19,.18),0 2px 0 rgba(22,21,19,.06)">🖨 Prenta öll spjöld</button>
+            <button style="height:30px;padding:0 11px;border:1px solid #c9c2b3;border-bottom-color:#a89f8c;background:linear-gradient(180deg,#ffffff,#f1ede4);border-radius:4px;font-size:12px;font-weight:600;box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(22,21,19,.18),0 2px 0 rgba(22,21,19,.06)">▲ Fela</button>
+          </span>
+        </div>
+        <div style="padding:14px 18px 10px;display:grid;grid-template-columns:repeat(5,1fr);gap:10px">
+          <sc-for list="{{ slots }}" as="s" hint-placeholder-count="5">
+            <div style="height:66px;border:1px dashed #bfb7a6;border-radius:4px;display:flex;align-items:center;justify-content:center;gap:7px;color:#8f8776;font-size:12px;background:linear-gradient(180deg,#eee9df,#f7f4ee);box-shadow:inset 0 2px 5px rgba(22,21,19,.1),inset 0 0 0 1px rgba(255,255,255,.7)"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px">CG-0{{ s }}</span>+</div>
+          </sc-for>
+        </div>
+        <div style="padding:0 18px 12px;text-align:center;font-size:12.5px;color:#6f685c">Veldu mál í Þjónustuborðinu og smelltu á <strong style="color:#161513">Skipulag</strong> til að bæta við.</div>
+        <div style="padding:0 18px 15px;display:flex;gap:9px">
+          <span style="flex:1.1;display:flex;align-items:center;gap:8px;height:36px;padding:0 11px;border:1px solid #c9c2b3;border-radius:4px;font-size:13px;color:#8f8776;background:linear-gradient(180deg,#f1ede4,#ffffff 55%);box-shadow:inset 0 2px 4px rgba(22,21,19,.12),inset 0 0 0 1px rgba(255,255,255,.8),0 1px 0 #fff">🏢 Fyrirtæki eða kennitala (RSK)…</span>
+          <span style="flex:1.6;display:flex;align-items:center;height:36px;padding:0 11px;border:1px solid #c9c2b3;border-radius:4px;font-size:13px;color:#8f8776;background:linear-gradient(180deg,#f1ede4,#ffffff 55%);box-shadow:inset 0 2px 4px rgba(22,21,19,.12),inset 0 0 0 1px rgba(255,255,255,.8),0 1px 0 #fff">+ Skrá verk… <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;padding:1px 6px;border:1px solid #d9d3c6;border-radius:2px">Enter</span></span>
+          <span style="flex:none;width:126px;display:flex;align-items:center;height:36px;padding:0 11px;border:1px solid #c9c2b3;border-bottom-color:#a89f8c;border-radius:4px;font-size:13px;font-weight:600;background:linear-gradient(180deg,#ffffff,#f1ede4);box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(22,21,19,.18)">Bjarndís ▾</span>
+          <button style="height:36px;padding:0 14px;border:1px solid #000;border-radius:5px;background:linear-gradient(180deg,#3a3732 0%,#23211e 50%,#161513 51%,#1d1b18 100%);font-size:12.5px;font-weight:700;color:#f4f1ea;text-shadow:0 -1px 0 rgba(0,0,0,.9);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 -1px 0 rgba(0,0,0,.6),0 3px 6px rgba(22,21,19,.45),0 1px 0 rgba(255,255,255,.5)">+ Bæta við</button>
+          <button style="height:36px;padding:0 12px;border:1px solid #c9c2b3;border-bottom-color:#a89f8c;background:linear-gradient(180deg,#ffffff,#f1ede4);border-radius:4px;font-size:12.5px;font-weight:600;box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(22,21,19,.18),0 2px 0 rgba(22,21,19,.06)">⚙ Fleiri</button>
+        </div>
+      </div>
+
+      <div style="background:#fff;border:1px solid #cfc8b9;border-radius:5px;background:linear-gradient(180deg,#ffffff 0%,#fbf9f5 100%);box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(255,255,255,.6),inset 0 -1px 0 rgba(22,21,19,.06),0 1px 2px rgba(22,21,19,.1),0 6px 10px -6px rgba(22,21,19,.18),0 18px 36px -18px rgba(22,21,19,.4)">
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid #d9d3c6;background:linear-gradient(180deg,#faf8f4,#f1ede4);box-shadow:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(255,255,255,.7);border-bottom:1px solid transparent;border-image:linear-gradient(90deg,#7a5a12 0%,#c9a54a 18%,#f5d76e 38%,#fff3b0 47%,#f5d76e 56%,#c9a54a 78%,#7a5a12 100%) 1;border-image-width:0 0 1px 0;border-radius:5px 5px 0 0">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;padding:2px 7px;border:1px solid #7a5a12;border-radius:2px;background:linear-gradient(115deg,rgba(255,255,255,0) 35%,rgba(255,255,255,.6) 48%,rgba(255,255,255,0) 56%),linear-gradient(180deg,#f0d78a,#c9a54a 60%,#a87b1f);color:#3e2c06;text-shadow:0 1px 0 rgba(255,255,255,.45);box-shadow:inset 0 1px 0 rgba(255,255,255,.8),inset 0 -1px 0 rgba(60,40,0,.4),0 1px 2px rgba(60,40,0,.3)">03</span><span style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;letter-spacing:-.01em;text-shadow:0 1px 0 #fff">Spjall</span>
+          <span style="font-size:12.5px;color:#4a463f">0 skilaboð</span>
+          <button style="margin-left:auto;height:30px;padding:0 11px;border:1px solid #c9c2b3;border-bottom-color:#a89f8c;background:linear-gradient(180deg,#ffffff,#f1ede4);border-radius:4px;font-size:12px;font-weight:600;box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(22,21,19,.18),0 2px 0 rgba(22,21,19,.06)">▲ Fela</button>
+        </div>
+        <div style="padding:22px;display:flex;flex-direction:column;align-items:center;gap:10px;font-size:12.5px;color:#6f685c;border-bottom:1px solid #e6e1d6"><span style="width:40px;height:40px;border-radius:50%;background:radial-gradient(circle at 32% 28%,#fff3d0 0%,#e8cb7a 16%,#b8892e 46%,#7a5a12 76%,#3e2c06 100%);box-shadow:inset 0 2px 1px rgba(255,255,255,.7),inset 0 -3px 5px rgba(0,0,0,.45);opacity:.22;display:inline-flex;align-items:center;justify-content:center;font-size:17px;filter:grayscale(.2)">🔥</span>Ekkert sagt enn. Skrifaðu eða dragðu skrá hingað.</div>
+        <div style="padding:12px 18px;display:flex;gap:9px;align-items:stretch">
+          <button style="width:40px;border:1px solid #c9c2b3;border-bottom-color:#a89f8c;background:linear-gradient(180deg,#ffffff,#f1ede4);border-radius:4px;font-size:14px;box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(22,21,19,.18)">📎</button>
+          <span style="flex:1;display:flex;align-items:flex-start;padding:10px 11px;min-height:58px;border:1px solid #c9c2b3;border-radius:4px;font-size:13px;color:#8f8776;background:linear-gradient(180deg,#f1ede4,#ffffff 55%);box-shadow:inset 0 2px 4px rgba(22,21,19,.12),inset 0 0 0 1px rgba(255,255,255,.8),0 1px 0 #fff">Skrifaðu — eða dragðu skrá hingað…</span>
+          <button style="padding:0 18px;border:1px solid #000;border-radius:5px;background:linear-gradient(180deg,#3a3732 0%,#23211e 50%,#161513 51%,#1d1b18 100%);font-size:12.5px;font-weight:700;color:#f4f1ea;text-shadow:0 -1px 0 rgba(0,0,0,.9);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 -1px 0 rgba(0,0,0,.6),0 3px 6px rgba(22,21,19,.45),0 1px 0 rgba(255,255,255,.5)">Senda</button>
+        </div>
+      </div>
+
+      <div style="background:#fff;border:1px solid #cfc8b9;border-radius:5px;background:linear-gradient(180deg,#ffffff 0%,#fbf9f5 100%);box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(255,255,255,.6),inset 0 -1px 0 rgba(22,21,19,.06),0 1px 2px rgba(22,21,19,.1),0 6px 10px -6px rgba(22,21,19,.18),0 18px 36px -18px rgba(22,21,19,.4);padding:12px 18px;display:flex;flex-direction:column;gap:11px">
+        <div style="display:flex;gap:9px;align-items:center">
+          <span style="flex:none;display:flex;align-items:center;gap:8px;height:34px;padding:0 11px;border:1px solid #d9d3c6;border-radius:3px;font-size:12.5px;font-weight:600">👤 Bjarndís ▾</span>
+          <span style="flex:none;width:250px;display:flex;align-items:center;gap:8px;height:34px;padding:0 11px;border:1px solid #c9c2b3;border-radius:4px;font-size:13px;color:#8f8776;background:linear-gradient(180deg,#f1ede4,#ffffff 55%);box-shadow:inset 0 2px 4px rgba(22,21,19,.12),inset 0 0 0 1px rgba(255,255,255,.8),0 1px 0 #fff">Leita (nafn · kt · R-nr)…</span>
+          <div style="display:flex;border:1px solid #d9d3c6;border-radius:3px;overflow:hidden;margin-left:4px">
+            <sc-for list="{{ states }}" as="s" hint-placeholder-count="4">
+              <button style="height:32px;padding:0 13px;border:none;border-left:1px solid #d9d3c6;background:{{ s.bg }};color:{{ s.fg }};font-size:12.5px;font-weight:600">{{ s.label }}</button>
+            </sc-for>
+          </div>
+          <span style="margin-left:auto;display:flex;gap:6px">
+            <button style="height:32px;padding:0 11px;border:1px solid #c9c2b3;border-bottom-color:#a89f8c;background:linear-gradient(180deg,#ffffff,#f1ede4);border-radius:4px;font-size:12px;font-weight:600;box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(22,21,19,.18),0 2px 0 rgba(22,21,19,.06)">🖨 Prenta</button>
+            <button style="height:32px;padding:0 11px;border:1px solid #c9c2b3;border-bottom-color:#a89f8c;background:linear-gradient(180deg,#ffffff,#f1ede4);border-radius:4px;font-size:12px;font-weight:600;box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(22,21,19,.18),0 2px 0 rgba(22,21,19,.06)">↻ Sækja</button>
+            <button style="height:32px;padding:0 11px;border:1px solid #c9a54a;background:#fbf4e3;border-radius:3px;font-size:12px;font-weight:600;color:#7a5a12">◉ Sýna falin (96)</button>
+          </span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-size:10px;font-weight:700;letter-spacing:.14em;color:#6f685c;margin-right:4px">NÆSTA AÐGERÐ</span>
+          <sc-for list="{{ actions }}" as="a" hint-placeholder-count="6">
+            <button style="height:30px;padding:0 12px;border:1px solid {{ a.brd }};background:{{ a.bg }};color:{{ a.fg }};border-radius:3px;font-size:12px;font-weight:600">{{ a.label }}</button>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 370px;gap:12px;align-items:start">
+        <div style="background:#fff;border:1px solid #cfc8b9;border-radius:5px;background:linear-gradient(180deg,#ffffff 0%,#fbf9f5 100%);box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(255,255,255,.6),inset 0 -1px 0 rgba(22,21,19,.06),0 1px 2px rgba(22,21,19,.1),0 6px 10px -6px rgba(22,21,19,.18),0 18px 36px -18px rgba(22,21,19,.4)">
+          <div style="display:flex;align-items:baseline;gap:8px;padding:11px 16px;border-bottom:1px solid transparent;border-image:linear-gradient(90deg,#7a5a12 0%,#c9a54a 18%,#f5d76e 38%,#fff3b0 47%,#f5d76e 56%,#c9a54a 78%,#7a5a12 100%) 1;border-image-width:0 0 1px 0">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;padding:2px 7px;border:1px solid #7a5a12;border-radius:2px;background:linear-gradient(115deg,rgba(255,255,255,0) 35%,rgba(255,255,255,.6) 48%,rgba(255,255,255,0) 56%),linear-gradient(180deg,#f0d78a,#c9a54a 60%,#a87b1f);color:#3e2c06;text-shadow:0 1px 0 rgba(255,255,255,.45);box-shadow:inset 0 1px 0 rgba(255,255,255,.8),inset 0 -1px 0 rgba(60,40,0,.4),0 1px 2px rgba(60,40,0,.3)">04</span><span style="font-family:'Playfair Display',serif;font-size:17px;font-weight:700">Nýjast</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:#8a6a1c">2</span>
+            <span style="margin-left:auto;font-size:11.5px;color:#6f685c">nýjast efst</span>
+          </div>
+          <sc-for list="{{ feed }}" as="f" hint-placeholder-count="2">
+            <div style="position:relative;padding:12px 16px 12px 22px;border-bottom:1px solid #e6e1d6;background:{{ f.bg }};display:flex;flex-direction:column;gap:5px"><span style="position:absolute;left:8px;top:15px;font-size:9px;color:{{ f.edge }}">◆</span>
+              <div style="display:flex;align-items:baseline;gap:8px">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#6f685c">{{ f.date }}</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:{{ f.ageInk }}">{{ f.age }}</span>
+                <span style="flex:1;min-width:0;font-family:'Playfair Display',serif;font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ f.title }}</span>
+              </div>
+              <div style="font-size:12.5px;line-height:1.5;color:#4a463f">{{ f.body }}</div>
+              <span style="width:max-content;margin-top:2px;padding:3px 8px;background:#fbf4e3;border:1px solid #ead9a8;border-radius:2px;font-size:11px;font-weight:600;color:#7a5a12">{{ f.tag }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="background:#fff;border:1px solid #cfc8b9;border-radius:5px;background:linear-gradient(180deg,#ffffff 0%,#fbf9f5 100%);box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(255,255,255,.6),inset 0 -1px 0 rgba(22,21,19,.06),0 1px 2px rgba(22,21,19,.1),0 6px 10px -6px rgba(22,21,19,.18),0 18px 36px -18px rgba(22,21,19,.4);align-self:stretch;display:flex;flex-direction:column">
+          <div style="display:flex;align-items:baseline;gap:8px;padding:11px 16px;border-bottom:1px solid transparent;border-image:linear-gradient(90deg,#7a5a12 0%,#c9a54a 18%,#f5d76e 38%,#fff3b0 47%,#f5d76e 56%,#c9a54a 78%,#7a5a12 100%) 1;border-image-width:0 0 1px 0">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;padding:2px 7px;border:1px solid #7a5a12;border-radius:2px;background:linear-gradient(115deg,rgba(255,255,255,0) 35%,rgba(255,255,255,.6) 48%,rgba(255,255,255,0) 56%),linear-gradient(180deg,#f0d78a,#c9a54a 60%,#a87b1f);color:#3e2c06;text-shadow:0 1px 0 rgba(255,255,255,.45);box-shadow:inset 0 1px 0 rgba(255,255,255,.8),inset 0 -1px 0 rgba(60,40,0,.4),0 1px 2px rgba(60,40,0,.3)">05</span><span style="font-family:'Playfair Display',serif;font-size:17px;font-weight:700">★ Áríðandi</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6f685c">0</span>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:30px;font-size:12.5px;color:#6f685c"><span style="width:40px;height:40px;border-radius:50%;background:radial-gradient(circle at 32% 28%,#fff3d0 0%,#e8cb7a 16%,#b8892e 46%,#7a5a12 76%,#3e2c06 100%);box-shadow:inset 0 2px 1px rgba(255,255,255,.7),inset 0 -3px 5px rgba(0,0,0,.45);opacity:.22;display:inline-flex;align-items:center;justify-content:center;font-size:17px;filter:grayscale(.2)">🔥</span>Engin áríðandi mál</div>
+        </div>
+        <div style="background:linear-gradient(160deg,#26241f 0%,#151412 40%,#0c0c0b 100%);border:1px solid #000;border-top:3px solid transparent;border-image:linear-gradient(90deg,#7a5a12 0%,#c9a54a 18%,#f5d76e 38%,#fff3b0 47%,#f5d76e 56%,#c9a54a 78%,#7a5a12 100%) 1;border-image-width:3px 0 0 0;border-radius:5px;color:#f4f1ea;box-shadow:inset 0 1px 0 rgba(255,255,255,.1),inset 0 0 0 1px rgba(226,196,111,.12),inset 0 -1px 0 rgba(0,0,0,.9),0 2px 0 #000,0 20px 40px -14px rgba(0,0,0,.85),0 0 24px -6px rgba(226,196,111,.2)">
+          <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid #2a2823">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;color:#e2c46f;padding:2px 7px;border:1px solid rgba(201,165,74,.5);border-radius:2px;background:linear-gradient(180deg,#2a2823,#161513);box-shadow:inset 0 1px 0 rgba(255,255,255,.08)">06</span><span style="font-size:10.5px;font-weight:700;letter-spacing:.16em;color:#c9a54a">VALIÐ MÁL</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#8fd6a5">0D</span>
+            <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:9.5px;padding:2px 6px;border:1px solid #3a372f;border-radius:2px;color:#6f685c">CG-04</span>
+          </div>
+          <div style="padding:14px 16px;display:flex;flex-direction:column;gap:12px">
+            <div>
+              <div style="font-family:'Playfair Display',serif;font-size:19px;font-weight:700;letter-spacing:-.01em;line-height:1.2">Nýtt mál — ótengt</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6f685c;margin-top:5px">docs.google.com/…1n3-Jcj</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:12px;color:#6f685c">🔗 Engin tenging</span>
+              <button style="height:28px;padding:0 10px;border:1px solid #000;border-radius:4px;background:linear-gradient(180deg,#33302b,#1c1b18 50%,#141312 51%,#1a1917);font-size:11.5px;font-weight:600;color:#f4f1ea;text-shadow:0 -1px 0 rgba(0,0,0,.9);box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 2px 3px rgba(0,0,0,.7)">Tengja</button>
+              <button style="height:28px;padding:0 10px;border:1px solid #000;border-radius:4px;background:linear-gradient(180deg,#33302b,#1c1b18 50%,#141312 51%,#1a1917);font-size:11.5px;font-weight:600;color:#f4f1ea;text-shadow:0 -1px 0 rgba(0,0,0,.9);box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 2px 3px rgba(0,0,0,.7)">Forvinna</button>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <span style="font-size:10px;font-weight:700;letter-spacing:.14em;color:#6f685c">ATHUGASEMDIR</span>
+              <span style="display:flex;align-items:flex-start;padding:9px 11px;min-height:58px;background:linear-gradient(180deg,#0a0a09,#141312);border:1px solid #000;border-radius:4px;font-size:12px;color:#8f8776;box-shadow:inset 0 2px 5px rgba(0,0,0,.9),0 1px 0 rgba(255,255,255,.06)">Athugasemdir…</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:7px">
+              <span style="font-size:10px;font-weight:700;letter-spacing:.14em;color:#6f685c">FLOKKUR</span>
+              <div style="display:flex;flex-wrap:wrap;gap:6px">
+                <sc-for list="{{ cats }}" as="k" hint-placeholder-count="6">
+                  <span style="padding:4px 9px;border:1px solid #3a372f;border-radius:2px;font-size:11.5px;color:#c8c1b1">{{ k }}</span>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:7px">
+              <span style="font-size:10px;font-weight:700;letter-spacing:.14em;color:#6f685c">STARFSMAÐUR</span>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+                <span style="display:flex;align-items:center;height:30px;padding:0 10px;border:1px solid #c9a54a;border-radius:3px;font-size:12px;font-weight:600;color:#c9a54a">Bjarndís ▾</span>
+                <sc-for list="{{ staff }}" as="s" hint-placeholder-count="5">
+                  <span style="padding:4px 9px;border:1px solid #3a372f;border-radius:2px;font-size:11.5px;color:#c8c1b1">{{ s }}</span>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;padding-top:6px">
+              <button style="flex:1;height:42px;border:1px solid #5a4410;border-top-color:#f7e6b8;border-bottom-color:#2e2004;border-radius:5px;background:linear-gradient(115deg,rgba(255,255,255,0) 30%,rgba(255,255,255,.55) 45%,rgba(255,255,255,0) 52%),repeating-linear-gradient(180deg,rgba(255,255,255,.08) 0 1px,rgba(0,0,0,0) 1px 3px),linear-gradient(180deg,#f3dc95 0%,#d9b25a 14%,#b8892e 46%,#8f6a1c 52%,#a87b1f 74%,#cfa54a 92%,#e8cb7a 100%);font-size:13.5px;font-weight:800;color:#161513;text-shadow:0 1px 0 rgba(255,255,255,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),inset 0 -3px 4px rgba(60,40,0,.5),0 4px 10px rgba(0,0,0,.65),0 0 18px rgba(184,137,46,.4)">📋 Setja á dagskrá</button>
+              <button style="height:40px;padding:0 13px;border:1px solid #000;border-radius:5px;background:linear-gradient(180deg,#33302b,#1c1b18 50%,#141312 51%,#1a1917);font-size:13px;font-weight:600;color:#f4f1ea;text-shadow:0 -1px 0 rgba(0,0,0,.9);box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 3px 5px rgba(0,0,0,.7)">··· Meira</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const GOLD = '#b8892e', INK = '#161513', TERRA = '#b5522a', GREEN = '#2f7a4a';
+const AGE = d => { const n = parseInt(d, 10); return n >= 5 ? TERRA : n >= 2 ? '#8a6a1c' : GREEN; };
+const NAV = [['Verkkaupar','',0],['Fagurinn','',0],['J.A.R.V.I.S.','',0],['TurboPaint','',0],['Þjónustuborð',16,1],['Skýrslur','',0],['Skýrslu-stöð','',0],['Verköst','',0],['Kröfu yfirlit',81,0],['Fjármála-yfirlit','',0],['Viðskiptavinir','',0],['Gerð Reikninga','',0]];
+class Component extends DCLogic {
+  renderVals() {
+    const seg = (list, active) => list.map((label, i) => ({ label, bg: i === active ? INK : '#fff', fg: i === active ? '#f4f1ea' : '#4a463f' }));
+    const cell = (label, num, cnt, h, on, jobs) => ({ label, num, cnt, h: h + 'px', bg: on ? '#fbf4e3' : '#faf8f4', brd: on ? '#e2c887' : '#e6e1d6', top: on ? '#d4a92a' : '#d9d3c6', fg: on ? '#7a5a12' : '#4a463f', jobs: jobs.map(([t, co, kind]) => ({ t, co, kind })) });
+    return {
+      nav: NAV.map(([label, n, on]) => ({
+        label, n, w: on ? 700 : 400,
+        bg: on ? 'linear-gradient(115deg,rgba(255,255,255,0) 30%,rgba(255,255,255,.4) 46%,rgba(255,255,255,0) 54%),repeating-linear-gradient(180deg,rgba(255,255,255,.07) 0 1px,rgba(0,0,0,0) 1px 3px),linear-gradient(180deg,#e8cb7a 0%,#c9a54a 45%,#9c7422 55%,#b8892e 100%)' : 'transparent',
+        fg: on ? INK : '#c8c1b1', nfg: on ? INK : '#8f8776',
+        sh: on ? 'inset 0 1px 0 rgba(255,255,255,.55),inset 0 -1px 0 rgba(0,0,0,.3),0 2px 6px rgba(0,0,0,.5)' : 'none'
+      })),
+      views: ['Sími', 'Tafla', 'Skjár'].map((label, i) => ({
+        label,
+        bg: i === 2 ? 'linear-gradient(115deg,rgba(255,255,255,0) 30%,rgba(255,255,255,.4) 46%,rgba(255,255,255,0) 54%),repeating-linear-gradient(180deg,rgba(255,255,255,.07) 0 1px,rgba(0,0,0,0) 1px 3px),linear-gradient(180deg,#e8cb7a 0%,#c9a54a 45%,#9c7422 55%,#b8892e 100%)' : 'transparent',
+        fg: i === 2 ? INK : '#a39b8a',
+        sh: i === 2 ? 'inset 0 1px 0 rgba(255,255,255,.5),inset 0 -1px 0 rgba(0,0,0,.25)' : 'none'
+      })),
+      syncs: [['Samstilla Tímavera', '#4fc47a', 'nýjast 09/02 · sótt 09/02, 12:15 PM'], ['Samstilla Ajour', '#4fc47a', 'nýjast 09/02 · sótt 09/02, 12:00 AM'], ['Samstilla Redder', GOLD, 'nýjast 08/27 · sótt 08/28, 09:30 AM'], ['Samstilla Payday', '#4fc47a', 'nýjast 08/26 · sótt 09/02, 07:00 AM']].map(([label, dot, meta]) => ({ label, dot, meta })),
+      kpis: [
+        ['ÓMERKT', '2', '2 mál · 1 án tengingar', 'CG-01', TERRA, '#fff', '#d9d3c6', '#6f685c', '#6f685c', '#d9d3c6', '#6f685c'],
+        ['Í VINNSLU', '3', '3 mál · 2 á dagskrá', 'CG-02', INK, '#fff', '#d9d3c6', '#6f685c', '#6f685c', '#d9d3c6', '#6f685c'],
+        ['BÍÐUR SVARS', '2', 'elsta 9 daga · Plaza', 'CG-03', INK, '#fff', '#d9d3c6', '#6f685c', '#6f685c', '#d9d3c6', '#6f685c'],
+        ['KLÁRT Í VIKUNNI', '24 / 36', 'staðir · 3 aksturslistar', 'CG-04', '#c9a54a', INK, '#2a2823', '#c9a54a', '#c8c1b1', '#3a372f', '#6f685c']
+      ].map(([label, value, meta, tag, num, bg, brd, kick, sub, tagBrd, tagFg]) => ({
+        label, value, meta, tag, num, brd, kick, sub, tagBrd, tagFg,
+        bg: bg === INK ? 'linear-gradient(160deg,#2a2823 0%,#161513 45%,#0c0c0b 100%)' : 'linear-gradient(180deg,#ffffff 0%,#fbf9f5 70%,#f1ede4 100%)',
+        top: bg === INK ? '#e8cb7a' : '#a87b1f',
+        sh: bg === INK
+          ? 'inset 0 1px 0 rgba(255,255,255,.1),inset 0 0 0 1px rgba(226,196,111,.14),0 2px 0 #000,0 16px 32px -12px rgba(0,0,0,.85),0 0 20px -6px rgba(226,196,111,.25)'
+          : 'inset 0 1px 0 #fff,inset 0 0 0 1px rgba(255,255,255,.6),inset 0 -1px 0 rgba(22,21,19,.08),0 1px 2px rgba(22,21,19,.12),0 6px 10px -6px rgba(22,21,19,.2),0 18px 36px -18px rgba(22,21,19,.45)'
+      })),
+      dayCols: [
+        [cell('MIÐ', 2, 2, 116, 1, [['08:30', 'Steypustöðin Hólabrú', GOLD], ['13:00', 'Grillvagninn', TERRA]])],
+        [cell('FIM', 3, 0, 116, 0, [])],
+        [cell('FÖS', 4, 1, 116, 0, [['10:00', 'Bílabúð Benna', GREEN]])],
+        [cell('LAU', 5, 0, 54, 0, []), cell('SUN', 6, 0, 54, 0, [])],
+        [cell('MÁN', 7, 3, 116, 0, [['09:00', 'Distica', GOLD], ['13:30', 'Hamraborg 7', GREEN]])],
+        [cell('ÞRI', 8, 0, 116, 0, [])]
+      ].map(cells => ({ cells })),
+      legend: [['Árskoðun', GOLD], ['Brunakerfiskoðun', TERRA], ['Fund', '#6f685c'], ['Uppsetning', GREEN], ['Annað', '#cfc8b9']].map(([label, c]) => ({ label, c })),
+      slots: [1, 2, 3, 4, 5],
+      states: seg(['Fyrirtæki', 'Allt', 'Ómerkt', 'Í vinnslu', 'Bíður svars'], 0),
+      actions: [['Hringja', 1], ['Senda tölvupóst', 0], ['Gera tilboð', 0], ['Senda skýrslur', 0], ['Eftir að rukka', 0], ['Uppsetning', 0]].map(([label, on]) => ({ label, bg: on ? INK : '#fff', brd: on ? INK : '#d9d3c6', fg: on ? '#f4f1ea' : INK })),
+      feed: [
+        ['01.09', '0D', 'docs.google.com/document/1n3-JcjHq92xYQq2PPvxJLdZ…', 'Enginn tengiliður — forvinna og tengja við fyrirtæki.', 'Ótengt', 1],
+        ['01.09', '1D', 'Grasnytjar ehf Hjarðarbóli', '12 tæki Gistiheimili í ölfus, hlaða með herberjum þurfum að fara á næstu dögum, hringja i hana þegar við erum á leiðinni.', 'Hringja fyrst', 0]
+      ].map(([date, age, title, body, tag, sel]) => ({ date, age, title, body, tag, ageInk: AGE(age), edge: sel ? GOLD : 'transparent', bg: sel ? '#fbf4e3' : '#fff' })),
+      cats: ['Þjónusta', 'Brunakerfi', 'Bókhald', 'Þjónustusamningur', 'Kvörtun', 'Draft'],
+      staff: ['Agnar', 'Charlize', 'Hákon', 'Binni', 'Anni']
+    };
+  }
+}
+</script>
+</body>
+</html>
