@@ -11146,8 +11146,8 @@ async function renderGerdReikninga(t){
         sub('05', ((K('gr-notes') || {}).value || '').trim().slice(0, 48) || 'innri — birtist ekki á skýrslu');
         const warns = [];
         const sync = (K('gr-dvh-sync') || {}).textContent || '';
-        if(/⚠/.test(sync)) warns.push({ sec: '02', t: sync.replace(/⚠/g, '').replace(/—.*$/, '').trim() });
-        bg.querySelectorAll('.gr-mat-line .m-warn').forEach(w => warns.push({ sec: '03', t: w.textContent.replace(/⚠/g, '').trim() }));
+        if(/⚠/.test(sync)){ const m = sync.match(/([0-9][0-9.,]*)s*klst/); const tb = m ? m[1].replace('.', ',') : null; const rk = String(Math.round((c.dvH + c.evH) * 100) / 100).replace('.', ','); warns.push({ sec: '02', t: tb ? ('Tímabók ' + tb + ' ≠ ' + rk + ' klst') : sync.replace(/⚠/g, '').replace(/—.*$/, '').trim() }); }
+        bg.querySelectorAll('.gr-mat-line .m-warn').forEach(w => { const t = w.textContent.replace(/⚠/g, '').trim(); if(!t || getComputedStyle(w).display === 'none') return; warns.push({ sec: '03', t }); });
         const box = K('gr-athuga');
         if(box){ box.classList.toggle('on', warns.length > 0); box.innerHTML = warns.length ? '<div class="t">ATHUGA · ' + warns.length + '</div>' + warns.map(w => '<div class="w" data-sec="' + w.sec + '"><span class="boss-plate" style="font-size:9px">' + w.sec + '</span><span>' + escapeHtml(w.t) + '</span></div>').join('') : ''; }
         const chip = K('gr-warn-n'); if(chip){ chip.textContent = warns.length ? String(warns.length) : ''; chip.style.display = warns.length ? '' : 'none'; }
