@@ -10395,6 +10395,55 @@ async function renderGerdReikninga(t){
       .gb-more .gr-btn:hover{background:var(--bg-2,#ece7dc)}
       .gr-modal-bg.boss .gr-tbk{margin-top:12px;border-top:0;padding:0;background:var(--input-bg,#f6f3ec);border:1px solid var(--edge,#c9c2b3);border-radius:4px;box-shadow:var(--well-shadow,inset 0 2px 3px rgba(22,21,19,.12))}
       .gr-modal-bg.boss .gr-tbk-head{padding:8px 10px;border-bottom:1px solid var(--line-2,#d9d3c6)}.gr-modal-bg.boss .gr-tbk-body{padding:6px 10px 10px}
+      .gb-r2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+      .gb-dates{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;margin-bottom:8px}
+      .gb-dates>.gr-r2{display:flex;align-items:center;gap:2px;margin:0;height:38px;padding:0 6px 0 8px;border:1px solid var(--edge,#c9c2b3);border-radius:4px;background:var(--input-bg,#f6f3ec);box-shadow:var(--well-shadow,inset 0 2px 3px rgba(22,21,19,.12))}
+      .gb-dates>.gr-r2>.gr-f{display:flex;align-items:center;margin:0}.gb-dates>.gr-r2>.gr-f>label{display:none}.gb-dates>.gr-r2>.gr-f>div{display:flex;align-items:center;gap:4px}
+      .gb-dates>.gr-r2>.gr-f:first-child::after{content:"→";color:var(--muted,#6f685c);margin:0 4px;font-weight:600}.gb-dates>.gr-r2>.gr-f:first-child .gr-datepick{display:none}
+      .gr-modal-bg.boss .gb-dates>.gr-r2 .gr-f input{border:0;background:transparent;box-shadow:none;width:98px;min-width:0;height:34px;padding:0 2px;font-family:var(--font-mono,ui-monospace,monospace);font-weight:600;text-align:center;font-variant-numeric:tabular-nums}
+      .gr-modal-bg.boss .gb-dates .gr-datepick{border:0;background:transparent;box-shadow:none;padding:0 4px;cursor:pointer}
+      .gr-modal-bg.boss .gb-dates>.gr-f{margin:0}.gr-modal-bg.boss .gb-dates>.gr-f>label{font-family:inherit;font-size:12.5px;letter-spacing:0;text-transform:none;color:var(--ink-2,#4a463f);font-weight:500;line-height:1.3}
+      .gr-modal-bg.boss .gb-dates>.gr-f>label input[type=checkbox]{width:18px;height:18px;accent-color:#2f7a4a;flex:none}
+      .gr-modal-bg.boss .gb-sec[data-sec="03"]{--mcols:1fr 96px 64px 84px 26px}
+      .gb-mhead{display:grid;grid-template-columns:var(--mcols);gap:6px;padding:0 0 4px}.gb-mhead span{font-family:var(--font-mono,ui-monospace,monospace);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted,#6f685c)}.gb-mhead .r{text-align:right}
+      .gr-modal-bg.boss .gr-mat-line{grid-template-columns:var(--mcols);gap:5px 6px;margin-bottom:6px}
+      .gr-modal-bg.boss .gr-mat-line input{height:36px;font-size:13px}.gr-modal-bg.boss .gr-mat-line .m-price,.gr-modal-bg.boss .gr-mat-line .m-qty{font-family:var(--font-mono,ui-monospace,monospace);font-weight:600;font-variant-numeric:tabular-nums}
+      .gr-mat-line .m-sum{display:none}.gr-modal-bg.boss .gr-mat-line .m-sum{display:block;text-align:right;font-family:var(--font-mono,ui-monospace,monospace);font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--ink,#161513);white-space:nowrap}
+      .gr-modal-bg.boss .gr-mat-line:has(.m-warn:not([hidden])) .m-price{background:#fbe9e7;border-color:#d9a59a;color:#7a2e1c}
+      .gr-modal-bg.boss .gr-mat-line .m-warn{font-size:11px;border-radius:4px;padding:5px 8px;background:linear-gradient(180deg,#fbe9e7,#f6dcd8);border-color:#d9a59a;color:#7a2e1c}
+      .gr-modal-bg.boss .gr-mat-del{border:0;background:transparent;color:var(--muted,#6f685c);font-size:18px;cursor:pointer}.gr-modal-bg.boss .gr-mat-del:hover{color:var(--red,#b5522a)}
+      .gr-modal-bg.boss .gr-mat-add{gap:8px;margin-top:8px}.gr-modal-bg.boss .gr-mat-add select{flex:1;min-width:0;height:36px}
+      .gr-modal-bg.boss #gr-mat-custom{height:36px;padding:0 12px;border:1px solid var(--edge,#c9c2b3);border-bottom-color:#a89f8c;border-radius:4px;background:linear-gradient(180deg,#fff,#efeae0);box-shadow:var(--key-shadow,inset 0 1px 0 #fff,0 2px 0 #cfc8b9);font:inherit;font-size:12.5px;font-weight:700;color:var(--ink,#161513);white-space:nowrap;cursor:pointer}
+      .gr-modal-bg.boss .gb-redder{display:grid;grid-template-columns:auto auto 1fr auto;align-items:center;gap:6px 14px;padding:10px 12px;margin-bottom:10px;border:1px solid #b9c9df;border-radius:5px;background:linear-gradient(180deg,#eef3fb,#e3ebf7);box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(22,21,19,.08);color:#2b4a72}
+      .gb-redder .k{font-size:12px;font-weight:600;max-width:120px;line-height:1.25}.gb-redder .v{font-family:var(--font-mono,ui-monospace,monospace);font-size:15px;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}.gb-redder .d{font-size:11.5px;color:#4a5f7c;line-height:1.35}
+      .gb-redder-open{height:32px;padding:0 12px;border:1px solid var(--edge,#c9c2b3);border-bottom-color:#a89f8c;border-radius:4px;background:linear-gradient(180deg,#fff,#efeae0);box-shadow:var(--key-shadow,inset 0 1px 0 #fff,0 2px 0 #cfc8b9);font:inherit;font-size:12px;font-weight:700;color:var(--ink,#161513);white-space:nowrap;cursor:pointer}.gb-redder-open:active{transform:translateY(1px);box-shadow:inset 0 1px 0 #fff,0 1px 0 #cfc8b9}
+      .gr-modal-bg.boss .gb-check{display:flex;align-items:center;gap:10px;padding:9px 12px;margin:0 0 8px;border:1px solid var(--line-2,#d9d3c6);border-radius:5px;background:#fff;box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(22,21,19,.08),0 8px 16px -12px rgba(22,21,19,.4);cursor:pointer;font-size:13px;text-transform:none;letter-spacing:0}
+      .gr-modal-bg.boss .gb-check input[type=checkbox]{width:18px;height:18px;margin:0;accent-color:#2f7a4a;flex:none}
+      .gb-check .n{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font-weight:600;color:var(--ink,#161513)}.gb-check .n small{font-size:11px;font-weight:400;color:var(--muted,#6f685c)}
+      .gb-check .a{margin-left:auto;font-family:var(--font-mono,ui-monospace,monospace);font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--ink,#161513);white-space:nowrap}
+      .gb-price{margin-top:12px}.gr-modal-bg.boss .gr-f label.gb-unit{font-family:inherit;font-size:inherit;letter-spacing:0;text-transform:none;margin-top:4px}
+      .gr-modal-bg.boss .gr-f .gb-unit input,.gr-modal-bg.boss .gb-hrow .gb-unit input{border:0;background:transparent;box-shadow:none;width:72px;min-width:0;height:34px;padding:0 8px;font-family:var(--font-mono,ui-monospace,monospace);font-weight:600;font-variant-numeric:tabular-nums}
+      .gb-price .gb-unit input{flex:1}
+      .gb-athuga.on{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:8px 12px}.gb-athuga .t{margin:0 4px 0 0}
+      .gb-athuga .w{padding:4px 8px;background:#fff;border:1px solid #d9b25a;border-radius:4px;box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(22,21,19,.12)}.gb-athuga .w::after{margin-left:2px}
+      .gb-kpi{box-shadow:var(--slab-shadow,0 16px 32px -12px rgba(0,0,0,.85)),inset 0 1px 0 rgba(255,255,255,.06)}.gb-kpi .k{border-right:1px solid #24221d;box-shadow:1px 0 0 #3f3c34}
+      .gb-kpi .k.total .kl{color:#d9b25a}.gb-kpi .k.total .kv{background:var(--gold-text,linear-gradient(180deg,#f7e6b8 0%,#e2c064 45%,#b8892e 100%));-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 1px 0 rgba(0,0,0,.7))}
+      @media(max-width:860px){.gb-r2,.gb-dates,.gb-price{grid-template-columns:1fr}.gb-dates{gap:8px}.gr-modal-bg.boss .gb-sec[data-sec="03"]{--mcols:1fr 72px 50px 64px 22px}.gb-mhead,.gr-modal-bg.boss .gr-mat-line{gap:4px}.gr-modal-bg.boss .gb-redder{grid-template-columns:1fr auto}.gb-redder .d{grid-column:1 / -1}.gb-redder .k{max-width:none}.gb-athuga .w{width:100%}.gb-athuga .w::after{margin-left:auto}}
+      .gb-hours{margin-top:2px}
+      .gb-hrow{display:grid;grid-template-columns:92px 1fr 1fr 96px;gap:10px;align-items:center;padding:5px 0}
+      .gb-hrow b{font-size:13px;color:var(--ink,#161513)}.gb-hrow b span{display:block;font-size:10px;color:var(--warn,#8a6a1c);font-weight:400}
+      .gb-hhead{padding:0 0 2px}.gb-hhead span{font-family:var(--font-mono,ui-monospace,monospace);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted,#6f685c)}.gb-hhead .r{text-align:right}
+      .gb-hsum{text-align:right;font-family:var(--font-mono,ui-monospace,monospace);font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--ink,#161513);white-space:nowrap}
+      .gr-modal-bg.boss .gb-hrow input{width:100%;box-sizing:border-box;height:36px;padding:0 10px;font:inherit;font-size:14px;font-family:var(--font-mono,ui-monospace,monospace);font-weight:600;font-variant-numeric:tabular-nums}
+      .gr-modal-bg.boss .gb-hrow input.gb-h{background:#fbf3d9;border-color:#d9b25a}
+      .gb-hstrip{display:flex;align-items:center;gap:10px;margin:8px 0 2px;padding:7px 10px;border:1px solid var(--line-2,#d9d3c6);border-radius:4px;background:var(--bg-2,#ece7dc);font-size:12.5px;color:var(--ink-2,#4a463f)}
+      .gb-hstrip.warn{background:linear-gradient(180deg,#fbf3d9,#f4e6b8);border-color:#d9b25a;color:#3e2c06}
+      .gb-hstrip #gr-fill-hours{margin-left:auto;float:none;height:32px;padding:0 12px;font-size:12px;white-space:nowrap}
+      .gb-akstur{margin-top:12px;border-top:1px solid var(--line-2,#d9d3c6);padding-top:12px}
+      .gb-unit{display:flex;align-items:center;height:36px;border:1px solid var(--edge,#c9c2b3);border-radius:4px;background:var(--input-bg,#f6f3ec);box-shadow:var(--well-shadow,inset 0 2px 3px rgba(22,21,19,.12));padding:0 10px 0 0;overflow:hidden;margin:0}
+      .gr-modal-bg.boss .gb-unit input{border:0;background:transparent;box-shadow:none;width:64px;min-width:0;height:34px;padding:0 8px;font-family:var(--font-mono,ui-monospace,monospace);font-weight:600}
+      .gb-unit span{font-size:11px;color:var(--muted,#6f685c);white-space:nowrap}
+      @media(max-width:860px){.gb-hrow{grid-template-columns:78px 1fr 1fr 68px;gap:6px}.gb-hstrip{flex-wrap:wrap}.gb-hstrip #gr-fill-hours{margin-left:0;width:100%}.gb-unit input{width:52px}}
       .gb-tv{display:inline-flex;align-items:center;gap:6px;margin-left:8px}
       .gb-tv-link{font-family:var(--font-mono,ui-monospace,monospace);font-size:10.5px;color:var(--gold-800,#8f6a1c);cursor:pointer;text-decoration:underline dotted;white-space:nowrap}
       .gb-lightbox{position:fixed;inset:0;z-index:100050;background:rgba(5,5,5,.92);display:flex;align-items:center;justify-content:center;padding:20px;flex-direction:column;gap:12px;cursor:zoom-out}
@@ -10867,27 +10916,31 @@ async function renderGerdReikninga(t){
           <section class="gb-sec" data-sec="01">
             <div class="gb-sec-h"><span class="boss-plate">01</span><span class="gb-sec-t">Verk</span><span class="gb-sec-sub" id="gr-sub-01"></span><b class="gb-sec-sum" id="gr-sum-01"></b><span class="gb-caret">›</span></div>
             <div class="gb-sec-b">
-          <div class="gr-st">Verkstaður</div>
+          <div class="gb-r2">
           <div class="gr-f"><label>Verkstaður</label><input id="gr-ws" value="${escapeAttr(name)}"></div>
-          <div class="gr-f"><label>Verkkaupi</label><input id="gr-cust" value="${escapeAttr(cust)}"></div>
+          <div class="gr-f"><label>Verkkaupi</label><input id="gr-cust" placeholder="Veldu verkkaupa…" autocomplete="off" value="${escapeAttr(cust)}"></div>
+          </div>
           <div id="gr-manual" style="display:none;border:1px dashed var(--border,var(--edge));border-radius:8px;padding:8px 10px;margin:2px 0 4px">
             <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Handvirkar upplýsingar verkkaupa — birtast á reikningi (t.d. þegar fletta þarf upp kennitölu eða skipta reikningi handvirkt).</div>
             <div class="gr-r2"><div class="gr-f"><label>Kennitala</label><input id="gr-kt" value="${escapeAttr(custKt)}" placeholder="000000-0000"></div><div class="gr-f"><label>Heimilisfang</label><input id="gr-addr" value="${escapeAttr(custAddr)}" placeholder="Heimilisfang verkkaupa"></div></div>
           </div>
+          <div class="gr-st">Tímabil</div>
+          <div class="gb-dates">
           <div class="gr-r2"><div class="gr-f"><label>Frá</label><div style="display:flex;align-items:center;gap:5px"><input type="text" id="gr-fra" value="${dmy(fra)}" placeholder="dd.mm.áááá" inputmode="numeric" maxlength="10" style="flex:1;min-width:0"><button type="button" class="gr-datepick" data-for="gr-fra" title="Veldu dagsetningu" style="flex:0 0 auto;border:1px solid var(--line-2,var(--edge));background:var(--card,#fff);border-radius:8px;padding:6px 9px;cursor:pointer;font-size:14px;line-height:1">📅</button></div></div><div class="gr-f"><label>Til</label><div style="display:flex;align-items:center;gap:5px"><input type="text" id="gr-til" value="${dmy(til)}" placeholder="dd.mm.áááá" inputmode="numeric" maxlength="10" style="flex:1;min-width:0"><button type="button" class="gr-datepick" data-for="gr-til" title="Veldu dagsetningu" style="flex:0 0 auto;border:1px solid var(--line-2,var(--edge));background:var(--card,#fff);border-radius:8px;padding:6px 9px;cursor:pointer;font-size:14px;line-height:1">📅</button></div></div></div>
           <div class="gr-f" style="margin-top:2px"><label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-weight:600"><input type="checkbox" id="gr-datemode" ${dateText?'checked':''}> Skrifa dagsetningu sjálf/ur á reikninginn (t.d. „Maí 2026")</label><input type="text" id="gr-datetext" value="${escapeAttr(dateText)}" placeholder="t.d. Maí 2026" style="margin-top:6px;${dateText?'':'display:none'}"></div>
+          </div>
             </div>
           </section>
           <section class="gb-sec" data-sec="02">
             <div class="gb-sec-h"><span class="boss-plate">02</span><span class="gb-sec-t">Tími &amp; akstur</span><span class="gb-sec-sub" id="gr-sub-02"></span><b class="gb-sec-sum" id="gr-sum-02"></b><span class="gb-caret">›</span></div>
             <div class="gb-sec-b">
-          <div class="gr-st">Tími <button type="button" id="gr-fill-hours" class="gr-btn" style="float:right;padding:3px 9px;font-size:11px" title="Fylla dagvinnu/yfirvinnu úr tímabók (yfirvinna eftir ${r.evThreshold} klst/dag${r.lunch>0?' — '+r.lunch+' klst hádegismatur frádreginn':''}; helgar (lau/sun) allar yfirvinna)">📥 Fylla úr tímabók</button></div>
-          <div class="gr-r3"><div class="gr-f"><label>Dagvinna</label><div id="gr-dvh-sync" style="font-size:11px;color:var(--muted-2);padding:6px 0">—</div></div>
-            <div class="gr-f"><label style="font-size:11px;color:var(--ink-2);font-weight:600">klst (breyta hér)</label><input type="text" inputmode="decimal" id="gr-dvh" value="${dvH}" style="background:var(--warn-bg);border-color:var(--warn-line)"></div><div class="gr-f"><label style="font-size:11px;color:var(--muted-2)">kr/klst</label><input type="text" inputmode="decimal" id="gr-dvr" value="${dvR}"></div></div>
-          <div class="gr-r3"><div class="gr-f"><label>Yfirvinna${r.evOk?'':'<span style="font-size:10px;color:var(--warn);font-weight:400"> — ekki leyfð</span>'}</label><div id="gr-evh-sync" style="font-size:11px;color:var(--muted-2);padding:6px 0"></div></div>
-            <div class="gr-f"><label style="font-size:11px;color:var(--ink-2);font-weight:600">klst (breyta hér)</label><input type="text" inputmode="decimal" id="gr-evh" value="${evH}" style="background:var(--warn-bg);border-color:var(--warn-line)"${r.evOk?'':' title="Yfirvinna ekki leyfð samkvæmt verðskrá"'}></div><div class="gr-f"><label style="font-size:11px;color:var(--muted-2)">kr/klst</label><input type="text" inputmode="decimal" id="gr-evr" value="${evR}"${r.evOk?'':' disabled style="opacity:.5"'}></div></div>
-          <div class="gr-st">Akstur</div>
-          <div class="gr-r2"><div class="gr-f"><label>km × ${r.km}</label><input type="number" id="gr-km" value="${km}" step="10"></div><div class="gr-f"><label>ferðir × ${fmt(r.ferd)}</label><input type="number" id="gr-ferd" value="${fr}" step="1"></div></div>
+          <div class="gb-hours">
+            <div class="gb-hrow gb-hhead"><span></span><span>Klst</span><span>Kr/klst</span><span class="r">Samtals</span></div>
+            <div class="gb-hrow"><b>Dagvinna</b><input class="gb-h" type="text" inputmode="decimal" id="gr-dvh" value="${dvH}"><input type="text" inputmode="decimal" id="gr-dvr" value="${dvR}"><span class="gb-hsum" id="gr-dv-sum">—</span></div>
+            <div class="gb-hrow"><b>Yfirvinna${r.evOk?'':'<span style="font-size:10px;color:var(--warn);font-weight:400"> — ekki leyfð</span>'}</b><input class="gb-h" type="text" inputmode="decimal" id="gr-evh" value="${evH}"${r.evOk?'':' title="Yfirvinna ekki leyfð samkvæmt verðskrá"'}><input type="text" inputmode="decimal" id="gr-evr" value="${evR}"${r.evOk?'':' disabled'}><span class="gb-hsum" id="gr-ev-sum">—</span></div>
+            <div class="gb-hstrip" id="gr-hstrip"><span id="gr-hstrip-t">Ber saman við tímabók…</span><button type="button" id="gr-fill-hours" class="gr-btn" title="Fylla dagvinnu/yfirvinnu úr tímabók (yfirvinna eftir ${r.evThreshold} klst/dag${r.lunch>0?' — '+r.lunch+' klst hádegismatur frádreginn':''}; helgar (lau/sun) allar yfirvinna)">📥 Fylla úr tímabók</button></div>
+            <div id="gr-dvh-sync" hidden>—</div><div id="gr-evh-sync" hidden></div>
+          </div>
           <div class="gr-tbk" id="gr-tbk-panel">
             <div class="gr-tbk-head">
               <span class="gr-tbk-title">🕒 Tímaskýrsla <span class="gr-tbk-sum" id="gr-tbk-sum">—</span><span class="gb-tv" id="gr-tv-slot"></span></span>
@@ -10900,27 +10953,27 @@ async function renderGerdReikninga(t){
             </div>
             <div class="gr-tbk-body" id="gr-tbk-body"><div class="gr-tbk-empty">Sæki tímafærslur…</div></div>
           </div>
+          <div class="gb-hrow gb-akstur"><b>Akstur</b><label class="gb-unit"><input type="number" id="gr-km" value="${km}" step="10"><span>km × ${r.km}</span></label><label class="gb-unit"><input type="number" id="gr-ferd" value="${fr}" step="1"><span>ferðir × ${fmt(r.ferd)}</span></label><span class="gb-hsum" id="gr-akstur-sum">0</span></div>
             </div>
           </section>
           <section class="gb-sec" data-sec="03">
             <div class="gb-sec-h"><span class="boss-plate">03</span><span class="gb-sec-t">Efni</span><span class="gb-sec-sub" id="gr-sub-03"></span><b class="gb-sec-sum" id="gr-sum-03"></b><span class="gb-caret">›</span></div>
             <div class="gb-sec-b">
-          <div class="gr-st">Efni (Redder / handvirkt)</div>
-          ${redderTotal>0?`<div class="gr-redder-note">Redder innkaupsverð þennan mánuð: <b>${fmt(redderTotal)} kr án vsk</b>. Forútfyllt á <b>söluverði Verðskrár</b> — aðeins efni sem á sér Verðskrárverð er rukkað; smávara (túss, klútar o.fl.) fellur undir smáhlutagjald. Leiðréttu eftir þörfum.</div>`:''}
+          ${redderTotal>0?`<div class="gr-redder-note gb-redder"><span class="k">Redder innkaup þennan mánuð</span><b class="v">${fmt(redderTotal)} kr</b><span class="d">án vsk · forútfyllt á söluverði Verðskrár · smávara fellur undir smáhlutagjald</span><button type="button" class="gb-redder-open" id="gr-redder-open" title="Opna Redder-innkaup mánaðarins (Efniskostnaður)">Sýna innkaup ›</button></div>`:''}
+          <div class="gb-mhead"><span>Vara</span><span>Söluverð</span><span>Magn</span><span class="r">Samtals</span><span></span></div>
           <div id="gr-mats"></div>
-          <div class="gr-mat-add">${matSelect} <button type="button" id="gr-mat-custom" class="gr-btn" style="margin-left:6px">+ Sérlína (handvirkt efni)</button></div>
+          <div class="gr-mat-add">${matSelect} <button type="button" id="gr-mat-custom" class="gr-btn" title="Bæta við handvirkri efnislínu">✎ Sérlína</button></div>
             </div>
           </section>
           <section class="gb-sec" data-sec="04">
             <div class="gb-sec-h"><span class="boss-plate">04</span><span class="gb-sec-t">Gjöld &amp; verð</span><span class="gb-sec-sub" id="gr-sub-04"></span><b class="gb-sec-sum" id="gr-sum-04"></b><span class="gb-caret">›</span></div>
             <div class="gb-sec-b">
-          <div class="gr-st">Aukagjöld</div>
-          <div class="gr-f"><label><input type="checkbox" id="gr-stadf" ${stadfOn?'checked':''}> Staðfesting brunaþéttinga (${fmt(GR_STADF)} kr)</label></div>
-          <div class="gr-f"><label style="cursor:pointer"><input type="checkbox" id="gr-sma-on" ${smaOn?'checked':''}> Smáhlutagjald = hanskar, þurrkur o.fl. (${r.sma} kr × dagvinnu + yfirvinnu klst, sjálfvirkt) — taktu hakið af til að sleppa</label><div style="font-size:11px;color:var(--muted)" id="gr-sma-hint">—</div></div>
-          <div class="gr-st">Afsláttur</div>
-          <div class="gr-f"><label>Afsláttur af öllum reikningnum (%)</label><input type="text" inputmode="decimal" id="gr-disc" value="${escapeAttr(String(discPct))}" placeholder="0" style="max-width:130px"><div style="font-size:11px;color:var(--muted);margin-top:3px">t.d. 10 = 10% — birtist sem lína á reikningnum</div></div>
-          <div class="gr-st">Fast verð</div>
-          <div class="gr-f"><label>Fast heildarverð með vsk (samningaverð)</label><input type="text" inputmode="numeric" id="gr-fix" value="${escapeAttr(fixedTotal>0?String(Math.round(fixedTotal)):'')}" placeholder="—" style="max-width:180px"><div style="font-size:11px;color:var(--muted);margin-top:3px">Ef sett — yfirristir útreiknað verð. Notið þegar verð hefur verið samið (t.d. 1250000).</div></div>
+          <label class="gb-check"><input type="checkbox" id="gr-stadf" ${stadfOn?'checked':''}><span class="n">Staðfesting brunaþéttinga <small>fast · einu sinni</small></span><b class="a" id="gr-stadf-amt">${fmt(GR_STADF)}</b></label>
+          <label class="gb-check"><input type="checkbox" id="gr-sma-on" ${smaOn?'checked':''}><span class="n">Smáhlutagjald <small id="gr-sma-hint">${r.sma} kr × klst (dv + ev) · sjálfvirkt</small></span><b class="a" id="gr-sma-amt">—</b></label>
+          <div class="gb-r2 gb-price">
+            <div class="gr-f"><label>Afsláttur af öllum reikningnum</label><label class="gb-unit" title="t.d. 10 = 10% — birtist sem lína á reikningnum"><input type="text" inputmode="decimal" id="gr-disc" value="${escapeAttr(String(discPct))}" placeholder="0"><span>% · birtist sem lína</span></label></div>
+            <div class="gr-f"><label>Fast verð m/vsk — yfirríður útreikning</label><label class="gb-unit" title="Ef sett — yfirríður útreiknað verð (samningsverð með vsk)"><input type="text" inputmode="numeric" id="gr-fix" value="${escapeAttr(fixedTotal>0?String(Math.round(fixedTotal)):'')}" placeholder="—"><span>t.d. samningsverð</span></label></div>
+          </div>
             </div>
           </section>
           <section class="gb-sec" data-sec="05">
@@ -10998,7 +11051,7 @@ async function renderGerdReikninga(t){
       div.innerHTML = `<input class="m-label" placeholder="Lýsing" value="${escapeAttr(m.label||'')}">
         <input class="m-price" type="number" placeholder="verð" value="${m.price||''}" step="1">
         <input class="m-qty" type="number" placeholder="magn" value="${m.qty||''}" step="1">
-        <button class="gr-mat-del" type="button" title="Eyða">×</button>
+        <span class="m-sum">—</span><button class="gr-mat-del" type="button" title="Eyða">×</button>
         <div class="m-warn" hidden></div>`;
       div.querySelector('.gr-mat-del').onclick = () => { div.remove(); draw(); };
       div.querySelectorAll('input').forEach(i=> i.addEventListener('input', () => { updateWarn(div); draw(); }));
@@ -11140,20 +11193,40 @@ async function renderGerdReikninga(t){
         const sub = (n, v) => { const e = K('gr-sub-' + n); if(e) e.textContent = v; };
         const wsv = (K('gr-ws') || {}).value || '', custv = (K('gr-cust') || {}).value || '';
         sub('01', wsv.trim() + ' · ' + monthLabelStatic(month) + (custv.trim() ? ' · ' + custv.trim() : ' · verkkaupi vantar'));
-        sub('02', (c.dvH || 0) + ' dv · ' + (c.evH || 0) + ' ev · ' + (c.km || 0) + ' km');
+        const fh = n => String(Math.round((n || 0) * 100) / 100).replace('.', ',');
+        sub('02', fh(c.dvH) + ' klst dv · ' + fh(c.evH) + ' ev · ' + (c.km || 0) + ' km');
+        const SS = (id, v) => { const e = K(id); if(e) e.textContent = v; };
+        SS('gr-dv-sum', fmt(c.dvAmt)); SS('gr-ev-sum', fmt(c.evAmt)); SS('gr-akstur-sum', fmt(c.kmAmt + c.frAmt));
+        bg.querySelectorAll('#gr-mats .gr-mat-line').forEach(l => { const p = Number((l.querySelector('.m-price') || {}).value) || 0, q = Number((l.querySelector('.m-qty') || {}).value) || 0; const e = l.querySelector('.m-sum'); if(e) e.textContent = p && q ? fmt(p * q) : '—'; });
+        const stOn = K('gr-stadf') && K('gr-stadf').checked; SS('gr-stadf-amt', stOn ? fmt(typeof GR_STADF !== 'undefined' ? GR_STADF : 0) : '0');
+        const smOn = K('gr-sma-on') && K('gr-sma-on').checked; SS('gr-sma-amt', smOn ? fmt(c.sma) : '0');
+        // Tímabókar-strimillinn: ein setning úr sync-textanum sem checkTimabokSync skrifar
+        const strip = K('gr-hstrip'), stripT = K('gr-hstrip-t');
+        if(strip && stripT){
+          const dvS = (K('gr-dvh-sync') || {}).textContent || '', evS = (K('gr-evh-sync') || {}).textContent || '';
+          const mm = dvS.match(/([0-9][0-9.,]*)\s*klst/); const tb = mm ? mm[1].replace('.', ',') : null; const rk = fh(c.dvH + c.evH);
+          const mis = /⚠/.test(dvS) || /⚠/.test(evS);
+          strip.classList.toggle('warn', mis);
+          if(/Ber saman/.test(dvS)) stripT.textContent = 'Ber saman við tímabók…';
+          else if(mis) stripT.innerHTML = '⚠ Tímabók segir <b>' + escapeHtml(tb || '?') + ' klst</b> — reikningur <b>' + rk + '</b>.' + (/⚠/.test(evS) ? ' ' + escapeHtml(evS.replace(/⚠/g,'').trim()) : '');
+          else stripT.textContent = '✓ Tímabók og reikningur í takt' + (tb ? ' (' + tb + ' klst)' : '') + '.';
+          const fb = K('gr-fill-hours'); if(fb) fb.style.display = mis ? '' : 'none';
+        }
         sub('03', c.matLines.filter(m => m.qty > 0 || m.total > 0).length + ' línur · Redder + Verðskrá');
         sub('04', 'staðf. ' + (c.stadf ? '✓' : '–') + ' · smáhl. ' + (c.sma ? '✓' : '–') + ' · afsl. ' + (c.discPct || 0) + ' % · fast ' + (c.fixed > 0 ? fmt(c.fixed) : '—'));
         sub('05', ((K('gr-notes') || {}).value || '').trim().slice(0, 48) || 'innri — birtist ekki á skýrslu');
         const warns = [];
         const sync = (K('gr-dvh-sync') || {}).textContent || '';
-        if(/⚠/.test(sync)){ const m = sync.match(/([0-9][0-9.,]*)s*klst/); const tb = m ? m[1].replace('.', ',') : null; const rk = String(Math.round((c.dvH + c.evH) * 100) / 100).replace('.', ','); warns.push({ sec: '02', t: tb ? ('Tímabók ' + tb + ' ≠ ' + rk + ' klst') : sync.replace(/⚠/g, '').replace(/—.*$/, '').trim() }); }
-        bg.querySelectorAll('.gr-mat-line .m-warn').forEach(w => { const t = w.textContent.replace(/⚠/g, '').trim(); if(!t || getComputedStyle(w).display === 'none') return; warns.push({ sec: '03', t }); });
+        if(/⚠/.test(sync)){ const m = sync.match(/([0-9][0-9.,]*)\s*klst/); const tb = m ? m[1].replace('.', ',') : null; const rk = String(Math.round((c.dvH + c.evH) * 100) / 100).replace('.', ','); warns.push({ sec: '02', t: tb ? ('Tímabók ' + tb + ' klst ≠ reikningur ' + rk) : sync.replace(/⚠/g, '').replace(/—.*$/, '').trim() }); }
+        bg.querySelectorAll('.gr-mat-line .m-warn').forEach(w => { const t = w.textContent.replace(/⚠/g, '').trim(); if(!t || getComputedStyle(w).display === 'none') return; const row = w.closest('.gr-mat-line'); const nm = ((row && row.querySelector('.m-label') || {}).value || '').replace(/^Eldv\.?\s*/i, '').split(/\s+/).slice(0, 2).join(' '); const nums = t.match(/([0-9][0-9.,]*)[^0-9]+innkaup[^0-9]+([0-9][0-9.,]*)/i); warns.push({ sec: '03', t: nums && nm ? (nm + ': söluverð ' + nums[1] + ' undir innkaupi ' + nums[2]) : t }); });
         const box = K('gr-athuga');
         if(box){ box.classList.toggle('on', warns.length > 0); box.innerHTML = warns.length ? '<div class="t">ATHUGA · ' + warns.length + '</div>' + warns.map(w => '<div class="w" data-sec="' + w.sec + '"><span class="boss-plate" style="font-size:9px">' + w.sec + '</span><span>' + escapeHtml(w.t) + '</span></div>').join('') : ''; }
         const chip = K('gr-warn-n'); if(chip){ chip.textContent = warns.length ? String(warns.length) : ''; chip.style.display = warns.length ? '' : 'none'; }
       }
       bg.__bossSums = bossSums; bossSums();
       const mo = new MutationObserver(() => { try{ bossSums(); }catch(_){} }); const mats = K('gr-mats'); if(mats) mo.observe(mats, { childList: true, subtree: true, characterData: true });
+      ['gr-dvh-sync','gr-evh-sync'].forEach(id => { const e = K(id); if(e) mo.observe(e, { childList: true, subtree: true, characterData: true }); });
+      const ro = K('gr-redder-open'); if(ro) ro.addEventListener('click', () => { const f = ((K('gr-fra') || {}).value || '').match(/(\d{2})\.(\d{4})$/); const ym = f ? f[2] + '-' + f[1] : ''; if(typeof rgOpenEfniEditor === 'function') rgOpenEfniEditor((K('gr-ws') || {}).value || '', ym); });
       K('gr-athuga').addEventListener('click', e => { const p = e.target.closest('.w'); if(!p) return; const sec = bg.querySelector('.gb-sec[data-sec="' + p.dataset.sec + '"]'); if(sec){ sec.classList.remove('collapsed'); sec.scrollIntoView({ behavior: 'smooth', block: 'start' }); } });
       // 🖼 Tímavera-skjáskot — eitt per (verkstað, mánuð), innra viðhengi (doc_type innra), sendist aldrei.
       const TV_PREFIX = 'Tímavera-skjáskot';
