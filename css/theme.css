@@ -550,6 +550,9 @@ body .hub-sync select{background:transparent;border:0;box-shadow:none;padding:2p
 .ky-tier{display:flex;align-items:center;gap:9px;padding:8px 18px 8px 34px;background:#faf8f4;border-bottom:1px solid var(--line);border-top:1px solid var(--line);position:relative}
 .ky-tier::before{content:"";position:absolute;left:18px;top:0;bottom:0;width:2px;background:var(--gold-line);opacity:.5}
 .ky-tier .t{font-size:12px;font-weight:700;color:var(--ink-2)}
+/* ⧉ Sameina beint í Ósendar-línunni (ósk Agnars 03.09.2026) */
+.ky-tier .kyf-sameina-all{margin-left:8px;height:24px;padding:0 9px;font-size:11px;line-height:1}
+@media(max-width:640px){.ky-tier .kyf-sameina-all{margin-left:6px;padding:0 7px}}
 .ky-tier .s{margin-left:auto;font-family:var(--font-mono);font-size:12px;font-weight:600;color:var(--ink);white-space:nowrap}
 .ky-tier .s .boss-kr{font-size:10px;color:var(--muted);opacity:1;margin-left:3px}
 /* Kröfu-röð */

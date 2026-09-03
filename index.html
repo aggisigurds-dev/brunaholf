@@ -57,7 +57,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://osfdzskyvisifcwyjkuk.supabase.co">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/theme.css?v=4">
+<link rel="stylesheet" href="/css/theme.css?v=5">
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
@@ -15231,7 +15231,7 @@ async function renderKrofuyfirlit(t){
     const badge=(cls,label,val)=> `<span class="boss-badge ${cls} ky-num">${label} ${fmtNum(val)} kr</span>`;
     const tierBlock=(d,tier,title,led)=> !d ? '' : `
       <div class="${tier===2?'ky-tblock2':''}">
-        <div class="ky-tier"><i class="boss-led" style="--led:${led}"></i><span class="t">${title}</span><span class="s ky-num">${fmtNum(d.outstanding_kr)}<span class="boss-kr">kr</span></span></div>
+        <div class="ky-tier"><i class="boss-led" style="--led:${led}"></i><span class="t">${title}</span>${tier===2?sameinaBtn(d.invoices||[]):''}<span class="s ky-num">${fmtNum(d.outstanding_kr)}<span class="boss-kr">kr</span></span></div>
         ${buildInvoiceRows(d.invoices||[], tier)}
       </div>`;
     const body = companies.map(c=>`
