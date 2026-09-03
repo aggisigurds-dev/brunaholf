@@ -27,19 +27,30 @@ exports.handler = async (event) => {
     });
     if (!r.ok) return json(r.status, { error: (await r.text()).slice(0, 300) });
     const rows = await r.json();
-    // Build summary by (worksite, month)
+    // Undanskildar línur (redder_line_items.excluded): raunveruleg endurkrafa per reikning
+    // = recharge_amount ef sett, annars m_vsk mínus undanskildar línur (upphaed er án vsk).
+    for (const inv of rows) {
+      const an = Number(inv.an_vsk) || 0, mv = Number(inv.m_vsk) || 0;
+      const factor = an > 0 ? mv / an : 1.24;
+      const exAn = (inv.redder_line_items || []).filter(li => li.excluded).reduce((a, li) => a + (Number(li.upphaed) || 0), 0);
+      inv.excluded_an_vsk = Math.round(exAn);
+      inv.excluded_m_vsk = Math.round(exAn * factor);
+      inv.effective_m_vsk = inv.recharge_amount != null ? Number(inv.recharge_amount) : Math.max(0, mv - inv.excluded_m_vsk);
+      inv.effective_an_vsk = Math.round(inv.effective_m_vsk / factor);
+    }
+    // Build summary by (worksite, month) — á RAUNVERULEGRI endurkröfu
     const byWorksiteMonth = {};
     let grandTotal = 0;
     for (const inv of rows) {
-      grandTotal += Number(inv.m_vsk || 0);
+      grandTotal += Number(inv.effective_m_vsk || 0);
       if (!inv.dagsetning) continue;
       const month = String(inv.dagsetning).slice(0,7);
       const ws = inv.worksite_match || '(óþekkt)';
       const k = `${ws}|${month}`;
       if (!byWorksiteMonth[k]) byWorksiteMonth[k] = { worksite: ws, month, invoice_count: 0, total_an_vsk: 0, total_m_vsk: 0 };
       byWorksiteMonth[k].invoice_count++;
-      byWorksiteMonth[k].total_an_vsk += Number(inv.an_vsk || 0);
-      byWorksiteMonth[k].total_m_vsk  += Number(inv.m_vsk || 0);
+      byWorksiteMonth[k].total_an_vsk += Number(inv.effective_an_vsk || 0);
+      byWorksiteMonth[k].total_m_vsk  += Number(inv.effective_m_vsk || 0);
     }
     return json(200, { rows, summary: { count: rows.length, grand_total_m_vsk: grandTotal, by_worksite_month: Object.values(byWorksiteMonth) } });
   }
@@ -78,6 +89,21 @@ exports.handler = async (event) => {
         }).catch(() => {});
       }
       return json(200, { ok: true, updated: updated.length });
+    }
+
+    // Lína af/á tengingunni (Agnar 03.09.2026) — vistast strax úr Efniskostnaðar-glugganum.
+    if (body.action === 'exclude_line') {
+      const id = parseInt(body.line_id, 10);
+      if (!Number.isFinite(id)) return json(400, { error: 'line_id vantar' });
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/redder_line_items?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+        body: JSON.stringify({ excluded: !!body.excluded }),
+      });
+      if (!r.ok) return json(r.status, { error: (await r.text()).slice(0, 300) });
+      const rows = await r.json();
+      if (!rows.length) return json(404, { error: 'lína fannst ekki' });
+      return json(200, { ok: true, line: rows[0] });
     }
 
     if (!body.invoice_nr) return json(400, { error: 'invoice_nr required' });

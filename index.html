@@ -9774,7 +9774,7 @@ async function rgOpenEfniEditor(worksite, month){
 
   let total = 0;
   const html = rows.map(inv => {
-    const recharge = Number(inv.recharge_amount ?? inv.m_vsk) || 0;
+    const recharge = Number(inv.recharge_amount ?? inv.effective_m_vsk ?? inv.m_vsk) || 0;
     total += recharge;
     return `
       <div class="efni-card">
@@ -9791,9 +9791,10 @@ async function rgOpenEfniEditor(worksite, month){
         <div class="efni-inv-orig">Upphafleg Redder upphæð: ${fmt(inv.m_vsk)} kr m. vsk (${fmt(inv.an_vsk)} án vsk)</div>
         ${(inv.redder_line_items||[]).length ? `
           <table class="efni-lines">
-            <thead><tr><th>Vörunr</th><th>Heiti</th><th class="num">Magn</th><th class="num">Verð</th><th class="num">Afsl</th><th class="num">Samtals</th></tr></thead>
+            <thead><tr><th title="Haka við = línan fer EKKI á tengingu verkstaðarins (hvorki í endurkröfu né efnislista)">Ekki á teng.</th><th>Vörunr</th><th>Heiti</th><th class="num">Magn</th><th class="num">Verð</th><th class="num">Afsl</th><th class="num">Samtals</th></tr></thead>
             <tbody>${inv.redder_line_items.map(li => `
-              <tr>
+              <tr class="${li.excluded?'efni-excl-row':''}">
+                <td><input type="checkbox" class="efni-excl" data-line="${li.id}" data-inv="${inv.id}" ${li.excluded?'checked':''} title="Ekki á tengingunni"></td>
                 <td>${escapeHtml(li.item_code||'')}</td>
                 <td title="${escapeAttr(li.item_name||'')}">${escapeHtml(simplifyRedderName(li.item_name))}</td>
                 <td class="num">${Number(li.magn||0)} ${escapeHtml(li.unit||'')}</td>
@@ -9822,6 +9823,36 @@ async function rgOpenEfniEditor(worksite, month){
       let t = 0;
       document.querySelectorAll('[data-efni-id]').forEach(x => t += Number(x.value)||0);
       document.getElementById('efni-total').textContent = fmt(t) + ' kr';
+    };
+  });
+  // Haka við línu = EKKI á tengingunni (Agnar 03.09.2026). Vistast strax; línan strikast
+  // út; sé Endurkrafa sjálfgefin (engin handslegin tala) lækkar hún um línuna m. vsk.
+  // Miðlarinn tekur línuna líka úr samantektinni (Kröfuyfirlit, Reikningagrid) og Gerð
+  // reikninga sleppir henni í efnislista-útfyllingu.
+  if(!document.getElementById('efni-excl-css')){ const st=document.createElement('style'); st.id='efni-excl-css'; st.textContent='.efni-excl-row td{opacity:.5;text-decoration:line-through} .efni-excl-row td:first-child{opacity:1;text-decoration:none} .efni-lines input.efni-excl{width:16px;height:16px;cursor:pointer}'; document.head.appendChild(st); }
+  document.querySelectorAll('input.efni-excl').forEach(cb => {
+    cb.onchange = async () => {
+      const inv = rows.find(r => String(r.id) === cb.dataset.inv);
+      const li = ((inv && inv.redder_line_items) || []).find(l => String(l.id) === cb.dataset.line);
+      const tr = cb.closest('tr'); const want = cb.checked; cb.disabled = true;
+      const $s = document.getElementById('efni-save-status');
+      try{
+        const r = await fetch('/api/redder-invoices', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'exclude_line', line_id: Number(cb.dataset.line), excluded: want }) });
+        const j = await r.json().catch(()=>({})); if(!r.ok || j.error) throw new Error(j.error || ('HTTP '+r.status));
+        if(li) li.excluded = want; if(tr) tr.classList.toggle('efni-excl-row', want);
+        if(inv && inv.recharge_amount == null){
+          const an = Number(inv.an_vsk)||0, mv = Number(inv.m_vsk)||0, factor = an>0 ? mv/an : 1.24;
+          const exAn = (inv.redder_line_items||[]).filter(l=>l.excluded).reduce((a,l)=>a+(Number(l.upphaed)||0),0);
+          const eff = Math.max(0, Math.round(mv - exAn*factor)); inv.effective_m_vsk = eff;
+          const inp = document.querySelector('[data-efni-id="'+inv.id+'"]');
+          if(inp){ inp.value = eff; inp.dataset.efniOrig = String(eff); inp.dispatchEvent(new Event('input')); }
+        }
+        if($s){ $s.textContent = want ? '✓ lína tekin af tengingunni' : '✓ lína aftur á tengingunni'; $s.className = 'wc-save-status wc-save-ok'; }
+      }catch(e){
+        cb.checked = !want;
+        if($s){ $s.textContent = '✗ vistaðist ekki: ' + (e.message||e); $s.className = 'wc-save-status wc-save-err'; }
+      }
+      cb.disabled = false;
     };
   });
 
@@ -10453,8 +10484,9 @@ async function renderGerdReikninga(t){
         const mo = (r.dagsetning||'').slice(0,7);
         const k = `${ws2}|${mo}`;
         (REDDER[k] = REDDER[k] || {an_vsk:0, lines:[]});
-        REDDER[k].an_vsk += Number(r.an_vsk)||0;
+        REDDER[k].an_vsk += Number(r.effective_an_vsk ?? r.an_vsk)||0;
         for(const li of (r.redder_line_items||[])){
+          if(li.excluded) continue; // hakað „Ekki á tengingu" í Efniskostnaði
           const qty = Number(li.magn)||0;
           // Real buy-in unit cost = line total / qty (upphaed is AFTER afsláttur);
           // fall back to ein_verd if qty/total missing.
