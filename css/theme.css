@@ -563,13 +563,13 @@ body .hub-sync select{background:transparent;border:0;box-shadow:none;padding:2p
 .ky-row.ky-likely:hover{background:linear-gradient(90deg,rgba(47,122,74,.15),rgba(47,122,74,.06))}
 .ky-row .ky-caret2{width:8px;flex-shrink:0;color:var(--muted-2);font-size:9px;user-select:none;transition:transform .12s ease;display:inline-block}
 .ky-invrow.open .ky-caret2{transform:rotate(90deg)}
-.ky-row .ky-main{flex:0 0 190px;width:190px;min-width:0;line-height:1.3}
+.ky-row .ky-main{flex:0 1 190px;width:190px;min-width:150px;line-height:1.3}
 .ky-row.ky-t2 .ky-main,.ky-t2 .ky-main{flex:1 1 340px;width:auto;min-width:190px}
 .ky-row .ky-main .ky-ws{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .ky-row .ky-main .ky-ws .n{font-size:13px;font-weight:700;color:var(--ink)}
 .ky-row .ky-main .ky-sub{font-size:11.5px;color:var(--muted);margin-top:2px}
 .ky-row .ky-main .ky-sub .ky-num{color:var(--muted)}
-.ky-row .ky-amt{flex:0 0 110px;width:110px;font-family:var(--font-mono);font-size:13.5px;font-weight:600;text-align:right;color:var(--ink);white-space:nowrap;flex-shrink:0}
+.ky-row .ky-amt{flex:0 0 100px;width:100px;font-family:var(--font-mono);font-size:13.5px;font-weight:600;text-align:right;color:var(--ink);white-space:nowrap;flex-shrink:0}
 .ky-row .ky-amt .boss-kr{font-size:10px;color:var(--muted);opacity:1;margin-left:3px}
 .ky-row .ky-notewrap{flex:1 1 150px;min-width:0;display:flex;align-items:center;gap:8px;font-size:12px;color:#a39b8a}
 .ky-row .ky-notewrap .ky-note-ic{font-size:13px;flex-shrink:0}

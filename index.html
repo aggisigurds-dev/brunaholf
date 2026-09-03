@@ -14967,6 +14967,19 @@ async function renderKrofuyfirlit(t){
   // „✓ Allar greiddar" — fjarlægt 2026-08-25 (verkefnalisti e66c62e2, Agnar:
   // þarf ekki þennan hnapp). Per-röð „Greitt" stendur.
 
+  // ── 📨 Krafa send — handvirkt merki (ósk Agnars 2026-09-03) ───────────────
+  // Gerir EKKERT annað en að verða grænt: enginn póstur, engin skrif í Payday,
+  // ekkert API. Merkið lifir á tækinu (localStorage) svo það haldist þótt listinn
+  // sé endurteiknaður eða síðan endurhlaðin. Þetta er vísvitandi aðskilið frá
+  // „📤 Senda Kröfu" sem sendir raunverulega póst á bókara.
+  const SENTMARK = (function(){ try{ return JSON.parse(localStorage.getItem('ky_sent_mark')||'{}'); }catch(_){ return {}; } })();
+  const sentMarked = k => !!SENTMARK[k];
+  function toggleSentMark(k){
+    if(SENTMARK[k]) delete SENTMARK[k]; else SENTMARK[k] = true;
+    try{ localStorage.setItem('ky_sent_mark', JSON.stringify(SENTMARK)); }catch(_){}
+    return !!SENTMARK[k];
+  }
+
   function actChips(inv, tier){
     const k = esc(inv.inv_key);
     // Falin röð (sýnd í gegnum „Sýna falin") → 👁 Sýna (af-fela) í stað 🙈 Fela.
@@ -15053,14 +15066,17 @@ async function renderKrofuyfirlit(t){
     const rvHtml = rvConf
       ? `<span class="ky-rv ok" title="Yfirmaður staðfesti í yfirferð">👔 Staðfest · ${esc(rv.review_confirmed_by||'')} ${rv.review_confirmed_at?esc(fmtDate(rv.review_confirmed_at)):''}</span>`
       : rvOn ? `<span class="ky-rv wait" title="Bíður yfirferðar yfirmanns (The Big Boss appið)">👔 Í yfirferð</span>` : '';
-    return `<span class="ky-wf-boxes" style="display:inline-flex;flex:0 0 312px;width:312px;flex-direction:column;align-items:flex-end;gap:3px">
+    return `<span class="ky-wf-boxes" style="display:inline-flex;flex:0 0 326px;width:326px;flex-direction:column;align-items:flex-end;gap:3px">
       <span style="display:inline-flex;align-items:center;gap:6px;flex-wrap:nowrap;${hasNums?'margin-bottom:14px':''}">
         ${withCap(wfBtn('tim','opentim','🕒','Tímask.','var(--blue-deep)','Opna Tímaskýrslu',!!timDoc), timCap)}${pdfLink(timDoc?bhDocUrl(timDoc):null,'Opna Tímaskýrslu PDF')}
         ${withCap(wfBtn('efn','openefn','📄','Efnisl.','var(--blue-deep)','Opna Efnislista í Gerð Reikninga',!!efnDoc), efnCap)}${pdfLink(efnDoc?bhDocUrl(efnDoc):null,'Opna Efnislista PDF')}
-        ${rv?wfBtn('rev','review','👔','Yfirferð','var(--blue-deep)',rvOn?'Taka úr yfirferð (afturkalla beiðni)':'Senda Efnislistann í yfirferð til yfirmanns (birtist í The Big Boss appinu)',rvOn):''}
-        ${wfBtn('conf','confirm','✓','Staðfest','var(--green)','Staðfesta',conf)}
-        ${conf?wfBtn('conf','breyta','✏️','Breyta','var(--red)','Breyta (af-staðfesta)',false):''}
+        ${/* 👔 Yfirferð — SLÖKKT í bili (ósk Agnars 2026-09-03). Bakendinn
+             (invoice_drafts.review_*) og yfirferd.html standa óhreyfð; til að
+             kveikja aftur: fjarlægja false&& hér. */''}
+        ${false&&rv?wfBtn('rev','review','👔','Yfirferð','var(--blue-deep)',rvOn?'Taka úr yfirferð (afturkalla beiðni)':'Senda Efnislistann í yfirferð til yfirmanns (birtist í The Big Boss appinu)',rvOn):''}
+        ${wfBtn('conf','confirm','✓','Staðfest','var(--green)',conf?'Staðfest — smelltu aftur til að af-staðfesta':'Staðfesta',conf)}
         ${wfBtn('send','send','📤',inv.sent?'Krafa send':'Senda Kröfu','var(--green)',inv.sent?'Þegar sent':'Senda á bókara',!!inv.sent)}
+        ${wfBtn('mark','sentmark','📨','Krafa send','var(--green)',sentMarked(inv.inv_key)?'Merkt sem send — smelltu til að afmerkja (handvirkt merki, engin skrif í kerfið)':'Merkja handvirkt að krafan sé send — verður grænt, gerir ekkert annað',sentMarked(inv.inv_key))}
         ${sentTrail}
       </span>
       ${rvHtml}
@@ -15654,6 +15670,15 @@ async function renderKrofuyfirlit(t){
       if(act==='opentim'){ if(typeof openTimabok==='function') openTimabok(iv.worksite, iv.work_month); return; }
       // 📄 Efnisl. → opnar Gerð Reikninga fyrir þennan verkstað/mánuð (þú vistar ÞAR).
       if(act==='openefn'){ if(typeof grOpenWorksite==='function') grOpenWorksite(iv.worksite, iv.work_month); return; }
+      // 📨 Krafa send — handvirkt merki. Ekkert kall, ekkert póstur: við
+      // skiptum um lit strax (engin endurteikning svo skrunstaðan haldist).
+      if(act==='sentmark'){
+        const on = toggleSentMark(key);
+        b.classList.toggle('on', on);
+        b.title = on ? 'Merkt sem send — smelltu til að afmerkja (handvirkt merki, engin skrif í kerfið)'
+                     : 'Merkja handvirkt að krafan sé send — verður grænt, gerir ekkert annað';
+        return;
+      }
       // 👔 Yfirferð — flagga/af-flagga drögin til yfirferðar hjá yfirmanni.
       // Skrifar á invoice_drafts (review_*-dálkana) sem yfirferd.html les.
       if(act==='review'){
@@ -15676,8 +15701,13 @@ async function renderKrofuyfirlit(t){
         undo(); renderList(); return;
       }
       // ✓ Staðfest / ✏️ Breyta — merking á Ósendar-röðina í Kröfu yfirliti.
-      if(act==='breyta'){ iv.wf.confirmed=false; wfPatchLocal(key,{wf:iv.wf}); await persistWf(key, iv.wf); renderList(); return; }
-      if(act==='confirm'){ const by=bhMe(); iv.wf.confirmed=true; iv.wf.confirmed_by=by; iv.wf.confirmed_at=new Date().toISOString(); wfPatchLocal(key,{wf:iv.wf}); await persistWf(key, iv.wf, by); renderList(); return; }
+      // ✓ Staðfest er ROFI: smellur staðfestir, annar smellur af-staðfestir
+      // (gamli ✏️ Breyta takkinn var óþarfi — Agnar 2026-09-03).
+      if(act==='confirm' || act==='breyta'){
+        if(iv.wf.confirmed){ iv.wf.confirmed=false; wfPatchLocal(key,{wf:iv.wf}); await persistWf(key, iv.wf); }
+        else { const by=bhMe(); iv.wf.confirmed=true; iv.wf.confirmed_by=by; iv.wf.confirmed_at=new Date().toISOString(); wfPatchLocal(key,{wf:iv.wf}); await persistWf(key, iv.wf, by); }
+        renderList(); return;
+      }
       if(act==='send'){
         if(iv.sent && !confirm('Þegar sent. Senda aftur?')) return;
         const ws=iv.worksite||'', wm=iv.work_month||'', cust=iv.customer||ws;
