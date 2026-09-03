@@ -78,9 +78,14 @@ exports.handler = async (event) => {
       return total;
     }
 
+    // project_aliases: rithættir sama verkstaðar renna saman (Agnar 03.09.2026: „Stórhöfða29"
+    // vs „Stórhöfði 29" birtust sem tvö verk í Kröfuyfirliti). Sama kort og Ajour-talningin.
+    const aliasRows = await sb('project_aliases?select=canonical_name,alias').catch(() => []);
+    const aliasMap = {};
+    for (const a of (aliasRows || [])) if (a && a.alias) aliasMap[a.alias] = a.canonical_name;
     const byProject = new Map();
     for (const r of entries) {
-      const p = r.project;
+      const p = aliasMap[r.project] || r.project;
       if (!byProject.has(p)) byProject.set(p, {
         project: p,
         hours: 0, days: new Set(), staff: new Set(),
