@@ -10429,6 +10429,15 @@ async function renderGerdReikninga(t){
       .gb-kpi{box-shadow:var(--slab-shadow,0 16px 32px -12px rgba(0,0,0,.85)),inset 0 1px 0 rgba(255,255,255,.06)}.gb-kpi .k{border-right:1px solid #24221d;box-shadow:1px 0 0 #3f3c34}
       .gb-kpi .k.total .kl{color:#d9b25a}.gb-kpi .k.total .kv{background:var(--gold-text,linear-gradient(180deg,#f7e6b8 0%,#e2c064 45%,#b8892e 100%));-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 1px 0 rgba(0,0,0,.7))}
       @media(max-width:860px){.gb-r2,.gb-dates,.gb-price{grid-template-columns:1fr}.gb-dates{gap:8px}.gr-modal-bg.boss .gb-sec[data-sec="03"]{--mcols:minmax(0,1fr) 70px 46px 62px 20px}.gb-akstur{grid-template-columns:1fr 1fr auto;grid-template-areas:"l l s" "a b b";gap:8px}.gb-akstur>b{grid-area:l}.gb-akstur>.gb-unit:nth-of-type(1){grid-area:a}.gb-akstur>.gb-unit:nth-of-type(2){grid-area:b}.gb-akstur>.gb-hsum{grid-area:s}.gb-akstur .gb-unit span{overflow:visible}.gb-mhead,.gr-modal-bg.boss .gr-mat-line{gap:4px}.gr-modal-bg.boss .gb-redder{grid-template-columns:1fr auto}.gb-redder .d{grid-column:1 / -1}.gb-redder .k{max-width:none}.gb-athuga .w{width:100%}.gb-athuga .w::after{margin-left:auto}}
+      .gb-notes-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 4px;font-size:11.5px;color:var(--muted,#6f685c)}
+      .gb-notes-btn{height:30px;padding:0 10px;border:1px solid var(--edge,#c9c2b3);border-bottom-color:#a89f8c;border-radius:4px;background:linear-gradient(180deg,#fff,#efeae0);box-shadow:var(--key-shadow,inset 0 1px 0 #fff,0 2px 0 #cfc8b9);font:inherit;font-size:12px;font-weight:700;color:var(--ink,#161513);cursor:pointer;white-space:nowrap}.gb-notes-btn:active{transform:translateY(1px)}
+      .gb-notes-st{font-size:11.5px;color:var(--ink-2,#4a463f)}
+      .gb-notes-imgs{display:flex;flex-wrap:wrap;gap:10px;margin:4px 0 2px}.gb-notes-imgs:empty{display:none}
+      .gb-notes-imgs figure{position:relative;margin:0;width:112px}
+      .gb-notes-imgs img{display:block;width:112px;height:80px;object-fit:cover;border:1px solid var(--line-2,#d9d3c6);border-radius:4px;background:#fff;box-shadow:0 1px 2px rgba(22,21,19,.12),0 8px 16px -12px rgba(22,21,19,.5);cursor:zoom-in}
+      .gb-notes-imgs figcaption{font-family:var(--font-mono,ui-monospace,monospace);font-size:9.5px;color:var(--muted,#6f685c);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .gb-notes-imgs .x{position:absolute;top:-7px;right:-7px;width:20px;height:20px;border-radius:50%;border:1px solid #5a2f22;background:var(--red,#b5522a);color:#fff;font-size:13px;line-height:18px;padding:0;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.4)}
+      .gr-modal-bg.boss #gr-notes.drop{outline:2px dashed var(--gold,#c9a54a);outline-offset:2px}
       .gb-hours{margin-top:2px}
       .gb-hrow{display:grid;grid-template-columns:92px 1fr 1fr 96px;gap:10px;align-items:center;padding:5px 0}
       .gb-hrow b{font-size:13px;color:var(--ink,#161513)}.gb-hrow b span{display:block;font-size:10px;color:var(--warn,#8a6a1c);font-weight:400}
@@ -10980,7 +10989,9 @@ async function renderGerdReikninga(t){
             <div class="gb-sec-h"><span class="boss-plate">05</span><span class="gb-sec-t">Athugasemd</span><span class="gb-sec-sub" id="gr-sub-05">innri — birtist ekki á skýrslu</span><b class="gb-sec-sum" id="gr-sum-05"></b><span class="gb-caret">›</span></div>
             <div class="gb-sec-b">
           <div class="gr-st">Athugasemd <span style="font-weight:400;color:var(--muted-2)">(innri — birtist EKKI á skýrslu/PDF)</span></div>
-          <div class="gr-f"><textarea id="gr-notes" rows="2" placeholder="Innri minnispunktur — fer hvorki á reikning né PDF">${escapeHtml(notes)}</textarea></div>
+          <div class="gr-f gb-notes-wrap"><textarea id="gr-notes" rows="2" placeholder="Innri minnispunktur — fer hvorki á reikning né PDF. Límdu skjáskot hér (Ctrl+V).">${escapeHtml(notes)}</textarea></div>
+          <div class="gb-notes-tools"><span class="hint">Límdu skjáskot beint í reitinn (Ctrl+V / ⌘V, „Líma" á síma), dragðu það inn eða</span><button type="button" class="gb-notes-btn" id="gr-notes-img-btn" title="Velja mynd úr tölvu/síma — vistast sem innra viðhengi">📷 Bæta við mynd</button><input type="file" id="gr-notes-img-file" accept="image/*" multiple hidden><span class="gb-notes-st" id="gr-notes-st"></span></div>
+          <div class="gb-notes-imgs" id="gr-notes-imgs"></div>
             </div>
           </section>
           <div class="gr-actions">
@@ -11253,6 +11264,49 @@ async function renderGerdReikninga(t){
           e.target.value = '';
         };
       }
+      // 📎 Skjáskot í Athugasemd (Agnar 03.09.2026): líma/draga/📷 → innra viðhengi (sendist aldrei), smámyndir undir reitnum
+      const NT_PREFIX = 'Athugasemd-skjáskot';
+      let ntDocs = [];
+      const ntSt = (t) => { const e = K('gr-notes-st'); if(e) e.textContent = t || ''; };
+      function ntRender(){
+        const box = K('gr-notes-imgs'); if(!box) return;
+        box.innerHTML = ntDocs.map((d, i) => '<figure class="th" data-i="' + i + '"><img src="' + escapeAttr(d.public_url || '') + '" alt="skjáskot" loading="lazy"><figcaption>' + escapeHtml(String(d.title || '').replace(NT_PREFIX, '').replace(/^[\s·]+/, '').replace(/\.(png|jpe?g|webp|gif)$/i, '').slice(0, 30)) + '</figcaption><button type="button" class="x" title="Eyða skjáskoti">×</button></figure>').join('');
+        const s5 = K('gr-sum-05'); if(s5) s5.textContent = ntDocs.length ? ('🖼 ' + ntDocs.length) : '';
+        box.querySelectorAll('figure').forEach(fg => {
+          const d = ntDocs[Number(fg.dataset.i)]; if(!d) return;
+          fg.querySelector('img').onclick = () => { const lb = document.createElement('div'); lb.className = 'gb-lightbox'; lb.innerHTML = '<div class="c">Athugasemd · innra skjáskot · sendist ekki · smelltu til að loka</div><img src="' + escapeAttr(d.public_url || '') + '" alt="skjáskot">'; lb.onclick = () => lb.remove(); document.body.appendChild(lb); };
+          fg.querySelector('.x').onclick = async () => { if(!confirm('Eyða þessu skjáskoti?')) return; try{ await fetch('/api/efnislisti-docs', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ drive_file_id: d.drive_file_id }) }); }catch(_){} await ntLoad(); if(typeof window.__grReloadPdfList === 'function') window.__grReloadPdfList(); };
+        });
+      }
+      async function ntLoad(){ try{ const r = await fetch('/api/efnislisti-docs?doc_type=innra'); const j = r.ok ? await r.json() : { rows: [] }; ntDocs = (j.rows || []).filter(x => x.worksite_name === name && x.work_month === month && String(x.title || '').startsWith(NT_PREFIX)); }catch(_){ ntDocs = []; } ntRender(); }
+      async function ntUpload(files){
+        const list = [...(files || [])].filter(f => f && /^image\//.test(f.type));
+        if(!list.length){ ntSt('Engin mynd í því sem kom — bara myndir vistast hér'); return; }
+        for(const f of list){
+          try{
+            if(f.size > 4 * 1024 * 1024) throw new Error('Myndin er stærri en 4 MB — minnkaðu hana');
+            ntSt('⏳ Vista skjáskot…');
+            const b64 = await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(',')[1]); fr.onerror = () => rej(new Error('Gat ekki lesið myndina')); fr.readAsDataURL(f); });
+            const d = new Date(), hh = String(d.getHours()).padStart(2, '0') + '.' + String(d.getMinutes()).padStart(2, '0');
+            const ext = ((f.type.split('/')[1] || 'png').replace('jpeg', 'jpg')).replace(/[^a-z0-9]/gi, '');
+            const generic = !f.name || /^(image|blob|skjáskot|screenshot)[^.]*\.(png|jpe?g|webp|gif)$/i.test(f.name);
+            const fn = NT_PREFIX + ' ' + month + ' · ' + d.toISOString().slice(0, 10) + ' ' + hh + (generic ? '.' + ext : ' · ' + f.name);
+            const r = await fetch('/api/pdf-store', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ fileName: fn, contentBase64: b64, mimeType: f.type || 'image/png', worksite_name: name, work_month: month, doc_type: 'innra' }) });
+            const j = await r.json().catch(() => ({})); if(!r.ok || j.error) throw new Error(j.error || ('HTTP ' + r.status));
+            ntSt('🔒 Skjáskot vistað — innra, sendist ekki með skýrslu');
+          }catch(err){ ntSt('✗ ' + (err.message || err)); }
+        }
+        await ntLoad(); if(typeof window.__grReloadPdfList === 'function') window.__grReloadPdfList();
+      }
+      const ntTa = K('gr-notes'), ntBtn = K('gr-notes-img-btn'), ntFile = K('gr-notes-img-file');
+      if(ntTa){
+        ntTa.addEventListener('paste', (e) => { const cd = e.clipboardData; if(!cd) return; const imgs = [...(cd.items || [])].filter(it => it.kind === 'file' && /^image\//.test(it.type)).map(it => it.getAsFile()).filter(Boolean); if(!imgs.length) return; const hasText = [...(cd.types || [])].includes('text/plain') && String(cd.getData('text/plain') || '').trim(); if(!hasText) e.preventDefault(); ntUpload(imgs); });
+        ntTa.addEventListener('dragover', (e) => { if([...((e.dataTransfer || {}).types || [])].includes('Files')){ e.preventDefault(); ntTa.classList.add('drop'); } });
+        ntTa.addEventListener('dragleave', () => ntTa.classList.remove('drop'));
+        ntTa.addEventListener('drop', (e) => { ntTa.classList.remove('drop'); const fl = (e.dataTransfer || {}).files; if(fl && fl.length){ e.preventDefault(); ntUpload(fl); } });
+      }
+      if(ntBtn && ntFile){ ntBtn.onclick = () => ntFile.click(); ntFile.onchange = (e) => { ntUpload(e.target.files); e.target.value = ''; }; }
+      ntLoad();
       tvLoad();
     })();
     (function(){ const _dm=document.getElementById('gr-datemode'), _dt=document.getElementById('gr-datetext'); if(_dm&&_dt) _dm.addEventListener('change', ()=>{ _dt.style.display=_dm.checked?'':'none'; if(_dm.checked){ _dt.focus(); } draw(); }); })();
