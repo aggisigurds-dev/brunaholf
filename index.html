@@ -11227,7 +11227,7 @@ async function renderGerdReikninga(t){
       bg.__bossSums = bossSums; bossSums();
       const mo = new MutationObserver(() => { try{ bossSums(); }catch(_){} }); const mats = K('gr-mats'); if(mats) mo.observe(mats, { childList: true, subtree: true, characterData: true });
       ['gr-dvh-sync','gr-evh-sync'].forEach(id => { const e = K(id); if(e) mo.observe(e, { childList: true, subtree: true, characterData: true }); });
-      const ro = K('gr-redder-open'); if(ro) ro.addEventListener('click', () => { const f = ((K('gr-fra') || {}).value || '').match(/(\d{2})\.(\d{4})$/); const ym = f ? f[2] + '-' + f[1] : ''; if(typeof rgOpenEfniEditor === 'function') rgOpenEfniEditor((K('gr-ws') || {}).value || '', ym); });
+      const ro = K('gr-redder-open'); if(ro) ro.addEventListener('click', () => { const f = ((K('gr-fra') || {}).value || '').match(/(\d{2})\.(\d{4})$/); const ym = f ? f[2] + '-' + f[1] : ''; if(typeof rgOpenEfniEditor !== 'function') return; rgOpenEfniEditor((K('gr-ws') || {}).value || '', ym); const mb = document.getElementById('modalBg'); if(mb){ mb.style.zIndex = '9500'; const o = new MutationObserver(() => { if(!mb.classList.contains('open')){ mb.style.zIndex = ''; o.disconnect(); } }); o.observe(mb, { attributes: true, attributeFilter: ['class'] }); } });
       K('gr-athuga').addEventListener('click', e => { const p = e.target.closest('.w'); if(!p) return; const sec = bg.querySelector('.gb-sec[data-sec="' + p.dataset.sec + '"]'); if(sec){ sec.classList.remove('collapsed'); sec.scrollIntoView({ behavior: 'smooth', block: 'start' }); } });
       // 🖼 Tímavera-skjáskot — eitt per (verkstað, mánuð), innra viðhengi (doc_type innra), sendist aldrei.
       const TV_PREFIX = 'Tímavera-skjáskot';
