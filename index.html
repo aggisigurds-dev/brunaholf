@@ -11302,7 +11302,7 @@ async function renderGerdReikninga(t){
           const mis = /⚠/.test(dvS) || /⚠/.test(evS);
           strip.classList.toggle('warn', mis);
           if(/Ber saman/.test(dvS)) stripT.textContent = 'Ber saman við tímabók…';
-          else if(mis) stripT.innerHTML = '⚠ Tímabók segir <b>' + escapeHtml(tb || '?') + ' klst</b> — reikningur <b>' + rk + '</b>.' + (/⚠/.test(evS) ? ' ' + escapeHtml(evS.replace(/⚠/g,'').trim()) : '');
+          else if(mis) stripT.innerHTML = '⚠ Tímabók segir <b>' + escapeHtml(tb || '?') + ' klst</b> — reikningur <b>' + rk + '</b>.' + (/⚠/.test(evS) ? ' Yfirvinna: ' + escapeHtml(evS.replace(/[⚠️]/g,'').replace(/^\s*tímabók:\s*/i,'').trim()) : '');
           else stripT.textContent = '✓ Tímabók og reikningur í takt' + (tb ? ' (' + tb + ' klst)' : '') + '.';
           const fb = K('gr-fill-hours'); if(fb) fb.style.display = mis ? '' : 'none';
         }
