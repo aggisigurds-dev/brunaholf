@@ -10346,6 +10346,28 @@ async function renderGerdReikninga(t){
       .gr-modal-bg.boss .gr-form{grid-area:form;background:transparent;border-right:0;padding:14px 16px 0;max-height:calc(94vh - 68px);overflow-y:auto}
       .gr-modal-bg.boss .gr-prev{grid-area:prev;background:transparent;padding:14px 18px 18px 0;max-height:none;overflow-y:auto}
       .gr-modal-bg.boss .gr-doc{box-shadow:0 1px 2px rgba(22,21,19,.15),0 18px 36px -18px rgba(22,21,19,.5);border:1px solid var(--line-2,#d9d3c6)}
+      .mm-bg{position:fixed;inset:0;z-index:100000;background:rgba(10,10,9,.55);display:flex;align-items:center;justify-content:center;padding:16px}
+      .mm{width:min(520px,96vw);max-height:90vh;overflow:auto;background:var(--bg,#f4f1ea);border:1px solid #000;border-radius:6px;box-shadow:0 30px 80px rgba(0,0,0,.55);border-top:3px solid transparent;border-image:var(--gold-line,linear-gradient(90deg,#7a5a12,#f5d76e,#7a5a12)) 1;border-image-width:3px 0 0 0}
+      .mm-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding:12px 15px;background:linear-gradient(180deg,#1c1b18,#0a0a09);color:#e8e2d3}
+      .mm-h b{font-family:var(--font-display,Georgia,serif);font-size:17px;color:#f5d76e;font-weight:700}
+      .mm-h span{font-size:12.5px;color:#b8b1a1}
+      .mm-b{padding:14px 15px;background:var(--card,#fff)}
+      .mm-list{border:1px solid var(--line-2,#d9d3c6);border-radius:5px;overflow:hidden;margin-bottom:14px}
+      .mm-r{display:grid;grid-template-columns:1fr auto auto;gap:12px;padding:8px 11px;border-top:1px solid var(--line,#e6e1d6);font-size:13.5px;align-items:baseline}
+      .mm-r:first-child{border-top:0}
+      .mm-f label{display:block;font-family:var(--font-mono,ui-monospace,monospace);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted,#6f685c);margin-bottom:5px}
+      .mm-well{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:7px 10px;border:1px solid var(--edge,#c9c2b3);border-radius:4px;background:var(--input-bg,#f6f3ec);box-shadow:var(--well-shadow,inset 0 2px 3px rgba(22,21,19,.12))}
+      .mm-well input{border:0;background:transparent;font:inherit;font-family:var(--font-mono,ui-monospace,monospace);font-size:13.5px;color:var(--ink,#161513);padding:2px 0}
+      .mm-hint{margin-left:auto;font-size:11.5px;color:var(--muted,#6f685c)}
+      .mm-opt{display:flex;align-items:flex-start;gap:10px;margin-top:12px;padding:10px 12px;border:1px solid var(--line-2,#d9d3c6);border-radius:5px;background:#fff;cursor:pointer;font-size:13.5px}
+      .mm-opt.on{border-color:#d9b25a;background:var(--warn-bg,#fbf3d9)}
+      .mm-opt input{width:18px;height:18px;accent-color:#8f6a1c;margin:1px 0 0;flex:none}
+      .mm-opt small{display:block;color:var(--muted,#6f685c);font-size:11.5px;margin-top:2px;line-height:1.45}
+      .mm-opt>b:last-child{margin-left:auto;white-space:nowrap;padding-left:8px}
+      .mm-tot{display:flex;align-items:baseline;gap:10px;margin-top:14px;padding:9px 12px;border:1px solid var(--line-2,#d9d3c6);border-radius:5px;background:var(--bg-2,#ece7dc);font-weight:600}
+      .mm-tot b{margin-left:auto;font-size:19px}
+      .mm-note{margin-top:12px;font-size:12.5px;line-height:1.5;color:var(--ink-2,#4a463f)}
+      .mm-a{display:flex;gap:9px;justify-content:flex-end;padding:12px 15px;background:var(--bg,#f4f1ea);border-top:1px solid var(--line-2,#d9d3c6)}
       .gb-athuga{display:none;margin:0 0 12px;padding:9px 12px;border:1px solid #d9b25a;border-radius:5px;background:linear-gradient(180deg,#fbf3d9,#f4e6b8);font-size:12.5px;color:#3e2c06;box-shadow:inset 0 1px 0 #fff}
       .gb-athuga.on{display:block}
       .gb-athuga .t{font-family:var(--font-mono,ui-monospace,monospace);font-size:10px;letter-spacing:.14em;color:#8f6a1c;margin-bottom:5px}
@@ -10435,6 +10457,7 @@ async function renderGerdReikninga(t){
       .gb-field .fl{padding:3px 0;border-top:1px dashed rgba(143,106,28,.35)}.gb-field .fl small{color:#8f6a1c;margin-left:6px;font-size:11px}.gb-field .fl.p{white-space:pre-wrap}
       .gb-field .fb{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}.gb-field .fb .h{font-size:10.5px;color:#8f6a1c;flex:1 1 100%}.gb-field .fb .h a{color:#8f6a1c}
       .gb-field-btn{height:30px;padding:0 10px;border:1px solid #5a4410;border-top-color:#f7e6b8;border-bottom-color:#2e2004;border-radius:4px;background:var(--gold-face,linear-gradient(180deg,#f3dc95,#b8892e));font:inherit;font-size:12px;font-weight:800;color:#161513;cursor:pointer}.gb-field-btn.ivory{border-color:var(--edge,#c9c2b3);border-bottom-color:#a89f8c;background:linear-gradient(180deg,#fff,#efeae0);font-weight:700}.gb-field-btn[disabled]{opacity:.6;cursor:default}
+      .gr-modal-bg.boss .gb-samr{display:inline-block;padding:1px 7px;margin-right:6px;border-radius:2px;border:1px solid #5a4410;background:var(--gold-face,linear-gradient(180deg,#f3dc95,#b8892e));color:#2e2004;font-family:var(--font-mono,ui-monospace,monospace);font-size:10px;letter-spacing:.08em}
       .gb-hours{margin-top:2px}
       .gb-hrow{display:grid;grid-template-columns:92px 1fr 1fr 96px;gap:10px;align-items:center;padding:5px 0}
       .gb-hrow b{font-size:13px;color:var(--ink,#161513)}.gb-hrow b span{display:block;font-size:10px;color:var(--warn,#8a6a1c);font-weight:400}
@@ -10735,8 +10758,13 @@ async function renderGerdReikninga(t){
         <td class="num">${gataFlag?'—':fmt(r.dv)}</td>
         <td class="num">${gataFlag?'—':(pgFailed?'⚠':(est?fmt(est):'—'))}</td>
         <td class="num">${redder>0?fmt(redder):'—'}</td>
-        <td>${saved?`<span class="gr-pill gr-pill-saved">✓ ${fmt(d.total_m_vsk)}</span>`:`<span class="gr-pill gr-pill-todo">⏳ eftir</span>`}</td>
-        <td>${gataFlag?`<button class="gr-btn gr-btn-primary" data-gr-gata="${escapeAttr(name)}">📐 Uppgjör</button>`:`<button class="gr-btn gr-btn-primary" data-gr-edit="${escapeAttr(name)}">🧾 Efnislisti</button>`}</td>
+        <td>${d && d.status==='merged'
+            ? `<span class="gr-pill" style="background:var(--bg-2);color:var(--muted);border:1px solid var(--line-2)" title="Rann inn í samreikning ${escapeAttr(monthLabel(d.merged_into||''))} — ekkert tapast">⧉ í samreikningi</span>`
+            : (saved?`<span class="gr-pill gr-pill-saved">✓ ${fmt(d.total_m_vsk)}</span>${d.merged_from?` <span class="gr-pill" style="background:var(--gold-face,linear-gradient(180deg,#f3dc95,#b8892e));color:#2e2004;border:1px solid #5a4410" title="Samreikningur úr ${escapeAttr((d.merged_from||[]).map(x=>x.work_month).join(', '))} + þessum mánuði">⧉ samreikningur</span>`:''}`
+                   :`<span class="gr-pill gr-pill-todo">⏳ eftir</span>`)}</td>
+        <td>${d && d.status==='merged'
+            ? `<button class="gr-btn" data-gr-unmerge="${escapeAttr(d.merged_into||'')}" data-gr-ws="${escapeAttr(name)}" title="Skila þessum mánuði úr samreikningnum">↩ Aftengja</button>`
+            : (gataFlag?`<button class="gr-btn gr-btn-primary" data-gr-gata="${escapeAttr(name)}">📐 Uppgjör</button>`:`<button class="gr-btn gr-btn-primary" data-gr-edit="${escapeAttr(name)}">🧾 Efnislisti</button>`)}</td>
       </tr>`;
     };
 
@@ -10777,6 +10805,20 @@ async function renderGerdReikninga(t){
     $meta.textContent = `${monthLabel(month)} · ${fmt(savedTotal)} kr vistað · ${pending} eftir`;
     $host.querySelectorAll('[data-gr-edit]').forEach(b=> b.onclick = ()=> { if(state.ui) state.ui.grReturnTo = null; openEditor(b.dataset.grEdit); });
     $host.querySelectorAll('[data-gr-gata]').forEach(b=> b.onclick = ()=> openGata(b.dataset.grGata));
+    // ↩ Aftengja: skilar mánuðinum úr samreikningnum og setur seinni mánuðinn í fyrra horf.
+    $host.querySelectorAll('[data-gr-unmerge]').forEach(b=> b.onclick = async ()=>{
+      const ws = b.dataset.grWs, tm = b.dataset.grUnmerge;
+      if(!tm){ alert('Veit ekki í hvaða samreikning þessi mánuður fór.'); return; }
+      if(!confirm('Aftengja '+ws+' úr samreikningnum í '+monthLabel(tm)+'?\n\nMánuðirnir fara í fyrra horf og samreikningurinn hverfur.')) return;
+      b.disabled = true; b.textContent = '⏳…';
+      try{
+        const r = await fetch('/api/invoice-drafts', { method:'POST', headers:{'content-type':'application/json'},
+          body: JSON.stringify({ action:'unmerge', worksite_name: ws, work_month: tm, updated_by: 'gerd-reikninga' }) });
+        const j = await r.json().catch(()=>({}));
+        if(!r.ok || j.error) throw new Error(j.error || ('HTTP '+r.status));
+        await load(true);
+      }catch(e){ alert('Gat ekki aftengt: '+(e.message||e)); b.disabled = false; b.textContent = '↩ Aftengja'; }
+    });
     // Per-worksite note box (saved to app-state, persists across months + devices).
     $host.querySelectorAll('[data-gr-note]').forEach(ta=> ta.addEventListener('change', ()=>{
       state.ui.gr_card_notes = state.ui.gr_card_notes || {};
@@ -10829,7 +10871,7 @@ async function renderGerdReikninga(t){
         tbEv = Math.round((Number(t.yf)||0)*100)/100;
         source = 'breytt tímabók';
       } else {
-        const resp = await fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&month=${encodeURIComponent(month)}`);
+        const resp = await fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&${grPeriodQS}`);
         const data = await resp.json();
         if(!resp.ok) throw new Error(data.error || ('HTTP '+resp.status));
         const sp = data.split || {};
@@ -10855,8 +10897,12 @@ async function renderGerdReikninga(t){
     const ymd = s => { const p=String(s||'').trim().split('.'); if(p.length===3){ const d=p[0].padStart(2,'0'), m=p[1].padStart(2,'0'), y=p[2]; if(/^\d{4}$/.test(y)&&+m>=1&&+m<=12&&+d>=1&&+d<=31) return `${y}-${m}-${d}`; } return ''; };
     const month = state.ui.gr_month;
     const r = rateFor(name);
-    const { fra, til } = monthRange(month);
     const d = draftFor(name);
+    // Samreikningur milli mánaða (03.09.2026): tímabilið á drögunum ræður Frá/Til og
+    // tímabókinni — annars mánaðamörkin eins og áður.
+    const grPeriod = (d && d.period_from && d.period_to) ? { from: String(d.period_from).slice(0,10), to: String(d.period_to).slice(0,10) } : null;
+    const grPeriodQS = grPeriod ? ('from=' + grPeriod.from + '&to=' + grPeriod.to) : ('month=' + encodeURIComponent(month));
+    const { fra, til } = grPeriod ? { fra: grPeriod.from, til: grPeriod.to } : monthRange(month);
     const wObj = WS.find(w=>w.project===name) || {};
     const pgRow = PG[name] || {};
     const ov = PAYER_OVERRIDE[name] || {};
@@ -10923,7 +10969,7 @@ async function renderGerdReikninga(t){
         <header class="gb-head">
           <div class="gb-title">Efnislisti</div>
           <span class="gb-plate">${d&&d.id?('DRÖG '+d.id):'NÝ DRÖG'}</span>
-          <div class="gb-meta">Mánaðamóta-reikningagerð · <b>${escapeHtml(name)}</b> · ${dmy(fra)}–${dmy(til)}</div>
+          <div class="gb-meta">${grPeriod?'<b class="gb-samr">⧉ SAMREIKNINGUR</b> ':'Mánaðamóta-reikningagerð · '}<b>${escapeHtml(name)}</b> · ${dmy(fra)}–${dmy(til)}${grPeriod&&d&&d.merged_from?' · úr '+escapeHtml((d.merged_from||[]).map(x=>x.work_month).join(' + '))+' + '+escapeHtml(month):''}</div>
           <span class="gb-status${d&&d.updated_at?'':' unsaved'}" id="gr-hd-status"><i class="boss-led"></i><span id="gr-hd-status-t">${(()=>{const t=d&&d.updated_at?new Date(d.updated_at):null;return t&&!isNaN(t)?('vistað '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')):'óvistað';})()}</span></span>
           <button class="gr-x" id="gr-close" type="button" title="Loka">×</button>
         </header>
@@ -11495,7 +11541,7 @@ async function renderGerdReikninga(t){
           btn.textContent = '⏳ Sæki tíma…'; btn.disabled = true;
           try {
             const ctrl = new AbortController(); const to = setTimeout(()=>ctrl.abort(), 15000);
-            const resp = await fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&month=${encodeURIComponent(month)}`, { signal: ctrl.signal });
+            const resp = await fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&${grPeriodQS}`, { signal: ctrl.signal });
             clearTimeout(to);
             const d = await resp.json().catch(()=>({}));
             if(resp.ok) rows = (d.rows||[]).map(r=>({ date:r.date||'', employee:r.employee||'', time_in:r.time_in||'', time_out:r.time_out||'', hours:Number(r.hours)||0 }));
@@ -11573,7 +11619,7 @@ async function renderGerdReikninga(t){
       btn.textContent = '⏳ Bý til PDF…'; btn.disabled = true;
       const $st = document.getElementById('gr-save-st');
       try {
-        const tb = await tbkLoadRows(name, month);
+        const tb = await tbkLoadRows(name, month, grPeriod);
         if(!tb.rows.length && !confirm('Engar tímafærslur fundust fyrir þennan mánuð — búa samt til PDF með tómri Tímaskýrslu á síðu 2?')) return;
         const res = await buildAndSaveCombinedPdf(name, month, grPdfData(), tb.rows, tb.yf);
         $st.innerHTML = `✓ PDF (2 síður) vistað — <a href="${res.webViewLink}" target="_blank" rel="noopener">opna</a> · <a href="${res.downloadUrl}" target="_blank" rel="noopener">sækja</a>`;
@@ -11587,7 +11633,7 @@ async function renderGerdReikninga(t){
       const btn = document.getElementById('gr-fill-hours');
       const old = btn.textContent; btn.textContent = '⏳…'; btn.disabled = true;
       try {
-        const resp = await fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&month=${encodeURIComponent(month)}`);
+        const resp = await fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&${grPeriodQS}`);
         const data = await resp.json();
         if(!resp.ok) throw new Error(data.error || ('HTTP '+resp.status));
         const sp = data.split;
@@ -11638,7 +11684,7 @@ async function renderGerdReikninga(t){
         if(thr) thr.addEventListener('change', ()=>{ const v=tbkNum(thr.value); tbkYf.thr=v>0?v:8; tbkSync(true); paintTbk(); });
       }
       if(tbkSaved && Array.isArray(tbkSaved.rows)){ tbkRows=tbkSaved.rows.map(r=>({...r})); tbkSort(); paintTbk(); }
-      else if(name && /^\d{4}-\d{2}$/.test(String(month))){ fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&month=${encodeURIComponent(month)}`).then(r=>r.json()).then(d=>{ tbkRows=(d.rows||[]).map(r=>({date:r.date||'',employee:r.employee||'',time_in:r.time_in||'',time_out:r.time_out||'',hours:Number(r.hours)||0})); tbkSort(); paintTbk(); }).catch(()=>{ const b=document.getElementById('gr-tbk-body'); if(b) b.innerHTML='<div class="gr-tbk-empty">Gat ekki sótt Tímaveru — bættu við með ＋.</div>'; }); }
+      else if(name && /^\d{4}-\d{2}$/.test(String(month))){ fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&${grPeriodQS}`).then(r=>r.json()).then(d=>{ tbkRows=(d.rows||[]).map(r=>({date:r.date||'',employee:r.employee||'',time_in:r.time_in||'',time_out:r.time_out||'',hours:Number(r.hours)||0})); tbkSort(); paintTbk(); }).catch(()=>{ const b=document.getElementById('gr-tbk-body'); if(b) b.innerHTML='<div class="gr-tbk-empty">Gat ekki sótt Tímaveru — bættu við með ＋.</div>'; }); }
       else { paintTbk(); }
       // ＋ vistar strax (03.09.2026): áður tapaðist ný lína ef gluggi var lokaður/endurhlaðinn áður en reitur var fylltur.
       { const a=document.getElementById('gr-tbk-add'); if(a) a.onclick=()=>{ tbkRows.unshift({date:(/^\d{4}-\d{2}$/.test(String(month))?month:'')+'-01',employee:'',time_in:'',time_out:'',hours:0}); paintTbk(); tbkPersist(); }; }
@@ -15305,8 +15351,92 @@ async function renderKrofuyfirlit(t){
   // (worksite_name,work_month) drög með samtölunni, merkir svo öll upprunalegu
   // drögin status:'skipped' (þau lifa áfram — bara hverfa úr Ósendar-þrepi 2, sjá
   // krofu-yfirlit-bru.js) svo upphæðin tvítelst ekki.
+  // ⧉ Samreikningur milli mánaða (Agnar 03.09.2026: „verk síðustu vikuna í mánuði og
+  // fyrstu vikuna í þeim næsta"). Sami verkstaður, tveir eða fleiri mánuðir → EINN
+  // reikningur á drögum SEINNI mánaðarins; hinir fá status 'merged' og lifa áfram
+  // (Aftengja skilar öllu). Bakendinn (/api/invoice-drafts action:'merge') leggur
+  // saman og dregur tvítöldu staðfestinguna frá — reiknað server-megin svo tvær
+  // vélar geti ekki sent ósamhljóða tölur.
+  async function openMergeMonthsModal(invs){
+    const ws = invs[0].worksite;
+    const months = [...new Set(invs.map(iv=>iv.work_month))].sort();
+    const target = months[months.length-1];
+    const full = m => REVIEWS[ws+'|'+m] || {};
+    const stadfMonths = months.filter(m=>Number(full(m).stadfesting)>0);
+    const stadfDup = stadfMonths.length>1
+      ? months.reduce((a,m)=>a+(Number(full(m).stadfesting)||0),0) - Math.max(...months.map(m=>Number(full(m).stadfesting)||0))
+      : 0;
+    const sumTotal = invs.reduce((a,iv)=>a+(Number(iv.amount)||0),0);
+    const vskF = (()=>{ const d=full(target); const n=Number(d.net_an_vsk)||0; return n>0 ? (Number(d.vsk_amount)||0)/n : 0.24; })();
+    const rowsHtml = months.map(m=>{
+      const d = full(m), iv = invs.find(x=>x.work_month===m) || {};
+      const h = (Number(d.hours_dagvinna)||0)+(Number(d.hours_eftirvinna)||0);
+      return `<div class="mm-r"><span>${esc(monthLbl(m))}</span><span class="ky-num" style="color:var(--muted)">${h?h.toFixed(2).replace('.',','):'—'} klst</span><span class="ky-num" style="font-weight:700">${fmtKr(iv.amount||d.total_m_vsk)}</span></div>`;
+    }).join('');
+    const bg = document.createElement('div');
+    bg.className = 'mm-bg';
+    bg.innerHTML = `<div class="mm">
+      <div class="mm-h"><b>⧉ Sameina mánuði í einn reikning</b><span>${esc(ws)}</span></div>
+      <div class="mm-b">
+        <div class="mm-list">${rowsHtml}</div>
+        <div class="mm-f"><label>Tímabil reikningsins</label>
+          <div class="mm-well"><input type="date" id="mm-from"><span>→</span><input type="date" id="mm-to"><span class="mm-hint" id="mm-hint">sæki dagsetningar…</span></div>
+        </div>
+        ${stadfDup>0 ? `<label class="mm-opt on" id="mm-stadf-l"><input type="checkbox" id="mm-stadf" checked><span><b>Staðfesting brunaþéttinga aðeins einu sinni</b><small>Hún stendur á ${stadfMonths.length} mánuðum. Sé hvor sendur í sínu lagi rukkast hún ${stadfMonths.length}×.</small></span><b class="ky-num">−${fmtKr(Math.round(stadfDup*(1+vskF)))}</b></label>` : ''}
+        <div class="mm-tot"><span>Samtals með vsk</span><b class="ky-num" id="mm-total">${fmtKr(sumTotal - (stadfDup>0?Math.round(stadfDup*(1+vskF)):0))}</b></div>
+        <div class="mm-note">Mánuðirnir sem sameinast fá stöðuna <b>„í samreikningi"</b> — þeim er ekki eytt og hægt er að aftengja þá aftur. Reikningurinn lendir í <b>${esc(monthLbl(target))}</b>, tímaskýrslan nær yfir allt tímabilið.</div>
+      </div>
+      <div class="mm-a"><button type="button" class="boss-btn ivory" id="mm-cancel">Hætta við</button><button type="button" class="boss-btn gold" id="mm-ok">⧉ Sameina</button></div>
+    </div>`;
+    document.body.appendChild(bg);
+    const $ = s => bg.querySelector(s);
+    const close = () => bg.remove();
+    bg.addEventListener('mousedown', e=>{ if(e.target===bg) close(); });
+    $('#mm-cancel').onclick = close;
+    // Sjálfgefið tímabil = fyrsta og síðasta tímafærsla verksins (ekki mánaðamörkin).
+    const lastDay = (()=>{ const [y,mo]=target.split('-').map(Number); return new Date(y,mo,0).getDate(); })();
+    $('#mm-from').value = months[0]+'-01';
+    $('#mm-to').value = target+'-'+String(lastDay).padStart(2,'0');
+    fetch(`/api/timabok?worksite=${encodeURIComponent(ws)}&from=${months[0]}-01&to=${target}-${String(lastDay).padStart(2,'0')}`)
+      .then(r=>r.json()).then(j=>{
+        const ds = (j.rows||[]).map(r=>r.date).filter(Boolean).sort();
+        if(ds.length){ $('#mm-from').value = ds[0]; $('#mm-to').value = ds[ds.length-1]; $('#mm-hint').textContent = ds.length+' færslur'; }
+        else $('#mm-hint').textContent = 'engar tímafærslur — stilltu sjálf/ur';
+      }).catch(()=>{ $('#mm-hint').textContent = 'náði ekki í tíma — stilltu sjálf/ur'; });
+    const recalc = () => {
+      const once = !$('#mm-stadf') || $('#mm-stadf').checked;
+      if($('#mm-stadf-l')) $('#mm-stadf-l').classList.toggle('on', once);
+      $('#mm-total').textContent = fmtKr(sumTotal - (once && stadfDup>0 ? Math.round(stadfDup*(1+vskF)) : 0));
+    };
+    if($('#mm-stadf')) $('#mm-stadf').onchange = recalc;
+    $('#mm-ok').onclick = async () => {
+      const btn = $('#mm-ok'); btn.disabled = true; btn.textContent = '⏳ Sameinar…';
+      try{
+        const r = await fetch('/api/invoice-drafts', { method:'POST', headers:{'content-type':'application/json'},
+          body: JSON.stringify({ action:'merge', worksite_name: ws, months,
+            period_from: $('#mm-from').value || null, period_to: $('#mm-to').value || null,
+            stadf_once: !$('#mm-stadf') || $('#mm-stadf').checked, updated_by: (typeof bhMe==='function' && bhMe()) || 'kröfuyfirlit' }) });
+        const j = await r.json().catch(()=>({}));
+        if(!r.ok || j.error) throw new Error(j.error || ('HTTP '+r.status));
+        close();
+        t2Selected.clear(); t2SelectMode = false;
+        try{ await load(true); }catch(_){}
+      }catch(e){
+        alert('Sameining mistókst: '+(e.message||e));
+        btn.disabled = false; btn.textContent = '⧉ Sameina';
+      }
+    };
+  }
+
   function openCombineModal(invs){
     if(!invs || invs.length<2) return;
+    // Sami verkstaður, ólíkir mánuðir → samreikningur (nýja leiðin). Ólíkir verkstaðir
+    // fara áfram gömlu leiðina: nýtt drög með samanlagðri upphæð.
+    {
+      const wsSet = new Set(invs.map(iv=>iv.worksite).filter(Boolean));
+      const mSet = new Set(invs.map(iv=>iv.work_month).filter(Boolean));
+      if(wsSet.size===1 && mSet.size===invs.length && invs.every(iv=>iv.worksite && iv.work_month)) return openMergeMonthsModal(invs);
+    }
     const total = invs.reduce((a,iv)=>a+(Number(iv.amount)||0),0);
     const months = [...new Set(invs.map(iv=>iv.work_month).filter(Boolean))].sort();
     const defMonth = months[months.length-1] || CUR_MONTH;
@@ -20845,14 +20975,15 @@ async function buildAndSaveCombinedPdf(name, month, data, rows, yfCfg, overwrite
 }
 // Tímaskýrslu-raðir fyrir samsetta PDF-ið: vistað eintak (timabok_edits, sama
 // og Tímabókar-glugginn sýnir) ef til, annars beint úr Tímaveru.
-async function tbkLoadRows(name, month){
+async function tbkLoadRows(name, month, period){
   const saved = (state.ui && state.ui.timabok_edits && state.ui.timabok_edits[name+'|'+month]) || null;
   const yf = (saved && saved.yfirvinna)
     ? { on: !!saved.yfirvinna.on, thr: (Number(saved.yfirvinna.thr) > 0 ? Number(saved.yfirvinna.thr) : 8) }
     : { on:false, thr:8 };
   if(saved && Array.isArray(saved.rows)) return { rows: saved.rows.map(r=>({...r})), yf };
   if(!name || !/^\d{4}-\d{2}$/.test(String(month))) return { rows:[], yf };
-  const resp = await fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&month=${encodeURIComponent(month)}`);
+  const qs = (period && period.from && period.to) ? ('from=' + period.from + '&to=' + period.to) : ('month=' + encodeURIComponent(month));
+  const resp = await fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&${qs}`);
   const j = await resp.json().catch(()=>({}));
   if(!resp.ok) throw new Error(j.error || ('HTTP '+resp.status));
   const rows = (j.rows||[]).map(r=>({ date:r.date||'', employee:r.employee||'', time_in:r.time_in||'', time_out:r.time_out||'', hours:Number(r.hours)||0 }));

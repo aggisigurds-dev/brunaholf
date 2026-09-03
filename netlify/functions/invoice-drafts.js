@@ -44,6 +44,10 @@ exports.handler = async (event) => {
     let body;
     try { body = JSON.parse(event.body || '{}'); }
     catch { return json(400, { error: 'Invalid JSON' }); }
+    // Samreikningur milli mánaða (Agnar 03.09.2026) — reiknað SERVER-megin úr röðunum
+    // sjálfum svo tvær vélar geti ekki sent ósamhljóða tölur.
+    if (body.action === 'merge') return mergeMonths(body);
+    if (body.action === 'unmerge') return unmergeMonths(body);
     if (!body.worksite_name || !body.work_month) return json(400, { error: 'worksite_name + work_month required' });
 
     const allowed = [
@@ -66,6 +70,9 @@ exports.handler = async (event) => {
       // hjá yfirmanni (yfirferd.html / The Big Boss app); hann vistar + staðfestir.
       'review_requested', 'review_requested_at', 'review_requested_by',
       'review_confirmed_at', 'review_confirmed_by',
+      // 2026-09-03 (samreikningur milli mánaða): tímabil verksins þegar það spannar
+      // mánaðamót; merged_from/merged_into/merge_snapshot eru sett af merge/unmerge.
+      'period_from', 'period_to',
     ];
     const payload = { updated_at: new Date().toISOString() };
     for (const k of allowed) if (body[k] !== undefined) payload[k] = body[k];
@@ -117,6 +124,110 @@ exports.handler = async (event) => {
 
   return json(405, { error: 'Method not allowed' });
 };
+
+/* ── Samreikningur milli mánaða (Agnar 03.09.2026) ───────────────────────────
+ * Verk sem spannar mánaðamót (t.d. Skúlagata 26, 13.08.–03.09.2026) á að fara á
+ * EINN reikning. Samreikningurinn er drög SEINNI mánaðarins (ákvörðun Agnars: „í
+ * seinni mánuðinum") — engin ný röð og ekkert nýtt flæði gegnum PDF/kröfur.
+ * Fyrri mánuðirnir fá status='merged' + merged_into og eru ALDREI eyddir.
+ *
+ * Upphæðir: net samreiknings = Σ net mánaðanna − staðfestingin sem var tvítalin.
+ * Það er rétt óháð töxtum, því hvert `net_an_vsk` er þegar innbyrðis rétt (akstur,
+ * efni, afsláttur talið með). Reitirnir sjálfir (klst, km, efni, gjöld) leggjast
+ * saman svo Efnislista-ritillinn reikni sömu tölu þegar hann opnar drögin.
+ */
+const MERGE_SUM = ['hours_dagvinna', 'hours_eftirvinna', 'akstur_km', 'akstur_ferdir', 'smahlutagjald', 'materials_total'];
+const MERGE_SNAP = MERGE_SUM.concat(['stadfesting', 'materials_jsonb', 'net_an_vsk', 'vsk_amount', 'total_m_vsk', 'notes', 'status']);
+
+async function sbRows(qs) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${qs}`, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } });
+  if (!r.ok) throw new Error((await r.text()).slice(0, 200));
+  return r.json();
+}
+async function sbPatchRows(filter, patch) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/invoice_drafts?${filter}`, {
+    method: 'PATCH',
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' },
+    body: JSON.stringify(patch),
+  });
+  if (!r.ok) throw new Error((await r.text()).slice(0, 200));
+  return r.json();
+}
+const nz = (v) => Number(v) || 0;
+const inList = (arr) => arr.map((m) => `"${String(m).replace(/"/g, '')}"`).join(',');
+
+async function mergeMonths(body) {
+  const ws = String(body.worksite_name || '').trim();
+  const months = [...new Set((body.months || []).map((m) => String(m).trim()).filter((m) => /^\d{4}-\d{2}$/.test(m)))].sort();
+  if (!ws || months.length < 2) return json(400, { error: 'worksite_name og a.m.k. tveir mánuðir (months) þarf' });
+  const stadfOnce = body.stadf_once !== false;
+
+  let rows;
+  try { rows = await sbRows(`invoice_drafts?worksite_name=eq.${encodeURIComponent(ws)}&work_month=in.(${inList(months)})&select=*`); }
+  catch (e) { return json(502, { error: e.message }); }
+  if (rows.length !== months.length) return json(404, { error: 'Fann ekki drög fyrir alla mánuðina' });
+
+  const locked = rows.filter((r) => ['invoiced', 'sent', 'merged'].includes(String(r.status || '')));
+  if (locked.length) return json(409, { error: 'Þessir mánuðir eru læstir (reikningur gerður eða þegar sameinaðir): ' + locked.map((r) => r.work_month).join(', ') });
+  const fixed = rows.filter((r) => r.fixed_total != null && Number(r.fixed_total) > 0);
+  if (fixed.length) return json(409, { error: 'Fast verð er sett á ' + fixed.map((r) => r.work_month).join(', ') + ' — taktu það af áður en mánuðirnir eru sameinaðir.' });
+
+  const target = rows.reduce((a, b) => (a.work_month > b.work_month ? a : b));   // seinni mánuðurinn
+  const sources = rows.filter((r) => r.work_month !== target.work_month);
+
+  const patch = { updated_at: new Date().toISOString(), updated_by: body.updated_by || 'samreikningur' };
+  for (const f of MERGE_SUM) patch[f] = rows.reduce((s, r) => s + nz(r[f]), 0);
+  patch.materials_jsonb = rows.flatMap((r) => (Array.isArray(r.materials_jsonb) ? r.materials_jsonb : []));
+  const stadfSum = rows.reduce((s, r) => s + nz(r.stadfesting), 0);
+  const stadfOne = Math.max(...rows.map((r) => nz(r.stadfesting)));
+  patch.stadfesting = stadfOnce ? stadfOne : stadfSum;
+  const netSum = rows.reduce((s, r) => s + nz(r.net_an_vsk), 0);
+  patch.net_an_vsk = Math.round((netSum - (stadfOnce ? stadfSum - stadfOne : 0)) * 100) / 100;
+  const vskFactor = nz(target.net_an_vsk) > 0 ? nz(target.vsk_amount) / nz(target.net_an_vsk) : 0.24;
+  patch.vsk_amount = Math.round(patch.net_an_vsk * vskFactor);
+  patch.total_m_vsk = Math.round((patch.net_an_vsk + patch.vsk_amount) * 100) / 100;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(String(body.period_from || ''))) patch.period_from = body.period_from;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(String(body.period_to || ''))) patch.period_to = body.period_to;
+  patch.customer_name = target.customer_name || (sources.find((r) => r.customer_name) || {}).customer_name || null;
+  patch.merge_snapshot = MERGE_SNAP.reduce((o, f) => { o[f] = target[f]; return o; }, { period_from: target.period_from, period_to: target.period_to });
+  patch.merged_from = sources.map((r) => ({ work_month: r.work_month, hours: nz(r.hours_dagvinna) + nz(r.hours_eftirvinna), stadfesting: nz(r.stadfesting), net_an_vsk: nz(r.net_an_vsk), total_m_vsk: nz(r.total_m_vsk) }));
+  patch.merged_into = null;
+  const mLabel = months.join(' + ');
+  const noteLine = 'Samreikningur ' + mLabel + (patch.period_from ? ' (' + patch.period_from + ' – ' + patch.period_to + ')' : '');
+  patch.notes = [String(target.notes || '').trim(), noteLine].filter(Boolean).join('\n');
+
+  try {
+    const saved = await sbPatchRows(`worksite_name=eq.${encodeURIComponent(ws)}&work_month=eq.${encodeURIComponent(target.work_month)}`, patch);
+    await sbPatchRows(`worksite_name=eq.${encodeURIComponent(ws)}&work_month=in.(${inList(sources.map((r) => r.work_month))})`,
+      { status: 'merged', merged_into: target.work_month, updated_at: new Date().toISOString(), updated_by: body.updated_by || 'samreikningur' });
+    return json(200, { ok: true, combined: saved[0] || null, target_month: target.work_month, merged: sources.map((r) => r.work_month), saved_stadfesting: stadfOnce ? stadfSum - stadfOne : 0 });
+  } catch (e) { return json(502, { error: e.message }); }
+}
+
+async function unmergeMonths(body) {
+  const ws = String(body.worksite_name || '').trim();
+  const month = String(body.work_month || '').trim();          // mánuður samreikningsins
+  if (!ws || !/^\d{4}-\d{2}$/.test(month)) return json(400, { error: 'worksite_name + work_month þarf' });
+  let rows;
+  try { rows = await sbRows(`invoice_drafts?worksite_name=eq.${encodeURIComponent(ws)}&work_month=eq.${encodeURIComponent(month)}&select=*`); }
+  catch (e) { return json(502, { error: e.message }); }
+  const t = rows[0];
+  if (!t) return json(404, { error: 'Fann ekki drögin' });
+  if (!t.merge_snapshot) return json(409, { error: 'Þessi drög eru ekki samreikningur' });
+
+  const snap = t.merge_snapshot || {};
+  const patch = { updated_at: new Date().toISOString(), updated_by: body.updated_by || 'samreikningur', merged_from: null, merge_snapshot: null, period_from: null, period_to: null };
+  for (const f of MERGE_SNAP) patch[f] = snap[f] !== undefined ? snap[f] : null;
+  if (snap.period_from !== undefined) patch.period_from = snap.period_from;
+  if (snap.period_to !== undefined) patch.period_to = snap.period_to;
+  if (!patch.status) patch.status = 'draft';
+  try {
+    const saved = await sbPatchRows(`worksite_name=eq.${encodeURIComponent(ws)}&work_month=eq.${encodeURIComponent(month)}`, patch);
+    const back = await sbPatchRows(`worksite_name=eq.${encodeURIComponent(ws)}&merged_into=eq.${encodeURIComponent(month)}`,
+      { status: 'draft', merged_into: null, updated_at: new Date().toISOString(), updated_by: body.updated_by || 'samreikningur' });
+    return json(200, { ok: true, restored: saved[0] || null, months_back: (back || []).map((r) => r.work_month) });
+  } catch (e) { return json(502, { error: e.message }); }
+}
 
 function cors() {
   return {

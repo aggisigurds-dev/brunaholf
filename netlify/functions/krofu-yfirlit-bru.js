@@ -140,7 +140,10 @@ exports.handler = async (event) => {
     // Sameinað (Kröfu yfirlit „🔗 Sameina valdar") → drögin lifa áfram í töflunni
     // (draftKeys held óbreytt svo þrep 3 áætli ekki tímana aftur) en detta úr
     // þrepi 2 sjálfu svo upphæðin tvítelst ekki með nýja sameinaða drögunum.
-    if (d.status === 'skipped') continue;
+    // 'merged' = mánuður sem rann inn í samreikning seinni mánaðarins (03.09.2026).
+    // Sama meðferð og eldra 'skipped': röðin lifir, en dettur úr þrepi 2 svo
+    // upphæðin tvítelst ekki á móti samreikningnum.
+    if (d.status === 'skipped' || d.status === 'merged') continue;
     const amt = +d.total_m_vsk || 0;
     if (amt <= 0 || wm < cutoff) continue;
     const key = `draftinv|${d.worksite_name}|${wm}`;

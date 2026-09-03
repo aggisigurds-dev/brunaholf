@@ -24,14 +24,25 @@ exports.handler = async (event) => {
   const q = event.queryStringParameters || {};
   const worksite = (q.worksite || '').trim();
   const month = (q.month || '').trim(); // YYYY-MM
-  if (!worksite || !/^\d{4}-\d{2}$/.test(month)) {
-    return json(400, { error: 'worksite and month=YYYY-MM required' });
+  // Samreikningur milli mánaða (03.09.2026): from/to spanna fleiri en einn mánuð svo
+  // tímaskýrslan nái yfir allt tímabilið — t.d. Skúlagata 26, 13.08.–03.09.2026.
+  const from = (q.from || '').trim(), to = (q.to || '').trim();
+  const isRange = /^\d{4}-\d{2}-\d{2}$/.test(from) && /^\d{4}-\d{2}-\d{2}$/.test(to);
+  if (!worksite || (!isRange && !/^\d{4}-\d{2}$/.test(month))) {
+    return json(400, { error: 'worksite and month=YYYY-MM (eða from/to=YYYY-MM-DD) required' });
   }
 
-  const start = `${month}-01`;
-  const [yr, mo] = month.split('-').map(Number);
-  const endD = new Date(yr, mo, 1);
-  const end = `${endD.getFullYear()}-${String(endD.getMonth() + 1).padStart(2, '0')}-01`;
+  let start, end;
+  if (isRange) {
+    start = from;
+    const t = new Date(to + 'T00:00:00'); t.setDate(t.getDate() + 1);   // `end` er útilokað (lt.)
+    end = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+  } else {
+    start = `${month}-01`;
+    const [yr, mo] = month.split('-').map(Number);
+    const endD = new Date(yr, mo, 1);
+    end = `${endD.getFullYear()}-${String(endD.getMonth() + 1).padStart(2, '0')}-01`;
+  }
 
   // Resolve aliases → the set of project_name spellings that map to this worksite.
   let names = new Set([worksite]);
@@ -125,7 +136,7 @@ exports.handler = async (event) => {
     .sort((a, b) => b.hours - a.hours);
 
   return json(200, {
-    worksite, month,
+    worksite, month, period: isRange ? { from, to } : null,
     matched_names: [...names],
     rows: out,
     by_employee,
