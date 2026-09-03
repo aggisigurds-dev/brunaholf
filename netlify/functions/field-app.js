@@ -86,7 +86,7 @@ async function handleGet(event) {
     const [tv, aliases, redder, entries, shares, recent] = await Promise.all([
       allPages(`timavera_entries?select=project,hours,date,employee&date=gte.${from}&date=lte.${to}&order=date.asc`),
       all('project_aliases?select=canonical_name,alias').catch(() => []),
-      all(`redder_invoices?select=worksite_match,dagsetning,an_vsk,redder_line_items(item_name,magn,upphaed,ein_verd,excluded)&dagsetning=gte.${from}&dagsetning=lte.${to}`).catch(() => []),
+      all(`redder_invoices?select=worksite_match,dagsetning,an_vsk,redder_line_items(item_name,magn,upphaed,ein_verd,excluded,worksite_override)&dagsetning=gte.${from}&dagsetning=lte.${to}`).catch(() => []),
       allPages(`field_entries?select=*&work_month=eq.${month}&order=created_at.desc`),
       all('field_shares?select=*&active=is.true&order=created_at.desc').catch(() => []),
       allPages(`timavera_entries?select=employee&date=gte.${since}`).catch(() => []),
@@ -111,13 +111,20 @@ async function handleGet(event) {
     // Redder-innkaup per verkstað (sömu línur og Efniskostnaður; undanskildar línur merktar)
     const rd = {};
     for (const inv of redder) {
-      const k = amap[inv.worksite_match] || inv.worksite_match; if (!k) continue;
-      const o = rd[k] = rd[k] || { an_vsk: 0, lines: [] };
-      o.an_vsk += Number(inv.an_vsk) || 0;
-      for (const li of (inv.redder_line_items || [])) {
+      const base = amap[inv.worksite_match] || inv.worksite_match;
+      const lines = inv.redder_line_items || [];
+      const hasOv = lines.some((l) => String(l.worksite_override || '').trim());
+      const bucket = (w) => (rd[w] = rd[w] || { an_vsk: 0, lines: [] });
+      if (base && !hasOv) bucket(base).an_vsk += Number(inv.an_vsk) || 0;
+      for (const li of lines) {
+        const amt = Number(li.upphaed) || 0;
+        const raw = String(li.worksite_override || '').trim();
+        const w = (raw && (amap[raw] || raw)) || base; if (!w) continue;
         const qty = Number(li.magn) || 0;
-        const cost = qty > 0 && li.upphaed != null ? Math.round(Number(li.upphaed) / qty) : (Number(li.ein_verd) || 0);
-        o.lines.push({ label: li.item_name || 'Efni', qty, cost, excluded: !!li.excluded, date: inv.dagsetning });
+        const cost = qty > 0 && li.upphaed != null ? Math.round(amt / qty) : (Number(li.ein_verd) || 0);
+        const b = bucket(w);
+        b.lines.push({ label: li.item_name || 'Efni', qty, cost, excluded: !!li.excluded, date: inv.dagsetning });
+        if (hasOv && !li.excluded) b.an_vsk += amt;
       }
     }
     for (const k of Object.keys(rd)) rd[k].an_vsk = Math.round(rd[k].an_vsk);

@@ -38,19 +38,47 @@ exports.handler = async (event) => {
       inv.effective_m_vsk = inv.recharge_amount != null ? Number(inv.recharge_amount) : Math.max(0, mv - inv.excluded_m_vsk);
       inv.effective_an_vsk = Math.round(inv.effective_m_vsk / factor);
     }
-    // Build summary by (worksite, month) — á RAUNVERULEGRI endurkröfu
+    // Build summary by (worksite, month) — á RAUNVERULEGRI endurkröfu.
+    // 03.09.2026: LÍNA má bera eigin verkstað (worksite_override), svo safnreikningur
+    // („ýmis verk") skiptist á raunverulega verkstaði. Þá ræður línan hvert upphæðin fer;
+    // það sem línurnar skýra ekki situr áfram á verkstað reikningsins.
     const byWorksiteMonth = {};
     let grandTotal = 0;
     for (const inv of rows) {
       grandTotal += Number(inv.effective_m_vsk || 0);
       if (!inv.dagsetning) continue;
-      const month = String(inv.dagsetning).slice(0,7);
-      const ws = inv.worksite_match || '(óþekkt)';
-      const k = `${ws}|${month}`;
-      if (!byWorksiteMonth[k]) byWorksiteMonth[k] = { worksite: ws, month, invoice_count: 0, total_an_vsk: 0, total_m_vsk: 0 };
-      byWorksiteMonth[k].invoice_count++;
-      byWorksiteMonth[k].total_an_vsk += Number(inv.effective_an_vsk || 0);
-      byWorksiteMonth[k].total_m_vsk  += Number(inv.effective_m_vsk || 0);
+      const month = String(inv.dagsetning).slice(0, 7);
+      const base = inv.worksite_match || '(óþekkt)';
+      const an = Number(inv.an_vsk) || 0, mv = Number(inv.m_vsk) || 0;
+      const factor = an > 0 ? mv / an : 1.24;
+      const lines = inv.redder_line_items || [];
+      const split = {};
+      let linesAn = 0;
+      for (const li of lines) {
+        const amt = Number(li.upphaed) || 0;
+        linesAn += amt;
+        if (li.excluded) continue;
+        const w = String(li.worksite_override || '').trim() || base;
+        split[w] = (split[w] || 0) + amt;
+      }
+      const hasOverride = lines.some((li) => String(li.worksite_override || '').trim());
+      if (!lines.length || !hasOverride) {
+        // Engar línur eða engin skipting → sama og áður (virðir recharge_amount).
+        split[base] = Number(inv.effective_an_vsk || 0);
+      } else {
+        const rest = an - linesAn;
+        if (rest > 0.5) split[base] = (split[base] || 0) + rest;
+      }
+      inv.worksite_split = Object.keys(split).length > 1 ? split : null;
+      for (const ws of Object.keys(split)) {
+        const anW = split[ws];
+        if (!anW) continue;
+        const k = `${ws}|${month}`;
+        if (!byWorksiteMonth[k]) byWorksiteMonth[k] = { worksite: ws, month, invoice_count: 0, total_an_vsk: 0, total_m_vsk: 0 };
+        byWorksiteMonth[k].invoice_count++;
+        byWorksiteMonth[k].total_an_vsk += Math.round(anW);
+        byWorksiteMonth[k].total_m_vsk += Math.round(anW * factor);
+      }
     }
     return json(200, { rows, summary: { count: rows.length, grand_total_m_vsk: grandTotal, by_worksite_month: Object.values(byWorksiteMonth) } });
   }
@@ -99,6 +127,40 @@ exports.handler = async (event) => {
         method: 'PATCH',
         headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
         body: JSON.stringify({ excluded: !!body.excluded }),
+      });
+      if (!r.ok) return json(r.status, { error: (await r.text()).slice(0, 300) });
+      const rows = await r.json();
+      if (!rows.length) return json(404, { error: 'lína fannst ekki' });
+      return json(200, { ok: true, line: rows[0] });
+    }
+
+    // Verkstaður á EINN reikning (Agnar 03.09.2026: „opnaðu fyrir það að ég geti lagað
+    // reikningana"). Ólíkt rename_worksite snertir þetta aðeins þennan reikning.
+    if (body.action === 'set_worksite') {
+      const id = parseInt(body.invoice_id, 10);
+      if (!Number.isFinite(id)) return json(400, { error: 'invoice_id vantar' });
+      const ws = String(body.worksite || '').trim();
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/redder_invoices?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+        body: JSON.stringify({ worksite_match: ws || null }),
+      });
+      if (!r.ok) return json(r.status, { error: (await r.text()).slice(0, 300) });
+      const rows = await r.json();
+      if (!rows.length) return json(404, { error: 'reikningur fannst ekki' });
+      return json(200, { ok: true, invoice: rows[0] });
+    }
+
+    // Verkstaður á EINA LÍNU — skiptir safnreikningi („ýmis verk") á raunverulega
+    // verkstaði. Tómt gildi skilar línunni aftur á verkstað reikningsins.
+    if (body.action === 'set_line_worksite') {
+      const id = parseInt(body.line_id, 10);
+      if (!Number.isFinite(id)) return json(400, { error: 'line_id vantar' });
+      const ws = String(body.worksite || '').trim();
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/redder_line_items?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+        body: JSON.stringify({ worksite_override: ws || null }),
       });
       if (!r.ok) return json(r.status, { error: (await r.text()).slice(0, 300) });
       const rows = await r.json();

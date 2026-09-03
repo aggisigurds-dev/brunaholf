@@ -9750,8 +9750,18 @@ function simplifyRedderName(raw){
   if(/r[úu]lla/.test(n))                                   return 'Eldvarnar rúlla';
   return raw || '';
 }
+async function bhWorksiteNames(){
+  if(window.__bhWsNames) return window.__bhWsNames;
+  try{
+    const r = await fetch('/api/worksites?year=combined');
+    const j = r.ok ? await r.json() : { worksites: [] };
+    window.__bhWsNames = [...new Set((j.worksites||[]).map(w=>w.project).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'is'));
+  }catch(_){ window.__bhWsNames = []; }
+  return window.__bhWsNames;
+}
 async function rgOpenEfniEditor(worksite, month){
   const fmt = n => Math.round(n||0).toLocaleString('is-IS');
+  const wsNames = await bhWorksiteNames();
   openModal(`
     <div class="rg-calc-wrap">
       <div class="rg-calc-head">
@@ -9791,6 +9801,7 @@ async function rgOpenEfniEditor(worksite, month){
           <div>
             <div class="efni-inv-nr">#${escapeHtml(inv.invoice_nr)} · ${inv.dagsetning || '—'}</div>
             <div class="efni-inv-raw">${escapeHtml(inv.worksite_raw || '')} · seljandi: ${escapeHtml(inv.salesperson || '—')}</div>
+            <div class="efni-ws-row"><label>Verkstaður reikningsins</label><input list="efni-ws-list" class="efni-ws-inv" data-inv="${inv.id}" value="${escapeAttr(inv.worksite_match||'')}" placeholder="óparað — skrifaðu verkstað"><span class="efni-ws-st"></span></div>
           </div>
           <div class="efni-edit">
             <label>Endurkrafa (kr m. vsk)</label>
@@ -9800,12 +9811,13 @@ async function rgOpenEfniEditor(worksite, month){
         <div class="efni-inv-orig">Upphafleg Redder upphæð: ${fmt(inv.m_vsk)} kr m. vsk (${fmt(inv.an_vsk)} án vsk)</div>
         ${(inv.redder_line_items||[]).length ? `
           <table class="efni-lines">
-            <thead><tr><th title="Haka við = línan fer EKKI á tengingu verkstaðarins (hvorki í endurkröfu né efnislista)">Ekki á teng.</th><th>Vörunr</th><th>Heiti</th><th class="num">Magn</th><th class="num">Verð</th><th class="num">Afsl</th><th class="num">Samtals</th></tr></thead>
+            <thead><tr><th title="Haka við = línan fer EKKI á tengingu verkstaðarins (hvorki í endurkröfu né efnislista)">Ekki á teng.</th><th>Vörunr</th><th>Heiti</th><th title="Skildu autt til að línan fylgi verkstað reikningsins — eða settu annan verkstað til að skipta reikningnum">Á verkstað</th><th class="num">Magn</th><th class="num">Verð</th><th class="num">Afsl</th><th class="num">Samtals</th></tr></thead>
             <tbody>${inv.redder_line_items.map(li => `
               <tr class="${li.excluded?'efni-excl-row':''}">
                 <td><input type="checkbox" class="efni-excl" data-line="${li.id}" data-inv="${inv.id}" ${li.excluded?'checked':''} title="Ekki á tengingunni"></td>
                 <td>${escapeHtml(li.item_code||'')}</td>
                 <td title="${escapeAttr(li.item_name||'')}">${escapeHtml(simplifyRedderName(li.item_name))}</td>
+                <td><input list="efni-ws-list" class="efni-ws-line" data-line="${li.id}" data-inv="${inv.id}" value="${escapeAttr(li.worksite_override||'')}" placeholder="${escapeAttr(inv.worksite_match||'—')}" title="Autt = fylgir verkstað reikningsins"></td>
                 <td class="num">${Number(li.magn||0)} ${escapeHtml(li.unit||'')}</td>
                 <td class="num">${fmt(li.ein_verd)}</td>
                 <td class="num">${li.afsl_pct||0}%</td>
@@ -9817,6 +9829,7 @@ async function rgOpenEfniEditor(worksite, month){
   }).join('');
 
   document.getElementById('efni-body').innerHTML = `
+    <datalist id="efni-ws-list">${wsNames.map(n=>`<option value="${escapeAttr(n)}">`).join('')}</datalist>
     <div class="efni-totals"><span>Samtals endurkrafa fyrir ${monthLabelStatic(month)}</span><strong id="efni-total">${fmt(total)} kr</strong></div>
     ${html}
     <div class="rg-calc-actions" style="margin-top:14px">
@@ -9826,6 +9839,38 @@ async function rgOpenEfniEditor(worksite, month){
     <div class="rg-calc-hint">Breyting á "Endurkrafa" hefur áhrif á samtals efniskostnað í Reikningagerð. Upphafleg Redder upphæð er fast og breytist ekki — endurkrafan er bara það sem þú ætlar að rukka verkkaupa.</div>
   `;
 
+  // Verkstaður reikningsins og einstakra lína (Agnar 03.09.2026: opna fyrir handvirka
+  // leiðréttingu). Vistast STRAX; tóm lína fylgir verkstað reikningsins.
+  const efniSave = async (body, el, okTxt) => {
+    const st = el.parentElement.querySelector('.efni-ws-st') || document.getElementById('efni-save-status');
+    el.disabled = true; if(st) st.textContent = '⏳';
+    try{
+      const r = await fetch('/api/redder-invoices', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      const j = await r.json().catch(()=>({}));
+      if(!r.ok || j.error) throw new Error(j.error || ('HTTP '+r.status));
+      if(st){ st.textContent = okTxt; st.className = (st.className||'').replace(/ efni-ws-err/g,'') + ' efni-ws-ok'; }
+      return true;
+    }catch(e){ if(st){ st.textContent = '✗ ' + (e.message||e); st.className = (st.className||'') + ' efni-ws-err'; } return false; }
+    finally{ el.disabled = false; }
+  };
+  document.querySelectorAll('input.efni-ws-inv').forEach(inp => {
+    inp.onchange = async () => {
+      const ws = inp.value.trim();
+      const ok = await efniSave({ action:'set_worksite', invoice_id: Number(inp.dataset.inv), worksite: ws }, inp, ws ? '✓ vistað' : '✓ óparað');
+      if(ok){ const inv = rows.find(r=>String(r.id)===inp.dataset.inv); if(inv) inv.worksite_match = ws || null;
+        document.querySelectorAll('input.efni-ws-line[data-inv="'+inp.dataset.inv+'"]').forEach(x=>{ x.placeholder = ws || '—'; });
+        if(ws && ws !== worksite){ const st = inp.parentElement.querySelector('.efni-ws-st'); if(st) st.textContent = '✓ færður á ' + ws + ' — hverfur héðan við næstu opnun'; } }
+    };
+  });
+  document.querySelectorAll('input.efni-ws-line').forEach(inp => {
+    inp.onchange = async () => {
+      const ws = inp.value.trim();
+      const ok = await efniSave({ action:'set_line_worksite', line_id: Number(inp.dataset.line), worksite: ws }, inp, ws ? '✓' : '✓ fylgir reikningi');
+      if(ok){ const inv = rows.find(r=>String(r.id)===inp.dataset.inv); const li = ((inv&&inv.redder_line_items)||[]).find(l=>String(l.id)===inp.dataset.line); if(li) li.worksite_override = ws || null;
+        inp.classList.toggle('efni-ws-moved', !!ws);
+        const $s = document.getElementById('efni-save-status'); if($s){ $s.textContent = ws ? ('✓ lína færð á ' + ws) : '✓ lína fylgir reikningnum aftur'; $s.className = 'wc-save-status wc-save-ok'; } }
+    };
+  });
   // live update total as user edits
   document.querySelectorAll('[data-efni-id]').forEach(el => {
     el.oninput = () => {
@@ -9838,7 +9883,7 @@ async function rgOpenEfniEditor(worksite, month){
   // út; sé Endurkrafa sjálfgefin (engin handslegin tala) lækkar hún um línuna m. vsk.
   // Miðlarinn tekur línuna líka úr samantektinni (Kröfuyfirlit, Reikningagrid) og Gerð
   // reikninga sleppir henni í efnislista-útfyllingu.
-  if(!document.getElementById('efni-excl-css')){ const st=document.createElement('style'); st.id='efni-excl-css'; st.textContent='.efni-excl-row td{opacity:.5;text-decoration:line-through} .efni-excl-row td:first-child{opacity:1;text-decoration:none} .efni-lines input.efni-excl{width:16px;height:16px;cursor:pointer}'; document.head.appendChild(st); }
+  if(!document.getElementById('efni-excl-css')){ const st=document.createElement('style'); st.id='efni-excl-css'; st.textContent='.efni-ws-row{display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap} .efni-ws-row label{font-family:var(--font-mono,ui-monospace,monospace);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)} .efni-ws-row input{height:32px;padding:0 9px;border:1px solid var(--edge);border-radius:4px;background:var(--input-bg,#f6f3ec);font:inherit;font-size:13px;min-width:200px} .efni-ws-st{font-size:11.5px;color:var(--muted)} .efni-ws-st.efni-ws-ok{color:var(--green)} .efni-ws-st.efni-ws-err{color:var(--red)} input.efni-ws-line{width:130px;height:26px;padding:0 6px;border:1px dashed var(--edge);border-radius:4px;background:transparent;font:inherit;font-size:11.5px} input.efni-ws-line.efni-ws-moved{border-style:solid;border-color:#5a4410;background:var(--warn-bg,#fbf3d9);font-weight:600} .efni-excl-row td{opacity:.5;text-decoration:line-through} .efni-excl-row td:first-child{opacity:1;text-decoration:none} .efni-lines input.efni-excl{width:16px;height:16px;cursor:pointer}'; document.head.appendChild(st); }
   document.querySelectorAll('input.efni-excl').forEach(cb => {
     cb.onchange = async () => {
       const inv = rows.find(r => String(r.id) === cb.dataset.inv);
@@ -10652,19 +10697,28 @@ async function renderGerdReikninga(t){
       DRAFTS = {}; for(const d of (dr.rows||[])) DRAFTS[`${d.worksite_name}|${d.work_month}`] = d;
       REDDER = {};
       for(const r of (rd.rows||[])){
-        const ws2 = r.worksite_match; if(!ws2) continue;
         const mo = (r.dagsetning||'').slice(0,7);
-        const k = `${ws2}|${mo}`;
-        (REDDER[k] = REDDER[k] || {an_vsk:0, lines:[]});
-        REDDER[k].an_vsk += Number(r.effective_an_vsk ?? r.an_vsk)||0;
-        for(const li of (r.redder_line_items||[])){
+        const base = r.worksite_match;
+        const lines = r.redder_line_items||[];
+        // Lína má bera eigin verkstað (worksite_override, Efniskostnaðar-ritillinn
+        // 03.09.2026) — þá fer hún þangað og safnreikningur skiptist á verkin.
+        const hasOv = lines.some(l => String(l.worksite_override||'').trim());
+        const bucket = ws => { const k = `${ws}|${mo}`; return (REDDER[k] = REDDER[k] || {an_vsk:0, lines:[]}); };
+        if(base && !hasOv) bucket(base).an_vsk += Number(r.effective_an_vsk ?? r.an_vsk)||0;
+        let linesAn = 0;
+        for(const li of lines){
+          const amt = Number(li.upphaed)||0; linesAn += amt;
           if(li.excluded) continue; // hakað „Ekki á tengingu" í Efniskostnaði
+          const ws2 = String(li.worksite_override||'').trim() || base; if(!ws2) continue;
           const qty = Number(li.magn)||0;
           // Real buy-in unit cost = line total / qty (upphaed is AFTER afsláttur);
           // fall back to ein_verd if qty/total missing.
-          const cost = qty>0 && li.upphaed!=null ? Math.round(Number(li.upphaed)/qty) : (Number(li.ein_verd)||0);
-          REDDER[k].lines.push({ label: li.item_name||'Efni', cost, qty });
+          const cost = qty>0 && li.upphaed!=null ? Math.round(amt/qty) : (Number(li.ein_verd)||0);
+          const b = bucket(ws2);
+          b.lines.push({ label: li.item_name||'Efni', cost, qty });
+          if(hasOv) b.an_vsk += amt;
         }
+        if(base && hasOv){ const rest = (Number(r.an_vsk)||0) - linesAn; if(rest > 0.5) bucket(base).an_vsk += rest; }
       }
       // Frá verkstað (Brunaþéttingar-appið): efni af lager + punktar per verkstað|mánuður → window.__FIELD
       try{ const fd = fdR && fdR.ok ? await fdR.json() : {rows:[]}; const F = {}; for(const e of (fd.rows||[])){ if(!e.worksite_name || !e.work_month) continue; const k = e.worksite_name+'|'+e.work_month; (F[k] = F[k] || {efni:[], punktar:[]}); if(e.kind==='efni') F[k].efni.push(e); else if(e.kind==='punktur') F[k].punktar.push(e); } window.__FIELD = F; }catch(_){ window.__FIELD = window.__FIELD || {}; }
