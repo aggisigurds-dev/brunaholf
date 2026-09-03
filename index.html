@@ -10339,6 +10339,91 @@ async function renderGerdReikninga(t){
       table.gr-efni tr.grand td{border-top:1px solid #000;border-bottom:3px double #000;padding:6px 4px;text-align:right}
       table.gr-efni tr.grand td.t{font-weight:700}
       @media(max-width:860px){.gr-modal{grid-template-columns:1fr}.gr-prev{display:none}}
+      /* ═══ Efnislisti — Boss-útlit (03.09.2026). Scoped á .gr-modal-bg.boss svo aðrar gr-modal síður haldist. ═══ */
+      .gr-modal-bg.boss{background:rgba(5,5,5,.62);padding:18px}
+      .gr-modal-bg.boss .gr-modal{grid-template-columns:440px 1fr;grid-template-rows:auto auto 1fr;grid-template-areas:"hd hd" "form kpi" "form prev";width:min(1260px,97vw);max-height:94vh;border-radius:6px;background:var(--bg,#f4f1ea);border:1px solid #000;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden}
+      .gb-head{grid-area:hd;position:relative;display:flex;align-items:center;gap:14px;padding:11px 18px 13px;background:linear-gradient(180deg,#23211e,#0a0a09);color:#e8e2d3;border-bottom:1px solid #000}
+      .gb-head::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--gold-line,linear-gradient(90deg,#7a5a12,#f5d76e,#7a5a12))}
+      .gb-title{font-family:var(--font-display,Georgia,serif);font-size:22px;font-weight:800;letter-spacing:-.01em;background:var(--gold-text,linear-gradient(180deg,#f5d76e,#b8892e));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 1px 0 rgba(0,0,0,.9))}
+      .gb-meta{font-size:12.5px;color:#b9b2a3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gb-meta b{color:#f1ecdf}
+      .gb-plate{font-family:var(--font-mono,ui-monospace,monospace);font-size:10px;letter-spacing:.14em;padding:3px 8px;border-radius:2px;border:1px solid rgba(201,165,74,.5);color:#e2c46f;background:linear-gradient(180deg,#2a2823,#161513);white-space:nowrap}
+      .gb-status{margin-left:auto;display:inline-flex;align-items:center;gap:7px;font-family:var(--font-mono,ui-monospace,monospace);font-size:11px;color:#c6f5d3;background:linear-gradient(180deg,#2a7a45,#0f3a1f);border:1px solid #0a2a15;border-radius:14px;padding:4px 11px;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 2px 5px rgba(0,0,0,.7)}
+      .gb-status .boss-led{width:8px;height:8px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#d8ffe4,#4fc47a 45%,#1e7a3f);box-shadow:0 0 6px #4fc47a}
+      .gb-status.unsaved{color:#fbf1d2;background:linear-gradient(180deg,#5a4410,#3e2c06);border-color:#2e2004}.gb-status.unsaved .boss-led{background:radial-gradient(circle at 35% 30%,#fff3b0,#c9a54a 45%,#8f6a1c);box-shadow:0 0 6px #c9a54a}
+      .gb-head .gr-x{color:#e8e2d3;width:34px;height:34px;border:1px solid #000;border-radius:4px;background:linear-gradient(180deg,#2a2823,#161513);font-size:20px;box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 2px 4px rgba(0,0,0,.6);flex:none}
+      .gb-kpi{grid-area:kpi;margin:14px 18px 0 0;padding:12px 16px;display:flex;align-items:center;gap:0;background:linear-gradient(180deg,#1c1b18,#0a0a09);border:1px solid #000;border-top:3px solid transparent;border-image:var(--gold-line,linear-gradient(90deg,#7a5a12,#f5d76e,#7a5a12)) 1;border-image-width:3px 0 0 0;border-radius:5px;color:#e8e2d3;box-shadow:var(--slab-shadow,0 16px 32px -12px rgba(0,0,0,.85))}
+      .gb-kpi .k{display:flex;flex-direction:column;gap:5px;padding:0 20px 0 0;margin-right:20px;border-right:1px solid #3a372f}
+      .gb-kpi .kl{font-family:var(--font-mono,ui-monospace,monospace);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold-500,#c9a54a)}
+      .gb-kpi .kv{font-family:var(--font-mono,ui-monospace,monospace);font-size:15px;font-weight:600;color:#f1ecdf;font-variant-numeric:tabular-nums;white-space:nowrap}
+      .gb-kpi .k.total{margin-left:auto;margin-right:0;padding-right:0;border-right:0;align-items:flex-end}
+      .gb-kpi .k.total .kv{font-family:var(--font-display,Georgia,serif);font-size:28px;font-weight:800;color:#f5d76e;text-shadow:0 1px 0 #000;letter-spacing:-.01em}
+      .gb-tabs{display:none}
+      .gr-modal-bg.boss .gr-form{grid-area:form;background:transparent;border-right:0;padding:14px 16px 0;max-height:calc(94vh - 68px);overflow-y:auto}
+      .gr-modal-bg.boss .gr-prev{grid-area:prev;background:transparent;padding:14px 18px 18px 0;max-height:none;overflow-y:auto}
+      .gr-modal-bg.boss .gr-doc{box-shadow:0 1px 2px rgba(22,21,19,.15),0 18px 36px -18px rgba(22,21,19,.5);border:1px solid var(--line-2,#d9d3c6)}
+      .gb-athuga{display:none;margin:0 0 12px;padding:9px 12px;border:1px solid #d9b25a;border-radius:5px;background:linear-gradient(180deg,#fbf3d9,#f4e6b8);font-size:12.5px;color:#3e2c06;box-shadow:inset 0 1px 0 #fff}
+      .gb-athuga.on{display:block}
+      .gb-athuga .t{font-family:var(--font-mono,ui-monospace,monospace);font-size:10px;letter-spacing:.14em;color:#8f6a1c;margin-bottom:5px}
+      .gb-athuga .w{display:flex;align-items:center;gap:8px;padding:3px 0;cursor:pointer}.gb-athuga .w::after{content:"›";margin-left:auto;color:#8f6a1c}
+      .gb-sec{background:var(--card,#fff);border:1px solid var(--line-2,#cfc8b9);border-radius:5px;box-shadow:var(--panel-shadow,0 1px 2px rgba(22,21,19,.12),0 6px 10px -6px rgba(22,21,19,.2));margin-bottom:12px}
+      .gb-sec-h{display:flex;align-items:center;gap:10px;padding:9px 12px;cursor:pointer;user-select:none;border-bottom:1px solid transparent;border-image:var(--gold-line,linear-gradient(90deg,#7a5a12,#f5d76e,#7a5a12)) 1;border-image-width:0 0 1px 0;background:linear-gradient(180deg,#fbf9f5,#f1ede4);border-radius:5px 5px 0 0}
+      .gb-sec.collapsed .gb-sec-h{border-image:none;border-bottom-color:transparent;border-radius:5px}
+      .gb-sec-t{font-family:var(--font-display,Georgia,serif);font-size:17px;font-weight:700;color:var(--ink,#161513);white-space:nowrap}
+      .gb-sec-sub{font-family:var(--font-mono,ui-monospace,monospace);font-size:11px;color:var(--muted,#6f685c);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+      .gb-sec-sum{margin-left:auto;font-family:var(--font-mono,ui-monospace,monospace);font-size:13px;font-weight:600;color:var(--ink,#161513);font-variant-numeric:tabular-nums;white-space:nowrap}
+      .gb-caret{color:var(--muted-2,#8f8776);font-size:15px;transform:rotate(90deg);transition:transform .15s;flex:none}
+      .gb-sec.collapsed .gb-caret{transform:rotate(0)}
+      .gb-sec-b{padding:10px 12px 12px}.gb-sec.collapsed .gb-sec-b{display:none}
+      .gb-sec .boss-plate{font-family:var(--font-mono,ui-monospace,monospace);font-size:10px;font-weight:600;letter-spacing:.14em;padding:2px 7px;border:1px solid #7a5a12;border-radius:2px;color:#3e2c06;text-shadow:0 1px 0 rgba(255,255,255,.45);background:linear-gradient(115deg,rgba(255,255,255,0) 35%,rgba(255,255,255,.6) 48%,rgba(255,255,255,0) 56%),linear-gradient(180deg,#f0d78a,#c9a54a 60%,#a87b1f);box-shadow:inset 0 1px 0 rgba(255,255,255,.8),inset 0 -1px 0 rgba(60,40,0,.4),0 1px 2px rgba(60,40,0,.3);flex:none}
+      .gr-modal-bg.boss .gr-st{font-family:var(--font-mono,ui-monospace,monospace);font-size:10px;letter-spacing:.14em;color:var(--gold-800,#8f6a1c);border-bottom:0;margin:12px 0 5px;padding-bottom:0}
+      .gb-sec-b > .gr-st:first-child{margin-top:0}
+      .gr-modal-bg.boss .gr-f label{font-family:var(--font-mono,ui-monospace,monospace);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted,#6f685c)}
+      .gr-modal-bg.boss .gr-f input,.gr-modal-bg.boss .gr-f textarea,.gr-modal-bg.boss .gr-mat-line input,.gr-modal-bg.boss .gr-mat-add select,.gr-modal-bg.boss .tbk-r input{background:var(--input-bg,#f6f3ec);border:1px solid var(--edge,#c9c2b3);border-radius:4px;box-shadow:var(--well-shadow,inset 0 2px 3px rgba(22,21,19,.12));color:var(--ink,#161513)}
+      .gr-modal-bg.boss #gr-fill-hours{border:1px solid #5a4410;border-top-color:#f7e6b8;border-bottom-color:#2e2004;border-radius:4px;background:var(--gold-face,linear-gradient(180deg,#f3dc95,#b8892e));color:#161513;font-weight:800;text-shadow:0 1px 0 rgba(255,255,255,.35);box-shadow:var(--gold-bevel-shadow,inset 0 1px 0 rgba(255,255,255,.55),0 2px 4px rgba(22,21,19,.4))}
+      .gr-modal-bg.boss .gr-redder-note{background:linear-gradient(180deg,#eef3fb,#e3ebf7);border-color:#b9c9df;color:#2b4a72}
+      .gr-modal-bg.boss .gr-btn{height:36px;border:1px solid var(--edge,#c9c2b3);border-bottom-color:#a89f8c;border-radius:4px;background:linear-gradient(180deg,#fff,#efebe2);color:var(--ink,#161513);font-weight:600;box-shadow:var(--key-shadow,0 1px 2px rgba(22,21,19,.2))}
+      .gr-modal-bg.boss .gr-btn:hover{filter:brightness(1.04)}.gr-modal-bg.boss .gr-btn:active{filter:brightness(.96)}
+      .gr-modal-bg.boss .gr-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;position:sticky;bottom:0;margin:6px -16px 0;padding:10px 16px 12px;background:linear-gradient(180deg,rgba(244,241,234,0),var(--bg,#f4f1ea) 28%);border-top:1px solid var(--line-2,#d9d3c6)}
+      .gb-grp{display:inline-flex;border:1px solid var(--edge,#c9c2b3);border-radius:4px;overflow:hidden;box-shadow:var(--key-shadow,0 1px 2px rgba(22,21,19,.2))}
+      .gb-grp .gr-btn{border:0;border-left:1px solid var(--edge,#c9c2b3);border-radius:0;box-shadow:none;height:36px}.gb-grp .gr-btn:first-child{border-left:0}
+      .gb-grp.dark{border-color:#000;box-shadow:var(--obsidian-shadow,inset 0 1px 0 rgba(255,255,255,.18),0 3px 6px rgba(0,0,0,.7))}
+      .gb-grp.dark .gr-btn{background:linear-gradient(180deg,#2a2823,#161513);color:#e8e2d3;border-left-color:#3a372f;text-shadow:0 -1px 0 rgba(0,0,0,.9);font-weight:700}
+      .gb-row2{display:inline-flex;gap:8px;align-items:center}
+      .gr-modal-bg.boss #gr-save{height:38px;padding:0 20px;border:1px solid #5a4410;border-top-color:#f7e6b8;border-bottom-color:#2e2004;border-radius:5px;background:var(--gold-face,linear-gradient(180deg,#f3dc95,#b8892e));color:#161513;font-weight:800;text-shadow:0 1px 0 rgba(255,255,255,.35);box-shadow:var(--gold-bevel-shadow,inset 0 1px 0 rgba(255,255,255,.55),inset 0 -2px 3px rgba(60,40,0,.45),0 3px 6px rgba(22,21,19,.45))}
+      .gb-more{display:inline-flex;gap:6px;flex-wrap:wrap;margin-left:auto;align-items:center}
+      .gb-more .gr-btn{background:transparent;border-color:transparent;color:var(--muted,#6f685c);box-shadow:none;height:32px;padding:0 8px}
+      .gb-more .gr-btn:hover{background:var(--bg-2,#ece7dc)}
+      .gr-modal-bg.boss .gr-tbk{margin-top:12px;border-top:0;padding:0;background:var(--input-bg,#f6f3ec);border:1px solid var(--edge,#c9c2b3);border-radius:4px;box-shadow:var(--well-shadow,inset 0 2px 3px rgba(22,21,19,.12))}
+      .gr-modal-bg.boss .gr-tbk-head{padding:8px 10px;border-bottom:1px solid var(--line-2,#d9d3c6)}.gr-modal-bg.boss .gr-tbk-body{padding:6px 10px 10px}
+      .gb-tv{display:inline-flex;align-items:center;gap:6px;margin-left:8px}
+      .gb-tv-link{font-family:var(--font-mono,ui-monospace,monospace);font-size:10.5px;color:var(--gold-800,#8f6a1c);cursor:pointer;text-decoration:underline dotted;white-space:nowrap}
+      .gb-lightbox{position:fixed;inset:0;z-index:100050;background:rgba(5,5,5,.92);display:flex;align-items:center;justify-content:center;padding:20px;flex-direction:column;gap:12px;cursor:zoom-out}
+      .gb-lightbox img{max-width:96vw;max-height:84vh;border:1px solid #3a372f;border-radius:4px;box-shadow:0 30px 80px rgba(0,0,0,.8);background:#fff}
+      .gb-lightbox .c{color:#e8e2d3;font-family:var(--font-mono,ui-monospace,monospace);font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+      @media(max-width:860px){
+        .gr-modal-bg.boss{padding:0}
+        .gr-modal-bg.boss .gr-modal{grid-template-columns:1fr;grid-template-rows:auto auto 1fr;grid-template-areas:"hd" "kpi" "main";width:100vw;max-height:100vh;height:100vh;border-radius:0;border:0}
+        .gb-head{flex-wrap:wrap;gap:8px 10px;padding:10px 12px 12px}
+        .gb-title{font-size:21px}.gb-meta{width:100%;order:5;white-space:normal}
+        .gb-kpi{margin:0;border-radius:0;padding:8px 12px 0;flex-wrap:wrap;border-top:0}
+        .gb-kpi .k{display:none}.gb-kpi .k.total{display:flex;flex-direction:row;align-items:baseline;justify-content:space-between;width:100%;margin:0;padding-bottom:8px}
+        .gb-kpi .k.total .kv{font-size:24px}
+        .gb-tabs{display:flex;width:100%;margin:0 -12px;width:calc(100% + 24px);background:var(--bg,#f4f1ea);border-top:1px solid #000}
+        .gb-tabs button{flex:1;height:40px;border:0;background:transparent;font:inherit;font-size:13px;font-weight:700;color:var(--muted,#6f685c);border-bottom:3px solid transparent;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+        .gb-tabs button.active{color:var(--ink,#161513);border-image:var(--gold-line,linear-gradient(90deg,#7a5a12,#f5d76e,#7a5a12)) 1;border-image-width:0 0 3px 0}
+        .gb-tabs .boss-chip{display:inline-flex;min-width:18px;height:18px;padding:0 5px;align-items:center;justify-content:center;border-radius:2px;border:1px solid #5a4410;background:var(--gold-face,linear-gradient(180deg,#f3dc95,#b8892e));color:#2e2004;font-family:var(--font-mono,ui-monospace,monospace);font-size:10px;font-weight:600}
+        .gr-modal-bg.boss .gr-form,.gr-modal-bg.boss .gr-prev{grid-area:main;max-height:none;padding:12px 12px 0}
+        .gr-modal-bg.boss .gr-prev{display:none;padding:12px}
+        .gr-modal-bg.boss .gr-modal.show-prev .gr-prev{display:block}.gr-modal-bg.boss .gr-modal.show-prev .gr-form{display:none}
+        .gr-modal-bg.boss .gr-doc{padding:22px 16px;max-width:none}
+        .gr-modal-bg.boss .gr-actions{margin:6px -12px 0;padding:8px 12px 10px}
+        .gb-grp{width:100%}.gb-grp .gr-btn{flex:1;justify-content:center;padding:0 4px;font-size:12px}
+        .gb-row2{display:flex;width:100%}.gb-row2 #gr-save{flex:1;height:44px;font-size:15px}
+        .gb-grp.dark{width:auto;flex:none}.gb-grp.dark .gr-btn{height:44px;min-width:52px;padding:0 10px}.gb-grp.dark .gb-lbl{display:none}
+        .gb-more{width:100%;margin-left:0;justify-content:flex-start}
+        .gb-sec-sub{display:none}.gb-sec.collapsed .gb-sec-sub{display:block;width:100%;margin-left:36px}
+        .gb-sec-h{flex-wrap:wrap}
+      }
     </style>
   `;
 
@@ -10756,14 +10841,32 @@ async function renderGerdReikninga(t){
     const revSnap = reviewOn && d ? JSON.parse(JSON.stringify(d)) : null;
 
     const bg = document.createElement('div');
-    bg.className = 'gr-modal-bg';
+    bg.className = 'gr-modal-bg boss';
     const matSelect = `<select id="gr-mat-pick"><option value="">+ bæta efni úr Verðskrá…</option>${
       GR_MATERIALS.map(s=>`<optgroup label="${escapeAttr(s.section)}">${s.items.map((it,i)=>`<option value="${escapeAttr(it.label)}|${it.price}">${escapeHtml(it.label)} — ${fmt(it.price)} kr</option>`).join('')}</optgroup>`).join('')
     }</select>`;
     bg.innerHTML = `
       <div class="gr-modal">
+        <header class="gb-head">
+          <div class="gb-title">Efnislisti</div>
+          <span class="gb-plate">${d&&d.id?('DRÖG '+d.id):'NÝ DRÖG'}</span>
+          <div class="gb-meta">Mánaðamóta-reikningagerð · <b>${escapeHtml(name)}</b> · ${dmy(fra)}–${dmy(til)}</div>
+          <span class="gb-status${d&&d.updated_at?'':' unsaved'}" id="gr-hd-status"><i class="boss-led"></i><span id="gr-hd-status-t">${(()=>{const t=d&&d.updated_at?new Date(d.updated_at):null;return t&&!isNaN(t)?('vistað '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')):'óvistað';})()}</span></span>
+          <button class="gr-x" id="gr-close" type="button" title="Loka">×</button>
+        </header>
+        <div class="gb-kpi">
+          <div class="k"><span class="kl">Tími</span><span class="kv" id="gr-k-timi">—</span></div>
+          <div class="k"><span class="kl">Efni</span><span class="kv" id="gr-k-efni">—</span></div>
+          <div class="k"><span class="kl">Gjöld</span><span class="kv" id="gr-k-gjold">—</span></div>
+          <div class="k"><span class="kl">Án vsk</span><span class="kv" id="gr-k-net">—</span></div>
+          <div class="k total"><span class="kl">Samtals með vsk</span><span class="kv" id="gr-k-total">—</span></div>
+          <div class="gb-tabs"><button type="button" class="active" data-gbtab="form">✎ Breyta <span class="boss-chip" id="gr-warn-n" style="display:none"></span></button><button type="button" data-gbtab="prev">Reikningur</button></div>
+        </div>
         <div class="gr-form">
-          <div class="gr-mh"><h2>Efnislisti</h2><button class="gr-x" id="gr-close" type="button">×</button></div>
+          <div class="gb-athuga" id="gr-athuga"></div>
+          <section class="gb-sec" data-sec="01">
+            <div class="gb-sec-h"><span class="boss-plate">01</span><span class="gb-sec-t">Verk</span><span class="gb-sec-sub" id="gr-sub-01"></span><b class="gb-sec-sum" id="gr-sum-01"></b><span class="gb-caret">›</span></div>
+            <div class="gb-sec-b">
           <div class="gr-st">Verkstaður</div>
           <div class="gr-f"><label>Verkstaður</label><input id="gr-ws" value="${escapeAttr(name)}"></div>
           <div class="gr-f"><label>Verkkaupi</label><input id="gr-cust" value="${escapeAttr(cust)}"></div>
@@ -10773,6 +10876,11 @@ async function renderGerdReikninga(t){
           </div>
           <div class="gr-r2"><div class="gr-f"><label>Frá</label><div style="display:flex;align-items:center;gap:5px"><input type="text" id="gr-fra" value="${dmy(fra)}" placeholder="dd.mm.áááá" inputmode="numeric" maxlength="10" style="flex:1;min-width:0"><button type="button" class="gr-datepick" data-for="gr-fra" title="Veldu dagsetningu" style="flex:0 0 auto;border:1px solid var(--line-2,var(--edge));background:var(--card,#fff);border-radius:8px;padding:6px 9px;cursor:pointer;font-size:14px;line-height:1">📅</button></div></div><div class="gr-f"><label>Til</label><div style="display:flex;align-items:center;gap:5px"><input type="text" id="gr-til" value="${dmy(til)}" placeholder="dd.mm.áááá" inputmode="numeric" maxlength="10" style="flex:1;min-width:0"><button type="button" class="gr-datepick" data-for="gr-til" title="Veldu dagsetningu" style="flex:0 0 auto;border:1px solid var(--line-2,var(--edge));background:var(--card,#fff);border-radius:8px;padding:6px 9px;cursor:pointer;font-size:14px;line-height:1">📅</button></div></div></div>
           <div class="gr-f" style="margin-top:2px"><label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-weight:600"><input type="checkbox" id="gr-datemode" ${dateText?'checked':''}> Skrifa dagsetningu sjálf/ur á reikninginn (t.d. „Maí 2026")</label><input type="text" id="gr-datetext" value="${escapeAttr(dateText)}" placeholder="t.d. Maí 2026" style="margin-top:6px;${dateText?'':'display:none'}"></div>
+            </div>
+          </section>
+          <section class="gb-sec" data-sec="02">
+            <div class="gb-sec-h"><span class="boss-plate">02</span><span class="gb-sec-t">Tími &amp; akstur</span><span class="gb-sec-sub" id="gr-sub-02"></span><b class="gb-sec-sum" id="gr-sum-02"></b><span class="gb-caret">›</span></div>
+            <div class="gb-sec-b">
           <div class="gr-st">Tími <button type="button" id="gr-fill-hours" class="gr-btn" style="float:right;padding:3px 9px;font-size:11px" title="Fylla dagvinnu/yfirvinnu úr tímabók (yfirvinna eftir ${r.evThreshold} klst/dag${r.lunch>0?' — '+r.lunch+' klst hádegismatur frádreginn':''}; helgar (lau/sun) allar yfirvinna)">📥 Fylla úr tímabók</button></div>
           <div class="gr-r3"><div class="gr-f"><label>Dagvinna</label><div id="gr-dvh-sync" style="font-size:11px;color:var(--muted-2);padding:6px 0">—</div></div>
             <div class="gr-f"><label style="font-size:11px;color:var(--ink-2);font-weight:600">klst (breyta hér)</label><input type="text" inputmode="decimal" id="gr-dvh" value="${dvH}" style="background:var(--warn-bg);border-color:var(--warn-line)"></div><div class="gr-f"><label style="font-size:11px;color:var(--muted-2)">kr/klst</label><input type="text" inputmode="decimal" id="gr-dvr" value="${dvR}"></div></div>
@@ -10780,10 +10888,32 @@ async function renderGerdReikninga(t){
             <div class="gr-f"><label style="font-size:11px;color:var(--ink-2);font-weight:600">klst (breyta hér)</label><input type="text" inputmode="decimal" id="gr-evh" value="${evH}" style="background:var(--warn-bg);border-color:var(--warn-line)"${r.evOk?'':' title="Yfirvinna ekki leyfð samkvæmt verðskrá"'}></div><div class="gr-f"><label style="font-size:11px;color:var(--muted-2)">kr/klst</label><input type="text" inputmode="decimal" id="gr-evr" value="${evR}"${r.evOk?'':' disabled style="opacity:.5"'}></div></div>
           <div class="gr-st">Akstur</div>
           <div class="gr-r2"><div class="gr-f"><label>km × ${r.km}</label><input type="number" id="gr-km" value="${km}" step="10"></div><div class="gr-f"><label>ferðir × ${fmt(r.ferd)}</label><input type="number" id="gr-ferd" value="${fr}" step="1"></div></div>
+          <div class="gr-tbk" id="gr-tbk-panel">
+            <div class="gr-tbk-head">
+              <span class="gr-tbk-title">🕒 Tímaskýrsla <span class="gr-tbk-sum" id="gr-tbk-sum">—</span><span class="gb-tv" id="gr-tv-slot"></span></span>
+              <span class="gr-tbk-tools">
+                <button type="button" class="gr-tbk-ic" id="gr-tbk-add" title="Bæta línu">＋</button>
+                <button type="button" class="gr-tbk-ic" id="gr-tbk-refetch" title="Endursækja úr tímaveru.is (hendir handvirkum breytingum)">🔄</button>
+                <button type="button" class="gr-tbk-ic" id="gr-tbk-expand" title="Stækka tímaskýrsluna / minnka (Efnislistinn helst sýnilegur)">⤢</button>
+                <button type="button" class="gr-tbk-ic" id="gr-tv-btn" title="Tímavera-skjáskot: frumtímarnir úr Tímaveru til að factchecka — eitt per mánuð, innra viðhengi, sendist aldrei">🖼</button><input type="file" id="gr-tv-file" accept="image/*" style="display:none">
+              </span>
+            </div>
+            <div class="gr-tbk-body" id="gr-tbk-body"><div class="gr-tbk-empty">Sæki tímafærslur…</div></div>
+          </div>
+            </div>
+          </section>
+          <section class="gb-sec" data-sec="03">
+            <div class="gb-sec-h"><span class="boss-plate">03</span><span class="gb-sec-t">Efni</span><span class="gb-sec-sub" id="gr-sub-03"></span><b class="gb-sec-sum" id="gr-sum-03"></b><span class="gb-caret">›</span></div>
+            <div class="gb-sec-b">
           <div class="gr-st">Efni (Redder / handvirkt)</div>
           ${redderTotal>0?`<div class="gr-redder-note">Redder innkaupsverð þennan mánuð: <b>${fmt(redderTotal)} kr án vsk</b>. Forútfyllt á <b>söluverði Verðskrár</b> — aðeins efni sem á sér Verðskrárverð er rukkað; smávara (túss, klútar o.fl.) fellur undir smáhlutagjald. Leiðréttu eftir þörfum.</div>`:''}
           <div id="gr-mats"></div>
           <div class="gr-mat-add">${matSelect} <button type="button" id="gr-mat-custom" class="gr-btn" style="margin-left:6px">+ Sérlína (handvirkt efni)</button></div>
+            </div>
+          </section>
+          <section class="gb-sec" data-sec="04">
+            <div class="gb-sec-h"><span class="boss-plate">04</span><span class="gb-sec-t">Gjöld &amp; verð</span><span class="gb-sec-sub" id="gr-sub-04"></span><b class="gb-sec-sum" id="gr-sum-04"></b><span class="gb-caret">›</span></div>
+            <div class="gb-sec-b">
           <div class="gr-st">Aukagjöld</div>
           <div class="gr-f"><label><input type="checkbox" id="gr-stadf" ${stadfOn?'checked':''}> Staðfesting brunaþéttinga (${fmt(GR_STADF)} kr)</label></div>
           <div class="gr-f"><label style="cursor:pointer"><input type="checkbox" id="gr-sma-on" ${smaOn?'checked':''}> Smáhlutagjald = hanskar, þurrkur o.fl. (${r.sma} kr × dagvinnu + yfirvinnu klst, sjálfvirkt) — taktu hakið af til að sleppa</label><div style="font-size:11px;color:var(--muted)" id="gr-sma-hint">—</div></div>
@@ -10791,32 +10921,36 @@ async function renderGerdReikninga(t){
           <div class="gr-f"><label>Afsláttur af öllum reikningnum (%)</label><input type="text" inputmode="decimal" id="gr-disc" value="${escapeAttr(String(discPct))}" placeholder="0" style="max-width:130px"><div style="font-size:11px;color:var(--muted);margin-top:3px">t.d. 10 = 10% — birtist sem lína á reikningnum</div></div>
           <div class="gr-st">Fast verð</div>
           <div class="gr-f"><label>Fast heildarverð með vsk (samningaverð)</label><input type="text" inputmode="numeric" id="gr-fix" value="${escapeAttr(fixedTotal>0?String(Math.round(fixedTotal)):'')}" placeholder="—" style="max-width:180px"><div style="font-size:11px;color:var(--muted);margin-top:3px">Ef sett — yfirristir útreiknað verð. Notið þegar verð hefur verið samið (t.d. 1250000).</div></div>
+            </div>
+          </section>
+          <section class="gb-sec" data-sec="05">
+            <div class="gb-sec-h"><span class="boss-plate">05</span><span class="gb-sec-t">Athugasemd</span><span class="gb-sec-sub" id="gr-sub-05">innri — birtist ekki á skýrslu</span><b class="gb-sec-sum" id="gr-sum-05"></b><span class="gb-caret">›</span></div>
+            <div class="gb-sec-b">
           <div class="gr-st">Athugasemd <span style="font-weight:400;color:var(--muted-2)">(innri — birtist EKKI á skýrslu/PDF)</span></div>
           <div class="gr-f"><textarea id="gr-notes" rows="2" placeholder="Innri minnispunktur — fer hvorki á reikning né PDF">${escapeHtml(notes)}</textarea></div>
+            </div>
+          </section>
           <div class="gr-actions">
-            <button class="gr-btn gr-btn-primary" id="gr-save" type="button">💾 Vista</button>
-            <button class="gr-btn" id="gr-savepdf" type="button" title="Vista sem PDF (geymt á Supabase, engin innskráning) — birtist neðst í „Vistuð PDF-skjöl" til að opna/sækja/senda">📄 Vista PDF</button>
-            <button class="gr-btn" id="gr-print" type="button">🖨 Prenta / PDF</button>
-            <button class="gr-btn" id="gr-vinnuskjal" type="button" title="Vinnuskjal — efnislistinn OG tímaskýrslan á sama blaði, þjappað á eina A4-síðu">📋 Vinnuskjal</button>
-            <button class="gr-btn" id="gr-manual-btn" type="button" title="Opna handvirka stillingu — kennitala og heimilisfang verkkaupa á reikning">✏️ Handvirkt</button>
-            <button class="gr-btn" id="gr-timabok" type="button" title="Prenta tímabók (mæting starfsmanna) til að senda með reikningi">🕒 Tímabók</button>
-            <button class="gr-btn" id="gr-pdf2" type="button" title="Vista EITT PDF: Efnislisti á síðu 1 og Tímaskýrsla á síðu 2 (geymt á Supabase, birtist í „Vistuð PDF-skjöl")">📑 PDF + Tímaskýrsla</button>
-            <button class="gr-btn" id="gr-innra" type="button" title="Skrá sem er BARA fyrir okkur (mynd, PDF, hvað sem er, allt að 4 MB) — vistast með mánuðinum en sendist ALDREI með skýrslu eða kröfu">🔒 Innra viðhengi</button><input type="file" id="gr-innra-file" style="display:none">
+            <div class="gb-grp">
+              <button class="gr-btn" id="gr-savepdf" type="button" title="Vista sem PDF (geymt á Supabase, engin innskráning) — birtist neðst í „Vistuð PDF-skjöl" til að opna/sækja/senda">PDF</button>
+              <button class="gr-btn" id="gr-print" type="button">Prenta</button>
+              <button class="gr-btn" id="gr-pdf2" type="button" title="Vista EITT PDF: Efnislisti á síðu 1 og Tímaskýrsla á síðu 2 (geymt á Supabase, birtist í „Vistuð PDF-skjöl")">PDF + Tímask.</button>
+              <button class="gr-btn" id="gr-vinnuskjal" type="button" title="Vinnuskjal — efnislistinn OG tímaskýrslan á sama blaði, þjappað á eina A4-síðu">Vinnuskjal</button>
+            </div>
+            <div class="gb-row2">
+              <button class="gr-btn gr-btn-primary" id="gr-save" type="button">💾 Vista</button>
+              <div class="gb-grp dark">
+                <button class="gr-btn" id="gr-manual-btn" type="button" title="Opna handvirka stillingu — kennitala og heimilisfang verkkaupa á reikning">✏️ <span class="gb-lbl">Handvirkt</span></button>
+                <button class="gr-btn" id="gr-timabok" type="button" title="Prenta tímabók (mæting starfsmanna) til að senda með reikningi">🕒 <span class="gb-lbl">Tímabók</span></button>
+              </div>
+            </div>
+            <div class="gb-more">
+              <button class="gr-btn" id="gr-innra" type="button" title="Skrá sem er BARA fyrir okkur (mynd, PDF, hvað sem er, allt að 4 MB) — vistast með mánuðinum en sendist ALDREI með skýrslu eða kröfu">🔒 Innra viðhengi</button><input type="file" id="gr-innra-file" style="display:none">
             ${reviewOn ? `<button class="gr-btn" id="gr-confirm" type="button" style="background:var(--green);border-color:var(--green);color:#fff" title="Vista breytingarnar OG staðfesta yfirferðina — skrifstofan sér grænt „👔 Staðfest" á Kröfu yfirliti">✓ Staðfesta</button>
             <button class="gr-btn" id="gr-revert" type="button" style="border-color:var(--red-dark);color:var(--red-dark)" title="Afturkalla ALLAR breytingar úr þessari opnun (líka vistaðar) — drögin fara aftur í það sem þau voru þegar formið opnaðist">↶ Hætta við</button>` : ''}
-            <button class="gr-btn" id="gr-close2" type="button">Loka</button>
-            <span id="gr-save-st" style="font-size:12px;color:var(--muted);align-self:center"></span>
-          </div>
-          <div class="gr-tbk" id="gr-tbk-panel">
-            <div class="gr-tbk-head">
-              <span class="gr-tbk-title">🕒 Tímaskýrsla <span class="gr-tbk-sum" id="gr-tbk-sum">—</span></span>
-              <span class="gr-tbk-tools">
-                <button type="button" class="gr-tbk-ic" id="gr-tbk-add" title="Bæta línu">＋</button>
-                <button type="button" class="gr-tbk-ic" id="gr-tbk-refetch" title="Endursækja úr tímaveru.is (hendir handvirkum breytingum)">🔄</button>
-                <button type="button" class="gr-tbk-ic" id="gr-tbk-expand" title="Stækka tímaskýrsluna / minnka (Efnislistinn helst sýnilegur)">⤢</button>
-              </span>
+              <button class="gr-btn" id="gr-close2" type="button">Loka</button>
+              <span id="gr-save-st" style="font-size:12px;color:var(--muted);align-self:center"></span>
             </div>
-            <div class="gr-tbk-body" id="gr-tbk-body"><div class="gr-tbk-empty">Sæki tímafærslur…</div></div>
           </div>
         </div>
         <div class="gr-prev"><div class="gr-doc" id="gr-doc"></div></div>
@@ -10979,10 +11113,74 @@ async function renderGerdReikninga(t){
             <tr class="grand"><td colspan="3">samtals með vsk${c.fixed>0?' <span style="font-size:10px;background:var(--warn-bg);color:var(--warn);padding:1px 5px;border-radius:3px;font-weight:normal">fast verð</span>':''}</td><td class="t">${kr(c.displayTotal)}</td></tr>
           </tbody>
         </table>
-        ${notes?`<p style="font-size:12px;color:#555;margin-top:16px;font-style:italic">${escapeHtml(notes)}</p>`:''}`;
+        `;
+      if(bg.__bossSums) bg.__bossSums();
     }
     document.querySelectorAll('.gr-form input, .gr-form textarea').forEach(el=>{ el.addEventListener('input', draw); el.addEventListener('change', draw); });
     draw();
+    // ── Boss-útlit (03.09.2026): KPI-slab, kaflasummur 01–05, ATHUGA-kassi, símaflipar,
+    //    fellanlegir kaflar og 🖼 Tímavera-skjáskot. Hangir á draw() gegnum bg.__bossSums.
+    (function bossWire(){
+      const modal = bg.querySelector('.gr-modal'); const mob = () => window.matchMedia('(max-width:860px)').matches;
+      bg.querySelectorAll('.gb-sec').forEach(sec => {
+        if(mob() && !['02','03'].includes(sec.dataset.sec)) sec.classList.add('collapsed');
+        sec.querySelector('.gb-sec-h').addEventListener('click', e => { if(e.target.closest('button,input,select,textarea,a,label')) return; sec.classList.toggle('collapsed'); });
+      });
+      bg.querySelectorAll('.gb-tabs [data-gbtab]').forEach(b => b.addEventListener('click', () => {
+        bg.querySelectorAll('.gb-tabs [data-gbtab]').forEach(x => x.classList.toggle('active', x === b));
+        modal.classList.toggle('show-prev', b.dataset.gbtab === 'prev');
+      }));
+      const K = id => document.getElementById(id);
+      function bossSums(){
+        const c = compute();
+        const timi = c.dvAmt + c.evAmt + c.kmAmt + c.frAmt, gjold = c.sma + c.stadf - c.disc;
+        if(K('gr-k-timi')){ K('gr-k-timi').textContent = fmt(timi); K('gr-k-efni').textContent = fmt(c.matSum); K('gr-k-gjold').textContent = fmt(gjold); K('gr-k-net').textContent = fmt(c.net); K('gr-k-total').textContent = fmt(c.displayTotal) + ' kr'; }
+        const S = (n, v) => { const e = K('gr-sum-' + n); if(e) e.textContent = v; };
+        S('02', fmt(timi)); S('03', fmt(c.matSum)); S('04', fmt(gjold));
+        const sub = (n, v) => { const e = K('gr-sub-' + n); if(e) e.textContent = v; };
+        const wsv = (K('gr-ws') || {}).value || '', custv = (K('gr-cust') || {}).value || '';
+        sub('01', wsv.trim() + ' · ' + monthLabelStatic(month) + (custv.trim() ? ' · ' + custv.trim() : ' · verkkaupi vantar'));
+        sub('02', (c.dvH || 0) + ' dv · ' + (c.evH || 0) + ' ev · ' + (c.km || 0) + ' km');
+        sub('03', c.matLines.filter(m => m.qty > 0 || m.total > 0).length + ' línur · Redder + Verðskrá');
+        sub('04', 'staðf. ' + (c.stadf ? '✓' : '–') + ' · smáhl. ' + (c.sma ? '✓' : '–') + ' · afsl. ' + (c.discPct || 0) + ' % · fast ' + (c.fixed > 0 ? fmt(c.fixed) : '—'));
+        sub('05', ((K('gr-notes') || {}).value || '').trim().slice(0, 48) || 'innri — birtist ekki á skýrslu');
+        const warns = [];
+        const sync = (K('gr-dvh-sync') || {}).textContent || '';
+        if(/⚠/.test(sync)) warns.push({ sec: '02', t: sync.replace(/⚠/g, '').replace(/—.*$/, '').trim() });
+        bg.querySelectorAll('.gr-mat-line .m-warn').forEach(w => warns.push({ sec: '03', t: w.textContent.replace(/⚠/g, '').trim() }));
+        const box = K('gr-athuga');
+        if(box){ box.classList.toggle('on', warns.length > 0); box.innerHTML = warns.length ? '<div class="t">ATHUGA · ' + warns.length + '</div>' + warns.map(w => '<div class="w" data-sec="' + w.sec + '"><span class="boss-plate" style="font-size:9px">' + w.sec + '</span><span>' + escapeHtml(w.t) + '</span></div>').join('') : ''; }
+        const chip = K('gr-warn-n'); if(chip){ chip.textContent = warns.length ? String(warns.length) : ''; chip.style.display = warns.length ? '' : 'none'; }
+      }
+      bg.__bossSums = bossSums; bossSums();
+      const mo = new MutationObserver(() => { try{ bossSums(); }catch(_){} }); const mats = K('gr-mats'); if(mats) mo.observe(mats, { childList: true, subtree: true, characterData: true });
+      K('gr-athuga').addEventListener('click', e => { const p = e.target.closest('.w'); if(!p) return; const sec = bg.querySelector('.gb-sec[data-sec="' + p.dataset.sec + '"]'); if(sec){ sec.classList.remove('collapsed'); sec.scrollIntoView({ behavior: 'smooth', block: 'start' }); } });
+      // 🖼 Tímavera-skjáskot — eitt per (verkstað, mánuð), innra viðhengi (doc_type innra), sendist aldrei.
+      const TV_PREFIX = 'Tímavera-skjáskot';
+      let tvDoc = null;
+      function tvRender(){ const sl = K('gr-tv-slot'); if(!sl) return; sl.innerHTML = tvDoc ? '<span class="gb-tv-link" id="gr-tv-open" title="Opna skjáskotið úr Tímaveru — frumtímarnir">🖼 Tímavera-skjáskot</span>' : ''; const o = K('gr-tv-open'); if(o) o.onclick = tvOpen; }
+      function tvOpen(){ if(!tvDoc) return; const lb = document.createElement('div'); lb.className = 'gb-lightbox'; lb.innerHTML = '<div class="c">Tímavera · frumtímar · ' + escapeHtml(monthLabelStatic(month)) + ' · smelltu til að loka</div><img src="' + escapeAttr(tvDoc.public_url || '') + '" alt="Tímavera skjáskot">'; lb.onclick = () => lb.remove(); document.body.appendChild(lb); }
+      async function tvLoad(){ try{ const r = await fetch('/api/efnislisti-docs?doc_type=innra'); const j = r.ok ? await r.json() : { rows: [] }; tvDoc = (j.rows || []).find(x => x.worksite_name === name && x.work_month === month && String(x.title || '').startsWith(TV_PREFIX)) || null; }catch(_){ tvDoc = null; } tvRender(); }
+      const tvBtn = K('gr-tv-btn'), tvFile = K('gr-tv-file');
+      if(tvBtn && tvFile){
+        tvBtn.onclick = () => { if(tvDoc && !confirm('Skjáskot úr Tímaveru er þegar til fyrir þennan mánuð.\nSkipta því út fyrir nýtt?')){ tvOpen(); return; } tvFile.click(); };
+        tvFile.onchange = async (e) => {
+          const f = e.target.files && e.target.files[0]; if(!f) return;
+          const $st = K('gr-save-st'); if($st) $st.textContent = '⏳ Hleð Tímavera-skjáskoti…';
+          try{
+            if(f.size > 4 * 1024 * 1024) throw new Error('Skjáskotið er stærra en 4 MB');
+            const b64 = await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(',')[1]); fr.onerror = () => rej(new Error('Gat ekki lesið skrána')); fr.readAsDataURL(f); });
+            if(tvDoc && tvDoc.drive_file_id){ try{ await fetch('/api/efnislisti-docs', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ drive_file_id: tvDoc.drive_file_id }) }); }catch(_){} }
+            const r = await fetch('/api/pdf-store', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ fileName: TV_PREFIX + ' ' + month + ' · ' + f.name, contentBase64: b64, mimeType: f.type || 'image/png', worksite_name: name, work_month: month, doc_type: 'innra' }) });
+            const j = await r.json().catch(() => ({})); if(!r.ok || j.error) throw new Error(j.error || ('HTTP ' + r.status));
+            if($st) $st.textContent = '🖼 Tímavera-skjáskot vistað (innra — sendist ekki)';
+            await tvLoad(); if(typeof window.__grReloadPdfList === 'function') window.__grReloadPdfList();
+          }catch(err){ if($st) $st.textContent = '✗ ' + (err.message || err); }
+          e.target.value = '';
+        };
+      }
+      tvLoad();
+    })();
     (function(){ const _dm=document.getElementById('gr-datemode'), _dt=document.getElementById('gr-datetext'); if(_dm&&_dt) _dm.addEventListener('change', ()=>{ _dt.style.display=_dm.checked?'':'none'; if(_dm.checked){ _dt.focus(); } draw(); }); })();
 
     // ----- Save -----
@@ -11021,6 +11219,7 @@ async function renderGerdReikninga(t){
         const saved = await rr.json();
         DRAFTS[`${name}|${month}`] = saved;
         $st.textContent = '✓ Vistað';
+        { const hs = document.getElementById('gr-hd-status'), ht = document.getElementById('gr-hd-status-t'); if(hs && ht){ const t = new Date(); ht.textContent = 'vistað ' + String(t.getHours()).padStart(2,'0') + ':' + String(t.getMinutes()).padStart(2,'0'); hs.classList.remove('unsaved'); } }
         renderList();
         return true;
       }catch(e){ $st.textContent = '✗ '+(e.message||e); return false; }
