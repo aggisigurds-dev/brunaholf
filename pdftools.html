@@ -11,16 +11,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>📄 PDF verkfæri — Brunahólf</title>
 <style>
-  :root{ --ink:#0f172a; --sub:#64748b; --line:#e2e8f0; --indigo:#4f46e5; --bg:#f1f5f9; }
+  :root{ --ink:var(--blue-deep); --sub:var(--blue); --line:var(--blue-bg); --indigo:var(--blue); --bg:var(--blue-bg); }
   *{ box-sizing:border-box; }
   html,body{ margin:0; }
   body{ font-family:'Space Grotesk',system-ui,-apple-system,Segoe UI,Roboto,sans-serif; color:var(--ink); background:var(--bg); }
-  a{ color:#1d4ed8; }
-  .top{ background:#0b1220; color:#fff; padding:12px 18px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  a{ color:var(--blue); }
+  .top{ background:#161513; color:#fff; padding:12px 18px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
   .top h1{ font-size:17px; margin:0; font-weight:800; letter-spacing:.2px; }
-  .top .badge{ background:#e0e7ff; color:#3730a3; font-size:11px; font-weight:800; padding:3px 9px; border-radius:99px; }
+  .top .badge{ background:var(--blue-bg); color:var(--blue-deep); font-size:11px; font-weight:800; padding:3px 9px; border-radius:99px; }
   input,button,select,textarea{ font-family:inherit; }
-  .btn{ border:1px solid rgba(0,0,0,.15); background:#fff; color:#1e293b; padding:9px 15px; border-radius:9px; font-weight:700; cursor:pointer; font-size:13px; }
+  .btn{ border:1px solid rgba(0,0,0,.15); background:#fff; color:#2a2823; padding:9px 15px; border-radius:9px; font-weight:700; cursor:pointer; font-size:13px; }
   .btn:disabled{ opacity:.5; cursor:default; }
   .btn.primary{ background:linear-gradient(180deg,#4f46e5,#4338ca); color:#fff; border-color:rgba(0,0,0,.2); }
   .btn.sm{ padding:6px 10px; font-size:12px; }
@@ -30,32 +30,37 @@
   .card h2{ font-size:14.5px; margin:0 0 4px; }
   .card .hint{ font-size:12px; color:var(--sub); margin:0 0 12px; }
   .card input[type=text], .card input[type=url], .card textarea{
-    width:100%; border:1px solid #cbd5e1; border-radius:8px; padding:9px 11px; font-size:13.5px; margin-bottom:8px; box-sizing:border-box;
+    width:100%; border:1px solid var(--blue-bg); border-radius:8px; padding:9px 11px; font-size:13.5px; margin-bottom:8px; box-sizing:border-box;
   }
   .card textarea{ min-height:90px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12.5px; resize:vertical; }
   .row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
   .out{ margin-top:12px; border-top:1px dashed var(--line); padding-top:12px; font-size:13px; }
-  .out.err{ color:#b91c1c; }
-  .inv-card{ display:flex; gap:12px; align-items:flex-start; background:#f8fafc; border:1px solid var(--line); border-radius:10px; padding:12px; margin-top:8px; }
+  .out.err{ color:var(--red); }
+  .inv-card{ display:flex; gap:12px; align-items:flex-start; background:var(--blue-bg); border:1px solid var(--line); border-radius:10px; padding:12px; margin-top:8px; }
   .inv-card .ico{ font-size:26px; line-height:1; }
   .inv-card .meta{ flex:1; min-width:0; }
   .inv-card .meta .nm{ font-weight:700; word-break:break-word; }
   .inv-card .meta .sub{ color:var(--sub); font-size:12px; margin-top:2px; }
-  .file-drop{ border:1px dashed #cbd5e1; border-radius:10px; padding:14px; text-align:center; color:var(--sub); font-size:12.5px; cursor:pointer; margin-bottom:8px; }
-  .file-drop:hover{ background:#f8fafc; }
+  .file-drop{ border:1px dashed var(--blue-bg); border-radius:10px; padding:14px; text-align:center; color:var(--sub); font-size:12.5px; cursor:pointer; margin-bottom:8px; }
+  .file-drop:hover{ background:var(--blue-bg); }
   .file-list{ font-size:12.5px; margin:6px 0 10px; }
   .file-list div{ padding:3px 0; display:flex; justify-content:space-between; gap:8px; }
   .spin{ display:inline-block; width:12px; height:12px; border:2px solid rgba(255,255,255,.4); border-top-color:#fff; border-radius:50%; animation:sp .7s linear infinite; vertical-align:-2px; }
-  .btn .spin{ border-color:rgba(0,0,0,.2); border-top-color:#1e293b; }
+  .btn .spin{ border-color:rgba(0,0,0,.2); border-top-color:#2a2823; }
   @keyframes sp{ to{ transform:rotate(360deg); } }
-  pre.extracted{ white-space:pre-wrap; word-break:break-word; max-height:320px; overflow:auto; background:#0b1220; color:#e5eefb; padding:12px; border-radius:8px; font-size:12px; }
+  pre.extracted{ white-space:pre-wrap; word-break:break-word; max-height:320px; overflow:auto; background:#161513; color:#e5eefb; padding:12px; border-radius:8px; font-size:12px; }
 </style>
+<script src="/js/theme.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/theme.css?v=2">
 </head>
 <body>
 <div class="top">
   <h1>📄 PDF verkfæri</h1>
   <span class="badge">Brunahólf</span>
-  <span class="muted" style="color:#94a3b8">Finna vistaða reikninga/skýrslur · sameina PDF · ná í texta</span>
+  <span class="muted" style="color:var(--blue)">Finna vistaða reikninga/skýrslur · sameina PDF · ná í texta</span>
 </div>
 
 <div class="wrap">
@@ -121,7 +126,7 @@
       <button class="btn" id="crop-save" disabled>Vista úrklippu sem PNG</button>
       <span class="muted" id="crop-status"></span>
     </div>
-    <div id="crop-wrap" style="margin-top:10px;max-height:75vh;overflow:auto;border:1px solid var(--line);border-radius:8px;display:none;background:#0b1220">
+    <div id="crop-wrap" style="margin-top:10px;max-height:75vh;overflow:auto;border:1px solid var(--line);border-radius:8px;display:none;background:#161513">
       <canvas id="crop-canvas" style="display:block;cursor:crosshair;max-width:none"></canvas>
     </div>
   </div>
@@ -195,7 +200,7 @@ document.getElementById('merge-go').onclick = async () => {
     const blob = b64ToBlob(j.base64, 'application/pdf');
     downloadBlob(blob, j.filename);
     out.innerHTML = '✓ Sameinað í eina skrá (' + j.pageCount + ' síður) — niðurhal hófst.'
-      + (j.errors ? '<div class="muted" style="margin-top:6px;color:#b45309">' + j.errors.map(esc).join('<br>') + '</div>' : '');
+      + (j.errors ? '<div class="muted" style="margin-top:6px;color:var(--red)">' + j.errors.map(esc).join('<br>') + '</div>' : '');
   } catch(e){ out.className = 'out err'; out.textContent = 'Villa: ' + (e.message || e); }
   setBusy(btn, false);
 };
@@ -241,7 +246,7 @@ document.getElementById('spl-go').onclick = async () => {
 let cmpFiles = [];
 function cmpRenderList(){
   const list = document.getElementById('cmp-list');
-  list.innerHTML = cmpFiles.map((f,i) => '<div><span>' + esc(f.name) + '</span><span class="muted">' + fmtSize(f.size) + ' <a href="#" data-rm="' + i + '" style="color:#b91c1c">✕</a></span></div>').join('');
+  list.innerHTML = cmpFiles.map((f,i) => '<div><span>' + esc(f.name) + '</span><span class="muted">' + fmtSize(f.size) + ' <a href="#" data-rm="' + i + '" style="color:var(--red)">✕</a></span></div>').join('');
   list.querySelectorAll('[data-rm]').forEach(a => a.addEventListener('click', e => {
     e.preventDefault(); cmpFiles.splice(+a.dataset.rm, 1); cmpRenderList();
     document.getElementById('cmp-go').disabled = !cmpFiles.length;
@@ -269,7 +274,7 @@ document.getElementById('cmp-go').onclick = async () => {
     if(!r.ok || j.error) throw new Error(j.error || ('HTTP ' + r.status));
     downloadBlob(b64ToBlob(j.base64,'application/pdf'), j.filename);
     out.innerHTML = '✓ PDF búið til (' + j.pageCount + ' síður) — niðurhal hófst.'
-      + (j.errors ? '<div class="muted" style="margin-top:6px;color:#b45309">' + j.errors.map(esc).join('<br>') + '</div>' : '');
+      + (j.errors ? '<div class="muted" style="margin-top:6px;color:var(--red)">' + j.errors.map(esc).join('<br>') + '</div>' : '');
   } catch(e){ out.className = 'out err'; out.textContent = 'Villa: ' + (e.message || e); }
   setBusy(btn, false);
 };

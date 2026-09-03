@@ -11,20 +11,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>🧰 Skjala-multitool — Brunahólf</title>
 <style>
-  :root{ --ink:#0f172a; --sub:#64748b; --line:#e2e8f0; --indigo:#4f46e5; --bg:#f1f5f9; }
+  :root{ --ink:var(--blue-deep); --sub:var(--blue); --line:var(--blue-bg); --indigo:var(--blue); --bg:var(--blue-bg); }
   *{ box-sizing:border-box; }
   html,body{ margin:0; height:100%; }
   body{ font-family:'Space Grotesk',system-ui,-apple-system,Segoe UI,Roboto,sans-serif; color:var(--ink); background:var(--bg); }
-  a{ color:#1d4ed8; }
-  .top{ background:#0b1220; color:#fff; padding:12px 18px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  a{ color:var(--blue); }
+  .top{ background:#161513; color:#fff; padding:12px 18px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
   .top h1{ font-size:17px; margin:0; font-weight:800; letter-spacing:.2px; }
-  .top .badge{ background:#e0e7ff; color:#3730a3; font-size:11px; font-weight:800; padding:3px 9px; border-radius:99px; }
+  .top .badge{ background:var(--blue-bg); color:var(--blue-deep); font-size:11px; font-weight:800; padding:3px 9px; border-radius:99px; }
   .top .src{ display:flex; gap:8px; align-items:center; flex:1; min-width:280px; }
   .top input.mono{ font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12.5px; }
   input,button,select{ font-family:inherit; }
-  input{ border:1px solid #334155; background:#0f172a; color:#e5eefb; border-radius:8px; padding:8px 10px; height:38px; }
+  input{ border:1px solid #3a3732; background:#1c1b18; color:#e5eefb; border-radius:8px; padding:8px 10px; height:38px; }
   .top input{ flex:1; min-width:180px; }
-  .btn{ border:1px solid rgba(0,0,0,.15); background:#fff; color:#1e293b; padding:9px 15px; border-radius:9px; font-weight:700; cursor:pointer; font-size:13px; }
+  .btn{ border:1px solid rgba(0,0,0,.15); background:#fff; color:#2a2823; padding:9px 15px; border-radius:9px; font-weight:700; cursor:pointer; font-size:13px; }
   .btn:disabled{ opacity:.5; cursor:default; }
   .btn.primary{ background:linear-gradient(180deg,#4f46e5,#4338ca); color:#fff; border-color:rgba(0,0,0,.2); }
   .btn.sm{ padding:6px 10px; font-size:12px; }
@@ -34,115 +34,115 @@
   @media(max-width:900px){ .wrap{ grid-template-columns:1fr; height:auto; } }
   .pane{ overflow:auto; padding:16px 18px; }
   .pane.left{ border-right:1px solid var(--line); background:#fff; }
-  .pane.right{ background:#0b1220; padding:0; display:flex; flex-direction:column; }
+  .pane.right{ background:#161513; padding:0; display:flex; flex-direction:column; }
   @media(max-width:900px){ .pane{ height:auto; } .pane.right{ height:70vh; } }
   /* controls */
   .controls{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px; }
   .controls label{ font-size:12.5px; color:var(--sub); display:flex; align-items:center; gap:6px; }
-  .controls input[type=number]{ width:72px; background:#fff; color:#0f172a; border-color:#cbd5e1; height:34px; }
+  .controls input[type=number]{ width:72px; background:#fff; color:var(--blue-deep); border-color:var(--blue-bg); height:34px; }
   /* file cards — hver skrá á eigin röð, nafnið á eigin línu (læsilegt) */
-  .item{ border:1px solid #eef2f7; border-left:3px solid #e2e8f0; border-radius:10px; padding:9px 12px; margin-bottom:8px; cursor:pointer; background:#fff; }
-  .item:hover{ background:#f8fafc; }
-  .item.sel{ background:#eef2ff; border-color:#c7d2fe; border-left-color:#4f46e5; }
+  .item{ border:1px solid var(--blue-bg); border-left:3px solid var(--blue-bg); border-radius:10px; padding:9px 12px; margin-bottom:8px; cursor:pointer; background:#fff; }
+  .item:hover{ background:var(--blue-bg); }
+  .item.sel{ background:var(--blue-bg); border-color:var(--blue-bg); border-left-color:var(--blue); }
   .item .l1{ display:flex; align-items:baseline; gap:9px; }
   .item .l1 .chk{ margin:0; flex:none; align-self:center; }
   .item .dt{ font-weight:800; white-space:nowrap; font-size:12.5px; }
-  .item .fname{ flex:1; color:#0f172a; text-decoration:none; font-weight:700; font-size:14px; word-break:break-word; line-height:1.3; }
-  .item .fname:hover{ color:#1d4ed8; text-decoration:underline; }
-  .item .l2{ display:flex; flex-wrap:wrap; gap:6px 16px; margin-top:6px; padding-left:2px; font-size:12px; color:#475569; }
-  .item .l2 .k{ color:#94a3b8; font-weight:600; margin-right:3px; }
-  .item .prop{ color:#0f172a; font-weight:600; word-break:break-word; }
-  .sub{ font-size:11px; color:#94a3b8; font-weight:400; }
+  .item .fname{ flex:1; color:var(--blue-deep); text-decoration:none; font-weight:700; font-size:14px; word-break:break-word; line-height:1.3; }
+  .item .fname:hover{ color:var(--blue); text-decoration:underline; }
+  .item .l2{ display:flex; flex-wrap:wrap; gap:6px 16px; margin-top:6px; padding-left:2px; font-size:12px; color:var(--blue-deep); }
+  .item .l2 .k{ color:var(--blue); font-weight:600; margin-right:3px; }
+  .item .prop{ color:var(--blue-deep); font-weight:600; word-break:break-word; }
+  .sub{ font-size:11px; color:var(--blue); font-weight:400; }
   .pill{ display:inline-block; padding:1px 8px; border-radius:99px; font-size:11px; font-weight:700; }
-  .pill.amber{ background:#fef3c7; color:#92400e; }
-  .pill.grey{ color:#94a3b8; font-weight:600; font-size:11px; }
-  .pill.red{ background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; }
-  .tgt{ font-size:11px; color:#3730a3; background:#eef2ff; padding:1px 8px; border-radius:6px; white-space:nowrap; font-weight:600; }
+  .pill.amber{ background:var(--warn-bg); color:var(--red-dark); }
+  .pill.grey{ color:var(--blue); font-weight:600; font-size:11px; }
+  .pill.red{ background:var(--red-bg); color:var(--red); border:1px solid var(--red-line); }
+  .tgt{ font-size:11px; color:var(--blue-deep); background:var(--blue-bg); padding:1px 8px; border-radius:6px; white-space:nowrap; font-weight:600; }
   /* apply box */
-  .applybox{ margin-top:14px; border-top:1px dashed #c7d2fe; padding-top:14px; }
+  .applybox{ margin-top:14px; border-top:1px dashed var(--blue-bg); padding-top:14px; }
   .applybox h3{ font-size:13px; margin:0 0 8px; }
   .radios{ display:flex; gap:16px; flex-wrap:wrap; font-size:12.5px; margin-bottom:10px; }
   .radios label{ display:flex; align-items:center; gap:6px; }
   .folders{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px; }
-  .folders label{ font-size:11px; color:#64748b; display:block; margin-bottom:3px; }
-  .folders input{ width:100%; background:#fff; color:#0f172a; border-color:#cbd5e1; height:36px; font-family:ui-monospace,monospace; font-size:12px; }
+  .folders label{ font-size:11px; color:var(--blue); display:block; margin-bottom:3px; }
+  .folders input{ width:100%; background:#fff; color:var(--blue-deep); border-color:var(--blue-bg); height:36px; font-family:ui-monospace,monospace; font-size:12px; }
   /* preview pane */
-  .pv-head{ display:flex; align-items:center; gap:10px; padding:10px 14px; color:#e5eefb; border-bottom:1px solid #1e293b; flex-wrap:wrap; }
-  .pv-head .nm{ flex:1; min-width:120px; font-size:12.5px; color:#cbd5e1; word-break:break-word; }
-  .pv-head .btn{ background:#1e293b; color:#e5eefb; border-color:#334155; }
-  .pv-frame{ flex:1; border:0; width:100%; background:#0b1220; }
-  .pv-empty{ flex:1; display:flex; align-items:center; justify-content:center; color:#475569; font-size:14px; text-align:center; padding:24px; }
-  .counter{ font-size:12px; color:#94a3b8; }
+  .pv-head{ display:flex; align-items:center; gap:10px; padding:10px 14px; color:var(--blue-bg); border-bottom:1px solid var(--blue-deep); flex-wrap:wrap; }
+  .pv-head .nm{ flex:1; min-width:120px; font-size:12.5px; color:var(--blue-bg); word-break:break-word; }
+  .pv-head .btn{ background:#2a2823; color:#e5eefb; border-color:#3a3732; }
+  .pv-frame{ flex:1; border:0; width:100%; background:#161513; }
+  .pv-empty{ flex:1; display:flex; align-items:center; justify-content:center; color:var(--blue-deep); font-size:14px; text-align:center; padding:24px; }
+  .counter{ font-size:12px; color:var(--blue); }
   /* folder shortcuts */
   .folderbar{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px; padding-bottom:12px; border-bottom:1px dashed var(--line); }
-  .folderbar .fb-title{ font-size:11px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; margin-right:2px; }
-  .fchip{ display:inline-flex; align-items:center; gap:6px; background:#eef2ff; border:1px solid #c7d2fe; border-radius:99px; padding:5px 6px 5px 11px; font-size:12.5px; }
-  .fchip .go{ color:#3730a3; font-weight:700; cursor:pointer; }
+  .folderbar .fb-title{ font-size:11px; font-weight:800; color:var(--blue); text-transform:uppercase; letter-spacing:.06em; margin-right:2px; }
+  .fchip{ display:inline-flex; align-items:center; gap:6px; background:var(--blue-bg); border:1px solid var(--blue-bg); border-radius:99px; padding:5px 6px 5px 11px; font-size:12.5px; }
+  .fchip .go{ color:var(--blue-deep); font-weight:700; cursor:pointer; }
   .fchip .go:hover{ text-decoration:underline; }
-  .fchip a.open{ color:#4f46e5; text-decoration:none; font-size:13px; }
-  .fchip .del{ color:#94a3b8; cursor:pointer; font-size:13px; border:0; background:none; padding:0 2px; }
-  .fchip .del:hover{ color:#dc2626; }
-  .fb-add{ border:1px dashed #cbd5e1; background:#fff; color:#475569; border-radius:99px; padding:5px 12px; font-size:12.5px; cursor:pointer; }
+  .fchip a.open{ color:var(--blue); text-decoration:none; font-size:13px; }
+  .fchip .del{ color:var(--blue); cursor:pointer; font-size:13px; border:0; background:none; padding:0 2px; }
+  .fchip .del:hover{ color:var(--red); }
+  .fb-add{ border:1px dashed var(--blue-bg); background:#fff; color:var(--blue-deep); border-radius:99px; padding:5px 12px; font-size:12.5px; cursor:pointer; }
   /* folder input + pick button */
   .tf-row{ display:flex; gap:6px; flex-wrap:wrap; }
   /* nafn-vísbendingin er sett inn Í .tf-row af JS — full breidd svo hún kremji ekki reitinn */
   .tf-name{ flex-basis:100%; font-size:11px; margin-top:3px; min-height:14px; word-break:break-word; line-height:1.2; }
   .tf-row input{ flex:1; }
-  .pick{ border:1px solid #cbd5e1; background:#fff; color:#334155; border-radius:8px; padding:0 10px; cursor:pointer; font-size:14px; height:36px; }
-  .pick.top{ height:38px; background:#1e293b; color:#e5eefb; border-color:#334155; }
-  .pick:hover{ background:#f1f5f9; }
-  .pick.top:hover{ background:#334155; }
+  .pick{ border:1px solid var(--blue-bg); background:#fff; color:var(--blue-deep); border-radius:8px; padding:0 10px; cursor:pointer; font-size:14px; height:36px; }
+  .pick.top{ height:38px; background:#2a2823; color:#e5eefb; border-color:#3a3732; }
+  .pick:hover{ background:var(--blue-bg); }
+  .pick.top:hover{ background:#3a3732; }
   /* drive folder-picker modal */
   .modal-bg{ position:fixed; inset:0; background:rgba(2,6,23,.55); display:none; align-items:center; justify-content:center; z-index:50; padding:16px; }
   .modal-bg.on{ display:flex; }
-  .modal{ background:#fff; color:#0f172a; border-radius:14px; width:min(640px,96vw); max-height:86vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 24px 60px -20px rgba(2,6,23,.6); }
+  .modal{ background:#fff; color:var(--blue-deep); border-radius:14px; width:min(640px,96vw); max-height:86vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 24px 60px -20px rgba(2,6,23,.6); }
   .modal .mh{ padding:14px 16px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:10px; }
   .modal .mh h2{ font-size:15px; margin:0; flex:1; }
-  .modal .mh .x{ border:0; background:none; font-size:20px; cursor:pointer; color:#64748b; }
+  .modal .mh .x{ border:0; background:none; font-size:20px; cursor:pointer; color:var(--blue); }
   .modal .mtool{ padding:10px 16px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; border-bottom:1px solid var(--line); }
-  .modal .mtool input{ flex:1; min-width:160px; background:#fff; color:#0f172a; border-color:#cbd5e1; height:36px; }
-  .crumb{ font-size:12px; color:#64748b; padding:6px 16px; }
-  .crumb b{ color:#0f172a; }
+  .modal .mtool input{ flex:1; min-width:160px; background:#fff; color:var(--blue-deep); border-color:var(--blue-bg); height:36px; }
+  .crumb{ font-size:12px; color:var(--blue); padding:6px 16px; }
+  .crumb b{ color:var(--blue-deep); }
   .mlist{ overflow:auto; padding:6px 8px 12px; }
   .frow{ display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:8px; cursor:pointer; }
-  .frow:hover{ background:#f1f5f9; }
+  .frow:hover{ background:var(--blue-bg); }
   .frow .nm{ flex:1; font-size:13.5px; font-weight:600; }
-  .frow .pickone{ border:1px solid #4f46e5; color:#4f46e5; background:#eef2ff; border-radius:7px; padding:4px 10px; font-size:12px; font-weight:700; cursor:pointer; }
+  .frow .pickone{ border:1px solid var(--blue); color:var(--blue); background:var(--blue-bg); border-radius:7px; padding:4px 10px; font-size:12px; font-weight:700; cursor:pointer; }
   .mfoot{ padding:12px 16px; border-top:1px solid var(--line); display:flex; gap:10px; align-items:center; }
-  .mfoot .cur{ flex:1; font-size:12px; color:#64748b; word-break:break-all; }
+  .mfoot .cur{ flex:1; font-size:12px; color:var(--blue); word-break:break-all; }
   /* duplicate banner + badge */
   #dupbar:not(:empty){ margin:0 0 12px; }
-  .dupbar{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; background:#fff7ed; border:1px solid #fed7aa; border-radius:10px; padding:10px 14px; }
-  .dupbar .t{ flex:1; font-size:13px; color:#9a3412; font-weight:600; }
-  .dupbar .btn.warn{ background:#ea580c; color:#fff; border-color:#c2410c; }
+  .dupbar{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; background:var(--red-bg); border:1px solid var(--red-line); border-radius:10px; padding:10px 14px; }
+  .dupbar .t{ flex:1; font-size:13px; color:var(--red-dark); font-weight:600; }
+  .dupbar .btn.warn{ background:var(--red); color:#fff; border-color:var(--red); }
   /* 🆕 Fyrirtæki sem eru ekki í kerfinu (2025/2026) — blátt, aðgreint frá appelsínugulu tvítaka-bandinu */
-  .newcobar{ background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:10px 14px; margin-bottom:8px; }
-  .newcobar .t{ font-size:13px; color:#1e40af; font-weight:600; margin-bottom:8px; }
+  .newcobar{ background:var(--blue-bg); border:1px solid var(--blue-bg); border-radius:10px; padding:10px 14px; margin-bottom:8px; }
+  .newcobar .t{ font-size:13px; color:var(--blue-deep); font-weight:600; margin-bottom:8px; }
   .newco-list{ display:flex; flex-direction:column; gap:6px; }
-  .newco-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:#fff; border:1px solid #dbeafe; border-radius:8px; padding:6px 10px; }
-  .newco-nafn{ font-weight:700; font-size:13px; color:#0f172a; flex:1; min-width:140px; }
-  input.newco-input{ background:#fff; border:1px solid #93c5fd; border-radius:7px; height:30px; padding:0 8px; font-weight:600; }
-  .newco-kt{ font-family:ui-monospace,Consolas,monospace; font-size:12px; color:#475569; }
-  .newco-meta{ font-size:11.5px; color:#64748b; }
+  .newco-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:#fff; border:1px solid var(--blue-bg); border-radius:8px; padding:6px 10px; }
+  .newco-nafn{ font-weight:700; font-size:13px; color:var(--blue-deep); flex:1; min-width:140px; }
+  input.newco-input{ background:#fff; border:1px solid var(--blue-bg); border-radius:7px; height:30px; padding:0 8px; font-weight:600; }
+  .newco-kt{ font-family:ui-monospace,Consolas,monospace; font-size:12px; color:var(--blue-deep); }
+  .newco-meta{ font-size:11.5px; color:var(--blue); }
   .newco-msg{ font-size:12px; }
-  .newco-docs{ flex-basis:100%; display:flex; flex-wrap:wrap; gap:4px 10px; padding-top:5px; margin-top:4px; border-top:1px dashed #dbeafe; }
-  .newco-doc{ font-size:11.5px; color:#1d4ed8; cursor:pointer; text-decoration:none; }
+  .newco-docs{ flex-basis:100%; display:flex; flex-wrap:wrap; gap:4px 10px; padding-top:5px; margin-top:4px; border-top:1px dashed var(--blue-bg); }
+  .newco-doc{ font-size:11.5px; color:var(--blue); cursor:pointer; text-decoration:none; }
   .newco-doc:hover{ text-decoration:underline; }
-  .newco-open{ font-size:11.5px; color:#4f46e5; text-decoration:none; margin-left:-6px; }
-  .item.dupe{ border-left-color:#ea580c !important; }
-  .badge-dupe{ display:inline-block; background:#ffedd5; color:#9a3412; font-size:10.5px; font-weight:800; padding:1px 7px; border-radius:99px; }
-  .item.edited{ border-left-color:#0f7a43 !important; }
-  .badge-edit{ display:inline-block; background:#dcfce7; color:#166534; font-size:10.5px; font-weight:800; padding:1px 7px; border-radius:99px; }
+  .newco-open{ font-size:11.5px; color:var(--blue); text-decoration:none; margin-left:-6px; }
+  .item.dupe{ border-left-color:var(--red) !important; }
+  .badge-dupe{ display:inline-block; background:var(--red-bg); color:var(--red-dark); font-size:10.5px; font-weight:800; padding:1px 7px; border-radius:99px; }
+  .item.edited{ border-left-color:var(--green) !important; }
+  .badge-edit{ display:inline-block; background:var(--green-bg); color:var(--green); font-size:10.5px; font-weight:800; padding:1px 7px; border-radius:99px; }
   /* inline correction editor */
-  .edit-btn{ border:1px solid #cbd5e1; background:#fff; color:#334155; border-radius:7px; padding:2px 9px; font-size:11.5px; font-weight:700; cursor:pointer; }
-  .edit-btn:hover{ background:#eef2ff; border-color:#c7d2fe; color:#3730a3; }
-  .rm-btn{ flex:none; align-self:center; border:1px solid #fecaca; background:#fef2f2; color:#dc2626; border-radius:8px; width:30px; height:30px; font-size:16px; font-weight:800; line-height:1; cursor:pointer; }
-  .rm-btn:hover{ background:#dc2626; border-color:#dc2626; color:#fff; }
-  .editor{ margin-top:9px; padding:11px 12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:9px; }
-  .editor label{ display:block; font-size:11px; font-weight:700; color:#64748b; margin:8px 0 3px; }
+  .edit-btn{ border:1px solid var(--blue-bg); background:#fff; color:var(--blue-deep); border-radius:7px; padding:2px 9px; font-size:11.5px; font-weight:700; cursor:pointer; }
+  .edit-btn:hover{ background:var(--blue-bg); border-color:var(--blue-bg); color:var(--blue-deep); }
+  .rm-btn{ flex:none; align-self:center; border:1px solid var(--red-bg); background:var(--red-bg); color:var(--red); border-radius:8px; width:30px; height:30px; font-size:16px; font-weight:800; line-height:1; cursor:pointer; }
+  .rm-btn:hover{ background:var(--red); border-color:var(--red); color:#fff; }
+  .editor{ margin-top:9px; padding:11px 12px; background:var(--blue-bg); border:1px solid var(--blue-bg); border-radius:9px; }
+  .editor label{ display:block; font-size:11px; font-weight:700; color:var(--blue); margin:8px 0 3px; }
   .editor .ed-grid{ display:flex; gap:10px; flex-wrap:wrap; }
   .editor .ed-grid > div{ flex:1; min-width:130px; }
-  .editor input, .editor select, .editor textarea{ width:100%; background:#fff; color:#0f172a; border:1px solid #cbd5e1; border-radius:7px; padding:7px 9px; font-size:13px; height:auto; }
+  .editor input, .editor select, .editor textarea{ width:100%; background:#fff; color:var(--blue-deep); border:1px solid var(--blue-bg); border-radius:7px; padding:7px 9px; font-size:13px; height:auto; }
   .editor textarea{ min-height:46px; resize:vertical; font-family:inherit; }
   .editor .ed-name{ font-weight:600; }
   .editor .ed-btns{ display:flex; gap:9px; align-items:center; margin-top:11px; flex-wrap:wrap; }
@@ -156,30 +156,35 @@
   .set-sec .hint{ font-size:11.5px; color:var(--sub); line-height:1.45; margin:0 0 10px; }
   .set-row{ display:flex; gap:14px; align-items:center; flex-wrap:wrap; font-size:12.5px; margin-bottom:8px; }
   .set-row label{ display:flex; align-items:center; gap:6px; }
-  .set-row input[type=number]{ width:76px; background:#fff; color:#0f172a; border-color:#cbd5e1; height:32px; }
-  .set-row select{ height:32px; background:#fff; color:#0f172a; border:1px solid #cbd5e1; border-radius:8px; padding:0 7px; font-size:12.5px; }
+  .set-row input[type=number]{ width:76px; background:#fff; color:var(--blue-deep); border-color:var(--blue-bg); height:32px; }
+  .set-row select{ height:32px; background:#fff; color:var(--blue-deep); border:1px solid var(--blue-bg); border-radius:8px; padding:0 7px; font-size:12.5px; }
   .set-opt{ display:grid; grid-template-columns:auto 1fr; gap:1px 9px; align-items:start;
             border:1px solid var(--line); border-radius:9px; padding:9px 11px; margin-bottom:7px; cursor:pointer; font-size:12.5px; }
-  .set-opt:hover{ background:#f8fafc; }
-  .set-opt.on{ border-color:#c7d2fe; background:#eef2ff; }
+  .set-opt:hover{ background:var(--blue-bg); }
+  .set-opt.on{ border-color:var(--blue-bg); background:var(--blue-bg); }
   .set-opt input{ grid-row:1/span 2; margin:3px 0 0; }
   .set-opt b{ grid-column:2; }
   .set-opt .d{ grid-column:2; color:var(--sub); font-size:11.5px; line-height:1.45; }
-  .set-sub{ margin:8px 0 0 22px; padding-left:11px; border-left:2px solid #e2e8f0; }
-  .set-note{ background:#fff7ed; border:1px solid #fed7aa; border-radius:8px; padding:8px 11px; font-size:11.5px; color:#9a3412; line-height:1.45; margin-top:8px; }
-  .set-ok{ background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:8px 11px; font-size:11.5px; color:#166534; line-height:1.45; margin-top:8px; }
+  .set-sub{ margin:8px 0 0 22px; padding-left:11px; border-left:2px solid var(--blue-bg); }
+  .set-note{ background:var(--red-bg); border:1px solid var(--red-line); border-radius:8px; padding:8px 11px; font-size:11.5px; color:var(--red-dark); line-height:1.45; margin-top:8px; }
+  .set-ok{ background:var(--green-bg); border:1px solid var(--green-bg); border-radius:8px; padding:8px 11px; font-size:11.5px; color:var(--green); line-height:1.45; margin-top:8px; }
   #applysum{ font-size:12px; color:var(--sub); margin-bottom:10px; line-height:1.5; }
-  #applysum b{ color:#0f172a; }
-  #applysum .q{ color:#3730a3; font-weight:700; }
+  #applysum b{ color:var(--blue-deep); }
+  #applysum .q{ color:var(--blue-deep); font-weight:700; }
   /* corrections log modal */
   .clist{ overflow:auto; padding:6px 4px 12px; }
   .crow{ border-bottom:1px solid var(--line); padding:9px 6px; font-size:12.5px; }
-  .crow .cf{ font-weight:700; color:#0f172a; word-break:break-word; }
-  .crow .cprop{ color:#b91c1c; text-decoration:line-through; word-break:break-word; }
-  .crow .ccorr{ color:#166534; font-weight:600; word-break:break-word; }
-  .crow .cmeta{ color:#94a3b8; font-size:11px; margin-top:2px; }
-  .crow .cnote{ color:#475569; font-style:italic; margin-top:2px; }
+  .crow .cf{ font-weight:700; color:var(--blue-deep); word-break:break-word; }
+  .crow .cprop{ color:var(--red); text-decoration:line-through; word-break:break-word; }
+  .crow .ccorr{ color:var(--green); font-weight:600; word-break:break-word; }
+  .crow .cmeta{ color:var(--blue); font-size:11px; margin-top:2px; }
+  .crow .cnote{ color:var(--blue-deep); font-style:italic; margin-top:2px; }
 </style>
+<script src="/js/theme.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/theme.css?v=2">
 </head>
 <body>
 <div class="top">
@@ -198,7 +203,7 @@
     <button id="dedup-btn" class="btn sm" title="Fljót tvítekninga-leit — les BARA nöfn (engin OCR), strípar (1)/(2)">🗂️ Tvítök (nöfn)</button>
     <button id="show-set" class="btn sm" title="Stillingar — lestur, flokkun, hvert skjölin fara">⚙️ Stillingar</button>
   </div>
-  <a href="/#bakendi" target="_top" class="muted" style="color:#93c5fd">← Bakendi</a>
+  <a href="/#bakendi" target="_top" class="muted" style="color:var(--blue-bg)">← Bakendi</a>
 </div>
 
 <div class="wrap">
@@ -398,14 +403,14 @@
   function folderId(s){ s=String(s||'').trim(); var m=s.match(/[-\w]{25,}/); return m?m[0]:s; }
 
   var DT = {
-    uttektarskyrsla: { lbl:'📄 Úttektarskýrsla', col:'#0891b2' },
-    brunakerfi:      { lbl:'🔔 Brunakerfi',      col:'#7c3aed' },
-    reikningur:      { lbl:'🧾 Reikningur',       col:'#1d4ed8' },
-    samningur:       { lbl:'📝 Samningur',        col:'#0f7a43' },
-    stadgreitt:      { lbl:'💵 Staðgreitt',       col:'#b45309' },
-    vendor:          { lbl:'📦 Vendor',           col:'#94a3b8' },
-    other:           { lbl:'· Annað',             col:'#94a3b8' },
-    error:           { lbl:'⚠️ Villa',            col:'#dc2626' },
+    uttektarskyrsla: { lbl:'📄 Úttektarskýrsla', col:'var(--blue-deep)' },
+    brunakerfi:      { lbl:'🔔 Brunakerfi',      col:'var(--blue)' },
+    reikningur:      { lbl:'🧾 Reikningur',       col:'var(--blue)' },
+    samningur:       { lbl:'📝 Samningur',        col:'var(--green)' },
+    stadgreitt:      { lbl:'💵 Staðgreitt',       col:'var(--red)' },
+    vendor:          { lbl:'📦 Vendor',           col:'var(--blue)' },
+    other:           { lbl:'· Annað',             col:'var(--blue)' },
+    error:           { lbl:'⚠️ Villa',            col:'var(--red)' },
   };
   var OURS = { reikningur:1, uttektarskyrsla:1, brunakerfi:1, samningur:1 };
   // tegundir í valmynd leiðréttingar + samsvarandi mappa-merki (til birtingar)
@@ -541,7 +546,7 @@
     }
     if(!q){ as.innerHTML=''; return; }
     if(!quarReady()){
-      as.innerHTML='<span style="color:#b45309;font-weight:700">'+(ps?'🧾 Forflokkun':'🚧 Sóttkví')+' valin en möppurnar eru ekki til enn</span>'
+      as.innerHTML='<span style="color:var(--red);font-weight:700">'+(ps?'🧾 Forflokkun':'🚧 Sóttkví')+' valin en möppurnar eru ekki til enn</span>'
         + ' — opnaðu ⚙️ Stillingar og ýttu „📂 Búa til möppurnar í lesmöppunni“.';
       return;
     }
@@ -586,9 +591,9 @@
   function setTfName(id,name){
     var sp=$(id+'-nm'); if(!sp) return;
     var hasVal=$(id)&&$(id).value.trim();
-    if(name){ sp.innerHTML='📁 '+esc(name); sp.style.color='#166534'; }
-    else if(hasVal){ sp.innerHTML='⚠ óþekkt mappa — smelltu 📁 til að velja'; sp.style.color='#b45309'; }
-    else { sp.innerHTML='<span style="color:#94a3b8">engin mappa valin</span>'; }
+    if(name){ sp.innerHTML='📁 '+esc(name); sp.style.color='var(--green)'; }
+    else if(hasVal){ sp.innerHTML='⚠ óþekkt mappa — smelltu 📁 til að velja'; sp.style.color='var(--red)'; }
+    else { sp.innerHTML='<span style="color:var(--blue)">engin mappa valin</span>'; }
   }
   async function resolveTfName(id){
     var v=$(id)?folderId($(id).value):''; if(!v){ setTfName(id,''); return; }
@@ -667,9 +672,9 @@
   function compareReport(file){
     var rd=new FileReader();
     rd.onload=function(){
-      var old; try{ old=JSON.parse(rd.result); }catch(_){ $('status').innerHTML='<span style="color:#dc2626">🔀 Ógild JSON-skrá.</span>'; return; }
+      var old; try{ old=JSON.parse(rd.result); }catch(_){ $('status').innerHTML='<span style="color:var(--red)">🔀 Ógild JSON-skrá.</span>'; return; }
       var oldRows=(old&&old.rows)||[];
-      if(!rows.length){ $('status').innerHTML='<span style="color:#b45309">🔀 Engin núverandi skönnun — keyrðu fyrst, berðu svo saman.</span>'; return; }
+      if(!rows.length){ $('status').innerHTML='<span style="color:var(--red)">🔀 Engin núverandi skönnun — keyrðu fyrst, berðu svo saman.</span>'; return; }
       var oldById={}; oldRows.forEach(function(r){ if(r&&r.id) oldById[r.id]=r; });
       var curById={}; rows.forEach(function(r){ if(r&&r.id) curById[r.id]=reportRow(r); });
       var added=[], changed=[], gone=[];
@@ -686,11 +691,11 @@
       Object.keys(oldById).forEach(function(id){ if(!curById[id]) gone.push(oldById[id]); });
       var when=old.generated_at?new Date(old.generated_at).toLocaleString('is-IS'):'?';
       var html='🔀 <b>Samanburður</b> við skýrslu frá '+esc(when)+' ('+oldRows.length+' raðir → '+rows.length+' nú): '
-        + '<b style="color:#0f7a43">'+added.length+' nýjar</b> · <b style="color:#b45309">'+changed.length+' breyttar</b> · <b style="color:#dc2626">'+gone.length+' horfnar</b>.';
+        + '<b style="color:var(--green)">'+added.length+' nýjar</b> · <b style="color:var(--red)">'+changed.length+' breyttar</b> · <b style="color:var(--red)">'+gone.length+' horfnar</b>.';
       var det=[];
-      added.slice(0,8).forEach(function(r){ det.push('<span style="color:#0f7a43">＋ '+esc(r.name||r.id)+'</span>'); });
-      changed.slice(0,8).forEach(function(c){ det.push('<span style="color:#b45309">≠ '+esc(c.row.name||c.row.id)+'</span> <span class="muted">('+esc(c.diffs.join(' · '))+')</span>'); });
-      gone.slice(0,8).forEach(function(r){ det.push('<span style="color:#dc2626">－ '+esc(r.name||r.id)+'</span>'); });
+      added.slice(0,8).forEach(function(r){ det.push('<span style="color:var(--green)">＋ '+esc(r.name||r.id)+'</span>'); });
+      changed.slice(0,8).forEach(function(c){ det.push('<span style="color:var(--red)">≠ '+esc(c.row.name||c.row.id)+'</span> <span class="muted">('+esc(c.diffs.join(' · '))+')</span>'); });
+      gone.slice(0,8).forEach(function(r){ det.push('<span style="color:var(--red)">－ '+esc(r.name||r.id)+'</span>'); });
       var more=(added.length>8?added.length-8:0)+(changed.length>8?changed.length-8:0)+(gone.length>8?gone.length-8:0);
       if(det.length) html+='<div style="margin-top:6px;line-height:1.7">'+det.join('<br>')+(more?('<br><span class="muted">… og '+more+' til viðbótar</span>'):'')+'</div>';
       $('status').innerHTML=html;
@@ -733,7 +738,7 @@
         row.querySelector('[data-open]').onclick=function(){ $('pk-q').value=''; pkStack.push({id:id,name:name}); pkSel={id:id,name:name}; setChoose(); pkLoad(); };
         row.querySelector('[data-take]').onclick=function(){ if(pkCb){ pkCb(id,name); } closePicker(); };
       });
-    }catch(e){ $('pk-list').innerHTML='<div class="muted" style="padding:16px;color:#dc2626">Villa: '+esc(e&&e.message||e)+'</div>'; }
+    }catch(e){ $('pk-list').innerHTML='<div class="muted" style="padding:16px;color:var(--red)">Villa: '+esc(e&&e.message||e)+'</div>'; }
   }
   $('pk-q').addEventListener('input', function(){ clearTimeout(pkTimer); pkTimer=setTimeout(pkLoad, 300); });
   $('pk-home').onclick=function(){ $('pk-q').value=''; pkStack=[{id:null,name:'Allt'}]; pkSel=null; pkLoad(); };
@@ -876,14 +881,14 @@
       var d = await r.json().catch(function(){ return {}; });
       if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
       if (msg) msg.innerHTML = d.existed
-        ? ' <b style="color:#b45309">var þegar til</b> (id ' + d.id + ')'
-        : ' <b style="color:#0f7a43">✓ stofnað</b> (id ' + d.id + ')';
+        ? ' <b style="color:var(--red)">var þegar til</b> (id ' + d.id + ')'
+        : ' <b style="color:var(--green)">✓ stofnað</b> (id ' + d.id + ')';
       b.textContent = '✓ Stofnað';
       // Keyra forskoðun aftur svo skjölin tengist nýja fyrirtækinu.
       if (msg) msg.innerHTML += ' — keyrðu forskoðun aftur til að tengja skjölin.';
     } catch (err) {
       b.disabled = false;
-      if (msg) msg.innerHTML = ' <b style="color:#b91c1c">villa: ' + esc(err.message || String(err)) + '</b>';
+      if (msg) msg.innerHTML = ' <b style="color:var(--red)">villa: ' + esc(err.message || String(err)) + '</b>';
     }
   });
   function dupInfo(){
@@ -908,11 +913,11 @@
     var btn=$('dup-move'); if(btn) btn.disabled=true;
     var done=0, cursor=0;
     async function worker(){ while(cursor<idxs.length){ var i=idxs[cursor++]; var r=rows[i];
-      setRes(i,'<span style="color:#64748b">… færi í rusl</span>');
+      setRes(i,'<span style="color:var(--blue)">… færi í rusl</span>');
       try{ var rr=await fetch('/api/drive-multitool',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'move-dupe',id:r.id,targetFolder:rusl,base_nafn:r.base_nafn})});
         var d=await rr.json().catch(function(){return{ok:false,error:'HTTP '+rr.status};}); r.__done=true;
-        setRes(i, d.ok?('<span style="color:#0f7a43;font-weight:700">✓ '+(d.moved?'fært í rusl':'þegar í rusli')+'</span>'):('<span style="color:#dc2626;font-weight:700">✗ '+esc(d.error||'villa')+'</span>'));
-      }catch(e){ r.__done=true; setRes(i,'<span style="color:#dc2626">✗ '+esc(e&&e.message||e)+'</span>'); }
+        setRes(i, d.ok?('<span style="color:var(--green);font-weight:700">✓ '+(d.moved?'fært í rusl':'þegar í rusli')+'</span>'):('<span style="color:var(--red);font-weight:700">✗ '+esc(d.error||'villa')+'</span>'));
+      }catch(e){ r.__done=true; setRes(i,'<span style="color:var(--red)">✗ '+esc(e&&e.message||e)+'</span>'); }
       done++; if(btn) btn.textContent='Færi '+done+'/'+idxs.length+'…'; } }
     await Promise.all([worker(),worker()]);
     paint(true); updateSelCount();
@@ -933,11 +938,11 @@
       if(_ed && _m){ _focus={ i:+_ed.getAttribute('data-ed'), cls:_m[0], ss:_ae.selectionStart, se:_ae.selectionEnd }; } }
     window.__mtFocus=_focus;
     var c = Object.keys(counts).sort().map(function(k){ return (DT[k]?DT[k].lbl:k)+' '+counts[k]; }).join(' · ');
-    $('status').innerHTML='Lesin '+rows.length+' skjöl'+(c?(' · '+c):'')+(done?' <b style="color:#0f7a43">— búið ✅</b>':(running?' …':''));
+    $('status').innerHTML='Lesin '+rows.length+' skjöl'+(c?(' · '+c):'')+(done?' <b style="color:var(--green)">— búið ✅</b>':(running?' …':''));
     var body='';
     var dup=dupInfo();
     rows.forEach(function(r,i){
-      var dt=DT[r.doc_type]||{lbl:r.doc_type,col:'#334155'};
+      var dt=DT[r.doc_type]||{lbl:r.doc_type,col:'var(--blue-deep)'};
       var ours=!!OURS[r.doc_type];
       var muted=(r.doc_type==='vendor'||r.doc_type==='other');
       var isDupe=dup.extras.has(i);
@@ -969,7 +974,7 @@
       // úr skjalinu — sýnileg HÉR, áður en ýtt er á Keyra. Grænt = hún leysti
       // staðinn; rautt merki = fjölstaða-kúnni án staðar-sönnunar → skjalið
       // vistast samt (tengt kúnnanum einum) og fer merkt í yfirferð.
-      if(r.vegna) bits.push('<span title="Vegna-/Tilvísunar-línan úr skjalinu — grunnur staðargreiningarinnar"><span class="k">Greining:</span> „'+esc(r.vegna)+'"'+(r.site_via==='vegna'?' <span class="pill" style="background:#dcfce7;color:#166534;border-color:#bbf7d0">→ 📍 '+esc(r.site_nafn||'')+'</span>':'')+'</span>');
+      if(r.vegna) bits.push('<span title="Vegna-/Tilvísunar-línan úr skjalinu — grunnur staðargreiningarinnar"><span class="k">Greining:</span> „'+esc(r.vegna)+'"'+(r.site_via==='vegna'?' <span class="pill" style="background:var(--green-bg);color:var(--green);border-color:var(--green-bg)">→ 📍 '+esc(r.site_nafn||'')+'</span>':'')+'</span>');
       if(r.needs_site && !r.__done) bits.push('<span class="pill red" title="Rekstrarfélag með marga staði en engin staðar-sönnun (vegna-lína / heimilisfang / #stimpill). Vistast tengt kúnnanum EINUM — aldrei giskað á stað — og merkist needs_site í yfirferð.">🏷 vantar stað → yfirferð</span>');
       // Pakki 8: vidskiptategund úr forskoðuninni (sala→línur→búðarmappa→óvíst)
       // — stimplast á skjalaröðina við Keyra.
@@ -1060,13 +1065,13 @@
   async function removeToAnnad(i){
     var r=rows[i]; if(!r) return;
     if(!confirm('Eyða skránni „'+(r.name||'')+'"?\n\nHún fer í ruslafötu Drive og er endurheimtanleg í ~30 daga (ekki varanlega eytt).')) return;
-    setRes(i,'<span style="color:#64748b">… eyði</span>');
+    setRes(i,'<span style="color:var(--blue)">… eyði</span>');
     var d;
     try{
       var rr=await fetch('/api/drive-multitool',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'trash',id:r.id,base_nafn:r.base_nafn})});
       d=await rr.json().catch(function(){return{ok:false,error:'HTTP '+rr.status};});
     }catch(e){ d={ok:false,error:(e&&e.message)||'net'}; }
-    if(!d.ok){ setRes(i,'<span style="color:#dc2626;font-weight:700">✗ '+esc(d.error||'villa')+'</span>'); return; }
+    if(!d.ok){ setRes(i,'<span style="color:var(--red);font-weight:700">✗ '+esc(d.error||'villa')+'</span>'); return; }
     dropRow(i);   // eytt (í rusl) → taka röðina af listanum
   }
 
@@ -1082,8 +1087,8 @@
     var o=r.__orig||{};
     // ekkert breytt og engin athugasemd → engin þörf á að skrá
     var changed=(newDt!==o.doc_type)||(newName!==(o.proposed_name||null))||(newYear!==(o.year!=null?o.year:null));
-    if(!changed && !note){ if(msg){ msg.style.color='#94a3b8'; msg.textContent='Ekkert breytt.'; } return; }
-    if(msg){ msg.style.color='#64748b'; msg.textContent='… vista'; }
+    if(!changed && !note){ if(msg){ msg.style.color='var(--blue)'; msg.textContent='Ekkert breytt.'; } return; }
+    if(msg){ msg.style.color='var(--blue)'; msg.textContent='… vista'; }
     r.__note=note;
     var body={ action:'log-correction', id:r.id, orig_name:r.name,
       proposed_doc_type:o.doc_type||null, proposed_name_orig:o.proposed_name||null,
@@ -1095,7 +1100,7 @@
       rr=await fetch('/api/drive-multitool',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
       d=await rr.json().catch(function(){return{ok:false,error:'HTTP '+rr.status};});
     }catch(e){ d={ok:false,error:(e&&e.message)||'net'}; }
-    if(!d.ok){ if(msg){ msg.style.color='#dc2626'; msg.textContent='✗ '+(d.error||'villa'); } return; }
+    if(!d.ok){ if(msg){ msg.style.color='var(--red)'; msg.textContent='✗ '+(d.error||'villa'); } return; }
     // vistun tókst → uppfæra röðina (svo „Keyra valið" noti leiðréttu gildin) + loka ritli
     r.doc_type=newDt; r.proposed_name=newName; r.year=newYear;
     if(newDt!==o.doc_type){ r.sub_hint=''; r.target=TARGET_LBL[newDt]||r.target; if(!OURS[newDt]){ r.site_id=null; r.site_nafn=null; } }
@@ -1126,7 +1131,7 @@
         if(d.nextOffset==null){ running=false; paint(true); break; }
         offset=d.nextOffset;
       }
-      if(rows.length>=cap){ running=false; $('status').innerHTML=$('status').innerHTML.replace(/ …$/,'')+' <b style="color:#b45309">— stöðvað eftir '+cap+' skjöl</b>'; }
+      if(rows.length>=cap){ running=false; $('status').innerHTML=$('status').innerHTML.replace(/ …$/,'')+' <b style="color:var(--red)">— stöðvað eftir '+cap+' skjöl</b>'; }
     }catch(e){ running=false; $('status').textContent='Villa: '+(e&&e.message||e); }
     finally{ running=false; $('run').disabled=false; $('stop').disabled=true; }
   }
@@ -1135,7 +1140,7 @@
 
   // ── apply (Fasi 2) ──
   async function applyOne(i){
-    var r=rows[i]; setRes(i,'<span style="color:#64748b">… vinn</span>');
+    var r=rows[i]; setRes(i,'<span style="color:var(--blue)">… vinn</span>');
     var body={ action:'apply', id:r.id, doc_type:r.doc_type, base_id:r.base_id, base_nafn:r.base_nafn,
       year:r.year, invoice_number:r.invoice_number, site_id:r.site_id,
       proposed_name:(r.__finalName || r.proposed_name),
@@ -1147,16 +1152,16 @@
       var rr=await fetch('/api/drive-multitool',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
       var d=await rr.json().catch(function(){ return {ok:false,error:'HTTP '+rr.status}; });
       r.__done=true;
-      if(!d.ok){ setRes(i,'<span style="color:#dc2626;font-weight:700">✗ '+esc(d.error||'villa')+'</span>'); return {res:'err'}; }
-      if(d.skipped==='not-ours'){ setRes(i,'<span style="color:#94a3b8">— sleppt (ekki okkar)</span>'); return {res:'skip'}; }
-      if(d.conflict){ setRes(i,'<span style="color:#b45309;font-weight:700">⚠ árekstur — ekki tengt</span>'+(d.moved?' <span style="color:#64748b">· fært</span>':'')); return {res:'conflict'}; }
+      if(!d.ok){ setRes(i,'<span style="color:var(--red);font-weight:700">✗ '+esc(d.error||'villa')+'</span>'); return {res:'err'}; }
+      if(d.skipped==='not-ours'){ setRes(i,'<span style="color:var(--blue)">— sleppt (ekki okkar)</span>'); return {res:'skip'}; }
+      if(d.conflict){ setRes(i,'<span style="color:var(--red);font-weight:700">⚠ árekstur — ekki tengt</span>'+(d.moved?' <span style="color:var(--blue)">· fært</span>':'')); return {res:'conflict'}; }
       var bits=[]; if(d.moved) bits.push('fært'); if(d.renamed) bits.push('endurnefnt');
       if(d.linkAction==='skipped_exists') bits.push('tengill til (ósnert)');
       else if(d.linked) bits.push('tengt'+(d.linkAction&&d.linkAction!=='linked'?(' ('+d.linkAction+')'):''));
       if(d.moveSkipped==='no-target') bits.push(inplaceOn()?'↩︎ á staðnum':'engin markmappa');
-      setRes(i,'<span style="color:#0f7a43;font-weight:700">✓ '+esc(bits.join(' + ')||'engin breyting')+'</span>');
+      setRes(i,'<span style="color:var(--green);font-weight:700">✓ '+esc(bits.join(' + ')||'engin breyting')+'</span>');
       return {res:'ok'};
-    }catch(e){ r.__done=true; setRes(i,'<span style="color:#dc2626;font-weight:700">✗ '+esc(e&&e.message||e)+'</span>'); return {res:'err'}; }
+    }catch(e){ r.__done=true; setRes(i,'<span style="color:var(--red);font-weight:700">✗ '+esc(e&&e.message||e)+'</span>'); return {res:'err'}; }
   }
   async function runApply(){
     var idxs=selectedIdxs(); if(!idxs.length) return;
@@ -1194,7 +1199,7 @@
     await Promise.all([worker(),worker()]);
     applying=false; $('apply-stop').disabled=true; $('apply-run').disabled=false; $('run').disabled=false; $('stop').disabled=true;
     document.querySelectorAll('.chk').forEach(function(c){ var i=parseInt(c.dataset.idx,10); if(!rows[i]||!rows[i].__done) c.disabled=false; });
-    $('apply-status').innerHTML+=' <b style="color:#0f7a43">— búið ✅</b>';
+    $('apply-status').innerHTML+=' <b style="color:var(--green)">— búið ✅</b>';
     updateSelCount();
   }
   $('apply-run').onclick=runApply;
@@ -1224,7 +1229,7 @@
           + '<div class="cmeta">'+fmtDate(c.created_at)+dtLine+yrLine+(c.drive_file_id?(' · <a href="/api/skjal?id='+encodeURIComponent(c.drive_file_id)+'" target="_blank" rel="noopener">opna PDF ↗</a>'):'')+'</div>'
           + '</div>';
       }).join('');
-    }catch(e){ $('corr-list').innerHTML='<div class="muted" style="padding:16px;color:#dc2626">Villa: '+esc(e&&e.message||e)+'</div>'; }
+    }catch(e){ $('corr-list').innerHTML='<div class="muted" style="padding:16px;color:var(--red)">Villa: '+esc(e&&e.message||e)+'</div>'; }
   }
   function closeCorr(){ $('corr-bg').classList.remove('on'); }
   $('show-corr').onclick=openCorrections;
@@ -1251,18 +1256,18 @@
   async function makeQuarFolders(){
     var src=folderId($('src').value);
     var msg=$('s-mkquar-msg'), btn=$('s-mkquar');
-    if(!src){ if(msg){ msg.style.color='#dc2626'; msg.textContent='Settu inn Drive-möppu efst fyrst.'; } return; }
+    if(!src){ if(msg){ msg.style.color='var(--red)'; msg.textContent='Settu inn Drive-möppu efst fyrst.'; } return; }
     if(btn) btn.disabled=true;
-    if(msg){ msg.style.color='#64748b'; msg.textContent='… bý til möppur'; }
+    if(msg){ msg.style.color='var(--blue)'; msg.textContent='… bý til möppur'; }
     try{
       var r=await fetch('/api/drive-multitool',{ method:'POST', headers:{'Content-Type':'application/json'},
         body:JSON.stringify({ action:'quarantine-folders', src:src, mode:quarMode() }) });
       var d=await r.json().catch(function(){ return {ok:false,error:'HTTP '+r.status}; });
       if(!d.ok) throw new Error((d.errors&&d.errors.join('; '))||d.error||'villa');
       QUAR={ src:src, mode:(d.mode==='presort'?'presort':'full'), folders:d.folders };
-      if(msg){ msg.style.color='#166534';
+      if(msg){ msg.style.color='var(--green)';
         msg.textContent='✓ '+(d.created&&d.created.length?('bjó til '+d.created.length+' möppur'):'möppurnar voru þegar til')+' — tilbúið.'; }
-    }catch(e){ if(msg){ msg.style.color='#dc2626'; msg.textContent='✗ '+(e&&e.message||e); } }
+    }catch(e){ if(msg){ msg.style.color='var(--red)'; msg.textContent='✗ '+(e&&e.message||e); } }
     finally{ if(btn) btn.disabled=false; syncSetUi(); paint(!running); }
   }
   if($('s-mkquar')) $('s-mkquar').onclick=makeQuarFolders;
@@ -1286,16 +1291,16 @@
       DEDUP=d;
       var groups=d.groups||[];
       $('dedup-count').textContent=d.total_files+' skrár · '+groups.length+' tvítaka-hópar · '+d.total_dupe_count+' aukaeintök';
-      if(!groups.length){ $('dedup-list').innerHTML='<div class="muted" style="padding:16px;color:#16a34a;font-weight:600">Engin tvítök eftir nafni. 🎉</div>'; return; }
+      if(!groups.length){ $('dedup-list').innerHTML='<div class="muted" style="padding:16px;color:var(--green);font-weight:600">Engin tvítök eftir nafni. 🎉</div>'; return; }
       $('dedup-list').innerHTML=groups.map(function(g){
-        var dupes=(g.dupes||[]).map(function(f){ return '<div style="padding:2px 0;color:#b91c1c;font-size:12.5px">🗑 <a href="'+f.viewUrl+'" target="_blank" rel="noopener">'+esc(f.name)+'</a></div>'; }).join('');
+        var dupes=(g.dupes||[]).map(function(f){ return '<div style="padding:2px 0;color:var(--red);font-size:12.5px">🗑 <a href="'+f.viewUrl+'" target="_blank" rel="noopener">'+esc(f.name)+'</a></div>'; }).join('');
         return '<div class="crow"><div class="cf">🗂️ '+esc(g.name)+' <span class="muted" style="font-weight:400">('+((g.dupes||[]).length+1)+' eintök)</span></div>'
-          + '<div style="padding:2px 0;color:#166534;font-size:12.5px">✅ Held: <a href="'+g.keeper.viewUrl+'" target="_blank" rel="noopener">'+esc(g.keeper.name)+'</a></div>'
+          + '<div style="padding:2px 0;color:var(--green);font-size:12.5px">✅ Held: <a href="'+g.keeper.viewUrl+'" target="_blank" rel="noopener">'+esc(g.keeper.name)+'</a></div>'
           + dupes + '</div>';
       }).join('');
       var total=d.total_dupe_count||0;
       var mv=$('dedup-move'); mv.style.display=''; mv.disabled=false; mv.textContent='🗑 Færa öll aukaeintök í rusl ('+total+')';
-    }catch(e){ $('dedup-list').innerHTML='<div class="muted" style="padding:16px;color:#dc2626">Villa: '+esc(e&&e.message||e)+'</div>'; }
+    }catch(e){ $('dedup-list').innerHTML='<div class="muted" style="padding:16px;color:var(--red)">Villa: '+esc(e&&e.message||e)+'</div>'; }
   }
   async function moveDedupes(){
     if(!DEDUP||!DEDUP.groups) return;

@@ -145,6 +145,18 @@ Agnar hannaði nýja útlitið í Claude Design og valdi það með skjámyndum:
    Tailwind-hex (`#94a3b8`, `#2f5fe0`, `#e2e8f0` …) í öðrum flipum eru leifar —
    skiptu þeim út fyrir tókena þegar þú snertir flipann.
 
+**Samræmingin 2026-09-03 (2. lota):** ALLIR hörðu Tailwind-litirnir í `index.html`
+(~1.900 gildi) voru þýddir yfir á þema-breytur — flipar sem enginn hafði snert
+fylgja núna Boss sjálfkrafa. Undirsíðurnar í iframe (`eydublod`, `multitool`,
+`pdftools`, `skraalisti`, `verkefnalisti`, `brunakerfi`) hlaða theme.css + Boss-
+fontana og eigin `:root` þeirra var þýtt yfir. **Tvær undantekningar:**
+`jarvis.html` heldur dökka HUD-útlitinu sínu (Boss-pallettan drap læsileikann þar)
+og `fjarmalyfirlit.html` á sinn eigin Boss-stíl í `css/fjarmalyfirlit.css`.
+Hub-umgjörðin í theme.css er bundin við `header.topbar` / `aside.sidebar` svo hún
+liti ekki undirsíður sem nota sömu klasanöfn — ekki víkka þá selectora aftur.
+Nýir litir: **notaðu tóken, ekki hex.** Ef vantar tón, bættu honum í `:root` í
+theme.css (og í `docs/design-boss/tokens/`), ekki inline í flipa.
+
 **Þjónustuborð boss v4** (`pages/thjonustubord-boss-v4.html`) er viðmiðunarskjárinn
 sem allt kerfið er mælt úr og er ætlaður **slokkvitaeki.netlify.app** — ekki
 útfæra hann hér nema Agnar biðji um það; joker-inn í slokkvitaeki á kaflann um

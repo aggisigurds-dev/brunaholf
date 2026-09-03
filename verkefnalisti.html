@@ -12,16 +12,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root {
-    --bg:#f6f7fb; --panel:#fff; --panel-2:#f8fafc; --line:#e2e8f0;
-    --fg:#0f172a; --muted:#64748b;
-    --ok:#16a34a; --amber:#d97706; --red:#dc2626; --brand:#dc2626; --blue:#2563eb;
+    --bg:var(--blue-bg); --panel:#fff; --panel-2:var(--blue-bg); --line:var(--blue-bg);
+    --fg:var(--blue-deep); --muted:var(--blue);
+    --ok:var(--green); --amber:var(--red); --red:var(--red); --brand:var(--red); --blue:var(--blue);
   }
   * { box-sizing:border-box; }
   body { margin:0; font:15px/1.5 -apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--fg); padding:24px; padding-bottom:80px; }
-  header { max-width:980px; margin:0 auto 24px; padding:18px 22px; background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%); color:#fff; border-radius:14px; box-shadow:0 1px 3px rgba(15,23,42,.06); }
+  header { max-width:980px; margin:0 auto 24px; padding:18px 22px; background:linear-gradient(135deg,#1c1b18 0%,#2a2823 100%); color:#fff; border-radius:14px; box-shadow:0 1px 3px rgba(15,23,42,.06); }
   header h1 { margin:0; font-size:20px; font-weight:700; display:flex; align-items:center; gap:10px; }
   header h1 .badge { background:var(--brand); color:#fff; padding:3px 9px; border-radius:6px; font-size:11px; font-weight:700; letter-spacing:.04em; }
-  header .sub { color:#cbd5e1; font-size:13px; margin-top:6px; }
+  header .sub { color:var(--blue-bg); font-size:13px; margin-top:6px; }
   main { max-width:980px; margin:0 auto; }
 
   /* Add form */
@@ -35,20 +35,20 @@
   .add-card textarea { min-height:64px; resize:vertical; font:13px/1.45 inherit; }
   .add-card input:focus, .add-card textarea:focus { outline:none; border-color:var(--brand); box-shadow:0 0 0 3px rgba(220,38,38,.1); }
   .paste-zone {
-    margin-top:8px; padding:14px; border:1.5px dashed #cbd5e1; border-radius:8px;
-    background:#f8fafc; color:var(--muted); font-size:12.5px; text-align:center; cursor:pointer;
+    margin-top:8px; padding:14px; border:1.5px dashed var(--blue-bg); border-radius:8px;
+    background:var(--blue-bg); color:var(--muted); font-size:12.5px; text-align:center; cursor:pointer;
     transition:border-color .15s, background .15s;
   }
   .paste-zone:hover { border-color:var(--brand); background:#fff; }
   .paste-zone:focus { outline:2px solid var(--brand); }
-  .paste-zone.has-image { border-style:solid; border-color:var(--ok); background:#f0fdf4; color:var(--ok); }
+  .paste-zone.has-image { border-style:solid; border-color:var(--ok); background:var(--green-bg); color:var(--ok); }
   .paste-zone img { max-width:100%; max-height:200px; border-radius:6px; margin-top:8px; display:block; margin-left:auto; margin-right:auto; box-shadow:0 1px 3px rgba(15,23,42,.1); }
   .actions { display:flex; gap:10px; margin-top:14px; align-items:center; flex-wrap:wrap; }
   .btn { padding:10px 18px; border:0; border-radius:8px; font:600 13px inherit; cursor:pointer; transition:background .15s; }
   .btn.primary { background:var(--brand); color:#fff; box-shadow:0 1px 2px rgba(220,38,38,.25); }
   .btn.primary:hover { background:#b91c1c; }
   .btn.ghost { background:transparent; color:var(--muted); border:1px solid var(--line); }
-  .btn.ghost:hover { color:var(--fg); border-color:var(--fg); background:#f1f5f9; }
+  .btn.ghost:hover { color:var(--fg); border-color:var(--fg); background:var(--blue-bg); }
   .btn[disabled] { opacity:.4; cursor:not-allowed; }
   .toast { font-size:12.5px; }
   .toast.ok { color:var(--ok); }
@@ -85,12 +85,12 @@
   .task:last-child { border-bottom:0; }
   .task[draggable="true"] { cursor:grab; }
   .task[draggable="true"]:active { cursor:grabbing; }
-  .task.dragging { opacity:.4; background:#f8fafc; }
+  .task.dragging { opacity:.4; background:var(--blue-bg); }
   .task.drop-above { box-shadow:inset 0 3px 0 var(--brand); }
   .task.drop-below { box-shadow:inset 0 -3px 0 var(--brand); }
   .task .task-body { display:flex; gap:8px; align-items:flex-start; }
   .task .task-text { flex:1; min-width:0; }
-  .grip { color:#cbd5e1; font-size:14px; padding:2px 4px; user-select:none; line-height:1.4; letter-spacing:-1px; flex:0 0 auto; }
+  .grip { color:var(--blue-bg); font-size:14px; padding:2px 4px; user-select:none; line-height:1.4; letter-spacing:-1px; flex:0 0 auto; }
   .task[draggable="true"]:hover .grip { color:var(--muted); }
   .task .title { font-size:14px; font-weight:600; line-height:1.4; }
   .task .desc { color:var(--muted); font-size:12.5px; margin-top:4px; line-height:1.45; white-space:pre-wrap; }
@@ -105,53 +105,53 @@
   .task .img-box { display:flex; flex-direction:column; }
   .task .ops { display:flex; gap:6px; align-items:flex-start; flex-wrap:wrap; justify-content:flex-end; }
   .task .ops button { font-size:11.5px; padding:5px 10px; border-radius:6px; border:1px solid var(--line); background:#fff; color:var(--fg); cursor:pointer; font-weight:500; }
-  .task .ops button:hover { background:var(--panel-2); border-color:#cbd5e1; }
-  .task .ops button.danger:hover { background:#fef2f2; color:var(--red); border-color:var(--red); }
+  .task .ops button:hover { background:var(--panel-2); border-color:var(--blue-bg); }
+  .task .ops button.danger:hover { background:var(--red-bg); color:var(--red); border-color:var(--red); }
 
   /* Status pills */
   .pill { display:inline-block; padding:3px 9px; border-radius:99px; font-size:10.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
-  .pill.beidni { background:#fef3c7; color:#92400e; border:1px solid #fde68a; }
-  .pill.i_vinnu { background:#dbeafe; color:#1e40af; border:1px solid #93c5fd; }
-  .pill.klarad { background:#dcfce7; color:#166534; border:1px solid #86efac; }
-  .pill.sleppt { background:#f1f5f9; color:var(--muted); border:1px solid var(--line); }
+  .pill.beidni { background:var(--warn-bg); color:var(--red-dark); border:1px solid var(--warn-line); }
+  .pill.i_vinnu { background:var(--blue-bg); color:var(--blue-deep); border:1px solid var(--blue-bg); }
+  .pill.klarad { background:var(--green-bg); color:var(--green); border:1px solid var(--green-line); }
+  .pill.sleppt { background:var(--blue-bg); color:var(--muted); border:1px solid var(--line); }
   .live-dot { display:inline-block; width:8px; height:8px; background:var(--ok); border-radius:50%; box-shadow:0 0 0 4px rgba(22,163,74,.2); margin-right:6px; vertical-align:middle; animation:pulse 2s infinite; }
   @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.5; } }
 
   /* Forgangs-merki: kringlótt, smellt til að skipta lit (grátt→grænt→gult→rautt→grátt) */
-  .flag-dot { flex:0 0 auto; align-self:flex-start; margin-top:3px; width:16px; height:16px; padding:0; border-radius:50%; border:2px solid rgba(15,23,42,.18); background:#cbd5e1; cursor:pointer; transition:background .12s, box-shadow .12s, border-color .12s; }
+  .flag-dot { flex:0 0 auto; align-self:flex-start; margin-top:3px; width:16px; height:16px; padding:0; border-radius:50%; border:2px solid rgba(15,23,42,.18); background:var(--blue-bg); cursor:pointer; transition:background .12s, box-shadow .12s, border-color .12s; }
   .flag-dot:hover { box-shadow:0 0 0 3px rgba(15,23,42,.08); }
-  .flag-dot[data-flag="1"] { background:var(--ok,#22c55e); border-color:#16a34a; }
-  .flag-dot[data-flag="2"] { background:#eab308; border-color:#ca8a04; }
-  .flag-dot[data-flag="3"] { background:var(--red,#ef4444); border-color:#dc2626; }
+  .flag-dot[data-flag="1"] { background:var(--ok,var(--green)); border-color:var(--green); }
+  .flag-dot[data-flag="2"] { background:var(--warn); border-color:var(--warn); }
+  .flag-dot[data-flag="3"] { background:var(--red,var(--red)); border-color:var(--red); }
   .empty { padding:18px 0; color:var(--muted); font-size:13px; font-style:italic; text-align:center; }
 
   /* Category filter chips */
   .cat-bar { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:18px; padding:12px 14px; background:var(--panel); border:1px solid var(--line); border-radius:10px; box-shadow:0 1px 2px rgba(15,23,42,.03); }
   .cat-chip { display:inline-flex; align-items:center; gap:5px; padding:5px 11px; border:1px solid var(--line); border-radius:99px; font-size:12px; font-weight:600; color:var(--muted); background:#fff; cursor:pointer; user-select:none; transition:all .12s; }
-  .cat-chip:hover { border-color:#cbd5e1; background:#f8fafc; }
+  .cat-chip:hover { border-color:var(--blue-bg); background:var(--blue-bg); }
   .cat-chip.active { background:var(--fg); color:#fff; border-color:var(--fg); }
   .cat-chip .cnt { font-variant-numeric:tabular-nums; opacity:.7; font-size:11px; }
 
   /* Short request-id badge — so a project can be pointed at directly ("check #94295522")
      instead of describing it in prose. Click to copy the full id. */
-  .id-badge { display:inline-block; padding:1px 6px; border-radius:5px; font:700 10.5px ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.02em; background:#f1f5f9; color:#475569; border:1px solid #e2e8f0; cursor:pointer; }
-  .id-badge:hover { background:#e2e8f0; color:#1e293b; }
+  .id-badge { display:inline-block; padding:1px 6px; border-radius:5px; font:700 10.5px ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.02em; background:var(--blue-bg); color:var(--blue-deep); border:1px solid var(--blue-bg); cursor:pointer; }
+  .id-badge:hover { background:var(--blue-bg); color:var(--blue-deep); }
 
   /* Category badge on task row */
   .cat-badge { display:inline-block; padding:1.5px 7px; border-radius:99px; font-size:10px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; margin-right:6px; vertical-align:middle; }
-  .cat-utlit    { background:#fce7f3; color:#9d174d; }
-  .cat-customer { background:#dbeafe; color:#1e40af; }
-  .cat-skjol    { background:#fef3c7; color:#92400e; }
-  .cat-reikning { background:#dcfce7; color:#166534; }
-  .cat-bakendi  { background:#e0e7ff; color:#3730a3; }
-  .cat-oryggi   { background:#fee2e2; color:#991b1b; }
-  .cat-vefryni  { background:#f3e8ff; color:#6b21a8; }
-  .cat-listi    { background:#cffafe; color:#155e75; }
-  .cat-allt     { background:#f1f5f9; color:#475569; }
+  .cat-utlit    { background:var(--blue-bg); color:var(--red); }
+  .cat-customer { background:var(--blue-bg); color:var(--blue-deep); }
+  .cat-skjol    { background:var(--warn-bg); color:var(--red-dark); }
+  .cat-reikning { background:var(--green-bg); color:var(--green); }
+  .cat-bakendi  { background:var(--blue-bg); color:var(--blue-deep); }
+  .cat-oryggi   { background:var(--red-bg); color:var(--red); }
+  .cat-vefryni  { background:var(--blue-bg); color:var(--blue-deep); }
+  .cat-listi    { background:var(--blue-bg); color:var(--blue-deep); }
+  .cat-allt     { background:var(--blue-bg); color:var(--blue-deep); }
 
   /* Status: í yfirferð */
-  .pill.i_yfirferd { background:#ffedd5; color:#9a3412; border:1px solid #fed7aa; }
-  .task[data-status="i_yfirferd"] { background:#fff7ed; border-left:3px solid #f97316; padding-left:10px; }
+  .pill.i_yfirferd { background:var(--red-bg); color:var(--red-dark); border:1px solid var(--red-line); }
+  .task[data-status="i_yfirferd"] { background:var(--red-bg); border-left:3px solid var(--red); padding-left:10px; }
 
   @media (max-width:640px) {
     body { padding:14px; }
@@ -160,6 +160,11 @@
     .task .ops { justify-content:flex-start; }
   }
 </style>
+<script src="/js/theme.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/theme.css?v=2">
 </head>
 <body>
 <header>
@@ -201,7 +206,7 @@
 <div id="stats" class="stats">
   <button type="button" class="stat" data-go="sec-beidni" title="Fara í Beiðnir"><b id="c-beidni">–</b><span>Beiðnir</span></button>
   <button type="button" class="stat" data-go="sec-vinnu" title="Fara í Í vinnu"><b id="c-vinnu" style="color:var(--blue)">–</b><span>Í vinnu</span></button>
-  <button type="button" class="stat" data-go="sec-yfirferd" title="Fara í Í yfirferð"><b id="c-yfirferd" style="color:#9a3412">–</b><span>Í yfirferð</span></button>
+  <button type="button" class="stat" data-go="sec-yfirferd" title="Fara í Í yfirferð"><b id="c-yfirferd" style="color:var(--red-dark)">–</b><span>Í yfirferð</span></button>
   <button type="button" class="stat" data-go="sec-klarad" title="Fara í Klárað"><b id="c-klarad" style="color:var(--ok)">–</b><span>Klárað</span></button>
 </div>
 
@@ -394,7 +399,7 @@ function renderTask(t) {
   const catKey = t.category || 'allt';
   const catLabel = (CAT_LABELS[catKey] || { label: catKey }).label;
   const catBadge = '<span class="cat-badge cat-' + esc(catKey) + '">' + esc(catLabel) + '</span>';
-  const agentBadge = t.assigned_agent ? '<span class="cat-badge" style="background:#fef3c7;color:#92400e">🤖 ' + esc(t.assigned_agent) + '</span>' : '';
+  const agentBadge = t.assigned_agent ? '<span class="cat-badge" style="background:var(--warn-bg);color:var(--red-dark)">🤖 ' + esc(t.assigned_agent) + '</span>' : '';
 
   const imgs = [];
   // Margar skjámyndir (request_image_urls fylki); gamla staka slóðin er fallback.
@@ -408,10 +413,10 @@ function renderTask(t) {
     imgs.push('<div class="img-box"><div class="img-label">Niðurstaða</div><a href="' + esc(t.result_image_url) + '" target="_blank"><img src="' + esc(t.result_image_url) + '" alt="niðurstaða"></a></div>');
   }
 
-  const notes = t.claude_notes ? '<div class="desc" style="color:#1e40af;margin-top:6px;background:#eff6ff;padding:6px 9px;border-radius:6px"><b>Claude:</b> ' + esc(t.claude_notes) + '</div>' : '';
+  const notes = t.claude_notes ? '<div class="desc" style="color:var(--blue-deep);margin-top:6px;background:var(--blue-bg);padding:6px 9px;border-radius:6px"><b>Claude:</b> ' + esc(t.claude_notes) + '</div>' : '';
   // Athugasemdir Agnars (t.d. „gerðu þetta öðruvísi" við ↶ Aftur í vinnu) —
   // appelsínugult box svo agentinn og skrifstofan sjái þær strax.
-  const fb = t.feedback ? '<div class="desc" style="color:#9a3412;margin-top:6px;background:#fff7ed;border:1px solid #fed7aa;padding:6px 9px;border-radius:6px;white-space:pre-wrap"><b>📣 Athugasemdir:</b>\n' + esc(t.feedback) + '</div>' : '';
+  const fb = t.feedback ? '<div class="desc" style="color:var(--red-dark);margin-top:6px;background:var(--red-bg);border:1px solid var(--red-line);padding:6px 9px;border-radius:6px;white-space:pre-wrap"><b>📣 Athugasemdir:</b>\n' + esc(t.feedback) + '</div>' : '';
 
   // Drag handle: only on rows still in beidni/i_vinnu (klárað/sleppt rows
   // stay frozen), and only in forgangs-röðun — í „Nýjast fyrst" ræður tíminn.
@@ -634,8 +639,8 @@ function openFeedback(id) {
   box.className = 'fb-box';
   box.style.cssText = 'grid-column:1/-1;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 12px;margin-top:4px';
   box.innerHTML =
-    '<label style="display:block;font-size:11px;color:#9a3412;text-transform:uppercase;letter-spacing:.04em;margin:0 0 5px;font-weight:700">Hverju á að breyta?</label>' +
-    '<textarea class="fb-text" style="width:100%;min-height:56px;padding:8px 10px;border:1px solid #fed7aa;border-radius:7px;font:13px/1.45 inherit;resize:vertical" placeholder="t.d. „takkinn á að vera vinstra megin, ekki hægra megin""></textarea>' +
+    '<label style="display:block;font-size:11px;color:var(--red-dark);text-transform:uppercase;letter-spacing:.04em;margin:0 0 5px;font-weight:700">Hverju á að breyta?</label>' +
+    '<textarea class="fb-text" style="width:100%;min-height:56px;padding:8px 10px;border:1px solid var(--red-line);border-radius:7px;font:13px/1.45 inherit;resize:vertical" placeholder="t.d. „takkinn á að vera vinstra megin, ekki hægra megin""></textarea>' +
     '<div class="actions" style="margin-top:8px">' +
       '<button class="btn primary fb-send">↶ Senda aftur í vinnu</button>' +
       '<button class="btn ghost fb-cancel">Hætta við</button>' +

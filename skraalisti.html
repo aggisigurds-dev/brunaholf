@@ -28,28 +28,28 @@
   áreiðanlegustu lyklarnir á okkar skjölum, ekki heitið sjálft.
 -->
 <style>
-  :root{ --ink:#0f172a; --sub:#64748b; --line:#e2e8f0; --indigo:#4f46e5; --bg:#f1f5f9; }
+  :root{ --ink:var(--blue-deep); --sub:var(--blue); --line:var(--blue-bg); --indigo:var(--blue); --bg:var(--blue-bg); }
   *{ box-sizing:border-box; }
   html,body{ margin:0; height:100%; }
   body{ font-family:'Space Grotesk',system-ui,-apple-system,Segoe UI,Roboto,sans-serif; color:var(--ink); background:var(--bg); }
-  a{ color:#1d4ed8; }
-  .top{ background:#0b1220; color:#fff; padding:12px 18px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  a{ color:var(--blue); }
+  .top{ background:#161513; color:#fff; padding:12px 18px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
   .top h1{ font-size:17px; margin:0; font-weight:800; letter-spacing:.2px; }
-  .top .badge{ background:#e0e7ff; color:#3730a3; font-size:11px; font-weight:800; padding:3px 9px; border-radius:99px; }
+  .top .badge{ background:var(--blue-bg); color:var(--blue-deep); font-size:11px; font-weight:800; padding:3px 9px; border-radius:99px; }
   .top .sp{ flex:1; }
   input,button,select{ font-family:inherit; }
-  .btn{ border:1px solid rgba(0,0,0,.15); background:#fff; color:#1e293b; padding:9px 15px; border-radius:9px; font-weight:700; cursor:pointer; font-size:13px; }
+  .btn{ border:1px solid rgba(0,0,0,.15); background:#fff; color:#2a2823; padding:9px 15px; border-radius:9px; font-weight:700; cursor:pointer; font-size:13px; }
   .btn:disabled{ opacity:.45; cursor:default; }
   .btn.primary{ background:linear-gradient(180deg,#4f46e5,#4338ca); color:#fff; border-color:rgba(0,0,0,.2); }
   .btn.sm{ padding:6px 10px; font-size:12px; }
-  .btn.dark{ background:#1e293b; color:#e5eefb; border-color:#334155; }
-  .btn.dark:hover{ background:#334155; }
+  .btn.dark{ background:#2a2823; color:#e5eefb; border-color:#3a3732; }
+  .btn.dark:hover{ background:#3a3732; }
   .muted{ color:var(--sub); font-size:12.5px; }
   .wrap{ padding:16px 18px 28px; }
   /* stjórnborð */
   .bar{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:14px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
   .bar label{ font-size:12.5px; color:var(--sub); display:flex; align-items:center; gap:6px; }
-  .bar select,.bar input[type=search]{ height:34px; background:#fff; color:#0f172a; border:1px solid #cbd5e1; border-radius:8px; padding:0 9px; font-size:13px; }
+  .bar select,.bar input[type=search]{ height:34px; background:#fff; color:var(--blue-deep); border:1px solid var(--blue-bg); border-radius:8px; padding:0 9px; font-size:13px; }
   .bar input[type=search]{ min-width:220px; }
   /* listaspjöld */
   .cols{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
@@ -57,48 +57,53 @@
   .card{ background:#fff; border:1px solid var(--line); border-radius:12px; display:flex; flex-direction:column; min-height:220px; }
   .card.b{ border-style:dashed; }
   .card .ch{ padding:11px 14px; border-bottom:1px solid var(--line); display:flex; gap:9px; align-items:center; flex-wrap:wrap; }
-  .card .ch .tag{ font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:#94a3b8; }
+  .card .ch .tag{ font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--blue); }
   .card .ch .fname{ flex:1; min-width:120px; font-weight:700; font-size:13.5px; word-break:break-word; }
-  .card .ch .cnt{ font-size:12px; font-weight:800; background:#eef2ff; color:#3730a3; padding:2px 9px; border-radius:99px; white-space:nowrap; }
+  .card .ch .cnt{ font-size:12px; font-weight:800; background:var(--blue-bg); color:var(--blue-deep); padding:2px 9px; border-radius:99px; white-space:nowrap; }
   .card .cl{ overflow:auto; max-height:min(58vh,560px); padding:4px 0 8px; }
   .row{ display:flex; align-items:baseline; gap:9px; padding:4px 14px; font-size:12.5px; border-left:3px solid transparent; }
-  .row:nth-child(odd){ background:#fafbfc; }
+  .row:nth-child(odd){ background:var(--blue-bg); }
   .row .n{ flex:1; word-break:break-word; }
   .row .n a{ color:inherit; text-decoration:none; }
-  .row .n a:hover{ color:#1d4ed8; text-decoration:underline; }
-  .row .k{ font-family:ui-monospace,Menlo,monospace; font-size:11px; color:#94a3b8; white-space:nowrap; }
-  .row.only{ border-left-color:#dc2626; background:#fef2f2; }
-  .row.both{ border-left-color:#16a34a; }
-  .empty{ padding:26px 16px; text-align:center; color:#94a3b8; font-size:13px; line-height:1.6; }
+  .row .n a:hover{ color:var(--blue); text-decoration:underline; }
+  .row .k{ font-family:ui-monospace,Menlo,monospace; font-size:11px; color:var(--blue); white-space:nowrap; }
+  .row.only{ border-left-color:var(--red); background:var(--red-bg); }
+  .row.both{ border-left-color:var(--green); }
+  .empty{ padding:26px 16px; text-align:center; color:var(--blue); font-size:13px; line-height:1.6; }
   /* samanburðar-borði */
   .cmp{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:14px; }
   .cmp .t{ font-size:13px; font-weight:700; margin-bottom:9px; }
   .cmp .pills{ display:flex; gap:9px; flex-wrap:wrap; }
   .pill{ font-size:12.5px; font-weight:700; padding:5px 11px; border-radius:99px; border:1px solid; }
-  .pill.both{ background:#f0fdf4; color:#166534; border-color:#bbf7d0; }
-  .pill.a{ background:#fef2f2; color:#b91c1c; border-color:#fecaca; }
-  .pill.b{ background:#fff7ed; color:#9a3412; border-color:#fed7aa; }
+  .pill.both{ background:var(--green-bg); color:var(--green); border-color:var(--green-bg); }
+  .pill.a{ background:var(--red-bg); color:var(--red); border-color:var(--red-bg); }
+  .pill.b{ background:var(--red-bg); color:var(--red-dark); border-color:var(--red-line); }
   .cmp .hint{ font-size:11.5px; color:var(--sub); margin-top:9px; line-height:1.5; }
-  .warn{ background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; border-radius:9px; padding:9px 12px; font-size:12.5px; margin-bottom:12px; }
+  .warn{ background:var(--red-bg); border:1px solid var(--red-line); color:var(--red-dark); border-radius:9px; padding:9px 12px; font-size:12.5px; margin-bottom:12px; }
   /* möppuveljari (sama og í multitool) */
   .modal-bg{ position:fixed; inset:0; background:rgba(2,6,23,.55); display:none; align-items:center; justify-content:center; z-index:50; padding:16px; }
   .modal-bg.on{ display:flex; }
-  .modal{ background:#fff; color:#0f172a; border-radius:14px; width:min(640px,96vw); max-height:86vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 24px 60px -20px rgba(2,6,23,.6); }
+  .modal{ background:#fff; color:var(--blue-deep); border-radius:14px; width:min(640px,96vw); max-height:86vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 24px 60px -20px rgba(2,6,23,.6); }
   .modal .mh{ padding:14px 16px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:10px; }
   .modal .mh h2{ font-size:15px; margin:0; flex:1; }
-  .modal .mh .x{ border:0; background:none; font-size:20px; cursor:pointer; color:#64748b; }
+  .modal .mh .x{ border:0; background:none; font-size:20px; cursor:pointer; color:var(--blue); }
   .modal .mtool{ padding:10px 16px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; border-bottom:1px solid var(--line); }
-  .modal .mtool input{ flex:1; min-width:160px; background:#fff; color:#0f172a; border:1px solid #cbd5e1; border-radius:8px; height:36px; padding:0 10px; }
-  .crumb{ font-size:12px; color:#64748b; padding:6px 16px; }
-  .crumb b{ color:#0f172a; cursor:pointer; }
+  .modal .mtool input{ flex:1; min-width:160px; background:#fff; color:var(--blue-deep); border:1px solid var(--blue-bg); border-radius:8px; height:36px; padding:0 10px; }
+  .crumb{ font-size:12px; color:var(--blue); padding:6px 16px; }
+  .crumb b{ color:var(--blue-deep); cursor:pointer; }
   .mlist{ overflow:auto; padding:6px 8px 12px; }
   .frow{ display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:8px; cursor:pointer; }
-  .frow:hover{ background:#f1f5f9; }
+  .frow:hover{ background:var(--blue-bg); }
   .frow .nm{ flex:1; font-size:13.5px; font-weight:600; }
-  .frow .pickone{ border:1px solid #4f46e5; color:#4f46e5; background:#eef2ff; border-radius:7px; padding:4px 10px; font-size:12px; font-weight:700; cursor:pointer; }
+  .frow .pickone{ border:1px solid var(--blue); color:var(--blue); background:var(--blue-bg); border-radius:7px; padding:4px 10px; font-size:12px; font-weight:700; cursor:pointer; }
   .mfoot{ padding:12px 16px; border-top:1px solid var(--line); display:flex; gap:10px; align-items:center; }
-  .mfoot .cur{ flex:1; font-size:12px; color:#64748b; word-break:break-all; }
+  .mfoot .cur{ flex:1; font-size:12px; color:var(--blue); word-break:break-all; }
 </style>
+<script src="/js/theme.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/theme.css?v=2">
 </head>
 <body>
 <div class="top">
@@ -107,7 +112,7 @@
   <span class="sp"></span>
   <button class="btn dark sm" id="ex-csv" disabled title="UTF-8 með BOM, semíkomma — opnast rétt í íslensku Excel">⬇️ Excel (CSV)</button>
   <button class="btn dark sm" id="ex-sheet" disabled title="Býr til nýtt Google Sheet með listunum">📊 Google Sheets</button>
-  <a href="/#bakendi" target="_top" class="muted" style="color:#93c5fd">← Bakendi</a>
+  <a href="/#bakendi" target="_top" class="muted" style="color:var(--blue-bg)">← Bakendi</a>
 </div>
 
 <div class="wrap">
@@ -290,7 +295,7 @@
         +   '<span class="pill both">✓ '+ra.nBoth+' í báðum</span>'
         +   '<span class="pill a">◀ '+ra.nOnly+' aðeins í A'+(A.name?(' ('+esc(A.name)+')'):'')+'</span>'
         +   '<span class="pill b">▶ '+rb.nOnly+' aðeins í B'+(B.name?(' ('+esc(B.name)+')'):'')+'</span>'
-        +   ((ra.nNoKey||rb.nNoKey)?('<span class="pill" style="background:#f8fafc;color:#64748b;border-color:#e2e8f0">⚠ '+(ra.nNoKey+rb.nNoKey)+' án lykils</span>'):'')
+        +   ((ra.nNoKey||rb.nNoKey)?('<span class="pill" style="background:var(--blue-bg);color:var(--blue);border-color:var(--blue-bg)">⚠ '+(ra.nNoKey+rb.nNoKey)+' án lykils</span>'):'')
         + '</div>'
         + ((ra.nNoKey||rb.nNoKey)
             ? '<div class="hint">⚠ Skrár „án lykils“ bera ekki '+esc(lbl)+' í heitinu og eru <b>hvorki</b> taldar samsvörun né mismunur — þær eru merktar sérstaklega í listunum. Veldu annan lykil til að ná þeim með.</div>'
@@ -321,7 +326,7 @@
       if(d.folder_name) S.name=d.folder_name;
       $('status').textContent='✓ '+S.total+' skrár í '+S.name+(d.folders?(' · '+d.folders+' undirmöppur'):'');
     }catch(e){
-      $(side+'-list').innerHTML='<div class="empty" style="color:#dc2626">Villa: '+esc(e&&e.message||e)+'</div>';
+      $(side+'-list').innerHTML='<div class="empty" style="color:var(--red)">Villa: '+esc(e&&e.message||e)+'</div>';
       $('status').textContent='';
       return;
     }
@@ -413,7 +418,7 @@
         row.querySelector('[data-open]').onclick=function(){ $('pk-q').value=''; pkStack.push({id:id,name:name}); pkSel={id:id,name:name}; setChoose(); pkLoad(); };
         row.querySelector('[data-take]').onclick=function(){ if(pkCb) pkCb(id,name); closePicker(); };
       });
-    }catch(e){ $('pk-list').innerHTML='<div class="muted" style="padding:16px;color:#dc2626">Villa: '+esc(e&&e.message||e)+'</div>'; }
+    }catch(e){ $('pk-list').innerHTML='<div class="muted" style="padding:16px;color:var(--red)">Villa: '+esc(e&&e.message||e)+'</div>'; }
   }
   $('pk-q').addEventListener('input', function(){ clearTimeout(pkTimer); pkTimer=setTimeout(pkLoad,300); });
   $('pk-home').onclick=function(){ $('pk-q').value=''; pkStack=[{id:null,name:'Allt'}]; pkSel=null; pkLoad(); };
