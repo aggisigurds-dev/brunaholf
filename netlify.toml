@@ -99,6 +99,22 @@
   to = "/.netlify/functions/timavera-maeting"
   status = 200
 
+# Brunaþéttingar — verkstaða-appið (starfsmenn á verkstað; PWA, manifest-brunathettingar.json).
+[[redirects]]
+  from = "/brunathettingar"
+  to = "/brunathettingar.html"
+  status = 200
+
+[[redirects]]
+  from = "/Brunaþéttingar"
+  to = "/brunathettingar.html"
+  status = 200
+
+[[redirects]]
+  from = "/brunathettingar/*"
+  to = "/brunathettingar.html"
+  status = 200
+
 [[redirects]]
   from = "/api/payday-pull-bg"
   to = "/.netlify/functions/payday-pull-background"

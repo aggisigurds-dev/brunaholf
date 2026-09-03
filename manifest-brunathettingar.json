@@ -1,0 +1,18 @@
+{
+  "name": "Brunaþéttingar — verkstaðir",
+  "short_name": "Brunaþéttingar",
+  "description": "Verkstaða-app Brunahólfs: efni af lager, punktar úr verkinu, mæting og beiðnir — vistast strax og sést á skrifstofunni.",
+  "start_url": "/brunathettingar",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4f1ea",
+  "theme_color": "#0a0a09",
+  "lang": "is",
+  "icons": [
+    { "src": "/img/brunaholf-icon-192.png?v=flame1", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/img/brunaholf-icon-512.png?v=flame1", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/img/brunaholf-icon-192.png?v=flame1", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/img/brunaholf-icon-512.png?v=flame1", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

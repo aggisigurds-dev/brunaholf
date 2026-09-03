@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light">
+<style>html{color-scheme:light}html,body{color-scheme:only light}</style>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Brunaþéttingar — verkstaðir</title>
+<!-- Brunaþéttingar — verkstaða-app Brunahólfs (ósk Agnars 03.09.2026).
+     Starfsmenn á verkstað skrá: efni af lager (á reikning verkkaupa), punkta úr verkinu,
+     mætingar-athugasemdir (veikur / seint / fjarverandi) og beiðnir til skrifstofu; sjá
+     Redder-innkaup mánaðarins og það sem Agnar deilir (TurboPaint-borð o.fl.).
+     ALLT vistast strax á /api/field-app (Supabase) — engin staðbundin gögn nema
+     nafn notanda og biðröð ef net dettur út (reynir aftur sjálfkrafa). Öll tæki lesa
+     sama grunn; skjámyndin endurnýjast á mínútu fresti og þegar appið kemur í forgrunn.
+     Efnið fer beint í Efnislistann í hubnum (kafli 03 „Frá verkstað"); allt annað í
+     hub-flipann „Frá verkstað". Boss-þema (css/theme.css). -->
+<link rel="manifest" href="/manifest-brunathettingar.json">
+<meta name="theme-color" content="#0a0a09">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Brunaþéttingar">
+<link rel="apple-touch-icon" href="/img/brunaholf-icon-192.png?v=flame1">
+<link rel="icon" href="/img/brunaholf-icon-192.png?v=flame1">
+<link rel="stylesheet" href="/css/theme.css?v=20260903">
+<style>
+  :root{--bg:#f4f1ea;--bg-2:#ece7dc;--card:#fff;--line:#e6e1d6;--line-2:#d9d3c6;--edge:#c9c2b3;--ink:#161513;--ink-2:#4a463f;--muted:#6f685c;--muted-2:#8f8776;--gold:#c9a54a;--gold-deep:#8f6a1c;--red:#b5522a;--green:#2f7a4a;--blue:#5980a6;--warn:#8a6a1c;--font-display:'Playfair Display',Georgia,'Times New Roman',serif;--font-mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.4 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;-webkit-text-size-adjust:100%}
+  body{padding-bottom:calc(66px + env(safe-area-inset-bottom))}
+  .bt-head{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,#1c1b18,#0a0a09);color:#e8e2d3;padding:calc(10px + env(safe-area-inset-top)) 14px 9px;border-bottom:3px solid transparent;border-image:linear-gradient(90deg,#7a5a12,#f5d76e,#7a5a12) 1;display:flex;align-items:center;gap:10px}
+  .bt-head h1{margin:0;font-family:var(--font-display);font-size:20px;font-weight:700;color:#f5d76e;letter-spacing:.2px;line-height:1.1}
+  .bt-head .sub{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#c9a54a;margin-top:2px}
+  .bt-who{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+  .bt-who button{background:transparent;border:1px solid #3a372f;color:#e8e2d3;border-radius:4px;padding:4px 9px;font:inherit;font-size:12px;font-weight:700;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bt-sync{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;display:inline-flex;align-items:center;gap:5px;color:#9a9484;white-space:nowrap}
+  .bt-sync i{width:7px;height:7px;border-radius:50%;background:#2f7a4a;box-shadow:0 0 6px #2f7a4a}
+  .bt-sync.queued i{background:#d9b25a;box-shadow:0 0 6px #d9b25a}.bt-sync.err i{background:#b5522a;box-shadow:0 0 6px #b5522a}.bt-sync.busy i{background:#9a9484;box-shadow:none}
+  main{padding:12px 12px 20px;max-width:760px;margin:0 auto}
+  .bt-tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;background:linear-gradient(180deg,#1c1b18,#0a0a09);border-top:1px solid #000;padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -10px 30px rgba(0,0,0,.35)}
+  .bt-tabs button{flex:1;background:transparent;border:0;color:#9a9484;font:inherit;font-size:10.5px;font-weight:700;padding:8px 2px 7px;display:flex;flex-direction:column;align-items:center;gap:2px;position:relative}
+  .bt-tabs button .i{font-size:19px;line-height:1}.bt-tabs button.on{color:#f5d76e}.bt-tabs button.on::after{content:"";position:absolute;top:0;left:22%;right:22%;height:3px;background:linear-gradient(90deg,#7a5a12,#f5d76e,#7a5a12)}
+  .panel{background:var(--card);border:1px solid var(--line-2);border-radius:6px;box-shadow:0 1px 2px rgba(22,21,19,.12),0 10px 24px -16px rgba(22,21,19,.5);margin-bottom:10px;overflow:hidden}
+  .panel-h{display:flex;align-items:center;gap:8px;padding:9px 12px;background:linear-gradient(180deg,#faf8f3,#ece7dc);border-bottom:1px solid var(--line-2);cursor:pointer}
+  .panel-h .sum{margin-left:auto;font-family:var(--font-mono);font-size:12px;font-weight:600;white-space:nowrap}
+  .panel.collapsed .panel-b{display:none}.panel.collapsed .caret{transform:rotate(0)}.caret{transition:transform .15s;transform:rotate(90deg);color:var(--muted);font-size:14px}
+  .plate{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:20px;padding:0 6px;border-radius:2px;border:1px solid #5a4410;background:linear-gradient(180deg,#f3dc95,#b8892e);color:#2e2004;font-family:var(--font-mono);font-size:10px;font-weight:700;box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
+  .panel-t{font-family:var(--font-display);font-size:16px;font-weight:700}
+  .panel-b{padding:10px 12px}
+  .kicker{font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+  .num{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-weight:600}
+  .chip{display:inline-block;padding:2px 8px;border-radius:3px;background:var(--bg-2);color:var(--ink-2);font-size:11.5px;font-weight:600;white-space:nowrap}
+  .chip.warn{background:#fbf3d9;color:#8a6a1c}.chip.red{background:#f6dcd8;color:#7a2e1c}.chip.green{background:#dfeee4;color:#2f7a4a}.chip.blue{background:#e3ebf7;color:#2b4a72}.chip.gold{background:linear-gradient(180deg,#f3dc95,#b8892e);color:#2e2004}
+  .key{height:40px;padding:0 14px;border:1px solid var(--edge);border-bottom-color:#a89f8c;border-radius:4px;background:linear-gradient(180deg,#fff,#efeae0);box-shadow:inset 0 1px 0 #fff,0 2px 0 #cfc8b9;font:inherit;font-size:13.5px;font-weight:700;color:var(--ink);cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;justify-content:center}
+  .key.gold{border-color:#5a4410;border-top-color:#f7e6b8;border-bottom-color:#2e2004;background:linear-gradient(180deg,#f3dc95,#b8892e);color:#161513;text-shadow:0 1px 0 rgba(255,255,255,.35);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 2px 0 #5a4410}
+  .key.dark{border-color:#000;background:linear-gradient(180deg,#2a2823,#0a0a09);color:#f1ecdf;box-shadow:0 2px 0 #000}
+  .key.sm{height:32px;padding:0 10px;font-size:12px}.key.wide{width:100%}
+  .key:active{transform:translateY(1px)}.key[disabled]{opacity:.5;pointer-events:none}
+  .well{width:100%;height:42px;padding:0 10px;border:1px solid var(--edge);border-radius:4px;background:#f6f3ec;box-shadow:inset 0 2px 3px rgba(22,21,19,.12);font:inherit;font-size:15px;color:var(--ink)}
+  textarea.well{height:auto;min-height:88px;padding:8px 10px;resize:vertical;line-height:1.4}
+  select.well{appearance:auto}
+  .wsline{display:flex;align-items:center;gap:10px;padding:10px 12px;border-top:1px solid var(--line);cursor:pointer}.wsline:first-child{border-top:0}.wsline:active{background:var(--bg-2)}
+  .wsname{font-weight:700;font-size:15px}
+  .emps{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+  .cnt{font-family:var(--font-mono);font-size:10.5px;color:var(--muted);margin-top:3px;display:flex;gap:8px;flex-wrap:wrap}
+  .cnt b{color:var(--gold-deep)}
+  .arrow{color:var(--muted-2);font-size:18px}
+  .sheet-bg{position:fixed;inset:0;z-index:50;background:rgba(5,5,5,.55);display:flex;align-items:flex-end;justify-content:center}
+  .sheet{background:var(--bg);width:100%;max-width:760px;max-height:90vh;overflow:auto;border-radius:12px 12px 0 0;padding:12px 14px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -20px 50px rgba(0,0,0,.45);border-top:3px solid transparent;border-image:linear-gradient(90deg,#7a5a12,#f5d76e,#7a5a12) 1}
+  .sheet h2{margin:0 0 8px;font-family:var(--font-display);font-size:19px}
+  .sheet .sub{font-size:12px;color:var(--muted);margin:-4px 0 10px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}
+  .chips button{border:1px solid var(--edge);background:#fff;border-radius:999px;padding:7px 13px;font:inherit;font-size:13px;font-weight:600;color:var(--ink-2);box-shadow:0 1px 0 #cfc8b9}
+  .chips button.on{background:linear-gradient(180deg,#f3dc95,#b8892e);border-color:#5a4410;color:#161513}
+  .items{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+  .items button{text-align:left;border:1px solid var(--line-2);background:#fff;border-radius:4px;padding:8px 10px;font:inherit;font-size:12.5px;font-weight:600;color:var(--ink);box-shadow:0 1px 2px rgba(22,21,19,.08)}
+  .items button small{display:block;font-weight:400;color:var(--muted);font-family:var(--font-mono);font-size:10.5px;margin-top:2px}
+  .items button.on{border-color:#5a4410;background:#fbf3d9}
+  .qty{display:flex;align-items:center;gap:8px;margin:6px 0 10px}.qty input{width:90px;text-align:center;font-family:var(--font-mono);font-weight:700}.qty button{width:44px;height:42px;font-size:22px;padding:0}.qty .u{color:var(--muted);font-family:var(--font-mono);font-size:12px}
+  .f{margin-bottom:10px}.f label{display:block;font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .actions{display:flex;gap:8px;margin-top:8px}.actions .key{flex:1}
+  .monthbar{display:flex;align-items:center;gap:8px;margin:2px 0 10px}.monthbar b{flex:1;text-align:center;font-family:var(--font-display);font-size:18px}
+  .empty{padding:16px;text-align:center;color:var(--muted-2);font-style:italic}
+  .entry{padding:8px 0;border-top:1px solid var(--line);display:flex;gap:8px;align-items:flex-start}.entry:first-child{border-top:0}
+  .entry .t{flex:1;min-width:0}.entry .t b{font-size:14px}.entry .note{white-space:pre-wrap;color:var(--ink-2);margin-top:2px}
+  .entry .meta{font-family:var(--font-mono);font-size:10.5px;color:var(--muted);margin-top:3px;display:flex;gap:8px;flex-wrap:wrap}
+  .entry .x{border:0;background:transparent;color:var(--muted);font-size:20px;padding:0 4px;cursor:pointer;line-height:1}
+  .entry.pending{opacity:.7}
+  .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+  .tile{display:block;text-decoration:none;color:var(--ink);background:#fff;border:1px solid var(--line-2);border-radius:6px;padding:14px 12px;box-shadow:0 1px 2px rgba(22,21,19,.12),0 10px 24px -16px rgba(22,21,19,.5)}
+  .tile .i{font-size:24px}.tile b{display:block;margin-top:6px;font-family:var(--font-display);font-size:15px}.tile small{color:var(--muted);display:block;margin-top:2px}
+  .toast{position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#161513;color:#f1ecdf;padding:9px 14px;border-radius:4px;font-size:13px;z-index:60;box-shadow:0 10px 30px rgba(0,0,0,.4);max-width:92vw;text-align:center}
+  .dayhead{display:flex;align-items:center;gap:8px;padding:9px 12px;background:linear-gradient(180deg,#faf8f3,#ece7dc);border-bottom:1px solid var(--line-2)}
+  .dayhead b{font-family:var(--font-display);font-size:15px}.dayhead .sum{margin-left:auto;font-family:var(--font-mono);font-size:11.5px;color:var(--muted)}
+  .staff{padding:8px 12px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px}
+  .staff .nm{font-weight:700;text-transform:capitalize;min-width:96px}
+  .staff .tm{font-family:var(--font-mono);font-size:12.5px;font-weight:600;white-space:nowrap}.staff .tm .in{color:var(--green)}.staff .tm .out{color:var(--red)}
+  .staff .cm{border:1px solid var(--edge);background:#fff;border-radius:999px;width:32px;height:30px;font-size:14px;margin-left:auto;cursor:pointer;box-shadow:0 1px 0 #cfc8b9}
+  .staff .proj{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:3px}
+  .staff .cmts{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:4px}
+  .back{background:transparent;border:0;color:var(--gold-deep);font:inherit;font-size:13px;font-weight:700;padding:0;margin-bottom:8px;cursor:pointer}
+  .hero{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}.hero h2{margin:0;font-family:var(--font-display);font-size:22px}.hero .sub{color:var(--muted);font-family:var(--font-mono);font-size:11.5px}
+  .rline{display:grid;grid-template-columns:1fr auto auto;gap:8px;padding:5px 0;border-top:1px solid var(--line);font-size:12.5px;align-items:center}.rline:first-child{border-top:0}.rline.ex{opacity:.45;text-decoration:line-through}
+  .names{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}.names button{border:1px solid var(--line-2);background:#fff;border-radius:4px;padding:10px;font:inherit;font-size:14px;font-weight:700;text-transform:capitalize;color:var(--ink)}
+  @media(min-width:720px){.items{grid-template-columns:1fr 1fr 1fr}.names{grid-template-columns:1fr 1fr 1fr}}
+</style>
+</head>
+<body>
+<header class="bt-head">
+  <div>
+    <h1>Brunaþéttingar</h1>
+    <div class="sub">Brunahólf · verkstaðir</div>
+  </div>
+  <div class="bt-who">
+    <button type="button" id="bt-who" title="Skipta um nafn">—</button>
+    <span class="bt-sync busy" id="bt-sync"><i></i><span id="bt-sync-t">sæki…</span></span>
+  </div>
+</header>
+<main id="bt-main"><div class="empty">Sæki…</div></main>
+<nav class="bt-tabs" id="bt-tabs">
+  <button type="button" data-tab="verk"><span class="i">🏗</span>Verkstaðir</button>
+  <button type="button" data-tab="maeting"><span class="i">🕒</span>Mæting</button>
+  <button type="button" data-tab="beidnir"><span class="i">📨</span>Beiðnir</button>
+  <button type="button" data-tab="deilt"><span class="i">📎</span>Deilt</button>
+</nav>
+<script src="/js/gr-materials.js?v=20260903"></script>
+<script>
+(function(){
+  'use strict';
+  const $ = (s, r) => (r || document).querySelector(s);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  const fmt = n => Math.round(Number(n) || 0).toLocaleString('is-IS');
+  const hf = n => (Math.round((Number(n) || 0) * 100) / 100).toLocaleString('is-IS');
+  const MN = ['janúar','febrúar','mars','apríl','maí','júní','júlí','ágúst','september','október','nóvember','desember'];
+  const WD = ['sunnudagur','mánudagur','þriðjudagur','miðvikudagur','fimmtudagur','föstudagur','laugardagur'];
+  const pad = n => String(n).padStart(2, '0');
+  const localYM = () => { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1); };
+  const today = () => { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+  const monthLabel = ym => { const [y, m] = String(ym).split('-').map(Number); return (MN[m - 1] || ym) + ' ' + y; };
+  const shiftYM = (ym, d) => { const [y, m] = ym.split('-').map(Number); const t = new Date(y, m - 1 + d, 1); return t.getFullYear() + '-' + pad(t.getMonth() + 1); };
+  const dmy = iso => { const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3] + '.' + m[2] + '.' + m[1] : String(iso || ''); };
+  const dayLbl = iso => { const d = new Date(iso + 'T00:00:00'); if (isNaN(d)) return iso; const t0 = new Date(); t0.setHours(0,0,0,0); const diff = Math.round((t0 - d) / 864e5); const base = WD[d.getDay()] + ' ' + d.getDate() + '. ' + MN[d.getMonth()].slice(0, 3); return diff === 0 ? 'Í dag — ' + base : diff === 1 ? 'Í gær — ' + base : base; };
+  const hhmm = iso => { const d = new Date(iso); return isNaN(d) ? '' : pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+  const uid = () => (crypto.randomUUID ? crypto.randomUUID() : 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10));
+  const LS = { get(k, d) { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (_) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} } };
+  // Aðgangslykill úr slóð (?t=…) — geymdur svo appið virki eftir „bæta á heimaskjá"
+  try { const t = new URLSearchParams(location.search).get('t'); if (t) LS.set('bt_token', t); } catch (_) {}
+  const TOKEN = LS.get('bt_token', '');
+
+  const CAT_MAETING = ['Veikur', 'Fjarverandi', 'Kom of seint', 'Fór snemma', 'Barn veikt', 'Annað'];
+  const CAT_BEIDNI = ['Teikningar', 'Efni', 'Verkfæri', 'Aðgangur', 'Spurning', 'Annað'];
+
+  const state = {
+    tab: LS.get('bt_tab', 'verk'),
+    month: LS.get('bt_month', localYM()),
+    author: LS.get('bt_author', ''),
+    boot: null, ws: null,
+    dagar: null, maetingEntries: [], beidnir: [],
+    queue: LS.get('bt_queue', []),
+    lastOk: null,
+  };
+  if (!/^\d{4}-\d{2}$/.test(state.month)) state.month = localYM();
+
+  // ── Net ───────────────────────────────────────────────────────────────────
+  async function api(path, opts) {
+    const o = Object.assign({ cache: 'no-store' }, opts || {});
+    o.headers = Object.assign({}, o.headers || {}, TOKEN ? { 'x-field-token': TOKEN } : {});
+    const r = await fetch(path, o);
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || j.error) { const e = new Error(j.error || ('HTTP ' + r.status)); e.status = r.status; throw e; }
+    return j;
+  }
+  const POST = body => api('/api/field-app', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  function setSync(mode, text) {
+    const el = $('#bt-sync'); if (!el) return;
+    el.className = 'bt-sync ' + (mode || '');
+    const q = state.queue.length;
+    $('#bt-sync-t').textContent = text || (q ? ('⏳ ' + q + ' í biðröð') : (mode === 'err' ? 'net-villa' : (state.lastOk ? 'vistað ' + state.lastOk : 'tengt')));
+  }
+  function toast(t) { const el = document.createElement('div'); el.className = 'toast'; el.textContent = t; document.body.appendChild(el); setTimeout(() => el.remove(), 2600); }
+  // Vistun STRAX; ef netið bregst fer færslan í biðröð (localStorage) og er send aftur
+  // sjálfkrafa (online-event, 20 s tikk, næsta opnun). client_id ver gegn tvítökum.
+  async function save(body) {
+    body.client_id = body.client_id || uid();
+    body.author = body.author || state.author;
+    try {
+      const j = await POST(Object.assign({ action: 'add' }, body));
+      state.lastOk = hhmm(new Date().toISOString()); setSync('ok');
+      return j.row;
+    } catch (e) {
+      if (e.status === 400 || e.status === 401) { toast('✗ ' + e.message); setSync('err'); return null; }
+      state.queue.push(body); LS.set('bt_queue', state.queue); setSync('queued');
+      toast('Ekkert net — vistað í biðröð, sendist sjálfkrafa');
+      return Object.assign({ id: 'p:' + body.client_id, pending: true, status: 'new', created_at: new Date().toISOString() }, body);
+    }
+  }
+  let flushing = false;
+  async function flush() {
+    if (flushing || !state.queue.length) return;
+    flushing = true; setSync('busy', 'sendi biðröð…');
+    try {
+      for (const b of [...state.queue]) {
+        try { await POST(Object.assign({ action: 'add' }, b)); state.queue = state.queue.filter(x => x.client_id !== b.client_id); LS.set('bt_queue', state.queue); }
+        catch (e) { if (e.status === 400 || e.status === 401) { state.queue = state.queue.filter(x => x.client_id !== b.client_id); LS.set('bt_queue', state.queue); toast('✗ Færsla hafnað: ' + e.message); } else break; }
+      }
+    } finally { flushing = false; }
+    if (!state.queue.length) { state.lastOk = hhmm(new Date().toISOString()); setSync('ok'); toast('✓ Biðröð send'); await refresh(true); } else setSync('queued');
+  }
+  const pendingRows = kind => state.queue.filter(b => b.kind === kind).map(b => Object.assign({ id: 'p:' + b.client_id, pending: true, status: 'new', created_at: new Date().toISOString() }, b));
+
+  // ── Gögn ──────────────────────────────────────────────────────────────────
+  async function loadBoot(force) {
+    if (state.boot && state.boot.month === state.month && !force) return state.boot;
+    setSync('busy', 'sæki…');
+    try { state.boot = await api('/api/field-app?op=bootstrap&month=' + state.month); setSync(state.queue.length ? 'queued' : 'ok'); }
+    catch (e) { setSync('err'); if (!state.boot) throw e; }
+    return state.boot;
+  }
+  async function loadMaeting(force) {
+    if (state.dagar && !force) return;
+    setSync('busy', 'sæki…');
+    try {
+      const [d, e] = await Promise.all([api('/api/timavera-dagar?days=8'), api('/api/field-app?op=entries&days=9&kind=maeting&shares=0')]);
+      state.dagar = d; state.maetingEntries = e.rows || []; setSync(state.queue.length ? 'queued' : 'ok');
+    } catch (err) { setSync('err'); if (!state.dagar) throw err; }
+  }
+  async function loadBeidnir(force) {
+    if (state.beidnir.length && !force) return;
+    setSync('busy', 'sæki…');
+    try { const e = await api('/api/field-app?op=entries&days=120&kind=beidni&shares=0'); state.beidnir = e.rows || []; setSync(state.queue.length ? 'queued' : 'ok'); }
+    catch (err) { setSync('err'); throw err; }
+  }
+  async function refresh(silent) {
+    try {
+      if (state.tab === 'verk' || state.tab === 'deilt') await loadBoot(true);
+      else if (state.tab === 'maeting') await loadMaeting(true);
+      else if (state.tab === 'beidnir') await loadBeidnir(true);
+      render();
+    } catch (e) { if (!silent) toast('✗ ' + e.message); }
+  }
+
+  // ── Sheets (neðri gluggar) ────────────────────────────────────────────────
+  function openSheet(html, onOpen) {
+    closeSheet();
+    const bg = document.createElement('div'); bg.className = 'sheet-bg'; bg.id = 'bt-sheet';
+    bg.innerHTML = '<div class="sheet">' + html + '</div>';
+    bg.addEventListener('click', e => { if (e.target === bg) closeSheet(); });
+    document.body.appendChild(bg);
+    if (onOpen) onOpen(bg.firstElementChild);
+  }
+  function closeSheet() { const s = $('#bt-sheet'); if (s) s.remove(); }
+  function chipsHtml(name, opts, cur) { return '<div class="chips" data-chips="' + name + '">' + opts.map(o => '<button type="button" data-v="' + esc(o) + '"' + (o === cur ? ' class="on"' : '') + '>' + esc(o) + '</button>').join('') + '</div>'; }
+  function wireChips(root, name, onPick) { const box = root.querySelector('[data-chips="' + name + '"]'); if (!box) return; box.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { box.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); onPick(b.dataset.v); })); }
+  const chipVal = (root, name) => { const b = root.querySelector('[data-chips="' + name + '"] button.on'); return b ? b.dataset.v : ''; };
+
+  // Hver ert þú? — nafnið fylgir hverri skráningu (author) og er geymt í símanum
+  function askWho(force) {
+    if (state.author && !force) return;
+    const names = (state.boot && state.boot.names) || [];
+    openSheet('<h2>Hver ert þú?</h2><div class="sub">Nafnið fylgir því sem þú skráir svo skrifstofan viti hver skrifaði.</div>'
+      + (names.length ? '<div class="names">' + names.map(n => '<button type="button" data-n="' + esc(n) + '">' + esc(n) + '</button>').join('') + '</div>' : '')
+      + '<div class="f"><label>Eða skrifa nafn</label><input class="well" id="who-in" placeholder="nafn" value="' + esc(state.author) + '"></div>'
+      + '<div class="actions"><button type="button" class="key gold" id="who-ok">Áfram</button></div>', sh => {
+        const done = n => { n = String(n || '').trim(); if (!n) return; state.author = n; LS.set('bt_author', n); closeSheet(); renderWho(); };
+        sh.querySelectorAll('.names button').forEach(b => b.addEventListener('click', () => done(b.dataset.n)));
+        $('#who-ok', sh).addEventListener('click', () => done($('#who-in', sh).value));
+        $('#who-in', sh).addEventListener('keydown', e => { if (e.key === 'Enter') done(e.target.value); });
+      });
+  }
+  function renderWho() { const b = $('#bt-who'); if (b) b.textContent = state.author ? ('👤 ' + state.author) : '👤 Hver ert þú?'; }
+
+  // ── Verkstaðir ────────────────────────────────────────────────────────────
+  const entriesFor = (kind, ws) => ((state.boot && state.boot.entries) || []).filter(e => e.kind === kind && (!ws || e.worksite_name === ws)).concat(pendingRows(kind).filter(e => e.work_month === state.month && (!ws || e.worksite_name === ws)));
+  function renderVerk() {
+    const b = state.boot;
+    if (state.ws) return renderWsDetail();
+    const list = (b.worksites || []).map(w => {
+      const nE = entriesFor('efni', w.name).length, nP = entriesFor('punktur', w.name).length;
+      const rd = (b.redder || {})[w.name];
+      return '<div class="wsline" data-ws="' + esc(w.name) + '"><div style="flex:1;min-width:0"><div class="wsname">' + esc(w.name) + '</div>'
+        + '<div class="emps">' + w.employees.slice(0, 6).map(e => '<span class="chip">' + esc(e.name) + ' <span class="num" style="font-weight:500;opacity:.7">' + hf(e.hours) + '</span></span>').join('') + (w.employees.length > 6 ? '<span class="chip">+' + (w.employees.length - 6) + '</span>' : '') + '</div>'
+        + '<div class="cnt"><span><b>' + hf(w.hours) + '</b> klst · ' + w.days + ' dagar</span>' + (rd ? '<span>Redder <b>' + fmt(rd.an_vsk) + '</b> kr</span>' : '') + (nE ? '<span>🧰 <b>' + nE + '</b> efni</span>' : '') + (nP ? '<span>📝 <b>' + nP + '</b> punktar</span>' : '') + '</div></div><span class="arrow">›</span></div>';
+    }).join('');
+    $('#bt-main').innerHTML = '<div class="monthbar"><button type="button" class="key sm" id="m-prev">‹</button><b>' + esc(monthLabel(state.month)) + '</b><button type="button" class="key sm" id="m-next">›</button></div>'
+      + '<div class="panel"><div class="panel-h" style="cursor:default"><span class="plate">01</span><span class="panel-t">Verkstaðir mánaðarins</span><span class="sum">' + (b.worksites || []).length + ' · úr Tímaveru</span></div>'
+      + (list || '<div class="empty">Engar tímafærslur í ' + esc(monthLabel(state.month)) + '</div>') + '</div>'
+      + '<div class="kicker" style="text-align:center;margin-top:6px">Smelltu á verkstað til að skrá efni af lager og punkta</div>';
+    $('#m-prev').onclick = () => { state.month = shiftYM(state.month, -1); LS.set('bt_month', state.month); go(); };
+    $('#m-next').onclick = () => { state.month = shiftYM(state.month, 1); LS.set('bt_month', state.month); go(); };
+    document.querySelectorAll('.wsline').forEach(el => el.addEventListener('click', () => { state.ws = el.dataset.ws; render(); window.scrollTo(0, 0); }));
+  }
+  function entryHtml(e, opts) {
+    const o = opts || {};
+    const seen = e.status && e.status !== 'new' ? '<span class="chip green">👁 séð á skrifstofu</span>' : '';
+    const pend = e.pending ? '<span class="chip warn">⏳ bíður nets</span>' : '';
+    let main = '';
+    if (e.kind === 'efni') main = '<b>' + esc(e.item_label) + '</b> <span class="num">× ' + hf(e.qty) + '</span> <span style="color:var(--muted)">' + esc(e.unit || '') + '</span>' + (e.note ? '<div class="note">' + esc(e.note) + '</div>' : '');
+    else if (e.kind === 'maeting') main = '<b>' + esc(e.employee || '') + '</b> <span class="chip ' + (/veik/i.test(e.category || '') ? 'red' : 'warn') + '">' + esc(e.category || 'athugasemd') + '</span>' + (e.note ? '<div class="note">' + esc(e.note) + '</div>' : '');
+    else if (e.kind === 'beidni') main = '<span class="chip blue">' + esc(e.category || 'beiðni') + '</span>' + (e.worksite_name ? ' <span class="chip">' + esc(e.worksite_name) + '</span>' : '') + '<div class="note">' + esc(e.note || '') + '</div>';
+    else main = '<div class="note">' + esc(e.note || '') + '</div>';
+    return '<div class="entry' + (e.pending ? ' pending' : '') + '" data-id="' + esc(e.id) + '"><div class="t">' + main + '<div class="meta"><span>' + esc(dmy(e.entry_date)) + (e.created_at ? ' ' + hhmm(e.created_at) : '') + '</span><span>' + esc(e.author || '') + '</span>' + seen + pend + '</div></div>' + (o.noDelete || e.pending ? '' : '<button type="button" class="x" data-del="' + esc(e.id) + '" title="Eyða">×</button>') + '</div>';
+  }
+  function wireDeletes(root, after) {
+    root.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', async () => {
+      if (!confirm('Eyða þessari skráningu?')) return;
+      try { await POST({ action: 'delete', id: Number(b.dataset.del) }); toast('Eytt'); await after(); } catch (e) { toast('✗ ' + e.message); }
+    }));
+  }
+  function renderWsDetail() {
+    const b = state.boot, name = state.ws;
+    const w = (b.worksites || []).find(x => x.name === name) || { name, hours: 0, employees: [], days: 0 };
+    const rd = (b.redder || {})[name] || { an_vsk: 0, lines: [] };
+    const efni = entriesFor('efni', name), punktar = entriesFor('punktur', name);
+    const efniSum = efni.reduce((s, e) => s + (Number(e.qty) || 0) * (Number(e.unit_price) || 0), 0);
+    $('#bt-main').innerHTML = '<button type="button" class="back" id="ws-back">‹ Verkstaðir · ' + esc(monthLabel(state.month)) + '</button>'
+      + '<div class="hero"><h2>' + esc(name) + '</h2><span class="sub">' + hf(w.hours) + ' klst · ' + w.days + ' dagar · ' + w.employees.length + ' starfsm.</span></div>'
+      + '<div class="panel collapsed" id="p-redder"><div class="panel-h"><span class="plate">02</span><span class="panel-t">Redder innkaup</span><span class="sum">' + fmt(rd.an_vsk) + ' kr</span><span class="caret">›</span></div><div class="panel-b">'
+      + (rd.lines.length ? rd.lines.map(l => '<div class="rline' + (l.excluded ? ' ex' : '') + '"><span>' + esc(l.label) + '</span><span class="num">× ' + hf(l.qty) + '</span><span class="num" style="color:var(--muted)">' + fmt(l.cost) + ' kr</span></div>').join('') + '<div class="kicker" style="margin-top:8px">án vsk · yfirstrikað = ekki á reikning verkkaupa</div>' : '<div class="empty">Engir Redder-reikningar á þennan verkstað í mánuðinum</div>')
+      + '</div></div>'
+      + '<div class="panel"><div class="panel-h" style="cursor:default"><span class="plate">03</span><span class="panel-t">Efni af lager</span><span class="sum">' + (efni.length ? efni.length + ' · ' + fmt(efniSum) + ' kr' : '—') + '</span></div><div class="panel-b">'
+      + '<div id="efni-list">' + (efni.length ? efni.map(e => entryHtml(e)).join('') : '<div class="empty">Ekkert skráð enn — efni sem var notað af lager og á að fara á reikning verkkaupa</div>') + '</div>'
+      + '<button type="button" class="key gold wide" id="efni-add" style="margin-top:10px">＋ Bæta við efni</button></div></div>'
+      + '<div class="panel"><div class="panel-h" style="cursor:default"><span class="plate">04</span><span class="panel-t">Punktar úr verkinu</span><span class="sum">' + (punktar.length || '—') + '</span></div><div class="panel-b">'
+      + '<div class="f"><textarea class="well" id="punktur-in" placeholder="Lýsing á því sem var gert, hvar, sérstök atriði, það sem skrifstofan þarf að vita…"></textarea></div>'
+      + '<button type="button" class="key wide" id="punktur-save">📝 Vista punkt</button>'
+      + '<div id="punktar-list" style="margin-top:10px">' + punktar.map(e => entryHtml(e)).join('') + '</div></div></div>';
+    $('#ws-back').onclick = () => { state.ws = null; render(); };
+    $('#p-redder .panel-h').onclick = () => $('#p-redder').classList.toggle('collapsed');
+    $('#efni-add').onclick = () => openEfniSheet(name);
+    $('#punktur-save').onclick = async () => {
+      const ta = $('#punktur-in'); const note = ta.value.trim(); if (!note) { toast('Skrifaðu punktinn fyrst'); return; }
+      $('#punktur-save').disabled = true;
+      const row = await save({ kind: 'punktur', worksite_name: name, work_month: state.month, entry_date: today(), note });
+      if (row) { ta.value = ''; if (!row.pending) state.boot.entries.unshift(row); toast(row.pending ? 'Í biðröð' : '✓ Punktur vistaður'); }
+      render();
+    };
+    wireDeletes($('#bt-main'), async () => { await loadBoot(true); render(); });
+  }
+  function openEfniSheet(ws) {
+    const groups = (state.boot && state.boot.materials) || window.GR_MATERIALS || [];
+    let sec = groups[0] ? groups[0].section : '', item = null, qty = 1;
+    const itemsHtml = () => '<div class="items">' + ((groups.find(g => g.section === sec) || { items: [] }).items.map(it => '<button type="button" data-l="' + esc(it.label) + '"' + (item && item.label === it.label ? ' class="on"' : '') + '>' + esc(it.label) + '<small>' + fmt(it.price) + ' kr/' + esc(it.unit) + '</small></button>').join('')) + '</div>';
+    openSheet('<h2>Efni af lager</h2><div class="sub">' + esc(ws) + ' · ' + esc(monthLabel(state.month)) + ' · fer á reikning verkkaupa á söluverði Verðskrár</div>'
+      + chipsHtml('sec', groups.map(g => g.section), sec) + '<div id="efni-items">' + itemsHtml() + '</div>'
+      + '<div class="f"><label>Magn</label><div class="qty"><button type="button" class="key" id="q-minus">−</button><input class="well" id="q-in" inputmode="decimal" value="1"><button type="button" class="key" id="q-plus">＋</button><span class="u" id="q-unit"></span></div></div>'
+      + '<div class="f"><label>Athugasemd (valfrjálst)</label><input class="well" id="efni-note" placeholder="t.d. 3. hæð, gegnumtök í stigahúsi"></div>'
+      + '<div class="actions"><button type="button" class="key" id="efni-cancel">Hætta við</button><button type="button" class="key gold" id="efni-ok">💾 Vista strax</button></div>', sh => {
+        const pickItem = () => { sh.querySelectorAll('#efni-items button').forEach(b => b.addEventListener('click', () => { item = (groups.find(g => g.section === sec) || { items: [] }).items.find(x => x.label === b.dataset.l) || null; sh.querySelectorAll('#efni-items button').forEach(x => x.classList.toggle('on', x === b)); $('#q-unit', sh).textContent = item ? item.unit : ''; })); };
+        pickItem();
+        wireChips(sh, 'sec', v => { sec = v; item = null; $('#efni-items', sh).innerHTML = itemsHtml(); pickItem(); $('#q-unit', sh).textContent = ''; });
+        const qin = $('#q-in', sh);
+        $('#q-minus', sh).onclick = () => { qty = Math.max(0.5, (Number(String(qin.value).replace(',', '.')) || 1) - 1); qin.value = qty; };
+        $('#q-plus', sh).onclick = () => { qty = (Number(String(qin.value).replace(',', '.')) || 0) + 1; qin.value = qty; };
+        $('#efni-cancel', sh).onclick = closeSheet;
+        $('#efni-ok', sh).onclick = async () => {
+          if (!item) { toast('Veldu efni fyrst'); return; }
+          const q = Number(String(qin.value).replace(',', '.')) || 0; if (!(q > 0)) { toast('Magn vantar'); return; }
+          $('#efni-ok', sh).disabled = true;
+          const row = await save({ kind: 'efni', worksite_name: ws, work_month: state.month, entry_date: today(), item_label: item.label, qty: q, unit: item.unit, unit_price: item.price, note: $('#efni-note', sh).value.trim() });
+          closeSheet();
+          if (row) { if (!row.pending) state.boot.entries.unshift(row); toast(row.pending ? 'Í biðröð — sendist sjálfkrafa' : '✓ ' + item.label + ' × ' + hf(q) + ' vistað'); }
+          render();
+        };
+      });
+  }
+
+  // ── Mæting ────────────────────────────────────────────────────────────────
+  function renderMaeting() {
+    const d = state.dagar || { days: [] };
+    const all = (state.maetingEntries || []).concat(pendingRows('maeting'));
+    const byKey = {}; for (const e of all) { const k = e.entry_date + '|' + String(e.employee || '').toLowerCase(); (byKey[k] = byKey[k] || []).push(e); }
+    const html = (d.days || []).map(day => {
+      const known = new Set(day.staff.map(s => String(s.employee).toLowerCase()));
+      const extra = all.filter(e => e.entry_date === day.date && !known.has(String(e.employee || '').toLowerCase()));
+      const extraNames = [...new Set(extra.map(e => e.employee))];
+      return '<div class="panel"><div class="dayhead"><b>' + esc(dayLbl(day.date)) + '</b><span class="sum">' + day.staff.length + ' starfsm. · ' + hf(day.total_hours) + ' klst</span></div>'
+        + day.staff.map(s => staffRow(day.date, s, byKey[day.date + '|' + String(s.employee).toLowerCase()] || [])).join('')
+        + extraNames.map(n => staffRow(day.date, { employee: n, in: '', out: '', hours: 0, projects: [], absent: true }, byKey[day.date + '|' + String(n).toLowerCase()] || [])).join('')
+        + '<div class="staff" style="justify-content:center"><button type="button" class="key sm" data-addemp="' + esc(day.date) + '">＋ Starfsmaður sem mætti ekki / annað</button></div></div>';
+    }).join('');
+    $('#bt-main').innerHTML = '<div class="hero"><h2>Mæting · verkstaðir</h2><span class="sub">síðustu 8 dagar · beint úr Tímaveru</span></div>'
+      + (html || '<div class="empty">Engar tímafærslur síðustu daga</div>')
+      + '<div class="kicker" style="text-align:center;margin-top:6px">💬 = athugasemd við starfsmann (veikur, seint, fjarverandi …) — sést strax á skrifstofunni</div>';
+    document.querySelectorAll('[data-cm]').forEach(b => b.addEventListener('click', () => openMaetingSheet(b.dataset.date, b.dataset.cm)));
+    document.querySelectorAll('[data-addemp]').forEach(b => b.addEventListener('click', () => openMaetingSheet(b.dataset.addemp, '')));
+    wireDeletes($('#bt-main'), async () => { await loadMaeting(true); render(); });
+  }
+  function staffRow(date, s, cmts) {
+    return '<div class="staff"><span class="nm">' + esc(s.employee) + '</span>'
+      + (s.absent ? '<span class="chip red">ekki í Tímaveru</span>' : '<span class="tm"><span class="in">' + esc(s.in || '—') + '</span> → <span class="out">' + esc(s.out || '—') + '</span> · ' + hf(s.hours) + ' klst</span>')
+      + '<button type="button" class="cm" data-cm="' + esc(s.employee) + '" data-date="' + esc(date) + '" title="Athugasemd">💬</button>'
+      + (s.projects && s.projects.length ? '<span class="proj">' + s.projects.map(p => '<span class="chip">' + esc(p.project) + ' <span style="opacity:.65">' + hf(p.hours) + '</span></span>').join('') + '</span>' : '')
+      + (cmts.length ? '<span class="cmts">' + cmts.map(e => '<span class="chip ' + (/veik/i.test(e.category || '') ? 'red' : 'warn') + '">' + esc(e.category || 'athugasemd') + (e.note ? ': ' + esc(e.note) : '') + ' <span style="opacity:.6">· ' + esc(e.author || '') + '</span>' + (e.pending ? ' ⏳' : '') + '</span>' + (e.pending ? '' : '<button type="button" class="x" data-del="' + esc(e.id) + '" title="Eyða" style="border:0;background:transparent;color:var(--muted);cursor:pointer">×</button>')).join('') + '</span>' : '')
+      + '</div>';
+  }
+  function openMaetingSheet(date, employee) {
+    const names = (state.boot && state.boot.names) || [];
+    let cat = '';
+    openSheet('<h2>Athugasemd · ' + esc(dayLbl(date)) + '</h2>'
+      + (employee ? '<div class="sub">Starfsmaður: <b style="text-transform:capitalize">' + esc(employee) + '</b></div>' : '<div class="f"><label>Starfsmaður</label>' + (names.length ? '<select class="well" id="m-emp"><option value="">— veldu —</option>' + names.map(n => '<option>' + esc(n) + '</option>').join('') + '<option value="__annad">Annað nafn…</option></select><input class="well" id="m-emp2" placeholder="nafn" style="margin-top:6px;display:none">' : '<input class="well" id="m-emp2" placeholder="nafn">') + '</div>')
+      + '<div class="f"><label>Hvað</label>' + chipsHtml('cat', CAT_MAETING, '') + '</div>'
+      + '<div class="f"><label>Nánar (valfrjálst)</label><input class="well" id="m-note" placeholder="t.d. hringdi kl. 7, kemur á morgun"></div>'
+      + '<div class="actions"><button type="button" class="key" id="m-cancel">Hætta við</button><button type="button" class="key gold" id="m-ok">💾 Vista strax</button></div>', sh => {
+        wireChips(sh, 'cat', v => { cat = v; });
+        const sel = $('#m-emp', sh); if (sel) sel.addEventListener('change', () => { $('#m-emp2', sh).style.display = sel.value === '__annad' ? '' : 'none'; });
+        $('#m-cancel', sh).onclick = closeSheet;
+        $('#m-ok', sh).onclick = async () => {
+          let emp = employee; if (!emp) { const v = sel ? sel.value : ''; emp = (v && v !== '__annad') ? v : ($('#m-emp2', sh).value || '').trim(); }
+          if (!emp) { toast('Veldu starfsmann'); return; }
+          if (!cat) { toast('Veldu hvað (veikur, seint …)'); return; }
+          $('#m-ok', sh).disabled = true;
+          const row = await save({ kind: 'maeting', entry_date: date, work_month: date.slice(0, 7), employee: emp, category: cat, note: $('#m-note', sh).value.trim() });
+          closeSheet();
+          if (row) { if (!row.pending) state.maetingEntries.unshift(row); toast(row.pending ? 'Í biðröð' : '✓ ' + emp + ': ' + cat); }
+          render();
+        };
+      });
+  }
+
+  // ── Beiðnir ───────────────────────────────────────────────────────────────
+  function renderBeidnir() {
+    const rows = (state.beidnir || []).concat(pendingRows('beidni'));
+    $('#bt-main').innerHTML = '<div class="hero"><h2>Beiðnir til skrifstofu</h2><span class="sub">teikningar · efni · verkfæri · annað</span></div>'
+      + '<button type="button" class="key gold wide" id="b-add">＋ Ný beiðni</button>'
+      + '<div class="panel" style="margin-top:10px"><div class="panel-h" style="cursor:default"><span class="plate">05</span><span class="panel-t">Sendar beiðnir</span><span class="sum">' + rows.length + '</span></div><div class="panel-b">' + (rows.length ? rows.map(e => entryHtml(e)).join('') : '<div class="empty">Engar beiðnir enn</div>') + '</div></div>';
+    $('#b-add').onclick = openBeidniSheet;
+    wireDeletes($('#bt-main'), async () => { await loadBeidnir(true); render(); });
+  }
+  function openBeidniSheet() {
+    const wss = (state.boot && state.boot.worksites) || [];
+    let cat = '';
+    openSheet('<h2>Ný beiðni</h2><div class="sub">Fer beint á skrifstofuna (hub-flipinn „Frá verkstað")</div>'
+      + '<div class="f"><label>Tegund</label>' + chipsHtml('cat', CAT_BEIDNI, '') + '</div>'
+      + '<div class="f"><label>Verkstaður (valfrjálst)</label><select class="well" id="b-ws"><option value="">—</option>' + wss.map(w => '<option>' + esc(w.name) + '</option>').join('') + '</select></div>'
+      + '<div class="f"><label>Beiðnin</label><textarea class="well" id="b-note" placeholder="t.d. vantar teikningar af 2. hæð, brunahólfun við lyftu"></textarea></div>'
+      + '<div class="actions"><button type="button" class="key" id="b-cancel">Hætta við</button><button type="button" class="key gold" id="b-ok">📨 Senda</button></div>', sh => {
+        wireChips(sh, 'cat', v => { cat = v; });
+        $('#b-cancel', sh).onclick = closeSheet;
+        $('#b-ok', sh).onclick = async () => {
+          const note = $('#b-note', sh).value.trim(); if (!note) { toast('Skrifaðu beiðnina'); return; }
+          $('#b-ok', sh).disabled = true;
+          const ws = $('#b-ws', sh).value;
+          const row = await save({ kind: 'beidni', category: cat || 'Annað', worksite_name: ws || null, entry_date: today(), work_month: today().slice(0, 7), note });
+          closeSheet();
+          if (row) { if (!row.pending) state.beidnir.unshift(row); toast(row.pending ? 'Í biðröð' : '✓ Beiðni send'); }
+          render();
+        };
+      });
+  }
+
+  // ── Deilt ─────────────────────────────────────────────────────────────────
+  function renderDeilt() {
+    const shares = (state.boot && state.boot.shares) || [];
+    $('#bt-main').innerHTML = '<div class="hero"><h2>Deilt & tenglar</h2><span class="sub">frá skrifstofunni</span></div>'
+      + '<div class="tiles"><a class="tile" href="/nlsh.html" target="_blank" rel="noopener"><span class="i">🏥</span><b>Landsspítalinn</b><small>NLSH staða og skýrsla</small></a>'
+      + '<a class="tile" href="/#tvmaeting" target="_blank" rel="noopener"><span class="i">🕒</span><b>Mæting í hub</b><small>full yfirsýn · síðustu 31 dagar</small></a>'
+      + '<a class="tile" href="https://kjarni.vercel.app/kjarni/turbopaint" target="_blank" rel="noopener"><span class="i">📐</span><b>TurboPaint</b><small>teikniborðið</small></a>'
+      + '<a class="tile" href="/" target="_blank" rel="noopener"><span class="i">🏢</span><b>Brunahólf hub</b><small>stjórnstöðin</small></a></div>'
+      + '<div class="panel"><div class="panel-h" style="cursor:default"><span class="plate">06</span><span class="panel-t">Deilt með verkstað</span><span class="sum">' + shares.length + '</span></div><div class="panel-b">'
+      + (shares.length ? shares.map(s => '<div class="entry"><div class="t"><b>' + (s.kind === 'turbopaint' ? '📐 ' : '🔗 ') + '<a href="' + esc(s.url) + '" target="_blank" rel="noopener" style="color:var(--gold-deep)">' + esc(s.title) + '</a></b>' + (s.note ? '<div class="note">' + esc(s.note) + '</div>' : '') + '<div class="meta"><span>' + esc(dmy(s.created_at)) + '</span></div></div></div>').join('') : '<div class="empty">Ekkert deilt enn — Agnar setur TurboPaint-borð og hlekki hér inn úr hubnum</div>')
+      + '</div></div>';
+  }
+
+  // ── Stýring ───────────────────────────────────────────────────────────────
+  function render() {
+    renderWho();
+    document.querySelectorAll('#bt-tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === state.tab));
+    try {
+      if (state.tab === 'verk') renderVerk();
+      else if (state.tab === 'maeting') renderMaeting();
+      else if (state.tab === 'beidnir') renderBeidnir();
+      else renderDeilt();
+    } catch (e) { $('#bt-main').innerHTML = '<div class="empty">Villa: ' + esc(e.message) + '</div>'; }
+  }
+  async function go() {
+    $('#bt-main').innerHTML = '<div class="empty">Sæki…</div>';
+    try {
+      if (state.tab === 'verk' || state.tab === 'deilt') await loadBoot(state.tab === 'verk' && state.boot && state.boot.month !== state.month);
+      else if (state.tab === 'maeting') { await loadBoot(false).catch(() => {}); await loadMaeting(false); }
+      else if (state.tab === 'beidnir') { await loadBoot(false).catch(() => {}); await loadBeidnir(false); }
+      render();
+      askWho(false);
+    } catch (e) { $('#bt-main').innerHTML = '<div class="empty">Náði ekki í gögn: ' + esc(e.message) + '<br><br><button type="button" class="key" onclick="location.reload()">Reyna aftur</button></div>'; setSync('err'); }
+  }
+  document.querySelectorAll('#bt-tabs button').forEach(b => b.addEventListener('click', () => { state.tab = b.dataset.tab; state.ws = null; LS.set('bt_tab', state.tab); go(); window.scrollTo(0, 0); }));
+  $('#bt-who').addEventListener('click', () => askWho(true));
+  window.addEventListener('online', flush);
+  setInterval(() => { if (navigator.onLine) flush(); }, 20000);
+  setInterval(() => { if (document.visibilityState === 'visible' && !$('#bt-sheet')) refresh(true); }, 60000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { flush(); refresh(true); } });
+  if (state.queue.length) setSync('queued');
+  go().then(flush);
+})();
+</script>
+</body>
+</html>
