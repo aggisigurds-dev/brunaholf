@@ -23,23 +23,30 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 // Ajour project_name variants for NLSH.
 const NLSH_NAMES = ['NLSH 5-6. hæð', 'NLSH 5-6 hæð', 'Landsspítalinn', 'Landsspitalinn'];
 
-// Contract verkliðir (m. vsk per heild). matcher tested against category_group (case/space-insensitive).
+// Samningsverkliðir — EIN tafla fyrir nlsh-uppgjor, nlsh-dashboard og nlsh-stada.
+//   rate   = verð per HEILD m. vsk        target = Fjöldi í samningi
+//   full   = 1 staka = 1 heild (annars 2 stakar = 1 heild)
+//   metrar = mælt í metrum (má hafa aukastafi) — samt helmingað eins og annað
+// REGLAN ER SÖNNUÐ ÚR SKÝRSLUNNI SJÁLFRI (Aðalskjal, júlí 2026, dálkar G/H):
+//   2.2 168 → 168 og 1.2 743 → 743 eru 1=1; 1.3 1 → 0,5, 2.11 206 → 103, 3.1 470 → 235
+//   eru helminguð. full á 1.3 var aldrei rétt (kom með 8e842a2 án rökstuðnings;
+//   calibraða commit-ið e232160 flaggaði aðeins 1.2 og hitti apríl-reikninginn á 0,7%).
 const VERK = [
-  { verk_nr: '2.1',  label: 'Ø20-34 plaströr',                rate: 7166,  test: /plast.*20-34/i },
-  { verk_nr: '2.2',  label: '(35-50) plaströr m eldv. kraga', rate: 19532, test: /plast.*35-50/i },
-  { verk_nr: '2.3',  label: 'Ø75-100 plaströr',               rate: 23720, test: /plast.*75-100/i },
-  { verk_nr: '2.4',  label: 'Ø15-35 stálrör',                 rate: 7166,  test: /st[áa]l.*15-35/i },
-  { verk_nr: '2.5',  label: 'Ø40-50 stálrör',                 rate: 7366,  test: /st[áa]l.*40-50/i },
-  { verk_nr: '2.6',  label: 'Ø75-110 stálrör',                rate: 7566,  test: /st[áa]l.*75-110/i },
-  { verk_nr: '2.7',  label: 'Ø110-160 stálrör',               rate: 8066,  test: /st[áa]l.*110-160/i },
-  { verk_nr: '2.8',  label: 'Ø125-160 loftstokkar',           rate: 11532, test: /loft.*125-160/i },
-  { verk_nr: '2.9',  label: 'Ø200-315 loftstokkar',           rate: 23064, test: /loft.*200-315/i },
-  { verk_nr: '2.10', label: 'Ø400-630 loftstokkar',           rate: 46128, test: /loft.*400-630/i },
-  { verk_nr: '2.11', label: 'Frágangur raufa m. stokkum (m)', rate: 11532, test: /^raufar/i },
-  { verk_nr: '1.1',  label: 'Ø100-150 Gólf/Hæðarskil',        rate: 38806, test: /g[óo]lf.*100-150/i },
-  { verk_nr: '1.2',  label: 'Ø160-200 Gólf/Hæðarskil',        rate: 56224, test: /g[óo]lf.*160-200/i, full: true },
-  { verk_nr: '1.3',  label: 'Ø210-300 Gólf/Hæðarskil',        rate: 65116, test: /g[óo]lf.*210-300/i, full: true },
-  { verk_nr: '3.1',  label: 'Rafmagnsraufar',                 rate: 9766,  test: /^raf/i },
+  { verk_nr: '2.1',  label: 'Ø20-34 plaströr',                rate: 7166,  target: 600,  test: /plast.*20-34/i },
+  { verk_nr: '2.2',  label: '(35-50) plaströr m eldv. kraga', rate: 19532, target: 600,  test: /plast.*35-50/i, full: true },
+  { verk_nr: '2.3',  label: 'Ø75-100 plaströr',               rate: 23720, target: 100,  test: /plast.*75-100/i },
+  { verk_nr: '2.4',  label: 'Ø15-35 stálrör',                 rate: 7166,  target: 800,  test: /st[áa]l.*15-35/i },
+  { verk_nr: '2.5',  label: 'Ø40-50 stálrör',                 rate: 7366,  target: 1100, test: /st[áa]l.*40-50/i },
+  { verk_nr: '2.6',  label: 'Ø75-110 stálrör',                rate: 7566,  target: 350,  test: /st[áa]l.*75-110/i },
+  { verk_nr: '2.7',  label: 'Ø110-160 stálrör',               rate: 8066,  target: 100,  test: /st[áa]l.*110-160/i },
+  { verk_nr: '2.8',  label: 'Ø125-160 loftstokkar',           rate: 11532, target: 600,  test: /loft.*125-160/i },
+  { verk_nr: '2.9',  label: 'Ø200-315 loftstokkar',           rate: 23064, target: 600,  test: /loft.*200-315/i },
+  { verk_nr: '2.10', label: 'Ø400-630 loftstokkar',           rate: 46128, target: 109,  test: /loft.*400-630/i },
+  { verk_nr: '2.11', label: 'Frágangur raufa m. stokkum (m)', rate: 11532, target: 102,  test: /^raufar/i, metrar: true },
+  { verk_nr: '1.1',  label: 'Ø100-150 Gólf/Hæðarskil',        rate: 38806, target: 50,   test: /g[óo]lf.*100-150/i },
+  { verk_nr: '1.2',  label: 'Ø160-200 Gólf/Hæðarskil',        rate: 56224, target: 100,  test: /g[óo]lf.*160-200/i, full: true },
+  { verk_nr: '1.3',  label: 'Ø210-300 Gólf/Hæðarskil',        rate: 65116, target: 25,   test: /g[óo]lf.*210-300/i },
+  { verk_nr: '3.1',  label: 'Rafmagnsraufar',                 rate: 9766,  target: 768,  test: /^raf/i },
 ];
 
 exports.handler = async (event) => {
@@ -84,8 +91,7 @@ exports.handler = async (event) => {
     totalStakar += stakar;
     const verk = VERK.find(v => v.test.test(group));
     if (!verk) { unmapped.push({ category_group: group, stakar }); continue; }
-    // Most verkliðir: 1 heild = 2 stakar. Verk 1.2 (Ø160-200 Gólf/Hæðarskil)
-    // is the exception — each staka is billed at full price (1 staka = 1 heild).
+    // 1 heild = 2 stakar nema full (2.2 og 1.2) — sjá VERK og sönnunina þar.
     const heilar = verk.full ? stakar : stakar / 2;
     const amount = Math.round(heilar * verk.rate);
     totalMvsk += amount;

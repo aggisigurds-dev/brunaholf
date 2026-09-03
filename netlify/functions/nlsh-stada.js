@@ -24,11 +24,10 @@
 //   3. SKÝRSLAN — reiknuð eins og samningsblaðið: heilar, upphæð heild (heilar ×
 //      verð/heild m. vsk), mánaðarmunur og upphæð í mánuði — per mánuð frá sept 2025.
 //
-// REGLUR BLAÐSINS (úr júlí-xlsx Agnars, 02.09.2026): flestir liðir 2 stakar = 1 heild;
-// 2.2 (kragi) og 1.2 eru 1 = 1; 2.11 og 3.1 eru METRAR (handslegin tala). ATH: þetta
-// víkur frá nlsh-uppgjor.js/nlsh-dashboard.js sem hafa `full` á 1.2 OG 1.3 en ekki 2.2
-// — það er ÁÆTLUNIN í hub-inum, þetta er SKÝRSLAN; misræmið er skráð, Agnar sker úr.
-// Verð og kortlagning flokkur→verkliður koma úr VERK í nlsh-uppgjor.js (einn staður).
+// REGLUR BLAÐSINS — sannaðar úr Aðalskjali (júlí 2026, dálkar G/H): ALLT helmingað nema
+// 2.2 og 1.2 (1 staka = 1 heild); 2.11 er í metrum (aukastafir) en helmingað samt; 3.1 og
+// 1.3 helminguð. Reglur, verð, Fjöldi og kortlagning: VERK í nlsh-uppgjor.js (einn staður,
+// samræmt 03.09.2026 — áður hafði hub-áætlunin full á 1.3 án rökstuðnings).
 
 const { VERK, NLSH_NAMES } = require('./nlsh-uppgjor.js');
 
@@ -37,17 +36,11 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const H = () => ({ apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'content-type': 'application/json' });
 const FYRSTI_MANUDUR = '2025-09';   // verkið hófst sept 2025 — fyrsta dálkur blaðsins
 
-// Fjöldi í samningi (sami og nlsh-dashboard.js target) + reglur blaðsins.
-const SKYRSLA = {
-  '2.1': { fjoldi: 600 }, '2.2': { fjoldi: 600, full: true }, '2.3': { fjoldi: 100 },
-  '2.4': { fjoldi: 800 }, '2.5': { fjoldi: 1100 }, '2.6': { fjoldi: 350 }, '2.7': { fjoldi: 100 },
-  '2.8': { fjoldi: 600 }, '2.9': { fjoldi: 600 }, '2.10': { fjoldi: 109 },
-  '2.11': { fjoldi: 102, metrar: true },
-  '1.1': { fjoldi: 50 }, '1.2': { fjoldi: 100, full: true }, '1.3': { fjoldi: 25 },
-  '3.1': { fjoldi: 768, metrar: true },
-};
+// Reglur, verð og Fjöldi koma úr VERK í nlsh-uppgjor.js (reglur úr VERK — einn staður).
+// Blaðið helmingar ALLT nema full-liðina (2.2, 1.2) — metrar (2.11) líka.
+const RULE = Object.fromEntries(VERK.map(v => [v.verk_nr, v]));
 const VERK_NR = new Set(VERK.map(v => v.verk_nr));
-const heilarAf = (verk_nr, stada) => { const r = SKYRSLA[verk_nr] || {}; return (r.metrar || r.full) ? stada : stada / 2; };
+const heilarAf = (verk_nr, stada) => (RULE[verk_nr] && RULE[verk_nr].full) ? stada : stada / 2;
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return resp(204, '', cors());
@@ -67,7 +60,7 @@ exports.handler = async (event) => {
       if (l.lokatala == null || l.lokatala === '') { eyda.push(verk_nr); continue; }
       const n = Number(l.lokatala);
       if (!Number.isFinite(n) || n < 0) return json(400, { error: `ógild lokatala fyrir ${verk_nr}` });
-      const metrar = !!(SKYRSLA[verk_nr] || {}).metrar;
+      const metrar = !!(RULE[verk_nr] || {}).metrar;
       upserts.push({ month, verk_nr, lokatala: metrar ? Math.round(n * 100) / 100 : Math.round(n),
         athugasemd: l.athugasemd ? String(l.athugasemd).slice(0, 200) : null, updated_at: now });
     }
@@ -179,10 +172,9 @@ async function stada(month) {
     totals: { stakar_alls: sum(lines, 'stakar_alls'), stakar_manudur: sum(lines, 'stakar_manudur'), unmapped_alls: sum(unmapped, 'stakar_alls') },
     ekki_done: ekkiDone,
     skyrsla: {
-      verk: VERK.map(v => ({ verk_nr: v.verk_nr, label: v.label, rate: v.rate, fjoldi: (SKYRSLA[v.verk_nr] || {}).fjoldi || null,
-        full: !!(SKYRSLA[v.verk_nr] || {}).full, metrar: !!(SKYRSLA[v.verk_nr] || {}).metrar })),
+      verk: VERK.map(v => ({ verk_nr: v.verk_nr, label: v.label, rate: v.rate, fjoldi: v.target || null, full: !!v.full, metrar: !!v.metrar })),
       manudir: skyrslaMan,
-      reglur: 'Heild = stakar/2 nema 2.2 og 1.2 (1=1); 2.11 og 3.1 eru metrar. Verð per heild m. vsk (VERK í nlsh-uppgjor.js).',
+      reglur: 'Heild = stakar/2 nema 2.2 og 1.2 (1=1) — líka metrar (2.11). Verð per heild m. vsk. Sannað úr Aðalskjali júlí 2026.',
     },
   });
 }

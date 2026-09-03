@@ -25,23 +25,9 @@ const NLSH_AJOUR = 'NLSH 5-6. hæð';
 const NLSH_TIMAVERA = ['Landsspitalinn', 'Landsspítalinn', 'NLSH 5-6. hæð', 'NLSH 5-6 hæð'];
 
 // Contract verkliðir: rate per heild (m. vsk) + target Fjöldi (budgeted stakar).
-const VERK = [
-  { verk_nr: '2.1',  label: 'Ø20-34 plaströr',                rate: 7166,  target: 600,  test: /plast.*20-34/i },
-  { verk_nr: '2.2',  label: '(35-50) plaströr m eldv. kraga', rate: 19532, target: 600,  test: /plast.*35-50/i },
-  { verk_nr: '2.3',  label: 'Ø75-100 plaströr',               rate: 23720, target: 100,  test: /plast.*75-100/i },
-  { verk_nr: '2.4',  label: 'Ø15-35 stálrör',                 rate: 7166,  target: 800,  test: /st[áa]l.*15-35/i },
-  { verk_nr: '2.5',  label: 'Ø40-50 stálrör',                 rate: 7366,  target: 1100, test: /st[áa]l.*40-50/i },
-  { verk_nr: '2.6',  label: 'Ø75-110 stálrör',                rate: 7566,  target: 350,  test: /st[áa]l.*75-110/i },
-  { verk_nr: '2.7',  label: 'Ø110-160 stálrör',               rate: 8066,  target: 100,  test: /st[áa]l.*110-160/i },
-  { verk_nr: '2.8',  label: 'Ø125-160 loftstokkar',           rate: 11532, target: 600,  test: /loft.*125-160/i },
-  { verk_nr: '2.9',  label: 'Ø200-315 loftstokkar',           rate: 23064, target: 600,  test: /loft.*200-315/i },
-  { verk_nr: '2.10', label: 'Ø400-630 loftstokkar',           rate: 46128, target: 109,  test: /loft.*400-630/i },
-  { verk_nr: '2.11', label: 'Frágangur raufa m. stokkum (m)', rate: 11532, target: 102,  test: /^raufar/i },
-  { verk_nr: '1.1',  label: 'Ø100-150 Gólf/Hæðarskil',        rate: 38806, target: 50,   test: /g[óo]lf.*100-150/i },
-  { verk_nr: '1.2',  label: 'Ø160-200 Gólf/Hæðarskil',        rate: 56224, target: 100,  test: /g[óo]lf.*160-200/i, full: true },
-  { verk_nr: '1.3',  label: 'Ø210-300 Gólf/Hæðarskil',        rate: 65116, target: 25,   test: /g[óo]lf.*210-300/i, full: true },
-  { verk_nr: '3.1',  label: 'Rafmagnsraufar',                 rate: 9766,  target: 768,  test: /^raf/i },
-];
+// VERK (verð, target, full, kortlagning) er EIN tafla í nlsh-uppgjor.js — afritið sem
+// var hér (með full á 1.3 án rökstuðnings) er farið. Sjá sönnun reglunnar þar.
+const { VERK } = require('./nlsh-uppgjor.js');
 
 // Staff number → display name. Tímavera first-name(s) → number for joining hours.
 const STAFF = {
