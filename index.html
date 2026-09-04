@@ -14799,7 +14799,7 @@ async function renderDrogstod(t){
   const isYM = s => /^\d{4}-\d{2}$/.test(String(s||''));
   const mlS = ym => { if(!isYM(ym)) return ''; const [y,m] = ym.split('-').map(Number); return MN[m-1]+' ’'+String(y).slice(2); };
   const nowYM = () => { const d = new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1); };
-  const fmt = n => Math.round(Number(n)||0).toLocaleString('is-IS');
+  const fmt = n => Math.round(Number(n)||0).toLocaleString('is-IS').replace(/,/g,'.');
   const hf = n => (Math.round((Number(n)||0)*100)/100).toLocaleString('is-IS');
   const dt = iso => { const d = new Date(iso); if(isNaN(d)) return ''; const t0 = new Date(); const y = new Date(t0); y.setDate(y.getDate()-1);
     const dag = d.toDateString()===t0.toDateString() ? 'í dag' : d.toDateString()===y.toDateString() ? 'í gær' : pad(d.getDate())+'.'+pad(d.getMonth()+1);
