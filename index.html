@@ -14848,6 +14848,8 @@ async function renderDrogstod(t){
       '.ds-ring{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin:7px 0 6px}.ds-ring i{display:block;height:5px;border-radius:2px;background:var(--line-2)}.ds-ring i.on{background:var(--green)}',
       '.ds-kv{display:flex;justify-content:space-between;gap:8px;font-size:12px;padding:2px 0;color:var(--ink-2)}.ds-kv b{font-family:var(--font-mono);font-weight:600;color:var(--ink)}',
       '.ds-chk{display:flex;gap:8px;align-items:center;padding:5px 0;font-size:12.5px;border-top:1px solid var(--line)}.ds-chk:first-child{border-top:0}',
+      '.ds-teng{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:0 0 12px}',
+      '.ds-chip.bad{background:var(--red-bg);color:var(--red);border-color:var(--red-line)}',
       '.ds-empty{padding:22px 14px;text-align:center;color:var(--muted-2);font-style:italic;font-size:12.5px;line-height:1.5}',
       '@media(max-width:900px){.ds-cols{grid-template-columns:1fr}.ds-head h1{font-size:24px}}',
     ].join('\n');
@@ -14856,7 +14858,7 @@ async function renderDrogstod(t){
 
   state.ui.ds_felag = FEL[state.ui.ds_felag] ? state.ui.ds_felag : 'slokkvitaeki';   // aðallega fyrir Slökkvitæki
   state.ui.ds_syn = ['baedi','slokkvitaeki','brunaholf'].includes(state.ui.ds_syn) ? state.ui.ds_syn : 'baedi';
-  let NOTES = [], STADA = null, sel = state.ui.ds_sel || null, opinnForm = null, queue = LS.get('ds_queue', []), aiLaest = false, NOTAD = [];
+  let NOTES = [], STADA = null, TENG = null, sel = state.ui.ds_sel || null, opinnForm = null, queue = LS.get('ds_queue', []), aiLaest = false, NOTAD = [];
   const PLH = { slokkvitaeki:'t.d. Hagkaup Skeifunni — 2 tæki skoðuð, 1 nýtt 6 kg, muna slöngukeflið', brunaholf:'t.d. Skúlagata 3 tímar aukalega í gær, hurð á 2. hæð' };
 
   $view.innerHTML = '<div class="ds-wrap">'
@@ -14871,6 +14873,7 @@ async function renderDrogstod(t){
     + '<button type="button" id="ds-cam" style="'+KEY+';height:42px" title="Mynd, skjáskot eða PDF með punktinum">📷</button>'
     + '<button type="button" id="ds-add" style="'+GOLD+';height:42px;padding:0 16px">Skrá</button></div>'
     + '<div class="ds-sync" id="ds-sync"></div>'
+    + '<div class="ds-teng" id="ds-teng"></div>'
     + '<div class="ds-cols"><div class="ds-col" id="ds-inn"></div><div class="ds-col" id="ds-verk"></div><div class="ds-col" id="ds-val"></div></div></div>';
 
   const api = (path, opts) => fetch(path, Object.assign({ cache:'no-store' }, opts||{})).then(async r => { const j = await r.json().catch(()=>({})); if(!r.ok || j.error){ const e = new Error(j.error||('HTTP '+r.status)); e.status = r.status; e.locked = !!j.locked; throw e; } return j; });
@@ -14897,8 +14900,8 @@ async function renderDrogstod(t){
 
   async function load(){
     try{
-      const [n, s] = await Promise.all([ api('/api/reikningspunktar?status=nytt,flokkad&limit=400'), api('/api/reikningspunktar?op=stada') ]);
-      NOTES = n.rows||[]; STADA = s;
+      const [n, s, tg] = await Promise.all([ api('/api/reikningspunktar?status=nytt,flokkad&limit=400'), api('/api/reikningspunktar?op=stada'), api('/api/data-sources-status').catch(()=>null) ]);
+      NOTES = n.rows||[]; STADA = s; TENG = tg;
       if(sel && !finnaSel()) sel = null;
       teikna();
     }catch(e){ $view.querySelector('#ds-inn').innerHTML = '<div class="ds-empty" style="color:var(--red)">Villa: '+esc(e.message)+'</div>'; }
@@ -15008,7 +15011,30 @@ async function renderDrogstod(t){
     return h;
   }
 
+  // Tengingar: rautt = ótengt/gamalt, gult = að eldast, grænt = ferskt. Póstreikningarnir
+  // fyrst því þeir eru það sem Agnar spyr alltaf um.
+  function tengStrimill(){
+    const el = $view.querySelector('#ds-teng'); if(!el) return;
+    if(!TENG){ el.innerHTML = ''; return; }
+    const kl = st => st==='fresh' ? 'ok' : (st==='aging' ? 'warn' : 'bad');
+    const stund = iso => { const d = new Date(iso); return isNaN(d) ? '—' : pad(d.getDate())+'.'+pad(d.getMonth()+1)+' '+pad(d.getHours())+':'+pad(d.getMinutes()); };
+    const chips = [];
+    for(const a of (TENG.email_accounts||[])){
+      const stutt = String(a.account||'').replace(/@(.+?)\..*$/, '@$1');
+      chips.push({ k: kl(a.status), t: '✉ '+stutt, s: a.status==='not_connected' ? 'ekki tengt' : 'nýjast '+stund(a.newest), tit: a.account+(a.newest ? ' · nýjasti póstur '+stund(a.newest) : ' · engin tenging') });
+    }
+    for(const src of (TENG.sources||[])){
+      if(src.key==='email') continue;
+      chips.push({ k: kl(src.status), t: (src.icon||'')+' '+src.label, s: (src.status==='stale' ? 'gamalt · ' : '')+'sótt '+stund(src.last_import), tit: src.label+(src.newest_real ? ' · nýjast '+String(src.newest_real).slice(0,10) : '')+(src.details ? ' · '+src.details : '') });
+    }
+    const rod = { bad:0, warn:1, ok:2 };
+    chips.sort((a,b) => rod[a.k]-rod[b.k]);
+    el.innerHTML = '<span style="font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-right:2px">Tengingar</span>'
+      + chips.map(c => '<span class="ds-chip '+c.k+'" title="'+esc(c.tit)+'">'+esc(c.t)+' <small style="font-weight:500;opacity:.85">'+esc(c.s)+'</small></span>').join('');
+  }
+
   function teikna(){
+    tengStrimill();
     $view.querySelector('#ds-inn').innerHTML = innholf();
     $view.querySelector('#ds-verk').innerHTML = verkColumn();
     $view.querySelector('#ds-val').innerHTML = valColumn();
