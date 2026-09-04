@@ -15739,9 +15739,10 @@ async function renderKrofuyfirlit(t){
     const heildAnVsk = (Number(inv.amount||0) || Number(n.total||0)) / (1 + (n.vsk/100));
     const efniPct = (n.redder > 0 && heildAnVsk > 0) ? Math.round((n.redder / heildAnVsk) * 100) : null;
     const vinnaPct = (n.dagvinna > 0 && heildAnVsk > 0) ? Math.round((n.dagvinna / heildAnVsk) * 100) : null;
-    const timCap = cap(`🕒 ${hoursDisp}${(!fastVerd && vinnaPct != null) ? ` <b class="ky-pct">${vinnaPct}%</b>` : ' klst'}`,
+    const timCap = cap(`🕒 ${hoursDisp}${(!fastVerd && vinnaPct != null) ? `<br><b class="ky-pct">${vinnaPct}%</b>` : '<br><span class="ky-eining">klst</span>'}`,
       'Klukkustundir úr Tímaveru' + (fastVerd ? ' — fast verð ræður upphæðinni, svo hlutfall er ekki sýnt' : (vinnaPct != null ? ' — vinnan (klst × taxti) er ' + vinnaPct + '% af upphæð raðarinnar án vsk' : '')));
-    const efnCap = fastVerd ? '' : cap(`🧱 ${numIS(n.redder)}${efniPct != null ? ` <b class="ky-pct">${efniPct}%</b>` : ''}`,
+    // 🧱 0 sagði ekkert og stóð á nær hverri röð — efnis-talan birtist aðeins þegar efni er til.
+    const efnCap = (fastVerd || !(n.redder > 0)) ? '' : cap(`🧱 ${numIS(n.redder)}${efniPct != null ? `<br><b class="ky-pct">${efniPct}%</b>` : ''}`,
       'Redder-innkaup mánaðarins án vsk' + (efniPct != null ? ' — ' + efniPct + '% af upphæð raðarinnar án vsk' : ''));
     const estCap = fastVerd ? '' : cap(`≈ ${numIS(n.total)}`,
       'Gróf áætlun: klst × taxti + smáhlutagjald + Redder-efni, m/vsk. Hún þekkir hvorki staðfestingargjald, akstur, afslátt né efni á söluverði'
@@ -15750,7 +15751,7 @@ async function renderKrofuyfirlit(t){
       ? `<span class="ky-rv ok" title="Yfirmaður staðfesti í yfirferð">👔 Staðfest · ${esc(rv.review_confirmed_by||'')} ${rv.review_confirmed_at?esc(fmtDate(rv.review_confirmed_at)):''}</span>`
       : rvOn ? `<span class="ky-rv wait" title="Bíður yfirferðar yfirmanns (The Big Boss appið)">👔 Í yfirferð</span>` : '';
     return `<span class="ky-wf-boxes" style="display:inline-flex;flex:0 0 386px;width:386px;flex-direction:column;align-items:flex-end;gap:3px">
-      <span style="display:inline-flex;align-items:center;gap:9px;flex-wrap:nowrap;${hasNums?'margin-bottom:16px':''}">
+      <span style="display:inline-flex;align-items:center;gap:9px;flex-wrap:nowrap;${hasNums?'margin-bottom:27px':''}">
         ${withCap(wfBtn('tim','opentim','🕒','Tímask.','var(--blue-deep)','Opna Tímaskýrslu',!!timDoc), timCap)}${pdfLink(timDoc?bhDocUrl(timDoc):null,'Opna Tímaskýrslu PDF')}
         ${withCap(wfBtn('efn','openefn','📄','Efnisl.','var(--blue-deep)','Opna Efnislista í Gerð Reikninga',!!efnDoc), efnCap)}${pdfLink(efnDoc?bhDocUrl(efnDoc):null, primDoc ? ('⭐ Aðalskjal mánaðarins: ' + esc(primDoc.title||'')) : 'Opna Efnislista PDF')}${bothLink}
         ${/* 👔 Yfirferð — SLÖKKT í bili (ósk Agnars 2026-09-03). Bakendinn
