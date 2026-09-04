@@ -137,3 +137,11 @@ Fjármál → `bokari` 💫 · pör/þekja → `sara-organizer` 🗂️ · kúnn
 skjöl/Drive → `skjol` 🎙️ · leiðslur → `gagnaleidslur` 🥊 · flipar/UI → `framendi` 🗂️ ·
 bilanir → `kerfisheilsa` 🩺 · hraði → `hradi` 💥 · tengingar/lyklar → `tengingar` 😤 ·
 RLS/lyklar-öryggi → `oryggi` 🔒 · hype → `hype` 🇺🇸.
+
+## Svið `rukkun` — 🦆 Jóakim aðalönd (05.09.2026)
+
+Agent `rukkari` (Rukkarinn). `safnaRukkun()` í `svid-status.js` les `/api/reikningspunktar?op=stada`
+(drög: `ready`/`sent`/`hidden`, `kunnar`, `unfiled`), `/api/reikningspunktar?status=nytt,flokkad` og
+`/api/data-sources-status` → tilbúið að senda (fjöldi + kr), ósend drög, punktar í innhólfi, tengingar í ólagi.
+Rödd `joakim` í `js/jarvis-voice.js` hefur **enga Fish-rödd enn** (`voice_id: null` → vafra-fallback);
+límdu `/m/<id>` af fish.audio þar. Í `PLAY_ORDER` strax á eftir Fjármálum.

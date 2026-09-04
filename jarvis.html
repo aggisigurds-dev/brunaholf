@@ -361,9 +361,9 @@
         <div class="straumur" id="straumur"><div style="color:var(--ink3)">sæki…</div></div>
       </div>
       <div class="spjald" data-spjald="serfraedingar">
-        <h2>Sérfræðingar <span>23 á diski</span></h2>
+        <h2>Sérfræðingar <span>25 á diski</span></h2>
         <details class="sfr-hop" open>
-          <summary>Raddir á HUD · 16</summary>
+          <summary>Raddir á HUD · 17</summary>
           <div class="sfr-listi">
             <div class="sfr-rod"><span class="sfr-e">🎩</span><span class="sfr-n">Jarvis</span><span class="sfr-r">Dagleg yfirsýn</span></div>
             <div class="sfr-rod"><span class="sfr-e">💰</span><span class="sfr-n">Samantha</span><span class="sfr-r">Fjármál og bókhald</span></div>
@@ -375,6 +375,7 @@
             <div class="sfr-rod"><span class="sfr-e">😤</span><span class="sfr-n">Samuel L. J.</span><span class="sfr-r">Tengingar og lyklar</span></div>
             <div class="sfr-rod"><span class="sfr-e">🩺</span><span class="sfr-n">Dr. House</span><span class="sfr-r">Kerfisheilsa</span></div>
             <div class="sfr-rod"><span class="sfr-e">🇺🇸</span><span class="sfr-n">Trump</span><span class="sfr-r">Hype-yfirlit</span></div>
+            <div class="sfr-rod"><span class="sfr-e">🦆</span><span class="sfr-n">Jóakim</span><span class="sfr-r">Rukkunarmál — Drög-stöð</span></div>
             <div class="sfr-rod"><span class="sfr-e">💪</span><span class="sfr-n">Arnold</span><span class="sfr-r">TurboPaint + RLS</span></div>
             <div class="sfr-rod"><span class="sfr-e">🏷️</span><span class="sfr-n">DeVito</span><span class="sfr-r">Prentun og QR</span></div>
             <div class="sfr-rod"><span class="sfr-e">🗺️</span><span class="sfr-n">Ramsay</span><span class="sfr-r">Kort og geocode</span></div>
@@ -451,6 +452,7 @@
         <button class="svidbtn" data-svid="kort">🗺️ Kort</button>
         <button class="svidbtn" data-svid="jarvis">🎩 Jarvis</button>
         <button class="svidbtn" data-svid="yfirlit">🇺🇸 Yfirlit</button>
+        <button class="svidbtn" data-svid="rukkun">🦆 Rukkun</button>
         <button class="svidbtn svidall" id="svidall" title="Spila allar raddir í röð">▶ Öll</button>
         <button class="svidbtn svidreload" id="svidreload" title="Hlaða ferskri samantekt">↻</button>
         <span class="svidsvar" id="svidsvar"></span>
@@ -1416,7 +1418,7 @@ setInterval(sakja, 60000);
 
   // ── ▶ Öll: raðspilar hverja rödd, bíður eftir að hún klári áður en næsta byrjar ──
   var allBtn = document.getElementById('svidall');
-  var PLAY_ORDER = ['yfirlit','jarvis','fjarmal','por','kunnar','skjol','gogn','hradi','tengingar','oryggi','prentun','kort'];
+  var PLAY_ORDER = ['yfirlit','jarvis','fjarmal','rukkun','por','kunnar','skjol','gogn','hradi','tengingar','oryggi','prentun','kort'];
   async function playAll(){
     if(playing){ stopAll(); return; }
     playing = true;

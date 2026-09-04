@@ -49,6 +49,12 @@
       sample: "Nobody sells fire extinguishers like Agnar. Nobody. Tremendous sales, the best. But those invoices — send them. Believe me.",
       fb: { lang: "en-US", rate: 0.92, pitch: 0.8, pref: /alex|david|aaron|google us english/i }
     },
+    joakim: {
+      name: "Jóakim aðalönd", emoji: "🦆", role: "Rukkunarmál",
+      voice_id: null,   // engin Fish-rödd valin enn — límdu /m/<id> af fish.audio hér (Scrooge McDuck) og hún tekur við
+      sample: "Four invoices ready, one point two million krónur waiting. Every króna counts — send them, and mind the ones still unsent.",
+      fb: { lang: "en-GB", rate: 1.0, pitch: 0.9, pref: /daniel|arthur|george|uk english male|ryan/i }
+    },
     harley: {
       name: "Harley", emoji: "🃏", role: "Ringulreiðs-áminningar",
       voice_id: "e723d4c8547d4552af98ded15728cfbd",   // Fish — Harley Quinn

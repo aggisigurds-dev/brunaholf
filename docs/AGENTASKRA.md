@@ -82,13 +82,13 @@ Teljarinn **153/187** (tilbúið-staða) er **óbreyttur**. Hann er ekki hluti a
 
 ## Jarvis-roster (brunaholf)
 
-Áhöfnin á `jarvis.html` er **tveir opnir hópar** (16 raddir + 6 lén). Villuleit er alvöru HUD-sæti (`data-spjald="villuleit"`) með grep-kveikjum — skill, ekki rödd.
+Áhöfnin á `jarvis.html` er **tveir opnir hópar** (17 raddir + 6 lén). Villuleit er alvöru HUD-sæti (`data-spjald="villuleit"`) með grep-kveikjum — skill, ekki rödd.
 
-Sæti: Jarvis · Samantha · Sara · Charlize · Freeman · Statham · Willis · Samuel L. J. · Dr. House · Trump · Arnold · DeVito · Ramsay · Elon Musk · Natalie · Joker.
+Sæti: Jarvis · Samantha · Sara · Charlize · Freeman · Statham · Willis · Samuel L. J. · Dr. House · Trump · Arnold · DeVito · Ramsay · Elon Musk · Natalie · Joker · Jóakim aðalönd (🦆 rukkari, svið `rukkun`, 05.09.2026).
 
 Veiði-kort koma úr `/api/veidin` + `v_veidin_hunt_*`. Grunnlínan **2026-07-30** er **staða um mánuði síðan**. Hunt-kort (systkini-kt, blob-græn, HUD Búið vs skýrsla, Drive-tvítök) eiga enga grunnlínu. `153/187` er óbreytt.
 
-Aðrar Jarvis-tölur sem `jarvis.md` telur ósamræmdar (ekki lagaðar hér): `js/jarvis-voice.js` AGENTS = 15 raddir; `svid-status.js` SVID = 12 svið. Roster er útlit, ekki loader.
+Aðrar Jarvis-tölur sem `jarvis.md` telur ósamræmdar (ekki lagaðar hér): `js/jarvis-voice.js` AGENTS = 16 raddir; `svid-status.js` SVID = 13 svið. Roster er útlit, ekki loader.
 
 ---
 

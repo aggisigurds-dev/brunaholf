@@ -95,6 +95,14 @@ const SVID = {
     still_en: 'Big, confident hype-man energy — superlatives, short punchy sentences. Celebrate the wins, call out what still needs doing. Never crude.',
     safna: safnaYfirlit,
   },
+  // 🦆 Rukkarinn (05.09.2026) — agent `rukkari`: hvað er tilbúið að senda, hvað bíður, hvað er ótengt.
+  rukkun: {
+    name: 'Jóakim aðalönd', emoji: '🦆', agent: 'rukkari',
+    rodd: 'joakim', voice_id: null,                       // engin Fish-rödd valin enn → vafra-rödd (fb í js/jarvis-voice.js)
+    kyn: 'kk',
+    still_en: 'Scrooge McDuck energy — every króna counted, gleeful about money coming in, grumbling about invoices still unsent. Thrifty, precise, never crude.',
+    safna: safnaRukkun,
+  },
 };
 
 // Hvernig á að ávarpa notandann UPPHÁTT.
@@ -229,6 +237,32 @@ async function safnaYfirlit() {
     fyrirtaeki_i_thjonustu: thjon,
     utistandandi_kr: Math.round(t.outstanding_kr || 0),
     skuldunautar: t.debtor_count || 0,
+  };
+}
+
+// ── 🦆 Rukkarinn — Drög-stöðin + tengingar: tilbúið að senda / ósent / punktar í innhólfi ──
+async function safnaRukkun() {
+  const [stada, teng, listi] = await Promise.all([
+    apiGet('/api/reikningspunktar?op=stada').catch(() => ({})),
+    apiGet('/api/data-sources-status').catch(() => ({})),
+    apiGet('/api/reikningspunktar?status=nytt,flokkad').catch(() => []),
+  ]);
+  const verk = (stada.verk || []).filter(v => !v.hidden);
+  const osend = verk.filter(v => !v.sent);
+  const tilbuin = osend.filter(v => v.ready);
+  const kr = (a) => Math.round(a.reduce((sum, v) => sum + (Number(v.fixed) > 0 ? Number(v.fixed) : (Number(v.total) || 0)), 0));
+  const olag = [...(teng.sources || []), ...(teng.email_accounts || [])].filter(x => x && x.status && x.status !== 'fresh');
+  const punktar = Array.isArray(listi) ? listi : (listi.notes || listi.punktar || listi.rows || []);
+  return {
+    tilbuid_ad_senda: tilbuin.length,
+    tilbuid_kr: kr(tilbuin),
+    osend_drog: osend.length,
+    osend_kr: kr(osend),
+    bida_punkta_eda_upplysinga: osend.length - tilbuin.length,
+    kunnar_slokkvitaekis_med_punkta: (stada.kunnar || []).length,
+    punktar_i_innholfi: punktar.length,
+    oflokkadir_punktar: Number(stada.unfiled) || 0,
+    tengingar_i_olagi: olag.map(x => (x.label || x.account || x.key) + ' (' + x.status + ')'),
   };
 }
 
@@ -416,6 +450,11 @@ function einfold(lykill, t) {
   if (lykill === 'yfirlit') {
     return `${t.fyrirtaeki_i_thjonustu} companies in service, ${t.vidskiptavinir_alls} customers total. ` +
            `${Math.round((t.utistandandi_kr || 0) / 1000)} thousand krónur outstanding from ${t.skuldunautar} debtors.`;
+  }
+  if (lykill === 'rukkun') {
+    return `${t.tilbuid_ad_senda} invoices are ready to send, worth ${Math.round((t.tilbuid_kr || 0) / 1000)} thousand krónur. ` +
+           `${t.osend_drog} drafts are still unsent and ${t.punktar_i_innholfi} notes wait in the inbox.` +
+           ((t.tengingar_i_olagi || []).length ? ` Connections to check: ${t.tengingar_i_olagi.join(', ')}.` : '');
   }
   return 'No summary available.';
 }
