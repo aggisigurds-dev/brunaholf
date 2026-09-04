@@ -590,7 +590,12 @@ textarea.ky-note{display:block;resize:none;overflow-x:hidden;overflow-y:auto;max
 .ky-row > .ky-wf-boxes{margin-left:auto}
 .ky-row > .ky-wf-boxes > span:first-child{justify-content:flex-end}
 .ky-row > .ky-actrow{margin-left:auto;flex:0 0 98px;width:98px;justify-content:flex-end}
-.ky-row > .ky-wf-boxes ~ .ky-actrow{margin-left:14px}
+/* Radir med vinnuflaedis-rod (threp 2/3): jafnt 9 px bil ALLS STADAR - milli takka, ad
+   upphaedinni og ad Fela (Agnar 05.09.2026). Fela-kassinn var fastur 98 px med hnappinn
+   haegra megin -> 69 px autt bil. Nu jafnbreidur innihaldinu; Fela helst a somu x-hnit
+   thvi hann er haegri brun radarinnar i ollum rodum. */
+.ky-row:has(.ky-wf-boxes){gap:9px}
+.ky-row > .ky-wf-boxes ~ .ky-actrow{margin-left:0;flex:0 0 auto;width:auto}
 
 .ky-row .ky-acts .ky-actrow{display:flex;gap:6px;align-items:center}
 .ky-row .ky-acts .ky-actrow .ky-gap{width:6px}
