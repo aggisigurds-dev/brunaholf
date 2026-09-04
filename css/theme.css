@@ -618,7 +618,7 @@ textarea.ky-note{display:block;resize:none;overflow-x:hidden;overflow-y:auto;max
    ad breikka takkann - 84 px takkar letu rodina flaeda ut a 1280 px skjam. */
 .ky-wf-boxes .ky-abtn{min-width:53px;width:53px;height:auto;min-height:47px;padding:4px 3px}
 .ky-wf-boxes .ky-abtn > span:last-child{white-space:normal;text-align:center;line-height:1.12}
-.ky-wf-cap{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:4px;font-family:var(--font-mono);font-size:10.5px;line-height:1.25;color:var(--muted);font-weight:500;white-space:nowrap;text-align:center;pointer-events:none}
+.ky-wf-cap{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:4px;font-family:var(--font-mono);font-size:10px;letter-spacing:-.01em;line-height:1.25;color:var(--muted);font-weight:500;white-space:nowrap;text-align:center;pointer-events:none}
 .ky-wf-cap .ky-eining{font-size:9px;opacity:.7}
 .ky-wf-nums{font-family:var(--font-mono);font-size:10.5px;color:var(--muted);white-space:nowrap}
 .ky-rv{font-size:9.5px;font-weight:700;white-space:nowrap}

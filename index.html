@@ -16126,12 +16126,13 @@ async function renderKrofuyfirlit(t){
     // 🧱 0 sagði ekkert og stóð á nær hverri röð — efnis-talan birtist aðeins þegar efni er til.
     const efnCap = fastVerd ? '' : cap(`🧱 ${numIS(efni)}${efniPct != null ? `<br><b class="ky-pct">${efniPct}%</b>` : ''}`,
       'Efniskostnaður án vsk (efnið á Efnislistanum, annars Redder-innkaup mánaðarins)' + (efniPct != null ? ' — ' + efniPct + '% af upphæð raðarinnar án vsk' : ''));
-    const estCap = fastVerd ? '' : cap(`≈ ${numIS(n.total)}`,
+    const estCap = fastVerd ? (inv.sent ? `<span class="ky-wf-cap" title="${sentTitle}">${sentLine}</span>` : '') : cap(`≈ ${numIS(n.total)}${inv.sent ? '<br>' + sentLine : ''}`,
       'Gróf áætlun: klst × taxti + smáhlutagjald + Redder-efni, m/vsk. Hún þekkir hvorki staðfestingargjald, akstur, afslátt né efni á söluverði'
       + (munur ? ' — drögin sjálf segja ' + numIS(inv.amount) + ' og sú tala ræður.' : '.'));
     // Sendingardagsetningin situr sem tala undir Krafa send, í sömu línu og klst/efni/áætlun
     // (var sér lína undir röðinni — Agnar 05.09.2026: í eðlilega línu miðað við hitt).
-    const sentCap = inv.sent ? `<span class="ky-wf-cap" title="${esc('Sent í bókun' + (inv.sent_by ? ' af ' + inv.sent_by : '') + (inv.sent_at ? ' ' + fmtDate(inv.sent_at) : ''))}">📤 ${esc(inv.sent_at ? fmtDate(inv.sent_at) : '')}${inv.sent_by ? '<br>' + esc(inv.sent_by) : ''}</span>` : '';
+    const sentTitle = esc('Sent í bókun' + (inv.sent_by ? ' af ' + inv.sent_by : '') + (inv.sent_at ? ' ' + fmtDate(inv.sent_at) : ''));
+    const sentLine = inv.sent ? '📤 ' + esc(String(inv.sent_at ? fmtDate(inv.sent_at) : '').replace(/^(\d{2}\.\d{2}\.)20(\d{2})$/, '$1$2')) : '';
     const rvHtml = rvConf
       ? `<span class="ky-rv ok" title="Yfirmaður staðfesti í yfirferð">👔 Staðfest · ${esc(rv.review_confirmed_by||'')} ${rv.review_confirmed_at?esc(fmtDate(rv.review_confirmed_at)):''}</span>`
       : rvOn ? `<span class="ky-rv wait" title="Bíður yfirferðar yfirmanns (The Big Boss appið)">👔 Í yfirferð</span>` : '';
@@ -16145,7 +16146,7 @@ async function renderKrofuyfirlit(t){
         ${false&&rv?wfBtn('rev','review','👔','Yfirferð','var(--blue-deep)',rvOn?'Taka úr yfirferð (afturkalla beiðni)':'Senda Efnislistann í yfirferð til yfirmanns (birtist í The Big Boss appinu)',rvOn):''}
         ${wfBtn('conf','confirm','✓','Staðfest','var(--green)',conf?'Staðfest — smelltu aftur til að af-staðfesta':'Staðfesta',conf)}
         ${withCap(wfBtn('send','send','📤',inv.sent?'Sent í bókun':'Senda í bókun','var(--green)',inv.sent?'Þegar sent í bókun':'Senda skjölin á bókarann — þú velur hvaða skjöl fara með',!!inv.sent), estCap)}
-        ${withCap(wfBtn('mark','sentmark','📨','Krafa send','var(--green)',sentMarked(inv.inv_key)?'Merkt sem send — smelltu til að afmerkja (handvirkt merki, engin skrif í kerfið)':'Merkja handvirkt að krafan sé send — verður grænt, gerir ekkert annað',sentMarked(inv.inv_key)), sentCap)}
+        ${wfBtn('mark','sentmark','📨','Krafa send','var(--green)',sentMarked(inv.inv_key)?'Merkt sem send — smelltu til að afmerkja (handvirkt merki, engin skrif í kerfið)':'Merkja handvirkt að krafan sé send — verður grænt, gerir ekkert annað',sentMarked(inv.inv_key))}
       </span>
       ${rvHtml}
     </span>`;
