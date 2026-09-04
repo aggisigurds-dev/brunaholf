@@ -3697,6 +3697,14 @@ function renderSkyrslustod(t){
       + '.st-pv-name{flex:1;min-width:0;font-size:12.5px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
       + '.st-pv-frame{flex:1;width:100%;border:0;background:#161513}'
       + '#bk-st-board tr.st-pv-on{outline:2px solid var(--gold,#c9a54a);outline-offset:-2px;background:var(--warn-bg,#fbf3d9)}'
+      + '.por-cell{display:flex;flex-direction:column;gap:2px}'
+      + '.por-cand{display:flex;align-items:center;gap:6px;padding:2px 4px;border-radius:5px;cursor:pointer}'
+      + '.por-cand:hover{background:rgba(201,165,74,.12)}'
+      + '.por-cand input[type=radio]{width:15px;height:15px;accent-color:#8f6a1c;flex:none;margin:0}'
+      + '.por-cell.single input[type=radio]{display:none}'
+      + '.por-cand .fn{font-size:11.5px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:300px}'
+      + '.por-cand:has(input:checked){background:rgba(47,122,74,.10)}'
+      + '.por-cand:has(input:not(:checked)) .fn{opacity:.6}'
       + '@media(min-width:1100px){'
       +   '.st-cols.on{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(420px,1fr);gap:16px;align-items:start}'
       +   '.section.st-has-pv{max-width:none}'
@@ -3991,16 +3999,21 @@ function wireStation(){
       const l = LOCS.find(x => String(x.id) === String(id));
       return l ? (l.heimilisfang || l.nafn || ('staður ' + id)) : '';
     }
-    function docCell(list){
+    // Hólf með öllum frambjóðendum: sá sem er valinn (radio) er skjal ársins.
+    // Sjálfgefið val = þegar staðfest skjal, annars fyrsta sem er ekki tvítak.
+    function docCell(list, key, side){
       if (!list.length) return '<span style="color:var(--red);font-weight:600">vantar</span>';
-      return list.map(d => '<div style="display:flex;align-items:center;gap:6px;margin:2px 0">'
+      const pick = list.find(d => d.reviewed && !d.is_duplicate) || list.find(d => !d.is_duplicate) || list[0];
+      return '<div class="por-cell' + (list.length === 1 ? ' single' : '') + '">' + list.map(d =>
+        '<label class="por-cand" data-id="' + d.id + '">'
+        + '<input type="radio" name="por-' + esc(key) + '-' + side + '" value="' + d.id + '"' + (d === pick ? ' checked' : '') + ' title="Þetta er skjal ársins">'
         + (d.view_url
             ? '<a href="' + d.view_url + '" target="_blank" rel="noopener" class="btn" style="padding:2px 7px;font-size:11px;text-decoration:none">📄</a>'
             : '<span style="color:var(--edge);font-size:11px">engin skrá</span>')
-        + '<span style="font-size:11.5px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:280px" title="' + esc(d.filename) + '">' + esc(d.filename) + '</span>'
+        + '<span class="fn" title="' + esc(d.filename) + '">' + esc(d.filename) + '</span>'
         + (d.reviewed ? '<span title="Staðfest" style="color:var(--green)">✓</span>' : '')
         + (d.is_duplicate ? '<span title="Merkt tvítak" style="color:var(--warn)">⧉</span>' : '')
-        + '</div>').join('');
+        + '</label>').join('') + '</div>';
     }
     function porGroups(){
       const g = new Map();
@@ -4014,7 +4027,9 @@ function wireStation(){
       const rows = [...g.values()].map(x => {
         const oflokkad = !x.loc || !x.year;
         const heilt = !oflokkad && x.rep.length > 0 && x.inv.length > 0;
-        return Object.assign(x, { oflokkad, heilt, stadur: x.loc ? locLabel(x.loc) : '' });
+        const ok = d => d.reviewed && !d.is_duplicate;
+        const stadfest = heilt && x.rep.some(ok) && x.inv.some(ok);
+        return Object.assign(x, { oflokkad, heilt, stadfest, key: (x.loc || 'x') + '-' + (x.year || 'x'), stadur: x.loc ? locLabel(x.loc) : '' });
       });
       rows.sort((a, b) => (a.oflokkad === b.oflokkad ? 0 : a.oflokkad ? -1 : 1)
         || String(a.stadur).localeCompare(String(b.stadur), 'is')
@@ -4023,27 +4038,32 @@ function wireStation(){
     }
     function porHtml(){
       const all = porGroups();
-      const rows = POR_ONLY() ? all.filter(r => !r.heilt) : all;
-      const nHeil = all.filter(r => r.heilt).length;
+      const rows = POR_ONLY() ? all.filter(r => !r.heilt || !r.stadfest) : all;   // ólokið = vantar hlið EÐA óstaðfest
+      const nHeil = all.filter(r => r.stadfest).length;
       const nVantar = all.filter(r => !r.heilt && !r.oflokkad).length;
       const nOfl = all.filter(r => r.oflokkad).length;
       const sum = '<span id="bk-st-por-sum-src" hidden>' + nHeil + '|' + nVantar + '|' + nOfl + '</span>';
-      if (!rows.length) return sum + '<div style="color:var(--muted);font-size:13px;padding:14px">' + (POR_ONLY() ? 'Allt parað — engin ópöruð skjöl. 🎉' : 'Engin skjöl.') + '</div>';
+      if (!rows.length) return sum + '<div style="color:var(--muted);font-size:13px;padding:14px">' + (POR_ONLY() ? 'Allt parað og staðfest. 🎉' : 'Engin skjöl.') + '</div>';
       const th = '<thead><tr style="background:var(--tbl-header);color:var(--ink-2);font-size:11px;text-transform:uppercase;letter-spacing:.03em">'
         + '<th style="padding:7px 8px;text-align:left">Staður</th><th style="padding:7px 8px;text-align:left">Ár</th>'
         + '<th style="padding:7px 8px;text-align:left">📄 Úttektarskýrsla</th><th style="padding:7px 8px;text-align:left">🧾 Reikningur</th>'
-        + '<th style="padding:7px 8px;text-align:left">Staða</th></tr></thead>';
+        + '<th style="padding:7px 8px;text-align:left">Staða</th><th style="padding:7px 8px;text-align:left"></th></tr></thead>';
       const chip = (txt, bg, col) => '<span style="display:inline-block;padding:2px 9px;border-radius:99px;background:' + bg + ';color:' + col + ';font-size:11px;font-weight:700;white-space:nowrap">' + txt + '</span>';
       const body = rows.map(r => {
         const stada = r.oflokkad ? chip('óflokkað — vantar ' + (!r.loc && !r.year ? 'stað og ár' : (!r.loc ? 'stað' : 'ár')), 'var(--red-bg)', 'var(--red-dark)')
-          : r.heilt ? chip('✓ par', 'var(--green-bg)', 'var(--green)')
+          : r.stadfest ? chip('✓ staðfest par', 'var(--green-bg)', 'var(--green)')
+          : r.heilt ? chip('par — óstaðfest', 'var(--bg-2)', 'var(--ink-2)')
           : chip('vantar ' + (r.inv.length ? 'skýrslu' : 'reikning'), 'var(--warn-bg)', 'var(--warn)');
-        return '<tr style="border-top:1px solid var(--bg-2)' + (r.heilt ? '' : ';background:var(--warn-bg)') + '">'
+        const btn = r.heilt
+          ? '<button type="button" class="btn por-ok" data-key="' + esc(r.key) + '" style="padding:4px 10px;font-size:12px;white-space:nowrap"' + (r.stadfest ? '' : ' data-primary="1"') + '>' + (r.stadfest ? '↻ Staðfesta aftur' : '✓ Staðfesta par') + '</button>'
+          : '<span style="font-size:11px;color:var(--muted-2)">—</span>';
+        return '<tr data-por="' + esc(r.key) + '" style="border-top:1px solid var(--bg-2)' + (r.stadfest ? '' : ';background:var(--warn-bg)') + '">'
           + '<td style="padding:6px 8px;font-weight:600">' + (r.stadur ? esc(r.stadur) : '<span style="color:var(--muted-2)">— enginn staður —</span>') + '</td>'
           + '<td style="padding:6px 8px;white-space:nowrap">' + (r.year ? esc(r.year) : '<span style="color:var(--muted-2)">—</span>') + '</td>'
-          + '<td style="padding:6px 8px">' + docCell(r.rep) + '</td>'
-          + '<td style="padding:6px 8px">' + docCell(r.inv) + '</td>'
-          + '<td style="padding:6px 8px">' + stada + (r.dups ? ' <span style="font-size:11px;color:var(--warn)" title="Merkt tvítök í hópnum">⧉ ' + r.dups + '</span>' : '') + '</td></tr>';
+          + '<td style="padding:6px 8px">' + docCell(r.rep, r.key, 'rep') + '</td>'
+          + '<td style="padding:6px 8px">' + docCell(r.inv, r.key, 'inv') + '</td>'
+          + '<td style="padding:6px 8px">' + stada + (r.dups ? ' <span style="font-size:11px;color:var(--warn)" title="Merkt tvítök í hópnum">⧉ ' + r.dups + '</span>' : '') + '</td>'
+          + '<td style="padding:6px 8px">' + btn + '</td></tr>';
       }).join('');
       return sum + '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12.5px">' + th + '<tbody>' + body + '</tbody></table></div>';
     }
@@ -4066,7 +4086,7 @@ function wireStation(){
         +   '<span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">Sýn</span>'
         +   '<button id="bk-st-view-listi" class="btn' + (POR() ? '' : ' primary') + '" style="padding:4px 10px;font-size:12px" title="Skýrslur og reikningar í sitt hvorum lista">📋 Listi</button>'
         +   '<button id="bk-st-view-por" class="btn' + (POR() ? ' primary' : '') + '" style="padding:4px 10px;font-size:12px" title="Skýrsla + reikningur hlið við hlið, eitt par per stað og ár">🔗 Pör</button>'
-        +   (POR() ? '<label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2);cursor:pointer"><input type="checkbox" id="bk-st-por-only"' + (POR_ONLY() ? ' checked' : '') + '> Aðeins ópöruð</label>' : '')
+        +   (POR() ? '<label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2);cursor:pointer"><input type="checkbox" id="bk-st-por-only"' + (POR_ONLY() ? ' checked' : '') + '> Aðeins ólokið</label>' : '')
         +   (POR() ? '<span id="bk-st-por-sum" style="font-size:12px;color:var(--muted)"></span>' : '')
         + '</div>'
         + '<div id="bk-st-reread-out"></div>';
@@ -4088,8 +4108,28 @@ function wireStation(){
       const vp = document.getElementById('bk-st-view-por'); if (vp) vp.addEventListener('click', () => setView('por'));
       const po = document.getElementById('bk-st-por-only');
       if (po) po.addEventListener('change', () => { state.ui = state.ui || {}; state.ui.st_por_only = po.checked; save(); rerender(); });
+      document.querySelectorAll('#bk-st-board .por-ok').forEach(b => b.addEventListener('click', async () => {
+        const tr = b.closest('tr'); if (!tr) return;
+        const valid = [], hin = [];
+        ['rep', 'inv'].forEach((side, i) => {
+          const cell = tr.children[2 + i];
+          const sel = cell.querySelector('input[type=radio]:checked');
+          cell.querySelectorAll('.por-cand').forEach(c => {
+            const id = c.getAttribute('data-id');
+            if (sel && String(sel.value) === String(id)) valid.push(id); else hin.push(id);
+          });
+        });
+        if (valid.length < 2) { setSt('Veldu bæði skýrslu og reikning', 'var(--warn)'); return; }
+        b.disabled = true; const old = b.textContent; b.textContent = '⏳ Vista…';
+        try {
+          for (const id of valid) { await save(id, { reviewed: true, is_duplicate: false }); const d = DOCS.find(x => String(x.id) === String(id)); if (d) { d.reviewed = true; d.is_duplicate = false; } }
+          for (const id of hin) { await save(id, { is_duplicate: true }); const d = DOCS.find(x => String(x.id) === String(id)); if (d) d.is_duplicate = true; }
+          setSt('✓ Par staðfest' + (hin.length ? ' · ' + hin.length + ' aukaeintök merkt tvítök' : ''), 'var(--green)');
+          rerender();
+        } catch (e) { setSt('Villa: ' + (e.message || e), 'var(--red)'); b.disabled = false; b.textContent = old; }
+      }));
       const src = document.getElementById('bk-st-por-sum-src'), out = document.getElementById('bk-st-por-sum');
-      if (src && out) { const p = src.textContent.split('|'); out.textContent = p[0] + ' heil pör · ' + p[1] + ' vantar hlið · ' + p[2] + ' óflokkuð'; }
+      if (src && out) { const p = src.textContent.split('|'); out.textContent = p[0] + ' staðfest pör · ' + p[1] + ' vantar hlið · ' + p[2] + ' óflokkuð'; }
     }
     // 🔁 Endurlesa öll skjöl félagsins úr INNIHALDI (felag-endurlestur) — lykkjar
     // batchað með lifandi log-línum + teljara; framvinda vistuð per base í
