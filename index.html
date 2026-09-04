@@ -3696,8 +3696,8 @@ function renderSkyrslustod(t){
       + '.st-pv-frame{flex:1;width:100%;border:0;background:#161513}'
       + '#bk-st-board tr.st-pv-on{outline:2px solid var(--gold,#c9a54a);outline-offset:-2px;background:var(--warn-bg,#fbf3d9)}'
       + '@media(min-width:1100px){'
-      +   '.section.st-has-pv{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(360px,1fr);gap:16px;align-items:start;max-width:1680px}'
-      +   '.section.st-has-pv > div:first-child{grid-column:1;margin:0}'
+      +   '.st-cols.on{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(380px,1fr);gap:16px;align-items:start}'
+      +   '.section.st-has-pv{max-width:1680px}'
       + '}'
       + '@media(max-width:1099px){.st-pv{position:static;height:70vh;margin-top:14px}}';
     document.head.appendChild(st);
@@ -3712,6 +3712,7 @@ function renderSkyrslustod(t){
           Veldu fyrirtæki í þjónustu, opnaðu hverja <b>skýrslu/reikning</b> (📄) og settu <b>réttan stað + ár</b> — ýttu svo á <b>✓ Staðfest</b>. <b>PDF-ið ræður — ekki nafnið.</b> Augljós pörun er forfyllt sem gul tillaga.</p>
       </div>
 
+      <div class="st-cols" id="st-cols">
       <div style="border-radius:12px;border:1px solid var(--line,var(--line));background:var(--card,#fff);box-shadow:0 1px 3px rgba(0,0,0,.05);padding:20px;display:flex;flex-direction:column;gap:16px">
         <div style="display:flex;gap:9px;flex-wrap:wrap;align-items:center">
           <input id="bk-st-search" type="search" inputmode="search" autocomplete="off" placeholder="🔎 Leita að fyrirtæki eða kt…" style="${inpSel};min-width:190px;flex:1 1 190px">
@@ -3724,8 +3725,7 @@ function renderSkyrslustod(t){
         </div>
         <div id="bk-st-board"></div>
       </div>
-    </div>
-    <div class="st-pv" id="st-pv" hidden>
+      <div class="st-pv" id="st-pv" hidden>
       <div class="st-pv-head">
         <button type="button" class="btn sm" id="st-pv-prev" title="Fyrra skjal">◀</button>
         <button type="button" class="btn sm" id="st-pv-next" title="Næsta skjal">▶</button>
@@ -3734,7 +3734,9 @@ function renderSkyrslustod(t){
         <a class="btn sm" id="st-pv-open" target="_blank" rel="noopener" hidden>Opna ↗</a>
         <button type="button" class="btn sm" id="st-pv-close" title="Loka forskoðun">✕</button>
       </div>
-      <iframe class="st-pv-frame" id="st-pv-frame" referrerpolicy="no-referrer" title="Forskoðun skjals"></iframe>
+        <iframe class="st-pv-frame" id="st-pv-frame" referrerpolicy="no-referrer" title="Forskoðun skjals"></iframe>
+      </div>
+      </div>
     </div>`;
   wireStation();
   wireStationPreview();
@@ -3759,6 +3761,7 @@ function wireStationPreview(){
     cur = { href, name: rowName(a) };
     pv.hidden = false;
     if(wrap) wrap.classList.add('st-has-pv');
+    const cols = document.getElementById('st-cols'); if(cols) cols.classList.add('on');
     frame.src = href;
     nameEl.textContent = cur.name;
     openEl.hidden = false; openEl.href = href;
@@ -3786,6 +3789,7 @@ function wireStationPreview(){
   document.getElementById('st-pv-close').onclick = () => {
     pv.hidden = true; frame.src = 'about:blank'; cur = null;
     if(wrap) wrap.classList.remove('st-has-pv');
+    const cols = document.getElementById('st-cols'); if(cols) cols.classList.remove('on');
     board.querySelectorAll('tr.st-pv-on').forEach(tr => tr.classList.remove('st-pv-on'));
     try{ state.ui = state.ui || {}; state.ui.st_pv = false; save(); }catch(_){}
   };
