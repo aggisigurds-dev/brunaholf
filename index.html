@@ -11484,12 +11484,12 @@ async function renderGerdReikninga(t){
             <div class="gb-hrow gb-hhead"><span></span><span>Klst</span><span>Kr/klst</span><span class="r">Samtals</span></div>
             <div class="gb-hrow"><b>Dagvinna</b><input class="gb-h" type="text" inputmode="decimal" id="gr-dvh" value="${dvH}"><input type="text" inputmode="decimal" id="gr-dvr" value="${dvR}"><span class="gb-hsum" id="gr-dv-sum">—</span></div>
             <div class="gb-hrow"><b>Yfirvinna${r.evOk?'':'<span style="font-size:10px;color:var(--warn);font-weight:400"> — ekki leyfð</span>'}</b><input class="gb-h" type="text" inputmode="decimal" id="gr-evh" value="${evH}"${r.evOk?'':' title="Yfirvinna ekki leyfð samkvæmt verðskrá"'}><input type="text" inputmode="decimal" id="gr-evr" value="${evR}"${r.evOk?'':' disabled'}><span class="gb-hsum" id="gr-ev-sum">—</span></div>
-            <label class="gb-yf" id="gr-yf-row" title="Þegar hakað er reiknar tímabókin yfirvinnu á hvern starfsmann: tímar umfram þröskuldinn þann dag færast á yfirvinnu-taxta">
+            <div class="gb-yf" id="gr-yf-row" title="Þegar hakað er reiknar tímabókin yfirvinnu á hvern starfsmann: tímar umfram þröskuldinn þann dag færast á yfirvinnu-taxta">
               <input type="checkbox" id="gr-yf-on">
-              <span>Reikna yfirvinnu af tímabók — tímar umfram</span>
+              <label for="gr-yf-on" style="cursor:pointer">Reikna yfirvinnu af tímabók — tímar umfram</label>
               <input type="text" inputmode="decimal" id="gr-yf-thr" value="8">
-              <span>klst/dag hjá hverjum starfsmanni</span>
-            </label>
+              <label for="gr-yf-on" style="cursor:pointer">klst/dag hjá hverjum starfsmanni</label>
+            </div>
             <div class="gb-hstrip" id="gr-hstrip"><span id="gr-hstrip-t">Ber saman við tímabók…</span><button type="button" id="gr-fill-hours" class="gr-btn" title="Fylla dagvinnu/yfirvinnu úr tímabók (yfirvinna eftir ${r.evThreshold} klst/dag${r.lunch>0?' — '+r.lunch+' klst hádegismatur frádreginn':''}; helgar (lau/sun) allar yfirvinna)">📥 Fylla úr tímabók</button></div>
             <div id="gr-dvh-sync" hidden>—</div><div id="gr-evh-sync" hidden></div>
           </div>
