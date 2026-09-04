@@ -2722,6 +2722,43 @@ function renderVidskiptavinir(t) {
       .vk-save{flex:1;padding:13px;background:linear-gradient(180deg,var(--warn-line),var(--gold-500) 45%,var(--red) 55%,var(--warn-line));color:var(--warn);border:none;border-radius:10px;font:inherit;font-weight:700;font-size:14px;cursor:pointer;min-width:120px}
       .vk-cancel{padding:13px;background:transparent;color:var(--ink2);border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14px;cursor:pointer}
       .vk-del{padding:13px;background:transparent;color:var(--red-line);border:1px solid var(--red-dark);border-radius:10px;font:inherit;font-size:14px;cursor:pointer}
+      .vk-wrap{max-width:1180px}
+      .vk-kpis{display:flex;gap:10px;flex-wrap:wrap;margin:2px 0 10px}
+      .vk-kpi{flex:1;min-width:120px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 12px}
+      .vk-kpi .l{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+      .vk-kpi .v{font-size:17px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;margin-top:2px}
+      .vk-kpi.warn .v{color:var(--warn)} .vk-kpi.red .v{color:var(--red)} .vk-kpi.green .v{color:var(--green)}
+      .vk-cust-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;cursor:pointer}
+      .vk-cust-head:hover{background:var(--bg-2)}
+      .vk-cust-sums{margin-left:auto;display:flex;gap:12px;flex-wrap:wrap;font-size:12px}
+      .vk-cust-sums b{font-variant-numeric:tabular-nums}
+      .vk-caret{color:var(--muted);font-size:14px;transition:transform .15s}
+      .vk-cust-card.open .vk-caret{transform:rotate(90deg)}
+      .vk-detail{border-top:1px solid var(--line);padding:0}
+      .vk-sec{border-top:1px solid var(--line);padding:12px 16px}
+      .vk-sec:first-child{border-top:0}
+      .vk-sec-t{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+      .vk-sec-t b{margin-left:auto;letter-spacing:0;text-transform:none;font-size:12px;color:var(--ink-2)}
+      .vk-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+      .vk-fact label{display:block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+      .vk-fact input{width:100%;box-sizing:border-box;height:34px;padding:0 9px;border:1px solid var(--edge);border-radius:6px;background:var(--input-bg,#f6f3ec);font:inherit;font-size:13px;color:var(--ink)}
+      .vk-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+      .vk-tbl th{text-align:left;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:4px 8px;border-bottom:1px solid var(--line)}
+      .vk-tbl td{padding:5px 8px;border-top:1px solid var(--line);vertical-align:top}
+      .vk-tbl td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+      .vk-pill{display:inline-block;padding:1px 8px;border-radius:99px;font-size:10.5px;font-weight:700;white-space:nowrap}
+      .vk-pill.greitt{background:var(--green-bg,#dfeee4);color:var(--green)}
+      .vk-pill.ogreitt{background:var(--warn-bg,#fbf3d9);color:var(--warn)}
+      .vk-pill.kredit{background:var(--bg-2);color:var(--muted)}
+      .vk-pill.osent{background:var(--red-bg,#f6dcd8);color:var(--red)}
+      .vk-mail{padding:6px 8px;border-top:1px solid var(--line);font-size:12.5px}
+      .vk-mail .h{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline}
+      .vk-mail .who{font-weight:600;color:var(--ink)}
+      .vk-mail .when{margin-left:auto;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+      .vk-mail .snip{color:var(--ink-2);margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+      .vk-notes{width:100%;box-sizing:border-box;min-height:90px;padding:9px 11px;border:1px solid var(--edge);border-radius:8px;background:var(--input-bg,#f6f3ec);font:inherit;font-size:13.5px;line-height:1.5;color:var(--ink);resize:vertical}
+      .vk-save-notes{margin-top:8px;padding:8px 14px;border:1px solid var(--edge);border-bottom-color:#a89f8c;border-radius:6px;background:linear-gradient(180deg,#fff,#efeae0);font:inherit;font-size:12.5px;font-weight:700;color:var(--ink);cursor:pointer}
+      .vk-st{font-size:12px;color:var(--muted);margin-left:8px}
     `;
     document.head.appendChild(s);
   }
@@ -2729,8 +2766,19 @@ function renderVidskiptavinir(t) {
   $view.innerHTML = '<div class="vk-wrap"><p style="color:var(--ink3)">Sæki…</p></div>';
   const wrap = $view.querySelector('.vk-wrap');
   let allRows = [];
+  let VKSUMS = {};          // nafn → { osent, ogreitt, greitt_ar } úr /api/verkkaupar
+  const VKDETAIL = {};      // nafn → smáatriði (sótt við fyrsta smell)
 
   const fmtKr = n => Math.round(n||0).toLocaleString('is-IS');
+
+  // Samtölur per greiðanda (ósent / ógreitt / greitt í ár) — birtast í hausnum á hverju spjaldi.
+  async function loadSums(){
+    try {
+      const r = await fetch('/api/verkkaupar', { cache:'no-store' });
+      const j = await r.json();
+      if (r.ok && j.rows) { VKSUMS = {}; for (const x of j.rows) VKSUMS[x.name] = x; if (allRows.length) renderList(allRows); }
+    } catch (_) {}
+  }
 
   function wsCard(w) {
     const evOk = w.eftirvinna_leyfid !== false;
@@ -2751,6 +2799,92 @@ function renderVidskiptavinir(t) {
     </div>`;
   }
 
+  const vkMoney = n => Math.round(Number(n)||0).toLocaleString('is-IS');
+  const vkDate = s => { const m = String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3]+'.'+m[2]+'.'+m[1] : (s||''); };
+  const vkMonth = s => { const m = String(s||'').match(/^(\d{4})-(\d{2})/); return m ? m[2]+'/'+m[1].slice(2) : (s||''); };
+
+  // Smáatriðin: staða, samskipti, kröfur, ósent og minnispunktar — allt úr /api/verkkaupar?name=
+  async function loadDetail(name, box){
+    box.innerHTML = '<div class="vk-sec" style="color:var(--muted);font-size:13px">Sæki…</div>';
+    let d = VKDETAIL[name];
+    if (!d) {
+      try {
+        const r = await fetch('/api/verkkaupar?name=' + encodeURIComponent(name), { cache:'no-store' });
+        d = await r.json();
+        if (!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));
+        VKDETAIL[name] = d;
+      } catch (e) {
+        box.innerHTML = '<div class="vk-sec" style="color:var(--red);font-size:13px">Villa: ' + escapeHtml(e.message||String(e)) + '</div>';
+        return;
+      }
+    }
+    const i = d.info || {}, S = d.samtals || {};
+    const krofur = (d.krofur||[]).slice(0, 12);
+    const html = []
+      .concat('<div class="vk-sec"><div class="vk-sec-t">Staðan</div><div class="vk-kpis">'
+        + '<div class="vk-kpi red"><div class="l">Ósent</div><div class="v">' + vkMoney(S.osent) + '</div></div>'
+        + '<div class="vk-kpi warn"><div class="l">Ógreitt</div><div class="v">' + vkMoney(S.ogreitt) + '</div></div>'
+        + '<div class="vk-kpi green"><div class="l">Greitt alls</div><div class="v">' + vkMoney(S.greitt) + '</div></div>'
+        + '<div class="vk-kpi"><div class="l">Kröfur sendar</div><div class="v">' + (S.krofur||0) + '</div></div>'
+        + '<div class="vk-kpi"><div class="l">Verkstaðir</div><div class="v">' + (S.verkstadir||0) + '</div></div></div></div>')
+      .concat('<div class="vk-sec"><div class="vk-sec-t">Tengiliður og skilmálar<b>vistast strax</b></div><div class="vk-facts">'
+        + [['kennitala','Kennitala','000000-0000'],['contact_email','Netfang','netfang@fyrirtaeki.is'],['contact_phone','Sími','000 0000'],
+           ['payment_terms','Greiðslufrestur','t.d. 30 dagar'],['payment_method','Greiðslumáti','t.d. bankareikningur'],['retention_pct','Verktrygging %','t.d. 5']]
+          .map(f => '<div class="vk-fact"><label>' + f[1] + '</label><input data-vk-field="' + f[0] + '" data-vk-name="' + escapeAttr(name) + '" value="' + escapeAttr(i[f[0]] == null ? '' : String(i[f[0]])) + '" placeholder="' + f[2] + '"></div>').join('')
+        + '</div></div>')
+      .concat(d.drog && d.drog.length ? ('<div class="vk-sec"><div class="vk-sec-t">Ósendar kröfur<b>' + d.drog.length + ' drög · ' + vkMoney(S.osent) + ' kr</b></div>'
+        + '<table class="vk-tbl"><thead><tr><th>Verkstaður</th><th>Mánuður</th><th class="n">Klst</th><th class="n">Upphæð</th><th></th></tr></thead><tbody>'
+        + d.drog.map(x => '<tr><td>' + escapeHtml(x.worksite_name) + '</td><td>' + vkMonth(x.work_month) + '</td><td class="n">' + (x.hours||0) + '</td><td class="n">' + vkMoney(x.total_m_vsk) + '</td>'
+          + '<td><button class="vk-edit-btn" data-vk-open="' + escapeAttr(x.worksite_name) + '" data-vk-month="' + escapeAttr(x.work_month) + '" style="margin:0">📄 Efnislisti</button></td></tr>').join('')
+        + '</tbody></table></div>') : '')
+      .concat('<div class="vk-sec"><div class="vk-sec-t">Kröfur sem við höfum sent<b>' + (S.krofur||0) + ' alls</b></div>'
+        + (krofur.length ? '<table class="vk-tbl"><thead><tr><th>Gjalddagi</th><th>Tilvísun</th><th class="n">Upphæð</th><th>Staða</th><th>Greitt</th></tr></thead><tbody>'
+          + krofur.map(v => '<tr><td class="n" style="text-align:left">' + vkDate(v.gjalddagi) + '</td><td>' + escapeHtml(v.worksite_match || v.tilvisun || '—') + '</td>'
+            + '<td class="n">' + vkMoney(v.upphaed_total) + '</td>'
+            + '<td><span class="vk-pill ' + (v.stada||'ogreitt') + '">' + (v.stada === 'greitt' ? 'greitt' : v.stada === 'kredit' ? 'kredit' : 'ógreitt') + '</span></td>'
+            + '<td class="n" style="text-align:left">' + vkDate(v.greidsla_date) + '</td></tr>').join('')
+          + '</tbody></table>' + ((d.krofur||[]).length > 12 ? '<div style="font-size:11.5px;color:var(--muted);margin-top:6px">Sýni 12 nýjustu af ' + d.krofur.length + '.</div>' : '')
+          : '<div style="color:var(--muted);font-size:12.5px">Engar kröfur skráðar á þennan greiðanda.</div>') + '</div>')
+      .concat('<div class="vk-sec"><div class="vk-sec-t">Samskipti<b>úr brunaholf-pósthólfinu</b></div>'
+        + ((d.samskipti||[]).length ? (d.samskipti||[]).slice(0,8).map(m => '<div class="vk-mail"><div class="h"><span class="who">' + escapeHtml(m.sender_name || m.sender_email || '—') + '</span>'
+            + '<span>' + escapeHtml(m.subject || '(án efnis)') + '</span><span class="when">' + vkDate(m.received_at) + '</span></div>'
+            + (m.snippet ? '<div class="snip">' + escapeHtml(m.snippet) + '</div>' : '') + '</div>').join('')
+          : '<div style="color:var(--muted);font-size:12.5px">Engir póstar fundust sem nefna verkstaðina eða greiðandann.</div>') + '</div>')
+      .concat('<div class="vk-sec"><div class="vk-sec-t">Minnispunktar<b>hvað var samið um, sérstök atriði, hver er tengiliður</b></div>'
+        + '<textarea class="vk-notes" data-vk-notes="' + escapeAttr(name) + '" placeholder="Skrifaðu hér — t.d. hvað var samið um, hver samþykkir reikninga, sérstök skilyrði…">' + escapeHtml(i.general_notes || '') + '</textarea>'
+        + '<div><button class="vk-save-notes" data-vk-savenotes="' + escapeAttr(name) + '">💾 Vista minnispunkta</button><span class="vk-st" data-vk-notes-st="' + escapeAttr(name) + '"></span></div></div>');
+    box.innerHTML = html.join('');
+    wireDetail(name, box);
+  }
+
+  function wireDetail(name, box){
+    const saveInfo = async (patch, st) => {
+      try {
+        const r = await fetch('/api/verkkaupar', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(Object.assign({ customer_name: name }, patch)) });
+        const j = await r.json(); if (!r.ok || j.error) throw new Error(j.error || ('HTTP ' + r.status));
+        if (VKDETAIL[name]) VKDETAIL[name].info = j.info || VKDETAIL[name].info;
+        if (st) { st.textContent = '✓ vistað'; st.style.color = 'var(--green)'; }
+        return true;
+      } catch (e) { if (st) { st.textContent = '✗ ' + (e.message||e); st.style.color = 'var(--red)'; } return false; }
+    };
+    box.querySelectorAll('[data-vk-field]').forEach(inp => {
+      inp.addEventListener('change', () => {
+        const st = box.querySelector('[data-vk-notes-st]');
+        saveInfo({ [inp.dataset.vkField]: inp.value.trim() }, st);
+      });
+    });
+    const btn = box.querySelector('[data-vk-savenotes]');
+    if (btn) btn.addEventListener('click', async () => {
+      const ta = box.querySelector('[data-vk-notes]'); const st = box.querySelector('[data-vk-notes-st]');
+      btn.disabled = true; if (st) { st.textContent = '⏳'; st.style.color = 'var(--muted)'; }
+      await saveInfo({ general_notes: ta.value }, st);
+      btn.disabled = false;
+    });
+    box.querySelectorAll('[data-vk-open]').forEach(b => b.addEventListener('click', () => {
+      if (typeof grOpenWorksite === 'function') grOpenWorksite(b.dataset.vkOpen, b.dataset.vkMonth);
+    }));
+  }
+
   function renderList(rows) {
     const grouped = {};
     for (const r of rows) {
@@ -2768,13 +2902,28 @@ function renderVidskiptavinir(t) {
         const wsList = grouped[name];
         const kt = wsList.find(w => w.kennitala)?.kennitala || '';
         const addr = wsList.find(w => w.heimilisfang)?.heimilisfang || '';
-        return `<div class="vk-cust-card">
-          <div class="vk-cust-head">
-            <div class="vk-cust-name">${escapeHtml(name)}</div>
-            ${(kt||addr) ? `<div class="vk-cust-meta">${kt?'Kt. '+escapeHtml(kt):''}${kt&&addr?' · ':''}${escapeHtml(addr)}</div>` : ''}
+        const sums = VKSUMS[name] || {};
+        const money = n => (Math.round(n||0)).toLocaleString('is-IS');
+        return `<div class="vk-cust-card" data-vk-card="${escapeAttr(name)}">
+          <div class="vk-cust-head" data-vk-toggle="${escapeAttr(name)}">
+            <span class="vk-caret">›</span>
+            <div>
+              <div class="vk-cust-name">${escapeHtml(name)}</div>
+              ${(kt||addr) ? `<div class="vk-cust-meta">${kt?'Kt. '+escapeHtml(kt):''}${kt&&addr?' · ':''}${escapeHtml(addr)}</div>` : ''}
+            </div>
+            <div class="vk-cust-sums">
+              ${sums.osent ? `<span style="color:var(--red)">Ósent <b>${money(sums.osent)}</b></span>` : ''}
+              ${sums.ogreitt ? `<span style="color:var(--warn)">Ógreitt <b>${money(sums.ogreitt)}</b></span>` : ''}
+              ${sums.greitt_ar ? `<span style="color:var(--green)">Greitt í ár <b>${money(sums.greitt_ar)}</b></span>` : ''}
+              <span style="color:var(--muted)">${wsList.length} verkst.</span>
+            </div>
           </div>
-          <div class="vk-ws-grid">${wsList.map(wsCard).join('')}</div>
-          <div class="vk-ws-add"><button class="vk-add-ws-btn" data-vk-addws="${escapeAttr(name)}">＋ Bæta við verkstað hér</button></div>
+          <div class="vk-detail" data-vk-detail="${escapeAttr(name)}" hidden></div>
+          <div class="vk-sec">
+            <div class="vk-sec-t">Samningurinn — taxtar og reglur</div>
+            <div class="vk-ws-grid" style="padding:0">${wsList.map(wsCard).join('')}</div>
+            <div class="vk-ws-add" style="padding:8px 0 0"><button class="vk-add-ws-btn" data-vk-addws="${escapeAttr(name)}">＋ Bæta við verkstað hér</button></div>
+          </div>
         </div>`;
       }).join('')}
       ${!names.length ? '<p style="color:var(--ink3);text-align:center;padding:40px">Engar stillingar skráðar. Ýttu á <b>+ Bæta við verkstað</b> til að byrja.</p>' : ''}
@@ -2787,6 +2936,15 @@ function renderVidskiptavinir(t) {
     wrap.querySelectorAll('[data-vk-addws]').forEach(btn => {
       btn.addEventListener('click', () => openModal(null, btn.dataset.vkAddws));
     });
+    wrap.querySelectorAll('[data-vk-toggle]').forEach(h => h.addEventListener('click', () => {
+      const name = h.dataset.vkToggle;
+      const card = h.closest('.vk-cust-card');
+      const box = card.querySelector('[data-vk-detail]');
+      const opna = box.hidden;
+      box.hidden = !opna;
+      card.classList.toggle('open', opna);
+      if (opna && !box.dataset.loaded) { box.dataset.loaded = '1'; loadDetail(name, box); }
+    }));
   }
 
   function openModal(w, defaultCustomer) {
@@ -2927,6 +3085,7 @@ function renderVidskiptavinir(t) {
       const data = await res.json();
       allRows = data.rows || [];
       renderList(allRows);
+      loadSums();   // samtolur per greidanda (osent/ogreitt/greitt) i hausana
     } catch(e) {
       wrap.innerHTML = '<p style="color:var(--red-line);padding:20px">Villa: '+escapeHtml(String(e.message||e))+'</p>';
     }

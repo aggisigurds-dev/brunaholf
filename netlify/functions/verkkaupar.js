@@ -33,6 +33,19 @@ exports.handler = async (event) => {
 
 const kr = (n) => Math.round(Number(n) || 0);
 const OSENT = (d) => (d.status || 'draft') === 'draft' && !d.merged_into && Number(d.total_m_vsk) > 0;
+// invoices-staðan kemur úr tveimur innsogum og er ýmist á ensku eða íslensku
+// ("PAID" og "Greidd" hlið við hlið) — normalísera svo greitt teljist ekki ógreitt.
+const stada = (v) => {
+  const s = String(v.status || '').trim().toUpperCase();
+  if (/^(PAID|GREIDD|GREITT)/.test(s) || v.greidsla_date) return 'greitt';
+  if (/^(CREDIT|KREDIT|CANCELL|ANNULL)/.test(s)) return 'kredit';
+  return 'ogreitt';
+};
+// Sama krafan getur komið úr báðum innsogum — teljum hverja (gjalddaga, upphæð) einu sinni.
+function dedupe(list) {
+  const seen = new Set();
+  return list.filter((v) => { const k = (v.gjalddagi || '') + '|' + kr(v.upphaed_total) + '|' + (v.tilvisun || ''); if (seen.has(k)) return false; seen.add(k); return true; });
+}
 
 async function list() {
   const [pg, info, inv, drafts, map] = await Promise.all([
@@ -54,13 +67,13 @@ async function list() {
   for (const i of info) if (i.customer_name) { const a = get(i.customer_name); if (i.kennitala) a.kt = i.kennitala; }
 
   const ar = new Date().getFullYear();
-  for (const v of inv) {
+  for (const v of dedupe(inv)) {
     if (!v.customer_name) continue;
     const a = get(v.customer_name);
-    const st = String(v.status || '').toUpperCase();
+    const s = stada(v);
     const upp = kr(v.upphaed_total);
-    if (st === 'PAID' && String(v.greidsla_date || '').slice(0, 4) === String(ar)) a.greitt_ar += upp;
-    if (st !== 'PAID' && st !== 'CREDIT' && st !== 'CANCELLED' && upp > 0) a.ogreitt += upp;
+    if (s === 'greitt' && String(v.greidsla_date || v.gjalddagi || '').slice(0, 4) === String(ar)) a.greitt_ar += upp;
+    if (s === 'ogreitt' && upp > 0) a.ogreitt += upp;
     if (v.gjalddagi && (!a.sidasta_krafa || v.gjalddagi > a.sidasta_krafa)) a.sidasta_krafa = v.gjalddagi;
   }
   for (const d of drafts) {
@@ -98,15 +111,16 @@ async function detail(name) {
     samskipti = await sb(`email_digest?select=id,sender_name,sender_email,subject,snippet,received_at,folder&or=(${orParts.join(',')})&order=received_at.desc&limit=25`).catch(() => []);
   }
 
-  const st = (v) => String(v.status || '').toUpperCase();
+  const inv2 = dedupe(inv);
+  for (const v of inv2) v.stada = stada(v);
   const samtals = {
-    krofur: inv.length,
-    ogreitt: inv.filter((v) => !['PAID', 'CREDIT', 'CANCELLED'].includes(st(v))).reduce((a, v) => a + kr(v.upphaed_total), 0),
-    greitt: inv.filter((v) => st(v) === 'PAID').reduce((a, v) => a + kr(v.upphaed_total), 0),
+    krofur: inv2.length,
+    ogreitt: inv2.filter((v) => v.stada === 'ogreitt').reduce((a, v) => a + kr(v.upphaed_total), 0),
+    greitt: inv2.filter((v) => v.stada === 'greitt').reduce((a, v) => a + kr(v.upphaed_total), 0),
     osent: drog.reduce((a, d) => a + d.total_m_vsk, 0),
     verkstadir: wsNames.length,
   };
-  return json(200, { info, worksites: pg, map, krofur: inv, drog, samskipti, samtals, generated_at: new Date().toISOString() });
+  return json(200, { info, worksites: pg, map, krofur: inv2, drog, samskipti, samtals, generated_at: new Date().toISOString() });
 }
 
 async function save(event) {
