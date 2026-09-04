@@ -3757,7 +3757,12 @@ function wireStationPreview(){
   const wrap = $view.querySelector('.section');
   let cur = null;   // { href, name }
   const links = () => [...board.querySelectorAll('a[href]')].filter(a => /\/api\/skjal\?id=|\/storage\/v1\/object\/public\//.test(a.getAttribute('href') || ''));
-  const rowName = a => { const tr = a.closest('tr'); const f = tr && tr.querySelector('.st-fname'); return (f ? f.textContent : (tr ? tr.textContent : '')).trim().slice(0, 90) || 'skjal'; };
+  const rowName = a => {
+    const sib = a.nextElementSibling;   // Por-synin: skraarnafnid er beint a eftir hlekknum
+    if(sib && sib.tagName === 'SPAN' && sib.textContent.trim()) return sib.textContent.trim().slice(0, 90);
+    const tr = a.closest('tr'); const f = tr && tr.querySelector('.st-fname');
+    return (f ? f.textContent : (tr ? tr.textContent : '')).trim().slice(0, 90) || 'skjal';
+  };
   function show(a){
     const href = a.getAttribute('href'); if(!href) return;
     cur = { href, name: rowName(a) };
