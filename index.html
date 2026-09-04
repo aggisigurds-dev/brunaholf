@@ -10924,6 +10924,11 @@ async function renderGerdReikninga(t){
       .gb-hsum{text-align:right;font-family:var(--font-mono,ui-monospace,monospace);font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--ink,#161513);white-space:nowrap}
       .gr-modal-bg.boss .gb-hrow input{width:100%;box-sizing:border-box;height:36px;padding:0 10px;font:inherit;font-size:14px;font-family:var(--font-mono,ui-monospace,monospace);font-weight:600;font-variant-numeric:tabular-nums}
       .gr-modal-bg.boss .gb-hrow input.gb-h{background:#fbf3d9;border-color:#d9b25a}
+      .gb-yf{display:flex;align-items:center;gap:7px;margin:8px 0 0;padding:7px 10px;border:1px solid var(--line-2,#d9d3c6);border-radius:4px;background:var(--bg,#f4f1ea);font-size:12.5px;color:var(--ink-2,#4a463f);cursor:pointer}
+      .gb-yf input[type=checkbox]{width:17px;height:17px;margin:0;accent-color:#8f6a1c;flex:none}
+      .gr-modal-bg.boss .gb-yf input[type=text]{width:52px;height:28px;padding:0 6px;text-align:center;font-family:var(--font-mono,ui-monospace,monospace);font-weight:600;font-size:12.5px}
+      .gb-yf.on{border-color:#d9b25a;background:var(--warn-bg,#fbf3d9);color:#3e2c06}
+      .gb-yf.off input[type=text]{opacity:.45}
       .gb-hstrip{display:flex;align-items:center;gap:10px;margin:8px 0 2px;padding:7px 10px;border:1px solid var(--line-2,#d9d3c6);border-radius:4px;background:var(--bg-2,#ece7dc);font-size:12.5px;color:var(--ink-2,#4a463f)}
       .gb-hstrip.warn{background:linear-gradient(180deg,#fbf3d9,#f4e6b8);border-color:#d9b25a;color:#3e2c06}
       .gb-hstrip #gr-fill-hours{margin-left:auto;float:none;height:32px;padding:0 12px;font-size:12px;white-space:nowrap}
@@ -11479,6 +11484,12 @@ async function renderGerdReikninga(t){
             <div class="gb-hrow gb-hhead"><span></span><span>Klst</span><span>Kr/klst</span><span class="r">Samtals</span></div>
             <div class="gb-hrow"><b>Dagvinna</b><input class="gb-h" type="text" inputmode="decimal" id="gr-dvh" value="${dvH}"><input type="text" inputmode="decimal" id="gr-dvr" value="${dvR}"><span class="gb-hsum" id="gr-dv-sum">—</span></div>
             <div class="gb-hrow"><b>Yfirvinna${r.evOk?'':'<span style="font-size:10px;color:var(--warn);font-weight:400"> — ekki leyfð</span>'}</b><input class="gb-h" type="text" inputmode="decimal" id="gr-evh" value="${evH}"${r.evOk?'':' title="Yfirvinna ekki leyfð samkvæmt verðskrá"'}><input type="text" inputmode="decimal" id="gr-evr" value="${evR}"${r.evOk?'':' disabled'}><span class="gb-hsum" id="gr-ev-sum">—</span></div>
+            <label class="gb-yf" id="gr-yf-row" title="Þegar hakað er reiknar tímabókin yfirvinnu á hvern starfsmann: tímar umfram þröskuldinn þann dag færast á yfirvinnu-taxta">
+              <input type="checkbox" id="gr-yf-on">
+              <span>Reikna yfirvinnu af tímabók — tímar umfram</span>
+              <input type="text" inputmode="decimal" id="gr-yf-thr" value="8">
+              <span>klst/dag hjá hverjum starfsmanni</span>
+            </label>
             <div class="gb-hstrip" id="gr-hstrip"><span id="gr-hstrip-t">Ber saman við tímabók…</span><button type="button" id="gr-fill-hours" class="gr-btn" title="Fylla dagvinnu/yfirvinnu úr tímabók (yfirvinna eftir ${r.evThreshold} klst/dag${r.lunch>0?' — '+r.lunch+' klst hádegismatur frádreginn':''}; helgar (lau/sun) allar yfirvinna)">📥 Fylla úr tímabók</button></div>
             <div id="gr-dvh-sync" hidden>—</div><div id="gr-evh-sync" hidden></div>
           </div>
@@ -11763,6 +11774,7 @@ async function renderGerdReikninga(t){
         const stOn = K('gr-stadf') && K('gr-stadf').checked; SS('gr-stadf-amt', stOn ? fmt(typeof GR_STADF !== 'undefined' ? GR_STADF : 0) : '0');
         const smOn = K('gr-sma-on') && K('gr-sma-on').checked; SS('gr-sma-amt', smOn ? fmt(c.sma) : '0');
         // Tímabókar-strimillinn: ein setning úr sync-textanum sem checkTimabokSync skrifar
+        try{ if(typeof yfSpegill === 'function') yfSpegill(); }catch(_){}
         const strip = K('gr-hstrip'), stripT = K('gr-hstrip-t');
         if(strip && stripT){
           const dvS = (K('gr-dvh-sync') || {}).textContent || '', evS = (K('gr-evh-sync') || {}).textContent || '';
@@ -11787,6 +11799,34 @@ async function renderGerdReikninga(t){
       }
       const bossSums0 = bossSums; let bsBusy = false; bossSums = function(){ if(bsBusy) return; bsBusy = true; try{ bossSums0(); } finally { bsBusy = false; } };
       bg.__bossSums = bossSums; bossSums();
+      // Yfirvinnu-stýringin í 02 er spegill á fótinn í Tímaskýrslunni: hún skrifar
+      // í #gr-tbk-yf / #gr-tbk-thr og lætur þeirra eigin change-atburði vinna verkið
+      // (skipting per starfsmann, uppfærsla á dv/ev, vistun) — engin tvöföld rökfræði.
+      const yfRow = K('gr-yf-row'), yfOn = K('gr-yf-on'), yfThr = K('gr-yf-thr');
+      function yfSpegill(){
+        const src = K('gr-tbk-yf'), thr = K('gr-tbk-thr');
+        if(!yfOn || !yfRow) return;
+        const on = !!(src && src.checked);
+        if(yfOn.checked !== on) yfOn.checked = on;
+        if(thr && document.activeElement !== yfThr && yfThr.value !== thr.value) yfThr.value = thr.value;
+        yfRow.classList.toggle('on', on);
+        yfRow.classList.toggle('off', !on);
+        if(yfThr) yfThr.disabled = !on;
+      }
+      function yfSkrifa(){
+        const src = K('gr-tbk-yf'), thr = K('gr-tbk-thr');
+        if(!src){ setTimeout(yfSkrifa, 400); return; }   // panell ekki teiknaður enn
+        if(src.checked !== yfOn.checked){ src.checked = yfOn.checked; src.dispatchEvent(new Event('change', { bubbles: true })); }
+        if(thr && yfThr && thr.value !== yfThr.value){ thr.value = yfThr.value; thr.dispatchEvent(new Event('change', { bubbles: true })); }
+        setTimeout(yfSpegill, 60);
+      }
+      if(yfOn){ yfOn.addEventListener('change', yfSkrifa); }
+      if(yfThr){ yfThr.addEventListener('change', yfSkrifa); yfThr.addEventListener('click', e => e.preventDefault()); }
+      if(yfRow){ yfRow.addEventListener('click', e => { if(e.target === yfThr) e.stopPropagation(); }); }
+      const yfTimer = setInterval(yfSpegill, 700);
+      setTimeout(() => clearInterval(yfTimer), 20000);
+      yfSpegill();
+
       const mo = new MutationObserver(() => { try{ bossSums(); }catch(_){} }); const mats = K('gr-mats'); if(mats) mo.observe(mats, { childList: true, subtree: true, characterData: true });
       ['gr-dvh-sync','gr-evh-sync'].forEach(id => { const e = K(id); if(e) mo.observe(e, { childList: true, subtree: true, characterData: true }); });
       const ro = K('gr-redder-open'); if(ro) ro.addEventListener('click', () => { const f = ((K('gr-fra') || {}).value || '').match(/(\d{2})\.(\d{4})$/); const ym = f ? f[2] + '-' + f[1] : ''; if(typeof rgOpenEfniEditor !== 'function') return; rgOpenEfniEditor((K('gr-ws') || {}).value || '', ym); const mb = document.getElementById('modalBg'); if(mb){ mb.style.zIndex = '9500'; const o = new MutationObserver(() => { if(!mb.classList.contains('open')){ mb.style.zIndex = ''; o.disconnect(); } }); o.observe(mb, { attributes: true, attributeFilter: ['class'] }); } });
