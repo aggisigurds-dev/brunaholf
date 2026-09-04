@@ -37,8 +37,10 @@ const OSENT = (d) => (d.status || 'draft') === 'draft' && !d.merged_into && Numb
 // ("PAID" og "Greidd" hlið við hlið) — normalísera svo greitt teljist ekki ógreitt.
 const stada = (v) => {
   const s = String(v.status || '').trim().toUpperCase();
+  // Kredit/afturköllun fyrst: kreditreikningur ber oft greiðsludag og reiknaðist
+  // annars sem NEIKVÆÐ greiðsla („Greitt í ár −8,7 m.kr." hjá Eykt).
+  if (/^(CREDIT|KREDIT|CANCELL|ANNULL)/.test(s) || Number(v.upphaed_total) < 0) return 'kredit';
   if (/^(PAID|GREIDD|GREITT)/.test(s) || v.greidsla_date) return 'greitt';
-  if (/^(CREDIT|KREDIT|CANCELL|ANNULL)/.test(s)) return 'kredit';
   return 'ogreitt';
 };
 // Sama krafan getur komið úr báðum innsogum — teljum hverja (gjalddaga, upphæð) einu sinni.
