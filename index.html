@@ -15680,11 +15680,18 @@ async function renderKrofuyfirlit(t){
     // hann breikkar ekki takkann; takkaröðin fær margin-bottom fyrir plássið.
     const cap = (txt,title)=> hasNums ? `<span class="ky-wf-cap" title="${title}">${txt}</span>` : '';
     const withCap = (btn,capHtml)=> `<span style="position:relative;display:inline-flex;flex:0 0 auto">${btn}${capHtml}</span>`;
-    const timCap = cap(`🕒 ${hoursDisp} klst`, 'Klukkustundir úr Tímaveru fyrir þennan mánuð — ekki endilega þær sem standa á drögunum');
     const munur = Math.abs(Number(inv.amount||0) - Number(n.total||0)) > 500;
-    const efnCap = cap(`🧱 ${numIS(n.redder)} efni · ≈ ${numIS(n.total)}`,
-      'Redder-innkaup mánaðarins án vsk · ≈ gróf áætlun: klst × taxti + smáhlutagjald + efni, m/vsk.'
-      + (munur ? ' Talan til vinstri (' + numIS(inv.amount) + ') er það sem stendur á drögunum og hún ræður.' : ''));
+    // Hlutföll: vinna og efni sem hlutfall af upphæð raðarinnar ÁN vsk (Redder er án vsk).
+    const heildAnVsk = (Number(inv.amount||0) || Number(n.total||0)) / (1 + (n.vsk/100));
+    const efniPct = (n.redder > 0 && heildAnVsk > 0) ? Math.round((n.redder / heildAnVsk) * 100) : null;
+    const vinnaPct = (n.dagvinna > 0 && heildAnVsk > 0) ? Math.round((n.dagvinna / heildAnVsk) * 100) : null;
+    const timCap = cap(`🕒 ${hoursDisp}${vinnaPct != null ? ` <small style=\"opacity:.75\">${vinnaPct}%</small>` : ' klst'}`,
+      'Klukkustundir úr Tímaveru' + (vinnaPct != null ? ' — vinnan (klst × taxti) er ' + vinnaPct + '% af upphæð raðarinnar án vsk' : ''));
+    const efnCap = cap(`🧱 ${numIS(n.redder)}${efniPct != null ? ` <small style=\"opacity:.75\">${efniPct}%</small>` : ''}`,
+      'Redder-innkaup mánaðarins án vsk' + (efniPct != null ? ' — ' + efniPct + '% af upphæð raðarinnar án vsk' : ''));
+    const estCap = cap(`≈ ${numIS(n.total)}`,
+      'Gróf áætlun: klst × taxti + smáhlutagjald + Redder-efni, m/vsk. Hún þekkir hvorki staðfestingargjald, akstur, afslátt né efni á söluverði'
+      + (munur ? ' — drögin sjálf segja ' + numIS(inv.amount) + ' og sú tala ræður.' : '.'));
     const rvHtml = rvConf
       ? `<span class="ky-rv ok" title="Yfirmaður staðfesti í yfirferð">👔 Staðfest · ${esc(rv.review_confirmed_by||'')} ${rv.review_confirmed_at?esc(fmtDate(rv.review_confirmed_at)):''}</span>`
       : rvOn ? `<span class="ky-rv wait" title="Bíður yfirferðar yfirmanns (The Big Boss appið)">👔 Í yfirferð</span>` : '';
@@ -15696,7 +15703,7 @@ async function renderKrofuyfirlit(t){
              (invoice_drafts.review_*) og yfirferd.html standa óhreyfð; til að
              kveikja aftur: fjarlægja false&& hér. */''}
         ${false&&rv?wfBtn('rev','review','👔','Yfirferð','var(--blue-deep)',rvOn?'Taka úr yfirferð (afturkalla beiðni)':'Senda Efnislistann í yfirferð til yfirmanns (birtist í The Big Boss appinu)',rvOn):''}
-        ${wfBtn('conf','confirm','✓','Staðfest','var(--green)',conf?'Staðfest — smelltu aftur til að af-staðfesta':'Staðfesta',conf)}
+        ${withCap(wfBtn('conf','confirm','✓','Staðfest','var(--green)',conf?'Staðfest — smelltu aftur til að af-staðfesta':'Staðfesta',conf), estCap)}
         ${wfBtn('send','send','📤',inv.sent?'Sent í bókun':'Senda í bókun','var(--green)',inv.sent?'Þegar sent í bókun':'Senda skjölin á bókarann — þú velur hvaða skjöl fara með',!!inv.sent)}
         ${wfBtn('mark','sentmark','📨','Krafa send','var(--green)',sentMarked(inv.inv_key)?'Merkt sem send — smelltu til að afmerkja (handvirkt merki, engin skrif í kerfið)':'Merkja handvirkt að krafan sé send — verður grænt, gerir ekkert annað',sentMarked(inv.inv_key))}
         ${sentTrail}
