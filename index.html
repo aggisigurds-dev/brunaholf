@@ -3977,6 +3977,71 @@ function wireStation(){
         + '<div style="overflow:auto;border:1px solid var(--line);border-radius:10px"><table style="width:100%;border-collapse:collapse;font-size:13px">'
         + (thead || THEAD) + '<tbody>' + docs.map(docRow).join('') + '</tbody></table></div>';
     }
+    // ── Pör: staður + ár á að eiga BÆÐI úttektarskýrslu og reikning (Agnar 04.09.2026).
+    // Skjöl án staðar eða árs geta ekki parast — þau fara efst sem „óflokkað" svo
+    // þau gleymist ekki. Tvítök eru talin sér og trufla ekki pörunina.
+    const POR = () => (state.ui && state.ui.st_view) === 'por';
+    const POR_ONLY = () => !!(state.ui && state.ui.st_por_only);
+    function locLabel(id){
+      const l = LOCS.find(x => String(x.id) === String(id));
+      return l ? (l.heimilisfang || l.nafn || ('staður ' + id)) : '';
+    }
+    function docCell(list){
+      if (!list.length) return '<span style="color:var(--red);font-weight:600">vantar</span>';
+      return list.map(d => '<div style="display:flex;align-items:center;gap:6px;margin:2px 0">'
+        + (d.view_url
+            ? '<a href="' + d.view_url + '" target="_blank" rel="noopener" class="btn" style="padding:2px 7px;font-size:11px;text-decoration:none">📄</a>'
+            : '<span style="color:var(--edge);font-size:11px">engin skrá</span>')
+        + '<span style="font-size:11.5px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:280px" title="' + esc(d.filename) + '">' + esc(d.filename) + '</span>'
+        + (d.reviewed ? '<span title="Staðfest" style="color:var(--green)">✓</span>' : '')
+        + (d.is_duplicate ? '<span title="Merkt tvítak" style="color:var(--warn)">⧉</span>' : '')
+        + '</div>').join('');
+    }
+    function porGroups(){
+      const g = new Map();
+      for (const d of DOCS) {
+        const key = (d.fyrirtaeki_id || '—') + '|' + (d.year || '—');
+        let x = g.get(key);
+        if (!x) g.set(key, x = { loc: d.fyrirtaeki_id || null, year: d.year || null, rep: [], inv: [], dups: 0 });
+        if (d.is_duplicate) x.dups++;
+        (d.doc_type === 'reikningur' ? x.inv : x.rep).push(d);
+      }
+      const rows = [...g.values()].map(x => {
+        const oflokkad = !x.loc || !x.year;
+        const heilt = !oflokkad && x.rep.length > 0 && x.inv.length > 0;
+        return Object.assign(x, { oflokkad, heilt, stadur: x.loc ? locLabel(x.loc) : '' });
+      });
+      rows.sort((a, b) => (a.oflokkad === b.oflokkad ? 0 : a.oflokkad ? -1 : 1)
+        || String(a.stadur).localeCompare(String(b.stadur), 'is')
+        || String(b.year || '').localeCompare(String(a.year || '')));
+      return rows;
+    }
+    function porHtml(){
+      const all = porGroups();
+      const rows = POR_ONLY() ? all.filter(r => !r.heilt) : all;
+      const nHeil = all.filter(r => r.heilt).length;
+      const nVantar = all.filter(r => !r.heilt && !r.oflokkad).length;
+      const nOfl = all.filter(r => r.oflokkad).length;
+      const sum = '<span id="bk-st-por-sum-src" hidden>' + nHeil + '|' + nVantar + '|' + nOfl + '</span>';
+      if (!rows.length) return sum + '<div style="color:var(--muted);font-size:13px;padding:14px">' + (POR_ONLY() ? 'Allt parað — engin ópöruð skjöl. 🎉' : 'Engin skjöl.') + '</div>';
+      const th = '<thead><tr style="background:var(--tbl-header);color:var(--ink-2);font-size:11px;text-transform:uppercase;letter-spacing:.03em">'
+        + '<th style="padding:7px 8px;text-align:left">Staður</th><th style="padding:7px 8px;text-align:left">Ár</th>'
+        + '<th style="padding:7px 8px;text-align:left">📄 Úttektarskýrsla</th><th style="padding:7px 8px;text-align:left">🧾 Reikningur</th>'
+        + '<th style="padding:7px 8px;text-align:left">Staða</th></tr></thead>';
+      const chip = (txt, bg, col) => '<span style="display:inline-block;padding:2px 9px;border-radius:99px;background:' + bg + ';color:' + col + ';font-size:11px;font-weight:700;white-space:nowrap">' + txt + '</span>';
+      const body = rows.map(r => {
+        const stada = r.oflokkad ? chip('óflokkað — vantar ' + (!r.loc && !r.year ? 'stað og ár' : (!r.loc ? 'stað' : 'ár')), 'var(--red-bg)', 'var(--red-dark)')
+          : r.heilt ? chip('✓ par', 'var(--green-bg)', 'var(--green)')
+          : chip('vantar ' + (r.inv.length ? 'skýrslu' : 'reikning'), 'var(--warn-bg)', 'var(--warn)');
+        return '<tr style="border-top:1px solid var(--bg-2)' + (r.heilt ? '' : ';background:var(--warn-bg)') + '">'
+          + '<td style="padding:6px 8px;font-weight:600">' + (r.stadur ? esc(r.stadur) : '<span style="color:var(--muted-2)">— enginn staður —</span>') + '</td>'
+          + '<td style="padding:6px 8px;white-space:nowrap">' + (r.year ? esc(r.year) : '<span style="color:var(--muted-2)">—</span>') + '</td>'
+          + '<td style="padding:6px 8px">' + docCell(r.rep) + '</td>'
+          + '<td style="padding:6px 8px">' + docCell(r.inv) + '</td>'
+          + '<td style="padding:6px 8px">' + stada + (r.dups ? ' <span style="font-size:11px;color:var(--warn)" title="Merkt tvítök í hópnum">⧉ ' + r.dups + '</span>' : '') + '</td></tr>';
+      }).join('');
+      return sum + '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12.5px">' + th + '<tbody>' + body + '</tbody></table></div>';
+    }
     function renderBoard(){
       if (!COMPANY) { $board.innerHTML = ''; return; }
       const unmatched = DOCS.filter(d => !d.fyrirtaeki_id && !d.is_duplicate).length;
@@ -3992,12 +4057,19 @@ function wireStation(){
         + '<button id="bk-st-consolidate" class="btn" style="padding:4px 10px;font-size:12px" title="Endurtengja augljós skjöl við réttan stað (yfirskrifar óstaðfestar tengingar) og merkja tvítök: ein ársskýrsla per staður+ár; reikningar aðeins tvítök ef sama R-númer. Rekstrarfélög: hver staður sér. Forsýn fyrst; ekkert eytt.">🧹 Sameina í eitt per ár</button>'
         + '<button id="bk-st-reread" class="btn" style="padding:4px 10px;font-size:12px" title="Les hvert PDF félagsins úr Drive (innihald, ekki skráarheiti), leiðréttir ár/tegund/stað (aðeins með sönnun: stimpill · einn staður · heimilisfang · staðar-nafn) og uppfærir búnaðar-facts nýjustu skýrslu hvers staðar">🔁 Endurlesa öll skjöl (innihald)</button>'
         + '<button id="bk-st-addsite" class="btn" style="padding:4px 10px;font-size:12px">➕ Nýr staður</button></div>'
+        + '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 10px">'
+        +   '<span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">Sýn</span>'
+        +   '<button id="bk-st-view-listi" class="btn' + (POR() ? '' : ' primary') + '" style="padding:4px 10px;font-size:12px" title="Skýrslur og reikningar í sitt hvorum lista">📋 Listi</button>'
+        +   '<button id="bk-st-view-por" class="btn' + (POR() ? ' primary' : '') + '" style="padding:4px 10px;font-size:12px" title="Skýrsla + reikningur hlið við hlið, eitt par per stað og ár">🔗 Pör</button>'
+        +   (POR() ? '<label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2);cursor:pointer"><input type="checkbox" id="bk-st-por-only"' + (POR_ONLY() ? ' checked' : '') + '> Aðeins ópöruð</label>' : '')
+        +   (POR() ? '<span id="bk-st-por-sum" style="font-size:12px;color:var(--muted)"></span>' : '')
+        + '</div>'
         + '<div id="bk-st-reread-out"></div>';
       if (!DOCS.length) { $board.innerHTML = head + '<div style="color:var(--muted);font-size:13px;padding:10px">Engin skjöl.</div>'; wireHead(); return; }
       // Keep the two document kinds apart so reports and invoices never get mixed up.
       const reports = DOCS.filter(d => d.doc_type !== 'reikningur');
       const invoices = DOCS.filter(d => d.doc_type === 'reikningur');
-      $board.innerHTML = head + sectionHtml('📄 Úttektarskýrslur', reports) + sectionHtml('🧾 Reikningar', invoices, THEAD_INV);
+      $board.innerHTML = head + (POR() ? porHtml() : (sectionHtml('📄 Úttektarskýrslur', reports) + sectionHtml('🧾 Reikningar', invoices, THEAD_INV)));
       wireHead();
     }
     function wireHead(){
@@ -4006,6 +4078,13 @@ function wireStation(){
       const f = document.getElementById('bk-st-confirm'); if (f) f.addEventListener('click', confirmLinked);
       const g = document.getElementById('bk-st-consolidate'); if (g) g.addEventListener('click', consolidateCo);
       const rr = document.getElementById('bk-st-reread'); if (rr) rr.addEventListener('click', rereadFelag);
+      const setView = v => { state.ui = state.ui || {}; state.ui.st_view = v; save(); rerender(); };
+      const vl = document.getElementById('bk-st-view-listi'); if (vl) vl.addEventListener('click', () => setView('listi'));
+      const vp = document.getElementById('bk-st-view-por'); if (vp) vp.addEventListener('click', () => setView('por'));
+      const po = document.getElementById('bk-st-por-only');
+      if (po) po.addEventListener('change', () => { state.ui = state.ui || {}; state.ui.st_por_only = po.checked; save(); rerender(); });
+      const src = document.getElementById('bk-st-por-sum-src'), out = document.getElementById('bk-st-por-sum');
+      if (src && out) { const p = src.textContent.split('|'); out.textContent = p[0] + ' heil pör · ' + p[1] + ' vantar hlið · ' + p[2] + ' óflokkuð'; }
     }
     // 🔁 Endurlesa öll skjöl félagsins úr INNIHALDI (felag-endurlestur) — lykkjar
     // batchað með lifandi log-línum + teljara; framvinda vistuð per base í
