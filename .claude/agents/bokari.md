@@ -596,3 +596,20 @@ Verkefnalisti 3af766ff, sex smærri fix á `renderNLSH` í index.html + `netlify
   "15.09–21.09" — notað í "Lokuð göt per viku" og "Frammistaða per starfsmann"
   töflunum (tooltip + undirtexti).
 - **Lokuð göt per viku**: pakkað í `<details>` svo hægt sé að fella út/inn.
+
+## 📥 Drög-stöð — punktar sem safnast áður en reikningur er sendur (2026-09-05)
+
+Tafla `reikningspunktar` (felag · raw · status nytt/flokkad/notad/hafnad ·
+worksite_name/work_month · ai · applied). Brunahólf: markið er drög (verkstaður|mánuður)
+og `POST /api/reikningspunktar {action:"apply"}` er EINA leiðin héðan í `invoice_drafts`:
+klst leggjast við `hours_dagvinna/eftirvinna` (taxtar úr Verðskrá ef vantar), efni bætist í
+`materials_jsonb`, gjald setur `fixed_total`, greiðandi setur `customer_name/kennitala`;
+upphæðin er endurreiknuð með sama kjarna og Efnislistinn (vinna + smáhlutagjald + staðfesting
++ efni, afsláttur, vsk — fast verð yfirríður) og nótulína „• dd.mm punktur: …" bætist í
+`invoice_drafts.notes`. Slökkvitæki: markið er kúnni (`fyrirtaeki.nafn`), reikningurinn
+verður til í Slökkvitæki-appinu og `apply` merkir punktinn aðeins notaðan.
+
+Gátlistinn (`?op=stada`) per drög: tímar (klst>0 eða fast verð) · efni (fast verð, ekkert
+Redder, eða materials_total>0) · greiðandi+kt (drög → customer_worksite_map → pricing_guide)
+· upphæð (total_m_vsk>0) · skjöl (efnislisti_pdf/_timabok_pdf eða ⭐ is_primary) · engir opnir
+punktar. `ready` = allt grænt. Sameinuð/sleppt/rukkuð drög og `paid` í meta eru ekki „í smíðum".

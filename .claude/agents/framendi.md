@@ -318,3 +318,25 @@ Aðalskjalið ræður 📄-tenglinum í Kröfuyfirliti (`primDoc` í `wfStrip`) 
 fremst í „Senda í bókun" — þannig verður aðsent uppgjörsskjal (Landsspítalinn)
 skjalið sem birtist og sendist. 🔒 `innra` fær engan takka og er nú **síað úr**
 `_docs` í `wfStrip` (skjáskot úr Athugasemd voru að lenda á 📄-tenglinum).
+
+## 📥 Drög-stöð (`drogstod`) — 2026-09-05
+
+Sameiginlegt innhólf reikningspunkta fyrir Slökkvitæki OG Brunahólf (Agnar: „draft
+invoice station … notes, hints, clues … confirm some parts over time, then send").
+Flipi beint á eftir Kröfu yfirliti; `renderDrogstod(t)` liggur rétt á undan
+`renderTvMaeting`. Slökkvitæki-appið fellir hann inn með `/?embed=1#drogstod`.
+
+- Þrír dálkar: **01 Innhólf** (punktar sem bíða, tillögu-flögur), **02 Í smíðum**
+  (Brunahólfs-drög með 6-strika gátlista úr `?op=stada`, Slökkvitækis-kúnnar með
+  fjölda punkta), **03 Valið** (gátlisti, línur, punktar sem bíða, Opna Efnislista /
+  Senda í bókun → Kröfu yfirlit).
+- Stikan efst: félags-rofi (Slökkvitæki sjálfgefið), Enter skráir STRAX, 📷 hleður
+  mynd/PDF í pdf-store sem `innra` undir „Drög-stöð"/líðandi mánuði og hengir á punktinn.
+  Biðröð í `localStorage.ds_queue` ef netið dettur út (sama mynstur og brunathettingar).
+- `state.ui`: `ds_felag`, `ds_syn` (bæði/SL/BH — synced), `ds_sel` (nav-only).
+- Reglurnar: punktur tapast aldrei · gervigreind leggur til, skrifar aldrei (aðeins
+  „✓ Setja á drögin" kallar `apply`) · gátlistinn er reiknaður, ekki geymdur.
+- Bakendi: `netlify/functions/reikningspunktar.js` (CRUD + `op=stada` + `apply`),
+  `netlify/functions/punktur-greining.js` (skema-þvingað JSON, Sonnet 5, fail-CLOSED
+  þar til `HUB_STAFF_PASSWORD` er sett). Tafla `reikningspunktar`
+  (`sql/2026-09-05_reikningspunktar.sql`).

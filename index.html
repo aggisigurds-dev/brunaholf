@@ -105,6 +105,7 @@ body.wide-view main{max-width:none}   /* Skyrslu-stodin: taflan + forskodunin ny
 /* Wide tabs (Vinnubók / Reikningagerð) get the full sidebar-to-edge width */
 body[data-tab="vinnubok"] main,
 body[data-tab="krofuyfirlit"] main,
+body[data-tab="drogstod"] main,
 body[data-tab="reikningar"] main{max-width:none;padding:14px 24px}
 /* Skjala-multitool fyllir alla breidd (iframe með eigin útliti) — engin padding/hámark */
 body[data-tab="multitool"] main{max-width:none;padding:0}
@@ -1465,6 +1466,7 @@ const DEFAULT_STATE = {
     {id:'skyrslustod', label:'Skýrslu-stöð', icon:'📊'},
     {id:'afkost', label:'Afköst', icon:'📈'},
     {id:'krofuyfirlit', label:'Kröfu yfirlit', icon:'📄'},
+    {id:'drogstod', label:'Drög-stöð', icon:'📥'},
     {id:'fjarmalyfirlit', label:'Fjármála-yfirlit', icon:'💰'},
     {id:'vidskiptavinir', label:'Viðskiptavinir', icon:'🏢'},
     {id:'krofur', label:'Krófur & Tekjur', icon:'📊'},
@@ -1755,7 +1757,7 @@ function clearDataCache(){
 function ensureNewTabs(s){
   if(!s || !Array.isArray(s.tabs)) return;
   if(!Array.isArray(s.bakendiLinks)) s.bakendiLinks = BAKENDI_LINK_SEED.map(x=>({...x}));
-  ['verkkaupar','dagurinn','jarvis','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','vorubirgdir','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','tvmaeting','verkstadapostur','verdsamanburdur','verkstadir','skuldunautar','skyrslur','skyrslustod','afkost','krofuyfirlit','fjarmalyfirlit','vidskiptavinir','krofur','hreyfingaryfirlit','nlsh','turbopaint','pdftools','spurningar','sjalfvirkni','vefryni','skodanir','brunayfirlit','verkfaeri','eydublod','multitool','skraalisti','bakendi'].forEach(id=>{
+  ['verkkaupar','dagurinn','jarvis','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','vorubirgdir','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','tvmaeting','verkstadapostur','verdsamanburdur','verkstadir','skuldunautar','skyrslur','skyrslustod','afkost','krofuyfirlit','drogstod','fjarmalyfirlit','vidskiptavinir','krofur','hreyfingaryfirlit','nlsh','turbopaint','pdftools','spurningar','sjalfvirkni','vefryni','skodanir','brunayfirlit','verkfaeri','eydublod','multitool','skraalisti','bakendi'].forEach(id=>{
     if(!s.tabs.find(t=>t.id===id)){
       const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
       if(d){
@@ -1767,6 +1769,10 @@ function ensureNewTabs(s){
         } else if(id === 'dagurinn'){
           // Dagurinn is the landing page — pin it to the very front.
           target = 0;
+        } else if(id === 'drogstod'){
+          // Drög-stöð (innhólf reikningspunkta) situr beint á eftir Kröfu yfirliti.
+          const idx = s.tabs.findIndex(t=>t.id==='krofuyfirlit');
+          target = idx >= 0 ? idx + 1 : -1;
         } else if(id === 'jarvis'){
           // J.A.R.V.I.S. situr beint undir Dagurinn — yfirlitsborðið yfir allt.
           const idx = s.tabs.findIndex(t=>t.id==='dagurinn');
@@ -2341,6 +2347,7 @@ function render(){
   if(t.id==='skyrslur') return renderSkyrslur(t);
   if(t.id==='afkost') return renderAfkost(t);
   if(t.id==='krofuyfirlit') return renderKrofuyfirlit(t);
+  if(t.id==='drogstod') return renderDrogstod(t);
   if(t.id==='fjarmalyfirlit') return renderFjarmalyfirlit(t);
   if(t.id==='krofur') return renderKrofur(t);
   if(t.id==='hreyfingaryfirlit') return renderHreyfingar(t);
@@ -14777,6 +14784,337 @@ async function renderVerkstadapostur(t){
   $view.querySelector('#fv-next').onclick = () => { state.ui.fv_month = shift(state.ui.fv_month, 1); save(); $view.querySelector('#fv-ml').textContent = ml(state.ui.fv_month); load(); };
   $view.querySelector('#fv-refresh').onclick = load;
   load();
+}
+// ── Drög-stöð — sameiginlegt innhólf reikningspunkta (Slökkvitæki + Brunahólf) ──
+// Agnar 04.-05.09.2026: „draft invoice station … notes, hints, clues … I can adjust,
+// confirm some parts over time, then send". Þrjár reglur sem viðmótið stendur á:
+//  1. Punktur tapast aldrei — skráður STRAX, biðröð í localStorage ef netið dettur út.
+//  2. Gervigreindin leggur til (✨), skrifar aldrei; aðeins ✓ Agnars skrifar í drögin.
+//  3. Gátlistinn er reiknaður úr því sem er til (invoice_drafts, skjöl, greiðandi …).
+// Slökkvitæki-appið fellir flipann inn með /?embed=1#drogstod (sama og Fjármál gerir).
+async function renderDrogstod(t){
+  const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const pad = n => String(n).padStart(2,'0');
+  const MN = ['jan','feb','mar','apr','maí','jún','júl','ágú','sep','okt','nóv','des'];
+  const isYM = s => /^\d{4}-\d{2}$/.test(String(s||''));
+  const mlS = ym => { if(!isYM(ym)) return ''; const [y,m] = ym.split('-').map(Number); return MN[m-1]+' ’'+String(y).slice(2); };
+  const nowYM = () => { const d = new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1); };
+  const fmt = n => Math.round(Number(n)||0).toLocaleString('is-IS');
+  const hf = n => (Math.round((Number(n)||0)*100)/100).toLocaleString('is-IS');
+  const dt = iso => { const d = new Date(iso); if(isNaN(d)) return ''; const t0 = new Date(); const y = new Date(t0); y.setDate(y.getDate()-1);
+    const dag = d.toDateString()===t0.toDateString() ? 'í dag' : d.toDateString()===y.toDateString() ? 'í gær' : pad(d.getDate())+'.'+pad(d.getMonth()+1);
+    return dag+' '+pad(d.getHours())+':'+pad(d.getMinutes()); };
+  const uid = () => (crypto.randomUUID ? crypto.randomUUID() : 'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,10));
+  const LS = { get(k,d){ try{ const v = JSON.parse(localStorage.getItem(k)); return v==null?d:v; }catch(_){ return d; } }, set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(_){} } };
+  const SRC = { hub:'⌨', simi:'📱', postur:'✉', mynd:'🖼', rodd:'🎤' };
+  const FEL = { slokkvitaeki:'Slökkvitæki', brunaholf:'Brunahólf' };
+  const CHK = [['timar','Tímar'],['efni','Efni'],['greidandi','Greiðandi & kt'],['upphaed','Upphæð'],['skjol','Skjöl'],['punktar','Punktar svaraðir']];
+  const VANTAR = { timar:'Vantar tíma', efni:'Efni óyfirfarið', greidandi:'Vantar greiðanda', upphaed:'Engin upphæð', skjol:'Skjöl vantar', punktar:'punktar bíða' };
+  const TEG = [['klst','Klukkustundir'],['efni','Efni / vara'],['gjald','Fast verð'],['greidandi','Greiðandi'],['upplysing','Bara punktur']];
+  const KEY = 'height:30px;padding:0 10px;border:1px solid var(--edge);border-bottom-color:#a89f8c;border-radius:4px;background:linear-gradient(180deg,#fff,#efeae0);box-shadow:inset 0 1px 0 #fff,0 2px 0 #cfc8b9;font:inherit;font-size:12px;font-weight:700;color:var(--ink);cursor:pointer;white-space:nowrap';
+  const GOLD = KEY+';border-color:#5a4410;background:var(--gold-face,linear-gradient(180deg,#f3dc95,#b8892e));color:#2e2004';
+  const PLATE = 'display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:20px;padding:0 6px;border-radius:2px;border:1px solid #5a4410;background:var(--gold-face,linear-gradient(180deg,#f3dc95,#b8892e));color:#2e2004;font-family:var(--font-mono);font-size:10px;font-weight:700';
+  const FLD = 'height:32px;padding:0 9px;border:1px solid var(--edge);border-radius:4px;background:var(--input-bg,#f6f3ec);font:inherit;font-size:12.5px;color:var(--ink);min-width:0';
+
+  if(!document.getElementById('ds-css')){
+    const st = document.createElement('style'); st.id = 'ds-css';
+    st.textContent = [
+      '.ds-wrap{max-width:none}',
+      '.ds-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}',
+      '.ds-cap{display:flex;gap:8px;align-items:center;margin:0 0 6px;padding:10px 12px;background:var(--card);border:1px solid var(--line-2);border-radius:6px;box-shadow:var(--panel-shadow,0 1px 2px rgba(22,21,19,.12))}',
+      '.ds-cap input[type=text]{flex:1;height:42px;padding:0 13px;border:1px solid var(--edge);border-radius:5px;background:var(--input-bg,#f6f3ec);font:inherit;font-size:14.5px;color:var(--ink);min-width:0}',
+      '.ds-seg{display:inline-flex;border:1px solid var(--edge);border-radius:5px;overflow:hidden}',
+      '.ds-seg button{border:0;background:transparent;padding:0 11px;height:32px;font:inherit;font-size:12px;font-weight:700;color:var(--ink-2);cursor:pointer}',
+      '.ds-seg button.on{background:var(--ink);color:#f4f1ea}',
+      '.ds-seg button.on.sl{background:#1f4f7a}.ds-seg button.on.bh{background:#8f6a1c}',
+      '.ds-sync{font-family:var(--font-mono);font-size:10.5px;color:var(--muted);margin:0 0 12px 4px;min-height:14px}',
+      '.ds-cols{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1.15fr) minmax(0,1fr);gap:12px;align-items:start}',
+      '.ds-col{min-width:0}',
+      '.ds-h{display:flex;align-items:center;gap:8px;padding:8px 12px;background:linear-gradient(180deg,#faf8f3,#ece7dc);border:1px solid var(--line-2);border-bottom:0;border-radius:6px 6px 0 0;font-family:var(--font-display);font-size:15px;font-weight:700;color:var(--ink)}',
+      '.ds-h small{margin-left:auto;font-family:var(--font-mono);font-size:10.5px;font-weight:500;color:var(--muted)}',
+      '.ds-body{background:var(--card);border:1px solid var(--line-2);border-radius:0 0 6px 6px;box-shadow:var(--panel-shadow,0 1px 2px rgba(22,21,19,.12));min-height:120px}',
+      '.ds-note{padding:10px 12px;border-top:1px solid var(--line)}.ds-note:first-child{border-top:0}',
+      '.ds-meta{display:flex;gap:7px;align-items:center;font-family:var(--font-mono);font-size:10.5px;color:var(--muted);margin-bottom:4px;flex-wrap:wrap}',
+      '.ds-raw{white-space:pre-wrap;font-size:13.5px;line-height:1.4;color:var(--ink);margin:0 0 6px}',
+      '.ds-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:600;white-space:nowrap;border:1px solid var(--line-2);background:var(--bg);color:var(--ink-2)}',
+      '.ds-chip.ok{background:var(--green-bg,#dfeee4);color:var(--green);border-color:#bfd9c8}',
+      '.ds-chip.warn{background:var(--warn-bg);color:var(--warn);border-color:var(--warn-line)}',
+      '.ds-chip.ai{background:#e8eef7;color:#1f4f7a;border-color:#b9c9df}',
+      '.ds-chip.sl{background:#e8eef7;color:#1f4f7a;border-color:#b9c9df}.ds-chip.bh{background:var(--warn-bg);color:#6a4d12;border-color:#d9c48a}',
+      '.ds-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px}',
+      '.ds-form{margin-top:8px;padding:9px 10px;border:1px dashed var(--edge);border-radius:5px;background:var(--bg);display:flex;gap:6px;flex-wrap:wrap;align-items:center}',
+      '.ds-verk{padding:10px 12px;border-top:1px solid var(--line);cursor:pointer}.ds-verk:first-child{border-top:0}.ds-verk:hover{background:var(--bg)}',
+      '.ds-verk.sel{background:var(--warn-bg,#fbf3d9);box-shadow:inset 3px 0 0 var(--gold)}',
+      '.ds-ring{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin:7px 0 6px}.ds-ring i{display:block;height:5px;border-radius:2px;background:var(--line-2)}.ds-ring i.on{background:var(--green)}',
+      '.ds-kv{display:flex;justify-content:space-between;gap:8px;font-size:12px;padding:2px 0;color:var(--ink-2)}.ds-kv b{font-family:var(--font-mono);font-weight:600;color:var(--ink)}',
+      '.ds-chk{display:flex;gap:8px;align-items:center;padding:5px 0;font-size:12.5px;border-top:1px solid var(--line)}.ds-chk:first-child{border-top:0}',
+      '.ds-empty{padding:22px 14px;text-align:center;color:var(--muted-2);font-style:italic;font-size:12.5px;line-height:1.5}',
+      '@media(max-width:900px){.ds-cols{grid-template-columns:1fr}.ds-head h1{font-size:24px}}',
+    ].join('\n');
+    document.head.appendChild(st);
+  }
+
+  state.ui.ds_felag = FEL[state.ui.ds_felag] ? state.ui.ds_felag : 'slokkvitaeki';   // aðallega fyrir Slökkvitæki
+  state.ui.ds_syn = ['baedi','slokkvitaeki','brunaholf'].includes(state.ui.ds_syn) ? state.ui.ds_syn : 'baedi';
+  let NOTES = [], STADA = null, sel = state.ui.ds_sel || null, opinnForm = null, queue = LS.get('ds_queue', []), aiLaest = false, NOTAD = [];
+  const PLH = { slokkvitaeki:'t.d. Hagkaup Skeifunni — 2 tæki skoðuð, 1 nýtt 6 kg, muna slöngukeflið', brunaholf:'t.d. Skúlagata 3 tímar aukalega í gær, hurð á 2. hæð' };
+
+  $view.innerHTML = '<div class="ds-wrap">'
+    + '<div class="ds-head"><div><div style="font-size:10.5px;font-weight:600;letter-spacing:2.5px;color:var(--gold-deep);text-transform:uppercase;margin-bottom:6px">REIKNINGAR · SÖFNUN Í SMÍÐUM</div>'
+    + '<h1 style="margin:0;font-family:var(--font-display);font-size:30px;font-weight:700;color:var(--ink)">Drög-stöð</h1>'
+    + '<div style="font-size:12px;color:var(--muted);margin-top:4px">Hentu inn punkti um leið og hann dettur í hug — hann safnast á rétt verk, þú staðfestir í bútum, og sendir þegar gátlistinn er grænn. Eitt innhólf fyrir Slökkvitæki og Brunahólf.</div></div>'
+    + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><div class="ds-seg" id="ds-syn">'+[['baedi','Bæði'],['slokkvitaeki','Slökkvitæki'],['brunaholf','Brunahólf']].map(([k,l])=>'<button type="button" data-syn="'+k+'" class="'+(state.ui.ds_syn===k?'on':'')+'">'+l+'</button>').join('')+'</div>'
+    + '<button type="button" id="ds-ai-all" style="'+KEY+'" title="Láta flokka alla nýja punkta (leggur til — skrifar ekki)">✨ Flokka nýtt</button><button type="button" id="ds-refresh" style="'+KEY+'" title="Sækja aftur">↻</button></div></div>'
+    + '<div class="ds-cap"><div class="ds-seg" id="ds-felag">'+[['slokkvitaeki','Slökkvitæki'],['brunaholf','Brunahólf']].map(([k,l])=>'<button type="button" data-f="'+k+'" class="'+(state.ui.ds_felag===k?'on '+(k==='slokkvitaeki'?'sl':'bh'):'')+'">'+l+'</button>').join('')+'</div>'
+    + '<input type="text" id="ds-in" placeholder="'+esc(PLH[state.ui.ds_felag])+'" autocomplete="off">'
+    + '<input type="file" id="ds-file" accept="image/*,application/pdf" hidden>'
+    + '<button type="button" id="ds-cam" style="'+KEY+';height:42px" title="Mynd, skjáskot eða PDF með punktinum">📷</button>'
+    + '<button type="button" id="ds-add" style="'+GOLD+';height:42px;padding:0 16px">Skrá</button></div>'
+    + '<div class="ds-sync" id="ds-sync"></div>'
+    + '<div class="ds-cols"><div class="ds-col" id="ds-inn"></div><div class="ds-col" id="ds-verk"></div><div class="ds-col" id="ds-val"></div></div></div>';
+
+  const api = (path, opts) => fetch(path, Object.assign({ cache:'no-store' }, opts||{})).then(async r => { const j = await r.json().catch(()=>({})); if(!r.ok || j.error){ const e = new Error(j.error||('HTTP '+r.status)); e.status = r.status; e.locked = !!j.locked; throw e; } return j; });
+  const post = body => api('/api/reikningspunktar', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(body) });
+  const setSync = txt => { const el = $view.querySelector('#ds-sync'); if(el) el.textContent = txt || (queue.length ? '⏳ '+queue.length+' í biðröð — sendist sjálfkrafa' : ''); };
+
+  // ── Skráning: strax, með biðröð ef netið dettur út (sama og verkstaða-appið) ──
+  async function skra(raw, extra){
+    const body = Object.assign({ action:'add', raw, felag: state.ui.ds_felag, source:'hub', author:(typeof bhMe==='function'?bhMe():'')||null, client_id: uid() }, extra||{});
+    try{ const j = await post(body); setSync('✓ skráð '+dt(new Date().toISOString())); return j.row; }
+    catch(e){
+      if(e.status===400 || e.status===401){ alert('✗ '+e.message); return null; }
+      queue.push(body); LS.set('ds_queue', queue); setSync(); return Object.assign({ id:'p:'+body.client_id, pending:true, status:'nytt', created_at:new Date().toISOString() }, body);
+    }
+  }
+  let flushing = false;
+  async function flush(){
+    if(flushing || !queue.length) return; flushing = true;
+    try{ for(const b of [...queue]){ try{ await post(b); queue = queue.filter(x=>x.client_id!==b.client_id); LS.set('ds_queue', queue); }catch(e){ if(e.status===400||e.status===401){ queue = queue.filter(x=>x.client_id!==b.client_id); LS.set('ds_queue', queue); } else break; } } }
+    finally{ flushing = false; }
+    setSync(queue.length ? '' : '✓ biðröð send'); if(!queue.length) load();
+  }
+  window.addEventListener('online', flush);
+
+  async function load(){
+    try{
+      const [n, s] = await Promise.all([ api('/api/reikningspunktar?status=nytt,flokkad&limit=400'), api('/api/reikningspunktar?op=stada') ]);
+      NOTES = n.rows||[]; STADA = s;
+      if(sel && !finnaSel()) sel = null;
+      teikna();
+    }catch(e){ $view.querySelector('#ds-inn').innerHTML = '<div class="ds-empty" style="color:var(--red)">Villa: '+esc(e.message)+'</div>'; }
+  }
+  const finnaSel = () => { if(!sel || !STADA) return null; if(sel.startsWith('bh|')){ const [,ws,wm] = sel.split('|'); return (STADA.verk||[]).find(v=>v.ws===ws && v.wm===wm) ? {tegund:'bh',ws,wm} : null; } if(sel.startsWith('sl|')){ const k = sel.slice(3); return {tegund:'sl',kunni:k}; } return null; };
+  const synist = felag => state.ui.ds_syn==='baedi' || state.ui.ds_syn===felag;
+  const felChip = f => '<span class="ds-chip '+(f==='slokkvitaeki'?'sl':'bh')+'">'+esc(FEL[f]||f)+'</span>';
+
+  // ── 01 Innhólf ───────────────────────────────────────────────────────────
+  function innholf(){
+    const list = NOTES.filter(n=>synist(n.felag)).concat(queue.filter(b=>synist(b.felag)).map(b=>Object.assign({ id:'p:'+b.client_id, pending:true, status:'nytt', created_at:new Date().toISOString() }, b)));
+    let h = '<div class="ds-h"><span style="'+PLATE+'">01</span>Innhólf<small>'+list.length+' bíða'+(STADA&&STADA.unfiled?' · '+STADA.unfiled+' óraðað':'')+'</small></div><div class="ds-body">';
+    if(!list.length) h += '<div class="ds-empty">Ekkert í innhólfinu. Skrifaðu punkt hér að ofan — hann vistast strax.</div>';
+    for(const n of list){
+      const ai = n.ai||null, sl = n.felag==='slokkvitaeki';
+      const ws = n.worksite_name||'', wm = n.work_month||'';
+      h += '<div class="ds-note" data-id="'+esc(n.id)+'"><div class="ds-meta"><span>'+(SRC[n.source]||'•')+' '+esc(dt(n.created_at))+'</span>'+(n.author?'<span>· '+esc(n.author)+'</span>':'')+felChip(n.felag)+(n.pending?'<span class="ds-chip warn">⏳ í biðröð</span>':'')+'</div>'
+        + '<div class="ds-raw">'+esc(n.raw)+'</div>'
+        + (Array.isArray(n.attachments)&&n.attachments.length ? '<div class="ds-row">'+n.attachments.map(a=>'<a class="ds-chip" href="'+esc(a.url||'#')+'" target="_blank" rel="noopener">📎 '+esc((a.title||'skrá').slice(0,40))+'</a>').join('')+'</div>' : '');
+      if(ai){
+        const v = Math.round((Number(ai.vissa)||0)*100);
+        h += '<div class="ds-row"><span class="ds-chip ai" title="Tillaga flokkunar — skrifar ekkert fyrr en þú staðfestir">✨ '+esc(ai.samantekt||'')+'</span><span class="ds-chip '+(v>=60?'ok':'warn')+'">'+v+'%</span>'+(ai.tegund?'<span class="ds-chip">'+esc((TEG.find(x=>x[0]===ai.tegund)||[0,ai.tegund])[1])+'</span>':'')+'</div>';
+        if(Array.isArray(ai.spurningar)&&ai.spurningar.length) h += '<div style="font-size:12px;color:var(--warn);margin-top:4px">❓ '+ai.spurningar.map(esc).join(' · ')+'</div>';
+      }
+      if(n.pending){ h += '</div>'; continue; }
+      // Markið: verk|mánuður (BH) eða kúnni (SL)
+      h += '<div class="ds-row">';
+      if(sl){
+        h += '<input list="ds-kunnar" data-k="kunni" value="'+esc(ws)+'" placeholder="Kúnni…" style="'+FLD+';flex:1;min-width:150px">';
+      } else {
+        const verk = (STADA&&STADA.verk)||[];
+        const cur = ws&&wm ? ws+'|'+wm : '';
+        h += '<select data-k="verk" style="'+FLD+';flex:1;min-width:150px"><option value="">— velja verk —</option>'+verk.map(v=>'<option value="'+esc(v.ws+'|'+v.wm)+'"'+(cur===v.ws+'|'+v.wm?' selected':'')+'>'+esc(v.ws)+' · '+esc(mlS(v.wm))+'</option>').join('')+(cur&&!verk.some(v=>v.ws+'|'+v.wm===cur)?'<option value="'+esc(cur)+'" selected>'+esc(ws)+' · '+esc(mlS(wm))+'</option>':'')+'<option value="__nytt">✎ annað verk / mánuður…</option></select>';
+      }
+      h += '<button type="button" data-act="setja" style="'+GOLD+'">'+(sl?'✓ Komið í reikning':'✓ Setja á')+'</button>'
+        + '<button type="button" data-act="ai" style="'+KEY+'" title="Láta flokka þennan punkt">✨</button>'
+        + '<button type="button" data-act="hafna" style="'+KEY+';color:var(--red)" title="Hafna — punkturinn geymist en hverfur úr innhólfinu">✕</button></div>';
+      if(!sl && opinnForm===n.id) h += applyForm(n);
+      h += '</div>';
+    }
+    h += '</div>';
+    return h;
+  }
+  // Staðfestingarformið: hvað á punkturinn að breyta í drögunum. Forfyllt úr tillögunni.
+  function applyForm(n){
+    const ai = n.ai||{}, tl = ai.tolur||{};
+    const teg = TEG.some(x=>x[0]===ai.tegund) ? ai.tegund : 'upplysing';
+    return '<div class="ds-form" data-form="'+esc(n.id)+'">'
+      + '<select data-f="tegund" style="'+FLD+'">'+TEG.map(([k,l])=>'<option value="'+k+'"'+(k===teg?' selected':'')+'>'+l+'</option>').join('')+'</select>'
+      + '<span data-teg="klst" style="display:'+(teg==='klst'?'inline-flex':'none')+';gap:6px"><input data-f="klst" type="text" inputmode="decimal" placeholder="dv klst" value="'+esc(tl.klst||'')+'" style="'+FLD+';width:80px"><input data-f="ev_klst" type="text" inputmode="decimal" placeholder="ev klst" value="'+esc(tl.ev_klst||'')+'" style="'+FLD+';width:80px"></span>'
+      + '<span data-teg="efni" style="display:'+(teg==='efni'?'inline-flex':'none')+';gap:6px"><input data-f="label" type="text" placeholder="heiti" value="'+esc(tl.efni_heiti||'')+'" style="'+FLD+';width:150px"><input data-f="price" type="text" inputmode="numeric" placeholder="verð án vsk" value="'+esc(tl.upphaed||'')+'" style="'+FLD+';width:100px"><input data-f="qty" type="text" inputmode="decimal" placeholder="magn" value="'+esc(tl.magn||1)+'" style="'+FLD+';width:64px"></span>'
+      + '<span data-teg="gjald" style="display:'+(teg==='gjald'?'inline-flex':'none')+';gap:6px"><input data-f="upphaed" type="text" inputmode="numeric" placeholder="fast verð m/vsk" value="'+esc(tl.upphaed||'')+'" style="'+FLD+';width:130px"></span>'
+      + '<span data-teg="greidandi" style="display:'+(teg==='greidandi'?'inline-flex':'none')+';gap:6px"><input data-f="customer_name" type="text" placeholder="greiðandi" value="'+esc(tl.greidandi||'')+'" style="'+FLD+';width:170px"><input data-f="kennitala" type="text" inputmode="numeric" placeholder="kt" value="'+esc(tl.kennitala||'')+'" style="'+FLD+';width:100px"></span>'
+      + '<button type="button" data-act="apply" style="'+GOLD+'">✓ Setja á drögin</button><button type="button" data-act="loka" style="'+KEY+'">Hætta</button>'
+      + '<div style="width:100%;font-size:11px;color:var(--muted)">Skrifast í Efnislista verksins og bætist sem innri nótulína — þú getur breytt öllu þar á eftir.</div></div>';
+  }
+
+  // ── 02 Verk í smíðum ─────────────────────────────────────────────────────
+  function verkColumn(){
+    const verk = ((STADA&&STADA.verk)||[]).filter(()=>synist('brunaholf'));
+    const kunnar = ((STADA&&STADA.kunnar)||[]).filter(()=>synist('slokkvitaeki'));
+    let h = '<div class="ds-h"><span style="'+PLATE+'">02</span>Í smíðum<small>'+(verk.length+kunnar.length)+(STADA&&STADA.tilbuin?' · '+STADA.tilbuin+' tilbúin':'')+'</small></div><div class="ds-body">';
+    if(!verk.length && !kunnar.length) h += '<div class="ds-empty">Engin verk í smíðum.</div>';
+    for(const k of kunnar){
+      const key = 'sl|'+k.kunni;
+      h += '<div class="ds-verk'+(sel===key?' sel':'')+'" data-sel="'+esc(key)+'"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><b style="font-size:14px">'+esc(k.kunni)+'</b>'+felChip('slokkvitaeki')+'</div>'
+        + '<div class="ds-row"><span class="ds-chip warn">'+k.punktar+' punkt'+(k.punktar===1?'ur bíður':'ar bíða')+'</span>'+(k.kt?'<span class="ds-chip">kt '+esc(k.kt)+'</span>':'<span class="ds-chip">óþekktur kúnni</span>')+'</div></div>';
+    }
+    for(const v of verk){
+      const key = 'bh|'+v.ws+'|'+v.wm;
+      const vantar = CHK.filter(([k])=>!v.checks[k]).map(([k])=> k==='punktar' ? v.punktar+' '+VANTAR.punktar : VANTAR[k]);
+      h += '<div class="ds-verk'+(sel===key?' sel':'')+'" data-sel="'+esc(key)+'"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><b style="font-size:14px">'+esc(v.ws)+'</b><span style="font-family:var(--font-mono);font-size:11.5px;color:var(--muted)">'+esc(mlS(v.wm))+'</span></div>'
+        + '<div class="ds-ring">'+CHK.map(([k])=>'<i class="'+(v.checks[k]?'on':'')+'" title="'+esc(CHK.find(c=>c[0]===k)[1])+'"></i>').join('')+'</div>'
+        + '<div class="ds-kv"><span>Tímar</span><b>'+hf(v.hours)+' klst</b></div>'
+        + '<div class="ds-kv"><span>Efni'+(v.redder?' · Redder '+fmt(v.redder):'')+'</span><b>'+fmt(v.materials_total)+'</b></div>'
+        + '<div class="ds-kv"><span>Upphæð'+(v.fixed?' · fast verð':'')+'</span><b>'+(v.total?fmt(v.total)+' kr':'—')+'</b></div>'
+        + '<div class="ds-row">'+(v.ready?'<span class="ds-chip ok">✓ Tilbúið að senda</span>':vantar.map(x=>'<span class="ds-chip warn">'+esc(x)+'</span>').join(''))+(v.sent?'<span class="ds-chip ok">sent í bókun</span>':'')+'</div></div>';
+    }
+    h += '</div>';
+    return h;
+  }
+
+  // ── 03 Valið verk ────────────────────────────────────────────────────────
+  function valColumn(){
+    const s = finnaSel();
+    let h = '<div class="ds-h"><span style="'+PLATE+'">03</span>Valið<small>'+(s ? (s.tegund==='sl'?'kúnni':'drög') : '')+'</small></div><div class="ds-body">';
+    if(!s){ h += '<div class="ds-empty">Smelltu á verk eða kúnna í dálknum við hliðina.</div></div>'; return h; }
+    if(s.tegund==='sl'){
+      const k = (STADA.kunnar||[]).find(x=>x.kunni===s.kunni)||{kunni:s.kunni, punktar:0};
+      const mine = NOTES.filter(n=>n.felag==='slokkvitaeki' && n.worksite_name===s.kunni);
+      h += '<div style="padding:10px 12px;border-bottom:1px solid var(--line)"><b style="font-size:15px">'+esc(k.kunni)+'</b>'+(k.kt?' <span class="ds-chip">kt '+esc(k.kt)+'</span>':'')+'<div style="font-size:12px;color:var(--muted);margin-top:4px">Reikningurinn verður til í Slökkvitæki-appinu — hakaðu „✓ Komið í reikning" við hvern punkt þegar hann er kominn þar inn.</div></div>';
+      h += '<div style="padding:8px 12px;font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">Punktar sem bíða ('+mine.length+')</div>';
+      h += mine.length ? mine.map(n=>'<div class="ds-chk"><span style="flex:1">'+esc(n.raw)+'</span><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">'+esc(dt(n.created_at))+'</span></div>').join('') : '<div class="ds-empty">Allt komið í reikning.</div>';
+      if(NOTAD.length) h += '<div style="padding:8px 12px;font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">Komið í reikning</div>'+NOTAD.map(n=>'<div class="ds-chk" style="opacity:.6"><span style="flex:1">'+esc(n.raw)+'</span><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">'+esc(dt(n.applied_at||n.created_at))+'</span></div>').join('');
+      h += '<div style="padding:10px 12px;display:flex;gap:6px;flex-wrap:wrap"><a href="https://slokkvitaeki.netlify.app/" target="_blank" rel="noopener" style="'+KEY+';display:inline-flex;align-items:center;text-decoration:none">Opna Slökkvitæki ↗</a></div></div>';
+      return h;
+    }
+    const v = (STADA.verk||[]).find(x=>x.ws===s.ws && x.wm===s.wm);
+    const mine = NOTES.filter(n=>n.felag!=='slokkvitaeki' && n.worksite_name===s.ws && n.work_month===s.wm);
+    h += '<div style="padding:10px 12px;border-bottom:1px solid var(--line)"><b style="font-size:15px">'+esc(v.ws)+'</b> <span style="font-family:var(--font-mono);font-size:11.5px;color:var(--muted)">'+esc(mlS(v.wm))+'</span>'+(v.customer?'<div style="font-size:12px;color:var(--ink-2);margin-top:3px">'+esc(v.customer)+(v.kt?' · kt '+esc(v.kt):'')+'</div>':'')+'</div>';
+    h += '<div style="padding:6px 12px 2px">'+CHK.map(([k,l])=>'<div class="ds-chk"><span style="font-size:15px;color:'+(v.checks[k]?'var(--green)':'var(--warn)')+'">'+(v.checks[k]?'●':'○')+'</span><span style="flex:1">'+esc(l)+'</span>'+(k==='punktar'&&!v.checks[k]?'<span class="ds-chip warn">'+v.punktar+'</span>':'')+'</div>').join('')+'</div>';
+    h += '<div style="padding:4px 12px 8px;border-top:1px solid var(--line)"><div class="ds-kv"><span>Dagvinna</span><b>'+hf(v.hours_dv)+' klst</b></div><div class="ds-kv"><span>Eftirvinna</span><b>'+hf(v.hours_ev)+' klst</b></div><div class="ds-kv"><span>Efni</span><b>'+fmt(v.materials_total)+' kr</b></div><div class="ds-kv"><span>'+(v.fixed?'Fast verð':'Upphæð')+' m/vsk</span><b>'+(v.total?fmt(v.total)+' kr':'—')+'</b></div></div>';
+    if(mine.length) h += '<div style="padding:6px 12px 2px;font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">Punktar sem bíða</div>'+mine.map(n=>'<div class="ds-chk"><span style="flex:1">'+esc(n.raw)+'</span><button type="button" data-fokus="'+esc(n.id)+'" style="'+KEY+';height:26px;padding:0 8px;font-size:11px">Setja á</button></div>').join('');
+    if(NOTAD.length) h += '<div style="padding:6px 12px 2px;font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">Komið í drögin</div>'+NOTAD.map(n=>'<div class="ds-chk" style="opacity:.6"><span style="flex:1">'+esc(n.raw)+'</span><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">'+esc(dt(n.applied_at||n.created_at))+'</span></div>').join('');
+    h += '<div style="padding:10px 12px;display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--line)"><button type="button" data-act="efnisl" style="'+KEY+'">🧾 Opna Efnislista</button><button type="button" data-act="senda" style="'+(v.ready?GOLD:KEY)+'"'+(v.ready?'':' title="Gátlistinn er ekki grænn enn"')+'>📤 Senda í bókun'+(v.ready?'':' · '+CHK.filter(([k])=>!v.checks[k]).length+' eftir')+'</button></div>';
+    h += '</div>';
+    return h;
+  }
+
+  function teikna(){
+    $view.querySelector('#ds-inn').innerHTML = innholf();
+    $view.querySelector('#ds-verk').innerHTML = verkColumn();
+    $view.querySelector('#ds-val').innerHTML = valColumn();
+    if(!document.getElementById('ds-kunnar')){ const dl = document.createElement('datalist'); dl.id = 'ds-kunnar'; document.body.appendChild(dl); }
+    document.getElementById('ds-kunnar').innerHTML = ((STADA&&STADA.kunnalisti)||[]).map(n=>'<option value="'+esc(n)+'">').join('');
+    vira();
+  }
+
+  async function greina(id, hljott){
+    try{ const j = await api('/api/punktur-greining', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ id }) }); return j; }
+    catch(e){ if(e.locked){ aiLaest = true; if(!hljott) setSync('✨ '+e.message); } else if(!hljott) alert('Flokkun mistókst: '+e.message); return null; }
+  }
+  async function hladaNotad(){
+    const s = finnaSel(); NOTAD = [];
+    if(!s) return;
+    try{ const j = await api('/api/reikningspunktar?status=notad&limit=8&worksite='+encodeURIComponent(s.tegund==='sl'?s.kunni:s.ws)+(s.tegund==='bh'?'&month='+s.wm:'')); NOTAD = j.rows||[]; }catch(_){}
+  }
+
+  function vira(){
+    const inn = $view.querySelector('#ds-inn');
+    inn.querySelectorAll('.ds-note').forEach(card => {
+      const id = card.dataset.id; if(!id || id.startsWith('p:')) return;
+      const nid = Number(id);
+      const note = NOTES.find(n=>String(n.id)===id);
+      const selVerk = card.querySelector('select[data-k="verk"]');
+      if(selVerk) selVerk.addEventListener('change', async () => {
+        let val = selVerk.value;
+        if(val==='__nytt'){ const ws = prompt('Verkstaður (heiti verksins):', note.worksite_name||''); if(!ws){ selVerk.value=''; return; } const wm = prompt('Mánuður (ÁÁÁÁ-MM):', note.work_month||nowYM()); if(!isYM(wm||'')){ alert('Mánuður þarf að vera ÁÁÁÁ-MM'); selVerk.value=''; return; } val = ws.trim()+'|'+wm; }
+        const [ws, wm] = val ? val.split('|') : ['',''];
+        try{ await post({ action:'set', id:nid, worksite_name: ws||null, work_month: wm||null }); note.worksite_name = ws||null; note.work_month = wm||null; teikna(); }catch(e){ alert('Villa: '+e.message); }
+      });
+      const kunni = card.querySelector('input[data-k="kunni"]');
+      if(kunni) kunni.addEventListener('change', async () => { const v = kunni.value.trim(); try{ await post({ action:'set', id:nid, worksite_name: v||null }); note.worksite_name = v||null; teikna(); }catch(e){ alert('Villa: '+e.message); } });
+      card.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', async () => {
+        const act = b.dataset.act;
+        if(act==='hafna'){ if(!confirm('Hafna þessum punkti? Hann geymist en hverfur úr innhólfinu.')) return; try{ await post({ action:'set', id:nid, status:'hafnad' }); NOTES = NOTES.filter(n=>n.id!==nid); teikna(); }catch(e){ alert('Villa: '+e.message); } return; }
+        if(act==='ai'){ b.disabled = true; b.textContent = '…'; const j = await greina(nid); if(j){ note.ai = j.ai; if(j.filed){ note.worksite_name = (j.ai.verkstadur||note.worksite_name); note.work_month = (j.ai.manudur||note.work_month); } note.status='flokkad'; } teikna(); return; }
+        if(act==='setja'){
+          if(note.felag==='slokkvitaeki'){
+            const k = (card.querySelector('input[data-k="kunni"]')||{}).value||note.worksite_name; if(!String(k||'').trim()){ alert('Veldu kúnna fyrst.'); return; }
+            try{ await post({ action:'apply', id:nid, worksite_name:String(k).trim(), tegund:'upplysing' }); NOTES = NOTES.filter(n=>n.id!==nid); await load(); }catch(e){ alert('Villa: '+e.message); }
+            return;
+          }
+          if(!note.worksite_name || !isYM(note.work_month)){ alert('Veldu verk og mánuð fyrst.'); return; }
+          opinnForm = (opinnForm===nid) ? null : nid; teikna(); return;
+        }
+        if(act==='loka'){ opinnForm = null; teikna(); return; }
+        if(act==='apply'){
+          const f = card.querySelector('[data-form]'); const g = k => { const el = f.querySelector('[data-f="'+k+'"]'); return el ? el.value.trim() : ''; };
+          const num = v => { const n = parseFloat(String(v).replace(/\s/g,'').replace(/\./g,'').replace(',','.')); return isFinite(n)?n:0; };
+          const teg = g('tegund');
+          const body = { action:'apply', id:nid, tegund:teg };
+          if(teg==='klst'){ body.klst = num(g('klst')); body.ev_klst = num(g('ev_klst')); if(!body.klst && !body.ev_klst){ alert('Klukkustundir vantar'); return; } }
+          if(teg==='efni'){ body.efni = { label:g('label'), price:num(g('price')), qty:num(g('qty'))||1 }; if(!body.efni.label||!body.efni.price){ alert('Efni þarf heiti og verð'); return; } }
+          if(teg==='gjald'){ body.upphaed = num(g('upphaed')); if(!body.upphaed){ alert('Upphæð vantar'); return; } }
+          if(teg==='greidandi'){ body.customer_name = g('customer_name'); body.kennitala = g('kennitala'); }
+          b.disabled = true; b.textContent = '⏳…';
+          try{ const j = await post(body); opinnForm = null; NOTES = NOTES.filter(n=>n.id!==nid); setSync('✓ komið í drögin'+(j.applied&&j.applied.total_m_vsk?' · '+fmt(j.applied.total_m_vsk)+' kr':'')); await load(); }
+          catch(e){ alert('Villa: '+e.message); b.disabled = false; b.textContent = '✓ Setja á drögin'; }
+        }
+      }));
+      const tegSel = card.querySelector('[data-form] select[data-f="tegund"]');
+      if(tegSel) tegSel.addEventListener('change', () => { card.querySelectorAll('[data-form] [data-teg]').forEach(sp => sp.style.display = sp.dataset.teg===tegSel.value ? 'inline-flex' : 'none'); });
+    });
+    $view.querySelectorAll('#ds-verk [data-sel]').forEach(el => el.addEventListener('click', async () => { sel = el.dataset.sel; state.ui.ds_sel = sel; save({nav:true}); await hladaNotad(); teikna(); }));
+    $view.querySelectorAll('#ds-val [data-fokus]').forEach(b => b.addEventListener('click', () => { opinnForm = Number(b.dataset.fokus); teikna(); const c = $view.querySelector('.ds-note[data-id="'+b.dataset.fokus+'"]'); if(c) c.scrollIntoView({ block:'center', behavior:'smooth' }); }));
+    const efn = $view.querySelector('#ds-val [data-act="efnisl"]'); if(efn) efn.addEventListener('click', () => { const s = finnaSel(); if(s&&s.tegund==='bh') grOpenWorksite(s.ws, s.wm); });
+    const snd = $view.querySelector('#ds-val [data-act="senda"]'); if(snd) snd.addEventListener('click', () => { state.ui.activeTab = 'krofuyfirlit'; save({nav:true}); render(); });
+  }
+
+  // ── Stikan, félag, sía, mynd ─────────────────────────────────────────────
+  const inp = $view.querySelector('#ds-in');
+  async function sendaInn(){
+    const raw = inp.value.trim(); if(!raw) { inp.focus(); return; }
+    inp.value = ''; const row = await skra(raw);
+    if(row){ if(!row.pending) NOTES.unshift(row); teikna(); if(!aiLaest && !row.pending){ const j = await greina(row.id, true); if(j){ row.ai = j.ai; if(j.filed){ row.worksite_name = j.ai.verkstadur||row.worksite_name; row.work_month = j.ai.manudur||row.work_month; } row.status='flokkad'; teikna(); } } }
+    inp.focus();
+  }
+  $view.querySelector('#ds-add').onclick = sendaInn;
+  inp.addEventListener('keydown', e => { if(e.key==='Enter'){ e.preventDefault(); sendaInn(); } });
+  $view.querySelectorAll('#ds-felag button').forEach(b => b.onclick = () => { state.ui.ds_felag = b.dataset.f; save(); $view.querySelectorAll('#ds-felag button').forEach(x => x.className = x===b ? 'on '+(b.dataset.f==='slokkvitaeki'?'sl':'bh') : ''); inp.placeholder = PLH[state.ui.ds_felag]; inp.focus(); });
+  $view.querySelectorAll('#ds-syn button').forEach(b => b.onclick = () => { state.ui.ds_syn = b.dataset.syn; save(); $view.querySelectorAll('#ds-syn button').forEach(x => x.classList.toggle('on', x===b)); teikna(); });
+  $view.querySelector('#ds-refresh').onclick = load;
+  $view.querySelector('#ds-ai-all').onclick = async () => {
+    const ny = NOTES.filter(n=>!n.ai && !n.pending); if(!ny.length){ setSync('ekkert nýtt að flokka'); return; }
+    for(const n of ny){ const j = await greina(n.id, true); if(!j){ if(aiLaest) break; continue; } n.ai = j.ai; if(j.filed){ n.worksite_name = j.ai.verkstadur||n.worksite_name; n.work_month = j.ai.manudur||n.work_month; } n.status='flokkad'; teikna(); }
+    if(aiLaest) setSync('✨ Flokkunin er læst þar til starfsmanna-innskráning er virk (HUB_STAFF_PASSWORD) — raðaðu handvirkt á meðan');
+  };
+  // Mynd/skjal: vistast sem innra viðhengi (sendist aldrei) undir „Drög-stöð"-hólfinu og hangir á punktinum.
+  $view.querySelector('#ds-cam').onclick = () => $view.querySelector('#ds-file').click();
+  $view.querySelector('#ds-file').addEventListener('change', async e => {
+    const f = e.target.files && e.target.files[0]; e.target.value = ''; if(!f) return;
+    if(f.size > 4*1024*1024){ alert('Skráin er stærri en 4 MB'); return; }
+    setSync('⏳ hleð upp '+f.name+'…');
+    try{
+      const b64 = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = rej; r.readAsDataURL(f); });
+      const j = await api('/api/pdf-store', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ fileName: f.name, contentBase64: b64, mimeType: f.type, worksite_name: 'Drög-stöð', work_month: nowYM(), doc_type: 'innra' }) });
+      const raw = inp.value.trim() || ('🖼 '+f.name); inp.value = '';
+      const row = await skra(raw, { source:'mynd', attachments:[{ drive_file_id: j.id, title: f.name, url: j.public_url }] });
+      if(row){ if(!row.pending) NOTES.unshift(row); teikna(); }
+    }catch(err){ alert('Upphleðsla mistókst: '+err.message); setSync(''); }
+  });
+
+  setSync();
+  await load();
+  flush();
 }
 async function renderTvMaeting(t){
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
