@@ -34,7 +34,7 @@ exports.handler = async (event) => {
   if (!SUPABASE_URL || !SUPABASE_KEY) return json(500, { error: 'Supabase env missing' });
   if (event.httpMethod !== 'GET') return json(405, { error: 'GET only (skrifað gegnum /api/krofur-yfirlit)' });
 
-  let invoices, drafts, meta, bank, cwmap;
+  let invoices, drafts, meta, bank, cwmap, pguide;
   // Non-fatal read failures are recorded here and returned so the frontend can
   // warn the user that a total may be wrong (instead of silently dropping data).
   const warnings = [];
@@ -57,6 +57,12 @@ exports.handler = async (event) => {
     cwmap = await fetchAll('customer_worksite_map',
       'select=customer_name,worksite_name')
       .catch(() => { warnings.push('customer_worksite_map lestur mistókst — greiðanda-hópun gæti verið ónákvæm'); return []; });
+    // Verðskráin ber líka greiðanda per verkstað (Viðskiptavinir-flipinn skrifar hann þangað).
+    // Án hennar tvístruðust mánuðir sama verkstaðar: sá sem hafði fengið greiðanda í
+    // Efnislistanum lenti undir greiðandanum, hinn stóð eftir undir verkstaðarnafninu
+    // (Agnar 04.09.2026: Stórhöfði 29 ágúst → Lagnaprýði, september eftir sem Stórhöfði).
+    pguide = await fetchAll('pricing_guide', 'select=customer_name,worksite_name')
+      .catch(() => { warnings.push('pricing_guide lestur mistókst — greiðanda-hópun gæti verið ónákvæm'); return []; });
   } catch (e) { return json(502, { error: e.message }); }
 
   // ---- worksite → payer resolution (rekstrarfélög / verkstaðir) -------------
@@ -67,8 +73,12 @@ exports.handler = async (event) => {
   // sótt úr `invoices` (customer_name → kt_greidanda) svo drögin geti sameinast
   // Payday-hópi greiðandans þegar við á.
   const worksiteToPayer = new Map();  // lc(worksite) -> payer customer_name
-  for (const m of (cwmap || [])) {
+  for (const m of (cwmap || [])) {          // handvirk tenging gengur fyrir
     const w = lc(m.worksite_name), p = String(m.customer_name || '').trim();
+    if (w && p && !worksiteToPayer.has(w)) worksiteToPayer.set(w, p);
+  }
+  for (const g of (pguide || [])) {         // verðskráin fyllir í eyðurnar
+    const w = lc(g.worksite_name), p = String(g.customer_name || '').trim();
     if (w && p && !worksiteToPayer.has(w)) worksiteToPayer.set(w, p);
   }
   const payerKt = new Map();           // lc(customer_name) -> kt (digits)
