@@ -11027,6 +11027,17 @@ async function renderGerdReikninga(t){
       });
     }catch(e){ box.innerHTML = `<div class="gr-section-h">📄 Vistuð PDF-skjöl</div><div class="gr-loading">Villa: ${escapeHtml(e.message||String(e))}</div>`; return; }
     rows.sort((a,b)=> String(b.added_at||'').localeCompare(String(a.added_at||'')));
+    // ⭐ Aðalskjal mánaðarins — skjalið sem birtist í Kröfuyfirliti (📄) og fer fremst
+    // í „Senda í bókun". Ein merking per (verkstaður, mánuður); bakendinn hreinsar hinar.
+    // 🔒 innra sendist aldrei og getur því ekki verið aðalskjal.
+    const starBtn = d => d.doc_type === 'innra' ? '' :
+      '<button class="tv-btn grp-star" data-fid="' + escapeHtml(d.drive_file_id) + '"'
+      + ' data-ws="' + escapeHtml(d.worksite_name||'') + '" data-wm="' + escapeHtml(d.work_month||'') + '"'
+      + ' data-on="' + (d.is_primary ? '1' : '') + '"'
+      + ' title="' + (d.is_primary ? 'Aðalskjal mánaðarins — smelltu til að taka merkinguna af'
+                                   : 'Merkja sem aðalskjal mánaðarins — það birtist í Kröfuyfirliti og fer fremst í bókun') + '"'
+      + (d.is_primary ? ' style="color:var(--gold-deep);border-color:var(--gold)"' : '')
+      + '>' + (d.is_primary ? '⭐' : '☆') + '</button> ';
     const dt = s => { if(!s) return '—'; const d=new Date(s); return isNaN(d)?String(s).slice(0,10):(String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear()); };
     const head = `<div class="gr-section-h">📄 Vistuð PDF-skjöl <span class="gr-count">${rows.length} skjöl · Efnislisti + Tímaskýrsla, geymd á Supabase (engin innskráning)</span></div>`;
     if(!rows.length){ box.innerHTML = head + `<div class="gr-loading" style="padding:14px">Engin vistuð PDF enn. Búðu til PDF með „📄 Vista PDF" í Efnislista eða Tímaskýrslu.</div>`; return; }
@@ -11037,8 +11048,23 @@ async function renderGerdReikninga(t){
         <td>${escapeHtml(d.worksite_name||'—')}</td>
         <td>${escapeHtml(d.work_month?monthLabel(d.work_month):'—')}</td>
         <td style="white-space:nowrap;color:var(--muted)">${dt(d.added_at)}</td>
-        <td style="white-space:nowrap"><a class="tv-btn" href="${view}" target="_blank" rel="noopener">🔗 Opna</a> <a class="tv-btn" href="${dl}" target="_blank" rel="noopener"${d.public_url?' download':''}>⤓ Sækja</a> <button class="tv-btn grp-del" data-fid="${escapeHtml(d.drive_file_id)}" data-title="${escapeHtml(d.title||'')}" title="Eyða PDF (endurheimtanlegt)" style="color:var(--red-dark);border-color:var(--red-line)">🗑</button></td>
+        <td style="white-space:nowrap"><a class="tv-btn" href="${view}" target="_blank" rel="noopener">🔗 Opna</a> <a class="tv-btn" href="${dl}" target="_blank" rel="noopener"${d.public_url?' download':''}>⤓ Sækja</a> ${starBtn(d)}<button class="tv-btn grp-del" data-fid="${escapeHtml(d.drive_file_id)}" data-title="${escapeHtml(d.title||'')}" title="Eyða PDF (endurheimtanlegt)" style="color:var(--red-dark);border-color:var(--red-line)">🗑</button></td>
       </tr>`; }).join('')}</tbody></table>`;
+    // ☆/⭐ smellur → /api/efnislisti-docs set_primary. Tómt drive_file_id tekur
+    // merkinguna af öllum skjölum mánaðarins (bakendinn hreinsar fyrst, setur svo).
+    box.querySelectorAll('.grp-star').forEach(b=>b.addEventListener('click', async ()=>{
+      const fid=b.dataset.fid, ws=b.dataset.ws, wm=b.dataset.wm;
+      if(!fid||!ws||!wm){ alert('Þetta skjal vantar verkstað/mánuð — get ekki merkt það.'); return; }
+      const af = b.dataset.on === '1';
+      const fyrra = b.textContent; b.disabled=true; b.textContent='…';
+      try{
+        const r=await fetch('/api/efnislisti-docs',{method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({action:'set_primary', worksite_name:ws, work_month:wm, drive_file_id: af ? '' : fid})});
+        const j=await r.json().catch(()=>({}));
+        if(!r.ok||j.error) throw new Error(j.error||('HTTP '+r.status));
+        await loadPdfList();
+      }catch(e){ alert('Tókst ekki að merkja aðalskjal: '+((e&&e.message)||e)); b.disabled=false; b.textContent=fyrra; }
+    }));
     box.querySelectorAll('.grp-del').forEach(b=>b.addEventListener('click', async ()=>{
       const fid=b.dataset.fid; if(!fid) return;
       if(!confirm('Eyða þessu PDF?\n„'+(b.dataset.title||fid)+'"\n\nSkjalið hverfur af listanum (Drive-skjöl fara í ruslið, endurheimtanleg í 30 daga).')) return;
@@ -11162,6 +11188,16 @@ async function renderGerdReikninga(t){
     const month = state.ui.gr_month;
     const sites = WS.filter(w => !NON_BILLABLE.test(w.project));
     const tim = sites.filter(w => !isGata(w.project) && (monthHours(w) > 0 || draftFor(w.project)));
+    // Handvirkt stofnuð verk (Kröfu yfirlit → „➕ Stofna nýtt verk") eiga engan
+    // Tímaveru-verkstað og sæjust því hvergi hér. Drög mánaðarins sem eiga ekki
+    // WS-röð fá spjald samt, með 0 klst.
+    { const haf = new Set(tim.map(w=>w.project));
+      Object.values(DRAFTS).forEach(d=>{
+        if(!d || !d.worksite_name || d.work_month !== month) return;
+        if(haf.has(d.worksite_name) || isGata(d.worksite_name)) return;
+        haf.add(d.worksite_name);
+        tim.push({ project: d.worksite_name, monthly: {} });
+      }); }
     tim.sort((a,b)=> monthHours(b)-monthHours(a));
     const gataNames = ['Landsspitalinn','Heklureitur','Dalvegur 30'];
     const gata = gataNames.map(n => sites.find(w => isGata(w.project) && new RegExp(n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace('Landsspitalinn','landssp[ií]tal'),'i').test(w.project)) || {project:n, monthly:{}, mapped_customers:[], _synthetic:true});
@@ -15402,6 +15438,7 @@ async function renderKrofuyfirlit(t){
             <option value="oldest_due">📅 Elsti gjalddagi</option>
             <option value="name">🔤 Nafn A–Ö</option>
           </select>
+          <button class="kyf-new boss-btn gold sm" type="button" title="Stofna splunkunýtt verk handvirkt — verkstaður, greiðandi, klst og upphæð slegin inn frá grunni">➕ Stofna nýtt verk</button>
           <button class="kyf-print boss-btn ivory sm" type="button" title="Prenta stílhreint yfirlit (án stjórntækja)">🖨 Prenta</button>
           <button class="kyf-refresh boss-btn ivory sm" type="button">↻ Sækja</button>
           <button class="kyf-hidden-toggle boss-btn outline-gold sm" type="button" title="Sýna/fela faldar kröfur" style="display:none"></button>
@@ -16021,6 +16058,151 @@ async function renderKrofuyfirlit(t){
     };
   }
 
+  // ➕ Stofna nýtt verk (Agnar 04.09.2026: „þar getur maður sett allt inn handvirkt á
+  // alveg nýtt verk"). Býr til invoice_drafts-röð frá grunni — verk sem er hvorki í
+  // Tímaveru né Ajour. Röðin birtist í Ósendum (þrepi 2) um leið og upphæð er komin á
+  // hana; „🧾 Efnislisti" opnar hana svo í ritlinum eins og hvert annað verk.
+  function openNyttVerkModal(){
+    const pgRows = PG || {};
+    const wsNames = Object.keys(pgRows).sort((a,b)=>String(a).localeCompare(String(b),'is'));
+    const debtors = [];
+    for(const bag of [state.data&&state.data.tier1, state.data&&state.data.tier2])
+      for(const d of ((bag&&bag.debtors)||[])) debtors.push(d);
+    const ktByCust = new Map();
+    for(const d of debtors) if(d.customer && d.kt && !ktByCust.has(d.customer)) ktByCust.set(d.customer, d.kt);
+    for(const p of Object.values(pgRows)) if(p && p.customer_name && p.kennitala && !ktByCust.has(p.customer_name)) ktByCust.set(p.customer_name, p.kennitala);
+    const custNames = [...new Set(Object.values(pgRows).map(p=>p&&p.customer_name).filter(Boolean)
+      .concat(debtors.map(d=>d.customer).filter(Boolean)))].sort((a,b)=>String(a).localeCompare(String(b),'is'));
+
+    const fld = 'width:100%;padding:8px 10px;border:1px solid var(--edge);border-radius:8px;font:inherit;font-size:14px;box-sizing:border-box;background:var(--input-bg,#f6f3ec);color:var(--ink)';
+    const lbl = 'display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin:0 0 3px';
+    const hint = 'font-weight:400;color:var(--muted-2)';
+    const grid2 = 'display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:11px';
+
+    const bg = document.createElement('div');
+    bg.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px';
+    bg.innerHTML = '<div style="background:var(--card,#fff);border:1px solid var(--line-2);border-radius:14px;padding:20px 22px;width:min(560px,96vw);max-height:90vh;overflow:auto;box-shadow:0 24px 60px -14px rgba(0,0,0,.45)">'
+      + '<div style="font-weight:800;font-size:17px;color:var(--ink);margin-bottom:2px">➕ Stofna nýtt verk</div>'
+      + '<div style="font-size:12px;color:var(--muted-2);margin-bottom:14px">Handvirkt verk — hvorki úr Tímaveru né Ajour. Allt slegið inn hér; þú getur breytt öllu eftir á í Efnislistanum.</div>'
+      + '<div style="' + grid2 + '">'
+      +   '<div><label style="' + lbl + '">Verkstaður <span style="' + hint + '">· heiti verksins</span></label>'
+      +     '<input id="_nv-ws" list="_nv-ws-list" placeholder="t.d. Skúlagata 26" style="' + fld + '" autocomplete="off">'
+      +     '<datalist id="_nv-ws-list">' + wsNames.map(n=>'<option value="' + esc(n) + '"></option>').join('') + '</datalist></div>'
+      +   '<div><label style="' + lbl + '">Mánuður</label>'
+      +     '<input id="_nv-month" type="month" value="' + esc(CUR_MONTH) + '" style="' + fld + '"></div>'
+      + '</div>'
+      + '<div style="' + grid2 + '">'
+      +   '<div><label style="' + lbl + '">Greiðandi <span style="' + hint + '">· hver borgar</span></label>'
+      +     '<input id="_nv-cust" list="_nv-cust-list" placeholder="t.d. Húsfélagið …" style="' + fld + '" autocomplete="off">'
+      +     '<datalist id="_nv-cust-list">' + custNames.map(n=>'<option value="' + esc(n) + '"></option>').join('') + '</datalist></div>'
+      +   '<div><label style="' + lbl + '">Kennitala</label>'
+      +     '<input id="_nv-kt" inputmode="numeric" placeholder="0000000000" style="' + fld + '"></div>'
+      + '</div>'
+      + '<div style="border-top:1px solid var(--line-2);margin:4px 0 12px"></div>'
+      + '<div style="' + grid2 + '">'
+      +   '<div><label style="' + lbl + '">Klst dagvinna</label><input id="_nv-dvh" inputmode="decimal" placeholder="0" style="' + fld + '"></div>'
+      +   '<div><label style="' + lbl + '">Taxti dagvinnu</label><input id="_nv-dvr" inputmode="numeric" value="9951" style="' + fld + '"></div>'
+      + '</div>'
+      + '<div style="' + grid2 + '">'
+      +   '<div><label style="' + lbl + '">Klst eftirvinna</label><input id="_nv-evh" inputmode="decimal" placeholder="0" style="' + fld + '"></div>'
+      +   '<div><label style="' + lbl + '">Taxti eftirvinnu</label><input id="_nv-evr" inputmode="numeric" value="14927" style="' + fld + '"></div>'
+      + '</div>'
+      + '<div style="' + grid2 + '">'
+      +   '<div><label style="' + lbl + '">Efniskostnaður <span style="' + hint + '">· án vsk</span></label><input id="_nv-mat" inputmode="numeric" placeholder="0" style="' + fld + '"></div>'
+      +   '<div><label style="' + lbl + '">Fast verð m/vsk <span style="' + hint + '">· yfirríður</span></label><input id="_nv-fix" inputmode="numeric" placeholder="samningsverð" style="' + fld + '"></div>'
+      + '</div>'
+      + '<label style="' + lbl + '">Athugasemd</label>'
+      + '<textarea id="_nv-notes" rows="2" placeholder="Hvað var gert, hvað var samið um…" style="' + fld + ';resize:vertical"></textarea>'
+      + '<div id="_nv-sum" style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:13px;padding:10px 12px;border:1px solid var(--line-2);border-radius:10px;background:var(--bg-2)">'
+      +   '<span style="font-size:12px;color:var(--muted)">Án vsk <b id="_nv-net" style="color:var(--ink-2)">0 kr</b> · vsk <b id="_nv-vsk" style="color:var(--ink-2)">0 kr</b></span>'
+      +   '<span style="font-weight:800;font-size:18px;color:var(--ink)" id="_nv-tot">0 kr</span>'
+      + '</div>'
+      + '<div id="_nv-warn" style="display:none;margin-top:8px;font-size:12px;color:var(--warn)">Upphæð er 0 — verkið verður til en birtist ekki í Ósendum fyrr en upphæð er komin á það.</div>'
+      + '<div id="_nv-err" style="display:none;margin-top:8px;font-size:12.5px;color:var(--red)"></div>'
+      + '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap">'
+      +   '<button id="_nv-x" type="button" style="padding:9px 16px;border:1px solid var(--edge);background:var(--card,#fff);border-radius:9px;cursor:pointer;font:inherit;font-weight:700;color:var(--ink-2)">Hætta við</button>'
+      +   '<button id="_nv-save" type="button" style="padding:9px 16px;border:1px solid var(--edge);background:var(--card,#fff);border-radius:9px;cursor:pointer;font:inherit;font-weight:700;color:var(--ink)">💾 Stofna</button>'
+      +   '<button id="_nv-open" type="button" style="padding:9px 18px;border:1px solid #1e5c37;background:linear-gradient(180deg,#3f9a61,#2f7a4a);color:#fff;border-radius:9px;cursor:pointer;font:inherit;font-weight:800">🧾 Stofna og opna Efnislista</button>'
+      + '</div></div>';
+    document.body.appendChild(bg);
+    const $ = id => bg.querySelector('#' + id);
+    const close = () => bg.remove();
+    bg.addEventListener('click', e => { if(e.target === bg) close(); });
+    $('_nv-x').onclick = close;
+
+    const num = v => { const n = parseFloat(String(v==null?'':v).replace(/\s/g,'').replace(/\./g,'').replace(',','.')); return isFinite(n) ? n : 0; };
+    const vskPct = () => { const p = pgRows[($('_nv-ws').value||'').trim()]; return Number(p && p.vsk_pct) || 24; };
+    function tolur(){
+      const dvH=num($('_nv-dvh').value), dvR=num($('_nv-dvr').value), evH=num($('_nv-evh').value), evR=num($('_nv-evr').value);
+      const mat=num($('_nv-mat').value), fix=num($('_nv-fix').value), v=vskPct();
+      const reikn = Math.round(dvH*dvR + evH*evR + mat);
+      const total = fix > 0 ? Math.round(fix) : Math.round(reikn*(1+v/100));
+      const net = fix > 0 ? Math.round(total/(1+v/100)) : reikn;
+      return { dvH, dvR, evH, evR, mat, fix, v, net, total, vsk: total-net };
+    }
+    function mala(){
+      const t = tolur();
+      $('_nv-net').textContent = fmtKr(t.net);
+      $('_nv-vsk').textContent = fmtKr(t.vsk);
+      $('_nv-tot').textContent = fmtKr(t.total);
+      $('_nv-warn').style.display = t.total > 0 ? 'none' : '';
+    }
+    ['_nv-dvh','_nv-dvr','_nv-evh','_nv-evr','_nv-mat','_nv-fix','_nv-ws'].forEach(id=> $(id).addEventListener('input', mala));
+    // Þekktur verkstaður úr Verðskránni → greiðandi, kt og taxtar fyllast sjálf.
+    $('_nv-ws').addEventListener('change', ()=>{
+      const p = pgRows[($('_nv-ws').value||'').trim()]; if(!p) { mala(); return; }
+      if(p.customer_name && !$('_nv-cust').value) $('_nv-cust').value = p.customer_name;
+      if(p.kennitala && !$('_nv-kt').value) $('_nv-kt').value = p.kennitala;
+      if(Number(p.dagvinna_rate)>0) $('_nv-dvr').value = Math.round(Number(p.dagvinna_rate));
+      if(Number(p.eftirvinna_rate)>0) $('_nv-evr').value = Math.round(Number(p.eftirvinna_rate));
+      mala();
+    });
+    $('_nv-cust').addEventListener('change', ()=>{
+      const kt = ktByCust.get(($('_nv-cust').value||'').trim());
+      if(kt && !$('_nv-kt').value) $('_nv-kt').value = kt;
+    });
+    mala();
+    setTimeout(()=>{ try{ $('_nv-ws').focus(); }catch(_){} }, 30);
+
+    async function stofna(opnaRitil, btn){
+      const ws = ($('_nv-ws').value||'').trim();
+      const month = ($('_nv-month').value||'').trim();
+      const villa = m => { const e=$('_nv-err'); e.textContent=m; e.style.display=''; };
+      $('_nv-err').style.display = 'none';
+      if(!ws){ villa('Verkstaður má ekki vera tómur.'); $('_nv-ws').focus(); return; }
+      if(!/^\d{4}-\d{2}$/.test(month)){ villa('Veldu gildan mánuð.'); return; }
+      const t = tolur();
+      const fyrri = btn.textContent; btn.disabled = true; btn.textContent = '⏳ Stofnar…';
+      try{
+        const r = await fetch('/api/invoice-drafts', { method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            worksite_name: ws, work_month: month,
+            customer_name: ($('_nv-cust').value||'').trim() || null,
+            kennitala: ($('_nv-kt').value||'').replace(/\D/g,'') || null,
+            source: 'handvirkt', status: 'draft',
+            hours_dagvinna: t.dvH || null, hours_eftirvinna: t.evH || null,
+            rate_dagvinna: t.dvR || null, rate_eftirvinna: t.evR || null,
+            materials_total: t.mat || null,
+            materials_jsonb: t.mat > 0 ? [{ label:'Efniskostnaður (handvirkt)', price: t.mat, qty: 1, total: t.mat }] : null,
+            net_an_vsk: t.net, vsk_amount: t.vsk, total_m_vsk: t.total,
+            fixed_total: t.fix > 0 ? Math.round(t.fix) : null,
+            notes: ($('_nv-notes').value||'').trim() || null,
+            updated_by: 'krofu-yfirlit',
+          }) });
+        const j = await r.json().catch(()=>({}));
+        if(!r.ok || j.error) throw new Error(j.error || ('HTTP '+r.status));
+      }catch(e){
+        villa('Tókst ekki að stofna: ' + ((e&&e.message)||e));
+        btn.disabled = false; btn.textContent = fyrri; return;
+      }
+      close();
+      if(opnaRitil && typeof grOpenWorksite === 'function'){ grOpenWorksite(ws, month); return; }
+      load(true);
+    }
+    $('_nv-save').onclick = e => stofna(false, e.currentTarget);
+    $('_nv-open').onclick = e => stofna(true, e.currentTarget);
+  }
+
   function openCombineModal(invs){
     if(!invs || invs.length<2) return;
     // Sami verkstaður, ólíkir mánuðir → samreikningur (nýja leiðin). Ólíkir verkstaðir
@@ -16611,6 +16793,7 @@ async function renderKrofuyfirlit(t){
     renderList();
   }));
   $view.querySelector('.kyf-refresh').addEventListener('click', ()=>load(true));
+  { const nb = $view.querySelector('.kyf-new'); if(nb) nb.addEventListener('click', ()=> openNyttVerkModal()); }
   // Flakk-lyklar í hausnum (Boss): 💰 Fjármála-yfirlit (fílabein) · 🧾 Gerð Reikninga (obsidian).
   [['.kyf-go-fjarmal','fjarmalyfirlit'],['.kyf-go-gerd','gerdreikninga']].forEach(([sel,id])=>{
     const b = $view.querySelector(sel); if(b) b.addEventListener('click', ()=>{ state_ui_go(id); });
