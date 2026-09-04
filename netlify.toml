@@ -224,15 +224,19 @@
 # leyfa vafranum að endurnota skrárnar án 304-umferðar í klukkustund — og
 # stale-while-revalidate uppfærir í bakgrunni. HTML-síðurnar sjálfar halda
 # sjálfgefna must-revalidate (þær eru inngangurinn og mega aldrei vera gamlar).
+# 05.09.2026: CSS/JS voru 1 klst (og allt ad solarhring med stale-while-revalidate)
+# gomul medan index.html var alltaf ferskt -> "klessa" i Krofu yfirliti eftir ad hun
+# var logud (Agnar og Anni sau nyja HTML med gamla theme.css). Nu endurstadfest eins
+# og HTML: einn 304 per skra per hledslu, aldrei gamalt utlit.
 [[headers]]
   for = "/js/*"
   [headers.values]
-    Cache-Control = "public, max-age=3600, stale-while-revalidate=86400"
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
   for = "/css/*"
   [headers.values]
-    Cache-Control = "public, max-age=3600, stale-while-revalidate=86400"
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
   for = "/img/*"
