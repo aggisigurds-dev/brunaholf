@@ -3685,6 +3685,23 @@ function renderSkodanir(t){
 // topbar/tabs/fab sjálfkrafa). Endurnýtir NÁKVÆMLEGA sama borð og Bakendi með því
 // að birta sömu element-id (bk-st-*) og kalla svo wireStation().
 function renderSkyrslustod(t){
+  if(!document.getElementById('st-pv-css')){
+    const st = document.createElement('style'); st.id = 'st-pv-css';
+    st.textContent = ''
+      + '.st-pv{position:sticky;top:12px;align-self:start;display:flex;flex-direction:column;height:calc(100vh - 90px);'
+      +   'border:1px solid var(--line-2,#d9d3c6);border-radius:12px;overflow:hidden;background:var(--card,#fff);box-shadow:0 1px 3px rgba(0,0,0,.08)}'
+      + '.st-pv-head{display:flex;align-items:center;gap:7px;padding:8px 10px;border-bottom:1px solid var(--line-2,#d9d3c6);background:var(--bg-2,#ece7dc)}'
+      + '.st-pv-count{font-family:var(--font-mono,ui-monospace,monospace);font-size:11px;color:var(--muted)}'
+      + '.st-pv-name{flex:1;min-width:0;font-size:12.5px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
+      + '.st-pv-frame{flex:1;width:100%;border:0;background:#161513}'
+      + '#bk-st-board tr.st-pv-on{outline:2px solid var(--gold,#c9a54a);outline-offset:-2px;background:var(--warn-bg,#fbf3d9)}'
+      + '@media(min-width:1100px){'
+      +   '.section.st-has-pv{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(360px,1fr);gap:16px;align-items:start;max-width:1680px}'
+      +   '.section.st-has-pv > div:first-child{grid-column:1;margin:0}'
+      + '}'
+      + '@media(max-width:1099px){.st-pv{position:static;height:70vh;margin-top:14px}}';
+    document.head.appendChild(st);
+  }
   const inpSel = 'padding:10px 12px;border:1px solid var(--line-2,var(--edge));border-radius:8px;font:inherit;font-size:13px;background:var(--input-bg,#fff);color:var(--ink,var(--ink))';
   $view.innerHTML = `
     <div class="section" style="max-width:1180px;padding:18px 20px">
@@ -3707,8 +3724,83 @@ function renderSkyrslustod(t){
         </div>
         <div id="bk-st-board"></div>
       </div>
+    </div>
+    <div class="st-pv" id="st-pv" hidden>
+      <div class="st-pv-head">
+        <button type="button" class="btn sm" id="st-pv-prev" title="Fyrra skjal">◀</button>
+        <button type="button" class="btn sm" id="st-pv-next" title="Næsta skjal">▶</button>
+        <span class="st-pv-count" id="st-pv-count"></span>
+        <span class="st-pv-name" id="st-pv-name">Veldu skjal</span>
+        <a class="btn sm" id="st-pv-open" target="_blank" rel="noopener" hidden>Opna ↗</a>
+        <button type="button" class="btn sm" id="st-pv-close" title="Loka forskoðun">✕</button>
+      </div>
+      <iframe class="st-pv-frame" id="st-pv-frame" referrerpolicy="no-referrer" title="Forskoðun skjals"></iframe>
     </div>`;
   wireStation();
+  wireStationPreview();
+}
+
+// ── Forskoðun til hliðar (Agnar 04.09.2026: „eins og í skjala multitool") ─────
+// Listinn er lesinn BEINT úr borðinu við hvern smell, svo forskoðunin fylgir alltaf
+// því sem sést (leit, sía, fyrirtæki) án þess að wireStation þurfi að vita af henni.
+function wireStationPreview(){
+  const pv = document.getElementById('st-pv'); if(!pv) return;
+  const frame = document.getElementById('st-pv-frame');
+  const nameEl = document.getElementById('st-pv-name');
+  const countEl = document.getElementById('st-pv-count');
+  const openEl = document.getElementById('st-pv-open');
+  const board = document.getElementById('bk-st-board');
+  const wrap = $view.querySelector('.section');
+  let cur = null;   // { href, name }
+  const links = () => [...board.querySelectorAll('a[href]')].filter(a => /\/api\/skjal\?id=|\/storage\/v1\/object\/public\//.test(a.getAttribute('href') || ''));
+  const rowName = a => { const tr = a.closest('tr'); const f = tr && tr.querySelector('.st-fname'); return (f ? f.textContent : (tr ? tr.textContent : '')).trim().slice(0, 90) || 'skjal'; };
+  function show(a){
+    const href = a.getAttribute('href'); if(!href) return;
+    cur = { href, name: rowName(a) };
+    pv.hidden = false;
+    if(wrap) wrap.classList.add('st-has-pv');
+    frame.src = href;
+    nameEl.textContent = cur.name;
+    openEl.hidden = false; openEl.href = href;
+    const all = links(); const i = all.indexOf(a);
+    countEl.textContent = i >= 0 ? (i + 1) + ' / ' + all.length : '';
+    board.querySelectorAll('tr.st-pv-on').forEach(tr => tr.classList.remove('st-pv-on'));
+    const tr = a.closest('tr'); if(tr) tr.classList.add('st-pv-on');
+    try{ state.ui = state.ui || {}; state.ui.st_pv = true; save(); }catch(_){}
+  }
+  function step(d){
+    const all = links(); if(!all.length) return;
+    const at = cur ? all.findIndex(a => a.getAttribute('href') === cur.href) : -1;
+    const nxt = all[Math.max(0, Math.min(all.length - 1, (at < 0 ? 0 : at + d)))];
+    if(nxt){ show(nxt); nxt.scrollIntoView({ block: 'nearest' }); }
+  }
+  // Smellur á skjal-hlekk í borðinu → forskoðun (Ctrl/⌘/miðjusmellur fer í nýjan flipa).
+  board.addEventListener('click', e => {
+    const a = e.target.closest('a[href]'); if(!a || !board.contains(a)) return;
+    if(e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+    if(!/\/api\/skjal\?id=|\/storage\/v1\/object\/public\//.test(a.getAttribute('href') || '')) return;
+    e.preventDefault(); show(a);
+  });
+  document.getElementById('st-pv-prev').onclick = () => step(-1);
+  document.getElementById('st-pv-next').onclick = () => step(1);
+  document.getElementById('st-pv-close').onclick = () => {
+    pv.hidden = true; frame.src = 'about:blank'; cur = null;
+    if(wrap) wrap.classList.remove('st-has-pv');
+    board.querySelectorAll('tr.st-pv-on').forEach(tr => tr.classList.remove('st-pv-on'));
+    try{ state.ui = state.ui || {}; state.ui.st_pv = false; save(); }catch(_){}
+  };
+  document.addEventListener('keydown', e => {
+    if(pv.hidden || state.ui.activeTab !== 'skyrslustod') return;
+    if(e.target.matches('input,select,textarea')) return;
+    if(e.key === 'ArrowDown'){ e.preventDefault(); step(1); }
+    if(e.key === 'ArrowUp'){ e.preventDefault(); step(-1); }
+    if(e.key === 'Escape') document.getElementById('st-pv-close').click();
+  });
+  // Fyrsta skjalið opnast sjálfkrafa ef forskoðunin var opin síðast.
+  if(state.ui && state.ui.st_pv){
+    const t0 = setInterval(() => { const all = links(); if(all.length){ clearInterval(t0); show(all[0]); } }, 400);
+    setTimeout(() => clearInterval(t0), 12000);
+  }
 }
 
 // ── Skýrslu-stöð (report → site matching board) — wiring shared by Bakendi + Skýrslu-stöð flipi.
