@@ -11804,21 +11804,28 @@ async function renderGerdReikninga(t){
       // (skipting per starfsmann, uppfærsla á dv/ev, vistun) — engin tvöföld rökfræði.
       const yfRow = K('gr-yf-row'), yfOn = K('gr-yf-on'), yfThr = K('gr-yf-thr');
       function yfSpegill(){
+        if(yfBid) return;
+        const st = typeof bg.__tbkGetYf === 'function' ? bg.__tbkGetYf() : null;
         const src = K('gr-tbk-yf'), thr = K('gr-tbk-thr');
         if(!yfOn || !yfRow) return;
-        const on = !!(src && src.checked);
+        const on = st ? st.on : !!(src && src.checked);
+        const thrVal = st ? String(st.thr) : (thr ? thr.value : null);
         if(yfOn.checked !== on) yfOn.checked = on;
-        if(thr && document.activeElement !== yfThr && yfThr.value !== thr.value) yfThr.value = thr.value;
+        if(thrVal != null && document.activeElement !== yfThr && yfThr.value !== thrVal) yfThr.value = thrVal;
         yfRow.classList.toggle('on', on);
         yfRow.classList.toggle('off', !on);
         if(yfThr) yfThr.disabled = !on;
       }
+      let yfBid = null;   // meðan skrifað er má spegillinn ekki lesa gamla gildið til baka
       function yfSkrifa(){
-        const src = K('gr-tbk-yf'), thr = K('gr-tbk-thr');
-        if(!src){ setTimeout(yfSkrifa, 400); return; }   // panell ekki teiknaður enn
-        if(src.checked !== yfOn.checked){ src.checked = yfOn.checked; src.dispatchEvent(new Event('change', { bubbles: true })); }
-        if(thr && yfThr && thr.value !== yfThr.value){ thr.value = yfThr.value; thr.dispatchEvent(new Event('change', { bubbles: true })); }
-        setTimeout(yfSpegill, 60);
+        const vil = { on: !!yfOn.checked, thr: (yfThr && yfThr.value) || '8' };
+        yfBid = vil;
+        const beita = (eftir) => {
+          if(typeof bg.__tbkSetYf === 'function'){ bg.__tbkSetYf(vil.on, vil.thr); yfBid = null; setTimeout(yfSpegill, 80); return; }
+          if(eftir > 0){ setTimeout(() => beita(eftir - 1), 300); return; }   // panell ekki teiknaður enn
+          yfBid = null;
+        };
+        beita(10);
       }
       if(yfOn){ yfOn.addEventListener('change', yfSkrifa); }
       if(yfThr){ yfThr.addEventListener('change', yfSkrifa); yfThr.addEventListener('click', e => e.preventDefault()); }
@@ -12202,6 +12209,10 @@ async function renderGerdReikninga(t){
         if(yfc) yfc.onchange=()=>{ tbkYf.on=yfc.checked; tbkSync(true); paintTbk(); };
         if(thr) thr.addEventListener('change', ()=>{ const v=tbkNum(thr.value); tbkYf.thr=v>0?v:8; tbkSync(true); paintTbk(); });
       }
+      // Yfirvinnu-stillingin er sett HEDAN (kafli 02 speglar hana) - beint i tbkYf svo
+      // endurteikning panelsins geti ekki etid breytinguna a leidinni.
+      bg.__tbkSetYf = (on, thr) => { tbkYf.on = !!on; const v = tbkNum(thr); if(v > 0) tbkYf.thr = v; tbkSync(true); paintTbk(); };
+      bg.__tbkGetYf = () => ({ on: !!tbkYf.on, thr: tbkYf.thr });
       if(tbkSaved && Array.isArray(tbkSaved.rows)){ tbkRows=tbkSaved.rows.map(r=>({...r})); tbkSort(); paintTbk(); }
       else if(name && /^\d{4}-\d{2}$/.test(String(month))){ fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&${grPeriodQS}`).then(r=>r.json()).then(d=>{ tbkRows=(d.rows||[]).map(r=>({date:r.date||'',employee:r.employee||'',time_in:r.time_in||'',time_out:r.time_out||'',hours:Number(r.hours)||0})); tbkSort(); paintTbk(); }).catch(()=>{ const b=document.getElementById('gr-tbk-body'); if(b) b.innerHTML='<div class="gr-tbk-empty">Gat ekki sótt Tímaveru — bættu við með ＋.</div>'; }); }
       else { paintTbk(); }
