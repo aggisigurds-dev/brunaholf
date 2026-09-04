@@ -249,6 +249,7 @@ async function safnaRukkun() {
   ]);
   const verk = (stada.verk || []).filter(v => !v.hidden);
   const osend = verk.filter(v => !v.sent);
+  const send = verk.filter(v => v.sent);          // send i bokun, bida Payday-reiknings
   const tilbuin = osend.filter(v => v.ready);
   const kr = (a) => Math.round(a.reduce((sum, v) => sum + (Number(v.fixed) > 0 ? Number(v.fixed) : (Number(v.total) || 0)), 0));
   const olag = [...(teng.sources || []), ...(teng.email_accounts || [])].filter(x => x && x.status && x.status !== 'fresh');
@@ -258,6 +259,8 @@ async function safnaRukkun() {
     tilbuid_kr: kr(tilbuin),
     osend_drog: osend.length,
     osend_kr: kr(osend),
+    send_i_bokun: send.length,
+    send_i_bokun_kr: kr(send),
     bida_punkta_eda_upplysinga: osend.length - tilbuin.length,
     kunnar_slokkvitaekis_med_punkta: (stada.kunnar || []).length,
     punktar_i_innholfi: punktar.length,
