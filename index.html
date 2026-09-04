@@ -15691,7 +15691,9 @@ async function renderKrofuyfirlit(t){
     const numIS = v => (Math.round(Number(v)||0)).toLocaleString('is-IS').replace(/,/g,'.');
     const hoursDisp = (Math.round(n.hours*100)/100).toString().replace('.',',');
     // Grænt = skjalið er TIL (búið til í Gerð Reikninga/Tímaskýrslu) — ekki inline-vistun.
-    const _docs = (n.ws&&n.wm) ? (EFDOCS[n.ws+'|'+n.wm]||[]) : [];
+    // 🔒 innra = innri viðhengi (skjáskot úr Athugasemd o.þ.h.) — sendast aldrei og
+    // mega ekki verða 📄 Efnislista-tengillinn hér (var að gerast, lagað 04.09.2026).
+    const _docs = ((n.ws&&n.wm) ? (EFDOCS[n.ws+'|'+n.wm]||[]) : []).filter(d=>d.doc_type!=='innra');
     const timDoc = _docs.find(d=>d.doc_type==='timabok_pdf');
     // ⭐ Aðalskjal mánaðarins gengur fyrir (t.d. Landsspítala-uppgjörið sem ER reikningurinn);
     // annars fyrsta skjalið sem er ekki tímaskýrsla. 📑 = samsett Efnislisti + Tímaskýrsla.
