@@ -15709,6 +15709,10 @@ async function renderKrofuyfirlit(t){
     // The Big Boss appið). Aðeins á röðum sem eiga invoice_drafts-röð (REVIEWS).
     const rv = (n.ws&&n.wm) ? REVIEWS[n.ws+'|'+n.wm] : null;
     const rvOn = !!(rv && rv.review_requested);
+    // Samið/fast verð í Efnislistanum ræður upphæðinni (Landspítala-uppgjörið er
+    // dæmið: verkið á engan raunverulegan efnislista). Þá er gróf-áætlunin úr
+    // klst × taxta + Redder villandi — hún fer, tímarnir standa eftir.
+    const fastVerd = !!(rv && Number(rv.fixed_total) > 0);
     const rvConf = !!(rv && rv.review_confirmed_at);
     // INLINE á sömu línu og upphæðin — eins og Greitt/Fela chipparnir í þrepi 1
     // og 6-takka röðin í Slökkvitæki-viðmiðinu. Chipparnir fara gegnum SAMA
@@ -15735,11 +15739,11 @@ async function renderKrofuyfirlit(t){
     const heildAnVsk = (Number(inv.amount||0) || Number(n.total||0)) / (1 + (n.vsk/100));
     const efniPct = (n.redder > 0 && heildAnVsk > 0) ? Math.round((n.redder / heildAnVsk) * 100) : null;
     const vinnaPct = (n.dagvinna > 0 && heildAnVsk > 0) ? Math.round((n.dagvinna / heildAnVsk) * 100) : null;
-    const timCap = cap(`🕒 ${hoursDisp}${vinnaPct != null ? ` <b class="ky-pct">${vinnaPct}%</b>` : ' klst'}`,
-      'Klukkustundir úr Tímaveru' + (vinnaPct != null ? ' — vinnan (klst × taxti) er ' + vinnaPct + '% af upphæð raðarinnar án vsk' : ''));
-    const efnCap = cap(`🧱 ${numIS(n.redder)}${efniPct != null ? ` <b class="ky-pct">${efniPct}%</b>` : ''}`,
+    const timCap = cap(`🕒 ${hoursDisp}${(!fastVerd && vinnaPct != null) ? ` <b class="ky-pct">${vinnaPct}%</b>` : ' klst'}`,
+      'Klukkustundir úr Tímaveru' + (fastVerd ? ' — fast verð ræður upphæðinni, svo hlutfall er ekki sýnt' : (vinnaPct != null ? ' — vinnan (klst × taxti) er ' + vinnaPct + '% af upphæð raðarinnar án vsk' : '')));
+    const efnCap = fastVerd ? '' : cap(`🧱 ${numIS(n.redder)}${efniPct != null ? ` <b class="ky-pct">${efniPct}%</b>` : ''}`,
       'Redder-innkaup mánaðarins án vsk' + (efniPct != null ? ' — ' + efniPct + '% af upphæð raðarinnar án vsk' : ''));
-    const estCap = cap(`≈ ${numIS(n.total)}`,
+    const estCap = fastVerd ? '' : cap(`≈ ${numIS(n.total)}`,
       'Gróf áætlun: klst × taxti + smáhlutagjald + Redder-efni, m/vsk. Hún þekkir hvorki staðfestingargjald, akstur, afslátt né efni á söluverði'
       + (munur ? ' — drögin sjálf segja ' + numIS(inv.amount) + ' og sú tala ræður.' : '.'));
     const rvHtml = rvConf
