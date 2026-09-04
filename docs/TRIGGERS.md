@@ -37,6 +37,7 @@ base 293, Hlaðvarpinn, Steypustöðin 2026.
 | `para` / `þekja` / `gloppa` / `vantar að rukka` | `sara-organizer` *(brunaholf)* | Pör skýrsla↔reikningur, `v_bundle_coverage`, aldrei ágiskun. |
 | `reikningur` / `sala` / `POS` / `Payday` / `dkPlus` / `afsláttur` | `sala-reikningar` | Sala, reikningagerð, PDF-vistun, póstur. ALLTAF LEYFA VISTUN. |
 | `krafa` / `kröfur` / `útistandandi` | `sala-reikningar` + `bokari` *(brunaholf)* | Kröfuyfirlit / AR. Bókari sannreynir tölu. |
+| `rukka` / `rukkunarmál` / `reikningalota` / `klára reikninga` / `hvað er tilbúið að senda` | `rukkari` *(brunaholf, spegill í slokkvitaeki)* | Stjórnar allri lotunni: les REIKNINGALOTA.md, tengingar, Drög-stöð, póstur; kallar á bokari / sala-reikningar / eldklar-postur. Útskýrir sig sjálfur — Agnar útskýrir ekkert. |
 | `taxti` / `VSK` / `NLSH` / `uppgjör` / `stemmir tala` | `bokari` *(brunaholf)* | Verðleggja, efnislisti, af hverju tala stemmir ekki. |
 | `audit` / `samræmi` / `stemmir` / `passar magnið` | `uttekt-audit` | Magn á tækjalista ↔ skýrslu ↔ reikningi. Lesaðeins. `docs/SAMRAEMI-<ár>.md`. |
 | `RLS` / `policy` / `lekt` / `anon` / `bucket` | `oryggi` *(brunaholf)* | RLS-staða, policies, lyklar. Áður en ný tafla fer í loftið. |

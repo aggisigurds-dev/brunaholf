@@ -8,6 +8,10 @@
 >
 > Reglan um staðreyndir gildir: tölur og kúnna-staðreyndir búa í `docs/STADREYNDIR.md`
 > og gagnagrunninum — hér er kortið og rútínan, ekki afrit af tölum.
+>
+> **Agentinn sem á þetta skjal: `rukkari` 🦆** (`.claude/agents/rukkari.md`, spegill í
+> slokkvitaeki) — kallaðu á hann og hann gerir kafla 1 sjálfur, kallar á bokari /
+> sala-reikningar / eldklar-postur og heldur utan um lotuna.
 
 ---
 

@@ -8,6 +8,9 @@ description: Byrja reikningalotu með Agnari án þess að hann þurfi að útsk
 Lestu **`docs/REIKNINGALOTA.md`** fyrst — allt sem Agnar hefur þurft að endurtaka
 (félögin, flæðin, afslættirnir, pósturinn) stendur þar. Spurðu ekki um það.
 
+Sé Agent-tólið tiltækt: kallaðu á **`rukkari`** (🦆) — hann keyrir þessa rútínu, kallar á
+bokari / sala-reikningar / eldklar-postur og heldur utan um lotuna. Skillinn er handvirka leiðin.
+
 ## Rútínan (5 mín, engar spurningar)
 
 1. `GET https://brunaholf.netlify.app/api/data-sources-status` → tengingar. Nefndu

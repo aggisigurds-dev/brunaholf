@@ -88,6 +88,7 @@ fært, orðrétt. Hver þeirra hleðst AÐEINS þegar hann er kallaður til.
 | RLS, policies, lyklar/tokens, public buckets — öryggið | `oryggi` | 🔒 *(rödd óvalin)* |
 | Hype-yfirlitið — sigrarnir fyrst, svo það sem á að klára | `hype` | 🇺🇸 Trump |
 | Staðreyndayfirferð — kerfið segir eitt, gögnin annað (factcheck_bord) | `natalie` | 🌸 Natalie |
+| Rukkunarmál beggja félaga — reikningalota, hvað er tilbúið að senda, punktar, póstur, tengingar; stjórnar bokari / sala-reikningar / eldklar-postur og les REIKNINGALOTA.md sjálfur | `rukkari` | 🦆 Jóakim aðalönd |
 
 **Notkun:** kallaðu á sérfræðinginn með Agent-tólinu (`subagent_type`), eða lestu skrána
 hans beint þegar þú þarft bara þekkinguna. **Ekki afrita innihald þeirra hingað** — ein
