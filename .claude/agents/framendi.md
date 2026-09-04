@@ -290,3 +290,31 @@ tekjur (klárað en ógreitt). `renderSkyrslur(t)` í `index.html`.
   með `source_app:'slokkvitaeki'`.
 - **Eftir**: merkja fleiri innbyggða glugga (Krófur & Tekjur, Slökkvitæki „í vinnslu");
   „Admin mode" takki við klukkuna (báðar síður) fyrir handvirkar leiðréttingar í summum.
+
+## ➕ Stofna nýtt verk (Kröfu yfirlit) — 2026-09-04
+
+Takki `.kyf-new` (Boss-gull) í `.kyf-toolbar`, við hlið 🖨 Prenta. Opnar
+`openNyttVerkModal()` (skilgreint rétt á undan `openCombineModal`) — glugga sem
+býr til **splunkunýtt verk handvirkt**: verkstaður, mánuður, greiðandi + kt, klst
+dagvinnu/eftirvinnu + taxtar, efniskostnaður, fast verð m/vsk og athugasemd.
+
+- Skrifar `invoice_drafts`-röð með `source:"handvirkt"`, `status:"draft"` og
+  reiknuðum `net_an_vsk` / `vsk_amount` / `total_m_vsk` (fast verð yfirríður og
+  bakreiknar netto). Röðin birtist strax í **Ósendum (þrepi 2)** — muna að þrep 2
+  sleppir röðum með `total_m_vsk = 0` (glugginn varar við því).
+- Verkstaður sem er í Verðskránni fyllir sjálfkrafa greiðanda, kt og taxta úr `PG`;
+  greiðanda-listinn kemur úr `PG` + skuldurum þrepa 1–2.
+- „🧾 Stofna og opna Efnislista" kallar `grOpenWorksite(ws, month)` eftir vistun.
+- Handvirk verk eiga **engan Tímaveru-verkstað**, svo `renderList()` í Gerð
+  Reikninga bætir nú við spjaldi fyrir drög mánaðarins sem eiga enga `WS`-röð
+  (annars sæjust þau hvergi þar).
+
+## ⭐ Aðalskjal mánaðarins — 2026-09-04
+
+`☆`/`⭐` takki (`.grp-star`) í „Vistuð PDF-skjöl" listanum → `/api/efnislisti-docs`
+`{action:"set_primary", worksite_name, work_month, drive_file_id}`; **tómt**
+`drive_file_id` tekur merkinguna af. Ein merking per (verkstaður, mánuður).
+Aðalskjalið ræður 📄-tenglinum í Kröfuyfirliti (`primDoc` í `wfStrip`) og fer
+fremst í „Senda í bókun" — þannig verður aðsent uppgjörsskjal (Landsspítalinn)
+skjalið sem birtist og sendist. 🔒 `innra` fær engan takka og er nú **síað úr**
+`_docs` í `wfStrip` (skjáskot úr Athugasemd voru að lenda á 📄-tenglinum).
