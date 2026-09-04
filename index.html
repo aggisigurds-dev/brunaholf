@@ -15612,7 +15612,7 @@ async function renderKrofuyfirlit(t){
              kveikja aftur: fjarlægja false&& hér. */''}
         ${false&&rv?wfBtn('rev','review','👔','Yfirferð','var(--blue-deep)',rvOn?'Taka úr yfirferð (afturkalla beiðni)':'Senda Efnislistann í yfirferð til yfirmanns (birtist í The Big Boss appinu)',rvOn):''}
         ${wfBtn('conf','confirm','✓','Staðfest','var(--green)',conf?'Staðfest — smelltu aftur til að af-staðfesta':'Staðfesta',conf)}
-        ${wfBtn('send','send','📤',inv.sent?'Krafa send':'Senda Kröfu','var(--green)',inv.sent?'Þegar sent':'Senda á bókara',!!inv.sent)}
+        ${wfBtn('send','send','📤',inv.sent?'Sent í bókun':'Senda í bókun','var(--green)',inv.sent?'Þegar sent í bókun':'Senda skjölin á bókarann — þú velur hvaða skjöl fara með',!!inv.sent)}
         ${wfBtn('mark','sentmark','📨','Krafa send','var(--green)',sentMarked(inv.inv_key)?'Merkt sem send — smelltu til að afmerkja (handvirkt merki, engin skrif í kerfið)':'Merkja handvirkt að krafan sé send — verður grænt, gerir ekkert annað',sentMarked(inv.inv_key))}
         ${sentTrail}
       </span>
@@ -16330,14 +16330,16 @@ async function renderKrofuyfirlit(t){
         renderList(); return;
       }
       if(act==='send'){
-        if(iv.sent && !confirm('Þegar sent. Senda aftur?')) return;
+        if(iv.sent && !confirm('Þegar sent í bókun. Senda aftur?')) return;
         const ws=iv.worksite||'', wm=iv.work_month||'', cust=iv.customer||ws;
         let to='bokhald@brunaholf.is'; try{ to=localStorage.getItem('email_to')||to; }catch(_){}
         if(cust){ try{ const ci=await fetch('/api/customer-info?name='+encodeURIComponent(cust)).then(r=>r.ok?r.json():null); if(ci&&ci.rows&&ci.rows[0]&&ci.rows[0].contact_email) to=ci.rows[0].contact_email; }catch(_){} }
-        const docs=((ws&&wm)?(EFDOCS[ws+'|'+wm]||[]):[]).filter(d=>d.drive_file_id && d.doc_type!=='innra'); // 🔒 innri viðhengi fara ALDREI með
-        if(!docs.length && !confirm('Ekkert vistað Efnislisti/Tímaskýrsla PDF fyrir '+(ws||'—')+' '+(wm||'')+'.\nVista fyrst með „💾 Vista PDF". Senda samt án viðhengja?')) return;
-        // Senda er óafturkræft (póstur út) — ein staðfesting svo óvart-smellur sendi ekki.
-        if(docs.length && !confirm('Senda '+docs.length+' skjal á '+to+'?')) return;
+        let docs=((ws&&wm)?(EFDOCS[ws+'|'+wm]||[]):[]).filter(d=>d.drive_file_id && d.doc_type!=='innra'); // 🔒 innri viðhengi fara ALDREI með
+        // Gluggi í stað confirm (Agnar 04.09.2026): velja skjölin sem fara með.
+        const val = await bhSendaBokunDialog({ ws, wm, cust, to, amount: iv.amount, docs });
+        if(!val) return;
+        to = val.to;
+        docs = val.docs;
         const by=bhMe();
         const restore=spinBtn(b);
         const attachments = docs.map(d=>{ const fn=((d.title||(d.doc_type==='timabok_pdf'?'Tímaskýrsla':'Efnislisti'))).replace(/\.pdf$/i,'')+'.pdf'; return d.public_url ? { filename:fn, url:d.public_url } : { filename:fn, driveId:d.drive_file_id }; });
@@ -16367,6 +16369,69 @@ async function renderKrofuyfirlit(t){
         if(bx && listEl.contains(bx)){ e.stopPropagation(); await handleKyBx(bx); return; }
       });
     }
+  }
+
+
+  // 🏦 „Senda í bókun" glugginn (Agnar 04.09.2026 — eins og í slokkvitaeki): sýnir hvert
+  // er sent og lista yfir skjölin sem hanga á verkinu með hakreitum. Efnislisti/Tímaskýrsla
+  // og 📎 viðhengi eru sjálfgefið hökuð; 🔒 innri viðhengi komast aldrei í listann.
+  function bhSendaBokunDialog(o){
+    return new Promise(resolve => {
+      const esc2 = s => escapeHtml(String(s == null ? '' : s));
+      const kr = n => Math.round(Number(n)||0).toLocaleString('is-IS');
+      const teg = d => d.doc_type === 'timabok_pdf' ? ['Tímaskýrsla','var(--blue)']
+                     : d.doc_type === 'vidhengi' || d.doc_type === 'efnislisti' ? ['Viðhengi','var(--gold-deep)']
+                     : ['Efnislisti','var(--green)'];
+      const old = document.getElementById('bh-bokun-modal'); if(old) old.remove();
+      const w = document.createElement('div');
+      w.id = 'bh-bokun-modal';
+      w.style.cssText = 'position:fixed;inset:0;z-index:100080;background:rgba(10,10,9,.6);display:flex;align-items:center;justify-content:center;padding:18px';
+      const rows = (o.docs||[]).map((d,i) => {
+        const t = teg(d);
+        return '<label style="display:flex;align-items:center;gap:10px;padding:9px 11px;border-top:1px solid var(--line);cursor:pointer">'
+          + '<input type="checkbox" class="bh-bokun-doc" data-i="'+i+'" checked style="width:17px;height:17px;accent-color:#2f7a4a;flex:none">'
+          + '<span style="display:inline-block;padding:1px 8px;border-radius:99px;font-size:10.5px;font-weight:700;white-space:nowrap;background:var(--bg-2);color:'+t[1]+'">'+t[0]+'</span>'
+          + '<span style="flex:1;min-width:0;font-size:12.5px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+escapeAttr(d.title||'')+'">'+esc2(d.title||d.doc_type)+'</span>'
+          + '<a href="'+escapeAttr(bhDocUrl(d))+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="font-size:11.5px;color:var(--blue);text-decoration:none;flex:none">👁 opna</a>'
+          + '</label>';
+      }).join('');
+      w.innerHTML = '<div style="background:var(--card,#fff);border:1px solid var(--line-2);border-radius:14px;max-width:560px;width:100%;max-height:88vh;overflow:auto;box-shadow:0 24px 60px rgba(0,0,0,.4)">'
+        + '<div style="padding:16px 18px 12px;border-bottom:1px solid var(--line-2)">'
+        +   '<div style="font-family:var(--font-display,inherit);font-size:19px;font-weight:700;color:var(--ink)">🏦 Senda í bókun</div>'
+        +   '<div style="font-size:13px;color:var(--muted);margin-top:3px">'+esc2(o.cust||o.ws||'')+(o.wm?' · '+esc2(o.wm):'')+(o.amount?' · <b style="color:var(--ink)">'+kr(o.amount)+' kr</b>':'')+'</div>'
+        + '</div>'
+        + '<div style="padding:12px 18px 0">'
+        +   '<label style="display:block;font-family:var(--font-mono,ui-monospace,monospace);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Sendist á</label>'
+        +   '<input id="bh-bokun-to" value="'+escapeAttr(o.to||'')+'" style="width:100%;box-sizing:border-box;height:38px;padding:0 11px;border:1px solid var(--edge);border-radius:7px;background:var(--input-bg,#f6f3ec);font:inherit;font-size:13.5px;color:var(--ink)">'
+        + '</div>'
+        + '<div style="padding:14px 18px 0">'
+        +   '<div style="display:flex;align-items:center;gap:8px;font-family:var(--font-mono,ui-monospace,monospace);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">Skjöl sem fylgja'
+        +     (o.docs && o.docs.length ? '<button type="button" id="bh-bokun-all" style="margin-left:auto;border:0;background:transparent;color:var(--blue);font:inherit;font-size:11px;cursor:pointer;letter-spacing:0;text-transform:none">velja allt / ekkert</button>' : '')
+        +   '</div>'
+        +   (o.docs && o.docs.length
+              ? '<div style="border:1px solid var(--line-2);border-radius:9px;margin-top:7px;overflow:hidden">'+rows+'</div>'
+              : '<div style="margin-top:7px;padding:12px 14px;border:1px dashed var(--edge);border-radius:9px;font-size:12.5px;color:var(--warn)">Engin vistuð skjöl fyrir '+esc2(o.ws||'—')+' '+esc2(o.wm||'')+'. Búðu til PDF í Efnislistanum eða sendu án viðhengja.</div>')
+        +   '<div style="font-size:11.5px;color:var(--muted);margin-top:8px">🔒 Innri viðhengi fara aldrei með — þau sjást hvorki hér né í póstinum.</div>'
+        + '</div>'
+        + '<div style="display:flex;gap:9px;justify-content:flex-end;padding:16px 18px 18px">'
+        +   '<button type="button" id="bh-bokun-x" style="padding:9px 16px;border:1px solid var(--edge);border-radius:8px;background:var(--card);color:var(--ink-2);font:inherit;font-size:13px;cursor:pointer">Hætta við</button>'
+        +   '<button type="button" id="bh-bokun-go" style="padding:9px 18px;border:1px solid #1e5c37;border-radius:8px;background:linear-gradient(180deg,#3f9a61,#2f7a4a);color:#fff;font:inherit;font-size:13px;font-weight:700;cursor:pointer">📤 Senda í bókun</button>'
+        + '</div></div>';
+      document.body.appendChild(w);
+      const done = v => { w.remove(); resolve(v); };
+      w.addEventListener('click', e => { if(e.target === w) done(null); });
+      w.querySelector('#bh-bokun-x').onclick = () => done(null);
+      const all = w.querySelector('#bh-bokun-all');
+      if(all) all.onclick = () => { const cbs=[...w.querySelectorAll('.bh-bokun-doc')]; const on=cbs.some(c=>!c.checked); cbs.forEach(c=>c.checked=on); };
+      w.querySelector('#bh-bokun-go').onclick = () => {
+        const to = (w.querySelector('#bh-bokun-to').value||'').trim();
+        if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)){ alert('Netfang lítur ekki rétt út.'); return; }
+        const valdir = [...w.querySelectorAll('.bh-bokun-doc')].filter(c=>c.checked).map(c=>o.docs[Number(c.dataset.i)]).filter(Boolean);
+        if(!valdir.length && (o.docs||[]).length && !confirm('Ekkert skjal valið — senda samt án viðhengja?')) return;
+        done({ to, docs: valdir });
+      };
+      setTimeout(()=>{ const g=w.querySelector('#bh-bokun-go'); if(g) g.focus(); }, 30);
+    });
   }
 
   // Stale-while-revalidate skyndiminni (lifir milli síðu-flakks). Þegar notandi
