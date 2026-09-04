@@ -99,11 +99,12 @@ button{cursor:pointer}
 }
 
 /* ======= Layout ======= */
-main{padding:26px 30px 28px;max-width:1240px;margin:0 auto;flex:1;min-width:0;width:100%}
+main{padding:26px 30px 28px;max-width:1560px;margin:0 auto;flex:1;min-width:0;width:100%}
 body.wide-view main{max-width:none}   /* Skyrslu-stodin: taflan + forskodunin nyta allan skjainn (Agnar 04.09.2026) */
 @media(max-width:780px){ main{padding:14px 12px 24px} }
 /* Wide tabs (Vinnubók / Reikningagerð) get the full sidebar-to-edge width */
 body[data-tab="vinnubok"] main,
+body[data-tab="krofuyfirlit"] main,
 body[data-tab="reikningar"] main{max-width:none;padding:14px 24px}
 /* Skjala-multitool fyllir alla breidd (iframe með eigin útliti) — engin padding/hámark */
 body[data-tab="multitool"] main{max-width:none;padding:0}
