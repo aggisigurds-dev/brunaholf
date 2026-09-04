@@ -15751,7 +15751,7 @@ async function renderKrofuyfirlit(t){
     const rvHtml = rvConf
       ? `<span class="ky-rv ok" title="Yfirmaður staðfesti í yfirferð">👔 Staðfest · ${esc(rv.review_confirmed_by||'')} ${rv.review_confirmed_at?esc(fmtDate(rv.review_confirmed_at)):''}</span>`
       : rvOn ? `<span class="ky-rv wait" title="Bíður yfirferðar yfirmanns (The Big Boss appið)">👔 Í yfirferð</span>` : '';
-    return `<span class="ky-wf-boxes" style="display:inline-flex;flex:0 0 534px;width:534px;flex-direction:column;align-items:flex-end;gap:3px">
+    return `<span class="ky-wf-boxes" style="display:inline-flex;flex:0 0 379px;width:379px;flex-direction:column;align-items:flex-end;gap:3px">
       <span style="display:inline-flex;align-items:center;gap:9px;flex-wrap:nowrap;${hasNums?'margin-bottom:27px':''}">
         ${withCap(wfBtn('tim','opentim','🕒','Tímask.','var(--blue-deep)','Opna Tímaskýrslu',!!timDoc), timCap)}${pdfLink(timDoc?bhDocUrl(timDoc):null,'Opna Tímaskýrslu PDF')}
         ${withCap(wfBtn('efn','openefn','📄','Efnisl.','var(--blue-deep)','Opna Efnislista í Gerð Reikninga',!!efnDoc), efnCap)}${pdfLink(efnDoc?bhDocUrl(efnDoc):null, primDoc ? ('⭐ Aðalskjal mánaðarins: ' + esc(primDoc.title||'')) : 'Opna Efnislista PDF')}${bothLink}
