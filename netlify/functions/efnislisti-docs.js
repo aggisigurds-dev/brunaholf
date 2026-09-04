@@ -29,6 +29,23 @@ exports.handler = async (event) => {
     let body;
     try { body = JSON.parse(event.body || '{}'); }
     catch { return json(400, { error: 'Invalid JSON' }); }
+    // ⭐ Aðalskjal mánaðarins (Agnar 04.09.2026): merkja EITT skjal sem það sem birtist
+    // á 📄-hlekknum og fer efst/hakað í „Senda í bókun" — t.d. Landsspítala-uppgjörið
+    // sem ER reikningurinn. Hin skjöl mánaðarins missa merkinguna sjálfkrafa.
+    if (body.action === 'set_primary') {
+      const ws = String(body.worksite_name || '').trim(), wm = String(body.work_month || '').trim();
+      const fid = String(body.drive_file_id || '').trim();
+      if (!ws || !wm) return json(400, { error: 'worksite_name + work_month vantar' });
+      const base = `${SUPABASE_URL}/rest/v1/efnislisti_documents?worksite_name=eq.${encodeURIComponent(ws)}&work_month=eq.${encodeURIComponent(wm)}`;
+      const h = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' };
+      const clear = await fetch(`${base}&is_primary=is.true`, { method: 'PATCH', headers: h, body: JSON.stringify({ is_primary: false }) });
+      if (!clear.ok) return json(clear.status, { error: (await clear.text()).slice(0, 300) });
+      if (!fid) return json(200, { ok: true, primary: null });   // tómt fid = taka merkinguna af
+      const set = await fetch(`${base}&drive_file_id=eq.${encodeURIComponent(fid)}`, { method: 'PATCH', headers: h, body: JSON.stringify({ is_primary: true }) });
+      if (!set.ok) return json(set.status, { error: (await set.text()).slice(0, 300) });
+      const rows = await set.json();
+      return json(200, { ok: true, primary: rows[0] || null });
+    }
     if (!body.worksite_name || !body.work_month || !body.drive_file_id) {
       return json(400, { error: 'worksite_name + work_month + drive_file_id required' });
     }

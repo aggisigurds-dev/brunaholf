@@ -40,7 +40,7 @@ exports.handler = async (event) => {
   // reikningur mánaðarins — sama doc_type og eldri uppgjörs-PDF); 'vidhengi' = annað skjal sem fer með.
   // Bæði mega vera hvaða skráartegund sem er (eins og innra), en sendast — ólíkt innra.
   const ANY_FILE = new Set(['innra', 'efnislisti', 'vidhengi']);
-  const doc_type = (['timabok_pdf', 'innra', 'efnislisti', 'vidhengi'].includes(body.doc_type)) ? body.doc_type : 'efnislisti_pdf';
+  const doc_type = (['timabok_pdf', 'innra', 'efnislisti', 'vidhengi', 'efnislisti_timabok_pdf'].includes(body.doc_type)) ? body.doc_type : 'efnislisti_pdf';
   if (!fileName || !b64) return json(400, { error: 'fileName + contentBase64 required' });
   if (!worksite_name || !work_month) return json(400, { error: 'worksite_name + work_month required' });
 

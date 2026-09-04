@@ -11018,7 +11018,7 @@ async function renderGerdReikninga(t){
       const j = r.ok ? await r.json() : { rows: [] };
       // 'vidhengi'/'efnislisti' = aðsend skjöl sem hengd eru á mánuðinn (t.d. Landsspítala-uppgjörið
       // sem er reikningurinn fyrir verkið) — þau vantaði í listann og sáust hvergi (lagað 03.09.2026).
-      rows = (j.rows||[]).filter(d => ['efnislisti_pdf','timabok_pdf','innra','vidhengi','efnislisti'].includes(d.doc_type));
+      rows = (j.rows||[]).filter(d => ['efnislisti_pdf','efnislisti_timabok_pdf','timabok_pdf','innra','vidhengi','efnislisti'].includes(d.doc_type));
       // 🔒 innra viðhengi: sýnt hér (opna/sækja/eyða) en merkt — fer aldrei út.
       rows.forEach(d => {
         if(d.doc_type==='innra' && !/^🔒/.test(d.title||'')) d.title = '🔒 Innra (sendist ekki) · ' + (d.title||'');
@@ -11033,7 +11033,7 @@ async function renderGerdReikninga(t){
     box.innerHTML = head + `<table class="grp-tbl"><thead><tr>
         <th>Skjal</th><th>Verkstaður</th><th>Mánuður</th><th>Gert</th><th></th></tr></thead><tbody>
       ${rows.map(d=>{ const tb=d.doc_type==='timabok_pdf'; const att=(d.doc_type==='vidhengi'||d.doc_type==='efnislisti'); const url=bhDocUrl(d); const view=url; const dl=d.public_url?(d.public_url+(d.public_url.includes('?')?'&':'?')+'download='+encodeURIComponent(String(d.title||'skjal').replace(/\.pdf$/i,'')+'.pdf')):(d.drive_file_id&&!String(d.drive_file_id).startsWith('sb:')?`https://drive.google.com/uc?export=download&id=${d.drive_file_id}`:url); return `<tr data-fid="${escapeHtml(d.drive_file_id)}">
-        <td><span class="grp-badge ${tb?'tb':'ef'}">${tb?'Tímaskýrsla':att?'Viðhengi':'Efnislisti'}</span> ${escapeHtml(d.title||'')}</td>
+        <td><span class="grp-badge ${tb?'tb':'ef'}">${tb?'Tímaskýrsla':att?'Viðhengi':d.doc_type==='efnislisti_timabok_pdf'?'Efnisl. + Tímask.':'Efnislisti'}</span> ${d.is_primary?'<span title="Aðalskjal mánaðarins — birtist í Kröfuyfirliti og fer fremst í bókun" style="color:var(--gold-deep)">⭐</span> ':''}${escapeHtml(d.title||'')}</td>
         <td>${escapeHtml(d.worksite_name||'—')}</td>
         <td>${escapeHtml(d.work_month?monthLabel(d.work_month):'—')}</td>
         <td style="white-space:nowrap;color:var(--muted)">${dt(d.added_at)}</td>
@@ -11767,7 +11767,9 @@ async function renderGerdReikninga(t){
         const wsv = (K('gr-ws') || {}).value || '', custv = (K('gr-cust') || {}).value || '';
         sub('01', wsv.trim() + ' · ' + monthLabelStatic(month) + (custv.trim() ? ' · ' + custv.trim() : ' · verkkaupi vantar'));
         const fh = n => String(Math.round((n || 0) * 100) / 100).replace('.', ',');
-        sub('02', fh(c.dvH) + ' klst dv · ' + fh(c.evH) + ' ev · ' + (c.km || 0) + ' km');
+        // Hlutföll af upphæð án vsk (ósk Agnars 04.09.2026: „sýna prósentuna þarna").
+        const pctAf = v => (c.net > 0 && v > 0) ? ' · ' + Math.round((v / c.net) * 100) + '%' : '';
+        sub('02', fh(c.dvH) + ' klst dv · ' + fh(c.evH) + ' ev · ' + (c.km || 0) + ' km' + pctAf(c.dvAmt + c.evAmt));
         const SS = (id, v) => { const e = K(id); if(e && e.textContent !== v) e.textContent = v; };
         SS('gr-dv-sum', fmt(c.dvAmt)); SS('gr-ev-sum', fmt(c.evAmt)); SS('gr-akstur-sum', fmt(c.kmAmt + c.frAmt));
         bg.querySelectorAll('#gr-mats .gr-mat-line').forEach(l => { const p = Number((l.querySelector('.m-price') || {}).value) || 0, q = Number((l.querySelector('.m-qty') || {}).value) || 0; const e = l.querySelector('.m-sum'); const v = p && q ? fmt(p * q) : '—'; if(e && e.textContent !== v) e.textContent = v; });
@@ -11786,7 +11788,7 @@ async function renderGerdReikninga(t){
           else stripT.textContent = '✓ Tímabók og reikningur í takt' + (tb ? ' (' + tb + ' klst)' : '') + '.';
           const fb = K('gr-fill-hours'); if(fb) fb.style.display = mis ? '' : 'none';
         }
-        sub('03', c.matLines.filter(m => m.qty > 0 || m.total > 0).length + ' línur · Redder + Verðskrá');
+        sub('03', c.matLines.filter(m => m.qty > 0 || m.total > 0).length + ' línur · Redder + Verðskrá' + pctAf(c.matSum));
         sub('04', 'staðf. ' + (c.stadf ? '✓' : '–') + ' · smáhl. ' + (c.sma ? '✓' : '–') + ' · afsl. ' + (c.discPct || 0) + ' % · fast ' + (c.fixed > 0 ? fmt(c.fixed) : '—'));
         sub('05', ((K('gr-notes') || {}).value || '').trim().slice(0, 48) || 'innri — birtist ekki á skýrslu');
         const warns = [];
@@ -15653,7 +15655,15 @@ async function renderKrofuyfirlit(t){
     const hoursDisp = (Math.round(n.hours*100)/100).toString().replace('.',',');
     // Grænt = skjalið er TIL (búið til í Gerð Reikninga/Tímaskýrslu) — ekki inline-vistun.
     const _docs = (n.ws&&n.wm) ? (EFDOCS[n.ws+'|'+n.wm]||[]) : [];
-    const timDoc = _docs.find(d=>d.doc_type==='timabok_pdf'), efnDoc = _docs.find(d=>d.doc_type!=='timabok_pdf');
+    const timDoc = _docs.find(d=>d.doc_type==='timabok_pdf');
+    // ⭐ Aðalskjal mánaðarins gengur fyrir (t.d. Landsspítala-uppgjörið sem ER reikningurinn);
+    // annars fyrsta skjalið sem er ekki tímaskýrsla. 📑 = samsett Efnislisti + Tímaskýrsla.
+    const primDoc = _docs.find(d=>d.is_primary);
+    const bothDoc = _docs.find(d=>d.doc_type==='efnislisti_timabok_pdf');
+    const efnDoc = primDoc || _docs.find(d=>d.doc_type!=='timabok_pdf');
+    const bothLink = (bothDoc && bothDoc !== efnDoc)
+      ? '<a href=' + JSON.stringify(bhDocUrl(bothDoc)) + ' target="_blank" rel="noopener" title="Efnislisti + Tímaskýrsla (2 síður)" style="flex:0 0 auto;font-size:14px;text-decoration:none;align-self:center">📑</a>'
+      : '';
     const conf = !!n.wf.confirmed;
     // 👔 Yfirferð — flagga drögin til yfirferðar hjá yfirmanni (yfirferd.html /
     // The Big Boss appið). Aðeins á röðum sem eiga invoice_drafts-röð (REVIEWS).
@@ -15698,7 +15708,7 @@ async function renderKrofuyfirlit(t){
     return `<span class="ky-wf-boxes" style="display:inline-flex;flex:0 0 326px;width:326px;flex-direction:column;align-items:flex-end;gap:3px">
       <span style="display:inline-flex;align-items:center;gap:6px;flex-wrap:nowrap;${hasNums?'margin-bottom:14px':''}">
         ${withCap(wfBtn('tim','opentim','🕒','Tímask.','var(--blue-deep)','Opna Tímaskýrslu',!!timDoc), timCap)}${pdfLink(timDoc?bhDocUrl(timDoc):null,'Opna Tímaskýrslu PDF')}
-        ${withCap(wfBtn('efn','openefn','📄','Efnisl.','var(--blue-deep)','Opna Efnislista í Gerð Reikninga',!!efnDoc), efnCap)}${pdfLink(efnDoc?bhDocUrl(efnDoc):null,'Opna Efnislista PDF')}
+        ${withCap(wfBtn('efn','openefn','📄','Efnisl.','var(--blue-deep)','Opna Efnislista í Gerð Reikninga',!!efnDoc), efnCap)}${pdfLink(efnDoc?bhDocUrl(efnDoc):null, primDoc ? ('⭐ Aðalskjal mánaðarins: ' + esc(primDoc.title||'')) : 'Opna Efnislista PDF')}${bothLink}
         ${/* 👔 Yfirferð — SLÖKKT í bili (ósk Agnars 2026-09-03). Bakendinn
              (invoice_drafts.review_*) og yfirferd.html standa óhreyfð; til að
              kveikja aftur: fjarlægja false&& hér. */''}
@@ -16428,6 +16438,7 @@ async function renderKrofuyfirlit(t){
         if(cust){ try{ const ci=await fetch('/api/customer-info?name='+encodeURIComponent(cust)).then(r=>r.ok?r.json():null); if(ci&&ci.rows&&ci.rows[0]&&ci.rows[0].contact_email) to=ci.rows[0].contact_email; }catch(_){} }
         let docs=((ws&&wm)?(EFDOCS[ws+'|'+wm]||[]):[]).filter(d=>d.drive_file_id && d.doc_type!=='innra'); // 🔒 innri viðhengi fara ALDREI með
         // Gluggi í stað confirm (Agnar 04.09.2026): velja skjölin sem fara með.
+        docs = docs.slice().sort((a,b)=> (b.is_primary?1:0) - (a.is_primary?1:0));   // ⭐ aðalskjalið fremst
         const val = await bhSendaBokunDialog({ ws, wm, cust, to, amount: iv.amount, docs });
         if(!val) return;
         to = val.to;
@@ -16472,6 +16483,7 @@ async function renderKrofuyfirlit(t){
       const esc2 = s => escapeHtml(String(s == null ? '' : s));
       const kr = n => Math.round(Number(n)||0).toLocaleString('is-IS');
       const teg = d => d.doc_type === 'timabok_pdf' ? ['Tímaskýrsla','var(--blue)']
+                     : d.doc_type === 'efnislisti_timabok_pdf' ? ['Efnisl. + Tímask.','var(--green)']
                      : d.doc_type === 'vidhengi' || d.doc_type === 'efnislisti' ? ['Viðhengi','var(--gold-deep)']
                      : ['Efnislisti','var(--green)'];
       const old = document.getElementById('bh-bokun-modal'); if(old) old.remove();
@@ -16480,9 +16492,11 @@ async function renderKrofuyfirlit(t){
       w.style.cssText = 'position:fixed;inset:0;z-index:100080;background:rgba(10,10,9,.6);display:flex;align-items:center;justify-content:center;padding:18px';
       const rows = (o.docs||[]).map((d,i) => {
         const t = teg(d);
+        const adal = d.is_primary ? '<span title="Aðalskjal mánaðarins" style="color:var(--gold-deep);flex:none">⭐</span>' : '';
         return '<label style="display:flex;align-items:center;gap:10px;padding:9px 11px;border-top:1px solid var(--line);cursor:pointer">'
           + '<input type="checkbox" class="bh-bokun-doc" data-i="'+i+'" checked style="width:17px;height:17px;accent-color:#2f7a4a;flex:none">'
           + '<span style="display:inline-block;padding:1px 8px;border-radius:99px;font-size:10.5px;font-weight:700;white-space:nowrap;background:var(--bg-2);color:'+t[1]+'">'+t[0]+'</span>'
+          + adal
           + '<span style="flex:1;min-width:0;font-size:12.5px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+escapeAttr(d.title||'')+'">'+esc2(d.title||d.doc_type)+'</span>'
           + '<a href="'+escapeAttr(bhDocUrl(d))+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="font-size:11.5px;color:var(--blue);text-decoration:none;flex:none">👁 opna</a>'
           + '</label>';
@@ -21619,7 +21633,8 @@ async function buildAndSaveCombinedPdf(name, month, data, rows, yfCfg, overwrite
   doc.addPage();
   drawTimabokPage(doc, logo, name, month, rows, yfCfg);
   const fileName = bhPdfName('Efnislisti', { ws:data.ws||name, month }); // nafnið sem Agnar bað um — 2 síður samt
-  return bhSavePdfToSupabase(doc, { fileName, worksite_name:name, work_month:month, doc_type:'efnislisti_pdf', overwrite });
+  // Eigin tegund (04.09.2026) svo samsetta skjalið sjáist sér í Kröfuyfirliti og skjalalistum.
+  return bhSavePdfToSupabase(doc, { fileName, worksite_name:name, work_month:month, doc_type:'efnislisti_timabok_pdf', overwrite });
 }
 // Tímaskýrslu-raðir fyrir samsetta PDF-ið: vistað eintak (timabok_edits, sama
 // og Tímabókar-glugginn sýnir) ef til, annars beint úr Tímaveru.
