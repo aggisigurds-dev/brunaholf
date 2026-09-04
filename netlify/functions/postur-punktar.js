@@ -32,6 +32,8 @@ const NEG = [
 const BLOCK_DOMAINS = /(^|\.)(husa\.is|alfred\.is|google\.com|microsoft\.com|engagement\.microsoft\.com|unimaze\.com|veldix\.is|barki\.is|pitstop\.is|facebookmail\.com|linkedin\.com|apple\.com|payday\.is|netlify\.com|github\.com)$/i;
 const NOREPLY = /^(no-?reply|noreply|donotreply|notification|notifications|mailer-daemon|postmaster)@/i;
 const KT = /\b(\d{6})-?(\d{4})\b/g;
+// Eigin félög: kt Slökkvitækis stendur í hverjum reikningspósti sem VIÐ sendum — mátun á þau væri alltaf röng.
+const OWN = /^(brunah[óo]lf|sl[öo]kkvit[æa]ki|eldkl[áa]r)/i;
 
 const lc = (s) => String(s || '').trim().toLowerCase();
 const digits = (s) => String(s || '').replace(/\D/g, '');
@@ -76,9 +78,9 @@ exports.handler = async (event) => {
       // Kúnnamátun: kt í texta gengur fyrir, svo netfang, svo lén.
       let kunni = null, how = null;
       const kts = [...text.matchAll(KT)].map((x) => x[1] + x[2]);
-      for (const kt of kts) { const f = byKt.get(kt); if (f) { kunni = f; how = 'kt ' + kt.slice(0, 6) + '-' + kt.slice(6); break; } }
-      if (!kunni && byMail.has(from)) { kunni = byMail.get(from); how = 'netfang'; }
-      if (!kunni && byDom.has(dom)) { kunni = byDom.get(dom); how = 'lén'; }
+      for (const kt of kts) { const f = byKt.get(kt); if (f && !OWN.test(f.nafn || '')) { kunni = f; how = 'kt ' + kt.slice(0, 6) + '-' + kt.slice(6); break; } }
+      if (!kunni && byMail.has(from) && !OWN.test(byMail.get(from).nafn || '')) { kunni = byMail.get(from); how = 'netfang'; }
+      if (!kunni && byDom.has(dom) && !OWN.test(byDom.get(dom).nafn || '')) { kunni = byDom.get(dom); how = 'lén'; }
       const cid = 'mail:' + (m.message_id || ('id' + m.id));
       const snip = String(m.snippet || m.body_preview || '').replace(/\s+/g, ' ').trim().slice(0, 240);
       const att = Array.isArray(m.attachment_names) && m.attachment_names.length ? '\n📎 ' + m.attachment_names.slice(0, 3).join(', ') : '';
@@ -90,16 +92,30 @@ exports.handler = async (event) => {
         raw: '✉ ' + (m.sender_name || m.sender_email) + ' · ' + (m.subject || '(ekkert efni)') + ' (' + dmy(m.received_at) + ')\n' + snip + att,
       });
     }
-    if (action !== 'skra') return P.json(200, { ok: true, account: ACCOUNT, since, days, candidates, skipped, alls: mails.length });
+    // Þræðir: sama efni (Re:/FW: strípað) frá sama léni = EINN punktur með nýjasta póstinum, hinir taldir.
+    const groups = new Map();
+    for (const c of candidates) {
+      const key = lc(String(c.subject || '').replace(/^\s*((re|fw|fwd|sv|vs)\s*:\s*)+/i, '')) + '|' + domain(c.sender_email);
+      const g = groups.get(key);
+      if (!g) groups.set(key, c);
+      else if (String(c.received_at) > String(g.received_at)) { c.eldri = (g.eldri || 0) + 1; c.eldri_ids = [...(g.eldri_ids || []), g.client_id]; groups.set(key, c); }
+      else { g.eldri = (g.eldri || 0) + 1; g.eldri_ids = [...(g.eldri_ids || []), c.client_id]; }
+    }
+    const threads = [...groups.values()].map((c) => Object.assign(c, {
+      raw: c.raw + (c.eldri ? '\n(+' + c.eldri + ' eldri póst' + (c.eldri === 1 ? 'ur' : 'ar') + ' í sama þræði)' : ''),
+      already: c.already || (c.eldri_ids || []).map((id) => doneSet.get(id)).find(Boolean) || null,
+    }));
+    threads.sort((a, b) => String(b.received_at).localeCompare(String(a.received_at)));
+    if (action !== 'skra') return P.json(200, { ok: true, account: ACCOUNT, since, days, candidates: threads, threads: threads.length, raw_candidates: candidates.length, skipped, alls: mails.length });
 
     const created = []; let dup = 0;
-    for (const c of candidates) {
+    for (const c of threads) {
       if (c.already) { dup++; continue; }
       const r = await P.sbPost('reikningspunktar', { raw: c.raw, felag: 'slokkvitaeki', source: 'postur', author: 'Póstvörður · ' + ACCOUNT, client_id: c.client_id, status: 'nytt', worksite_name: c.kunni, attachments: [] });
       if (r.ok) { const rows = await r.json(); created.push({ id: rows[0] && rows[0].id, sender: c.sender, subject: c.subject, kunni: c.kunni }); }
       else if (r.status === 409) dup++;
     }
-    return P.json(200, { ok: true, account: ACCOUNT, since, days, created, already: dup, candidates: candidates.length, skipped });
+    return P.json(200, { ok: true, account: ACCOUNT, since, days, created, already: dup, candidates: threads.length, skipped });
   } catch (e) {
     return P.json(500, { error: e.message || String(e) });
   }
