@@ -4040,9 +4040,10 @@ function wireStation(){
       const all = porGroups();
       const rows = POR_ONLY() ? all.filter(r => !r.heilt || !r.stadfest) : all;   // ólokið = vantar hlið EÐA óstaðfest
       const nHeil = all.filter(r => r.stadfest).length;
+      const nOstadfest = all.filter(r => r.heilt && !r.stadfest).length;
       const nVantar = all.filter(r => !r.heilt && !r.oflokkad).length;
       const nOfl = all.filter(r => r.oflokkad).length;
-      const sum = '<span id="bk-st-por-sum-src" hidden>' + nHeil + '|' + nVantar + '|' + nOfl + '</span>';
+      const sum = '<span id="bk-st-por-sum-src" hidden>' + nHeil + '|' + nOstadfest + '|' + nVantar + '|' + nOfl + '</span>';
       if (!rows.length) return sum + '<div style="color:var(--muted);font-size:13px;padding:14px">' + (POR_ONLY() ? 'Allt parað og staðfest. 🎉' : 'Engin skjöl.') + '</div>';
       const th = '<thead><tr style="background:var(--tbl-header);color:var(--ink-2);font-size:11px;text-transform:uppercase;letter-spacing:.03em">'
         + '<th style="padding:7px 8px;text-align:left">Staður</th><th style="padding:7px 8px;text-align:left">Ár</th>'
@@ -4129,7 +4130,7 @@ function wireStation(){
         } catch (e) { setSt('Villa: ' + (e.message || e), 'var(--red)'); b.disabled = false; b.textContent = old; }
       }));
       const src = document.getElementById('bk-st-por-sum-src'), out = document.getElementById('bk-st-por-sum');
-      if (src && out) { const p = src.textContent.split('|'); out.textContent = p[0] + ' staðfest pör · ' + p[1] + ' vantar hlið · ' + p[2] + ' óflokkuð'; }
+      if (src && out) { const p = src.textContent.split('|'); out.textContent = p[0] + ' staðfest · ' + p[1] + ' óstaðfest · ' + p[2] + ' vantar hlið · ' + p[3] + ' óflokkuð'; }
     }
     // 🔁 Endurlesa öll skjöl félagsins úr INNIHALDI (felag-endurlestur) — lykkjar
     // batchað með lifandi log-línum + teljara; framvinda vistuð per base í
