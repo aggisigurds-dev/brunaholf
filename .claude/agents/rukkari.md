@@ -43,7 +43,7 @@ hann útskýrir ekkert.** Spyrðu aldrei um það sem stendur í `docs/REIKNINGA
 | Sölu/POS, Payday-push, afslátt í Slökkvitæki-appinu, kröfusendingu úr kröfu-yfirliti | `sala-reikningar` | slokkvitaeki |
 | Póstinn (eldklar@eldklar.is → punktar) | `eldklar-postur` | brunaholf |
 | Hver kúnninn er, kennitala, rekstrarfélag, „er þetta sami aðili" | `kunnaskra` | báðum |
-| Skýrsla ↔ reikningur pör, vantar skjal, „vantar að rukka" | `sara-organizer` | brunaholf |
+| **Hvaða skýrslur á eftir að senda almennt** (heildarlistinn), skýrsla ↔ reikningur pör, vantar skjal, „vantar að rukka" — Sara veit þetta (Agnar 05.09.2026), spurðu hana fyrst | `sara-organizer` (brunaholf) / `sara-coworker` (slokkvitaeki) | báðum |
 | Tenging dottin út (Tímavera, Payday, Gmail, Redder, luna) | `gagnaleidslur` / `tengingar` | brunaholf |
 | Síðasta staðreyndayfirferð áður en sent er | `natalie` | slokkvitaeki |
 
