@@ -14882,7 +14882,7 @@ async function renderDrogstod(t){
 
   // ── Skráning: strax, með biðröð ef netið dettur út (sama og verkstaða-appið) ──
   async function skra(raw, extra){
-    const body = Object.assign({ action:'add', raw, felag: state.ui.ds_felag, source:'hub', author:(typeof bhMe==='function'?bhMe():'')||null, client_id: uid() }, extra||{});
+    const body = Object.assign({ action:'add', raw, felag: felVal(), source:'hub', author:(typeof bhMe==='function'?bhMe():'')||null, client_id: uid() }, extra||{});
     try{ const j = await post(body); setSync('✓ skráð '+dt(new Date().toISOString())); return j.row; }
     catch(e){
       if(e.status===400 || e.status===401){ alert('✗ '+e.message); return null; }
@@ -14907,7 +14907,9 @@ async function renderDrogstod(t){
     }catch(e){ $view.querySelector('#ds-inn').innerHTML = '<div class="ds-empty" style="color:var(--red)">Villa: '+esc(e.message)+'</div>'; }
   }
   const finnaSel = () => { if(!sel || !STADA) return null; if(sel.startsWith('bh|')){ const [,ws,wm] = sel.split('|'); return (STADA.verk||[]).find(v=>v.ws===ws && v.wm===wm) ? {tegund:'bh',ws,wm} : null; } if(sel.startsWith('sl|')){ const k = sel.slice(3); return {tegund:'sl',kunni:k}; } return null; };
-  const synist = felag => state.ui.ds_syn==='baedi' || state.ui.ds_syn===felag;
+  const synVal = () => ['baedi','slokkvitaeki','brunaholf'].includes(state.ui.ds_syn) ? state.ui.ds_syn : 'baedi';
+  const felVal = () => FEL[state.ui.ds_felag] ? state.ui.ds_felag : 'slokkvitaeki';
+  const synist = felag => synVal()==='baedi' || synVal()===felag;
   const felChip = f => '<span class="ds-chip '+(f==='slokkvitaeki'?'sl':'bh')+'">'+esc(FEL[f]||f)+'</span>';
 
   // ── 01 Innhólf ───────────────────────────────────────────────────────────
@@ -15115,7 +15117,7 @@ async function renderDrogstod(t){
   }
   $view.querySelector('#ds-add').onclick = sendaInn;
   inp.addEventListener('keydown', e => { if(e.key==='Enter'){ e.preventDefault(); sendaInn(); } });
-  $view.querySelectorAll('#ds-felag button').forEach(b => b.onclick = () => { state.ui.ds_felag = b.dataset.f; save(); $view.querySelectorAll('#ds-felag button').forEach(x => x.className = x===b ? 'on '+(b.dataset.f==='slokkvitaeki'?'sl':'bh') : ''); inp.placeholder = PLH[state.ui.ds_felag]; inp.focus(); });
+  $view.querySelectorAll('#ds-felag button').forEach(b => b.onclick = () => { state.ui.ds_felag = b.dataset.f; save(); $view.querySelectorAll('#ds-felag button').forEach(x => x.className = x===b ? 'on '+(b.dataset.f==='slokkvitaeki'?'sl':'bh') : ''); inp.placeholder = PLH[felVal()]; inp.focus(); });
   $view.querySelectorAll('#ds-syn button').forEach(b => b.onclick = () => { state.ui.ds_syn = b.dataset.syn; save(); $view.querySelectorAll('#ds-syn button').forEach(x => x.classList.toggle('on', x===b)); teikna(); });
   $view.querySelector('#ds-refresh').onclick = load;
   $view.querySelector('#ds-ai-all').onclick = async () => {
