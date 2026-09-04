@@ -15335,13 +15335,25 @@ async function renderKrofuyfirlit(t){
 
   // ── 📨 Krafa send — handvirkt merki (ósk Agnars 2026-09-03) ───────────────
   // Gerir EKKERT annað en að verða grænt: enginn póstur, engin skrif í Payday,
-  // ekkert API. Merkið lifir á tækinu (localStorage) svo það haldist þótt listinn
-  // sé endurteiknaður eða síðan endurhlaðin. Þetta er vísvitandi aðskilið frá
-  // „📤 Senda Kröfu" sem sendir raunverulega póst á bókara.
-  const SENTMARK = (function(){ try{ return JSON.parse(localStorage.getItem('ky_sent_mark')||'{}'); }catch(_){ return {}; } })();
+  // ekkert API. Þetta er vísvitandi aðskilið frá „📤 Senda Kröfu" sem sendir
+  // raunverulega póst á bókara.
+  // 04.09.2026 (Agnar: „helst ekki inni milli tölva"): merkið bjó í localStorage og
+  // fylgdi því einu tæki. Það býr núna í state.ui.ky_sent_mark sem samstillist á
+  // þjóninn (/api/app-state) eins og aðrar hub-stillingar; gömlu tækis-merkin eru
+  // flutt yfir í fyrsta sinn svo ekkert tapist.
+  const SENTMARK = (function(){
+    state.ui = state.ui || {};
+    if(!state.ui.ky_sent_mark){
+      let old = {}; try{ old = JSON.parse(localStorage.getItem('ky_sent_mark')||'{}'); }catch(_){}
+      state.ui.ky_sent_mark = old || {};
+      if(Object.keys(state.ui.ky_sent_mark).length) save();
+    }
+    return state.ui.ky_sent_mark;
+  })();
   const sentMarked = k => !!SENTMARK[k];
   function toggleSentMark(k){
     if(SENTMARK[k]) delete SENTMARK[k]; else SENTMARK[k] = true;
+    state.ui.ky_sent_mark = SENTMARK; save();   // samstillist milli tölva
     try{ localStorage.setItem('ky_sent_mark', JSON.stringify(SENTMARK)); }catch(_){}
     return !!SENTMARK[k];
   }
