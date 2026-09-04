@@ -16079,9 +16079,12 @@ async function renderKrofuyfirlit(t){
     const primDoc = _docs.find(d=>d.is_primary);
     const bothDoc = _docs.find(d=>d.doc_type==='efnislisti_timabok_pdf');
     const efnDoc = primDoc || _docs.find(d=>d.doc_type!=='timabok_pdf');
+    // Skjala-tenglar sitja sem lítil merki á horni takkans — taka ekkert pláss í röðinni.
+    // (Tómu 17 px raufarnar sem héldu súlunum í línu gerðu bilin allt of löng — Agnar 05.09.2026.)
+    const BADGE = 'position:absolute;top:-7px;z-index:2;font-size:11px;line-height:1;text-decoration:none;background:var(--card,#fff);border:1px solid var(--line-2);border-radius:99px;padding:2px 3px;box-shadow:0 1px 2px rgba(0,0,0,.18)';
     const bothLink = (bothDoc && bothDoc !== efnDoc)
-      ? '<a href=' + JSON.stringify(bhDocUrl(bothDoc)) + ' target="_blank" rel="noopener" title="Efnislisti + Tímaskýrsla (2 síður)" style="flex:0 0 17px;width:17px;text-align:center;font-size:14px;text-decoration:none;align-self:center">📑</a>'
-      : '<span style="flex:0 0 17px;width:17px"></span>';
+      ? '<a href=' + JSON.stringify(bhDocUrl(bothDoc)) + ' target="_blank" rel="noopener" title="Efnislisti + Tímaskýrsla (2 síður)" style="' + BADGE + ';left:-7px">📑</a>'
+      : '';
     const conf = !!n.wf.confirmed;
     // 👔 Yfirferð — flagga drögin til yfirferðar hjá yfirmanni (yfirferd.html /
     // The Big Boss appið). Aðeins á röðum sem eiga invoice_drafts-röð (REVIEWS).
@@ -16099,8 +16102,7 @@ async function renderKrofuyfirlit(t){
     // eða flex-basis:100% — hvert þeirra þvingar klasann á sér línu aftur
     // (það var rótin að öllum fyrri umkvörtunum).
     const wfBtn=(box,act,icon,label,col,title,on)=>kyAbtn('ky-bx','data-box="'+box+'" data-act="'+act+'" data-key="'+key+'"',icon,label,col,title,on);
-    const RAUF = 'flex:0 0 17px;width:17px;text-align:center';   // fast pláss — tómt þegar skjal vantar
-    const pdfLink=(url,t)=> url ? `<a href="${esc(url)}" target="_blank" rel="noopener" title="${t}" style="${RAUF};font-size:14px;text-decoration:none;align-self:center">📄</a>` : `<span style="${RAUF}"></span>`;
+    const pdfLink=(url,t)=> url ? `<a href="${esc(url)}" target="_blank" rel="noopener" title="${t}" style="${BADGE};right:-7px">📄</a>` : '';
     const sentTrail = inv.sent ? `<span class="ky-rv ok" style="flex:0 0 auto;align-self:center">${(inv.sent_by?esc(inv.sent_by)+' · ':'')}${inv.sent_at?esc(fmtDate(inv.sent_at)):''}</span>` : '';
     // Litlu tölurnar (klst · efni · heild) — AÐEINS þegar eitthvað er reiknað;
     // annars bara takkar eins og í viðmiðinu (núll-línan var hávaði).
@@ -16112,7 +16114,7 @@ async function renderKrofuyfirlit(t){
     // undir Tímask., 🧱 efni · 📄 heild undir Efnisl. Textinn er absolute svo
     // hann breikkar ekki takkann; takkaröðin fær margin-bottom fyrir plássið.
     const cap = (txt,title)=> hasNums ? `<span class="ky-wf-cap" title="${title}">${txt}</span>` : '';
-    const withCap = (btn,capHtml)=> `<span style="position:relative;display:inline-flex;flex:0 0 auto">${btn}${capHtml}</span>`;
+    const withCap = (btn,capHtml,badge)=> `<span style="position:relative;display:inline-flex;flex:0 0 auto">${btn}${capHtml}${badge||''}</span>`;
     const munur = Math.abs(Number(inv.amount||0) - Number(n.total||0)) > 500;
     // Hlutföll: vinna og efni sem hlutfall af upphæð raðarinnar ÁN vsk (Redder er án vsk).
     const heildAnVsk = (Number(inv.amount||0) || Number(n.total||0)) / (1 + (n.vsk/100));
@@ -16121,27 +16123,30 @@ async function renderKrofuyfirlit(t){
     const timCap = cap(`🕒 ${hoursDisp}${(!fastVerd && vinnaPct != null) ? `<br><b class="ky-pct">${vinnaPct}%</b>` : '<br><span class="ky-eining">klst</span>'}`,
       'Klukkustundir úr Tímaveru' + (fastVerd ? ' — fast verð ræður upphæðinni, svo hlutfall er ekki sýnt' : (vinnaPct != null ? ' — vinnan (klst × taxti) er ' + vinnaPct + '% af upphæð raðarinnar án vsk' : '')));
     // 🧱 0 sagði ekkert og stóð á nær hverri röð — efnis-talan birtist aðeins þegar efni er til.
-    const efnCap = (fastVerd || !(n.redder > 0)) ? '' : cap(`🧱 ${numIS(n.redder)}${efniPct != null ? `<br><b class="ky-pct">${efniPct}%</b>` : ''}`,
+    const efnCap = fastVerd ? '' : cap(`🧱 ${numIS(n.redder)}${efniPct != null ? `<br><b class="ky-pct">${efniPct}%</b>` : ''}`,
       'Redder-innkaup mánaðarins án vsk' + (efniPct != null ? ' — ' + efniPct + '% af upphæð raðarinnar án vsk' : ''));
     const estCap = fastVerd ? '' : cap(`≈ ${numIS(n.total)}`,
       'Gróf áætlun: klst × taxti + smáhlutagjald + Redder-efni, m/vsk. Hún þekkir hvorki staðfestingargjald, akstur, afslátt né efni á söluverði'
       + (munur ? ' — drögin sjálf segja ' + numIS(inv.amount) + ' og sú tala ræður.' : '.'));
+    // Sendingardagsetningin situr sem tala undir Krafa send, í sömu línu og klst/efni/áætlun
+    // (var sér lína undir röðinni — Agnar 05.09.2026: í eðlilega línu miðað við hitt).
+    const sentCap = inv.sent ? `<span class="ky-wf-cap" title="${esc('Sent í bókun' + (inv.sent_by ? ' af ' + inv.sent_by : '') + (inv.sent_at ? ' ' + fmtDate(inv.sent_at) : ''))}">📤 ${esc(inv.sent_at ? fmtDate(inv.sent_at) : '')}${inv.sent_by ? '<br>' + esc(inv.sent_by) : ''}</span>` : '';
     const rvHtml = rvConf
       ? `<span class="ky-rv ok" title="Yfirmaður staðfesti í yfirferð">👔 Staðfest · ${esc(rv.review_confirmed_by||'')} ${rv.review_confirmed_at?esc(fmtDate(rv.review_confirmed_at)):''}</span>`
       : rvOn ? `<span class="ky-rv wait" title="Bíður yfirferðar yfirmanns (The Big Boss appið)">👔 Í yfirferð</span>` : '';
-    return `<span class="ky-wf-boxes" style="display:inline-flex;flex:0 0 379px;width:379px;flex-direction:column;align-items:flex-end;gap:3px">
-      <span style="display:inline-flex;align-items:center;gap:9px;flex-wrap:nowrap;${hasNums?'margin-bottom:27px':''}">
-        ${withCap(wfBtn('tim','opentim','🕒','Tímask.','var(--blue-deep)','Opna Tímaskýrslu',!!timDoc), timCap)}${pdfLink(timDoc?bhDocUrl(timDoc):null,'Opna Tímaskýrslu PDF')}
-        ${withCap(wfBtn('efn','openefn','📄','Efnisl.','var(--blue-deep)','Opna Efnislista í Gerð Reikninga',!!efnDoc), efnCap)}${pdfLink(efnDoc?bhDocUrl(efnDoc):null, primDoc ? ('⭐ Aðalskjal mánaðarins: ' + esc(primDoc.title||'')) : 'Opna Efnislista PDF')}${bothLink}
+    return `<span class="ky-wf-boxes" style="display:inline-flex;flex:0 0 301px;width:301px;flex-direction:column;align-items:flex-end;gap:3px">
+      <span style="display:inline-flex;align-items:center;gap:9px;flex-wrap:nowrap;${(hasNums||inv.sent)?'margin-bottom:27px':''}">
+        ${withCap(wfBtn('tim','opentim','🕒','Tímask.','var(--blue-deep)','Opna Tímaskýrslu',!!timDoc), timCap, pdfLink(timDoc?bhDocUrl(timDoc):null,'Opna Tímaskýrslu PDF'))}
+        ${withCap(wfBtn('efn','openefn','📄','Efnisl.','var(--blue-deep)','Opna Efnislista í Gerð Reikninga',!!efnDoc), efnCap, pdfLink(efnDoc?bhDocUrl(efnDoc):null, primDoc ? ('⭐ Aðalskjal mánaðarins: ' + esc(primDoc.title||'')) : 'Opna Efnislista PDF') + bothLink)}
         ${/* 👔 Yfirferð — SLÖKKT í bili (ósk Agnars 2026-09-03). Bakendinn
              (invoice_drafts.review_*) og yfirferd.html standa óhreyfð; til að
              kveikja aftur: fjarlægja false&& hér. */''}
         ${false&&rv?wfBtn('rev','review','👔','Yfirferð','var(--blue-deep)',rvOn?'Taka úr yfirferð (afturkalla beiðni)':'Senda Efnislistann í yfirferð til yfirmanns (birtist í The Big Boss appinu)',rvOn):''}
         ${wfBtn('conf','confirm','✓','Staðfest','var(--green)',conf?'Staðfest — smelltu aftur til að af-staðfesta':'Staðfesta',conf)}
         ${withCap(wfBtn('send','send','📤',inv.sent?'Sent í bókun':'Senda í bókun','var(--green)',inv.sent?'Þegar sent í bókun':'Senda skjölin á bókarann — þú velur hvaða skjöl fara með',!!inv.sent), estCap)}
-        ${wfBtn('mark','sentmark','📨','Krafa send','var(--green)',sentMarked(inv.inv_key)?'Merkt sem send — smelltu til að afmerkja (handvirkt merki, engin skrif í kerfið)':'Merkja handvirkt að krafan sé send — verður grænt, gerir ekkert annað',sentMarked(inv.inv_key))}
+        ${withCap(wfBtn('mark','sentmark','📨','Krafa send','var(--green)',sentMarked(inv.inv_key)?'Merkt sem send — smelltu til að afmerkja (handvirkt merki, engin skrif í kerfið)':'Merkja handvirkt að krafan sé send — verður grænt, gerir ekkert annað',sentMarked(inv.inv_key)), sentCap)}
       </span>
-      <span style="display:inline-flex;align-items:center;gap:8px">${sentTrail}${rvHtml}</span>
+      ${rvHtml}
     </span>`;
   }
 
@@ -17007,7 +17012,8 @@ async function renderKrofuyfirlit(t){
         let docs=((ws&&wm)?(EFDOCS[ws+'|'+wm]||[]):[]).filter(d=>d.drive_file_id && d.doc_type!=='innra'); // 🔒 innri viðhengi fara ALDREI með
         // Gluggi í stað confirm (Agnar 04.09.2026): velja skjölin sem fara með.
         docs = docs.slice().sort((a,b)=> (b.is_primary?1:0) - (a.is_primary?1:0));   // ⭐ aðalskjalið fremst
-        const val = await bhSendaBokunDialog({ ws, wm, cust, to, amount: iv.amount, docs });
+        const sjalfgefid = 'Sæl(l),\n\nMeðfylgjandi Efnislisti/Tímaskýrsla fyrir '+(cust||ws||'')+(wm?' ('+wm+')':'')+' til skráningar í Payday.';
+        const val = await bhSendaBokunDialog({ ws, wm, cust, to, amount: iv.amount, docs, msg: sjalfgefid });
         if(!val) return;
         to = val.to;
         docs = val.docs;
@@ -17016,7 +17022,8 @@ async function renderKrofuyfirlit(t){
         const attachments = docs.map(d=>{ const fn=((d.title||(d.doc_type==='timabok_pdf'?'Tímaskýrsla':'Efnislisti'))).replace(/\.pdf$/i,'')+'.pdf'; return d.public_url ? { filename:fn, url:d.public_url } : { filename:fn, driveId:d.drive_file_id }; });
         const docLinks = docs.length ? '<p>Skjöl:</p><ul>'+docs.map(d=>'<li><a href="'+esc(bhDocUrl(d))+'">'+esc(d.title||d.doc_type)+'</a></li>').join('')+'</ul>' : '';
         const subject = 'Efnislisti/Tímaskýrsla — '+(cust||ws||'')+(wm?(' '+wm):'');
-        const html = '<p>Sæl(l),</p><p>Meðfylgjandi Efnislisti/Tímaskýrsla fyrir <b>'+esc(cust||ws||'')+'</b>'+(wm?(' ('+esc(wm)+')'):'')+' til skráningar í Payday.</p>'+docLinks+'<p>Kveðja,<br>Brunahólf</p>';
+        const msgHtml = String(val.msg || sjalfgefid).split(/\n{2,}/).map(p => '<p>' + esc(p).replace(/\n/g, '<br>') + '</p>').join('');
+        const html = msgHtml + docLinks + '<p>Kveðja,<br>Brunahólf</p>';
         try{
           const r=await fetch('/api/gmail-send',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({ account:'eldklar@eldklar.is', from:'Brunahólf <eldklar@eldklar.is>', to:[to], subject, html, attachments })});
           const j=await r.json().catch(()=>({}));
@@ -17078,6 +17085,10 @@ async function renderKrofuyfirlit(t){
         +   '<label style="display:block;font-family:var(--font-mono,ui-monospace,monospace);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Sendist á</label>'
         +   '<input id="bh-bokun-to" value="'+escapeAttr(o.to||'')+'" style="width:100%;box-sizing:border-box;height:38px;padding:0 11px;border:1px solid var(--edge);border-radius:7px;background:var(--input-bg,#f6f3ec);font:inherit;font-size:13.5px;color:var(--ink)">'
         + '</div>'
+        + '<div style="padding:12px 18px 0">'
+        +   '<label style="display:block;font-family:var(--font-mono,ui-monospace,monospace);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Skilaboð í póstinum</label>'
+        +   '<textarea id="bh-bokun-msg" rows="4" style="width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--edge);border-radius:7px;background:var(--input-bg,#f6f3ec);font:inherit;font-size:13px;line-height:1.45;color:var(--ink);resize:vertical">'+esc2(o.msg||'')+'</textarea>'
+        + '</div>'
         + '<div style="padding:14px 18px 0">'
         +   '<div style="display:flex;align-items:center;gap:8px;font-family:var(--font-mono,ui-monospace,monospace);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">Skjöl sem fylgja'
         +     (o.docs && o.docs.length ? '<button type="button" id="bh-bokun-all" style="margin-left:auto;border:0;background:transparent;color:var(--blue);font:inherit;font-size:11px;cursor:pointer;letter-spacing:0;text-transform:none">velja allt / ekkert</button>' : '')
@@ -17102,7 +17113,7 @@ async function renderKrofuyfirlit(t){
         if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)){ alert('Netfang lítur ekki rétt út.'); return; }
         const valdir = [...w.querySelectorAll('.bh-bokun-doc')].filter(c=>c.checked).map(c=>o.docs[Number(c.dataset.i)]).filter(Boolean);
         if(!valdir.length && (o.docs||[]).length && !confirm('Ekkert skjal valið — senda samt án viðhengja?')) return;
-        done({ to, docs: valdir });
+        done({ to, docs: valdir, msg: ((w.querySelector('#bh-bokun-msg')||{}).value||'').trim() });
       };
       setTimeout(()=>{ const g=w.querySelector('#bh-bokun-go'); if(g) g.focus(); }, 30);
     });
