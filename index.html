@@ -11831,7 +11831,18 @@ async function renderGerdReikninga(t){
         };
         beita(10);
       }
-      if(yfOn){ yfOn.addEventListener('change', yfSkrifa); }
+      // Smellurinn flettir stodunni i TIMABOKINNI sjalfri (ekki i reitnum): draw()/bossSums
+      // keyra a input-atburdinum og endurstilltu reitinn adur en change komst ad, svo
+      // tim' kom alltaf 'af'. Nu er lesid ur einu heimildinni og henni flett.
+      if(yfOn){
+        yfOn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const g = (yfOn.closest && yfOn.closest('.gr-modal-bg')) || bg;
+          const st = g && typeof g.__tbkGetYf === 'function' ? g.__tbkGetYf() : { on: false, thr: 8 };
+          yfOn.checked = !st.on;
+          yfSkrifa();
+        });
+      }
       if(yfThr){ yfThr.addEventListener('change', yfSkrifa); yfThr.addEventListener('click', e => e.preventDefault()); }
       if(yfRow){ yfRow.addEventListener('click', e => { if(e.target === yfThr) e.stopPropagation(); }); }
       const yfTimer = setInterval(yfSpegill, 700);
