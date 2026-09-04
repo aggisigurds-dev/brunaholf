@@ -11805,7 +11805,8 @@ async function renderGerdReikninga(t){
       const yfRow = K('gr-yf-row'), yfOn = K('gr-yf-on'), yfThr = K('gr-yf-thr');
       function yfSpegill(){
         if(yfBid) return;
-        const st = typeof bg.__tbkGetYf === 'function' ? bg.__tbkGetYf() : null;
+        const g0 = (yfOn && yfOn.closest && yfOn.closest('.gr-modal-bg')) || bg;
+        const st = g0 && typeof g0.__tbkGetYf === 'function' ? g0.__tbkGetYf() : null;
         const src = K('gr-tbk-yf'), thr = K('gr-tbk-thr');
         if(!yfOn || !yfRow) return;
         const on = st ? st.on : !!(src && src.checked);
@@ -11820,8 +11821,11 @@ async function renderGerdReikninga(t){
       function yfSkrifa(){
         const vil = { on: !!yfOn.checked, thr: (yfThr && yfThr.value) || '8' };
         yfBid = vil;
+        // Finna gluggann ut fra reitnum sjalfum - closure-breytan getur bent a eldri glugga
+        const glugginn = () => (yfOn.closest && yfOn.closest('.gr-modal-bg')) || bg;
         const beita = (eftir) => {
-          if(typeof bg.__tbkSetYf === 'function'){ bg.__tbkSetYf(vil.on, vil.thr); yfBid = null; setTimeout(yfSpegill, 80); return; }
+          const g = glugginn();
+          if(g && typeof g.__tbkSetYf === 'function'){ g.__tbkSetYf(vil.on, vil.thr); yfBid = null; setTimeout(yfSpegill, 80); return; }
           if(eftir > 0){ setTimeout(() => beita(eftir - 1), 300); return; }   // panell ekki teiknaður enn
           yfBid = null;
         };
