@@ -3696,15 +3696,15 @@ function renderSkyrslustod(t){
       + '.st-pv-frame{flex:1;width:100%;border:0;background:#161513}'
       + '#bk-st-board tr.st-pv-on{outline:2px solid var(--gold,#c9a54a);outline-offset:-2px;background:var(--warn-bg,#fbf3d9)}'
       + '@media(min-width:1100px){'
-      +   '.st-cols.on{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(380px,1fr);gap:16px;align-items:start}'
-      +   '.section.st-has-pv{max-width:1680px}'
+      +   '.st-cols.on{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(420px,1fr);gap:16px;align-items:start}'
+      +   '.section.st-has-pv{max-width:none}'
       + '}'
       + '@media(max-width:1099px){.st-pv{position:static;height:70vh;margin-top:14px}}';
     document.head.appendChild(st);
   }
   const inpSel = 'padding:10px 12px;border:1px solid var(--line-2,var(--edge));border-radius:8px;font:inherit;font-size:13px;background:var(--input-bg,#fff);color:var(--ink,var(--ink))';
   $view.innerHTML = `
-    <div class="section" style="max-width:1180px;padding:18px 20px">
+    <div class="section" style="max-width:none;padding:18px 24px">
       <div style="margin:0 0 14px">
         <div style="font-size:10.5px;font-weight:600;color:var(--blue);letter-spacing:2.5px;text-transform:uppercase">Brunahólf · Yfirferð</div>
         <h1 style="font-family:var(--font-display,inherit);font-size:26px;font-weight:700;color:var(--ink,var(--ink));margin:6px 0 6px;letter-spacing:.2px">📊 Skýrslu-stöð</h1>
