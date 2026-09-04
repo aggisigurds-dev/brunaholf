@@ -596,9 +596,9 @@ textarea.ky-note{display:block;resize:none;overflow-x:hidden;overflow-y:auto;max
 .ky-row .ky-acts .ky-actrow .ky-gap{width:6px}
 .ky-bank{color:var(--green);font-size:10.5px;font-weight:600;margin-top:2px;line-height:1.35}
 /* Aðgerðatakkar (ky-abtn): 46×42 fílabeins-lykill → blár (vistað) → grænn (staðfest/sent) */
-.ky-abtn{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:46px;height:42px;padding:0 6px;border-radius:var(--radius-sm);border:1px solid var(--edge);border-bottom-color:var(--edge-deep);background:var(--key-bg);box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(22,21,19,.18);cursor:default;font:inherit;font-size:8.5px;font-weight:700;letter-spacing:.02em;color:var(--ink-2);white-space:nowrap;box-sizing:border-box}
-.ky-abtn > span:first-child{font-size:14px;line-height:1}
-.ky-abtn > span:last-child{font-size:8.5px;font-weight:700;letter-spacing:.02em}
+.ky-abtn{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:53px;height:47px;padding:0 7px;border-radius:var(--radius-sm);border:1px solid var(--edge);border-bottom-color:var(--edge-deep);background:var(--key-bg);box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(22,21,19,.18);cursor:default;font:inherit;font-size:8.5px;font-weight:700;letter-spacing:.02em;color:var(--ink-2);white-space:nowrap;box-sizing:border-box}
+.ky-abtn > span:first-child{font-size:15.5px;line-height:1}
+.ky-abtn > span:last-child{font-size:9.2px;font-weight:700;letter-spacing:.02em}
 .ky-abtn.on{border-color:#0a2a15;border-bottom-color:#0a2a15;background:var(--key-green-bg);color:#c6f5d3;text-shadow:0 -1px 0 rgba(0,0,0,.8);box-shadow:var(--key-green-shadow)}
 .ky-abtn.saved{border-color:#3c5f80;border-bottom-color:#25405a;background:var(--key-blue-bg);color:#f2f5f8;text-shadow:0 -1px 0 rgba(0,0,0,.4);box-shadow:var(--key-blue-shadow)}
 .ky-abtn.on > span,.ky-abtn.saved > span{color:inherit !important}
@@ -607,7 +607,8 @@ textarea.ky-note{display:block;resize:none;overflow-x:hidden;overflow-y:auto;max
 .ky-act:disabled{opacity:.55;cursor:default}
 .ky-act.ky-nudge{border-color:var(--green);box-shadow:inset 0 1px 0 #fff,0 0 0 3px rgba(47,122,74,.28),0 1px 2px rgba(22,21,19,.18);animation:kyPulse 1.8s ease-in-out infinite}
 @keyframes kyPulse{0%,100%{box-shadow:inset 0 1px 0 #fff,0 0 0 3px rgba(47,122,74,.28),0 1px 2px rgba(22,21,19,.18)}50%{box-shadow:inset 0 1px 0 #fff,0 0 0 5px rgba(47,122,74,.14),0 1px 2px rgba(22,21,19,.18)}}
-.ky-wf-cap{position:absolute;top:100%;left:1px;margin-top:3px;font-family:var(--font-mono);font-size:9.5px;line-height:1.2;color:var(--muted);font-weight:500;white-space:nowrap;pointer-events:none}
+.ky-pct{color:var(--gold-deep);font-weight:700;font-size:10px}
+.ky-wf-cap{position:absolute;top:100%;left:1px;margin-top:4px;font-family:var(--font-mono);font-size:10.5px;line-height:1.2;color:var(--muted);font-weight:500;white-space:nowrap;pointer-events:none}
 .ky-wf-nums{font-family:var(--font-mono);font-size:10.5px;color:var(--muted);white-space:nowrap}
 .ky-rv{font-size:9.5px;font-weight:700;white-space:nowrap}
 .ky-rv.ok{color:var(--green)}.ky-rv.wait{color:#7a5a12}
