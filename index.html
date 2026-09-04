@@ -16118,13 +16118,14 @@ async function renderKrofuyfirlit(t){
     const munur = Math.abs(Number(inv.amount||0) - Number(n.total||0)) > 500;
     // Hlutföll: vinna og efni sem hlutfall af upphæð raðarinnar ÁN vsk (Redder er án vsk).
     const heildAnVsk = (Number(inv.amount||0) || Number(n.total||0)) / (1 + (n.vsk/100));
-    const efniPct = (n.redder > 0 && heildAnVsk > 0) ? Math.round((n.redder / heildAnVsk) * 100) : null;
+    const efni = (rv && Number(rv.materials_total) > 0) ? Number(rv.materials_total) : n.redder;   // efnið á drögunum (Redder + lager + handvirkt), annars Redder
+    const efniPct = heildAnVsk > 0 ? Math.round((efni / heildAnVsk) * 100) : null;
     const vinnaPct = (n.dagvinna > 0 && heildAnVsk > 0) ? Math.round((n.dagvinna / heildAnVsk) * 100) : null;
     const timCap = cap(`🕒 ${hoursDisp}${(!fastVerd && vinnaPct != null) ? `<br><b class="ky-pct">${vinnaPct}%</b>` : '<br><span class="ky-eining">klst</span>'}`,
       'Klukkustundir úr Tímaveru' + (fastVerd ? ' — fast verð ræður upphæðinni, svo hlutfall er ekki sýnt' : (vinnaPct != null ? ' — vinnan (klst × taxti) er ' + vinnaPct + '% af upphæð raðarinnar án vsk' : '')));
     // 🧱 0 sagði ekkert og stóð á nær hverri röð — efnis-talan birtist aðeins þegar efni er til.
-    const efnCap = fastVerd ? '' : cap(`🧱 ${numIS(n.redder)}${efniPct != null ? `<br><b class="ky-pct">${efniPct}%</b>` : ''}`,
-      'Redder-innkaup mánaðarins án vsk' + (efniPct != null ? ' — ' + efniPct + '% af upphæð raðarinnar án vsk' : ''));
+    const efnCap = fastVerd ? '' : cap(`🧱 ${numIS(efni)}${efniPct != null ? `<br><b class="ky-pct">${efniPct}%</b>` : ''}`,
+      'Efniskostnaður án vsk (efnið á Efnislistanum, annars Redder-innkaup mánaðarins)' + (efniPct != null ? ' — ' + efniPct + '% af upphæð raðarinnar án vsk' : ''));
     const estCap = fastVerd ? '' : cap(`≈ ${numIS(n.total)}`,
       'Gróf áætlun: klst × taxti + smáhlutagjald + Redder-efni, m/vsk. Hún þekkir hvorki staðfestingargjald, akstur, afslátt né efni á söluverði'
       + (munur ? ' — drögin sjálf segja ' + numIS(inv.amount) + ' og sú tala ræður.' : '.'));
