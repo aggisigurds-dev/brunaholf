@@ -115,6 +115,9 @@ vistuð á drögunum svo endurprentun stemmi á öllum tækjum. Sértaxtar (t.d.
   Sé `age_days` > 0 á reikningi sem skiptir máli, segðu það og lestu póstinn beint (Chrome/Outlook)
   í stað þess að treysta samantektinni. brunaholf-pósturinn býr í **Outlook**, ekki Gmail.
 - Tengingastrimillinn efst í Drög-stöðinni sýnir þetta sama — rautt = ótengt/gamalt.
+- **Póstvörður Eldklárs** („✉ Sækja úr pósti" í Drög-stöðinni = `POST /api/postur-punktar {action:'skra'}`,
+  agent `eldklar-postur`): les AÐEINS eldklar@eldklar.is, síðustu 14 daga, INBOX; lykilorð + kt-mátun
+  við `fyrirtaeki`, ekkert AI; sami póstur verður aldrei tvisvar að punkti (`client_id = mail:<message_id>`).
 
 ---
 

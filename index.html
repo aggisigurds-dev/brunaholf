@@ -14866,6 +14866,7 @@ async function renderDrogstod(t){
     + '<h1 style="margin:0;font-family:var(--font-display);font-size:30px;font-weight:700;color:var(--ink)">Drög-stöð</h1>'
     + '<div style="font-size:12px;color:var(--muted);margin-top:4px">Hentu inn punkti um leið og hann dettur í hug — hann safnast á rétt verk, þú staðfestir í bútum, og sendir þegar gátlistinn er grænn. Eitt innhólf fyrir Slökkvitæki og Brunahólf.</div></div>'
     + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><div class="ds-seg" id="ds-syn">'+[['baedi','Bæði'],['slokkvitaeki','Slökkvitæki'],['brunaholf','Brunahólf']].map(([k,l])=>'<button type="button" data-syn="'+k+'" class="'+(state.ui.ds_syn===k?'on':'')+'">'+l+'</button>').join('')+'</div>'
+    + '<button type="button" id="ds-postur" style="'+KEY+'" title="Póstvörður Eldklárs: les eldklar@eldklar.is (síðustu 14 daga) og skráir pósta sem varða reikninga, kröfur, úttektir og kennitölur sem punkta — aldrei tvisvar">✉ Sækja úr pósti</button>'
     + '<button type="button" id="ds-ai-all" style="'+KEY+'" title="Láta flokka alla nýja punkta (leggur til — skrifar ekki)">✨ Flokka nýtt</button><button type="button" id="ds-refresh" style="'+KEY+'" title="Sækja aftur">↻</button></div></div>'
     + '<div class="ds-cap"><div class="ds-seg" id="ds-felag">'+[['slokkvitaeki','Slökkvitæki'],['brunaholf','Brunahólf']].map(([k,l])=>'<button type="button" data-f="'+k+'" class="'+(state.ui.ds_felag===k?'on '+(k==='slokkvitaeki'?'sl':'bh'):'')+'">'+l+'</button>').join('')+'</div>'
     + '<input type="text" id="ds-in" placeholder="'+esc(PLH[state.ui.ds_felag])+'" autocomplete="off">'
@@ -15120,6 +15121,17 @@ async function renderDrogstod(t){
   $view.querySelectorAll('#ds-felag button').forEach(b => b.onclick = () => { state.ui.ds_felag = b.dataset.f; save(); $view.querySelectorAll('#ds-felag button').forEach(x => x.className = x===b ? 'on '+(b.dataset.f==='slokkvitaeki'?'sl':'bh') : ''); inp.placeholder = PLH[felVal()]; inp.focus(); });
   $view.querySelectorAll('#ds-syn button').forEach(b => b.onclick = () => { state.ui.ds_syn = b.dataset.syn; save(); $view.querySelectorAll('#ds-syn button').forEach(x => x.classList.toggle('on', x===b)); teikna(); });
   $view.querySelector('#ds-refresh').onclick = load;
+  // Póstvörður Eldklárs — eitt pósthólf, lykilorð + kt-mátun, ekkert AI. client_id ver gegn tvítökum.
+  $view.querySelector('#ds-postur').onclick = async () => {
+    const b = $view.querySelector('#ds-postur'); b.disabled = true; setSync('✉ les eldklar@eldklar.is…');
+    try{
+      const j = await api('/api/postur-punktar', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ action:'skra', days:14 }) });
+      const n = (j.created||[]).length;
+      setSync(n ? '✉ '+n+' punkt'+(n===1?'ur':'ar')+' úr pósti'+(j.already?' · '+j.already+' þegar inni':'')+(j.skipped?' · '+j.skipped+' póstum sleppt':'') : '✉ ekkert nýtt í pósti'+(j.already?' — '+j.already+' þegar inni':'')+(j.skipped?' · '+j.skipped+' sleppt':''));
+      if(n) await load();
+    }catch(e){ setSync('✉ villa: '+e.message); }
+    b.disabled = false;
+  };
   $view.querySelector('#ds-ai-all').onclick = async () => {
     const ny = NOTES.filter(n=>!n.ai && !n.pending); if(!ny.length){ setSync('ekkert nýtt að flokka'); return; }
     for(const n of ny){ const j = await greina(n.id, true); if(!j){ if(aiLaest) break; continue; } n.ai = j.ai; if(j.filed){ n.worksite_name = j.ai.verkstadur||n.worksite_name; n.work_month = j.ai.manudur||n.work_month; } n.status='flokkad'; teikna(); }
