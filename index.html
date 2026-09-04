@@ -11812,11 +11812,13 @@ async function renderGerdReikninga(t){
         const on = st ? st.on : !!(src && src.checked);
         const thrVal = st ? String(st.thr) : (thr ? thr.value : null);
         if(yfOn.checked !== on) yfOn.checked = on;
-        if(thrVal != null && document.activeElement !== yfThr && yfThr.value !== thrVal) yfThr.value = thrVal;
+        const nylegaSnert = (Date.now() - (typeof yfSnert === 'number' ? yfSnert : 0)) < 2500;
+        if(thrVal != null && document.activeElement !== yfThr && !nylegaSnert && yfThr.value !== thrVal) yfThr.value = thrVal;
         yfRow.classList.toggle('on', on);
         yfRow.classList.toggle('off', !on);
         if(yfThr) yfThr.disabled = !on;
       }
+      let yfSnert = 0, yfTof = null;   // sidasti innslattur i throskuldinn (spegillinn helst fra a medan)
       let yfBid = null;   // meðan skrifað er má spegillinn ekki lesa gamla gildið til baka
       function yfSkrifa(){
         const vil = { on: !!yfOn.checked, thr: (yfThr && yfThr.value) || '8' };
@@ -11843,7 +11845,21 @@ async function renderGerdReikninga(t){
           yfSkrifa();
         });
       }
-      if(yfThr){ yfThr.addEventListener('change', yfSkrifa); yfThr.addEventListener('click', e => e.preventDefault()); }
+      if(yfThr){
+        const throskSkrifa = () => {
+          yfSnert = Date.now();
+          clearTimeout(yfTof);
+          yfTof = setTimeout(() => {
+            const g = (yfOn.closest && yfOn.closest('.gr-modal-bg')) || bg;
+            const st = g && typeof g.__tbkGetYf === 'function' ? g.__tbkGetYf() : null;
+            const v = (yfThr.value || '').trim();
+            if(g && typeof g.__tbkSetYf === 'function' && v) g.__tbkSetYf(st ? st.on : yfOn.checked, v);
+            yfSnert = Date.now();
+          }, 500);
+        };
+        yfThr.addEventListener('input', throskSkrifa);
+        yfThr.addEventListener('change', throskSkrifa);
+      }
       if(yfRow){ yfRow.addEventListener('click', e => { if(e.target === yfThr) e.stopPropagation(); }); }
       const yfTimer = setInterval(yfSpegill, 700);
       setTimeout(() => clearInterval(yfTimer), 20000);
