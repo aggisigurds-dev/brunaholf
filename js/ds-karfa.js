@@ -325,7 +325,12 @@
           b.disabled = true; b.textContent = '⏳…';
           try { clearTimeout(timers[note.id]); await vista(note, { sent: true }); }
           catch (err) { alert('Vistun mistókst: ' + (err.message || err)); b.disabled = false; b.textContent = '🧺 Senda í körfu ↗'; return; }
-          window.open(POS_URL + '?karfa=' + encodeURIComponent(note.id) + '#sala', '_blank', 'noopener');
+          const url = POS_URL + '?karfa=' + encodeURIComponent(note.id) + '#sala';
+          // Innfelld í Slökkvitæki-appið (Big Boss / Fjármál, ?embed=1): færa allan gluggann á söluborðið
+          // í stað þess að opna nýjan flipa — sama app, karfan bíður þar. Annars nýr flipi.
+          let faert = false;
+          if (window.top !== window) { try { window.top.location.href = url; faert = true; } catch (_) { faert = false; } }
+          if (!faert) window.open(url, '_blank', 'noopener');
           ctx.setSync('🧺 karfa #' + note.id + ' send í söluborðið — reikningurinn er kláraður þar');
           ctx.teikna();
         }
