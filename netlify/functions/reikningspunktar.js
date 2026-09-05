@@ -60,7 +60,14 @@ async function del(path) {
   return fetch(`${P.SUPABASE_URL}/rest/v1/${path}`, { method: 'DELETE', headers: { apikey: P.SUPABASE_KEY, Authorization: 'Bearer ' + P.SUPABASE_KEY } });
 }
 
+// CORS a oll svor: soluborð Slokkvitaekis (annad len) saekir draft-korfuna med ?id= (patch 352, 05.09.2026).
+const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'content-type', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS' };
 exports.handler = async (event) => {
+  const r = await innri(event);
+  if (r && typeof r === 'object') r.headers = Object.assign({}, r.headers || {}, CORS);
+  return r;
+};
+async function innri(event) {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'content-type', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS' }, body: '' };
   if (!P.dbReady()) return P.json(500, { error: 'Supabase env missing' });
   const g = P.requireStaff(event); if (g) return g;
