@@ -2053,28 +2053,77 @@ function save(opts){
   scheduleServerSync();
 }
 
-/* ====== Cross-device state sync (Supabase via /api/app-state) ======
-   localStorage stays as the fast cache; the server copy is the
-   shared source of truth across browsers/devices. On boot we kick
-   off a background fetch; if the server has a newer version, we
-   replace the in-memory state and re-render. */
+/* ── Samstilling PER LYKIL (05.09.2026 — Agnar: „4 tölvur í sama rými, allt 100% synced“) ──
+   Áður fór ALLT state-objectið upp í hverri vistun, svo vél sem var opin með gamalt eintak
+   yfirskrifaði breytingar hinna (merki, nótur, tímabókar-breytingar, flipa-röð …). Nú:
+   • hver vél man síðustu þjóns-útgáfu per lykil (_synced) og sendir AÐEINS lyklana sem hún
+     breytti — þjónninn sameinar í einni færslu (RPC hub_state_merge, atómískt);
+   • svar þjónsins (sameinað) rennur inn í lyklana sem þessi vél snerti ekki;
+   • vélin sækir sameinaða útgáfu á mínútu fresti (þegar flipinn er sýnilegur) og tekur inn
+     það sem hinar breyttu — endurteiknar aðeins flipastikuna, aldrei það sem notandinn er í. */
 let _syncTimer = null;
 let _syncInFlight = false;
+let _pullInFlight = false;
+let _pollTimer = null;
 let _serverHasRecord = false;
+let _synced = { ui: {}, top: {}, has: false };   // JSON per lykil eins og þjónninn hafði þá síðast
+const _PER_DEVICE = new Set(['activeTab']);        // býr í hverri vél fyrir sig (nav-vistun)
+const _J = v => JSON.stringify(v === undefined ? null : v);
+function _snapSynced(v){
+  _synced = { ui: {}, top: {}, has: true };
+  for(const k of Object.keys((v && v.ui) || {})) _synced.ui[k] = _J(v.ui[k]);
+  for(const k of Object.keys(v || {})) if(k !== 'ui') _synced.top[k] = _J(v[k]);
+}
+// Lyklarnir sem ÞESSI vél hefur breytt síðan síðast var samstillt (null = eytt).
+function _buildPatch(){
+  const ui = {}, top = {}; const su = (state && state.ui) || {};
+  for(const k of Object.keys(su)){ if(_PER_DEVICE.has(k) || k === 'updated_at') continue; if(_synced.ui[k] !== _J(su[k])) ui[k] = su[k]; }
+  for(const k of Object.keys(_synced.ui)){ if(_PER_DEVICE.has(k) || k === 'updated_at') continue; if(!(k in su)) ui[k] = null; }
+  for(const k of Object.keys(state || {})){ if(k === 'ui') continue; if(_synced.top[k] !== _J(state[k])) top[k] = state[k]; }
+  return { ui, top };
+}
+// Tekur sameinaða þjóns-útgáfu inn — lyklar sem þessi vél breytti (dirty) halda sér.
+function _mergeIn(server, dirty){
+  const res = { tabsChanged:false, uiChanged:false };
+  if(!server || typeof server !== 'object') return res;
+  state.ui = state.ui || {};
+  const du = (dirty && dirty.ui) || {}, dt = (dirty && dirty.top) || {};
+  const sui = server.ui || {};
+  for(const k of Object.keys(sui)){ if(_PER_DEVICE.has(k) || (k in du)) continue; if(_J(state.ui[k]) !== _J(sui[k])){ state.ui[k] = sui[k]; res.uiChanged = true; } }
+  for(const k of Object.keys(state.ui)){ if(_PER_DEVICE.has(k) || k === 'updated_at' || (k in du)) continue; if(!(k in sui) && _synced.ui[k] !== undefined){ delete state.ui[k]; res.uiChanged = true; } }
+  for(const k of Object.keys(server)){ if(k === 'ui' || (k in dt)) continue; if(_J(state[k]) !== _J(server[k])){ if(k === 'tabs') res.tabsChanged = true; state[k] = server[k]; } }
+  if(res.tabsChanged) ensureNewTabs(state);
+  return res;
+}
 function scheduleServerSync(){
   if(_syncTimer) clearTimeout(_syncTimer);
   _syncTimer = setTimeout(syncToServer, 800);
 }
 async function syncToServer(){
-  if(_syncInFlight) { _syncTimer = setTimeout(syncToServer, 1000); return; }
+  if(_syncInFlight || _pullInFlight) { _syncTimer = setTimeout(syncToServer, 1000); return; }
   _syncInFlight = true;
   try{
-    await fetch('/api/app-state', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ key:'hub_state', value: state }),
+    const patch = _serverHasRecord ? _buildPatch() : null;
+    if(patch && !Object.keys(patch.ui).length && !Object.keys(patch.top).length){ setSyncBadge('synced'); return; }
+    const r = await fetch('/api/app-state', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(patch ? { key:'hub_state', patch } : { key:'hub_state', value: state }),
     });
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const j = await r.json().catch(()=>null);
     _serverHasRecord = true;
+    const merged = j && j.value;
+    if(merged && typeof merged === 'object'){
+      // Breytingar annarra véla á meðan renna inn — nema það sem breyttist hér (fyrir eða eftir sendingu).
+      const nuna = _buildPatch();
+      const dirty = patch ? { ui: Object.assign({}, patch.ui, nuna.ui), top: Object.assign({}, patch.top, nuna.top) } : nuna;
+      const res = _mergeIn(merged, dirty);
+      _snapSynced(merged);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      if(res.tabsChanged){ try{ if(typeof renderTabs === 'function') renderTabs(); }catch(e){} }
+      // lyklar sem breyttust á meðan sendingin stóð eru enn dirty → senda strax aftur
+      const eftir = _buildPatch(); if(Object.keys(eftir.ui).length || Object.keys(eftir.top).length) scheduleServerSync();
+    } else if(!patch){ _snapSynced(state); }
     setSyncBadge('synced');
   }catch(e){
     setSyncBadge('offline');
@@ -2082,57 +2131,49 @@ async function syncToServer(){
     _syncInFlight = false;
   }
 }
+function _armPoll(){
+  if(_pollTimer) return;
+  _pollTimer = setInterval(() => { if(document.visibilityState === 'visible' && !_syncInFlight && !_pullInFlight) syncFromServer(); }, 60000);
+}
 async function syncFromServer(){
+  if(_pullInFlight) return; _pullInFlight = true;
   try{
-    const r = await fetch('/api/app-state?key=hub_state');
-    if(r.status === 404){ // first device — push current local state up
+    const r = await fetch('/api/app-state?key=hub_state', { cache:'no-store' });
+    if(r.status === 404){ // fyrsta vélin — ýta staðbundna eintakinu upp
       _serverHasRecord = false;
       if(state && state.tabs) scheduleServerSync();
-      setSyncBadge('synced');
+      setSyncBadge('synced'); _armPoll();
       return;
     }
     if(!r.ok) throw new Error('HTTP '+r.status);
     const { value: server } = await r.json();
     _serverHasRecord = true;
-    const localTs = state?.ui?.updated_at || '';
-    // Compare the EMBEDDED state timestamp (server.ui.updated_at) — same field,
-    // same client clock as localTs — NOT the server record's receipt time. The
-    // record time uses the server clock; mixing clocks made the server copy win
-    // on machines whose clock lags, reverting unsynced local edits (e.g. a tab
-    // reorder made just before refresh). server wins only if its embedded state
-    // is strictly newer; otherwise keep the local copy and push it up.
-    const serverTs = server?.ui?.updated_at || '';
-    if(serverTs && serverTs > localTs && server && server.tabs){
-      const prevActiveTab = state?.ui?.activeTab;
-      const prevTabsHash  = JSON.stringify((state?.tabs||[]).map(t => t.id));
-      state = server;
-      // Re-apply tab migration to the server-fetched state so newer-than-
-      // server tabs (Vinnustofa, Efniskostnaður, etc.) still appear even
-      // when an older server snapshot would otherwise overwrite them.
-      ensureNewTabs(state);
-      // Respect a URL deep-link (e.g. when embedded in slökkvitæki-appinu as
-      // brunaholf.netlify.app/#gerdreikninga): keep that tab active even though
-      // the server snapshot carries a different last-used activeTab. No-op when
-      // the hash names no tab, so normal cross-device sync is unaffected.
+    if(server && typeof server === 'object'){
+      const prevTabsHash = JSON.stringify((state?.tabs||[]).map(t => t.id));
+      // Fyrsta samstilling lotunnar: sé staðbundna eintakið YNGRA en þjónsins (breytt án nets) halda
+      // þess lyklar sér og fara upp; annars ræður þjónninn. Eftir það ræður per-lykla dirty-listinn.
+      let dirty;
+      if(!_synced.has){
+        const localTs = state?.ui?.updated_at || '', serverTs = server?.ui?.updated_at || '';
+        dirty = (localTs && localTs > serverTs) ? _buildPatch() : { ui:{}, top:{} };
+      } else dirty = _buildPatch();
+      const res = _mergeIn(server, dirty);
+      _snapSynced(server);
       try{ if(typeof applyDeepLinkTab === 'function') applyDeepLinkTab(); }catch(_){}
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      // Only re-render if the structure actually changed — otherwise the
-      // re-render races with whatever the active tab is loading and breaks
-      // its in-flight DOM (race causes "can't click" bugs).
       const newTabsHash = JSON.stringify((state?.tabs||[]).map(t => t.id));
-      const newActiveTab = state?.ui?.activeTab;
-      if(prevActiveTab !== newActiveTab || prevTabsHash !== newTabsHash){
-        try{ renderActive(); }catch(e){}
-      } else {
-        // Just refresh the nav (might have new buttons) without nuking $view
-        try{ if(typeof renderTabs === 'function') renderTabs(); }catch(e){}
-      }
-    } else if(localTs && (!serverTs || localTs > serverTs)){
-      scheduleServerSync();
+      // Endurteikna virka flipann AÐEINS ef flipa-uppbyggingin breyttist (endurteikning í miðri
+      // vinnu brýtur DOM-ið sem flipinn er að hlaða — „can't click“-gallinn). Annars bara stikan.
+      if(prevTabsHash !== newTabsHash){ try{ renderActive(); }catch(e){} }
+      else if(res.tabsChanged || res.uiChanged){ try{ if(typeof renderTabs === 'function') renderTabs(); }catch(e){} }
+      // það sem þessi vél á ósent fer upp núna
+      const eftir = _buildPatch(); if(Object.keys(eftir.ui).length || Object.keys(eftir.top).length) scheduleServerSync();
     }
-    setSyncBadge('synced');
+    setSyncBadge('synced'); _armPoll();
   }catch(e){
     setSyncBadge('offline');
+  }finally{
+    _pullInFlight = false;
   }
 }
 function setSyncBadge(mode){
@@ -15540,7 +15581,11 @@ async function renderSkyrslur(t){
     {name:'Óinnvoiceað — klárað, ekki rukkað', ids:['CG-03'], note:'Vinna búin en enginn reikningur/krafa gerð enn (Tímavera-áætlun)'},
   ];
   window.__cgReports = reports;
-  window.__cgSaveReports = ()=>{ try{ localStorage.setItem('cg_reports', JSON.stringify(reports)); }catch(_){} };
+  window.__cgSaveReports = ()=>{ try{ localStorage.setItem('cg_reports', JSON.stringify(reports)); }catch(_){} try{ fetch('/api/app-state',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({ key:'cg_reports', value: reports })}); }catch(_){} };
+  // 05.09.2026: skýrslurnar búa á þjóninum (app_kv cg_reports) — localStorage er aðeins skyndiminni.
+  fetch('/api/app-state?key=cg_reports',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{
+    if(j && Array.isArray(j.value) && j.value.length){ reports.splice(0, reports.length, ...j.value); try{ localStorage.setItem('cg_reports', JSON.stringify(reports)); }catch(_){} if(typeof render==='function') render(); }
+  }).catch(()=>{});
 
   const focus = window.CG_FOCUS; window.CG_FOCUS = null;
 

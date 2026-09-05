@@ -1,0 +1,151 @@
+
+=== brunaholf: 233 skrár · 93 lyklar · GÖGN? 10 · óvíst 53 · útlit 30 ===
+!! vfr_annotate (1) index.html
+!! cg_values (1) index.html
+!! cg_reports (1) index.html
+!! ky_sent_mark (1) index.html
+!! state.ui.rg_hidden (2) index.html
+!! state.ui.tr_done (1) index.html
+!! state.ui.gr_card_notes (1) index.html
+!! state.ui.timabok_edits (3) index.html
+!! state.ui.vb_hidden (2) index.html
+!! state.ui.ky_sent_mark (4) index.html
+?  <LYK> (1) afkastavakt.html
+?  <LS_KEY> (2) brunakerfi-skodun.html, keepit.html
+?  brunaholf_svarhjalp (1) email-helper.html
+?  bh_opna_skjal (1) eydublod.html
+?  bh_opna_gogn (1) eydublod.html
+?  bh_eydublad_gult (1) eydublod.html
+?  bh_undirskrift_sjalfgefin (1) eydublod.html
+?  cg_capture (1) index.html
+?  email_to (2) index.html
+?  <STORAGE_KEY> (4) index.html, public/tilbod/index.html
+?  <PROG_KEY> (5) index.html
+?  <FOLDER_KEY> (2) index.html
+?  <DS_KEY> (1) index.html
+?  <MT_KEY> (2) index.html
+?  <LOGO_KEY> (1) index.html
+?  <VB_LS_KEY> (1) index.html
+?  <HKEY> (2) index.html
+?  <TEMPLATE_KEY> (1) index.html
+?  <KEY_VISIBLE> (2) index.html
+?  <KEY_HISTORY> (1) index.html
+?  state.ui.st_pv (2) index.html
+?  state.ui.st_por_only (1) index.html
+?  state.ui.gr_month (5) index.html
+?  state.ui.grReturnTo (3) index.html
+?  state.ui.gr_date_text (1) index.html
+?  state.ui.gr_sma_off (1) index.html
+?  state.ui.gr_discount (1) index.html
+?  state.ui.vb_months_back (2) index.html
+?  state.ui.vb_months_fwd (2) index.html
+?  state.ui.vb_pad (2) index.html
+?  state.ui.vb_calc_history (2) index.html
+?  state.ui.vb_styles (2) index.html
+?  state.ui.fv_month (3) index.html
+?  state.ui.ds_felag (2) index.html
+?  state.ui.ds_syn (2) index.html
+?  state.ui.ds_sel (1) index.html
+?  state.ui.tvm_days (2) index.html
+?  state.ui.vk (1) index.html
+?  state.ui.appsScriptUrl (1) index.html
+?  state.ui.uploadFolderId (1) index.html
+?  radd_mal (2) jarvis.html, radd.html
+?  <LYKILL> (1) jarvis.html
+?  <L_SER> (1) jarvis.html
+?  <L_VAL> (1) jarvis.html
+?  <MAIN_KEY> (1) js/jarvis-voice.js
+?  _kh_alerted (1) js/kerfisheilsa-widget.js
+?  <KEY> (3) js/theme.js, js/viewmode.js
+?  state.ui.knownTags (1) keepit.html
+?  state.ui.q (5) keepit.html
+?  <SETKEY> (1) multitool.html
+?  <MTKEY> (3) multitool.html
+?  <FKEY> (1) multitool.html
+?  vl-cat (1) verkefnalisti.html
+útlit: bh_tab_counts, vfr_mode, bk_last_folder, bh_relink_wide, gr_snapshot_v1, kf_collapsed, cg_user, nl_collapsed, bh_me, state.ui.updated_at, state.ui.activeTab, state.ui.st_view, state.ui.gr_view, state.ui.vb_review, state.ui.vb_collapsed_years, state.ui.vb_layout, state.ui.vb_review_filter, state.ui.layout, state.ui.editMode, state.ui.colorFilter, state.ui.tagFilters, state.ui.tagFilter, state.ui.activeView, state.ui.companyFilter, state.ui.filter, state.ui.savedViews, state.ui.sort, state.ui.dark, state.ui.installDismissedUntil, vl-sort
+
+=== slokkvitaeki: 417 skrár · 111 lyklar · GÖGN? 4 · óvíst 71 · útlit 36 ===
+!! vb_notes_min (1) js/patches/231-verkbord.js
+!! brunakerfi_verdlisti (2) js/patches/273-brunakerfi-skyrsla.js
+!! _pricelist66Seeded (1) js/patches/66-pricelist-seed.js
+!! _pricelist66IconsV8 (1) js/patches/66-pricelist-seed.js
+?  _vrSeeded (3) js/demoseed.js
+?  <STORAGE_KEY> (1) js/navfix.js
+?  _slokk_gc (2) js/newfeatures.js, js/patches/00-legacy.js
+?  fp_<id> (1) js/patches/00-legacy.js
+?  slokk_trip_ (4) js/patches/00-legacy.js, js/patches/224-uttekt-taeki.js
+?  <RECENT_KEY> (1) js/patches/117-vorur-picker.js
+?  <FAV_KEY> (1) js/patches/117-vorur-picker.js
+?  <SNAP_KEY> (1) js/patches/153-arsskodun.js
+?  <LS_MONTHS> (2) js/patches/153-arsskodun.js, js/patches/161-leidsogn.js
+?  <LS_POSTNR> (1) js/patches/153-arsskodun.js
+?  <LS_STATUS> (1) js/patches/153-arsskodun.js
+?  <LS_SKIPHIDE> (1) js/patches/153-arsskodun.js
+?  <OVR_LS> (1) js/patches/153-arsskodun.js
+?  <LS_KEY> (4) js/patches/154-last-view-memory.js, js/patches/19-kennitala-lookup.js
+?  <LS_VISIBLE> (1) js/patches/155-arsskodun-map-embed.js
+?  <SYNC_FLAG> (2) js/patches/156-geocode-prewarm.js
+?  <LS_FILT> (1) js/patches/157-allir-vidskiptavinir.js
+?  <LS_XFILT> (1) js/patches/157-allir-vidskiptavinir.js
+?  <LS_TECH> (1) js/patches/158-vidsk-detail.js
+?  <LS_YEAR> (1) js/patches/161-leidsogn.js
+?  <LS_FLOKK> (1) js/patches/161-leidsogn.js
+?  <ROUTE_KEY> (1) js/patches/161-leidsogn.js
+?  <VM_KEY> (1) js/patches/166-krofu-yfirlit.js
+?  <TAGS_KEY> (1) js/patches/172-thjonustuverk.js
+?  <GC_KEY> (2) js/patches/173-geocode-cache-from-appsettings.js, js/patches/178-manual-geocode.js
+?  _slokk_rekstrarfelog (1) js/patches/175-rekstrarfelog.js
+?  mt_tech (2) js/patches/179-mottaka-arrival.js, js/patches/210-vertid-mottaka.js
+?  sv_stepf (1) js/patches/190-thjonustu-verkstaedi.js
+?  <EMP_KEY> (2) js/patches/190-thjonustu-verkstaedi.js, js/patches/219-bilstjori.js
+?  <FS_KEY> (1) js/patches/219-bilstjori.js
+?  _vb_flokk (1) js/patches/231-verkbord.js
+?  <QKEY> (1) js/patches/231-verkbord.js
+?  <SKEY> (1) js/patches/231-verkbord.js
+?  <TGKEY> (4) js/patches/231-verkbord.js
+?  <VMKEY> (1) js/patches/231-verkbord.js
+?  <FKEY> (1) js/patches/231-verkbord.js
+?  <WKEY> (3) js/patches/231-verkbord.js
+?  <TOGGLE_KEY> (1) js/patches/237-customer-brief.js
+?  <WATCH_KEY> (1) js/patches/238-adstod-banner.js
+?  <SNOOZE_KEY> (2) js/patches/239-adstodarmidstod.js
+?  slokk_send_from (1) js/patches/254-receipt-sender.js
+?  <CUSTOM_KEY> (1) js/patches/261-app-profiles.js
+?  <CFG_KEY> (3) js/patches/261-app-profiles.js
+?  <OV_KEY> (1) js/patches/261-app-profiles.js
+?  pe_dock (2) js/patches/262-page-editor.js
+?  pe_side_w (1) js/patches/262-page-editor.js
+?  bks_mirror (1) js/patches/273-brunakerfi-skyrsla.js
+?  <LS> (4) js/patches/288-rf-thjonustu-summa.js, js/patches/319-column-drag.js
+?  resend_api_key (1) js/patches/29-email-invoice.js
+?  email_from (1) js/patches/29-email-invoice.js
+?  edge_shared_key (1) js/patches/290-api-key-header.js
+?  <HUNSA_KEY> (1) js/patches/293-utgafu-vakt.js
+?  cg_capture_sk (1) js/patches/297-cg-capture.js
+?  <KEY> (1) js/patches/299-sala-vorulisti-beta.js
+?  bh_sb (1) js/patches/305-skipulagsbord.js
+?  <HKEY> (1) js/patches/309-thjonustuver-postar.js
+?  <LS_ON> (2) js/patches/317-arsskodun-bilstjori.js, js/patches/318-honnunarhamur.js
+?  <LS_AK> (1) js/patches/317-arsskodun-bilstjori.js
+?  <LS_DOCK> (1) js/patches/320-device-frame.js
+?  <LSZ> (2) js/patches/331-ars-phone-skjar.js
+?  <LS_CONV> (1) js/patches/344-adstodarmadur.js
+?  <OPIN_KEY> (1) js/patches/347-spjall.js
+?  <LOG_KEY> (1) js/patches/37-bulk-reminders.js
+?  job_rev_${key} (1) js/patches/43-job-profitability.js
+?  job_hourly_rate (1) js/patches/43-job-profitability.js
+?  cfg_ (1) js/patches/46-quick-links.js
+?  cfg_km_rate (1) js/patches/47-mileage-log.js
+?  templates (1) js/patches/62-templates.js
+?  _auxProductsSeededV1 (2) js/patches/80-aux-products.js
+?  fp_ (2) js/scanner.js, js/v9.js
+?  <LYKILL> (1) spotify/index.html
+útlit: slokk_video_lang, <CACHE_KEY>, vidsk_sort, _vr_last_tech, <DROG_SORT_KEY>, <VIEW_KEY>, lastView, <LS_VIEW>, <LS_SORT>, <LS_SORTCOL>, <LS_SORTDIR>, <GC_CACHE_KEY>, <DISMISS_KEY>, slokk_viewmode_phone_v1, _ky_paysync_at, <SORT_KEY>, <FILTER_LS>, _rf_svc_view, _tv_view, sv_mode, sv_sort, fc_migrated_v1, th_theme, vb_forvinna_open, pe_dock_desk_v2, bky_view, email_mode, <OPEN_KEY>, <LS_ZOOM>, ct_list_open, sb_order_cache, sb_hidden_cache, dt_filled_open, <SHOWALL_KEY>, _qr_mode, _slokk_lang
+
+=== kjarni: 327 skrár · 5 lyklar · GÖGN? 2 · óvíst 2 · útlit 1 ===
+!! kjarni_draft (1) apps/slokkvitaeki/app/draft/DraftClient.tsx
+!! slok_cart (1) apps/slokkvitaeki/app/verslun/StoreClient.tsx
+?  <SKIN_KEY> (1) apps/slokkvitaeki/app/kjarni/StationChrome.tsx
+?  kjarni3d_aikey (1) apps/web/src/app/3dwork/revive.tsx
+útlit: kjarni3d_aimodel

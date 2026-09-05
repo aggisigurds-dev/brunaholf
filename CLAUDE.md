@@ -106,6 +106,17 @@ ALDREI í heilu lagi — `grep` fyrst, svo `offset`/`limit`. Sama gildir um
   REVIEW side (Aggi sees „Vantar undirskrift" badge), never as a hard stop on
   save. Applies to `/skoda.html`, all Slökkvitæki templates, Verkefnalisti
   beidnir, customer-detail editing — every form.
+- **SAMSTILLT MILLI VÉLA — harðkóðuð regla (Agnar 05.09.2026):** fjórar tölvur í sama rými vinna
+  saman í sömu gögnum. **Hvert merki, takki, hnappur, textareitur eða upplýsing sem lýsir STÖÐU
+  gagna** (krafa send/staðfest/greidd/falin, nótur, drög, körfur, punktar, breytingar á tímum,
+  stillingar sem snerta reikninga) **VERÐUR að skrifast á þjóninn** (Supabase-tafla eða
+  `/api/app-state` með SÉR-lykli) **og lesast þaðan** — aldrei aðeins í `localStorage`,
+  `sessionStorage` eða `state.ui`. `localStorage` er leyfilegt fyrir útlitsval eins vafra
+  (sía, röðun, samanbrot, þema, hver er við vélina) og fyrir skyndiminni sem þjónninn
+  endurhleður. `state.ui` (hub_state) er heilt object sem hver vél yfirskrifar — vinnustaða
+  á ekki heima þar. Dæmi um rétta leið: `krofur_yfirlit_meta` (confirmed/sent/done/hidden/
+  paid/note), `invoice_drafts`, `reikningspunktar.karfa`, `app_kv` (`ky_settings`).
+  Úttekt á vafra-lyklum: `docs/UTTEKT-VAFRASTADA-20260905.txt` (brunaholf).
 - **Language**: UI text in Icelandic. Keep new labels in Icelandic
   unless the field is intrinsically English (e.g. column names).
 - **Money**: ISK, no decimals. Format with `Math.round` + locale.

@@ -14,6 +14,7 @@ const ALLOWED_KEYS = new Set([
   'kvittanir_templates',
   'multitool_settings', // ⚙️ Stillingar í Skjala-multitool (deilast milli vélanna 4)
   'ky_settings',        // Kröfu yfirlit: netfang bókara o.fl. sem allar vélar deila (05.09.2026)
+  'cg_reports',         // Skýrslur (CG): notenda-skilgreindar skýrslur — sama eintak á öllum vélum (05.09.2026)
 ]);
 
 exports.handler = async (event) => {
@@ -36,8 +37,20 @@ exports.handler = async (event) => {
     let body;
     try { body = JSON.parse(event.body || '{}'); }
     catch { return json(400, { error: 'Invalid JSON' }); }
-    const { key, value } = body;
+    const { key, value, patch } = body;
     if (!ALLOWED_KEYS.has(key)) return json(400, { error: 'Unknown key' });
+    // Samstilling per lykil (05.09.2026): { key, patch:{ ui:{k:v|null}, top:{tabs:[…]} } } → RPC hub_state_merge
+    // sameinar í EINNI færslu (row lock) svo 4 vélar yfirskrifi aldrei hver aðra. Skilar sameinaða gildinu.
+    if (patch && typeof patch === 'object') {
+      const rr = await fetch(`${SUPABASE_URL}/rest/v1/rpc/hub_state_merge`, {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ p_key: key, p_ui: (patch.ui && typeof patch.ui === 'object') ? patch.ui : {}, p_top: (patch.top && typeof patch.top === 'object') ? patch.top : {} }),
+      });
+      if (!rr.ok) return json(rr.status, { error: (await rr.text()).slice(0, 300) });
+      const merged = await rr.json();
+      return json(200, { value: merged, updated_at: new Date().toISOString(), merged: true });
+    }
     if (value === undefined) return json(400, { error: 'Missing value' });
 
     const r = await fetch(`${SUPABASE_URL}/rest/v1/app_kv?on_conflict=key`, {
