@@ -118,6 +118,15 @@
       '.dk-cta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:10px}.dk-stada{font-family:var(--font-mono);font-size:10.5px;color:var(--muted)}.dk-stada.ok{color:var(--green,#2f7a4a)}',
       '.dk-nota{width:100%;box-sizing:border-box;margin-top:8px;min-height:44px;padding:6px 8px;border:1px dashed var(--edge,#c9c2b3);border-radius:4px;background:var(--input-bg,#f6f3ec);font:inherit;font-size:12px;resize:vertical}',
       '.ds-chip.karfa{background:#fbf3d9;border-color:#d9b95a;color:#5a4410}',
+      // Yfirlit (Agnar 05.09.2026): „smækka svo ég sjái allt á einum skjá — skjáskot og senda áfram"
+      '.ds-karfa.compact .dk-t,.ds-karfa.compact .dk-tools,.ds-karfa.compact .dk-nota,.ds-karfa.compact .dk-tot,.ds-karfa.compact .dk-cta,.ds-karfa.compact .dk-head{display:none}',
+      '.dk-yfirlit{background:#fff;color:#161513;border:1px solid #d9d3c6;border-radius:6px;padding:10px 12px;font-size:12px;line-height:1.3}',
+      '.dk-yfirlit .y-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;border-bottom:2px solid #161513;padding-bottom:5px;margin-bottom:6px}.dk-yfirlit .y-head b{font-family:var(--font-display,serif);font-size:15px}.dk-yfirlit .y-head span{font-family:var(--font-mono);font-size:10.5px;color:#6f685c}',
+      '.dk-yfirlit .y-kunni{font-size:12px;margin-bottom:6px}.dk-yfirlit .y-kunni small{color:#6f685c;font-family:var(--font-mono);font-size:10.5px}',
+      '.dk-yfirlit table{width:100%;border-collapse:collapse}.dk-yfirlit td{padding:3px 0;border-top:1px solid #ece7dc;vertical-align:top}.dk-yfirlit td.r{text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap;padding-left:8px}.dk-yfirlit td.n{color:#6f685c;font-family:var(--font-mono);font-size:10.5px;white-space:nowrap;padding-right:6px}',
+      '.dk-yfirlit .y-tot td{border-top:1px solid #161513;font-weight:600}.dk-yfirlit .y-tot.big td{font-size:14px;border-top:0;padding-top:2px}.dk-yfirlit .y-tot.big td.r{font-family:var(--font-display,serif);font-size:16px}',
+      '.dk-yfirlit .y-note{margin-top:7px;font-size:10.5px;color:#6f685c;border-top:1px dashed #d9d3c6;padding-top:5px}',
+      '.dk-yfirlit .y-bar{display:flex;gap:6px;margin-top:8px}.dk-yfirlit .y-bar button{flex:1;height:34px;font:inherit;font-size:12px;font-weight:700;border:1px solid #c9c2b3;border-radius:4px;background:#f6f3ec;color:#161513;cursor:pointer}',
       // Sími (Agnar 05.09.2026, „can you make it fit"): hver lína verður spjald — vöruheitið á fullri
       // breidd, svo magn · verð · afsl · samtals · ✕ í einni röð með smá-merkjum; takkar á fullri breidd.
       '@media (max-width:720px){',
@@ -169,8 +178,34 @@
       + '<label>Afsl. af heild % <input data-f="discount_pct" value="' + esc(tala(k.discount_pct)) + '" inputmode="decimal"></label></div>'
       + '<textarea class="dk-nota" data-f="athugasemd" placeholder="Krass — hvað á eftir að athuga, hvað var sagt, afsláttur sem bíður…">' + esc(k.athugasemd || '') + '</textarea>'
       + '<div class="dk-tot"><span>Án vsk <b class="dk-ex">' + fmt(t.ex) + '</b></span><span>VSK <b class="dk-vsk">' + fmt(t.vsk) + '</b></span><span class="dk-total">' + fmt(t.total) + ' kr</span></div>'
-      + '<div class="dk-cta"><button type="button" data-dk="senda" style="' + ctx.GOLD + '" title="Opnar söluborð Slökkvitækis með þessari körfu — reikningurinn verður til þar">🧺 Senda í körfu ↗</button><span class="dk-stada">' + (k.saved_at ? 'vistað ' + esc(stund(k.saved_at)) : 'óvistað') + '</span></div>'
+      + '<div class="dk-cta"><button type="button" data-dk="senda" style="' + ctx.GOLD + '" title="Opnar söluborð Slökkvitækis með þessari körfu — reikningurinn verður til þar">🧺 Senda í körfu ↗</button><button type="button" data-dk="yfirlit" style="' + ctx.KEY + '" title="Samþjappað yfirlit sem kemst á einn skjá — til að skjáskjóta og senda áfram">🔍 Yfirlit</button><span class="dk-stada">' + (k.saved_at ? 'vistað ' + esc(stund(k.saved_at)) : 'óvistað') + '</span></div>'
+      + '<div class="dk-yfirlit" hidden></div>'
       + '</div>';
+  }
+  // Samþjappað drög-spjald: kúnni · línur · samtölur — eitt skjáskot, ekkert ritanlegt.
+  function yfirlitHtml(note) {
+    const k = note.karfa || { lines: [] }; const ku = k.kunni || {}; const t = totals(k);
+    const d = new Date(); const dags = pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.' + d.getFullYear();
+    const rows = (k.lines || []).filter(l => num(l.qty) > 0 || num(l.unit_price_ex_vat) > 0).map(l =>
+      '<tr><td class="n">' + esc(tala(l.qty)) + ' ×</td><td>' + esc(l.desc || '') + (num(l.disc_pct) ? ' <small style="color:#6f685c">−' + esc(tala(l.disc_pct)) + '%</small>' : '') + '</td><td class="r">' + fmt(l.unit_price_ex_vat) + '</td><td class="r">' + fmt(linuSum(l)) + '</td></tr>').join('');
+    return '<div class="y-head"><b>Slökkvitæki ehf.</b><span>Drög að reikningi · ' + dags + '</span></div>'
+      + '<div class="y-kunni"><b>' + esc(ku.nafn || note.worksite_name || '—') + '</b>' + (ku.kt ? ' <small>kt ' + esc(ku.kt) + '</small>' : '') + '</div>'
+      + '<table><tbody>' + rows
+      + (num(k.discount_pct) ? '<tr><td class="n"></td><td>Afsláttur af heild</td><td class="r"></td><td class="r">−' + esc(tala(k.discount_pct)) + '%</td></tr>' : '')
+      + '<tr class="y-tot"><td class="n"></td><td>Samtals án vsk</td><td class="r"></td><td class="r">' + fmt(t.ex) + '</td></tr>'
+      + '<tr class="y-tot" style="font-weight:400"><td class="n"></td><td>VSK 24%</td><td class="r"></td><td class="r">' + fmt(t.vsk) + '</td></tr>'
+      + '<tr class="y-tot big"><td class="n"></td><td>Samtals m. vsk</td><td class="r"></td><td class="r">' + fmt(t.total) + ' kr</td></tr>'
+      + '</tbody></table>'
+      + '<div class="y-note">Drög — ekki reikningur. Einingaverð án vsk.' + (k.athugasemd ? ' ' + esc(k.athugasemd) : '') + '</div>'
+      + '<div class="y-bar"><button type="button" data-dk="afrita">📋 Afrita sem texta</button><button type="button" data-dk="yfirlit">✏️ Breyta</button></div>';
+  }
+  function yfirlitTexti(note) {
+    const k = note.karfa || { lines: [] }; const ku = k.kunni || {}; const t = totals(k);
+    const L = ['Slökkvitæki ehf. — Drög að reikningi', (ku.nafn || note.worksite_name || '') + (ku.kt ? ' · kt ' + ku.kt : ''), ''];
+    for (const l of (k.lines || [])) if (num(l.qty) > 0 || num(l.unit_price_ex_vat) > 0) L.push(tala(l.qty) + ' × ' + (l.desc || '') + ' @ ' + fmt(l.unit_price_ex_vat) + (num(l.disc_pct) ? ' −' + tala(l.disc_pct) + '%' : '') + ' = ' + fmt(linuSum(l)));
+    if (num(k.discount_pct)) L.push('Afsláttur af heild −' + tala(k.discount_pct) + '%');
+    L.push('', 'Samtals án vsk ' + fmt(t.ex) + ' kr', 'VSK 24% ' + fmt(t.vsk) + ' kr', 'Samtals m. vsk ' + fmt(t.total) + ' kr', '', 'Drög — ekki reikningur. Einingaverð án vsk.');
+    return L.join('\n');
   }
   function badge(note) {
     const k = note.karfa; if (!k || !Array.isArray(k.lines) || !k.lines.length) return '';
@@ -263,6 +298,16 @@
         const b = e.target.closest('[data-dk]'); if (!b) return;
         const act = b.dataset.dk;
         if (act === 'loka') { opin = null; ctx.teikna(); return; }
+        if (act === 'yfirlit') {
+          const y = root.querySelector('.dk-yfirlit'); const a = !root.classList.contains('compact');
+          root.classList.toggle('compact', a); y.hidden = !a; if (a) { y.innerHTML = yfirlitHtml(note); try { y.scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (_) {} }
+          return;
+        }
+        if (act === 'afrita') {
+          try { await navigator.clipboard.writeText(yfirlitTexti(note)); b.textContent = '✓ Afritað'; setTimeout(() => { b.textContent = '📋 Afrita sem texta'; }, 1500); }
+          catch (_) { alert(yfirlitTexti(note)); }
+          return;
+        }
         if (act === 'del') { const tr = b.closest('tr[data-i]'); k.lines.splice(+tr.dataset.i, 1); k.auto = false; vistaSidar(note, root); ctx.teikna(); return; }
         if (act === 'add' || act === 'addsvc') { k.lines.push(nyLina(act === 'addsvc' ? 'service' : 'product')); k.auto = false; ctx.teikna(); const r2 = ctx.view.querySelector('.ds-karfa[data-karfa="' + note.id + '"] tr:last-child input[data-f="desc"]'); if (r2) r2.focus(); vistaSidar(note, ctx.view.querySelector('.ds-karfa[data-karfa="' + note.id + '"]') || root); return; }
         if (act === 'urtexta') { if (k.lines.length && !confirm('Skipta línunum út fyrir það sem lesið er úr textanum?')) return; k.lines = fromText(note.raw); k.auto = true; ctx.teikna(); vistaSidar(note, ctx.view.querySelector('.ds-karfa[data-karfa="' + note.id + '"]') || root); return; }
