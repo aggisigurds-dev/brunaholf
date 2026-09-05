@@ -69,6 +69,9 @@ Talan alltaf með uppruna (`pricing_guide` / `solur` / `invoice_drafts` / samnin
   punktur með `raw` sem byrjar á `ÁKVÖRÐUN dd.mm:` — næsta lota les hann fyrst.
 - Það sem var sent er merkt: `applied`/`notad` í Drög-stöð, `krofur_yfirlit_meta` (BH),
   `solur` (SL). Þú leggur aldrei til að rukka aftur það sem er merkt sent.
+- **Slökkvitækis-sala úr punkti = draft-karfa** (05.09.2026): `POST /api/reikningspunktar {action:'karfa', id, karfa:{lines,discount_pct}}`
+  (línur í POS-sniði: type/desc/qty/unit_price_ex_vat/vsk_pct/product_id/disc_pct; vörulisti `GET ?op=vorur`).
+  Þú mátt fylla körfuna og leggja hana til — Agnar sendir hana í söluborðið („Senda í körfu"); salan verður til þar.
 - Slitni lotan: ekkert tapast. Næsta lota, þótt hún sé viku síðar, byrjar á skrefi 1.
 
 ## Að finna kúnna sem Agnar man ekki nafnið á (lærdómur 05.09.2026 — Álhella 7)
