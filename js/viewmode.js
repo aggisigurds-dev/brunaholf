@@ -9,6 +9,8 @@
  * skjal með ?bhframe=1 og römmum sig þá EKKI aftur (bara venjulegt app).
  */
 (function () {
+  // Innfellt i annad app (?embed=1, t.d. Big Boss / Fjarmal): enginn rofi - foreldrid raedur staerdinni.
+  if (/[?&]embed=1(&|$)/.test(location.search)) return;
   var KEY = 'bh_viewmode';
   var WIDTHS = { mobile: 390, tablet: 834 };
   var LABELS = [['mobile', '📱', 'Sími'], ['tablet', '📲', 'Spjaldtölva'], ['desktop', '🖥', 'Tölva']];
