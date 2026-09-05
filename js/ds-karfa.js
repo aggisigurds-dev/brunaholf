@@ -123,15 +123,16 @@
       '@media (max-width:720px){',
       '.ds-karfa{padding:10px 10px 12px}.dk-head .dk-kunni{width:100%;white-space:normal}',
       '.dk-t thead{display:none}.dk-t,.dk-t tbody{display:block}',
-      '.dk-t tr{display:grid;grid-template-columns:64px 1fr 58px minmax(74px,auto) 28px;grid-template-areas:"d d d d d" "q p a s x";gap:6px;padding:9px 0;border-top:1px solid var(--line,#e6e1d6);align-items:end}',
+      '.dk-t tr{display:grid;grid-template-columns:54px minmax(0,1fr) 50px minmax(62px,auto) 24px;grid-template-areas:"d d d d d" "q p a s x";gap:6px 5px;padding:9px 0;border-top:1px solid var(--line,#e6e1d6);align-items:end;min-width:0}',
       '.dk-t td{display:block;padding:0;border-top:0;width:auto !important}',
       '.dk-t td:nth-child(1){grid-area:d}.dk-t td:nth-child(2){grid-area:q}.dk-t td:nth-child(3){grid-area:p}.dk-t td:nth-child(4){grid-area:a}.dk-t td:nth-child(5){grid-area:s;text-align:right;padding-bottom:8px}.dk-t td:nth-child(6){grid-area:x;text-align:right;padding-bottom:4px}',
       '.dk-t td:nth-child(2)::before,.dk-t td:nth-child(3)::before,.dk-t td:nth-child(4)::before,.dk-t td:nth-child(5)::before{display:block;font-family:var(--font-mono);font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:3px;white-space:nowrap}',
       '.dk-t td:nth-child(2)::before{content:"magn"}.dk-t td:nth-child(3)::before{content:"verð án vsk"}.dk-t td:nth-child(4)::before{content:"afsl %"}.dk-t td:nth-child(5)::before{content:"samtals"}',
-      '.dk-t input{height:36px;font-size:14px;padding:0 8px}.dk-t td.r{font-size:13.5px}.dk-t .dk-pid{white-space:normal}',
-      '.dk-tools .sp{display:none}.dk-tools button{flex:1 1 auto;height:38px}.dk-tools label{width:100%;justify-content:space-between;margin-top:2px}.dk-tools label input{width:72px;height:34px}',
+      '.dk-t input{height:36px;font-size:13px;padding:0 6px;min-width:0}.dk-t td{min-width:0}.dk-t td.r{font-size:13px}.dk-t .dk-pid{white-space:normal}',
+      // inline-stíllinn (KEY/GOLD, 30 px) ræður annars — !important hér svo takkarnir séu fingra-stórir
+      '.dk-tools .sp{display:none}.dk-tools button{flex:1 1 auto;height:38px !important}.dk-tools label{width:100%;justify-content:space-between;margin-top:2px}.dk-tools label input{width:72px;height:34px}',
       '.dk-tot{justify-content:space-between;gap:8px 12px;font-size:11px}.dk-tot .dk-total{width:100%;text-align:right;font-size:19px;margin-top:2px}',
-      '.dk-cta{flex-direction:column;align-items:stretch}.dk-cta button{width:100%;height:46px;font-size:14px}.dk-cta .dk-stada{text-align:center}',
+      '.dk-cta{flex-direction:column;align-items:stretch}.dk-cta button{width:100% !important;height:46px !important;font-size:14px !important}.dk-cta .dk-stada{text-align:center}',
       '}'
     ].join('\n');
     document.head.appendChild(st);
