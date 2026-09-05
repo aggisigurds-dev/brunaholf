@@ -14887,11 +14887,11 @@ async function renderDrogstod(t){
   const api = (path, opts) => fetch(path, Object.assign({ cache:'no-store' }, opts||{})).then(async r => { const j = await r.json().catch(()=>({})); if(!r.ok || j.error){ const e = new Error(j.error||('HTTP '+r.status)); e.status = r.status; e.locked = !!j.locked; throw e; } return j; });
   const post = body => api('/api/reikningspunktar', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(body) });
   // Draft-karfan (js/ds-karfa.js) fær það sem hún þarf úr þessari lotu — ekkert afritað þangað.
-  const dsCtx = { get NOTES(){ return NOTES; }, addNote: r => { NOTES.unshift(r); }, post, api, teikna: () => teikna(), setSync, skra: (raw, extra) => skra(raw, extra), felVal, view: $view,
+  const dsCtx = { get NOTES(){ return NOTES; }, addNote: r => { NOTES.unshift(r); }, post, api, teikna: () => teikna(), setSync: t => setSync(t), skra: (raw, extra) => skra(raw, extra), felVal: () => felVal(), view: $view,   // lot-visanir: const-in koma a eftir (TDZ)
     setFelag: k => { const b = $view.querySelector('#ds-felag button[data-f="'+k+'"]'); if(b) b.click(); },
     inputValue: () => { const i = $view.querySelector('#ds-in'); const v = i ? i.value.trim() : ''; if(i) i.value = ''; return v; },
     selKunni: () => { const s = finnaSel(); return (s && s.tegund==='sl') ? s.kunni : null; },
-    esc, fmt, dt, KEY, GOLD, FLD };
+    esc, fmt, dt: x => dt(x), KEY, GOLD, FLD };
   const setSync = txt => { const el = $view.querySelector('#ds-sync'); if(el) el.textContent = txt || (queue.length ? '⏳ '+queue.length+' í biðröð — sendist sjálfkrafa' : ''); };
 
   // ── Skráning: strax, með biðröð ef netið dettur út (sama og verkstaða-appið) ──
