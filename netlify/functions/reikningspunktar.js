@@ -77,6 +77,10 @@ exports.handler = async (event) => {
 async function handleGet(event) {
   const q = event.queryStringParameters || {};
   if (q.op === 'stada') return P.json(200, await stada());
+  // Vörulisti Slökkvitækis fyrir draft-körfuna (05.09.2026) — sömu verð og söluborðið notar.
+  if (q.op === 'vorur') return P.json(200, { vorur: await all('vorur?select=id,nafn,verd_an_vsk,vsk_prosenta,flokkur&virkt=eq.true&order=nafn&limit=2000') });
+  // Einn punktur með körfu — söluborðið (patch 352) sækir hann þvert á lén með ?karfa=<id>.
+  if (q.id) { const [row] = await all(`reikningspunktar?select=*&id=eq.${Number(q.id) || 0}`); return row ? P.json(200, { row }) : P.json(404, { error: 'Punktur fannst ekki' }); }
 
   const parts = ['select=*', 'order=created_at.desc'];
   if (q.status) {
@@ -106,7 +110,7 @@ async function stada() {
     all('project_aliases?select=canonical_name,alias').catch(() => []),
     allPages(`redder_invoices?select=worksite_match,dagsetning,month_override,an_vsk&dagsetning=gte.${cutoff}-01`).catch(() => []),
     // Kúnnar Slökkvitækis — nöfn + kt fyrir SL-hlið stöðvarinnar (leitarlisti og auðkenning).
-    allPages('fyrirtaeki?select=id,nafn,kennitala&deleted_at=is.null&order=nafn').catch(() => []),
+    allPages('fyrirtaeki?select=id,nafn,kennitala,athugasemdir&deleted_at=is.null&order=nafn').catch(() => []),
   ]);
 
   // Greiðanda-keðjan — sama og krofu-yfirlit-bru.js: handvirk tenging → Verðskrá.
@@ -144,7 +148,7 @@ async function stada() {
   const felagBy = new Map(felog.map((f) => [lc(f.nafn), f]));
   const kunnar = Object.values(kunnarBy).map((k) => {
     const f = felagBy.get(lc(k.kunni)) || null;
-    return { kunni: k.kunni, punktar: k.ids.length, punktar_ids: k.ids, id: f ? f.id : null, kt: f ? digits(f.kennitala) : '', thekktur: !!f };
+    return { kunni: k.kunni, punktar: k.ids.length, punktar_ids: k.ids, id: f ? f.id : null, kt: f ? digits(f.kennitala) : '', thekktur: !!f, athugasemdir: f ? (f.athugasemdir || '') : '' };
   }).sort((a, b) => b.punktar - a.punktar || a.kunni.localeCompare(b.kunni, 'is'));
   const metaBy = new Map(meta.map((m) => [m.inv_key, m]));
 
@@ -223,6 +227,7 @@ async function handlePost(event) {
     if (b.status !== undefined) { if (!STATUS.includes(b.status)) return P.json(400, { error: 'status ógilt' }); patch.status = b.status; }
     if (b.felag !== undefined) { if (!FELAG.includes(b.felag)) return P.json(400, { error: 'felag ógilt' }); patch.felag = b.felag; }
     if (b.ai !== undefined) patch.ai = b.ai;
+    if (b.raw !== undefined) patch.raw = String(b.raw).slice(0, 4000);   // krassblað — Agnar skrifar inn á punktinn (05.09.2026)
     const r = await P.sbPatch(`reikningspunktar?id=eq.${id}`, patch);
     if (!r.ok) return P.json(r.status, { error: (await r.text()).slice(0, 300) });
     const rows = await r.json();
@@ -236,8 +241,58 @@ async function handlePost(event) {
   }
 
   if (action === 'apply') return apply(b, now);
+  if (action === 'karfa') return karfa(b, now);
+  // Krass á kúnnann / verkið úr Valið-dálknum (05.09.2026) — sömu reitir og appið/Efnislistinn nota.
+  if (action === 'kunni_nota') {
+    const nafn = String(b.nafn || '').trim(); if (!nafn) return P.json(400, { error: 'nafn vantar' });
+    const r = await P.sbPatch(`fyrirtaeki?nafn=eq.${encodeURIComponent(nafn)}&deleted_at=is.null`, { athugasemdir: String(b.athugasemdir || '').slice(0, 4000) });
+    if (!r.ok) return P.json(r.status, { error: (await r.text()).slice(0, 300) });
+    const rows = await r.json(); return P.json(200, { ok: true, n: rows.length });
+  }
+  if (action === 'verk_nota') {
+    const ws = String(b.worksite_name || '').trim(); if (!ws || !isMonth(b.work_month)) return P.json(400, { error: 'verk og mánuð vantar' });
+    const r = await P.sbPatch(`invoice_drafts?worksite_name=eq.${encodeURIComponent(ws)}&work_month=eq.${b.work_month}`, { notes: String(b.notes || '').slice(0, 8000), updated_at: now });
+    if (!r.ok) return P.json(r.status, { error: (await r.text()).slice(0, 300) });
+    const rows = await r.json(); return P.json(200, { ok: true, n: rows.length });
+  }
 
   return P.json(400, { error: 'Óþekkt action' });
+}
+
+// Draft-karfa (Agnar 05.09.2026): „nýr flokkur — ekki venjuleg sala, ekki drög í solur, heldur
+// bara draft-karfa sem flækist ekki í neitt fyrr en hún er kláruð í söluborði.“ Býr AÐEINS í
+// reikningspunktar.karfa. Kúnninn er leystur úr worksite_name (fyrirtaeki.nafn) svo
+// söluborðið fái id + kt + fastan afslátt; tölur reiknaðar hér líka svo flögur stemmi.
+async function karfa(b, now) {
+  const id = Number(b.id); if (!id) return P.json(400, { error: 'id vantar' });
+  const [note] = await all(`reikningspunktar?select=*&id=eq.${id}`);
+  if (!note) return P.json(404, { error: 'Punktur fannst ekki' });
+  const n = (v) => { const x = Number(v); return isFinite(x) ? x : 0; };
+  const inn = (b.karfa && typeof b.karfa === 'object') ? b.karfa : {};
+  const lines = (Array.isArray(inn.lines) ? inn.lines : []).slice(0, 80).map((l) => ({
+    type: l.type === 'service' ? 'service' : 'product', desc: String(l.desc || '').slice(0, 200), qty: n(l.qty),
+    unit_price_ex_vat: n(l.unit_price_ex_vat), vsk_pct: n(l.vsk_pct) || 24, product_id: l.product_id ? Number(l.product_id) : null,
+    disc_pct: n(l.disc_pct), hint: l.hint ? String(l.hint).slice(0, 120) : undefined,
+  }));
+  const ws = String(b.worksite_name || note.worksite_name || '').trim();
+  let kunni = null;
+  if (ws) {
+    const f = await all(`fyrirtaeki?select=id,nafn,kennitala,afslattur_pct,netfang&nafn=eq.${encodeURIComponent(ws)}&deleted_at=is.null&limit=1`).catch(() => []);
+    kunni = f[0] ? { id: f[0].id, nafn: f[0].nafn, kt: f[0].kennitala || null, afslattur_pct: n(f[0].afslattur_pct), netfang: f[0].netfang || null } : { id: null, nafn: ws, kt: null, afslattur_pct: 0 };
+  }
+  let ex = 0, vsk = 0;
+  for (const l of lines) { const s = l.qty * l.unit_price_ex_vat * (1 - l.disc_pct / 100); ex += s; vsk += s * l.vsk_pct / 100; }
+  const d = n(inn.discount_pct); if (d) { ex *= 1 - d / 100; vsk *= 1 - d / 100; }
+  const exR = Math.round(ex), totR = Math.round(ex + vsk);
+  const prev = (note.karfa && typeof note.karfa === 'object') ? note.karfa : {};
+  const k = { lines, discount_pct: d, athugasemd: String(inn.athugasemd || '').slice(0, 1000), auto: !!inn.auto, kunni,
+    totals: { ex: exR, vsk: totR - exR, total: totR }, created_at: prev.created_at || now, saved_at: now, sent_at: b.sent ? now : (prev.sent_at || null) };
+  const patch = { karfa: k, updated_at: now };
+  if (ws && ws !== note.worksite_name) patch.worksite_name = ws;
+  if (note.status === 'nytt' && !note.ai) patch.status = 'flokkad';
+  const r = await P.sbPatch(`reikningspunktar?id=eq.${id}`, patch);
+  if (!r.ok) return P.json(r.status, { error: (await r.text()).slice(0, 300) });
+  return P.json(200, { ok: true, row: (await r.json())[0] || null, karfa: k });
 }
 
 // Skrifar punktinn í drögin — eina leiðin héðan inn í invoice_drafts. Hluta-PATCH
