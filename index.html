@@ -15965,11 +15965,12 @@ async function renderKrofuyfirlit(t){
       const invs = (d.invoices||[]).filter(inv=>{
         if(paidSet.has(inv.inv_key)) return false;
         if(invHidden(inv)) return state.showHidden;   // faldar sjást AÐEINS þegar „Sýna falin" er á
+        if(inv.done) return state.showHidden;          // 📨 Krafa send (grænt) = farin úr Ósent (Agnar 05.09.2026) — sést aðeins með „Sýna falin"
         return true;
-      }).map(inv=> invHidden(inv) ? {...inv, _hidden:true} : inv);
+      }).map(inv=> invHidden(inv) ? {...inv, _hidden:true} : (inv.done ? {...inv, _done:true} : inv));
       if(!invs.length) continue;
       // Faldar raðir (þegar sýndar) teljast EKKI í útistandandi summuna.
-      out.push({ ...d, invoices:invs, outstanding_kr:invs.reduce((a,i)=> a + (i._hidden?0:i.amount), 0) });
+      out.push({ ...d, invoices:invs, outstanding_kr:invs.reduce((a,i)=> a + ((i._hidden||i._done)?0:i.amount), 0) });
     }
     return out;
   }
@@ -16024,7 +16025,7 @@ async function renderKrofuyfirlit(t){
   // „🔗 Sameina" — gulur hnappur á þrep-2 fyrirtækja-kort: sameinar ALLA mánuði
   // eins verkstaðar í einn efnislista og felur upprunalegu drögin (status:'skipped').
   function sameinaBtn(t2inv){
-    const invs = (t2inv||[]).filter(i => !i._hidden && i.source==='gerd-drög' && i.worksite && i.work_month);
+    const invs = (t2inv||[]).filter(i => !i._hidden && !i._done && i.source==='gerd-drög' && i.worksite && i.work_month);
     if(invs.length < 2) return '';
     const keys = invs.map(i => esc(i.inv_key)).join('~');
     return '<button class="kyf-sameina-all boss-btn gold sm" data-keys="'+keys+'" type="button" '
@@ -16051,13 +16052,15 @@ async function renderKrofuyfirlit(t){
     }
     return state.ui.ky_sent_mark;
   })();
-  const sentMarked = inv => !!(inv && (inv.done || SENTMARK[inv.inv_key]));   // þjónn (krofur_yfirlit_meta.done) — gamla state-merkið gildir þar til það er flutt (05.09.2026)
-  function toggleSentMark(k){
-    if(SENTMARK[k]) delete SENTMARK[k]; else SENTMARK[k] = true;
-    state.ui.ky_sent_mark = SENTMARK; save();   // samstillist milli tölva
-    try{ localStorage.setItem('ky_sent_mark', JSON.stringify(SENTMARK)); }catch(_){}
-    return !!SENTMARK[k];
-  }
+  const sentMarked = inv => !!(inv && (inv.done || SENTMARK[inv.inv_key]));
+  // Stillingar Kröfu yfirlits sem allar vélar deila (app_kv: ky_settings) — t.d. netfang bókara.
+  // localStorage er aðeins varaleið þegar þjónninn svarar ekki (05.09.2026: „hver einn og einasti
+  // takki, hnappur, textabox … 100% synced“ — 4 vélar í sama rými).
+  let KYSET = {};
+  async function loadKySettings(){ try{ const r = await fetch('/api/app-state?key=ky_settings',{cache:'no-store'}); if(r.ok){ const j = await r.json(); if(j && j.value && typeof j.value==='object') KYSET = j.value; } }catch(_){} }
+  const emailTo = () => { let lt=''; try{ lt = localStorage.getItem('email_to')||''; }catch(_){} return KYSET.email_to || lt || 'bokhald@brunaholf.is'; };
+  async function setEmailTo(em){ em = String(em||'').trim(); if(!em || em===KYSET.email_to) return; KYSET.email_to = em; try{ localStorage.setItem('email_to', em); }catch(_){} try{ await fetch('/api/app-state',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({ key:'ky_settings', value: KYSET })}); }catch(_){} }   // þjónn (krofur_yfirlit_meta.done) — gamla state-merkið gildir þar til það er flutt (05.09.2026)
+  // toggleSentMark fjarlægt 05.09.2026 — merkið býr í krofur_yfirlit_meta.done (sjá act==='sentmark').
 
   function actChips(inv, tier){
     const k = esc(inv.inv_key);
@@ -16232,7 +16235,7 @@ async function renderKrofuyfirlit(t){
     const gj = (tier===1&&inv.gjalddagi) ? `<span class="ky-num">${inv.gjalddagi.split('-').reverse().join('.')}</span> &nbsp;·&nbsp; ` : '';
     return `
       <div class="ky-invrow${tier===2?' ky-t2':''}">
-        <div class="ky-row${lp?' ky-likely':''}" data-key="${esc(inv.inv_key)}"${inv._hidden?' style="opacity:.5"':''}>
+        <div class="ky-row${lp?' ky-likely':''}" data-key="${esc(inv.inv_key)}"${(inv._hidden||inv._done)?' style="opacity:.5"':''}>
           ${t2chk||''}<span class="ky-caret2">▸</span>
           <div class="ky-main">
             <div class="ky-ws"><span class="n">${rnum}</span>${mtagHtml}${tier===1?agingPill(inv.days_overdue):''}</div>
@@ -16942,7 +16945,7 @@ async function renderKrofuyfirlit(t){
       const n = wfNums(iv);
       const numIS = v => (Math.round(Number(v)||0)).toLocaleString('is-IS').replace(/,/g,'.');
       const hoursDisp = (Math.round(n.hours*100)/100).toString().replace('.',',');
-      let to='bokhald@brunaholf.is'; try{ to=localStorage.getItem('email_to')||to; }catch(_){}
+      let to=emailTo();
       const bg=document.createElement('div');
       bg.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px';
       const fld=(id,lbl,val,unit)=>`<label style="display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin:10px 0 3px">${lbl}</label>
@@ -16977,7 +16980,7 @@ async function renderKrofuyfirlit(t){
         const h=parseNum($h.value), r=parseNum($r.value), t=parseNum($t.value);
         iv.wf.hours = h; iv.wf.redder = r;
         iv.wf.efn_total = (t!=null && Math.abs(t-recalc())>1) ? t : null;   // yfirskrift aðeins ef frábrugðið sjálfvirku
-        try{ const em=document.getElementById('_wf-to').value.trim(); if(em) localStorage.setItem('email_to', em); }catch(_){}
+        try{ const em=document.getElementById('_wf-to').value.trim(); if(em) setEmailTo(em); }catch(_){}
         wfPatchLocal(key,{wf:iv.wf}); await persistWf(key, iv.wf); close(); renderList();
       };
     }
@@ -16992,7 +16995,7 @@ async function renderKrofuyfirlit(t){
       const stop=e=>e.stopPropagation(); inp.addEventListener('click',stop); inp.addEventListener('mousedown',stop);
       inp.addEventListener('change', async ()=>{
         const key=inp.dataset.key, f=inp.dataset.f; const iv=findInv(key); if(!iv) return;
-        if(f==='to'){ try{ localStorage.setItem('email_to', inp.value.trim()); }catch(_){}; return; }
+        if(f==='to'){ setEmailTo(inp.value.trim()); return; }
         iv.wf = Object.assign({}, iv.wf);
         iv.wf[f] = parseNum(inp.value);
         await persistWf(key, iv.wf);
@@ -17056,7 +17059,7 @@ async function renderKrofuyfirlit(t){
       if(act==='send'){
         if(iv.sent && !confirm('Þegar sent í bókun. Senda aftur?')) return;
         const ws=iv.worksite||'', wm=iv.work_month||'', cust=iv.customer||ws;
-        let to='bokhald@brunaholf.is'; try{ to=localStorage.getItem('email_to')||to; }catch(_){}
+        let to=emailTo();
         if(cust){ try{ const ci=await fetch('/api/customer-info?name='+encodeURIComponent(cust)).then(r=>r.ok?r.json():null); if(ci&&ci.rows&&ci.rows[0]&&ci.rows[0].contact_email) to=ci.rows[0].contact_email; }catch(_){} }
         let docs=((ws&&wm)?(EFDOCS[ws+'|'+wm]||[]):[]).filter(d=>d.drive_file_id && d.doc_type!=='innra'); // 🔒 innri viðhengi fara ALDREI með
         // Gluggi í stað confirm (Agnar 04.09.2026): velja skjölin sem fara með.
@@ -17181,6 +17184,7 @@ async function renderKrofuyfirlit(t){
   }
   async function fetchAll(){
     // krofu-yfirlit-bru + efnislisti-docs + invoice-drafts eru óháð → samhliða.
+    loadKySettings();   // stillingar (netfang bókara) af þjóninum, samhliða — ekki beðið
     const [bruR, efR, drR] = await Promise.all([
       fetch('/api/krofu-yfirlit-bru',{cache:'no-store'}).then(r=>r.json()),
       fetch('/api/efnislisti-docs').then(r=>r.ok?r.json():{rows:[]}).catch(()=>({rows:[]})),

@@ -13,6 +13,7 @@ const ALLOWED_KEYS = new Set([
   'hub_state',         // tabs + buttons + ui
   'kvittanir_templates',
   'multitool_settings', // ⚙️ Stillingar í Skjala-multitool (deilast milli vélanna 4)
+  'ky_settings',        // Kröfu yfirlit: netfang bókara o.fl. sem allar vélar deila (05.09.2026)
 ]);
 
 exports.handler = async (event) => {
