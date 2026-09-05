@@ -118,7 +118,21 @@
       '.dk-cta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:10px}.dk-stada{font-family:var(--font-mono);font-size:10.5px;color:var(--muted)}.dk-stada.ok{color:var(--green,#2f7a4a)}',
       '.dk-nota{width:100%;box-sizing:border-box;margin-top:8px;min-height:44px;padding:6px 8px;border:1px dashed var(--edge,#c9c2b3);border-radius:4px;background:var(--input-bg,#f6f3ec);font:inherit;font-size:12px;resize:vertical}',
       '.ds-chip.karfa{background:#fbf3d9;border-color:#d9b95a;color:#5a4410}',
-      '@media (max-width:720px){.dk-t th:nth-child(4),.dk-t td:nth-child(4){display:none}.dk-tot{justify-content:flex-start}}'
+      // Sími (Agnar 05.09.2026, „can you make it fit"): hver lína verður spjald — vöruheitið á fullri
+      // breidd, svo magn · verð · afsl · samtals · ✕ í einni röð með smá-merkjum; takkar á fullri breidd.
+      '@media (max-width:720px){',
+      '.ds-karfa{padding:10px 10px 12px}.dk-head .dk-kunni{width:100%;white-space:normal}',
+      '.dk-t thead{display:none}.dk-t,.dk-t tbody{display:block}',
+      '.dk-t tr{display:grid;grid-template-columns:64px 1fr 58px minmax(74px,auto) 28px;grid-template-areas:"d d d d d" "q p a s x";gap:6px;padding:9px 0;border-top:1px solid var(--line,#e6e1d6);align-items:end}',
+      '.dk-t td{display:block;padding:0;border-top:0;width:auto !important}',
+      '.dk-t td:nth-child(1){grid-area:d}.dk-t td:nth-child(2){grid-area:q}.dk-t td:nth-child(3){grid-area:p}.dk-t td:nth-child(4){grid-area:a}.dk-t td:nth-child(5){grid-area:s;text-align:right;padding-bottom:8px}.dk-t td:nth-child(6){grid-area:x;text-align:right;padding-bottom:4px}',
+      '.dk-t td:nth-child(2)::before,.dk-t td:nth-child(3)::before,.dk-t td:nth-child(4)::before,.dk-t td:nth-child(5)::before{display:block;font-family:var(--font-mono);font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:3px;white-space:nowrap}',
+      '.dk-t td:nth-child(2)::before{content:"magn"}.dk-t td:nth-child(3)::before{content:"verð án vsk"}.dk-t td:nth-child(4)::before{content:"afsl %"}.dk-t td:nth-child(5)::before{content:"samtals"}',
+      '.dk-t input{height:36px;font-size:14px;padding:0 8px}.dk-t td.r{font-size:13.5px}.dk-t .dk-pid{white-space:normal}',
+      '.dk-tools .sp{display:none}.dk-tools button{flex:1 1 auto;height:38px}.dk-tools label{width:100%;justify-content:space-between;margin-top:2px}.dk-tools label input{width:72px;height:34px}',
+      '.dk-tot{justify-content:space-between;gap:8px 12px;font-size:11px}.dk-tot .dk-total{width:100%;text-align:right;font-size:19px;margin-top:2px}',
+      '.dk-cta{flex-direction:column;align-items:stretch}.dk-cta button{width:100%;height:46px;font-size:14px}.dk-cta .dk-stada{text-align:center}',
+      '}'
     ].join('\n');
     document.head.appendChild(st);
   }
