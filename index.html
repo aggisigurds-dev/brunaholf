@@ -16051,7 +16051,7 @@ async function renderKrofuyfirlit(t){
     }
     return state.ui.ky_sent_mark;
   })();
-  const sentMarked = k => !!SENTMARK[k];
+  const sentMarked = inv => !!(inv && (inv.done || SENTMARK[inv.inv_key]));   // þjónn (krofur_yfirlit_meta.done) — gamla state-merkið gildir þar til það er flutt (05.09.2026)
   function toggleSentMark(k){
     if(SENTMARK[k]) delete SENTMARK[k]; else SENTMARK[k] = true;
     state.ui.ky_sent_mark = SENTMARK; save();   // samstillist milli tölva
@@ -16188,7 +16188,7 @@ async function renderKrofuyfirlit(t){
         ${false&&rv?wfBtn('rev','review','👔','Yfirferð','var(--blue-deep)',rvOn?'Taka úr yfirferð (afturkalla beiðni)':'Senda Efnislistann í yfirferð til yfirmanns (birtist í The Big Boss appinu)',rvOn):''}
         ${wfBtn('conf','confirm','✓','Staðfest','var(--green)',conf?'Staðfest — smelltu aftur til að af-staðfesta':'Staðfesta',conf)}
         ${withCap(wfBtn('send','send','📤',inv.sent?'Sent í bókun':'Senda í bókun','var(--green)',inv.sent?'Þegar sent í bókun':'Senda skjölin á bókarann — þú velur hvaða skjöl fara með',!!inv.sent), estCap)}
-        ${wfBtn('mark','sentmark','📨','Krafa send','var(--green)',sentMarked(inv.inv_key)?'Merkt sem send — smelltu til að afmerkja (handvirkt merki, engin skrif í kerfið)':'Merkja handvirkt að krafan sé send — verður grænt, gerir ekkert annað',sentMarked(inv.inv_key))}
+        ${wfBtn('mark','sentmark','📨','Krafa send','var(--green)',sentMarked(inv)?('Krafa merkt send'+(inv.done_by?' af '+esc(inv.done_by):'')+(inv.done_at?' '+fmtDate(inv.done_at):'')+' — smelltu til að afmerkja (vistast fyrir allar tölvur)'):'Merkja að krafan sé send — verður grænt og vistast fyrir allar tölvur',sentMarked(inv))}
       </span>
       ${rvHtml}
     </span>`;
@@ -17013,10 +17013,15 @@ async function renderKrofuyfirlit(t){
       // 📨 Krafa send — handvirkt merki. Ekkert kall, ekkert póstur: við
       // skiptum um lit strax (engin endurteikning svo skrunstaðan haldist).
       if(act==='sentmark'){
-        const on = toggleSentMark(key);
+        // 05.09.2026 (Agnar: „not synced between computers“): merkið býr í krofur_yfirlit_meta.done
+        // á þjóninum — sama leið og Staðfest/Sent — ekki lengur í state.ui (sem hver tölva yfirskrifaði).
+        const on = !sentMarked(iv); const by = bhMe();
+        iv.done = on; iv.done_by = on ? (by||null) : null; iv.done_at = on ? new Date().toISOString() : null;
+        if(SENTMARK[key]){ delete SENTMARK[key]; state.ui.ky_sent_mark = SENTMARK; save(); }
         b.classList.toggle('on', on);
-        b.title = on ? 'Merkt sem send — smelltu til að afmerkja (handvirkt merki, engin skrif í kerfið)'
-                     : 'Merkja handvirkt að krafan sé send — verður grænt, gerir ekkert annað';
+        b.title = on ? 'Krafa merkt send — smelltu til að afmerkja (vistast fyrir allar tölvur)' : 'Merkja að krafan sé send — verður grænt og vistast fyrir allar tölvur';
+        try{ const r = await fetch('/api/krofur-yfirlit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'save', inv_key:key, done:on, by})}); if(!r.ok) throw new Error('HTTP '+r.status); }
+        catch(e){ alert('Tókst ekki að vista merkið: '+(e.message||e)); }
         return;
       }
       // 👔 Yfirferð — flagga/af-flagga drögin til yfirferðar hjá yfirmanni.
@@ -17191,6 +17196,21 @@ async function renderKrofuyfirlit(t){
     // FYRSTA MÁLNING STRAX með þrep 1+2 (+Ósendar-borðið) — ekki bíða eftir þunga
     // þrep-3 útreikningnum (worksites/nlsh/redder). Notandi sér listann miklu fyrr.
     metaFromState(); renderList();
+    // Flutningur (05.09.2026): „Krafa send“-merki sem bjuggu í state.ui/localStorage fara á
+    // þjóninn (krofur_yfirlit_meta.done) einu sinni og state-merkið er tæmt — svo allar tölvur sjái það sama.
+    (async () => {
+      const gamalt = Object.keys(SENTMARK || {}); if(!gamalt.length) return;
+      const raðir = [].concat(...Object.values(bruR || {}).filter(Array.isArray)).filter(r => r && r.inv_key);
+      for(const k of gamalt){
+        const r = raðir.find(x => x.inv_key === k);
+        if(r && r.done){ continue; }
+        try{ const rr = await fetch('/api/krofur-yfirlit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'save', inv_key:k, done:true, by:'flutt úr tæki'})}); if(!rr.ok) return; if(r){ r.done = true; r.done_by = 'flutt úr tæki'; } }
+        catch(_){ return; }   // netið úti → reyna næst
+      }
+      for(const k of gamalt) delete SENTMARK[k];
+      state.ui.ky_sent_mark = {}; save(); try{ localStorage.removeItem('ky_sent_mark'); }catch(_){}
+      renderList();
+    })();
     // Þrep 3 (reiknað í vafra) + HOURS/REDDER í bakgrunni → endur-teikna þegar klárt.
     try{ state.tier3 = await computeTier3(); }catch(_){ state.tier3 = groupTier3([]); }
     metaFromState(); renderList();
