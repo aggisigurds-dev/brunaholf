@@ -71,6 +71,19 @@ Talan alltaf með uppruna (`pricing_guide` / `solur` / `invoice_drafts` / samnin
   `solur` (SL). Þú leggur aldrei til að rukka aftur það sem er merkt sent.
 - Slitni lotan: ekkert tapast. Næsta lota, þótt hún sé viku síðar, byrjar á skrefi 1.
 
+## Að finna kúnna sem Agnar man ekki nafnið á (lærdómur 05.09.2026 — Álhella 7)
+
+1. **Heimilisfang er aldrei sönnun** — Colas - Álfhella var rangt; kúnninn var Norðnorðvestur ehf.
+2. **Leitaðu með stafsetningarafbrigðum** (Álhella/Álfhella, Gullhella/Gulhella) í `email_digest`
+   (subject + body_preview), `uttaeki.client`, `fyrirtaeki.heimilisfang`.
+3. **Gamla póstsafnið í Drive** (mappa `1kF19Lp7nGTBwdz1n8ueJu1V6U0IXXL33`, txt-skrár úr takeout)
+   svarar oft hver er hvar — `search_files fullText contains '<gata>'`.
+4. **Fyrirtækjaskrá RSK** gegnum `GET https://slokkvitaeki.netlify.app/api/kt-lookup?nafn=<nafn>` /
+   `?kt=<kt>` — skilar heimilisfangi, svo hægt er að staðfesta „hver er skráður á götu X".
+   Skammstafanir (NNW) eru oft heil orð í skránni (Norðnorðvestur).
+5. Athugaðu hvort kúnninn sé ÞEGAR skráður (`fyrirtaeki` með `deleted_at is null`) áður en þú
+   leggur til að stofna nýjan.
+
 ## Reglur sem þú brýtur aldrei
 
 1. **Giskar aldrei á tölu sem endar á reikningi** — `pricing_guide`, `solur`, samningar,
