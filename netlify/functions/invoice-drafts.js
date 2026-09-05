@@ -53,7 +53,7 @@ exports.handler = async (event) => {
     const allowed = [
       'worksite_name', 'work_month', 'customer_name', 'source',
       'hours_dagvinna', 'hours_eftirvinna', 'rate_dagvinna', 'rate_eftirvinna',
-      'akstur_km', 'akstur_ferdir', 'smahlutagjald', 'stadfesting',
+      'akstur_km', 'akstur_ferdir', 'akstur_gjald', 'smahlutagjald', 'stadfesting',
       'materials_jsonb', 'materials_total',
       'net_an_vsk', 'vsk_amount', 'total_m_vsk',
       'status', 'payday_invoice_id', 'notes', 'updated_by',
@@ -136,7 +136,7 @@ exports.handler = async (event) => {
  * efni, afsláttur talið með). Reitirnir sjálfir (klst, km, efni, gjöld) leggjast
  * saman svo Efnislista-ritillinn reikni sömu tölu þegar hann opnar drögin.
  */
-const MERGE_SUM = ['hours_dagvinna', 'hours_eftirvinna', 'akstur_km', 'akstur_ferdir', 'smahlutagjald', 'materials_total'];
+const MERGE_SUM = ['hours_dagvinna', 'hours_eftirvinna', 'akstur_km', 'akstur_ferdir', 'akstur_gjald', 'smahlutagjald', 'materials_total'];
 const MERGE_SNAP = MERGE_SUM.concat(['stadfesting', 'materials_jsonb', 'net_an_vsk', 'vsk_amount', 'total_m_vsk', 'notes', 'status']);
 
 async function sbRows(qs) {

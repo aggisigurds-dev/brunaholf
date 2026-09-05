@@ -10453,16 +10453,17 @@ async function renderTilbunirReikningar(t){
     const kr = n => fmt(n)+' kr.';
     const row = (l,p,m,tot)=>`<tr><td class="l">${esc(l)}</td><td class="p">${p!=null?kr(p):''}</td><td class="m">${m!=null&&m!==''?m:''}</td><td class="t">${kr(tot)}</td></tr>`;
     const dvH=Number(d.hours_dagvinna)||0, dvR=Number(d.rate_dagvinna)||0, evH=Number(d.hours_eftirvinna)||0, evR=Number(d.rate_eftirvinna)||0;
-    const km=Number(d.akstur_km)||0, fr=Number(d.akstur_ferdir)||0, sma=Number(d.smahlutagjald)||0, stadf=Number(d.stadfesting)||0;
+    const km=Number(d.akstur_km)||0, fr=Number(d.akstur_ferdir)||0, gj=Number(d.akstur_gjald)||0, sma=Number(d.smahlutagjald)||0, stadf=Number(d.stadfesting)||0;
     const mats = Array.isArray(d.materials_jsonb)?d.materials_jsonb:[];
     let fra='', til='';
     if(/^\d{4}-\d{2}/.test(d.work_month||'')){ const [y,m]=d.work_month.split('-').map(Number); const last=new Date(y,m,0).getDate(); fra=`${d.work_month}-01`; til=`${d.work_month}-${String(last).padStart(2,'0')}`; }
     let body='';
     if(dvH>0) body += row('Dagvinna', dvR, dvH.toFixed(2), Math.round(dvR*dvH));
     if(evH>0) body += row('Yfirvinna', evR, evH.toFixed(2), Math.round(evR*evH));
-    if(km>0||fr>0) body += '<tr class="sec"><td colspan="4">Akstur</td></tr>';
+    if(km>0||fr>0||gj>0) body += '<tr class="sec"><td colspan="4">Akstur</td></tr>';
     if(km>0) body += row('ekinn km.', 186, km, km*186);
     if(fr>0) body += row('ekinn ferð', 4000, fr, fr*4000);
+    if(gj>0) body += row('akstursgjald', gj, '1', gj);
     const matRows = mats.filter(m=>(Number(m.qty)||0)>0||(Number(m.total)||0)>0).map(m=>{ const q=Number(m.qty)||0,p=Number(m.price)||0; return row(m.label,p,(q%1?q.toFixed(2):String(q)),Number(m.total)||Math.round(p*q)); }).join('');
     if(matRows) body += '<tr class="sec"><td colspan="4">Efni</td></tr>'+matRows;
     if(sma>0||stadf>0) body += '<tr class="sec"><td colspan="4">Aukagjöld</td></tr>';
@@ -10941,7 +10942,7 @@ async function renderGerdReikninga(t){
       .gb-hstrip{display:flex;align-items:center;gap:10px;margin:8px 0 2px;padding:7px 10px;border:1px solid var(--line-2,#d9d3c6);border-radius:4px;background:var(--bg-2,#ece7dc);font-size:12.5px;color:var(--ink-2,#4a463f)}
       .gb-hstrip.warn{background:linear-gradient(180deg,#fbf3d9,#f4e6b8);border-color:#d9b25a;color:#3e2c06}
       .gb-hstrip #gr-fill-hours{margin-left:auto;float:none;height:32px;padding:0 12px;font-size:12px;white-space:nowrap}
-      .gb-akstur{grid-template-columns:72px 1fr 1fr 72px;margin-top:12px;border-top:1px solid var(--line-2,#d9d3c6);padding-top:12px}
+      .gb-akstur{margin-top:4px;border-top:1px dashed var(--line-2,#d9d3c6);padding-top:8px}.gb-gjald input{text-align:right}
       .gb-unit{display:flex;align-items:center;height:36px;border:1px solid var(--edge,#c9c2b3);border-radius:4px;background:var(--input-bg,#f6f3ec);box-shadow:var(--well-shadow,inset 0 2px 3px rgba(22,21,19,.12));padding:0 10px 0 0;overflow:hidden;margin:0}
       .gr-modal-bg.boss .gb-unit input{border:0;background:transparent;box-shadow:none;width:64px;min-width:0;height:34px;padding:0 8px;font-family:var(--font-mono,ui-monospace,monospace);font-weight:600}
       .gb-unit span{font-size:10.5px;color:var(--muted,#6f685c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -11441,6 +11442,7 @@ async function renderGerdReikninga(t){
     const evR = d && d.rate_eftirvinna ? Number(d.rate_eftirvinna) : r.ev;
     const km  = d ? Number(d.akstur_km)||0 : 0;
     const fr  = d ? Number(d.akstur_ferdir)||0 : 0;
+    const gj  = d ? Number(d.akstur_gjald)||0 : 0;   // sér akstursgjald (05.09.2026)
     const stadfOn = d ? Number(d.stadfesting)>0 : r.stadf;
     // Aldrei sýna sjálfvirkar kerfis-athugasemdir á reikningi/skjali sem fer til
     // verkkaupa. „Handvirkt skráð í Vinnubók (…)" er audit-lína (updated_by/at geymir
@@ -11529,6 +11531,8 @@ async function renderGerdReikninga(t){
             <div class="gb-hrow gb-hhead"><span></span><span>Klst</span><span>Kr/klst</span><span class="r">Samtals</span></div>
             <div class="gb-hrow"><b>Dagvinna</b><input class="gb-h" type="text" inputmode="decimal" id="gr-dvh" value="${dvH}"><input type="text" inputmode="decimal" id="gr-dvr" value="${dvR}"><span class="gb-hsum" id="gr-dv-sum">—</span></div>
             <div class="gb-hrow"><b>Yfirvinna${r.evOk?'':'<span style="font-size:10px;color:var(--warn);font-weight:400"> — ekki leyfð</span>'}</b><input class="gb-h" type="text" inputmode="decimal" id="gr-evh" value="${evH}"${r.evOk?'':' title="Yfirvinna ekki leyfð samkvæmt verðskrá"'}><input type="text" inputmode="decimal" id="gr-evr" value="${evR}"${r.evOk?'':' disabled'}><span class="gb-hsum" id="gr-ev-sum">—</span></div>
+            <div class="gb-hrow gb-akstur"><b>Akstur</b><label class="gb-unit"><input type="number" id="gr-km" value="${km}" step="10"><span>km × ${r.km}</span></label><label class="gb-unit"><input type="number" id="gr-ferd" value="${fr}" step="1"><span>ferðir × ${fmt(r.ferd)}</span></label><span class="gb-hsum" id="gr-akstur-sum">0</span></div>
+            <div class="gb-hrow gb-gjald" title="Sér akstursgjald á þennan reikning — fast gjald í kr án vsk, til viðbótar við km og ferðir"><b>Akstursgjald</b><input type="text" inputmode="decimal" id="gr-gjald" value="${gj?gj:''}" placeholder="0"><span style="font-size:11px;color:var(--muted)">sér gjald · kr án vsk</span><span class="gb-hsum" id="gr-gjald-sum">${gj?fmt(gj):'—'}</span></div>
             <div class="gb-yf" id="gr-yf-row" title="Þegar hakað er reiknar tímabókin yfirvinnu á hvern starfsmann: tímar umfram þröskuldinn þann dag færast á yfirvinnu-taxta">
               <input type="checkbox" id="gr-yf-on">
               <label for="gr-yf-on" style="cursor:pointer">Reikna yfirvinnu af tímabók — tímar umfram</label>
@@ -11550,7 +11554,6 @@ async function renderGerdReikninga(t){
             </div>
             <div class="gr-tbk-body" id="gr-tbk-body"><div class="gr-tbk-empty">Sæki tímafærslur…</div></div>
           </div>
-          <div class="gb-hrow gb-akstur"><b>Akstur</b><label class="gb-unit"><input type="number" id="gr-km" value="${km}" step="10"><span>km × ${r.km}</span></label><label class="gb-unit"><input type="number" id="gr-ferd" value="${fr}" step="1"><span>ferðir × ${fmt(r.ferd)}</span></label><span class="gb-hsum" id="gr-akstur-sum">0</span></div>
             </div>
           </section>
           <section class="gb-sec" data-sec="03">
@@ -11726,14 +11729,14 @@ async function renderGerdReikninga(t){
 
     function compute(){
       const dvH=numv('gr-dvh'),dvR=numv('gr-dvr'),evH=numv('gr-evh'),evR=numv('gr-evr');
-      const km=numv('gr-km'),fr=numv('gr-ferd');
+      const km=numv('gr-km'),fr=numv('gr-ferd'),gj=document.getElementById('gr-gjald')?numv('gr-gjald'):0;
       const stadf = document.getElementById('gr-stadf').checked ? GR_STADF : 0;
       const smaH = dvH + evH;                 // smáhlutagjald á dagvinnu OG yfirvinnu
       const sma = (document.getElementById('gr-sma-on') && !document.getElementById('gr-sma-on').checked) ? 0 : Math.round(r.sma * smaH);
       const matLines = gatherMats();
       const matSum = matLines.reduce((a,m)=>a+m.total,0);
-      const dvAmt=dvR*dvH, evAmt=evR*evH, kmAmt=km*r.km, frAmt=fr*r.ferd;
-      const net0 = dvAmt+evAmt+kmAmt+frAmt+sma+stadf+matSum;
+      const dvAmt=dvR*dvH, evAmt=evR*evH, kmAmt=km*r.km, frAmt=fr*r.ferd, gjAmt=Math.round(gj);
+      const net0 = dvAmt+evAmt+kmAmt+frAmt+gjAmt+sma+stadf+matSum;
       const discPct = Math.max(0, Math.min(100, (function(){ const el=document.getElementById('gr-disc'); return el?parseNum(el.value):0; })()));
       const disc = discPct>0 ? Math.round(net0*discPct/100) : 0;
       const net = net0 - disc;
@@ -11742,7 +11745,7 @@ async function renderGerdReikninga(t){
       const fixedEl = document.getElementById('gr-fix');
       const fixed = fixedEl ? parseNum(fixedEl.value) : 0;
       const displayTotal = fixed > 0 ? Math.round(fixed) : total;
-      return {dvH,dvR,evH,evR,km,fr,stadf,sma,matLines,matSum,dvAmt,evAmt,kmAmt,frAmt,net0,discPct,disc,net,vsk,total,fixed,displayTotal};
+      return {dvH,dvR,evH,evR,km,fr,gj,stadf,sma,matLines,matSum,dvAmt,evAmt,kmAmt,frAmt,gjAmt,net0,discPct,disc,net,vsk,total,fixed,displayTotal};
     }
 
     function draw(){
@@ -11771,9 +11774,10 @@ async function renderGerdReikninga(t){
           <tbody>
             ${c.dvH>0?row('Dagvinna', c.dvR, c.dvH.toFixed(2), c.dvAmt):''}
             ${c.evH>0?row('Yfirvinna', c.evR, c.evH.toFixed(2), c.evAmt):''}
-            ${(c.km>0||c.fr>0)?'<tr class="sec"><td colspan="4">Akstur</td></tr>':''}
+            ${(c.km>0||c.fr>0||c.gj>0)?'<tr class="sec"><td colspan="4">Akstur</td></tr>':''}
             ${c.km>0?row('ekinn km.', r.km, c.km, c.kmAmt):''}
             ${c.fr>0?row('ekinn ferð', r.ferd, c.fr, c.frAmt):''}
+            ${c.gj>0?row('akstursgjald', c.gj, '1', c.gjAmt):''}
             ${matRows?'<tr class="sec"><td colspan="4">Efni</td></tr>'+matRows:''}
             ${(c.sma>0||c.stadf>0)?'<tr class="sec"><td colspan="4">Aukagjöld</td></tr>':''}
             ${c.sma>0?row('Smáhlutagjald = hanskar, þurrkur o.fl.', r.sma, (c.dvH+c.evH).toFixed(2), c.sma):''}
@@ -11804,7 +11808,7 @@ async function renderGerdReikninga(t){
       const K = id => document.getElementById(id);
       function bossSums(){
         const c = compute();
-        const timi = c.dvAmt + c.evAmt + c.kmAmt + c.frAmt, gjold = c.sma + c.stadf - c.disc;
+        const timi = c.dvAmt + c.evAmt + c.kmAmt + c.frAmt + c.gjAmt, gjold = c.sma + c.stadf - c.disc;
         if(K('gr-k-timi')){ K('gr-k-timi').textContent = fmt(timi); K('gr-k-efni').textContent = fmt(c.matSum); K('gr-k-gjold').textContent = fmt(gjold); K('gr-k-net').textContent = fmt(c.net); K('gr-k-total').textContent = fmt(c.displayTotal) + ' kr'; }
         const S = (n, v) => { const e = K('gr-sum-' + n); if(e) e.textContent = v; };
         S('02', fmt(timi)); S('03', fmt(c.matSum)); S('04', fmt(gjold));
@@ -11814,9 +11818,9 @@ async function renderGerdReikninga(t){
         const fh = n => String(Math.round((n || 0) * 100) / 100).replace('.', ',');
         // Hlutföll af upphæð án vsk (ósk Agnars 04.09.2026: „sýna prósentuna þarna").
         const pctAf = v => (c.net > 0 && v > 0) ? ' · ' + Math.round((v / c.net) * 100) + '%' : '';
-        sub('02', fh(c.dvH) + ' klst dv · ' + fh(c.evH) + ' ev · ' + (c.km || 0) + ' km' + pctAf(c.dvAmt + c.evAmt));
+        sub('02', fh(c.dvH) + ' klst dv · ' + fh(c.evH) + ' ev · ' + (c.km || 0) + ' km' + (c.gj > 0 ? ' · gjald ' + fmt(c.gj) : '') + pctAf(c.dvAmt + c.evAmt));
         const SS = (id, v) => { const e = K(id); if(e && e.textContent !== v) e.textContent = v; };
-        SS('gr-dv-sum', fmt(c.dvAmt)); SS('gr-ev-sum', fmt(c.evAmt)); SS('gr-akstur-sum', fmt(c.kmAmt + c.frAmt));
+        SS('gr-dv-sum', fmt(c.dvAmt)); SS('gr-ev-sum', fmt(c.evAmt)); SS('gr-akstur-sum', fmt(c.kmAmt + c.frAmt)); SS('gr-gjald-sum', c.gj > 0 ? fmt(c.gjAmt) : '—');
         bg.querySelectorAll('#gr-mats .gr-mat-line').forEach(l => { const p = Number((l.querySelector('.m-price') || {}).value) || 0, q = Number((l.querySelector('.m-qty') || {}).value) || 0; const e = l.querySelector('.m-sum'); const v = p && q ? fmt(p * q) : '—'; if(e && e.textContent !== v) e.textContent = v; });
         const stOn = K('gr-stadf') && K('gr-stadf').checked; SS('gr-stadf-amt', stOn ? fmt(typeof GR_STADF !== 'undefined' ? GR_STADF : 0) : '0');
         const smOn = K('gr-sma-on') && K('gr-sma-on').checked; SS('gr-sma-amt', smOn ? fmt(c.sma) : '0');
@@ -12018,7 +12022,7 @@ async function renderGerdReikninga(t){
             source: existing?.source || 'timavera',
             hours_dagvinna: c.dvH, hours_eftirvinna: c.evH,
             rate_dagvinna: c.dvR, rate_eftirvinna: c.evR,
-            akstur_km: c.km, akstur_ferdir: c.fr,
+            akstur_km: c.km, akstur_ferdir: c.fr, akstur_gjald: c.gj,
             smahlutagjald: c.sma, stadfesting: c.stadf,
             materials_jsonb: c.matLines, materials_total: c.matSum,
             net_an_vsk: c.net, vsk_amount: c.vsk, total_m_vsk: c.displayTotal,
@@ -12069,7 +12073,7 @@ async function renderGerdReikninga(t){
         // Skrifa snapshotið frá opnun til baka — aðeins reitirnir sem ritillinn
         // getur breytt (PATCH-leiðin í invoice-drafts.js snertir ekkert annað).
         const flds = ['customer_name','kennitala','heimilisfang','hours_dagvinna','hours_eftirvinna',
-          'rate_dagvinna','rate_eftirvinna','akstur_km','akstur_ferdir','smahlutagjald','stadfesting',
+          'rate_dagvinna','rate_eftirvinna','akstur_km','akstur_ferdir','akstur_gjald','smahlutagjald','stadfesting',
           'materials_jsonb','materials_total','net_an_vsk','vsk_amount','total_m_vsk','discount_pct','fixed_total','status','notes'];
         const body = { worksite_name: revSnap.worksite_name, work_month: revSnap.work_month, updated_by:'yfirferd-revert' };
         for(const f of flds) if(revSnap[f] !== undefined) body[f] = revSnap[f];
@@ -22296,9 +22300,10 @@ function drawEfnislistiPage(doc, logo, data){
   const bodyRows = [];
   if(c.dvH>0) bodyRows.push(line('Dagvinna', c.dvR, c.dvH.toFixed(2), c.dvAmt));
   if(c.evH>0) bodyRows.push(line('Yfirvinna', c.evR, c.evH.toFixed(2), c.evAmt));
-  if(c.km>0||c.fr>0) bodyRows.push(sec('Akstur'));
+  if(c.km>0||c.fr>0||c.gj>0) bodyRows.push(sec('Akstur'));
   if(c.km>0) bodyRows.push(line('ekinn km.', rt.km, c.km, c.kmAmt));
   if(c.fr>0) bodyRows.push(line('ekin ferð', rt.ferd, c.fr, c.frAmt));
+  if(c.gj>0) bodyRows.push(line('akstursgjald', c.gj, '1', c.gjAmt));
   const mats = (c.matLines||[]).filter(m=>m.qty>0||m.total>0);
   if(mats.length){ bodyRows.push(sec('Efni')); mats.forEach(m=> bodyRows.push(line(m.label, m.price, (m.qty%1?m.qty.toFixed(2):String(m.qty)), m.total))); }
   if(c.sma>0||c.stadf>0) bodyRows.push(sec('Aukagjöld'));
