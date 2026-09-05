@@ -34,6 +34,10 @@
 
   let VORUR = null, vorurLofad = null, opin = null, ctx = null;
   const timers = {};
+  // Í síma opnast karfan sem YFIRLIT (skjáskot/senda áfram) — ritillinn einn smell í burtu („✏️ Breyta").
+  // Valið man sig per punkt í lotunni svo teikning eftir breytingu hendi manni ekki aftur í yfirlitið.
+  const compactPref = {};
+  const isMobile = () => !!(window.matchMedia && window.matchMedia('(max-width:720px)').matches);
 
   // ── Vörulistinn ──────────────────────────────────────────────────────────
   function hladaVorur() {
@@ -172,6 +176,7 @@
       + '<div class="dk-head"><b>🧺 Draft-karfa</b><span class="dk-kunni">' + (kunniNafn ? esc(kunniNafn) + (ku.kt ? ' · kt ' + esc(ku.kt) : '') + (ku.afslattur_pct ? ' · ' + esc(ku.afslattur_pct) + '% fastur afsl.' : '') : 'enginn kúnni valinn — veldu kúnna í reitnum fyrir ofan') + '</span><span class="sp"></span>'
       + (k.auto ? '<span class="ds-chip warn" title="Línurnar voru lesnar sjálfkrafa úr textanum — yfirfarðu vöru, magn og verð">✨ sjálfvirk tillaga</span>' : '')
       + (k.sent_at ? '<span class="ds-chip ok" title="Send í söluborðið">↗ send ' + esc(stund(k.sent_at)) + '</span>' : '')
+      + '<button type="button" class="dk-x" data-dk="yfirlit" title="Yfirlit — allt á einum skjá (skjáskot / senda áfram)">🔍</button>'
       + '<button type="button" class="dk-x" data-dk="loka" title="Loka (karfan geymist)">✕</button></div>'
       + '<table class="dk-t"><thead><tr><th>Vara / þjónusta</th><th>Magn</th><th>Ein.verð án vsk</th><th>Afsl %</th><th style="text-align:right">Samtals</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>'
       + '<div class="dk-tools"><button type="button" data-dk="add" style="' + ctx.KEY + '">+ Vara</button><button type="button" data-dk="addsvc" style="' + ctx.KEY + '">+ Vinna / þjónusta</button><button type="button" data-dk="urtexta" style="' + ctx.KEY + '" title="Lesa línurnar aftur úr texta punktsins (skiptir út núverandi línum)">↻ Úr punktinum</button><span class="sp"></span>'
@@ -279,6 +284,8 @@
       const note = ctx.NOTES.find(n => String(n.id) === root.dataset.karfa); if (!note || !note.karfa) return;
       const k = note.karfa;
       root.addEventListener('click', e => e.stopPropagation());
+      const vilCompact = compactPref[note.id] !== undefined ? compactPref[note.id] : isMobile();
+      if (vilCompact) { root.classList.add('compact'); const y = root.querySelector('.dk-yfirlit'); if (y) { y.hidden = false; y.innerHTML = yfirlitHtml(note); } }
       root.addEventListener('input', e => {
         const el = e.target; const f = el.dataset.f; if (!f) return;
         const tr = el.closest('tr[data-i]');
@@ -300,6 +307,7 @@
         if (act === 'loka') { opin = null; ctx.teikna(); return; }
         if (act === 'yfirlit') {
           const y = root.querySelector('.dk-yfirlit'); const a = !root.classList.contains('compact');
+          compactPref[note.id] = a;
           root.classList.toggle('compact', a); y.hidden = !a; if (a) { y.innerHTML = yfirlitHtml(note); try { y.scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (_) {} }
           return;
         }
