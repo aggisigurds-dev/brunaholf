@@ -17070,6 +17070,7 @@ async function renderKrofuyfirlit(t){
         b.title = on ? 'Krafa merkt send — smelltu til að afmerkja (vistast fyrir allar tölvur)' : 'Merkja að krafan sé send — verður grænt og vistast fyrir allar tölvur';
         try{ const r = await fetch('/api/krofur-yfirlit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'save', inv_key:key, done:on, by})}); if(!r.ok) throw new Error('HTTP '+r.status); }
         catch(e){ alert('Tókst ekki að vista merkið: '+(e.message||e)); }
+        renderList();   // röðin fer úr Ósent um leið (kemur aftur með „Sýna falin" / afmerkingu)
         return;
       }
       // 👔 Yfirferð — flagga/af-flagga drögin til yfirferðar hjá yfirmanni.
