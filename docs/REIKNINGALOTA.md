@@ -71,11 +71,11 @@ POS (js/pos.js) → solur: status 'drog' (greitt síðar) eða 'final'
   sendir kröfu.
 - „Reikningur" og „greitt síðar" eru **ekki** það sama: greitt_sidar → reikningur er
   einstefna, aldrei til baka (regla Agnars 20.05.2026).
-- **Draft-karfa (05.09.2026):** Slökkvitækis-punktur í Drög-stöðinni á „🧺 Karfa" — krassblað með vörum
+- **Draft-karfa (05.09.2026):** Slökkvitækis-punktur í Drög-stöðinni á „🛒 Karfa" — krassblað með vörum
   úr vörulistanum, magni, verði, afslætti og samtölu (`reikningspunktar.karfa`, EKKI sala, EKKI drög í
   `solur`). Línurnar lesast sjálfkrafa úr texta punktsins („7 × 5 kg CO2-tæki", „10 klst × 12.500 kr").
   „Senda í körfu" opnar söluborðið með `?karfa=<id>` (patch 352) — reikningurinn verður til ÞAR, eftir
-  reglum söluborðsins. Opnast úr skráningarstikunni (🧺 Karfa), á punktinum og í Valið („🧺 Ný karfa").
+  reglum söluborðsins. Opnast úr skráningarstikunni (🛒 Karfa), á punktinum og í Valið („🛒 Ný karfa").
 - **Krassblaðið:** textinn á hverjum punkti er ritanlegur á staðnum (vistast sjálfkrafa), krass-reitur á
   kúnnann (→ `fyrirtaeki.athugasemdir`) og verkið (→ `invoice_drafts.notes`) í Valið, „+ punktur" á spjöldunum.
 - Úttekt sem á eftir að klára = fyrirtæki í þjónustu, á vinnublaði, án úttektarsölu ársins.
@@ -160,7 +160,7 @@ Birgjareikningar sem eru endurrukkaðir á kúnna (t.d. Securitas-efni fyrir bru
 1. Droppa PDF/mynd á **Efniskostnaður → 📥 Droppa kostnaðarreikningi**, velja fyrirtækið til endurrukkunar
    (og afslátt okkar %). Skjalið vistast á Supabase, punktur verður til í Drög-stöð með 🧾-færslu og
    AI les birgi, nr., dags., afhendingarstað, afslátt og línur.
-2. Á punktinum (Drög-stöð → 🧺): yfirfara línurnar — listaverð = innkaup ÷ (1 − afsl.); söluverð má breyta;
-   „🧺 Setja í körfu" → línurnar í draft-körfuna á söluverði → „Senda í körfu" → Sala → reikningur.
+2. Á punktinum (Drög-stöð → 🛒): yfirfara línurnar — listaverð = innkaup ÷ (1 − afsl.); söluverð má breyta;
+   „🛒 Setja í körfu" → línurnar í draft-körfuna á söluverði → „Senda í körfu" → Sala → reikningur.
 3. Listinn á Efniskostnaði er innkaupabók með hook á endurrukkunaraðilann; „📚 Í bókhald" þegar
    reikningurinn er kominn til bókara. Regla: afsláttur birgja kemur ALDREI á reikning kúnna (Charlize #410).

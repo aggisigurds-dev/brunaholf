@@ -115,7 +115,7 @@ reikningi kúnna. Allt bíður í Drög-stöð þar til allir reikningarnir eru 
 **Hvar:** 🧾 Kostnaðarreikningar eru færslur í körfu punktsins (`reikningspunktar.karfa.kostnadur`,
 `js/ds-karfa.js`): birgir · nr. · dags. · afsl. okkar % · PDF (innra viðhengi, Supabase Storage) · línur
 með innkaupsverði, afslætti línu, listaverði (= innkaup ÷ (1 − afsl.)) og söluverði (má yfirskrifa).
-„🧺 Setja í körfu" flytur línurnar í draft-körfuna á söluverði (vara úr vörulista → okkar listaverð).
+„🛒 Setja í körfu" flytur línurnar í draft-körfuna á söluverði (vara úr vörulista → okkar listaverð).
 
 **Innlestur:** droppsvæðið á Efniskostnaði (`#efniskostnadur`) — PDF/mynd → pdf-store (innra) →
 punktur með 🧾 → `POST /api/reikningspunktar {action:'lesa_kostnad', id, kid}` sendir skjalið SJÁLFT

@@ -144,7 +144,7 @@
       n++;
     }
     k.auto = false;
-    ctx.setSync('🧺 ' + n + ' lín' + (n === 1 ? 'a' : 'ur') + ' úr ' + hint + ' settar í körfuna á söluverði');
+    ctx.setSync('🛒 ' + n + ' lín' + (n === 1 ? 'a' : 'ur') + ' úr ' + hint + ' settar í körfuna á söluverði');
     return n;
   }
   function uppfaeraKostTolur(invEl, inv) {
@@ -212,7 +212,7 @@
         + '<div class="dk-kt-wrap"><table class="dk-kt"><thead><tr><th>Lýsing</th><th>Magn</th><th>Innkaup án vsk</th><th>Afsl %</th><th style="text-align:right">Listaverð</th><th>Söluverð án vsk</th><th style="text-align:right">Samtals sala</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>'
         + '<div class="dk-kinv-tools"><button type="button" data-dk="kost-line" style="' + ctx.KEY + '">+ Lína</button><button type="button" data-dk="kost-paste" style="' + ctx.KEY + '" title="Líma línur af reikningnum („3 x Reykskynjari 12.500", ein í hverja línu) — þær lesast í töfluna">📋 Líma línur</button><span class="sp"></span>'
         + '<span class="dk-kinv-tot">Innkaup <b class="k-innk">' + fmt(t.innk) + '</b> · Endurkrafa <b class="k-sala">' + fmt(t.sala) + '</b> · Framlegð <b class="k-fl">' + fmt(t.fl) + ' (' + t.pct + '%)</b></span>'
-        + '<button type="button" data-dk="kost-tilkorfu" style="' + ctx.GOLD + '" title="Setur línurnar í draft-körfuna á söluverði (skiptir út fyrri línum þessa reiknings)">🧺 Setja í körfu</button></div>'
+        + '<button type="button" data-dk="kost-tilkorfu" style="' + ctx.GOLD + '" title="Setur línurnar í draft-körfuna á söluverði (skiptir út fyrri línum þessa reiknings)">🛒 Setja í körfu</button></div>'
         + '<textarea class="dk-kpaste" hidden placeholder="Límdu línur af reikningnum — ein í hverja línu:&#10;3 x Reykskynjari Hochiki 12.500&#10;Kapall 2x0,75 25 m 190&#10;…og smelltu á „Lesa línur"."></textarea>'
         + '<div class="dk-kinv-tools dk-kpastebar" hidden><button type="button" data-dk="kost-lesa" style="' + ctx.GOLD + '">Lesa línur</button><button type="button" data-dk="kost-paste" style="' + ctx.KEY + '">Hætta við</button></div>'
         + '</div>';
@@ -305,7 +305,7 @@
         + '<td style="width:26px"><button type="button" class="dk-x" data-dk="del" title="Taka línu út">✕</button></td></tr>';
     }).join('');
     return '<div class="ds-karfa" data-karfa="' + esc(note.id) + '">'
-      + '<div class="dk-head"><b>🧺 Draft-karfa</b><span class="dk-kunni">' + (kunniNafn ? esc(kunniNafn) + (ku.kt ? ' · kt ' + esc(ku.kt) : '') + (ku.afslattur_pct ? ' · ' + esc(ku.afslattur_pct) + '% fastur afsl.' : '') : 'enginn kúnni valinn — veldu kúnna í reitnum fyrir ofan') + '</span><span class="sp"></span>'
+      + '<div class="dk-head"><b>🛒 Draft-karfa</b><span class="dk-kunni">' + (kunniNafn ? esc(kunniNafn) + (ku.kt ? ' · kt ' + esc(ku.kt) : '') + (ku.afslattur_pct ? ' · ' + esc(ku.afslattur_pct) + '% fastur afsl.' : '') : 'enginn kúnni valinn — veldu kúnna í reitnum fyrir ofan') + '</span><span class="sp"></span>'
       + (k.auto ? '<span class="ds-chip warn" title="Línurnar voru lesnar sjálfkrafa úr textanum — yfirfarðu vöru, magn og verð">✨ sjálfvirk tillaga</span>' : '')
       + (k.sent_at ? '<span class="ds-chip ok" title="Send í söluborðið">↗ send ' + esc(stund(k.sent_at)) + '</span>' : '')
       + '<button type="button" class="dk-x" data-dk="yfirlit" title="Yfirlit — allt á einum skjá (skjáskot / senda áfram)">🔍</button>'
@@ -316,7 +316,7 @@
       + kostHtml(note)
       + '<textarea class="dk-nota" data-f="athugasemd" placeholder="Krass — hvað á eftir að athuga, hvað var sagt, afsláttur sem bíður…">' + esc(k.athugasemd || '') + '</textarea>'
       + '<div class="dk-tot"><span>Án vsk <b class="dk-ex">' + fmt(t.ex) + '</b></span><span>VSK <b class="dk-vsk">' + fmt(t.vsk) + '</b></span><span class="dk-total">' + fmt(t.total) + ' kr</span></div>'
-      + '<div class="dk-cta"><button type="button" data-dk="senda" style="' + ctx.GOLD + '" title="Opnar söluborð Slökkvitækis með þessari körfu — reikningurinn verður til þar">🧺 Senda í körfu ↗</button><button type="button" data-dk="yfirlit" style="' + ctx.KEY + '" title="Samþjappað yfirlit sem kemst á einn skjá — til að skjáskjóta og senda áfram">🔍 Yfirlit</button><span class="dk-stada">' + (k.saved_at ? 'vistað ' + esc(stund(k.saved_at)) : 'óvistað') + '</span></div>'
+      + '<div class="dk-cta"><button type="button" data-dk="senda" style="' + ctx.GOLD + '" title="Opnar söluborð Slökkvitækis með þessari körfu — reikningurinn verður til þar">🛒 Senda í körfu ↗</button><button type="button" data-dk="yfirlit" style="' + ctx.KEY + '" title="Samþjappað yfirlit sem kemst á einn skjá — til að skjáskjóta og senda áfram">🔍 Yfirlit</button><span class="dk-stada">' + (k.saved_at ? 'vistað ' + esc(stund(k.saved_at)) : 'óvistað') + '</span></div>'
       + '<div class="dk-yfirlit" hidden></div>'
       + '</div>';
   }
@@ -350,7 +350,7 @@
     const nl = Array.isArray(k.lines) ? k.lines.length : 0, nk = Array.isArray(k.kostnadur) ? k.kostnadur.length : 0;
     if (!nl && !nk) return '';
     const t = totals(k);
-    return '<span class="ds-chip karfa" title="Draft-karfa' + (k.sent_at ? ' — send í söluborð ' + esc(stund(k.sent_at)) : '') + (nk ? ' · ' + nk + ' kostnaðarreikning' + (nk === 1 ? 'ur' : 'ar') : '') + '">🧺 ' + nl + ' lín' + (nl === 1 ? 'a' : 'ur') + ' · ' + fmt(t.total) + ' kr' + (nk ? ' · 🧾 ' + nk : '') + (k.sent_at ? ' · ↗' : '') + '</span>';
+    return '<span class="ds-chip karfa" title="Draft-karfa' + (k.sent_at ? ' — send í söluborð ' + esc(stund(k.sent_at)) : '') + (nk ? ' · ' + nk + ' kostnaðarreikning' + (nk === 1 ? 'ur' : 'ar') : '') + '">🛒 ' + nl + ' lín' + (nl === 1 ? 'a' : 'ur') + ' · ' + fmt(t.total) + ' kr' + (nk ? ' · 🧾 ' + nk : '') + (k.sent_at ? ' · ↗' : '') + '</span>';
   }
 
   // ── Vistun (sjálfkrafa, 800 ms) ──────────────────────────────────────────
@@ -373,7 +373,7 @@
   }
   function uppfaeraFlogu(note) {
     const b = ctx.view.querySelector('[data-karfa-open="' + note.id + '"]'); const t = totals(note.karfa || { lines: [] });
-    if (b) b.textContent = '🧺 ' + (note.karfa && note.karfa.lines.length ? fmt(t.total) + ' kr' : 'Karfa');
+    if (b) b.textContent = '🛒 ' + (note.karfa && note.karfa.lines.length ? fmt(t.total) + ' kr' : 'Karfa');
   }
   function uppfaeraTolur(root, note) {
     const k = note.karfa; const t = totals(k);
@@ -398,20 +398,20 @@
     ctx = c; const $v = ctx.view;
     // takkar á spjöldum (01) og í Valið (03)
     $v.querySelectorAll('[data-karfa-open]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); const id = Number(b.dataset.karfaOpen); if (opin === id) { opin = null; ctx.teikna(); } else opna(id); }));
-    // 🧺 Ný karfa á valinn kúnna (03)
+    // 🛒 Ný karfa á valinn kúnna (03)
     const ny = $v.querySelector('#ds-val [data-act="nykarfa"]');
     if (ny) ny.addEventListener('click', async () => {
       const kunni = ctx.selKunni(); if (!kunni) return;
       ny.disabled = true;
-      const row = await ctx.skra('🧺 Karfa — ' + kunni, { worksite_name: kunni, felag: 'slokkvitaeki' });
+      const row = await ctx.skra('🛒 Karfa — ' + kunni, { worksite_name: kunni, felag: 'slokkvitaeki' });
       if (row && !row.pending) { ctx.addNote(row); await opna(row.id); } else if (row) { alert('Netið er úti — punkturinn er í biðröð; karfan opnast þegar hann er kominn inn.'); }
       ny.disabled = false;
     });
-    // 🧺 Karfa í skráningarstikunni efst — einu sinni
+    // 🛒 Karfa í skráningarstikunni efst — einu sinni
     const kb = document.getElementById('ds-karfa');
     if (kb && !kb.dataset.wired) { kb.dataset.wired = '1'; kb.addEventListener('click', async () => {
       if (ctx.felVal() !== 'slokkvitaeki') ctx.setFelag('slokkvitaeki');
-      const raw = ctx.inputValue() || '🧺 Karfa';
+      const raw = ctx.inputValue() || '🛒 Karfa';
       kb.disabled = true;
       const row = await ctx.skra(raw, { felag: 'slokkvitaeki' });
       if (row && !row.pending) { ctx.addNote(row); await opna(row.id); } else if (row) alert('Netið er úti — punkturinn er í biðröð; karfan opnast þegar hann er kominn inn.');
@@ -506,14 +506,14 @@
           if (!note.worksite_name) { alert('Veldu kúnna fyrst (reiturinn „Kúnni…" fyrir ofan) — söluborðið þarf að vita á hvern reikningurinn fer.'); return; }
           b.disabled = true; b.textContent = '⏳…';
           try { clearTimeout(timers[note.id]); await vista(note, { sent: true }); }
-          catch (err) { alert('Vistun mistókst: ' + (err.message || err)); b.disabled = false; b.textContent = '🧺 Senda í körfu ↗'; return; }
+          catch (err) { alert('Vistun mistókst: ' + (err.message || err)); b.disabled = false; b.textContent = '🛒 Senda í körfu ↗'; return; }
           const url = POS_URL + '?karfa=' + encodeURIComponent(note.id) + '#sala';
           // Innfelld í Slökkvitæki-appið (Big Boss / Fjármál, ?embed=1): færa allan gluggann á söluborðið
           // í stað þess að opna nýjan flipa — sama app, karfan bíður þar. Annars nýr flipi.
           let faert = false;
           if (window.top !== window) { try { window.top.location.href = url; faert = true; } catch (_) { faert = false; } }
           if (!faert) window.open(url, '_blank', 'noopener');
-          ctx.setSync('🧺 karfa #' + note.id + ' send í söluborðið — reikningurinn er kláraður þar');
+          ctx.setSync('🛒 karfa #' + note.id + ' send í söluborðið — reikningurinn er kláraður þar');
           ctx.teikna();
         }
       });

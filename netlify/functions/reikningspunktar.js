@@ -462,7 +462,7 @@ async function lesaKostnad(b, now) {
 }
 // kost_til_korfu: allar 🧾-línur punktsins í karfa.lines á SÖLUVERÐI (vara úr vörulista → okkar listaverð,
 // handstillt söluverð → það, annars reiknað listaverð). Kreditnótur/línur með magn ≤ 0 sleppa. Sama og
-// „🧺 Setja í körfu" í Drög-stöð gerir, en héðan getur söluborðið sótt þetta beint („Sækja í körfu").
+// „🛒 Setja í körfu" í Drög-stöð gerir, en héðan getur söluborðið sótt þetta beint („Sækja í körfu").
 // b.sent = merkja körfuna senda í söluborð (hverfur þá úr op=bidur og punkturinn sýnir ↗).
 async function kostTilKorfu(b, now) {
   const id = Number(b.id); if (!id) return P.json(400, { error: 'id vantar' });

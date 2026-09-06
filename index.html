@@ -35,7 +35,7 @@
 
 <meta charset="utf-8">
 <script src="/js/gr-materials.js?v=20260903"></script>
-<script src="/js/ds-karfa.js?v=20260906n" defer></script>
+<script src="/js/ds-karfa.js?v=20260906p" defer></script>
 <meta name="color-scheme" content="light"/>
 <!-- Chrome Android Force Dark endurlitar síður sjálfkrafa og gerði sumar
      hub-síður ólæsilegar í síma Agnars. `only light` er opt-out Blink.
@@ -14960,7 +14960,7 @@ async function renderDrogstod(t){
     + '<input type="file" id="ds-file" accept="image/*,application/pdf" hidden>'
     + '<button type="button" id="ds-cam" style="'+KEY+';height:42px" title="Mynd, skjáskot eða PDF með punktinum">📷</button>'
     + '<button type="button" id="ds-add" style="'+GOLD+';height:42px;padding:0 16px">Skrá</button>'
-    + '<button type="button" id="ds-karfa" style="'+KEY+';height:42px" title="Opna draft-körfu (Slökkvitæki): vörur, verð, afsláttur — krassblað þar til hún er send í söluborðið">🧺 Karfa</button></div>'
+    + '<button type="button" id="ds-karfa" style="'+KEY+';height:42px" title="Opna draft-körfu (Slökkvitæki): vörur, verð, afsláttur — krassblað þar til hún er send í söluborðið">🛒 Karfa</button></div>'
     + '<div class="ds-sync" id="ds-sync"></div>'
     + '<div class="ds-teng" id="ds-teng"></div>'
     + '<div class="ds-cols"><div class="ds-col" id="ds-inn"></div><div class="ds-col" id="ds-verk"></div><div class="ds-col" id="ds-val"></div></div></div>';
@@ -15033,7 +15033,7 @@ async function renderDrogstod(t){
         const cur = ws&&wm ? ws+'|'+wm : '';
         h += '<select data-k="verk" style="'+FLD+';flex:1;min-width:150px"><option value="">— velja verk —</option>'+verk.map(v=>'<option value="'+esc(v.ws+'|'+v.wm)+'"'+(cur===v.ws+'|'+v.wm?' selected':'')+'>'+esc(v.ws)+' · '+esc(mlS(v.wm))+'</option>').join('')+(cur&&!verk.some(v=>v.ws+'|'+v.wm===cur)?'<option value="'+esc(cur)+'" selected>'+esc(ws)+' · '+esc(mlS(wm))+'</option>':'')+'<option value="__nytt">✎ annað verk / mánuður…</option></select>';
       }
-      if(sl) h += '<button type="button" data-karfa-open="'+esc(n.id)+'" style="'+KEY+'" title="Draft-karfa: vörur, magn, verð, afsláttur — krassblað þar til hún er send í söluborðið">🧺 '+((n.karfa&&n.karfa.lines&&n.karfa.lines.length&&window.DsKarfa)?fmt(DsKarfa.totals(n.karfa).total)+' kr':'Karfa')+'</button>';
+      if(sl) h += '<button type="button" data-karfa-open="'+esc(n.id)+'" style="'+KEY+'" title="Draft-karfa: vörur, magn, verð, afsláttur — krassblað þar til hún er send í söluborðið">🛒 '+((n.karfa&&n.karfa.lines&&n.karfa.lines.length&&window.DsKarfa)?fmt(DsKarfa.totals(n.karfa).total)+' kr':'Karfa')+'</button>';
       h += '<button type="button" data-act="setja" style="'+GOLD+'">'+(sl?'✓ Komið í reikning':'✓ Setja á')+'</button>'
         + '<button type="button" data-act="ai" style="'+KEY+'" title="Láta flokka þennan punkt">✨</button>'
         + '<button type="button" data-act="hafna" style="'+KEY+';color:var(--red)" title="Hafna — punkturinn geymist en hverfur úr innhólfinu">✕</button></div>';
@@ -15094,9 +15094,9 @@ async function renderDrogstod(t){
       h += '<div style="padding:10px 12px;border-bottom:1px solid var(--line)"><b style="font-size:15px">'+esc(k.kunni)+'</b>'+(k.kt?' <span class="ds-chip">kt '+esc(k.kt)+'</span>':'')+'<div style="font-size:12px;color:var(--muted);margin-top:4px">Reikningurinn verður til í Slökkvitæki-appinu — hakaðu „✓ Komið í reikning" við hvern punkt þegar hann er kominn þar inn.</div></div>';
       h += '<textarea class="ds-krass" data-k="kunni-nota" data-kunni="'+esc(k.kunni)+'" placeholder="Krass um kúnnann — vistast á kúnnann (athugasemdir í appinu)…" spellcheck="false">'+esc(k.athugasemdir||'')+'</textarea>';
       h += '<div style="padding:8px 12px;font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">Punktar sem bíða ('+mine.length+')</div>';
-      h += mine.length ? mine.map(n=>'<div class="ds-chk"><span style="flex:1">'+esc(n.raw.split('\n')[0].slice(0,140))+'</span>'+(window.DsKarfa?DsKarfa.badge(n):'')+'<button type="button" data-karfa-open="'+esc(n.id)+'" style="'+KEY+';height:26px;padding:0 8px" title="Opna draft-körfu punktsins">🧺</button><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">'+esc(dt(n.created_at))+'</span></div>').join('') : '<div class="ds-empty">Allt komið í reikning.</div>';
+      h += mine.length ? mine.map(n=>'<div class="ds-chk"><span style="flex:1">'+esc(n.raw.split('\n')[0].slice(0,140))+'</span>'+(window.DsKarfa?DsKarfa.badge(n):'')+'<button type="button" data-karfa-open="'+esc(n.id)+'" style="'+KEY+';height:26px;padding:0 8px" title="Opna draft-körfu punktsins">🛒</button><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">'+esc(dt(n.created_at))+'</span></div>').join('') : '<div class="ds-empty">Allt komið í reikning.</div>';
       if(NOTAD.length) h += '<div style="padding:8px 12px;font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">Komið í reikning</div>'+NOTAD.map(n=>'<div class="ds-chk" style="opacity:.6"><span style="flex:1">'+esc(n.raw)+'</span><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">'+esc(dt(n.applied_at||n.created_at))+'</span></div>').join('');
-      h += '<div style="padding:10px 12px;display:flex;gap:6px;flex-wrap:wrap"><button type="button" data-act="nykarfa" style="'+GOLD+'" title="Ný draft-karfa á þennan kúnna — vörur, verð, afsláttur, send í söluborðið">🧺 Ný karfa</button><a href="https://slokkvitaeki.netlify.app/" target="_blank" rel="noopener" style="'+KEY+';display:inline-flex;align-items:center;text-decoration:none">Opna Slökkvitæki ↗</a></div></div>';
+      h += '<div style="padding:10px 12px;display:flex;gap:6px;flex-wrap:wrap"><button type="button" data-act="nykarfa" style="'+GOLD+'" title="Ný draft-karfa á þennan kúnna — vörur, verð, afsláttur, send í söluborðið">🛒 Ný karfa</button><a href="https://slokkvitaeki.netlify.app/" target="_blank" rel="noopener" style="'+KEY+';display:inline-flex;align-items:center;text-decoration:none">Opna Slökkvitæki ↗</a></div></div>';
       return h;
     }
     const v = (STADA.verk||[]).find(x=>x.ws===s.ws && x.wm===s.wm);
