@@ -115,6 +115,7 @@ exports.handler = async (event) => {
       if (r.ok) { const rows = await r.json(); created.push({ id: rows[0] && rows[0].id, sender: c.sender, subject: c.subject, kunni: c.kunni }); }
       else if (r.status === 409) dup++;
     }
+    await P.log({ agent: 'postvordur', action: 'skra_ur_posti', felag: 'slokkvitaeki', target: ACCOUNT, input: { days, alls: mails.length }, output: { created: created.length, already: dup, candidates: threads.length, skipped }, status: created.length ? 'ok' : 'tillaga' });
     return P.json(200, { ok: true, account: ACCOUNT, since, days, created, already: dup, candidates: threads.length, skipped });
   } catch (e) {
     return P.json(500, { error: e.message || String(e) });

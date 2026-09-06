@@ -82,6 +82,14 @@ exports.handler = async (event) => {
     // hlutauppfærsla án `source` (👔 yfirferðar-togglinn, yfirferd.html vistun)
     // féll á 23502 þótt röðin ætti gilt source-gildi nú þegar.
     const filter = `worksite_name=eq.${encodeURIComponent(body.worksite_name)}&work_month=eq.${encodeURIComponent(body.work_month)}`;
+    // 06.09.2026: útgáfu-vörn — expected_updated_at (eintakið sem ritillinn opnaði). Sé röðin yngri á
+    // þjóninum hefur önnur vél breytt henni: 409 með núverandi röð, ritillinn spyr. force=true sleppir.
+    const vaenta = (body.expected_updated_at && !body.force) ? String(body.expected_updated_at) : null;
+    if (vaenta) {
+      const cr = await fetch(`${SUPABASE_URL}/rest/v1/invoice_drafts?${filter}&select=updated_at,updated_by,worksite_name,work_month,total_m_vsk`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
+      const cur = cr.ok ? await cr.json() : [];
+      if (cur.length && cur[0].updated_at && new Date(cur[0].updated_at).getTime() > new Date(vaenta).getTime() + 1000) return json(409, { conflict: true, current: cur[0] });
+    }
     const pr = await fetch(`${SUPABASE_URL}/rest/v1/invoice_drafts?${filter}`, {
       method: 'PATCH',
       headers: {

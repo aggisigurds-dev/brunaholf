@@ -130,6 +130,28 @@ function sbPost(table, body) {
 function secHeaders(extra) {
   return { 'Content-Type': 'application/json', 'Referrer-Policy': 'no-referrer', 'Cache-Control': 'no-store', ...(extra || {}) };
 }
+// ── Aðgerðaskrá agenta (06.09.2026) — ein lína per aðgerð í agent_logs. Bilar aldrei kallandann:
+//    skilar röðinni eða null. Kallandinn á að await-a (Netlify lokar fallinu þegar handler skilar).
+//    { agent, action, felag?, target?, input?, output?, status?: ok|villa|hafnad|tillaga, duration_ms?, by_who?, session_id? }
+async function log(e) {
+  try {
+    if (!e || !e.agent || !e.action) return null;
+    const klippa = (v) => { if (v == null) return null; try { const s = JSON.stringify(v); return s.length > 6000 ? { _klippt: true, hluti: s.slice(0, 6000) } : v; } catch (_) { return { _texti: String(v).slice(0, 2000) }; } };
+    const row = {
+      agent: String(e.agent).slice(0, 60), action: String(e.action).slice(0, 60),
+      felag: e.felag ? String(e.felag).slice(0, 20) : null, target: e.target ? String(e.target).slice(0, 200) : null,
+      input: klippa(e.input), output: klippa(e.output),
+      status: ['ok', 'villa', 'hafnad', 'tillaga'].includes(e.status) ? e.status : 'ok',
+      duration_ms: Number.isFinite(e.duration_ms) ? Math.round(e.duration_ms) : null,
+      by_who: e.by_who ? String(e.by_who).slice(0, 60) : null, session_id: e.session_id ? String(e.session_id).slice(0, 80) : null,
+    };
+    const r = await sbPost('agent_logs', row);
+    if (!r.ok) return null;
+    const rows = await r.json().catch(() => []);
+    return rows[0] || null;
+  } catch (_) { return null; }
+}
+
 function json(code, body, extraHeaders) {
   return { statusCode: code, headers: secHeaders(extraHeaders), body: JSON.stringify(body) };
 }
@@ -193,6 +215,6 @@ module.exports = {
   COOKIE, TTL_SECONDS,
   signToken, verifyToken, hashPassword, verifyPassword,
   parseCookies, sessionCookie, clearCookie, getSession,
-  sbGet, sbPatch, sbPost, json, secHeaders, envReady, dbReady,
+  sbGet, sbPatch, sbPost, json, secHeaders, envReady, dbReady, log,
   SUPABASE_URL, SUPABASE_KEY,
 };

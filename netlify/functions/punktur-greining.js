@@ -128,6 +128,7 @@ exports.handler = async (event) => {
     // Röðun á punktinum sjálfum (ekki drögunum) þegar vissan er nóg — apply er eftir sem áður ✓ Agnars.
     if (!note.worksite_name && ai.verkstadur && Number(ai.vissa) >= 0.6) patch.worksite_name = nofn.find((n) => lc(n) === lc(ai.verkstadur)) || ai.verkstadur;
     if (!note.work_month && ai.manudur && Number(ai.vissa) >= 0.6) patch.work_month = ai.manudur;
+    await P.log({ agent: 'punktur-greining', action: 'flokka', felag: note.felag, target: 'punktur:' + id, input: { raw: String(note.raw || '').slice(0, 300) }, output: ai, status: 'tillaga' });
     await P.sbPatch(`reikningspunktar?id=eq.${id}`, patch);
     return P.json(200, { ok: true, ai, cached: hit, filed: !!(patch.worksite_name || patch.work_month) });
   } catch (e) {

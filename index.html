@@ -2053,44 +2053,76 @@ function save(opts){
   scheduleServerSync();
 }
 
-/* ── Samstilling PER LYKIL (05.09.2026 — Agnar: „4 tölvur í sama rými, allt 100% synced“) ──
-   Áður fór ALLT state-objectið upp í hverri vistun, svo vél sem var opin með gamalt eintak
-   yfirskrifaði breytingar hinna (merki, nótur, tímabókar-breytingar, flipa-röð …). Nú:
-   • hver vél man síðustu þjóns-útgáfu per lykil (_synced) og sendir AÐEINS lyklana sem hún
-     breytti — þjónninn sameinar í einni færslu (RPC hub_state_merge, atómískt);
-   • svar þjónsins (sameinað) rennur inn í lyklana sem þessi vél snerti ekki;
-   • vélin sækir sameinaða útgáfu á mínútu fresti (þegar flipinn er sýnilegur) og tekur inn
-     það sem hinar breyttu — endurteiknar aðeins flipastikuna, aldrei það sem notandinn er í. */
+/* ── Samstilling PER LYKIL v2 (05.–06.09.2026 — Agnar: „4 tölvur í sama rými, allt 100% synced“) ──
+   Áður fór ALLT state-objectið upp í hverri vistun, svo vél með gamalt eintak yfirskrifaði
+   breytingar hinna. Nú:
+   • hver vél man síðustu þjóns-útgáfu per lykil (_synced, líka í localStorage svo listinn lifi
+     endurhleðslu) og sendir AÐEINS það sem hún breytti — þjónninn sameinar í einni færslu
+     (RPC hub_state_merge, raðlás);
+   • map-lyklar (timabok_edits, gr_card_notes, tr_done, vb_review, gr_* …) sameinast PER UNDIRLYKIL
+     (p_deep) — vél með gamalt map þurrkar ekki út færslur hinna (úttekt 06.09.2026);
+   • svar þjónsins rennur inn í lyklana sem þessi vél snerti ekki; sótt á mínútu fresti;
+   • þjónninn ræður við fyrstu samstillingu ef engin snapshot er til (engin klukkusamanburður
+     milli véla) — nema þjónninn eigi ekkert (404), þá fer staðbundna eintakið upp;
+   • lyklar sem eiga heima á hverri vél fyrir sig (activeTab, editMode, forskoðun, „til baka“)
+     fara aldrei upp. */
 let _syncTimer = null;
 let _syncInFlight = false;
 let _pullInFlight = false;
 let _pollTimer = null;
 let _serverHasRecord = false;
+const _SYNC_LS = STORAGE_KEY + ':synced';
 let _synced = { ui: {}, top: {}, has: false };   // JSON per lykil eins og þjónninn hafði þá síðast
-const _PER_DEVICE = new Set(['activeTab']);        // býr í hverri vél fyrir sig (nav-vistun)
+try{ const g = JSON.parse(localStorage.getItem(_SYNC_LS) || 'null'); if(g && g.ui && g.top) _synced = { ui: g.ui, top: g.top, has: true }; }catch(_){}
+const _PER_DEVICE = new Set(['activeTab', 'editMode', 'st_pv', 'grReturnTo', 'ds_sel', 'vb_calc_history']);
 const _J = v => JSON.stringify(v === undefined ? null : v);
+const _isMap = v => !!v && typeof v === 'object' && !Array.isArray(v);
 function _snapSynced(v){
   _synced = { ui: {}, top: {}, has: true };
   for(const k of Object.keys((v && v.ui) || {})) _synced.ui[k] = _J(v.ui[k]);
   for(const k of Object.keys(v || {})) if(k !== 'ui') _synced.top[k] = _J(v[k]);
+  try{ localStorage.setItem(_SYNC_LS, JSON.stringify({ ui: _synced.ui, top: _synced.top })); }catch(_){}
 }
-// Lyklarnir sem ÞESSI vél hefur breytt síðan síðast var samstillt (null = eytt).
+// Lyklarnir sem ÞESSI vél hefur breytt síðan síðast var samstillt. Map-lyklar: aðeins breyttu undirlyklarnir (deep).
 function _buildPatch(){
-  const ui = {}, top = {}; const su = (state && state.ui) || {};
-  for(const k of Object.keys(su)){ if(_PER_DEVICE.has(k) || k === 'updated_at') continue; if(_synced.ui[k] !== _J(su[k])) ui[k] = su[k]; }
+  const ui = {}, deep = {}, top = {}; const su = (state && state.ui) || {};
+  for(const k of Object.keys(su)){
+    if(_PER_DEVICE.has(k) || k === 'updated_at') continue;
+    const nuJ = _J(su[k]); if(_synced.ui[k] === nuJ) continue;
+    let fyrra = null; try{ fyrra = _synced.ui[k] !== undefined ? JSON.parse(_synced.ui[k]) : null; }catch(_){ fyrra = null; }
+    if(_isMap(su[k]) && _isMap(fyrra)){
+      const d = {};
+      for(const sk of Object.keys(su[k])) if(_J(su[k][sk]) !== _J(fyrra[sk])) d[sk] = su[k][sk];
+      for(const sk of Object.keys(fyrra)) if(!(sk in su[k])) d[sk] = null;
+      if(Object.keys(d).length) deep[k] = d;
+    } else ui[k] = su[k];
+  }
   for(const k of Object.keys(_synced.ui)){ if(_PER_DEVICE.has(k) || k === 'updated_at') continue; if(!(k in su)) ui[k] = null; }
   for(const k of Object.keys(state || {})){ if(k === 'ui') continue; if(_synced.top[k] !== _J(state[k])) top[k] = state[k]; }
-  return { ui, top };
+  return { ui, deep, top };
 }
-// Tekur sameinaða þjóns-útgáfu inn — lyklar sem þessi vél breytti (dirty) halda sér.
+const _tomtPatch = p => !Object.keys(p.ui).length && !Object.keys(p.deep).length && !Object.keys(p.top).length;
+// Tekur sameinaða þjóns-útgáfu inn — það sem þessi vél breytti (dirty) heldur sér, líka per undirlykil.
 function _mergeIn(server, dirty){
   const res = { tabsChanged:false, uiChanged:false };
   if(!server || typeof server !== 'object') return res;
   state.ui = state.ui || {};
-  const du = (dirty && dirty.ui) || {}, dt = (dirty && dirty.top) || {};
+  const du = (dirty && dirty.ui) || {}, dd = (dirty && dirty.deep) || {}, dt = (dirty && dirty.top) || {};
   const sui = server.ui || {};
-  for(const k of Object.keys(sui)){ if(_PER_DEVICE.has(k) || (k in du)) continue; if(_J(state.ui[k]) !== _J(sui[k])){ state.ui[k] = sui[k]; res.uiChanged = true; } }
-  for(const k of Object.keys(state.ui)){ if(_PER_DEVICE.has(k) || k === 'updated_at' || (k in du)) continue; if(!(k in sui) && _synced.ui[k] !== undefined){ delete state.ui[k]; res.uiChanged = true; } }
+  for(const k of Object.keys(sui)){
+    if(_PER_DEVICE.has(k) || (k in du)) continue;
+    if(k in dd){
+      // map: taka undirlykla þjónsins nema þá sem þessi vél breytti
+      const loc = _isMap(state.ui[k]) ? state.ui[k] : {}; const srv = _isMap(sui[k]) ? sui[k] : {};
+      let fyrra = {}; try{ fyrra = _synced.ui[k] ? (JSON.parse(_synced.ui[k]) || {}) : {}; }catch(_){ fyrra = {}; }
+      for(const sk of Object.keys(srv)){ if(sk in dd[k]) continue; if(_J(loc[sk]) !== _J(srv[sk])){ loc[sk] = srv[sk]; res.uiChanged = true; } }
+      for(const sk of Object.keys(loc)){ if(sk in dd[k]) continue; if(!(sk in srv) && (sk in fyrra)){ delete loc[sk]; res.uiChanged = true; } }
+      state.ui[k] = loc;
+      continue;
+    }
+    if(_J(state.ui[k]) !== _J(sui[k])){ state.ui[k] = sui[k]; res.uiChanged = true; }
+  }
+  for(const k of Object.keys(state.ui)){ if(_PER_DEVICE.has(k) || k === 'updated_at' || (k in du) || (k in dd)) continue; if(!(k in sui) && _synced.ui[k] !== undefined){ delete state.ui[k]; res.uiChanged = true; } }
   for(const k of Object.keys(server)){ if(k === 'ui' || (k in dt)) continue; if(_J(state[k]) !== _J(server[k])){ if(k === 'tabs') res.tabsChanged = true; state[k] = server[k]; } }
   if(res.tabsChanged) ensureNewTabs(state);
   return res;
@@ -2104,7 +2136,7 @@ async function syncToServer(){
   _syncInFlight = true;
   try{
     const patch = _serverHasRecord ? _buildPatch() : null;
-    if(patch && !Object.keys(patch.ui).length && !Object.keys(patch.top).length){ setSyncBadge('synced'); return; }
+    if(patch && _tomtPatch(patch)){ setSyncBadge('synced'); return; }
     const r = await fetch('/api/app-state', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify(patch ? { key:'hub_state', patch } : { key:'hub_state', value: state }),
@@ -2114,15 +2146,13 @@ async function syncToServer(){
     _serverHasRecord = true;
     const merged = j && j.value;
     if(merged && typeof merged === 'object'){
-      // Breytingar annarra véla á meðan renna inn — nema það sem breyttist hér (fyrir eða eftir sendingu).
       const nuna = _buildPatch();
-      const dirty = patch ? { ui: Object.assign({}, patch.ui, nuna.ui), top: Object.assign({}, patch.top, nuna.top) } : nuna;
+      const dirty = patch ? { ui: Object.assign({}, patch.ui, nuna.ui), deep: Object.assign({}, patch.deep, nuna.deep), top: Object.assign({}, patch.top, nuna.top) } : nuna;
       const res = _mergeIn(merged, dirty);
       _snapSynced(merged);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       if(res.tabsChanged){ try{ if(typeof renderTabs === 'function') renderTabs(); }catch(e){} }
-      // lyklar sem breyttust á meðan sendingin stóð eru enn dirty → senda strax aftur
-      const eftir = _buildPatch(); if(Object.keys(eftir.ui).length || Object.keys(eftir.top).length) scheduleServerSync();
+      const eftir = _buildPatch(); if(!_tomtPatch(eftir)) scheduleServerSync();   // breyttist á meðan → senda aftur
     } else if(!patch){ _snapSynced(state); }
     setSyncBadge('synced');
   }catch(e){
@@ -2139,7 +2169,7 @@ async function syncFromServer(){
   if(_pullInFlight) return; _pullInFlight = true;
   try{
     const r = await fetch('/api/app-state?key=hub_state', { cache:'no-store' });
-    if(r.status === 404){ // fyrsta vélin — ýta staðbundna eintakinu upp
+    if(r.status === 404){ // þjónninn á ekkert enn — þessi vél leggur til grunninn
       _serverHasRecord = false;
       if(state && state.tabs) scheduleServerSync();
       setSyncBadge('synced'); _armPoll();
@@ -2150,24 +2180,19 @@ async function syncFromServer(){
     _serverHasRecord = true;
     if(server && typeof server === 'object'){
       const prevTabsHash = JSON.stringify((state?.tabs||[]).map(t => t.id));
-      // Fyrsta samstilling lotunnar: sé staðbundna eintakið YNGRA en þjónsins (breytt án nets) halda
-      // þess lyklar sér og fara upp; annars ræður þjónninn. Eftir það ræður per-lykla dirty-listinn.
-      let dirty;
-      if(!_synced.has){
-        const localTs = state?.ui?.updated_at || '', serverTs = server?.ui?.updated_at || '';
-        dirty = (localTs && localTs > serverTs) ? _buildPatch() : { ui:{}, top:{} };
-      } else dirty = _buildPatch();
+      // Engin snapshot (fyrsta lota á þessari vél, eða hreinsað) → þjónninn ræður öllu sem er
+      // ekki per-vél. Annars ræður per-lykla dirty-listinn (líka eftir endurhleðslu).
+      const dirty = _synced.has ? _buildPatch() : { ui:{}, deep:{}, top:{} };
       const res = _mergeIn(server, dirty);
       _snapSynced(server);
       try{ if(typeof applyDeepLinkTab === 'function') applyDeepLinkTab(); }catch(_){}
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       const newTabsHash = JSON.stringify((state?.tabs||[]).map(t => t.id));
-      // Endurteikna virka flipann AÐEINS ef flipa-uppbyggingin breyttist (endurteikning í miðri
+      // Virki flipinn er AÐEINS endurteiknaður ef flipa-mengið breyttist (endurteikning í miðri
       // vinnu brýtur DOM-ið sem flipinn er að hlaða — „can't click“-gallinn). Annars bara stikan.
       if(prevTabsHash !== newTabsHash){ try{ renderActive(); }catch(e){} }
       else if(res.tabsChanged || res.uiChanged){ try{ if(typeof renderTabs === 'function') renderTabs(); }catch(e){} }
-      // það sem þessi vél á ósent fer upp núna
-      const eftir = _buildPatch(); if(Object.keys(eftir.ui).length || Object.keys(eftir.top).length) scheduleServerSync();
+      const eftir = _buildPatch(); if(!_tomtPatch(eftir)) scheduleServerSync();   // það sem þessi vél á ósent
     }
     setSyncBadge('synced'); _armPoll();
   }catch(e){
@@ -12074,8 +12099,18 @@ async function renderGerdReikninga(t){
             status: existing?.status || 'draft',
             notes: document.getElementById('gr-notes').value.trim() || null,
             updated_by: 'gerd-reikninga',
+            // 06.09.2026: útgáfu-vörn — þjónninn hafnar (409) ef önnur vél breytti drögunum eftir að þau
+            // voru opnuð hér; þá er spurt hvort eigi að yfirskrifa (ALLTAF LEYFA VISTUN — en meðvitað).
+            expected_updated_at: existing?.updated_at || null,
           }, extra || {})),
         });
+        if(rr.status === 409){
+          const j = await rr.json().catch(()=>({})); const cur = j.current || {};
+          const hv = cur.updated_by ? String(cur.updated_by) : 'önnur vél'; const hn = cur.updated_at ? new Date(cur.updated_at).toLocaleString('is-IS') : '';
+          $st.textContent = 'Ekki vistað — breytt á annarri vél';
+          if(confirm('Þessi drög breyttust á annarri vél ('+hv+(hn?' · '+hn:'')+') eftir að þú opnaðir þau.\n\nYfirskrifa með þínu eintaki? (Hætta við = endurhlaða síðuna og sjá þeirra útgáfu)')) return doSave(Object.assign({}, extra || {}, { force: true }));
+          return;
+        }
         if(!rr.ok) throw new Error('HTTP '+rr.status+': '+(await rr.text()).slice(0,120));
         const saved = await rr.json();
         DRAFTS[`${name}|${month}`] = saved;
@@ -16088,14 +16123,12 @@ async function renderKrofuyfirlit(t){
   // fylgdi því einu tæki. Það býr núna í state.ui.ky_sent_mark sem samstillist á
   // þjóninn (/api/app-state) eins og aðrar hub-stillingar; gömlu tækis-merkin eru
   // flutt yfir í fyrsta sinn svo ekkert tapist.
+  // Gömul merki (localStorage og hugsanlega gamalt state.ui) lesin í MINNI aðeins — flutt á þjóninn
+  // við fyrstu hleðslu Kröfu yfirlits (sjá fetchAll) og aldrei skrifuð í state.ui aftur (06.09.2026).
   const SENTMARK = (function(){
-    state.ui = state.ui || {};
-    if(!state.ui.ky_sent_mark){
-      let old = {}; try{ old = JSON.parse(localStorage.getItem('ky_sent_mark')||'{}'); }catch(_){}
-      state.ui.ky_sent_mark = old || {};
-      if(Object.keys(state.ui.ky_sent_mark).length) save();
-    }
-    return state.ui.ky_sent_mark;
+    let old = {}; try{ old = JSON.parse(localStorage.getItem('ky_sent_mark')||'{}'); }catch(_){}
+    const fra = (state.ui && state.ui.ky_sent_mark && typeof state.ui.ky_sent_mark === 'object') ? state.ui.ky_sent_mark : {};
+    return Object.assign({}, old || {}, fra);
   })();
   const sentMarked = inv => !!(inv && (inv.done || SENTMARK[inv.inv_key]));
   // Stillingar Kröfu yfirlits sem allar vélar deila (app_kv: ky_settings) — t.d. netfang bókara.
@@ -16976,8 +17009,16 @@ async function renderKrofuyfirlit(t){
       for(const d of (((state.data||{}).tier2||{}).debtors||[])) for(const iv of (d.invoices||[])) if(iv.inv_key===key) Object.assign(iv, patch);
     }
     function findInv(key){ for(const d of (((state.data||{}).tier2||{}).debtors||[])) for(const iv of (d.invoices||[])) if(iv.inv_key===key) return iv; return null; }
+    // 06.09.2026: aðeins reitirnir sem ÞESSI vél breytti fara upp (wf_patch → RPC ky_wf_merge) —
+    // Tímar á vél A þurrka þá ekki út Redder sem vél B setti. _wfSync = síðasta þekkta þjóns-útgáfa.
     async function persistWf(key, wf, by){
-      try{ await fetch('/api/krofur-yfirlit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'save', inv_key:key, wf_state:wf, by})}); }catch(_){}
+      const iv = findInv(key); const prev = (iv && iv._wfSync) || {}; const patch = {};
+      for(const k of new Set([...Object.keys(wf||{}), ...Object.keys(prev)])){ const a = JSON.stringify(wf ? wf[k] : undefined), b = JSON.stringify(prev[k]); if(a !== b) patch[k] = (wf && wf[k] !== undefined) ? wf[k] : null; }
+      if(!Object.keys(patch).length) return;
+      try{
+        const r = await fetch('/api/krofur-yfirlit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'save', inv_key:key, wf_patch:patch, by})});
+        if(r.ok){ const j = await r.json().catch(()=>null); const nu = (j && j.wf_state && typeof j.wf_state === 'object') ? j.wf_state : Object.assign({}, prev, wf); if(iv){ iv._wfSync = JSON.parse(JSON.stringify(nu)); iv.wf = Object.assign({}, iv.wf, nu); } }
+      }catch(_){}
     }
     async function refreshEfdocs(){
       try{ const er=await fetch('/api/efnislisti-docs'); const ej=er.ok?await er.json():{rows:[]}; const idx={};
@@ -17065,7 +17106,7 @@ async function renderKrofuyfirlit(t){
         // á þjóninum — sama leið og Staðfest/Sent — ekki lengur í state.ui (sem hver tölva yfirskrifaði).
         const on = !sentMarked(iv); const by = bhMe();
         iv.done = on; iv.done_by = on ? (by||null) : null; iv.done_at = on ? new Date().toISOString() : null;
-        if(SENTMARK[key]){ delete SENTMARK[key]; state.ui.ky_sent_mark = SENTMARK; save(); }
+        if(SENTMARK[key]) delete SENTMARK[key];
         b.classList.toggle('on', on);
         b.title = on ? 'Krafa merkt send — smelltu til að afmerkja (vistast fyrir allar tölvur)' : 'Merkja að krafan sé send — verður grænt og vistast fyrir allar tölvur';
         try{ const r = await fetch('/api/krofur-yfirlit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'save', inv_key:key, done:on, by})}); if(!r.ok) throw new Error('HTTP '+r.status); }
@@ -17238,6 +17279,7 @@ async function renderKrofuyfirlit(t){
     ]);
     if(bruR && bruR.error) throw new Error(bruR.error);
     state.data = bruR; state.newest = bruR.newest_timavera || null;
+    for(const d of (((bruR||{}).tier2||{}).debtors||[])) for(const iv of (d.invoices||[])) iv._wfSync = JSON.parse(JSON.stringify(iv.wf||{}));   // þjóns-útgáfa wf per röð (wf_patch)
     const idx = {};
     for(const d of (efR.rows||[])){ const k=(d.worksite_name||'')+'|'+(d.work_month||''); (idx[k]=idx[k]||[]).push(d); }
     EFDOCS = idx;
@@ -17258,7 +17300,8 @@ async function renderKrofuyfirlit(t){
         catch(_){ return; }   // netið úti → reyna næst
       }
       for(const k of gamalt) delete SENTMARK[k];
-      state.ui.ky_sent_mark = {}; save(); try{ localStorage.removeItem('ky_sent_mark'); }catch(_){}
+      if(state.ui && ('ky_sent_mark' in state.ui)){ delete state.ui.ky_sent_mark; save(); }   // → null í patch → eytt á þjóni
+      try{ localStorage.removeItem('ky_sent_mark'); }catch(_){}
       renderList();
     })();
     // Þrep 3 (reiknað í vafra) + HOURS/REDDER í bakgrunni → endur-teikna þegar klárt.

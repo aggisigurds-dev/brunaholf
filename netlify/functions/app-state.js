@@ -45,7 +45,7 @@ exports.handler = async (event) => {
       const rr = await fetch(`${SUPABASE_URL}/rest/v1/rpc/hub_state_merge`, {
         method: 'POST',
         headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ p_key: key, p_ui: (patch.ui && typeof patch.ui === 'object') ? patch.ui : {}, p_top: (patch.top && typeof patch.top === 'object') ? patch.top : {} }),
+        body: JSON.stringify({ p_key: key, p_ui: (patch.ui && typeof patch.ui === 'object') ? patch.ui : {}, p_top: (patch.top && typeof patch.top === 'object') ? patch.top : {}, p_deep: (patch.deep && typeof patch.deep === 'object') ? patch.deep : {} }),
       });
       if (!rr.ok) return json(rr.status, { error: (await rr.text()).slice(0, 300) });
       const merged = await rr.json();

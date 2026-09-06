@@ -299,7 +299,9 @@ async function karfa(b, now) {
   if (note.status === 'nytt' && !note.ai) patch.status = 'flokkad';
   const r = await P.sbPatch(`reikningspunktar?id=eq.${id}`, patch);
   if (!r.ok) return P.json(r.status, { error: (await r.text()).slice(0, 300) });
-  return P.json(200, { ok: true, row: (await r.json())[0] || null, karfa: k });
+  const rowK = (await r.json())[0] || null;
+  if (b.sent) await P.log({ agent: 'drogstod', action: 'karfa_send_i_soluborð', felag: note.felag, target: 'punktur:' + id, output: { linur: lines.length, total: k.totals.total, kunni: kunni && kunni.nafn }, by_who: b.by || null });
+  return P.json(200, { ok: true, row: rowK, karfa: k });
 }
 
 // Skrifar punktinn í drögin — eina leiðin héðan inn í invoice_drafts. Hluta-PATCH
@@ -319,6 +321,7 @@ async function apply(b, now) {
     const applied = { felag: 'slokkvitaeki', kunni: ws, tegund, athugasemd: b.athugasemd ? String(b.athugasemd).slice(0, 300) : null };
     const nr = await P.sbPatch(`reikningspunktar?id=eq.${id}`, { status: 'notad', worksite_name: ws, work_month: isMonth(wm) ? wm : null, applied, applied_at: now, updated_at: now });
     if (!nr.ok) return P.json(nr.status, { error: (await nr.text()).slice(0, 300) });
+    await P.log({ agent: 'drogstod', action: 'punktur_notadur', felag: 'slokkvitaeki', target: 'punktur:' + id, output: applied, by_who: b.by || null });
     return P.json(200, { ok: true, row: (await nr.json())[0] || null, applied });
   }
   if (!ws || !isMonth(wm)) return P.json(400, { error: 'Veldu verk og mánuð fyrst' });

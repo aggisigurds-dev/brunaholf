@@ -419,6 +419,7 @@ exports.handler = async (event) => {
   text = text || einfold(lykill, tolur);
   const generated_at = new Date().toISOString();
   await writeCache(lykill, notandi, { text, tolur, generated_at }).catch(() => {});
+  await P.log({ agent: 'jarvis:' + lykill, action: 'samantekt', target: notandi, output: { tolur, text: String(text).slice(0, 400) } });
 
   return json(200, { ok: true, svid: lykill, name: s.name, emoji: s.emoji, rodd: s.rodd,
     voice_id: s.voice_id, agent: s.agent, text, tolur, generated_at, cached: false });

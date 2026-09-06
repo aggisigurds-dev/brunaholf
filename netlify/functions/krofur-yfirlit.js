@@ -251,6 +251,17 @@ async function saveOverride(event) {
   // Ósendar-vinnuflæði — reitastaða (Tímar/Redder/Efnislisti box states + tölur +
   // vistuð PDF). Client sendir ALLT wf_state objectið svo við geymum það eins og er.
   if (body.wf_state && typeof body.wf_state === 'object') patch.wf_state = body.wf_state;
+  // 06.09.2026: wf_patch = aðeins breyttir reitir → RPC ky_wf_merge sameinar í einni færslu (raðlás).
+  let wfMerged = null;
+  if (body.wf_patch && typeof body.wf_patch === 'object' && !Array.isArray(body.wf_patch)) {
+    const rr = await fetch(`${SUPABASE_URL}/rest/v1/rpc/ky_wf_merge`, {
+      method: 'POST', headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ p_inv_key: inv_key, p_patch: body.wf_patch }),
+    });
+    if (!rr.ok) return json(502, { error: `wf_merge: ${rr.status} ${(await rr.text()).slice(0, 200)}` });
+    wfMerged = await rr.json().catch(() => null);
+    delete patch.wf_state;
+  }
 
   const r = await fetch(`${SUPABASE_URL}/rest/v1/krofur_yfirlit_meta?on_conflict=inv_key`, {
     method: 'POST',
