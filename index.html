@@ -20106,8 +20106,10 @@ async function efKostnadarYfirlit(){
     + '<h3 style="margin:0 0 6px">📥 Droppa kostnaðarreikningi <span style="font-weight:400;color:var(--muted);font-size:12px">— PDF eða mynd af birgjareikningi sem á að endurrukka; vistast á Supabase og lesist inn</span></h3>'
     + '<div id="ef-drop" style="border:2px dashed var(--edge);border-radius:12px;padding:18px;text-align:center;background:var(--input-bg);cursor:pointer">'
     + '<div style="font-size:26px">🧾</div><div style="font-weight:600">Dragðu skrár hingað eða smelltu til að velja</div>'
-    + '<div style="font-size:11.5px;color:var(--muted);margin-top:4px">PDF, mynd eða skjáskot · margar í einu · ≤ 4 MB hver</div></div>'
+    + '<div style="font-size:11.5px;color:var(--muted);margin-top:4px">PDF, mynd eða skjáskot · margar í einu · ≤ 4 MB hver</div>'
+    + '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px"><button type="button" class="rg-tool" id="ef-kost-pick" style="min-height:44px;padding:0 16px">📁 Velja skrá</button><button type="button" class="rg-tool" id="ef-kost-snap" style="min-height:44px;padding:0 16px" title="Opnar myndavélina — mynd af reikningnum lesist eins og PDF">📷 Mynda reikning</button></div></div>'
     + '<input type="file" id="ef-kost-file" accept="image/*,application/pdf" multiple hidden>'
+    + '<input type="file" id="ef-kost-cam" accept="image/*" capture="environment" hidden>'
     + '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px">'
     + '<label style="display:flex;gap:6px;align-items:center;font-size:12.5px;flex:2 1 260px">Fyrirtæki til endurrukkunar <input list="ef-kunnar" id="ef-kost-kunni" placeholder="Kúnni (Slökkvitæki)…" style="flex:1;min-width:0;height:34px;padding:0 8px;border:1px solid var(--edge);border-radius:6px;background:#fff;font:inherit"></label>'
     + '<label style="display:flex;gap:6px;align-items:center;font-size:12.5px">Afsl. okkar % <input id="ef-kost-afsl" inputmode="decimal" value="'+esc(afslDef||'')+'" placeholder="t.d. 30" style="width:64px;height:34px;padding:0 8px;border:1px solid var(--edge);border-radius:6px;background:#fff;font:inherit;text-align:right"></label>'
@@ -20120,7 +20122,11 @@ async function efKostnadarYfirlit(){
 
   const drop = document.getElementById('ef-drop'), file = document.getElementById('ef-kost-file'), log = document.getElementById('ef-kost-log');
   const logLine = (html) => { const d = document.createElement('div'); d.innerHTML = html; log.appendChild(d); return d; };
-  drop.onclick = () => file.click();
+  drop.onclick = e => { if (e.target.closest('button')) return; file.click(); };
+  const cam = document.getElementById('ef-kost-cam');
+  document.getElementById('ef-kost-pick').onclick = e => { e.stopPropagation(); file.click(); };
+  document.getElementById('ef-kost-snap').onclick = e => { e.stopPropagation(); cam.click(); };
+  cam.addEventListener('change', e => { const fs = [...(e.target.files||[])]; e.target.value = ''; if(fs.length) skraSkrar(fs); });
   ['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.style.borderColor = 'var(--gold-deep)'; drop.style.background = '#fff'; }));
   ['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.style.borderColor = 'var(--edge)'; drop.style.background = 'var(--input-bg)'; }));
   drop.addEventListener('drop', e => { const fs = e.dataTransfer && e.dataTransfer.files; if(fs && fs.length) skraSkrar([...fs]); });
