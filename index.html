@@ -20111,7 +20111,7 @@ async function efKostnadarYfirlit(){
     + '<input type="file" id="ef-kost-file" accept="image/*,application/pdf" multiple hidden>'
     + '<input type="file" id="ef-kost-cam" accept="image/*" capture="environment" hidden>'
     + '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px">'
-    + '<label style="display:flex;gap:6px;align-items:center;font-size:12.5px;flex:2 1 260px">Fyrirtæki til endurrukkunar <input list="ef-kunnar" id="ef-kost-kunni" placeholder="Kúnni (Slökkvitæki)…" style="flex:1;min-width:0;height:34px;padding:0 8px;border:1px solid var(--edge);border-radius:6px;background:#fff;font:inherit"></label>'
+    + '<label style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12.5px;flex:2 1 260px;min-width:0">Fyrirtæki til endurrukkunar <input list="ef-kunnar" id="ef-kost-kunni" placeholder="Kúnni (Slökkvitæki)…" style="flex:1 1 180px;min-width:0;max-width:100%;height:34px;padding:0 8px;border:1px solid var(--edge);border-radius:6px;background:#fff;font:inherit"></label>'
     + '<label style="display:flex;gap:6px;align-items:center;font-size:12.5px">Afsl. okkar % <input id="ef-kost-afsl" inputmode="decimal" value="'+esc(afslDef||'')+'" placeholder="t.d. 30" style="width:64px;height:34px;padding:0 8px;border:1px solid var(--edge);border-radius:6px;background:#fff;font:inherit;text-align:right"></label>'
     + '<label style="display:flex;gap:6px;align-items:center;font-size:12.5px"><input type="checkbox" id="ef-kost-ai" checked> Lesa inn sjálfkrafa (AI)</label>'
     + '</div><datalist id="ef-kunnar"></datalist><div id="ef-kost-log" style="margin-top:8px;font-size:12px;line-height:1.6"></div></div>'
