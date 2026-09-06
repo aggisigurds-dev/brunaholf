@@ -320,11 +320,13 @@ const KOST_SCHEMA = {
     lines: {
       type: 'array', description: 'Vörulínur reikningsins. Flutningur/þjónustugjöld sem sér-línur ef þau eru á reikningnum.',
       items: {
-        type: 'object', additionalProperties: false, required: ['desc', 'qty', 'unit_cost_ex_vat', 'vsk_pct'],
+        type: 'object', additionalProperties: false, required: ['desc', 'qty', 'unit_cost_ex_vat', 'disc_pct', 'unit_list_ex_vat', 'vsk_pct'],
         properties: {
           desc: { type: 'string', description: 'Vöruheiti/lýsing (vörunúmer má fylgja)' },
           qty: { type: 'number', description: 'Magn' },
-          unit_cost_ex_vat: { type: 'number', description: 'Einingarverð ÁN vsk sem kaupandinn borgaði (eftir afslátt línu). Heiltölur í ISK.' },
+          unit_cost_ex_vat: { type: 'number', description: 'Einingarverð ÁN vsk sem kaupandinn borgaði (eftir afslátt línu). ISK.' },
+          disc_pct: { type: 'number', description: 'Afsláttarprósenta ÞESSARAR línu ef hún kemur fram (t.d. 30 eða 35), annars 0' },
+          unit_list_ex_vat: { type: 'number', description: 'Einingarverð ÁN vsk FYRIR afslátt (listaverð) ef það kemur fram á reikningnum, annars 0' },
           vsk_pct: { type: 'number', description: 'VSK-prósenta línunnar (24 eða 11), 24 ef óljóst' },
         },
       },
@@ -360,7 +362,8 @@ async function lesaKostnad(b, now) {
     : { type: 'image', source: { type: 'base64', media_type: mime, data: buf.toString('base64') } };
   const system = 'Þú lest birgjareikning (kostnaðarreikning) sem Slökkvitæki ehf / Brunahólf ehf fékk frá seljanda og skilar honum sem JSON. '
     + 'Reglur: unit_cost_ex_vat = einingarverðið ÁN VSK sem KAUPANDINN borgaði (eftir afslátt). Ef reikningurinn sýnir listaverð og afslátt, gefðu afsl_pct = afsláttarprósentan og unit_cost_ex_vat = nettóverðið. '
-    + 'Tölur í ISK án þúsundapunkta. Dagsetning YYYY-MM-DD. Taktu ALLAR vörulínur með, líka flutning og gjöld ef þau standa á reikningnum. Ekki búa neitt til sem ekki stendur á skjalinu.';
+    + 'Afsláttur getur verið mismunandi milli lína (t.d. 30% á einni, 35% á annarri) — gefðu disc_pct og unit_list_ex_vat PER LÍNU þegar reikningurinn sýnir „verð fyrir afslátt" eða afsláttarprósentu línunnar (oft í ítarupplýsingum neðst); afsl_pct í haus = algengasta línu-afslátturinn. '
+    + 'Tölur í ISK án þúsundapunkta. Dagsetning YYYY-MM-DD (útgáfudagur reiknings, ekki gjalddagi). Taktu ALLAR vörulínur með, líka flutning og gjöld ef þau standa á reikningnum. Ekki búa neitt til sem ekki stendur á skjalinu.';
   const ar = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
@@ -380,7 +383,10 @@ async function lesaKostnad(b, now) {
   const lista = (cost, d) => (d >= 100 ? num(cost) : num(cost) / (1 - d / 100));
   const lines = out.lines.slice(0, 80).map((l) => {
     const cost = Math.round(num(l.unit_cost_ex_vat) * 100) / 100;
-    return { desc: String(l.desc || '').slice(0, 200), qty: num(l.qty) || 1, cost, disc_pct: afsl, disc_manual: false, sell: Math.round(lista(cost, afsl) * 100) / 100, sell_manual: false, vsk_pct: num(l.vsk_pct) || 24 };
+    const d = num(l.disc_pct) > 0 ? num(l.disc_pct) : afsl;                 // línu-afsláttur ræður, annars haus
+    const listShown = num(l.unit_list_ex_vat);                              // listaverð af reikningnum ef það stendur þar
+    const sell = listShown > cost ? Math.round(listShown * 100) / 100 : Math.round(lista(cost, d) * 100) / 100;
+    return { desc: String(l.desc || '').slice(0, 200), qty: num(l.qty) || 1, cost, disc_pct: d, disc_manual: d !== afsl, sell, sell_manual: false, vsk_pct: num(l.vsk_pct) || 24 };
   });
   if (!inv.birgir && out.birgir) inv.birgir = String(out.birgir).slice(0, 120);
   if (!inv.nr && out.nr) inv.nr = String(out.nr).slice(0, 60);
