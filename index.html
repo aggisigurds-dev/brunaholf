@@ -35,7 +35,7 @@
 
 <meta charset="utf-8">
 <script src="/js/gr-materials.js?v=20260903"></script>
-<script src="/js/ds-karfa.js?v=20260905g" defer></script>
+<script src="/js/ds-karfa.js?v=20260906k" defer></script>
 <meta name="color-scheme" content="light"/>
 <!-- Chrome Android Force Dark endurlitar síður sjálfkrafa og gerði sumar
      hub-síður ólæsilegar í síma Agnars. `only light` er opt-out Blink.
@@ -15273,6 +15273,8 @@ async function renderDrogstod(t){
   setSync();
   await load();
   flush();
+  // Efniskostnaðar-síðan („Opna punkt" / „＋ Skrá kostnaðarreikning") vísar hingað með bendingu (06.09.2026)
+  try{ const oid = sessionStorage.getItem('ds_open_karfa'); if(oid){ sessionStorage.removeItem('ds_open_karfa'); if(window.DsKarfa) await DsKarfa.open(Number(oid)); } }catch(_){}
 }
 async function renderTvMaeting(t){
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -19808,12 +19810,14 @@ async function renderEfniskostnadur(t){
       </div>
 
       <div id="ef-table-host"></div>
+      <div id="ef-kost-host"></div>
     </div>
     <datalist id="ef-ws-datalist"></datalist>
   `;
 
   const readBtn = document.getElementById('ef-read-btn');
   if (readBtn) readBtn.onclick = () => efReadRedder(t, readBtn);
+  efKostnadarYfirlit();   // handskráðir kostnaðarreikningar (aðrir birgjar) úr Drög-stöð — 06.09.2026
 
   try {
     const [r, wsR] = await Promise.all([
@@ -20080,6 +20084,45 @@ async function efReadRedder(t, btn){
   } finally {
     if (btn) btn.disabled = false;
   }
+}
+// Handskráðir kostnaðarreikningar — „Redder-form" fyrir aðra birgja (Agnar 06.09.2026: „vantar
+// einhvers konar Redder form skráningu"). Formið sjálft býr í körfu punktsins í Drög-stöð
+// (js/ds-karfa.js, 🧾 Kostnaðarreikningar); hér er yfirlitið yfir þá alla + „Skrá nýjan".
+async function efKostnadarYfirlit(){
+  const host = document.getElementById('ef-kost-host'); if(!host) return;
+  const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const fmt = n => Math.round(n||0).toLocaleString('is-IS');
+  const dmy = iso => { const m = String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3]+'.'+m[2]+'.'+m[1] : '—'; };
+  host.innerHTML = '<div class="wc-card" style="margin-top:14px"><h3>🧾 Kostnaðarreikningar annarra birgja <span style="font-weight:400;color:var(--muted);font-size:12px">— endurrukkaðir á fullu listaverði, skráðir í Drög-stöð</span></h3><div style="color:var(--muted);font-size:12px">Sækir…</div></div>';
+  let rows = [];
+  try{ const r = await fetch('/api/reikningspunktar?op=kostnadur'); if(!r.ok) throw new Error('HTTP '+r.status); rows = (await r.json()).rows||[]; }
+  catch(e){ host.querySelector('div div').textContent = 'Villa: '+(e.message||e); return; }
+  const innk = rows.reduce((a,r)=>a+(r.innkaup_an_vsk||0),0), sala = rows.reduce((a,r)=>a+(r.endurkrafa_an_vsk||0),0);
+  const opna = id => { try{ sessionStorage.setItem('ds_open_karfa', String(id)); }catch(_){} location.hash = '#drogstod'; };
+  host.innerHTML = '<div class="wc-card" style="margin-top:14px">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h3 style="margin:0">🧾 Kostnaðarreikningar annarra birgja <span style="font-weight:400;color:var(--muted);font-size:12px">— endurrukkaðir á fullu listaverði, skráðir í Drög-stöð</span></h3>'
+    + '<button type="button" class="rg-tool" id="ef-kost-ny" title="Býr til punkt í Drög-stöð með tómum kostnaðarreikningi — birgir, nr., dags., PDF og línur skráðar þar">＋ Skrá kostnaðarreikning</button></div>'
+    + (rows.length ? '<div style="overflow:auto;margin-top:8px"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="color:var(--muted-2);font-weight:600;text-align:left">'
+      + '<th style="padding:5px 6px">Kúnni / verk</th><th style="padding:5px 6px">Birgir</th><th style="padding:5px 6px">Nr.</th><th style="padding:5px 6px">Dags</th><th style="padding:5px 6px;text-align:right">Innkaup án vsk</th><th style="padding:5px 6px;text-align:right">Endurkrafa án vsk</th><th style="padding:5px 6px;text-align:right">Framlegð</th><th style="padding:5px 6px">Staða</th><th></th></tr></thead><tbody>'
+      + rows.map(r => { const fl = (r.endurkrafa_an_vsk||0)-(r.innkaup_an_vsk||0); return '<tr style="border-top:1px solid var(--border)">'
+        + '<td style="padding:4px 6px;font-weight:600">'+esc(r.kunni||'(án kúnna)')+'</td><td style="padding:4px 6px">'+esc(r.birgir||'—')+'</td><td style="padding:4px 6px;font-family:JetBrains Mono,monospace">'+esc(r.nr||'—')+'</td><td style="padding:4px 6px">'+esc(dmy(r.dags))+'</td>'
+        + '<td style="padding:4px 6px;text-align:right">'+fmt(r.innkaup_an_vsk)+'</td><td style="padding:4px 6px;text-align:right;font-weight:600">'+fmt(r.endurkrafa_an_vsk)+'</td><td style="padding:4px 6px;text-align:right;color:'+(fl>=0?'var(--green)':'var(--red)')+'">'+fmt(fl)+(r.endurkrafa_an_vsk?' ('+Math.round(fl/r.endurkrafa_an_vsk*100)+'%)':'')+'</td>'
+        + '<td style="padding:4px 6px">'+(r.sent_at?'↗ send í söluborð':r.status==='notad'?'✓ notað':r.pdf?'📎 PDF · bíður':'bíður')+(r.linur?' · '+r.linur+' lín'+(r.linur===1?'a':'ur'):'')+'</td>'
+        + '<td style="padding:4px 6px"><button type="button" class="rg-tool" data-kost-open="'+esc(r.punktur)+'" style="padding:2px 8px;font-size:11px">Opna punkt #'+esc(r.punktur)+'</button></td></tr>'; }).join('')
+      + '</tbody><tfoot><tr style="border-top:2px solid var(--ink);font-weight:700"><td style="padding:5px 6px" colspan="4">Samtals '+rows.length+' reikning'+(rows.length===1?'ur':'ar')+'</td><td style="padding:5px 6px;text-align:right">'+fmt(innk)+'</td><td style="padding:5px 6px;text-align:right">'+fmt(sala)+'</td><td style="padding:5px 6px;text-align:right">'+fmt(sala-innk)+'</td><td colspan="2"></td></tr></tfoot></table></div>'
+      : '<div style="color:var(--muted);font-size:12px;margin-top:8px">Engir handskráðir kostnaðarreikningar enn. „＋ Skrá kostnaðarreikning" býr til punkt í Drög-stöð — þar skráirðu birgi, númer, dagsetningu, PDF og línurnar með innkaupsverði og afslætti okkar; listaverðið reiknast og „🧺 Setja í körfu" flytur línurnar í draft-körfuna.</div>')
+    + '</div>';
+  host.querySelectorAll('[data-kost-open]').forEach(b => b.onclick = () => opna(b.dataset.kostOpen));
+  const ny = host.querySelector('#ef-kost-ny');
+  if (ny) ny.onclick = async () => {
+    ny.disabled = true;
+    try{
+      const r = await fetch('/api/reikningspunktar', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ action:'add', raw:'🧾 Kostnaðarreikningur — endurrukkun', felag:'slokkvitaeki', source:'hub', author:(typeof bhMe==='function'?bhMe():'')||null }) });
+      const j = await r.json(); if(!r.ok || !j.row) throw new Error(j.error||('HTTP '+r.status));
+      try{ sessionStorage.setItem('ds_open_kost', '1'); }catch(_){}
+      opna(j.row.id);
+    }catch(e){ alert('Tókst ekki að búa til punkt: '+(e.message||e)); ny.disabled = false; }
+  };
 }
 async function efWriteRedder(t, btn){
   const meta = document.getElementById('ef-meta');

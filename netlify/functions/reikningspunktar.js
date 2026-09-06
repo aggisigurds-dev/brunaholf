@@ -86,6 +86,22 @@ async function handleGet(event) {
   if (q.op === 'stada') return P.json(200, await stada());
   // Vörulisti Slökkvitækis fyrir draft-körfuna (05.09.2026) — sömu verð og söluborðið notar.
   if (q.op === 'vorur') return P.json(200, { vorur: await all('vorur?select=id,nafn,verd_an_vsk,vsk_prosenta,flokkur&virkt=eq.true&order=nafn&limit=2000') });
+  // Handskráðir kostnaðarreikningar úr körfum punktanna (06.09.2026) — Efniskostnaðar-síðan sýnir þá.
+  if (q.op === 'kostnadur') {
+    const rows = await all('reikningspunktar?select=id,felag,status,worksite_name,work_month,karfa,created_at,updated_at&karfa=not.is.null&order=updated_at.desc&limit=500');
+    const out = [];
+    for (const r of rows) {
+      const k = r.karfa && typeof r.karfa === 'object' ? r.karfa : {};
+      for (const inv of (Array.isArray(k.kostnadur) ? k.kostnadur : [])) {
+        let innk = 0, sala = 0;
+        for (const l of (inv.lines || [])) { innk += num(l.qty) * num(l.cost); sala += num(l.qty) * num(l.sell); }
+        out.push({ punktur: r.id, felag: r.felag, status: r.status, kunni: r.worksite_name || (k.kunni && k.kunni.nafn) || null, work_month: r.work_month,
+          id: inv.id, birgir: inv.birgir || '', nr: inv.nr || '', dags: inv.dags || null, afsl_pct: num(inv.afsl_pct), linur: (inv.lines || []).length,
+          pdf: inv.pdf || null, innkaup_an_vsk: Math.round(innk), endurkrafa_an_vsk: Math.round(sala), sent_at: k.sent_at || null, updated_at: r.updated_at });
+      }
+    }
+    return P.json(200, { rows: out });
+  }
   // Einn punktur með körfu — söluborðið (patch 352) sækir hann þvert á lén með ?karfa=<id>.
   if (q.id) { const [row] = await all(`reikningspunktar?select=*&id=eq.${Number(q.id) || 0}`); return row ? P.json(200, { row }) : P.json(404, { error: 'Punktur fannst ekki' }); }
 
@@ -241,6 +257,20 @@ async function handlePost(event) {
     return P.json(200, { row: rows[0] || null });
   }
 
+  // Viðhengi á punkt sem er þegar til (06.09.2026) — áður varð hver mynd/PDF sér punktur.
+  if (action === 'attach') {
+    const id = Number(b.id); if (!id) return P.json(400, { error: 'id vantar' });
+    const a = b.attachment && typeof b.attachment === 'object' ? b.attachment : null;
+    if (!a || !(a.url || a.drive_file_id)) return P.json(400, { error: 'viðhengi vantar' });
+    const [note] = await all(`reikningspunktar?select=id,attachments&id=eq.${id}`);
+    if (!note) return P.json(404, { error: 'Punktur fannst ekki' });
+    const list = (Array.isArray(note.attachments) ? note.attachments : []).concat([{ drive_file_id: a.drive_file_id || null, title: String(a.title || 'skrá').slice(0, 120), url: String(a.url || '').slice(0, 400) }]).slice(-20);
+    const r = await P.sbPatch(`reikningspunktar?id=eq.${id}`, { attachments: list, updated_at: now });
+    if (!r.ok) return P.json(r.status, { error: (await r.text()).slice(0, 300) });
+    const rows = await r.json();
+    return P.json(200, { row: rows[0] || null });
+  }
+
   if (action === 'delete') {
     const id = Number(b.id); if (!id) return P.json(400, { error: 'id vantar' });
     const r = await del(`reikningspunktar?id=eq.${id}`);
@@ -279,7 +309,7 @@ async function karfa(b, now) {
   const lines = (Array.isArray(inn.lines) ? inn.lines : []).slice(0, 80).map((l) => ({
     type: l.type === 'service' ? 'service' : 'product', desc: String(l.desc || '').slice(0, 200), qty: n(l.qty),
     unit_price_ex_vat: n(l.unit_price_ex_vat), vsk_pct: n(l.vsk_pct) || 24, product_id: l.product_id ? Number(l.product_id) : null,
-    disc_pct: n(l.disc_pct), hint: l.hint ? String(l.hint).slice(0, 120) : undefined,
+    disc_pct: n(l.disc_pct), hint: l.hint ? String(l.hint).slice(0, 120) : undefined, kost_ref: l.kost_ref ? String(l.kost_ref).slice(0, 60) : undefined,
   }));
   const ws = String(b.worksite_name || note.worksite_name || '').trim();
   let kunni = null;
@@ -292,7 +322,18 @@ async function karfa(b, now) {
   const d = n(inn.discount_pct); if (d) { ex *= 1 - d / 100; vsk *= 1 - d / 100; }
   const exR = Math.round(ex), totR = Math.round(ex + vsk);
   const prev = (note.karfa && typeof note.karfa === 'object') ? note.karfa : {};
-  const k = { lines, discount_pct: d, athugasemd: String(inn.athugasemd || '').slice(0, 1000), auto: !!inn.auto, kunni,
+  // Kostnaðarreikningar (06.09.2026): birgjareikningar sem eru endurrukkaðir — innkaupsverð,
+  // afsláttur okkar, söluverð (listaverð = innkaup ÷ (1 − afsl.)). Búa AÐEINS hér í körfunni.
+  const kostnadur = (Array.isArray(inn.kostnadur) ? inn.kostnadur : []).slice(0, 20).map((inv) => ({
+    id: String(inv.id || ('k' + Date.now().toString(36))).slice(0, 40), birgir: String(inv.birgir || '').slice(0, 120), nr: String(inv.nr || '').slice(0, 60),
+    dags: /^\d{4}-\d{2}-\d{2}$/.test(String(inv.dags || '')) ? inv.dags : null, afsl_pct: n(inv.afsl_pct),
+    pdf: inv.pdf && typeof inv.pdf === 'object' ? { drive_file_id: inv.pdf.drive_file_id || null, title: String(inv.pdf.title || '').slice(0, 120), url: String(inv.pdf.url || '').slice(0, 400) } : null,
+    lines: (Array.isArray(inv.lines) ? inv.lines : []).slice(0, 80).map((l) => ({
+      desc: String(l.desc || '').slice(0, 200), qty: n(l.qty), cost: n(l.cost), disc_pct: n(l.disc_pct), disc_manual: !!l.disc_manual, sell: n(l.sell), sell_manual: !!l.sell_manual, vsk_pct: n(l.vsk_pct) || 24,
+    })),
+    created_at: inv.created_at || now,
+  }));
+  const k = { lines, kostnadur, discount_pct: d, athugasemd: String(inn.athugasemd || '').slice(0, 1000), auto: !!inn.auto, kunni,
     totals: { ex: exR, vsk: totR - exR, total: totR }, created_at: prev.created_at || now, saved_at: now, sent_at: b.sent ? now : (prev.sent_at || null) };
   const patch = { karfa: k, updated_at: now };
   if (ws && ws !== note.worksite_name) patch.worksite_name = ws;

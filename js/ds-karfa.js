@@ -102,6 +102,123 @@
   }
   const nyLina = teg => ({ type: teg === 'service' ? 'service' : 'product', desc: '', qty: 1, unit_price_ex_vat: 0, vsk_pct: 24, product_id: null, disc_pct: 0 });
 
+  // ── Kostnaðarreikningar (Agnar 06.09.2026: „vantar einhvers konar Redder form skráningu") ──
+  // Birgjareikningar sem eru endurrukkaðir á kúnnann: innkaupsverð + afslátturinn sem VIÐ fengum
+  // → listaverð = innkaup ÷ (1 − afsl.) → söluverð (má yfirskrifa). Regla (Charlize #410):
+  // afsláttur birgja er framlegð okkar og kemur aldrei á reikning kúnna. Búa í karfa.kostnadur.
+  const listaverd = (cost, disc) => { const d = num(disc); return d >= 100 ? num(cost) : num(cost) / (1 - d / 100); };
+  const nyKostLina = (inv, extra) => Object.assign({ desc: '', qty: 1, cost: 0, disc_pct: num(inv.afsl_pct), disc_manual: false, sell: 0, sell_manual: false, vsk_pct: 24 }, extra || {});
+  const nyKost = () => ({ id: 'k' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), birgir: '', nr: '', dags: new Date().toISOString().slice(0, 10), afsl_pct: 0, pdf: null, lines: [], created_at: new Date().toISOString() });
+  function kostTotals(inv) {
+    let innk = 0, sala = 0;
+    for (const l of (inv.lines || [])) { innk += num(l.qty) * num(l.cost); sala += num(l.qty) * num(l.sell); }
+    return { innk: Math.round(innk), sala: Math.round(sala), fl: Math.round(sala - innk), pct: sala > 0 ? Math.round((sala - innk) / sala * 100) : 0 };
+  }
+  function uppfaeraSell(l) { if (!l.sell_manual) l.sell = Math.round(listaverd(l.cost, l.disc_pct) * 100) / 100; }
+  // Límdar línur af reikningi: „3 x Reykskynjari 12.500" · „Reykskynjari 3 stk 12.500 kr" · „Kapall 25 m 190" (síðasta talan = einingaverð).
+  function lesaKostLinur(text, inv) {
+    const out = [];
+    for (let s of String(text || '').split('\n')) {
+      s = s.replace(/^[\s•\-–*·]+/, '').replace(/\s+kr\.?\s*$/i, '').trim(); if (!s) continue;
+      let m, qty = 1, desc = s, price = 0;
+      if ((m = s.match(/^(\d+(?:[.,]\d+)?)\s*(?:[×x]|stk\.?)?\s+(.+?)\s+([\d.]+(?:,\d+)?)$/))) { qty = num(m[1]); desc = m[2]; price = num(m[3]); }
+      else if ((m = s.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s*(?:[×x]|stk\.?)\s+([\d.]+(?:,\d+)?)$/))) { desc = m[1]; qty = num(m[2]); price = num(m[3]); }
+      else if ((m = s.match(/^(.+?)\s+([\d.]+(?:,\d+)?)$/))) { desc = m[1]; price = num(m[2]); }
+      else continue;
+      desc = desc.replace(/\s+(stk|x)\.?$/i, '').trim(); if (!desc) continue;
+      const l = nyKostLina(inv, { desc, qty: qty || 1, cost: price }); uppfaeraSell(l); out.push(l);
+    }
+    return out;
+  }
+  // Línurnar í körfuna á söluverði: vara úr vörulista → OKKAR listaverð; handstillt söluverð → það; annars reiknað listaverð.
+  function tilKorfu(note, inv) {
+    const k = note.karfa; const ref = 'kost:' + inv.id; const hint = (inv.birgir || 'kostnaðarreikningur') + (inv.nr ? ' ' + inv.nr : '');
+    k.lines = (k.lines || []).filter(l => l.kost_ref !== ref);
+    let n = 0;
+    for (const l of (inv.lines || [])) {
+      if (!(num(l.qty) > 0)) continue;
+      const v = l.sell_manual ? null : voraEftirNafni(l.desc);
+      k.lines.push(v
+        ? { type: 'product', desc: v.nafn, qty: num(l.qty), unit_price_ex_vat: v.verd, vsk_pct: v.vsk, product_id: v.id, disc_pct: 0, kost_ref: ref, hint }
+        : { type: 'product', desc: l.desc, qty: num(l.qty), unit_price_ex_vat: num(l.sell), vsk_pct: num(l.vsk_pct) || 24, product_id: null, disc_pct: 0, kost_ref: ref, hint });
+      n++;
+    }
+    k.auto = false;
+    ctx.setSync('🧺 ' + n + ' lín' + (n === 1 ? 'a' : 'ur') + ' úr ' + hint + ' settar í körfuna á söluverði');
+    return n;
+  }
+  function uppfaeraKostTolur(invEl, inv) {
+    if (!invEl || !inv) return;
+    invEl.querySelectorAll('tr[data-kl]').forEach(tr => {
+      const l = inv.lines[+tr.dataset.kl]; if (!l) return;
+      const di = tr.querySelector('[data-kf="disc"]'); if (di && document.activeElement !== di) di.value = tala(l.disc_pct);
+      const se = tr.querySelector('[data-kf="sell"]'); if (se && document.activeElement !== se) { se.value = tala(l.sell); se.classList.toggle('manual', !!l.sell_manual); }
+      const li = tr.querySelector('.dk-lista'); if (li) li.textContent = fmt(listaverd(l.cost, l.disc_pct));
+      const su = tr.querySelector('.dk-ksum'); if (su) su.textContent = fmt(num(l.qty) * num(l.sell));
+    });
+    const t = kostTotals(inv); const q = s => invEl.querySelector(s);
+    if (q('.k-innk')) q('.k-innk').textContent = fmt(t.innk);
+    if (q('.k-sala')) q('.k-sala').textContent = fmt(t.sala);
+    if (q('.k-fl')) q('.k-fl').textContent = fmt(t.fl) + ' (' + t.pct + '%)';
+  }
+  function birgjaListi() {
+    const names = new Set();
+    (ctx.NOTES || []).forEach(n => (((n.karfa || {}).kostnadur) || []).forEach(inv => { if (inv.birgir) names.add(inv.birgir); }));
+    let dl = document.getElementById('ds-birgjar');
+    if (!dl) { dl = document.createElement('datalist'); dl.id = 'ds-birgjar'; document.body.appendChild(dl); }
+    dl.innerHTML = [...names].sort((a, b) => a.localeCompare(b, 'is')).map(n => '<option value="' + esc(n) + '">').join('');
+  }
+  // 📎 PDF/mynd af reikningnum: innra viðhengi (sendist aldrei) — hangir á reikningnum OG punktinum.
+  function hengjaPdf(note, inv, btn) {
+    const f0 = document.createElement('input'); f0.type = 'file'; f0.accept = 'image/*,application/pdf'; f0.hidden = true; document.body.appendChild(f0);
+    f0.addEventListener('change', async () => {
+      const f = f0.files && f0.files[0]; f0.remove(); if (!f) return;
+      if (f.size > 4 * 1024 * 1024) { alert('Skráin er stærri en 4 MB'); return; }
+      btn.disabled = true; btn.textContent = '⏳…';
+      try {
+        const b64 = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = rej; r.readAsDataURL(f); });
+        const d = new Date(); const ym = d.getFullYear() + '-' + pad(d.getMonth() + 1);
+        const j = await ctx.api('/api/pdf-store', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ fileName: f.name, contentBase64: b64, mimeType: f.type, worksite_name: 'Drög-stöð', work_month: ym, doc_type: 'innra' }) });
+        inv.pdf = { drive_file_id: j.id, title: f.name, url: j.public_url };
+        try { const r = await ctx.post({ action: 'attach', id: note.id, attachment: inv.pdf }); if (r && r.row && Array.isArray(r.row.attachments)) note.attachments = r.row.attachments; } catch (_) {}
+        await vista(note); ctx.teikna();
+      } catch (e) { alert('Upphleðsla mistókst: ' + (e.message || e)); btn.disabled = false; btn.textContent = '📎 PDF'; }
+    });
+    f0.click();
+  }
+  function kostHtml(note) {
+    const k = note.karfa || {}; const list = Array.isArray(k.kostnadur) ? k.kostnadur : [];
+    let h = '<div class="dk-kost"><div class="dk-kost-h"><b>🧾 Kostnaðarreikningar</b><small>innkaup sem eru endurrukkuð — listaverð = innkaup ÷ (1 − afsl. okkar); söluverð má yfirskrifa</small>'
+      + '<button type="button" data-dk="kost-add" style="' + ctx.KEY + '" title="Skrá birgjareikning: birgir, nr., dags., PDF og línur með innkaupsverði og afslætti okkar">+ Kostnaðarreikningur</button></div>';
+    list.forEach((inv, i) => {
+      const t = kostTotals(inv);
+      const rows = (inv.lines || []).map((l, j) => '<tr data-kl="' + j + '"><td><input data-kf="desc" list="ds-vorur" value="' + esc(l.desc) + '" placeholder="Vara / lýsing af reikningi…"></td>'
+        + '<td style="width:58px"><input class="n" data-kf="qty" value="' + esc(tala(l.qty)) + '" inputmode="decimal"></td>'
+        + '<td style="width:92px"><input class="n" data-kf="cost" value="' + esc(tala(l.cost)) + '" inputmode="decimal" title="Innkaupsverð án vsk (eining)"></td>'
+        + '<td style="width:54px"><input class="n" data-kf="disc" value="' + esc(tala(l.disc_pct)) + '" inputmode="decimal" title="Afslátturinn sem VIÐ fengum %"></td>'
+        + '<td class="r dk-lista" title="Listaverð = innkaup ÷ (1 − afsl.)">' + fmt(listaverd(l.cost, l.disc_pct)) + '</td>'
+        + '<td style="width:92px"><input class="n sell' + (l.sell_manual ? ' manual' : '') + '" data-kf="sell" value="' + esc(tala(l.sell)) + '" inputmode="decimal" title="Söluverð án vsk á reikning kúnna — sjálfgefið listaverðið"></td>'
+        + '<td class="r dk-ksum">' + fmt(num(l.qty) * num(l.sell)) + '</td>'
+        + '<td style="width:26px"><button type="button" class="dk-x" data-dk="kost-ldel" title="Taka línu út">✕</button></td></tr>').join('');
+      h += '<div class="dk-kinv" data-ki="' + i + '"><div class="dk-kinv-h">'
+        + '<input data-kf="birgir" list="ds-birgjar" value="' + esc(inv.birgir) + '" placeholder="Birgir (t.d. Securitas, Rönning, Redder…)">'
+        + '<input data-kf="nr" value="' + esc(inv.nr) + '" placeholder="Reikn.nr">'
+        + '<input data-kf="dags" type="date" value="' + esc(inv.dags || '') + '">'
+        + '<label>Afsl. okkar % <input class="n" data-kf="afsl_pct" value="' + esc(tala(inv.afsl_pct)) + '" inputmode="decimal" title="Afslátturinn sem við fengum á reikningnum — fer á allar línur sem ekki hafa sér-afslátt"></label>'
+        + (inv.pdf && inv.pdf.url ? '<a class="ds-chip" href="' + esc(inv.pdf.url) + '" target="_blank" rel="noopener" title="Innra viðhengi — sendist aldrei">📎 ' + esc((inv.pdf.title || 'PDF').slice(0, 28)) + '</a>' : '<button type="button" data-dk="kost-pdf" style="' + ctx.KEY + '" title="Hengja PDF/mynd af reikningnum við (innra viðhengi, sendist aldrei)">📎 PDF</button>')
+        + '<button type="button" class="dk-x" data-dk="kost-del" title="Eyða kostnaðarreikningi úr punktinum">✕</button></div>'
+        + '<div class="dk-kt-wrap"><table class="dk-kt"><thead><tr><th>Lýsing</th><th>Magn</th><th>Innkaup án vsk</th><th>Afsl %</th><th style="text-align:right">Listaverð</th><th>Söluverð án vsk</th><th style="text-align:right">Samtals sala</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>'
+        + '<div class="dk-kinv-tools"><button type="button" data-dk="kost-line" style="' + ctx.KEY + '">+ Lína</button><button type="button" data-dk="kost-paste" style="' + ctx.KEY + '" title="Líma línur af reikningnum („3 x Reykskynjari 12.500", ein í hverja línu) — þær lesast í töfluna">📋 Líma línur</button><span class="sp"></span>'
+        + '<span class="dk-kinv-tot">Innkaup <b class="k-innk">' + fmt(t.innk) + '</b> · Endurkrafa <b class="k-sala">' + fmt(t.sala) + '</b> · Framlegð <b class="k-fl">' + fmt(t.fl) + ' (' + t.pct + '%)</b></span>'
+        + '<button type="button" data-dk="kost-tilkorfu" style="' + ctx.GOLD + '" title="Setur línurnar í draft-körfuna á söluverði (skiptir út fyrri línum þessa reiknings)">🧺 Setja í körfu</button></div>'
+        + '<textarea class="dk-kpaste" hidden placeholder="Límdu línur af reikningnum — ein í hverja línu:&#10;3 x Reykskynjari Hochiki 12.500&#10;Kapall 2x0,75 25 m 190&#10;…og smelltu á „Lesa línur"."></textarea>'
+        + '<div class="dk-kinv-tools dk-kpastebar" hidden><button type="button" data-dk="kost-lesa" style="' + ctx.GOLD + '">Lesa línur</button><button type="button" data-dk="kost-paste" style="' + ctx.KEY + '">Hætta við</button></div>'
+        + '</div>';
+    });
+    h += '</div>';
+    return h;
+  }
+
   // ── CSS ──────────────────────────────────────────────────────────────────
   function css() {
     if (document.getElementById('ds-karfa-css')) return;
@@ -122,6 +239,18 @@
       '.dk-cta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:10px}.dk-stada{font-family:var(--font-mono);font-size:10.5px;color:var(--muted)}.dk-stada.ok{color:var(--green,#2f7a4a)}',
       '.dk-nota{width:100%;box-sizing:border-box;margin-top:8px;min-height:44px;padding:6px 8px;border:1px dashed var(--edge,#c9c2b3);border-radius:4px;background:var(--input-bg,#f6f3ec);font:inherit;font-size:12px;resize:vertical}',
       '.ds-chip.karfa{background:#fbf3d9;border-color:#d9b95a;color:#5a4410}',
+      // 🧾 Kostnaðarreikningar (06.09.2026): birgjareikningar sem eru endurrukkaðir — „Redder-form" fyrir aðra birgja
+      '.dk-kost{margin-top:10px;border-top:1px dashed var(--edge,#c9c2b3);padding-top:8px}',
+      '.dk-kost-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px}.dk-kost-h b{font-size:12.5px}.dk-kost-h small{color:var(--muted);font-size:11px;flex:1 1 200px}',
+      '.dk-kinv{border:1px solid var(--line,#e6e1d6);border-radius:6px;padding:8px 10px;margin-top:6px;background:var(--bg-2,#ece7dc)}',
+      '.dk-kinv-h{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.dk-kinv-h input{height:30px;padding:0 7px;border:1px solid var(--edge,#c9c2b3);border-radius:4px;background:var(--input-bg,#f6f3ec);font:inherit;font-size:12.5px;color:var(--ink);box-sizing:border-box;min-width:0}',
+      '.dk-kinv-h input[data-kf="birgir"]{flex:2 1 150px}.dk-kinv-h input[data-kf="nr"]{flex:1 1 84px}.dk-kinv-h input[data-kf="dags"]{flex:1 1 130px}.dk-kinv-h label{font-size:11.5px;color:var(--muted);display:inline-flex;align-items:center;gap:5px}.dk-kinv-h label input{width:56px;text-align:right}',
+      '.dk-kt-wrap{overflow-x:auto;margin-top:6px}.dk-kt{width:100%;min-width:560px;border-collapse:collapse}.dk-kt th{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left;padding:2px 4px;font-weight:600}',
+      '.dk-kt td{padding:3px 4px;vertical-align:middle;border-top:1px solid var(--line,#e6e1d6)}.dk-kt td.r{text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}',
+      '.dk-kt input{height:30px;padding:0 6px;border:1px solid var(--edge,#c9c2b3);border-radius:4px;background:var(--input-bg,#f6f3ec);font:inherit;font-size:12.5px;color:var(--ink);width:100%;box-sizing:border-box;min-width:0}.dk-kt input.n{text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums}.dk-kt input.sell.manual{border-color:var(--gold-deep,#8f6a1c);background:#fff}',
+      '.dk-kinv-tools{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px}.dk-kinv-tools .sp{flex:1}.dk-kinv-tot{font-family:var(--font-mono);font-size:11px;color:var(--muted)}.dk-kinv-tot b{color:var(--ink)}',
+      '.dk-kpaste{width:100%;box-sizing:border-box;margin-top:6px;min-height:72px;padding:6px 8px;border:1px dashed var(--edge,#c9c2b3);border-radius:4px;background:#fff;font:inherit;font-size:12px}',
+      '.ds-karfa.compact .dk-kost{display:none}',
       // Yfirlit (Agnar 05.09.2026): „smækka svo ég sjái allt á einum skjá — skjáskot og senda áfram"
       '.ds-karfa.compact .dk-t,.ds-karfa.compact .dk-tools,.ds-karfa.compact .dk-nota,.ds-karfa.compact .dk-tot,.ds-karfa.compact .dk-cta,.ds-karfa.compact .dk-head{display:none}',
       '.dk-yfirlit{background:#fff;color:#161513;border:1px solid #d9d3c6;border-radius:6px;padding:10px 12px;font-size:12px;line-height:1.3}',
@@ -154,7 +283,7 @@
   // ── Ritillinn ────────────────────────────────────────────────────────────
   function tryggjaKorfu(note) {
     if (note.karfa && typeof note.karfa === 'object' && Array.isArray(note.karfa.lines)) return false;
-    note.karfa = { lines: fromText(note.raw), discount_pct: 0, athugasemd: '', auto: true, kunni: null, totals: null };
+    note.karfa = { lines: fromText(note.raw), kostnadur: [], discount_pct: 0, athugasemd: '', auto: true, kunni: null, totals: null };
     return true;
   }
   function box(note) {
@@ -181,6 +310,7 @@
       + '<table class="dk-t"><thead><tr><th>Vara / þjónusta</th><th>Magn</th><th>Ein.verð án vsk</th><th>Afsl %</th><th style="text-align:right">Samtals</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>'
       + '<div class="dk-tools"><button type="button" data-dk="add" style="' + ctx.KEY + '">+ Vara</button><button type="button" data-dk="addsvc" style="' + ctx.KEY + '">+ Vinna / þjónusta</button><button type="button" data-dk="urtexta" style="' + ctx.KEY + '" title="Lesa línurnar aftur úr texta punktsins (skiptir út núverandi línum)">↻ Úr punktinum</button><span class="sp"></span>'
       + '<label>Afsl. af heild % <input data-f="discount_pct" value="' + esc(tala(k.discount_pct)) + '" inputmode="decimal"></label></div>'
+      + kostHtml(note)
       + '<textarea class="dk-nota" data-f="athugasemd" placeholder="Krass — hvað á eftir að athuga, hvað var sagt, afsláttur sem bíður…">' + esc(k.athugasemd || '') + '</textarea>'
       + '<div class="dk-tot"><span>Án vsk <b class="dk-ex">' + fmt(t.ex) + '</b></span><span>VSK <b class="dk-vsk">' + fmt(t.vsk) + '</b></span><span class="dk-total">' + fmt(t.total) + ' kr</span></div>'
       + '<div class="dk-cta"><button type="button" data-dk="senda" style="' + ctx.GOLD + '" title="Opnar söluborð Slökkvitækis með þessari körfu — reikningurinn verður til þar">🧺 Senda í körfu ↗</button><button type="button" data-dk="yfirlit" style="' + ctx.KEY + '" title="Samþjappað yfirlit sem kemst á einn skjá — til að skjáskjóta og senda áfram">🔍 Yfirlit</button><span class="dk-stada">' + (k.saved_at ? 'vistað ' + esc(stund(k.saved_at)) : 'óvistað') + '</span></div>'
@@ -213,19 +343,21 @@
     return L.join('\n');
   }
   function badge(note) {
-    const k = note.karfa; if (!k || !Array.isArray(k.lines) || !k.lines.length) return '';
+    const k = note.karfa; if (!k) return '';
+    const nl = Array.isArray(k.lines) ? k.lines.length : 0, nk = Array.isArray(k.kostnadur) ? k.kostnadur.length : 0;
+    if (!nl && !nk) return '';
     const t = totals(k);
-    return '<span class="ds-chip karfa" title="Draft-karfa' + (k.sent_at ? ' — send í söluborð ' + esc(stund(k.sent_at)) : '') + '">🧺 ' + k.lines.length + ' lín' + (k.lines.length === 1 ? 'a' : 'ur') + ' · ' + fmt(t.total) + ' kr' + (k.sent_at ? ' · ↗' : '') + '</span>';
+    return '<span class="ds-chip karfa" title="Draft-karfa' + (k.sent_at ? ' — send í söluborð ' + esc(stund(k.sent_at)) : '') + (nk ? ' · ' + nk + ' kostnaðarreikning' + (nk === 1 ? 'ur' : 'ar') : '') + '">🧺 ' + nl + ' lín' + (nl === 1 ? 'a' : 'ur') + ' · ' + fmt(t.total) + ' kr' + (nk ? ' · 🧾 ' + nk : '') + (k.sent_at ? ' · ↗' : '') + '</span>';
   }
 
   // ── Vistun (sjálfkrafa, 800 ms) ──────────────────────────────────────────
   async function vista(note, opts) {
     const k = note.karfa; if (!k) return null;
-    const body = { action: 'karfa', id: note.id, karfa: { lines: k.lines, discount_pct: num(k.discount_pct), athugasemd: k.athugasemd || '', auto: !!k.auto } };
+    const body = { action: 'karfa', id: note.id, karfa: { lines: k.lines, kostnadur: Array.isArray(k.kostnadur) ? k.kostnadur : [], discount_pct: num(k.discount_pct), athugasemd: k.athugasemd || '', auto: !!k.auto } };
     if (opts && opts.sent) body.sent = true;
     if (note.worksite_name) body.worksite_name = note.worksite_name;
     const j = await ctx.post(body);
-    if (j && j.karfa) { note.karfa = Object.assign({}, j.karfa, { lines: k.lines }); }
+    if (j && j.karfa) { note.karfa = Object.assign({}, j.karfa, { lines: k.lines, kostnadur: Array.isArray(k.kostnadur) ? k.kostnadur : [] }); }
     return j;
   }
   function vistaSidar(note, root) {
@@ -253,8 +385,11 @@
     const note = ctx.NOTES.find(n => String(n.id) === String(id)); if (!note) return;
     try { await hladaVorur(); } catch (e) { alert('Náði ekki vörulistanum: ' + (e.message || e)); }
     const ny = tryggjaKorfu(note);
+    // Efniskostnaðar-síðan („＋ Skrá kostnaðarreikning") biður um tóman kostnaðarreikning um leið
+    let nyK = false;
+    try { if (sessionStorage.getItem('ds_open_kost')) { sessionStorage.removeItem('ds_open_kost'); note.karfa.kostnadur = Array.isArray(note.karfa.kostnadur) ? note.karfa.kostnadur : []; if (!note.karfa.kostnadur.length) { note.karfa.kostnadur.push(nyKost()); nyK = true; } } } catch (_) {}
     opin = note.id; ctx.teikna(); skruna(note.id);
-    if (ny) { try { await vista(note); ctx.teikna(); } catch (_) {} }
+    if (ny || nyK) { try { await vista(note); ctx.teikna(); } catch (_) {} }
   }
   function wire(c) {
     ctx = c; const $v = ctx.view;
@@ -286,8 +421,32 @@
       root.addEventListener('click', e => e.stopPropagation());
       const vilCompact = compactPref[note.id] !== undefined ? compactPref[note.id] : isMobile();
       if (vilCompact) { root.classList.add('compact'); const y = root.querySelector('.dk-yfirlit'); if (y) { y.hidden = false; y.innerHTML = yfirlitHtml(note); } }
+      birgjaListi();
+      const rootNow = () => ctx.view.querySelector('.ds-karfa[data-karfa="' + note.id + '"]') || root;
       root.addEventListener('input', e => {
-        const el = e.target; const f = el.dataset.f; if (!f) return;
+        const el = e.target;
+        // 🧾 kostnaðarreikningur — reitir merktir data-kf
+        const kf = el.dataset.kf;
+        if (kf) {
+          const invEl = el.closest('.dk-kinv'); const inv = invEl ? (k.kostnadur || [])[+invEl.dataset.ki] : null; if (!inv) return;
+          const trk = el.closest('tr[data-kl]');
+          if (trk) {
+            const l = inv.lines[+trk.dataset.kl]; if (!l) return;
+            if (kf === 'desc') l.desc = el.value;
+            if (kf === 'qty') l.qty = num(el.value);
+            if (kf === 'cost') { l.cost = num(el.value); uppfaeraSell(l); }
+            if (kf === 'disc') { l.disc_pct = num(el.value); l.disc_manual = true; uppfaeraSell(l); }
+            if (kf === 'sell') { l.sell = num(el.value); l.sell_manual = true; el.classList.add('manual'); }
+          } else {
+            if (kf === 'birgir') inv.birgir = el.value;
+            if (kf === 'nr') inv.nr = el.value;
+            if (kf === 'dags') inv.dags = el.value || null;
+            if (kf === 'afsl_pct') { inv.afsl_pct = num(el.value); for (const l of inv.lines) if (!l.disc_manual) { l.disc_pct = inv.afsl_pct; uppfaeraSell(l); } }
+          }
+          uppfaeraKostTolur(invEl, inv); vistaSidar(note, root);
+          return;
+        }
+        const f = el.dataset.f; if (!f) return;
         const tr = el.closest('tr[data-i]');
         if (tr) {
           const l = k.lines[+tr.dataset.i]; if (!l) return;
@@ -314,6 +473,26 @@
         if (act === 'afrita') {
           try { await navigator.clipboard.writeText(yfirlitTexti(note)); b.textContent = '✓ Afritað'; setTimeout(() => { b.textContent = '📋 Afrita sem texta'; }, 1500); }
           catch (_) { alert(yfirlitTexti(note)); }
+          return;
+        }
+        // 🧾 kostnaðarreikningar
+        if (act === 'kost-add') { k.kostnadur = Array.isArray(k.kostnadur) ? k.kostnadur : []; k.kostnadur.push(nyKost()); ctx.teikna(); vistaSidar(note, rootNow()); const bi = rootNow().querySelector('.dk-kinv:last-of-type [data-kf="birgir"]'); if (bi) bi.focus(); return; }
+        if (act.startsWith('kost-')) {
+          const invEl = b.closest('.dk-kinv'); const ki = invEl ? +invEl.dataset.ki : -1; const inv = ki >= 0 ? (k.kostnadur || [])[ki] : null; if (!inv) return;
+          if (act === 'kost-del') { if (!confirm('Eyða þessum kostnaðarreikningi úr punktinum?' + (inv.pdf ? ' (Viðhengið hangir áfram á punktinum.)' : ''))) return; k.kostnadur.splice(ki, 1); ctx.teikna(); vistaSidar(note, rootNow()); return; }
+          if (act === 'kost-line') { inv.lines.push(nyKostLina(inv)); ctx.teikna(); const d2 = rootNow().querySelector('.dk-kinv[data-ki="' + ki + '"] tr[data-kl]:last-child [data-kf="desc"]'); if (d2) d2.focus(); vistaSidar(note, rootNow()); return; }
+          if (act === 'kost-ldel') { const tr = b.closest('tr[data-kl]'); inv.lines.splice(+tr.dataset.kl, 1); ctx.teikna(); vistaSidar(note, rootNow()); return; }
+          if (act === 'kost-paste') { const ta = invEl.querySelector('.dk-kpaste'), bar = invEl.querySelector('.dk-kpastebar'); const show = ta.hidden; ta.hidden = !show; bar.hidden = !show; if (show) ta.focus(); return; }
+          if (act === 'kost-lesa') {
+            const ta = invEl.querySelector('.dk-kpaste'); const nyjar = lesaKostLinur(ta.value, inv);
+            if (!nyjar.length) { alert('Fann engar línur — sniðið er „3 x Vara 12.500" (ein vara í hverja línu, síðasta talan = einingaverð).'); return; }
+            inv.lines = inv.lines.concat(nyjar); ctx.teikna(); vistaSidar(note, rootNow()); return;
+          }
+          if (act === 'kost-pdf') { hengjaPdf(note, inv, b); return; }
+          if (act === 'kost-tilkorfu') {
+            if (!(inv.lines || []).some(l => num(l.qty) > 0)) { alert('Engar línur með magni á reikningnum.'); return; }
+            tilKorfu(note, inv); ctx.teikna(); vistaSidar(note, rootNow()); return;
+          }
           return;
         }
         if (act === 'del') { const tr = b.closest('tr[data-i]'); k.lines.splice(+tr.dataset.i, 1); k.auto = false; vistaSidar(note, root); ctx.teikna(); return; }
