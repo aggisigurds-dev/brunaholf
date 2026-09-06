@@ -15086,13 +15086,13 @@ async function renderDrogstod(t){
     if(!verk.length && !kunnar.length) h += '<div class="ds-empty">Engin verk í smíðum.</div>';
     for(const k of kunnar){
       const key = 'sl|'+k.kunni;
-      h += '<div class="ds-verk'+(sel===key?' sel':'')+'" data-sel="'+esc(key)+'"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><b style="font-size:14px">'+esc(k.kunni)+'</b>'+profil(k.kunni)+felChip('slokkvitaeki')+'</div>'
+      h += '<div class="ds-verk'+(sel===key?' sel':'')+'" data-sel="'+esc(key)+'"><div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 8px"><b style="font-size:14px;min-width:0">'+esc(k.kunni)+'</b>'+profil(k.kunni)+felChip('slokkvitaeki')+'</div>'
         + '<div class="ds-row"><span class="ds-chip warn">'+k.punktar+' punkt'+(k.punktar===1?'ur bíður':'ar bíða')+'</span>'+(k.kt?'<span class="ds-chip">kt '+esc(k.kt)+'</span>':'<span class="ds-chip">óþekktur kúnni</span>')+'<button type="button" data-nypunktur="sl|'+esc(k.kunni)+'" style="'+KEY+';height:26px;padding:0 8px;margin-left:auto" title="Nýr punktur á þennan kúnna">+ punktur</button></div></div>';
     }
     for(const v of verk){
       const key = 'bh|'+v.ws+'|'+v.wm;
       const vantar = CHK.filter(([k])=>!v.checks[k]).map(([k])=> k==='punktar' ? v.punktar+' '+VANTAR.punktar : VANTAR[k]);
-      h += '<div class="ds-verk'+(sel===key?' sel':'')+'" data-sel="'+esc(key)+'"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><b style="font-size:14px">'+esc(v.ws)+'</b><span style="font-family:var(--font-mono);font-size:11.5px;color:var(--muted)">'+esc(mlS(v.wm))+'</span></div>'
+      h += '<div class="ds-verk'+(sel===key?' sel':'')+'" data-sel="'+esc(key)+'"><div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 8px"><b style="font-size:14px;min-width:0">'+esc(v.ws)+'</b><span style="font-family:var(--font-mono);font-size:11.5px;color:var(--muted)">'+esc(mlS(v.wm))+'</span></div>'
         + '<div class="ds-ring">'+CHK.map(([k])=>'<i class="'+(v.checks[k]?'on':'')+'" title="'+esc(CHK.find(c=>c[0]===k)[1])+'"></i>').join('')+'</div>'
         + '<div class="ds-kv"><span>Tímar</span><b>'+hf(v.hours)+' klst</b></div>'
         + '<div class="ds-kv"><span>Efni'+(v.redder?' · Redder '+fmt(v.redder):'')+'</span><b>'+fmt(v.materials_total)+'</b></div>'
