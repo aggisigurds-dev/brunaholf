@@ -35,7 +35,7 @@
 
 <meta charset="utf-8">
 <script src="/js/gr-materials.js?v=20260903"></script>
-<script src="/js/ds-karfa.js?v=20260906k" defer></script>
+<script src="/js/ds-karfa.js?v=20260906m" defer></script>
 <meta name="color-scheme" content="light"/>
 <!-- Chrome Android Force Dark endurlitar síður sjálfkrafa og gerði sumar
      hub-síður ólæsilegar í síma Agnars. `only light` er opt-out Blink.
@@ -20171,7 +20171,7 @@ async function efKostnadarYfirlit(){
         + rows.map(r => { const fl = (r.endurkrafa_an_vsk||0)-(r.innkaup_an_vsk||0); return '<tr style="border-top:1px solid var(--border)">'
           + '<td style="padding:4px 6px;font-weight:600">'+esc(r.kunni||'(án kúnna)')+'</td><td style="padding:4px 6px">'+esc(r.birgir||'—')+(r.pdf&&r.pdf.url?' <a href="'+esc(r.pdf.url)+'" target="_blank" rel="noopener" title="'+esc(r.pdf.title||'PDF')+'">📎</a>':'')+'</td><td style="padding:4px 6px;font-family:JetBrains Mono,monospace">'+esc(r.nr||'—')+'</td><td style="padding:4px 6px">'+esc(dmy(r.dags))+'</td>'
           + '<td style="padding:4px 6px;text-align:right">'+fmt(r.innkaup_an_vsk)+'</td><td style="padding:4px 6px;text-align:right;font-weight:600">'+fmt(r.endurkrafa_an_vsk)+'</td><td style="padding:4px 6px;text-align:right;color:'+(fl>=0?'var(--green)':'var(--red)')+'">'+fmt(fl)+(r.endurkrafa_an_vsk?' ('+Math.round(fl/r.endurkrafa_an_vsk*100)+'%)':'')+'</td>'
-          + '<td style="padding:4px 6px">'+(r.sent_at?'↗ send í söluborð':r.status==='notad'?'✓ notað':r.linur?'bíður · '+r.linur+' lín'+(r.linur===1?'a':'ur'):'⚠ engar línur')+'</td>'
+          + '<td style="padding:4px 6px">'+(r.kredit?'↩ kredit · ':'')+(r.sent_at?'↗ send í söluborð':r.status==='notad'?'✓ notað':r.linur?'bíður · '+r.linur+' lín'+(r.linur===1?'a':'ur'):'⚠ engar línur')+(r.afhending?' <span style="color:var(--muted)" title="Afhendingarstaður á reikningnum">📍 '+esc(r.afhending)+'</span>':'')+'</td>'
           + '<td style="padding:4px 6px"><button type="button" class="rg-tool" data-kost-bh="'+esc(r.punktur)+'|'+esc(r.id)+'|'+(r.bokhald_at?'0':'1')+'" style="padding:2px 8px;font-size:11px" title="'+(r.bokhald_at?'Komið í bókhald '+esc(dmy(r.bokhald_at))+' — smelltu til að afmerkja':'Merkja sem komið í bókhald')+'">'+(r.bokhald_at?'📚 '+esc(dmy(r.bokhald_at)):'📚 Í bókhald')+'</button></td>'
           + '<td style="padding:4px 6px"><button type="button" class="rg-tool" data-kost-open="'+esc(r.punktur)+'" style="padding:2px 8px;font-size:11px">Opna #'+esc(r.punktur)+'</button></td></tr>'; }).join('')
         + '</tbody><tfoot><tr style="border-top:2px solid var(--ink);font-weight:700"><td style="padding:5px 6px" colspan="4">Samtals '+rows.length+' reikning'+(rows.length===1?'ur':'ar')+'</td><td style="padding:5px 6px;text-align:right">'+fmt(innk)+'</td><td style="padding:5px 6px;text-align:right">'+fmt(sala)+'</td><td style="padding:5px 6px;text-align:right">'+fmt(sala-innk)+'</td><td colspan="3"></td></tr></tfoot></table></div>'

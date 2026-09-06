@@ -205,6 +205,8 @@
         + '<input data-kf="nr" value="' + esc(inv.nr) + '" placeholder="Reikn.nr">'
         + '<input data-kf="dags" type="date" value="' + esc(inv.dags || '') + '">'
         + '<label>Afsl. okkar % <input class="n" data-kf="afsl_pct" value="' + esc(tala(inv.afsl_pct)) + '" inputmode="decimal" title="Afslátturinn sem við fengum á reikningnum — fer á allar línur sem ekki hafa sér-afslátt"></label>'
+        + (inv.kredit ? '<span class="ds-chip warn" title="Kreditnóta — magn neikvætt, dregst frá; fer ekki sjálfkrafa í körfu">↩ KREDIT</span>' : '')
+        + (inv.ai && inv.ai.afhending ? '<span class="ds-chip" title="Afhendingarstaður á reikningnum — vísbending um kúnna, ekki sönnun">📍 ' + esc(inv.ai.afhending) + '</span>' : '')
         + (inv.pdf && inv.pdf.url ? '<a class="ds-chip" href="' + esc(inv.pdf.url) + '" target="_blank" rel="noopener" title="Innra viðhengi — sendist aldrei">📎 ' + esc((inv.pdf.title || 'PDF').slice(0, 28)) + '</a>' : '<button type="button" data-dk="kost-pdf" style="' + ctx.KEY + '" title="Hengja PDF/mynd af reikningnum við (innra viðhengi, sendist aldrei)">📎 PDF</button>')
         + '<button type="button" class="dk-x" data-dk="kost-del" title="Eyða kostnaðarreikningi úr punktinum">✕</button></div>'
         + '<div class="dk-kt-wrap"><table class="dk-kt"><thead><tr><th>Lýsing</th><th>Magn</th><th>Innkaup án vsk</th><th>Afsl %</th><th style="text-align:right">Listaverð</th><th>Söluverð án vsk</th><th style="text-align:right">Samtals sala</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>'
