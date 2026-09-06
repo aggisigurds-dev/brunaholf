@@ -14962,6 +14962,7 @@ async function renderDrogstod(t){
       '.ds-ring{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin:7px 0 6px}.ds-ring i{display:block;height:5px;border-radius:2px;background:var(--line-2)}.ds-ring i.on{background:var(--green)}',
       '.ds-kv{display:flex;justify-content:space-between;gap:8px;font-size:12px;padding:2px 0;color:var(--ink-2)}.ds-kv b{font-family:var(--font-mono);font-weight:600;color:var(--ink)}',
       '.ds-chk{display:flex;gap:8px;align-items:center;padding:5px 0;font-size:12.5px;border-top:1px solid var(--line)}.ds-chk:first-child{border-top:0}',
+      '.ds-pk-list{margin-top:6px;border-top:1px dashed var(--line-2)}.ds-pk{display:flex;gap:6px;align-items:flex-start;padding:5px 0;border-top:1px solid var(--line);font-size:12.5px;line-height:1.35}.ds-pk:first-child{border-top:0}.ds-pk-t{font-family:var(--font-mono);font-size:10.5px;color:var(--muted);flex:0 0 auto;padding-top:2px}.ds-pk-x{flex:1;min-width:0;word-break:break-word}.ds-pk button{flex:0 0 auto;height:24px;padding:0 7px;font-size:12px;cursor:pointer}',   // punktar á kúnna-spjaldinu (06.09.2026)
       '@media (max-width:720px){.ds-wrap{padding-bottom:120px}.ds-cap{flex-wrap:wrap}.ds-cap #ds-in{flex:1 1 100%;order:-1;min-width:0}.ds-cap #ds-felag{order:0}.ds-cap #ds-add,.ds-cap #ds-karfa{flex:1 1 auto}}',   // simi: reiturinn a fullri breidd, takkarnir i rod fyrir nedan   // simi: fljotandi takkar (Simi/Tolva-rofi, FAB) hylja ekki sidasta spjaldid
       '.ds-teng{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:0 0 12px}',
       '.ds-chip.bad{background:var(--red-bg);color:var(--red);border-color:var(--red-line)}',
@@ -15036,6 +15037,7 @@ async function renderDrogstod(t){
   const felChip = f => '<span class="ds-chip '+(f==='slokkvitaeki'?'sl':'bh')+'">'+esc(FEL[f]||f)+'</span>';
   const kunnaId = nafn => { if(!nafn) return null; const k = ((STADA&&STADA.kunnar)||[]).find(x=>x.kunni===nafn); if(k&&k.id) return k.id; const m = (STADA&&STADA.kunnaIds)||{}; return m[nafn]||null; };
   const profil = nafn => slProfilChip(kunnaId(nafn));
+  let tengjaOpen = null;   // kúnna-spjald með opið „Tengja kt"-form (06.09.2026)
 
   // ── 01 Innhólf ───────────────────────────────────────────────────────────
   function innholf(){
@@ -15096,8 +15098,16 @@ async function renderDrogstod(t){
     if(!verk.length && !kunnar.length) h += '<div class="ds-empty">Engin verk í smíðum.</div>';
     for(const k of kunnar){
       const key = 'sl|'+k.kunni;
+      // Punktarnir sjálfir + grunnaðgerðir beint á spjaldinu (Agnar 06.09.2026: „stendur ekkert þarna … hvaða punktar" —
+      // í símanum lenti Valið-dálkurinn langt fyrir neðan öll spjöldin). ✎ opnar punktinn í innhólfinu, 🗑 eyðir,
+      // 🔗 tengir alla punkta spjaldsins við kúnna úr kúnnaskrá appsins (þá kemur kt + prófíll).
+      const mine = NOTES.filter(n=>n.felag==='slokkvitaeki' && n.worksite_name===k.kunni);
       h += '<div class="ds-verk'+(sel===key?' sel':'')+'" data-sel="'+esc(key)+'"><div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 8px"><b style="font-size:14px;min-width:0">'+esc(k.kunni)+'</b>'+profil(k.kunni)+felChip('slokkvitaeki')+'</div>'
-        + '<div class="ds-row"><span class="ds-chip warn">'+k.punktar+' punkt'+(k.punktar===1?'ur bíður':'ar bíða')+'</span>'+(k.kt?'<span class="ds-chip">kt '+esc(k.kt)+'</span>':'<span class="ds-chip">óþekktur kúnni</span>')+'<button type="button" data-nypunktur="sl|'+esc(k.kunni)+'" style="'+KEY+';height:26px;padding:0 8px;margin-left:auto" title="Nýr punktur á þennan kúnna">+ punktur</button></div></div>';
+        + '<div class="ds-row"><span class="ds-chip warn">'+k.punktar+' punkt'+(k.punktar===1?'ur bíður':'ar bíða')+'</span>'+(k.kt?'<span class="ds-chip">kt '+esc(k.kt)+'</span>':'<span class="ds-chip bad" title="Nafnið finnst ekki í kúnnaskrá appsins — tengdu punktana við réttan kúnna (🔗 Tengja kt)">óþekktur kúnni</span>')+'<button type="button" data-nypunktur="sl|'+esc(k.kunni)+'" style="'+KEY+';height:26px;padding:0 8px;margin-left:auto" title="Nýr punktur á þennan kúnna">+ punktur</button></div>'
+        + (mine.length ? '<div class="ds-pk-list">'+mine.map(n=>{ const raw = String(n.raw||''); const l1 = raw.split('\n')[0].slice(0,160); const meira = raw.length>l1.length; return '<div class="ds-pk" data-pk="'+esc(n.id)+'"><span class="ds-pk-t">'+esc(dt(n.created_at))+'</span><span class="ds-pk-x" title="'+esc(raw.slice(0,600))+'">'+esc(l1)+(meira?' …':'')+'</span>'+(window.DsKarfa?DsKarfa.badge(n):'')+'<button type="button" data-pk-open="'+esc(n.id)+'" style="'+KEY+'" title="Opna punktinn í innhólfinu (breyta, karfa, komið í reikning)">✎</button><button type="button" data-pk-del="'+esc(n.id)+'" style="'+KEY+';color:var(--red)" title="Eyða punktinum">🗑</button></div>'; }).join('')+'</div>' : '')
+        + '<div class="ds-row"><button type="button" data-pk-tengja="'+esc(k.kunni)+'" style="'+KEY+';height:26px;padding:0 8px" title="'+(k.thekktur?'Færa alla punkta spjaldsins á annan kúnna':'Tengja punktana við kúnna úr kúnnaskrá appsins — þá kemur kt og prófíll')+'">🔗 '+(k.thekktur?'Annar kúnni':'Tengja kt')+'</button></div>'
+        + (tengjaOpen===k.kunni ? '<div class="ds-form" data-pk-tengja-form><input list="ds-kunnar" data-pk-kunni="'+esc(k.kunni)+'" placeholder="Nafn kúnna úr kúnnaskrá appsins…" style="'+FLD+';flex:1;min-width:180px"><button type="button" data-pk-tengja-ok style="'+GOLD+'">✓ Tengja</button><button type="button" data-pk-tengja-x style="'+KEY+'">✕</button></div>' : '')
+        + '</div>';
     }
     for(const v of verk){
       const key = 'bh|'+v.ws+'|'+v.wm;
@@ -15230,7 +15240,7 @@ async function renderDrogstod(t){
       const tegSel = card.querySelector('[data-form] select[data-f="tegund"]');
       if(tegSel) tegSel.addEventListener('change', () => { card.querySelectorAll('[data-form] [data-teg]').forEach(sp => sp.style.display = sp.dataset.teg===tegSel.value ? 'inline-flex' : 'none'); });
     });
-    $view.querySelectorAll('#ds-verk [data-sel]').forEach(el => el.addEventListener('click', async () => { sel = el.dataset.sel; state.ui.ds_sel = sel; save({nav:true}); await hladaNotad(); teikna(); }));
+    $view.querySelectorAll('#ds-verk [data-sel]').forEach(el => el.addEventListener('click', async () => { sel = el.dataset.sel; state.ui.ds_sel = sel; save({nav:true}); await hladaNotad(); teikna(); if(window.innerWidth<=900){ const v = $view.querySelector('#ds-val'); if(v) v.scrollIntoView({ block:'start', behavior:'smooth' }); } }));
     $view.querySelectorAll('#ds-val [data-fokus]').forEach(b => b.addEventListener('click', () => { opinnForm = Number(b.dataset.fokus); teikna(); const c = $view.querySelector('.ds-note[data-id="'+b.dataset.fokus+'"]'); if(c) c.scrollIntoView({ block:'center', behavior:'smooth' }); }));
     const efn = $view.querySelector('#ds-val [data-act="efnisl"]'); if(efn) efn.addEventListener('click', () => { const s = finnaSel(); if(s&&s.tegund==='bh') grOpenWorksite(s.ws, s.wm); });
     const snd = $view.querySelector('#ds-val [data-act="senda"]'); if(snd) snd.addEventListener('click', () => { state.ui.activeTab = 'krofuyfirlit'; save({nav:true}); render(); });
@@ -15247,6 +15257,42 @@ async function renderDrogstod(t){
     if(kn) kn.addEventListener('input', () => { const k = ((STADA&&STADA.kunnar)||[]).find(x=>x.kunni===kn.dataset.kunni); if(k) k.athugasemdir = kn.value; sidar(kn, 'kn', () => post({ action:'kunni_nota', nafn: kn.dataset.kunni, athugasemdir: kn.value })); });
     const vn = $view.querySelector('#ds-val textarea[data-k="verk-nota"]');
     if(vn) vn.addEventListener('input', () => { const v = ((STADA&&STADA.verk)||[]).find(x=>x.ws===vn.dataset.ws && x.wm===vn.dataset.wm); if(v) v.notes = vn.value; sidar(vn, 'vn', () => post({ action:'verk_nota', worksite_name: vn.dataset.ws, work_month: vn.dataset.wm, notes: vn.value })); });
+    // Grunnaðgerðir á kúnna-spjaldinu (06.09.2026): eyða punkti, opna hann, tengja við kúnna (kt).
+    $view.querySelectorAll('#ds-verk [data-pk-del]').forEach(b => b.addEventListener('click', async e => {
+      e.stopPropagation(); const id = Number(b.dataset.pkDel); const n = NOTES.find(x=>x.id===id);
+      if(!confirm('Eyða þessum punkti?\n\n'+String((n&&n.raw)||'').slice(0,240))) return;
+      b.disabled = true;
+      try{ await post({ action:'delete', id }); NOTES = NOTES.filter(x=>x.id!==id); setSync('🗑 punkti eytt'); await load(); }catch(err){ alert('Villa: '+err.message); b.disabled = false; }
+    }));
+    $view.querySelectorAll('#ds-verk [data-pk-open]').forEach(b => b.addEventListener('click', e => {
+      e.stopPropagation(); const id = Number(b.dataset.pkOpen); opinnForm = id; teikna();
+      const c = $view.querySelector('.ds-note[data-id="'+id+'"]'); if(c) c.scrollIntoView({ block:'center', behavior:'smooth' });
+    }));
+    $view.querySelectorAll('#ds-verk [data-pk-tengja]').forEach(b => b.addEventListener('click', e => {
+      e.stopPropagation(); tengjaOpen = (tengjaOpen===b.dataset.pkTengja) ? null : b.dataset.pkTengja; teikna();
+      const inp = $view.querySelector('#ds-verk input[data-pk-kunni]'); if(inp) inp.focus();
+    }));
+    $view.querySelectorAll('#ds-verk [data-pk-tengja-x]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); tengjaOpen = null; teikna(); }));
+    $view.querySelectorAll('#ds-verk [data-pk-tengja-form]').forEach(f => f.addEventListener('click', e => e.stopPropagation()));
+    $view.querySelectorAll('#ds-verk input[data-pk-kunni]').forEach(inp => inp.addEventListener('keydown', e => { if(e.key==='Enter'){ e.preventDefault(); tengjaPunkta(inp); } }));
+    $view.querySelectorAll('#ds-verk [data-pk-tengja-ok]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); tengjaPunkta(b.parentElement.querySelector('input[data-pk-kunni]')); }));
+    async function tengjaPunkta(inp){
+      if(!inp) return;
+      const fra = inp.dataset.pkKunni, til = inp.value.trim();
+      if(!til){ alert('Veldu kúnna úr listanum.'); return; }
+      if(til===fra){ tengjaOpen = null; teikna(); return; }
+      const k = ((STADA&&STADA.kunnar)||[]).find(x=>x.kunni===fra);
+      const ids = (k&&k.punktar_ids&&k.punktar_ids.length) ? k.punktar_ids : NOTES.filter(n=>n.felag==='slokkvitaeki'&&n.worksite_name===fra).map(n=>n.id);
+      if(!kunnaId(til) && !confirm('„'+til+'" finnst ekki í kúnnaskrá appsins — tengja samt?')) return;
+      try{
+        for(const id of ids) await post({ action:'set', id, worksite_name: til });
+        NOTES.forEach(n=>{ if(ids.includes(n.id)) n.worksite_name = til; });
+        tengjaOpen = null;
+        if(sel==='sl|'+fra){ sel = 'sl|'+til; state.ui.ds_sel = sel; save({nav:true}); }
+        setSync('🔗 '+ids.length+' punkt'+(ids.length===1?'ur':'ar')+' → '+til);
+        await load();
+      }catch(err){ alert('Villa: '+err.message); }
+    }
     $view.querySelectorAll('#ds-verk [data-nypunktur]').forEach(b => b.addEventListener('click', async e => {
       e.stopPropagation();
       const [teg, a, m] = b.dataset.nypunktur.split('|');
