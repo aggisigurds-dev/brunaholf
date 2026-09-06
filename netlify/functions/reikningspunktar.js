@@ -240,6 +240,7 @@ async function stada() {
   return {
     generated_at: new Date().toISOString(), cutoff, verk, unfiled, alls: verk.length, tilbuin: verk.filter((v) => v.ready).length,
     kunnar, kunnalisti: felog.map((f) => f.nafn).filter(Boolean),
+    kunnaIds: Object.fromEntries(felog.filter((f) => f.nafn && f.id).map((f) => [f.nafn, f.id])),   // 🏢 prófíl-hlekkir (06.09.2026)
   };
 }
 

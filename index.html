@@ -14873,6 +14873,24 @@ async function renderVerkstadapostur(t){
 //  2. Gervigreindin leggur til (✨), skrifar aldrei; aðeins ✓ Agnars skrifar í drögin.
 //  3. Gátlistinn er reiknaður úr því sem er til (invoice_drafts, skjöl, greiðandi …).
 // Slökkvitæki-appið fellir flipann inn með /?embed=1#drogstod (sama og Fjármál gerir).
+// 🏢 Fyrirtækjaprófíll Slökkvitækis (Agnar 06.09.2026: „linkaðu fyrirtækin inn á fyrirtækjaprófílinn").
+// Inni í appi (?embed=1 í Fjármál/Boss) færist foreldrið á #companies/<id> (pappi 357 þar opnar prófílinn án
+// endurhleðslu); í vafra opnast appið í nýjum flipa.
+function slProfilUrl(id){ return 'https://slokkvitaeki.netlify.app/#companies/' + id; }
+function slOpnaProfil(id){
+  const url = slProfilUrl(id);
+  if (window.top !== window) { try { window.top.location.hash = '#companies/' + id; return; } catch(_){} }
+  window.open(url, '_blank', 'noopener');
+}
+function slProfilChip(id, txt){
+  if (!id) return '';
+  return '<a class="ds-chip" href="' + slProfilUrl(id) + '" data-profil="' + id + '" title="Opna fyrirtækjaprófílinn í Slökkvitæki-appinu" style="text-decoration:none">🏢 ' + (txt || 'Prófíll') + ' ↗</a>';
+}
+document.addEventListener('click', function(e){
+  const a = e.target.closest && e.target.closest('a[data-profil]'); if (!a) return;
+  e.preventDefault(); e.stopPropagation(); slOpnaProfil(a.getAttribute('data-profil'));
+}, true);
+
 async function renderDrogstod(t){
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const pad = n => String(n).padStart(2,'0');
@@ -15006,6 +15024,8 @@ async function renderDrogstod(t){
   const felVal = () => FEL[state.ui.ds_felag] ? state.ui.ds_felag : 'slokkvitaeki';
   const synist = felag => synVal()==='baedi' || synVal()===felag;
   const felChip = f => '<span class="ds-chip '+(f==='slokkvitaeki'?'sl':'bh')+'">'+esc(FEL[f]||f)+'</span>';
+  const kunnaId = nafn => { if(!nafn) return null; const k = ((STADA&&STADA.kunnar)||[]).find(x=>x.kunni===nafn); if(k&&k.id) return k.id; const m = (STADA&&STADA.kunnaIds)||{}; return m[nafn]||null; };
+  const profil = nafn => slProfilChip(kunnaId(nafn));
 
   // ── 01 Innhólf ───────────────────────────────────────────────────────────
   function innholf(){
@@ -15027,7 +15047,7 @@ async function renderDrogstod(t){
       // Markið: verk|mánuður (BH) eða kúnni (SL)
       h += '<div class="ds-row">';
       if(sl){
-        h += '<input list="ds-kunnar" data-k="kunni" value="'+esc(ws)+'" placeholder="Kúnni…" style="'+FLD+';flex:1;min-width:150px">';
+        h += '<input list="ds-kunnar" data-k="kunni" value="'+esc(ws)+'" placeholder="Kúnni…" style="'+FLD+';flex:1;min-width:150px">'+(ws?profil(ws):'');
       } else {
         const verk = (STADA&&STADA.verk)||[];
         const cur = ws&&wm ? ws+'|'+wm : '';
@@ -15066,7 +15086,7 @@ async function renderDrogstod(t){
     if(!verk.length && !kunnar.length) h += '<div class="ds-empty">Engin verk í smíðum.</div>';
     for(const k of kunnar){
       const key = 'sl|'+k.kunni;
-      h += '<div class="ds-verk'+(sel===key?' sel':'')+'" data-sel="'+esc(key)+'"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><b style="font-size:14px">'+esc(k.kunni)+'</b>'+felChip('slokkvitaeki')+'</div>'
+      h += '<div class="ds-verk'+(sel===key?' sel':'')+'" data-sel="'+esc(key)+'"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><b style="font-size:14px">'+esc(k.kunni)+'</b>'+profil(k.kunni)+felChip('slokkvitaeki')+'</div>'
         + '<div class="ds-row"><span class="ds-chip warn">'+k.punktar+' punkt'+(k.punktar===1?'ur bíður':'ar bíða')+'</span>'+(k.kt?'<span class="ds-chip">kt '+esc(k.kt)+'</span>':'<span class="ds-chip">óþekktur kúnni</span>')+'<button type="button" data-nypunktur="sl|'+esc(k.kunni)+'" style="'+KEY+';height:26px;padding:0 8px;margin-left:auto" title="Nýr punktur á þennan kúnna">+ punktur</button></div></div>';
     }
     for(const v of verk){
@@ -15091,7 +15111,7 @@ async function renderDrogstod(t){
     if(s.tegund==='sl'){
       const k = (STADA.kunnar||[]).find(x=>x.kunni===s.kunni)||{kunni:s.kunni, punktar:0};
       const mine = NOTES.filter(n=>n.felag==='slokkvitaeki' && n.worksite_name===s.kunni);
-      h += '<div style="padding:10px 12px;border-bottom:1px solid var(--line)"><b style="font-size:15px">'+esc(k.kunni)+'</b>'+(k.kt?' <span class="ds-chip">kt '+esc(k.kt)+'</span>':'')+'<div style="font-size:12px;color:var(--muted);margin-top:4px">Reikningurinn verður til í Slökkvitæki-appinu — hakaðu „✓ Komið í reikning" við hvern punkt þegar hann er kominn þar inn.</div></div>';
+      h += '<div style="padding:10px 12px;border-bottom:1px solid var(--line)"><b style="font-size:15px">'+esc(k.kunni)+'</b>'+(k.kt?' <span class="ds-chip">kt '+esc(k.kt)+'</span>':'')+' '+profil(k.kunni)+'<div style="font-size:12px;color:var(--muted);margin-top:4px">Reikningurinn verður til í Slökkvitæki-appinu — hakaðu „✓ Komið í reikning" við hvern punkt þegar hann er kominn þar inn.</div></div>';
       h += '<textarea class="ds-krass" data-k="kunni-nota" data-kunni="'+esc(k.kunni)+'" placeholder="Krass um kúnnann — vistast á kúnnann (athugasemdir í appinu)…" spellcheck="false">'+esc(k.athugasemdir||'')+'</textarea>';
       h += '<div style="padding:8px 12px;font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">Punktar sem bíða ('+mine.length+')</div>';
       h += mine.length ? mine.map(n=>'<div class="ds-chk"><span style="flex:1">'+esc(n.raw.split('\n')[0].slice(0,140))+'</span>'+(window.DsKarfa?DsKarfa.badge(n):'')+'<button type="button" data-karfa-open="'+esc(n.id)+'" style="'+KEY+';height:26px;padding:0 8px" title="Opna draft-körfu punktsins">🛒</button><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">'+esc(dt(n.created_at))+'</span></div>').join('') : '<div class="ds-empty">Allt komið í reikning.</div>';
@@ -20120,7 +20140,8 @@ async function efKostnadarYfirlit(){
     + '<div id="ef-kost-list"><div class="wc-card" style="margin-top:14px"><h3>🧾 Kostnaðarreikningar annarra birgja</h3><div style="color:var(--muted);font-size:12px">Sækir…</div></div></div>';
 
   // Kúnnalistinn (Slökkvitæki) — sami og Drög-stöð notar
-  try{ const r = await fetch('/api/reikningspunktar?op=stada'); if(r.ok){ const st = await r.json(); document.getElementById('ef-kunnar').innerHTML = ((st&&st.kunnalisti)||[]).map(n=>'<option value="'+esc(n)+'">').join(''); } }catch(_){}
+  let KIDS = {};
+  try{ const r = await fetch('/api/reikningspunktar?op=stada'); if(r.ok){ const st = await r.json(); KIDS = (st&&st.kunnaIds)||{}; document.getElementById('ef-kunnar').innerHTML = ((st&&st.kunnalisti)||[]).map(n=>'<option value="'+esc(n)+'">').join(''); } }catch(_){}
 
   const drop = document.getElementById('ef-drop'), file = document.getElementById('ef-kost-file'), log = document.getElementById('ef-kost-log');
   const logLine = (html) => { const d = document.createElement('div'); d.innerHTML = html; log.appendChild(d); return d; };
@@ -20191,7 +20212,7 @@ async function efKostnadarYfirlit(){
       + (rows.length ? '<div style="overflow:auto;margin-top:8px"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="color:var(--muted-2);font-weight:600;text-align:left">'
         + '<th style="padding:5px 6px">Kúnni</th><th style="padding:5px 6px">Birgir</th><th style="padding:5px 6px">Nr.</th><th style="padding:5px 6px">Dags</th><th style="padding:5px 6px;text-align:right">Innkaup án vsk</th><th style="padding:5px 6px;text-align:right">Endurkrafa án vsk</th><th style="padding:5px 6px;text-align:right">Framlegð</th><th style="padding:5px 6px">Staða</th><th style="padding:5px 6px">Bókhald</th><th></th></tr></thead><tbody>'
         + rows.map(r => { const fl = (r.endurkrafa_an_vsk||0)-(r.innkaup_an_vsk||0); return '<tr style="border-top:1px solid var(--border)">'
-          + '<td style="padding:4px 6px;font-weight:600">'+esc(r.kunni||'(án kúnna)')+'</td><td style="padding:4px 6px">'+esc(r.birgir||'—')+(r.pdf&&r.pdf.url?' <a href="'+esc(r.pdf.url)+'" target="_blank" rel="noopener" title="'+esc(r.pdf.title||'PDF')+'">📎</a>':'')+'</td><td style="padding:4px 6px;font-family:JetBrains Mono,monospace">'+esc(r.nr||'—')+'</td><td style="padding:4px 6px">'+esc(dmy(r.dags))+'</td>'
+          + '<td style="padding:4px 6px;font-weight:600">'+esc(r.kunni||'(án kúnna)')+(KIDS[r.kunni]?' '+slProfilChip(KIDS[r.kunni], ''):'')+'</td><td style="padding:4px 6px">'+esc(r.birgir||'—')+(r.pdf&&r.pdf.url?' <a href="'+esc(r.pdf.url)+'" target="_blank" rel="noopener" title="'+esc(r.pdf.title||'PDF')+'">📎</a>':'')+'</td><td style="padding:4px 6px;font-family:JetBrains Mono,monospace">'+esc(r.nr||'—')+'</td><td style="padding:4px 6px">'+esc(dmy(r.dags))+'</td>'
           + '<td style="padding:4px 6px;text-align:right">'+fmt(r.innkaup_an_vsk)+'</td><td style="padding:4px 6px;text-align:right;font-weight:600">'+fmt(r.endurkrafa_an_vsk)+'</td><td style="padding:4px 6px;text-align:right;color:'+(fl>=0?'var(--green)':'var(--red)')+'">'+fmt(fl)+(r.endurkrafa_an_vsk?' ('+Math.round(fl/r.endurkrafa_an_vsk*100)+'%)':'')+'</td>'
           + '<td style="padding:4px 6px">'+(r.kredit?'↩ kredit · ':'')+(r.sent_at?'↗ send í söluborð':r.status==='notad'?'✓ notað':r.linur?'bíður · '+r.linur+' lín'+(r.linur===1?'a':'ur'):'⚠ engar línur')+(r.afhending?' <span style="color:var(--muted)" title="Afhendingarstaður á reikningnum">📍 '+esc(r.afhending)+'</span>':'')+'</td>'
           + '<td style="padding:4px 6px"><button type="button" class="rg-tool" data-kost-bh="'+esc(r.punktur)+'|'+esc(r.id)+'|'+(r.bokhald_at?'0':'1')+'" style="padding:2px 8px;font-size:11px" title="'+(r.bokhald_at?'Komið í bókhald '+esc(dmy(r.bokhald_at))+' — smelltu til að afmerkja':'Merkja sem komið í bókhald')+'">'+(r.bokhald_at?'📚 '+esc(dmy(r.bokhald_at)):'📚 Í bókhald')+'</button></td>'
