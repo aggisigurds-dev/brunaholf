@@ -62,6 +62,10 @@ skrifar og hvernig hún brotnar. Mundu: luna-bridge róbótarnir keyra á Window
   rejects content-less extension rows (no subject AND no snippet → counted as
   `skipped_empty`, never upserted).
 - `company-mail.js` — **`GET /api/company-mail[?days=365]`** (service role, CORS *):
+  **Skyndiminni (06.09.2026):** lista-svarið er vistað í `app_kv` (`company_mail_v2_<days>`, 15 mín TTL,
+  stampede-lás 60 s, gamalt svar ef reikningur bilar — `cached`/`stale`/`cache_age_s` í svarinu; `?fresh=1` þvingar).
+  Áður kostaði hvert kall 5–6 s + tvö `tv_history_sites`-RPC og var kallað við HVERJA hleðslu appsins →
+  pottstífla (PGRST003/504 á allt) kvöldið 06.09. `?co=<id>` (saga eins fyrirtækis) er EKKI cache-uð, ~0,6 s.
   per SERVICE company (`fyrirtaeki` `er_i_thjonustu=true`), the newest INBOUND email
   and whether it is **unreplied**. Powers the Slökkvitæki „Fyrirtæki í þjónustu"
   red-envelope badge (patch 295) so an email from months ago is not forgotten
