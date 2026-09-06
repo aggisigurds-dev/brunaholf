@@ -14879,7 +14879,17 @@ async function renderVerkstadapostur(t){
 function slProfilUrl(id){ return 'https://slokkvitaeki.netlify.app/#company/' + id; }
 function slOpnaProfil(id){
   const url = slProfilUrl(id);
-  if (window.top !== window) { try { window.top.location.hash = '#company/' + id; return; } catch(_){} }
+  if (window.top !== window) {
+    try { window.top.location.hash = '#company/' + id; return; } catch(_){}   // sami uppruni (hub í hub)
+    // annar uppruni (Fjármál/Boss-appið): postMessage → pappi 357 opnar prófílinn og svarar með ack;
+    // komi ekkert svar (gamalt app / annað foreldri) → nýr flipi.
+    let ok = false;
+    const onAck = e => { const d = e.data || {}; if (d.type === 'slokk-open-company-ack' && String(d.id) === String(id)) { ok = true; window.removeEventListener('message', onAck); } };
+    window.addEventListener('message', onAck);
+    try { window.parent.postMessage({ type: 'slokk-open-company', id: Number(id) }, '*'); } catch(_){}
+    setTimeout(() => { window.removeEventListener('message', onAck); if (!ok) window.open(url, '_blank', 'noopener'); }, 900);
+    return;
+  }
   window.open(url, '_blank', 'noopener');
 }
 function slProfilChip(id, txt){
