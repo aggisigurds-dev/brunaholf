@@ -65,6 +65,32 @@ exports.handler = async (event) => {
     days = Math.min(days, 730);
     const sinceIso = new Date(Date.now() - days * 86400000).toISOString();
 
+    // ── app_kv-skyndiminni á lista-svarinu (06.09.2026) ─────────────────────────────
+    // Svarið er það sama fyrir alla (lista-vítt, ekki per notanda) en kostar 5–6 s og
+    // tvö tv_history_sites-RPC + skönnun á ~7.700 póstum. Hver hleðsla appsins (295) kallaði
+    // hingað → á kvöldi með mörgum flipum/tækjum: 1.337 statement timeouts, 183 pool timeouts,
+    // 504 á app_settings/solur/uttaeki fyrir ALLA. Nú: reiknað í mesta lagi einu sinni á
+    // CACHE_TTL; stampede-lás (aðrir fá gamla svarið á meðan); gamalt svar ef reikningur bilar.
+    // ?fresh=1 þvingar endurreikning.
+    const CACHE_KEY = 'company_mail_v2_' + days;
+    const LOCK_KEY = CACHE_KEY + '_lock';
+    const wantFresh = q.fresh === '1' || q.nocache === '1';
+    let cached = null;
+    try { cached = await kvGet(CACHE_KEY); } catch (_) { cached = null; }
+    const cacheAge = (cached && cached.t) ? Date.now() - cached.t : Infinity;
+    if (!wantFresh && cached && cached.payload && cacheAge < CACHE_TTL) {
+      return json(200, { ...cached.payload, cached: true, cache_age_s: Math.round(cacheAge / 1000) });
+    }
+    if (!wantFresh && cached && cached.payload) {
+      let lock = null;
+      try { lock = await kvGet(LOCK_KEY); } catch (_) { lock = null; }
+      if (lock && lock.t && Date.now() - lock.t < LOCK_TTL) {
+        return json(200, { ...cached.payload, cached: true, stale: true, cache_age_s: Math.round(cacheAge / 1000) });
+      }
+    }
+    try { await kvSet(LOCK_KEY, { t: Date.now() }); } catch (_) { /* lásinn er best-effort */ }
+    const staleFallback = (cached && cached.payload) ? cached.payload : null;
+
     // Fire the felag-derived history set (broad green — the SAME source Þjónustuver
     // póstar uses) in PARALLEL with our own reads. It is ~3.4s server-side, so total
     // time ≈ max(this, the email_digest scan), not the sum. Never throws into the
@@ -378,7 +404,7 @@ exports.handler = async (event) => {
     charlizeSiteIds.forEach(id => histIdSet.add(Number(id))); // tengiliðaskrá links → „has history"
     const histIds = [...histIdSet];
 
-    return json(200, {
+    const payload = {
       byId,
       histIds,
       generated_at: new Date().toISOString(),
@@ -389,11 +415,41 @@ exports.handler = async (event) => {
         availability: histIds.length,
         green: Object.values(byId).filter(v => !v.unreplied && !(v.signals && v.signals.length)).length,
       },
-    });
+    };
+    try { await kvSet(CACHE_KEY, { t: Date.now(), payload }); } catch (_) { /* cache er best-effort */ }
+    return json(200, payload);
   } catch (e) {
+    // gamalt svar frekar en 500 — merkin á listanum halda sér þótt grunnurinn hiksti
+    try {
+      const q2 = event.queryStringParameters || {};
+      let d2 = parseInt(q2.days, 10); if (!Number.isFinite(d2) || d2 <= 0) d2 = 365; d2 = Math.min(d2, 730);
+      const c2 = await kvGet('company_mail_v2_' + d2);
+      if (c2 && c2.payload) return json(200, { ...c2.payload, cached: true, stale: true, error: String(e && e.message || e).slice(0, 200) });
+    } catch (_) {}
     return json(500, { error: String(e && e.message || e) });
   }
 };
+
+// ── app_kv (key text, value jsonb) — sama mynstur og payday-föllin ─────────────────
+const CACHE_TTL = 15 * 60 * 1000;   // lista-svarið reiknað í mesta lagi einu sinni á korteri
+const LOCK_TTL = 60 * 1000;         // stampede-lás: aðrir fá gamla svarið meðan einn reiknar
+async function kvGet(key) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/app_kv?key=eq.${encodeURIComponent(key)}&select=value`, {
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
+  });
+  if (!r.ok) return null;
+  const rows = await r.json();
+  return rows && rows[0] ? rows[0].value : null;
+}
+async function kvSet(key, value) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/app_kv?on_conflict=key`, {
+    method: 'POST',
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`,
+      'content-type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' },
+    body: JSON.stringify([{ key, value, updated_at: new Date().toISOString() }]),
+  });
+  if (!r.ok) throw new Error('app_kv ' + r.status);
+}
 
 // Free/shared mail domains are still allowed as an exact address (it IS the
 // customer's address); the ambiguity guard drops any shared across companies.
