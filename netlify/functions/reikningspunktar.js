@@ -385,9 +385,12 @@ async function lesaKostnad(b, now) {
 
   const afsl = num(out.afsl_pct) > 0 ? num(out.afsl_pct) : num(inv.afsl_pct);
   const lista = (cost, d) => (d >= 100 ? num(cost) : num(cost) / (1 - d / 100));
+  // Þegar reikningurinn tilgreinir afslátt á EINHVERRI línu er „0" á hinum = enginn afsláttur (Securitas:
+  // brunastrengur á fullu verði við hlið 30%-lína). Haus-afslátturinn gildir aðeins ef engin lína hefur sér-afslátt.
+  const anyLineDisc = out.lines.some((l) => num(l.disc_pct) > 0);
   const lines = out.lines.slice(0, 80).map((l) => {
     const cost = Math.round(num(l.unit_cost_ex_vat) * 100) / 100;
-    const d = num(l.disc_pct) > 0 ? num(l.disc_pct) : afsl;                 // línu-afsláttur ræður, annars haus
+    const d = num(l.disc_pct) > 0 ? num(l.disc_pct) : (anyLineDisc ? 0 : afsl);
     const qty = num(l.qty) || 1;
     // Listaverð af reikningnum má nota ef það stemmir við innkaup ÷ (1 − afsl.) — Securitas sýnir
     // LÍNU-heild fyrir afslátt (2 stk = tvöfalt), svo líka prófað deilt með magni. Annars reiknað.

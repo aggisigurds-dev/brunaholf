@@ -253,6 +253,7 @@
       '.dk-kinv-tools{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px}.dk-kinv-tools .sp{flex:1}.dk-kinv-tot{font-family:var(--font-mono);font-size:11px;color:var(--muted)}.dk-kinv-tot b{color:var(--ink)}',
       '.dk-kpaste{width:100%;box-sizing:border-box;margin-top:6px;min-height:72px;padding:6px 8px;border:1px dashed var(--edge,#c9c2b3);border-radius:4px;background:#fff;font:inherit;font-size:12px}',
       '.ds-karfa.compact .dk-kost{display:none}',
+      '.dk-kpastebar[hidden],.dk-kpaste[hidden]{display:none!important}',   // display:flex sló annars út [hidden]
       // Yfirlit (Agnar 05.09.2026): „smækka svo ég sjái allt á einum skjá — skjáskot og senda áfram"
       '.ds-karfa.compact .dk-t,.ds-karfa.compact .dk-tools,.ds-karfa.compact .dk-nota,.ds-karfa.compact .dk-tot,.ds-karfa.compact .dk-cta,.ds-karfa.compact .dk-head{display:none}',
       '.dk-yfirlit{background:#fff;color:#161513;border:1px solid #d9d3c6;border-radius:6px;padding:10px 12px;font-size:12px;line-height:1.3}',
