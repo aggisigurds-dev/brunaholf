@@ -14876,10 +14876,10 @@ async function renderVerkstadapostur(t){
 // 🏢 Fyrirtækjaprófíll Slökkvitækis (Agnar 06.09.2026: „linkaðu fyrirtækin inn á fyrirtækjaprófílinn").
 // Inni í appi (?embed=1 í Fjármál/Boss) færist foreldrið á #companies/<id> (pappi 357 þar opnar prófílinn án
 // endurhleðslu); í vafra opnast appið í nýjum flipa.
-function slProfilUrl(id){ return 'https://slokkvitaeki.netlify.app/#companies/' + id; }
+function slProfilUrl(id){ return 'https://slokkvitaeki.netlify.app/#company/' + id; }
 function slOpnaProfil(id){
   const url = slProfilUrl(id);
-  if (window.top !== window) { try { window.top.location.hash = '#companies/' + id; return; } catch(_){} }
+  if (window.top !== window) { try { window.top.location.hash = '#company/' + id; return; } catch(_){} }
   window.open(url, '_blank', 'noopener');
 }
 function slProfilChip(id, txt){

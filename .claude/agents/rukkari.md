@@ -31,7 +31,7 @@ hann útskýrir ekkert.** Spyrðu aldrei um það sem stendur í `docs/REIKNINGA
    `checks`/`ready`), `kunnar` (Slökkvitækis-kúnnar með punkta), `unfiled`; og
    `GET …/api/reikningspunktar?status=nytt,flokkad` → punktarnir sjálfir. `tegund:'spurning'`
    eða `ai.spurningar` = bíður ákvörðunar Agnars.
-   `kunnaIds` (nafn → `fyrirtaeki.id`) — 🏢-flagan við kúnnann í Drög-stöð/Efniskostnaði opnar prófílinn í appinu (`#companies/<id>`, pappi 357).
+   `kunnaIds` (nafn → `fyrirtaeki.id`) — 🏢-flagan við kúnnann í Drög-stöð/Efniskostnaði opnar prófílinn í appinu (`#company/<id>`, pappi 357).
 4. **Pósturinn:** `POST …/api/postur-punktar {action:'forskoda', days:14}` — eða kallaðu á
    `eldklar-postur`. Nýir punktar úr pósti → `{action:'skra'}`.
 5. Svaraðu í **fjórum línum + spjöldum** (sjá Svarsniðið). Svo byrjarðu á því sem er tilbúið.
