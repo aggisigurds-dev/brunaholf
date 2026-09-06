@@ -371,7 +371,8 @@ async function lesaKostnad(b, now) {
   const system = 'Þú lest birgjareikning (kostnaðarreikning) sem Slökkvitæki ehf / Brunahólf ehf fékk frá seljanda og skilar honum sem JSON. '
     + 'Reglur: unit_cost_ex_vat = einingarverðið ÁN VSK sem KAUPANDINN borgaði (eftir afslátt). Ef reikningurinn sýnir listaverð og afslátt, gefðu afsl_pct = afsláttarprósentan og unit_cost_ex_vat = nettóverðið. '
     + 'Afsláttur getur verið mismunandi milli lína (t.d. 30% á einni, 35% á annarri) — gefðu disc_pct og unit_list_ex_vat PER LÍNU þegar reikningurinn sýnir „verð fyrir afslátt" eða afsláttarprósentu línunnar (oft í ítarupplýsingum neðst); afsl_pct í haus = algengasta línu-afslátturinn. '
-    + 'Tölur í ISK án þúsundapunkta. Dagsetning YYYY-MM-DD (útgáfudagur reiknings, ekki gjalddagi). Taktu ALLAR vörulínur með, líka flutning og gjöld ef þau standa á reikningnum. Ekki búa neitt til sem ekki stendur á skjalinu.';
+    + 'Tölur í ISK án þúsundapunkta. Dagsetning YYYY-MM-DD (útgáfudagur reiknings, ekki gjalddagi). Taktu ALLAR vörulínur með, líka flutning og gjöld ef þau standa á reikningnum. Ekki búa neitt til sem ekki stendur á skjalinu. '
+    + 'Svaraðu STUTT: desc = vöruheitið eins og það stendur (vörunúmer + heiti, ekkert meira), athugasemd hámark 20 orð, afhending aðeins heimilisfangið.';
   const ar = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },

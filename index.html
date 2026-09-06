@@ -20147,7 +20147,21 @@ async function efKostnadarYfirlit(){
         const kid = 'k'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
         await post({ action:'karfa', id: row.id, worksite_name: kunni||undefined, karfa: { lines:[], kostnadur:[{ id: kid, birgir:'', nr:'', dags: today, afsl_pct: afsl, pdf, lines:[] }], discount_pct:0, athugasemd:'', auto:false } });
         let res = null;
-        if(ai){ line.textContent = '⏳ '+f.name+' — les reikninginn…'; try{ res = await post({ action:'lesa_kostnad', id: row.id, kid }); }catch(e){ res = { ok:false, error: e.message||String(e) }; } }
+        if(ai){
+          line.textContent = '⏳ '+f.name+' — les reikninginn…';
+          const t0 = Date.now();
+          try{ res = await post({ action:'lesa_kostnad', id: row.id, kid }); }
+          catch(e){
+            // Netlify-gáttin gefst upp eftir ~26 s (504) en fallið klárar lesturinn — sækjum punktinn aftur.
+            res = { ok:false, error: e.message||String(e) };
+            for(let i=0;i<4 && !res.ok;i++){
+              await new Promise(r=>setTimeout(r,6000));
+              try{ const g = await fetch('/api/reikningspunktar?id='+row.id); const gj = await g.json(); const inv = ((gj.row&&gj.row.karfa&&gj.row.karfa.kostnadur)||[]).find(x=>x.id===kid);
+                if(inv && inv.ai && inv.ai.at && new Date(inv.ai.at).getTime() >= t0 - 5000){ res = { ok:true, birgir: inv.birgir, nr: inv.nr, linur: (inv.lines||[]).length, afsl_pct: inv.afsl_pct, kredit: inv.kredit, afhending: inv.ai.afhending }; }
+              }catch(_){}
+            }
+          }
+        }
         const st = res && res.ok ? '✓ lesið: '+(res.birgir||'birgir óþekktur')+(res.nr?' nr. '+res.nr:'')+' · '+(res.linur||0)+' lín'+(res.linur===1?'a':'ur')+(res.afsl_pct?' · afsl. '+res.afsl_pct+'%':'') : (res ? '⚠ ekki lesið sjálfkrafa ('+esc(res.error||res.reason||'')+') — skráðu línurnar á punktinum' : 'vistað — línur skráðar á punktinum');
         line.innerHTML = '✓ '+esc(f.name)+' → punktur #'+row.id+(kunni?' · '+esc(kunni):'')+' · '+st+' <button type="button" class="rg-tool" data-kost-open="'+row.id+'" style="padding:2px 8px;font-size:11px">Opna</button>';
         line.querySelector('[data-kost-open]').onclick = () => opna(row.id);
