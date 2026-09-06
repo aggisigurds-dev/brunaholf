@@ -129,3 +129,8 @@ okkar starfsstöð) er VÍSBENDING, ekki sönnun — kúnninn er valinn á punkt
 
 **Dæmi:** Borealis (Sveitahótelið Brú ehf, fyrirtæki 202) — punktur #27, Securitas-reikningar
 ÞR+26155383 / ÞR+26156521 / ÞR+26157242 / ÞRK073370 (06.09.2026).
+
+**Hookurinn (06.09.2026):** `GET /api/reikningspunktar?op=bidur&kt=&kunni=` = 🧾 sem bíða á kúnna (ekki send í
+söluborð); `POST {action:'kost_til_korfu', id, sent}` = línurnar í körfu á söluverði. Söluborðið (355) sýnir
+borða með „Sækja í körfu" þegar kúnninn er valinn; brunakerfisskýrslan sýnir viðvörun. `?punktur=<id>#drogstod`
+opnar punktinn beint.
