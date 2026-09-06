@@ -15275,6 +15275,8 @@ async function renderDrogstod(t){
   flush();
   // Efniskostnaðar-síðan („Opna punkt" / „＋ Skrá kostnaðarreikning") vísar hingað með bendingu (06.09.2026)
   try{ const oid = sessionStorage.getItem('ds_open_karfa'); if(oid){ sessionStorage.removeItem('ds_open_karfa'); if(window.DsKarfa) await DsKarfa.open(Number(oid)); } }catch(_){}
+  // ?punktur=<id> (söluborðið / brunakerfisskýrslan vísa hingað úr 🧾-borðanum) — einu sinni, svo hreinsað
+  try{ const sp = new URLSearchParams(location.search); const pid = Number(sp.get('punktur')||0); if(pid){ sp.delete('punktur'); history.replaceState(null, '', location.pathname + (sp.toString() ? '?' + sp.toString() : '') + location.hash); if(window.DsKarfa) await DsKarfa.open(pid); } }catch(_){}
 }
 async function renderTvMaeting(t){
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

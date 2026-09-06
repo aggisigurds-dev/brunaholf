@@ -86,6 +86,38 @@ async function handleGet(event) {
   if (q.op === 'stada') return P.json(200, await stada());
   // Vörulisti Slökkvitækis fyrir draft-körfuna (05.09.2026) — sömu verð og söluborðið notar.
   if (q.op === 'vorur') return P.json(200, { vorur: await all('vorur?select=id,nafn,verd_an_vsk,vsk_prosenta,flokkur&virkt=eq.true&order=nafn&limit=2000') });
+  // Hookurinn á endurrukkunaraðilann (Agnar 06.09.2026: „mun þetta koma inn eða einhvers konar viðvörun"):
+  // söluborðið og brunakerfisskýrslan spyrja hér þegar kúnni er valinn. Skilar punktum með 🧾 sem
+  // ekki hafa verið sendir í söluborð, á kúnna eftir nafni (worksite_name) og/eða kennitölu (karfa.kunni.kt
+  // eða fyrirtaeki með sömu kt — kt = hver borgar, nafn = staðurinn).
+  if (q.op === 'bidur') {
+    const kt = digits(q.kt); const nafn = lc(q.kunni);
+    if (!kt && !nafn) return P.json(400, { error: 'kt eða kunni vantar' });
+    let nofn = new Set(); if (nafn) nofn.add(nafn);
+    if (kt) {
+      const fl = await all(`fyrirtaeki?select=nafn,kennitala&deleted_at=is.null&limit=2000`).catch(() => []);
+      for (const f of fl) if (digits(f.kennitala) === kt && f.nafn) nofn.add(lc(f.nafn));
+    }
+    const rows = await all("reikningspunktar?select=id,felag,status,worksite_name,karfa,updated_at&felag=eq.slokkvitaeki&status=in.(nytt,flokkad)&karfa=not.is.null&order=updated_at.desc&limit=400");
+    const out = []; let innkS = 0, salaS = 0, n = 0;
+    for (const r of rows) {
+      const k = r.karfa && typeof r.karfa === 'object' ? r.karfa : {};
+      const list = Array.isArray(k.kostnadur) ? k.kostnadur : [];
+      if (!list.length || k.sent_at) continue;
+      const kk = (k.kunni && typeof k.kunni === 'object') ? k.kunni : {};
+      const hit = nofn.has(lc(r.worksite_name)) || (kt && digits(kk.kt) === kt);
+      if (!hit) continue;
+      const entries = list.map((inv) => {
+        let innk = 0, sala = 0;
+        for (const l of (inv.lines || [])) { innk += num(l.qty) * num(l.cost); sala += num(l.qty) * num(l.sell); }
+        return { id: inv.id, birgir: inv.birgir || '', nr: inv.nr || '', dags: inv.dags || null, kredit: !!inv.kredit, linur: (inv.lines || []).length, innkaup_an_vsk: Math.round(innk), endurkrafa_an_vsk: Math.round(sala), pdf: inv.pdf && inv.pdf.url ? inv.pdf.url : null };
+      });
+      const innk = entries.reduce((a, e) => a + e.innkaup_an_vsk, 0), sala = entries.reduce((a, e) => a + e.endurkrafa_an_vsk, 0);
+      innkS += innk; salaS += sala; n += entries.length;
+      out.push({ punktur: r.id, kunni: r.worksite_name || kk.nafn || null, kt: kk.kt || null, entries, innkaup_an_vsk: innk, endurkrafa_an_vsk: sala, updated_at: r.updated_at });
+    }
+    return P.json(200, { rows: out, samtals: { n, innkaup_an_vsk: innkS, endurkrafa_an_vsk: salaS } });
+  }
   // Handskráðir kostnaðarreikningar úr körfum punktanna (06.09.2026) — Efniskostnaðar-síðan sýnir þá.
   if (q.op === 'kostnadur') {
     const rows = await all('reikningspunktar?select=id,felag,status,worksite_name,work_month,karfa,created_at,updated_at&karfa=not.is.null&order=updated_at.desc&limit=500');
@@ -280,6 +312,7 @@ async function handlePost(event) {
   if (action === 'apply') return apply(b, now);
   if (action === 'karfa') return karfa(b, now);
   if (action === 'lesa_kostnad') return lesaKostnad(b, now);
+  if (action === 'kost_til_korfu') return kostTilKorfu(b, now);
   if (action === 'kost_set') return kostSet(b, now);
   // Krass á kúnnann / verkið úr Valið-dálknum (05.09.2026) — sömu reitir og appið/Efnislistinn nota.
   if (action === 'kunni_nota') {
@@ -426,6 +459,53 @@ async function lesaKostnad(b, now) {
   await P.log({ agent: 'drogstod', action: 'kostnadarreikningur_lesinn', felag: note.felag, target: 'punktur:' + id, input: { kid, title },
     output: { birgir: inv.birgir, nr: inv.nr, linur: lines.length, afsl_pct: afsl, samtals_an_vsk: inv.ai.samtals_an_vsk }, by_who: b.by || null });
   return P.json(200, { ok: true, birgir: inv.birgir, nr: inv.nr, dags: inv.dags, afsl_pct: afsl, kredit: !!inv.kredit, linur: lines.length, samtals_an_vsk: inv.ai.samtals_an_vsk, samtals_m_vsk: inv.ai.samtals_m_vsk, afhending: inv.ai.afhending, athugasemd: inv.ai.athugasemd });
+}
+// kost_til_korfu: allar 🧾-línur punktsins í karfa.lines á SÖLUVERÐI (vara úr vörulista → okkar listaverð,
+// handstillt söluverð → það, annars reiknað listaverð). Kreditnótur/línur með magn ≤ 0 sleppa. Sama og
+// „🧺 Setja í körfu" í Drög-stöð gerir, en héðan getur söluborðið sótt þetta beint („Sækja í körfu").
+// b.sent = merkja körfuna senda í söluborð (hverfur þá úr op=bidur og punkturinn sýnir ↗).
+async function kostTilKorfu(b, now) {
+  const id = Number(b.id); if (!id) return P.json(400, { error: 'id vantar' });
+  const [note] = await all(`reikningspunktar?select=*&id=eq.${id}`);
+  if (!note) return P.json(404, { error: 'Punktur fannst ekki' });
+  const k = (note.karfa && typeof note.karfa === 'object') ? note.karfa : { lines: [] };
+  const list = Array.isArray(k.kostnadur) ? k.kostnadur : [];
+  if (!list.length) return P.json(400, { error: 'Engir kostnaðarreikningar á punktinum' });
+  const vorur = await all('vorur?select=id,nafn,verd_an_vsk,vsk_prosenta&virkt=eq.true&limit=2000').catch(() => []);
+  const norm = (s) => String(s || '').toLowerCase().replace(/co₂/g, 'co2').replace(/[.,·\-–—()\/]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const byName = new Map(); for (const v of vorur) byName.set(norm(v.nafn), v);
+  const lines = (Array.isArray(k.lines) ? k.lines : []).filter((l) => !(l.kost_ref && String(l.kost_ref).startsWith('kost:')));
+  let n = 0;
+  for (const inv of list) {
+    if (inv.kredit) continue;
+    const ref = 'kost:' + inv.id; const hint = (inv.birgir || 'kostnaðarreikningur') + (inv.nr ? ' ' + inv.nr : '');
+    for (const l of (inv.lines || [])) {
+      const qty = num(l.qty); if (!(qty > 0)) continue;
+      const v = l.sell_manual ? null : byName.get(norm(l.desc));
+      lines.push(v
+        ? { type: 'product', desc: v.nafn, qty, unit_price_ex_vat: num(v.verd_an_vsk), vsk_pct: num(v.vsk_prosenta) || 24, product_id: v.id, disc_pct: 0, kost_ref: ref, hint }
+        : { type: 'product', desc: String(l.desc || '').slice(0, 200), qty, unit_price_ex_vat: num(l.sell), vsk_pct: num(l.vsk_pct) || 24, product_id: null, disc_pct: 0, kost_ref: ref, hint });
+      n++;
+    }
+  }
+  if (!n) return P.json(400, { error: 'Engar línur með magni (aðeins kreditnótur?)' });
+  let ex = 0, vsk = 0;
+  for (const l of lines) { const s = l.qty * l.unit_price_ex_vat * (1 - (l.disc_pct || 0) / 100); ex += s; vsk += s * l.vsk_pct / 100; }
+  const d = num(k.discount_pct); if (d) { ex *= 1 - d / 100; vsk *= 1 - d / 100; }
+  const exR = Math.round(ex), totR = Math.round(ex + vsk);
+  let kunni = k.kunni || null;
+  if (!kunni && note.worksite_name) {
+    const f = await all(`fyrirtaeki?select=id,nafn,kennitala,afslattur_pct,netfang&nafn=eq.${encodeURIComponent(note.worksite_name)}&deleted_at=is.null&limit=1`).catch(() => []);
+    kunni = f[0] ? { id: f[0].id, nafn: f[0].nafn, kt: f[0].kennitala || null, afslattur_pct: num(f[0].afslattur_pct), netfang: f[0].netfang || null } : { id: null, nafn: note.worksite_name, kt: null, afslattur_pct: 0 };
+  }
+  const karfa = Object.assign({}, k, { lines, kunni, auto: false, totals: { ex: exR, vsk: totR - exR, total: totR }, saved_at: now, sent_at: b.sent ? now : (k.sent_at || null) });
+  const patch = { karfa, updated_at: now };
+  if (note.status === 'nytt' && !note.ai) patch.status = 'flokkad';
+  const r = await P.sbPatch(`reikningspunktar?id=eq.${id}`, patch);
+  if (!r.ok) return P.json(r.status, { error: (await r.text()).slice(0, 300) });
+  const row = (await r.json())[0] || null;
+  await P.log({ agent: 'drogstod', action: b.sent ? 'kostnadur_saekt_i_soluborð' : 'kostnadur_i_korfu', felag: note.felag, target: 'punktur:' + id, output: { linur: n, total: totR, kunni: kunni && kunni.nafn }, by_who: b.by || null });
+  return P.json(200, { ok: true, row, karfa, linur: n });
 }
 // kost_set: smáreitir á 🧾-færslu án þess að senda alla körfuna (Efniskostnaðar-listinn: „Í bókhald").
 async function kostSet(b, now) {
