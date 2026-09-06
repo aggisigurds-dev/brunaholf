@@ -153,3 +153,14 @@ vistuð á drögunum svo endurprentun stemmi á öllum tækjum. Sértaxtar (t.d.
 | Kröfu-yfirlit Slökkvitækis | `slokkvitaeki.netlify.app/#krofu-yfirlit` |
 | Óklárað hjá Slökkvitækjum (04.09.2026) | Artifact „Óklárað hjá Slökkvitækjum" — innihaldið er komið í Drög-stöðina |
 | Hvað gerðist síðast | `slokkvitaeki/docs/MINNISBOK.md` (efst = nýjast) |
+
+## Kostnaðarreikningar (endurrukkun) — 06.09.2026
+
+Birgjareikningar sem eru endurrukkaðir á kúnna (t.d. Securitas-efni fyrir brunakerfi Borealis):
+1. Droppa PDF/mynd á **Efniskostnaður → 📥 Droppa kostnaðarreikningi**, velja fyrirtækið til endurrukkunar
+   (og afslátt okkar %). Skjalið vistast á Supabase, punktur verður til í Drög-stöð með 🧾-færslu og
+   AI les birgi, nr., dags., afhendingarstað, afslátt og línur.
+2. Á punktinum (Drög-stöð → 🧺): yfirfara línurnar — listaverð = innkaup ÷ (1 − afsl.); söluverð má breyta;
+   „🧺 Setja í körfu" → línurnar í draft-körfuna á söluverði → „Senda í körfu" → Sala → reikningur.
+3. Listinn á Efniskostnaði er innkaupabók með hook á endurrukkunaraðilann; „📚 Í bókhald" þegar
+   reikningurinn er kominn til bókara. Regla: afsláttur birgja kemur ALDREI á reikning kúnna (Charlize #410).

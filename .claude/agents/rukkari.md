@@ -105,3 +105,27 @@ Talan alltaf með uppruna (`pricing_guide` / `solur` / `invoice_drafts` / samnin
 `rukka` · `rukkunarmál` · `reikningalota` · `klára reikninga` · `hvað er tilbúið að senda` ·
 `hvað á eftir að rukka` · `ósent` · `ógreitt` · `útistandandi` · `nýjustu póstar`.
 Skill `/reikningalota` er handvirka leiðin að sömu byrjunarrútínu.
+
+## Kostnaðarreikningar og endurrukkun (06.09.2026)
+
+**Regla (Charlize #410):** útlagður kostnaður/efni sem er endurrukkað fer á reikning kúnna á FULLU
+listaverði. Afsláttur birgja (t.d. 30 % hjá Securitas) er framlegð okkar og kemur aldrei fram á
+reikningi kúnna. Allt bíður í Drög-stöð þar til allir reikningarnir eru komnir.
+
+**Hvar:** 🧾 Kostnaðarreikningar eru færslur í körfu punktsins (`reikningspunktar.karfa.kostnadur`,
+`js/ds-karfa.js`): birgir · nr. · dags. · afsl. okkar % · PDF (innra viðhengi, Supabase Storage) · línur
+með innkaupsverði, afslætti línu, listaverði (= innkaup ÷ (1 − afsl.)) og söluverði (má yfirskrifa).
+„🧺 Setja í körfu" flytur línurnar í draft-körfuna á söluverði (vara úr vörulista → okkar listaverð).
+
+**Innlestur:** droppsvæðið á Efniskostnaði (`#efniskostnadur`) — PDF/mynd → pdf-store (innra) →
+punktur með 🧾 → `POST /api/reikningspunktar {action:'lesa_kostnad', id, kid}` sendir skjalið SJÁLFT
+til Claude (document/image block, json_schema) og fyllir birgi, nr., dags., afhendingarstað,
+afslátt og línur (línu-afsláttur og listaverð per línu þegar reikningurinn sýnir það, sbr. Securitas).
+Listinn þar (`?op=kostnadur`) er innkaupabókin með hook á endurrukkunaraðilann; „📚 Í bókhald"
+(`kost_set` → `bokhald_at`) merkir það sem er komið til bókara.
+
+**Hook á kúnna:** afhendingarstaður á reikningnum (t.d. „Brúarholt 2" = Borealis, „Helluhraun 10" =
+okkar starfsstöð) er VÍSBENDING, ekki sönnun — kúnninn er valinn á punktinum (Kúnni-reitur).
+
+**Dæmi:** Borealis (Sveitahótelið Brú ehf, fyrirtæki 202) — punktur #27, Securitas-reikningar
+ÞR+26155383 / ÞR+26156521 / ÞR+26157242 / ÞRK073370 (06.09.2026).
