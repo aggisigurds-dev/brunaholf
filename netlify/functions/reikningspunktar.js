@@ -358,9 +358,16 @@ async function lesaKostnad(b, now) {
   const title = String((inv.pdf && inv.pdf.title) || '');
   const isPdf = buf.slice(0, 4).toString() === '%PDF' || /\.pdf$/i.test(title);
   const mime = isPdf ? 'application/pdf' : (/\.png$/i.test(title) ? 'image/png' : /\.webp$/i.test(title) ? 'image/webp' : /\.gif$/i.test(title) ? 'image/gif' : 'image/jpeg');
-  const block = isPdf
-    ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: buf.toString('base64') } }
-    : { type: 'image', source: { type: 'base64', media_type: mime, data: buf.toString('base64') } };
+  // Texti fyrst (pdf-parse, sömu vél og redder-read): margfalt hraðara en að láta líkanið horfa á síðurnar
+  // (2 bls. = 23–30 s → 504). Skjalið sjálft (document/image block) aðeins þegar enginn texti finnst (skann/mynd).
+  let pdfText = '';
+  if (isPdf) { try { const d = await require('pdf-parse')(buf); pdfText = String((d && d.text) || ''); } catch (_) { pdfText = ''; } }
+  const hasText = pdfText.replace(/\s/g, '').length >= 200;
+  const block = hasText
+    ? { type: 'text', text: 'TEXTI ÚR PDF-REIKNINGNUM „' + title + '":\n\n' + pdfText.slice(0, 40000) }
+    : (isPdf
+      ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: buf.toString('base64') } }
+      : { type: 'image', source: { type: 'base64', media_type: mime, data: buf.toString('base64') } });
   const system = 'Þú lest birgjareikning (kostnaðarreikning) sem Slökkvitæki ehf / Brunahólf ehf fékk frá seljanda og skilar honum sem JSON. '
     + 'Reglur: unit_cost_ex_vat = einingarverðið ÁN VSK sem KAUPANDINN borgaði (eftir afslátt). Ef reikningurinn sýnir listaverð og afslátt, gefðu afsl_pct = afsláttarprósentan og unit_cost_ex_vat = nettóverðið. '
     + 'Afsláttur getur verið mismunandi milli lína (t.d. 30% á einni, 35% á annarri) — gefðu disc_pct og unit_list_ex_vat PER LÍNU þegar reikningurinn sýnir „verð fyrir afslátt" eða afsláttarprósentu línunnar (oft í ítarupplýsingum neðst); afsl_pct í haus = algengasta línu-afslátturinn. '
@@ -410,7 +417,7 @@ async function lesaKostnad(b, now) {
   if (b.replace) { inv.lines = lines; if (out.birgir) inv.birgir = String(out.birgir).slice(0, 120); if (out.nr) inv.nr = String(out.nr).slice(0, 60); if (/^\d{4}-\d{2}-\d{2}$/.test(String(out.dags || ''))) inv.dags = out.dags; }
   else if (!(Array.isArray(inv.lines) && inv.lines.length)) inv.lines = lines; else inv.lines = inv.lines.concat(lines);
   inv.ai = { model: KOST_MODEL, at: now, samtals_an_vsk: num(out.samtals_an_vsk), samtals_m_vsk: num(out.samtals_m_vsk), athugasemd: String(out.athugasemd || '').slice(0, 300), linur: lines.length,
-    afhending: String(out.afhending || '').slice(0, 160),
+    afhending: String(out.afhending || '').slice(0, 160), leid: hasText ? 'texti' : (isPdf ? 'pdf-myndir' : 'mynd'),
     usage: aj.usage ? { in: aj.usage.input_tokens, out: aj.usage.output_tokens } : null };
   const patch = { karfa: Object.assign({}, k, { kostnadur: list, saved_at: now }), updated_at: now };
   const r = await P.sbPatch(`reikningspunktar?id=eq.${id}`, patch);
