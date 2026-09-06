@@ -97,7 +97,7 @@ async function handleGet(event) {
         for (const l of (inv.lines || [])) { innk += num(l.qty) * num(l.cost); sala += num(l.qty) * num(l.sell); }
         out.push({ punktur: r.id, felag: r.felag, status: r.status, kunni: r.worksite_name || (k.kunni && k.kunni.nafn) || null, work_month: r.work_month,
           id: inv.id, birgir: inv.birgir || '', nr: inv.nr || '', dags: inv.dags || null, afsl_pct: num(inv.afsl_pct), linur: (inv.lines || []).length,
-          pdf: inv.pdf || null, innkaup_an_vsk: Math.round(innk), endurkrafa_an_vsk: Math.round(sala), sent_at: k.sent_at || null, updated_at: r.updated_at });
+          pdf: inv.pdf || null, innkaup_an_vsk: Math.round(innk), endurkrafa_an_vsk: Math.round(sala), sent_at: k.sent_at || null, bokhald_at: inv.bokhald_at || null, updated_at: r.updated_at });
       }
     }
     return P.json(200, { rows: out });
@@ -279,6 +279,8 @@ async function handlePost(event) {
 
   if (action === 'apply') return apply(b, now);
   if (action === 'karfa') return karfa(b, now);
+  if (action === 'lesa_kostnad') return lesaKostnad(b, now);
+  if (action === 'kost_set') return kostSet(b, now);
   // Krass á kúnnann / verkið úr Valið-dálknum (05.09.2026) — sömu reitir og appið/Efnislistinn nota.
   if (action === 'kunni_nota') {
     const nafn = String(b.nafn || '').trim(); if (!nafn) return P.json(400, { error: 'nafn vantar' });
@@ -300,6 +302,122 @@ async function handlePost(event) {
 // bara draft-karfa sem flækist ekki í neitt fyrr en hún er kláruð í söluborði.“ Býr AÐEINS í
 // reikningspunktar.karfa. Kúnninn er leystur úr worksite_name (fyrirtaeki.nafn) svo
 // söluborðið fái id + kt + fastan afslátt; tölur reiknaðar hér líka svo flögur stemmi.
+// ── Kostnaðarreikningar (06.09.2026) ─────────────────────────────────────
+// lesa_kostnad: AI les birgjareikninginn (PDF eða mynd, sótt úr Supabase Storage) og fyllir
+// birgi, nr., dags., afslátt og línur í 🧾-færsluna í körfunni. Claude fær skjalið SJÁLFT
+// (document/image block) — engin OCR-keðja, skannaðir reikningar lesast líka. Skrifar aðeins
+// í karfa.kostnadur[kid]; tölur eru síðan sýnilegar og ritanlegar á punktinum (Drög-stöð).
+const KOST_MODEL = process.env.KOST_MODEL || process.env.PUNKTUR_MODEL || 'claude-sonnet-5';
+const KOST_SCHEMA = {
+  type: 'object', additionalProperties: false,
+  required: ['birgir', 'nr', 'dags', 'afsl_pct', 'afhending', 'lines', 'samtals_an_vsk', 'samtals_m_vsk', 'athugasemd'],
+  properties: {
+    birgir: { type: 'string', description: 'Nafn birgjans/seljanda (fyrirtækið sem gaf reikninginn út)' },
+    afhending: { type: 'string', description: 'Afhendingarstaður/-heimilisfang eða verkheiti sem stendur á reikningnum (oft með litlum stöfum, t.d. „Brúarholt 4"), annars tómur strengur' },
+    nr: { type: 'string', description: 'Reikningsnúmer eins og það stendur á reikningnum, annars tómur strengur' },
+    dags: { type: 'string', description: 'Dagsetning reiknings YYYY-MM-DD, annars tómur strengur' },
+    afsl_pct: { type: 'number', description: 'Afsláttarprósenta sem kaupandinn fékk (t.d. 30 fyrir 30%). 0 ef enginn afsláttur kemur fram.' },
+    lines: {
+      type: 'array', description: 'Vörulínur reikningsins. Flutningur/þjónustugjöld sem sér-línur ef þau eru á reikningnum.',
+      items: {
+        type: 'object', additionalProperties: false, required: ['desc', 'qty', 'unit_cost_ex_vat', 'vsk_pct'],
+        properties: {
+          desc: { type: 'string', description: 'Vöruheiti/lýsing (vörunúmer má fylgja)' },
+          qty: { type: 'number', description: 'Magn' },
+          unit_cost_ex_vat: { type: 'number', description: 'Einingarverð ÁN vsk sem kaupandinn borgaði (eftir afslátt línu). Heiltölur í ISK.' },
+          vsk_pct: { type: 'number', description: 'VSK-prósenta línunnar (24 eða 11), 24 ef óljóst' },
+        },
+      },
+    },
+    samtals_an_vsk: { type: 'number', description: 'Samtals reiknings án vsk' },
+    samtals_m_vsk: { type: 'number', description: 'Samtals reiknings með vsk' },
+    athugasemd: { type: 'string', description: 'Stutt athugasemd ef eitthvað er óljóst (t.d. kreditnóta, gjaldmiðill ekki ISK, margar síður), annars tómur strengur' },
+  },
+};
+async function lesaKostnad(b, now) {
+  const id = Number(b.id); const kid = String(b.kid || '');
+  if (!id || !kid) return P.json(400, { error: 'id og kid vantar' });
+  const key = process.env.ANTHROPIC_API_KEY || '';
+  if (!key) return P.json(503, { ok: false, error: 'ANTHROPIC_API_KEY vantar í Netlify' });
+  const [note] = await all(`reikningspunktar?select=*&id=eq.${id}`);
+  if (!note) return P.json(404, { error: 'Punktur fannst ekki' });
+  const k = (note.karfa && typeof note.karfa === 'object') ? note.karfa : { lines: [] };
+  const list = Array.isArray(k.kostnadur) ? k.kostnadur : [];
+  const inv = list.find((x) => x && x.id === kid);
+  if (!inv) return P.json(404, { error: 'Kostnaðarreikningur fannst ekki á punktinum' });
+  const url = inv.pdf && inv.pdf.url;
+  if (!url) return P.json(400, { ok: false, error: 'Ekkert PDF/mynd á reikningnum' });
+
+  const rf = await fetch(url);
+  if (!rf.ok) return P.json(502, { ok: false, error: 'Náði ekki skjalinu (' + rf.status + ')' });
+  const buf = Buffer.from(await rf.arrayBuffer());
+  if (buf.length > 20 * 1024 * 1024) return P.json(413, { ok: false, error: 'Skjalið er of stórt' });
+  const title = String((inv.pdf && inv.pdf.title) || '');
+  const isPdf = buf.slice(0, 4).toString() === '%PDF' || /\.pdf$/i.test(title);
+  const mime = isPdf ? 'application/pdf' : (/\.png$/i.test(title) ? 'image/png' : /\.webp$/i.test(title) ? 'image/webp' : /\.gif$/i.test(title) ? 'image/gif' : 'image/jpeg');
+  const block = isPdf
+    ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: buf.toString('base64') } }
+    : { type: 'image', source: { type: 'base64', media_type: mime, data: buf.toString('base64') } };
+  const system = 'Þú lest birgjareikning (kostnaðarreikning) sem Slökkvitæki ehf / Brunahólf ehf fékk frá seljanda og skilar honum sem JSON. '
+    + 'Reglur: unit_cost_ex_vat = einingarverðið ÁN VSK sem KAUPANDINN borgaði (eftir afslátt). Ef reikningurinn sýnir listaverð og afslátt, gefðu afsl_pct = afsláttarprósentan og unit_cost_ex_vat = nettóverðið. '
+    + 'Tölur í ISK án þúsundapunkta. Dagsetning YYYY-MM-DD. Taktu ALLAR vörulínur með, líka flutning og gjöld ef þau standa á reikningnum. Ekki búa neitt til sem ekki stendur á skjalinu.';
+  const ar = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+    body: JSON.stringify({
+      model: KOST_MODEL, max_tokens: 2000, system,
+      messages: [{ role: 'user', content: [block, { type: 'text', text: 'Lestu þennan reikning og skilaðu JSON samkvæmt skemanu.' + (note.worksite_name ? ' Kaupandinn endurrukkar hann á kúnnann „' + note.worksite_name + '".' : '') }] }],
+      output_config: { format: { type: 'json_schema', schema: KOST_SCHEMA } },
+    }),
+  });
+  const aj = await ar.json().catch(() => ({}));
+  if (!ar.ok) return P.json(502, { ok: false, error: 'AI: ' + ((aj.error && aj.error.message) || ar.status) });
+  let out = null;
+  try { const t = (aj.content || []).filter((c) => c.type === 'text').map((c) => c.text).join(''); out = JSON.parse(t); } catch (_) { out = null; }
+  if (!out || !Array.isArray(out.lines)) return P.json(502, { ok: false, error: 'AI skilaði ekki gildu JSON' });
+
+  const afsl = num(out.afsl_pct) > 0 ? num(out.afsl_pct) : num(inv.afsl_pct);
+  const lista = (cost, d) => (d >= 100 ? num(cost) : num(cost) / (1 - d / 100));
+  const lines = out.lines.slice(0, 80).map((l) => {
+    const cost = Math.round(num(l.unit_cost_ex_vat) * 100) / 100;
+    return { desc: String(l.desc || '').slice(0, 200), qty: num(l.qty) || 1, cost, disc_pct: afsl, disc_manual: false, sell: Math.round(lista(cost, afsl) * 100) / 100, sell_manual: false, vsk_pct: num(l.vsk_pct) || 24 };
+  });
+  if (!inv.birgir && out.birgir) inv.birgir = String(out.birgir).slice(0, 120);
+  if (!inv.nr && out.nr) inv.nr = String(out.nr).slice(0, 60);
+  if (!inv.dags || inv.dags === now.slice(0, 10)) { if (/^\d{4}-\d{2}-\d{2}$/.test(String(out.dags || ''))) inv.dags = out.dags; }
+  inv.afsl_pct = afsl;
+  if (!(Array.isArray(inv.lines) && inv.lines.length)) inv.lines = lines; else inv.lines = inv.lines.concat(lines);
+  inv.ai = { model: KOST_MODEL, at: now, samtals_an_vsk: num(out.samtals_an_vsk), samtals_m_vsk: num(out.samtals_m_vsk), athugasemd: String(out.athugasemd || '').slice(0, 300), linur: lines.length,
+    afhending: String(out.afhending || '').slice(0, 160),
+    usage: aj.usage ? { in: aj.usage.input_tokens, out: aj.usage.output_tokens } : null };
+  const patch = { karfa: Object.assign({}, k, { kostnadur: list, saved_at: now }), updated_at: now };
+  const r = await P.sbPatch(`reikningspunktar?id=eq.${id}`, patch);
+  if (!r.ok) return P.json(r.status, { error: (await r.text()).slice(0, 300) });
+  await P.log({ agent: 'drogstod', action: 'kostnadarreikningur_lesinn', felag: note.felag, target: 'punktur:' + id, input: { kid, title },
+    output: { birgir: inv.birgir, nr: inv.nr, linur: lines.length, afsl_pct: afsl, samtals_an_vsk: inv.ai.samtals_an_vsk }, by_who: b.by || null });
+  return P.json(200, { ok: true, birgir: inv.birgir, nr: inv.nr, dags: inv.dags, afsl_pct: afsl, linur: lines.length, samtals_an_vsk: inv.ai.samtals_an_vsk, samtals_m_vsk: inv.ai.samtals_m_vsk, afhending: inv.ai.afhending, athugasemd: inv.ai.athugasemd });
+}
+// kost_set: smáreitir á 🧾-færslu án þess að senda alla körfuna (Efniskostnaðar-listinn: „Í bókhald").
+async function kostSet(b, now) {
+  const id = Number(b.id); const kid = String(b.kid || '');
+  if (!id || !kid) return P.json(400, { error: 'id og kid vantar' });
+  const [note] = await all(`reikningspunktar?select=*&id=eq.${id}`);
+  if (!note) return P.json(404, { error: 'Punktur fannst ekki' });
+  const k = (note.karfa && typeof note.karfa === 'object') ? note.karfa : { lines: [] };
+  const list = Array.isArray(k.kostnadur) ? k.kostnadur : [];
+  const inv = list.find((x) => x && x.id === kid);
+  if (!inv) return P.json(404, { error: 'Kostnaðarreikningur fannst ekki' });
+  const pt = (b.patch && typeof b.patch === 'object') ? b.patch : {};
+  if (pt.bokhald_at !== undefined) inv.bokhald_at = pt.bokhald_at ? String(pt.bokhald_at).slice(0, 40) : null;
+  if (pt.bokhald_by !== undefined) inv.bokhald_by = pt.bokhald_by ? String(pt.bokhald_by).slice(0, 60) : null;
+  if (pt.birgir !== undefined) inv.birgir = String(pt.birgir || '').slice(0, 120);
+  if (pt.nr !== undefined) inv.nr = String(pt.nr || '').slice(0, 60);
+  const r = await P.sbPatch(`reikningspunktar?id=eq.${id}`, { karfa: Object.assign({}, k, { kostnadur: list, saved_at: now }), updated_at: now });
+  if (!r.ok) return P.json(r.status, { error: (await r.text()).slice(0, 300) });
+  if (pt.bokhald_at !== undefined) await P.log({ agent: 'drogstod', action: pt.bokhald_at ? 'kostnadarreikningur_i_bokhald' : 'kostnadarreikningur_ur_bokhaldi', felag: note.felag, target: 'punktur:' + id, output: { kid, birgir: inv.birgir, nr: inv.nr }, by_who: pt.bokhald_by || null });
+  return P.json(200, { ok: true, kostnadur: inv });
+}
+
 async function karfa(b, now) {
   const id = Number(b.id); if (!id) return P.json(400, { error: 'id vantar' });
   const [note] = await all(`reikningspunktar?select=*&id=eq.${id}`);
@@ -332,6 +450,8 @@ async function karfa(b, now) {
       desc: String(l.desc || '').slice(0, 200), qty: n(l.qty), cost: n(l.cost), disc_pct: n(l.disc_pct), disc_manual: !!l.disc_manual, sell: n(l.sell), sell_manual: !!l.sell_manual, vsk_pct: n(l.vsk_pct) || 24,
     })),
     created_at: inv.created_at || now,
+    bokhald_at: inv.bokhald_at || null, bokhald_by: inv.bokhald_by ? String(inv.bokhald_by).slice(0, 60) : null,
+    ai: inv.ai && typeof inv.ai === 'object' ? inv.ai : null,
   }));
   const k = { lines, kostnadur, discount_pct: d, athugasemd: String(inn.athugasemd || '').slice(0, 1000), auto: !!inn.auto, kunni,
     totals: { ex: exR, vsk: totR - exR, total: totR }, created_at: prev.created_at || now, saved_at: now, sent_at: b.sent ? now : (prev.sent_at || null) };
