@@ -165,7 +165,7 @@
   status = 200
 
 [functions."timavera-maeting"]
-  schedule = "*/10 * * * *"
+  schedule = "*/15 * * * *"   # 07.09.2026: var */10 — færri köll (Netlify-kvóti tæmdist 06.09)
 
 # ⚠️ ALDREI setja `schedule` á föllu sem VAFRINN kallar á.
 # Netlify svarar hverri HTTP-beiðni á áætlaða föllu með 403. Frá 2026-07-24 til
