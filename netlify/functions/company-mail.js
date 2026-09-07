@@ -193,12 +193,19 @@ exports.handler = async (event) => {
     try {
       const ktToSites = {};
       sites.forEach(s => { const k = String(s.kennitala || '').replace(/\D/g, ''); if (k) (ktToSites[k] = ktToSites[k] || []).push(s); });
-      const contacts = await fetchAll('charlize_contacts', 'netfang,kennitala', '&kennitala=not.is.null&status=neq.rejected');
+      const contacts = await fetchAll('charlize_contacts', 'netfang,kennitala,hlutverk', '&kennitala=not.is.null&status=neq.rejected');
+      // 07.09.2026 (Agnar — Kirkjuvellir sýndi „Nýjasti póstur" frá Greenkey um Norðurhellu 17): netfang
+      // UMSJÓNARAÐILA (Eignaumsjón, Greenkey …) sem sér um mörg hús má aldrei verða strict per-hús
+      // tengiliður — annars eignast það hús sem kt-in hans var fyrst tengd við HVERN póst hans, óháð efni
+      // (Greenkey á kt 630216-1680 með TVEIMUR stöðum → engin strict-tenging þar, en Kirkjuvellir einn →
+      // strict; AMBIG-vörnin greip ekki). Tengiliðir með hlutverk „umsjón…" fá aðeins breiða (gula)
+      // tengingu + „póstsaga til" á öllum stöðum kt-arinnar; pósturinn sést áfram í Þjónustuver póstar.
+      const sharedRole = (c) => /umsj|umsýsl|eignaums|manager|property/i.test(String(c.hlutverk || ''));
       contacts.forEach(c => {
         const k = String(c.kennitala || '').replace(/\D/g, ''); const ss = ktToSites[k];
         if (!ss || !ss.length) return;
-        if (ss.length === 1) { claim(c.netfang, ss[0].id); charlizeSiteIds.add(ss[0].id); }
-        else ss.forEach(s => charlizeSiteIds.add(s.id)); // shared base → all its in-service sites count as "has history"
+        if (ss.length === 1 && !sharedRole(c)) { claim(c.netfang, ss[0].id); charlizeSiteIds.add(ss[0].id); }
+        else ss.forEach(s => charlizeSiteIds.add(s.id)); // shared base / umsjón → all its in-service sites count as "has history"
         if (ss[0].customer_base_id) claimBase(c.netfang, ss[0].customer_base_id);
       });
       Object.keys(emailToId).forEach(e => { if (emailToId[e] === AMBIG) delete emailToId[e]; });
