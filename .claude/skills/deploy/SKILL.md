@@ -68,3 +68,4 @@ If you add a table, a tab, or an endpoint, update the matching section of
 `CLAUDE.md` in the **same commit** — one fact, one place.
 
 Sannreynt 07.09.2026: fyrsta [deploy]-ýtingin (991cb9d) byggði og skrifaði build.json; ýting án [deploy] á að skila „skipped" hjá Netlify.
+Athugið: merkið er bókstaflegt — commit-skilaboð sem nefna það í texta kveikja byggingu; skrifið „deploy-merkið" í venjulegum skilaboðum.
