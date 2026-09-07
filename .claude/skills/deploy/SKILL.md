@@ -14,6 +14,18 @@ description: >
 The hub has **no build step**. The site *is* the repo: `publish = "."` in
 `netlify.toml`. You edit the source directly and push.
 
+## Deploy = `[deploy]` í haus-commiti (regla frá 07.09.2026)
+Hvert framleiðslu-deploy kostar 15 Netlify-krítur (≈ 10 sent) og hver ýting var deploy —
+218 ýtingar hér á 20 dögum. Nú byggir Netlify hubbinn **aðeins** þegar haus-commit
+ýtingarinnar inniheldur `[deploy]` (`ignore`-skipun í `netlify.toml`, exit 1 = byggja).
+Venjulegar ýtingar samstilla vélarnar en birta ekkert. Morgunkeyrslan
+(`.github/workflows/morning-deploy.yml`, 06:15 UTC) ýtir tómu `[deploy]`-commiti ef live
+`/build.json` ≠ HEAD, svo ekkert gleymist. Loka verki með:
+```bash
+git commit --allow-empty -m "[deploy] hvað fer út" && git push origin main
+```
+Auto-sync wip-commit ber `[skip ci]` nema óýtt `[deploy]`-commit bíði undir því.
+
 ## The flow
 ```bash
 # edit index.html and/or netlify/functions/*.js directly

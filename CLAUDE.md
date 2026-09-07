@@ -98,6 +98,15 @@ staðreynd á að eiga sér einn stað, annars rekur hún í sundur.
 ALDREI í heilu lagi — `grep` fyrst, svo `offset`/`limit`. Sama gildir um
 `graphify-out/graph.json` (392k tokens).
 
+## Deploy — `[deploy]` í haus-commiti (07.09.2026)
+
+Hver ýting á `main` var Netlify-deploy (15 krítur ≈ 10 sent hvert; 218 á 20 dögum) og
+kvótinn keypti $10 pakka daglega. Nú byggir Netlify **aðeins** þegar haus-commit ýtingar
+inniheldur `[deploy]` (`ignore` í `netlify.toml`). Ýttu eins oft og þú vilt til að
+samstilla vélarnar; **loka verki með `git commit --allow-empty -m "[deploy] …" && git push`**.
+Morgunkeyrsla (`.github/workflows/morning-deploy.yml`, 06:15 UTC) birtir sjálfkrafa ef
+eitthvað er óbirt (live `/build.json` ≠ HEAD). Sjá `.claude/skills/deploy/SKILL.md`.
+
 ## Conventions
 
 - **ALLTAF LEYFA VISTUN** ("always allow save"): No save / „Vista" button in

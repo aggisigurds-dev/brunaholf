@@ -1,0 +1,41 @@
+name: Morgunbirting (Netlify)
+
+# 07.09.2026: Netlify byggir hubbinn AÐEINS þegar haus-commit segir [deploy] (sjá `ignore` í
+# netlify.toml) — hvert framleiðslu-deploy kostar 15 krítur og hver ýting var deploy. Þessi keyrsla
+# kl. 06:15 UTC gáir hvort HEAD sé óbirt (live /build.json ≠ HEAD) og ýtir þá tómu [deploy]-commiti
+# svo Netlify byggi. Ekkert óbirt → ekkert commit, ekkert deploy.
+
+on:
+  schedule:
+    - cron: '15 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  morgun:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Bera saman live build.json og HEAD
+        id: gate
+        run: |
+          live=$(curl -sf "https://brunaholf.netlify.app/build.json?_=$(date +%s)" | sed -n 's/.*"commit":"\([0-9a-f]*\)".*/\1/p')
+          full=$(git rev-parse HEAD)
+          echo "live=$live head=$full"
+          if [ -n "$live" ]; then
+            case "$full" in
+              "$live"*) echo "Ekkert óbirt — sleppi"; echo "run=false" >> "$GITHUB_OUTPUT"; exit 0 ;;
+            esac
+          fi
+          echo "run=true" >> "$GITHUB_OUTPUT"
+
+      - name: Ýta tómu [deploy]-commiti
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          git config user.name "Agnar Sigurdsson"
+          git config user.email "aggisigurds@gmail.com"
+          git commit --allow-empty -m "[deploy] sjálfvirk morgunbirting $(date -u +%Y-%m-%d)"
+          git push

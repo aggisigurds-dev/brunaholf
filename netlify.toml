@@ -3,6 +3,14 @@
 [build]
   publish = "."
   functions = "netlify/functions"
+  # 07.09.2026: build.json með stutta commit-hashinu svo morgunkeyrslan
+  # (.github/workflows/morning-deploy.yml) og fólk sjái hvaða útgáfa er í loftinu — sama og slokkvitaeki.
+  command = "printf '{\"commit\":\"%s\",\"time\":\"%s\"}\\n' \"$(git rev-parse --short=7 HEAD)\" \"$(date -u +%Y-%m-%dT%H:%MZ)\" > build.json"
+  # 07.09.2026 (Agnar: „næstum 10$ á dag"): Netlify byggir AÐEINS þegar haus-commit segir [deploy]
+  # (exit 1 = byggja, exit 0 = sleppa). Hvert framleiðslu-deploy kostar 15 krítur; 218 ýtingar á 20
+  # dögum hefðu verið ~3.300 krítur. Ýtingar samstilla vélarnar áfram; birting = `git commit -m
+  # "[deploy] …"` (má vera tómt commit) eða morgunkeyrslan kl. 06:15 sem ýtir [deploy] ef eitthvað er óbirt.
+  ignore = "git log -1 --pretty=%B | grep -qF '[deploy]' && exit 1 || exit 0"
 
 # --- Innri skrár EKKI birtar opinberlega -------------------------------------
 # `publish = "."` birtir rót verkefnisins, svo ALLT sem er í repo-inu var sótt-
