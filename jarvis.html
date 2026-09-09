@@ -296,6 +296,30 @@
 .vkort .base{font-size:9px;color:var(--ink3);margin-top:3px;line-height:1.35}
 
 .sfr-rod.sfr-cw{border-left:2px solid #3ecf8e;padding-left:5px;margin-left:-7px}
+
+/* -- Öryggisnet: 36 verðir. Rautt á að vera ÓÞÆGILEGT að horfa á. ------- */
+.on-haus{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
+.on-tala{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.on-tala.heilt{color:var(--ok)} .on-tala.brotid{color:#ff8f6b}
+.on-undir{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)}
+.on-stodnad{margin-left:auto;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:#ffb84d;border:1px solid rgba(255,184,77,.4);padding:2px 6px}
+.on-rod{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-top:1px solid rgba(79,216,255,.08)}
+.on-rod:first-of-type{border-top:0}
+.on-dot{width:7px;height:7px;flex:0 0 7px;margin-top:5px;transform:rotate(45deg)}
+.on-dot.graent{background:var(--ok);box-shadow:0 0 6px var(--ok)}
+.on-dot.rautt{background:#ff8f6b;box-shadow:0 0 8px #ff8f6b}
+.on-dot.villa{background:#ffb84d;box-shadow:0 0 6px #ffb84d}
+.on-nafn{font-size:11px;color:var(--ink);font-weight:700;letter-spacing:.02em}
+.on-msg{font-size:11px;color:var(--ink2);line-height:1.45;margin-top:2px;word-break:break-word}
+.on-tenglar{margin-top:4px;display:flex;flex-wrap:wrap;gap:6px}
+/* Tengill beint i kodann sem a ad laga - thad er munurinn a yfirlitsbladi og verkfaeri. */
+.on-tengill{font-size:10px;letter-spacing:.04em;color:var(--cy);text-decoration:none;
+  border:1px solid rgba(79,216,255,.3);padding:1px 6px;background:rgba(79,216,255,.06)}
+.on-tengill:hover{background:rgba(79,216,255,.18);color:#fff}
+.on-graen-listi{margin-top:9px;font-size:10px;color:var(--ink3);line-height:1.6;
+  letter-spacing:.03em;border-top:1px solid rgba(79,216,255,.08);padding-top:7px}
+.on-graen-listi b{color:var(--ok);font-weight:700}
 .sfr-badge{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.02em;color:#0a3d28;background:#3ecf8e;border-radius:6px;padding:1px 6px;margin-left:4px;white-space:nowrap}
 @media(max-width:640px){
   .sfr-rod{grid-template-columns:24px 1fr;gap:2px 8px;padding:8px 0}
@@ -1123,8 +1147,8 @@ setInterval(sakja, 60000);
 /* -- Utlit (4 forstillingar) + gogn i nyju spjoldin --------------------- */
 (function(){
   var UTLIT = {
-    adal:      { heiti:'Adal',      spjold:['vitals','serfraedingar','villuleit','fjarskipti','velar','hljod','gogn','markmid'] },
-    kerfi:     { heiti:'Kerfi',     spjold:['vitals','perf','fjarskipti','velar','gogn'] },
+    adal:      { heiti:'Adal',      spjold:['vitals','oryggisnet','serfraedingar','villuleit','fjarskipti','velar','hljod','gogn','markmid'] },
+    kerfi:     { heiti:'Kerfi',     spjold:['vitals','oryggisnet','perf','fjarskipti','velar','gogn'] },
     thjonusta: { heiti:'Thjonusta', spjold:['thekja','gloppur','verk','markmid','villuleit'] },
     fjarmal:   { heiti:'Fjarmal',   spjold:['krofur','thekja','markmid'] }
   };
@@ -1300,12 +1324,93 @@ setInterval(sakja, 60000);
   (function(){ var b=document.getElementById('perf-btn');
     if(b) b.addEventListener('click', function(ev){ ev.stopPropagation(); saekjaPerf(); }); })();
 
+  /* -- Öryggisnetið: 36 verðir í slokkvitaeki/tools/audit-*.cjs -----------
+   * Bakgrunnur (09.09.2026): verðirnir voru skrifaðir yfir marga mánuði og
+   * KEYRÐU HVERGI sjálfkrafa — hvorki í CI, git-hook né npm-skripti. Þess vegna
+   * komu sömu villurnar aftur. Nú keyra þeir við hverja ýtingu og skrifa í
+   * `oryggisnet_keyrslur`; hér birtist niðurstaðan.
+   *
+   * Rautt er ekki óþægindi heldur niðurstaða. Grunnlína er ALDREI hækkuð til
+   * að fá grænt — sjá docs/VERKLAG.md í slokkvitaeki.
+   */
+  var REPO_SLOKK = 'https://github.com/aggisigurds-dev/slokkvitaeki/blob/master/';
+
+  // Skilaboð varðanna bera skráarvísanir (t.d. "js/pos.js:1477"). Hér verða þær
+  // að tenglum beint í línuna sem á að laga — það er munurinn á yfirlitsblaði
+  // og verkfæri sem hægt er að vinna með.
+  function skraTenglar(txt){
+    var fundnir = {}, ut = [];
+    var re = /((?:js|tools|netlify|docs)\/[A-Za-z0-9._\/-]+\.(?:cjs|js|md))(?::(\d+))?/g, m;
+    while((m = re.exec(txt || '')) !== null){
+      var lykill = m[1] + (m[2] ? ':' + m[2] : '');
+      if(fundnir[lykill]) continue;
+      fundnir[lykill] = 1;
+      ut.push('<a class="on-tengill" target="_blank" rel="noopener" href="'
+        + REPO_SLOKK + m[1] + (m[2] ? '#L' + m[2] : '') + '">'
+        + lykill.replace(/^.*\//,'') + '</a>');
+      if(ut.length >= 6) break;
+    }
+    return ut;
+  }
+  function hreinsaSkilabod(s){
+    return String(s || '').replace(/^RED:\s*/, '')
+      .replace(/[&<>"]/g, function(c){
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];
+      });
+  }
+
+  async function saekjaOryggisnet(){
+    var box = document.getElementById('on-efni');
+    if(!box) return;
+    try{
+      var j = await (await fetch('/api/oryggisnet',{cache:'no-store'})).json();
+      var t = j.talning || {}, brotnir = (j.verdir||[]).filter(function(v){ return v.stada !== 'graent'; });
+      var slaem = (t.rautt||0) + (t.villa||0);
+
+      var h = '<div class="on-haus">'
+        + '<span class="on-tala ' + (slaem ? 'brotid' : 'heilt') + '">'
+        + (t.graent||0) + '<span style="font-size:14px;color:var(--ink3)">/' + (j.alls||0) + '</span></span>'
+        + '<span class="on-undir">' + (slaem ? slaem + ' brotnir' : 'netið heldur') + '</span>'
+        + (j.stodnad ? '<span class="on-stodnad">keyrsla ' + Math.floor((j.aldur_min||0)/1440) + 'd gömul</span>' : '')
+        + '</div>';
+
+      // Brotnir verðir fyrst og í fullri lengd. Þeir eiga að vera fyrirferðarmiklir.
+      brotnir.forEach(function(v){
+        var tenglar = skraTenglar(v.skilabod);
+        h += '<div class="on-rod">'
+          + '<span class="on-dot ' + v.stada + '"></span>'
+          + '<div style="min-width:0;flex:1">'
+            + '<div class="on-nafn">' + hreinsaSkilabod(v.nafn) + '</div>'
+            + '<div class="on-msg">' + hreinsaSkilabod(v.skilabod) + '</div>'
+            + (tenglar.length ? '<div class="on-tenglar">' + tenglar.join('') + '</div>' : '')
+          + '</div></div>';
+      });
+
+      // Grænir eru bara nöfn — þeir þurfa ekkert pláss fyrr en þeir bila.
+      var graenir = (j.verdir||[]).filter(function(v){ return v.stada === 'graent'; })
+                                 .map(function(v){ return v.nafn; });
+      if(graenir.length){
+        h += '<div class="on-graen-listi"><b>Í lagi:</b> ' + graenir.join(' · ') + '</div>';
+      }
+      if(!brotnir.length && !graenir.length){
+        h += '<div style="color:var(--ink3);font-size:12px">engin keyrsla skráð enn — '
+          + 'keyrðu <code>npm run audit</code> í slokkvitaeki</div>';
+      }
+      box.innerHTML = h;
+      stimp('on-uppf');
+    }catch(e){ villa('on-efni'); }
+  }
+  window.__oryggisnetRefresh = saekjaOryggisnet;
+  (function(){ var b=document.getElementById('on-btn');
+    if(b) b.addEventListener('click', function(ev){ ev.stopPropagation(); saekjaOryggisnet(); }); })();
+
   function saekjaSyn(syn){
     if(syn.indexOf('krofur')  !== -1) saekjaKrofur();
     if(syn.indexOf('thekja')  !== -1) saekjaThekja();
     if(syn.indexOf('gloppur') !== -1) saekjaGloppur();
     if(syn.indexOf('verk')    !== -1) saekjaVerk();
     if(syn.indexOf('perf')    !== -1) saekjaPerf();
+    if(syn.indexOf('oryggisnet') !== -1) saekjaOryggisnet();
   }
   setInterval(function(){ saekjaSyn(spjoldFyrir(nuv)); }, 300000);
   beita();
