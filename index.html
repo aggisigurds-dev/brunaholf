@@ -11497,6 +11497,9 @@ async function renderGerdReikninga(t){
     const cust = (d && d.customer_name) || r.customer || ov.name || (wObj.mapped_customers||[])[0] || '';
     const custKt = (d && d.kennitala) || pgRow.kennitala || ov.kt || '';
     const custAddr = (d && d.heimilisfang) || pgRow.heimilisfang || ov.addr || '';
+    // 09.09.2026 (ósk Agnars): netfang verkkaupa á sama stað og kt/heimilisfang,
+    // svo reikningurinn eigi viðtakanda án þess að fletta upp annars staðar.
+    const custEmail = (d && d.netfang) || pgRow.netfang || ov.email || '';
     const dateText = (state.ui && state.ui.gr_date_text && state.ui.gr_date_text[name+'|'+month]) || '';
     const smaOn = !(state.ui && state.ui.gr_sma_off && state.ui.gr_sma_off[name+'|'+month]);
     const discPct = (state.ui && state.ui.gr_discount && state.ui.gr_discount[name+'|'+month]) || '';
@@ -11581,7 +11584,7 @@ async function renderGerdReikninga(t){
           </div>
           <button class="gb-manual-link" id="gr-manual-btn" type="button" title="Opna handvirka stillingu — kennitala og heimilisfang verkkaupa á reikning">✏️ <span class="gb-lbl">Handvirkt</span> — kt. og heimilisfang verkkaupa á reikning</button><div id="gr-manual" style="display:none;border:1px dashed var(--border,var(--edge));border-radius:8px;padding:8px 10px;margin:2px 0 4px">
             <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Handvirkar upplýsingar verkkaupa — birtast á reikningi (t.d. þegar fletta þarf upp kennitölu eða skipta reikningi handvirkt).</div>
-            <div class="gr-r2"><div class="gr-f"><label>Kennitala</label><input id="gr-kt" value="${escapeAttr(custKt)}" placeholder="000000-0000"></div><div class="gr-f"><label>Heimilisfang</label><input id="gr-addr" value="${escapeAttr(custAddr)}" placeholder="Heimilisfang verkkaupa"></div></div>
+            <div class="gr-r2"><div class="gr-f"><label>Kennitala</label><input id="gr-kt" value="${escapeAttr(custKt)}" placeholder="000000-0000"></div><div class="gr-f"><label>Heimilisfang</label><input id="gr-addr" value="${escapeAttr(custAddr)}" placeholder="Heimilisfang verkkaupa"></div></div><div class="gr-r2"><div class="gr-f"><label>Netfang</label><input id="gr-email" type="email" value="${escapeAttr(custEmail)}" placeholder="netfang@verkkaupi.is" autocomplete="off"></div><div class="gr-f"></div></div>
           </div>
           <div class="gr-st">Tímabil</div>
           <div class="gb-dates">
@@ -12106,6 +12109,7 @@ async function renderGerdReikninga(t){
             customer_name: document.getElementById('gr-cust').value.trim() || null,
             kennitala: document.getElementById('gr-kt').value.trim() || null,
             heimilisfang: document.getElementById('gr-addr').value.trim() || null,
+            netfang: (document.getElementById('gr-email')||{}).value ? document.getElementById('gr-email').value.trim() : null,
             source: existing?.source || 'timavera',
             hours_dagvinna: c.dvH, hours_eftirvinna: c.evH,
             rate_dagvinna: c.dvR, rate_eftirvinna: c.evR,

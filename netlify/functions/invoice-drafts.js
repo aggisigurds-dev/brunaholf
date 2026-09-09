@@ -58,6 +58,8 @@ exports.handler = async (event) => {
       'net_an_vsk', 'vsk_amount', 'total_m_vsk',
       'status', 'payday_invoice_id', 'notes', 'updated_by',
       'kennitala', 'heimilisfang',
+      // 09.09.2026: netfang verkkaupa - reiturinn i Efnislista-ritlinum (#gr-email)
+      'netfang',
       // 2026-07-08 (afsláttar-úttekt): persist the Gerð Reikninga discount so
       // a saved draft reprints correctly on any device — it used to be
       // reconstructed from the CURRENT UI state (state.ui.gr_discount), so a
