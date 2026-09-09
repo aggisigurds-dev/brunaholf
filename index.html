@@ -19524,7 +19524,13 @@ async function renderNLSH(t){
   };
   load();
   loadNotes();
-  clearInterval(window.__nlNotesPoll); window.__nlNotesPoll=setInterval(loadNotes,15000);
+  clearInterval(window.__nlNotesPoll);
+  // 09.09.2026: var an visibilityState-varnar og sotti /api/nlsh-notes a 15 s
+  // fresti - 240 koll a klst ur einum opnum flipa, lika thegar enginn horfdi.
+  // Sama vorn og linan 2166 hefur haft allan timann. 15 s -> 45 s og faldur
+  // flipi kostar ekkert; ferskt er sott strax vid visibilitychange.
+  window.__nlNotesPoll=setInterval(function(){ if(document.visibilityState==="visible") loadNotes(); },45000);
+  document.addEventListener("visibilitychange", function(){ if(document.visibilityState==="visible") loadNotes(); });
 }
 
 async function renderVerdskra(t){
