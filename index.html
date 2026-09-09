@@ -11556,8 +11556,28 @@ async function renderGerdReikninga(t){
     // svo reikningurinn eigi viðtakanda án þess að fletta upp annars staðar.
     const custEmail = (d && d.netfang) || pgRow.netfang || ov.email || '';
     const dateText = (state.ui && state.ui.gr_date_text && state.ui.gr_date_text[name+'|'+month]) || '';
-    const smaOn = !(state.ui && state.ui.gr_sma_off && state.ui.gr_sma_off[name+'|'+month]);
-    const discPct = (state.ui && state.ui.gr_discount && state.ui.gr_discount[name+'|'+month]) || '';
+    // ⚠️ DRÖGIN RÁÐA, EKKI STAÐBUNDIN STAÐA (09.09.2026 — virk peningavilla).
+    //
+    // Áður las þetta AÐEINS úr state.ui[...|month]. Vél sem hafði ekki þann
+    // undirlykil — annar starfsmaður, annar vafri, eða þessi vél áður en
+    // þjóns-samstillingin lenti — sá afsláttarreitinn AUÐAN. Ýtti hún þá á Vista
+    // skrifaði línan neðar `discount_pct: (state.ui...) || 0` NÚLL yfir raunverulega
+    // afsláttinn á þjóninum, og kúnninn var rukkaður fullt verð.
+    //
+    // Nákvæmlega sviðsmyndin sem Agnar lýsti: yfirmaðurinn erlendis opnar
+    // reikninginn, breytir einhverju smáu, ýtir á vista — og afslátturinn hverfur.
+    // Athugasemdin við vistunina sagði alltaf „afsláttur vistast Á drögunum" —
+    // skrifin voru rétt, lesturinn til baka var aldrei tengdur.
+    //
+    // gr_sma_off er spegilmyndin: smaOn er sjálfgefið TRUE, svo vél án
+    // undirlykilsins kveikir aftur á smáhlutagjaldi sem var VILJANDI slökkt á,
+    // og compute() skrifar gjaldið til baka á reikninginn.
+    const smaOn = d
+      ? Number(d.smahlutagjald || 0) > 0
+      : !(state.ui && state.ui.gr_sma_off && state.ui.gr_sma_off[name+'|'+month]);
+    const discPct = (d && Number(d.discount_pct) > 0)
+      ? Number(d.discount_pct)
+      : ((state.ui && state.ui.gr_discount && state.ui.gr_discount[name+'|'+month]) || '');
     const fixedTotal = d && d.fixed_total ? Number(d.fixed_total) : 0;
     // Prefill: saved draft wins; else compute from Tímavera + pricing-guide; materials from draft or Redder.
     const dvH = Math.round((d ? Number(d.hours_dagvinna)||0 : (monthHours(wObj)||0))*100)/100;
@@ -12174,7 +12194,18 @@ async function renderGerdReikninga(t){
             net_an_vsk: c.net, vsk_amount: c.vsk, total_m_vsk: c.displayTotal,
             // afsláttur vistast Á drögunum (ekki bara í UI-state) svo
             // endurprentun stemmi á öllum tækjum.
-            discount_pct: (state.ui.gr_discount||{})[name+'|'+month] || 0,
+            //
+            // 09.09.2026: LESIÐ ÚR REITNUM, ekki úr state.ui. Áður kom gildið úr
+            // staðbundinni stöðu og varð 0 ef þessi vél hafði ekki undirlykilinn —
+            // sem þurrkaði út raunverulegan afslátt á þjóninum þegar önnur vél
+            // opnaði reikninginn og vistaði. Reiturinn er það sem notandinn sér;
+            // hann er því eina rétta heimildin um hvað hann ætlaði að vista.
+            discount_pct: (function(){
+              var e = document.getElementById('gr-disc');
+              if (!e) return (state.ui.gr_discount||{})[name+'|'+month] || 0;
+              var v = parseNum(e.value);
+              return Number.isFinite(v) ? Math.max(0, Math.min(100, v)) : 0;
+            })(),
             fixed_total: numv('gr-fix') || null,
             status: existing?.status || 'draft',
             notes: document.getElementById('gr-notes').value.trim() || null,
