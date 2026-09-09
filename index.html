@@ -12074,12 +12074,33 @@ async function renderGerdReikninga(t){
       const c = compute();
       { const _k=name+'|'+month, _dm=document.getElementById('gr-datemode'), _dtv=(document.getElementById('gr-datetext').value||'').trim(); state.ui=state.ui||{}; state.ui.gr_date_text=state.ui.gr_date_text||{}; if(_dm&&_dm.checked&&_dtv) state.ui.gr_date_text[_k]=_dtv; else delete state.ui.gr_date_text[_k]; state.ui.gr_sma_off=state.ui.gr_sma_off||{}; const _so=document.getElementById('gr-sma-on'); if(_so&&!_so.checked) state.ui.gr_sma_off[_k]=true; else delete state.ui.gr_sma_off[_k]; state.ui.gr_discount=state.ui.gr_discount||{}; const _dp=document.getElementById('gr-disc')?Math.max(0,Math.min(100,parseNum(document.getElementById('gr-disc').value))):0; if(_dp>0) state.ui.gr_discount[_k]=_dp; else delete state.ui.gr_discount[_k]; save(); }
       const $st = document.getElementById('gr-save-st');
+      // 09.09.2026 — reitavíxl-vörn. Verkstaður / Verkkaupi / Kennitala eru þrír
+      // textareitir hlið við hlið. Agnar sló verkkaupann í Verkstað og kennitöluna
+      // í Verkkaupa (drag 322: worksite_name="Veislan - Veitingaeldhús ehf.",
+      // customer_name="4212202040"). Kennitala í nafnreit er ALDREI rétt og fer á
+      // reikning sem fer á kúnna — spurt er, ekki stöðvað (ALLTAF LEYFA VISTUN).
+      {
+        const erKt = v => /^\d{6}-?\d{4}$/.test(String(v || '').replace(/\s/g, ''));
+        const wsV = (document.getElementById('gr-ws') || {}).value || '';
+        const cuV = (document.getElementById('gr-cust') || {}).value || '';
+        const rangt = [erKt(wsV) && 'Verkstaður', erKt(cuV) && 'Verkkaupi'].filter(Boolean);
+        if (rangt.length && !confirm(
+          'Kennitala stendur í reitnum „' + rangt.join('" og „') + '".\n\n' +
+          'Kennitalan á heima í Kennitölu-reitnum — annars fer hún á reikninginn sem nafn.\n\n' +
+          'Vista samt?')) { $st.textContent = 'Ekki vistað — athugaðu reitina'; return false; }
+      }
       $st.textContent = 'Vistar…';
       const existing = draftFor(name);
       try{
         const rr = await fetch('/api/invoice-drafts', {
           method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify(Object.assign({
+            // 09.09.2026 — AUÐKENNIÐ. Án þess þekkti þjónninn dragið á
+            // worksite_name, sem er þessi ritanlegi reitur hér fyrir neðan.
+            // Innsláttarvilla í honum bjó til NÝTT drag og gamla sat óbreytt
+            // eftir — vistun sem leit út eins og gagnatap. Sjá haus-athugasemd
+            // í netlify/functions/invoice-drafts.js.
+            id: existing?.id || undefined,
             worksite_name: document.getElementById('gr-ws').value.trim(),
             work_month: month,
             customer_name: document.getElementById('gr-cust').value.trim() || null,
@@ -12114,6 +12135,13 @@ async function renderGerdReikninga(t){
         if(!rr.ok) throw new Error('HTTP '+rr.status+': '+(await rr.text()).slice(0,120));
         const saved = await rr.json();
         DRAFTS[`${name}|${month}`] = saved;
+        // Þjónninn segir frá ef hann þurfti að stofna nýtt drag af því upprunalega
+        // fannst ekki. Áður gerðist það þögult og leit út eins og gagnatap.
+        if (saved && saved.endurstofnad) {
+          alert('Upprunalegu drögin fundust ekki (þeim var líklega eytt á annarri vél).\n\n' +
+                'Vinnan þín var VISTUÐ í nýtt drag — ekkert tapaðist — en athugaðu listann: ' +
+                'þar geta nú verið tvö drög fyrir þennan verkstað.');
+        }
         $st.textContent = '✓ Vistað';
         grDirty = false;   // vistun tókst — hausinn má aftur segja „vistað"
         { const hs = document.getElementById('gr-hd-status'), ht = document.getElementById('gr-hd-status-t'); if(hs && ht){ const t = new Date(); ht.textContent = 'vistað ' + String(t.getHours()).padStart(2,'0') + ':' + String(t.getMinutes()).padStart(2,'0'); hs.classList.remove('unsaved'); } }
