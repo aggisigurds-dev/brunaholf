@@ -81,7 +81,29 @@ exports.handler = async (event) => {
     // NOT NULL-tékkin keyra á henni ÁÐUR en conflict-uppfærslan tekur við — svo
     // hlutauppfærsla án `source` (👔 yfirferðar-togglinn, yfirferd.html vistun)
     // féll á 23502 þótt röðin ætti gilt source-gildi nú þegar.
-    const filter = `worksite_name=eq.${encodeURIComponent(body.worksite_name)}&work_month=eq.${encodeURIComponent(body.work_month)}`;
+    // ⚠️ AUÐKENNI DRAGSINS ER `id`, ALDREI NAFNIÐ (09.09.2026 — gagnatap í rauntíma).
+    //
+    // Áður var sían eingöngu worksite_name+work_month. worksite_name er RITANLEGUR
+    // reitur í ritlinum (#gr-ws). Breyttist hann um einn staf — innsláttarvilla,
+    // rangur reitur, eða verkkaupanafn sem lenti í verkstaðarreitnum — þá hitti
+    // PATCH-ið ENGA röð og féll í gegn á INSERT. Ný röð varð til; gamla dragið sat
+    // óbreytt eftir. Notandinn kom til baka, sá gömlu tölurnar og hélt að vistunin
+    // hefði glatast. Hún hafði það ekki — hún fór á rangan stað, þögult.
+    //
+    // Verst: útgáfuvörnin hér að neðan notaði SÖMU síu, svo hún fletti upp í röngu
+    // röðinni, fann ekkert og skilaði engu 409. Vörnin sem átti að grípa þetta þagði.
+    //
+    // Raundæmi (Agnar var að senda reikninga með yfirmanni sínum):
+    //   drag 299  austurstrònd                    -> fékk aldrei breytinguna
+    //   drag 322  "Veislan - Veitingaeldhús ehf."  <- nýtt tvítak, nafn í röngum reit
+    //             customer_name = "4212202040"        og kennitalan í nafnreitnum
+    //
+    // Nú: sé `id` sent frá ritlinum ræður það. Endurnefning endurnefnir þá í stað
+    // þess að klofna. Nafn-sían er aðeins notuð þegar ekkert id er til (ný drög og
+    // eldri kallendur eins og reikningspunktar.js).
+    const filter = body.id
+      ? `id=eq.${encodeURIComponent(body.id)}`
+      : `worksite_name=eq.${encodeURIComponent(body.worksite_name)}&work_month=eq.${encodeURIComponent(body.work_month)}`;
     // 06.09.2026: útgáfu-vörn — expected_updated_at (eintakið sem ritillinn opnaði). Sé röðin yngri á
     // þjóninum hefur önnur vél breytt henni: 409 með núverandi röð, ritillinn spyr. force=true sleppir.
     const vaenta = (body.expected_updated_at && !body.force) ? String(body.expected_updated_at) : null;
@@ -104,6 +126,17 @@ exports.handler = async (event) => {
     const patched = await pr.json();
     if (patched.length) return json(200, patched[0]);
 
+    // Hingað kemst kallið aðeins ef ENGIN röð fannst til að uppfæra.
+    // Með `id` þýðir það að röðinni hafi verið eytt á meðan ritillinn var opinn.
+    // Reglan „ALLTAF LEYFA VISTUN" (CLAUDE.md) bannar að stöðva vistun, svo við
+    // búum til nýja röð — en segjum frá því í svarinu (`endurstofnad`) svo
+    // ritillinn geti sagt notandanum það í stað þess að klofna þögult eins og áður.
+    const endurstofnad = !!body.id;
+    if (endurstofnad) {
+      console.warn('[invoice-drafts] id=' + body.id + ' fannst ekki — stofna nýtt drag fyrir ' +
+        JSON.stringify(body.worksite_name) + '/' + body.work_month);
+    }
+
     const r = await fetch(`${SUPABASE_URL}/rest/v1/invoice_drafts?on_conflict=worksite_name,work_month`, {
       method: 'POST',
       headers: {
@@ -116,7 +149,7 @@ exports.handler = async (event) => {
     });
     if (!r.ok) return json(r.status, { error: (await r.text()).slice(0, 300) });
     const arr = await r.json();
-    return json(200, arr[0] || { ok: true });
+    return json(200, Object.assign({}, arr[0] || { ok: true }, endurstofnad ? { endurstofnad: true } : {}));
   }
 
   if (event.httpMethod === 'DELETE') {
