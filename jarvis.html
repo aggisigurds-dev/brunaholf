@@ -968,13 +968,77 @@ function stika(nafn, gildi, hlutfall, klasi){
     '<div class="rein '+(klasi||'')+'"><i style="width:'+Math.max(2,Math.min(100,hlutfall))+'%"></i></div></div>';
 }
 
+/* ── Sóknarstjóri: ver Netlify fyrir ofálagi ───────────────────────────────
+ * Agnar 09.09.2026: „passa að það verði ekkert overload á Netlify. Það hefur
+ * krassað 2svar og stundum farið í öfga token eating mode. Sumt er nóg að ég
+ * bara refreshi, og annað sem þarf ekki rauntíma tracking."
+ *
+ * Mælt sama dag — einn opinn flipi kostaði:
+ *   sakja() keyrði á 60 s fresti og sótti FJÓRA endapunkta í hvert sinn,
+ *   þar á meðal /api/veidin sem er 113 KB og /api/data-sources-status sem
+ *   tekur 2,9 s. Það gerir ~240 fallaköll og ~7,8 MB á KLUKKUSTUND, eða
+ *   ~4.300 köll og ~140 MB á 18 tíma degi — og fjórfalt það á vélunum fjórum.
+ *   Engin visibilityState-vörn var til, svo þetta keyrði líka í földum flipa.
+ *
+ * Tvennt lagar það:
+ *   1. Lágmarksbil PER ENDAPUNKT. Það sem breytist einu sinni á dag á ekki að
+ *      sækjast á mínútu fresti. Svarið er geymt og skilað aftur á milli.
+ *   2. Ekkert er sótt þegar flipinn er falinn — en sótt STRAX þegar hann
+ *      birtist aftur, svo hægari lykkja kostar enga ferskleika í reynd.
+ */
+var SOKN = { sidast:{}, gogn:{}, bilun:{},
+  bil: {
+    '/api/vel-heartbeat':        120000,   // 2 mín — 0,8 KB, ódýrt
+    '/api/kerfisheilsa':         180000,   // 3 mín — 12 KB
+    '/api/veidin':               600000,   // 10 mín — 113 KB, veiðitölur breytast við skýrslur
+    '/api/data-sources-status':  600000,   // 10 mín — 2,9 s fall, ferskleiki mælist í dögum
+    '/api/oryggisnet':           600000,   // 10 mín — breytist aðeins við ýtingu
+    '/api/verkefnalisti':        600000,   // 10 mín — 935 KB (!), sér verk að grennja
+    '/api/krofur-yfirlit':       300000,   // 5 mín — 271 KB
+    '/api/worksites':            600000    // 10 mín — 89 KB
+  },
+  sjalfgefid: 300000 };
+
+function synilegt(){ return document.visibilityState === 'visible'; }
+
+// Sækir aðeins ef nógu langt er liðið; annars skilar síðasta svari.
+// `thvinga` fer fram hjá bilinu — notað af ↻-tökkunum, þar sem notandinn bað um það.
+async function soek(slod, thvinga){
+  var nu = Date.now();
+  var bil = SOKN.bil[slod] != null ? SOKN.bil[slod] : SOKN.sjalfgefid;
+  // Vörnin má EKKI krefjast þess að skyndiminnið eigi gildi. Við bilun er ekkert
+  // gildi til, og fyrri útgáfa sleppti því alltaf í gegn — biluð leið fékk fulla
+  // ferð að eilífu. Fannst í prófun 09.09.2026: fjögur köll í hverri sókn þótt
+  // bilanateljarinn hækkaði. Nú ræður tíminn einn, og skilað er því sem til er.
+  if(!thvinga && SOKN.sidast[slod] && (nu - SOKN.sidast[slod]) < bil){
+    return SOKN.gogn[slod] !== undefined ? SOKN.gogn[slod] : null;
+  }
+  try{
+    var r = await fetch(slod, {cache:'no-store'});
+    if(!r.ok) throw new Error(r.status);
+    var j = await r.json();
+    SOKN.gogn[slod] = j; SOKN.sidast[slod] = nu; SOKN.bilun[slod] = 0;
+    return j;
+  }catch(e){
+    // Bakfall við bilun. Án þess reyndi hver sókn AFTUR strax — endapunktur
+    // sem er niðri fengi fulla ferð, nákvæmlega þegar Netlify ræður síst við
+    // það. Fannst í prófun 09.09.2026: þrjár sóknir í röð gáfu 12 köll.
+    // Bilanabið tvöfaldast (30 s → 8 mín) og núllast við fyrsta góða svar.
+    SOKN.bilun[slod] = Math.min((SOKN.bilun[slod] || 0) + 1, 5);
+    SOKN.sidast[slod] = nu - bil + Math.min(30000 * Math.pow(2, SOKN.bilun[slod] - 1), 480000);
+    // Gamalt svar er betra en autt spjald.
+    return SOKN.gogn[slod] !== undefined ? SOKN.gogn[slod] : null;
+  }
+}
+
 async function sakja(){
+  if(!synilegt()) return;               // falinn flipi kostar ekkert
   try{
     const [h, g, v, ve] = await Promise.all([
-      fetch('/api/kerfisheilsa',{cache:'no-store'}).then(r=>r.json()).catch(()=>null),
-      fetch('/api/data-sources-status',{cache:'no-store'}).then(r=>r.json()).catch(()=>null),
-      fetch('/api/vel-heartbeat',{cache:'no-store'}).then(r=>r.json()).catch(()=>null),
-      fetch('/api/veidin',{cache:'no-store'}).then(r=>r.json()).catch(()=>null),
+      soek('/api/kerfisheilsa'),
+      soek('/api/data-sources-status'),
+      soek('/api/vel-heartbeat'),
+      soek('/api/veidin'),
     ]);
 
     // ── vitals
@@ -1106,7 +1170,12 @@ staerd(); teiknaKjarna(); teiknaBylgju(); teiknaRatsja();
 settMal(MAL);
 baetaStraum('stjórnstöð ræst','ok');
 sakja();
-setInterval(sakja, 60000);
+// 60 s -> 120 s. Soknarstjorinn ver hvern endapunkt fyrir sig ofan a thetta,
+// svo tidnin her stjornar adeins thvi hversu fljott nytt svar birtist.
+setInterval(function(){ if(synilegt()) sakja(); }, 120000);
+// Ferskt STRAX thegar flipinn birtist aftur. Thess vegna ma lykkjan vera haeg:
+// notandinn faer alltaf ferskt thegar hann horfir, og ekkert er sott thegar ekki.
+document.addEventListener('visibilitychange', function(){ if(synilegt()) sakja(); });
 
 /* -- Notandi: hver situr vid bordid? ------------------------------------ */
 (function(){
@@ -1202,7 +1271,7 @@ setInterval(sakja, 60000);
 
   async function saekjaKrofur(){
     try{
-      var j = await (await fetch('/api/debtors',{cache:'no-store'})).json();
+      var j = await soek('/api/debtors');
       var t = j.totals || {};
       document.getElementById('kr-efni').innerHTML =
         lina('Utistandandi', kr(t.outstanding_kr), '#ff8f6b') +
@@ -1214,7 +1283,7 @@ setInterval(sakja, 60000);
   }
   async function saekjaThekja(){
     try{
-      var j = await (await fetch('/api/svid-status?svid=por&tolur=1',{cache:'no-store'})).json();
+      var j = await soek('/api/svid-status?svid=por&tolur=1');
       var t = j.tolur || {};
       document.getElementById('th-efni').innerHTML =
         lina('Klarud por', (t.klarad||0), '#5fd39a') +
@@ -1226,7 +1295,7 @@ setInterval(sakja, 60000);
   }
   async function saekjaGloppur(){
     try{
-      var j = await (await fetch('/api/service-gaps',{cache:'no-store'})).json();
+      var j = await soek('/api/service-gaps');
       var c = j.counts || {};
       document.getElementById('gl-efni').innerHTML =
         lina('Tengd skjol', (c.linked_total||0), '#5fd39a') +
@@ -1238,7 +1307,7 @@ setInterval(sakja, 60000);
   }
   async function saekjaVerk(){
     try{
-      var j = await (await fetch('/api/verkefnalisti',{cache:'no-store'})).json();
+      var j = await soek('/api/verkefnalisti');
       var t = j.tasks || {}, arr = Array.isArray(t) ? t : [];
       var eftir = {};
       arr.forEach(function(x){ var st = x.status || '?'; eftir[st] = (eftir[st]||0) + 1; });
@@ -1359,11 +1428,11 @@ setInterval(sakja, 60000);
       });
   }
 
-  async function saekjaOryggisnet(){
+  async function saekjaOryggisnet(thvinga){
     var box = document.getElementById('on-efni');
     if(!box) return;
     try{
-      var j = await (await fetch('/api/oryggisnet',{cache:'no-store'})).json();
+      var j = await soek('/api/oryggisnet', thvinga);
       var t = j.talning || {}, brotnir = (j.verdir||[]).filter(function(v){ return v.stada !== 'graent'; });
       var slaem = (t.rautt||0) + (t.villa||0);
 
@@ -1402,7 +1471,7 @@ setInterval(sakja, 60000);
   }
   window.__oryggisnetRefresh = saekjaOryggisnet;
   (function(){ var b=document.getElementById('on-btn');
-    if(b) b.addEventListener('click', function(ev){ ev.stopPropagation(); saekjaOryggisnet(); }); })();
+    if(b) b.addEventListener('click', function(ev){ ev.stopPropagation(); saekjaOryggisnet(true); }); })();
 
   function saekjaSyn(syn){
     if(syn.indexOf('krofur')  !== -1) saekjaKrofur();
@@ -1412,7 +1481,10 @@ setInterval(sakja, 60000);
     if(syn.indexOf('perf')    !== -1) saekjaPerf();
     if(syn.indexOf('oryggisnet') !== -1) saekjaOryggisnet();
   }
-  setInterval(function(){ saekjaSyn(spjoldFyrir(nuv)); }, 300000);
+  setInterval(function(){ if(document.visibilityState==='visible') saekjaSyn(spjoldFyrir(nuv)); }, 300000);
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState==='visible') saekjaSyn(spjoldFyrir(nuv));
+  });
   beita();
 })();
 
