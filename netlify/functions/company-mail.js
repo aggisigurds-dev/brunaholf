@@ -409,6 +409,53 @@ exports.handler = async (event) => {
       if (ha && Array.isArray(ha.ids)) ha.ids.forEach(id => histIdSet.add(Number(id)));
     } catch (_) { /* best-effort — omit older ids on failure */ }
     charlizeSiteIds.forEach(id => histIdSet.add(Number(id))); // tengiliðaskrá links → „has history"
+
+    // ── VÍÐ PÓSTSTAÐA + BLÁTT MERKI (09.09.2026, ósk Agnars) ─────────────────
+    // v_kunni_postur_stada er ein röð per KÚNNA (customers_base) og byggir á
+    // víðu tengingunni: netföng customers_base + lén sem á sér nákvæmlega einn
+    // kúnna (frípóstlén og okkar eigin kassar útilokaðir). Hún nær yfir 235
+    // kúnna á móti þeim ~206 sem nákvæma netfangið eitt fann — Granítsteinar er
+    // t.d. skráður bokhald@granitsteinar.is en allur póstur er við
+    // granitsteinar@granitsteinar.is.
+    //
+    // Blátt = beiðni um aukaþjónustu EÐA uppsögn á samningi (bh_postflokkur).
+    // Rautt/blátt gildir aðeins innan þess glugga þar sem við EIGUM sendan póst
+    // (SENT byrjar 18.07.2025); eldra verður grænt. Sú vörn er í viewinu sjálfu
+    // og tók 120 af 154 fölskum rauðum.
+    //
+    // Lagt OFAN Á það sem á undan er komið: má bæta við og lyfta í blátt, en
+    // aldrei fjarlægja rautt/gult sem nákvæma tengingin fann. Best-effort —
+    // bregðist lesturinn haldast merkin óbreytt (mælt 648 ms fyrir allar raðir).
+    let vidPunktar = 0;
+    try {
+      const stada = await fetchAll('v_kunni_postur_stada',
+        'select=customer_base_id,punktur,postar,sidast,sidasti_inn,sidasta_svar,sidasta_beidni,sidasta_uppsogn,osvarad');
+      for (const r of stada) {
+        for (const sid of (baseToSites[r.customer_base_id] || [])) {
+          const e = byId[sid] || (byId[sid] = {
+            from: null, subject: '', snippet: '', received_at: null,
+            is_question: false, unreplied: false, important: false,
+            signals: [], match: 'vid',
+          });
+          e.vid_punktur = r.punktur || null;
+          e.vid_postar = r.postar || 0;
+          e.history = true;
+          if (r.sidast && (!e.received_at || r.sidast > e.received_at)) e.received_at = r.sidast;
+          if (r.osvarad) e.unreplied = true;
+          if (r.punktur === 'blar') {
+            const upp = r.sidasta_uppsogn || '';
+            const bei = r.sidasta_beidni || '';
+            e.vid_tegund = (upp && upp >= bei) ? 'uppsogn' : 'beidni';
+            e.vid_merki_at = (upp > bei ? upp : bei) || null;
+          }
+          histIdSet.add(Number(sid));
+          vidPunktar++;
+        }
+      }
+    } catch (err) {
+      console.warn('[company-mail] víð póststaða féll:', String(err && err.message || err).slice(0, 160));
+    }
+
     const histIds = [...histIdSet];
 
     const payload = {
@@ -420,6 +467,8 @@ exports.handler = async (event) => {
         exact: exactMatched, with_signals: Object.values(byId).filter(v => v.signals && v.signals.length).length,
         history: historyAdded + felagGreen, history_felag: felagGreen,
         availability: histIds.length,
+        vid_punktar: vidPunktar,
+        blair: Object.values(byId).filter(v => v.vid_punktur === 'blar').length,
         green: Object.values(byId).filter(v => !v.unreplied && !(v.signals && v.signals.length)).length,
       },
     };
