@@ -87,9 +87,47 @@ exports.handler = async (event) => {
 
   try {
     if (event.httpMethod === 'GET') {
+      const q = event.queryStringParameters || {};
+
+      // ?tolur=1 — AÐEINS talning. Fyrir Jarvis og önnur yfirlit sem sýna þrjár
+      // tölur og þurfa aldrei lýsingarnar.
+      //
+      // Af hverju (09.09.2026): fulla svarið er ~982 KB og tekur 2,5 s af því
+      // `select=*` dregur description, claude_notes, feedback og myndaslóðir fyrir
+      // 500 raðir. Jarvis sótti það á fimm mínútna fresti til að birta „383 verk".
+      // Agnar var að eyða ~10$ á dag í Netlify og hubburinn hafði krassað tvisvar.
+      // Þessi hamur sækir tvo örsmáa dálka og skilar innan við 1 KB.
+      if (q.tolur) {
+        const r = await sb('verkefnalisti?select=status,flag,category&limit=2000');
+        if (!r.ok) return json(r.status, { error: await r.text() });
+        const radir = await r.json();
+        const eftirStodu = {}, eftirFlokki = {}, eftirMerki = {};
+        for (const t of radir) {
+          eftirStodu[t.status] = (eftirStodu[t.status] || 0) + 1;
+          if (t.status === 'beidni') {
+            eftirFlokki[t.category || 'allt'] = (eftirFlokki[t.category || 'allt'] || 0) + 1;
+            eftirMerki[t.flag || 0] = (eftirMerki[t.flag || 0] || 0) + 1;
+          }
+        }
+        return json(200, {
+          alls: radir.length,
+          eftir_stodu: eftirStodu,
+          opin: (eftirStodu.beidni || 0) + (eftirStodu.i_vinnu || 0) + (eftirStodu.i_yfirferd || 0),
+          beidni_eftir_flokki: eftirFlokki,
+          beidni_eftir_merki: eftirMerki,
+        });
+      }
+
       // Röðun: staða → forgangs-merki (rautt=3 efst) → handvirk röð (priority) → nýjast.
       // Liturinn er þannig aðal-forgangurinn; drag fínstillir innan sama litar.
-      const r = await sb('verkefnalisti?select=*&order=status.asc,flag.desc,priority.desc,created_at.desc&limit=500');
+      //
+      // ?slim=1 — borðið sjálft án þungu textadálkanna (description, claude_notes,
+      // feedback, myndir). Notað þegar aðeins þarf að teikna listann.
+      const dalkar = q.slim
+        ? 'id,title,status,category,flag,priority,assigned_agent,created_at,updated_at,completed_at'
+        : '*';
+      const r = await sb('verkefnalisti?select=' + dalkar +
+        '&order=status.asc,flag.desc,priority.desc,created_at.desc&limit=500');
       if (!r.ok) return json(r.status, { error: await r.text() });
       const tasks = await r.json();
       return json(200, { tasks });

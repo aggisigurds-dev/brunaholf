@@ -1307,11 +1307,14 @@ document.addEventListener('visibilitychange', function(){ if(synilegt()) sakja()
   }
   async function saekjaVerk(){
     try{
-      var j = await soek('/api/verkefnalisti');
-      var t = j.tasks || {}, arr = Array.isArray(t) ? t : [];
-      var eftir = {};
-      arr.forEach(function(x){ var st = x.status || '?'; eftir[st] = (eftir[st]||0) + 1; });
-      var h = lina('Verkefni alls', arr.length);
+      // ?tolur=1 — talning reiknuð á þjóninum. Áður sótti þetta ALLAN listann:
+      // 982 KB og 2,5 s af því `select=*` dregur lýsingar, athugasemdir og
+      // myndaslóðir fyrir 500 raðir — til að birta þrjár tölur. Á fimm mínútna
+      // fresti, á fjórum vélum. Svarið er nú innan við 1 KB.
+      var j = await soek('/api/verkefnalisti?tolur=1');
+      var eftir = (j && j.eftir_stodu) || {};
+      var h = lina('Verkefni alls', (j && j.alls) || 0);
+      if(j && j.opin != null) h += lina('Opin', j.opin, '#ffb84d');
       Object.keys(eftir).sort(function(a,b){ return eftir[b] - eftir[a]; }).slice(0,4)
         .forEach(function(k){ h += lina(k, eftir[k]); });
       document.getElementById('vk-efni').innerHTML = h;
