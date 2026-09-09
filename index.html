@@ -2068,6 +2068,7 @@ function save(opts){
      fara aldrei upp. */
 let _syncTimer = null;
 let _syncInFlight = false;
+let _syncMistokst = 0;   // fjoldi mistekinna vistana i rod -> vaxandi bid (09.09.2026)
 let _pullInFlight = false;
 let _pollTimer = null;
 let _serverHasRecord = false;
@@ -2131,6 +2132,48 @@ function scheduleServerSync(){
   if(_syncTimer) clearTimeout(_syncTimer);
   _syncTimer = setTimeout(syncToServer, 800);
 }
+
+/* ── VISTUN MÁ ALDREI GLATAST (09.09.2026) ────────────────────────────────────
+ * Agnar: „Ég bið um þetta atriði á hverjum degi. Af hverju er ekki hægt að
+ *         eitthvað vistist? Hvað kemur í veg fyrir það?"
+ *
+ * Mælt svar — þrennt, og samstillingin sjálf var ekki sökudólgurinn:
+ *
+ *  1. NAFN SEM LYKILL. invoice_drafts þekkti dragið á worksite_name, ritanlegum
+ *     reit. Vistun fór á ranga röð. Lagað sama dag (auðkennið er nú `id`).
+ *
+ *  2. 800 ms BIÐ ÁN ÚTSKOLUNAR.  save() skrifaði í localStorage og setti
+ *     tímamæli á 800 ms. Færi notandinn af síðunni, lokaði flipanum eða
+ *     endurhlæði innan þess tíma FÓR HANN ALDREI AF STAÐ. Breytingin var til á
+ *     þeirri einu vél og barst aldrei á þjóninn. Enginn `pagehide`-flush var til.
+ *
+ *  3. MISTÖKST VISTUN VAR ÞÖGGUÐ.  catch setti merkið á „offline" og gerði
+ *     ekkert meira. Engin biðröð, engin endurtilraun. Eitt 500-svar frá Netlify
+ *     — eða kalt fall sem svaraði of seint — og vinnan dó með flipanum.
+ *
+ * Hér eru 2 og 3 lagfærð. Sama regla og textatap-sópið 09.09: debounce án
+ * blur-flush er gagnatap sem bíður þess að gerast.
+ */
+let _flushad = false;
+function flushSyncNow(){
+  // Kallað þegar síðan er að hverfa. Enginn tími fyrir kurteisi: sendum strax
+  // með keepalive svo vafrinn klári beiðnina þótt flipinn sé farinn.
+  try{
+    if(_syncTimer){ clearTimeout(_syncTimer); _syncTimer = null; }
+    const patch = _serverHasRecord ? _buildPatch() : null;
+    if(patch && _tomtPatch(patch)) return;
+    const body = JSON.stringify(patch ? { key:'hub_state', patch } : { key:'hub_state', value: state });
+    fetch('/api/app-state', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body, keepalive: true,
+    }).catch(()=>{});
+    _flushad = true;
+  }catch(_){}
+}
+window.addEventListener('pagehide', flushSyncNow);
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState === 'hidden') flushSyncNow();
+});
 async function syncToServer(){
   if(_syncInFlight || _pullInFlight) { _syncTimer = setTimeout(syncToServer, 1000); return; }
   _syncInFlight = true;
@@ -2155,8 +2198,20 @@ async function syncToServer(){
       const eftir = _buildPatch(); if(!_tomtPatch(eftir)) scheduleServerSync();   // breyttist á meðan → senda aftur
     } else if(!patch){ _snapSynced(state); }
     setSyncBadge('synced');
+    _syncMistokst = 0;
   }catch(e){
+    // 09.09.2026: ÁÐUR var þetta allt — merkið varð „offline" og vinnan dó með
+    // flipanum. Ekkert reyndi aftur. Eitt 500-svar frá Netlify eða kalt fall sem
+    // svaraði of seint þýddi að breytingin komst aldrei á þjóninn, og notandinn
+    // sá hana hverfa næst þegar hann opnaði á annarri vél.
+    // Nú: endurtilraun með vaxandi bið (2 s → 4 → 8 → 16 → 32, hámark 60 s) þar
+    // til hún kemst upp. Breytingin situr í localStorage á meðan, svo ekkert
+    // glatast þótt endurtilraunin taki tíma.
     setSyncBadge('offline');
+    _syncMistokst = Math.min((_syncMistokst || 0) + 1, 6);
+    const bid = Math.min(2000 * Math.pow(2, _syncMistokst - 1), 60000);
+    if(_syncTimer) clearTimeout(_syncTimer);
+    _syncTimer = setTimeout(syncToServer, bid);
   }finally{
     _syncInFlight = false;
   }
