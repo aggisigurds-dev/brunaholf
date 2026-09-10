@@ -352,3 +352,12 @@ async function fetchAll(table, qs) {
 function cors() { return { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET, POST, OPTIONS', 'access-control-allow-headers': 'content-type' }; }
 function json(s, p) { return resp(s, JSON.stringify(p), { 'content-type': 'application/json', ...cors() }); }
 function resp(statusCode, body, headers) { return { statusCode, headers, body }; }
+
+// 2026-09-10 (Agnar: „ad eg geti valid starfsmannanumer, td Hamza og sed hvad
+// hann er ad klara, byrja a morgum gotum per dag sidustu td 30 daga"):
+// nlsh-starfsmadur.js svarar their spurningu og THARF somu kortlagningu.
+// Hun er flutt ut hedan fremur en afritud - skrain sjalf ber vidvorun um afrit
+// af VERK sem rak i sundur (full a 1.3 an rokstudnings). Ein tafla, einn stadur.
+exports.STAFF = STAFF;
+exports.nrForEmployee = nrForEmployee;
+exports.nrFromCategory = nrFromCategory;

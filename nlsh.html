@@ -193,6 +193,17 @@
     let d;
     try{ const r=await fetch('/api/nlsh-dashboard'); d=await r.json(); if(d.error) throw new Error(d.error); }
     catch(e){ meta.textContent='Villa: '+e.message; return; }
+    // 2026-09-10 (Agnar: „bæta við filter á byrjuðum verkum tala og kláruðum",
+    // „expand week"): borðið skilar EINNI holes-tölu — annaðhvort aðeins Done
+    // eða allt — svo það getur ekki sagt hvað er klárað OG hvað er ólokið.
+    // nlsh-starfsmadur telur hvort tveggja í sömu keyrslu. Bregðist kallið
+    // stendur vikuborðið óbreytt; dagaopnunin sýnir þá aðeins kláruðu tölurnar.
+    let _dagKl = {};
+    try{
+      const r2=await fetch('/api/nlsh-starfsmadur?dagar=200');
+      const s2=await r2.json();
+      (s2.dagar_allir||[]).forEach(x=>{ _dagKl[x.nr+'|'+x.dags]=x; });
+    }catch(_){ /* valfrjálst — má vanta */ }
     meta.textContent = d.only_done ? 'aðeins kláruð göt' : 'öll göt';
     document.getElementById('nl-cards').innerHTML = [
       card('Heildartekjur (m. vsk)', kr(d.totals.revenue_m_vsk), num(d.totals.heilar)+' heildir'),
@@ -268,11 +279,91 @@
       <thead><tr><th>Starfsmaður</th>${wkeys.map(w=>`<th>${w.replace(/^\d+-W/,'v')}</th>`).join('')}<th>Samtals</th><th>Göt/klst</th></tr></thead>
       <tbody>${staffRows.map(([nr,o])=>`<tr><td>${nameByNr[nr]||('Starfsmaður '+nr)}</td>${
         wkeys.map(w=>{ const c=o.wks[w]; if(!c||(!c.holes&&!c.hours)) return '<td style="color:#d3d9e0">·</td>';
-          return `<td title="${c.holes} göt · ${c.hours} klst"><b>${c.holes||0}</b><span style="color:#94a3b8">/${Math.round(c.hours)||0}</span></td>`; }).join('')
+          return `<td class="nl-wk" data-nr="${nr}" data-wk="${w}" title="${c.holes} göt · ${c.hours} klst — smelltu til að opna vikuna"><b>${c.holes||0}</b><span style="color:#94a3b8">/${Math.round(c.hours)||0}</span></td>`; }).join('')
       }<td><b>${o.tot.holes}</b><span style="color:#94a3b8">/${Math.round(o.tot.hours)}</span></td><td>${o.tot.hours?Math.round(o.tot.holes/o.tot.hours*100)/100:'—'}</td></tr>`).join('')}</tbody>
       <tfoot><tr><td>Samtals</td>${wkeys.map(w=>{ const t=inWin.filter(r=>r.week===w).reduce((a,r)=>{a.h+=r.holes;a.k+=r.hours;return a;},{h:0,k:0});
         return `<td><b>${t.h}</b><span style="color:#94a3b8">/${Math.round(t.k)}</span></td>`; }).join('')}<td><b>${winTot.holes}</b><span style="color:#94a3b8">/${Math.round(winTot.hours)}</span></td><td>${winTot.hours?Math.round(winTot.holes/winTot.hours*100)/100:'—'}</td></tr></tfoot></table>`
       : '<div style="padding:14px;color:#94a3b8;font-size:13px">Engin gögn í þessum mánuðum.</div>';
+
+    // ── 2026-09-10, ósk Agnars: „eða bara þarna að geta opnað á vikuna svo
+    // ég sjái dagana" (og á undan: „að ég geti valið starfsmannanúmer, td Hamza
+    // og séð hvað hann er að klára ... per dag").
+    //
+    // Vikureiturinn opnast núna niður í dagana sína. Gögnin eru ÞEGAR í
+    // svarinu (`byStaffDay`), svo þetta kostar ekkert kall — vikan opnast
+    // samstundis. ALLIR sjö dagar eru sýndir, líka þeir tómu: „ekkert þennan
+    // dag" er svar, ekki eyða. Helgar eru daufar svo mánudagur sjáist í röðinni.
+    (function opnaViku(){
+      const tafla = document.querySelector('#nl-perf table'); if(!tafla) return;
+      if(!document.getElementById('nl-wk-css')){
+        const st=document.createElement('style'); st.id='nl-wk-css';
+        st.textContent = 
+          '#nl-perf td.nl-wk{cursor:pointer}'+
+          '#nl-perf td.nl-wk:hover{background:#eef4ff;box-shadow:inset 0 0 0 1px #c7d9ff}'+
+          '#nl-perf td.nl-wk.opin{background:#e0ebff;box-shadow:inset 0 0 0 1px #93b4ff}'+
+          '#nl-perf tr.nl-wk-dagar>td{background:#f7f9fc;padding:0}'+
+          '#nl-perf .nl-wk-inn{padding:10px 12px}'+
+          '#nl-perf .nl-wk-h{font-size:12px;font-weight:700;color:#334155;margin-bottom:7px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}'+
+          '#nl-perf table.nl-dg{width:100%;border-collapse:collapse;font-size:12px}'+
+          '#nl-perf table.nl-dg th{text-align:right;color:#64748b;font-weight:600;padding:3px 8px;border-bottom:1px solid #e2e8f0}'+
+          '#nl-perf table.nl-dg th:first-child{text-align:left}'+
+          '#nl-perf table.nl-dg td{text-align:right;padding:3px 8px;border-bottom:1px solid #eef2f7;font-variant-numeric:tabular-nums}'+
+          '#nl-perf table.nl-dg td:first-child{text-align:left}'+
+          '#nl-perf table.nl-dg tr.helgi td{color:#a3adba}'+
+          '#nl-perf table.nl-dg tr.tomur td{color:#c2cad4}';
+        document.head.appendChild(st);
+      }
+      // Mánudagur ISO-vikunnar út frá lyklinum (vika 1 inniheldur 4. janúar).
+      function manudagur(wk){
+        const m=/^(\d{4})-W(\d{2})$/.exec(wk); if(!m) return null;
+        const ar=+m[1], vika=+m[2];
+        const jan4=new Date(Date.UTC(ar,0,4));
+        const man1=new Date(jan4.getTime()-(((jan4.getUTCDay()+6)%7))*86400000);
+        return new Date(man1.getTime()+(vika-1)*7*86400000);
+      }
+      const VD=['mán','þri','mið','fim','fös','lau','sun'];
+      tafla.addEventListener('click', ev=>{
+        const td=ev.target.closest('td.nl-wk'); if(!td||!tafla.contains(td)) return;
+        const tr=td.parentElement;
+        const nr=+td.dataset.nr, wk=td.dataset.wk;
+        const naest=tr.nextElementSibling;
+        const opinNu = naest && naest.classList.contains('nl-wk-dagar') && naest.dataset.wk===wk;
+        if(naest && naest.classList.contains('nl-wk-dagar')) naest.remove();
+        tr.parentElement.querySelectorAll('td.nl-wk.opin').forEach(x=>x.classList.remove('opin'));
+        if(opinNu) return;                                  // sami reitur aftur → loka
+        td.classList.add('opin');
+        const man=manudagur(wk); if(!man) return;
+        const eftirDegi={};
+        (d.byStaffDay||[]).filter(r=>r.nr===nr).forEach(r=>{ eftirDegi[r.date]=r; });
+        const linur=[];
+        let sh=0, sk=0, so=0;
+        for(let i=0;i<7;i++){
+          const dd=new Date(man.getTime()+i*86400000);
+          const key=dd.toISOString().slice(0,10);
+          const r=eftirDegi[key]||{holes:0,hours:0};
+          const kl=_dagKl[nr+'|'+key];
+          // `holes` úr borðinu er KLÁRAÐ (borðið síar á Done). `olokid` kemur
+          // úr nlsh-starfsmadur og er gat sem er skráð þennan dag en ekki Done.
+          const klarad=r.holes||0, olokid=kl?kl.olokid:null;
+          sh+=klarad; sk+=r.hours||0; so+=(olokid||0);
+          const tomur=!(klarad||r.hours||olokid), helgi=i>=5;
+          linur.push(`<tr class="${tomur?'tomur ':''}${helgi?'helgi':''}">`+
+            `<td>${VD[i]} ${key.slice(8)}.${key.slice(5,7)}.</td>`+
+            `<td>${klarad}</td>`+
+            `<td>${olokid==null?'<span style="color:#c2cad4">—</span>':(olokid||0)}</td>`+
+            `<td>${Math.round((r.hours||0)*10)/10}</td>`+
+            `<td>${r.hours?Math.round(klarad/r.hours*100)/100:'—'}</td></tr>`);
+        }
+        const ny=document.createElement('tr');
+        ny.className='nl-wk-dagar'; ny.dataset.wk=wk;
+        ny.innerHTML=`<td colspan="${tr.children.length}"><div class="nl-wk-inn">`+
+          `<div class="nl-wk-h"><span>📅 ${(nameByNr[nr]||('Starfsmaður '+nr))} — ${wk.replace(/^\d+-W/,'vika ')}</span>`+
+          `<span style="color:#64748b;font-weight:600">${sh} kláruð${so?' · '+so+' ólokin':''} · ${Math.round(sk*10)/10} klst · ${sk?Math.round(sh/sk*100)/100:'—'} göt/klst</span></div>`+
+          `<table class="nl-dg"><thead><tr><th>Dagur</th><th title="registration_status = Done">Kláruð</th><th title="Skráð á hann þennan dag en ekki Done">Ólokið</th><th>Klst</th><th>Göt/klst</th></tr></thead><tbody>${linur.join('')}</tbody></table>`+
+          '</div></td>';
+        tr.after(ny);
+      });
+    })();
     document.getElementById('nl-verk').innerHTML = `<table class="nl-t">
       <thead><tr><th>Verk</th><th>Verkliður</th><th>Búið</th><th>Markmið</th><th>%</th><th>Heildir</th><th>Verð/heild</th><th>Tekjur m.vsk</th></tr></thead>
       <tbody>${d.byVerk.map(v=>`<tr><td>${v.verk_nr}</td><td style="text-align:left">${v.label}</td><td>${num(v.stakar)}</td><td>${num(v.target)}</td><td style="text-align:left"><span class="nl-pct">${v.pct==null?'—':v.pct+'%'}</span></td><td>${v.heilar}</td><td>${kr(v.rate_m_vsk)}</td><td>${kr(v.amount_m_vsk)}</td></tr>`).join('')}</tbody>
