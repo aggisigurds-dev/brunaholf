@@ -1500,11 +1500,15 @@ document.addEventListener('visibilitychange', function(){ if(synilegt()) sakja()
       var j = await soek('/api/oryggisnet', thvinga);
       var t = j.talning || {}, brotnir = (j.verdir||[]).filter(function(v){ return v.stada !== 'graent'; });
       var slaem = (t.rautt||0) + (t.villa||0);
+      // Þaggaðir (10.09.2026): grænir AÐEINS af því slæma talan var fryst sem grunnlína.
+      // Fallið merkir þá (oryggisnet.js, lesaGrunnlinu). Áður stóðu þeir í „Í lagi" með heilum.
+      var thaggadir = (j.verdir||[]).filter(function(v){ return v.stada === 'graent' && v.thaggadur; });
 
       var h = '<div class="on-haus">'
         + '<span class="on-tala ' + (slaem ? 'brotid' : 'heilt') + '">'
         + (t.graent||0) + '<span style="font-size:14px;color:var(--ink3)">/' + (j.alls||0) + '</span></span>'
-        + '<span class="on-undir">' + (slaem ? slaem + ' brotnir' : 'netið heldur') + '</span>'
+        + '<span class="on-undir">' + (slaem ? slaem + ' brotnir' : 'netið heldur')
+          + (thaggadir.length ? ' · <span style="color:#e8c547">' + thaggadir.length + ' þaggaðir</span>' : '') + '</span>'
         + (j.stodnad ? '<span class="on-stodnad">keyrsla ' + Math.floor((j.aldur_min||0)/1440) + 'd gömul</span>' : '')
         + '</div>';
 
@@ -1520,13 +1524,27 @@ document.addEventListener('visibilitychange', function(){ if(synilegt()) sakja()
           + '</div></div>';
       });
 
-      // Grænir eru bara nöfn — þeir þurfa ekkert pláss fyrr en þeir bila.
-      var graenir = (j.verdir||[]).filter(function(v){ return v.stada === 'graent'; })
+      // Þaggaðir í miðjuna: ekki jafn háværir og brotnir, en aldrei faldir í „Í lagi".
+      // Skilaboðin sjást svo talan sem var fryst sé fyrir augum (t.d. „40 blank sales").
+      thaggadir.forEach(function(v){
+        var tenglar = skraTenglar(v.skilabod);
+        h += '<div class="on-rod" title="Grænn aðeins af því slæma talan var fryst sem grunnlína. Núllaðu grunnlínuna og þá geltir hann aftur.">'
+          + '<span class="on-dot" style="background:#e8c547;box-shadow:0 0 6px #e8c547"></span>'
+          + '<div style="min-width:0;flex:1">'
+            + '<div class="on-nafn">' + hreinsaSkilabod(v.nafn)
+              + ' <span style="color:#e8c547;font-weight:700;letter-spacing:.1em;font-size:9px">ÞAGGAÐUR</span></div>'
+            + '<div class="on-msg">' + hreinsaSkilabod(v.skilabod) + '</div>'
+            + (tenglar.length ? '<div class="on-tenglar">' + tenglar.join('') + '</div>' : '')
+          + '</div></div>';
+      });
+
+      // Heilir grænir eru bara nöfn — þeir þurfa ekkert pláss fyrr en þeir bila.
+      var graenir = (j.verdir||[]).filter(function(v){ return v.stada === 'graent' && !v.thaggadur; })
                                  .map(function(v){ return v.nafn; });
       if(graenir.length){
         h += '<div class="on-graen-listi"><b>Í lagi:</b> ' + graenir.join(' · ') + '</div>';
       }
-      if(!brotnir.length && !graenir.length){
+      if(!brotnir.length && !thaggadir.length && !graenir.length){
         h += '<div style="color:var(--ink3);font-size:12px">engin keyrsla skráð enn — '
           + 'keyrðu <code>npm run audit</code> í slokkvitaeki</div>';
       }

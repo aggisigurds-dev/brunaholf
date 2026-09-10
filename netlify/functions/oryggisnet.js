@@ -43,8 +43,29 @@ exports.handler = async (event) => {
   const stada = await get('v_oryggisnet_stada?select=*&order=stada.asc,audit.asc');
   if (!stada) return json(502, { error: 'Náði ekki í oryggisnet_keyrslur' });
 
-  const talning = { graent: 0, rautt: 0, villa: 0 };
-  for (const v of stada) if (talning[v.stada] != null) talning[v.stada]++;
+  // ÞAGGAÐIR VERÐIR (10.09.2026). Sjö verðir voru „grænir" aðeins af því slæma
+  // talan var fryst sem grunnlína — t.d. „40 blank sales (<= baseline 40)". Á
+  // Jarvis litu þeir nákvæmlega eins út og heilir verðir og fengu aðeins nafnið
+  // sitt í „Í lagi"-línunni. Múlbundinn hundur sem sést sem heill er fölsk
+  // staðreynd — nákvæmlega það sem Agnar kvartaði yfir.
+  // oryggisnet_keyrslur á engan grunnlínu-dálk; talan býr aðeins í skilaboðatexta
+  // varðarins og er því lesin þaðan: „baseline N" eða „grunnlína N". Grunnlína 0
+  // er heilbrigð („BASELINE 0", „<= baseline 0") og telst EKKI þögguð.
+  // Takmörk: aðeins síðasta lína varðarins er vistuð í skilabod, svo vörður sem
+  // prentar grunnlínuna ofar (t.d. audit-t-s-i) greinist ekki hér.
+  const lesaGrunnlinu = (s) => {
+    const texti = String(s || '');
+    const re = /(?:baseline|grunnl[ií]na)\s*:?\s*(\d+)/gi;
+    let m, mest = 0;
+    while ((m = re.exec(texti)) !== null) mest = Math.max(mest, Number(m[1]));
+    return mest;
+  };
+
+  const talning = { graent: 0, rautt: 0, villa: 0, thaggadir: 0 };
+  for (const v of stada) {
+    if (talning[v.stada] != null) talning[v.stada]++;
+    if (v.stada === 'graent' && lesaGrunnlinu(v.skilabod) > 0) talning.thaggadir++;
+  }
 
   // Síðasta keyrsla: hvenær, hvaðan, og hversu gömul hún er. Gömul keyrsla er
   // sjálfstæð aðvörun — net sem keyrir ekki er jafn gagnslaust og ekkert net.
@@ -64,6 +85,9 @@ exports.handler = async (event) => {
       nafn: v.audit.replace(/^audit-/, '').replace(/\.cjs$/, ''),
       stada: v.stada,
       skilabod: v.skilabod,
+      // Grunnlína lesin úr skilaboðunum (sjá lesaGrunnlinu). > 0 á grænum verði = þaggaður.
+      grunnlina: lesaGrunnlinu(v.skilabod),
+      thaggadur: v.stada === 'graent' && lesaGrunnlinu(v.skilabod) > 0,
       ms: v.ms,
       timi: v.timi,
       uppruni: v.uppruni,
