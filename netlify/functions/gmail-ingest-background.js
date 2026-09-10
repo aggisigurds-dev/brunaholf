@@ -1,5 +1,5 @@
 // gmail-ingest-background.js — SCHEDULED (netlify.toml, á 2 tíma fresti):
-// sækir eldklar INBOX + SENT sjálfvirkt inn í email_digest svo svarstaðan á
+// sækir eldklar INBOX + SENT (og INBOX bokhald@eldklar.is) sjálfvirkt inn í email_digest svo svarstaðan á
 // „Þjónustuver póstum" (slokkvitaeki patch 309) og company-mail helst fersk án
 // þess að nokkur smelli á „📥 Sækja póst".
 //
@@ -20,6 +20,11 @@ const { handler: ingest } = require('./gmail-ingest');
 const JOBS = [
   { account: 'eldklar@eldklar.is', folder: 'inbox' },
   { account: 'eldklar@eldklar.is', folder: 'sent' },
+  // 10.09.2026: bokhald@eldklar.is kom áður AÐEINS um Thunderbird-brúna á tölvunni „Notandi",
+  // sem hætti að skila 02.09 (12 póstar í grunninum, frá 25.08). Google-tengingin virkar:
+  // INBOX var bakfyllt sama dag (119 póstar, 0 villur). SENT er VILJANDI ekki sótt — þar eru
+  // 4 póstar, m.a. launaseðlar starfsmanna, og ekkert af því er samskipti við viðskiptavini.
+  { account: 'bokhald@eldklar.is', folder: 'inbox' },
 ];
 const DAYS = 3; // lítill gluggi per keyrslu; upsert á message_id gerir skörun skaðlausa
 

@@ -17,7 +17,11 @@
  * Endapunktur:
  *   GET  /api/gmail-send?status=1        → hvaða pósthólf geta sent
  *   POST /api/gmail-send
- *     { account, to:[…], subject, html, cc?:[…], replyTo?, attachments?:[…] }
+ *     { account, to:[…], subject, html, cc?:[…], replyTo?, inReplyTo?, attachments?:[…] }
+ *
+ *   inReplyTo (10.09.2026) — Message-ID upprunalega póstsins (email_digest.message_id).
+ *     Setur In-Reply-To + References og sendir með threadId sendandi pósthólfsins, svo
+ *     svarið lendir í SAMA samtali, bæði hjá viðtakanda og í Gmail hjá okkur.
  *
  *   Viðhengi — sömu snið og email-send.js tekur, svo kallendur þurfa ekki að breytast:
  *     { filename, content }  base64 (t.d. reikningur teiknaður í vafranum)
@@ -145,10 +149,24 @@ exports.handler = async (event) => {
     });
   }
 
+  // ── Svar í SAMA þræði (10.09.2026) ────────────────────────────────────────
+  // Agnar: „laaaaang þægilegast ef maður getur svarað póstum úr kerfinu og það haldi sama
+  // samtalinu". Svara-hnappurinn (240) sendi áður nýjan póst með „Re:" í efni og Gmail
+  // setti hann í NÝJAN þráð. Nú: In-Reply-To + References (póstforrit viðtakandans raðar
+  // svarinu í samtalið) og threadId úr SENDANDI pósthólfinu (svarið lendir í sama þræði
+  // hjá okkur). Uppflettingin má ALDREI stöðva sendingu: finnist upprunalegi pósturinn
+  // ekki fer svarið samt — með hausunum en án threadId — og viðvörun fylgir svarinu.
+  let thread = null;
+  const inReplyTo = normMsgId(body.inReplyTo);
+  if (body.inReplyTo && !inReplyTo) warnings.push('inReplyTo hunsað: ógilt Message-ID');
+  if (inReplyTo) thread = await finnaThrad(token, inReplyTo, warnings);
+
   const mime = buildMime({
     from: body.from || account,       // má vera „Nafn <netfang>" — verður að vera pósthólfið eða alias þess
     to, cc: [].concat(body.cc || []).filter(Boolean),
     replyTo: body.replyTo || '',
+    inReplyTo: inReplyTo || '',
+    references: thread ? thread.references : '',
     subject,
     html: String(body.html || ''),
     attachments: atts,
@@ -157,7 +175,7 @@ exports.handler = async (event) => {
   const r = await fetch(GMAIL_SEND, {
     method: 'POST',
     headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ raw: b64url(mime) }),
+    body: JSON.stringify(thread && thread.threadId ? { raw: b64url(mime), threadId: thread.threadId } : { raw: b64url(mime) }),
   });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) {
@@ -172,7 +190,11 @@ exports.handler = async (event) => {
       warnings,
     });
   }
-  return json(200, { ok: true, id: j.id, threadId: j.threadId, warnings });
+  return json(200, {
+    ok: true, id: j.id, threadId: j.threadId,
+    threaded: !!(thread && thread.threadId && j.threadId === thread.threadId),
+    warnings,
+  });
 };
 
 // ── Bilanaskráning fyrir stöðvaða sendingu ──────────────────────────────────
@@ -249,6 +271,49 @@ function encAddr(a) {
   return m ? (enc(m[1]) + ' <' + m[2] + '>') : String(a || '').trim();
 }
 function wrap(b64) { return (b64.match(/.{1,76}/g) || []).join('\r\n'); }
+
+// Message-ID → „<…>" án bila, gæsalappa eða línuskila; annað → null. Gildið fer beint í
+// MIME-haus, svo þetta er líka vörnin gegn haus-innskoti („…>\r\nBcc: …").
+function normMsgId(v) {
+  const s = String(v == null ? '' : v).trim();
+  if (!s) return null;
+  const inner = s.replace(/^</, '').replace(/>$/, '');
+  if (!/^[^\s<>"]{3,300}$/.test(inner) || inner.indexOf('@') === -1) return null;
+  return '<' + inner + '>';
+}
+
+// Finnur upprunalega póstinn í SENDANDI pósthólfinu (Gmail-leit rfc822msgid:) og skilar
+// threadId + References-keðju (fyrri tilvísanir + upprunalega Message-ID). Kastar aldrei.
+async function finnaThrad(token, msgId, warnings) {
+  const H = { Authorization: 'Bearer ' + token };
+  const api = 'https://gmail.googleapis.com/gmail/v1/users/me/messages';
+  try {
+    const l = await fetch(api + '?maxResults=1&q=' + encodeURIComponent('rfc822msgid:' + msgId.slice(1, -1)), { headers: H });
+    if (!l.ok) {
+      warnings.push('þráðaleit: HTTP ' + l.status + ' — svarið fer án threadId');
+      return { threadId: null, references: msgId };
+    }
+    const lj = await l.json().catch(() => ({}));
+    const hit = lj && lj.messages && lj.messages[0];
+    if (!hit) {
+      warnings.push('upprunalegi pósturinn fannst ekki í sendandi pósthólfi — svarið fer án threadId');
+      return { threadId: null, references: msgId };
+    }
+    let refs = '';
+    const m = await fetch(api + '/' + encodeURIComponent(hit.id) + '?format=metadata&metadataHeaders=References', { headers: H });
+    if (m.ok) {
+      const mj = await m.json().catch(() => ({}));
+      const hdr = ((mj && mj.payload && mj.payload.headers) || []).find(x => String(x.name || '').toLowerCase() === 'references');
+      refs = hdr ? String(hdr.value || '') : '';
+    }
+    const kedja = (refs.match(/<[^<>\s"]+>/g) || []).filter(x => x !== msgId).slice(-10);
+    kedja.push(msgId);
+    return { threadId: hit.threadId || null, references: kedja.join(' ') };
+  } catch (e) {
+    warnings.push('þráðaleit mistókst: ' + String((e && e.message) || e));
+    return { threadId: null, references: msgId };
+  }
+}
 function b64url(s) {
   return Buffer.from(s, 'utf8').toString('base64')
     .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -269,6 +334,12 @@ function buildMime(o) {
   ];
   if (o.cc && o.cc.length) h.push('Cc: ' + o.cc.map(encAddr).join(', '));
   if (o.replyTo) h.push('Reply-To: ' + encAddr(o.replyTo));
+  if (o.inReplyTo) {
+    // Bæði gildin eru hreinsuð í normMsgId / finnaThrad (aðeins <…> án bila eða línuskila),
+    // svo ekkert getur skotið inn eigin haus. Löng References-keðja er brotin á línur (RFC 5322).
+    h.push('In-Reply-To: ' + o.inReplyTo);
+    h.push('References: ' + String(o.references || o.inReplyTo).split(' ').filter(Boolean).join('\r\n '));
+  }
   h.push('Subject: ' + enc(o.subject));
   h.push('MIME-Version: 1.0');
 
