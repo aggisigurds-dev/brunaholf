@@ -16075,6 +16075,42 @@ async function renderKrofuyfirlit(t){
     for(const bag of [state.data&&state.data.tier1, state.data&&state.data.tier2, state.tier3])
       for(const d of ((bag&&bag.debtors)||[])) for(const iv of (d.invoices||[])) if(iv.inv_key===key) iv.hidden = val;
   }
+  // 10.09.2026 — invHidden() les FJÓRAR heimildir með OR. Gleymist ein þeirra reisir
+  // renderList() feluna upp aftur í sömu andrá og hún var afvirkjuð, og aðeins HÖRÐ
+  // endurhleðsla lagar það. Þess vegna er þetta EINA leiðin sem má breyta feluninni:
+  // hún snertir allar heimildirnar í einu og er samhverf (falið ↔ ekki falið).
+  function beitaHidden(key, falid){
+    if(falid) hiddenSet.add(key); else hiddenSet.delete(key);
+    persistHidden();
+    if(falid) serverHidden.add(key); else serverHidden.delete(key);
+    if(state.data){
+      if(!Array.isArray(state.data.hidden_keys)) state.data.hidden_keys = [];
+      const an = state.data.hidden_keys.filter(k => k !== key);
+      state.data.hidden_keys = falid ? an.concat([key]) : an;
+    }
+    setInvHidden(key, falid);
+  }
+  // Vistar feluna OG LES SVARIÐ TIL BAKA. Bakendinn skilar röðinni eins og hún ER í
+  // gagnagrunninum (Prefer: return=representation → { ok:true, meta:{ inv_key, hidden … } }),
+  // svo við þurfum ekki að GISKA á að skrifin hafi skilað sér.
+  //   { ok:false }                     → skrifin komust ekki á þjóninn.
+  //   { ok:true, hidden, stadfest }    → `hidden` er ÞJÓNSGILDIÐ, ekki það sem við báðum um.
+  // r.ok eitt og sér dugar ekki: 200 með óvæntum bol (t.d. villusíða frá Netlify) leit
+  // áður út nákvæmlega eins og heppnuð vistun.
+  async function vistaHidden(key, falid){
+    let r;
+    try{
+      r = await fetch('/api/krofur-yfirlit',{method:'POST',headers:{'content-type':'application/json'},
+        body:JSON.stringify({action:'save', inv_key:key, hidden:falid})});
+    }catch(_){ return { ok:false }; }
+    if(!r.ok) return { ok:false };
+    const j = await r.json().catch(()=>null);
+    const m = j && j.meta;
+    // Ef svarið ber ekki meta.hidden (eldri útgáfa af fallinu) treystum við r.ok og notum
+    // gildið sem við báðum um — skrifin fóru í gegn, við fáum bara enga staðfestingu á því.
+    const fraThjoni = (m && typeof m.hidden === 'boolean') ? m.hidden : null;
+    return { ok:true, hidden: fraThjoni === null ? falid : fraThjoni, stadfest: fraThjoni !== null };
+  }
 
   const state = { data:null, tier3:null, sort:'amount_desc', search:'', tierFilter:'company', newest:null, showHidden:false, pgFailed:false, wsFailed:false };
   // ── Sameina drög (tier 2): valstaða ──────────────────────────────────────
@@ -17188,65 +17224,59 @@ async function renderKrofuyfirlit(t){
       const key = b.dataset.key, act = b.dataset.act;
       if(!key || b.disabled) return;
       b.disabled = true;
-      // 👁 Sýna — hætta að fela (af-fela). Skrifar hidden:false, hreinsar bæði
-      // localStorage-settið og bakenda-flaggið svo hún birtist strax aftur.
-      if(act==='unhide'){
+      // 👁 Sýna / 🙈 Fela — ein samhverf leið fyrir báðar áttir.
+      if(act==='unhide' || act==='hide'){
         // 09.09.2026 — Agnar, miðja í reikningalotu: „nú get ég ekki unhide gamla verkið."
-        // Skrifin komust alla leið (mælt: krofur_yfirlit_meta.hidden = false), en röðin
-        // hélst grá og „Sýna" gerði ekkert við hvern smell.
+        // Skrifin komust alla leið (mælt: krofur_yfirlit_meta.hidden = false kl. 21:53:09),
+        // en röðin hélst grá og „Sýna" gerði ekkert við hvern smell.
         //
         // ROTIN: renderList() byrjar á  serverHidden = new Set(state.data.hidden_keys)
         // — það er SKYNDIMYNDIN sem var sótt ÁÐUR en við skrifuðum. serverHidden.delete()
-        // hér að neðan var því afturkallað í sömu andrá og renderList() keyrði, og
-        // invHidden() les þrjár heimildir með OR — sú þriðja vann alltaf.
-        // __KYF_CACHE (5 mín) hélt svo gömlu skyndimyndinni þótt farið væri af flipanum,
-        // svo aðeins HÖRÐ endurhleðsla lagaði það.
+        // var því afturkallað í sömu andrá og renderList() keyrði, og invHidden() les
+        // heimildirnar með OR — sú sem gleymdist vann alltaf. __KYF_CACHE (5 mín) hélt svo
+        // gömlu skyndimyndinni þótt farið væri af flipanum: aðeins HÖRÐ endurhleðsla lagaði það.
         //
-        // Lagfæringin: fjarlægja lykilinn líka úr state.data.hidden_keys, svo
-        // endurbyggingin í renderList() reisi hann ekki upp aftur.
-        let svarOk = true;
-        try{
-          const r = await fetch('/api/krofur-yfirlit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'save', inv_key:key, hidden:false})});
-          svarOk = r.ok;
-        }catch(_){ svarOk = false; }
-        if(!svarOk){
-          // Mistókst vistun má ekki líta út eins og hún hafi tekist.
+        // 10.09.2026: heimildirnar eru nú uppfærðar á EINUM stað (beitaHidden) — og það sem
+        // meira er, við teiknum úr ÞVÍ SEM ÞJÓNNINN SVARAR, ekki úr því sem við báðum um.
+        // Staðbundið gildi eftir skrif er ágiskun; svarið er staðreynd.
+        const falid = (act==='hide');
+        const sv = await vistaHidden(key, falid);
+        if(!sv.ok){
+          // Mistókst vistun má aldrei líta út eins og hún hafi tekist.
           b.disabled = false;
-          alert('Náði ekki að afvirkja felunina — reyndu aftur.\n\nRöðin er enn falin á þjóninum.');
+          alert(falid
+            ? 'Náði ekki að fela — reyndu aftur.\n\nBreytingin komst EKKI á þjóninn.'
+            : 'Náði ekki að afvirkja felunina — reyndu aftur.\n\nRöðin er enn falin á þjóninum.');
           return;
         }
-        hiddenSet.delete(key); persistHidden();
-        serverHidden.delete(key);
-        if(state.data && Array.isArray(state.data.hidden_keys)){
-          state.data.hidden_keys = state.data.hidden_keys.filter(k => k !== key);
+        beitaHidden(key, sv.hidden);   // ← þjónsgildið, ekki óskin
+        renderList();
+        // Þjónninn geymdi annað en beðið var um (t.d. önnur vél skrifaði á sama augnabliki —
+        // fjórar tölvur í sama rými). Röðin sýnir núna rétta stöðu; segjum frá svo enginn
+        // haldi að smellurinn hafi virkað.
+        if(sv.stadfest && sv.hidden !== falid){
+          alert(falid
+            ? 'Þjónninn geymdi röðina EKKI falda — hún er enn sýnileg.\n\nHugsanlega afvirkjaði önnur vél feluna á sama tíma. Listinn sýnir stöðuna á þjóninum.'
+            : 'Þjónninn geymir röðina enn falda.\n\nHugsanlega faldi önnur vél hana á sama tíma. Listinn sýnir stöðuna á þjóninum.');
         }
-        setInvHidden(key,false); renderList();
         return;
       }
-      if(act==='paid') b.classList.add('on');
-      const payload = act==='paid' ? {action:'save', inv_key:key, paid:true} : {action:'save', inv_key:key, hidden:true};
-      // 09.09.2026: villan var þögguð með catch(_){} — greitt/falið leit út fyrir að
-      // hafa vistast þótt kallið félli. Nú er svarið athugað og notandanum sagt frá.
+      // Hér stendur aðeins ✓ Greitt eftir (unhide/hide er afgreitt að ofan).
+      if(act!=='paid'){ b.disabled = false; return; }
+      b.classList.add('on');
+      // 09.09.2026: villan var þögguð með catch(_){} — greitt leit út fyrir að hafa
+      // vistast þótt kallið félli. Nú er svarið athugað og notandanum sagt frá.
       let okSvar = true;
       try{
-        const r = await fetch('/api/krofur-yfirlit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
+        const r = await fetch('/api/krofur-yfirlit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'save', inv_key:key, paid:true})});
         okSvar = r.ok;
       }catch(_){ okSvar = false; }
       if(!okSvar){
-        b.disabled = false; if(act==='paid') b.classList.remove('on');
+        b.disabled = false; b.classList.remove('on');
         alert('Náði ekki að vista — reyndu aftur.\n\nBreytingin komst EKKI á þjóninn.');
         return;
       }
-      if(act==='paid'){ paidSet.add(key); setTimeout(renderList, 260); }
-      else {
-        hiddenSet.add(key); persistHidden();
-        // Samhverft við „Sýna" hér að ofan: skyndimyndin verður að fylgja, annars
-        // reisir renderList() gamla ástandið upp úr state.data.hidden_keys.
-        if(state.data && Array.isArray(state.data.hidden_keys) && !state.data.hidden_keys.includes(key)){
-          state.data.hidden_keys.push(key);
-        }
-        setInvHidden(key,true); renderList();
-      }
+      paidSet.add(key); setTimeout(renderList, 260);
     }
 
     // ── Ósendar-vinnuflæði (lárétt skref-borð) ──────────────────────────────
