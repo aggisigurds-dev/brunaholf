@@ -1,6 +1,7 @@
 // tengilidir-build.js — build/refresh Charlize tengiliðir from work email.
 //
-//   GET /api/tengilidir-build[?dry=1][&scope=meaningful|all]
+//   GET  /api/tengilidir-build[?scope=meaningful|all]   → ALLTAF þurrkeyrsla, skrifar ekkert
+//   POST /api/tengilidir-build[?scope=meaningful|all]   → bætir NÝJUM netföngum við, eyðir engu
 //
 // Derives contact addresses from email_digest, matches them to companies, and
 // upserts into charlize_contacts (all status='pending' for human review — the
@@ -17,9 +18,8 @@
 //
 // scope=meaningful (default): the 308 company-linked + the shared-domain managers.
 //   scope=all: also every otengd vendor/one-off (mostly noise — you reject in review).
-// Writes replace only prior source='postur-eldklar*' rows; manual seeds + any row a
-// human has touched (other source) are never deleted, and existing addresses are skipped
-// so seeds are never duplicated.
+// Skrif (aðeins POST) bæta við netföngum sem eru ekki þegar í skránni. Engu er eytt og
+// engri röð sem til er breytt — sjá WRITE-athugasemdina neðst (10.09.2026).
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ACCOUNT = 'eldklar@eldklar.is';
@@ -55,7 +55,9 @@ exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors, body: '' };
   if (!SUPABASE_URL || !KEY) return { statusCode: 500, headers: cors, body: JSON.stringify({ error: 'missing SUPABASE env' }) };
   const q = event.queryStringParameters || {};
-  const dry = q.dry === '1' || q.dry === 'true';
+  // GET skrifar ALDREI (10.09.2026): opinn tengill, forskoðun eða vafri sem sækir slóðina
+  // aftur mátti ekki geta hreinsað tengiliðaskrána. Skrif krefjast POST.
+  const dry = event.httpMethod !== 'POST' || q.dry === '1' || q.dry === 'true';
   const scope = (q.scope === 'all') ? 'all' : 'meaningful';
 
   try {
@@ -112,10 +114,12 @@ exports.handler = async (event) => {
 
     if (dry) return { statusCode: 200, headers: cors, body: JSON.stringify({ dry: true, ...summary, samples: rows.slice(0, 15).map(r => ({ netfang: r.netfang, len: r.len, fyrirtaeki: r.fyrirtaeki, kt: r.kennitala, role: r.hlutverk, n: r.faerslur, conf: r.confidence })) }) };
 
-    // WRITE: replace prior auto rows, skip addresses that already exist (seeds/human rows)
+    // WRITE — BÆTIR AÐEINS VIÐ (10.09.2026). Hér stóð DELETE á source=postur-eldklar* á
+    // undan innsetningu, en existing var lesið Á UNDAN eyðingunni: hver eydd röð taldist
+    // „til" og var aldrei sett inn aftur. Tengja og Samþykkja breyta ekki source, svo ein
+    // keyrsla hefði tekið 443 raðir, þar af 384 samþykktar tengingar sem voru unnar í
+    // höndunum (mælt 10.09.2026). Nú er engu eytt; aðeins ný netföng eru sett inn.
     const existing = new Set((await pageAll('charlize_contacts', 'netfang')).map(r => (r.netfang || '').toLowerCase()));
-    const del = await fetch(`${SUPABASE_URL}/rest/v1/charlize_contacts?source=like.postur-eldklar*`, { method: 'DELETE', headers: { ...H, Prefer: 'return=minimal' } });
-    if (!del.ok && del.status !== 404) throw new Error('delete ' + del.status + ' ' + (await del.text()).slice(0, 160));
     const fresh = rows.filter(r => !existing.has(r.netfang));
     let written = 0;
     for (let i = 0; i < fresh.length; i += 200) {
