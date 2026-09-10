@@ -328,8 +328,33 @@ async function fetchAllPages(path) {
   // svartíma /api/worksites). Fyrsta síðan biður nú um count=exact og
   // afgangurinn er sóttur SAMHLIÐA — sama niðurstaða, ~2×RTT í stað N×RTT.
   const pageSize = 1000;
+  // 2026-09-10 — EINKVÆM RÖÐUN ER SKILYRÐI FYRIR SAMHLIÐA SÍÐUM, ekki snyrtimennska.
+  // Síðurnar hér að neðan eru sóttar SAMHLIÐA sem sjálfstæðar Range-beiðnir.
+  // Án einkvæmrar röðunar lofar PostgREST engri fastri röð milli beiðna, svo
+  // síða 2 og 3 geta skarast eða sleppt röðum. Það gerðist í reynd: lifandi
+  // /api/worksites gaf total_ajour_registrations 12.742 -> 12.608 -> 12.588 í
+  // þremur köllum í röð, en rétta talan fyrir 2026 er 13.182 (mælt í SQL sama
+  // dag). Allar þrjár voru rangar og engin villa sást. Sama fall sækir
+  // timavera_entries (order=date.asc — dagsetning er EKKI einkvæm) og invoices
+  // (order=gjalddagi — ekki einkvæmt), þ.e. rukkunartölur.
+  // Lausn: `id` er alltaf síðasti röðunarlykillinn. Allar fimm töflurnar sem
+  // kalla hingað (ajour_registrations, timavera_entries, invoices,
+  // bank_transactions, email_digest) hafa `id` sem frumlykil — staðfest.
+  // Kalli einhver þetta á töflu án `id` fellur beiðnin með 400: hávær villa er
+  // betri en þögul vantalning.
+  const slod = (() => {
+    const q = path.indexOf('?');
+    const grunnur = q < 0 ? path : path.slice(0, q);
+    const hlutar = q < 0 ? [] : path.slice(q + 1).split('&');
+    const i = hlutar.findIndex((h) => h.startsWith('order='));
+    if (i < 0) { hlutar.push('order=id.asc'); }
+    else if (!hlutar[i].slice(6).split(',').some((k) => k === 'id' || k.startsWith('id.'))) {
+      hlutar[i] = hlutar[i] + ',id.asc';
+    }
+    return grunnur + '?' + hlutar.join('&');
+  })();
   const fetchPage = async (from, withCount) => {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${slod}`, {
       headers: {
         'apikey': SUPABASE_KEY,
         'Authorization': `Bearer ${SUPABASE_KEY}`,
