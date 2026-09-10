@@ -37,6 +37,18 @@ async function sb(path, init = {}) {
   return fetch(`${SUPABASE_URL}/rest/v1/${path}`, { ...init, headers });
 }
 
+// Talning REIKNUÐ Í SQL: HEAD + `count=exact` skilar aðeins „Content-Range: */395",
+// engum röðum — og sker aldrei við 1000 eins og raðalestur gerir.
+// null = talningin brást (aldrei 0 sem staðreynd).
+async function telja(path) {
+  try {
+    const r = await sb(path, { method: 'HEAD', headers: { Prefer: 'count=exact' } });
+    if (!r.ok) return null;
+    const n = parseInt(String(r.headers.get('content-range') || '').split('/')[1], 10);
+    return Number.isFinite(n) ? n : null;
+  } catch (_) { return null; }
+}
+
 function decodeImageB64(b64) {
   if (!b64) return null;
   let s = String(b64);
@@ -97,20 +109,43 @@ exports.handler = async (event) => {
       // 500 raðir. Jarvis sótti það á fimm mínútna fresti til að birta „383 verk".
       // Agnar var að eyða ~10$ á dag í Netlify og hubburinn hafði krassað tvisvar.
       // Þessi hamur sækir tvo örsmáa dálka og skilar innan við 1 KB.
+      //
+      // 10.09.2026: talningin sjálf fer nú fram Í SQL. Fyrri útgáfan las
+      // `limit=2000` og taldi í JS — en PostgREST sker ÞÖGULT við 1000 raðir og
+      // skilar samt HTTP 200, svo „alls" hefði staðnæmst við 1000 án viðvörunar
+      // um leið og listinn færi yfir það (395 raðir í dag). HEAD + count=exact
+      // skilar aðeins hausnum, engum röðum, og sker aldrei.
       if (q.tolur) {
-        const r = await sb('verkefnalisti?select=status,flag,category&limit=2000');
-        if (!r.ok) return json(r.status, { error: await r.text() });
-        const radir = await r.json();
-        const eftirStodu = {}, eftirFlokki = {}, eftirMerki = {};
-        for (const t of radir) {
-          eftirStodu[t.status] = (eftirStodu[t.status] || 0) + 1;
-          if (t.status === 'beidni') {
+        const STODUR = ['beidni', 'i_vinnu', 'i_yfirferd', 'klarad', 'sleppt'];
+        const [alls, ...perStodu] = await Promise.all([
+          telja('verkefnalisti?select=id'),
+          ...STODUR.map((s) => telja('verkefnalisti?select=id&status=eq.' + s)),
+        ]);
+        if (alls == null || perStodu.some((n) => n == null)) {
+          return json(502, { error: 'talning mistókst' });
+        }
+        const eftirStodu = {};
+        STODUR.forEach((s, i) => { if (perStodu[i]) eftirStodu[s] = perStodu[i]; });
+        // Staða utan listans (t.d. NULL eða eldra heiti) má ekki hverfa úr heildinni.
+        const thekkt = perStodu.reduce((a, n) => a + n, 0);
+        if (alls > thekkt) eftirStodu.annad = alls - thekkt;
+
+        // Sundurliðun beiðna eftir flokki/merki: aðeins beidni-raðir, tveir örsmáir
+        // dálkar, BLAÐSÍÐUFLETT svo 1000-raða þakið bíti aldrei.
+        const eftirFlokki = {}, eftirMerki = {};
+        for (let fra = 0; ; fra += 1000) {
+          const r = await sb('verkefnalisti?select=flag,category&status=eq.beidni&order=id.asc',
+            { headers: { Range: `${fra}-${fra + 999}`, 'Range-Unit': 'items' } });
+          if (!r.ok) return json(r.status, { error: await r.text() });
+          const sida = await r.json();
+          for (const t of sida) {
             eftirFlokki[t.category || 'allt'] = (eftirFlokki[t.category || 'allt'] || 0) + 1;
             eftirMerki[t.flag || 0] = (eftirMerki[t.flag || 0] || 0) + 1;
           }
+          if (sida.length < 1000) break;
         }
         return json(200, {
-          alls: radir.length,
+          alls,
           eftir_stodu: eftirStodu,
           opin: (eftirStodu.beidni || 0) + (eftirStodu.i_vinnu || 0) + (eftirStodu.i_yfirferd || 0),
           beidni_eftir_flokki: eftirFlokki,

@@ -988,16 +988,22 @@ function stika(nafn, gildi, hlutfall, klasi){
  *   2. Ekkert er sótt þegar flipinn er falinn — en sótt STRAX þegar hann
  *      birtist aftur, svo hægari lykkja kostar enga ferskleika í reynd.
  */
+// ⚠️ Lyklarnir eru NÁKVÆM slóð eins og hún er send í soek(), með fyrirspurnarstreng.
+//    `SOKN.bil['/api/veidin']` grípur EKKI `/api/veidin?tolur=1` — það fellur á
+//    sjalfgefid. Fannst 10.09.2026: `/api/verkefnalisti?tolur=1` hafði aldrei fengið
+//    10 mín bilið sitt af því lykillinn var án `?tolur=1`.
+//    Stærðir mældar 10.09.2026 (afþjappað svar).
 var SOKN = { sidast:{}, gogn:{}, bilun:{},
   bil: {
-    '/api/vel-heartbeat':        120000,   // 2 mín — 0,8 KB, ódýrt
-    '/api/kerfisheilsa':         180000,   // 3 mín — 12 KB
-    '/api/veidin':               600000,   // 10 mín — 113 KB, veiðitölur breytast við skýrslur
-    '/api/data-sources-status':  600000,   // 10 mín — 2,9 s fall, ferskleiki mælist í dögum
-    '/api/oryggisnet':           600000,   // 10 mín — breytist aðeins við ýtingu
-    '/api/verkefnalisti':        600000,   // 10 mín — 935 KB (!), sér verk að grennja
-    '/api/krofur-yfirlit':       300000,   // 5 mín — 271 KB
-    '/api/worksites':            600000    // 10 mín — 89 KB
+    '/api/vel-heartbeat':                120000,   // 2 mín  — 0,8 KB, ódýrt
+    '/api/kerfisheilsa':                 180000,   // 3 mín  — 12 KB
+    '/api/veidin?tolur=1':               600000,   // 10 mín — 1,3 KB (var 113 KB), breytast við skýrslur
+    '/api/data-sources-status':          600000,   // 10 mín — 3 KB, ferskleiki mælist í dögum
+    '/api/oryggisnet':                   600000,   // 10 mín — breytist aðeins við ýtingu
+    '/api/verkefnalisti?tolur=1':        600000,   // 10 mín — 0,3 KB (var 935 KB)
+    '/api/service-gaps?tolur=1':         600000,   // 10 mín — 0,13 KB (var 37 KB)
+    '/api/svid-status?svid=por&tolur=1': 600000,   // 10 mín — 0,4 KB
+    '/api/debtors':                      300000    // 5 mín  — 6 KB
   },
   sjalfgefid: 300000 };
 
@@ -1033,6 +1039,50 @@ async function soek(slod, thvinga){
   }
 }
 
+/* ── Hunt-listarnir: talan strax, listinn þegar smellt er ──────────────────
+ * /api/veidin skilar níu listum, 113 KB. Jarvis sýnir FIMM þeirra og allir eru
+ * samanbrotnir; hinir fjórir (amber, engin_skyrsla, rukkud_an_skyrslu,
+ * bundle_gloppur — 95 KB) eru bara til á veidin.html. Samt sótti hver einasta
+ * hleðsla allt saman. Nú: ?tolur=1 gefur teljarana (1,3 KB) og fullur listi
+ * kemur EINU SINNI, þegar notandinn opnar <details>.
+ */
+var HUNT = [
+  { k:'systkini_kt',     tala:'systkini_kt',           t:'Systkini-kt',          d:['nafn','kennitala'] },
+  { k:'blob_graen',      tala:'blob_graen_an_skyrslu', t:'Blob-græn án skýrslu', d:['nafn','kennitala'],
+    ath:'Plaza, Colas HQ, Slippurinn, Heimaleiga HQ, Midtown, bílageymsla, Borgarnes, Pizzan Strandgata, Benna Fiskislóð — ef listinn stemmir.' },
+  { k:'hud_buid_gloppa', tala:'hud_buid_vs_skyrsla',   t:'HUD Búið án skýrslu',  d:['nafn'],
+    ath:'Ársskoðun-blob vs customer_documents. Ekki sama tala.' },
+  { k:'drive_tvitok',    tala:'drive_tvitok',          t:'Drive-tvítök',         d:['doc_id','felag'] },
+  { k:'skjol_an_ars',    tala:'skjol_an_ars',          t:'Skjöl án árs',         d:['doc_id','doc_type','file_name'] }
+];
+var VEIDI_FULL = null;    // fulla svarið, sótt í mesta lagi einu sinni per hleðslu
+var VEIDI_SOKN = null;    // sókn í gangi — fimm smellir í röð mega ekki gefa fimm köll
+async function hladaHunt(){
+  if(!VEIDI_FULL){
+    if(!VEIDI_SOKN){
+      VEIDI_SOKN = fetch('/api/veidin', {cache:'no-store'})
+        .then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; });
+    }
+    VEIDI_FULL = await VEIDI_SOKN;
+    VEIDI_SOKN = null;
+  }
+  var L = (VEIDI_FULL && VEIDI_FULL.listar) || {};
+  HUNT.forEach(function(c){
+    var ul = document.querySelector('[data-hunt-ul="'+c.k+'"]');
+    if(!ul) return;
+    var rows = L[c.k];
+    if(!rows){ ul.innerHTML = '<li style="color:#ff8f6b">næ ekki listanum</li>'; return; }
+    ul.innerHTML = rows.map(function(x){
+      return '<li>'+c.d.map(function(d){ return esc(x[d]); }).filter(Boolean).join(' · ')+'</li>';
+    }).join('') || '<li>hreinsað</li>';
+  });
+}
+// `toggle` flæðir ekki upp — þess vegna gripið í NIÐURFERÐ (capture=true).
+document.addEventListener('toggle', function(ev){
+  var d = ev.target;
+  if(d && d.tagName === 'DETAILS' && d.hasAttribute('data-hunt') && d.open) hladaHunt();
+}, true);
+
 async function sakja(){
   if(!synilegt()) return;               // falinn flipi kostar ekkert
   try{
@@ -1040,7 +1090,11 @@ async function sakja(){
       soek('/api/kerfisheilsa'),
       soek('/api/data-sources-status'),
       soek('/api/vel-heartbeat'),
-      soek('/api/veidin'),
+      // ?tolur=1 — 1,3 KB í stað 113 KB. Jarvis teiknar TÖLUR úr þessu kalli
+      // (skotmörk, þekja, hunt-teljarar); 95 KB af fulla svarinu voru fjórir
+      // listar sem hann snertir aldrei og hinir 17 sátu samanbrotnir. Fullur
+      // listi kemur í `hladaHunt()` þegar notandinn opnar hann sjálfur.
+      soek('/api/veidin?tolur=1'),
     ]);
 
     // ── vitals
@@ -1124,8 +1178,11 @@ async function sakja(){
         let extra = '';
         if (!c.laegra && c.af && n[c.af]!=null) extra = nu+' af '+n[c.af];
         else if (c.laegra) extra = 'markmið: 0';
-        if (c.k==='skjol_an_ars' && nu===1 && (ve.listar||{}).skjol_an_ars && ve.listar.skjol_an_ars[0])
-          extra += (extra?' · ':'')+'doc '+ve.listar.skjol_an_ars[0].doc_id;
+        // Listinn kemur ekki lengur með teljurunum; doc-númerið birtist ef notandinn
+        // hefur þegar opnað hunt-listana (VEIDI_FULL), annars aðeins talan.
+        const skjolL = ((VEIDI_FULL||{}).listar||{}).skjol_an_ars;
+        if (c.k==='skjol_an_ars' && nu===1 && skjolL && skjolL[0])
+          extra += (extra?' · ':'')+'doc '+skjolL[0].doc_id;
         return '<div class="vkort'+(jakt?' jakt':'')+'"><h3>'+esc(c.t)+'</h3><div class="big">'+esc(nu)+' <span class="dlt '+cls+'">'+dlt+'</span></div>'+
           '<div class="base">grunnlína '+(b.dags||GRUNN_DAGS)+' (staða um mánuði síðan): '+esc(grunn)+(extra?('<br>'+esc(extra)):'')+'</div></div>';
       }
@@ -1144,19 +1201,20 @@ async function sakja(){
           '<div class="veidikort-heiti">Þekja — núna vs '+GRUNN_DAGS+'</div>'+
           '<div class="veidikort">'+thekja.map(c => veidiKortHtml(c, false)).join('')+'</div>';
       }
-      const L = ve.listar || {};
-      const lis = (rows, cols) => (rows||[]).map(x => '<li>'+cols.map(c => esc(x[c])).filter(Boolean).join(' · ')+'</li>').join('')
-        || '<li>hreinsað</li>';
+      // Hunt-listarnir: TALAN kemur úr ?tolur=1 (1,3 KB), LISTINN þegar smellt er.
+      // Fyrir 09.09.2026 sótti hver hleðsla öll 113 KB af /api/veidin til að geta
+      // fyllt fimm samanbrotna lista sem oftast voru aldrei opnaðir.
       const hl = $('#huntlisti');
       if (hl) {
-        hl.innerHTML =
-          '<details open><summary>Systkini-kt <b>'+esc((L.systkini_kt||[]).length)+'</b></summary><ul>'+lis(L.systkini_kt,['nafn','kennitala'])+'</ul></details>'+
-          '<details><summary>Blob-græn án skýrslu <b>'+esc((L.blob_graen||[]).length)+'</b></summary><ul>'+lis(L.blob_graen,['nafn','kennitala'])+'</ul>'+
-            '<div class="ath">Plaza, Colas HQ, Slippurinn, Heimaleiga HQ, Midtown, bílageymsla, Borgarnes, Pizzan Strandgata, Benna Fiskislóð — ef listinn stemmir.</div></details>'+
-          '<details><summary>HUD Búið án skýrslu <b>'+esc((L.hud_buid_gloppa||[]).length)+'</b></summary>'+
-            '<div class="ath">Ársskoðun-blob vs customer_documents. Ekki sama tala.</div><ul>'+lis(L.hud_buid_gloppa,['nafn'])+'</ul></details>'+
-          '<details><summary>Drive-tvítök <b>'+esc((L.drive_tvitok||[]).length)+'</b></summary><ul>'+lis(L.drive_tvitok,['doc_id','felag'])+'</ul></details>'+
-          '<details><summary>Skjöl án árs <b>'+esc((L.skjol_an_ars||[]).length)+'</b></summary><ul>'+lis(L.skjol_an_ars,['doc_id','doc_type','file_name'])+'</ul></details>';
+        hl.innerHTML = HUNT.map(c =>
+          '<details data-hunt="'+c.k+'"><summary>'+esc(c.t)+' <b>'+
+            (n[c.tala]==null ? '—' : esc(n[c.tala]))+'</b></summary>'+
+          (c.ath ? '<div class="ath">'+esc(c.ath)+'</div>' : '')+
+          '<ul data-hunt-ul="'+c.k+'"><li style="color:var(--ink3)">smelltu til að sækja listann</li></ul></details>'
+        ).join('');
+        // Endurteikning á 2 mín fresti má ekki tæma lista sem þegar var sóttur —
+        // fyllt aftur úr skyndiminni, ekkert nýtt netkall.
+        if (VEIDI_FULL) hladaHunt();
       }
     }
 
@@ -1297,7 +1355,9 @@ document.addEventListener('visibilitychange', function(){ if(synilegt()) sakja()
   }
   async function saekjaGloppur(){
     try{
-      var j = await soek('/api/service-gaps');
+      // ?tolur=1 — 0,13 KB í stað 37 KB. Spjaldið sýnir fjóra teljara; fulla svarið
+      // bar 77 gloppu-raðir og 98 ótengd skjöl sem aldrei voru teiknuð. Talið í SQL.
+      var j = await soek('/api/service-gaps?tolur=1');
       var c = j.counts || {};
       document.getElementById('gl-efni').innerHTML =
         lina('Tengd skjol', (c.linked_total||0), '#5fd39a') +
@@ -1478,12 +1538,25 @@ document.addEventListener('visibilitychange', function(){ if(synilegt()) sakja()
   (function(){ var b=document.getElementById('on-btn');
     if(b) b.addEventListener('click', function(ev){ ev.stopPropagation(); saekjaOryggisnet(true); }); })();
 
+  // Þrýstimælirinn keyrir EKKI sjálfur (10.09.2026). Hann tímamælir sex þyngstu
+  // endapunktana með því að sækja þá í FULLRI stærð (~480 KB í hvert sinn: kröfur
+  // 267, veiðin 113, verkstaðir 88 …). Sjálfvirkt við hverja teikningu og á 5 mín
+  // fresti í Kerfi-útlitinu var hann sjálfur álagið sem hann átti að vakta — og
+  // eini hluti Jarvis sem fór fram hjá sóknarstjóranum (hrá fetch, ekkert bil).
+  // Slóðir og grunnlínur eru ÓBREYTTAR, svo mælingin er jafn sönn og áður;
+  // hún kostar bara ekkert fyrr en notandinn ýtir á ↻.
+  function perfBidur(){
+    var box = document.getElementById('perf-efni');
+    if(!box || _perfBusy || box.querySelector('.maelagrid')) return;
+    box.innerHTML = '<div style="color:var(--ink3);font-size:12px">Ýttu á ↻ til að mæla — '
+      + 'sækir 6 endapunkta í fullri stærð (~480 KB), því ekki sjálfvirkt.</div>';
+  }
   function saekjaSyn(syn){
     if(syn.indexOf('krofur')  !== -1) saekjaKrofur();
     if(syn.indexOf('thekja')  !== -1) saekjaThekja();
     if(syn.indexOf('gloppur') !== -1) saekjaGloppur();
     if(syn.indexOf('verk')    !== -1) saekjaVerk();
-    if(syn.indexOf('perf')    !== -1) saekjaPerf();
+    if(syn.indexOf('perf')    !== -1) perfBidur();
     if(syn.indexOf('oryggisnet') !== -1) saekjaOryggisnet();
   }
   setInterval(function(){ if(document.visibilityState==='visible') saekjaSyn(spjoldFyrir(nuv)); }, 300000);
