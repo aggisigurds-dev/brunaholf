@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Starfsmenn — dagur fyrir dag</title>
+<style>
+  :root{--ink:#0f172a;--ink2:#475569;--ink3:#94a3b8;--brd:#e2e8f0;--bg:#f6f7f9;--kort:#fff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+  .wrap{max-width:1180px;margin:0 auto;padding:18px 16px 60px}
+  h1{font-size:20px;margin:0 0 3px}
+  .sub{color:var(--ink2);font-size:13px;margin-bottom:16px}
+  .stikur{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .stikur label{font-size:12px;color:var(--ink2);font-weight:600}
+  select,input[type=text]{font:inherit;font-size:13px;padding:6px 9px;border:1px solid var(--brd);border-radius:8px;background:#fff;color:var(--ink)}
+  button{font:inherit;font-size:13px;font-weight:600;padding:6px 13px;border:1px solid var(--brd);border-radius:8px;background:#fff;color:var(--ink);cursor:pointer}
+  button.prim{background:#0f172a;color:#fff;border-color:#0f172a}
+  button:hover{background:#eef2f7}button.prim:hover{background:#1e293b}
+  .vidv{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:11px 14px;font-size:12.5px;color:#78350f;margin-bottom:16px;line-height:1.5}
+  .vidv b{color:#92400e}
+  .sm{background:var(--kort);border:1px solid var(--brd);border-radius:12px;margin-bottom:18px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  .sm-h{padding:12px 15px;border-bottom:1px solid var(--brd);background:#fafbfc;display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+  .sm-h b{font-size:15px}.sm-h .nr{font-size:11px;color:var(--ink3);font-family:ui-monospace,monospace}
+  .kort{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1px;background:var(--brd)}
+  .k{background:#fff;padding:11px 13px}
+  .k .l{font-size:10.5px;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+  .k .v{font-size:19px;font-weight:700;margin-top:3px;font-variant-numeric:tabular-nums}
+  .k .n{font-size:11px;color:var(--ink3);margin-top:1px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{text-align:right;padding:7px 9px;color:var(--ink2);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid var(--brd);background:#fafbfc;position:sticky;top:0}
+  th:first-child,td:first-child{text-align:left}
+  td{text-align:right;padding:6px 9px;border-bottom:1px solid #f1f5f9;font-variant-numeric:tabular-nums}
+  tr.helgi td{color:var(--ink3);background:#fcfcfd}
+  tr.tomur td{color:#cbd5e1}
+  tr:hover td{background:#f8fafc}
+  .span{display:inline-block;height:9px;border-radius:5px;background:#93c5fd;min-width:2px;vertical-align:middle}
+  .spanwrap{position:relative;width:150px;height:11px;background:#f1f5f9;border-radius:5px;display:inline-block}
+  .spanwrap i{position:absolute;top:1px;height:9px;border-radius:5px;background:#60a5fa}
+  .mis-plus{color:#b45309}.mis-minus{color:#0369a1}
+  .verk{font-size:10.5px;color:var(--ink3);max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tw{overflow-x:auto;max-height:640px;overflow-y:auto}
+  .foot{color:var(--ink3);font-size:11.5px;margin-top:22px;text-align:center}
+  @media(max-width:640px){.verk{display:none}.spanwrap{width:80px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>👷 Starfsmenn — dagur fyrir dag</h1>
+  <div class="sub" id="sub">Mæting, lok, viðvera og afköst. <span id="meta"></span></div>
+
+  <div class="stikur">
+    <label>Starfsmenn</label>
+    <input type="text" id="nr" value="20,24" size="10" title="Starfsmannanúmer, aðskilin með kommu">
+    <label>Dagar</label>
+    <select id="dagar"><option>14</option><option selected>30</option><option>60</option><option>90</option></select>
+    <label>Tímar</label>
+    <select id="verkefni">
+      <option value="allt" selected>Allur vinnudagurinn</option>
+      <option value="nlsh">Aðeins Landspítali</option>
+    </select>
+    <button class="prim" id="sakja">Sækja</button>
+    <span id="stada" style="font-size:12px;color:#94a3b8"></span>
+  </div>
+
+  <div class="vidv">
+    <b>Hvaðan klukkan kemur.</b> Mæting og lok koma úr <b>Tímaveru</b> (<code>time_in</code>/<code>time_out</code>) — ekki úr gata-skráningunum.
+    Ajour geymir <b>enga klukkustund</b>: innlesturinn klippir tímann af og skrifar miðnætti, þótt CSV-skráin á Drive beri hann.
+    <br><b>Viðvera</b> = síðasta stimplun − fyrsta stimplun, <b>hlé og matartímar meðtalin</b>. <b>Bókað</b> = tímarnir sem eru skráðir (það sem er borgað).
+    Munurinn er hlé, akstur og tímar á önnur verkefni — ekki „óskráð vinna". Veldu <b>Aðeins Landspítali</b> til að sjá bara þann verkstað;
+    þá sýnist dagurinn styttri hjá þeim sem skipti um stað.
+  </div>
+
+  <div id="ut"></div>
+  <div class="foot">Brunahólf ehf · Tímavera (klukka + tímar) + Ajour (göt)</div>
+</div>
+
+<script>
+(function(){
+  const $ = s => document.querySelector(s);
+  const num = n => (n==null?'—':new Intl.NumberFormat('is-IS').format(Math.round(n*100)/100));
+  const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const mins = s => { const m=/^(\d{2}):(\d{2})$/.exec(s||''); return m? +m[1]+(+m[2])/60 : null; };
+
+  function kort(l,v,n){ return `<div class="k"><div class="l">${l}</div><div class="v">${v}</div><div class="n">${n||''}</div></div>`; }
+
+  function teikna(d){
+    // Sameiginlegur kvarði á súlurnar svo dagar (og starfsmenn) séu samanburðarhæfir.
+    let lo=24, hi=0;
+    d.starfsmenn.forEach(s=>s.dagar.forEach(x=>{
+      const a=mins(x.fyrsta), b=mins(x.sidasta);
+      if(a!=null) lo=Math.min(lo,a); if(b!=null) hi=Math.max(hi,b);
+    }));
+    if(hi<=lo){ lo=6; hi=18; }
+    lo=Math.floor(lo-0.5); hi=Math.ceil(hi+0.5);
+    const bil = hi-lo;
+
+    $('#ut').innerHTML = d.starfsmenn.map(s=>{
+      const t=s.samtals;
+      const linur = s.dagar.map(x=>{
+        const a=mins(x.fyrsta), b=mins(x.sidasta);
+        const sula = (a!=null&&b!=null&&b>a)
+          ? `<span class="spanwrap"><i style="left:${((a-lo)/bil*100).toFixed(1)}%;width:${(((b-a)/bil)*100).toFixed(1)}%"></i></span>` : '';
+        const mis = x.mismunur;
+        const misTxt = mis==null ? '—'
+          : `<span class="${mis>0?'mis-plus':(mis<0?'mis-minus':'')}">${mis>0?'+':''}${num(mis)}</span>`;
+        const tomur = !x.fyrsta && !x.bokad_klst && !x.klarad;
+        return `<tr class="${tomur?'tomur ':''}${x.helgi?'helgi':''}">
+          <td>${x.vikudagur} ${x.dags.slice(8)}.${x.dags.slice(5,7)}.</td>
+          <td>${x.fyrsta||'—'}</td><td>${x.sidasta||'—'}</td>
+          <td style="text-align:left">${sula}</td>
+          <td>${x.vidvera_klst==null?'—':num(x.vidvera_klst)}</td>
+          <td>${x.bokad_klst?num(x.bokad_klst):'—'}</td>
+          <td>${misTxt}</td>
+          <td><b>${x.klarad||0}</b></td>
+          <td>${x.got_per_klst==null?'—':num(x.got_per_klst)}</td>
+          <td class="verk" title="${esc((x.verkefni_dagsins||[]).join(', '))}">${esc((x.verkefni_dagsins||[]).join(', '))}</td>
+        </tr>`;
+      }).join('');
+
+      return `<div class="sm">
+        <div class="sm-h"><b>${esc(s.nafn)}</b><span class="nr">nr. ${s.nr}</span>
+          <span style="color:#64748b;font-size:12px">${t.virkir_dagar} virkir dagar · ${num(t.klarad)} göt · ${num(t.bokad_klst)} klst bókaðar</span></div>
+        <div class="kort">
+          ${kort('Mætir að meðaltali', t.medal_fyrsta||'—','fyrsta stimplun')}
+          ${kort('Hættir að meðaltali', t.medal_sidasta||'—','síðasta stimplun')}
+          ${kort('Viðvera á dag', t.medal_vidvera==null?'—':num(t.medal_vidvera)+' klst','hlé meðtalin')}
+          ${kort('Bókað á dag', t.medal_bokad==null?'—':num(t.medal_bokad)+' klst','skráðir tímar')}
+          ${kort('Göt á dag', t.medal_klarad==null?'—':num(t.medal_klarad),'kláruð')}
+          ${kort('Göt/klst', t.got_per_klst==null?'—':num(t.got_per_klst),'á bókaða tíma')}
+        </div>
+        ${t.dagar_an_stimplunar?`<div style="padding:8px 15px;font-size:12px;color:#92400e;background:#fffbeb;border-top:1px solid #fde68a">⚠ ${t.dagar_an_stimplunar} dagar með vinnu en <b>enga klukkustimplun</b> — þar er viðvera óþekkt.</div>`:''}
+        <div class="tw"><table>
+          <thead><tr><th>Dagur</th><th>Mæting</th><th>Lok</th><th style="text-align:left">Vinnudagurinn</th><th>Viðvera</th><th>Bókað</th><th>Mism.</th><th>Kláruð</th><th>Göt/klst</th><th class="verk">Verkefni</th></tr></thead>
+          <tbody>${linur}</tbody>
+        </table></div>
+      </div>`;
+    }).join('');
+  }
+
+  async function sakja(){
+    const nr=$('#nr').value.trim()||'20,24', dagar=$('#dagar').value, verkefni=$('#verkefni').value;
+    $('#stada').textContent='Sæki…';
+    try{
+      const r=await fetch(`/api/starfsmenn-dagar?nr=${encodeURIComponent(nr)}&dagar=${dagar}&verkefni=${verkefni}`);
+      const d=await r.json();
+      if(d.error) throw new Error(d.error);
+      $('#meta').textContent=`${d.fra} → ${d.til}`;
+      $('#stada').textContent='';
+      if(!d.starfsmenn||!d.starfsmenn.length){ $('#ut').innerHTML='<div class="sm" style="padding:18px;color:#94a3b8">Engin gögn.</div>'; return; }
+      teikna(d);
+    }catch(e){ $('#stada').textContent='Villa: '+e.message; }
+  }
+  $('#sakja').onclick=sakja;
+  $('#nr').addEventListener('keydown',e=>{ if(e.key==='Enter') sakja(); });
+  $('#dagar').onchange=sakja; $('#verkefni').onchange=sakja;
+  sakja();
+})();
+</script>
+</body>
+</html>

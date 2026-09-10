@@ -107,6 +107,13 @@
   to = "/.netlify/functions/timavera-maeting"
   status = 200
 
+# Starfsmenn — dagur fyrir dag (maeting/lok/vidvera vs. afkost). Ser-sida, ekki flipi:
+# hun er spurning stjornanda, ekki daglegt verkfaeri, og a ekki heima i hub-flettunum.
+[[redirects]]
+  from = "/starfsmenn"
+  to = "/starfsmenn.html"
+  status = 200
+
 # Brunaþéttingar — verkstaða-appið (starfsmenn á verkstað; PWA, manifest-brunathettingar.json).
 [[redirects]]
   from = "/brunathettingar"
