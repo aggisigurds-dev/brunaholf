@@ -1,7 +1,11 @@
 // krofur-yfirlit.js — Brunahólf krófur (invoices) overview, scoped to one year.
 //
 //   GET  /api/krofur-yfirlit?year=2026
-//     → { year, generated_at, summary, byMonth[], byCustomer[], rows[] }
+//     → { year, generated_at, summary, byMonth[], byCustomer[], rows[] }   ~272 KB
+//   GET  /api/krofur-yfirlit?year=2026&tolur=1
+//     → { year, generated_at, summary, byMonth[], byCustomer[], slokk }    ~2,5 KB
+//       Sama útreikning, engar raðir (`rows`, `slokk.sales/uncollected/daily`).
+//       Fyrir Jarvis/yfirlit sem sýna heildartölur en aldrei listana.
 //   POST /api/krofur-yfirlit  { action:'save', inv_key, hidden?, amount_override?, note? }
 //     → { ok, meta }
 //
@@ -27,8 +31,18 @@ exports.handler = async (event) => {
   if (event.httpMethod === 'POST') return saveOverride(event);
   if (event.httpMethod !== 'GET') return json(405, { error: 'Method not allowed' });
 
-  const year = String((event.queryStringParameters || {}).year || '2026').slice(0, 4);
+  const q = event.queryStringParameters || {};
+  const year = String(q.year || '2026').slice(0, 4);
   const from = `${year}-01-01`, to = `${Number(year) + 1}-01-01`;
+
+  // ?tolur=1 — AÐEINS samantektin (summary + byMonth + byCustomer + Slökkvitækis-
+  // tölurnar). Fulla svarið er ~272 KB: `rows` er 99 KB og `slokk` 169 KB
+  // (289 ósóttar kröfur + 729 sölur + 60 dagar + 40 ársskoðunarfélög) — allt saman
+  // raðir sem yfirlitsspjöldin teikna aldrei. Þau sýna tölur. Fullur listi
+  // tilheyrir Kröfu-yfirlits-flipanum, sem notandinn opnar sjálfur.
+  // Í þessum ham sleppum við líka `invoice_drafts`-lestrinum: hann fæðir aðeins
+  // `draft_match` á hverri röð, sem er ekki skilað.
+  const tolurMode = !!q.tolur;
 
   let invoices, meta, bank, drafts;
   // Non-fatal read failures are recorded here and returned so the frontend can
@@ -43,7 +57,7 @@ exports.handler = async (event) => {
     bank = await fetchAll('bank_transactions', 'select=kt_counterparty,amount,trans_date,text,description&amount=gt.0')
       .catch(() => { warnings.push('bank_transactions lestur mistókst — bankagreiðslur ekki krossaðar, greiddar kröfur gætu talist ógreiddar'); return []; });
     // What the office tracked in Vinnubók / Reikningagerð (saved efnislisti totals).
-    drafts = await fetchAll('invoice_drafts', 'select=worksite_name,work_month,total_m_vsk,customer_name')
+    drafts = tolurMode ? [] : await fetchAll('invoice_drafts', 'select=worksite_name,work_month,total_m_vsk,customer_name')
       .catch(() => { warnings.push('invoice_drafts lestur mistókst — Reikningagerðar-samanburður vantar'); return []; });
   } catch (e) { return json(502, { error: e.message }); }
 
@@ -225,6 +239,23 @@ exports.handler = async (event) => {
   // a worksite row in the „Brunahólf verkstaðir — reikningsstaða" section.
   const wsMeta = {};
   for (const m of meta) { if (String(m.inv_key || '').startsWith('ws|')) wsMeta[m.inv_key] = { hidden: !!m.hidden, amount_override: m.amount_override != null ? Number(m.amount_override) : null, note: m.note || null }; }
+
+  if (tolurMode) {
+    // Sömu tölur, engar raðir. Slökkvitækis-hlutinn heldur öllum skölurunum
+    // (sala_total, reikningur_sent, uncollected_total …) og mánaðarlínunum, en
+    // missir listana (sales, uncollected, daily, inspections.companies).
+    let slokkT = null;
+    if (slokk) {
+      const { sales, uncollected, daily, inspections, ...skalarar } = slokk;
+      slokkT = Object.assign(skalarar, {
+        uncollected_count: (uncollected || []).length,
+        inspections: inspections
+          ? { overdue_equip: inspections.overdue_equip, overdue_companies: inspections.overdue_companies }
+          : null,
+      });
+    }
+    return json(200, { year, generated_at: new Date().toISOString(), today, summary, byMonth, byCustomer, slokk: slokkT, warnings, tolur: true });
+  }
 
   return json(200, { year, generated_at: new Date().toISOString(), today, summary, byMonth, byCustomer, rows, slokk, wsMeta, warnings });
 };

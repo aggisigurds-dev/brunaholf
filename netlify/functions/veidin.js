@@ -4,7 +4,10 @@
 //   GET /api/veidin  →  { baseline, nuna, delta, listar:{ amber, engin_skyrsla,
 //                          rukkud_an_skyrslu, bundle_gloppur,
 //                          systkini_kt, blob_graen, hud_buid_gloppa,
-//                          drive_tvitok, skjol_an_ars } }
+//                          drive_tvitok, skjol_an_ars } }        ~113 KB
+//   GET /api/veidin?tolur=1 → { baseline, nuna, delta, tolur:true }  ~1,3 KB
+//     Talningin er reiknuð Í SQL (count=exact + HEAD), engar raðir sóttar.
+//     Notað af Jarvis og hubbinum, sem sýna FJÖLDA en aldrei listana sjálfa.
 //
 // „nuna" les lifandi úr v_veidin_tolur · amber · engin_skyrsla · rukkud +
 // hunt-sýnunum (sql/2026-08-31_v_veidin_hunt.sql). „baseline" er FÖST
@@ -53,10 +56,87 @@ async function sbGet(path){
   return out;
 }
 
+// Talning REIKNUÐ Í SQL — `Prefer: count=exact` + HEAD skilar aðeins hausnum
+// („Content-Range: */213"), engum röðum. Þetta er munurinn á 34 KB og 0 bætum
+// fyrir sömu töluna. Skilar null ef sýnin er ekki til, svo kallandinn geti
+// fallið aftur á eldri leið í stað þess að birta 0 sem staðreynd.
+async function sbCount(path){
+  try{
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+      method:'HEAD', headers: sbHeaders({ Prefer:'count=exact' }),
+    });
+    if(!r.ok) return null;
+    const n = parseInt(String(r.headers.get('content-range')||'').split('/')[1], 10);
+    return Number.isFinite(n) ? n : null;
+  }catch(_){ return null; }
+}
+
+// Aðeins tölurnar — enginn listi. Jarvis og hubburinn sýna FJÖLDA (spjöld,
+// þrýstimæla, skotmörk); þeir lásu samt öll 113 KB af röðum til að fá þær.
+// 09.09.2026: 95 KB af því voru fjórir listar sem Jarvis snertir aldrei
+// (amber, engin_skyrsla, rukkud_an_skyrslu, bundle_gloppur). Fullur listi
+// tilheyrir veidin.html — síðunni sem notandinn opnar sjálfur.
+async function tolurHamur(){
+  const curYear = new Date().getFullYear();
+  // ⚠️ ALLTAF `select=*` í talningunni. `select=<dálkur>` skilar 400 ef dálkurinn
+  //    heitir öðru nafni í sýninni (v_veidin_amber á `nafn`, ekki `felag`) — og
+  //    sbCount kyngir því sem null. HEAD sækir engar raðir hvort eð er, svo `*`
+  //    kostar ekkert og getur ekki brotnað á dálkanafni.
+  const bundleN = (stada) => sbCount('v_bundle_coverage?yr=eq.' + curYear + '&stada=eq.' + stada + '&select=*');
+  const [tolur, huntRows, amberN, enginSkN, rukkudN, porN, reiknN, skyrslaN,
+         systkiniN, blobN, hudN, driveN] = await Promise.all([
+    sbGet('v_veidin_tolur?select=*'),
+    sbGet('v_veidin_hunt_tolur?select=*').catch(() => []),
+    sbCount('v_veidin_amber?select=*'),
+    sbCount('v_veidin_engin_skyrsla?select=*'),
+    sbCount('v_veidin_rukkud_an_skyrslu?select=*'),
+    bundleN('klarad'), bundleN('vantar_reikning'), bundleN('vantar_skyrslu'),
+    sbCount('v_veidin_systkini_kt?select=*'),
+    sbCount('v_veidin_blob_graen?select=*'),
+    sbCount('v_veidin_hud_buid_gloppa?select=*'),
+    sbCount('v_veidin_drive_tvitok?select=*'),
+  ]);
+  const t = tolur[0] || {};
+  const hunt = huntRows[0] || {};
+  const nuna = {
+    dags: new Date().toISOString().slice(0, 10),
+    stadir_i_thjonustu: t.stadir_i_thjonustu,
+    felog_i_thjonustu: t.felog_i_thjonustu,
+    stadir_med_2026_skyrslu: t.stadir_med_2026_skyrslu,
+    stadir_med_2025_skyrslu: t.stadir_med_2025_skyrslu,
+    engin_skyrsla_25_26: enginSkN,
+    amber_felog: amberN,
+    rukkud_an_skyrslu: rukkudN,
+    stadir_med_samning: t.stadir_med_samning,
+    felog_med_netfang: t.felog_med_netfang,
+    skjol_an_ars: t.skjol_an_ars,
+    skyrslur_2026: t.skyrslur_2026,
+    skyrslur_2026_reviewed: t.skyrslur_2026_reviewed,
+    gleymd_felog: t.gleymd_felog,
+    bundle_por: porN,
+    bundle_reikn_vantar: reiknN,
+    bundle_skyrsla_vantar: skyrslaN,
+    systkini_kt: hunt.systkini_kt != null ? hunt.systkini_kt : systkiniN,
+    blob_graen_an_skyrslu: hunt.blob_graen_an_skyrslu != null ? hunt.blob_graen_an_skyrslu : blobN,
+    hud_buid_2026: hunt.hud_buid_2026,
+    hud_buid_vs_skyrsla: hunt.hud_buid_vs_skyrsla != null ? hunt.hud_buid_vs_skyrsla : hudN,
+    drive_2026_radir: hunt.drive_2026_radir,
+    drive_2026_distinct: hunt.drive_2026_distinct,
+    drive_tvitok: hunt.drive_tvitok != null ? hunt.drive_tvitok : driveN,
+  };
+  const delta = {};
+  for (const k of Object.keys(BASELINE)) {
+    if (k === 'dags') continue;
+    if (typeof nuna[k] === 'number') delta[k] = nuna[k] - BASELINE[k];
+  }
+  return json(200, { baseline: BASELINE, nuna, delta, tolur: true });
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors() };
   if (event.httpMethod !== 'GET') return json(405, { error: 'GET only' });
   try {
+    if ((event.queryStringParameters || {}).tolur) return await tolurHamur();
     const curYear = new Date().getFullYear();
     const [tolur, amber, enginSk, rukkud, bundle] = await Promise.all([
       sbGet('v_veidin_tolur?select=*'),

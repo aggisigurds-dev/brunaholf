@@ -2,8 +2,9 @@
 // Öfug hlið á Skýrslu-vaktinni (sem vaktar staði Í þjónustu). LES LIFANDI (engin
 // skyndiminni) svo listinn sé áreiðanlegur á meðan verið er að endurlesa/tengja.
 //
-//   GET /api/service-gaps
-//     → { generated_at, counts, rows, unlinked }
+//   GET /api/service-gaps           → { generated_at, counts, rows, unlinked }  ~37 KB
+//   GET /api/service-gaps?tolur=1   → { generated_at, counts, tolur:true }      ~0,15 KB
+//     Talið Í SQL (count=exact + HEAD). Fyrir yfirlit sem sýna fjóra teljara.
 //       rows      = FLOKKUR A: base á skrá, á þjónustu-skjöl, EN enginn lifandi
 //                   staður merktur er_i_thjonustu (úr v_service_gaps). flokkur
 //                   'med_stad' (bara vantar merkinguna) | 'an_stadar'.
@@ -63,6 +64,36 @@ exports.handler = async (event) => {
     } catch (e) { return json(502, { error: e.message }); }
   }
 
+  // ?tolur=1 — AÐEINS `counts`, talið Í SQL með `count=exact` + HEAD (engar
+  // raðir sóttar). Fulla svarið er ~37 KB: 77 gloppu-raðir + 98 ótengd skjöl,
+  // sem yfirlitsspjöldin teikna aldrei — þau sýna fjóra teljara. Listinn sjálfur
+  // tilheyrir Þjónustu-gloppu-síðunni sem notandinn opnar.
+  if (p.tolur) {
+    // an_stadar = allt − med_stad, nákvæmlega eins og JS-flokkunin: NULL í
+    // lifandi_stadir telst „án staðar" (`(r.lifandi_stadir||0) > 0`).
+    // unlinked dregur frá tvítök, eins og `.filter(d => !d.is_duplicate)`.
+    const ODOC = 'customer_documents?customer_base_id=is.null&doc_type=in.(uttektarskyrsla,brunakerfi,samningur)';
+    const [linked_total, med_stad, otengd_alls, otengd_tvitok] = await Promise.all([
+      count('v_service_gaps?select=*'),
+      count('v_service_gaps?lifandi_stadir=gt.0&select=*'),
+      count(ODOC + '&select=*'),
+      count(ODOC + '&is_duplicate=is.true&select=*'),
+    ]);
+    if (linked_total == null || med_stad == null || otengd_alls == null || otengd_tvitok == null) {
+      return json(502, { error: 'talning mistókst' });
+    }
+    return json(200, {
+      generated_at: new Date().toISOString(),
+      counts: {
+        linked_total,
+        med_stad,
+        an_stadar: linked_total - med_stad,
+        unlinked: otengd_alls - otengd_tvitok,
+      },
+      tolur: true,
+    });
+  }
+
   // Listi: flokkur A (v_service_gaps) + flokkur B (ótengd þjónustu-skjöl).
   let all, unlinkedRaw;
   try {
@@ -95,6 +126,22 @@ exports.handler = async (event) => {
 
   return json(200, { generated_at: new Date().toISOString(), counts, rows, unlinked });
 };
+
+// Talning REIKNUÐ Í SQL: `count=exact` + HEAD skilar aðeins hausnum
+// („Content-Range: */77"), engum röðum. `select=*` alltaf — `select=<dálkur>`
+// skilar 400 ef dálkurinn heitir öðru nafni í sýninni, og HEAD sækir engar
+// raðir hvort eð er. null = talningin brást (aldrei 0 sem staðreynd).
+async function count(path) {
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+      method: 'HEAD',
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, Prefer: 'count=exact' },
+    });
+    if (!r.ok) return null;
+    const n = parseInt(String(r.headers.get('content-range') || '').split('/')[1], 10);
+    return Number.isFinite(n) ? n : null;
+  } catch (_) { return null; }
+}
 
 async function fetchAll(table, qs) {
   const out = []; let from = 0;

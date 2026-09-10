@@ -20,23 +20,30 @@ exports.handler = async (event) => {
   if (!SUPABASE_URL || !SUPABASE_KEY) return json(500, { error: 'Supabase env missing' });
   if (event.httpMethod !== 'GET') return json(405, { error: 'Method not allowed' });
 
+  // Hvorugur helper má KASTA: þeir keyra allir í einu Promise.all hér að neðan,
+  // og eitt fallið kall mátti aldrei fella alla ferskleikaskýrsluna (sama vörn
+  // og gömlu try/catch-blokkirnar veittu áður en þetta varð samhliða).
   const get = async (path) => {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` },
-    });
-    if (!r.ok) return null;
-    return await r.json();
+    try {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` },
+      });
+      if (!r.ok) return null;
+      return await r.json();
+    } catch (_) { return null; }
   };
   const head = async (path) => {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-      method: 'HEAD',
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-        'Prefer': 'count=exact',
-      },
-    });
-    return parseInt(r.headers.get('content-range')?.split('/')[1] || '0', 10) || 0;
+    try {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+        method: 'HEAD',
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          'Prefer': 'count=exact',
+        },
+      });
+      return parseInt(r.headers.get('content-range')?.split('/')[1] || '0', 10) || 0;
+    } catch (_) { return 0; }
   };
 
   const now = Date.now();
@@ -50,82 +57,91 @@ exports.handler = async (event) => {
     return r?.[0]?.[col] ?? null;
   };
 
-  // ----- Tímavera (meta has the file-import stamp; real freshness = newest workday) -----
-  const tvMeta = await get('timavera_meta?id=eq.1&select=last_import,row_count,source_file');
+  // ── ÖLL köllin SAMHLIÐA (09.09.2026 — afkastalagfæring) ────────────────────
+  // Áður runnu þau Í RÖÐ: sex gagnalindir × (meta → newest → count) + póstur =
+  // 19 Supabase-ferðir hver á eftir annarri ≈ 2,9 s — fyrir svar sem er 3 KB.
+  // Netlify rukkar eftir GB-SEKÚNDUM, ekki bætum, svo þetta örsmáa svar var
+  // DÝRASTA fallið á síðunni. Ekkert kallanna les niðurstöðu annars, svo þau
+  // eiga öll heima í einu Promise.all: kostnaðurinn fer úr 19×RTT í 1×RTT.
+  // ⚠️ Bættu nýrri gagnalind við LISTANN hér að neðan — ekki með nýju `await`
+  //    fyrir ofan hann, þá er raðkeyrslan komin aftur.
+  const EXPECTED = [
+    'eldklar@eldklar.is', 'Brunaholf@brunaholf.is', 'bokhald@brunaholf.is',
+    'brunaholfehf@gmail.com', 'bokhald@eldklar.is', 'aggi@brunaholf.is',
+  ];
+  // folder=neq.SENT alls staðar: sendur póstur (SENT-innsog, 2026-07-10) má
+  // hvorki skekkja ferskleika innhólfsins né birtast undir „nýjustu póstar".
+  const [
+    tvMeta, tvReal, tvCount,
+    ajLatest, ajReal, ajCount,
+    bankLatest, bankReal, bankCount,
+    invLatest, invReal, invCount,
+    rdLatest, rdReal, rdCount,
+    edLatest, edCount,
+    recentRows,
+    ...acctRows
+  ] = await Promise.all([
+    // Tímavera (meta á innlestrar-stimpilinn; raunferskleiki = nýjasti vinnudagur)
+    get('timavera_meta?id=eq.1&select=last_import,row_count,source_file'),
+    newest('timavera_entries', 'date'),
+    head('timavera_entries'),
+    // Ajour skráningar
+    get('ajour_registrations?select=registration_created_date&order=registration_created_date.desc.nullslast&limit=1'),
+    newest('ajour_registrations', 'execution_date'),
+    head('ajour_registrations'),
+    // Landsbankinn ledger
+    get('bank_transactions?select=imported_at&order=imported_at.desc.nullslast&limit=1'),
+    newest('bank_transactions', 'trans_date'),
+    head('bank_transactions'),
+    // Reikningar (Payday + Landsbankinn krafnir)
+    get('invoices?select=imported_at&order=imported_at.desc.nullslast&limit=1'),
+    newest('invoices', 'greidsla_date'),
+    head('invoices'),
+    // Redder efnisreikningar
+    get('redder_invoices?select=imported_at&order=imported_at.desc.nullslast&limit=1'),
+    newest('redder_invoices', 'dagsetning'),
+    head('redder_invoices'),
+    // Email digest
+    get('email_digest?select=received_at&folder=neq.SENT&order=received_at.desc.nullslast&limit=1'),
+    head('email_digest'),
+    // 5 nýjustu póstar
+    get('email_digest?select=subject,sender_name,sender_email,received_at,account&folder=neq.SENT&order=received_at.desc.nullslast&limit=5'),
+    // …og eitt kall per pósthólf (breiðist út í `acctRows`, sömu röð og EXPECTED)
+    ...EXPECTED.map((acct) => get(
+      'email_digest?account=eq.' + encodeURIComponent(acct) +
+      '&folder=neq.SENT&select=received_at&order=received_at.desc.nullslast&limit=1'
+    )),
+  ]);
+
   const tvTs = tvMeta?.[0]?.last_import;                 // last sync (file import)
-  const tvReal = await newest('timavera_entries', 'date'); // newest actual workday
-  const tvCount = await head('timavera_entries');
-
-  // ----- Ajour registrations -----
-  const ajLatest = await get('ajour_registrations?select=registration_created_date&order=registration_created_date.desc.nullslast&limit=1');
   const ajTs = ajLatest?.[0]?.registration_created_date;
-  const ajReal = await newest('ajour_registrations', 'execution_date');
-  const ajCount = await head('ajour_registrations');
-
-  // ----- Landsbankinn bank ledger -----
-  const bankLatest = await get('bank_transactions?select=imported_at&order=imported_at.desc.nullslast&limit=1');
   const bankTs = bankLatest?.[0]?.imported_at;
-  const bankReal = await newest('bank_transactions', 'trans_date');
-  const bankCount = await head('bank_transactions');
-
-  // ----- Invoices (Payday + Landsbankinn krafnir, most recent imported_at) -----
-  const invLatest = await get('invoices?select=imported_at&order=imported_at.desc.nullslast&limit=1');
   const invTs = invLatest?.[0]?.imported_at;
-  const invReal = await newest('invoices', 'greidsla_date'); // newest payment seen
-  const invCount = await head('invoices');
-
-  // ----- Redder (material) invoices -----
-  const rdLatest = await get('redder_invoices?select=imported_at&order=imported_at.desc.nullslast&limit=1');
   const rdTs = rdLatest?.[0]?.imported_at;
-  const rdReal = await newest('redder_invoices', 'dagsetning');
-  const rdCount = await head('redder_invoices');
-
-  // ----- Email digest (luna-bridge scrape) -----
-  // folder=neq.SENT everywhere below: sent-mail rows (SENT ingest, 2026-07-10)
-  // must not skew inbox freshness or show up under "newest emails".
-  const edLatest = await get('email_digest?select=received_at&folder=neq.SENT&order=received_at.desc.nullslast&limit=1');
   const edTs = edLatest?.[0]?.received_at;
   const edReal = edTs; // for email the received_at IS the real data date
-  const edCount = await head('email_digest');
 
   // ----- 5 newest emails (defensive; never breaks the report) -----
-  let recent_emails = [];
-  try {
-    const rows = await get('email_digest?select=subject,sender_name,sender_email,received_at,account&folder=neq.SENT&order=received_at.desc.nullslast&limit=5');
-    if (Array.isArray(rows)) {
-      recent_emails = rows.map(r => ({
-        subject: r.subject || '(án efnis)',
-        from: r.sender_name || r.sender_email || '',
-        sender_email: r.sender_email || null,
-        received_at: r.received_at || null,
-        account: r.account || null,
-      }));
-    }
-  } catch (_) { recent_emails = []; }
+  const recent_emails = Array.isArray(recentRows) ? recentRows.map(r => ({
+    subject: r.subject || '(án efnis)',
+    from: r.sender_name || r.sender_email || '',
+    sender_email: r.sender_email || null,
+    received_at: r.received_at || null,
+    account: r.account || null,
+  })) : [];
 
   // ----- Per-mailbox connection status (reminder of which accounts to connect) -----
   // One entry per EXPECTED business mailbox; status from the newest received_at.
-  let email_accounts = [];
-  try {
-    const EXPECTED = [
-      'eldklar@eldklar.is', 'Brunaholf@brunaholf.is', 'bokhald@brunaholf.is',
-      'brunaholfehf@gmail.com', 'bokhald@eldklar.is', 'aggi@brunaholf.is',
-    ];
-    email_accounts = await Promise.all(EXPECTED.map(async (acct) => {
-      const rows = await get(
-        'email_digest?account=eq.' + encodeURIComponent(acct) +
-        '&folder=neq.SENT&select=received_at&order=received_at.desc.nullslast&limit=1'
-      );
-      const newest = rows?.[0]?.received_at ?? null;
-      const age_days = ageDays(newest);
-      let status;
-      if (newest == null) status = 'not_connected';
-      else if (age_days <= 2) status = 'fresh';
-      else if (age_days <= 14) status = 'aging';
-      else status = 'stale';
-      return { account: acct, newest, age_days, status };
-    }));
-  } catch (_) { email_accounts = []; }
+  const email_accounts = EXPECTED.map((acct, i) => {
+    const nyjast = acctRows[i]?.[0]?.received_at ?? null;
+    const age_days = ageDays(nyjast);
+    let status;
+    if (nyjast == null) status = 'not_connected';
+    else if (age_days <= 2) status = 'fresh';
+    else if (age_days <= 14) status = 'aging';
+    else status = 'stale';
+    return { account: acct, newest: nyjast, age_days, status };
+  });
 
   const sources = [
     {

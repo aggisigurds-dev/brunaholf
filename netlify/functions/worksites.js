@@ -5,7 +5,10 @@
 //   - manual billing status (from worksite_status table)
 //
 // Supports:
-//   GET  /api/worksites?year=2026
+//   GET  /api/worksites?year=2026            → { generated_at, summary, worksites[] }  ~89 KB
+//   GET  /api/worksites?year=2026&tolur=1    → { generated_at, summary, tolur:true }   ~0,3 KB
+//        Aðeins heildartölurnar; sleppir líka email_digest- og customer_info-lestrinum
+//        (per-verkstað gögn). Fyrir Jarvis/yfirlit sem sýna tölur en engan lista.
 //   POST /api/worksites  body { project_name, year, billing_status?, notes?, drive_folder_url?, payday_url? }
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -19,6 +22,14 @@ exports.handler = async (event) => {
   if (event.httpMethod !== 'GET') return json(405, { error: 'Method not allowed' });
 
   const p = event.queryStringParameters || {};
+  // ?tolur=1 — AÐEINS `summary`. Jarvis og hub-spjöldin sýna heildartölur
+  // (verkstaðir, klst, rukkað, ógreitt); þau lásu samt öll 50 verkstaða-objectin
+  // með reikningaröðum, póstum og tengiliðum — 89 KB — til að birta átta tölur.
+  // Í þessum ham sleppum við líka tveimur AÐFÖNGUM sem aðeins per-verkstað-svarið
+  // notar: email_digest (~9.200 raðir í ársglugganum, þyngsti lesturinn í fallinu)
+  // og customer_info. Talningin sem eftir stendur er ÓBREYTT — sama útreikning,
+  // bara ekki skilað út.
+  const tolurMode = !!p.tolur;
   const yearParam = (p.year || String(new Date().getFullYear())).trim();
   // Range can be a single year or "combined" (current + previous)
   const now = new Date().getFullYear();
@@ -39,13 +50,13 @@ exports.handler = async (event) => {
       // Scope email mentions to the same year window as timavera/ajour (was: whole
       // ~30k-row table on every call → ~23s). received_at≥dateFrom cuts it to the
       // current 1–2 year window; email→worksite matching only needs in-window mail.
-      fetchAllPages(`email_digest?select=id,account,sender_email,sender_name,subject,snippet,received_at&folder=neq.SENT&received_at=gte.${dateFrom}`),
+      tolurMode ? [] : fetchAllPages(`email_digest?select=id,account,sender_email,sender_name,subject,snippet,received_at&folder=neq.SENT&received_at=gte.${dateFrom}`),
       sb(`worksite_status?year=in.(${statusYears.join(',')})&select=*`),
       fetchAllPages(`invoices?select=*&or=(gjalddagi.is.null,and(gjalddagi.gte.${dateFrom},gjalddagi.lte.${dateTo}))&order=gjalddagi.desc.nullslast`),
       fetchAjourCountsRange(dateFrom, dateTo),
       sb(`customer_worksite_map?select=*`),
       fetchAllPages(`bank_transactions?select=trans_date,amount,text,kt_counterparty&amount=gt.0`),
-      sb(`customer_info?select=*`),
+      tolurMode ? [] : sb(`customer_info?select=*`),
     ]);
     const customerInfoByName = {};
     for (const ci of customerInfos) customerInfoByName[ci.customer_name] = ci;
@@ -252,6 +263,7 @@ exports.handler = async (event) => {
       },
     };
 
+    if (tolurMode) return json(200, { generated_at: new Date().toISOString(), summary, tolur: true });
     return json(200, { generated_at: new Date().toISOString(), summary, worksites });
   } catch (e) {
     return json(500, { error: e.message || String(e) });
