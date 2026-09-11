@@ -1212,9 +1212,13 @@ function teiknaBylgju(){
 /* ── ratsjá: vélarnar. Fjarlægð frá miðju = hve langt síðan lífsmark. ── */
 let VELAR = [];
 function teiknaRatsja(){
+  requestAnimationFrame(teiknaRatsja);   // FYRST (eins og kjarninn) → stök teikni-villa frystir aldrei ratsjána
   const c = $('#ratsja-canvas'), x = c.getContext('2d');
   const rgl = erRgEigindi() ? '230,176,74' : '79,216,255';   // Ragnarök: gull í stað blás
   const w = c.width, h = c.height, cx = w/2, cy = h/2, R = Math.min(w,h)/2 - 6;
+  // Ómældur strigi (1×1 þegar Vélar-spjaldið er falið eða glugginn lágmarkaður) gaf neikvæðan radíus →
+  // arc() kastaði IndexSizeError. Beðið eftir næstu mælingu (staerd við resize/útlitsskipti) í staðinn.
+  if(!(R > 0)) return;
   const dpr = Math.min(2, devicePixelRatio||1);
   x.clearRect(0,0,w,h);
   for(let i=1;i<=3;i++){
@@ -1246,7 +1250,6 @@ function teiknaRatsja(){
     x.fillStyle=`rgba(${lit},.85)`; x.font=`${9.5*dpr}px ui-monospace,monospace`; x.textAlign='center';
     x.fillText(String(v.vel||'').slice(0,14).toUpperCase(), px, py-13*dpr);
   });
-  requestAnimationFrame(teiknaRatsja);
 }
 
 /* ── tal ────────────────────────────────────────────────── */
