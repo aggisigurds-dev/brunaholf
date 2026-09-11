@@ -338,6 +338,38 @@
   .svidrod{gap:8px}
   .svidbtn{min-height:42px;padding:8px 12px}
 }
+
+/* -- Tengingar (11.09.2026, úr Golden Jarvis MkII): þjónusturnar úr /api/kerfisheilsa ----------
+   Sömu gögn og Kerfis-vitals teljast úr — ekkert aukakall. Hópur með eitthvað rautt/gult opnast
+   sjálfur; heill hópur er samanbrotinn svo spjaldið verði ekki 20 kort á hæð. */
+.tg-hop{border:1px solid rgba(79,216,255,.12);margin:8px 0 0;padding:0 8px 6px;background:rgba(79,216,255,.03)}
+.tg-hop>summary{cursor:pointer;list-style:none;padding:8px 2px;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--cy2);font-weight:700;display:flex;gap:8px;align-items:baseline}
+.tg-hop>summary::-webkit-details-marker{display:none}
+.tg-hop>summary b{margin-left:auto;color:var(--ink3);font-weight:600;letter-spacing:.06em;white-space:nowrap}
+.tg-kort{position:relative;border:1px solid var(--cy-dim);padding:8px 10px 9px 13px;margin-top:6px;background:rgba(2,12,25,.4)}
+.tg-kort::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ok)}
+.tg-kort.gult::before{background:var(--var)}
+.tg-kort.raudt::before{background:var(--hae)}
+.tg-kort.graat::before{background:var(--ink3)}
+.tg-top{display:flex;align-items:center;gap:7px;min-width:0}
+.tg-led{width:8px;height:8px;border-radius:50%;flex:0 0 8px;background:var(--ok);box-shadow:0 0 6px var(--ok)}
+.gult .tg-led{background:var(--var);box-shadow:0 0 6px var(--var)}
+.raudt .tg-led{background:var(--hae);box-shadow:0 0 8px var(--hae)}
+.graat .tg-led{background:var(--ink3);box-shadow:none}
+.tg-nafn{font-size:12px;font-weight:700;color:var(--ink);letter-spacing:.02em;min-width:0;overflow-wrap:anywhere}
+.tg-undir{font-size:10px;color:var(--ink3);margin-top:2px;overflow-wrap:anywhere}
+.tg-stada{font-size:11px;color:var(--ink2);margin-top:5px;line-height:1.45;overflow-wrap:anywhere}
+.tg-meta{font-size:9.5px;color:var(--ink3);margin-top:3px}
+.tg-hvernig{margin-top:7px;border:1px solid rgba(79,216,255,.14);background:rgba(2,8,20,.6);font-size:10.5px;line-height:1.55;color:var(--ink2)}
+.tg-hvernig>summary{cursor:pointer;padding:5px 9px;font-size:9.5px;letter-spacing:.08em;color:var(--ink3)}
+.tg-hvernig>div{padding:0 9px 8px;overflow-wrap:anywhere}
+.tg-hvernig code{color:var(--cy);font-size:10px}
+.tg-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tg-btn{font:inherit;font-size:10.5px;letter-spacing:.04em;color:var(--ink2);background:transparent;border:1px solid var(--cy-dim);
+  padding:4px 9px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;min-height:28px}
+.tg-btn:hover{border-color:var(--cy);color:var(--cy)}
+.tg-btn[disabled]{opacity:.55;cursor:progress}
 </style>
 <style id="rg-thema">
 /* ══ ÚTLIT: KLASSÍSKT ↔ RAGNARÖK ═══════════════════════════════════════════
@@ -608,6 +640,33 @@ html[data-thema="ragnarok"] .tenglar::before{content:"";position:absolute;left:0
 html[data-thema="ragnarok"] .tenglar a{color:#9c7a45}
 html[data-thema="ragnarok"] .tenglar a:hover{color:#f6dc95;border-color:rgba(201,160,74,.35)}
 
+/* tengingar — þjónustukortin eins og í hönnuninni: saumaður málmrammi, gullrönd til vinstri, glóandi ljós */
+html[data-thema="ragnarok"] .tg-hop{border:0;background:transparent;padding:0;margin:12px 0 0}
+html[data-thema="ragnarok"] .tg-hop>summary{font-size:10px;font-weight:500;letter-spacing:.3em;color:#bf9a5d;padding:6px 2px 2px}
+html[data-thema="ragnarok"] .tg-hop>summary b{color:#9c7a45;font-weight:500;letter-spacing:.08em}
+html[data-thema="ragnarok"] .tg-kort{border:1.5px solid transparent;border-radius:2px;padding:12px 12px 12px 16px;margin-top:8px;overflow:hidden;
+  background:var(--rg-innri),var(--rg-hnappmalmur);box-shadow:0 6px 18px rgba(0,0,0,.7)}
+html[data-thema="ragnarok"] .tg-kort::before{width:4px;background:linear-gradient(180deg,#fff1c4,#c9982f,#6e4a12);box-shadow:0 0 10px rgba(255,200,90,.6)}
+html[data-thema="ragnarok"] .tg-kort.gult::before{background:linear-gradient(180deg,#ffd9a8,#ff9a3a,#8a3d10);box-shadow:0 0 10px rgba(255,150,60,.6)}
+html[data-thema="ragnarok"] .tg-kort.raudt::before{background:linear-gradient(180deg,#ffb09a,#ff5a36,#7a1405);box-shadow:0 0 12px rgba(255,80,40,.7)}
+html[data-thema="ragnarok"] .tg-kort.graat::before{background:linear-gradient(180deg,#9c7a45,#4a3210);box-shadow:none}
+html[data-thema="ragnarok"] .tg-led{width:10px;height:10px;flex-basis:10px;background:radial-gradient(circle at 35% 35%,#fff6d8,#e6b04a 60%,#8a6420);box-shadow:0 0 8px rgba(255,210,120,.8)}
+html[data-thema="ragnarok"] .gult .tg-led{background:radial-gradient(circle at 35% 35%,#ffe0b8,#ff9a3a 60%,#8a3d10);box-shadow:0 0 8px rgba(255,150,60,.8)}
+html[data-thema="ragnarok"] .raudt .tg-led{background:radial-gradient(circle at 35% 35%,#ffd0c0,#ff5a36 60%,#7a1405);box-shadow:0 0 10px rgba(255,80,40,.9)}
+html[data-thema="ragnarok"] .graat .tg-led{background:radial-gradient(circle at 35% 35%,#bf9a5d,#4a3210);box-shadow:none}
+html[data-thema="ragnarok"] .tg-nafn{font-size:14px;font-weight:500;color:#f6dc95;letter-spacing:0}
+html[data-thema="ragnarok"] .tg-undir{font-size:10px;color:#9c7a45;margin-top:3px}
+html[data-thema="ragnarok"] .tg-stada{font-size:12px;color:#f3e4bf;margin-top:8px}
+html[data-thema="ragnarok"] .tg-meta{font-size:9.5px;color:#9c7a45;margin-top:4px}
+html[data-thema="ragnarok"] .tg-hvernig{margin-top:10px;border:1px solid rgba(201,160,74,.35);border-radius:1px;background:#050505;color:#d3ac66;line-height:1.6}
+html[data-thema="ragnarok"] .tg-hvernig>summary{color:#bf9a5d;letter-spacing:.14em;text-transform:uppercase;font-size:9px;padding:7px 10px}
+html[data-thema="ragnarok"] .tg-hvernig>div{padding:0 10px 10px}
+html[data-thema="ragnarok"] .tg-hvernig code{color:#ffcf6a}
+html[data-thema="ragnarok"] .tg-acts{gap:8px;margin-top:10px}
+html[data-thema="ragnarok"] .tg-btn{min-height:36px;padding:0 12px;border:1px solid transparent;border-radius:2px;white-space:nowrap;
+  background:var(--rg-innri),var(--rg-hnappmalmur);color:#f3e4bf;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.02em}
+html[data-thema="ragnarok"] .tg-btn:hover{color:#fff1c4;box-shadow:0 0 14px rgba(255,200,90,.45)}
+
 html.embedded[data-thema="ragnarok"] .klukka .t{font-size:28px}
 @media(max-width:640px){
   html[data-thema="ragnarok"] .kjarni{min-height:600px}
@@ -795,6 +854,12 @@ html.embedded[data-thema="ragnarok"] .klukka .t{font-size:28px}
       <div class="spjald" data-spjald="hljod">
         <h2>Hljóðnemi</h2>
         <canvas id="bylgja" style="width:100%;height:56px;display:block"></canvas>
+      </div>
+      <!-- 2026-09-11: TENGINGAR úr Golden Jarvis MkII. Þjónusturnar úr /api/kerfisheilsa — sama svar og
+           Kerfis-vitals telur úr, svo spjaldið kostar ekkert aukakall. ⏱ Prófa prófar EINA tengingu. -->
+      <div class="spjald" data-spjald="tengingar">
+        <h2>Tengingar <span id="tg-uppf">—</span></h2>
+        <div id="tg-efni"><div style="color:var(--ink3)">sæki…</div></div>
       </div>
       <div class="spjald" data-spjald="gogn">
         <h2>Gagnaleiðslur</h2>
@@ -1423,6 +1488,113 @@ document.addEventListener('toggle', function(ev){
   if(d && d.tagName === 'DETAILS' && d.hasAttribute('data-hunt') && d.open) hladaHunt();
 }, true);
 
+/* ── Tengingar (úr Golden Jarvis MkII, 11.09.2026) ─────────────────────────
+ * Sömu þjónustukort og kerfisheilsa.html, úr SAMA svari og Kerfis-vitals (/api/kerfisheilsa,
+ * geymt í sóknarstjóranum) — ekkert aukakall. „⏱ Prófa" gerir raunverulegt handaband við EINA
+ * þjónustu (?test=<id>) og uppfærir skyndiminnið; „📥 Sækja núna" og tenglar opnast í nýjum
+ * flipa nákvæmlega eins og á Kerfisheilsu. „Merkja endurnýjað" (lyklaskrá) býr áfram þar.
+ */
+const TG_OPIN = {};                                    // hópar/skýringar sem notandinn opnaði eða lokaði sjálfur
+const TG_ROD = { raudt:0, gult:1, graent:2, graat:3 }; // það sem þarf athygli fyrst; grátt („ekki útfært") aftast
+function tgTimi(iso){
+  if(!iso) return '';
+  const s = Math.floor((Date.now() - new Date(iso).getTime())/1000);
+  if(!isFinite(s)) return '';
+  if(s < 60) return 'rétt í þessu';
+  if(s < 3600) return Math.floor(s/60) + ' mín síðan';
+  if(s < 86400) return Math.floor(s/3600) + ' klst síðan';
+  return Math.floor(s/86400) + ' daga síðan';
+}
+function tgTalning(t){
+  if(!t) return '';
+  if(t.minutur != null) return t.minutur > 0 ? t.label + ' eftir ' + t.minutur + ' mín' : t.label + ' — útrunninn';
+  if(t.dagar != null) return t.label + ': ' + (t.dagar === 0 ? 'í dag' : t.dagar + ' daga gamall');
+  return '';
+}
+function teiknaTengingar(services){
+  const box = document.getElementById('tg-efni');
+  if(!box) return;
+  // Persónulega pósthólfið hans Agnars á ekki heima hér (Agnar: „ekki flækja aggisigurds@gmail.com inn í þetta"):
+  // hvorki kortið né „📥 Sækja póst núna"-takkinn, sem myndi soga persónulegan póst inn í email_digest.
+  services = services.filter(s => !/aggisigurds@gmail\.com/i.test((s.id || '') + ' ' + (s.heiti || '')));
+  const hopar = [], eftir = {};
+  services.forEach(s => {
+    const k = s.hopur || 'Annað';
+    if(!eftir[k]){ eftir[k] = []; hopar.push(k); }
+    eftir[k].push(s);
+  });
+  const u = document.getElementById('tg-uppf');
+  if(!hopar.length){
+    box.innerHTML = '<div style="color:var(--ink3);font-size:11px">engar tengingar skráðar</div>';
+    if(u) u.textContent = '—';
+    return;
+  }
+  // Skýringartextinn á þjóninum ber `kóða` og stöku <b>/<code>/<br> — aðeins þau (án eiginda) fá að lifa, allt annað er stafað út.
+  const skyring = t => esc(t).replace(/&lt;(\/?)(b|code|br|i|em|strong)&gt;/g, '<$1$2>').replace(/`([^`]+)`/g, '<code>$1</code>');
+  const kort = s => {
+    const meta = [tgTalning(s.talning), s.profad ? 'prófað ' + tgTimi(s.profad) : '',
+      s.sidasta_keyrsla && s.sidasta_keyrsla.at ? 'síðasta keyrsla ' + tgTimi(s.sidasta_keyrsla.at) : ''].filter(Boolean).join(' · ');
+    const takkar = (s.adgerdir || []).map(a =>
+        a.test ? '<button type="button" class="tg-btn" data-tg-prufa="' + esc(a.test) + '">' + esc(a.label) + '</button>'
+      : a.url  ? '<a class="tg-btn" href="' + esc(a.url) + '" target="_blank" rel="noopener">' + esc(a.label) + '</a>'
+      : '').join('') +
+      (s.tenglar || []).map(t => '<a class="tg-btn" href="' + esc(t.url) + '" target="_blank" rel="noopener">' + esc(t.label) + '</a>').join('');
+    const slaemt = s.status === 'raudt' || s.status === 'gult', vid = 'v:' + s.id;
+    const opin = TG_OPIN[vid] != null ? TG_OPIN[vid] : slaemt;
+    return '<div class="tg-kort ' + esc(s.status || 'graat') + '">' +
+      '<div class="tg-top"><span class="tg-led"></span><span class="tg-nafn">' + esc(s.heiti) + '</span></div>' +
+      (s.undir ? '<div class="tg-undir">' + esc(s.undir) + '</div>' : '') +
+      (s.detail ? '<div class="tg-stada">' + esc(s.detail) + '</div>' : '') +
+      (meta ? '<div class="tg-meta">' + esc(meta) + '</div>' : '') +
+      (s.hvernig ? '<details class="tg-hvernig" data-tg="' + esc(vid) + '"' + (opin ? ' open' : '') + '><summary>Hvernig virkar þetta</summary><div>' + skyring(s.hvernig) + '</div></details>' : '') +
+      (takkar ? '<div class="tg-acts">' + takkar + '</div>' : '') +
+    '</div>';
+  };
+  let iLagi = 0, aths = 0;
+  box.innerHTML = hopar.map(k => {
+    const listi = eftir[k].slice().sort((a, b) => (TG_ROD[a.status] ?? 2) - (TG_ROD[b.status] ?? 2));
+    const ok = listi.filter(s => s.status === 'graent').length;
+    const slaem = listi.filter(s => s.status === 'raudt' || s.status === 'gult').length;
+    iLagi += ok; aths += slaem;
+    const hid = 'h:' + k, opin = TG_OPIN[hid] != null ? TG_OPIN[hid] : slaem > 0;
+    return '<details class="tg-hop" data-tg="' + esc(hid) + '"' + (opin ? ' open' : '') + '><summary>' + esc(k) +
+      '<b>' + ok + '/' + listi.length + (slaem ? ' · ' + slaem + ' að athuga' : ' í lagi') + '</b></summary>' +
+      listi.map(kort).join('') + '</details>';
+  }).join('');
+  if(u) u.textContent = iLagi + '/' + services.length + ' í lagi' + (aths ? ' · ' + aths + ' að athuga' : '');
+}
+async function prufaTengingu(id, btn){
+  const adur = btn.textContent;
+  btn.disabled = true; btn.textContent = '⏳ …';
+  try{
+    const r = await fetch('/api/kerfisheilsa?test=' + encodeURIComponent(id), { cache:'no-store' });
+    const j = await r.json();
+    if(!r.ok || j.error) throw new Error(j.error || ('HTTP ' + r.status));
+    // Svarið ber ALLAR þjónustur með nýju prófuninni — það verður skyndiminnið, svo sakja()
+    // teiknar vitals + tengingar upp á nýtt án þess að kalla aftur.
+    SOKN.gogn['/api/kerfisheilsa'] = j; SOKN.sidast['/api/kerfisheilsa'] = Date.now(); SOKN.bilun['/api/kerfisheilsa'] = 0;
+    teiknaTengingar(j.services || []);   // strax — sakja() teiknar ekkert ef flipinn er falinn, og þá sæti takkinn á „⏳ …"
+    const s = (j.services || []).find(x => x.id === id);
+    baetaStraum('tenging prófuð: ' + (s ? s.heiti + ' — ' + (s.detail || s.status) : id), s && s.status === 'raudt' ? 'hae' : 'ok');
+    sakja();
+  }catch(e){
+    baetaStraum('prófun féll: ' + id + ' — ' + ((e && e.message) || e), 'hae');
+    btn.textContent = '✗ villa';
+    setTimeout(() => { btn.textContent = adur; btn.disabled = false; }, 2500);
+  }
+}
+(function(){
+  const box = document.getElementById('tg-efni');
+  if(!box) return;
+  box.addEventListener('click', ev => {
+    const b = ev.target.closest('[data-tg-prufa]');
+    if(b){ prufaTengingu(b.dataset.tgPrufa, b); return; }
+    // Smellur á fyrirsögn hóps/skýringar: muna valið svo endurteikning á 2 mín fresti loki ekki því sem var opnað.
+    const sm = ev.target.closest('summary'), d = sm && sm.parentElement;
+    if(d && d.dataset && d.dataset.tg) TG_OPIN[d.dataset.tg] = !d.open;
+  });
+})();
+
 async function sakja(){
   if(!synilegt()) return;               // falinn flipi kostar ekkert
   try{
@@ -1452,6 +1624,7 @@ async function sakja(){
       p.push('<span class="p '+(raud?'hae':'on')+'">'+(raud?raud+' ótengt':'tengingar í lagi')+'</span>');
       if(gul) p.push('<span class="p vara">'+gul+' að athuga</span>');
       $('#pillur').innerHTML = p.join('');
+      teiknaTengingar(h.services || []);
     }
 
     // ── vélar
@@ -1643,8 +1816,8 @@ document.addEventListener('visibilitychange', function(){ if(synilegt()) sakja()
 /* -- Utlit (4 forstillingar) + gogn i nyju spjoldin --------------------- */
 (function(){
   var UTLIT = {
-    adal:      { heiti:'Adal',      spjold:['vitals','oryggisnet','serfraedingar','villuleit','fjarskipti','velar','hljod','gogn','markmid'] },
-    kerfi:     { heiti:'Kerfi',     spjold:['vitals','oryggisnet','perf','fjarskipti','velar','gogn'] },
+    adal:      { heiti:'Adal',      spjold:['vitals','oryggisnet','serfraedingar','villuleit','fjarskipti','velar','hljod','tengingar','gogn','markmid'] },
+    kerfi:     { heiti:'Kerfi',     spjold:['vitals','oryggisnet','perf','fjarskipti','velar','tengingar','gogn'] },
     thjonusta: { heiti:'Thjonusta', spjold:['thekja','gloppur','verk','markmid','villuleit'] },
     fjarmal:   { heiti:'Fjarmal',   spjold:['krofur','thekja','markmid'] }
   };
@@ -1956,7 +2129,7 @@ document.addEventListener('visibilitychange', function(){ if(synilegt()) sakja()
 (function(){
   var HEITI = {
     vitals:'◆ Kerfis-vitals', fjarskipti:'◆ Fjarskipti', velar:'◆ Velar',
-    hljod:'◆ Hljodnemi', gogn:'◆ Gagnaleidslur', markmid:'◆ Meginmarkmid', serfraedingar:'◆ Serfraedingar',
+    hljod:'◆ Hljodnemi', gogn:'◆ Gagnaleidslur', tengingar:'◆ Tengingar', markmid:'◆ Meginmarkmid', serfraedingar:'◆ Serfraedingar',
     villuleit:'◆ Villuleit (hindra kludur)',
     krofur:'◆ Krofur & utistandandi', thekja:'◆ Thekja — por',
     gloppur:'◆ Thjonustu-gloppur', verk:'◆ Verkefni', perf:'◆ Thrystingur (frammistada)'
