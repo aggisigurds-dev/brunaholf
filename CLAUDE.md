@@ -148,6 +148,10 @@ eitthvað er óbirt (live `/build.json` ≠ HEAD). Sjá `.claude/skills/deploy/S
 - **Boss-útlit (svart stál · rjómapappír · gull):** skill `boss-theme` (.claude/skills/boss-theme — tokens,
   gullrecipes, .boss-* klasar, viðmiðunarskjár) og `css/theme.css`. Lesa `brunaholf-layout` á undan CSS-breytingum.
   Fyrstu útfærslur: Þjónustuborð, Efnislista-ritillinn í Gerð reikninga (03.09.2026).
+- **Jarvis Ragnarök-útlit (11.09.2026):** `js/ragnarok.js` (rofi `RgThema` + eldkjarni `RgKjarni`) og
+  `<style id="rg-thema">` í `jarvis.html` og `afkastavakt.html`. Stilling á tæki: `localStorage jarvis_thema_v1`
+  (`?thema=ragnarok|klassiskt` setur hana). Klassíska útlitið er sjálfgefið og óbreytt — allar Ragnarök-reglur eru
+  bundnar við `html[data-thema="ragnarok"]`; litir sem JS teiknar fara í gegnum `var(--litur-…, klassískt)` eða `L()`.
 
 ## Security note
 

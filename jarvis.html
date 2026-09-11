@@ -8,7 +8,13 @@
 <!-- Radd-prufa: sjálf-innihaldið 🎙️ spjald (raddir + Fish-prufa). Sprautar sig
      sjálft inn á DOM-ready svo ein <script>-lína dugar. Slökkt með
      window.JARVIS_VOICE_NO_TESTER=true. -->
-<script defer src="/js/jarvis-voice.js?v=2"></script>
+<script defer src="/js/jarvis-voice.js?v=3"></script>
+<!-- Útlit (Klassískt ↔ Ragnarök, Agnar 11.09.2026): eigindið á <html> er sett HÉR, áður en
+     nokkuð málast, svo Ragnarök blikki ekki klassískt fyrst. Stillingin er á tækinu
+     (localStorage jarvis_thema_v1), sameiginleg með Vélarrými; ?thema=ragnarok|klassiskt setur hana.
+     Rofinn, letrið og eldkjarninn eru í /js/ragnarok.js (samstillt og lítið — kjarninn þarf það við ræsingu). -->
+<script>(function(){var t=null;try{t=new URLSearchParams(location.search).get('thema');}catch(_){}try{if(t==='ragnarok'||t==='klassiskt')localStorage.setItem('jarvis_thema_v1',t);else t=localStorage.getItem('jarvis_thema_v1');}catch(_){}if(t==='ragnarok'){document.documentElement.setAttribute('data-thema','ragnarok');var l=document.createElement('link');l.id='rg-letur';l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap';document.head.appendChild(l);}})();</script>
+<script src="/js/ragnarok.js?v=1"></script>
 
 <meta charset="utf-8">
 <meta name="color-scheme" content="dark"/>
@@ -234,7 +240,7 @@
 
 /* -- Notenda-rofi (2026-08-01) -- */
 .notandarod{display:flex;gap:6px;justify-content:flex-end;margin-top:7px}
-.nbtn{font:inherit;font-size:11.5px;font-weight:600;letter-spacing:.05em;color:#5f829f;
+.nbtn{font:inherit;font-size:11.5px;font-weight:600;letter-spacing:.05em;color:var(--litur-dauft,#5f829f);
   background:rgba(10,20,32,.5);border:1px solid #152c44;border-radius:7px;padding:5px 11px;
   cursor:pointer;transition:all .15s}
 .nbtn:hover{border-color:#2d6d9e;color:#a8cbe8}
@@ -302,16 +308,16 @@
 /* -- Öryggisnet: 36 verðir. Rautt á að vera ÓÞÆGILEGT að horfa á. ------- */
 .on-haus{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
 .on-tala{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
-.on-tala.heilt{color:var(--ok)} .on-tala.brotid{color:#ff8f6b}
+.on-tala.heilt{color:var(--ok)} .on-tala.brotid{color:var(--litur-rautt,#ff8f6b)}
 .on-undir{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)}
 .on-stodnad{margin-left:auto;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
-  color:#ffb84d;border:1px solid rgba(255,184,77,.4);padding:2px 6px}
+  color:var(--litur-gult,#ffb84d);border:1px solid rgba(255,184,77,.4);padding:2px 6px}
 .on-rod{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-top:1px solid rgba(79,216,255,.08)}
 .on-rod:first-of-type{border-top:0}
 .on-dot{width:7px;height:7px;flex:0 0 7px;margin-top:5px;transform:rotate(45deg)}
 .on-dot.graent{background:var(--ok);box-shadow:0 0 6px var(--ok)}
-.on-dot.rautt{background:#ff8f6b;box-shadow:0 0 8px #ff8f6b}
-.on-dot.villa{background:#ffb84d;box-shadow:0 0 6px #ffb84d}
+.on-dot.rautt{background:var(--litur-rautt,#ff8f6b);box-shadow:0 0 8px var(--litur-rautt,#ff8f6b)}
+.on-dot.villa{background:var(--litur-gult,#ffb84d);box-shadow:0 0 6px var(--litur-gult,#ffb84d)}
 .on-nafn{font-size:11px;color:var(--ink);font-weight:700;letter-spacing:.02em}
 .on-msg{font-size:11px;color:var(--ink2);line-height:1.45;margin-top:2px;word-break:break-word}
 .on-tenglar{margin-top:4px;display:flex;flex-wrap:wrap;gap:6px}
@@ -333,6 +339,285 @@
   .svidbtn{min-height:42px;padding:8px 12px}
 }
 </style>
+<style id="rg-thema">
+/* ══ ÚTLIT: KLASSÍSKT ↔ RAGNARÖK ═══════════════════════════════════════════
+   Ragnarök = „Golden Jarvis MkII" úr Claude Design (Agnar 11.09.2026): kolsvart,
+   bráðið gull, málmplötur með hnoðum og skornum hornum, Chakra Petch.
+   Klassíska útlitið hér fyrir ofan er sjálfgefið og óbreytt: allar Ragnarök-reglur
+   eru bundnar við html[data-thema="ragnarok"] (sett í <head>, sjá /js/ragnarok.js).
+   Klassískir viðaukar eru aðeins rofinn (.thema-horn) og faldir Ragnarök-hlutir. */
+.rg-bar,.rg-protokoll,.rg-knapp{display:none}
+.em{font-style:normal}
+.kjarni>.thema-horn{position:absolute;top:10px;left:10px;z-index:3}
+#thema-rofi{border:1px solid var(--cy-dim);background:transparent;color:var(--ink3);font:inherit;font-size:10px;
+  letter-spacing:.16em;padding:3px 10px;cursor:pointer;text-transform:uppercase}
+#thema-rofi:hover{border-color:var(--cy);color:var(--cy)}
+@keyframes rg-flokt{0%,92%,100%{opacity:1}93%{opacity:.4}95%{opacity:1}97%{opacity:.6}}
+@keyframes rg-blikk{0%,100%{opacity:1}50%{opacity:.45}}
+
+html[data-thema="ragnarok"]{
+  --bg:#020202; --bg2:#080808;
+  --cy:#f6dc95; --cy2:#e6b04a; --cy-dim:rgba(201,160,74,.35);
+  --ink:#f3e4bf; --ink2:#bf9a5d; --ink3:#9c7a45;
+  --ok:#f6dc95; --var:#ffb27a; --hae:#ff5a36;
+  --mono:'Chakra Petch',ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  /* litir sem JS setur í inline-stíl sem var(--litur-…, klassískur litur) */
+  --litur-graent:#f6dc95; --litur-gult:#ffb27a; --litur-rautt:#ff6a3d; --litur-thagg:#e6b04a; --litur-dauft:#9c7a45;
+  --g-spor:rgba(120,40,8,.6); --g-ok:#f6dc95; --g-alag:#ff9a3a; --g-nidri:#ff5a36; --g-grunn:#fff0c0; --g-visir:#fff6d8;
+  /* uppskriftir úr hönnuninni */
+  --rg-malmur:linear-gradient(90deg,transparent 0 12%,rgba(255,140,40,.9) 12% 14%,transparent 14% 100%) border-box,
+    repeating-linear-gradient(90deg,transparent 0 41px,rgba(5,5,5,.85) 41px 46px,transparent 46px 97px,rgba(5,5,5,.85) 97px 100px,transparent 100px 163px) border-box,
+    repeating-linear-gradient(0deg,transparent 0 53px,rgba(5,5,5,.85) 53px 57px,transparent 57px 131px) border-box,
+    linear-gradient(135deg,#fff0c0 0%,#ffb347 12%,#7a3a0c 26%,#ffcf6a 40%,#c9982f 52%,#ff8c2a 64%,#3e1a06 76%,#ffd98a 88%,#d2691e 100%) border-box;
+  --rg-plata:repeating-linear-gradient(90deg,rgba(255,255,255,.035) 0 1px,transparent 1px 3px) padding-box,linear-gradient(180deg,#1c1c1c 0%,#070707 100%) padding-box;
+  --rg-innri:repeating-linear-gradient(90deg,rgba(255,255,255,.03) 0 1px,transparent 1px 3px) padding-box,linear-gradient(180deg,#141414 0%,#030303 100%) padding-box;
+  --rg-hnappmalmur:repeating-linear-gradient(90deg,transparent 0 23px,rgba(5,5,5,.9) 23px 26px,transparent 26px 61px) border-box,linear-gradient(135deg,#ffcf6a,#ff8c2a 30%,#5a2a08 50%,#ffd98a 70%,#d2691e) border-box;
+  --rg-dauft:linear-gradient(135deg,#6e5520,#1a1a1a 50%,#4a3210) border-box;
+  --rg-kort:linear-gradient(135deg,#8a6a2a,#1a1a1a 45%,#6e4a12) border-box;
+  --rg-hnod:radial-gradient(circle at 8px 8px,#fff0c0 0 1.5px,#ff8c2a 2.5px,#3e1a06 3.5px,transparent 4.5px),
+    radial-gradient(circle at calc(100% - 8px) 8px,#fff0c0 0 1.5px,#ff8c2a 2.5px,#3e1a06 3.5px,transparent 4.5px),
+    radial-gradient(circle at 8px calc(100% - 8px),#fff0c0 0 1.5px,#ff8c2a 2.5px,#3e1a06 3.5px,transparent 4.5px),
+    radial-gradient(circle at calc(100% - 8px) calc(100% - 8px),#fff0c0 0 1.5px,#ff8c2a 2.5px,#3e1a06 3.5px,transparent 4.5px);
+  --rg-skurdur:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px);
+  --rg-gulltexti:linear-gradient(180deg,#fff4d1 0%,#f0cf78 35%,#a5762a 55%,#ffe7a8 75%,#c9982f 100%);
+  --rg-gulltala:linear-gradient(180deg,#fff6d8,#f3d582 45%,#b3832f 60%,#ffe9b0);
+  --rg-gullrein:linear-gradient(90deg,#8f6a22,#f7e3a8);
+  --rg-glodrein:linear-gradient(90deg,#8a3d10,#ff9a4a);
+  --rg-eldrein:linear-gradient(90deg,#7a1405,#ff5a36);
+}
+html[data-thema="ragnarok"] body{background:
+    radial-gradient(ellipse 30% 12% at 8% 62%,rgba(140,60,12,.35),transparent 70%),
+    radial-gradient(ellipse 26% 10% at 92% 18%,rgba(160,70,15,.3),transparent 70%),
+    radial-gradient(ellipse 40% 8% at 50% 88%,rgba(120,50,10,.3),transparent 70%),
+    repeating-linear-gradient(45deg,rgba(255,255,255,.02) 0 2px,transparent 2px 14px),
+    radial-gradient(ellipse 120% 40% at 50% 28%,#1a1408 0%,#080808 40%,#020202 100%);
+  background-color:#020202;background-attachment:fixed;letter-spacing:.02em}
+html[data-thema="ragnarok"] body::after{background:repeating-linear-gradient(0deg,rgba(255,200,90,.04) 0 1px,transparent 1px 4px);mix-blend-mode:normal}
+html[data-thema="ragnarok"] body::before{opacity:0}
+html[data-thema="ragnarok"] a{color:#e6b04a}
+html[data-thema="ragnarok"] a:hover{color:#ffe3a3}
+html[data-thema="ragnarok"] code{color:#ffcf6a}
+html[data-thema="ragnarok"] .grind,
+html[data-thema="ragnarok"] .dalkur{gap:14px}
+html[data-thema="ragnarok"] .em{display:none}
+
+/* fliparöðin efst: ein röð af römmuðum hnöppum eins og í hönnuninni (Vélarrými fyrst) */
+html[data-thema="ragnarok"] .utlitsrod{padding:4px 0 2px;gap:8px;margin-bottom:14px}
+html[data-thema="ragnarok"] #velarrymi,
+html[data-thema="ragnarok"] #spjaldval,
+html[data-thema="ragnarok"] #fskjar{position:static;transform:none;display:inline-flex;align-items:center;justify-content:center}
+html[data-thema="ragnarok"] #velarrymi{order:0;min-height:44px;padding:0 15px;font-size:13px;letter-spacing:.06em;text-decoration:none}
+html[data-thema="ragnarok"] .ubtn{order:1;min-height:44px;padding:0 15px;font-size:13px;letter-spacing:.06em}
+html[data-thema="ragnarok"] #spjaldval,
+html[data-thema="ragnarok"] #fskjar{order:2;width:44px;height:44px;font-size:17px;color:#e6b04a}
+
+/* rammaðir hnappar: dauf umgjörð; virkur fær málm og glóð */
+html[data-thema="ragnarok"] #velarrymi,
+html[data-thema="ragnarok"] #spjaldval,
+html[data-thema="ragnarok"] #fskjar,
+html[data-thema="ragnarok"] #thema-rofi,
+html[data-thema="ragnarok"] #perf-btn,
+html[data-thema="ragnarok"] #on-btn,
+html[data-thema="ragnarok"] .ubtn,
+html[data-thema="ragnarok"] .nbtn,
+html[data-thema="ragnarok"] .malrofi button,
+html[data-thema="ragnarok"] #svalmynd .loka{border:1.5px solid transparent;border-radius:2px;
+  background:linear-gradient(180deg,#1c1c1c,#070707) padding-box,var(--rg-dauft);
+  color:#d3ac66;font-family:var(--mono);font-weight:500;box-shadow:0 3px 8px rgba(0,0,0,.6);
+  transition:box-shadow .15s,color .15s}
+html[data-thema="ragnarok"] #velarrymi:hover,
+html[data-thema="ragnarok"] #spjaldval:hover,
+html[data-thema="ragnarok"] #fskjar:hover,
+html[data-thema="ragnarok"] #thema-rofi:hover,
+html[data-thema="ragnarok"] #perf-btn:hover,
+html[data-thema="ragnarok"] #on-btn:hover,
+html[data-thema="ragnarok"] .ubtn:hover,
+html[data-thema="ragnarok"] .nbtn:hover,
+html[data-thema="ragnarok"] .malrofi button:hover,
+html[data-thema="ragnarok"] #svalmynd .loka:hover{color:#fff1c4;box-shadow:0 0 14px rgba(255,200,90,.35),0 3px 8px rgba(0,0,0,.6)}
+html[data-thema="ragnarok"] .ubtn.virkt,
+html[data-thema="ragnarok"] .nbtn.virkt,
+html[data-thema="ragnarok"] .malrofi button.on{background:linear-gradient(180deg,#3a2a10,#141414) padding-box,var(--rg-hnappmalmur);
+  color:#fff1c4;box-shadow:0 0 16px rgba(255,200,90,.45),0 3px 8px rgba(0,0,0,.6)}
+html[data-thema="ragnarok"] .nbtn{min-height:44px;padding:0 18px;font-size:13px;letter-spacing:.02em}
+html[data-thema="ragnarok"] .notandarod{gap:8px;margin-top:12px}
+html[data-thema="ragnarok"] .malrofi{gap:6px}
+html[data-thema="ragnarok"] .malrofi button{min-height:36px;padding:0 14px;font-size:11px;letter-spacing:.16em}
+html[data-thema="ragnarok"] .kjarni>.malrofi{top:14px;right:16px}
+html[data-thema="ragnarok"] .kjarni>.thema-horn{top:14px;left:16px}
+html[data-thema="ragnarok"] #thema-rofi{min-height:36px;padding:0 14px;font-size:11px;letter-spacing:.16em}
+html[data-thema="ragnarok"] #perf-btn,
+html[data-thema="ragnarok"] #on-btn{width:24px;height:22px;padding:0;font-size:12px;line-height:1;color:#f6dc95;cursor:pointer;vertical-align:middle}
+
+/* plötur: málmrammi með saumum, hnoð í hornum, skorin horn */
+html[data-thema="ragnarok"] .haus,
+html[data-thema="ragnarok"] .spjald,
+html[data-thema="ragnarok"] .kjarni,
+html[data-thema="ragnarok"] .markmid{position:relative;border:3px solid transparent;border-radius:0;
+  background:var(--rg-plata),var(--rg-malmur);clip-path:var(--rg-skurdur)}
+html[data-thema="ragnarok"] .kjarni{min-height:660px;
+  background:radial-gradient(circle at 50% 37%,rgba(255,150,40,.12),transparent 58%) padding-box,var(--rg-plata),var(--rg-malmur)}
+html[data-thema="ragnarok"] .haus{padding:16px 16px 14px}
+html[data-thema="ragnarok"] .spjald{padding:14px 14px 16px}
+html[data-thema="ragnarok"] .markmid{padding:14px 14px 16px;margin-top:14px}
+html[data-thema="ragnarok"] .haus::before,
+html[data-thema="ragnarok"] .spjald::after,
+html[data-thema="ragnarok"] .kjarni::after,
+html[data-thema="ragnarok"] .markmid::after{content:"";position:absolute;inset:0;width:auto;height:auto;border:0;
+  background:var(--rg-hnod);pointer-events:none;z-index:4}
+html[data-thema="ragnarok"] .haus::after{display:none}
+html[data-thema="ragnarok"] .spjald::before,
+html[data-thema="ragnarok"] .kjarni::before,
+html[data-thema="ragnarok"] .markmid::before{content:"";position:absolute;top:0;left:14px;right:14px;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,230,160,.7),transparent);pointer-events:none;z-index:4}
+
+/* hausinn */
+html[data-thema="ragnarok"] .haus>div:first-child{flex:1 1 300px;min-width:0;max-width:420px}
+html[data-thema="ragnarok"] .merki{font-size:24px;line-height:1;font-weight:600;letter-spacing:.3em;text-shadow:none;
+  background:var(--rg-gulltexti);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 10px rgba(255,200,90,.45));animation:rg-flokt 5s steps(1) infinite}
+html[data-thema="ragnarok"] .rg-bar{display:block;width:100%;height:7px;margin-top:10px;border-radius:1px;
+  background:radial-gradient(circle at 20% 40%,rgba(255,244,210,.5) 0 1px,transparent 2px) 0 0/6px 7px,
+    radial-gradient(circle at 70% 70%,rgba(0,0,0,.55) 0 1px,transparent 2px) 3px 0/6px 7px,
+    linear-gradient(180deg,#fff0c0 0%,#c9982f 30%,#6e4a12 55%,#b8862c 80%,#3e2a0c 100%);
+  box-shadow:0 1px 0 rgba(255,240,200,.35) inset,0 2px 6px rgba(0,0,0,.8)}
+html[data-thema="ragnarok"] .rg-protokoll{display:flex;justify-content:space-between;align-items:center;gap:12px;
+  margin-top:8px;font-size:9px;font-weight:700;letter-spacing:.16em;color:#e6b04a;white-space:nowrap}
+html[data-thema="ragnarok"] .rg-armed{padding:1px 6px;border:1px solid #e6b04a;color:#fff1c4}
+html[data-thema="ragnarok"] .undirmerki{margin-top:8px;font-size:10px;letter-spacing:.24em;color:#bf9a5d}
+html[data-thema="ragnarok"] .pillur{gap:8px;margin-top:14px}
+html[data-thema="ragnarok"] .p{border:1px solid transparent;border-radius:1px;padding:5px 10px;font-size:10px;letter-spacing:.18em;color:#d3ac66;
+  background:linear-gradient(#161616,#161616) padding-box,var(--rg-dauft);box-shadow:none}
+html[data-thema="ragnarok"] .p.on{color:#ffe9b8;background:linear-gradient(#161616,#161616) padding-box,linear-gradient(135deg,#f3dc9c,#8f6a22,#e7c66f) border-box}
+html[data-thema="ragnarok"] .p.vara{color:#ffc494;background:linear-gradient(#1a0c06,#1a0c06) padding-box,linear-gradient(135deg,#ffb26b,#8a3d10,#ff9a4a) border-box;animation:rg-blikk 2.4s ease-in-out infinite}
+html[data-thema="ragnarok"] .p.hae{color:#ffb09a;background:linear-gradient(#1f0804,#1f0804) padding-box,linear-gradient(135deg,#ff7a4a,#8a1d08,#ff5a36) border-box;animation:rg-blikk 1.1s ease-in-out infinite}
+html[data-thema="ragnarok"] .klukka .t{font-size:36px;line-height:1;font-weight:600;letter-spacing:.12em;margin-top:4px;text-shadow:none;
+  background:linear-gradient(180deg,#fff6d8 0%,#f3d582 40%,#b3832f 58%,#ffe9b0 80%,#d1a13a 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 14px rgba(255,200,90,.45))}
+html[data-thema="ragnarok"] .klukka .d{margin-top:6px;font-size:10px;letter-spacing:.26em;color:#bf9a5d}
+
+/* spjöldin og mælistikurnar (gagnaleiðslur, vitals) */
+html[data-thema="ragnarok"] .spjald>h2{font-size:10px;letter-spacing:.3em;color:#f6dc95;margin-bottom:10px}
+html[data-thema="ragnarok"] .spjald>h2::before{width:7px;height:7px;background:linear-gradient(135deg,#fff1c4,#b8862c);box-shadow:0 0 6px rgba(255,210,120,.7)}
+html[data-thema="ragnarok"] .spjald>h2 span{color:#9c7a45}
+html[data-thema="ragnarok"] .maelir{border:1px solid transparent;border-radius:2px;padding:8px 10px 10px;text-align:left;background:var(--rg-innri),var(--rg-kort)}
+html[data-thema="ragnarok"] .maelagrid .maelir{padding:6px 4px 8px;text-align:center}
+html[data-thema="ragnarok"] .maelir .lina{font-size:10px;letter-spacing:.14em;color:#f3e4bf}
+html[data-thema="ragnarok"] .maelir .lina b{color:#f6dc95}
+html[data-thema="ragnarok"] .rein{height:5px;margin-top:6px;background:#161616}
+html[data-thema="ragnarok"] .rein i,
+html[data-thema="ragnarok"] .rein.ok i{background:var(--rg-gullrein);box-shadow:0 0 8px rgba(255,210,120,.6);border-radius:3px}
+html[data-thema="ragnarok"] .rein.var i{background:var(--rg-glodrein);box-shadow:0 0 8px rgba(255,140,60,.6)}
+html[data-thema="ragnarok"] .rein.hae i{background:var(--rg-eldrein);box-shadow:0 0 10px rgba(255,80,40,.7)}
+html[data-thema="ragnarok"] .straumur div{color:#bf9a5d}
+html[data-thema="ragnarok"] .straumur .kl{color:#e6b04a}
+html[data-thema="ragnarok"] .mlabel{color:#f3e4bf;letter-spacing:.06em}
+html[data-thema="ragnarok"] .mbase{color:#9c7a45}
+html[data-thema="ragnarok"] .sfr-rod{border-bottom-color:rgba(201,160,74,.1)}
+html[data-thema="ragnarok"] .sfr-n{color:#f3e4bf;font-weight:600}
+html[data-thema="ragnarok"] .sfr-r{color:#bf9a5d}
+html[data-thema="ragnarok"] .sfr-fot{color:#9c7a45}
+html[data-thema="ragnarok"] .sfr-hop{border-color:rgba(201,160,74,.22);background:rgba(255,170,60,.03)}
+html[data-thema="ragnarok"] .sfr-hop>summary{color:#e6b04a}
+html[data-thema="ragnarok"] .sfr-rod.sfr-dim .sfr-n{color:#d3ac66}
+html[data-thema="ragnarok"] .sfr-rod.sfr-dim .sfr-r{color:#9c7a45}
+html[data-thema="ragnarok"] .sfr-rod.sfr-cw{border-left-color:#ffcf6a}
+html[data-thema="ragnarok"] .sfr-badge{color:#1a1204;background:#f6dc95;border-radius:1px}
+html[data-thema="ragnarok"] .kveikjur span{border-color:rgba(201,160,74,.35);color:#bf9a5d}
+
+/* kjarninn og TALA-hnappurinn — eldhringurinn sjálfur er teiknaður á striga (RgKjarni) */
+html[data-thema="ragnarok"] .mid{gap:14px;padding:12px 16px 22px}
+html[data-thema="ragnarok"] .heyri{font-size:10px;letter-spacing:.3em;color:#bf9a5d}
+html[data-thema="ragnarok"] .talid{color:#f3e4bf}
+html[data-thema="ragnarok"] .svar{border:1px solid transparent;border-radius:2px;background:var(--rg-innri),var(--rg-kort);color:#f3e4bf}
+html[data-thema="ragnarok"] .svar b{color:#f6dc95}
+html[data-thema="ragnarok"] #hnappur{position:relative;isolation:isolate;width:124px;height:124px;border:0;background:transparent;gap:9px;
+  color:#f3d582;font-size:12px;font-weight:600;letter-spacing:.24em;text-shadow:0 0 10px rgba(255,140,40,.9)}
+html[data-thema="ragnarok"] #hnappur.on{color:#fff6d8}
+html[data-thema="ragnarok"] #hnappur .ic{font-size:0;width:16px;height:16px;border-radius:50%;border:2px solid #f6dc95;
+  background:radial-gradient(circle closest-side,#fff0c0 0 42%,transparent 56%);box-shadow:0 0 8px rgba(255,217,138,.8)}
+html[data-thema="ragnarok"] .rg-knapp{display:block;position:absolute;left:-30px;top:-30px;width:calc(100% + 60px);height:calc(100% + 60px);
+  z-index:-1;pointer-events:none}
+
+/* svið-hnapparnir */
+html[data-thema="ragnarok"] .svidrod{gap:8px}
+html[data-thema="ragnarok"] .svidbtn{min-height:44px;padding:0 16px;border:1px solid transparent;border-radius:2px;
+  background:var(--rg-innri),var(--rg-hnappmalmur);color:#f3e4bf;font-family:var(--mono);font-size:12px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;box-shadow:0 3px 8px rgba(0,0,0,.6)}
+html[data-thema="ragnarok"] .svidbtn:hover{border-color:transparent;color:#fff1c4;box-shadow:0 0 14px rgba(255,200,90,.45),0 3px 8px rgba(0,0,0,.6)}
+html[data-thema="ragnarok"] .svidbtn.svidreload{font-size:16px;padding:0 12px;color:#f6dc95}
+html[data-thema="ragnarok"] .svidbtn.svidall{color:#ffcf6a}
+html[data-thema="ragnarok"] .svidbtn.svidall.virk{color:#fff6d8;background:linear-gradient(180deg,#2a0e06,#0c0402) padding-box,linear-gradient(135deg,#ff7a4a,#8a1d08,#ff5a36) border-box}
+html[data-thema="ragnarok"] .svidsvar{color:#bf9a5d}
+html[data-thema="ragnarok"] .svidsvar b{color:#f6dc95}
+
+/* meginmarkmið, veiðikortin og hunt-listarnir */
+html[data-thema="ragnarok"] .mtitill{font-size:10px;letter-spacing:.3em;color:#f6dc95}
+html[data-thema="ragnarok"] .mtala{font-size:30px;font-weight:600;line-height:1.1;margin:10px 0 4px;text-shadow:none;
+  background:var(--rg-gulltala);-webkit-background-clip:text;background-clip:text;color:transparent}
+html[data-thema="ragnarok"] .mtexti{color:#bf9a5d}
+html[data-thema="ragnarok"] .mrein{height:9px;background:#161616}
+html[data-thema="ragnarok"] .mrein i{background:var(--rg-gullrein);box-shadow:0 0 10px rgba(255,210,120,.6)}
+html[data-thema="ragnarok"] .mrein span{color:#fff6d8;text-shadow:0 0 6px rgba(0,0,0,.95),0 1px 2px rgba(0,0,0,.9)}
+html[data-thema="ragnarok"] .mfotur{color:#9c7a45}
+html[data-thema="ragnarok"] .veidikort-heiti{font-size:9px;letter-spacing:.16em;color:#9c7a45}
+html[data-thema="ragnarok"] .vkort{border:1px solid transparent;border-radius:2px;padding:10px 10px 12px;background:var(--rg-innri),var(--rg-kort)}
+html[data-thema="ragnarok"] .vkort.jakt{background:var(--rg-innri),linear-gradient(135deg,#a8561a,#1a1a1a 45%,#7a3a0c) border-box}
+html[data-thema="ragnarok"] .vkort h3{font-size:8.5px;letter-spacing:.14em;line-height:1.4;color:#bf9a5d}
+html[data-thema="ragnarok"] .vkort .big{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;margin-top:4px}
+html[data-thema="ragnarok"] .vkort .big .tala{font-size:26px;font-weight:600;line-height:1;
+  background:var(--rg-gulltala);-webkit-background-clip:text;background-clip:text;color:transparent}
+html[data-thema="ragnarok"] .vkort .dlt{margin-left:0;font-size:10px;font-weight:500;padding:2px 6px;border-radius:1px}
+html[data-thema="ragnarok"] .vkort .dlt.good{background:rgba(201,160,74,.18);color:#f6dc95}
+html[data-thema="ragnarok"] .vkort .dlt.bad{background:rgba(216,112,42,.2);color:#ffb27a}
+html[data-thema="ragnarok"] .vkort .dlt.zero{background:rgba(120,100,60,.14);color:#9c7a45}
+html[data-thema="ragnarok"] .vkort .base{font-size:8.5px;color:#9c7a45;margin-top:6px}
+html[data-thema="ragnarok"] .huntlisti details{border:1px solid transparent;border-radius:2px;background:var(--rg-innri),var(--rg-kort)}
+html[data-thema="ragnarok"] .huntlisti summary{color:#bf9a5d;letter-spacing:.1em}
+html[data-thema="ragnarok"] .huntlisti summary b{color:#f6dc95}
+html[data-thema="ragnarok"] .huntlisti ul{color:#f3e4bf}
+html[data-thema="ragnarok"] .huntlisti .ath{color:#9c7a45}
+
+/* öryggisnetið */
+html[data-thema="ragnarok"] .on-tala{font-size:30px;font-weight:600}
+html[data-thema="ragnarok"] .on-tala.heilt .tala{background:var(--rg-gulltala);-webkit-background-clip:text;background-clip:text;color:transparent}
+html[data-thema="ragnarok"] .on-undir{font-size:9px;letter-spacing:.1em;color:#bf9a5d}
+html[data-thema="ragnarok"] .on-stodnad{color:#ffb27a;border-color:rgba(255,178,122,.4)}
+html[data-thema="ragnarok"] .on-rod{border-top-color:rgba(201,160,74,.12);padding:8px 0}
+html[data-thema="ragnarok"] .on-dot{width:8px;height:8px;flex-basis:8px}
+html[data-thema="ragnarok"] .on-dot.graent{background:linear-gradient(135deg,#fff1c4,#b8862c);box-shadow:0 0 6px rgba(255,210,120,.7)}
+html[data-thema="ragnarok"] .on-nafn{font-size:12px;font-weight:500;color:#f6dc95}
+html[data-thema="ragnarok"] .on-msg{font-size:10.5px;line-height:1.6;color:#bf9a5d}
+html[data-thema="ragnarok"] .on-tengill{color:#ffcf6a;border-color:rgba(255,207,106,.3);background:rgba(255,170,60,.06)}
+html[data-thema="ragnarok"] .on-tengill:hover{background:rgba(255,170,60,.18);color:#fff6d8}
+html[data-thema="ragnarok"] .on-graen-listi{color:#7d6238;border-top-color:rgba(201,160,74,.12);font-size:9.5px;line-height:1.8}
+html[data-thema="ragnarok"] .on-graen-listi b{color:#f6dc95;font-weight:500}
+
+/* spjaldavalið og tenglarnir neðst (hættuborði eins og yfir valmyndinni í hönnuninni) */
+html[data-thema="ragnarok"] #svalmynd{background:rgba(2,2,2,.78)}
+html[data-thema="ragnarok"] #svalmynd .kort{border:3px solid transparent;border-radius:0;background:var(--rg-plata),var(--rg-malmur);clip-path:var(--rg-skurdur)}
+html[data-thema="ragnarok"] #svalmynd h3{color:#f6dc95;font-size:13px;font-weight:600;letter-spacing:.18em;text-transform:uppercase}
+html[data-thema="ragnarok"] #svalmynd .undir{color:#bf9a5d}
+html[data-thema="ragnarok"] #svalmynd label{color:#f3e4bf}
+html[data-thema="ragnarok"] #svalmynd label:hover{background:rgba(255,170,60,.08)}
+html[data-thema="ragnarok"] #svalmynd input{accent-color:#e6b04a}
+html[data-thema="ragnarok"] #svalmynd .loka{min-height:44px;font-size:13px;letter-spacing:.12em;text-transform:uppercase}
+html[data-thema="ragnarok"] .tenglar{position:relative;padding-top:18px;margin-top:18px}
+html[data-thema="ragnarok"] .tenglar::before{content:"";position:absolute;left:0;right:0;top:0;height:8px;
+  background:repeating-linear-gradient(135deg,#ff8c2a 0 6px,#ffcf6a 6px 9px,#0a0a0a 9px 20px)}
+html[data-thema="ragnarok"] .tenglar a{color:#9c7a45}
+html[data-thema="ragnarok"] .tenglar a:hover{color:#f6dc95;border-color:rgba(201,160,74,.35)}
+
+html.embedded[data-thema="ragnarok"] .klukka .t{font-size:28px}
+@media(max-width:640px){
+  html[data-thema="ragnarok"] .kjarni{min-height:600px}
+  html[data-thema="ragnarok"] .merki{font-size:21px;letter-spacing:.26em}
+  html[data-thema="ragnarok"] .klukka .t{font-size:32px}
+  html[data-thema="ragnarok"] .utlitsrod{gap:6px}
+  html[data-thema="ragnarok"] .ubtn,
+  html[data-thema="ragnarok"] #velarrymi{padding:0 12px}
+}
+</style>
 <!-- Sett á <html> STRAX (ekki í enda body) svo app-hamurinn sé kominn áður en
      fyrsta málningin verður til — annars blikkar venjulega útlitið fyrst.
      Sami eins-línu rofi og index.html notar. -->
@@ -350,18 +635,20 @@
 
 <div class="hud">
     <div class="utlitsrod" id="utlitsrod">
-      <a id="velarrymi" href="/afkastavakt.html" target="_blank" title="Afkastavakt — vélarrými (fullur skjár)">🔧 Vélarrými</a>
+      <a id="velarrymi" href="/afkastavakt.html" target="_blank" title="Afkastavakt — vélarrými (fullur skjár)"><i class="em">🔧 </i>Vélarrými</a>
       <button id="spjaldval" title="Velja spjöld">⚙</button>
       <button id="fskjar" title="Fullur skjár">⛶</button>
-      <button class="ubtn" data-utlit="adal">◈ Aðal</button>
-      <button class="ubtn" data-utlit="kerfi">⚡ Kerfi</button>
-      <button class="ubtn" data-utlit="thjonusta">🗂️ Þjónusta</button>
-      <button class="ubtn" data-utlit="fjarmal">💰 Fjármál</button>
+      <button class="ubtn" data-utlit="adal"><i class="em">◈ </i>Aðal</button>
+      <button class="ubtn" data-utlit="kerfi"><i class="em">⚡ </i>Kerfi</button>
+      <button class="ubtn" data-utlit="thjonusta"><i class="em">🗂️ </i>Þjónusta</button>
+      <button class="ubtn" data-utlit="fjarmal"><i class="em">💰 </i>Fjármál</button>
     </div>
 
   <div class="haus">
     <div>
       <div class="merki">J.A.R.V.I.S.</div>
+      <div class="rg-bar" aria-hidden="true"></div>
+      <div class="rg-protokoll" aria-hidden="true"><span>WASTELAND PROTOCOL</span><span class="rg-armed">ARMED</span></div>
       <div class="undirmerki">Brunahólf ehf · Slökkvitæki ehf — stjórnstöð</div>
       <div class="pillur" id="pillur"><span class="p">ræsir…</span></div>
     </div>
@@ -454,6 +741,8 @@
           <button data-mal="is" class="on">ÍSL</button>
           <button data-mal="en">ENG</button>
         </div>
+        <!-- Útlitsrofinn er líka STILLING → hitt hornið. Sjálf skiptin eru í /js/ragnarok.js. -->
+        <div class="thema-horn"><button id="thema-rofi" type="button" title="Skipta í Ragnarök-útlit">🔥 Ragnarök</button></div>
         <div class="mid">
           <div class="talid" id="talid"></div>
           <div class="svar" id="svar" hidden></div>
@@ -466,19 +755,19 @@
            (þekkinguna) og rödd í js/jarvis-voice.js (útrásina). Smellur sækir
            LIFANDI tölur úr /api/svid-status og lætur þá rödd lesa samantektina. -->
       <div class="svidrod" id="svidrod">
-        <button class="svidbtn" data-svid="fjarmal">💰 Fjármál</button>
-        <button class="svidbtn" data-svid="por">🗂️ Pör</button>
-        <button class="svidbtn" data-svid="kunnar">👥 Kúnnar</button>
-        <button class="svidbtn" data-svid="skjol">📄 Skjöl</button>
-        <button class="svidbtn" data-svid="gogn">🔌 Gagnaleiðslur</button>
-        <button class="svidbtn" data-svid="hradi">💥 Hraði</button>
-        <button class="svidbtn" data-svid="tengingar">😤 Tengingar</button>
-        <button class="svidbtn" data-svid="oryggi">🔒 Öryggi</button>
-        <button class="svidbtn" data-svid="prentun">🏷️ Prentun</button>
-        <button class="svidbtn" data-svid="kort">🗺️ Kort</button>
-        <button class="svidbtn" data-svid="jarvis">🎩 Jarvis</button>
-        <button class="svidbtn" data-svid="yfirlit">🇺🇸 Yfirlit</button>
-        <button class="svidbtn" data-svid="rukkun">🦆 Rukkun</button>
+        <button class="svidbtn" data-svid="fjarmal"><i class="em">💰 </i>Fjármál</button>
+        <button class="svidbtn" data-svid="por"><i class="em">🗂️ </i>Pör</button>
+        <button class="svidbtn" data-svid="kunnar"><i class="em">👥 </i>Kúnnar</button>
+        <button class="svidbtn" data-svid="skjol"><i class="em">📄 </i>Skjöl</button>
+        <button class="svidbtn" data-svid="gogn"><i class="em">🔌 </i>Gagnaleiðslur</button>
+        <button class="svidbtn" data-svid="hradi"><i class="em">💥 </i>Hraði</button>
+        <button class="svidbtn" data-svid="tengingar"><i class="em">😤 </i>Tengingar</button>
+        <button class="svidbtn" data-svid="oryggi"><i class="em">🔒 </i>Öryggi</button>
+        <button class="svidbtn" data-svid="prentun"><i class="em">🏷️ </i>Prentun</button>
+        <button class="svidbtn" data-svid="kort"><i class="em">🗺️ </i>Kort</button>
+        <button class="svidbtn" data-svid="jarvis"><i class="em">🎩 </i>Jarvis</button>
+        <button class="svidbtn" data-svid="yfirlit"><i class="em">🇺🇸 </i>Yfirlit</button>
+        <button class="svidbtn" data-svid="rukkun"><i class="em">🦆 </i>Rukkun</button>
         <button class="svidbtn svidall" id="svidall" title="Spila allar raddir í röð">▶ Öll</button>
         <button class="svidbtn svidreload" id="svidreload" title="Hlaða ferskri samantekt">↻</button>
         <span class="svidsvar" id="svidsvar"></span>
@@ -546,6 +835,13 @@
 const $ = s => document.querySelector(s);
 const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pad = n => String(n).padStart(2,'0');
+
+/* ── Útlit: Klassískt ↔ Ragnarök ────────────────────────────────────────
+   Rofinn, letrið og samstillingin eru í /js/ragnarok.js (RgThema). Hér er aðeins
+   það sem á við þessa síðu: merkið á rofanum, TALA-striginn og kjarna-teikningin.
+   erRagnarok() krefst RgKjarni líka — náist skráin ekki teiknast klassíski kjarninn. */
+const erRgEigindi = () => document.documentElement.getAttribute('data-thema') === 'ragnarok';
+const erRagnarok = () => erRgEigindi() && !!window.RgKjarni;
 
 /* ── „Setja upp app" ────────────────────────────────────────────────────
    Chrome geymir uppsetningar-boðið í `beforeinstallprompt`; við grípum það,
@@ -625,17 +921,52 @@ const HNOTTUR = (() => {
   }
   return ut;
 })();
+// TALA-hnappurinn fær eigin striga í Ragnarök (eldhringur utan um hnappinn), búinn til þegar þarf.
+let rgKnapp = null;
+function rgKnappCanvas(){
+  if(!rgKnapp && hnapp){
+    rgKnapp = document.createElement('canvas');
+    rgKnapp.className = 'rg-knapp';
+    rgKnapp.setAttribute('aria-hidden', 'true');
+    hnapp.insertBefore(rgKnapp, hnapp.firstChild);
+  }
+  return rgKnapp;
+}
 function staerd(){
-  [kc, $('#ratsja-canvas'), $('#bylgja')].forEach(c => {
+  [kc, $('#ratsja-canvas'), $('#bylgja'), rgKnapp].forEach(c => {
+    if(!c) return;
     const r = c.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio||1);
     c.width = Math.max(1, r.width*dpr); c.height = Math.max(1, r.height*dpr);
   });
 }
 addEventListener('resize', staerd);
 
+// Ragnarök: glóðin (brotnir bogar + glæður) á kjarnanum og á TALA-hnappnum — hvor með sitt ástand.
+const RG_GLOD = window.RgKjarni ? RgKjarni.glod(42, 90) : null;
+const RG_KNAPP_GLOD = window.RgKjarni ? RgKjarni.glod(12, 0) : null;
+const RG_KNAPP_AGNIR = window.RgKjarni ? RgKjarni.agnir(190) : null;
+function teiknaRgKnapp(t, dt){
+  const c = rgKnapp;
+  if(!c || c.width < 8 || !RG_KNAPP_AGNIR) return;
+  const x = c.getContext('2d'), W = c.width, H = c.height, cx = W/2, cy = H/2;
+  const dpr = Math.min(2, devicePixelRatio||1);
+  const R = Math.max(1, (W - 60*dpr)/2/1.09);   // dökka skífan = hnappurinn; striginn nær 30 px út fyrir hann
+  const talar = hnapp.classList.contains('on');
+  x.clearRect(0, 0, W, H);
+  RgKjarni.hringir(x, cx, cy, R, dpr, t, false);
+  x.globalCompositeOperation = 'lighter';
+  RG_KNAPP_AGNIR.teikna(x, cx, cy, R, dpr, t, dt, talar ? 3 : 1, talar ? 1.4 : 1);
+  RG_KNAPP_GLOD.teikna(x, cx, cy, R, dpr, t, dt, talar ? 3 : 1);
+  RgKjarni.blomi(x, cx, cy, R*(.42 + (talar ? .12*Math.sin(t*6) : .05*Math.sin(t*2))));
+  RgKjarni.kjarni(x, cx, cy, R*2.2, dpr, t);
+  x.globalCompositeOperation = 'source-over';
+}
+
 function teiknaKjarna(nu){
   requestAnimationFrame(teiknaKjarna);   // raða næsta ramma FYRST → stök teikni-villa frystir aldrei hnöttinn
-  const w = kc.width, h = kc.height, cx = w/2, cy = h*.385;
+  // Ragnarök: hnötturinn stærri og ofar — hringirnir og gráðutölurnar ná út í 1,5·R.
+  const RG = erRagnarok(), tSek = (nu||0)/1000;
+  const w = kc.width, h = kc.height, cx = w/2, cy = h*(RG ? .37 : .385);
   const dpr = Math.min(2, devicePixelRatio||1);
   // TÍMABUNDIÐ, ekki rammabundið — annars snýst hnötturinn tvöfalt hraðar á
   // 120Hz skjá en 60Hz. Þakið ver okkur á flipa sem lá í dvala.
@@ -654,14 +985,16 @@ function teiknaKjarna(nu){
   // ójafnt („streaming inconstantly") í stað jafns straums.
   const gustur = Math.max(.15, .55 + .45*Math.sin(fasi*.63)*Math.sin(fasi*.29+1.3));
 
-  const R = Math.min(w, h*.86)*.25;
+  const R = RG ? Math.min(w, h*.8)*.28 : Math.min(w, h*.86)*.25;
   // ALLT er kalt. Stöðuliturinn (`heilsulitur`) var áður á mælihringjunum og
   // gerði þá RAUÐA um leið og tenging datt út — Agnar: „not a red ring".
   // Kerfisstaðan sést í pillunum efst og í KERFIS-VITALS, hún þarf ekki að
   // mála myndina.
-  const kalt  = (a) => `rgba(150,205,255,${a})`;
+  const kalt  = RG ? (a) => `rgba(255,178,86,${a})` : (a) => `rgba(150,205,255,${a})`;
   const maeli = (a) => `rgba(120,205,255,${a})`;
 
+  if(RG) RgKjarni.hringir(kx, cx, cy, R, dpr, tSek, true);   // Ragnarök-umgjörðin kemur í stað mælihringjanna
+  else {
   // ── Mælitækin: ÞRÍR hringir, hver á sínum hraða og átt ──────────────────
   // 1) Punktahringur innst — réttsælis
   kx.beginPath();
@@ -704,6 +1037,7 @@ function teiknaKjarna(nu){
       kx.fillText(String(d).padStart(3,'0'), cx+Math.cos(a)*rt, cy+Math.sin(a)*rt);
     }
   }
+  }
 
   // ── Hnötturinn ───────────────────────────────────────────────────────────
   // Samleggjandi teikning: þar sem agnirnar þéttast leggst birtan saman og
@@ -712,7 +1046,7 @@ function teiknaKjarna(nu){
 
   // Dauf innri glóð svo hnötturinn sé fylltur en ekki hol skel
   const innri = kx.createRadialGradient(cx,cy,0,cx,cy,R);
-  innri.addColorStop(0, kalt(.30+.20*E)); innri.addColorStop(.55, kalt(.11+.10*E));
+  innri.addColorStop(0, kalt(RG ? .12+.12*E : .30+.20*E)); innri.addColorStop(.55, kalt(RG ? .04+.06*E : .11+.10*E));
   innri.addColorStop(1, kalt(0));
   kx.beginPath(); kx.arc(cx,cy,R,0,Math.PI*2); kx.fillStyle = innri; kx.fill();
 
@@ -741,7 +1075,7 @@ function teiknaKjarna(nu){
     // Þéttist og skerpist eftir því sem hún nálgast kjarnann.
     const nalaegd = 1 - (p.r-INNSTA)/(YSTA-INNSTA);
     const a = (.20 + .62*d) * tindr * (.85 + .5*E) * (.86 + .28*nalaegd) + p.blossi*.55;
-    kx.strokeStyle = kx.fillStyle = kalt(a);
+    kx.strokeStyle = kx.fillStyle = RG ? `rgba(255,${(170+70*nalaegd)|0},${(70+90*nalaegd)|0},${a})` : kalt(a);
     if(p.strik){
       // örstutt strik EFTIR stefnunni INN — sýnir áttina án þess að hraða neinu
       const n = Math.hypot(x, sy-cy) || 1;
@@ -755,18 +1089,21 @@ function teiknaKjarna(nu){
     }
   }
 
+  if(RG) RG_GLOD.teikna(kx, cx, cy, R, dpr, tSek, dt, 1 + 2*E);   // brennandi bogar + glæður; hljóðið kyndir
+
   // ── Punkturinn í miðjunni: LÍTILL og hvítglóandi, ekki stór hnöttur.
   // Flökt: hraður titringur með orkunni + hægari andardráttur með gustinum.
   const flokt = 1 + .16*Math.sin(fasi*7.3)*E + .12*(gustur-.55);
   const bR = Math.max(0, R*(.30 + .14*E) * flokt);
   const blomi = kx.createRadialGradient(cx,cy,0,cx,cy,bR);
-  blomi.addColorStop(0, `rgba(255,255,255,${(.70+.28*E).toFixed(2)})`);
-  blomi.addColorStop(.16, `rgba(210,238,255,${(.34+.30*E).toFixed(2)})`);
-  blomi.addColorStop(.55, kalt(.10+.16*E));
-  blomi.addColorStop(1, kalt(0));
+  blomi.addColorStop(0, RG ? `rgba(255,250,225,${(.75+.25*E).toFixed(2)})` : `rgba(255,255,255,${(.70+.28*E).toFixed(2)})`);
+  blomi.addColorStop(.16, RG ? `rgba(255,200,110,${(.38+.30*E).toFixed(2)})` : `rgba(210,238,255,${(.34+.30*E).toFixed(2)})`);
+  blomi.addColorStop(.55, RG ? `rgba(230,100,25,${(.12+.16*E).toFixed(2)})` : kalt(.10+.16*E));
+  blomi.addColorStop(1, RG ? 'rgba(200,60,10,0)' : kalt(0));
   kx.beginPath(); kx.arc(cx,cy,bR,0,Math.PI*2); kx.fillStyle = blomi; kx.fill();
   kx.beginPath(); kx.arc(cx,cy,Math.max(0,(1.5+1.6*E)*flokt*dpr),0,Math.PI*2);
-  kx.fillStyle = 'rgba(255,255,255,.95)'; kx.fill();
+  kx.fillStyle = RG ? 'rgba(255,248,220,.95)' : 'rgba(255,255,255,.95)'; kx.fill();
+  if(RG) RgKjarni.kjarni(kx, cx, cy, R, dpr, tSek);   // bráðinn kjarni
 
   kx.globalCompositeOperation = 'source-over';
 
@@ -774,11 +1111,12 @@ function teiknaKjarna(nu){
   // GILDRA: inline-stíll slær út `#hnappur.on` í CSS, svo rauði hlustunar-
   // liturinn verður að vera valinn hér líka.
   if(hnapp){
-    const [br,bg,bb] = hnapp.classList.contains('on') ? [255,90,110] : [79,216,255];
+    const [br,bg,bb] = hnapp.classList.contains('on') ? (RG ? [255,220,150] : [255,90,110]) : (RG ? [255,140,40] : [79,216,255]);
     hnapp.style.boxShadow =
       `0 0 ${Math.round(28+56*E)}px rgba(${br},${bg},${bb},${(.26+.36*E).toFixed(2)}),` +
       `inset 0 0 ${Math.round(24+38*E)}px rgba(${br},${bg},${bb},${(.14+.32*E).toFixed(2)})`;
   }
+  if(RG) teiknaRgKnapp(tSek, dt);
 }
 
 /* ── hljóðnemi: alvöru bylgja, ekki hreyfimynd ── */
@@ -787,7 +1125,7 @@ let greinir = null, gognBuffer = null;
 function teiknaBylgju(){
   const w = bc.width, h = bc.height;
   bx.clearRect(0,0,w,h);
-  bx.strokeStyle = 'rgba(79,216,255,.75)'; bx.lineWidth = Math.min(2, devicePixelRatio||1);
+  bx.strokeStyle = erRgEigindi() ? 'rgba(255,170,70,.85)' : 'rgba(79,216,255,.75)'; bx.lineWidth = Math.min(2, devicePixelRatio||1);
   bx.beginPath();
   if(greinir && gognBuffer){
     greinir.getByteTimeDomainData(gognBuffer);
@@ -810,24 +1148,25 @@ function teiknaBylgju(){
 let VELAR = [];
 function teiknaRatsja(){
   const c = $('#ratsja-canvas'), x = c.getContext('2d');
+  const rgl = erRgEigindi() ? '230,176,74' : '79,216,255';   // Ragnarök: gull í stað blás
   const w = c.width, h = c.height, cx = w/2, cy = h/2, R = Math.min(w,h)/2 - 6;
   const dpr = Math.min(2, devicePixelRatio||1);
   x.clearRect(0,0,w,h);
   for(let i=1;i<=3;i++){
     x.beginPath(); x.arc(cx,cy,R*i/3,0,Math.PI*2);
-    x.strokeStyle='rgba(79,216,255,.16)'; x.lineWidth=1*dpr; x.stroke();
+    x.strokeStyle=`rgba(${rgl},.16)`; x.lineWidth=1*dpr; x.stroke();
   }
   x.beginPath(); x.moveTo(cx-R,cy); x.lineTo(cx+R,cy); x.moveTo(cx,cy-R); x.lineTo(cx,cy+R);
-  x.strokeStyle='rgba(79,216,255,.12)'; x.stroke();
+  x.strokeStyle=`rgba(${rgl},.12)`; x.stroke();
 
   const sveipur = (Date.now()/2600)%1 * Math.PI*2;
   const gr = x.createConicGradient ? x.createConicGradient(sveipur,cx,cy) : null;
-  if(gr){ gr.addColorStop(0,'rgba(79,216,255,.30)'); gr.addColorStop(.12,'rgba(79,216,255,0)');
-    gr.addColorStop(1,'rgba(79,216,255,0)');
+  if(gr){ gr.addColorStop(0,`rgba(${rgl},.30)`); gr.addColorStop(.12,`rgba(${rgl},0)`);
+    gr.addColorStop(1,`rgba(${rgl},0)`);
     x.beginPath(); x.arc(cx,cy,R,0,Math.PI*2); x.fillStyle=gr; x.fill(); }
 
   if(!VELAR.length){
-    x.fillStyle='rgba(63,115,145,.9)'; x.font=`${11*dpr}px ui-monospace,monospace`;
+    x.fillStyle=erRgEigindi() ? 'rgba(191,154,93,.9)' : 'rgba(63,115,145,.9)'; x.font=`${11*dpr}px ui-monospace,monospace`;
     x.textAlign='center'; x.fillText('ENGIN VÉL Á SKJÁNUM', cx, cy+4*dpr);
   }
   VELAR.forEach((v,i) => {
@@ -835,7 +1174,8 @@ function teiknaRatsja(){
     const naer = v.aldur_min==null ? 1 : Math.min(1, v.aldur_min/1440);   // sólarhringur = ysta baugur
     const rr = R*(.22 + naer*.72);
     const px = cx+Math.cos(a)*rr, py = cy+Math.sin(a)*rr;
-    const lit = v.status==='graent' ? '67,245,160' : v.status==='gult' ? '255,199,70' : '255,90,110';
+    const rg = erRgEigindi();
+    const lit = v.status==='graent' ? (rg ? '246,220,149' : '67,245,160') : v.status==='gult' ? (rg ? '255,178,122' : '255,199,70') : (rg ? '255,90,54' : '255,90,110');
     x.beginPath(); x.arc(px,py,4*dpr,0,Math.PI*2); x.fillStyle=`rgba(${lit},.95)`; x.fill();
     x.beginPath(); x.arc(px,py,9*dpr,0,Math.PI*2); x.strokeStyle=`rgba(${lit},.35)`; x.stroke();
     x.fillStyle=`rgba(${lit},.85)`; x.font=`${9.5*dpr}px ui-monospace,monospace`; x.textAlign='center';
@@ -1071,7 +1411,7 @@ async function hladaHunt(){
     var ul = document.querySelector('[data-hunt-ul="'+c.k+'"]');
     if(!ul) return;
     var rows = L[c.k];
-    if(!rows){ ul.innerHTML = '<li style="color:#ff8f6b">næ ekki listanum</li>'; return; }
+    if(!rows){ ul.innerHTML = '<li style="color:var(--litur-rautt,#ff8f6b)">næ ekki listanum</li>'; return; }
     ul.innerHTML = rows.map(function(x){
       return '<li>'+c.d.map(function(d){ return esc(x[d]); }).filter(Boolean).join(' · ')+'</li>';
     }).join('') || '<li>hreinsað</li>';
@@ -1183,12 +1523,12 @@ async function sakja(){
         const skjolL = ((VEIDI_FULL||{}).listar||{}).skjol_an_ars;
         if (c.k==='skjol_an_ars' && nu===1 && skjolL && skjolL[0])
           extra += (extra?' · ':'')+'doc '+skjolL[0].doc_id;
-        return '<div class="vkort'+(jakt?' jakt':'')+'"><h3>'+esc(c.t)+'</h3><div class="big">'+esc(nu)+' <span class="dlt '+cls+'">'+dlt+'</span></div>'+
+        return '<div class="vkort'+(jakt?' jakt':'')+'"><h3>'+esc(c.t)+'</h3><div class="big"><span class="tala">'+esc(nu)+'</span> <span class="dlt '+cls+'">'+dlt+'</span></div>'+
           '<div class="base">grunnlína '+(b.dags||GRUNN_DAGS)+' (staða um mánuði síðan): '+esc(grunn)+(extra?('<br>'+esc(extra)):'')+'</div></div>';
       }
       function huntKortHtml(c){
         const nu = n[c.k];
-        return '<div class="vkort jakt"><h3>'+esc(c.t)+'</h3><div class="big">'+(nu==null?'—':esc(nu))+'</div>'+
+        return '<div class="vkort jakt"><h3>'+esc(c.t)+'</h3><div class="big"><span class="tala">'+(nu==null?'—':esc(nu))+'</span></div>'+
           '<div class="base">nýtt skotmark · '+esc(c.skyr)+'</div></div>';
       }
       const box = $('#veidikort');
@@ -1227,6 +1567,33 @@ async function sakja(){
 }
 
 staerd(); teiknaKjarna(); teiknaBylgju(); teiknaRatsja();
+
+// Útlitsrofinn (Klassískt ↔ Ragnarök). Skiptin sjálf eru í /js/ragnarok.js; hér er merkið á
+// rofanum og TALA-striginn, sem þarf stærð um leið og Ragnarök kviknar (kjarninn hækkar líka).
+function merkjaThemaRofa(){
+  const b = $('#thema-rofi'), rg = erRgEigindi();
+  if(!b) return;
+  b.textContent = rg ? '❄ Klassískt' : '🔥 Ragnarök';
+  b.title = rg ? 'Skipta í klassískt útlit' : 'Skipta í Ragnarök-útlit';
+}
+function eftirThema(){
+  if(erRgEigindi()) rgKnappCanvas();
+  if(window.RgThema) RgThema.litaHaus(erRgEigindi());
+  merkjaThemaRofa(); staerd();
+}
+eftirThema();
+$('#thema-rofi').addEventListener('click', () => {
+  if(window.RgThema) RgThema.skipta();
+  else {                                    // ragnarok.js náðist ekki: skipta samt um stíl
+    const rg = !erRgEigindi();
+    if(rg) document.documentElement.setAttribute('data-thema', 'ragnarok');
+    else document.documentElement.removeAttribute('data-thema');
+    try{ localStorage.setItem('jarvis_thema_v1', rg ? 'ragnarok' : 'klassiskt'); }catch(_){}
+    eftirThema();
+  }
+  baetaStraum(erRgEigindi() ? 'útlit: Ragnarök' : 'útlit: klassískt', 'ok');
+});
+addEventListener('rg:thema', eftirThema);
 settMal(MAL);
 baetaStraum('stjórnstöð ræst','ok');
 sakja();
@@ -1327,17 +1694,17 @@ document.addEventListener('visibilitychange', function(){ if(synilegt()) sakja()
       + '<span style="font-weight:700' + (l ? ';color:' + l : '') + '">' + g + '</span></div>';
   }
   function stimp(id){ var e = document.getElementById(id); if(e) e.textContent = new Date().toTimeString().slice(0,5); }
-  function villa(id){ var e = document.getElementById(id); if(e) e.innerHTML = '<div style="color:#ff8f6b;font-size:12px">nae ekki sambandi</div>'; }
+  function villa(id){ var e = document.getElementById(id); if(e) e.innerHTML = '<div style="color:var(--litur-rautt,#ff8f6b);font-size:12px">nae ekki sambandi</div>'; }
 
   async function saekjaKrofur(){
     try{
       var j = await soek('/api/debtors');
       var t = j.totals || {};
       document.getElementById('kr-efni').innerHTML =
-        lina('Utistandandi', kr(t.outstanding_kr), '#ff8f6b') +
+        lina('Utistandandi', kr(t.outstanding_kr), 'var(--litur-rautt,#ff8f6b)') +
         lina('Fjoldi reikninga', (t.outstanding_n||0)) +
         lina('Skuldunautar', (t.debtor_count||0)) +
-        lina('Greitt i banka?', kr(t.bank_paid_kr), '#5fd39a');
+        lina('Greitt i banka?', kr(t.bank_paid_kr), 'var(--litur-graent,#5fd39a)');
       stimp('kr-uppf');
     }catch(e){ villa('kr-efni'); }
   }
@@ -1346,9 +1713,9 @@ document.addEventListener('visibilitychange', function(){ if(synilegt()) sakja()
       var j = await soek('/api/svid-status?svid=por&tolur=1');
       var t = j.tolur || {};
       document.getElementById('th-efni').innerHTML =
-        lina('Klarud por', (t.klarad||0), '#5fd39a') +
-        lina('Vantar reikning', (t.vantar_reikning||0), '#ffb84d') +
-        lina('Vantar skyrslu', (t.vantar_skyrslu||0), '#ffb84d') +
+        lina('Klarud por', (t.klarad||0), 'var(--litur-graent,#5fd39a)') +
+        lina('Vantar reikning', (t.vantar_reikning||0), 'var(--litur-gult,#ffb84d)') +
+        lina('Vantar skyrslu', (t.vantar_skyrslu||0), 'var(--litur-gult,#ffb84d)') +
         lina('I Payday', (t.reikn_payday||0));
       stimp('th-uppf');
     }catch(e){ villa('th-efni'); }
@@ -1360,10 +1727,10 @@ document.addEventListener('visibilitychange', function(){ if(synilegt()) sakja()
       var j = await soek('/api/service-gaps?tolur=1');
       var c = j.counts || {};
       document.getElementById('gl-efni').innerHTML =
-        lina('Tengd skjol', (c.linked_total||0), '#5fd39a') +
+        lina('Tengd skjol', (c.linked_total||0), 'var(--litur-graent,#5fd39a)') +
         lina('Med stad', (c.med_stad||0)) +
-        lina('An stadar', (c.an_stadar||0), '#ffb84d') +
-        lina('Otengd', (c.unlinked||0), '#ff8f6b');
+        lina('An stadar', (c.an_stadar||0), 'var(--litur-gult,#ffb84d)') +
+        lina('Otengd', (c.unlinked||0), 'var(--litur-rautt,#ff8f6b)');
       stimp('gl-uppf');
     }catch(e){ villa('gl-efni'); }
   }
@@ -1376,7 +1743,7 @@ document.addEventListener('visibilitychange', function(){ if(synilegt()) sakja()
       var j = await soek('/api/verkefnalisti?tolur=1');
       var eftir = (j && j.eftir_stodu) || {};
       var h = lina('Verkefni alls', (j && j.alls) || 0);
-      if(j && j.opin != null) h += lina('Opin', j.opin, '#ffb84d');
+      if(j && j.opin != null) h += lina('Opin', j.opin, 'var(--litur-gult,#ffb84d)');
       Object.keys(eftir).sort(function(a,b){ return eftir[b] - eftir[a]; }).slice(0,4)
         .forEach(function(k){ h += lina(k, eftir[k]); });
       document.getElementById('vk-efni').innerHTML = h;
@@ -1390,23 +1757,23 @@ document.addEventListener('visibilitychange', function(){ if(synilegt()) sakja()
   function _arc(cx,cy,r,f0,f1,col,w){
     if(f1<=f0) return '';
     var A=_pt(cx,cy,r,f0), B=_pt(cx,cy,r,f1);
-    return '<path d="M'+A[0].toFixed(1)+' '+A[1].toFixed(1)+' A'+r+' '+r+' 0 0 1 '+B[0].toFixed(1)+' '+B[1].toFixed(1)+'" fill="none" stroke="'+col+'" stroke-width="'+w+'" stroke-linecap="round"/>';
+    return '<path d="M'+A[0].toFixed(1)+' '+A[1].toFixed(1)+' A'+r+' '+r+' 0 0 1 '+B[0].toFixed(1)+' '+B[1].toFixed(1)+'" fill="none" style="stroke:'+col+'" stroke-width="'+w+'" stroke-linecap="round"/>';
   }
   function _gauge(g){
     var cx=60, cy=56, r=46, max=g.base*2.5;
     var fB=g.base/max, fC=g.ceiling/max, fV=Math.min(g.ms/max,1);
     var svg='<svg viewBox="0 0 120 64">'
-      + _arc(cx,cy,r,0,1,'#16283b',9)
-      + _arc(cx,cy,r,0,fB,'#34c759',9)
-      + _arc(cx,cy,r,fB,Math.min(fC,1),'#ffb340',9)
-      + _arc(cx,cy,r,Math.min(fC,1),1,'#ff5d5d',9);
+      + _arc(cx,cy,r,0,1,'var(--g-spor,#16283b)',9)
+      + _arc(cx,cy,r,0,fB,'var(--g-ok,#34c759)',9)
+      + _arc(cx,cy,r,fB,Math.min(fC,1),'var(--g-alag,#ffb340)',9)
+      + _arc(cx,cy,r,Math.min(fC,1),1,'var(--g-nidri,#ff5d5d)',9);
     // grunnlínu-strik
     var T0=_pt(cx,cy,r-9,fB), T1=_pt(cx,cy,r+3,fB);
-    svg += '<line x1="'+T0[0].toFixed(1)+'" y1="'+T0[1].toFixed(1)+'" x2="'+T1[0].toFixed(1)+'" y2="'+T1[1].toFixed(1)+'" stroke="#cfe0f0" stroke-width="1.6"/>';
+    svg += '<line x1="'+T0[0].toFixed(1)+'" y1="'+T0[1].toFixed(1)+'" x2="'+T1[0].toFixed(1)+'" y2="'+T1[1].toFixed(1)+'" style="stroke:var(--g-grunn,#cfe0f0)" stroke-width="1.6"/>';
     // vísir
     var N=_pt(cx,cy,r-5,fV);
-    svg += '<line x1="'+cx+'" y1="'+cy+'" x2="'+N[0].toFixed(1)+'" y2="'+N[1].toFixed(1)+'" stroke="#e8eaed" stroke-width="2.2"/><circle cx="'+cx+'" cy="'+cy+'" r="3.2" fill="#e8eaed"/></svg>';
-    var col = g.status==='ok'?'#34c759':g.status==='alag'?'#ffb340':'#ff5d5d';
+    svg += '<line x1="'+cx+'" y1="'+cy+'" x2="'+N[0].toFixed(1)+'" y2="'+N[1].toFixed(1)+'" style="stroke:var(--g-visir,#e8eaed)" stroke-width="2.2"/><circle cx="'+cx+'" cy="'+cy+'" r="3.2" style="fill:var(--g-visir,#e8eaed)"/></svg>';
+    var col = g.status==='ok'?'var(--g-ok,#34c759)':g.status==='alag'?'var(--g-alag,#ffb340)':'var(--g-nidri,#ff5d5d)';
     var val = g.code!==200 ? 'NIÐRI' : (g.ms+' ms');
     return '<div class="maelir">'+svg+'<div class="mlabel">'+g.label+'</div>'
       +'<div class="mval" style="color:'+col+'">'+val+'</div>'
@@ -1451,7 +1818,7 @@ document.addEventListener('visibilitychange', function(){ if(synilegt()) sakja()
       var slaemt=res.filter(function(r){ return r.status!=='ok'; }).length;
       if(e) e.textContent = slaemt ? ('⚠ '+slaemt+' yfir grunnlínu') : '✓ allt í lagi';
       stimp('perf-uppf');
-    }catch(err){ if(!res.length) box.innerHTML='<div style="color:#ff8f6b;font-size:12px">næ ekki mælingu</div>'; }
+    }catch(err){ if(!res.length) box.innerHTML='<div style="color:var(--litur-rautt,#ff8f6b);font-size:12px">næ ekki mælingu</div>'; }
     finally{ _perfBusy=false; }
   }
   window.__perfRefresh = saekjaPerf;
@@ -1506,9 +1873,9 @@ document.addEventListener('visibilitychange', function(){ if(synilegt()) sakja()
 
       var h = '<div class="on-haus">'
         + '<span class="on-tala ' + (slaem ? 'brotid' : 'heilt') + '">'
-        + (t.graent||0) + '<span style="font-size:14px;color:var(--ink3)">/' + (j.alls||0) + '</span></span>'
+        + '<span class="tala">' + (t.graent||0) + '</span><span style="font-size:14px;color:var(--ink3)">/' + (j.alls||0) + '</span></span>'
         + '<span class="on-undir">' + (slaem ? slaem + ' brotnir' : 'netið heldur')
-          + (thaggadir.length ? ' · <span style="color:#e8c547">' + thaggadir.length + ' þaggaðir</span>' : '') + '</span>'
+          + (thaggadir.length ? ' · <span style="color:var(--litur-thagg,#e8c547)">' + thaggadir.length + ' þaggaðir</span>' : '') + '</span>'
         + (j.stodnad ? '<span class="on-stodnad">keyrsla ' + Math.floor((j.aldur_min||0)/1440) + 'd gömul</span>' : '')
         + '</div>';
 
@@ -1529,10 +1896,10 @@ document.addEventListener('visibilitychange', function(){ if(synilegt()) sakja()
       thaggadir.forEach(function(v){
         var tenglar = skraTenglar(v.skilabod);
         h += '<div class="on-rod" title="Grænn aðeins af því slæma talan var fryst sem grunnlína. Núllaðu grunnlínuna og þá geltir hann aftur.">'
-          + '<span class="on-dot" style="background:#e8c547;box-shadow:0 0 6px #e8c547"></span>'
+          + '<span class="on-dot" style="background:var(--litur-thagg,#e8c547);box-shadow:0 0 6px var(--litur-thagg,#e8c547)"></span>'
           + '<div style="min-width:0;flex:1">'
             + '<div class="on-nafn">' + hreinsaSkilabod(v.nafn)
-              + ' <span style="color:#e8c547;font-weight:700;letter-spacing:.1em;font-size:9px">ÞAGGAÐUR</span></div>'
+              + ' <span style="color:var(--litur-thagg,#e8c547);font-weight:700;letter-spacing:.1em;font-size:9px">ÞAGGAÐUR</span></div>'
             + '<div class="on-msg">' + hreinsaSkilabod(v.skilabod) + '</div>'
             + (tenglar.length ? '<div class="on-tenglar">' + tenglar.join('') + '</div>' : '')
           + '</div></div>';
@@ -1683,7 +2050,7 @@ document.addEventListener('visibilitychange', function(){ if(synilegt()) sakja()
       if(j.error) throw new Error(j.error);
       var ts = stimp(j.generated_at);
       var merki = ts ? ('🕒 '+ts+(j.cached?'':' · ferskt')) : (j.cached?'geymt':'ferskt');
-      ut.innerHTML = (j.emoji?j.emoji+' ':'')+'<b>'+esc2(j.name||'')+'</b> <span style="color:#5f829f">· '+merki+'</span><br>'+esc2(j.text||'');
+      ut.innerHTML = (j.emoji?j.emoji+' ':'')+'<b>'+esc2(j.name||'')+'</b> <span style="color:var(--litur-dauft,#5f829f)">· '+merki+'</span><br>'+esc2(j.text||'');
       if(window.Jarvis && typeof Jarvis.say==='function' && j.rodd){ Jarvis.say(j.rodd, j.text); }
       if(typeof baetaStraum==='function') baetaStraum(svid+' samantekt'+(fresh?' (ferskt)':''), 'ok');
     }catch(e){

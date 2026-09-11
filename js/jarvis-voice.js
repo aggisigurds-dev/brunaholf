@@ -306,7 +306,30 @@
       "#" + PANEL_ID + " .jvt-stop{background:#1a0a10;border:1px solid #5a2530;color:#ff8a98;border-radius:8px;padding:7px 11px;",
       "  font:700 12px system-ui;cursor:pointer}",
       "#" + PANEL_ID + " .jvt-stop:hover{border-color:#ff5a6e}",
-      "#" + PANEL_ID + " .jvt-status{font-size:10.5px;color:#3f7391;min-height:14px;flex:1;text-align:right}"
+      "#" + PANEL_ID + " .jvt-status{font-size:10.5px;color:#3f7391;min-height:14px;flex:1;text-align:right}",
+      // Ragnarök-útlit (html[data-thema=ragnarok], sjá js/ragnarok.js): sama spjald í bráðnu gulli.
+      "html[data-thema=ragnarok] #" + LAUNCH_ID + "{color:#f6dc95;background:linear-gradient(180deg,#1c1c1c,#070707);border-color:rgba(230,176,74,.55);border-radius:2px;font-family:'Chakra Petch',system-ui,sans-serif;letter-spacing:.1em}",
+      "html[data-thema=ragnarok] #" + LAUNCH_ID + ":hover{border-color:#f6dc95;box-shadow:0 0 14px rgba(255,200,90,.35),0 4px 18px rgba(0,0,0,.55)}",
+      "html[data-thema=ragnarok] #" + PANEL_ID + "{background:rgba(10,9,7,.97);border-color:rgba(201,160,74,.45);border-radius:4px;color:#f3e4bf;font-family:'Chakra Petch',system-ui,sans-serif}",
+      "html[data-thema=ragnarok] #" + PANEL_ID + " .jvt-hd b{color:#e6b04a}",
+      "html[data-thema=ragnarok] #" + PANEL_ID + " .jvt-x{color:#9c7a45}",
+      "html[data-thema=ragnarok] #" + PANEL_ID + " .jvt-x:hover{color:#ff5a36}",
+      "html[data-thema=ragnarok] #" + PANEL_ID + " textarea{background:#080706;border-color:rgba(201,160,74,.25);color:#f3e4bf}",
+      "html[data-thema=ragnarok] #" + PANEL_ID + " textarea:focus{border-color:#e6b04a}",
+      "html[data-thema=ragnarok] #" + PANEL_ID + " .jvt-ag{border-color:rgba(201,160,74,.22);background:#0f0d0a;color:#f3e4bf}",
+      "html[data-thema=ragnarok] #" + PANEL_ID + " .jvt-ag:hover{border-color:#c9982f}",
+      "html[data-thema=ragnarok] #" + PANEL_ID + " .jvt-ag.on{border-color:#f6dc95;background:#1f1709;box-shadow:0 0 0 1px #f6dc95,0 0 16px rgba(255,200,90,.35)}",
+      "html[data-thema=ragnarok] #" + PANEL_ID + " .jvt-ag.loading{border-color:#c9982f}",
+      "html[data-thema=ragnarok] #" + PANEL_ID + " .jvt-ag.ismain{border-color:#8f6a22}",
+      "html[data-thema=ragnarok] #" + PANEL_ID + " .jvt-star{color:#6e5520}",
+      "html[data-thema=ragnarok] #" + PANEL_ID + " .jvt-star:hover{color:#ffd873}",
+      "html[data-thema=ragnarok] #" + PANEL_ID + " .jvt-ag.ismain .jvt-star{color:#ffcf6a}",
+      "html[data-thema=ragnarok] #" + PANEL_ID + " .jvt-ag .rl,html[data-thema=ragnarok] #" + PANEL_ID + " .jvt-main{color:#bf9a5d}",
+      "html[data-thema=ragnarok] #" + PANEL_ID + " .jvt-main span{color:#9c7a45!important}",
+      "html[data-thema=ragnarok] #" + PANEL_ID + " .jvt-main b{color:#ffcf6a}",
+      "html[data-thema=ragnarok] #" + PANEL_ID + " .jvt-stop{background:#1f0804;border-color:#6e2010;color:#ffb09a}",
+      "html[data-thema=ragnarok] #" + PANEL_ID + " .jvt-stop:hover{border-color:#ff5a36}",
+      "html[data-thema=ragnarok] #" + PANEL_ID + " .jvt-status{color:#9c7a45}"
     ].join("");
     var st = document.createElement("style");
     st.id = STYLE_ID; st.textContent = css;
