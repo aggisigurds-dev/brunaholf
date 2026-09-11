@@ -148,6 +148,12 @@
   .cat-vefryni  { background:var(--blue-bg); color:var(--blue-deep); }
   .cat-listi    { background:var(--blue-bg); color:var(--blue-deep); }
   .cat-allt     { background:var(--blue-bg); color:var(--blue-deep); }
+  .cat-sala     { background:var(--green-bg); color:var(--green); }
+  .cat-utkall   { background:var(--warn-bg); color:var(--red-dark); }
+  .cat-gagnaheilbrigdi { background:var(--warn-bg); color:var(--red-dark); }
+  .cat-frontend { background:var(--blue-bg); color:var(--blue-deep); }
+  .cat-kodi     { background:var(--blue-bg); color:var(--blue-deep); }
+  .cat-kerfi    { background:var(--blue-bg); color:var(--blue-deep); }
 
   /* Status: í yfirferð */
   .pill.i_yfirferd { background:var(--red-bg); color:var(--red-dark); border:1px solid var(--red-line); }
@@ -473,6 +479,12 @@ const CAT_LABELS = {
   oryggi:   { label: 'Öryggi',   emoji: '🔒' },
   vefryni:  { label: 'Vefrýni',  emoji: '🔍' },
   listi:    { label: 'Verkefnalisti', emoji: '📋' },
+  sala:     { label: 'Sala',     emoji: '🧾' },
+  utkall:   { label: 'Útköll',   emoji: '🚒' },
+  gagnaheilbrigdi: { label: 'Gagnaheilbrigði', emoji: '🩺' },
+  frontend: { label: 'Framendi', emoji: '🖥️' },
+  kodi:     { label: 'Kóði',     emoji: '⚙️' },
+  kerfi:    { label: 'Kerfi',    emoji: '🧩' },
 };
 
 let activeCat = (function() {
@@ -501,16 +513,21 @@ function applyCatFilter() {
 }
 
 function renderCatBar(tasks) {
-  const counts = { allt: tasks.length };
+  const counts = {};
   for (const t of tasks) counts[t.category || 'allt'] = (counts[t.category || 'allt'] || 0) + 1;
-  const order = ['allt','utlit','customer','skjol','reikning','bakendi','vefryni','oryggi','listi'];
-  const html = order
+  // Föst röð fyrst, svo HVER annar flokkur sem finnst í gögnunum (stærstu fyrst).
+  // Áður duttu allir flokkar utan föstu níu út úr síunum: 11.09.2026 sáust 64
+  // óbyrjuð verk (gagnaheilbrigði, framendi, sala, kóði, kerfi) hvergi. „Allt"
+  // taldi auk þess verk í flokknum 'allt' tvisvar.
+  const base = ['allt','utlit','customer','skjol','reikning','bakendi','vefryni','oryggi','listi'];
+  const extra = Object.keys(counts).filter(k => base.indexOf(k) < 0).sort((a, b) => counts[b] - counts[a]);
+  const html = base.concat(extra)
     .filter(k => k === 'allt' || counts[k])
     .map(k => {
       const meta = CAT_LABELS[k] || { label: k, emoji: '•' };
       return '<button class="cat-chip" data-cat="' + esc(k) + '">' +
         meta.emoji + ' ' + esc(meta.label) +
-        ' <span class="cnt">' + (counts[k] || 0) + '</span>' +
+        ' <span class="cnt">' + (k === 'allt' ? tasks.length : (counts[k] || 0)) + '</span>' +
       '</button>';
     }).join('');
   // Röðunar-val hægra megin í síuröðinni.
