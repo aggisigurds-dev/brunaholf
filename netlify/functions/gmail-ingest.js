@@ -131,6 +131,12 @@ exports.handler = async (event) => {
   // to the requested account string (so the row is attributable even if the
   // userinfo email wasn't stored).
   const account = connected || wantAccount || 'me';
+  // Agnar 11.09.2026 („já eyða öllu tengt aggisigurds@gmail.com"): persónulega pósthólfið er utan innsogs —
+  // líka þegar það kemur inn sem aðal-tengingin (id=1), sem er áfram notuð fyrir Drive og Sheets.
+  // Gagnagrunnurinn hafnar því líka (trigger trg_utiloka_personulegt_postholf á email_digest).
+  if (/^aggisigurds@gmail\.com$/i.test(String(account))) {
+    return json(403, { error: 'Persónulega pósthólfið (aggisigurds@gmail.com) er útilokað frá innsogi. Aðal-tengingin er áfram notuð fyrir Drive og Sheets.' });
+  }
 
   try {
     // 1) list recent message ids (inbox by default, sent mail with folder=sent)

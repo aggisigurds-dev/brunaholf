@@ -222,26 +222,29 @@ function build(accounts, kv, mailFresh, runs, probes) {
     const id = 'google:' + a.email, t = pr(id);
     const fersk = mailFresh[(a.email || '').toLowerCase()];
     const aldur = days(fersk);
+    // Agnar 11.09.2026: persónulega pósthólfið er utan innsogs. Kortið lifir (aðal-tengingin keyrir Drive + Sheets)
+    // en án „Sækja póst núna" og án pósts-ferskleika, sem yrði annars gulur eftir viku.
+    const personulegt = /^aggisigurds@gmail\.com$/i.test(a.email || '');
     let status = t ? (t.ok ? GREEN : RED) : AMBER;
     let detail = t ? t.detail : 'aldrei prófuð héðan';
-    if (status === GREEN && aldur != null && aldur > 7) {
+    if (!personulegt && status === GREEN && aldur != null && aldur > 7) {
       status = AMBER; detail += ' · nýjasti póstur ' + aldur + ' daga gamall';
     }
     if (!a.has_refresh) { status = RED; detail = 'enginn refresh-lykill — tengja þarf aftur'; }
     S.push({
       id, hopur: 'Pósthólf', heiti: a.email,
-      undir: a.id === 1 ? 'Aðal-aðgangur · Drive + Sheets + Gmail' : 'Gmail-innsog',
+      undir: personulegt ? 'Aðal-aðgangur · Drive + Sheets (póstur útilokaður)' : a.id === 1 ? 'Aðal-aðgangur · Drive + Sheets + Gmail' : 'Gmail-innsog',
       status, detail,
       hvernig: a.id === 1
         ? 'Þessi aðgangur keyrir ALLT Drive- og Sheets-dótið (skjalalestur, möppuflokkun, Sheet-smíði) auk Gmail. Í skýinu — engin tölva þarf að vera í gangi.'
         : 'Gmail API úr skýi (`/api/gmail-ingest?account=…`) sækir póstinn beint frá Google inn í email_digest. Engin tölva þarf að vera í gangi.',
-      talning: fersk ? { label: 'nýjasti póstur', dagar: aldur } : null,
+      talning: fersk && !personulegt ? { label: 'nýjasti póstur', dagar: aldur } : null,
       profad: t ? t.at : null,
       adgerdir: [
         { label: '⏱ Prófa', test: id },
         { label: '🔌 Tengja aftur', url: '/api/google-auth?account=' + encodeURIComponent(a.email) },
         { label: '📥 Sækja póst núna', url: '/api/gmail-ingest?account=' + encodeURIComponent(a.email) + '&days=10' },
-      ],
+      ].filter(x => !(personulegt && /gmail-ingest/.test(x.url || ''))),
       tenglar: [{ label: 'Google · aðgangsheimildir ↗', url: 'https://myaccount.google.com/permissions' }],
     });
   });
