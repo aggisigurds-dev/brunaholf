@@ -111,25 +111,41 @@
     br.addColorStop(0, 'rgba(255,120,30,0)'); br.addColorStop(1, 'rgba(255,120,30,.34)');
     x.fillStyle = br; x.beginPath(); x.arc(cx, cy, R * 1.09, 0, HRINGUR); x.fill();
 
-    // bjartur snúningsbogi (18 s): ljós fjórðungur + glóandi fjórðungur
-    var snD = t * HRINGUR / 18;
-    x.save();
-    x.shadowBlur = 10 * dpr; x.shadowColor = 'rgba(255,140,40,1)'; x.lineWidth = Math.max(2, 3.5 * dpr);
-    x.strokeStyle = '#fff0c0'; bogi(R * 1.21, -0.75 * Math.PI + snD, -0.25 * Math.PI + snD);
-    x.strokeStyle = 'rgba(255,120,40,.6)'; bogi(R * 1.21, -0.25 * Math.PI + snD, 0.25 * Math.PI + snD);
-    x.restore();
+    // bjartur snúningsbogi (18 s): ljós fjórðungur + glóandi fjórðungur. Glóðin er breið dauf rönd
+    // undir — shadowBlur í hverjum ramma var dýr á síma (yfirferð 11.09.2026).
+    var snD = t * HRINGUR / 18, a0 = -0.75 * Math.PI + snD, a1 = -0.25 * Math.PI + snD, a2 = 0.25 * Math.PI + snD;
+    x.lineWidth = Math.max(6, 11 * dpr); x.strokeStyle = 'rgba(255,140,40,.22)'; bogi(R * 1.21, a0, a2);
+    x.lineWidth = Math.max(2, 3.5 * dpr);
+    x.strokeStyle = '#fff0c0'; bogi(R * 1.21, a0, a1);
+    x.strokeStyle = 'rgba(255,120,40,.6)'; bogi(R * 1.21, a1, a2);
 
-    if (!merki) return;
-    x.save();                                                    // gráðutölurnar standa kyrrar
-    x.font = Math.round(9 * dpr) + "px 'Chakra Petch',ui-monospace,Menlo,Consolas,monospace";
-    if ('letterSpacing' in x) x.letterSpacing = (1.2 * dpr).toFixed(1) + 'px';
-    x.textAlign = 'center'; x.textBaseline = 'middle';
-    x.fillStyle = '#ff9a3a'; x.shadowBlur = 6 * dpr; x.shadowColor = 'rgba(255,120,30,.8)';
-    for (d = 0; d < 360; d += 30) {
-      a = (d - 90) * GR;
-      x.fillText(String(d).padStart(3, '0'), cx + Math.cos(a) * R * 1.43, cy + Math.sin(a) * R * 1.43);
+    if (merki) teiknaMerki(x, cx, cy, R, dpr);
+  }
+
+  // Gráðutölurnar standa kyrrar, svo þær eru teiknaðar EINU SINNI (með glóð) á geymslustriga og
+  // aðeins afritaðar í hverjum ramma. Teiknaðar aftur ef stærð, miðja eða letur breytist.
+  var merkjaGeymsla = typeof WeakMap === 'function' ? new WeakMap() : null;
+  function teiknaMerki(x, cx, cy, R, dpr) {
+    var W = x.canvas.width, H = x.canvas.height;
+    var letur = !!(document.fonts && document.fonts.check && document.fonts.check('9px "Chakra Petch"'));
+    var lykill = W + 'x' + H + ':' + Math.round(cx) + ',' + Math.round(cy) + ',' + Math.round(R) + ',' + dpr + ',' + letur;
+    var g = merkjaGeymsla && merkjaGeymsla.get(x.canvas);
+    if (!g || g.lykill !== lykill) {
+      var c = document.createElement('canvas'), d, a;
+      c.width = W; c.height = H;
+      var y = c.getContext('2d');
+      y.font = Math.round(9 * dpr) + "px 'Chakra Petch',ui-monospace,Menlo,Consolas,monospace";
+      if ('letterSpacing' in y) y.letterSpacing = (1.2 * dpr).toFixed(1) + 'px';
+      y.textAlign = 'center'; y.textBaseline = 'middle';
+      y.fillStyle = '#ff9a3a'; y.shadowBlur = 6 * dpr; y.shadowColor = 'rgba(255,120,30,.8)';
+      for (d = 0; d < 360; d += 30) {
+        a = (d - 90) * GR;
+        y.fillText(String(d).padStart(3, '0'), cx + Math.cos(a) * R * 1.43, cy + Math.sin(a) * R * 1.43);
+      }
+      g = { lykill: lykill, strigi: c };
+      if (merkjaGeymsla) merkjaGeymsla.set(x.canvas, g);
     }
-    x.restore();
+    x.drawImage(g.strigi, 0, 0);
   }
 
   // Brennandi brotnir bogar og glæður sem rísa. Hver striga fær sitt eintak (eigið ástand).

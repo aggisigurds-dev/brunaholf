@@ -17,7 +17,7 @@
 <!-- Útlit (Klassískt ↔ Ragnarök, Agnar 11.09.2026): sama stilling og J.A.R.V.I.S. (localStorage
      jarvis_thema_v1). Eigindið á <html> er sett hér, áður en málað er; rofinn og eldkjarninn eru í /js/ragnarok.js. -->
 <script>(function(){var t=null;try{t=new URLSearchParams(location.search).get('thema');}catch(_){}try{if(t==='ragnarok'||t==='klassiskt')localStorage.setItem('jarvis_thema_v1',t);else t=localStorage.getItem('jarvis_thema_v1');}catch(_){}if(t==='ragnarok'){document.documentElement.setAttribute('data-thema','ragnarok');var l=document.createElement('link');l.id='rg-letur';l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap';document.head.appendChild(l);}})();</script>
-<script src="/js/ragnarok.js?v=1"></script>
+<script src="/js/ragnarok.js?v=2"></script>
 <style>
   /* Afkastavakt — endurgerð úr Claude Design, vanilla. RAUNMÆLING, og hver mælir
      stilltur við SÍNA grunnlínu (hlutfallslegt álag), svo hægir-en-heilbrigðir
@@ -193,9 +193,9 @@ html[data-thema="ragnarok"] .scaleln:nth-child(5){color:#7d6238!important}
 <div class="wrap">
   <!-- Litaferlar Ragnarök-mælanna (url(#rg-g-…)); klassíska útlitið notar þá ekki. -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
-    <linearGradient id="rg-g-ok" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff0c0"/><stop offset="1" stop-color="#ff9a3a"/></linearGradient>
-    <linearGradient id="rg-g-amber" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffd98a"/><stop offset="1" stop-color="#ff6a1a"/></linearGradient>
-    <linearGradient id="rg-g-rautt" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff9a80"/><stop offset="1" stop-color="#ff3a1a"/></linearGradient>
+    <linearGradient id="rg-g-ok" x1="0" y1="0" x2="1" y2="0" gradientTransform="rotate(-150 .5 .5)"><stop offset="0" stop-color="#fff0c0"/><stop offset="1" stop-color="#ff9a3a"/></linearGradient>
+    <linearGradient id="rg-g-amber" x1="0" y1="0" x2="1" y2="0" gradientTransform="rotate(-150 .5 .5)"><stop offset="0" stop-color="#ffd98a"/><stop offset="1" stop-color="#ff6a1a"/></linearGradient>
+    <linearGradient id="rg-g-rautt" x1="0" y1="0" x2="1" y2="0" gradientTransform="rotate(-150 .5 .5)"><stop offset="0" stop-color="#ff9a80"/><stop offset="1" stop-color="#ff3a1a"/></linearGradient>
     <radialGradient id="rg-g-andlit"><stop offset="0" stop-color="#161616"/><stop offset=".75" stop-color="#050505"/><stop offset="1" stop-color="#2a1004"/></radialGradient>
     <radialGradient id="rg-g-hetta"><stop offset="0" stop-color="#fff6d8"/><stop offset="1" stop-color="#c9982f"/></radialGradient>
   </defs></svg>

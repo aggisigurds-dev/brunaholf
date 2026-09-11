@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="is">
 <head>
+<meta charset="utf-8">
 <!-- Villuvöktun: FYRST og ÓSEINKAÐ, svo hún grípi líka villur í
      boot-kóðanum. `defer` hefði látið hana ræsast Á EFTIR inline-
      scriptunum og þá sæist einmitt versta tegundin ekki. -->
@@ -14,9 +15,8 @@
      (localStorage jarvis_thema_v1), sameiginleg með Vélarrými; ?thema=ragnarok|klassiskt setur hana.
      Rofinn, letrið og eldkjarninn eru í /js/ragnarok.js (samstillt og lítið — kjarninn þarf það við ræsingu). -->
 <script>(function(){var t=null;try{t=new URLSearchParams(location.search).get('thema');}catch(_){}try{if(t==='ragnarok'||t==='klassiskt')localStorage.setItem('jarvis_thema_v1',t);else t=localStorage.getItem('jarvis_thema_v1');}catch(_){}if(t==='ragnarok'){document.documentElement.setAttribute('data-thema','ragnarok');var l=document.createElement('link');l.id='rg-letur';l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap';document.head.appendChild(l);}})();</script>
-<script src="/js/ragnarok.js?v=1"></script>
+<script src="/js/ragnarok.js?v=2"></script>
 
-<meta charset="utf-8">
 <meta name="color-scheme" content="dark"/>
 <!-- Chrome Android Force Dark endurlitar síður sjálfkrafa og gerði sumar
      hub-síður ólæsilegar í síma Agnars. `only dark` er opt-out Blink.
@@ -379,7 +379,7 @@
    eru bundnar við html[data-thema="ragnarok"] (sett í <head>, sjá /js/ragnarok.js).
    Klassískir viðaukar eru aðeins rofinn (.thema-horn) og faldir Ragnarök-hlutir. */
 .rg-bar,.rg-protokoll,.rg-knapp{display:none}
-.em{font-style:normal}
+.utlitsrod .em,.svidrod .em{font-style:normal}
 .kjarni>.thema-horn{position:absolute;top:10px;left:10px;z-index:3}
 #thema-rofi{border:1px solid var(--cy-dim);background:transparent;color:var(--ink3);font:inherit;font-size:10px;
   letter-spacing:.16em;padding:3px 10px;cursor:pointer;text-transform:uppercase}
@@ -431,7 +431,9 @@ html[data-thema="ragnarok"] a:hover{color:#ffe3a3}
 html[data-thema="ragnarok"] code{color:#ffcf6a}
 html[data-thema="ragnarok"] .grind,
 html[data-thema="ragnarok"] .dalkur{gap:14px}
-html[data-thema="ragnarok"] .em{display:none}
+/* aðeins tákn fliparaðarinnar og svið-hnappanna — radd-prufan (jarvis-voice.js) notar líka .em og heldur sínum */
+html[data-thema="ragnarok"] .utlitsrod .em,
+html[data-thema="ragnarok"] .svidrod .em{display:none}
 
 /* fliparöðin efst: ein röð af römmuðum hnöppum eins og í hönnuninni (Vélarrými fyrst) */
 html[data-thema="ragnarok"] .utlitsrod{padding:4px 0 2px;gap:8px;margin-bottom:14px}
