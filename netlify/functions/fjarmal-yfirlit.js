@@ -7,8 +7,9 @@
 //        · Ógreiddar í Payday (dk_invoice_id sett) · Ósendar kröfur (aldrei sendar)
 //   B) Raun-ógreitt í Payday hjá Brunahólf (úr `invoices`, óborgaðir, sama tier-1
 //      regla og krofu-yfirlit-bru: non-credit, ekki greitt, ekki falið).
-//   C) Ósent — SAMA tala og „Ósent" KPI-spjaldið (CG-02) á Kröfu yfirliti
-//      (drög úr invoice_drafts + draft-invoices, mínus falin/greitt/skipped).
+//   C) Ósent — TEKIÐ BEINT úr Kröfu yfirliti: /api/krofu-yfirlit-bru → tier2,
+//      allar raðir sem eru ekki `hidden`. Ein heimild, ekki endurreiknuð regla
+//      (áður vék þetta spjald frá CG-02 — sjá athugasemd við C1).
 //      (Eldri Tímavera-mánuðir eru áfram reiknaðir til upplýsinga en hvorki
 //      birtir né í grand_total — sjá athugasemd við timavera_eldri.)
 //   D) Áunnið Tímavera-tímagjald ÞESSA mánaðar (klst × dagvinnutaxti m/vsk).
@@ -68,6 +69,22 @@ exports.handler = async (event) => {
   const mEnd = ymOf(addMonths(new Date(month + '-01T00:00:00Z'), 1)) + '-01';
 
   const warnings = [];
+
+  // „Ósent" (C1) kemur úr Kröfu yfirliti — RÆST STRAX svo kallið liggi samhliða
+  // Supabase-lestrunum hér að neðan og bæti engum biðtíma við svartímann.
+  // `.then(ok, err)` strax svo þetta verði aldrei óhöndluð höfnun þótt C1 falli.
+  const kyPromise = (async () => {
+    // Eigin host fyrst svo deploy-preview prófi SJÁLFA sig en ekki framleiðslu.
+    const host = (event.headers && (event.headers.host || event.headers.Host)) || '';
+    const base = host ? `https://${host}` : (process.env.URL || process.env.DEPLOY_URL || '');
+    if (!base) throw new Error('fann ekki grunnslóð');
+    const r = await fetch(`${base}/api/krofu-yfirlit-bru`, { headers: { 'cache-control': 'no-store' } });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const j = await r.json();
+    if (j && j.error) throw new Error(j.error);
+    return j;
+  })().then(v => ({ ok: true, v }), e => ({ ok: false, e }));
+
   let solur = [], invoices = [], drafts = [], meta = [], tv = [], verk = [], fjLive = [];
   try {
     solur = await sbAll('solur', 'select=id,samtals,greitt_med,paid_at,krafa_sent_at,invoiced_at,dk_invoice_id,is_credit,credit_of,created_at,status,num,customer_nafn&greitt_med=eq.reikningur');
@@ -135,34 +152,69 @@ exports.handler = async (event) => {
     add(B, amt, { label: r.customer_name || '—', sub: r.tilvisun != null ? String(r.tilvisun) : '', kr: Math.round(amt) });
   }
 
-  // ── C1) Ósent — SAMA skilgreining og „Ósent" KPI-spjaldið (CG-02) á Kröfu
-  // yfirliti (ósk Agnars 8.8.: tölurnar eiga að vera tengdar saman). Kröfu
-  // yfirlit = krofu-yfirlit-bru þrep 2 mínus faldar raðir:
-  //   · invoice_drafts: status≠skipped, work_month ≥ 3-mán cutoff, upphæð>0,
-  //     meta(draftinv|ws|wm) hvorki paid né hidden
-  //   · invoices-raðir með status 'drög/draft': hvorki kredit/paid/hidden
-  // Engin NON_BILLABLE-sía hér lengur — CG-02 hefur hana ekki, og talan á að
-  // stemma við spjaldið uppá krónu. Ef önnur hlið breytist, breyttu hinni.
+  // ── C1) Ósent — TEKIÐ BEINT ÚR KRÖFU YFIRLITI (ósk Agnars 11.09.2026:
+  // „geturðu látið þessa samantölu draga frekar ósent úr kröfuyfirlit").
+  //
+  // Áður var þrep-2 reglan SKRIFUÐ UPP AFTUR hér, með athugasemd sem bað næsta
+  // mann að muna að breyta báðum hliðum. Það entist ekki: 11.09.2026 sagði
+  // Kröfu yfirlit 14.854.855 á 15 röðum en þetta spjald 14.996.115 á 16 —
+  // austurströnd 2026-07 (141.260 kr) var falin í Kröfu yfirliti en sást hér,
+  // því hliðarnar tvær flettu meta upp á ólíkum lyklum.
+  //
+  // Núna er aðeins EIN heimild: /api/krofu-yfirlit-bru skilar tier2 fullbúnu
+  // með `hidden`-merkingunni sem borðið sjálft notar. Við leggjum saman sömu
+  // raðir og spjaldið sýnir (allt sem er ekki hidden) — engin endurtekin regla.
   const cutoff = ymOf(addMonths(now, -3));
   const C_osendar = n0();
-  for (const d of drafts) {
-    const wm = String(d.work_month || '');
-    const amt = +d.total_m_vsk || 0;
-    if (lc(d.status) === 'skipped') continue;
-    if (amt <= 0 || wm < cutoff) continue;
-    const mt = metaBy.get(`draftinv|${d.worksite_name}|${wm}`) || {};
-    if (mt.paid || mt.hidden) continue;
-    add(C_osendar, amt, { label: d.worksite_name || '—', sub: wm, kr: Math.round(amt) });
+  let osent_heimild = 'krofu-yfirlit-bru';
+  try {
+    const kyRes = await kyPromise;                   // ræst efst — bíður sjaldnast
+    if (!kyRes.ok) throw kyRes.e;
+    const t2 = kyRes.v.tier2 || {};
+    const rows = [];
+    for (const d of (t2.debtors || [])) for (const iv of (d.invoices || [])) rows.push(iv);
+    if (!rows.length && (t2.n || 0) > 0) throw new Error('tier2 skilaði engum röðum');
+    for (const iv of rows) {
+      if (iv.hidden) continue;                       // sama sía og spjaldið
+      const amt = +iv.amount || 0;
+      if (amt <= 0) continue;
+      add(C_osendar, amt, {
+        label: iv.worksite || iv.customer || '—',
+        sub: iv.work_month || (iv.tilvisun != null ? 'drög ' + iv.tilvisun : 'drög'),
+        kr: Math.round(amt),
+      });
+    }
+    // Sundurliðunin að ofan er okkar lesning á röðunum; SJÁLF TALAN kemur frá
+    // Kröfu yfirliti sjálfu. Þannig getur spjaldið ekki rekið frá borðinu þótt
+    // þrep-2 reglan breytist þar — það er einmitt það sem gerðist áður.
+    if (t2.total != null) C_osendar.kr = Math.round(+t2.total || 0);
+    if (t2.n != null) C_osendar.n = +t2.n || 0;
+  } catch (e) {
+    // Kröfu yfirlit náðist ekki — fallum aftur á gömlu staðbundnu regluna svo
+    // spjaldið standi ekki tómt, en SEGJUM frá: talan getur þá vikið frá CG-02.
+    osent_heimild = 'staðbundin varaleið';
+    warnings.push('Ósent: náði ekki í Kröfu yfirlit (' + e.message + ') — reiknað staðbundið, getur vikið frá CG-02.');
+    C_osendar.kr = 0; C_osendar.n = 0; C_osendar.list = [];
+    for (const d of drafts) {
+      const wm = String(d.work_month || '');
+      const amt = +d.total_m_vsk || 0;
+      if (lc(d.status) === 'skipped') continue;
+      if (amt <= 0 || wm < cutoff) continue;
+      const mt = metaBy.get(`draftinv|${d.worksite_name}|${wm}`) || {};
+      if (mt.paid || mt.hidden) continue;
+      add(C_osendar, amt, { label: d.worksite_name || '—', sub: wm, kr: Math.round(amt) });
+    }
+    for (const r of invoices) {
+      const st = lc(r.status);
+      if (!DRAFT_ST.has(st)) continue;
+      const amt = +r.upphaed_total || +r.hofudstoll || 0;
+      if (amt <= 0) continue;
+      const mt = metaBy.get(`${r.source || 'x'}|${r.tilvisun || r.id}`) || {};
+      if (mt.paid || mt.hidden) continue;
+      add(C_osendar, amt, { label: r.customer_name || '—', sub: r.tilvisun != null ? 'drög ' + r.tilvisun : 'drög', kr: Math.round(amt) });
+    }
   }
-  for (const r of invoices) {
-    const st = lc(r.status);
-    if (!DRAFT_ST.has(st)) continue;
-    const amt = +r.upphaed_total || +r.hofudstoll || 0;
-    if (amt <= 0) continue;
-    const mt = metaBy.get(`${r.source || 'x'}|${r.tilvisun || r.id}`) || {};
-    if (mt.paid || mt.hidden) continue;
-    add(C_osendar, amt, { label: r.customer_name || '—', sub: r.tilvisun != null ? 'drög ' + r.tilvisun : 'drög', kr: Math.round(amt) });
-  }
+  C_osendar.heimild = osent_heimild;
 
   // ── C2/D) Tímavera-áunnið (klst × taxti) — rukkanlegir verkstaðir ─────────
   const tvByMonth = {}; // 'YYYY-MM' → klst
