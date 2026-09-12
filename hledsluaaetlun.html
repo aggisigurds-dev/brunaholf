@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light"/>
+<!-- Sama Force-Dark vörn og aðrar hub-síður (sjá pdftools.html). -->
+<style>html{color-scheme:light}html,body{color-scheme:only light}</style>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🔋 Hleðsluáætlun — Brunahólf</title>
+<!--
+  HLEÐSLUÁÆTLUN · LÁNSTÆKI (12.09.2026)
+
+  Agnar: „útbúa nýtt tól í bakenda brunahólf sem les okkar vörulínur út úr invoicum
+  til að safna í gagnabanka yfir hleðsluáætlanirnar" — og áður: „reikna út hvað við
+  þurfum að taka með okkur mörg lánstæki í verkin … á 5 ára fresti en tækin með
+  misjafnan tíma … 10 hlaðin 2025, 15 hlaðin 2024, 15 hlaðin 2023, 5 hlaðin 2022 …
+  þá vitum við að við þurfum mest að hafa tilbúin 5 lánstæki í bílnum".
+
+  GÖGN (Supabase, sama verkefni og appið):
+    reikningslestur / reikningslinur   ← lesnir reikningar (skrifað AÐEINS gegnum rpc reikningslestur_skra)
+    v_hledslur_stadur_ar               ← hleðslur + ný tæki per stað/ár/tegund (lesnir Stólpa-reikningar + sölur appsins)
+    v_reikningslestur_stada            ← hve margir Stólpa-reikningar eru lesnir per ár
+    v_reikningar_olesnir               ← biðröð lestrar (Drive-tengdir reikningar sem eru ekki lesnir)
+    app_settings.arsskodun_customers   ← tækjafjöldi og úttektarmánuður (Ársskoðun ræður alltaf)
+
+  LESTUR: PDF sótt gegnum /api/skjal (eitt í einu, 300 ms hlé — ekkert álag á Netlify), texti
+  dreginn út með pdf.js í vafranum og lesinn með js/reikningslinur-lesari.js. Lesturinn er
+  vistaður á þjóninum, svo allar vélar sjá sömu stöðu og keyrsla heldur áfram þar sem hún hætti.
+
+  ÁÆTLUN: hleðsluhæf tæki í Ársskoðun − tæki sem voru hlaðin eða keypt ný á síðustu fjórum
+  árum fyrir næstu úttekt = tæki sem fara á hleðslu = lánstæki í bílinn.
+-->
+<script src="/js/theme.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/theme.css?v=4">
+<style>
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; }
+  body{ font-family:'Space Grotesk',system-ui,-apple-system,Segoe UI,Roboto,sans-serif; color:var(--ink,#1f1d18); background:var(--bg-2,#f4f2ec); }
+  .top{ background:#161513; color:#fff; padding:12px 18px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .top h1{ font-size:17px; margin:0; font-weight:800; letter-spacing:.2px; }
+  .top .badge{ background:var(--gold,#c9a45c); color:#161513; font-size:11px; font-weight:800; padding:3px 9px; border-radius:99px; }
+  .top .stada{ font-size:12.5px; color:#d8d2c4; }
+  .top a{ color:#e9dcc0; font-size:12.5px; margin-left:auto; text-decoration:none; }
+  .wrap{ display:grid; gap:16px; padding:18px; max-width:1500px; margin:0 auto; }
+  .card{ background:#fff; border:1px solid var(--line,#e5e0d4); border-radius:14px; padding:16px 18px; min-width:0; }
+  .card h2{ font-size:15px; margin:0 0 4px; }
+  .hint{ font-size:12.5px; color:var(--muted,#6b6557); margin:0 0 12px; line-height:1.55; max-width:980px; }
+  .row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  input[type=search], select{ font:inherit; font-size:13px; padding:8px 10px; border:1px solid var(--line-2,#d6cfbf); border-radius:8px; background:#fff; color:inherit; }
+  input[type=search]{ min-width:220px; }
+  label.chk{ font-size:13px; display:inline-flex; gap:6px; align-items:center; cursor:pointer; }
+  .btn{ border:1px solid rgba(0,0,0,.15); background:#fff; color:#2a2823; padding:8px 14px; border-radius:9px; font-weight:700; cursor:pointer; font-size:13px; font-family:inherit; }
+  .btn:disabled{ opacity:.5; cursor:default; }
+  .btn.primary{ background:#161513; color:#fff; border-color:#161513; }
+  .btn:focus-visible, input:focus-visible, select:focus-visible, tr.rad:focus-visible{ outline:2px solid var(--gold,#c9a45c); outline-offset:2px; }
+  .samantekt{ display:flex; gap:22px; flex-wrap:wrap; margin:12px 0; font-size:12.5px; color:var(--muted,#6b6557); }
+  .samantekt b{ font-size:20px; font-variant-numeric:tabular-nums; display:block; color:var(--ink,#1f1d18); }
+  .tw{ overflow-x:auto; border:1px solid var(--line,#e5e0d4); border-radius:10px; }
+  table{ border-collapse:collapse; width:100%; font-size:13px; font-variant-numeric:tabular-nums; }
+  th, td{ padding:7px 9px; border-bottom:1px solid #eee8dc; text-align:left; white-space:nowrap; }
+  th{ background:#faf8f3; font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted,#6b6557); position:sticky; top:0; }
+  td.n, th.n{ text-align:right; }
+  td.stadur{ white-space:normal; min-width:220px; }
+  td.stadur small{ display:block; color:var(--muted,#6b6557); font-size:11.5px; }
+  td.ar.utan{ color:#bdb6a6; }
+  td.lan{ font-weight:800; font-size:14px; }
+  td.lan.jak{ color:#8a4b00; background:#fff4e0; }
+  tr.rad{ cursor:pointer; }
+  tr.rad:hover td{ background:#fbf9f4; }
+  tr.nanar td{ background:#fcfbf7; white-space:normal; font-size:12.5px; color:#3b382f; line-height:1.6; }
+  .flis{ display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:99px; background:#efebe1; color:#5b5547; }
+  .flis.vara{ background:#fdecec; color:#9b1c1c; }
+  .flis.ok{ background:#e7f4ea; color:#1f6b35; }
+  .progress{ height:6px; background:#efebe1; border-radius:99px; overflow:hidden; margin:10px 0; }
+  .progress > div{ height:100%; width:0; background:var(--gold,#c9a45c); transition:width .2s; }
+  .log{ font-family:'IBM Plex Mono',ui-monospace,monospace; font-size:12px; background:#161513; color:#e9e4d8; border-radius:8px; padding:10px 12px; max-height:280px; overflow:auto; white-space:pre-wrap; margin-top:10px; }
+  .log .villa{ color:#ffb4a8; }
+  .log .ok{ color:#b9e6c3; }
+  .drop{ border:1.5px dashed var(--line-2,#d6cfbf); border-radius:10px; padding:14px; text-align:center; font-size:12.5px; color:var(--muted,#6b6557); margin-top:12px; }
+  .drop.yfir{ background:#faf6ea; border-color:var(--gold,#c9a45c); }
+  .villuborði{ background:#fdecec; color:#9b1c1c; border:1px solid #f3c2c2; border-radius:10px; padding:10px 14px; font-size:13px; }
+  @media (prefers-reduced-motion: reduce){ .progress > div{ transition:none; } }
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>🔋 Hleðsluáætlun</h1>
+  <span class="badge">Slökkvitæki</span>
+  <span class="stada" id="topstada">Hleð…</span>
+  <a href="/bakendi">← Bakendi</a>
+</div>
+
+<main class="wrap">
+  <div id="villa" class="villuborði" hidden></div>
+
+  <section class="card" aria-labelledby="h-aaetlun">
+    <h2 id="h-aaetlun">Hleðsla og lánstæki á næstu úttekt</h2>
+    <p class="hint">Hleðsluhæf tæki í Ársskoðun, að frádregnum tækjum sem voru hlaðin eða keypt ný á síðustu fjórum árum fyrir næstu úttekt (hleðsla á 5 ára fresti). Það sem eftir stendur fer á hleðslu, og jafnmörg lánstæki þarf í bílinn. Byggt á lesnum reikningum og sölum appsins. Vanti reikninga fyrir stað sýnist hann með of mörg tæki á hleðslu, sjá dálkinn <b>Reikningar</b>. Smelltu á línu til að sjá sundurliðun.</p>
+    <div class="row">
+      <input type="search" id="leit" placeholder="Leita að stað eða heimilisfangi…" aria-label="Leita">
+      <select id="manudur" aria-label="Úttektarmánuður"></select>
+      <label class="chk"><input type="checkbox" id="bara-lan" checked> Aðeins staðir sem þurfa lánstæki</label>
+    </div>
+    <div class="samantekt" id="samantekt"></div>
+    <div class="tw"><table id="tafla"></table></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-lestur">
+    <h2 id="h-lestur">Lesa reikninga í gagnabankann</h2>
+    <p class="hint">Les vörulínur (vörunúmer, fjöldi, verð) úr Stólpa-reikningum sem eru tengdir í Drive. Hver lína er sannreynd: fjöldi × verð × afsláttur = upphæð, og summan með VSK = „Til greiðslu“. Reikningur sem stemmir ekki er merktur og ekki notaður sem fullgild heimild. Einn reikningur er lesinn í einu og lesturinn vistast á þjóninum, svo óhætt er að stöðva og halda áfram síðar, líka á annarri vél.</p>
+    <div class="tw" style="max-width:640px"><table id="stada-ar"></table></div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn primary" id="lesa" disabled>▶ Lesa ólesna reikninga (<span id="olesnir">…</span>)</button>
+      <button class="btn" id="aftur" disabled>↻ Lesa aftur þá sem stemma ekki (<span id="ekki-fjoldi">…</span>)</button>
+      <button class="btn" id="stodva" disabled>■ Stöðva</button>
+    </div>
+    <div class="progress" aria-hidden="true"><div id="bar"></div></div>
+    <div class="drop" id="drop">Eða dragðu Stólpa-reikninga (PDF) hingað · <label style="text-decoration:underline;cursor:pointer">velja skrár<input type="file" id="skrar" accept="application/pdf" multiple hidden></label></div>
+    <div class="log" id="log" aria-live="polite"></div>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="/js/reikningslinur-lesari.js"></script>
+<script>
+(function () {
+  'use strict';
+  const SB = window.supabase.createClient('https://osfdzskyvisifcwyjkuk.supabase.co', 'sb_publishable_YVpznM5EK01qOdevQwOcIg_rMjTkT7f');
+  if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const SKJAL = /netlify\.app$/.test(location.hostname) ? '/api/skjal?id=' : 'https://brunaholf.netlify.app/api/skjal?id=';
+  const HRINGUR = 5;   // Agnar: hlaðið á 5 ára fresti
+  const MAN = ['', 'jan.', 'feb.', 'mars', 'apr.', 'maí', 'júní', 'júlí', 'ágúst', 'sept.', 'okt.', 'nóv.', 'des.'];
+  // Hópar = lyklar Ársskoðunar (equipment). Tegundir úr reikningum sem teljast til hvers hóps.
+  const HOPAR = [
+    { lykill: 'lettvatn', merki: 'Léttvatn', tegundir: ['lettvatn', 'lettvatn2', 'abf'] },
+    { lykill: 'duft6_12', merki: 'Duft 6–12 kg', tegundir: ['duft6', 'duft9', 'duft12'] },
+    { lykill: 'duft2', merki: 'Duft 1–2 kg', tegundir: ['duft2', 'duft1'] },
+    { lykill: 'co2_5', merki: 'CO₂ 5 kg', tegundir: ['co2_5'] },
+    { lykill: 'co2_2', merki: 'CO₂ 1–2 kg', tegundir: ['co2_2', 'co2_1'] }
+  ];
+  const TEG_HOPUR = {};
+  HOPAR.forEach(h => h.tegundir.forEach(t => { TEG_HOPUR[t] = h.lykill; }));
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const bida = ms => new Promise(r => setTimeout(r, ms));
+  // Íslenskt tölusnið án staðarstillingar vafrans (Chromium án is-IS gaf „3,919" og „6:41:01 PM").
+  const fjoldi = n => String(Math.round(Math.abs(Number(n) || 0))).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  const tala = n => {
+    const x = Math.round((Number(n) || 0) * 10) / 10;
+    const [heil, brot] = String(Math.abs(x)).split('.');
+    return (x < 0 ? '−' : '') + fjoldi(heil) + (brot ? ',' + brot : '');
+  };
+  const klukka = () => { const d = new Date(); return [d.getHours(), d.getMinutes(), d.getSeconds()].map(v => String(v).padStart(2, '0')).join(':'); };
+  const nrHreint = s => String(s || '').replace(/^R[-\s]*/, 'R-');
+
+  const G = { ars: {}, fyr: new Map(), hl: [], stada: [], skjol: new Map(), lesnir: new Set(), lestur: [], vorur: {}, radir: [], opid: new Set() };
+
+  function synaVillu(texti) { const v = $('villa'); v.textContent = texti; v.hidden = !texti; }
+
+  async function allt(tafla, select, breyta) {
+    let ut = [], fra = 0;
+    for (;;) {
+      let q = SB.from(tafla).select(select);
+      if (breyta) q = breyta(q);
+      const { data, error } = await q.range(fra, fra + 999);
+      if (error) throw new Error(tafla + ': ' + error.message);
+      ut = ut.concat(data || []);
+      if (!data || data.length < 1000) break;
+      fra += 1000;
+    }
+    return ut;
+  }
+
+  async function hlada() {
+    const [arsR, fyr, hl, stadaR, skjol, lestur, vorur] = await Promise.all([
+      SB.from('app_settings').select('ars:settings->arsskodun_customers').eq('id', 1).single(),
+      allt('fyrirtaeki', 'id,nafn,heimilisfang,deleted_at', q => q.order('id')),
+      allt('v_hledslur_stadur_ar', 'fyrirtaeki_id,ar,thjonusta,tegund,magn,uppruni',
+        q => q.order('fyrirtaeki_id').order('ar').order('tegund').order('thjonusta').order('uppruni')),
+      SB.from('v_reikningslestur_stada').select('ar,skjol,lesin,stemma,stemma_ekki').order('ar'),
+      allt('customer_documents', 'fyrirtaeki_id,invoice_number',
+        q => q.eq('doc_type', 'reikningur').like('invoice_number', 'R-10%').not('drive_file_id', 'is', null).not('is_duplicate', 'is', true).order('id')),
+      allt('reikningslestur', 'reikningur_nr,doc_id,drive_file_id,fyrirtaeki_id,stemmir,ath,ar', q => q.order('reikningur_nr')),
+      allt('vorur', 'nafn,flokkur,dk_vorunr', q => q.not('dk_vorunr', 'is', null).order('id'))
+    ]);
+    if (arsR.error) throw new Error('Ársskoðun: ' + arsR.error.message);
+    if (stadaR.error) throw new Error('Staða lestrar: ' + stadaR.error.message);
+    G.ars = (arsR.data && arsR.data.ars) || {};
+    G.fyr = new Map(fyr.map(f => [f.id, f]));
+    G.hl = hl;
+    G.stada = stadaR.data || [];
+    G.skjol = new Map();
+    skjol.forEach(d => {
+      if (!d.fyrirtaeki_id) return;
+      if (!G.skjol.has(d.fyrirtaeki_id)) G.skjol.set(d.fyrirtaeki_id, new Set());
+      G.skjol.get(d.fyrirtaeki_id).add(nrHreint(d.invoice_number));
+    });
+    G.lestur = lestur;
+    G.lesnir = new Set(lestur.filter(r => r.stemmir === true).map(r => r.reikningur_nr));
+    G.vorur = {};
+    vorur.forEach(v => { G.vorur[String(v.dk_vorunr)] = v; });
+  }
+
+  // ── Áætlun ────────────────────────────────────────────────────────────────
+  function reikna() {
+    const iar = new Date().getFullYear();
+    const per = new Map();   // fyrirtaeki_id → { ár → { hópur → magn, _kg } }
+    G.hl.forEach(r => {
+      const fid = r.fyrirtaeki_id, ar = r.ar;
+      if (!fid || !ar) return;
+      if (!per.has(fid)) per.set(fid, {});
+      const p = per.get(fid);
+      p[ar] = p[ar] || {};
+      const magn = Number(r.magn) || 0;
+      if (r.tegund === 'co2_kg') { p[ar]._kg = (p[ar]._kg || 0) + magn; return; }
+      const h = TEG_HOPUR[r.tegund];
+      if (h) p[ar][h] = (p[ar][h] || 0) + magn;
+    });
+
+    const radir = [];
+    Object.keys(G.ars).forEach(k => {
+      const fid = +k;
+      const f = G.fyr.get(fid);
+      const a = G.ars[k] || {};
+      if (!f || f.deleted_at) return;
+      const eq = a.equipment || {};
+      const hopar = HOPAR.map(h => ({ h, taeki: Math.max(0, Math.round(+eq[h.lykill] || 0)) })).filter(x => x.taeki > 0);
+      const N = hopar.reduce((s, x) => s + x.taeki, 0);
+      if (!N) return;
+      const sidast = +a.last_year_inspected || 0;
+      const Y = sidast >= iar ? iar + 1 : iar;            // næsta úttekt
+      const fra = Y - (HRINGUR - 1), til = Math.min(Y, iar);
+      const p = per.get(fid) || {};
+      let lan = 0;
+      const nanar = hopar.map(x => {
+        let nyleg = 0;
+        for (let y = fra; y <= til; y++) nyleg += (p[y] || {})[x.h.lykill] || 0;
+        nyleg = Math.max(0, nyleg);
+        const a2 = Math.max(0, x.taeki - nyleg);
+        lan += a2;
+        return { merki: x.h.merki, taeki: x.taeki, nyleg, a: a2 };
+      });
+      const arDalkar = [];
+      for (let y = iar - (HRINGUR - 1); y <= iar; y++) {
+        const py = p[y] || {};
+        arDalkar.push({ ar: y, magn: HOPAR.reduce((s, h) => s + (py[h.lykill] || 0), 0), kg: py._kg || 0, iGlugga: y >= fra && y <= til });
+      }
+      const skjolSet = G.skjol.get(fid) || new Set();
+      let lesnir = 0;
+      skjolSet.forEach(n => { if (G.lesnir.has(n)) lesnir++; });
+      radir.push({ fid, nafn: f.nafn, heim: f.heimilisfang, man: +a.inspect_month || 0, Y, fra, til, N, lan, nanar, arDalkar, skjol: skjolSet.size, lesnir, askrift: a.subscribed !== false });
+    });
+    radir.sort((x, y) => (x.Y - y.Y) || ((x.man || 13) - (y.man || 13)) || String(x.nafn).localeCompare(String(y.nafn), 'is'));
+    G.radir = radir;
+  }
+
+  function teiknaAaetlun() {
+    const iar = new Date().getFullYear();
+    const leit = $('leit').value.trim().toLowerCase();
+    const man = +$('manudur').value || 0;
+    const baraLan = $('bara-lan').checked;
+    const synd = G.radir.filter(r =>
+      (!man || r.man === man) && (!baraLan || r.lan > 0) &&
+      (!leit || (String(r.nafn || '') + ' ' + String(r.heim || '')).toLowerCase().includes(leit)));
+
+    const lanAlls = synd.reduce((s, r) => s + r.lan, 0);
+    const taekiAlls = synd.reduce((s, r) => s + r.N, 0);
+    const skjol = G.stada.reduce((s, r) => s + (r.skjol || 0), 0);
+    const stemma = G.stada.reduce((s, r) => s + (r.stemma || 0), 0);
+    $('samantekt').innerHTML =
+      '<div><b>' + synd.length + '</b>staðir' + (man ? ' í ' + MAN[man] : '') + '</div>' +
+      '<div><b>' + fjoldi(lanAlls) + '</b>tæki á hleðslu ≈ lánstæki</div>' +
+      '<div><b>' + fjoldi(taekiAlls) + '</b>hleðsluhæf tæki</div>' +
+      '<div><b>' + (skjol ? Math.round(100 * stemma / skjol) : 0) + '%</b>Stólpa-reikninga lesin (' + fjoldi(stemma) + ' af ' + fjoldi(skjol) + ')</div>';
+
+    const arH = [];
+    for (let y = iar - (HRINGUR - 1); y <= iar; y++) arH.push(y);
+    let html = '<thead><tr><th>Staður</th><th>Úttekt</th><th class="n">Tæki</th>' +
+      arH.map(y => '<th class="n" title="Hlaðin eða ný tæki ' + y + '">' + y + '</th>').join('') +
+      '<th class="n" title="Tæki sem fara á hleðslu á næstu úttekt = lánstæki">Lánstæki</th><th>Reikningar</th></tr></thead><tbody>';
+    if (!synd.length) html += '<tr><td colspan="' + (5 + arH.length) + '" style="color:var(--muted,#6b6557)">Enginn staður passar við síuna.</td></tr>';
+    synd.forEach(r => {
+      const opid = G.opid.has(r.fid);
+      const lestrarFlis = r.skjol === 0 ? '<span class="flis">engir í Drive</span>'
+        : (r.lesnir >= r.skjol ? '<span class="flis ok">' + r.lesnir + '/' + r.skjol + '</span>' : '<span class="flis vara">' + r.lesnir + '/' + r.skjol + '</span>');
+      html += '<tr class="rad" tabindex="0" data-fid="' + r.fid + '" aria-expanded="' + opid + '">' +
+        '<td class="stadur">' + esc(r.nafn) + (r.askrift ? '' : ' <span class="flis">ekki í áskrift</span>') + '<small>' + esc(r.heim || '') + '</small></td>' +
+        '<td>' + (r.man ? MAN[r.man] + ' ' : '') + r.Y + '</td>' +
+        '<td class="n">' + r.N + '</td>' +
+        r.arDalkar.map(d => '<td class="n ar' + (d.iGlugga ? '' : ' utan') + '">' + (d.magn ? tala(d.magn) : '·') + (d.kg ? '<small title="CO₂ hlaðið eftir kílóum"> +' + tala(d.kg) + ' kg</small>' : '') + '</td>').join('') +
+        '<td class="n lan' + (r.lan > 0 ? ' jak' : '') + '">' + r.lan + '</td>' +
+        '<td>' + lestrarFlis + '</td></tr>';
+      if (opid) {
+        const hl = r.nanar.map(x => '<b>' + esc(x.merki) + '</b>: ' + x.taeki + ' tæki · hlaðin eða ný ' + r.fra + '–' + r.til + ': ' + tala(x.nyleg) + ' → <b>' + x.a + ' á hleðslu</b>').join('<br>');
+        const kg = r.arDalkar.filter(d => d.kg).map(d => d.ar + ': ' + tala(d.kg) + ' kg').join(', ');
+        const vantar = r.skjol > r.lesnir ? '<br>⚠ ' + (r.skjol - r.lesnir) + ' af ' + r.skjol + ' reikningum í Drive eru ólesnir eða stemma ekki. Hleðslur á þeim vantar, svo talan getur verið of há.' : '';
+        html += '<tr class="nanar"><td colspan="' + (5 + arH.length) + '">' + hl +
+          (kg ? '<br>CO₂ hlaðið eftir kílóum (ekki talið í áætlun, deilist ekki á tæki): ' + kg : '') +
+          '<br>Næsta úttekt ' + r.Y + (r.man ? ' (' + MAN[r.man] + ')' : '') + '. Tæki hlaðin ' + (r.fra - 1) + ' eða fyrr eru komin á tíma.' + vantar + '</td></tr>';
+      }
+    });
+    html += '</tbody>';
+    $('tafla').innerHTML = html;
+  }
+
+  async function teiknaLestur() {
+    let html = '<thead><tr><th>Ár</th><th class="n">Reikningar í Drive</th><th class="n">Lesnir</th><th class="n">Stemma</th><th class="n">Stemma ekki</th></tr></thead><tbody>';
+    G.stada.forEach(r => {
+      html += '<tr><td>' + r.ar + '</td><td class="n">' + r.skjol + '</td><td class="n">' + r.lesin + '</td><td class="n">' + r.stemma + '</td><td class="n">' + (r.stemma_ekki ? '<span class="flis vara">' + r.stemma_ekki + '</span>' : '0') + '</td></tr>';
+    });
+    $('stada-ar').innerHTML = html + '</tbody>';
+    const { count, error } = await SB.from('v_reikningar_olesnir').select('doc_id', { count: 'exact', head: true });
+    $('olesnir').textContent = error ? '?' : String(count);
+    $('ekki-fjoldi').textContent = String(G.lestur.filter(endurlesanlegur).length);
+    if (!keyrir) { $('lesa').disabled = !count; $('aftur').disabled = $('ekki-fjoldi').textContent === '0'; }
+  }
+
+  async function endurhlada() {
+    $('topstada').textContent = 'Hleð gögnum…';
+    try {
+      await hlada();
+      reikna();
+      teiknaAaetlun();
+      await teiknaLestur();
+      synaVillu('');
+      $('topstada').textContent = G.radir.length + ' staðir með hleðsluhæf tæki';
+    } catch (e) {
+      synaVillu('Gat ekki sótt gögn: ' + e.message);
+      $('topstada').textContent = 'Villa';
+    }
+  }
+
+  // ── Lestur ────────────────────────────────────────────────────────────────
+  let keyrir = false;
+  function logga(texti, cls) {
+    const el = document.createElement('div');
+    if (cls) el.className = cls;
+    el.textContent = klukka() + '  ' + texti;
+    const log = $('log');
+    log.prepend(el);
+    while (log.childNodes.length > 300) log.lastChild.remove();
+  }
+
+  async function textiUrBuffer(buf) {
+    const doc = await pdfjsLib.getDocument({ data: buf }).promise;
+    try { return await ReikningsLinur.textiUrPdfjs(doc); } finally { doc.destroy(); }
+  }
+
+  // d = { doc_id, reikningur_nr, drive_file_id, fyrirtaeki_id }
+  async function lesaEinn(d) {
+    let texti = null, villa = null;
+    for (let tilraun = 0; tilraun < 2 && texti === null; tilraun++) {
+      try {
+        const r = await fetch(SKJAL + encodeURIComponent(d.drive_file_id));
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        texti = await textiUrBuffer(await r.arrayBuffer());
+      } catch (e) { villa = e.message || String(e); await bida(900); }
+    }
+    const grunnur = { reikningur_nr: d.reikningur_nr, doc_id: d.doc_id, drive_file_id: d.drive_file_id, fyrirtaeki_id: d.fyrirtaeki_id, uppruni: 'stolpi_pdf', lesid_af: 'hledsluaaetlun' };
+    let p, skyring = '';
+    if (texti === null) {
+      p = Object.assign({}, grunnur, { stemmir: null, linur: [], ath: ['Las ekki PDF: ' + villa] });
+      skyring = 'las ekki PDF (' + villa + ')';
+    } else {
+      const r = ReikningsLinur.lesa(texti, { vorur: G.vorur });
+      if (r.textalaust) {
+        p = Object.assign({}, grunnur, { stemmir: null, linur: [], ath: r.ath });
+        skyring = 'skannað PDF án texta — þarf ljóslestur';
+      } else if (r.reikningur_nr !== d.reikningur_nr) {
+        p = Object.assign({}, grunnur, { stemmir: false, linur: [], dags: r.dags, kennitala: r.kennitala, vidskiptavinur: r.vidskiptavinur,
+          ath: ['Skjalið segir ' + (r.reikningur_nr || 'ekkert reikningsnúmer') + ' — línur ekki vistaðar undir ' + d.reikningur_nr] });
+        skyring = 'PDF-ið er ' + (r.reikningur_nr || 'án reikningsnúmers');
+      } else {
+        p = Object.assign({}, r, grunnur);
+        if (r.stemmir !== true) skyring = r.linur.length + ' línur · samtala stemmir ekki' + (r.ath.length ? ' · ' + r.ath[0] : '');
+      }
+    }
+    const { error } = await SB.rpc('reikningslestur_skra', { p });
+    if (error) return { villa: 'vistun: ' + error.message };
+    const hledslur = (p.linur || []).filter(l => l.thjonusta === 'hledsla').reduce((s, l) => s + (Number(l.magn) || 0), 0);
+    return { stemmir: p.stemmir === true, linur: (p.linur || []).length, hledslur, skyring };
+  }
+
+  async function keyra(rod, heiti) {
+    if (keyrir || !rod.length) return;
+    keyrir = true;
+    $('lesa').disabled = true; $('aftur').disabled = true; $('stodva').disabled = false;
+    let i = 0, ok = 0, ekki = 0, villurIRod = 0;
+    logga(heiti + ': ' + rod.length + ' reikningar', '');
+    for (; i < rod.length && keyrir; i++) {
+      const d = rod[i];
+      let n;
+      try { n = await lesaEinn(d); } catch (e) { n = { villa: e.message || String(e) }; }
+      if (n.villa) { villurIRod++; ekki++; logga('✗ ' + d.reikningur_nr + ' — ' + n.villa, 'villa'); }
+      else {
+        villurIRod = 0;
+        if (n.stemmir) { ok++; logga('✓ ' + d.reikningur_nr + ' · ' + n.linur + ' línur' + (n.hledslur ? ' · ' + tala(n.hledslur) + ' hlaðin' : ''), 'ok'); }
+        else { ekki++; logga('⚠ ' + d.reikningur_nr + ' — ' + n.skyring, 'villa'); }
+      }
+      $('bar').style.width = Math.round(100 * (i + 1) / rod.length) + '%';
+      $('topstada').textContent = heiti + ': ' + (i + 1) + ' af ' + rod.length;
+      if (villurIRod >= 5) { logga('Stöðvað eftir 5 villur í röð. Athugaðu netið eða skjal-proxyið og reyndu aftur.', 'villa'); i++; break; }
+      await bida(300);
+    }
+    const stodvad = !keyrir;
+    keyrir = false;
+    $('stodva').disabled = true;
+    logga((stodvad ? 'Stöðvað' : 'Lokið') + ': ' + ok + ' stemma · ' + ekki + ' stemma ekki eða villa · ' + (rod.length - i) + ' eftir', '');
+    await endurhlada();
+  }
+
+  $('lesa').addEventListener('click', async () => {
+    $('lesa').disabled = true;
+    try {
+      const rod = await allt('v_reikningar_olesnir', 'doc_id,reikningur_nr,year,drive_file_id,fyrirtaeki_id', q => q.order('year', { ascending: false }).order('doc_id'));
+      await keyra(rod, 'Les ólesna');
+    } catch (e) { synaVillu('Gat ekki sótt biðröðina: ' + e.message); $('lesa').disabled = false; }
+  });
+  // Skönnuð PDF (án textalags) eru ekki lesin aftur — þau þurfa ljóslestur, ekki nýja tilraun.
+  const endurlesanlegur = r => r.stemmir !== true && r.drive_file_id && !(Array.isArray(r.ath) && r.ath.some(a => /textalag/.test(String(a))));
+  $('aftur').addEventListener('click', () => {
+    const rod = G.lestur.filter(endurlesanlegur)
+      .map(r => ({ doc_id: r.doc_id, reikningur_nr: r.reikningur_nr, drive_file_id: r.drive_file_id, fyrirtaeki_id: r.fyrirtaeki_id }));
+    keyra(rod, 'Les aftur');
+  });
+  $('stodva').addEventListener('click', () => { keyrir = false; $('stodva').disabled = true; logga('Stöðva eftir þennan reikning…', ''); });
+
+  // Skrár af tölvunni (t.d. reikningasafn úr Stólpa)
+  async function lesaSkrar(skrar) {
+    const listi = Array.from(skrar || []).filter(f => /pdf$/i.test(f.name) || f.type === 'application/pdf');
+    if (!listi.length) { logga('Engar PDF-skrár valdar', 'villa'); return; }
+    logga('Les ' + listi.length + ' skrár af tölvunni', '');
+    for (const f of listi) {
+      try {
+        const r = ReikningsLinur.lesa(await textiUrBuffer(await f.arrayBuffer()), { vorur: G.vorur });
+        if (!r.reikningur_nr) { logga('✗ ' + f.name + ' — fann ekkert reikningsnúmer', 'villa'); continue; }
+        const { data: cd } = await SB.from('customer_documents').select('id,drive_file_id,fyrirtaeki_id')
+          .eq('doc_type', 'reikningur').eq('invoice_number', r.reikningur_nr).not('is_duplicate', 'is', true).limit(1);
+        const d = (cd && cd[0]) || {};
+        const p = Object.assign({}, r, { uppruni: 'stolpi_pdf', doc_id: d.id || null, drive_file_id: d.drive_file_id || null, fyrirtaeki_id: d.fyrirtaeki_id || null, lesid_af: 'hledsluaaetlun:skra' });
+        const { data, error } = await SB.rpc('reikningslestur_skra', { p });
+        if (error) { logga('✗ ' + f.name + ' — vistun: ' + error.message, 'villa'); continue; }
+        const stadur = data && data.fyrirtaeki_id ? '' : ' · staður óleystur';
+        logga((r.stemmir ? '✓ ' : '⚠ ') + r.reikningur_nr + ' (' + f.name + ') · ' + r.linur.length + ' línur' + (r.stemmir ? '' : ' · stemmir ekki') + stadur, r.stemmir ? 'ok' : 'villa');
+      } catch (e) { logga('✗ ' + f.name + ' — ' + (e.message || e), 'villa'); }
+    }
+    await endurhlada();
+  }
+  $('skrar').addEventListener('change', e => lesaSkrar(e.target.files));
+  const drop = $('drop');
+  ['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('yfir'); }));
+  ['dragleave', 'drop'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove('yfir'); }));
+  drop.addEventListener('drop', e => lesaSkrar(e.dataTransfer && e.dataTransfer.files));
+
+  // ── Síur og línur ─────────────────────────────────────────────────────────
+  $('manudur').innerHTML = '<option value="0">Allir mánuðir</option>' + MAN.slice(1).map((m, i) => '<option value="' + (i + 1) + '">' + m + '</option>').join('');
+  ['leit', 'manudur', 'bara-lan'].forEach(id => $(id).addEventListener(id === 'leit' ? 'input' : 'change', teiknaAaetlun));
+  function vixla(tr) {
+    const fid = +tr.dataset.fid;
+    if (G.opid.has(fid)) G.opid.delete(fid); else G.opid.add(fid);
+    teiknaAaetlun();
+  }
+  $('tafla').addEventListener('click', e => { const tr = e.target.closest('tr.rad'); if (tr) vixla(tr); });
+  $('tafla').addEventListener('keydown', e => { if (e.key !== 'Enter' && e.key !== ' ') return; const tr = e.target.closest('tr.rad'); if (tr) { e.preventDefault(); vixla(tr); } });
+
+  if (!window.ReikningsLinur || !window.pdfjsLib) synaVillu('Lesarinn hlóðst ekki (js/reikningslinur-lesari.js eða pdf.js).');
+  endurhlada();
+})();
+</script>
+</body>
+</html>
