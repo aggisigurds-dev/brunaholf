@@ -375,6 +375,14 @@
         p = Object.assign({}, grunnur, { stemmir: false, linur: [], dags: r.dags, kennitala: r.kennitala, vidskiptavinur: r.vidskiptavinur,
           ath: ['Skjalið segir ' + (r.reikningur_nr || 'ekkert reikningsnúmer') + ' — línur ekki vistaðar undir ' + d.reikningur_nr] });
         skyring = 'PDF-ið er ' + (r.reikningur_nr || 'án reikningsnúmers');
+        // Reikningsnúmerið í PDF-inu er sannleikurinn („skráarheitið lýgur"). Línurnar vistast undir því,
+        // en án doc_id/staðar úr rangt merkta skjalinu — staðurinn leysist af kennitölunni.
+        if (r.reikningur_nr && !G.lesnir.has(r.reikningur_nr)) {
+          const rett = Object.assign({}, r, { uppruni: 'stolpi_pdf', doc_id: null, drive_file_id: d.drive_file_id, fyrirtaeki_id: null, lesid_af: 'hledsluaaetlun',
+            ath: r.ath.concat(['PDF-skjalið er skráð sem ' + d.reikningur_nr + ' í customer_documents (doc ' + d.doc_id + ')']) });
+          const auka = await SB.rpc('reikningslestur_skra', { p: rett });
+          skyring += auka.error ? ' · vistun undir réttu númeri mistókst: ' + auka.error.message : ' · vistað undir ' + r.reikningur_nr;
+        }
       } else {
         p = Object.assign({}, r, grunnur);
         if (r.stemmir !== true) skyring = r.linur.length + ' línur · samtala stemmir ekki' + (r.ath.length ? ' · ' + r.ath[0] : '');
@@ -421,8 +429,10 @@
       await keyra(rod, 'Les ólesna');
     } catch (e) { synaVillu('Gat ekki sótt biðröðina: ' + e.message); $('lesa').disabled = false; }
   });
-  // Skönnuð PDF (án textalags) eru ekki lesin aftur — þau þurfa ljóslestur, ekki nýja tilraun.
-  const endurlesanlegur = r => r.stemmir !== true && r.drive_file_id && !(Array.isArray(r.ath) && r.ath.some(a => /textalag/.test(String(a))));
+  // Ekki lesið aftur: skönnuð PDF (þurfa ljóslestur) og skjöl sem eru rangt merkt (PDF-ið ber annað
+  // reikningsnúmer — línurnar eru þegar vistaðar undir því). Ný tilraun breytir engu um hvort tveggja.
+  const endurlesanlegur = r => r.stemmir !== true && r.drive_file_id &&
+    !(Array.isArray(r.ath) && r.ath.some(a => /textalag|Skjalið segir R-/.test(String(a))));
   $('aftur').addEventListener('click', () => {
     const rod = G.lestur.filter(endurlesanlegur)
       .map(r => ({ doc_id: r.doc_id, reikningur_nr: r.reikningur_nr, drive_file_id: r.drive_file_id, fyrirtaeki_id: r.fyrirtaeki_id }));

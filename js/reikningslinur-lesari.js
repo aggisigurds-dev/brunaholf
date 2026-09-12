@@ -129,27 +129,47 @@
     if (!m || !(aukastafir === 1 ? VERD1 : VERD2).test(m[1])) return null;
     return { einingaverd: tala(m[1]), vorunumer: m[2] };
   }
+  // Handslegin lína getur verið án vörunúmers („-2,0 | 3.387,0 | 2 | -6.774" á kreditnótu R-108024) —
+  // þá er verðið eitt og sér og línan flokkast eftir heiti.
+  function verdEdaVerdOgNumer(tok, aukastafir) {
+    return verdOgNumer(tok, aukastafir) ||
+      ((aukastafir === 1 ? VERD1 : VERD2).test(String(tok)) ? { einingaverd: tala(tok), vorunumer: null } : null);
+  }
 
-  // Snið A' — tölurnar aftast á línunni aðskildar með bilum.
+  // Snið A' — tölurnar aftast á línunni aðskildar með bilum:
+  //   „1,0 3.150,0133 23.150"         [fjöldi] [verð+nr] [VSK+upphæð]
+  //   „4,0 6.962,9177 223.67415,00"   [fjöldi] [verð+nr] [VSK+upphæð+afsl.%] — afslátturinn límdur aftan við
+  //   … eða VSK, upphæð og afsláttur sem sér orð.
+  // „223.67415,00" → allar gildar skiptingar; aðeins sú sem reiknast er notuð.
+  function vskUpphAfsl(tok) {
+    const s = String(tok), ut = [];
+    const vsk = s.charAt(0);
+    if (!/^\d$/.test(vsk)) return ut;
+    const R = s.slice(1);
+    if (UPPH.test(R)) ut.push({ vsk, upph: R, af: null });
+    for (const n of [4, 5]) {
+      if (R.length > n && UPPH.test(R.slice(0, -n)) && AFSL.test(R.slice(-n))) ut.push({ vsk, upph: R.slice(0, -n), af: R.slice(-n) });
+    }
+    return ut;
+  }
   function klofnaBilum(lina) {
     const toks = String(lina).trim().split(/\s+/);
     const kostir = [
-      { k: 3, les: t => { const vu = t[2].match(VSKUPPH); return vu ? { vsk: vu[1], upph: vu[2], af: null } : null; } },
-      { k: 4, les: t => { const vu = t[2].match(VSKUPPH); return vu && AFSL.test(t[3]) ? { vsk: vu[1], upph: vu[2], af: t[3] } : null; } },
-      { k: 4, les: t => (/^\d$/.test(t[2]) && UPPH.test(t[3]) ? { vsk: t[2], upph: t[3], af: null } : null) },
-      { k: 5, les: t => (/^\d$/.test(t[2]) && UPPH.test(t[3]) && AFSL.test(t[4]) ? { vsk: t[2], upph: t[3], af: t[4] } : null) }
+      { k: 3, les: t => vskUpphAfsl(t[2]) },
+      { k: 4, les: t => (AFSL.test(t[3]) ? vskUpphAfsl(t[2]).filter(x => x.af === null).map(x => Object.assign(x, { af: t[3] })) : []) },
+      { k: 4, les: t => (/^\d$/.test(t[2]) && UPPH.test(t[3]) ? [{ vsk: t[2], upph: t[3], af: null }] : []) },
+      { k: 5, les: t => (/^\d$/.test(t[2]) && UPPH.test(t[3]) && AFSL.test(t[4]) ? [{ vsk: t[2], upph: t[3], af: t[4] }] : []) }
     ];
     for (const kostur of kostir) {
       if (toks.length <= kostur.k) continue;
       const t = toks.slice(-kostur.k);
       if (!MAGN.test(t[0])) continue;
-      const vn = verdOgNumer(t[1], t[0].split(',')[1].length);
+      const vn = verdEdaVerdOgNumer(t[1], t[0].split(',')[1].length);
       if (!vn) continue;
-      const r = kostur.les(t);
-      if (!r) continue;
-      const tolur = { magn: tala(t[0]), einingaverd: vn.einingaverd, vorunumer: vn.vorunumer, vsk: r.vsk, upphaed: tala(r.upph), afslattur_pct: r.af === null ? null : tala(r.af) };
-      if (!reiknast(tolur.magn, tolur.einingaverd, tolur.afslattur_pct, tolur.upphaed)) continue;
-      return { lysing: toks.slice(0, -kostur.k).join(' '), tolur };
+      for (const r of kostur.les(t)) {
+        const tolur = { magn: tala(t[0]), einingaverd: vn.einingaverd, vorunumer: vn.vorunumer, vsk: r.vsk, upphaed: tala(r.upph), afslattur_pct: r.af === null ? null : tala(r.af) };
+        if (reiknast(tolur.magn, tolur.einingaverd, tolur.afslattur_pct, tolur.upphaed)) return { lysing: toks.slice(0, -kostur.k).join(' '), tolur };
+      }
     }
     return null;
   }
@@ -246,7 +266,7 @@
       if (!lysing) { ath.push('talnalína án lýsingar: ' + hopur.join(' | ')); continue; }
       let t = null, snid = null;
       if (hopur.length >= 4 && MAGN.test(hopur[0]) && /^\d$/.test(hopur[2]) && UPPH.test(hopur[3])) {
-        const vn = verdOgNumer(hopur[1], hopur[0].split(',')[1].length);
+        const vn = verdEdaVerdOgNumer(hopur[1], hopur[0].split(',')[1].length);
         const af = hopur[4] && AFSL.test(hopur[4]) ? tala(hopur[4]) : null;
         if (vn) {
           t = { magn: tala(hopur[0]), einingaverd: vn.einingaverd, vorunumer: vn.vorunumer, vsk: hopur[2], upphaed: tala(hopur[3]), afslattur_pct: af };

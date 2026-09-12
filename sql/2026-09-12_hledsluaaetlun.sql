@@ -187,11 +187,23 @@ select d.year as ar, count(*) as skjol, count(r.reikningur_nr) as lesin,
    and not coalesce(d.is_duplicate, false)
  group by d.year;
 
+-- Flutningur 3 (hledsluaaetlun_olesnir_frumrit_tvitak, sama kvöld): frumrit sem var ranglega merkt tvítak er
+-- líka lesið þegar skjalið sem bar númerið reyndist annar reikningur (kreditnóta skráð undir númeri frumritsins:
+-- R-106991/R-107073, R-107041/R-107127, R-107808/R-107852, R-108022/R-108024). customer_documents óbreytt.
 create or replace view public.v_reikningar_olesnir with (security_invoker = on) as
-select d.id as doc_id, regexp_replace(d.invoice_number, '^R[-\s]*', 'R-') as reikningur_nr, d.year, d.drive_file_id, d.fyrirtaeki_id
-  from customer_documents d
- where d.doc_type = 'reikningur' and d.invoice_number ~ '^R[-\s]*10\d{4}$' and d.drive_file_id is not null
-   and not coalesce(d.is_duplicate, false)
-   and not exists (select 1 from reikningslestur r where r.reikningur_nr = regexp_replace(d.invoice_number, '^R[-\s]*', 'R-'));
+with d as (
+  select c.id, regexp_replace(c.invoice_number, '^R[-\s]*', 'R-') as nr, c.year, c.drive_file_id, c.fyrirtaeki_id,
+         coalesce(c.is_duplicate, false) as tvitak
+    from customer_documents c
+   where c.doc_type = 'reikningur' and c.invoice_number ~ '^R[-\s]*10\d{4}$' and c.drive_file_id is not null
+)
+select d.id as doc_id, d.nr as reikningur_nr, d.year, d.drive_file_id, d.fyrirtaeki_id
+  from d
+ where (not d.tvitak
+        or exists (select 1 from reikningslestur m
+                    where m.reikningur_nr = d.nr and m.drive_file_id <> d.drive_file_id
+                      and m.ath::text like '%Skjalið segir R-%'))
+   and not exists (select 1 from reikningslestur r
+                    where r.reikningur_nr = d.nr and (r.stemmir is true or r.drive_file_id = d.drive_file_id));
 
 grant select on public.v_hledslur_stadur_ar, public.v_reikningslestur_stada, public.v_reikningar_olesnir to anon, authenticated;

@@ -754,3 +754,29 @@ en með þéttri reglu (`\d{6}-\d{4}` eða `\d{10}`) — lausari regla gleypti �
 2025" sem kennitölu og skildi merkta númerið eftir ólesið.
 
 Skrár án lykils eru merktar „lykil vantar" og taldar **hvorki** samsvörun né mismunur.
+
+---
+
+### 🔋 Hleðsluáætlun — reikningslínur úr Stólpa-PDF (12.09.2026)
+
+`hledsluaaetlun.html` (kort í Bakenda › Skjala-vinnsla) les **vörulínur** úr Stólpa-reikningum sem eru
+tengdir í `customer_documents` (Drive) og vistar í `reikningslestur` (haus + `stemmir`) og
+`reikningslinur` (vörunúmer, magn, verð, þjónusta, tegund). Eina skrifleiðin er rpc
+`reikningslestur_skra(p jsonb)`. Yfirlit: `v_hledslur_stadur_ar` (lesnir reikningar + sölur appsins),
+`v_reikningslestur_stada`, `v_reikningar_olesnir`. SQL: `sql/2026-09-12_hledsluaaetlun.sql`.
+
+- **Lesarinn** `js/reikningslinur-lesari.js` keyrir eins í vafra (pdf.js 3.11 → `textiUrPdfjs`) og í Node
+  (pdf-parse). Þrjú snið: límd lína (`…5,009.677,00117243.547,0010,00`), tala á línu, og með bilum
+  (`1,0 3.150,0133 23.150`, stundum með afslættinum límdum aftan við: `223.67415,00`). Vörunúmerið er
+  límt aftan við einingaverðið og aukastafir verðsins = aukastafir fjöldans. Handslegin lína getur
+  verið án vörunúmers.
+- **Sannprófun:** hver lína fjöldi × verð × (1 − afsl.) = upphæð, og Σ × (1 + VSK) = „Til greiðslu“.
+  Reikningur sem stemmir ekki er merktur og ekki notaður sem heimild.
+- **Flokkun eftir vörunúmeri** (sama röð og `vorur.dk_vorunr`), aldrei heiti: stuttheitið „Hleðsla“ á
+  R-105200 er vörunr. 132 tímavinna. Nr. 131 „Hleðsla Co2 pr. Kg.“ er kíló → `co2_kg`.
+- **Reikningsnúmerið í PDF-inu ræður.** Skjal skráð með öðru númeri → línurnar vistast undir númeri
+  PDF-sins, án staðar úr rangt merkta skjalinu. Dæmi 12.09: kreditnóturnar R-107852 og R-108024 voru
+  skráðar undir númerum frumritanna (R-107808, R-108022) og frumritin sjálf merkt `is_duplicate`.
+- Skönnuð PDF án textalags merkjast „þarf ljóslestur“ og eru ekki lesin aftur. Reikningar annarra
+  fyrirtækja sem lent hafa í reikningamöppunni (t.d. bókhaldsþjónusta) lesast ekki og standa merktir.
+- `/api/skjal` er Netlify-fall: lesið eitt í einu með 300 ms hléi (CORS `*`, virkar af localhost).
