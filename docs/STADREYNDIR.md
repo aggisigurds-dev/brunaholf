@@ -1186,3 +1186,21 @@ felldar saman — sbr. árekstrarviðvörunina sem eitt þeirra bar. Hvert atri�
   af stað er ekki keyrð óumbeðið — ekki einu sinni á eigið pósthólf.
 - **`node tools/audit-all.cjs` FYRIR og EFTIR breytingu á vörðum leiðum**
   (ORYGGISNET.md regla 0), og ný trygging fær ALLTAF sína `tools/audit-<nafn>.cjs`.
+
+## 16. Ferðir í `inspection_trips` — opin ferð sannar ekki heimsókn *(DB 2026-09-12)*
+
+- **Opin ferð í `app_settings.inspection_trips` sannar EKKI að heimsókn hafi verið hafin.**
+  Raunveruleg ferð geymir `units` / `skodunaradili` / `skodun_dagsetning` / `notes`.
+  *Sönnun:* 85 ferðir stimplaðar 29.07.2026 18:15 – 17.08.2026 18:23 geymdu EINGÖNGU
+  `_deleted`, `_ts` og `computed`. Þær urðu til við það eitt að OPNA fyrirtæki: patch
+  `227-trip-cloud-sync.js` vafði `localStorage.setItem` og speglaði afleiddu
+  `computed`-samtöluna úr patch 129 í skýið. Lagað 18.08.2026 með `silentSet`; engin fölsk
+  ferð er stimpluð eftir það. Ferðirnar 85 voru afhakaðar 06.09.2026 og 6.019.763 kr af
+  fölskum samtölum hurfu úr „óklárað" (afrit `backup_20260906_inspection_trips` og
+  `backup_20260906_berar_ferdir`; yfirferð á þjónustuborði #855).
+- **Kláruð ferð ber `_locked: true` og `_invoice`** — `165-visit-workflow.js` skrifar það
+  þegar „Klára heimsókn" býr til úttektarsöluna, og ferðin geymist óbreytt. Eldri ferðir og
+  sölur úr öðrum leiðum bera það EKKI: mælt 12.09.2026 voru 167 af 250 ferðum ekki
+  `_deleted`, og 124 þeirra á stöðum með úttektarsölu á árinu (t.d. Klaki Tech #466: gögn
+  frá 17.08, R-000677 send og greidd). Ferð án `_locked` er því ekki sönnun um óklárað
+  verk — berðu hana saman við úttektarsölu ársins.
