@@ -33,16 +33,24 @@ function json(s, p) {
 function digits(s) {
   return String(s == null ? '' : s).replace(/\D/g, '');
 }
+// 2026-09-12 (Verkefnalisti f23f4e54): skýrslur úr skýrsluforminu geyma AFSTÆÐA slóð í
+// Supabase-geymslu („samningar/brunakerfi-skyrslur/<id>/….pdf"), ekki http-slóð, og voru því
+// ekki taldar — hubbinn sýndi 5 „Skoðað 2026" þar sem Slökkvitæki-appið (patch 272) sýnir 8.
+function storagePublicUrl(p) {
+  const s = String(p || '').replace(/^\/+/, '');
+  const i = s.indexOf('/');
+  if (i < 1 || !SUPABASE_URL || /\.html?(\?|#|$)/i.test(s)) return null;
+  return SUPABASE_URL.replace(/\/+$/, '') + '/storage/v1/object/public/' + s.slice(0, i) + '/' +
+    s.slice(i + 1).split('/').map(encodeURIComponent).join('/');
+}
 function docHasFile(d) {
-  const p = String(d.storage_path || '');
-  if (/^https?:\/\//i.test(p) && !/\.html(\?|#|$)/i.test(p)) return true;
-  return !!(d.drive_file_id);
+  return !!docUrl(d);
 }
 function docUrl(d) {
   const p = String(d.storage_path || '');
-  if (/^https?:\/\//i.test(p) && !/\.html(\?|#|$)/i.test(p)) return p;
+  if (/^https?:\/\//i.test(p)) return /\.html?(\?|#|$)/i.test(p) ? null : p;
   if (d.drive_file_id) return 'https://brunaholf.netlify.app/api/skjal?id=' + encodeURIComponent(d.drive_file_id);
-  return null;
+  return p ? storagePublicUrl(p) : null;
 }
 function docYear(d) {
   const y = Number(d.year || 0);
