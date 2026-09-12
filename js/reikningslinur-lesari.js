@@ -45,6 +45,8 @@
     '117': ['nytt', 'lettvatn'], '118': ['nytt', 'duft6'], '119': ['nytt', 'duft2'],
     '120': ['nytt', 'abf'], '121': ['nytt', 'co2_5'], '122': ['nytt', 'co2_2'],
     '329': ['nytt', 'lettvatn2'], '341': ['nytt', 'co2_1'], '342': ['nytt', 'co2_5'], '343': ['nytt', 'co2_5'],
+    '143': ['nytt', 'co2_5'],     // „Kolsýrukútur notaður 5 kg. með krana" (eldri Stólpa-reikningar)
+    '116': ['nytt', 'lettvatn'],  // „Léttvatnsstæki 6ltr Einlitt" (eldri Stólpa-reikningar)
     '160': ['nytt', 'reyk'], '161': ['nytt', 'reyk'], '162': ['nytt', 'reyk'], '214': ['nytt', 'reyk'],
     '170': ['nytt', 'teppi'],
     '132': ['annad', null]   // „Slökkvitækjaþjónusta" — tímavinna, ekki tækjafjöldi

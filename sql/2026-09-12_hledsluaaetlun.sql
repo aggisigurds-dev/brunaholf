@@ -130,7 +130,7 @@ with koda (vorunumer, thjonusta, tegund) as (values
   ('131', 'hledsla', 'co2_kg'), ('328', 'hledsla', 'duft1'), ('331', 'hledsla', 'duft12'),
   ('117', 'nytt', 'lettvatn'), ('118', 'nytt', 'duft6'), ('119', 'nytt', 'duft2'), ('120', 'nytt', 'abf'),
   ('121', 'nytt', 'co2_5'), ('122', 'nytt', 'co2_2'), ('329', 'nytt', 'lettvatn2'), ('341', 'nytt', 'co2_1'),
-  ('342', 'nytt', 'co2_5'), ('343', 'nytt', 'co2_5')
+  ('342', 'nytt', 'co2_5'), ('343', 'nytt', 'co2_5'), ('143', 'nytt', 'co2_5'), ('116', 'nytt', 'lettvatn')  -- 143/116: flutningur hledsluaaetlun_koda_143_116
 ),
 stolpi as (
   select coalesce(cd.fyrirtaeki_id, r.fyrirtaeki_id) as fyrirtaeki_id, r.ar::int as ar,
@@ -207,3 +207,38 @@ select d.id as doc_id, d.nr as reikningur_nr, d.year, d.drive_file_id, d.fyrirta
                     where r.reikningur_nr = d.nr and (r.stemmir is true or r.drive_file_id = d.drive_file_id));
 
 grant select on public.v_hledslur_stadur_ar, public.v_reikningslestur_stada, public.v_reikningar_olesnir to anon, authenticated;
+
+-- ── 4. Lestur per skjal (flutningur hledsluaaetlun_lestur_per_skjal, sama kvöld) ─────────────────────────
+-- reikningslestur er lyklað á reikningsnúmer; tvö skjöl með sama skráða númeri (kreditnóta skráð undir númeri
+-- frumrits) skiptust á að birtast ólesin, og tóm tilraun annars hefði getað skrifað yfir reikning sem stemmir.
+-- Leysir af hólmi v_reikningar_olesnir hér að ofan og bætir tveimur skrefum í reikningslestur_skra.
+create table if not exists public.reikningslestur_skjol (
+  doc_id bigint primary key,
+  drive_file_id text,
+  reikningur_nr text,   -- númerið sem skjalið er skráð undir í customer_documents
+  pdf_nr text,          -- númerið sem stendur í PDF-inu (null ef ólæsilegt)
+  stemmir boolean,
+  ath jsonb not null default '[]'::jsonb,
+  lesid_at timestamptz not null default now()
+);
+alter table public.reikningslestur_skjol enable row level security;
+create policy reikningslestur_skjol_lesa on public.reikningslestur_skjol for select to anon, authenticated using (true);
+-- (bakfyllt úr reikningslestur þar sem doc_id var skráð)
+
+-- reikningslestur_skra: (a) skráir alltaf skjalið í reikningslestur_skjol þegar doc_id fylgir;
+-- (b) tóm tilraun (0 línur, stemmir ekki) skrifar ekki yfir reikning sem stemmir þegar — skilar 'sleppt'.
+
+create or replace view public.v_reikningar_olesnir with (security_invoker = on) as
+with d as (
+  select c.id, regexp_replace(c.invoice_number, '^R[-\s]*', 'R-') as nr, c.year, c.drive_file_id, c.fyrirtaeki_id,
+         coalesce(c.is_duplicate, false) as tvitak
+    from customer_documents c
+   where c.doc_type = 'reikningur' and c.invoice_number ~ '^R[-\s]*10\d{4}$' and c.drive_file_id is not null
+)
+select d.id as doc_id, d.nr as reikningur_nr, d.year, d.drive_file_id, d.fyrirtaeki_id
+  from d
+ where not exists (select 1 from reikningslestur_skjol s where s.doc_id = d.id)
+   and (not d.tvitak
+        or exists (select 1 from reikningslestur_skjol m
+                    where m.reikningur_nr = d.nr and m.doc_id <> d.id and m.ath::text like '%Skjalið segir R-%'))
+   and not (d.tvitak and exists (select 1 from reikningslestur r where r.reikningur_nr = d.nr and r.stemmir is true));

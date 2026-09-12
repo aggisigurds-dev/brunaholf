@@ -368,6 +368,7 @@
       skyring = 'las ekki PDF (' + villa + ')';
     } else {
       const r = ReikningsLinur.lesa(texti, { vorur: G.vorur });
+      grunnur.pdf_nr = r.reikningur_nr || null;   // númerið sem stendur í PDF-inu → reikningslestur_skjol
       if (r.textalaust) {
         p = Object.assign({}, grunnur, { stemmir: null, linur: [], ath: r.ath });
         skyring = 'skannað PDF án texta — þarf ljóslestur';
