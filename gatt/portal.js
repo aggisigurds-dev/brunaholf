@@ -162,7 +162,7 @@
     $('#login').classList.add('hidden');
     $('#portal').classList.remove('hidden');
     var d = new Date();
-    var today = ('0' + d.getDate()).slice(-2) + '.' + ('0' + (d.getMonth() + 1)).slice(-2) + '.' + d.getFullYear();
+    var today = ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear();
     $('#yf-kicker').textContent = 'Staða brunavarna · uppfært ' + today;
     renderCards(data.stats);
     renderYfirlit(data.buildings);

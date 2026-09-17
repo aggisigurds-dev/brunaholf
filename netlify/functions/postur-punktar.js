@@ -38,7 +38,7 @@ const OWN = /^(brunah[óo]lf|sl[öo]kkvit[æa]ki|eldkl[áa]r)/i;
 const lc = (s) => String(s || '').trim().toLowerCase();
 const digits = (s) => String(s || '').replace(/\D/g, '');
 const domain = (e) => { const m = lc(e).match(/@([^>\s]+)/); return m ? m[1] : ''; };
-function dmy(iso) { const d = new Date(iso); return isNaN(d) ? '' : String(d.getDate()).padStart(2, '0') + '.' + String(d.getMonth() + 1).padStart(2, '0'); }
+function dmy(iso) { const d = new Date(iso); return isNaN(d) ? '' : String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0'); }
 async function all(qs) { const r = await P.sbGet(qs); if (!r.ok) throw new Error('Supabase ' + r.status + ': ' + (await r.text()).slice(0, 200)); return r.json(); }
 
 exports.handler = async (event) => {

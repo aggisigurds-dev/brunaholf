@@ -10546,7 +10546,7 @@ async function renderTilbunirReikningar(t){
   if(!rows.length){ host.innerHTML = '<div class="gr-loading">Engir vistaðir reikningar enn. Vistaðu reikning í „Gerð Reikninga".</div>'; return; }
   const keyOf = d => (d.worksite_name||'')+'|'+(d.work_month||'');
   const doneMap = (state.ui && state.ui.tr_done) || {};
-  const cdate = s => { if(!s) return '—'; const d=new Date(s); if(isNaN(d)) return String(s).slice(0,10); return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear(); };
+  const cdate = s => { if(!s) return '—'; const d=new Date(s); if(isNaN(d)) return String(s).slice(0,10); return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear(); };
   // Default: nýjustu gerðu reikningar efst.
   let sortCol = 'created_at', sortDir = 'desc';
   const GET = { worksite_name:d=>String(d.worksite_name||''), customer_name:d=>String(d.customer_name||''), work_month:d=>String(d.work_month||''), total_m_vsk:d=>Number(d.total_m_vsk||0), status:d=>String(d.status||''), created_at:d=>String(d.created_at||'') };
@@ -11194,7 +11194,7 @@ async function renderGerdReikninga(t){
                                    : 'Merkja sem aðalskjal mánaðarins — það birtist í Kröfuyfirliti og fer fremst í bókun') + '"'
       + (d.is_primary ? ' style="color:var(--gold-deep);border-color:var(--gold)"' : '')
       + '>' + (d.is_primary ? '⭐' : '☆') + '</button> ';
-    const dt = s => { if(!s) return '—'; const d=new Date(s); return isNaN(d)?String(s).slice(0,10):(String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear()); };
+    const dt = s => { if(!s) return '—'; const d=new Date(s); return isNaN(d)?String(s).slice(0,10):(String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear()); };
     const head = `<div class="gr-section-h">📄 Vistuð PDF-skjöl <span class="gr-count">${rows.length} skjöl · Efnislisti + Tímaskýrsla, geymd á Supabase (engin innskráning)</span></div>`;
     if(!rows.length){ box.innerHTML = head + `<div class="gr-loading" style="padding:14px">Engin vistuð PDF enn. Búðu til PDF með „📄 Vista PDF" í Efnislista eða Tímaskýrslu.</div>`; return; }
     box.innerHTML = head + `<table class="grp-tbl"><thead><tr>
@@ -15054,7 +15054,7 @@ async function renderDrogstod(t){
   const fmt = n => Math.round(Number(n)||0).toLocaleString('is-IS').replace(/,/g,'.');
   const hf = n => (Math.round((Number(n)||0)*100)/100).toLocaleString('is-IS');
   const dt = iso => { const d = new Date(iso); if(isNaN(d)) return ''; const t0 = new Date(); const y = new Date(t0); y.setDate(y.getDate()-1);
-    const dag = d.toDateString()===t0.toDateString() ? 'í dag' : d.toDateString()===y.toDateString() ? 'í gær' : pad(d.getDate())+'.'+pad(d.getMonth()+1);
+    const dag = d.toDateString()===t0.toDateString() ? 'í dag' : d.toDateString()===y.toDateString() ? 'í gær' : pad(d.getDate())+'/'+pad(d.getMonth()+1);
     return dag+' '+pad(d.getHours())+':'+pad(d.getMinutes()); };
   const uid = () => (crypto.randomUUID ? crypto.randomUUID() : 'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,10));
   const LS = { get(k,d){ try{ const v = JSON.parse(localStorage.getItem(k)); return v==null?d:v; }catch(_){ return d; } }, set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(_){} } };
@@ -15301,7 +15301,7 @@ async function renderDrogstod(t){
     const el = $view.querySelector('#ds-teng'); if(!el) return;
     if(!TENG){ el.innerHTML = ''; return; }
     const kl = st => st==='fresh' ? 'ok' : (st==='aging' ? 'warn' : 'bad');
-    const stund = iso => { const d = new Date(iso); return isNaN(d) ? '—' : pad(d.getDate())+'.'+pad(d.getMonth()+1)+' '+pad(d.getHours())+':'+pad(d.getMinutes()); };
+    const stund = iso => { const d = new Date(iso); return isNaN(d) ? '—' : pad(d.getDate())+'/'+pad(d.getMonth()+1)+' '+pad(d.getHours())+':'+pad(d.getMinutes()); };
     const chips = [];
     for(const a of (TENG.email_accounts||[])){
       const stutt = String(a.account||'').replace(/@(.+?)\..*$/, '@$1');
@@ -15945,7 +15945,7 @@ window.cgDeleteReport = function(i){
 async function renderAfkost(t){
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fmtKr = n => (Math.round(Number(n)||0)).toLocaleString('is-IS').replace(/,/g,'.') + ' kr';
-  const fmtDay = iso => { const d=new Date(iso+'T00:00:00'); return isNaN(d)?iso:(String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')); };
+  const fmtDay = iso => { const d=new Date(iso+'T00:00:00'); return isNaN(d)?iso:(String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')); };
   const pct = (now,prev) => { if(!prev) return now?'+∞':'±0%'; const p=Math.round((now-prev)/prev*100); return (p>0?'+':'')+p+'%'; };
 
   $view.innerHTML = `
@@ -16040,7 +16040,7 @@ async function renderKrofuyfirlit(t){
   const fmtNum = n => (Math.round(Number(n)||0)).toLocaleString('is-IS').replace(/,/g,'.');
   const emptyBox = txt => `<div class="boss-panel kyf-empty"><span class="boss-medallion ghost">🔥</span><span>${esc(txt)}</span></div>`;
   const fmtDate = iso => { if(!iso) return '—'; const d=new Date(iso); if(isNaN(d)) return '—';
-    return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear(); };
+    return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear(); };
   const ktDigits = s => String(s||'').replace(/\D+/g,'');
 
   // Aldurs-tákn: grænt ≤30d · gull-blek 31–60d · terra >60d — mono „31D" (Boss).
@@ -18014,7 +18014,7 @@ async function renderDagurinn(t){
   const fmtDate = iso => {
     if(!iso) return '—';
     const d = new Date(iso); if(isNaN(d)) return '—';
-    return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear();
+    return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
   };
   // íslenskur afstæður tími úr tímastimpli
   const relTime = iso => {

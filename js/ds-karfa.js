@@ -20,7 +20,7 @@
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const fmt = n => Math.round(Number(n) || 0).toLocaleString('is-IS').replace(/,/g, '.');
   const pad = n => String(n).padStart(2, '0');
-  const stund = iso => { const d = new Date(iso); return isNaN(d) ? '' : pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+  const stund = iso => { const d = new Date(iso); return isNaN(d) ? '' : pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()); };
   // Íslensk tala: „12.500" = 12500 (þúsundapunktur), „23790.32" = 23790,32 (tugabrot), „1.234,5" = 1234,5.
   const num = v => {
     const s = String(v == null ? '' : v).trim().replace(/\s/g, ''); if (!s) return 0;
@@ -323,7 +323,7 @@
   // Samþjappað drög-spjald: kúnni · línur · samtölur — eitt skjáskot, ekkert ritanlegt.
   function yfirlitHtml(note) {
     const k = note.karfa || { lines: [] }; const ku = k.kunni || {}; const t = totals(k);
-    const d = new Date(); const dags = pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.' + d.getFullYear();
+    const d = new Date(); const dags = pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear();
     const rows = (k.lines || []).filter(l => num(l.qty) > 0 || num(l.unit_price_ex_vat) > 0).map(l =>
       '<tr><td class="n">' + esc(tala(l.qty)) + ' ×</td><td>' + esc(l.desc || '') + (num(l.disc_pct) ? ' <small style="color:#6f685c">−' + esc(tala(l.disc_pct)) + '%</small>' : '') + '</td><td class="r">' + fmt(l.unit_price_ex_vat) + '</td><td class="r">' + fmt(linuSum(l)) + '</td></tr>').join('');
     return '<div class="y-head"><b>Slökkvitæki ehf.</b><span>Drög að reikningi · ' + dags + '</span></div>'
