@@ -43,7 +43,7 @@ exports.handler = async (event) => {
       'select=id,tilvisun,kt_greidanda,customer_name,gjalddagi,eindagi,hofudstoll,upphaed_total,status,source');
     // invoice_drafts feed the „Ósendar kröfur" (tier2) totals — a failure hides real drafts.
     drafts = await fetchAll('invoice_drafts',
-      'select=worksite_name,work_month,total_m_vsk,customer_name,kennitala,status')
+      'select=worksite_name,work_month,total_m_vsk,customer_name,kennitala,status,payday_invoice_id')
       .catch(() => { warnings.push('invoice_drafts lestur mistókst — ósendar drög gætu vantað í þrep 2'); return []; });
     // meta carries the manual greitt/falið/staðfest flags — without it, hidden or
     // paid krófur reappear and the outstanding totals are wrong.
@@ -55,7 +55,7 @@ exports.handler = async (event) => {
       .catch(() => { warnings.push('bank_transactions lestur mistókst — „líklega greitt" bankamátun vantar'); return []; });
     // Worksite→payer map only affects grouping (optional) — record but stay resilient.
     cwmap = await fetchAll('customer_worksite_map',
-      'select=customer_name,worksite_name')
+      'select=customer_name,worksite_name,kt_greidanda')
       .catch(() => { warnings.push('customer_worksite_map lestur mistókst — greiðanda-hópun gæti verið ónákvæm'); return []; });
     // Verðskráin ber líka greiðanda per verkstað (Viðskiptavinir-flipinn skrifar hann þangað).
     // Án hennar tvístruðust mánuðir sama verkstaðar: sá sem hafði fengið greiðanda í
@@ -72,6 +72,34 @@ exports.handler = async (event) => {
   // í greiðanda svo öll drögin lendi undir sama greiðanda. kt greiðandans er
   // sótt úr `invoices` (customer_name → kt_greidanda) svo drögin geti sameinast
   // Payday-hópi greiðandans þegar við á.
+  // 17.09.2026 (Agnar: „það vantar ennþá inn verkstaðina ... nafnið sem kemur í
+  // tímaveru"): HIN áttin — greiðandi -> verkstaður. Aðeins þegar svarið er
+  // ótvírætt; greiðandi með fleiri en einn verkstað fær ekkert, því ágiskun
+  // setti rangt nafn á kröfuna (Reitir atvinnuhúsnæði á sjö verkstaði).
+  const tolur = (s) => String(s || '').replace(/\D/g, '');
+  const nafnLykill = (s) => lc(s).replace(/ehf\.?|hf\.?|slf\.?|\.|\s+/g, '');
+  const einnAf = (rows, lykill) => {
+    const m = new Map();
+    for (const r of rows) {
+      const k = lykill(r), w = String(r.worksite_name || '').trim();
+      if (!k || !w) continue;
+      if (!m.has(k)) m.set(k, w); else if (m.get(k) !== w) m.set(k, null);
+    }
+    return m;
+  };
+  const wsEftirKt = einnAf(cwmap, (r) => tolur(r.kt_greidanda));
+  const wsEftirNafni = einnAf(cwmap.concat(pguide), (r) => nafnLykill(r.customer_name));
+  const wsEftirPayday = new Map();
+  for (const d of drafts) if (d.payday_invoice_id != null && d.worksite_name) wsEftirPayday.set(String(d.payday_invoice_id), d.worksite_name);
+  const finnaVerkstad = (r) => {
+    const dragid = wsEftirPayday.get(String(r.id));
+    if (dragid) return { worksite: dragid, worksite_src: 'drag' };
+    const ktw = wsEftirKt.get(tolur(r.kt_greidanda));
+    if (ktw) return { worksite: ktw, worksite_src: 'kt' };
+    const nw = wsEftirNafni.get(nafnLykill(r.customer_name));
+    if (nw) return { worksite: nw, worksite_src: 'nafn' };
+    return { worksite: null, worksite_src: null };
+  };
   const worksiteToPayer = new Map();  // lc(worksite) -> payer customer_name
   for (const m of (cwmap || [])) {          // handvirk tenging gengur fyrir
     const w = lc(m.worksite_name), p = String(m.customer_name || '').trim();
@@ -135,6 +163,7 @@ exports.handler = async (event) => {
       confirmed_at: mt.confirmed_at || null, done_at: mt.done_at || null,
       confirmed_by: mt.confirmed_by || null, sent_by: mt.sent_by || null, done_by: mt.done_by || null,
       wf: mt.wf_state || null,
+      ...finnaVerkstad(r),
       likely_paid: false, bank: null,        // fyllt í matchBank() hér að neðan
     };
     (isDraft ? t2 : t1).push(row);
