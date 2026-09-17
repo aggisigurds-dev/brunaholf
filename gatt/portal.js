@@ -10,7 +10,7 @@
   var fmtDate = function (d) {
     if (!d) return '—';
     var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(d));
-    return m ? (m[3] + '.' + m[2] + '.' + m[1]) : String(d);
+    return m ? (m[3] + '/' + m[2] + '/' + m[1]) : String(d);
   };
   var TYPE_LABEL = { uttektarskyrsla: 'Slökkvitæki', brunakerfi: 'Brunakerfi' };
 

@@ -1308,6 +1308,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 <script src="/js/nlsh-stada.js?v=20260903c" defer></script>
 <script src="/js/viewmode.js?v=2" defer></script>
 <script src="/js/kerfisheilsa-widget.js?v=20260805a" defer></script>
+  <script src="/js/dags-snid.js?v=20260917a"></script>
 </head>
 <body>
 
@@ -2933,7 +2934,7 @@ function renderVidskiptavinir(t) {
   }
 
   const vkMoney = n => Math.round(Number(n)||0).toLocaleString('is-IS');
-  const vkDate = s => { const m = String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3]+'.'+m[2]+'.'+m[1] : (s||''); };
+  const vkDate = s => { const m = String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3] + '/' + m[2] + '/' + m[1] : (s||''); };
   const vkMonth = s => { const m = String(s||'').match(/^(\d{4})-(\d{2})/); return m ? m[2]+'/'+m[1].slice(2) : (s||''); };
 
   // Smáatriðin: staða, samskipti, kröfur, ósent og minnispunktar — allt úr /api/verkkaupar?name=
@@ -5895,12 +5896,12 @@ function renderBakendi(t){
              + '📌 ' + escapeHtml(g.name) + ' <span style="font-weight:500;color:var(--muted)">— held eftir 1, færi ' + g.dupes.length + '</span></td></tr>';
         rows += '<tr style="color:var(--green)"><td style="padding:4px 10px;width:28px">✅</td>'
              + '<td style="padding:4px 10px"><a href="' + g.keeper.viewUrl + '" target="_blank" rel="noopener" style="color:var(--ink)">' + escapeHtml(g.keeper.name) + '</a></td>'
-             + '<td style="padding:4px 10px;color:var(--muted);font-size:11.5px">' + (g.keeper.createdTime ? g.keeper.createdTime.slice(0,10).split('-').reverse().join('.') : '') + '</td>'
+             + '<td style="padding:4px 10px;color:var(--muted);font-size:11.5px">' + (g.keeper.createdTime ? g.keeper.createdTime.slice(0,10).split('-').reverse().join('/') : '') + '</td>'
              + '<td style="padding:4px 10px;color:var(--muted);font-size:11.5px">held eftir</td></tr>';
         g.dupes.forEach(f => {
           rows += '<tr><td style="padding:4px 10px"><input type="checkbox" class="_dd-cb" value="' + f.id + '" checked></td>'
                + '<td style="padding:4px 10px"><a href="' + f.viewUrl + '" target="_blank" rel="noopener" style="color:var(--ink-2)">' + escapeHtml(f.name) + '</a></td>'
-               + '<td style="padding:4px 10px;color:var(--muted-2);font-size:11.5px">' + (f.createdTime ? f.createdTime.slice(0,10).split('-').reverse().join('.') : '') + '</td>'
+               + '<td style="padding:4px 10px;color:var(--muted-2);font-size:11.5px">' + (f.createdTime ? f.createdTime.slice(0,10).split('-').reverse().join('/') : '') + '</td>'
                + '<td style="padding:4px 10px;color:var(--warn);font-size:11.5px">' + fmtBytes(f.size) + ' → rusl</td></tr>';
         });
       });
@@ -7838,7 +7839,7 @@ function renderBakendi(t){
 function samningarResultsHtml(d, rows){
   const chip = (l, v, bg) => `<span style="display:inline-block;padding:3px 10px;border-radius:99px;background:${bg || 'var(--bg-2)'};border:1px solid var(--line);font-size:12.5px;font-weight:600;margin:0 6px 6px 0">${l}: ${v}</span>`;
   const td = 'padding:5px 8px;border-bottom:1px solid var(--bg-2)';
-  const fmtDate = iso => { const m = String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[3]}.${m[2]}.${m[1]}` : (iso||''); };
+  const fmtDate = iso => { const m = String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[3]}/${m[2]}/${m[1]}` : (iso||''); };
   let html = '<div style="margin:8px 0 12px">'
     + chip('Lesnir', d.scanned)
     + (d.dry ? '' : chip('Skráðir', d.indexed, 'var(--green-bg)'))
@@ -7932,7 +7933,7 @@ function reikningarResultsHtml(d, rows){
   const chip = (l, v, bg) => `<span style="display:inline-block;padding:3px 10px;border-radius:99px;background:${bg || 'var(--bg-2)'};border:1px solid var(--line);font-size:12.5px;font-weight:600;margin:0 6px 6px 0">${l}: ${v}</span>`;
   const td = 'padding:5px 8px;border-bottom:1px solid var(--bg-2)';
   const fmtKr = n => (n == null || n === '') ? '' : Math.round(Number(n)).toLocaleString('is-IS') + ' kr';
-  const fmtDate = iso => { const m = String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[3]}.${m[2]}.${m[1]}` : (iso||''); };
+  const fmtDate = iso => { const m = String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[3]}/${m[2]}/${m[1]}` : (iso||''); };
   let html = '<div style="margin:8px 0 12px">'
     + chip('Lesnir', d.scanned)
     + (d.dry ? '' : chip('Skráðir', d.indexed, 'var(--green-bg)'))
@@ -10150,7 +10151,7 @@ async function renderVinnustofa(t){
                   </div>
                   <div class="vs-item-body">
                     <div class="vs-item-num"><div class="vs-item-num-l">Skuld</div><div class="vs-item-num-v vs-item-num-amount" style="color:var(--red-dark)">${fmt(unpaid)}</div></div>
-                    <div class="vs-item-num"><div class="vs-item-num-l">Elsti gjalddagi</div><div class="vs-item-num-v">${oldest ? oldest.split('-').reverse().join('.') : '—'}</div></div>
+                    <div class="vs-item-num"><div class="vs-item-num-l">Elsti gjalddagi</div><div class="vs-item-num-v">${oldest ? oldest.split('-').reverse().join('/') : '—'}</div></div>
                   </div>
                   <div class="vs-item-actions">
                     <a class="vs-btn vs-btn-primary" href="${gmailUrl}" target="_blank" rel="noopener">📧 Senda áminningu</a>
@@ -10179,7 +10180,7 @@ async function renderVinnustofa(t){
     recent.sort((a,b) => String(b.date).localeCompare(String(a.date)));
     $activity.innerHTML = recent.length === 0 ? '<div class="vs-empty">Engin starfsemi.</div>' : recent.slice(0, 12).map(e => `
       <div class="vs-event">
-        <span class="vs-event-date">${e.date ? e.date.split('-').reverse().join('.') : ''}</span>
+        <span class="vs-event-date">${e.date ? e.date.split('-').reverse().join('/') : ''}</span>
         <span class="vs-event-icon">${e.kind === 'paid' ? '✅' : '📤'}</span>
         <span class="vs-event-text">
           ${e.kind === 'paid' ? 'Greitt' : 'Sent'} — <strong>${escapeHtml(e.worksite)}</strong>
@@ -10510,7 +10511,7 @@ async function renderTilbunirReikningar(t){
   const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   const MN = ['jan.','feb.','mars','apríl','maí','júní','júlí','ágúst','sept.','okt.','nóv.','des.'];
   const mlabel = ym => { if(!ym||!/^\d{4}-\d{2}/.test(ym)) return ym||''; const [y,m]=ym.split('-'); return `${MN[+m-1]} ${y}`; };
-  const dmy = s => { if(!s) return ''; const [y,m,d]=s.split('-'); return `${d}.${m}.${y}`; };
+  const dmy = s => { if(!s) return ''; const [y,m,d]=s.split('-'); return `${d}/${m}/${y}`; };
 
   $view.innerHTML = `
     <div class="gr-wrap">
@@ -10786,7 +10787,7 @@ async function renderGerdReikninga(t){
   const monthLabel = ym => { const [y,m]=ym.split('-'); return `${MNAMES[+m-1]} ${y}`; };
   const monthRange = ym => { const [y,m]=ym.split('-').map(Number); const last=new Date(y,m,0).getDate();
     return { fra:`${ym}-01`, til:`${ym}-${String(last).padStart(2,'0')}` }; };
-  const dmy = s => { if(!s) return ''; const [y,m,d]=s.split('-'); return `${d}.${m}.${y}`; };
+  const dmy = s => { if(!s) return ''; const [y,m,d]=s.split('-'); return `${d}/${m}/${y}`; };
 
   $view.innerHTML = `
     <div class="gr-wrap">
@@ -10905,6 +10906,10 @@ async function renderGerdReikninga(t){
       .tbk-r input{font:inherit;font-size:12px;padding:4px 6px;border:1px solid var(--border,var(--line));border-radius:6px;width:100%;box-sizing:border-box}
       .tbk-r .tbk-h-in{background:var(--warn-bg);border-color:var(--warn-line);text-align:right;font-variant-numeric:tabular-nums}
     .tbk-r.tbk-r8{grid-template-columns:130px 1fr 70px 70px 74px 56px 56px 30px}
+    .tbk-verk .tbk-r{grid-template-columns:130px 1fr 70px 70px 74px 120px 30px}
+    .tbk-verk .tbk-r.tbk-r8{grid-template-columns:130px 1fr 70px 70px 74px 56px 56px 110px 30px}
+    .tbk-verkr{font-size:11px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .tbk-verkhaus{font-size:11.5px;color:var(--muted);padding:2px 8px 6px;line-height:1.35}
     .tbk-r .tbk-ro{text-align:right;font-variant-numeric:tabular-nums;font-size:12px;color:var(--ink-2);padding:4px 2px;white-space:nowrap}
     .tbk-r .tbk-ro.yf{color:var(--red);font-weight:600}
       .tbk-h{background:var(--tbl-header);font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);font-weight:600}
@@ -11562,7 +11567,7 @@ async function renderGerdReikninga(t){
   function openEditor(name){
     // dd.mm.áááá ↔ ISO. Frá/Til reitirnir sýna íslenskt dagsetningarsnið; native
     // <input type="date"> sýnir US MM/DD/YYYY á en-US vöfrum. Gildin geymast ISO.
-    const ymd = s => { const p=String(s||'').trim().split('.'); if(p.length===3){ const d=p[0].padStart(2,'0'), m=p[1].padStart(2,'0'), y=p[2]; if(/^\d{4}$/.test(y)&&+m>=1&&+m<=12&&+d>=1&&+d<=31) return `${y}-${m}-${d}`; } return ''; };
+    const ymd = s => { const p=String(s||'').trim().split(/[./-]/); if(p.length===3){ const d=p[0].padStart(2,'0'), m=p[1].padStart(2,'0'), y=p[2]; if(/^\d{4}$/.test(y)&&+m>=1&&+m<=12&&+d>=1&&+d<=31) return `${y}-${m}-${d}`; } return ''; };
     const month = state.ui.gr_month;
     const r = rateFor(name);
     const d = draftFor(name);
@@ -11688,7 +11693,7 @@ async function renderGerdReikninga(t){
           </div>
           <div class="gr-st">Tímabil</div>
           <div class="gb-dates">
-          <div class="gr-r2"><div class="gr-f"><label>Frá</label><div style="display:flex;align-items:center;gap:5px"><input type="text" id="gr-fra" value="${dmy(fra)}" placeholder="dd.mm.áááá" inputmode="numeric" maxlength="10" style="flex:1;min-width:0"><button type="button" class="gr-datepick" data-for="gr-fra" title="Veldu dagsetningu" style="flex:0 0 auto;border:1px solid var(--line-2,var(--edge));background:var(--card,#fff);border-radius:8px;padding:6px 9px;cursor:pointer;font-size:14px;line-height:1">📅</button></div></div><div class="gr-f"><label>Til</label><div style="display:flex;align-items:center;gap:5px"><input type="text" id="gr-til" value="${dmy(til)}" placeholder="dd.mm.áááá" inputmode="numeric" maxlength="10" style="flex:1;min-width:0"><button type="button" class="gr-datepick" data-for="gr-til" title="Veldu dagsetningu" style="flex:0 0 auto;border:1px solid var(--line-2,var(--edge));background:var(--card,#fff);border-radius:8px;padding:6px 9px;cursor:pointer;font-size:14px;line-height:1">📅</button></div></div></div>
+          <div class="gr-r2"><div class="gr-f"><label>Frá</label><div style="display:flex;align-items:center;gap:5px"><input type="text" id="gr-fra" value="${dmy(fra)}" placeholder="dd/mm/áááá" inputmode="numeric" maxlength="10" style="flex:1;min-width:0"><button type="button" class="gr-datepick" data-for="gr-fra" title="Veldu dagsetningu" style="flex:0 0 auto;border:1px solid var(--line-2,var(--edge));background:var(--card,#fff);border-radius:8px;padding:6px 9px;cursor:pointer;font-size:14px;line-height:1">📅</button></div></div><div class="gr-f"><label>Til</label><div style="display:flex;align-items:center;gap:5px"><input type="text" id="gr-til" value="${dmy(til)}" placeholder="dd/mm/áááá" inputmode="numeric" maxlength="10" style="flex:1;min-width:0"><button type="button" class="gr-datepick" data-for="gr-til" title="Veldu dagsetningu" style="flex:0 0 auto;border:1px solid var(--line-2,var(--edge));background:var(--card,#fff);border-radius:8px;padding:6px 9px;cursor:pointer;font-size:14px;line-height:1">📅</button></div></div></div>
           <div class="gr-f" style="margin-top:2px"><label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-weight:600"><input type="checkbox" id="gr-datemode" ${dateText?'checked':''}> Skrifa dagsetningu sjálf/ur á reikninginn (t.d. „Maí 2026")</label><input type="text" id="gr-datetext" value="${escapeAttr(dateText)}" placeholder="t.d. Maí 2026" style="margin-top:6px;${dateText?'':'display:none'}"></div>
           </div>
             </div>
@@ -12087,7 +12092,7 @@ async function renderGerdReikninga(t){
 
       const mo = new MutationObserver(() => { try{ bossSums(); }catch(_){} }); const mats = K('gr-mats'); if(mats) mo.observe(mats, { childList: true, subtree: true, characterData: true });
       ['gr-dvh-sync','gr-evh-sync'].forEach(id => { const e = K(id); if(e) mo.observe(e, { childList: true, subtree: true, characterData: true }); });
-      const ro = K('gr-redder-open'); if(ro) ro.addEventListener('click', () => { const f = ((K('gr-fra') || {}).value || '').match(/(\d{2})\.(\d{4})$/); const ym = f ? f[2] + '-' + f[1] : ''; if(typeof rgOpenEfniEditor !== 'function') return; rgOpenEfniEditor((K('gr-ws') || {}).value || '', ym); const mb = document.getElementById('modalBg'); if(mb){ mb.style.zIndex = '9500'; const o = new MutationObserver(() => { if(!mb.classList.contains('open')){ mb.style.zIndex = ''; o.disconnect(); } }); o.observe(mb, { attributes: true, attributeFilter: ['class'] }); } });
+      const ro = K('gr-redder-open'); if(ro) ro.addEventListener('click', () => { const f = ((K('gr-fra') || {}).value || '').match(/(\d{2})[./](\d{4})$/); const ym = f ? f[2] + '-' + f[1] : ''; if(typeof rgOpenEfniEditor !== 'function') return; rgOpenEfniEditor((K('gr-ws') || {}).value || '', ym); const mb = document.getElementById('modalBg'); if(mb){ mb.style.zIndex = '9500'; const o = new MutationObserver(() => { if(!mb.classList.contains('open')){ mb.style.zIndex = ''; o.disconnect(); } }); o.observe(mb, { attributes: true, attributeFilter: ['class'] }); } });
       K('gr-athuga').addEventListener('click', e => { const p = e.target.closest('.w'); if(!p) return; const sec = bg.querySelector('.gb-sec[data-sec="' + p.dataset.sec + '"]'); if(sec){ sec.classList.remove('collapsed'); sec.scrollIntoView({ behavior: 'smooth', block: 'start' }); } });
       // 🖼 Tímavera-skjáskot — eitt per (verkstað, mánuð), innra viðhengi (doc_type innra), sendist aldrei.
       const TV_PREFIX = 'Tímavera-skjáskot';
@@ -12363,7 +12368,7 @@ async function renderGerdReikninga(t){
             const resp = await fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&${grPeriodQS}`, { signal: ctrl.signal });
             clearTimeout(to);
             const d = await resp.json().catch(()=>({}));
-            if(resp.ok) rows = (d.rows||[]).map(r=>({ date:r.date||'', employee:r.employee||'', time_in:r.time_in||'', time_out:r.time_out||'', hours:Number(r.hours)||0 }));
+            if(resp.ok) rows = (d.rows||[]).map(r=>({ date:r.date||'', employee:r.employee||'', time_in:r.time_in||'', time_out:r.time_out||'', hours:Number(r.hours)||0, project:r.project||'' }));
           } catch(_e){ /* engir tímar — vinnuskjalið prentast samt með efnislistanum */ }
         }
         // Lógóið innfellt sem data-URL, sama og „🖨 Prenta / PDF" gerir: afrit
@@ -14335,7 +14340,7 @@ async function renderHreyfingar(t){
         const label=isBank?'🏦 Innborgun (banki)':isPay?'💰 Greitt (Payday)':(KIND[m.kind]||m.kind);
         const ref=isBank?`<span class="hy-hint">${esc(m.text||'banki')} · upplýsing</span>`:(m.ref?((isPay?'R-':'')+esc(m.ref)):'');
         return `<tr${isBank?' style="opacity:.5"':''}>
-          <td>${m.date ? m.date.split('-').reverse().join('.') : ''}</td>
+          <td>${m.date ? m.date.split('-').reverse().join('/') : ''}</td>
           <td>${label}</td>
           <td>${ref}</td>
           <td class="hy-deb">${m.delta>0?kr(m.delta):''}</td>
@@ -14346,7 +14351,7 @@ async function renderHreyfingar(t){
       return `<div class="hy-c${isHid?' hid':''}" data-kt="${c.kt}" data-name="${esc((c.name||'').toLowerCase())} ${c.kt}" data-hidden="${isHid?1:0}">
         <div class="hy-ch">
           <div><div class="hy-nm">${esc(c.name)}<span class="kt">${c.kt}</span></div>
-            <div class="hy-sub">${c.n_invoices} reikningar · ${c.n_payments} greiðslur · ${c.first_date ? c.first_date.split('-').reverse().join('.') : ''} → ${c.last_date ? c.last_date.split('-').reverse().join('.') : ''}</div></div>
+            <div class="hy-sub">${c.n_invoices} reikningar · ${c.n_payments} greiðslur · ${c.first_date ? c.first_date.split('-').reverse().join('/') : ''} → ${c.last_date ? c.last_date.split('-').reverse().join('/') : ''}</div></div>
           <div class="hy-stat">
             <div><div class="l">Reikningað</div><div class="v">${krM(c.invoiced)}</div></div>
             <div><div class="l">Greitt</div><div class="v" style="color:var(--green)">${krM(c.paid)}</div></div>
@@ -14605,7 +14610,7 @@ async function renderKrofur(t){
     const title = {open:'Útistandandi — ógreiddar krófur',overdue:'Útrunnið — komnar fram yfir gjalddaga',paid:'Greitt',flag:'Til skoðunar'}[filter]||'Krófur';
     const tag = r => r.paid ? '<span style="color:var(--green);font-weight:700">✓ greitt</span>'
       : (r.gjalddagi&&r.gjalddagi<today ? '<span style="color:var(--red-dark);font-weight:700">● útrunnið</span>' : '<span style="color:var(--warn);font-weight:700">● ógreitt</span>');
-    const list = rows.length ? rows.map(r=>`<div class="kf-mod-r"><span>${esc(r.customer_name||'—')} — ${tag(r)} <small>${esc(r.source||'')} ${esc(String(r.tilvisun||''))} · gjalddagi ${r.gjalddagi ? r.gjalddagi.split('-').reverse().join('.') : '—'}${r.kt?(' · '+esc(r.kt)):''}${r.bank_paid?' · 🏦 e.t.v. greitt í banka':''}</small></span><b>${kr(r.amount)}</b></div>`).join('') : '<div class="kf-note">Engar krófur.</div>';
+    const list = rows.length ? rows.map(r=>`<div class="kf-mod-r"><span>${esc(r.customer_name||'—')} — ${tag(r)} <small>${esc(r.source||'')} ${esc(String(r.tilvisun||''))} · gjalddagi ${r.gjalddagi ? r.gjalddagi.split('-').reverse().join('/') : '—'}${r.kt?(' · '+esc(r.kt)):''}${r.bank_paid?' · 🏦 e.t.v. greitt í banka':''}</small></span><b>${kr(r.amount)}</b></div>`).join('') : '<div class="kf-note">Engar krófur.</div>';
     host.innerHTML = `<div class="kf-mod"><h4>${title} <span class="kf-note">(${rows.length} krófur · smelltu aftur á spjaldið til að loka)</span></h4>
       <div class="kf-note" style="margin-bottom:4px">✓ greitt / ● ógreitt / ● útrunnið sýnir stöðu hverrar krófu · smelltu á nafn til að fletta í krófulistanum að neðan</div>
       ${list}<div class="kf-mod-tot"><span>Samtals</span><span>${kr(tot)}</span></div></div>`;
@@ -14650,7 +14655,7 @@ async function renderKrofur(t){
     if(!vis.length){ $('kf-uncollected').innerHTML='<div class="kf-note" style="padding:8px">Engar óinnheimtar reikningssölur.</div>'; return; }
     $('kf-uncollected').innerHTML = vis.map(r=>`<div class="kf-row ${r.flagged?'flag-r':''}" data-k="${esc(r.inv_key)}">
       <div class="kf-rn">${esc(r.customer_name)} ${r.flagged?'<span class="kf-badge kf-b-flag">⚠️ Skoða</span>':''}
-        <small>R-${esc(String(r.num||''))} · ${String(r.created_at||'').slice(0,10).split('-').reverse().join('.')}${r.kt?(' · '+esc(r.kt)):''} · ${r.sent_to_dk?'✓ í dkPlus':'ekki í dkPlus'}</small>
+        <small>R-${esc(String(r.num||''))} · ${String(r.created_at||'').slice(0,10).split('-').reverse().join('/')}${r.kt?(' · '+esc(r.kt)):''} · ${r.sent_to_dk?'✓ í dkPlus':'ekki í dkPlus'}</small>
         ${r.note?`<div class="kf-note-l">📝 ${esc(r.note)}</div>`:''}
       </div>
       <div class="kf-amt"><input type="text" value="${num(r.amount)}" data-amt></div>
@@ -14670,7 +14675,7 @@ async function renderKrofur(t){
       const veryOld = r.elsta && r.elsta < (today.slice(0,4)-1)+today.slice(4); // >~1 ár
       return `<div class="kf-row ${r.flagged?'flag-r':''}" data-k="${esc(r.inv_key)}">
       <div class="kf-rn">${esc(r.client)} ${r.flagged?'<span class="kf-badge kf-b-flag">⚠️ Skoða</span>':''}${veryOld?'<span class="kf-badge kf-b-overdue">>1 ár</span>':''}
-        <small>${r.overdue_equip} tæki yfir skoðun · elsti gjalddagi ${r.elsta ? r.elsta.split('-').reverse().join('.') : '—'}${r.sidasta?(' · síðast skoðað '+r.sidasta.split('-').reverse().join('.')):''}</small>
+        <small>${r.overdue_equip} tæki yfir skoðun · elsti gjalddagi ${r.elsta ? r.elsta.split('-').reverse().join('/') : '—'}${r.sidasta?(' · síðast skoðað '+r.sidasta.split('-').reverse().join('/')):''}</small>
         ${r.note?`<div class="kf-note-l">📝 ${esc(r.note)}</div>`:''}
       </div>
       <div class="kf-amt" style="min-width:70px"><b>${r.overdue_equip}</b><small>tæki</small></div>
@@ -14715,7 +14720,7 @@ async function renderKrofur(t){
     $('kf-wsbill-note').textContent=`${billed.length} reikningað · ${unbilled.length} bara klst (≈ ${kr(estU)} óreikningað)`+(hiddenWs.length?` · ${hiddenWs.length} falið`:'');
     const acts=w=>`<span class="kf-wsact"><button class="kf-btn" data-ws-note="${esc(w.project)}" title="Minnispunktur">📝</button><button class="kf-btn" data-ws-hide="${esc(w.project)}" title="Fela / fjarlægja úr yfirliti">🙈</button></span>`;
     const noteL=w=> w._meta.note?`<div class="kf-note-l">📝 ${esc(w._meta.note)}</div>`:'';
-    const uRow=w=>`<div class="kf-mod-r"><span>${esc(w.project)} <small>${(w.hours||0).toFixed(0)} klst${w.last?(' · síðast '+String(w.last).slice(0,10).split('-').reverse().join('.')):''}${w._meta.amount_override!=null?' · leiðrétt':''}</small>${noteL(w)}</span><span class="kf-wsright"><b>≈ <input class="kf-wsamt" type="text" value="${num(estOf(w))}" data-ws-amt="${esc(w.project)}"> kr</b>${acts(w)}</span></div>`;
+    const uRow=w=>`<div class="kf-mod-r"><span>${esc(w.project)} <small>${(w.hours||0).toFixed(0)} klst${w.last?(' · síðast '+String(w.last).slice(0,10).split('-').reverse().join('/')):''}${w._meta.amount_override!=null?' · leiðrétt':''}</small>${noteL(w)}</span><span class="kf-wsright"><b>≈ <input class="kf-wsamt" type="text" value="${num(estOf(w))}" data-ws-amt="${esc(w.project)}"> kr</b>${acts(w)}</span></div>`;
     const bRow=w=>`<div class="kf-mod-r"><span>${esc(w.project)} <small>${(w.hours||0).toFixed(0)} klst · ${w.invoice_count} reikn.</small>${noteL(w)}</span><span class="kf-wsright"><b>${kr(w._t)}</b>${acts(w)}</span></div>`;
     const hRow=w=>`<div class="kf-mod-r" style="opacity:.6"><span>${esc(w.project)} <small>${(w.invoice_count||0)>0?w.invoice_count+' reikn.':(w.hours||0).toFixed(0)+' klst'}</small></span><span class="kf-wsright"><button class="kf-btn" data-ws-show="${esc(w.project)}" title="Sýna aftur">👁 Sýna</button></span></div>`;
     host.innerHTML=`<div class="kf-mod"><div class="kf-mod-cols">
@@ -14805,8 +14810,8 @@ async function renderKrofur(t){
     const METH = {reikningur:'reikningur',stadgreitt:'staðgreitt',greitt_sidar:'greitt síðar'};
     // Clear paid/unpaid tag so you can see who has paid.
     const tag = (r)=> r.paid ? '<span style="color:var(--green);font-weight:700">✓ greitt</span>' : '<span style="color:var(--red-dark);font-weight:700">● ógreitt</span>';
-    const bhList = bhRows.length ? bhRows.map(r=>`<div class="kf-mod-r"><span>${esc(r.customer_name||'—')} — ${tag(r)} <small>${esc(r.source||'')} ${esc(String(r.tilvisun||''))} · ${rec?('greitt '+(r.greidsla_date ? r.greidsla_date.split('-').reverse().join('.') : '')):('gjalddagi '+(r.gjalddagi ? r.gjalddagi.split('-').reverse().join('.') : ''))}</small></span><b>${kr(r.amount)}</b></div>`).join('') : '<div class="kf-note">Engar krófur.</div>';
-    const slList = slRows.length ? slRows.map(r=>`<div class="kf-mod-r"><span>${esc(r.customer||'—')} <small>R-${esc(String(r.num||''))} · ${METH[r.method]||esc(r.method||'')} · ${r.date ? r.date.split('-').reverse().join('.') : ''}</small></span><b>${kr(r.amount)}</b></div>`).join('') : '<div class="kf-note">Engar sölur.</div>';
+    const bhList = bhRows.length ? bhRows.map(r=>`<div class="kf-mod-r"><span>${esc(r.customer_name||'—')} — ${tag(r)} <small>${esc(r.source||'')} ${esc(String(r.tilvisun||''))} · ${rec?('greitt '+(r.greidsla_date ? r.greidsla_date.split('-').reverse().join('/') : '')):('gjalddagi '+(r.gjalddagi ? r.gjalddagi.split('-').reverse().join('/') : ''))}</small></span><b>${kr(r.amount)}</b></div>`).join('') : '<div class="kf-note">Engar krófur.</div>';
+    const slList = slRows.length ? slRows.map(r=>`<div class="kf-mod-r"><span>${esc(r.customer||'—')} <small>R-${esc(String(r.num||''))} · ${METH[r.method]||esc(r.method||'')} · ${r.date ? r.date.split('-').reverse().join('/') : ''}</small></span><b>${kr(r.amount)}</b></div>`).join('') : '<div class="kf-note">Engar sölur.</div>';
     host.innerHTML = `<div class="kf-mod">
       <h4>${esc(mlabel(mo))} — ${rec?'innkomið (greitt í mánuðinum)':unp?'ógreitt (bíður greiðslu)':'útgefið'}</h4>
       <div class="kf-note">${rec?'Eftir greiðsludegi · Slökkvitæki staðgreitt':unp?'Ógreiddar krófur mánaðarins · Slökkvitæki reikningssölur (bíða dkPlus)':'Brunahólf eftir gjalddaga · Slökkvitæki eftir söludegi'} · ✓ greitt / ● ógreitt sýnir hver hefur borgað</div>
@@ -14829,9 +14834,9 @@ async function renderKrofur(t){
     const ov = r.amount_override!=null;
     return `<div class="kf-row ${r.hidden?'hidden-r':''} ${r.flagged?'flag-r':''}" data-k="${esc(r.inv_key)}">
       <div class="kf-rn">${esc(r.customer_name||'—')}
-        <small>${esc(r.source||'')} nr. ${esc(r.tilvisun||'')} · gjalddagi ${r.gjalddagi ? r.gjalddagi.split('-').reverse().join('.') : '—'}${r.kt?(' · '+esc(r.kt)):''}</small>
+        <small>${esc(r.source||'')} nr. ${esc(r.tilvisun||'')} · gjalddagi ${r.gjalddagi ? r.gjalddagi.split('-').reverse().join('/') : '—'}${r.kt?(' · '+esc(r.kt)):''}</small>
         ${r.note?`<div class="kf-note-l">📝 ${esc(r.note)}</div>`:''}
-        ${r.bank_text?`<div class="kf-src">🏦 ${esc(r.bank_text)} (${r.bank_date ? r.bank_date.split('-').reverse().join('.') : ''})</div>`:''}
+        ${r.bank_text?`<div class="kf-src">🏦 ${esc(r.bank_text)} (${r.bank_date ? r.bank_date.split('-').reverse().join('/') : ''})</div>`:''}
         ${r.draft_match?`<div class="kf-draft">✓ passar við Reikningagerð: ${esc(r.draft_match.worksite||'')} ${kr(r.draft_match.total)}</div>`:''}
       </div>
       <div>${badges.join(' ')}</div>
@@ -14932,7 +14937,7 @@ async function renderVerkstadapostur(t){
   state.ui.fv_month = /^\d{4}-\d{2}$/.test(state.ui.fv_month||'') ? state.ui.fv_month : nowYM();
   const ml = ym => { const [y,m] = ym.split('-').map(Number); return (MN[m-1]||ym)+' '+y; };
   const shift = (ym,d) => { const [y,m] = ym.split('-').map(Number); const x = new Date(y, m-1+d, 1); return x.getFullYear()+'-'+pad(x.getMonth()+1); };
-  const dmy = v => { const m = String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3]+'.'+m[2]+'.'+m[1] : ''; };
+  const dmy = v => { const m = String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3] + '/' + m[2] + '/' + m[1] : ''; };
   const hhmm = v => { const d = new Date(v); return isNaN(d) ? '' : pad(d.getHours())+':'+pad(d.getMinutes()); };
   const hf = n => (Math.round((Number(n)||0)*100)/100).toLocaleString('is-IS');
   const fmt = n => Math.round(Number(n)||0).toLocaleString('is-IS');
@@ -16560,7 +16565,7 @@ async function renderKrofuyfirlit(t){
     const noteInline = tier===2 ? `<div class="ky-notewrap" style="width:auto;margin-top:3px"><span class="ky-note-ic" style="font-size:10px;${note?'':'opacity:.35'}">📝</span><textarea class="ky-note" rows="1" data-key="${esc(inv.inv_key)}" placeholder="minnispunktur…" style="font-size:10.5px">${esc(note)}</textarea></div>` : '';
     // Sundurliðun — opnast við smell á röð.
     const detailCells = [
-      ['Gjalddagi', inv.gjalddagi ? inv.gjalddagi.split('-').reverse().join('.') : '—'],
+      ['Gjalddagi', inv.gjalddagi ? inv.gjalddagi.split('-').reverse().join('/') : '—'],
       ['Eindagi', esc(inv.eindagi||'—')],
       ['Uppruni', esc(inv.source||'—')],
       ['Upphæð', fmtKr(inv.amount)],
@@ -16569,7 +16574,7 @@ async function renderKrofuyfirlit(t){
     const bankDetail = (inv.bank)
       ? `<div class="ky-bank" style="margin-top:9px;font-size:11px">🏦 Banki: ${fmtKr(inv.bank.amount)} · ${esc(inv.bank.date||'—')}${inv.bank.text?' · '+esc(inv.bank.text):''}${inv.bank.extra>0?' <span style="color:var(--warn)">(+'+fmtKr(inv.bank.extra)+' vextir)</span>':''}</div>`
       : '';
-    const gj = (tier===1&&inv.gjalddagi) ? `<span class="ky-num">${inv.gjalddagi.split('-').reverse().join('.')}</span> &nbsp;·&nbsp; ` : '';
+    const gj = (tier===1&&inv.gjalddagi) ? `<span class="ky-num">${inv.gjalddagi.split('-').reverse().join('/')}</span> &nbsp;·&nbsp; ` : '';
     return `
       <div class="ky-invrow${tier===2?' ky-t2':''}">
         <div class="ky-row${lp?' ky-likely':''}" data-key="${esc(inv.inv_key)}"${(inv._hidden||inv._done)?' style="opacity:.5"':''}>
@@ -16686,7 +16691,7 @@ async function renderKrofuyfirlit(t){
     // Zero-balance debtors (e.g. everything netted to 0 after mark-paid) render
     // collapsed by default so they don't clutter the list; nonzero = expanded.
     const collapsed = (db.outstanding_kr||0) === 0;
-    const cnt = `${(db.invoices||[]).length} ${tier===3?'liðir':(tier===2?'drög':'reikningar')}${tier===1?' · elsti gjalddagi '+(db.oldest_due ? db.oldest_due.split('-').reverse().join('.') : '—'):''}`;
+    const cnt = `${(db.invoices||[]).length} ${tier===3?'liðir':(tier===2?'drög':'reikningar')}${tier===1?' · elsti gjalddagi '+(db.oldest_due ? db.oldest_due.split('-').reverse().join('/') : '—'):''}`;
     return `
       <div class="ky-card">
         <div class="ky-card-head" role="button" tabindex="0" title="Smelltu til að opna/loka">
@@ -17730,7 +17735,7 @@ async function renderKrofuyfirlit(t){
         const d = await r.json().catch(()=>({}));
         if(!r.ok || d.error) throw new Error(d.error || ('HTTP '+r.status));
         const w = d.reconcile_window;
-        const win = w ? (w.start.split('-').reverse().join('.')+' → '+w.end.split('-').reverse().join('.')) : (String(d.from||'').slice(0,10)+' → '+String(d.to||'').slice(0,10));
+        const win = w ? (w.start.split('-').reverse().join('/')+' → '+w.end.split('-').reverse().join('/')) : (String(d.from||'').slice(0,10)+' → '+String(d.to||'').slice(0,10));
         txt.textContent = '✓ '+win+' · '+(d.upserted||0)+' færslur'+(d.reconciled?' · '+d.reconciled+' úreltar eytt':'')+(d.reconcile_blocked?' · ⚠ speglun stöðvuð (öryggisþak)':'');
         dot.className = 'dot done'; wrap.classList.add('ok');
         if(d.reconcile_blocked) alert('Speglun stöðvuð (öryggisþak):\n\n'+d.reconcile_blocked);
@@ -17874,7 +17879,7 @@ async function renderSkuldunautar(t){
       return `<div class="sk-d" data-i="${i}" data-name="${esc((db.customer||'').toLowerCase())} ${db.kt||''}">
         <div class="sk-dh">
           <div><div class="sk-dn">${esc(db.customer)}${db.kt?`<span class="sk-kt">${db.kt}</span>`:''}</div>
-            <div class="sk-dm">${db.invoices.length} reikningar · elsti gjalddagi ${db.oldest_due ? db.oldest_due.split('-').reverse().join('.') : '—'}</div></div>
+            <div class="sk-dm">${db.invoices.length} reikningar · elsti gjalddagi ${db.oldest_due ? db.oldest_due.split('-').reverse().join('/') : '—'}</div></div>
           <div class="sk-bank">${bankLine}</div>
           <div class="sk-dv">${kr(db.outstanding_kr)}<small>útistandandi</small></div>
           <div class="sk-caret">▸</div>
@@ -18949,7 +18954,7 @@ async function renderVorubirgdir(t){
     .replace(/æ/g,'ae').replace(/þ/g,'th').replace(/ð/g,'d')
     .normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
   const isNumTok = t => /^-?[\d.,]+%?$/.test(t);
-  const isDateTok = t => /^\d{1,2}\.\d{1,2}\.\d{2,4}$/.test(t);
+  const isDateTok = t => /^\d{1,2}[./]\d{1,2}[./]\d{2,4}$/.test(t);
   function parseNum(tok){
     if(tok==null) return null;
     let s = String(tok).replace(/%/g,'').replace(/\s|kr\.?/gi,'');
@@ -20396,7 +20401,7 @@ async function efKostnadarYfirlit(){
   const host = document.getElementById('ef-kost-host'); if(!host) return;
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fmt = n => Math.round(n||0).toLocaleString('is-IS').replace(/,/g,'.');
-  const dmy = iso => { const m = String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3]+'.'+m[2]+'.'+m[1] : '—'; };
+  const dmy = iso => { const m = String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3] + '/' + m[2] + '/' + m[1] : '—'; };
   const post = async body => { const r = await fetch('/api/reikningspunktar', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(body) }); const j = await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.error||('HTTP '+r.status)); return j; };
   const opna = id => { try{ sessionStorage.setItem('ds_open_karfa', String(id)); }catch(_){} location.hash = '#drogstod'; };
   const LSK = 'ef_kost_afsl';
@@ -22404,6 +22409,10 @@ function ensureGrModalCss(){
     .tbk-r input{font:inherit;font-size:12px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;width:100%;box-sizing:border-box}
     .tbk-r .tbk-h-in{background:var(--warn-bg);border-color:var(--warn-line);text-align:right;font-variant-numeric:tabular-nums}
     .tbk-r.tbk-r8{grid-template-columns:130px 1fr 70px 70px 74px 56px 56px 30px}
+    .tbk-verk .tbk-r{grid-template-columns:130px 1fr 70px 70px 74px 120px 30px}
+    .tbk-verk .tbk-r.tbk-r8{grid-template-columns:130px 1fr 70px 70px 74px 56px 56px 110px 30px}
+    .tbk-verkr{font-size:11px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .tbk-verkhaus{font-size:11.5px;color:var(--muted);padding:2px 8px 6px;line-height:1.35}
     .tbk-r .tbk-ro{text-align:right;font-variant-numeric:tabular-nums;font-size:12px;color:var(--ink-2);padding:4px 2px;white-space:nowrap}
     .tbk-r .tbk-ro.yf{color:var(--red);font-weight:600}
     .tbk-h{background:var(--tbl-header);font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);font-weight:600}
@@ -22547,7 +22556,7 @@ async function openTimabok(name, month){
   // svo hægt kall eða teikni-villa festi ekki gluggann á „Sæki tímafærslur…".
   if(saved && Array.isArray(saved.rows)){
     rows = saved.rows.map(r=>({...r}));
-    st.textContent = 'breytt eintak (vistað ' + (saved.saved_at? String(saved.saved_at).slice(0,10).split('-').reverse().join('.') : '') + ')';
+    st.textContent = 'breytt eintak (vistað ' + (saved.saved_at? String(saved.saved_at).slice(0,10).split('-').reverse().join('/') : '') + ')';
     sortRows(); paint();
   } else if(!name || !/^\d{4}-\d{2}$/.test(String(month))){
     // Vantar verkstað/mánuð (t.d. Payday-drög án verkstaðar) → ekkert að sækja.
@@ -22563,7 +22572,7 @@ async function openTimabok(name, month){
         clearTimeout(to);
         const data = await resp.json().catch(()=>({}));
         if(!resp.ok) throw new Error(data.error||('HTTP '+resp.status));
-        rows = (data.rows||[]).map(r=>({ date:r.date||'', employee:r.employee||'', time_in:r.time_in||'', time_out:r.time_out||'', hours:Number(r.hours)||0 }));
+        rows = (data.rows||[]).map(r=>({ date:r.date||'', employee:r.employee||'', time_in:r.time_in||'', time_out:r.time_out||'', hours:Number(r.hours)||0, project:r.project||'' }));
         sortRows();
       }catch(e){
         if(!bg.isConnected) return;   // notandi lokaði glugganum á meðan
@@ -22582,7 +22591,12 @@ async function openTimabok(name, month){
     // raðað eftir Inn-tíma) upp að þröskuldinum eru dagvinna, restin yfirvinna.
     const rs = tbkRowSplit(rows, { on: t.on, thr: t.thr });
     const rcls = t.on ? ' tbk-r8' : '';
-    const head = `<div class="tbk-r tbk-h${rcls}"><span>Dagsetning</span><span>Starfsmaður</span><span>Inn</span><span>Út</span><span>Tímar</span>${t.on?'<span style="text-align:right">Dagv.</span><span style="text-align:right">Yfirv.</span>':''}<span></span></div>`;
+    // 17.09.2026: project_aliases rúlla mörgum Tímaveru-verkstöðum upp í eitt nafn.
+    // Dálkurinn birtist AÐEINS þegar línurnar koma úr fleiri en einum — annars
+    // segir línan yfir töflunni hvaðan þær koma og útlitið helst óbreytt.
+    const verkstadir = [...new Set(rows.map(r => (r.project||'').trim()).filter(Boolean))];
+    const margirVerkst = verkstadir.length > 1;
+    const head = `<div class="tbk-r tbk-h${rcls}"><span>Dagsetning</span><span>Starfsmaður</span><span>Inn</span><span>Út</span><span>Tímar</span>${margirVerkst?'<span>Verkstaður</span>':''}${t.on?'<span style="text-align:right">Dagv.</span><span style="text-align:right">Yfirv.</span>':''}<span></span></div>`;
     const rr = rows.map((r,i)=>`<div class="tbk-r${rcls}">
         <input type="date" value="${escapeAttr(r.date)}" data-f="date" data-i="${i}">
         <input type="text" value="${escapeAttr(r.employee)}" data-f="employee" data-i="${i}" placeholder="Nafn">
@@ -22590,6 +22604,7 @@ async function openTimabok(name, month){
         <input type="text" value="${escapeAttr(r.time_out)}" data-f="time_out" data-i="${i}" placeholder="16:00">
         <input type="text" inputmode="decimal" value="${escapeAttr(String(r.hours))}" data-f="hours" data-i="${i}" class="tbk-h-in">
         ${t.on?`<span class="tbk-ro">${_phr(rs[i].dv)}</span><span class="tbk-ro yf">${rs[i].yf>0?_phr(rs[i].yf):''}</span>`:''}
+        ${margirVerkst?`<span class="tbk-verkr" title="Verkstaður í Tímaveru">${escapeHtml(r.project||'—')}</span>`:''}
         <button class="tbk-del" data-del="${i}" title="Fjarlægja línu">✕</button>
       </div>`).join('');
     const emp = Object.keys(t.byEmp).sort((a,b)=>a.localeCompare(b,'is')).map(e=>{
@@ -22601,7 +22616,7 @@ async function openTimabok(name, month){
     const empHead = t.on
       ? `<div class="tbk-er tbk-eh tbk-er5"><span>Starfsmaður</span><span>Dagar</span><span>Dagvinna</span><span>Yfirvinna</span><span>Tímar</span></div>`
       : `<div class="tbk-er tbk-eh"><span>Starfsmaður</span><span>Dagar</span><span>Tímar</span></div>`;
-    body.innerHTML = `<div class="tbk-tbl">${head}${rr||'<div class="gr-loading" style="padding:10px">Engar línur — bættu við með ＋.</div>'}</div>
+    body.innerHTML = `${verkstadir.length?`<div class="tbk-verkhaus">Úr Tímaveru: ${verkstadir.map(v=>escapeHtml(v)).join(' · ')}</div>`:''}<div class="tbk-tbl${margirVerkst?' tbk-verk':''}">${head}${rr||'<div class="gr-loading" style="padding:10px">Engar línur — bættu við með ＋.</div>'}</div>
       <div class="tbk-yf">
         <label><input type="checkbox" id="tbk-yf" ${t.on?'checked':''}> Yfirvinna</label>
         <input type="text" inputmode="decimal" class="thr" id="tbk-yf-thr" value="${escapeAttr(tbkThrTxt(yf.thr))}" ${t.on?'':'disabled'}>
@@ -22631,7 +22646,7 @@ async function openTimabok(name, month){
       clearTimeout(to);
       const data = await resp.json().catch(()=>({}));
       if(!resp.ok) throw new Error(data.error||('HTTP '+resp.status));
-      rows = (data.rows||[]).map(r=>({ date:r.date||'', employee:r.employee||'', time_in:r.time_in||'', time_out:r.time_out||'', hours:Number(r.hours)||0 }));
+      rows = (data.rows||[]).map(r=>({ date:r.date||'', employee:r.employee||'', time_in:r.time_in||'', time_out:r.time_out||'', hours:Number(r.hours)||0, project:r.project||'' }));
       // Clear saved local edits so the modal no longer shows "breytt eintak"
       if(state.ui && state.ui.timabok_edits) delete state.ui.timabok_edits[key];
       save();
@@ -22751,7 +22766,7 @@ function drawTimabokPage(doc, logo, name, month, rows, yfCfg){
   // utan gluggans — t.d. endurprentun — noti sömu stillingu).
   if(yfCfg === undefined) yfCfg = tbkSavedYf(name, month);
   const t = tbkYfSplit(sorted, yfCfg);
-  const dmy = s => { const p=String(s||'').split('-'); return p.length===3? `${p[2]}.${p[1]}.${p[0]}` : (s||''); };
+  const dmy = s => { const p=String(s||'').split('-'); return p.length===3? `${p[2]}/${p[1]}/${p[0]}` : (s||''); };
   const rsPdf = tbkRowSplit(sorted, { on: t.on, thr: t.thr });   // per-röð ÐV/YF dálkar (65adc9e7)
   const foot = t.on
     ? [[{ content:`Samtals (yfirvinna yfir ${tbkThrTxt(t.thr)} klst/dag)`, colSpan:4, styles:{ halign:'right' } }, _phr(t.dv), _phr(t.yf), _phr(t.total)]]
@@ -22826,14 +22841,14 @@ async function tbkLoadRows(name, month, period){
   const resp = await fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&${qs}`);
   const j = await resp.json().catch(()=>({}));
   if(!resp.ok) throw new Error(j.error || ('HTTP '+resp.status));
-  const rows = (j.rows||[]).map(r=>({ date:r.date||'', employee:r.employee||'', time_in:r.time_in||'', time_out:r.time_out||'', hours:Number(r.hours)||0 }));
+  const rows = (j.rows||[]).map(r=>({ date:r.date||'', employee:r.employee||'', time_in:r.time_in||'', time_out:r.time_out||'', hours:Number(r.hours)||0, project:r.project||'' }));
   return { rows, yf };
 }
 // Teiknar Efnislistann á NÚVERANDI síðu skjalsins (deilt með samsetta PDF-inu).
 function drawEfnislistiPage(doc, logo, data){
   const c = data.c, rt = data.rate;
   const W = doc.internal.pageSize.getWidth();
-  const dmy = s => { const p=String(s||'').split('-'); return p.length===3? `${p[2]}.${p[1]}.${p[0]}` : (s||''); };
+  const dmy = s => { const p=String(s||'').split('-'); return p.length===3? `${p[2]}/${p[1]}/${p[0]}` : (s||''); };
   let y = 40;
   // Haus (2026-09-02, ósk Agnars): aðeins lógóið og „Verðskrá / tilboð" undir því — enginn „Brunahólf ehf." texti.
   if(logo){ try{ doc.addImage(logo, bhLogoFmt(logo), 40, y, 150, 46); }catch{} }
@@ -22886,7 +22901,7 @@ function drawEfnislistiPage(doc, logo, data){
 // Print the (possibly edited) tímaskýrsla as HTML.
 async function printTimabok(name, month, rows, yfCfg){
   const hr = n => _phr(n);
-  const dmy = s => { const p=String(s||'').split('-'); return p.length===3? `${p[2]}.${p[1]}.${p[0]}` : (s||''); };
+  const dmy = s => { const p=String(s||'').split('-'); return p.length===3? `${p[2]}/${p[1]}/${p[0]}` : (s||''); };
   if(yfCfg === undefined) yfCfg = tbkSavedYf(name, month);
   const sorted = rows.slice().sort((a,b)=> String(b.date).localeCompare(String(a.date)) || String(a.employee).localeCompare(String(b.employee),'is'));
   const t = tbkYfSplit(sorted, yfCfg);
@@ -22956,7 +22971,7 @@ async function printTimabok(name, month, rows, yfCfg){
 // að leyfa annarri síðu að fljóta með en að prenta eitthvað sem enginn les.
 function printVinnuskjal(name, month, docHtml, rows, yfCfg){
   const hr = n => _phr(n);
-  const dmy = s => { const p=String(s||'').split('-'); return p.length===3? `${p[2]}.${p[1]}.${p[0]}` : (s||''); };
+  const dmy = s => { const p=String(s||'').split('-'); return p.length===3? `${p[2]}/${p[1]}/${p[0]}` : (s||''); };
   if(yfCfg === undefined) yfCfg = tbkSavedYf(name, month);
   // Í tímaröð (öfugt við gluggann sem sýnir nýjast efst) — fylgiskjal sem er
   // lesið ofan frá og niður með mánuðinum.

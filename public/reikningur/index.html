@@ -177,6 +177,7 @@
   .small-link { font-size: 11px; color: var(--blue); cursor: pointer; }
   .small-link:hover { text-decoration: underline; }
 </style>
+  <script src="/js/dags-snid.js?v=20260917a"></script>
 </head>
 <body>
 
@@ -385,7 +386,7 @@ function fmtPeriod(from, til){
   if(!from || !til) return '';
   const fmtDate = s => {
     const [y,m,d] = s.split('-');
-    return `${d}.${m}.${y}`;
+    return `${d}/${m}/${y}`;
   };
   return `${fmtDate(from)} til ${fmtDate(til)}`;
 }

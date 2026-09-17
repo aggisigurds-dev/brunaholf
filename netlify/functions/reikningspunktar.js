@@ -40,7 +40,7 @@ const digits = (s) => String(s || '').replace(/\D/g, '');
 const num = (v) => { const n = Number(v); return isFinite(n) ? n : 0; };
 const r2 = (n) => Math.round(num(n) * 100) / 100;
 function monthsAgo(n) { const d = new Date(); d.setMonth(d.getMonth() - n); return d.toISOString().slice(0, 7); }
-function dmy(iso) { const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? `${m[3]}.${m[2]}.${m[1]}` : ''; }
+function dmy(iso) { const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? `${m[3]}/${m[2]}/${m[1]}` : ''; }
 
 async function all(qs) {
   const r = await P.sbGet(qs);

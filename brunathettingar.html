@@ -105,6 +105,7 @@
   .names{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}.names button{border:1px solid var(--line-2);background:#fff;border-radius:4px;padding:10px;font:inherit;font-size:14px;font-weight:700;text-transform:capitalize;color:var(--ink)}
   @media(min-width:720px){.items{grid-template-columns:1fr 1fr 1fr}.names{grid-template-columns:1fr 1fr 1fr}}
 </style>
+  <script src="/js/dags-snid.js?v=20260917a"></script>
 </head>
 <body>
 <header class="bt-head">
@@ -139,7 +140,7 @@
   const today = () => { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
   const monthLabel = ym => { const [y, m] = String(ym).split('-').map(Number); return (MN[m - 1] || ym) + ' ' + y; };
   const shiftYM = (ym, d) => { const [y, m] = ym.split('-').map(Number); const t = new Date(y, m - 1 + d, 1); return t.getFullYear() + '-' + pad(t.getMonth() + 1); };
-  const dmy = iso => { const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3] + '.' + m[2] + '.' + m[1] : String(iso || ''); };
+  const dmy = iso => { const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3] + '/' + m[2] + '/' + m[1] : String(iso || ''); };
   const dayLbl = iso => { const d = new Date(iso + 'T00:00:00'); if (isNaN(d)) return iso; const t0 = new Date(); t0.setHours(0,0,0,0); const diff = Math.round((t0 - d) / 864e5); const base = WD[d.getDay()] + ' ' + d.getDate() + '. ' + MN[d.getMonth()].slice(0, 3); return diff === 0 ? 'Í dag — ' + base : diff === 1 ? 'Í gær — ' + base : base; };
   const hhmm = iso => { const d = new Date(iso); return isNaN(d) ? '' : pad(d.getHours()) + ':' + pad(d.getMinutes()); };
   const uid = () => (crypto.randomUUID ? crypto.randomUUID() : 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10));

@@ -102,6 +102,11 @@ exports.handler = async (event) => {
     out.push({
       date: r.date, time_in: r.time_in || '', time_out: r.time_out || '',
       hours: Math.round(hours * 100) / 100, lunch, employee: r.employee || '',
+      // 17.09.2026 (Agnar: „rugla svolítið með bara þetta"): verkstaðurinn EINS OG
+      // HANN STENDUR Í TÍMAVERU fylgir hverri línu. Aliasarnir hér að ofan rúlla
+      // mörgum Tímaveru-nöfnum upp í eitt verkstaðarnafn, svo tímaskýrslan gat
+      // sýnt línur úr þremur verkum án þess að nokkuð segði hvaðan þær komu.
+      project: r.project || '',
     });
     const e = (byEmp[r.employee] = byEmp[r.employee] || { employee: r.employee || '', hours: 0, days: new Set() });
     e.hours += hours; e.days.add(r.date);
