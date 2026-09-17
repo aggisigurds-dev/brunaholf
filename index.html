@@ -16543,7 +16543,12 @@ async function renderKrofuyfirlit(t){
   // ▸ · verkstaður/R-nr + mánaðar-plata (+ aldur á þrepi 1) · undirlína · minnispunktur
   // · mono-upphæð · vinnuflæðis-lyklar (þrep 2/3) · Greitt/Fela. Sundurliðun undir.
   function invRow(inv, tier, t2chk){
-    const rnum = inv.tilvisun ? ('R-'+esc(inv.tilvisun)) : (inv.worksite ? esc(inv.worksite) : ('#'+esc(inv.id||'')));
+    // 17.09.2026: áður annaðhvort R-númer EÐA verkstaður, svo Payday-kröfur földu
+    // alltaf verkstaðinn. Nú bæði — verkstaðurinn er það sem segir hvaða verk þetta er.
+    const wsName = inv.worksite || (inv.draft_match && inv.draft_match.worksite) || '';
+    const rnum = inv.tilvisun
+      ? ('R-' + esc(inv.tilvisun) + (wsName ? '<span class="ky-wsname"> · ' + esc(wsName) + '</span>' : ''))
+      : (wsName ? esc(wsName) : ('#' + esc(inv.id || '')));
     let sub;
     if(tier===3){
       sub = esc(monthLbl(inv.work_month)) + (inv.hours!=null ? ' · '+inv.hours.toFixed(0)+'t' : '') + (inv.partial && state.newest ? ' · til '+esc(dayMon(state.newest)) : '');

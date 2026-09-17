@@ -44,7 +44,7 @@ exports.handler = async (event) => {
   // `draft_match` á hverri röð, sem er ekki skilað.
   const tolurMode = !!q.tolur;
 
-  let invoices, meta, bank, drafts;
+  let invoices, meta, bank, drafts, wsmap;
   // Non-fatal read failures are recorded here and returned so the frontend can
   // warn the user that a total may be wrong (instead of silently dropping data).
   const warnings = [];
@@ -57,9 +57,39 @@ exports.handler = async (event) => {
     bank = await fetchAll('bank_transactions', 'select=kt_counterparty,amount,trans_date,text,description&amount=gt.0')
       .catch(() => { warnings.push('bank_transactions lestur mistókst — bankagreiðslur ekki krossaðar, greiddar kröfur gætu talist ógreiddar'); return []; });
     // What the office tracked in Vinnubók / Reikningagerð (saved efnislisti totals).
-    drafts = tolurMode ? [] : await fetchAll('invoice_drafts', 'select=worksite_name,work_month,total_m_vsk,customer_name')
+    drafts = tolurMode ? [] : await fetchAll('invoice_drafts', 'select=worksite_name,work_month,total_m_vsk,customer_name,payday_invoice_id')
       .catch(() => { warnings.push('invoice_drafts lestur mistókst — Reikningagerðar-samanburður vantar'); return []; });
+    // Verkstaðurinn er ekki á reikningnum sjálfum — hann fæst úr draginu sem bjó
+    // hann til, annars úr korti greiðanda. Bilun hér má ALDREI fella kröfulistann.
+    wsmap = tolurMode ? [] : await fetchAll('customer_worksite_map', 'select=customer_name,kt_greidanda,worksite_name')
+      .catch(() => { warnings.push('customer_worksite_map lestur mistókst — verkstaður birtist ekki á kröfum'); return []; });
   } catch (e) { return json(502, { error: e.message }); }
+
+  // Ótvírætt eða ekkert: lykill sem á fleiri en einn verkstað skilar null.
+  const nafnLykill = (s) => String(s || '').toLowerCase().replace(/ehf\.?|hf\.?|slf\.?|\.|\s+/g, '');
+  const einnAf = (rows, lykill) => {
+    const m = new Map();
+    for (const r of rows) {
+      const k = lykill(r), w = String(r.worksite_name || '').trim();
+      if (!k || !w) continue;
+      if (!m.has(k)) m.set(k, w); else if (m.get(k) !== w) m.set(k, null);   // fleiri en einn → null
+    }
+    return m;
+  };
+  const ktLykill = (s) => String(s || '').replace(/D/g, '');   // ktd er skilgreint neðar
+  const wsEftirKt = einnAf(wsmap, (r) => ktLykill(r.kt_greidanda));
+  const wsEftirNafni = einnAf(wsmap, (r) => nafnLykill(r.customer_name));
+  const wsEftirPayday = new Map();
+  for (const d of drafts) if (d.payday_invoice_id != null && d.worksite_name) wsEftirPayday.set(String(d.payday_invoice_id), d.worksite_name);
+  function finnaVerkstad(r) {
+    const ur_dragi = wsEftirPayday.get(String(r.id));
+    if (ur_dragi) return { worksite: ur_dragi, worksite_src: 'drag' };
+    const ur_kt = wsEftirKt.get(ktLykill(r.kt_greidanda));
+    if (ur_kt) return { worksite: ur_kt, worksite_src: 'kt' };
+    const ur_nafni = wsEftirNafni.get(nafnLykill(r.customer_name));
+    if (ur_nafni) return { worksite: ur_nafni, worksite_src: 'nafn' };
+    return { worksite: null, worksite_src: null };
+  }
 
   const metaBy = new Map(meta.map((m) => [m.inv_key, m]));
   const today = new Date().toISOString().slice(0, 10);
@@ -128,6 +158,7 @@ exports.handler = async (event) => {
       bank_paid: !!bm, bank_text: bm ? bm.text : null, bank_date: bm ? bm.date : null,
       draft_match: draftHit ? { worksite: draftHit.worksite, total: draftHit.total } : null,
       month: mo,
+      ...finnaVerkstad(r),
     };
   });
 
