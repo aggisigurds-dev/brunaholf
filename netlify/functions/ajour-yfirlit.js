@@ -1,0 +1,49 @@
+// ajour-yfirlit.js — yfirlit yfir ÖLL Ajour-verkefni: punktar per verkstað, þessi + síðasti mánuður.
+//   GET /api/ajour-yfirlit → { generated_at, vel, months:[{month,total,projects:[{id,name,total,done,
+//        created,completed,rejected,notApproved,newest,sample[]}]}], age_hours, stale }
+//
+// Ajour á ekkert opinbert API; talningin er sótt af brúartölvu (luna-bridge/ajour-yfirlit.js,
+// vistuð innskráning, aðeins lestur) og geymd í app_kv['ajour_yfirlit']. Þetta fall les hana
+// aðeins. Til að ENDURNÝJA: POST /api/ajour-yfirlit → setur beiðni í automation_triggers
+// (workflow 'ajour-yfirlit') sem watcher á brúartölvu tekur innan mínútu.
+
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const H = () => ({ apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' });
+
+exports.handler = async (event) => {
+  if (event.httpMethod === 'OPTIONS') return resp(204, '', cors());
+  if (!SUPABASE_URL || !SUPABASE_KEY) return json(500, { error: 'Supabase env missing' });
+
+  if (event.httpMethod === 'POST') {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/automation_triggers`, {
+      method: 'POST', headers: { ...H(), Prefer: 'return=representation' },
+      body: JSON.stringify({ workflow: 'ajour-yfirlit', requested_by: 'hub-ajour' }),
+    });
+    if (!r.ok) return json(502, { error: 'Gat ekki sent beiðni á brúna: ' + r.status });
+    const row = (await r.json())[0] || {};
+    return json(200, { ok: true, trigger_id: row.id });
+  }
+  if (event.httpMethod !== 'GET') return json(405, { error: 'GET/POST only' });
+
+  const q = event.queryStringParameters || {};
+  if (q.trigger) {   // staða beiðni: pending | running | done | error
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/automation_triggers?id=eq.${encodeURIComponent(q.trigger)}&select=status,result`, { headers: H() });
+    const row = r.ok ? (await r.json())[0] : null;
+    return json(200, row || { status: 'unknown' });
+  }
+
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/app_kv?key=eq.ajour_yfirlit&select=value`, { headers: H() });
+    if (!r.ok) throw new Error('app_kv: ' + r.status);
+    const row = (await r.json())[0];
+    if (!row || !row.value) return json(200, { empty: true, months: [] });
+    const v = row.value;
+    const ageH = v.generated_at ? (Date.now() - Date.parse(v.generated_at)) / 3600e3 : null;
+    return json(200, { ...v, age_hours: ageH != null ? Math.round(ageH * 10) / 10 : null, stale: ageH == null || ageH > 80 });
+  } catch (e) { return json(502, { error: e.message }); }
+};
+
+function cors() { return { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET, POST, OPTIONS', 'access-control-allow-headers': 'content-type' }; }
+function json(s, p) { return resp(s, JSON.stringify(p), { 'content-type': 'application/json', 'cache-control': 'no-store', ...cors() }); }
+function resp(statusCode, body, headers) { return { statusCode, headers, body }; }

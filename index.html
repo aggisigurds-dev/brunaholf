@@ -1477,6 +1477,7 @@ const DEFAULT_STATE = {
     {id:'krofur', label:'Krófur & Tekjur', icon:'📊'},
     {id:'hreyfingaryfirlit', label:'Hreyfingaryfirlit', icon:'📒'},
     {id:'nlsh',        label:'Landsspítalinn', icon:'🏥'},
+    {id:'ajour',       label:'Ajour', icon:'📍'},
     {id:'maeting',    label:'Mæting', icon:'👥', sheetCsv:'https://docs.google.com/spreadsheets/d/e/2PACX-1vRXUTGE4Ui3eadS0kGX0d-5LvFbyt5SNWD6ToeRRn1MJ6zoiGng7RK5ZJOVEq6s_x8wkiNLpgU8nHJk/pub?output=csv'},
     {id:'verkefnastada', label:'Verkefnastaða', icon:'📊', sheetCsv:''},
     {id:'april',      label:'Apríl reikningar', icon:'📋'},
@@ -1762,7 +1763,7 @@ function clearDataCache(){
 function ensureNewTabs(s){
   if(!s || !Array.isArray(s.tabs)) return;
   if(!Array.isArray(s.bakendiLinks)) s.bakendiLinks = BAKENDI_LINK_SEED.map(x=>({...x}));
-  ['verkkaupar','dagurinn','jarvis','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','vorubirgdir','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','tvmaeting','verkstadapostur','verdsamanburdur','verkstadir','skuldunautar','skyrslur','skyrslustod','afkost','krofuyfirlit','drogstod','fjarmalyfirlit','vidskiptavinir','krofur','hreyfingaryfirlit','nlsh','turbopaint','pdftools','spurningar','sjalfvirkni','vefryni','skodanir','brunayfirlit','verkfaeri','eydublod','multitool','skraalisti','bakendi'].forEach(id=>{
+  ['verkkaupar','dagurinn','jarvis','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','vorubirgdir','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','tvmaeting','verkstadapostur','verdsamanburdur','verkstadir','skuldunautar','skyrslur','skyrslustod','afkost','krofuyfirlit','drogstod','fjarmalyfirlit','vidskiptavinir','krofur','hreyfingaryfirlit','nlsh','ajour','turbopaint','pdftools','spurningar','sjalfvirkni','vefryni','skodanir','brunayfirlit','verkfaeri','eydublod','multitool','skraalisti','bakendi'].forEach(id=>{
     if(!s.tabs.find(t=>t.id===id)){
       const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
       if(d){
@@ -1792,6 +1793,10 @@ function ensureNewTabs(s){
           const idx = s.tabs.findIndex(t=>t.id==='bakendi');
           const idx2 = s.tabs.findIndex(t=>t.id==='stillingar');
           target = idx >= 0 ? idx : (idx2 >= 0 ? idx2 : -1);
+        } else if(id === 'ajour'){
+          // Ajour situr beint undir Landsspítalanum.
+          const nIdx = s.tabs.findIndex(t=>t.id==='nlsh');
+          target = nIdx >= 0 ? nIdx + 1 : -1;
         } else if(id === 'tvmaeting'){
           // Mæting · verkstaðir situr beint undir Tímaveru.
           const tvIdx = s.tabs.findIndex(t=>t.id==='timavera');
@@ -2479,6 +2484,7 @@ function render(){
   if(t.id==='spurningar') return renderSpurningar(t);
   if(t.id==='timavera') return renderTimavera(t);
   if(t.id==='tvmaeting') return renderTvMaeting(t);
+  if(t.id==='ajour') return renderAjour(t);
   if(t.id==='verkstadapostur') return renderVerkstadapostur(t);
   if(t.id==='verdsamanburdur') return renderCompetitors(t);
   if(t.id==='verkstadir') return renderWorksites(t);
@@ -15525,6 +15531,98 @@ async function renderDrogstod(t){
   // ?punktur=<id> (söluborðið / brunakerfisskýrslan vísa hingað úr 🧾-borðanum) — einu sinni, svo hreinsað
   try{ const sp = new URLSearchParams(location.search); const pid = Number(sp.get('punktur')||0); if(pid){ sp.delete('punktur'); history.replaceState(null, '', location.pathname + (sp.toString() ? '?' + sp.toString() : '') + location.hash); if(window.DsKarfa) await DsKarfa.open(pid); } }catch(_){}
 }
+// ── 📍 Ajour — punktar per verkstað, þessi + síðasti mánuður (18.09.2026) ─────────────
+// Ajour-mælaborðið sýnir ekki hvar nýir punktar hafa bæst við nema opnað sé hvert verkefni
+// (ósk Agnars). Brúartölvan sækir talningu allra verkefna beint úr skýrsluviðmóti Ajour
+// (luna-bridge/ajour-yfirlit.js, aðeins lestur) → app_kv['ajour_yfirlit'] → /api/ajour-yfirlit.
+async function renderAjour(t){
+  const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const MN = ['janúar','febrúar','mars','apríl','maí','júní','júlí','ágúst','september','október','nóvember','desember'];
+  const mLbl = ym => { const p=String(ym||'').split('-'); return (MN[(+p[1])-1]||ym)+' '+(p[0]||''); };
+  const dm = iso => { const m=String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3]+'/'+m[2]+'/'+m[1] : '—'; };
+  const num = n => (Number(n)||0).toLocaleString('is-IS');
+  const BTN = 'padding:7px 13px;border-radius:var(--radius-sm);cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;';
+  $view.innerHTML = `
+    <div style="max-width:980px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+        <div>
+          <div style="font-size:10.5px;font-weight:600;letter-spacing:2.5px;color:var(--gold-deep);text-transform:uppercase;margin-bottom:6px">AJOUR · ÖLL VERKEFNI</div>
+          <h1 style="margin:0;font-family:var(--font-display);font-size:30px;font-weight:700;color:var(--ink)">Ajour — punktar per verkstað</h1>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px" id="aj-meta">Sæki…</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button id="aj-sync" type="button" title="Biður brúartölvuna að sækja nýja talningu úr Ajour (tekur um mínútu)" style="${BTN}border:1px solid var(--navy-dark);background:var(--navy-dark);color:#fff">↻ Sækja úr Ajour</button>
+          <a href="https://brunaholf.ajoursystem.net" target="_blank" rel="noopener" style="${BTN}border:1px solid var(--line-2);background:var(--card);color:var(--ink-2);text-decoration:none">Opna Ajour ↗</a>
+        </div>
+      </div>
+      <div id="aj-warn"></div>
+      <div id="aj-body"><div style="padding:32px;text-align:center;color:var(--muted-2)">Sæki Ajour-yfirlit…</div></div>
+    </div>`;
+
+  async function load(){
+    const body = $view.querySelector('#aj-body'), meta = $view.querySelector('#aj-meta'), warn = $view.querySelector('#aj-warn');
+    if(!body) return;
+    try{
+      const r = await fetch('/api/ajour-yfirlit',{cache:'no-store'}); const d = await r.json();
+      if(!r.ok || d.error) throw new Error(d.error||('HTTP '+r.status));
+      if(d.empty || !(d.months||[]).length){ body.innerHTML = '<div style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:26px;text-align:center;color:var(--muted-2);font-style:italic">Ekkert Ajour-yfirlit hefur verið sótt enn — smelltu á „↻ Sækja úr Ajour".</div>'; meta.textContent=''; return; }
+      const [cur, prev] = d.months;
+      meta.textContent = 'Skráningar (punktar) stofnaðar í Ajour · '+num(d.projects_total)+' verkefni alls · sótt '+new Date(d.generated_at).toLocaleString('is-IS',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false})+(d.vel?' ('+esc(d.vel)+')':'');
+      warn.innerHTML = d.stale ? '<div style="background:var(--red-bg);border:1px solid var(--red-line);border-radius:12px;padding:11px 15px;margin-bottom:12px;font-size:12.5px;color:var(--red)">⚠️ <b>Ajour-yfirlitið er '+Math.round((d.age_hours||0)/24)+' daga gamalt</b> — engin brúartölva hefur sótt nýlega. Smelltu á „↻ Sækja úr Ajour"; ef ekkert gerist þarf að kveikja á skrifstofu- eða heimatölvunni.</div>' : '';
+      // sameina mánuðina tvo per verkefni
+      const by = new Map();
+      for(const p of (cur.projects||[])) by.set(p.id, { id:p.id, name:p.name, cur:p, prev:null });
+      for(const p of (prev.projects||[])){ const o = by.get(p.id) || { id:p.id, name:p.name, cur:null, prev:null }; o.prev = p; by.set(p.id, o); }
+      const rows = [...by.values()].sort((a,b)=> ((b.cur?b.cur.total:0)-(a.cur?a.cur.total:0)) || ((b.prev?b.prev.total:0)-(a.prev?a.prev.total:0)));
+      const today = new Date().toISOString().slice(0,10);
+      const ageD = iso => iso ? Math.round((Date.parse(today)-Date.parse(iso))/864e5) : null;
+      const cell = p => p ? '<b style="color:var(--ink)">'+num(p.total)+'</b>'+(p.created>0?' <span title="Stofnað en ekki lokið (created)" style="color:var(--warn);font-weight:600">· '+num(p.created)+' opnir</span>':'') : '<span style="color:var(--muted-2)">—</span>';
+      const TH = 'padding:9px 14px;text-align:right;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)';
+      const TD = 'padding:10px 14px;text-align:right;border-top:1px solid var(--line);white-space:nowrap';
+      body.innerHTML = '<div style="background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm)">'
+        + '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13.5px" class="ky-num">'
+        + '<thead><tr style="background:var(--tbl-header)"><th style="'+TH+';text-align:left">Verkstaður</th><th style="'+TH+'">'+esc(mLbl(cur.month))+'</th><th style="'+TH+'">'+esc(mLbl(prev.month))+'</th><th style="'+TH+'">Nýjasti punktur</th><th style="'+TH+'"></th></tr></thead><tbody>'
+        + rows.map(o=>{
+            const newest = (o.cur&&o.cur.newest) || (o.prev&&o.prev.newest) || null; const a = ageD(newest);
+            const fresh = a!=null && a<=2;
+            return '<tr><td style="'+TD+';text-align:left;font-family:var(--font-body,inherit);font-weight:600;color:var(--ink);white-space:normal">'+esc(o.name)+(fresh?' <span style="display:inline-block;background:var(--green-bg);color:var(--green);border:1px solid var(--green-line);border-radius:3px;padding:1px 7px;font-size:10.5px;font-weight:700;margin-left:6px">NÝTT</span>':'')+'</td>'
+              + '<td style="'+TD+'">'+cell(o.cur)+'</td><td style="'+TD+'">'+cell(o.prev)+'</td>'
+              + '<td style="'+TD+';color:'+(fresh?'var(--green)':'var(--muted)')+'">'+esc(dm(newest))+(a!=null?' <span style="opacity:.7">· '+(a===0?'í dag':a===1?'í gær':a+' d.')+'</span>':'')+'</td>'
+              + '<td style="'+TD+'"><a href="https://brunaholf.ajoursystem.net/construction?prjId='+encodeURIComponent(o.id)+'&regType=QA" target="_blank" rel="noopener" style="color:var(--gold-deep);font-weight:600;text-decoration:none">Opna ↗</a></td></tr>';
+          }).join('')
+        + '<tr style="background:var(--tbl-header)"><td style="'+TD+';text-align:left;font-weight:700">Samtals</td><td style="'+TD+';font-weight:700">'+num(cur.total)+'</td><td style="'+TD+';font-weight:700">'+num(prev.total)+'</td><td style="'+TD+'"></td><td style="'+TD+'"></td></tr>'
+        + '</tbody></table></div></div>'
+        + '<div style="font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.5">Talið eftir <b>stofndegi</b> skráningar í Ajour (allar gerðir: QA, verk, gallar…). „opnir" = stofnað en ekki merkt lokið. „NÝTT" = punktur stofnaður síðustu 2 daga. Verkefni án skráninga þessa tvo mánuði sjást ekki.</div>';
+    }catch(e){
+      body.innerHTML = '<div style="padding:26px;color:var(--red);background:var(--card);border:1px solid var(--red-line);border-radius:12px">Gat ekki sótt Ajour-yfirlit: '+esc(e.message||String(e))+'</div>';
+    }
+  }
+
+  const sy = $view.querySelector('#aj-sync');
+  if(sy) sy.addEventListener('click', async ()=>{
+    const orig = '↻ Sækja úr Ajour'; sy.disabled = true;
+    const set = tx => { sy.textContent = tx; };
+    try{
+      set('… sendi beiðni');
+      const r = await fetch('/api/ajour-yfirlit',{method:'POST'}); const d = await r.json();
+      if(!r.ok || d.error || d.trigger_id==null) throw new Error(d.error||'gat ekki sent beiðni');
+      const t0 = Date.now();
+      for(;;){
+        await new Promise(s=>setTimeout(s,4000));
+        const sek = Math.round((Date.now()-t0)/1000);
+        const st = await fetch('/api/ajour-yfirlit?trigger='+d.trigger_id,{cache:'no-store'}).then(x=>x.json()).catch(()=>({}));
+        if(st.status==='done'){ set('✓ Sótt'); await load(); break; }
+        if(st.status==='error') throw new Error(/login/i.test(st.result||'') ? 'Ajour-innskráning útrunnin á brúartölvunni' : String(st.result||'villa').split('|')[0].slice(0,140));
+        if(st.status==='running') set('… brúartölva sækir '+sek+'s'); else set('… bíð eftir brúartölvu '+sek+'s');
+        if(st.status!=='running' && sek>100) throw new Error('Engin brúartölva svaraði — kveiktu á skrifstofu- eða heimatölvunni');
+        if(sek>300) throw new Error('sókn tók of langan tíma');
+      }
+    }catch(e){ set('⚠ '+(e.message||e)); sy.title = String(e.message||e); }
+    finally{ sy.disabled = false; setTimeout(()=>{ sy.textContent = orig; }, 9000); }
+  });
+  load();
+}
+
 async function renderTvMaeting(t){
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const WD = ['Sunnudagur','Mánudagur','Þriðjudagur','Miðvikudagur','Fimmtudagur','Föstudagur','Laugardagur'];
