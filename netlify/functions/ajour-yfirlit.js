@@ -51,7 +51,7 @@ exports.handler = async (event) => {
 // Stórhöfði 29/Stórhöfða29, Stangarhylur/Stangarhyl…) → berum saman fyrsta orðið án
 // brodda: sameiginlegt forskeyti ≥6 stafir (eða allt orðið ef styttra). Tvö handvirk pör
 // þar sem nöfnin eiga ekkert sameiginlegt. Svarið ber Tímaveru-nafnið svo pörunin SJÁIST.
-const HANDPOR = { nlsh: 'landsspitalinn', borgarspitalinn: 'aland' };   // Borgarspítalinn = Áland 6
+const HANDPOR = { nlsh: 'landsspitalinn', borgarspitalinn: 'aland' };   // Borgarspítalinn = Áland 6 (staðfest af Agnari 18.09.2026)
 const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ð/g, 'd').replace(/þ/g, 'th').replace(/æ/g, 'ae');
 const firstWord = (s) => (norm(s).match(/[a-z]{3,}/) || [''])[0];
 function samaStadur(ajourName, tvName) {
