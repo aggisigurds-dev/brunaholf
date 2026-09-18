@@ -2443,7 +2443,20 @@ async function startGoogleReauth(){
   } catch(e){ alert('Gat ekki opnað Google tengingu: '+(e.message||e)); }
 }
 
+// ── Sýnar-kynslóð (18.09.2026) ──────────────────────────────────────────────
+// Hver render() skrifar yfir $view.innerHTML og eyðir þar með ÖLLUM hnútum
+// fyrri sýnar. Hæg load()-föll sem biðu eftir `await fetch(...)` vöknuðu svo
+// upp við að hnútarnir þeirra væru horfnir og köstuðu
+// „Cannot set properties of null" — 27 tilvik á hvora sýn í villur-töflunni,
+// frá 31.07. Teljarinn hækkar FYRIR hverja teiknun; load() grípur kynslóðina
+// sína í upphafi og hættir hljóðlega eftir await ef hún er úrelt. Það sleppir
+// líka öllum eftirvinnslunni (fleiri köll, þung HTML-smíði) fyrir sýn sem
+// enginn horfir á lengur.
+let __synKynslod = 0;
+const synUrelt = (kynslod) => kynslod !== __synKynslod;
+
 function render(){
+  __synKynslod++;
   document.body.classList.toggle('editmode', !!state.ui.editMode);
   $editToggle.classList.toggle('on', !!state.ui.editMode);
   $editToggle.textContent = state.ui.editMode ? '✓ Hætta' : '✎ Breyta';
@@ -14894,6 +14907,7 @@ async function renderKrofur(t){
   }
 
   async function load(){
+    const minKynslod = __synKynslod;   // 18.09.2026 — sjá „Sýnar-kynslóð" við render()
     $('kf-meta').textContent='Sækir…';
     // Worksite billing status — parallel, non-blocking (heavier endpoint, ~20s).
     // cachedFetch reuses the copy the Dagurinn/Yfirlit landing tabs already fetched,
@@ -14903,11 +14917,20 @@ async function renderKrofur(t){
       .catch(e=>{ const h=$('kf-wsbill'); if(h) h.innerHTML='<div class="kf-note" style="padding:8px">Villa við að sækja verkstaði: '+esc(e&&e.message||e)+'</div>'; });
     try{
       const r = await fetch('/api/krofur-yfirlit?year='+encodeURIComponent(YEAR));
+      // Notandinn getur verið kominn á aðra sýn meðan beðið var. Þá eru kf-hnútarnir
+      // horfnir — hættum áður en svarið er lesið, ekki bara áður en það er teiknað.
+      if(synUrelt(minKynslod)) return;
       if(!r.ok) throw new Error(await r.text());
       DATA = await r.json();
+      if(synUrelt(minKynslod)) return;
       $('kf-meta').textContent = `${(DATA.summary&&DATA.summary.count)||0} krófur · uppfært núna`;
       paint();
-    }catch(e){ $('kf-meta').textContent='Villa'; $('kf-list').innerHTML='<div class="kf-note" style="padding:12px">Villa: '+esc(e.message||e)+'</div>'; }
+    }catch(e){
+      // Villuboðin eiga hvergi heima ef sýnin er farin — og $('kf-meta') er þá null.
+      // Áður kastaði ÞESSI lína sjálf (villur-taflan: setting 'textContent').
+      if(synUrelt(minKynslod)) return;
+      $('kf-meta').textContent='Villa'; $('kf-list').innerHTML='<div class="kf-note" style="padding:12px">Villa: '+esc(e.message||e)+'</div>';
+    }
   }
 
   $('kf-year').value = YEAR;
@@ -19586,10 +19609,17 @@ async function renderNLSH(t){
   }
 
   async function load(){
+    const minKynslod = __synKynslod;   // 18.09.2026 — sjá „Sýnar-kynslóð" við render()
     const meta=document.getElementById('nl-meta'); meta.textContent='Sækir…';
     let d;
     try{ const r=await fetch('/api/nlsh-dashboard?range='+encodeURIComponent(nlDayRange)); d=await r.json(); if(d.error) throw new Error(d.error); }
-    catch(e){ meta.textContent='Villa: '+e.message; return; }
+    catch(e){ if(synUrelt(minKynslod)) return; meta.textContent='Villa: '+e.message; return; }
+    // Notandinn fór á aðra sýn meðan beðið var eftir svarinu (nlsh-dashboard er þungt).
+    // $view hefur verið skrifað yfir, svo nl-cards / nl-charts / nl-day / nl-month /
+    // nl-week / nl-staff eru öll horfin. Áður kastaði fyrsta skrifið hér að neðan
+    // „Cannot set properties of null (setting 'innerHTML')" (villur-taflan, /#skyrslur).
+    // Við hættum hljóðlega — og sleppum um leið loadMonthly() og mountNlshSections().
+    if(synUrelt(minKynslod)) return;
     meta.textContent = d.only_done ? 'aðeins kláruð göt' : 'öll göt';
     document.querySelectorAll('.nl-range-btn').forEach(b=>b.classList.toggle('active', b.dataset.range===nlDayRange));
     const dayLbl={this_week:'þessa viku',last_week:'síðustu viku',this_month:'þennan mánuð',last_month:'síðasta mánuð'}[nlDayRange]||'síðustu 2 vikur';
