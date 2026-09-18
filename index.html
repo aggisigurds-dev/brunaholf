@@ -16596,6 +16596,9 @@ async function renderKrofuyfirlit(t){
   // takki, hnappur, textabox … 100% synced“ — 4 vélar í sama rými).
   let KYSET = {};
   async function loadKySettings(){ try{ const r = await fetch('/api/app-state?key=ky_settings',{cache:'no-store'}); if(r.ok){ const j = await r.json(); if(j && j.value && typeof j.value==='object') KYSET = j.value; } }catch(_){} }
+  // Birtingarheiti verkstada (18.09.2026, Agnar: "Borgarspitalinn fyrir framan Aland"): Timavera-nafnid er
+  // LYKILL (drog, verdskra, porun) og ma ekki breytast - heitid er adeins synt. ky_settings.ws_display = { 'Áland 6': 'Borgarspítalinn' }.
+  const wsDisp = nm => { const m = KYSET.ws_display || {}; const k = Object.keys(m).find(x => x.toLowerCase() === String(nm||'').trim().toLowerCase()); return (k && m[k]) ? (m[k] + ' · ' + nm) : nm; };
   const emailTo = () => { let lt=''; try{ lt = localStorage.getItem('email_to')||''; }catch(_){} return KYSET.email_to || lt || 'bokhald@brunaholf.is'; };
   async function setEmailTo(em){ em = String(em||'').trim(); if(!em || em===KYSET.email_to) return; KYSET.email_to = em; try{ localStorage.setItem('email_to', em); }catch(_){} try{ await fetch('/api/app-state',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({ key:'ky_settings', value: KYSET })}); }catch(_){} }   // þjónn (krofur_yfirlit_meta.done) — gamla state-merkið gildir þar til það er flutt (05.09.2026)
   // toggleSentMark fjarlægt 05.09.2026 — merkið býr í krofur_yfirlit_meta.done (sjá act==='sentmark').
@@ -16743,8 +16746,8 @@ async function renderKrofuyfirlit(t){
     // alltaf verkstaðinn. Nú bæði — verkstaðurinn er það sem segir hvaða verk þetta er.
     const wsName = inv.worksite || (inv.draft_match && inv.draft_match.worksite) || '';
     const rnum = inv.tilvisun
-      ? ('R-' + esc(inv.tilvisun) + (wsName ? '<span class="ky-wsname"> · ' + esc(wsName) + '</span>' : ''))
-      : (wsName ? esc(wsName) : ('#' + esc(inv.id || '')));
+      ? ('R-' + esc(inv.tilvisun) + (wsName ? '<span class="ky-wsname"> · ' + esc(wsDisp(wsName)) + '</span>' : ''))
+      : (wsName ? esc(wsDisp(wsName)) : ('#' + esc(inv.id || '')));
     let sub;
     if(tier===3){
       sub = esc(monthLbl(inv.work_month)) + (inv.hours!=null ? ' · '+inv.hours.toFixed(0)+'t' : '') + (inv.partial && state.newest ? ' · til '+esc(dayMon(state.newest)) : '')
@@ -16848,7 +16851,7 @@ async function renderKrofuyfirlit(t){
         <div class="ky-card-head" role="button" tabindex="0" title="Smelltu til að opna/loka">
           <span class="ky-caret">▾</span>
           <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
-            <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span class="ky-name">${esc(c.customer||'(óþekkt)')}</span>${c.kt?`<span class="ky-kt">kt ${esc(c.kt)}</span>`:''}</div>
+            <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span class="ky-name">${esc(wsDisp(c.customer)||'(óþekkt)')}</span>${c.kt?`<span class="ky-kt">kt ${esc(c.kt)}</span>`:''}</div>
             <div class="ky-tags" style="margin-top:0">${c.s1?badge('ogreitt','Ógreitt',c.s1):''}${c.s2?badge('osent','Ósent',c.s2):''}${c.s3?badge('','Tími',c.s3):''}</div>
           </div>
           <div class="ky-total"><div class="l">Samtals</div><div class="v ky-num">${fmtNum(c.total)} <span class="boss-kr">kr</span></div></div>
@@ -17778,7 +17781,7 @@ async function renderKrofuyfirlit(t){
   }
   async function fetchAll(){
     // krofu-yfirlit-bru + efnislisti-docs + invoice-drafts eru óháð → samhliða.
-    loadKySettings();   // stillingar (netfang bókara) af þjóninum, samhliða — ekki beðið
+    loadKySettings().then(()=>{ try{ if(KYSET.ws_display && Object.keys(KYSET.ws_display).length) renderList(); }catch(_){} });   // stillingar (netfang bókara) af þjóninum, samhliða — ekki beðið
     const [bruR, efR, drR] = await Promise.all([
       fetch('/api/krofu-yfirlit-bru',{cache:'no-store'}).then(r=>r.json()),
       fetch('/api/efnislisti-docs').then(r=>r.ok?r.json():{rows:[]}).catch(()=>({rows:[]})),
