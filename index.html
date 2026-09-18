@@ -1303,7 +1303,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
-<script src="/js/hub-sync-buttons.js?v=20260812gull" defer></script>
+<script src="/js/hub-sync-buttons.js?v=20260918a" defer></script>
 <script src="/js/nlsh-sections.js?v=20260830b" defer></script>
 <script src="/js/nlsh-stada.js?v=20260903c" defer></script>
 <script src="/js/viewmode.js?v=2" defer></script>
@@ -15619,6 +15619,10 @@ async function renderTvMaeting(t){
   }
   $view.querySelectorAll('#tvm-range [data-d]').forEach(b=>b.addEventListener('click',()=>{ state.ui.tvm_days=+b.dataset.d; save(); render(); }));
   const rf = $view.querySelector('#tvm-refresh'); if(rf) rf.addEventListener('click', load);
+  // Tímavera samstillt annars staðar (annar takki / annar gluggi) → endurhlaða listann hér.
+  if(window.__tvmSync) document.removeEventListener('hub-sync-done', window.__tvmSync);
+  window.__tvmSync = ev => { if(ev && ev.detail && ev.detail.wf==='timavera' && document.getElementById('tvm-list')) load(); };
+  document.addEventListener('hub-sync-done', window.__tvmSync);
   // 🔗 Deilanlegur tengill á stöku síðuna /maeting.html (aðeins lestur, engin hliðarstika).
   const sh = $view.querySelector('#tvm-share');
   if(sh) sh.addEventListener('click', async () => {
@@ -15644,6 +15648,8 @@ async function renderTvMaeting(t){
       const d = await r.json();
       if (!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));
       sy.textContent = '✓ ' + (d.upserted != null ? d.upserted + ' færslur' : 'Búið');
+      // láta alla „Samstilla Tímavera" takka (og aðra flipa/glugga) vita — sjá hub-sync-buttons.js
+      try{ if(window.HubSync) HubSync.announce('timavera','done','✓ samstillt núna · '+(d.upserted != null ? d.upserted : 0)+' færslur'); }catch(_){}
       await load();
     } catch (e) {
       sy.textContent = '⚠ Villa';
@@ -19427,6 +19433,7 @@ async function renderNLSH(t){
           <button id="nl-refresh" class="tv-btn" type="button"><span class="tv-refresh-icon">↻</span> Sækja</button>
         </div>
       </div>
+      <div id="nl-ajour-ovirkt"></div>
       <div id="nl-cards" class="nl-cards"></div>
       <h3 class="nl-h3" id="skyrsla">📌 Mánaðarlokaskýrsla Landsspítalans <span class="nl-note">(veldu mánuð · sláðu inn lokatölur · Vista — sömu tölur á öllum vélum)</span></h3>
       <div id="nl-stada"></div>
@@ -19809,6 +19816,26 @@ async function renderNLSH(t){
       setTimeout(()=>{updBtn.textContent=orig;},6000);
     }finally{ updBtn.disabled=false; }
   };
+  // ⚠ Ajour óvirkt (18.09.2026): Ajour kemur aðeins inn þegar brúartölva sækir það. Þegar
+  // síðasta sókn bilaði (útrunnin innskráning) eða engin sókn hefur tekist í >80 klst
+  // stendur það skýrt efst á síðunni — tölurnar fyrir neðan ná þá aðeins að „nýjast".
+  const ajourOvirkt = async () => {
+    const box = document.getElementById('nl-ajour-ovirkt'); if(!box) return;
+    try{
+      const d = await fetch('/api/data-sources-status',{cache:'no-store'}).then(r=>r.json());
+      const a = (d.sources||[]).find(s=>s.key==='ajour');
+      if(!a || !a.inactive){ box.innerHTML=''; return; }
+      const dm = iso => { const x=new Date(iso); return isNaN(x)?'—':String(x.getDate()).padStart(2,'0')+'/'+String(x.getMonth()+1).padStart(2,'0'); };
+      box.innerHTML = '<div style="background:var(--red-bg);border:1px solid var(--red-line);border-radius:12px;padding:12px 16px;margin:12px 0;font-size:13px;color:var(--red);line-height:1.5">'
+        + '⚠️ <b>Ajour er óvirkt</b> — '+String(a.inactive_reason||'engin sókn nýlega').replace(/[<>&]/g,'')
+        + '. Tölurnar hér ná aðeins til <b>'+dm(a.newest_real)+'</b>'+(a.last_import?' (síðast sótt '+dm(a.last_import)+')':'')
+        + '. Smelltu á <b>↻ Samstilla Ajour</b> — ef engin brúartölva svarar þarf að kveikja á skrifstofu- eða heimatölvunni.</div>';
+    }catch(_){ box.innerHTML=''; }
+  };
+  ajourOvirkt();
+  if(window.__nlAjourSync) document.removeEventListener('hub-sync-done', window.__nlAjourSync);
+  window.__nlAjourSync = ev => { if(ev && ev.detail && ev.detail.wf==='ajour' && document.getElementById('nl-cards')){ load(); ajourOvirkt(); } };
+  document.addEventListener('hub-sync-done', window.__nlAjourSync);
   const shareBtn=document.getElementById('nl-share');
   if(shareBtn) shareBtn.onclick=async()=>{
     const url=location.origin+'/nlsh.html';

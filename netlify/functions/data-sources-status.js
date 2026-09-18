@@ -114,7 +114,24 @@ exports.handler = async (event) => {
   ]);
 
   const tvTs = tvMeta?.[0]?.last_import;                 // last sync (file import)
-  const ajTs = ajLatest?.[0]?.registration_created_date;
+  // Ajour (18.09.2026): „sótt" sýndi áður registration_created_date — dagsetningu nýjustu
+  // SKRÁNINGAR í Ajour, ekki hvenær við sóttum (stóð í „05/30" mánuðum saman). Nú: síðasta
+  // vel heppnaða keyrsla ajour-fetch (automation_runs), annars nýjasta imported_at.
+  // Óvirkt = síðasta keyrsla biluð EÐA engin vel heppnuð sókn í >80 klst (helgi með
+  // slökkta tölvu er ~72 klst og á ekki að kveikja á viðvörun).
+  const [ajRuns, ajImp] = await Promise.all([
+    get('automation_runs?job_name=eq.ajour-fetch&select=status,detail,source,finished_at&order=finished_at.desc.nullslast&limit=10').catch(() => null),
+    get('ajour_registrations?select=imported_at&order=imported_at.desc.nullslast&limit=1').catch(() => null),
+  ]);
+  const ajLastRun = Array.isArray(ajRuns) ? ajRuns[0] : null;
+  const ajLastOk = Array.isArray(ajRuns) ? ajRuns.find((r) => r.status === 'success') : null;
+  const ajTs = (ajLastOk && ajLastOk.finished_at) || ajImp?.[0]?.imported_at || null;
+  const ajFetchH = ajTs ? (Date.now() - Date.parse(ajTs)) / 3600e3 : null;
+  const ajRunFailed = !!(ajLastRun && ajLastRun.status === 'error');
+  const ajInactive = ajRunFailed || ajFetchH == null || ajFetchH > 80;
+  const ajReason = ajRunFailed ? (ajLastRun.detail || 'Síðasta Ajour-keyrsla bilaði')
+    : ajFetchH == null ? 'Ajour hefur aldrei verið sótt'
+    : ajFetchH > 80 ? ('Engin Ajour-sókn í ' + Math.round(ajFetchH / 24) + ' daga — er kveikt á tölvunni sem sækir?') : null;
   const bankTs = bankLatest?.[0]?.imported_at;
   const invTs = invLatest?.[0]?.imported_at;
   const rdTs = rdLatest?.[0]?.imported_at;
@@ -160,8 +177,10 @@ exports.handler = async (event) => {
       file_hint: 'AjourRegistrationData*.csv',
       icon: '🏗',
       last_import: ajTs, newest_real: ajReal,
-      age_days: ageDays(ajReal), status: statusFor(ageDays(ajReal)),
-      count: ajCount, details: null,
+      age_days: ageDays(ajReal), status: ajInactive ? 'stale' : (ajFetchH <= 30 ? 'fresh' : 'aging'),
+      count: ajCount, details: ajReason,
+      inactive: ajInactive, inactive_reason: ajReason,
+      last_run: ajLastRun ? { status: ajLastRun.status, source: ajLastRun.source, finished_at: ajLastRun.finished_at } : null,
     },
     {
       key: 'bank', label: 'Landsbankinn ledger',
