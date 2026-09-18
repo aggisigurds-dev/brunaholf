@@ -70,7 +70,7 @@
   function load(){
     var list=document.getElementById('list'), meta=document.getElementById('meta');
     fetch('/api/timavera-dagar?days='+days,{cache:'no-store'}).then(function(r){ return r.json().then(function(d){ if(!r.ok||d.error) throw new Error(d.error||('HTTP '+r.status)); return d; }); }).then(function(d){
-      meta.textContent = 'Hvenær starfsmenn mættu og hættu — beint úr Tímaveru · uppfært '+new Date().toLocaleTimeString('is-IS',{hour:'2-digit',minute:'2-digit'});
+      meta.textContent = 'Hvenær starfsmenn mættu og hættu — beint úr Tímaveru · uppfært '+new Date().toLocaleTimeString('is-IS',{hour:'2-digit',minute:'2-digit',hour12:false});
       if(!(d.days||[]).length){ list.innerHTML='<div class="empty">Engar tímafærslur á tímabilinu</div>'; return; }
       list.innerHTML = d.days.map(function(day){
         return '<div class="day"><div class="day-h"><b>'+esc(dayLbl(day.date))+'</b><span class="ky-num">'+day.staff.length+' starfsm. · '+(day.open_count?'<span class="g">'+day.open_count+' inni núna</span> · ':'')+'<span style="color:var(--ink)">'+hf(day.total_hours)+' klst'+(day.open_count?' hingað til':'')+'</span></span></div>'
