@@ -2,7 +2,7 @@
 //   GET /api/postsaga?kt=711292-2929   → { kt, fyrirtaeki:[{id,nafn,heimilisfang,tengt}], rows:[…lyklar[]] }
 //        Leitar að kennitölu með bandstriki, án bandstriks, fyrirtækjanafni og heimilisfangi
 //        (allra staða á kennitölunni) í pósti eldklar@eldklar.is og bokhald@eldklar.is.
-//   GET /api/postsaga?otengd=1[&thjonusta=1] → fyrirtæki ÁN tengdrar póstsögu sem finnast samt í pósti
+//   GET /api/postsaga?otengd=1 → fyrirtæki Í ÞJÓNUSTU án tengdrar póstsögu sem finnast samt í pósti
 //        (tafla postsaga_otengd, reiknuð á nóttunni kl. 05:40 af pg_cron — keyrslan tekur ~35 sek).
 //   POST /api/postsaga {action:'reikna'} → endurreikna listann núna (bakgrunnur er óþarfi; ~35 sek).
 // 18.09.2026 (Agnar). Aðeins lestur á pósti; EKKERT er tengt sjálfkrafa. Persónulega hólfið er aldrei með.
