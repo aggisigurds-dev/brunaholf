@@ -117,7 +117,21 @@
     // Villur á <img>/<script> koma líka hingað en bera ekkert `error`-hlut.
     if (e && e.target && e.target !== window && e.target.tagName) {
       var s = e.target.src || e.target.href;
-      if (s) senda('audlind', 'Náði ekki í ' + e.target.tagName.toLowerCase(), String(s).slice(0, 300), null);
+      // 18.09.2026 — AFLÝST ER EKKI BILAÐ. 295 „Náði ekki í img" af símanum bárust
+      // 31–430 ms eftir hleðslu, á góðu 4G (9,9 Mb/s, engin gagnasparnaður, síðan
+      // í forgrunni) — og ástandslínan sýndi að viðmótið skipti um sýn á nákvæmlega
+      // sama augnabliki. Skipti um sýn hendir hnútunum, vafrinn aflýsir beiðnum
+      // þeirra, og `error` kviknar. Það er eðlileg hegðun, ekki bilun.
+      //
+      // `isConnected` greinir þetta: sé hnúturinn horfinn úr DOM þegar villan
+      // kviknar var beiðnin aflýst. Skráð sem slíkt í stað þess að drekkja
+      // raunverulegu myndavillunum — helmingur allra skráðra villna var þetta.
+      var iDom = true;
+      try { iDom = e.target.isConnected !== false; } catch (_) {}
+      if (s) {
+        senda('audlind', (iDom ? 'Náði ekki í ' : 'Aflýst beiðni (hnútur farinn úr DOM) — ')
+          + e.target.tagName.toLowerCase(), String(s).slice(0, 300), null);
+      }
       return;
     }
     senda('onerror', (e && (e.message || (e.error && e.error.message))) || 'Óþekkt villa',
