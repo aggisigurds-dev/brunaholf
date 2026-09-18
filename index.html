@@ -1539,6 +1539,7 @@ const DEFAULT_STATE = {
     {id:'multitool',  label:'Skjala-multitool', icon:'🗂️'},
     {id:'skraalisti', label:'Skráalisti', icon:'📋'},
     {id:'driveleit',  label:'Drive-leit', icon:'🔎'},
+    {id:'postleit',   label:'Póstleit', icon:'✉️'},
     {id:'bakendi',    label:'Bakendi',    icon:'🗄'},
     {id:'stillingar', label:'Stillingar', icon:'⚙️'}
   ],
@@ -1764,7 +1765,7 @@ function clearDataCache(){
 function ensureNewTabs(s){
   if(!s || !Array.isArray(s.tabs)) return;
   if(!Array.isArray(s.bakendiLinks)) s.bakendiLinks = BAKENDI_LINK_SEED.map(x=>({...x}));
-  ['verkkaupar','dagurinn','jarvis','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','vorubirgdir','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','tvmaeting','verkstadapostur','verdsamanburdur','verkstadir','skuldunautar','skyrslur','skyrslustod','afkost','krofuyfirlit','drogstod','fjarmalyfirlit','vidskiptavinir','krofur','hreyfingaryfirlit','nlsh','ajour','turbopaint','pdftools','spurningar','sjalfvirkni','vefryni','skodanir','brunayfirlit','verkfaeri','eydublod','multitool','skraalisti','driveleit','bakendi'].forEach(id=>{
+  ['verkkaupar','dagurinn','jarvis','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','vorubirgdir','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','tvmaeting','verkstadapostur','verdsamanburdur','verkstadir','skuldunautar','skyrslur','skyrslustod','afkost','krofuyfirlit','drogstod','fjarmalyfirlit','vidskiptavinir','krofur','hreyfingaryfirlit','nlsh','ajour','turbopaint','pdftools','spurningar','sjalfvirkni','vefryni','skodanir','brunayfirlit','verkfaeri','eydublod','multitool','skraalisti','driveleit','postleit','bakendi'].forEach(id=>{
     if(!s.tabs.find(t=>t.id===id)){
       const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
       if(d){
@@ -1794,6 +1795,10 @@ function ensureNewTabs(s){
           const idx = s.tabs.findIndex(t=>t.id==='bakendi');
           const idx2 = s.tabs.findIndex(t=>t.id==='stillingar');
           target = idx >= 0 ? idx : (idx2 >= 0 ? idx2 : -1);
+        } else if(id === 'postleit'){
+          // Póstleit situr beint undir Drive-leit.
+          const dIdx = s.tabs.findIndex(t=>t.id==='driveleit');
+          target = dIdx >= 0 ? dIdx + 1 : -1;
         } else if(id === 'driveleit'){
           // Drive-leit situr beint undir Skráalista.
           const sIdx = s.tabs.findIndex(t=>t.id==='skraalisti');
@@ -2497,6 +2502,7 @@ function render(){
   if(t.id==='tvmaeting') return renderTvMaeting(t);
   if(t.id==='ajour') return renderAjour(t);
   if(t.id==='driveleit') return renderDriveLeit(t);
+  if(t.id==='postleit') return renderPostleit(t);
   if(t.id==='verkstadapostur') return renderVerkstadapostur(t);
   if(t.id==='verdsamanburdur') return renderCompetitors(t);
   if(t.id==='verkstadir') return renderWorksites(t);
@@ -15769,6 +15775,102 @@ async function renderDriveLeit(t){
     const id = sel.value; if(!id) return; const m = Object.assign({}, moppur()); delete m[id]; state.ui.drive_leit_moppur = m; save(); val.folder=''; saveVal(); paintFolders();
   });
   setTimeout(()=>{ try{ q.focus(); }catch(_){} }, 60);
+}
+
+// ── ✉️ Póstleit — leit í tölvupósti allra vinnupósthólfa (18.09.2026) ────────────────────────
+// Systir við Drive-leit. Les /api/postleit (email_digest — luna-bridge safnar póstinum úr
+// Thunderbird). Aðeins lestur. Persónulega hólfið er ekki með nema það sé valið sérstaklega.
+async function renderPostleit(t){
+  const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const LS = 'postleit_val';
+  let val = {}; try{ val = JSON.parse(localStorage.getItem(LS)||'{}')||{}; }catch(_){ val = {}; }
+  const saveVal = () => { try{ localStorage.setItem(LS, JSON.stringify(val)); }catch(_){} };
+  const HOLF = [['','📬 Öll vinnupósthólf'],['eldklar@eldklar.is','eldklar@eldklar.is'],['brunaholf@brunaholf.is','brunaholf@brunaholf.is'],['bokhald@eldklar.is','bokhald@eldklar.is'],['bokhald@brunaholf.is','bokhald@brunaholf.is'],['brunaholfehf@gmail.com','brunaholfehf@gmail.com'],['aggi@brunaholf.is','aggi@brunaholf.is'],['aggisigurds@gmail.com','🔒 aggisigurds@gmail.com (persónulegt)']];
+  const BTN = 'padding:8px 14px;border-radius:var(--radius-sm);cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;';
+  const INP = 'height:38px;padding:0 12px;border:1px solid var(--line-2);border-radius:var(--radius-sm);background:var(--card);color:var(--ink);font:inherit;font-size:14px;box-sizing:border-box;';
+  const p2 = n => String(n).padStart(2,'0');
+  const dm = iso => { const d=new Date(iso); if(isNaN(d)) return ''; return p2(d.getDate())+'/'+p2(d.getMonth()+1)+'/'+d.getFullYear()+' '+p2(d.getHours())+':'+p2(d.getMinutes()); };
+  const hl = (txt, words) => { let h = esc(txt); for(const w of words){ if(w.length<2) continue; try{ h = h.replace(new RegExp('('+w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'), '<mark style="background:#fdf0b8;color:inherit;padding:0 1px;border-radius:2px">$1</mark>'); }catch(_){} } return h; };
+
+  $view.innerHTML = `
+    <div style="max-width:980px">
+      <div style="font-size:10.5px;font-weight:600;letter-spacing:2.5px;color:var(--gold-deep);text-transform:uppercase;margin-bottom:6px">TÖLVUPÓSTUR</div>
+      <h1 style="margin:0 0 4px;font-family:var(--font-display);font-size:30px;font-weight:700;color:var(--ink)">Póstleit</h1>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px" id="pl-sub">Leitar í pósti allra vinnupósthólfa — efnislína, sendandi, viðtakandi og texti.</div>
+      <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow-sm)">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input id="pl-q" type="search" placeholder="Leitarorð — t.d. nafn fyrirtækis, reikningsnúmer, heimilisfang…" autocomplete="off" style="${INP}flex:1 1 320px">
+          <button id="pl-go" type="button" style="${BTN}border:1px solid var(--navy-dark);background:var(--navy-dark);color:#fff">🔎 Leita</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px">
+          <select id="pl-acc" style="${INP}flex:1 1 240px;appearance:auto">${HOLF.map(h=>'<option value="'+esc(h[0])+'">'+esc(h[1])+'</option>').join('')}</select>
+          <select id="pl-folder" style="${INP}flex:0 1 170px;appearance:auto"><option value="all">Innhólf + sent</option><option value="inbox">Aðeins innhólf</option><option value="sent">Aðeins sent</option></select>
+          <input id="pl-sender" type="text" placeholder="Sendandi (nafn eða netfang)" autocomplete="off" style="${INP}flex:1 1 200px;font-size:12.5px">
+        </div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-top:10px;font-size:12.5px;color:var(--ink-2)">
+          <label style="display:flex;align-items:center;gap:6px">Frá <input id="pl-from" type="date" style="${INP}height:34px;font-size:12.5px"></label>
+          <label style="display:flex;align-items:center;gap:6px">Til <input id="pl-to" type="date" style="${INP}height:34px;font-size:12.5px"></label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input id="pl-body" type="checkbox" style="width:16px;height:16px"> Leita líka í meginmáli</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input id="pl-att" type="checkbox" style="width:16px;height:16px"> Aðeins með viðhengi</label>
+        </div>
+      </div>
+      <div id="pl-meta" style="font-size:12px;color:var(--muted);margin:12px 2px 6px"></div>
+      <div id="pl-res"></div>
+      <div id="pl-more" style="text-align:center;margin-top:10px"></div>
+    </div>`;
+
+  const $ = id => $view.querySelector(id);
+  $('#pl-acc').value = val.account||''; $('#pl-folder').value = val.folder||'all'; $('#pl-body').checked = val.body !== false; $('#pl-att').checked = !!val.att;
+  let offset = 0, shown = 0;
+
+  function rowHtml(m, words){
+    const sent = m.folder === 'SENT';
+    const hver = sent ? ('Til: '+(m.to_addresses||'')) : ((m.sender_name||'')+(m.sender_email?' <'+m.sender_email+'>':''));
+    const att = Array.isArray(m.attachment_names) ? m.attachment_names : [];
+    const gmail = /@gmail\.com$/i.test(m.account||'') && m.message_id ? 'https://mail.google.com/mail/u/?authuser='+encodeURIComponent(m.account)+'#search/rfc822msgid:'+encodeURIComponent(String(m.message_id).replace(/^<|>$/g,'')) : '';
+    return '<details style="border-top:1px solid var(--line)"><summary style="list-style:none;cursor:pointer;padding:10px 16px;display:flex;gap:12px;align-items:flex-start">'
+      + '<span style="font-size:17px;flex:0 0 auto;margin-top:1px">'+(sent?'📤':'📩')+'</span>'
+      + '<span style="flex:1;min-width:0"><span style="display:block;font-weight:600;color:var(--ink);font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+hl(m.subject||'(án efnis)',words)+(m.has_attachment?' <span title="'+esc(att.join(', '))+'">📎</span>':'')+'</span>'
+      + '<span style="display:block;font-size:11.5px;color:var(--ink-2);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+hl(hver,words)+'</span>'
+      + '<span style="display:block;font-size:11.5px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+hl(String(m.snippet||'').slice(0,200),words)+'</span></span>'
+      + '<span style="flex:0 0 auto;text-align:right;font-size:11px;color:var(--muted);white-space:nowrap" class="ky-num">'+esc(dm(m.received_at))+'<br><span style="opacity:.8">'+esc(m.account||'')+'</span></span></summary>'
+      + '<div style="padding:4px 16px 14px 45px;font-size:12.5px;color:var(--ink-2);line-height:1.55">'
+      + (att.length?'<div style="margin-bottom:6px">'+att.map(a=>'<span style="display:inline-block;background:var(--bg-2);border-radius:3px;padding:2px 8px;margin:0 4px 4px 0;font-size:11.5px">📎 '+esc(a)+'</span>').join('')+'</div>':'')
+      + '<div style="white-space:pre-wrap;background:var(--bg-2);border-radius:8px;padding:10px 12px;max-height:320px;overflow:auto">'+hl(String(m.body_preview||m.snippet||'(enginn texti vistaður)'),words)+'</div>'
+      + (sent?'':'<div style="margin-top:6px;font-size:11.5px;color:var(--muted)">Til: '+esc(m.to_addresses||'—')+'</div>')
+      + (gmail?'<div style="margin-top:6px"><a href="'+esc(gmail)+'" target="_blank" rel="noopener" style="color:var(--gold-deep);font-weight:600;text-decoration:none">Opna í Gmail ↗</a></div>':'')
+      + '</div></details>';
+  }
+
+  async function run(append){
+    const res = $('#pl-res'), meta = $('#pl-meta'), more = $('#pl-more');
+    const term = $('#pl-q').value.trim();
+    val = { account: $('#pl-acc').value, folder: $('#pl-folder').value, body: $('#pl-body').checked, att: $('#pl-att').checked }; saveVal();
+    const sender = $('#pl-sender').value.trim(), from = $('#pl-from').value, to = $('#pl-to').value;
+    if(!term && !sender && !from && !to && !val.account){ meta.textContent = 'Sláðu inn leitarorð — eða veldu pósthólf, sendanda eða tímabil.'; return; }
+    if(!append){ offset = 0; shown = 0; res.innerHTML = ''; }
+    meta.textContent = 'Leita…'; more.innerHTML = '';
+    try{
+      const ps = new URLSearchParams({ q: term, folder: val.folder, limit: '50', offset: String(offset) });
+      if(val.account) ps.set('account', val.account); if(sender) ps.set('sender', sender);
+      if(from) ps.set('from', from); if(to) ps.set('to', to); if(val.body) ps.set('body','1'); if(val.att) ps.set('att','1');
+      const r = await fetch('/api/postleit?'+ps.toString(), {cache:'no-store'}); const d = await r.json();
+      if(!r.ok || d.error) throw new Error(d.error || ('HTTP '+r.status));
+      const words = term.split(/\s+/).filter(Boolean);
+      shown += d.count; offset += d.count;
+      meta.innerHTML = '<b>'+shown+(d.more?'+':'')+'</b> '+(shown===1?'póstur':'póstar')+' · '+esc(val.account||'öll vinnupósthólf')+' · nýjast efst';
+      if(!shown){ res.innerHTML = '<div style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:24px;text-align:center;color:var(--muted-2);font-style:italic">Ekkert fannst.'+(val.body?'':' Prófaðu að haka við „Leita líka í meginmáli".')+'</div>'; return; }
+      const html = d.rows.map(m=>rowHtml(m,words)).join('');
+      if(append){ res.querySelector('._pl-box').insertAdjacentHTML('beforeend', html); }
+      else res.innerHTML = '<div class="_pl-box" style="background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm)">'+html+'</div>';
+      if(d.more){ more.innerHTML = '<button type="button" id="pl-next" style="'+BTN+'border:1px solid var(--line-2);background:var(--card);color:var(--ink-2)">Sýna næstu 50</button>'; $('#pl-next').addEventListener('click', ()=>run(true)); }
+    }catch(e){ meta.textContent=''; res.innerHTML = '<div style="padding:20px;color:var(--red);background:var(--card);border:1px solid var(--red-line);border-radius:12px">'+esc(e.message||String(e))+'</div>'; }
+  }
+  $('#pl-go').addEventListener('click', ()=>run(false));
+  ['#pl-q','#pl-sender'].forEach(id => $(id).addEventListener('keydown', e => { if(e.key==='Enter') run(false); }));
+  // ferskleiki: hvenær brúin skilaði síðast pósti
+  fetch('/api/data-sources-status',{cache:'no-store'}).then(r=>r.json()).then(d=>{ const s=(d.sources||[]).find(x=>x.key==='email'||x.key==='email_digest'); const sub=$('#pl-sub'); if(s&&s.newest_real&&sub) sub.textContent += ' Nýjasti póstur í safninu: '+dm(s.newest_real)+'.'; }).catch(()=>{});
+  setTimeout(()=>{ try{ $('#pl-q').focus(); }catch(_){} }, 60);
 }
 
 async function renderTvMaeting(t){
