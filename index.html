@@ -15779,13 +15779,13 @@ async function renderDriveLeit(t){
 
 // ── ✉️ Póstleit — leit í tölvupósti allra vinnupósthólfa (18.09.2026) ────────────────────────
 // Systir við Drive-leit. Les /api/postleit (email_digest — luna-bridge safnar póstinum úr
-// Thunderbird). Aðeins lestur. Persónulega hólfið er ekki með nema það sé valið sérstaklega.
+// Thunderbird). Aðeins lestur. Persónulega hólfið er ALDREI með (lokað á þjóninum líka).
 async function renderPostleit(t){
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const LS = 'postleit_val';
   let val = {}; try{ val = JSON.parse(localStorage.getItem(LS)||'{}')||{}; }catch(_){ val = {}; }
   const saveVal = () => { try{ localStorage.setItem(LS, JSON.stringify(val)); }catch(_){} };
-  const HOLF = [['','📬 Öll vinnupósthólf'],['eldklar@eldklar.is','eldklar@eldklar.is'],['brunaholf@brunaholf.is','brunaholf@brunaholf.is'],['bokhald@eldklar.is','bokhald@eldklar.is'],['bokhald@brunaholf.is','bokhald@brunaholf.is'],['brunaholfehf@gmail.com','brunaholfehf@gmail.com'],['aggi@brunaholf.is','aggi@brunaholf.is'],['aggisigurds@gmail.com','🔒 aggisigurds@gmail.com (persónulegt)']];
+  const HOLF = [['','📬 Öll vinnupósthólf'],['eldklar@eldklar.is','eldklar@eldklar.is'],['brunaholf@brunaholf.is','brunaholf@brunaholf.is'],['bokhald@eldklar.is','bokhald@eldklar.is'],['bokhald@brunaholf.is','bokhald@brunaholf.is'],['brunaholfehf@gmail.com','brunaholfehf@gmail.com'],['aggi@brunaholf.is','aggi@brunaholf.is']];
   const BTN = 'padding:8px 14px;border-radius:var(--radius-sm);cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;';
   const INP = 'height:38px;padding:0 12px;border:1px solid var(--line-2);border-radius:var(--radius-sm);background:var(--card);color:var(--ink);font:inherit;font-size:14px;box-sizing:border-box;';
   const p2 = n => String(n).padStart(2,'0');

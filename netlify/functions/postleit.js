@@ -7,9 +7,8 @@
 // 18.09.2026 (Agnar: „svipað sem leitar í tölvupóstum"). Systir við Drive-leit.
 //   • q leitar í efnislínu, sendanda, viðtakanda, og útdrætti; body=1 bætir
 //     við meginmálinu (body_preview). Mörg orð = ÖLL verða að finnast (AND), hvert í einhverjum reit.
-//   • account tómt = ÖLL VINNUPÓSTHÓLF. Persónulega hólfið (aggisigurds@gmail.com) er ALDREI með
-//     í þeirri sjálfgefnu leit — það þarf að velja sérstaklega (sbr. regluna um að persónulegi
-//     pósturinn blandist ekki vinnugögnum).
+//   • account tómt = ÖLL VINNUPÓSTHÓLF. Persónulega hólfið (aggisigurds@gmail.com) er ALDREI með —
+//     ekki heldur þótt beðið sé um það (Agnar 18.09.2026: „burt með það").
 //   • Aðeins lestur. Þjónustulykill; taflan hefur engar anon-reglur.
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -39,8 +38,10 @@ exports.handler = async (event) => {
     'select=id,message_id,account,folder,sender_name,sender_email,to_addresses,subject,snippet,body_preview,has_attachment,attachment_names,received_at',
     'order=received_at.desc.nullslast', `limit=${limit + 1}`, `offset=${offset}`,
   ];
+  // Personulega holfid er ALDREI leitanlegt her - hvorki sjalfgefid ne tho thad se bedid um thad (Agnar 18.09.2026).
+  if (account && account.toLowerCase() === PERSONULEGT) return json(400, { error: 'Þetta pósthólf er ekki hluti af póstleitinni.' });
+  parts.push(`account=not.ilike.${encodeURIComponent(PERSONULEGT)}`);
   if (account) parts.push(`account=ilike.${encodeURIComponent(hreint(account))}`);
-  else parts.push(`account=not.ilike.${encodeURIComponent(PERSONULEGT)}`);
   if (folder === 'sent') parts.push('folder=eq.SENT'); else if (folder === 'inbox') parts.push('folder=neq.SENT');
   if (from) parts.push(`received_at=gte.${from}T00:00:00Z`);
   if (to) parts.push(`received_at=lte.${to}T23:59:59Z`);
