@@ -51,7 +51,32 @@ exports.handler = async (event) => {
       const id = +b.id;
       if (!id || !b.action) return json(400, { error: 'id + action required' });
       let patch = null;
-      if (b.action === 'link') {
+      // 18.09.2026 (Agnar: „bryndis@ — allt í lagi þó sama samskiptasamtalið tengist á fleiri"):
+      // umsjónaraðili skrifar um mörg hús. 'link' SKIPTIR um hús á röðinni; 'link_add' BÆTIR VIÐ
+      // húsi — ný röð með sama netfangi og annarri kennitölu (UNIQUE (netfang, kennitala) ver gegn
+      // tvítökum). Sé upphaflega röðin ótengd er hún einfaldlega tengd.
+      if (b.action === 'link_add') {
+        const kt = String(b.kennitala || '').trim();
+        if (!kt) return json(400, { error: 'kennitala required for link_add' });
+        const sr = await fetch(`${SUPABASE_URL}/rest/v1/charlize_contacts?id=eq.${id}&select=*`, { headers: H });
+        const src = sr.ok ? (await sr.json())[0] : null;
+        if (!src) return json(404, { error: 'tengiliður fannst ekki' });
+        if (src.kennitala && String(src.kennitala).replace(/\D/g, '') !== kt.replace(/\D/g, '')) {
+          const row = {
+            netfang: src.netfang, len: src.len, tegund: src.tegund, hlutverk: src.hlutverk, heiti: src.heiti, attin: src.attin,
+            faerslur: src.faerslur, fyrst_sest: src.fyrst_sest, sidast_sest: src.sidast_sest,
+            kennitala: kt, fyrirtaeki: (b.fyrirtaeki || null), status: 'approved', confidence: 'confirmed',
+            source: 'Tengiliðir-síðan: viðbótarhús við ' + (src.fyrirtaeki || src.kennitala) + ' (' + new Date().toISOString().slice(0, 10) + ')',
+          };
+          const ir = await fetch(`${SUPABASE_URL}/rest/v1/charlize_contacts?on_conflict=netfang,kennitala`, {
+            method: 'POST', headers: { ...H, Prefer: 'resolution=merge-duplicates,return=representation' }, body: JSON.stringify(row),
+          });
+          if (!ir.ok) return json(ir.status, { error: 'insert ' + ir.status + ' ' + (await ir.text()).slice(0, 160) });
+          const ny = await ir.json();
+          return json(200, { ok: true, added: true, contact: (ny && ny[0]) || null });
+        }
+        patch = { kennitala: kt, fyrirtaeki: (b.fyrirtaeki || null), confidence: 'confirmed' };
+      } else if (b.action === 'link') {
         const kt = String(b.kennitala || '').trim();
         if (!kt) return json(400, { error: 'kennitala required for link' });
         patch = { kennitala: kt, fyrirtaeki: (b.fyrirtaeki || null), confidence: 'confirmed' };
