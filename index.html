@@ -16305,7 +16305,26 @@ async function renderKrofuyfirlit(t){
       for(const month of WINDOW){
         const hours = (w.monthly||{})[month] || 0;
         if(hours<=0) continue;
-        if(draftKeys.has(`${w.project}|${month}`)) continue;   // þegar með vistuð drög
+        if(draftKeys.has(`${w.project}|${month}`)){
+          // Drög vistuð INNAN mánaðarins frysta upphæðina við vistunardaginn — tímar sem
+          // bætast við eftir það sáust hvergi í Kröfu yfirliti fyrr en vistað var aftur í
+          // Gerð Reikninga (Agnar 18.09.2026: Áland 6 stóð í 33 klst, Tímavera sagði 187).
+          // Mismunurinn fer því í „Tími eftir" sem viðbótarlína. Drög sem voru vistuð EFTIR
+          // að mánuðinum lauk eru frágengin (hádegi/afsláttur dregin frá) → engin viðbót.
+          const dr = REVIEWS[`${w.project}|${month}`];
+          if(!dr || dr.status!=='draft' || Number(dr.fixed_total)>0) continue;
+          if(String(dr.updated_at||'').slice(0,7) > month) continue;
+          const saved = (Number(dr.hours_dagvinna)||0) + (Number(dr.hours_eftirvinna)||0);
+          const nyir = hours - saved;
+          if(!(saved>0) || nyir < 0.5) continue;
+          const estN = Math.round(nyir * r.dv * (1 + r.vsk/100));
+          if(estN<=0) continue;
+          rows.push({ inv_key:`timavera-vidbot|${w.project}|${month}`, id:null, tilvisun:null, source:'tímavera',
+            kt:'', customer:cust, worksite:w.project, work_month:month, hours:nyir,
+            amount:estN, gjalddagi:null, days_overdue:null, partial: month===CUR_MONTH,
+            vidbot:true, vistad_klst:saved, vistad_dags:String(dr.updated_at||'').slice(0,10) });
+          continue;
+        }
         const est = Math.round(hours * r.dv * (1 + r.vsk/100));
         if(est<=0) continue;
         rows.push({ inv_key:`timavera|${w.project}|${month}`, id:null, tilvisun:null, source:'tímavera',
@@ -16456,7 +16475,7 @@ async function renderKrofuyfirlit(t){
     const pg=PG[ws]||{};
     const rate = Number(pg.dagvinna_rate)||9951;
     const vsk = Number(pg.vsk_pct)||24;
-    const hours = wf.hours!=null ? Number(wf.hours) : (Number(HOURS[ws+'|'+wm])||0);
+    const hours = inv.vidbot ? (Number(inv.hours)||0) : wf.hours!=null ? Number(wf.hours) : (Number(HOURS[ws+'|'+wm])||0);
     const redder = wf.redder!=null ? Number(wf.redder) : (Number(REDDER[ws+'|'+wm])||0);
     const dagvinna = hours*rate, smahl = hours*137;
     const net = dagvinna + smahl + redder;
@@ -16574,7 +16593,8 @@ async function renderKrofuyfirlit(t){
       : (wsName ? esc(wsName) : ('#' + esc(inv.id || '')));
     let sub;
     if(tier===3){
-      sub = esc(monthLbl(inv.work_month)) + (inv.hours!=null ? ' · '+inv.hours.toFixed(0)+'t' : '') + (inv.partial && state.newest ? ' · til '+esc(dayMon(state.newest)) : '');
+      sub = esc(monthLbl(inv.work_month)) + (inv.hours!=null ? ' · '+inv.hours.toFixed(0)+'t' : '') + (inv.partial && state.newest ? ' · til '+esc(dayMon(state.newest)) : '')
+        + (inv.vidbot ? ' · <b title="Drögin í Gerð Reikninga voru vistuð '+esc(fmtDate(inv.vistad_dags))+' með '+numIS(Math.round(inv.vistad_klst*10)/10)+' klst. Þetta eru tímarnir sem hafa bæst við í Tímaveru síðan — þeir eru ekki í drögunum.">＋ nýir tímar síðan drög voru vistuð '+esc(fmtDate(inv.vistad_dags))+'</b>' : '');
     } else {
       sub = esc(inv.source||'');
     }

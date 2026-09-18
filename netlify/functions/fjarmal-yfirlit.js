@@ -175,7 +175,7 @@ exports.handler = async (event) => {
     for (const d of (t2.debtors || [])) for (const iv of (d.invoices || [])) rows.push(iv);
     if (!rows.length && (t2.n || 0) > 0) throw new Error('tier2 skilaði engum röðum');
     for (const iv of rows) {
-      if (iv.hidden) continue;                       // sama sía og spjaldið
+      if (iv.hidden || iv.done) continue;            // sama sía og spjaldið
       const amt = +iv.amount || 0;
       if (amt <= 0) continue;
       add(C_osendar, amt, {

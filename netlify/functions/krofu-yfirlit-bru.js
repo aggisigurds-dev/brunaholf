@@ -259,13 +259,16 @@ function rollup(rows) {
     let g = by.get(gk);
     if (!g) by.set(gk, g = { kt: r.kt, customer: r.customer, invoices: [], outstanding_kr: 0, oldest_due: null });
     g.invoices.push(r);
-    if (r.hidden) continue;                    // faldar raðir teljast ekki í summur
+    // Faldar raðir teljast ekki í summur. Sama gildir um „📨 Krafa send" (done): borðið
+    // tekur þær úr Ósent, en summan hér taldi þær áfram — Fjármála-yfirlit og hliðarstiku-
+    // merkið lásu því 15,1 m / 14 drög þegar borðið sjálft sagði 962 þús. / 3 (18.09.2026).
+    if (r.hidden || r.done) continue;
     g.outstanding_kr += r.amount;
     if (r.gjalddagi && (!g.oldest_due || r.gjalddagi < g.oldest_due)) g.oldest_due = r.gjalddagi;
   }
   const debtors = [...by.values()].sort((a, b) => b.outstanding_kr - a.outstanding_kr);
   debtors.forEach((d) => d.invoices.sort((a, b) => b.amount - a.amount));
-  const visibleRows = rows.filter((r) => !r.hidden);
+  const visibleRows = rows.filter((r) => !r.hidden && !r.done);
   return {
     debtors,
     total: debtors.reduce((a, d) => a + d.outstanding_kr, 0),
