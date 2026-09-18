@@ -93,7 +93,7 @@ exports.handler = async (event) => {
     invoices = await sbAll('invoices', 'select=upphaed_total,hofudstoll,status,source,tilvisun,id,kt_greidanda,customer_name');
   } catch (e) { warnings.push('invoices lestur mistókst — Brunahólf Payday-ógreitt gæti vantað: ' + e.message); }
   try {
-    drafts = await sbAll('invoice_drafts', 'select=worksite_name,work_month,total_m_vsk,status');
+    drafts = await sbAll('invoice_drafts', 'select=worksite_name,work_month,total_m_vsk,status,hours_dagvinna,hours_eftirvinna');
   } catch (e) { warnings.push('invoice_drafts lestur mistókst — ósendir reikningar gætu vantað'); }
   try {
     meta = await sbAll('krofur_yfirlit_meta', 'select=inv_key,hidden,paid');
@@ -236,6 +236,20 @@ exports.handler = async (event) => {
     return list.length > 300 ? list.slice(0, 300) : list;
   };
   const D = { klst: Math.round((tvByMonth[month] || 0) * 100) / 100, kr: Math.round((tvByMonth[month] || 0) * taxti), list: projList(month) };
+  // 18.09.2026: hluti manadarins er THEGAR i drogum (Osent) eda sendum krofum (Payday).
+  // An fradrattar taldist su vinna tvisvar i heildarpipunni (1,12 m i sept. 2026).
+  // Vistadar klst a drogum manadarins dragast thvi fra i grand_total; spjaldid synir afram brutto.
+  let iDrogumKlst = 0;
+  for (const dr of drafts) {
+    if (String(dr.work_month || '') !== month) continue;
+    if (['skipped', 'merged', 'void'].includes(lc(dr.status))) continue;
+    if (NON_BILLABLE.test(dr.worksite_name || '')) continue;
+    iDrogumKlst += (+dr.hours_dagvinna || 0) + (+dr.hours_eftirvinna || 0);
+  }
+  iDrogumKlst = Math.min(iDrogumKlst, tvByMonth[month] || 0);
+  D.i_drogum_klst = Math.round(iDrogumKlst * 100) / 100;
+  D.i_drogum_kr = Math.round(iDrogumKlst * taxti);
+  D.netto_kr = D.kr - D.i_drogum_kr;
   const tvEldriMonths = Object.keys(tvByMonth).filter((m) => m < month).sort();
   const timavera_eldri = {
     klst: Math.round(tvEldriMonths.reduce((s, m) => s + tvByMonth[m], 0) * 100) / 100,
@@ -300,7 +314,7 @@ exports.handler = async (event) => {
   // timavera_eldri er brúttó (klst × taxti) og dregur ekki frá það sem þegar er
   // rukkað/sent — gaf ranga (of háa) mynd í Heildar-pípunni, því tekið út 2026-08-08.
   // Áfram skilað í svarinu til upplýsinga, bara ekki summað inn í grand_total.
-  const grand_total = A.heildar.kr + B.kr + C_osendar.kr + D.kr;
+  const grand_total = A.heildar.kr + B.kr + C_osendar.kr + D.netto_kr;
 
   return json(200, {
     generated_at: new Date().toISOString(),

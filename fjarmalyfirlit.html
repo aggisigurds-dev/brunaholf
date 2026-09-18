@@ -112,7 +112,8 @@
     var pipe = [
       ['Slökkvitæki', A.heildar.kr, ''],
       ['Brunahólf Payday', d.bru_payday_ogreitt.kr, ''],
-      ['Tímavera · '+mon3, d.timavera_manudur.kr, 'gold'],
+      // nettó: tímar sem eru þegar í drögum/kröfum mánaðarins teljast ekki aftur (18.09.2026)
+      ['Tímavera · '+mon3, (d.timavera_manudur.netto_kr!=null ? d.timavera_manudur.netto_kr : d.timavera_manudur.kr), 'gold'],
       (nlshBy.length ? ['NLSH · '+mon3, nlshMonthKr, 'gold'] : null),
       ['Ósent', d.bru_osendar.kr, '']
     ].filter(Boolean).map(function(p){ return '<div><div class="pl">'+esc(p[0])+'</div><div class="pv '+p[2]+'">'+num(p[1])+'</div></div>'; }).join('');
@@ -150,7 +151,7 @@
         '<div class="grid">' + card('card--green full', 'Útistandandi kröfur (óborgaðar)', d.bru_payday_ogreitt.kr, d.bru_payday_ogreitt.n+' kröfur', d.bru_payday_ogreitt.list) + '</div></section>' +
 
       '<section>'+sh('🕒 Áunnið Tímavera — '+mlabel(d.month), d.timavera_manudur.kr) +
-        '<div class="grid">' + card('card--hero full', 'Þessi mánuður (klst × dagvinnutaxti m/vsk)', d.timavera_manudur.kr, d.timavera_manudur.klst+' klst · taxti '+kr(d.taxti_mvsk)+'/klst', d.timavera_manudur.list, LINK_TIMI) + '</div></section>' +
+        '<div class="grid">' + card('card--hero full', 'Þessi mánuður (klst × dagvinnutaxti m/vsk)', d.timavera_manudur.kr, d.timavera_manudur.klst+' klst · taxti '+kr(d.taxti_mvsk)+'/klst' + (d.timavera_manudur.i_drogum_klst>0 ? ' · þar af '+d.timavera_manudur.i_drogum_klst+' klst ('+kr(d.timavera_manudur.i_drogum_kr)+') þegar í drögum/kröfum — ekki tvítalið í heildar-pípu' : ''), d.timavera_manudur.list, LINK_TIMI) + '</div></section>' +
 
       (nlshBy.length ?
        '<section>'+sh('🏥 Áunnið NLSH (Landsspítalinn)', nlshMonthKr) +
