@@ -15814,6 +15814,17 @@ async function renderPostleit(t){
           <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input id="pl-att" type="checkbox" style="width:16px;height:16px"> Aðeins með viðhengi</label>
         </div>
       </div>
+      <div style="background:var(--card);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow-sm);margin-top:12px">
+        <div style="font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--ink)">Póstsaga eftir kennitölu</div>
+        <div style="font-size:12px;color:var(--muted);margin:2px 0 10px">Stimplaðu inn kennitölu — keyrslan leitar að <b>kennitölunni með og án bandstriks, nafni fyrirtækisins og heimilisfangi</b> í pósti eldklar@eldklar.is og bokhald@eldklar.is.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input id="ps-kt" type="text" inputmode="numeric" placeholder="000000-0000" autocomplete="off" style="${INP}flex:0 1 200px;font-family:var(--font-mono)">
+          <button id="ps-go" type="button" style="${BTN}border:1px solid var(--navy-dark);background:var(--navy-dark);color:#fff">🔎 Leita að öllu fjórum</button>
+          <button id="ps-otengd" type="button" style="${BTN}border:1px solid var(--line-2);background:var(--card);color:var(--ink-2)">📋 Fyrirtæki án tengdrar póstsögu</button>
+        </div>
+        <div id="ps-meta" style="font-size:12px;color:var(--muted);margin-top:10px"></div>
+        <div id="ps-res" style="margin-top:8px"></div>
+      </div>
       <div id="pl-meta" style="font-size:12px;color:var(--muted);margin:12px 2px 6px"></div>
       <div id="pl-res"></div>
       <div id="pl-more" style="text-align:center;margin-top:10px"></div>
@@ -15870,6 +15881,53 @@ async function renderPostleit(t){
   ['#pl-q','#pl-sender'].forEach(id => $(id).addEventListener('keydown', e => { if(e.key==='Enter') run(false); }));
   // ferskleiki: hvenær brúin skilaði síðast pósti
   fetch('/api/data-sources-status',{cache:'no-store'}).then(r=>r.json()).then(d=>{ const s=(d.sources||[]).find(x=>x.key==='email'||x.key==='email_digest'); const sub=$('#pl-sub'); if(s&&s.newest_real&&sub) sub.textContent += ' Nýjasti póstur í safninu: '+dm(s.newest_real)+'.'; }).catch(()=>{});
+  // ── Póstsaga eftir kennitölu (fjórir lyklar) + fyrirtæki án tengdrar póstsögu ──
+  const LYKILL = l => { const k=String(l||''); const c = /^kt /.test(k) ? ['var(--green-bg)','var(--green)'] : /^nafn/.test(k) ? ['var(--info-bg)','var(--blue)'] : ['var(--warn-bg)','var(--warn)']; return '<span style="display:inline-block;background:'+c[0]+';color:'+c[1]+';border-radius:3px;padding:1px 7px;margin:2px 4px 0 0;font-size:10.5px;font-weight:700">'+esc(k)+'</span>'; };
+  async function ktLeit(kt){
+    const meta = $('#ps-meta'), res = $('#ps-res'); if(kt!=null) $('#ps-kt').value = kt;
+    const v = $('#ps-kt').value.trim(); if(v.replace(/\D/g,'').length!==10){ meta.textContent = 'Kennitala þarf að vera 10 tölustafir.'; return; }
+    meta.textContent = 'Leita að öllu fjórum…'; res.innerHTML = '';
+    try{
+      const r = await fetch('/api/postsaga?kt='+encodeURIComponent(v), {cache:'no-store'}); const d = await r.json();
+      if(!r.ok || d.error) throw new Error(d.error||('HTTP '+r.status));
+      const fy = d.fyrirtaeki||[];
+      meta.innerHTML = '<b>'+d.count+'</b> '+(d.count===1?'póstur':'póstar')+' · leitað að: '+(d.leitad_ad||[]).map(x=>'<span class="ky-num" style="background:var(--bg-2);border-radius:3px;padding:1px 6px;margin-right:4px">'+esc(x)+'</span>').join('')
+        + (fy.length?'':' · <span style="color:var(--warn)">kennitalan er ekki á fyrirtækjaskránni — aðeins leitað að kennitölunni sjálfri</span>');
+      const stadir = fy.length ? '<div style="font-size:12px;color:var(--ink-2);margin-bottom:8px">'+fy.map(x=>'🏢 <b>'+esc(x.nafn)+'</b>'+(x.heimilisfang?' · '+esc(x.heimilisfang):'')+(x.otengt_med_post?' · <span style="color:var(--warn);font-weight:600">engin tengd póstsaga</span>':'')).join('<br>')+'</div>' : '';
+      if(!d.count){ res.innerHTML = stadir+'<div style="padding:16px;text-align:center;color:var(--muted-2);font-style:italic;border:1px dashed var(--line-2);border-radius:8px">Ekkert fannst í pósthólfunum tveimur.</div>'; return; }
+      res.innerHTML = stadir+'<div style="border:1px solid var(--line);border-radius:8px;overflow:hidden">'+d.rows.map(m=>{
+        const sent = m.folder==='SENT';
+        return '<div style="padding:9px 14px;border-top:1px solid var(--line);display:flex;gap:10px;align-items:flex-start"><span style="font-size:16px">'+(sent?'📤':'📩')+'</span>'
+          + '<span style="flex:1;min-width:0"><span style="display:block;font-weight:600;font-size:13px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(m.subject||'(án efnis)')+(m.has_attachment?' 📎':'')+'</span>'
+          + '<span style="display:block;font-size:11.5px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(sent?('Til: '+(m.to_addresses||'')):((m.sender_name||'')+' <'+(m.sender_email||'')+'>'))+'</span>'
+          + '<span style="display:block">'+(m.lyklar||[]).map(LYKILL).join('')+'</span></span>'
+          + '<span class="ky-num" style="flex:0 0 auto;text-align:right;font-size:11px;color:var(--muted);white-space:nowrap">'+esc(dm(m.received_at))+'<br><span style="opacity:.8">'+esc(m.account||'')+'</span></span></div>';
+      }).join('')+'</div>';
+    }catch(e){ meta.textContent=''; res.innerHTML = '<div style="padding:14px;color:var(--red);border:1px solid var(--red-line);border-radius:8px">'+esc(e.message||String(e))+'</div>'; }
+  }
+  async function otengdListi(){
+    const meta = $('#ps-meta'), res = $('#ps-res'); meta.textContent = 'Sæki lista…'; res.innerHTML = '';
+    try{
+      const r = await fetch('/api/postsaga?otengd=1', {cache:'no-store'}); const d = await r.json();
+      if(!r.ok || d.error) throw new Error(d.error||('HTTP '+r.status));
+      const teikna = () => {
+        const bara = $view.querySelector('#ps-thj') ? $view.querySelector('#ps-thj').checked : true;
+        const rows = (d.rows||[]).filter(x=>!bara || x.er_i_thjonustu);
+        meta.innerHTML = '<b>'+rows.length+'</b> fyrirtæki án tengdrar póstsögu sem finnast samt í póstinum · reiknað '+esc(dm(d.reiknad))+' (endurreiknast á hverri nóttu) · <label style="cursor:pointer"><input id="ps-thj" type="checkbox" '+(bara?'checked':'')+' style="vertical-align:middle"> aðeins í þjónustu</label>';
+        const TH='padding:7px 10px;text-align:right;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)', TD='padding:7px 10px;text-align:right;border-top:1px solid var(--line);font-size:12.5px;white-space:nowrap';
+        const n = v => v ? '<b style="color:var(--ink)">'+v+'</b>' : '<span style="color:var(--muted-2)">—</span>';
+        res.innerHTML = '<div style="border:1px solid var(--line);border-radius:8px;overflow:auto;max-height:520px"><table style="width:100%;border-collapse:collapse" class="ky-num"><thead><tr style="background:var(--tbl-header);position:sticky;top:0"><th style="'+TH+';text-align:left">Fyrirtæki</th><th style="'+TH+'">Kennitala</th><th style="'+TH+'" title="Póstar þar sem kennitalan stendur (með eða án bandstriks) — sterkasta vísbendingin">Kt</th><th style="'+TH+'">Nafn</th><th style="'+TH+'" title="Heimilisfang — veikasta vísbendingin; sama hús getur hýst fleiri">Heimilisf.</th><th style="'+TH+'">Síðast</th><th style="'+TH+'"></th></tr></thead><tbody>'
+          + rows.map(x=>'<tr><td style="'+TD+';text-align:left;white-space:normal;font-family:var(--font-body,inherit);font-weight:600;color:var(--ink)">'+esc(x.nafn)+'<div style="font-weight:400;font-size:11px;color:var(--muted)">'+esc(x.heimilisfang||'')+'</div></td><td style="'+TD+'">'+esc(x.kennitala||'')+'</td><td style="'+TD+'">'+n(x.kt_hit)+'</td><td style="'+TD+'">'+n(x.nafn_hit)+'</td><td style="'+TD+'">'+n(x.addr_hit)+'</td><td style="'+TD+';color:var(--muted)">'+esc(dm(x.sidast).slice(0,10))+'</td><td style="'+TD+'"><button type="button" data-ps-kt="'+esc(x.kennitala||'')+'" style="padding:3px 9px;border:1px solid var(--line-2);border-radius:4px;background:var(--card);cursor:pointer;font:inherit;font-size:11.5px;font-weight:600;color:var(--gold-deep)">Skoða</button></td></tr>').join('')
+          + '</tbody></table></div>';
+        const cb = $view.querySelector('#ps-thj'); if(cb) cb.addEventListener('change', teikna);
+        res.querySelectorAll('[data-ps-kt]').forEach(b => b.addEventListener('click', () => ktLeit(b.dataset.psKt)));
+      };
+      teikna();
+    }catch(e){ meta.textContent=''; res.innerHTML = '<div style="padding:14px;color:var(--red);border:1px solid var(--red-line);border-radius:8px">'+esc(e.message||String(e))+'</div>'; }
+  }
+  $('#ps-go').addEventListener('click', ()=>ktLeit());
+  $('#ps-kt').addEventListener('keydown', e => { if(e.key==='Enter') ktLeit(); });
+  $('#ps-otengd').addEventListener('click', otengdListi);
   setTimeout(()=>{ try{ $('#pl-q').focus(); }catch(_){} }, 60);
 }
 
