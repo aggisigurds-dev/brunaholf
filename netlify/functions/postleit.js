@@ -47,7 +47,17 @@ exports.handler = async (event) => {
   if (to) parts.push(`received_at=lte.${to}T23:59:59Z`);
   if (p.att === '1' || p.att === 'true') parts.push('has_attachment=eq.true');
   if (sender) { const e = encodeURIComponent(`*${hreint(sender)}*`); parts.push(`or=(sender_name.ilike.${e},sender_email.ilike.${e})`); }
-  const words = hreint(q).split(/\s+/).filter(Boolean).slice(0, 6);
+  // Beygingarþol (Agnar 18.09.2026: „laugarvegur getur verið Laugarvegi … ur gæti verið i"): orð sem
+  // er 5+ stafir og hvorki tala né netfang er stytt um algenga beygingarendingu og leitað að
+  // STOFNINUM, svo „Laugavegur", „Laugavegi" og „Laugavegar" finnast öll. nakvaemt=1 slekkur á þessu.
+  const nakvaemt = p.nakvaemt === '1' || p.nakvaemt === 'true';
+  const stofn = (w) => {
+    if (nakvaemt || w.length < 5 || /[\d@._-]/.test(w)) return w;
+    const m = w.match(/^(.{4,}?)(urinn|inum|unum|anna|innar|inni|inn|ins|inu|ið|in|ar|ir|ur|um|a|i|s|u)$/i);
+    // u-hljóðvarp: gata ↔ götu, höfn ↔ hafnar — síðasta a/ö stofnsins verður „_" (einn hvaða stafur sem er)
+    return (m ? m[1] : w).replace(/[aö]([^aeiouyáéíóúýæö]{1,2})$/i, '_$1');
+  };
+  const words = hreint(q).split(/\s+/).filter(Boolean).slice(0, 6).map(stofn);
   const cols = ['subject', 'snippet', 'sender_name', 'sender_email', 'to_addresses'].concat(body ? ['body_preview'] : []);
   // hvert orð: or=(…) yfir reitina; mörg orð → and=(or(…),or(…))
   const orFor = (w) => `or(${cols.map((c) => `${c}.ilike.*${w}*`).join(',')})`;
@@ -59,7 +69,7 @@ exports.handler = async (event) => {
     if (!r.ok) return json(r.status, { error: `Supabase ${r.status}: ${(await r.text()).slice(0, 300)}` });
     const rows = await r.json();
     const more = rows.length > limit;
-    return json(200, { q, account: account || null, folder, from: from || null, to: to || null, body, offset, more,
+    return json(200, { q, leitad_ad: words, account: account || null, folder, from: from || null, to: to || null, body, offset, more,
       count: Math.min(rows.length, limit),
       rows: rows.slice(0, limit).map((x) => ({ ...x, body_preview: String(x.body_preview || '').slice(0, 1500) })) });
   } catch (e) { return json(502, { error: e.message }); }
