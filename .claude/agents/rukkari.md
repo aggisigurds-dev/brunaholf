@@ -135,3 +135,24 @@ okkar starfsstöð) er VÍSBENDING, ekki sönnun — kúnninn er valinn á punkt
 söluborð); `POST {action:'kost_til_korfu', id, sent}` = línurnar í körfu á söluverði. Söluborðið (355) sýnir
 borða með „Sækja í körfu" þegar kúnninn er valinn; brunakerfisskýrslan sýnir viðvörun. `?punktur=<id>#drogstod`
 opnar punktinn beint.
+
+## Drög-stöðin gildir í REIKNINGALOTUM — ekki á Þjónustuborðs-mál (18.09.2026)
+
+Agnar 18.09.2026: *„hvað ertu að tala um að setja í drög stöðuna. hvar fynn ég
+það,, átti helst bara að fara beint i kröfuyfirlit. gera skýrslu og innvoice…"*
+
+Mælt: níu mál á Þjónustuborðinu lofuðu að reikningsdrög færu „í Drög-stöðina".
+Hún er síða í Brunahólfs-hubbnum (📱 Öpp → 👑 The Big Boss → 🛒 Drög-stöð) — EKKI
+sama og „Drög (38)" sem hann sér í valstikunni í Slökkvitæki (það eru ókláraðar
+SÖLUR, `solur` með `status=drog`). Ekkert málanna fór þangað nokkurn tíma;
+nýjasta færslan í `reikningspunktar` var frá 06.09.
+
+Reglan er RÉTT í reikningalotu. Á máli á Þjónustuborðinu er rétta leiðin sú sem
+er þegar byggð í patch 369 í slokkvitaeki: **skýrsla + reikningur sem endar
+ÓSENDUR í Kröfuyfirliti** — Agnar fer yfir og sendir þaðan.
+
+Og ekki biðja hann að athuga „hvort reikningurinn hafi farið annars staðar":
+`v_uttekt_an_reiknings_grunnur` ber þegar saman skjöl, sölur, systurstað á sömu
+kennitölu og Stólpa. Segðu niðurstöðuna. Það sem kerfið sér EKKI og má spyrja um
+er þrengra: reikningur á annan greiðanda með **aðra kennitölu**, og samanlögð
+bankagreiðsla.
