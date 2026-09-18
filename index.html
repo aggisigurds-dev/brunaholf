@@ -2314,6 +2314,11 @@ function renderTabs(){
   const _me = (typeof bhMe==='function' ? bhMe() : '') || '';
   const _ini = _me ? _me.split(/\s+/).map(w=>w[0]||'').join('').slice(0,2).toUpperCase() : '?';
   const foot = lay==='horizontal' ? '' : `<div class="sb-foot" id="sb-foot" title="Hver ert þú? Smelltu til að breyta"><span class="ini">${escapeHtml(_ini)}</span><span class="nm">${_me?escapeHtml(_me):'velja nafn'}</span></div>`;
+  // Sýnileiki flipa (18.09.2026): `tabs` er fylki sem fer upp Í HEILU LAGI — vél með eldra
+  // eintak (eða sem ensureNewTabs breytti við ræsingu) yfirskrifaði 👁/🙈-val Agnars, svo
+  // Sjálfvirkni „hélst ekki sýnileg". Valið býr nú í map-lyklinum ui.tab_hidden sem
+  // sameinast per flipa (deep-merge); fylkið hlýðir honum hér.
+  { const th = (state.ui && state.ui.tab_hidden) || null; if(th) for(const t of state.tabs){ if(t.id in th){ const h = !!th[t.id]; if(!!t.hidden !== h) t.hidden = h; } } }
   const visible = state.tabs.filter(t => state.ui.editMode || !t.hidden || t.id==='stillingar');
   if(lay==='horizontal'){
     $tabs.innerHTML = visible.map(t=> t.sep
@@ -2388,6 +2393,7 @@ function renderTabs(){
         tog.addEventListener('click', e=>{
           e.stopPropagation(); e.preventDefault();
           _t.hidden = !_t.hidden;
+          state.ui.tab_hidden = Object.assign({}, state.ui.tab_hidden || {}, { [_t.id]: !!_t.hidden });   // sjá athugasemd við `visible`
           if(_t.hidden && state.ui.activeTab===_t.id){ const fv = state.tabs.find(x=>!x.hidden && x.id!==_t.id); if(fv) state.ui.activeTab = fv.id; }
           save(); render();
         });
