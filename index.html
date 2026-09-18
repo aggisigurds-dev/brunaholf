@@ -15549,6 +15549,7 @@ async function renderTvMaeting(t){
           ${[3,8,14,31].map(n=>`<button data-d="${n}" type="button" style="padding:7px 13px;border-radius:var(--radius-sm);cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;${n===state.ui.tvm_days?'border:1px solid var(--navy-dark);background:var(--navy-dark);color:#fff':'border:1px solid var(--line-2);background:var(--card);color:var(--ink-2)'}">${n} d.</button>`).join('')}
           <button id="tvm-sync" type="button" title="Sækja nýjustu tímafærslur beint úr Tímaveru API" style="padding:7px 13px;border-radius:var(--radius-sm);cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;border:1px solid var(--navy-dark);background:var(--navy-dark);color:#fff">↻ Samstilla</button>
           <button id="tvm-refresh" type="button" style="padding:7px 13px;border-radius:var(--radius-sm);cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;border:1px solid var(--line-2);background:var(--card);color:var(--ink-2)">↻</button>
+          <button id="tvm-share" type="button" title="Afrita tengil á staka Mætingarsíðu — viðtakandinn sér aðeins þessa síðu (engin hliðarstika, aðeins lestur)" style="padding:7px 13px;border-radius:var(--radius-sm);cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;border:1px solid var(--line-2);background:var(--card);color:var(--ink-2)">Deila síðu</button>
         </div>
       </div>
       <div id="tvm-list"><div style="padding:32px;text-align:center;color:var(--muted-2)">Sæki mætingu…</div></div>
@@ -15618,6 +15619,18 @@ async function renderTvMaeting(t){
   }
   $view.querySelectorAll('#tvm-range [data-d]').forEach(b=>b.addEventListener('click',()=>{ state.ui.tvm_days=+b.dataset.d; save(); render(); }));
   const rf = $view.querySelector('#tvm-refresh'); if(rf) rf.addEventListener('click', load);
+  // 🔗 Deilanlegur tengill á stöku síðuna /maeting.html (aðeins lestur, engin hliðarstika).
+  const sh = $view.querySelector('#tvm-share');
+  if(sh) sh.addEventListener('click', async () => {
+    const url = location.origin + '/maeting.html';
+    let ok = false;
+    try{ await navigator.clipboard.writeText(url); ok = true; }catch(_){
+      try{ const ta=document.createElement('textarea'); ta.value=url; ta.style.cssText='position:fixed;opacity:0'; document.body.appendChild(ta); ta.select(); ok=document.execCommand('copy'); ta.remove(); }catch(__){}
+    }
+    const orig = 'Deila síðu';
+    sh.textContent = ok ? '✓ Hlekkur afritaður' : url;
+    setTimeout(() => { sh.textContent = orig; }, ok ? 2500 : 12000);
+  });
   // 🔄 Samstilla — beintengingin við Tímaveru API (timavera-pull, 2026-07-10):
   // sækir vinnufærslur síðustu daga beint frá api.timavera.is og upsertar í
   // timavera_entries — enginn xlsx-export/bridge lengur nauðsynlegur.

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light"/>
+<style>html{color-scheme:light}html,body{color-scheme:only light}</style>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Mæting · verkstaðir</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/theme.css?v=4">
+<!-- Deilanleg, stök Mætingarsíða (18.09.2026, ósk Agnars): aðeins lestur, engin
+     hliðarstika, enginn tengill inn í hubbinn, enginn Samstilla-takki. Les sama
+     /api/timavera-dagar og flipinn „Mæting · verkstaðir" í index.html. -->
+<style>
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body,system-ui,sans-serif)}
+  .mt{max-width:860px;margin:0 auto;padding:22px 16px 60px}
+  .mt-kick{font-size:10.5px;font-weight:600;letter-spacing:2.5px;color:var(--gold-deep);text-transform:uppercase;margin-bottom:6px}
+  .mt h1{margin:0;font-family:var(--font-display);font-size:30px;font-weight:700;color:var(--ink)}
+  .mt-meta{font-size:12px;color:var(--muted);margin:4px 0 14px}
+  .mt-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .mt-range{display:flex;gap:6px;flex-wrap:wrap}
+  .mt-range button{padding:7px 13px;border-radius:var(--radius-sm);cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;border:1px solid var(--line-2);background:var(--card);color:var(--ink-2)}
+  .mt-range button.on{border-color:var(--navy-dark);background:var(--navy-dark);color:#fff}
+  .day{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow-sm)}
+  .day-h{padding:11px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--line);background:var(--tbl-header)}
+  .day-h b{font-family:var(--font-display);font-weight:600;font-size:15px}
+  .day-h span{font-size:12px;color:var(--muted);font-weight:600}
+  .row{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;padding:9px 18px;border-top:1px solid var(--line)}
+  .row .nm{font-weight:600;text-transform:capitalize;min-width:140px}
+  .row .tm{white-space:nowrap;font-weight:600}
+  .g{color:var(--green)} .r{color:var(--red)} .m{color:var(--muted);font-weight:500} .m2{color:var(--muted-2)}
+  .chips{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:3px;margin-top:1px}
+  .chip{display:inline-block;background:var(--bg-2);color:var(--ink-2);border-radius:3px;padding:2px 9px;margin:1px 3px 1px 0;font-size:11.5px;white-space:nowrap;font-weight:600}
+  .chip.sick{background:var(--red-bg);color:var(--red)} .chip.slk{background:var(--info-bg);color:var(--blue)}
+  .chip i{font-style:normal;opacity:.65}
+  .empty{padding:26px;text-align:center;color:var(--muted-2);font-style:italic;background:var(--card);border:1px solid var(--line);border-radius:12px}
+</style>
+</head>
+<body>
+<div class="mt">
+  <div class="mt-head">
+    <div>
+      <div class="mt-kick" id="kick">Tímavera</div>
+      <h1>Mæting · verkstaðir</h1>
+      <div class="mt-meta" id="meta">Sæki mætingu…</div>
+    </div>
+    <div class="mt-range" id="range"></div>
+  </div>
+  <div id="list"></div>
+</div>
+<script>
+(function(){
+  var esc = function(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); };
+  var WD = ['Sunnudagur','Mánudagur','Þriðjudagur','Miðvikudagur','Fimmtudagur','Föstudagur','Laugardagur'];
+  var MN = ['jan','feb','mar','apr','maí','jún','júl','ágú','sep','okt','nóv','des'];
+  var hf = function(n){ return (Math.round((Number(n)||0)*100)/100).toLocaleString('is-IS'); };
+  var dayLbl = function(iso){ var d=new Date(iso+'T00:00:00'); if(isNaN(d)) return iso;
+    var t=new Date(); t.setHours(0,0,0,0); var diff=Math.round((t-d)/864e5);
+    var base=WD[d.getDay()]+' '+d.getDate()+'. '+MN[d.getMonth()];
+    return diff===0?('Í dag — '+base):diff===1?('Í gær — '+base):base; };
+  var days = 3;
+  function range(){
+    document.getElementById('range').innerHTML = [3,8,14,31].map(function(n){ return '<button type="button" data-d="'+n+'"'+(n===days?' class="on"':'')+'>'+n+' d.</button>'; }).join('');
+    document.getElementById('kick').textContent = 'Tímavera · síðustu '+days+' dagar';
+  }
+  document.getElementById('range').addEventListener('click', function(e){ var b=e.target.closest('[data-d]'); if(!b) return; days=+b.dataset.d; range(); load(); });
+  function load(){
+    var list=document.getElementById('list'), meta=document.getElementById('meta');
+    fetch('/api/timavera-dagar?days='+days,{cache:'no-store'}).then(function(r){ return r.json().then(function(d){ if(!r.ok||d.error) throw new Error(d.error||('HTTP '+r.status)); return d; }); }).then(function(d){
+      meta.textContent = 'Hvenær starfsmenn mættu og hættu — beint úr Tímaveru · uppfært '+new Date().toLocaleTimeString('is-IS',{hour:'2-digit',minute:'2-digit'});
+      if(!(d.days||[]).length){ list.innerHTML='<div class="empty">Engar tímafærslur á tímabilinu</div>'; return; }
+      list.innerHTML = d.days.map(function(day){
+        return '<div class="day"><div class="day-h"><b>'+esc(dayLbl(day.date))+'</b><span class="ky-num">'+day.staff.length+' starfsm. · '+(day.open_count?'<span class="g">'+day.open_count+' inni núna</span> · ':'')+'<span style="color:var(--ink)">'+hf(day.total_hours)+' klst'+(day.open_count?' hingað til':'')+'</span></span></div>'
+          + day.staff.map(function(s){
+            return '<div class="row"><span class="nm">'+esc(s.employee)+'</span>'
+              + '<span class="tm ky-num"><span class="g">'+esc(s['in']||'—')+'</span> <span class="m2">→</span> '+(s.open?'<span class="g">í vinnu</span>':'<span class="r">'+esc(s.out||'—')+'</span>')+' <span class="m"> · '+hf(s.hours)+' klst'+(s.open?' hingað til':'')+'</span></span>'
+              + '<span class="chips">'+(s.projects||[]).map(function(p){ var pn=String(p.project||''); var c=/veikindi|sick/i.test(pn)?' sick':/slökkvit|slokkvit/i.test(pn)?' slk':'';
+                  return '<span class="chip'+c+'">'+esc(pn)+' <i class="ky-num">'+hf(p.hours)+'klst'+(p['in']?' · '+esc(p['in'])+'–'+(p.open?'í vinnu':esc(p.out||'?')):'')+'</i></span>'; }).join('')+'</span></div>';
+          }).join('') + '</div>';
+      }).join('');
+    }).catch(function(e){ list.innerHTML='<div class="empty" style="color:var(--red)">Gat ekki sótt mætingu: '+esc(e.message||e)+'</div>'; });
+  }
+  range(); load();
+  setInterval(function(){ if(!document.hidden) load(); }, 5*60*1000);   // lifandi skjár: endurnýjast á 5 mín
+})();
+</script>
+</body>
+</html>
