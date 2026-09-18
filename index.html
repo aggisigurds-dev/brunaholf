@@ -15579,20 +15579,51 @@ async function renderAjour(t){
       const cell = p => p ? '<b style="color:var(--ink)">'+num(p.total)+'</b>'+(p.created>0?' <span title="Stofnað en ekki lokið (created)" style="color:var(--warn);font-weight:600">· '+num(p.created)+' opnir</span>':'') : '<span style="color:var(--muted-2)">—</span>';
       const TH = 'padding:9px 14px;text-align:right;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)';
       const TD = 'padding:10px 14px;text-align:right;border-top:1px solid var(--line);white-space:nowrap';
+      // Punktar per dag + Tímavera sama dag (hverjir voru á staðnum, klst) → afköst á mann / á klst.
+      const WD = ['sun','mán','þri','mið','fim','fös','lau'];
+      const r1 = n => (Math.round((Number(n)||0)*10)/10).toLocaleString('is-IS');
+      const dagar = o => {
+        const tv = (d.tv||{})[o.id] || null, tvDays = (tv&&tv.days)||{};
+        const keys = Object.keys(d.daily||{}).filter(k => ((d.daily[k]||{})[o.id]||0) > 0 || tvDays[k]).sort().reverse();
+        if(!keys.length) return '<div style="padding:10px 0;color:var(--muted-2);font-style:italic;font-size:12.5px">Engin dagatalning enn.</div>';
+        let sp=0, sk=0, sm=0, nd=0;
+        const th = 'padding:6px 10px;text-align:right;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)';
+        const td = 'padding:6px 10px;text-align:right;border-top:1px solid var(--line);white-space:nowrap;font-size:12.5px';
+        const body = keys.map(k => {
+          const p = (d.daily[k]||{})[o.id]||0, t = tvDays[k]||null, menn = t ? t.menn.length : 0, klst = t ? t.klst : 0;
+          if(p>0 && menn>0){ sp+=p; sk+=klst; sm+=menn; nd++; }
+          const dt = new Date(k+'T00:00:00');
+          return '<tr><td style="'+td+';text-align:left">'+WD[dt.getDay()]+' '+esc(dm(k)).slice(0,5)+'</td>'
+            + '<td style="'+td+';font-weight:700;color:var(--ink)">'+(p?num(p):'<span style="color:var(--muted-2)">—</span>')+'</td>'
+            + '<td style="'+td+';text-align:left;white-space:normal;text-transform:capitalize;color:var(--ink-2)">'+(t?esc(t.menn.join(', ')):'<span style="color:var(--muted-2)">—</span>')+'</td>'
+            + '<td style="'+td+'">'+(t?r1(klst):'—')+'</td>'
+            + '<td style="'+td+';font-weight:600;color:var(--green)">'+(p&&menn?r1(p/menn):'—')+'</td>'
+            + '<td style="'+td+'">'+(p&&klst?r1(p/klst):'—')+'</td></tr>';
+        }).join('');
+        const par = tv ? 'Tímavera: <b>'+esc(tv.timavera.join(' + '))+'</b>' : '<span style="color:var(--warn)">Fann engan samsvarandi verkstað í Tímaveru — aðeins punktar sýndir.</span>';
+        const medal = nd ? ' · meðaltal daga með bæði punkta og tíma: <b>'+r1(sp/nd)+' punktar/dag</b> · <b>'+r1(sp/sm)+' á mann</b> · <b>'+r1(sp/sk)+' á klst</b>' : '';
+        return '<div style="font-size:11.5px;color:var(--muted);padding:10px 0 6px">'+par+medal+'</div>'
+          + '<table style="width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:8px" class="ky-num"><thead><tr><th style="'+th+';text-align:left">Dagur</th><th style="'+th+'">Punktar</th><th style="'+th+';text-align:left">Á staðnum (Tímavera)</th><th style="'+th+'">Klst</th><th style="'+th+'">Punktar/mann</th><th style="'+th+'">Punktar/klst</th></tr></thead><tbody>'+body+'</tbody></table>';
+      };
       body.innerHTML = '<div style="background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm)">'
         + '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13.5px" class="ky-num">'
         + '<thead><tr style="background:var(--tbl-header)"><th style="'+TH+';text-align:left">Verkstaður</th><th style="'+TH+'">'+esc(mLbl(cur.month))+'</th><th style="'+TH+'">'+esc(mLbl(prev.month))+'</th><th style="'+TH+'">Nýjasti punktur</th><th style="'+TH+'"></th></tr></thead><tbody>'
         + rows.map(o=>{
             const newest = (o.cur&&o.cur.newest) || (o.prev&&o.prev.newest) || null; const a = ageD(newest);
             const fresh = a!=null && a<=2;
-            return '<tr><td style="'+TD+';text-align:left;font-family:var(--font-body,inherit);font-weight:600;color:var(--ink);white-space:normal">'+esc(o.name)+(fresh?' <span style="display:inline-block;background:var(--green-bg);color:var(--green);border:1px solid var(--green-line);border-radius:3px;padding:1px 7px;font-size:10.5px;font-weight:700;margin-left:6px">NÝTT</span>':'')+'</td>'
+            return '<tr data-aj-row="'+esc(o.id)+'" style="cursor:pointer" title="Smelltu til að sjá punkta per dag"><td style="'+TD+';text-align:left;font-family:var(--font-body,inherit);font-weight:600;color:var(--ink);white-space:normal"><span class="aj-chev" style="display:inline-block;width:14px;color:var(--muted-2)">▸</span>'+esc(o.name)+(fresh?' <span style="display:inline-block;background:var(--green-bg);color:var(--green);border:1px solid var(--green-line);border-radius:3px;padding:1px 7px;font-size:10.5px;font-weight:700;margin-left:6px">NÝTT</span>':'')+'</td>'
               + '<td style="'+TD+'">'+cell(o.cur)+'</td><td style="'+TD+'">'+cell(o.prev)+'</td>'
               + '<td style="'+TD+';color:'+(fresh?'var(--green)':'var(--muted)')+'">'+esc(dm(newest))+(a!=null?' <span style="opacity:.7">· '+(a===0?'í dag':a===1?'í gær':a+' d.')+'</span>':'')+'</td>'
-              + '<td style="'+TD+'"><a href="https://brunaholf.ajoursystem.net/construction?prjId='+encodeURIComponent(o.id)+'&regType=QA" target="_blank" rel="noopener" style="color:var(--gold-deep);font-weight:600;text-decoration:none">Opna ↗</a></td></tr>';
+              + '<td style="'+TD+'"><a href="https://brunaholf.ajoursystem.net/construction?prjId='+encodeURIComponent(o.id)+'&regType=QA" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--gold-deep);font-weight:600;text-decoration:none">Opna ↗</a></td></tr>'
+              + '<tr data-aj-det="'+esc(o.id)+'" hidden><td colspan="5" style="padding:0 14px 14px 28px;border-top:0;background:var(--bg-2)">'+dagar(o)+'</td></tr>';
           }).join('')
         + '<tr style="background:var(--tbl-header)"><td style="'+TD+';text-align:left;font-weight:700">Samtals</td><td style="'+TD+';font-weight:700">'+num(cur.total)+'</td><td style="'+TD+';font-weight:700">'+num(prev.total)+'</td><td style="'+TD+'"></td><td style="'+TD+'"></td></tr>'
         + '</tbody></table></div></div>'
-        + '<div style="font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.5">Talið eftir <b>stofndegi</b> skráningar í Ajour (allar gerðir: QA, verk, gallar…). „opnir" = stofnað en ekki merkt lokið. „NÝTT" = punktur stofnaður síðustu 2 daga. Verkefni án skráninga þessa tvo mánuði sjást ekki.</div>';
+        + '<div style="font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.5">Talið eftir <b>stofndegi</b> skráningar í Ajour (allar gerðir: QA, verk, gallar…). „opnir" = stofnað en ekki merkt lokið. „NÝTT" = punktur stofnaður síðustu 2 daga. Verkefni án skráninga þessa tvo mánuði sjást ekki. <b>Smelltu á verkstað</b> til að sjá punkta per dag og hverjir voru á staðnum (Tímavera).</div>';
+      body.querySelectorAll('[data-aj-row]').forEach(tr => tr.addEventListener('click', () => {
+        const det = body.querySelector('[data-aj-det="'+tr.dataset.ajRow+'"]'); if(!det) return;
+        det.hidden = !det.hidden; const ch = tr.querySelector('.aj-chev'); if(ch) ch.textContent = det.hidden ? '▸' : '▾';
+      }));
     }catch(e){
       body.innerHTML = '<div style="padding:26px;color:var(--red);background:var(--card);border:1px solid var(--red-line);border-radius:12px">Gat ekki sótt Ajour-yfirlit: '+esc(e.message||String(e))+'</div>';
     }
