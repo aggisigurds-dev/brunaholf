@@ -34,9 +34,21 @@
   const tvo = (n) => String(n).padStart(2, '0');
   const ddmmyyyy = (d) => (isNaN(d) ? '' : tvo(d.getDate()) + '/' + tvo(d.getMonth() + 1) + '/' + d.getFullYear());
 
+  // 18.09.2026 (Agnar: "Allar dagsetningar eiga ad vera DD/MM en ekki manudurinn a undan"):
+  // koll MED valkostum foru obreytt i gegn, og a velum sem vantar islensku stadfaersluna
+  // fell { day:'2-digit', month:'2-digit', hour:... } a en-US -> "09/18, 04:15 PM".
+  // Seu valkostirnir EINGONGU tolulegir (enginn manadar-/vikudagstexti) notum vid en-GB,
+  // sem er alltaf til i vafranum: dagur fyrst, skastrik, 24 klst. Timabelti og adrir
+  // valkostir halda ser. Textasnid ("17. september 2026") fer afram obreytt i gegn.
+  const TEXTI = { long: 1, short: 1, narrow: 1 };
+  const tolulegt = (o) => !!o && typeof o === 'object'
+    && !TEXTI[o.month] && !o.weekday && !o.era && !o.timeZoneName && !o.dayPeriod
+    && !(o.dateStyle && o.dateStyle !== 'short') && !(o.timeStyle && o.timeStyle !== 'short' && o.timeStyle !== 'medium');
+
   const upprDate = Date.prototype.toLocaleDateString;
   Date.prototype.toLocaleDateString = function (locale, options) {
     if (!options && erIslenskt(locale)) return ddmmyyyy(this);
+    if (erIslenskt(locale) && tolulegt(options)) return upprDate.call(this, 'en-GB', options);
     return upprDate.call(this, locale, options);
   };
 
@@ -46,7 +58,15 @@
       if (isNaN(this)) return '';
       return ddmmyyyy(this) + ', ' + tvo(this.getHours()) + ':' + tvo(this.getMinutes());
     }
+    if (erIslenskt(locale) && tolulegt(options)) return upprBoth.call(this, 'en-GB', options);
     return upprBoth.call(this, locale, options);
+  };
+
+  // Klukkan: alltaf 24 klst (aldrei "04:15 PM").
+  const upprTime = Date.prototype.toLocaleTimeString;
+  Date.prototype.toLocaleTimeString = function (locale, options) {
+    if (erIslenskt(locale) && (!options || tolulegt(options))) return upprTime.call(this, 'en-GB', options);
+    return upprTime.call(this, locale, options);
   };
 
   // Fyrir nýjan kóða — hreinna en að smíða Date bara til að sniðmáta.
