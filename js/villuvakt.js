@@ -16,6 +16,20 @@
   if (window.__villuvaktUppsett) return;
   window.__villuvaktUppsett = true;
 
+  // 18.09.2026 — muna FYRRI sýn. „Cannot set properties of null" kemur nær alltaf
+  // úr async-falli sem skilaði eftir að notandinn skipti um sýn; hnúturinn sem það
+  // ætlaði að skrifa í er þá horfinn. `location.hash` einn segir bara hvar hann
+  // endaði — munurinn á fyrri og núverandi sýn er sjálf skýringin.
+  window.__villuvaktSyn = location.hash || '#';
+  window.__villuvaktSynTimi = Date.now();
+  window.addEventListener('hashchange', function (e) {
+    try {
+      var gamalt = e && e.oldURL ? ('#' + String(e.oldURL).split('#')[1] || '#') : window.__villuvaktSyn;
+      window.__villuvaktSyn = gamalt;                 // sýnin sem var YFIRGEFIN
+      window.__villuvaktSynTimi = Date.now();         // hvenær skipt var
+    } catch (_) {}
+  });
+
   var API = (location.hostname.indexOf('brunaholf') !== -1 || location.hostname === 'localhost' || location.hostname === '127.0.0.1')
     ? '/api/villur'
     : 'https://brunaholf.netlify.app/api/villur';
@@ -39,11 +53,42 @@
       if (sed[lykill] || sent >= MAX_SENDINGAR) return;
       sed[lykill] = 1; sent++;
 
+      // 17.09.2026 — TENGINGIN FYLGIR MEÐ. 227 „Náði ekki í img" komu af símanum
+      // á #thjonustu-verkstaedi, en nákvæmlega sömu slóðir svara 200 af skrifborði
+      // og þjónustuvinnungurinn geymir ekkert. Það var ekki hægt að greina, því
+      // skýrslan sagði ekkert um ástand tækisins þegar hún varð til. Auðlindavillur
+      // bera engan stafla, svo hann er notaður undir þessar upplýsingar: næsta
+      // tilvik segir hvort síminn var án nets, á hægri tengingu eða í gagnasparnaði.
+      var astand = null;
+      try {
+        var c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+        astand = 'net=' + (navigator.onLine ? 'á' : 'AF')
+          + (c ? ' · gerð=' + (c.effectiveType || '?')
+               + ' · niðurhal=' + (c.downlink != null ? c.downlink + 'Mb/s' : '?')
+               + ' · töf=' + (c.rtt != null ? c.rtt + 'ms' : '?')
+               + ' · gagnasparnaður=' + (c.saveData ? 'JÁ' : 'nei')
+             : ' · engar tengingarupplýsingar')
+          + ' · sýnilegt=' + (document.visibilityState || '?');
+        // 18.09.2026 — HVAÐA SÝN VAR VIRK. Stærstu villurnar í dag eru
+        // „Cannot set properties of null" úr `async`-föllum: hnúturinn var til
+        // þegar fyrirspurnin hófst en horfinn þegar svarið kom, af því að
+        // notandinn skipti um sýn á meðan. Sú saga sést aðeins ef við skráum
+        // hvort sýnin BREYTTIST — `slod` ein sýnir bara hvar hann endaði.
+        astand += ' · sýn=' + (location.hash || '#') + (window.__villuvaktSyn && window.__villuvaktSyn !== location.hash
+          ? ' (var ' + window.__villuvaktSyn + ' fyrir ' + (Date.now() - (window.__villuvaktSynTimi || Date.now())) + 'ms)'
+          : '');
+      } catch (_) { astand = null; }
+
       var gogn = {
         uppruni: UPPRUNI, tegund: tegund, skilabod: skilabod,
         slod: (location.pathname + location.hash).slice(0, 300),
         skra: skra || null,
-        stafli: stafli ? String(stafli).slice(0, 4000) : null,
+        // 18.09.2026: ástandið fylgir nú ÖLLUM villum, ekki bara auðlindavillum.
+        // Fyrri útgáfa setti það aðeins þegar stafli vantaði — en það eru einmitt
+        // villurnar með stafla (afneitanir úr async-föllum) sem eru óútskýrðastar,
+        // því staflinn segir HVAR en ekki VIÐ HVAÐA AÐSTÆÐUR.
+        stafli: [stafli ? String(stafli).slice(0, 3600) : null,
+                 astand ? '[ástand tækis] ' + astand : null].filter(Boolean).join('\n') || null,
         vafri: navigator.userAgent.slice(0, 300),
         notandi: notandi(),
       };
