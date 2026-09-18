@@ -389,7 +389,7 @@
   }
   function staffRow(date, s, cmts) {
     return '<div class="staff"><span class="nm">' + esc(s.employee) + '</span>'
-      + (s.absent ? '<span class="chip red">ekki í Tímaveru</span>' : '<span class="tm"><span class="in">' + esc(s.in || '—') + '</span> → <span class="out">' + esc(s.out || '—') + '</span> · ' + hf(s.hours) + ' klst</span>')
+      + (s.absent ? '<span class="chip red">ekki í Tímaveru</span>' : '<span class="tm"><span class="in">' + esc(s.in || '—') + '</span> → ' + (s.open ? '<span class="in">í vinnu</span>' : '<span class="out">' + esc(s.out || '—') + '</span>') + ' · ' + hf(s.hours) + ' klst' + (s.open ? ' hingað til' : '') + '</span>')
       + '<button type="button" class="cm" data-cm="' + esc(s.employee) + '" data-date="' + esc(date) + '" title="Athugasemd">💬</button>'
       + (s.projects && s.projects.length ? '<span class="proj">' + s.projects.map(p => '<span class="chip">' + esc(p.project) + ' <span style="opacity:.65">' + hf(p.hours) + '</span></span>').join('') + '</span>' : '')
       + (cmts.length ? '<span class="cmts">' + cmts.map(e => '<span class="chip ' + (/veik/i.test(e.category || '') ? 'red' : 'warn') + '">' + esc(e.category || 'athugasemd') + (e.note ? ': ' + esc(e.note) : '') + ' <span style="opacity:.6">· ' + esc(e.author || '') + '</span>' + (e.pending ? ' ⏳' : '') + '</span>' + (e.pending ? '' : '<button type="button" class="x" data-del="' + esc(e.id) + '" title="Eyða" style="border:0;background:transparent;color:var(--muted);cursor:pointer">×</button>')).join('') + '</span>' : '')
