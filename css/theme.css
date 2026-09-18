@@ -569,6 +569,15 @@ body .hub-sync select{background:transparent;border:0;box-shadow:none;padding:2p
 .ky-invrow{min-width:0}
 .ky-row{display:flex;align-items:center;gap:10px;padding:10px 18px 10px 52px;border-bottom:1px solid var(--line);font-size:12.5px;cursor:pointer;background:transparent;transition:background .12s;position:relative}
 .ky-row::before{content:"";position:absolute;left:34px;top:0;bottom:0;width:1px;background:var(--line-2)}
+/* 18.09.2026 (Agnar): i fyrirtaekjaspjoldunum runnu threpahausar (Ogreitt / Osendar / Timi eftir) og radir
+   saman vid nafn fyrirtaekisins. Threpin og radirnar fara inn um ~50-60px svo nafnid standi eitt vinstra megin.
+   Adeins bordtolva - simareglurnar nedar (max-width) halda sinu. */
+@media(min-width:901px){
+  .ky-card-rows .ky-tier{padding-left:84px}
+  .ky-card-rows .ky-tier::before{left:68px}
+  .ky-card-rows .ky-row{padding-left:112px}
+  .ky-card-rows .ky-row::before{left:94px}
+}
 .ky-row:hover{background:var(--row-hover)}
 .ky-row.ky-likely{background:linear-gradient(90deg,rgba(47,122,74,.09),rgba(47,122,74,.03))}
 .ky-row.ky-likely:hover{background:linear-gradient(90deg,rgba(47,122,74,.15),rgba(47,122,74,.06))}
