@@ -25,7 +25,7 @@ body{
 .syncbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
 
 /* Heildar-pípa — dökk slab með 00-plötu, gull-tölu og pípu-dálkum til hægri */
-.grand{padding:20px 24px;display:flex;align-items:flex-end;gap:24px;position:relative;overflow:hidden;flex-wrap:wrap}
+.grand{margin-bottom:30px;padding:20px 24px;display:flex;align-items:flex-end;gap:24px;position:relative;overflow:hidden;flex-wrap:wrap}
 .grand .coin{position:absolute;right:-30px;top:-40px;width:200px;height:200px;border-radius:50%;background:var(--gold-coin);opacity:.12;pointer-events:none}
 .grand .lbl{display:flex;align-items:center;gap:8px;position:relative}
 .grand .lbl .t{font-size:10.5px;font-weight:700;letter-spacing:.18em;color:var(--gold-500);text-transform:uppercase}

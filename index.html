@@ -16594,7 +16594,7 @@ async function renderKrofuyfirlit(t){
     let sub;
     if(tier===3){
       sub = esc(monthLbl(inv.work_month)) + (inv.hours!=null ? ' · '+inv.hours.toFixed(0)+'t' : '') + (inv.partial && state.newest ? ' · til '+esc(dayMon(state.newest)) : '')
-        + (inv.vidbot ? ' · <b title="Drögin í Gerð Reikninga voru vistuð '+esc(fmtDate(inv.vistad_dags))+' með '+numIS(Math.round(inv.vistad_klst*10)/10)+' klst. Þetta eru tímarnir sem hafa bæst við í Tímaveru síðan — þeir eru ekki í drögunum.">＋ nýir tímar síðan drög voru vistuð '+esc(fmtDate(inv.vistad_dags))+'</b>' : '');
+        + (inv.vidbot ? ' · <b title="Drögin í Gerð Reikninga voru vistuð '+esc(fmtDate(inv.vistad_dags))+' með '+(Math.round((Number(inv.vistad_klst)||0)*10)/10).toLocaleString('is-IS')+' klst. Þetta eru tímarnir sem hafa bæst við í Tímaveru síðan — þeir eru ekki í drögunum.">＋ nýir tímar síðan drög voru vistuð '+esc(fmtDate(inv.vistad_dags))+'</b>' : '');
     } else {
       sub = esc(inv.source||'');
     }
