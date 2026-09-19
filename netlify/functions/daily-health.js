@@ -88,7 +88,7 @@ exports.handler = async (event) => {
       // Starfið er í lagi af því einhver vél skilaði árangri — en vél sem er föst
       // fær sína eigin gulu ábendingu. Annars þegir hún endalaust.
       for (const f of run.fastar || []) {
-        const aldur = f.klstSidanILagi == null ? 'hefur aldrei skilað árangri'
+        const aldur = f.klstSidanILagi == null ? 'engin árangursrík keyrsla fannst'
           : f.klstSidanILagi >= 48 ? `föst í ${Math.floor(f.klstSidanILagi / 24)} daga`
           : `föst í ${f.klstSidanILagi} klst`;
         alerts.push(`🟠 ${label} — vélin „${f.source}" ${aldur}${f.detail ? ': ' + trim(f.detail, 110) : ''}`);
@@ -185,15 +185,31 @@ async function latestRun(jobName) {
     const v = velar.get(s);
     if (!v.sidastILagi && !bad(x.status)) v.sidastILagi = x;
   }
-  const fastar = [...velar.values()]
-    .filter((v) => bad(v.nyjast.status))
-    .map((v) => ({
+  const fastar = [];
+  for (const v of velar.values()) {
+    if (!bad(v.nyjast.status)) continue;
+    // SPYRJA BEINT UM SÍÐASTA ÁRANGUR. Fyrsta útgáfa leitaði aðeins í sömu tíu
+    // röðunum og að ofan og sagði því „hefur aldrei skilað árangri" um vél sem
+    // hafði skilað árangri 27 sinnum sama sólarhring — villurnar hennar fylltu
+    // einfaldlega úrtakið. Fjarvera í of litlu úrtaki er ekki staðreynd.
+    let sidast = v.sidastILagi;
+    if (!sidast) {
+      try {
+        const r = await sbFetch(`automation_runs?job_name=eq.${encodeURIComponent(jobName)}`
+          + `&source=eq.${encodeURIComponent(v.source)}`
+          + '&status=in.(ok,success,done)&select=finished_at&order=finished_at.desc.nullslast&limit=1',
+          { headers: { Range: '0-0', 'Range-Unit': 'items' } });
+        if (r.ok) sidast = (await r.json())[0] || null;
+      } catch (_) { /* ómælt er betra en rangt */ }
+    }
+    fastar.push({
       source: v.source,
       detail: String(v.nyjast.detail || '').slice(0, 140),
-      klstSidanILagi: v.sidastILagi
-        ? Math.floor((Date.now() - (Date.parse(v.sidastILagi.finished_at) || Date.now())) / 3600000)
+      klstSidanILagi: sidast && sidast.finished_at
+        ? Math.floor((Date.now() - (Date.parse(sidast.finished_at) || Date.now())) / 3600000)
         : null,
-    }));
+    });
+  }
 
   if (bad(newest.status)) {
     const t0 = Date.parse(newest.finished_at) || Date.now();
