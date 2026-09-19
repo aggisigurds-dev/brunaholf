@@ -152,11 +152,23 @@ async function enabledJobsWithLatestRun() {
 
 async function latestRun(jobName) {
   const q = `automation_runs?job_name=eq.${encodeURIComponent(jobName)}`
-    + '&select=status,detail,finished_at&order=finished_at.desc.nullslast&limit=1';
-  const r = await sbFetch(q, { headers: { Range: '0-0', 'Range-Unit': 'items' } });
+    + '&select=status,detail,finished_at,source&order=finished_at.desc.nullslast&limit=10';
+  const r = await sbFetch(q, { headers: { Range: '0-9', 'Range-Unit': 'items' } });
   if (!r.ok) throw new Error(`automation_runs: ${r.status}`);
   const page = await r.json();
-  return page.length ? page[0] : null;
+  if (!page.length) return null;
+  // 19.09.2026 — TVÆR VÉLAR, EITT STARF. luna-bridge keyrir nú bæði á skrifstofuvél og heimavél; þær skrá til
+  // skiptis og nýjasta röðin ein sagði „villa" þótt hin vélin hefði skilað árangri 4 mín áður (heimavélin les
+  // Thunderbird sem enginn hefur opnað í viku). Starfið er í lagi ef EINHVER vél (source) skilaði árangri á
+  // síðustu klukkustund; vélin sem mistókst er nefnd í detail en kveikir ekki rautt.
+  const newest = page[0];
+  const bad = (s) => /err|fail|villa/i.test(String(s || ''));
+  if (bad(newest.status)) {
+    const t0 = Date.parse(newest.finished_at) || Date.now();
+    const okRun = page.find((x) => !bad(x.status) && x.source !== newest.source && (t0 - (Date.parse(x.finished_at) || 0)) < 3600000);
+    if (okRun) return { ...okRun, detail: `${okRun.detail || ''} · (önnur vél, ${newest.source || '?'}, skilaði villu: ${String(newest.detail || '').slice(0, 120)})` };
+  }
+  return newest;
 }
 
 // ---- HTML-póstur ------------------------------------------------------------
