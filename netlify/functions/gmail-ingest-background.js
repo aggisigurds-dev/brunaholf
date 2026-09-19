@@ -51,13 +51,25 @@ exports.handler = async () => {
       const res = await ingest({ httpMethod: 'GET', queryStringParameters: qs }, {});
       let body = {};
       try { body = JSON.parse((res && res.body) || '{}'); } catch (_) {}
-      ran.push({ account: j.account, folder: j.folder.toUpperCase(), ok: body.ok !== false, upserted: body.upserted || 0, errors: body.errors || 0 });
+      ran.push({ account: j.account, folder: j.folder.toUpperCase(), ok: body.ok !== false, upserted: body.upserted || 0, nyir: body.nyir, errors: body.errors || 0 });
     } catch (e) {
       ran.push({ account: j.account, folder: j.folder.toUpperCase(), ok: false, error: String((e && e.message) || e) });
     }
   }
   const bad = ran.filter((r) => !r.ok).length;
   const total = ran.reduce((n, r) => n + (r.upserted || 0), 0);
-  await logRun(bad ? 'error' : 'ok', total + ' upserted · ' + ran.map((r) => r.folder + ':' + (r.ok ? r.upserted : 'villa')).join(' '));
+  // 19.09.2026 — SKRÁ ÞAÐ SEM BARST, EKKI ÞAÐ SEM VAR SENT.
+  // Hér stóð áður `total + " upserted"`, sem er fjöldi raða sem voru SENDAR í
+  // gagnagrunninn. Glugginn er 3 dagar, svo sömu póstarnir fóru inn tólf sinnum
+  // á dag og línan sagði „16 upserted" þótt enginn nýr póstur hefði borist.
+  // Sú tala lítur út eins og vinna og faldi þögnina. Nú stendur „0 nýir · 16
+  // óbreyttir" þegar ekkert berst — og þögn lítur út eins og þögn.
+  // `nyir` er null ef talningin brást; þá stendur „?" fremur en tala sem laug.
+  const oviss = ran.some((r) => r.ok && (r.nyir === null || r.nyir === undefined));
+  const nyirAlls = ran.reduce((n, r) => n + (r.nyir || 0), 0);
+  const sundurlidun = ran.map((r) => r.folder + ':' + (!r.ok ? 'villa'
+    : (r.nyir === null || r.nyir === undefined) ? '?' : r.nyir)).join(' ');
+  await logRun(bad ? 'error' : 'ok',
+    (oviss ? '?' : nyirAlls) + ' nýir · ' + total + ' óbreyttir · ' + sundurlidun);
   return { statusCode: 200, body: JSON.stringify({ ok: bad === 0, ran }) };
 };

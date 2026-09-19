@@ -238,6 +238,28 @@ exports.handler = async (event) => {
     }
 
     // 4) upsert in batches — exactly like bridge.js upsert() (on_conflict=message_id)
+    // 19.09.2026 — HVE MARGIR ERU NÝIR? `upserted` telur raðir sem voru SENDAR,
+    // ekki raðir sem breyttust, og glugginn er 3 dagar. Sömu póstarnir fóru því
+    // inn tólf sinnum á dag og automation_runs sagði „16 upserted" þótt enginn
+    // nýr póstur hefði borist. Talan leit út eins og vinna. Hér er spurt hverjir
+    // séu þegar til ÁÐUR en skrifað er, svo þögn líti út eins og þögn.
+    let fyrir = new Set();
+    try {
+      const idListi = records.map(r => r.message_id).filter(Boolean);
+      // 50 í senn: Message-ID er ~60 stafir og 200 saman gefa 12 kB slóð.
+      // URLSearchParams sér um kóðunina — að kóða listann í heilu lagi myndi
+      // kóða kommurnar sem aðskilja gildin og eyðileggja fyrirspurnina.
+      for (let i = 0; i < idListi.length; i += 50) {
+        const u = new URL(`${SUPABASE_URL}/rest/v1/email_digest`);
+        u.searchParams.set('select', 'message_id');
+        u.searchParams.set('message_id', 'in.(' +
+          idListi.slice(i, i + 50).map(v => JSON.stringify(String(v))).join(',') + ')');
+        const q = await fetch(u, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } });
+        if (!q.ok) throw new Error('talning ' + q.status);
+        (await q.json()).forEach(r => fyrir.add(r.message_id));
+      }
+    } catch (_) { fyrir = null; }   // talning má aldrei fella innsogið
+    const nyir = fyrir ? records.filter(r => !fyrir.has(r.message_id)).length : null;
     let upserted = 0;
     for (let i = 0; i < records.length; i += BATCH) {
       const slice = records.slice(i, i + BATCH);
@@ -257,7 +279,7 @@ exports.handler = async (event) => {
 
     return json(200, {
       ok: true, account, days, folder: sentFolder ? 'SENT' : 'INBOX',
-      listed: ids.length, mapped: records.length, upserted, errors,
+      listed: ids.length, mapped: records.length, upserted, nyir, errors,
       questions: records.filter(r => r.is_question).length,
     });
   } catch (e) {
