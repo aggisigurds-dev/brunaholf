@@ -85,6 +85,14 @@ exports.handler = async (event) => {
         alerts.push(`🔴 ${label} villa${run.detail ? ': ' + trim(run.detail, 120) : ''}`);
         continue;
       }
+      // Starfið er í lagi af því einhver vél skilaði árangri — en vél sem er föst
+      // fær sína eigin gulu ábendingu. Annars þegir hún endalaust.
+      for (const f of run.fastar || []) {
+        const aldur = f.klstSidanILagi == null ? 'hefur aldrei skilað árangri'
+          : f.klstSidanILagi >= 48 ? `föst í ${Math.floor(f.klstSidanILagi / 24)} daga`
+          : `föst í ${f.klstSidanILagi} klst`;
+        alerts.push(`🟠 ${label} — vélin „${f.source}" ${aldur}${f.detail ? ': ' + trim(f.detail, 110) : ''}`);
+      }
       const fin = run.finished_at ? Date.parse(run.finished_at) : NaN;
       const ageH = isNaN(fin) ? null : Math.floor((nowMs - fin) / 3600000);
       if (ageH != null && ageH > STALE_JOB_HOURS) {
@@ -163,12 +171,36 @@ async function latestRun(jobName) {
   // síðustu klukkustund; vélin sem mistókst er nefnd í detail en kveikir ekki rautt.
   const newest = page[0];
   const bad = (s) => /err|fail|villa/i.test(String(s || ''));
+
+  // 19.09.2026 — VÉL SEM ER FÖST MÁ EKKI HVERFA Á BAK VIÐ FRÍSKAN TVÍBURA.
+  // Reglan hér að neðan (önnur vél bjargar starfinu) gerði stöðuna græna og þá
+  // barst ENGIN ábending — biluðu vélarinnar var aðeins getið inni í `detail`,
+  // sem er ekki birt nema fyrir rauðar raðir. Mælt sama dag: `desktop` hafði
+  // verið föst í 200 klst og sást hvergi af því `luna-bridge:skrifstofa` var
+  // frísk. Hver vél fær því sinn eigin dóm, og hann fylgir starfinu út.
+  const velar = new Map();
+  for (const x of page) {
+    const s = x.source || '?';
+    if (!velar.has(s)) velar.set(s, { source: s, nyjast: x, sidastILagi: null });
+    const v = velar.get(s);
+    if (!v.sidastILagi && !bad(x.status)) v.sidastILagi = x;
+  }
+  const fastar = [...velar.values()]
+    .filter((v) => bad(v.nyjast.status))
+    .map((v) => ({
+      source: v.source,
+      detail: String(v.nyjast.detail || '').slice(0, 140),
+      klstSidanILagi: v.sidastILagi
+        ? Math.floor((Date.now() - (Date.parse(v.sidastILagi.finished_at) || Date.now())) / 3600000)
+        : null,
+    }));
+
   if (bad(newest.status)) {
     const t0 = Date.parse(newest.finished_at) || Date.now();
     const okRun = page.find((x) => !bad(x.status) && x.source !== newest.source && (t0 - (Date.parse(x.finished_at) || 0)) < 3600000);
-    if (okRun) return { ...okRun, detail: `${okRun.detail || ''} · (önnur vél, ${newest.source || '?'}, skilaði villu: ${String(newest.detail || '').slice(0, 120)})` };
+    if (okRun) return { ...okRun, fastar };
   }
-  return newest;
+  return { ...newest, fastar };
 }
 
 // ---- HTML-póstur ------------------------------------------------------------

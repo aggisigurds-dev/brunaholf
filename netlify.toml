@@ -234,6 +234,19 @@
 [functions."gmail-ingest-background"]
   schedule = "35 */2 * * *"
 
+# ── Heilsuvaktin (2026-09-19) ────────────────────────────────────────────────
+# daily-health var skrifað til að segja frá þegar gagnaleiðsla fúnar eða
+# samstilling klikkar — og hefur aldrei sagt neitt, því í haus þess stóð
+# „Enginn tímaáætlun er skráð í netlify.toml". Fyrsta þurrkeyrsla fann SJÖ
+# raunveruleg vandamál sem enginn hafði séð, þar á meðal Landsbanka-möppu sem
+# var 96 daga gömul og Ajour-innskráningu sem var útrunnin.
+#
+# Sendir AÐEINS þegar ábendingar eru til staðar, svo góður dagur er hljóður.
+# 07:10 er valið svo það rekist hvorki á payday (:00), timavera (:15) né
+# gmail-ingest (:35). Þagga má með HEALTH_ALERT_OFF=1 í Netlify-umhverfinu.
+[functions."daily-health-background"]
+  schedule = "10 7 * * *"
+
 # ── Afkasta-caching (2026-08-13) ─────────────────────────────────────────────
 # Allar <script>/<link> tilvísanir nota ?v= útgáfustimpil, svo það er óhætt að
 # leyfa vafranum að endurnota skrárnar án 304-umferðar í klukkustund — og
