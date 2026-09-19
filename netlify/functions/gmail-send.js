@@ -323,6 +323,10 @@ function guessType(n) {
   return e === 'pdf' ? 'application/pdf'
     : e === 'png' ? 'image/png'
     : (e === 'jpg' || e === 'jpeg') ? 'image/jpeg'
+    // 19.09.2026: .txt/.csv skiluðu octet-stream, sem neyðir viðtakandann til að
+    // hlaða skránni niður í stað þess að opna hana. charset bætist við neðar.
+    : e === 'txt' ? 'text/plain'
+    : e === 'csv' ? 'text/csv'
     : 'application/octet-stream';
 }
 
@@ -367,8 +371,16 @@ function buildMime(o) {
       ? '"' + clean + '"'
       : '"=?UTF-8?B?' + Buffer.from(clean, 'utf8').toString('base64') + '?="';
     parts.push('--' + bnd);
+    // 19.09.2026 — STAFASETT Á TEXTAVIÐHENGI. Agnar sendi skjáskot af viðhengi
+    // sem las „PrÃ³funarskjal“ í stað „Prófunarskjal“. Meginmálið (línan með
+    // text/html að neðan) bar alltaf charset="UTF-8"; viðhengin gerðu það ekki,
+    // svo viðtakandinn varð að giska og Android giskaði á Latin-1. Á aðeins við
+    // um text/* — charset á ekki erindi við PDF eða myndir.
+    const tegund = /^text\//i.test(a.type) && !/charset=/i.test(a.type)
+      ? a.type + '; charset="UTF-8"'
+      : a.type;
     parts.push(
-      'Content-Type: ' + a.type + '; name=' + q + '\r\n' +
+      'Content-Type: ' + tegund + '; name=' + q + '\r\n' +
       'Content-Disposition: attachment; filename=' + q + '; ' +
         "filename*=UTF-8''" + encodeURIComponent(clean) + '\r\n' +
       'Content-Transfer-Encoding: base64\r\n\r\n' +
