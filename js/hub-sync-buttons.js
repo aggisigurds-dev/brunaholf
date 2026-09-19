@@ -25,10 +25,10 @@
   const fmt = (s) => s ? new Date(s).toLocaleString("is-IS", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : null;
   const fmtDay = (s) => s ? new Date(s).toLocaleDateString("is-IS", { day: "2-digit", month: "2-digit" }) : null;
 
-  // ── real data freshness (cached ~12s, shared across all buttons) ─────────────
+  // ── real data freshness (cached ~60s, shared across all buttons) ─────────────
   let _dss = null, _dssAt = 0, _dssP = null;
   async function dss() {
-    if (_dss && Date.now() - _dssAt < 12000) return _dss;
+    if (_dss && Date.now() - _dssAt < 60000) return _dss;
     if (_dssP) return _dssP;
     _dssP = fetch("/api/data-sources-status").then((r) => r.json()).then((d) => { _dss = d; _dssAt = Date.now(); _dssP = null; return d; })
       .catch(() => { _dssP = null; return _dss || { sources: [] }; });
@@ -215,7 +215,14 @@
       setTimeout(async () => { btn.disabled = false; btn.textContent = `↻ Samstilla ${label}`; await refresh(); }, 5000);
     };
     refresh();
-    if (!el._t) el._t = setInterval(refresh, 15000);
+    // 19.09.2026 — MÆLT í Supabase-loggum: /api/data-sources-status var sótt ~3.200× á sólarhring (hvert kall er
+    // ~25 fyrirspurnir), líka um miðja nótt: hver takki endurlas á 15 s fresti, líka í földum flipa, og takkar sem
+    // höfðu verið endurteiknaðir burt héldu áfram að tikka. Ferskleikinn mælist í klukkustundum og dögum — nú á
+    // 2 mín fresti, aðeins í sýnilegum flipa, og tímamælirinn deyr með takkanum.
+    if (!el._t) el._t = setInterval(() => {
+      if (!el.isConnected) { clearInterval(el._t); el._t = null; return; }
+      if (document.visibilityState === "visible") refresh();
+    }, 120000);
   }
 
   function init() {

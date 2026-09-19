@@ -1303,7 +1303,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
-<script src="/js/hub-sync-buttons.js?v=20260918a" defer></script>
+<script src="/js/hub-sync-buttons.js?v=20260919a" defer></script>
 <script src="/js/nlsh-sections.js?v=20260830b" defer></script>
 <script src="/js/nlsh-stada.js?v=20260903c" defer></script>
 <script src="/js/viewmode.js?v=2" defer></script>
@@ -2088,6 +2088,7 @@ function save(opts){
 let _syncTimer = null;
 let _syncInFlight = false;
 let _syncMistokst = 0;   // fjoldi mistekinna vistana i rod -> vaxandi bid (09.09.2026)
+let _lykkjuTeljari = 0; // sama patch sent i rod -> haett eftir 3 (19.09.2026)
 let _pullInFlight = false;
 let _pollTimer = null;
 let _serverHasRecord = false;
@@ -2095,7 +2096,14 @@ const _SYNC_LS = STORAGE_KEY + ':synced';
 let _synced = { ui: {}, top: {}, has: false };   // JSON per lykil eins og þjónninn hafði þá síðast
 try{ const g = JSON.parse(localStorage.getItem(_SYNC_LS) || 'null'); if(g && g.ui && g.top) _synced = { ui: g.ui, top: g.top, has: true }; }catch(_){}
 const _PER_DEVICE = new Set(['activeTab', 'editMode', 'st_pv', 'grReturnTo', 'ds_sel', 'vb_calc_history']);
-const _J = v => JSON.stringify(v === undefined ? null : v);
+// 19.09.2026 — LYKLARÖÐ. jsonb í Postgres endurraðar lyklum hlutar (eftir lengd, svo stafrófi: „url" á undan
+// „label"), svo gildið sem hub_state_merge skilar strengjast ÖÐRUVÍSI en sama gildi á þessari vél. _J bar saman
+// strengi → tabs og bakendiLinks voru „breytt" að eilífu → syncToServer sendi aftur á ~1,3 s fresti úr HVERJUM
+// opnum flipa, allan sólarhringinn. MÆLT í Supabase-loggum: 65.453 köll á hub_state_merge á 24 klst (1.800 á
+// klst kl. 03 að nóttu), hvert þeirra líka Netlify-fallskall. Nú er strengjað með röðuðum lyklum (fylki halda röð).
+const _rodud = v => Array.isArray(v) ? v.map(_rodud)
+  : (v && typeof v === 'object') ? Object.keys(v).sort().reduce((o, k) => { o[k] = _rodud(v[k]); return o; }, {}) : v;
+const _J = v => JSON.stringify(_rodud(v === undefined ? null : v));
 const _isMap = v => !!v && typeof v === 'object' && !Array.isArray(v);
 function _snapSynced(v){
   _synced = { ui: {}, top: {}, has: true };
@@ -2214,7 +2222,15 @@ async function syncToServer(){
       _snapSynced(merged);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       if(res.tabsChanged){ try{ if(typeof renderTabs === 'function') renderTabs(); }catch(e){} }
-      const eftir = _buildPatch(); if(!_tomtPatch(eftir)) scheduleServerSync();   // breyttist á meðan → senda aftur
+      // breyttist á meðan → senda aftur. ÖRYGGI (19.09.2026): sé afgangurinn NÁKVÆMLEGA sá sami og var að fara
+      // upp hefur þjónninn þegar fengið hann — að senda hann aftur breytir engu og verður að endalausri lykkju
+      // (sjá _J að ofan). Þá er hætt og sagt frá í console í stað þess að hamra á þjóninum.
+      const eftir = _buildPatch();
+      if(!_tomtPatch(eftir)){
+        if(patch && _J(eftir) === _J(patch)){ _lykkjuTeljari = (_lykkjuTeljari || 0) + 1; } else _lykkjuTeljari = 0;
+        if((_lykkjuTeljari || 0) < 3) scheduleServerSync();
+        else console.warn('[hub-sync] sama patch þrisvar í röð — hætti að endursenda', Object.keys(eftir.ui||{}), Object.keys(eftir.deep||{}), Object.keys(eftir.top||{}));
+      } else _lykkjuTeljari = 0;
     } else if(!patch){ _snapSynced(state); }
     setSyncBadge('synced');
     _syncMistokst = 0;
