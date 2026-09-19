@@ -25,6 +25,12 @@ const JOBS = [
   // INBOX var bakfyllt sama dag (119 póstar, 0 villur). SENT er VILJANDI ekki sótt — þar eru
   // 4 póstar, m.a. launaseðlar starfsmanna, og ekkert af því er samskipti við viðskiptavini.
   { account: 'bokhald@eldklar.is', folder: 'inbox' },
+  // 19.09.2026: SENT bætt við. Var viljandi sleppt 10.09 því þar liggja 4
+  // launaseðlar og engin svör fóru þaðan. Nú fer svar úr því hólfi sem tók við
+  // póstinum, svo bokhald@ sendir raunveruleg svör — og án þeirra stóð Árskógar
+  // 6-8 „ÓSVARAÐ" þótt svarið hefði farið 18:58. RLS hleypir aðeins bokhald@
+  // INBOX til appsins, svo SENT-raðir eru þjónsmegin og sjást ekki á borðinu.
+  { account: 'bokhald@eldklar.is', folder: 'sent' },
 ];
 const DAYS = 3; // lítill gluggi per keyrslu; upsert á message_id gerir skörun skaðlausa
 
