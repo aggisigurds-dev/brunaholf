@@ -680,3 +680,14 @@ textarea.ky-note{display:block;resize:none;overflow-x:hidden;overflow-y:auto;max
   .ky-tier::before{left:12px}
   .ky-row .ky-notewrap{width:200px}
 }
+
+/* === SÍMASKOÐUN 19.09.2026 — þrír skjáir flæddu út fyrir 375 px gluggann (mælt) =================
+   Gerð reikninga: table.grp-tbl 796 px án skrunramma (+433 px) · Kröfur & Tekjur: .kf-act út fyrir
+   grid-röðina (+158 px) · Landsspítalinn: .nl-grid dálkur 402 px í 351 px ramma (+39 px).
+   Nú skrunar hvert svæði INNAN síns ramma; síðan sjálf hliðrast ekki. */
+@media (max-width:760px){
+  .gr-wrap table.grp-tbl{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+  .kf-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .nl-grid{grid-template-columns:minmax(0,1fr)}
+  .nl-grid > .nl-col{min-width:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
+}
