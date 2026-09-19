@@ -198,6 +198,13 @@ exports.handler = async (event) => {
           return {
             // dedupe key — RFC822 Message-Id header, fall back to the gmail id.
             message_id: (hh['message-id'] || '').trim() || `gmail:${account}/${id}`,
+            // 19.09.2026 — ÞRÁÐURINN. Gmail skilar `threadId` með hverju skeyti og
+            // hefur alltaf gert; hann fór beint í ruslið hér. Án hans var spurningin
+            // „svöruðum við þessu?" ágiskun: útsendur póstur tengdist félagi eftir
+            // netfangi viðtakanda, en netfang umsjónaraðila þjónar mörgum félögum,
+            // svo svörin voru felld og Þjónustuver sagði „Vantar svar" hjá fólki sem
+            // var búið að fá svar. Með þræðinum er það staðreynd, ekki líkindamat.
+            thread_id: m.threadId || null,
             account,
             folder: sentFolder ? 'SENT' : 'INBOX',
             sender_name: from.name,
@@ -231,6 +238,7 @@ exports.handler = async (event) => {
           subject: r.subject || '(án efnis)',
           from: r.sender_name || r.sender_email || '',
           received_at: r.received_at,
+          thread_id: r.thread_id,
           is_question: r.is_question,
         })),
         note: 'Prufa — ekkert vistað í email_digest.',
