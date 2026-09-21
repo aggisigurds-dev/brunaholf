@@ -42,10 +42,15 @@ exports.handler = async (event) => {
   }
 
   try {
+    // 21.09.2026 (úttekt): villusvar frá email_digest (hlutur, ekki fylki) varð að „200 + tómt pósthólf".
+    // Nú er r.ok athugað og villan merkt upstream → 502 í catch að neðan.
     const [emails, actions] = await Promise.all([
       fetch(`${SUPABASE_URL}/rest/v1/email_digest?${parts.join('&')}`, {
         headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
-      }).then(r => r.json()),
+      }).then(async r => {
+        if (!r.ok) { const e = new Error('email_digest: ' + r.status + ' ' + (await r.text()).slice(0, 200)); e.upstream = true; throw e; }
+        return r.json();
+      }),
       fetch(`${SUPABASE_URL}/rest/v1/email_actions?select=*&limit=3000`, {
         headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
       }).then(r => r.json()),
@@ -82,7 +87,7 @@ exports.handler = async (event) => {
 
     return json(200, { count: rows.length, starred_count, label_counts, rows });
   } catch (e) {
-    return json(500, { error: e.message || String(e) });
+    return json(e && e.upstream ? 502 : 500, { error: e.message || String(e) });
   }
 };
 

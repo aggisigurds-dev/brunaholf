@@ -44,9 +44,11 @@ async function handleGet() {
 
   // Attach the latest run per job (one tiny query each — the job list is small).
   for (const j of jobs) {
+    // 21.09.2026 (úttekt): last_run=null þýðir „aldrei keyrt". Ef keyrslusagan LAS EKKI er það annað mál —
+    // þá fylgir last_run_error:true svo viðmótið geti sagt „gat ekki lesið" í stað „aldrei keyrt".
     try {
       j.last_run = await latestRun(j.name);
-    } catch (_) { j.last_run = null; }
+    } catch (e) { j.last_run = null; j.last_run_error = true; j.last_run_error_detail = String(e && e.message || e).slice(0, 200); }
   }
   return json(200, { generated_at: new Date().toISOString(), jobs });
 }

@@ -14464,7 +14464,8 @@ async function renderKrofur(t){
   const num = n => (Math.round(Number(n)||0)).toLocaleString('is-IS');
   const kr  = n => num(n) + ' kr';
   const mlabel = (m) => { const [y,mo]=String(m||'').split('-'); return ['jan','feb','mar','apr','maí','jún','júl','ágú','sep','okt','nóv','des'][(+mo||1)-1]+' '+(y||''); };
-  let YEAR = (t && t._krofurYear) || '2026';
+  // 21.09.2026 (úttekt): sjálfgefið ár var fast '2026' — nú líðandi ár (og ár-listinn hér að neðan nær alltaf niður í 2024).
+  let YEAR = (t && t._krofurYear) || String(new Date().getFullYear());
   let DATA = null, filter = 'all', q = '', moSel = null, moMode = 'invoiced', WSD = null, WSMETA = null;
 
   $view.innerHTML = `
@@ -14476,7 +14477,7 @@ async function renderKrofur(t){
         </div>
         <div class="rg-controls">
           <select id="kf-year" style="padding:8px 11px;border:1px solid var(--border,var(--edge));border-radius:8px;font:inherit;font-size:13px">
-            <option>2026</option><option>2025</option><option>2024</option>
+            ${Array.from({length:Math.max(3,new Date().getFullYear()-2023)},(_,i)=>'<option>'+(new Date().getFullYear()-i)+'</option>').join('')}
           </select>
           <button id="kf-refresh" class="tv-btn" type="button"><span class="tv-refresh-icon">↻</span> Sækja</button>
         </div>
@@ -16306,7 +16307,14 @@ async function renderSkyrslur(t){
     {name:'Óinnvoiceað — klárað, ekki rukkað', ids:['CG-03'], note:'Vinna búin en enginn reikningur/krafa gerð enn (Tímavera-áætlun)'},
   ];
   window.__cgReports = reports;
-  window.__cgSaveReports = ()=>{ try{ localStorage.setItem('cg_reports', JSON.stringify(reports)); }catch(_){} try{ fetch('/api/app-state',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({ key:'cg_reports', value: reports })}); }catch(_){} };
+  window.__cgSaveReports = ()=>{ try{ localStorage.setItem('cg_reports', JSON.stringify(reports)); }catch(_){} try{ fetch('/api/app-state',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({ key:'cg_reports', value: reports })}).then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); cgVistunVilla(null); }).catch(cgVistunVilla); }catch(e){ cgVistunVilla(e); } };
+  // 21.09.2026 (úttekt): samstillta try/catch-ið náði aldrei höfnuðu loforði og r.ok var aldrei lesið — vistun gat mistekist þegjandi.
+  // Enginn toast-hjálpari er til í skránni → lítill fastur borði neðst; smellur lokar, næsta heppnaða vistun fjarlægir hann.
+  function cgVistunVilla(e){
+    let b = document.getElementById('cg-vistun-villa'); if(!e){ if(b) b.remove(); return; }
+    if(!b){ b = document.createElement('div'); b.id = 'cg-vistun-villa'; b.style.cssText = 'position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:99999;background:#b91c1c;color:#fff;padding:11px 16px;border-radius:10px;font-weight:700;font-size:13px;box-shadow:0 6px 24px rgba(0,0,0,.3);cursor:pointer;max-width:90vw'; b.title = 'Smelltu til að loka'; b.onclick = ()=>b.remove(); document.body.appendChild(b); }
+    b.textContent = '⚠ Skýrslan vistaðist EKKI á þjóninn ('+((e&&e.message)||e)+') — hún er aðeins í þessum vafra. Reyndu aftur.';
+  }
   // 05.09.2026: skýrslurnar búa á þjóninum (app_kv cg_reports) — localStorage er aðeins skyndiminni.
   fetch('/api/app-state?key=cg_reports',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{
     if(j && Array.isArray(j.value) && j.value.length){ reports.splice(0, reports.length, ...j.value); try{ localStorage.setItem('cg_reports', JSON.stringify(reports)); }catch(_){} if(typeof render==='function') render(); }
@@ -18058,8 +18066,16 @@ async function renderKrofuyfirlit(t){
   // ~mín bið) og gögnin uppfærast hljóðlega í bakgrunni. TTL 5 mín; eldra en það
   // → sýnum cache samt en revalidate-um. „↻ Sækja" þvingar ferskt (force=true).
   const KYF_TTL = 5*60*1000;
-  function cacheStore(){ try{ window.__KYF_CACHE = { data:state.data, tier3:state.tier3, efdocs:EFDOCS, reviews:REVIEWS, pg:PG, hours:HOURS, redder:REDDER, ts:Date.now() }; }catch(_){} }
+  function cacheStore(){ try{ window.__KYF_CACHE = { data:state.data, tier3:state.tier3, efdocs:EFDOCS, reviews:REVIEWS, pg:PG, hours:HOURS, redder:REDDER, ts:(window.__KYF_VILLA?0:Date.now()) }; }catch(_){} }   // 21.09.2026 (úttekt): hálf hleðsla telst ekki fersk → næsta opnun sækir aftur
+  // 21.09.2026 (úttekt): sýnileg viðvörun undir hausnum þegar skjöl/yfirferð náðust ekki (annars lítur allt út eins og skjöl vanti).
+  function kyfVillaBordi(){
+    let b = $view.querySelector('#kyf-villa'); const head = $view.querySelector('.kyf-head');
+    if(!window.__KYF_VILLA){ if(b) b.remove(); return; }
+    if(!b && head){ b = document.createElement('div'); b.id = 'kyf-villa'; b.className = 'kyf-warnbox'; b.style.cssText = 'margin:10px 0;font-weight:700'; head.insertAdjacentElement('afterend', b); }
+    if(b) b.textContent = '⚠ Náði ekki í skjöl/yfirferð — ekki senda kröfur fyrr en þetta hleðst';
+  }
   function metaFromState(){
+    kyfVillaBordi();
     const meta = $view.querySelector('#kyf-meta'); if(!meta || !state.data) return;
     const t1n=(state.data.tier1||{}).n||0, t2n=(state.data.tier2||{}).n||0, t3n=(state.tier3||{}).n||0;
     meta.textContent = t1n+' ógreiddar · '+t2n+' ósendar · '+t3n+' tími eftir · '+new Date(state.data.generated_at).toLocaleString('is-IS');
@@ -18069,10 +18085,12 @@ async function renderKrofuyfirlit(t){
     loadKySettings().then(()=>{ try{ if(KYSET.ws_display && Object.keys(KYSET.ws_display).length) renderList(); }catch(_){} });   // stillingar (netfang bókara) af þjóninum, samhliða — ekki beðið
     const [bruR, efR, drR] = await Promise.all([
       fetch('/api/krofu-yfirlit-bru',{cache:'no-store'}).then(r=>r.json()),
-      fetch('/api/efnislisti-docs').then(r=>r.ok?r.json():{rows:[]}).catch(()=>({rows:[]})),
-      fetch('/api/invoice-drafts').then(r=>r.ok?r.json():{rows:[]}).catch(()=>({rows:[]})),
+      // 21.09.2026 (úttekt): bilun hér varð þegjandi að {rows:[]} — skjöl/yfirferð litu út fyrir að vanta. Nú merkt _villa og viðvörun sýnd (kyfVillaBordi).
+      fetch('/api/efnislisti-docs').then(r=>r.ok?r.json():{rows:[],_villa:true}).catch(()=>({rows:[],_villa:true})),
+      fetch('/api/invoice-drafts').then(r=>r.ok?r.json():{rows:[],_villa:true}).catch(()=>({rows:[],_villa:true})),
     ]);
     if(bruR && bruR.error) throw new Error(bruR.error);
+    window.__KYF_VILLA = !!((efR&&efR._villa)||(drR&&drR._villa));
     state.data = bruR; state.newest = bruR.newest_timavera || null;
     for(const d of (((bruR||{}).tier2||{}).debtors||[])) for(const iv of (d.invoices||[])) iv._wfSync = JSON.parse(JSON.stringify(iv.wf||{}));   // þjóns-útgáfa wf per röð (wf_patch)
     const idx = {};
@@ -21757,8 +21775,10 @@ function renderLeidsogn(t){
     <div id="leid-count" style="display:flex;align-items:center;gap:10px;margin:12px 2px 10px;font-weight:700"></div>
     <div id="leid-list"></div>`;
   if(_leidData){ leidBuildFilters(); leidRenderList(); }
-  else fetch('/api/leidsogn',{cache:'no-store'}).then(r=>r.json()).then(d=>{ _leidData=(d&&d.companies)||[]; leidBuildFilters(); leidRenderList(); })
-    .catch(()=>{ const e=document.getElementById('leid-filters'); if(e) e.innerHTML='<div class="empty" style="padding:12px;color:var(--muted,var(--muted))">Náði ekki í leiðsögn-gögn.</div>'; });
+  // 21.09.2026 (úttekt): villusvar varð áður að tómum lista (og festist sem _leidData=[]). Nú: r.ok athugað, villa sést í listanum og næsta opnun reynir aftur.
+  else fetch('/api/leidsogn',{cache:'no-store'}).then(r=>r.json().catch(()=>({})).then(d=>{ if(!r.ok||(d&&d.error)) throw new Error((d&&d.error)||('HTTP '+r.status)); return d; })).then(d=>{ _leidData=(d&&d.companies)||[]; leidBuildFilters(); leidRenderList(); })
+    .catch(err=>{ const e=document.getElementById('leid-filters'); if(e) e.innerHTML='<div class="empty" style="padding:12px;color:var(--muted,var(--muted))">Náði ekki í leiðsögn-gögn.</div>';
+      const l=document.getElementById('leid-list'); if(l) l.innerHTML='<div class="empty" style="padding:12px;color:#dc2626;font-weight:600">⚠ Náði ekki í leiðsögn-gögn ('+String((err&&err.message)||err).replace(/[&<>]/g,'')+') — listinn er EKKI tómur í raun. Opnaðu flipann aftur til að reyna á ný.</div>'; });
 }
 function leidBuildFilters(){
   const host = document.getElementById('leid-filters'); if(!host) return;

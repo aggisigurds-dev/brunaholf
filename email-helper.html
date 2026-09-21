@@ -170,7 +170,9 @@ async function loadInbox(){
   box.innerHTML='<div class="meta" style="padding:12px">⏳ Sæki…</div>';
   try{
     const r=await fetch(INBOX+'?account='+encodeURIComponent(acct)+'&filter='+encodeURIComponent(filt)+'&limit=25');
-    const j=await r.json();
+    // 21.09.2026 (úttekt): villusvar (500/502) birtist áður sem „Engar beiðnir fundust" — nú sem raunveruleg villa.
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok||j.error) throw new Error(j.error||('HTTP '+r.status));
     const rows=(j.rows||[]).filter(m=>!/no-reply@accounts\.google|account-security-noreply/i.test(m.sender_email||''));
     if(!rows.length){ box.innerHTML='<div class="meta" style="padding:12px">Engar beiðnir fundust.</div>'; return; }
     window.__mails={};

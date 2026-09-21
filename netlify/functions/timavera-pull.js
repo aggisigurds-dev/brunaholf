@@ -248,8 +248,11 @@ async function readKvKey() {
 // ---- Tímavera API -------------------------------------------------------------
 
 async function tvGet(apiKey, path) {
+  // 21.09.2026 (úttekt): 15 s þak — hangandi Tímavera-API má ekki halda fallinu þar til Netlify drepur það
+  // þegjandi. Mælt: heil keyrsla (líka 60 daga speglun) tekur mest 3 s. AbortError endar í catch handlersins.
   const r = await fetch(API_BASE + path, {
     headers: { Authorization: `Bearer ${apiKey}`, Accept: 'application/json' },
+    signal: AbortSignal.timeout(15000),
   });
   if (!r.ok) {
     const txt = (await r.text()).slice(0, 200);
@@ -342,14 +345,21 @@ function ymd(ms) {
 // breytt (nýr entry_key) eða eytt þar. Hlífir hópum með opna færslu í gangi.
 async function findStale({ win, keys, openGuards, scopeAll }) {
   const scope = scopeAll ? '' : '&source_file=eq.timavera-api';
-  const r = await fetch(
-    `${SUPABASE_URL}/rest/v1/timavera_entries` +
-    `?select=id,entry_key,date,employee,project,time_in,hours,source_file` +
-    `&date=gte.${win.start}&date=lte.${win.end}${scope}&limit=20000`,
-    { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } },
-  );
-  if (!r.ok) throw new Error('Speglunarlestur ' + r.status + ': ' + (await r.text()).slice(0, 200));
-  const existing = await r.json();
+  // 21.09.2026 (úttekt): limit=20000 skilaði aðeins fyrstu 1000 röðunum (PostgREST-þak) — langur gluggi
+  // speglaðist því aðeins að hluta. Blaðað með Range (order=id svo síður skarist ekki); villa kastar áfram.
+  const existing = [];
+  for (let from = 0; ; from += 1000) {
+    const r = await fetch(
+      `${SUPABASE_URL}/rest/v1/timavera_entries` +
+      `?select=id,entry_key,date,employee,project,time_in,hours,source_file` +
+      `&date=gte.${win.start}&date=lte.${win.end}${scope}&order=id.asc`,
+      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, Range: `${from}-${from + 999}`, 'Range-Unit': 'items' } },
+    );
+    if (!r.ok) throw new Error('Speglunarlestur ' + r.status + ': ' + (await r.text()).slice(0, 200));
+    const page = await r.json();
+    existing.push(...page);
+    if (page.length < 1000) break;
+  }
   const stale = existing.filter(row => {
     if (keys.has(row.entry_key)) return false;
     const guard = `${row.date}|${String(row.employee || '').toLowerCase()}|${String(row.project || '').toLowerCase()}`;

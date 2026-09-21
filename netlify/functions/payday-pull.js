@@ -156,6 +156,9 @@ async function getAccessToken() {
       'Api-Version': API_VERSION,
     },
     body: JSON.stringify({ clientId: CLIENT_ID, clientSecret: CLIENT_SECRET }),
+    // 21.09.2026 (úttekt): 15 s þak á Payday-köll — hangandi API má ekki halda fallinu þar til Netlify drepur
+    // það þegjandi. Mælt: heil keyrsla tekur mest ~4 s. AbortError lendir í catch handlersins (skráð + JSON 500).
+    signal: AbortSignal.timeout(15000),
   });
   if (!r.ok) {
     const txt = (await r.text()).slice(0, 300);
@@ -208,6 +211,8 @@ async function fetchInvoicesPage(token, page, pageSize, since, until) {
       Accept: 'application/json',
       'Api-Version': API_VERSION,
     },
+    // 21.09.2026 (úttekt): 15 s þak per síðu (sjá getAccessToken) — AbortError lendir í catch handlersins.
+    signal: AbortSignal.timeout(15000),
   });
   if (!r.ok) {
     const txt = (await r.text()).slice(0, 300);

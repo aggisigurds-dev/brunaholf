@@ -378,9 +378,18 @@ async function ktByCompanyName(company, address) {
   const key = foldNm(company);
   if (!key || key.length < 4) return null;
   if (!_ktByNameCache) {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/fyrirtaeki?deleted_at=is.null&kennitala=not.is.null&select=nafn,kennitala,heimilisfang&limit=5000`, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } });
-    const rows = await r.json().catch(() => []);
-    _ktByNameCache = Array.isArray(rows) ? rows : [];
+    // 21.09.2026 (úttekt): PostgREST skilar mest 1000 röðum óháð limit= (fyrirtaeki er 1.192 raðir) —
+    // blaðað með Range þar til síða er <1000; villa KASTAR (kallarinn grípur) í stað þess að geyma tóman lista.
+    const allRows = [];
+    for (let from = 0; ; from += 1000) {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/fyrirtaeki?deleted_at=is.null&kennitala=not.is.null&select=nafn,kennitala,heimilisfang&order=id.asc`, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, Range: `${from}-${from + 999}`, 'Range-Unit': 'items' } });
+      if (!r.ok) throw new Error('fyrirtaeki (kt-uppfletting): ' + r.status + ' ' + (await r.text()).slice(0, 200));
+      const page = await r.json();
+      if (!Array.isArray(page)) throw new Error('fyrirtaeki (kt-uppfletting): óvænt svar');
+      allRows.push(...page);
+      if (page.length < 1000) break;
+    }
+    _ktByNameCache = allRows;
   }
   const hits = _ktByNameCache.filter(x => foldNm(x.nafn) === key && String(x.kennitala || '').replace(/\D/g, '').length === 10);
   if (!hits.length) return null;

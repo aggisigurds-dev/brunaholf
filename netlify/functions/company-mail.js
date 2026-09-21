@@ -190,6 +190,9 @@ exports.handler = async (event) => {
     // per-base claim (yellow/signals) and marks the site as „has history" so the
     // „Póstsaga til" sort covers it. Best-effort — never breaks the endpoint.
     const charlizeSiteIds = new Set();
+    // 21.09.2026 (úttekt): ef tengiliðalesturinn KASTAR má svarið ekki þykjast vera heilt („enginn póstur") —
+    // það fær degraded:true + degraded_reason (lögun svarsins að öðru leyti óbreytt, framendinn virkar áfram).
+    let degradedReason = null;
     try {
       const ktToSites = {};
       sites.forEach(s => { const k = String(s.kennitala || '').replace(/\D/g, ''); if (k) (ktToSites[k] = ktToSites[k] || []).push(s); });
@@ -210,12 +213,16 @@ exports.handler = async (event) => {
       });
       Object.keys(emailToId).forEach(e => { if (emailToId[e] === AMBIG) delete emailToId[e]; });
       Object.keys(emailToBase).forEach(e => { if (emailToBase[e] === AMBIG_B) delete emailToBase[e]; });
-    } catch (e) { /* charlize_contacts optional — never break the endpoint */ }
+    } catch (e) { /* charlize_contacts optional — never break the endpoint */
+      degradedReason = 'charlize_contacts: ' + String(e && e.message || e).slice(0, 160);
+      console.warn('[company-mail] tengiliðalestur féll:', degradedReason);
+    }
 
     const companyEmails = new Set(Object.keys(emailToId));
     if (!companyEmails.size) {
       return json(200, { byId: {}, generated_at: new Date().toISOString(),
-        scanned: { emails: 0, companies: sites.length, matched: 0 } });
+        scanned: { emails: 0, companies: sites.length, matched: 0 },
+        ...(degradedReason ? { degraded: true, degraded_reason: degradedReason } : {}) });
     }
 
     // ---- read recent email_digest (inbound + sent) — PARALLEL pages ----
@@ -472,6 +479,8 @@ exports.handler = async (event) => {
         green: Object.values(byId).filter(v => !v.unreplied && !(v.signals && v.signals.length)).length,
       },
     };
+    // 21.09.2026 (úttekt): merkið fylgir svarinu inn í skyndiminnið — hverfur við næsta heila endurreikning.
+    if (degradedReason) { payload.degraded = true; payload.degraded_reason = degradedReason; }
     try { await kvSet(CACHE_KEY, { t: Date.now(), payload }); } catch (_) { /* cache er best-effort */ }
     return json(200, payload);
   } catch (e) {

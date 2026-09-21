@@ -431,7 +431,9 @@ function nyl(t){
   if(m < 1440) return Math.round(m/60) + ' klst';
   return Math.round(m/1440) + ' d';
 }
-setInterval(saekjaVillur, 120000);
+// 21.09.2026 (úttekt): faldur flipi sækir ekki lengur; ferskt sótt þegar hann verður sýnilegur.
+setInterval(() => { if (document.visibilityState === 'visible') saekjaVillur(); }, 120000);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') saekjaVillur(); });
 saekjaVillur();
 
 function teikna(services){
@@ -509,7 +511,9 @@ async function sakja(test, btn){
 $('#test').addEventListener('click', () => sakja('1'));
 $('#refresh').addEventListener('click', () => sakja(''));
 sakja('');                       // fyrsta hleðsla: ÓDÝRT, engin ytri köll
-setInterval(() => sakja(''), 120000);
+// 21.09.2026 (úttekt): faldur flipi sækir ekki lengur; ferskt (ódýrt) sótt þegar hann verður sýnilegur.
+setInterval(() => { if (document.visibilityState === 'visible') sakja(''); }, 120000);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') sakja(''); });
 </script>
 </body>
 </html>

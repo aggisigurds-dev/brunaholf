@@ -39,7 +39,21 @@ const lc = (s) => String(s || '').trim().toLowerCase();
 const digits = (s) => String(s || '').replace(/\D/g, '');
 const domain = (e) => { const m = lc(e).match(/@([^>\s]+)/); return m ? m[1] : ''; };
 function dmy(iso) { const d = new Date(iso); return isNaN(d) ? '' : String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0'); }
-async function all(qs) { const r = await P.sbGet(qs); if (!r.ok) throw new Error('Supabase ' + r.status + ': ' + (await r.text()).slice(0, 200)); return r.json(); }
+// 21.09.2026 (úttekt): PostgREST skilar mest 1000 röðum óháð limit= — all() blaðar nú (limit/offset, sama
+// mynstur og allPages í reikningspunktar.js). max = efri mörk (pósturinn heldur sínu 400-þaki). Lesvilla er
+// merkt upstream svo handlerinn svari 502 í stað þess að tómur listi endurskapi þegar unna punkta.
+async function all(qs, max) {
+  const out = []; const lim = 1000;
+  for (let off = 0; ; off += lim) {
+    const n = max ? Math.min(lim, max - out.length) : lim;
+    const r = await P.sbGet(`${qs}&limit=${n}&offset=${off}`);
+    if (!r.ok) { const e = new Error('Supabase ' + r.status + ': ' + (await r.text()).slice(0, 200)); e.upstream = true; throw e; }
+    const rows = await r.json();
+    out.push(...rows);
+    if (rows.length < n || (max && out.length >= max)) break;
+  }
+  return out;
+}
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'content-type', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS' }, body: '' };
@@ -53,9 +67,11 @@ exports.handler = async (event) => {
   try {
     const since = new Date(Date.now() - days * 864e5).toISOString();
     const [mails, felog, already] = await Promise.all([
-      all(`email_digest?select=id,message_id,folder,sender_name,sender_email,subject,snippet,body_preview,is_question,has_attachment,attachment_names,received_at&account=eq.${encodeURIComponent(ACCOUNT)}&folder=eq.INBOX&received_at=gte.${since}&order=received_at.desc&limit=400`),
-      all('fyrirtaeki?select=id,nafn,kennitala,netfang&deleted_at=is.null&limit=3000').catch(() => []),
-      all('reikningspunktar?select=client_id,status&client_id=like.mail%3A*&limit=5000').catch(() => []),
+      all(`email_digest?select=id,message_id,folder,sender_name,sender_email,subject,snippet,body_preview,is_question,has_attachment,attachment_names,received_at&account=eq.${encodeURIComponent(ACCOUNT)}&folder=eq.INBOX&received_at=gte.${since}&order=received_at.desc`, 400),
+      // 21.09.2026 (úttekt): lykillestrarnir tveir mega EKKI verða [] við villu — þá týnist kúnnamátun og
+      // „already" tæmist svo 'skra' reynir að skrá þegar unna pósta aftur. Villa → 502 (sjá catch neðst).
+      all('fyrirtaeki?select=id,nafn,kennitala,netfang&deleted_at=is.null&order=id.asc'),
+      all('reikningspunktar?select=client_id,status&client_id=like.mail%3A*&order=id.asc'),
     ]);
     const byKt = new Map(), byMail = new Map(), byDom = new Map();
     for (const f of felog) {
@@ -118,6 +134,6 @@ exports.handler = async (event) => {
     await P.log({ agent: 'postvordur', action: 'skra_ur_posti', felag: 'slokkvitaeki', target: ACCOUNT, input: { days, alls: mails.length }, output: { created: created.length, already: dup, candidates: threads.length, skipped }, status: created.length ? 'ok' : 'tillaga' });
     return P.json(200, { ok: true, account: ACCOUNT, since, days, created, already: dup, candidates: threads.length, skipped });
   } catch (e) {
-    return P.json(500, { error: e.message || String(e) });
+    return P.json(e && e.upstream ? 502 : 500, { error: e.message || String(e) });
   }
 };

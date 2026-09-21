@@ -185,7 +185,17 @@
       const body=(box.querySelector('#nl-note-body').value||'').trim();
       if(!body){ box.querySelector('#nl-note-body').focus(); return; }
       const btn=box.querySelector('#nl-note-send'); btn.disabled=true; btn.textContent='Sendi…';
-      try{ await fetch('/api/nlsh-notes',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({author,body})}); }catch(_){}
+      // 21.09.2026 (úttekt): reiturinn var ALLTAF tæmdur, líka þegar sendingin mistókst — skilaboð gátu horfið.
+      // Nú tæmist hann aðeins eftir r.ok; annars helst textinn, takkinn opnast aftur og villa sést.
+      let ok=false;
+      try{ const r=await fetch('/api/nlsh-notes',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({author,body})}); ok=r.ok; }catch(_){}
+      if(!ok){
+        btn.disabled=false; btn.textContent='Senda';
+        let er=box.querySelector('#nl-note-err');
+        if(!er){ er=document.createElement('div'); er.id='nl-note-err'; er.style.cssText='color:#dc2626;font-size:12px;font-weight:600;padding:4px 6px'; box.appendChild(er); }
+        er.textContent='Sendist ekki — reyndu aftur';
+        return;
+      }
       box.querySelector('#nl-note-body').value=''; loadNotes();
     };
   }
@@ -374,7 +384,10 @@
   load();
   if(typeof window.mountNlshStada==='function') window.mountNlshStada();
   loadNotes();
-  setInterval(loadNotes,15000);
+  // 21.09.2026 (úttekt): sótti á 15 s fresti líka í földum flipa (5.760 köll á dag per flipa).
+  // Sama vörn og í index.html: aðeins sýnilegur flipi, 45 s, ferskt strax við visibilitychange.
+  setInterval(function(){ if(document.visibilityState==="visible") loadNotes(); },45000);
+  document.addEventListener("visibilitychange", function(){ if(document.visibilityState==="visible") loadNotes(); });
 })();
 </script>
 </body>

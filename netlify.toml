@@ -179,8 +179,10 @@
   to = "/.netlify/functions/:splat"
   status = 200
 
-[functions."timavera-maeting"]
-  schedule = "*/15 * * * *"   # 07.09.2026: var */10 — færri köll (Netlify-kvóti tæmdist 06.09)
+# 21.09.2026 (úttekt): áætlunin á `timavera-maeting` (*/15 → 96 keyrslur á dag) FJARLÆGÐ. Fallið les aðeins
+# Mæting-sheetið og skilar JSON — það skrifar ekkert í gagnagrunn og enginn les úttak áætlaðrar keyrslu, svo
+# hver keyrsla var hrein sóun á Netlify-kvóta. Skráin og /api/maeting-tilvísunin standa óbreyttar; án áætlunar
+# svarar fallið líka aftur HTTP-beiðnum (áætlað fall fær 403 — sjá viðvörunina hér að neðan).
 
 # ⚠️ ALDREI setja `schedule` á föllu sem VAFRINN kallar á.
 # Netlify svarar hverri HTTP-beiðni á áætlaða föllu með 403. Frá 2026-07-24 til

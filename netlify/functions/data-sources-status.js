@@ -42,8 +42,14 @@ exports.handler = async (event) => {
           'Prefer': 'count=exact',
         },
       });
-      return parseInt(r.headers.get('content-range')?.split('/')[1] || '0', 10) || 0;
-    } catch (_) { return 0; }
+      // 21.09.2026 (úttekt): bilað kall / ekkert content-range = ÓÞEKKTUR fjöldi (null), ekki „0 færslur".
+      // `count` er aðeins sent áfram í svarið hér að neðan (engin reikniaðgerð) — null = „óþekkt".
+      if (!r.ok) return null;
+      const total = (r.headers.get('content-range') || '').split('/')[1];
+      if (total == null || total === '' || total === '*') return null;
+      const n = parseInt(total, 10);
+      return Number.isFinite(n) ? n : null;
+    } catch (_) { return null; }
   };
 
   const now = Date.now();

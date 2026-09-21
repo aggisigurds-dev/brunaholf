@@ -124,6 +124,10 @@ async function skilja(texti) {
         model: 'claude-opus-4-7', max_tokens: 400, system: kerfi,
         messages: [{ role: 'user', content: texti.slice(0, 4000) }],
       }),
+      // 21.09.2026 (úttekt): 20 s þak á AI-kallið. Punkturinn er vistaður EFTIR þetta kall — hangandi kall
+      // skilar nú {} (óflokkað) og punkturinn vistast samt, í stað þess að fallið deyi með óvistaðan punkt.
+      // AbortError lendir í catch hér að neðan.
+      signal: AbortSignal.timeout(20000),
     });
     const j = await r.json();
     const t = ((j.content || []).map(c => c.text || '').join('') || '').trim();
@@ -196,6 +200,8 @@ async function spyrja(b) {
         model: 'claude-opus-4-7', max_tokens: 350, system: kerfi,
         messages: [{ role: 'user', content: 'SAMHENGI:\n' + samhengi + '\n\nSPURNING:\n' + q }],
       }),
+      // 21.09.2026 (úttekt): 20 s þak — AbortError verður 502 JSON í catch hér að neðan.
+      signal: AbortSignal.timeout(20000),
     });
     const j = await r.json();
     const svar = ((j.content || []).map(c => c.text || '').join('') || '').trim();

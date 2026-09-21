@@ -278,7 +278,9 @@ function build(accounts, kv, mailFresh, runs, probes) {
     'PAYDAY_CLIENT_ID/SECRET vantar', runs['payday-pull-slokk'],
     (kv['payday_oauth_slokk'] || {}).expires_at, {
       hvernig: 'Í SKÝINU. `/api/payday-pull-slokk` speglar ALLA Payday-reikninga Slökkvitækja í `payday_invoices_slokk` (aðskilið frá Brunahólfs-tölunum). Keyrir sjálfkrafa kl. 10 og 15 gegnum payday-sync-cron.',
-      adgerdir: [{ label: '📥 Sækja núna', url: '/api/payday-pull-slokk' }],
+      // 21.09.2026 (úttekt): fallið payday-pull-slokk býr á Slökkvitækja-síðunni, ekki hér — afstæða slóðin
+      // gaf 404 á brunaholf.netlify.app. Alger slóð á rétta síðu.
+      adgerdir: [{ label: '📥 Sækja núna', url: 'https://slokkvitaeki.netlify.app/api/payday-pull-slokk' }],
     }));
   // ── Gagnaleiðslur ────────────────────────────────────────
   S.push(svc('timavera', 'Gagnaleiðslur', 'Tímavera API', 'Vinnufærslur beint úr Tímaveru',

@@ -36,5 +36,12 @@ exports.handler = async () => {
   const res = await health({ httpMethod: 'GET', queryStringParameters: { send: '1' }, headers: {} }, {});
   let body = {};
   try { body = JSON.parse((res && res.body) || '{}'); } catch (_) {}
+  // 21.09.2026 (úttekt): þegar innra kallið bilar (EMAIL_FAILED = 502, eða önnur 4xx/5xx) má áætlaða keyrslan
+  // ekki skrá sig „200 OK" í Netlify-loggnum — vaktin sem á að láta vita þagnaði þá sjálf án þess að nokkur sæi.
+  const innerStatus = (res && res.statusCode) || 0;
+  if (innerStatus >= 400 || body.ok === false) {
+    console.error('[daily-health-background] vaktin mistókst:', innerStatus, body.error, body.message || '');
+    return { statusCode: 500, body: JSON.stringify({ ok: false, sent: false, inner_status: innerStatus, error: body.error || ('daily-health ' + innerStatus), message: body.message || body.detail || null, summary: body.summary }) };
+  }
   return { statusCode: 200, body: JSON.stringify({ ok: body.ok !== false, sent: body.sent, summary: body.summary }) };
 };

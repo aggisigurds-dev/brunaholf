@@ -86,13 +86,14 @@ function groupByCustomer(sales){
 
 function load(){
   $('list').innerHTML = '<div class="empty">Sæki…</div>';
-  fetch('/api/solur?unsent=1&limit=500').then(r=>r.json()).then(d=>{
+  // 21.09.2026 (úttekt): villusvar birtist áður sem „Engar reikningssölur í bið 🎉" — nú fer það í villuboðin (rauð).
+  fetch('/api/solur?unsent=1&limit=500').then(r=>r.json().catch(()=>({})).then(d=>{ if(!r.ok||d.error) throw new Error(d.error||('HTTP '+r.status)); return d; })).then(d=>{
     const sales = d.sales||[];
     GROUPS = groupByCustomer(sales);
     renderStats(sales);
     render();
     $('meta').textContent = 'Uppfært '+new Date().toLocaleTimeString('is-IS');
-  }).catch(e=>{ $('list').innerHTML = '<div class="empty">Náði ekki í sölur ('+esc(String(e))+')</div>'; });
+  }).catch(e=>{ $('list').innerHTML = '<div class="empty" style="color:#dc2626;font-weight:600">⚠ Náði ekki í sölur ('+esc(String(e.message||e))+')</div>'; });
 }
 
 function renderStats(sales){

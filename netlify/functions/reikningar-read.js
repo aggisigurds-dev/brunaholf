@@ -28,9 +28,20 @@ exports.handler = async (event) => {
 
   // Customer picker list for the editable Viðskiptavinur match (UI autocomplete).
   if (event.httpMethod === 'GET' && (event.queryStringParameters || {}).customers === '1') {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/customers_base?select=id,nafn,kennitala&order=nafn.asc`, { headers: sbHeaders({ Range: '0-4999' }) });
-    const rows = await r.json().catch(() => []);
-    return json(200, { customers: Array.isArray(rows) ? rows : [] });
+    // 21.09.2026 (úttekt): Range '0-4999' skilaði aðeins fyrstu 1000 (customers_base er 1.164 raðir) —
+    // blaðað 1000 í senn; villa → 502 með skýringu, ekki „200 + tómur listi". order fær id sem jafnteflisbrjót.
+    try {
+      const customers = [];
+      for (let from = 0; ; from += 1000) {
+        const r = await fetch(`${SUPABASE_URL}/rest/v1/customers_base?select=id,nafn,kennitala&order=nafn.asc,id.asc`, { headers: sbHeaders({ Range: `${from}-${from + 999}`, 'Range-Unit': 'items' }) });
+        if (!r.ok) throw new Error('customers_base: ' + r.status + ' ' + (await r.text()).slice(0, 200));
+        const page = await r.json();
+        if (!Array.isArray(page)) throw new Error('customers_base: óvænt svar');
+        customers.push(...page);
+        if (page.length < 1000) break;
+      }
+      return json(200, { customers });
+    } catch (e) { return json(502, { error: String(e.message || e) }); }
   }
   // Manual override of one invoice's customer link (change company / mark wrong).
   if (event.httpMethod === 'POST') {

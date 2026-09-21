@@ -808,7 +808,10 @@ document.getElementById('stats').addEventListener('click', e => {
 load();
 // Poll every 15s, BUT skip while a drag is in flight so the list doesn't
 // rip out from under the user mid-drag. (Ritill opinn → load() teiknar ekki yfir.)
-setInterval(() => { if (!isDragging) load(); }, 15000);
+// 21.09.2026 (úttekt): sótti á 15 s fresti líka í földum flipa. Nú aðeins sýnilegur flipi,
+// 45 s, og ferskt sótt strax þegar flipinn verður sýnilegur aftur.
+setInterval(() => { if (!isDragging && document.visibilityState === 'visible') load(); }, 45000);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !isDragging) load(); });
 </script>
 </body>
 </html>
