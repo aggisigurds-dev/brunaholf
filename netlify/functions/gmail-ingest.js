@@ -139,6 +139,23 @@ exports.handler = async (event) => {
   }
 
   try {
+    // 0) MERKIN. Gmail skilar `labelIds` med hverju skeyti (lika i format=metadata),
+    // en thau eru audkenni - `Label_8371` segir engum neitt og brotnar ef merki er
+    // endurnefnt. Skrain er sott EINU SINNI per keyrslu og aukenni vorpud i nofn.
+    //
+    // Bilun her ma ALDREI fella innsogid: merki eru viðbót, posturinn er adalatridid.
+    // Tha verdur `labels` null og fyrri gildi standa (upsert skrifar ekki yfir med
+    // undefined... en thad GERIR thad med null, svo vid sleppum reitnum alveg).
+    let merkjaNofn = null;
+    try {
+      const lr = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/labels',
+        { headers: { Authorization: `Bearer ${token}` } });
+      if (lr.ok) {
+        merkjaNofn = {};
+        ((await lr.json()).labels || []).forEach(l => { if (l.id) merkjaNofn[l.id] = l.name || l.id; });
+      }
+    } catch (_) { merkjaNofn = null; }
+
     // 1) list recent message ids (inbox by default, sent mail with folder=sent)
     const q = `in:${sentFolder ? 'sent' : 'inbox'} newer_than:${days}d`;
     const ids = [];
@@ -195,6 +212,13 @@ exports.handler = async (event) => {
           // returns the payload part tree).
           const attachment_names = collectAttachmentNames(m.payload);
 
+          // INBOX/SENT/UNREAD eru skilin eftir - `folder` ber tha stadreynd thegar,
+          // og UNREAD segir bara hvort EINHVER hafi opnad postinn i Gmail.
+          const merki = merkjaNofn
+            ? (m.labelIds || []).map(id => merkjaNofn[id] || id)
+                .filter(n => !/^(INBOX|SENT|UNREAD|DRAFT)$/.test(n))
+            : null;
+
           return {
             // dedupe key — RFC822 Message-Id header, fall back to the gmail id.
             message_id: (hh['message-id'] || '').trim() || `gmail:${account}/${id}`,
@@ -205,6 +229,9 @@ exports.handler = async (event) => {
             // svo svörin voru felld og Þjónustuver sagði „Vantar svar" hjá fólki sem
             // var búið að fá svar. Með þræðinum er það staðreynd, ekki líkindamat.
             thread_id: m.threadId || null,
+            // Adeins thegar merkjaskrain fekkst. Vaeri null skrifad her myndi ein
+            // mistokin kollun thurrka ut merki sem thegar voru komin i tofluna.
+            ...(merki ? { labels: merki } : {}),
             account,
             folder: sentFolder ? 'SENT' : 'INBOX',
             sender_name: from.name,
@@ -240,7 +267,14 @@ exports.handler = async (event) => {
           received_at: r.received_at,
           thread_id: r.thread_id,
           is_question: r.is_question,
+          labels: r.labels || null,
         })),
+        // Hvada merki eru raunverulega i notkun i thessu holfi, og hve oft.
+        merki_i_notkun: (() => {
+          const t = {};
+          records.forEach(r => (r.labels || []).forEach(n => { t[n] = (t[n] || 0) + 1; }));
+          return Object.entries(t).sort((a, b) => b[1] - a[1]).map(([n, c]) => n + referl(c));
+        })(),
         note: 'Prufa — ekkert vistað í email_digest.',
       });
     }
@@ -294,6 +328,8 @@ exports.handler = async (event) => {
     return json(500, { error: String(e.message || e) });
   }
 };
+
+function referl(n) { return ' \u00d7' + n; }
 
 // Walk the Gmail payload part tree for parts that carry a filename.
 function collectAttachmentNames(payload) {
