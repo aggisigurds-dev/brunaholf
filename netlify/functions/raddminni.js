@@ -76,22 +76,30 @@ async function vista(b) {
     if (!up.ok) { audio_path = null; }   // hljóðið tapaðist — textinn heldur samt áfram
   }
 
-  // 2) Claude les textann og segir hvað þetta er.
-  const skilningur = texti ? await skilja(texti) : {};
-
-  // 3) Skrá punktinn.
+  // 2) SKRÁ PUNKTINN FYRST (21.09.2026, úttekt): áður var hann skráður EFTIR AI-kallið. Hangi það kall lengur en
+  //    fallið lifir deyr fallið — og textinn með, þótt hljóðið sæti munaðarlaust í fötunni. Nú er textinn kominn í
+  //    töfluna (óflokkaður) áður en nokkuð annað gerist; flokkunin bætist við á eftir og má bregðast.
   const row = {
     texti: texti || null, audio_path,
     seconds: Number.isFinite(b.seconds) ? Math.round(b.seconds) : null,
-    flokkur: skilningur.flokkur || null,
-    titill: skilningur.titill || null,
-    samantekt: skilningur.samantekt || null,
-    fyrirtaeki: skilningur.fyrirtaeki || null,
     notandi: b.notandi ? String(b.notandi).slice(0, 60) : null,
   };
   const ins = await sbPost('raddminni', row);
   if (!ins.ok) return json(500, { error: 'Vistun féll: ' + (await ins.text()).slice(0, 200) });
   const [skrad] = await ins.json();
+
+  // 3) Claude les textann og segir hvað þetta er — og flokkunin er skrifuð á punktinn sem þegar er til.
+  const skilningur = texti ? await skilja(texti) : {};
+  const flokkun = {
+    flokkur: skilningur.flokkur || null,
+    titill: skilningur.titill || null,
+    samantekt: skilningur.samantekt || null,
+    fyrirtaeki: skilningur.fyrirtaeki || null,
+  };
+  if (flokkun.flokkur || flokkun.titill || flokkun.samantekt || flokkun.fyrirtaeki) {
+    try { const p = await sbPatch(`raddminni?id=eq.${skrad.id}`, flokkun); if (p && p.ok) Object.assign(skrad, flokkun); }
+    catch (_) { /* punkturinn er vistaður; óflokkaður punktur sést í yfirferð */ }
+  }
 
   // 4) VERKEFNI fara sjálfkrafa á Verkefnalistann — hitt bíður yfirferðar
   //    (það á ekki að fylla listann af hugleiðingum).
