@@ -9775,7 +9775,7 @@ async function loadDataSources(){
             </div>
             <div class="rg-source-meta">
               ${s.last_import
-                ? `${s.age_days != null ? (s.age_days === 0 ? 'Í dag' : s.age_days + ' dagar síðan') : '?'} · ${(s.count||0).toLocaleString('is-IS')} færslur`
+                ? `${s.age_days != null ? (s.age_days === 0 ? 'Í dag' : s.age_days + ' dagar síðan') : '?'} · ${(s.count==null?'?':s.count.toLocaleString('is-IS'))} færslur`
                 : '<em>engin gögn enn</em>'}
             </div>
             <div class="rg-source-file">📥 ${escapeHtml(s.file_hint||'—')}</div>
@@ -21737,7 +21737,7 @@ async function loadStjornbordSources(){
       <div class="sb-src" title="${escapeAttr(s.file_hint||'')}">
         <div class="sb-src-head"><span>${s.icon||'•'}</span><span class="sb-src-label">${escapeHtml(s.label)}</span>
           <span class="sb-pill" style="background:${col(s.status)}22;color:${col(s.status)}">${lab(s.status)}</span></div>
-        <div class="sb-src-meta">${s.last_import ? ((s.age_days!=null ? (s.age_days===0?'Í dag':s.age_days+' dagar síðan') : '?') + ' · ' + (s.count||0).toLocaleString('is-IS') + ' færslur') : 'engin gögn enn'}</div>
+        <div class="sb-src-meta">${s.last_import ? ((s.age_days!=null ? (s.age_days===0?'Í dag':s.age_days+' dagar síðan') : '?') + ' · ' + (s.count==null?'?':s.count.toLocaleString('is-IS')) + ' færslur') : 'engin gögn enn'}</div>
       </div>`).join('') + '</div>';
   }catch(e){ el.innerHTML = '<div class="empty" style="padding:12px;color:var(--muted,var(--muted))">Náði ekki í gagnastöðu — skoðaðu aftur síðar.</div>'; }
 }

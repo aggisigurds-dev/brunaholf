@@ -196,7 +196,9 @@ exports.handler = async (event) => {
     try {
       const ktToSites = {};
       sites.forEach(s => { const k = String(s.kennitala || '').replace(/\D/g, ''); if (k) (ktToSites[k] = ktToSites[k] || []).push(s); });
-      const contacts = await fetchAll('charlize_contacts', 'netfang,kennitala,hlutverk', '&kennitala=not.is.null&status=neq.rejected');
+      // 21.09.2026 (uttekt): fetchAll tekur (tafla, qs) - her voru THRJU vidfong, svo slodin vard '?netfang,kennitala,hlutverk'
+      // (ogild fyrirspurn: allir dalkar, allar radir, status-sian datt ut). Hafnadir tengilidir hefdu talist med.
+      const contacts = await fetchAll('charlize_contacts', 'select=netfang,kennitala,hlutverk&kennitala=not.is.null&status=neq.rejected');
       // 07.09.2026 (Agnar — Kirkjuvellir sýndi „Nýjasti póstur" frá Greenkey um Norðurhellu 17): netfang
       // UMSJÓNARAÐILA (Eignaumsjón, Greenkey …) sem sér um mörg hús má aldrei verða strict per-hús
       // tengiliður — annars eignast það hús sem kt-in hans var fyrst tengd við HVERN póst hans, óháð efni
