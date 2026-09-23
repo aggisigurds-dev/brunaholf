@@ -24661,5 +24661,85 @@ setTimeout(syncFromServer, 200);
 })();
 </script>
 
+
+<!-- ── SKÝRSLU-STÖÐ: SKIPTUR SKJÁR Á SÍMA/SPJALDTÖLVU (23.09.2026) ─────────────
+     Agnar: „app page for skýrslustod … the doc preview will be around half of
+     screen on upper half frozen in place, and the scrollable list on lower half.
+     And when pushed on some line the preview will appear."
+
+     Á þröngum skjá sat forskoðunin NEÐAN við borðið, svo maður sá annaðhvort
+     skjalið eða röðina sem það tilheyrir — aldrei hvort tveggja. Hér er efri
+     helmingurinn frystur utan um forskoðunina og listinn skrunar undir henni.
+
+     Ekkert í Skýrslu-stöðinni sjálfri er snert: smellur á röð finnur skjal-
+     hlekkinn sem er þegar í röðinni og smellir á hann, svo sama `show()` og
+     áður teiknar forskoðunina (hlekkjahlustarinn í wireStationPreview grípur).
+     ────────────────────────────────────────────────────────────────────────── -->
+<style id="ss-split-css">
+@media (max-width: 900px){
+  /* Forskoðunin: föst á efri helmingi skjásins. */
+  body.ss-split #st-pv:not([hidden]){
+    position: fixed !important; top: 0; left: 0; right: 0;
+    height: 46vh; z-index: 1200;
+    display: flex !important; flex-direction: column;
+    margin: 0 !important; border: 0 !important; border-radius: 0 !important;
+    border-bottom: 2px solid #11141c !important;
+    background: #fff; box-shadow: 0 14px 30px -18px rgba(0,0,0,.65);
+  }
+  body.ss-split #st-pv:not([hidden]) .st-pv-head{
+    flex: 0 0 auto; display: flex; align-items: center; gap: 6px;
+    padding: 8px 10px; border-bottom: 1px solid var(--line, #e2e8f0); background: #f7f8fb;
+  }
+  body.ss-split #st-pv:not([hidden]) .st-pv-name{
+    flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-size: 12.5px;
+  }
+  body.ss-split #st-pv:not([hidden]) .st-pv-frame{
+    flex: 1 1 auto; width: 100%; height: auto !important; min-height: 0; border: 0;
+  }
+  /* Listinn byrjar undir forskoðuninni og skrunar einn. */
+  body.ss-split #view{ padding-top: calc(46vh + 6px) !important; }
+  /* Röðin sem er í forskoðun: gullrönd svo maður sjái hvar maður er staddur. */
+  body.ss-split #bk-st-board tr.st-pv-on{ box-shadow: inset 3px 0 0 #d3ab4e !important; }
+  body.ss-split #bk-st-board tr[data-id]{ cursor: pointer; }
+}
+</style>
+<script>
+(function(){
+  if (window.__ssSplit) return; window.__ssSplit = true;
+
+  function throngt(){ return window.matchMedia('(max-width: 900px)').matches; }
+
+  // Smellur á RÖÐ (ekki á stýri) → sama og smellur á skjal-hlekkinn í henni.
+  document.addEventListener('click', function(e){
+    if (!throngt()) return;
+    var board = document.getElementById('bk-st-board'); if (!board) return;
+    if (!board.contains(e.target)) return;
+    if (e.target.closest('a,button,select,input,textarea,label,option')) return;
+    var tr = e.target.closest('tr[data-id]'); if (!tr) return;
+    var a = tr.querySelector('a[href*="/api/skjal?id="],a[href*="/storage/v1/object/public/"]');
+    if (a) a.click();          // wireStationPreview grípur hlekkinn og opnar forskoðun
+  }, true);
+
+  // Efri helmingurinn er aðeins frystur MEÐAN forskoðunin er opin.
+  function sync(){
+    var pv = document.getElementById('st-pv');
+    var opin = !!(pv && !pv.hidden && throngt());
+    document.body.classList.toggle('ss-split', opin);
+  }
+  var mo = new MutationObserver(sync);
+  function watch(){
+    var pv = document.getElementById('st-pv');
+    if (pv) { try { mo.observe(pv, { attributes: true, attributeFilter: ['hidden'] }); } catch(_){} }
+    sync();
+  }
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(watch, 600); });
+  if (document.readyState !== 'loading') setTimeout(watch, 600);
+  // Flipaskipti teikna #st-pv upp á nýtt — fylgjast með og tengja aftur.
+  new MutationObserver(function(){ watch(); }).observe(document.documentElement, { childList: true, subtree: true });
+  window.addEventListener('resize', sync);
+})();
+</script>
+
 </body>
 </html>
