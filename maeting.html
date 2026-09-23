@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="color-scheme" content="light"/>
-<style>html{color-scheme:light}html,body{color-scheme:only light}</style>
+<style>html{color-scheme:light}html,body{color-scheme:only light}    .nota{flex:0 1 300px;margin-left:auto;padding:3px 9px;border-left:3px solid var(--gold-deep,#b8912f);background:var(--bg-2,#f4f6f9);border-radius:4px;font-size:12px;color:var(--ink-2,#3a4250)}
+  </style>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <title>Mæting · verkstaðir</title>
@@ -69,6 +70,10 @@
   document.getElementById('range').addEventListener('click', function(e){ var b=e.target.closest('[data-d]'); if(!b) return; days=+b.dataset.d; range(); load(); });
   function load(){
     var list=document.getElementById('list'), meta=document.getElementById('meta');
+    // Skýringarnar sem eru skrifaðar í Mætingarflipanum (app_kv: maeting_notur)
+    // fylgja með hingað — sama geymsla, svo stöku síðan segir það sama og hubbið.
+    var NOTUR={};
+    fetch('/api/app-state?key=maeting_notur',{cache:'no-store'}).then(function(r){ return r.ok?r.json():null; }).then(function(j){ NOTUR=(j&&j.value&&j.value.ui)||{}; }).catch(function(){}).then(function(){
     fetch('/api/timavera-dagar?days='+days,{cache:'no-store'}).then(function(r){ return r.json().then(function(d){ if(!r.ok||d.error) throw new Error(d.error||('HTTP '+r.status)); return d; }); }).then(function(d){
       meta.textContent = 'Hvenær starfsmenn mættu og hættu — beint úr Tímaveru · uppfært '+new Date().toLocaleTimeString('is-IS',{hour:'2-digit',minute:'2-digit',hour12:false});
       if(!(d.days||[]).length){ list.innerHTML='<div class="empty">Engar tímafærslur á tímabilinu</div>'; return; }
@@ -78,10 +83,11 @@
             return '<div class="row"><span class="nm">'+esc(s.employee)+'</span>'
               + '<span class="tm ky-num"><span class="g">'+esc(s['in']||'—')+'</span> <span class="m2">→</span> '+(s.open?'<span class="g">í vinnu</span>':'<span class="r">'+esc(s.out||'—')+'</span>')+' <span class="m"> · '+hf(s.hours)+' klst'+(s.open?' hingað til':'')+'</span></span>'
               + '<span class="chips">'+(s.projects||[]).map(function(p){ var pn=String(p.project||''); var c=/veikindi|sick/i.test(pn)?' sick':/slökkvit|slokkvit/i.test(pn)?' slk':'';
-                  return '<span class="chip'+c+'">'+esc(pn)+' <i class="ky-num">'+hf(p.hours)+'klst'+(p['in']?' · '+esc(p['in'])+'–'+(p.open?'í vinnu':esc(p.out||'?')):'')+'</i></span>'; }).join('')+'</span></div>';
+                  return '<span class="chip'+c+'">'+esc(pn)+' <i class="ky-num">'+hf(p.hours)+'klst'+(p['in']?' · '+esc(p['in'])+'–'+(p.open?'í vinnu':esc(p.out||'?')):'')+'</i></span>'; }).join('')+'</span>'+(NOTUR[day.date+'|'+String(s.employee||'').trim().toLowerCase()]?'<span class="nota">'+esc(NOTUR[day.date+'|'+String(s.employee||'').trim().toLowerCase()])+'</span>':'')+'</div>';
           }).join('') + '</div>';
       }).join('');
     }).catch(function(e){ list.innerHTML='<div class="empty" style="color:var(--red)">Gat ekki sótt mætingu: '+esc(e.message||e)+'</div>'; });
+    });
   }
   range(); load();
   setInterval(function(){ if(!document.hidden) load(); }, 5*60*1000);   // lifandi skjár: endurnýjast á 5 mín

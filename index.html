@@ -15946,6 +15946,31 @@ async function renderPostleit(t){
   setTimeout(()=>{ try{ $('#pl-q').focus(); }catch(_){} }, 60);
 }
 
+/* Mætingar-nóturnar: eitt eintak í minni, sótt úr app_kv (`maeting_notur`).
+   Sama geymsla og /maeting.html les, svo stöku síðan sýnir sömu skýringar. */
+let TVM_NOTUR = {};
+async function tvmSaekjaNotur(){
+  try{
+    const r = await fetch('/api/app-state?key=maeting_notur', { cache:'no-store' });
+    if(r.status === 404){ TVM_NOTUR = {}; return TVM_NOTUR; }
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const j = await r.json();
+    TVM_NOTUR = (j && j.value && j.value.ui) ? j.value.ui : {};
+  }catch(e){ console.warn('[mæting] sæki nótur', e); }
+  return TVM_NOTUR;
+}
+async function tvmVistaNotu(lykill, texti){
+  const gildi = String(texti || '').trim();
+  const r = await fetch('/api/app-state', {
+    method:'POST', headers:{'content-type':'application/json'},
+    // null tekur nótuna út úr röðinni; hub_state_merge sér um samrunann.
+    body: JSON.stringify({ key:'maeting_notur', patch:{ ui:{ [lykill]: gildi || null } } })
+  });
+  if(!r.ok) throw new Error('HTTP '+r.status+' '+(await r.text()).slice(0,120));
+  if(gildi) TVM_NOTUR[lykill] = gildi; else delete TVM_NOTUR[lykill];
+  return true;
+}
+
 async function renderTvMaeting(t){
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const WD = ['Sunnudagur','Mánudagur','Þriðjudagur','Miðvikudagur','Fimmtudagur','Föstudagur','Laugardagur'];
@@ -15957,6 +15982,29 @@ async function renderTvMaeting(t){
     return diff===0?('Í dag — '+base):diff===1?('Í gær — '+base):base; };
   const hf = n => (Math.round((Number(n)||0)*100)/100).toLocaleString('is-IS');
   state.ui.tvm_days = state.ui.tvm_days || 8;
+
+  /* ── Skýringarreitur við hverja röð (Agnar 23.09.2026) ──────────────────────
+     „texta lína hægra megin sem er hægt að setja inn skýringu á t.d. fjarvist.
+     Svo það vistist og saveist allstaðar."
+
+     Nóturnar liggja í app_kv undir lyklinum `maeting_notur`, og hver nóta er
+     eitt stak undir `value.ui` með lykilinn `YYYY-MM-DD|starfsmaður`. Vistun fer
+     um `patch:{ui:{…}}` → RPC hub_state_merge, sem sameinar EINA nótu inn í
+     röðina með röð-læsingu. Þess vegna geta fjórar vélar skrifað samtímis án
+     þess að nokkur nóta glatist — sama leið og hub_state notar.
+
+     Reiturinn er í sömu línu og tímarnir, hægra megin (margin-left:auto). */
+  const notaLykill = (dags, nafn) => dags + '|' + String(nafn || '').trim().toLowerCase();
+  const notaReitur = (dags, nafn) => {
+    const k = notaLykill(dags, nafn);
+    const v = (TVM_NOTUR && TVM_NOTUR[k]) || '';
+    return '<input class="tvm-nota" data-k="' + esc(k) + '" value="' + esc(v) + '" maxlength="180" ' +
+      'placeholder="Skýring — t.d. veikur, frí, seinkun…" ' +
+      'title="Skýring á þessari mætingu. Vistast strax og sést á öllum tækjum." ' +
+      'style="margin-left:auto;flex:0 1 300px;min-width:180px;height:32px;padding:0 10px;border:1px solid var(--line-2);' +
+      'border-left:3px solid ' + (v ? 'var(--gold-deep)' : 'var(--line-2)') + ';border-radius:var(--radius-sm);' +
+      'background:var(--card);color:var(--ink);font:inherit;font-size:12.5px;outline:none">';
+  };
 
   $view.innerHTML = `
     <div style="max-width:860px">
@@ -15981,6 +16029,7 @@ async function renderTvMaeting(t){
     try{
       const r = await fetch('/api/timavera-dagar?days='+state.ui.tvm_days, {cache:'no-store'});
       const d = await r.json();
+      await tvmSaekjaNotur();   // skýringarnar (app_kv) — sóttar áður en raðirnar eru teiknaðar
       // 💬 Athugasemdir úr Brunaþéttingar-appinu (veikur / seint / fjarverandi) per dag+starfsmaður
       const fr = await fetch('/api/field-app?op=entries&days='+(state.ui.tvm_days+1)+'&kind=maeting&shares=0', {cache:'no-store'}).catch(()=>null);
       const fj = fr && fr.ok ? await fr.json().catch(()=>({rows:[]})) : {rows:[]};
@@ -16025,12 +16074,14 @@ async function renderTvMaeting(t){
                       : ['var(--bg-2)','var(--ink-2)'];
                 return `<span style="display:inline-block;background:${c[0]};color:${c[1]};border-radius:3px;padding:2px 9px;margin:1px 3px 1px 0;font-size:11.5px;white-space:nowrap;font-weight:600">${esc(pn)} <span style="opacity:.65" class="ky-num">${hf(p.hours)}klst${p.in?' · '+esc(p.in)+'–'+(p.open?'í vinnu':esc(p.out||'?')):''}</span></span>`;
               }).join('')}</span>
+              ${notaReitur(day.date, s.employee)}
               ${(FM[day.date+'|'+String(s.employee).toLowerCase()]||[]).length ? '<span style="flex:1 1 100%;display:flex;flex-wrap:wrap">'+(FM[day.date+'|'+String(s.employee).toLowerCase()]||[]).map(fmChip).join('')+'</span>' : ''}
             </div>`).join('')}
           ${[...new Set((fj.rows||[]).filter(e=>e.entry_date===day.date && !day.staff.some(s=>String(s.employee).toLowerCase()===String(e.employee||'').toLowerCase())).map(e=>String(e.employee||'')))].map(n=>`
             <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;padding:9px 18px;border-top:1px solid var(--line)">
               <span style="font-weight:600;color:var(--ink);text-transform:capitalize;min-width:140px">${esc(n)}</span>
               <span style="font-size:12px;color:var(--red);font-weight:600">ekki í Tímaveru</span>
+              ${notaReitur(day.date, n)}
               <span style="flex:1 1 100%;display:flex;flex-wrap:wrap">${(FM[day.date+'|'+n.toLowerCase()]||[]).map(fmChip).join('')}</span>
             </div>`).join('')}
         </div>`).join('');
@@ -16038,6 +16089,28 @@ async function renderTvMaeting(t){
       list.innerHTML = '<div style="padding:26px;color:var(--red);background:#fff;border:1px solid var(--red-line);border-radius:12px">Gat ekki sótt mætingu: '+esc(e.message||String(e))+'</div>';
     }
   }
+  // Skýringarreitirnir: vistast við blur/Enter. Ein nóta í einu um hub_state_merge,
+  // svo samtímis skrif frá öðru tæki yfirskrifa ekki hinar nóturnar.
+  $view.addEventListener('change', async e => {
+    const inp = e.target.closest && e.target.closest('input.tvm-nota'); if(!inp) return;
+    const k = inp.dataset.k; if(!k) return;
+    const gildi = inp.value.trim();
+    if(gildi === (TVM_NOTUR[k] || '')) return;
+    inp.style.borderLeftColor = 'var(--muted-2)';
+    try{
+      await tvmVistaNotu(k, gildi);
+      inp.style.borderLeftColor = gildi ? 'var(--gold-deep)' : 'var(--line-2)';
+      inp.title = 'Vistað ' + new Date().toLocaleTimeString('is-IS',{hour:'2-digit',minute:'2-digit'}) + ' — sést á öllum tækjum.';
+    }catch(err){
+      inp.style.borderLeftColor = 'var(--red)';
+      inp.title = 'Vistaðist EKKI: ' + (err.message||err);
+      alert('Skýringin vistaðist ekki: ' + (err.message||err));
+    }
+  });
+  $view.addEventListener('keydown', e => {
+    const inp = e.target.closest && e.target.closest('input.tvm-nota');
+    if(inp && e.key === 'Enter'){ e.preventDefault(); inp.blur(); }
+  });
   $view.querySelectorAll('#tvm-range [data-d]').forEach(b=>b.addEventListener('click',()=>{ state.ui.tvm_days=+b.dataset.d; save(); render(); }));
   const rf = $view.querySelector('#tvm-refresh'); if(rf) rf.addEventListener('click', load);
   // Tímavera samstillt annars staðar (annar takki / annar gluggi) → endurhlaða listann hér.

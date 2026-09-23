@@ -15,6 +15,11 @@ const ALLOWED_KEYS = new Set([
   'multitool_settings', // ⚙️ Stillingar í Skjala-multitool (deilast milli vélanna 4)
   'ky_settings',        // Kröfu yfirlit: netfang bókara o.fl. sem allar vélar deila (05.09.2026)
   'cg_reports',         // Skýrslur (CG): notenda-skilgreindar skýrslur — sama eintak á öllum vélum (05.09.2026)
+  // Mæting · verkstaðir: skýring við hverja röð (t.d. „veikur", „frí", „bíllinn
+  // bilaði"). Lykill hverrar nótu er `YYYY-MM-DD|starfsmaður` og þær liggja undir
+  // `value.ui`, svo `patch:{ui:{…}}` (hub_state_merge) skrifar EINA nótu í einu með
+  // röð-læsingu — tvær vélar geta skrifað samtímis án þess að hvor yfirskrifi aðra.
+  'maeting_notur',      // 23.09.2026 (Agnar: „texta lína hægra megin … vistist allstaðar")
 ]);
 
 exports.handler = async (event) => {
