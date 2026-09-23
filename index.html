@@ -24686,7 +24686,9 @@ setTimeout(syncFromServer, 200);
     border-bottom: 2px solid #11141c !important;
     background: #fff; box-shadow: 0 14px 30px -18px rgba(0,0,0,.65);
   }
-  body.ss-split #st-pv:not([hidden]) .st-pv-head{
+  /* Hausinn: ein lína, þéttir takkar — á 412 px braut hann sig í þrjár raðir
+     og át 90 px af forskoðuninni (mælt 23.09). */
+  body.ss-split #st-pv:not([hidden]) .st-pv-head{ flex-wrap: nowrap !important; white-space: nowrap;
     flex: 0 0 auto; display: flex; align-items: center; gap: 6px;
     padding: 8px 10px; border-bottom: 1px solid var(--line, #e2e8f0); background: #f7f8fb;
   }
@@ -24699,6 +24701,8 @@ setTimeout(syncFromServer, 200);
   }
   /* Listinn byrjar undir forskoðuninni og skrunar einn. */
   body.ss-split #view{ padding-top: calc(46vh + 6px) !important; }
+  body.ss-split #st-pv:not([hidden]) .st-pv-head .btn{ padding: 6px 9px !important; font-size: 12px !important; min-height: 0 !important; }
+  body.ss-split #st-pv:not([hidden]) .st-pv-count{ font-size: 11px; color: #6b7483; }
   /* Röðin sem er í forskoðun: gullrönd svo maður sjái hvar maður er staddur. */
   body.ss-split #bk-st-board tr.st-pv-on{ box-shadow: inset 3px 0 0 #d3ab4e !important; }
   body.ss-split #bk-st-board tr[data-id]{ cursor: pointer; }
