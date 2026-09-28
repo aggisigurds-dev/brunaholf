@@ -42,10 +42,19 @@ async function stada(value) {
 }
 
 // ── Gmail ────────────────────────────────────────────────────────────────────
+// 28.09.2026: 3 mánaða söfnun rakst á „Units per minute per user" (403/429) — 20–40 skeyti féllu í hverri
+// keyrslu og þurfti að keyra aftur og aftur. Kvótinn er á mínútu, svo beðið er og reynt aftur (15 s, 30 s, 45 s)
+// í stað þess að sleppa skeytinu. Aðrar villur falla strax eins og áður.
+const bida = (ms) => new Promise((res) => setTimeout(res, ms));
 async function gget(token, path) {
-  const r = await fetch(GMAIL + path, { headers: { Authorization: 'Bearer ' + token } });
-  if (!r.ok) throw new Error('Gmail ' + r.status + ' ' + (await r.text()).slice(0, 200));
-  return r.json();
+  for (let tilraun = 0; ; tilraun++) {
+    const r = await fetch(GMAIL + path, { headers: { Authorization: 'Bearer ' + token } });
+    if (r.ok) return r.json();
+    const texti = (await r.text()).slice(0, 400);
+    const kvoti = r.status === 429 || (r.status === 403 && /quota|rate ?limit/i.test(texti));
+    if (kvoti && tilraun < 3) { await bida(15000 * (tilraun + 1)); continue; }
+    throw new Error('Gmail ' + r.status + ' ' + texti.slice(0, 200));
+  }
 }
 async function listaSkeyti(token, days) {
   const q = encodeURIComponent('has:attachment newer_than:' + days + 'd -from:' + ACCOUNT);
