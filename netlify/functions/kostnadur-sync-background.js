@@ -109,7 +109,7 @@ const SCHEMA = {
   type: 'object', additionalProperties: false,
   properties: {
     tegund: { type: 'string', enum: ['reikningur', 'kvittun', 'teya_yfirlit', 'kortayfirlit', 'greidsluselill', 'okkar_reikningur', 'tilbod', 'annad'] },
-    flokkur: { type: 'string', enum: ['verkstaedi', 'verk', 'efni', 'rekstur', 'bill', 'hugbunadur', 'annad', 'ekki_kostnadur'] },
+    flokkur: { type: 'string', enum: ['verkstaedi', 'verk', 'lager', 'efni', 'rekstur', 'bill', 'hugbunadur', 'annad', 'ekki_kostnadur'] },
     seljandi: nullable('string'),
     seljandi_kt: nullable('string'),
     reikningsnr: nullable('string'),
@@ -140,8 +140,9 @@ const SYSTEM =
   'kortafyrirtækinu — færslur í linur), kortayfirlit (kreditkortayfirlit), greidsluselill, okkar_reikningur ' +
   '(reikningur sem VIÐ gáfum út — Slökkvitæki/Brunahólf er seljandinn), tilbod, annad.\n' +
   'flokkur: verkstaedi (rekstrarvörur/varahlutir/áfyllingarefni fyrir verkstæðið sjálft), verk (kostnaður sem ' +
-  'tilheyrir ákveðnu verki eða viðskiptavini — t.d. verknúmer, heimilisfang eða kúnni nefndur), efni (vörukaup ' +
-  'til endursölu), rekstur (sími, húsnæði, tryggingar, bókhald, skattar, gjöld), bill (eldsneyti, viðgerðir, ' +
+  'tilheyrir ákveðnu verki eða viðskiptavini — t.d. verknúmer, heimilisfang eða kúnni nefndur), lager (vörur keyptar ' +
+  'á lager: slökkvitæki, reykskynjarar, brunaslöngur, skilti og varahlutir til endursölu), efni (annað efni og ' +
+  'vörukaup), rekstur (sími, húsnæði, tryggingar, bókhald, skattar, gjöld), bill (eldsneyti, viðgerðir, ' +
   'dekk), hugbunadur (áskriftir, hugbúnaður), annad, ekki_kostnadur (okkar eigin reikningar, auglýsingar, ' +
   'skjöl sem eru ekki kostnaður).\n' +
   'Upphæðir í krónum sem tölur án þúsundaskila (12.400 kr → 12400). upphaed = heildarupphæð MEÐ VSK. ' +
