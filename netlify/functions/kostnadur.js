@@ -39,8 +39,35 @@ exports.handler = async (event) => {
       const [row] = r.ok ? await r.json() : [];
       return json(200, { stada: row ? row.value : null, uppfaert: row ? row.updated_at : null });
     }
+    if (event.httpMethod === 'GET' && p.mynd) {
+      const id = parseInt(p.mynd, 10);
+      if (!id) return json(400, { error: 'mynd=<id> vantar' });
+      const r = await fetch(SUPABASE_URL + '/rest/v1/kostnadur?select=mynd_path&id=eq.' + id, { headers: sbH() });
+      const [row] = r.ok ? await r.json() : [];
+      if (!row || !row.mynd_path) return json(404, { error: 'Mynd fannst ekki' });
+      const s = await fetch(SUPABASE_URL + '/storage/v1/object/sign/' + BUCKET + '/' + row.mynd_path, {
+        method: 'POST', headers: sbH({ 'content-type': 'application/json' }), body: JSON.stringify({ expiresIn: 3600 }),
+      });
+      const sj = await s.json().catch(() => ({}));
+      const slod = sj.signedURL || sj.signedUrl;
+      if (!s.ok || !slod) return json(502, { error: 'Undirritun mistókst: ' + JSON.stringify(sj).slice(0, 200) });
+      return json(200, { url: SUPABASE_URL + '/storage/v1' + slod });
+    }
     if (event.httpMethod === 'POST') {
       let b = {}; try { b = JSON.parse(event.body || '{}'); } catch (_) {}
+      if (b.action === 'upload-url') {
+        const id = parseInt(b.id, 10);
+        const ext = (String(b.ext || 'jpg')).replace(/[^a-z0-9]/g, '').slice(0, 6) || 'jpg';
+        if (!id) return json(400, { error: 'id vantar' });
+        const path = 'myndir/' + id + '/' + Date.now() + '.' + ext;
+        const s = await fetch(SUPABASE_URL + '/storage/v1/object/upload/sign/' + BUCKET + '/' + path, {
+          method: 'POST', headers: sbH({ 'content-type': 'application/json' }),
+        });
+        const sj = await s.json().catch(() => ({}));
+        const signedURL = sj.signedURL || sj.url;
+        if (!s.ok || !signedURL) return json(502, { error: 'Undirritun upload mistókst: ' + JSON.stringify(sj).slice(0, 200) });
+        return json(200, { uploadUrl: SUPABASE_URL + '/storage/v1' + signedURL, path });
+      }
       if (b.action !== 'sync') return json(400, { error: 'action óþekkt' });
       // Ein keyrsla í einu — önnur söfnun á meðan sú fyrri er á ferð myndi lesa sömu skjölin tvisvar.
       const r = await fetch(SUPABASE_URL + '/rest/v1/app_kv?select=value,updated_at&key=eq.kostnadur_sync', { headers: sbH() });
