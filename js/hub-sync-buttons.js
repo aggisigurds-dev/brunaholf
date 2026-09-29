@@ -89,9 +89,13 @@
       let cur = null;
       try { cur = (await (await fetch(`${SUPABASE_URL}/rest/v1/automation_triggers?id=eq.${row.id}&select=status,result`, { headers: H })).json())[0]; } catch (_) {}
       const st = cur && cur.status;
-      if (st === "done") return { ok: true, result: cur.result || "" };
-      if (st === "error") throw new Error(/login/i.test(cur.result || "") ? "Ajour-innskráning útrunnin á brúartölvunni" : String(cur.result || "villa á brúartölvu").split("|")[0].slice(0, 140));
-      if (st === "running") { setP("brúartölva sækir… " + sek + "s"); if (sek > 900) throw new Error("sókn tók of langan tíma"); continue; }
+      // 29.09.2026: „NÚNA"-skriftur brúarinnar (luna-bridge ajour-nuna.js / postur-nuna.js) skrifa
+      // framvindu í result meðan þær keyra — t.d. „🔑 innskráningargluggi opinn á skrifstofuvélinni".
+      // Í lokin er result síðustu 3 línur úttaksins (" | "); sú síðasta er samantektin.
+      const sidast = String((cur && cur.result) || "").split("|").pop().trim();
+      if (st === "done") return { ok: true, result: sidast };
+      if (st === "error") throw new Error(/login/i.test(sidast) ? "Ajour-innskráning útrunnin á brúartölvunni" : (sidast || "villa á brúartölvu").slice(0, 160));
+      if (st === "running") { setP((sidast ? sidast + " · " : "brúartölva sækir… ") + sek + "s"); if (sek > 900) throw new Error("sókn tók of langan tíma"); continue; }
       setP("bíð eftir brúartölvu… " + sek + "s");
       if (sek > 100) {                                   // engin vél tók beiðnina
         fetch(`${SUPABASE_URL}/rest/v1/automation_triggers?id=eq.${row.id}&status=eq.pending`, {   // svo hún keyri ekki klukkutímum seinna
@@ -103,7 +107,7 @@
   }
   async function ajourRun(setP) {
     const b = await bridgeRun("ajour", setP);
-    if (b.ok) return "sótt úr Ajour";
+    if (b.ok) return b.result || "sótt úr Ajour";
     setP("engin brúartölva í gangi — les Drive-skrá…");
     const d = await ajourDrive(setP);
     throw new Error("Engin brúartölva í gangi (skrifstofu-/heimavél) — las aðeins síðustu Drive-skrá (" + d + ")");
@@ -120,10 +124,21 @@
     }
     return "í vinnslu";
   }
+  // Redder (29.09.2026): reikningarnir koma í pósti í Thunderbird á skrifstofuvélinni og
+  // fara þaðan á Drive — gamli takkinn las AÐEINS Drive, svo reikningur sem kom í gær sást
+  // ekki fyrr en í 07:30-keyrslunni (0145333, 28.09). Nú: brúin ræsir Thunderbird ef þarf og
+  // les póst + Redder + setur á Drive; svari engin brúartölva er Drive lesið sem varaleið.
+  async function redderBridge(setP) {
+    const b = await bridgeRun("redder", setP);
+    if (b.ok) return b.result || "sótt úr Thunderbird";
+    setP("engin brúartölva svaraði — les Drive…");
+    const d = await redderRun(setP);
+    return "engin brúartölva svaraði — las aðeins Drive (" + d + ")";
+  }
   const CLOUD = {
     timavera: () => getJSON("/api/timavera-pull?days=30").then((d) => (d.upserted != null ? d.upserted : 0) + " færslur"),
     payday:   () => getJSON("/api/payday-pull").then((d) => (d.upserted != null ? d.upserted : 0) + " reikningar"),
-    redder:   redderRun,
+    redder:   redderBridge,
     ajour:    ajourRun,
   };
 

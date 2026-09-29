@@ -105,6 +105,17 @@ A separate repo `aggisigurds-dev/luna-bridge` runs on the user's
 **Windows desktop** as a set of scheduled scripts. It's the source
 for several Supabase tables this app reads:
 
+- **„Samstilla NÚNA" (29.09.2026, luna-bridge eeeb6ad):** skrifstofuvélin (DESKTOP-509MN7M)
+  er aðalbrúin. Hub-takkarnir ↻ Samstilla **Ajour** og **Redder** (`js/hub-sync-buttons.js`,
+  `bridgeRun`) setja beiðni í `automation_triggers` → watcher keyrir `ajour-nuna.js`
+  (opnar innskráningarglugga á vélinni ef lotan er dauð → CSV-sókn → yfirlit) eða
+  `postur-nuna.js` (ræsir Thunderbird ef lokað → bridge.js + redder.js + redder-drive.js).
+  Redder-takkinn las áður AÐEINS Drive (`/api/redder-read`) — það er nú varaleið ef engin
+  brúartölva svarar. Skrifturnar skrifa framvindu í `automation_triggers.result` (watcher
+  setur `TRIGGER_ID`) og takkinn sýnir hana. **Ajour-lotan** er lotukaka sem deyr við
+  aðgerðaleysi → `ajour-vakandi.js` á 10 mín fresti (Task `LunaBridge2-AjourVakandi`)
+  heldur henni lifandi; `automation_runs(job_name='ajour-vakandi')` skráir aðeins breytingar.
+
 - **`bridge.js`** — reads Thunderbird mbox files for 5 accounts,
   classifies messages, upserts to `email_digest`. Runs every 15min
   via Task Scheduler.
