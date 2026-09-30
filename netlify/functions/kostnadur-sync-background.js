@@ -199,6 +199,57 @@ exports.handler = async (event) => {
   if (!SUPABASE_URL || !SUPABASE_KEY) return;
   if (!ANTHROPIC) { s.villur.push('ANTHROPIC_API_KEY vantar í Netlify'); s.a_ferd = false; s.lokid = new Date().toISOString(); await stada(s); return; }
   await stada(s);
+
+  // ── ENDURLESTUR Á MISHEPPNUÐUM LESTRI (30.09.2026) ────────────────────────
+  // Agnar: „upphæðin kemur allavega ekki inn hjá öryggismiðstöðinni."
+  // Lesturinn féll á `Claude 400: Your credit balance is too low` — 13 skjöl,
+  // þar á meðal 9 alvöru reikningar: Öryggismiðstöðin 1027503, Sölureikningur
+  // S-034796, Reikningur-0000002..7.
+  //
+  // EN VERRA: innsetningin neðar notar `resolution=ignore-duplicates`, svo röð
+  // sem ER komin er ALDREI snert aftur. Skjöl sem féllu á inneign hefðu því
+  // staðið föst að eilífu — líka eftir að fyllt væri á. Þessi umferð tekur
+  // raðir sem bera ai_villa og les þær upp á nýtt.
+  //
+  // VÖRN: AÐEINS raðir þar sem breytt_af IS NULL — enginn hefur snert þær
+  // handvirkt. Flokkur, tenging á verk og nótur sem einhver skráði eru því
+  // aldrei yfirskrifaðar, og PATCH snertir eingöngu AI-reitina.
+  try {
+    const endurMax = Math.min(Math.max(parseInt(p.endur || '20', 10) || 20, 0), 100);
+    if (endurMax > 0) {
+      const rr = await sb('kostnadur?select=id,storage_path,skra_nafn,mime,efni,sendandi,sendandi_email&ai_villa=not.is.null&breytt_af=is.null&order=id.desc&limit=' + endurMax);
+      const radir = rr.ok ? await rr.json() : [];
+      s.endurlesid = 0; s.endur_mistokst = 0;
+      for (const rad of radir) {
+        if (Date.now() - t0 > TIMA_HAMARK_MS) break;
+        if (!rad.storage_path) continue;
+        try {
+          const dl = await fetch(SUPABASE_URL + '/storage/v1/object/' + BUCKET + '/' + rad.storage_path, { headers: sbH() });
+          if (!dl.ok) throw new Error('Storage ' + dl.status);
+          const buf = Buffer.from(await dl.arrayBuffer());
+          const ai = await lesa({ fn: rad.skra_nafn, mime: rad.mime }, buf, rad.efni || '', (rad.sendandi || '') + ' <' + (rad.sendandi_email || '') + '>');
+          const patch = {
+            tegund: ai.tegund, flokkur: ai.flokkur, seljandi: ai.seljandi, seljandi_kt: kt(ai.seljandi_kt),
+            reikningsnr: ai.reikningsnr, dags: dagsEda(ai.dags), gjalddagi: dagsEda(ai.gjalddagi),
+            upphaed: tala(ai.upphaed), vsk: tala(ai.vsk), gjaldmidill: ai.gjaldmidill || 'ISK',
+            linur: Array.isArray(ai.linur) ? ai.linur.slice(0, 300) : [], samantekt: ai.samantekt, tilvisun: ai.tilvisun,
+            ai_vissa: typeof ai.vissa === 'number' ? ai.vissa : null,
+            ai: { model: MODEL, lesid: new Date().toISOString(), endurlesid: true },
+            ai_villa: null,
+          };
+          if (ai.flokkur === 'ekki_kostnadur' || ai.tegund === 'okkar_reikningur') patch.stada = 'hunsad';
+          await sb('kostnadur?id=eq.' + rad.id, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(patch) });
+          s.endurlesid++;
+        } catch (e) {
+          s.endur_mistokst++;
+          // Villan er skráð AFTUR svo næsta keyrsla reyni áfram — hún hverfur ekki þegjandi.
+          await sb('kostnadur?id=eq.' + rad.id, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ ai_villa: String(e.message || e).slice(0, 400) }) });
+        }
+      }
+      if (s.endurlesid || s.endur_mistokst) await stada(s);
+    }
+  } catch (e) { s.villur.push('endurlestur: ' + String(e.message || e).slice(0, 200)); }
+
   try {
     const token = await freshAccessTokenFor(ACCOUNT);
     const ids = await listaSkeyti(token, days);
