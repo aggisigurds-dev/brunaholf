@@ -98,7 +98,14 @@
       if (st === "running") { setP((sidast ? sidast + " · " : "brúartölva sækir… ") + sek + "s"); if (sek > 900) throw new Error("sókn tók of langan tíma"); continue; }
       setP("bíð eftir brúartölvu… " + sek + "s");
       if (sek > 100) {                                   // engin vél tók beiðnina
-        fetch(`${SUPABASE_URL}/rest/v1/automation_triggers?id=eq.${row.id}&status=eq.pending`, {   // svo hún keyri ekki klukkutímum seinna
+        // 30.09.2026: filterinn var `status=eq.pending`, en migrationin 29.09
+        // (sql/2026-09-29_automation_triggers_bida.sql) breytti SJÁLFGEFNA gildinu í
+        // 'bida' og innsetningin hér að ofan setur ekki status — svo hver ný röð er
+        // 'bida' og þessi PATCH náði í ENGA röð. Beiðnin sat þá í biðröð og brúin gat
+        // tekið hana klukkutímum seinna, sem er einmitt það sem hún á að hindra.
+        // LATENT, EKKI SKAÐI: mælt sama dag báru allar 19 villuraðir `started_at`, svo
+        // brúin hafði alltaf tekið beiðnina og þessi leið hafði aldrei keyrt.
+        fetch(`${SUPABASE_URL}/rest/v1/automation_triggers?id=eq.${row.id}&status=in.(pending,bida)`, {   // svo hún keyri ekki klukkutímum seinna
           method: "PATCH", headers: { ...H, Prefer: "return=minimal" },
           body: JSON.stringify({ status: "error", result: "engin brúartölva svaraði innan 100 sek", finished_at: new Date().toISOString() }) }).catch(() => {});
         return { ok: false };
