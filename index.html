@@ -2369,6 +2369,12 @@ function renderTabs(){
     el.addEventListener('click',()=>{
       const _lt = state.tabs.find(x=>x.id===el.dataset.id);
       if(_lt && _lt.url){ window.open(_lt.url, '_blank', 'noopener'); return; } // ytri tengill (t.d. Verkfæri) → opnast í nýjum flipa, skiptir ekki um view
+      // 01.10.2026 — sama flipi aftur má ekki kalla render(): það tæmir $view,
+      // drepur í-loftinu sóknir (__synKynslod) og hoppar á topp síðunnar.
+      if(state.ui.activeTab===el.dataset.id){
+        document.getElementById('layout').classList.remove('open');
+        return;
+      }
       state.ui.activeTab=el.dataset.id; save({nav:true}); render();
       document.getElementById('layout').classList.remove('open'); // close mobile drawer
     });
@@ -24316,6 +24322,7 @@ function applyDeepLinkTab(){
   if(tab.url){ try{ window.open(tab.url, '_blank', 'noopener'); }catch(_){} return false; } // ytri tengill (t.d. Verkfæri) — opna, ekki skipta um view
   tab.hidden = false;
   state.ui = state.ui || {};
+  if(state.ui.activeTab === id) return false; // þegar á flipanum — ekki render() sem tæmir $view
   state.ui.activeTab = id;
   return true;
 }
