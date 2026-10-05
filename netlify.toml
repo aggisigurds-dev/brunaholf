@@ -219,6 +219,12 @@
 [functions."payday-pull-background"]
   schedule = "0 7,15 * * *"
 
+# Redder-reikningar: línur + verkstaður úr PDF-unum í Drive (05.10.2026). Póstlesarinn skráir aðeins
+# hausinn og Drive-lesarinn var bara keyrður með takka — september sat línulaus á „(ótengt)". Þrisvar
+# á dag í nyir-ham: aðeins reikningar sem vantar eða eru póst-haus án lína; eldri reikningar ósnertir.
+[functions."redder-read-background"]
+  schedule = "50 9,13,17 * * *"
+
 # Nightly (03:00 UTC) append-only backup of the Supabase document PDFs
 # (úttektarskýrslur + reikningar + Efnislisti/Tímaskýrsla) into a Google Drive
 # backup folder — a durable second copy so the docs never live in one unbacked

@@ -10,6 +10,16 @@
 //     no dry → upsert new/changed invoices into redder_invoices
 //
 // Batched by `offset` (each call ≤ ~10s); the UI pages through via `nextOffset`.
+//
+//   GET /api/redder-read?nyir=1[&dry=1][&limit=12]
+//     AÐEINS reikningar sem vantar línurnar (05.10.2026, Agnar: „the reader from redder seems to be
+//     down.. very few is readed"). Póstlesarinn (luna-bridge/redder.js) skráir aðeins HAUSINN
+//     (source 'redder_mail': engar línur, enginn verkstaður) og þessi lesari var bara keyrður með
+//     takka — enginn ýtti eftir 11.09, svo september sat línulaus á „(ótengt)". nyir les skrá aðeins
+//     ef reikningurinn er EKKI til eða er póst-haus án lína; eldri reikningar (handvirkar tengingar,
+//     útilokaðar línur) eru ósnertir og handvirk verkstaðatenging á haus er aldrei yfirskrifuð.
+//     Unnar skrár detta úr menginu, svo kallarinn kallar aftur með offset 0 þar til nextOffset er null.
+//     redder-read-background.js keyrir þetta á áætlun.
 // Per PDF it extracts: Reikningur nr. · Dagsetning · Eindagi · Sölumaður ·
 // "Vegna <verkstaður> umb <tengiliður>" · Upphæð án vsk / Vsk / Samtals m. vsk —
 // and since 2026-07-09 also the EFNIS-VÖRULÍNUR (vörunr/heiti/magn/ein.verð/
@@ -34,6 +44,7 @@ exports.handler = async (event) => {
   const dry = p.dry === '1' || p.dry === 'true';
   const limit = Math.min(parseInt(p.limit || '6', 10) || 6, 12);
   const offset = Math.max(parseInt(p.offset || '0', 10) || 0, 0);
+  const nyir = p.nyir === '1' || p.nyir === 'true';
 
   let token;
   try { token = await freshAccessToken(); }
@@ -44,6 +55,20 @@ exports.handler = async (event) => {
 
   try {
     let files = await listPdfs(folder, token);
+    let thekkt = null;                                   // nyir: invoice_nr → { source, worksite_match, lines }
+    if (nyir) {
+      thekkt = await thekktirReikningar();
+      const nyjar = [];
+      let oskyrd = 0;
+      for (const f of files) {
+        const m = String(f.name || '').match(/Reikningur[-_ ]?0*(\d{4,7})/i);
+        if (!m) { oskyrd++; continue; }                  // tilboð o.þ.h. — heitið segir ekki hvaða reikningur
+        const t = thekkt.get(m[1].padStart(7, '0'));
+        if (!t || (t.lines === 0 && t.source === 'redder_mail')) nyjar.push(f);
+      }
+      files = nyjar;
+      stats.nyir = true; stats.oskyrd_heiti = oskyrd;
+    }
     // ?only=<reikningsnr eða hluti úr skráarnafni> — endurlesa EINN reikning eftir
     // lagfæringu á lesaranum án þess að skrifa yfir alla möppuna (03.09.2026).
     const only = (p.only || '').trim();
@@ -98,14 +123,18 @@ exports.handler = async (event) => {
 
         if (!dry) {
           if (await invoiceExists(invoice_nr)) stats.dupSkip++;   // stat only — upsert still refreshes it
-          const inv = await upsertInvoice({
+          const uppf = {
             invoice_nr, dagsetning, eindagi, salesperson,
             worksite_match, worksite_raw: vegna.raw || null,
             contact_person: vegna.contact || null,
             an_vsk, vsk, m_vsk,
             drive_file_id: f.id, source: 'gdrive',
             notes: 'Lesið úr Drive (redder-read)',
-          });
+          };
+          // nyir: verkstaður sem var tengdur handvirkt á póst-hausinn ræður
+          const fyrir = thekkt && thekkt.get(invoice_nr);
+          if (fyrir && fyrir.worksite_match) delete uppf.worksite_match;
+          const inv = await upsertInvoice(uppf);
           // Replace the invoice's line items ONLY when the parse found some —
           // a parse miss must never wipe good existing lines.
           if (inv && inv.id && li.lines.length) {
@@ -118,6 +147,8 @@ exports.handler = async (event) => {
     }
     stats.processed = slice.length;
     stats.nextOffset = (offset + slice.length < files.length) ? offset + slice.length : null;
+    // nyir + skrif: unnar skrár detta úr menginu — næsta kall byrjar aftur á 0
+    if (nyir && !dry) stats.nextOffset = stats.nextOffset != null ? 0 : null;
   } catch (e) {
     return json(500, { error: e.message, stats });
   }
@@ -402,6 +433,23 @@ async function invoiceExists(invoice_nr) {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/redder_invoices?invoice_nr=eq.${encodeURIComponent(invoice_nr)}&select=invoice_nr&limit=1`, { headers: sbHeaders() });
   const rows = await r.json().catch(() => []);
   return Array.isArray(rows) && rows.length > 0;
+}
+// nyir: allir þekktir reikningar með fjölda lína (blaðsíðuflett — aldrei bara fyrsta síðan)
+async function thekktirReikningar() {
+  const ut = new Map();
+  for (let fra = 0; ; fra += 1000) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/redder_invoices?select=invoice_nr,source,worksite_match,redder_line_items(count)&order=id`, {
+      headers: sbHeaders({ Range: `${fra}-${fra + 999}`, 'Range-Unit': 'items' }),
+    });
+    if (!r.ok) throw new Error('þekktir reikningar ' + r.status + ' ' + (await r.text()).slice(0, 200));
+    const arr = await r.json();
+    for (const x of arr) {
+      const c = Array.isArray(x.redder_line_items) && x.redder_line_items[0] ? +x.redder_line_items[0].count || 0 : 0;
+      ut.set(String(x.invoice_nr), { source: x.source, worksite_match: x.worksite_match, lines: c });
+    }
+    if (arr.length < 1000) break;
+  }
+  return ut;
 }
 async function upsertInvoice(row) {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/redder_invoices?on_conflict=invoice_nr`, {
