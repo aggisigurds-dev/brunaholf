@@ -2469,6 +2469,13 @@ function buttonsFor(tabId){ return state.buttons.filter(b=>b.tab===tabId); }
 
 function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function escapeAttr(s){ return escapeHtml(s); }
+// Redder-reikningurinn sjálfur (05.10.2026, Agnar: „sjá skjölin úr efniskostnað eins og í Kostnaður í slokkvitaeki"):
+// PDF-ið í Drive-möppunni opnast um /api/skjal — server-OAuth, engin Google-innskráning né reikningaveljari.
+// Póst-haus án Drive-skrár (source redder_mail) fær hlutlausa línu í stað dauðs takka.
+function redderPdfHlekkur(inv){
+  if (inv && inv.drive_file_id) return `<a class="rg-tool" href="/api/skjal?id=${encodeURIComponent(inv.drive_file_id)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="margin-left:6px;padding:2px 7px;font-size:11px;font-weight:500" title="Opna PDF-reikninginn frá Redder í nýjum flipa">📄 Skoða reikning</a>`;
+  return `<span style="margin-left:6px;font-size:11px;font-weight:400;color:var(--muted)" title="PDF-ið er ekki komið í Drive-möppuna — lesarinn sækir það sjálfkrafa">📄 PDF ekki komið</span>`;
+}
 
 // ===== Google OAuth re-auth helpers (Drive token expires/revokes periodically) =====
 // True when a failed API response looks like the Google connection needs renewing.
@@ -10396,7 +10403,7 @@ async function rgOpenEfniEditor(worksite, month){
       <div class="efni-card">
         <div class="efni-card-head">
           <div>
-            <div class="efni-inv-nr"><label class="efni-pick"><input type="checkbox" class="efni-sel" data-inv="${inv.id}" title="Velja til að færa marga reikninga í einu"> #${escapeHtml(inv.invoice_nr)}</label> · ${inv.dagsetning || '—'}${inv.bundle_label?` · <span class="efni-bundle">⧉ ${escapeHtml(inv.bundle_label)}</span>`:''}</div>
+            <div class="efni-inv-nr"><label class="efni-pick"><input type="checkbox" class="efni-sel" data-inv="${inv.id}" title="Velja til að færa marga reikninga í einu"> #${escapeHtml(inv.invoice_nr)}</label> · ${inv.dagsetning || '—'}${inv.bundle_label?` · <span class="efni-bundle">⧉ ${escapeHtml(inv.bundle_label)}</span>`:''} ${redderPdfHlekkur(inv)}</div>
             <div class="efni-inv-raw">${escapeHtml(inv.worksite_raw || '')} · seljandi: ${escapeHtml(inv.salesperson || '—')}</div>
             <div class="efni-ws-row"><label>Verkstaður reikningsins</label><input list="efni-ws-list" class="efni-ws-inv" data-inv="${inv.id}" value="${escapeAttr(inv.worksite_match||'')}" placeholder="óparað — skrifaðu verkstað"><label class="efni-mo">Telst í mánuði<input type="month" class="efni-month-inv" data-inv="${inv.id}" value="${escapeAttr(inv.month_override || String(inv.dagsetning||'').slice(0,7))}" title="Efni keypt í lok mánaðar má telja með næsta mánuði — bókhaldsdagsetningin breytist ekki"></label><span class="efni-ws-st"></span></div>
           </div>
@@ -20922,7 +20929,7 @@ async function renderEfniskostnadur(t){
                   ${g.invoices.map(inv => `
                     <div style="margin:8px 0;padding:10px;background:#fff;border-radius:6px;border:1px solid var(--border)">
                       <div style="display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:12px">
-                        <span>Reikningur #${escapeHtml(inv.invoice_nr)} · ${inv.dagsetning || '—'}
+                        <span>Reikningur #${escapeHtml(inv.invoice_nr)} · ${inv.dagsetning || '—'} ${redderPdfHlekkur(inv)}
                           <span class="ef-ws-slot" data-ef-slot="inv" data-ef-invoice="${escapeAttr(inv.invoice_nr)}" data-ef-old="${escapeAttr(inv.worksite_match||'')}" data-ef-label="${inv.worksite_match?'↪ Breyta':'🔗 Tengja við verkstað'}" style="margin-left:8px;font-weight:400"><button type="button" class="rg-tool ef-ws-trigger" style="padding:2px 6px;font-size:11px" title="${inv.worksite_match?'Færa þennan reikning á annan verkstað':'Tengja við verkstað handvirkt'}">${inv.worksite_match?'↪ Breyta':'🔗 Tengja við verkstað'}</button></span>
                         </span>
                         <span>${fmt(inv.m_vsk)} kr m. vsk</span>
