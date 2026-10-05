@@ -12276,6 +12276,8 @@ async function renderGerdReikninga(t){
             netfang: (document.getElementById('gr-email')||{}).value ? document.getElementById('gr-email').value.trim() : null,
             source: existing?.source || 'timavera',
             hours_dagvinna: c.dvH, hours_eftirvinna: c.evH,
+            // 05.10.2026: Tímaveru-tímar mánaðarins Á VISTUNARSTUNDU — Kröfu yfirlit telur nýja tíma frá þessu marki
+            timavera_klst_vid_vistun: Math.round((Number(monthHours(wObj))||0)*100)/100,
             rate_dagvinna: c.dvR, rate_eftirvinna: c.evR,
             akstur_km: c.km, akstur_ferdir: c.fr, akstur_gjald: c.gj,
             smahlutagjald: c.sma, stadfesting: c.stadf,
@@ -16839,10 +16841,18 @@ async function renderKrofuyfirlit(t){
           // að mánuðinum lauk eru frágengin (hádegi/afsláttur dregin frá) → engin viðbót.
           const dr = REVIEWS[`${w.project}|${month}`];
           if(!dr || dr.status!=='draft' || Number(dr.fixed_total)>0) continue;
-          if(String(dr.updated_at||'').slice(0,7) > month) continue;
           const saved = (Number(dr.hours_dagvinna)||0) + (Number(dr.hours_eftirvinna)||0);
-          const nyir = hours - saved;
-          if(!(saved>0) || nyir < 0.5) continue;
+          // 05.10.2026 (Agnar: „…svo myndi byrja að telja þar"): drögin geyma Tímaveru-tíma mánaðarins á vistunarstundu
+          // (timavera_klst_vid_vistun). Nýir tímar = Tímavera núna − Tímavera við vistun — talið FRÁ VISTUN, óháð
+          // vistunardegi og óháð hádegis-/handfærslum á tímunum í drögunum sjálfum. Eldri drög án gildisins: gamla reglan.
+          const tvVid = (dr.timavera_klst_vid_vistun==null || dr.timavera_klst_vid_vistun==='') ? null : Number(dr.timavera_klst_vid_vistun);
+          let nyir;
+          // Agnar sama dag: „væri síðan bara fínt að tímar færu bara beint inn í kröfuyfirlit, ég gæti þá bara falið ef
+          // þess þarf" — eldri reglan (engin viðbót ef drögin voru vistuð eftir mánuðinn) faldi raunverulega tíma; nú
+          // sjást þeir alltaf og hann felur ef þarf.
+          if(tvVid!=null && Number.isFinite(tvVid)) nyir = hours - tvVid;
+          else { if(!(saved>0)) continue; nyir = hours - saved; }   // drög án tíma (t.d. punktavirði) eru ekki tímadrög
+          if(nyir < 0.5) continue;
           const estN = Math.round(nyir * r.dv * (1 + r.vsk/100));
           if(estN<=0) continue;
           rows.push({ inv_key:`timavera-vidbot|${w.project}|${month}`, id:null, tilvisun:null, source:'tímavera',
@@ -17114,6 +17124,7 @@ async function renderKrofuyfirlit(t){
   // ▸ · verkstaður/R-nr + mánaðar-plata (+ aldur á þrepi 1) · undirlína · minnispunktur
   // · mono-upphæð · vinnuflæðis-lyklar (þrep 2/3) · Greitt/Fela. Sundurliðun undir.
   function invRow(inv, tier, t2chk){
+    if(tier===3 && inv.vidbot && t2DragLykill(inv.worksite, inv.work_month)) return '';   // sameinað drögunum (05.10.2026)
     // 17.09.2026: áður annaðhvort R-númer EÐA verkstaður, svo Payday-kröfur földu
     // alltaf verkstaðinn. Nú bæði — verkstaðurinn er það sem segir hvaða verk þetta er.
     const wsName = inv.worksite || (inv.draft_match && inv.draft_match.worksite) || '';
@@ -17126,6 +17137,10 @@ async function renderKrofuyfirlit(t){
         + (inv.vidbot ? ' · <b title="Drögin í Gerð Reikninga voru vistuð '+esc(fmtDate(inv.vistad_dags))+' með '+(Math.round((Number(inv.vistad_klst)||0)*10)/10).toLocaleString('is-IS')+' klst. Þetta eru tímarnir sem hafa bæst við í Tímaveru síðan — þeir eru ekki í drögunum.">＋ nýir tímar síðan drög voru vistuð '+esc(fmtDate(inv.vistad_dags))+'</b>' : '');
     } else {
       sub = esc(inv.source||'');
+      if(tier===2 && inv.source==='gerd-drög'){
+        const vb = vidbotFyrir(inv.worksite, inv.work_month);
+        if(vb) sub += ' · <b title="Tímar sem hafa bæst við í Tímaveru síðan drögin voru vistuð '+esc(fmtDate(vb.vistad_dags))+' — þeir eru EKKI í drögunum. Opnaðu Gerð Reikninga, 📥 sæktu tímana og vistaðu.">＋ '+(Math.round((Number(vb.hours)||0)*10)/10).toLocaleString('is-IS')+' klst nýir síðan vistað '+esc(fmtDate(vb.vistad_dags))+' · ≈ '+fmtNum(vb.amount)+' kr</b>';
+      }
     }
     // Líklega-greitt vísbending (banka-krossvísun): grænn blær + skýringarlína.
     const lp = tier===1 && inv.likely_paid && inv.bank;
@@ -17180,6 +17195,19 @@ async function renderKrofuyfirlit(t){
   function buildInvoiceRows(invoices, tier){
     return (invoices||[]).map(inv=>invRow(inv, tier, '')).join('');
   }
+  // 05.10.2026 (Agnar: „geturðu sameinað allt svona sem er í sama mánuði"): viðbótartímar (vidbot) fyrir verkstað|mánuð
+  // sem á vistuð drög í Ósendar birtast INNI í drögunum („＋ N klst nýir síðan vistað …"), ekki sem sér lína í Tími eftir.
+  // Upphæðin telst áfram í Tíma-heildinni (KPI, merki, samtals) — aðeins línan flyst.
+  function t2DragLykill(ws, wm){
+    for(const d of (((state.data||{}).tier2||{}).debtors||[])) for(const iv of (d.invoices||[]))
+      if(iv.source==='gerd-drög' && !iv.hidden && !iv.done && iv.worksite===ws && iv.work_month===wm) return true;
+    return false;
+  }
+  function vidbotFyrir(ws, wm){
+    for(const d of ((state.tier3||{}).debtors||[])) for(const iv of (d.invoices||[]))
+      if(iv.vidbot && iv.worksite===ws && iv.work_month===wm) return iv;
+    return null;
+  }
 
   // Per-fyrirtæki: eitt spjald per greiðanda með öll þrjú þrepin saman
   // (🔴 ógreitt · 🟡 ósent · ⚪ tími eftir). Sameinar l1/l2/l3 eftir kt (annars nafni).
@@ -17213,7 +17241,8 @@ async function renderKrofuyfirlit(t){
       `<div class="ky-sec-sub">Ógreitt + ósent + tímauppsöfnun saman á hvert fyrirtæki.</div>`;
     if(!companies.length) return head + emptyBox(state.search?'Ekkert passar við leit':'Engin fyrirtæki');
     const badge=(cls,label,val)=> `<span class="boss-badge ${cls} ky-num">${label} ${fmtNum(val)} kr</span>`;
-    const tierBlock=(d,tier,title,led)=> !d ? '' : `
+    // 05.10.2026: Tími eftir-blokk sem á aðeins línur sem eru sameinaðar drögunum (vidbot) birtist ekki tóm
+    const tierBlock=(d,tier,title,led)=> (!d || (tier===3 && !buildInvoiceRows(d.invoices||[], tier))) ? '' : `
       <div class="${tier===2?'ky-tblock2':''}">
         <div class="ky-tier"><i class="boss-led" style="--led:${led}"></i><span class="t">${title}</span>${tier===2?sameinaBtn(d.invoices||[]):''}<span class="s ky-num">${fmtNum(d.outstanding_kr)}<span class="boss-kr">kr</span></span></div>
         ${buildInvoiceRows(d.invoices||[], tier)}

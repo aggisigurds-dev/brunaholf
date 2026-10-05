@@ -60,6 +60,8 @@ exports.handler = async (event) => {
       'kennitala', 'heimilisfang',
       // 09.09.2026: netfang verkkaupa - reiturinn i Efnislista-ritlinum (#gr-email)
       'netfang',
+      // 05.10.2026: Tímaveru-tímar mánaðarins við vistun — Kröfu yfirlit telur nýja tíma frá þessu marki
+      'timavera_klst_vid_vistun',
       // 2026-07-08 (afsláttar-úttekt): persist the Gerð Reikninga discount so
       // a saved draft reprints correctly on any device — it used to be
       // reconstructed from the CURRENT UI state (state.ui.gr_discount), so a
