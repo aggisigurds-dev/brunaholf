@@ -13130,6 +13130,7 @@ async function renderGerdReikninga(t){
       </div>`;
     document.body.appendChild(bg);
     let dirty = false, D = null, DN = null;   // D = valinn mánuður, DN = staðan núna (líðandi mánuður)
+    let autoMan = !monthArg, sendurFra = null;   // fyrsta opnun hoppar yfir senda (frosna) mánuði
     const $ = id => document.getElementById(id);
     const close = (force) => { if(dirty && force!==true && !confirm('Óvistaðar breytingar á stöðunni tapast ef þú lokar núna.\n\nLoka samt?')) return; bg.remove(); };
     bg.addEventListener('click', e => { if(e.target===bg) close(); });
@@ -13287,13 +13288,23 @@ async function renderGerdReikninga(t){
         [D, DN] = await Promise.all([sok(month), month===NOW ? null : sok(NOW)]);
         if(!DN) DN = D;
       }catch(e){ $('nle-ws').innerHTML = `<div class="nle-note nle-bad">Gat ekki sótt stöðuna (${escapeHtml(e.message||String(e))}).</div>`; return; }
+      // Mánuður Gerðar reikninga getur staðið á sendum mánuði (ágúst) — þá opnast glugginn læstur og
+      // ekkert er hægt að gera (Agnar 06.10: „það virkar ekki að ýta á efnislistann"). Við fyrstu opnun
+      // er því hoppað áfram á fyrsta ósenda mánuðinn; handvirkt val á sendum mánuði sýnir hann læstan.
+      if(autoMan && fryst() && month < NOW){
+        const fra = sendurFra || month; sendurFra = fra;
+        month = nextMan(month); $('nle-man').value = month;
+        return hlada();
+      }
+      autoMan = false;
+      if(sendurFra){ const f = sendurFra; sendurFra = null; setTimeout(() => { if(!$('nle-st').textContent) $('nle-st').textContent = '🔒 '+manLang(f)+' er sendur og læstur — opnaði '+manLang(month)+'. Fyrri mánuðir eru í „Lok mánaðar".'; }, 0); }
       dirty = false;
       const v = D.vistad_at ? new Date(D.vistad_at) : null;
       $('nle-hd-status-t').textContent = fryst() ? '🔒 sendur · læstur' : v && !isNaN(v) ? ('staða vistuð '+String(v.getDate()).padStart(2,'0')+'/'+String(v.getMonth()+1).padStart(2,'0')+' '+String(v.getHours()).padStart(2,'0')+':'+String(v.getMinutes()).padStart(2,'0')) : 'staða óvistuð';
       $('nle-hd-status').classList.toggle('unsaved', !v && !fryst());
       renderNotes(); renderWs(); refresh();
     }
-    const skiptaMan = (m) => { if(dirty && !confirm('Óvistaðar breytingar tapast ef þú skiptir um mánuð. Halda áfram?')) { $('nle-man').value = month; return; } month = m; $('nle-man').value = m; hlada(); };
+    const skiptaMan = (m) => { if(dirty && !confirm('Óvistaðar breytingar tapast ef þú skiptir um mánuð. Halda áfram?')) { $('nle-man').value = month; return; } autoMan = false; month = m; $('nle-man').value = m; hlada(); };
     $('nle-man').onchange = () => skiptaMan($('nle-man').value);
     $('nle-tillaga').onclick = () => { if(!D) return; D.skyrsla.verk.forEach((v,i) => { const e = $('nle-in-'+i); if(e) e.value = ''; }); dirty = true; $('nle-hd-status-t').textContent='óvistað'; refresh(); $('nle-st').textContent = 'Reitirnir tæmdir — tillagan úr Ajour gildir. Ýttu á Vista til að festa hana.'; };
 
@@ -24189,23 +24200,67 @@ async function buildAndSaveTimabokPdf(name, month, rows, overwrite, yfCfg){
   const lib = await loadJsPdf();
   const logo = await bhLogoDataUrl();
   const doc = new lib.jsPDF({ unit:'pt', format:'a4', compress:true });
+  doc.__playfair = await bhPdfPlayfair(doc);
   drawTimabokPage(doc, logo, name, month, rows, yfCfg);
   const fileName = bhPdfName('Tímaskýrsla', { ws:name, month });
   // Geymt á Supabase (ekkert Google-innskráning) — sést strax í „Vistuð PDF-skjöl".
   return bhSavePdfToSupabase(doc, { fileName, worksite_name:name, work_month:month, doc_type:'timabok_pdf', overwrite });
 }
+// ── Útlit Efnislista + Tímaskýrslu (06.10.2026, „Report redesign with summary" Agnars) ──
+// Sameiginlegur haus: lógó · „Brunahólf ehf" (serif) + tvær gráar línur til hægri · svört lína.
+// Heiti verkstaðar í Playfair Display Bold (Agnar: „með þetta font í Verkstaður" — sama letur og
+// titlar appsins, t.d. „Fyrirtæki í Þjónustu"); TTF sótt einu sinni af fonts.gstatic.com, annars Times.
+let _bhPlayfairTtf = null;
+async function bhPdfPlayfair(doc){
+  try{
+    if(_bhPlayfairTtf === null){
+      const r = await fetch('https://fonts.gstatic.com/s/playfairdisplay/v40/nuFvD-vYSZviVYUb_rj3ij__anPXJzDwcbmjWBN2PKeiukDQ.ttf');
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const b = new Uint8Array(await r.arrayBuffer()); let s = '';
+      for(let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
+      _bhPlayfairTtf = btoa(s);
+    }
+    if(!_bhPlayfairTtf) return false;
+    doc.addFileToVFS('PlayfairDisplay-Bold.ttf', _bhPlayfairTtf);
+    doc.addFont('PlayfairDisplay-Bold.ttf', 'Playfair', 'bold');
+    return true;
+  }catch(_){ _bhPlayfairTtf = ''; return false; }
+}
+const BH_PDF_L = 54;   // spássíur eins og hönnunin (54 pt hvoru megin)
+function bhPdfHaus(doc, logo, lina1, lina2){
+  const W = doc.internal.pageSize.getWidth(), R = W - BH_PDF_L;
+  if(logo){ try{ doc.addImage(logo, bhLogoFmt(logo), BH_PDF_L, 46, 144, 44); }catch{} }
+  doc.setFont('times','bold'); doc.setFontSize(12.5); doc.setTextColor(26); doc.text('Brunahólf ehf', R, 61, { align:'right' });
+  doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(110);
+  if(lina1) doc.text(lina1, R, 74, { align:'right' });
+  if(lina2) doc.text(lina2, R, 87, { align:'right' });
+  doc.setDrawColor(17); doc.setLineWidth(1.4); doc.line(BH_PDF_L, 107, R, 107);
+}
+function bhPdfMerki(doc, txt, x, y, align){   // lítill grár hástafa-merkimiði („VERKSTAÐUR")
+  doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(110);
+  try{ doc.setCharSpace(0.8); }catch(_){}
+  doc.text(String(txt).toUpperCase(), x, y, align ? { align } : undefined);
+  try{ doc.setCharSpace(0); }catch(_){}
+}
+function bhPdfTitill(doc, txt, y, maxW){   // heiti verkstaðar — skilar grunnlínu síðustu línu
+  if(doc.__playfair) doc.setFont('Playfair','bold'); else doc.setFont('times','bold');
+  doc.setFontSize(21); doc.setTextColor(26);
+  const lines = doc.splitTextToSize(String(txt||''), maxW);
+  doc.text(lines, BH_PDF_L, y);
+  return y + (lines.length - 1) * 25;
+}
+const BH_PDF_HEAD = { font:'helvetica', fontStyle:'bold', fontSize:6.5, textColor:85, fillColor:false, lineWidth:{ bottom:0.9 }, lineColor:[17,17,17], cellPadding:{ top:0, bottom:7, left:0, right:0 } };
+const BH_PDF_BODY = { font:'helvetica', fontSize:9, textColor:34, lineWidth:{ bottom:0.5 }, lineColor:[226,226,226], cellPadding:{ top:9, bottom:9, left:0, right:0 } };
+
 // Teiknar Tímaskýrsluna á NÚVERANDI síðu skjalsins — deilt með samsetta PDF-inu
 // (buildAndSaveCombinedPdf) svo ein teikning gildi fyrir bæði.
 function drawTimabokPage(doc, logo, name, month, rows, yfCfg){
-  const W = doc.internal.pageSize.getWidth();
-  let y = 40;
-  if(logo){ try{ doc.addImage(logo, bhLogoFmt(logo), 40, y, 150, 46); }catch{} }
-  doc.setFont('helvetica','bold'); doc.setFontSize(20); doc.text('Tímaskýrsla', W-40, y+16, {align:'right'});
-  doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(90);
-  doc.text('Mæting starfsmanna — fylgiskjal með reikningi', W-40, y+32, {align:'right'});
-  doc.setTextColor(20); doc.setFont('helvetica','bold'); doc.setFontSize(13.5);
-  doc.text(`${name} · ${monthLabelStatic(month)}`, W-40, y+48, {align:'right'});
-  y += 70;
+  const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), L = BH_PDF_L, R = W - L;
+  const MAN = ['Janúar','Febrúar','Mars','Apríl','Maí','Júní','Júlí','Ágúst','September','Október','Nóvember','Desember'];
+  const [yy, mm] = String(month||'').split('-');
+  bhPdfHaus(doc, logo, 'Tímaskýrsla · fylgiskjal með reikningi', mm ? MAN[+mm-1]+' '+yy : monthLabelStatic(month));
+  bhPdfMerki(doc, 'Mæting starfsmanna', L, 136);
+  const ty = bhPdfTitill(doc, name, 161, R - L);
   const sorted = rows.slice().sort((a,b)=> String(a.date).localeCompare(String(b.date)) || String(a.employee).localeCompare(String(b.employee),'is'));
   // Yfirvinnu-skipting: sjálfgefið það sem var vistað með eintakinu (svo PDF
   // utan gluggans — t.d. endurprentun — noti sömu stillingu).
@@ -24213,40 +24268,51 @@ function drawTimabokPage(doc, logo, name, month, rows, yfCfg){
   const t = tbkYfSplit(sorted, yfCfg);
   const dmy = s => { const p=String(s||'').split('-'); return p.length===3? `${p[2]}/${p[1]}/${p[0]}` : (s||''); };
   const rsPdf = tbkRowSplit(sorted, { on: t.on, thr: t.thr });   // per-röð ÐV/YF dálkar (65adc9e7)
-  const foot = t.on
-    ? [[{ content:`Samtals (yfirvinna yfir ${tbkThrTxt(t.thr)} klst/dag)`, colSpan:4, styles:{ halign:'right' } }, _phr(t.dv), _phr(t.yf), _phr(t.total)]]
-    : [['', '', '', 'Tímar alls', _phr(t.total)]];
+  const hh = (txt, al) => ({ content: txt, styles: { halign: al || 'left' } });
   doc.autoTable({
-    startY: y,
+    startY: ty + 30, theme:'plain',
     head: t.on
-      ? [['Dagsetning','Starfsmaður','Inn','Út','Dagvinna','Yfirvinna','Tímar']]
-      : [['Dagsetning','Starfsmaður','Inn','Út','Tímar']],
+      ? [[hh('DAGSETNING'), hh('STARFSMAÐUR'), hh('INN','right'), hh('ÚT','right'), hh('DAGVINNA','right'), hh('YFIRVINNA','right'), hh('TÍMAR','right')]]
+      : [[hh('DAGSETNING'), hh('STARFSMAÐUR'), hh('INN','right'), hh('ÚT','right'), hh('TÍMAR','right')]],
     body: sorted.map((r,i)=> t.on
       ? [dmy(r.date), r.employee||'', r.time_in||'', r.time_out||'', _phr(rsPdf[i].dv), rsPdf[i].yf>0?_phr(rsPdf[i].yf):'', _phr(r.hours)]
       : [dmy(r.date), r.employee||'', r.time_in||'', r.time_out||'', _phr(r.hours)]),
-    foot,
-    // Leturstærð hækkuð 03.09.2026 (Agnar: „sést varla" á síma) — 9 → 11,5 pt.
-    styles:{ font:'helvetica', fontSize:11.5, cellPadding:4 },
-    headStyles:{ fillColor:[30,30,30], textColor:255, fontSize:10 },
-    footStyles:{ fillColor:[240,240,240], textColor:20, fontStyle:'bold', fontSize:11.5 },
+    headStyles: BH_PDF_HEAD, bodyStyles: { ...BH_PDF_BODY, cellPadding:{ top:8.5, bottom:8.5, left:0, right:0 } },
     columnStyles: t.on
-      ? { 2:{halign:'center'}, 3:{halign:'center'}, 4:{halign:'right'}, 5:{halign:'right'}, 6:{halign:'right'} }
-      : { 2:{halign:'center'}, 3:{halign:'center'}, 4:{halign:'right'} },
-    margin:{ left:40, right:40 },
+      ? { 0:{ cellWidth:92 }, 1:{ cellWidth:'auto' }, 2:{ cellWidth:46, halign:'right' }, 3:{ cellWidth:50, halign:'right' }, 4:{ cellWidth:60, halign:'right' }, 5:{ cellWidth:60, halign:'right' }, 6:{ cellWidth:56, halign:'right', fontStyle:'bold' } }
+      : { 0:{ cellWidth:133 }, 1:{ cellWidth:'auto' }, 2:{ cellWidth:60, halign:'right' }, 3:{ cellWidth:65, halign:'right' }, 4:{ cellWidth:79, halign:'right', fontStyle:'bold' } },
+    margin:{ left:L, right:L },
   });
-  // Per-employee summary.
+  // Samtala: þykk lína undir töflunni, „Tímar alls" + stór serif-tala (yfirvinna sundurliðuð fyrir ofan)
+  let y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : ty + 60);
+  if(y > H - 120){ doc.addPage(); y = 60; }
+  doc.setDrawColor(17); doc.setLineWidth(1.4); doc.line(L, y, R, y);
+  y += 20;
+  const lbl = R - 120;
+  if(t.on){
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(110);
+    doc.text('Dagvinna', lbl, y, { align:'right' }); doc.setTextColor(34); doc.text(_phr(t.dv), R, y, { align:'right' }); y += 14;
+    doc.setTextColor(110); doc.text('Yfirvinna (yfir '+tbkThrTxt(t.thr)+' klst/dag)', lbl, y, { align:'right' }); doc.setTextColor(34); doc.text(_phr(t.yf), R, y, { align:'right' }); y += 20;
+  }
+  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(26); doc.text('Tímar alls', lbl, y, { align:'right' });
+  doc.setFont('times','bold'); doc.setFontSize(16); doc.text(_phr(t.total), R, y + 1, { align:'right' });
+  // Samantekt á starfsmann
+  let y2 = y + 46;
+  if(y2 > H - 110){ doc.addPage(); y2 = 60; }
+  doc.setFont('times','bold'); doc.setFontSize(12); doc.setTextColor(26); doc.text('Samantekt á starfsmann', L, y2);
+  doc.setDrawColor(90); doc.setLineWidth(0.9); doc.line(L, y2 + 9, R, y2 + 9);
   const empRows = Object.keys(t.byEmp).sort((a,b)=>a.localeCompare(b,'is')).map(e=>{
     const m = t.byEmp[e];
     return t.on ? [e, String(m.days.size), _phr(m.dv), _phr(m.yf), _phr(m.hours)] : [e, String(m.days.size), _phr(m.hours)];
   });
-  let y2 = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y) + 22;
-  doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.text('Samantekt á starfsmann', 40, y2);
-  doc.autoTable({ startY: y2+8,
-    head: t.on ? [['Starfsmaður','Dagar','Dagvinna','Yfirvinna','Tímar']] : [['Starfsmaður','Dagar','Tímar']],
+  doc.autoTable({ startY: y2 + 22, theme:'plain',
+    head: t.on ? [[hh('STARFSMAÐUR'), hh('DAGAR','right'), hh('DAGVINNA','right'), hh('YFIRVINNA','right'), hh('TÍMAR','right')]] : [[hh('STARFSMAÐUR'), hh('DAGAR','right'), hh('TÍMAR','right')]],
     body: empRows,
-    styles:{ font:'helvetica', fontSize:11.5, cellPadding:4 }, headStyles:{ fillColor:[30,30,30], textColor:255, fontSize:10 },
-    columnStyles: t.on ? { 1:{halign:'right'}, 2:{halign:'right'}, 3:{halign:'right'}, 4:{halign:'right'} } : { 1:{halign:'right'}, 2:{halign:'right'} },
-    margin:{ left:40, right:40 }, tableWidth: t.on ? 470 : 360 });
+    headStyles: { ...BH_PDF_HEAD, lineWidth:{ bottom:0.5 }, lineColor:[200,200,200] }, bodyStyles: { ...BH_PDF_BODY, cellPadding:{ top:8.5, bottom:8.5, left:0, right:0 } },
+    columnStyles: t.on
+      ? { 1:{ cellWidth:50, halign:'right' }, 2:{ cellWidth:70, halign:'right' }, 3:{ cellWidth:70, halign:'right' }, 4:{ cellWidth:66, halign:'right', fontStyle:'bold' } }
+      : { 1:{ cellWidth:60, halign:'right' }, 2:{ cellWidth:79, halign:'right', fontStyle:'bold' } },
+    margin:{ left:L, right:L } });
 }
 
 // Build the Efnislisti (invoice prep) PDF from the editor's computed numbers, upload to Drive.
@@ -24254,6 +24320,7 @@ async function buildAndSaveEfnislistiPdf(name, month, data, overwrite){
   const lib = await loadJsPdf();
   const logo = await bhLogoDataUrl();
   const doc = new lib.jsPDF({ unit:'pt', format:'a4', compress:true });
+  doc.__playfair = await bhPdfPlayfair(doc);
   drawEfnislistiPage(doc, logo, data);
   const fileName = bhPdfName('Efnislisti', { ws:data.ws||name, month });
   return bhSavePdfToSupabase(doc, { fileName, worksite_name:name, work_month:month, doc_type:'efnislisti_pdf', overwrite });
@@ -24417,6 +24484,7 @@ async function buildAndSaveCombinedPdf(name, month, data, rows, yfCfg, overwrite
   const lib = await loadJsPdf();
   const logo = await bhLogoDataUrl();
   const doc = new lib.jsPDF({ unit:'pt', format:'a4', compress:true });
+  doc.__playfair = await bhPdfPlayfair(doc);
   drawEfnislistiPage(doc, logo, data);
   doc.addPage();
   drawTimabokPage(doc, logo, name, month, rows, yfCfg);
@@ -24441,56 +24509,85 @@ async function tbkLoadRows(name, month, period){
   return { rows, yf };
 }
 // Teiknar Efnislistann á NÚVERANDI síðu skjalsins (deilt með samsetta PDF-inu).
+// Útlit 06.10.2026 (Agnar, „Report redesign"): VERKSTAÐUR + heiti í Playfair · VERKKAUPI til hægri ·
+// LIÐUR / EIN.VERÐ ÁN VSK / MAGN / SAMTALS ÁN VSK · hópar (Akstur/Efni/Aukagjöld) með serif-fyrirsögn ·
+// samtölur til hægri með þykkri línu og stórri serif-upphæð.
 function drawEfnislistiPage(doc, logo, data){
   const c = data.c, rt = data.rate;
-  const W = doc.internal.pageSize.getWidth();
+  const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), L = BH_PDF_L, R = W - L;
   const dmy = s => { const p=String(s||'').split('-'); return p.length===3? `${p[2]}/${p[1]}/${p[0]}` : (s||''); };
-  let y = 40;
-  // Haus (2026-09-02, ósk Agnars): aðeins lógóið og „Verðskrá / tilboð" undir því — enginn „Brunahólf ehf." texti.
-  if(logo){ try{ doc.addImage(logo, bhLogoFmt(logo), 40, y, 150, 46); }catch{} }
-  doc.setFont('helvetica','italic'); doc.setFontSize(11); doc.setTextColor(90); doc.text('Verðskrá / tilboð', 40, y+60);
-  doc.setTextColor(20); doc.setFont('helvetica','normal');
-  y += 80;
-  doc.setFontSize(12.5); doc.text(data.dateText || (dmy(data.fra)+' til '+dmy(data.til)), 40, y);
-  doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.text(data.ws||'', 40, y+20);
-  doc.setFont('helvetica','normal'); doc.setFontSize(11.5); doc.setTextColor(60);
-  let by = y+38;
-  if(data.cust){ doc.text(data.cust, 40, by); by+=15; }
-  if(data.kt){ doc.text('kt. '+data.kt, 40, by); by+=15; }
-  if(data.addr){ doc.text(data.addr, 40, by); by+=15; }
-  doc.setTextColor(20);
   const kr = n => _pkr(n);
-  const sec = t => [{ content:t, colSpan:4, styles:{ fontStyle:'bold', fillColor:[245,245,245], textColor:20 } }];
-  const line = (l,p,m,tot) => [l, p!=null?kr(p):'', m!=null?String(m):'', kr(tot)];
-  const bodyRows = [];
-  if(c.dvH>0) bodyRows.push(line('Dagvinna', c.dvR, c.dvH.toFixed(2), c.dvAmt));
-  if(c.evH>0) bodyRows.push(line('Yfirvinna', c.evR, c.evH.toFixed(2), c.evAmt));
-  if(c.km>0||c.fr>0||c.gj>0) bodyRows.push(sec('Akstur'));
-  if(c.km>0) bodyRows.push(line('ekinn km.', rt.km, c.km, c.kmAmt));
-  if(c.fr>0) bodyRows.push(line('ekin ferð', rt.ferd, c.fr, c.frAmt));
-  if(c.gj>0) bodyRows.push(line('akstursgjald', c.gj, '1', c.gjAmt));
+  const klst = h => _phr(h) + ' klst';
+  const magn = q => { const n = Number(q)||0; return n % 1 ? n.toLocaleString('is-IS', { minimumFractionDigits:2, maximumFractionDigits:2 }) : n.toLocaleString('is-IS'); };
+  // Haus (2026-09-02: lógóið; „Verðskrá / tilboð" + tímabil til hægri)
+  bhPdfHaus(doc, logo, 'Verðskrá / tilboð', data.dateText || (dmy(data.fra)+' til '+dmy(data.til)));
+  // Verkstaður (vinstri) og verkkaupi (hægri)
+  bhPdfMerki(doc, 'Verkstaður', L, 138);
+  const ty = bhPdfTitill(doc, data.ws||'', 163, (data.cust || data.kt) ? R - L - 200 : R - L);
+  let ly = ty;
+  if(data.vegna){   // „Vegna"-reiturinn (23e179a) — aðeins ef eitthvað er skrifað
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(102);
+    const vl = doc.splitTextToSize('Vegna: '+data.vegna, (data.cust || data.kt) ? R - L - 200 : R - L);
+    doc.text(vl, L, ly + 17); ly += 17 + 12 * (vl.length - 1);
+  }
+  let ry = 134;
+  if(data.cust || data.kt || data.addr){
+    bhPdfMerki(doc, 'Verkkaupi', R, ry, 'right'); ry += 17;
+    if(data.cust){ doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(26); doc.text(data.cust, R, ry, { align:'right' }); ry += 14; }
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(102);
+    if(data.kt){ doc.text('kt. '+data.kt, R, ry, { align:'right' }); ry += 13; }
+    if(data.addr){ doc.text(data.addr, R, ry, { align:'right' }); ry += 13; }
+  }
+  // Línur
+  const body = [], tvilit = {}, hopar = new Set();
+  const sec = t => { hopar.add(body.length); body.push([{ content:t, colSpan:4 }]); };
+  const line = (l, p, m, tot, feitt) => body.push([l, p!=null?kr(p):'', m!=null?m:'', feitt ? { content: kr(tot), styles:{ fontStyle:'bold' } } : kr(tot)]);
+  if(c.dvH>0) line('Dagvinna', c.dvR, klst(c.dvH), c.dvAmt, true);
+  if(c.evH>0) line('Yfirvinna', c.evR, klst(c.evH), c.evAmt, true);
+  if(c.km>0||c.fr>0||c.gj>0) sec('Akstur');
+  if(c.km>0) line('ekinn km.', rt.km, magn(c.km), c.kmAmt);
+  if(c.fr>0) line('ekin ferð', rt.ferd, magn(c.fr), c.frAmt);
+  if(c.gj>0) line('akstursgjald', c.gj, '1', c.gjAmt);
   const mats = (c.matLines||[]).filter(m=>m.qty>0||m.total>0);
-  if(mats.length){ bodyRows.push(sec('Efni')); mats.forEach(m=> bodyRows.push(line(m.label, m.price, (m.qty%1?m.qty.toFixed(2):String(m.qty)), m.total))); }
-  if(c.sma>0||c.stadf>0) bodyRows.push(sec('Aukagjöld'));
-  if(c.sma>0) bodyRows.push(line('Smáhlutagjald (hanskar, þurrkur o.fl.)', rt.sma, (c.dvH+c.evH).toFixed(2), c.sma));
-  if(c.stadf>0) bodyRows.push(line('Staðfesting brunaþéttinga', rt.stadf, '1', c.stadf));
-  if(c.disc>0) bodyRows.push(['Afsláttur ('+(c.discPct%1?c.discPct.toFixed(1):c.discPct)+'%)', '', '', '−'+kr(c.disc)]);
-  const foot = [
-    [{content:'Samtals án vsk', colSpan:3, styles:{halign:'right',fontStyle:'italic'}}, {content:kr(c.net), styles:{halign:'right'}}],
-    [{content:'vsk ('+rt.vsk+'%)', colSpan:3, styles:{halign:'right',fontStyle:'italic'}}, {content:kr(c.vsk), styles:{halign:'right'}}],
-    [{content:'Samtals með vsk'+(c.fixed>0?' (fast verð)':''), colSpan:3, styles:{halign:'right',fontStyle:'bold'}}, {content:kr(c.displayTotal), styles:{halign:'right',fontStyle:'bold'}}],
-  ];
+  if(mats.length){ sec('Efni'); mats.forEach(m=> line(m.label, m.price, magn(m.qty), m.total)); }
+  if(c.sma>0||c.stadf>0) sec('Aukagjöld');
+  if(c.sma>0){ tvilit[body.length] = ['Smáhlutagjald', ' (hanskar, þurrkur o.fl.)']; line('Smáhlutagjald (hanskar, þurrkur o.fl.)', rt.sma, klst(c.dvH+c.evH), c.sma); }
+  if(c.stadf>0) line('Staðfesting brunaþéttinga', rt.stadf, '1', c.stadf);
+  if(c.disc>0) body.push(['Afsláttur ('+(c.discPct%1?c.discPct.toFixed(1):c.discPct)+'%)', '', '', '−'+kr(c.disc)]);
+  const hh = (txt, al) => ({ content: txt, styles: { halign: al || 'left' } });
   doc.autoTable({
-    startY: Math.max(by+8, y+40),
-    head: [[ '', {content:'án vsk',styles:{halign:'right'}}, {content:'magn',styles:{halign:'right'}}, {content:'samtals',styles:{halign:'right'}} ]],
-    body: bodyRows, foot,
-    // Leturstærð hækkuð 03.09.2026 (Agnar: „mjög svo litlir stafir, sést varla") — 9,5 → 12 pt.
-    styles:{ font:'helvetica', fontSize:12, cellPadding:4.5 },
-    headStyles:{ fillColor:[255,255,255], textColor:90, fontStyle:'italic', fontSize:10.5, lineWidth:{bottom:0.5}, lineColor:[180,180,180] },
-    footStyles:{ fillColor:[255,255,255], textColor:20, fontSize:12 },
-    columnStyles:{ 1:{halign:'right'}, 2:{halign:'right'}, 3:{halign:'right'} },
-    margin:{ left:40, right:40 },
+    startY: Math.max(ly + 34, ry + 18), theme:'plain',
+    head: [[hh('LIÐUR'), hh('EIN.VERÐ ÁN VSK','right'), hh('MAGN','right'), hh('SAMTALS ÁN VSK','right')]],
+    body,
+    headStyles: BH_PDF_HEAD, bodyStyles: BH_PDF_BODY,
+    columnStyles:{ 0:{ cellWidth:'auto' }, 1:{ cellWidth:110, halign:'right' }, 2:{ cellWidth:72, halign:'right' }, 3:{ cellWidth:102, halign:'right' } },
+    margin:{ left:L, right:L },
+    didParseCell: d => {
+      if(d.section !== 'body') return;
+      if(hopar.has(d.row.index)){ Object.assign(d.cell.styles, { font:'times', fontStyle:'bold', fontSize:11, textColor:26, lineColor:[90,90,90], lineWidth:{ bottom:0.9 }, cellPadding:{ top:17, bottom:7, left:0, right:0 } }); }
+      if(tvilit[d.row.index] && d.column.index === 0) d.cell.text = [''];
+    },
+    didDrawCell: d => {   // „Smáhlutagjald" dökkt + „(hanskar, þurrkur o.fl.)" grátt í sama reit
+      const tv = d.section === 'body' && d.column.index === 0 && tvilit[d.row.index];
+      if(!tv) return;
+      const yT = d.cell.y + d.cell.height / 2 + 3.1;
+      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(34); doc.text(tv[0], d.cell.x, yT);
+      const w = doc.getTextWidth(tv[0]); doc.setTextColor(130); doc.text(tv[1], d.cell.x + w, yT);
+    },
   });
+  // Samtölur til hægri
+  let y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : 300) + 28;
+  if(y > H - 90){ doc.addPage(); y = 70; }
+  const X = R - 225;
+  doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
+  doc.setTextColor(110); doc.text('Samtals án vsk', X, y); doc.setTextColor(34); doc.text(kr(c.net), R, y, { align:'right' });
+  doc.setTextColor(110); doc.text('Vsk ('+rt.vsk+'%)', X, y + 20); doc.setTextColor(34); doc.text(kr(c.vsk), R, y + 20, { align:'right' });
+  doc.setDrawColor(17); doc.setLineWidth(1.4); doc.line(X, y + 35, R, y + 35);
+  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(26);
+  doc.text('Samtals með vsk' + (c.fixed>0 ? ' (fast verð)' : ''), X, y + 58);
+  doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
+  const krW = doc.getTextWidth(' kr'); doc.text(' kr', R, y + 58, { align:'right' });
+  doc.setFont('times','bold'); doc.setFontSize(17); doc.text((Math.round(Number(c.displayTotal)||0)).toLocaleString('is-IS'), R - krW, y + 58, { align:'right' });
   // Athugasemdin er INNRI (Agnar 03.09.2026) — prentast EKKI á PDF né forskoðun.
 }
 
