@@ -4099,6 +4099,14 @@ function renderSkyrslustod(t){
           <button id="bk-st-all-dups" class="btn" title="Sjá öll skjöl sem eru flögguð sem tvítök — til að yfirfara">📑 Tvítök</button>
           <span id="bk-st-status" style="font-size:12.5px;color:var(--muted)"></span>
         </div>
+        <!-- Rekstrarfélög: pörun eftir tækjafjölda (06.10.2026, Agnar: „para burtséð frá heitum / heimilisföngum") -->
+        <div id="bk-rf-bar" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0 6px">
+          <span style="font-size:12.5px;font-weight:700;color:var(--ink-2)">Rekstrarfélag · eftir tækjafjölda</span>
+          <select id="bk-rf-kt" style="${inpSel};min-width:260px"><option value="">— veldu félag með marga staði —</option></select>
+          <button id="bk-rf-run" class="btn" title="Telja tæki eftir tegund úr skýrslum, reikningum og tækjaskrá og para — nöfn og heimilisföng koma hvergi við sögu">⚖ Para eftir magni</button>
+          <span id="bk-rf-status" style="font-size:12.5px;color:var(--muted)"></span>
+        </div>
+        <div id="bk-rf-panel" hidden></div>
         <div id="bk-st-board"></div>
       </div>
       <div class="st-pv" id="st-pv" hidden>
@@ -4116,6 +4124,95 @@ function renderSkyrslustod(t){
     </div>`;
   wireStation();
   wireStationPreview();
+  wireRekstrarfelag();
+}
+
+// ── Rekstrarfélög — pörun eftir tækjafjölda (06.10.2026) ─────────────────────
+// Agnar: „lesið yrði yfir svona rekstrarfélög og skráð niður úr skýrslu og invoicum tækjafjölda eftir tegundum …
+// para þau síðan saman burtséð frá heitum / heimilisföngum" · „Invoice = skýrsla = tækjalisti" · „ekki alltaf að
+// marka eldri skjöl". Þjónninn (/api/para-rekstrarfelag) telur; hér er aðeins sýnt og staðfest.
+function wireRekstrarfelag(){
+  const $kt = document.getElementById('bk-rf-kt'), $run = document.getElementById('bk-rf-run'), $st = document.getElementById('bk-rf-status'), $p = document.getElementById('bk-rf-panel');
+  if(!$kt || !$run || !$p) return;
+  const esc = s => escapeHtml(String(s == null ? '' : s));
+  const setSt = (m, c) => { $st.textContent = m || ''; $st.style.color = c || 'var(--muted)'; };
+  const cell = 'padding:5px 8px;border-bottom:1px solid var(--line-2,#e6e1d6);vertical-align:top;font-size:12.5px';
+  const mono = 'font-family:var(--font-mono,ui-monospace,monospace);font-size:11.5px';
+  const MAN = ['jan','feb','mar','apr','maí','jún','júl','ágú','sep','okt','nóv','des'];
+  let G = null;
+  fetch('/api/para-rekstrarfelag?listi=1').then(r => r.json()).then(j => {
+    (j.felog || []).forEach(f => { const o = document.createElement('option'); o.value = f.kt; o.textContent = f.nafn + ' — ' + f.stadir + ' staðir · ' + f.kt; $kt.appendChild(o); });
+  }).catch(() => setSt('náði ekki í félagalistann', 'var(--bad,#b3261e)'));
+
+  function row(s){
+    const r = s.reikningur, st = s.stadur, par = s.par;
+    const reikn = r ? ('<b>' + esc(r.nr) + '</b> ' + esc(r.dags || '') + '<div style="' + mono + '">skoðuð: ' + esc(r.skodud_txt) + (r.ny_txt !== '—' ? ' · ný: ' + esc(r.ny_txt) : '') + '</div>'
+        + '<div style="' + mono + ';color:' + (r.oruggt ? 'var(--ok,#2f7a4a)' : 'var(--warn,#8f6a1c)') + '">frávik ' + r.fravik + (r.oruggt ? ' ✓' : ' ?') + '</div>') : '<span style="color:var(--muted)">enginn reikningur innan ±4 mán.</span>';
+    const stad = st ? (st.sammala ? '<span style="color:var(--ok,#2f7a4a)">✓ sami staður</span>' : '<span style="color:var(--bad,#b3261e)">tölurnar passa við <b>' + esc(st.nafn) + '</b> (' + st.fravik + ' frá) · ' + st.eigin_fravik + ' frá eigin tækjaskrá</span>') : '';
+    const parTxt = { sammala: '<span style="color:var(--ok,#2f7a4a)">✓ parað við þennan</span>', annar: '<span style="color:var(--bad,#b3261e)">parað við annan' + (par && par.handvirkt ? ' (handvirkt)' : '') + '</span>', vantar: '<span style="color:var(--warn,#8f6a1c)">vantar reikning í par</span>', par_an_talningar: 'par til, engin talning', ekkert: '<span style="color:var(--muted)">ekkert par</span>' }[s.par_stada] || '';
+    const takki = s.ma_para ? '<button class="btn sm bk-rf-para" data-i="' + s._i + '">Para</button>' : '';
+    return '<tr>'
+      + '<td style="' + cell + '"><b>' + esc(s.nafn) + '</b><div style="' + mono + ';color:var(--muted)">' + s.ar + '-' + (s.man ? MAN[s.man - 1] : '?') + (s.eldri ? ' · ⚠ eldri heimild' : '') + '</div></td>'
+      + '<td style="' + cell + ';' + mono + '">' + esc(s.skyrsla_txt) + ' <span style="color:var(--muted)">(' + s.taeki + ')</span></td>'
+      + '<td style="' + cell + '">' + reikn + '</td>'
+      + '<td style="' + cell + '">' + stad + '</td>'
+      + '<td style="' + cell + '">' + parTxt + ' ' + takki + '</td></tr>';
+  }
+  function render(){
+    if(!G) { $p.hidden = true; return; }
+    G.skyrslur.forEach((s, i) => { s._i = i; });
+    const stemma = G.skyrslur.filter(s => s.par_stada === 'sammala' && s.stadur && s.stadur.sammala).length;
+    const th = (t, w) => '<th style="text-align:left;padding:6px 8px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)' + (w ? ';width:' + w : '') + '">' + t + '</th>';
+    let h = '<div style="border:1px solid var(--line-2,#d9d3c6);border-radius:12px;background:var(--card,#fff);padding:12px 14px;margin-bottom:12px">'
+      + '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:baseline;margin-bottom:8px"><b style="font-size:14px">' + esc(G.kt) + '</b>'
+      + '<span style="font-size:12.5px;color:var(--muted)">' + G.stadir.length + ' staðir · ' + G.skyrslur.length + ' skýrslur með talningu · <b style="color:var(--ok,#2f7a4a)">' + stemma + ' stemma</b> við reikning og stað · ' + G.olesnar.length + ' ólesnar · ' + G.reikningar_an_skyrslu.length + ' reikningar án skýrslu</span></div>'
+      + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">' + G.stadir.map(s => '<span style="' + mono + ';padding:2px 8px;border:1px solid var(--line-2,#d9d3c6);border-radius:999px;background:var(--bg-2,#ece7dc)" title="' + esc(s.vigur) + '">' + esc(s.nafn) + ' · ' + s.taeki + '</span>').join('') + '</div>'
+      + '<table style="width:100%;border-collapse:collapse"><thead><tr>' + th('Skýrsla', '22%') + th('Tæki í skýrslu') + th('Reikningur sem tölurnar velja') + th('Staður eftir tækjaskrá') + th('Par', '18%') + '</tr></thead><tbody>'
+      + G.skyrslur.map(row).join('') + '</tbody></table>';
+    if(G.olesnar.length){
+      h += '<div style="margin-top:12px;font-size:12.5px;font-weight:700">Ólesnar skýrslur — engin talning enn</div><table style="width:100%;border-collapse:collapse">'
+        + G.olesnar.map(d => '<tr><td style="' + cell + '"><b>' + esc(d.nafn || d.fid) + '</b> · ' + esc(d.ar || '????') + '</td><td style="' + cell + ';' + mono + '">' + esc((d.skra || '').slice(0, 80)) + '</td><td style="' + cell + '"><button class="btn sm bk-rf-lesa" data-doc="' + d.doc + '">Lesa PDF</button></td></tr>').join('') + '</table>';
+    }
+    if(G.reikningar_an_skyrslu.length){
+      h += '<div style="margin-top:12px;font-size:12.5px;font-weight:700">Reikningar sem engin skýrsla tók — staðurinn sem tölurnar segja</div><table style="width:100%;border-collapse:collapse">'
+        + G.reikningar_an_skyrslu.map(r => '<tr><td style="' + cell + '"><b>' + esc(r.nr) + '</b> ' + esc(r.dags || '') + '</td><td style="' + cell + '">skráður á ' + esc(r.nafn || '—') + '</td><td style="' + cell + ';' + mono + '">' + esc(r.skodud_txt) + (r.ny_txt !== '—' ? ' · ný ' + esc(r.ny_txt) : '') + '</td><td style="' + cell + '">' + (r.stadur ? '→ ' + esc(r.stadur.nafn) + ' (' + r.stadur.fravik + ' frá)' : '') + '</td></tr>').join('') + '</table>';
+    }
+    h += '<div style="margin-top:12px;font-size:12.5px;font-weight:700">Hleðslusaga — úr Hleðslu- og sölulínum reikninga (lota: léttvatn/duft 5 ár, CO₂ 10 ár)</div><table style="width:100%;border-collapse:collapse">'
+      + G.hledsla.map(x => '<tr><td style="' + cell + '"><b>' + esc(x.nafn) + '</b> · ' + x.taeki + ' tæki</td><td style="' + cell + ';' + mono + '">' + (x.saga.length ? x.saga.map(y => y.ar + ': hlaðin ' + esc(y.hladin) + (y.ny !== '—' ? ' · ný ' + esc(y.ny) : '')).join('<br>') : '<span style="color:var(--muted)">engir lesnir reikningar</span>') + '</td><td style="' + cell + ';font-size:12px;color:var(--ink-2)">' + (x.texti ? '<span style="color:var(--muted)">' + esc(x.texti.ar) + ':</span> ' + esc(x.texti.annad) : '') + '</td></tr>').join('') + '</table>'
+      + '<div style="margin-top:6px;font-size:11.5px;color:var(--muted)">Reykskynjarar eru taldir í skýrslu en aldrei rukkaðir og eru utan samanburðar. Lesnir reikningar ná skemmra aftur en hleðslulotan — sagan fyllist eftir því sem eldri reikningar eru lesnir.</div></div>';
+    $p.innerHTML = h; $p.hidden = false;
+  }
+  async function saekja(){
+    const kt = $kt.value; if(!kt) return;
+    setSt('tel…'); $run.disabled = true;
+    try{ const r = await fetch('/api/para-rekstrarfelag?kt=' + encodeURIComponent(kt)); const j = await r.json(); if(j.error) throw new Error(j.error); G = j; render(); setSt(''); }
+    catch(e){ setSt('villa: ' + (e && e.message || e), 'var(--bad,#b3261e)'); }
+    finally{ $run.disabled = false; }
+  }
+  $run.addEventListener('click', saekja);
+  $kt.addEventListener('change', () => { if($kt.value) saekja(); });
+  $p.addEventListener('click', async (e) => {
+    const bp = e.target.closest('.bk-rf-para'), bl = e.target.closest('.bk-rf-lesa');
+    if(bp){
+      const s = G && G.skyrslur[+bp.dataset.i]; if(!s || !s.reikningur) return;
+      bp.disabled = true; bp.textContent = 'para…';
+      try{
+        const r = await fetch('/api/para-rekstrarfelag', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ action:'para', par_id: s.par && s.par.id, fid: s.fid, base: s.base, year: s.ar, report_doc_id: s.doc, invoice_doc_id: s.reikningur.doc, solur_id: s.reikningur.solur_id, reikn: s.reikningur.nr, fravik: s.reikningur.fravik }) });
+        const j = await r.json();
+        if(!j.ok) { setSt(j.reason || j.error || 'tókst ekki', 'var(--bad,#b3261e)'); bp.disabled = false; bp.textContent = 'Para'; return; }
+        setSt('✓ parað (' + j.adgerd + ')', 'var(--ok,#2f7a4a)'); await saekja();
+      }catch(err){ setSt('villa: ' + (err && err.message || err), 'var(--bad,#b3261e)'); bp.disabled = false; bp.textContent = 'Para'; }
+    }
+    if(bl){
+      bl.disabled = true; bl.textContent = 'les…';
+      try{
+        const r = await fetch('/api/para-rekstrarfelag', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ action:'lesa', doc_id: +bl.dataset.doc }) });
+        const j = await r.json();
+        if(!j.ok) { setSt(j.reason || j.error || 'gat ekki lesið', 'var(--bad,#b3261e)'); bl.disabled = false; bl.textContent = 'Lesa PDF'; return; }
+        setSt('✓ lesið: ' + (j.hja || '') + ' · ' + (j.man ? MAN[j.man - 1] : '?') + ' ' + j.ar + ' · ' + j.vigur, 'var(--ok,#2f7a4a)'); await saekja();
+      }catch(err){ setSt('villa: ' + (err && err.message || err), 'var(--bad,#b3261e)'); bl.disabled = false; bl.textContent = 'Lesa PDF'; }
+    }
+  });
 }
 
 // ── Forskoðun til hliðar (Agnar 04.09.2026: „eins og í skjala multitool") ─────

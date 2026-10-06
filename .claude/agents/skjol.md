@@ -780,3 +780,18 @@ tengdir í `customer_documents` (Drive) og vistar í `reikningslestur` (haus + `
 - Skönnuð PDF án textalags merkjast „þarf ljóslestur“ og eru ekki lesin aftur. Reikningar annarra
   fyrirtækja sem lent hafa í reikningamöppunni (t.d. bókhaldsþjónusta) lesast ekki og standa merktir.
 - `/api/skjal` er Netlify-fall: lesið eitt í einu með 300 ms hléi (CORS `*`, virkar af localhost).
+
+## Rekstrarfélög — pörun eftir tækjafjölda (06.10.2026)
+
+- `para-rekstrarfelag.js` — **⚖ Para eftir magni** í Skýrslu-stöð (stika fyrir ofan borðið, `#bk-rf-bar`,
+  `wireRekstrarfelag()` í index.html). Agnar: „para burtséð frá heitum / heimilisföngum" · „Invoice = skýrsla =
+  tækjalisti" · „ekki alltaf að marka eldri skjöl". Telur tæki eftir tegund (léttvatn · duft 6-12 · duft 2 ·
+  CO₂ 2 · CO₂ 5 · slöngur · teppi; reykskynjarar utan) úr þremur heimildum — tækjaskrá (`uttaeki`), skýrslum
+  (`arsskodun_report_facts` + `arsskodun_customers[fid].history`) og reikningum (`reikningslinur` OG `solur.linur`
+  fyrir R-000xxx) — og finnur fyrir hverja skýrslu besta reikning (−1..+4 mán, frávik = Σ|mismunur| ± ný) og
+  besta stað. `GET ?listi=1` (kt með ≥ 2 staði) · `GET ?kt=` · `POST {action:'para', …}` fyllir par sem vantar
+  reikning / nýskráir (`matched_by='magn_station'`), hreyfir ALDREI manual/manual_unlink eða klárað par ·
+  `POST {action:'lesa', doc_id}` les PDF ólesinnar skýrslu og bætir árinu í `history` (app_settings_merge, einn
+  lykill). Systurtól án viðmóts: `slokkvitaeki/tools/para-rekstrarfelag.cjs`. Dæmið: öll blöð Steypustöðvarinnar
+  heita „Malarhöfða 38" — tölurnar 17/20/1/2 eru Borgarnes hvað sem blaðið heitir. „Staður víkur" getur líka þýtt
+  ófullkomna tækjaskrá (Arnarhvoll: 7 slöngur í skýrslu, engar í skránni).

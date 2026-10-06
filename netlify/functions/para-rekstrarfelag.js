@@ -1,0 +1,268 @@
+// para-rekstrarfelag.js — pörun skýrslna, reikninga og staða EFTIR TÆKJAFJÖLDA, fyrir rekstrarfélög
+// með marga staði á einni kennitölu (Steypustöðin 8, Center Hotels 11, Pizzan 11 …).
+//
+// Agnar 06.10.2026: „útbúa auka tól … lesið yfir svona rekstrarfélög og skráð niður úr skýrslu og invoicum
+// tækjafjölda eftir tegundum, hve mörg ný, hlaðin og yfirfarin. Para þau síðan saman burtséð frá heitum /
+// heimilisföngum." · „Invoice = skýrsla = tækjalisti." · „Ekki alltaf að marka eldri skjöl."
+// Dæmið sem kenndi þetta: öll skýrslublöð Steypustöðvarinnar bera „Malarhöfða 38" (aðalskrifstofa) — nafnið
+// segir ekki staðinn, en 17 léttvatn + 20 duft + 1 CO₂ + 2 slöngur eru Borgarnes hvað sem blaðið heitir.
+//
+// Þrjár heimildir, ein eining = tæki eftir tegund (lettvatn · duft6 · duft2 · co2_2 · co2_5 · slanga · teppi;
+// reykskynjarar eru taldir í skýrslu en aldrei rukkaðir og eru því utan samanburðar):
+//   STAÐUR      uttaeki (virk tæki á fyrirtaeki_id)
+//   SKÝRSLA     arsskodun_report_facts (nýjasta) + app_settings.arsskodun_customers[fid].history (ár fyrir ár)
+//   REIKNINGUR  reikningslinur (Yfirferð + Hleðsla = skoðuð · „Slökkvitæki …" = ný) OG solur.linur (R-000xxx frá 06/2026)
+//
+//   GET  /api/para-rekstrarfelag?listi=1       → { felog:[{kt, nafn, stadir}] }  kennitölur með ≥ 2 staði í þjónustu
+//   GET  /api/para-rekstrarfelag?kt=660707-0420 → { stadir, skyrslur, reikningar_an_skyrslu, olesnar, hledsla }
+//        hver skýrsla: besti reikningur innan −1..+4 mán (frávik = Σ|mismunur| ± ný, +0,5 per mán), besti staður
+//        eftir tækjaskrá, og hvort document_pairs sé sammála. `oruggt` = frávik ≤ max(2, 10 % af tækjum).
+//   POST {action:'para', par_id|null, fid, base, year, report_doc_id, invoice_doc_id|solur_id, reikn, fravik}
+//        → document_pairs: fyllir par sem vantar reikning eða nýskráir; HREYFIR ALDREI við manual/manual_unlink
+//          eða pari sem er klárað við annan reikning (skilar {ok:false, reason}). `dry:true` sýnir án þess að skrifa.
+//   POST {action:'lesa', doc_id} → les PDF skýrslunnar (Drive + pdf-parse, sama þáttun og skyrsla-bunadur) og
+//        bætir árinu í arsskodun_customers[fid].history (app_settings_merge — aðeins sá lykill snertur).
+//
+// Les með SUPABASE_SERVICE_ROLE_KEY. Systurtól án viðmóts: slokkvitaeki/tools/para-rekstrarfelag.cjs.
+
+const { json, cors, freshAccessToken } = require('./_google');
+const { parseBunadur, toEquipment } = require('./_bunadur');
+// pdf-parse er aðeins hlaðið þegar 'lesa' er kallað — GET-greiningin á að virka án þess (líka í staðbundinni prófun)
+let _pdf = null; const pdf = (buf) => { if (!_pdf) _pdf = require('pdf-parse'); return _pdf(buf); };
+
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const sbHeaders = (extra) => Object.assign({ apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }, extra || {});
+async function sbGet(path) {
+  const out = [];
+  for (let from = 0; ; from += 1000) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers: sbHeaders({ Range: `${from}-${from + 999}` }) });
+    if (!r.ok) throw new Error(path.slice(0, 60) + ' → ' + r.status + ' ' + (await r.text()).slice(0, 140));
+    const rows = await r.json();
+    out.push(...rows);
+    if (rows.length < 1000) return out;
+  }
+}
+
+const TEG = ['lettvatn', 'duft6', 'duft2', 'co2_2', 'co2_5', 'slanga', 'teppi'];
+const MAN = ['janúar', 'febrúar', 'mars', 'apríl', 'maí', 'júní', 'júlí', 'ágúst', 'september', 'október', 'nóvember', 'desember'];
+const MNUM = {};
+MAN.forEach((m, i) => { MNUM[m] = i + 1; });
+const tom = () => { const o = {}; TEG.forEach(t => { o[t] = 0; }); return o; };
+const sum = v => TEG.reduce((s, t) => s + (v[t] || 0), 0);
+const fjarl = (a, b) => TEG.reduce((s, t) => s + Math.abs((a[t] || 0) - (b[t] || 0)), 0);
+const manTala = s => { const m = String(s || '').toLowerCase(); const i = MAN.findIndex(x => m.indexOf(x) >= 0); return i >= 0 ? i + 1 : (m.indexOf('oktober') >= 0 ? 10 : 0); };
+const manIdx = (ar, man) => (+ar) * 12 + (+man || 6) - 1;
+
+function urSkyrslu(e) { e = e || {}; const v = tom(); v.lettvatn = +e.lettvatn || 0; v.duft6 = +e.duft6_12 || 0; v.duft2 = +e.duft2 || 0; v.co2_2 = +e.co2_2 || 0; v.co2_5 = +e.co2_5 || 0; v.slanga = +e.brunaslongur || 0; v.teppi = +e.eldvarnarteppi || 0; return v; }
+function urTaeki(rows) {
+  const v = tom();
+  rows.forEach(r => {
+    const t = String(r.type || ''), s = String(r.size || '');
+    if (/léttvatn/i.test(t)) v.lettvatn++;
+    else if (/duft/i.test(t)) { if (/(^|[^0-9])2([^0-9]|$)/.test(s)) v.duft2++; else v.duft6++; }
+    else if (/co2|co₂/i.test(t)) { if (/5/.test(s)) v.co2_5++; else v.co2_2++; }
+    else if (/slang|slöngu/i.test(t)) v.slanga++;
+    else if (/teppi/i.test(t)) v.teppi++;
+  });
+  return v;
+}
+function tegUrTexta(d) {
+  d = String(d || '').toLowerCase();
+  if (/léttvatn|lettvatn/.test(d)) return 'lettvatn';
+  if (/duft/.test(d)) return /(^|[^0-9])2 ?kg/.test(d) ? 'duft2' : 'duft6';
+  if (/co2|co₂|kolsýr/.test(d)) return /5 ?kg/.test(d) ? 'co2_5' : 'co2_2';
+  if (/brunaslang|slöngu/.test(d)) return 'slanga';
+  if (/teppi/.test(d)) return 'teppi';
+  return null;
+}
+function urLinum(linur) {
+  const yf = tom(), hl = tom(), ny = tom();
+  linur.forEach(l => {
+    const t = l.tegund === 'co2_kg' ? null : (l.tegund || tegUrTexta(l.lysing));
+    if (!t || !TEG.includes(t)) return;
+    const m = +l.magn || 0, d = String(l.lysing || '');
+    if (/^Yfirferð/i.test(d)) yf[t] += m; else if (/^Hleðsla/i.test(d)) hl[t] += m; else if (/^Slökkvitæki/i.test(d)) ny[t] += m;
+  });
+  const skodud = tom(); TEG.forEach(t => { skodud[t] = yf[t] + hl[t]; });
+  return { yf, hl, ny, skodud };
+}
+const vstr = v => TEG.filter(t => v[t]).map(t => v[t] + ' ' + t).join(', ') || '—';
+
+// ── listi rekstrarfélaga ─────────────────────────────────────────────────────
+async function listi() {
+  const f = await sbGet('fyrirtaeki?er_i_thjonustu=eq.true&deleted_at=is.null&kennitala=not.is.null&select=id,nafn,kennitala&order=id');
+  const h = {};
+  f.forEach(x => { if (x.kennitala === '999999-9999') return; (h[x.kennitala] = h[x.kennitala] || []).push(x); });
+  const felog = Object.keys(h).filter(k => h[k].length >= 2).map(k => ({ kt: k, stadir: h[k].length, nafn: h[k][0].nafn.replace(/[-–].*$/, '').trim() }));
+  felog.sort((a, b) => b.stadir - a.stadir || a.nafn.localeCompare(b.nafn, 'is'));
+  return { felog };
+}
+
+// ── greining fyrir eina kennitölu ───────────────────────────────────────────
+async function greining(kt) {
+  const stadir = await sbGet('fyrirtaeki?kennitala=eq.' + encodeURIComponent(kt) + '&deleted_at=is.null&select=id,nafn,heimilisfang,er_i_thjonustu,customer_base_id&order=id');
+  if (!stadir.length) return { kt, stadir: [], skyrslur: [], reikningar_an_skyrslu: [], olesnar: [], hledsla: [] };
+  const ids = stadir.map(s => s.id), inn = 'in.(' + ids.join(',') + ')';
+  const [taeki, skjol, facts, lestur, por, asRow, reiknSkjol, solur] = await Promise.all([
+    sbGet('uttaeki?fyrirtaeki_id=' + inn + '&status=eq.active&select=fyrirtaeki_id,type,size'),
+    sbGet('customer_documents?fyrirtaeki_id=' + inn + '&doc_type=eq.uttektarskyrsla&is_duplicate=is.false&select=id,fyrirtaeki_id,year,doc_date,file_name,drive_file_id&order=year.desc'),
+    sbGet('arsskodun_report_facts?fyrirtaeki_id=' + inn + '&select=fyrirtaeki_id,report_year,inspect_month,equipment,total_devices,source_doc_id'),
+    sbGet('reikningslestur?or=(fyrirtaeki_id.' + inn + ',kennitala.eq.' + encodeURIComponent(kt) + ')&select=reikningur_nr,fyrirtaeki_id,dags,ar,doc_id&order=dags.desc'),
+    sbGet('document_pairs?fyrirtaeki_id=' + inn + '&select=id,fyrirtaeki_id,year,service_type,report_doc_id,invoice_doc_id,solur_id,status,matched_by'),
+    sbGet('app_settings?id=eq.1&select=a:settings->arsskodun_customers'),
+    sbGet('customer_documents?fyrirtaeki_id=' + inn + '&doc_type=eq.reikningur&select=id,invoice_number'),
+    sbGet('solur?customer_kt=eq.' + encodeURIComponent(kt) + '&is_credit=is.false&select=id,num,customer_id,created_at,linur,status&order=created_at.desc')
+  ]);
+  const nrs = lestur.map(l => l.reikningur_nr);
+  const linur = nrs.length ? await sbGet('reikningslinur?reikningur_nr=in.(' + nrs.map(n => '"' + n + '"').join(',') + ')&magn=gt.0&select=reikningur_nr,lysing,magn,tegund') : [];
+  const ars = (asRow[0] && asRow[0].a) || {};
+  const nafn = {}; stadir.forEach(s => { nafn[s.id] = s.nafn; });
+  const docEftirNr = {}; reiknSkjol.forEach(d => { if (d.invoice_number) docEftirNr[d.invoice_number] = d.id; });
+
+  const stadV = {}; stadir.forEach(s => { stadV[s.id] = urTaeki(taeki.filter(t => t.fyrirtaeki_id === s.id)); });
+
+  // skýrslur: ein færsla per (staður, ár)
+  const sk = [];
+  facts.forEach(f => sk.push({ fid: f.fyrirtaeki_id, ar: f.report_year, man: f.inspect_month, v: urSkyrslu(f.equipment), doc: f.source_doc_id, heimild: 'facts' }));
+  ids.forEach(i => (((ars[String(i)] || {}).history) || []).forEach(h => { const ar = +h.year, man = manTala(h.skodun); if (!ar || sk.some(x => x.fid === i && x.ar === ar)) return; sk.push({ fid: i, ar, man, v: urSkyrslu(h.equipment), doc: null, heimild: 'history' + (h.skra ? ' · ' + h.skra : '') }); }));
+  const olesin = skjol.filter(d => !sk.some(x => x.fid === d.fyrirtaeki_id && +x.ar === +d.year));
+
+  // reikningar: reikningslestur + solur (salan ræður sé sami reikningur í báðum)
+  const rk = lestur.map(l => { const u = urLinum(linur.filter(x => x.reikningur_nr === l.reikningur_nr)); const d = l.dags ? new Date(l.dags) : null; return Object.assign({ nr: l.reikningur_nr, fid: l.fyrirtaeki_id, dags: l.dags, ar: d ? d.getFullYear() : +l.ar, man: d ? d.getMonth() + 1 : 0, doc: l.doc_id || docEftirNr[l.reikningur_nr] || null, solurId: null }, u); }).filter(r => sum(r.skodud) + sum(r.ny) > 0);
+  solur.filter(s => s.status !== 'void' && s.status !== 'cancelled').forEach(s => {
+    const ls = (Array.isArray(s.linur) ? s.linur : []).map(l => ({ lysing: String(l.desc || l.lysing || ''), magn: +(l.qty || l.magn || 0), tegund: null }));
+    const u = urLinum(ls); if (sum(u.skodud) + sum(u.ny) === 0) return;
+    const fyrri = rk.findIndex(r => r.nr === s.num); if (fyrri >= 0) rk.splice(fyrri, 1);
+    const d = new Date(s.created_at);
+    rk.push(Object.assign({ nr: s.num, fid: s.customer_id, dags: String(s.created_at).slice(0, 10), ar: d.getFullYear(), man: d.getMonth() + 1, doc: docEftirNr[s.num] || null, solurId: s.id }, u));
+  });
+
+  const iAr = new Date().getFullYear();
+  const skyrslur = [];
+  sk.sort((a, b) => b.ar - a.ar || a.fid - b.fid).forEach(s => {
+    const mi = manIdx(s.ar, s.man);
+    let best = null;
+    rk.forEach(r => {
+      const dm = manIdx(r.ar, r.man) - mi; if (dm < -1 || dm > 4) return;
+      const medNy = tom(); TEG.forEach(t => { medNy[t] = r.skodud[t] + r.ny[t]; });
+      const d = Math.min(fjarl(s.v, r.skodud), fjarl(s.v, medNy)) + Math.abs(dm) * 0.5;
+      if (!best || d < best.d) best = { r, d };
+    });
+    let bs = null; ids.forEach(i => { const d = fjarl(s.v, stadV[i]); if (!bs || d < bs.d) bs = { fid: i, d }; });
+    const sv = sum(s.v), oruggt = !!(best && best.d <= Math.max(2, sv * 0.1));
+    const skDoc = (skjol.find(d => d.fyrirtaeki_id === s.fid && +d.year === +s.ar) || {}).id || s.doc;
+    const par = por.find(p => p.fyrirtaeki_id === s.fid && +p.year === +s.ar && p.service_type === 'uttekt') || por.find(p => p.report_doc_id === skDoc);
+    const parInv = par && (par.invoice_doc_id || par.solur_id);
+    const samiReikn = !!(best && par && ((par.invoice_doc_id && par.invoice_doc_id === best.r.doc) || (par.solur_id && par.solur_id === best.r.solurId)));
+    const handvirkt = !!(par && /manual/.test(par.matched_by || ''));
+    const parStada = best ? (parInv ? (samiReikn ? 'sammala' : 'annar') : 'vantar') : (parInv ? 'par_an_talningar' : 'ekkert');
+    const maPara = oruggt && !!skDoc && !!(best.r.doc || best.r.solurId) && (!par || (par.status === 'vantar_reikning' && !handvirkt));
+    const eiginFravik = fjarl(s.v, stadV[s.fid]);
+    skyrslur.push({
+      fid: s.fid, nafn: nafn[s.fid], ar: s.ar, man: s.man, heimild: s.heimild, eldri: (iAr - s.ar) >= 2, doc: skDoc, taeki: sv, skyrsla: s.v, skyrsla_txt: vstr(s.v),
+      reikningur: best ? { nr: best.r.nr, dags: best.r.dags, fid: best.r.fid, doc: best.r.doc, solur_id: best.r.solurId, skodud: best.r.skodud, ny: best.r.ny, skodud_txt: vstr(best.r.skodud), ny_txt: vstr(best.r.ny), fravik: Math.round(best.d * 10) / 10, oruggt } : null,
+      stadur: bs ? { fid: bs.fid, nafn: nafn[bs.fid], fravik: bs.d, eigin_fravik: eiginFravik, sammala: bs.fid === s.fid } : null,
+      par: par ? { id: par.id, status: par.status, matched_by: par.matched_by, invoice_doc_id: par.invoice_doc_id, solur_id: par.solur_id, sammala: samiReikn, handvirkt } : null,
+      par_stada: parStada, ma_para: maPara, base: (stadir.find(x => x.id === s.fid) || {}).customer_base_id || null
+    });
+  });
+  const teknir = new Set(skyrslur.map(x => x.reikningur && x.reikningur.nr).filter(Boolean));
+  const reikningar_an_skyrslu = rk.filter(r => !teknir.has(r.nr)).map(r => { let bs = null; ids.forEach(i => { const d = fjarl(r.skodud, stadV[i]); if (!bs || d < bs.d) bs = { fid: i, d }; }); return { nr: r.nr, dags: r.dags, fid: r.fid, nafn: nafn[r.fid] || null, skodud_txt: vstr(r.skodud), ny_txt: vstr(r.ny), stadur: bs ? { fid: bs.fid, nafn: nafn[bs.fid], fravik: bs.d } : null }; });
+
+  // hleðslusaga per staður (Agnar: „spá fyrir hvað maður þarf að sækja mörg tæki til hleðslu")
+  const hledsla = stadir.map(st => {
+    const ar = {};
+    rk.filter(r => r.fid === st.id).forEach(r => { const y = r.ar; ar[y] = ar[y] || { hl: tom(), ny: tom() }; TEG.forEach(t => { ar[y].hl[t] += r.hl[t]; ar[y].ny[t] += r.ny[t]; }); });
+    const h = (((ars[String(st.id)] || {}).history) || []).slice().sort((a, b) => (+b.year) - (+a.year)).find(x => x.annad);
+    return { fid: st.id, nafn: st.nafn, taeki: sum(stadV[st.id]), saga: Object.keys(ar).map(Number).sort().map(y => ({ ar: y, hladin: vstr(ar[y].hl), ny: vstr(ar[y].ny) })), texti: h ? { ar: h.year, annad: String(h.annad).slice(0, 400) } : null };
+  });
+
+  return {
+    kt, stadir: stadir.map(s => ({ id: s.id, nafn: s.nafn, heimilisfang: s.heimilisfang, thjonusta: s.er_i_thjonustu, taeki: sum(stadV[s.id]), vigur: vstr(stadV[s.id]) })),
+    skyrslur, reikningar_an_skyrslu,
+    olesnar: olesin.map(d => ({ doc: d.id, fid: d.fyrirtaeki_id, nafn: nafn[d.fyrirtaeki_id], ar: d.year, skra: d.file_name, drive: d.drive_file_id })),
+    hledsla
+  };
+}
+
+// ── POST para ───────────────────────────────────────────────────────────────
+async function para(b) {
+  const fid = parseInt(b.fid, 10), year = parseInt(b.year, 10), rep = parseInt(b.report_doc_id, 10);
+  const inv = b.invoice_doc_id ? parseInt(b.invoice_doc_id, 10) : null, sol = b.solur_id ? parseInt(b.solur_id, 10) : null;
+  if (!fid || !year || !rep || (!inv && !sol)) return { ok: false, reason: 'vantar fid/year/report_doc_id/reikning' };
+  const nota = '06.10.2026+: parað eftir tækjafjölda per tegund (para-rekstrarfelag) · ' + (b.reikn || '') + ' · frávik ' + (b.fravik != null ? b.fravik : '?');
+  const til = await sbGet('document_pairs?fyrirtaeki_id=eq.' + fid + '&year=eq.' + year + '&service_type=eq.uttekt&select=id,status,matched_by,invoice_doc_id,solur_id,notes');
+  const par = til[0];
+  if (par) {
+    if (/manual/.test(par.matched_by || '')) return { ok: false, reason: 'parið er handvirkt (' + par.matched_by + ') — ekki hreyft' };
+    if (par.invoice_doc_id || par.solur_id) return { ok: false, reason: 'parið er þegar klárað við ' + (par.invoice_doc_id ? 'skjal ' + par.invoice_doc_id : 'sölu ' + par.solur_id) + ' — ekki hreyft' };
+    if (b.dry) return { ok: true, dry: true, adgerd: 'uppfaera', par_id: par.id };
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/document_pairs?id=eq.${par.id}`, { method: 'PATCH', headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }), body: JSON.stringify({ invoice_doc_id: inv, solur_id: sol, report_doc_id: rep, status: 'klarad', matched_by: 'magn_station', notes: ((par.notes || '') + ' | ' + nota).slice(-900), updated_at: new Date().toISOString() }) });
+    if (!r.ok) throw new Error('PATCH ' + r.status + ' ' + (await r.text()).slice(0, 160));
+    return { ok: true, adgerd: 'uppfaera', par_id: par.id };
+  }
+  if (b.dry) return { ok: true, dry: true, adgerd: 'nyskra' };
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/document_pairs`, { method: 'POST', headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }), body: JSON.stringify({ customer_base_id: b.base || null, fyrirtaeki_id: fid, year, service_type: 'uttekt', report_doc_id: rep, invoice_doc_id: inv, solur_id: sol, status: 'klarad', matched_by: 'magn_station', notes: nota }) });
+  const rows = await r.json().catch(() => []);
+  if (!r.ok) throw new Error('POST ' + r.status + ' ' + JSON.stringify(rows).slice(0, 160));
+  return { ok: true, adgerd: 'nyskra', par_id: rows[0] && rows[0].id };
+}
+
+// ── POST lesa ───────────────────────────────────────────────────────────────
+function parseMonth(text) {
+  const t = String(text || '');
+  let m = /Dags[^0-9]{0,6}[0-9]{1,2}[./]([0-9]{1,2})[./][0-9]{2,4}/i.exec(t);
+  if (m) return parseInt(m[1], 10);
+  m = /(janúar|febrúar|mars|apríl|maí|júní|júlí|ágúst|september|október|nóvember|desember|oktober)[ \t]+20[0-9][0-9]/i.exec(t);
+  if (m) return MNUM[m[1].toLowerCase()] || (m[1].toLowerCase() === 'oktober' ? 10 : null);
+  return null;
+}
+async function lesa(b) {
+  const docId = parseInt(b.doc_id, 10); if (!docId) return { ok: false, reason: 'vantar doc_id' };
+  const d = (await sbGet('customer_documents?id=eq.' + docId + '&select=id,fyrirtaeki_id,year,drive_file_id,file_name'))[0];
+  if (!d || !d.drive_file_id) return { ok: false, reason: 'skjalið finnst ekki eða á enga Drive-skrá' };
+  const token = await freshAccessToken();
+  const r = await fetch(`https://www.googleapis.com/drive/v3/files/${d.drive_file_id}?alt=media&supportsAllDrives=true`, { headers: { Authorization: `Bearer ${token}` } });
+  if (!r.ok) return { ok: false, reason: 'Drive ' + r.status };
+  const parsed = await pdf(Buffer.from(await r.arrayBuffer())).catch(() => null);
+  const text = (parsed && parsed.text) || '';
+  if (text.replace(/[ \t\r\n]/g, '').length < 30) return { ok: false, reason: 'gat ekki lesið PDF-texta (skannað blað?)' };
+  const bun = parseBunadur(text), man = parseMonth(text);
+  if (!(bun.matched > 0)) return { ok: false, reason: 'engin „Fjöldi"-lína fannst í textanum' };
+  const equipment = toEquipment(bun);
+  // „hjá fyrirtækinu …" + „yfirfarin í <mánuður ár>" — línurnar sem segja staðinn og mánuðinn
+  const hja = (/hjá fyrirtækinu[ \t]+([^\n]{3,90})/i.exec(text) || [])[1] || null;
+  const annad = (/Annað:[ \t]*([^]*?)(Athugasemdir:|Fyrir hönd|$)/i.exec(text) || [])[1];
+  const ar = d.year || (/(20[0-9][0-9])/.exec(text) || [])[1];
+  const faersla = { year: String(ar), skodun: ar + '-' + (man ? MAN[man - 1] : ''), equipment, annad: annad ? annad.replace(/[ \t\r\n]+/g, ' ').trim().slice(0, 600) : '', skra: d.file_name || '', stada: '', lesid: 'para-rekstrarfelag ' + new Date().toISOString().slice(0, 10) };
+  if (!b.dry) {
+    const row = (await sbGet('app_settings?id=eq.1&select=a:settings->arsskodun_customers'))[0] || {};
+    const cur = ((row.a || {})[String(d.fyrirtaeki_id)] || {});
+    const history = Array.isArray(cur.history) ? cur.history.filter(h => String(h.year) !== String(ar)) : [];
+    history.push(faersla);
+    const patch = { arsskodun_customers: {} }; patch.arsskodun_customers[String(d.fyrirtaeki_id)] = { history };
+    const m = await fetch(`${SUPABASE_URL}/rest/v1/rpc/app_settings_merge`, { method: 'POST', headers: sbHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ p_patch: patch }) });
+    if (!m.ok) throw new Error('app_settings_merge ' + m.status + ' ' + (await m.text()).slice(0, 160));
+  }
+  return { ok: true, doc_id: docId, fid: d.fyrirtaeki_id, ar, man, hja, equipment, vigur: vstr(urSkyrslu(equipment)), annad: faersla.annad, dry: !!b.dry };
+}
+
+exports.handler = async (event) => {
+  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors(), body: '' };
+  if (!SUPABASE_URL || !SUPABASE_KEY) return json(500, { error: 'Supabase env missing' });
+  try {
+    if (event.httpMethod === 'POST') {
+      let body = {}; try { body = JSON.parse(event.body || '{}'); } catch (_) {}
+      if (body.action === 'para') return json(200, await para(body));
+      if (body.action === 'lesa') return json(200, await lesa(body));
+      return json(400, { error: 'unknown action' });
+    }
+    const p = event.queryStringParameters || {};
+    if (p.listi) return json(200, await listi());
+    if (p.kt && /^[0-9]{6}-?[0-9]{4}$/.test(p.kt)) return json(200, await greining(p.kt));
+    return json(400, { error: 'vantar ?kt=660707-0420 eða ?listi=1' });
+  } catch (e) {
+    return json(500, { error: String(e && e.message || e).slice(0, 300) });
+  }
+};
