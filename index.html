@@ -4148,8 +4148,9 @@ function wireRekstrarfelag(){
 
   function row(s){
     const r = s.reikningur, st = s.stadur, par = s.par;
-    const reikn = r ? ('<b>' + esc(r.nr) + '</b> ' + esc(r.dags || '') + '<div style="' + mono + '">skoðuð: ' + esc(r.skodud_txt) + (r.ny_txt !== '—' ? ' · ný: ' + esc(r.ny_txt) : '') + '</div>'
-        + '<div style="' + mono + ';color:' + (r.oruggt ? 'var(--ok,#2f7a4a)' : 'var(--warn,#8f6a1c)') + '">frávik ' + r.fravik + (r.oruggt ? ' ✓' : ' ?') + '</div>') : '<span style="color:var(--muted)">enginn reikningur innan ±4 mán.</span>';
+    const reikn = (r ? ('<b>' + esc(r.nr) + '</b> ' + esc(r.dags || '') + '<div style="' + mono + '">skoðuð: ' + esc(r.skodud_txt) + (r.ny_txt !== '—' ? ' · ný: ' + esc(r.ny_txt) : '') + '</div>'
+        + '<div style="' + mono + ';color:' + (r.oruggt ? 'var(--ok,#2f7a4a)' : 'var(--warn,#8f6a1c)') + '">frávik ' + r.fravik + (r.oruggt ? ' ✓' : ' ?') + '</div>') : '<span style="color:var(--muted)">enginn reikningur innan ±4 mán.</span>')
+        + ((s.ath || []).length ? '<div style="' + mono + ';color:var(--muted)" title="Ábendingar tólsins: vegna-lína reikningsins, reikningur sem annar staður á þegar, tvíræðar tölur">⚑ ' + s.ath.map(esc).join('<br>⚑ ') + '</div>' : '');
     const stad = st ? (st.sammala ? '<span style="color:var(--ok,#2f7a4a)">✓ sami staður</span>' : '<span style="color:var(--bad,#b3261e)">tölurnar passa við <b>' + esc(st.nafn) + '</b> (' + st.fravik + ' frá) · ' + st.eigin_fravik + ' frá eigin tækjaskrá</span>') : '';
     const parTxt = { sammala: '<span style="color:var(--ok,#2f7a4a)">✓ parað við þennan</span>', annar: '<span style="color:var(--bad,#b3261e)">parað við annan' + (par && par.handvirkt ? ' (handvirkt)' : '') + '</span>', vantar: '<span style="color:var(--warn,#8f6a1c)">vantar reikning í par</span>', par_an_talningar: 'par til, engin talning', ekkert: '<span style="color:var(--muted)">ekkert par</span>' }[s.par_stada] || '';
     const takki = s.ma_para ? '<button class="btn sm bk-rf-para" data-i="' + s._i + '">Para</button>' : '';
