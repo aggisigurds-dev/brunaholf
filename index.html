@@ -11110,6 +11110,7 @@ async function renderGerdReikninga(t){
       .gr-doc h1{font-size:24px;margin:0;font-weight:700}
       .gr-doc .gr-doc-sub{font-size:13px;font-style:italic;color:#555;margin:6px 0 0}
       .gr-doc .gr-doc-meta{margin-bottom:14px}
+      .gr-doc .gr-doc-vegna{font-size:12px;margin-top:6px;line-height:1.45;color:#222}
       .gr-doc .gr-doc-ws{font-weight:700}
       table.gr-efni{width:100%;border-collapse:collapse;font-size:12.5px}
       table.gr-efni td{padding:3px 4px;vertical-align:bottom}
@@ -11767,6 +11768,8 @@ async function renderGerdReikninga(t){
     // svo reikningurinn eigi viðtakanda án þess að fletta upp annars staðar.
     const custEmail = (d && d.netfang) || pgRow.netfang || ov.email || '';
     const dateText = (state.ui && state.ui.gr_date_text && state.ui.gr_date_text[name+'|'+month]) || '';
+    // 06.10.2026 (Agnar): „Vegna“-lína í Verk-boxinu — fer á skjalið AÐEINS ef eitthvað er skrifað.
+    const vegna = (state.ui && state.ui.gr_vegna && state.ui.gr_vegna[name+'|'+month]) || '';
     // ⚠️ DRÖGIN RÁÐA, EKKI STAÐBUNDIN STAÐA (09.09.2026 — virk peningavilla).
     //
     // Áður las þetta AÐEINS úr state.ui[...|month]. Vél sem hafði ekki þann
@@ -11876,6 +11879,7 @@ async function renderGerdReikninga(t){
           <div class="gb-dates">
           <div class="gr-r2"><div class="gr-f"><label>Frá</label><div style="display:flex;align-items:center;gap:5px"><input type="text" id="gr-fra" value="${dmy(fra)}" placeholder="dd/mm/áááá" inputmode="numeric" maxlength="10" style="flex:1;min-width:0"><button type="button" class="gr-datepick" data-for="gr-fra" title="Veldu dagsetningu" style="flex:0 0 auto;border:1px solid var(--line-2,var(--edge));background:var(--card,#fff);border-radius:8px;padding:6px 9px;cursor:pointer;font-size:14px;line-height:1">📅</button></div></div><div class="gr-f"><label>Til</label><div style="display:flex;align-items:center;gap:5px"><input type="text" id="gr-til" value="${dmy(til)}" placeholder="dd/mm/áááá" inputmode="numeric" maxlength="10" style="flex:1;min-width:0"><button type="button" class="gr-datepick" data-for="gr-til" title="Veldu dagsetningu" style="flex:0 0 auto;border:1px solid var(--line-2,var(--edge));background:var(--card,#fff);border-radius:8px;padding:6px 9px;cursor:pointer;font-size:14px;line-height:1">📅</button></div></div></div>
           <div class="gr-f" style="margin-top:2px"><label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-weight:600"><input type="checkbox" id="gr-datemode" ${dateText?'checked':''}> Skrifa dagsetningu sjálf/ur á reikninginn (t.d. „Maí 2026")</label><input type="text" id="gr-datetext" value="${escapeAttr(dateText)}" placeholder="t.d. Maí 2026" style="margin-top:6px;${dateText?'':'display:none'}"></div>
+          <div class="gr-f" style="margin-top:10px"><div class="gr-st">Vegna <span style="font-weight:400;color:var(--muted-2)">(kemur á skjalið aðeins ef skrifað)</span></div><input type="text" id="gr-vegna" value="${escapeAttr(vegna)}" placeholder="t.d. brunaþéttingar eftir lagnaleið, 3. hæð" autocomplete="off"></div>
           </div>
             </div>
           </section>
@@ -12114,6 +12118,8 @@ async function renderGerdReikninga(t){
       const pAddr = (document.getElementById('gr-addr') || {}).value ? document.getElementById('gr-addr').value.trim() : '';
       const payerBlock = (pCust||pKt||pAddr)
         ? `<div class="gr-doc-cust">${escapeHtml(pCust)}${pKt?`<br>kt. ${escapeHtml(pKt)}`:''}${pAddr?`<br>${escapeHtml(pAddr)}`:''}</div>` : '';
+      const pVegna = ((document.getElementById('gr-vegna') || {}).value || '').trim();
+      const vegnaBlock = pVegna ? `<div class="gr-doc-vegna"><b>Vegna:</b> ${escapeHtml(pVegna)}</div>` : '';
       const row = (l,p,m,tot,md) => `<tr><td class="l">${escapeHtml(l)}</td><td class="p">${p!=null?kr(p):''}</td><td class="m">${m!=null&&m!==''?m:''}</td><td class="t">${kr(tot)}</td></tr>`;
       let matRows = c.matLines.filter(m=>m.qty>0||m.total>0).map(m=>row(m.label, m.price, (m.qty%1?m.qty.toFixed(2):String(m.qty)), m.total)).join('');
       if(!matRows) matRows = '';
@@ -12123,7 +12129,7 @@ async function renderGerdReikninga(t){
           <img src="${escapeAttr(getLogo())}" class="gr-doc-logo" alt="" onerror="this.style.display='none'">
           <div class="gr-doc-sub">Verðskrá / tilboð</div>
         </div>
-        <div class="gr-doc-meta"><div>${(()=>{const _dm=document.getElementById('gr-datemode'),_dt=document.getElementById('gr-datetext');return (_dm&&_dm.checked&&_dt&&(_dt.value||'').trim())?escapeHtml((_dt.value||'').trim()):(dmy(fra)+' til '+dmy(til));})()}</div><div class="gr-doc-ws">${escapeHtml(ws)}</div>${payerBlock}</div>
+        <div class="gr-doc-meta"><div>${(()=>{const _dm=document.getElementById('gr-datemode'),_dt=document.getElementById('gr-datetext');return (_dm&&_dm.checked&&_dt&&(_dt.value||'').trim())?escapeHtml((_dt.value||'').trim()):(dmy(fra)+' til '+dmy(til));})()}</div><div class="gr-doc-ws">${escapeHtml(ws)}</div>${payerBlock}${vegnaBlock}</div>
         <table class="gr-efni">
           <thead><tr><td></td><td class="p">án vsk</td><td class="m">magn</td><td class="t">samtals</td></tr></thead>
           <tbody>
@@ -12361,7 +12367,7 @@ async function renderGerdReikninga(t){
     // ----- Save -----
     const doSave = async (extra) => {
       const c = compute();
-      { const _k=name+'|'+month, _dm=document.getElementById('gr-datemode'), _dtv=(document.getElementById('gr-datetext').value||'').trim(); state.ui=state.ui||{}; state.ui.gr_date_text=state.ui.gr_date_text||{}; if(_dm&&_dm.checked&&_dtv) state.ui.gr_date_text[_k]=_dtv; else delete state.ui.gr_date_text[_k]; state.ui.gr_sma_off=state.ui.gr_sma_off||{}; const _so=document.getElementById('gr-sma-on'); if(_so&&!_so.checked) state.ui.gr_sma_off[_k]=true; else delete state.ui.gr_sma_off[_k]; state.ui.gr_discount=state.ui.gr_discount||{}; const _dp=document.getElementById('gr-disc')?Math.max(0,Math.min(100,parseNum(document.getElementById('gr-disc').value))):0; if(_dp>0) state.ui.gr_discount[_k]=_dp; else delete state.ui.gr_discount[_k]; save(); }
+      { const _k=name+'|'+month, _dm=document.getElementById('gr-datemode'), _dtv=(document.getElementById('gr-datetext').value||'').trim(); state.ui=state.ui||{}; state.ui.gr_date_text=state.ui.gr_date_text||{}; if(_dm&&_dm.checked&&_dtv) state.ui.gr_date_text[_k]=_dtv; else delete state.ui.gr_date_text[_k]; state.ui.gr_vegna=state.ui.gr_vegna||{}; const _vg=((document.getElementById('gr-vegna')||{}).value||'').trim(); if(_vg) state.ui.gr_vegna[_k]=_vg; else delete state.ui.gr_vegna[_k]; state.ui.gr_sma_off=state.ui.gr_sma_off||{}; const _so=document.getElementById('gr-sma-on'); if(_so&&!_so.checked) state.ui.gr_sma_off[_k]=true; else delete state.ui.gr_sma_off[_k]; state.ui.gr_discount=state.ui.gr_discount||{}; const _dp=document.getElementById('gr-disc')?Math.max(0,Math.min(100,parseNum(document.getElementById('gr-disc').value))):0; if(_dp>0) state.ui.gr_discount[_k]=_dp; else delete state.ui.gr_discount[_k]; save(); }
       const $st = document.getElementById('gr-save-st');
       // 09.09.2026 — reitavíxl-vörn. Verkstaður / Verkkaupi / Kennitala eru þrír
       // textareitir hlið við hlið. Agnar sló verkkaupann í Verkstað og kennitöluna
@@ -12514,7 +12520,7 @@ async function renderGerdReikninga(t){
           .gr-doc-top{margin-bottom:24px}
           .gr-doc-logo{width:170px;height:auto;display:block}
           .gr-doc-sub{font-style:italic;color:#555;margin:6px 0 0}
-          .gr-doc-meta{margin-bottom:14px}.gr-doc-ws{font-weight:700}.gr-doc-cust{font-size:12px;margin-top:4px;line-height:1.45;color:#222}
+          .gr-doc-meta{margin-bottom:14px}.gr-doc-ws{font-weight:700}.gr-doc-cust{font-size:12px;margin-top:4px;line-height:1.45;color:#222}.gr-doc-vegna{font-size:12px;margin-top:6px;line-height:1.45;color:#222}
           table.gr-efni{width:100%;border-collapse:collapse;font-size:13px}
           table.gr-efni td{padding:3px 4px}
           table.gr-efni thead td{font-style:italic;color:#555;text-align:right}
@@ -12578,7 +12584,7 @@ async function renderGerdReikninga(t){
         kt: (document.getElementById('gr-kt')||{}).value ? document.getElementById('gr-kt').value.trim() : '',
         addr: (document.getElementById('gr-addr')||{}).value ? document.getElementById('gr-addr').value.trim() : '',
         fra: ymd(document.getElementById('gr-fra').value), til: ymd(document.getElementById('gr-til').value),
-        dateText, notes: document.getElementById('gr-notes').value.trim(),
+        dateText, vegna: ((document.getElementById('gr-vegna')||{}).value||'').trim(), notes: document.getElementById('gr-notes').value.trim(),
         rate: { km:r.km, ferd:r.ferd, vsk:r.vsk, sma:r.sma, stadf:GR_STADF }, c,
       };
     };
@@ -24243,6 +24249,7 @@ function drawGatEfnislistiPage(doc, logo, data){
   if(data.cust){ doc.text(data.cust, 40, by); by+=15; }
   if(data.kt){ doc.text('kt. '+data.kt, 40, by); by+=15; }
   if(data.addr){ doc.text(data.addr, 40, by); by+=15; }
+  if(data.vegna){ by += 4; const vl = doc.splitTextToSize('Vegna: '+data.vegna, 515); doc.text(vl, 40, by); by += 15*vl.length; }
   doc.setTextColor(20);
   const kr = n => _pkr(n);
   const bodyRows = [[{ content:'Brunalokanir', colSpan:4, styles:{ fontStyle:'bold', fillColor:[245,245,245], textColor:20 } }]];
