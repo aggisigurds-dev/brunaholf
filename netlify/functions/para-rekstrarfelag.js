@@ -151,12 +151,14 @@ async function greining(kt) {
     const stig = h => (h.doc_id ? 4 : 0) + (() => { const n = stadirUrTexta(stadir, (h.hja || '') + ' ' + (h.skra || '')); return n.includes(i) ? 2 : (n.length ? 0 : 1); })();
     const rod = l.slice().sort((a, b) => stig(b) - stig(a));
     const h = rod[0], adrar = l.filter(x => x !== h && fjarl(urSkyrslu(x.equipment), urSkyrslu(h.equipment)) > 0);
-    return { h, fleiri: adrar.length ? 'sagan geymir ' + l.length + ' færslur fyrir ' + ar + ' — valin „' + (h.skra || h.hja || 'án heitis') + '“, hinar: ' + adrar.map(x => vstr(urSkyrslu(x.equipment))).join(' · ') : null };
+    return { h, stig: stig(h), fleiri: adrar.length ? 'sagan geymir ' + l.length + ' færslur fyrir ' + ar + ' — valin „' + (h.skra || h.hja || 'án heitis') + '“, hinar: ' + adrar.map(x => vstr(urSkyrslu(x.equipment))).join(' · ') : null };
   };
   facts.forEach(f => {
     const ar = +f.report_year, saga = veljaSogu(f.fyrirtaeki_id, ar);
     const skjalRangt = f.source_doc_id && skjalAr[f.source_doc_id] && skjalAr[f.source_doc_id] !== ar;
-    if (saga && (saga.h.doc_id || skjalRangt)) return;   // sagan vinnur — bætt við í history-lykkjunni að neðan
+    // sagan vinnur aðeins ef hún er lesin úr PDF (doc_id) eða nefnir þennan stað sjálf — ónefnd sögufærsla á móti facts-röð með
+    // rangt skjal er jafntefli (Plaza 2026: facts 39/6/35 með 2025-skjali, sagan 14/11 = tölur Granda) og þá stendur facts-röðin
+    if (saga && (saga.h.doc_id || (skjalRangt && saga.stig >= 2))) return;   // bætt við í history-lykkjunni að neðan
     sk.push({ fid: f.fyrirtaeki_id, ar, man: f.inspect_month, v: urSkyrslu(f.equipment), doc: f.source_doc_id, heimild: 'facts', ath0: [skjalRangt ? 'facts-röðin vísar á skjal ' + f.source_doc_id + ' frá ' + skjalAr[f.source_doc_id] : null, saga && fjarl(urSkyrslu(saga.h.equipment), urSkyrslu(f.equipment)) > 0 ? 'sagan segir ' + vstr(urSkyrslu(saga.h.equipment)) + ' fyrir ' + ar + ' — facts-röðin notuð' : null, saga ? saga.fleiri : null].filter(Boolean) });
   });
   Object.keys(sogur).forEach(k => {
