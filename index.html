@@ -12726,12 +12726,17 @@ async function renderGerdReikninga(t){
   // í mánuðinum (/api/gata-uppgjor?klarad=1); verð = hole_size_rates scope 'heklureitur'.
   // Vistast sem venjuleg drög (invoice_drafts) — línurnar í materials_jsonb með gat:true,
   // materials_total 0 (enginn efniskostnaður) og fixed_total = samtala svo Kröfu yfirlit sýni fast verð.
-  async function openHeklureitur(name){
-    const month = state.ui.gr_month;
+  async function openHeklureitur(name, monthArg){
+    // Mánuður: gefinn (mánaðarval í glugganum) eða mánuður Gerðar reikninga. Glugginn á eigið
+    // mánaðarval (06.10.2026) — síðan stóð á ágúst og drög vistuðust á 0 kr fyrir mánuð án gata.
+    const month = monthArg || state.ui.gr_month;
+    const SIDASTI = (()=>{ const d = new Date(); d.setDate(1); d.setMonth(d.getMonth()-1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); })();
+    const NUNA = (()=>{ const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); })();
+    const manVal = (()=>{ const out = []; const d = new Date(); d.setDate(1); for(let i = 0; i < 14; i++){ out.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')); d.setMonth(d.getMonth()-1); } if(!out.includes(month)) out.push(month); return out.sort().reverse(); })();
     const wsName = /^heklureitur$/i.test(String(name||'').trim()) ? 'Heklu reitur' : name;
     const VSK_PCT = 24;
     const { fra, til } = monthRange(month);
-    const existing = draftFor(wsName);
+    const existing = DRAFTS[`${wsName}|${month}`];
     const payer = PAYER_OVERRIDE[wsName] || PAYER_OVERRIDE['Heklu reitur'] || {};
     const FOOT = 'Einingaverð miðast við þéttingu á annarri hlið hvers gats og fela í sér vinnu og efni. Skráning í Ajour gæðakerfið, skjalavinna og utanumhald er innifalið.';
     const bg = document.createElement('div');
@@ -12764,7 +12769,8 @@ async function renderGerdReikninga(t){
         <header class="gb-head">
           <div class="gb-title">Efnislisti · göt</div>
           <span class="gb-plate">HEKLUREITUR</span>
-          <div class="gb-meta">Brunalokanir eftir fjölda kláraðra gata · <b>${escapeHtml(wsName)}</b> · ${dmy(fra)}–${dmy(til)}</div>
+          <div class="gb-meta">Brunalokanir eftir fjölda kláraðra gata · <b>${escapeHtml(wsName)}</b> · ${dmy(fra)}–${dmy(til)}
+            <select id="hk-man" title="Mánuður" style="margin-left:8px;height:26px;border-radius:4px;border:1px solid #3a372f;background:#161513;color:#e8e2d3;font:inherit;font-size:12px;padding:0 6px">${manVal.map(m=>`<option value="${m}"${m===month?' selected':''}>${escapeHtml(monthLabel(m))}${m===NUNA?' (líðandi)':''}</option>`).join('')}</select></div>
           <span class="gb-status${existing&&existing.updated_at?'':' unsaved'}" id="hk-hd-status"><i class="boss-led"></i><span id="hk-hd-status-t">${(()=>{const t=existing&&existing.updated_at?new Date(existing.updated_at):null;return t&&!isNaN(t)?('vistað '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')):'óvistað';})()}</span></span>
           <button class="gr-x" id="hk-close" type="button" title="Loka">×</button>
         </header>
@@ -12809,6 +12815,11 @@ async function renderGerdReikninga(t){
     bg.addEventListener('click', e => { if(e.target===bg) close(); });
     document.getElementById('hk-close').onclick = () => close();
     document.getElementById('hk-close2').onclick = () => close();
+    document.getElementById('hk-man').onchange = (e) => {
+      const m = e.target.value;
+      if(dirty && !confirm('Óvistaðar breytingar tapast ef þú skiptir um mánuð. Halda áfram?')){ e.target.value = month; return; }
+      bg.remove(); openHeklureitur(name, m);
+    };
     bg.querySelectorAll('.gb-sec-h').forEach(h => h.onclick = () => h.parentElement.classList.toggle('collapsed'));
     const $body = document.getElementById('hk-body');
 
@@ -12829,6 +12840,14 @@ async function renderGerdReikninga(t){
 
     // Línur: vistuð drög (gat-línur) ráða magni; annars Ajour. Ajour-talan sést alltaf til hliðar.
     const saved = existing && Array.isArray(existing.materials_jsonb) ? existing.materials_jsonb.filter(m => m && m.gat) : [];
+    // Fyrsta opnun á mánuði án nokkurra kláraðra gata (og án vistaðra gatalína) → síðasti heili mánuður.
+    if(!monthArg && month < SIDASTI && !Object.values(ajourByKey).some(v => v > 0) && !saved.some(m => Number(m.qty) > 0)){
+      bg.remove();
+      const w = await openHeklureitur(name, SIDASTI);
+      const st = document.getElementById('hk-st');
+      if(st && !st.textContent) st.textContent = 'Engin kláruð göt í '+monthLabel(month)+' — opnaði '+monthLabel(SIDASTI)+'. Annar mánuður: veldu í hausnum.';
+      return w;
+    }
     let qty = {};
     const fromAjour = () => { const q = {}; for(const [k,v] of Object.entries(ajourByKey)) if(v>0) q[k] = v; return q; };
     if(saved.length){ for(const m of saved){ const k = `${m.size_min_mm}-${m.size_max_mm}`; if(rateByKey.has(k)) qty[k] = Number(m.qty)||0; } }
@@ -12922,7 +12941,7 @@ async function renderGerdReikninga(t){
     const doSave = async (force) => {
       const c = calc();
       $st.textContent = 'Vistar…';
-      const cur = draftFor(wsName);
+      const cur = DRAFTS[`${wsName}|${month}`];   // drög GLUGGA-mánaðarins (ekki endilega mánuður síðunnar)
       try{
         const rr = await fetch('/api/invoice-drafts', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
           id: cur?.id || undefined,
@@ -24268,6 +24287,7 @@ function drawTimabokPage(doc, logo, name, month, rows, yfCfg){
   const t = tbkYfSplit(sorted, yfCfg);
   const dmy = s => { const p=String(s||'').split('-'); return p.length===3? `${p[2]}/${p[1]}/${p[0]}` : (s||''); };
   const rsPdf = tbkRowSplit(sorted, { on: t.on, thr: t.thr });   // per-röð ÐV/YF dálkar (65adc9e7)
+  const nafn = e => String(e||'').replace(/(^|[\s-])(\p{Ll})/gu, (m, sp, ch) => sp + ch.toUpperCase());   // „lukasz“ → „Lukasz“ (aðeins birting)
   const hh = (txt, al) => ({ content: txt, styles: { halign: al || 'left' } });
   doc.autoTable({
     startY: ty + 30, theme:'plain',
@@ -24275,8 +24295,8 @@ function drawTimabokPage(doc, logo, name, month, rows, yfCfg){
       ? [[hh('DAGSETNING'), hh('STARFSMAÐUR'), hh('INN','right'), hh('ÚT','right'), hh('DAGVINNA','right'), hh('YFIRVINNA','right'), hh('TÍMAR','right')]]
       : [[hh('DAGSETNING'), hh('STARFSMAÐUR'), hh('INN','right'), hh('ÚT','right'), hh('TÍMAR','right')]],
     body: sorted.map((r,i)=> t.on
-      ? [dmy(r.date), r.employee||'', r.time_in||'', r.time_out||'', _phr(rsPdf[i].dv), rsPdf[i].yf>0?_phr(rsPdf[i].yf):'', _phr(r.hours)]
-      : [dmy(r.date), r.employee||'', r.time_in||'', r.time_out||'', _phr(r.hours)]),
+      ? [dmy(r.date), nafn(r.employee), r.time_in||'', r.time_out||'', _phr(rsPdf[i].dv), rsPdf[i].yf>0?_phr(rsPdf[i].yf):'', _phr(r.hours)]
+      : [dmy(r.date), nafn(r.employee), r.time_in||'', r.time_out||'', _phr(r.hours)]),
     headStyles: BH_PDF_HEAD, bodyStyles: { ...BH_PDF_BODY, cellPadding:{ top:8.5, bottom:8.5, left:0, right:0 } },
     columnStyles: t.on
       ? { 0:{ cellWidth:92 }, 1:{ cellWidth:'auto' }, 2:{ cellWidth:46, halign:'right' }, 3:{ cellWidth:50, halign:'right' }, 4:{ cellWidth:60, halign:'right' }, 5:{ cellWidth:60, halign:'right' }, 6:{ cellWidth:56, halign:'right', fontStyle:'bold' } }
@@ -24297,22 +24317,22 @@ function drawTimabokPage(doc, logo, name, month, rows, yfCfg){
   doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(26); doc.text('Tímar alls', lbl, y, { align:'right' });
   doc.setFont('times','bold'); doc.setFontSize(16); doc.text(_phr(t.total), R, y + 1, { align:'right' });
   // Samantekt á starfsmann
-  let y2 = y + 46;
+  let y2 = y + 38;
   if(y2 > H - 110){ doc.addPage(); y2 = 60; }
   doc.setFont('times','bold'); doc.setFontSize(12); doc.setTextColor(26); doc.text('Samantekt á starfsmann', L, y2);
   doc.setDrawColor(90); doc.setLineWidth(0.9); doc.line(L, y2 + 9, R, y2 + 9);
   const empRows = Object.keys(t.byEmp).sort((a,b)=>a.localeCompare(b,'is')).map(e=>{
     const m = t.byEmp[e];
-    return t.on ? [e, String(m.days.size), _phr(m.dv), _phr(m.yf), _phr(m.hours)] : [e, String(m.days.size), _phr(m.hours)];
+    return t.on ? [nafn(e), String(m.days.size), _phr(m.dv), _phr(m.yf), _phr(m.hours)] : [nafn(e), String(m.days.size), _phr(m.hours)];
   });
   doc.autoTable({ startY: y2 + 22, theme:'plain',
     head: t.on ? [[hh('STARFSMAÐUR'), hh('DAGAR','right'), hh('DAGVINNA','right'), hh('YFIRVINNA','right'), hh('TÍMAR','right')]] : [[hh('STARFSMAÐUR'), hh('DAGAR','right'), hh('TÍMAR','right')]],
     body: empRows,
-    headStyles: { ...BH_PDF_HEAD, lineWidth:{ bottom:0.5 }, lineColor:[200,200,200] }, bodyStyles: { ...BH_PDF_BODY, cellPadding:{ top:8.5, bottom:8.5, left:0, right:0 } },
+    headStyles: { ...BH_PDF_HEAD, lineWidth:{ bottom:0.5 }, lineColor:[200,200,200] }, bodyStyles: { ...BH_PDF_BODY, cellPadding:{ top:7, bottom:7, left:0, right:0 } },
     columnStyles: t.on
       ? { 1:{ cellWidth:50, halign:'right' }, 2:{ cellWidth:70, halign:'right' }, 3:{ cellWidth:70, halign:'right' }, 4:{ cellWidth:66, halign:'right', fontStyle:'bold' } }
       : { 1:{ cellWidth:60, halign:'right' }, 2:{ cellWidth:79, halign:'right', fontStyle:'bold' } },
-    margin:{ left:L, right:L } });
+    margin:{ left:L, right:L, bottom:28 } });
 }
 
 // Build the Efnislisti (invoice prep) PDF from the editor's computed numbers, upload to Drive.
