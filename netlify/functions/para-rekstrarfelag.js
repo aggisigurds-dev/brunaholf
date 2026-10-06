@@ -139,8 +139,31 @@ async function greining(kt) {
 
   // skýrslur: ein færsla per (staður, ár)
   const sk = [];
-  facts.forEach(f => sk.push({ fid: f.fyrirtaeki_id, ar: f.report_year, man: f.inspect_month, v: urSkyrslu(f.equipment), doc: f.source_doc_id, heimild: 'facts' }));
-  ids.forEach(i => (((ars[String(i)] || {}).history) || []).forEach(h => { const ar = +h.year, man = manTala(h.skodun); if (!ar || sk.some(x => x.fid === i && x.ar === ar)) return; sk.push({ fid: i, ar, man, v: urSkyrslu(h.equipment), doc: null, heimild: 'history' + (h.skra ? ' · ' + h.skra : ''), hja: h.hja || null }); }));
+  // TVÆR GEYMSLUR, OG BÁÐAR GETA LOGIÐ (mælt 06.10.2026): sagan undir Grjóthálsi (261) geymdi skýrslur ALLRA fimm Aðalskoðunar-staða
+  // — fjórar færslur fyrir 2026, sjö fyrir 2025 — og facts-röðin bar tölur Hjallahrauns með 2025-skjali sem heimild. 119 (félag, ár)
+  // eiga fleiri en eina færslu í sögunni (111 félög, mest 15). Því: (1) færsla sem lesa skrifaði úr PDF (doc_id) vinnur; (2) facts-röð
+  // þar sem heimildarskjalið er af öðru ári en report_year er ekki treyst sé saga til; (3) séu fleiri færslur sama ár er sú valin sem
+  // nefnir þennan stað (hja/skra) og hinar taldar í ath — aldrei „fyrsta sem fannst".
+  const skjalAr = {}; skjol.forEach(d => { skjalAr[d.id] = +d.year; });
+  const sogur = {}; ids.forEach(i => { (((ars[String(i)] || {}).history) || []).forEach(h => { const ar = +h.year; if (!ar) return; (sogur[i + ':' + ar] = sogur[i + ':' + ar] || []).push(h); }); });
+  const veljaSogu = (i, ar) => {
+    const l = sogur[i + ':' + ar] || []; if (!l.length) return null;
+    const stig = h => (h.doc_id ? 4 : 0) + (() => { const n = stadirUrTexta(stadir, (h.hja || '') + ' ' + (h.skra || '')); return n.includes(i) ? 2 : (n.length ? 0 : 1); })();
+    const rod = l.slice().sort((a, b) => stig(b) - stig(a));
+    const h = rod[0], adrar = l.filter(x => x !== h && fjarl(urSkyrslu(x.equipment), urSkyrslu(h.equipment)) > 0);
+    return { h, fleiri: adrar.length ? 'sagan geymir ' + l.length + ' færslur fyrir ' + ar + ' — valin „' + (h.skra || h.hja || 'án heitis') + '“, hinar: ' + adrar.map(x => vstr(urSkyrslu(x.equipment))).join(' · ') : null };
+  };
+  facts.forEach(f => {
+    const ar = +f.report_year, saga = veljaSogu(f.fyrirtaeki_id, ar);
+    const skjalRangt = f.source_doc_id && skjalAr[f.source_doc_id] && skjalAr[f.source_doc_id] !== ar;
+    if (saga && (saga.h.doc_id || skjalRangt)) return;   // sagan vinnur — bætt við í history-lykkjunni að neðan
+    sk.push({ fid: f.fyrirtaeki_id, ar, man: f.inspect_month, v: urSkyrslu(f.equipment), doc: f.source_doc_id, heimild: 'facts', ath0: [skjalRangt ? 'facts-röðin vísar á skjal ' + f.source_doc_id + ' frá ' + skjalAr[f.source_doc_id] : null, saga && fjarl(urSkyrslu(saga.h.equipment), urSkyrslu(f.equipment)) > 0 ? 'sagan segir ' + vstr(urSkyrslu(saga.h.equipment)) + ' fyrir ' + ar + ' — facts-röðin notuð' : null, saga ? saga.fleiri : null].filter(Boolean) });
+  });
+  Object.keys(sogur).forEach(k => {
+    const [i, ar] = k.split(':').map(Number); if (sk.some(x => x.fid === i && x.ar === ar)) return;
+    const saga = veljaSogu(i, ar), h = saga.h, f = facts.find(x => x.fyrirtaeki_id === i && +x.report_year === ar);
+    sk.push({ fid: i, ar, man: manTala(h.skodun), v: urSkyrslu(h.equipment), doc: h.doc_id || null, heimild: 'history' + (h.skra ? ' · ' + h.skra : ''), hja: h.hja || null, ath0: [saga.fleiri, f && fjarl(urSkyrslu(f.equipment), urSkyrslu(h.equipment)) > 0 ? 'facts-röðin segir ' + vstr(urSkyrslu(f.equipment)) + (f.source_doc_id ? ' (skjal ' + f.source_doc_id + (skjalAr[f.source_doc_id] ? ' frá ' + skjalAr[f.source_doc_id] : '') + ')' : '') + ' — sagan úr PDF notuð' : null].filter(Boolean) });
+  });
   const olesin = skjol.filter(d => !sk.some(x => x.fid === d.fyrirtaeki_id && +x.ar === +d.year));
 
   // reikningar: reikningslestur + solur (salan ræður sé sami reikningur í báðum)
@@ -188,7 +211,7 @@ async function greining(kt) {
   });
   const skyrslur = [];
   kand.sort((a, b) => b.s.ar - a.s.ar || a.s.fid - b.s.fid).forEach(k => {
-    const s = k.s, best = k.best, ath = [];
+    const s = k.s, best = k.best, ath = (s.ath0 || []).slice();
     let bs = null; ids.forEach(i => { const d = fjarl(s.v, stadV[i]); if (!bs || d < bs.d) bs = { fid: i, d }; });
     const sv = sum(s.v);
     const skDoc = (skjol.find(d => d.fyrirtaeki_id === s.fid && +d.year === +s.ar) || {}).id || s.doc;
@@ -318,6 +341,16 @@ async function lesa(b) {
     const patch = { arsskodun_customers: {} }; patch.arsskodun_customers[String(d.fyrirtaeki_id)] = { history };
     const m = await fetch(`${SUPABASE_URL}/rest/v1/rpc/app_settings_merge`, { method: 'POST', headers: sbHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ p_patch: patch }) });
     if (!m.ok) throw new Error('app_settings_merge ' + m.status + ' ' + (await m.text()).slice(0, 160));
+    // Hin geymslan líka (fact-check: „þær fara úr takt"): facts-röðin er ein per félag = nýjasta skýrslan. Uppfærð þegar þetta ár er
+    // jafn nýtt eða nýrra en það sem röðin ber — eldra skjal lækkar hana aldrei. Fyrir 261 bar hún tölur Hjallahrauns með 2025-skjali.
+    const fr = (await sbGet('arsskodun_report_facts?fyrirtaeki_id=eq.' + d.fyrirtaeki_id + '&select=report_year,source_doc_id'))[0];
+    if (!fr || !fr.report_year || +ar >= +fr.report_year) {
+      const alls = Object.keys(equipment || {}).reduce((t, k) => t + (+equipment[k] || 0), 0);
+      const fu = await fetch(`${SUPABASE_URL}/rest/v1/arsskodun_report_facts?on_conflict=fyrirtaeki_id`, { method: 'POST', headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' }),
+        body: JSON.stringify({ fyrirtaeki_id: d.fyrirtaeki_id, source_doc_id: docId, drive_file_id: d.drive_file_id || null, report_year: +ar, inspect_month: man || null, equipment, total_devices: alls, parse_ok: true, parsed_at: new Date().toISOString(), raw_month_txt: man ? MAN[man - 1] + ' ' + ar : null }) });
+      if (!fu.ok) throw new Error('report_facts ' + fu.status + ' ' + (await fu.text()).slice(0, 160));
+      faersla._facts = 'uppfærð';
+    }
   }
   return { ok: true, doc_id: docId, fid: d.fyrirtaeki_id, ar, man, hja, equipment, vigur: vstr(urSkyrslu(equipment)), annad: faersla.annad, annar_stadur: annarStadur || null, vidvorun: vidvorun || null, dry: !!b.dry };
 }
