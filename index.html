@@ -4131,18 +4131,20 @@ function renderSkyrslustod(t){
 // Agnar: „lesið yrði yfir svona rekstrarfélög og skráð niður úr skýrslu og invoicum tækjafjölda eftir tegundum …
 // para þau síðan saman burtséð frá heitum / heimilisföngum" · „Invoice = skýrsla = tækjalisti" · „ekki alltaf að
 // marka eldri skjöl". Þjónninn (/api/para-rekstrarfelag) telur; hér er aðeins sýnt og staðfest.
+let RF_G = null, RF_KT = '', RF_FELOG = null;   // lifir af endurteikningu flipans (hún gerist þegar félagalistinn kemur)
 function wireRekstrarfelag(){
-  const $kt = document.getElementById('bk-rf-kt'), $run = document.getElementById('bk-rf-run'), $st = document.getElementById('bk-rf-status'), $p = document.getElementById('bk-rf-panel');
-  if(!$kt || !$run || !$p) return;
+  const $kt = document.getElementById('bk-rf-kt'), $run = document.getElementById('bk-rf-run');
+  if(!$kt || !$run) return;
+  // hnútarnir eru sóttir við hverja notkun — spjaldið sem var til þegar var tengt getur verið dottið úr DOM
+  const $P = () => document.getElementById('bk-rf-panel'), $ST = () => document.getElementById('bk-rf-status');
   const esc = s => escapeHtml(String(s == null ? '' : s));
-  const setSt = (m, c) => { $st.textContent = m || ''; $st.style.color = c || 'var(--muted)'; };
+  const setSt = (m, c) => { const $st = $ST(); if(!$st) return; $st.textContent = m || ''; $st.style.color = c || 'var(--muted)'; };
   const cell = 'padding:5px 8px;border-bottom:1px solid var(--line-2,#e6e1d6);vertical-align:top;font-size:12.5px';
   const mono = 'font-family:var(--font-mono,ui-monospace,monospace);font-size:11.5px';
   const MAN = ['jan','feb','mar','apr','maí','jún','júl','ágú','sep','okt','nóv','des'];
-  let G = null;
-  fetch('/api/para-rekstrarfelag?listi=1').then(r => r.json()).then(j => {
-    (j.felog || []).forEach(f => { const o = document.createElement('option'); o.value = f.kt; o.textContent = f.nafn + ' — ' + f.stadir + ' staðir · ' + f.kt; $kt.appendChild(o); });
-  }).catch(() => setSt('náði ekki í félagalistann', 'var(--bad,#b3261e)'));
+  const fylla = felog => { felog.forEach(f => { const o = document.createElement('option'); o.value = f.kt; o.textContent = f.nafn + ' — ' + f.stadir + ' staðir · ' + f.kt; $kt.appendChild(o); }); if(RF_KT) $kt.value = RF_KT; if(RF_G) render(); };
+  if(RF_FELOG) fylla(RF_FELOG);
+  else fetch('/api/para-rekstrarfelag?listi=1').then(r => r.json()).then(j => { RF_FELOG = j.felog || []; fylla(RF_FELOG); }).catch(() => setSt('náði ekki í félagalistann', 'var(--bad,#b3261e)'));
 
   function row(s){
     const r = s.reikningur, st = s.stadur, par = s.par;
@@ -4159,7 +4161,8 @@ function wireRekstrarfelag(){
       + '<td style="' + cell + '">' + parTxt + ' ' + takki + '</td></tr>';
   }
   function render(){
-    if(!G) { $p.hidden = true; return; }
+    const $p = $P(); if(!$p) return;
+    const G = RF_G; if(!G) { $p.hidden = true; return; }
     G.skyrslur.forEach((s, i) => { s._i = i; });
     const stemma = G.skyrslur.filter(s => s.par_stada === 'sammala' && s.stadur && s.stadur.sammala).length;
     const th = (t, w) => '<th style="text-align:left;padding:6px 8px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)' + (w ? ';width:' + w : '') + '">' + t + '</th>';
@@ -4184,17 +4187,17 @@ function wireRekstrarfelag(){
   }
   async function saekja(){
     const kt = $kt.value; if(!kt) return;
-    setSt('tel…'); $run.disabled = true;
-    try{ const r = await fetch('/api/para-rekstrarfelag?kt=' + encodeURIComponent(kt)); const j = await r.json(); if(j.error) throw new Error(j.error); G = j; render(); setSt(''); }
+    RF_KT = kt; setSt('tel…'); $run.disabled = true;
+    try{ const r = await fetch('/api/para-rekstrarfelag?kt=' + encodeURIComponent(kt)); const j = await r.json(); if(j.error) throw new Error(j.error); RF_G = j; render(); setSt(''); }
     catch(e){ setSt('villa: ' + (e && e.message || e), 'var(--bad,#b3261e)'); }
     finally{ $run.disabled = false; }
   }
   $run.addEventListener('click', saekja);
   $kt.addEventListener('change', () => { if($kt.value) saekja(); });
-  $p.addEventListener('click', async (e) => {
+  const $p0 = $P(); if($p0 && !$p0._rfWired) { $p0._rfWired = true; $p0.addEventListener('click', async (e) => {
     const bp = e.target.closest('.bk-rf-para'), bl = e.target.closest('.bk-rf-lesa');
     if(bp){
-      const s = G && G.skyrslur[+bp.dataset.i]; if(!s || !s.reikningur) return;
+      const s = RF_G && RF_G.skyrslur[+bp.dataset.i]; if(!s || !s.reikningur) return;
       bp.disabled = true; bp.textContent = 'para…';
       try{
         const r = await fetch('/api/para-rekstrarfelag', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ action:'para', par_id: s.par && s.par.id, fid: s.fid, base: s.base, year: s.ar, report_doc_id: s.doc, invoice_doc_id: s.reikningur.doc, solur_id: s.reikningur.solur_id, reikn: s.reikningur.nr, fravik: s.reikningur.fravik }) });
@@ -4212,7 +4215,7 @@ function wireRekstrarfelag(){
         setSt('✓ lesið: ' + (j.hja || '') + ' · ' + (j.man ? MAN[j.man - 1] : '?') + ' ' + j.ar + ' · ' + j.vigur, 'var(--ok,#2f7a4a)'); await saekja();
       }catch(err){ setSt('villa: ' + (err && err.message || err), 'var(--bad,#b3261e)'); bl.disabled = false; bl.textContent = 'Lesa PDF'; }
     }
-  });
+  }); }
 }
 
 // ── Forskoðun til hliðar (Agnar 04.09.2026: „eins og í skjala multitool") ─────
