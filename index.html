@@ -13011,17 +13011,55 @@ async function renderGerdReikninga(t){
     let month = monthArg || state.ui.gr_month;
     if(!/^\d{4}-\d{2}$/.test(month||'') || month < '2025-09') month = NOW;
 
+    // Skjalið (06.10.2026, útlit Agnars): hvítt blað, serif-titill, svartur haus valins mánaðar, strik í
+    // auðum reitum, svört samtalslína og samtölukassi. Hver regla fær líka .gr-modal-bg.boss.nl-ef-forskeyti
+    // svo þema appsins (mono-hástafir á th, Playfair á h1) máli ekki skjalið; prentglugginn notar sömu reglur.
+    const NLE_DOC_CSS = (() => {
+      const R = [
+        ['.nd-head', 'display:flex;align-items:center;margin:0 0 12px'],
+        ['.nd-logo', 'height:44px;width:auto;display:block;margin-right:22px'],
+        ['.nd-tit', 'flex:1;min-width:0;border-left:1px solid #cfcfcf;padding-left:22px'],
+        ['h1', "font-family:Georgia,'Times New Roman',serif;font-size:25px;font-weight:700;color:#1a1a1a;margin:0 0 4px;letter-spacing:-.01em;text-transform:none;line-height:1.15;background:none;-webkit-text-fill-color:#1a1a1a"],
+        ['.nd-sub', 'font-size:11.5px;color:#666'],
+        ['.nd-right', 'text-align:right;font-size:11.5px;color:#666;line-height:1.45;white-space:nowrap'],
+        ['.nd-right b', "font-family:Georgia,'Times New Roman',serif;font-size:15px;color:#1a1a1a;font-weight:700"],
+        ['.nd-rule', 'border-top:2.5px solid #111;margin:0 0 14px'],
+        ['table', 'border-collapse:collapse;width:100%;white-space:nowrap;background:#fff'],
+        ['th, td', "font-family:'Segoe UI',Calibri,Arial,Helvetica,sans-serif;padding:6px 5px;text-align:right;border:0;background:transparent;color:#1a1a1a;letter-spacing:0;text-transform:none;font-size:11px;font-weight:400;font-style:normal;line-height:1.25;box-shadow:none"],
+        ['thead th', 'font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.05em;vertical-align:bottom;white-space:normal;border-bottom:1.5px solid #111'],
+        ['thead th.sub, thead th.cur', 'white-space:nowrap'],
+        ['thead th.grp', 'text-align:center;border-bottom:1px solid #9a9a9a'],
+        ['thead th.grp + th.grp', 'border-left:8px solid #fff'],
+        ['thead th.sub', 'text-transform:none;letter-spacing:0;font-size:10px;color:#555'],
+        ['th.l, td.l', 'text-align:left'],
+        ['thead th.cur', 'background:#1a1a1a;color:#fff'],
+        ['th.sept, td.sept', 'background:#ececec'],
+        ['td.cur', 'background:#f4f4f4'],
+        ['td.b, td.vn', 'font-weight:700'],
+        ['td.lab', 'color:#333'],
+        ['td.dash', 'color:#b8b8b8'],
+        ['tbody td', 'border-bottom:1px solid #e6e6e6'],
+        ['tbody tr.grp td', 'border-top:2px solid #8a8a8a'],
+        ['tfoot td', 'background:#111;color:#fff;font-weight:700;padding:8px 5px'],
+        ['tfoot td.cur', 'background:#2b2b2b'],
+        ['tfoot td.sept', 'background:#3a3a3a'],
+        ['.nd-tot', 'margin:18px 0 0 auto;width:340px;border:1px solid #cfcfcf;border-top:3px solid #111;padding:14px 18px 12px;background:#fff'],
+        ['.nd-tot .r', 'display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:#555;padding:2px 0'],
+        ['.nd-tot .r + .r', 'margin-top:6px'],
+        ['.nd-tot .big', "font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:700;color:#111"],
+        ['.nd-tot .big small', "font-family:Georgia,'Times New Roman',serif;font-size:15px;font-weight:400;color:#111"],
+        ['.nd-tot .an', 'font-size:13px;color:#1a1a1a'],
+      ];
+      const imp = body => body.split(';').filter(Boolean).map(d => d + ' !important').join(';');
+      return R.map(([sel, body]) => sel.split(',').map(s => s.trim()).flatMap(s => ['.nle-doc ' + s, '.gr-modal-bg.boss.nl-ef .nle-doc ' + s]).join(',') + '{' + imp(body) + '}').join('\n');
+    })();
+
     const bg = document.createElement('div');
     bg.className = 'gr-modal-bg boss nl-ef';
     bg.innerHTML = `
       <style>
         .gr-modal-bg.boss.nl-ef .gr-modal{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto auto;grid-template-areas:"hd" "kpi" "form" "prev";overflow-y:auto}
         .gr-modal-bg.boss.nl-ef .gr-prev,.gr-modal-bg.boss.nl-ef .nle-doc{min-width:0;max-width:100%}
-        /* skjalið er blað til verkkaupa — þema appsins (mono-hástafir á th, Playfair á h1) á ekki við hér */
-        .gr-modal-bg.boss.nl-ef .nle-doc h1{font-family:Calibri,Arial,Helvetica,sans-serif !important}
-        .gr-modal-bg.boss.nl-ef .nle-doc th,.gr-modal-bg.boss.nl-ef .nle-doc td{font-family:Calibri,Arial,Helvetica,sans-serif !important;text-transform:none !important;letter-spacing:0 !important;font-size:10.5px !important;color:#111 !important;padding:2px 4px !important}
-        .gr-modal-bg.boss.nl-ef .nle-doc th{font-weight:700 !important;white-space:normal !important;line-height:1.15 !important;vertical-align:middle !important}
-        .gr-modal-bg.boss.nl-ef .nle-doc td.l{color:#7a5a12 !important}
         .gr-modal-bg.boss.nl-ef .gb-kpi{margin:14px 18px 0}
         .gr-modal-bg.boss.nl-ef .gr-form{max-height:none;overflow:visible;padding:14px 18px 0}
         .gr-modal-bg.boss.nl-ef .gr-prev{padding:4px 18px 22px;overflow:visible}
@@ -13042,27 +13080,8 @@ async function renderGerdReikninga(t){
         .nl-ef .nle-tbl tr.nle-ed input{border-color:#8f6a1c;font-weight:700}
         .nl-ef .nle-tbl tfoot td{font-weight:700;border-bottom:0;padding-top:7px}
         .nl-ef .nle-link{border:0;background:transparent;color:#1d5fa8;cursor:pointer;font:inherit;font-size:12px;font-weight:600;padding:0 0 0 6px}
-        .nl-ef .nle-doc{background:#fff;border:1px solid var(--line-2,#d9d3c6);box-shadow:0 1px 2px rgba(22,21,19,.15),0 18px 36px -18px rgba(22,21,19,.5);padding:22px 24px;overflow-x:auto;font-family:Calibri,Arial,Helvetica,sans-serif;color:#111}
-        .nle-doc .nd-head{display:flex;align-items:center;gap:22px;margin:0 0 8px}
-        .nle-doc .nd-logo{height:48px;width:auto;display:block}
-        .nle-doc .nd-tit{flex:1;min-width:0}
-        .nle-doc h1{font-size:23px;color:#1f5fa8;margin:0 0 3px;font-weight:700;letter-spacing:-.01em}
-        .nle-doc .nd-sub{font-size:11.5px;color:#8a6d1f}
-        .nle-doc .nd-right{text-align:right;font-size:11px;color:#666;line-height:1.5;white-space:nowrap}
-        .nle-doc .nd-right b{color:#111;font-size:12.5px}
-        .nle-doc .nd-rule{border-top:2px solid #1f5fa8;margin:0 0 10px}
-        .nle-doc table{border-collapse:collapse;font-size:10.5px;white-space:nowrap;width:100%}
-        .nle-doc th,.nle-doc td{border:1px solid #9a9a9a;padding:2px 4px;text-align:right}
-        .nle-doc th{background:#f2f2f2;font-weight:700;text-align:center}
-        .nle-doc td.l{text-align:left;color:#7a5a12}
-        .nle-doc td.hl,.nle-doc th.hl{background:#f2f2f2;font-weight:700;font-style:italic}
-        .nle-doc td.mn{background:#e7e7e7}
-        .nle-doc td.cur,.nle-doc th.cur{background:#fff8dc}
-        .nle-doc tfoot td{font-weight:700;border-top:2px solid #333}
-        .nle-doc td.ph{background:#f8f8f8}
-        .nle-doc .nd-tot{margin:10px 0 0 auto;width:300px;border-top:1.5px solid #1f5fa8;padding-top:6px;font-size:12px;color:#555}
-        .nle-doc .nd-tot div{display:flex;justify-content:space-between;padding:1px 0}
-        .nle-doc .nd-tot div:first-child{color:#111;font-size:13.5px}
+        .nl-ef .nle-doc{background:#fff;border:1px solid var(--line-2,#d9d3c6);box-shadow:0 1px 2px rgba(22,21,19,.15),0 18px 36px -18px rgba(22,21,19,.5);padding:26px 28px;overflow-x:auto;font-family:'Segoe UI',Calibri,Arial,Helvetica,sans-serif;color:#1a1a1a}
+        ${NLE_DOC_CSS}
         .nl-ef .nle-chk{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;cursor:pointer;margin-left:6px}
         .nl-ef .nle-chk input{width:16px;height:16px;accent-color:#8f6a1c}
         .nl-ef .rf-bg{position:fixed;inset:0;z-index:100001;background:rgba(10,10,9,.55);display:flex;align-items:center;justify-content:center;padding:16px}
@@ -13205,27 +13224,42 @@ async function renderGerdReikninga(t){
 
     const docHtml = (M) => {
       const months = M.man, cur = months.length - 1, BH = baraHeilar();
-      const tvo = k => k === cur || !BH;                       // stakar + heilar, eða aðeins heilar
-      const manIs = MAN_IS[+month.split('-')[1]-1].toLowerCase();
-      const head1 = `<tr><th rowspan="2">Verk nr.</th><th rowspan="2">Verkliðir</th><th rowspan="2">Fjöldi</th><th rowspan="2">Upphæð<br>m vsk</th><th colspan="2" class="hl">Heildar lokanir<br>Stakar og heilar</th>${months.map((m,k)=>`<th colspan="${tvo(k)?2:1}" class="${k===cur?'cur':''}">${escapeHtml(k===cur?manNafn(m.month):manStutt(m.month))}</th>`).join('')}<th rowspan="2">Upphæð Heild<br>m vsk</th><th rowspan="2" class="cur">Upphæð í ${escapeHtml(manIs)}<br>með vsk</th></tr>`;
-      const head2 = `<tr><th class="hl">Stakar</th><th class="hl">heilar</th>${months.map((m,k)=>(tvo(k)?`<th class="${k===cur?'cur':''}">st.</th>`:'')+`<th class="${k===cur?'cur':''}">heil.</th>`).join('')}</tr>`;
-      const body = M.rows.map(r => {
-        const mc = months.map((m, k) => {
-          const isCur = k === cur;
-          const dl = isCur ? r.delta : m.lines[r.i].delta, dh = isCur ? r.dH : m.lines[r.i].delta_heilar;
-          return (tvo(k) ? `<td class="mn ${isCur?'cur':''}">${dl?nf(dl):''}</td>` : '') + `<td class="${isCur?'cur':(BH&&k%2?'ph':'')}">${dh?nf(dh,1):''}</td>`;
-        }).join('');
-        return `<tr><td>${escapeHtml(r.v.verk_nr)}</td><td class="l">${escapeHtml(r.v.label)}</td><td>${r.v.fjoldi!=null?fmt(r.v.fjoldi):''}</td><td>${fmt(r.v.rate)}</td><td class="hl">${nf(r.st)}</td><td class="hl">${nf(r.heilar,1)}</td>${mc}<td>${fmt(r.heild)}</td><td class="cur"><b>${fmt(r.um)}</b></td></tr>`;
+      const prev = months.slice(0, cur);
+      const [yy, mm] = month.split('-').map(Number), sidasti = new Date(yy, mm, 0).getDate();
+      const manIs = MAN_IS[mm-1].toLowerCase();
+      const stutt = ['jan.','feb.','mars','apr.','maí','júní','júlí','ágú.','sept.','okt.','nóv.','des.'][mm-1];
+      const nR = BH ? 2 : 3;
+      const tom = '<td class="dash">–</td>';
+      // Haus: BH → tvær línur (hópar / Stakar·Heilar·mánuðir·st.·heil.); annars þrjár (mánuður yfir st.+heil.)
+      const r1 = `<tr><th rowspan="${nR}" class="l">Verk nr.</th><th rowspan="${nR}" class="l">Verkliðir</th><th rowspan="${nR}">Fjöldi</th><th rowspan="${nR}">Ein.verð<br>m/vsk</th>`
+        + `<th colspan="2" class="grp">Heildar lokanir</th>`
+        + (prev.length ? `<th colspan="${BH ? prev.length : prev.length*2}" class="grp">${BH ? 'Heilar lokanir per mánuð' : 'Lokanir per mánuð'}</th>` : '')
+        + `<th colspan="2"${BH ? '' : ' rowspan="2"'} class="grp cur">${escapeHtml(manNafn(month))}</th>`
+        + `<th rowspan="${nR}">Upphæð heild<br>m/vsk</th><th rowspan="${nR}" class="sept">Upphæð í ${escapeHtml(stutt)}<br>m/vsk</th></tr>`;
+      const r2 = BH
+        ? `<tr><th class="sub">Stakar</th><th class="sub">Heilar</th>${prev.map(m => `<th class="sub">${escapeHtml(manStutt(m.month))}</th>`).join('')}<th class="sub cur">st.</th><th class="sub cur">heil.</th></tr>`
+        : `<tr><th class="sub" rowspan="2">Stakar</th><th class="sub" rowspan="2">Heilar</th>${prev.map(m => `<th class="sub" colspan="2">${escapeHtml(manStutt(m.month))}</th>`).join('')}</tr>`
+          + `<tr>${prev.map(() => '<th class="sub">st.</th><th class="sub">heil.</th>').join('')}<th class="sub cur">st.</th><th class="sub cur">heil.</th></tr>`;
+      const hopur = vn => String(vn).split('.')[0];
+      const body = M.rows.map((r, i) => {
+        const ny = i > 0 && hopur(r.v.verk_nr) !== hopur(M.rows[i-1].v.verk_nr);
+        const mc = prev.map(m => { const l = m.lines[r.i];
+          const h = l.delta_heilar ? `<td>${nf(l.delta_heilar,1)}</td>` : tom;
+          return BH ? h : (l.delta ? `<td>${nf(l.delta)}</td>` : tom) + h; }).join('');
+        return `<tr${ny ? ' class="grp"' : ''}><td class="l vn">${escapeHtml(r.v.verk_nr)}</td><td class="l lab">${escapeHtml(r.v.label)}</td><td>${r.v.fjoldi!=null?fmt(r.v.fjoldi):''}</td><td>${fmt(r.v.rate)}</td>`
+          + `<td>${r.st ? nf(r.st) : ''}</td><td class="b">${r.heilar ? nf(r.heilar,1) : ''}</td>${mc}`
+          + `<td class="cur">${r.delta ? nf(r.delta) : ''}</td><td class="cur b">${r.dH ? nf(r.dH,1) : ''}</td>`
+          + `<td>${fmt(r.heild)}</td><td class="sept b">${fmt(r.um)}</td></tr>`;
       }).join('');
-      const footMan = months.map((m, k) => { const isCur = k===cur; const t = isCur ? { delta:M.T.d, dH:M.T.dH } : { delta:m.totals.delta, dH:m.lines.reduce((a,l)=>a+l.delta_heilar,0) }; return (tvo(k) ? `<td class="mn ${isCur?'cur':''}">${nf(t.delta,1)}</td>` : '') + `<td class="${isCur?'cur':''}">${nf(t.dH,1)}</td>`; }).join('');
-      const [yy, mm] = month.split('-').map(Number); const sidasti = new Date(yy, mm, 0).getDate();
+      const footMan = prev.map(m => { const dH = m.lines.reduce((a,l) => a + (l.delta_heilar||0), 0);
+        return (BH ? '' : `<td>${nf(m.totals.delta,1)}</td>`) + `<td>${nf(dH,1)}</td>`; }).join('');
       return `<div class="nd-head">${LOGO?`<img class="nd-logo" src="${LOGO}" alt="Brunahólf">`:''}
-          <div class="nd-tit"><h1>Nýji Landsspítalinn Hringbraut</h1><div class="nd-sub">Landsspítalinn &nbsp;·&nbsp; 5.–6. hæð &nbsp;·&nbsp; Samtals kláraðir verkþættir per mánuð</div></div>
+          <div class="nd-tit"><h1>Nýji Landsspítalinn Hringbraut</h1><div class="nd-sub">Landsspítalinn · 5.–6. hæð · Samtals kláraðir verkþættir per mánuð</div></div>
           <div class="nd-right"><b>Brunahólf ehf</b><br>Uppgjör ${escapeHtml(manIs)} ${yy}<br>${String(sidasti).padStart(2,'0')}/${String(mm).padStart(2,'0')}/${yy}</div></div>
         <div class="nd-rule"></div>
-        <table><thead>${head1}${head2}</thead><tbody>${body}</tbody>
-        <tfoot><tr><td></td><td class="l">Samtals Verk + Metrar</td><td></td><td></td><td class="hl">${nf(M.T.st)}</td><td class="hl">${nf(M.T.h,1)}</td>${footMan}<td>${fmt(M.T.heild)}</td><td class="cur">${fmt(M.T.um)}</td></tr></tfoot></table>
-        <div class="nd-tot"><div><span>Upphæð í ${escapeHtml(manIs)} með vsk</span><b>${fmt(M.T.um)} kr</b></div><div><span>án vsk</span><span>${fmt(Math.round(M.T.um/1.24))} kr</span></div></div>`;
+        <table><thead>${r1}${r2}</thead><tbody>${body}</tbody>
+        <tfoot><tr><td></td><td class="l">Samtals Verk + Metrar</td><td></td><td></td><td>${nf(M.T.st)}</td><td>${nf(M.T.h,1)}</td>${footMan}<td class="cur">${nf(M.T.d,1)}</td><td class="cur">${nf(M.T.dH,1)}</td><td>${fmt(M.T.heild)}</td><td class="sept">${fmt(M.T.um)}</td></tr></tfoot></table>
+        <div class="nd-tot"><div class="r"><span>Upphæð í ${escapeHtml(manIs)} með vsk</span><span class="big">${fmt(M.T.um)} <small>kr</small></span></div><div class="r"><span>án vsk</span><span class="an">${fmt(Math.round(M.T.um/1.24))} kr</span></div></div>`;
     };
 
     const refresh = () => {
@@ -13345,7 +13379,7 @@ async function renderGerdReikninga(t){
       const w = window.open('', '_blank'); if(!w){ alert('Leyfðu sprettiglugga til að prenta.'); return; }
       const css = [...bg.querySelectorAll('style')].map(s => s.textContent).join('\n');
       w.document.write(`<!DOCTYPE html><html lang="is"><head><meta charset="utf-8"><title>${escapeHtml(bhPdfName('Efnislisti', { ws: wsName, month }).replace(/\.pdf$/,''))}</title>
-        <style>${css}\n@page{size:A4 landscape;margin:8mm}body{margin:0}.nle-doc{border:0;box-shadow:none;padding:0;overflow:visible}.nle-doc table{font-size:8.5px}</style></head>
+        <style>${css}\n@page{size:A4 landscape;margin:8mm}body{margin:0;background:#fff}.nle-doc{border:0;box-shadow:none;padding:0;overflow:visible;font-family:'Segoe UI',Calibri,Arial,sans-serif}.nle-doc th,.nle-doc td{font-size:8.5px !important;padding:4px 3px !important}.nle-doc thead th{font-size:7px !important}.nle-doc thead th.sub{font-size:7.5px !important}</style></head>
         <body><div class="nle-doc">${docHtml(model())}</div><script>window.onload=function(){window.print();}<\/script></body></html>`);
       w.document.close();
     };
@@ -24278,10 +24312,9 @@ function drawGatEfnislistiPage(doc, logo, data){
 }
 
 // Nýi Landsspítalinn — Efnislisti · NLSH (06.10.2026): blaðið sem fer til ÞG/Landsspítalans, liggjandi
-// A4: lógó + haus, heildarlokanir (stakar/heilar), mánuðirnir frá sept 2025, Upphæð Heild m vsk og
-// upphæð mánaðarins. M = model() úr openNlshEfnislisti (sendir mánuðir frosnir).
-// o.baraHeilar (Agnar 06.10: „taka í burtu st. … svo hver mánuður sýnir bara heil.") → fyrri mánuðir
-// sýna aðeins heilar; valinn mánuður heldur stökum og heilum.
+// A4 í útliti Agnars: lógó | serif-titill, svört lína, „Heildar lokanir" + „Heilar lokanir per mánuð",
+// valinn mánuður með svörtum haus, strik í auðum reitum, svört samtalslína og samtölukassi.
+// M = model() úr openNlshEfnislisti (sendir mánuðir frosnir). o.baraHeilar → fyrri mánuðir aðeins heilar.
 async function buildAndSaveNlshEfnislistiPdf(name, month, M, o){
   const lib = await loadJsPdf();
   const logo = await bhLogoDataUrl();
@@ -24294,72 +24327,86 @@ function drawNlshEfnislistiPage(doc, month, M, o){
   const W = doc.internal.pageSize.getWidth();
   const manNafn = o.manNafn || (ym => ym);
   const q = (x, d) => { const n = Number(x)||0; if(!n) return ''; return n.toLocaleString('is-IS', { minimumFractionDigits: d||0, maximumFractionDigits: d==null?2:d }); };
-  const kr = n => _pkr(n), k0 = n => (Math.round(Number(n)||0)).toLocaleString('is-IS');   // inni í töflunni án „kr“
+  const k0 = n => (Math.round(Number(n)||0)).toLocaleString('is-IS');
   const [yy, mm] = month.split('-').map(Number), sidasti = new Date(yy, mm, 0).getDate();
   const MAN_IS = ['janúar','febrúar','mars','apríl','maí','júní','júlí','ágúst','september','október','nóvember','desember'];
-  // fyrri mánuðir með stuttu heiti svo dálkurinn brotni ekki í miðju orði („Septemb/er")
+  const STUTT = ['jan.','feb.','mars','apr.','maí','júní','júlí','ágú.','sept.','okt.','nóv.','des.'];
   const manStutt = ym => { const [y, m] = String(ym).split('-'); return ['Jan','Feb','Mar','Apr','Maí','Jún','Júl','Ágú','Sep','Okt','Nóv','Des'][+m-1]+' '+String(y).slice(2); };
-  // ── Haus: lógó eins og í Efnislistanum, titill, verkkaupi/mánuður til hægri ──
-  let tx = 24;
-  if(o.logo){ try{ doc.addImage(o.logo, bhLogoFmt(o.logo), 24, 16, 124, 38); tx = 166; }catch{} }
-  doc.setFont('helvetica','bold'); doc.setFontSize(17); doc.setTextColor(31,95,168); doc.text('Nýji Landsspítalinn Hringbraut', tx, 32);
-  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(138,109,31);
-  doc.text('Landsspítalinn  ·  5.–6. hæð  ·  Samtals kláraðir verkþættir per mánuð', tx, 46);
-  doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(20); doc.text('Brunahólf ehf', W-24, 26, { align:'right' });
-  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(90);
-  doc.text('Uppgjör '+MAN_IS[mm-1]+' '+yy, W-24, 38, { align:'right' });
-  doc.text(String(sidasti).padStart(2,'0')+'/'+String(mm).padStart(2,'0')+'/'+yy, W-24, 50, { align:'right' });
-  doc.setDrawColor(31,95,168); doc.setLineWidth(1.2); doc.line(24, 62, W-24, 62);
-  // ── Dálkar: hópur per mánuð; fyrri mánuðir aðeins heilar ef o.baraHeilar; >13 mánuðir → „Áður" ──
+  // ── Haus ──
+  let tx = 28;
+  if(o.logo){ try{ doc.addImage(o.logo, bhLogoFmt(o.logo), 28, 20, 116, 36); tx = 176; }catch{} }
+  if(tx > 28){ doc.setDrawColor(200); doc.setLineWidth(0.6); doc.line(160, 18, 160, 58); }
+  doc.setFont('times','bold'); doc.setFontSize(19); doc.setTextColor(26); doc.text('Nýji Landsspítalinn Hringbraut', tx, 37);
+  doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(102);
+  doc.text('Landsspítalinn · 5.–6. hæð · Samtals kláraðir verkþættir per mánuð', tx, 51);
+  doc.setFont('times','bold'); doc.setFontSize(11.5); doc.setTextColor(26); doc.text('Brunahólf ehf', W-24, 30, { align:'right' });
+  doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(102);
+  doc.text('Uppgjör '+MAN_IS[mm-1]+' '+yy, W-24, 42, { align:'right' });
+  doc.text(String(sidasti).padStart(2,'0')+'/'+String(mm).padStart(2,'0')+'/'+yy, W-24, 53, { align:'right' });
+  doc.setDrawColor(17); doc.setLineWidth(1.8); doc.line(24, 66, W-24, 66);
+  // ── Tafla ──
   const cur = M.man.length - 1, BH = !!o.baraHeilar;
-  const months = M.man.map((m, k) => ({ month: m.month, k }));
-  const MAXM = 13;
-  const elst = months.length > MAXM ? months.slice(0, months.length - MAXM + 1) : [];
-  const syn = months.length > MAXM ? months.slice(months.length - MAXM + 1) : months;
-  const gildi = (r, k) => k === cur ? { st: r.delta, h: r.dH } : { st: M.man[k].lines[r.i].delta, h: M.man[k].lines[r.i].delta_heilar };
-  const hopar = [ ...(elst.length ? [{ heiti:'Áður', ks: elst.map(m => m.k), cols: BH ? ['h'] : ['st','h'], cur:false }] : []),
-    ...syn.map(m => ({ heiti: m.k === cur ? manNafn(m.month) : manStutt(m.month), ks:[m.k], cols: (m.k === cur || !BH) ? ['st','h'] : ['h'], cur: m.k === cur })) ];
-  const curStyle = { fillColor:[255,248,220] };
-  const summa = (r, ks) => ks.reduce((a, k) => { const g = gildi(r, k); a.st += g.st||0; a.h += g.h||0; return a; }, { st:0, h:0 });
-  const head1 = [
-    { content:'Verk nr.', rowSpan:2 }, { content:'Verkliðir', rowSpan:2 }, { content:'Fjöldi', rowSpan:2 }, { content:'Upphæð\nm vsk', rowSpan:2 },
-    { content:'Heildar lokanir\nStakar og heilar', colSpan:2, styles:{ fontStyle:'bolditalic' } },
-    ...hopar.map(h => ({ content: h.heiti, colSpan: h.cols.length, styles: h.cur ? curStyle : {} })),
-    { content:'Upphæð Heild\nm vsk', rowSpan:2 }, { content:'Upphæð í '+MAN_IS[mm-1]+'\nmeð vsk', rowSpan:2, styles:curStyle },
-  ];
-  const head2 = [ { content:'Stakar', styles:{ fontStyle:'bolditalic' } }, { content:'heilar', styles:{ fontStyle:'bolditalic' } },
-    ...hopar.flatMap(h => h.cols.map(c => ({ content: c === 'st' ? 'st.' : 'heil.', styles: h.cur ? curStyle : {} }))) ];
-  const body = M.rows.map(r => [ r.v.verk_nr, r.v.label, r.v.fjoldi!=null ? q(r.v.fjoldi) : '', k0(r.v.rate), q(r.st), q(r.heilar, 1),
-    ...hopar.flatMap(h => { const g = summa(r, h.ks); return h.cols.map(c => c === 'st' ? q(g.st) : q(g.h, 1)); }),
-    k0(r.heild), { content: k0(r.um), styles:{ fontStyle:'bold' } } ]);
-  const sumAll = ks => M.rows.reduce((a, r) => { const g = summa(r, ks); a.st += g.st; a.h += g.h; return a; }, { st:0, h:0 });
-  const foot = [[ '', 'Samtals Verk + Metrar', '', '', q(M.T.st), q(M.T.h, 1),
-    ...hopar.flatMap(h => { const g = sumAll(h.ks); return h.cols.map(c => c === 'st' ? q(g.st, 1) : q(g.h, 1)); }), k0(M.T.heild), k0(M.T.um) ]];
-  const nCols = hopar.reduce((a, h) => a + h.cols.length, 0);
-  const rumt = nCols <= 18;                                   // aðeins heilar → breiðari dálkar og stærra letur
-  const lab = rumt ? 112 : 82, fs = rumt ? 7 : 5.8;
-  const fast = 20 + lab + 24 + 32 + 34 + 34 + 48 + 46;
-  const mw = Math.max(12, (W - 48 - fast) / nCols);
-  const colStyles = { 0:{ cellWidth:20, halign:'left' }, 1:{ cellWidth:lab, halign:'left', textColor:[122,90,18] }, 2:{ cellWidth:24 }, 3:{ cellWidth:32 }, 4:{ cellWidth:34, fillColor:[242,242,242], fontStyle:'bolditalic' }, 5:{ cellWidth:34, fillColor:[242,242,242], fontStyle:'bolditalic' } };
-  let c = 6;
-  hopar.forEach((h, hi) => h.cols.forEach(col => { colStyles[c++] = { cellWidth: mw, fillColor: h.cur ? [255,248,220] : (col === 'st' ? [231,231,231] : (hi % 2 ? [246,246,246] : [255,255,255])) }; }));
-  colStyles[c] = { cellWidth:48 }; colStyles[c+1] = { cellWidth:46, fillColor:[255,248,220] };
+  const prev = M.man.slice(0, cur);
+  const nR = BH ? 2 : 3;
+  const D = '–', GRA = [184,184,184];
+  const CUR_H = { fillColor:[26,26,26], textColor:255 }, SEPT = [236,236,236], CURB = [244,244,244];
+  const fix = (t, extra) => ({ content: t.toUpperCase(), rowSpan: nR, styles: { valign:'bottom', ...(extra||{}) } });
+  const grp = (t, cs, extra) => ({ content: t, colSpan: cs, styles: { halign:'center', lineWidth:{ bottom:0.5 }, lineColor:[150,150,150], ...(extra||{}) } });
+  const sub = (t, extra) => ({ content: t, styles: { fontStyle:'bold', textColor:85, ...(extra||{}) } });
+  const head = [[ fix('Verk nr.', { halign:'left' }), fix('Verkliðir', { halign:'left' }), fix('Fjöldi', { halign:'right' }), fix('Ein.verð\nm/vsk', { halign:'right' }),
+    grp('HEILDAR LOKANIR', 2),
+    ...(prev.length ? [grp(BH ? 'HEILAR LOKANIR PER MÁNUÐ' : 'LOKANIR PER MÁNUÐ', BH ? prev.length : prev.length*2)] : []),
+    { ...grp(manNafn(month).toUpperCase(), 2, CUR_H), ...(BH ? {} : { rowSpan:2 }) },
+    fix('Upphæð heild\nm/vsk', { halign:'right' }), fix('Upphæð í '+STUTT[mm-1]+'\nm/vsk', { halign:'right', fillColor:[226,226,226] }) ]];
+  if(BH) head.push([ sub('Stakar', { halign:'right' }), sub('Heilar', { halign:'right' }), ...prev.map(m => sub(manStutt(m.month), { halign:'right' })), sub('st.', { halign:'right', ...CUR_H }), sub('heil.', { halign:'right', ...CUR_H }) ]);
+  else {
+    head.push([ { ...sub('Stakar', { halign:'right', valign:'bottom' }), rowSpan:2 }, { ...sub('Heilar', { halign:'right', valign:'bottom' }), rowSpan:2 }, ...prev.map(m => ({ ...sub(manStutt(m.month), { halign:'center' }), colSpan:2 })) ]);
+    head.push([ ...prev.flatMap(() => [sub('st.', { halign:'right' }), sub('heil.', { halign:'right' })]), sub('st.', { halign:'right', ...CUR_H }), sub('heil.', { halign:'right', ...CUR_H }) ]);
+  }
+  const cell = (v, st) => ({ content: v, styles: st || {} });
+  const tomt = () => cell(D, { textColor: GRA });
+  const body = M.rows.map(r => [
+    cell(r.v.verk_nr, { fontStyle:'bold', halign:'left' }), cell(r.v.label, { halign:'left', textColor:51 }),
+    r.v.fjoldi!=null ? q(r.v.fjoldi) : '', k0(r.v.rate), q(r.st), cell(q(r.heilar, 1), { fontStyle:'bold' }),
+    ...prev.flatMap(m => { const l = m.lines[r.i]; const h = l.delta_heilar ? q(l.delta_heilar, 1) : tomt();
+      return BH ? [h] : [l.delta ? q(l.delta) : tomt(), h]; }),
+    cell(q(r.delta), { fillColor: CURB }), cell(q(r.dH, 1), { fillColor: CURB, fontStyle:'bold' }),
+    k0(r.heild), cell(k0(r.um), { fillColor: SEPT, fontStyle:'bold' }) ]);
+  const hopur = vn => String(vn).split('.')[0];
+  const nyHopur = M.rows.map((r, i) => i > 0 && hopur(r.v.verk_nr) !== hopur(M.rows[i-1].v.verk_nr));
+  const foot = [[ '', cell('Samtals Verk + Metrar', { halign:'left' }), '', '', q(M.T.st), q(M.T.h, 1),
+    ...prev.flatMap(m => { const dH = m.lines.reduce((a, l) => a + (l.delta_heilar||0), 0); return BH ? [q(dH, 1)] : [q(m.totals.delta, 1), q(dH, 1)]; }),
+    cell(q(M.T.d, 1), { fillColor:[43,43,43] }), cell(q(M.T.dH, 1), { fillColor:[43,43,43] }), k0(M.T.heild), cell(k0(M.T.um), { fillColor:[58,58,58] }) ]];
+  const nMon = (BH ? prev.length : prev.length*2) + 2;
+  const lab = BH ? 108 : 78, fs = BH ? 7 : 5.4, fixW = 26 + lab + 26 + 34 + 34 + 34 + 52 + 50;
+  const mw = Math.max(12, (W - 48 - fixW) / nMon);
+  const colStyles = { 0:{ cellWidth:26 }, 1:{ cellWidth:lab }, 2:{ cellWidth:26 }, 3:{ cellWidth:34 }, 4:{ cellWidth:34 }, 5:{ cellWidth:34 } };
+  for(let c = 0; c < nMon; c++) colStyles[6+c] = { cellWidth: mw };
+  colStyles[6+nMon] = { cellWidth:52 }; colStyles[7+nMon] = { cellWidth:50 };
   doc.autoTable({
-    startY: 72, head: [head1, head2], body, foot,
-    theme:'grid',
-    styles:{ font:'helvetica', fontSize:fs, cellPadding:{ top:2.2, bottom:2.2, left:1.5, right:1.5 }, halign:'right', lineColor:[170,170,170], lineWidth:0.4, textColor:20, overflow:'linebreak' },
-    headStyles:{ fillColor:[242,242,242], textColor:20, fontStyle:'bold', halign:'center', valign:'middle', fontSize:fs },
-    footStyles:{ fillColor:[255,255,255], textColor:20, fontStyle:'bold', fontSize: rumt ? fs : 5.2 },
+    startY: 76, head, body, foot, theme:'plain',
+    styles:{ font:'helvetica', fontSize:fs, cellPadding:{ top:3.4, bottom:3.4, left:1.6, right:1.6 }, halign:'right', valign:'middle', textColor:26, overflow:'linebreak' },
+    headStyles:{ fontStyle:'bold', fontSize: fs-1.3, textColor:85, fillColor:false, lineWidth:{ bottom:1.1 }, lineColor:[17,17,17] },
+    bodyStyles:{ lineWidth:{ bottom:0.4 }, lineColor:[228,228,228] },
+    footStyles:{ fillColor:[17,17,17], textColor:255, fontStyle:'bold', fontSize: BH ? fs-0.4 : fs-0.4, overflow:'visible' },
     columnStyles: colStyles,
     margin:{ left:24, right:24 },
+    didDrawCell: (d) => {   // þykkari lína milli verkhópa (2.x · 1.x · 3.x)
+      if(d.section === 'body' && nyHopur[d.row.index]){ doc.setDrawColor(150); doc.setLineWidth(0.9); doc.line(d.cell.x, d.cell.y, d.cell.x + d.cell.width, d.cell.y); }
+    },
   });
-  const fy = (doc.lastAutoTable ? doc.lastAutoTable.finalY : 400) + 18;
-  doc.setDrawColor(31,95,168); doc.setLineWidth(0.8); doc.line(W-250, fy-11, W-24, fy-11);
-  doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(60);
-  doc.text('Upphæð í '+MAN_IS[mm-1]+' með vsk', W-250, fy+2);
-  doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(20); doc.text(kr(M.T.um), W-24, fy+2, { align:'right' });
-  doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(60);
-  doc.text('án vsk', W-250, fy+16); doc.text(kr(Math.round(M.T.um/1.24)), W-24, fy+16, { align:'right' });
+  // ── Samtölukassi ──
+  const bw = 250, bx = W - 24 - bw, by = (doc.lastAutoTable ? doc.lastAutoTable.finalY : 420) + 16, bh = 52;
+  doc.setDrawColor(207); doc.setLineWidth(0.6); doc.rect(bx, by, bw, bh);
+  doc.setDrawColor(17); doc.setLineWidth(2.2); doc.line(bx, by, bx + bw, by);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(85);
+  doc.text('Upphæð í '+MAN_IS[mm-1]+' með vsk', bx + 12, by + 22);
+  doc.setFont('times','normal'); doc.setFontSize(11); doc.setTextColor(17);
+  const krW = doc.getTextWidth(' kr');
+  doc.text(' kr', bx + bw - 12, by + 22, { align:'right' });
+  doc.setFont('times','bold'); doc.setFontSize(17); doc.text(k0(M.T.um), bx + bw - 12 - krW, by + 22, { align:'right' });
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(85); doc.text('án vsk', bx + 12, by + 40);
+  doc.setFontSize(10); doc.setTextColor(26); doc.text(k0(Math.round(M.T.um/1.24))+' kr', bx + bw - 12, by + 40, { align:'right' });
 }
 
 // Samsett PDF (ósk Agnars 2026-09-02): Efnislisti á síðu 1, Tímaskýrsla á síðu 2.
