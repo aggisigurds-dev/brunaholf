@@ -795,3 +795,20 @@ tengdir í `customer_documents` (Drive) og vistar í `reikningslestur` (haus + `
   lykill). Systurtól án viðmóts: `slokkvitaeki/tools/para-rekstrarfelag.cjs`. Dæmið: öll blöð Steypustöðvarinnar
   heita „Malarhöfða 38" — tölurnar 17/20/1/2 eru Borgarnes hvað sem blaðið heitir. „Staður víkur" getur líka þýtt
   ófullkomna tækjaskrá (Arnarhvoll: 7 slöngur í skýrslu, engar í skránni).
+- **Einn reikningur, ein skýrsla (lært 06.10.2026 kl. 14).** Fyrsta útgáfan skoðaði hverja skýrslu eina og sér og
+  paraði R-107896 („vegna húsnæðis Hjallahraun 4") við ÞRJÁ staði Aðalskoðunar, því Grjótháls og Hjallahraun áttu
+  nákvæmlega sömu tölur (4 léttvatn, 1 CO₂ 2, 1 CO₂ 5, 1 slanga). Nú gildir í greiningunni OG í `POST para`:
+  reikningur sem er bundinn í pari tilheyrir þeirri skýrslu (`force:true` eina undantekningin);
+  `reikningslestur.vegna` útilokar aðra staði og sker úr tvíræðni (`stadirUrTexta`: sameiginlega forskeytið
+  „Center Hótel - " fer af heitunum, stofn fyrstu 6 stafa — Hjallahraun/Hjallahrauni); skýrslur með lægsta frávik
+  velja fyrst; tveir staðir með sömu tölur sama ár = `tviraed`, sýnt en ekki parað sjálfkrafa. Ábendingarnar standa
+  í `ath[]` og birtast með ⚑ undir reikningnum. Pörin fjögur sem fyrsta útgáfan skemmdi (1293, 1327, 1500, 1620)
+  voru afturkölluð í `vantar_reikning` (`matched_by='magn_afturkallad_20261006'`, afrit `backup_20261006_rf_leidretting`).
+- **`lesa` yfirskrifar ekki blint.** Skjal 9906 lá undir Skjaldbreið (198) en sagði sjálft „hjá fyrirtækinu Miðgarður
+  (Center Hótel)" með 33 tækjum — lesturinn yfirskrifaði 3-tækja söguna hennar. Nú stöðvar `lesa` sig (svar
+  `tharf_force:true` + tölurnar) ef línan „hjá fyrirtækinu/húsfélaginu …" nefnir annan stað í hópnum (sama kt) eða ef
+  árið á þegar færslu úr öðru skjali með öðrum tölum; `force:true` yfirskrifar. Færslan ber `doc_id` og `hja`.
+  Skjalið var fært á Miðgarð (par 1469 vísaði þegar á það) og bæði ár lesin aftur.
+- **Tæki = allt nema `urelt`.** `uttaeki.status` ber active / „Í lagi" / ok / loaned; sían `status=eq.active` faldi 11
+  félög alveg (Dalbrekka 4-6: 48 tæki) — sama gildra og 15/153/177 lentu í 01.09.2026, og `audit-status-gildi.cjs` í
+  slokkvitaeki fer rautt á henni.
