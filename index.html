@@ -1306,6 +1306,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 .pdf-vistad{display:inline-flex;align-items:center;gap:10px;margin-top:4px;padding:8px 10px 8px 14px;border-radius:9px;background:#e8f7ee;border:1px solid #9bd7b2;color:#0f5c33;font-size:14.5px;font-weight:700;line-height:1;white-space:nowrap}
 .pdf-vistad .pv-btn{display:inline-flex;align-items:center;height:30px;padding:0 14px;border-radius:7px;background:linear-gradient(180deg,#1f9d5a,#0f6e3a);border:1px solid #0a4f29;color:#fff;font-size:13.5px;font-weight:700;text-decoration:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 2px 5px -2px rgba(0,0,0,.4)}
 .pdf-vistad .pv-btn:hover{filter:brightness(1.08)}
+.pdf-vistad small{font-size:12px;font-weight:500;color:#2f6b47}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
 <script src="/js/hub-sync-buttons.js?v=20260919a" defer></script>
@@ -12611,7 +12612,7 @@ async function renderGerdReikninga(t){
         const b64 = await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(',')[1]); fr.onerror = () => rej(new Error('Gat ekki lesið skrána')); fr.readAsDataURL(f); });
         const r = await fetch('/api/pdf-store', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ fileName: f.name, contentBase64: b64, mimeType: f.type || 'application/octet-stream', worksite_name: name, work_month: month, doc_type: 'vidhengi' }) });
         const j = await r.json().catch(()=>({})); if(!r.ok || j.error) throw new Error(j.error || ('HTTP '+r.status));
-        $st.innerHTML = `📎 Viðhengi vistað — <a href="${j.public_url}" target="_blank" rel="noopener">opna</a> · fer með skýrslu/kröfu`;
+        $st.innerHTML = `<span class="pdf-vistad">📎 Viðhengi vistað <a class="pv-btn" href="${j.public_url}" target="_blank" rel="noopener">Opna</a><small>fer með skýrslu/kröfu</small></span>`;
         if(typeof window.__grReloadPdfList==='function') window.__grReloadPdfList();
       }catch(err){ $st.textContent = '✗ '+(err.message||err); }
       e.target.value = '';
@@ -12628,7 +12629,7 @@ async function renderGerdReikninga(t){
         const b64 = await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(',')[1]); fr.onerror = () => rej(new Error('Gat ekki lesið skrána')); fr.readAsDataURL(f); });
         const r = await fetch('/api/pdf-store', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ fileName: f.name, contentBase64: b64, mimeType: f.type || 'application/octet-stream', worksite_name: name, work_month: month, doc_type: 'innra' }) });
         const j = await r.json().catch(()=>({})); if(!r.ok || j.error) throw new Error(j.error || ('HTTP '+r.status));
-        $st.innerHTML = `🔒 Innra viðhengi vistað — <a href="${j.public_url}" target="_blank" rel="noopener">opna</a> · sendist ekki með skýrslu`;
+        $st.innerHTML = `<span class="pdf-vistad">🔒 Innra viðhengi vistað <a class="pv-btn" href="${j.public_url}" target="_blank" rel="noopener">Opna</a><small>sendist ekki með skýrslu</small></span>`;
         if(typeof window.__grReloadPdfList==='function') window.__grReloadPdfList();
       }catch(err){ $st.textContent = '✗ '+(err.message||err); }
       e.target.value = '';
@@ -12643,7 +12644,7 @@ async function renderGerdReikninga(t){
         const tb = await tbkLoadRows(name, month, grPeriod);
         if(!tb.rows.length && !confirm('Engar tímafærslur fundust fyrir þennan mánuð — búa samt til PDF með tómri Tímaskýrslu á síðu 2?')) return;
         const res = await buildAndSaveCombinedPdf(name, month, grPdfData(), tb.rows, tb.yf);
-        $st.innerHTML = `✓ PDF (2 síður) vistað — <a href="${res.webViewLink}" target="_blank" rel="noopener">opna</a> · <a href="${res.downloadUrl}" target="_blank" rel="noopener">sækja</a>`;
+        $st.innerHTML = `<span class="pdf-vistad">✓ PDF (2 síður) vistað <a class="pv-btn" href="${res.webViewLink}" target="_blank" rel="noopener">Opna</a><a class="pv-btn" href="${res.downloadUrl}" target="_blank" rel="noopener">Sækja</a></span>`;
         if(typeof window.__grReloadPdfList==='function') window.__grReloadPdfList();
       } catch(e){ $st.textContent = '✗ '+(e.message||e); alert('Gat ekki vistað PDF: '+(e.message||e)); }
       finally { btn.textContent = old; btn.disabled = false; }
@@ -24114,7 +24115,7 @@ async function openTimabok(name, month){
       state.ui = state.ui||{}; state.ui.timabok_edits = state.ui.timabok_edits||{};
       state.ui.timabok_edits[key] = { rows: rows.map(r=>({...r})), yfirvinna:{ on:yf.on, thr:yf.thr }, saved_at: new Date().toISOString() }; save();
       const res = await buildAndSaveTimabokPdf(name, month, rows, undefined, { on:yf.on, thr:yf.thr });
-      st.innerHTML = `✓ vistað — <a href="${res.webViewLink}" target="_blank" rel="noopener">opna</a> · <a href="${res.downloadUrl}" target="_blank" rel="noopener">sækja</a>`;
+      st.innerHTML = `<span class="pdf-vistad">✓ Tímabók vistuð <a class="pv-btn" href="${res.webViewLink}" target="_blank" rel="noopener">Opna</a><a class="pv-btn" href="${res.downloadUrl}" target="_blank" rel="noopener">Sækja</a></span>`;
     }catch(e){ alert('Gat ekki vistað PDF: '+(e.message||e)); }
     finally{ btn.textContent=old; btn.disabled=false; }
   };
