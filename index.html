@@ -12840,12 +12840,15 @@ async function renderGerdReikninga(t){
 
     // Línur: vistuð drög (gat-línur) ráða magni; annars Ajour. Ajour-talan sést alltaf til hliðar.
     const saved = existing && Array.isArray(existing.materials_jsonb) ? existing.materials_jsonb.filter(m => m && m.gat) : [];
-    // Fyrsta opnun á mánuði án nokkurra kláraðra gata (og án vistaðra gatalína) → síðasti heili mánuður.
-    if(!monthArg && month < SIDASTI && !Object.values(ajourByKey).some(v => v > 0) && !saved.some(m => Number(m.qty) > 0)){
+    // Fyrsta opnun: (a) mánuður án nokkurra kláraðra gata (og án vistaðra gatalína) fyrir síðasta heila mánuð,
+    // eða (b) líðandi mánuður meðan síðasti heili mánuður er ósendur → síðasti heili mánuður (sá sem á að rukka).
+    const sidSendur = (d => !!(d && (d.payday_invoice_id || d.status === 'invoiced')))(DRAFTS[`${wsName}|${SIDASTI}`]);
+    const tomur = !Object.values(ajourByKey).some(v => v > 0) && !saved.some(m => Number(m.qty) > 0);
+    if(!monthArg && ((month < SIDASTI && tomur) || (month === NUNA && !sidSendur))){
       bg.remove();
       const w = await openHeklureitur(name, SIDASTI);
       const st = document.getElementById('hk-st');
-      if(st && !st.textContent) st.textContent = 'Engin kláruð göt í '+monthLabel(month)+' — opnaði '+monthLabel(SIDASTI)+'. Annar mánuður: veldu í hausnum.';
+      if(st && !st.textContent) st.textContent = (month === NUNA ? monthLabel(month)+' er ekki búinn' : 'Engin kláruð göt í '+monthLabel(month))+' — opnaði '+monthLabel(SIDASTI)+'. Annar mánuður: veldu í hausnum.';
       return w;
     }
     let qty = {};
@@ -13310,13 +13313,18 @@ async function renderGerdReikninga(t){
       // Mánuður Gerðar reikninga getur staðið á sendum mánuði (ágúst) — þá opnast glugginn læstur og
       // ekkert er hægt að gera (Agnar 06.10: „það virkar ekki að ýta á efnislistann"). Við fyrstu opnun
       // er því hoppað áfram á fyrsta ósenda mánuðinn; handvirkt val á sendum mánuði sýnir hann læstan.
-      if(autoMan && fryst() && month < NOW){
-        const fra = sendurFra || month; sendurFra = fra;
-        month = nextMan(month); $('nle-man').value = month;
-        return hlada();
+      if(autoMan){
+        // Sjálfgefið = fyrsti mánuður sem er EKKI sendur (sá sem á að rukka), hvaða mánuð sem síðan stendur á:
+        // síða á október → september ef hann er ósendur; síða á sendum ágúst → hoppa áfram.
+        const fyrsti = D.skyrsla.manudir.find(m => !m.fryst);
+        if(fyrsti && fyrsti.month !== month){ sendurFra = sendurFra || ('@' + month); month = fyrsti.month; $('nle-man').value = month; return hlada(); }
+        if(!fyrsti && month < NOW){ sendurFra = sendurFra || month; month = nextMan(month); $('nle-man').value = month; return hlada(); }
       }
       autoMan = false;
-      if(sendurFra){ const f = sendurFra; sendurFra = null; setTimeout(() => { if(!$('nle-st').textContent) $('nle-st').textContent = '🔒 '+manLang(f)+' er sendur og læstur — opnaði '+manLang(month)+'. Fyrri mánuðir eru í „Lok mánaðar".'; }, 0); }
+      if(sendurFra){ const f = sendurFra; sendurFra = null; setTimeout(() => { if($('nle-st').textContent) return;
+        $('nle-st').textContent = f[0] === '@'
+          ? 'Opnaði '+manLang(month)+' — fyrsta mánuðinn sem er ekki sendur. Annar mánuður: „Lok mánaðar".'
+          : '🔒 '+manLang(f)+' er sendur og læstur — opnaði '+manLang(month)+'. Fyrri mánuðir eru í „Lok mánaðar".'; }, 0); }
       dirty = false;
       const v = D.vistad_at ? new Date(D.vistad_at) : null;
       $('nle-hd-status-t').textContent = fryst() ? '🔒 sendur · læstur' : v && !isNaN(v) ? ('staða vistuð '+String(v.getDate()).padStart(2,'0')+'/'+String(v.getMonth()+1).padStart(2,'0')+' '+String(v.getHours()).padStart(2,'0')+':'+String(v.getMinutes()).padStart(2,'0')) : 'staða óvistuð';
