@@ -20,6 +20,15 @@ const WORKSITE_AJOUR_NAMES = {
   'Heklureitur':  ['Heklureitur','Heklu reitur'],
 };
 
+// Verkstaður með EIGIN verðskrá í hole_size_rates (scope). Stærð sem vantar í hana
+// fellur á 'generic'. Heklureitur: verðin úr Heklureitur_30.04.2026.xlsx (Agnar 06.10.2026,
+// sql/2026-10-06_heklureitur_verdskra.sql) — gjaldið per gat felur í sér vinnu OG efni,
+// og `notes` geymir lýsinguna sem fer á reikninginn („Brunalokanir á stærðum Ø00-31").
+const WORKSITE_RATE_SCOPE = {
+  'Heklureitur': 'heklureitur',
+};
+const gatLysing = (a, b) => `Brunalokanir á stærðum Ø${a === 0 ? '00' : a}-${b}`;
+
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return resp(204, '', cors());
   if (!SUPABASE_URL || !SUPABASE_KEY) return json(500, { error: 'Supabase env missing' });
@@ -38,6 +47,11 @@ exports.handler = async (event) => {
     if (key) ajourNames = WORKSITE_AJOUR_NAMES[key];
   }
   if (!ajourNames) return json(400, { error: `Unknown worksite "${worksite}". Supported: ${Object.keys(WORKSITE_AJOUR_NAMES).join(', ')}` });
+  const canonKey = Object.keys(WORKSITE_AJOUR_NAMES).find((k) => WORKSITE_AJOUR_NAMES[k] === ajourNames);
+  const rateScope = WORKSITE_RATE_SCOPE[canonKey] || null;
+  // ?klarad=1 → aðeins kláraðar brunalokanir (registration_status Done). Heklureits-Efnislistinn
+  // rukkar „fjölda kláraðra gata per mánuð"; eldri kallarar (Dalvegur) telja áfram allt.
+  const klarad = qs.klarad === '1' || qs.klarad === 'true';
 
   const monthStart = `${month}-01`;
   const [year, mm] = month.split('-').map(Number);
@@ -63,22 +77,44 @@ exports.handler = async (event) => {
   };
 
   const ajourFilter = `project_name=in.(${ajourNames.map(n => `"${n}"`).join(',')})`;
-  const [ajour, rates, bandRates] = await Promise.all([
+  const scopes = rateScope ? `scope=in.(generic,${rateScope})` : 'scope=eq.generic';
+  const [ajour, rates, bandRates, nyjast, seinast, syncKv] = await Promise.all([
     fetchAll('ajour_registrations',
-      `select=category_group&${ajourFilter}&execution_date=gte.${monthStart}&execution_date=lt.${monthEnd}&category_group=ilike.Gat*`),
-    fetchAll('hole_size_rates', `select=size_min_mm,size_max_mm,size_label,rate_an_vsk&scope=eq.generic&category=eq.hole`),
+      `select=category_group,execution_date,registration_status&${ajourFilter}&execution_date=gte.${monthStart}&execution_date=lt.${monthEnd}&category_group=ilike.Gat*`),
+    fetchAll('hole_size_rates', `select=scope,size_min_mm,size_max_mm,size_label,rate_an_vsk,notes&${scopes}&category=eq.hole&order=size_min_mm.asc`),
     fetchAll('hole_size_rates', `select=category,size_min_mm,size_label,rate_an_vsk&scope=eq.generic&category=in.(kragi,bordi)&order=category.asc,size_min_mm.asc`),
+    // Ferskleiki gagnanna: síðasti innlestur + nýjasta skráning verkefnisins (óháð mánuði)
+    fetchAll('ajour_registrations', `select=imported_at&${ajourFilter}&order=imported_at.desc.nullslast&limit=1`).catch(() => []),
+    fetchAll('ajour_registrations', `select=execution_date&${ajourFilter}&order=execution_date.desc.nullslast&limit=1`).catch(() => []),
+    // luna-bridge ajour-yfirlit.js skráir hvenær verkefnaraðir voru síðast samstilltar (líka þegar ekkert nýtt kom)
+    fetchAll('app_kv', 'select=value&key=eq.ajour_radir_sync').catch(() => []),
   ]);
+  const syncInfo = ((syncKv[0] || {}).value || {})[canonKey] || null;
 
-  // Build size → rate lookup
+  // Build size → rate lookup — eigin verðskrá verkstaðarins gengur framar 'generic'
   const rateBySize = new Map();
-  for (const r of rates) rateBySize.set(`${r.size_min_mm}-${r.size_max_mm}`, r);
+  for (const r of rates) {
+    const key = `${r.size_min_mm}-${r.size_max_mm}`;
+    const fyrir = rateBySize.get(key);
+    if (!fyrir || (rateScope && r.scope === rateScope)) rateBySize.set(key, r);
+  }
+  const lysingFor = (r) => (r.scope === rateScope && r.notes) ? r.notes : gatLysing(Number(r.size_min_mm), Number(r.size_max_mm));
 
   // Count stakar per category_group, then map to hole-size bucket via regex
   const groupCounts = {};
+  const byDay = {};
+  // Ókláraðar skráningar mánaðarins (klarad=1): ekki taldar, en sýndar svo ekkert gleymist
+  // (apríl 2026: 5 skráningar enn opnar — Excel-skjalið taldi þær með).
+  const opnar = {};
   for (const row of ajour) {
+    if (klarad && row.registration_status !== 'Done') {
+      const og = row.category_group || '';
+      opnar[og] = (opnar[og] || 0) + 1;
+      continue;
+    }
     const g = row.category_group || '';
     groupCounts[g] = (groupCounts[g] || 0) + 1;
+    if (row.execution_date) byDay[row.execution_date] = (byDay[row.execution_date] || 0) + 1;
   }
 
   const holes = [];
@@ -95,6 +131,10 @@ exports.handler = async (event) => {
     holes.push({
       group,
       size_label: rate.size_label,
+      size_min_mm: Number(rate.size_min_mm),
+      size_max_mm: Number(rate.size_max_mm),
+      label: lysingFor(rate),
+      rate_scope: rate.scope,
       stakar,
       rate_an_vsk: Number(rate.rate_an_vsk),
       an_vsk,
@@ -102,6 +142,11 @@ exports.handler = async (event) => {
     });
   }
   holes.sort((a,b) => b.an_vsk - a.an_vsk);
+  // Öll verð (eigin verðskrá ef til, annars generic) — Efnislistinn getur bætt við stærð handvirkt.
+  const allRates = [...rateBySize.values()]
+    .sort((a, b) => Number(a.size_min_mm) - Number(b.size_min_mm))
+    .map((r) => ({ size_label: r.size_label, size_min_mm: Number(r.size_min_mm), size_max_mm: Number(r.size_max_mm),
+      rate_an_vsk: Number(r.rate_an_vsk), label: lysingFor(r), rate_scope: r.scope }));
 
   const holes_m_vsk = Math.round(holes_an_vsk * 1.24);
   const bands_m_vsk = bandsOverride != null ? bandsOverride : 0;
@@ -119,7 +164,13 @@ exports.handler = async (event) => {
     worksite,
     month,
     ajour_projects: ajourNames,
+    rate_scope: rateScope || 'generic',
+    klarad,
     holes,
+    all_rates: allRates,
+    by_day: byDay,
+    opnar: Object.entries(opnar).map(([group, stakar]) => ({ group, stakar })),
+    ferskleiki: { last_import: (nyjast[0] || {}).imported_at || null, last_registration: (seinast[0] || {}).execution_date || null, last_sync: (syncInfo && syncInfo.synced_at) || null },
     unmapped,
     band_rates: { kragi: kragar, bordi: bordar },
     totals: {

@@ -47,13 +47,25 @@ uppsafnað síðast`. Það leiðréttir sjálfkrafa afturvirkar stærðar-endur
 **Starfsmaður er í `category`-reitnum** („Starfsmaður N"), ekki í
 `CheckListItemCheckedByUser` (sá er alltaf almennur og gagnslaus).
 
-## Dalvegur 30 og Heklureitur — almenn hole_size_rates
+## Dalvegur 30 og Heklureitur — hole_size_rates
 
 `category_group` er á sniðinu `"Gat Ø NNN-NNN"` → dragðu út tölurnar tvær og tengdu við
-`hole_size_rates` (`size_min_mm`/`size_max_mm`, `scope='generic'`). Bönd og kragar eru
-**ekki** í Ajour fyrir þessa staði — þau koma handvirkt (`bands_m_vsk` yfirskrift).
-NB Dalvegur er skipt í Ajour: `Dalvegur 18B` + `Dalvegur 26` + `Dalvegur 30A` — leggðu
-öll þrjú saman.
+`hole_size_rates` (`size_min_mm`/`size_max_mm`). Dalvegur: `scope='generic'`; bönd og kragar
+koma handvirkt (`bands_m_vsk` yfirskrift). NB Dalvegur er skipt í Ajour: `Dalvegur 18B` +
+`Dalvegur 26` + `Dalvegur 30A` — leggðu öll þrjú saman.
+
+**Heklureitur (06.10.2026) — EIGIN verðskrá + „Efnislisti · göt":** `scope='heklureitur'`
+(41 stærð, 2.900 → 100.500 kr án vsk, úr Heklureitur_30.04.2026.xlsx; `notes` = reikningslýsingin
+„Brunalokanir á stærðum Ø00-31"). Gjaldið per gat felur í sér vinnu OG efni — engir Tímaveru-
+taxtar, enginn efniskostnaður, engin bönd/kragar. Gerð Reikninga → Heklu reitur → **🧾 Efnislisti ·
+göt** (`openHeklureitur` í index.html) les `/api/gata-uppgjor?worksite=Heklu+reitur&month=…&klarad=1`
+(aðeins `registration_status='Done'`; ókláraðar skráningar og flokkar utan verðskrár sýndir sem
+viðvörun). Vistast sem venjuleg drög „Heklu reitur" (gatalínur í `materials_jsonb` með `gat:true`,
+`materials_total`=0, `fixed_total`=samtala → Kröfu yfirlit sýnir fast verð) + PDF `efnislisti_pdf`.
+Greiðandi: Framkvæmdafélagið Laugavegur ehf. kt. 680921-2020. Sannreynt: apríl 2026 = 1.629.608
+m.vsk, nákvæmlega Gatastærðir-blaðið (með 3 ókláruðum + Ø1700-1799 á 1710-1759 bætt við handvirkt).
+Ajour-raðir Heklureits samstilltar af luna-bridge `ajour-yfirlit.js` (`syncVerkefnaRadir`, app_kv
+`ajour_radir_sync`) — CSV-útflutningurinn nær aðeins yfir NLSH.
 
 ## 🔴 Afsláttar-konvensjónin (algengasta villan í kerfinu)
 
@@ -284,9 +296,10 @@ Mánaðaruppgjör table (charge = this month − previous) + a 📸 Loka mánað
 button (hub only) that captures the live cumulative. Seeded: 2026-04 = 59.472.216
 (úr samningssheet), 2026-05 = 60.429.627 (Ajour).
 
-#### Heklureitur, Dalvegur 30 — generic per-hole-size Verðskrá
-**Confirmed (Dalvegur_30.04.2026.xlsx, user-verified for Heklureitur):**
-both use the **same generic per-hole-size Verðskrá** — NOT a custom
+#### Dalvegur 30 (+ Heklureitur fyrir 06.10.2026) — generic per-hole-size Verðskrá
+**06.10.2026: Heklureitur hefur nú EIGIN verðskrá (`scope='heklureitur'`, sjá kaflann ofar) — eldri
+fullyrðingin um að hann notaði sömu almennu verðin stóðst ekki (Heklureits-skjalið: 2.900/3.600/5.500…).**
+**Confirmed (Dalvegur_30.04.2026.xlsx):** Dalvegur uses the **generic per-hole-size Verðskrá** — NOT a custom
 contract like NLSH. Rates by 50mm bucket from 000-031 mm → 1960-2009 mm,
 plus a Bönd/Kragar/Borði rate table by specific size in mm.
 

@@ -10779,7 +10779,8 @@ async function renderTilbunirReikningar(t){
     if(fr>0) body += row('ekinn ferð', 4000, fr, fr*4000);
     if(gj>0) body += row('akstursgjald', gj, '1', gj);
     const matRows = mats.filter(m=>(Number(m.qty)||0)>0||(Number(m.total)||0)>0).map(m=>{ const q=Number(m.qty)||0,p=Number(m.price)||0; return row(m.label,p,(q%1?q.toFixed(2):String(q)),Number(m.total)||Math.round(p*q)); }).join('');
-    if(matRows) body += '<tr class="sec"><td colspan="4">Efni</td></tr>'+matRows;
+    // Heklureits-Efnislisti (06.10.2026): línurnar eru brunalokanir per gatastærð (gat:true), ekki efni.
+    if(matRows) body += '<tr class="sec"><td colspan="4">'+(mats.some(m=>m&&m.gat)?'Brunalokanir':'Efni')+'</td></tr>'+matRows;
     if(sma>0||stadf>0) body += '<tr class="sec"><td colspan="4">Aukagjöld</td></tr>';
     if(sma>0) body += row('Smáhlutagjald = hanskar, þurrkur o.fl.', null, (dvH+evH).toFixed(2), sma);
     if(stadf>0) body += row('Staðfesting brunaþéttinga', null, '1', stadf);
@@ -10939,7 +10940,12 @@ async function renderGerdReikninga(t){
   // geymir aðeins customer_name, svo kt/heimilisfang greiðanda er skráð hér.
   const PAYER_OVERRIDE = {
     'Orkureitur': { name:'SAFÍR byggingar ehf.', kt:'551021-0680', addr:'Ármúla 27, 108 Reykjavík' },
+    // Heklureitur (06.10.2026): greiðandi Payday-reikninga R206–R305 — forfylling í Heklureits-Efnislistanum.
+    'Heklu reitur': { name:'Framkvæmdafélagið Laugavegur ehf.', kt:'680921-2020', addr:'' },
+    'Heklureitur':  { name:'Framkvæmdafélagið Laugavegur ehf.', kt:'680921-2020', addr:'' },
   };
+  // Heklureitur rukkast eftir fjölda kláraðra gata per gatastærð (eigin Efnislisti, openHeklureitur).
+  const isHeklu = name => /heklu\s*reit/i.test(name||'');
 
   state.ui = state.ui || {};
   if(!/^\d{4}-\d{2}$/.test(state.ui.gr_month||'')) state.ui.gr_month = '2026-05';
@@ -11499,7 +11505,7 @@ async function renderGerdReikninga(t){
       try{ localStorage.setItem('gr_snapshot_v1', JSON.stringify({WS,PG,DRAFTS,REDDER,NLSH_MONTHLY,ts:Date.now()})); }catch(_){}
       renderList();
       // Re-open editor directly when arriving from the "Tilbúnir reikningar" page.
-      if(window.__grPendingOpen){ const pe = window.__grPendingOpen; window.__grPendingOpen = null; try{ openEditor(pe); }catch(_e){} }
+      if(window.__grPendingOpen){ const pe = window.__grPendingOpen; window.__grPendingOpen = null; try{ if(isHeklu(pe)) openGata(pe); else openEditor(pe); }catch(_e){} }
       document.getElementById('gr-deep-wait')?.remove();
     }catch(e){
       document.getElementById('gr-deep-wait')?.remove();
@@ -11528,7 +11534,8 @@ async function renderGerdReikninga(t){
       }); }
     tim.sort((a,b)=> monthHours(b)-monthHours(a));
     const gataNames = ['Landsspitalinn','Heklureitur','Dalvegur 30'];
-    const gata = gataNames.map(n => sites.find(w => isGata(w.project) && new RegExp(n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace('Landsspitalinn','landssp[ií]tal'),'i').test(w.project)) || {project:n, monthly:{}, mapped_customers:[], _synthetic:true});
+    // 06.10.2026: Tímavera skrifar „Heklu reitur" (með bili) — bilið hunsað svo spjaldið beri sama nafn og drögin.
+    const gata = gataNames.map(n => sites.find(w => isGata(w.project) && new RegExp(n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace('Landsspitalinn','landssp[ií]tal').replace('Heklureitur','heklu\\s*reitur'),'i').test(w.project)) || {project:(n==='Heklureitur'?'Heklu reitur':n), monthly:{}, mapped_customers:[], _synthetic:true});
 
     const card = (w, gataFlag) => {
       const name = w.project;
@@ -11566,7 +11573,7 @@ async function renderGerdReikninga(t){
           </div>
           <div class="gr-card-actions">
             ${gataFlag
-              ? `<button class="gr-btn gr-btn-primary" data-gr-gata="${escapeAttr(name)}">📐 Ajour uppgjör</button>`
+              ? `<button class="gr-btn gr-btn-primary" data-gr-gata="${escapeAttr(name)}">${isHeklu(name)?'🧾 Efnislisti · göt':'📐 Ajour uppgjör'}</button>`
               : `<button class="gr-btn gr-btn-primary" data-gr-edit="${escapeAttr(name)}">🧾 Efnislisti</button>`}
           </div>
           <div class="gr-card-note"><textarea class="gr-note-in" data-gr-note="${escapeAttr(name)}" rows="2" placeholder="Athugasemd (vistast)…" style="width:100%;margin-top:8px;border:1px solid var(--border,var(--edge));border-radius:8px;padding:6px 8px;font:inherit;font-size:12px;resize:vertical;box-sizing:border-box">${escapeHtml(note)}</textarea></div>
@@ -11601,7 +11608,7 @@ async function renderGerdReikninga(t){
                    :`<span class="gr-pill gr-pill-todo">⏳ eftir</span>`)}</td>
         <td>${d && d.status==='merged'
             ? `<button class="gr-btn" data-gr-unmerge="${escapeAttr(d.merged_into||'')}" data-gr-ws="${escapeAttr(name)}" title="Skila þessum mánuði úr samreikningnum">↩ Aftengja</button>`
-            : (gataFlag?`<button class="gr-btn gr-btn-primary" data-gr-gata="${escapeAttr(name)}">📐 Uppgjör</button>`:`<button class="gr-btn gr-btn-primary" data-gr-edit="${escapeAttr(name)}">🧾 Efnislisti</button>`)}</td>
+            : (gataFlag?`<button class="gr-btn gr-btn-primary" data-gr-gata="${escapeAttr(name)}">${isHeklu(name)?'🧾 Efnislisti · göt':'📐 Uppgjör'}</button>`:`<button class="gr-btn gr-btn-primary" data-gr-edit="${escapeAttr(name)}">🧾 Efnislisti</button>`)}</td>
       </tr>`;
     };
 
@@ -12698,8 +12705,281 @@ async function renderGerdReikninga(t){
     } catch(_tbkErr){ /* innfellda tímaskýrslan mistókst — ritillinn virkar samt */ }
   }
 
+  // ===== Heklureitur — Efnislisti · göt (Agnar 06.10.2026) =====
+  // „Ný tegund af Efnislista sem á við bara fyrir Heklureit — reikningurinn/uppkastið bara út frá
+  // fjölda kláraðra gata per mánuð, verðið úr google sheets skjalinu … engin tímaveru verð eða
+  // efniskostnaður, gjaldið per gat felur bæði í sér." Magn = kláraðar brunalokanir (Done) í Ajour
+  // í mánuðinum (/api/gata-uppgjor?klarad=1); verð = hole_size_rates scope 'heklureitur'.
+  // Vistast sem venjuleg drög (invoice_drafts) — línurnar í materials_jsonb með gat:true,
+  // materials_total 0 (enginn efniskostnaður) og fixed_total = samtala svo Kröfu yfirlit sýni fast verð.
+  async function openHeklureitur(name){
+    const month = state.ui.gr_month;
+    const wsName = /^heklureitur$/i.test(String(name||'').trim()) ? 'Heklu reitur' : name;
+    const VSK_PCT = 24;
+    const { fra, til } = monthRange(month);
+    const existing = draftFor(wsName);
+    const payer = PAYER_OVERRIDE[wsName] || PAYER_OVERRIDE['Heklu reitur'] || {};
+    const FOOT = 'Einingaverð miðast við þéttingu á annarri hlið hvers gats og fela í sér vinnu og efni. Skráning í Ajour gæðakerfið, skjalavinna og utanumhald er innifalið.';
+    const bg = document.createElement('div');
+    bg.className = 'gr-modal-bg boss';
+    bg.innerHTML = `
+      <style>
+        .hk-tbl{width:100%;border-collapse:collapse;font-size:13px}
+        .hk-tbl th{font-family:var(--font-mono,ui-monospace,monospace);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted,#6f685c);font-weight:600;text-align:right;padding:4px 6px;border-bottom:1px solid var(--line-2,#d9d3c6)}
+        .hk-tbl th:first-child{text-align:left}
+        .hk-tbl td{padding:5px 6px;border-bottom:1px solid var(--line,#e6e1d6);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+        .hk-tbl td.l{text-align:left;white-space:normal}
+        .hk-tbl td.aj{color:var(--muted,#6f685c);font-family:var(--font-mono,ui-monospace,monospace);font-size:12px}
+        .hk-tbl tr.hk-diff td.aj{color:#8f6a1c;font-weight:700}
+        .hk-tbl input{width:64px;text-align:right;padding:5px 6px;font:inherit;font-variant-numeric:tabular-nums;background:var(--input-bg,#f6f3ec);border:1px solid var(--edge,#c9c2b3);border-radius:4px;box-shadow:var(--well-shadow,inset 0 2px 3px rgba(22,21,19,.12))}
+        .hk-tbl tr.hk-zero td{color:var(--muted-2,#8f8776)}
+        .hk-tbl tfoot td{border-bottom:0;font-weight:700;padding-top:8px}
+        .hk-x{border:0;background:transparent;color:var(--muted-2,#8f8776);cursor:pointer;font-size:15px;padding:0 2px}
+        .hk-add{display:flex;gap:8px;align-items:center;margin-top:10px}
+        .hk-add select{flex:1;min-width:0;height:34px;padding:0 8px;background:var(--input-bg,#f6f3ec);border:1px solid var(--edge,#c9c2b3);border-radius:4px;font:inherit;font-size:13px}
+        .hk-src{font-size:12.5px;line-height:1.5;color:var(--ink-2,#4a463f);margin:0 0 10px;padding:9px 11px;border:1px solid var(--line-2,#d9d3c6);border-radius:5px;background:linear-gradient(180deg,#fbf9f5,#f1ede4)}
+        .hk-src b{color:var(--ink,#161513)}
+        .hk-days{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+        .hk-days span{font-family:var(--font-mono,ui-monospace,monospace);font-size:11px;padding:2px 7px;border-radius:10px;background:#fff;border:1px solid var(--line-2,#d9d3c6);color:var(--ink-2,#4a463f)}
+        .hk-warn{font-size:12.5px;line-height:1.5;margin:10px 0 0;padding:8px 11px;border:1px solid #d9b25a;border-radius:5px;background:linear-gradient(180deg,#fbf3d9,#f4e6b8);color:#3e2c06}
+        .hk-stale{border-color:#c0392b;background:linear-gradient(180deg,#fdecea,#f8d7d3);color:#7a1d14}
+        .gr-doc .hk-foot{margin-top:18px;font-size:11px;font-style:italic;color:#555;line-height:1.45}
+        .gr-modal-bg.boss #hk-save{height:38px;padding:0 20px;border:1px solid #5a4410;border-top-color:#f7e6b8;border-bottom-color:#2e2004;border-radius:5px;background:var(--gold-face,linear-gradient(180deg,#f3dc95,#b8892e));color:#161513;font-weight:800;text-shadow:0 1px 0 rgba(255,255,255,.35);box-shadow:var(--gold-bevel-shadow,inset 0 1px 0 rgba(255,255,255,.55),inset 0 -2px 3px rgba(60,40,0,.45),0 3px 6px rgba(22,21,19,.45))}
+      </style>
+      <div class="gr-modal">
+        <header class="gb-head">
+          <div class="gb-title">Efnislisti · göt</div>
+          <span class="gb-plate">HEKLUREITUR</span>
+          <div class="gb-meta">Brunalokanir eftir fjölda kláraðra gata · <b>${escapeHtml(wsName)}</b> · ${dmy(fra)}–${dmy(til)}</div>
+          <span class="gb-status${existing&&existing.updated_at?'':' unsaved'}" id="hk-hd-status"><i class="boss-led"></i><span id="hk-hd-status-t">${(()=>{const t=existing&&existing.updated_at?new Date(existing.updated_at):null;return t&&!isNaN(t)?('vistað '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')):'óvistað';})()}</span></span>
+          <button class="gr-x" id="hk-close" type="button" title="Loka">×</button>
+        </header>
+        <div class="gb-kpi">
+          <div class="k"><span class="kl">Göt</span><span class="kv" id="hk-k-got">—</span></div>
+          <div class="k"><span class="kl">Stærðir</span><span class="kv" id="hk-k-st">—</span></div>
+          <div class="k"><span class="kl">Án vsk</span><span class="kv" id="hk-k-net">—</span></div>
+          <div class="k"><span class="kl">Vsk ${VSK_PCT}%</span><span class="kv" id="hk-k-vsk">—</span></div>
+          <div class="k total"><span class="kl">Samtals með vsk</span><span class="kv" id="hk-k-total">—</span></div>
+        </div>
+        <div class="gr-form">
+          <section class="gb-sec" data-sec="01">
+            <div class="gb-sec-h"><span class="boss-plate">01</span><span class="gb-sec-t">Verkkaupi</span><span class="gb-sec-sub" id="hk-sub-01"></span><span class="gb-caret">›</span></div>
+            <div class="gb-sec-b">
+              <div class="gb-r2">
+                <div class="gr-f"><label>Verkkaupi</label><input id="hk-cust" value="${escapeAttr((existing&&existing.customer_name)||payer.name||'')}"></div>
+                <div class="gr-f"><label>Kennitala</label><input id="hk-kt" value="${escapeAttr((existing&&existing.kennitala)||payer.kt||'')}" placeholder="000000-0000"></div>
+              </div>
+              <div class="gb-r2">
+                <div class="gr-f"><label>Heimilisfang</label><input id="hk-addr" value="${escapeAttr((existing&&existing.heimilisfang)||payer.addr||'')}" placeholder="Heimilisfang verkkaupa"></div>
+                <div class="gr-f"><label>Netfang</label><input id="hk-email" type="email" value="${escapeAttr((existing&&existing.netfang)||'')}" placeholder="netfang@verkkaupi.is" autocomplete="off"></div>
+              </div>
+            </div>
+          </section>
+          <section class="gb-sec" data-sec="02">
+            <div class="gb-sec-h"><span class="boss-plate">02</span><span class="gb-sec-t">Brunalokanir</span><span class="gb-sec-sub">kláruð göt úr Ajour · ${escapeHtml(monthLabel(month))}</span><b class="gb-sec-sum" id="hk-sum-02"></b><span class="gb-caret">›</span></div>
+            <div class="gb-sec-b" id="hk-body"><div class="gr-loading">Sæki talningu úr Ajour…</div></div>
+          </section>
+          <div class="gr-actions">
+            <button class="gr-btn" id="hk-save" type="button">💾 Vista drög</button>
+            <div class="gb-grp"><button class="gr-btn" id="hk-pdf" type="button" title="Vista PDF (fer í „Vistuð PDF-skjöl", Kröfu yfirlit og bókun)">📄 Vista PDF</button><button class="gr-btn" id="hk-print" type="button">🖨 Prenta</button></div>
+            <div class="gb-more"><button class="gr-btn" id="hk-reset" type="button" title="Setja magn aftur eins og Ajour segir">↺ Magn úr Ajour</button><button class="gr-btn" id="hk-close2" type="button">Loka</button></div>
+            <span id="hk-st" style="font-size:12px;color:var(--muted);flex-basis:100%"></span>
+          </div>
+        </div>
+        <div class="gr-prev"><div class="gr-doc" id="hk-doc"></div></div>
+      </div>`;
+    document.body.appendChild(bg);
+    let dirty = false;
+    const setDirty = (v) => { dirty = v; const s=document.getElementById('hk-hd-status'); if(s){ s.classList.toggle('unsaved', !!v || !(existing&&existing.updated_at)); } if(v){ const t=document.getElementById('hk-hd-status-t'); if(t) t.textContent='óvistað'; } };
+    const close = (force) => { if(dirty && force!==true && !confirm('Óvistaðar breytingar á Efnislistanum tapast ef þú lokar núna.\n\nLoka samt?')) return; bg.remove(); };
+    bg.addEventListener('click', e => { if(e.target===bg) close(); });
+    document.getElementById('hk-close').onclick = () => close();
+    document.getElementById('hk-close2').onclick = () => close();
+    bg.querySelectorAll('.gb-sec-h').forEach(h => h.onclick = () => h.parentElement.classList.toggle('collapsed'));
+    const $body = document.getElementById('hk-body');
+
+    let data;
+    try{
+      const resp = await fetch(`/api/gata-uppgjor?worksite=${encodeURIComponent(wsName)}&month=${encodeURIComponent(month)}&klarad=1`);
+      data = await resp.json();
+      if(!resp.ok) throw new Error(data.error || ('HTTP '+resp.status));
+    }catch(e){
+      $body.innerHTML = `<div class="hk-warn hk-stale">Gat ekki sótt talningu úr Ajour (${escapeHtml(e.message||String(e))}).</div>`;
+      return;
+    }
+    const allRates = (data.all_rates||[]).filter(r => r.rate_an_vsk > 0);
+    const rateKey = r => `${r.size_min_mm}-${r.size_max_mm}`;
+    const rateByKey = new Map(allRates.map(r => [rateKey(r), r]));
+    const ajourByKey = {};
+    for(const h of (data.holes||[])) ajourByKey[`${h.size_min_mm}-${h.size_max_mm}`] = Number(h.stakar)||0;
+
+    // Línur: vistuð drög (gat-línur) ráða magni; annars Ajour. Ajour-talan sést alltaf til hliðar.
+    const saved = existing && Array.isArray(existing.materials_jsonb) ? existing.materials_jsonb.filter(m => m && m.gat) : [];
+    let qty = {};
+    const fromAjour = () => { const q = {}; for(const [k,v] of Object.entries(ajourByKey)) if(v>0) q[k] = v; return q; };
+    if(saved.length){ for(const m of saved){ const k = `${m.size_min_mm}-${m.size_max_mm}`; if(rateByKey.has(k)) qty[k] = Number(m.qty)||0; } }
+    else qty = fromAjour();
+    const shownKeys = () => allRates.map(rateKey).filter(k => (qty[k]||0) > 0 || (ajourByKey[k]||0) > 0 || k in qty);
+
+    const fr = data.ferskleiki || {};
+    const fmtTs = s => { if(!s) return '—'; const t = new Date(s); if(isNaN(t)) return String(s); return dmy(t.toISOString().slice(0,10)) + ' kl. ' + String(t.getHours()).padStart(2,'0') + ':' + String(t.getMinutes()).padStart(2,'0'); };
+    const dagar = Object.entries(data.by_day||{}).sort((a,b)=>a[0].localeCompare(b[0]));
+    // Ferskleiki = nýjasta af samstillingu brúarinnar (app_kv ajour_radir_sync) og síðasta innlestri.
+    const ferskt = [fr.last_sync, fr.last_import].filter(Boolean).sort().pop() || null;
+    const stale = ferskt && (Date.now() - new Date(ferskt).getTime()) > 3*864e5 && til >= String(ferskt).slice(0,10);
+
+    const lines = () => shownKeys().map(k => { const r = rateByKey.get(k); const q = Number(qty[k])||0; return { key:k, label:r.label, size_label:r.size_label, size_min_mm:r.size_min_mm, size_max_mm:r.size_max_mm, price:r.rate_an_vsk, qty:q, total:Math.round(q*r.rate_an_vsk), ajour: ajourByKey[k]||0 }; });
+    const calc = () => { const ls = lines().filter(l => l.qty > 0); const net = ls.reduce((a,l)=>a+l.total,0); const vsk = Math.round(net*VSK_PCT/100); return { ls, net, vsk, total: net+vsk, got: ls.reduce((a,l)=>a+l.qty,0) }; };
+
+    const renderBody = () => {
+      const ls = lines();
+      const used = new Set(ls.map(l=>l.key));
+      const opnar = data.opnar||[], unm = data.unmapped||[];
+      $body.innerHTML = `
+        <div class="hk-src${stale?' hk-stale':''}">
+          Magn = <b>kláraðar brunalokanir</b> (Done) skráðar í Ajour ${escapeHtml(dmy(fra))}–${escapeHtml(dmy(til))}, verð úr Heklureits-verðskránni.
+          ${stale?'<br><b>⚠ Gögnin úr Ajour eru gömul</b> — sæktu nýjustu skráningar áður en þú sendir.':''}
+          <br>Síðast sótt úr Ajour: <b>${escapeHtml(fmtTs(ferskt))}</b> · nýjasta skráning: <b>${escapeHtml(fr.last_registration?dmy(fr.last_registration):'—')}</b>
+          ${dagar.length?`<div class="hk-days">${dagar.map(([d,n])=>`<span>${escapeHtml(dmy(d).slice(0,5))} · ${n}</span>`).join('')}</div>`:''}
+        </div>
+        <table class="hk-tbl">
+          <thead><tr><th>Gatastærð</th><th title="Kláruð göt í Ajour">Ajour</th><th>Magn</th><th>Einingaverð</th><th>Samtals án vsk</th><th></th></tr></thead>
+          <tbody>${ls.length ? ls.map(l => `
+            <tr class="${l.qty!==l.ajour?'hk-diff':''} ${l.qty?'':'hk-zero'}">
+              <td class="l" title="${escapeAttr(l.label)}"><b>${escapeHtml(String(l.label).replace(/^Brunalokanir á stærðum\s*/,''))}</b></td>
+              <td class="aj">${l.ajour||'–'}</td>
+              <td><input type="number" min="0" step="1" inputmode="numeric" data-hk-q="${l.key}" value="${l.qty||''}"></td>
+              <td>${fmt(l.price)}</td>
+              <td data-hk-t="${l.key}">${l.qty?fmt(l.total):'–'}</td>
+              <td>${l.ajour?'':`<button type="button" class="hk-x" data-hk-rm="${l.key}" title="Fjarlægja línu">✕</button>`}</td>
+            </tr>`).join('') : `<tr><td class="l" colspan="6" style="color:var(--muted)">Engin kláruð göt skráð í Ajour í ${escapeHtml(monthLabel(month))}.</td></tr>`}</tbody>
+          <tfoot><tr><td class="l">Samtals</td><td class="aj">${ls.reduce((a,l)=>a+l.ajour,0)||'–'}</td><td id="hk-f-got"></td><td></td><td id="hk-f-net"></td><td></td></tr></tfoot>
+        </table>
+        <div class="hk-add"><select id="hk-add-sel"><option value="">＋ Bæta við gatastærð…</option>${allRates.filter(r=>!used.has(rateKey(r))).map(r=>`<option value="${rateKey(r)}">${escapeHtml(r.label)} — ${fmt(r.rate_an_vsk)} kr</option>`).join('')}</select></div>
+        ${opnar.length?`<div class="hk-warn"><b>Ekki kláruð í Ajour (ekki talin með):</b> ${opnar.map(o=>escapeHtml(o.group)+' × '+o.stakar).join(', ')}. Bættu við magni ef þau eiga að rukkast núna.</div>`:''}
+        ${unm.length?`<div class="hk-warn"><b>Flokkur sem passar ekki við verðskrána:</b> ${unm.map(u=>escapeHtml(u.group)+' × '+u.stakar).join(', ')} — veldu rétta stærð í „Bæta við gatastærð" og settu magnið inn.</div>`:''}`;
+      $body.querySelectorAll('[data-hk-q]').forEach(inp => inp.addEventListener('input', () => {
+        const v = Math.max(0, Math.round(Number(inp.value)||0)); qty[inp.dataset.hkQ] = v;
+        const l = lines().find(x=>x.key===inp.dataset.hkQ);
+        const tr = inp.closest('tr'); if(tr && l){ tr.classList.toggle('hk-diff', l.qty!==l.ajour); tr.classList.toggle('hk-zero', !l.qty); }
+        const cell = $body.querySelector(`[data-hk-t="${inp.dataset.hkQ}"]`); if(cell && l) cell.textContent = l.qty?fmt(l.total):'–';
+        setDirty(true); refresh();
+      }));
+      $body.querySelectorAll('[data-hk-rm]').forEach(b => b.onclick = () => { delete qty[b.dataset.hkRm]; setDirty(true); renderBody(); refresh(); });
+      const sel = document.getElementById('hk-add-sel');
+      sel.onchange = () => { if(!sel.value) return; qty[sel.value] = qty[sel.value] || 0; setDirty(true); renderBody(); refresh(); const inp = $body.querySelector(`[data-hk-q="${sel.value}"]`); if(inp) inp.focus(); };
+    };
+
+    const docHtml = (c) => {
+      const cust = document.getElementById('hk-cust').value.trim(), kt = document.getElementById('hk-kt').value.trim(), addr = document.getElementById('hk-addr').value.trim();
+      const kr = n => fmt(n)+' kr.';
+      return `
+        <div class="gr-doc-top"><img class="gr-doc-logo" src="${escapeAttr(getLogo())}" alt="" onerror="this.style.display='none'"><div class="gr-doc-sub">Verðskrá / tilboð</div></div>
+        <div class="gr-doc-meta"><div>${dmy(fra)} til ${dmy(til)}</div><div class="gr-doc-ws">${escapeHtml(wsName)}</div>${[cust, kt?'kt. '+kt:'', addr].filter(Boolean).map(escapeHtml).join('<br>')}</div>
+        <table class="gr-efni">
+          <thead><tr><td></td><td class="p">án vsk</td><td class="m">magn</td><td class="t">samtals</td></tr></thead>
+          <tbody>
+            <tr class="sec"><td colspan="4">Brunalokanir</td></tr>
+            ${c.ls.map(l=>`<tr><td class="l">${escapeHtml(l.label)}</td><td class="p">${kr(l.price)}</td><td class="m">${l.qty}</td><td class="t">${kr(l.total)}</td></tr>`).join('') || '<tr><td class="l" colspan="4">—</td></tr>'}
+            <tr class="sub"><td colspan="3">Samtals án vsk</td><td class="t">${kr(c.net)}</td></tr>
+            <tr class="sub"><td colspan="3">vsk (${VSK_PCT}%)</td><td class="t">${kr(c.vsk)}</td></tr>
+            <tr class="grand"><td colspan="3">samtals með vsk</td><td class="t">${kr(c.total)}</td></tr>
+          </tbody>
+        </table>
+        <div class="hk-foot">${escapeHtml(FOOT)}</div>`;
+    };
+
+    const refresh = () => {
+      const c = calc();
+      const set = (id, v) => { const e = document.getElementById(id); if(e) e.textContent = v; };
+      set('hk-k-got', String(c.got)); set('hk-k-st', String(c.ls.length)); set('hk-k-net', fmt(c.net)); set('hk-k-vsk', fmt(c.vsk)); set('hk-k-total', fmt(c.total)+' kr');
+      set('hk-f-got', String(c.got)); set('hk-f-net', fmt(c.net)); set('hk-sum-02', fmt(c.total)+' kr m.vsk');
+      set('hk-sub-01', document.getElementById('hk-cust').value.trim());
+      document.getElementById('hk-doc').innerHTML = docHtml(c);
+      return c;
+    };
+    ['hk-cust','hk-kt','hk-addr','hk-email'].forEach(id => document.getElementById(id).addEventListener('input', () => { setDirty(true); refresh(); }));
+    renderBody(); refresh();
+
+    document.getElementById('hk-reset').onclick = () => { qty = fromAjour(); setDirty(true); renderBody(); refresh(); };
+
+    const pdfData = () => { const c = calc(); return { ws: wsName, cust: document.getElementById('hk-cust').value.trim(), kt: document.getElementById('hk-kt').value.trim(), addr: document.getElementById('hk-addr').value.trim(), fra, til, lines: c.ls, net: c.net, vsk: c.vsk, vskPct: VSK_PCT, total: c.total, foot: FOOT }; };
+    const $st = document.getElementById('hk-st');
+    const doSave = async (force) => {
+      const c = calc();
+      $st.textContent = 'Vistar…';
+      const cur = draftFor(wsName);
+      try{
+        const rr = await fetch('/api/invoice-drafts', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+          id: cur?.id || undefined,
+          worksite_name: wsName, work_month: month,
+          customer_name: document.getElementById('hk-cust').value.trim() || null,
+          kennitala: document.getElementById('hk-kt').value.trim() || null,
+          heimilisfang: document.getElementById('hk-addr').value.trim() || null,
+          netfang: document.getElementById('hk-email').value.trim() || null,
+          source: 'ajour',
+          hours_dagvinna: 0, hours_eftirvinna: 0, rate_dagvinna: 0, rate_eftirvinna: 0,
+          akstur_km: 0, akstur_ferdir: 0, akstur_gjald: 0, smahlutagjald: 0, stadfesting: 0,
+          materials_jsonb: c.ls.map(l => ({ gat:true, label:l.label, size_label:l.size_label, size_min_mm:l.size_min_mm, size_max_mm:l.size_max_mm, price:l.price, qty:l.qty, total:l.total, ajour:l.ajour })),
+          materials_total: 0,
+          net_an_vsk: c.net, vsk_amount: c.vsk, total_m_vsk: c.total, fixed_total: c.total || null, discount_pct: 0,
+          status: cur?.status || 'draft',
+          updated_by: 'efnislisti-got',
+          expected_updated_at: cur?.updated_at || null,
+          force: force === true ? true : undefined,
+        }) });
+        if(rr.status === 409){
+          const j = await rr.json().catch(()=>({})); const cu = j.current || {};
+          $st.textContent = 'Ekki vistað — breytt á annarri vél';
+          if(confirm('Þessi drög breyttust á annarri vél ('+(cu.updated_by||'önnur vél')+(cu.updated_at?' · '+new Date(cu.updated_at).toLocaleString('is-IS'):'')+') eftir að þú opnaðir þau.\n\nYfirskrifa með þínu eintaki?')) return doSave(true);
+          return false;
+        }
+        if(!rr.ok) throw new Error('HTTP '+rr.status);
+        const d = await rr.json();
+        DRAFTS[`${wsName}|${month}`] = d;
+        setDirty(false);
+        const t = new Date(); const tt = document.getElementById('hk-hd-status-t'); if(tt) tt.textContent = 'vistað '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
+        document.getElementById('hk-hd-status')?.classList.remove('unsaved');
+        $st.textContent = '✓ Vistað — '+fmt(c.total)+' kr m.vsk · birtist í Kröfu yfirliti undir Ósendar';
+        renderList();
+        return true;
+      }catch(e){ $st.textContent = '✗ '+(e.message||e); return false; }
+    };
+    document.getElementById('hk-save').onclick = () => doSave();
+    document.getElementById('hk-pdf').onclick = async () => {
+      const btn = document.getElementById('hk-pdf'); const old = btn.textContent;
+      btn.textContent = '⏳ Bý til PDF…'; btn.disabled = true;
+      try{
+        if(dirty){ const ok = await doSave(); if(!ok) return; }
+        const res = await buildAndSaveGatEfnislistiPdf(wsName, month, pdfData());
+        $st.innerHTML = `✓ PDF vistað — <a href="${escapeAttr(res.webViewLink)}" target="_blank" rel="noopener">opna</a> · <a href="${escapeAttr(res.downloadUrl)}" target="_blank" rel="noopener">sækja</a>`;
+        if(typeof window.__grReloadPdfList==='function') window.__grReloadPdfList();
+      }catch(e){ $st.textContent = '✗ '+(e.message||e); alert('Gat ekki vistað PDF: '+(e.message||e)); }
+      finally{ btn.textContent = old; btn.disabled = false; }
+    };
+    document.getElementById('hk-print').onclick = async () => {
+      const w = window.open('', '_blank'); if(!w){ alert('Leyfðu sprettiglugga til að prenta.'); return; }
+      const logo = await bhLogoDataUrl();
+      const html = document.getElementById('hk-doc').innerHTML.replace(/src="[^"]*"/, logo ? `src="${logo}"` : 'src=""');
+      w.document.write(`<!DOCTYPE html><html lang="is"><head><meta charset="utf-8"><title>${escapeHtml(bhPdfName('Efnislisti', { ws:wsName, month }).replace(/\.pdf$/,''))}</title>
+        <style>body{font-family:'Times New Roman',Times,serif;color:#000;margin:32px 40px;font-size:13px}@page{size:A4 portrait;margin:14mm}
+        .gr-doc-top{margin-bottom:24px}.gr-doc-logo{width:170px;height:auto;display:block}.gr-doc-sub{font-style:italic;color:#555;margin:6px 0 0}
+        .gr-doc-meta{margin-bottom:14px;line-height:1.45}.gr-doc-ws{font-weight:700}
+        table{width:100%;border-collapse:collapse;font-size:13px}td{padding:3px 4px;vertical-align:bottom}
+        thead td{font-style:italic;color:#555;text-align:right}thead td:first-child{text-align:left}
+        td.l{text-align:left}td.p,td.m,td.t{text-align:right;white-space:nowrap}td.m{border-bottom:1px solid #000}
+        tr.sec td{font-weight:700;padding-top:12px}
+        tr.sub td{border-top:1px solid #000;padding-top:4px;text-align:right;font-style:italic;color:#555}tr.sub td.t{font-style:normal;color:#000}
+        tr.grand td{border-top:1px solid #000;border-bottom:3px double #000;padding:6px 4px;text-align:right}tr.grand td.t{font-weight:700}
+        .hk-foot{margin-top:18px;font-size:11px;font-style:italic;color:#555;line-height:1.45}</style></head><body>${html}
+        <script>window.onload=function(){window.print();}<\/script></body></html>`);
+      w.document.close();
+    };
+  }
+
   // ===== Gata (Ajour) uppgjör =====
   async function openGata(name){
+    if(isHeklu(name)) return openHeklureitur(name);
     const month = state.ui.gr_month;
     const isNLSH = /landssp[ií]tal|nlsh/i.test(name);
     const bg = document.createElement('div');
@@ -23566,6 +23846,58 @@ async function buildAndSaveEfnislistiPdf(name, month, data, overwrite){
   drawEfnislistiPage(doc, logo, data);
   const fileName = bhPdfName('Efnislisti', { ws:data.ws||name, month });
   return bhSavePdfToSupabase(doc, { fileName, worksite_name:name, work_month:month, doc_type:'efnislisti_pdf', overwrite });
+}
+
+// Heklureitur — Efnislisti · göt (06.10.2026): brunalokanir per gatastærð, sama haus og Efnislistinn.
+// Vistað sem efnislisti_pdf svo það birtist í „Vistuð PDF-skjöl", Kröfu yfirliti og fylgi bókun.
+async function buildAndSaveGatEfnislistiPdf(name, month, data, overwrite){
+  const lib = await loadJsPdf();
+  const logo = await bhLogoDataUrl();
+  const doc = new lib.jsPDF({ unit:'pt', format:'a4', compress:true });
+  drawGatEfnislistiPage(doc, logo, data);
+  const fileName = bhPdfName('Efnislisti', { ws:data.ws||name, month });
+  return bhSavePdfToSupabase(doc, { fileName, worksite_name:name, work_month:month, doc_type:'efnislisti_pdf', overwrite });
+}
+function drawGatEfnislistiPage(doc, logo, data){
+  const W = doc.internal.pageSize.getWidth();
+  const dmy = s => { const p=String(s||'').split('-'); return p.length===3? `${p[2]}/${p[1]}/${p[0]}` : (s||''); };
+  let y = 40;
+  if(logo){ try{ doc.addImage(logo, bhLogoFmt(logo), 40, y, 150, 46); }catch{} }
+  doc.setFont('helvetica','italic'); doc.setFontSize(11); doc.setTextColor(90); doc.text('Verðskrá / tilboð', 40, y+60);
+  doc.setTextColor(20); doc.setFont('helvetica','normal');
+  y += 80;
+  doc.setFontSize(12.5); doc.text(dmy(data.fra)+' til '+dmy(data.til), 40, y);
+  doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.text(data.ws||'', 40, y+20);
+  doc.setFont('helvetica','normal'); doc.setFontSize(11.5); doc.setTextColor(60);
+  let by = y+38;
+  if(data.cust){ doc.text(data.cust, 40, by); by+=15; }
+  if(data.kt){ doc.text('kt. '+data.kt, 40, by); by+=15; }
+  if(data.addr){ doc.text(data.addr, 40, by); by+=15; }
+  doc.setTextColor(20);
+  const kr = n => _pkr(n);
+  const bodyRows = [[{ content:'Brunalokanir', colSpan:4, styles:{ fontStyle:'bold', fillColor:[245,245,245], textColor:20 } }]];
+  (data.lines||[]).forEach(l => bodyRows.push([l.label, kr(l.price), String(l.qty), kr(l.total)]));
+  const foot = [
+    [{content:'Samtals án vsk', colSpan:3, styles:{halign:'right',fontStyle:'italic'}}, {content:kr(data.net), styles:{halign:'right'}}],
+    [{content:'vsk ('+(data.vskPct||24)+'%)', colSpan:3, styles:{halign:'right',fontStyle:'italic'}}, {content:kr(data.vsk), styles:{halign:'right'}}],
+    [{content:'Samtals með vsk', colSpan:3, styles:{halign:'right',fontStyle:'bold'}}, {content:kr(data.total), styles:{halign:'right',fontStyle:'bold'}}],
+  ];
+  doc.autoTable({
+    startY: Math.max(by+8, y+40),
+    head: [[ '', {content:'án vsk',styles:{halign:'right'}}, {content:'magn',styles:{halign:'right'}}, {content:'samtals',styles:{halign:'right'}} ]],
+    body: bodyRows, foot,
+    styles:{ font:'helvetica', fontSize:12, cellPadding:4.5 },
+    headStyles:{ fillColor:[255,255,255], textColor:90, fontStyle:'italic', fontSize:10.5, lineWidth:{bottom:0.5}, lineColor:[180,180,180] },
+    footStyles:{ fillColor:[255,255,255], textColor:20, fontSize:12 },
+    columnStyles:{ 1:{halign:'right'}, 2:{halign:'right'}, 3:{halign:'right'} },
+    margin:{ left:40, right:40 },
+  });
+  if(data.foot){
+    const fy = (doc.lastAutoTable ? doc.lastAutoTable.finalY : by) + 22;
+    doc.setFont('helvetica','italic'); doc.setFontSize(9.5); doc.setTextColor(90);
+    doc.text(doc.splitTextToSize(data.foot, W-80), 40, fy);
+    doc.setTextColor(20);
+  }
 }
 
 // Samsett PDF (ósk Agnars 2026-09-02): Efnislisti á síðu 1, Tímaskýrsla á síðu 2.
