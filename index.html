@@ -1305,7 +1305,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
 <script src="/js/hub-sync-buttons.js?v=20260919a" defer></script>
 <script src="/js/nlsh-sections.js?v=20260830b" defer></script>
-<script src="/js/nlsh-stada.js?v=20261006a" defer></script>
+<script src="/js/nlsh-stada.js?v=20261006b" defer></script>
 <script src="/js/viewmode.js?v=2" defer></script>
 <script src="/js/kerfisheilsa-widget.js?v=20260805a" defer></script>
   <script src="/js/dags-snid.js?v=20260918b"></script>
@@ -12992,6 +12992,7 @@ async function renderGerdReikninga(t){
     const MAN_IS = ['Janúar','Febrúar','Mars','Apríl','Maí','Júní','Júlí','Ágúst','September','Október','Nóvember','Desember'];
     const manNafn = ym => { const [y,m]=String(ym).split('-'); return MAN_IS[+m-1]+' '+String(y).slice(2); };
     const manLang = ym => { const [y,m]=String(ym).split('-'); return MAN_IS[+m-1].toLowerCase()+' '+y; };
+    const nextMan = ym => { const [y,m]=String(ym).split('-').map(Number); const d=new Date(y,m,1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); };
     const nf = (n, d) => { const x = Number(n)||0; return x.toLocaleString('is-IS', { minimumFractionDigits: d==null?0:d, maximumFractionDigits: d==null?2:d }); };
     const parseIs = v => { const s = String(v==null?'':v).trim().replace(/\s/g,'').replace(/\.(?=\d{3}(\D|$))/g,'').replace(',', '.'); if(s==='') return null; const n = Number(s); return Number.isFinite(n) && n >= 0 ? n : null; };
     const manudirTil = () => { const out=[]; for(let d=new Date(2025,8,1); ; d.setMonth(d.getMonth()+1)){ const ym=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); out.push(ym); if(ym>=NOW) break; } return out; };
@@ -13091,18 +13092,23 @@ async function renderGerdReikninga(t){
     const draftOf = m => DRAFTS[`${wsName}|${m}`];
     const sendur = d => !!(d && (d.payday_invoice_id || d.status === 'invoiced'));
 
-    // Líkanið: mánuðir úr þjóninum; VALINN mánuður endurreiknaður úr reitunum.
+    // Líkanið: mánuðir úr þjóninum; VALINN mánuður endurreiknaður úr reitunum — nema hann sé
+    // sendur og frosinn (Agnar 06.10.2026: „það má ekki breyta fyrri mánuðum eftir að hann er
+    // sendur út"); þá gilda tölurnar sem voru sendar og leiðrétting fer í næsta mánuð sem mismunur.
+    const fryst = () => !!(D && D.skyrsla.manudir[D.skyrsla.manudir.length-1].fryst);
     const model = () => {
       const S = D.skyrsla, man = S.manudir, valinn = man[man.length-1], fyrri = man.length>1 ? man[man.length-2] : null;
+      const F = !!valinn.fryst;
       const rows = S.verk.map((v,i) => {
-        const l = valinn.lines[i], p = fyrri ? fyrri.lines[i] : { stada:0, heilar:0 };
+        const l = valinn.lines[i], p = fyrri ? fyrri.lines[i] : { stada:0, heilar:0, upphaed:0 };
+        const nowL = DN ? DN.skyrsla.manudir[DN.skyrsla.manudir.length-1].lines[i] : null;
+        if(F) return { v, i, l, p, sett: l.lokatala, st: l.stada, stud: l.studull, delta: l.delta, dH: l.delta_heilar, heilar: l.heilar, heild: l.upphaed, um: l.upphaed_man, now: nowL ? nowL.stada : null };
         const inp = $('nle-in-'+i); const sett = inp ? parseIs(inp.value) : (l.lokatala);
         const st = sett != null ? sett : l.tillaga;
         const stud = l.studull != null ? l.studull : (v.full ? 1 : 0.5);
         const delta = Math.round((st - p.stada)*1000)/1000, dH = Math.round(delta*stud*1000)/1000;
-        const heilar = Math.round((p.heilar + dH)*1000)/1000;
-        const nowL = DN ? DN.skyrsla.manudir[DN.skyrsla.manudir.length-1].lines[i] : null;
-        return { v, i, l, p, sett, st, stud, delta, dH, heilar, heild: Math.round(heilar*v.rate), um: Math.round(dH*v.rate), now: nowL ? nowL.stada : null };
+        const heilar = Math.round((p.heilar + dH)*1000)/1000, um = Math.round(dH*v.rate);
+        return { v, i, l, p, sett, st, stud, delta, dH, heilar, heild: (p.upphaed||0) + um, um, now: nowL ? nowL.stada : null };
       });
       const T = rows.reduce((a,r)=>{ a.st+=r.st; a.h+=r.heilar; a.d+=r.delta; a.dH+=r.dH; a.heild+=r.heild; a.um+=r.um; return a; }, { st:0, h:0, d:0, dH:0, heild:0, um:0 });
       return { S, man, valinn, fyrri, rows, T };
@@ -13112,15 +13118,32 @@ async function renderGerdReikninga(t){
       const M = model(), out = [];
       if(M.fyrri && !M.fyrri.vistad) out.push(`<div class="nle-note nle-warn"><b>${escapeHtml(manLang(M.fyrri.month))}</b> hefur engar lokatölur vistaðar — tillaga úr Ajour notuð sem upphafsstaða mánaðarins.<button type="button" data-nle-goto="${M.fyrri.month}">Opna ${escapeHtml(manLang(M.fyrri.month))}</button></div>`);
       const d = draftOf(month);
-      if(sendur(d)){
-        const munur = M.T.um - Math.round(Number(d.total_m_vsk)||0);
-        out.push(`<div class="nle-note ${Math.abs(munur)>500?'nle-bad':''}">Reikningur fyrir ${escapeHtml(manLang(month))} er þegar sendur (${fmt(d.total_m_vsk)} kr m. vsk). <b>Vista uppfærir aðeins stöðuna í lok mánaðar</b>, ekki sendu drögin.${Math.abs(munur)>500?` Reiknað eftir reglunni: <b>${fmt(M.T.um)} kr</b> — munur <b>${munur>0?'+':''}${fmt(munur)} kr</b>.`:''}</div>`);
+      if(M.valinn.fryst){
+        out.push(`<div class="nle-note">🔒 <b>${escapeHtml(manLang(month))} er sendur og læstur</b> — ${fmt(M.T.um)} kr m. vsk, eins og hann var sendur${M.valinn.fryst_heimild?` <span style="color:var(--muted)">(${escapeHtml(M.valinn.fryst_heimild)})</span>`:''}. Leiðréttingar fara í lokastöðu næsta mánaðar og mismunurinn rukkast þar.${month < NOW ? `<button type="button" data-nle-goto="${nextMan(month)}">Opna ${escapeHtml(manLang(nextMan(month)))}</button>` : ''}</div>`);
+      } else if(M.valinn.sent || sendur(d)){
+        const sent = M.valinn.sent ? M.valinn.sent.total_m_vsk : Math.round(Number(d.total_m_vsk)||0);
+        const munur = M.T.um - sent;
+        out.push(`<div class="nle-note ${Math.abs(munur)>500?'nle-bad':'nle-warn'}">Reikningur fyrir ${escapeHtml(manLang(month))} er sendur (${fmt(sent)} kr m. vsk) en mánuðurinn er ekki festur.${Math.abs(munur)>500?` Tölurnar hér gefa <b>${fmt(M.T.um)} kr</b> — munur <b>${munur>0?'+':''}${fmt(munur)} kr</b>.`:''} <button type="button" id="nle-frysta">🔒 Festa ${escapeHtml(manLang(month))} eins og hann stendur</button></div>`);
       }
       if(month >= NOW) out.push(`<div class="nle-note">${escapeHtml(manLang(month))} er ekki búinn — staðan er bráðabirgða þar til mánuðurinn klárast.</div>`);
       const rf = D.raufar || {}; const ol = rf.olesin || 0;
       if(ol) out.push(`<div class="nle-note">2.11: ${ol} kláruð skráning${ol===1?'':'ar'} án lesanlegs ummáls — opnaðu <b>📐 2.11 metrar</b> og settu metrana inn.</div>`);
       $('nle-notes').innerHTML = out.join('');
       $('nle-notes').querySelectorAll('[data-nle-goto]').forEach(b => b.onclick = () => skiptaMan(b.dataset.nleGoto));
+      const fb = $('nle-frysta');
+      if(fb) fb.onclick = async () => {
+        if(!confirm('Festa '+manLang(month)+' með '+fmt(model().T.um)+' kr m. vsk?\n\nEftir það breytist mánuðurinn ekki — leiðréttingar fara í næsta mánuð sem mismunur.')) return;
+        fb.disabled = true; $('nle-st').textContent = 'Festi…';
+        try{
+          const r = await fetch('/api/nlsh-stada', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ action:'frysta', month }) });
+          const j = await r.json(); if(!r.ok || j.error) throw new Error(j.error || ('HTTP '+r.status));
+          D = j; dirty = false; $('nle-st').textContent = '🔒 '+manLang(month)+' festur';
+          renderNotes(); renderWs(); refresh();
+        }catch(e){ fb.disabled = false; $('nle-st').textContent = '✗ '+(e.message||e); }
+      };
+      const F = fryst();
+      $('nle-save').disabled = F; $('nle-tillaga').disabled = F;
+      $('nle-save').title = F ? 'Sendur mánuður er læstur — leiðréttu í næsta mánuði' : '';
     };
 
     const renderWs = () => {
@@ -13133,7 +13156,7 @@ async function renderGerdReikninga(t){
           <td>${fmt(r.v.rate)}</td>
           <td class="mut">${nf(r.p.stada)}</td>
           <td class="mut">${r.l.ny_ajour?'+'+nf(r.l.ny_ajour):'·'}</td>
-          <td class="st"><input id="nle-in-${r.i}" inputmode="decimal" value="${r.l.lokatala!=null?String(r.l.lokatala).replace('.',','):''}" placeholder="${escapeAttr(nf(r.l.tillaga))}" title="Tillaga ${escapeAttr(nf(r.l.tillaga))} = ${escapeAttr(nf(r.p.stada))} + ${escapeAttr(nf(r.l.ny_ajour||0))} nýjar í Ajour — auður reitur = tillagan gildir"></td>
+          <td class="st"><input id="nle-in-${r.i}" inputmode="decimal"${M.valinn.fryst?' disabled':''} value="${r.l.lokatala!=null?String(r.l.lokatala).replace('.',','):''}" placeholder="${escapeAttr(nf(r.l.tillaga))}" title="Tillaga ${escapeAttr(nf(r.l.tillaga))} = ${escapeAttr(nf(r.p.stada))} + ${escapeAttr(nf(r.l.ny_ajour||0))} nýjar í Ajour — auður reitur = tillagan gildir"></td>
           <td class="now">${r.now!=null?nf(r.now):'—'}</td>
           <td data-nle-d="${r.i}">${r.delta?(r.delta>0?'+':'')+nf(r.delta):'·'}</td>
           <td data-nle-dh="${r.i}">${r.dH?nf(r.dH,1):'·'}</td>
@@ -13193,8 +13216,8 @@ async function renderGerdReikninga(t){
       }catch(e){ $('nle-ws').innerHTML = `<div class="nle-note nle-bad">Gat ekki sótt stöðuna (${escapeHtml(e.message||String(e))}).</div>`; return; }
       dirty = false;
       const v = D.vistad_at ? new Date(D.vistad_at) : null;
-      $('nle-hd-status-t').textContent = v && !isNaN(v) ? ('staða vistuð '+String(v.getDate()).padStart(2,'0')+'/'+String(v.getMonth()+1).padStart(2,'0')+' '+String(v.getHours()).padStart(2,'0')+':'+String(v.getMinutes()).padStart(2,'0')) : 'staða óvistuð';
-      $('nle-hd-status').classList.toggle('unsaved', !v);
+      $('nle-hd-status-t').textContent = fryst() ? '🔒 sendur · læstur' : v && !isNaN(v) ? ('staða vistuð '+String(v.getDate()).padStart(2,'0')+'/'+String(v.getMonth()+1).padStart(2,'0')+' '+String(v.getHours()).padStart(2,'0')+':'+String(v.getMinutes()).padStart(2,'0')) : 'staða óvistuð';
+      $('nle-hd-status').classList.toggle('unsaved', !v && !fryst());
       renderNotes(); renderWs(); refresh();
     }
     const skiptaMan = (m) => { if(dirty && !confirm('Óvistaðar breytingar tapast ef þú skiptir um mánuð. Halda áfram?')) { $('nle-man').value = month; return; } month = m; $('nle-man').value = m; hlada(); };
@@ -13241,7 +13264,7 @@ async function renderGerdReikninga(t){
 
     // Vista: festir stöðu mánaðarins (allar línur — sýnda talan) + drög mánaðarins (nema sendur reikningur).
     $('nle-save').onclick = async () => {
-      if(!D) return;
+      if(!D || fryst()) return;
       const M = model(), $st = $('nle-st'); $st.textContent = 'Vistar stöðu…';
       try{
         const r = await fetch('/api/nlsh-stada', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ month, lines: M.rows.map(x => ({ verk_nr: x.v.verk_nr, lokatala: x.st })) }) });
@@ -24213,6 +24236,83 @@ function drawGatEfnislistiPage(doc, logo, data){
     doc.text(doc.splitTextToSize(data.foot, W-80), 40, fy);
     doc.setTextColor(20);
   }
+}
+
+// Nýi Landsspítalinn — Efnislisti · NLSH (06.10.2026): blaðið sem fer til ÞG/Landsspítalans, liggjandi
+// A4 eins og júlíblaðið: heildarlokanir (stakar/heilar), stakar og heilar per mánuð frá sept 2025,
+// Upphæð Heild m vsk og upphæð mánaðarins. M = model() úr openNlshEfnislisti (sendir mánuðir frosnir).
+async function buildAndSaveNlshEfnislistiPdf(name, month, M, o){
+  const lib = await loadJsPdf();
+  const doc = new lib.jsPDF({ unit:'pt', format:'a4', orientation:'landscape', compress:true });
+  drawNlshEfnislistiPage(doc, month, M, o||{});
+  const fileName = bhPdfName('Efnislisti', { ws:name, month });
+  return bhSavePdfToSupabase(doc, { fileName, worksite_name:name, work_month:month, doc_type:'efnislisti_pdf' });   // aldrei yfirskrifa sent skjal
+}
+function drawNlshEfnislistiPage(doc, month, M, o){
+  const W = doc.internal.pageSize.getWidth();
+  const manNafn = o.manNafn || (ym => ym);
+  const q = (x, d) => { const n = Number(x)||0; if(!n) return ''; return n.toLocaleString('is-IS', { minimumFractionDigits: d||0, maximumFractionDigits: d==null?2:d }); };
+  const kr = n => _pkr(n), k0 = n => (Math.round(Number(n)||0)).toLocaleString('is-IS');   // inni í töflunni án „kr“ — dálkarnir eru mjóir
+  const [yy, mm] = month.split('-').map(Number), sidasti = new Date(yy, mm, 0).getDate();
+  const MAN_IS = ['janúar','febrúar','mars','apríl','maí','júní','júlí','ágúst','september','október','nóvember','desember'];
+  // Haus eins og júlíblaðið
+  doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(31,95,168); doc.text('Nýji Landsspítalinn Hringbraut', 24, 34);
+  doc.setDrawColor(31,95,168); doc.setLineWidth(1.4); doc.line(24, 40, W-24, 40);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(138,109,31);
+  doc.text('Landsspítalinn', 24, 54); doc.text('5-6 hæð', W*0.42, 54);
+  doc.setTextColor(110); doc.text('Brunahólf ehf', W-24, 54, { align:'right' });
+  doc.text(String(sidasti).padStart(2,'0')+'/'+String(mm).padStart(2,'0')+'/'+yy, W-24, 65, { align:'right' });
+  doc.setFillColor(217,217,217); doc.rect(24, 72, W*0.6, 17, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(20);
+  doc.text('1   Landsspítalinn 5-6 hæð Samtals kláraðir verkþættir per mánuð', 30, 84);
+  // Mánuðir: allir frá sept 2025; ef þeir verða fleiri en 13 sameinast þeir elstu í „Áður"
+  const months = M.man.map((m, k) => ({ month: m.month, k }));
+  const MAXM = 13;
+  const elst = months.length > MAXM ? months.slice(0, months.length - MAXM + 1) : [];
+  const syn = months.length > MAXM ? months.slice(months.length - MAXM + 1) : months;
+  const cur = M.man.length - 1;
+  const gildi = (r, k) => k === cur ? { st: r.delta, h: r.dH } : { st: M.man[k].lines[r.i].delta, h: M.man[k].lines[r.i].delta_heilar };
+  const curStyle = { fillColor:[255,248,220] };
+  const head1 = [
+    { content:'Verk nr.', rowSpan:2 }, { content:'Verkliðir', rowSpan:2 }, { content:'Fjöldi', rowSpan:2 }, { content:'Upphæð\nm vsk', rowSpan:2 },
+    { content:'Heildar lokanir\nStakar og heilar', colSpan:2, styles:{ fontStyle:'bolditalic' } },
+    ...(elst.length ? [{ content:'Áður', colSpan:2 }] : []),
+    ...syn.map(m => ({ content: manNafn(m.month), colSpan:2, styles: m.k===cur ? curStyle : {} })),
+    { content:'Upphæð Heild\nm vsk', rowSpan:2 }, { content:'Upphæð í '+MAN_IS[mm-1]+'\nmeð vsk', rowSpan:2, styles:curStyle },
+  ];
+  const head2 = [ { content:'Stakar', styles:{ fontStyle:'bolditalic' } }, { content:'heilar', styles:{ fontStyle:'bolditalic' } },
+    ...(elst.length ? ['st.','heil.'] : []), ...syn.flatMap(m => [{ content:'st.', styles: m.k===cur?curStyle:{} }, { content:'heil.', styles: m.k===cur?curStyle:{} }]) ];
+  const body = M.rows.map(r => {
+    const ad = elst.reduce((a, m) => { const g = gildi(r, m.k); a.st += g.st||0; a.h += g.h||0; return a; }, { st:0, h:0 });
+    return [ r.v.verk_nr, r.v.label, r.v.fjoldi!=null ? q(r.v.fjoldi) : '', k0(r.v.rate), q(r.st), q(r.heilar, 1),
+      ...(elst.length ? [q(ad.st), q(ad.h, 1)] : []),
+      ...syn.flatMap(m => { const g = gildi(r, m.k); return [q(g.st), q(g.h, 1)]; }),
+      k0(r.heild), { content: k0(r.um), styles:{ fontStyle:'bold' } } ];
+  });
+  const sumK = k => M.rows.reduce((a, r) => { const g = gildi(r, k); a.st += g.st||0; a.h += g.h||0; return a; }, { st:0, h:0 });
+  const adT = elst.reduce((a, m) => { const g = sumK(m.k); a.st += g.st; a.h += g.h; return a; }, { st:0, h:0 });
+  const foot = [[ '', 'Samtals Verk + Metrar', '', '', q(M.T.st), q(M.T.h, 1), ...(elst.length ? [q(adT.st), q(adT.h, 1)] : []),
+    ...syn.flatMap(m => { const g = sumK(m.k); return [q(g.st, 1), q(g.h, 1)]; }), k0(M.T.heild), k0(M.T.um) ]];
+  const nMon = (elst.length ? 1 : 0) + syn.length;
+  const fast = 20 + 82 + 22 + 30 + 32 + 32 + 44 + 42;
+  const mw = Math.max(12, (W - 48 - fast) / (nMon * 2));
+  const colStyles = { 0:{ cellWidth:20, halign:'left' }, 1:{ cellWidth:82, halign:'left', textColor:[122,90,18] }, 2:{ cellWidth:22 }, 3:{ cellWidth:30 }, 4:{ cellWidth:32, fillColor:[242,242,242], fontStyle:'bolditalic' }, 5:{ cellWidth:32, fillColor:[242,242,242], fontStyle:'bolditalic' } };
+  for(let c = 0; c < nMon*2; c++) colStyles[6+c] = { cellWidth: mw, fillColor: c%2===0 ? [231,231,231] : [255,255,255] };
+  colStyles[6+nMon*2] = { cellWidth:44 }; colStyles[7+nMon*2] = { cellWidth:42, fillColor:[255,248,220] };
+  doc.autoTable({
+    startY: 98, head: [head1, head2], body, foot,
+    theme:'grid',
+    styles:{ font:'helvetica', fontSize:5.8, cellPadding:{ top:2, bottom:2, left:1, right:1 }, halign:'right', lineColor:[154,154,154], lineWidth:0.4, textColor:20, overflow:'linebreak' },
+    headStyles:{ fillColor:[242,242,242], textColor:20, fontStyle:'bold', halign:'center', valign:'middle', fontSize:5.8 },
+    footStyles:{ fillColor:[255,255,255], textColor:20, fontStyle:'bold', fontSize:5.2 },
+    columnStyles: colStyles,
+    margin:{ left:24, right:24 },
+  });
+  const fy = (doc.lastAutoTable ? doc.lastAutoTable.finalY : 400) + 16;
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(20);
+  doc.text(kr(M.T.um)+'   M/vsk', W-24, fy, { align:'right' });
+  doc.setFont('helvetica','normal');
+  doc.text(kr(Math.round(M.T.um/1.24))+'   án/Vsk', W-24, fy+14, { align:'right' });
 }
 
 // Samsett PDF (ósk Agnars 2026-09-02): Efnislisti á síðu 1, Tímaskýrsla á síðu 2.

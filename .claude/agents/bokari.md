@@ -44,6 +44,24 @@ loftstokkar = 46.128). **Sæktu þau úr gagnagrunni — ekki muna þau.**
 **Mánaðaruppgjör NLSH er MISMUNUR**, ekki summa mánaðarins: `rukkað = uppsafnað núna −
 uppsafnað síðast`. Það leiðréttir sjálfkrafa afturvirkar stærðar-endurflokkanir.
 
+**Sendur mánuður er FROSINN (Agnar 06.10.2026):** „það má ekki breyta fyrri mánuðum eftir að hann er
+sendur út … tek bara lokastöðuna og við sendum reikning fyrir mismuninum." `nlsh_manadarlok` ber
+`stakar_man/heilar_man/upphaed_man/fryst_at`; frosin röð er aldrei endurreiknuð (hvorki regla né
+Ajour). Sept 2025 – ágúst 2026 frystir úr senda blaðinu `Landsspitalinn ágúst.xlsx`
+(`sql/2026-10-06_nlsh_fryst.sql`) — hver mánuður = blaðið upp á krónu (ágúst 6.435.896). Blaðið er
+EKKI regluföst saga: 2.2 helmingað apr–jún en heilt í júlí, 1.2 helmingað í ágúst, 3.1 sept 2025 án
+heila, 1.2 jan 7 heilar án stakra — þess vegna má ALDREI endurreikna gamla mánuði eftir reglu.
+Opinn mánuður: Δ stakar = lokastaða − lokastaða síðasta mánaðar; heilar = Δ × ½ nema gólf/hæðarskil
+1.x (1=1); Upphæð Heild = Σ sent + mánuðurinn. POST á frosinn mánuð → 409. Sjálfvirk frysting: drög
+mánaðarins send (payday_invoice_id/invoiced) með `nlsh:true`-línum → línurnar frystast við næsta GET;
+annars „🔒 Festa" (POST `{action:'frysta', month}`).
+**Efnislisti · NLSH** (Gerð reikninga → Landsspitalinn, `openNlshEfnislisti` + `drawNlshEfnislistiPage`
+í index.html): staða í lok mánaðar (reitir, tillaga = fyrri staða + Ajour), „Staða núna" lifandi, skjal
+eins og júlíblaðið (liggjandi A4), 📐 2.11-gluggi + ↗ Metraskrá stokka. Vista = lokatölur + drög
+„Landsspitalinn" (ÞG verktakar ehf. 581198-2569). **2.11 er í METRUM úr ummáli** í Ajour
+Description: (L+L+B+B)/1000 (`raufMetrar` í nlsh-stada.js; yfirskrift per skráningu í
+`nlsh_raufar_metrar`). 3.1 Rafmagnsraufar = Raf göt + Raf raufar + Raflagnaþéttingar.
+
 **Starfsmaður er í `category`-reitnum** („Starfsmaður N"), ekki í
 `CheckListItemCheckedByUser` (sá er alltaf almennur og gagnslaus).
 

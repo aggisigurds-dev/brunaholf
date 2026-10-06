@@ -90,6 +90,14 @@ exports.handler = async (event) => {
     }
     const month = String(p.month || '').trim();
     if (!/^\d{4}-\d{2}$/.test(month)) return json(400, { error: 'month verður að vera YYYY-MM' });
+    // Sendur mánuður er læstur (Agnar 06.10.2026): „það má ekki breyta fyrri mánuðum eftir að hann
+    // er sendur út … tek bara lokastöðuna og við sendum reikning fyrir mismuninum." Leiðrétting fer
+    // í næsta opna mánuð — lokastaðan þar tekur hana upp sem mismun.
+    try {
+      const f = await fetch(`${SUPABASE_URL}/rest/v1/nlsh_manadarlok?month=eq.${month}&fryst_at=not.is.null&select=verk_nr&limit=1`, { headers: H() });
+      if (f.ok && (await f.json()).length) return json(409, { error: `${month} er sendur og læstur — leiðréttu lokastöðuna í næsta mánuði; mismunurinn rukkast þar.`, fryst: true });
+    } catch (_) { /* taflan án frystidálka — áfram */ }
+    if (p.action === 'frysta') return frysta(month);
     const lines = Array.isArray(p.lines) ? p.lines : (p.verk_nr ? [p] : []);
     const upserts = [], eyda = [];
     const now = new Date().toISOString();
@@ -125,19 +133,41 @@ exports.handler = async (event) => {
 };
 
 async function stada(month) {
+  try { return json(200, await reikna(month)); }
+  catch (e) { return json(502, { error: e.message }); }
+}
+
+// Festir mánuðinn eins og hann stendur (handvirkt — t.d. reikningur sendur úr eldra flæði).
+async function frysta(month) {
+  try {
+    const P = await reikna(month);
+    const M = P.skyrsla.manudir[P.skyrsla.manudir.length - 1];
+    if (M.fryst) return json(200, P);
+    const now = new Date().toISOString();
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/nlsh_manadarlok?on_conflict=month,verk_nr`, {
+      method: 'POST', headers: { ...H(), Prefer: 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify(M.lines.map(l => ({ month, verk_nr: l.verk_nr, lokatala: l.stada, stakar_man: l.delta, heilar_man: l.delta_heilar,
+        upphaed_man: l.upphaed_man, fryst_at: now, fryst_heimild: 'Efnislisti NLSH — fest handvirkt', updated_at: now }))) });
+    if (!r.ok) throw new Error(`frysta: ${r.status} ${(await r.text()).slice(0, 200)}`);
+    return json(200, await reikna(month));
+  } catch (e) { return json(502, { error: e.message }); }
+}
+
+async function reikna(month) {
   const [y, m] = month.split('-').map(Number);
   const fra = `${month}-01`;
   const til = new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 10);   // fyrsti dagur næsta mánaðar
 
-  let groups, manRows, lokRows, raufRows = [], raufYfir = [];
-  try {
+  let groups, manRows, lokRows, raufRows = [], raufYfir = [], drogRows = [];
+  {
     const nofn = `project_name=in.(${NLSH_NAMES.map(n => `"${n}"`).join(',')})`;
-    const [g, mr, lr, rr, ry] = await Promise.all([
+    const [g, mr, lr, rr, ry, dr] = await Promise.all([
       fetch(`${SUPABASE_URL}/rest/v1/rpc/nlsh_stada`, { method: 'POST', headers: H(), body: JSON.stringify({ p_names: NLSH_NAMES, p_fra: fra, p_til: til }) }),
       fetch(`${SUPABASE_URL}/rest/v1/rpc/nlsh_stada_manudir`, { method: 'POST', headers: H(), body: JSON.stringify({ p_names: NLSH_NAMES, p_til: til }) }),
-      fetch(`${SUPABASE_URL}/rest/v1/nlsh_manadarlok?select=month,verk_nr,lokatala,athugasemd,updated_at&order=month`, { headers: H() }),
+      fetch(`${SUPABASE_URL}/rest/v1/nlsh_manadarlok?select=month,verk_nr,lokatala,athugasemd,updated_at,stakar_man,heilar_man,upphaed_man,fryst_at,fryst_heimild&order=month`, { headers: H() }),
       fetch(`${SUPABASE_URL}/rest/v1/ajour_registrations?select=serial_number,registration_status,checked_date,execution_date,subject&${nofn}&category_group=ilike.Raufar*&limit=5000`, { headers: H() }),
       fetch(`${SUPABASE_URL}/rest/v1/nlsh_raufar_metrar?select=serial_number,metrar,athugasemd,updated_at&limit=5000`, { headers: H() }),
+      fetch(`${SUPABASE_URL}/rest/v1/invoice_drafts?worksite_name=ilike.*landssp*&select=id,work_month,status,payday_invoice_id,total_m_vsk,materials_jsonb`, { headers: H() }),
     ]);
     for (const [r, n] of [[g, 'nlsh_stada'], [mr, 'nlsh_stada_manudir'], [lr, 'lokatölur']]) {
       if (!r.ok) throw new Error(`${n}: ${r.status} ${(await r.text()).slice(0, 200)}`);
@@ -145,7 +175,8 @@ async function stada(month) {
     [groups, manRows, lokRows] = await Promise.all([g.json(), mr.json(), lr.json()]);
     if (rr.ok) raufRows = await rr.json();
     if (ry.ok) raufYfir = await ry.json();   // taflan getur vantað í eldra umhverfi — þá bara Description
-  } catch (e) { return json(502, { error: e.message }); }
+    if (dr.ok) drogRows = await dr.json();
+  }
 
   // ── 2.11: metrar per skráningu og mánuð (fyrsta Done-dagsetning, sama og nlsh_stada_manudir) ──
   const yfir = new Map(raufYfir.map(r => [String(r.serial_number), r]));
@@ -201,20 +232,44 @@ async function stada(month) {
     if (!nyjar.has(r.manudur)) nyjar.set(r.manudur, new Map());
     const mp = nyjar.get(r.manudur); mp.set(vn, (mp.get(vn) || 0) + (Number(r.nyjar) || 0));
   }
+  // ── Sendir mánuðir eru FROSNIR (Agnar 06.10.2026) ──────────────────────
+  // Frosin röð (fryst_at) ber stakar/heilar/upphæð mánaðarins eins og þau voru send og er aldrei
+  // endurreiknuð — hvorki eftir reglunni né Ajour. Sept 2025 – ágúst 2026 frystir úr senda blaðinu
+  // (Landsspitalinn ágúst.xlsx; sql/2026-10-06_nlsh_fryst.sql). Næsti opni mánuður reiknast frá
+  // lokastöðu síðasta senda mánaðar, svo leiðrétting kemur fram sem mismunur þar.
+  // Sjálfvirk frysting: drög mánaðarins send (payday_invoice_id / invoiced) og bera NLSH-línur
+  // (Efnislisti · NLSH vistar þær) → línur draganna eru það sem var sent og frystast.
+  const drog = new Map(drogRows.map(d => [d.work_month, d]));
+  const nyFrysting = [], nowIso = new Date().toISOString();
+  const r3 = x => Math.round(x * 1000) / 1000;   // metrar (2.11) — engin fleytitöluslæða
   const cum = new Map(VERK.map(v => [v.verk_nr, 0]));
   const prevStada = new Map(VERK.map(v => [v.verk_nr, 0]));
   const prevHeilar = new Map(VERK.map(v => [v.verk_nr, 0]));
+  const prevUpph = new Map(VERK.map(v => [v.verk_nr, 0]));
   const skyrslaMan = [];
   for (const mo of manudir) {
     const ny = nyjar.get(mo) || new Map();
     const lm = lok.get(mo) || new Map();
+    const d = drog.get(mo);
+    const dSent = !!(d && (d.payday_invoice_id || d.status === 'invoiced'));
+    const dLin = dSent && Array.isArray(d.materials_jsonb) ? d.materials_jsonb.filter(x => x && x.nlsh && x.verk_nr) : [];
+    const urDrogum = dLin.length > 0 && ![...lm.values()].some(r => r.fryst_at);
     const rows = VERK.map(v => {
       const vn = v.verk_nr;
       // nýjar lokanir í Ajour í mánuðinum (≥ 0) — 2.11 í METRUM úr ummálum, ekki fjöldi skráninga
       const nyMan = v.metrar ? Math.round((raufMan.get(mo) || 0) * 100) / 100 : (ny.get(vn) || 0);
       cum.set(vn, (cum.get(vn) || 0) + nyMan);
       const ajour_cum = cum.get(vn);
-      const s = lm.get(vn);
+      let s = lm.get(vn);
+      if (urDrogum) {
+        const x = dLin.find(l => String(l.verk_nr) === vn);
+        const stakar = x ? Number(x.stakar) || 0 : 0, h = x ? Number(x.qty) || 0 : 0;
+        s = { month: mo, verk_nr: vn, lokatala: r3(prevStada.get(vn) + stakar), stakar_man: stakar, heilar_man: h,
+          upphaed_man: x ? Math.round(h * (Number(x.rate_m_vsk) || v.rate)) : 0, fryst_at: nowIso,
+          fryst_heimild: `reikningsdrög #${d.id} (sent)`, athugasemd: s ? s.athugasemd : null, updated_at: nowIso };
+        nyFrysting.push(s);
+      }
+      const fryst = !!(s && s.fryst_at);
       const lokatala = s ? Number(s.lokatala) : null;
       // TILLAGA (06.10.2026): staða í lok fyrri mánaðar + nýjar lokanir mánaðarins í Ajour.
       // Áður var heildartala Ajour notuð þegar lokatölu vantaði — en lokatölurnar (Aðalskjalið)
@@ -223,22 +278,32 @@ async function stada(month) {
       const tillaga = prevStada.get(vn) + nyMan;
       const st = lokatala != null ? lokatala : tillaga;
       const stud = studull(v, mo);
-      const r3 = x => Math.round(x * 1000) / 1000;   // metrar (2.11) — engin fleytitöluslæða
-      const delta = r3(st - prevStada.get(vn)), delta_heilar = r3(delta * stud);
-      const heilar = r3(prevHeilar.get(vn) + delta_heilar);
-      prevStada.set(vn, st); prevHeilar.set(vn, heilar);
-      return { verk_nr: vn, ajour_cum: Math.round(ajour_cum * 100) / 100, ny_ajour: nyMan, tillaga: Math.round(tillaga * 100) / 100, lokatala, stada: st, studull: stud, heilar, upphaed: Math.round(heilar * v.rate),
-        delta, delta_heilar, upphaed_man: Math.round(delta_heilar * v.rate) };
+      const delta = fryst ? r3(Number(s.stakar_man) || 0) : r3(st - prevStada.get(vn));
+      const delta_heilar = fryst ? r3(Number(s.heilar_man) || 0) : r3(delta * stud);
+      const upphaed_man = fryst ? Math.round(Number(s.upphaed_man) || 0) : Math.round(delta_heilar * v.rate);
+      const heilar = r3(prevHeilar.get(vn) + delta_heilar), upphaed = prevUpph.get(vn) + upphaed_man;
+      prevStada.set(vn, st); prevHeilar.set(vn, heilar); prevUpph.set(vn, upphaed);
+      return { verk_nr: vn, ajour_cum: Math.round(ajour_cum * 100) / 100, ny_ajour: nyMan, tillaga: Math.round(tillaga * 100) / 100, lokatala, stada: st, studull: stud, heilar, upphaed,
+        delta, delta_heilar, upphaed_man, fryst };
     });
     const t = rows.reduce((a, r) => { a.stakar += r.stada; a.heilar += r.heilar; a.upphaed += r.upphaed; a.delta += r.delta; a.upphaed_man += r.upphaed_man; return a; },
       { stakar: 0, heilar: 0, upphaed: 0, delta: 0, upphaed_man: 0 });
-    skyrslaMan.push({ month: mo, lines: rows, totals: t, vistad: lm.size });
+    const fr = rows.every(r => r.fryst);
+    const fsr = fr ? [...lm.values()].concat(nyFrysting.filter(x => x.month === mo)).find(r => r.fryst_at) : null;
+    skyrslaMan.push({ month: mo, lines: rows, totals: t, vistad: lm.size, fryst: fr,
+      fryst_heimild: fsr ? fsr.fryst_heimild : null,
+      sent: dSent ? { id: d.id, total_m_vsk: Math.round(Number(d.total_m_vsk) || 0), payday_invoice_id: d.payday_invoice_id || null } : null });
+  }
+  if (nyFrysting.length) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/nlsh_manadarlok?on_conflict=month,verk_nr`, {
+      method: 'POST', headers: { ...H(), Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify(nyFrysting) });
+    if (!r.ok) throw new Error(`frysting: ${r.status} ${(await r.text()).slice(0, 200)}`);
   }
   const valinn = skyrslaMan[skyrslaMan.length - 1];
   for (const L of lines) { const r = valinn.lines[idx.get(L.verk_nr)]; L.lokatala = r.lokatala; L.stada = r.stada; L.heilar = r.heilar; }
 
   const sum = (arr, k) => arr.reduce((a, x) => a + (x[k] || 0), 0);
-  return json(200, {
+  return {
     month, fra, til_exclusive: til,
     vistad_at: (lok.get(month) ? [...lok.get(month).values()] : []).reduce((a, r) => (!a || r.updated_at > a) ? r.updated_at : a, null),
     vistadir_manudir: vistadir,
@@ -248,14 +313,14 @@ async function stada(month) {
     skyrsla: {
       verk: VERK.map(v => ({ verk_nr: v.verk_nr, label: v.label, rate: v.rate, fjoldi: v.target || null, full: studull(v, month) === 1, studull: studull(v, month), metrar: !!v.metrar })),
       manudir: skyrslaMan,
-      reglur: 'Heild = stakar/2 nema gólf/hæðarskil (1=1); 2.2 var 1=1 til og með júlí 2026. 2.11 í metrum (ummál úr Ajour). Verð per heild m. vsk. Án lokatölu: staða fyrri mánaðar + nýjar lokanir í Ajour.',
+      reglur: 'Opnir mánuðir: heild = stakar/2 nema gólf/hæðarskil (1=1). 2.11 í metrum (ummál úr Ajour). Sendir mánuðir eru frosnir eins og þeir voru sendir — leiðrétting kemur fram sem mismunur í næsta mánuði. Án lokatölu: staða fyrri mánaðar + nýjar lokanir í Ajour.',
     },
     raufar: {
       rows: raufar,
       per_man: Object.fromEntries([...raufMan.entries()].sort().map(([k, v]) => [k, Math.round(v * 100) / 100])),
       olesin: raufar.filter(r => r.done && r.metrar == null).length,
     },
-  });
+  };
 }
 
 function sidastiManudur() {

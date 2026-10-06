@@ -64,8 +64,10 @@
     document.querySelectorAll('#nl-stada-t tr[data-verk]').forEach(tr=>{
       const i=tr.querySelector('input.nl-lok'); const lok=lokGildi(i); const ajour=+i.dataset.ajour; const st=lok==null?ajour:lok;
       // Heilar safnast: fyrri heilar + Δ × stuðull mánaðarins (gólf/hæðarskil 1, annað ½ — gildisdagar í VERK)
-      const stud=+tr.dataset.studull||0.5, rate=+tr.dataset.rate, prevSt=+tr.dataset.prevstada, prevH=+tr.dataset.prevheilar;
-      const delta=Math.round((st-prevSt)*1000)/1000, dH=delta*stud, heilar=prevH+dH, upphaed=Math.round(heilar*rate), um=Math.round(dH*rate);
+      const stud=+tr.dataset.studull||0.5, rate=+tr.dataset.rate, prevSt=+tr.dataset.prevstada, prevH=+tr.dataset.prevheilar, prevU=+tr.dataset.prevupph||0;
+      // Sendur mánuður er frosinn (06.10.2026): tölurnar sem voru sendar, aldrei endurreiknaðar
+      const F=tr.dataset.fryst==='1';
+      const delta=F?+tr.dataset.fdelta:Math.round((st-prevSt)*1000)/1000, dH=F?+tr.dataset.fdh:delta*stud, heilar=prevH+dH, um=F?+tr.dataset.fum:Math.round(dH*rate), upphaed=prevU+um;
       tr.querySelector('.c-heilar').textContent=nf1(heilar); tr.querySelector('.c-upphaed').textContent=kr(upphaed);
       tr.querySelector('.c-delta').textContent=(delta>=0?'+':'')+nf1(delta); tr.querySelector('.c-um').textContent=kr(um);
       tr.classList.toggle('nl-diff', lok!=null && lok!==ajour);
@@ -81,7 +83,7 @@
       const d=await r.json(); if(!r.ok||d.error) throw new Error(d.error||('HTTP '+r.status));
       stadaTeikna(d); msgSet('Vistað ✓ '+mLabel(d.month)+(d.vistad_at?' · '+fmtTs(d.vistad_at):' (allir reitir auðir → Ajour gildir)'));
     }catch(e){ msgSet('Vistaðist EKKI: '+e.message); }
-    btn.disabled=false; btn.textContent='💾 Vista lokatölur';
+    btn.disabled=!!(stadaGogn&&stadaGogn.skyrsla.manudir[stadaGogn.skyrsla.manudir.length-1].fryst); btn.textContent='💾 Vista lokatölur';
   }
   async function stadaAfrita(medNr){
     if(!stadaGogn){ msgSet('Engin gögn enn'); return; }
@@ -109,12 +111,12 @@
     const hdrMan=man.slice(0,-1).map(m=>`<th title="Lokað í ${esc(mLabel(m.month))}${m.vistad?' · lokatölur vistaðar':' · Ajour'}">${esc(mStutt(m.month))}${m.vistad?' ●':''}</th>`).join('');
     const rows=valinn.lines.map((l,i)=>{ const v=verkMap[l.verk_nr]; const prev=fyrri?fyrri.lines[i]:{stada:0,heilar:0};
       const manCells=man.slice(0,-1).map(m=>{ const x=m.lines[i]; return `<td class="c-man${x.lokatala!=null?' c-lok':''}" title="staða ${nf1(x.stada)}${x.lokatala!=null?' (lokatala)':' (Ajour)'}">${x.delta?((x.delta>0?'+':'')+nf1(x.delta)):'<span style=color:#c8ccd2>·</span>'}</td>`; }).join('');
-      return `<tr data-verk="${esc(l.verk_nr)}" data-rate="${v.rate}" data-studull="${v.studull!=null?v.studull:(v.full?1:0.5)}" data-metrar="${v.metrar?1:0}" data-prevstada="${prev.stada}" data-prevheilar="${prev.heilar}">
+      return `<tr data-verk="${esc(l.verk_nr)}" data-rate="${v.rate}" data-studull="${v.studull!=null?v.studull:(v.full?1:0.5)}" data-metrar="${v.metrar?1:0}" data-prevstada="${prev.stada}" data-prevheilar="${prev.heilar}" data-prevupph="${prev.upphaed||0}"${l.fryst?` data-fryst="1" data-fdelta="${l.delta}" data-fdh="${l.delta_heilar}" data-fum="${l.upphaed_man}"`:''}>
         <td>${esc(l.verk_nr)}</td><td style="text-align:left">${esc(v.label)}${v.metrar?' <span class="nl-note">(m)</span>':''}${v.full?' <span class="nl-note">1=1</span>':''}</td>
         <td>${v.fjoldi==null?'—':num(v.fjoldi)}</td><td>${kr(v.rate)}</td>${manCells}
-        <td class="c-stada"><input class="nl-lok" inputmode="decimal" data-verk="${esc(l.verk_nr)}" data-ajour="${l.tillaga!=null?l.tillaga:l.ajour_cum}" value="${l.lokatala==null?'':l.lokatala}" placeholder="${nf1(l.tillaga!=null?l.tillaga:l.ajour_cum)}" title="Tillaga ${nf1(l.tillaga!=null?l.tillaga:l.ajour_cum)} = staða fyrri mánaðar + ${nf1(l.ny_ajour||0)} nýjar í Ajour (Ajour alls: ${nf1(l.ajour_cum)}) — auður reitur = tillagan gildir"></td>
+        <td class="c-stada"><input class="nl-lok" inputmode="decimal"${l.fryst?' disabled':''} data-verk="${esc(l.verk_nr)}" data-ajour="${l.tillaga!=null?l.tillaga:l.ajour_cum}" value="${l.lokatala==null?'':l.lokatala}" placeholder="${nf1(l.tillaga!=null?l.tillaga:l.ajour_cum)}" title="Tillaga ${nf1(l.tillaga!=null?l.tillaga:l.ajour_cum)} = staða fyrri mánaðar + ${nf1(l.ny_ajour||0)} nýjar í Ajour (Ajour alls: ${nf1(l.ajour_cum)}) — auður reitur = tillagan gildir"></td>
         <td class="c-delta"></td><td class="c-heilar"></td><td class="c-upphaed"></td><td class="c-um"></td></tr>`; }).join('');
-    t.innerHTML=`<div class="nl-skyrsla-h"><b>Landsspítalinn 5.–6. hæð — staða í lok ${esc(mLabel(d.month))}</b> <span class="nl-note">· ${d.vistad_at?'lokatölur vistaðar '+esc(fmtTs(d.vistad_at)):'engar lokatölur vistaðar fyrir þennan mánuð — Ajour-tölur sýndar'}</span></div>
+    t.innerHTML=`<div class="nl-skyrsla-h"><b>Landsspítalinn 5.–6. hæð — staða í lok ${esc(mLabel(d.month))}</b> <span class="nl-note">· ${valinn.fryst?'🔒 sendur og læstur — leiðréttingar fara í lokastöðu næsta mánaðar og mismunurinn rukkast þar':d.vistad_at?'lokatölur vistaðar '+esc(fmtTs(d.vistad_at)):'engar lokatölur vistaðar fyrir þennan mánuð — Ajour-tölur sýndar'}</span></div>
       <table class="nl-t nl-skyrsla" id="nl-stada-tafla">
       <thead><tr><th>Verk</th><th>Verkliður</th><th>Fjöldi</th><th>Verð/heild</th>${hdrMan}<th class="c-stada">Staða ${esc(mStutt(d.month))}</th><th>Δ ${esc(mStutt(d.month))}</th><th>Heilar</th><th>Upphæð heild</th><th>Upphæð í ${esc(mStutt(d.month))}</th></tr></thead>
       <tbody>${rows}</tbody>
@@ -122,6 +124,7 @@
       <div class="nl-note" style="padding:6px 2px">${esc(S.reglur)} Mánaðardálkar sýna lokanir í hverjum mánuði (● = lokatölur vistaðar). Reiturinn „Staða" er lokatalan sem þú sendir — auður = Ajour gildir; rauð lína = víkur frá Ajour. ${d.unmapped.length?'Utan samnings: '+d.unmapped.map(u=>esc(u.category_group)+' '+num(u.stakar_alls)).join(' · ')+'. ':''}Ekki merkt Done í Ajour núna: <b>${num(d.ekki_done)}</b>.</div>`;
     t.querySelectorAll('input.nl-lok').forEach(i=>i.addEventListener('input', stadaSamtala));
     stadaSamtala();
+    for(const id of ['nl-stada-vista','nl-stada-ajour']){ const b=document.getElementById(id); if(b){ b.disabled=!!valinn.fryst; b.title=valinn.fryst?'Sendur mánuður er læstur — leiðréttu í næsta mánuði':b.title; } }
     const sel=document.getElementById('nl-stada-man');
     if(sel && document.activeElement!==sel){ const set=new Set((d.vistadir_manudir||[]).map(x=>x.month)); [...sel.options].forEach(o=>{ o.textContent=mLabel(o.value)+(set.has(o.value)?' ●':''); }); }
   }
