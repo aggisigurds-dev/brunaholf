@@ -812,3 +812,13 @@ tengdir í `customer_documents` (Drive) og vistar í `reikningslestur` (haus + `
 - **Tæki = allt nema `urelt`.** `uttaeki.status` ber active / „Í lagi" / ok / loaned; sían `status=eq.active` faldi 11
   félög alveg (Dalbrekka 4-6: 48 tæki) — sama gildra og 15/153/177 lentu í 01.09.2026, og `audit-status-gildi.cjs` í
   slokkvitaeki fer rautt á henni.
+- **Tvær geymslur, og báðar ljúga (mælt 06.10.2026 kl. 14:45).** Sagan `arsskodun_customers[fid].history` undir Grjóthálsi
+  (261) geymdi skýrslur ALLRA fimm Aðalskoðunar-staða (fjórar færslur 2026, sjö 2025 — kt-lekinn úr batch-lestri á
+  Drive-möppu „febrúar 2026/"), og sama undir Höfuðstöðvum Heimaleigu. Í heild: **119 (félag, ár) með fleiri en eina
+  sögufærslu (111 félög, mest 15)**. `arsskodun_report_facts`: **138 raðir vísa á skjal af öðru ári en report_year, 17 á skjal
+  annars félags** (261 bar tölur Hjallahrauns með 2025-skjali). Þess vegna leit R-106443 „vegna Gjótháls" út fyrir að stangast
+  á við skýrsluna — reikningurinn var réttur, geymslan röng. Reglan í `greining()`: færsla sem `lesa` skrifaði úr PDF (`doc_id`)
+  vinnur; facts-röð með heimildarskjal af öðru ári víkur aðeins fyrir sögufærslu sem nefnir staðinn sjálf (`stig ≥ 2`), ónefnd
+  færsla á móti henni er jafntefli og facts stendur (Plaza 2026: facts 39/6/35, sagan 14/11 = Grandi); séu fleiri færslur sama
+  ár er sú valin sem nefnir þennan stað og hinar taldar í ⚑. **`lesa` uppfærir nú báðar geymslurnar** (facts upsert á
+  `fyrirtaeki_id`, aldrei með eldra skjali en röðin ber). Hreinsun á 119 tvöföldunum er EKKI gerð — þarf lestur á hverju PDF.
