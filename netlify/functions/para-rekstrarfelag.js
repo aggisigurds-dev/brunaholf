@@ -240,7 +240,8 @@ async function lesa(b) {
   if (!(bun.matched > 0)) return { ok: false, reason: 'engin „Fjöldi"-lína fannst í textanum' };
   const equipment = toEquipment(bun);
   // „hjá fyrirtækinu …" + „yfirfarin í <mánuður ár>" — línurnar sem segja staðinn og mánuðinn
-  const hja = (/hjá fyrirtækinu[ \t]+([^\n]{3,90})/i.exec(text) || [])[1] || null;
+  // „hjá fyrirtækinu Steypustöðin Borgarnesi kt:…" — línuskil geta komið á eftir „fyrirtækinu" í PDF-textanum
+  const hja = ((/hjá fyrirtækinu[ \t\r\n]+([^\n]{3,90})/i.exec(text) || [])[1] || '').replace(/[ \t]*kt[.:]?[ \t]*[0-9-]*[ \t]*$/i, '').trim() || null;
   const annad = (/Annað:[ \t]*([^]*?)(Athugasemdir:|Fyrir hönd|$)/i.exec(text) || [])[1];
   const ar = d.year || (/(20[0-9][0-9])/.exec(text) || [])[1];
   const faersla = { year: String(ar), skodun: ar + '-' + (man ? MAN[man - 1] : ''), equipment, annad: annad ? annad.replace(/[ \t\r\n]+/g, ' ').trim().slice(0, 600) : '', skra: d.file_name || '', stada: '', lesid: 'para-rekstrarfelag ' + new Date().toISOString().slice(0, 10) };
