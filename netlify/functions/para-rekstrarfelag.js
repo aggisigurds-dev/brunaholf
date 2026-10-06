@@ -125,7 +125,7 @@ async function greining(kt) {
   // skýrslur: ein færsla per (staður, ár)
   const sk = [];
   facts.forEach(f => sk.push({ fid: f.fyrirtaeki_id, ar: f.report_year, man: f.inspect_month, v: urSkyrslu(f.equipment), doc: f.source_doc_id, heimild: 'facts' }));
-  ids.forEach(i => (((ars[String(i)] || {}).history) || []).forEach(h => { const ar = +h.year, man = manTala(h.skodun); if (!ar || sk.some(x => x.fid === i && x.ar === ar)) return; sk.push({ fid: i, ar, man, v: urSkyrslu(h.equipment), doc: null, heimild: 'history' + (h.skra ? ' · ' + h.skra : '') }); }));
+  ids.forEach(i => (((ars[String(i)] || {}).history) || []).forEach(h => { const ar = +h.year, man = manTala(h.skodun); if (!ar || sk.some(x => x.fid === i && x.ar === ar)) return; sk.push({ fid: i, ar, man, v: urSkyrslu(h.equipment), doc: null, heimild: 'history' + (h.skra ? ' · ' + h.skra : ''), hja: h.hja || null }); }));
   const olesin = skjol.filter(d => !sk.some(x => x.fid === d.fyrirtaeki_id && +x.ar === +d.year));
 
   // reikningar: reikningslestur + solur (salan ræður sé sami reikningur í báðum)
@@ -160,7 +160,7 @@ async function greining(kt) {
     const maPara = oruggt && !!skDoc && !!(best.r.doc || best.r.solurId) && (!par || (par.status === 'vantar_reikning' && !handvirkt));
     const eiginFravik = fjarl(s.v, stadV[s.fid]);
     skyrslur.push({
-      fid: s.fid, nafn: nafn[s.fid], ar: s.ar, man: s.man, heimild: s.heimild, eldri: (iAr - s.ar) >= 2, doc: skDoc, taeki: sv, skyrsla: s.v, skyrsla_txt: vstr(s.v),
+      fid: s.fid, nafn: nafn[s.fid], ar: s.ar, man: s.man, heimild: s.heimild, hja: s.hja || null, eldri: (iAr - s.ar) >= 2, doc: skDoc, taeki: sv, skyrsla: s.v, skyrsla_txt: vstr(s.v),
       reikningur: best ? { nr: best.r.nr, dags: best.r.dags, fid: best.r.fid, doc: best.r.doc, solur_id: best.r.solurId, skodud: best.r.skodud, ny: best.r.ny, skodud_txt: vstr(best.r.skodud), ny_txt: vstr(best.r.ny), fravik: Math.round(best.d * 10) / 10, oruggt } : null,
       stadur: bs ? { fid: bs.fid, nafn: nafn[bs.fid], fravik: bs.d, eigin_fravik: eiginFravik, sammala: bs.fid === s.fid } : null,
       par: par ? { id: par.id, status: par.status, matched_by: par.matched_by, invoice_doc_id: par.invoice_doc_id, solur_id: par.solur_id, sammala: samiReikn, handvirkt } : null,
@@ -244,7 +244,7 @@ async function lesa(b) {
   const hja = ((/hjá[ \t\r\n]+fyrirtækinu[ \t\r\n]+([^\n]{3,90})/i.exec(text) || [])[1] || '').replace(/[ \t]*kt[.:]?[ \t]*[0-9-]*[ \t]*$/i, '').trim() || null;
   const annad = (/Annað:[ \t]*([^]*?)(Athugasemdir:|Fyrir hönd|$)/i.exec(text) || [])[1];
   const ar = d.year || (/(20[0-9][0-9])/.exec(text) || [])[1];
-  const faersla = { year: String(ar), skodun: ar + '-' + (man ? MAN[man - 1] : ''), equipment, annad: annad ? annad.replace(/[ \t\r\n]+/g, ' ').trim().slice(0, 600) : '', skra: d.file_name || '', stada: '', lesid: 'para-rekstrarfelag ' + new Date().toISOString().slice(0, 10) };
+  const faersla = { year: String(ar), skodun: ar + '-' + (man ? MAN[man - 1] : ''), equipment, hja, annad: annad ? annad.replace(/[ \t\r\n]+/g, ' ').trim().slice(0, 600) : '', skra: d.file_name || '', stada: '', lesid: 'para-rekstrarfelag ' + new Date().toISOString().slice(0, 10) };
   if (!b.dry) {
     const row = (await sbGet('app_settings?id=eq.1&select=a:settings->arsskodun_customers'))[0] || {};
     const cur = ((row.a || {})[String(d.fyrirtaeki_id)] || {});

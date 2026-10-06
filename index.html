@@ -4154,7 +4154,7 @@ function wireRekstrarfelag(){
     const parTxt = { sammala: '<span style="color:var(--ok,#2f7a4a)">✓ parað við þennan</span>', annar: '<span style="color:var(--bad,#b3261e)">parað við annan' + (par && par.handvirkt ? ' (handvirkt)' : '') + '</span>', vantar: '<span style="color:var(--warn,#8f6a1c)">vantar reikning í par</span>', par_an_talningar: 'par til, engin talning', ekkert: '<span style="color:var(--muted)">ekkert par</span>' }[s.par_stada] || '';
     const takki = s.ma_para ? '<button class="btn sm bk-rf-para" data-i="' + s._i + '">Para</button>' : '';
     return '<tr>'
-      + '<td style="' + cell + '"><b>' + esc(s.nafn) + '</b><div style="' + mono + ';color:var(--muted)">' + s.ar + '-' + (s.man ? MAN[s.man - 1] : '?') + (s.eldri ? ' · ⚠ eldri heimild' : '') + '</div></td>'
+      + '<td style="' + cell + '"><b>' + esc(s.nafn) + '</b><div style="' + mono + ';color:var(--muted)">' + s.ar + '-' + (s.man ? MAN[s.man - 1] : '?') + (s.eldri ? ' · ⚠ eldri heimild' : '') + '</div>' + (s.hja ? '<div style="' + mono + ';color:var(--muted)" title="Línan „hjá fyrirtækinu …“ úr skýrslunni sjálfri">„' + esc(s.hja) + '“</div>' : '') + '</td>'
       + '<td style="' + cell + ';' + mono + '">' + esc(s.skyrsla_txt) + ' <span style="color:var(--muted)">(' + s.taeki + ')</span></td>'
       + '<td style="' + cell + '">' + reikn + '</td>'
       + '<td style="' + cell + '">' + stad + '</td>'
