@@ -10779,7 +10779,8 @@ async function renderTilbunirReikningar(t){
     if(fr>0) body += row('ekinn ferð', 4000, fr, fr*4000);
     if(gj>0) body += row('akstursgjald', gj, '1', gj);
     const matRows = mats.filter(m=>(Number(m.qty)||0)>0||(Number(m.total)||0)>0).map(m=>{ const q=Number(m.qty)||0,p=Number(m.price)||0; return row(m.label,p,(q%1?q.toFixed(2):String(q)),Number(m.total)||Math.round(p*q)); }).join('');
-    if(matRows) body += '<tr class="sec"><td colspan="4">Efni</td></tr>'+matRows;
+    // Heklureits-Efnislisti (06.10.2026): línurnar eru brunalokanir per gatastærð (gat:true), ekki efni.
+    if(matRows) body += '<tr class="sec"><td colspan="4">'+(mats.some(m=>m&&m.gat)?'Brunalokanir':'Efni')+'</td></tr>'+matRows;
     if(sma>0||stadf>0) body += '<tr class="sec"><td colspan="4">Aukagjöld</td></tr>';
     if(sma>0) body += row('Smáhlutagjald = hanskar, þurrkur o.fl.', null, (dvH+evH).toFixed(2), sma);
     if(stadf>0) body += row('Staðfesting brunaþéttinga', null, '1', stadf);
@@ -10939,7 +10940,12 @@ async function renderGerdReikninga(t){
   // geymir aðeins customer_name, svo kt/heimilisfang greiðanda er skráð hér.
   const PAYER_OVERRIDE = {
     'Orkureitur': { name:'SAFÍR byggingar ehf.', kt:'551021-0680', addr:'Ármúla 27, 108 Reykjavík' },
+    // Heklureitur (06.10.2026): greiðandi Payday-reikninga R206–R305 — forfylling í Heklureits-Efnislistanum.
+    'Heklu reitur': { name:'Framkvæmdafélagið Laugavegur ehf.', kt:'680921-2020', addr:'' },
+    'Heklureitur':  { name:'Framkvæmdafélagið Laugavegur ehf.', kt:'680921-2020', addr:'' },
   };
+  // Heklureitur rukkast eftir fjölda kláraðra gata per gatastærð (eigin Efnislisti, openHeklureitur).
+  const isHeklu = name => /heklu\s*reit/i.test(name||'');
 
   state.ui = state.ui || {};
   if(!/^\d{4}-\d{2}$/.test(state.ui.gr_month||'')) state.ui.gr_month = '2026-05';
