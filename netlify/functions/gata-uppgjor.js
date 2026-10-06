@@ -78,7 +78,7 @@ exports.handler = async (event) => {
 
   const ajourFilter = `project_name=in.(${ajourNames.map(n => `"${n}"`).join(',')})`;
   const scopes = rateScope ? `scope=in.(generic,${rateScope})` : 'scope=eq.generic';
-  const [ajour, rates, bandRates, nyjast, seinast] = await Promise.all([
+  const [ajour, rates, bandRates, nyjast, seinast, syncKv] = await Promise.all([
     fetchAll('ajour_registrations',
       `select=category_group,execution_date,registration_status&${ajourFilter}&execution_date=gte.${monthStart}&execution_date=lt.${monthEnd}&category_group=ilike.Gat*`),
     fetchAll('hole_size_rates', `select=scope,size_min_mm,size_max_mm,size_label,rate_an_vsk,notes&${scopes}&category=eq.hole&order=size_min_mm.asc`),
@@ -86,7 +86,10 @@ exports.handler = async (event) => {
     // Ferskleiki gagnanna: síðasti innlestur + nýjasta skráning verkefnisins (óháð mánuði)
     fetchAll('ajour_registrations', `select=imported_at&${ajourFilter}&order=imported_at.desc.nullslast&limit=1`).catch(() => []),
     fetchAll('ajour_registrations', `select=execution_date&${ajourFilter}&order=execution_date.desc.nullslast&limit=1`).catch(() => []),
+    // luna-bridge ajour-yfirlit.js skráir hvenær verkefnaraðir voru síðast samstilltar (líka þegar ekkert nýtt kom)
+    fetchAll('app_kv', 'select=value&key=eq.ajour_radir_sync').catch(() => []),
   ]);
+  const syncInfo = ((syncKv[0] || {}).value || {})[canonKey] || null;
 
   // Build size → rate lookup — eigin verðskrá verkstaðarins gengur framar 'generic'
   const rateBySize = new Map();
@@ -167,7 +170,7 @@ exports.handler = async (event) => {
     all_rates: allRates,
     by_day: byDay,
     opnar: Object.entries(opnar).map(([group, stakar]) => ({ group, stakar })),
-    ferskleiki: { last_import: (nyjast[0] || {}).imported_at || null, last_registration: (seinast[0] || {}).execution_date || null },
+    ferskleiki: { last_import: (nyjast[0] || {}).imported_at || null, last_registration: (seinast[0] || {}).execution_date || null, last_sync: (syncInfo && syncInfo.synced_at) || null },
     unmapped,
     band_rates: { kragi: kragar, bordi: bordar },
     totals: {
