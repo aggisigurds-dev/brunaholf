@@ -202,6 +202,9 @@ async function greining(kt) {
   const rod = kand.slice().sort((a, b) => (a.listi.length ? a.listi[0].d : 99) - (b.listi.length ? b.listi[0].d : 99) || b.s.ar - a.s.ar);
   rod.forEach(k => {
     const s = k.s; let best = null, upptekinn = null;
+    // jafntefli (tveir reikningar með sömu línur, t.d. R-107256/R-107267 Höfuðstöðvar sept 2025): sá sem parið á þegar vinnur
+    const eigin = c => { const t = tekid[lykill(c.r)]; return t && t.fid === s.fid && t.ar === +s.ar ? 1 : 0; };
+    k.listi.sort((a, b) => a.d - b.d || eigin(b) - eigin(a));
     for (const c of k.listi) {
       const t = tekid[lykill(c.r)];
       if (t && !(t.fid === s.fid && t.ar === +s.ar)) { if (!upptekinn) upptekinn = { nr: c.r.nr, fravik: Math.round(c.d * 10) / 10, fid: t.fid, ar: t.ar, par: t.par || null }; continue; }
