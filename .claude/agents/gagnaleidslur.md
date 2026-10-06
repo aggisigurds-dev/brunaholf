@@ -115,6 +115,19 @@ for several Supabase tables this app reads:
   setur `TRIGGER_ID`) og takkinn sýnir hana. **Ajour-lotan** er lotukaka sem deyr við
   aðgerðaleysi → `ajour-vakandi.js` á 10 mín fresti (Task `LunaBridge2-AjourVakandi`)
   heldur henni lifandi; `automation_runs(job_name='ajour-vakandi')` skráir aðeins breytingar.
+- **Tvær brúarvélar (06.10.2026, Agnar: „finn þetta ekki, tengdu þessa tölvu").** Skrifstofuvélin DESKTOP-509MN7M
+  keyrir **LunaBridge2-*** (sett upp með `setja-upp-varavel.bat`: Watcher 1 mín · Email 15 mín · Redder daglega 07:30 ·
+  Heartbeat 30 mín · Ajour 06:45 · AjourYfirlit 07:15 · SkraStada klst · AjourVakandi 10 mín) með **Store-Thunderbird**
+  (`shell:AppsFolder…`, prófíll undir LocalCache); hún merkir keyrslur `source='luna-bridge:skrifstofa'`. Heimavélin
+  DESKTOP-M5FO3I6 keyrir gömlu **LunaBridge-*** verkin (Email 15 mín · Watcher 1 mín · Redder — nú daglega 07:45, var
+  vikulega fös · Heartbeat 30 mín) með **klassískri Thunderbird** (Program Files, prófíll `TB_PROFILE` í .env) og merkir
+  `source='desktop'`. Þrennt sem var bilað þar og var lagað: Thunderbird var lokað síðan 11.09 (brúin skráði „ekkert nýtt í
+  606 klst" á 15 mín fresti — rauðu línurnar í Sjálfvirkni voru ÞESSI vél, ekki skrifstofan); hjartslátturinn svaraði 401
+  því `VEL_HEARTBEAT_TOKEN` vantaði í `luna-bridge/.env` (sækist með `netlify env:get VEL_HEARTBEAT_TOKEN --context
+  production` ÚR brunaholf-möppunni — úr annarri möppu skilar CLI-ið villutexta sem lítur út eins og gildi); tréð var 17
+  commit á eftir. `postur-nuna.js` þekkir nú báðar uppsetningarnar (exe í Program Files + TB_PROFILE, annars Store).
+  **Skrifstofuvélin sendir ENGAN hjartslátt** (aðeins M5FO3I6 í `vel_heartbeat`) — LunaBridge2-Heartbeat vantar eða
+  token-inn vantar í .env hennar; þess vegna sést hún ekki á Kerfisheilsu þótt hún vinni.
 - **Redder-línurnar koma AÐEINS úr Drive-lesaranum (05.10.2026).** `redder.js` (póstur) skráir bara hausinn
   (`source 'redder_mail'`: engar línur, enginn verkstaður — og kreditreikningar urðu jákvæðir, slaufumínusinn
   týnist). Eftir breytinguna 29.09 hér að ofan keyrði enginn `/api/redder-read` lengur, svo september sat á
