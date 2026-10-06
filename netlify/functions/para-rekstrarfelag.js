@@ -220,11 +220,19 @@ function parseMonth(text) {
 }
 async function lesa(b) {
   const docId = parseInt(b.doc_id, 10); if (!docId) return { ok: false, reason: 'vantar doc_id' };
-  const d = (await sbGet('customer_documents?id=eq.' + docId + '&select=id,fyrirtaeki_id,year,drive_file_id,file_name'))[0];
-  if (!d || !d.drive_file_id) return { ok: false, reason: 'skjalið finnst ekki eða á enga Drive-skrá' };
-  const token = await freshAccessToken();
-  const r = await fetch(`https://www.googleapis.com/drive/v3/files/${d.drive_file_id}?alt=media&supportsAllDrives=true`, { headers: { Authorization: `Bearer ${token}` } });
-  if (!r.ok) return { ok: false, reason: 'Drive ' + r.status };
+  const d = (await sbGet('customer_documents?id=eq.' + docId + '&select=id,fyrirtaeki_id,year,drive_file_id,storage_path,file_name'))[0];
+  if (!d || !(d.drive_file_id || d.storage_path)) return { ok: false, reason: 'skjalið finnst ekki eða á hvorki Drive-skrá né geymsluslóð' };
+  let r;
+  if (d.drive_file_id) {
+    const token = await freshAccessToken();
+    r = await fetch(`https://www.googleapis.com/drive/v3/files/${d.drive_file_id}?alt=media&supportsAllDrives=true`, { headers: { Authorization: `Bearer ${token}` } });
+    if (!r.ok) return { ok: false, reason: 'Drive ' + r.status };
+  } else {
+    // skýrslur úr appinu sjálfu búa í Supabase-geymslunni: storage_path = "<bucket>/<slóð>" (t.d. samningar/company_attachments/608/…pdf)
+    const sp = String(d.storage_path).replace(/^[/]+/, ''), bucket = sp.split('/')[0], slod = sp.slice(bucket.length + 1);
+    r = await fetch(`${SUPABASE_URL}/storage/v1/object/${bucket}/${slod.split('/').map(encodeURIComponent).join('/')}`, { headers: sbHeaders() });
+    if (!r.ok) return { ok: false, reason: 'geymsla ' + r.status + ' (' + sp.slice(0, 60) + ')' };
+  }
   const parsed = await pdf(Buffer.from(await r.arrayBuffer())).catch(() => null);
   const text = (parsed && parsed.text) || '';
   if (text.replace(/[ \t\r\n]/g, '').length < 30) return { ok: false, reason: 'gat ekki lesið PDF-texta (skannað blað?)' };
