@@ -111,7 +111,7 @@
       return `<tr data-verk="${esc(l.verk_nr)}" data-rate="${v.rate}" data-full="${v.full?1:0}" data-metrar="${v.metrar?1:0}" data-prevstada="${prev.stada}" data-prevheilar="${prev.heilar}">
         <td>${esc(l.verk_nr)}</td><td style="text-align:left">${esc(v.label)}${v.metrar?' <span class="nl-note">(m)</span>':''}${v.full?' <span class="nl-note">1=1</span>':''}</td>
         <td>${v.fjoldi==null?'—':num(v.fjoldi)}</td><td>${kr(v.rate)}</td>${manCells}
-        <td class="c-stada"><input class="nl-lok" inputmode="decimal" data-verk="${esc(l.verk_nr)}" data-ajour="${l.ajour_cum}" value="${l.lokatala==null?'':l.lokatala}" placeholder="${nf1(l.ajour_cum)}" title="Ajour: ${nf1(l.ajour_cum)} — auður reitur = Ajour gildir"></td>
+        <td class="c-stada"><input class="nl-lok" inputmode="decimal" data-verk="${esc(l.verk_nr)}" data-ajour="${l.tillaga!=null?l.tillaga:l.ajour_cum}" value="${l.lokatala==null?'':l.lokatala}" placeholder="${nf1(l.tillaga!=null?l.tillaga:l.ajour_cum)}" title="Tillaga ${nf1(l.tillaga!=null?l.tillaga:l.ajour_cum)} = staða fyrri mánaðar + ${nf1(l.ny_ajour||0)} nýjar í Ajour (Ajour alls: ${nf1(l.ajour_cum)}) — auður reitur = tillagan gildir"></td>
         <td class="c-delta"></td><td class="c-heilar"></td><td class="c-upphaed"></td><td class="c-um"></td></tr>`; }).join('');
     t.innerHTML=`<div class="nl-skyrsla-h"><b>Landsspítalinn 5.–6. hæð — staða í lok ${esc(mLabel(d.month))}</b> <span class="nl-note">· ${d.vistad_at?'lokatölur vistaðar '+esc(fmtTs(d.vistad_at)):'engar lokatölur vistaðar fyrir þennan mánuð — Ajour-tölur sýndar'}</span></div>
       <table class="nl-t nl-skyrsla" id="nl-stada-tafla">

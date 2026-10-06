@@ -145,15 +145,21 @@ async function stada(month) {
     const lm = lok.get(mo) || new Map();
     const rows = VERK.map(v => {
       const vn = v.verk_nr;
-      cum.set(vn, (cum.get(vn) || 0) + (ny.get(vn) || 0));
+      const nyMan = ny.get(vn) || 0;   // nýjar lokanir í Ajour í mánuðinum (≥ 0)
+      cum.set(vn, (cum.get(vn) || 0) + nyMan);
       const ajour_cum = cum.get(vn);
       const s = lm.get(vn);
       const lokatala = s ? Number(s.lokatala) : null;
-      const st = lokatala != null ? lokatala : ajour_cum;
+      // TILLAGA (06.10.2026): staða í lok fyrri mánaðar + nýjar lokanir mánaðarins í Ajour.
+      // Áður var heildartala Ajour notuð þegar lokatölu vantaði — en lokatölurnar (Aðalskjalið)
+      // eru hærri en Ajour á 2.11 og 3.1, svo ágúst 2026 sýndi −131 og −24 (lokanir ganga ekki
+      // til baka). Án nokkurra lokatalna er tillagan = heildartala Ajour, eins og áður.
+      const tillaga = prevStada.get(vn) + nyMan;
+      const st = lokatala != null ? lokatala : tillaga;
       const heilar = heilarAf(vn, st);
       const delta = st - prevStada.get(vn), delta_heilar = heilar - prevHeilar.get(vn);
       prevStada.set(vn, st); prevHeilar.set(vn, heilar);
-      return { verk_nr: vn, ajour_cum, lokatala, stada: st, heilar, upphaed: Math.round(heilar * v.rate),
+      return { verk_nr: vn, ajour_cum, ny_ajour: nyMan, tillaga, lokatala, stada: st, heilar, upphaed: Math.round(heilar * v.rate),
         delta, delta_heilar, upphaed_man: Math.round(delta_heilar * v.rate) };
     });
     const t = rows.reduce((a, r) => { a.stakar += r.stada; a.heilar += r.heilar; a.upphaed += r.upphaed; a.delta += r.delta; a.upphaed_man += r.upphaed_man; return a; },
@@ -174,7 +180,7 @@ async function stada(month) {
     skyrsla: {
       verk: VERK.map(v => ({ verk_nr: v.verk_nr, label: v.label, rate: v.rate, fjoldi: v.target || null, full: !!v.full, metrar: !!v.metrar })),
       manudir: skyrslaMan,
-      reglur: 'Heild = stakar/2 nema 2.2 og 1.2 (1=1) — líka metrar (2.11). Verð per heild m. vsk. Sannað úr Aðalskjali júlí 2026.',
+      reglur: 'Heild = stakar/2 nema 2.2 og 1.2 (1=1) — líka metrar (2.11). Verð per heild m. vsk. Sannað úr Aðalskjali júlí 2026. Án lokatölu: staða fyrri mánaðar + nýjar lokanir í Ajour.',
     },
   });
 }
