@@ -1305,7 +1305,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
 <script src="/js/hub-sync-buttons.js?v=20260919a" defer></script>
 <script src="/js/nlsh-sections.js?v=20260830b" defer></script>
-<script src="/js/nlsh-stada.js?v=20260903c" defer></script>
+<script src="/js/nlsh-stada.js?v=20261006a" defer></script>
 <script src="/js/viewmode.js?v=2" defer></script>
 <script src="/js/kerfisheilsa-widget.js?v=20260805a" defer></script>
   <script src="/js/dags-snid.js?v=20260918b"></script>
@@ -10946,6 +10946,8 @@ async function renderGerdReikninga(t){
   };
   // Heklureitur rukkast eftir fjölda kláraðra gata per gatastærð (eigin Efnislisti, openHeklureitur).
   const isHeklu = name => /heklu\s*reit/i.test(name||'');
+  // Nýi Landsspítalinn — samningsskýrsla per mánuð (eigin Efnislisti, openNlshEfnislisti).
+  const isNlsh = name => /landssp[ií]tal|nlsh/i.test(name||'');
 
   state.ui = state.ui || {};
   if(!/^\d{4}-\d{2}$/.test(state.ui.gr_month||'')) state.ui.gr_month = '2026-05';
@@ -11505,7 +11507,7 @@ async function renderGerdReikninga(t){
       try{ localStorage.setItem('gr_snapshot_v1', JSON.stringify({WS,PG,DRAFTS,REDDER,NLSH_MONTHLY,ts:Date.now()})); }catch(_){}
       renderList();
       // Re-open editor directly when arriving from the "Tilbúnir reikningar" page.
-      if(window.__grPendingOpen){ const pe = window.__grPendingOpen; window.__grPendingOpen = null; try{ if(isHeklu(pe)) openGata(pe); else openEditor(pe); }catch(_e){} }
+      if(window.__grPendingOpen){ const pe = window.__grPendingOpen; window.__grPendingOpen = null; try{ if(isHeklu(pe) || isNlsh(pe)) openGata(pe); else openEditor(pe); }catch(_e){} }
       document.getElementById('gr-deep-wait')?.remove();
     }catch(e){
       document.getElementById('gr-deep-wait')?.remove();
@@ -11573,7 +11575,7 @@ async function renderGerdReikninga(t){
           </div>
           <div class="gr-card-actions">
             ${gataFlag
-              ? `<button class="gr-btn gr-btn-primary" data-gr-gata="${escapeAttr(name)}">${isHeklu(name)?'🧾 Efnislisti · göt':'📐 Ajour uppgjör'}</button>`
+              ? `<button class="gr-btn gr-btn-primary" data-gr-gata="${escapeAttr(name)}">${isHeklu(name)?'🧾 Efnislisti · göt':isNlsh(name)?'🧾 Efnislisti · NLSH':'📐 Ajour uppgjör'}</button>`
               : `<button class="gr-btn gr-btn-primary" data-gr-edit="${escapeAttr(name)}">🧾 Efnislisti</button>`}
           </div>
           <div class="gr-card-note"><textarea class="gr-note-in" data-gr-note="${escapeAttr(name)}" rows="2" placeholder="Athugasemd (vistast)…" style="width:100%;margin-top:8px;border:1px solid var(--border,var(--edge));border-radius:8px;padding:6px 8px;font:inherit;font-size:12px;resize:vertical;box-sizing:border-box">${escapeHtml(note)}</textarea></div>
@@ -11608,7 +11610,7 @@ async function renderGerdReikninga(t){
                    :`<span class="gr-pill gr-pill-todo">⏳ eftir</span>`)}</td>
         <td>${d && d.status==='merged'
             ? `<button class="gr-btn" data-gr-unmerge="${escapeAttr(d.merged_into||'')}" data-gr-ws="${escapeAttr(name)}" title="Skila þessum mánuði úr samreikningnum">↩ Aftengja</button>`
-            : (gataFlag?`<button class="gr-btn gr-btn-primary" data-gr-gata="${escapeAttr(name)}">${isHeklu(name)?'🧾 Efnislisti · göt':'📐 Uppgjör'}</button>`:`<button class="gr-btn gr-btn-primary" data-gr-edit="${escapeAttr(name)}">🧾 Efnislisti</button>`)}</td>
+            : (gataFlag?`<button class="gr-btn gr-btn-primary" data-gr-gata="${escapeAttr(name)}">${isHeklu(name)?'🧾 Efnislisti · göt':isNlsh(name)?'🧾 Efnislisti · NLSH':'📐 Uppgjör'}</button>`:`<button class="gr-btn gr-btn-primary" data-gr-edit="${escapeAttr(name)}">🧾 Efnislisti</button>`)}</td>
       </tr>`;
     };
 
@@ -12977,9 +12979,322 @@ async function renderGerdReikninga(t){
     };
   }
 
+  // ===== Nýi Landsspítalinn — Efnislisti · NLSH (Agnar 06.10.2026) =====
+  // „Sérstakt Efnislista fyrir Nýja landsspítalann svo hún komi svipað út og fyrsta skjalið
+  // [júlíblaðið] … ég þarf oft aðeins að lagfæra … hafðu Heildar lokanir / Stakar lokanir og
+  // uppfærðu þar stöðuna í lok mánaðar en sýndu samt á vinnusvæðinu hver staðan er núna."
+  // Gögn: /api/nlsh-stada (lokatölur per mánuð + tillaga = staða fyrri mánaðar + nýjar í Ajour;
+  // 2.11 í metrum úr ummálum). Vista = festir stöðu mánaðarins (allar línur) + drög „Landsspitalinn".
+  async function openNlshEfnislisti(name, monthArg){
+    const wsName = name;
+    const NOW = (()=>{ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); })();
+    const METRASKRA = 'https://docs.google.com/spreadsheets/d/1X46Cf11JCE_PMdA3C6LsOtlVbv6ZDlS53-9WLC-pezI/edit?gid=618326755#gid=618326755';
+    const MAN_IS = ['Janúar','Febrúar','Mars','Apríl','Maí','Júní','Júlí','Ágúst','September','Október','Nóvember','Desember'];
+    const manNafn = ym => { const [y,m]=String(ym).split('-'); return MAN_IS[+m-1]+' '+String(y).slice(2); };
+    const manLang = ym => { const [y,m]=String(ym).split('-'); return MAN_IS[+m-1].toLowerCase()+' '+y; };
+    const nf = (n, d) => { const x = Number(n)||0; return x.toLocaleString('is-IS', { minimumFractionDigits: d==null?0:d, maximumFractionDigits: d==null?2:d }); };
+    const parseIs = v => { const s = String(v==null?'':v).trim().replace(/\s/g,'').replace(/\.(?=\d{3}(\D|$))/g,'').replace(',', '.'); if(s==='') return null; const n = Number(s); return Number.isFinite(n) && n >= 0 ? n : null; };
+    const manudirTil = () => { const out=[]; for(let d=new Date(2025,8,1); ; d.setMonth(d.getMonth()+1)){ const ym=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); out.push(ym); if(ym>=NOW) break; } return out; };
+    let month = monthArg || state.ui.gr_month;
+    if(!/^\d{4}-\d{2}$/.test(month||'') || month < '2025-09') month = NOW;
+
+    const bg = document.createElement('div');
+    bg.className = 'gr-modal-bg boss nl-ef';
+    bg.innerHTML = `
+      <style>
+        .gr-modal-bg.boss.nl-ef .gr-modal{grid-template-columns:1fr;grid-template-rows:auto auto auto auto;grid-template-areas:"hd" "kpi" "form" "prev";overflow-y:auto}
+        .gr-modal-bg.boss.nl-ef .gb-kpi{margin:14px 18px 0}
+        .gr-modal-bg.boss.nl-ef .gr-form{max-height:none;overflow:visible;padding:14px 18px 0}
+        .gr-modal-bg.boss.nl-ef .gr-prev{padding:4px 18px 22px;overflow:visible}
+        .nl-ef .nle-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 10px}
+        .nl-ef .nle-bar select{height:34px;padding:0 8px;background:var(--input-bg,#f6f3ec);border:1px solid var(--edge,#c9c2b3);border-radius:4px;font:inherit;font-size:13px}
+        .nl-ef .nle-note{font-size:12.5px;line-height:1.5;margin:0 0 10px;padding:8px 11px;border:1px solid var(--line-2,#d9d3c6);border-radius:5px;background:linear-gradient(180deg,#fbf9f5,#f1ede4);color:var(--ink-2,#4a463f)}
+        .nl-ef .nle-warn{border-color:#d9b25a;background:linear-gradient(180deg,#fbf3d9,#f4e6b8);color:#3e2c06}
+        .nl-ef .nle-bad{border-color:#c0392b;background:linear-gradient(180deg,#fdecea,#f8d7d3);color:#7a1d14}
+        .nl-ef .nle-note button{margin-left:8px;height:26px;padding:0 10px;border:1px solid #8f6a1c;border-radius:4px;background:#fff;cursor:pointer;font:inherit;font-size:12px;font-weight:600}
+        .nl-ef .nle-tbl{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+        .nl-ef .nle-tbl th{font-family:var(--font-mono,ui-monospace,monospace);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted,#6f685c);font-weight:600;text-align:right;padding:4px 6px;border-bottom:1px solid var(--line-2,#d9d3c6);white-space:nowrap}
+        .nl-ef .nle-tbl th.l,.nl-ef .nle-tbl td.l{text-align:left}
+        .nl-ef .nle-tbl td{padding:4px 6px;border-bottom:1px solid var(--line,#e6e1d6);text-align:right;white-space:nowrap}
+        .nl-ef .nle-tbl td.mut{color:var(--muted,#6f685c)}
+        .nl-ef .nle-tbl td.now{color:#1d5fa8;font-weight:600}
+        .nl-ef .nle-tbl th.st,.nl-ef .nle-tbl td.st{background:rgba(201,165,74,.12)}
+        .nl-ef .nle-tbl input{width:84px;text-align:right;padding:4px 6px;font:inherit;font-variant-numeric:tabular-nums;background:var(--input-bg,#f6f3ec);border:1px solid var(--edge,#c9c2b3);border-radius:4px;box-shadow:var(--well-shadow,inset 0 2px 3px rgba(22,21,19,.12))}
+        .nl-ef .nle-tbl tr.nle-ed input{border-color:#8f6a1c;font-weight:700}
+        .nl-ef .nle-tbl tfoot td{font-weight:700;border-bottom:0;padding-top:7px}
+        .nl-ef .nle-link{border:0;background:transparent;color:#1d5fa8;cursor:pointer;font:inherit;font-size:12px;font-weight:600;padding:0 0 0 6px}
+        .nl-ef .nle-doc{background:#fff;border:1px solid var(--line-2,#d9d3c6);box-shadow:0 1px 2px rgba(22,21,19,.15),0 18px 36px -18px rgba(22,21,19,.5);padding:22px 24px;overflow-x:auto;font-family:Calibri,Arial,Helvetica,sans-serif;color:#111}
+        .nle-doc h1{font-size:24px;color:#1f5fa8;margin:0 0 4px;font-weight:700}
+        .nle-doc .nd-rule{border-top:2px solid #1f5fa8;margin:0 0 6px}
+        .nle-doc .nd-meta{display:flex;justify-content:space-between;font-size:11px;color:#8a6d1f;margin:0 0 10px}
+        .nle-doc .nd-meta span:last-child{color:#888;text-align:right}
+        .nle-doc .nd-sec{background:#d9d9d9;font-weight:700;font-size:14px;padding:5px 10px;margin:0 0 6px;display:inline-block;min-width:60%}
+        .nle-doc table{border-collapse:collapse;font-size:10px;white-space:nowrap}
+        .nle-doc th,.nle-doc td{border:1px solid #9a9a9a;padding:2px 4px;text-align:right}
+        .nle-doc th{background:#f2f2f2;font-weight:700;text-align:center}
+        .nle-doc td.l{text-align:left;color:#7a5a12}
+        .nle-doc td.hl,.nle-doc th.hl{background:#f2f2f2;font-weight:700;font-style:italic}
+        .nle-doc td.mn{background:#e7e7e7}
+        .nle-doc td.cur,.nle-doc th.cur{background:#fff8dc}
+        .nle-doc tfoot td{font-weight:700;border-top:2px solid #333}
+        .nle-doc .nd-tot{text-align:right;font-size:11px;margin-top:4px}
+        .nl-ef .rf-bg{position:fixed;inset:0;z-index:100001;background:rgba(10,10,9,.55);display:flex;align-items:center;justify-content:center;padding:16px}
+        .nl-ef .rf{width:min(1100px,97vw);max-height:90vh;display:flex;flex-direction:column;background:var(--bg,#f4f1ea);border:1px solid #000;border-radius:6px;box-shadow:0 30px 80px rgba(0,0,0,.55);overflow:hidden}
+        .nl-ef .rf-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 15px;background:linear-gradient(180deg,#1c1b18,#0a0a09);color:#e8e2d3}
+        .nl-ef .rf-h b{font-family:var(--font-display,Georgia,serif);font-size:17px;color:#f5d76e}
+        .nl-ef .rf-h select{height:30px;border-radius:4px;border:1px solid #3a372f;background:#161513;color:#e8e2d3;font:inherit;font-size:12.5px;padding:0 6px}
+        .nl-ef .rf-b{padding:12px 15px;overflow:auto;background:var(--card,#fff)}
+        .nl-ef .rf-b td.d{white-space:normal;max-width:420px;text-align:left;color:var(--ink-2,#4a463f)}
+        .nl-ef .rf-a{display:flex;gap:9px;align-items:center;padding:10px 15px;border-top:1px solid var(--line-2,#d9d3c6)}
+      </style>
+      <div class="gr-modal">
+        <header class="gb-head">
+          <div class="gb-title">Efnislisti · NLSH</div>
+          <span class="gb-plate">LANDSSPÍTALINN 5–6</span>
+          <div class="gb-meta" id="nle-meta">Nýi Landsspítalinn Hringbraut · ${escapeHtml(manLang(month))}</div>
+          <span class="gb-status unsaved" id="nle-hd-status"><i class="boss-led"></i><span id="nle-hd-status-t">sæki…</span></span>
+          <button class="gr-x" id="nle-close" type="button" title="Loka">×</button>
+        </header>
+        <div class="gb-kpi">
+          <div class="k"><span class="kl">Heildar lokanir</span><span class="kv" id="nle-k-st">—</span></div>
+          <div class="k"><span class="kl">Heilar</span><span class="kv" id="nle-k-h">—</span></div>
+          <div class="k"><span class="kl" id="nle-k-dl">Lokanir í mán.</span><span class="kv" id="nle-k-d">—</span></div>
+          <div class="k"><span class="kl">Án vsk</span><span class="kv" id="nle-k-net">—</span></div>
+          <div class="k total"><span class="kl" id="nle-k-tl">Upphæð í mánuði m. vsk</span><span class="kv" id="nle-k-t">—</span></div>
+        </div>
+        <div class="gr-form">
+          <div class="nle-bar">
+            <label style="font-size:12.5px;font-weight:600">Lok mánaðar <select id="nle-man">${manudirTil().map(m=>`<option value="${m}"${m===month?' selected':''}>${escapeHtml(manLang(m))}</option>`).join('')}</select></label>
+            <button class="gr-btn" id="nle-tillaga" type="button" title="Tæma reitina — tillagan (staða fyrri mánaðar + nýjar lokanir í Ajour) gildir">↺ Tillaga úr Ajour</button>
+            <button class="gr-btn" id="nle-metrar" type="button" title="2.11 — metrar úr ummálum Ajour-skráninga">📐 2.11 metrar</button>
+            <button class="gr-btn" id="nle-metraskra" type="button" title="Opna metraskrá stokka (Google Sheets) í aukaglugga">↗ Metraskrá stokka</button>
+          </div>
+          <div id="nle-notes"></div>
+          <div id="nle-ws"><div class="gr-loading">Sæki stöðu Landsspítalans…</div></div>
+          <div class="gr-actions">
+            <button class="gr-btn" id="nle-save" type="button" style="height:38px;padding:0 20px;border:1px solid #5a4410;border-top-color:#f7e6b8;border-bottom-color:#2e2004;border-radius:5px;background:var(--gold-face,linear-gradient(180deg,#f3dc95,#b8892e));color:#161513;font-weight:800">💾 Vista stöðu og drög</button>
+            <div class="gb-grp"><button class="gr-btn" id="nle-pdf" type="button">📄 Vista PDF</button><button class="gr-btn" id="nle-print" type="button">🖨 Prenta</button></div>
+            <div class="gb-more"><button class="gr-btn" id="nle-close2" type="button">Loka</button></div>
+            <span id="nle-st" style="font-size:12px;color:var(--muted);flex-basis:100%"></span>
+          </div>
+        </div>
+        <div class="gr-prev"><div class="nle-doc" id="nle-doc"></div></div>
+      </div>`;
+    document.body.appendChild(bg);
+    let dirty = false, D = null, DN = null;   // D = valinn mánuður, DN = staðan núna (líðandi mánuður)
+    const $ = id => document.getElementById(id);
+    const close = (force) => { if(dirty && force!==true && !confirm('Óvistaðar breytingar á stöðunni tapast ef þú lokar núna.\n\nLoka samt?')) return; bg.remove(); };
+    bg.addEventListener('click', e => { if(e.target===bg) close(); });
+    $('nle-close').onclick = () => close(); $('nle-close2').onclick = () => close();
+    $('nle-metraskra').onclick = () => { window.open(METRASKRA, 'nlsh-metraskra', 'popup,width=1280,height=860'); };
+
+    const draftOf = m => DRAFTS[`${wsName}|${m}`];
+    const sendur = d => !!(d && (d.payday_invoice_id || d.status === 'invoiced'));
+
+    // Líkanið: mánuðir úr þjóninum; VALINN mánuður endurreiknaður úr reitunum.
+    const model = () => {
+      const S = D.skyrsla, man = S.manudir, valinn = man[man.length-1], fyrri = man.length>1 ? man[man.length-2] : null;
+      const rows = S.verk.map((v,i) => {
+        const l = valinn.lines[i], p = fyrri ? fyrri.lines[i] : { stada:0, heilar:0 };
+        const inp = $('nle-in-'+i); const sett = inp ? parseIs(inp.value) : (l.lokatala);
+        const st = sett != null ? sett : l.tillaga;
+        const stud = l.studull != null ? l.studull : (v.full ? 1 : 0.5);
+        const delta = Math.round((st - p.stada)*1000)/1000, dH = Math.round(delta*stud*1000)/1000;
+        const heilar = Math.round((p.heilar + dH)*1000)/1000;
+        const nowL = DN ? DN.skyrsla.manudir[DN.skyrsla.manudir.length-1].lines[i] : null;
+        return { v, i, l, p, sett, st, stud, delta, dH, heilar, heild: Math.round(heilar*v.rate), um: Math.round(dH*v.rate), now: nowL ? nowL.stada : null };
+      });
+      const T = rows.reduce((a,r)=>{ a.st+=r.st; a.h+=r.heilar; a.d+=r.delta; a.dH+=r.dH; a.heild+=r.heild; a.um+=r.um; return a; }, { st:0, h:0, d:0, dH:0, heild:0, um:0 });
+      return { S, man, valinn, fyrri, rows, T };
+    };
+
+    const renderNotes = () => {
+      const M = model(), out = [];
+      if(M.fyrri && !M.fyrri.vistad) out.push(`<div class="nle-note nle-warn"><b>${escapeHtml(manLang(M.fyrri.month))}</b> hefur engar lokatölur vistaðar — tillaga úr Ajour notuð sem upphafsstaða mánaðarins.<button type="button" data-nle-goto="${M.fyrri.month}">Opna ${escapeHtml(manLang(M.fyrri.month))}</button></div>`);
+      const d = draftOf(month);
+      if(sendur(d)){
+        const munur = M.T.um - Math.round(Number(d.total_m_vsk)||0);
+        out.push(`<div class="nle-note ${Math.abs(munur)>500?'nle-bad':''}">Reikningur fyrir ${escapeHtml(manLang(month))} er þegar sendur (${fmt(d.total_m_vsk)} kr m. vsk). <b>Vista uppfærir aðeins stöðuna í lok mánaðar</b>, ekki sendu drögin.${Math.abs(munur)>500?` Reiknað eftir reglunni: <b>${fmt(M.T.um)} kr</b> — munur <b>${munur>0?'+':''}${fmt(munur)} kr</b>.`:''}</div>`);
+      }
+      if(month >= NOW) out.push(`<div class="nle-note">${escapeHtml(manLang(month))} er ekki búinn — staðan er bráðabirgða þar til mánuðurinn klárast.</div>`);
+      const rf = D.raufar || {}; const ol = rf.olesin || 0;
+      if(ol) out.push(`<div class="nle-note">2.11: ${ol} kláruð skráning${ol===1?'':'ar'} án lesanlegs ummáls — opnaðu <b>📐 2.11 metrar</b> og settu metrana inn.</div>`);
+      $('nle-notes').innerHTML = out.join('');
+      $('nle-notes').querySelectorAll('[data-nle-goto]').forEach(b => b.onclick = () => skiptaMan(b.dataset.nleGoto));
+    };
+
+    const renderWs = () => {
+      const M = model(), fy = M.fyrri ? manNafn(M.fyrri.month) : '—';
+      $('nle-ws').innerHTML = `<table class="nle-tbl">
+        <thead><tr><th class="l">Verk</th><th class="l">Verkliður</th><th>Verð/heild</th><th>Staða ${escapeHtml(fy)}</th><th title="Nýjar lokanir í Ajour í mánuðinum (2.11 í metrum)">+ Ajour</th><th class="st">Staða í lok ${escapeHtml(manNafn(month))}</th><th title="Staðan eins og hún er í dag (${escapeHtml(manLang(NOW))})">Staða núna</th><th>Δ stakar</th><th>Δ heilar</th><th>Upphæð í ${escapeHtml(manNafn(month))}</th></tr></thead>
+        <tbody>${M.rows.map(r => `<tr class="${r.sett!=null&&r.sett!==r.l.tillaga?'nle-ed':''}">
+          <td class="l">${escapeHtml(r.v.verk_nr)}</td>
+          <td class="l">${escapeHtml(r.v.label)}${r.stud===1?' <span style="color:#8f6a1c;font-size:10.5px">1=1</span>':''}${r.v.metrar?` <button type="button" class="nle-link" data-nle-metrar="1" title="Metrar úr ummálum Ajour-skráninga">📐 metrar</button>`:''}</td>
+          <td>${fmt(r.v.rate)}</td>
+          <td class="mut">${nf(r.p.stada)}</td>
+          <td class="mut">${r.l.ny_ajour?'+'+nf(r.l.ny_ajour):'·'}</td>
+          <td class="st"><input id="nle-in-${r.i}" inputmode="decimal" value="${r.l.lokatala!=null?String(r.l.lokatala).replace('.',','):''}" placeholder="${escapeAttr(nf(r.l.tillaga))}" title="Tillaga ${escapeAttr(nf(r.l.tillaga))} = ${escapeAttr(nf(r.p.stada))} + ${escapeAttr(nf(r.l.ny_ajour||0))} nýjar í Ajour — auður reitur = tillagan gildir"></td>
+          <td class="now">${r.now!=null?nf(r.now):'—'}</td>
+          <td data-nle-d="${r.i}">${r.delta?(r.delta>0?'+':'')+nf(r.delta):'·'}</td>
+          <td data-nle-dh="${r.i}">${r.dH?nf(r.dH,1):'·'}</td>
+          <td data-nle-um="${r.i}">${r.um?fmt(r.um):'·'}</td></tr>`).join('')}</tbody>
+        <tfoot><tr><td class="l" colspan="3">Samtals</td><td class="mut">${nf(M.rows.reduce((a,r)=>a+r.p.stada,0))}</td><td class="mut">${nf(M.rows.reduce((a,r)=>a+(r.l.ny_ajour||0),0))}</td><td class="st" id="nle-f-st"></td><td class="now">${DN?nf(M.rows.reduce((a,r)=>a+(r.now||0),0)):'—'}</td><td id="nle-f-d"></td><td id="nle-f-dh"></td><td id="nle-f-um"></td></tr></tfoot></table>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:6px">${escapeHtml((M.S.reglur||''))} Staða núna = ${escapeHtml(manLang(NOW))} (lifandi úr Ajour). Gula dálkinn festir Vista sem stöðu í lok mánaðar.</div>`;
+      M.rows.forEach(r => { const inp = $('nle-in-'+r.i); if(inp) inp.addEventListener('input', () => { dirty = true; $('nle-hd-status-t').textContent='óvistað'; $('nle-hd-status').classList.add('unsaved'); refresh(); }); });
+      $('nle-ws').querySelectorAll('[data-nle-metrar]').forEach(b => b.onclick = () => raufarGluggi());
+    };
+
+    const docHtml = (M) => {
+      const months = M.man;
+      const head1 = `<tr><th rowspan="2">Verk nr.</th><th rowspan="2">Verkliðir</th><th rowspan="2">Fjöldi</th><th rowspan="2">Upphæð<br>m vsk</th><th colspan="2" class="hl">Heildar lokanir<br>Stakar og heilar</th>${months.map(m=>`<th colspan="2" class="${m.month===month?'cur':''}">${escapeHtml(manNafn(m.month))}</th>`).join('')}<th rowspan="2">Upphæð Heild<br>m vsk</th><th rowspan="2" class="cur">Upphæð í ${escapeHtml(MAN_IS[+month.split('-')[1]-1].toLowerCase())}<br>með vsk</th></tr>`;
+      const head2 = `<tr><th class="hl">Stakar</th><th class="hl">heilar</th>${months.map(m=>`<th class="${m.month===month?'cur':''}">st.</th><th class="${m.month===month?'cur':''}">heil.</th>`).join('')}</tr>`;
+      const cell = (x, d) => x ? nf(x, d) : (x===0 ? '0' : '');
+      const body = M.rows.map(r => {
+        const mc = months.map((m, k) => {
+          const isCur = k === months.length-1;
+          const dl = isCur ? r.delta : m.lines[r.i].delta, dh = isCur ? r.dH : m.lines[r.i].delta_heilar;
+          return `<td class="mn ${isCur?'cur':''}">${dl?nf(dl):''}</td><td class="${isCur?'cur':''}">${dh?nf(dh,1):''}</td>`;
+        }).join('');
+        return `<tr><td>${escapeHtml(r.v.verk_nr)}</td><td class="l">${escapeHtml(r.v.label)}</td><td>${r.v.fjoldi!=null?fmt(r.v.fjoldi):''}</td><td>${fmt(r.v.rate)}</td><td class="hl">${nf(r.st)}</td><td class="hl">${nf(r.heilar,1)}</td>${mc}<td>${fmt(r.heild)}</td><td class="cur"><b>${fmt(r.um)}</b></td></tr>`;
+      }).join('');
+      const footMan = months.map((m, k) => { const isCur = k===months.length-1; const t = isCur ? { delta:M.T.d, dH:M.T.dH } : { delta:m.totals.delta, dH:m.lines.reduce((a,l)=>a+l.delta_heilar,0) }; return `<td class="mn ${isCur?'cur':''}">${nf(t.delta,1)}</td><td class="${isCur?'cur':''}">${nf(t.dH,1)}</td>`; }).join('');
+      const [yy, mm] = month.split('-').map(Number); const sidasti = new Date(yy, mm, 0).getDate();
+      return `<h1>Nýji Landsspítalinn Hringbraut</h1><div class="nd-rule"></div>
+        <div class="nd-meta"><span>Landsspítalinn</span><span>5-6 hæð</span><span>Brunahólf ehf<br>${String(sidasti).padStart(2,'0')}/${String(mm).padStart(2,'0')}/${yy}</span></div>
+        <div class="nd-sec">1 Landsspítalinn 5-6 hæð Samtals kláraðir verkþættir per mánuð</div>
+        <table><thead>${head1}${head2}</thead><tbody>${body}</tbody>
+        <tfoot><tr><td></td><td class="l">Samtals Verk + Metrar</td><td></td><td></td><td class="hl">${nf(M.T.st)}</td><td class="hl">${nf(M.T.h,1)}</td>${footMan}<td>${fmt(M.T.heild)}</td><td class="cur">${fmt(M.T.um)}</td></tr></tfoot></table>
+        <div class="nd-tot"><b>${fmt(M.T.um)}</b> M/vsk &nbsp;·&nbsp; ${fmt(Math.round(M.T.um/1.24))} án/Vsk</div>`;
+    };
+
+    const refresh = () => {
+      const M = model();
+      M.rows.forEach(r => {
+        const set = (k, v) => { const e = bg.querySelector(`[data-nle-${k}="${r.i}"]`); if(e) e.textContent = v; };
+        set('d', r.delta?(r.delta>0?'+':'')+nf(r.delta):'·'); set('dh', r.dH?nf(r.dH,1):'·'); set('um', r.um?fmt(r.um):'·');
+        const tr = $('nle-in-'+r.i)?.closest('tr'); if(tr) tr.classList.toggle('nle-ed', r.sett!=null && r.sett!==r.l.tillaga);
+      });
+      const s = (id, v) => { const e = $(id); if(e) e.textContent = v; };
+      s('nle-f-st', nf(M.T.st)); s('nle-f-d', (M.T.d>0?'+':'')+nf(M.T.d)); s('nle-f-dh', nf(M.T.dH,1)); s('nle-f-um', fmt(M.T.um));
+      s('nle-k-st', nf(M.T.st)); s('nle-k-h', nf(M.T.h,1)); s('nle-k-dl', 'Lokanir í '+manNafn(month)); s('nle-k-d', (M.T.d>0?'+':'')+nf(M.T.d));
+      s('nle-k-net', fmt(Math.round(M.T.um/1.24))); s('nle-k-tl', 'Upphæð í '+manNafn(month)+' m. vsk'); s('nle-k-t', fmt(M.T.um)+' kr');
+      $('nle-doc').innerHTML = docHtml(M);
+      return M;
+    };
+
+    async function hlada(){
+      $('nle-st').textContent = '';
+      $('nle-meta').textContent = 'Nýi Landsspítalinn Hringbraut · ' + manLang(month);
+      $('nle-ws').innerHTML = '<div class="gr-loading">Sæki stöðu Landsspítalans…</div>';
+      try{
+        const sok = async m => { const r = await fetch('/api/nlsh-stada?til='+encodeURIComponent(m)); const j = await r.json(); if(!r.ok || j.error) throw new Error(j.error || ('HTTP '+r.status)); return j; };
+        [D, DN] = await Promise.all([sok(month), month===NOW ? null : sok(NOW)]);
+        if(!DN) DN = D;
+      }catch(e){ $('nle-ws').innerHTML = `<div class="nle-note nle-bad">Gat ekki sótt stöðuna (${escapeHtml(e.message||String(e))}).</div>`; return; }
+      dirty = false;
+      const v = D.vistad_at ? new Date(D.vistad_at) : null;
+      $('nle-hd-status-t').textContent = v && !isNaN(v) ? ('staða vistuð '+String(v.getDate()).padStart(2,'0')+'/'+String(v.getMonth()+1).padStart(2,'0')+' '+String(v.getHours()).padStart(2,'0')+':'+String(v.getMinutes()).padStart(2,'0')) : 'staða óvistuð';
+      $('nle-hd-status').classList.toggle('unsaved', !v);
+      renderNotes(); renderWs(); refresh();
+    }
+    const skiptaMan = (m) => { if(dirty && !confirm('Óvistaðar breytingar tapast ef þú skiptir um mánuð. Halda áfram?')) { $('nle-man').value = month; return; } month = m; $('nle-man').value = m; hlada(); };
+    $('nle-man').onchange = () => skiptaMan($('nle-man').value);
+    $('nle-tillaga').onclick = () => { if(!D) return; D.skyrsla.verk.forEach((v,i) => { const e = $('nle-in-'+i); if(e) e.value = ''; }); dirty = true; $('nle-hd-status-t').textContent='óvistað'; refresh(); $('nle-st').textContent = 'Reitirnir tæmdir — tillagan úr Ajour gildir. Ýttu á Vista til að festa hana.'; };
+
+    // 2.11 — aukagluggi: metrar per Ajour-skráningu úr ummálinu í Description, leiðréttanlegt.
+    function raufarGluggi(){
+      if(!D) return;
+      const rf = document.createElement('div'); rf.className = 'rf-bg'; bg.appendChild(rf);
+      let sia = month;
+      const teikna = () => {
+        const R = (D.raufar && D.raufar.rows) || [];
+        const perMan = (D.raufar && D.raufar.per_man) || {};
+        const listi = R.filter(r => sia === 'allt' ? true : r.man === sia);
+        const sum = listi.filter(r=>r.done).reduce((a,r)=>a+(r.metrar||0),0);
+        const manOpts = Object.keys(perMan).sort().reverse();
+        rf.innerHTML = `<div class="rf">
+          <div class="rf-h"><b>2.11 · Frágangur raufa meðfram köntuðum stokkum</b><span style="font-size:12px;color:#b9b2a3">metrar = ummál úr Ajour (L+L+B+B)/1000</span>
+            <select id="rf-sia" style="margin-left:auto"><option value="allt"${sia==='allt'?' selected':''}>Allir mánuðir</option>${[...new Set([month, ...manOpts])].sort().reverse().map(m=>`<option value="${m}"${m===sia?' selected':''}>${escapeHtml(manLang(m))}${perMan[m]!=null?' · '+nf(perMan[m])+' m':''}</option>`).join('')}</select></div>
+          <div class="rf-b"><table class="nle-tbl"><thead><tr><th class="l">Nr.</th><th class="l">Lokið</th><th class="l">Lýsing í Ajour</th><th>Lesið</th><th>Metrar</th></tr></thead><tbody>
+            ${listi.map(r => `<tr><td class="l">${escapeHtml(r.serial_number)}</td><td class="l mut">${r.dags?escapeHtml(dmy(String(r.dags).slice(0,10))):'—'}${r.done?'':' · <i>ekki lokið</i>'}</td>
+              <td class="d">${escapeHtml(r.lysing||'— engin lýsing —')}</td>
+              <td class="mut">${r.lesid?(r.lesid.lengd?escapeHtml(r.lesid.lengd+'×'+r.lesid.breidd)+' → ':'')+nf(r.lesid.metrar)+' m':'<span style="color:#c0392b">ólæsilegt</span>'}</td>
+              <td><input data-rf-sn="${escapeAttr(r.serial_number)}" inputmode="decimal" value="${r.yfirskrift!=null?String(r.yfirskrift).replace('.',','):''}" placeholder="${r.lesid?escapeAttr(nf(r.lesid.metrar)):'m'}" title="Auður reitur = lesið úr lýsingunni"></td></tr>`).join('') || '<tr><td colspan="5" class="l mut">Engar 2.11-skráningar í þessum mánuði.</td></tr>'}
+          </tbody><tfoot><tr><td class="l" colspan="4">Samtals (kláraðar)</td><td>${nf(sum)} m</td></tr></tfoot></table></div>
+          <div class="rf-a"><button class="gr-btn" id="rf-skra" type="button">↗ Metraskrá stokka (Google Sheets)</button><span id="rf-st" style="font-size:12px;color:var(--muted)"></span><button class="gr-btn" id="rf-loka" type="button" style="margin-left:auto">Loka</button></div></div>`;
+        rf.querySelector('#rf-sia').onchange = e => { sia = e.target.value; teikna(); };
+        rf.querySelector('#rf-skra').onclick = () => window.open(METRASKRA, 'nlsh-metraskra', 'popup,width=1280,height=860');
+        rf.querySelector('#rf-loka').onclick = () => { rf.remove(); renderNotes(); renderWs(); refresh(); };
+        rf.querySelectorAll('[data-rf-sn]').forEach(inp => inp.addEventListener('change', async () => {
+          const st = rf.querySelector('#rf-st'); st.textContent = 'Vistar…';
+          try{
+            const r = await fetch('/api/nlsh-stada', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ action:'raufar', serial_number: inp.dataset.rfSn, metrar: parseIs(inp.value), month }) });
+            const j = await r.json(); if(!r.ok || j.error) throw new Error(j.error || ('HTTP '+r.status));
+            D = j; st.textContent = '✓ Vistað — 2.11 endurreiknað'; teikna();
+          }catch(e){ st.textContent = '✗ '+(e.message||e); }
+        }));
+      };
+      rf.addEventListener('click', e => { if(e.target === rf){ rf.remove(); renderNotes(); renderWs(); refresh(); } });
+      teikna();
+    }
+    $('nle-metrar').onclick = () => raufarGluggi();
+
+    // Vista: festir stöðu mánaðarins (allar línur — sýnda talan) + drög mánaðarins (nema sendur reikningur).
+    $('nle-save').onclick = async () => {
+      if(!D) return;
+      const M = model(), $st = $('nle-st'); $st.textContent = 'Vistar stöðu…';
+      try{
+        const r = await fetch('/api/nlsh-stada', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ month, lines: M.rows.map(x => ({ verk_nr: x.v.verk_nr, lokatala: x.st })) }) });
+        const j = await r.json(); if(!r.ok || j.error) throw new Error(j.error || ('HTTP '+r.status));
+        D = j; if(month === NOW) DN = j;
+      }catch(e){ $st.textContent = '✗ Staða vistaðist ekki: '+(e.message||e); return; }
+      const M2 = model(), cur = draftOf(month);
+      if(sendur(cur)){ dirty = false; $st.textContent = '✓ Staða í lok '+manLang(month)+' vistuð · drögin óbreytt (reikningur þegar sendur)'; renderNotes(); renderWs(); refresh(); return; }
+      $st.textContent = 'Vistar drög…';
+      try{
+        const total = M2.T.um, net = Math.round(total/1.24);
+        const rr = await fetch('/api/invoice-drafts', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+          id: cur?.id || undefined, worksite_name: wsName, work_month: month,
+          customer_name: cur?.customer_name || 'ÞG verktakar ehf.', kennitala: cur?.kennitala || '581198-2569',
+          source: 'ajour', hours_dagvinna: 0, hours_eftirvinna: 0, rate_dagvinna: 0, rate_eftirvinna: 0,
+          materials_jsonb: M2.rows.filter(x => x.dH).map(x => ({ nlsh:true, verk_nr:x.v.verk_nr, label:x.v.verk_nr+' '+x.v.label, qty:x.dH, price:Math.round(x.v.rate/1.24*100)/100, total:Math.round(x.um/1.24), rate_m_vsk:x.v.rate, stakar:x.delta })),
+          materials_total: 0, net_an_vsk: net, vsk_amount: total - net, total_m_vsk: total, fixed_total: total || null, discount_pct: 0,
+          status: cur?.status || 'draft', updated_by: 'efnislisti-nlsh', expected_updated_at: cur?.updated_at || null,
+        }) });
+        if(rr.status === 409){ $st.textContent = 'Staða vistuð · drögin EKKI — þeim var breytt á annarri vél. Lokaðu og opnaðu aftur.'; return; }
+        if(!rr.ok) throw new Error('HTTP '+rr.status);
+        DRAFTS[`${wsName}|${month}`] = await rr.json();
+        dirty = false; renderList();
+        $st.textContent = '✓ Staða í lok '+manLang(month)+' vistuð · drög '+fmt(total)+' kr m. vsk — birtast í Kröfu yfirliti undir Ósendar';
+        renderNotes(); renderWs(); refresh();
+      }catch(e){ $st.textContent = '✗ Staðan vistaðist en drögin ekki: '+(e.message||e); }
+    };
+    $('nle-pdf').onclick = async () => {
+      if(!D) return;
+      const btn = $('nle-pdf'), old = btn.textContent; btn.textContent = '⏳ Bý til PDF…'; btn.disabled = true;
+      try{
+        const res = await buildAndSaveNlshEfnislistiPdf(wsName, month, model(), { manNafn, manLang });
+        $('nle-st').innerHTML = `✓ PDF vistað — <a href="${escapeAttr(res.webViewLink)}" target="_blank" rel="noopener">opna</a> · <a href="${escapeAttr(res.downloadUrl)}" target="_blank" rel="noopener">sækja</a>`;
+        if(typeof window.__grReloadPdfList==='function') window.__grReloadPdfList();
+      }catch(e){ $('nle-st').textContent = '✗ '+(e.message||e); alert('Gat ekki vistað PDF: '+(e.message||e)); }
+      finally{ btn.textContent = old; btn.disabled = false; }
+    };
+    $('nle-print').onclick = () => {
+      if(!D) return;
+      const w = window.open('', '_blank'); if(!w){ alert('Leyfðu sprettiglugga til að prenta.'); return; }
+      const css = [...bg.querySelectorAll('style')].map(s => s.textContent).join('\n');
+      w.document.write(`<!DOCTYPE html><html lang="is"><head><meta charset="utf-8"><title>${escapeHtml(bhPdfName('Efnislisti', { ws: wsName, month }).replace(/\.pdf$/,''))}</title>
+        <style>${css}\n@page{size:A4 landscape;margin:8mm}body{margin:0}.nle-doc{border:0;box-shadow:none;padding:0;overflow:visible}.nle-doc table{font-size:8.5px}</style></head>
+        <body><div class="nle-doc">${docHtml(model())}</div><script>window.onload=function(){window.print();}<\/script></body></html>`);
+      w.document.close();
+    };
+    hlada();
+  }
+
   // ===== Gata (Ajour) uppgjör =====
   async function openGata(name){
     if(isHeklu(name)) return openHeklureitur(name);
+    if(isNlsh(name)) return openNlshEfnislisti(name);   // 06.10.2026 — gamla heildar-glugganum hér að neðan er ekki lengur náð fyrir NLSH
     const month = state.ui.gr_month;
     const isNLSH = /landssp[ií]tal|nlsh/i.test(name);
     const bg = document.createElement('div');

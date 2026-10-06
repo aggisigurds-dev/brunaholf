@@ -43,7 +43,7 @@ exports.handler = async (event) => {
   try {
     const token = await freshAccessToken();
     const DRAWING_ALIASES = ['DrawingName', 'Drawing/drawingname', 'drawingname', 'Drawing', 'DrawingFileName', 'RegistrationDrawing', 'Tegning'];
-    const SUBJECT_ALIASES = ['Subject', 'RegistrationSubject', 'Emne'];
+    const SUBJECT_ALIASES = ['Subject', 'RegistrationSubject', 'Emne', 'Description'];   // Description: ummál raufa NLSH 2.11 (06.10.2026)
 
     // ── Umferð 1: dagsetningaröð per dálk + prófun — EKKERT skrifað ──────────────
     let header = null, idx = {};

@@ -27,7 +27,7 @@ const NLSH_TIMAVERA = ['Landsspitalinn', 'Landsspítalinn', 'NLSH 5-6. hæð', '
 // Contract verkliðir: rate per heild (m. vsk) + target Fjöldi (budgeted stakar).
 // VERK (verð, target, full, kortlagning) er EIN tafla í nlsh-uppgjor.js — afritið sem
 // var hér (með full á 1.3 án rökstuðnings) er farið. Sjá sönnun reglunnar þar.
-const { VERK } = require('./nlsh-uppgjor.js');
+const { VERK, studull } = require('./nlsh-uppgjor.js');
 
 // Staff number → display name. Tímavera first-name(s) → number for joining hours.
 const STAFF = {
@@ -126,16 +126,18 @@ exports.handler = async (event) => {
 
   // ---- byVerk (cumulative contract status) ----
   const verkAgg = new Map(); // verk_nr -> stakar
+  const verkHeil = new Map(); // verk_nr -> heilar (stuðull mánaðarins per skráningu — gildisdagar í VERK)
   let unmappedStakar = 0;
-  for (const { group } of serialInfo.values()) {
+  for (const { group, date } of serialInfo.values()) {
     const v = verkOf(group);
     if (!v) { unmappedStakar++; continue; }
     verkAgg.set(v.verk_nr, (verkAgg.get(v.verk_nr) || 0) + 1);
+    verkHeil.set(v.verk_nr, (verkHeil.get(v.verk_nr) || 0) + studull(v, monthOf(date)));
   }
   const byVerk = VERK.map(v => {
     const override = overrides[v.verk_nr] || 0;
     const stakar = (verkAgg.get(v.verk_nr) || 0) + override;
-    const heilar = v.full ? stakar : stakar / 2;
+    const heilar = (verkHeil.get(v.verk_nr) || 0) + override * studull(v, null);
     // Samningsmarkmiðið (target) er PER TÍMABIL — þegar búið fer yfir það þýðir
     // það að nýtt tímabil er hafið, ekki að markmiðið sé "yfirfyllt" að eilífu.
     // Sýna þrepað markmið (target × tier) og % miðað við ÞAÐ (ósk Agnars:
@@ -152,9 +154,9 @@ exports.handler = async (event) => {
   const totalHoles = serialInfo.size;
 
   // ---- amount for a single serial (its share of revenue) ----
-  function serialAmount(group) {
+  function serialAmount(group, ym) {
     const v = verkOf(group); if (!v) return 0;
-    return (v.full ? 1 : 0.5) * v.rate; // 1 staka = (full?1:0.5) heild × rate
+    return studull(v, ym) * v.rate; // 1 staka = (1 eða 0,5) heild × rate — gildisdagar í VERK
   }
 
   // ---- byMonth (holes + revenue + hours) ----
@@ -162,7 +164,7 @@ exports.handler = async (event) => {
   for (const { group, date } of serialInfo.values()) {
     const ym = monthOf(date); if (!ym) continue;
     (months[ym] || (months[ym] = { holes: 0, revenue: 0 }));
-    months[ym].holes++; months[ym].revenue += serialAmount(group);
+    months[ym].holes++; months[ym].revenue += serialAmount(group, ym);
   }
   const hoursByMonth = {}, hoursByWeek = {}, hoursByNr = {};
   for (const h of hours) {
@@ -185,7 +187,7 @@ exports.handler = async (event) => {
   for (const { group, date } of serialInfo.values()) {
     if (!date) continue; const wk = isoWeek(date);
     (weeks[wk] || (weeks[wk] = { holes: 0, revenue: 0 }));
-    weeks[wk].holes++; weeks[wk].revenue += serialAmount(group);
+    weeks[wk].holes++; weeks[wk].revenue += serialAmount(group, monthOf(date));
   }
   const allWeeks = [...new Set([...Object.keys(weeks), ...Object.keys(hoursByWeek)])].sort();
   let cumH = 0, cumR = 0;
@@ -207,7 +209,7 @@ exports.handler = async (event) => {
     if (!date) continue;
     const d = String(date).slice(0, 10);
     dayHoles[d] = (dayHoles[d] || 0) + 1;
-    dayRev[d] = (dayRev[d] || 0) + serialAmount(group);
+    dayRev[d] = (dayRev[d] || 0) + serialAmount(group, monthOf(d));
   }
   const [dayFrom, dayTo] = dayRangeBounds(qs.range);
   const byDay = [];

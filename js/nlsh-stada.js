@@ -63,8 +63,9 @@
     const T={stada:0,heilar:0,upphaed:0,delta:0,upphaed_man:0};
     document.querySelectorAll('#nl-stada-t tr[data-verk]').forEach(tr=>{
       const i=tr.querySelector('input.nl-lok'); const lok=lokGildi(i); const ajour=+i.dataset.ajour; const st=lok==null?ajour:lok;
-      const full=tr.dataset.full==='1', metrar=tr.dataset.metrar==='1', rate=+tr.dataset.rate, prevSt=+tr.dataset.prevstada, prevH=+tr.dataset.prevheilar;
-      const heilar=full?st:st/2, upphaed=Math.round(heilar*rate), delta=st-prevSt, dH=heilar-prevH, um=Math.round(dH*rate);
+      // Heilar safnast: fyrri heilar + Δ × stuðull mánaðarins (gólf/hæðarskil 1, annað ½ — gildisdagar í VERK)
+      const stud=+tr.dataset.studull||0.5, rate=+tr.dataset.rate, prevSt=+tr.dataset.prevstada, prevH=+tr.dataset.prevheilar;
+      const delta=Math.round((st-prevSt)*1000)/1000, dH=delta*stud, heilar=prevH+dH, upphaed=Math.round(heilar*rate), um=Math.round(dH*rate);
       tr.querySelector('.c-heilar').textContent=nf1(heilar); tr.querySelector('.c-upphaed').textContent=kr(upphaed);
       tr.querySelector('.c-delta').textContent=(delta>=0?'+':'')+nf1(delta); tr.querySelector('.c-um').textContent=kr(um);
       tr.classList.toggle('nl-diff', lok!=null && lok!==ajour);
@@ -108,7 +109,7 @@
     const hdrMan=man.slice(0,-1).map(m=>`<th title="Lokað í ${esc(mLabel(m.month))}${m.vistad?' · lokatölur vistaðar':' · Ajour'}">${esc(mStutt(m.month))}${m.vistad?' ●':''}</th>`).join('');
     const rows=valinn.lines.map((l,i)=>{ const v=verkMap[l.verk_nr]; const prev=fyrri?fyrri.lines[i]:{stada:0,heilar:0};
       const manCells=man.slice(0,-1).map(m=>{ const x=m.lines[i]; return `<td class="c-man${x.lokatala!=null?' c-lok':''}" title="staða ${nf1(x.stada)}${x.lokatala!=null?' (lokatala)':' (Ajour)'}">${x.delta?((x.delta>0?'+':'')+nf1(x.delta)):'<span style=color:#c8ccd2>·</span>'}</td>`; }).join('');
-      return `<tr data-verk="${esc(l.verk_nr)}" data-rate="${v.rate}" data-full="${v.full?1:0}" data-metrar="${v.metrar?1:0}" data-prevstada="${prev.stada}" data-prevheilar="${prev.heilar}">
+      return `<tr data-verk="${esc(l.verk_nr)}" data-rate="${v.rate}" data-studull="${v.studull!=null?v.studull:(v.full?1:0.5)}" data-metrar="${v.metrar?1:0}" data-prevstada="${prev.stada}" data-prevheilar="${prev.heilar}">
         <td>${esc(l.verk_nr)}</td><td style="text-align:left">${esc(v.label)}${v.metrar?' <span class="nl-note">(m)</span>':''}${v.full?' <span class="nl-note">1=1</span>':''}</td>
         <td>${v.fjoldi==null?'—':num(v.fjoldi)}</td><td>${kr(v.rate)}</td>${manCells}
         <td class="c-stada"><input class="nl-lok" inputmode="decimal" data-verk="${esc(l.verk_nr)}" data-ajour="${l.tillaga!=null?l.tillaga:l.ajour_cum}" value="${l.lokatala==null?'':l.lokatala}" placeholder="${nf1(l.tillaga!=null?l.tillaga:l.ajour_cum)}" title="Tillaga ${nf1(l.tillaga!=null?l.tillaga:l.ajour_cum)} = staða fyrri mánaðar + ${nf1(l.ny_ajour||0)} nýjar í Ajour (Ajour alls: ${nf1(l.ajour_cum)}) — auður reitur = tillagan gildir"></td>

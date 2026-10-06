@@ -31,9 +31,15 @@ const NLSH_NAMES = ['NLSH 5-6. hæð', 'NLSH 5-6 hæð', 'Landsspítalinn', 'Lan
 //   2.2 168 → 168 og 1.2 743 → 743 eru 1=1; 1.3 1 → 0,5, 2.11 206 → 103, 3.1 470 → 235
 //   eru helminguð. full á 1.3 var aldrei rétt (kom með 8e842a2 án rökstuðnings;
 //   calibraða commit-ið e232160 flaggaði aðeins 1.2 og hitti apríl-reikninginn á 0,7%).
+// REGLA AGNARS 06.10.2026: „gólf/hæðarskil jafngildir 1 en ekki hálfur" — þéttað báðum megin,
+// fullt verð; ALLT annað helmingað („eins og alls staðar annars staðar"). Gildisdagar halda
+// sögunni eins og hún var rukkuð: 2.2 var rukkað heilt til og með júlí 2026 (júlí 139 → 139)
+// og helmingað frá ágúst (ágústblaðið 80 → 40); 1.3 var helmingað til júlí (1 → 0,5).
+//   fullTil = fullt verð til og með þessum mánuði, helmingað eftir það
+//   fullFra = helmingað fyrir þennan mánuð, fullt frá og með honum
 const VERK = [
   { verk_nr: '2.1',  label: 'Ø20-34 plaströr',                rate: 7166,  target: 600,  test: /plast.*20-34/i },
-  { verk_nr: '2.2',  label: '(35-50) plaströr m eldv. kraga', rate: 19532, target: 600,  test: /plast.*35-50/i, full: true },
+  { verk_nr: '2.2',  label: '(35-50) plaströr m eldv. kraga', rate: 19532, target: 600,  test: /plast.*35-50/i, full: true, fullTil: '2026-07' },
   { verk_nr: '2.3',  label: 'Ø75-100 plaströr',               rate: 23720, target: 100,  test: /plast.*75-100/i },
   { verk_nr: '2.4',  label: 'Ø15-35 stálrör',                 rate: 7166,  target: 800,  test: /st[áa]l.*15-35/i },
   { verk_nr: '2.5',  label: 'Ø40-50 stálrör',                 rate: 7366,  target: 1100, test: /st[áa]l.*40-50/i },
@@ -43,11 +49,20 @@ const VERK = [
   { verk_nr: '2.9',  label: 'Ø200-315 loftstokkar',           rate: 23064, target: 600,  test: /loft.*200-315/i },
   { verk_nr: '2.10', label: 'Ø400-630 loftstokkar',           rate: 46128, target: 109,  test: /loft.*400-630/i },
   { verk_nr: '2.11', label: 'Frágangur raufa m. stokkum (m)', rate: 11532, target: 102,  test: /^raufar/i, metrar: true },
-  { verk_nr: '1.1',  label: 'Ø100-150 Gólf/Hæðarskil',        rate: 38806, target: 50,   test: /g[óo]lf.*100-150/i },
+  { verk_nr: '1.1',  label: 'Ø100-150 Gólf/Hæðarskil',        rate: 38806, target: 50,   test: /g[óo]lf.*100-150/i, full: true },
   { verk_nr: '1.2',  label: 'Ø160-200 Gólf/Hæðarskil',        rate: 56224, target: 100,  test: /g[óo]lf.*160-200/i, full: true },
-  { verk_nr: '1.3',  label: 'Ø210-300 Gólf/Hæðarskil',        rate: 65116, target: 25,   test: /g[óo]lf.*210-300/i },
+  { verk_nr: '1.3',  label: 'Ø210-300 Gólf/Hæðarskil',        rate: 65116, target: 25,   test: /g[óo]lf.*210-300/i, full: true, fullFra: '2026-08' },
+  // 3.1 sameinar „Raf göt", „Raf raufar" og „Raflagnaþéttingar, göt og raufar" (Agnar 06.10.2026).
   { verk_nr: '3.1',  label: 'Rafmagnsraufar',                 rate: 9766,  target: 768,  test: /^raf/i },
 ];
+// Heilar per staka í tilteknum mánuði (YYYY-MM): 1 = fullt verð, 0,5 = helmingað.
+function studull(v, month) {
+  if (!v || !v.full) return 0.5;
+  const m = String(month || '');
+  if (v.fullTil && m && m > v.fullTil) return 0.5;
+  if (v.fullFra && (!m || m < v.fullFra)) return 0.5;
+  return 1;
+}
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return resp(204, '', cors());
@@ -91,8 +106,8 @@ exports.handler = async (event) => {
     totalStakar += stakar;
     const verk = VERK.find(v => v.test.test(group));
     if (!verk) { unmapped.push({ category_group: group, stakar }); continue; }
-    // 1 heild = 2 stakar nema full (2.2 og 1.2) — sjá VERK og sönnunina þar.
-    const heilar = verk.full ? stakar : stakar / 2;
+    // 1 heild = 2 stakar nema gólf/hæðarskil (1=1) — sjá VERK, studull og gildisdagana þar.
+    const heilar = stakar * studull(verk, month);
     const amount = Math.round(heilar * verk.rate);
     totalMvsk += amount;
     totalHeilar += heilar;
@@ -136,4 +151,5 @@ function resp(statusCode, body, headers) { return { statusCode, headers, body };
 
 // Deilt með nlsh-stada.js svo kortlagningin flokkur→verkliður eigi sér EINN stað.
 exports.VERK = VERK;
+exports.studull = studull;
 exports.NLSH_NAMES = NLSH_NAMES;

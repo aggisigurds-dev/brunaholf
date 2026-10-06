@@ -29,7 +29,26 @@
 // 1.3 helminguð. Reglur, verð, Fjöldi og kortlagning: VERK í nlsh-uppgjor.js (einn staður,
 // samræmt 03.09.2026 — áður hafði hub-áætlunin full á 1.3 án rökstuðnings).
 
-const { VERK, NLSH_NAMES } = require('./nlsh-uppgjor.js');
+const { VERK, NLSH_NAMES, studull } = require('./nlsh-uppgjor.js');
+
+// 2.11 „Frágangur raufa meðfram köntuðum stokkum" er EINI liðurinn í metrum (Agnar 06.10.2026):
+// hver Ajour-skráning ber ummál stokksins í Description („860mm*430mm", „800mm-350mm",
+// „1,3 m") og metrarnir eru ummálið: (L+L+B+B)/1000 — t.d. 34 skráningar → 102 m.
+// Lesið úr ajour_registrations.subject (Description úr CSV); yfirskrift per skráningu í
+// nlsh_raufar_metrar (handleiðrétt þegar textinn er óljós). Fjöldi skráninga skiptir engu.
+function raufMetrar(desc) {
+  const d = String(desc || '').replace(/(\d),(\d)/g, '$1.$2')
+    .replace(/\b\d{1,2}[-./]\d{1,2}[-./]\d{2,4}\b/g, ' ');   // dagsetningar („02-07-2026") eru ekki ummál
+  const finna = (re) => { const out = []; let m; while ((m = re.exec(d))) out.push([+m[1], +m[2]]); return out; };
+  // „860mm*430mm", „650 x 400", „850×400" ganga framar „800mm-350mm" / „240_250"
+  let por = finna(/(\d{2,4})\s*(?:mm)?\s*[x×*X]\s*(\d{2,4})\s*(?:mm)?/g);
+  if (!por.length) por = finna(/(\d{2,4})\s*(?:mm)?\s*[\-–_]\s*(\d{2,4})\s*(?:mm|m)?/g);
+  por = por.filter(([a, b]) => a >= 20 && b >= 20);
+  if (por.length) { const [a, b] = por[por.length - 1]; return { metrar: Math.round(2 * a + 2 * b) / 1000, lengd: a, breidd: b, adferd: 'ummál' }; }
+  const mm = d.match(/(\d+(?:\.\d+)?)\s*(?:m\b|metr)/i);
+  if (mm && +mm[1] > 0 && +mm[1] < 20) return { metrar: +mm[1], lengd: null, breidd: null, adferd: 'metrar' };
+  return null;
+}
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -40,7 +59,8 @@ const FYRSTI_MANUDUR = '2025-09';   // verkið hófst sept 2025 — fyrsta dálk
 // Blaðið helmingar ALLT nema full-liðina (2.2, 1.2) — metrar (2.11) líka.
 const RULE = Object.fromEntries(VERK.map(v => [v.verk_nr, v]));
 const VERK_NR = new Set(VERK.map(v => v.verk_nr));
-const heilarAf = (verk_nr, stada) => (RULE[verk_nr] && RULE[verk_nr].full) ? stada : stada / 2;
+// Heilar safnast mánuð fyrir mánuð: Δ stakar × stuðull MÁNAÐARINS (gildisdagar í VERK —
+// 2.2 heilt til júlí 2026, helmingað frá ágúst; gólf/hæðarskil 1=1).
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return resp(204, '', cors());
@@ -49,6 +69,25 @@ exports.handler = async (event) => {
   if (event.httpMethod === 'POST') {
     let p = {};
     try { p = JSON.parse(event.body || '{}'); } catch (_) { return json(400, { error: 'Ógilt JSON' }); }
+    // 2.11 — handleiðrétting metra á einni skráningu (null = eyða → lesið úr Description)
+    if (p.action === 'raufar') {
+      const sn = String(p.serial_number || '').trim();
+      if (!/^\d+$/.test(sn)) return json(400, { error: 'serial_number vantar' });
+      try {
+        if (p.metrar == null || p.metrar === '') {
+          const r = await fetch(`${SUPABASE_URL}/rest/v1/nlsh_raufar_metrar?serial_number=eq.${sn}`, { method: 'DELETE', headers: H() });
+          if (!r.ok) throw new Error(`eyða: ${r.status}`);
+        } else {
+          const n = Number(p.metrar);
+          if (!Number.isFinite(n) || n < 0 || n > 50) return json(400, { error: 'ógildir metrar' });
+          const r = await fetch(`${SUPABASE_URL}/rest/v1/nlsh_raufar_metrar?on_conflict=serial_number`, {
+            method: 'POST', headers: { ...H(), Prefer: 'resolution=merge-duplicates,return=minimal' },
+            body: JSON.stringify([{ serial_number: sn, metrar: Math.round(n * 1000) / 1000, athugasemd: p.athugasemd ? String(p.athugasemd).slice(0, 200) : null, updated_at: new Date().toISOString() }]) });
+          if (!r.ok) throw new Error(`vista: ${r.status} ${(await r.text()).slice(0, 200)}`);
+        }
+      } catch (e) { return json(502, { error: e.message }); }
+      return stada(String(p.month || '').trim() || sidastiManudur());
+    }
     const month = String(p.month || '').trim();
     if (!/^\d{4}-\d{2}$/.test(month)) return json(400, { error: 'month verður að vera YYYY-MM' });
     const lines = Array.isArray(p.lines) ? p.lines : (p.verk_nr ? [p] : []);
@@ -90,18 +129,44 @@ async function stada(month) {
   const fra = `${month}-01`;
   const til = new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 10);   // fyrsti dagur næsta mánaðar
 
-  let groups, manRows, lokRows;
+  let groups, manRows, lokRows, raufRows = [], raufYfir = [];
   try {
-    const [g, mr, lr] = await Promise.all([
+    const nofn = `project_name=in.(${NLSH_NAMES.map(n => `"${n}"`).join(',')})`;
+    const [g, mr, lr, rr, ry] = await Promise.all([
       fetch(`${SUPABASE_URL}/rest/v1/rpc/nlsh_stada`, { method: 'POST', headers: H(), body: JSON.stringify({ p_names: NLSH_NAMES, p_fra: fra, p_til: til }) }),
       fetch(`${SUPABASE_URL}/rest/v1/rpc/nlsh_stada_manudir`, { method: 'POST', headers: H(), body: JSON.stringify({ p_names: NLSH_NAMES, p_til: til }) }),
       fetch(`${SUPABASE_URL}/rest/v1/nlsh_manadarlok?select=month,verk_nr,lokatala,athugasemd,updated_at&order=month`, { headers: H() }),
+      fetch(`${SUPABASE_URL}/rest/v1/ajour_registrations?select=serial_number,registration_status,checked_date,execution_date,subject&${nofn}&category_group=ilike.Raufar*&limit=5000`, { headers: H() }),
+      fetch(`${SUPABASE_URL}/rest/v1/nlsh_raufar_metrar?select=serial_number,metrar,athugasemd,updated_at&limit=5000`, { headers: H() }),
     ]);
     for (const [r, n] of [[g, 'nlsh_stada'], [mr, 'nlsh_stada_manudir'], [lr, 'lokatölur']]) {
       if (!r.ok) throw new Error(`${n}: ${r.status} ${(await r.text()).slice(0, 200)}`);
     }
     [groups, manRows, lokRows] = await Promise.all([g.json(), mr.json(), lr.json()]);
+    if (rr.ok) raufRows = await rr.json();
+    if (ry.ok) raufYfir = await ry.json();   // taflan getur vantað í eldra umhverfi — þá bara Description
   } catch (e) { return json(502, { error: e.message }); }
+
+  // ── 2.11: metrar per skráningu og mánuð (fyrsta Done-dagsetning, sama og nlsh_stada_manudir) ──
+  const yfir = new Map(raufYfir.map(r => [String(r.serial_number), r]));
+  const raufBy = new Map();
+  for (const r of raufRows) {
+    const sn = String(r.serial_number);
+    const e = raufBy.get(sn) || { serial_number: sn, done: false, dags: null, subject: null };
+    if (r.registration_status === 'Done') e.done = true;
+    const d = r.checked_date || r.execution_date;
+    if (d && (!e.dags || d < e.dags)) e.dags = d;
+    if (r.subject && !e.subject) e.subject = r.subject;
+    raufBy.set(sn, e);
+  }
+  const raufar = [...raufBy.values()].map(e => {
+    const lesid = raufMetrar(e.subject), y = yfir.get(e.serial_number);
+    const metrar = y ? Number(y.metrar) : (lesid ? lesid.metrar : null);
+    return { serial_number: e.serial_number, done: e.done, dags: e.dags, man: e.dags ? String(e.dags).slice(0, 7) : null,
+      lysing: e.subject, lesid, yfirskrift: y ? Number(y.metrar) : null, athugasemd: y ? y.athugasemd : null, metrar };
+  }).sort((a, b) => String(b.dags || '').localeCompare(String(a.dags || '')) || (+b.serial_number - +a.serial_number));
+  const raufMan = new Map();   // month → metrar (Done)
+  for (const r of raufar) if (r.done && r.man && r.metrar != null) raufMan.set(r.man, (raufMan.get(r.man) || 0) + r.metrar);
 
   const verkAf = (group) => { const i = VERK.findIndex(v => v.test.test(group)); return i < 0 ? null : VERK[i].verk_nr; };
 
@@ -145,7 +210,8 @@ async function stada(month) {
     const lm = lok.get(mo) || new Map();
     const rows = VERK.map(v => {
       const vn = v.verk_nr;
-      const nyMan = ny.get(vn) || 0;   // nýjar lokanir í Ajour í mánuðinum (≥ 0)
+      // nýjar lokanir í Ajour í mánuðinum (≥ 0) — 2.11 í METRUM úr ummálum, ekki fjöldi skráninga
+      const nyMan = v.metrar ? Math.round((raufMan.get(mo) || 0) * 100) / 100 : (ny.get(vn) || 0);
       cum.set(vn, (cum.get(vn) || 0) + nyMan);
       const ajour_cum = cum.get(vn);
       const s = lm.get(vn);
@@ -156,10 +222,12 @@ async function stada(month) {
       // til baka). Án nokkurra lokatalna er tillagan = heildartala Ajour, eins og áður.
       const tillaga = prevStada.get(vn) + nyMan;
       const st = lokatala != null ? lokatala : tillaga;
-      const heilar = heilarAf(vn, st);
-      const delta = st - prevStada.get(vn), delta_heilar = heilar - prevHeilar.get(vn);
+      const stud = studull(v, mo);
+      const r3 = x => Math.round(x * 1000) / 1000;   // metrar (2.11) — engin fleytitöluslæða
+      const delta = r3(st - prevStada.get(vn)), delta_heilar = r3(delta * stud);
+      const heilar = r3(prevHeilar.get(vn) + delta_heilar);
       prevStada.set(vn, st); prevHeilar.set(vn, heilar);
-      return { verk_nr: vn, ajour_cum, ny_ajour: nyMan, tillaga, lokatala, stada: st, heilar, upphaed: Math.round(heilar * v.rate),
+      return { verk_nr: vn, ajour_cum: Math.round(ajour_cum * 100) / 100, ny_ajour: nyMan, tillaga: Math.round(tillaga * 100) / 100, lokatala, stada: st, studull: stud, heilar, upphaed: Math.round(heilar * v.rate),
         delta, delta_heilar, upphaed_man: Math.round(delta_heilar * v.rate) };
     });
     const t = rows.reduce((a, r) => { a.stakar += r.stada; a.heilar += r.heilar; a.upphaed += r.upphaed; a.delta += r.delta; a.upphaed_man += r.upphaed_man; return a; },
@@ -178,9 +246,14 @@ async function stada(month) {
     totals: { stakar_alls: sum(lines, 'stakar_alls'), stakar_manudur: sum(lines, 'stakar_manudur'), unmapped_alls: sum(unmapped, 'stakar_alls') },
     ekki_done: ekkiDone,
     skyrsla: {
-      verk: VERK.map(v => ({ verk_nr: v.verk_nr, label: v.label, rate: v.rate, fjoldi: v.target || null, full: !!v.full, metrar: !!v.metrar })),
+      verk: VERK.map(v => ({ verk_nr: v.verk_nr, label: v.label, rate: v.rate, fjoldi: v.target || null, full: studull(v, month) === 1, studull: studull(v, month), metrar: !!v.metrar })),
       manudir: skyrslaMan,
-      reglur: 'Heild = stakar/2 nema 2.2 og 1.2 (1=1) — líka metrar (2.11). Verð per heild m. vsk. Sannað úr Aðalskjali júlí 2026. Án lokatölu: staða fyrri mánaðar + nýjar lokanir í Ajour.',
+      reglur: 'Heild = stakar/2 nema gólf/hæðarskil (1=1); 2.2 var 1=1 til og með júlí 2026. 2.11 í metrum (ummál úr Ajour). Verð per heild m. vsk. Án lokatölu: staða fyrri mánaðar + nýjar lokanir í Ajour.',
+    },
+    raufar: {
+      rows: raufar,
+      per_man: Object.fromEntries([...raufMan.entries()].sort().map(([k, v]) => [k, Math.round(v * 100) / 100])),
+      olesin: raufar.filter(r => r.done && r.metrar == null).length,
     },
   });
 }
