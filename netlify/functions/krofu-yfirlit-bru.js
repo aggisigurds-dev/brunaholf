@@ -47,7 +47,7 @@ exports.handler = async (event) => {
       .catch(() => { warnings.push('invoice_drafts lestur mistókst — ósendar drög gætu vantað í þrep 2'); return []; });
     // meta carries the manual greitt/falið/staðfest flags — without it, hidden or
     // paid krófur reappear and the outstanding totals are wrong.
-    meta = await fetchAll('krofur_yfirlit_meta', 'select=inv_key,hidden,paid,note,confirmed,sent,done,sent_at,confirmed_at,done_at,confirmed_by,sent_by,done_by,wf_state')
+    meta = await fetchAll('krofur_yfirlit_meta', 'select=inv_key,hidden,paid,note,confirmed,sent,done,sent_at,confirmed_at,done_at,confirmed_by,sent_by,done_by,wf_state,syna_alltaf')
       .catch(() => { warnings.push('krofur_yfirlit_meta lestur mistókst — handvirkar merkingar (greitt/falið) vantar, tölur gætu verið rangar'); return []; });
     // Bank cross-ref only flags likely-paid krófur (does not change the total) — still surface a failure.
     bank = await fetchAll('bank_transactions',
@@ -184,9 +184,10 @@ exports.handler = async (event) => {
     // upphæðin tvítelst ekki á móti samreikningnum.
     if (d.status === 'skipped' || d.status === 'merged') continue;
     const amt = +d.total_m_vsk || 0;
-    if (amt <= 0 || wm < cutoff) continue;
     const key = `draftinv|${d.worksite_name}|${wm}`;
     const mt = metaBy.get(key) || {};
+    // syna_alltaf (06.10.2026, „mátt kveikja á höfðabakka og Keldur"): þessi röð birtist óháð 3 mánaða glugganum.
+    if (amt <= 0 || (wm < cutoff && !mt.syna_alltaf)) continue;
     if (mt.paid) continue;   // falið er sent áfram (hidden:true), bara greitt er sleppt
     // Leysa verkstaðar-nafn í greiðanda svo öll drögin lendi undir sama greiðanda
     // (t.d. Landsspítalinn-drög → ÞG verktakar). Fellur til baka á upprunalega
