@@ -13261,7 +13261,7 @@ async function renderGerdReikninga(t){
           <td>${fmt(r.v.rate)}</td>
           <td class="mut">${nf(r.p.stada)}</td>
           <td class="mut">${r.l.ny_ajour?'+'+nf(r.l.ny_ajour):'·'}</td>
-          <td class="st"><input id="nle-in-${r.i}" inputmode="decimal"${M.valinn.fryst?' disabled':''} value="${r.l.lokatala!=null?String(r.l.lokatala).replace('.',','):''}" placeholder="${escapeAttr(nf(r.l.tillaga))}" title="Tillaga ${escapeAttr(nf(r.l.tillaga))} = ${escapeAttr(nf(r.p.stada))} + ${escapeAttr(nf(r.l.ny_ajour||0))} nýjar í Ajour — auður reitur = tillagan gildir"></td>
+          <td class="st"><input id="nle-in-${r.i}" inputmode="decimal"${M.valinn.fryst?' disabled':''} value="${String(r.l.lokatala!=null?r.l.lokatala:r.l.tillaga).replace('.',',')}" placeholder="${escapeAttr(nf(r.l.tillaga))}" title="Heildarstaða í lok mánaðar — skrifaðu þína tölu. Tillaga ${escapeAttr(nf(r.l.tillaga))} = ${escapeAttr(nf(r.p.stada))} + ${escapeAttr(nf(r.l.ny_ajour||0))} nýjar í Ajour"></td>
           <td class="now">${r.now!=null?nf(r.now):'—'}</td>
           <td data-nle-d="${r.i}">${r.delta?(r.delta>0?'+':'')+nf(r.delta):'·'}</td>
           <td data-nle-dh="${r.i}">${r.dH?nf(r.dH,1):'·'}</td>
@@ -13368,7 +13368,9 @@ async function renderGerdReikninga(t){
     }
     const skiptaMan = (m) => { if(dirty && !confirm('Óvistaðar breytingar tapast ef þú skiptir um mánuð. Halda áfram?')) { $('nle-man').value = month; return; } autoMan = false; month = m; $('nle-man').value = m; hlada(); };
     $('nle-man').onchange = () => skiptaMan($('nle-man').value);
-    $('nle-tillaga').onclick = () => { if(!D) return; D.skyrsla.verk.forEach((v,i) => { const e = $('nle-in-'+i); if(e) e.value = ''; }); dirty = true; $('nle-hd-status-t').textContent='óvistað'; refresh(); $('nle-st').textContent = 'Reitirnir tæmdir — tillagan úr Ajour gildir. Ýttu á Vista til að festa hana.'; };
+    // Reitirnir sýna alltaf tölu (vistuð lokatala, annars tillaga) — gráar „placeholder"-tölur litu út fyrir að vera
+    // læstar (Agnar 07.10: „get ég samt ekki alveg breytt september heildar talningartölunum").
+    $('nle-tillaga').onclick = () => { if(!D || fryst()) return; const L = D.skyrsla.manudir[D.skyrsla.manudir.length-1].lines; D.skyrsla.verk.forEach((v,i) => { const e = $('nle-in-'+i); if(e) e.value = String(L[i].tillaga).replace('.',','); }); dirty = true; $('nle-hd-status-t').textContent='óvistað'; refresh(); $('nle-st').textContent = 'Tillagan úr Ajour sett í reitina. Ýttu á Vista til að festa hana.'; };
 
     // 2.11 — aukagluggi: metrar per Ajour-skráningu úr ummálinu í Description, leiðréttanlegt.
     function raufarGluggi(){
