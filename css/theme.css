@@ -413,8 +413,20 @@ aside.sidebar::-webkit-scrollbar-thumb{background:#2a2823;border-radius:3px}
 .nav-section-label{font-family:var(--font-ui);font-weight:700;font-size:9.5px;color:var(--gold-500);letter-spacing:.2em;text-transform:uppercase;padding:14px 18px 6px;margin:0}
 .nav-sep{height:1px;background:rgba(255,255,255,.06);margin:8px 12px;box-shadow:0 1px 0 rgba(0,0,0,.8)}
 .tab-sep{color:#8f8776;padding:9px 18px 5px}
-.tab-sep .sep-label{color:var(--gold-500);letter-spacing:.2em;font-size:9.5px;opacity:1}
 .tab-sep .sep-line{opacity:.12}
+/* Flokka-yfirlína (07.10.2026, ósk Agnars: „svona flokka yfirlínur eins og á Slökkvitæki")
+   — gull ◆ + hástafir með .2em bili, sama snið og .nav-section-label (SALA · VIÐSKIPTAVINIR).
+   Lína með heiti fær meira loft að ofan svo hún lesist sem kaflaskil; línan sjálf dofnar. */
+.tab-sep:has(.sep-label){padding:16px 18px 6px}
+.tab-sep .sep-label{color:var(--gold-500);letter-spacing:.2em;font-size:9.5px;font-weight:700;text-transform:uppercase;opacity:1;text-shadow:0 0 8px rgba(201,165,74,.25);display:inline-flex;align-items:center;gap:6px}
+.tab-sep .sep-label::before{content:"◆";font-size:7px;color:var(--gold-500);opacity:.9;line-height:1}
+.tab-sep:has(.sep-label) .sep-line{opacity:.08}
+.layout.compact .tab-sep .sep-label{display:none}
+.layout.compact .tab-sep:has(.sep-label){padding:9px 10px 5px}
+/* Breyta-hamur: ✎ (endurnefna) og ✕ (fjarlægja) á flokkalínu */
+.tab-sep .sep-tool{margin-left:auto;cursor:pointer;font-size:11px;padding:0 4px;opacity:.6;flex:0 0 auto;color:var(--on-dark-soft)}
+.tab-sep .sep-tool + .sep-tool{margin-left:0}
+.tab-sep .sep-tool:hover{opacity:1;color:var(--gold-500)}
 .sb-foot{position:sticky;bottom:0;margin-top:auto;padding:14px 18px;border-top:1px solid #000;box-shadow:inset 0 1px 0 rgba(255,255,255,.07);background:linear-gradient(180deg,#1a1917,#0d0d0c);display:flex;align-items:center;gap:9px;color:var(--on-dark-soft);font-size:12.5px;flex:none;cursor:pointer}
 .sb-foot::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:var(--gold-line)}
 .sb-foot .ini{width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#3a3732,#1a1917 70%);border:1px solid #000;box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 0 0 1px #8a6a1c,0 2px 4px rgba(0,0,0,.7);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#e2c46f;flex:none;font-family:var(--font-mono)}

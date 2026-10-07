@@ -58,7 +58,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://osfdzskyvisifcwyjkuk.supabase.co">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/theme.css?v=20260919">
+<link rel="stylesheet" href="/css/theme.css?v=20261007">
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
@@ -1693,6 +1693,9 @@ const DEFAULT_STATE = {
 function b(){ return Math.random().toString(36).slice(2,9); }
 
 let state = load();
+// Flokka-yfirlínur (07.10.2026): einskiptis-merkingin í ensureNewTabs á að samstillast strax,
+// ekki bíða eftir næstu handvirku vistun — annars gæti þjónninn skilað ómerktu línunum aftur.
+if(window.__flokkalinurNytt){ window.__flokkalinurNytt = false; setTimeout(()=>{ try{ save(); }catch(_){} }, 1500); }
 
 /* ====== Data cache layer ======
    Stops the Reikningagerð / Vinnustofa tabs from re-fetching all 5-6 API
@@ -2005,6 +2008,29 @@ function ensureNewTabs(s){
       s.tabs.splice(target, 0, tab);
     }
     s.ui._tpPinV1 = true;
+  }
+  // 07.10.2026 — Flokka-yfirlínur (Agnar: „svona flokka yfirlínur eins og á Slökkvitæki").
+  // Einskiptis: ómerktu skillínurnar sem hann raðaði sjálfur fá heiti eftir fyrsta sýnilega
+  // flipanum sem fylgir, og efsti hópurinn fær eigin línu. Röðin hans er ÓSNERT; heitin má
+  // breyta með ✎ í Breyta-ham. Línur sem hann hefur þegar nefnt eru látnar í friði.
+  if(!s.ui._flokkalinurV1){
+    const th = (s.ui && s.ui.tab_hidden) || {};
+    const falinn = t => !!(t.hidden || th[t.id]);
+    const HEITI = { efniskostnadur:'Vinna', nlsh:'Vinna', tenglar:'Yfirlit', yfirlit:'Yfirlit',
+      reikningar:'Verkstaðir', verkstadapostur:'Verkstaðir', skodanir:'Verkfæri', brunayfirlit:'Verkfæri',
+      stjornbord:'Annað', slokkvitaeki:'Annað', inbox:'Annað', bakendi:'Kerfi', stillingar:'Kerfi' };
+    let sidast = '';
+    for(let i=0;i<s.tabs.length;i++){
+      const t = s.tabs[i]; if(!t.sep || (t.label||'').trim()) continue;
+      const naesti = s.tabs.slice(i+1).find(x=>!x.sep && !falinn(x));
+      const h = naesti && HEITI[naesti.id];
+      if(h && h !== sidast){ t.label = h; sidast = h; }   // tvær línur í röð fá ekki sama heiti
+    }
+    if(s.tabs.length && !s.tabs[0].sep && s.tabs.some(t=>t.sep && t.label)){
+      s.tabs.unshift({ id:'sep-daglegt', sep:true, label:'Daglegt' });
+    }
+    s.ui._flokkalinurV1 = true;
+    window.__flokkalinurNytt = true;   // → save() strax eftir ræsingu svo heitin fari á þjóninn (sjá eftir load)
   }
 }
 
@@ -2404,19 +2430,24 @@ function renderTabs(){
   if(state.ui.editMode){
     $tabs.querySelectorAll('[data-id]').forEach(el=>{
       const _t = state.tabs.find(x=>x.id===el.dataset.id);
-      // Dauf lína (skil): endurnefna (tvísmella) + fjarlægja (✕). Ekki hide-toggle.
+      // Flokkalína / dauf lína (skil): ✎ endurnefna (líka tvísmellur) + ✕ fjarlægja. Ekki hide-toggle.
+      // 07.10.2026: ✎-takki svo endurnefning virki í síma (tvísmellur er ekki til á snertiskjá).
       if(_t && _t.sep){
         if(!el.querySelector('.sep-x')){
+          const nefna = ()=>{
+            const lbl = prompt('Heiti flokks (tómt = bara dauf lína):', _t.label||''); if(lbl===null) return;
+            _t.label = lbl.trim(); save(); renderTabs(); };
+          const p = document.createElement('span');
+          p.className='sep-tool sep-edit'; p.textContent='✎'; p.title='Breyta heiti flokks';
+          p.addEventListener('click', e=>{ e.stopPropagation(); e.preventDefault(); nefna(); });
+          el.appendChild(p);
           const x = document.createElement('span');
-          x.className='sep-x'; x.textContent='✕'; x.title='Fjarlægja línu';
-          x.style.cssText='margin-left:auto;cursor:pointer;font-size:11px;padding:0 4px;opacity:.6;flex:0 0 auto';
+          x.className='sep-tool sep-x'; x.textContent='✕'; x.title='Fjarlægja línu';
           x.addEventListener('click', e=>{ e.stopPropagation(); e.preventDefault();
             state.tabs = state.tabs.filter(t=>t.id!==_t.id); save(); renderTabs(); });
           el.appendChild(x);
-          el.title='Tvísmelltu til að nefna skil · dragðu til að færa';
-          el.addEventListener('dblclick', e=>{ e.stopPropagation();
-            const lbl = prompt('Heiti á skilum (tómt = bara lína):', _t.label||''); if(lbl===null) return;
-            _t.label = lbl.trim(); save(); renderTabs(); });
+          el.title='✎ breyta heiti · dragðu til að færa · ✕ fjarlægja';
+          el.addEventListener('dblclick', e=>{ e.stopPropagation(); nefna(); });
         }
       }
       // Faldar síður birtast daufar í Breyta-ham svo hægt sé að sýna þær aftur.
@@ -2459,12 +2490,15 @@ function renderTabs(){
     // dragðu upp til að flokka. Vistast í state.tabs → /api/app-state (samstillt).
     if(!$tabs.querySelector('.tab-addsep')){
       const add = document.createElement('button');
-      add.className='tab-addsep'; add.type='button'; add.textContent='➕ Bæta daufri línu';
+      add.className='tab-addsep'; add.type='button'; add.textContent='➕ Nýr flokkur / lína';
+      add.title='Flokkalína með heiti (gull) — tómt heiti = dauf lína. Dragðu hana svo á réttan stað.';
       add.onclick = ()=>{
-        const sep = { id:'sep-'+Date.now().toString(36), sep:true, label:'' };
+        const lbl = prompt('Heiti flokks (tómt = bara dauf lína):', ''); if(lbl===null) return;
+        const sep = { id:'sep-'+Date.now().toString(36), sep:true, label:lbl.trim() };
         const si = state.tabs.findIndex(t=>t.id==='stillingar');
         state.tabs.splice(si<0?state.tabs.length:si, 0, sep);
         save(); renderTabs();
+        const nel = $tabs.querySelector('[data-id="'+sep.id+'"]'); if(nel && nel.scrollIntoView) nel.scrollIntoView({block:'center'});
       };
       $tabs.appendChild(add);
     }
