@@ -101,6 +101,19 @@ exports.handler = async (event) => {
     const lines = Array.isArray(p.lines) ? p.lines : (p.verk_nr ? [p] : []);
     const upserts = [], eyda = [];
     const now = new Date().toISOString();
+    // TEKNAR FRAM (07.10.2026, Agnar: „setja stöðuna í dag allt inn í september"): sá hluti lokatölunnar sem er umfram
+    // tillögu mánaðarins og Ajour skráði EFTIR mánaðamót telst tekinn fram fyrir — næsti mánuður dregur hann frá svo
+    // sama verk teljist ekki tvisvar. Venjuleg vistun (aðeins verk mánaðarins) gefur 0.
+    let fyrir = null;
+    try {
+      const nuna = new Date().toISOString().slice(0, 7);
+      const P0 = await reikna(nuna > month ? nuna : month);
+      const M0 = P0.skyrsla.manudir, i0 = M0.findIndex(m => m.month === month);
+      if (i0 >= 0) fyrir = Object.fromEntries(P0.skyrsla.verk.map((v, k) => [v.verk_nr, {
+        tillaga: M0[i0].lines[k].tillaga,
+        eftir: M0.slice(i0 + 1).reduce((a, m) => a + (Number(m.lines[k].ny_ajour_hratt) || 0), 0),
+      }]));
+    } catch (_) { fyrir = null; }   // tekst ekki að reikna → teknar_fram 0 (eins og áður)
     for (const l of lines) {
       const verk_nr = String(l.verk_nr || '').trim();
       if (!VERK_NR.has(verk_nr)) return json(400, { error: `óþekktur verkliður: ${verk_nr}` });
@@ -108,7 +121,10 @@ exports.handler = async (event) => {
       const n = Number(l.lokatala);
       if (!Number.isFinite(n) || n < 0) return json(400, { error: `ógild lokatala fyrir ${verk_nr}` });
       const metrar = !!(RULE[verk_nr] || {}).metrar;
-      upserts.push({ month, verk_nr, lokatala: metrar ? Math.round(n * 100) / 100 : Math.round(n),
+      const lok = metrar ? Math.round(n * 100) / 100 : Math.round(n);
+      const f = fyrir && fyrir[verk_nr];
+      const tf = f ? Math.max(0, Math.min(lok - (Number(f.tillaga) || 0), Number(f.eftir) || 0)) : 0;
+      upserts.push({ month, verk_nr, lokatala: lok, teknar_fram: Math.round(tf * 100) / 100,
         athugasemd: l.athugasemd ? String(l.athugasemd).slice(0, 200) : null, updated_at: now });
     }
     try {
@@ -164,7 +180,7 @@ async function reikna(month) {
     const [g, mr, lr, rr, ry, dr] = await Promise.all([
       fetch(`${SUPABASE_URL}/rest/v1/rpc/nlsh_stada`, { method: 'POST', headers: H(), body: JSON.stringify({ p_names: NLSH_NAMES, p_fra: fra, p_til: til }) }),
       fetch(`${SUPABASE_URL}/rest/v1/rpc/nlsh_stada_manudir`, { method: 'POST', headers: H(), body: JSON.stringify({ p_names: NLSH_NAMES, p_til: til }) }),
-      fetch(`${SUPABASE_URL}/rest/v1/nlsh_manadarlok?select=month,verk_nr,lokatala,athugasemd,updated_at,stakar_man,heilar_man,upphaed_man,fryst_at,fryst_heimild&order=month`, { headers: H() }),
+      fetch(`${SUPABASE_URL}/rest/v1/nlsh_manadarlok?select=month,verk_nr,lokatala,athugasemd,updated_at,stakar_man,heilar_man,upphaed_man,fryst_at,fryst_heimild,teknar_fram&order=month`, { headers: H() }),
       fetch(`${SUPABASE_URL}/rest/v1/ajour_registrations?select=serial_number,registration_status,checked_date,execution_date,subject&${nofn}&category_group=ilike.Raufar*&limit=5000`, { headers: H() }),
       fetch(`${SUPABASE_URL}/rest/v1/nlsh_raufar_metrar?select=serial_number,metrar,athugasemd,updated_at&limit=5000`, { headers: H() }),
       fetch(`${SUPABASE_URL}/rest/v1/invoice_drafts?worksite_name=ilike.*landssp*&select=id,work_month,status,payday_invoice_id,total_m_vsk,materials_jsonb`, { headers: H() }),
@@ -246,6 +262,7 @@ async function reikna(month) {
   const prevStada = new Map(VERK.map(v => [v.verk_nr, 0]));
   const prevHeilar = new Map(VERK.map(v => [v.verk_nr, 0]));
   const prevUpph = new Map(VERK.map(v => [v.verk_nr, 0]));
+  const prevTF = new Map(VERK.map(v => [v.verk_nr, 0]));   // teknar fram í lokatölu fyrri mánaðar
   const skyrslaMan = [];
   for (const mo of manudir) {
     const ny = nyjar.get(mo) || new Map();
@@ -257,8 +274,10 @@ async function reikna(month) {
     const rows = VERK.map(v => {
       const vn = v.verk_nr;
       // nýjar lokanir í Ajour í mánuðinum (≥ 0) — 2.11 í METRUM úr ummálum, ekki fjöldi skráninga
-      const nyMan = v.metrar ? Math.round((raufMan.get(mo) || 0) * 100) / 100 : (ny.get(vn) || 0);
-      cum.set(vn, (cum.get(vn) || 0) + nyMan);
+      const nyHratt = v.metrar ? Math.round((raufMan.get(mo) || 0) * 100) / 100 : (ny.get(vn) || 0);
+      // nýjar lokanir mánaðarins − það sem fyrri mánuður tók fram fyrir (sjá teknar_fram í POST)
+      const nyMan = Math.max(0, Math.round((nyHratt - (prevTF.get(vn) || 0)) * 100) / 100);
+      cum.set(vn, (cum.get(vn) || 0) + nyHratt);
       const ajour_cum = cum.get(vn);
       let s = lm.get(vn);
       if (urDrogum) {
@@ -283,7 +302,8 @@ async function reikna(month) {
       const upphaed_man = fryst ? Math.round(Number(s.upphaed_man) || 0) : Math.round(delta_heilar * v.rate);
       const heilar = r3(prevHeilar.get(vn) + delta_heilar), upphaed = prevUpph.get(vn) + upphaed_man;
       prevStada.set(vn, st); prevHeilar.set(vn, heilar); prevUpph.set(vn, upphaed);
-      return { verk_nr: vn, ajour_cum: Math.round(ajour_cum * 100) / 100, ny_ajour: nyMan, tillaga: Math.round(tillaga * 100) / 100, lokatala, stada: st, studull: stud, heilar, upphaed,
+      prevTF.set(vn, s && s.teknar_fram != null ? Number(s.teknar_fram) || 0 : 0);
+      return { verk_nr: vn, ajour_cum: Math.round(ajour_cum * 100) / 100, ny_ajour: nyMan, ny_ajour_hratt: nyHratt, teknar_fram: s && s.teknar_fram != null ? Number(s.teknar_fram) : 0, tillaga: Math.round(tillaga * 100) / 100, lokatala, stada: st, studull: stud, heilar, upphaed,
         delta, delta_heilar, upphaed_man, fryst };
     });
     const t = rows.reduce((a, r) => { a.stakar += r.stada; a.heilar += r.heilar; a.upphaed += r.upphaed; a.delta += r.delta; a.upphaed_man += r.upphaed_man; return a; },

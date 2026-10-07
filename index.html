@@ -13418,6 +13418,7 @@ async function renderGerdReikninga(t){
         const r = await fetch('/api/nlsh-stada', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ month, lines: M.rows.map(x => ({ verk_nr: x.v.verk_nr, lokatala: x.st })) }) });
         const j = await r.json(); if(!r.ok || j.error) throw new Error(j.error || ('HTTP '+r.status));
         D = j; if(month === NOW) DN = j;
+        { const t = new Date(); $('nle-hd-status-t').textContent = 'staða vistuð '+String(t.getDate()).padStart(2,'0')+'/'+String(t.getMonth()+1).padStart(2,'0')+' '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0'); $('nle-hd-status').classList.remove('unsaved'); }
       }catch(e){ $st.textContent = '✗ Staða vistaðist ekki: '+(e.message||e); return; }
       const M2 = model(), cur = draftOf(month);
       if(sendur(cur)){ dirty = false; $st.textContent = '✓ Staða í lok '+manLang(month)+' vistuð · drögin óbreytt (reikningur þegar sendur)'; renderNotes(); renderWs(); refresh(); return; }
