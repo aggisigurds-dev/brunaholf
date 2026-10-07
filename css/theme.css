@@ -421,6 +421,8 @@ aside.sidebar::-webkit-scrollbar-thumb{background:#2a2823;border-radius:3px}
 .tab-sep .sep-label{color:var(--gold-500);letter-spacing:.2em;font-size:9.5px;font-weight:700;text-transform:uppercase;opacity:1;text-shadow:0 0 8px rgba(201,165,74,.25);display:inline-flex;align-items:center;gap:6px}
 .tab-sep .sep-label::before{content:"◆";font-size:7px;color:var(--gold-500);opacity:.9;line-height:1}
 .tab-sep:has(.sep-label) .sep-line{opacity:.08}
+/* Síðurnar smá inndregnar undir ◆-flokkalínunni (Agnar 07.10.2026) — ekki í compact */
+.layout:not(.compact) .tab-v,.layout:not(.compact) .tab-v:hover,.layout:not(.compact) .tab-v.active:hover{padding-left:30px}
 .layout.compact .tab-sep .sep-label{display:none}
 .layout.compact .tab-sep:has(.sep-label){padding:9px 10px 5px}
 /* Breyta-hamur: ✎ (endurnefna) og ✕ (fjarlægja) á flokkalínu */
