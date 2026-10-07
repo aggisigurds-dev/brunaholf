@@ -10833,7 +10833,7 @@ function grOpenWorksite(worksite, month){
   // (t.d. á Kröfu yfirlit) í stað þess að skilja hann eftir á Gerð Reikninga.
   // grOpenWorksite er AÐEINS kallað af Kröfu yfirlit „📄 Efnisl."-hnappinum.
   if(state.ui.activeTab && state.ui.activeTab !== 'gerdreikninga') state.ui.grReturnTo = state.ui.activeTab;
-  if(month && /^\d{4}-\d{2}$/.test(month)) state.ui.gr_month = month;
+  if(month && /^\d{4}-\d{2}$/.test(month)){ state.ui.gr_month = month; window.__grPendingMonth = month; }   // sérgluggar (NLSH/Heklureitur) opna nákvæmlega þann mánuð
   // Hleðslu-yfirlag strax svo Gerð Reikninga-listinn blikki EKKI áður en ritillinn
   // opnast (sama yfirlag og djúptengingin notar; fjarlægt í pending-open hooknum í load()).
   try{
@@ -11514,7 +11514,7 @@ async function renderGerdReikninga(t){
       try{ localStorage.setItem('gr_snapshot_v1', JSON.stringify({WS,PG,DRAFTS,REDDER,NLSH_MONTHLY,ts:Date.now()})); }catch(_){}
       renderList();
       // Re-open editor directly when arriving from the "Tilbúnir reikningar" page.
-      if(window.__grPendingOpen){ const pe = window.__grPendingOpen; window.__grPendingOpen = null; try{ if(isHeklu(pe) || isNlsh(pe)) openGata(pe); else openEditor(pe); }catch(_e){} }
+      if(window.__grPendingOpen){ const pe = window.__grPendingOpen, pm = window.__grPendingMonth || undefined; window.__grPendingOpen = null; window.__grPendingMonth = null; try{ if(isHeklu(pe) || isNlsh(pe)) openGata(pe, pm); else openEditor(pe); }catch(_e){} }
       document.getElementById('gr-deep-wait')?.remove();
     }catch(e){
       document.getElementById('gr-deep-wait')?.remove();
@@ -13020,7 +13020,8 @@ async function renderGerdReikninga(t){
   // Gögn: /api/nlsh-stada (lokatölur per mánuð + tillaga = staða fyrri mánaðar + nýjar í Ajour;
   // 2.11 í metrum úr ummálum). Vista = festir stöðu mánaðarins (allar línur) + drög „Landsspitalinn".
   async function openNlshEfnislisti(name, monthArg){
-    const wsName = name;
+    // Eitt nafn á drögunum: Kröfu yfirlit sendir „Landsspítalinn" (með í), Gerð reikninga „Landsspitalinn".
+    const wsName = isNlsh(name) ? 'Landsspitalinn' : name;
     const NOW = (()=>{ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); })();
     const METRASKRA = 'https://docs.google.com/spreadsheets/d/1X46Cf11JCE_PMdA3C6LsOtlVbv6ZDlS53-9WLC-pezI/edit?gid=618326755#gid=618326755';
     const MAN_IS = ['Janúar','Febrúar','Mars','Apríl','Maí','Júní','Júlí','Ágúst','September','Október','Nóvember','Desember'];
@@ -13426,9 +13427,10 @@ async function renderGerdReikninga(t){
   }
 
   // ===== Gata (Ajour) uppgjör =====
-  async function openGata(name){
-    if(isHeklu(name)) return openHeklureitur(name);
-    if(isNlsh(name)) return openNlshEfnislisti(name);   // 06.10.2026 — gamla heildar-glugganum hér að neðan er ekki lengur náð fyrir NLSH
+  async function openGata(name, monthArg){
+    // monthArg: mánuður sem var smellt á annars staðar (Kröfu yfirlit „📄 Efnisl.") — gildir þá óbreyttur.
+    if(isHeklu(name)) return openHeklureitur(name, monthArg);
+    if(isNlsh(name)) return openNlshEfnislisti(name, monthArg);   // 06.10.2026 — gamla heildar-glugganum hér að neðan er ekki lengur náð fyrir NLSH
     const month = state.ui.gr_month;
     const isNLSH = /landssp[ií]tal|nlsh/i.test(name);
     const bg = document.createElement('div');
@@ -18756,7 +18758,13 @@ async function renderKrofuyfirlit(t){
     function wfPatchLocal(key, patch){
       for(const d of (((state.data||{}).tier2||{}).debtors||[])) for(const iv of (d.invoices||[])) if(iv.inv_key===key) Object.assign(iv, patch);
     }
-    function findInv(key){ for(const d of (((state.data||{}).tier2||{}).debtors||[])) for(const iv of (d.invoices||[])) if(iv.inv_key===key) return iv; return null; }
+    // Leitar í ÖLLUM þrepum — „Tími eftir" (þrep 3: tímavera|…, nlsh|…) er reiknað í vafranum og býr í
+    // state.tier3. Áður aðeins þrep 2 → 📄 Efnisl./🕒 Tímask. á Landsspítalanum gerðu ekkert (07.10.2026).
+    function findInv(key){
+      for(const bag of [state.data&&state.data.tier2, state.tier3, state.data&&state.data.tier1])
+        for(const d of ((bag||{}).debtors||[])) for(const iv of (d.invoices||[])) if(iv.inv_key===key) return iv;
+      return null;
+    }
     // 06.09.2026: aðeins reitirnir sem ÞESSI vél breytti fara upp (wf_patch → RPC ky_wf_merge) —
     // Tímar á vél A þurrka þá ekki út Redder sem vél B setti. _wfSync = síðasta þekkta þjóns-útgáfa.
     async function persistWf(key, wf, by){
