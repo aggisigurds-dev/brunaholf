@@ -10804,6 +10804,9 @@ async function renderTilbunirReikningar(t){
   paint();
 
   async function printSavedInvoice(d){
+    // NLSH-drögin geyma aðeins línur mánaðarins — skjalið með öllum mánuðum er í Efnislista · NLSH (08.10.2026,
+    // Agnar: „pdf efnislistinn þarf að innihalda hina mánuðina líka").
+    if(/landssp[ií]tal|nlsh/i.test(d && d.worksite_name || '') && typeof grOpenWorksite === 'function'){ grOpenWorksite('Landsspitalinn', d.work_month); return; }
     const kr = n => fmt(n)+' kr.';
     const row = (l,p,m,tot)=>`<tr><td class="l">${esc(l)}</td><td class="p">${p!=null?kr(p):''}</td><td class="m">${m!=null&&m!==''?m:''}</td><td class="t">${kr(tot)}</td></tr>`;
     const dvH=Number(d.hours_dagvinna)||0, dvR=Number(d.rate_dagvinna)||0, evH=Number(d.hours_eftirvinna)||0, evR=Number(d.rate_eftirvinna)||0;
