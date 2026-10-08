@@ -54,6 +54,18 @@ exports.handler = async (event) => {
     if (!rows.length) {
       return json(200, { ok: true, file: fileName, parsed: 0, upserted: 0, skipped: 0, headers, mapping, note: 'Engar gildar færslur (fann ekki dags/upphæð).' });
     }
+    // Vörn (08.10.2026): nýjasta skráin á Drive sem passaði við „hreyf" var „reikningar hreyfingar frá
+    // 2023.xlsx" — viðskiptamannahreyfingar úr Payday (Nafn/Kt/Eindagi/Debet/Kredit), EKKI bankayfirlit.
+    // 15.578 Payday-línur hefðu farið inn sem bankafærslur. Bankayfirlit ber tilvísunarnúmer (tnr) og/eða
+    // kennitölu mótaðila; viðskiptamannahreyfingar bera „Eindagi" og Debet/Kredit. Dry-run sýnir áfram allt.
+    const hdr = headers.map(h => String(h || '').toLowerCase());
+    const liturUtEinsOgVidskiptamannahreyfingar = hdr.includes('eindagi') && (hdr.includes('debet') || hdr.includes('kredit'));
+    const vantarBankaDalka = !mapping.tnr && !mapping.kt_counterparty;
+    if (!dry && p.force !== '1' && (liturUtEinsOgVidskiptamannahreyfingar || vantarBankaDalka)) {
+      return json(422, { ok: false, file: fileName, headers, mapping,
+        error: 'Skráin lítur ekki út eins og bankayfirlit (' + (liturUtEinsOgVidskiptamannahreyfingar ? 'Eindagi/Debet/Kredit = viðskiptamannahreyfingar' : 'hvorki tilvísunarnúmer né kennitala mótaðila') + ') — ekkert skrifað. Veldu rétta skrá með ?file=ID eða ?force=1 ef þetta er örugglega bankinn.' });
+    }
+    const company = ['brunaholf', 'slokkvitaeki'].includes(String(p.company || '').toLowerCase()) ? String(p.company).toLowerCase() : COMPANY;
 
     // Dedupe within the file by the upsert key (identical rows trip the upsert).
     const seen = new Map();
@@ -73,7 +85,7 @@ exports.handler = async (event) => {
     const now = new Date().toISOString();
     for (let i = 0; i < uniq.length; i += BATCH) {
       const slice = uniq.slice(i, i + BATCH).map(r => ({
-        ...r, source: SOURCE, company: COMPANY, imported_at: now,
+        ...r, source: SOURCE, company, imported_at: now,
       }));
       const u = await fetch(`${SUPABASE_URL}/rest/v1/bank_transactions?on_conflict=trans_date,tnr,amount`, {
         method: 'POST',
