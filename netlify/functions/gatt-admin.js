@@ -123,12 +123,10 @@ exports.handler = async (event) => {
     // 09.10.2026 (Agnar: „ég geti center hotels án lykilorðs"): starfsmaður opnar vef
     // kúnna án lykilorðs kúnnans. Skilar einnota 2-mín hlekk (top-level GET á
     // gatt-login setur session-cookie — virkar líka þegar stjórnsíðan er í iframe).
-    // FAIL-CLOSED: krefst ALVÖRU starfsmanna-session. Meðan HUB_STAFF_PASSWORD er
-    // ekki sett hleypir requireStaff öllu í gegn — þá má þetta EKKI virka, annars
-    // gæti hver sem er opnað vef hvaða kúnna sem er. Hver opnun skráð í agent_logs.
+    // Hver opnun skráð í agent_logs.
     if (action === 'impersonate') {
-      if (!P.hubConfigured()) return P.json(403, { error: 'Starfsmanna-innskráning ekki virk (HUB_STAFF_PASSWORD vantar í Netlify) — þess vegna lokað', need_hub: true });
-      if (!P.staffFromEvent(event)) return P.json(401, { error: 'Innskráning starfsmanns vantar', need_login: true });
+      // 09.10.2026 (Agnar: „burt með helv lykilorðaruglið"): sama hlið og restin af stjórnsíðunni
+      // (requireStaff efst í handler) — opið meðan HUB_STAFF_PASSWORD er ekki sett, lokast sjálfkrafa þegar það er sett.
       if (!P.envReady()) return P.json(503, { error: 'PORTAL_JWT_SECRET vantar' });
       const id = String(body.id || '');
       if (!id) return P.json(400, { error: 'id vantar' });
