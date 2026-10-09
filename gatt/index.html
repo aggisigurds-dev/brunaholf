@@ -19,12 +19,26 @@
     --bg:#e9eaec; --card:#f7f7f7; --white:#fff;
     --ink:#161616; --ink2:#3f4247; --dim:#7b7f86; --faint:#9aa0a8;
     --dark:#141414; --dark2:#20211f;
-    --accent:#c8642a; --accent-soft:#e7a074; --ontime:#f6e6d8;
+    --accent:#c8642a; --accent-hd:#c8642a; --accent-soft:#e7a074; --ontime:#f6e6d8;
     --line:#d9dade; --line2:#c9cbcf;
     --good:#1f7a44; --serif:"Cormorant Garamond",Georgia,serif;
     --ui:"Jost",system-ui,sans-serif;
   }
-  /* önnur þemu bætast við hér síðar, t.d. :root[data-theme="cream"]{ --bg:#efe7db; --accent:#8a6d2f; ... } */
+  /* ── ÞEMU per viðskiptahóp (portal_users.theme → data-theme á <html>) ────────
+     Sjálfgefið (steel) = hlutlaust stál/appelsínugult hér að ofan.
+     --accent = áhersla á LJÓSUM fleti (dökkgull í cream); --accent-hd = áhersla á
+     DÖKKUM fleti (haus/dökk spjöld/takkar → ljósgull í cream). */
+  :root[data-theme="cream"]{
+    --bg:#efe7db; --card:#faf5ec; --white:#fff;
+    --ink:#26190f; --ink2:#4f4131; --dim:#8a7c66; --faint:#a3937d;
+    --dark:#26190f; --dark2:#3d2a19;
+    --accent:#8a6d2f; --accent-hd:#d8b25c; --accent-soft:#d8b25c; --ontime:#f4ead7;
+    --line:#e8dfcf; --line2:#dccfb8;
+    --good:#0f6e3a;
+  }
+  /* Á dökkum flötum (haus, dökk spjöld, dökkir takkar) → nota haus-áhersluna.
+     Í steel er --accent-hd == --accent (engin breyting); í cream verður hún ljósgull. */
+  header, #login button, .sc.dark, .chip.on, .msg-compose button{ --accent: var(--accent-hd); }
   *{box-sizing:border-box}
   html,body{margin:0}
   body{background:var(--bg);color:var(--ink2);font-family:var(--ui);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
