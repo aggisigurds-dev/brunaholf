@@ -17761,10 +17761,36 @@ async function renderKrofuyfirlit(t){
       }
     }
     // Landsspítalinn (NLSH) — Ajour-tekjur úr byMonth sem eigin hópur.
+    /* 09.10.2026 (Agnar, rétt áður en hann sendi september: „það virðist ekki passa alveg
+     * miðað við sem er í drögum og tími eftir"). Þessi lykkja virti EKKI `draftKeys` eins og
+     * Tímavera-lykkjan að ofan, svo mánuður með vistuðum drögum taldist TVISVAR:
+     * einu sinni í þrepi 2 (drögin) og aftur hér sem „Tími eftir".
+     * MÆLT þann dag á ÞG verktökum: drög sept. 3.827.435 kr (fast verð, vistað 09.10.) OG
+     * Ajour-lína sept. 2.993.773 kr — samtals 6.821.208 kr fyrir sama mánuðinn. Októberlínan
+     * (497.920 kr) var rétt, enda engin drög til á þeim mánuði.
+     * Reglan er nú sú SAMA og fyrir Tímaveru: drög á mánuðinum → aðeins viðbótin sést, og
+     * engin viðbót þegar reikningurinn er frágenginn (sendur) eða á föstu verði. */
+    const nlshDraftKey = man => {
+      for(const k of draftKeys){ const i = k.lastIndexOf('|');
+        if(i > 0 && k.slice(i+1) === man && /landssp|nlsh/i.test(k.slice(0, i))) return k; }
+      return null;
+    };
     for(const m of ((nl && nl.byMonth) || [])){
       if(!WINDOW.includes(m.month)) continue;
       const amt = Number(m.revenue_m_vsk)||0;
       if(amt<=0) continue;
+      const dKey = nlshDraftKey(m.month);
+      if(dKey){
+        const dr = REVIEWS[dKey];
+        if(!dr || dr.status!=='draft' || Number(dr.fixed_total)>0) continue;
+        const vidbot = amt - (Number(dr.total_m_vsk)||0);
+        if(vidbot < 1000) continue;   // drögin ná þegar yfir Ajour-tekjur mánaðarins
+        rows.push({ inv_key:`nlsh-vidbot|${m.month}`, id:null, tilvisun:null, source:'ajour',
+          kt:'', customer:'ÞG verktakar ehf.', worksite:'Landsspítalinn', work_month:m.month,
+          amount:vidbot, gjalddagi:null, days_overdue:null, partial: m.month===CUR_MONTH,
+          vidbot:true, vistad_dags:String(dr.updated_at||'').slice(0,10) });
+        continue;
+      }
       rows.push({ inv_key:`nlsh|${m.month}`, id:null, tilvisun:null, source:'ajour',
         kt:'', customer:'ÞG verktakar ehf.', worksite:'Landsspítalinn', work_month:m.month,
         amount:amt, gjalddagi:null, days_overdue:null, partial: m.month===CUR_MONTH });
