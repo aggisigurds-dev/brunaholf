@@ -16,6 +16,21 @@ const DUMMY = 'scrypt$00000000000000000000000000000000$0000000000000000000000000
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: P.secHeaders(), body: '' };
+  // ── Starfsmaður opnar vef kúnna (09.10.2026) — einnota 2-mín hlekkur úr gatt-admin
+  //    `impersonate` (sem krefst starfsmanna-session). Top-level GET → cookie → /gatt/.
+  if (event.httpMethod === 'GET') {
+    const imp = (event.queryStringParameters || {}).imp;
+    const fail = (msg) => ({ statusCode: 403, headers: P.secHeaders({ 'Content-Type': 'text/html; charset=utf-8' }),
+      body: '<meta charset="utf-8"><p style="font:16px system-ui;padding:24px">' + msg + '</p>' });
+    if (!imp || !P.envReady()) return fail('Ógildur hlekkur.');
+    const t = P.verifyToken(imp);
+    if (!t || !t.imp || t.base_id) return fail('Hlekkurinn er útrunninn — opnaðu aftur af stjórnsíðunni.');
+    const r = await P.sbGet(`portal_users?id=eq.${encodeURIComponent(String(t.imp))}&select=*&limit=1`);
+    const u = r.ok ? (await r.json())[0] : null;
+    if (!u || !u.active) return fail('Aðgangur fannst ekki eða er afvirkjaður.');
+    const token = P.signToken({ base_id: u.base_id, email: u.email || '', theme: u.theme || 'steel', name: u.display_name || '', staff: true });
+    return { statusCode: 302, headers: P.secHeaders({ 'Set-Cookie': P.sessionCookie(token), Location: '/gatt/?c=' + encodeURIComponent(u.slug || '') }), body: '' };
+  }
   if (event.httpMethod !== 'POST') return P.json(405, { error: 'POST only' });
   if (!P.envReady()) return P.json(503, { error: 'Þjónustuvefur ekki uppsettur (env vantar)' });
 

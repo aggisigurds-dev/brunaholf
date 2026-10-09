@@ -120,6 +120,27 @@ exports.handler = async (event) => {
       return P.json(200, { ok: true, password: pw, row: pubRow((await r.json())[0]) });
     }
 
+    // 09.10.2026 (Agnar: „ég geti center hotels án lykilorðs"): starfsmaður opnar vef
+    // kúnna án lykilorðs kúnnans. Skilar einnota 2-mín hlekk (top-level GET á
+    // gatt-login setur session-cookie — virkar líka þegar stjórnsíðan er í iframe).
+    // FAIL-CLOSED: krefst ALVÖRU starfsmanna-session. Meðan HUB_STAFF_PASSWORD er
+    // ekki sett hleypir requireStaff öllu í gegn — þá má þetta EKKI virka, annars
+    // gæti hver sem er opnað vef hvaða kúnna sem er. Hver opnun skráð í agent_logs.
+    if (action === 'impersonate') {
+      if (!P.hubConfigured()) return P.json(403, { error: 'Starfsmanna-innskráning ekki virk (HUB_STAFF_PASSWORD vantar í Netlify) — þess vegna lokað', need_hub: true });
+      if (!P.staffFromEvent(event)) return P.json(401, { error: 'Innskráning starfsmanns vantar', need_login: true });
+      if (!P.envReady()) return P.json(503, { error: 'PORTAL_JWT_SECRET vantar' });
+      const id = String(body.id || '');
+      if (!id) return P.json(400, { error: 'id vantar' });
+      const r = await P.sbGet(`portal_users?id=eq.${encodeURIComponent(id)}&select=id,base_id,slug,active,display_name&limit=1`);
+      const u = r.ok ? (await r.json())[0] : null;
+      if (!u) return P.json(404, { error: 'Aðgangur fannst ekki' });
+      if (!u.active) return P.json(400, { error: 'Vefurinn er afvirkjaður — virkjaðu hann fyrst' });
+      const t = P.signToken({ imp: u.id }, 120);
+      await P.log({ agent: 'gatt-admin', action: 'opna-sem-kunni', felag: String(u.base_id), target: u.display_name || u.slug, by_who: 'starfsmadur' });
+      return P.json(200, { ok: true, url: origin(event) + '/api/gatt-login?imp=' + encodeURIComponent(t) });
+    }
+
     if (action === 'clear-password') {
       const id = String(body.id || '');
       const r = await P.sbPatch(`portal_users?id=eq.${id}&select=*`, { pass_hash: null });

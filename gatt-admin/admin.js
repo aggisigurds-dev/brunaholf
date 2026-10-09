@@ -91,6 +91,7 @@
         '<td><span class="pill ' + st.c + '"><span class="dot"></span>' + st.t + '</span></td>' +
         '<td class="hide-sm acc ' + (a.email ? '' : 'none') + '">' + esc(a.email || '—') + '</td>' +
         '<td><div class="actions">' +
+          '<button class="btn btn--sm btn--accent" data-act="imp" title="Opna vef kúnnans án lykilorðs (starfsmaður)">Opna sem kúnni ↗</button>' +
           '<button class="btn btn--sm" data-act="copy">⧉ Hlekkur</button>' +
           '<button class="btn btn--sm" data-act="edit">Aðgangur</button>' +
         '</div></td></tr>' +
@@ -101,6 +102,14 @@
       var id = tr.getAttribute('data-id');
       var a = state.access.find(function (x) { return String(x.id) === id; });
       tr.querySelector('[data-act="copy"]').onclick = function () { copy(urlOf(a)); };
+      // 09.10.2026: starfsmaður opnar vef kúnna án lykilorðs. Glugginn opnaður STRAX (popup-vörn), slóðin sett eftir svar.
+      tr.querySelector('[data-act="imp"]').onclick = function () {
+        var w = window.open('about:blank', '_blank');
+        api({ action: 'impersonate', id: a.id }).then(function (res) {
+          if (res.ok && res.url) { if (w) w.location = res.url; else location.href = res.url; }
+          else { if (w) w.close(); toast(res.error || 'Villa'); }
+        }).catch(function () { if (w) w.close(); toast('Netvilla'); });
+      };
       tr.querySelector('[data-act="edit"]').onclick = function () { toggleEditor(a); };
     });
   }
