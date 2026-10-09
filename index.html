@@ -10834,9 +10834,9 @@ async function renderTilbunirReikningar(t){
     if(dvH>0) body += row('Dagvinna', dvR, dvH.toFixed(2), Math.round(dvR*dvH));
     if(evH>0) body += row('Yfirvinna', evR, evH.toFixed(2), Math.round(evR*evH));
     if(km>0||fr>0||gj>0) body += '<tr class="sec"><td colspan="4">Akstur</td></tr>';
-    if(km>0) body += row('ekinn km.', 186, km, km*186);
-    if(fr>0) body += row('ekinn ferð', 4000, fr, fr*4000);
-    if(gj>0) body += row('akstursgjald', gj, '1', gj);
+    if(km>0) body += row('Ekinn km.', 186, km, km*186);
+    if(fr>0) body += row('Ekinn ferð', 4000, fr, fr*4000);
+    if(gj>0) body += row('Akstursgjald', gj, '1', gj);
     const matRows = mats.filter(m=>(Number(m.qty)||0)>0||(Number(m.total)||0)>0).map(m=>{ const q=Number(m.qty)||0,p=Number(m.price)||0; return row(m.label,p,(q%1?q.toFixed(2):String(q)),Number(m.total)||Math.round(p*q)); }).join('');
     // Heklureits-Efnislisti (06.10.2026): línurnar eru brunalokanir per gatastærð (gat:true), ekki efni.
     if(matRows) body += '<tr class="sec"><td colspan="4">'+(mats.some(m=>m&&m.gat)?'Brunalokanir':'Efni')+'</td></tr>'+matRows;
@@ -10865,12 +10865,12 @@ async function renderTilbunirReikningar(t){
       </style></head><body>
       <div class="top">${logo?'<img src="'+logo+'" class="logo" alt="">':''}<div class="sub">Verðskrá / tilboð</div></div>
       <div class="meta"><div>${(()=>{const _k=(d.worksite_name||'')+'|'+(d.work_month||''),_t=(state.ui&&state.ui.gr_date_text&&state.ui.gr_date_text[_k])||'';return _t?esc(_t):(dmy(fra)+' til '+dmy(til));})()}</div><div class="ws">${esc(d.worksite_name)}</div>${payer?`<div class="cust">${payer}</div>`:''}</div>
-      <table><thead><tr><td></td><td class="p">án vsk</td><td class="m">magn</td><td class="t">samtals</td></tr></thead><tbody>
+      <table><thead><tr><td></td><td class="p">Án vsk</td><td class="m">Magn</td><td class="t">Samtals</td></tr></thead><tbody>
         ${body}
         ${(()=>{const _k=(d.worksite_name||'')+'|'+(d.work_month||''),_p=(d.discount_pct!=null?+d.discount_pct:((state.ui&&state.ui.gr_discount&&state.ui.gr_discount[_k])||0))||0; if(!_p) return ''; const _d=Math.round(net*_p/(100-_p)); return `<tr><td class="l">Afsláttur (${_p}%)</td><td class="p"></td><td class="m"></td><td class="t">−${kr(_d)}</td></tr>`;})()}
         <tr class="sub"><td colspan="3">Samtals án vsk</td><td class="t">${kr(net)}</td></tr>
-        <tr class="sub"><td colspan="3">vsk</td><td class="t">${kr(vsk)}</td></tr>
-        <tr class="grand"><td colspan="3">samtals með vsk</td><td class="t">${kr(total)}</td></tr>
+        <tr class="sub"><td colspan="3">Vsk</td><td class="t">${kr(vsk)}</td></tr>
+        <tr class="grand"><td colspan="3">Samtals með vsk</td><td class="t">${kr(total)}</td></tr>
       </tbody></table>
       <script>window.onload=function(){window.print();}<\/script></body></html>`);
     w.document.close();
@@ -12185,22 +12185,22 @@ async function renderGerdReikninga(t){
         </div>
         <div class="gr-doc-meta"><div>${(()=>{const _dm=document.getElementById('gr-datemode'),_dt=document.getElementById('gr-datetext');return (_dm&&_dm.checked&&_dt&&(_dt.value||'').trim())?escapeHtml((_dt.value||'').trim()):(dmy(fra)+' til '+dmy(til));})()}</div><div class="gr-doc-ws">${escapeHtml(ws)}</div>${payerBlock}${vegnaBlock}</div>
         <table class="gr-efni">
-          <thead><tr><td></td><td class="p">án vsk</td><td class="m">magn</td><td class="t">samtals</td></tr></thead>
+          <thead><tr><td></td><td class="p">Án vsk</td><td class="m">Magn</td><td class="t">Samtals</td></tr></thead>
           <tbody>
             ${c.dvH>0?row('Dagvinna', c.dvR, c.dvH.toFixed(2), c.dvAmt):''}
             ${c.evH>0?row('Yfirvinna', c.evR, c.evH.toFixed(2), c.evAmt):''}
             ${(c.km>0||c.fr>0||c.gj>0)?'<tr class="sec"><td colspan="4">Akstur</td></tr>':''}
-            ${c.km>0?row('ekinn km.', r.km, c.km, c.kmAmt):''}
-            ${c.fr>0?row('ekinn ferð', r.ferd, c.fr, c.frAmt):''}
-            ${c.gj>0?row('akstursgjald', c.gj, '1', c.gjAmt):''}
+            ${c.km>0?row('Ekinn km.', r.km, c.km, c.kmAmt):''}
+            ${c.fr>0?row('Ekinn ferð', r.ferd, c.fr, c.frAmt):''}
+            ${c.gj>0?row('Akstursgjald', c.gj, '1', c.gjAmt):''}
             ${matRows?'<tr class="sec"><td colspan="4">Efni</td></tr>'+matRows:''}
             ${(c.sma>0||c.stadf>0)?'<tr class="sec"><td colspan="4">Aukagjöld</td></tr>':''}
             ${c.sma>0?row('Smáhlutagjald = hanskar, þurrkur o.fl.', r.sma, (c.dvH+c.evH).toFixed(2), c.sma):''}
             ${c.stadf>0?row('Staðfesting brunaþéttinga', GR_STADF, '1', c.stadf):''}
             ${c.disc>0?`<tr><td class="l">Afsláttur (${c.discPct%1?c.discPct.toFixed(1):c.discPct}%)</td><td class="p"></td><td class="m"></td><td class="t">−${kr(c.disc)}</td></tr>`:''}
             <tr class="sub"><td colspan="3">Samtals án vsk</td><td class="t">${kr(c.net)}</td></tr>
-            <tr class="sub"><td colspan="3">vsk (${r.vsk}%)</td><td class="t">${kr(c.vsk)}</td></tr>
-            <tr class="grand"><td colspan="3">samtals með vsk${c.fixed>0?' <span style="font-size:10px;background:var(--warn-bg);color:var(--warn);padding:1px 5px;border-radius:3px;font-weight:normal">fast verð</span>':''}</td><td class="t">${kr(c.displayTotal)}</td></tr>
+            <tr class="sub"><td colspan="3">Vsk (${r.vsk}%)</td><td class="t">${kr(c.vsk)}</td></tr>
+            <tr class="grand"><td colspan="3">Samtals með vsk${c.fixed>0?' <span style="font-size:10px;background:var(--warn-bg);color:var(--warn);padding:1px 5px;border-radius:3px;font-weight:normal">fast verð</span>':''}</td><td class="t">${kr(c.displayTotal)}</td></tr>
           </tbody>
         </table>
         `;
@@ -12791,7 +12791,6 @@ async function renderGerdReikninga(t){
     const { fra, til } = monthRange(month);
     const existing = DRAFTS[`${wsName}|${month}`];
     const payer = PAYER_OVERRIDE[wsName] || PAYER_OVERRIDE['Heklu reitur'] || {};
-    const FOOT = 'Einingaverð miðast við þéttingu á annarri hlið hvers gats og fela í sér vinnu og efni. Skráning í Ajour gæðakerfið, skjalavinna og utanumhald er innifalið.';
     const bg = document.createElement('div');
     bg.className = 'gr-modal-bg boss';
     bg.innerHTML = `
@@ -12815,7 +12814,6 @@ async function renderGerdReikninga(t){
         .hk-days span{font-family:var(--font-mono,ui-monospace,monospace);font-size:11px;padding:2px 7px;border-radius:10px;background:#fff;border:1px solid var(--line-2,#d9d3c6);color:var(--ink-2,#4a463f)}
         .hk-warn{font-size:12.5px;line-height:1.5;margin:10px 0 0;padding:8px 11px;border:1px solid #d9b25a;border-radius:5px;background:linear-gradient(180deg,#fbf3d9,#f4e6b8);color:#3e2c06}
         .hk-stale{border-color:#c0392b;background:linear-gradient(180deg,#fdecea,#f8d7d3);color:#7a1d14}
-        .gr-doc .hk-foot{margin-top:18px;font-size:11px;font-style:italic;color:#555;line-height:1.45}
         .gr-modal-bg.boss #hk-save{height:38px;padding:0 20px;border:1px solid #5a4410;border-top-color:#f7e6b8;border-bottom-color:#2e2004;border-radius:5px;background:var(--gold-face,linear-gradient(180deg,#f3dc95,#b8892e));color:#161513;font-weight:800;text-shadow:0 1px 0 rgba(255,255,255,.35);box-shadow:var(--gold-bevel-shadow,inset 0 1px 0 rgba(255,255,255,.55),inset 0 -2px 3px rgba(60,40,0,.45),0 3px 6px rgba(22,21,19,.45))}
       </style>
       <div class="gr-modal">
@@ -12966,16 +12964,15 @@ async function renderGerdReikninga(t){
         <div class="gr-doc-top"><img class="gr-doc-logo" src="${escapeAttr(getLogo())}" alt="" onerror="this.style.display='none'"><div class="gr-doc-sub">Verðskrá / tilboð</div></div>
         <div class="gr-doc-meta"><div>${dmy(fra)} til ${dmy(til)}</div><div class="gr-doc-ws">${escapeHtml(wsName)}</div>${[cust, kt?'kt. '+kt:'', addr].filter(Boolean).map(escapeHtml).join('<br>')}</div>
         <table class="gr-efni">
-          <thead><tr><td></td><td class="p">án vsk</td><td class="m">magn</td><td class="t">samtals</td></tr></thead>
+          <thead><tr><td></td><td class="p">Án vsk</td><td class="m">Magn</td><td class="t">Samtals</td></tr></thead>
           <tbody>
             <tr class="sec"><td colspan="4">Brunalokanir</td></tr>
             ${c.ls.map(l=>`<tr><td class="l">${escapeHtml(l.label)}</td><td class="p">${kr(l.price)}</td><td class="m">${l.qty}</td><td class="t">${kr(l.total)}</td></tr>`).join('') || '<tr><td class="l" colspan="4">—</td></tr>'}
             <tr class="sub"><td colspan="3">Samtals án vsk</td><td class="t">${kr(c.net)}</td></tr>
-            <tr class="sub"><td colspan="3">vsk (${VSK_PCT}%)</td><td class="t">${kr(c.vsk)}</td></tr>
-            <tr class="grand"><td colspan="3">samtals með vsk</td><td class="t">${kr(c.total)}</td></tr>
+            <tr class="sub"><td colspan="3">Vsk (${VSK_PCT}%)</td><td class="t">${kr(c.vsk)}</td></tr>
+            <tr class="grand"><td colspan="3">Samtals með vsk</td><td class="t">${kr(c.total)}</td></tr>
           </tbody>
-        </table>
-        <div class="hk-foot">${escapeHtml(FOOT)}</div>`;
+        </table>`;
     };
 
     const refresh = () => {
@@ -12992,7 +12989,7 @@ async function renderGerdReikninga(t){
 
     document.getElementById('hk-reset').onclick = () => { qty = fromAjour(); setDirty(true); renderBody(); refresh(); };
 
-    const pdfData = () => { const c = calc(); return { ws: wsName, cust: document.getElementById('hk-cust').value.trim(), kt: document.getElementById('hk-kt').value.trim(), addr: document.getElementById('hk-addr').value.trim(), fra, til, lines: c.ls, net: c.net, vsk: c.vsk, vskPct: VSK_PCT, total: c.total, foot: FOOT }; };
+    const pdfData = () => { const c = calc(); return { ws: wsName, cust: document.getElementById('hk-cust').value.trim(), kt: document.getElementById('hk-kt').value.trim(), addr: document.getElementById('hk-addr').value.trim(), fra, til, lines: c.ls, net: c.net, vsk: c.vsk, vskPct: VSK_PCT, total: c.total }; };
     const $st = document.getElementById('hk-st');
     const doSave = async (force) => {
       const c = calc();
@@ -13060,7 +13057,7 @@ async function renderGerdReikninga(t){
         tr.sec td{font-weight:700;padding-top:12px}
         tr.sub td{border-top:1px solid #000;padding-top:4px;text-align:right;font-style:italic;color:#555}tr.sub td.t{font-style:normal;color:#000}
         tr.grand td{border-top:1px solid #000;border-bottom:3px double #000;padding:6px 4px;text-align:right}tr.grand td.t{font-weight:700}
-        .hk-foot{margin-top:18px;font-size:11px;font-style:italic;color:#555;line-height:1.45}</style></head><body>${html}
+</style></head><body>${html}
         <script>window.onload=function(){window.print();}<\/script></body></html>`);
       w.document.close();
     };
@@ -24452,12 +24449,12 @@ function drawGatEfnislistiPage(doc, logo, data){
   (data.lines||[]).forEach(l => bodyRows.push([l.label, kr(l.price), String(l.qty), kr(l.total)]));
   const foot = [
     [{content:'Samtals án vsk', colSpan:3, styles:{halign:'right',fontStyle:'italic'}}, {content:kr(data.net), styles:{halign:'right'}}],
-    [{content:'vsk ('+(data.vskPct||24)+'%)', colSpan:3, styles:{halign:'right',fontStyle:'italic'}}, {content:kr(data.vsk), styles:{halign:'right'}}],
+    [{content:'Vsk ('+(data.vskPct||24)+'%)', colSpan:3, styles:{halign:'right',fontStyle:'italic'}}, {content:kr(data.vsk), styles:{halign:'right'}}],
     [{content:'Samtals með vsk', colSpan:3, styles:{halign:'right',fontStyle:'bold'}}, {content:kr(data.total), styles:{halign:'right',fontStyle:'bold'}}],
   ];
   doc.autoTable({
     startY: Math.max(by+8, y+40),
-    head: [[ '', {content:'án vsk',styles:{halign:'right'}}, {content:'magn',styles:{halign:'right'}}, {content:'samtals',styles:{halign:'right'}} ]],
+    head: [[ '', {content:'Án vsk',styles:{halign:'right'}}, {content:'Magn',styles:{halign:'right'}}, {content:'Samtals',styles:{halign:'right'}} ]],
     body: bodyRows, foot,
     styles:{ font:'helvetica', fontSize:12, cellPadding:4.5 },
     headStyles:{ fillColor:[255,255,255], textColor:90, fontStyle:'italic', fontSize:10.5, lineWidth:{bottom:0.5}, lineColor:[180,180,180] },
@@ -24465,12 +24462,6 @@ function drawGatEfnislistiPage(doc, logo, data){
     columnStyles:{ 1:{halign:'right'}, 2:{halign:'right'}, 3:{halign:'right'} },
     margin:{ left:40, right:40 },
   });
-  if(data.foot){
-    const fy = (doc.lastAutoTable ? doc.lastAutoTable.finalY : by) + 22;
-    doc.setFont('helvetica','italic'); doc.setFontSize(9.5); doc.setTextColor(90);
-    doc.text(doc.splitTextToSize(data.foot, W-80), 40, fy);
-    doc.setTextColor(20);
-  }
 }
 
 // Nýi Landsspítalinn — Efnislisti · NLSH (06.10.2026): blaðið sem fer til ÞG/Landsspítalans, liggjandi
@@ -24639,9 +24630,9 @@ function drawEfnislistiPage(doc, logo, data){
   if(c.dvH>0) line('Dagvinna', c.dvR, klst(c.dvH), c.dvAmt, true);
   if(c.evH>0) line('Yfirvinna', c.evR, klst(c.evH), c.evAmt, true);
   if(c.km>0||c.fr>0||c.gj>0) sec('Akstur');
-  if(c.km>0) line('ekinn km.', rt.km, magn(c.km), c.kmAmt);
-  if(c.fr>0) line('ekin ferð', rt.ferd, magn(c.fr), c.frAmt);
-  if(c.gj>0) line('akstursgjald', c.gj, '1', c.gjAmt);
+  if(c.km>0) line('Ekinn km.', rt.km, magn(c.km), c.kmAmt);
+  if(c.fr>0) line('Ekin ferð', rt.ferd, magn(c.fr), c.frAmt);
+  if(c.gj>0) line('Akstursgjald', c.gj, '1', c.gjAmt);
   const mats = (c.matLines||[]).filter(m=>m.qty>0||m.total>0);
   if(mats.length){ sec('Efni'); mats.forEach(m=> line(m.label, m.price, magn(m.qty), m.total)); }
   if(c.sma>0||c.stadf>0) sec('Aukagjöld');
