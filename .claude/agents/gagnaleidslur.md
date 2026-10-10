@@ -136,6 +136,11 @@ for several Supabase tables this app reads:
   `redder-read-background` keyrir það 09:50/13:50/17:50 UTC → `automation_runs(job_name='redder-read')`.
   Bakfylling 05.10: 52 reikningar lesnir (13 í sept). Reikningar sem standa áfram „(ótengt)" hafa enga
   „Vegna/V:"-tilvísun í PDF-inu — þá þarf 🔗 Tengja við verkstað.
+  **📄 Skoða reikning** (index.html `redderPdfHlekkur(inv)`, Efniskostnaður + Gerð reikninga) opnar PDF-ið um
+  `/api/skjal?id=<drive_file_id>` — server-OAuth, engin Google-innskráning; póst-haus án Drive-skrár: „PDF ekki
+  komið". Ekki keyra fulla möppu-endurlesningu (án nyir) til að „laga" — hún yfirskrifar handvirka verkstaði og
+  útilokaðar línur á eldri reikningum. Áður en þú segir „lesarinn er bilaður": SQL á `redder_invoices` eftir
+  `source` + línufjölda og `automation_runs(job_name='redder-read')` — oftast hefur hann bara ekki keyrt.
 
 - **`bridge.js`** — reads Thunderbird mbox files for 5 accounts,
   classifies messages, upserts to `email_digest`. Runs every 15min
