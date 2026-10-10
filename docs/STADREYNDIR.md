@@ -1204,3 +1204,29 @@ felldar saman — sbr. árekstrarviðvörunina sem eitt þeirra bar. Hvert atri�
   `_deleted`, og 124 þeirra á stöðum með úttektarsölu á árinu (t.d. Klaki Tech #466: gögn
   frá 17.08, R-000677 send og greidd). Ferð án `_locked` er því ekki sönnun um óklárað
   verk — berðu hana saman við úttektarsölu ársins.
+
+## 17. Skýrslugeymslurnar tvær ljúga — mælt 06.10.2026 (rekstrarfélög pöruð eftir magni)
+
+Tölurnar eru úr Supabase 06.10.2026 kl. 14:45 og standa þar til einhver hreinsar.
+
+| Mæling | Tala |
+|---|---|
+| (félag, ár) með **fleiri en eina** færslu í `arsskodun_customers[fid].history` | **119** (111 félög, mest 15 á einu ári) |
+| `arsskodun_report_facts`-raðir alls | 666 |
+| … þar sem `source_doc_id` er skjal af **öðru ári** en `report_year` | **138** |
+| … þar sem `source_doc_id` er skjal **annars félags** | **17** |
+| `uttaeki` með status ≠ active (Í lagi / ok / loaned) | 178 tæki á 16 félögum; **11 félög eiga ekkert `active`** |
+
+Orsökin: batch-lestur á Drive-möppu („febrúar 2026/…") skrifaði skýrslur allra staða á sömu
+kennitölu undir EINN stað (Grjótháls bar fjórar færslur 2026, sjö 2025; Höfuðstöðvar Heimaleigu
+fimm fyrir 2025). Afleiðingin leit út eins og „reikningur stangast á við skýrslu" (R-106443
+„vegna Gjótháls") — reikningurinn var réttur, PDF-ið sagði það sama. **Regla:** lestu PDF-ið
+áður en reikningur er dæmdur rangur; vinnulagið er í `slokkvitaeki/.claude/skills/rekstrarfelog-parun`
+og tólið í `netlify/functions/para-rekstrarfelag.js` (sérfræðingur `skjol`).
+
+Fjárhagsgloppur sem komu í ljós í sömu keyrslu (ósannreyndar hjá Agnari, ekki lagaðar):
+Midtown Hotel okt 2025 — 61 tæki skoðuð, enginn reikningur; Aðalskoðun — fjórir staðir
+skoðaðir í febrúar en einn reikningur á ári (2025 og 2026); Center Grandi jan 2026 — 25 tæki,
+enginn skoðunarreikningur (R-108134 er ný álma); Þingholt Apartments des 2025 — 5 tæki.
+Höfuðstöðvar Heimaleigu sept 2025: R-107256 (26.269) og R-107267 (22.500) með sömu línur,
+dagur á milli, hvorugur kreditfærður.
