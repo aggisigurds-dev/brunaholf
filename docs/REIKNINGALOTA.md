@@ -154,6 +154,20 @@ vistuð á drögunum svo endurprentun stemmi á öllum tækjum. Sértaxtar (t.d.
 | Óklárað hjá Slökkvitækjum (04.09.2026) | Artifact „Óklárað hjá Slökkvitækjum" — innihaldið er komið í Drög-stöðina |
 | Hvað gerðist síðast | `slokkvitaeki/docs/MINNISBOK.md` (efst = nýjast) |
 
+## Orðalag pósta og reikningstexta → Svar-stöð (08.10.2026)
+
+Þetta skjal fjallar um flæðin, ekki orðalagið. **Allur texti sem fer út** — reikningspóstar, skýrslupóstar, „vegna"-lína,
+lýsing kröfu í Payday, kreditnótutexti, svör við póstum, tilboð, SMS — er kortlagður á
+**slokkvitaeki.netlify.app/#svarstod**: 27 sendileiðir með textanum orðrétt, hvar hann er skráður og reglunum.
+Hver gluggi sem sendir ber smátt númer **SV-01 … SV-27** í hausnum („Senda í bókun" hér í hubbinu er SV-13).
+Regla Agnars á spjaldinu (`app_settings.svarstod.reglur`) gengur framar þessu skjali og skillunum.
+Flipinn **Ósamræmi** listar 20 staði þar sem textinn segir sitt hvað (gjalddagi 7+3 / 10 / 14, þrjú félagsnöfn,
+„Bankaupplýsingar koma hér", bókunarpóstur sem fyllist með netfangi kúnnans …) — bíða ákvörðunar Agnars.
+
+**Tvö ólík „kostnaðar"-kerfi:** (a) **Kostnaðarreikningar (endurrukkun)** hér að neðan — birgjareikningar sem eru
+rukkaðir áfram á kúnna, droppað á Efniskostnað → Drög-stöð. (b) **Kostnaður** í Slökkvitæki-appinu (`#kostnadur`) —
+viðhengi úr pósti eldklar@ lesin sjálfkrafa sem kostnaður fyrirtækisins (sjá `gagnaleidslur`). Ekki rugla saman.
+
 ## Kostnaðarreikningar (endurrukkun) — 06.09.2026
 
 Birgjareikningar sem eru endurrukkaðir á kúnna (t.d. Securitas-efni fyrir brunakerfi Borealis):
