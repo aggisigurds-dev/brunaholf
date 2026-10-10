@@ -61,6 +61,16 @@ eins og júlíblaðið (liggjandi A4), 📐 2.11-gluggi + ↗ Metraskrá stokka.
 „Landsspitalinn" (ÞG verktakar ehf. 581198-2569). **2.11 er í METRUM úr ummáli** í Ajour
 Description: (L+L+B+B)/1000 (`raufMetrar` í nlsh-stada.js; yfirskrift per skráningu í
 `nlsh_raufar_metrar`). 3.1 Rafmagnsraufar = Raf göt + Raf raufar + Raflagnaþéttingar.
+**`teknar_fram` (94886ab, 07.10.2026):** lokatala vistuð EFTIR mánaðamót (Agnar: „setja stöðuna í dag
+allt inn í september") → per verklið `teknar_fram = max(0, min(lokatala − tillaga, Ajour eftir
+mánaðamót))`; næsti mánuður reiknar `nyMan = max(0, nyHratt − teknar_fram fyrri mánaðar)` svo ekkert
+tvítelst. Sept 2026 vistaður þannig → drög #339 = 3.827.435 m. vsk; október byrjaði á 0.
+**5% afsláttur NLSH er settur í Payday, ALDREI í drögin:** hver reikningur síðan í apríl =
+Efnislisti × 0,95 (ágúst 6.435.896 → R-370 6.114.101; júlí 10.573.087 → R-352 10.044.433). Drögin
+og Kröfu yfirlit sýna upphæð fyrir afslátt (opið mál á borði #1131 hvort það breytist).
+Glugginn velur sjálfur fyrsta ófrosna mánuðinn (síðumánuður skiptir ekki máli); PDF-ið sýnir
+heilar allra fyrri mánaða + mánuðinn. Kröfu yfirlit: drög á mánuðinum → aðeins viðbót sem „Tími
+eftir" (`nlsh-vidbot|<mán>`, 1c35343). Verklagið skref fyrir skref: skill `gata-manadarlok`.
 
 **Starfsmaður er í `category`-reitnum** („Starfsmaður N"), ekki í
 `CheckListItemCheckedByUser` (sá er alltaf almennur og gagnslaus).
@@ -84,6 +94,8 @@ Greiðandi: Framkvæmdafélagið Laugavegur ehf. kt. 680921-2020. Sannreynt: apr
 m.vsk, nákvæmlega Gatastærðir-blaðið (með 3 ókláruðum + Ø1700-1799 á 1710-1759 bætt við handvirkt).
 Ajour-raðir Heklureits samstilltar af luna-bridge `ajour-yfirlit.js` (`syncVerkefnaRadir`, app_kv
 `ajour_radir_sync`) — CSV-útflutningurinn nær aðeins yfir NLSH.
+Glugginn á EIGIÐ mánaðarval (`#hk-man`) og drögin eru `DRAFTS[ws|mánuður gluggans]` — ekki
+`draftFor`, sem les mánuð síðunnar (gildran 06.10: síðan á ágúst → 0 kr drög #338).
 
 ## 🔴 Afsláttar-konvensjónin (algengasta villan í kerfinu)
 

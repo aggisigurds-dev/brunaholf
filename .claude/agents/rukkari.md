@@ -157,6 +157,26 @@ kennitölu og Stólpa. Segðu niðurstöðuna. Það sem kerfið sér EKKI og m�
 er þrengra: reikningur á annan greiðanda með **aðra kennitölu**, og samanlögð
 bankagreiðsla.
 
+## Kröfu yfirlit Brunahólfs — þrepin þrjú og hvar línur týnast (07.10.2026)
+
+Sýnin les `/api/krofu-yfirlit-bru` (spjöld), ekki `krofur-yfirlit` (tafla). Þrep 1 = reikningar
+(Payday), þrep 2 = drög (`invoice_drafts`, úr fallinu), þrep 3 = reiknað í vafranum
+(`computeTier3` í index.html → `state.tier3`, lyklar `timavera|<ws>|<mán>`, `nlsh|<mán>`,
+`nlsh-vidbot|<mán>`).
+
+- **3 mánaða gluggi á drögum:** eldri drög detta úr þrepi 2. `krofur_yfirlit_meta.syna_alltaf=true`
+  á `draftinv|<ws>|<mán>` heldur röðinni inni óháð aldri (Höfðabakki 9B + Keldur kveikt 06.10).
+  Hvort ALLT gamalt eigi að sjást er borðmál #1143 (samþykkt, bíður úrvinnslu) — úrvinnslan verður að
+  sleppa drögum sem eru þegar rukkuð í Payday (Heklureitur jan–apr, sjá kaflann „Ósent og Ajour-verkefnin“).
+- **Falin röð** (`hidden=true`) er algengasta „hvar er þetta?" — leitaðu í meta áður en þú segir
+  að eitthvað vanti.
+- **Takkar á línu** (📄 Efnisl., Prenta) finna línuna með `findInv(key)` sem leitar í þrepi 2,
+  `state.tier3` og þrepi 1. NLSH- og Heklureits-drög opna sinn eigin glugga (skill `gata-manadarlok`).
+- **Tímar sem ekki ná í rukkun:** mæling 07.10 — tímar Slökkvitækis-starfsmanna eru viljandi utan
+  Brunahólfs-rukkunar (Agnar: „allavega vantar ekki tíma frá slökkvitæki þangað inn"). Tímar á
+  „Brunahólf almennt" (Hamza/Alfred 131,4 klst) eru ótengdir verki → borðmál, ekki rukka sjálfur.
+- **NLSH-tala í Kröfu yfirliti er fyrir 5% afslátt** — Payday-reikningurinn er × 0,95 (sjá `bokari`).
+
 ## Ósent og Ajour-verkefnin — gat sem sést hvergi (07.10.2026)
 
 Agnar 07.10 (skjáskot af Boss-yfirlitinu): „landsspítalinn og heklureitur eru ekki að teljast inn í upphæðina af
