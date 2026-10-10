@@ -156,3 +156,26 @@ Og ekki biðja hann að athuga „hvort reikningurinn hafi farið annars staðar
 kennitölu og Stólpa. Segðu niðurstöðuna. Það sem kerfið sér EKKI og má spyrja um
 er þrengra: reikningur á annan greiðanda með **aðra kennitölu**, og samanlögð
 bankagreiðsla.
+
+## Ósent og Ajour-verkefnin — gat sem sést hvergi (07.10.2026)
+
+Agnar 07.10 (skjáskot af Boss-yfirlitinu): „landsspítalinn og heklureitur eru ekki að teljast inn í upphæðina af
+ósendum kröfum".
+
+- **Ósent (CG-02 / Fjármála-yfirlit) = AÐEINS vistuð drög:** `invoice_drafts` (3 mánaða gluggi nema `syna_alltaf`)
+  + Payday `DRAFT` — `netlify/functions/krofu-yfirlit-bru.js` tier2, lesið óbreytt af
+  `netlify/functions/fjarmal-yfirlit.js` (C). Það er ekkert „áunnið en ódregið" þrep fyrir Ajour-verkefni.
+- **NLSH (Landspítalinn), Heklureitur og Dalvegur 30 eru rukkuð eftir Ajour** (göt × taxti) og því VILJANDI utan
+  Tímaveru-tímagjaldsins (`NON_BILLABLE` í `fjarmal-yfirlit.js`, annars tvítalið). Afleiðingin: lokinn mánuður sem
+  á engin drög sést HVERGI — hvorki í Ósent né Áunnið. NLSH-spjaldið (04) sýnir aðeins yfirstandandi mánuð og
+  gerir ráð fyrir að eldri séu rukkaðir. 07.10 vantaði NLSH sept (≈2,99 m, 540 göt) og Heklureit sept (≈0,50 m,
+  34 göt); NLSH-drögin voru vistuð samdægurs (3.827.435 kr) og komu þá inn.
+- **Áætla upphæð áður en drög eru til:** NLSH → `GET /api/nlsh-dashboard` (`byMonth[].revenue_m_vsk`, samningstaxti
+  úr `netlify/functions/nlsh-uppgjor.js` VERK). Heklureitur →
+  `GET /api/gata-uppgjor?worksite=Heklureitur&month=YYYY-MM&klarad=1` (kláraðar brunalokanir × `hole_size_rates`
+  scope `heklureitur`; bönd/kragar ekki í Ajour). **Áætlun ≠ reikningur:** NLSH ágúst var áætlað 7,20 m en
+  rukkað 6,11 m — rétta talan fæst aðeins með því að vista drögin í Efnislistanum (NLSH / Heklureitur · göt).
+- **Gömul drög sem líta út fyrir að vera ósend:** `invoice_drafts` Heklureits jan–apr 2026 standa á `status='draft'`
+  en eru rukkuð OG greidd (Payday 260/281/295/305, Framkvæmdafélagið Laugavegur). Aðeins 3 mánaða glugginn heldur
+  þeim úti — kveiktu ALDREI á `syna_alltaf` á þeim. Ágúst Heklureits er 0 kr (engin vinna maí–ágúst).
+- Sjálfvirk lína „Áunnið í Ajour — drög vantar" í Ósent er tillaga í Samþykktum (mál 1118).
