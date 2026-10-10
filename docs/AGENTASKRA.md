@@ -77,6 +77,10 @@ Teljarinn **153/187** (tilbúið-staða) er **óbreyttur**. Hann er ekki hluti a
 | `arnold` | skill | slokkvitaeki | `.claude/skills/arnold/SKILL.md` | `staðsetning` · `slökkvigildi` · `flóttaleið` · `byggingarreglugerð` | Rugla við agent `oryggi` (RLS). Roster-Arnold er **bæði**: þetta skill + `oryggi`-rödd. |
 | `elon-musk` | skill | slokkvitaeki | `.claude/skills/elon-musk/SKILL.md` | sama og agentinn | Sjá `elon-musk` að ofan. |
 | `deploy` | skill | slokk + bh | `.claude/skills/deploy/SKILL.md` | `deploy` · `ýta` · `deploy.js` | `node deploy.js`. |
+| `vidmotsprof` | skill | brunaholf | `.claude/skills/vidmotsprof/SKILL.md` (+ `sink.cjs`) | `prófa` · `staðfesta` · `virkar þetta` · `skjáskot af PDF` | Staðfesta UI með API-kalli. Láta próf skrifa í lifandi gögn. |
+| `gata-manadarlok` | skill | brunaholf | `.claude/skills/gata-manadarlok/SKILL.md` | `loka mánuðinum` · `Efnislisti NLSH` · `Heklureitur göt` · `lokastaðan` | Endurreikna frosinn mánuð. Setja 5% í drögin. Nota mánuð síðunnar. |
+| `bh-pdf` | skill | brunaholf | `.claude/skills/bh-pdf/SKILL.md` | `PDF útlit` · `font í Verkstaður` · `lógóið` · `Tímaskýrsla PDF` | Teikna haus upp á nýtt. Edit án fallheitis (teiknararnir eru nær eins). |
+| `samthykki-a-bord` | skill | ~/.claude (bæði félög) | `~/.claude/skills/samthykki-a-bord/SKILL.md` | `settu á þjónustuborðið` · `setja inn á samþykktir` · `settu á mig` | Safnspjald. Insert án `assigned_to 'Agnar'`. |
 
 ---
 

@@ -94,6 +94,11 @@ fært, orðrétt. Hver þeirra hleðst AÐEINS þegar hann er kallaður til.
 hans beint þegar þú þarft bara þekkinguna. **Ekki afrita innihald þeirra hingað** — ein
 staðreynd á að eiga sér einn stað, annars rekur hún í sundur.
 
+**Verklags-skills (`.claude/skills/`):** `gata-manadarlok` (mánaðarlok NLSH + Heklureits — frosnir
+mánuðir, drög, PDF) · `bh-pdf` (jsPDF-útlit: haus, Playfair, töflustílar) · `vidmotsprof` (prófa í
+gegnum viðmótið án þess að skrifa í lifandi gögn; PDF fangað og opnað með pdf.js) · `deploy` ·
+`reikningalota`. Samþykkismál á Þjónustuborðið: skill `samthykki-a-bord` (í `~/.claude/skills`).
+
 ⚠️ **Um stórar skrár:** `index.html` er 1,29 MB ≈ **323.000 tokens**. Lestu hana
 ALDREI í heilu lagi — `grep` fyrst, svo `offset`/`limit`. Sama gildir um
 `graphify-out/graph.json` (392k tokens).
