@@ -355,3 +355,13 @@ fjórar tölvur í sama rými vinna
   paid/note), `invoice_drafts`, `reikningspunktar.karfa`, `app_kv` (`ky_settings`).
   Úttekt á vafra-lyklum: `docs/UTTEKT-VAFRASTADA-20260905.txt` (brunaholf).
 
+
+## Hliðarstikan — flokkalínur (07.10.2026)
+
+`state.tabs` ber `sep`-hluti `{id:'sep-…', sep:true, label}`. Merkt lína = gull ◆-flokkafyrirsögn
+(`css/theme.css` `.tab-sep .sep-label`, `::before "◆"`), ómerkt = dauf lína; síðurnar sitja 30 px
+inndregnar undir (`.layout:not(.compact) .tab-v`). Í Breyta-ham: ✎ endurnefna (líka tvísmellur),
+✕ fjarlægja, drag (HTML5 — færir AÐEINS línuna, síður á milli skipta um flokk), „➕ Nýr flokkur / lína".
+Einskiptis-merkingin `ui._flokkalinurV1` nefndi línur Agnars eftir næsta sýnilega flipa; `ui._tiltektV1`
+fjarlægði tvítekinn flipa (okkarVerkefni) og faldi Anni & Aggi + Spurningar. `tabs`-fylkið fer upp í heilu
+lagi — `window.__flokkalinurNytt` → `save()` 1,5 s eftir ræsingu svo merkingin samstillist.
