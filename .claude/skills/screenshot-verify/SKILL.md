@@ -35,6 +35,25 @@ Run it with the global Playwright on the expected path:
 NODE_PATH=/opt/node22/lib/node_modules node your-script.cjs
 ```
 
+## If the relay hangs: plain Playwright through the agent proxy (08.10.2026)
+In one session `launch()` above never returned (no error, no output). Plain Playwright worked by pointing
+Chromium at the session's egress proxy:
+```js
+const { chromium } = require('playwright');
+const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium',
+  proxy: { server: process.env.HTTPS_PROXY, bypass: '192.0.2.2' } });   // bypass = the container IP
+const context = await b.newContext({ ignoreHTTPSErrors: true });
+```
+- With `proxy` set, **127.0.0.1/localhost also goes through the proxy** (the page shows "agent-proxy relay … HTTPS
+  CONNECT"). Serve the app with `python3 -m http.server 8787` and open it on the container IP
+  (`hostname -I`, e.g. `http://192.0.2.2:8787/`), listed in `bypass`.
+- Supabase answered through it (401 without a key = reachable). Netlify deploy-preview hosts failed with
+  `ERR_TOO_MANY_RETRIES` — test a local copy instead.
+- Block real writes: `context.route('**/*')` and `fulfill` every non-GET/HEAD/OPTIONS request to `supabase.co`,
+  `/api/` or `/.netlify/` (record the bodies to assert on them).
+- In the Slökkvitæki app the boot overlay (`.boot-veil`) can sit over everything headless; screenshots came out
+  clean only after a click inside the page.
+
 ## Non-obvious gotchas (each cost real time once)
 - **Name the script `.cjs`** (like `tools/bh-browser.cjs`). If the repo is an ES
   module, a plain `.js` loads through the ESM loader and `module.exports` silently
