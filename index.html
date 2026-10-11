@@ -17492,6 +17492,22 @@ async function renderKrofuyfirlit(t){
   const ktDigits = s => String(s||'').replace(/\D+/g,'');
 
   // Aldurs-tákn: grænt ≤30d · gull-blek 31–60d · terra >60d — mono „31D" (Boss).
+  /* Aldurspilla á ÓSEND drög eldri en 3 mánaða (mál #1143, samþykkt 09.10.2026:
+   * „líka eldri en 3 mánaða (merkt með aldri)"). Mánaðar-platan segir HVAÐA mánuður;
+   * þessi segir HVE GAMALT, af því að „feb ’26" er ekki það sama og „8 mán ógreitt"
+   * þegar 57 raðir koma inn í einu. Reiknað úr work_month, ekki úr gjalddaga —
+   * ósend drög eiga engan gjalddaga. */
+  function aldursPilla(workMonth){
+    if(!workMonth) return '';
+    const m = /^(\d{4})-(\d{2})$/.exec(String(workMonth));
+    if(!m) return '';
+    const man = (_now.getFullYear() - +m[1]) * 12 + (_now.getMonth() + 1 - +m[2]);
+    if(man < 4) return '';
+    const cls = man >= 12 ? 'ogreitt' : man >= 6 ? 'osent' : 'greitt';
+    return '<span class="boss-badge ' + cls + ' ky-num" style="padding:1px 7px;font-size:10.5px" '
+      + 'title="Vinnumánuðurinn er ' + esc(monthPeriod(workMonth)) + ' — ' + man + ' mánuðum eldri en þessi. Drögin eru ósend.">'
+      + man + ' MÁN</span>';
+  }
   function agingPill(days){
     if(days==null) return '';
     const cls = days>60 ? 'ogreitt' : days>30 ? 'osent' : 'greitt';
@@ -17693,6 +17709,12 @@ async function renderKrofuyfirlit(t){
   }
 
   // Þrep 3 — reiknað í vafra úr /api/worksites (+ pricing-guide + nlsh-dashboard).
+  /* Mál #1143 (b), samþykkt 09.10.2026: „drög merkt overdue fá nýja tíma reiknaða
+   * inn eins og önnur". overdue = ÓRUKKAÐ (docs/ — Rukkunargögn merking), svo slík
+   * drög eru ekki frágengin og viðbótartímar eftir vistun eiga að sjást eins og
+   * á draft. Fast verð (fixed_total) stöðvar viðbótina áfram, eins og áður. */
+  const OSEND_DROG = new Set(['draft', 'overdue']);
+
   async function computeTier3(){
     // Aðgreina raunverulega sóknar-villu (net/HTTP) frá löglega tómu svari svo
     // við föllum ekki hljóðlega á sjálfgefna taxta og sýnum rangar áætlanir.
@@ -17732,7 +17754,7 @@ async function renderKrofuyfirlit(t){
           // Mismunurinn fer því í „Tími eftir" sem viðbótarlína. Drög sem voru vistuð EFTIR
           // að mánuðinum lauk eru frágengin (hádegi/afsláttur dregin frá) → engin viðbót.
           const dr = REVIEWS[`${w.project}|${month}`];
-          if(!dr || dr.status!=='draft' || Number(dr.fixed_total)>0) continue;
+          if(!dr || !OSEND_DROG.has(String(dr.status||'')) || Number(dr.fixed_total)>0) continue;
           const saved = (Number(dr.hours_dagvinna)||0) + (Number(dr.hours_eftirvinna)||0);
           // 05.10.2026 (Agnar: „…svo myndi byrja að telja þar"): drögin geyma Tímaveru-tíma mánaðarins á vistunarstundu
           // (timavera_klst_vid_vistun). Nýir tímar = Tímavera núna − Tímavera við vistun — talið FRÁ VISTUN, óháð
@@ -17782,7 +17804,7 @@ async function renderKrofuyfirlit(t){
       const dKey = nlshDraftKey(m.month);
       if(dKey){
         const dr = REVIEWS[dKey];
-        if(!dr || dr.status!=='draft' || Number(dr.fixed_total)>0) continue;
+        if(!dr || !OSEND_DROG.has(String(dr.status||'')) || Number(dr.fixed_total)>0) continue;
         const vidbot = amt - (Number(dr.total_m_vsk)||0);
         if(vidbot < 1000) continue;   // drögin ná þegar yfir Ajour-tekjur mánaðarins
         rows.push({ inv_key:`nlsh-vidbot|${m.month}`, id:null, tilvisun:null, source:'ajour',
@@ -18090,7 +18112,7 @@ async function renderKrofuyfirlit(t){
         <div class="ky-row${lp?' ky-likely':''}" data-key="${esc(inv.inv_key)}"${(inv._hidden||inv._done)?' style="opacity:.5"':''}>
           ${t2chk||''}<span class="ky-caret2">▸</span>
           <div class="ky-main">
-            <div class="ky-ws"><span class="n">${rnum}</span>${mtagHtml}${tier===1?agingPill(inv.days_overdue):''}</div>
+            <div class="ky-ws"><span class="n">${rnum}</span>${mtagHtml}${tier===1?agingPill(inv.days_overdue):(tier===2&&inv.gamalt?aldursPilla(inv.work_month):'')}</div>
             <div class="ky-sub">${gj}${sub}</div>
             ${bankLine}
             ${noteInline}

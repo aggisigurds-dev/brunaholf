@@ -169,9 +169,28 @@ exports.handler = async (event) => {
     (isDraft ? t2 : t1).push(row);
   }
 
-  // ---- invoice_drafts (Gerð Reikninga) → tier2, only recent unsent cycle ----
-  // Bundið við síðustu 3 mánuði svo gamlar (þegar sendar) drög-raðir dredgist ekki upp.
+  // ---- invoice_drafts (Gerð Reikninga) → tier2: ÖLL ÓSEND, óháð aldri -------
+  /* Mál #1143, samþykkt af Agnari 09.10.2026: „Kröfu yfirlit sýnir öll ósend drög
+   * með upphæð, líka eldri en 3 mánaða (merkt með aldri)."
+   *
+   * HÉR VAR GILDRA SEM 3-MÁNAÐA GIRÐINGIN FALDI. Lykkjan sleppti aðeins `skipped`
+   * og `merged` — EKKI `invoiced` né `void`, og ekki drögum sem bera
+   * `payday_invoice_id`. Girðingin var því eina vörnin gegn því að þegar
+   * reikningsfærð drög birtust sem ósend. MÆLT 11.10.2026 á 131 röð í
+   * `invoice_drafts`: utan gluggans lágu 184.427.672 kr, en 110.603.143 kr af þeim
+   * voru `invoiced` eða báru Payday-reikning. Hefði ég aðeins fjarlægt girðinguna
+   * hefði Kröfu yfirlit sagt ~190 m kr útistandandi — talan hefði verið röng og
+   * yfirlitið ónotandi.
+   *
+   * Þess vegna er ÓSENT nú skilgreint beint: staðan er ekki `invoiced`/`void`/
+   * `skipped`/`merged` OG engin Payday-röð hangir á drögunum. Þá — og aðeins þá —
+   * má aldurinn vera frjáls. MÆLT eftir breytingu: 76 ósend drög, 108.550.218 kr,
+   * þar af 57 raðir (78.893.483 kr) sem sáust hvergi áður. Þær bera `work_month`,
+   * svo viðmótið getur merkt aldurinn, og Agnar felur það sem ekki á við.
+   *
+   * `monthsAgo(3)` stendur eftir sem VIÐMIÐUN fyrir aldursmerkið, ekki sem sía. */
   const cutoff = monthsAgo(3);
+  const EKKI_OSENT = new Set(['invoiced', 'void', 'skipped', 'merged']);
   const draftKeys = [];
   for (const d of drafts) {
     const wm = String(d.work_month || '');
@@ -182,12 +201,14 @@ exports.handler = async (event) => {
     // 'merged' = mánuður sem rann inn í samreikning seinni mánaðarins (03.09.2026).
     // Sama meðferð og eldra 'skipped': röðin lifir, en dettur úr þrepi 2 svo
     // upphæðin tvítelst ekki á móti samreikningnum.
-    if (d.status === 'skipped' || d.status === 'merged') continue;
+    if (EKKI_OSENT.has(String(d.status || ''))) continue;
+    // Payday-röð á drögunum = reikningurinn er farinn, hvað sem staðan segir.
+    if (d.payday_invoice_id != null) continue;
     const amt = +d.total_m_vsk || 0;
     const key = `draftinv|${d.worksite_name}|${wm}`;
     const mt = metaBy.get(key) || {};
-    // syna_alltaf (06.10.2026, „mátt kveikja á höfðabakka og Keldur"): þessi röð birtist óháð 3 mánaða glugganum.
-    if (amt <= 0 || (wm < cutoff && !mt.syna_alltaf)) continue;
+    // syna_alltaf þarf ekki lengur að lyfta röð yfir girðinguna — hún er farin.
+    if (amt <= 0) continue;
     if (mt.paid) continue;   // falið er sent áfram (hidden:true), bara greitt er sleppt
     // Leysa verkstaðar-nafn í greiðanda svo öll drögin lendi undir sama greiðanda
     // (t.d. Landsspítalinn-drög → ÞG verktakar). Fellur til baka á upprunalega
@@ -203,6 +224,8 @@ exports.handler = async (event) => {
       confirmed_by: mt.confirmed_by || null, sent_by: mt.sent_by || null, done_by: mt.done_by || null,
       wf: mt.wf_state || null,
       worksite: d.worksite_name, work_month: wm,
+      // Viðmótið merkir aldurinn (mál #1143). `gamalt` = eldra en 3 mánaða viðmiðun.
+      draft_status: d.status || null, gamalt: !!(wm && wm < cutoff),
     });
   }
 
