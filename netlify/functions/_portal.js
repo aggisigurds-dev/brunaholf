@@ -1,5 +1,9 @@
 // _portal.js — öryggiskjarni Þjónustuvefsins (kúndavefur /gatt/).
 //
+// 11.10.2026: Þjónustuvefurinn sjálfur (gatt/, gatt-admin/, gatt*-föllin) býr nú AÐEINS í
+// slokkvitaeki-repoinu; eintakinu hér var eytt og /gatt* vísar þangað (netlify.toml).
+// Þessi skrá stendur eftir því starfsmanna-hliðið (hub-login, field-app o.fl.) notar hana.
+//
 // Sameiginleg hjálparföll fyrir gatt-login / gatt / gatt-doc:
 //   • JWT (HS256) undirritað með node:crypto — engir aukapakkar.
 //   • Lykilorð hashað með scrypt (salt per notanda), timing-safe samanburður.

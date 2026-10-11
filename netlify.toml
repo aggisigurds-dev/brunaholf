@@ -67,6 +67,35 @@
   status = 404
   force = true
 
+# Þjónustuvefurinn (kúndavefur /gatt + stjórnsíða /gatt-admin) býr í slokkvitaeki-repoinu
+# (11.10.2026). Hér var eldra eintak sem rak í sundur (Agnar 10.10: „ruglingur á repos") —
+# því var eytt og gamlar slóðir, líka þær sem kúnnar fengu í pósti, vísa nú þangað.
+# Netlify flytur fyrirspurnarstrenginn (?c=<slug>) sjálfkrafa með í 301. force = true
+# svo engin skrá hér geti skyggt á regluna. Breytingar á vefnum: slokkvitaeki, aldrei hér.
+[[redirects]]
+  from = "/gatt/*"
+  to = "https://slokkvitaeki.netlify.app/gatt/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/gatt"
+  to = "https://slokkvitaeki.netlify.app/gatt/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/gatt-admin/*"
+  to = "https://slokkvitaeki.netlify.app/gatt-admin/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/gatt-admin"
+  to = "https://slokkvitaeki.netlify.app/gatt-admin/"
+  status = 301
+  force = true
+
 # TurboPaint lives on the Kjarni Vercel app.
 [[redirects]]
   from = "/kjarni"

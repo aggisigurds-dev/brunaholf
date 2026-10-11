@@ -83,8 +83,9 @@ theme.css; theme.css raises specificity with a `body ` prefix for those.
 - `package.json` holds **Netlify function deps only** (`mailparser`, `pdf-lib`,
   `pdf-parse`, `xlsx`) - it is not a frontend toolchain. Do not add frontend
   packages there.
-- Deployed on Netlify. `gatt/` and `gatt-admin/` are separate areas - check auth
-  assumptions before changing their layout.
+- Deployed on Netlify. The customer portal (`/gatt`, `/gatt-admin`) is NOT in this
+  repo any more: it lives in `slokkvitaeki`, and brunaholf 301-redirects those paths
+  there (netlify.toml, 2026-10-11). Do not recreate it here.
 - No runtime JS style-stamping here (unlike the sibling `slokkvitaeki` repo), so
   normal CSS specificity applies and `!important` behaves as expected.
 
