@@ -168,6 +168,54 @@ Flipinn **Ósamræmi** listar 20 staði þar sem textinn segir sitt hvað (gjald
 rukkaðir áfram á kúnna, droppað á Efniskostnað → Drög-stöð. (b) **Kostnaður** í Slökkvitæki-appinu (`#kostnadur`) —
 viðhengi úr pósti eldklar@ lesin sjálfkrafa sem kostnaður fyrirtækisins (sjá `gagnaleidslur`). Ekki rugla saman.
 
+## Kröfu yfirlit: öll ósend drög, óháð aldri — 11.10.2026 (mál #1143)
+
+Agnar samþykkti 09.10.: *„Kröfu yfirlit sýnir öll ósend drög með upphæð, líka eldri en
+3 mánaða (merkt með aldri)."* Það er gert — en **lestu þetta áður en þú leggur þrep 2
+saman.**
+
+### Girðingin sem fór, og gildran sem hún hafði falið
+
+Þrep 2 var bundið við síðustu 3 mánuði. Lykkjan sem byggir það úr `invoice_drafts`
+sleppti aðeins `skipped` og `merged` — **ekki `invoiced`, ekki `void`, og ekki drögum
+sem bera `payday_invoice_id`**. Aldurs-girðingin var því eina vörnin gegn því að þegar
+reikningsfærð drög birtust sem ósend.
+
+Mælt 11.10.2026 á 131 röð: utan gluggans lágu **184.427.672 kr**, en **110.603.143 kr**
+af þeim voru þegar farin út (`invoiced` 105.534.189 · `invoiced`+payday 4.062.823 ·
+`draft`+payday 1.006.129). Hefði girðingin verið tekin af án annars hefði yfirlitið
+sagt ~190 m kr útistandandi.
+
+### Hvernig ÓSENT er skilgreint núna
+
+```
+EKKI_OSENT = { invoiced, void, skipped, merged }
+ósent  =  staðan er ekki í EKKI_OSENT   OG   payday_invoice_id er null
+```
+
+Payday-röð á drögunum þýðir að reikningurinn er farinn, **hvað sem staðan segir**.
+Aldurinn er ekki lengur sía: `monthsAgo(3)` er aðeins viðmiðun fyrir aldurspilluna
+(4+ mán gul · 6+ appelsínugul · 12+ rauð), sem ber vinnumánuðinn í titlinum.
+
+Drög á `overdue` fá nú líka nýja tíma reiknaða eins og `draft` — `overdue` er ÓRUKKAÐ,
+svo þau eru ekki frágengin. Fast verð (`fixed_total`) stöðvar viðbótina áfram.
+
+### Talan sem kom inn — og hvað hún er EKKI
+
+Þrep 2 fór úr **19 röðum (29.656.734 kr)** í **76 raðir (108.550.218 kr)**. Nýju
+raðirnar eru **57, samtals 78.893.483 kr**.
+
+> **Þetta er ekki 108 m kr útistandandi.** Mælingin segir að raðirnar séu *ekki merktar
+> sendar* — ekki að vinnan sé ógreidd. Sumt kann að hafa farið út um aðra leið
+> (Slökkvitæki-appið, Payday beint, samreikningur milli mánaða). Þær koma inn til að
+> Agnar **sjái** þær og feli það sem ekki á við, eins og hann bað um 05.10.:
+> *„gæti þá bara falið ef þess þarf"*. Lotan á aldrei að leggja þrep 2 saman og kalla
+> það skuld.
+
+Stærstu nýju raðirnar: Dalvegur 30 feb 6.480.762 · Landsspítalinn jún 7.096.000 ·
+Slökkvitæki ehf jún 6.000.000 · Grímsbær nóv 4.959.866 · Reykjarfell jan 3.496.150.
+
+---
 ## Kostnaðarreikningar (endurrukkun) — 06.09.2026
 
 Birgjareikningar sem eru endurrukkaðir á kúnna (t.d. Securitas-efni fyrir brunakerfi Borealis):
