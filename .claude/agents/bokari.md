@@ -65,7 +65,7 @@ Description: (L+L+B+B)/1000 (`raufMetrar` í nlsh-stada.js; yfirskrift per skrá
 allt inn í september") → per verklið `teknar_fram = max(0, min(lokatala − tillaga, Ajour eftir
 mánaðamót))`; næsti mánuður reiknar `nyMan = max(0, nyHratt − teknar_fram fyrri mánaðar)` svo ekkert
 tvítelst. Sept 2026 vistaður þannig → drög #339 = 3.827.435 m. vsk; október byrjaði á 0.
-**5% afsláttur NLSH er settur í Payday, ALDREI í drögin:** hver reikningur síðan í apríl =
+**5% GEYMSLUFÉ (ekki afsláttur) er dregið frá í Payday, ALDREI í drögunum:** hver reikningur síðan í apríl =
 Efnislisti × 0,95 (ágúst 6.435.896 → R-370 6.114.101; júlí 10.573.087 → R-352 10.044.433). Drögin
 og Kröfu yfirlit sýna upphæð fyrir afslátt (opið mál á borði #1131 hvort það breytist).
 Glugginn velur sjálfur fyrsta ófrosna mánuðinn (síðumánuður skiptir ekki máli); PDF-ið sýnir

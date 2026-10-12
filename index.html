@@ -17939,7 +17939,7 @@ async function renderKrofuyfirlit(t){
   // númerið sem þarf að koma fram er 21727. geturðu leyft mér að breyta þessu þarna"). Greiðandi, kt og
   // tilvísun eru per VERKSTAÐ (customer_worksite_map) og fara líka á ósend drög hans — /api/customer-map.
   const ktFmt = s => { const d = ktDigits(s); return d.length === 10 ? d.slice(0,6) + '-' + d.slice(6) : String(s||''); };
-  const greidTilv = invs => { for(const i of (invs||[])) if(i && i.tilvisun) return String(i.tilvisun); return ''; };
+  const greidTilv = invs => { for(const i of (invs||[])) if(i && i.tilvisun_reiknings) return String(i.tilvisun_reiknings); return ''; };   // ekki i.tilvisun = R-númer Payday
   function greidHaus(invs, cust, kt){
     const wsl = [...new Set((invs||[]).filter(i => i && i.worksite && (i.source === 'gerd-drög' || String(i.inv_key||'').startsWith('timavera|'))).map(i => i.worksite))];
     const tilv = greidTilv(invs);
@@ -19086,7 +19086,7 @@ async function renderKrofuyfirlit(t){
         docs = docs.slice().sort((a,b)=> (b.is_primary?1:0) - (a.is_primary?1:0));   // ⭐ aðalskjalið fremst
         const sjalfgefid = 'Sæl(l),\n\nMeðfylgjandi Efnislisti/Tímaskýrsla fyrir '+(cust||ws||'')+(wm?' ('+wm+')':'')+' til skráningar í Payday.'
           // 12.10.2026: kt + tilvísun af spjaldinu (✎ Greiðandi) svo bókarinn setji þau á reikninginn (LSH: 21727)
-          + ((iv.kt || iv.tilvisun) ? '\n\n' + (iv.kt ? 'Greiðandi: ' + (cust||'') + ', kt. ' + ktFmt(iv.kt) : '') + (iv.kt && iv.tilvisun ? '\n' : '') + (iv.tilvisun ? 'Tilvísun á reikninginn: ' + iv.tilvisun : '') : '');
+          + ((iv.kt || iv.tilvisun_reiknings) ? '\n\n' + (iv.kt ? 'Greiðandi: ' + (cust||'') + ', kt. ' + ktFmt(iv.kt) : '') + (iv.kt && iv.tilvisun_reiknings ? '\n' : '') + (iv.tilvisun_reiknings ? 'Tilvísun á reikninginn: ' + iv.tilvisun_reiknings : '') : '');
         const val = await bhSendaBokunDialog({ ws, wm, cust, to, amount: iv.amount, docs, msg: sjalfgefid });
         if(!val) return;
         to = val.to;

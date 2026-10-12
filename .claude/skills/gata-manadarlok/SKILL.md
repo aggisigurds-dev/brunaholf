@@ -3,7 +3,7 @@ name: gata-manadarlok
 description: >
   Mánaðarlok gata-verkanna tveggja — Landsspítalinn (NLSH, ÞG verktakar) og Heklureitur
   (Framkvæmdafélagið Laugavegur) — í Gerð reikninga: hvaða gluggi, hvaða mánuður, hvernig
-  lokatölur verða að drögum og PDF, hvað er frosið og hvar 5% afslátturinn fer. Notaðu þegar
+  lokatölur verða að drögum og PDF, hvað er frosið og hvar 5% geymsluféð fer. Notaðu þegar
   Agnar segir „loka mánuðinum", „Efnislisti NLSH", „Landsspítalinn september", „Heklureitur
   göt", „lokastaðan", „setja stöðuna inn", „sendi reikning fyrir mismuninum", eða þegar
   NLSH/Heklureits-gluggi opnast læstur, á röngum mánuði eða með 0 kr.
@@ -30,7 +30,7 @@ Hvorugt verkið rukkast eftir Tímaveru. **Dýpri þekking (verð, reglur, saga)
 3. **`teknar_fram`:** sé lokatala vistuð eftir mánaðamót (staðan „í dag", eins og september
    07.10) reiknar fallið per verklið `min(lokatala − tillaga, Ajour eftir mánaðamót)` og næsti
    mánuður dregur það frá nýjum lokunum — ekkert tvítalið. Venjuleg vistun gefur 0.
-4. **5% afsláttur er settur í Payday, ekki í drögin.** Hver NLSH-reikningur síðan í apríl =
+4. **5% geymslufé (ekki afsláttur) er dregið frá í Payday, ekki í drögunum.** Hver NLSH-reikningur síðan í apríl =
    Efnislisti × 0,95 (ágúst 6.435.896 → R-370 6.114.101). Drög og Kröfu yfirlit sýna upphæð
    FYRIR afslátt — ekki „leiðrétta" það nema Agnar ákveði annað (borðmál #1131).
 5. **Sjálfvirk frysting:** drög mánaðarins send (payday_invoice_id / invoiced) með

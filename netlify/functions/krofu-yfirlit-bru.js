@@ -233,7 +233,8 @@ exports.handler = async (event) => {
       wf: mt.wf_state || null,
       worksite: d.worksite_name, work_month: wm,
       // 12.10.2026: tilvísun á reikninginn (drögin fyrst, svo verkstaðurinn) — sýnd á spjaldinu og í Senda í bókun.
-      tilvisun: String(d.tilvisun || '').trim() || (payer && payer.tilvisun) || null,
+      // ATH: ekki 'tilvisun' — sá reitur er R-númerið á Payday-röðum og viðmótið birtir hann sem 'R-…'.
+      tilvisun_reiknings: String(d.tilvisun || '').trim() || (payer && payer.tilvisun) || null,
       // Viðmótið merkir aldurinn (mál #1143). `gamalt` = eldra en 3 mánaða viðmiðun.
       draft_status: d.status || null, gamalt: !!(wm && wm < cutoff),
     });

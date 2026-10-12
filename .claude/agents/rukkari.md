@@ -175,7 +175,10 @@ Sýnin les `/api/krofu-yfirlit-bru` (spjöld), ekki `krofur-yfirlit` (tafla). Þ
 - **Tímar sem ekki ná í rukkun:** mæling 07.10 — tímar Slökkvitækis-starfsmanna eru viljandi utan
   Brunahólfs-rukkunar (Agnar: „allavega vantar ekki tíma frá slökkvitæki þangað inn"). Tímar á
   „Brunahólf almennt" (Hamza/Alfred 131,4 klst) eru ótengdir verki → borðmál, ekki rukka sjálfur.
-- **NLSH-tala í Kröfu yfirliti er fyrir 5% afslátt** — Payday-reikningurinn er × 0,95 (sjá `bokari`).
+- **NLSH-tala í Kröfu yfirliti er fyrir 5% geymslufé** — Payday-reikningurinn er × 0,95 (sjá `bokari`).
+- **✎ Greiðandi á spjaldinu (12.10.2026):** greiðandi + kt + tilvísun á reikning per VERKSTAÐ → `POST /api/customer-map
+  {action:'greidandi'}` skrifar `customer_worksite_map` (confidence `manual`, gengur fyrir) og ósend drög. Tilvísunin
+  fer á Efnislistann (VERKKAUPI-blokkin), í ritilinn (`#gr-tilv`) og í Senda í bókun. Áland 6 = Landspítali 500300-2130, tilvísun 21727.
 
 ## Ósent og Ajour-verkefnin — gat sem sést hvergi (07.10.2026)
 
