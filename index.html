@@ -2564,7 +2564,14 @@ function render(){
   __synKynslod++;
   document.body.classList.toggle('editmode', !!state.ui.editMode);
   $editToggle.classList.toggle('on', !!state.ui.editMode);
-  $editToggle.textContent = state.ui.editMode ? '✓ Hætta' : '✎ Breyta';
+  // 12.10.2026 — Agnar: „það kemur líka bara hætta, kannski fínt að geta ýtt á
+  // vista frekar". Breytingar vistast jafnóðum, en „Hætta" las eins og „hætta
+  // við" — og þá treystir maður ekki að neitt hafi vistast. Takkinn segir nú
+  // það sem hann gerir.
+  $editToggle.textContent = state.ui.editMode ? '✓ Vista' : '✎ Breyta';
+  $editToggle.title = state.ui.editMode
+    ? 'Vista og loka — breytingar á stikunni hafa þegar vistast, þetta sendir þær strax upp'
+    : 'Breyta hliðarstikunni — raða, fela, nefna flokka';
   renderTabs();
   const t = activeTab();
   document.body.classList.toggle('wide-view', t.id === 'skyrslustod');   // full breidd fyrir skjalabordid
@@ -11816,7 +11823,11 @@ async function renderGerdReikninga(t){
     const pgRow = PG[name] || {};
     const ov = PAYER_OVERRIDE[name] || {};
     const cust = (d && d.customer_name) || r.customer || ov.name || (wObj.mapped_customers||[])[0] || '';
-    const custKt = (d && d.kennitala) || pgRow.kennitala || ov.kt || '';
+    // 12.10.2026: greiðandi verkstaðarins úr customer_worksite_map (✎ Greiðandi í Kröfu yfirliti) — kt + tilvísun
+    // forfyllast í ný drög (t.d. Áland 6 → Landspítali 500300-2130, tilvísun 21727).
+    const wci = (wObj.mapped_customer_info||[]).find(m => !cust || String(m.customer_name||'').trim().toLowerCase() === String(cust).trim().toLowerCase()) || {};
+    const custKt = (d && d.kennitala) || pgRow.kennitala || ov.kt || wci.kt_greidanda || '';
+    const custTilv = (d && d.tilvisun) || wci.tilvisun || '';
     const custAddr = (d && d.heimilisfang) || pgRow.heimilisfang || ov.addr || '';
     // 09.09.2026 (ósk Agnars): netfang verkkaupa á sama stað og kt/heimilisfang,
     // svo reikningurinn eigi viðtakanda án þess að fletta upp annars staðar.
@@ -11927,7 +11938,7 @@ async function renderGerdReikninga(t){
           </div>
           <button class="gb-manual-link" id="gr-manual-btn" type="button" title="Opna handvirka stillingu — kennitala og heimilisfang verkkaupa á reikning">✏️ <span class="gb-lbl">Handvirkt</span> — kt. og heimilisfang verkkaupa á reikning</button><div id="gr-manual" style="display:none;border:1px dashed var(--border,var(--edge));border-radius:8px;padding:8px 10px;margin:2px 0 4px">
             <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Handvirkar upplýsingar verkkaupa — birtast á reikningi (t.d. þegar fletta þarf upp kennitölu eða skipta reikningi handvirkt).</div>
-            <div class="gr-r2"><div class="gr-f"><label>Kennitala</label><input id="gr-kt" value="${escapeAttr(custKt)}" placeholder="000000-0000"></div><div class="gr-f"><label>Heimilisfang</label><input id="gr-addr" value="${escapeAttr(custAddr)}" placeholder="Heimilisfang verkkaupa"></div></div><div class="gr-r2"><div class="gr-f"><label>Netfang</label><input id="gr-email" type="email" value="${escapeAttr(custEmail)}" placeholder="netfang@verkkaupi.is" autocomplete="off"></div><div class="gr-f"></div></div>
+            <div class="gr-r2"><div class="gr-f"><label>Kennitala</label><input id="gr-kt" value="${escapeAttr(custKt)}" placeholder="000000-0000"></div><div class="gr-f"><label>Heimilisfang</label><input id="gr-addr" value="${escapeAttr(custAddr)}" placeholder="Heimilisfang verkkaupa"></div></div><div class="gr-r2"><div class="gr-f"><label>Netfang</label><input id="gr-email" type="email" value="${escapeAttr(custEmail)}" placeholder="netfang@verkkaupi.is" autocomplete="off"></div><div class="gr-f"><label>Tilvísun á reikning</label><input id="gr-tilv" value="${escapeAttr(custTilv)}" placeholder="t.d. pöntunarnúmer" autocomplete="off"></div></div>
           </div>
           <div class="gr-st">Tímabil</div>
           <div class="gb-dates">
@@ -12170,8 +12181,9 @@ async function renderGerdReikninga(t){
       const pCust = document.getElementById('gr-cust').value.trim();
       const pKt   = (document.getElementById('gr-kt')   || {}).value ? document.getElementById('gr-kt').value.trim()   : '';
       const pAddr = (document.getElementById('gr-addr') || {}).value ? document.getElementById('gr-addr').value.trim() : '';
-      const payerBlock = (pCust||pKt||pAddr)
-        ? `<div class="gr-doc-cust">${escapeHtml(pCust)}${pKt?`<br>kt. ${escapeHtml(pKt)}`:''}${pAddr?`<br>${escapeHtml(pAddr)}`:''}</div>` : '';
+      const pTilv = ((document.getElementById('gr-tilv') || {}).value || '').trim();
+      const payerBlock = (pCust||pKt||pAddr||pTilv)
+        ? `<div class="gr-doc-cust">${escapeHtml(pCust)}${pKt?`<br>kt. ${escapeHtml(pKt)}`:''}${pAddr?`<br>${escapeHtml(pAddr)}`:''}${pTilv?`<br>Tilvísun: ${escapeHtml(pTilv)}`:''}</div>` : '';
       const pVegna = ((document.getElementById('gr-vegna') || {}).value || '').trim();
       const vegnaBlock = pVegna ? `<div class="gr-doc-vegna"><b>Vegna:</b> ${escapeHtml(pVegna)}</div>` : '';
       const row = (l,p,m,tot,md) => `<tr><td class="l">${escapeHtml(l)}</td><td class="p">${p!=null?kr(p):''}</td><td class="m">${m!=null&&m!==''?m:''}</td><td class="t">${kr(tot)}</td></tr>`;
@@ -12456,6 +12468,7 @@ async function renderGerdReikninga(t){
             kennitala: document.getElementById('gr-kt').value.trim() || null,
             heimilisfang: document.getElementById('gr-addr').value.trim() || null,
             netfang: (document.getElementById('gr-email')||{}).value ? document.getElementById('gr-email').value.trim() : null,
+            tilvisun: ((document.getElementById('gr-tilv')||{}).value || '').trim() || null,
             source: existing?.source || 'timavera',
             hours_dagvinna: c.dvH, hours_eftirvinna: c.evH,
             // 05.10.2026: Tímaveru-tímar mánaðarins Á VISTUNARSTUNDU — Kröfu yfirlit telur nýja tíma frá þessu marki
@@ -12637,6 +12650,7 @@ async function renderGerdReikninga(t){
         cust: document.getElementById('gr-cust').value.trim(),
         kt: (document.getElementById('gr-kt')||{}).value ? document.getElementById('gr-kt').value.trim() : '',
         addr: (document.getElementById('gr-addr')||{}).value ? document.getElementById('gr-addr').value.trim() : '',
+        tilv: ((document.getElementById('gr-tilv')||{}).value || '').trim(),
         fra: ymd(document.getElementById('gr-fra').value), til: ymd(document.getElementById('gr-til').value),
         dateText, vegna: ((document.getElementById('gr-vegna')||{}).value||'').trim(), notes: document.getElementById('gr-notes').value.trim(),
         rate: { km:r.km, ferd:r.ferd, vsk:r.vsk, sma:r.sma, stadf:GR_STADF }, c,
@@ -17921,6 +17935,66 @@ async function renderKrofuyfirlit(t){
   // Birtingarheiti verkstada (18.09.2026, Agnar: "Borgarspitalinn fyrir framan Aland"): Timavera-nafnid er
   // LYKILL (drog, verdskra, porun) og ma ekki breytast - heitid er adeins synt. ky_settings.ws_display = { 'Áland 6': 'Borgarspítalinn' }.
   const wsDisp = nm => { const m = KYSET.ws_display || {}; const k = Object.keys(m).find(x => x.toLowerCase() === String(nm||'').trim().toLowerCase()); return (k && m[k]) ? (m[k] + ' · ' + nm) : nm; };
+  // ✎ Greiðandi á spjaldinu (12.10.2026, Agnar á Borgarspítalanum · Áland 6: „Kt. er 500300-2130 LSH og
+  // númerið sem þarf að koma fram er 21727. geturðu leyft mér að breyta þessu þarna"). Greiðandi, kt og
+  // tilvísun eru per VERKSTAÐ (customer_worksite_map) og fara líka á ósend drög hans — /api/customer-map.
+  const ktFmt = s => { const d = ktDigits(s); return d.length === 10 ? d.slice(0,6) + '-' + d.slice(6) : String(s||''); };
+  const greidTilv = invs => { for(const i of (invs||[])) if(i && i.tilvisun) return String(i.tilvisun); return ''; };
+  function greidHaus(invs, cust, kt){
+    const wsl = [...new Set((invs||[]).filter(i => i && i.worksite && (i.source === 'gerd-drög' || String(i.inv_key||'').startsWith('timavera|'))).map(i => i.worksite))];
+    const tilv = greidTilv(invs);
+    const tilvHtml = tilv ? `<span class="ky-kt" title="Tilvísun sem fer á reikninginn">Tilvísun ${esc(tilv)}</span>` : '';
+    if(!wsl.length) return tilvHtml;
+    const nafn = wsl.some(w => w.toLowerCase() === String(cust||'').trim().toLowerCase()) ? '' : String(cust||'');
+    return tilvHtml + `<button type="button" class="ky-greid-btn" data-ws="${esc(wsl.join('~'))}" data-cust="${esc(nafn)}" data-kt="${esc(ktFmt(kt))}" data-tilv="${esc(tilv)}" title="Skrá greiðanda, kennitölu og tilvísun á reikning" style="border:1px solid var(--line-2);background:transparent;border-radius:6px;padding:1px 7px;font:inherit;font-size:11.5px;color:var(--muted);cursor:pointer">✎ ${kt ? 'Breyta' : 'Skrá kt.'}</button>`;
+  }
+  function openGreidandiForm(btn){
+    const wsl = String(btn.dataset.ws||'').split('~').filter(Boolean); if(!wsl.length) return;
+    const old = document.getElementById('ky-greid-modal'); if(old) old.remove();
+    const w = document.createElement('div'); w.id = 'ky-greid-modal';
+    w.style.cssText = 'position:fixed;inset:0;z-index:100080;background:rgba(10,10,9,.55);display:flex;align-items:center;justify-content:center;padding:16px';
+    const inp = 'width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--line-2);border-radius:8px;font:inherit;font-size:13.5px;background:var(--card,#fff);color:var(--ink)';
+    const lbl = 'display:block;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:12px 0 4px';
+    const wsHtml = wsl.length > 1
+      ? `<select id="ky-greid-ws" style="${inp}">${wsl.map(x => `<option value="${esc(x)}">${esc(wsDisp(x))}</option>`).join('')}</select>`
+      : `<div style="font-size:14px;font-weight:600;color:var(--ink)">${esc(wsDisp(wsl[0]))}</div><input type="hidden" id="ky-greid-ws" value="${esc(wsl[0])}">`;
+    w.innerHTML = `<div style="background:var(--card,#fff);border:1px solid var(--line-2);border-radius:14px;max-width:440px;width:100%;padding:18px 20px;box-shadow:0 24px 60px rgba(0,0,0,.4)">
+      <div style="font-family:var(--font-display,inherit);font-size:19px;font-weight:700;color:var(--ink)">Greiðandi</div>
+      <label style="${lbl}">Verkstaður</label>${wsHtml}
+      <label style="${lbl}" for="ky-greid-cust">Greiðandi</label><input id="ky-greid-cust" style="${inp}" value="${esc(btn.dataset.cust||'')}" placeholder="t.d. Landspítali" autocomplete="off">
+      <label style="${lbl}" for="ky-greid-kt">Kennitala</label><input id="ky-greid-kt" style="${inp}" value="${esc(btn.dataset.kt||'')}" placeholder="000000-0000" inputmode="numeric" autocomplete="off">
+      <label style="${lbl}" for="ky-greid-tilv">Tilvísun á reikning</label><input id="ky-greid-tilv" style="${inp}" value="${esc(btn.dataset.tilv||'')}" placeholder="t.d. pöntunarnúmer" autocomplete="off">
+      <div style="font-size:12px;color:var(--muted);margin-top:10px;line-height:1.45">Gildir fyrir verkstaðinn: ósend drög hans og öll ný. Reikningar sem eru komnir í Payday breytast ekki.</div>
+      <div id="ky-greid-st" style="font-size:12.5px;margin-top:8px;min-height:16px"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px">
+        <button type="button" id="ky-greid-cancel" style="padding:8px 14px;border:1px solid var(--line-2);border-radius:8px;background:transparent;font:inherit;font-size:13px;cursor:pointer;color:var(--ink)">Hætta við</button>
+        <button type="button" id="ky-greid-save" style="padding:8px 16px;border:1px solid #1e5c37;border-radius:8px;background:linear-gradient(180deg,#3f9a61,#2f7a4a);color:#fff;font:inherit;font-size:13px;font-weight:700;cursor:pointer">Vista</button>
+      </div></div>`;
+    document.body.appendChild(w);
+    const close = () => w.remove();
+    w.addEventListener('click', e => { if(e.target === w) close(); });
+    w.querySelector('#ky-greid-cancel').addEventListener('click', close);
+    w.addEventListener('keydown', e => { if(e.key === 'Escape') close(); if(e.key === 'Enter' && e.target.tagName === 'INPUT') w.querySelector('#ky-greid-save').click(); });
+    const kt = w.querySelector('#ky-greid-kt');
+    kt.addEventListener('blur', () => { kt.value = ktFmt(kt.value); });
+    (w.querySelector('#ky-greid-cust').value ? kt : w.querySelector('#ky-greid-cust')).focus();
+    w.querySelector('#ky-greid-save').addEventListener('click', async ev => {
+      const sb = ev.currentTarget, st = w.querySelector('#ky-greid-st');
+      const body = { action:'greidandi', worksite_name: w.querySelector('#ky-greid-ws').value,
+        customer_name: w.querySelector('#ky-greid-cust').value.trim(), kennitala: ktFmt(kt.value.trim()),
+        tilvisun: w.querySelector('#ky-greid-tilv').value.trim(), by: bhMe() || '' };
+      sb.disabled = true; st.style.color = 'var(--muted)'; st.textContent = 'Vista…';
+      try{
+        const r = await fetch('/api/customer-map', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(body) });
+        const j = await r.json().catch(() => ({}));
+        if(!r.ok || j.error) throw new Error(j.error || ('HTTP ' + r.status));
+        if(!body.customer_name && !j.map && !(j.drog||[]).length){ st.style.color = 'var(--red)'; st.textContent = 'Skrifaðu nafn greiðanda — verkstaðurinn á engan greiðanda enn.'; sb.disabled = false; return; }
+        st.style.color = 'var(--green)'; st.textContent = '✓ Vistað' + ((j.drog||[]).length ? ' · ' + j.drog.length + ' drög uppfærð' : '');
+        await fetchAll(); metaFromState(); renderList(); cacheStore();
+        setTimeout(close, 600);
+      }catch(e){ st.style.color = 'var(--red)'; st.textContent = '✗ ' + (e.message || e); sb.disabled = false; }
+    });
+  }
   const emailTo = () => { let lt=''; try{ lt = localStorage.getItem('email_to')||''; }catch(_){} return KYSET.email_to || lt || 'bokhald@brunaholf.is'; };
   async function setEmailTo(em){ em = String(em||'').trim(); if(!em || em===KYSET.email_to) return; KYSET.email_to = em; try{ localStorage.setItem('email_to', em); }catch(_){} try{ await fetch('/api/app-state',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({ key:'ky_settings', value: KYSET })}); }catch(_){} }   // þjónn (krofur_yfirlit_meta.done) — gamla state-merkið gildir þar til það er flutt (05.09.2026)
   // toggleSentMark fjarlægt 05.09.2026 — merkið býr í krofur_yfirlit_meta.done (sjá act==='sentmark').
@@ -18192,7 +18266,7 @@ async function renderKrofuyfirlit(t){
         <div class="ky-card-head" role="button" tabindex="0" title="Smelltu til að opna/loka">
           <span class="ky-caret">▾</span>
           <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
-            <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span class="ky-name">${esc(wsDisp(c.customer)||'(óþekkt)')}</span>${c.kt?`<span class="ky-kt">kt ${esc(c.kt)}</span>`:''}</div>
+            <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span class="ky-name">${esc(wsDisp(c.customer)||'(óþekkt)')}</span>${c.kt?`<span class="ky-kt">kt ${esc(ktFmt(c.kt))}</span>`:''}${greidHaus([...((c.t[2]||{}).invoices||[]), ...((c.t[3]||{}).invoices||[])], c.customer, c.kt)}</div>
             <div class="ky-tags" style="margin-top:0">${c.s1?badge('ogreitt','Ógreitt',c.s1):''}${c.s2?badge('osent','Ósent',c.s2):''}${c.s3?badge('','Tími',c.s3):''}</div>
           </div>
           <div class="ky-total"><div class="l">Samtals</div><div class="v ky-num">${fmtNum(c.total)} <span class="boss-kr">kr</span></div></div>
@@ -18209,11 +18283,12 @@ async function renderKrofuyfirlit(t){
   function renderDebtor(db, tier){
     const nm = db.customer || '(óþekkt)';
     // Þrep 3: titillinn er greiðandinn → sýnum verkstað(i) sem undirlínu (úr gögnum).
-    let metaHtml = db.kt ? `<span class="ky-kt">kt ${esc(db.kt)}</span>` : '';
+    let metaHtml = db.kt ? `<span class="ky-kt">kt ${esc(ktFmt(db.kt))}</span>` : '';
     if(tier===3){
       const ws = [...new Set((db.invoices||[]).map(i=>i.worksite).filter(Boolean))];
       if(ws.length) metaHtml = `<span class="ky-kt">📍 ${ws.map(esc).join(' · ')}</span>`;
     }
+    if(tier===2 || tier===3) metaHtml += greidHaus(db.invoices, db.customer, db.kt);
     let agBar = '';
     if(tier===1){
       let agG=0, agA=0, agR=0;
@@ -18728,9 +18803,10 @@ async function renderKrofuyfirlit(t){
       const toggle = ()=>{ const rowsEl = h.nextElementSibling; const car = h.querySelector('.ky-caret');
         if(!rowsEl) return; const open = rowsEl.style.display==='none';
         rowsEl.style.display = open?'block':'none'; if(car) car.textContent = open?'▾':'▸'; };
-      h.addEventListener('click', toggle);
-      h.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggle(); } });
+      h.addEventListener('click', e=>{ if(e.target.closest('.ky-greid-btn')) return; toggle(); });
+      h.addEventListener('keydown', e=>{ if(e.target.closest('.ky-greid-btn')) return; if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggle(); } });
     });
+    listEl.querySelectorAll('.ky-greid-btn').forEach(b=>b.addEventListener('click', e=>{ e.stopPropagation(); openGreidandiForm(b); }));
     listEl.querySelectorAll('.kyf-sameina-all').forEach(b=>b.addEventListener('click',(e)=>{
       e.stopPropagation();
       const keys=(b.dataset.keys||'').split('~').filter(Boolean);
@@ -19008,7 +19084,9 @@ async function renderKrofuyfirlit(t){
         let docs=((ws&&wm)?(EFDOCS[ws+'|'+wm]||[]):[]).filter(d=>d.drive_file_id && d.doc_type!=='innra'); // 🔒 innri viðhengi fara ALDREI með
         // Gluggi í stað confirm (Agnar 04.09.2026): velja skjölin sem fara með.
         docs = docs.slice().sort((a,b)=> (b.is_primary?1:0) - (a.is_primary?1:0));   // ⭐ aðalskjalið fremst
-        const sjalfgefid = 'Sæl(l),\n\nMeðfylgjandi Efnislisti/Tímaskýrsla fyrir '+(cust||ws||'')+(wm?' ('+wm+')':'')+' til skráningar í Payday.';
+        const sjalfgefid = 'Sæl(l),\n\nMeðfylgjandi Efnislisti/Tímaskýrsla fyrir '+(cust||ws||'')+(wm?' ('+wm+')':'')+' til skráningar í Payday.'
+          // 12.10.2026: kt + tilvísun af spjaldinu (✎ Greiðandi) svo bókarinn setji þau á reikninginn (LSH: 21727)
+          + ((iv.kt || iv.tilvisun) ? '\n\n' + (iv.kt ? 'Greiðandi: ' + (cust||'') + ', kt. ' + ktFmt(iv.kt) : '') + (iv.kt && iv.tilvisun ? '\n' : '') + (iv.tilvisun ? 'Tilvísun á reikninginn: ' + iv.tilvisun : '') : '');
         const val = await bhSendaBokunDialog({ ws, wm, cust, to, amount: iv.amount, docs, msg: sjalfgefid });
         if(!val) return;
         to = val.to;
@@ -24671,6 +24749,7 @@ function drawEfnislistiPage(doc, logo, data){
     if(data.kt){ doc.text('kt. '+data.kt, R, ry, { align:'right' }); ry += 13; }
     if(data.addr){ doc.text(data.addr, R, ry, { align:'right' }); ry += 13; }
   }
+  if(data.tilv){ doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(102); doc.text('Tilvísun: '+data.tilv, R, ry, { align:'right' }); ry += 13; }   // 12.10.2026 (LSH 21727)
   // Línur
   const body = [], tvilit = {}, hopar = new Set();
   const sec = t => { hopar.add(body.length); body.push([{ content:t, colSpan:4 }]); };
@@ -25491,9 +25570,46 @@ function bindEditButtons(){
   wireDragSort();
 }
 
+/* Lítill fastur borði — enginn toast-hjálpari er til í þessari skrá (sama og
+ * cgVistunVilla gerir). Hann er ekki skraut: án hans er „vistað" ósýnilegt, og
+ * það var einmitt vantraustið sem Agnar lýsti 12.10.2026. */
+function stikuBordi(txt, villa){
+  let b = document.getElementById('stiku-bordi');
+  if(!b){ b = document.createElement('div'); b.id = 'stiku-bordi';
+    b.style.cssText = 'position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:99999;padding:10px 16px;border-radius:10px;font-weight:700;font-size:13px;box-shadow:0 6px 24px rgba(0,0,0,.3);cursor:pointer;max-width:90vw;color:#fff';
+    b.title = 'Smelltu til að loka'; b.onclick = ()=>b.remove(); document.body.appendChild(b); }
+  b.style.background = villa ? '#b91c1c' : '#15803d';
+  b.textContent = txt;
+  clearTimeout(b._t);
+  // Villan situr þar til smellt er — hún má ekki hverfa óséð. Staðfestingin fer sjálf.
+  if(!villa) b._t = setTimeout(()=>{ try{ b.remove(); }catch(_){} }, 2600);
+}
 $editToggle.onclick = ()=>{
+  const varAd = !!state.ui.editMode;
   state.ui.editMode = !state.ui.editMode;
   save(); render();
+  // Að loka Breyta-ham er það augnablik sem notandinn telur sig hafa vistað.
+  // save() setur aðeins 800 ms tímamæli — fari hann af síðunni innan hennar
+  // fer breytingin ALDREI upp (sama gat og pagehide-flushið var smíðað fyrir
+  // 09.09.2026). Hér er skolað út strax og sagt frá.
+  if(varAd){
+    try{
+      if(_syncTimer){ clearTimeout(_syncTimer); _syncTimer = null; }
+      // syncToServer() GRÍPUR SÍNAR EIGIN VILLUR (endurtilraun með vaxandi bið),
+      // svo .then() keyrir alltaf — líka þegar ekkert komst upp. Fyrsta útgáfan
+      // mín sagði því „vistuð" á prófunarþjóni sem á ekkert /api. Falskt
+      // „vistað" er nákvæmlega lygin sem kostaði traustið; við lesum því
+      // MERKIÐ sem syncToServer setti sjálft, ekki það að loforðið hafi lifað.
+      Promise.resolve(syncToServer()).then(()=>{
+        const m = document.getElementById('sync-badge');
+        const komst = !m || m.classList.contains('sync-ok');
+        if(komst) stikuBordi('✓ Hliðarstikan vistuð', false);
+        else stikuBordi('⚠ Náði EKKI að vista stikuna á þjóninn — hún situr í þessum vafra og fer upp við næstu tengingu', true);
+      }).catch(()=>{
+        stikuBordi('⚠ Náði EKKI að vista stikuna á þjóninn — hún situr í þessum vafra og fer upp við næstu tengingu', true);
+      });
+    }catch(_){}
+  }
 };
 $fab.onclick = ()=>{
   const at = state.ui.activeTab;
