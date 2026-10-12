@@ -43,7 +43,7 @@ exports.handler = async (event) => {
       'select=id,tilvisun,kt_greidanda,customer_name,gjalddagi,eindagi,hofudstoll,upphaed_total,status,source');
     // invoice_drafts feed the „Ósendar kröfur" (tier2) totals — a failure hides real drafts.
     drafts = await fetchAll('invoice_drafts',
-      'select=worksite_name,work_month,total_m_vsk,customer_name,kennitala,status,payday_invoice_id')
+      'select=worksite_name,work_month,total_m_vsk,customer_name,kennitala,status,payday_invoice_id,tilvisun')
       .catch(() => { warnings.push('invoice_drafts lestur mistókst — ósendar drög gætu vantað í þrep 2'); return []; });
     // meta carries the manual greitt/falið/staðfest flags — without it, hidden or
     // paid krófur reappear and the outstanding totals are wrong.
@@ -55,7 +55,7 @@ exports.handler = async (event) => {
       .catch(() => { warnings.push('bank_transactions lestur mistókst — „líklega greitt" bankamátun vantar'); return []; });
     // Worksite→payer map only affects grouping (optional) — record but stay resilient.
     cwmap = await fetchAll('customer_worksite_map',
-      'select=customer_name,worksite_name,kt_greidanda')
+      'select=customer_name,worksite_name,kt_greidanda,confidence,tilvisun')
       .catch(() => { warnings.push('customer_worksite_map lestur mistókst — greiðanda-hópun gæti verið ónákvæm'); return []; });
     // Verðskráin ber líka greiðanda per verkstað (Viðskiptavinir-flipinn skrifar hann þangað).
     // Án hennar tvístruðust mánuðir sama verkstaðar: sá sem hafði fengið greiðanda í
@@ -101,9 +101,17 @@ exports.handler = async (event) => {
     return { worksite: null, worksite_src: null };
   };
   const worksiteToPayer = new Map();  // lc(worksite) -> payer customer_name
-  for (const m of (cwmap || [])) {          // handvirk tenging gengur fyrir
+  // 12.10.2026: kt og tilvísun verkstaðarins úr kortinu sjálfu (✎ Greiðandi í Kröfu yfirliti) — áður
+  // kom kt AÐEINS úr fyrri Payday-reikningum á sama nafni, svo nýr greiðandi stóð kt-laus.
+  const wsKt = new Map(), wsTilv = new Map();
+  const cwRod = [...(cwmap || [])].sort((a, b) => (b.confidence === 'manual') - (a.confidence === 'manual'));
+  for (const m of cwRod) {                  // handvirk tenging gengur fyrir ('manual' fremst)
     const w = lc(m.worksite_name), p = String(m.customer_name || '').trim();
-    if (w && p && !worksiteToPayer.has(w)) worksiteToPayer.set(w, p);
+    if (w && p && !worksiteToPayer.has(w)) {
+      worksiteToPayer.set(w, p);
+      if (digits(m.kt_greidanda)) wsKt.set(w, digits(m.kt_greidanda));
+      if (String(m.tilvisun || '').trim()) wsTilv.set(w, String(m.tilvisun).trim());
+    }
   }
   for (const g of (pguide || [])) {         // verðskráin fyllir í eyðurnar
     const w = lc(g.worksite_name), p = String(g.customer_name || '').trim();
@@ -118,7 +126,7 @@ exports.handler = async (event) => {
   function resolvePayer(name) {
     const payer = worksiteToPayer.get(lc(name));
     if (!payer) return null;
-    return { customer: payer, kt: payerKt.get(lc(payer)) || '' };
+    return { customer: payer, kt: wsKt.get(lc(name)) || payerKt.get(lc(payer)) || '', tilvisun: wsTilv.get(lc(name)) || '' };
   }
 
   const metaBy = new Map(meta.map((m) => [m.inv_key, m]));
@@ -224,6 +232,8 @@ exports.handler = async (event) => {
       confirmed_by: mt.confirmed_by || null, sent_by: mt.sent_by || null, done_by: mt.done_by || null,
       wf: mt.wf_state || null,
       worksite: d.worksite_name, work_month: wm,
+      // 12.10.2026: tilvísun á reikninginn (drögin fyrst, svo verkstaðurinn) — sýnd á spjaldinu og í Senda í bókun.
+      tilvisun: String(d.tilvisun || '').trim() || (payer && payer.tilvisun) || null,
       // Viðmótið merkir aldurinn (mál #1143). `gamalt` = eldra en 3 mánaða viðmiðun.
       draft_status: d.status || null, gamalt: !!(wm && wm < cutoff),
     });

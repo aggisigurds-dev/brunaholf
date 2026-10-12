@@ -60,6 +60,8 @@ exports.handler = async (event) => {
       'kennitala', 'heimilisfang',
       // 09.09.2026: netfang verkkaupa - reiturinn i Efnislista-ritlinum (#gr-email)
       'netfang',
+      // 12.10.2026: tilvísun á reikninginn (Payday reference, t.d. 21727 hjá LSH) — #gr-tilv
+      'tilvisun',
       // 05.10.2026: Tímaveru-tímar mánaðarins við vistun — Kröfu yfirlit telur nýja tíma frá þessu marki
       'timavera_klst_vid_vistun',
       // 2026-07-08 (afsláttar-úttekt): persist the Gerð Reikninga discount so

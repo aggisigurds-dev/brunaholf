@@ -145,7 +145,10 @@ exports.handler = async (event) => {
 
     // Build customer↔worksite mapping
     const mapByWorksite = {};
-    for (const m of mappings) {
+    // Handvirk tenging (confidence 'manual', t.d. ✎ Greiðandi í Kröfu yfirliti 12.10.2026) fremst —
+    // mapped_customers[0] er greiðandinn sem ritillinn og þrep 3 nota.
+    const mappingsRod = [...(Array.isArray(mappings) ? mappings : [])].sort((a, b) => (b.confidence === 'manual') - (a.confidence === 'manual'));
+    for (const m of mappingsRod) {
       (mapByWorksite[m.worksite_name] = mapByWorksite[m.worksite_name] || []).push(m);
     }
     // Index invoices by customer + worksite_match
@@ -236,6 +239,8 @@ exports.handler = async (event) => {
         mapped_customers: (mapByWorksite[p.project] || []).map(m => m.customer_name),
         mapped_customer_info: (mapByWorksite[p.project] || []).map(m => ({
           customer_name: m.customer_name,
+          // 12.10.2026: kt + tilvísun verkstaðarins (✎ Greiðandi) — Efnislista-ritillinn forfyllir ný drög
+          kt_greidanda: m.kt_greidanda || null, tilvisun: m.tilvisun || null,
           ...(customerInfoByName[m.customer_name] || {}),
         })),
         status: statusByProject[p.project] || {
