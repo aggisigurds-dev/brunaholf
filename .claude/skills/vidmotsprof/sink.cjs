@@ -1,6 +1,8 @@
-// Staðbundinn móttakari: vafrinn POSTar gögn hingað, skrifað í scratchpad. Aðeins 127.0.0.1.
+// Staðbundinn móttakari: vafrinn POSTar gögn hingað. Aðeins 127.0.0.1.
+// Skrifar í SINK_DIR eða möppuna sem skriftan er keyrð ÚR (cwd) — ALDREI í skill-möppuna (hún er í git).
+// Keyra úr scratchpad:  cd <scratchpad> && node <brunaholf>/.claude/skills/vidmotsprof/sink.cjs
 const http = require('http'), fs = require('fs'), path = require('path');
-const DIR = __dirname;
+const DIR = process.env.SINK_DIR || process.cwd();
 const hdr = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -26,4 +28,5 @@ http.createServer((req, res) => {
     res.writeHead(200, { ...hdr, 'Content-Type': 'text/plain' });
     res.end('ok ' + buf.length);
   });
-}).listen(8765, '127.0.0.1', () => console.log('listening 8765'));
+}).on('error', e => { console.error(e.code === 'EADDRINUSE' ? 'Port 8765 er þegar í notkun — móttakari keyrir líklega nú þegar (skrifar í SÍNA möppu).' : e.message); process.exit(1); })
+  .listen(8765, '127.0.0.1', () => console.log('listening 8765 → ' + DIR));

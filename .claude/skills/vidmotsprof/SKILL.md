@@ -69,7 +69,9 @@ ekki hub-flipann — Playwright er þá leiðin.
 
 PDF-smiðirnir (`buildAndSave*Pdf`) POSTa `{fileName, contentBase64}` á `/api/pdf-store`.
 Gríptu það á leiðinni og sendu á staðbundinn móttakara (`sink.cjs` í þessari möppu,
-127.0.0.1:8765, skrifar í möppuna sína):
+127.0.0.1:8765). **Keyrðu hann ÚR scratchpad** (`cd <scratchpad> && node …/sink.cjs`, í bakgrunni) — hann
+skrifar í cwd (eða `SINK_DIR`), aldrei í skill-möppuna. „Port 8765 er þegar í notkun" = móttakari keyrir
+nú þegar og skrifar í SÍNA möppu; GET `?name=<skrá>` les skrána til baka hvar sem hún lenti:
 
 ```js
 if (url.pathname === '/api/pdf-store') {
