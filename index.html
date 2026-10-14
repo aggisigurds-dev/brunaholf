@@ -19735,6 +19735,8 @@ async function renderDagurinn(t){
     const syncBox = document.getElementById('dg-sync');
     try{
       const r = await fetch('/api/data-sources-status');
+      // 14.10.2026: flipinn getur verið farinn þegar svarið kemur (villuskrá #8, 34×: innerHTML á null) — þá er ekkert að teikna.
+      if(!syncBox || !syncBox.isConnected) return;
       if(!r.ok) throw new Error('HTTP '+r.status);
       const j = await r.json();
       sources = Array.isArray(j.sources) ? j.sources : [];
@@ -21902,6 +21904,7 @@ async function renderEfniskostnadur(t){
     });
 
     const renderTable = () => {
+    if(!document.getElementById('ef-meta')) return;   // 14.10.2026: flipinn farinn áður en gögnin komu (villuskrá #21, 34×)
     const fMonth = $fMonth.value, fWs = $fWs.value;
     const filtered = rows.filter(inv => (!fMonth || invMonth(inv)===fMonth) && (!fWs || invWs(inv)===fWs));
 
