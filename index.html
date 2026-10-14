@@ -1310,6 +1310,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
 <script src="/js/hub-sync-buttons.js?v=20260919a" defer></script>
+<script src="/js/afkost.js?v=20261014b" defer></script>
 <script src="/js/nlsh-sections.js?v=20260830b" defer></script>
 <script src="/js/nlsh-stada.js?v=20261006b" defer></script>
 <script src="/js/viewmode.js?v=2" defer></script>
@@ -17405,6 +17406,9 @@ window.cgDeleteReport = function(i){
 // 3-month macro trend vs the prior 3 months. Reads /api/afkost (aggregates
 // solur/verkbeidnir/uttaeki server-side — no new tables).
 async function renderAfkost(t){
+  // 14.10.2026: síðan býr í js/afkost.js (Boss-útlit, endursmíðaðar heimildir — sjá
+  // netlify/functions/afkost.js). Gamla útgáfan hér að neðan er varaleið ef skráin hleðst ekki.
+  if(window.AfkostSida && typeof AfkostSida.render === 'function') return AfkostSida.render($view);
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fmtKr = n => (Math.round(Number(n)||0)).toLocaleString('is-IS').replace(/,/g,'.') + ' kr';
   const fmtDay = iso => { const d=new Date(iso+'T00:00:00'); return isNaN(d)?iso:(String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')); };
