@@ -18152,12 +18152,12 @@ async function renderKrofuyfirlit(t){
     let sub;
     if(tier===3){
       sub = esc(monthLbl(inv.work_month)) + (inv.hours!=null ? ' · '+inv.hours.toFixed(0)+'t' : '') + (inv.partial && state.newest ? ' · til '+esc(dayMon(state.newest)) : '')
-        + (inv.vidbot ? ' · <b title="Drögin í Gerð Reikninga voru vistuð '+esc(fmtDate(inv.vistad_dags))+' með '+(Math.round((Number(inv.vistad_klst)||0)*10)/10).toLocaleString('is-IS')+' klst. Þetta eru tímarnir sem hafa bæst við í Tímaveru síðan — þeir eru ekki í drögunum.">＋ nýir tímar síðan drög voru vistuð '+esc(fmtDate(inv.vistad_dags))+'</b>' : '');
+        + (inv.vidbot ? ' · <b title="Drögin í Gerð Reikninga voru vistuð '+esc(fmtDate(inv.vistad_dags))+' með '+(Math.round((Number(inv.vistad_klst)||0)*10)/10).toLocaleString('is-IS')+' klst. Þetta eru tímarnir sem hafa bæst við í Tímaveru síðan — þeir eru ekki í drögunum. Meðan mánuðurinn stendur fara þeir sjálfir inn á 2 tíma fresti (drog-timar); eldri mánuði: opnaðu Gerð Reikninga, 📥 sæktu tímana og vistaðu.">＋ nýir tímar síðan drög voru vistuð '+esc(fmtDate(inv.vistad_dags))+'</b>' : '');
     } else {
       sub = esc(inv.source||'');
       if(tier===2 && inv.source==='gerd-drög'){
         const vb = vidbotFyrir(inv.worksite, inv.work_month);
-        if(vb) sub += ' · <b title="Tímar sem hafa bæst við í Tímaveru síðan drögin voru vistuð '+esc(fmtDate(vb.vistad_dags))+' — þeir eru EKKI í drögunum. Opnaðu Gerð Reikninga, 📥 sæktu tímana og vistaðu.">＋ '+(Math.round((Number(vb.hours)||0)*10)/10).toLocaleString('is-IS')+' klst nýir síðan vistað '+esc(fmtDate(vb.vistad_dags))+' · ≈ '+fmtNum(vb.amount)+' kr</b>';
+        if(vb) sub += ' · <b title="Tímar sem hafa bæst við í Tímaveru síðan drögin voru vistuð '+esc(fmtDate(vb.vistad_dags))+' — þeir eru EKKI í drögunum enn. Meðan mánuðurinn stendur fara þeir SJÁLFIR inn á 2 tíma fresti (drog-timar, 10 mín eftir Tímaveru-sókn); eldri mánuði: opnaðu Gerð Reikninga, 📥 sæktu tímana og vistaðu. Viltu handstýra tímunum: skrifaðu 🔒tímar í athugasemd dragsins.">＋ '+(Math.round((Number(vb.hours)||0)*10)/10).toLocaleString('is-IS')+' klst nýir síðan vistað '+esc(fmtDate(vb.vistad_dags))+' · ≈ '+fmtNum(vb.amount)+' kr</b>';
       }
     }
     // Líklega-greitt vísbending (banka-krossvísun): grænn blær + skýringarlína.

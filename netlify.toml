@@ -232,6 +232,15 @@
 [functions."timavera-pull-background"]
   schedule = "15 */2 * * *"
 
+# Nýir Tímaveru-tímar fara SJÁLFIR inn í ósend drög mánaðarins (14.10.2026, Agnar: „ég vil bara að þetta fari
+# sjálft inn innan þess mánaðar" — Skùlagata 26 sýndi „+16,1 klst nýir síðan vistað" í Kröfu yfirliti).
+# 10 mín eftir timavera-pull svo nýjustu færslurnar séu komnar. Gerir það sama og 📥 + 💾 í Gerð Reikninga:
+# dv/ev úr /api/timabok, smáhlutagjald endurreiknað, akstur/efni/afsláttur óbreytt, timavera_klst_vid_vistun
+# uppfært. Snertir ALDREI fast verð, Ajour-drög, send/samreiknuð drög né drög með „🔒tímar" í notes.
+# Keyrslan skráist í automation_runs (job_name drog-timar). HTTP-tvíburinn /api/drog-timar?dry=1 sýnir áætlunina.
+[functions."drog-timar-background"]
+  schedule = "25 */2 * * *"
+
 # Nætur-speglun 60 daga aftur (2026-08-07, beiðni 0138d239). Tíða keyrslan að ofan
 # speglar aðeins síðustu tvo heilu dagana, en vinnufærslum er breytt í tímaveru.is
 # löngu eftir á (staðfest: keyrsla 31.7 sótti leiðréttar færslur frá 13.7). Þessi

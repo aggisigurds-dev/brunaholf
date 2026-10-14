@@ -226,3 +226,22 @@ Birgjareikningar sem eru endurrukkaðir á kúnna (t.d. Securitas-efni fyrir bru
    „🛒 Setja í körfu" → línurnar í draft-körfuna á söluverði → „Senda í körfu" → Sala → reikningur.
 3. Listinn á Efniskostnaði er innkaupabók með hook á endurrukkunaraðilann; „📚 Í bókhald" þegar
    reikningurinn er kominn til bókara. Regla: afsláttur birgja kemur ALDREI á reikning kúnna (Charlize #410).
+
+## Nýir tímar fara sjálfir inn í drög mánaðarins — 14.10.2026
+
+Agnar (Skùlagata 26, okt '26 sýndi „＋ 16,1 klst nýir síðan vistað 12/10"): *„Ég var að láta
+endurreikna en fór aftur í að vantaði tíma inn — ég vil bara að þetta fari sjálft inn innan
+þess mánaðar."*
+
+`netlify/functions/drog-timar.js` (+ `-background` tvíburi á áætlun `25 */2 * * *`, 10 mín eftir
+Tímaveru-sókn) gerir fyrir hvert **ósent Tímaveru-drag í mánuði sem enn stendur** (þessi mánuður,
+og sá fyrri fyrstu 3 daga næsta mánaðar) nákvæmlega það sem „📥 Fylla úr tímabók" + „💾 Vista"
+gera í Gerð Reikninga: dv/ev úr `/api/timabok`, smáhlutagjald endurreiknað (ef það var á), akstur/
+staðfesting/efni/afsláttur óbreytt, net/vsk/samtals með sömu formúlu, `timavera_klst_vid_vistun`
+sett á Tímaveru-klst núna. Lækki tímar í Tímaveru fylgir dragið líka niður.
+
+**Snertir aldrei:** fast verð (`fixed_total`), Ajour/gata-drög, send drög (`payday_invoice_id`),
+samreiknuð drög, né drög með **„🔒tímar"** í athugasemd — það er rofinn ef Agnar vill handstýra
+tímunum á drögum í líðandi mánuði. Eldri mánuðir eru ósnertir: þar gildir „＋ nýir tímar"-merkið
+og handvirk sókn eins og áður. `GET /api/drog-timar?dry=1` sýnir áætlunina án þess að vista;
+keyrslur skráast í `automation_runs` (`drog-timar`).
