@@ -79,13 +79,13 @@ exports.handler = async (event) => {
   const ajourFilter = `project_name=in.(${ajourNames.map(n => `"${n}"`).join(',')})`;
   const scopes = rateScope ? `scope=in.(generic,${rateScope})` : 'scope=eq.generic';
   const [ajour, rates, bandRates, nyjast, seinast, syncKv] = await Promise.all([
-    fetchAll('ajour_registrations',
+    fetchAll('skr_hub_skraningar',
       `select=category_group,execution_date,registration_status&${ajourFilter}&execution_date=gte.${monthStart}&execution_date=lt.${monthEnd}&category_group=ilike.Gat*`),
     fetchAll('hole_size_rates', `select=scope,size_min_mm,size_max_mm,size_label,rate_an_vsk,notes&${scopes}&category=eq.hole&order=size_min_mm.asc`),
     fetchAll('hole_size_rates', `select=category,size_min_mm,size_label,rate_an_vsk&scope=eq.generic&category=in.(kragi,bordi)&order=category.asc,size_min_mm.asc`),
     // Ferskleiki gagnanna: síðasti innlestur + nýjasta skráning verkefnisins (óháð mánuði)
-    fetchAll('ajour_registrations', `select=imported_at&${ajourFilter}&order=imported_at.desc.nullslast&limit=1`).catch(() => []),
-    fetchAll('ajour_registrations', `select=execution_date&${ajourFilter}&order=execution_date.desc.nullslast&limit=1`).catch(() => []),
+    fetchAll('skr_hub_skraningar', `select=imported_at&${ajourFilter}&order=imported_at.desc.nullslast&limit=1`).catch(() => []),
+    fetchAll('skr_hub_skraningar', `select=execution_date&${ajourFilter}&order=execution_date.desc.nullslast&limit=1`).catch(() => []),
     // luna-bridge ajour-yfirlit.js skráir hvenær verkefnaraðir voru síðast samstilltar (líka þegar ekkert nýtt kom)
     fetchAll('app_kv', 'select=value&key=eq.ajour_radir_sync').catch(() => []),
   ]);

@@ -86,7 +86,7 @@ exports.handler = async (event) => {
   if (onlyDone) q += `&registration_status=eq.Done`;
 
   let rows;
-  try { rows = await fetchAll('ajour_registrations', q); }
+  try { rows = await fetchAll('skr_hub_skraningar', q); }
   catch (e) { return json(502, { error: e.message }); }
 
   // distinct serials per category_group (a serial repeats across ~13 checklist rows)

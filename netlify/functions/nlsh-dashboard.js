@@ -101,7 +101,7 @@ exports.handler = async (event) => {
   try {
     let q = `select=serial_number,category_group,category,checked_date,execution_date,registration_status&project_name=eq.${encodeURIComponent(NLSH_AJOUR)}`;
     if (onlyDone) q += `&registration_status=eq.Done`;
-    ajour = await fetchAll('ajour_registrations', q);
+    ajour = await fetchAll('skr_hub_skraningar', q);
     const tvIn = NLSH_TIMAVERA.map(n => `"${n}"`).join(',');
     hours = await fetchAll('timavera_entries', `select=date,hours,employee,project&project=in.(${tvIn})`);
     overrides = await fetchVerkOverrides();
