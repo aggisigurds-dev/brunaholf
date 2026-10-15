@@ -11244,15 +11244,15 @@ async function renderGerdReikninga(t){
       .gr-modal-bg.boss .gr-form{grid-area:form;background:transparent;border-right:0;padding:14px 16px 0;max-height:calc(94vh - 68px);overflow-y:auto}
       .gr-modal-bg.boss .gr-prev{grid-area:prev;background:transparent;padding:14px 18px 18px 0;max-height:none;overflow-y:auto}
       .gr-modal-bg.boss .gr-doc{box-shadow:0 1px 2px rgba(22,21,19,.15),0 18px 36px -18px rgba(22,21,19,.5);border:1px solid var(--line-2,#d9d3c6)}
-      /* .mm-* (Sameina manudi) voru HER til 15.10.2026 og eru nu i css/theme.css.
-       * Astaedan: thessi <style> er hluti af JS-STRENGNUM sem teiknar Gerd
-       * reikninga. Reglurnar komust thvi i DOM-id adeins ef sa flipi hafdi verid
-       * opnadur. `openMergeMonthsModal` er hins vegar kallad af Krofu yfirliti.
-       * MAELT 15.10.2026 a #krofuyfirlit: glugginn var til i DOM (rettur texti),
-       * en `position:static`, breidd 0 og 0 `.mm-bg`-reglur i 1148 skodudum
-       * reglum. Agnar sa thvi engan glugga, enga villu, ekkert — og sagdi
-       * „Eg nae ekki ad sameina thessa 2". Stillinn a ekki ad hanga i flipa sem
-       * notar hann ekki. */
+      /* .mm-* reglurnar (Sameina mánuði) voru HÉR til 15.10.2026 og eru nú í
+       * css/theme.css. Ástæðan: þessi style-blokk er hluti af JS-STRENGNUM sem
+       * teiknar Gerð reikninga. Reglurnar komust því í DOM-ið aðeins ef sá flipi
+       * hafði verið opnaður — en openMergeMonthsModal er kallað af Kröfu yfirliti.
+       * MÆLT 15.10.2026 á #krofuyfirlit: glugginn var til í DOM með réttum texta,
+       * en position:static, breidd 0, og 0 mm-bg-reglur af 1148 skoðuðum.
+       * Agnar sá því engan glugga, enga villu, ekkert — og sagði „Ég næ ekki að
+       * sameina þessa 2". Stíll á ekki að hanga í flipa sem notar hann ekki.
+       * ATH: engin bakstrik í þessari athugasemd — þau slíta strenginn. */
       .gb-athuga{display:none;margin:0 0 12px;padding:9px 12px;border:1px solid #d9b25a;border-radius:5px;background:linear-gradient(180deg,#fbf3d9,#f4e6b8);font-size:12.5px;color:#3e2c06;box-shadow:inset 0 1px 0 #fff}
       .gb-athuga.on{display:block}
       .gb-athuga .t{font-family:var(--font-mono,ui-monospace,monospace);font-size:10px;letter-spacing:.14em;color:#8f6a1c;margin-bottom:5px}
@@ -18277,7 +18277,20 @@ async function renderKrofuyfirlit(t){
       return b.total-a.total;
     });
     const total = companies.reduce((a,c)=>a+c.total,0);
-    const head = `<div class="ky-sec"><h2>Per fyrirtæki</h2><span class="ky-sec-n">${companies.length} fyrirtæki</span><span class="ky-sec-total ky-num">${fmtNum(total)} <span class="boss-kr">kr</span></span></div>`+
+    /* ☑ Velja — hakreita-hamurinn (Agnar 15.10.2026: „væri kanski bara fínt ef
+     * það væru box sem ég get hakað í og ýtt á sameina síðan").
+     *
+     * Hamurinn var ALLUR til fyrir: `t2SelectMode` teiknar hakreit á hverja
+     * gerd-drög röð í `buildInvoiceRows`, `t2Selected` safnar þeim og stikan
+     * `.kyf-t2-bar` (í skel síðunnar, utan listans) ber „🔗 Sameina valdar →".
+     * Kveikjan bjó hins vegar EINGÖNGU í þrepa-hausnum `section(2,…)` — og
+     * „Per fyrirtæki" teiknar engan slíkan haus.
+     * MÆLT 15.10.2026 á #krofuyfirlit: 1 `.ky-sec` í DOM, 0 `.kyf-t2-sel-toggle`.
+     * Agnar er í þeirri sýn, svo hamurinn var óaðgengilegur — ekki óhannaður.
+     * Sami takki og sömu klasar, svo smellarinn neðar bindur hann sjálfkrafa:
+     * hann bindur á öllum `listEl` og hausinn er þar inni. */
+    const selBtn = `<button class="kyf-t2-sel-toggle boss-btn ${t2SelectMode?'obsidian':'ivory'} sm" type="button" title="Haka í þau drög sem eiga að sameinast">${t2SelectMode?'✗ Hætta':'☑ Velja'}</button>`;
+    const head = `<div class="ky-sec"><h2>Per fyrirtæki</h2><span class="ky-sec-n">${companies.length} fyrirtæki</span>${selBtn}<span class="ky-sec-total ky-num">${fmtNum(total)} <span class="boss-kr">kr</span></span></div>`+
       `<div class="ky-sec-sub">Ógreitt + ósent + tímauppsöfnun saman á hvert fyrirtæki.</div>`;
     if(!companies.length) return head + emptyBox(state.search?'Ekkert passar við leit':'Engin fyrirtæki');
     const badge=(cls,label,val)=> `<span class="boss-badge ${cls} ky-num">${label} ${fmtNum(val)} kr</span>`;
