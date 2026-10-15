@@ -12,6 +12,13 @@
       {label:'Háþennslukítti',unit:'stk',price:4489},{label:'Eldvarnar silikon',unit:'stk',price:2220},
       {label:'Eldvarnar steinull',unit:'plata',price:10703},{label:'Eldvarnar málning',unit:'líter',price:2500},
       {label:'Eldvarnar rúlla 55mm',unit:'stk',price:53574},
+      /* 15.10.2026 (Agnar): rúllan er 25 m og var aðeins seljanleg í heilu lagi,
+         svo tveir metrar urðu annaðhvort 53.574 kr eða handskrifuð sérlína.
+         MÆLT Í REDDER (redder_line_items, „Eldvarnarband PW á rúllu 2mm x 25M"):
+         ein_verd 53.574,19 er FULLA verðið og afsl_pct 50 er okkar innkaup (26.787).
+         Verðskráin ber því fulla verðið — lengdarmetrinn er 53.574,19 / 25 = 2.143 kr,
+         ekki helmingurinn af því. Rúllan sjálf stendur óbreytt fyrir ofan. */
+      {label:'Eldvarnar rúlla 55mm — lengdarmetri',unit:'m',price:2143},
     ]},
     { section:'Eldvarnar band (mm)', items:[
       {label:'Band 55mm',unit:'stk',price:1621},{label:'Band 63mm',unit:'stk',price:3590},{label:'Band 75mm',unit:'stk',price:1236},
