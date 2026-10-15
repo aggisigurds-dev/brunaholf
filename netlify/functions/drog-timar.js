@@ -103,7 +103,28 @@ async function keyra(opts) {
       if (Math.abs(delta) < 0.05) { ut.obreytt++; ut.linur.push({ ...lina, tv: tvNu, obreytt: true }); continue; }
 
       const sp = tb.split || {};
-      const dvH = r2(Number(sp.hours_dagvinna) || 0), evH = r2(Number(sp.hours_eftirvinna) || 0);
+      /* 15.10.2026 — Agnar: „svo oft eitthvað 0.1 klst í yfirvinnu og vesen",
+       * „það á ekki að vera yfirvinna þarna".
+       *
+       * Þetta starf skrifaði yfirvinnuna úr /api/timabok (8 klst/dag, helgar
+       * allar yfirvinna) beint í drögin — ÓHÁÐ hakinu „Reikna yfirvinnu af
+       * tímabók" í Efnislistanum. Hakið er sjálfgefið AF, svo Agnar slökkti
+       * aftur og aftur á einhverju sem hann hafði aldrei kveikt á.
+       * MÆLT 15.10.2026: Skùlagata 26 sept. bar yfirvinnu 1,26 klst með hakið
+       * AF, og átta drög síðan í júní báru yfirvinnu — þar af 0,02 klst (rúm
+       * mínúta) á Hvaleyrarbraut og Stórhöfða, rukkuð á yfirvinnutaxta.
+       *
+       * Nú fer HEILDIN í dagvinnu. Summan er sú sama (frádrættir tímabókar
+       * haldast, t.d. hádegi Fjarðagötu) — aðeins skiptingin breytist.
+       *
+       * TAKMÖRKUN, sögð hreint út: þjónninn sér ekki hakið (það býr í
+       * state.ui.timabok_edits hjá vafranum). Setji Agnar yfirvinnu handvirkt
+       * á eitt verk mun þetta starf núlla hana næst þegar tímar þess verks
+       * breytast um meira en 0,05 klst. Það er rétt forgangsröðun í dag — hann
+       * vill enga yfirvinnu — en sé það einhvern tíma rangt þarf merki á
+       * drögunum sjálfum (t.d. reit „yfirvinna_handvirk") sem starfið virðir. */
+      const dvH = r2((Number(sp.hours_dagvinna) || 0) + (Number(sp.hours_eftirvinna) || 0));
+      const evH = 0;
       const c = reikna(d, PG[d.worksite_name] || {}, dvH, evH);
       const payload = {
         hours_dagvinna: dvH, hours_eftirvinna: evH, smahlutagjald: c.sma,
