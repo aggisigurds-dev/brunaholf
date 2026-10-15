@@ -49,10 +49,11 @@
   }
 
   // Hubbinn sem foreldragluggi (iframe í index.html, sama lén) — hann á lifandi state og sendir sjálfur.
+  // (`state` hubbsins er let-breyta og sést EKKI sem parent.state — þess vegna vidmotAllt().)
   function hub() {
     try {
       var p = window.parent;
-      if (p && p !== window && typeof p.vidmotSetja === 'function' && p.state && p.state.ui) return p;
+      if (p && p !== window && typeof p.vidmotSetja === 'function' && typeof p.vidmotAllt === 'function') return p;
     } catch (_) {}
     return null;
   }
@@ -94,7 +95,7 @@
     if (hladid) return hladid;
     var p = hub();
     if (p) {
-      var br0 = false; try { br0 = inn(p.state.ui.vidmot); } catch (_) {}
+      var br0 = false; try { br0 = inn(p.vidmotAllt()); } catch (_) {}
       if (br0) { vistaCache(); tilkynna(); }
       hladid = Promise.resolve(br0);
       return hladid;

@@ -162,7 +162,7 @@ eitthvað er óbirt (live `/build.json` ≠ HEAD). Sjá `.claude/skills/deploy/S
   gullrecipes, .boss-* klasar, viðmiðunarskjár) og `css/theme.css`. Lesa `brunaholf-layout` á undan CSS-breytingum.
   Fyrstu útfærslur: Þjónustuborð, Efnislista-ritillinn í Gerð reikninga (03.09.2026).
 - **Jarvis Ragnarök-útlit (11.09.2026):** `js/ragnarok.js` (rofi `RgThema` + eldkjarni `RgKjarni`) og
-  `<style id="rg-thema">` í `jarvis.html` og `afkastavakt.html`. Stilling á tæki: `localStorage jarvis_thema_v1`
+  `<style id="rg-thema">` í `jarvis.html` og `afkastavakt.html`. Valið er samstillt (state.ui.vidmot.jarvis_thema_v1, regla 15.10.2026); `localStorage jarvis_thema_v1` er aðeins skyndiminni fyrir <head>-skriftuna
   (`?thema=ragnarok|klassiskt` setur hana). Klassíska útlitið er sjálfgefið og óbreytt — allar Ragnarök-reglur eru
   bundnar við `html[data-thema="ragnarok"]`; litir sem JS teiknar fara í gegnum `var(--litur-…, klassískt)` eða `L()`.
 

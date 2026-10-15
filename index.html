@@ -2205,6 +2205,8 @@ function vidmotSetja(lykill, gildi){
   state.ui.vidmot[lykill] = { v: (gildi === undefined ? null : gildi), ts: Date.now() };
   save();
 }
+// Fyrir js/vidmot.js í iframe (sama lén): `state` er let-breyta og sést ekki sem window.state — þetta fall gerir það.
+function vidmotAllt(){ return (state && state.ui && _isMap(state.ui.vidmot)) ? state.ui.vidmot : {}; }
 function vidmotMengi(forskeyti){
   const ut = {}; const m = state && state.ui && state.ui.vidmot;
   if(_isMap(m)) for(const k of Object.keys(m)){
