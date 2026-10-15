@@ -2415,8 +2415,12 @@ window.bhSetTabCount = function(id, n){
   const el = document.querySelector('.tab-v[data-id="'+id+'"] .tc');
   if(el) el.textContent = n ? String(n) : '';
 };
+// 15.10.2026 (Agnar: hliðarstikan „stanslaust að breytast aftur og ég alltaf að reyna setja hann réttan"): útlitsvalið
+// bjó í sameiginlega hub-ástandinu (hub_state) sem sími, spjaldtölva og tölvurnar deila — hvert tæki skrifaði yfir hin.
+// Nú er valið PER VAFRA (localStorage bh_layout); state.ui.layout er aðeins upphafsgildi fyrir nýjan vafra.
+function bhLayout(){ try{ const l = localStorage.getItem('bh_layout'); if(l==='sidebar'||l==='compact'||l==='horizontal') return l; }catch(_){} return state.ui.layout || 'sidebar'; }
 function renderTabs(){
-  const lay = state.ui.layout || 'sidebar';
+  const lay = bhLayout();
   $tabs.classList.toggle('layout-h', lay==='horizontal');
   const lay$ = document.getElementById('layout');
   lay$.classList.toggle('compact', lay==='compact');
@@ -25513,7 +25517,7 @@ function renderStillingar(){
     </div>
   `).join('');
 
-  const lay = state.ui.layout || 'sidebar';
+  const lay = bhLayout();
   $view.innerHTML = `
     <div class="section">
       <h2>Útlit</h2>
@@ -25524,7 +25528,7 @@ function renderStillingar(){
           <button class="btn ${lay==='compact'?'primary':'ghost'}" data-lay="compact">▮ Þröng (bara tákn)</button>
           <button class="btn ${lay==='horizontal'?'primary':'ghost'}" data-lay="horizontal">─ Lárétt (gamalt)</button>
         </div>
-        <div class="helprow">Hliðarstika hentar best á tölvu / stærri skjáum. Á símanum opnast hún með ☰ takkanum.</div>
+        <div class="helprow">Hliðarstika hentar best á tölvu / stærri skjáum. Á símanum opnast hún með ☰ takkanum. Valið gildir fyrir þennan vafra — síminn og tölvan geta haft sitt hvort.</div>
       </div>
     </div>
     <div class="section">
@@ -25569,7 +25573,7 @@ function renderStillingar(){
       </div>
     </div>`;
   $view.querySelectorAll('[data-lay]').forEach(b=>{
-    b.onclick = ()=>{ state.ui.layout = b.dataset.lay; save(); render(); };
+    b.onclick = ()=>{ try{ localStorage.setItem('bh_layout', b.dataset.lay); }catch(_){} render(); };
   });
   document.getElementById('ep-save').onclick = ()=>{
     state.ui.appsScriptUrl = document.getElementById('ep-url').value.trim();
