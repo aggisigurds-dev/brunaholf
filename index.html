@@ -17583,6 +17583,22 @@ async function renderKrofuyfirlit(t){
   const YR2 = ['jan','feb','mar','apr','maí','jún','júl','ágú','sep','okt','nóv','des'];
   const FULLMON = ['Janúar','Febrúar','Mars','Apríl','Maí','Júní','Júlí','Ágúst','September','Október','Nóvember','Desember'];
   const monthTag = v => { if(!v) return ''; const s=String(v); const d=new Date(s.length===7?s+'-01':s); if(isNaN(d)) return ''; return YR2[d.getMonth()]+' ’'+String(d.getFullYear()).slice(-2); };
+  /* 15.10.2026 — Agnar: „Skráðu þá tímabilið sept-okt 26".
+   * Samreikningur spannar fleiri en einn mánuð; merkið sýndi aðeins þann
+   * seinni, svo reikningur sem nær yfir tvo mánuði leit út eins og eins
+   * mánaðar reikningur. Sami ártalsstimpill er ekki endurtekinn:
+   *   sama ár      → „sep–okt ’26"
+   *   sitt hvort ár → „des ’25–jan ’26" */
+  const monthTagSpan = ms => {
+    const l = [...new Set((ms||[]).filter(Boolean))].sort();
+    if(!l.length) return '';
+    if(l.length === 1) return monthTag(l[0]);
+    const f = l[0], s2 = l[l.length-1];
+    const ar = x => String(x).slice(0,4), man = x => YR2[+String(x).slice(5,7)-1] || '';
+    return ar(f) === ar(s2)
+      ? man(f)+'–'+man(s2)+' ’'+ar(s2).slice(-2)
+      : monthTag(f)+'–'+monthTag(s2);
+  };
   const monthPeriod = v => { if(!v) return '—'; const s=String(v); const d=new Date(s.length===7?s+'-01':s); if(isNaN(d)) return '—'; return FULLMON[d.getMonth()]+' '+d.getFullYear(); };
   const isoM = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
   const _now = new Date();
@@ -18071,8 +18087,26 @@ async function renderKrofuyfirlit(t){
     const pg=PG[ws]||{};
     const rate = Number(pg.dagvinna_rate)||9951;
     const vsk = Number(pg.vsk_pct)||24;
-    const hours = inv.vidbot ? (Number(inv.hours)||0) : wf.hours!=null ? Number(wf.hours) : (Number(HOURS[ws+'|'+wm])||0);
-    const redder = wf.redder!=null ? Number(wf.redder) : (Number(REDDER[ws+'|'+wm])||0);
+    /* 15.10.2026 — Agnar: „stendur bara 6.43 tímar undir kringlunni núna".
+     *
+     * HOURS og REDDER eru uppflettingar á (verkstaður|mánuður). Eftir
+     * samreikning spanna drögin FLEIRI mánuði, en röðin ber aðeins
+     * seinni mánuðinn — svo merkin lásu 6,43 klst þar sem drögin sjálf
+     * bera 40,28, og vinnuhlutfallið varð 16% í stað ~99%. Upphæðin var
+     * alltaf rétt (hún kemur úr drögunum), en merkin undir henni sögðu
+     * annað, og tvær tölur sem stangast á er það sama og engin tala.
+     *
+     * merged_from (úr invoice_drafts um REVIEWS) ber hvern uppruna-mánuð
+     * með sínum klst, svo summan er mæld en ekki ágiskuð.
+     *
+     * Handvirk yfirskrift (wf.hours/wf.redder) stendur ÓSNERT — þar hefur
+     * Agnar slegið inn tölu og hún gengur framar forfyllingu, eins og
+     * annars staðar í þessum reitum. Þar með getur ekkert tvítalist. */
+    const samr = ((REVIEWS[ws+'|'+wm]||{}).merged_from)||[];
+    const samrKlst = samr.reduce((a,x)=>a+(Number(x.hours)||0),0);
+    const samrRedder = samr.reduce((a,x)=>a+(Number(REDDER[ws+'|'+(x.work_month||'')])||0),0);
+    const hours = inv.vidbot ? (Number(inv.hours)||0) : wf.hours!=null ? Number(wf.hours) : ((Number(HOURS[ws+'|'+wm])||0) + samrKlst);
+    const redder = wf.redder!=null ? Number(wf.redder) : ((Number(REDDER[ws+'|'+wm])||0) + samrRedder);
     const dagvinna = hours*rate, smahl = hours*137;
     const net = dagvinna + smahl + redder;
     const total = wf.efn_total!=null ? Number(wf.efn_total) : Math.round(net*(1+vsk/100));
@@ -18205,7 +18239,11 @@ async function renderKrofuyfirlit(t){
       ? `<div class="ky-bank">🏦 Líklega þegar greitt — ${fmtKr(inv.bank.amount)} í banka ${esc(inv.bank.date||'')}${inv.bank.extra>0?' (+'+fmtKr(inv.bank.extra)+' vextir)':''}</div>`
       : '';
     // Mánaðar-plata (skönnun eftir mánuði) — úr gjalddaga, annars vinnumánuði (þrep 3).
-    const mtag = monthTag(inv.gjalddagi || inv.work_month);
+    // Samreikningur: platan sýnir ALLA mánuðina sem reikningurinn nær yfir.
+    const _mfMon = ((REVIEWS[(inv.worksite||'')+'|'+(inv.work_month||'')]||{}).merged_from||[]).map(x=>x.work_month);
+    const mtag = (!inv.gjalddagi && _mfMon.length)
+      ? monthTagSpan([..._mfMon, inv.work_month])
+      : monthTag(inv.gjalddagi || inv.work_month);
     const mtagHtml = mtag ? `<span class="boss-monotag">${esc(mtag)}</span>` : '';
     // Minnispunktur — dauf-strikaður reitur; 📝 fyllist þegar punktur er til.
     // Þrep 2: í EFRI línuna (inni í nafna-blokkinni) svo röðin styttist og takkarnir komist á skjáinn.
