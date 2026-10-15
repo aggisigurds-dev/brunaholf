@@ -17641,7 +17641,16 @@ async function renderKrofuyfirlit(t){
     return { ok:true, hidden: fraThjoni === null ? falid : fraThjoni, stadfest: fraThjoni !== null };
   }
 
-  const state = { data:null, tier3:null, sort:'amount_desc', search:'', tierFilter:'company', newest:null, showHidden:false, pgFailed:false, wsFailed:false };
+  /* 15.10.2026 — Agnar: „geturðu síðan leyft mér að haka við fleirri filters í
+   * einu... eins og bæði ósent og tími eftir".
+   *
+   * Áður var tierFilter EINN strengur, svo þrepin útilokuðu hvert annað og
+   * „Allt" var eina leiðin til að sjá tvö í einu — en hún dregur líka inn
+   * þriðja þrepið sem hann vildi ekki sjá. Núna:
+   *   company / likely → sjálfstæðir hamir (ein sýn í einu, óbreytt)
+   *   tiers            → þrepin, og tierSel segir hver þeirra eru hökuð
+   * „Allt" er því ekki lengur sérstakt ástand heldur „öll þrjú hökuð". */
+  const state = { data:null, tier3:null, sort:'amount_desc', search:'', tierFilter:'company', tierSel:new Set(['t1','t2','t3']), newest:null, showHidden:false, pgFailed:false, wsFailed:false };
   // ── Sameina drög (tier 2): valstaða ──────────────────────────────────────
   let t2SelectMode = false;
   const t2Selected = new Map();  // inv_key → invoice object (tier-2 gerd-drög only)
@@ -18822,7 +18831,7 @@ async function renderKrofuyfirlit(t){
     } else if(state.tierFilter==='likely'){
       html += section(1,'🏦','Líklega þegar greitt','Enn ógreiddar í Payday en fundust greiddar í banka (sama kt + upphæð) — smelltu ✓ Greitt til að staðfesta.', onlyLikely(l1));
     } else {
-      const show = k => state.tierFilter==='all' || state.tierFilter===k;
+      const show = k => state.tierSel.has(k);
       if(show('t1')) html += section(1,'🔴','Ógreiddar kröfur','Sendir reikningar sem eru enn óborgaðir — Payday SENT + Landsbanki + handvirkir.', l1);
       if(show('t2')) html += section(2,'🟡','Ósendar kröfur','Drög sem á eftir að senda (engir gjalddagar enn).', l2);
       if(show('t3')) html += section(3,'⚪','Tími eftir að senda', t3sub, l3);
@@ -18833,7 +18842,7 @@ async function renderKrofuyfirlit(t){
     const showLikelyBtn = banner && banner.querySelector('.kyf-show-likely');
     if(showLikelyBtn) showLikelyBtn.addEventListener('click', ()=>{
       state.tierFilter = 'likely';
-      $view.querySelectorAll('.kyf-vf').forEach(x=> x.classList.toggle('active', x.dataset.vf===state.tierFilter));
+      syncVfTakka();
       renderList();
     });
 
@@ -19326,10 +19335,32 @@ async function renderKrofuyfirlit(t){
   const searchInp = $view.querySelector('.kyf-search');
   searchInp.addEventListener('input', e=>{ state.search = e.target.value; renderList();
     const el = $view.querySelector('.kyf-search'); if(el){ el.focus(); } });
+  /* Þrepa-takkarnir eru HÖK (má velja fleiri en eitt), hinir tveir eru hamir.
+   * Smellur á þrep sem er þegar hakað tekur það AF — nema það sé það síðasta,
+   * því tómur listi segir ekkert og lítur út eins og bilun. */
+  function syncVfTakka(){
+    $view.querySelectorAll('.kyf-vf').forEach(x=>{
+      const k = x.dataset.vf;
+      const virkur = (k==='company'||k==='likely') ? state.tierFilter===k
+                   : k==='all' ? (state.tierFilter==='tiers' && state.tierSel.size===3)
+                   : (state.tierFilter==='tiers' && state.tierSel.has(k));
+      x.classList.toggle('active', virkur);
+    });
+  }
   $view.querySelectorAll('.kyf-vf').forEach(b=>b.addEventListener('click',()=>{
-    if(state.tierFilter===b.dataset.vf) return;
-    state.tierFilter = b.dataset.vf;
-    $view.querySelectorAll('.kyf-vf').forEach(x=> x.classList.toggle('active', x.dataset.vf===state.tierFilter));
+    const k = b.dataset.vf;
+    if(k==='company' || k==='likely'){
+      if(state.tierFilter===k) return;
+      state.tierFilter = k;
+    } else if(k==='all'){
+      state.tierFilter = 'tiers';
+      state.tierSel = new Set(['t1','t2','t3']);
+    } else {
+      if(state.tierFilter!=='tiers'){ state.tierFilter='tiers'; state.tierSel=new Set([k]); }
+      else if(state.tierSel.has(k)){ if(state.tierSel.size>1) state.tierSel.delete(k); }
+      else state.tierSel.add(k);
+    }
+    syncVfTakka();
     renderList();
   }));
   $view.querySelector('.kyf-refresh').addEventListener('click', ()=>load(true));
@@ -21823,9 +21854,9 @@ async function renderEfniskostnadur(t){
       </div>
 
       <div class="rg-kpis">
-        <div class="rg-kpi"><div class="rg-kpi-l">Reikningar í gagnagrunni</div><div class="rg-kpi-v" id="ef-k-count">—</div><div class="rg-kpi-x">Redder PDFs vistaðir</div></div>
+        <div class="rg-kpi" id="ef-kpi-listi" role="button" tabindex="0" title="Smelltu til að sjá hvern reikning: númer, dagsetningu og hvort hann er tengdur verkstað" style="cursor:pointer"><div class="rg-kpi-l">Reikningar í gagnagrunni</div><div class="rg-kpi-v" id="ef-k-count">—</div><div class="rg-kpi-x">Redder PDFs vistaðir · smella = listi</div></div>
         <div class="rg-kpi rg-kpi-hero"><div class="rg-kpi-l">Heildarefniskostnaður m. vsk</div><div class="rg-kpi-v" id="ef-k-total">—</div><div class="rg-kpi-x">til endurkrafninga</div></div>
-        <div class="rg-kpi rg-kpi-warn"><div class="rg-kpi-l">Án verkstaðs</div><div class="rg-kpi-v" id="ef-k-noworksite">—</div><div class="rg-kpi-x">þarf að tengja</div></div>
+        <div class="rg-kpi rg-kpi-warn" id="ef-kpi-otengt" role="button" tabindex="0" title="Smelltu til að sjá ótengdu reikningana og tengja þá" style="cursor:pointer"><div class="rg-kpi-l">Án verkstaðs</div><div class="rg-kpi-v" id="ef-k-noworksite">—</div><div class="rg-kpi-x">þarf að tengja · smella = listi</div></div>
         <div class="rg-kpi"><div class="rg-kpi-l">Verkstaðir með efnisinnkaup</div><div class="rg-kpi-v" id="ef-k-sites">—</div><div class="rg-kpi-x">unique worksites</div></div>
       </div>
 
@@ -21938,6 +21969,55 @@ async function renderEfniskostnadur(t){
       }
     });
 
+    // 15.10.2026 (Agnar: „þarna í reikningar í gagnagrunni sýnt reikningana sem eru tengdir, hvenær þeir eru
+    // dagsettir og reikningsnúmer og hvort þeir séu tengdir"): smellur á KPI-kortið opnar reikningalista —
+    // númer · dagsetning · verkstaður (tengdur/ótengdur) · upphæð · uppruni · PDF — með 🔗 Tengja á ótengdum
+    // (sami ef-ws-slot/efOpenPicker-vélbúnaður og hópatöflunni). „Án verkstaðs"-kortið opnar sama lista síaðan.
+    let efListi = null;   // null | 'allir' | 'tengdir' | 'otengdir'
+    const efListiHtml = (filtered) => {
+      if(!efListi) return '';
+      const sort = [...filtered].sort((a,b)=> String(b.dagsetning||'').localeCompare(String(a.dagsetning||'')) || String(b.invoice_nr||'').localeCompare(String(a.invoice_nr||'')));
+      const nT = sort.filter(i=>i.worksite_match).length, nO = sort.length - nT;
+      const syn = efListi==='tengdir' ? sort.filter(i=>i.worksite_match) : efListi==='otengdir' ? sort.filter(i=>!i.worksite_match) : sort;
+      const chip = (v,l,n) => `<button type="button" class="rg-tool ef-listi-chip" data-listi="${v}" style="padding:3px 10px;font-size:11px${efListi===v?';background:var(--navy-dark);color:#fff;border-color:var(--navy-dark)':''}">${l} <span style="opacity:.7">${n}</span></button>`;
+      const dags = d => d ? String(d).slice(8,10)+'.'+String(d).slice(5,7)+'.'+String(d).slice(0,4) : '—';
+      const rowHtml = inv => {
+        const ws = inv.worksite_match;
+        const slot = `<span class="ef-ws-slot" data-ef-slot="inv" data-ef-invoice="${escapeAttr(inv.invoice_nr)}" data-ef-old="${escapeAttr(ws||'')}" data-ef-label="${ws?'✏️':'🔗 Tengja'}"><button type="button" class="rg-tool ef-ws-trigger" style="padding:2px 8px;font-size:11px">${ws?'✏️':'🔗 Tengja'}</button></span>`;
+        const pdf = inv.drive_file_id ? `<a class="rg-tool" href="/api/skjal?id=${encodeURIComponent(inv.drive_file_id)}" target="_blank" rel="noopener" style="padding:2px 7px;font-size:11px" title="Opna PDF">📄</a>` : '';
+        return `<tr style="border-top:1px solid var(--line)${ws?'':';background:#fffbeb'}">
+          <td style="padding:5px 8px;font-family:var(--font-mono);font-size:12px">${escapeHtml(inv.invoice_nr||'')}</td>
+          <td style="padding:5px 8px;white-space:nowrap">${dags(inv.dagsetning)}</td>
+          <td style="padding:5px 8px">${ws ? '<span style="color:var(--ok,#16a34a);font-weight:600">✓</span> '+escapeHtml(ws) : '<span style="color:var(--warn);font-weight:600">⚠ ótengt</span>'+(inv.worksite_raw?` <span style="color:var(--muted);font-size:11px">„${escapeHtml(inv.worksite_raw)}"</span>`:'')}</td>
+          <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">${fmt(inv.m_vsk)} kr</td>
+          <td style="padding:5px 8px;font-size:11px;color:var(--muted-2)">${escapeHtml(inv.source==='redder_mail'?'póstur':inv.source==='gdrive'?'Drive':(inv.source||''))}${(inv.redder_line_items&&inv.redder_line_items.length)?'':' · engar línur'}</td>
+          <td style="padding:5px 8px;white-space:nowrap">${slot} ${pdf}</td></tr>`;
+      };
+      return `<div class="wc-card" style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <h3 style="margin:0">🧾 Reikningar í gagnagrunni <span style="font-weight:400;color:var(--muted);font-size:12px">· ${syn.length} sýndir</span></h3>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">${chip('allir','Allir',sort.length)}${chip('tengdir','✓ Tengdir',nT)}${chip('otengdir','⚠ Ótengdir',nO)}<button type="button" class="rg-tool ef-listi-chip" data-listi="" style="padding:3px 10px;font-size:11px">✕ Loka</button></div>
+        </div>
+        <div style="overflow-x:auto;margin-top:10px;max-height:520px;overflow-y:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+            <thead><tr style="color:var(--muted-2);font-size:10.5px;text-transform:uppercase;letter-spacing:1px;position:sticky;top:0;background:var(--card)">
+              <th style="text-align:left;padding:4px 8px">Reikningur</th><th style="text-align:left;padding:4px 8px">Dags.</th><th style="text-align:left;padding:4px 8px">Verkstaður</th><th style="text-align:right;padding:4px 8px">M. vsk</th><th style="text-align:left;padding:4px 8px">Uppruni</th><th></th>
+            </tr></thead>
+            <tbody>${syn.map(rowHtml).join('') || '<tr><td colspan="6" style="padding:12px;color:var(--muted);font-style:italic">Enginn reikningur í þessari síu.</td></tr>'}</tbody>
+          </table>
+        </div>
+      </div>`;
+    };
+    const efListiOpna = (mode) => { efListi = (efListi===mode) ? null : mode; renderTable(); if(efListi){ const h=document.getElementById('ef-table-host'); if(h) h.scrollIntoView({behavior:'smooth',block:'start'}); } };
+    const $kL = document.getElementById('ef-kpi-listi'), $kO = document.getElementById('ef-kpi-otengt');
+    if($kL) $kL.onclick = () => efListiOpna('allir');
+    if($kO) $kO.onclick = () => efListiOpna('otengdir');
+    document.getElementById('ef-table-host').addEventListener('click', (e) => {
+      const c = e.target.closest('.ef-listi-chip'); if(!c) return;
+      e.preventDefault(); e.stopPropagation();
+      efListi = c.dataset.listi || null; renderTable();
+    });
+
     const renderTable = () => {
     if(!document.getElementById('ef-meta')) return;   // 14.10.2026: flipinn farinn áður en gögnin komu (villuskrá #21, 34×)
     const fMonth = $fMonth.value, fWs = $fWs.value;
@@ -22040,7 +22120,7 @@ async function renderEfniskostnadur(t){
         </div>
       </div>
     `;
-    document.getElementById('ef-table-host').innerHTML = html;
+    document.getElementById('ef-table-host').innerHTML = efListiHtml(filtered) + html;
     }; // end renderTable
 
     $fMonth.addEventListener('change', renderTable);
