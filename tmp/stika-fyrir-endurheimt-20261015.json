@@ -1,0 +1,478 @@
+{
+ "sott": "2026-10-15T11:55:20.657Z",
+ "tabs": [
+  {
+   "id": "verkkaupar",
+   "url": "/verkkaupar.html",
+   "icon": "🤝",
+   "label": "Verkkaupar",
+   "external": true
+  },
+  {
+   "id": "dagurinn",
+   "icon": "🌅",
+   "label": "Dagurinn"
+  },
+  {
+   "id": "jarvis",
+   "icon": "🧠",
+   "label": "J.A.R.V.I.S."
+  },
+  {
+   "id": "turbopaint",
+   "icon": "📐",
+   "label": "TurboPaint"
+  },
+  {
+   "id": "yfirlit",
+   "icon": "🏠",
+   "label": "Yfirlit",
+   "hidden": false
+  },
+  {
+   "id": "stjornbord",
+   "icon": "🎛",
+   "label": "Stjórnborð"
+  },
+  {
+   "id": "leidsogn",
+   "icon": "🧭",
+   "label": "Leiðsögn"
+  },
+  {
+   "id": "inbox",
+   "icon": "📧",
+   "label": "Inbox"
+  },
+  {
+   "id": "spurningar",
+   "icon": "⚠",
+   "label": "Spurningar",
+   "hidden": true
+  },
+  {
+   "id": "timavera",
+   "icon": "⏱",
+   "label": "Tímavera"
+  },
+  {
+   "id": "tvmaeting",
+   "icon": "🕒",
+   "label": "Mæting · verkstaðir",
+   "hidden": false
+  },
+  {
+   "id": "verkstadapostur",
+   "icon": "🧰",
+   "label": "Frá verkstað"
+  },
+  {
+   "id": "verdsamanburdur",
+   "icon": "⚖️",
+   "label": "Verðsamanburður"
+  },
+  {
+   "id": "verkstadir",
+   "icon": "🏗",
+   "label": "Verkstaðir"
+  },
+  {
+   "id": "skuldunautar",
+   "icon": "💸",
+   "label": "Skuldunautar"
+  },
+  {
+   "id": "skyrslur",
+   "icon": "📊",
+   "label": "Skýrslur"
+  },
+  {
+   "id": "skyrslustod",
+   "icon": "📊",
+   "label": "Skýrslu-stöð",
+   "hidden": false
+  },
+  {
+   "id": "afkost",
+   "icon": "📈",
+   "label": "Afköst",
+   "hidden": false
+  },
+  {
+   "id": "krofuyfirlit",
+   "icon": "📄",
+   "label": "Kröfu yfirlit",
+   "hidden": false
+  },
+  {
+   "id": "drogstod",
+   "icon": "📥",
+   "label": "Drög-stöð"
+  },
+  {
+   "id": "fjarmalyfirlit",
+   "icon": "💰",
+   "label": "Fjármála-yfirlit"
+  },
+  {
+   "id": "vidskiptavinir",
+   "icon": "🏢",
+   "label": "Viðskiptavinir"
+  },
+  {
+   "id": "krofur",
+   "icon": "📊",
+   "label": "Kröfur & Tekjur"
+  },
+  {
+   "id": "hreyfingaryfirlit",
+   "icon": "📒",
+   "label": "Hreyfingaryfirlit"
+  },
+  {
+   "id": "nlsh",
+   "icon": "🏥",
+   "label": "Landsspítalinn"
+  },
+  {
+   "id": "ajour",
+   "icon": "📍",
+   "label": "Ajour",
+   "hidden": false
+  },
+  {
+   "id": "maeting",
+   "icon": "👥",
+   "label": "Mæting",
+   "sheetCsv": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRXUTGE4Ui3eadS0kGX0d-5LvFbyt5SNWD6ToeRRn1MJ6zoiGng7RK5ZJOVEq6s_x8wkiNLpgU8nHJk/pub?output=csv"
+  },
+  {
+   "id": "verkefnastada",
+   "icon": "📊",
+   "label": "Verkefnastaða",
+   "sheetCsv": ""
+  },
+  {
+   "id": "april",
+   "icon": "📋",
+   "label": "Apríl reikningar"
+  },
+  {
+   "id": "todo",
+   "icon": "📌",
+   "label": "Todo"
+  },
+  {
+   "id": "slokkvitaeki",
+   "icon": "🔥",
+   "label": "Slökkvitæki gögn"
+  },
+  {
+   "id": "gogn",
+   "icon": "🗂",
+   "label": "Gögn & geymslur",
+   "sheetCsv": ""
+  },
+  {
+   "id": "samthaetting",
+   "icon": "🔗",
+   "label": "Samþætting",
+   "checklist": [
+    {
+     "done": false,
+     "note": "Engin backup. Disk klikkar = töpuð gögn.",
+     "text": "Slökkvitæki shop tölva 1 — kortleggja hvaða möppur eru ekki annars staðar",
+     "group": "⚠️ KRÍTÍSKT — engin backup"
+    },
+    {
+     "done": false,
+     "text": "Slökkvitæki shop tölva 2 — sama",
+     "group": "⚠️ KRÍTÍSKT — engin backup"
+    },
+    {
+     "done": false,
+     "note": "Sjálfvirk samhliða backup í cloud-ið frá þeim degi.",
+     "text": "Setja upp Google Drive sync (brunaholfehf@) á báðar shop tölvur",
+     "group": "⚠️ KRÍTÍSKT — engin backup"
+    },
+    {
+     "done": true,
+     "note": "Ákvörðun tekin.",
+     "text": "⭐ brunaholfehf@gmail.com Drive = master fyrir Slökkvitæki rekstur",
+     "group": "🏠 Skipuleggja kanonical"
+    },
+    {
+     "done": true,
+     "note": "Þrjú sheet unnin í Cowork chat \"Organize fire extinguisher service database\". Tengt í Slökkvitæki gögn flipa.",
+     "text": "⭐ Úttektir 2026 + Þjónustuáætlun + Bera saman = master gagnasafn",
+     "group": "🏠 Skipuleggja kanonical"
+    },
+    {
+     "done": false,
+     "note": "Ef í aggisigurds@ — Move to brunaholfehf@ Drive.",
+     "text": "Staðfesta hvort 3 master sheets eru í brunaholfehf@ Drive (ekki aggisigurds@)",
+     "group": "🏠 Skipuleggja kanonical"
+    },
+    {
+     "done": false,
+     "text": "Aggisigurds@gmail.com Drive = master fyrir Brunahólf rekstur",
+     "group": "🏠 Skipuleggja kanonical"
+    },
+    {
+     "done": false,
+     "text": "Hanna möppustrúktúr í brunaholfehf@ Drive (Viðskiptavinir / Verkefni / Kerfisskjöl / Reikningar / Bokhald)",
+     "group": "🏠 Skipuleggja kanonical"
+    },
+    {
+     "done": false,
+     "text": "Búa til \"00 — START HERE\" möppu með leiðbeiningum fyrir aðra notendur",
+     "group": "🏠 Skipuleggja kanonical"
+    },
+    {
+     "done": false,
+     "note": "Tvær aðferðir: 1) Download zip + upload (öruggt en mikill traffic). 2) Share allt → \"Save to my Drive\" frá brunaholfehf@.",
+     "text": "Færa allt úr eldklar@ Drive → brunaholfehf@ Drive",
+     "group": "🚚 Færa gögn"
+    },
+    {
+     "done": false,
+     "note": "OneDrive desktop app download → drag-drop í Google Drive web.",
+     "text": "Færa allt úr eldklar@ OneDrive → brunaholfehf@ Drive",
+     "group": "🚚 Færa gögn"
+    },
+    {
+     "done": false,
+     "text": "Bera saman OneDrive vs Drive úr eldklar@ — duplicate detection",
+     "group": "🚚 Færa gögn"
+    },
+    {
+     "done": false,
+     "text": "Endurtengja slokkvitaeki.netlify.app við brunaholfehf@ Drive (gamla CSV slóð líklega ógild)",
+     "group": "🚚 Færa gögn"
+    },
+    {
+     "done": false,
+     "text": "bokhald@brunaholf.is → finna lykilorð → forwarding á aggisigurds@",
+     "group": "📧 Tölvupóstur"
+    },
+    {
+     "done": false,
+     "text": "bokhald@eldklar.is → forwarding á aggisigurds@ (label \"Slökkvitæki/Bokhald\")",
+     "group": "📧 Tölvupóstur"
+    },
+    {
+     "done": false,
+     "text": "brunaholf@brunaholf.is → forwarding á aggisigurds@",
+     "group": "📧 Tölvupóstur"
+    },
+    {
+     "done": false,
+     "text": "Gmail labels: \"Brunahólf\", \"Slökkvitæki\", \"Bokhald\" — sjálfvirkar reglur",
+     "group": "📧 Tölvupóstur"
+    },
+    {
+     "done": false,
+     "text": "Staðfesta að engin gögn eru aðeins í eldklar@ Drive",
+     "group": "🧹 Hreinsun (eftir migration)"
+    },
+    {
+     "done": false,
+     "text": "Halda eldklar@ Drive sem read-only arkív í 6 mánuði",
+     "group": "🧹 Hreinsun (eftir migration)"
+    },
+    {
+     "done": false,
+     "text": "Loka eldklar@ OneDrive subscription (sparar pening)",
+     "group": "🧹 Hreinsun (eftir migration)"
+    },
+    {
+     "done": false,
+     "text": "Cataloga gömul gögn í aggisigurds@ vs flytja yfir á brunaholfehf@",
+     "group": "🧹 Hreinsun (eftir migration)"
+    }
+   ]
+  },
+  {
+   "id": "okkarVerkefni",
+   "icon": "👥",
+   "label": "Anni & Aggi",
+   "hidden": true,
+   "twoCol": {
+    "Aggi": {
+     "items": []
+    },
+    "Anni": {
+     "items": []
+    }
+   }
+  },
+  {
+   "id": "verkefnaskra",
+   "icon": "📋",
+   "items": [],
+   "label": "Verkefnaskrá"
+  },
+  {
+   "id": "minverkefni",
+   "icon": "☑",
+   "label": "Mín verkefni",
+   "checklist": [
+    {
+     "done": false,
+     "text": "Klára Apríl reikninga (19 verk eftir)",
+     "group": "🔥 Vika"
+    },
+    {
+     "done": false,
+     "text": "Setja upp Apps Script (Code.gs) fyrir Drive/Sheets",
+     "group": "🔥 Vika"
+    },
+    {
+     "done": false,
+     "text": "Tengja bokhald@brunaholf.is — finna lykilorð",
+     "group": "🔥 Vika"
+    },
+    {
+     "done": false,
+     "text": "Klára Tímavera + Ajour + Payday API tengingar",
+     "group": "📋 Mánuður"
+    },
+    {
+     "done": false,
+     "text": "Hreinsa úreltan flipa í Brunahólf Rekstrarstjórnun",
+     "group": "📋 Mánuður"
+    }
+   ]
+  },
+  {
+   "id": "kvittanir",
+   "icon": "📷",
+   "label": "Kvittanir & PDF"
+  },
+  {
+   "id": "tenglar",
+   "icon": "🔗",
+   "label": "Tenglar"
+  },
+  {
+   "id": "reikningatenglar",
+   "icon": "📨",
+   "label": "Reikningatenglar"
+  },
+  {
+   "id": "pdftools",
+   "icon": "📄",
+   "label": "PDF verkfæri"
+  },
+  {
+   "id": "eydublod",
+   "icon": "📝",
+   "label": "Eyðublöð"
+  },
+  {
+   "id": "reikningar",
+   "icon": "💳",
+   "label": "Reikningagerð"
+  },
+  {
+   "id": "gerdreikninga",
+   "icon": "🧾",
+   "label": "Gerð Reikninga"
+  },
+  {
+   "id": "tilbunirReikningar",
+   "icon": "✅",
+   "label": "Tilbúnir reikningar"
+  },
+  {
+   "id": "vinnubok",
+   "icon": "📝",
+   "label": "Vinnubók"
+  },
+  {
+   "id": "vinnustofa",
+   "icon": "🎯",
+   "label": "Vinnustofa"
+  },
+  {
+   "id": "verdskra",
+   "icon": "💰",
+   "label": "Verðskrá"
+  },
+  {
+   "id": "efniskostnadur",
+   "icon": "📦",
+   "label": "Efniskostnaður"
+  },
+  {
+   "id": "vorubirgdir",
+   "icon": "🏷️",
+   "label": "Vörubirgðir"
+  },
+  {
+   "id": "utgjold",
+   "icon": "💸",
+   "label": "Útgjöld",
+   "sheetCsv": ""
+  },
+  {
+   "id": "sjalfvirkni",
+   "icon": "⚙️",
+   "label": "Sjálfvirkni"
+  },
+  {
+   "id": "vefryni",
+   "icon": "🔎",
+   "label": "Vefrýni"
+  },
+  {
+   "id": "skodanir",
+   "icon": "📋",
+   "label": "Skoðanir"
+  },
+  {
+   "id": "brunayfirlit",
+   "icon": "🔔",
+   "label": "Brunakerfi yfirlit"
+  },
+  {
+   "id": "verkfaeri",
+   "url": "https://verkfaeri.netlify.app",
+   "icon": "🧰",
+   "label": "Verkfæri",
+   "external": true
+  },
+  {
+   "id": "multitool",
+   "icon": "🗂️",
+   "label": "Skjala-multitool"
+  },
+  {
+   "id": "skraalisti",
+   "icon": "📋",
+   "label": "Skráalisti"
+  },
+  {
+   "id": "driveleit",
+   "icon": "🔎",
+   "label": "Drive-leit",
+   "hidden": false
+  },
+  {
+   "id": "postleit",
+   "icon": "✉️",
+   "label": "Póstleit",
+   "hidden": false
+  },
+  {
+   "id": "bakendi",
+   "icon": "🗄",
+   "label": "Bakendi"
+  },
+  {
+   "id": "stillingar",
+   "icon": "⚙️",
+   "label": "Stillingar"
+  }
+ ]
+}
