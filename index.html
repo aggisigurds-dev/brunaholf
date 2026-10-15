@@ -882,6 +882,14 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 .rg-fc-cell.rg-fc-total .rg-fc-v{color:#fff;font-size:24px}
 .rg-fc-x{font-size:11px;color:var(--muted-2);margin-top:2px}
 .rg-forecast-list{margin-top:16px;max-height:480px;overflow-y:auto}
+/* 15.10.2026 — Efniskostnaður: hver mánuður rammaður inn með samtölu (Agnar: „rammað inn hvern mánuð og heildarkostnað") */
+.ef-man{border:1px solid var(--line-2);border-left:4px solid var(--blue-deep);border-radius:10px;padding:10px 12px 4px;margin-bottom:16px;background:rgba(255,255,255,.6)}
+.ef-man-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 10px;padding:2px 4px 8px;border-bottom:1px solid var(--line-2)}
+.ef-man-t{font-family:var(--font-display);font-size:17px;font-weight:600;color:var(--blue-deep)}
+.ef-man-m{font-size:11.5px;color:var(--muted-2);margin-left:10px}
+.ef-man-amt{font-family:var(--font-display);font-size:19px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ef-man-amt small{font-family:var(--font);font-size:10.5px;font-weight:600;color:var(--muted-2);margin-left:6px;letter-spacing:1px;text-transform:uppercase}
+.ef-man .rg-fc-item.ef-otengt{border-color:#fcd34d;background:#fffbeb}
 .rg-fc-item{background:#fff;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden;transition:box-shadow 100ms ease}
 .rg-fc-item[open]{box-shadow:0 2px 8px rgba(0,0,0,0.06)}
 .rg-fc-item summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:auto 1fr 1fr auto auto auto;gap:12px;align-items:center;padding:10px 14px;font-size:12.5px}
@@ -22050,6 +22058,21 @@ async function renderEfniskostnadur(t){
     }
     const groupRows = Object.values(groups).sort((a,b) => b.month.localeCompare(a.month) || b.total_m_vsk - a.total_m_vsk);
 
+    // Mánaðarrammar (15.10.2026): hver mánuður í sínum ramma með samtölu, fjölda reikninga og verkstaða,
+    // og hve margir eru ótengdir; verkstaðalínurnar innan rammans, stærsta fyrst, ótengt gult.
+    const efManudir = (gr, itemFn) => {
+      const man = [];
+      for (const g of gr) { let m = man.find(x => x.month === g.month); if (!m) { m = { month: g.month, groups: [], total: 0, n: 0, otengt: 0 }; man.push(m); } m.groups.push(g); m.total += g.total_m_vsk; m.n += g.invoices.length; if (g.worksite === '(ótengt)') m.otengt += g.invoices.length; }
+      return man.map(m => `
+        <section class="ef-man">
+          <div class="ef-man-h">
+            <div><span class="ef-man-t">${escapeHtml(monthLabelStatic(m.month))}</span><span class="ef-man-m">${m.n} ${m.n===1?'reikningur':'reikningar'} · ${m.groups.filter(g=>g.worksite!=='(ótengt)').length} verkstaðir${m.otengt ? ` · <span style="color:var(--warn);font-weight:600">${m.otengt} ótengd${m.otengt>1?'ir':'ur'}</span>` : ''}</span></div>
+            <div class="ef-man-amt">${fmt(m.total)} kr<small>m. vsk</small></div>
+          </div>
+          ${m.groups.map(itemFn).join('')}
+        </section>`).join('');
+    };
+
     const html = `
       <div class="rg-forecast" style="background:linear-gradient(135deg,var(--blue-bg) 0%,var(--blue-bg) 100%);border-color:var(--blue-bg)">
         <div class="rg-forecast-head">
@@ -22061,13 +22084,13 @@ async function renderEfniskostnadur(t){
         <div class="rg-forecast-list" style="max-height:none;display:block">
           ${groupRows.length === 0
             ? '<div class="wc-empty">Engir Redder reikningar fyrir þessa síu.</div>'
-            : groupRows.map(g => `
-              <details class="rg-fc-item">
+            : efManudir(groupRows, g => `
+              <details class="rg-fc-item${g.worksite==='(ótengt)'?' ef-otengt':''}">
                 <summary>
-                  <span class="rg-fc-tag" style="background:var(--blue-bg);color:var(--blue-deep)">${escapeHtml(monthLabelStatic(g.month))}</span>
+                  <span class="rg-fc-tag" style="${g.worksite==='(ótengt)' ? 'background:#fef3c7;color:#92400e' : 'background:var(--blue-bg);color:var(--blue-deep)'}">${g.worksite==='(ótengt)' ? '⚠ ótengt' : '✓ tengt'}</span>
                   <span class="rg-fc-item-name">${escapeHtml(g.worksite)}</span>
                   ${g.worksite!=='(ótengt)' ? `<span class="ef-ws-slot" data-ef-slot="group" data-ef-old="${escapeAttr(g.worksite)}" data-ef-label="✏️" title="Endurnefna þennan verkstað alls staðar (t.d. sameina misstafaða tvítöku)"><button type="button" class="rg-tool ef-ws-trigger" style="padding:2px 6px;font-size:11px">✏️</button></span>` : ''}
-                  <span class="rg-fc-item-cust">${g.invoices.length} reikningur${g.invoices.length>1?'ar':''}</span>
+                  <span class="rg-fc-item-cust">${g.invoices.length} ${g.invoices.length===1?'reikningur':'reikningar'}</span>
                   <span class="rg-fc-item-month"></span>
                   <span class="rg-fc-item-hrs"></span>
                   <span class="rg-fc-item-amt">${fmt(g.total_m_vsk)} kr</span>
@@ -22110,7 +22133,7 @@ async function renderEfniskostnadur(t){
                   `).join('')}
                 </div>
               </details>
-            `).join('')}
+            `)}
         </div>
       </div>
 
