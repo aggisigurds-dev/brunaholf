@@ -18241,8 +18241,21 @@ async function renderKrofuyfirlit(t){
   // 2026-07-07: Per-fyrirtæki view — build ONLY the invoice-rows for a set of
   // invoices (reused by the company cards so the class-based click/note/action
   // wiring below picks them up automatically).
+  /* Gátmerki í sameina-ham (þrep 2) — AÐEINS á gerd-drög raðir sem eiga sitt
+   * eigið worksite_name+work_month, ekki Payday-drög.
+   *
+   * 15.10.2026 — Agnar: „ég get ekkkert sameinað ennþáaa". Ákvörðunin bjó
+   * afrituð inni í renderDebtor, sem AÐEINS þrepa-sýnin notar. Fyrirtækja-
+   * sýnin fer um buildInvoiceRows, sem sendi fast tómt t2chk — svo hakreitirnir
+   * birtust aldrei þar. MÆLT á lifandi vef: ✗ Hætta virkt, 8 .ky-tblock2,
+   * 18 raðir, 0 .kyf-t2-chk. Reglan er ein, svo hún á að eiga einn stað. */
+  function t2Hak(inv, tier){
+    return (tier===2 && t2SelectMode && inv.source==='gerd-drög' && inv.worksite && inv.work_month)
+      ? `<input type="checkbox" class="kyf-t2-chk" data-key="${esc(inv.inv_key)}" ${t2Selected.has(inv.inv_key)?'checked':''} onclick="event.stopPropagation()" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;accent-color:var(--gold-600);margin-right:2px">`
+      : '';
+  }
   function buildInvoiceRows(invoices, tier){
-    return (invoices||[]).map(inv=>invRow(inv, tier, '')).join('');
+    return (invoices||[]).map(inv=>invRow(inv, tier, t2Hak(inv, tier))).join('');
   }
   // 05.10.2026 (Agnar: „geturðu sameinað allt svona sem er í sama mánuði"): viðbótartímar (vidbot) fyrir verkstað|mánuð
   // sem á vistuð drög í Ósendar birtast INNI í drögunum („＋ N klst nýir síðan vistað …"), ekki sem sér lína í Tími eftir.
@@ -18349,14 +18362,7 @@ async function renderKrofuyfirlit(t){
         (agR?'<div style="width:'+(agR/agTot*100)+'%;background:var(--red)"></div>':'')+
       '</div>';
     }
-    const rows = (db.invoices||[]).map(inv=>{
-      // Gátmerki í velstillu (tier 2 / sameina-hamur) — aðeins á gerd-drög (invoice_drafts-
-      // studdar raðir með sitt eigið worksite_name+work_month), EKKI Payday-drög.
-      const t2chk = (tier===2 && t2SelectMode && inv.source==='gerd-drög' && inv.worksite && inv.work_month)
-        ? `<input type="checkbox" class="kyf-t2-chk" data-key="${esc(inv.inv_key)}" ${t2Selected.has(inv.inv_key)?'checked':''} onclick="event.stopPropagation()" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;accent-color:var(--gold-600);margin-right:2px">`
-        : '';
-      return invRow(inv, tier, t2chk);
-    }).join('');
+    const rows = buildInvoiceRows(db.invoices, tier);
     // Zero-balance debtors (e.g. everything netted to 0 after mark-paid) render
     // collapsed by default so they don't clutter the list; nonzero = expanded.
     const collapsed = (db.outstanding_kr||0) === 0;
