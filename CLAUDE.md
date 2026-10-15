@@ -131,6 +131,14 @@ eitthvað er óbirt (live `/build.json` ≠ HEAD). Sjá `.claude/skills/deploy/S
   á ekki heima þar. Dæmi um rétta leið: `krofur_yfirlit_meta` (confirmed/sent/done/hidden/
   paid/note), `invoice_drafts`, `reikningspunktar.karfa`, `app_kv` (`ky_settings`).
   Úttekt á vafra-lyklum: `docs/UTTEKT-VAFRASTADA-20260905.txt` (brunaholf).
+
+  **REGLA 15.10.2026 (Agnar: „ég vill ekki sjá neinstaðar neina slíka stillingu að það virki bara í einhverju
+  ákveðnu tæki … regla bannað að það sé slíkt" — fimm tölvur, „þetta á bara að vera eins alls staðar og haldast"):**
+  undanþágan hér að ofan um „útlitsval eins vafra" er FALLIN ÚR GILDI. Hvert val notandans — útlit hliðarstiku,
+  sía, röðun, samanbrot, þema, sýn, hamur, kveikt/slökkt, dálkabreidd — fer í hub_state (state.ui.<lykill> + save())
+  og er eins á öllum vélum; nýjasta valið ræður (sbr. layout_ts í _mergeIn). Í localStorage mega aðeins vera:
+  skyndiminni sem þjónninn endurhleður, tímabundin staða (opinn flipi/activeTab, bakk, ósend drög), og „hver er
+  við vélina" (bh_me). Skrif á þjón aðeins við raunverulegan smell — aldrei í lykkju eða vakt.
 - **Language**: UI text in Icelandic. Keep new labels in Icelandic
   unless the field is intrinsically English (e.g. column names).
 - **Money**: ISK, no decimals. Format with `Math.round` + locale.
