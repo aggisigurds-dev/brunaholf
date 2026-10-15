@@ -2139,7 +2139,30 @@ let _syncMistokst = 0;   // fjoldi mistekinna vistana i rod -> vaxandi bid (09.0
 let _lykkjuTeljari = 0; // sama patch sent i rod -> haett eftir 3 (19.09.2026)
 let _pullInFlight = false;
 let _pollTimer = null;
-let _serverHasRecord = false;
+/* 15.10.2026 — HLIÐARSTIKAN HVARF. Agnar: „hliðarstikan er alltaf í veseni",
+ * „fer allllltaf í sama far".
+ *
+ * MÆLT: grunnmynd 12.10. kl. 16:02 bar 68 flipa, 6 flokkalínur og 30 falda.
+ * Þjónninn — skrifaður 14.10. kl. 22:21 — bar 61 flipa, 0 flokkalínur og 2
+ * falda. Ekki hálft afturhvarf heldur ALLT ÖNNUR staða, nánast sjálfgefin.
+ *
+ * ORSÖKIN VAR HÉR. `_serverHasRecord` byrjaði á `false` í hverri einustu
+ * hleðslu, og báðir sendendur lesa hana svona:
+ *     const patch = _serverHasRecord ? _buildPatch() : null;
+ *     body = patch ? { patch } : { key:'hub_state', value: state }
+ * Þangað til FYRSTA samstilling hafði tekist í lotunni sendi því hvaða
+ * vistun sem er ALLT staðbundna ástandið og skipti þjónsfærslunni út í heilu
+ * lagi. `false` þýddi „þjónninn á ekkert" — en það var aldrei mælt, bara
+ * gefið sér.
+ *
+ * Verst: `flushSyncNow` keyrir á `pagehide`, þ.e. ÞEGAR VÉL ER SLÖKKT. Vél
+ * með gamla stiku sem er lokað sendir hana upp á leiðinni út og þurrkar
+ * vinnu hinna þriggja. Það skýrir „stundum" — þetta gerist ekki við hverja
+ * vistun heldur þegar vél vaknar eða deyr með gamalt eintak.
+ *
+ * `null` = ÓVITAÐ. Aðeins staðfest 404 má gera hana `false`.
+ */
+let _serverHasRecord = null;
 const _SYNC_LS = STORAGE_KEY + ':synced';
 let _synced = { ui: {}, top: {}, has: false };   // JSON per lykil eins og þjónninn hafði þá síðast
 try{ const g = JSON.parse(localStorage.getItem(_SYNC_LS) || 'null'); if(g && g.ui && g.top) _synced = { ui: g.ui, top: g.top, has: true }; }catch(_){}
@@ -2235,7 +2258,13 @@ function flushSyncNow(){
   // með keepalive svo vafrinn klári beiðnina þótt flipinn sé farinn.
   try{
     if(_syncTimer){ clearTimeout(_syncTimer); _syncTimer = null; }
-    const patch = _serverHasRecord ? _buildPatch() : null;
+    /* Heilskrif (value: state) má AÐEINS fara þegar við höfum SÉÐ 404 og eigum
+     * enga snapshot. Í öllum öðrum tilvikum fer patch — líka þegar við vitum
+     * ekki enn hvað þjónninn á. `hub_state_merge` býr færsluna til ef hún
+     * vantar (`if cur is null then cur := '{}'`), svo patch er öruggt svar líka
+     * á tómum þjóni. Þar með er heilskrifa-leiðin nánast dauð — og það er
+     * markmiðið: hún getur ekki lengur þurrkað út vinnu hinna vélanna. */
+    const patch = (_serverHasRecord === false && !_synced.has) ? null : _buildPatch();
     if(patch && _tomtPatch(patch)) return;
     const body = JSON.stringify(patch ? { key:'hub_state', patch } : { key:'hub_state', value: state });
     fetch('/api/app-state', {
@@ -2253,7 +2282,13 @@ async function syncToServer(){
   if(_syncInFlight || _pullInFlight) { _syncTimer = setTimeout(syncToServer, 1000); return; }
   _syncInFlight = true;
   try{
-    const patch = _serverHasRecord ? _buildPatch() : null;
+    /* Heilskrif (value: state) má AÐEINS fara þegar við höfum SÉÐ 404 og eigum
+     * enga snapshot. Í öllum öðrum tilvikum fer patch — líka þegar við vitum
+     * ekki enn hvað þjónninn á. `hub_state_merge` býr færsluna til ef hún
+     * vantar (`if cur is null then cur := '{}'`), svo patch er öruggt svar líka
+     * á tómum þjóni. Þar með er heilskrifa-leiðin nánast dauð — og það er
+     * markmiðið: hún getur ekki lengur þurrkað út vinnu hinna vélanna. */
+    const patch = (_serverHasRecord === false && !_synced.has) ? null : _buildPatch();
     if(patch && _tomtPatch(patch)){ setSyncBadge('synced'); return; }
     const r = await fetch('/api/app-state', {
       method:'POST', headers:{'Content-Type':'application/json'},
