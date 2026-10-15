@@ -12200,12 +12200,32 @@ async function renderGerdReikninga(t){
       const net0 = dvAmt+evAmt+kmAmt+frAmt+gjAmt+sma+stadf+matSum;
       const discPct = Math.max(0, Math.min(100, (function(){ const el=document.getElementById('gr-disc'); return el?parseNum(el.value):0; })()));
       const disc = discPct>0 ? Math.round(net0*discPct/100) : 0;
-      const net = net0 - disc;
-      const vsk = Math.round(net*r.vsk/100);
-      const total = net+vsk;
       const fixedEl = document.getElementById('gr-fix');
       const fixed = fixedEl ? parseNum(fixedEl.value) : 0;
-      const displayTotal = fixed > 0 ? Math.round(fixed) : total;
+      /* 15.10.2026 — FAST VERÐ SKILDI LIÐINA EFTIR.
+       * Áður vék aðeins heildin fyrir fasta verðinu (`displayTotal`), en `net`
+       * og `vsk` héldu áfram að vera línusumman. Prentleiðin les öll þrjú beint
+       * úr vistuðu reitunum (sjá ~10897), svo reikningurinn stangaðist á við
+       * sjálfan sig: Stangarhyl 3 og 3A júlí 2026 bar liði 1.270.137 + 304.833
+       * = 1.574.970 en heild 1.250.000 — 324.970 kr sem gengu ekki upp.
+       * Nú ræður fasta verðið ÖLLUM þremur: net = heild/1,24 og vsk er
+       * mismunurinn, svo liðirnir leggjast alltaf í heildina upp á krónu.
+       *
+       * Og heildin er námunduð í heilar krónur í báðum greinum. `net0` er
+       * fleytitala (klst × taxti), svo 28 af 37 lifandi drögum báru aura í
+       * total_m_vsk — ISK ber enga aura og nákvæmur samanburður við Payday
+       * féll á því. */
+      let net, vsk, total;
+      if (fixed > 0) {
+        total = Math.round(fixed);
+        net   = Math.round(total / (1 + r.vsk/100));
+        vsk   = total - net;
+      } else {
+        net   = Math.round(net0 - disc);
+        vsk   = Math.round(net * r.vsk/100);
+        total = net + vsk;
+      }
+      const displayTotal = total;
       return {dvH,dvR,evH,evR,km,fr,gj,stadf,sma,matLines,matSum,dvAmt,evAmt,kmAmt,frAmt,gjAmt,net0,discPct,disc,net,vsk,total,fixed,displayTotal};
     }
 
@@ -14672,7 +14692,8 @@ async function renderVinnubok(t){
           </div>
         </div>
         <div class="vb-cell-main">
-          <input type="text" class="vb-amount-input" data-vb-save-amt="${escapeAttr(draftKey)}"
+          <input type="text" class="vb-amount-input" data-vb-save-amt="${escapeAttr(draftKey)}" readonly
+                 title="Lesinn einn — upphæðin ræðst af Efnislistanum í Gerð reikninga. Vinnubók skrifaði áður heildina án liðanna."
                  value="${draftKr ? draftKr.toLocaleString('is-IS') : ''}" placeholder="—" inputmode="numeric">
           <div class="vb-amount-currency">kr m. vsk</div>
           <div class="vb-save-status" data-vb-status="${escapeAttr(draftKey)}"></div>
@@ -14713,7 +14734,21 @@ async function renderVinnubok(t){
     return n.toString();
   }
 
+  /* 15.10.2026 — Agnar: „ég er eiginlega hættur að nota vinnubók, vill helst
+   * hafa kröfuyfirlit sem aðal."
+   *
+   * Þessi leið var EINA leiðin í kerfinu sem skrifaði `total_m_vsk` án þess að
+   * snerta `net_an_vsk` og `vsk_amount`. Heildin varð því handslegna talan á
+   * meðan liðirnir sátu eftir frá fyrri útreikningi, og prentleiðin les öll
+   * þrjú beint úr reitunum. MÆLT: KELDUR júlí 2026 ber heild 5.975.052 en
+   * liði sem leggjast í 4.425.633 (munur 1,55 m), og Súðavogur 7 júní 23.221 —
+   * bæði `updated_by = vinnubok`.
+   *
+   * Kröfu yfirlit og Efnislistinn eru heimildin; Vinnubók er yfirlit. Reiturinn
+   * er því lesinn einn og þetta fall skrifar ekkert. Fallið sjálft stendur
+   * (kallað á þremur stöðum) svo ekkert brotni — það hættir bara strax. */
   async function saveAmount(input){
+    return;   // Vinnubók skrifar ekki lengur — sjá athugasemd að ofan.
     const key = input.dataset.vbSaveAmt;
     const [worksite, month] = key.split('|');
     // ISK has no decimals — keep digits only. Robust against "." / spaces / "kr" /
