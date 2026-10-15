@@ -58,7 +58,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://osfdzskyvisifcwyjkuk.supabase.co">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/theme.css?v=20261007b">
+<link rel="stylesheet" href="/css/theme.css?v=20261015mm">
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
@@ -11244,28 +11244,15 @@ async function renderGerdReikninga(t){
       .gr-modal-bg.boss .gr-form{grid-area:form;background:transparent;border-right:0;padding:14px 16px 0;max-height:calc(94vh - 68px);overflow-y:auto}
       .gr-modal-bg.boss .gr-prev{grid-area:prev;background:transparent;padding:14px 18px 18px 0;max-height:none;overflow-y:auto}
       .gr-modal-bg.boss .gr-doc{box-shadow:0 1px 2px rgba(22,21,19,.15),0 18px 36px -18px rgba(22,21,19,.5);border:1px solid var(--line-2,#d9d3c6)}
-      .mm-bg{position:fixed;inset:0;z-index:100000;background:rgba(10,10,9,.55);display:flex;align-items:center;justify-content:center;padding:16px}
-      .mm{width:min(520px,96vw);max-height:90vh;overflow:auto;background:var(--bg,#f4f1ea);border:1px solid #000;border-radius:6px;box-shadow:0 30px 80px rgba(0,0,0,.55);border-top:3px solid transparent;border-image:var(--gold-line,linear-gradient(90deg,#7a5a12,#f5d76e,#7a5a12)) 1;border-image-width:3px 0 0 0}
-      .mm-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding:12px 15px;background:linear-gradient(180deg,#1c1b18,#0a0a09);color:#e8e2d3}
-      .mm-h b{font-family:var(--font-display,Georgia,serif);font-size:17px;color:#f5d76e;font-weight:700}
-      .mm-h span{font-size:12.5px;color:#b8b1a1}
-      .mm-b{padding:14px 15px;background:var(--card,#fff)}
-      .mm-list{border:1px solid var(--line-2,#d9d3c6);border-radius:5px;overflow:hidden;margin-bottom:14px}
-      .mm-r{display:grid;grid-template-columns:1fr auto auto;gap:12px;padding:8px 11px;border-top:1px solid var(--line,#e6e1d6);font-size:13.5px;align-items:baseline}
-      .mm-r:first-child{border-top:0}
-      .mm-f label{display:block;font-family:var(--font-mono,ui-monospace,monospace);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted,#6f685c);margin-bottom:5px}
-      .mm-well{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:7px 10px;border:1px solid var(--edge,#c9c2b3);border-radius:4px;background:var(--input-bg,#f6f3ec);box-shadow:var(--well-shadow,inset 0 2px 3px rgba(22,21,19,.12))}
-      .mm-well input{border:0;background:transparent;font:inherit;font-family:var(--font-mono,ui-monospace,monospace);font-size:13.5px;color:var(--ink,#161513);padding:2px 0}
-      .mm-hint{margin-left:auto;font-size:11.5px;color:var(--muted,#6f685c)}
-      .mm-opt{display:flex;align-items:flex-start;gap:10px;margin-top:12px;padding:10px 12px;border:1px solid var(--line-2,#d9d3c6);border-radius:5px;background:#fff;cursor:pointer;font-size:13.5px}
-      .mm-opt.on{border-color:#d9b25a;background:var(--warn-bg,#fbf3d9)}
-      .mm-opt input{width:18px;height:18px;accent-color:#8f6a1c;margin:1px 0 0;flex:none}
-      .mm-opt small{display:block;color:var(--muted,#6f685c);font-size:11.5px;margin-top:2px;line-height:1.45}
-      .mm-opt>b:last-child{margin-left:auto;white-space:nowrap;padding-left:8px}
-      .mm-tot{display:flex;align-items:baseline;gap:10px;margin-top:14px;padding:9px 12px;border:1px solid var(--line-2,#d9d3c6);border-radius:5px;background:var(--bg-2,#ece7dc);font-weight:600}
-      .mm-tot b{margin-left:auto;font-size:19px}
-      .mm-note{margin-top:12px;font-size:12.5px;line-height:1.5;color:var(--ink-2,#4a463f)}
-      .mm-a{display:flex;gap:9px;justify-content:flex-end;padding:12px 15px;background:var(--bg,#f4f1ea);border-top:1px solid var(--line-2,#d9d3c6)}
+      /* .mm-* (Sameina manudi) voru HER til 15.10.2026 og eru nu i css/theme.css.
+       * Astaedan: thessi <style> er hluti af JS-STRENGNUM sem teiknar Gerd
+       * reikninga. Reglurnar komust thvi i DOM-id adeins ef sa flipi hafdi verid
+       * opnadur. `openMergeMonthsModal` er hins vegar kallad af Krofu yfirliti.
+       * MAELT 15.10.2026 a #krofuyfirlit: glugginn var til i DOM (rettur texti),
+       * en `position:static`, breidd 0 og 0 `.mm-bg`-reglur i 1148 skodudum
+       * reglum. Agnar sa thvi engan glugga, enga villu, ekkert — og sagdi
+       * „Eg nae ekki ad sameina thessa 2". Stillinn a ekki ad hanga i flipa sem
+       * notar hann ekki. */
       .gb-athuga{display:none;margin:0 0 12px;padding:9px 12px;border:1px solid #d9b25a;border-radius:5px;background:linear-gradient(180deg,#fbf3d9,#f4e6b8);font-size:12.5px;color:#3e2c06;box-shadow:inset 0 1px 0 #fff}
       .gb-athuga.on{display:block}
       .gb-athuga .t{font-family:var(--font-mono,ui-monospace,monospace);font-size:10px;letter-spacing:.14em;color:#8f6a1c;margin-bottom:5px}
