@@ -11232,7 +11232,13 @@ async function renderGerdReikninga(t){
       @media(max-width:860px){.gr-modal{grid-template-columns:1fr}.gr-prev{display:none}}
       /* ═══ Efnislisti — Boss-útlit (03.09.2026). Scoped á .gr-modal-bg.boss svo aðrar gr-modal síður haldist. ═══ */
       .gr-modal-bg.boss{background:rgba(5,5,5,.62);padding:18px}
-      .gr-modal-bg.boss .gr-modal{grid-template-columns:minmax(460px,44%) 1fr;grid-template-rows:auto auto 1fr;grid-template-areas:"hd hd" "form kpi" "form prev";width:min(1260px,97vw);max-height:94vh;border-radius:6px;background:var(--bg,#f4f1ea);border:1px solid #000;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden}
+      /* 15.10.2026 (Agnar: „geturdu breikkad adeins Efnislista gluggann"):
+       * 1260 -> 1560 px. Tveir dalkar deila glugganum (eydublad 44% og
+       * forskodun reikningsins), svo 1260 skildi eftir ~690 px fyrir
+       * reikninginn sjalfan og linurnar brotnudu. 97vw heldur, svo thetta
+       * breytir engu a minni skjaum og simahamurinn (max-width 1100) er
+       * osnortinn. */
+      .gr-modal-bg.boss .gr-modal{grid-template-columns:minmax(460px,44%) 1fr;grid-template-rows:auto auto 1fr;grid-template-areas:"hd hd" "form kpi" "form prev";width:min(1560px,97vw);max-height:94vh;border-radius:6px;background:var(--bg,#f4f1ea);border:1px solid #000;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden}
       .gb-head{grid-area:hd;position:relative;display:flex;align-items:center;gap:14px;padding:11px 18px 13px;background:linear-gradient(180deg,#23211e,#0a0a09);color:#e8e2d3;border-bottom:1px solid #000}
       .gb-head::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--gold-line,linear-gradient(90deg,#7a5a12,#f5d76e,#7a5a12))}
       .gb-title{font-family:var(--font-display,Georgia,serif);font-size:22px;font-weight:800;letter-spacing:-.01em;background:var(--gold-text,linear-gradient(180deg,#f5d76e,#b8892e));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 1px 0 rgba(0,0,0,.9))}
