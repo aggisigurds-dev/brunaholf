@@ -117,14 +117,22 @@ async function keyra(opts) {
        * Nú fer HEILDIN í dagvinnu. Summan er sú sama (frádrættir tímabókar
        * haldast, t.d. hádegi Fjarðagötu) — aðeins skiptingin breytist.
        *
-       * TAKMÖRKUN, sögð hreint út: þjónninn sér ekki hakið (það býr í
-       * state.ui.timabok_edits hjá vafranum). Setji Agnar yfirvinnu handvirkt
-       * á eitt verk mun þetta starf núlla hana næst þegar tímar þess verks
-       * breytast um meira en 0,05 klst. Það er rétt forgangsröðun í dag — hann
-       * vill enga yfirvinnu — en sé það einhvern tíma rangt þarf merki á
-       * drögunum sjálfum (t.d. reit „yfirvinna_handvirk") sem starfið virðir. */
-      const dvH = r2((Number(sp.hours_dagvinna) || 0) + (Number(sp.hours_eftirvinna) || 0));
-      const evH = 0;
+       * Agnar vill samt geta kveikt á yfirvinnu þegar hún á við („en þá samt
+       * kanski fínt að ég geti samt kveikt á yfirvinnu í kerfinu 8klst+").
+       * Þjónninn sér ekki hakið sjálft (það býr í state.ui.timabok_edits hjá
+       * vafranum) — en hann sér AFLEIÐINGU þess: beri drögin yfirvinnu er
+       * búið að kveikja á henni þar. Hún er því notuð sem merkið:
+       *
+       *   ev > 0 á drögunum  → Agnar hefur kveikt; starfið heldur áfram að
+       *                        skipta eftir reglu tímabókarinnar (8 klst/dag).
+       *   ev = 0             → hrein drög; allt fer í dagvinnu, alltaf.
+       *
+       * Þannig ræður hakið í raun, án nýs dálks, og starfið getur hvorki
+       * laumað yfirvinnu inn á hrein drög né þurrkað út þá sem hann valdi. */
+      const yfirvinnaValin = (Number(d.hours_eftirvinna) || 0) > 0;
+      const spDv = Number(sp.hours_dagvinna) || 0, spEv = Number(sp.hours_eftirvinna) || 0;
+      const dvH = r2(yfirvinnaValin ? spDv : spDv + spEv);
+      const evH = r2(yfirvinnaValin ? spEv : 0);
       const c = reikna(d, PG[d.worksite_name] || {}, dvH, evH);
       const payload = {
         hours_dagvinna: dvH, hours_eftirvinna: evH, smahlutagjald: c.sma,

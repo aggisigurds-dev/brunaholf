@@ -11832,14 +11832,29 @@ async function renderGerdReikninga(t){
         tbEv = Math.round((Number(sp.hours_eftirvinna)||0)*100)/100;
         source = 'tímaveru.is';
       }
-      const dvOk = Math.abs(tbDv - (Number(curDvh)||0)) < 0.01;
-      const evOk = Math.abs(tbEv - (Number(curEvh)||0)) < 0.01;
+      /* 15.10.2026 — BAR SAMAN RANGA REITI.
+       * Áður var dagvinna borin saman við dagvinnu og yfirvinna við yfirvinnu.
+       * Strimillinn neðar prentar hins vegar tímabókar-DAGVINNUNA á móti HEILD
+       * reikningsins, svo 3,32 klst munur á SKIPTINGU birtist Agnari sem
+       * „Tímabók segir 273,75 — reikningur 273,74" og leit út eins og 0,01
+       * námundun. Hann eyddi tíma í að elta hala sem var ekki til.
+       *
+       * Og frá sama degi setur `drog-timar` alla tíma í dagvinnu (Agnar vill
+       * enga yfirvinnu). Héldi gamli samanburðurinn sér myndi hver einustu drög
+       * loga rauð að eilífu, því tímabókin skiptir áfram við 8 klst/dag.
+       *
+       * Rétta spurningin er hvort SAMA VINNAN standi báðum megin — þ.e. heildin.
+       * Skiptingin er framsetning, ekki staðreynd. Vikmörkin 0,02 kyngja
+       * námundun á öðrum aukastaf (tímar geymast með tveimur) en nema allt sem
+       * er raunverulegur munur. */
+      const tbAlls  = Math.round((tbDv + tbEv) * 100) / 100;
+      const curAlls = Math.round(((Number(curDvh)||0) + (Number(curEvh)||0)) * 100) / 100;
+      const dvOk = Math.abs(tbAlls - curAlls) < 0.02;
       dvEl.innerHTML = dvOk
         ? '<span style="color:var(--green)">✓ í takt við tímabók</span>'
-        : `<span style="color:var(--red);font-weight:700" title="Tímabók (${escapeAttr(source)}) fyrir ${escapeAttr(name)} · ${escapeAttr(month)} sýnir ${tbDv} klst dagvinnu núna">⚠️ tímabók: ${tbDv} klst — 📥 til að uppfæra</span>`;
-      if(evEl) evEl.innerHTML = evOk
-        ? '<span style="color:var(--green)">✓ í takt</span>'
-        : `<span style="color:var(--red);font-weight:700">⚠️ tímabók: ${tbEv} klst</span>`;
+        : `<span style="color:var(--red);font-weight:700" title="Tímabók (${escapeAttr(source)}) fyrir ${escapeAttr(name)} · ${escapeAttr(month)} sýnir ${tbAlls} klst alls núna">⚠️ tímabók: ${tbAlls} klst — 📥 til að uppfæra</span>`;
+      /* Skiptingin ein og sér er ekki lengur viðvörunarefni. */
+      if(evEl) evEl.innerHTML = '<span style="color:var(--green)">✓ í takt</span>';
     }catch(_){ dvEl.textContent = ''; }
   }
 
