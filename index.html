@@ -2216,8 +2216,15 @@ function _mergeIn(server, dirty){
   state.ui = state.ui || {};
   const du = (dirty && dirty.ui) || {}, dd = (dirty && dirty.deep) || {}, dt = (dirty && dirty.top) || {};
   const sui = server.ui || {};
+  // 15.10.2026 (Agnar, 5 tölvur): útlitsvalið er eitt fyrir allar vélar — nýjasti smellur (layout_ts) ræður, LÍKA þótt þessi
+  // vél eigi eldri óstaðfesta breytingu á layout í dirty-listanum. Annars sendi vél með strandaðan dirty-lista gamla gildið
+  // sitt aftur og aftur og hinar fjórar „breyttust til baka".
+  if(sui.layout !== undefined && (+sui.layout_ts || 0) >= (+state.ui.layout_ts || 0)){
+    if(state.ui.layout !== sui.layout){ state.ui.layout = sui.layout; res.uiChanged = true; }
+    if(sui.layout_ts !== undefined) state.ui.layout_ts = sui.layout_ts;
+  }
   for(const k of Object.keys(sui)){
-    if(_PER_DEVICE.has(k) || (k in du)) continue;
+    if(_PER_DEVICE.has(k) || k === 'layout' || k === 'layout_ts' || (k in du)) continue;
     if(k in dd){
       // map: taka undirlykla þjónsins nema þá sem þessi vél breytti
       const loc = _isMap(state.ui[k]) ? state.ui[k] : {}; const srv = _isMap(sui[k]) ? sui[k] : {};
@@ -2415,10 +2422,10 @@ window.bhSetTabCount = function(id, n){
   const el = document.querySelector('.tab-v[data-id="'+id+'"] .tc');
   if(el) el.textContent = n ? String(n) : '';
 };
-// 15.10.2026 (Agnar: hliðarstikan „stanslaust að breytast aftur og ég alltaf að reyna setja hann réttan"): útlitsvalið
-// bjó í sameiginlega hub-ástandinu (hub_state) sem sími, spjaldtölva og tölvurnar deila — hvert tæki skrifaði yfir hin.
-// Nú er valið PER VAFRA (localStorage bh_layout); state.ui.layout er aðeins upphafsgildi fyrir nýjan vafra.
-function bhLayout(){ try{ const l = localStorage.getItem('bh_layout'); if(l==='sidebar'||l==='compact'||l==='horizontal') return l; }catch(_){} return state.ui.layout || 'sidebar'; }
+// 15.10.2026 (Agnar, 5 tölvur: „þetta á bara að vera eins alls staðar og haldast"): útlitsvalið er EITT fyrir allar vélar
+// (state.ui.layout í hub_state). Nýjasti smellur ræður með layout_ts — sjá _mergeIn — svo vél með gamla óstaðfesta
+// breytingu í dirty-listanum geti ekki skrifað yfir það sem var valið síðast á annarri vél.
+function bhLayout(){ try{ localStorage.removeItem('bh_layout'); }catch(_){} const l = state.ui && state.ui.layout; return (l==='sidebar'||l==='compact'||l==='horizontal') ? l : 'sidebar'; }
 function renderTabs(){
   const lay = bhLayout();
   $tabs.classList.toggle('layout-h', lay==='horizontal');
@@ -25528,7 +25535,7 @@ function renderStillingar(){
           <button class="btn ${lay==='compact'?'primary':'ghost'}" data-lay="compact">▮ Þröng (bara tákn)</button>
           <button class="btn ${lay==='horizontal'?'primary':'ghost'}" data-lay="horizontal">─ Lárétt (gamalt)</button>
         </div>
-        <div class="helprow">Hliðarstika hentar best á tölvu / stærri skjáum. Á símanum opnast hún með ☰ takkanum. Valið gildir fyrir þennan vafra — síminn og tölvan geta haft sitt hvort.</div>
+        <div class="helprow">Hliðarstika hentar best á tölvu / stærri skjáum. Á símanum opnast hún með ☰ takkanum. Valið gildir á öllum vélunum — nýjasta valið ræður.</div>
       </div>
     </div>
     <div class="section">
@@ -25573,7 +25580,7 @@ function renderStillingar(){
       </div>
     </div>`;
   $view.querySelectorAll('[data-lay]').forEach(b=>{
-    b.onclick = ()=>{ try{ localStorage.setItem('bh_layout', b.dataset.lay); }catch(_){} render(); };
+    b.onclick = ()=>{ state.ui.layout = b.dataset.lay; state.ui.layout_ts = Date.now(); save(); render(); };
   });
   document.getElementById('ep-save').onclick = ()=>{
     state.ui.appsScriptUrl = document.getElementById('ep-url').value.trim();
