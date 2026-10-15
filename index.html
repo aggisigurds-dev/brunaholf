@@ -2174,7 +2174,51 @@ let _serverHasRecord = null;
 const _SYNC_LS = STORAGE_KEY + ':synced';
 let _synced = { ui: {}, top: {}, has: false };   // JSON per lykil eins og þjónninn hafði þá síðast
 try{ const g = JSON.parse(localStorage.getItem(_SYNC_LS) || 'null'); if(g && g.ui && g.top) _synced = { ui: g.ui, top: g.top, has: true }; }catch(_){}
-const _PER_DEVICE = new Set(['activeTab', 'editMode', 'st_pv', 'grReturnTo', 'ds_sel', 'vb_calc_history']);
+const _PER_DEVICE = new Set(['activeTab', 'editMode', 'grReturnTo', 'ds_sel', 'vb_calc_history']);
+
+/* ── VIÐMÓTSVAL — EITT fyrir allar vélar (REGLA 15.10.2026) ─────────────────────────────
+ * Agnar: „ég vill ekki sjá neinstaðar neina slíka stillingu að það virki bara í einhverju ákveðnu
+ * tæki". Hvert val notandans (sía, röðun, samanbrot, þema, hamur, kveikt/slökkt …) býr í EINUM
+ * sameiginlegum geymslustað:  state.ui.vidmot = { <lykill>: { v:<gildi>, ts:<ms> } }
+ *   • vidmotLesa(lykill, sjalfgefid)  — les gildið (sjalfgefid ef ekkert/null)
+ *   • vidmotSetja(lykill, gildi)      — setur {v, ts:Date.now()} og save() → hub_state_merge sem
+ *                                       deep-patch á EINUM undirlykli (hinir haldast). AÐEINS við
+ *                                       raunverulegan smell/breytingu — aldrei í teikningu eða vakt.
+ *   • vidmotMengi(forskeyti)          — { <afgangur lykils>: v } fyrir alla lykla með forskeyti og
+ *                                       sönnu gildi (mengi geymast sem einn lykill per atriði,
+ *                                       t.d. hy_hidden.<kt> = true — fylki sameinast ekki).
+ *   • vidmotArfur(lykill, lsLykill, umbreyta) — EINSKIPTIS flutningur: ef vidmot á ekkert en gamli
+ *                                       localStorage-lykillinn er til → gildið þaðan sem upphafsgildi
+ *                                       (ekkert skrifað aftur í localStorage).
+ * Sameining (_mergeIn): per undirlykli, HÆRRI ts vinnur — líka þótt þessi vél eigi lykilinn í
+ * dirty-listanum (sama hugsun og layout_ts). Síður utan hubbsins nota js/vidmot.js (sama snið).
+ * Stór gildi (myndir/data-URL) fara ALDREI hingað. */
+function vidmotLesa(lykill, sjalfgefid){
+  try{
+    const e = state && state.ui && state.ui.vidmot && state.ui.vidmot[lykill];
+    return (e && e.v !== undefined && e.v !== null) ? e.v : sjalfgefid;
+  }catch(_){ return sjalfgefid; }
+}
+function vidmotSetja(lykill, gildi){
+  state.ui = state.ui || {};
+  if(!_isMap(state.ui.vidmot)) state.ui.vidmot = {};
+  state.ui.vidmot[lykill] = { v: (gildi === undefined ? null : gildi), ts: Date.now() };
+  save();
+}
+function vidmotMengi(forskeyti){
+  const ut = {}; const m = state && state.ui && state.ui.vidmot;
+  if(_isMap(m)) for(const k of Object.keys(m)){
+    if(k.indexOf(forskeyti) === 0 && m[k] && m[k].v) ut[k.slice(forskeyti.length)] = m[k].v;
+  }
+  return ut;
+}
+function vidmotArfur(lykill, lsLykill, umbreyta){
+  const e = state && state.ui && state.ui.vidmot && state.ui.vidmot[lykill];
+  if(e && e.v !== undefined && e.v !== null) return e.v;
+  let g = null; try{ g = localStorage.getItem(lsLykill); }catch(_){ g = null; }
+  if(g === null) return undefined;
+  try{ return umbreyta ? umbreyta(g) : g; }catch(_){ return undefined; }
+}
 // 19.09.2026 — LYKLARÖÐ. jsonb í Postgres endurraðar lyklum hlutar (eftir lengd, svo stafrófi: „url" á undan
 // „label"), svo gildið sem hub_state_merge skilar strengjast ÖÐRUVÍSI en sama gildi á þessari vél. _J bar saman
 // strengi → tabs og bakendiLinks voru „breytt" að eilífu → syncToServer sendi aftur á ~1,3 s fresti úr HVERJUM
@@ -2197,6 +2241,9 @@ function _buildPatch(){
     if(_PER_DEVICE.has(k) || k === 'updated_at') continue;
     const nuJ = _J(su[k]); if(_synced.ui[k] === nuJ) continue;
     let fyrra = null; try{ fyrra = _synced.ui[k] !== undefined ? JSON.parse(_synced.ui[k]) : null; }catch(_){ fyrra = null; }
+    // vidmot (15.10.2026) fer ALLTAF sem deep-map — líka áður en fyrsta snapshot er til — svo ein vél með fáa
+    // undirlykla skipti aldrei út öllu vali hinna vélanna með heilum ui-lykli.
+    if(k === 'vidmot' && _isMap(su[k]) && !_isMap(fyrra)) fyrra = {};
     if(_isMap(su[k]) && _isMap(fyrra)){
       const d = {};
       for(const sk of Object.keys(su[k])) if(_J(su[k][sk]) !== _J(fyrra[sk])) d[sk] = su[k][sk];
@@ -2223,8 +2270,19 @@ function _mergeIn(server, dirty){
     if(state.ui.layout !== sui.layout){ state.ui.layout = sui.layout; res.uiChanged = true; }
     if(sui.layout_ts !== undefined) state.ui.layout_ts = sui.layout_ts;
   }
+  // 15.10.2026 — vidmot: PER UNDIRLYKLI, hærri ts vinnur — LÍKA þótt þessi vél eigi undirlykilinn í dirty-listanum
+  // (sama regla og layout_ts). Lykill sem þjónninn á ekki helst hér (fer upp í næsta patch); aldrei eytt héðan.
+  if(_isMap(sui.vidmot)){
+    const loc = _isMap(state.ui.vidmot) ? state.ui.vidmot : {};
+    for(const sk of Object.keys(sui.vidmot)){
+      const s = sui.vidmot[sk], l = loc[sk];
+      if(!_isMap(s)) continue;
+      if(!_isMap(l) || (+s.ts || 0) >= (+l.ts || 0)){ if(_J(l) !== _J(s)){ loc[sk] = s; res.uiChanged = true; } }
+    }
+    state.ui.vidmot = loc;
+  }
   for(const k of Object.keys(sui)){
-    if(_PER_DEVICE.has(k) || k === 'layout' || k === 'layout_ts' || (k in du)) continue;
+    if(_PER_DEVICE.has(k) || k === 'layout' || k === 'layout_ts' || k === 'vidmot' || (k in du)) continue;
     if(k in dd){
       // map: taka undirlykla þjónsins nema þá sem þessi vél breytti
       const loc = _isMap(state.ui[k]) ? state.ui[k] : {}; const srv = _isMap(sui[k]) ? sui[k] : {};
@@ -2236,7 +2294,7 @@ function _mergeIn(server, dirty){
     }
     if(_J(state.ui[k]) !== _J(sui[k])){ state.ui[k] = sui[k]; res.uiChanged = true; }
   }
-  for(const k of Object.keys(state.ui)){ if(_PER_DEVICE.has(k) || k === 'updated_at' || (k in du) || (k in dd)) continue; if(!(k in sui) && _synced.ui[k] !== undefined){ delete state.ui[k]; res.uiChanged = true; } }
+  for(const k of Object.keys(state.ui)){ if(_PER_DEVICE.has(k) || k === 'updated_at' || k === 'vidmot' || (k in du) || (k in dd)) continue; if(!(k in sui) && _synced.ui[k] !== undefined){ delete state.ui[k]; res.uiChanged = true; } }
   for(const k of Object.keys(server)){ if(k === 'ui' || (k in dt)) continue; if(_J(state[k]) !== _J(server[k])){ if(k === 'tabs') res.tabsChanged = true; state[k] = server[k]; } }
   if(res.tabsChanged) ensureNewTabs(state);
   return res;
@@ -3443,9 +3501,15 @@ function renderPdfTools(t){
 // nákvæmlega eins og Skjala-multitool). `allow="microphone"` af því HUD-ið hlustar
 // (getUserMedia + talgreining) — án þess þagnar kjarninn inni í iframe.
 function renderJarvis(t){
-  // Ragnarök-útlitið í Jarvis (sama stilling og iframe-ið notar) litar rammann hér og fylgir rofanum
-  // lifandi: iframe-ið skrifar í localStorage og storage-atburðurinn berst í þennan glugga.
-  try { document.body.setAttribute('data-jv-thema', localStorage.getItem('jarvis_thema_v1') || ''); } catch(_) {}
+  // Ragnarök-útlitið í Jarvis: sannleikurinn er vidmot (eins á öllum vélum, 15.10.2026); localStorage-eintakið er
+  // AÐEINS skyndiminni fyrir <head>-skriftu jarvis.html og speglað hér. Rofinn í iframe-inu kallar í vidmotSetja hjá
+  // þessum glugga (js/vidmot.js) og skrifar afritið → storage-atburðurinn litar rammann lifandi.
+  try {
+    let jvt = localStorage.getItem('jarvis_thema_v1') || '';
+    const jvv = vidmotLesa('jarvis_thema_v1', null);
+    if(jvv === 'ragnarok' || jvv === 'klassiskt'){ jvt = jvv; try{ localStorage.setItem('jarvis_thema_v1', jvv); }catch(_){} }
+    document.body.setAttribute('data-jv-thema', jvt);
+  } catch(_) {}
   if(!window.__jvThemaBound){
     window.__jvThemaBound = true;
     window.addEventListener('storage', e => { if(e.key === 'jarvis_thema_v1') document.body.setAttribute('data-jv-thema', e.newValue || ''); });
@@ -3462,8 +3526,8 @@ function renderVefryni(t){
   const API = '/api/vefryni';
   const V = (window.__VFR = window.__VFR || {
     pages:[], pins:[], cur:0,
-    mode: localStorage.getItem('vfr_mode') || 'flip',
-    annotate: localStorage.getItem('vfr_annotate') !== '0',
+    mode: vidmotArfur('vfr_mode', 'vfr_mode') || 'flip',
+    annotate: vidmotArfur('vfr_annotate', 'vfr_annotate', g => g !== '0') !== false,
     loaded:false,
   });
 
@@ -3867,8 +3931,8 @@ function renderVefryni(t){
   }
 
   // ── top bar wiring ──────────────────────────────────────────────────────────
-  $view.querySelectorAll('#vfr-mode button').forEach(b=> b.onclick=()=>{ V.mode=b.dataset.mode; localStorage.setItem('vfr_mode',V.mode); renderDeck(); });
-  $armtog.onclick=()=>{ V.annotate=!V.annotate; localStorage.setItem('vfr_annotate', V.annotate?'1':'0'); renderDeck(); };
+  $view.querySelectorAll('#vfr-mode button').forEach(b=> b.onclick=()=>{ V.mode=b.dataset.mode; vidmotSetja('vfr_mode', V.mode); renderDeck(); });
+  $armtog.onclick=()=>{ V.annotate=!V.annotate; vidmotSetja('vfr_annotate', !!V.annotate); renderDeck(); };
   $view.querySelector('#vfr-addpage').onclick=addPage;
   $view.querySelector('#vfr-submit').onclick=submit;
 
@@ -4966,7 +5030,7 @@ function wireStation(){
 function renderBakendi(t){
   const FOLDER_KEY = 'bakendi_doc_folder';
   const DEFAULT_FOLDER = '1ApVH4kzbZ4SmwXsLtFqUOn3hotSNECTk';
-  const folder = localStorage.getItem(FOLDER_KEY) || DEFAULT_FOLDER;
+  const folder = vidmotArfur(FOLDER_KEY, FOLDER_KEY) || DEFAULT_FOLDER;
   const inp = 'padding:9px 11px;border:1px solid var(--line-2);border-radius:var(--radius-sm);font:inherit;font-size:13px;background:var(--input-bg);color:var(--ink)';
   const hint = 'font-size:11.5px;color:var(--muted);margin-top:5px';
 
@@ -5860,9 +5924,9 @@ function renderBakendi(t){
       const cb=document.getElementById('bk-pf-copy');
       if(cb) cb.onclick=async()=>{ try{ await navigator.clipboard.writeText(p.id); cb.textContent='✓ Afritað'; setTimeout(()=>{ cb.textContent='📋 Afrita ID'; },1800); }catch(_){ prompt('Mappa ID:', p.id); } };
     };
-    try{ showPicked(JSON.parse(localStorage.getItem('bk_last_folder')||'null')); }catch(_){}
+    try{ showPicked(vidmotArfur('bk_last_folder', 'bk_last_folder', g => JSON.parse(g)) || null); }catch(_){}
     $pf.onclick = () => openDriveFolderPicker(p => {
-      try{ localStorage.setItem('bk_last_folder', JSON.stringify(p)); }catch(_){}
+      try{ vidmotSetja('bk_last_folder', p ? { id: p.id, name: p.name } : null); }catch(_){}
       showPicked(p);
     });
   })();
@@ -5941,7 +6005,7 @@ function renderBakendi(t){
   const $results = document.getElementById('bk-results');
 
   $save.onclick = () => {
-    localStorage.setItem(FOLDER_KEY, ($folder.value || '').trim());
+    vidmotSetja(FOLDER_KEY, ($folder.value || '').trim());
     const old = $save.textContent; $save.textContent = '✓ Vistað';
     setTimeout(() => { $save.textContent = old; }, 1400);
   };
@@ -6096,7 +6160,7 @@ function renderBakendi(t){
   let docRows = [];   // accumulated read docs (for the editable customer match)
   async function runBakendi(dry){
     const f = driveFolderId(($folder.value || '').trim()) || DEFAULT_FOLDER;
-    localStorage.setItem(FOLDER_KEY, f);
+    if(vidmotLesa(FOLDER_KEY, null) !== f) vidmotSetja(FOLDER_KEY, f);   // smellur á Keyra — skrifað aðeins ef breytt
     $dry.disabled = $run.disabled = true;
     $results.innerHTML = '<div class="empty">Vinnur… les skjöl í lotum, þetta uppfærist jafnóðum.</div>';
     const acc = { dry, total: 0, scanned: 0, indexed: 0, dupSkip: 0, notSlokkvitaeki: 0, noKt: 0, errors: 0, unmatched: [], added: [] };
@@ -6258,7 +6322,7 @@ function renderBakendi(t){
     const DS_KEY = 'drive_sort_folders_v1';
     const persistEls = { src:$src, master:$master, reports:$reports, dupes:$dupes, other:$other };
     try {
-      const saved = JSON.parse(localStorage.getItem(DS_KEY) || '{}');
+      const saved = vidmotArfur(DS_KEY, DS_KEY, g => JSON.parse(g)) || {};
       for (const k in persistEls) if (saved[k] != null && saved[k] !== '') persistEls[k].value = saved[k];
       if ($queue && saved.queue != null) $queue.value = saved.queue;
     } catch(_) {}
@@ -6266,7 +6330,8 @@ function renderBakendi(t){
       const out = {};
       for (const k in persistEls) out[k] = (persistEls[k].value || '').trim();
       if ($queue) out.queue = $queue.value || '';
-      try { localStorage.setItem(DS_KEY, JSON.stringify(out)); } catch(_) {}
+      // change/blur á reit → vidmot (eins á öllum vélum); aðeins skrifað ef eitthvað breyttist
+      try { if(_J(vidmotLesa(DS_KEY, null)) !== _J(out)) vidmotSetja(DS_KEY, out); } catch(_) {}
     }
     for (const k in persistEls) { persistEls[k].addEventListener('change', saveFolders); persistEls[k].addEventListener('blur', saveFolders); }
     if ($queue) { $queue.addEventListener('change', saveFolders); $queue.addEventListener('blur', saveFolders); }
@@ -6434,8 +6499,8 @@ function renderBakendi(t){
 
     // Muna síðustu uppsprettu-möppu milli hleðslna.
     const MT_KEY = 'drive_multitool_src_v1';
-    try { const s = localStorage.getItem(MT_KEY); if (s && !$src.value) $src.value = s; } catch(_){}
-    $src.addEventListener('change', ()=>{ try{ localStorage.setItem(MT_KEY, ($src.value||'').trim()); }catch(_){} });
+    try { const s = vidmotArfur(MT_KEY, MT_KEY); if (s && !$src.value) $src.value = s; } catch(_){}
+    $src.addEventListener('change', ()=>{ try{ vidmotSetja(MT_KEY, ($src.value||'').trim()); }catch(_){} });
 
     const esc = (s)=> (window.escapeHtml ? escapeHtml(String(s==null?'':s)) : String(s==null?'':s));
     const DT = {
@@ -6515,7 +6580,7 @@ function renderBakendi(t){
     async function runLoop(){
       const src = ($src.value||'').trim();
       if (!src) { $status.textContent = 'Vantar möppu'; return; }
-      try{ localStorage.setItem(MT_KEY, src); }catch(_){}
+      try{ if(vidmotLesa(MT_KEY, null) !== src) vidmotSetja(MT_KEY, src); }catch(_){}
       const cap = Math.max(parseInt($cap.value||'100',10)||100, 1);
       const recurse = ($recurse && $recurse.checked) ? '1' : '0';
       rows = []; counts = {}; running = true;
@@ -13386,11 +13451,11 @@ async function renderGerdReikninga(t){
     };
 
     // Hak „Fyrri mánuðir: aðeins heilar" (Agnar 06.10: „taka í burtu st. … svo hver mánuður sýnir bara
-    // heil. þetta fer að vera svo langur listi"). Útlitsval vafrans → localStorage (sjálfgefið á).
+    // heil. þetta fer að vera svo langur listi"). Val → vidmot, eins á öllum vélum (sjálfgefið á).
     const BH_KEY = 'nle_bara_heilar';
-    try{ $('nle-baraheil').checked = localStorage.getItem(BH_KEY) !== '0'; }catch(_){ $('nle-baraheil').checked = true; }
+    try{ $('nle-baraheil').checked = vidmotArfur(BH_KEY, BH_KEY, g => g !== '0') !== false; }catch(_){ $('nle-baraheil').checked = true; }
     const baraHeilar = () => !!$('nle-baraheil').checked;
-    $('nle-baraheil').onchange = () => { try{ localStorage.setItem(BH_KEY, baraHeilar() ? '1' : '0'); }catch(_){} if(D) refresh(); };
+    $('nle-baraheil').onchange = () => { try{ vidmotSetja(BH_KEY, baraHeilar()); }catch(_){} if(D) refresh(); };
     let LOGO = '';
     bhLogoDataUrl().then(d => { LOGO = d || ''; if(D) refresh(); }).catch(() => {});
 
@@ -15282,9 +15347,17 @@ async function renderHreyfingar(t){
   const num = n => (Math.round(n||0)).toLocaleString('is-IS');
   const kr  = n => num(n) + ' kr';
   const krM = n => Math.abs(n)>=1e6 ? (Math.round(n/1e5)/10).toLocaleString('is-IS')+' m' : num(n);
+  // Falin fyrirtæki: EINN vidmot-lykill per kt (hy_hidden.<kt> = true/false) svo tvær vélar sem fela sitt hvort
+  // fyrirtækið yfirskrifi ekki hvor aðra; gamla localStorage-fylkið er aðeins einskiptis upphafsgildi.
   const HKEY = 'hy_hidden';
-  const loadHidden = () => { try{ return new Set(JSON.parse(localStorage.getItem(HKEY)||'[]')); }catch(_){ return new Set(); } };
-  const saveHidden = s => { try{ localStorage.setItem(HKEY, JSON.stringify([...s])); }catch(_){} };
+  const loadHidden = () => {
+    try{
+      const m = vidmotMengi(HKEY + '.');
+      if(Object.keys(m).length || (state.ui && state.ui.vidmot && Object.keys(state.ui.vidmot).some(k => k.indexOf(HKEY + '.') === 0))) return new Set(Object.keys(m));
+      return new Set(JSON.parse(localStorage.getItem(HKEY)||'[]'));
+    }catch(_){ return new Set(); }
+  };
+  const saveHidden = (s, kt) => { try{ if(kt) vidmotSetja(HKEY + '.' + kt, s.has(kt)); }catch(_){} };
   let hidden = loadHidden();
   let showHidden = false;
   const balCol = b => b>1000 ? 'var(--red-dark)' : (b<-1000 ? 'var(--green)' : 'var(--blue-deep)');
@@ -15460,7 +15533,7 @@ async function renderHreyfingar(t){
         const kt=card.dataset.kt;
         if(hidden.has(kt)){ hidden.delete(kt); card.dataset.hidden='0'; card.classList.remove('hid'); h.querySelector('.hy-hide').textContent='🙈'; }
         else { hidden.add(kt); card.dataset.hidden='1'; card.classList.add('hid'); h.querySelector('.hy-hide').textContent='👁'; }
-        saveHidden(hidden); applyVis();
+        saveHidden(hidden, kt); applyVis();
       });
     });
     document.getElementById('hy-search').oninput=applyVis;
@@ -15946,16 +16019,18 @@ async function renderKrofur(t){
   // Collapsible section headers — click a kf-sec to fold its content. State
   // persists per-section in localStorage; the golink inside a header still works.
   function setupCollapse(){
-    let st={}; try{ st=JSON.parse(localStorage.getItem('kf_collapsed')||'{}'); }catch(_){}
+    // Samanbrot per kafla → vidmot (kf_collapsed.<sec>), eins á öllum vélum; gamla localStorage-mappið aðeins upphafsgildi.
+    let arfur={}; try{ arfur=JSON.parse(localStorage.getItem('kf_collapsed')||'{}')||{}; }catch(_){}
+    const er = key => { const v = vidmotLesa('kf_collapsed.'+key, null); return v === null ? !!arfur[key] : !!v; };
     $view.querySelectorAll('.kf-sec[data-sec]').forEach(h=>{
       const key=h.dataset.sec;
       if(!h.querySelector('.kf-caret')){ const c=document.createElement('span'); c.className='kf-caret'; c.textContent='▾'; h.insertBefore(c, h.firstChild); }
       const apply=(col)=>{ h.classList.toggle('collapsed', col); let el=h.nextElementSibling;
         while(el && !(el.classList&&el.classList.contains('kf-sec'))){ el.style.display = col?'none':''; el=el.nextElementSibling; } };
-      apply(!!st[key]);
-      h.onclick=(e)=>{ if(e.target.closest('a')) return; st[key]=!st[key];
-        try{ localStorage.setItem('kf_collapsed', JSON.stringify(st)); }catch(_){}
-        apply(!!st[key]); };
+      apply(er(key));
+      h.onclick=(e)=>{ if(e.target.closest('a')) return; const col=!er(key);
+        try{ vidmotSetja('kf_collapsed.'+key, col); }catch(_){}
+        apply(col); };
     });
   }
 
@@ -16709,8 +16784,8 @@ async function renderAjour(t){
 async function renderDriveLeit(t){
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const LS = 'drive_leit_val';
-  let val = {}; try{ val = JSON.parse(localStorage.getItem(LS)||'{}')||{}; }catch(_){ val = {}; }
-  const saveVal = () => { try{ localStorage.setItem(LS, JSON.stringify(val)); }catch(_){} };
+  let val = {}; try{ val = vidmotArfur(LS, LS, g => JSON.parse(g)) || {}; }catch(_){ val = {}; }
+  const saveVal = () => { try{ if(_J(vidmotLesa(LS, null)) !== _J(val)) vidmotSetja(LS, Object.assign({}, val)); }catch(_){} };   // run() kallar líka — skrifað aðeins ef breytt
   const moppur = () => (state.ui && state.ui.drive_leit_moppur) || {};
   const fid = s => { const x=String(s||'').trim(); const m=x.match(/\/folders\/([A-Za-z0-9_-]{10,})/)||x.match(/[?&]id=([A-Za-z0-9_-]{10,})/); return m?m[1]:(/^[A-Za-z0-9_-]{10,}$/.test(x)?x:''); };
   const BTN = 'padding:8px 14px;border-radius:var(--radius-sm);cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;';
@@ -16812,8 +16887,8 @@ async function renderDriveLeit(t){
 async function renderPostleit(t){
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const LS = 'postleit_val';
-  let val = {}; try{ val = JSON.parse(localStorage.getItem(LS)||'{}')||{}; }catch(_){ val = {}; }
-  const saveVal = () => { try{ localStorage.setItem(LS, JSON.stringify(val)); }catch(_){} };
+  let val = {}; try{ val = vidmotArfur(LS, LS, g => JSON.parse(g)) || {}; }catch(_){ val = {}; }
+  const saveVal = () => { try{ if(_J(vidmotLesa(LS, null)) !== _J(val)) vidmotSetja(LS, Object.assign({}, val)); }catch(_){} };   // run() kallar líka — skrifað aðeins ef breytt
   const HOLF = [['','📬 Öll vinnupósthólf'],['eldklar@eldklar.is','eldklar@eldklar.is'],['brunaholf@brunaholf.is','brunaholf@brunaholf.is'],['bokhald@eldklar.is','bokhald@eldklar.is'],['bokhald@brunaholf.is','bokhald@brunaholf.is'],['brunaholfehf@gmail.com','brunaholfehf@gmail.com'],['aggi@brunaholf.is','aggi@brunaholf.is']];
   const BTN = 'padding:8px 14px;border-radius:var(--radius-sm);cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;';
   const INP = 'height:38px;padding:0 12px;border:1px solid var(--line-2);border-radius:var(--radius-sm);background:var(--card);color:var(--ink);font:inherit;font-size:14px;box-sizing:border-box;';
@@ -19737,7 +19812,7 @@ async function renderSkuldunautar(t){
       const r=await fetch('/api/debtors',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
       const j=await r.json().catch(()=>({})); if(!r.ok||j.error) throw new Error(j.error||('HTTP '+r.status)); return j;
     }
-    const who = ()=> (localStorage.getItem('bh_user')||localStorage.getItem('ky_user')||null);
+    const who = ()=> (bhMe() || null);   // 15.10.2026: bh_user/ky_user voru hvergi skrifaðir (skiluðu alltaf null) → bh_me
     list.querySelectorAll('.sk-mk').forEach(b=>b.addEventListener('click',async(e)=>{
       e.stopPropagation(); b.disabled=true; b.textContent='…';
       try{ await post({action:'mark', inv_key:b.dataset.key, [b.dataset.act]:true, by:who()}); await load(); }
@@ -21165,24 +21240,27 @@ async function renderSjalfvirkni(t){
 async function renderNLSH(t){
   // Fella-saman gluggana (ósk Agnars: „make every window collapsable"). Smellur á
   // <h3 class="nl-h3"> víxlar .nl-collapsed; ástand geymt í localStorage per fyrirsögn.
+  // 15.10.2026: ástandið er í vidmot (nl_collapsed.<lykill>), eins á öllum vélum. Lykillinn er id fyrirsagnar ef
+  // það er til, annars titilltextinn án <span class="nl-note"> (fyrsti textahnúturinn), klipptur í 40 stafi.
+  // Gamla localStorage-mappið (textContent.slice(0,60)) er aðeins einskiptis upphafsgildi.
+  const nlLykill = h => { let t = ''; try{ t = h.id || (h.firstChild && h.firstChild.nodeType === 3 ? h.firstChild.textContent : '') || ''; }catch(_){}
+    t = String(t).trim(); if(!t) t = (h.textContent||'').trim(); return t.slice(0,40); };
+  const nlEr = h => { const v = vidmotLesa('nl_collapsed.' + nlLykill(h), null); if(v !== null) return !!v;
+    const g = (h.textContent||'').trim().slice(0,60); return !!(window.__nlCollapsedArfur && window.__nlCollapsedArfur[g]); };
   if(!window.__nlCollapseWired){
     window.__nlCollapseWired = true;
-    let store; try{ store = JSON.parse(localStorage.getItem('nl_collapsed')||'{}'); }catch(_){ store={}; }
-    window.__nlCollapsed = store;
+    let store; try{ store = JSON.parse(localStorage.getItem('nl_collapsed')||'{}')||{}; }catch(_){ store={}; }
+    window.__nlCollapsedArfur = store;
     document.addEventListener('click', function(e){
       const h = e.target.closest && e.target.closest('h3.nl-h3');
       if(!h) return;
       const on = h.classList.toggle('nl-collapsed');
-      const key = (h.textContent||'').trim().slice(0,60);
-      try{ window.__nlCollapsed[key]=on; localStorage.setItem('nl_collapsed', JSON.stringify(window.__nlCollapsed)); }catch(_){}
+      try{ vidmotSetja('nl_collapsed.' + nlLykill(h), on); }catch(_){}
     }, false);
   }
   // Endurheimta samanfelld ástand eftir að NLSH-DOM er teiknað.
   setTimeout(function(){
-    try{ document.querySelectorAll('h3.nl-h3').forEach(function(h){
-      const key=(h.textContent||'').trim().slice(0,60);
-      if(window.__nlCollapsed && window.__nlCollapsed[key]) h.classList.add('nl-collapsed');
-    }); }catch(_){}
+    try{ document.querySelectorAll('h3.nl-h3').forEach(function(h){ h.classList.toggle('nl-collapsed', nlEr(h)); }); }catch(_){}
   }, 60);
   $view.innerHTML = `
     <div class="rg-wrap">
@@ -22331,7 +22409,7 @@ async function efKostnadarYfirlit(){
   const post = async body => { const r = await fetch('/api/reikningspunktar', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(body) }); const j = await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.error||('HTTP '+r.status)); return j; };
   const opna = id => { try{ sessionStorage.setItem('ds_open_karfa', String(id)); }catch(_){} location.hash = '#drogstod'; };
   const LSK = 'ef_kost_afsl';
-  let afslDef = 0; try{ afslDef = Number(localStorage.getItem(LSK)||0)||0; }catch(_){}
+  let afslDef = 0; try{ afslDef = Number(vidmotArfur(LSK, LSK) || 0) || 0; }catch(_){}   // sjálfgefinn afsláttur % — val, eins á öllum vélum
 
   // ── Droppsvæðið (Agnar 06.09.2026: „væri flott að geta droppað svona kostnaðarreikningum og valið
   //    fyrirtæki … sem yrði síðan lesið inn af tólunum … svo það verður bara listi … geymist á Supabase")
@@ -22367,7 +22445,7 @@ async function efKostnadarYfirlit(){
   ['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.style.borderColor = 'var(--edge)'; drop.style.background = 'var(--input-bg)'; }));
   drop.addEventListener('drop', e => { const fs = e.dataTransfer && e.dataTransfer.files; if(fs && fs.length) skraSkrar([...fs]); });
   file.addEventListener('change', e => { const fs = [...(e.target.files||[])]; e.target.value = ''; if(fs.length) skraSkrar(fs); });
-  document.getElementById('ef-kost-afsl').addEventListener('change', e => { try{ localStorage.setItem(LSK, String(Number(String(e.target.value).replace(',','.'))||0)); }catch(_){} });
+  document.getElementById('ef-kost-afsl').addEventListener('change', e => { try{ vidmotSetja(LSK, Number(String(e.target.value).replace(',','.'))||0); }catch(_){} });
 
   async function skraSkrar(files){
     const kunni = (document.getElementById('ef-kost-kunni').value||'').trim();
@@ -26196,10 +26274,12 @@ setTimeout(syncFromServer, 200);
   const input = document.getElementById('luna-input');
   const sendBtn = document.getElementById('luna-send');
 
-  // Show fab if previously unlocked or ?luna=1 is set.
+  // Show fab if previously unlocked or ?luna=1 is set. 15.10.2026: valið er í vidmot (luna_visible) — eins á öllum
+  // vélum; gamli localStorage-lykillinn (luna.visible.v1) er aðeins einskiptis upphafsgildi.
   const params = new URLSearchParams(location.search);
-  if (params.get('luna') === '1') localStorage.setItem(KEY_VISIBLE, '1');
-  if (localStorage.getItem(KEY_VISIBLE) === '1') fab.style.display = 'flex';
+  const lunaSyn = () => (typeof vidmotArfur === 'function') ? (vidmotArfur('luna_visible', KEY_VISIBLE, g => g === '1') === true) : false;
+  if (params.get('luna') === '1' && !lunaSyn()) { try{ vidmotSetja('luna_visible', true); }catch(_){} }
+  if (lunaSyn()) fab.style.display = 'flex';
 
   function loadHistory(){
     try { return JSON.parse(localStorage.getItem(KEY_HISTORY) || '[]'); }
@@ -26241,7 +26321,7 @@ setTimeout(syncFromServer, 200);
     panel.classList.add('open');
     panel.setAttribute('aria-hidden','false');
     fab.style.display = 'flex';
-    localStorage.setItem(KEY_VISIBLE,'1');
+    if(!lunaSyn()){ try{ vidmotSetja('luna_visible', true); }catch(_){} }
     input.focus();
   }
   function closePanel(){

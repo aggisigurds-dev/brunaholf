@@ -447,7 +447,7 @@ function teikna(services){
       try{
         await fetch('/api/vel-skipun', { method:'POST', headers:{'content-type':'application/json'},
           body: JSON.stringify({ action:'senda', vel:b.dataset.vel, uppskrift:b.dataset.upp,
-            beidandi: localStorage.getItem('ky_me')||null }) });
+            beidandi: localStorage.getItem('bh_me')||null }) });
       }catch(_){}
       b.textContent = '✓ Í röð'; setTimeout(()=>{ b.textContent = g; b.disabled = false; sakja(''); }, 1400);
     }));

@@ -108,8 +108,8 @@
 
   function notandi() {
     try {
-      return localStorage.getItem('ky_eg') || localStorage.getItem('bs_employee') ||
-             localStorage.getItem('starfsmadur') || null;
+      // 15.10.2026: ky_eg/bs_employee/starfsmadur voru hvergi skrifaðir (alltaf null) → bh_me („hver er við vélina")
+      return localStorage.getItem('bh_me') || null;
     } catch (_) { return null; }
   }
 

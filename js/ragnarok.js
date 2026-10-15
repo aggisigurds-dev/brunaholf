@@ -4,8 +4,9 @@
  * eftir „Golden Jarvis MkII" úr Claude Design. Klassíska (bláa) útlitið er
  * sjálfgefið og óbreytt; Ragnarök kviknar með <html data-thema="ragnarok">.
  *
- * Stillingin á við tækið: localStorage `jarvis_thema_v1` ('ragnarok' | 'klassiskt'),
- * sameiginleg báðum síðunum og hubbinu (index.html litar rammann um Jarvis-flipann).
+ * Stillingin er EIN fyrir allar vélar (regla 15.10.2026): vidmot-lykillinn `jarvis_thema_v1`
+ * ('ragnarok' | 'klassiskt') í hub_state gegnum js/vidmot.js; localStorage-eintakið með sama nafni
+ * er aðeins skyndiminni. Sameiginleg báðum síðunum og hubbinu (index.html litar rammann um Jarvis-flipann).
  * `?thema=ragnarok` eða `?thema=klassiskt` í slóð setur hana líka. Höfuð-skriftan á
  * hvorri síðu setur eigindið ÁÐUR en málað er; þessi skrá sér um rofann (RgThema),
  * letrið, samstillingu milli flipa og teikningu eldkjarnans (RgKjarni).
@@ -44,7 +45,12 @@
     var rg = t === 'ragnarok', adur = er();
     if (rg) { document.documentElement.setAttribute('data-thema', 'ragnarok'); saekjaLetur(); }
     else document.documentElement.removeAttribute('data-thema');
-    if (vista) { try { localStorage.setItem(LYKILL, rg ? 'ragnarok' : 'klassiskt'); } catch (e) {} }
+    // 15.10.2026: sannleikurinn er vidmot (js/vidmot.js → hub_state, eins á öllum vélum); localStorage-eintakið
+    // er AÐEINS skyndiminni svo <head>-skriftan geti málað rétt áður en nokkuð er sótt.
+    if (vista) {
+      try { localStorage.setItem(LYKILL, rg ? 'ragnarok' : 'klassiskt'); } catch (e) {}
+      try { if (window.Vidmot) Vidmot.setja(LYKILL, rg ? 'ragnarok' : 'klassiskt'); } catch (e) {}
+    }
     litaHaus(rg);
     if (adur !== rg) window.dispatchEvent(new CustomEvent('rg:thema', { detail: { ragnarok: rg } }));
   }
@@ -55,6 +61,16 @@
     if (e.key === LYKILL) setja(e.newValue === 'ragnarok' ? 'ragnarok' : 'klassiskt', false);
   });
   if (er()) saekjaLetur();
+  // Þjónsgildið (annarrar vélar) tekur við þegar vidmot hefur hlaðist — og skyndiminnið uppfærist.
+  try {
+    if (window.Vidmot) Vidmot.hlada().then(function () {
+      var t = Vidmot.lesa(LYKILL, null);
+      if ((t === 'ragnarok' || t === 'klassiskt') && (t === 'ragnarok') !== er()) {
+        setja(t, false);
+        try { localStorage.setItem(LYKILL, t); } catch (e) {}
+      }
+    });
+  } catch (e) {}
 
   window.RgThema = { LYKILL: LYKILL, er: er, setja: setja, skipta: skipta, litaHaus: litaHaus };
 

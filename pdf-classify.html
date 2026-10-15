@@ -59,6 +59,7 @@
   details summary { cursor:pointer; font-size:12px; color:var(--blue); }
   textarea { font:11px/1.4 ui-monospace,Menlo,monospace; width:100%; padding:6px 8px; border:1px solid var(--line); border-radius:6px; resize:vertical; min-height:50px; }
 </style>
+<script src="/js/vidmot.js?v=1"></script>
 </head>
 <body>
 <header>
@@ -179,19 +180,24 @@ function val(id) {
 }
 function status(msg) { el('hint').textContent = msg || ''; }
 
-// Persist folder-id inputs across page loads so they don't have to be
-// re-pasted every visit. Saves on each keystroke, restores on boot.
+// Persist folder-id inputs across page loads so they don't have to be re-pasted every visit.
+// 15.10.2026: vidmot-val (js/vidmot.js → hub_state, eins á öllum vélum), lykill pdf-classify.<id>;
+// skrifað á `change` (ekki við hvern staf). Gömlu localStorage-lyklarnir eru aðeins einskiptis upphafsgildi.
 const PERSIST_IDS = ['src', 't-uttekt', 't-reikningar', 't-annad', 't-dups', 'since'];
-const LS_PREFIX = 'pdf-classify:';
+const LS_PREFIX = 'pdf-classify:', V_PREFIX = 'pdf-classify.';
+const pcLesa = id => { try { return (window.Vidmot && Vidmot.lesa(V_PREFIX + id, null)) ?? localStorage.getItem(LS_PREFIX + id); } catch { return null; } };
 for (const id of PERSIST_IDS) {
   const node = el(id);
   if (!node) continue;
-  const saved = localStorage.getItem(LS_PREFIX + id);
+  const saved = pcLesa(id);
   if (saved != null && !node.value) node.value = saved;
-  node.addEventListener('input', () => {
-    try { localStorage.setItem(LS_PREFIX + id, node.value); } catch {}
+  node.addEventListener('change', () => {
+    try { if (window.Vidmot && Vidmot.lesa(V_PREFIX + id, null) !== node.value) Vidmot.setja(V_PREFIX + id, node.value); } catch {}
   });
 }
+if (window.Vidmot) Vidmot.hlada().then(() => {
+  for (const id of PERSIST_IDS) { const node = el(id); const v = Vidmot.lesa(V_PREFIX + id, null); if (node && v != null && !node.value) node.value = v; }
+});
 
 async function runSample() {
   const src = val('src');

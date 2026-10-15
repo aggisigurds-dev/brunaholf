@@ -14,7 +14,8 @@
      nokkuð málast, svo Ragnarök blikki ekki klassískt fyrst. Stillingin er á tækinu
      (localStorage jarvis_thema_v1), sameiginleg með Vélarrými; ?thema=ragnarok|klassiskt setur hana.
      Rofinn, letrið og eldkjarninn eru í /js/ragnarok.js (samstillt og lítið — kjarninn þarf það við ræsingu). -->
-<script>(function(){var t=null;try{t=new URLSearchParams(location.search).get('thema');}catch(_){}try{if(t==='ragnarok'||t==='klassiskt')localStorage.setItem('jarvis_thema_v1',t);else t=localStorage.getItem('jarvis_thema_v1');}catch(_){}if(t==='ragnarok'){document.documentElement.setAttribute('data-thema','ragnarok');var l=document.createElement('link');l.id='rg-letur';l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap';document.head.appendChild(l);}})();</script>
+<script src="/js/vidmot.js?v=1"></script>
+<script>(function(){var t=null;try{t=new URLSearchParams(location.search).get('thema');}catch(_){}try{if(t==='ragnarok'||t==='klassiskt'){localStorage.setItem('jarvis_thema_v1',t);if(window.Vidmot)Vidmot.setja('jarvis_thema_v1',t);}else{t=(window.Vidmot&&Vidmot.lesa('jarvis_thema_v1',null))||localStorage.getItem('jarvis_thema_v1');}}catch(_){}if(t==='ragnarok'){document.documentElement.setAttribute('data-thema','ragnarok');var l=document.createElement('link');l.id='rg-letur';l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap';document.head.appendChild(l);}})();</script>
 <script src="/js/ragnarok.js?v=2"></script>
 
 <meta name="color-scheme" content="dark"/>
@@ -942,12 +943,14 @@ setInterval(() => {
 }, 1000);
 
 /* ── mál ────────────────────────────────────────────────── */
-let MAL = localStorage.getItem('radd_mal') || 'is';
-function settMal(m){
-  MAL = m; localStorage.setItem('radd_mal', m);
+// 15.10.2026: málið er vidmot-val (eins á öllum vélum); gamli localStorage-lykillinn aðeins einskiptis upphafsgildi.
+let MAL = (window.Vidmot && Vidmot.lesa('radd_mal', null)) || localStorage.getItem('radd_mal') || 'is';
+function settMal(m, vista){
+  MAL = m; if(vista !== false){ try{ if(window.Vidmot) Vidmot.setja('radd_mal', m); }catch(_){} }
   document.querySelectorAll('.malrofi button').forEach(b => b.classList.toggle('on', b.dataset.mal===m));
   if(sr) sr.lang = m==='en' ? 'en-US' : 'is-IS';
 }
+if(window.Vidmot) Vidmot.hlada().then(() => { const m = Vidmot.lesa('radd_mal', MAL); if(m !== MAL) settMal(m, false); });
 document.querySelectorAll('.malrofi button').forEach(b =>
   b.addEventListener('click', () => settMal(b.dataset.mal)));
 
@@ -1767,7 +1770,8 @@ $('#thema-rofi').addEventListener('click', () => {
     const rg = !erRgEigindi();
     if(rg) document.documentElement.setAttribute('data-thema', 'ragnarok');
     else document.documentElement.removeAttribute('data-thema');
-    try{ localStorage.setItem('jarvis_thema_v1', rg ? 'ragnarok' : 'klassiskt'); }catch(_){}
+    try{ localStorage.setItem('jarvis_thema_v1', rg ? 'ragnarok' : 'klassiskt'); }catch(_){}   // skyndiminni
+    try{ if(window.Vidmot) Vidmot.setja('jarvis_thema_v1', rg ? 'ragnarok' : 'klassiskt'); }catch(_){}   // sannleikurinn (allar vélar)
     eftirThema();
   }
   baetaStraum(erRgEigindi() ? 'útlit: Ragnarök' : 'útlit: klassískt', 'ok');
@@ -1827,12 +1831,24 @@ document.addEventListener('visibilitychange', function(){ if(synilegt()) sakja()
     thjonusta: { heiti:'Thjonusta', spjold:['thekja','gloppur','verk','markmid','villuleit'] },
     fjarmal:   { heiti:'Fjarmal',   spjold:['krofur','thekja','markmid'] }
   };
-  var L_VAL = 'jarvis_utlit_v1', L_SER = 'jarvis_utlit_sersnid_v1';
-  var nuv;
-  try { nuv = localStorage.getItem(L_VAL) || 'adal'; } catch(e) { nuv = 'adal'; }
-  if(!UTLIT[nuv]) nuv = 'adal';
+  // 15.10.2026: útlitsvalið og sérsniðin eru vidmot-val (eins á öllum vélum). Sérsnið: EINN lykill per útlit
+  // (jarvis_utlit_sersnid.<utlit>) með map {spjald:true} — fylki sameinast ekki. Gömlu localStorage-lyklarnir
+  // (jarvis_utlit_v1 / jarvis_utlit_sersnid_v1) eru aðeins einskiptis upphafsgildi.
+  var L_VAL = 'jarvis_utlit_v1', L_SER = 'jarvis_utlit_sersnid_v1', L_SER_V = 'jarvis_utlit_sersnid.';
+  var V = window.Vidmot || null;
+  function lesaUtlit(){ var u = null; try{ u = (V && V.lesa(L_VAL, null)) || localStorage.getItem(L_VAL) || 'adal'; }catch(e){ u = 'adal'; } return UTLIT[u] ? u : 'adal'; }
+  var nuv = lesaUtlit();
 
-  function sersnid(){ try{ return JSON.parse(localStorage.getItem(L_SER)) || {}; }catch(e){ return {}; } }
+  function sersnidArfur(){ try{ return JSON.parse(localStorage.getItem(L_SER)) || {}; }catch(e){ return {}; } }
+  function sersnid(){
+    var ut = {}, arfur = sersnidArfur();
+    Object.keys(UTLIT).forEach(function(u){
+      var m = V ? V.lesa(L_SER_V + u, null) : null;
+      if(m && typeof m === 'object' && !Array.isArray(m)) ut[u] = Object.keys(m).filter(function(k){ return m[k]; });
+      else if(arfur[u] && arfur[u].length) ut[u] = arfur[u];
+    });
+    return ut;
+  }
   function spjoldFyrir(u){ var x = sersnid(); return (x[u] && x[u].length) ? x[u] : UTLIT[u].spjold; }
 
   function beita(){
@@ -1852,8 +1868,8 @@ document.addEventListener('visibilitychange', function(){ if(synilegt()) sakja()
     spjold: spjoldFyrir,
     allt: UTLIT,
     vista: function(u, arr){
-      var x = sersnid(); x[u] = arr;
-      try{ localStorage.setItem(L_SER, JSON.stringify(x)); }catch(e){}
+      var m = {}; (arr || []).forEach(function(k){ m[k] = true; });
+      try{ if(V) V.setja(L_SER_V + u, m); }catch(e){}
       beita();
     }
   };
@@ -1861,9 +1877,14 @@ document.addEventListener('visibilitychange', function(){ if(synilegt()) sakja()
   document.querySelectorAll('.ubtn').forEach(function(b){
     b.addEventListener('click', function(){
       nuv = b.dataset.utlit;
-      try{ localStorage.setItem(L_VAL, nuv); }catch(e){}
+      try{ if(V) V.setja(L_VAL, nuv); }catch(e){}
       beita();
     });
+  });
+  // Þjónsgildið (annarrar vélar) tekur við þegar vidmot hefur hlaðist.
+  if(V) V.hlada().then(function(){
+    var u = lesaUtlit(), adur = JSON.stringify(spjoldFyrir(nuv)), fyrra = nuv; nuv = u;
+    if(u !== fyrra || JSON.stringify(spjoldFyrir(u)) !== adur) beita();
   });
 
   var kr = function(n){ return (Math.round(n||0)).toLocaleString('is-IS') + ' kr'; };

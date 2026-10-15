@@ -181,6 +181,7 @@
   .crow .cnote{ color:var(--blue-deep); font-style:italic; margin-top:2px; }
 </style>
 <script src="/js/theme.js"></script>
+<script src="/js/vidmot.js?v=1"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
@@ -574,9 +575,13 @@
   }
 
   // ── remember source folder ──
+  // 15.10.2026: uppsprettumappan er vidmot-val (js/vidmot.js → hub_state, eins á öllum vélum); gamli
+  // localStorage-lykillinn er aðeins einskiptis upphafsgildi. Skrifað aðeins ef gildið breyttist.
   var MTKEY='multitool_src_v1';
-  try{ var s=localStorage.getItem(MTKEY); if(s) $('src').value=s; }catch(_){}
-  $('src').addEventListener('change', function(){ try{ localStorage.setItem(MTKEY, folderId($('src').value)); }catch(_){} });
+  function munaSrc(v){ try{ if(window.Vidmot && v && Vidmot.lesa(MTKEY,null)!==v) Vidmot.setja(MTKEY, v); }catch(_){} }
+  try{ var s=(window.Vidmot && Vidmot.lesa(MTKEY,null)) || localStorage.getItem(MTKEY); if(s) $('src').value=s; }catch(_){}
+  $('src').addEventListener('change', function(){ munaSrc(folderId($('src').value)); });
+  if(window.Vidmot) Vidmot.hlada().then(function(){ var v=Vidmot.lesa(MTKEY,null); if(v && !$('src').value) $('src').value=v; });
 
   // ── remember „Annað" target folder + re-paint svo vendor/other verði valanleg ──
   var ANNADKEY='multitool_tf_annad_v1';
@@ -622,9 +627,31 @@
   });
 
   // ── saved Drive folder shortcuts (localStorage) — hjálpar við að skipuleggja möppur ──
-  var FKEY='multitool_folders_v1';
-  function loadFolders(){ try{ return JSON.parse(localStorage.getItem(FKEY)||'[]')||[]; }catch(_){ return []; } }
-  function saveFolders(a){ try{ localStorage.setItem(FKEY, JSON.stringify(a)); }catch(_){} }
+  // 15.10.2026: flýtimöppurnar eru vidmot-val — EINN lykill per möppu (multitool_folder.<id> = {label, ord}),
+  // eyðing = gildið null (nýrri ts vinnur), svo tvær vélar sem bæta við sitt hvorri möppunni yfirskrifa ekki
+  // hvor aðra. Gamla localStorage-fylkið (multitool_folders_v1) er aðeins einskiptis upphafsgildi.
+  var FKEY='multitool_folders_v1', FKEY_V='multitool_folder.';
+  function loadFolders(){
+    try{
+      if(window.Vidmot){
+        var m=Vidmot.mengi(FKEY_V), ids=Object.keys(m);
+        var allt=Vidmot.allt(), nokkur=Object.keys(allt).some(function(k){ return k.indexOf(FKEY_V)===0; });
+        if(ids.length || nokkur) return ids.map(function(id){ var f=m[id]||{}; return {id:id, label:f.label||id, ord:+f.ord||0}; }).sort(function(a,b){ return a.ord-b.ord; });
+      }
+      return JSON.parse(localStorage.getItem(FKEY)||'[]')||[];
+    }catch(_){ return []; }
+  }
+  function saveFolders(a){
+    // a = nýi listinn í heild; aðeins það sem breyttist skrifast (ný/breytt mappa, eða eydd → null)
+    try{
+      if(!window.Vidmot) return;
+      var adur=Vidmot.mengi(FKEY_V), nu={};
+      (a||[]).forEach(function(f,i){ if(f&&f.id) nu[f.id]={label:f.label||f.id, ord:i}; });
+      Object.keys(nu).forEach(function(id){ var g=adur[id]; if(!g || g.label!==nu[id].label || (+g.ord||0)!==nu[id].ord) Vidmot.setja(FKEY_V+id, nu[id]); });
+      Object.keys(adur).forEach(function(id){ if(!nu[id]) Vidmot.setja(FKEY_V+id, null); });
+    }catch(_){}
+  }
+  if(window.Vidmot) Vidmot.hlada().then(function(br){ if(br) renderFolders(); });
   function renderFolders(){
     var arr=loadFolders(), bar=$('folderbar');
     var html='<span class="fb-title">📁 Möppur</span>';
@@ -636,7 +663,7 @@
     });
     html+='<button class="fb-add" id="fb-add">➕ Bæta möppu</button>';
     bar.innerHTML=html;
-    Array.prototype.forEach.call(bar.querySelectorAll('[data-go]'), function(el){ el.onclick=function(){ var f=loadFolders()[+el.dataset.go]; if(f){ $('src').value=f.id; try{localStorage.setItem(MTKEY,f.id);}catch(_){} runLoop(); } }; });
+    Array.prototype.forEach.call(bar.querySelectorAll('[data-go]'), function(el){ el.onclick=function(){ var f=loadFolders()[+el.dataset.go]; if(f){ $('src').value=f.id; munaSrc(f.id); runLoop(); } }; });
     Array.prototype.forEach.call(bar.querySelectorAll('[data-del]'), function(el){ el.onclick=function(){ var a=loadFolders(); a.splice(+el.dataset.del,1); saveFolders(a); renderFolders(); }; });
     var add=$('fb-add'); if(add) add.onclick=function(){ addFolder(); };
   }
@@ -1113,7 +1140,7 @@
   // ── preview run loop ──
   async function runLoop(){
     var src=folderId($('src').value); if(!src || src.length < 20){ $('status').textContent='Vantar gilda Drive-möppu-auðkenni — límdu inn möppu-URL eða folder-id.'; return; }
-    try{ localStorage.setItem(MTKEY, src); }catch(_){}
+    munaSrc(src);
     var cap=Math.max(parseInt($('s-cap').value||'100',10)||100,1);
     var recurse=$('s-recurse').checked?'1':'0';
     var order=($('s-order')&&$('s-order').value)||'name';

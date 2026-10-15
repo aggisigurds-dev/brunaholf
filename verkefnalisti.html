@@ -167,6 +167,7 @@
   }
 </style>
 <script src="/js/theme.js"></script>
+<script src="/js/vidmot.js?v=1"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
@@ -488,20 +489,20 @@ const CAT_LABELS = {
   kerfi:    { label: 'Kerfi',    emoji: '🧩' },
 };
 
-let activeCat = (function() {
-  try { return localStorage.getItem('vl-cat') || 'allt'; } catch { return 'allt'; }
-})();
+// 15.10.2026: sía og röðun eru vidmot-val (js/vidmot.js → hub_state, eins á öllum vélum). Gömlu
+// localStorage-lyklarnir vl-cat / vl-sort eru aðeins einskiptis upphafsgildi — aldrei skrifað í þá framar.
+const vlLesa = (k, ls, d) => { try { return (window.Vidmot && Vidmot.lesa(k, null)) || localStorage.getItem(ls) || d; } catch { return d; } };
+let activeCat = vlLesa('vl-cat', 'vl-cat', 'allt');
 
 // Röðun: 'forgangur' (sjálfgefið — merki/drag-röð) eða 'nyjast' (nýjustu beiðnir efst).
-let activeSort = (function() {
-  try { return localStorage.getItem('vl-sort') || 'forgangur'; } catch { return 'forgangur'; }
-})();
+let activeSort = vlLesa('vl-sort', 'vl-sort', 'forgangur');
 function setSort(s) {
   activeSort = s;
-  try { localStorage.setItem('vl-sort', s); } catch {}
+  try { if (window.Vidmot) Vidmot.setja('vl-sort', s); } catch {}
   load();
 }
 
+// Teiknun skrifar EKKERT — skrifið er í smellinum á flísina (renderCatBar), ekki hér.
 function applyCatFilter() {
   document.querySelectorAll('.task').forEach(t => {
     const c = t.dataset.category || 'allt';
@@ -510,8 +511,13 @@ function applyCatFilter() {
   document.querySelectorAll('.cat-chip').forEach(ch => {
     ch.classList.toggle('active', ch.dataset.cat === activeCat);
   });
-  try { localStorage.setItem('vl-cat', activeCat); } catch {}
 }
+// Þjónsgildið (annarrar vélar) tekur við þegar vidmot hefur hlaðist.
+if (window.Vidmot) Vidmot.hlada().then(() => {
+  const c = Vidmot.lesa('vl-cat', activeCat), s = Vidmot.lesa('vl-sort', activeSort);
+  if (c !== activeCat) { activeCat = c; applyCatFilter(); }
+  if (s !== activeSort) { activeSort = s; load(); }
+});
 
 function renderCatBar(tasks) {
   const counts = {};
@@ -540,7 +546,7 @@ function renderCatBar(tasks) {
     '</span>';
   $('cat-bar').innerHTML = html + sortHtml;
   document.querySelectorAll('.cat-chip[data-cat]').forEach(ch => {
-    ch.addEventListener('click', () => { activeCat = ch.dataset.cat; applyCatFilter(); });
+    ch.addEventListener('click', () => { activeCat = ch.dataset.cat; try { if (window.Vidmot) Vidmot.setja('vl-cat', activeCat); } catch {} applyCatFilter(); });
   });
 }
 

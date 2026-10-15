@@ -16,7 +16,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
 <!-- Útlit (Klassískt ↔ Ragnarök, Agnar 11.09.2026): sama stilling og J.A.R.V.I.S. (localStorage
      jarvis_thema_v1). Eigindið á <html> er sett hér, áður en málað er; rofinn og eldkjarninn eru í /js/ragnarok.js. -->
-<script>(function(){var t=null;try{t=new URLSearchParams(location.search).get('thema');}catch(_){}try{if(t==='ragnarok'||t==='klassiskt')localStorage.setItem('jarvis_thema_v1',t);else t=localStorage.getItem('jarvis_thema_v1');}catch(_){}if(t==='ragnarok'){document.documentElement.setAttribute('data-thema','ragnarok');var l=document.createElement('link');l.id='rg-letur';l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap';document.head.appendChild(l);}})();</script>
+<script src="/js/vidmot.js?v=1"></script>
+<script>(function(){var t=null;try{t=new URLSearchParams(location.search).get('thema');}catch(_){}try{if(t==='ragnarok'||t==='klassiskt'){localStorage.setItem('jarvis_thema_v1',t);if(window.Vidmot)Vidmot.setja('jarvis_thema_v1',t);}else{t=(window.Vidmot&&Vidmot.lesa('jarvis_thema_v1',null))||localStorage.getItem('jarvis_thema_v1');}}catch(_){}if(t==='ragnarok'){document.documentElement.setAttribute('data-thema','ragnarok');var l=document.createElement('link');l.id='rg-letur';l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap';document.head.appendChild(l);}})();</script>
 <script src="/js/ragnarok.js?v=2"></script>
 <style>
   /* Afkastavakt — endurgerð úr Claude Design, vanilla. RAUNMÆLING, og hver mælir
@@ -565,7 +566,8 @@ renderPanels();
 AV.thema=function(){
   if(window.RgThema){ RgThema.skipta(); return; }
   if(erRg()) document.documentElement.removeAttribute('data-thema'); else document.documentElement.setAttribute('data-thema','ragnarok');
-  try{ localStorage.setItem('jarvis_thema_v1', erRg()?'ragnarok':'klassiskt'); }catch(e){}
+  try{ localStorage.setItem('jarvis_thema_v1', erRg()?'ragnarok':'klassiskt'); }catch(e){}   // skyndiminni
+  try{ if(window.Vidmot) Vidmot.setja('jarvis_thema_v1', erRg()?'ragnarok':'klassiskt'); }catch(e){}   // sannleikurinn (allar vélar)
   eftirThema();
 };
 function merkjaThemaBtn(){ var b=document.getElementById('themaBtn'); if(b) b.textContent=erRg()?'❄ KLASSÍSKT':'🔥 RAGNARÖK'; }

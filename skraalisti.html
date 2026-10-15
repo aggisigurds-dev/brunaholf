@@ -100,6 +100,7 @@
   .mfoot .cur{ flex:1; font-size:12px; color:var(--blue); word-break:break-all; }
 </style>
 <script src="/js/theme.js"></script>
+<script src="/js/vidmot.js?v=1"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
@@ -427,10 +428,12 @@
   $('pk-choose').onclick=function(){ if(pkSel&&pkCb) pkCb(pkSel.id,pkSel.name); closePicker(); };
 
   // ── muna valdar möppur milli heimsókna ───────────────────────────────────
+  // 15.10.2026: valið er vidmot (js/vidmot.js → hub_state, eins á öllum vélum); gamli localStorage-lykillinn
+  // er aðeins einskiptis upphafsgildi. remember() er aðeins kallað úr smell/breytingu notanda.
   var KEY='skraalisti_v1';
-  function remember(){ try{ localStorage.setItem(KEY, JSON.stringify({
+  function remember(){ try{ if(window.Vidmot) Vidmot.setja(KEY, {
     a:{id:A.id,name:A.name}, b:{id:B.id,name:B.name},
-    recurse:$('recurse').checked, matchkey:$('matchkey').value })); }catch(_){}
+    recurse:$('recurse').checked, matchkey:$('matchkey').value }); }catch(_){}
   }
 
   $('a-pick').onclick=function(){ openPicker(function(id,name){ load('a',id,name).then(remember); }); };
@@ -444,14 +447,21 @@
   $('ex-sheet').onclick=toSheets;
 
   (function init(){
-    var s=null; try{ s=JSON.parse(localStorage.getItem(KEY)||'null'); }catch(_){}
-    if(s){
+    var beitt='';
+    function beita(s){
+      if(!s || typeof s!=='object') return;
+      var j=JSON.stringify(s); if(j===beitt) return; beitt=j;
       if(typeof s.recurse==='boolean') $('recurse').checked=s.recurse;
       if(s.matchkey) $('matchkey').value=s.matchkey;
-      if(s.a&&s.a.id) load('a',s.a.id,s.a.name);
-      if(s.b&&s.b.id) load('b',s.b.id,s.b.name);
+      if(s.a&&s.a.id && s.a.id!==A.id) load('a',s.a.id,s.a.name);
+      if(s.b&&s.b.id && s.b.id!==B.id) load('b',s.b.id,s.b.name);
     }
+    var s=null;
+    try{ s=(window.Vidmot && Vidmot.lesa(KEY,null)) || JSON.parse(localStorage.getItem(KEY)||'null'); }catch(_){}
+    beita(s);
     paint();
+    // Þjónsgildið (annarrar vélar) tekur við þegar vidmot hefur hlaðist.
+    if(window.Vidmot) Vidmot.hlada().then(function(){ beita(Vidmot.lesa(KEY,null)); paint(); });
   })();
 })();
 </script>

@@ -220,6 +220,7 @@
   }
 </style>
 <script src="/js/theme.js"></script>
+<script src="/js/vidmot.js?v=1"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
@@ -796,7 +797,8 @@ async function openForm(){
 
 function paintForm(){
   document.getElementById('pageTitle').innerHTML = `${esc(form.titill)}<span class="sub">Brunahólf ehf.</span>`;
-  const showVars = localStorage.getItem('bh_eydublad_gult') !== '0';
+  // 15.10.2026: gula merkingin er vidmot-val (eins á öllum vélum); gamli localStorage-lykillinn aðeins einskiptis upphafsgildi.
+  const showVars = (window.Vidmot && typeof Vidmot.lesa('bh_eydublad_gult', null) === 'boolean') ? Vidmot.lesa('bh_eydublad_gult', true) : (localStorage.getItem('bh_eydublad_gult') !== '0');
   document.body.classList.toggle('show-vars', showVars);
 
   $root.innerHTML = `
@@ -839,7 +841,12 @@ function paintForm(){
   document.getElementById('fields').addEventListener('input', onFieldInput);
   document.getElementById('varsToggle').addEventListener('change', e => {
     document.body.classList.toggle('show-vars', e.target.checked);
-    localStorage.setItem('bh_eydublad_gult', e.target.checked ? '1' : '0');
+    try{ if(window.Vidmot) Vidmot.setja('bh_eydublad_gult', !!e.target.checked); }catch(_){}
+  });
+  // Þjónsgildið (annarrar vélar) tekur við þegar vidmot hefur hlaðist.
+  if(window.Vidmot) Vidmot.hlada().then(() => {
+    const v = Vidmot.lesa('bh_eydublad_gult', null); const t = document.getElementById('varsToggle');
+    if(typeof v === 'boolean' && t && t.checked !== v){ t.checked = v; document.body.classList.toggle('show-vars', v); }
   });
 
   fitPreview();

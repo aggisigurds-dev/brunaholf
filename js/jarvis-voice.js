@@ -237,16 +237,22 @@
    * Which agent answers when you TALK to Jarvis. Switch it from the 🎙️ tester
    * (tap the ★ on any agent) — e.g. flip the main between Natalie and Jarvis.
    * The HUD's tala() calls Jarvis.sayMain(text, {lang}) so replies use this. */
+  // 15.10.2026: valið er vidmot (js/vidmot.js → hub_state, eins á öllum vélum); gamli localStorage-lykillinn
+  // er aðeins einskiptis upphafsgildi.
   var MAIN_KEY = "jarvis_main_voice";
   function getMain() {
-    try { var m = localStorage.getItem(MAIN_KEY); return (m && AGENTS[m]) ? m : "jarvis"; }
+    try {
+      var m = (window.Vidmot && Vidmot.lesa(MAIN_KEY, null)) || localStorage.getItem(MAIN_KEY);
+      return (m && AGENTS[m]) ? m : "jarvis";
+    }
     catch (e) { return "jarvis"; }
   }
   function setMain(id) {
     if (!AGENTS[id]) return;
-    try { localStorage.setItem(MAIN_KEY, id); } catch (e) {}
+    try { if (window.Vidmot) Vidmot.setja(MAIN_KEY, id); } catch (e) {}
     reflectMain();
   }
+  try { if (window.Vidmot) Vidmot.hlada().then(function () { reflectMain(); }); } catch (e) {}
   function sayMain(text, opts) { return say(getMain(), text, opts); }
 
   /* ══ Radd-prufa: self-contained floating 🎙️ panel ══════════════════════════

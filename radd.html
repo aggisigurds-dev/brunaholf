@@ -106,6 +106,7 @@
     border-top:1px solid #2a2f35;padding-top:14px}
   .villa{color:#ffb4b4}
 </style>
+<script src="/js/vidmot.js?v=1"></script>
 </head>
 <body>
 <div class="wrap">
@@ -159,15 +160,18 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 let rec = null, chunks = [], sr = null, t0 = 0, tikk = null, lokaTexti = '', bidTexti = '';
-let MAL = localStorage.getItem('radd_mal') || 'is';
+// 15.10.2026: málið er vidmot-val (js/vidmot.js → hub_state, eins á öllum vélum og sama lykill og í J.A.R.V.I.S.);
+// gamli localStorage-lykillinn er aðeins einskiptis upphafsgildi.
+let MAL = (window.Vidmot && Vidmot.lesa('radd_mal', null)) || localStorage.getItem('radd_mal') || 'is';
 
 /* Talgreiningin tekur EITT mál í einu — hún giskar ekki. Rofinn segir henni
    hvort þú talar íslensku eða ensku, og sama val ræður málinu á svarinu. */
-function settMal(m){
-  MAL = m; localStorage.setItem('radd_mal', m);
+function settMal(m, vista){
+  MAL = m; if(vista !== false){ try{ if(window.Vidmot) Vidmot.setja('radd_mal', m); }catch(_){} }
   document.querySelectorAll('.malbtn').forEach(b => b.classList.toggle('on', b.dataset.mal===m));
   if(sr) sr.lang = (m==='en' ? 'en-US' : 'is-IS');
 }
+if(window.Vidmot) Vidmot.hlada().then(() => { const m = Vidmot.lesa('radd_mal', MAL); if(m !== MAL) settMal(m, false); });
 document.querySelectorAll('.malbtn').forEach(b =>
   b.addEventListener('click', () => settMal(b.dataset.mal)));
 settMal(MAL);
@@ -297,7 +301,7 @@ $('#vista').addEventListener('click', async () => {
       audio_b64 = await b64(blob);
     }
     const r = await fetch('/api/raddminni', { method:'POST', headers:{'content-type':'application/json'},
-      body: JSON.stringify({ action:'save', texti, audio_b64, seconds, notandi: localStorage.getItem('ky_me')||null }) });
+      body: JSON.stringify({ action:'save', texti, audio_b64, seconds, notandi: localStorage.getItem('bh_me')||null }) });
     const j = await r.json();
     if(j.error) throw new Error(j.error);
     $('#texti').value=''; lokaTexti=''; chunks=[]; $('#klukka').textContent='00:00';
