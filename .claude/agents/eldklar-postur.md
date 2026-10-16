@@ -42,3 +42,7 @@ client_id:'mail:'+message_id}`.
 2. Aldrei skrifa í `invoice_drafts`, `solur` eða Payday. Punkturinn er tillaga.
 3. Skilaðu í fjórum línum: nýjast sótt · skráðir punktar (fjöldi + kúnnar) · sleppt (af hverju)
    · pósthólfið tengt/ekki. Ekki endursegja póstana.
+
+## Lærdómur
+
+- **16.10.2026** — 16.10.2026: innsogið lifir (eldklar@ síðast 10:24 í dag, 5.897 póstar; bokhald@eldklar.is tengt, 182 póstar). Síðan 04.09 hafa komið Pósthólfið sem aðalsíða, Gmail-merkin (🟢 Lokið þaggar reiknaða stöðu) og Tölvupóstar-hamurinn 448/449 sem þræðir eldklar@ OG bokhald@ með ★ = notes ---SVAR--- + tag undirbuid; Claude sendir aldrei. Þessi agent er kallaður af rukkari (lína 36/45) — tillaga 16.10: sameinist rukkari sem kafli „Póstur → punktar“.

@@ -240,3 +240,7 @@ MEÐ stað parast aðeins við pör SAMA staðar (aldrei við null-staðar pör 
 reikningur á þriðja systkinastað bjó til sitt eigið par án þess að snerta hin.
 Afrit: `backup_20260809_document_pairs`. Sama lexía og annars staðar í skjalinu:
 **kennitala/base svarar „hver borgar", aldrei „hvar unnum við".**
+
+## Lærdómur
+
+- **16.10.2026** — 16.10.2026: trg_auto_pair_customer_document lifir; document_pairs = 1.563 pör, 507 sjálfvirk (auto_standby/auto_trigger). Pörun rekstrarfélaga eftir tækjafjölda per tegund („Para eftir magni“, 06.10) er nú skill slokkvitaeki/.claude/skills/rekstrarfelog-parun (tól para-rekstrarfelag.cjs/renna-rekstrarfelag.cjs, fall brunaholf para-rekstrarfelag.js) — nota það, ekki endurfinna. Reglan þar: aldrei para sama reikning við tvo staði, aldrei hreyfa manual/manual_unlink pör.

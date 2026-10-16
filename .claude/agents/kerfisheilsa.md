@@ -84,3 +84,7 @@ curl -s --max-time 8 https://status.claude.com/api/v2/status.json
 
 Byrjaðu alltaf á einni línu: **hvað er bilað og hversu viss ertu.** Svo sönnunargögnin.
 Ekki fela niðurstöðuna neðst í löngum texta.
+
+## Lærdómur
+
+- **16.10.2026** — Supabase-stífla 06.09.2026: þegar ALLT er hægt, athuga Supabase query_logs FYRST — ein föst/þung fyrirspurn (company_mail) stíflaði allt hliðið; status-síðan sagði ekkert. Heilsuvaktin daily-health keyrir 07:10 daglega (daily-health-background, netlify.toml), sendir aðeins þegar ábendingar eru til (HEALTH_ALERT_OFF=1 þaggar, ?dry=1 skoðar); störf sem eru ekki í automation_jobs eru ósýnileg henni. Tvær luna-brýr: skrifstofuvélin (DESKTOP-509MN7M, luna-bridge 2) er aðalbrúin; heimavélin M5FO3I6 framleiðir falskar „föst pósthólf“-viðvaranir (76% keyrslna 05.10) — vinnupósturinn kemst samt inn um gmail-ingest.

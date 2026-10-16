@@ -62,3 +62,7 @@ Vikuyfirlit/stöðupóstur í Claude Code: sæktu tölurnar sömu leið
 `document_pairs` klarad per ár) og haltu sniðinu — sigrar fyrst með stærstu
 tölunni, svo „það sem á að klára" með skýrri næstu aðgerð. Á íslensku þegar
 Agnar biður um íslensku; upplesturinn á jarvis.html er alltaf enska.
+
+## Lærdómur
+
+- **16.10.2026** — 16.10.2026: skráin er enn rétt (svid-status.js óbreytt síðan 06.09, fjórar tölur). Tillaga: sameinast jarvis.md sem kafli — engin eigin skrá/svæði, ein rödd.

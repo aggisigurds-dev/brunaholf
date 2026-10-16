@@ -365,3 +365,7 @@ inndregnar undir (`.layout:not(.compact) .tab-v`). Í Breyta-ham: ✎ endurnefna
 Einskiptis-merkingin `ui._flokkalinurV1` nefndi línur Agnars eftir næsta sýnilega flipa; `ui._tiltektV1`
 fjarlægði tvítekinn flipa (okkarVerkefni) og faldi Anni & Aggi + Spurningar. `tabs`-fylkið fer upp í heilu
 lagi — `window.__flokkalinurNytt` → `save()` 1,5 s eftir ræsingu svo merkingin samstillist.
+
+## Lærdómur
+
+- **16.10.2026** — Uppgjör 16.10.2026 úr Stílstjóra-lotunni: Sími Agnars keyrir Force Dark sem ekki slekkst — allar hub-síður þurfa `<meta name="color-scheme">` (lagað 28.08 á 32/32, en starfsmenn.html er í dag EINA af 36 síðum sem vantar hann). Kröfu yfirlit-strimillinn (04.09 „Þetta er enþá í klessu … jafnt alls staðar á milli“): mæla bil á hverjum hnapp fyrir sig, ekki eitt gildi.

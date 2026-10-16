@@ -94,3 +94,7 @@ CLS er sá sem oftast gleymist og pirrar mest: mynd eða flís sem hleðst seint
 og ýtir hnappinum sem verið var að ýta á. Gefðu myndum og kortum fasta stærð.
 
 **Heimild:** [Core Web Vitals þröskuldar](https://www.corewebvitals.io/core-web-vitals)
+
+## Lærdómur
+
+- **16.10.2026** — 16.10.2026: brunaholf/index.html er nú 1,95 MB (var 1,29 MB 01.08) — versnað, LCP-vandi á síma. Slökkvitækja-hliðin á sín afkastatól: skill slokkvitaeki/.claude/skills/frontend-profiler, docs/MAELINGAR.md (10 mældar gildrur — tala án lista er fullyrðing) og minnisskrár afkost_20260921/nott_20260930/hopp_421; mælingargildrur: falið vafraspjald frystir vaktir án rAF, Shadow DOM/offsetParent gefa falskar bilanir.

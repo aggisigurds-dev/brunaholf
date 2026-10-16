@@ -106,3 +106,7 @@ select tablename, policyname, cmd, roles from pg_policies where schemaname='publ
 select name, public from storage.buckets order by public desc, name;
 ```
 eða `get_advisors` (security) fyrir heildarlistann með remediation-hlekkjum.
+
+## Lærdómur
+
+- **16.10.2026** — Mælt 16.10.2026 (pg_class/storage.buckets): 193 töflur án RLS í public (var 226 19.08 — fer í rétta átt), 20 af 26 buckets public (var 15/16 — buckets fjölga opin). Endurmæla alltaf áður en tölur eru nefndar.

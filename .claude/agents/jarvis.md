@@ -145,3 +145,7 @@ Agent `rukkari` (Rukkarinn). `safnaRukkun()` í `svid-status.js` les `/api/reikn
 `/api/data-sources-status` → tilbúið að senda (fjöldi + kr), ósend drög, punktar í innhólfi, tengingar í ólagi.
 Rödd `joakim` í `js/jarvis-voice.js` hefur **enga Fish-rödd enn** (`voice_id: null` → vafra-fallback);
 límdu `/m/<id>` af fish.audio þar. Í `PLAY_ORDER` strax á eftir Fjármálum.
+
+## Lærdómur
+
+- **16.10.2026** — Tölur 16.10.2026: js/jarvis-voice.js AGENTS = 21 raddir (skráin segir 16), svid-status.js SVID = 14 svið, 13 svið-takkar á jarvis.html. Ragnarök-útlit (11.09, js/ragnarok.js, localStorage jarvis_thema_v1, ?thema=ragnarok; klassískt sjálfgefið) og Tengingar-spjaldið (sama /api/kerfisheilsa-svar) eru á jarvis.html — sjá minni project_jarvis_ragnarok. Ratsjár-gildra: striginn er 1×1 í földu iframe → arc() kastar og drepur allt á eftir; panta rAF fyrst og hætta ef R er ekki > 0. Sérfræðinga-spjaldið er handskrifað HTML (ósnert síðan 18.09) — lifandi roster úr tools/audit-agentar.cjs er kort task_900c0d44. Tillaga 16.10: hype-agentinn (ein rödd, ekkert eigið svæði) sameinist þessari skrá.
