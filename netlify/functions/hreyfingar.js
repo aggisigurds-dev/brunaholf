@@ -78,9 +78,10 @@ exports.handler = async (event) => {
     const credit = isCredit(st, amt);
     const cancelled = isCancelled(st);
     const kind = credit ? (amt < 0 ? 'kreditnota' : 'kreditfaersla') : 'reikningur';
-    c.mv.push({ date: r.gjalddagi || r.greidsla_date || null, kind, ref: refOf(r), delta: amt, via: null, text: null, cancelled });
+    // 16.10.2026 (Agnar: „opna reikningana úr hreyfingarlistanum"): src=payday → viðmótið gerir röðina að hlekk á /api/payday-invoice-pdf.
+    c.mv.push({ date: r.gjalddagi || r.greidsla_date || null, kind, ref: refOf(r), delta: amt, via: null, text: null, cancelled, src: lc(r.source) || null });
     if (isPaid(st) && amt > 0) {
-      c.mv.push({ date: r.greidsla_date || r.gjalddagi || null, kind: 'greidsla', ref: refOf(r), delta: -amt, via: 'payday', text: null });
+      c.mv.push({ date: r.greidsla_date || r.gjalddagi || null, kind: 'greidsla', ref: refOf(r), delta: -amt, via: 'payday', text: null, src: lc(r.source) || null });
     }
   }
 

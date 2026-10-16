@@ -283,6 +283,9 @@ function mapInvoice(raw) {
     // þegar tilvisun breytist. Þetta er undirstaðan undir að færa
     // upsert-lykilinn af tilvisun yfir á payday_invoice_id.
     payday_invoice_id: /^[0-9]+$/.test(String(pdId||'')) ? Number(pdId) : null,
+    // 16.10.2026: Payday-id er GUID, ekki tala — payday_invoice_id var því alltaf NULL (0/383).
+    // payday_uuid ber GUID-ið svo /api/payday-invoice-pdf geti sótt PDF-ið (GET /invoices/{id}/pdf).
+    payday_uuid: /^[0-9a-f-]{32,36}$/i.test(String(pdId||'')) ? String(pdId) : null,
     customer_name: name || null,
     kt_greidanda: fmtKt(kt),
     hofudstoll: Math.round(exVat || 0),
@@ -368,3 +371,8 @@ function isoDate(v) {
   }
   return null;
 }
+
+// 16.10.2026: payday-invoice-pdf.js endurnýtir tókann (sama app_kv-skyndiminni) og slóðirnar.
+exports.getAccessToken = getAccessToken;
+exports.API_BASE = API_BASE;
+exports.API_VERSION = API_VERSION;

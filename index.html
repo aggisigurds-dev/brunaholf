@@ -12867,7 +12867,10 @@ async function renderGerdReikninga(t){
         const drogMan = Object.keys(DRAFTS).filter(k => k.startsWith(name + '|')).map(k => k.slice(name.length + 1)).filter(m => m && m !== month);
         const ar = new Set(drogMan.map(m => m.slice(0,4))); ar.add(String(new Date().getFullYear())); if(month) ar.add(month.slice(0,4));
         let krofur = [];
-        if(!lett){ host.innerHTML = '<div class="gb-saga-bidur">Sæki greiðslustöðu úr Payday…</div>'; krofur = (await sagaKrofur([...ar])).filter(r => r.worksite === name && !r.cancelled && !r.credit && !r.excluded && !r.dup); }
+        if(!lett){ host.innerHTML = '<div class="gb-saga-bidur">Sæki greiðslustöðu úr Payday…</div>'; krofur = (await sagaKrofur([...ar])).filter(r => (r.worksite === name || (r.draft_match && r.draft_match.worksite === name)) && !r.cancelled && !r.credit && !r.excluded && !r.dup); }
+        // 16.10.2026: r.worksite kemur úr customer_worksite_map eftir NAFNI greiðanda og getur verið annar verkstaður sama
+        // greiðanda (Rekstrarfélag Kringlunnar → „Kringlan - Turn" meðan drögin heita „Kringlan"; R-355 ágúst sýndist „Drög · ósent").
+        // draft_match (upphæðarpörun þjónsins við drög) telst því líka.
         // Pörun: 1) upphæð (±2 kr) yfir ÖLL drög verkstaðarins, opni mánuðurinn meðtalinn, svo hans reikningur lendi ekki
         // á öðrum mánuði; 2) gjalddagi sem er eftir mánaðarlok og innan 60 daga. Eitt par per reikning.
         const notadar = new Set(); const par = {};
@@ -12916,7 +12919,7 @@ async function renderGerdReikninga(t){
             + '</div>';
         }).join('');
         host.innerHTML = '<div class="gb-saga-h"><span>Mánuður</span><span>Klst</span><span>Efni</span><span>Efni %</span><span>Upphæð m. vsk</span><span>Staða</span><span></span></div>' + html
-          + '<div class="gb-saga-f"><span>' + n + ' reikning' + (n === 1 ? 'ur' : 'ar') + ' · ' + fmt(sumKr) + ' kr rukkað' + (sumOgr > 0 ? ' · <b class="bad">' + fmt(sumOgr) + ' kr ógreitt</b>' : ' · allt greitt') + '</span>'
+          + '<div class="gb-saga-f"><span>' + n + ' reikning' + (n === 1 ? 'ur' : 'ar') + ' · ' + fmt(sumKr) + ' kr rukkað' + (sumOgr > 0 ? ' · <b class="bad">' + fmt(sumOgr) + ' kr ógreitt</b>' : notadar.size ? ' · allt greitt' : ' · engin Payday-pörun') + '</span>'
           + '<span>' + sagaKlst(sumKlst) + ' klst · efni ' + fmt(sumEfni) + ' kr' + (pctN ? ' · meðalhlutfall ' + Math.round(pctS / pctN) + '%' : '') + '</span></div>'
           + '<div class="gb-saga-foot"><button type="button" class="gb-link" id="gr-hreyf"' + (custKt ? '' : ' disabled') + ' title="' + (custKt ? 'Hreyfingaryfirlit verkkaupa í bókhaldi Brunahólfs (kt. ' + escapeAttr(custKt) + ')' : 'Kennitala vantar á verkkaupa') + '">📒 Hreyfingaryfirlit verkkaupa ›</button><span class="gb-saga-src">Greiðslustaða: Payday-spegill + bankapörun, sama regla og Kröfu yfirlit</span></div>';
         tengjaHreyf();
@@ -15948,6 +15951,7 @@ async function renderHreyfingar(t){
       .hy-tw{max-height:340px;overflow-y:auto;border:1px solid var(--border,var(--line));border-radius:8px}
       .hy-deb{color:var(--red-dark)}.hy-cre{color:var(--green)}
       .hy-hint{font-size:10.5px;color:var(--muted)}
+      .hy-pdf{color:inherit;text-decoration:none;border-bottom:1px dotted var(--gold,#b8923a);cursor:pointer}.hy-pdf:hover{color:var(--gold,#b8923a)}
     </style>`;
 
   // cumulative invoiced vs paid line chart
@@ -16007,8 +16011,13 @@ async function renderHreyfingar(t){
       const isHid=hidden.has(c.kt);
       const rows=c.movements.map(m=>{
         const isBank=m.kind==='banki', isPay=m.kind==='greidsla';
-        const label=isBank?'🏦 Innborgun (banki)':isPay?'💰 Greitt (Payday)':(KIND[m.kind]||m.kind);
-        const ref=isBank?`<span class="hy-hint">${esc(m.text||'banki')} · upplýsing</span>`:(m.ref?((isPay?'R-':'')+esc(m.ref)):'');
+        const label0=isBank?'🏦 Innborgun (banki)':isPay?'💰 Greitt (Payday)':(KIND[m.kind]||m.kind);
+        // 16.10.2026 (Agnar: „opna reikningana úr hreyfingarlistanum"): Payday-raðir með númeri verða hlekkur á
+        // /api/payday-invoice-pdf?tilvisun=N (PDF-ið sjálft úr Payday, GET /invoices/{id}/pdf) — bæði tegund og tilvísun.
+        const pdfHref=(!isBank && m.src==='payday' && m.ref && !/^#/.test(String(m.ref)))?('/api/payday-invoice-pdf?tilvisun='+encodeURIComponent(m.ref)):'';
+        const lnk=(inner)=>pdfHref?`<a class="hy-pdf" href="${pdfHref}" target="_blank" rel="noopener" title="Opna reikning ${esc(m.ref)} (PDF úr Payday)">${inner}</a>`:inner;
+        const label=isPay?label0:lnk(label0);
+        const ref=isBank?`<span class="hy-hint">${esc(m.text||'banki')} · upplýsing</span>`:(m.ref?lnk((isPay?'R-':'')+esc(m.ref)):'');
         return `<tr${isBank?' style="opacity:.5"':''}>
           <td>${m.date ? m.date.split('-').reverse().join('/') : ''}</td>
           <td>${label}</td>
