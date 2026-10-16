@@ -321,6 +321,9 @@ button:focus-visible{outline:2px solid var(--gold-500);outline-offset:2px}
    Áður sýndi línan annaðhvort R-númer eða verkstað, svo Payday-kröfur földu hann alltaf. */
 .ky-wsname{font-family:var(--font-body);font-weight:400;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .boss-monotag{font-family:var(--font-mono);font-size:10px;padding:1px 7px;border-radius:var(--radius-xs);background:#ebe6db;color:var(--muted);white-space:nowrap}
+/* 16.10.2026: vinnutímabil úr tímaskýrslu við hlið reikningsmánaðar (Kröfu yfirlit); .misr = annar mánuður en reikningurinn */
+.boss-perotag{font-family:var(--font-mono);font-size:10px;padding:1px 7px;border-radius:var(--radius-xs);background:#ebe6db;color:var(--muted);white-space:nowrap;margin-left:4px}
+.boss-perotag.misr{background:var(--gold-face,linear-gradient(180deg,#f5d76e,#c9a54a 55%,#8f6a1c));color:#1e1502;border:1px solid #8f6a1c;font-weight:600}
 .boss-led{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.85),var(--led,#8f8776) 45%,rgba(0,0,0,.25));box-shadow:0 0 6px var(--led,#8f8776),inset 0 0 0 1px rgba(0,0,0,.25)}
 .boss-led.on{--led:#4fc47a}
 .boss-led.warn{--led:#c9a54a}

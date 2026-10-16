@@ -58,7 +58,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://osfdzskyvisifcwyjkuk.supabase.co">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/theme.css?v=20261015mm">
+<link rel="stylesheet" href="/css/theme.css?v=20261016a">
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
@@ -18260,6 +18260,31 @@ async function renderKrofuyfirlit(t){
    * mánaðar reikningur. Sami ártalsstimpill er ekki endurtekinn:
    *   sama ár      → „sep–okt ’26"
    *   sitt hvort ár → „des ’25–jan ’26" */
+  // 16.10.2026 (Agnar: „setja inn tímabilið sem er á tímaskýrslunum, því þarna er í raun ágúst tímar, en sent út í
+  // september"): drögin sem röð á. Þrep 2 = sín eigin drög (worksite|work_month). Þrep 1 = payday_invoice_id → id,
+  // annars sami verkstaður + sama upphæð (±2 kr) þegar aðeins EIN drög passa. Engin ágiskun annars (ekkert merki).
+  const vinnuDrog = (inv, tier) => { try{
+    if(tier === 2 && inv.worksite && inv.work_month) return REVIEWS[inv.worksite + '|' + inv.work_month] || null;
+    if(tier !== 1) return null;
+    const all = Object.values(REVIEWS || {}).filter(Boolean);
+    const byId = inv.id != null ? all.find(d => d.payday_invoice_id != null && String(d.payday_invoice_id) === String(inv.id)) : null;
+    if(byId) return byId;
+    const ws = inv.worksite || (inv.draft_match && inv.draft_match.worksite) || ''; if(!ws) return null;
+    const amt = Math.round(Number(inv.amount) || 0); if(!(amt > 0)) return null;
+    const hits = all.filter(d => d.worksite_name === ws && Math.abs(Math.round(Number(d.total_m_vsk) || 0) - amt) <= 2);
+    return hits.length === 1 ? hits[0] : null;
+  }catch(_){ return null; } };
+  // Tímabilsmerki: period_from/period_to úr drögunum, annars mánuðurinn allur. Gull þegar vinnumánuður ≠ reikningsmánuður.
+  const periodTag = (inv, tier) => {
+    const d = vinnuDrog(inv, tier); if(!d) return '';
+    const wm = String(d.work_month || ''); const sidasti = wm ? String(new Date(+wm.slice(0,4), +wm.slice(5,7), 0).getDate()).padStart(2,'0') : '';
+    const fra = String(d.period_from || (wm ? wm + '-01' : '')).slice(0,10), til = String(d.period_to || (wm ? wm + '-' + sidasti : '')).slice(0,10);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(fra) || !/^\d{4}-\d{2}-\d{2}$/.test(til)) return '';
+    const dm = x => x.slice(8,10) + '/' + x.slice(5,7);
+    const vinnuMan = fra.slice(0,7), reikMan = String(inv.gjalddagi || inv.work_month || '').slice(0,7);
+    const misr = !!(reikMan && vinnuMan !== reikMan);
+    return '<span class="boss-perotag' + (misr ? ' misr' : '') + '" title="Vinnutímabil skv. tímaskýrslu' + (misr ? ' — annar mánuður en reikningsmánuðurinn (' + esc(monthTag(reikMan + '-01')) + ')' : '') + '">Tímabil ' + dm(fra) + '–' + dm(til) + '</span>';
+  };
   const monthTagSpan = ms => {
     const l = [...new Set((ms||[]).filter(Boolean))].sort();
     if(!l.length) return '';
@@ -18915,7 +18940,8 @@ async function renderKrofuyfirlit(t){
     const mtag = (!inv.gjalddagi && _mfMon.length)
       ? monthTagSpan([..._mfMon, inv.work_month])
       : monthTag(inv.gjalddagi || inv.work_month);
-    const mtagHtml = mtag ? `<span class="boss-monotag">${esc(mtag)}</span>` : '';
+    const mtagHtml = mtag ? `<span class="boss-monotag" title="Reikningsmánuður">${esc(mtag)}</span>` : '';
+    const perHtml = periodTag(inv, tier);
     // Minnispunktur — dauf-strikaður reitur; 📝 fyllist þegar punktur er til.
     // Þrep 2: í EFRI línuna (inni í nafna-blokkinni) svo röðin styttist og takkarnir komist á skjáinn.
     const note = inv.note || '';
@@ -18938,7 +18964,7 @@ async function renderKrofuyfirlit(t){
         <div class="ky-row${lp?' ky-likely':''}" data-key="${esc(inv.inv_key)}"${(inv._hidden||inv._done)?' style="opacity:.5"':''}>
           ${t2chk||''}<span class="ky-caret2">▸</span>
           <div class="ky-main">
-            <div class="ky-ws"><span class="n">${rnum}</span>${mtagHtml}${tier===1?agingPill(inv.days_overdue):(tier===2&&inv.gamalt?aldursPilla(inv.work_month):'')}</div>
+            <div class="ky-ws"><span class="n">${rnum}</span>${mtagHtml}${perHtml}${tier===1?agingPill(inv.days_overdue):(tier===2&&inv.gamalt?aldursPilla(inv.work_month):'')}</div>
             <div class="ky-sub">${gj}${sub}</div>
             ${bankLine}
             ${noteInline}
