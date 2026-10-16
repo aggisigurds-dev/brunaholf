@@ -11589,6 +11589,23 @@ async function renderGerdReikninga(t){
       .gb2 .gb-kh span+span{margin-left:auto;font-family:var(--font-mono,ui-monospace,monospace);font-size:12px;font-weight:500;color:#6f685c}
       .gr-modal-bg.boss.gb2 .gb-kpi .k{flex-direction:row;align-items:baseline;justify-content:space-between;gap:10px;margin:0;padding:6px 16px;border:0;box-shadow:none}
       .gb2 .gb-kh+.k{padding-top:12px}
+      /* 16.10.2026 (Verkefnaspjald Agnars): efnishlutfall í samantekt, Redder-línur + viðvörun í Efni, Hreyfingar-takki */
+      .gr-modal-bg.boss.gb2 .gb-kpi .kv small.gb-pct{font-size:11px;font-weight:400;color:#8f8776;margin-left:7px;font-family:var(--font-mono,ui-monospace,monospace)}
+      .gb2 .gb-redder-lines{grid-column:1/-1;display:flex;flex-direction:column;gap:3px;margin-top:4px;border-top:1px solid #c9d4e6;padding-top:7px}
+      .gb2 .gb-redder-lines .rl{display:grid;grid-template-columns:1fr auto auto auto 28px;gap:4px 12px;align-items:center;font-size:12px;line-height:1.3}
+      .gb2 .gb-redder-lines .rl .n small{color:#6f685c;font-size:11px}
+      .gb2 .gb-redder-lines .rl .q,.gb2 .gb-redder-lines .rl .u,.gb2 .gb-redder-lines .rl .a{font-family:var(--font-mono,ui-monospace,monospace);font-variant-numeric:tabular-nums;white-space:nowrap}
+      .gb2 .gb-redder-lines .rl .u{color:#6f685c}
+      .gb2 .gb-redder-lines .rl.miss .n{color:#8a3b12;font-weight:600}
+      .gb2 .gb-redder-lines .rl .ok{color:#2e7d32;text-align:center}
+      .gb2 .gb-redder-lines .rl.dim{color:#6f685c;grid-template-columns:1fr}
+      .gb2 .gb-redder-add{height:24px;width:28px;padding:0;border:1px solid #a89f8c;border-radius:4px;background:#fff;cursor:pointer;font-size:12px;line-height:1}
+      .gb2 .gb-redder-add:hover{background:#f6f0e4}
+      .gb2 .gb-redder-warn{grid-column:1/-1;margin-top:6px;padding:8px 10px;border-radius:4px;background:#fff3e6;border:1px solid #e3b98a;color:#7a3e0e;font-size:12px;display:flex;flex-direction:column;gap:5px}
+      .gb2 .gb-redder-warn[hidden]{display:none}
+      .gb2 .gb-redder-add-all{align-self:flex-start;height:28px;padding:0 10px;border:1px solid #c7893f;border-radius:4px;background:linear-gradient(180deg,#fff7ec,#f6e4c8);cursor:pointer;font-size:12px;font-weight:600;color:#5a2d05}
+      .gr-modal-bg.boss.gb2 .gb-redder.warn{border-color:#e3b98a}
+      @media (max-width:860px){ .gb2 .gb-redder-lines .rl{grid-template-columns:1fr auto 28px} .gb2 .gb-redder-lines .rl .u,.gb2 .gb-redder-lines .rl .q{display:none} }
       .gr-modal-bg.boss.gb2 .gb-kpi .kl{font-family:inherit;font-size:14px;letter-spacing:0;text-transform:none;color:#4a463f}
       .gr-modal-bg.boss.gb2 .gb-kpi .kv{font-size:14px;color:#161513}
       .gr-modal-bg.boss.gb2 .gb-kpi .k.net{margin-top:6px;padding-top:12px;border-top:1px solid #e6e1d6}
@@ -12194,6 +12211,7 @@ async function renderGerdReikninga(t){
           <h1 class="gb-h1">${escapeHtml(name)}</h1>
           <div class="gb-meta">${grPeriod?'<b class="gb-samr">⧉ SAMREIKNINGUR</b> ':''}${cust?escapeHtml(cust)+' · ':''}${escapeHtml((()=>{ const M=['Janúar','Febrúar','Mars','Apríl','Maí','Júní','Júlí','Ágúst','September','Október','Nóvember','Desember']; const p=String(month||'').split('-'); return p.length===2&&M[+p[1]-1] ? M[+p[1]-1]+' '+p[0] : String(month||''); })())} ·${dmy(fra)}–${dmy(til)}${grPeriod&&d&&d.merged_from?' · úr '+escapeHtml((d.merged_from||[]).map(x=>x.work_month).join(' + '))+' + '+escapeHtml(month):''}</div>
           <span class="gb-sp"></span>
+          <button type="button" class="gb-key" id="gr-hreyf" ${custKt?'':'disabled'} title="${custKt?'Hreyfingaryfirlit verkkaupa í bókhaldi Brunahólfs (kt. '+escapeAttr(custKt)+')':'Kennitala vantar á verkkaupa'}">📒 Hreyfingar</button>
           <button type="button" class="gb-key" id="gb-prevfull" aria-pressed="false" title="Sýna reikninginn í fullri stærð við hlið eyðublaðsins">Stækka forskoðun</button>
           <button class="gr-btn gr-btn-primary" id="gr-save" type="button">Vista</button>
         </div>
@@ -12232,7 +12250,7 @@ async function renderGerdReikninga(t){
           <div class="gb-tabbox">
             <div class="gb-tabbar" role="tablist" aria-label="Kaflar reikningsins">
               <button type="button" role="tab" class="gb-tab on" data-tab="02" aria-selected="true"><i>02</i>Tími og akstur<span class="gb-tdot" id="gb-tdot-02" title="Tímabók og reikningur stemma ekki" hidden></span></button>
-              <button type="button" role="tab" class="gb-tab" data-tab="03" aria-selected="false"><i>03</i>Efni<span class="gb-tc" id="gb-tc-03"></span></button>
+              <button type="button" role="tab" class="gb-tab" data-tab="03" aria-selected="false"><i>03</i>Efni<span class="gb-tc" id="gb-tc-03"></span><span class="gb-tdot" id="gb-tdot-03" title="Redder-innkaup stemma ekki við efnislistann" hidden></span></button>
               <button type="button" role="tab" class="gb-tab" data-tab="04" aria-selected="false"><i>04</i>Gjöld og afsláttur<span class="gb-tc" id="gb-tc-04"></span></button>
               <button type="button" role="tab" class="gb-tab" data-tab="05" aria-selected="false"><i>05</i>Athugasemd<svg class="gb-lock" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-label="innri"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></button>
               <b class="gb-tsum" id="gb-tsum"></b>
@@ -12272,7 +12290,7 @@ async function renderGerdReikninga(t){
           <section class="gb-sec" data-sec="03">
             <div class="gb-sec-h"><span class="boss-plate">03</span><span class="gb-sec-t">Efni</span><span class="gb-sec-sub" id="gr-sub-03"></span><b class="gb-sec-sum" id="gr-sum-03"></b><span class="gb-caret">›</span></div>
             <div class="gb-sec-b">
-          ${redderTotal>0?`<div class="gr-redder-note gb-redder"><span class="k">Redder innkaup þennan mánuð</span><b class="v">${fmt(redderTotal)} kr</b><span class="d">án vsk · forútfyllt á söluverði Verðskrár · smávara fellur undir smáhlutagjald</span><button type="button" class="gb-redder-open" id="gr-redder-open" title="Opna Redder-innkaup mánaðarins (Efniskostnaður)">Sýna innkaup ›</button></div>`:''}
+          ${(redderTotal>0||((REDDER[`${name}|${month}`]||{}).lines||[]).length)?`<div class="gr-redder-note gb-redder" id="gr-redder-box"><span class="k">Redder innkaup þennan mánuð</span><b class="v">${fmt(redderTotal)} kr</b><span class="d">án vsk · innkaupsverð eftir afslátt · smávara fellur undir smáhlutagjald</span><button type="button" class="gb-redder-open" id="gr-redder-open" title="Opna Redder-innkaup mánaðarins (Efniskostnaður)">Sýna innkaup ›</button><div class="gb-redder-lines" id="gr-redder-lines"></div><div class="gb-redder-warn" id="gr-redder-warn" hidden></div></div>`:''}
           ${fieldBoxHtml()}
           <div class="gb-mhead"><span>Vara</span><span>Söluverð</span><span>Magn</span><span class="r">Samtals</span><span></span></div>
           <div id="gr-mats"></div>
@@ -12411,6 +12429,24 @@ async function renderGerdReikninga(t){
       addMat({label:'', price:0, qty:1, cost:0}); draw();
       const last = $mats.querySelector('.gr-mat-line:last-child .m-label'); if(last) last.focus();
     };
+    // 16.10.2026 (Verkefnaspjald Agnars): 📒 Hreyfingar — Hreyfingaryfirlit verkkaupa í bókhaldi Brunahólfs (hub-flipinn),
+    // opnað á kennitölu verkkaupa. Glugginn lokast; óvistuð drög spyrja fyrst.
+    { const hb = document.getElementById('gr-hreyf'); if(hb) hb.onclick = () => {
+        const kt = String(((document.getElementById('gr-kt')||{}).value || custKt || '')).trim(); if(!kt) return;
+        const st = document.getElementById('gr-hd-status');
+        if(st && st.classList.contains('unsaved') && !confirm('Drögin eru óvistuð og glugginn lokast. Opna Hreyfingaryfirlit samt?')) return;
+        try{ sessionStorage.setItem('hy_open_kt', kt); }catch(_){}
+        try{ close(); }catch(_){}
+        try{ window.state.ui.activeTab = 'hreyfingaryfirlit'; save({nav:true}); render(); }catch(_){ location.hash = '#hreyfingaryfirlit'; }
+      }; }
+    // ➕ Redder-lína í efnislistann: Verðskrár-samsvörun á söluverði, annars sérlína á innkaupsverði (Agnar breytir verðinu).
+    { const rb = document.getElementById('gr-redder-box'); if(rb) rb.addEventListener('click', e => {
+        const one = e.target.closest('.gb-redder-add'), all = e.target.closest('.gb-redder-add-all'); if(!one && !all) return;
+        const rd0 = REDDER[`${name}|${month}`] || {lines:[]};
+        const lines = all ? (rb.__vantar || []) : [rd0.lines[Number(one.dataset.ri)]].filter(Boolean);
+        for(const l of lines){ const m = matchVerdskra(l.label); addMat({ label: m ? m.label : l.label, price: m ? m.price : (l.cost||0), qty: l.qty||1, cost: l.cost||0 }); }
+        if(lines.length) draw();
+      }); }
 
     function gatherMats(){
       const out = [];
@@ -12538,6 +12574,35 @@ async function renderGerdReikninga(t){
         modal.classList.toggle('show-prev', b.dataset.gbtab === 'prev');
       }));
       const K = id => document.getElementById(id);
+      // 16.10.2026 (Verkefnaspjald Agnars): Redder-innkaup verksins í Efni-flipanum. Lína telst „í lista" ef heiti hennar
+      // (eða Verðskrár-samsvörun þess) finnst meðal efnislínanna. Viðvörun þegar línu vantar eða efni á reikningi er
+      // lægra en innkaupin. Teiknað úr bossSums() svo kassinn fylgi hverri breytingu á listanum. Skilar fjölda viðvarana.
+      const rdNorm = v => String(v||'').toLowerCase().replace(/\s+/g,' ').trim();
+      function redderBox(c){
+        const box = K('gr-redder-box'); const rd0 = REDDER[`${name}|${month}`]; if(!box || !rd0) return 0;
+        const lines = rd0.lines || [];
+        // Lína telst í listanum ef heiti hennar, Verðskrár-samsvörun þess, eða Verðskrár-samsvörun efnislínu ber saman —
+        // eldri Redder-forútfyllingar bera innkaupaheitið (t.d. „Eldv. Málning ISO14001 Hvítt") en ekki Verðskrár-heitið.
+        const lifandi = (c.matLines||[]).filter(m => m.qty > 0 || m.total > 0);
+        const inList = new Set(lifandi.map(m => rdNorm(m.label)));
+        const inVerd = new Set(lifandi.map(m => { const v = matchVerdskra(m.label); return v ? rdNorm(v.label) : ''; }).filter(Boolean));
+        const vantar = lines.filter(l => { const m = matchVerdskra(l.label); const a = rdNorm(l.label), b = m ? rdNorm(m.label) : ''; return !(inList.has(a) || (b && (inList.has(b) || inVerd.has(b)))); });
+        const L = K('gr-redder-lines');
+        if(L){
+          const html = lines.length ? lines.map((l, i) => { const m = matchVerdskra(l.label); const miss = vantar.includes(l);
+            return '<div class="rl' + (miss ? ' miss' : '') + '"><span class="n">' + escapeHtml(l.label) + (m && rdNorm(m.label) !== rdNorm(l.label) ? '<small> → ' + escapeHtml(m.label) + '</small>' : '') + '</span><span class="q">× ' + String(l.qty||0).replace('.', ',') + '</span><span class="u">' + fmt(l.cost||0) + ' kr/ein</span><b class="a">' + fmt(Math.round((l.cost||0)*(l.qty||0))) + ' kr</b>' + (miss ? '<button type="button" class="gb-redder-add" data-ri="' + i + '" title="Setja línuna í efnislistann (söluverð Verðskrár ef hún finnst þar, annars innkaupsverð)">➕</button>' : '<span class="ok" title="Í efnislistanum">✓</span>') + '</div>'; }).join('')
+            : '<div class="rl dim">Engar vörulínur í Redder-reikningnum — aðeins samtalan.</div>';
+          if(L.innerHTML !== html) L.innerHTML = html;
+        }
+        const warns = [];
+        if(vantar.length) warns.push('⚠ ' + vantar.length + (vantar.length === 1 ? ' Redder-lína er skráð á þetta verk en er ekki í efnislistanum' : ' Redder-línur eru skráðar á þetta verk en eru ekki í efnislistanum'));
+        if((rd0.an_vsk||0) > 0 && c.matSum < (rd0.an_vsk||0)) warns.push('⚠ Efni á reikningi (' + fmt(c.matSum) + ' kr) er lægra en Redder-innkaupin (' + fmt(rd0.an_vsk) + ' kr)');
+        const W = K('gr-redder-warn');
+        if(W){ const html = warns.map(w => '<div>' + escapeHtml(w) + '</div>').join('') + (vantar.length ? '<button type="button" class="gb-redder-add-all">➕ Setja ' + (vantar.length === 1 ? 'línuna' : 'allar ' + vantar.length + ' línurnar') + ' í listann</button>' : ''); if(W.innerHTML !== html) W.innerHTML = html; W.hidden = !warns.length; }
+        box.classList.toggle('warn', warns.length > 0);
+        box.__vantar = vantar;
+        return warns.length;
+      }
       function bossSums(){
         const c = compute();
         const timi = c.dvAmt + c.evAmt + c.kmAmt + c.frAmt + c.gjAmt, gjold = c.sma + c.stadf - c.disc;
@@ -12595,6 +12660,12 @@ async function renderGerdReikninga(t){
           SS('gb-tc-04', String((c.stadf ? 1 : 0) + (c.sma ? 1 : 0) + (c.discPct > 0 ? 1 : 0) + (c.fixed > 0 ? 1 : 0)));
           const ts = { '02': fmt(timi) + ' kr', '03': fmt(c.matSum) + ' kr', '04': fmt(gjold) + ' kr', '05': '' };
           SS('gb-tsum', ts[bg.__gbTab || '02'] || ''); }
+        // 16.10.2026: efnishlutfall (efni / reikningur án vsk) í Samantekt og haus 03; Redder-kassinn + punktur á flipann.
+        { const nRd = redderBox(c) || 0;
+          const pct = c.net > 0 ? Math.round(100 * c.matSum / c.net) : 0;
+          const ke = K('gr-k-efni'); if(ke){ const html = fmt(c.matSum) + ' kr<small class="gb-pct" title="Hlutfall efnis af reikningi án vsk">' + pct + '%</small>'; if(ke.innerHTML !== html) ke.innerHTML = html; }
+          sub('03', (c.matSum > 0 ? pct + '% af reikningi án vsk' : '') + (nRd ? (c.matSum > 0 ? ' · ' : '') + '⚠ Redder' : ''));
+          const td = K('gb-tdot-03'); if(td) td.hidden = !nRd; }
       }
       const bossSums0 = bossSums; let bsBusy = false; bossSums = function(){ if(bsBusy) return; bsBusy = true; try{ bossSums0(); } finally { bsBusy = false; } };
       bg.__bossSums = bossSums; bossSums();
@@ -15724,6 +15795,13 @@ async function renderHreyfingar(t){
     document.getElementById('hy-search').oninput=applyVis;
     document.getElementById('hy-hidtoggle').onclick=()=>{ showHidden=!showHidden; applyVis(); };
     applyVis();
+    // 16.10.2026: komið úr Efnislistanum (📒 Hreyfingar) — leita að kennitölunni og opna spjaldið hennar.
+    try{ const kt0 = sessionStorage.getItem('hy_open_kt'); if(kt0){ sessionStorage.removeItem('hy_open_kt');
+      const dig = v => String(v||'').replace(/\D/g,'');
+      const card = [...list.querySelectorAll('.hy-c')].find(c => dig(c.dataset.kt) === dig(kt0));
+      const s = document.getElementById('hy-search'); if(s){ s.value = card ? card.dataset.kt : kt0; applyVis(); }
+      if(card){ card.style.display = ''; card.classList.add('open'); const ex = card.querySelector('.hy-exp'); if(ex) ex.textContent = '▾'; card.scrollIntoView({ block: 'start' }); }
+    } }catch(_){}
   }
   document.getElementById('hy-refresh').addEventListener('click', load);
   load();

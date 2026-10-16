@@ -4,8 +4,23 @@
     {
       "name": "brunaholf-dev",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["--yes", "serve", "-l", "5601", "."],
+      "runtimeArgs": [
+        "--yes",
+        "serve",
+        "-l",
+        "5601",
+        "."
+      ],
       "port": 5601
+    },
+    {
+      "name": "brunaholf-proxy",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "tools/local-proxy-serve.cjs",
+        "8788"
+      ],
+      "port": 8788
     }
   ]
 }
