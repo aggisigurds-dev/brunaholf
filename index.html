@@ -903,15 +903,15 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 .ef-vl-x{width:34px;height:34px;border-radius:5px;border:1px solid #3a372f;background:#0a0a09;color:#c8c1b1;font-size:16px;cursor:pointer;flex:none;padding:0}
 .ef-vl-x:hover{border-color:var(--gold-500);color:#f5d76e}
 .ef-vl-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 18px;background:#1d1b18;border-bottom:1px solid #2a2823}
-.ef-vl-leit{flex:1 1 220px;min-width:0;height:34px;padding:0 12px;border:1px solid #000;border-radius:4px;background:linear-gradient(180deg,#0a0a09,#141312);color:#f4f1ea;font-size:13px;box-shadow:inset 0 2px 5px rgba(0,0,0,.9),0 1px 0 rgba(255,255,255,.06);font-family:inherit}
-.ef-vl-leit::placeholder{color:#8f8776}
+.modal .ef-vl .ef-vl-bar input.ef-vl-leit[type=search]{flex:1 1 220px;width:auto;min-width:0;height:34px;padding:0 12px;border:1px solid #000;border-radius:4px;background:linear-gradient(180deg,#0a0a09,#141312);color:#f4f1ea;font-size:13px;box-shadow:inset 0 2px 5px rgba(0,0,0,.9),0 1px 0 rgba(255,255,255,.06);font-family:inherit}
+.modal .ef-vl .ef-vl-bar input.ef-vl-leit[type=search]::placeholder{color:#8f8776}
 .ef-vl-seg{display:inline-flex;border:1px solid #3a372f;border-radius:4px;overflow:hidden;background:#0a0a09}
 .ef-vl-seg button{height:32px;padding:0 12px;border:0;border-left:1px solid #3a372f;background:transparent;color:#c8c1b1;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap}
 .ef-vl-seg button:first-child{border-left:0}
 .ef-vl-seg button span{opacity:.6;font-weight:500;margin-left:3px}
 .ef-vl-seg button.on{background:var(--gold-face);color:#161513;text-shadow:0 1px 0 rgba(255,255,255,.35)}
 .ef-vl-seg button.on span{opacity:.8}
-.ef-vl-rodun{display:none;height:32px;padding:0 8px;border:1px solid #3a372f;border-radius:4px;background:#0a0a09;color:#c8c1b1;font-size:12px;font-family:inherit}
+.modal .ef-vl .ef-vl-bar select.ef-vl-rodun{display:none;width:auto;height:36px;padding:0 10px;border:1px solid #3a372f;border-radius:4px;background:#0a0a09;color:#c8c1b1;font-size:13px;font-family:inherit}
 .ef-vl-scroll{overflow:auto;min-height:0;flex:1;-webkit-overflow-scrolling:touch}
 .ef-vl-tafla{width:100%;border-collapse:collapse;font-size:12.5px}
 .ef-vl-tafla th{position:sticky;top:0;z-index:1;background:#0a0a09;color:#c9a54a;font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;text-align:left;padding:9px 10px;border-bottom:1px solid #3a372f;cursor:pointer;user-select:none;white-space:nowrap}
@@ -947,18 +947,18 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
   .ef-vl-head{padding:12px 14px;gap:10px}
   .ef-vl-head .boss-plate{display:none}
   .ef-vl-bar{padding:8px 14px;gap:8px}
-  .ef-vl-rodun{display:inline-flex;flex:1 1 100%}
-  .ef-vl-tafla thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .modal .ef-vl .ef-vl-bar select.ef-vl-rodun{display:inline-flex;flex:1 1 100%}
+  .ef-vl-tafla thead{display:none}
   .ef-vl-tafla,.ef-vl-tafla tbody,.ef-vl-tafla tr,.ef-vl-tafla td,.ef-vl-tafla tfoot{display:block}
   .ef-vl-tafla tbody tr{display:grid;grid-template-columns:1fr 1fr;gap:2px 12px;padding:10px 14px;border-bottom:1px solid #2a2823}
   .ef-vl-tafla tbody td{border:0;padding:3px 0;white-space:normal}
   .ef-vl-tafla tbody td:first-child{grid-column:1 / -1;padding-bottom:6px}
-  .ef-vl-tafla tbody td.r{text-align:left;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
-  .ef-vl-tafla tbody td.r::before{content:attr(data-l);font-family:var(--font-mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#8f8776;flex:none}
+  .ef-vl-tafla tbody td.r{display:block;text-align:right;line-height:1.6}
+  .ef-vl-tafla tbody td.r::before{content:attr(data-l);float:left;margin-right:8px;font-family:var(--font-mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#8f8776}
   .ef-vl-tafla tbody td.ef-vl-tom{grid-column:1 / -1}
   .ef-vl-heiti{min-width:0}
   .ef-vl-tafla tfoot td{position:static;padding:10px 14px;border-top:1px solid #3a372f}
-  .ef-vl-nota{padding:8px 14px}
+  .ef-vl-nota{display:none}
 }
 .rg-fc-item{background:#fff;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden;transition:box-shadow 100ms ease}
 .rg-fc-item[open]{box-shadow:0 2px 8px rgba(0,0,0,0.06)}
