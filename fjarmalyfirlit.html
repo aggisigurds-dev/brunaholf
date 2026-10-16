@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/theme.css?v=4">
-<link rel="stylesheet" href="/css/fjarmalyfirlit.css?v=3">
+<link rel="stylesheet" href="/css/fjarmalyfirlit.css?v=4">
   <script src="/js/dags-snid.js?v=20260918b"></script>
 </head>
 <body>
@@ -109,14 +109,19 @@
     if(meta) meta.textContent = 'Uppfært '+new Date(d.generated_at).toLocaleString('is-IS')+' · taxti '+kr(d.taxti_mvsk)+'/klst m/vsk (9.951 × 1,24) · rukkanlegir Tímavera-verkstaðir án Slökkvitæki-innri / NLSH';
 
     // Pípu-dálkarnir á dökku slab-inu: það sem myndar heildar-pípuna.
+    var fmtKlst = function(n){ return (Math.round((+n||0)*100)/100).toLocaleString('is-IS',{minimumFractionDigits:0,maximumFractionDigits:2}); };
     var pipe = [
       ['Slökkvitæki', A.heildar.kr, ''],
       ['Brunahólf Payday', d.bru_payday_ogreitt.kr, ''],
       // nettó: tímar sem eru þegar í drögum/kröfum mánaðarins teljast ekki aftur (18.09.2026)
-      ['Tímavera · '+mon3, (d.timavera_manudur.netto_kr!=null ? d.timavera_manudur.netto_kr : d.timavera_manudur.kr), 'gold'],
+      ['Tímavera · '+mon3, (d.timavera_manudur.netto_kr!=null ? d.timavera_manudur.netto_kr : d.timavera_manudur.kr), 'gold',
+        // 16.10.2026 (Agnar: „tímaveru stundir virðast ekki vera koma inn á fjármálayfirlit"): 0 þýðir að tímarnir eru þegar í drögum
+        // (Ósent) og eru ekki taldir aftur — segjum það í stað þess að láta töluna líta út eins og tóm gögn.
+        (d.timavera_manudur.klst>0 ? (d.timavera_manudur.i_drogum_klst>0 ? (fmtKlst(d.timavera_manudur.klst)+' klst · '+(d.timavera_manudur.i_drogum_klst>=d.timavera_manudur.klst-0.005 ? 'allt' : fmtKlst(d.timavera_manudur.i_drogum_klst))+' í drögum') : fmtKlst(d.timavera_manudur.klst)+' klst') : 'engar færslur'),
+        'Tímar úr Tímaveru í '+mon3+': '+d.timavera_manudur.klst+' klst ('+kr(d.timavera_manudur.kr)+'). Þegar komnir í drög/kröfur: '+(d.timavera_manudur.i_drogum_klst||0)+' klst ('+kr(d.timavera_manudur.i_drogum_kr||0)+') — teljast í Ósent, ekki tvisvar. Talan hér er það sem er EKKI enn komið í drög.'],
       (nlshBy.length ? ['NLSH · '+mon3, nlshMonthKr, 'gold'] : null),
       ['Ósent', d.bru_osendar.kr, '']
-    ].filter(Boolean).map(function(p){ return '<div><div class="pl">'+esc(p[0])+'</div><div class="pv '+p[2]+'">'+num(p[1])+'</div></div>'; }).join('');
+    ].filter(Boolean).map(function(p){ return '<div'+(p[4]?' title="'+esc(p[4])+'"':'')+'><div class="pl">'+esc(p[0])+'</div><div class="pv '+p[2]+'">'+num(p[1])+'</div>'+(p[3]?'<div class="ps">'+esc(p[3])+'</div>':'')+'</div>'; }).join('');
 
     document.getElementById('app').innerHTML =
       warnHtml +
