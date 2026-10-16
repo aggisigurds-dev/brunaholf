@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/theme.css?v=4">
-<link rel="stylesheet" href="/css/fjarmalyfirlit.css?v=4">
+<link rel="stylesheet" href="/css/fjarmalyfirlit.css?v=5">
   <script src="/js/dags-snid.js?v=20260918b"></script>
 </head>
 <body>
@@ -79,11 +79,33 @@
     if(det) det.hidden = open;
     var chev = btn.querySelector('.chev'); if(chev) chev.textContent = open?'▸':'▾';
   }
-  // Kaflahaus: gull-plata með númeri · Playfair heiti · samtala · gull-hárlína.
+  // 16.10.2026 (Agnar: „Það vantar refresh takka á allt þarna og hvenær sótt seinast"): hver kafli ber nú „sótt HH:MM · fyrir N mín" og
+  // ↻ sem sækir allt upp á nýtt (ein API-sókn fæðir alla kafla). Tölur sem eru reiknaðar annars staðar (Skýrslur í vinnslu úr appinu,
+  // NLSH úr Ajour) bera sinn eigin tíma, og verða gulbrúnar þegar þær eru orðnar gamlar.
+  function hhmm(t){ var d=new Date(t); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+  function ago(t){ var m=Math.max(0,Math.round((Date.now()-t)/60000)); if(m<1) return 'núna'; if(m<60) return 'fyrir '+m+' mín'; var h=Math.round(m/60); return h<48 ? 'fyrir '+h+' klst' : 'fyrir '+Math.round(h/24)+' d'; }
+  function stampTxt(t,label){ return (label||'sótt')+' '+hhmm(t)+' · '+ago(t); }
+  function stampHtml(t,label,staleMin,withBtn){
+    if(!t) return '';
+    var gamalt = staleMin && (Date.now()-t) > staleMin*60000;
+    return '<span class="sh-t'+(gamalt?' gamalt':'')+'" data-t="'+t+'" data-label="'+esc(label||'sótt')+'" data-stale="'+(staleMin||0)+'" title="'+esc((label||'sótt')+' '+new Date(t).toLocaleString('is-IS'))+'">'+esc(stampTxt(t,label))+'</span>'
+      + (withBtn ? '<button type="button" class="sh-r" title="Sækja allt upp á nýtt" onclick="load(true)">↻</button>' : '');
+  }
+  setInterval(function(){
+    document.querySelectorAll('.sh-t[data-t]').forEach(function(e){
+      var t=+e.getAttribute('data-t'), st=+e.getAttribute('data-stale')||0;
+      e.textContent = stampTxt(t, e.getAttribute('data-label'));
+      e.classList.toggle('gamalt', !!st && (Date.now()-t) > st*60000);
+    });
+  }, 30000);
+  var _gen = 0; // hvenær /api/fjarmal-yfirlit var reiknað (generated_at)
+  // Kaflahaus: gull-plata með númeri · Playfair heiti · samtala · gull-hárlína · sótt-tími + ↻.
   var _sec = 0;
-  function sh(title, total){
+  function sh(title, total, opt){
     var n = String(++_sec).padStart(2,'0');
-    return '<div class="sh"><span class="boss-plate">'+n+'</span><h2>'+title+'</h2><span class="st">'+kr(total)+'</span><span class="hair"></span></div>';
+    opt = opt || {};
+    var t = opt.t || _gen;
+    return '<div class="sh"><span class="boss-plate">'+n+'</span><h2>'+title+'</h2><span class="st">'+kr(total)+'</span><span class="hair"></span>'+stampHtml(t, opt.label, opt.stale || 15, true)+'</div>';
   }
   var LINK_SLOKK = '<a class="worklink" href="https://slokkvitaeki.netlify.app/reikningar-bid.html" target="_blank" rel="noopener" onclick="event.stopPropagation()">✏️ Vinna kröfur →</a>';
   var LINK_BRU = '<a class="worklink" href="https://brunaholf.netlify.app/#gerdreikninga" target="_blank" rel="noopener" onclick="event.stopPropagation()">✏️ Vinna drög →</a>';
@@ -92,8 +114,9 @@
   var LINK_VERKROD = '<a class="worklink" href="https://slokkvitaeki.netlify.app/#verkstaedi" target="_blank" rel="noopener" onclick="event.stopPropagation()">🔧 Opna Verkröðina →</a>';
   var LINK_AFGR = '<a class="worklink" href="https://slokkvitaeki.netlify.app/#afgreidsla" target="_blank" rel="noopener" onclick="event.stopPropagation()">🛎️ Opna Afgreiðsluna →</a>';
 
-  function render(d, nlsh){
+  function render(d, nlsh, nlshAt){
     _cid = 0; _sec = 0;
+    _gen = Date.parse(d.generated_at) || Date.now();
     // Áunnið NLSH (Landsspítalinn) úr Ajour-samningi (/api/nlsh-dashboard byMonth).
     // AÐEINS þessi mánuður fer í pípuna — eldri NLSH-mánuðir eru þegar rukkaðir í
     // Payday (invoices) svo þeir mega ekki tvítaljast.
@@ -140,7 +163,7 @@
           // EKKI inni í heildar-pípunni (skarast við ósendar/Payday þegar rukkað er):
           (d.skyrslur_i_vinnslu
             ? card('card--blue', 'Skýrslur í vinnslu (áætlað virði)', d.skyrslur_i_vinnslu.kr,
-                d.skyrslur_i_vinnslu.n+' verk á borðinu', d.skyrslur_i_vinnslu.list, LINK_VERKST)
+                d.skyrslur_i_vinnslu.n+' verk á borðinu', d.skyrslur_i_vinnslu.list, LINK_VERKST + (d.skyrslur_i_vinnslu.updated_at ? '<div class="cstamp">'+stampHtml(Date.parse(d.skyrslur_i_vinnslu.updated_at),'reiknað í appinu',30,false)+' <span class="cs-n">· endurreiknast þegar staða verks breytist eða Þjónustuverkstæði er opnað</span></div>' : ''))
             : '') +
           (d.slokk_verkstaedi
             ? card('', 'Á verkstæði (Verkröð)', d.slokk_verkstaedi.kr,
@@ -159,7 +182,7 @@
         '<div class="grid">' + card('card--hero full', 'Þessi mánuður (klst × dagvinnutaxti m/vsk)', d.timavera_manudur.kr, d.timavera_manudur.klst+' klst · taxti '+kr(d.taxti_mvsk)+'/klst' + (d.timavera_manudur.i_drogum_klst>0 ? ' · þar af '+d.timavera_manudur.i_drogum_klst+' klst ('+kr(d.timavera_manudur.i_drogum_kr)+') þegar í drögum/kröfum — ekki tvítalið í heildar-pípu' : ''), d.timavera_manudur.list, LINK_TIMI) + '</div></section>' +
 
       (nlshBy.length ?
-       '<section>'+sh('🏥 Áunnið NLSH (Landsspítalinn)', nlshMonthKr) +
+       '<section>'+sh('🏥 Áunnið NLSH (Landsspítalinn)', nlshMonthKr, {t: nlshAt || _gen, label: 'sótt'}) +
         '<div class="grid">' + card('card--hero full', 'Þessi mánuður (Ajour · samningstaxti m/vsk)', nlshMonthKr, 'uppsafnað í ár '+kr(nlshCumKr)+' · smelltu fyrir mánuði', nlshList) + '</div></section>'
        : '') +
 
@@ -171,18 +194,20 @@
       '<div class="note">Uppfært '+new Date(d.generated_at).toLocaleString('is-IS')+'. Taxti '+kr(d.taxti_mvsk)+'/klst m/vsk (9.951 × 1,24). Rukkanlegir Tímavera-verkstaðir (án Slökkvitæki-innri / NLSH).</div>';
   }
 
-  function load(){
-    document.getElementById('app').innerHTML = '<div class="loading"><span class="boss-medallion ghost">🔥</span><span>Sæki tölur…</span></div>';
+  function load(silent){
+    if(silent === true){ document.querySelectorAll('.sh-r').forEach(function(b){ b.classList.add('snuning'); }); }
+    else document.getElementById('app').innerHTML = '<div class="loading"><span class="boss-medallion ghost">🔥</span><span>Sæki tölur…</span></div>';
     Promise.all([
       fetch(API).then(function(r){ return r.json(); }),
       fetch('/api/nlsh-dashboard').then(function(r){ return r.json(); }).catch(function(){ return null; })
     ]).then(function(res){
       var d=res[0], nlsh=res[1];
       if(d.error){ document.getElementById('app').innerHTML='<div class="warn">Villa: '+d.error+'</div>'; return; }
-      render(d, nlsh);
-    }).catch(function(e){ document.getElementById('app').innerHTML='<div class="warn">Netvilla: '+e.message+'</div>'; });
+      render(d, nlsh, Date.now());
+    }).catch(function(e){
+      document.querySelectorAll('.sh-r').forEach(function(b){ b.classList.remove('snuning'); }); document.getElementById('app').innerHTML='<div class="warn">Netvilla: '+e.message+'</div>'; });
   }
-  document.getElementById('refresh').onclick=function(e){ e.preventDefault(); load(); };
+  document.getElementById('refresh').onclick=function(e){ e.preventDefault(); load(true); };
   load();
 </script>
 <script src="/js/hub-sync-buttons.js?v=20260919a" defer></script>

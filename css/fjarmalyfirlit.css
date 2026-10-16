@@ -95,3 +95,15 @@ section{display:flex;flex-direction:column;gap:10px}
   .grand .pipe{margin-left:0;gap:16px}
   .grid{grid-template-columns:1fr}
 }
+
+/* 16.10.2026: sótt-tími + ↻ á hverjum kafla */
+.sh .sh-t{margin-left:14px;font-size:11px;color:var(--muted,#8c8678);white-space:nowrap;font-variant-numeric:tabular-nums}
+.sh .sh-t.gamalt,.cstamp .sh-t.gamalt{color:#b8860b;font-weight:600}
+.sh .sh-r{margin-left:8px;width:26px;height:26px;border-radius:7px;border:1px solid var(--line-2,#d9d3c4);background:var(--card-bg,#fff);color:var(--ink,#1a1812);cursor:pointer;font-size:14px;line-height:1;padding:0;flex:none}
+.sh .sh-r:hover{border-color:var(--gold-500,#b8923a)}
+.sh .sh-r.snuning{animation:fyspin .8s linear infinite;pointer-events:none;opacity:.6}
+@keyframes fyspin{to{transform:rotate(360deg)}}
+.cstamp{margin-top:8px;font-size:10.5px;color:var(--muted,#8c8678);line-height:1.5}
+.cstamp .sh-t{margin-left:0;font-size:10.5px}
+.cstamp .cs-n{opacity:.85}
+@media(max-width:700px){.sh{flex-wrap:wrap}.sh .sh-t{margin-left:auto}}
