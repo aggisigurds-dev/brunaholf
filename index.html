@@ -3064,7 +3064,7 @@ function renderVidskiptavinir(t) {
   // Listi greiðenda vinstra megin (leit á nafni/kennitölu), valið félag hægra megin: haus, KPI-röð, tengiliður og
   // skilmálar (vistast strax í customer_info), samningurinn (verðskrá per verkstað), ósendar kröfur, sendar kröfur,
   // samskipti úr pósthólfinu og minnispunktar. Gögn og vistun óbreytt: /api/pricing-guide, /api/verkkaupar(?name=).
-  // Djúptenging: sessionStorage.vk_open_name (📒 nafn verkkaupa í Efnislistanum) velur félagið við opnun.
+  // Djúptenging: window.__bhOpna.nafn (🏢 nafn verkkaupa í Efnislistanum) velur félagið við opnun — síðubreyta, ekki vafralykill.
   if (!document.getElementById('vk-css')) {
     const s = document.createElement('style');
     s.id = 'vk-css';
@@ -3277,7 +3277,7 @@ function renderVidskiptavinir(t) {
       ['osent','Ósent', vkMoney(S.osent) + ' kr'], ['ogreitt','Ógreitt', vkMoney(S.ogreitt) + ' kr'], ['greitt','Greitt alls', vkMoney(S.greitt) + ' kr'],
       ['','Kröfur sendar', String(S.krofur||0)], ['','Verkstaðir', String(S.verkstadir||0)]
     ].map(k => '<div class="boss-kpi ' + k[0] + '"><div class="k-label">' + k[1] + '</div><div class="k-num">' + k[2] + '</div></div>').join('');
-    const hb = col.querySelector('#vk-hreyf'); if (hb) { hb.disabled = !kt; hb.title = kt ? 'Hreyfingaryfirlit greiðandans í bókhaldi Brunahólfs (kt. ' + kt + ')' : 'Kennitala vantar'; hb.onclick = () => { try{ sessionStorage.setItem('hy_open_kt', kt); }catch(_){} try{ window.state.ui.activeTab = 'hreyfingaryfirlit'; save({nav:true}); render(); }catch(_){ location.hash = '#hreyfingaryfirlit'; } }; }
+    const hb = col.querySelector('#vk-hreyf'); if (hb) { hb.disabled = !kt; hb.title = kt ? 'Hreyfingaryfirlit greiðandans í bókhaldi Brunahólfs (kt. ' + kt + ')' : 'Kennitala vantar'; hb.onclick = () => { (window.__bhOpna = window.__bhOpna || {}).kt = kt; try{ window.state.ui.activeTab = 'hreyfingaryfirlit'; save({nav:true}); render(); }catch(_){ location.hash = '#hreyfingaryfirlit'; } }; }
     const krofur = (d.krofur||[]).slice(0, 12);
     const fact = (f, l, p, wide) => '<div class="vk-fact' + (wide ? ' wide' : '') + '"><label>' + l + '</label><input data-vk-field="' + f + '" value="' + escapeAttr(i[f] == null ? '' : String(i[f])) + '" placeholder="' + p + '"></div>';
     box.innerHTML = ''
@@ -3365,7 +3365,7 @@ function renderVidskiptavinir(t) {
     if (valinn && !hopar()[valinn]) valinn = null;
     // Djúptenging úr Efnislistanum (nafn verkkaupa) — annars fyrsta félagið á breiðum skjá.
     let opna = null;
-    try { opna = sessionStorage.getItem('vk_open_name'); if (opna) sessionStorage.removeItem('vk_open_name'); } catch(_) {}
+    try { opna = (window.__bhOpna||{}).nafn || null; if (opna) delete window.__bhOpna.nafn; } catch(_) {}
     if (opna) { const names = Object.keys(hopar()); const hit = names.find(n => n === opna) || names.find(n => n.toLowerCase() === opna.toLowerCase()); if (hit) { leit = ''; const s = wrap.querySelector('#vk-search'); if (s) s.value = ''; velja(hit, { scroll: true }); return; } }
     if (valinn) velja(valinn);
     else if (window.innerWidth > 980) { const first = Object.keys(hopar()).sort((a,b) => a.localeCompare(b,'is'))[0]; if (first) velja(first); }
@@ -12512,7 +12512,7 @@ async function renderGerdReikninga(t){
         const nafn = String(((document.getElementById('gr-cust')||{}).value || cust || '')).trim(); if(!nafn) return;
         const st = document.getElementById('gr-hd-status');
         if(st && st.classList.contains('unsaved') && !confirm('Drögin eru óvistuð og glugginn lokast. Opna viðskiptavininn samt?')) return;
-        try{ sessionStorage.setItem('vk_open_name', nafn); }catch(_){}
+        (window.__bhOpna = window.__bhOpna || {}).nafn = nafn;
         try{ close(); }catch(_){}
         try{ window.state.ui.activeTab = 'vidskiptavinir'; save({nav:true}); render(); }catch(_){ location.hash = '#vidskiptavinir'; }
       }; }
@@ -12850,7 +12850,7 @@ async function renderGerdReikninga(t){
         const kt = String(((document.getElementById('gr-kt')||{}).value || custKt || '')).trim(); if(!kt) return;
         const st = document.getElementById('gr-hd-status');
         if(st && st.classList.contains('unsaved') && !confirm('Drögin eru óvistuð og glugginn lokast. Opna Hreyfingaryfirlit samt?')) return;
-        try{ sessionStorage.setItem('hy_open_kt', kt); }catch(_){}
+        (window.__bhOpna = window.__bhOpna || {}).kt = kt;
         try{ close(); }catch(_){}
         try{ window.state.ui.activeTab = 'hreyfingaryfirlit'; save({nav:true}); render(); }catch(_){ location.hash = '#hreyfingaryfirlit'; }
       }; }
@@ -15983,7 +15983,7 @@ async function renderHreyfingar(t){
     document.getElementById('hy-hidtoggle').onclick=()=>{ showHidden=!showHidden; applyVis(); };
     applyVis();
     // 16.10.2026: komið úr Efnislistanum (📒 Hreyfingar) — leita að kennitölunni og opna spjaldið hennar.
-    try{ const kt0 = sessionStorage.getItem('hy_open_kt'); if(kt0){ sessionStorage.removeItem('hy_open_kt');
+    try{ const kt0 = (window.__bhOpna||{}).kt || null; if(kt0){ delete window.__bhOpna.kt;
       const dig = v => String(v||'').replace(/\D/g,'');
       const card = [...list.querySelectorAll('.hy-c')].find(c => dig(c.dataset.kt) === dig(kt0));
       const s = document.getElementById('hy-search'); if(s){ s.value = card ? card.dataset.kt : kt0; applyVis(); }
