@@ -248,3 +248,17 @@ svarað í 3 daga'".
 ## Lærdómur
 
 - **16.10.2026** — Uppgjör lota 16.10.2026 — Tengireglan: vegna-línan (/vegna:?\s+(.+)$/im + „Tilvísun:") er FJÓRÐA sönnun í _spine (stimpill → einn staður → heimilisfang → vegna; aliases, beygingaþol) síðan 13.08.2026; fjölstaða-kt án sönnunar → aðeins customer_base_id + customer_documents.needs_site=true (hreinsast sjálft þegar staður fæst); Skýrslu-stöð sýnir „🏷 N vantar stað" per félag. Opið 16.10: Akurhús ehf. (650416-2280) ekki til í kerfinu (Kirkjustétt 4, Hamraborg 1/12); Menja #908/#1531 tvískráð á sömu kt með 9 tæki á #1531; Bæjarlind 12 #601/#628 með SÖMU 20 tækin tvítalin; Versa (base 159↔1071) og Pumpingiron (290↔1081) sama kt tvær grunnskrár — allt bíður Agnars.
+
+## Viðskiptavinir-flipinn + customer_info — 16.10.2026
+
+- `customer_info` fékk þrjá dálka (apply_migration + `sql/2026-10-16_customer_info_tengilidur.sql`): `contact_name`
+  (tengiliður), `invoice_email` (reikningspóstur), `heimilisfang`. `netlify/functions/verkkaupar.js` INFO_FIELDS
+  leyfir þá í POST (upsert á customer_name); `detail()` skilar nú `kt` í röðinni customer_info → pricing_guide →
+  customer_worksite_map.kt_greidanda → invoice_drafts.kennitala (Lagnaprýði átti kt aðeins í drögum). Listinn
+  (/api/verkkaupar) ber `kt` sem er oft null — nota detail-svarið.
+- Viðskiptavinir í hubnum = greiðendur (customer_name) hópaðir úr pricing_guide; valið félag sýnir tengilið og
+  skilmála (9 reitir, vistast við change), samninginn (verðskrá per verkstað), ósendar og sendar kröfur, samskipti
+  úr email_digest og minnispunkta. Opnast beint úr Efnislistanum með 🏢 á nafni verkkaupa (window.__bhOpna.nafn).
+- Varnagli: fyrsta vistun reitanna var ekki prófuð á þjóni í lotunni (prófunarþjónninn læsir POST) — staðfesta
+  „✓ vistað" fyrsta sinn.
+

@@ -660,3 +660,25 @@ punktar. `ready` = allt grænt. Sameinuð/sleppt/rukkuð drög og `paid` í meta
 ## Lærdómur
 
 - **16.10.2026** — Uppgjör lota 16.10.2026: (1) Gerð reikninga/Efnislisti 15.10: gluggi sem Agnar hafði opinn (óvistaður, gömul gildi) var vistaður 18:01 og þurrkaði bæði leiðrétta yfirvinnu OG efnið sem lotan hafði sett (Áland 6 79.478 kr) — þriðja skiptið sama kvöld; verklag: eftir að lota skrifar í drög má EKKI vista úr opnum glugga — loka og opna aftur; tveir ritlar staflast með sömu auðkenni (gr-ws/gr-save/gr-mat-pick). (2) Drög bera ákvörðun um dagvinnu/yfirvinnu (ev=0/ev>0) frá 15.10 — drog-timar les ekki lengur dv/ev úr /api/timabok (Charlize #880 leysir af #836). (3) Efniskostnaður-kortið „Reikningar í gagnagrunni" (15.10) opnar lista 391 reikninga (255 tengdir, 136 ótengdir) með 🔗 Tengja / ✏️, hver mánuður í ramma með samtölu; Redder 137012 (22.06, Landspítalinn, 90.750) og 136032 höfðu sloppið framhjá möppunni — Landspítala-reikningurinn aldrei á Efnislista júní (sendir mánuðir frosnir, ákvörðun Agnars).
+
+## Efnislisti 16.10.2026 — Redder-innkaup, efnishlutfall, 06 Fyrri reikningar, talnasnið
+
+- **03 Efni · Redder:** kassinn `#gr-redder-box` telur upp vörulínur mánaðarins (innkaupsverð = upphæð eftir afslátt /
+  magn). Lína telst „í efnislistanum" ef heiti hennar, Verðskrár-samsvörun þess (`matchVerdskra`) EÐA Verðskrár-
+  samsvörun efnislínu ber saman — eldri forútfyllingar bera innkaupaheitið („Eldv. Málning ISO14001 Hvítt"), ekki
+  Verðskrár-heitið. ➕ setur línu í listann á söluverði Verðskrár ef samsvörun finnst, annars sérlínu á innkaupsverði
+  sem Agnar breytir. Tvær viðvaranir: línu vantar í lista · efni á reikningi (matSum) < Redder-innkaup (an_vsk).
+- **Efnishlutfall** = efni / reikningur án vsk (`c.matSum / c.net`), birt í Samantekt og haus 03; sama regla í 06.
+- **06 Fyrri reikningar:** ein röð per fyrri mánuð verkstaðarins úr drögunum (klst dagv. + yfirv., efni, %, m. vsk);
+  greiðslustaða úr `/api/krofur-yfirlit?year=` — SAMA regla og Kröfu yfirlit (Payday greitt EÐA bankapörun; kredit,
+  afturkallað, undanskilið telja ekki). Payday-reikningur paraður við mánuð á upphæð (±2 kr) yfir ÖLL drög
+  verkstaðarins (líka opna mánuðinn — annars lendir ágúst-reikningur á september-röð), annars gjalddagi 1–60 dögum
+  EFTIR mánaðarlok. Dæmi: Áland 6 ágúst 2026 = Payday nr. 371, tilv. 21727, 949.308 kr, greiddur 30/09.
+  🧾 Reikningur = doc_type 'invoice' í efnislisti-docs ef til, annars prentun okkar úr drögunum; Payday-PDF sjálft er
+  hvergi speglað í kerfinu.
+- **Talnasnið:** Kr/klst, akstursgjald og fast verð sýna þúsundapunkt (9.951); `parseNum` les punkt sem þúsundaskil
+  þegar engin komma er og hver hópur er þrír tölustafir („9.951"→9951, „1.764.014"), annars brot („168.5", „9.951,5").
+  Geymd gildi eru áfram hráar tölur. Mætingar-taflan (openTimabok) tekur dd/mm/áááá, geymir ISO.
+- **Kröfu yfirlit:** tímabilsmerkið „Tímabil 01/08–31/08" (gull = annar mánuður en reikningurinn) svarar ruglingi
+  Agnars um ágúst-tíma sem eru sendir í september (R-361 Hrafnista Nesvellir 4).
+

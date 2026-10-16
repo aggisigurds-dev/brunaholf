@@ -100,3 +100,14 @@ skjáskot af canvas-inu; `getTextContent()` gefur textann og `styles[].fontFamil
 
 ## Skrif sem síðan sendir sjálf (uppgjör lota 16.10.2026)
 Playwright-opnun á slokkvitaeki-síðu sendir óbeðin skrif sem route-reglan verður að grípa: `brunaholf.netlify.app/api/villur`, `year_factcheck` POST (félag 391 við HVERJA síðuhleðslu), `/api/husmynd`, `app_problems` — og TurboPaint-próf skrifa í `turbopaint_boards` + fötuna `turbopaint` (nota prófstað 1404). Höfuðlaust próf með ferskum prófíl sýnir ALDREI bilanir sem stafa af fullu localStorage í Chrome Agnars (mæla í „Browser 1").
+
+## 5 · Prófunarþjónn með lifandi API án skrifa — `tools/local-proxy-serve.cjs` (16.10.2026)
+
+`node tools/local-proxy-serve.cjs 8788` í brunaholf: static skrár úr repóinu, `/api/*` og `/.netlify/*` GET/HEAD
+áframsent á brunaholf.netlify.app, POST/PATCH/PUT/DELETE fá 405 — prófun getur aldrei skrifað. Launch-nafn
+`brunaholf-proxy` í `C:\Users\Slokkvitaeki\.claude\launch.json` (preview_start les ÞÁ skrá, ekki brunaholf/.claude).
+Það sem sást: hub_state-save og aðrar vistanir svara 405 í console (eðlilegt); ERR_CONNECTION_REFUSED í console eftir
+endurræsingu þjónsins er gamalt; tvær lotur deila ekki port 8788 — ef hann er upptekinn er það hin lotan, navigate bara.
+Netlify-föll sem breytast í lotunni (verkkaupar.js) keyra EKKI staðbundið — framleiðslu-útgáfan svarar þar til deploy.
+Eftir [deploy]: `build.json` getur komið úr CDN-skyndiminni; mæla með `?t=<tímastimpill>` og Cache-Control: no-cache.
+

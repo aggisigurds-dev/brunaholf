@@ -329,3 +329,17 @@ ANNAÐ kerfi en „Efniskostnaður / Kostnaðarreikningar (endurrukkun)" hér a�
 - **16.10.2026** — Uppgjör lota 16.10.2026: (1) Ajour hak-tími mælir EKKI vinnutíma: hak starfsmanns 20 þann 9.9 enduðu 11:16 en EXIF-mynd (S24 Ultra) er frá 14:25 — hakatími = hvenær hann settist með símann; EXIF er eina óháða stimpilmerkið (tools/mynda-timar.cjs les fyrsta/síðasta tökutíma per dag); aldrei meta vinnutíma einstaklings úr Ajour — segja „gólf, ekki mæling"; Excel-tímabrot 0,3333 er tugabrot. (2) Ajour-útflutningur: CSV hendir klukku úr RegistrationCreatedDate og ber tvö dagsetningasnið í sömu skrá; JSON/XML bera ISO m. millisek, hreiðraða CheckListItems, engin tímabelti; RegistrationCreatedDate = fyrsta hak, allur gátlisti hakaður á ~11 s; allt hakað af sameiginlega notandanum „Starfsmaður Brunahólf" (Category „Starfsmaður N"); innlesturinn klippir tíma svo ajour_registrations er allt miðnætti. (3) Regla Agnars 10.09: „Þetta pælingar þurfa ekkert að fara inn á síðuna … ekki skoða tímavera … bara þessi skjöl frá ajour" — athuganir á einstökum starfsmönnum eru SPURNINGAR, ekki síður: netlify/functions/starfsmenn-dagar.js + starfsmenn.html fóru í loftið ÓBEÐIÐ („Á ég að taka hana niður?" ósvarað). (4) Anthropic-inneign núll 30.09 ⇒ kostnadur-sync fékk 400 og 13 kostnaðarskjöl festust án upphæðar (ignore-duplicates) → endurlesturs-umferð aðeins á breytt_af IS NULL; kostnadur-sync-background keyrir ekki sjálfkrafa (Charlize #874).
 
 - **16.10.2026** — Uppgjör lota 16.10.2026 (Beiðnaskógurinn 18.09): LunaBridge2-Redder-verkið hafði aldrei keyrt („30.11.1999, kóði 267011"); ajour_yfirlit app_kv.updated_at lýgur (ajour-yfirlit.js skrifar aðeins key+value); mbox-brú hinna 4 hólfa dauð frá 11.09 (1.598 villur/372 ok); gamla brúin desktop á DESKTOP-M5FO3I6 föst og hamrar persónulega Gmail — á að stöðvast, Agnar þarf aðgang að vélinni. Vörður um þögult innsog ber saman þrjár hliðar (Gmail · DB · appið), ekki tímaþröskuld.
+
+## Redder-línur í Efnislistanum · Payday-staða í 06 · skjölin (16.10.2026)
+
+- `REDDER[verkstaður|mánuður]` (byggt í renderGerdReikninga úr /api/redder-invoices) = `{ an_vsk, lines:[{label, cost,
+  qty}] }`; `cost` = upphæð eftir afslátt / magn (ein_verd er FULLT verð). Línur með worksite_override fara á sinn
+  verkstað. `REDDER` er lokað í renderGerdReikninga — ekki global; í prófun les maður /api/redder-invoices beint.
+- 06 Fyrri reikningar sækir `/api/krofur-yfirlit?year=` (þungt: bankapörun) aðeins þegar flipinn er opnaður, geymt
+  per ár í `window.__gbKy`. Reglan um greitt er þar, ekki í viðmótinu.
+- `invoice_drafts.payday_invoice_id` ↔ `invoices.id` (bru-fallið parar svo); drög bera `tilvisun` (21727) en
+  Payday-röðin `tilvisun` = reikningsnúmer (371) — EKKI sami reitur.
+- `/api/efnislisti-docs?worksite&month`: doc_type `efnislisti_pdf` / `efnislisti_timabok_pdf` (Supabase storage
+  efnislisti-pdf/<slug>/<mán>/…, public_url) og `invoice` (Drive, /api/skjal?id=). Payday-reiknings-PDF er ekki til
+  í kerfinu — Agnar sækir hann í Payday.
+

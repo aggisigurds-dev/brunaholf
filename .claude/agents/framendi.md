@@ -371,3 +371,28 @@ lagi — `window.__flokkalinurNytt` → `save()` 1,5 s eftir ræsingu svo merkin
 - **16.10.2026** — Uppgjör 16.10.2026 úr Stílstjóra-lotunni: Sími Agnars keyrir Force Dark sem ekki slekkst — allar hub-síður þurfa `<meta name="color-scheme">` (lagað 28.08 á 32/32, en starfsmenn.html er í dag EINA af 36 síðum sem vantar hann). Kröfu yfirlit-strimillinn (04.09 „Þetta er enþá í klessu … jafnt alls staðar á milli“): mæla bil á hverjum hnapp fyrir sig, ekki eitt gildi.
 
 - **16.10.2026** — 15.10.2026 — hliðarstikan „alltaf í veseni": rótin var hub_state-samstillingin — let _serverHasRecord = false í HVERRI hleðslu ⇒ hver vistun á undan fyrstu heppnuðu samstillingu sendi ALLT staðbundið ástand ({key:hub_state, value:state}) og skipti þjónsfærslunni út; flushSyncNow keyrir á pagehide svo vél sem er SLÖKKT með gamla stiku sendi hana á leiðinni út og þurrkaði hinar þrjár (grunnmynd 68 flipar/6 flokkalínur/30 faldir → þjónn 61/0/2). Lagað: null = óvitað, heilskrif aðeins eftir séð 404 + engin snapshot, annars alltaf patch; stikan endurheimt úr tmp/stika-grunnmynd.json; nýr „✓ Vista" skolar strax og borði segir satt. VÖRNIN VIRKAR FYRST ÞEGAR HVER VÉL HEFUR GERT Ctrl+F5. Útilokað með mælingu 12.10: ensureNewTabs endurraðar ekki, migration endurnefnir ekki, RPC skiptir topp-lykli út heilum.
+
+## Efnislisti .gb2 · Viðskiptavinir · Kröfu yfirlit — hvar hlutirnir búa (16.10.2026)
+
+Lota 16.10.2026 (commit 8860d86 → 9f78dd9), allt í `index.html`, grep á nöfnin — línunúmer flakka:
+
+- **Efnislisti-glugginn (.gb2, `grOpenWorksite` → sniðmátið í renderGerdReikninga):** flipar 02–06 í `.gb-tabbar`,
+  `gbSetTab(s)` skiptir; `bossSums()` uppfærir samantekt og kallar `redderBox(c)` (03) og efnishlutfall
+  (`gr-k-efni` + `gr-sub-03`); `teiknaSaga()` teiknar 06 Fyrri reikningar í `#gr-saga` (létt við opnun = teljari,
+  fullt við flipaskipti). Titilröðin: nafn verkkaupa er `button#gr-cust-open.gb-custlink` → Viðskiptavinir.
+  Kr/klst-reitir sýna `fmtInn()` (þúsundapunktur) og endursníðast við `blur`, aldrei við ásláttur.
+- **Afhending milli flipa í sömu síðu:** `window.__bhOpna = { kt, nafn }`, eytt við lestur. ALDREI sessionStorage/
+  localStorage fyrir slíkt — `tools/audit-vafrastada.cjs` (slokkvitaeki, pre-push) telur lyklana á móti grunnlínu
+  (brunaholf ls 35) og stöðvar ýtingar beggja repóa ef nýr lykill bætist við.
+- **Viðskiptavinir (`renderVidskiptavinir`):** grindin `.vk-grid` teiknuð einu sinni; `teiknaLista()` (vinstri
+  listi, leit `#vk-search`) og `velja(name)` → `loadDetail()` (hægri spjald 02–08) uppfæra hvort í sínu lagi.
+  `openModal()` (verðskrá per verkstað) og `load()` óbreytt frá fyrri útgáfu. Sjálfgefið fyrsta félag valið >980 px.
+- **Kröfu yfirlit spjöld (`invRow`):** `periodTag(inv, tier)` / `vinnuDrog()` við hlið `monthTag` — „Tímabil
+  dd/mm–dd/mm" úr drögunum (REVIEWS[worksite|work_month].period_from/to), `.boss-perotag.misr` í gulli þegar
+  vinnumánuður ≠ reikningsmánuður. Taflan (/api/krofur-yfirlit, renderKrofur) ber ekkert mánaðarmerki.
+- **CSS-gildrur mældar:** (1) haus og raðir sem hvor eru sín grind MEGA EKKI hafa `auto`-dálk — hann fær ólíka
+  breidd (tómur í haus, takkar í röð) og fr-dálkarnir hliðrast; fastur px-dálkur. (2) `grid-template-columns:1fr`
+  = minmax(auto,1fr): spjald með leitarreit tók min-content 375 px á 390 px síma → `minmax(0,1fr)` + `min-width:0`.
+  (3) `toLocaleString('is-IS')` gefur kommur á vél án is-IS — þúsundapunktur með regex. (4) `css/theme.css` er
+  með `?v=` í index.html — hnika við hverja CSS-breytingu þar (nú 20261016a).
+
