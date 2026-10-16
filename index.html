@@ -893,26 +893,23 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 /* ===== 📋 Verðlisti Efniskostnaðar (16.10.2026) — ljóst pappírsspjald eins og Kröfu yfirlitið, gull aðeins í rönd og merkjum (Agnar 16.10: „ekki dökkan bakgrunn") ===== */
 #ef-verdlisti-btn{border-color:var(--gold-500);color:var(--gold-deep);font-weight:600;background:linear-gradient(180deg,#fff,#fbf4e3)}
 #ef-verdlisti-btn:hover{border-color:var(--gold-700);background:#fbf4e3}
-#ef-verdlisti-btn:disabled{opacity:.55;cursor:default}
-.modal:has(.ef-vl){max-width:1180px;padding:0;background:var(--card);color:var(--ink);border:1px solid var(--border);box-shadow:0 18px 50px rgba(22,21,19,.28);overflow:hidden;display:flex;flex-direction:column;max-height:92vh}
-.ef-vl{display:flex;flex-direction:column;min-height:0;max-height:92vh;font-family:var(--font-ui)}
-.ef-vl-head{display:flex;align-items:center;gap:14px;padding:14px 18px;background:linear-gradient(180deg,#faf8f4,#f1ede4);border-bottom:2px solid transparent;border-image:var(--gold-line) 1;border-image-width:0 0 2px 0}
+.ef-vl-sida{background:var(--card);color:var(--ink);border:1px solid var(--border);border-radius:12px;box-shadow:0 1px 2px rgba(0,0,0,.03),0 2px 8px rgba(0,0,0,.04);overflow:hidden}
+.ef-vl{display:flex;flex-direction:column;min-height:0;font-family:var(--font-ui)}
+.ef-vl-head{display:flex;align-items:center;gap:14px;padding:14px 18px;background:linear-gradient(180deg,#faf8f4,#f1ede4);border-bottom:2px solid transparent;border-image:var(--gold-line) 1;border-image-width:0 0 2px 0;border-radius:12px 12px 0 0}
 .ef-vl-title{flex:1;min-width:0}
 .ef-vl-title h2{margin:0;font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--ink);letter-spacing:-.01em}
 .ef-vl-sub{font-size:11.5px;color:var(--muted);margin-top:3px}
-.ef-vl-x{width:34px;height:34px;border-radius:5px;border:1px solid var(--border);background:#fff;color:var(--ink-2);font-size:16px;cursor:pointer;flex:none;padding:0}
-.ef-vl-x:hover{border-color:var(--gold-600);color:var(--ink)}
 .ef-vl-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 18px;background:#f7f4ee;border-bottom:1px solid var(--line-2)}
-.modal .ef-vl .ef-vl-bar input.ef-vl-leit[type=search]{flex:1 1 220px;width:auto;min-width:0;height:34px;padding:0 12px;border:1px solid var(--edge,#cfc8b9);border-radius:4px;background:#fff;color:var(--ink);font-size:13px;box-shadow:inset 0 1px 2px rgba(22,21,19,.08);font-family:inherit}
-.modal .ef-vl .ef-vl-bar input.ef-vl-leit[type=search]::placeholder{color:var(--muted-2)}
+.ef-vl .ef-vl-bar input.ef-vl-leit[type=search]{flex:1 1 220px;width:auto;min-width:0;height:34px;padding:0 12px;border:1px solid var(--edge,#cfc8b9);border-radius:4px;background:#fff;color:var(--ink);font-size:13px;box-shadow:inset 0 1px 2px rgba(22,21,19,.08);font-family:inherit}
+.ef-vl .ef-vl-bar input.ef-vl-leit[type=search]::placeholder{color:var(--muted-2)}
 .ef-vl-seg{display:inline-flex;border:1px solid var(--line-2);border-radius:4px;overflow:hidden;background:#fff}
 .ef-vl-seg button{height:32px;padding:0 12px;border:0;border-left:1px solid var(--line-2);background:#fff;color:var(--ink-2);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap}
 .ef-vl-seg button:first-child{border-left:0}
 .ef-vl-seg button span{opacity:.6;font-weight:500;margin-left:3px}
 .ef-vl-seg button.on{background:var(--ink);color:#f4f1ea}
 .ef-vl-seg button.on span{opacity:.75}
-.modal .ef-vl .ef-vl-bar select.ef-vl-rodun{display:none;width:auto;height:36px;padding:0 10px;border:1px solid var(--line-2);border-radius:4px;background:#fff;color:var(--ink);font-size:13px;font-family:inherit}
-.ef-vl-scroll{overflow:auto;min-height:0;flex:1;-webkit-overflow-scrolling:touch}
+.ef-vl .ef-vl-bar select.ef-vl-rodun{display:none;width:auto;height:36px;padding:0 10px;border:1px solid var(--line-2);border-radius:4px;background:#fff;color:var(--ink);font-size:13px;font-family:inherit}
+.ef-vl-scroll{overflow:auto;min-height:0;flex:1;max-height:calc(100vh - 150px);-webkit-overflow-scrolling:touch}
 .ef-vl-tafla{width:100%;border-collapse:collapse;font-size:12.5px}
 .ef-vl-tafla th{position:sticky;top:0;z-index:1;background:var(--tbl-header,#f4f1ea);color:var(--muted);font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;text-align:left;padding:9px 10px;border-bottom:1px solid var(--line-2);cursor:pointer;user-select:none;white-space:nowrap}
 .ef-vl-tafla th.r,.ef-vl-tafla td.r{text-align:right}
@@ -936,6 +933,9 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 .ef-vl-al.lag{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-line)}
 .ef-vl-al.tap{background:var(--red-bg);color:var(--red);border:1px solid var(--red-line)}
 .ef-vl-al.ein{background:var(--bg-2);color:var(--muted);border:1px solid var(--line-2);font-weight:600}
+.ef-vl-tafla tr.ef-vl-flokkur td{background:#f7f4ee;color:var(--ink);font-family:var(--font-display);font-size:13.5px;font-weight:700;padding:10px 10px 6px;border-bottom:1px solid var(--line-2);border-top:2px solid transparent;border-image:var(--gold-line) 1;border-image-width:2px 0 0 0;white-space:normal}
+.ef-vl-tafla tr.ef-vl-flokkur td small{font-family:var(--font-ui);font-size:11px;font-weight:500;color:var(--muted);margin-left:8px}
+.ef-vl-tafla tr.ef-vl-flokkur.an td{color:var(--muted)}
 .ef-vl-tafla tfoot td{position:sticky;bottom:0;background:var(--bg,#f4f1ea);color:var(--ink);font-weight:700;border-top:1px solid var(--line-2);border-bottom:0;padding:10px;white-space:normal}
 .ef-vl-tafla tfoot td{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .ef-vl-tafla tfoot td small{color:var(--muted);font-weight:500}
@@ -947,7 +947,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
   .ef-vl-head{padding:12px 14px;gap:10px}
   .ef-vl-head .boss-plate{display:none}
   .ef-vl-bar{padding:8px 14px;gap:8px}
-  .modal .ef-vl .ef-vl-bar select.ef-vl-rodun{display:inline-flex;flex:1 1 100%}
+  .ef-vl .ef-vl-bar select.ef-vl-rodun{display:inline-flex;flex:1 1 100%}
   .ef-vl-tafla thead{display:none}
   .ef-vl-tafla,.ef-vl-tafla tbody,.ef-vl-tafla tr,.ef-vl-tafla td,.ef-vl-tafla tfoot{display:block}
   .ef-vl-tafla tbody tr{display:grid;grid-template-columns:1fr 1fr;gap:2px 12px;padding:10px 14px;border-bottom:1px solid var(--line-2)}
@@ -956,6 +956,8 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
   .ef-vl-tafla tbody td.r{display:block;text-align:right;line-height:1.6}
   .ef-vl-tafla tbody td.r::before{content:attr(data-l);float:left;margin-right:8px;font-family:var(--font-mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2)}
   .ef-vl-tafla tbody td.ef-vl-tom{grid-column:1 / -1}
+  .ef-vl-tafla tbody tr.ef-vl-flokkur{display:block;padding:10px 14px 4px}
+  .ef-vl-tafla tbody tr.ef-vl-flokkur td{padding:0;border:0}
   .ef-vl-heiti{min-width:0}
   .ef-vl-tafla tfoot td{position:static;padding:10px 14px;border-top:1px solid var(--line-2)}
   .ef-vl-nota{display:none}
@@ -1614,6 +1616,7 @@ const DEFAULT_STATE = {
     {id:'vinnustofa', label:'Vinnustofa', icon:'🎯'},
     {id:'verdskra', label:'Verðskrá', icon:'💰'},
     {id:'efniskostnadur', label:'Efniskostnaður', icon:'📦'},
+    {id:'verdlisti', label:'Verðlisti', icon:'📋'},
     {id:'vorubirgdir', label:'Vörubirgðir', icon:'🏷️'},
     {id:'utgjold',    label:'Útgjöld',    icon:'💸', sheetCsv:''},
     {id:'sjalfvirkni', label:'Sjálfvirkni', icon:'⚙️'},
@@ -1853,7 +1856,7 @@ function clearDataCache(){
 function ensureNewTabs(s){
   if(!s || !Array.isArray(s.tabs)) return;
   if(!Array.isArray(s.bakendiLinks)) s.bakendiLinks = BAKENDI_LINK_SEED.map(x=>({...x}));
-  ['verkkaupar','dagurinn','jarvis','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','vorubirgdir','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','tvmaeting','verkstadapostur','verdsamanburdur','verkstadir','skuldunautar','skyrslur','skyrslustod','afkost','krofuyfirlit','drogstod','fjarmalyfirlit','vidskiptavinir','krofur','hreyfingaryfirlit','nlsh','ajour','turbopaint','pdftools','spurningar','sjalfvirkni','vefryni','skodanir','brunayfirlit','verkfaeri','eydublod','multitool','skraalisti','driveleit','postleit','bakendi'].forEach(id=>{
+  ['verkkaupar','dagurinn','jarvis','stjornbord','leidsogn','reikningatenglar','gerdreikninga','tilbunirReikningar','vinnubok','vinnustofa','verdskra','efniskostnadur','verdlisti','vorubirgdir','kvittanir','minverkefni','verkefnaskra','gogn','samthaetting','slokkvitaeki','okkarVerkefni','inbox','timavera','tvmaeting','verkstadapostur','verdsamanburdur','verkstadir','skuldunautar','skyrslur','skyrslustod','afkost','krofuyfirlit','drogstod','fjarmalyfirlit','vidskiptavinir','krofur','hreyfingaryfirlit','nlsh','ajour','turbopaint','pdftools','spurningar','sjalfvirkni','vefryni','skodanir','brunayfirlit','verkfaeri','eydublod','multitool','skraalisti','driveleit','postleit','bakendi'].forEach(id=>{
     if(!s.tabs.find(t=>t.id===id)){
       const d = DEFAULT_STATE.tabs.find(t=>t.id===id);
       if(d){
@@ -1947,6 +1950,11 @@ function ensureNewTabs(s){
           const bIdx = s.tabs.findIndex(t=>t.id==='bakendi');
           const sIdx = s.tabs.findIndex(t=>t.id==='stillingar');
           target = idx >= 0 ? idx + 1 : (bIdx >= 0 ? bIdx : (sIdx >= 0 ? sIdx : -1));
+        } else if(id === 'verdlisti'){
+          // Verðlisti (Redder-innkaup vs söluverð okkar, 16.10.2026) situr beint á eftir Efniskostnaði.
+          const idx = s.tabs.findIndex(t=>t.id==='efniskostnadur');
+          const bIdx = s.tabs.findIndex(t=>t.id==='bakendi');
+          target = idx >= 0 ? idx + 1 : (bIdx >= 0 ? bIdx : -1);
         } else if(id === 'vorubirgdir'){
           // Vörubirgðir situr rétt á eftir Efniskostnaði (annars fyrir ofan Bakendi).
           const idx = s.tabs.findIndex(t=>t.id==='efniskostnadur');
@@ -2800,6 +2808,7 @@ function render(){
   if(t.id==='nlsh') return renderNLSH(t);
   if(t.id==='turbopaint') return renderTurbopaint(t);
   if(t.id==='efniskostnadur') return renderEfniskostnadur(t);
+  if(t.id==='verdlisti') return renderVerdlisti(t);
   if(t.id==='vefryni') return renderVefryni(t);
   if(t.id==='skodanir') return renderSkodanir(t);
   if(t.id==='brunayfirlit') return renderBrunakerfiYfirlit(t);
@@ -22597,7 +22606,7 @@ async function renderEfniskostnadur(t){
           <div class="rg-sub" style="margin-top:4px">Redder reikningar — efni sem fer á reikning hjá verkkaupa</div>
         </div>
         <div class="rg-controls">
-          <button type="button" class="rg-tool" id="ef-verdlisti-btn" disabled title="Sækir Redder-línur…">📋 Verðlisti</button>
+          <a class="rg-tool" id="ef-verdlisti-btn" href="#verdlisti" onclick="event.preventDefault();efOpnaFlipa('verdlisti')" title="Verðlisti — innkaup okkar, afsláttur, fullt verð og söluverð per vöru (eigin síða)">📋 Verðlisti →</a>
           <select id="ef-f-month" class="ef-filter"><option value="">Allir mánuðir</option></select>
           <select id="ef-f-ws" class="ef-filter"><option value="">Allir verkstaðir</option></select>
           <a class="rg-tool" href="https://mail.google.com/mail/u/0/?authuser=bokhald@brunaholf.is#search/from%3Aredder.is" target="_blank" rel="noopener">📧 Redder í Gmail</a>
@@ -22894,7 +22903,6 @@ async function renderEfniskostnadur(t){
     $fMonth.addEventListener('change', renderTable);
     $fWs.addEventListener('change', renderTable);
     renderTable();
-    efVerdlistiTengja(rows);   // 📋 Verðlisti (16.10.2026) — sömu rows, ekkert nýtt kall
   } catch(e) {
     document.getElementById('ef-meta').textContent = 'Villa: '+(e.message||e);
   }
@@ -22942,38 +22950,62 @@ function efVerdlistiByggja(rows){
   }
   return ut;
 }
-function efVerdlistiTengja(rows){
-  const b = document.getElementById('ef-verdlisti-btn'); if(!b) return;
-  b.disabled = false;
-  b.title = 'Innkaupsverð okkar, afsláttur, fullt verð og söluverð — ein röð per vöru sem við kaupum hjá Redder';
-  b.onclick = () => efVerdlistiOpna(rows);
+// Skipta um flipa innan úr síðu (sama leið og 🏢/Hreyfingaryfirlit nota): activeTab + nav-save + render,
+// hash sem varaleið. Hash-ið eitt dugar ekki þegar það stendur þegar á flipanum (enginn hashchange).
+function efOpnaFlipa(id){
+  try{ state.ui = state.ui || {}; state.ui.activeTab = id; save({nav:true}); render(); }
+  catch(_){ location.hash = '#' + id; }
 }
-function efVerdlistiOpna(rows){
-  const vorur = efVerdlistiByggja(rows);
-  const P = n => { const v = Math.round(Number(n)||0); return (v<0?'-':'') + String(Math.abs(v)).replace(/\B(?=(\d{3})+(?!\d))/g,'.'); };
-  const dags = d => d ? d.slice(8,10)+'.'+d.slice(5,7)+'.'+d.slice(0,4) : '—';
-  const DALKAR = [
-    ['vara','Vara','l'], ['inn','Innkaup okkar','r'], ['afsl','Afsl.','r'], ['ein','Fullt verð','r'],
-    ['sala','Söluverð okkar','r'], ['alagning','Álagning','r'], ['sidast','Síðast keypt','r'], ['kaup','Kaup','r'],
-  ];
-  const LYKLAR = DALKAR.map(d=>d[0]);
-  let rodun = String(vidmotLesa('ef_vl_rodun', 'kaup:desc') || 'kaup:desc');
-  if(!LYKLAR.includes(rodun.split(':')[0])) rodun = 'kaup:desc';
-  let sia = String(vidmotLesa('ef_vl_sia', 'allt') || 'allt');
-  if(!['allt','verdskra','an'].includes(sia)) sia = 'allt';
-  let leit = '';
+// 16.10.2026 (Agnar): Verðlistinn er eigin síða í hliðarstikunni (flipi `verdlisti`, beint á eftir
+// Efniskostnaði) og Efniskostnaður ber tengil á hana. Sama efni og áður — ekkert modal lengur.
+async function renderVerdlisti(t){
+  $view.innerHTML = `
+    <div class="rg-wrap">
+      <div class="rg-header">
+        <div>
+          <div style="font-size:10.5px;font-weight:600;letter-spacing:2.5px;color:var(--gold-deep);text-transform:uppercase;margin-bottom:6px">REDDER · VERÐSKRÁ EFNIS</div>
+          <h1 class="rg-h1">Verðlisti <span class="rg-sub" id="vl-meta">Sækir…</span></h1>
+          <div class="rg-sub" style="margin-top:4px">Innkaup okkar · afsláttur · fullt verð · söluverð okkar — hlið við hlið, ein röð per vöru sem við kaupum hjá Redder</div>
+        </div>
+        <div class="rg-controls">
+          <a class="rg-tool" href="#efniskostnadur" onclick="event.preventDefault();efOpnaFlipa('efniskostnadur')" title="Redder-reikningarnir sjálfir, per verkstað og mánuð">📦 Efniskostnaður</a>
+          <button type="button" class="rg-tool" id="vl-refresh" title="Sækja Redder-línurnar aftur">↻ Sækja</button>
+        </div>
+      </div>
+      <div id="vl-host"><div class="ef-vl ef-vl-sida"><div class="ef-vl-tom">Sækir Redder-reikninga…</div></div></div>
+    </div>`;
+  const saekja = async (force) => {
+    const meta = () => document.getElementById('vl-meta');
+    try{
+      const r = await cachedFetch('/api/redder-invoices', { force: !!force });
+      if(!r || !r.ok) throw new Error('HTTP ' + (r && r.status));
+      const { rows } = await r.json();
+      const host = document.getElementById('vl-host'); if(!host) return;   // flipinn farinn áður en gögnin komu
+      const vorur = efVerdlistiByggja(rows || []);
+      host.innerHTML = efVerdlistiHtml(vorur, rows || []);
+      efVerdlistiVirkja(host.querySelector('.ef-vl'), vorur);
+      if(meta()) meta().textContent = `${vorur.length} vörur · ${(rows||[]).length} reikningar`;
+    }catch(e){ if(meta()) meta().textContent = 'Villa: ' + (e.message || e); }
+  };
+  const rb = document.getElementById('vl-refresh'); if(rb) rb.onclick = () => saekja(true);
+  saekja(false);
+}
+const EF_VL_DALKAR = [
+  ['vara','Vara','l'], ['inn','Innkaup okkar','r'], ['afsl','Afsl.','r'], ['ein','Fullt verð','r'],
+  ['sala','Söluverð okkar','r'], ['alagning','Álagning','r'], ['sidast','Síðast keypt','r'], ['kaup','Kaup','r'],
+];
+function efVerdlistiHtml(vorur, rows){
   const nAllt = vorur.length, nV = vorur.filter(v=>v.sala!==null).length, nAn = nAllt - nV;
-  const rodunVal = DALKAR.flatMap(([k,l,a]) => a==='l'
+  const rodunVal = EF_VL_DALKAR.flatMap(([k,l,a]) => a==='l'
     ? [[k+':asc', l+' A→Ö'], [k+':desc', l+' Ö→A']]
     : [[k+':desc', l+' ↓'], [k+':asc', l+' ↑']]);
-  const html = `<div class="ef-vl">
+  return `<div class="ef-vl ef-vl-sida">
     <div class="ef-vl-head">
       <span class="boss-plate">VERÐLISTI</span>
       <div class="ef-vl-title">
-        <h2>📋 Verðlisti — Redder-innkaup og söluverð okkar</h2>
+        <h2>📋 Redder-innkaup og söluverð okkar</h2>
         <div class="ef-vl-sub">${nAllt} vörur úr ${rows.length} Redder-reikningum · ${nV} í Verðskrá efnis · nýjasta kaupverðið per vöru, verð án vsk</div>
       </div>
-      <button type="button" class="ef-vl-x" id="ef-vl-loka" title="Loka (Esc)">✕</button>
     </div>
     <div class="ef-vl-bar">
       <input type="search" id="ef-vl-leit" class="ef-vl-leit" placeholder="Leita að vöru, vörunúmeri eða verðskrárheiti…" autocomplete="off">
@@ -22986,26 +23018,49 @@ function efVerdlistiOpna(rows){
     </div>
     <div class="ef-vl-scroll">
       <table class="ef-vl-tafla">
-        <thead><tr>${DALKAR.map(([k,l,a])=>`<th data-k="${k}" class="${a==='r'?'r':''}" title="Raða eftir ${escapeAttr(l)}">${escapeHtml(l)}<span class="ef-vl-pila"></span></th>`).join('')}</tr></thead>
+        <thead><tr>${EF_VL_DALKAR.map(([k,l,a])=>`<th data-k="${k}" class="${a==='r'?'r':''}" title="Raða eftir ${escapeAttr(l)}">${escapeHtml(l)}<span class="ef-vl-pila"></span></th>`).join('')}</tr></thead>
         <tbody id="ef-vl-body"></tbody>
         <tfoot id="ef-vl-fot"></tfoot>
       </table>
     </div>
     <div class="ef-vl-nota"><strong>Innkaup okkar</strong> = upphæð/magn á nýjasta Redder-reikningi (eftir afslátt). <strong>Fullt verð</strong> = listaverð Redder (ein_verd). <strong>Söluverð okkar</strong> = Verðskrá efnis (js/gr-materials.js) — „ekki í verðskrá" = smáhlutir sem fara ekki sem sér lína á reikning. <strong>Álagning</strong> = söluverð / innkaup − 1; rautt = selt undir innkaupsverði.</div>
   </div>`;
-  openModal(html);
-  const rot = document.querySelector('#modalContent .ef-vl'); if(!rot) return;
+}
+function efVerdlistiVirkja(rot, vorur){
+  if(!rot) return;
+  const P = n => { const v = Math.round(Number(n)||0); return (v<0?'-':'') + String(Math.abs(v)).replace(/\B(?=(\d{3})+(?!\d))/g,'.'); };
+  const dags = d => d ? d.slice(8,10)+'.'+d.slice(5,7)+'.'+d.slice(0,4) : '—';
+  const LYKLAR = EF_VL_DALKAR.map(d=>d[0]);
+  // Val vistað í hub_state (regla 15.10.2026): röðun „dálkur:átt" og sía allt|verdskra|an. Leitin er tímabundin.
+  let rodun = String(vidmotLesa('ef_vl_rodun', 'kaup:desc') || 'kaup:desc');
+  if(!LYKLAR.includes(rodun.split(':')[0])) rodun = 'kaup:desc';
+  let sia = String(vidmotLesa('ef_vl_sia', 'allt') || 'allt');
+  if(!['allt','verdskra','an'].includes(sia)) sia = 'allt';
+  let leit = '';
   const $body = rot.querySelector('#ef-vl-body'), $fot = rot.querySelector('#ef-vl-fot'), $leit = rot.querySelector('#ef-vl-leit'), $rod = rot.querySelector('#ef-vl-rodun');
+  const perEin = /^(l[íi]ter|m)$/i;
   const alagningHtml = v => {
     if(v.alagning===null || !isFinite(v.alagning)) return '<span class="dauft">—</span>';
     // Verðskráin selur málningu per líter (og rúllubandið líka per metra) en Redder selur dunk/rúllu — álagning
     // á ósambærilegar einingar væri fölsk „tap"-merking (8 L dunkur 9.923 kr vs 2.500 kr/l → −75%).
-    const perEin = /^(l[íi]ter|m)$/i;
     if(perEin.test(v.salaEining||'') && !perEin.test(String(v.unit||''))) return `<span class="ef-vl-al ein" title="Verðskráin er per ${escapeAttr(v.salaEining)} en kaupin per ${escapeAttr(String(v.unit||'stk').toLowerCase())} — ekki sambærilegt">per ${escapeHtml(v.salaEining)}</span>`;
     const p = Math.round(v.alagning*100);
     const kl = p < 0 ? 'tap' : p < 30 ? 'lag' : 'ok';
     return `<span class="ef-vl-al ${kl}" title="${p<0?'Selt undir innkaupsverði':'Söluverð / innkaup − 1'}">${p<0?'−':'+'}${Math.abs(p)}%</span>`;
   };
+  // Flokkar (Agnar 16.10.2026: „kíttin efst, ull, eldvarnarband, málning, og Eldvarnarkraga stærðirnar í lokin").
+  // Flokkað eftir Verðskrárliðnum sem varan parast við; óparaðar vörur í eigin flokki aftast.
+  const FLOKKAR = [
+    ['kitti','Kítti',        l => /akr[íi]l|k[íi]tti|silikon/i.test(l)],
+    ['ull','Ull',            l => /steinull|þéttull/i.test(l)],
+    ['band','Eldvarnarband', l => /^band|rúlla/i.test(l)],
+    ['malning','Málning',    l => /m[áa]lning/i.test(l)],
+    ['ror','Brunaþéttirör',  l => /brunaþéttirör/i.test(l)],
+    ['kragi','Eldvarnarkragar — eftir stærð', l => /^kragi/i.test(l)],
+  ];
+  const flokkur = v => { if(v.sala===null) return FLOKKAR.length + 1; const i = FLOKKAR.findIndex(f => f[2](v.salaHeiti||'')); return i < 0 ? FLOKKAR.length : i; };
+  const flokkHeiti = i => i < FLOKKAR.length ? FLOKKAR[i][1] : (i === FLOKKAR.length ? 'Annað í verðskrá' : 'Ekki í verðskrá');
+  const mm = v => { const m = String(v.salaHeiti||v.heiti||'').match(/(\d{2,3})\s*mm/i); return m ? Number(m[1]) : 9999; };
   const teikna = () => {
     const [rk, ratt] = rodun.split(':');
     const q = leit.trim().toLowerCase();
@@ -23014,13 +23069,19 @@ function efVerdlistiOpna(rows){
     const gildi = v => rk==='vara' ? v.heiti.toLowerCase() : rk==='sidast' ? (v.sidast||'') : ((v[rk]===null||v[rk]===undefined) ? null : Number(v[rk]));
     const dir = ratt==='asc' ? 1 : -1;
     l.sort((a,b)=>{
-      if(sia==='allt' && (a.sala===null) !== (b.sala===null)) return a.sala===null ? 1 : -1;   // óparaðar neðst
+      const fa = flokkur(a), fb = flokkur(b);
+      if(fa !== fb) return fa - fb;                                   // flokkaröðin ræður fyrst
+      if(fa < FLOKKAR.length && FLOKKAR[fa][0]==='kragi'){             // kragarnir alltaf eftir stærð (32 → 315 mm)
+        const d = mm(a) - mm(b); if(d) return d;
+      }
       const x = gildi(a), y = gildi(b);
       if(x===null && y===null) return a.heiti.localeCompare(b.heiti,'is');
       if(x===null) return 1; if(y===null) return -1;
       return ((x<y ? -1 : x>y ? 1 : 0) * dir) || a.heiti.localeCompare(b.heiti,'is');
     });
-    $body.innerHTML = l.length ? l.map(v => `<tr class="${v.sala===null?'an':''}">
+    let sidastiFl = -1;
+    const flokkRod = f => { const i = l.filter(v=>flokkur(v)===f); const sum = i.reduce((a,v)=>a+v.upph,0); return `<tr class="ef-vl-flokkur ${f > FLOKKAR.length ? 'an' : ''}"><td colspan="8">${escapeHtml(flokkHeiti(f))}<small>${i.length} ${i.length===1?'vara':'vörur'} · keypt ${P(sum)} kr</small></td></tr>`; };
+    $body.innerHTML = l.length ? l.map(v => { const f = flokkur(v); const haus = f !== sidastiFl ? flokkRod(f) : ''; sidastiFl = f; return haus + `<tr class="${v.sala===null?'an':''}">
       <td data-l="Vara"><div class="ef-vl-heiti">${escapeHtml(v.heiti)}</div><div class="ef-vl-meta">${v.kodi?`<code>${escapeHtml(v.kodi)}</code> · `:''}${v.sala!==null?`<span class="ef-vl-vs">Verðskrá: ${escapeHtml(v.salaHeiti)}</span>`:'<span class="ef-vl-ekki">— ekki í verðskrá</span>'}</div></td>
       <td class="r" data-l="Innkaup okkar"><strong>${P(v.inn)}</strong> kr${v.unit?`<small>/${escapeHtml(String(v.unit).toLowerCase())}</small>`:''}</td>
       <td class="r" data-l="Afsláttur">${v.afsl ? Math.round(v.afsl*10)/10+'%' : '0%'}</td>
@@ -23029,12 +23090,12 @@ function efVerdlistiOpna(rows){
       <td class="r" data-l="Álagning">${alagningHtml(v)}</td>
       <td class="r" data-l="Síðast keypt" title="${v.fyrst?'Fyrst keypt '+dags(v.fyrst):''}">${dags(v.sidast)}</td>
       <td class="r" data-l="Kaup" title="${v.kaup} línur á Redder-reikningum · ${P(v.magn)} ${escapeAttr(String(v.unit||'').toLowerCase())} alls">${v.kaup}<small>×</small> <span class="dauft">${P(v.magn)} ${escapeHtml(String(v.unit||'').toLowerCase())}</span></td>
-    </tr>`).join('') : `<tr><td colspan="8" class="ef-vl-tom">Engin vara passar við leitina.</td></tr>`;
+    </tr>`; }).join('') : `<tr><td colspan="8" class="ef-vl-tom">Engin vara passar við leitina.</td></tr>`;
     const sumUpph = l.reduce((a,v)=>a+v.upph,0), sumKaup = l.reduce((a,v)=>a+v.kaup,0), lV = l.filter(v=>v.sala!==null).length;
     $fot.innerHTML = `<tr><td colspan="8"><span>${l.length} ${l.length===1?'vara':'vörur'} <small>· ${lV} í verðskrá · ${l.length-lV} ekki</small></span><span class="ef-vl-fot-sum">Samtals keypt <strong class="gull">${P(sumUpph)} kr</strong> <small>án vsk · ${sumKaup} línur</small></span></td></tr>`;
     rot.querySelectorAll('th[data-k]').forEach(th => { const on = th.dataset.k===rk; th.classList.toggle('on', on); th.querySelector('.ef-vl-pila').textContent = on ? (ratt==='asc'?'▲':'▼') : ''; });
     rot.querySelectorAll('#ef-vl-sia button').forEach(b => b.classList.toggle('on', b.dataset.sia===sia));
-    if($rod.value !== rodun) $rod.value = rodun;
+    if($rod && $rod.value !== rodun) $rod.value = rodun;
   };
   // Raunsmellur → vistað á þjón (hub_state ui.vidmot) — aldrei í lykkju eða vakt.
   rot.querySelector('thead').addEventListener('click', e => {
@@ -23043,16 +23104,12 @@ function efVerdlistiOpna(rows){
     rodun = k===rk ? `${k}:${ratt==='asc'?'desc':'asc'}` : `${k}:${k==='vara'?'asc':'desc'}`;
     vidmotSetja('ef_vl_rodun', rodun); teikna();
   });
-  $rod.addEventListener('change', () => { rodun = $rod.value; vidmotSetja('ef_vl_rodun', rodun); teikna(); });
+  if($rod) $rod.addEventListener('change', () => { rodun = $rod.value; vidmotSetja('ef_vl_rodun', rodun); teikna(); });
   rot.querySelector('#ef-vl-sia').addEventListener('click', e => {
     const b = e.target.closest('button[data-sia]'); if(!b || b.dataset.sia===sia) return;
     sia = b.dataset.sia; vidmotSetja('ef_vl_sia', sia); teikna();
   });
-  $leit.addEventListener('input', () => { leit = $leit.value; teikna(); });
-  rot.querySelector('#ef-vl-loka').onclick = () => closeModal();
-  if(window.__efVlEsc) document.removeEventListener('keydown', window.__efVlEsc);
-  window.__efVlEsc = e => { if(e.key==='Escape'){ closeModal(); document.removeEventListener('keydown', window.__efVlEsc); window.__efVlEsc = null; } };
-  document.addEventListener('keydown', window.__efVlEsc);
+  if($leit) $leit.addEventListener('input', () => { leit = $leit.value; teikna(); });
   teikna();
 }
 
