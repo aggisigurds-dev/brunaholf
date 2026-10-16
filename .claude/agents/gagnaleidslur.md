@@ -340,6 +340,11 @@ ANNAÐ kerfi en „Efniskostnaður / Kostnaðarreikningar (endurrukkun)" hér a�
 - `invoice_drafts.payday_invoice_id` ↔ `invoices.id` (bru-fallið parar svo); drög bera `tilvisun` (21727) en
   Payday-röðin `tilvisun` = reikningsnúmer (371) — EKKI sami reitur.
 - `/api/efnislisti-docs?worksite&month`: doc_type `efnislisti_pdf` / `efnislisti_timabok_pdf` (Supabase storage
-  efnislisti-pdf/<slug>/<mán>/…, public_url) og `invoice` (Drive, /api/skjal?id=). Payday-reiknings-PDF er ekki til
-  í kerfinu — Agnar sækir hann í Payday.
+  efnislisti-pdf/<slug>/<mán>/…, public_url) og `invoice` (Drive, /api/skjal?id=). Payday-reiknings-PDF er ekki speglað
+  í kerfinu en sækist á staðnum frá 16.10.2026: `GET /api/payday-invoice-pdf?tilvisun=355`
+  (`netlify/functions/payday-invoice-pdf.js` → Payday `GET /invoices/{guid}/pdf`, GUID úr `invoices.payday_uuid`
+  sem payday-pull fyllir; payday_invoice_id (int) var alltaf NULL því Payday-id er GUID). Hreyfingaryfirlit
+  (`hreyfingar.js` setur `src`) gerir Payday-raðir að hlekk á þetta fall. Fyrri reikningar í 06 telja líka
+  `draft_match.worksite` — `r.worksite` kemur eftir nafni greiðanda og getur verið annar verkstaður
+  (Rekstrarfélag Kringlunnar → „Kringlan - Turn" meðan drögin heita „Kringlan").
 
