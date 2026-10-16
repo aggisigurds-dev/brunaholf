@@ -12826,7 +12826,8 @@ async function renderGerdReikninga(t){
         { const td = K('gb-tdot-02'); if(td) td.hidden = !hoursMis;
           SS('gb-tc-03', String(c.matLines.filter(m => m.qty > 0 || m.total > 0).length));
           SS('gb-tc-04', String((c.stadf ? 1 : 0) + (c.sma ? 1 : 0) + (c.discPct > 0 ? 1 : 0) + (c.fixed > 0 ? 1 : 0)));
-          const ts = { '02': fmt(timi) + ' kr', '03': fmt(c.matSum) + ' kr', '04': fmt(gjold) + ' kr', '05': '', '06': '' };
+          const efniPctTs = (c.net > 0 && c.matSum > 0) ? ' · ' + Math.round(100 * c.matSum / c.net) + '%' : ''; // 16.10 Agnar: „sýna 3% inn á efni svona bara fyrir okkur að sjá"
+          const ts = { '02': fmt(timi) + ' kr', '03': fmt(c.matSum) + ' kr' + efniPctTs, '04': fmt(gjold) + ' kr', '05': '', '06': '' };
           SS('gb-tsum', ts[bg.__gbTab || '02'] || ''); }
         // 16.10.2026: efnishlutfall (efni / reikningur án vsk) í Samantekt og haus 03; Redder-kassinn + punktur á flipann.
         { const nRd = redderBox(c) || 0;
