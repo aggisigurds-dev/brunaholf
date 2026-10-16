@@ -3059,101 +3059,130 @@ function renderFjarmalyfirlit(t){
 }
 // 🏢 Viðskiptavinir — per-viðskiptavin reikningsstillingar (pricing_guide). 2026-08-08.
 function renderVidskiptavinir(t) {
+  // 16.10.2026 — endurhönnuð í Boss-útlitinu (Agnar: „Viðskiptavinir-síðan er rosalega ljót og takmörkuð" og
+  // „komast inn á page sem ég get sett einhverjar upplýsingar um viðskiptavininn, eins og tölvupóstinn").
+  // Listi greiðenda vinstra megin (leit á nafni/kennitölu), valið félag hægra megin: haus, KPI-röð, tengiliður og
+  // skilmálar (vistast strax í customer_info), samningurinn (verðskrá per verkstað), ósendar kröfur, sendar kröfur,
+  // samskipti úr pósthólfinu og minnispunktar. Gögn og vistun óbreytt: /api/pricing-guide, /api/verkkaupar(?name=).
+  // Djúptenging: sessionStorage.vk_open_name (📒 nafn verkkaupa í Efnislistanum) velur félagið við opnun.
   if (!document.getElementById('vk-css')) {
     const s = document.createElement('style');
     s.id = 'vk-css';
     s.textContent = `
-      .vk-wrap{max-width:860px;margin:0 auto;padding:18px 14px 40px}
-      .vk-head{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
-      .vk-h1{font-size:22px;font-weight:800;margin:0;flex:1}
-      .vk-btn-add{font:inherit;font-size:13px;font-weight:700;padding:9px 16px;border:1px solid var(--blue-deep);border-radius:9px;background:var(--blue-deep);color:var(--blue-bg);cursor:pointer}
-      .vk-cust-card{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:14px;overflow:hidden}
-      .vk-cust-head{padding:12px 16px;border-bottom:1px solid var(--line)}
-      .vk-cust-name{font-size:15px;font-weight:700;color:var(--ink)}
-      .vk-cust-meta{font-size:12px;color:var(--ink3);margin-top:2px}
-      .vk-ws-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;padding:12px 14px}
-      .vk-ws-item{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:11px 13px}
-      .vk-ws-name{font-size:13px;font-weight:700;margin-bottom:6px;color:var(--ink)}
-      .vk-rate-row{font-size:12px;color:var(--ink2);margin:3px 0;display:flex;gap:6px;align-items:center}
-      .vk-tag{display:inline-block;font-size:10.5px;font-weight:700;border-radius:99px;padding:2px 8px;margin:3px 3px 0 0}
-      .vk-tag-green{background:var(--green);border:1px solid var(--green);color:var(--green-line)}
-      .vk-tag-red{background:var(--red-dark);border:1px solid var(--red-dark);color:var(--red-line)}
-      .vk-tag-blue{background:var(--blue-deep);border:1px solid var(--blue-deep);color:var(--blue)}
-      .vk-edit-btn{font:inherit;font-size:11px;padding:4px 10px;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--ink2);cursor:pointer;margin-top:8px}
-      .vk-ws-add{padding:6px 14px 12px}
-      .vk-add-ws-btn{font:inherit;font-size:12px;padding:6px 12px;border:1px dashed var(--blue-deep);border-radius:8px;background:transparent;color:var(--ink3);cursor:pointer}
+      .vk-wrap{max-width:1380px;margin:0 auto;padding:16px 16px 48px}
+      .vk-top{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:0 0 14px}
+      .vk-top .boss-h1{margin:0;font-size:30px}
+      .vk-count{font-family:var(--font-mono,ui-monospace,monospace);font-size:12px;color:var(--muted);flex:1}
+      .vk-grid{display:grid;grid-template-columns:minmax(260px,340px) minmax(0,1fr);gap:16px;align-items:start}
+      .vk-list-panel,.vk-d,#vk-detail{min-width:0;max-width:100%}
+      .vk-search{min-width:0}
+      .vk-list-panel{position:sticky;top:12px;max-height:calc(100vh - 40px);display:flex;flex-direction:column;overflow:hidden}
+      .vk-list-panel .boss-panel-head{flex-wrap:wrap;gap:8px 12px}
+      .vk-search{width:100%;box-sizing:border-box;height:36px;margin-top:4px}
+      .vk-list{overflow:auto;flex:1;background:var(--card,#fff)}
+      .vk-row{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line,#e6e1d6);background:transparent;padding:10px 16px;font:inherit;color:var(--ink,#161513);cursor:pointer}
+      .vk-row:hover{background:var(--bg-2,#ece7dc)}
+      .vk-row.sel{background:#1a1813;color:#f4f1ea;box-shadow:inset 3px 0 0 var(--gold,#c9a54a)}
+      .vk-row .n{display:block;font-weight:700;font-size:14px;line-height:1.25}
+      .vk-row .m{display:block;font-family:var(--font-mono,ui-monospace,monospace);font-size:11px;color:var(--muted,#6f685c);margin-top:2px}
+      .vk-row.sel .m{color:#b9b19f}
+      .vk-row .s{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px}
+      .vk-row .s span{font-family:var(--font-mono,ui-monospace,monospace);font-size:10.5px;padding:1px 7px;border-radius:3px;background:var(--bg-2,#ece7dc);color:var(--ink-2,#4a463f);font-variant-numeric:tabular-nums}
+      .vk-row .s span.osent{background:#f6dcd8;color:#8a3b12}.vk-row .s span.ogreitt{background:#fbf3d9;color:#8a6a1c}
+      .vk-row.sel .s span{background:rgba(255,255,255,.12);color:#f4f1ea}
+      .vk-empty{padding:40px 20px;text-align:center;color:var(--muted);font-size:14px}
+      .vk-d{overflow:hidden}
+      .vk-dh{align-items:flex-start}
+      .vk-dt{flex:1;min-width:0}
+      .vk-name{margin:0;font-family:var(--font-display,Georgia,serif);font-size:26px;font-weight:800;line-height:1.1;letter-spacing:-.01em;color:var(--ink)}
+      .vk-sub{font-family:var(--font-mono,ui-monospace,monospace);font-size:12px;color:var(--muted);margin-top:4px;display:flex;gap:10px;flex-wrap:wrap}
+      .vk-dact{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+      .vk-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;padding:14px 18px 4px}
+      .vk-kpis .boss-kpi{padding:10px 12px}
+      .vk-kpis .k-label{font-family:var(--font-mono,ui-monospace,monospace);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+      .vk-kpis .k-num{font-family:var(--font-display,Georgia,serif);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink);margin-top:2px}
+      .vk-kpis .osent .k-num{color:#b5522a}.vk-kpis .ogreitt .k-num{color:#8a6a1c}.vk-kpis .greitt .k-num{color:#2f7a4a}
+      .vk-sec{padding:14px 18px 16px;border-top:1px solid var(--line,#e6e1d6)}
+      .vk-sec-h{display:flex;align-items:center;gap:10px;margin:0 0 10px;font-family:var(--font-display,Georgia,serif);font-size:15px;font-weight:700;color:var(--ink)}
+      .vk-sec-h small{font-family:var(--font-mono,ui-monospace,monospace);font-size:11px;font-weight:500;color:var(--muted);margin-left:auto}
+      .vk-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px 12px}
+      .vk-fact label{display:block;font-family:var(--font-mono,ui-monospace,monospace);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+      .vk-fact input{width:100%;box-sizing:border-box;height:36px;padding:0 10px;border:1px solid var(--edge,#c9c2b3);border-radius:4px;background:#fff;font:inherit;font-size:13.5px;color:var(--ink);box-shadow:inset 0 1px 2px rgba(0,0,0,.06)}
+      .vk-fact input:focus{outline:2px solid var(--gold,#c9a54a);outline-offset:-1px}
+      .vk-fact.wide{grid-column:span 2}
+      .vk-st{font-family:var(--font-mono,ui-monospace,monospace);font-size:11px;color:var(--muted);margin-left:10px}
+      .vk-ws-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+      .vk-ws-item{background:var(--bg,#f4f1ea);border:1px solid var(--line-2,#d9d3c6);border-radius:4px;padding:11px 13px}
+      .vk-ws-name{font-size:13.5px;font-weight:700;margin-bottom:6px;color:var(--ink)}
+      .vk-rate-row{font-size:12px;color:var(--ink-2,#4a463f);margin:3px 0;display:flex;gap:6px;align-items:center}
+      .vk-rate-row b{font-variant-numeric:tabular-nums}
+      .vk-tag{display:inline-block;font-family:var(--font-mono,ui-monospace,monospace);font-size:10px;font-weight:600;border-radius:3px;padding:2px 7px;margin:4px 4px 0 0;background:#fff;border:1px solid var(--line-2,#d9d3c6);color:var(--ink-2)}
+      .vk-tag-red{border-color:#e3b0a3;color:#8a3b12}.vk-tag-green{border-color:#b7d3c0;color:#2f7a4a}
+      .vk-edit-btn{font:inherit;font-size:11.5px;padding:4px 10px;border:1px solid var(--edge,#c9c2b3);border-bottom-color:#a89f8c;border-radius:4px;background:linear-gradient(180deg,#fff,#efeae0);color:var(--ink);cursor:pointer;margin-top:8px}
+      .vk-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+      .vk-tbl th{text-align:left;font-family:var(--font-mono,ui-monospace,monospace);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:4px 8px;border-bottom:1px solid var(--line-2,#d9d3c6)}
+      .vk-tbl td{padding:6px 8px;border-top:1px solid var(--line,#e6e1d6);vertical-align:top}
+      .vk-tbl td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+      .vk-pill{display:inline-block;padding:1px 8px;border-radius:3px;font-family:var(--font-mono,ui-monospace,monospace);font-size:10.5px;font-weight:600;white-space:nowrap}
+      .vk-pill.greitt{background:#dfeee4;color:#2f7a4a}.vk-pill.ogreitt{background:#fbf3d9;color:#8a6a1c}.vk-pill.kredit{background:var(--bg-2,#ece7dc);color:var(--muted)}.vk-pill.osent{background:#f6dcd8;color:#8a3b12}
+      .vk-mail{padding:7px 0;border-top:1px solid var(--line,#e6e1d6);font-size:12.5px}
+      .vk-mail:first-of-type{border-top:0}
+      .vk-mail .h{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline}
+      .vk-mail .who{font-weight:700;color:var(--ink)}
+      .vk-mail .when{margin-left:auto;font-family:var(--font-mono,ui-monospace,monospace);font-size:11px;color:var(--muted)}
+      .vk-mail .snip{color:var(--ink-2,#4a463f);margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+      .vk-notes{width:100%;box-sizing:border-box;min-height:110px;padding:10px 12px;border:1px solid var(--edge,#c9c2b3);border-radius:4px;background:#fff;font:inherit;font-size:13.5px;line-height:1.5;color:var(--ink);resize:vertical;box-shadow:inset 0 1px 2px rgba(0,0,0,.06)}
+      .vk-muted{color:var(--muted);font-size:12.5px}
+      /* verkstaðar-glugginn (óbreyttur að virkni) */
       .vk-ov{position:fixed;inset:0;z-index:7100;background:rgba(6,8,16,.78);display:flex;align-items:flex-end;justify-content:center}
       @media(min-width:600px){.vk-ov{align-items:center}}
-      .vk-mod{background:var(--blue-deep);border:1px solid var(--line);border-radius:18px 18px 0 0;padding:22px 18px;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;box-sizing:border-box}
-      @media(min-width:600px){.vk-mod{border-radius:18px}}
-      .vk-mod h3{font-size:17px;font-weight:800;margin:0 0 16px;color:var(--ink)}
-      .vk-sect-lbl{font-size:11px;font-weight:700;color:var(--ink3);letter-spacing:.05em;text-transform:uppercase;border-top:1px solid var(--line);padding-top:10px;margin:14px 0 10px}
+      .vk-mod{background:var(--card,#fff);border:1px solid var(--line-2,#d9d3c6);border-radius:8px 8px 0 0;padding:22px 18px;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;box-sizing:border-box;color:var(--ink)}
+      @media(min-width:600px){.vk-mod{border-radius:8px}}
+      .vk-mod h3{font-family:var(--font-display,Georgia,serif);font-size:20px;font-weight:800;margin:0 0 16px;color:var(--ink)}
+      .vk-sect-lbl{font-family:var(--font-mono,ui-monospace,monospace);font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;border-top:1px solid var(--line,#e6e1d6);padding-top:10px;margin:14px 0 10px}
       .vk-field{margin-bottom:11px}
-      .vk-field label{display:block;font-size:11.5px;color:var(--ink3);margin-bottom:4px;font-weight:600}
-      .vk-field input,.vk-field select{width:100%;box-sizing:border-box;padding:9px 11px;background:var(--blue-deep);border:1px solid var(--blue-deep);border-radius:8px;color:var(--ink);font:inherit;font-size:14px}
-      .vk-field input:read-only{background:var(--ink);color:var(--ink3)}
+      .vk-field label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:4px;font-weight:600}
+      .vk-field input,.vk-field select{width:100%;box-sizing:border-box;padding:9px 11px;background:#fff;border:1px solid var(--edge,#c9c2b3);border-radius:4px;color:var(--ink);font:inherit;font-size:14px}
+      .vk-field input:read-only{background:var(--bg-2,#ece7dc);color:var(--muted)}
       .vk-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
       .vk-toggle{display:flex;align-items:center;gap:10px;margin-bottom:11px}
-      .vk-toggle label{font-size:13px;color:var(--ink2);flex:1;cursor:pointer}
+      .vk-toggle label{font-size:13px;color:var(--ink-2);flex:1;cursor:pointer}
       .vk-actions{display:flex;gap:9px;margin-top:20px;flex-wrap:wrap}
-      .vk-save{flex:1;padding:13px;background:linear-gradient(180deg,var(--warn-line),var(--gold-500) 45%,var(--red) 55%,var(--warn-line));color:var(--warn);border:none;border-radius:10px;font:inherit;font-weight:700;font-size:14px;cursor:pointer;min-width:120px}
-      .vk-cancel{padding:13px;background:transparent;color:var(--ink2);border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14px;cursor:pointer}
-      .vk-del{padding:13px;background:transparent;color:var(--red-line);border:1px solid var(--red-dark);border-radius:10px;font:inherit;font-size:14px;cursor:pointer}
-      .vk-wrap{max-width:1180px}
-      .vk-kpis{display:flex;gap:10px;flex-wrap:wrap;margin:2px 0 10px}
-      .vk-kpi{flex:1;min-width:120px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 12px}
-      .vk-kpi .l{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-      .vk-kpi .v{font-size:17px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;margin-top:2px}
-      .vk-kpi.warn .v{color:var(--warn)} .vk-kpi.red .v{color:var(--red)} .vk-kpi.green .v{color:var(--green)}
-      .vk-cust-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;cursor:pointer}
-      .vk-cust-head:hover{background:var(--bg-2)}
-      .vk-cust-sums{margin-left:auto;display:flex;gap:12px;flex-wrap:wrap;font-size:12px}
-      .vk-cust-sums b{font-variant-numeric:tabular-nums}
-      .vk-caret{color:var(--muted);font-size:14px;transition:transform .15s}
-      .vk-cust-card.open .vk-caret{transform:rotate(90deg)}
-      .vk-detail{border-top:1px solid var(--line);padding:0}
-      .vk-sec{border-top:1px solid var(--line);padding:12px 16px}
-      .vk-sec:first-child{border-top:0}
-      .vk-sec-t{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:8px}
-      .vk-sec-t b{margin-left:auto;letter-spacing:0;text-transform:none;font-size:12px;color:var(--ink-2)}
-      .vk-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
-      .vk-fact label{display:block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
-      .vk-fact input{width:100%;box-sizing:border-box;height:34px;padding:0 9px;border:1px solid var(--edge);border-radius:6px;background:var(--input-bg,#f6f3ec);font:inherit;font-size:13px;color:var(--ink)}
-      .vk-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
-      .vk-tbl th{text-align:left;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:4px 8px;border-bottom:1px solid var(--line)}
-      .vk-tbl td{padding:5px 8px;border-top:1px solid var(--line);vertical-align:top}
-      .vk-tbl td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-      .vk-pill{display:inline-block;padding:1px 8px;border-radius:99px;font-size:10.5px;font-weight:700;white-space:nowrap}
-      .vk-pill.greitt{background:var(--green-bg,#dfeee4);color:var(--green)}
-      .vk-pill.ogreitt{background:var(--warn-bg,#fbf3d9);color:var(--warn)}
-      .vk-pill.kredit{background:var(--bg-2);color:var(--muted)}
-      .vk-pill.osent{background:var(--red-bg,#f6dcd8);color:var(--red)}
-      .vk-mail{padding:6px 8px;border-top:1px solid var(--line);font-size:12.5px}
-      .vk-mail .h{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline}
-      .vk-mail .who{font-weight:600;color:var(--ink)}
-      .vk-mail .when{margin-left:auto;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
-      .vk-mail .snip{color:var(--ink-2);margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-      .vk-notes{width:100%;box-sizing:border-box;min-height:90px;padding:9px 11px;border:1px solid var(--edge);border-radius:8px;background:var(--input-bg,#f6f3ec);font:inherit;font-size:13.5px;line-height:1.5;color:var(--ink);resize:vertical}
-      .vk-save-notes{margin-top:8px;padding:8px 14px;border:1px solid var(--edge);border-bottom-color:#a89f8c;border-radius:6px;background:linear-gradient(180deg,#fff,#efeae0);font:inherit;font-size:12.5px;font-weight:700;color:var(--ink);cursor:pointer}
-      .vk-st{font-size:12px;color:var(--muted);margin-left:8px}
+      .vk-save{flex:1;padding:12px;border:1px solid #5a4410;border-radius:4px;background:var(--gold-face,linear-gradient(180deg,#f5d76e,#c9a54a 55%,#8f6a1c));color:#1e1502;font:inherit;font-weight:700;font-size:14px;cursor:pointer}
+      .vk-cancel{padding:12px;background:transparent;color:var(--ink-2);border:1px solid var(--edge,#c9c2b3);border-radius:4px;font:inherit;font-size:14px;cursor:pointer}
+      .vk-del{padding:12px;background:transparent;color:#8a3b12;border:1px solid #e3b0a3;border-radius:4px;font:inherit;font-size:14px;cursor:pointer}
+      @media(max-width:980px){
+        .vk-grid{grid-template-columns:minmax(0,1fr)}
+        .vk-dh{flex-wrap:wrap}.vk-dact{width:100%;justify-content:flex-start}
+        .vk-list-panel{position:static;max-height:46vh}
+        .vk-name{font-size:22px}
+        .vk-fact.wide{grid-column:auto}
+      }
     `;
     document.head.appendChild(s);
   }
 
-  $view.innerHTML = '<div class="vk-wrap"><p style="color:var(--ink3)">Sæki…</p></div>';
+  $view.innerHTML = '<div class="vk-wrap"><p class="vk-muted" style="padding:20px">Sæki…</p></div>';
   const wrap = $view.querySelector('.vk-wrap');
   let allRows = [];
   let VKSUMS = {};          // nafn → { osent, ogreitt, greitt_ar } úr /api/verkkaupar
-  const VKDETAIL = {};      // nafn → smáatriði (sótt við fyrsta smell)
+  const VKDETAIL = {};      // nafn → smáatriði (sótt við fyrsta val)
+  let valinn = null;        // nafn greiðandans sem er valinn
+  let leit = '';
 
-  const fmtKr = n => Math.round(n||0).toLocaleString('is-IS');
+  // Þúsundapunktur handvirkt — toLocaleString('is-IS') gefur kommur á vél án is-IS (mælt 15.10.2026).
+  const vkMoney = n => { const x = Math.round(Number(n)||0); return (x<0?'-':'') + String(Math.abs(x)).replace(/\B(?=(\d{3})+(?!\d))/g,'.'); };
+  const fmtKr = vkMoney;
+  const vkDate = s => { const m = String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3] + '/' + m[2] + '/' + m[1] : (s||''); };
+  const vkMonth = s => { const m = String(s||'').match(/^(\d{4})-(\d{2})/); return m ? m[2]+'/'+m[1].slice(2) : (s||''); };
+  const dig = v => String(v||'').replace(/\D/g,'');
 
-  // Samtölur per greiðanda (ósent / ógreitt / greitt í ár) — birtast í hausnum á hverju spjaldi.
+  // Samtölur per greiðanda (ósent / ógreitt / greitt í ár) — merkin í listanum og KPI-röðin.
   async function loadSums(){
     try {
       const r = await fetch('/api/verkkaupar', { cache:'no-store' });
       const j = await r.json();
-      if (r.ok && j.rows) { VKSUMS = {}; for (const x of j.rows) VKSUMS[x.name] = x; if (allRows.length) renderList(allRows); }
+      if (r.ok && j.rows) { VKSUMS = {}; for (const x of j.rows) VKSUMS[x.name] = x; if (allRows.length) teiknaLista(); }
     } catch (_) {}
   }
 
@@ -3164,25 +3193,69 @@ function renderVidskiptavinir(t) {
     const srcLabel = w.source === 'ajour' ? 'Ajour' : w.source === 'fixed' ? 'Fast' : 'Tímavera';
     return `<div class="vk-ws-item">
       <div class="vk-ws-name">${escapeHtml(w.worksite_name)}</div>
-      <div class="vk-rate-row"><span style="color:var(--ink3)">Dagvinna</span><b>${fmtKr(w.dagvinna_rate)} kr/klst</b></div>
-      ${evOk ? `<div class="vk-rate-row"><span style="color:var(--ink3)">Yfirvinna</span><b>${fmtKr(w.eftirvinna_rate)} kr/klst</b> · þröskuldur ${threshold}klst</div>` : ''}
-      <div style="margin-top:5px">
+      <div class="vk-rate-row"><span style="color:var(--muted)">Dagvinna</span><b>${fmtKr(w.dagvinna_rate)} kr/klst</b></div>
+      ${evOk ? `<div class="vk-rate-row"><span style="color:var(--muted)">Yfirvinna</span><b>${fmtKr(w.eftirvinna_rate)} kr/klst</b> · þröskuldur ${threshold} klst</div>` : ''}
+      <div style="margin-top:3px">
         ${!evOk ? '<span class="vk-tag vk-tag-red">Engin yfirvinna</span>' : ''}
-        ${lunch > 0 ? `<span class="vk-tag vk-tag-blue">-${lunch}klst hádegi/dag</span>` : ''}
+        ${lunch > 0 ? `<span class="vk-tag">−${lunch} klst hádegi/dag</span>` : ''}
         ${w.verkfaeragjald ? '<span class="vk-tag vk-tag-green">Verkfæragjald</span>' : ''}
-        <span class="vk-tag vk-tag-blue">${srcLabel}</span>
+        <span class="vk-tag">${srcLabel}</span>
       </div>
-      <button class="vk-edit-btn" data-vk-edit="${escapeAttr(w.worksite_name)}">✏️ Breyta</button>
+      <button class="vk-edit-btn" data-vk-edit="${escapeAttr(w.worksite_name)}">✎ Breyta</button>
     </div>`;
   }
 
-  const vkMoney = n => Math.round(Number(n)||0).toLocaleString('is-IS');
-  const vkDate = s => { const m = String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3] + '/' + m[2] + '/' + m[1] : (s||''); };
-  const vkMonth = s => { const m = String(s||'').match(/^(\d{4})-(\d{2})/); return m ? m[2]+'/'+m[1].slice(2) : (s||''); };
+  function hopar(){
+    const grouped = {};
+    for (const r of allRows) { const k = r.customer_name || '(Óþekktur)'; (grouped[k] = grouped[k] || []).push(r); }
+    return grouped;
+  }
+  const kennitalaFyrir = (name, info) => (info && info.kennitala) || ((hopar()[name]||[]).find(w => w.kennitala)||{}).kennitala || '';
+  const heimilisfangFyrir = (name, info) => (info && info.heimilisfang) || ((hopar()[name]||[]).find(w => w.heimilisfang)||{}).heimilisfang || '';
 
-  // Smáatriðin: staða, samskipti, kröfur, ósent og minnispunktar — allt úr /api/verkkaupar?name=
-  async function loadDetail(name, box){
-    box.innerHTML = '<div class="vk-sec" style="color:var(--muted);font-size:13px">Sæki…</div>';
+  // ---------- Listinn (vinstra megin) ----------
+  function teiknaLista(){
+    const grouped = hopar();
+    const names = Object.keys(grouped).sort((a,b) => a.localeCompare(b,'is'));
+    const q = leit.trim().toLowerCase(), qd = dig(leit);
+    const synd = names.filter(n => !q || n.toLowerCase().includes(q) || (qd && dig(kennitalaFyrir(n)).includes(qd)));
+    const list = wrap.querySelector('.vk-list'); if(!list) return;
+    const html = synd.map(name => {
+      const ws = grouped[name]; const kt = kennitalaFyrir(name); const s = VKSUMS[name] || {};
+      return `<button type="button" class="vk-row${name === valinn ? ' sel' : ''}" data-vk-sel="${escapeAttr(name)}">
+        <span class="n">${escapeHtml(name)}</span>
+        <span class="m">${kt ? 'kt. ' + escapeHtml(kt) + ' · ' : ''}${ws.length} verkst.</span>
+        ${(s.osent || s.ogreitt) ? `<span class="s">${s.osent ? '<span class="osent">ósent ' + vkMoney(s.osent) + '</span>' : ''}${s.ogreitt ? '<span class="ogreitt">ógreitt ' + vkMoney(s.ogreitt) + '</span>' : ''}</span>` : ''}
+      </button>`;
+    }).join('') || '<div class="vk-empty">Ekkert félag passar.</div>';
+    if (list.innerHTML !== html) list.innerHTML = html;
+    const c = wrap.querySelector('.vk-count'); if (c) c.textContent = names.length + ' greiðendur · ' + allRows.length + ' verkstaðir';
+  }
+
+  // ---------- Valið félag (hægra megin) ----------
+  async function velja(name, { scroll } = {}){
+    valinn = name;
+    teiknaLista();
+    const col = wrap.querySelector('#vk-detail'); if(!col) return;
+    const grouped = hopar(); const ws = grouped[name] || [];
+    col.innerHTML = `<div class="boss-panel vk-d">
+      <div class="boss-panel-head vk-dh"><span class="boss-plate">02</span>
+        <div class="vk-dt"><h2 class="vk-name">${escapeHtml(name)}</h2><div class="vk-sub" id="vk-sub"></div></div>
+        <div class="vk-dact">
+          <button type="button" class="boss-btn ivory" id="vk-hreyf" title="Hreyfingaryfirlit greiðandans í bókhaldi Brunahólfs">📒 Hreyfingar</button>
+          <button type="button" class="boss-btn ivory" data-vk-addws="${escapeAttr(name)}">＋ Verkstaður</button>
+        </div>
+      </div>
+      <div class="vk-kpis" id="vk-kpis"></div>
+      <div id="vk-box"><div class="vk-sec vk-muted">Sæki…</div></div>
+    </div>`;
+    col.querySelectorAll('[data-vk-edit]').forEach(btn => { const w = allRows.find(r => r.worksite_name === btn.dataset.vkEdit); if (w) btn.addEventListener('click', () => openModal(w, null)); });
+    col.querySelectorAll('[data-vk-addws]').forEach(btn => btn.addEventListener('click', () => openModal(null, btn.dataset.vkAddws)));
+    if (scroll && window.innerWidth <= 980) col.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    await loadDetail(name, col.querySelector('#vk-box'), col);
+  }
+
+  async function loadDetail(name, box, col){
     let d = VKDETAIL[name];
     if (!d) {
       try {
@@ -3191,46 +3264,56 @@ function renderVidskiptavinir(t) {
         if (!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));
         VKDETAIL[name] = d;
       } catch (e) {
-        box.innerHTML = '<div class="vk-sec" style="color:var(--red);font-size:13px">Villa: ' + escapeHtml(e.message||String(e)) + '</div>';
+        box.innerHTML = '<div class="vk-sec" style="color:#b5522a;font-size:13px">Villa: ' + escapeHtml(e.message||String(e)) + '</div>';
         return;
       }
     }
+    if (valinn !== name) return; // notandinn valdi annað félag á meðan
     const i = d.info || {}, S = d.samtals || {};
+    // kennitala: customer_info → verðskrá → customer_worksite_map (kt_greidanda) — sama röð og Efnislistinn notar
+    const kt = kennitalaFyrir(name, i) || d.kt || ((d.map||[]).find(m => m.kt_greidanda)||{}).kt_greidanda || '', addr = heimilisfangFyrir(name, i);
+    const sub = col.querySelector('#vk-sub'); if (sub) sub.innerHTML = [kt ? 'kt. ' + escapeHtml(kt) : '', addr ? escapeHtml(addr) : '', i.contact_name ? '👤 ' + escapeHtml(i.contact_name) : '', i.contact_email ? '✉ ' + escapeHtml(i.contact_email) : ''].filter(Boolean).map(x => '<span>' + x + '</span>').join('');
+    const kp = col.querySelector('#vk-kpis'); if (kp) kp.innerHTML = [
+      ['osent','Ósent', vkMoney(S.osent) + ' kr'], ['ogreitt','Ógreitt', vkMoney(S.ogreitt) + ' kr'], ['greitt','Greitt alls', vkMoney(S.greitt) + ' kr'],
+      ['','Kröfur sendar', String(S.krofur||0)], ['','Verkstaðir', String(S.verkstadir||0)]
+    ].map(k => '<div class="boss-kpi ' + k[0] + '"><div class="k-label">' + k[1] + '</div><div class="k-num">' + k[2] + '</div></div>').join('');
+    const hb = col.querySelector('#vk-hreyf'); if (hb) { hb.disabled = !kt; hb.title = kt ? 'Hreyfingaryfirlit greiðandans í bókhaldi Brunahólfs (kt. ' + kt + ')' : 'Kennitala vantar'; hb.onclick = () => { try{ sessionStorage.setItem('hy_open_kt', kt); }catch(_){} try{ window.state.ui.activeTab = 'hreyfingaryfirlit'; save({nav:true}); render(); }catch(_){ location.hash = '#hreyfingaryfirlit'; } }; }
     const krofur = (d.krofur||[]).slice(0, 12);
-    const html = []
-      .concat('<div class="vk-sec"><div class="vk-sec-t">Staðan</div><div class="vk-kpis">'
-        + '<div class="vk-kpi red"><div class="l">Ósent</div><div class="v">' + vkMoney(S.osent) + '</div></div>'
-        + '<div class="vk-kpi warn"><div class="l">Ógreitt</div><div class="v">' + vkMoney(S.ogreitt) + '</div></div>'
-        + '<div class="vk-kpi green"><div class="l">Greitt alls</div><div class="v">' + vkMoney(S.greitt) + '</div></div>'
-        + '<div class="vk-kpi"><div class="l">Kröfur sendar</div><div class="v">' + (S.krofur||0) + '</div></div>'
-        + '<div class="vk-kpi"><div class="l">Verkstaðir</div><div class="v">' + (S.verkstadir||0) + '</div></div></div></div>')
-      .concat('<div class="vk-sec"><div class="vk-sec-t">Tengiliður og skilmálar<b>vistast strax</b></div><div class="vk-facts">'
-        + [['kennitala','Kennitala','000000-0000'],['contact_email','Netfang','netfang@fyrirtaeki.is'],['contact_phone','Sími','000 0000'],
-           ['payment_terms','Greiðslufrestur','t.d. 30 dagar'],['payment_method','Greiðslumáti','t.d. bankareikningur'],['retention_pct','Verktrygging %','t.d. 5']]
-          .map(f => '<div class="vk-fact"><label>' + f[1] + '</label><input data-vk-field="' + f[0] + '" data-vk-name="' + escapeAttr(name) + '" value="' + escapeAttr(i[f[0]] == null ? '' : String(i[f[0]])) + '" placeholder="' + f[2] + '"></div>').join('')
-        + '</div></div>')
-      .concat(d.drog && d.drog.length ? ('<div class="vk-sec"><div class="vk-sec-t">Ósendar kröfur<b>' + d.drog.length + ' drög · ' + vkMoney(S.osent) + ' kr</b></div>'
+    const fact = (f, l, p, wide) => '<div class="vk-fact' + (wide ? ' wide' : '') + '"><label>' + l + '</label><input data-vk-field="' + f + '" value="' + escapeAttr(i[f] == null ? '' : String(i[f])) + '" placeholder="' + p + '"></div>';
+    box.innerHTML = ''
+      + '<div class="vk-sec"><div class="vk-sec-h"><span class="boss-plate">03</span>Tengiliður og skilmálar <small>vistast strax þegar reit er lokað</small><span class="vk-st" data-vk-notes-st></span></div><div class="vk-facts">'
+        + fact('contact_name','Tengiliður','Nafn þess sem tekur við reikningum')
+        + fact('contact_email','Netfang','netfang@fyrirtaeki.is')
+        + fact('contact_phone','Sími','000 0000')
+        + fact('invoice_email','Reikningspóstur','ef annað en netfang tengiliðar')
+        + fact('kennitala','Kennitala','000000-0000')
+        + fact('heimilisfang','Heimilisfang','Gata 4, 200 Bær', true)
+        + fact('payment_terms','Greiðslufrestur','t.d. 30 dagar')
+        + fact('payment_method','Greiðslumáti','t.d. bankareikningur')
+        + fact('retention_pct','Verktrygging %','t.d. 5')
+      + '</div></div>'
+      + '<div class="vk-sec"><div class="vk-sec-h"><span class="boss-plate">04</span>Samningurinn <small>taxtar og reglur per verkstað</small></div><div class="vk-ws-grid">' + ((hopar()[name]||[]).map(wsCard).join('') || '<div class="vk-muted">Enginn verkstaður skráður.</div>') + '</div></div>'
+      + (d.drog && d.drog.length ? ('<div class="vk-sec"><div class="vk-sec-h"><span class="boss-plate">05</span>Ósendar kröfur <small>' + d.drog.length + ' drög · ' + vkMoney(S.osent) + ' kr</small></div>'
         + '<table class="vk-tbl"><thead><tr><th>Verkstaður</th><th>Mánuður</th><th class="n">Klst</th><th class="n">Upphæð</th><th></th></tr></thead><tbody>'
         + d.drog.map(x => '<tr><td>' + escapeHtml(x.worksite_name) + '</td><td>' + vkMonth(x.work_month) + '</td><td class="n">' + (x.hours||0) + '</td><td class="n">' + vkMoney(x.total_m_vsk) + '</td>'
           + '<td><button class="vk-edit-btn" data-vk-open="' + escapeAttr(x.worksite_name) + '" data-vk-month="' + escapeAttr(x.work_month) + '" style="margin:0">📄 Efnislisti</button></td></tr>').join('')
         + '</tbody></table></div>') : '')
-      .concat('<div class="vk-sec"><div class="vk-sec-t">Kröfur sem við höfum sent<b>' + (S.krofur||0) + ' alls</b></div>'
+      + '<div class="vk-sec"><div class="vk-sec-h"><span class="boss-plate">06</span>Kröfur sem við höfum sent <small>' + (S.krofur||0) + ' alls</small></div>'
         + (krofur.length ? '<table class="vk-tbl"><thead><tr><th>Gjalddagi</th><th>Tilvísun</th><th class="n">Upphæð</th><th>Staða</th><th>Greitt</th></tr></thead><tbody>'
           + krofur.map(v => '<tr><td class="n" style="text-align:left">' + vkDate(v.gjalddagi) + '</td><td>' + escapeHtml(v.worksite_match || v.tilvisun || '—') + '</td>'
             + '<td class="n">' + vkMoney(v.upphaed_total) + '</td>'
             + '<td><span class="vk-pill ' + (v.stada||'ogreitt') + '">' + (v.stada === 'greitt' ? 'greitt' : v.stada === 'kredit' ? 'kredit' : 'ógreitt') + '</span></td>'
             + '<td class="n" style="text-align:left">' + vkDate(v.greidsla_date) + '</td></tr>').join('')
-          + '</tbody></table>' + ((d.krofur||[]).length > 12 ? '<div style="font-size:11.5px;color:var(--muted);margin-top:6px">Sýni 12 nýjustu af ' + d.krofur.length + '.</div>' : '')
-          : '<div style="color:var(--muted);font-size:12.5px">Engar kröfur skráðar á þennan greiðanda.</div>') + '</div>')
-      .concat('<div class="vk-sec"><div class="vk-sec-t">Samskipti<b>úr brunaholf-pósthólfinu</b></div>'
+          + '</tbody></table>' + ((d.krofur||[]).length > 12 ? '<div class="vk-muted" style="margin-top:6px">Sýni 12 nýjustu af ' + d.krofur.length + '.</div>' : '')
+          : '<div class="vk-muted">Engar kröfur skráðar á þennan greiðanda.</div>') + '</div>'
+      + '<div class="vk-sec"><div class="vk-sec-h"><span class="boss-plate">07</span>Samskipti <small>úr brunaholf-pósthólfinu</small></div>'
         + ((d.samskipti||[]).length ? (d.samskipti||[]).slice(0,8).map(m => '<div class="vk-mail"><div class="h"><span class="who">' + escapeHtml(m.sender_name || m.sender_email || '—') + '</span>'
             + '<span>' + escapeHtml(m.subject || '(án efnis)') + '</span><span class="when">' + vkDate(m.received_at) + '</span></div>'
             + (m.snippet ? '<div class="snip">' + escapeHtml(m.snippet) + '</div>' : '') + '</div>').join('')
-          : '<div style="color:var(--muted);font-size:12.5px">Engir póstar fundust sem nefna verkstaðina eða greiðandann.</div>') + '</div>')
-      .concat('<div class="vk-sec"><div class="vk-sec-t">Minnispunktar<b>hvað var samið um, sérstök atriði, hver er tengiliður</b></div>'
-        + '<textarea class="vk-notes" data-vk-notes="' + escapeAttr(name) + '" placeholder="Skrifaðu hér — t.d. hvað var samið um, hver samþykkir reikninga, sérstök skilyrði…">' + escapeHtml(i.general_notes || '') + '</textarea>'
-        + '<div><button class="vk-save-notes" data-vk-savenotes="' + escapeAttr(name) + '">💾 Vista minnispunkta</button><span class="vk-st" data-vk-notes-st="' + escapeAttr(name) + '"></span></div></div>');
-    box.innerHTML = html.join('');
+          : '<div class="vk-muted">Engir póstar fundust sem nefna verkstaðina eða greiðandann.</div>') + '</div>'
+      + '<div class="vk-sec"><div class="vk-sec-h"><span class="boss-plate">08</span>Minnispunktar <small>hvað var samið um, hver samþykkir reikninga, sérstök skilyrði</small></div>'
+        + '<textarea class="vk-notes" data-vk-notes placeholder="Skrifaðu hér…">' + escapeHtml(i.general_notes || '') + '</textarea>'
+        + '<div style="margin-top:8px;display:flex;align-items:center;gap:8px"><button type="button" class="boss-btn ivory" data-vk-savenotes>💾 Vista minnispunkta</button><span class="vk-st" data-vk-notes-st2></span></div></div>';
     wireDetail(name, box);
   }
 
@@ -3239,89 +3322,53 @@ function renderVidskiptavinir(t) {
       try {
         const r = await fetch('/api/verkkaupar', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(Object.assign({ customer_name: name }, patch)) });
         const j = await r.json(); if (!r.ok || j.error) throw new Error(j.error || ('HTTP ' + r.status));
-        if (VKDETAIL[name]) VKDETAIL[name].info = j.info || VKDETAIL[name].info;
-        if (st) { st.textContent = '✓ vistað'; st.style.color = 'var(--green)'; }
+        if (VKDETAIL[name]) VKDETAIL[name].info = j.info || Object.assign({}, VKDETAIL[name].info, patch);
+        if (st) { st.textContent = '✓ vistað'; st.style.color = '#2f7a4a'; }
+        teiknaLista();
         return true;
-      } catch (e) { if (st) { st.textContent = '✗ ' + (e.message||e); st.style.color = 'var(--red)'; } return false; }
+      } catch (e) { if (st) { st.textContent = '✗ ' + (e.message||e); st.style.color = '#b5522a'; } return false; }
     };
     box.querySelectorAll('[data-vk-field]').forEach(inp => {
-      inp.addEventListener('change', () => {
-        const st = box.querySelector('[data-vk-notes-st]');
-        saveInfo({ [inp.dataset.vkField]: inp.value.trim() }, st);
-      });
+      inp.addEventListener('change', () => { const st = box.querySelector('[data-vk-notes-st]'); if (st) { st.textContent = '⏳'; st.style.color = ''; } saveInfo({ [inp.dataset.vkField]: inp.value.trim() }, st); });
     });
     const btn = box.querySelector('[data-vk-savenotes]');
     if (btn) btn.addEventListener('click', async () => {
-      const ta = box.querySelector('[data-vk-notes]'); const st = box.querySelector('[data-vk-notes-st]');
-      btn.disabled = true; if (st) { st.textContent = '⏳'; st.style.color = 'var(--muted)'; }
+      const ta = box.querySelector('[data-vk-notes]'); const st = box.querySelector('[data-vk-notes-st2]');
+      btn.disabled = true; if (st) { st.textContent = '⏳'; st.style.color = ''; }
       await saveInfo({ general_notes: ta.value }, st);
       btn.disabled = false;
     });
     box.querySelectorAll('[data-vk-open]').forEach(b => b.addEventListener('click', () => {
       if (typeof grOpenWorksite === 'function') grOpenWorksite(b.dataset.vkOpen, b.dataset.vkMonth);
     }));
+    box.querySelectorAll('[data-vk-edit]').forEach(btn => { const w = allRows.find(r => r.worksite_name === btn.dataset.vkEdit); if (w) btn.addEventListener('click', () => openModal(w, null)); });
   }
 
+  // Grindin: teiknuð einu sinni; listinn og valið félag uppfærast hvort í sínu lagi (ekkert hopp við endursókn).
   function renderList(rows) {
-    const grouped = {};
-    for (const r of rows) {
-      const k = r.customer_name || '(Óþekktur)';
-      if (!grouped[k]) grouped[k] = [];
-      grouped[k].push(r);
-    }
-    const names = Object.keys(grouped).sort((a,b) => a.localeCompare(b,'is'));
-    wrap.innerHTML = `
-      <div class="vk-head">
-        <h1 class="vk-h1">🏢 Viðskiptavinir</h1>
-        <button class="vk-btn-add" id="vk-new">+ Bæta við verkstað</button>
-      </div>
-      ${names.map(name => {
-        const wsList = grouped[name];
-        const kt = wsList.find(w => w.kennitala)?.kennitala || '';
-        const addr = wsList.find(w => w.heimilisfang)?.heimilisfang || '';
-        const sums = VKSUMS[name] || {};
-        const money = n => (Math.round(n||0)).toLocaleString('is-IS');
-        return `<div class="vk-cust-card" data-vk-card="${escapeAttr(name)}">
-          <div class="vk-cust-head" data-vk-toggle="${escapeAttr(name)}">
-            <span class="vk-caret">›</span>
-            <div>
-              <div class="vk-cust-name">${escapeHtml(name)}</div>
-              ${(kt||addr) ? `<div class="vk-cust-meta">${kt?'Kt. '+escapeHtml(kt):''}${kt&&addr?' · ':''}${escapeHtml(addr)}</div>` : ''}
-            </div>
-            <div class="vk-cust-sums">
-              ${sums.osent ? `<span style="color:var(--red)">Ósent <b>${money(sums.osent)}</b></span>` : ''}
-              ${sums.ogreitt ? `<span style="color:var(--warn)">Ógreitt <b>${money(sums.ogreitt)}</b></span>` : ''}
-              ${sums.greitt_ar ? `<span style="color:var(--green)">Greitt í ár <b>${money(sums.greitt_ar)}</b></span>` : ''}
-              <span style="color:var(--muted)">${wsList.length} verkst.</span>
-            </div>
-          </div>
-          <div class="vk-detail" data-vk-detail="${escapeAttr(name)}" hidden></div>
-          <div class="vk-sec">
-            <div class="vk-sec-t">Samningurinn — taxtar og reglur</div>
-            <div class="vk-ws-grid" style="padding:0">${wsList.map(wsCard).join('')}</div>
-            <div class="vk-ws-add" style="padding:8px 0 0"><button class="vk-add-ws-btn" data-vk-addws="${escapeAttr(name)}">＋ Bæta við verkstað hér</button></div>
-          </div>
+    allRows = rows;
+    if (!wrap.querySelector('.vk-grid')) {
+      wrap.innerHTML = `
+        <div class="vk-top"><h1 class="boss-h1">Viðskiptavinir</h1><span class="vk-count"></span><button type="button" class="boss-btn ivory" id="vk-new">＋ Bæta við verkstað</button></div>
+        <div class="vk-grid">
+          <aside class="boss-panel vk-list-panel">
+            <div class="boss-panel-head"><span class="boss-plate">01</span><span class="boss-panel-title">Greiðendur</span><input type="search" class="boss-field vk-search" id="vk-search" placeholder="🔍 Leita — nafn eða kennitala" autocomplete="off"></div>
+            <div class="vk-list"></div>
+          </aside>
+          <section id="vk-detail"><div class="boss-panel vk-d"><div class="vk-empty">Veldu greiðanda úr listanum til vinstri.</div></div></section>
         </div>`;
-      }).join('')}
-      ${!names.length ? '<p style="color:var(--ink3);text-align:center;padding:40px">Engar stillingar skráðar. Ýttu á <b>+ Bæta við verkstað</b> til að byrja.</p>' : ''}
-    `;
-    wrap.querySelector('#vk-new')?.addEventListener('click', () => openModal(null, null));
-    wrap.querySelectorAll('[data-vk-edit]').forEach(btn => {
-      const ws = allRows.find(r => r.worksite_name === btn.dataset.vkEdit);
-      if (ws) btn.addEventListener('click', () => openModal(ws, null));
-    });
-    wrap.querySelectorAll('[data-vk-addws]').forEach(btn => {
-      btn.addEventListener('click', () => openModal(null, btn.dataset.vkAddws));
-    });
-    wrap.querySelectorAll('[data-vk-toggle]').forEach(h => h.addEventListener('click', () => {
-      const name = h.dataset.vkToggle;
-      const card = h.closest('.vk-cust-card');
-      const box = card.querySelector('[data-vk-detail]');
-      const opna = box.hidden;
-      box.hidden = !opna;
-      card.classList.toggle('open', opna);
-      if (opna && !box.dataset.loaded) { box.dataset.loaded = '1'; loadDetail(name, box); }
-    }));
+      wrap.querySelector('#vk-new').addEventListener('click', () => openModal(null, null));
+      wrap.querySelector('#vk-search').addEventListener('input', e => { leit = e.target.value; teiknaLista(); });
+      wrap.querySelector('.vk-list').addEventListener('click', e => { const b = e.target.closest('[data-vk-sel]'); if (b) velja(b.dataset.vkSel, { scroll: true }); });
+    }
+    teiknaLista();
+    if (valinn && !hopar()[valinn]) valinn = null;
+    // Djúptenging úr Efnislistanum (nafn verkkaupa) — annars fyrsta félagið á breiðum skjá.
+    let opna = null;
+    try { opna = sessionStorage.getItem('vk_open_name'); if (opna) sessionStorage.removeItem('vk_open_name'); } catch(_) {}
+    if (opna) { const names = Object.keys(hopar()); const hit = names.find(n => n === opna) || names.find(n => n.toLowerCase() === opna.toLowerCase()); if (hit) { leit = ''; const s = wrap.querySelector('#vk-search'); if (s) s.value = ''; velja(hit, { scroll: true }); return; } }
+    if (valinn) velja(valinn);
+    else if (window.innerWidth > 980) { const first = Object.keys(hopar()).sort((a,b) => a.localeCompare(b,'is'))[0]; if (first) velja(first); }
   }
 
   function openModal(w, defaultCustomer) {
@@ -11590,6 +11637,8 @@ async function renderGerdReikninga(t){
       .gr-modal-bg.boss.gb2 .gb-kpi .k{flex-direction:row;align-items:baseline;justify-content:space-between;gap:10px;margin:0;padding:6px 16px;border:0;box-shadow:none}
       .gb2 .gb-kh+.k{padding-top:12px}
       /* 16.10.2026 (Verkefnaspjald Agnars): efnishlutfall í samantekt, Redder-línur + viðvörun í Efni, Hreyfingar-takki */
+      .gb2 .gb-tt .gb-meta .gb-custlink{font:inherit;font-size:inherit;color:#161513;font-weight:600;background:none;border:0;border-bottom:1px dotted #8f8776;padding:0 1px;cursor:pointer}
+      .gb2 .gb-tt .gb-meta .gb-custlink:hover{color:#8f6a1c;border-bottom-color:#8f6a1c}
       .gr-modal-bg.boss.gb2 .gb-kpi .kv small.gb-pct{font-size:11px;font-weight:400;color:#8f8776;margin-left:7px;font-family:var(--font-mono,ui-monospace,monospace)}
       .gb2 .gb-redder-lines{grid-column:1/-1;display:flex;flex-direction:column;gap:3px;margin-top:4px;border-top:1px solid #c9d4e6;padding-top:7px}
       .gb2 .gb-redder-lines .rl{display:grid;grid-template-columns:1fr auto auto auto 28px;gap:4px 12px;align-items:center;font-size:12px;line-height:1.3}
@@ -12212,7 +12261,7 @@ async function renderGerdReikninga(t){
         </header>
         <div class="gb-tt">
           <h1 class="gb-h1">${escapeHtml(name)}</h1>
-          <div class="gb-meta">${grPeriod?'<b class="gb-samr">⧉ SAMREIKNINGUR</b> ':''}${cust?escapeHtml(cust)+' · ':''}${escapeHtml((()=>{ const M=['Janúar','Febrúar','Mars','Apríl','Maí','Júní','Júlí','Ágúst','September','Október','Nóvember','Desember']; const p=String(month||'').split('-'); return p.length===2&&M[+p[1]-1] ? M[+p[1]-1]+' '+p[0] : String(month||''); })())} ·${dmy(fra)}–${dmy(til)}${grPeriod&&d&&d.merged_from?' · úr '+escapeHtml((d.merged_from||[]).map(x=>x.work_month).join(' + '))+' + '+escapeHtml(month):''}</div>
+          <div class="gb-meta">${grPeriod?'<b class="gb-samr">⧉ SAMREIKNINGUR</b> ':''}${cust?'<button type="button" class="gb-custlink" id="gr-cust-open" title="Opna viðskiptavininn — tengiliður, netfang, kröfur, minnispunktar">🏢 '+escapeHtml(cust)+'</button> · ':''}${escapeHtml((()=>{ const M=['Janúar','Febrúar','Mars','Apríl','Maí','Júní','Júlí','Ágúst','September','Október','Nóvember','Desember']; const p=String(month||'').split('-'); return p.length===2&&M[+p[1]-1] ? M[+p[1]-1]+' '+p[0] : String(month||''); })())} ·${dmy(fra)}–${dmy(til)}${grPeriod&&d&&d.merged_from?' · úr '+escapeHtml((d.merged_from||[]).map(x=>x.work_month).join(' + '))+' + '+escapeHtml(month):''}</div>
           <span class="gb-sp"></span>
           <button type="button" class="gb-key" id="gr-hreyf" ${custKt?'':'disabled'} title="${custKt?'Hreyfingaryfirlit verkkaupa í bókhaldi Brunahólfs (kt. '+escapeAttr(custKt)+')':'Kennitala vantar á verkkaupa'}">📒 Hreyfingar</button>
           <button type="button" class="gb-key" id="gb-prevfull" aria-pressed="false" title="Sýna reikninginn í fullri stærð við hlið eyðublaðsins">Stækka forskoðun</button>
@@ -12441,6 +12490,16 @@ async function renderGerdReikninga(t){
         try{ sessionStorage.setItem('hy_open_kt', kt); }catch(_){}
         try{ close(); }catch(_){}
         try{ window.state.ui.activeTab = 'hreyfingaryfirlit'; save({nav:true}); render(); }catch(_){ location.hash = '#hreyfingaryfirlit'; }
+      }; }
+    // 🏢 Viðskiptavinurinn (16.10.2026, Agnar: „ýta á viðskiptavininn og komast inn á page"): opnar Viðskiptavinir-flipann
+    // með greiðandann valinn. Glugginn lokast; óvistuð drög spyrja fyrst.
+    { const cb = document.getElementById('gr-cust-open'); if(cb) cb.onclick = () => {
+        const nafn = String(((document.getElementById('gr-cust')||{}).value || cust || '')).trim(); if(!nafn) return;
+        const st = document.getElementById('gr-hd-status');
+        if(st && st.classList.contains('unsaved') && !confirm('Drögin eru óvistuð og glugginn lokast. Opna viðskiptavininn samt?')) return;
+        try{ sessionStorage.setItem('vk_open_name', nafn); }catch(_){}
+        try{ close(); }catch(_){}
+        try{ window.state.ui.activeTab = 'vidskiptavinir'; save({nav:true}); render(); }catch(_){ location.hash = '#vidskiptavinir'; }
       }; }
     // ➕ Redder-lína í efnislistann: Verðskrár-samsvörun á söluverði, annars sérlína á innkaupsverði (Agnar breytir verðinu).
     { const rb = document.getElementById('gr-redder-box'); if(rb) rb.addEventListener('click', e => {

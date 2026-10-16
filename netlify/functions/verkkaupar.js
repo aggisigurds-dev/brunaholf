@@ -15,7 +15,9 @@
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const INFO_FIELDS = ['kennitala', 'payment_method', 'payment_terms', 'retention_pct', 'retention_notes',
-  'contact_email', 'contact_phone', 'general_notes'];
+  'contact_email', 'contact_phone', 'general_notes',
+  // 16.10.2026 — Viðskiptavinir-síðan: tengiliður, reikningspóstur, heimilisfang (sql/2026-10-16_customer_info_tengilidur.sql)
+  'contact_name', 'invoice_email', 'heimilisfang'];
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return resp(204, '');
@@ -122,7 +124,10 @@ async function detail(name) {
     osent: drog.reduce((a, d) => a + d.total_m_vsk, 0),
     verkstadir: wsNames.length,
   };
-  return json(200, { info, worksites: pg, map, krofur: inv2, drog, samskipti, samtals, generated_at: new Date().toISOString() });
+  // 16.10.2026 — kennitala greiðandans í sömu röð og Efnislistinn: customer_info → verðskrá → kort → drög
+  const kt = info.kennitala || (pg.find((p) => p.kennitala) || {}).kennitala || (map.find((m) => m.kt_greidanda) || {}).kt_greidanda
+    || (drafts.find((d) => d.customer_name === name && d.kennitala) || {}).kennitala || null;
+  return json(200, { info, kt, worksites: pg, map, krofur: inv2, drog, samskipti, samtals, generated_at: new Date().toISOString() });
 }
 
 async function save(event) {
