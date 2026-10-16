@@ -71,6 +71,13 @@ Eyðublöð-kaflanum hjá framendi/skjol).
 `/api/vefryni` (service-role) les/skrifar. Þetta er mynstrið fyrir töflur sem
 frontend þarf ekki að snerta beint: færa aðganginn í Netlify-fall og læsa töflunni.
 `charlize_contacts` (setup-tengilidir.sql) kveikir líka RLS strax við stofnun.
+**En taflan lekur gegnum view:** view keyra með réttindum eigandans, ekki anon. Tvö view lesa
+`charlize_contacts` og anon má lesa bæði: `v_charlize_contacts_active` (frá upphafi — netfang, kt,
+heiti, fjöldi pósta) og `v_kunni_netfong` (16.10.2026 — aðeins netfang + customer_base_id, svo
+viðbótarnetföng tengist Samskiptum). `email_digest` sjálft er anon-læsilegt, svo hvorugt opnar nýjan
+gagnaflokk — en sá sem lokar charlize_contacts í alvöru verður að loka view-unum líka
+(`security_invoker = on`), annars er RLS-ið á töflunni skraut. Skrif fara AÐEINS um `/api/tengilidir`
+(GET `?kennitala=`, POST `add`/`aftengja`/`link`/…).
 
 ## Vinnureglur — brjóttu þær ekki
 
