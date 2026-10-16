@@ -926,6 +926,9 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 .ef-vl-meta code{font-family:var(--font-mono);font-size:10px;color:var(--muted)}
 .ef-vl-vs{color:var(--gold-deep)}
 .ef-vl-ekki{color:var(--muted-2);font-style:italic}
+.ef-vl-rith{color:var(--muted);border-bottom:1px dotted var(--line-2);cursor:help}
+.ef-vl-sama{border:1px dashed var(--gold-500);background:#fbf4e3;color:var(--gold-deep);font:inherit;font-size:10.5px;line-height:1.5;border-radius:3px;padding:0 6px;cursor:pointer;white-space:normal;text-align:left}
+.ef-vl-sama:hover{background:#f5e9c8}
 .ef-vl-tafla .gull{color:var(--gold-deep)}
 .ef-vl-tafla .dauft{color:var(--muted-2)}
 .ef-vl-al{display:inline-block;min-width:52px;padding:2px 7px;border-radius:3px;font-weight:700;font-size:11.5px;text-align:center}
@@ -22938,9 +22941,9 @@ function efVerdlistiByggja(rows){
       const kodi = li.item_code ? String(li.item_code).trim() : '';
       const lykill = kodi || ('n:'+heiti.toLowerCase());
       let v = vorur.get(lykill);
-      if(!v){ v = { lykill, kodi, heiti, unit: li.unit||'', kaup:0, magn:0, upph:0, fyrst:d, sidast:'', ein:0, afsl:0, inn:0 }; vorur.set(lykill, v); }
+      if(!v){ v = { lykill, kodi, heiti, unit: li.unit||'', kaup:0, magn:0, upph:0, fyrst:d, sidast:'', ein:0, afsl:0, inn:0, rith:{} }; vorur.set(lykill, v); }
       const magn = Number(li.magn)||0, ein = Number(li.ein_verd)||0, afsl = Number(li.afsl_pct)||0, upph = Number(li.upphaed)||0;
-      v.kaup++; v.magn += magn; v.upph += upph;
+      v.kaup++; v.magn += magn; v.upph += upph; v.rith[heiti] = (v.rith[heiti]||0) + 1;
       if(d && (!v.fyrst || d < v.fyrst)) v.fyrst = d;
       if(d >= (v.sidast||'')){   // nýjasta kaupið ræður verðinu sem sýnt er
         v.sidast = d; v.heiti = heiti; if(li.unit) v.unit = li.unit;
@@ -22949,8 +22952,32 @@ function efVerdlistiByggja(rows){
       }
     }
   }
+  // Tvítök (Agnar 16.10.2026: „fjarlægðu tvítök úr verðlistanum"). Sama vörunúmer = sama vara (lykillinn að ofan);
+  // annars sama heiti eftir normalíseringu: Eldv./Eldvarnar, Akríl/Akríll, „(25)"- og „~160"-skott, punktar og bil.
+  // ISO14001-vörurnar halda sér AÐSKILDAR (annar birgir, annað verð) nema vörunúmerið sé eins — þær fá ⧉-merki.
+  const efNorm = t => String(t||'').toLowerCase().replace(/\(\s*\d+\s*\)/g,' ').replace(/~\s*\d+/g,' ')
+    .replace(/\beldv\.?\s*/g,'eldvarnar ').replace(/akr[íi]ll\b/g,'akríl').replace(/h[áa]þennslu|h[áa]þenslu/g,'háþenslu')
+    .replace(/[^0-9a-záðéíóúýþæö]+/g,' ').replace(/\s+/g,' ').trim();
+  const eftirHeiti = new Map();
+  for(const v of [...vorur.values()]){
+    const nk = efNorm(v.heiti);
+    const fyrri = eftirHeiti.get(nk);
+    if(!fyrri){ eftirHeiti.set(nk, v); continue; }
+    const nyrri = (v.sidast||'') > (fyrri.sidast||'');          // nýjasta kaupið ræður verði/dagsetningu
+    const grunn = nyrri ? v : fyrri, hitt = nyrri ? fyrri : v;
+    grunn.kaup += hitt.kaup; grunn.magn += hitt.magn; grunn.upph += hitt.upph;
+    if(hitt.fyrst && (!grunn.fyrst || hitt.fyrst < grunn.fyrst)) grunn.fyrst = hitt.fyrst;
+    for(const h of Object.keys(hitt.rith)) grunn.rith[h] = (grunn.rith[h]||0) + hitt.rith[h];
+    grunn.kodar = [...new Set([].concat(grunn.kodar||[grunn.kodi], hitt.kodar||[hitt.kodi]).filter(Boolean))];
+    vorur.delete(hitt.lykill); eftirHeiti.set(nk, grunn);
+  }
   const ut = [];
   for(const v of vorur.values()){
+    const rl = Object.entries(v.rith).sort((a,b)=>b[1]-a[1] || a[0].localeCompare(b[0],'is'));
+    v.heiti = rl.length ? rl[0][0] : v.heiti;                        // algengasti rithátturinn er nafnið
+    v.rithaettir = rl.map(x=>x[0]);
+    if(!v.kodar) v.kodar = v.kodi ? [v.kodi] : [];
+    v.kodi = v.kodar.join(' / ');
     const m = (typeof matchVerdskra === 'function') ? matchVerdskra(v.heiti) : null;
     v.sala = m ? (Number(m.price)||0) : null;
     v.salaHeiti = m ? m.label : '';
@@ -22958,6 +22985,12 @@ function efVerdlistiByggja(rows){
     v.alagning = (m && v.inn > 0) ? (v.sala / v.inn - 1) : null;
     ut.push(v);
   }
+  // Óviss tvítök: sama Verðskrár-pörun en annað vörunúmer/birgir — EKKI sameinað, merkt „⧉ sama og …" svo þær sjáist saman.
+  // … og sama rúmmál/þyngd: 310 ml, 600 ml og 5 kg eru ólíkar vörur þótt pörunin sé sú sama (mm-stærðin er þegar í pöruninni).
+  const rummal = v => (String(v.heiti||'').toLowerCase().replace(',','.').match(/\d+(?:\.\d+)?\s*(?:ml|kg|l)\b/g) || []).map(t=>t.replace(/\s+/g,'')).sort().join('+');
+  const eftirParun = new Map();
+  for(const v of ut) if(v.sala!==null){ const k = v.salaHeiti + '|' + rummal(v); const l = eftirParun.get(k) || []; l.push(v); eftirParun.set(k, l); }
+  for(const l of eftirParun.values()) if(l.length > 1) for(const v of l) v.sama = l.filter(x=>x!==v).map(x=>x.heiti);
   return ut;
 }
 // Skipta um flipa innan úr síðu (sama leið og 🏢/Hreyfingaryfirlit nota): activeTab + nav-save + render,
@@ -23006,6 +23039,7 @@ const EF_VL_DALKAR = [
 ];
 function efVerdlistiHtml(vorur, rows){
   const nAllt = vorur.length, nV = vorur.filter(v=>v.sala!==null).length, nAn = nAllt - nV;
+  const nSam = vorur.reduce((a,v)=>a + Math.max(0,(v.rithaettir||[]).length-1,(v.kodar||[]).length-1), 0), nOviss = vorur.filter(v=>v.sama && v.sama.length).length;
   const rodunVal = EF_VL_DALKAR.flatMap(([k,l,a]) => a==='l'
     ? [[k+':asc', l+' A→Ö'], [k+':desc', l+' Ö→A']]
     : [[k+':desc', l+' ↓'], [k+':asc', l+' ↑']]);
@@ -23014,7 +23048,7 @@ function efVerdlistiHtml(vorur, rows){
       <span class="boss-plate">VERÐLISTI</span>
       <div class="ef-vl-title">
         <h2>📋 Redder-innkaup og söluverð okkar</h2>
-        <div class="ef-vl-sub">${nAllt} vörur úr ${rows.length} Redder-reikningum · ${nV} í Verðskrá efnis · nýjasta kaupverðið per vöru, verð án vsk</div>
+        <div class="ef-vl-sub">${nAllt} vörur úr ${rows.length} Redder-reikningum · ${nV} í Verðskrá efnis${nSam ? ` · ${nSam} tvítök sameinuð` : ''}${nOviss ? ` · <span title="Sama Verðskrár-pörun en annað vörunúmer — ekki sameinað">${nOviss} óviss merkt ⧉</span>` : ''} · nýjasta kaupverðið per vöru, verð án vsk</div>
       </div>
     </div>
     <div class="ef-vl-bar">
@@ -23092,7 +23126,7 @@ function efVerdlistiVirkja(rot, vorur){
     let sidastiFl = -1;
     const flokkRod = f => { const i = l.filter(v=>flokkur(v)===f); const sum = i.reduce((a,v)=>a+v.upph,0); return `<tr class="ef-vl-flokkur ${f > FLOKKAR.length ? 'an' : ''}"><td colspan="8">${escapeHtml(flokkHeiti(f))}<small>${i.length} ${i.length===1?'vara':'vörur'} · keypt ${P(sum)} kr</small></td></tr>`; };
     $body.innerHTML = l.length ? l.map(v => { const f = flokkur(v); const haus = f !== sidastiFl ? flokkRod(f) : ''; sidastiFl = f; return haus + `<tr class="${v.sala===null?'an':''}">
-      <td data-l="Vara"><div class="ef-vl-heiti">${escapeHtml(v.heiti)}</div><div class="ef-vl-meta">${v.kodi?`<code>${escapeHtml(v.kodi)}</code> · `:''}${v.sala!==null?`<span class="ef-vl-vs">Verðskrá: ${escapeHtml(v.salaHeiti)}</span>`:'<span class="ef-vl-ekki">— ekki í verðskrá</span>'}</div></td>
+      <td data-l="Vara"><div class="ef-vl-heiti">${escapeHtml(v.heiti)}</div><div class="ef-vl-meta">${v.kodi?`<code>${escapeHtml(v.kodi)}</code> · `:''}${v.sala!==null?`<span class="ef-vl-vs">Verðskrá: ${escapeHtml(v.salaHeiti)}</span>`:'<span class="ef-vl-ekki">— ekki í verðskrá</span>'}${(v.rithaettir||[]).length>1?` · <span class="ef-vl-rith" title="${escapeAttr(v.rithaettir.join(' · '))}">sameinað úr ${v.rithaettir.length} rithættum</span>`:''}${(v.sama||[]).length?` · <button type="button" class="ef-vl-sama" data-leit="${escapeAttr(v.salaHeiti)}" title="Sama Verðskrár-pörun en annað vörunúmer/birgir — ekki sameinað. Smelltu til að sjá þær saman: ${escapeAttr(v.sama.join(' · '))}">⧉ sama og ${v.sama.length===1?escapeHtml(v.sama[0]):v.sama.length+' aðrar'}</button>`:''}</div></td>
       <td class="r" data-l="Innkaup okkar"><strong>${P(v.inn)}</strong> kr${v.unit?`<small>/${escapeHtml(String(v.unit).toLowerCase())}</small>`:''}</td>
       <td class="r" data-l="Afsláttur">${v.afsl ? Math.round(v.afsl*10)/10+'%' : '0%'}</td>
       <td class="r" data-l="Fullt verð">${P(v.ein)} kr</td>
@@ -23120,6 +23154,7 @@ function efVerdlistiVirkja(rot, vorur){
     sia = b.dataset.sia; vidmotSetja('ef_vl_sia', sia); teikna();
   });
   if($leit) $leit.addEventListener('input', () => { leit = $leit.value; teikna(); });
+  $body.addEventListener('click', e => { const b = e.target.closest('.ef-vl-sama'); if(!b) return; leit = b.dataset.leit || ''; if($leit) $leit.value = leit; teikna(); rot.querySelector('.ef-vl-scroll').scrollTop = 0; });
   teikna();
 }
 
