@@ -656,3 +656,7 @@ Gátlistinn (`?op=stada`) per drög: tímar (klst>0 eða fast verð) · efni (fa
 Redder, eða materials_total>0) · greiðandi+kt (drög → customer_worksite_map → pricing_guide)
 · upphæð (total_m_vsk>0) · skjöl (efnislisti_pdf/_timabok_pdf eða ⭐ is_primary) · engir opnir
 punktar. `ready` = allt grænt. Sameinuð/sleppt/rukkuð drög og `paid` í meta eru ekki „í smíðum".
+
+## Lærdómur
+
+- **16.10.2026** — Uppgjör lota 16.10.2026: (1) Gerð reikninga/Efnislisti 15.10: gluggi sem Agnar hafði opinn (óvistaður, gömul gildi) var vistaður 18:01 og þurrkaði bæði leiðrétta yfirvinnu OG efnið sem lotan hafði sett (Áland 6 79.478 kr) — þriðja skiptið sama kvöld; verklag: eftir að lota skrifar í drög má EKKI vista úr opnum glugga — loka og opna aftur; tveir ritlar staflast með sömu auðkenni (gr-ws/gr-save/gr-mat-pick). (2) Drög bera ákvörðun um dagvinnu/yfirvinnu (ev=0/ev>0) frá 15.10 — drog-timar les ekki lengur dv/ev úr /api/timabok (Charlize #880 leysir af #836). (3) Efniskostnaður-kortið „Reikningar í gagnagrunni" (15.10) opnar lista 391 reikninga (255 tengdir, 136 ótengdir) með 🔗 Tengja / ✏️, hver mánuður í ramma með samtölu; Redder 137012 (22.06, Landspítalinn, 90.750) og 136032 höfðu sloppið framhjá möppunni — Landspítala-reikningurinn aldrei á Efnislista júní (sendir mánuðir frosnir, ákvörðun Agnars).

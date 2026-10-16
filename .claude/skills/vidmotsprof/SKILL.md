@@ -97,3 +97,6 @@ skjáskot af canvas-inu; `getTextContent()` gefur textann og `styles[].fontFamil
 ## Sjá líka
 `screenshot-verify` (fjarlotur: TLS-relay), `deploy`, minni `feedback-profunarsmellur-eydir`
 (aldrei smella á takka sem fannst með mynstri — ✕ var Eyða).
+
+## Skrif sem síðan sendir sjálf (uppgjör lota 16.10.2026)
+Playwright-opnun á slokkvitaeki-síðu sendir óbeðin skrif sem route-reglan verður að grípa: `brunaholf.netlify.app/api/villur`, `year_factcheck` POST (félag 391 við HVERJA síðuhleðslu), `/api/husmynd`, `app_problems` — og TurboPaint-próf skrifa í `turbopaint_boards` + fötuna `turbopaint` (nota prófstað 1404). Höfuðlaust próf með ferskum prófíl sýnir ALDREI bilanir sem stafa af fullu localStorage í Chrome Agnars (mæla í „Browser 1").

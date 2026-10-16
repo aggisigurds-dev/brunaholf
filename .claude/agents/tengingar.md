@@ -106,3 +106,5 @@ bilun í desember.
 ## Lærdómur
 
 - **16.10.2026** — Standandi mál endurmæld 16.10.2026 á /api/kerfisheilsa (16 græn · 1 gult · 2 grá): Netlify-PAT er ENDURNÝJAÐUR (61 dagar) og gildið farið úr slokkvitaeki/CLAUDE.md — kaflinn „Netlify-PAT-inn LAK“ að ofan er úreltur; bokhald@eldklar.is ER tengt (Gmail-innsog grænt, 182 póstar, síðast 15.10). Enn rétt: Office 365/Graph grátt (ekki útfært), @brunaholf.is um Thunderbird á luna-bridge; eina gula er VEL_HEARTBEAT_TOKEN (endurnýjun aldrei skráð). Ajour-lota hefur FAST líf 7,8 klst frá innskráningu (mælt 29.–30.09, keep-alive gagnast ekki) — Samstilla ræsir innskráninguna aftur.
+
+- **16.10.2026** — Netlify env 15.10.2026: þegar breyta er merkt leyndarmál leyfir Netlify ekki „sama gildi í öllum samhengjum" — gildið fer í Production-reitinn. Lyklar sem eiga að fara úr vafra í Netlify env (per-tækis reglan): resend_api_key (29/176/240), ja_is_api_key (19), sms_twilio_* (33) — opið verk.

@@ -48,3 +48,10 @@ says what to change — take it over the original description if they conflict.*
 
 Board UI: `verkefnalisti.html`; table `verkefnalisti`; images in the public
 `verkefnalisti` bucket.
+
+## Yfirferð og lokun — reglur Agnars (uppgjör lota 16.10.2026)
+- Staðan `sleppt` er til (auk beidni → i_vinnu → i_yfirferd → klarad); reitirnir `category`, `flag` og `priority` eru á verkinu.
+- **Agnar samþykkir áður en verk fer i_yfirferd → klarad** („those thre yes" 22.08.2026); prófa EINA uppfærslu fyrst — `stada` er hunsað hljóðlaust, reiturinn heitir `status`.
+- **Lesa titilinn** áður en verki er lokað (`returning title`) — id eitt og sér hefur lokað röngu verki (minni feedback_loka_verki_titill).
+- Yfirferð („verkefnalist reviewing"): mæla LIFANDI, ekki strengjaleit í bundle; `git pull` á báðum repóum áður en verk er sagt „ógert" (22.08: patch „vantaði" af því leitað var í röngum möppu og brunaholf var 26 commits á eftir).
+- Verkefni og staða eiga heima hér, ekki í Charlize (hún geymir reglur).

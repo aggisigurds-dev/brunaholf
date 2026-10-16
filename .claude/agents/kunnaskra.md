@@ -244,3 +244,7 @@ mátun og company-mail.js, bara á einn kúnna í einu). Birtist sem badge í ha
 (`customer.html`) ALLTAF þegar til er samskipti, og sem `🤖 AI Ráðgjafi`-flagg (info fyrstu
 2 daga, warn frá 3 dögum) þegar ósvarað — bein ósk verkefnalistans um „flagar 'enginn
 svarað í 3 daga'".
+
+## Lærdómur
+
+- **16.10.2026** — Uppgjör lota 16.10.2026 — Tengireglan: vegna-línan (/vegna:?\s+(.+)$/im + „Tilvísun:") er FJÓRÐA sönnun í _spine (stimpill → einn staður → heimilisfang → vegna; aliases, beygingaþol) síðan 13.08.2026; fjölstaða-kt án sönnunar → aðeins customer_base_id + customer_documents.needs_site=true (hreinsast sjálft þegar staður fæst); Skýrslu-stöð sýnir „🏷 N vantar stað" per félag. Opið 16.10: Akurhús ehf. (650416-2280) ekki til í kerfinu (Kirkjustétt 4, Hamraborg 1/12); Menja #908/#1531 tvískráð á sömu kt með 9 tæki á #1531; Bæjarlind 12 #601/#628 með SÖMU 20 tækin tvítalin; Versa (base 159↔1071) og Pumpingiron (290↔1081) sama kt tvær grunnskrár — allt bíður Agnars.
