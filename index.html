@@ -890,6 +890,76 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 .ef-man-amt{font-family:var(--font-display);font-size:19px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
 .ef-man-amt small{font-family:var(--font);font-size:10.5px;font-weight:600;color:var(--muted-2);margin-left:6px;letter-spacing:1px;text-transform:uppercase}
 .ef-man .rg-fc-item.ef-otengt{border-color:#fcd34d;background:#fffbeb}
+/* ===== 📋 Verðlisti Efniskostnaðar (16.10.2026) — dökkt stálspjald með gullrönd, opnast í #modal ===== */
+#ef-verdlisti-btn{border-color:var(--gold-500);color:var(--gold-deep);font-weight:600;background:linear-gradient(180deg,#fff,#fbf4e3)}
+#ef-verdlisti-btn:hover{border-color:var(--gold-700);background:#fbf4e3}
+#ef-verdlisti-btn:disabled{opacity:.55;cursor:default}
+.modal:has(.ef-vl){max-width:1180px;padding:0;background:#161513;color:#f4f1ea;border:1px solid #000;box-shadow:0 18px 50px rgba(0,0,0,.6),0 0 0 1px rgba(201,165,74,.25);overflow:hidden;display:flex;flex-direction:column;max-height:92vh}
+.ef-vl{display:flex;flex-direction:column;min-height:0;max-height:92vh;font-family:var(--font-ui)}
+.ef-vl-head{display:flex;align-items:center;gap:14px;padding:14px 18px;background:linear-gradient(180deg,#2a2823,#161513);border-bottom:2px solid transparent;border-image:var(--gold-line) 1;border-image-width:0 0 2px 0}
+.ef-vl-title{flex:1;min-width:0}
+.ef-vl-title h2{margin:0;font-family:var(--font-display);font-size:20px;font-weight:700;color:#f7e6b8;letter-spacing:-.01em}
+.ef-vl-sub{font-size:11.5px;color:#a39b8a;margin-top:3px}
+.ef-vl-x{width:34px;height:34px;border-radius:5px;border:1px solid #3a372f;background:#0a0a09;color:#c8c1b1;font-size:16px;cursor:pointer;flex:none;padding:0}
+.ef-vl-x:hover{border-color:var(--gold-500);color:#f5d76e}
+.ef-vl-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 18px;background:#1d1b18;border-bottom:1px solid #2a2823}
+.ef-vl-leit{flex:1 1 220px;min-width:0;height:34px;padding:0 12px;border:1px solid #000;border-radius:4px;background:linear-gradient(180deg,#0a0a09,#141312);color:#f4f1ea;font-size:13px;box-shadow:inset 0 2px 5px rgba(0,0,0,.9),0 1px 0 rgba(255,255,255,.06);font-family:inherit}
+.ef-vl-leit::placeholder{color:#8f8776}
+.ef-vl-seg{display:inline-flex;border:1px solid #3a372f;border-radius:4px;overflow:hidden;background:#0a0a09}
+.ef-vl-seg button{height:32px;padding:0 12px;border:0;border-left:1px solid #3a372f;background:transparent;color:#c8c1b1;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap}
+.ef-vl-seg button:first-child{border-left:0}
+.ef-vl-seg button span{opacity:.6;font-weight:500;margin-left:3px}
+.ef-vl-seg button.on{background:var(--gold-face);color:#161513;text-shadow:0 1px 0 rgba(255,255,255,.35)}
+.ef-vl-seg button.on span{opacity:.8}
+.ef-vl-rodun{display:none;height:32px;padding:0 8px;border:1px solid #3a372f;border-radius:4px;background:#0a0a09;color:#c8c1b1;font-size:12px;font-family:inherit}
+.ef-vl-scroll{overflow:auto;min-height:0;flex:1;-webkit-overflow-scrolling:touch}
+.ef-vl-tafla{width:100%;border-collapse:collapse;font-size:12.5px}
+.ef-vl-tafla th{position:sticky;top:0;z-index:1;background:#0a0a09;color:#c9a54a;font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;text-align:left;padding:9px 10px;border-bottom:1px solid #3a372f;cursor:pointer;user-select:none;white-space:nowrap}
+.ef-vl-tafla th.r,.ef-vl-tafla td.r{text-align:right}
+.ef-vl-tafla th:hover{color:#f5d76e}
+.ef-vl-tafla th.on{color:#fff3b0}
+.ef-vl-pila{display:inline-block;width:10px;margin-left:3px;font-size:8px}
+.ef-vl-tafla td{padding:8px 10px;border-bottom:1px solid #26231f;vertical-align:middle;font-variant-numeric:tabular-nums;white-space:nowrap;color:#e4dfd3}
+.ef-vl-tafla tbody tr:hover td{background:#201e1a}
+.ef-vl-tafla tr.an td{color:#8f8776}
+.ef-vl-tafla td small{font-size:10px;color:#8f8776;margin-left:2px}
+.ef-vl-heiti{font-weight:600;color:#f4f1ea;white-space:normal;min-width:200px}
+.ef-vl-tafla tr.an .ef-vl-heiti{color:#a39b8a}
+.ef-vl-meta{font-size:10.5px;color:#8f8776;margin-top:2px;white-space:normal}
+.ef-vl-meta code{font-family:var(--font-mono);font-size:10px;color:#a39b8a}
+.ef-vl-vs{color:#c9a54a}
+.ef-vl-ekki{color:#8f8776;font-style:italic}
+.ef-vl-tafla .gull{color:#f5d76e}
+.ef-vl-tafla .dauft{color:#6a6458}
+.ef-vl-al{display:inline-block;min-width:52px;padding:2px 7px;border-radius:3px;font-weight:700;font-size:11.5px;text-align:center}
+.ef-vl-al.ok{background:rgba(79,196,122,.14);color:#4fc47a;border:1px solid rgba(79,196,122,.35)}
+.ef-vl-al.lag{background:rgba(226,196,111,.14);color:#e2c46f;border:1px solid rgba(226,196,111,.35)}
+.ef-vl-al.tap{background:rgba(224,122,90,.16);color:#e07a5a;border:1px solid rgba(224,122,90,.4)}
+.ef-vl-al.ein{background:rgba(143,135,118,.12);color:#a39b8a;border:1px solid rgba(143,135,118,.35);font-weight:600}
+.ef-vl-tafla tfoot td{position:sticky;bottom:0;background:#0a0a09;color:#f7e6b8;font-weight:700;border-top:1px solid #3a372f;border-bottom:0;padding:10px;white-space:normal}
+.ef-vl-tafla tfoot td{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.ef-vl-tafla tfoot td small{color:#a39b8a;font-weight:500}
+.ef-vl-nota{padding:9px 18px;font-size:10.5px;color:#8f8776;border-top:1px solid #2a2823;background:#1d1b18;line-height:1.5}
+.ef-vl-nota strong{color:#a39b8a;font-weight:600}
+.ef-vl-tom{padding:28px;text-align:center;color:#8f8776;font-style:italic;white-space:normal}
+@media(max-width:640px){
+  .ef-vl-title h2{font-size:16px}
+  .ef-vl-head{padding:12px 14px;gap:10px}
+  .ef-vl-head .boss-plate{display:none}
+  .ef-vl-bar{padding:8px 14px;gap:8px}
+  .ef-vl-rodun{display:inline-flex;flex:1 1 100%}
+  .ef-vl-tafla thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .ef-vl-tafla,.ef-vl-tafla tbody,.ef-vl-tafla tr,.ef-vl-tafla td,.ef-vl-tafla tfoot{display:block}
+  .ef-vl-tafla tbody tr{display:grid;grid-template-columns:1fr 1fr;gap:2px 12px;padding:10px 14px;border-bottom:1px solid #2a2823}
+  .ef-vl-tafla tbody td{border:0;padding:3px 0;white-space:normal}
+  .ef-vl-tafla tbody td:first-child{grid-column:1 / -1;padding-bottom:6px}
+  .ef-vl-tafla tbody td.r{text-align:left;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+  .ef-vl-tafla tbody td.r::before{content:attr(data-l);font-family:var(--font-mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#8f8776;flex:none}
+  .ef-vl-tafla tbody td.ef-vl-tom{grid-column:1 / -1}
+  .ef-vl-heiti{min-width:0}
+  .ef-vl-tafla tfoot td{position:static;padding:10px 14px;border-top:1px solid #3a372f}
+  .ef-vl-nota{padding:8px 14px}
+}
 .rg-fc-item{background:#fff;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden;transition:box-shadow 100ms ease}
 .rg-fc-item[open]{box-shadow:0 2px 8px rgba(0,0,0,0.06)}
 .rg-fc-item summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:auto 1fr 1fr auto auto auto;gap:12px;align-items:center;padding:10px 14px;font-size:12.5px}
@@ -11081,6 +11151,68 @@ function grOpenWorksite(worksite, month){
   state.ui.activeTab = 'gerdreikninga';
   save(); render();
 }
+// ===== Verðskrá efnis — pörun Redder-heita við js/gr-materials.js (EINA söluverðskráin) =====
+// Flutt úr renderGerdReikninga 16.10.2026 svo Verðlisti Efniskostnaðar (efVerdlistiByggja) geti lesið sömu pörun.
+// Innihald óbreytt — aðeins inndráttur.
+// ===== Verðskrá efnis (same price list as /reikningur) — used for quick-add =====
+// Verðskrá efnis býr nú í js/gr-materials.js (sama listi í Brunaþéttingar-appinu og /api/field-app).
+const GR_MATERIALS = window.GR_MATERIALS || [];
+const GR_FLAT = GR_MATERIALS.flatMap(s=>s.items);
+// Autofill from Redder should bill the customer our SALE price, not the buy-in
+// cost. Match each Redder line to a Verðskrá item → bill that sale price.
+// Lines with NO Verðskrá match (consumables: túss, hreinsiklútar, kíttisstútur,
+// hnífar …) are NOT recharged — they're covered by smáhlutagjald/aukagjald —
+// so they're dropped from the autofill. (Only on first autofill; once the draft
+// is saved its stored materials are reused unchanged.)
+const grNorm = (s)=>String(s||'').toLowerCase().replace(/[^0-9a-záðéíóúýþæ]+/gi,' ').replace(/\s+/g,' ').trim();
+// Aliases for UNSIZED materials: Redder writes abbreviated/variant names
+// (Akríll, Þéttull, ml/mm pack sizes) that the size-aware matcher misses.
+// Each entry: a test on the normalised Redder name → the exact Verðskrá label.
+// These are real billable materials, so they must map to a Verðskrá price.
+const GR_REDDER_ALIASES = [
+  { label:'Eldvarnar Akríl 5kg', test:n=>/akr[íi]l?l?/.test(n) && /5\s*kg/.test(n) },
+  { label:'Eldvarnar akríl',     test:n=>/akr[íi]l?l?/.test(n) },                 // 310/600ml tubes
+  // „háþensl" stofn (án -u) grípur líka „Eldvarnar kítti háþensla 310ml" —
+  // sama vara, ein_verd 4.488,71 = Verðskrá 4.489 (staðfest úr redder_line_items).
+  { label:'Háþennslukítti',      test:n=>/h[áa]þe?n+sl/.test(n) || /h[áa]þ.*k[íi]tti/.test(n) },
+  { label:'Eldvarnar steinull',  test:n=>/þéttull|steinull/.test(n) },           // þéttull = steinull
+  // 16.10.2026: krefst „eldv" líka — „Baðsilikon 808 m.mygluv." paraðist annars við Eldvarnar silikon (sást í Verðlista).
+  { label:'Eldvarnar silikon',   test:n=>/silikon|silicon/.test(n) && /eldv/.test(n) },
+  // 16.10.2026: krefst „eldv" líka — annars paraðist Málningalímband/Málningar innlegg/Málningahræra við Eldvarnar málning
+  // (sást í Verðlista Efniskostnaðar; Redder-heitin á málningunni sjálfri eru „Eldv. Málning 8L …" og „Eldvarnar Málning Stopseal …").
+  { label:'Eldvarnar málning',   test:n=>/m[áa]lning/.test(n) && /eldv/.test(n) },
+  // Band á RÚLLU er rúllu-varan, ekki stök bönd — bæði Redder-heitin
+  // („Eldv.band á rúllu 25M 50mmx1,8" og „Eldvarnarband PW á rúllu 2mm x 25M")
+  // bera nákvæmlega Verðskrárverðið 53.574,19 (staðfest úr redder_line_items).
+  { label:'Eldvarnar rúlla 55mm', test:n=>/rúll/.test(n) && /eldv/.test(n) },
+];
+// Verðskrá items that are genuinely size-specific (mm must agree to match).
+const grIsSized = (label)=>/^(band|kragi|brunaþéttirör)/i.test(label) || /rúlla/i.test(label);
+function matchVerdskra(label){
+  const n = grNorm(label);
+  if(!n) return null;
+  // 1) Unsized-material aliases first (akríl, þéttull, háþennslukítti, …).
+  for(const a of GR_REDDER_ALIASES){
+    if(a.test(n)){ const it = GR_FLAT.find(x=>x.label===a.label); if(it) return it; }
+  }
+  // 2) Size-aware token match — mm only constrains genuinely sized Verðskrá items.
+  const mm = (n.match(/(\d{2,3})\s*mm/)||[])[1] || null;
+  let best=null, bestScore=0;
+  for(const it of GR_FLAT){
+    const ni = grNorm(it.label);
+    const sized = grIsSized(it.label);
+    const itMm = (ni.match(/(\d{2,3})\s*mm/)||[])[1] || null;
+    if(sized){ if(!mm || mm !== itMm) continue; }    // sized items require an exact mm match
+    const toks = ni.split(' ').filter(t=>t.length>2 && !/^\d+$/.test(t) && !/mm$/.test(t));
+    if(!toks.length) continue;
+    let hit=0; for(const t of toks) if(n.includes(t)) hit++;
+    let score = hit/toks.length;
+    if(sized && mm===itMm) score += 0.5;             // matched size is a strong signal
+    if(score>bestScore){ bestScore=score; best=it; }
+  }
+  return bestScore>=0.6 ? best : null;
+}
+
 async function renderGerdReikninga(t){
   // Deep-link beint í Efnislista-ritilinn — ?grws=<verkstaður>&grwm=<YYYY-MM>[&review=1]#gerdreikninga.
   // Notað af yfirferd.html (Big Boss appinu): yfirmaður fær beinan hlekk á alvöru
@@ -11110,61 +11242,8 @@ async function renderGerdReikninga(t){
       }
     }catch(_){}
   }
-  // ===== Verðskrá efnis (same price list as /reikningur) — used for quick-add =====
-  // Verðskrá efnis býr nú í js/gr-materials.js (sama listi í Brunaþéttingar-appinu og /api/field-app).
-  const GR_MATERIALS = window.GR_MATERIALS || [];
-  const GR_FLAT = GR_MATERIALS.flatMap(s=>s.items);
-  // Autofill from Redder should bill the customer our SALE price, not the buy-in
-  // cost. Match each Redder line to a Verðskrá item → bill that sale price.
-  // Lines with NO Verðskrá match (consumables: túss, hreinsiklútar, kíttisstútur,
-  // hnífar …) are NOT recharged — they're covered by smáhlutagjald/aukagjald —
-  // so they're dropped from the autofill. (Only on first autofill; once the draft
-  // is saved its stored materials are reused unchanged.)
-  const grNorm = (s)=>String(s||'').toLowerCase().replace(/[^0-9a-záðéíóúýþæ]+/gi,' ').replace(/\s+/g,' ').trim();
-  // Aliases for UNSIZED materials: Redder writes abbreviated/variant names
-  // (Akríll, Þéttull, ml/mm pack sizes) that the size-aware matcher misses.
-  // Each entry: a test on the normalised Redder name → the exact Verðskrá label.
-  // These are real billable materials, so they must map to a Verðskrá price.
-  const GR_REDDER_ALIASES = [
-    { label:'Eldvarnar Akríl 5kg', test:n=>/akr[íi]l?l?/.test(n) && /5\s*kg/.test(n) },
-    { label:'Eldvarnar akríl',     test:n=>/akr[íi]l?l?/.test(n) },                 // 310/600ml tubes
-    // „háþensl" stofn (án -u) grípur líka „Eldvarnar kítti háþensla 310ml" —
-    // sama vara, ein_verd 4.488,71 = Verðskrá 4.489 (staðfest úr redder_line_items).
-    { label:'Háþennslukítti',      test:n=>/h[áa]þe?n+sl/.test(n) || /h[áa]þ.*k[íi]tti/.test(n) },
-    { label:'Eldvarnar steinull',  test:n=>/þéttull|steinull/.test(n) },           // þéttull = steinull
-    { label:'Eldvarnar silikon',   test:n=>/silikon|silicon/.test(n) },
-    { label:'Eldvarnar málning',   test:n=>/m[áa]lning/.test(n) },
-    // Band á RÚLLU er rúllu-varan, ekki stök bönd — bæði Redder-heitin
-    // („Eldv.band á rúllu 25M 50mmx1,8" og „Eldvarnarband PW á rúllu 2mm x 25M")
-    // bera nákvæmlega Verðskrárverðið 53.574,19 (staðfest úr redder_line_items).
-    { label:'Eldvarnar rúlla 55mm', test:n=>/rúll/.test(n) && /eldv/.test(n) },
-  ];
-  // Verðskrá items that are genuinely size-specific (mm must agree to match).
-  const grIsSized = (label)=>/^(band|kragi|brunaþéttirör)/i.test(label) || /rúlla/i.test(label);
-  function matchVerdskra(label){
-    const n = grNorm(label);
-    if(!n) return null;
-    // 1) Unsized-material aliases first (akríl, þéttull, háþennslukítti, …).
-    for(const a of GR_REDDER_ALIASES){
-      if(a.test(n)){ const it = GR_FLAT.find(x=>x.label===a.label); if(it) return it; }
-    }
-    // 2) Size-aware token match — mm only constrains genuinely sized Verðskrá items.
-    const mm = (n.match(/(\d{2,3})\s*mm/)||[])[1] || null;
-    let best=null, bestScore=0;
-    for(const it of GR_FLAT){
-      const ni = grNorm(it.label);
-      const sized = grIsSized(it.label);
-      const itMm = (ni.match(/(\d{2,3})\s*mm/)||[])[1] || null;
-      if(sized){ if(!mm || mm !== itMm) continue; }    // sized items require an exact mm match
-      const toks = ni.split(' ').filter(t=>t.length>2 && !/^\d+$/.test(t) && !/mm$/.test(t));
-      if(!toks.length) continue;
-      let hit=0; for(const t of toks) if(n.includes(t)) hit++;
-      let score = hit/toks.length;
-      if(sized && mm===itMm) score += 0.5;             // matched size is a strong signal
-      if(score>bestScore){ bestScore=score; best=it; }
-    }
-    return bestScore>=0.6 ? best : null;
-  }
+  // Verðskrá efnis (GR_MATERIALS/GR_FLAT/matchVerdskra) býr nú á efsta stigi fyrir ofan þetta fall — 16.10.2026:
+  // Verðlisti Efniskostnaðar (efVerdlistiByggja) les sömu pörun, svo hún má ekki vera læst inni í þessu falli.
   const GR_KM=186, GR_FERD=4000, GR_SMA=137, GR_STADF=20000;
 
   function isGata(name){ return /landsspítal|landsspital|nlsh|heklu|dalvegur 30/i.test(name||''); }
@@ -11637,7 +11716,7 @@ async function renderGerdReikninga(t){
       .gr-modal-bg.boss.gb2 .gb-kpi .k{flex-direction:row;align-items:baseline;justify-content:space-between;gap:10px;margin:0;padding:6px 16px;border:0;box-shadow:none}
       .gb2 .gb-kh+.k{padding-top:12px}
       /* 16.10.2026 (Verkefnaspjald Agnars): efnishlutfall í samantekt, Redder-línur + viðvörun í Efni, Hreyfingar-takki */
-      .gb2 .gb-saga-h,.gb2 .gb-saga-r{display:grid;grid-template-columns:minmax(150px,1.4fr) .7fr .9fr .55fr 1.15fr 1.35fr auto;gap:4px 12px;align-items:center;padding:8px 10px;border-top:1px solid #e6e1d6}
+      .gb2 .gb-saga-h,.gb2 .gb-saga-r{display:grid;grid-template-columns:minmax(150px,1.4fr) .7fr .9fr .55fr 1.15fr 1.35fr 212px;gap:4px 12px;align-items:center;padding:8px 10px;border-top:1px solid #e6e1d6}
       .gb2 .gb-saga-h{font-family:var(--font-mono,ui-monospace,monospace);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#6f685c;border-top:0;padding-top:0}
       .gb2 .gb-saga-r.hasd{cursor:pointer}.gb2 .gb-saga-r.hasd:hover{background:#f6f3ec}
       .gb2 .gb-saga-r .c{font-size:12.5px;min-width:0;color:#161513}.gb2 .gb-saga-r .c small{display:block;font-family:var(--font-mono,ui-monospace,monospace);font-size:10.5px;color:#6f685c;font-weight:400}
@@ -11645,7 +11724,7 @@ async function renderGerdReikninga(t){
       .gb2 .gb-saga-r .c.k,.gb2 .gb-saga-r .c.e,.gb2 .gb-saga-r .c.p,.gb2 .gb-saga-r .c.a{font-family:var(--font-mono,ui-monospace,monospace);font-variant-numeric:tabular-nums;white-space:nowrap}
       .gb2 .gb-saga-r .c.s{font-family:var(--font-mono,ui-monospace,monospace);font-size:11.5px;font-weight:600}
       .gb2 .gb-saga-r .c.s.ok{color:#2f7a4a}.gb2 .gb-saga-r .c.s.warn{color:#8a6a1c}.gb2 .gb-saga-r .c.s.bad{color:#b5522a}.gb2 .gb-saga-r .c.s.drog{color:#6f685c}
-      .gb2 .gb-saga-r .c.t{display:flex;gap:6px;white-space:nowrap}
+      .gb2 .gb-saga-r .c.t{display:flex;gap:6px;white-space:nowrap;justify-content:flex-end}
       .gb2 .gb-saga-btn{height:28px;padding:0 9px;border:1px solid var(--edge,#c9c2b3);border-bottom-color:#a89f8c;border-radius:4px;background:linear-gradient(180deg,#fff,#efeae0);font:inherit;font-size:11.5px;font-weight:600;color:#161513;cursor:pointer}
       .gb2 .gb-saga-btn:disabled{opacity:.45;cursor:default}
       .gb2 .gb-saga-f{display:flex;justify-content:space-between;gap:10px 18px;flex-wrap:wrap;padding:10px;border-top:2px solid #cfc8b9;font-family:var(--font-mono,ui-monospace,monospace);font-size:12px;color:#161513}.gb2 .gb-saga-f .bad{color:#b5522a}
@@ -22492,6 +22571,7 @@ async function renderEfniskostnadur(t){
           <div class="rg-sub" style="margin-top:4px">Redder reikningar — efni sem fer á reikning hjá verkkaupa</div>
         </div>
         <div class="rg-controls">
+          <button type="button" class="rg-tool" id="ef-verdlisti-btn" disabled title="Sækir Redder-línur…">📋 Verðlisti</button>
           <select id="ef-f-month" class="ef-filter"><option value="">Allir mánuðir</option></select>
           <select id="ef-f-ws" class="ef-filter"><option value="">Allir verkstaðir</option></select>
           <a class="rg-tool" href="https://mail.google.com/mail/u/0/?authuser=bokhald@brunaholf.is#search/from%3Aredder.is" target="_blank" rel="noopener">📧 Redder í Gmail</a>
@@ -22788,9 +22868,166 @@ async function renderEfniskostnadur(t){
     $fMonth.addEventListener('change', renderTable);
     $fWs.addEventListener('change', renderTable);
     renderTable();
+    efVerdlistiTengja(rows);   // 📋 Verðlisti (16.10.2026) — sömu rows, ekkert nýtt kall
   } catch(e) {
     document.getElementById('ef-meta').textContent = 'Villa: '+(e.message||e);
   }
+}
+
+// ===== 📋 Verðlisti Efniskostnaðar (16.10.2026) =====
+// Agnar 15.10.2026: „sýna á Efniskostnaðar-síðunni hvað við kaupum vöruna á, afsláttinn, fulla verðið og
+// söluverðið okkar hlið við hlið." Ein röð per vöru sem við kaupum hjá Redder (lykill = vörunúmer Redder,
+// annars heitið), byggð úr SÖMU rows og síðan hleður þegar (/api/redder-invoices → redder_line_items) —
+// ekkert nýtt kall, engin ný tafla.
+//   Innkaup okkar = nýjasta kaupverð eftir afslátt (upphaed/magn; annars ein_verd × (1 − afsl_pct/100))
+//   Fullt verð    = ein_verd (listaverð Redder, án vsk)
+//   Söluverð      = js/gr-materials.js (window.GR_MATERIALS — EINA söluverðskráin) um matchVerdskra(heiti)
+//   Álagning      = söluverð / innkaup − 1
+// Röðun og sía vistast í hub_state (vidmotSetja → eins á öllum vélum, regla 15.10.2026); leitin er tímabundin.
+function efVerdlistiByggja(rows){
+  const vorur = new Map();
+  for(const inv of (rows||[])){
+    const d = inv.dagsetning ? String(inv.dagsetning).slice(0,10) : '';
+    for(const li of (inv.redder_line_items||[])){
+      const heiti = String(li.item_name||'').trim();
+      if(!heiti) continue;
+      const kodi = li.item_code ? String(li.item_code).trim() : '';
+      const lykill = kodi || ('n:'+heiti.toLowerCase());
+      let v = vorur.get(lykill);
+      if(!v){ v = { lykill, kodi, heiti, unit: li.unit||'', kaup:0, magn:0, upph:0, fyrst:d, sidast:'', ein:0, afsl:0, inn:0 }; vorur.set(lykill, v); }
+      const magn = Number(li.magn)||0, ein = Number(li.ein_verd)||0, afsl = Number(li.afsl_pct)||0, upph = Number(li.upphaed)||0;
+      v.kaup++; v.magn += magn; v.upph += upph;
+      if(d && (!v.fyrst || d < v.fyrst)) v.fyrst = d;
+      if(d >= (v.sidast||'')){   // nýjasta kaupið ræður verðinu sem sýnt er
+        v.sidast = d; v.heiti = heiti; if(li.unit) v.unit = li.unit;
+        v.ein = ein; v.afsl = afsl;
+        v.inn = (magn > 0 && upph > 0) ? upph/magn : ein*(1-afsl/100);
+      }
+    }
+  }
+  const ut = [];
+  for(const v of vorur.values()){
+    const m = (typeof matchVerdskra === 'function') ? matchVerdskra(v.heiti) : null;
+    v.sala = m ? (Number(m.price)||0) : null;
+    v.salaHeiti = m ? m.label : '';
+    v.salaEining = m ? (m.unit||'') : '';
+    v.alagning = (m && v.inn > 0) ? (v.sala / v.inn - 1) : null;
+    ut.push(v);
+  }
+  return ut;
+}
+function efVerdlistiTengja(rows){
+  const b = document.getElementById('ef-verdlisti-btn'); if(!b) return;
+  b.disabled = false;
+  b.title = 'Innkaupsverð okkar, afsláttur, fullt verð og söluverð — ein röð per vöru sem við kaupum hjá Redder';
+  b.onclick = () => efVerdlistiOpna(rows);
+}
+function efVerdlistiOpna(rows){
+  const vorur = efVerdlistiByggja(rows);
+  const P = n => { const v = Math.round(Number(n)||0); return (v<0?'-':'') + String(Math.abs(v)).replace(/\B(?=(\d{3})+(?!\d))/g,'.'); };
+  const dags = d => d ? d.slice(8,10)+'.'+d.slice(5,7)+'.'+d.slice(0,4) : '—';
+  const DALKAR = [
+    ['vara','Vara','l'], ['inn','Innkaup okkar','r'], ['afsl','Afsl.','r'], ['ein','Fullt verð','r'],
+    ['sala','Söluverð okkar','r'], ['alagning','Álagning','r'], ['sidast','Síðast keypt','r'], ['kaup','Kaup','r'],
+  ];
+  const LYKLAR = DALKAR.map(d=>d[0]);
+  let rodun = String(vidmotLesa('ef_vl_rodun', 'kaup:desc') || 'kaup:desc');
+  if(!LYKLAR.includes(rodun.split(':')[0])) rodun = 'kaup:desc';
+  let sia = String(vidmotLesa('ef_vl_sia', 'allt') || 'allt');
+  if(!['allt','verdskra','an'].includes(sia)) sia = 'allt';
+  let leit = '';
+  const nAllt = vorur.length, nV = vorur.filter(v=>v.sala!==null).length, nAn = nAllt - nV;
+  const rodunVal = DALKAR.flatMap(([k,l,a]) => a==='l'
+    ? [[k+':asc', l+' A→Ö'], [k+':desc', l+' Ö→A']]
+    : [[k+':desc', l+' ↓'], [k+':asc', l+' ↑']]);
+  const html = `<div class="ef-vl">
+    <div class="ef-vl-head">
+      <span class="boss-plate dark">VERÐLISTI</span>
+      <div class="ef-vl-title">
+        <h2>📋 Verðlisti — Redder-innkaup og söluverð okkar</h2>
+        <div class="ef-vl-sub">${nAllt} vörur úr ${rows.length} Redder-reikningum · ${nV} í Verðskrá efnis · nýjasta kaupverðið per vöru, verð án vsk</div>
+      </div>
+      <button type="button" class="ef-vl-x" id="ef-vl-loka" title="Loka (Esc)">✕</button>
+    </div>
+    <div class="ef-vl-bar">
+      <input type="search" id="ef-vl-leit" class="ef-vl-leit" placeholder="Leita að vöru, vörunúmeri eða verðskrárheiti…" autocomplete="off">
+      <div class="ef-vl-seg" id="ef-vl-sia">
+        <button type="button" data-sia="allt">Allt <span>${nAllt}</span></button>
+        <button type="button" data-sia="verdskra">Í verðskrá <span>${nV}</span></button>
+        <button type="button" data-sia="an">Ekki í verðskrá <span>${nAn}</span></button>
+      </div>
+      <select id="ef-vl-rodun" class="ef-vl-rodun" title="Raða eftir">${rodunVal.map(([v,l])=>`<option value="${v}">${escapeHtml(l)}</option>`).join('')}</select>
+    </div>
+    <div class="ef-vl-scroll">
+      <table class="ef-vl-tafla">
+        <thead><tr>${DALKAR.map(([k,l,a])=>`<th data-k="${k}" class="${a==='r'?'r':''}" title="Raða eftir ${escapeAttr(l)}">${escapeHtml(l)}<span class="ef-vl-pila"></span></th>`).join('')}</tr></thead>
+        <tbody id="ef-vl-body"></tbody>
+        <tfoot id="ef-vl-fot"></tfoot>
+      </table>
+    </div>
+    <div class="ef-vl-nota"><strong>Innkaup okkar</strong> = upphæð/magn á nýjasta Redder-reikningi (eftir afslátt). <strong>Fullt verð</strong> = listaverð Redder (ein_verd). <strong>Söluverð okkar</strong> = Verðskrá efnis (js/gr-materials.js) — „ekki í verðskrá" = smáhlutir sem fara ekki sem sér lína á reikning. <strong>Álagning</strong> = söluverð / innkaup − 1; rautt = selt undir innkaupsverði.</div>
+  </div>`;
+  openModal(html);
+  const rot = document.querySelector('#modalContent .ef-vl'); if(!rot) return;
+  const $body = rot.querySelector('#ef-vl-body'), $fot = rot.querySelector('#ef-vl-fot'), $leit = rot.querySelector('#ef-vl-leit'), $rod = rot.querySelector('#ef-vl-rodun');
+  const alagningHtml = v => {
+    if(v.alagning===null || !isFinite(v.alagning)) return '<span class="dauft">—</span>';
+    // Verðskráin selur málningu per líter (og rúllubandið líka per metra) en Redder selur dunk/rúllu — álagning
+    // á ósambærilegar einingar væri fölsk „tap"-merking (8 L dunkur 9.923 kr vs 2.500 kr/l → −75%).
+    const perEin = /^(l[íi]ter|m)$/i;
+    if(perEin.test(v.salaEining||'') && !perEin.test(String(v.unit||''))) return `<span class="ef-vl-al ein" title="Verðskráin er per ${escapeAttr(v.salaEining)} en kaupin per ${escapeAttr(String(v.unit||'stk').toLowerCase())} — ekki sambærilegt">per ${escapeHtml(v.salaEining)}</span>`;
+    const p = Math.round(v.alagning*100);
+    const kl = p < 0 ? 'tap' : p < 30 ? 'lag' : 'ok';
+    return `<span class="ef-vl-al ${kl}" title="${p<0?'Selt undir innkaupsverði':'Söluverð / innkaup − 1'}">${p<0?'−':'+'}${Math.abs(p)}%</span>`;
+  };
+  const teikna = () => {
+    const [rk, ratt] = rodun.split(':');
+    const q = leit.trim().toLowerCase();
+    let l = vorur.filter(v => sia==='allt' || (sia==='verdskra' ? v.sala!==null : v.sala===null));
+    if(q) l = l.filter(v => (v.heiti+' '+v.kodi+' '+v.salaHeiti).toLowerCase().includes(q));
+    const gildi = v => rk==='vara' ? v.heiti.toLowerCase() : rk==='sidast' ? (v.sidast||'') : ((v[rk]===null||v[rk]===undefined) ? null : Number(v[rk]));
+    const dir = ratt==='asc' ? 1 : -1;
+    l.sort((a,b)=>{
+      if(sia==='allt' && (a.sala===null) !== (b.sala===null)) return a.sala===null ? 1 : -1;   // óparaðar neðst
+      const x = gildi(a), y = gildi(b);
+      if(x===null && y===null) return a.heiti.localeCompare(b.heiti,'is');
+      if(x===null) return 1; if(y===null) return -1;
+      return ((x<y ? -1 : x>y ? 1 : 0) * dir) || a.heiti.localeCompare(b.heiti,'is');
+    });
+    $body.innerHTML = l.length ? l.map(v => `<tr class="${v.sala===null?'an':''}">
+      <td data-l="Vara"><div class="ef-vl-heiti">${escapeHtml(v.heiti)}</div><div class="ef-vl-meta">${v.kodi?`<code>${escapeHtml(v.kodi)}</code> · `:''}${v.sala!==null?`<span class="ef-vl-vs">Verðskrá: ${escapeHtml(v.salaHeiti)}</span>`:'<span class="ef-vl-ekki">— ekki í verðskrá</span>'}</div></td>
+      <td class="r" data-l="Innkaup okkar"><strong>${P(v.inn)}</strong> kr${v.unit?`<small>/${escapeHtml(String(v.unit).toLowerCase())}</small>`:''}</td>
+      <td class="r" data-l="Afsláttur">${v.afsl ? Math.round(v.afsl*10)/10+'%' : '0%'}</td>
+      <td class="r" data-l="Fullt verð">${P(v.ein)} kr</td>
+      <td class="r" data-l="Söluverð okkar">${v.sala!==null ? `<strong class="gull">${P(v.sala)}</strong> kr${v.salaEining?`<small>/${escapeHtml(v.salaEining)}</small>`:''}` : '<span class="dauft">—</span>'}</td>
+      <td class="r" data-l="Álagning">${alagningHtml(v)}</td>
+      <td class="r" data-l="Síðast keypt" title="${v.fyrst?'Fyrst keypt '+dags(v.fyrst):''}">${dags(v.sidast)}</td>
+      <td class="r" data-l="Kaup" title="${v.kaup} línur á Redder-reikningum · ${P(v.magn)} ${escapeAttr(String(v.unit||'').toLowerCase())} alls">${v.kaup}<small>×</small> <span class="dauft">${P(v.magn)} ${escapeHtml(String(v.unit||'').toLowerCase())}</span></td>
+    </tr>`).join('') : `<tr><td colspan="8" class="ef-vl-tom">Engin vara passar við leitina.</td></tr>`;
+    const sumUpph = l.reduce((a,v)=>a+v.upph,0), sumKaup = l.reduce((a,v)=>a+v.kaup,0), lV = l.filter(v=>v.sala!==null).length;
+    $fot.innerHTML = `<tr><td colspan="8"><span>${l.length} ${l.length===1?'vara':'vörur'} <small>· ${lV} í verðskrá · ${l.length-lV} ekki</small></span><span class="ef-vl-fot-sum">Samtals keypt <strong class="gull">${P(sumUpph)} kr</strong> <small>án vsk · ${sumKaup} línur</small></span></td></tr>`;
+    rot.querySelectorAll('th[data-k]').forEach(th => { const on = th.dataset.k===rk; th.classList.toggle('on', on); th.querySelector('.ef-vl-pila').textContent = on ? (ratt==='asc'?'▲':'▼') : ''; });
+    rot.querySelectorAll('#ef-vl-sia button').forEach(b => b.classList.toggle('on', b.dataset.sia===sia));
+    if($rod.value !== rodun) $rod.value = rodun;
+  };
+  // Raunsmellur → vistað á þjón (hub_state ui.vidmot) — aldrei í lykkju eða vakt.
+  rot.querySelector('thead').addEventListener('click', e => {
+    const th = e.target.closest('th[data-k]'); if(!th) return;
+    const k = th.dataset.k, [rk, ratt] = rodun.split(':');
+    rodun = k===rk ? `${k}:${ratt==='asc'?'desc':'asc'}` : `${k}:${k==='vara'?'asc':'desc'}`;
+    vidmotSetja('ef_vl_rodun', rodun); teikna();
+  });
+  $rod.addEventListener('change', () => { rodun = $rod.value; vidmotSetja('ef_vl_rodun', rodun); teikna(); });
+  rot.querySelector('#ef-vl-sia').addEventListener('click', e => {
+    const b = e.target.closest('button[data-sia]'); if(!b || b.dataset.sia===sia) return;
+    sia = b.dataset.sia; vidmotSetja('ef_vl_sia', sia); teikna();
+  });
+  $leit.addEventListener('input', () => { leit = $leit.value; teikna(); });
+  rot.querySelector('#ef-vl-loka').onclick = () => closeModal();
+  if(window.__efVlEsc) document.removeEventListener('keydown', window.__efVlEsc);
+  window.__efVlEsc = e => { if(e.key==='Escape'){ closeModal(); document.removeEventListener('keydown', window.__efVlEsc); window.__efVlEsc = null; } };
+  document.addEventListener('keydown', window.__efVlEsc);
+  teikna();
 }
 
 // Two-step Redder-lesari: first click PREVIEWS (dry) every PDF and shows the
