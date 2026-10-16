@@ -11637,6 +11637,27 @@ async function renderGerdReikninga(t){
       .gr-modal-bg.boss.gb2 .gb-kpi .k{flex-direction:row;align-items:baseline;justify-content:space-between;gap:10px;margin:0;padding:6px 16px;border:0;box-shadow:none}
       .gb2 .gb-kh+.k{padding-top:12px}
       /* 16.10.2026 (Verkefnaspjald Agnars): efnishlutfall í samantekt, Redder-línur + viðvörun í Efni, Hreyfingar-takki */
+      .gb2 .gb-saga-h,.gb2 .gb-saga-r{display:grid;grid-template-columns:minmax(150px,1.4fr) .7fr .9fr .55fr 1.15fr 1.35fr auto;gap:4px 12px;align-items:center;padding:8px 10px;border-top:1px solid #e6e1d6}
+      .gb2 .gb-saga-h{font-family:var(--font-mono,ui-monospace,monospace);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#6f685c;border-top:0;padding-top:0}
+      .gb2 .gb-saga-r.hasd{cursor:pointer}.gb2 .gb-saga-r.hasd:hover{background:#f6f3ec}
+      .gb2 .gb-saga-r .c{font-size:12.5px;min-width:0;color:#161513}.gb2 .gb-saga-r .c small{display:block;font-family:var(--font-mono,ui-monospace,monospace);font-size:10.5px;color:#6f685c;font-weight:400}
+      .gb2 .gb-saga-r .c .l{display:none}
+      .gb2 .gb-saga-r .c.k,.gb2 .gb-saga-r .c.e,.gb2 .gb-saga-r .c.p,.gb2 .gb-saga-r .c.a{font-family:var(--font-mono,ui-monospace,monospace);font-variant-numeric:tabular-nums;white-space:nowrap}
+      .gb2 .gb-saga-r .c.s{font-family:var(--font-mono,ui-monospace,monospace);font-size:11.5px;font-weight:600}
+      .gb2 .gb-saga-r .c.s.ok{color:#2f7a4a}.gb2 .gb-saga-r .c.s.warn{color:#8a6a1c}.gb2 .gb-saga-r .c.s.bad{color:#b5522a}.gb2 .gb-saga-r .c.s.drog{color:#6f685c}
+      .gb2 .gb-saga-r .c.t{display:flex;gap:6px;white-space:nowrap}
+      .gb2 .gb-saga-btn{height:28px;padding:0 9px;border:1px solid var(--edge,#c9c2b3);border-bottom-color:#a89f8c;border-radius:4px;background:linear-gradient(180deg,#fff,#efeae0);font:inherit;font-size:11.5px;font-weight:600;color:#161513;cursor:pointer}
+      .gb2 .gb-saga-btn:disabled{opacity:.45;cursor:default}
+      .gb2 .gb-saga-f{display:flex;justify-content:space-between;gap:10px 18px;flex-wrap:wrap;padding:10px;border-top:2px solid #cfc8b9;font-family:var(--font-mono,ui-monospace,monospace);font-size:12px;color:#161513}.gb2 .gb-saga-f .bad{color:#b5522a}
+      .gb2 .gb-saga-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 10px 0;font-size:11px;color:#6f685c}
+      .gb2 .gb-saga-bidur{padding:14px 10px;font-size:12.5px;color:#6f685c}
+      .gb2 .gb-link{font:inherit;font-size:12.5px;font-weight:600;color:#161513;background:none;border:0;border-bottom:1px dotted #8f8776;padding:0 1px;cursor:pointer}.gb2 .gb-link:hover{color:#8f6a1c}.gb2 .gb-link:disabled{opacity:.5;cursor:default}
+      @media (max-width:860px){
+        .gb2 .gb-saga-h{display:none}
+        .gb2 .gb-saga-r{grid-template-columns:1fr 1fr 1fr;grid-template-areas:"m m s" "k e p" "a a t";padding:10px 8px}
+        .gb2 .gb-saga-r .c.m{grid-area:m}.gb2 .gb-saga-r .c.k{grid-area:k}.gb2 .gb-saga-r .c.e{grid-area:e}.gb2 .gb-saga-r .c.p{grid-area:p}.gb2 .gb-saga-r .c.a{grid-area:a}.gb2 .gb-saga-r .c.s{grid-area:s;text-align:right}.gb2 .gb-saga-r .c.t{grid-area:t;justify-content:flex-end}
+        .gb2 .gb-saga-r .c .l{display:block;font-family:var(--font-mono,ui-monospace,monospace);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:#8f8776}
+      }
       .gb2 .gb-tt .gb-meta .gb-custlink{font:inherit;font-size:inherit;color:#161513;font-weight:600;background:none;border:0;border-bottom:1px dotted #8f8776;padding:0 1px;cursor:pointer}
       .gb2 .gb-tt .gb-meta .gb-custlink:hover{color:#8f6a1c;border-bottom-color:#8f6a1c}
       .gr-modal-bg.boss.gb2 .gb-kpi .kv small.gb-pct{font-size:11px;font-weight:400;color:#8f8776;margin-left:7px;font-family:var(--font-mono,ui-monospace,monospace)}
@@ -12263,7 +12284,6 @@ async function renderGerdReikninga(t){
           <h1 class="gb-h1">${escapeHtml(name)}</h1>
           <div class="gb-meta">${grPeriod?'<b class="gb-samr">⧉ SAMREIKNINGUR</b> ':''}${cust?'<button type="button" class="gb-custlink" id="gr-cust-open" title="Opna viðskiptavininn — tengiliður, netfang, kröfur, minnispunktar">🏢 '+escapeHtml(cust)+'</button> · ':''}${escapeHtml((()=>{ const M=['Janúar','Febrúar','Mars','Apríl','Maí','Júní','Júlí','Ágúst','September','Október','Nóvember','Desember']; const p=String(month||'').split('-'); return p.length===2&&M[+p[1]-1] ? M[+p[1]-1]+' '+p[0] : String(month||''); })())} ·${dmy(fra)}–${dmy(til)}${grPeriod&&d&&d.merged_from?' · úr '+escapeHtml((d.merged_from||[]).map(x=>x.work_month).join(' + '))+' + '+escapeHtml(month):''}</div>
           <span class="gb-sp"></span>
-          <button type="button" class="gb-key" id="gr-hreyf" ${custKt?'':'disabled'} title="${custKt?'Hreyfingaryfirlit verkkaupa í bókhaldi Brunahólfs (kt. '+escapeAttr(custKt)+')':'Kennitala vantar á verkkaupa'}">📒 Hreyfingar</button>
           <button type="button" class="gb-key" id="gb-prevfull" aria-pressed="false" title="Sýna reikninginn í fullri stærð við hlið eyðublaðsins">Stækka forskoðun</button>
           <button class="gr-btn gr-btn-primary" id="gr-save" type="button">Vista</button>
         </div>
@@ -12305,6 +12325,7 @@ async function renderGerdReikninga(t){
               <button type="button" role="tab" class="gb-tab" data-tab="03" aria-selected="false"><i>03</i>Efni<span class="gb-tc" id="gb-tc-03"></span><span class="gb-tdot" id="gb-tdot-03" title="Redder-innkaup stemma ekki við efnislistann" hidden></span></button>
               <button type="button" role="tab" class="gb-tab" data-tab="04" aria-selected="false"><i>04</i>Gjöld og afsláttur<span class="gb-tc" id="gb-tc-04"></span></button>
               <button type="button" role="tab" class="gb-tab" data-tab="05" aria-selected="false"><i>05</i>Athugasemd<svg class="gb-lock" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-label="innri"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></button>
+              <button type="button" role="tab" class="gb-tab" data-tab="06" aria-selected="false" title="Fyrri reikningar þessa verkstaðar — mánuður, upphæð, greiðslustaða, skjölin"><i>06</i>Fyrri reikningar<span class="gb-tc" id="gb-tc-06"></span><span class="gb-tdot" id="gb-tdot-06" title="Ógreiddur reikningur eldri en 30 daga" hidden></span></button>
               <b class="gb-tsum" id="gb-tsum"></b>
             </div>
           <section class="gb-sec" data-sec="02">
@@ -12368,6 +12389,10 @@ async function renderGerdReikninga(t){
           <div class="gb-notes-tools"><span class="hint">Límdu skjáskot beint í reitinn (Ctrl+V / ⌘V, „Líma" á síma), dragðu það inn eða</span><button type="button" class="gb-notes-btn" id="gr-notes-img-btn" title="Velja mynd úr tölvu/síma — vistast sem innra viðhengi">📷 Bæta við mynd</button><input type="file" id="gr-notes-img-file" accept="image/*" multiple hidden><span class="gb-notes-st" id="gr-notes-st"></span></div>
           <div class="gb-notes-imgs" id="gr-notes-imgs"></div>
             </div>
+          </section>
+          <section class="gb-sec" data-sec="06">
+            <div class="gb-sec-h"><span class="boss-plate">06</span><span class="gb-sec-t">Fyrri reikningar</span><span class="gb-sec-sub" id="gr-sub-06">allir mánuðir þessa verkstaðar nema sá opni</span><b class="gb-sec-sum" id="gr-sum-06"></b><span class="gb-caret">›</span></div>
+            <div class="gb-sec-b"><div class="gb-saga" id="gr-saga"><div class="gb-saga-bidur">Sæki…</div></div></div>
           </section>
           </div>
         </div>
@@ -12481,16 +12506,6 @@ async function renderGerdReikninga(t){
       addMat({label:'', price:0, qty:1, cost:0}); draw();
       const last = $mats.querySelector('.gr-mat-line:last-child .m-label'); if(last) last.focus();
     };
-    // 16.10.2026 (Verkefnaspjald Agnars): 📒 Hreyfingar — Hreyfingaryfirlit verkkaupa í bókhaldi Brunahólfs (hub-flipinn),
-    // opnað á kennitölu verkkaupa. Glugginn lokast; óvistuð drög spyrja fyrst.
-    { const hb = document.getElementById('gr-hreyf'); if(hb) hb.onclick = () => {
-        const kt = String(((document.getElementById('gr-kt')||{}).value || custKt || '')).trim(); if(!kt) return;
-        const st = document.getElementById('gr-hd-status');
-        if(st && st.classList.contains('unsaved') && !confirm('Drögin eru óvistuð og glugginn lokast. Opna Hreyfingaryfirlit samt?')) return;
-        try{ sessionStorage.setItem('hy_open_kt', kt); }catch(_){}
-        try{ close(); }catch(_){}
-        try{ window.state.ui.activeTab = 'hreyfingaryfirlit'; save({nav:true}); render(); }catch(_){ location.hash = '#hreyfingaryfirlit'; }
-      }; }
     // 🏢 Viðskiptavinurinn (16.10.2026, Agnar: „ýta á viðskiptavininn og komast inn á page"): opnar Viðskiptavinir-flipann
     // með greiðandann valinn. Glugginn lokast; óvistuð drög spyrja fyrst.
     { const cb = document.getElementById('gr-cust-open'); if(cb) cb.onclick = () => {
@@ -12723,7 +12738,7 @@ async function renderGerdReikninga(t){
         { const td = K('gb-tdot-02'); if(td) td.hidden = !hoursMis;
           SS('gb-tc-03', String(c.matLines.filter(m => m.qty > 0 || m.total > 0).length));
           SS('gb-tc-04', String((c.stadf ? 1 : 0) + (c.sma ? 1 : 0) + (c.discPct > 0 ? 1 : 0) + (c.fixed > 0 ? 1 : 0)));
-          const ts = { '02': fmt(timi) + ' kr', '03': fmt(c.matSum) + ' kr', '04': fmt(gjold) + ' kr', '05': '' };
+          const ts = { '02': fmt(timi) + ' kr', '03': fmt(c.matSum) + ' kr', '04': fmt(gjold) + ' kr', '05': '', '06': '' };
           SS('gb-tsum', ts[bg.__gbTab || '02'] || ''); }
         // 16.10.2026: efnishlutfall (efni / reikningur án vsk) í Samantekt og haus 03; Redder-kassinn + punktur á flipann.
         { const nRd = redderBox(c) || 0;
@@ -12734,15 +12749,122 @@ async function renderGerdReikninga(t){
       }
       const bossSums0 = bossSums; let bsBusy = false; bossSums = function(){ if(bsBusy) return; bsBusy = true; try{ bossSums0(); } finally { bsBusy = false; } };
       bg.__bossSums = bossSums; bossSums();
+      // ===== 06 Fyrri reikningar (16.10.2026, Agnar: „sjá fyrri reikninga þarna / eldri efnislista.. hreyfingarlistann,
+      // hvaða mánuður það var, upphæð, hvenær gefinn út og hvort hann er greiddur" + „Dagvinnumagn, efniskostnað og
+      // hlutfallsprósentu efnis af heild" + opna skjölin tvö). Heimildir: DRAFTS (invoice_drafts per verkstaður|mánuður),
+      // /api/krofur-yfirlit?year= (SAMA greiðsluregla og Kröfu yfirlit: paid = Payday greitt EÐA bankapörun; kredit og
+      // afturkallað undanskilið), /api/efnislisti-docs (PDF-skjölin). Payday-reikningur paraður við mánuð á upphæð
+      // (±2 kr), annars á gjalddaga innan 60 daga frá mánaðarlokum. Reiknings-PDF: skjal doc_type 'invoice' ef til,
+      // annars prentun okkar úr drögunum (printSavedInvoice) — Payday-PDF sjálft er ekki speglað í okkar kerfi.
+      const SAGA_MAN = ['Janúar','Febrúar','Mars','Apríl','Maí','Júní','Júlí','Ágúst','September','Október','Nóvember','Desember'];
+      const sagaMan = m => { const p = String(m||'').split('-'); return p.length >= 2 ? (SAGA_MAN[+p[1]-1] || p[1]) + ' ' + p[0] : String(m||''); };
+      const sagaDags = s => { const x = String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return x ? x[3] + '/' + x[2] + '/' + x[1] : ''; };
+      const sagaKlst = n => (Math.round((Number(n)||0)*100)/100).toString().replace('.', ',');
+      const sagaEfni = d => { if(d && d.materials_total != null) return Number(d.materials_total)||0; const m = Array.isArray(d && d.materials_jsonb) ? d.materials_jsonb : []; return m.reduce((s, x) => s + Math.round((Number(x.price)||0) * (Number(x.qty)||0)), 0); };
+      const sagaSS = (id, v) => { const e = K(id); if(e && e.textContent !== v) e.textContent = v; };
+      window.__gbKy = window.__gbKy || {};
+      async function sagaKrofur(years){
+        const ut = [];
+        for(const y of years){
+          if(!window.__gbKy[y]){ window.__gbKy[y] = fetch('/api/krofur-yfirlit?year=' + y).then(r => r.ok ? r.json() : { rows: [] }).catch(() => ({ rows: [] })); }
+          const j = await window.__gbKy[y]; ut.push(...((j && j.rows) || []));
+        }
+        return ut;
+      }
+      let sagaSott = false;
+      async function teiknaSaga(opts){
+        const host = K('gr-saga'); if(!host) return;
+        const lett = !!(opts && opts.lett);
+        const drogMan = Object.keys(DRAFTS).filter(k => k.startsWith(name + '|')).map(k => k.slice(name.length + 1)).filter(m => m && m !== month);
+        const ar = new Set(drogMan.map(m => m.slice(0,4))); ar.add(String(new Date().getFullYear())); if(month) ar.add(month.slice(0,4));
+        let krofur = [];
+        if(!lett){ host.innerHTML = '<div class="gb-saga-bidur">Sæki greiðslustöðu úr Payday…</div>'; krofur = (await sagaKrofur([...ar])).filter(r => r.worksite === name && !r.cancelled && !r.credit && !r.excluded && !r.dup); }
+        // Pörun: 1) upphæð (±2 kr) yfir ÖLL drög verkstaðarins, opni mánuðurinn meðtalinn, svo hans reikningur lendi ekki
+        // á öðrum mánuði; 2) gjalddagi sem er eftir mánaðarlok og innan 60 daga. Eitt par per reikning.
+        const notadar = new Set(); const par = {};
+        const allirMan = Object.keys(DRAFTS).filter(k => k.startsWith(name + '|')).map(k => k.slice(name.length + 1)).filter(Boolean).sort((a,b) => b.localeCompare(a));
+        for(const m of allirMan){ const d = DRAFTS[name + '|' + m]; const tot = Math.round(Number(d.total_m_vsk)||0); if(!(tot > 0)) continue;
+          const inv = krofur.find(r => !notadar.has(r.inv_key) && Math.abs(Math.round(r.amount) - tot) <= 2); if(inv){ notadar.add(inv.inv_key); par[m] = inv; } }
+        for(const m of allirMan){ if(par[m]) continue; const [y, mo] = m.split('-').map(Number); const lok = new Date(y, mo, 0);
+          const inv = krofur.find(r => { if(notadar.has(r.inv_key) || !r.gjalddagi) return false; const g = new Date(r.gjalddagi); const dagar = (g - lok) / 864e5; return dagar > 0 && dagar <= 60; }); if(inv){ notadar.add(inv.inv_key); par[m] = inv; } }
+        const rows = drogMan.sort((a,b) => b.localeCompare(a)).map(m => ({ m, d: DRAFTS[name + '|' + m], inv: par[m] || null }));
+        for(const r of krofur){ if(notadar.has(r.inv_key)) continue; const g = String(r.gjalddagi||''); const mm = g ? (() => { const dt = new Date(g); dt.setMonth(dt.getMonth() - 1); return dt.toISOString().slice(0,7); })() : (r.month || ''); if(mm && mm !== month) rows.push({ m: mm, d: null, inv: r }); }
+        rows.sort((a,b) => b.m.localeCompare(a.m));
+        const idag = new Date();
+        const stada = r => {
+          if(r.inv){ if(r.inv.paid) return { t: 'Greiddur ✓' + (r.inv.greidsla_date ? ' ' + sagaDags(r.inv.greidsla_date) : r.inv.bank_date ? ' ' + sagaDags(r.inv.bank_date) + ' (banki)' : ''), c: 'ok' };
+            const dagar = r.inv.gjalddagi ? Math.round((idag - new Date(r.inv.gjalddagi)) / 864e5) : 0;
+            return dagar > 0 ? { t: 'Ógreiddur · ' + dagar + ' dag' + (dagar === 1 ? 'ur' : 'ar') + ' fram yfir', c: dagar > 30 ? 'bad' : 'warn', dagar } : { t: 'Sendur · gjalddagi ' + sagaDags(r.inv.gjalddagi), c: 'warn' }; }
+          const st = String(r.d && r.d.status || '');
+          if(st === 'invoiced' || st === 'sent') return { t: 'Sendur (án Payday-pörunar)', c: 'warn' };
+          if(st === 'merged') return { t: 'Í samreikningi', c: '' };
+          if(st === 'skipped') return { t: 'Sleppt', c: '' };
+          return { t: 'Drög · ósent', c: 'drog' };
+        };
+        const n = rows.length; const vanskil = rows.some(r => { const s = stada(r); return s.c === 'bad'; });
+        sagaSS('gb-tc-06', n ? String(n) : ''); { const td = K('gb-tdot-06'); if(td) td.hidden = !vanskil; }
+        if(lett) { if(!sagaSott) host.innerHTML = '<div class="gb-saga-bidur">' + (n ? n + ' fyrri mánuð' + (n === 1 ? 'ur' : 'ir') + ' — opnaðu flipann til að sækja greiðslustöðu.' : 'Engir fyrri mánuðir á þessum verkstað.') + '</div>'; return; }
+        sagaSott = true;
+        if(!n){ host.innerHTML = '<div class="gb-saga-bidur">Engir fyrri mánuðir á þessum verkstað.</div>'; return; }
+        let sumKr = 0, sumOgr = 0, sumKlst = 0, sumEfni = 0, pctN = 0, pctS = 0;
+        const html = rows.map(r => {
+          const s = stada(r); const tot = r.d ? Math.round(Number(r.d.total_m_vsk)||0) : (r.inv ? Math.round(r.inv.amount) : 0);
+          sumKr += tot; if(r.inv && !r.inv.paid) sumOgr += tot;
+          let klst = '—', efni = '—', pct = '—';
+          if(r.d){ const dv = Number(r.d.hours_dagvinna)||0, ev = Number(r.d.hours_eftirvinna)||0; klst = sagaKlst(dv) + (ev > 0 ? ' <small>(+' + sagaKlst(ev) + ' yfirv.)</small>' : ''); sumKlst += dv + ev;
+            const e = sagaEfni(r.d), net = Number(r.d.net_an_vsk)||0; efni = fmt(e) + ' kr'; sumEfni += e; if(net > 0){ const p = Math.round(100 * e / net); pct = p + '%'; pctN++; pctS += p; } }
+          const nr = r.inv ? ('nr. ' + escapeHtml(String(r.inv.tilvisun||'')) + (r.d && r.d.tilvisun ? ' · tilv. ' + escapeHtml(String(r.d.tilvisun)) : '')) : (r.d && r.d.tilvisun ? 'tilv. ' + escapeHtml(String(r.d.tilvisun)) : '');
+          const gefinn = r.inv && r.inv.gjalddagi ? 'gjalddagi ' + sagaDags(r.inv.gjalddagi) : (r.d && r.d.updated_at ? 'vistað ' + sagaDags(r.d.updated_at) : '');
+          return '<div class="gb-saga-r' + (r.d ? ' hasd' : '') + '" data-saga-m="' + escapeAttr(r.m) + '" title="' + (r.d ? 'Opna ' + escapeAttr(sagaMan(r.m)) : '') + '">'
+            + '<div class="c m"><b>' + escapeHtml(sagaMan(r.m)) + '</b><small>' + (nr || '&nbsp;') + '</small></div>'
+            + '<div class="c k"><span class="l">Klst</span>' + klst + '</div>'
+            + '<div class="c e"><span class="l">Efni</span>' + efni + '</div>'
+            + '<div class="c p"><span class="l">Efni %</span>' + pct + '</div>'
+            + '<div class="c a"><span class="l">M. vsk</span><b>' + fmt(tot) + ' kr</b><small>' + escapeHtml(gefinn) + '</small></div>'
+            + '<div class="c s ' + s.c + '">' + escapeHtml(s.t) + '</div>'
+            + '<div class="c t"><button type="button" class="gb-saga-btn" data-saga-doc="' + escapeAttr(r.m) + '" title="Opna nýjasta Efnislista-PDF mánaðarins">📄 Efnislisti</button>'
+            + '<button type="button" class="gb-saga-btn" data-saga-inv="' + escapeAttr(r.m) + '"' + (r.d ? '' : ' disabled') + ' title="' + (r.d ? 'Reikningurinn eins og við prentum hann úr drögunum' : 'Engin drög — reikningurinn er aðeins í Payday') + '">🧾 Reikningur</button></div>'
+            + '</div>';
+        }).join('');
+        host.innerHTML = '<div class="gb-saga-h"><span>Mánuður</span><span>Klst</span><span>Efni</span><span>Efni %</span><span>Upphæð m. vsk</span><span>Staða</span><span></span></div>' + html
+          + '<div class="gb-saga-f"><span>' + n + ' reikning' + (n === 1 ? 'ur' : 'ar') + ' · ' + fmt(sumKr) + ' kr rukkað' + (sumOgr > 0 ? ' · <b class="bad">' + fmt(sumOgr) + ' kr ógreitt</b>' : ' · allt greitt') + '</span>'
+          + '<span>' + sagaKlst(sumKlst) + ' klst · efni ' + fmt(sumEfni) + ' kr' + (pctN ? ' · meðalhlutfall ' + Math.round(pctS / pctN) + '%' : '') + '</span></div>'
+          + '<div class="gb-saga-foot"><button type="button" class="gb-link" id="gr-hreyf"' + (custKt ? '' : ' disabled') + ' title="' + (custKt ? 'Hreyfingaryfirlit verkkaupa í bókhaldi Brunahólfs (kt. ' + escapeAttr(custKt) + ')' : 'Kennitala vantar á verkkaupa') + '">📒 Hreyfingaryfirlit verkkaupa ›</button><span class="gb-saga-src">Greiðslustaða: Payday-spegill + bankapörun, sama regla og Kröfu yfirlit</span></div>';
+        tengjaHreyf();
+        host.querySelectorAll('[data-saga-doc]').forEach(b => b.addEventListener('click', async e => { e.stopPropagation(); const m = b.dataset.sagaDoc; b.disabled = true;
+          try{ const r = await fetch('/api/efnislisti-docs?worksite=' + encodeURIComponent(name) + '&month=' + encodeURIComponent(m)); const j = r.ok ? await r.json() : { rows: [] };
+            const docs = (j.rows||[]).filter(x => /^efnislisti/.test(String(x.doc_type||'')) && (x.public_url || x.drive_file_id));
+            docs.sort((a,b) => (b.doc_type === 'efnislisti_timabok_pdf') - (a.doc_type === 'efnislisti_timabok_pdf') || String(b.added_at||'').localeCompare(String(a.added_at||'')));
+            const d0 = docs[0]; if(!d0){ alert('Ekkert Efnislista-PDF vistað fyrir ' + sagaMan(m) + '.'); return; }
+            window.open(d0.public_url || ('/api/skjal?id=' + encodeURIComponent(d0.drive_file_id)), '_blank', 'noopener');
+          }catch(err){ alert('Náði ekki í skjalalistann: ' + (err.message||err)); } finally { b.disabled = false; } }));
+        host.querySelectorAll('[data-saga-inv]').forEach(b => b.addEventListener('click', async e => { e.stopPropagation(); const m = b.dataset.sagaInv; const d = DRAFTS[name + '|' + m]; if(!d) return;
+          try{ const r = await fetch('/api/efnislisti-docs?worksite=' + encodeURIComponent(name) + '&month=' + encodeURIComponent(m) + '&doc_type=invoice'); const j = r.ok ? await r.json() : { rows: [] }; const inv = (j.rows||[])[0];
+            if(inv && (inv.public_url || inv.drive_file_id)){ window.open(inv.public_url || ('/api/skjal?id=' + encodeURIComponent(inv.drive_file_id)), '_blank', 'noopener'); return; } }catch(_){}
+          if(typeof printSavedInvoice === 'function') printSavedInvoice(d); }));
+        host.querySelectorAll('.gb-saga-r.hasd').forEach(row => row.addEventListener('click', e => { if(e.target.closest('button')) return; const m = row.dataset.sagaM;
+          const st = K('gr-hd-status'); if(st && st.classList.contains('unsaved') && !confirm('Drögin eru óvistuð og glugginn lokast. Opna ' + sagaMan(m) + ' samt?')) return;
+          try{ close(); }catch(_){} grOpenWorksite(name, m); }));
+      }
+      function tengjaHreyf(){ const hb = document.getElementById('gr-hreyf'); if(!hb || hb.__bundinn) return; hb.__bundinn = true; hb.onclick = () => {
+        const kt = String(((document.getElementById('gr-kt')||{}).value || custKt || '')).trim(); if(!kt) return;
+        const st = document.getElementById('gr-hd-status');
+        if(st && st.classList.contains('unsaved') && !confirm('Drögin eru óvistuð og glugginn lokast. Opna Hreyfingaryfirlit samt?')) return;
+        try{ sessionStorage.setItem('hy_open_kt', kt); }catch(_){}
+        try{ close(); }catch(_){}
+        try{ window.state.ui.activeTab = 'hreyfingaryfirlit'; save({nav:true}); render(); }catch(_){ location.hash = '#hreyfingaryfirlit'; }
+      }; }
       // gb2 flipar 02–05 (15.10.2026): einn kafli í einu í stað fimm kafla í röð.
       const gbSetTab = s => {
         bg.__gbTab = s;
         bg.querySelectorAll('.gb-tab').forEach(b => { const on = b.dataset.tab === s; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
         bg.querySelectorAll('.gb-tabbox > .gb-sec').forEach(x => x.classList.toggle('gb-act', x.dataset.sec === s));
         try{ bossSums(); }catch(_){}
+        if(s === '06') teiknaSaga().catch(() => {});
       };
       bg.querySelectorAll('.gb-tab').forEach(b => b.addEventListener('click', () => gbSetTab(b.dataset.tab)));
       gbSetTab('02');
+      teiknaSaga({ lett: true }).catch(() => {});
       { const ath = K('gr-athuga'); if(ath) ath.addEventListener('click', e => { const p = e.target.closest('.w'); if(p && /^0[2-5]$/.test(p.dataset.sec || '')) gbSetTab(p.dataset.sec); }); }
       { const pf = K('gb-prevfull'); if(pf) pf.addEventListener('click', () => { const on = !modal.classList.contains('prev-full'); modal.classList.toggle('prev-full', on); pf.setAttribute('aria-pressed', on ? 'true' : 'false'); pf.textContent = on ? 'Minnka forskoðun' : 'Stækka forskoðun'; }); }
       // Yfirvinnu-stýringin í 02 er spegill á fótinn í Tímaskýrslunni: hún skrifar
