@@ -12094,6 +12094,9 @@ async function renderGerdReikninga(t){
   function openEditor(name){
     // dd.mm.áááá ↔ ISO. Frá/Til reitirnir sýna íslenskt dagsetningarsnið; native
     // <input type="date"> sýnir US MM/DD/YYYY á en-US vöfrum. Gildin geymast ISO.
+    // 16.10.2026 (Agnar: „má setja punktinn inn í þúsund 9.951"): Kr/klst, akstursgjald og fast verð birtast með
+    // þúsundapunkti; geymda gildið er áfram hrá tala (parseNum les „9.951" sem 9951 og „9.951,5" sem 9951,5).
+    const fmtInn = v => { const x = Number(v); if(!isFinite(x) || x === 0) return x === 0 ? '0' : ''; const r = Math.round(x*100)/100; const heil = Math.trunc(Math.abs(r)); const brot = Math.round((Math.abs(r)-heil)*100); return (r<0?'-':'') + String(heil).replace(/\B(?=(\d{3})+(?!\d))/g,'.') + (brot ? ',' + String(brot).padStart(2,'0').replace(/0$/,'') : ''); };
     const ymd = s => { const p=String(s||'').trim().split(/[./-]/); if(p.length===3){ const d=p[0].padStart(2,'0'), m=p[1].padStart(2,'0'), y=p[2]; if(/^\d{4}$/.test(y)&&+m>=1&&+m<=12&&+d>=1&&+d<=31) return `${y}-${m}-${d}`; } return ''; };
     const month = state.ui.gr_month;
     const r = rateFor(name);
@@ -12261,10 +12264,10 @@ async function renderGerdReikninga(t){
           <div class="gb-hours">
             <div class="gb-hstrip" id="gr-hstrip"><svg class="gb-hs-i" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="gr-hstrip-t">Ber saman við tímabók…</span><button type="button" id="gr-fill-hours" class="gr-btn" title="Fylla dagvinnu/yfirvinnu úr tímabók (yfirvinna eftir ${r.evThreshold} klst/dag${r.lunch>0?' — '+r.lunch+' klst hádegismatur frádreginn':''}; helgar (lau/sun) allar yfirvinna)">Samræma við tímabók</button></div>
             <div class="gb-hrow gb-hhead"><span></span><span>Klst</span><span>Kr/klst</span><span class="r">Samtals</span></div>
-            <div class="gb-hrow"><b>Dagvinna</b><input class="gb-h" type="text" inputmode="decimal" id="gr-dvh" value="${String(dvH).replace('.',',')}"><input type="text" inputmode="decimal" id="gr-dvr" value="${dvR}"><span class="gb-hsum" id="gr-dv-sum">—</span></div>
-            <div class="gb-hrow"><b>Yfirvinna${r.evOk?'':'<span style="font-size:10px;color:var(--warn);font-weight:400"> — ekki leyfð</span>'}</b><input class="gb-h" type="text" inputmode="decimal" id="gr-evh" value="${String(evH).replace('.',',')}"${r.evOk?'':' title="Yfirvinna ekki leyfð samkvæmt verðskrá"'}><input type="text" inputmode="decimal" id="gr-evr" value="${evR}"${r.evOk?'':' disabled'}><span class="gb-hsum" id="gr-ev-sum">—</span></div>
+            <div class="gb-hrow"><b>Dagvinna</b><input class="gb-h" type="text" inputmode="decimal" id="gr-dvh" value="${String(dvH).replace('.',',')}"><input type="text" inputmode="decimal" id="gr-dvr" value="${fmtInn(dvR)}"><span class="gb-hsum" id="gr-dv-sum">—</span></div>
+            <div class="gb-hrow"><b>Yfirvinna${r.evOk?'':'<span style="font-size:10px;color:var(--warn);font-weight:400"> — ekki leyfð</span>'}</b><input class="gb-h" type="text" inputmode="decimal" id="gr-evh" value="${String(evH).replace('.',',')}"${r.evOk?'':' title="Yfirvinna ekki leyfð samkvæmt verðskrá"'}><input type="text" inputmode="decimal" id="gr-evr" value="${fmtInn(evR)}"${r.evOk?'':' disabled'}><span class="gb-hsum" id="gr-ev-sum">—</span></div>
             <div class="gb-hrow gb-akstur"><b>Akstur</b><label class="gb-unit"><input type="number" id="gr-km" value="${km}" step="10"><span>km × ${r.km}</span></label><label class="gb-unit"><input type="number" id="gr-ferd" value="${fr}" step="1"><span>ferðir × ${fmt(r.ferd)}</span></label><span class="gb-hsum" id="gr-akstur-sum">0</span></div>
-            <div class="gb-hrow gb-gjald" title="Sér akstursgjald á þennan reikning — fast gjald í kr án vsk, til viðbótar við km og ferðir"><b>Akstursgjald</b><input type="text" inputmode="decimal" id="gr-gjald" value="${gj?gj:''}" placeholder="0"><span style="font-size:11px;color:var(--muted)">sér gjald · kr án vsk</span><span class="gb-hsum" id="gr-gjald-sum">${gj?fmt(gj):'—'}</span></div>
+            <div class="gb-hrow gb-gjald" title="Sér akstursgjald á þennan reikning — fast gjald í kr án vsk, til viðbótar við km og ferðir"><b>Akstursgjald</b><input type="text" inputmode="decimal" id="gr-gjald" value="${gj?fmtInn(gj):''}" placeholder="0"><span style="font-size:11px;color:var(--muted)">sér gjald · kr án vsk</span><span class="gb-hsum" id="gr-gjald-sum">${gj?fmt(gj):'—'}</span></div>
             <div class="gb-yf" id="gr-yf-row" title="Þegar hakað er reiknar tímabókin yfirvinnu á hvern starfsmann: tímar umfram þröskuldinn þann dag færast á yfirvinnu-taxta">
               <input type="checkbox" id="gr-yf-on">
               <label for="gr-yf-on" style="cursor:pointer">Reikna yfirvinnu af tímabók — tímar umfram</label>
@@ -12304,7 +12307,7 @@ async function renderGerdReikninga(t){
           <label class="gb-check"><input type="checkbox" id="gr-sma-on" ${smaOn?'checked':''}><span class="n">Smáhlutagjald <small id="gr-sma-hint">${r.sma} kr × klst (dv + ev) · sjálfvirkt</small></span><b class="a" id="gr-sma-amt">—</b></label>
           <div class="gb-r2 gb-price">
             <div class="gr-f"><label>Afsláttur af öllum reikningnum</label><label class="gb-unit" title="t.d. 10 = 10% — birtist sem lína á reikningnum"><input type="text" inputmode="decimal" id="gr-disc" value="${escapeAttr(String(discPct))}" placeholder="0"><span>% · birtist sem lína</span></label></div>
-            <div class="gr-f"><label>Fast verð m/vsk</label><label class="gb-unit" title="Ef sett — yfirríður útreiknað verð (samningsverð með vsk)"><input type="text" inputmode="numeric" id="gr-fix" value="${escapeAttr(fixedTotal>0?String(Math.round(fixedTotal)):'')}" placeholder="—"><span>t.d. samningsverð</span></label></div>
+            <div class="gr-f"><label>Fast verð m/vsk</label><label class="gb-unit" title="Ef sett — yfirríður útreiknað verð (samningsverð með vsk)"><input type="text" inputmode="numeric" id="gr-fix" value="${escapeAttr(fixedTotal>0?fmtInn(Math.round(fixedTotal)):'')}" placeholder="—"><span>t.d. samningsverð</span></label></div>
           </div>
             </div>
           </section>
@@ -12466,6 +12469,7 @@ async function renderGerdReikninga(t){
     const parseNum = v => {
       let s = String(v==null?'':v).trim().replace(/\s/g,'');
       if(s.indexOf(',')>-1 && s.indexOf('.')>-1) s = s.replace(/\./g,'').replace(',','.'); // 1.234,5 -> 1234.5
+      else if(s.indexOf(',')===-1 && /^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g,''); // 9.951 / 1.764.014 -> þúsundapunktar (16.10.2026)
       else s = s.replace(',','.');                                                          // 168,5   -> 168.5
       s = s.replace(/[^0-9.\-]/g,'');
       const n = parseFloat(s); return isFinite(n)?n:0;
@@ -12560,6 +12564,8 @@ async function renderGerdReikninga(t){
       if(bg.__bossSums) bg.__bossSums();
     }
     document.querySelectorAll('.gr-form input, .gr-form textarea').forEach(el=>{ el.addEventListener('input', draw); el.addEventListener('change', draw); });
+    ['gr-dvr','gr-evr','gr-gjald','gr-fix'].forEach(id => { const el = document.getElementById(id); if(!el) return;
+      el.addEventListener('blur', () => { if(!String(el.value).trim()) return; const v = parseNum(el.value); const t = fmtInn(id === 'gr-fix' ? Math.round(v) : v); if(el.value !== t) el.value = t; }); });
     draw();
     // ── Boss-útlit (03.09.2026): KPI-slab, kaflasummur 01–05, ATHUGA-kassi, símaflipar,
     //    fellanlegir kaflar og 🖼 Tímavera-skjáskot. Hangir á draw() gegnum bg.__bossSums.
@@ -24866,8 +24872,12 @@ async function openTimabok(name, month){
     const verkstadir = [...new Set(rows.map(r => (r.project||'').trim()).filter(Boolean))];
     const margirVerkst = verkstadir.length > 1;
     const head = `<div class="tbk-r tbk-h${rcls}"><span>Dagsetning</span><span>Starfsmaður</span><span>Inn</span><span>Út</span><span>Tímar</span>${margirVerkst?'<span>Verkstaður</span>':''}${t.on?'<span style="text-align:right">Dagv.</span><span style="text-align:right">Yfirv.</span>':''}<span></span></div>`;
+    // 16.10.2026 (Agnar: „Dagsetningar snúa öfugt, vill hafa DD MM YYYY"): textareitur dd/mm/áááá í stað type="date",
+    // sem teiknaði 10/15/2026 eftir tungumáli vafrans. Geymt gildi (rows[i].date) er áfram ISO áááá-mm-dd.
+    const tbkDmy = v => { const m = String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3] + '/' + m[2] + '/' + m[1] : String(v||''); };
+    const tbkYmd = v => { const p = String(v||'').trim().split(/[./-]/); if(p.length !== 3) return ''; const d = p[0].padStart(2,'0'), m = p[1].padStart(2,'0'), y = p[2].length === 2 ? '20' + p[2] : p[2]; if(!/^\d{4}$/.test(y) || +m < 1 || +m > 12 || +d < 1 || +d > 31) return ''; return y + '-' + m + '-' + d; };
     const rr = rows.map((r,i)=>`<div class="tbk-r${rcls}">
-        <input type="date" value="${escapeAttr(r.date)}" data-f="date" data-i="${i}">
+        <input type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/áááá" value="${escapeAttr(tbkDmy(r.date))}" data-f="date" data-i="${i}">
         <input type="text" value="${escapeAttr(r.employee)}" data-f="employee" data-i="${i}" placeholder="Nafn">
         <input type="text" value="${escapeAttr(r.time_in)}" data-f="time_in" data-i="${i}" placeholder="08:00">
         <input type="text" value="${escapeAttr(r.time_out)}" data-f="time_out" data-i="${i}" placeholder="16:00">
@@ -24895,7 +24905,7 @@ async function openTimabok(name, month){
       <div class="tbk-tot tbk-sub"><span>Yfirvinna (yfir ${tbkThrTxt(t.thr)} klst/dag)</span><b>${_phr(t.yf)} klst</b></div>`:''}
       <div class="tbk-tot"><span>Tímar alls</span><b>${_phr(t.total)} klst</b></div>
       ${emp?`<div class="tbk-emp">${empHead}${emp}</div>`:''}`;
-    body.querySelectorAll('input[data-i]').forEach(inp=> inp.addEventListener('change',()=>{ const i=+inp.dataset.i, f=inp.dataset.f; rows[i][f] = f==='hours'? (Number(String(inp.value).replace(',','.').replace(/[^\d.]/g,''))||0) : inp.value; if(f==='hours'||f==='employee'||f==='date'||f==='time_in') paint(); }));
+    body.querySelectorAll('input[data-i]').forEach(inp=> inp.addEventListener('change',()=>{ const i=+inp.dataset.i, f=inp.dataset.f; rows[i][f] = f==='hours'? (Number(String(inp.value).replace(',','.').replace(/[^\d.]/g,''))||0) : f==='date' ? (tbkYmd(inp.value) || rows[i].date) : inp.value; if(f==='hours'||f==='employee'||f==='date'||f==='time_in') paint(); }));
     body.querySelectorAll('[data-del]').forEach(b=> b.onclick=()=>{ rows.splice(+b.dataset.del,1); paint(); });
     const yfChk = body.querySelector('#tbk-yf'), yfThr = body.querySelector('#tbk-yf-thr');
     if(yfChk) yfChk.onchange = ()=>{ yf.on = yfChk.checked; paint(); };
