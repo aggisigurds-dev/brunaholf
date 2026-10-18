@@ -26,7 +26,9 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 // Móttakandi + sendandi eru env-stýrðir; sjálfgildi eru ekki leyndarmál.
-const ALERT_TO = process.env.HEALTH_ALERT_TO || 'brunaholf@brunaholf.is';
+// 18.10.2026 (Agnar: „sendu frekar á aggisigurds@gmail.com“): viðvaranirnar fóru á brunaholf@brunaholf.is sem hann skoðar ekki, svo
+// útrunnin Ajour-innskráning og 125 daga gömul bankabók sátu óséð. Gmail-pósthólfið er það sem hann les í símanum.
+const ALERT_TO = process.env.HEALTH_ALERT_TO || 'aggisigurds@gmail.com';
 // account = tengda Gmail-pósthólfið sem SENDIR (verður að hafa gmail.send heimild).
 const ALERT_ACCOUNT = process.env.HEALTH_ALERT_ACCOUNT || 'eldklar@eldklar.is';
 const ALERT_FROM = process.env.HEALTH_ALERT_FROM || 'Brunahólf <eldklar@eldklar.is>';
