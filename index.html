@@ -19984,7 +19984,13 @@ async function renderKrofuyfirlit(t){
         const ws=iv.worksite||'', wm=iv.work_month||'', cust=iv.customer||ws;
         let to=emailTo();
         if(cust){ try{ const ci=await fetch('/api/customer-info?name='+encodeURIComponent(cust)).then(r=>r.ok?r.json():null); if(ci&&ci.rows&&ci.rows[0]&&ci.rows[0].contact_email) to=ci.rows[0].contact_email; }catch(_){} }
-        let docs=((ws&&wm)?(EFDOCS[ws+'|'+wm]||[]):[]).filter(d=>d.drive_file_id && d.doc_type!=='innra'); // 🔒 innri viðhengi fara ALDREI með
+        // 19.10.2026 (Agnar: Kringlan 2026-10 sagði „Engin vistuð skjöl" þótt PDF-ið væri nývistað): EFDOCS er
+        // sótt EINU SINNI við hleðslu síðunnar (og endurheimt úr skyndiminni), svo skjal sem var búið til eftir
+        // það sást ekki fyrr en við endurhleðslu. Glugginn sækir nú ferskan lista fyrir þetta verk og mánuð;
+        // skyndiminnið er aðeins bakfall ef sóknin bregst.
+        let ferskt = null;
+        if(ws && wm){ try{ const fr = await fetch('/api/efnislisti-docs?worksite='+encodeURIComponent(ws)+'&month='+encodeURIComponent(wm), { cache:'no-store' }); if(fr.ok){ const fj = await fr.json(); if(fj && Array.isArray(fj.rows)){ ferskt = fj.rows; EFDOCS[ws+'|'+wm] = fj.rows; } } }catch(_){ ferskt = null; } }
+        let docs=(ferskt || ((ws&&wm)?(EFDOCS[ws+'|'+wm]||[]):[])).filter(d=>d.drive_file_id && d.doc_type!=='innra'); // 🔒 innri viðhengi fara ALDREI með
         // Gluggi í stað confirm (Agnar 04.09.2026): velja skjölin sem fara með.
         docs = docs.slice().sort((a,b)=> (b.is_primary?1:0) - (a.is_primary?1:0));   // ⭐ aðalskjalið fremst
         const sjalfgefid = 'Sæl(l),\n\nMeðfylgjandi Efnislisti/Tímaskýrsla fyrir '+(cust||ws||'')+(wm?' ('+wm+')':'')+' til skráningar í Payday.'
