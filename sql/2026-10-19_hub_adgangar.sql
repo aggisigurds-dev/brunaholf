@@ -39,3 +39,6 @@ revoke all on public.hub_adgangar, public.hub_adgangar_stilling from anon, authe
 
 -- 19.10.2026 — rofi „krefjast innskráningar": slökkt sjálfgefið; admin kveikir á adgangar.html þegar allir hafa lagað sig að.
 alter table public.hub_adgangar_stilling add column if not exists krefjast boolean not null default false;
+
+-- 19.10.2026 — hversu lengi innskráning varir: false = 10 klst, true = „alltaf" (eitt ár; ógildist þó við lykilorðaskipti).
+alter table public.hub_adgangar_stilling add column if not exists session_alltaf boolean not null default false;

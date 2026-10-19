@@ -69,6 +69,16 @@ const PW = 'Proforð-1234';
   r = await call('POST', { action: 'krefjast', on: false }, adm); ok(r.status === 200 && r.body.krefjast === false, 'admin slekkur');
   r = await call('GET'); ok(r.body.gate === false, 'gate=false aftur');
 
+  console.log('Hversu lengi innskráning varir');
+  const lengd = (ck) => { const p = JSON.parse(Buffer.from(decodeURIComponent(ck.split('=')[1]).split('.')[0].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString()); return p.exp - p.iat; };
+  r = await call('POST', { action: 'login', nn: 'AS', password: PW }); ok(lengd(r.cookie) === 36000, 'sjálfgefið: session endist 10 klst');
+  r = await call('POST', { action: 'session', alltaf: true }, ls); ok(r.status === 403, 'lengdarrofi sem venjulegur starfsmaður → 403');
+  r = await call('POST', { action: 'session', alltaf: true }, adm); ok(r.status === 200 && r.body.alltaf === true, 'admin velur alltaf');
+  r = await call('GET', null, adm, { listi: '1' }); ok(r.body.alltaf === true, 'listi ber stöðuna');
+  r = await call('POST', { action: 'login', nn: 'AS', password: PW }); ok(lengd(r.cookie) === 31536000, 'ný innskráning endist eitt ár');
+  const alltafCk = r.cookie; r = await call('GET', null, alltafCk, { listi: '1' }); ok(r.status === 200, 'alltaf-cookie virkar');
+  r = await call('POST', { action: 'session', alltaf: false }, adm); r = await call('POST', { action: 'login', nn: 'AS', password: PW }); ok(lengd(r.cookie) === 36000, 'aftur í 10 klst');
+
   console.log('Aðgangur sendur');
   r = await call('POST', { action: 'senda', id: db.hub_adgangar[1].id }, adm);
   ok(r.status === 200 && mails.length === 1 && mails[0].to[0] === 'lena@bbio.is' && mails[0].html.includes('LS') && mails[0].html.includes(PW), 'senda aðgang: póstur með notandanafni og lykilorði');

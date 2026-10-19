@@ -143,3 +143,5 @@ innskráningu fer notandinn aftur á `next` (aðeins slóð sem byrjar á `/`, e
 Þetta er VIÐMÓTSHLIÐ, ekki API-vörn: föllin eru óbreytt og ná hvorki Claude, brúnni né sjálfvirkum verkum. Aðrar síður (maeting.html,
 brunathettingar.html, jarvis.html …) eru EKKI hliðaðar. Neyðarslökkvun ef enginn kemst inn: `update hub_adgangar_stilling set krefjast=false where id=1`.
 Þegar rofinn er kveikt og Claude prófar `index.html` í vafra þarf innskráningu — slökkva á rofanum á meðan eða prófa án hliðsins.
+Innskráning varir: stilling `session_alltaf` (sjálfgefið false = 10 klst; true = „alltaf" = eitt ár). Admin velur á adgangar.html
+(`POST {action:'session', alltaf}`); gildir um NÝJAR innskráningar — gömul session halda sínum tíma. Lykilorðaskipti ógildir öll session í báðum stillingum.

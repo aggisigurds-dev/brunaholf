@@ -123,7 +123,7 @@ h1{margin:2px 0 0;font-family:"Playfair Display",serif;font-weight:700;font-size
     eye: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>'
   };
 
-  var S = { view: 'boot', users: [], rolur: [], felog: [], sidurAll: [], pwAt: null, me: null, felagSia: 'Allir', q: '', dr: null, f: null, pwDlg: false, delDlg: null, busy: false, krefjast: false };
+  var S = { view: 'boot', users: [], rolur: [], felog: [], sidurAll: [], pwAt: null, me: null, felagSia: 'Allir', q: '', dr: null, f: null, pwDlg: false, delDlg: null, busy: false, krefjast: false, alltaf: false };
 
   // ── endurvarp eftir innskráningu (stjórnstöðin sendir óinnskráða hingað með ?next=) ──
   function nextUrl() {
@@ -162,7 +162,7 @@ h1{margin:2px 0 0;font-family:"Playfair Display",serif;font-weight:700;font-size
       if (j._status === 401) { S.view = 'login'; return paint(); }
       if (j._status === 403) { S.view = 'nonadmin'; return paint(); }
       if (!j.users) { S.view = 'down'; return paint(); }
-      S.users = j.users; S.rolur = j.rolur; S.felog = j.felog; S.sidurAll = j.sidurAll; S.pwAt = j.pw_changed_at; S.krefjast = !!j.krefjast; S.me = j.me; S.view = 'admin';
+      S.users = j.users; S.rolur = j.rolur; S.felog = j.felog; S.sidurAll = j.sidurAll; S.pwAt = j.pw_changed_at; S.krefjast = !!j.krefjast; S.alltaf = !!j.alltaf; S.me = j.me; S.view = 'admin';
       if (!$('#tbl')) paint(); else { renderKpi(); renderTable(); renderMe(); }
     });
   }
@@ -295,8 +295,23 @@ h1{margin:2px 0 0;font-family:"Playfair Display",serif;font-weight:700;font-size
       '<div class="kpi"><small>Admin</small><strong>' + adm + '</strong><em>geta stofnað aðganga</em></div>' +
       '<div class="kpi dark"><small>Sameiginlegt lykilorð</small><div class="row"><span class="dots">••••••••••</span><button class="btn" id="pwb" type="button">Breyta lykilorði</button></div><em>Síðast breytt ' + esc(fmtDate(S.pwAt) || '—') + '</em></div>' +
       '<div class="kpi gate" style="flex:1.3 1 260px"><small>Krefjast innskráningar</small><div class="row"><button type="button" class="sw" id="gate" role="switch" aria-checked="' + (S.krefjast ? 'true' : 'false') + '" aria-label="Krefjast innskráningar þegar stjórnstöðin er opnuð"><i></i></button><b>' + (S.krefjast ? 'Kveikt' : 'Slökkt') + '</b></div><em>' + (S.krefjast ? 'Allir þurfa að skrá sig inn þegar þeir opna stjórnstöðina.' : 'Stjórnstöðin opnast án innskráningar, eins og áður.') + '</em></div>';
+    $('#kpi').insertAdjacentHTML('beforeend', sessionCard());
     $('#pwb').addEventListener('click', openPwDlg);
     $('#gate').addEventListener('click', function () { if (S.krefjast) setGate(false); else openGateDlg(); });
+    $('#kpi').querySelectorAll('[data-lota]').forEach(function (b) { b.addEventListener('click', function () { var alltaf = b.getAttribute('data-lota') === 'alltaf'; if (alltaf !== S.alltaf) setSession(alltaf); }); });
+  }
+  // Hversu lengi innskráning varir (Agnar 19.10.2026: „hvort maður haldist bara alltaf innskráður, eða hvort það detti út eftir 10 klst")
+  function sessionCard() {
+    return '<div class="kpi gate" style="flex:1.3 1 260px"><small>Innskráning varir</small><div class="row"><div class="seg" role="group" aria-label="Hversu lengi innskráning varir">' +
+      '<button type="button" class="sg' + (S.alltaf ? '' : ' on') + '" data-lota="10" aria-pressed="' + (!S.alltaf) + '">10 klst</button>' +
+      '<button type="button" class="sg' + (S.alltaf ? ' on' : '') + '" data-lota="alltaf" aria-pressed="' + S.alltaf + '">Alltaf</button></div></div>' +
+      '<em>' + (S.alltaf ? 'Fólk helst innskráð í allt að eitt ár á hverju tæki, nema lykilorði sé skipt.' : 'Innskráning rennur út eftir 10 klukkustundir.') + ' Gildir um nýjar innskráningar.</em></div>';
+  }
+  function setSession(alltaf) {
+    api('POST', { action: 'session', alltaf: alltaf }).then(function (j) {
+      if (j.ok) { S.alltaf = !!j.alltaf; renderKpi(); toast(S.alltaf ? 'Innskráning varir nú alltaf (nýjar innskráningar).' : 'Innskráning rennur nú út eftir 10 klst (nýjar innskráningar).'); }
+      else toast(j.error || 'Mistókst.', true);
+    });
   }
   function shown() {
     var q = S.q.trim().toLowerCase();

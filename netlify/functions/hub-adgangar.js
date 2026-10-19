@@ -27,7 +27,9 @@ const crypto = require('crypto');
 const P = require('./_portal');
 
 const COOKIE = 'hub_user';
-const TTL = 60 * 60 * 10; // 10 klst
+const TTL = 60 * 60 * 10;               // sjálfgefið: 10 klst
+const TTL_ALLTAF = 60 * 60 * 24 * 365;  // „haldast alltaf innskráður": eitt ár (ógildist samt við lykilorðaskipti)
+const ttlFor = (st) => (st && st.session_alltaf ? TTL_ALLTAF : TTL);
 const ROLUR = ['Admin', 'Starfsmaður', 'Afgreiðsla'];
 const FELOG = ['Brunahólf', 'Slökkvitæki'];
 // Síðurnar sem hægt er að veita aðgang að. Orðin eru geymd eins og þau birtast í valmyndinni.
@@ -80,11 +82,11 @@ async function delUser(id) {
 // ── session ──────────────────────────────────────────────────────────────────────────────────────────────────────
 function signSession(stilling, user) {
   const now = Math.floor(Date.now() / 1000);
-  const payload = b64(JSON.stringify({ uid: user.id, nn: user.notandanafn, v: stilling.pw_changed_at || '', iat: now, exp: now + TTL }));
+  const payload = b64(JSON.stringify({ uid: user.id, nn: user.notandanafn, v: stilling.pw_changed_at || '', iat: now, exp: now + ttlFor(stilling) }));
   const sig = b64(crypto.createHmac('sha256', stilling.session_secret).update(payload).digest());
   return payload + '.' + sig;
 }
-function cookieFor(token) { return COOKIE + '=' + enq(token) + '; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=' + TTL; }
+function cookieFor(token, stilling) { return COOKIE + '=' + enq(token) + '; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=' + ttlFor(stilling); }
 const clearCookie = () => COOKIE + '=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0';
 async function sessionUser(event, stillingGefin) {
   const token = P.parseCookies(event)[COOKIE];
@@ -155,7 +157,7 @@ exports.handler = async (event) => {
         felog: u.felog || [], rola: u.rola, sidur: u.sidur || [], virkur: !!u.virkur, sent_at: u.sent_at, last_login_at: u.last_login_at,
         laest: !!(u.laest_til && new Date(u.laest_til) > new Date()),
       }));
-      return P.json(200, { users, rolur: ROLUR, felog: FELOG, sidurAll: SIDUR, pw_changed_at: s.stilling.pw_changed_at, krefjast: !!s.stilling.krefjast, me: publicUser(s.user) });
+      return P.json(200, { users, rolur: ROLUR, felog: FELOG, sidurAll: SIDUR, pw_changed_at: s.stilling.pw_changed_at, krefjast: !!s.stilling.krefjast, alltaf: !!s.stilling.session_alltaf, me: publicUser(s.user) });
     }
     const st = st0;
     // gate = rofinn „krefjast innskráningar" er kveikt OG uppsetningu er lokið; stjórnstöðin (index.html) sendir þá óinnskráða á adgangar.html
@@ -186,7 +188,7 @@ exports.handler = async (event) => {
       return P.json(401, { error: 'Rangt notandanafn eða lykilorð.' });
     }
     await patchUser(user.id, { mistok: 0, laest_til: null, last_login_at: new Date().toISOString() });
-    return P.json(200, { ok: true, user: publicUser(user) }, { 'Set-Cookie': cookieFor(signSession(st, user)) });
+    return P.json(200, { ok: true, user: publicUser(user) }, { 'Set-Cookie': cookieFor(signSession(st, user), st) });
   }
 
   // ── opið: fyrsta uppsetning (einnota kóði) ──
@@ -202,7 +204,7 @@ exports.handler = async (event) => {
     const admin = (await getUserBy('notandanafn', 'AS')) || (await listUsers()).find((u) => u.rola === 'Admin' && u.virkur);
     if (!admin) return P.json(500, { error: 'Enginn admin á skrá.' });
     await logA('setup', 'setup', admin.notandanafn);
-    return P.json(200, { ok: true, user: publicUser(admin) }, { 'Set-Cookie': cookieFor(signSession(st2, admin)) });
+    return P.json(200, { ok: true, user: publicUser(admin) }, { 'Set-Cookie': cookieFor(signSession(st2, admin), st2) });
   }
 
   // ── opið: gleymt lykilorð — svarar ALLTAF eins, hvort sem póstfangið er skráð eða ekki ──
@@ -278,6 +280,13 @@ exports.handler = async (event) => {
     return P.json(200, { ok: true, krefjast: on });
   }
 
+  if (action === 'session') { // hversu lengi innskráning varir: alltaf=true → eitt ár, annars 10 klst. Gildir um NÝJAR innskráningar.
+    const alltaf = body.alltaf === true;
+    if (!(await patchStilling({ session_alltaf: alltaf }))) return P.json(500, { error: 'Vistun mistókst.' });
+    await logA(me, alltaf ? 'session_alltaf' : 'session_10klst', null);
+    return P.json(200, { ok: true, alltaf });
+  }
+
   if (action === 'opna') { // afléttir lás eftir rangar tilraunir
     const u = await patchUser(Number(body.id), { mistok: 0, laest_til: null });
     return u ? P.json(200, { ok: true }) : P.json(404, { error: 'Notandi fannst ekki.' });
@@ -291,7 +300,7 @@ exports.handler = async (event) => {
     if (!(await patchStilling({ pw_hash: P.hashPassword(body.nytt), pw_enc: encPw(body.nytt), pw_changed_at: now, session_secret: nySecret }))) return P.json(500, { error: 'Vistun mistókst.' });
     const st2 = await getStilling();
     await logA(me, 'breyta_lykilord', null);
-    return P.json(200, { ok: true, pw_changed_at: now }, { 'Set-Cookie': cookieFor(signSession(st2, s.user)) });
+    return P.json(200, { ok: true, pw_changed_at: now }, { 'Set-Cookie': cookieFor(signSession(st2, s.user), st2) });
   }
 
   if (action === 'senda') {
