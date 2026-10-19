@@ -18338,6 +18338,36 @@ async function renderKrofuyfirlit(t){
     const cls = days>60 ? 'ogreitt' : days>30 ? 'osent' : 'greitt';
     return '<span class="boss-badge '+cls+' ky-num" style="padding:1px 7px;font-size:10.5px">'+days+'D</span>';
   }
+  // ── Stöðulanan (19.10.2026, Agnar: „more visual status indicator … in kind of a
+  // straight line downward the whole page") — EITT stöðumerki á hverja röð og hvern
+  // fyrirtækjahaus, alltaf í sama dálki vinstra megin (.ky-st, CSS í css/theme.css).
+  // Orðin og liturinn segja það sama; rautt er eina merkið sem kallar á viðbrögð.
+  // Röðin hér er líka forgangsröðin fyrir hausinn (fyrsta sem finnst ræður).
+  const KY_STODUR = {
+    ogreitt: ['Ógreitt í Payday', 'Reikningur í Payday, gjalddagi liðinn'],
+    liklega: ['Líklega greitt',   'Innborgun fannst í banka — staðfestu með ✓ Greitt'],
+    payday:  ['Í Payday',         'Reikningur sendur úr Payday, bíður gjalddaga'],
+    osent:   ['Ósent',            'Drög tilbúin, ekki send'],
+    bokun:   ['Sent í bókun',     'Skjölin farin á bókarann, krafa ekki send enn'],
+    send:    ['Krafa send',       'Krafan merkt send — kemur í Ógreitt þegar Payday skilar henni'],
+    timi:    ['Tími eftir',       'Tímar skráðir í Tímaveru, engin drög enn']
+  };
+  function kyStada(inv, tier){
+    if(tier===1) return inv.likely_paid ? 'liklega' : (inv.days_overdue!=null && inv.days_overdue>0) ? 'ogreitt' : 'payday';
+    if(tier===2) return sentMarked(inv) ? 'send' : inv.sent ? 'bokun' : 'osent';
+    return 'timi';
+  }
+  function kyStadaPilla(key){
+    const s = KY_STODUR[key]; if(!s) return '';
+    return '<span class="ky-st ky-st-'+key+'" title="'+esc(s[1])+'"><b></b>'+esc(s[0])+'</span>';
+  }
+  // Haus fyrirtækis: forgangsröðin er röð KY_STODUR — ógreitt fyrst, tími síðast.
+  function kyStadaHaus(pairs){
+    const found = new Set();
+    for(const [d,tier] of pairs) for(const inv of ((d&&d.invoices)||[])) found.add(kyStada(inv, tier));
+    for(const key of Object.keys(KY_STODUR)) if(found.has(key)) return kyStadaPilla(key);
+    return '';
+  }
   // Aðgerðatakki 46×42 (Boss): fílabeins-lykill; filled=true → grænn lykill
   // (staðfest/sent/skjal til). Liturinn (color) er ekki notaður lengur — CSS ræður.
   function kyAbtn(cls,extra,glyph,label,color,title,filled){
@@ -19068,7 +19098,7 @@ async function renderKrofuyfirlit(t){
     return `
       <div class="ky-invrow${tier===2?' ky-t2':''}">
         <div class="ky-row${lp?' ky-likely':''}" data-key="${esc(inv.inv_key)}"${(inv._hidden||inv._done)?' style="opacity:.5"':''}>
-          ${t2chk||''}<span class="ky-caret2">▸</span>
+          ${t2chk||''}<span class="ky-caret2">▸</span>${kyStadaPilla(kyStada(inv, tier))}
           <div class="ky-main">
             <div class="ky-ws"><span class="n">${rnum}</span>${mtagHtml}${perHtml}${tier===1?agingPill(inv.days_overdue):(tier===2&&inv.gamalt?aldursPilla(inv.work_month):'')}</div>
             <div class="ky-sub">${gj}${sub}</div>
@@ -19174,7 +19204,7 @@ async function renderKrofuyfirlit(t){
     const body = companies.map(c=>`
       <div class="ky-card">
         <div class="ky-card-head" role="button" tabindex="0" title="Smelltu til að opna/loka">
-          <span class="ky-caret">▾</span>
+          <span class="ky-caret">▾</span>${kyStadaHaus([[c.t[1],1],[c.t[2],2],[c.t[3],3]])}
           <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
             <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span class="ky-name">${esc(wsDisp(c.customer)||'(óþekkt)')}</span>${c.kt?`<span class="ky-kt">kt ${esc(ktFmt(c.kt))}</span>`:''}${greidHaus([...((c.t[2]||{}).invoices||[]), ...((c.t[3]||{}).invoices||[])], c.customer, c.kt)}</div>
             <div class="ky-tags" style="margin-top:0">${c.s1?badge('ogreitt','Ógreitt',c.s1):''}${c.s2?badge('osent','Ósent',c.s2):''}${c.s3?badge('','Tími',c.s3):''}</div>
@@ -19219,7 +19249,7 @@ async function renderKrofuyfirlit(t){
     return `
       <div class="ky-card">
         <div class="ky-card-head" role="button" tabindex="0" title="Smelltu til að opna/loka">
-          <span class="ky-caret">${collapsed?'▸':'▾'}</span>
+          <span class="ky-caret">${collapsed?'▸':'▾'}</span>${kyStadaHaus([[db,tier]])}
           <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
             <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span class="ky-name">${esc(nm)}</span>${metaHtml}</div>
             ${agBar}

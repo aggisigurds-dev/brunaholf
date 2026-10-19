@@ -595,6 +595,28 @@ body .hub-sync select{background:transparent;border:0;box-shadow:none;padding:2p
   .ky-card-rows .ky-row{padding-left:112px}
   .ky-card-rows .ky-row::before{left:94px}
 }
+/* 19.10.2026 — Stöðulanan (Agnar: „more visual status indicator", „in kind of a straight line
+   downward the whole page"). Eitt .ky-st merki á hverja röð (absolute, fastur x) og hvern haus
+   (flex-barn beint á eftir örinni) svo merkin standa í einum dálki niður alla síðuna. Raðirnar
+   fara 60px lengra inn svo lanan sé laus. Litir: rautt = eina merkið sem kallar á viðbrögð. */
+.ky-st{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px 0 8px;border-radius:999px;border:1px solid var(--line-2);background:#e8e4dc;color:var(--ink-2);font-size:11px;font-weight:700;white-space:nowrap;line-height:1;flex:0 0 124px;width:124px;box-sizing:border-box;overflow:hidden;cursor:default}
+.ky-st b{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0}
+.ky-st-ogreitt{background:var(--red-bg);border-color:var(--red-line);color:var(--red)}
+.ky-st-liklega{background:var(--green-bg);border-color:var(--green);border-style:dashed;color:var(--green)}
+.ky-st-payday{background:var(--gold-500);border-color:var(--gold-600);color:#1a1613}
+.ky-st-osent{background:var(--blue-bg);border-color:var(--line-2);color:var(--blue-deep)}
+.ky-st-bokun{background:var(--blue-deep);border-color:var(--blue-deep);color:#fff}
+.ky-st-send{background:var(--green-bg);border-color:var(--green-line);color:var(--green)}
+.ky-st-timi{background:var(--warn-bg);border-color:var(--warn-line);color:var(--warn)}
+.ky-row > .ky-st{position:absolute;left:38px;top:50%;transform:translateY(-50%)}
+@media(min-width:901px){
+  .ky-card-rows .ky-row{padding-left:172px}
+  .ky-card-rows .ky-row::before{left:154px}
+}
+@media(max-width:900px){
+  .ky-row > .ky-st{position:static;transform:none;flex:0 0 auto;width:auto}
+  .ky-card-head > .ky-st{flex:0 0 auto;width:auto}
+}
 .ky-row:hover{background:var(--row-hover)}
 .ky-row.ky-likely{background:linear-gradient(90deg,rgba(47,122,74,.09),rgba(47,122,74,.03))}
 .ky-row.ky-likely:hover{background:linear-gradient(90deg,rgba(47,122,74,.15),rgba(47,122,74,.06))}
