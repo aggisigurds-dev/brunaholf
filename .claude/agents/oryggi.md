@@ -110,3 +110,26 @@ eða `get_advisors` (security) fyrir heildarlistann með remediation-hlekkjum.
 ## Lærdómur
 
 - **16.10.2026** — Mælt 16.10.2026 (pg_class/storage.buckets): 193 töflur án RLS í public (var 226 19.08 — fer í rétta átt), 20 af 26 buckets public (var 15/16 — buckets fjölga opin). Endurmæla alltaf áður en tölur eru nefndar.
+
+## Aðgangsstjórn og innskráning notenda (19.10.2026, áfangi 1)
+
+Agnar: „geturðu opnað að ég geti stofnað notendur, lykilorð, heimildir". Fyrirkomulag: notandanafn = skammstöfun
+(Agnar = AS), EITT sameiginlegt lykilorð fyrir alla, Agnar admin. Síða `adgangar.html` (innskráning + admin-listi),
+fall `netlify/functions/hub-adgangar.js` (`/api/hub-adgangar`), töflur `hub_adgangar` + `hub_adgangar_stilling`
+(`sql/2026-10-19_hub_adgangar.sql`). RLS á, engar policies — aðeins þjónustulykillinn (fallið) kemst í þær.
+
+- **Lykilorðið er geymt tvisvar:** scrypt-hash (innskráning) og AES-256-GCM dulritað (aðeins svo „gleymt lykilorð"/„senda
+  aðgang" geti SENT það, sem er krafa Agnars). Dulritunarlykill = sha256 af þjónustulyklinum (Netlify-env), ekki í DB.
+  Session-token er HMAC með `session_secret` í `hub_adgangar_stilling`; að skipta um lykilorð snýr honum → öll önnur
+  session ógild. Cookie `hub_user` (HttpOnly, Secure, SameSite=Lax, 10 klst). ÓTENGT cookie `hub_session`/requireStaff.
+- **Fyrsta uppsetning:** einnota kóði (sha256 í `setup_hash`) → admin velur lykilorðið sjálfur á `/adgangar.html`; kóðinn
+  núllast. Claude á ALDREI að velja eða skrifa lykilorðið.
+- **Lás:** 8 rangar tilraunir → notandi læstur í 15 mín (`mistok`/`laest_til`), admin afléttir. „Gleymt lykilorð" svarar
+  alltaf eins (skráð eða óskráð póstfang), ekki oftar en á 5 mín fresti per notanda; póstur fer um `/api/gmail-send`
+  (`eldklar@eldklar.is`). SMS er EKKI til (enginn SMS-veitandi tengdur).
+- **Vörn:** síðasti virki admin má ekki missa hlutverkið, vera gerður óvirkur né eytt; enginn eyðir sjálfum sér.
+- **ÁFANGI 1 hliðar ekkert annað.** `requireStaff` (HUB_STAFF_PASSWORD, fail-open) og 123 óvarin föll standa óbreytt.
+  Heimildir (`sidur`) eru geymdar og skilað úr `/api/hub-adgangar` en valmyndin felur enn ekkert og bakendinn
+  athugar þær ekki. Áfangi 2 (Agnars ákvörðun): tengja `requireStaff` við `hub_user` + fela síður í valmynd.
+- Próf: `node tools/test-hub-adgangar.cjs` (42 atriði á Supabase-líkani í minni); staðbundin sýn:
+  `node tools/dev-hub-adgangar.cjs` → http://localhost:8789/adgangar.html (ekkert raunverulegt snert).

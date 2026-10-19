@@ -21,6 +21,15 @@
         "8788"
       ],
       "port": 8788
+    },
+    {
+      "name": "adgangar-dev",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "tools/dev-hub-adgangar.cjs",
+        "8789"
+      ],
+      "port": 8789
     }
   ]
 }

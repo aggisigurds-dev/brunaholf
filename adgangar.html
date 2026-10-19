@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Aðgangar — Brunahólf</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+:root{--ink:#1a1714;--ink2:#4a453b;--mut:#6b655a;--line:#e4dccb;--line2:#d9d2c2;--paper:#f3efe6;--card:#fbf9f4;--gold:#c9a24a;--gold-d:#8a6a14;--red:#b3261e}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"Inter",system-ui,sans-serif;font-size:14px;line-height:1.5}
+button,input{font:inherit}
+.hdr{height:78px;padding:0 32px;display:flex;align-items:center;gap:16px;background:linear-gradient(180deg,#1c1813,#15120f);border-bottom:2px solid var(--gold)}
+.logo{font-family:"Playfair Display",serif;font-weight:700;font-size:34px;line-height:1;color:#e3c468}
+.logo small{display:block;font-family:"Inter",sans-serif;font-weight:700;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-top:3px}
+.me{margin-left:auto;display:flex;align-items:center;gap:12px;padding:6px 8px 6px 8px;border-radius:999px;border:1px solid #3a3228;background:#262118}
+.me .av{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--gold);color:var(--ink);font-family:"JetBrains Mono",monospace;font-weight:700;font-size:12px}
+.me b{display:block;font-size:13px;color:#f1e9d6;line-height:1.2}
+.me i{display:block;font-style:normal;font-weight:700;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);line-height:1.2}
+.me button{height:32px;padding:0 12px;border-radius:999px;border:1px solid #3a3228;background:transparent;color:#f1e9d6;font-weight:600;font-size:12.5px;cursor:pointer}
+.me button:hover{border-color:var(--gold)}
+.wrap{max-width:1296px;margin:0 auto;padding:26px 32px 56px;display:flex;flex-direction:column;gap:20px}
+.over{font-weight:700;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-d)}
+h1{margin:2px 0 0;font-family:"Playfair Display",serif;font-weight:700;font-size:40px;line-height:1.05;letter-spacing:-.01em}
+.lbl{display:block;font-weight:700;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut)}
+.btn{height:36px;padding:0 13px;border-radius:6px;border:1px solid var(--line2);background:#fff;color:#2a2620;font-weight:600;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap}
+.btn:hover{border-color:var(--gold)}
+.btn:disabled{opacity:.4;pointer-events:none}
+.btn svg{width:15px;height:15px}
+.gold{border-color:#a8862f;background:linear-gradient(180deg,#e3c468,#c9a24a);color:var(--ink);box-shadow:0 1px 0 var(--gold-d);font-weight:700}
+.gold:hover{filter:brightness(1.05);border-color:#a8862f}
+.dng{color:var(--red);border-color:#f1b8b4}
+.btn:focus-visible,.sg:focus-visible,.lnk:focus-visible,.reitur:focus-visible{outline:none;box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--gold-d)}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:6px;overflow:hidden;background:#fff}
+.sg{min-height:36px;padding:0 14px;border:0;border-right:1px solid #e6dfcf;background:#fff;color:#2a2620;font-weight:600;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap}
+.sg:last-child{border-right:0}
+.sg.on{background:var(--ink);color:#fff}
+.kpis{display:flex;gap:12px;flex-wrap:wrap}
+.kpi{flex:1 1 150px;min-width:0;padding:14px 16px 12px;background:var(--card);border:1px solid var(--line);border-radius:8px}
+.kpi small{display:block;font-weight:700;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut)}
+.kpi strong{display:block;margin-top:6px;font-family:"Playfair Display",serif;font-weight:700;font-size:32px;line-height:1}
+.kpi em{display:block;margin-top:6px;font-style:normal;font-size:12.5px;color:var(--mut)}
+.kpi.dark{flex:1.6 1 300px;background:#1c1813;border-color:#3a3228}
+.kpi.dark small{color:var(--gold)}.kpi.dark em{color:#a39b89}
+.kpi.dark .row{display:flex;align-items:center;gap:12px;margin-top:8px;flex-wrap:wrap}
+.kpi.dark .dots{font-family:"JetBrains Mono",monospace;font-size:22px;letter-spacing:.18em;color:#f1e9d6}
+.kpi.dark .btn{margin-left:auto;height:32px;background:#262118;border-color:#3a3228;color:#f1e9d6}
+.tb{background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.scroll{overflow-x:auto}
+.tr{display:grid;grid-template-columns:84px minmax(170px,1.2fr) minmax(190px,1.3fr) 150px 126px 168px 212px;gap:14px;align-items:center;padding:13px 20px;border-top:1px solid #ece6d8;background:#fff;min-width:1190px}
+.tr.th{background:#f6f2e8;border-top:0;padding-top:10px;padding-bottom:10px;font-weight:700;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut)}
+.nnc{display:inline-flex;align-items:center;justify-content:center;min-width:44px;height:28px;padding:0 8px;border-radius:5px;background:var(--ink);color:#e3c468;font-family:"JetBrains Mono",monospace;font-weight:700;font-size:13px;letter-spacing:.1em}
+.nnc.tomt{background:#f1ece1;color:var(--mut);border:1px dashed #c9bfa6;font-weight:500}
+.nm{font-weight:700;font-size:14px}
+.sub{font-size:12px;line-height:1.45;color:var(--mut);margin-top:2px}
+.mono{font-family:"JetBrains Mono",monospace;font-size:12.5px;color:#2a2620;overflow-wrap:anywhere}
+.dim{color:var(--mut)}
+.fchip{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:4px;background:#f1ece1;border:1px solid var(--line);color:var(--ink2);font-weight:600;font-size:11.5px}
+.pill{display:inline-flex;align-items:center;gap:7px;height:26px;padding:0 11px 0 9px;border-radius:999px;border:1px solid transparent;font-weight:600;font-size:12px;white-space:nowrap}
+.pill b{width:8px;height:8px;border-radius:50%;display:inline-block}
+.p-virkur{background:#e3f3e8;border-color:#a9d9b8;color:#1e6b3a}.p-virkur b{background:#2e9e58}
+.p-sent{background:#fff3d6;border-color:#f0d48a;color:#8a5a00}.p-sent b{background:#e0a100}
+.p-ekki{background:#e8ecf1;border-color:#c7d0dc;color:#3f4d61}.p-ekki b{background:#6b7a90}
+.p-vantar{background:#fde8e7;border-color:#f1b8b4;color:var(--red)}.p-vantar b{background:#d4322a}
+.p-ovirkur{background:#eee;border-color:#ccc;color:#555}.p-ovirkur b{background:#888}
+.act{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+.reitur{height:44px;width:100%;padding:0 12px;border-radius:6px;border:1px solid var(--line2);background:#fff;color:var(--ink);font-size:14.5px}
+.reitur:focus{outline:none;border-color:var(--gold-d);box-shadow:0 0 0 2px var(--gold-d)}
+.reitur::placeholder{color:#7a7262}
+.reitur.nn{font-family:"JetBrains Mono",monospace;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+.reitur.nn::placeholder{font-family:"Inter",sans-serif;font-weight:400;letter-spacing:0;text-transform:none}
+.fld{display:flex;flex-direction:column;gap:6px}
+.ck{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 12px;border-radius:6px;border:1px solid var(--line);background:#fff;font-weight:500;font-size:13.5px;cursor:pointer}
+.ck input{width:18px;height:18px;accent-color:var(--gold-d);flex:none;margin:0}
+.ck.dis{opacity:.55}
+.meta{font-size:12.5px;line-height:1.5;color:var(--mut)}
+.err{display:flex;align-items:flex-start;gap:8px;font-size:13px;font-weight:600;color:var(--red)}
+.lnk{border:0;background:transparent;padding:10px 8px;min-height:44px;font-weight:600;font-size:13px;color:var(--gold-d);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.lnk:hover{color:var(--ink)}
+.card{width:100%;max-width:480px;margin:56px auto 0;padding:36px 36px 14px;background:var(--card);border:1px solid var(--line);border-radius:8px;box-shadow:0 1px 0 #fff inset,0 14px 32px -20px rgba(26,23,20,.4)}
+.card h1{font-size:36px;margin:4px 0 0}
+.card form{margin-top:18px;display:flex;flex-direction:column;gap:20px}
+.card .foot{margin-top:14px;border-top:1px solid var(--line);padding-top:4px;display:flex;justify-content:center}
+.pwf{display:flex;gap:8px}
+.go{width:100%;height:48px;border-radius:6px;border:1px solid #a8862f;background:linear-gradient(180deg,#e3c468,#c9a24a);color:var(--ink);font-weight:700;font-size:15px;box-shadow:0 1px 0 var(--gold-d);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.go:hover{filter:brightness(1.05)}.go:disabled{opacity:.4;pointer-events:none}
+.ovl{position:fixed;inset:0;z-index:50;background:rgba(26,23,20,.5);display:flex;justify-content:flex-end}
+.ovl.mid{justify-content:center;align-items:center;padding:16px}
+.panel{width:460px;max-width:100%;height:100%;overflow-y:auto;background:var(--card);border-left:2px solid var(--gold);display:flex;flex-direction:column}
+.dlg{width:440px;max-width:100%;background:var(--card);border:1px solid var(--line);border-top:2px solid var(--gold);border-radius:8px;padding:24px;display:flex;flex-direction:column;gap:16px}
+.dlg h2,.panel h2{margin:2px 0 0;font-family:"Playfair Display",serif;font-weight:700;font-size:28px;line-height:1.1}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:80;max-width:92vw;padding:12px 18px;border-radius:8px;background:var(--ink);color:#fff;font-weight:600;font-size:13.5px;box-shadow:0 10px 30px -10px rgba(0,0,0,.5)}
+.toast.bad{background:var(--red)}
+@media (max-width:700px){.hdr{padding:0 16px}.wrap{padding:20px 16px 48px}h1{font-size:32px}.card{margin-top:24px;padding:28px 20px 10px}.panel{border-left:0}}
+</style>
+</head>
+<body>
+<div id="app" aria-live="polite"></div>
+<div id="layer"></div>
+<div id="toast-root"></div>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var I = {
+    user: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>',
+    lock: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
+    mail: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>',
+    plus: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>',
+    close: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    arrow: '<svg viewBox="0 0 24 24" aria-hidden="true" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+    warn: '<svg viewBox="0 0 24 24" aria-hidden="true" width="16" height="16" style="flex:none;margin-top:1px" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/></svg>',
+    eye: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>'
+  };
+
+  var S = { view: 'boot', users: [], rolur: [], felog: [], sidurAll: [], pwAt: null, me: null, felagSia: 'Allir', q: '', dr: null, f: null, pwDlg: false, delDlg: null, busy: false };
+
+  // ── net ──
+  function api(method, body, qs) {
+    var url = '/api/hub-adgangar' + (qs ? '?' + qs : '');
+    var opt = { method: method, headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin' };
+    if (body) opt.body = JSON.stringify(body);
+    return fetch(url, opt).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { j._status = r.status; return j; }); });
+  }
+  function toast(msg, bad) {
+    var el = document.createElement('div'); el.className = 'toast' + (bad ? ' bad' : ''); el.setAttribute('role', bad ? 'alert' : 'status'); el.textContent = msg;
+    var root = $('#toast-root'); root.innerHTML = ''; root.appendChild(el); setTimeout(function () { if (el.parentNode) el.remove(); }, bad ? 6000 : 3500);
+  }
+  function fmtDate(iso) { if (!iso) return ''; var d = new Date(iso); if (isNaN(d)) return ''; var p = function (n) { return (n < 10 ? '0' : '') + n; }; return p(d.getDate()) + '/' + p(d.getMonth() + 1) + '/' + d.getFullYear(); }
+
+  // ── boot ──
+  function boot() {
+    api('GET').then(function (st) {
+      if (st.setupNeeded) { S.view = 'setup'; return paint(); }
+      if (!st.configured) { S.view = 'unconf'; return paint(); }
+      if (!st.authed) { S.view = 'login'; return paint(); }
+      S.me = st.user;
+      if (st.user.rola !== 'Admin') { S.view = 'nonadmin'; return paint(); }
+      loadList();
+    }).catch(function () { S.view = 'down'; paint(); });
+  }
+  function loadList() {
+    return api('GET', null, 'listi=1').then(function (j) {
+      if (j._status === 401) { S.view = 'login'; return paint(); }
+      if (j._status === 403) { S.view = 'nonadmin'; return paint(); }
+      if (!j.users) { S.view = 'down'; return paint(); }
+      S.users = j.users; S.rolur = j.rolur; S.felog = j.felog; S.sidurAll = j.sidurAll; S.pwAt = j.pw_changed_at; S.me = j.me; S.view = 'admin';
+      if (!$('#tbl')) paint(); else { renderKpi(); renderTable(); renderMe(); }
+    });
+  }
+
+  // ── sameiginlegt útlit ──
+  function header(right) { return '<header class="hdr"><div class="logo">Brunahólf<small>Stjórnstöð</small></div>' + (right || '') + '</header>'; }
+  function cardHead(title) { return '<div class="over">— — Stjórnstöð</div><h1>' + esc(title) + '</h1>'; }
+  function pwField(id, label, ph, extraAttr) {
+    return '<div class="fld"><label class="lbl" for="' + id + '">' + label + '</label><div class="pwf"><input class="reitur" id="' + id + '" type="password" placeholder="' + esc(ph) + '" ' + (extraAttr || '') + '><button type="button" class="btn" data-show="' + id + '" aria-label="Sýna lykilorð">Sýna</button></div></div>';
+  }
+  function wireShow(root) {
+    root.querySelectorAll('[data-show]').forEach(function (b) {
+      b.addEventListener('click', function () { var i = $('#' + b.getAttribute('data-show')); var show = i.type === 'password'; i.type = show ? 'text' : 'password'; b.textContent = show ? 'Fela' : 'Sýna'; });
+    });
+  }
+
+  // ── sýnir ──
+  function paint() {
+    var app = $('#app'), v = S.view;
+    if (v === 'boot') { app.innerHTML = header() + '<main class="wrap"><p class="meta">Hleð…</p></main>'; return; }
+    if (v === 'down') { app.innerHTML = header() + '<main class="card"><div class="over">— — Stjórnstöð</div><h1>Næ ekki sambandi</h1><p class="meta" style="margin:14px 0 22px">Þjónninn svarar ekki. Reyndu aftur eftir augnablik.</p><button class="go" id="retry">Reyna aftur</button><div class="foot"></div></main>'; $('#retry').addEventListener('click', boot); return; }
+    if (v === 'unconf') { app.innerHTML = header() + '<main class="card">' + cardHead('Ekki sett upp') + '<p class="meta" style="margin:14px 0 22px">Aðgangsskráin er ekki til á þjóninum enn.</p><div class="foot"></div></main>'; return; }
+    if (v === 'setup') return paintSetup();
+    if (v === 'login') return paintLogin();
+    if (v === 'forgot') return paintForgot();
+    if (v === 'nonadmin') {
+      app.innerHTML = header('<div class="me"><span class="av">' + esc(S.me && S.me.nn) + '</span><div><b>' + esc(S.me && S.me.nafn) + '</b><i>' + esc(S.me && S.me.rola) + '</i></div><button id="out">Skrá út</button></div>') + '<main class="card">' + cardHead('Aðeins admin') + '<p class="meta" style="margin:14px 0 22px">Þú ert skráð(ur) inn en aðgangsstjórn er aðeins fyrir admin.</p><div class="foot"></div></main>';
+      $('#out').addEventListener('click', logout); return;
+    }
+    paintAdmin();
+  }
+
+  function paintSetup() {
+    $('#app').innerHTML = header() + '<main class="card">' + cardHead('Fyrsta uppsetning') +
+      '<form id="f" novalidate><p class="meta" style="margin:0">Sláðu inn uppsetningarkóðann sem þú fékkst og veldu sameiginlega lykilorðið sem allir starfsmenn nota. Kóðinn virkar einu sinni.</p>' +
+      '<div class="fld"><label class="lbl" for="code">Uppsetningarkóði</label><input class="reitur" id="code" type="text" autocomplete="off" spellcheck="false" placeholder="XXXXX-XXXXX-XXXXX-XXXXX" style="font-family:\'JetBrains Mono\',monospace;letter-spacing:.06em;text-transform:uppercase"></div>' +
+      pwField('p1', 'Lykilorð', 'Að minnsta kosti 8 stafir', 'autocomplete="new-password"') + pwField('p2', 'Lykilorð aftur', 'Endurtaktu lykilorðið', 'autocomplete="new-password"') +
+      '<div id="e"></div><button class="go" type="submit">Ljúka uppsetningu ' + I.arrow + '</button></form><div class="foot"></div></main>';
+    wireShow($('#app'));
+    $('#f').addEventListener('submit', function (ev) {
+      ev.preventDefault(); var e = $('#e'); e.innerHTML = '';
+      var code = $('#code').value, a = $('#p1').value, b = $('#p2').value;
+      if (a.length < 8) { e.innerHTML = '<div class="err" role="alert">' + I.warn + 'Lykilorðið þarf að vera að minnsta kosti 8 stafir.</div>'; return; }
+      if (a !== b) { e.innerHTML = '<div class="err" role="alert">' + I.warn + 'Lykilorðin stemma ekki.</div>'; return; }
+      api('POST', { action: 'setup', code: code, password: a }).then(function (j) {
+        if (j.ok) { toast('Uppsetningu lokið — þú ert skráð(ur) inn.'); S.me = j.user; loadList(); } else { e.innerHTML = '<div class="err" role="alert">' + I.warn + esc(j.error || 'Mistókst.') + '</div>'; }
+      });
+    });
+  }
+
+  function paintLogin() {
+    $('#app').innerHTML = header() + '<main class="card">' + cardHead('Innskráning') +
+      '<form id="f" novalidate><p class="meta" style="margin:0">Sláðu inn notandanafn og lykilorð.</p>' +
+      '<div class="fld"><label class="lbl" for="nn">Notandanafn</label><input class="reitur nn" id="nn" type="text" maxlength="6" autocomplete="username" autocapitalize="characters" placeholder="Skammstöfun" aria-describedby="nnh"><div class="meta" id="nnh">Notandanafnið er skammstöfunin þín, til dæmis AS.</div></div>' +
+      pwField('pw', 'Lykilorð', 'Sláðu inn lykilorð', 'autocomplete="current-password"') +
+      '<div id="e"></div><button class="go" type="submit">Skrá inn ' + I.arrow + '</button></form>' +
+      '<div class="foot"><button class="lnk" id="gl" type="button">Gleymt lykilorð?</button></div></main>';
+    wireShow($('#app'));
+    $('#gl').addEventListener('click', function () { S.view = 'forgot'; paint(); });
+    $('#f').addEventListener('submit', function (ev) {
+      ev.preventDefault(); var e = $('#e'); e.innerHTML = '';
+      var nn = $('#nn').value, pw = $('#pw').value; if (!nn || !pw) { e.innerHTML = '<div class="err" role="alert">' + I.warn + 'Sláðu inn notandanafn og lykilorð.</div>'; return; }
+      api('POST', { action: 'login', nn: nn, password: pw }).then(function (j) {
+        if (j.ok) { S.me = j.user; if (j.user.rola === 'Admin') loadList(); else { S.view = 'nonadmin'; paint(); } }
+        else if (j.setupNeeded) { boot(); }
+        else { e.innerHTML = '<div class="err" role="alert">' + I.warn + esc(j.error || 'Mistókst.') + '</div>'; }
+      });
+    });
+  }
+
+  function paintForgot() {
+    $('#app').innerHTML = header() + '<main class="card">' + cardHead('Gleymt lykilorð') +
+      '<form id="f" novalidate><p class="meta" style="margin:0">Sláðu inn póstfangið þitt. Við sendum þér notandanafnið og lykilorðið í tölvupósti.</p>' +
+      '<div class="fld"><label class="lbl" for="pf">Póstfang</label><input class="reitur" id="pf" type="email" autocomplete="email" placeholder="Póstfang"></div>' +
+      '<div id="e"></div><button class="go" type="submit">Senda í tölvupósti ' + I.arrow + '</button></form>' +
+      '<div class="foot"><button class="lnk" id="bk" type="button">Til baka í innskráningu</button></div></main>';
+    $('#bk').addEventListener('click', function () { S.view = 'login'; paint(); });
+    $('#f').addEventListener('submit', function (ev) {
+      ev.preventDefault(); var pf = $('#pf').value.trim(); if (!pf) return;
+      var btn = $('#f .go'); btn.disabled = true;
+      api('POST', { action: 'gleymt', postfang: pf }).then(function (j) {
+        $('#f').innerHTML = '<p class="nm" style="font-size:17px;margin:0">Tölvupóstur sendur</p><p class="meta" style="margin:0;font-size:13.5px">' + esc((j && j.skilabod) || 'Ef póstfangið er skráð sendum við notandanafn og lykilorð þangað.') + ' Athugaðu líka ruslpóstinn.</p>';
+      });
+    });
+  }
+
+  function logout() { api('POST', { action: 'logout' }).then(function () { S = Object.assign(S, { view: 'login', me: null, users: [] }); paint(); }); }
+
+  // ── admin ──
+  function statusOf(u) {
+    if (!u.virkur) return ['Óvirkur', 'p-ovirkur'];
+    if (u.laest) return ['Læstur', 'p-vantar'];
+    if (u.last_login_at) return ['Skráð(ur) inn', 'p-virkur'];
+    if (!u.nn) return ['Vantar notandanafn', 'p-vantar'];
+    if (u.sent_at) return ['Sent ' + fmtDate(u.sent_at), 'p-sent'];
+    if (u.pf) return ['Ekki sent', 'p-ekki'];
+    return ['Vantar póstfang', 'p-vantar'];
+  }
+  function paintAdmin() {
+    $('#app').innerHTML = header('<div class="me" id="me"></div>') +
+      '<main class="wrap">' +
+      '<div style="display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap"><div><div class="over">— — Stjórnstöð · Admin</div><h1>Aðgangar</h1><div style="margin-top:6px;font-size:13.5px;color:var(--ink2)">Hver má skrá sig inn og hvað hann sér. Aðeins admin sér þessa síðu.</div></div>' +
+      '<div style="margin-left:auto"><button class="btn gold" id="nyr" style="height:44px;padding:0 18px;font-size:14px">' + I.plus + 'Bæta við aðgangi</button></div></div>' +
+      '<section class="kpis" id="kpi" aria-label="Samtölur"></section>' +
+      '<section style="display:flex;gap:12px;align-items:center;flex-wrap:wrap" aria-label="Síur"><label for="leit" style="position:absolute;left:-9999px">Leita</label>' +
+      '<input class="reitur" id="leit" type="search" placeholder="Leita (nafn · notandanafn · póstfang)…" style="width:300px;height:40px" value="' + esc(S.q) + '">' +
+      '<div class="seg" id="felagSeg" role="group" aria-label="Félag"></div><span id="cnt" style="margin-left:auto;font-size:13px;color:var(--mut)"></span></section>' +
+      '<section class="tb scroll" id="tbl" aria-label="Starfsmannalisti"></section></main>';
+    renderMe(); renderKpi(); renderTable();
+    $('#nyr').addEventListener('click', function () { openDrawer(null); });
+    $('#leit').addEventListener('input', function (e) { S.q = e.target.value; renderTable(); });
+    var seg = $('#felagSeg'); seg.innerHTML = ['Allir'].concat(S.felog).map(function (n) { return '<button type="button" class="sg' + (S.felagSia === n ? ' on' : '') + '" data-f="' + esc(n) + '" aria-pressed="' + (S.felagSia === n) + '">' + esc(n) + '</button>'; }).join('');
+    seg.addEventListener('click', function (e) { var b = e.target.closest('[data-f]'); if (!b) return; S.felagSia = b.getAttribute('data-f'); seg.querySelectorAll('.sg').forEach(function (x) { var on = x.getAttribute('data-f') === S.felagSia; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); }); renderTable(); });
+  }
+  function renderMe() {
+    var m = $('#me'); if (!m || !S.me) return;
+    m.innerHTML = '<span class="av">' + esc(S.me.nn) + '</span><div><b>' + esc((S.me.nafn || '').split(' ')[0]) + '</b><i>' + esc(S.me.rola) + '</i></div><button id="out">Skrá út</button>';
+    $('#out').addEventListener('click', logout);
+  }
+  function renderKpi() {
+    var n = S.users.length, geta = S.users.filter(function (u) { return u.virkur && u.nn; }).length;
+    var vantarNn = S.users.filter(function (u) { return u.virkur && !u.nn; }).length;
+    var vantarSb = S.users.filter(function (u) { return !u.pf && !u.sm; }).length;
+    var adm = S.users.filter(function (u) { return u.rola === 'Admin' && u.virkur; }).length;
+    $('#kpi').innerHTML =
+      '<div class="kpi"><small>Starfsmenn</small><strong>' + n + '</strong><em>á listanum</em></div>' +
+      '<div class="kpi"><small>Geta skráð sig inn</small><strong>' + geta + '</strong><em>með notandanafn</em></div>' +
+      '<div class="kpi"><small>Vantar notandanafn</small><strong style="color:var(--red)">' + vantarNn + '</strong><em>geta ekki skráð sig inn</em></div>' +
+      '<div class="kpi"><small>Vantar samband</small><strong>' + vantarSb + '</strong><em>póstfang og sími vantar</em></div>' +
+      '<div class="kpi"><small>Admin</small><strong>' + adm + '</strong><em>geta stofnað aðganga</em></div>' +
+      '<div class="kpi dark"><small>Sameiginlegt lykilorð</small><div class="row"><span class="dots">••••••••••</span><button class="btn" id="pwb" type="button">Breyta lykilorði</button></div><em>Síðast breytt ' + esc(fmtDate(S.pwAt) || '—') + '</em></div>';
+    $('#pwb').addEventListener('click', openPwDlg);
+  }
+  function shown() {
+    var q = S.q.trim().toLowerCase();
+    return S.users.filter(function (u) { return (S.felagSia === 'Allir' || u.felog.indexOf(S.felagSia) > -1) && (!q || (u.nafn + ' ' + u.nn + ' ' + u.pf).toLowerCase().indexOf(q) > -1); });
+  }
+  function renderTable() {
+    var rows = shown(); var el = $('#tbl');
+    $('#cnt').textContent = rows.length + ' af ' + S.users.length + ' sýndir';
+    var h = '<div class="tr th"><span>Notandanafn</span><span>Starfsmaður</span><span>Samband</span><span>Félag</span><span>Hlutverk</span><span>Staða</span><span></span></div>';
+    h += rows.map(function (u) {
+      var st = statusOf(u);
+      var undir = u.nafn === 'Afgreiðsla' ? 'Sameiginlegur aðgangur' : (u.nr || u.kt) ? ((u.nr ? 'Starfsmannanúmer ' + u.nr : '') + (u.nr && u.kt ? ' · ' : '') + (u.kt ? 'kt. ' + u.kt : '')) : 'Upplýsingar vantar';
+      var sidur = u.rola === 'Admin' ? 'Allar síður' : u.sidur.length === 0 ? 'Engin síða valin' : u.sidur.length === 1 ? '1 síða' : u.sidur.length + ' síður';
+      return '<div class="tr" data-id="' + u.id + '"><span><span class="nnc' + (u.nn ? '' : ' tomt') + '">' + esc(u.nn || '—') + '</span></span>' +
+        '<div><div class="nm">' + esc(u.nafn) + '</div><div class="sub">' + esc(undir) + '</div></div>' +
+        '<div><div class="mono">' + esc(u.pf || '—') + '</div><div class="mono dim" style="margin-top:2px">' + esc(u.sm || '—') + '</div></div>' +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap">' + (u.felog.length ? u.felog.map(function (f) { return '<span class="fchip">' + esc(f) + '</span>'; }).join('') : '<span class="dim">—</span>') + '</div>' +
+        '<div><div class="nm" style="font-weight:600;font-size:13.5px">' + esc(u.rola) + '</div><div class="sub">' + sidur + '</div></div>' +
+        '<span><span class="pill ' + st[1] + '"><b></b>' + esc(st[0]) + '</span></span>' +
+        '<div class="act">' + (u.laest ? '<button class="btn" data-a="opna">Aflétta lás</button>' : '') +
+        '<button class="btn" data-a="senda"' + (u.pf && u.nn ? '' : ' disabled') + '>Senda aðgang</button><button class="btn" data-a="breyta">Breyta</button></div></div>';
+    }).join('');
+    if (!rows.length) h += '<div class="tr"><span class="meta" style="grid-column:1/-1">Enginn passar við leitina.</span></div>';
+    el.innerHTML = h;
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('#tbl [data-a]'); if (!b) return;
+    var id = Number(b.closest('.tr').getAttribute('data-id')), u = S.users.filter(function (x) { return x.id === id; })[0]; if (!u) return;
+    var a = b.getAttribute('data-a');
+    if (a === 'breyta') openDrawer(u);
+    if (a === 'opna') api('POST', { action: 'opna', id: id }).then(function (j) { if (j.ok) { toast('Lás afléttur.'); loadList(); } else toast(j.error || 'Mistókst.', true); });
+    if (a === 'senda') { b.disabled = true; api('POST', { action: 'senda', id: id }).then(function (j) { if (j.ok) { toast('Aðgangur sendur á ' + u.pf + '.'); loadList(); } else { toast(j.error || 'Sending mistókst.', true); b.disabled = false; } }); }
+  });
+
+  // ── hliðarglugginn ──
+  function sugg(nafn) { var w = String(nafn || '').trim().split(/\s+/).filter(Boolean); return w.length < 2 ? '' : (w[0][0] + w[w.length - 1][0]).toUpperCase(); }
+  function openDrawer(u) {
+    S.dr = u ? { mode: 'breyta', id: u.id } : { mode: 'nyr' };
+    S.f = u ? { nafn: u.nafn, nnManual: true, nn: u.nn, nr: u.nr, kt: u.kt, pf: u.pf, sm: u.sm, felog: u.felog.slice(), rola: u.rola, sidur: u.sidur.slice(), virkur: u.virkur, senda: false }
+            : { nafn: '', nnManual: false, nn: '', nr: '', kt: '', pf: '', sm: '', felog: ['Brunahólf'], rola: 'Starfsmaður', sidur: [], virkur: true, senda: true };
+    paintDrawer();
+  }
+  function closeLayer() { S.dr = null; S.f = null; S.pwDlg = false; S.delDlg = null; $('#layer').innerHTML = ''; }
+  function fld(id, label, attrs, extra) { return '<div class="fld"><label class="lbl" for="' + id + '">' + label + '</label><input class="reitur' + (extra || '') + '" id="' + id + '" ' + attrs + '></div>'; }
+  function paintDrawer() {
+    var f = S.f, adm = f.rola === 'Admin', nyr = S.dr.mode === 'nyr';
+    var sidurOn = adm ? S.sidurAll : f.sidur;
+    $('#layer').innerHTML = '<div class="ovl" id="ovl"><form class="panel" id="df" role="dialog" aria-modal="true" aria-label="' + (nyr ? 'Bæta við aðgangi' : 'Breyta aðgangi') + '" novalidate>' +
+      '<div style="display:flex;align-items:center;gap:12px;padding:22px 28px 14px;flex:none"><div><div class="over">— — Aðgangur</div><h2>' + (nyr ? 'Bæta við aðgangi' : 'Breyta aðgangi') + '</h2></div><button type="button" class="btn" id="dx" style="margin-left:auto;width:40px;height:40px;padding:0" aria-label="Loka">' + I.close + '</button></div>' +
+      '<div style="flex:1 1 auto;padding:6px 28px 20px;display:flex;flex-direction:column;gap:16px">' +
+      fld('f-nafn', 'Nafn', 'type="text" placeholder="Fullt nafn" value="' + esc(f.nafn) + '"') +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' + fld('f-nn', 'Notandanafn', 'type="text" maxlength="6" placeholder="Skammstöfun" value="' + esc(f.nnManual ? f.nn : sugg(f.nafn)) + '"', ' nn') + fld('f-nr', 'Starfsmannanúmer', 'type="text" placeholder="Númer" value="' + esc(f.nr) + '"') + '</div>' +
+      '<div class="sub" style="margin-top:-8px">Notandanafnið er fyrstu stafir fornafns og eftirnafns. Þú getur breytt því.</div>' +
+      fld('f-kt', 'Kennitala', 'type="text" placeholder="000000-0000" value="' + esc(f.kt) + '"') + fld('f-pf', 'Póstfang', 'type="email" placeholder="Póstfang" value="' + esc(f.pf) + '"') + fld('f-sm', 'Símanúmer', 'type="tel" placeholder="000 0000" value="' + esc(f.sm) + '"') +
+      '<div class="fld"><span class="lbl">Félag</span><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' + S.felog.map(function (n) { return '<label class="ck"><input type="checkbox" data-felag="' + esc(n) + '"' + (f.felog.indexOf(n) > -1 ? ' checked' : '') + '>' + esc(n) + '</label>'; }).join('') + '</div></div>' +
+      '<div class="fld"><span class="lbl">Hlutverk</span><div class="seg" role="group" aria-label="Hlutverk" style="display:grid;grid-template-columns:repeat(' + S.rolur.length + ',1fr)">' + S.rolur.map(function (n) { return '<button type="button" class="sg' + (f.rola === n ? ' on' : '') + '" data-rola="' + esc(n) + '" aria-pressed="' + (f.rola === n) + '">' + esc(n) + '</button>'; }).join('') + '</div></div>' +
+      '<div class="fld"><span class="lbl">Aðgangur að síðum</span><div class="sub" style="margin:0">' + (adm ? 'Admin sér allar síður og getur stofnað aðganga.' : 'Veldu hvaða síður starfsmaðurinn sér.') + '</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' +
+      S.sidurAll.map(function (n) { return '<label class="ck' + (adm ? ' dis' : '') + '"><input type="checkbox" data-sida="' + esc(n) + '"' + (sidurOn.indexOf(n) > -1 ? ' checked' : '') + (adm ? ' disabled' : '') + '>' + esc(n) + '</label>'; }).join('') + '</div></div>' +
+      (nyr ? '' : '<label class="ck"><input type="checkbox" id="f-virkur"' + (f.virkur ? ' checked' : '') + '>Aðgangurinn er virkur (má skrá sig inn)</label>') +
+      '<div id="de"></div></div>' +
+      '<div style="flex:none;padding:14px 28px 22px;border-top:1px solid var(--line);background:#f6f2e8;display:flex;flex-direction:column;gap:12px">' +
+      (nyr ? '<label class="ck"><input type="checkbox" id="f-senda"' + (f.senda ? ' checked' : '') + '>Senda aðgangsupplýsingar strax á póstfangið</label>' : '') +
+      '<div style="display:flex;gap:10px">' + (nyr ? '' : '<button type="button" class="btn dng" id="deb" style="height:46px">Eyða</button>') + '<button type="button" class="btn" id="dc" style="flex:1;height:46px">Hætta við</button><button type="submit" class="btn gold" id="dv" style="flex:2;height:46px;font-size:14px">Vista aðgang</button></div></div></form></div>';
+    wireDrawer();
+  }
+  function wireDrawer() {
+    var f = S.f, root = $('#layer');
+    function val(id) { return $(id, root).value; }
+    $('#dx').addEventListener('click', closeLayer); $('#dc').addEventListener('click', closeLayer);
+    $('#ovl').addEventListener('mousedown', function (e) { if (e.target.id === 'ovl') closeLayer(); });
+    $('#f-nafn').addEventListener('input', function (e) { f.nafn = e.target.value; if (!f.nnManual) $('#f-nn').value = sugg(f.nafn); });
+    $('#f-nn').addEventListener('input', function (e) { f.nn = e.target.value.toUpperCase(); f.nnManual = true; e.target.value = f.nn; });
+    ['nr', 'kt', 'pf', 'sm'].forEach(function (k) { $('#f-' + k).addEventListener('input', function (e) { f[k] = e.target.value; }); });
+    root.querySelectorAll('[data-felag]').forEach(function (c) { c.addEventListener('change', function () { var n = c.getAttribute('data-felag'); f.felog = c.checked ? f.felog.concat([n]) : f.felog.filter(function (x) { return x !== n; }); }); });
+    root.querySelectorAll('[data-rola]').forEach(function (b) { b.addEventListener('click', function () { f.rola = b.getAttribute('data-rola'); if (!f.nnManual) f.nn = sugg(f.nafn); paintDrawer(); }); });
+    root.querySelectorAll('[data-sida]').forEach(function (c) { c.addEventListener('change', function () { var n = c.getAttribute('data-sida'); f.sidur = c.checked ? f.sidur.concat([n]) : f.sidur.filter(function (x) { return x !== n; }); }); });
+    var v = $('#f-virkur', root); if (v) v.addEventListener('change', function () { f.virkur = v.checked; });
+    var s = $('#f-senda', root); if (s) s.addEventListener('change', function () { f.senda = s.checked; });
+    var del = $('#deb', root); if (del) del.addEventListener('click', function () { openDelDlg(); });
+    $('#df').addEventListener('submit', function (ev) {
+      ev.preventDefault(); var de = $('#de'); de.innerHTML = '';
+      if (!f.nafn.trim()) { de.innerHTML = '<div class="err" role="alert">' + I.warn + 'Nafn vantar.</div>'; return; }
+      var nn = f.nnManual ? f.nn : sugg(f.nafn);
+      var body = { action: 'vista', id: S.dr.mode === 'breyta' ? S.dr.id : undefined, nafn: f.nafn, nn: nn, nr: f.nr, kt: f.kt, pf: f.pf, sm: f.sm, felog: f.felog, rola: f.rola, sidur: f.sidur, virkur: f.virkur };
+      $('#dv').disabled = true;
+      api('POST', body).then(function (j) {
+        if (!j.ok) { $('#dv').disabled = false; de.innerHTML = '<div class="err" role="alert">' + I.warn + esc(j.error || 'Vistun mistókst.') + '</div>'; return; }
+        var wantSend = S.dr.mode === 'nyr' && f.senda && f.pf && nn, newId = j.id;
+        closeLayer();
+        if (wantSend) api('POST', { action: 'senda', id: newId }).then(function (r) { toast(r.ok ? 'Aðgangur vistaður og sendur á ' + f.pf + '.' : 'Aðgangur vistaður. Sending mistókst: ' + (r.error || ''), !r.ok); loadList(); });
+        else { toast('Aðgangur vistaður.'); loadList(); }
+      });
+    });
+  }
+  function openDelDlg() {
+    var u = S.users.filter(function (x) { return x.id === S.dr.id; })[0]; if (!u) return;
+    S.delDlg = u; var d = document.createElement('div'); d.className = 'ovl mid'; d.style.zIndex = 70; d.id = 'ovl2';
+    d.innerHTML = '<div class="dlg" role="alertdialog" aria-label="Eyða aðgangi"><div class="over">— — Staðfesting</div><h2>Eyða ' + esc(u.nafn) + '?</h2><p class="meta" style="margin:0">Aðgangurinn og allar upplýsingar um starfsmanninn á listanum eyðast. Þetta er ekki hægt að afturkalla. Viltu frekar gera aðganginn óvirkan skaltu taka hakið af „Aðgangurinn er virkur".</p><div id="ee"></div><div style="display:flex;gap:10px"><button class="btn" id="n" style="flex:1;height:44px">Hætta við</button><button class="btn dng" id="y" style="flex:1;height:44px;font-weight:700">Eyða aðgangi</button></div></div>';
+    document.body.appendChild(d);
+    $('#n', d).addEventListener('click', function () { d.remove(); S.delDlg = null; });
+    $('#y', d).addEventListener('click', function () {
+      api('POST', { action: 'eyda', id: u.id }).then(function (j) { if (j.ok) { d.remove(); closeLayer(); toast('Aðgangi eytt.'); loadList(); } else { $('#ee', d).innerHTML = '<div class="err" role="alert">' + I.warn + esc(j.error || 'Mistókst.') + '</div>'; } });
+    });
+  }
+
+  // ── lykilorðsgluggi ──
+  function openPwDlg() {
+    $('#layer').innerHTML = '<div class="ovl mid" id="ovl"><form class="dlg" id="pf" role="dialog" aria-modal="true" aria-label="Breyta lykilorði" novalidate><div class="over">— — Sameiginlegt lykilorð</div><h2>Breyta lykilorði</h2>' +
+      '<p class="meta" style="margin:0">Nýja lykilorðið gildir fyrir alla starfsmenn. Allir aðrir eru skráðir út og þurfa að skrá sig inn aftur. Senda þarf aðganginn aftur á þá sem eiga að fá nýja lykilorðið.</p>' +
+      pwField('n1', 'Nýtt lykilorð', 'Að minnsta kosti 8 stafir', 'autocomplete="new-password"') + pwField('n2', 'Nýtt lykilorð aftur', 'Endurtaktu lykilorðið', 'autocomplete="new-password"') +
+      '<div id="pe"></div><div style="display:flex;gap:10px"><button type="button" class="btn" id="pc" style="flex:1;height:46px">Hætta við</button><button type="submit" class="btn gold" style="flex:2;height:46px;font-size:14px">Vista lykilorð</button></div></form></div>';
+    wireShow($('#layer'));
+    $('#pc').addEventListener('click', closeLayer);
+    $('#ovl').addEventListener('mousedown', function (e) { if (e.target.id === 'ovl') closeLayer(); });
+    $('#pf').addEventListener('submit', function (ev) {
+      ev.preventDefault(); var e = $('#pe'); e.innerHTML = ''; var a = $('#n1').value, b = $('#n2').value;
+      if (a.length < 8) { e.innerHTML = '<div class="err" role="alert">' + I.warn + 'Lykilorðið þarf að vera að minnsta kosti 8 stafir.</div>'; return; }
+      if (a !== b) { e.innerHTML = '<div class="err" role="alert">' + I.warn + 'Lykilorðin stemma ekki.</div>'; return; }
+      api('POST', { action: 'breyta_lykilord', nytt: a }).then(function (j) { if (j.ok) { closeLayer(); toast('Lykilorði breytt.'); loadList(); } else { e.innerHTML = '<div class="err" role="alert">' + I.warn + esc(j.error || 'Mistókst.') + '</div>'; } });
+    });
+  }
+
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && $('#ovl2')) { $('#ovl2').remove(); S.delDlg = null; } else if (e.key === 'Escape' && $('#layer .ovl')) closeLayer(); });
+  paint(); boot();
+})();
+</script>
+</body>
+</html>
