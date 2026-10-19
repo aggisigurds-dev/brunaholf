@@ -2567,6 +2567,56 @@ window.bhSetTabCount = function(id, n){
 // (state.ui.layout í hub_state). Nýjasti smellur ræður með layout_ts — sjá _mergeIn — svo vél með gamla óstaðfesta
 // breytingu í dirty-listanum geti ekki skrifað yfir það sem var valið síðast á annarri vél.
 function bhLayout(){ try{ localStorage.removeItem('bh_layout'); }catch(_){} const l = state.ui && state.ui.layout; return (l==='sidebar'||l==='compact'||l==='horizontal') ? l : 'sidebar'; }
+
+/* ── HLIÐARSTIKA v2 — röðin og flokkalínurnar eru EITT SKJAL (19.10.2026) ──────────────────
+ * Agnar: „hún fer stanslaust í rugl, þó ég sé búinn að biðja um að laga hana í örugglega 20–30
+ * sinnum" · „það voru yfirflokkslínur sem eru núna farnar, og röðunin helst aldrei" · „kannski
+ * bara búa til nýja hliðarstiku".
+ *
+ * HVERS VEGNA GÖMLU LAGFÆRINGARNAR HÉLDU EKKI: röðin bjó í `state.tabs`, fylki sem fer upp í
+ * heilu lagi um leið og eitthvað í því víkur frá síðasta afriti vélarinnar — og KÓÐINN SJÁLFUR
+ * breytir því við hverja ræsingu (ensureNewTabs bætir nýjum flipum inn, renderTabs stillir
+ * hidden-merki). Vél með gamalt eintak sendi því ALLA röðina sína yfir þjóninn án þess að
+ * nokkur hefði snert stikuna; _mergeIn sleppti svo röð þjónsins af því `tabs` var „dirty".
+ * Mælt: þjónninn 19.10 bar 62 flipa og 0 flokkalínur; grunnmyndin 12.10 (tmp/stika-grunnmynd.json)
+ * 68 flipa, 6 línur, 30 falda. Hver lagfæring stoppaði eina kveikju; fylkið sjálft var gildran.
+ *
+ * NÚ: röð + flokkalínur = `ui.vidmot.hlidarstika = { v:{ rod:[ {id} | {id, sep:'Heiti'} ] }, ts }`.
+ *   • Aðeins SMELLUR notandans skrifar skjalið (drag, ✎, ✕, ➕, Stillingar-röðun). Kóðinn aldrei.
+ *   • Nýjasti ts vinnur — í _mergeIn OG í hub_state_merge á þjóninum — líka þótt vélin eigi
+ *     eldri óstaðfesta breytingu. Vél sem vaknar/deyr með gamla stiku getur ekki skrifað yfir.
+ *   • `state.tabs` er aðeins SKRÁ yfir flipana (heiti, tákn, url). Röð þess skiptir engu.
+ *     Nýr flipi sem skjalið þekkir ekki birtist aftast (fyrir ofan Stillingar) án þess að
+ *     skjalið sé skrifað. Auðkenni í skjalinu sem engin skrá á er sleppt í teikningu en HALDIÐ.
+ *   • Sýnileiki er áfram `ui.tab_hidden` (per flipa, deep-merge — virkaði).
+ *   • Breyta-hamur sækir fyrst nýjasta skjalið af þjóni, svo breyting byrji aldrei á gömlu.
+ * Ekkert skjal (fyrsta ræsing eftir þessa breytingu) → gamla fylkið les sem bakfall. */
+const STIKA_LYKILL = 'hlidarstika';
+function stikaDoc(){ const v = vidmotLesa(STIKA_LYKILL, null); return (v && Array.isArray(v.rod)) ? v : null; }
+function stikaVista(rod){
+  vidmotSetja(STIKA_LYKILL, { rod: rod.filter(e => e && e.id).map(e => e.sep !== undefined ? { id:String(e.id), sep:String(e.sep||'') } : { id:String(e.id) }) });
+}
+function stikaFalinn(t){ const th = state.ui && state.ui.tab_hidden; return (th && (t.id in th)) ? !!th[t.id] : !!t.hidden; }
+// Skjalið leyst upp í teiknanlegan lista: flipar úr skránni í röð skjalsins, flokkalínur sem {sep:true,label}.
+function stikaListi(){
+  const skra = new Map((state.tabs || []).filter(t => t && !t.sep).map(t => [t.id, t]));
+  const doc = stikaDoc();
+  const rod = doc ? doc.rod : (state.tabs || []).map(t => t.sep ? { id:t.id, sep:(t.label || '') } : { id:t.id });
+  const ut = [], sed = new Set();
+  for(const e of rod){
+    if(!e || !e.id || sed.has(e.id)) continue;
+    if(e.sep !== undefined){ sed.add(e.id); ut.push({ id:e.id, sep:true, label:String(e.sep || '') }); continue; }
+    const t = skra.get(e.id); if(t){ sed.add(e.id); ut.push(t); }
+  }
+  const nyir = (state.tabs || []).filter(t => t && !t.sep && !sed.has(t.id) && t.id !== 'stillingar');
+  const si = ut.findIndex(x => x.id === 'stillingar');
+  if(nyir.length){ if(si >= 0) ut.splice(si, 0, ...nyir); else ut.push(...nyir); }
+  if(!sed.has('stillingar') && skra.get('stillingar')) ut.push(skra.get('stillingar'));
+  return ut;
+}
+// Teiknanlegi listinn aftur í skjalsform — það sem vistast eftir drag/✎/✕/➕.
+const stikaRodUr = listi => listi.map(x => x.sep ? { id:x.id, sep:(x.label || '') } : { id:x.id });
+window.__stika = { listi: stikaListi, doc: stikaDoc, vista: stikaVista };   // fyrir próf og aðrar síður
 function renderTabs(){
   const lay = bhLayout();
   $tabs.classList.toggle('layout-h', lay==='horizontal');
@@ -2588,7 +2638,9 @@ function renderTabs(){
   // Sjálfvirkni „hélst ekki sýnileg". Valið býr nú í map-lyklinum ui.tab_hidden sem
   // sameinast per flipa (deep-merge); fylkið hlýðir honum hér.
   { const th = (state.ui && state.ui.tab_hidden) || null; if(th) for(const t of state.tabs){ if(t.id in th){ const h = !!th[t.id]; if(!!t.hidden !== h) t.hidden = h; } } }
-  const visible = state.tabs.filter(t => state.ui.editMode || !t.hidden || t.id==='stillingar');
+  // 19.10.2026: röðin kemur úr skjalinu (sjá HLIÐARSTIKA v2 að ofan), ekki úr state.tabs.
+  const listi = stikaListi();
+  const visible = listi.filter(t => state.ui.editMode || t.sep || !stikaFalinn(t) || t.id==='stillingar');
   if(lay==='horizontal'){
     $tabs.innerHTML = visible.map(t=> t.sep
       ? `<span class="tab-sep-h" data-id="${t.id}" data-sep="1"></span>`
@@ -2640,14 +2692,16 @@ function renderTabs(){
   // Raða í hliðastiku: í ✎ Breyta-ham má draga flipa til að endurraða (vistast).
   if(state.ui.editMode){
     $tabs.querySelectorAll('[data-id]').forEach(el=>{
-      const _t = state.tabs.find(x=>x.id===el.dataset.id);
+      const _t = listi.find(x=>x.id===el.dataset.id);
       // Flokkalína / dauf lína (skil): ✎ endurnefna (líka tvísmellur) + ✕ fjarlægja. Ekki hide-toggle.
       // 07.10.2026: ✎-takki svo endurnefning virki í síma (tvísmellur er ekki til á snertiskjá).
+      // 19.10.2026: allt skrifast í stiku-skjalið (stikaVista), aldrei í state.tabs.
       if(_t && _t.sep){
         if(!el.querySelector('.sep-x')){
           const nefna = ()=>{
             const lbl = prompt('Heiti flokks (tómt = bara dauf lína):', _t.label||''); if(lbl===null) return;
-            _t.label = lbl.trim(); save(); renderTabs(); };
+            const rod = stikaRodUr(stikaListi()); const e = rod.find(x=>x.id===_t.id); if(e) e.sep = lbl.trim();
+            stikaVista(rod); renderTabs(); };
           const p = document.createElement('span');
           p.className='sep-tool sep-edit'; p.textContent='✎'; p.title='Breyta heiti flokks';
           p.addEventListener('click', e=>{ e.stopPropagation(); e.preventDefault(); nefna(); });
@@ -2655,7 +2709,7 @@ function renderTabs(){
           const x = document.createElement('span');
           x.className='sep-tool sep-x'; x.textContent='✕'; x.title='Fjarlægja línu';
           x.addEventListener('click', e=>{ e.stopPropagation(); e.preventDefault();
-            state.tabs = state.tabs.filter(t=>t.id!==_t.id); save(); renderTabs(); });
+            stikaVista(stikaRodUr(stikaListi()).filter(t=>t.id!==_t.id)); renderTabs(); });
           el.appendChild(x);
           el.title='✎ breyta heiti · dragðu til að færa · ✕ fjarlægja';
           el.addEventListener('dblclick', e=>{ e.stopPropagation(); nefna(); });
@@ -2689,12 +2743,12 @@ function renderTabs(){
         e.preventDefault(); el.style.outline='';
         const src = e.dataTransfer.getData('text/plain'), dst = el.dataset.id;
         if(!src || src===dst) return;
-        const arr = state.tabs;
+        const arr = stikaRodUr(stikaListi());
         const si = arr.findIndex(t=>t.id===src); if(si<0) return;
         const [moved] = arr.splice(si,1);
         const di = arr.findIndex(t=>t.id===dst);
         arr.splice(di<0?arr.length:di, 0, moved);
-        save(); renderTabs();
+        stikaVista(arr); renderTabs();
       });
     });
     // „➕ Bæta daufri línu" — setur ný skil (dauf lína) fyrir ofan Stillingar;
@@ -2705,10 +2759,11 @@ function renderTabs(){
       add.title='Flokkalína með heiti (gull) — tómt heiti = dauf lína. Dragðu hana svo á réttan stað.';
       add.onclick = ()=>{
         const lbl = prompt('Heiti flokks (tómt = bara dauf lína):', ''); if(lbl===null) return;
-        const sep = { id:'sep-'+Date.now().toString(36), sep:true, label:lbl.trim() };
-        const si = state.tabs.findIndex(t=>t.id==='stillingar');
-        state.tabs.splice(si<0?state.tabs.length:si, 0, sep);
-        save(); renderTabs();
+        const sep = { id:'sep-'+Date.now().toString(36), sep:lbl.trim() };
+        const rod = stikaRodUr(stikaListi());
+        const si = rod.findIndex(t=>t.id==='stillingar');
+        rod.splice(si<0?rod.length:si, 0, sep);
+        stikaVista(rod); renderTabs();
         const nel = $tabs.querySelector('[data-id="'+sep.id+'"]'); if(nel && nel.scrollIntoView) nel.scrollIntoView({block:'center'});
       };
       $tabs.appendChild(add);
@@ -8657,6 +8712,20 @@ const TV_PALETTE = [
   'var(--blue)', 'var(--gold-500)', 'var(--green)', 'var(--red)', 'var(--blue)'
 ];
 const TV_OTHER = 'var(--muted-2)';
+// 19.10.2026 (Agnar sendi mynd: allar súlur og legend-kassar svartir): Chart.js teiknar á <canvas> og skilur
+// EKKI var(--red) — ógildur litur verður svartur. DOM-stikurnar (starfsmenn) héldu lit því vafrinn leysir var()
+// þar. Leysum breyturnar úr :root við hverja teikningu (þemað getur breyst) og skilum gildi sem canvas skilur.
+function tvResolve(v){
+  const m = /^var\((--[\w-]+)\)$/.exec(String(v || '').trim()); if (!m) return v;
+  const c = getComputedStyle(document.documentElement).getPropertyValue(m[1]).trim();
+  return c || '#888888';
+}
+const TV_COL = i => tvResolve(TV_PALETTE[i % TV_PALETTE.length]);
+// Gegnsæ útgáfa fyrir fyllingu undir línu: #rrggbb → #rrggbb20, annars rgba() úr rgb().
+function tvAlpha(c, hex2){
+  c = tvResolve(c); if (/^#[0-9a-f]{6}$/i.test(c)) return c + hex2;
+  const m = /^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/i.exec(c); return m ? `rgba(${m[1]},${m[2]},${m[3]},${parseInt(hex2,16)/255})` : c;
+}
 
 let _tvCharts = {};
 function tvDestroyCharts(){
@@ -8798,6 +8867,12 @@ function renderTimavera(t){
     document.getElementById('tv-kpi-staff').textContent     = d.summary.active_staff;
     document.getElementById('tv-kpi-today').textContent     = tvFormatHours(d.summary.today_hours);
     document.getElementById('tv-kpi-today-x').textContent   = d.summary.today_date ? d.summary.today_date : '—';
+    // 19.10.2026 (Agnar: „Í dag · 82,4 · 2026-10-16" á mánudegi): today_date er síðasti dagur með LOKUÐUM
+    // færslum, ekki endilega í dag. Merkjum spjaldið og kortin tvö eftir því — talan er rétt, merkið var rangt.
+    { const iDag = new Date().toISOString().slice(0, 10); const er = d.summary.today_date === iDag;
+      const l = document.getElementById('tv-kpi-today').parentElement.querySelector('.tv-kpi-l');
+      if (l) l.textContent = er ? 'Í dag' : 'Síðasti skráði dagur';
+      document.querySelectorAll('.tv-card-title').forEach(t => { const m = /^(Í dag|Síðasti dagur)( — .*)$/.exec(t.textContent); if (m) t.textContent = (er ? 'Í dag' : 'Síðasti dagur') + m[2]; }); }
 
     // Today date label
     document.getElementById('tv-today-date').textContent = d.today.date ? d.today.date : '—';
@@ -8817,13 +8892,13 @@ function renderTimavera(t){
     const series = m.series.map((s, i) => ({
       label: s.project,
       data: s.data,
-      backgroundColor: TV_PALETTE[i % TV_PALETTE.length],
-      borderColor: TV_PALETTE[i % TV_PALETTE.length],
+      backgroundColor: TV_COL(i),
+      borderColor: TV_COL(i),
       borderWidth: 0,
       stack: 'all',
     }));
     if (m.other.some(v => v > 0)) {
-      series.push({ label:'Annað', data:m.other, backgroundColor:TV_OTHER, borderColor:TV_OTHER, borderWidth:0, stack:'all' });
+      series.push({ label:'Annað', data:m.other, backgroundColor:tvResolve(TV_OTHER), borderColor:tvResolve(TV_OTHER), borderWidth:0, stack:'all' });
     }
     const ctx = document.getElementById('tv-monthly');
     if (_tvCharts.monthly) _tvCharts.monthly.destroy();
@@ -8858,7 +8933,7 @@ function renderTimavera(t){
   function renderTodayProject(t){
     const labels = t.by_project.map(x => x.project);
     const data   = t.by_project.map(x => x.hours);
-    const colors = labels.map((_, i) => TV_PALETTE[i % TV_PALETTE.length]);
+    const colors = labels.map((_, i) => TV_COL(i));
     const ctx = document.getElementById('tv-today-project');
     if (_tvCharts.todayProj) _tvCharts.todayProj.destroy();
     _tvCharts.todayProj = new Chart(ctx, {
@@ -8899,8 +8974,8 @@ function renderTimavera(t){
     const series = w.series.map((s, i) => ({
       label: s.project,
       data: s.data,
-      borderColor: TV_PALETTE[i % TV_PALETTE.length],
-      backgroundColor: TV_PALETTE[i % TV_PALETTE.length] + '20',
+      borderColor: TV_COL(i),
+      backgroundColor: tvAlpha(TV_COL(i), '20'),
       borderWidth: 2,
       tension: 0.3,
       pointRadius: 3,
@@ -17679,10 +17754,19 @@ async function renderTvMaeting(t){
       // úr Tímaveru — ef nýjasta færslan er >1 dags gömul segjum við það hreint út
       // (samstilling flytur bara skrána sem er til; hún býr ekki til nýja daga).
       let staleBanner = '';
+      // 19.10.2026 (Agnar: „Mæting sér tímana, en heldur því samt fram að seinustu gögnin séu frá föstudegi"):
+      // newest_entry er nýjasta LOKAÐA færslan í timavera_entries; opnar færslur dagsins koma beint úr Tímaveru-API
+      // og eru í d.days. Sé dagur með færslum nýrri en newest_entry (í dag, allir inni) er ekkert gamalt — þá segjum
+      // við hvar lokaðar færslur enda í stað þess að hrópa „3 daga gömul" fyrir ofan 10 manns í vinnu.
+      const nyjastiDagur = (d.days||[]).map(x => x && x.date).filter(Boolean).sort().pop() || null;
       if (d.newest_entry) {
         const nd = new Date(d.newest_entry+'T00:00:00'); const t0 = new Date(); t0.setHours(0,0,0,0);
         const ageD = Math.round((t0-nd)/864e5);
-        if (ageD > 1) {
+        const liveNyrra = !!(nyjastiDagur && nyjastiDagur > d.newest_entry);
+        if (ageD > 1 && liveNyrra) {
+          staleBanner = '<div style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 15px;margin-bottom:12px;font-size:12px;color:var(--muted);line-height:1.5">'+
+            'ℹ️ Lokaðar færslur ná til <b>'+esc(dayLbl(d.newest_entry))+'</b> · færslur frá '+esc(dayLbl(nyjastiDagur))+' eru lifandi úr Tímaveru og fara í tímatöfluna við útstimplun.</div>';
+        } else if (ageD > 1) {
           staleBanner = '<div style="background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:12px;padding:11px 15px;margin-bottom:12px;font-size:12.5px;color:var(--warn);line-height:1.5">'+
             '⚠️ <b>Nýjustu Tímaveru-gögnin eru frá '+esc(dayLbl(d.newest_entry))+' ('+ageD+' daga gömul).</b> '+
             (d.source_file ? 'Nýjasta útflutningsskráin („'+esc(d.source_file)+'") nær bara þangað — ' : '')+
@@ -26551,13 +26635,13 @@ function renderStillingar(){
       dragClass:'sortable-drag',
       onEnd: ()=>{
         const newOrder = Array.from(parent.querySelectorAll('.tab-row')).map(el => el.dataset.tabid);
-        const map = {};
-        state.tabs.forEach(t=>{ map[t.id]=t; });
-        const reordered = newOrder.map(id=>map[id]).filter(Boolean);
-        // append any tabs not in DOM (shouldn't happen but safety)
-        state.tabs.forEach(t=>{ if(!reordered.find(x=>x.id===t.id)) reordered.push(t); });
-        state.tabs = reordered;
-        save();
+        // 19.10.2026: skrifast í stiku-skjalið. Flokkalínurnar halda sæti sínu — flipasætin milli
+        // þeirra fyllast í nýju röðinni (listinn hér sýnir ekki línurnar).
+        const rod = stikaRodUr(stikaListi());
+        const bid = newOrder.filter(id => rod.some(e => e.sep === undefined && e.id === id));
+        const ny = []; let k = 0;
+        for(const e of rod){ if(e.sep !== undefined){ ny.push(e); continue; } if(!bid.includes(e.id)){ ny.push(e); continue; } ny.push({ id: bid[k++] }); }
+        stikaVista(ny);
       }
     });
   });
@@ -26581,6 +26665,7 @@ function renderStillingar(){
   };
   document.getElementById('resetBtn').onclick = ()=>{
     if(confirm('Endurstilla allt? Þetta eyðir öllum sérsniðnum hnöppum og tabs.')){
+      try{ vidmotSetja(STIKA_LYKILL, null); }catch(_){}   // 19.10.2026: stiku-skjalið líka í sjálfgefið
       localStorage.removeItem(STORAGE_KEY);
       state = load(); render();
     }
@@ -26737,8 +26822,11 @@ function stikuBordi(txt, villa){
   // Villan situr þar til smellt er — hún má ekki hverfa óséð. Staðfestingin fer sjálf.
   if(!villa) b._t = setTimeout(()=>{ try{ b.remove(); }catch(_){} }, 2600);
 }
-$editToggle.onclick = ()=>{
+$editToggle.onclick = async ()=>{
   const varAd = !!state.ui.editMode;
+  // 19.10.2026: Breyta-hamur byrjar á NÝJASTA stiku-skjalinu af þjóni — annars raðar maður ofan á
+  // gamla stiku og nýi tímastimpillinn ber hana yfir vinnu hinna vélanna.
+  if(!varAd){ try{ $editToggle.textContent = '… sæki'; await syncFromServer(); }catch(_){} }
   state.ui.editMode = !state.ui.editMode;
   save(); render();
   // Að loka Breyta-ham er það augnablik sem notandinn telur sig hafa vistað.

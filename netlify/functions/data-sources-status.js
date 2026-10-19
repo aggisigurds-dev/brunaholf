@@ -140,7 +140,10 @@ exports.handler = async (event) => {
     : ajFetchH > 80 ? ('Engin Ajour-sókn í ' + Math.round(ajFetchH / 24) + ' daga — er kveikt á tölvunni sem sækir?') : null;
   const bankTs = bankLatest?.[0]?.imported_at;
   const invTs = invLatest?.[0]?.imported_at;
-  const rdTs = rdLatest?.[0]?.imported_at;
+  // 19.10.2026: „sótt" = síðasta keyrsla Redder-lesarans (luna-bridge redder.js skráir redder-bridge í automation_runs),
+  // ekki aðeins nýjasti innlesni reikningur — annars sýndi hubbinn „sótt 16/10" þótt lesarinn keyrði á 30 mín fresti.
+  const rdRun = await get('automation_runs?job_name=eq.redder-bridge&status=eq.success&select=finished_at&order=finished_at.desc.nullslast&limit=1').catch(() => null);
+  const rdTs = [rdLatest?.[0]?.imported_at, rdRun?.[0]?.finished_at].filter(Boolean).sort().pop() || null;
   const edTs = edLatest?.[0]?.received_at;
   const edReal = edTs; // for email the received_at IS the real data date
 
