@@ -42,3 +42,6 @@ alter table public.hub_adgangar_stilling add column if not exists krefjast boole
 
 -- 19.10.2026 — hversu lengi innskráning varir: false = 10 klst, true = „alltaf" (eitt ár; ógildist þó við lykilorðaskipti).
 alter table public.hub_adgangar_stilling add column if not exists session_alltaf boolean not null default false;
+
+-- 19.10.2026 — sjálfstæður rofi fyrir Slökkvitæki-appið (slokkvitaeki.netlify.app); false = opnast án innskráningar.
+alter table public.hub_adgangar_stilling add column if not exists krefjast_slokk boolean not null default false;

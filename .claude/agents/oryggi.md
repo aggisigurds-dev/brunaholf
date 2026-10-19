@@ -145,3 +145,13 @@ brunathettingar.html, jarvis.html …) eru EKKI hliðaðar. Neyðarslökkvun ef 
 Þegar rofinn er kveikt og Claude prófar `index.html` í vafra þarf innskráningu — slökkva á rofanum á meðan eða prófa án hliðsins.
 Innskráning varir: stilling `session_alltaf` (sjálfgefið false = 10 klst; true = „alltaf" = eitt ár). Admin velur á adgangar.html
 (`POST {action:'session', alltaf}`); gildir um NÝJAR innskráningar — gömul session halda sínum tíma. Lykilorðaskipti ógildir öll session í báðum stillingum.
+
+### Slökkvitæki-appið notar sömu innskráningu (19.10.2026)
+Agnar: „geturðu bætt við útskrá þarna svo nýtt nafn geti skráð sig inn" (notandamerkið neðst í hliðarstiku Slökkvitækis var fast „JS / Jón S.").
+- `slokkvitaeki/netlify/functions/hub-adgangar.cjs` er **AFRIT** af þessu falli (sama notendaskrá, lykilorð og session-lykill í Supabase; cookie
+  `hub_user` er per vef). Breyttu fallinu HÉR og afritaðu óbreytt þangað (nema `require('./_portal.cjs')`).
+- Hliðið ákveðst eftir hýsli (`erSlokk`): `krefjast` = Brunahólf, `krefjast_slokk` = Slökkvitæki. Sjálfstæðir rofar á adgangar.html, báðir slökktir sjálfgefið.
+- Slökkvitæki: `innskraning.html` (Brunastál-innskráning), hlið fremst í `index.html` (→ `/innskraning.html?next=…`, bilar opið), og
+  `js/patches/475-notandi-innskraning.js` sem sýnir innskráða nafnið í notandamerkinu og opnar valmynd með „Skrá út" (+ „Aðgangar" fyrir admin) eða „Skrá inn".
+- Póstur um „gleymt lykilorð"/„senda aðgang" fer alltaf um brunaholf.netlify.app/api/gmail-send (`MAIL_ORIGIN`). SMS: `sms-send.js` er til á Slökkvitæki en
+  TWILIO_SID/TOKEN/FROM eru ósettar (mælt 19.10: `stillt:false`) — SMS-leiðin í „gleymt lykilorð" kemur þegar þær eru settar.
