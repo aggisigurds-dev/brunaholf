@@ -133,3 +133,13 @@ fall `netlify/functions/hub-adgangar.js` (`/api/hub-adgangar`), töflur `hub_adg
   athugar þær ekki. Áfangi 2 (Agnars ákvörðun): tengja `requireStaff` við `hub_user` + fela síður í valmynd.
 - Próf: `node tools/test-hub-adgangar.cjs` (42 atriði á Supabase-líkani í minni); staðbundin sýn:
   `node tools/dev-hub-adgangar.cjs` → http://localhost:8789/adgangar.html (ekkert raunverulegt snert).
+
+### Rofi „krefjast innskráningar" (19.10.2026)
+Agnar: „hafa það að þurfi alltaf að skrá sig inn þegar maður fer inn á síðuna … rofi á meðan allir eru að aðlagast".
+Stilling `krefjast` (boolean, SLÖKKT sjálfgefið) í `hub_adgangar_stilling`; admin snýr henni á `adgangar.html` (staðfestingargluggi við
+kveikingu), `POST /api/hub-adgangar {action:'krefjast', on}`. `GET /api/hub-adgangar` skilar `gate` (= kveikt OG lykilorð sett).
+Hliðið er inline-skripta fremst í `<head>` á `index.html`: `gate && !authed` → `location.replace('/adgangar.html?next=…')`; eftir
+innskráningu fer notandinn aftur á `next` (aðeins slóð sem byrjar á `/`, ekki `//`). **Bilar OPIÐ** (3,5 s tímamörk, villa → síðan opnast).
+Þetta er VIÐMÓTSHLIÐ, ekki API-vörn: föllin eru óbreytt og ná hvorki Claude, brúnni né sjálfvirkum verkum. Aðrar síður (maeting.html,
+brunathettingar.html, jarvis.html …) eru EKKI hliðaðar. Neyðarslökkvun ef enginn kemst inn: `update hub_adgangar_stilling set krefjast=false where id=1`.
+Þegar rofinn er kveikt og Claude prófar `index.html` í vafra þarf innskráningu — slökkva á rofanum á meðan eða prófa án hliðsins.

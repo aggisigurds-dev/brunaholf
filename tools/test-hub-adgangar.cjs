@@ -56,6 +56,19 @@ const PW = 'Proforð-1234';
   ok(r.status === 200 && db.hub_adgangar.find((u) => u.notandanafn === 'OA').sidur.length === H._test.SIDUR.length, 'admin fær allar síður');
   r = await call('POST', { action: 'eyda', id: ny.id }, adm); ok(r.status === 200 && !db.hub_adgangar.find((u) => u.id === ny.id), 'eyða notanda');
 
+  console.log('Rofi: krefjast innskráningar');
+  r = await call('GET'); ok(r.body.gate === false, 'slökkt sjálfgefið: gate=false');
+  r = await call('POST', { action: 'krefjast', on: true }); ok(r.status === 401, 'rofi án innskráningar → 401');
+  r = await call('POST', { action: 'krefjast', on: true }, ls); ok(r.status === 403, 'rofi sem venjulegur starfsmaður → 403');
+  r = await call('POST', { action: 'krefjast', on: true }, adm); ok(r.status === 200 && r.body.krefjast === true, 'admin kveikir');
+  r = await call('GET'); ok(r.body.gate === true && r.body.authed === false, 'óinnskráður sér gate=true');
+  r = await call('GET', null, adm); ok(r.body.gate === true && r.body.authed === true, 'innskráður sér gate=true og authed=true');
+  r = await call('GET', null, adm, { listi: '1' }); ok(r.body.krefjast === true, 'listi ber stöðu rofans');
+  r = await call('POST', { action: 'krefjast', on: 'já' }, adm); ok(r.body.krefjast === false, 'aðeins true kveikir (annað = slökkt)');
+  r = await call('POST', { action: 'krefjast', on: true }, adm);
+  r = await call('POST', { action: 'krefjast', on: false }, adm); ok(r.status === 200 && r.body.krefjast === false, 'admin slekkur');
+  r = await call('GET'); ok(r.body.gate === false, 'gate=false aftur');
+
   console.log('Aðgangur sendur');
   r = await call('POST', { action: 'senda', id: db.hub_adgangar[1].id }, adm);
   ok(r.status === 200 && mails.length === 1 && mails[0].to[0] === 'lena@bbio.is' && mails[0].html.includes('LS') && mails[0].html.includes(PW), 'senda aðgang: póstur með notandanafni og lykilorði');

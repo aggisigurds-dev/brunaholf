@@ -86,10 +86,10 @@ function signSession(stilling, user) {
 }
 function cookieFor(token) { return COOKIE + '=' + enq(token) + '; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=' + TTL; }
 const clearCookie = () => COOKIE + '=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0';
-async function sessionUser(event) {
+async function sessionUser(event, stillingGefin) {
   const token = P.parseCookies(event)[COOKIE];
   if (!token || token.indexOf('.') < 0) return null;
-  const stilling = await getStilling();
+  const stilling = stillingGefin || await getStilling(); // stillingin er sótt einu sinni á beiðni (sparar Supabase-köll)
   if (!stilling || !stilling.pw_hash || !stilling.session_secret) return null;
   const [payload, sig] = token.split('.');
   const expect = crypto.createHmac('sha256', stilling.session_secret).update(payload).digest();
@@ -145,7 +145,8 @@ exports.handler = async (event) => {
 
   // GET — staða (opið) eða listi (Admin)
   if (event.httpMethod === 'GET') {
-    const s = await sessionUser(event);
+    const st0 = await getStilling();
+    const s = await sessionUser(event, st0);
     if (qs.listi === '1') {
       if (!s) return P.json(401, { error: 'Innskráning vantar', need_login: true });
       if (s.user.rola !== 'Admin') return P.json(403, { error: 'Aðeins admin' });
@@ -154,10 +155,11 @@ exports.handler = async (event) => {
         felog: u.felog || [], rola: u.rola, sidur: u.sidur || [], virkur: !!u.virkur, sent_at: u.sent_at, last_login_at: u.last_login_at,
         laest: !!(u.laest_til && new Date(u.laest_til) > new Date()),
       }));
-      return P.json(200, { users, rolur: ROLUR, felog: FELOG, sidurAll: SIDUR, pw_changed_at: s.stilling.pw_changed_at, me: publicUser(s.user) });
+      return P.json(200, { users, rolur: ROLUR, felog: FELOG, sidurAll: SIDUR, pw_changed_at: s.stilling.pw_changed_at, krefjast: !!s.stilling.krefjast, me: publicUser(s.user) });
     }
-    const st = await getStilling();
-    return P.json(200, { setupNeeded: !!(st && !st.pw_hash && st.setup_hash), configured: !!(st && st.pw_hash), authed: !!s, user: publicUser(s && s.user) });
+    const st = st0;
+    // gate = rofinn „krefjast innskráningar" er kveikt OG uppsetningu er lokið; stjórnstöðin (index.html) sendir þá óinnskráða á adgangar.html
+    return P.json(200, { setupNeeded: !!(st && !st.pw_hash && st.setup_hash), configured: !!(st && st.pw_hash), gate: !!(st && st.pw_hash && st.krefjast), authed: !!s, user: publicUser(s && s.user) });
   }
   if (event.httpMethod !== 'POST') return P.json(405, { error: 'GET eða POST' });
 
@@ -266,6 +268,14 @@ exports.handler = async (event) => {
     if (!(await delUser(id))) return P.json(500, { error: 'Eyðing mistókst.' });
     await logA(me, 'eyda', u.notandanafn || u.nafn);
     return P.json(200, { ok: true });
+  }
+
+  if (action === 'krefjast') { // rofinn: krefjast innskráningar þegar stjórnstöðin er opnuð (slökkt sjálfgefið)
+    const on = body.on === true;
+    if (on && !s.stilling.pw_hash) return P.json(409, { error: 'Lykilorð er ekki sett — ljúktu uppsetningu fyrst.' });
+    if (!(await patchStilling({ krefjast: on }))) return P.json(500, { error: 'Vistun mistókst.' });
+    await logA(me, on ? 'krefjast_kveikt' : 'krefjast_slokkt', null);
+    return P.json(200, { ok: true, krefjast: on });
   }
 
   if (action === 'opna') { // afléttir lás eftir rangar tilraunir

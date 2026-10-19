@@ -36,3 +36,6 @@ create table if not exists public.hub_adgangar_stilling (
 alter table public.hub_adgangar_stilling enable row level security;
 
 revoke all on public.hub_adgangar, public.hub_adgangar_stilling from anon, authenticated;
+
+-- 19.10.2026 — rofi „krefjast innskráningar": slökkt sjálfgefið; admin kveikir á adgangar.html þegar allir hafa lagað sig að.
+alter table public.hub_adgangar_stilling add column if not exists krefjast boolean not null default false;

@@ -5,6 +5,24 @@
      boot-kóðanum. `defer` hefði látið hana ræsast Á EFTIR inline-
      scriptunum og þá sæist einmitt versta tegundin ekki. -->
 <script src="/js/villuvakt.js?v=20260918c"></script>
+<!-- Innskráningarkrafa (19.10.2026, Agnar: „hafa það að þurfi alltaf að skrá sig inn … rofi á meðan allir eru að aðlagast").
+     Rofinn býr á adgangar.html (stilling krefjast í hub_adgangar_stilling) og er SLÖKKT sjálfgefið. Kveikt + óinnskráður →
+     sendur á adgangar.html?next=… og aftur hingað eftir innskráningu. Bilar OPIÐ: svari þjónninn ekki innan 3,5 s eða villa
+     komi upp opnast síðan eins og áður — hliðið má aldrei loka starfsfólk úti. Þetta er viðmótshlið (ekki API-vörn):
+     föllin sjálf eru óbreytt. Fyrst í <head>, fyrir allt annað, svo síðan sjáist ekki blikka. -->
+<style>html.hub-gate-pending body{visibility:hidden}</style>
+<script>
+(function(){try{
+  var d=document.documentElement; d.classList.add('hub-gate-pending');
+  var done=false, open=function(){ if(done)return; done=true; d.classList.remove('hub-gate-pending'); };
+  var t=setTimeout(open,3500);
+  fetch('/api/hub-adgangar',{credentials:'same-origin',cache:'no-store'}).then(function(r){return r.json();}).then(function(s){
+    clearTimeout(t);
+    if(s && s.gate && !s.authed){ location.replace('/adgangar.html?next='+encodeURIComponent(location.pathname+location.search+location.hash)); }
+    else open();
+  }).catch(function(){ clearTimeout(t); open(); });
+}catch(e){ document.documentElement.classList.remove('hub-gate-pending'); }})();
+</script>
 <script src="/js/theme.js?v=1"></script>
 <script>
 /* Afkasta-lagfæring 2026-08-13: sameina samhliða EINS GET-köll á /api/*.
