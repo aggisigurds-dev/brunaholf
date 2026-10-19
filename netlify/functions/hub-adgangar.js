@@ -38,6 +38,14 @@ const SIDUR = ['Fjármála-yfirlit', 'Kröfu yfirlit', 'Mæting · verkstaðir',
 const MAX_MISTOK = 8;
 const LAS_MIN = 15;
 const SENDA_BIL_MIN = 5;
+// Póstur fer alltaf um Brunahólf (gmail-send býr þar) — líka þegar Slökkvitæki-eintak fallsins sendir.
+const MAIL_ORIGIN = 'https://brunaholf.netlify.app';
+const URL_HUB = 'https://brunaholf.netlify.app/';
+const URL_SLOKK = 'https://slokkvitaeki.netlify.app/';
+const hostOf = (event) => String((event.headers && (event.headers.host || event.headers.Host)) || '').toLowerCase();
+// Sama fall og sama notendaskrá þjónar báðum vefjum; hliðið (rofinn) er sjálfstætt per vef.
+const erSlokk = (event) => hostOf(event).indexOf('slokkvitaeki') > -1;
+const gateFor = (st, event) => !!(st && st.pw_hash && (erSlokk(event) ? st.krefjast_slokk : st.krefjast));
 const MAIL_ACCOUNT = process.env.HUB_MAIL_ACCOUNT || 'eldklar@eldklar.is';
 const MAIL_FROM = process.env.HUB_MAIL_FROM || 'Brunahólf <eldklar@eldklar.is>';
 
@@ -112,7 +120,6 @@ const okMail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s || '')) && Stri
 function normKt(s) { const d = String(s || '').replace(/\D/g, ''); return d.length === 10 ? d.slice(0, 6) + '-' + d.slice(6) : String(s || '').trim().slice(0, 20); }
 function normSimi(s) { const d = String(s || '').replace(/\D/g, ''); return d.length === 7 ? d.slice(0, 3) + ' ' + d.slice(3) : String(s || '').trim().slice(0, 20); }
 const strong = (pw) => typeof pw === 'string' && pw.length >= 8 && pw.length <= 72;
-function origin(event) { return 'https://' + ((event.headers && (event.headers.host || event.headers.Host)) || 'brunaholf.netlify.app'); }
 async function logA(by, action, target, extra) { try { await P.log({ agent: 'hub-adgangar', action, target, by_who: by, input: extra || null }); } catch (_) { /* aldrei hindra */ } }
 
 async function sendCredentials(event, user, stilling) {
@@ -120,16 +127,19 @@ async function sendCredentials(event, user, stilling) {
   if (!pw) return { ok: false, error: 'Lykilorðið er ekki vistað til útsendingar — settu það aftur undir „Breyta lykilorði".' };
   if (!okMail(user.postfang)) return { ok: false, error: 'Póstfang vantar eða er ógilt.' };
   if (!user.notandanafn) return { ok: false, error: 'Notandanafn vantar.' };
-  const url = origin(event) + '/adgangar.html';
+  const felog = user.felog || [];
+  const linkar = [];
+  if (!felog.length || felog.indexOf('Brunahólf') > -1) linkar.push(['Brunahólf (stjórnstöð)', URL_HUB]);
+  if (!felog.length || felog.indexOf('Slökkvitæki') > -1) linkar.push(['Slökkvitæki-appið', URL_SLOKK]);
   const html = '<div style="font-family:Arial,sans-serif;font-size:15px;color:#1a1714;line-height:1.55">'
     + '<p>Hæ ' + esc((user.nafn || '').split(' ')[0]) + ',</p>'
     + '<p>Hér eru aðgangsupplýsingarnar þínar að Brunahólfi:</p>'
     + '<table style="border-collapse:collapse;margin:12px 0"><tr><td style="padding:6px 14px 6px 0;color:#6b655a">Notandanafn</td><td style="padding:6px 0;font-family:Consolas,monospace;font-size:17px"><b>' + esc(user.notandanafn) + '</b></td></tr>'
     + '<tr><td style="padding:6px 14px 6px 0;color:#6b655a">Lykilorð</td><td style="padding:6px 0;font-family:Consolas,monospace;font-size:17px"><b>' + esc(pw) + '</b></td></tr></table>'
-    + '<p>Skráðu þig inn á <a href="' + esc(url) + '">' + esc(url.replace('https://', '')) + '</a>.</p>'
+    + '<p>Skráðu þig inn á:</p><ul>' + linkar.map((l) => '<li>' + esc(l[0]) + ': <a href="' + esc(l[1]) + '">' + esc(l[1].replace('https://', '').replace(/\/$/, '')) + '</a></li>').join('') + '</ul>'
     + '<p style="color:#6b655a;font-size:13px">Ekki áframsenda þennan póst. Lykilorðið er sameiginlegt fyrir starfsfólk.</p></div>';
   try {
-    const r = await fetch(origin(event) + '/api/gmail-send', {
+    const r = await fetch(MAIL_ORIGIN + '/api/gmail-send', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ account: MAIL_ACCOUNT, from: MAIL_FROM, to: [user.postfang], subject: 'Aðgangur að Brunahólfi', html }),
     });
@@ -157,11 +167,11 @@ exports.handler = async (event) => {
         felog: u.felog || [], rola: u.rola, sidur: u.sidur || [], virkur: !!u.virkur, sent_at: u.sent_at, last_login_at: u.last_login_at,
         laest: !!(u.laest_til && new Date(u.laest_til) > new Date()),
       }));
-      return P.json(200, { users, rolur: ROLUR, felog: FELOG, sidurAll: SIDUR, pw_changed_at: s.stilling.pw_changed_at, krefjast: !!s.stilling.krefjast, alltaf: !!s.stilling.session_alltaf, me: publicUser(s.user) });
+      return P.json(200, { users, rolur: ROLUR, felog: FELOG, sidurAll: SIDUR, pw_changed_at: s.stilling.pw_changed_at, krefjast: !!s.stilling.krefjast, krefjast_slokk: !!s.stilling.krefjast_slokk, alltaf: !!s.stilling.session_alltaf, me: publicUser(s.user) });
     }
     const st = st0;
     // gate = rofinn „krefjast innskráningar" er kveikt OG uppsetningu er lokið; stjórnstöðin (index.html) sendir þá óinnskráða á adgangar.html
-    return P.json(200, { setupNeeded: !!(st && !st.pw_hash && st.setup_hash), configured: !!(st && st.pw_hash), gate: !!(st && st.pw_hash && st.krefjast), authed: !!s, user: publicUser(s && s.user) });
+    return P.json(200, { setupNeeded: !!(st && !st.pw_hash && st.setup_hash), configured: !!(st && st.pw_hash), gate: gateFor(st, event), authed: !!s, user: publicUser(s && s.user) });
   }
   if (event.httpMethod !== 'POST') return P.json(405, { error: 'GET eða POST' });
 
@@ -273,11 +283,11 @@ exports.handler = async (event) => {
   }
 
   if (action === 'krefjast') { // rofinn: krefjast innskráningar þegar stjórnstöðin er opnuð (slökkt sjálfgefið)
-    const on = body.on === true;
+    const on = body.on === true, slokk = body.felag === 'slokk'; // sjálfstæður rofi fyrir Slökkvitæki-appið
     if (on && !s.stilling.pw_hash) return P.json(409, { error: 'Lykilorð er ekki sett — ljúktu uppsetningu fyrst.' });
-    if (!(await patchStilling({ krefjast: on }))) return P.json(500, { error: 'Vistun mistókst.' });
-    await logA(me, on ? 'krefjast_kveikt' : 'krefjast_slokkt', null);
-    return P.json(200, { ok: true, krefjast: on });
+    if (!(await patchStilling(slokk ? { krefjast_slokk: on } : { krefjast: on }))) return P.json(500, { error: 'Vistun mistókst.' });
+    await logA(me, (slokk ? 'slokk_' : '') + (on ? 'krefjast_kveikt' : 'krefjast_slokkt'), null);
+    return P.json(200, { ok: true, krefjast: on, felag: slokk ? 'slokk' : 'hub' });
   }
 
   if (action === 'session') { // hversu lengi innskráning varir: alltaf=true → eitt ár, annars 10 klst. Gildir um NÝJAR innskráningar.

@@ -123,7 +123,7 @@ h1{margin:2px 0 0;font-family:"Playfair Display",serif;font-weight:700;font-size
     eye: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>'
   };
 
-  var S = { view: 'boot', users: [], rolur: [], felog: [], sidurAll: [], pwAt: null, me: null, felagSia: 'Allir', q: '', dr: null, f: null, pwDlg: false, delDlg: null, busy: false, krefjast: false, alltaf: false };
+  var S = { view: 'boot', users: [], rolur: [], felog: [], sidurAll: [], pwAt: null, me: null, felagSia: 'Allir', q: '', dr: null, f: null, pwDlg: false, delDlg: null, busy: false, krefjast: false, krefjastSlokk: false, alltaf: false };
 
   // ── endurvarp eftir innskráningu (stjórnstöðin sendir óinnskráða hingað með ?next=) ──
   function nextUrl() {
@@ -162,7 +162,7 @@ h1{margin:2px 0 0;font-family:"Playfair Display",serif;font-weight:700;font-size
       if (j._status === 401) { S.view = 'login'; return paint(); }
       if (j._status === 403) { S.view = 'nonadmin'; return paint(); }
       if (!j.users) { S.view = 'down'; return paint(); }
-      S.users = j.users; S.rolur = j.rolur; S.felog = j.felog; S.sidurAll = j.sidurAll; S.pwAt = j.pw_changed_at; S.krefjast = !!j.krefjast; S.alltaf = !!j.alltaf; S.me = j.me; S.view = 'admin';
+      S.users = j.users; S.rolur = j.rolur; S.felog = j.felog; S.sidurAll = j.sidurAll; S.pwAt = j.pw_changed_at; S.krefjast = !!j.krefjast; S.krefjastSlokk = !!j.krefjast_slokk; S.alltaf = !!j.alltaf; S.me = j.me; S.view = 'admin';
       if (!$('#tbl')) paint(); else { renderKpi(); renderTable(); renderMe(); }
     });
   }
@@ -294,10 +294,10 @@ h1{margin:2px 0 0;font-family:"Playfair Display",serif;font-weight:700;font-size
       '<div class="kpi"><small>Vantar samband</small><strong>' + vantarSb + '</strong><em>póstfang og sími vantar</em></div>' +
       '<div class="kpi"><small>Admin</small><strong>' + adm + '</strong><em>geta stofnað aðganga</em></div>' +
       '<div class="kpi dark"><small>Sameiginlegt lykilorð</small><div class="row"><span class="dots">••••••••••</span><button class="btn" id="pwb" type="button">Breyta lykilorði</button></div><em>Síðast breytt ' + esc(fmtDate(S.pwAt) || '—') + '</em></div>' +
-      '<div class="kpi gate" style="flex:1.3 1 260px"><small>Krefjast innskráningar</small><div class="row"><button type="button" class="sw" id="gate" role="switch" aria-checked="' + (S.krefjast ? 'true' : 'false') + '" aria-label="Krefjast innskráningar þegar stjórnstöðin er opnuð"><i></i></button><b>' + (S.krefjast ? 'Kveikt' : 'Slökkt') + '</b></div><em>' + (S.krefjast ? 'Allir þurfa að skrá sig inn þegar þeir opna stjórnstöðina.' : 'Stjórnstöðin opnast án innskráningar, eins og áður.') + '</em></div>';
-    $('#kpi').insertAdjacentHTML('beforeend', sessionCard());
+      '';
+    $('#kpi').insertAdjacentHTML('beforeend', gateCard('hub') + gateCard('slokk') + sessionCard());
     $('#pwb').addEventListener('click', openPwDlg);
-    $('#gate').addEventListener('click', function () { if (S.krefjast) setGate(false); else openGateDlg(); });
+    $('#kpi').querySelectorAll('[data-gate]').forEach(function (b) { b.addEventListener('click', function () { var fe = b.getAttribute('data-gate'); var on = fe === 'slokk' ? S.krefjastSlokk : S.krefjast; if (on) setGate(false, fe); else openGateDlg(fe); }); });
     $('#kpi').querySelectorAll('[data-lota]').forEach(function (b) { b.addEventListener('click', function () { var alltaf = b.getAttribute('data-lota') === 'alltaf'; if (alltaf !== S.alltaf) setSession(alltaf); }); });
   }
   // Hversu lengi innskráning varir (Agnar 19.10.2026: „hvort maður haldist bara alltaf innskráður, eða hvort það detti út eftir 10 klst")
@@ -417,19 +417,32 @@ h1{margin:2px 0 0;font-family:"Playfair Display",serif;font-weight:700;font-size
     });
   }
 
-  function setGate(on) {
-    api('POST', { action: 'krefjast', on: on }).then(function (j) {
-      if (j.ok) { S.krefjast = !!j.krefjast; renderKpi(); toast(S.krefjast ? 'Kveikt: allir þurfa nú að skrá sig inn.' : 'Slökkt: stjórnstöðin opnast án innskráningar.'); var d = $('#ovl2'); if (d) d.remove(); }
-      else { toast(j.error || 'Mistókst.', true); }
+  function gateCard(fe) {
+    var slokk = fe === 'slokk', on = slokk ? S.krefjastSlokk : S.krefjast;
+    var nafn = slokk ? 'Slökkvitæki-appið' : 'Stjórnstöðin (Brunahólf)';
+    return '<div class="kpi gate" style="flex:1.3 1 260px"><small>Krefjast innskráningar · ' + nafn + '</small><div class="row"><button type="button" class="sw" data-gate="' + fe + '" role="switch" aria-checked="' + (on ? 'true' : 'false') + '" aria-label="Krefjast innskráningar í ' + nafn + '"><i></i></button><b>' + (on ? 'Kveikt' : 'Slökkt') + '</b></div><em>' + (on ? 'Allir þurfa að skrá sig inn þegar þeir opna ' + (slokk ? 'Slökkvitæki-appið' : 'stjórnstöðina') + '.' : (slokk ? 'Slökkvitæki-appið' : 'Stjórnstöðin') + ' opnast án innskráningar, eins og áður.') + '</em></div>';
+  }
+  function setGate(on, fe) {
+    var slokk = fe === 'slokk';
+    api('POST', { action: 'krefjast', on: on, felag: fe }).then(function (j) {
+      if (j.ok) {
+        if (slokk) S.krefjastSlokk = !!j.krefjast; else S.krefjast = !!j.krefjast;
+        renderKpi();
+        var nafn = slokk ? 'Slökkvitæki-appið' : 'stjórnstöðin';
+        toast(j.krefjast ? 'Kveikt: allir þurfa nú að skrá sig inn í ' + (slokk ? 'Slökkvitæki-appinu' : 'stjórnstöðinni') + '.' : 'Slökkt: ' + nafn + ' opnast án innskráningar.');
+        var d = $('#ovl2'); if (d) d.remove();
+      } else { toast(j.error || 'Mistókst.', true); }
     });
   }
-  function openGateDlg() {
+  function openGateDlg(fe) {
+    var slokk = fe === 'slokk';
     var geta = S.users.filter(function (u) { return u.virkur && u.nn; }).length;
+    var nafn = slokk ? 'Slökkvitæki-appið' : 'stjórnstöðina';
     var d = document.createElement('div'); d.className = 'ovl mid'; d.style.zIndex = 70; d.id = 'ovl2';
-    d.innerHTML = '<div class="dlg" role="alertdialog" aria-label="Kveikja á innskráningarkröfu"><div class="over">— — Staðfesting</div><h2>Kveikja á innskráningarkröfu?</h2><p class="meta" style="margin:0">Næst þegar einhver opnar stjórnstöðina þarf hann að skrá sig inn með notandanafni og lykilorði. Núna geta <b>' + geta + ' af ' + S.users.length + '</b> starfsmönnum skráð sig inn — hinir komast ekki inn fyrr en þeir fá notandanafn.</p><p class="meta" style="margin:0">Þú getur slökkt aftur hér hvenær sem er. Þetta er hlið í viðmótinu; sjálf gagnaföllin eru óbreytt.</p><div style="display:flex;gap:10px"><button class="btn" id="gn" style="flex:1;height:44px">Hætta við</button><button class="btn gold" id="gy" style="flex:1;height:44px">Kveikja</button></div></div>';
+    d.innerHTML = '<div class="dlg" role="alertdialog" aria-label="Kveikja á innskráningarkröfu"><div class="over">— — Staðfesting</div><h2>Kveikja á innskráningarkröfu?</h2><p class="meta" style="margin:0">Næst þegar einhver opnar ' + nafn + ' þarf hann að skrá sig inn með notandanafni og lykilorði. Núna geta <b>' + geta + ' af ' + S.users.length + '</b> starfsmönnum skráð sig inn — hinir komast ekki inn fyrr en þeir fá notandanafn.</p><p class="meta" style="margin:0">Þú getur slökkt aftur hér hvenær sem er. Þetta er hlið í viðmótinu; sjálf gagnaföllin eru óbreytt.</p><div style="display:flex;gap:10px"><button class="btn" id="gn" style="flex:1;height:44px">Hætta við</button><button class="btn gold" id="gy" style="flex:1;height:44px">Kveikja</button></div></div>';
     document.body.appendChild(d);
     $('#gn', d).addEventListener('click', function () { d.remove(); });
-    $('#gy', d).addEventListener('click', function () { setGate(true); });
+    $('#gy', d).addEventListener('click', function () { setGate(true, fe); });
   }
 
   // ── lykilorðsgluggi ──

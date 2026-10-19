@@ -7,8 +7,8 @@ const path = require("path");
 const H = require(path.join(__dirname, '..', 'netlify', 'functions', 'hub-adgangar.js'));
 let pass = 0, fail = 0;
 const ok = (c, msg) => { if (c) { pass++; console.log('  ✓ ' + msg); } else { fail++; console.log('  ✗ ' + msg); } };
-const call = async (method, body, cookie, qs) => {
-  const r = await H.handler({ httpMethod: method, body: body ? JSON.stringify(body) : null, headers: { host: 'brunaholf.netlify.app', cookie: cookie || '' }, queryStringParameters: qs || {} });
+const call = async (method, body, cookie, qs, host) => {
+  const r = await H.handler({ httpMethod: method, body: body ? JSON.stringify(body) : null, headers: { host: host || 'brunaholf.netlify.app', cookie: cookie || '' }, queryStringParameters: qs || {} });
   return { status: r.statusCode, body: JSON.parse(r.body || '{}'), cookie: ((r.headers || {})['Set-Cookie'] || '').split(';')[0] };
 };
 const PW = 'Proforð-1234';
@@ -68,6 +68,19 @@ const PW = 'Proforð-1234';
   r = await call('POST', { action: 'krefjast', on: true }, adm);
   r = await call('POST', { action: 'krefjast', on: false }, adm); ok(r.status === 200 && r.body.krefjast === false, 'admin slekkur');
   r = await call('GET'); ok(r.body.gate === false, 'gate=false aftur');
+
+  console.log('Sjálfstæður rofi fyrir Slökkvitæki-appið');
+  const SL = 'slokkvitaeki.netlify.app';
+  r = await call('GET', null, '', null, SL); ok(r.body.gate === false, 'Slökkvitæki: slökkt sjálfgefið');
+  r = await call('POST', { action: 'krefjast', on: true, felag: 'slokk' }, adm); ok(r.status === 200 && r.body.felag === 'slokk', 'admin kveikir á Slökkvitæki');
+  r = await call('GET', null, '', null, SL); ok(r.body.gate === true, 'Slökkvitæki: gate=true');
+  r = await call('GET'); ok(r.body.gate === false, 'Brunahólf óbreytt: gate=false');
+  r = await call('POST', { action: 'krefjast', on: true }, adm); r = await call('GET', null, '', null, SL); ok(r.body.gate === true, 'kveikt á báðum');
+  r = await call('POST', { action: 'krefjast', on: false, felag: 'slokk' }, adm); r = await call('GET', null, '', null, SL); ok(r.body.gate === false, 'Slökkvitæki slökkt');
+  r = await call('GET'); ok(r.body.gate === true, 'Brunahólf enn kveikt');
+  r = await call('POST', { action: 'krefjast', on: false }, adm);
+  r = await call('POST', { action: 'login', nn: 'AS', password: PW }, '', null, SL); ok(r.status === 200 && /^hub_user=/.test(r.cookie), 'innskráning virkar á Slökkvitæki-hýsli (sama notendaskrá)');
+  r = await call('GET', null, r.cookie, null, SL); ok(r.body.authed === true && r.body.user.nn === 'AS', 'cookie virkar á Slökkvitæki');
 
   console.log('Hversu lengi innskráning varir');
   const lengd = (ck) => { const p = JSON.parse(Buffer.from(decodeURIComponent(ck.split('=')[1]).split('.')[0].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString()); return p.exp - p.iat; };
