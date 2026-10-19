@@ -18361,13 +18361,8 @@ async function renderKrofuyfirlit(t){
     const s = KY_STODUR[key]; if(!s) return '';
     return '<span class="ky-st ky-st-'+key+'" title="'+esc(s[1])+'"><b></b>'+esc(s[0])+'</span>';
   }
-  // Haus fyrirtækis: forgangsröðin er röð KY_STODUR — ógreitt fyrst, tími síðast.
-  function kyStadaHaus(pairs){
-    const found = new Set();
-    for(const [d,tier] of pairs) for(const inv of ((d&&d.invoices)||[])) found.add(kyStada(inv, tier));
-    for(const key of Object.keys(KY_STODUR)) if(found.has(key)) return kyStadaPilla(key);
-    return '';
-  }
+  // (Merkið var líka á fyrirtækjahausnum — Agnar 19.10.2026: „Dont put it in front of the
+  //  company name" — svo það er aðeins á röðunum.)
   // Aðgerðatakki 46×42 (Boss): fílabeins-lykill; filled=true → grænn lykill
   // (staðfest/sent/skjal til). Liturinn (color) er ekki notaður lengur — CSS ræður.
   function kyAbtn(cls,extra,glyph,label,color,title,filled){
@@ -19196,15 +19191,17 @@ async function renderKrofuyfirlit(t){
     if(!companies.length) return head + emptyBox(state.search?'Ekkert passar við leit':'Engin fyrirtæki');
     const badge=(cls,label,val)=> `<span class="boss-badge ${cls} ky-num">${label} ${fmtNum(val)} kr</span>`;
     // 05.10.2026: Tími eftir-blokk sem á aðeins línur sem eru sameinaðar drögunum (vidbot) birtist ekki tóm
+    // 19.10.2026 (Agnar): þrepahausarnir „Ógreitt" og „Tími eftir" fara — stöðumerkið á
+    // röðinni segir það sama. „Ósendar" stendur því hún ber Sameina-takkann.
     const tierBlock=(d,tier,title,led)=> (!d || (tier===3 && !buildInvoiceRows(d.invoices||[], tier))) ? '' : `
       <div class="${tier===2?'ky-tblock2':''}">
-        <div class="ky-tier"><i class="boss-led" style="--led:${led}"></i><span class="t">${title}</span>${tier===2?sameinaBtn(d.invoices||[]):''}<span class="s ky-num">${fmtNum(d.outstanding_kr)}<span class="boss-kr">kr</span></span></div>
+        ${tier===2?`<div class="ky-tier"><i class="boss-led" style="--led:${led}"></i><span class="t">${title}</span>${sameinaBtn(d.invoices||[])}<span class="s ky-num">${fmtNum(d.outstanding_kr)}<span class="boss-kr">kr</span></span></div>`:''}
         ${buildInvoiceRows(d.invoices||[], tier)}
       </div>`;
     const body = companies.map(c=>`
       <div class="ky-card">
         <div class="ky-card-head" role="button" tabindex="0" title="Smelltu til að opna/loka">
-          <span class="ky-caret">▾</span>${kyStadaHaus([[c.t[1],1],[c.t[2],2],[c.t[3],3]])}
+          <span class="ky-caret">▾</span>
           <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
             <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span class="ky-name">${esc(wsDisp(c.customer)||'(óþekkt)')}</span>${c.kt?`<span class="ky-kt">kt ${esc(ktFmt(c.kt))}</span>`:''}${greidHaus([...((c.t[2]||{}).invoices||[]), ...((c.t[3]||{}).invoices||[])], c.customer, c.kt)}</div>
             <div class="ky-tags" style="margin-top:0">${c.s1?badge('ogreitt','Ógreitt',c.s1):''}${c.s2?badge('osent','Ósent',c.s2):''}${c.s3?badge('','Tími',c.s3):''}</div>
@@ -19249,7 +19246,7 @@ async function renderKrofuyfirlit(t){
     return `
       <div class="ky-card">
         <div class="ky-card-head" role="button" tabindex="0" title="Smelltu til að opna/loka">
-          <span class="ky-caret">${collapsed?'▸':'▾'}</span>${kyStadaHaus([[db,tier]])}
+          <span class="ky-caret">${collapsed?'▸':'▾'}</span>
           <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
             <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span class="ky-name">${esc(nm)}</span>${metaHtml}</div>
             ${agBar}
