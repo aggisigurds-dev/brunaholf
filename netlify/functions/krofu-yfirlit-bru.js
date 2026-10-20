@@ -133,6 +133,41 @@ exports.handler = async (event) => {
   const today = new Date().toISOString().slice(0, 10);
   const todayMs = Date.parse(today);
 
+  // ---- sjálfvirk tenging: ósend drög ↔ Payday-reikningur sem er þegar til ------
+  /* Agnar 20.10.2026: „láta hina hverfa eða þær mergast þegar kerfið finnur kröfuna í Payday, svo það sé ekki að tvítelja".
+   *
+   * VANDINN (mældur): bókarinn býr reikninginn til í Payday eftir að drögin fóru „Sent í bókun" — kerfið veit þá ekki að þetta er sami
+   * hluturinn (drögin bera ekki `payday_invoice_id`, aðeins þegar reikningurinn er sendur beint úr Gerð reikninga). Rafís-drögin
+   * (2.586.543 kr) og R-379 (sama kt, sama upphæð) töldust því BÆÐI — Ógreitt og Ósent — og Landspítali sýndi 7.918.494 kr í stað 3.959.247.
+   *
+   * REGLAN (ströng, því röng tenging felur raunveruleg drög): sama kennitala, upphæð innan 1 kr, Payday-röð með stöðuna SENT eða PAID,
+   * gjalddagi ekki fyrr en vinnumánuður drags byrjar, hver Payday-röð tengist í mesta lagi EINUM drögum (elsta drög fyrst), og röð sem
+   * hangir þegar á drögum (payday_invoice_id) er frátekin. Tengd drög LIFA áfram í töflunni (ekkert er eytt eða skrifað — þetta er GET);
+   * þau detta aðeins úr Ósent svo upphæðin tvítelst ekki. Greiðandi-kt kemur úr drögunum sjálfum eða greiðandakortinu (resolvePayer).
+   * EKKI_OSENT_TENGING er afrit af EKKI_OSENT hér að neðan — breytist annað þarf hitt að breytast. */
+  const EKKI_OSENT_TENGING = new Set(['invoiced', 'void', 'skipped', 'merged']);
+  const sjalfvirkTenging = new Map();       // draft inv_key → Payday-röð (invoices) sem hún á
+  {
+    const frataekid = new Set(drafts.filter((d) => d.payday_invoice_id != null).map((d) => String(d.payday_invoice_id)));
+    const paydayRodur = invoices.filter((r) => lc(r.source) === 'payday' && /^(sent|paid)$/.test(lc(r.status)) && digits(r.kt_greidanda) && (+r.upphaed_total || 0) > 0 && r.gjalddagi);
+    const kandidatar = drafts
+      .filter((d) => !EKKI_OSENT_TENGING.has(String(d.status || '')) && d.payday_invoice_id == null && d.worksite_name && /^\d{4}-\d{2}$/.test(String(d.work_month || '')) && (+d.total_m_vsk || 0) > 0)
+      .sort((a, b) => String(a.work_month).localeCompare(String(b.work_month)));
+    for (const d of kandidatar) {
+      const payer = resolvePayer(d.worksite_name) || resolvePayer(d.customer_name);
+      const kt = digits(d.kennitala) || (payer && digits(payer.kt)) || '';
+      if (!kt) continue;
+      const amt = +d.total_m_vsk, manudur = d.work_month + '-01';
+      const hit = paydayRodur
+        .filter((r) => !frataekid.has(String(r.id)) && digits(r.kt_greidanda) === kt && Math.abs((+r.upphaed_total) - amt) <= 1 && String(r.gjalddagi) >= manudur)
+        .sort((a, b) => String(a.gjalddagi).localeCompare(String(b.gjalddagi)))[0];
+      if (!hit) continue;
+      frataekid.add(String(hit.id));
+      sjalfvirkTenging.set(`draftinv|${d.worksite_name}|${d.work_month}`, hit);
+      if (!wsEftirPayday.has(String(hit.id))) wsEftirPayday.set(String(hit.id), d.worksite_name);   // Payday-röðin fær verkstaðinn úr drögunum
+    }
+  }
+
   // ---- bank cross-reference (sama og Skuldunautar/debtors.js) ---------------
   // Vísbending: reikningur sem enn er „ógreiddur" í Payday en fannst greiddur
   // beint í banka → líklega þegar greitt (skrifstofan gleymdi að merkja í Payday).
@@ -214,6 +249,8 @@ exports.handler = async (event) => {
     if (d.payday_invoice_id != null) continue;
     const amt = +d.total_m_vsk || 0;
     const key = `draftinv|${d.worksite_name}|${wm}`;
+    // Sjálfvirk tenging (sjá hér að ofan): reikningurinn er til í Payday → drögin teljast ekki aftur sem ósend.
+    if (sjalfvirkTenging.has(key)) continue;
     const mt = metaBy.get(key) || {};
     // syna_alltaf þarf ekki lengur að lyfta röð yfir girðinguna — hún er farin.
     if (amt <= 0) continue;
@@ -281,6 +318,8 @@ exports.handler = async (event) => {
     // framendinn haldi þeim falinni þvert á tæki/vafra — ekki bara í localStorage.
     hidden_keys: meta.filter((m) => m.hidden).map((m) => m.inv_key),
     draftKeys,
+    // Drög sem þjónninn tengdi sjálfvirkt við Payday-reikning (detta úr Ósent, lifa í töflunni) — gagnsæi fyrir yfirferð.
+    sjalfvirk_tenging: [...sjalfvirkTenging].map(([k, r]) => ({ draft: k, tilvisun: r.tilvisun, status: r.status, amount: +r.upphaed_total || 0 })),
     likely_paid: { n: likely.length, kr: likely.reduce((a, r) => a + r.amount, 0) },
     note: 'Ógreitt = allir reikningar sem eru hvorki greiddir, kreditfærðir né drög. Payday SENT telst ógreitt (útistandandi). likely_paid = fannst greitt í banka en enn ógreitt í Payday.',
   });

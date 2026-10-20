@@ -402,3 +402,11 @@ Agnar: „síðustu payday greiðslur, dagsetningu og upphæð í frekar litlum 
 skýringarlínuna (`.kyf-subrow` = flex; `css/theme.css`), fimm fastar raðir frá fyrsta ramma svo ekkert hoppar. Gögn: `GET /api/krofu-greidslur?n=5`
 (`netlify/functions/krofu-greidslur.js`) = `invoices` með source='payday' OG status='PAID', nýjasta `greidsla_date` fyrst; kreditreikningar (CREDIT)
 og Landsbanka-kröfur teljast EKKI. Sótt úr `load()` í Kröfu yfirliti (ekki oftar en á 20 s fresti nema ↻ Sækja), DOM aðeins skrifað ef undirskrift breyttist.
+
+## Kröfu yfirlit: Ósendar-línan farin, drög tengjast Payday sjálfkrafa (20.10.2026)
+- Agnar: „taka burt ósendar línuna, hálf óþarfi". Þrepahausinn „Ósendar" í fyrirtækjaspjaldinu er farinn; „🔗 Sameina" (sameinaBtn) býr nú í haus spjaldsins við hlið
+  merkjanna (`.ky-tags`) og birtist aðeins þegar ≥2 drög eru sameinanleg. Þrepa-sýnin (`section()`/`renderDebtor`) er óbreytt.
+- Agnar: „láta hina hverfa eða mergast þegar kerfið finnur kröfuna í Payday, svo það sé ekki að tvítelja". `krofu-yfirlit-bru.js` tengir ósend drög
+  við Payday-röð SJÁLFVIRKT (aðeins reiknað, ekkert skrifað): sama kt, upphæð innan 1 kr, Payday SENT/PAID, gjalddagi ≥ upphaf vinnumánaðar, einn-á-einn
+  (elsta drög fyrst), raðir sem hanga á drögum (payday_invoice_id) frátekin. Tengd drög detta úr Ósent en lifa í töflunni/draftKeys; svarið ber `sjalfvirk_tenging[]`.
+  Próf: `node tools/test-krofu-sjalfvirk-tenging.cjs` (13 atriði; fellur á gamla kóðanum). Mælt 20.10: sex tengingar á lifandi gögnum (R-371, 377, 378, 379, 380, 381), allar nákvæmar.
