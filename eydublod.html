@@ -66,6 +66,14 @@
   .docrow .t{flex:1; min-width:0}
   .docrow .t b{display:block; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .docrow .t span{color:var(--muted); font-size:11.5px}
+  .docrow .t b.nafn{cursor:pointer}
+  .docrow .t b.nafn:hover{text-decoration:underline}
+  .forsk{position:fixed; inset:0; z-index:9999; background:rgba(15,15,15,.62); display:flex; align-items:center; justify-content:center; padding:2vh 2vw}
+  .forsk-box{background:#fff; width:min(960px,96vw); height:94vh; border-radius:10px; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 18px 60px rgba(0,0,0,.45)}
+  .forsk-top{display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid var(--line2); font-size:13px; flex-wrap:wrap}
+  .forsk-top b{flex:1; min-width:140px}
+  .forsk-top a,.forsk-top button{font:inherit; padding:5px 10px; border:1px solid var(--line2); border-radius:6px; background:#fff; color:inherit; text-decoration:none; cursor:pointer}
+  .forsk-box iframe{flex:1; border:0; width:100%; background:#eee}
   .docrow a, .docrow button{
     border:1px solid var(--line); background:#fff; border-radius:7px; padding:5px 9px;
     font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; color:var(--text);
@@ -289,7 +297,7 @@
 /* Útgáfa síðunnar. BUMPAÐU þessu við hverja breytingu — merkið í hausnum er
    eina leiðin fyrir Agnar til að sjá strax hvort vafrinn situr á gamalli
    vistaðri útgáfu (það gerðist 2026-08-07 og kostaði drjúgan tíma). */
-const UTGAFA = '2026-10-20.3';
+const UTGAFA = '2026-10-20.4';
 
 let currentRowId = null;   // id á þeirri DB-röð sem er opin (til staðfestingar)
 let lastPublicUrl = null;  // public_url nýjasta vistunarins — til sendingar
@@ -645,7 +653,7 @@ function renderSafn(boxId, medNafni){
     const vid = (d.gogn && Array.isArray(d.gogn._vidhengi)) ? d.gogn._vidhengi : [];
     return `<div class="docrow">
       <div class="t">
-        <b>${esc(d.stadur || d.titill || d.skra_nafn || 'Skjal')}</b>
+        <b class="nafn" onclick="forskoda('${d.id}')" title="Opna forskoðun">${esc(d.stadur || d.titill || d.skra_nafn || 'Skjal')}</b>
         <span>${d.dagsetning ? fmtDate(d.dagsetning) : ''}${medNafni && d.titill ? ' · ' + esc(d.titill) : ''}
           · ${new Date(d.created_at).toLocaleDateString('is-IS')}</span>
         ${vid.map(v => `<span class="vidhengi"><a href="${esc(v.url)}" target="_blank" rel="noopener">📎 ${esc(v.nafn)}</a>
@@ -689,6 +697,27 @@ document.addEventListener('paste', async ev => {
   ev.preventDefault();
   try{ settTeikningu(await lesaMynd(it.getAsFile())); }catch(e){}
 });
+
+/* ── Forskoðun: nafn skjals í safninu opnar PDF-inn í glugga ── */
+function forskoda(id){
+  const d = safn.find(x => x.id === id);
+  if(!d || !d.public_url){ return; }
+  const vid = (d.gogn && Array.isArray(d.gogn._vidhengi)) ? d.gogn._vidhengi : [];
+  const el = document.createElement('div');
+  el.className = 'forsk';
+  el.innerHTML = `<div class="forsk-box">
+    <div class="forsk-top"><b>${esc(d.stadur || d.titill || 'Skjal')} · v${d.utgafa}</b>
+      ${vid.map(v => `<a href="${esc(v.url)}" target="_blank" rel="noopener">📎 ${esc(v.nafn)}</a>`).join('')}
+      <a href="${esc(d.public_url)}" target="_blank" rel="noopener">⬇︎ Opna / sækja</a>
+      <button type="button" id="forskLoka">✕ Loka</button></div>
+    <iframe src="${esc(d.public_url)}#view=FitH" title="Forskoðun"></iframe></div>`;
+  const loka = () => { el.remove(); document.removeEventListener('keydown', esc_); };
+  const esc_ = ev => { if(ev.key === 'Escape') loka(); };
+  el.addEventListener('click', ev => { if(ev.target === el) loka(); });
+  document.addEventListener('keydown', esc_);
+  document.body.appendChild(el);
+  el.querySelector('#forskLoka').onclick = loka;
+}
 
 /* ── Viðhengi: festa skrá (t.d. Ajour-skýrslu) við skjal ──────────────────
    Skráin fer beint í Supabase Storage um undirritaða slóð (Ajour-skýrslur eru ~9 MB, of stórar fyrir

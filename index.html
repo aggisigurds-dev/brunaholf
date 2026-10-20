@@ -2163,6 +2163,8 @@ function ensureNewTabs(s){
   }
 }
 
+// 20.10.2026: Eyðublöð-flipinn heitir „Staðf. Brunalokana" — líka þótt samstillt staða þjónsins beri gamla heitið (aðeins birting).
+function tabNafn(t){ return (t && t.id === 'eydublod' && t.label === 'Eyðublöð') ? 'Staðf. Brunalokana' : (t ? t.label : ''); }
 function load(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -2670,14 +2672,14 @@ function renderTabs(){
     $tabs.innerHTML = visible.map(t=> t.sep
       ? `<span class="tab-sep-h" data-id="${t.id}" data-sep="1"></span>`
       : `<button class="tab ${state.ui.activeTab===t.id?'active':''}" data-id="${t.id}">
-        <span>${t.icon||'•'}</span><span>${escapeHtml(t.label)}</span>
+        <span>${t.icon||'•'}</span><span>${escapeHtml(tabNafn(t))}</span>
       </button>
     `).join('');
   } else {
     $tabs.innerHTML = brand + visible.map(t=> t.sep
       ? `<div class="tab-sep" data-id="${t.id}" data-sep="1">${t.label?`<span class="sep-label">${escapeHtml(t.label)}</span>`:''}<span class="sep-line"></span></div>`
-      : `<button class="tab-v ${state.ui.activeTab===t.id?'active':''}" data-id="${t.id}" title="${escapeAttr(t.label)}">
-        <span class="ti">${t.icon||'•'}</span><span class="tn">${escapeHtml(t.label)}</span><span class="tc">${(window.BH_TAB_COUNTS||{})[t.id]||''}</span>
+      : `<button class="tab-v ${state.ui.activeTab===t.id?'active':''}" data-id="${t.id}" title="${escapeAttr(tabNafn(t))}">
+        <span class="ti">${t.icon||'•'}</span><span class="tn">${escapeHtml(tabNafn(t))}</span><span class="tc">${(window.BH_TAB_COUNTS||{})[t.id]||''}</span>
       </button>
     `).join('') + foot;
   }
@@ -2851,7 +2853,7 @@ function render(){
   renderTabs();
   const t = activeTab();
   document.body.classList.toggle('wide-view', t.id === 'skyrslustod');   // full breidd fyrir skjalabordid
-  $brandTitle.textContent = t.label;
+  $brandTitle.textContent = tabNafn(t);
   document.body.dataset.tab = t.id;
   try{ if(window.cgSyncBanner) window.cgSyncBanner(); }catch(_){}
   if(t.id==='dagurinn') return renderDagurinn(t);
