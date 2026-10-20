@@ -157,3 +157,6 @@ Dæmi um „eitt heimilisfang": `Sunnukriki 3, Mosfellsbær` · sveitarfélag `M
   Brúarvogur 1-3, Gilsbúð 9, Bugðufljót 9, Orkureitur 20.12.2025, o.fl.), Straumhella 5 (annað skjal: brunavörn
   burðarstála) og stutta yfirlýsingin skv. 38. gr. a. Fastir hlutar innfluttra skjala koma úr núverandi sniðmáti við Breyta.
 - **Flipinn** heitir „Staðf. Brunalokana" (`tabNafn()` í index.html, aðeins birting; samstillt staða getur borið gamla heitið).
+- **Hliðarstika (útg. .8):** reitirnir „Staður, heimilisfang, byggingar", „Hvað var gert", „Um ræðir" og „Niðurstaða" fylgjast að við gulu/ritanlegu
+  svæðin í skjalinu í báðar áttir (`syncSidebar()`). Að skrifa í „Um ræðir"/„Niðurstaða" tekur sjálfvirku setninguna yfir; „↻ Sjálfvirkt" tekur hana upp aftur.
+- **Endurgerð skjöl:** `gogn._endurgert` + merkið „↻ Endurgerð" í safninu = PDF smíðað úr docx því frumrit fannst ekki.

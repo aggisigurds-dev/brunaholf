@@ -299,7 +299,7 @@
 /* Útgáfa síðunnar. BUMPAÐU þessu við hverja breytingu — merkið í hausnum er
    eina leiðin fyrir Agnar til að sjá strax hvort vafrinn situr á gamalli
    vistaðri útgáfu (það gerðist 2026-08-07 og kostaði drjúgan tíma). */
-const UTGAFA = '2026-10-20.7';
+const UTGAFA = '2026-10-20.8';
 
 let currentRowId = null;   // id á þeirri DB-röð sem er opin (til staðfestingar)
 let lastPublicUrl = null;  // public_url nýjasta vistunarins — til sendingar
@@ -377,6 +377,15 @@ const FORMS = [
           def:'', placeholder:'3-5-7' },
         { key:'sveitarfelag', type:'text', list:SVEITARFELOG, label:'Teikningar af vef (eignarfall)',
           def:'Reykjavíkurborgar', placeholder:'Reykjavíkurborgar' }
+      ] },
+    { titill:'Texti',
+      fields:[
+        { key:'hvadVarGert', type:'area', rows:5, label:'Hvað var gert',
+          hint:'Ein málsgrein í hverri línu. Fylgist að við textann í skjalinu.' },
+        { key:'umraedir', type:'area', rows:3, auto:true, label:'Um ræðir',
+          hint:'Skrifast sjálfkrafa út frá byggingunum þar til þú skrifar hér eða í skjalið. „↻ Sjálfvirkt" tekur það upp aftur.' },
+        { key:'nidurstada', type:'area', rows:5, auto:true, label:'Niðurstaða',
+          hint:'Sama regla og „Um ræðir".' }
       ] },
     { titill:'Útlit',
       fields:[
@@ -1040,6 +1049,9 @@ function fieldHtml(f){
           </span>
         </div>
       </div>`;
+  } else if(f.type === 'area'){
+    input = `<textarea id="${id}" name="${f.key}" rows="${f.rows || 3}" style="width:100%;font:inherit;padding:8px;border:1px solid var(--line2);border-radius:6px;resize:vertical">${esc(val)}</textarea>`
+      + (f.auto ? `<div style="margin-top:4px"><button type="button" class="btn btn-ghost" style="padding:3px 10px;font-size:12px" onclick="aftur('${f.key}')">↻ Sjálfvirkt</button></div>` : '');
   } else if(f.type === 'img'){
     input = `<div class="img-wrap"><input type="file" accept="image/*" onchange="veljaTeikningu(this)">
       <div id="teiknPrev">${val ? `<img src="${esc(val)}" alt="">` : ''}</div>
@@ -1069,10 +1081,21 @@ function onFieldInput(e){
   if(!key) return;
   values[key] = e.target.value;
   if(key === 'dagsetning') values.dagsetningRaw = '';
+  if(form.autos && form.autos[key]) autoOn[key] = false;   // notandinn tók setninguna yfir
   recalcAuto();
   renderDoc();
+  syncSidebar();
   saveDraft();
 }
+
+/* Sjálfvirku setningarnar (og aðrir reitir) í hliðarstikunni fylgja gildinu í skjalinu — nema þeir sem verið er að skrifa í. */
+function syncSidebar(){
+  Object.keys(form.autos || {}).concat(['hvadVarGert', 'stadur']).forEach(k => {
+    const si = document.getElementById('f_' + k);
+    if(si && si !== document.activeElement && si.value !== (values[k] || '')) si.value = values[k] || '';
+  });
+}
+function aftur(key){ autoOn[key] = true; recalcAuto(); renderDoc(); syncSidebar(); saveDraft(); }
 
 /* ── Ritanleg svæði BEINT í skjalinu ───────────────────────────────── */
 const E = {
@@ -1136,6 +1159,7 @@ function refreshAutoRegions(){
     const el = document.querySelector(`#doc [data-f="${k}"]`);
     if(el && el !== document.activeElement) el.textContent = values[k];
   });
+  syncSidebar();
 }
 
 function fitPreview(){
