@@ -120,6 +120,15 @@ og tegund) og **myndayfirlit** sem fylgir oft með til verkkaupa.
    heimilisfang, ekki númeraðar byggingar), `passaEinaSidu()`, `buildPdf()` og senda blobbið á
    staðbundinn móttakara. Vistun í lifandi skjalasafn aðeins þegar Agnar biður um það.
 
+**Verk sem eru aðeins brunaþéttingar (göt/línuþéttingar), engar hurðir** (Agnar 20.10, Sunnukriki 3):
+staðlaða textinn talar mest um eldvarnarhurðir. Taka út þriðju „Hvað var gert"-línuna („Farið var yfir allar
+eldvarnarhurðir…", `values.hvadVarGert` = fyrstu tvær línurnar) og orðið „eldvarnarhurðir" úr niðurstöðunni
+(„brunahólfun í <stað> sé í samræmi…"). Aðeins í því skjali, ekki í `defaults`.
+Sunnukriki 3 (Agnar 20.10: „brunaþéttingar meðfram leiðslum og lögnum og brunahólfun") fékk í staðinn línuna
+„Brunaþéttingar voru gerðar meðfram leiðslum og lögnum þar sem þær fara í gegnum brunahólfandi byggingarhluta."
+og niðurstöðuna „…að brunahólfun og brunaþéttingar meðfram leiðslum og lögnum í <stað> séu í samræmi…".
+Orðalagið er mitt, byggt á lýsingu Agnars — hann yfirfer það áður en skjalið fer út.
+
 Dæmi um „eitt heimilisfang": `Sunnukriki 3, Mosfellsbær` · sveitarfélag `Mosfellsbæjar` · „Um ræðir húsnæðið
 í Sunnukrika 3 samkvæmt teikningum af vef Mosfellsbæjar." (þágufall: Sunnukriki → Sunnukrika).
 
