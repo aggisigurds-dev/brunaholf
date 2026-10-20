@@ -299,7 +299,7 @@
 /* Útgáfa síðunnar. BUMPAÐU þessu við hverja breytingu — merkið í hausnum er
    eina leiðin fyrir Agnar til að sjá strax hvort vafrinn situr á gamalli
    vistaðri útgáfu (það gerðist 2026-08-07 og kostaði drjúgan tíma). */
-const UTGAFA = '2026-10-20.6';
+const UTGAFA = '2026-10-20.7';
 
 let currentRowId = null;   // id á þeirri DB-röð sem er opin (til staðfestingar)
 let lastPublicUrl = null;  // public_url nýjasta vistunarins — til sendingar
@@ -368,7 +368,7 @@ const FORMS = [
   sections:[
     { titill:'Verkið',
       fields:[
-        { key:'stadur', type:'text', label:'Staður / heimilisfang',
+        { key:'stadur', type:'text', label:'Staður, heimilisfang, byggingar',
           hint:'Fyrirsögn skjalsins. Má líka skrifa beint í gula reitinn í skjalinu — þetta tvennt fylgist að.',
           def:'', placeholder:'T.d. Sunnukriki 3, Mosfellsbær' },
         { key:'dagsetning', type:'date', label:'Dagsetning', def:todayIso() },
