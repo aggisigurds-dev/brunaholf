@@ -67,6 +67,8 @@
   .docrow .t b{display:block; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .docrow .t span{color:var(--muted); font-size:11.5px}
   .docrow .t b.nafn{cursor:pointer}
+  .endurgerd-badge{font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; background:#fff3d6; color:#8a5a00; border:1px solid #f0d08a; white-space:nowrap}
+  .docrow .vidhengi button{font:inherit; font-size:11px; padding:1px 6px; margin-left:4px; border:1px solid var(--line2); border-radius:5px; background:#fff; cursor:pointer}
   .docrow .t b.nafn:hover{text-decoration:underline}
   .forsk{position:fixed; inset:0; z-index:9999; background:rgba(15,15,15,.62); display:flex; align-items:center; justify-content:center; padding:2vh 2vw}
   .forsk-box{background:#fff; width:min(960px,96vw); height:94vh; border-radius:10px; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 18px 60px rgba(0,0,0,.45)}
@@ -297,7 +299,7 @@
 /* Útgáfa síðunnar. BUMPAÐU þessu við hverja breytingu — merkið í hausnum er
    eina leiðin fyrir Agnar til að sjá strax hvort vafrinn situr á gamalli
    vistaðri útgáfu (það gerðist 2026-08-07 og kostaði drjúgan tíma). */
-const UTGAFA = '2026-10-20.4';
+const UTGAFA = '2026-10-20.5';
 
 let currentRowId = null;   // id á þeirri DB-röð sem er opin (til staðfestingar)
 let lastPublicUrl = null;  // public_url nýjasta vistunarins — til sendingar
@@ -657,10 +659,12 @@ function renderSafn(boxId, medNafni){
         <span>${d.dagsetning ? fmtDate(d.dagsetning) : ''}${medNafni && d.titill ? ' · ' + esc(d.titill) : ''}
           · ${new Date(d.created_at).toLocaleDateString('is-IS')}</span>
         ${vid.map(v => `<span class="vidhengi"><a href="${esc(v.url)}" target="_blank" rel="noopener">📎 ${esc(v.nafn)}</a>
+          <button data-url="${esc(v.url)}" data-nafn="${esc(v.nafn)}" onclick="saekjaVidhengi(this)" title="Sækja á þessa tölvu">⬇︎</button>
           <button class="del" onclick="taka_af('${d.id}','${esc(v.path)}')" title="Fjarlægja viðhengi">✕</button></span>`).join('')}
       </div>
       <button onclick="hengjaVid('${d.id}')" title="Festa skrá (t.d. Ajour-skýrslu) við þetta skjal">📎 Hengja við</button>
       <span class="vbadge">v${d.utgafa}</span>
+      ${d.gogn && d.gogn._endurgert ? `<span class="endurgerd-badge" title="${esc(d.gogn._endurgert.athugasemd || 'Endurgert skjal')}">↻ Endurgerð</span>` : ''}
       ${stadfest ? `<span class="stadfest-badge" title="Staðfest ${stadfestBy ? 'af ' + stadfestBy + ' ' : ''}${stadfestDate}">✓ Staðfest</span>` : ''}
       ${d.public_url ? `<a href="${esc(d.public_url)}" target="_blank" rel="noopener">⬇︎ PDF</a>` : ''}
       ${d.public_url ? `<button onclick="sendaById('${d.id}')">📤 Senda</button>` : ''}
@@ -698,6 +702,22 @@ document.addEventListener('paste', async ev => {
   try{ settTeikningu(await lesaMynd(it.getAsFile())); }catch(e){}
 });
 
+/* ── Sækja viðhengi á þessa tölvu: skráin liggur á þjóninum, svo hún er aðgengileg af hvaða tölvu sem er ── */
+async function saekjaVidhengi(btn){
+  const url = btn.dataset.url, nafn = btn.dataset.nafn || 'vidhengi';
+  const old = btn.textContent; btn.disabled = true; btn.textContent = '⏳';
+  try{
+    const r = await fetch(url);
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    const blob = await r.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = nafn;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }catch(e){ window.open(url, '_blank'); }
+  finally{ btn.disabled = false; btn.textContent = old; }
+}
+
 /* ── Forskoðun: nafn skjals í safninu opnar PDF-inn í glugga ── */
 function forskoda(id){
   const d = safn.find(x => x.id === id);
@@ -707,7 +727,7 @@ function forskoda(id){
   el.className = 'forsk';
   el.innerHTML = `<div class="forsk-box">
     <div class="forsk-top"><b>${esc(d.stadur || d.titill || 'Skjal')} · v${d.utgafa}</b>
-      ${vid.map(v => `<a href="${esc(v.url)}" target="_blank" rel="noopener">📎 ${esc(v.nafn)}</a>`).join('')}
+      ${vid.map(v => `<a href="${esc(v.url)}" target="_blank" rel="noopener">📎 ${esc(v.nafn)}</a><button type="button" data-url="${esc(v.url)}" data-nafn="${esc(v.nafn)}" onclick="saekjaVidhengi(this)" title="Sækja á þessa tölvu">⬇︎</button>`).join('')}
       <a href="${esc(d.public_url)}" target="_blank" rel="noopener">⬇︎ Opna / sækja</a>
       <button type="button" id="forskLoka">✕ Loka</button></div>
     <iframe src="${esc(d.public_url)}#view=FitH" title="Forskoðun"></iframe></div>`;

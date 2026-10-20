@@ -139,3 +139,21 @@ Dæmi um „eitt heimilisfang": `Sunnukriki 3, Mosfellsbær` · sveitarfélag `M
 - A4, ekki US Letter (frumritið var Letter). Spássía áfram 1 in.
 - Orðið er **brunalokun** (þétting gats/brunahólfunar), ekki „brunaloka" (damper) — fyrirsögn skjalsins
   er „Staðfesting brunalokana". Sama orð og í Heklureits- og Gata-verðskránni (`Brunalokanir á stærðum Ø…`).
+
+## Skjalasafn: forskoðun, 📎 viðhengi, teikning, Drive-innflutningur (20.10.2026)
+
+- **Forskoðun:** nafn skjals í Skjalasafninu opnar PDF-inn í glugga (`forskoda()`), með viðhengjum og „Opna / sækja".
+- **📎 Hengja við:** fest við *útgáfuna* (gogn._vidhengi). Skráin fer BEINT í Storage um undirritaða slóð
+  (`attach_url` → PUT → `attach_done` í `netlify/functions/eydublod.js`) — Ajour-skýrslur eru ~9 MB, of stórar fyrir
+  Netlify-fall. `detach` fjarlægir; eyðing útgáfu hreinsar viðhengin. Prófað lifandi með 9 MB skrá.
+- **Teikning í skjalinu:** hliðarstikan „Teikning" — velja mynd eða líma skjáskot (Ctrl+V), minnkað í ≤1600 px JPEG,
+  birtist sem síða 2 með sama haus (`values.teikning`, `teikningTexti`). Vektor-útgáfan með Ajour-punktum:
+  `ajour-hnitasida.cjs` (sjá kaflann hér að ofan).
+- **Undirskrift** 15% minni og með gegnsæjum bakgrunni (`img/undirskrift-annthor-hrein.png`; frumritið er óhreyft).
+  Eldri skjöl sem vísa í frumritið fá hreina útgáfu við opnun.
+- **Drive-innflutningur:** `drive-innflutningur/parse.cjs` (les niðurhalaðar Drive-PDF, dregur út texta með pdfjs-dist)
+  og `import.cjs` (`--dry` fyrst; endurkeyranlegt, merkir `gogn._innflutt.drive_id`). Flutti inn 38 upprunalegar
+  PDF-staðfestingar 20.10. Ekki innflutt: 14 docx-skjöl án PDF (Hvaleyrarbraut 39, Skerpluholt 7, Lyngbarð 2,
+  Brúarvogur 1-3, Gilsbúð 9, Bugðufljót 9, Orkureitur 20.12.2025, o.fl.), Straumhella 5 (annað skjal: brunavörn
+  burðarstála) og stutta yfirlýsingin skv. 38. gr. a. Fastir hlutar innfluttra skjala koma úr núverandi sniðmáti við Breyta.
+- **Flipinn** heitir „Staðf. Brunalokana" (`tabNafn()` í index.html, aðeins birting; samstillt staða getur borið gamla heitið).
