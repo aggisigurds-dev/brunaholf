@@ -120,7 +120,7 @@
    "sidast": "2026-10-16",
    "skrif": 6,
    "gaetir": 11,
-   "breytt": 2,
+   "breytt": 3,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Netvörður — gætir öryggisnetsins. KALLA ÁÐUR en breytt er vörðum leiðum (reikninga-OUT, kennitala, rukkun, tilbúið-staða) OG á eftir, til að staðfesta að breyti"
@@ -165,7 +165,7 @@
    "sidast": "2026-10-16",
    "skrif": 14,
    "gaetir": 14,
-   "breytt": 1,
+   "breytt": 2,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Sala/POS, reikningagerð, dkPlus/Payday, afslættir, sjálfvirk PDF-vistun, reikninga-póstur og úttektartexti. Notaðu fyrir allt sem snýr að sölu, reikningum, verð"
@@ -180,7 +180,7 @@
    "sidast": "2026-10-16",
    "skrif": 7,
    "gaetir": 5,
-   "breytt": 1,
+   "breytt": 2,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Samþykktirnar — á öll svör Agnars á Þjónustuborðinu og vinnur úr þeim. Les biðröðina (svar:samthykkt / vinnsla / endurmeta), ENDURMÆLIR forsendur hvers máls áðu"
@@ -419,11 +419,9 @@
    "emoji": null,
    "sidast": "2026-10-10",
    "skrif": 5,
-   "gaetir": 18,
+   "gaetir": 17,
    "breytt": 7,
-   "daudir": [
-    "js/patches/231-verkbord.js"
-   ],
+   "daudir": [],
    "merki": "🔴",
    "lysing": "Layout, CSS and responsive rules specific to the Slokkvitaeki app. Use BEFORE writing any CSS, media query, or layout change in this repo - including mobile/des"
   },
@@ -632,9 +630,9 @@
    "sidast": "2026-10-16",
    "skrif": 9,
    "gaetir": 5,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Kann viðskiptavina-líkanið — customers_base, fyrirtaeki, rekstrarfélög, kennitölur og hvernig þau tengjast. Notaðu þegar leita þarf að kúnna, tengja kt, greina "
   },
   {
