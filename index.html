@@ -3288,6 +3288,26 @@ function renderVidskiptavinir(t) {
       .vk-mail .snip{color:var(--ink-2,#4a463f);margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
       .vk-notes{width:100%;box-sizing:border-box;min-height:110px;padding:10px 12px;border:1px solid var(--edge,#c9c2b3);border-radius:4px;background:#fff;font:inherit;font-size:13.5px;line-height:1.5;color:var(--ink);resize:vertical;box-shadow:inset 0 1px 2px rgba(0,0,0,.06)}
       .vk-muted{color:var(--muted);font-size:12.5px}
+      /* 20.10.2026 — flipar: Fjármál · Staðir & teikningar · Greining (Slökkvitæki-prófíllinn og Greiningin felld inn, ?bh=1) */
+      .vk-tabs{display:flex;gap:6px;padding:12px 18px 0;border-bottom:1px solid var(--line,#e6e1d6);flex-wrap:wrap}
+      .vk-tab{font:inherit;font-size:13.5px;font-weight:700;padding:9px 18px;border:1px solid var(--edge,#c9c2b3);border-bottom:0;border-radius:6px 6px 0 0;background:var(--bg-2,#ece7dc);color:var(--ink-2,#4a463f);cursor:pointer;margin-bottom:-1px}
+      .vk-tab:hover{color:var(--ink,#161513)}
+      .vk-tab.on{background:var(--card,#fff);color:var(--ink,#161513);box-shadow:inset 0 3px 0 var(--gold,#c9a54a)}
+      .vk-tab .n{font-family:var(--font-mono,ui-monospace,monospace);font-size:10.5px;margin-left:7px;padding:1px 7px;border-radius:9px;background:rgba(0,0,0,.09)}
+      .vk-pane[hidden]{display:none}
+      .vk-frame-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px 18px}
+      .vk-frame-bar .vk-cap{font-family:var(--font-mono,ui-monospace,monospace);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+      .vk-frame-bar input{flex:1;min-width:240px;height:36px;padding:0 10px;border:1px solid var(--edge,#c9c2b3);border-radius:4px;background:#fff;font:inherit;font-size:13.5px;color:var(--ink,#161513)}
+      .vk-chip{font:inherit;font-size:12.5px;font-weight:700;padding:6px 12px;border:1px solid var(--edge,#c9c2b3);border-radius:4px;background:var(--bg-2,#ece7dc);color:var(--ink-2,#4a463f);cursor:pointer;text-align:left}
+      .vk-chip small{font-weight:500;color:var(--muted,#6f685c);margin-left:6px}
+      .vk-chip em{font-style:normal;margin-left:6px}
+      .vk-chip.on{background:#1a1813;color:#f4f1ea;border-color:#1a1813;box-shadow:inset 0 -3px 0 var(--gold,#c9a54a)}
+      .vk-chip.on small{color:#b9b19f}
+      .vk-frame{display:block;width:100%;height:calc(100vh - 190px);min-height:680px;border:0;border-top:1px solid var(--line,#e6e1d6);background:#fff}
+      .vk-stofna{padding:16px 18px 20px}
+      .vk-stofna p{margin:0 0 12px}
+      .vk-row .s span.stadir{background:#e3ecf7;color:#2c4a73}
+      @media(max-width:980px){.vk-frame{height:78vh;min-height:520px}.vk-tab{padding:8px 12px;font-size:12.5px}}
       /* verkstaðar-glugginn (óbreyttur að virkni) */
       .vk-ov{position:fixed;inset:0;z-index:7100;background:rgba(6,8,16,.78);display:flex;align-items:flex-end;justify-content:center}
       @media(min-width:600px){.vk-ov{align-items:center}}
@@ -3363,6 +3383,8 @@ function renderVidskiptavinir(t) {
   function hopar(){
     const grouped = {};
     for (const r of allRows) { const k = r.customer_name || '(Óþekktur)'; (grouped[k] = grouped[k] || []).push(r); }
+    // greiðendur með customer_info en enga verðskrá (t.d. nýr kúnni) — aðeins þeir sem eru skráðir, ekki allir í reikningum
+    for (const n of Object.keys(VKSUMS)) if (VKSUMS[n] && VKSUMS[n].skrad && !grouped[n]) grouped[n] = [];
     return grouped;
   }
   const kennitalaFyrir = (name, info) => (info && info.kennitala) || ((hopar()[name]||[]).find(w => w.kennitala)||{}).kennitala || '';
@@ -3379,8 +3401,8 @@ function renderVidskiptavinir(t) {
       const ws = grouped[name]; const kt = kennitalaFyrir(name); const s = VKSUMS[name] || {};
       return `<button type="button" class="vk-row${name === valinn ? ' sel' : ''}" data-vk-sel="${escapeAttr(name)}">
         <span class="n">${escapeHtml(name)}</span>
-        <span class="m">${kt ? 'kt. ' + escapeHtml(kt) + ' · ' : ''}${ws.length} verkst.</span>
-        ${(s.osent || s.ogreitt) ? `<span class="s">${s.osent ? '<span class="osent">ósent ' + vkMoney(s.osent) + '</span>' : ''}${s.ogreitt ? '<span class="ogreitt">ógreitt ' + vkMoney(s.ogreitt) + '</span>' : ''}</span>` : ''}
+        <span class="m">${kt ? 'kt. ' + escapeHtml(kt) + ' · ' : ''}${Math.max(ws.length, s.worksites || 0)} verkst.</span>
+        ${(s.osent || s.ogreitt || s.stadir) ? `<span class="s">${s.stadir ? '<span class="stadir">' + s.stadir + (s.stadir === 1 ? ' staður' : ' staðir') + (s.greining ? ' · greining' : '') + '</span>' : ''}${s.osent ? '<span class="osent">ósent ' + vkMoney(s.osent) + '</span>' : ''}${s.ogreitt ? '<span class="ogreitt">ógreitt ' + vkMoney(s.ogreitt) + '</span>' : ''}</span>` : ''}
       </button>`;
     }).join('') || '<div class="vk-empty">Ekkert félag passar.</div>';
     if (list.innerHTML !== html) list.innerHTML = html;
@@ -3388,7 +3410,8 @@ function renderVidskiptavinir(t) {
   }
 
   // ---------- Valið félag (hægra megin) ----------
-  async function velja(name, { scroll } = {}){
+  async function velja(name, { scroll, flipi } = {}){
+    const fyrriValinn = valinn;
     valinn = name;
     teiknaLista();
     const col = wrap.querySelector('#vk-detail'); if(!col) return;
@@ -3401,11 +3424,22 @@ function renderVidskiptavinir(t) {
           <button type="button" class="boss-btn ivory" data-vk-addws="${escapeAttr(name)}">＋ Verkstaður</button>
         </div>
       </div>
-      <div class="vk-kpis" id="vk-kpis"></div>
-      <div id="vk-box"><div class="vk-sec vk-muted">Sæki…</div></div>
+      <div class="vk-tabs" role="tablist">
+        <button type="button" class="vk-tab on" role="tab" data-vk-tab="fjarmal">Fjármál</button>
+        <button type="button" class="vk-tab" role="tab" data-vk-tab="stadir">Staðir &amp; teikningar <span class="n">…</span></button>
+        <button type="button" class="vk-tab" role="tab" data-vk-tab="greining">Greining</button>
+      </div>
+      <div class="vk-pane" id="vk-pane-fjarmal">
+        <div class="vk-kpis" id="vk-kpis"></div>
+        <div id="vk-box"><div class="vk-sec vk-muted">Sæki…</div></div>
+      </div>
+      <div class="vk-pane" id="vk-pane-stadir" hidden><div class="vk-sec vk-muted">Sæki…</div></div>
+      <div class="vk-pane" id="vk-pane-greining" hidden><div class="vk-sec vk-muted">Sæki…</div></div>
     </div>`;
     col.querySelectorAll('[data-vk-edit]').forEach(btn => { const w = allRows.find(r => r.worksite_name === btn.dataset.vkEdit); if (w) btn.addEventListener('click', () => openModal(w, null)); });
     col.querySelectorAll('[data-vk-addws]').forEach(btn => btn.addEventListener('click', () => openModal(null, btn.dataset.vkAddws)));
+    col.querySelectorAll('[data-vk-tab]').forEach(b => b.addEventListener('click', () => velduFlipa(col, b.dataset.vkTab)));
+    velduFlipa(col, flipi || (fyrriValinn === name ? opinnFlipi : 'fjarmal'));
     if (scroll && window.innerWidth <= 980) col.scrollIntoView({ block: 'start', behavior: 'smooth' });
     await loadDetail(name, col.querySelector('#vk-box'), col);
   }
@@ -3470,6 +3504,85 @@ function renderVidskiptavinir(t) {
         + '<textarea class="vk-notes" data-vk-notes placeholder="Skrifaðu hér…">' + escapeHtml(i.general_notes || '') + '</textarea>'
         + '<div style="margin-top:8px;display:flex;align-items:center;gap:8px"><button type="button" class="boss-btn ivory" data-vk-savenotes>💾 Vista minnispunkta</button><span class="vk-st" data-vk-notes-st2></span></div></div>';
     wireDetail(name, box);
+    buaFlipa(name, d, col);
+  }
+
+  // ---------- Flipar: Fjármál · Staðir & teikningar · Greining (20.10.2026) ----------
+  // Agnar: „öflugt company profile … mikið um teikningavinnu og greiningar — helst nota sömu vélina, hún skrái bara á annan
+  // stað". Slökkvitæki-prófíllinn (#company/<id>) og Greiningin (#greining/<heimilisfang>) eru felld inn með ?bh=1 (felur
+  // skel appsins). Þetta er SAMA vélin — Teikning, Búnaðargreining og Greining vista í sömu töflur, á STAÐINN (fyrirtaeki)
+  // sem er tengdur greiðandanum á kennitölu. Staður sem vantar er stofnaður hér (POST /api/verkkaupar {action:'stofna_stad'}).
+  const SLOKK = 'https://slokkvitaeki.netlify.app';
+  let opinnFlipi = 'fjarmal';
+  function rammi(slod, titill){
+    const f = document.createElement('iframe');
+    f.className = 'vk-frame'; f.src = slod; f.title = titill;
+    f.setAttribute('loading', 'lazy'); f.setAttribute('allow', 'clipboard-write; fullscreen');
+    return f;
+  }
+  function velduFlipa(col, nafn){
+    opinnFlipi = nafn;
+    col.querySelectorAll('[data-vk-tab]').forEach(b => { const on = b.dataset.vkTab === nafn; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
+    col.querySelectorAll('.vk-pane').forEach(p => { p.hidden = p.id !== 'vk-pane-' + nafn; });
+    const p = col.querySelector('#vk-pane-' + nafn);
+    if (p && p._opna && !p._opnad) { p._opnad = true; p._opna(); }      // rammar eru smíðaðir fyrst þegar flipinn er opnaður
+  }
+  function buaFlipa(name, d, col){
+    const stadir = d.stadir || [], vh = d.verkstadir_heimili || [], info = d.info || {};
+    const tn = col.querySelector('[data-vk-tab="stadir"] .n'); if (tn) tn.textContent = String(stadir.length);
+    const ps = col.querySelector('#vk-pane-stadir'), pg = col.querySelector('#vk-pane-greining');
+    if (!ps || !pg) return;
+    const heimiliA = (stadir.find(s => s.heimilisfang) || {}).heimilisfang || (vh.find(x => x.heimilisfang) || {}).heimilisfang || info.heimilisfang || '';
+    // — Staðir & teikningar —
+    if (stadir.length) {
+      ps.innerHTML = '<div class="vk-frame-bar" data-vk-bar></div><div data-vk-ram></div>';
+      const bar = ps.querySelector('[data-vk-bar]'), ram = ps.querySelector('[data-vk-ram]');
+      const sjaStad = (id) => {
+        const s = stadir.find(x => x.id === id) || stadir[0];
+        bar.innerHTML = stadir.map(x => '<button type="button" class="vk-chip' + (x.id === s.id ? ' on' : '') + '" data-vk-stadur="' + x.id + '">' + escapeHtml(x.nafn || ('Staður ' + x.id))
+          + (x.heimilisfang ? '<small>' + escapeHtml(x.heimilisfang) + '</small>' : '') + '<em>' + (x.teikning ? '🗺' : '') + (x.greining ? '🔎' : '') + '</em></button>').join('')
+          + '<span style="flex:1"></span><a class="boss-btn ivory" target="_blank" rel="noopener" href="' + SLOKK + '/#company/' + s.id + '">↗ Opna í Slökkvitæki</a>';
+        ram.innerHTML = ''; ram.appendChild(rammi(SLOKK + '/?bh=1#company/' + s.id, 'Slökkvitæki — ' + (s.nafn || s.id)));
+      };
+      bar.addEventListener('click', e => { const b = e.target.closest('[data-vk-stadur]'); if (b) sjaStad(+b.dataset.vkStadur); });
+      ps._opna = () => sjaStad(stadir[0].id);
+    } else {
+      const wsn = vh.length === 1 ? vh[0].worksite_name : '';
+      const nafnA = wsn ? name + ' — ' + wsn : name;
+      ps.innerHTML = '<div class="vk-stofna"><div class="vk-sec-h">Enginn staður í Slökkvitæki</div>'
+        + '<p class="vk-muted">Staður geymir teikningar, Greiningu, skjöl og tæki og birtist hér sem prófíll. Stofnaðu hann einu sinni — Greiningin vistast svo á hann (sama vél og í Slökkvitæki).</p>'
+        + '<div class="vk-facts"><div class="vk-fact"><label>Nafn staðar</label><input data-vk-sn value="' + escapeAttr(nafnA) + '"></div>'
+        + '<div class="vk-fact wide"><label>Heimilisfang (með póstnúmeri)</label><input data-vk-sh value="' + escapeAttr(heimiliA) + '" placeholder="Gata 4, 200 Bær"></div></div>'
+        + '<div style="margin-top:12px;display:flex;align-items:center;gap:10px"><button type="button" class="boss-btn ivory" data-vk-stofna>＋ Stofna stað í Slökkvitæki</button><span class="vk-st" data-vk-stofna-st></span></div></div>';
+      const btn = ps.querySelector('[data-vk-stofna]'), st = ps.querySelector('[data-vk-stofna-st]');
+      btn.addEventListener('click', async () => {
+        const nafn = ps.querySelector('[data-vk-sn]').value.trim(), heimili = ps.querySelector('[data-vk-sh]').value.trim();
+        if (!nafn) { st.textContent = '✗ nafn vantar'; st.style.color = '#b5522a'; return; }
+        if (!/\d{3}/.test(heimili)) { st.textContent = '✗ heimilisfang með póstnúmeri vantar'; st.style.color = '#b5522a'; return; }
+        if (!confirm('Stofna stað „' + nafn + '" (' + heimili + ') í Slökkvitæki undir ' + name + '?')) return;
+        btn.disabled = true; st.textContent = '⏳'; st.style.color = '';
+        try {
+          const kt = kennitalaFyrir(name, info) || d.kt || '';
+          const r = await fetch('/api/verkkaupar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'stofna_stad', customer_name: name, nafn, heimilisfang: heimili, kennitala: kt }) });
+          const j = await r.json(); if (!r.ok || j.error) throw new Error(j.error || ('HTTP ' + r.status));
+          delete VKDETAIL[name]; if (VKSUMS[name]) VKSUMS[name].stadir = Math.max(1, (VKSUMS[name].stadir || 0));
+          await velja(name, { flipi: 'stadir' });
+        } catch (e) { st.textContent = '✗ ' + (e.message || e); st.style.color = '#b5522a'; btn.disabled = false; }
+      });
+    }
+    // — Greining (Greining fasteignar fyrir heimilisfang) —
+    pg.innerHTML = '<div class="vk-frame-bar"><span class="vk-cap">Heimilisfang</span><input data-vk-gaddr type="text" placeholder="Gata 4, 200 Bær" value="' + escapeAttr(heimiliA) + '">'
+      + '<button type="button" class="boss-btn ivory" data-vk-greina>🔎 Greina</button><a class="boss-btn ivory" data-vk-gut target="_blank" rel="noopener" hidden>↗ Opna í Slökkvitæki</a></div><div data-vk-gram></div>';
+    const inp = pg.querySelector('[data-vk-gaddr]'), gram = pg.querySelector('[data-vk-gram]'), lnk = pg.querySelector('[data-vk-gut]');
+    const greina = () => {
+      const a = inp.value.trim(); if (!a) { inp.focus(); return; }
+      lnk.href = SLOKK + '/#greining/' + encodeURIComponent(a); lnk.hidden = false;
+      gram.innerHTML = ''; gram.appendChild(rammi(SLOKK + '/?bh=1#greining/' + encodeURIComponent(a), 'Greining — ' + a));
+    };
+    pg.querySelector('[data-vk-greina]').addEventListener('click', greina);
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') greina(); });
+    pg._opna = () => { if (inp.value.trim()) greina(); };
+    velduFlipa(col, opinnFlipi);      // flipinn sem notandinn valdi áður en gögnin komu
   }
 
   function wireDetail(name, box){

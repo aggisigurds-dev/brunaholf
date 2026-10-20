@@ -34,6 +34,8 @@ exports.handler = async (event) => {
 };
 
 const kr = (n) => Math.round(Number(n) || 0);
+// kennitala → dddddd-dddd (sama snið og trigger normalize_kennitala skrifar í customer_info / fyrirtaeki / customers_base)
+const normKt = (s) => { const d = String(s || '').replace(/\D/g, ''); return d.length === 10 ? d.slice(0, 6) + '-' + d.slice(6) : ''; };
 const OSENT = (d) => (d.status || 'draft') === 'draft' && !d.merged_into && Number(d.total_m_vsk) > 0;
 // invoices-staðan kemur úr tveimur innsogum og er ýmist á ensku eða íslensku
 // ("PAID" og "Greidd" hlið við hlið) — normalísera svo greitt teljist ekki ógreitt.
@@ -65,10 +67,13 @@ async function list() {
   for (const p of pg) if (p.worksite_name && p.customer_name) wsOwner[p.worksite_name] = p.customer_name;
 
   const acc = {};
-  const get = (name) => (acc[name] = acc[name] || { name, kt: null, worksites: 0, osent: 0, ogreitt: 0, greitt_ar: 0, sidasta_krafa: null, sidustu_samskipti: null });
-  for (const p of pg) if (p.customer_name) get(p.customer_name).worksites++;
-  for (const m of map) if (m.customer_name) { const a = get(m.customer_name); if (!a.kt && m.kt_greidanda) a.kt = m.kt_greidanda; }
-  for (const i of info) if (i.customer_name) { const a = get(i.customer_name); if (i.kennitala) a.kt = i.kennitala; }
+  const get = (name) => (acc[name] = acc[name] || { name, kt: null, worksites: 0, osent: 0, ogreitt: 0, greitt_ar: 0, sidasta_krafa: null, sidustu_samskipti: null, skrad: false, stadir: 0, greining: false });
+  // skrad = greiðandinn er skráður viljandi (verðskrá eða customer_info) — ekki bara nefndur á reikningi; viðmótið sýnir aðeins þá
+  const wsSet = {}; const addWs = (n, w) => { if (n && w) (wsSet[n] = wsSet[n] || new Set()).add(w); };
+  for (const p of pg) if (p.customer_name) { const a = get(p.customer_name); a.worksites++; a.skrad = true; addWs(p.customer_name, p.worksite_name); }
+  for (const m of map) if (m.customer_name) { const a = get(m.customer_name); if (!a.kt && m.kt_greidanda) a.kt = m.kt_greidanda; addWs(m.customer_name, m.worksite_name); }
+  for (const i of info) if (i.customer_name) { const a = get(i.customer_name); if (i.kennitala) a.kt = i.kennitala; a.skrad = true; }
+  for (const n of Object.keys(wsSet)) acc[n].worksites = Math.max(acc[n].worksites, wsSet[n].size);
 
   const ar = new Date().getFullYear();
   for (const v of dedupe(inv)) {
@@ -86,6 +91,17 @@ async function list() {
     if (!name) continue;
     get(name).osent += kr(d.total_m_vsk);
   }
+  // Staðir í Slökkvitæki (fyrirtaeki á sömu kennitölu) og hvort Búnaðargreining er vistuð — fyrir merkin í listanum (aukaatriði)
+  try {
+    const kts = [...new Set(Object.values(acc).filter((a) => a.skrad).map((a) => normKt(a.kt)).filter(Boolean))];
+    if (kts.length) {
+      const fy = await sb('fyrirtaeki?select=id,kennitala&deleted_at=is.null&kennitala=in.(' + kts.join(',') + ')&limit=1000');
+      const ids = fy.map((f) => f.id);
+      const bg = ids.length ? await sb('bunadargreining?select=company_id&fjarlaegt_at=is.null&company_id=in.(' + ids.join(',') + ')').catch(() => []) : [];
+      const medGr = new Set(bg.map((g) => g.company_id));
+      for (const a of Object.values(acc)) { const k = normKt(a.kt); if (!k) continue; const mine = fy.filter((f) => f.kennitala === k); a.stadir = mine.length; a.greining = mine.some((f) => medGr.has(f.id)); }
+    }
+  } catch (_) { /* merkin eru aukaatriði */ }
   const rows = Object.values(acc).sort((a, b) => (b.osent + b.ogreitt) - (a.osent + a.ogreitt) || a.name.localeCompare(b.name, 'is'));
   return json(200, { rows, generated_at: new Date().toISOString() });
 }
@@ -127,7 +143,26 @@ async function detail(name) {
   // 16.10.2026 — kennitala greiðandans í sömu röð og Efnislistinn: customer_info → verðskrá → kort → drög
   const kt = info.kennitala || (pg.find((p) => p.kennitala) || {}).kennitala || (map.find((m) => m.kt_greidanda) || {}).kt_greidanda
     || (drafts.find((d) => d.customer_name === name && d.kennitala) || {}).kennitala || null;
-  return json(200, { info, kt, worksites: pg, map, krofur: inv2, drog, samskipti, samtals, generated_at: new Date().toISOString() });
+  // Staðir í Slökkvitæki: fyrirtaeki á sömu kennitölu eða sama customers_base — þar búa teikningar, Greining, skjöl og tæki
+  let stadir = [];
+  const ktN = normKt(kt);
+  if (ktN) {
+    try {
+      const base = await sb('customers_base?select=id&kennitala=eq.' + ktN).catch(() => []);
+      const or = ['kennitala.eq.' + ktN].concat(base.length ? ['customer_base_id.in.(' + base.map((b) => b.id).join(',') + ')'] : []);
+      stadir = await sb('fyrirtaeki?select=id,nafn,heimilisfang,kennitala,er_i_thjonustu&deleted_at=is.null&or=(' + or.join(',') + ')&order=id.asc&limit=40');
+      const sIds = stadir.map((s) => s.id);
+      if (sIds.length) {
+        const [tb, bg] = await Promise.all([
+          sb('teikning_bord?select=company_id&company_id=in.(' + sIds.join(',') + ')').catch(() => []),
+          sb('bunadargreining?select=company_id&fjarlaegt_at=is.null&company_id=in.(' + sIds.join(',') + ')').catch(() => []),
+        ]);
+        for (const s of stadir) { s.teikning = tb.some((x) => x.company_id === s.id); s.greining = bg.some((x) => x.company_id === s.id); }
+      }
+    } catch (_) { stadir = []; }
+  }
+  const verkstadir_heimili = map.filter((m) => m.worksite_name).map((m) => ({ worksite_name: m.worksite_name, heimilisfang: m.heimilisfang || null }));
+  return json(200, { info, kt, worksites: pg, map, krofur: inv2, drog, samskipti, samtals, stadir, verkstadir_heimili, generated_at: new Date().toISOString() });
 }
 
 async function save(event) {
@@ -135,6 +170,7 @@ async function save(event) {
   try { b = JSON.parse(event.body || '{}'); } catch { return json(400, { error: 'Invalid JSON' }); }
   const name = String(b.customer_name || '').trim();
   if (!name) return json(400, { error: 'customer_name vantar' });
+  if (b.action === 'stofna_stad') return await stofnaStad(b, name);
   const row = { customer_name: name, updated_at: new Date().toISOString() };
   for (const f of INFO_FIELDS) if (b[f] !== undefined) row[f] = b[f] === '' ? null : b[f];
   const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_info?on_conflict=customer_name`, {
@@ -145,6 +181,26 @@ async function save(event) {
   if (!r.ok) return json(r.status, { error: (await r.text()).slice(0, 300) });
   const rows = await r.json();
   return json(200, { ok: true, info: rows[0] || row });
+}
+
+// 20.10.2026 — „Stofna stað í Slökkvitæki" úr Viðskiptavinir-síðunni: ný röð í fyrirtaeki undir kennitölu greiðandans. Triggerar sjá um
+// kennitölusnið, póstnúmer og tengingu við customers_base. Aldrei tvítekið: sama kt + sama heimilisfang skilar röðinni sem er til.
+async function stofnaStad(b, customer) {
+  const nafn = String(b.nafn || '').trim() || customer;
+  const heimili = String(b.heimilisfang || '').trim();
+  const ktN = normKt(b.kennitala);
+  if (!/\d{3}/.test(heimili)) return json(400, { error: 'Heimilisfang með póstnúmeri vantar (t.d. „Sunnukriki 3, 270 Mosfellsbær")' });
+  if (ktN) {
+    const til = await sb('fyrirtaeki?select=id,nafn,heimilisfang&deleted_at=is.null&kennitala=eq.' + ktN);
+    const dup = til.find((f) => f.heimilisfang && f.heimilisfang.trim().toLowerCase() === heimili.toLowerCase());
+    if (dup) return json(200, { ok: true, id: dup.id, existed: true });
+  }
+  const row = { nafn, heimilisfang: heimili, er_i_thjonustu: false, athugasemdir: 'Stofnað úr Viðskiptavinir (Brunahólf) fyrir greiðandann ' + customer };
+  if (ktN) row.kennitala = ktN;
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/fyrirtaeki`, { method: 'POST', headers: Object.assign(hdrs(), { 'Content-Type': 'application/json', Prefer: 'return=representation' }), body: JSON.stringify(row) });
+  if (!r.ok) return json(r.status, { error: (await r.text()).slice(0, 300) });
+  const rows = await r.json();
+  return json(200, { ok: true, id: (rows[0] || {}).id, existed: false });
 }
 
 function hdrs() { return { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }; }
