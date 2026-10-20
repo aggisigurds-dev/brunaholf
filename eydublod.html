@@ -39,7 +39,7 @@
   .topbar .utg{font-size:11px; color:var(--blue); font-weight:700; white-space:nowrap; cursor:help}
 
   /* ── Forsíða ─────────────────────────────────────────────────────── */
-  .wrap{max-width:1000px; margin:0 auto; padding:22px 16px 60px}
+  .wrap{max-width:min(1560px, 96vw); margin:0 auto; padding:22px 16px 60px}
   .cards{display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px}
   .card{
     background:var(--panel); border:1px solid var(--line); border-radius:14px;
@@ -67,6 +67,8 @@
   .docrow .t b{display:block; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .docrow .t span{color:var(--muted); font-size:11.5px}
   .docrow .t b.nafn{cursor:pointer}
+  .docrow .vidhengi{display:inline-flex; align-items:center; gap:4px; white-space:nowrap; margin:3px 12px 0 0}
+  .docrow .vidhengi a{max-width:420px; overflow:hidden; text-overflow:ellipsis}
   .endurgerd-badge{font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; background:#fff3d6; color:#8a5a00; border:1px solid #f0d08a; white-space:nowrap}
   .docrow .vidhengi button{font:inherit; font-size:11px; padding:1px 6px; margin-left:4px; border:1px solid var(--line2); border-radius:5px; background:#fff; cursor:pointer}
   .docrow .t b.nafn:hover{text-decoration:underline}
@@ -306,7 +308,7 @@
 /* Útgáfa síðunnar. BUMPAÐU þessu við hverja breytingu — merkið í hausnum er
    eina leiðin fyrir Agnar til að sjá strax hvort vafrinn situr á gamalli
    vistaðri útgáfu (það gerðist 2026-08-07 og kostaði drjúgan tíma). */
-const UTGAFA = '2026-10-20.10';
+const UTGAFA = '2026-10-20.11';
 
 let currentRowId = null;   // id á þeirri DB-röð sem er opin (til staðfestingar)
 let lastPublicUrl = null;  // public_url nýjasta vistunarins — til sendingar
