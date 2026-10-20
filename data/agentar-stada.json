@@ -1,6 +1,6 @@
 {
  "utgafa": 1,
- "nyjast": "2026-10-16",
+ "nyjast": "2026-10-19",
  "throskuldur": 6,
  "osnert_dagar": 30,
  "uppspretta": "slokkvitaeki/tools/audit-agentar.cjs --json",
@@ -30,9 +30,9 @@
    "sidast": "2026-10-16",
    "skrif": 33,
    "gaetir": 32,
-   "breytt": 0,
+   "breytt": 2,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Flettur, borð og navigation — Verkborð, Bakendi, Bílstjóri, Aksturslisti, URL-routing (218), bakk-takkinn (3 patchar), app-síður (261). Notaðu þegar bætt er við"
   },
   {
@@ -45,9 +45,9 @@
    "sidast": "2026-10-16",
    "skrif": 9,
    "gaetir": 4,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Elon Musk — byggingarstjóri rafkerfisins. As-built yfir ALLAR tengingar á staðnum: útreikningar (verð, VSK, afslættir, KPI, TÆKI, FULLBÚIÐ), skjala-lyklar (fyri"
   },
   {
@@ -60,9 +60,9 @@
    "sidast": "2026-10-16",
    "skrif": 19,
    "gaetir": 20,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Hönnuðurinn — lagfærir útlit, fínstillir farsímaskjái (mobile view) og hannar app-view/skjái. Notaðu þegar síða/flipi lítur illa út, brotnar eða er þröng á síma"
   },
   {
@@ -120,7 +120,7 @@
    "sidast": "2026-10-16",
    "skrif": 6,
    "gaetir": 11,
-   "breytt": 1,
+   "breytt": 2,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Netvörður — gætir öryggisnetsins. KALLA ÁÐUR en breytt er vörðum leiðum (reikninga-OUT, kennitala, rukkun, tilbúið-staða) OG á eftir, til að staðfesta að breyti"
@@ -165,9 +165,9 @@
    "sidast": "2026-10-16",
    "skrif": 14,
    "gaetir": 14,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Sala/POS, reikningagerð, dkPlus/Payday, afslættir, sjálfvirk PDF-vistun, reikninga-póstur og úttektartexti. Notaðu fyrir allt sem snýr að sölu, reikningum, verð"
   },
   {
@@ -180,9 +180,9 @@
    "sidast": "2026-10-16",
    "skrif": 7,
    "gaetir": 5,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Samþykktirnar — á öll svör Agnars á Þjónustuborðinu og vinnur úr þeim. Les biðröðina (svar:samthykkt / vinnsla / endurmeta), ENDURMÆLIR forsendur hvers máls áðu"
   },
   {
@@ -252,8 +252,8 @@
    "slod": ".claude/skills/arnold/SKILL.md",
    "hud": null,
    "emoji": null,
-   "sidast": "2026-10-09",
-   "skrif": 10,
+   "sidast": "2026-10-19",
+   "skrif": 12,
    "gaetir": 0,
    "breytt": 0,
    "daudir": [],
@@ -482,9 +482,9 @@
    "sidast": "2026-10-16",
    "skrif": 3,
    "gaetir": 3,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Hvernig Agnar sendir skill-agenta í villuleit sem er variant-alert — finna afrit af sama villumynstri (systkini-kt, röng join, falskt grænt) þvert á hubinn. Not"
   },
   {
@@ -659,9 +659,9 @@
    "slod": ".claude/agents/oryggi.md",
    "hud": "Arnold (RLS-rödd)",
    "emoji": "💪",
-   "sidast": "2026-10-16",
-   "skrif": 3,
-   "gaetir": 1,
+   "sidast": "2026-10-19",
+   "skrif": 7,
+   "gaetir": 6,
    "breytt": 0,
    "daudir": [],
    "merki": "🟢",
