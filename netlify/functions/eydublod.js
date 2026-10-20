@@ -89,11 +89,13 @@ async function save(body) {
   // Ný útgáfa á sama skjali ef skjal_id fylgir, annars nýtt skjal.
   let skjal_id = String(body.skjal_id || '').trim();
   let utgafa = 1;
+  let vidhengiSannleikur = null;     // viðhengi nýjustu útgáfu á þjóninum ráða (ritill með gamla stöðu má ekki týna eða endurvekja viðhengi)
   if (skjal_id) {
     const prev = await sbAll(
-      `${SUPABASE_URL}/rest/v1/${TABLE}?select=utgafa&skjal_id=eq.${encodeURIComponent(skjal_id)}` +
+      `${SUPABASE_URL}/rest/v1/${TABLE}?select=utgafa,gogn&skjal_id=eq.${encodeURIComponent(skjal_id)}` +
       `&order=utgafa.desc&limit=1`);
     utgafa = (prev[0] && prev[0].utgafa ? prev[0].utgafa : 0) + 1;
+    if (prev[0] && prev[0].gogn) vidhengiSannleikur = Array.isArray(prev[0].gogn._vidhengi) ? prev[0].gogn._vidhengi : [];
   } else {
     skjal_id = randomUuid();
   }
@@ -127,7 +129,7 @@ async function save(body) {
     titill: str(body.titill),
     stadur: str(body.stadur),
     dagsetning: body.dagsetning || null,
-    gogn: body.gogn && typeof body.gogn === 'object' ? body.gogn : {},
+    gogn: Object.assign({}, body.gogn && typeof body.gogn === 'object' ? body.gogn : {}, vidhengiSannleikur ? { _vidhengi: vidhengiSannleikur } : {}),
     skra_nafn: str(body.fileName),
     storage_path, public_url,
     created_by: str(body.created_by),
@@ -218,12 +220,20 @@ async function attachDone(body) {
   if (!row) return json(404, { error: 'Skjal fannst ekki' });
   const path = String(body.path || '');
   if (!path.startsWith(`${row.form_id}/vidhengi/`)) return json(400, { error: 'Röng slóð' });
-  const gogn = Object.assign({}, row.gogn || {});
-  const list = Array.isArray(gogn._vidhengi) ? gogn._vidhengi.slice() : [];
-  list.push({ nafn: str(body.name) || path.split('/').pop(), path, url: publicUrlOf(path), staerd: Number(body.size) || null, at: new Date().toISOString() });
-  gogn._vidhengi = list;
-  const r = await patchGogn(row.id, gogn);
-  if (!r.ok) return json(r.status, { error: (await r.text()).slice(0, 300) });
+  // Viðhengi tilheyra SKJALINU, ekki einni útgáfu: bætt við allar útgáfur (annars hvarf viðhengi sem fest var við gamla útgáfu af listanum).
+  const entry = { nafn: str(body.name) || path.split('/').pop(), path, url: publicUrlOf(path), staerd: Number(body.size) || null, at: new Date().toISOString() };
+  const syst = await sbAll(`${SUPABASE_URL}/rest/v1/${TABLE}?select=id,gogn&skjal_id=eq.${encodeURIComponent(row.skjal_id)}`);
+  let list = [];
+  for (const sr of syst) {
+    const g = Object.assign({}, sr.gogn || {});
+    const had = Array.isArray(g._vidhengi) ? g._vidhengi.slice() : [];
+    if (!had.some((v) => v.path === path)) {
+      had.push(entry); g._vidhengi = had;
+      const pr = await patchGogn(sr.id, g);
+      if (!pr.ok) return json(pr.status, { error: (await pr.text()).slice(0, 300) });
+    }
+    if (sr.id === row.id) list = had;
+  }
   return json(200, { ok: true, id: row.id, vidhengi: list });
 }
 

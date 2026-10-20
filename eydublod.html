@@ -306,7 +306,7 @@
 /* Útgáfa síðunnar. BUMPAÐU þessu við hverja breytingu — merkið í hausnum er
    eina leiðin fyrir Agnar til að sjá strax hvort vafrinn situr á gamalli
    vistaðri útgáfu (það gerðist 2026-08-07 og kostaði drjúgan tíma). */
-const UTGAFA = '2026-10-20.9';
+const UTGAFA = '2026-10-20.10';
 
 let currentRowId = null;   // id á þeirri DB-röð sem er opin (til staðfestingar)
 let lastPublicUrl = null;  // public_url nýjasta vistunarins — til sendingar
@@ -680,7 +680,7 @@ function renderSafn(boxId, medNafni){
           · ${new Date(d.created_at).toLocaleDateString('is-IS')}</span>
         ${vid.map(v => `<span class="vidhengi"><a href="${esc(v.url)}" target="_blank" rel="noopener">📎 ${esc(v.nafn)}</a>
           <button data-url="${esc(v.url)}" data-nafn="${esc(v.nafn)}" onclick="saekjaVidhengi(this)" title="Sækja á þessa tölvu">⬇︎</button>
-          <button class="del" onclick="taka_af('${d.id}','${esc(v.path)}')" title="Fjarlægja viðhengi">✕</button></span>`).join('')}
+          <button class="del" onclick="taka_af('${d.id}','${esc(v.path)}')" title="Fjarlægja þetta viðhengi">✕ Fjarlægja</button></span>`).join('')}
       </div>
       <button onclick="hengjaVid('${d.id}')" title="Festa skrá (t.d. Ajour-skýrslu) við þetta skjal">📎 Hengja við</button>
       <span class="vbadge">v${d.utgafa}</span>
@@ -747,7 +747,7 @@ function forskoda(id){
   el.className = 'forsk';
   el.innerHTML = `<div class="forsk-box">
     <div class="forsk-top"><b>${esc(d.stadur || d.titill || 'Skjal')} · v${d.utgafa}</b>
-      ${vid.map(v => `<a href="${esc(v.url)}" target="_blank" rel="noopener">📎 ${esc(v.nafn)}</a><button type="button" data-url="${esc(v.url)}" data-nafn="${esc(v.nafn)}" onclick="saekjaVidhengi(this)" title="Sækja á þessa tölvu">⬇︎</button>`).join('')}
+      ${vid.map(v => `<a href="${esc(v.url)}" target="_blank" rel="noopener">📎 ${esc(v.nafn)}</a><button type="button" data-url="${esc(v.url)}" data-nafn="${esc(v.nafn)}" onclick="saekjaVidhengi(this)" title="Sækja á þessa tölvu">⬇︎</button><button type="button" onclick="fjarlaegjaUrForsk('${d.id}','${esc(v.path)}')" title="Fjarlægja þetta viðhengi">✕ Fjarlægja</button>`).join('')}
       <a href="${esc(d.public_url)}" target="_blank" rel="noopener">⬇︎ Opna / sækja</a>
       <button type="button" id="forskLoka">✕ Loka</button></div>
     <iframe src="${esc(d.public_url)}#view=FitH" title="Forskoðun"></iframe></div>`;
@@ -790,6 +790,10 @@ function hengjaVid(id){
     }catch(e){ tell('✗ ' + e.message); alert('Tókst ekki að hengja við: ' + e.message); }
   };
   inp.click();
+}
+async function fjarlaegjaUrForsk(id, path){
+  await taka_af(id, path);
+  const ov = document.querySelector('.forsk'); if(ov) ov.remove();
 }
 async function taka_af(id, path){
   if(!confirm('Fjarlægja þetta viðhengi?')) return;
