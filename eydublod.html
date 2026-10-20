@@ -55,6 +55,9 @@
     display:inline-block; margin-top:11px; font-size:11px; font-weight:700;
     background:var(--red-bg); color:var(--red); border:1px solid var(--red-line); padding:2px 8px; border-radius:999px;
   }
+  .introrad{display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap}
+  .ajourlink{display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border:1px solid var(--line2); border-radius:8px; background:#fff; color:inherit; text-decoration:none; font-weight:700; font-size:13px; white-space:nowrap; box-shadow:0 1px 2px rgba(0,0,0,.06)}
+  .ajourlink:hover{background:#faf6ee; border-color:#c9a24a}
   .intro{color:var(--muted); font-size:13.5px; margin:0 0 18px; max-width:640px}
   .sect-h{font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.06em;
     color:var(--muted); margin:30px 0 10px}
@@ -308,7 +311,7 @@
 /* Útgáfa síðunnar. BUMPAÐU þessu við hverja breytingu — merkið í hausnum er
    eina leiðin fyrir Agnar til að sjá strax hvort vafrinn situr á gamalli
    vistaðri útgáfu (það gerðist 2026-08-07 og kostaði drjúgan tíma). */
-const UTGAFA = '2026-10-20.11';
+const UTGAFA = '2026-10-20.12';
 
 let currentRowId = null;   // id á þeirri DB-röð sem er opin (til staðfestingar)
 let lastPublicUrl = null;  // public_url nýjasta vistunarins — til sendingar
@@ -636,10 +639,14 @@ async function listForms(){
   document.body.classList.remove('show-vars');
   $root.innerHTML = `
     <div class="wrap">
-      <p class="intro">
-        Veldu eyðublað, skrifaðu beint ofan í skjalið og vistaðu það sem PDF í skjalasafnið.
-        Vistuð skjöl má sækja, opna aftur og gefa út í nýrri útgáfu.
-      </p>
+      <div class="introrad">
+        <p class="intro">
+          Veldu eyðublað, skrifaðu beint ofan í skjalið og vistaðu það sem PDF í skjalasafnið.
+          Vistuð skjöl má sækja, opna aftur og gefa út í nýrri útgáfu.
+        </p>
+        <a class="ajourlink" href="https://brunaholf.ajoursystem.net/construction" target="_blank" rel="noopener"
+           title="Opna Ajour (AjourInspect &amp; QA) í nýjum flipa">🔗 Opna Ajour</a>
+      </div>
       <div class="cards">
         ${FORMS.map(f => `
           <button class="card" onclick="go('${f.id}')">
