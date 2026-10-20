@@ -599,7 +599,7 @@ dagsetningarforskeyti (`2024-03-11 nóta.pdf`), `drive-count`/`skyrslu-ar` ekki.
 
 Nýr flipi **`eydublod`** + sjálfstæð síða `eydublod.html` (sama iframe-mynstur og
 `multitool`/`pdftools`; `renderEydublod(t)` í index.html). Býr til útprentanleg
-skjöl til verkkaupa. Fyrsta eyðublaðið: **„Yfirlýsing vegna brunalokana"**.
+skjöl til verkkaupa. Fyrsta eyðublaðið: **„Staðfesting brunalokana"**.
 
 - **Stafrétt eftirmynd af Word-frumritinu.** Uppsetningin er lesin beint úr
   `Staðfesting_Keldur31072026.docx` — ekki ágiskuð: US Letter 8,5×11in, spássía

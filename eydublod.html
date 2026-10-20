@@ -247,7 +247,7 @@
    geymir aðeins það sem er ekki í skjalinu — dagsetningarval, sjálfvirkni-
    reitir, undirskrift og skjalasafnið.
 
-   Fyrsta eyðublaðið, „Yfirlýsing vegna brunalokana", er stafrétt eftirmynd
+   Fyrsta eyðublaðið, „Staðfesting brunalokana", er stafrétt eftirmynd
    af Word-frumritinu (Staðfesting_Keldur31072026.docx): letur, leturstærðir,
    línubil, spássíur, haus, punktar og myndir lesin beint úr docx-inu.
 
@@ -285,7 +285,7 @@
 /* Útgáfa síðunnar. BUMPAÐU þessu við hverja breytingu — merkið í hausnum er
    eina leiðin fyrir Agnar til að sjá strax hvort vafrinn situr á gamalli
    vistaðri útgáfu (það gerðist 2026-08-07 og kostaði drjúgan tíma). */
-const UTGAFA = '2026-08-08.1';
+const UTGAFA = '2026-10-20.1';
 
 let currentRowId = null;   // id á þeirri DB-röð sem er opin (til staðfestingar)
 let lastPublicUrl = null;  // public_url nýjasta vistunarins — til sendingar
@@ -344,7 +344,7 @@ function efni(v){
 const FORMS = [
 {
   id:'yfirlysing-brunalokana',
-  titill:'Yfirlýsing vegna brunalokana',
+  titill:'Staðfesting brunalokana',
   lysing:'Staðfesting til verkkaupa um að brunahólfun og eldvarnarhurðir standist kröfur HMS og gildandi reglugerðir.',
   icon:'🔥',
   merki:'Skjal til verkkaupa',
@@ -714,7 +714,7 @@ function sendaById(id) {
 async function sendaSkjal(url, titill) {
   if (!url) return;
   if (navigator.share) {
-    try { await navigator.share({ title: titill || 'Yfirlýsing vegna brunalokana', url: url }); } catch(_) {}
+    try { await navigator.share({ title: titill || 'Staðfesting brunalokana', url: url }); } catch(_) {}
   } else {
     try {
       await navigator.clipboard.writeText(url);
