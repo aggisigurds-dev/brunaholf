@@ -69,3 +69,13 @@ If you add a table, a tab, or an endpoint, update the matching section of
 
 Sannreynt 07.09.2026: fyrsta [deploy]-ýtingin (991cb9d) byggði og skrifaði build.json; ýting án [deploy] á að skila „skipped" hjá Netlify.
 Athugið: merkið er bókstaflegt — commit-skilaboð sem nefna það í texta kveikja byggingu; skrifið „deploy-merkið" í venjulegum skilaboðum.
+
+## ⚠️ „nothing to commit" = auto-sync tók skrárnar þínar fyrst (20.10.2026)
+Auto-sync (Scheduled Task, 15 mín fresti) wip-committar ALLT óbirt með `[skip ci]` og ýtir. Ef þú vinnur lengi áður en þú
+committar getur `git commit -m "[deploy] …"` sagt **„nothing to commit, working tree clean"** — og í `commit && push`-keðju
+stöðvast allt þar, ekkert birtist, en `git log` lítur vel út. Samt LIFANDI síðan sýnir gamla útgáfu.
+- **Alltaf staðfesta birtingu:** `curl -s <síða>?x=$RANDOM | grep -o "UTGAFA = '[^']*'"` (síður með útgáfumerki, t.d. `eydublod.html`)
+  eða `/build.json` — bíða í lykkju þar til það breytist (tekur ~30–40 s eftir `[deploy]`-ýtingu).
+- **Ef „nothing to commit":** `git commit --allow-empty -m "[deploy] …" && git push origin main` (tómt commit nægir; auto-sync-commitið er þegar á main).
+- Bumpa útgáfumerki síðunnar við hverja breytingu svo þetta sjáist strax.
+- `git add -A` er hættulegt hér (vinnuskrár, graphify-out); bæta við skrám með nafni.

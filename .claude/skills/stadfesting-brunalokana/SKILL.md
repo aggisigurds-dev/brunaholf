@@ -143,9 +143,12 @@ Dæmi um „eitt heimilisfang": `Sunnukriki 3, Mosfellsbær` · sveitarfélag `M
 ## Skjalasafn: forskoðun, 📎 viðhengi, teikning, Drive-innflutningur (20.10.2026)
 
 - **Forskoðun:** nafn skjals í Skjalasafninu opnar PDF-inn í glugga (`forskoda()`), með viðhengjum og „Opna / sækja".
-- **📎 Hengja við:** fest við *útgáfuna* (gogn._vidhengi). Skráin fer BEINT í Storage um undirritaða slóð
-  (`attach_url` → PUT → `attach_done` í `netlify/functions/eydublod.js`) — Ajour-skýrslur eru ~9 MB, of stórar fyrir
-  Netlify-fall. `detach` fjarlægir; eyðing útgáfu hreinsar viðhengin. Prófað lifandi með 9 MB skrá.
+- **📎 Hengja við:** viðhengi tilheyra **skjalinu** (`gogn._vidhengi` á ÖLLUM útgáfum). Skráin fer BEINT í Storage um
+  undirritaða slóð (`attach_url` → PUT → `attach_done` í `netlify/functions/eydublod.js`) — Ajour-skýrslur eru ~9 MB,
+  of stórar fyrir Netlify-fall. `attach_done` bætir við allar útgáfur, `detach` fjarlægir af öllum og eyðir skránni,
+  `save` heldur viðhengjalista þjónsins (ritill með gamla stöðu týnir engu), og eyðing einnar útgáfu tekur aldrei skrá
+  sem önnur útgáfa vísar í. Saga: viðhengi var fyrst per útgáfa → Agnar festi skýrslu á v3 meðan listinn sýndi v4 og
+  gat ekki fjarlægt gamla. Hnappar: „⬇︎" (sækir á þessa tölvu — skráin er á þjóninum) og „✕ Fjarlægja", líka í forskoðun.
 - **Teikning í skjalinu:** hliðarstikan „Teikning" — velja mynd eða líma skjáskot (Ctrl+V), minnkað í ≤1600 px JPEG,
   birtist sem síða 2 með sama haus (`values.teikning`, `teikningTexti`). Vektor-útgáfan með Ajour-punktum:
   `ajour-hnitasida.cjs` (sjá kaflann hér að ofan).
@@ -153,10 +156,32 @@ Dæmi um „eitt heimilisfang": `Sunnukriki 3, Mosfellsbær` · sveitarfélag `M
   Eldri skjöl sem vísa í frumritið fá hreina útgáfu við opnun.
 - **Drive-innflutningur:** `drive-innflutningur/parse.cjs` (les niðurhalaðar Drive-PDF, dregur út texta með pdfjs-dist)
   og `import.cjs` (`--dry` fyrst; endurkeyranlegt, merkir `gogn._innflutt.drive_id`). Flutti inn 38 upprunalegar
-  PDF-staðfestingar 20.10. Ekki innflutt: 14 docx-skjöl án PDF (Hvaleyrarbraut 39, Skerpluholt 7, Lyngbarð 2,
-  Brúarvogur 1-3, Gilsbúð 9, Bugðufljót 9, Orkureitur 20.12.2025, o.fl.), Straumhella 5 (annað skjal: brunavörn
-  burðarstála) og stutta yfirlýsingin skv. 38. gr. a. Fastir hlutar innfluttra skjala koma úr núverandi sniðmáti við Breyta.
+  PDF-staðfestingar 20.10. 12 docx-skjöl án PDF voru **endurgerð** úr Word-textanum (`parse2.cjs`-aðferðin: JSZip →
+  `word/document.xml` + `word/header*.xml`; aðeins `<w:t>`-texti, annars slæðast tölur úr XML-inu inn) og smíðuð í
+  eyðublaðinu með `gogn._endurgert`. Ekki innflutt: Straumhella 5 (annað skjal: brunavörn burðarstála) og stutta
+  yfirlýsingin skv. 38. gr. a. Fastir hlutar innfluttra skjala koma úr núverandi sniðmáti við Breyta, nema endurgerðu
+  skjölin sem geyma eigin kafla úr frumritinu. Drive-niðurhal: `download_file_content` skilar base64 í skrá í
+  `tool-results` (ekki í samhengið) — lesa með node, aldrei með Read.
 - **Flipinn** heitir „Staðf. Brunalokana" (`tabNafn()` í index.html, aðeins birting; samstillt staða getur borið gamla heitið).
 - **Hliðarstika (útg. .8):** reitirnir „Staður, heimilisfang, byggingar", „Hvað var gert", „Um ræðir" og „Niðurstaða" fylgjast að við gulu/ritanlegu
   svæðin í skjalinu í báðar áttir (`syncSidebar()`). Að skrifa í „Um ræðir"/„Niðurstaða" tekur sjálfvirku setninguna yfir; „↻ Sjálfvirkt" tekur hana upp aftur.
 - **Endurgerð skjöl:** `gogn._endurgert` + merkið „↻ Endurgerð" í safninu = PDF smíðað úr docx því frumrit fannst ekki.
+
+## Lærdómur 20.10.2026 (seinni hluti dagsins)
+
+- **Teikning má ALDREI skeyta aftan við PDF utan eyðublaðsins.** Sunnukriki 3 v2 var PDF + skeytt Ajour-síða; þegar Agnar opnaði
+  skjalið og vistaði v3 smíðaði eyðublaðið nýtt PDF án síðunnar og hún „fór úr". Rétt leið: mynd með punktum á canvas →
+  `values.teikning` (sjá `teikning-med-punktum.js`) → `buildPdf()` → vista sem nýja útgáfu. Þá fylgir teikningin gogn.
+- **Ajour-skýrsla á íslensku:** Agnar skiptir Ajour-viðmótinu sjálfur (fáni efst til hægri, vistast á notanda). Prentgluggi
+  („Útprentun skráninga") → flipinn *Ítarleg*: „Sýna athugasemdir" **af**, „8 Myndir pr. síða", „Sýna aðeins afmerkt",
+  skráningarteikning og hnit á. Tilkynning með niðurhalshlekk er í bjöllunni (`/api/reporting/download/<id>`).
+  Skýrslan er ein síða á skráningu (9 skráningar = 18 síður). Agnar bjó oft til sína eigin á meðan ég prentaði — hans nýjasta ræður.
+- **Aldrei fjarlægja viðhengi sem Agnar festi nema hann biðji um það** — bjóða það frekar (✕ Fjarlægja er í viðmótinu).
+- **Landnúmer/fastanúmer:** staðfangaskrá HMS (opið WFS, `geo.fasteignaskra.is/ws/geoserver/wfs`, typename
+  `fasteignaskra:VSTADF_ALLT`, `CQL_FILTER=HEITI_NF='Sunnukriki' AND HUSNR=3`) gefur LANDNR og HEINUM. **Sérnúmer/fastanúmer
+  eigna fást ekki** án HMS-áskriftar (api.hms.is → 403). Sunnukriki 3 = landnr 205123 (sama fyrir 3, 3A, 3B). Engin kennitala
+  eða landnúmer er í neinni af ~50 Drive-staðfestingum; Agnar bætti 205123 við staðarlínuna sjálfur.
+- **Forsíða Skjalasafns:** nýjasta skjal (dagsetning skjals) efst, breitt svæði (`.wrap` allt að 1560 px), „🔗 Opna Ajour" efst til
+  hægri, nafn opnar forskoðun, enginn skjalalisti inni í ritlinum og **dragbær skiptilína** milli hliðarstiku og skjals
+  (`bh_eydublad_ew` í Vidmot = sameiginlegt val, tvísmellur núllstillir).
+- **Birting stoppar ef auto-sync nær skránum á undan þér:** sjá skill `deploy` („nothing to commit"-gildran).
