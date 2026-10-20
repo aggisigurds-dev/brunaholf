@@ -273,4 +273,6 @@ Tillaga á hvert fyrirtæki er ein af: **TAKA ÚT** (þrjú óháð nei) · **HA
 
 ## Lærdómur
 
+- **20.10.2026 — SALA OG TÆKI ER EKKI ÞJÓNUSTA.** Natalie lagði til að Teitur Jónasson ehf. (#169, rútufyrirtæki) og Hagvagnar þjónusta (#547) væru „lifandi" af því að sala 2026 og virk tæki fundust. Agnar leiðrétti: *„ekki í þjónustu, bara búðarsala."* Búðarsala (`solur.source='pos'`/`vidskiptategund='bud'`) og tæki sem hanga á röðinni gera fyrirtæki ekki að þjónustukúnna — Ársskoðun á aðeins við fyrirtæki með þjónustusamning/árlega úttekt. Áður en þú leggur til að setja félag INN í þjónustu: sýndu **úttektarsönnun** (skýrsla, `source` ∈ uttekt/slokkvikerfi/brunakerfi/vinnublad, samningur) en ekki bara sölu. Hafi félag afskráningu (`removed_from_service_at`) og aðeins búðarsölur eftir hana er afskráningin RÉTT, ekki villa. Og blobbinn `subscribed=true` með `er_i_thjonustu=false` heldur félagi á listanum — afskráðu þá í báðum (sama og ⬇ Úr þjónustu).
+
 - **30.09.2026** — MÆLDU ALDREI EINU SINNI. Í nótt gaf eitt sýni 22.070 ms hleðslu þar sem rétta talan var 5.358 — hefði ég birt það hefði ég sagt að nóttin fjórfaldaði hleðslutímann. Og öfugt: fyrsta lagfæringin mín á 153 leit rétt út í kóða en var ÓVIRK (las DB.cache.units áður en það var fyllt) — það sást aðeins af því ég mældi undirskrift hverrar fyrirspurnar á netinu eftir birtingu, ekki bara heildartöluna.
