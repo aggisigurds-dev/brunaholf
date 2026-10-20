@@ -231,11 +231,19 @@ async function detach(body) {
   const row = await rowById(String(body.id || '').trim());
   if (!row) return json(404, { error: 'Skjal fannst ekki' });
   const path = String(body.path || '');
-  const gogn = Object.assign({}, row.gogn || {});
-  const list = (Array.isArray(gogn._vidhengi) ? gogn._vidhengi : []).filter((v) => v.path !== path);
-  gogn._vidhengi = list;
-  const r = await patchGogn(row.id, gogn);
-  if (!r.ok) return json(r.status, { error: (await r.text()).slice(0, 300) });
+  // Ný útgáfa afritar viðhengjalistann, svo skráin er fjarlægð af ÖLLUM útgáfum skjalsins (annars vísaði sú nýja í eydda skrá).
+  const syst = await sbAll(`${SUPABASE_URL}/rest/v1/${TABLE}?select=id,gogn&skjal_id=eq.${encodeURIComponent(row.skjal_id)}`);
+  let list = [];
+  for (const sr of syst) {
+    const g = Object.assign({}, sr.gogn || {});
+    const had = Array.isArray(g._vidhengi) ? g._vidhengi : [];
+    const nu = had.filter((v) => v.path !== path);
+    if (nu.length === had.length) continue;
+    g._vidhengi = nu;
+    const pr = await patchGogn(sr.id, g);
+    if (!pr.ok) return json(pr.status, { error: (await pr.text()).slice(0, 300) });
+    if (sr.id === row.id) list = nu;
+  }
   if (path.startsWith(`${row.form_id}/vidhengi/`)) {
     await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeURI(path)}`, {
       method: 'DELETE', headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
@@ -250,13 +258,17 @@ async function del(body) {
   if (!id) return json(400, { error: 'id vantar' });
 
   const rows = await sbAll(
-    `${SUPABASE_URL}/rest/v1/${TABLE}?select=id,storage_path,gogn&id=eq.${encodeURIComponent(id)}`);
+    `${SUPABASE_URL}/rest/v1/${TABLE}?select=id,skjal_id,storage_path,gogn&id=eq.${encodeURIComponent(id)}`);
   const row = rows[0];
   if (!row) return json(404, { error: 'Skjal fannst ekki' });
 
-  // Viðhengi fylgja útgáfunni — hreinsum þau líka svo engar munaðarlausar skrár verði eftir.
+  // Viðhengi fylgja útgáfunni, en ný útgáfa afritar listann og deilir skránum. Eyðum aðeins skrám sem engin önnur
+  // útgáfa sama skjals vísar í, svo eyðing eldri útgáfu taki aldrei viðhengi frá þeirri nýrri.
+  const adrar = await sbAll(`${SUPABASE_URL}/rest/v1/${TABLE}?select=id,gogn&skjal_id=eq.${encodeURIComponent(row.skjal_id)}`);
+  const notad = new Set();
+  adrar.filter((r) => r.id !== row.id).forEach((r) => ((r.gogn && r.gogn._vidhengi) || []).forEach((v) => { if (v && v.path) notad.add(v.path); }));
   for (const v of ((row.gogn && row.gogn._vidhengi) || [])) {
-    if (v && v.path) await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeURI(v.path)}`, {
+    if (v && v.path && !notad.has(v.path)) await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeURI(v.path)}`, {
       method: 'DELETE', headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
     }).catch(() => {});
   }
