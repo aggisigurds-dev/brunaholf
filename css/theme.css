@@ -690,13 +690,24 @@ textarea.ky-note{display:block;resize:none;overflow-x:hidden;overflow-y:auto;max
 .kyf-lpbox{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--green);padding:11px 15px;background:var(--green-bg);border:1px solid var(--green-line);border-radius:var(--radius-sm);line-height:1.5}
 .kyf-empty{padding:26px;text-align:center;color:var(--muted);font-style:italic;display:flex;flex-direction:column;align-items:center;gap:10px}
 .kyf-foot{padding:6px 4px;font-size:12px;color:var(--muted);display:flex;gap:14px}
+/* 20.10.2026 — „Síðustu greiðslur · Payday": lítill dálkur til hægri við skýringarlínuna á Kröfu yfirliti (Agnar: „dagsetningu og upphæð í
+   frekar litlum dálk til hægri"). Fimm fastar raðir frá fyrsta ramma, svo hæðin hoppar ekki þegar gögnin koma. */
+.kyf-subrow{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.kyf-subrow > .kyf-help{flex:1 1 380px;min-width:0}
+.kyf-greidslur{flex:0 0 372px;max-width:100%;box-sizing:border-box;overflow:hidden;padding-bottom:4px}
+.kyf-greidslur .kg-h{padding:8px 12px 5px;font:700 9.5px/1 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.kyf-greidslur .kg-r{display:grid;grid-template-columns:70px minmax(0,1fr) auto;gap:8px;align-items:baseline;padding:2px 12px;min-height:19px;box-sizing:border-box;border-top:1px solid var(--line);font-size:11.5px;line-height:15px}
+.kyf-greidslur .kg-d{font-family:var(--font-mono);font-size:10.5px;color:var(--muted);white-space:nowrap}
+.kyf-greidslur .kg-n{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2)}
+.kyf-greidslur .kg-a{font-family:var(--font-mono);font-weight:600;color:var(--green);text-align:right;white-space:nowrap}
+@media(max-width:900px){.kyf-greidslur{flex:1 1 100%}}
 /* Prentun: stílhreint yfirlit (aðeins meðan body.kyf-printing er sett) */
 @media print{
   body.kyf-printing .topbar,body.kyf-printing .sidebar,body.kyf-printing #tabs{display:none !important}
   body.kyf-printing .layout{display:block !important}
   body.kyf-printing #view{margin:0 !important;padding:0 !important}
   body.kyf-printing .kyf-print-hide,body.kyf-printing #kyf-fresh,body.kyf-printing .kyf-wrap .hub-sync,
-  body.kyf-printing .kyf-wrap .kyf-help,body.kyf-printing .kyf-wrap .ky-abtn,
+  body.kyf-printing .kyf-wrap .kyf-help,body.kyf-printing .kyf-wrap .kyf-greidslur,body.kyf-printing .kyf-wrap .ky-abtn,
   body.kyf-printing .fab,body.kyf-printing .fab-screenshot,body.kyf-printing #_bh-viewmode,body.kyf-printing #luna-fab{display:none !important}
   body.kyf-printing .kyf-wrap{max-width:none !important}
   body.kyf-printing,body.kyf-printing *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}

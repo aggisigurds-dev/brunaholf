@@ -396,3 +396,9 @@ Lota 16.10.2026 (commit 8860d86 → 9f78dd9), allt í `index.html`, grep á nöf
   (3) `toLocaleString('is-IS')` gefur kommur á vél án is-IS — þúsundapunktur með regex. (4) `css/theme.css` er
   með `?v=` í index.html — hnika við hverja CSS-breytingu þar (nú 20261016a).
 
+
+## Kröfu yfirlit: „Síðustu greiðslur · Payday" (20.10.2026)
+Agnar: „síðustu payday greiðslur, dagsetningu og upphæð í frekar litlum dálk til hægri". Spjald (`aside.kyf-greidslur`) til hægri við
+skýringarlínuna (`.kyf-subrow` = flex; `css/theme.css`), fimm fastar raðir frá fyrsta ramma svo ekkert hoppar. Gögn: `GET /api/krofu-greidslur?n=5`
+(`netlify/functions/krofu-greidslur.js`) = `invoices` með source='payday' OG status='PAID', nýjasta `greidsla_date` fyrst; kreditreikningar (CREDIT)
+og Landsbanka-kröfur teljast EKKI. Sótt úr `load()` í Kröfu yfirliti (ekki oftar en á 20 s fresti nema ↻ Sækja), DOM aðeins skrifað ef undirskrift breyttist.

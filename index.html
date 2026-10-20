@@ -76,7 +76,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://osfdzskyvisifcwyjkuk.supabase.co">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/theme.css?v=20261016a">
+<link rel="stylesheet" href="/css/theme.css?v=20261020b">
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
@@ -18705,6 +18705,7 @@ async function renderKrofuyfirlit(t){
         </div>
       </div>
 
+      <div class="kyf-subrow">
       <details class="kyf-help boss-panel">
         <summary>❓ Hvað þýðir þetta? <span style="font-weight:500;color:var(--muted)">— smelltu til að opna skýringu</span></summary>
         <div class="kyf-help-body">
@@ -18718,6 +18719,13 @@ async function renderKrofuyfirlit(t){
           <div>Reikningur sem er enn „ógreiddur" í Payday <b>en fannst greiddur beint í banka</b> (sama kt + upphæð). Yfirfarðu og smelltu <b>✓ Greitt</b> til að staðfesta. „<b>+vextir</b>" = bankagreiðslan var hærri (dráttarvextir).</div>
         </div>
       </details>
+      <!-- 20.10.2026 (Agnar: „síðustu payday greiðslur, dagsetningu og upphæð í frekar litlum dálk til hægri"): 5 nýjustu greiðslur
+           (Payday, PAID) úr /api/krofu-greidslur. Fimm raðir frá fyrsta ramma (—) svo hæðin hoppar ekki þegar gögnin koma. -->
+      <aside class="kyf-greidslur boss-panel" aria-label="Síðustu greiðslur í Payday">
+        <div class="kg-h">Síðustu greiðslur · Payday</div>
+        ${[0,1,2,3,4].map(()=>'<div class="kg-r"><span class="kg-d">—</span><span class="kg-n">&nbsp;</span><span class="kg-a">—</span></div>').join('')}
+      </aside>
+      </div>
 
       <div class="kyf-warn"></div>
       <div class="kyf-lp-banner"></div>
@@ -20328,7 +20336,36 @@ async function renderKrofuyfirlit(t){
     metaFromState(); renderList();
     cacheStore();
   }
+  // Síðustu greiðslur úr Payday (lítill dálkur til hægri, 20.10.2026). Aðeins spjaldið sjálft er uppfært (fimm fastar raðir,
+  // sama hæð fyrir og eftir) og ekki oftar en á 20 s fresti nema notandinn ýti á ↻ Sækja. Bilar hljóðlega: spjaldið helst eins.
+  let _grTs = 0, _grSeq = 0;
+  async function saekjaGreidslur(force){
+    const box = $view.querySelector('.kyf-greidslur'); if(!box) return;
+    if(!force && Date.now() - _grTs < 20000) return;
+    _grTs = Date.now();
+    const seq = ++_grSeq;
+    try{
+      const r = await fetch('/api/krofu-greidslur?n=5', { cache:'no-store' });
+      const d = await r.json();
+      if(seq !== _grSeq) return;
+      if(!r.ok || !Array.isArray(d.rows)) throw new Error(d.error || ('HTTP '+r.status));
+      const rows = d.rows.slice(0, 5);
+      const html = [0,1,2,3,4].map(i => {
+        const x = rows[i];
+        if(!x) return '<div class="kg-r"><span class="kg-d">—</span><span class="kg-n">&nbsp;</span><span class="kg-a">—</span></div>';
+        const nafn = x.customer_name || '';
+        const tit = (x.tilvisun ? 'R-'+x.tilvisun+' · ' : '') + nafn + ' · greitt ' + fmtDate(x.greidsla_date) + ' · ' + fmtNum(x.upphaed_total) + ' kr';
+        return '<div class="kg-r" title="'+esc(tit)+'"><span class="kg-d">'+esc(fmtDate(x.greidsla_date))+'</span><span class="kg-n">'+esc(nafn)+'</span><span class="kg-a">'+fmtNum(x.upphaed_total)+' kr</span></div>';
+      }).join('');
+      const sig = html;
+      if(box.dataset.sig === sig) return;           // ekkert breyttist → engin DOM-skrif
+      box.dataset.sig = sig;
+      box.innerHTML = '<div class="kg-h">Síðustu greiðslur · Payday</div>' + html;
+    }catch(_){ _grTs = 0; }
+  }
+
   async function load(force){
+    saekjaGreidslur(!!force);
     const meta = $view.querySelector('#kyf-meta');
     const cache = (!force && window.__KYF_CACHE) || null;
     if(cache && cache.data){
