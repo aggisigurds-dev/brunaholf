@@ -88,7 +88,13 @@
   .empty{padding:16px 12px; color:var(--muted); font-size:13px}
 
   /* ── Ritill + skjal ──────────────────────────────────────────────── */
-  .layout{display:grid; grid-template-columns:330px 1fr; align-items:start}
+  .layout{display:grid; grid-template-columns:var(--ew,330px) 9px 1fr; align-items:start}
+  .splitter{cursor:col-resize; align-self:stretch; position:sticky; top:53px; height:calc(100vh - 53px); touch-action:none; user-select:none;
+    background:linear-gradient(to right, transparent 3px, var(--line) 3px, var(--line) 4px, transparent 4px)}
+  .splitter::after{content:'⋮'; position:absolute; top:50%; left:0; right:0; text-align:center; color:var(--muted); font-size:16px; transform:translateY(-50%)}
+  .splitter:hover, .splitter.dragging{background:rgba(160,120,40,.18)}
+  body.dragging-split{cursor:col-resize; user-select:none}
+  body.dragging-split iframe{pointer-events:none}
   .editor{
     background:var(--panel); border-right:1px solid var(--line);
     padding:16px 14px 80px; height:calc(100vh - 53px); overflow-y:auto;
@@ -97,6 +103,7 @@
   .preview{padding:22px; overflow-x:auto; background:var(--bg)}
   @media (max-width:900px){
     .layout{grid-template-columns:1fr}
+    .splitter{display:none}
     .editor{height:auto; position:static; border-right:none; border-bottom:1px solid var(--line); padding-bottom:20px}
     .preview{padding:10px}
   }
@@ -223,7 +230,7 @@
   @page{size:A4; margin:1in}
   @media print{
     html,body{background:#fff !important}
-    .topbar, .editor, .no-print{display:none !important}
+    .topbar, .editor, .splitter, .no-print{display:none !important}
     .layout{display:block !important}
     .preview{padding:0 !important; overflow:visible !important; background:#fff !important}
     .preview .zoomwrap{height:auto !important; overflow:visible !important}
@@ -299,7 +306,7 @@
 /* Útgáfa síðunnar. BUMPAÐU þessu við hverja breytingu — merkið í hausnum er
    eina leiðin fyrir Agnar til að sjá strax hvort vafrinn situr á gamalli
    vistaðri útgáfu (það gerðist 2026-08-07 og kostaði drjúgan tíma). */
-const UTGAFA = '2026-10-20.8';
+const UTGAFA = '2026-10-20.9';
 
 let currentRowId = null;   // id á þeirri DB-röð sem er opin (til staðfestingar)
 let lastPublicUrl = null;  // public_url nýjasta vistunarins — til sendingar
@@ -660,7 +667,8 @@ function renderSafn(boxId, medNafni){
   const box = document.getElementById(boxId);
   if(!box) return;
   if(!safn.length){ box.innerHTML = '<div class="empty">Ekkert vistað enn.</div>'; return; }
-  box.innerHTML = safn.map(d => {
+  const rod = safn.slice().sort((a, b) => String(b.dagsetning || '').localeCompare(String(a.dagsetning || '')) || String(b.created_at).localeCompare(String(a.created_at)));   // nýjasta skjalið efst
+  box.innerHTML = rod.map(d => {
     const stadfest = d.gogn && d.gogn._stadfest;
     const stadfestBy = stadfest ? (d.gogn._stadfest_by || '') : '';
     const stadfestDate = stadfest ? (d.gogn._stadfest_at || '').slice(0,10) : '';
@@ -991,12 +999,13 @@ function paintForm(){
             ${skjalId ? '<button class="btn btn-ghost" onclick="nyttSkjal()">Nýtt skjal</button>' : ''}
           </div>
           <div id="saveStatus" class="status"></div>
-          <div class="docs" id="safnList"><div class="empty">Sæki…</div></div>
         </fieldset>
         <div class="toolbar" style="border-bottom:none;padding-top:6px;margin-bottom:0">
           <button class="btn btn-ghost" onclick="resetForm()">Hreinsa allt</button>
         </div>
       </div>
+
+      <div class="splitter no-print" id="splitter" title="Dragðu til að breyta breidd stikunnar (tvísmelltu til að núllstilla)"></div>
 
       <div class="preview">
         <div class="toolbar no-print">
@@ -1022,6 +1031,7 @@ function paintForm(){
     if(typeof v === 'boolean' && t && t.checked !== v){ t.checked = v; document.body.classList.toggle('show-vars', v); }
   });
 
+  initSplitter();
   fitPreview();
   initSig();
   renderDoc();
@@ -1160,6 +1170,32 @@ function refreshAutoRegions(){
     if(el && el !== document.activeElement) el.textContent = values[k];
   });
   syncSidebar();
+}
+
+/* Dragbær skiptilína milli hliðarstiku og skjals. Breiddin vistast sem sameiginlegt val (Vidmot → þjónn), eins á öllum vélum. */
+function initSplitter(){
+  const lay = document.querySelector('.layout'), sp = document.getElementById('splitter');
+  if(!lay || !sp) return;
+  const MIN = 260, setW = w => lay.style.setProperty('--ew', Math.round(w) + 'px');
+  const maxW = () => Math.max(MIN + 40, Math.min(760, window.innerWidth - 360));
+  const lesa = () => { try{ return window.Vidmot ? Vidmot.lesa('bh_eydublad_ew', null) : null; }catch(_){ return null; } };
+  const beita = v => { if(typeof v === 'number' && v >= MIN && v <= 900) setW(Math.min(v, maxW())); };
+  beita(lesa());
+  try{ if(window.Vidmot) Vidmot.hlada().then(() => beita(lesa())); }catch(_){}
+  sp.addEventListener('pointerdown', ev => {
+    ev.preventDefault(); sp.setPointerCapture(ev.pointerId);
+    sp.classList.add('dragging'); document.body.classList.add('dragging-split');
+    const left = lay.getBoundingClientRect().left;
+    const move = e => setW(Math.max(MIN, Math.min(maxW(), e.clientX - left)));
+    const up = e => {
+      sp.removeEventListener('pointermove', move); sp.removeEventListener('pointerup', up); sp.removeEventListener('pointercancel', up);
+      sp.classList.remove('dragging'); document.body.classList.remove('dragging-split');
+      const w = parseFloat(getComputedStyle(lay).getPropertyValue('--ew')) || null;
+      try{ if(window.Vidmot && w) Vidmot.setja('bh_eydublad_ew', Math.round(w)); }catch(_){}
+    };
+    sp.addEventListener('pointermove', move); sp.addEventListener('pointerup', up); sp.addEventListener('pointercancel', up);
+  });
+  sp.addEventListener('dblclick', () => { lay.style.removeProperty('--ew'); try{ if(window.Vidmot) Vidmot.setja('bh_eydublad_ew', null); }catch(_){} });
 }
 
 function fitPreview(){
