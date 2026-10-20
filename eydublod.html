@@ -175,7 +175,11 @@
   .doc li{font-family:Calibri,Carlito,"Segoe UI",Candara,Arial,sans-serif; font-size:12pt;
     line-height:var(--lh); padding-left:.5in; text-indent:-.25in}
   .doc li::before{content:"\25CF"; display:inline-block; width:.25in; text-indent:0; font-size:10pt}
-  .doc .sigimg{display:block; width:4.39in; height:1.06in; margin-top:.18in}
+  .doc .sigimg{display:block; width:3.75in; height:.905in; margin-top:.18in}
+  .doc .teikning-sida{break-before:page; page-break-before:always; margin-top:.3in}
+  .doc .teikning{display:block; width:100%; margin-top:.15in; border:1px solid #bbb}
+  .img-wrap input[type=file]{width:100%; font-size:12px}
+  .img-wrap #teiknPrev img{width:100%; margin-top:6px; border:1px solid var(--line2)}
 
   /* ── Bein ritun ofan í skjalið ───────────────────────────────────── */
   .ed{outline:none}
@@ -285,7 +289,7 @@
 /* Útgáfa síðunnar. BUMPAÐU þessu við hverja breytingu — merkið í hausnum er
    eina leiðin fyrir Agnar til að sjá strax hvort vafrinn situr á gamalli
    vistaðri útgáfu (það gerðist 2026-08-07 og kostaði drjúgan tíma). */
-const UTGAFA = '2026-10-20.2';
+const UTGAFA = '2026-10-20.3';
 
 let currentRowId = null;   // id á þeirri DB-röð sem er opin (til staðfestingar)
 let lastPublicUrl = null;  // public_url nýjasta vistunarins — til sendingar
@@ -366,6 +370,12 @@ const FORMS = [
         { key:'linubil', type:'number', label:'Línubil', def:1.5, min:1, max:2, step:0.05,
           hint:'1,5 er rúmt; frumritið var 1,15. „Passa á eina síðu" finnur stærsta bilið sem kemst fyrir.' },
         { key:'einsidu', type:'fitbtn', label:'' }
+      ] },
+    { titill:'Teikning',
+      fields:[
+        { key:'teikning', type:'img', label:'Skjáskot af teikningu',
+          hint:'Veldu mynd eða límdu inn með Ctrl+V (t.d. „Sýna hnit" úr Ajour). Birtist sem síða 2 í skjalinu og PDF.' },
+        { key:'teikningTexti', type:'text', label:'Texti yfir teikningu', def:'Staðfesting nær yfir hvíta svæðið á teikningunni', placeholder:'Staðsetning brunaþéttinga á teikningu' }
       ] },
     { titill:'Undirritun',
       fields:[
@@ -476,7 +486,8 @@ const FORMS = [
       <p class="p12 b">${E.line('fyrirhond', v.fyrirhond)}</p>
       <p class="p12">${esc(v.abyrgdarmadur)}</p>
       ${v.sig ? `<img class="sigimg" src="${esc(v.sig)}" alt="Undirskrift">` : ''}
-    </div>`,
+    </div>
+    ${v.teikning ? `<div class="teikning-sida"><p class="doc-title">${esc(v.stadur)}</p><p class="p12 doc-center">${esc(v.teikningTexti || 'Staðsetning brunaþéttinga á teikningu')}</p><img class="teikning" src="${esc(v.teikning)}" alt="Teikning"></div>` : ''}`,
 
   /* ── Sama skjal teiknað í PDF (vektor). P = hjálpartólin neðar. ── */
   pdf: async (v, P) => {
@@ -518,22 +529,48 @@ const FORMS = [
     // Kveðjan, fyrirtækjanafnið, nafn ábyrgðarmanns og undirskriftin mynda EINA
     // heild — undirskrift má aldrei slitna frá nafninu yfir á næstu síðu.
     const sig = v.sig ? await P.image(v.sig) : null;
-    P.need(3 * 12 * P.LH + (sig ? 13 + 76.3 : 0));
+    P.need(3 * 12 * P.LH + (sig ? 13 + 65.2 : 0));
 
     P.para(v.kvedja2, {size:12});
     P.para(v.fyrirhond, {size:12, style:'bold'});
     P.para(v.abyrgdarmadur, {size:12});
     if(sig){
       P.gap(13);                                // 0,18in undir nafninu
-      P.drawImage(sig, 'PNG', P.M, P.getY(), 316, 76.3);
-      P.gap(76.3);
+      P.drawImage(sig, 'PNG', P.M, P.getY(), 270, 65.2);
+      P.gap(65.2);
+    }
+
+    // Viðauki: skjáskot af teikningu (t.d. „Sýna hnit" úr Ajour) á síðu 2, með sama haus.
+    if(v.teikning){
+      const dims = await imgDims(v.teikning);
+      P.doc.addPage();
+      const top = 36;
+      if(logo) P.drawImage(logo, 'JPEG', P.M + (P.CW - 146.9)/2, top, 146.9, 35.3);
+      P.textAt('BRUNAHÓLF EHF.', P.M, top + 35.3, {size:11, style:'bold'});
+      P.textAt(v.hausTitill, P.M + P.CW, top + 35.3, {size:11, align:'right'});
+      const r2b = top + 35.3 + 12.65;
+      P.textAt('Leyfisnúmer ' + v.leyfisnumer, P.M, r2b, {size:11});
+      P.textAt((v.hausAbyrgd || '') + v.abyrgdarmadur, P.M + P.CW, r2b, {size:11, align:'right'});
+      P.rule(r2b + 3);
+      P.setY(r2b + 30);
+      P.para(v.stadur, {size:14, style:'bold', align:'center'});
+      P.para(v.teikningTexti || 'Staðsetning brunaþéttinga á teikningu', {size:12, align:'center'});
+      P.gap(8);
+      if(dims){
+        const maxW = P.CW, maxH = P.PH - 72 - P.getY();
+        const k = Math.min(maxW / dims[0], maxH / dims[1]);
+        const w = dims[0] * k, h = dims[1] * k;
+        P.drawImage(v.teikning, 'JPEG', P.M + (maxW - w)/2, P.getY(), w, h);
+        P.gap(h);
+      }
     }
   }
 }
 ];
 
 /* Sjálfgefin undirskrift: Annþór, úr frumritinu (word/media/image1.png). */
-const SIG_SJALFGEFIN = '/img/undirskrift-annthor.png';
+const SIG_SJALFGEFIN = '/img/undirskrift-annthor-hrein.png';   // gegnsær bakgrunnur (20.10.2026) — frumritið er undirskrift-annthor.png
+const SIG_GAMLA = '/img/undirskrift-annthor.png';              // eldri skjöl vísa í hana: skipt út við opnun
 
 /* ═════════════════ ÁSTAND ═════════════════ */
 let form = null, values = {}, autoOn = {}, sigPad = null, saveTimer = null;
@@ -605,12 +642,16 @@ function renderSafn(boxId, medNafni){
     const stadfest = d.gogn && d.gogn._stadfest;
     const stadfestBy = stadfest ? (d.gogn._stadfest_by || '') : '';
     const stadfestDate = stadfest ? (d.gogn._stadfest_at || '').slice(0,10) : '';
+    const vid = (d.gogn && Array.isArray(d.gogn._vidhengi)) ? d.gogn._vidhengi : [];
     return `<div class="docrow">
       <div class="t">
         <b>${esc(d.stadur || d.titill || d.skra_nafn || 'Skjal')}</b>
         <span>${d.dagsetning ? fmtDate(d.dagsetning) : ''}${medNafni && d.titill ? ' · ' + esc(d.titill) : ''}
           · ${new Date(d.created_at).toLocaleDateString('is-IS')}</span>
+        ${vid.map(v => `<span class="vidhengi"><a href="${esc(v.url)}" target="_blank" rel="noopener">📎 ${esc(v.nafn)}</a>
+          <button class="del" onclick="taka_af('${d.id}','${esc(v.path)}')" title="Fjarlægja viðhengi">✕</button></span>`).join('')}
       </div>
+      <button onclick="hengjaVid('${d.id}')" title="Festa skrá (t.d. Ajour-skýrslu) við þetta skjal">📎 Hengja við</button>
       <span class="vbadge">v${d.utgafa}</span>
       ${stadfest ? `<span class="stadfest-badge" title="Staðfest ${stadfestBy ? 'af ' + stadfestBy + ' ' : ''}${stadfestDate}">✓ Staðfest</span>` : ''}
       ${d.public_url ? `<a href="${esc(d.public_url)}" target="_blank" rel="noopener">⬇︎ PDF</a>` : ''}
@@ -619,6 +660,76 @@ function renderSafn(boxId, medNafni){
       <button class="del" onclick="eydaSkjali('${d.id}')" title="Eyða þessari útgáfu">✕</button>
     </div>`;
   }).join('');
+}
+
+/* ── Teikning (skjáskot) ─ minnkuð í ≤1600 px JPEG svo skjalið haldist létt ── */
+function lesaMynd(file){
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onload = () => { const im = new Image(); im.onload = () => {
+      const k = Math.min(1, 1600 / Math.max(im.width, im.height));
+      const c = document.createElement('canvas'); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+      const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(im, 0, 0, c.width, c.height);
+      res(c.toDataURL('image/jpeg', 0.82)); }; im.onerror = rej; im.src = fr.result; };
+    fr.onerror = rej; fr.readAsDataURL(file);
+  });
+}
+function imgDims(src){ return new Promise(r => { const i = new Image(); i.onload = () => r([i.width, i.height]); i.onerror = () => r(null); i.src = src; }); }
+function settTeikningu(url){
+  values.teikning = url || '';
+  saveDraft(); renderDoc();
+  const p = document.getElementById('teiknPrev'); if(p) p.innerHTML = url ? `<img src="${url}" alt="">` : '';
+}
+async function veljaTeikningu(inp){ const f = inp.files && inp.files[0]; if(f){ try{ settTeikningu(await lesaMynd(f)); }catch(e){ alert('Tókst ekki að lesa myndina'); } } }
+function takaTeikningu(){ settTeikningu(''); }
+document.addEventListener('paste', async ev => {
+  if(!form || !(form.sections || []).some(s => s.fields.some(f => f.type === 'img'))) return;
+  const it = [...((ev.clipboardData && ev.clipboardData.items) || [])].find(i => i.type.startsWith('image/'));
+  if(!it) return;
+  ev.preventDefault();
+  try{ settTeikningu(await lesaMynd(it.getAsFile())); }catch(e){}
+});
+
+/* ── Viðhengi: festa skrá (t.d. Ajour-skýrslu) við skjal ──────────────────
+   Skráin fer beint í Supabase Storage um undirritaða slóð (Ajour-skýrslur eru ~9 MB, of stórar fyrir
+   Netlify-fall), svo er hún skráð á útgáfuna. Fylgir útgáfunni; eyðist með henni.                    */
+function hengjaVid(id){
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = '.pdf,.jpg,.jpeg,.png,.docx,.xlsx,.csv';
+  inp.onchange = async () => {
+    const f = inp.files && inp.files[0];
+    if(!f) return;
+    const tell = txt => { const el = document.getElementById('saveStatus'); if(el){ el.className = 'status'; el.textContent = txt; } else console.log(txt); };
+    try{
+      tell('⏳ Hleð upp ' + f.name + '…');
+      const r1 = await fetch('/api/eydublod', { method:'POST', headers:{'content-type':'application/json'},
+        body: JSON.stringify({ action:'attach_url', id, fileName: f.name }) });
+      const j1 = await r1.json();
+      if(!r1.ok || !j1.ok) throw new Error(j1.error || ('HTTP ' + r1.status));
+      const fd = new FormData();
+      fd.append('cacheControl', '31536000');
+      fd.append('', f);
+      const up = await fetch(j1.upload_url, { method:'PUT', body: fd });
+      if(!up.ok) throw new Error('Upphleðsla brást (' + up.status + ')');
+      const r2 = await fetch('/api/eydublod', { method:'POST', headers:{'content-type':'application/json'},
+        body: JSON.stringify({ action:'attach_done', id, path: j1.path, name: f.name, size: f.size }) });
+      const j2 = await r2.json();
+      if(!r2.ok || !j2.ok) throw new Error(j2.error || ('HTTP ' + r2.status));
+      await loadSafn(form ? form.id : undefined);
+      renderSafn(form ? 'safnList' : 'safnBox', !form);
+      tell('✓ Fest við skjalið: ' + f.name);
+    }catch(e){ tell('✗ ' + e.message); alert('Tókst ekki að hengja við: ' + e.message); }
+  };
+  inp.click();
+}
+async function taka_af(id, path){
+  if(!confirm('Fjarlægja þetta viðhengi?')) return;
+  try{
+    await fetch('/api/eydublod', { method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ action:'detach', id, path }) });
+  }catch(e){}
+  await loadSafn(form ? form.id : undefined);
+  renderSafn(form ? 'safnList' : 'safnBox', !form);
 }
 
 async function opnaSkjal(id){
@@ -635,6 +746,7 @@ async function opnaSkjal(id){
 
 function applySaved(d){
   values = Object.assign({}, formDefaults(), d.gogn || {});
+  if(values.sig === SIG_GAMLA) values.sig = SIG_SJALFGEFIN;
   autoOn = {};                       // vistað skjal er fast — engin sjálfvirk yfirskrift
   skjalId = d.skjal_id; utgafa = d.utgafa;
   currentRowId = d.id || null;
@@ -876,6 +988,10 @@ function fieldHtml(f){
           </span>
         </div>
       </div>`;
+  } else if(f.type === 'img'){
+    input = `<div class="img-wrap"><input type="file" accept="image/*" onchange="veljaTeikningu(this)">
+      <div id="teiknPrev">${val ? `<img src="${esc(val)}" alt="">` : ''}</div>
+      <div class="sig-actions"><span>eða límdu inn (Ctrl+V)</span><span><button type="button" onclick="takaTeikningu()">Fjarlægja</button></span></div></div>`;
   } else if(f.type === 'fitbtn'){
     input = `<button type="button" class="btn" id="btnFit" onclick="passaEinaSidu()"
         style="width:100%">📄 Passa á eina síðu</button>

@@ -41,6 +41,9 @@ exports.handler = async (event) => {
 
       if (body.action === 'delete') return await del(body);
       if (body.action === 'confirm') return await confirm_(body);
+      if (body.action === 'attach_url') return await attachUrl(body);
+      if (body.action === 'attach_done') return await attachDone(body);
+      if (body.action === 'detach') return await detach(body);
       return await save(body);                       // sjálfgefið: vista
     }
     return json(405, { error: 'GET eða POST' });
@@ -173,15 +176,90 @@ async function confirm_(body) {
   return json(200, { ok: true, id, stadfest_at: at });
 }
 
+/* ── Viðhengi (t.d. Ajour-skýrsla) ───────────────────────────────────────
+   Skráin fer BEINT í Supabase Storage um undirritaða slóð (Netlify-föll taka í mesta lagi ~6 MB og
+   Ajour-skýrslur eru ~9 MB). Skráin sjálf er svo skráð í gogn._vidhengi á þeirri útgáfu sem hún er fest við.
+     attach_url  {id, fileName}            → { upload_url, path, public_url }
+     attach_done {id, path, name, size}    → bætir við gogn._vidhengi
+     detach      {id, path}                → fjarlægir af lista og eyðir skránni                       */
+async function rowById(id) {
+  const rows = await sbAll(
+    `${SUPABASE_URL}/rest/v1/${TABLE}?select=id,skjal_id,utgafa,form_id,gogn&id=eq.${encodeURIComponent(id)}`);
+  return rows[0] || null;
+}
+async function patchGogn(id, gogn) {
+  return fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?id=eq.${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+    body: JSON.stringify({ gogn }),
+  });
+}
+const publicUrlOf = (p) => `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${encodeURI(p)}`;
+
+async function attachUrl(body) {
+  const row = await rowById(String(body.id || '').trim());
+  if (!row) return json(404, { error: 'Skjal fannst ekki' });
+  const safeName = String(body.fileName || 'vidhengi')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9._-]+/g, '_').slice(-80) || 'vidhengi';
+  const path = `${row.form_id}/vidhengi/${String(row.skjal_id).slice(0, 8)}-v${row.utgafa}-${Date.now()}-${safeName}`;
+  const r = await fetch(`${SUPABASE_URL}/storage/v1/object/upload/sign/${BUCKET}/${encodeURI(path)}`, {
+    method: 'POST',
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+    body: '{}',
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || !j.url) return json(r.status || 502, { error: `Undirrituð slóð brást: ${JSON.stringify(j).slice(0, 200)}` });
+  const upload_url = /^https?:/.test(j.url) ? j.url : `${SUPABASE_URL}/storage/v1${j.url}`;
+  return json(200, { ok: true, upload_url, path, public_url: publicUrlOf(path) });
+}
+
+async function attachDone(body) {
+  const row = await rowById(String(body.id || '').trim());
+  if (!row) return json(404, { error: 'Skjal fannst ekki' });
+  const path = String(body.path || '');
+  if (!path.startsWith(`${row.form_id}/vidhengi/`)) return json(400, { error: 'Röng slóð' });
+  const gogn = Object.assign({}, row.gogn || {});
+  const list = Array.isArray(gogn._vidhengi) ? gogn._vidhengi.slice() : [];
+  list.push({ nafn: str(body.name) || path.split('/').pop(), path, url: publicUrlOf(path), staerd: Number(body.size) || null, at: new Date().toISOString() });
+  gogn._vidhengi = list;
+  const r = await patchGogn(row.id, gogn);
+  if (!r.ok) return json(r.status, { error: (await r.text()).slice(0, 300) });
+  return json(200, { ok: true, id: row.id, vidhengi: list });
+}
+
+async function detach(body) {
+  const row = await rowById(String(body.id || '').trim());
+  if (!row) return json(404, { error: 'Skjal fannst ekki' });
+  const path = String(body.path || '');
+  const gogn = Object.assign({}, row.gogn || {});
+  const list = (Array.isArray(gogn._vidhengi) ? gogn._vidhengi : []).filter((v) => v.path !== path);
+  gogn._vidhengi = list;
+  const r = await patchGogn(row.id, gogn);
+  if (!r.ok) return json(r.status, { error: (await r.text()).slice(0, 300) });
+  if (path.startsWith(`${row.form_id}/vidhengi/`)) {
+    await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeURI(path)}`, {
+      method: 'DELETE', headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
+    }).catch(() => {});
+  }
+  return json(200, { ok: true, id: row.id, vidhengi: list });
+}
+
 /* ── Eyðing (ein útgáfa) ──────────────────────────────────────────────── */
 async function del(body) {
   const id = String(body.id || '').trim();
   if (!id) return json(400, { error: 'id vantar' });
 
   const rows = await sbAll(
-    `${SUPABASE_URL}/rest/v1/${TABLE}?select=id,storage_path&id=eq.${encodeURIComponent(id)}`);
+    `${SUPABASE_URL}/rest/v1/${TABLE}?select=id,storage_path,gogn&id=eq.${encodeURIComponent(id)}`);
   const row = rows[0];
   if (!row) return json(404, { error: 'Skjal fannst ekki' });
+
+  // Viðhengi fylgja útgáfunni — hreinsum þau líka svo engar munaðarlausar skrár verði eftir.
+  for (const v of ((row.gogn && row.gogn._vidhengi) || [])) {
+    if (v && v.path) await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeURI(v.path)}`, {
+      method: 'DELETE', headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
+    }).catch(() => {});
+  }
 
   if (row.storage_path) {
     // Skráin má vera farin nú þegar — það á ekki að stoppa eyðingu raðarinnar.
