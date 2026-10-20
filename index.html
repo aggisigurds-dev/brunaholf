@@ -3517,7 +3517,7 @@ function renderVidskiptavinir(t) {
   function rammi(slod, titill){
     const f = document.createElement('iframe');
     f.className = 'vk-frame'; f.src = slod; f.title = titill;
-    f.setAttribute('loading', 'lazy'); f.setAttribute('allow', 'clipboard-write; fullscreen');
+    f.setAttribute('allow', 'clipboard-write; fullscreen');     // smíðaður fyrst þegar flipinn er opnaður — ekki lazy (lazy-iframe hleðst ekki fyrr en hann sést)
     return f;
   }
   function velduFlipa(col, nafn){
@@ -3551,10 +3551,15 @@ function renderVidskiptavinir(t) {
       const nafnA = wsn ? name + ' — ' + wsn : name;
       ps.innerHTML = '<div class="vk-stofna"><div class="vk-sec-h">Enginn staður í Slökkvitæki</div>'
         + '<p class="vk-muted">Staður geymir teikningar, Greiningu, skjöl og tæki og birtist hér sem prófíll. Stofnaðu hann einu sinni — Greiningin vistast svo á hann (sama vél og í Slökkvitæki).</p>'
+        + (vh.length ? '<div class="vk-frame-bar" style="padding:0 0 12px"><span class="vk-cap">Verkstaður</span>' + vh.map(x => '<button type="button" class="vk-chip" data-vk-vh="' + escapeAttr(x.worksite_name) + '" data-vk-vha="' + escapeAttr(x.heimilisfang || '') + '">' + escapeHtml(x.worksite_name) + '</button>').join('') + '</div>' : '')
         + '<div class="vk-facts"><div class="vk-fact"><label>Nafn staðar</label><input data-vk-sn value="' + escapeAttr(nafnA) + '"></div>'
         + '<div class="vk-fact wide"><label>Heimilisfang (með póstnúmeri)</label><input data-vk-sh value="' + escapeAttr(heimiliA) + '" placeholder="Gata 4, 200 Bær"></div></div>'
         + '<div style="margin-top:12px;display:flex;align-items:center;gap:10px"><button type="button" class="boss-btn ivory" data-vk-stofna>＋ Stofna stað í Slökkvitæki</button><span class="vk-st" data-vk-stofna-st></span></div></div>';
       const btn = ps.querySelector('[data-vk-stofna]'), st = ps.querySelector('[data-vk-stofna-st]');
+      ps.querySelectorAll('[data-vk-vh]').forEach(c => c.addEventListener('click', () => {
+        ps.querySelector('[data-vk-sn]').value = name + ' — ' + c.dataset.vkVh;
+        const hi = ps.querySelector('[data-vk-sh]'); hi.value = c.dataset.vkVha || (c.dataset.vkVh + ', '); hi.focus();
+      }));
       btn.addEventListener('click', async () => {
         const nafn = ps.querySelector('[data-vk-sn]').value.trim(), heimili = ps.querySelector('[data-vk-sh]').value.trim();
         if (!nafn) { st.textContent = '✗ nafn vantar'; st.style.color = '#b5522a'; return; }
