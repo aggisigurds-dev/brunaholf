@@ -299,7 +299,7 @@
 /* Útgáfa síðunnar. BUMPAÐU þessu við hverja breytingu — merkið í hausnum er
    eina leiðin fyrir Agnar til að sjá strax hvort vafrinn situr á gamalli
    vistaðri útgáfu (það gerðist 2026-08-07 og kostaði drjúgan tíma). */
-const UTGAFA = '2026-10-20.5';
+const UTGAFA = '2026-10-20.6';
 
 let currentRowId = null;   // id á þeirri DB-röð sem er opin (til staðfestingar)
 let lastPublicUrl = null;  // public_url nýjasta vistunarins — til sendingar
@@ -368,6 +368,9 @@ const FORMS = [
   sections:[
     { titill:'Verkið',
       fields:[
+        { key:'stadur', type:'text', label:'Staður / heimilisfang',
+          hint:'Fyrirsögn skjalsins. Má líka skrifa beint í gula reitinn í skjalinu — þetta tvennt fylgist að.',
+          def:'', placeholder:'T.d. Sunnukriki 3, Mosfellsbær' },
         { key:'dagsetning', type:'date', label:'Dagsetning', def:todayIso() },
         { key:'byggingar', type:'text', label:'Byggingar',
           hint:'T.d. „3-5-7". Skrifar sjálfkrafa setningarnar tvær í skjalinu. Tómt ef verkið er ekki númeraðar byggingar.',
@@ -1114,6 +1117,9 @@ function onDocInput(ev){
   } else {
     values[key] = el.dataset.kind === 'line' ? txt.trim() : txt;
   }
+  // Hliðarstikureitur með sama lykli (t.d. „Staður") fylgir því sem er skrifað í skjalið.
+  const si = document.getElementById('f_' + key);
+  if(si && si !== document.activeElement && si.value !== values[key]) si.value = values[key] || '';
 
   // Notandinn tók sjálfvirkan texta yfir → hættum að skrifa hann.
   if(autoOn[key]) autoOn[key] = false;
