@@ -28,12 +28,24 @@ exports.handler = async (event) => {
 
   let meta;
   try {
-    const mr = await fetch('https://www.googleapis.com/drive/v3/files/' + id + '?fields=id,name,mimeType,size&supportsAllDrives=true', {
+    const mr = await fetch('https://www.googleapis.com/drive/v3/files/' + id + '?fields=id,name,mimeType,size,md5Checksum,modifiedTime&supportsAllDrives=true', {
       headers: { Authorization: 'Bearer ' + token },
     });
     if (!mr.ok) return json(mr.status, { error: 'meta ' + mr.status });
     meta = await mr.json();
   } catch (e) { return json(500, { error: e.message }); }
+
+  // 21.10.2026 (Agnar: „eðlilegt að nýja skjalið komi strax inn"): svarið bar `max-age=3600`, svo þegar
+  // uttekt-upload skrifaði nýja útgáfu ofan í sama Drive-skjal (R-001186, blýantur í línutexta) sýndi vafrinn
+  // gamla afritið í allt að klukkutíma. Nú: ETag = md5 skjalsins í Drive og `no-cache` — vafrinn spyr í hvert
+  // sinn, fær 304 (aðeins metadata-kall, engin niðurhal) meðan skjalið er óbreytt, og nýju bætin um leið og
+  // það breytist.
+  const etag = meta.md5Checksum ? '"' + meta.md5Checksum + '"' : (meta.modifiedTime ? 'W/"' + meta.modifiedTime + '"' : '');
+  const inm = (event.headers || {})['if-none-match'] || (event.headers || {})['If-None-Match'] || '';
+  const CACHE = 'no-cache';
+  if (etag && inm && inm.split(',').map(s => s.trim()).includes(etag)) {
+    return { statusCode: 304, headers: { etag, 'cache-control': CACHE, 'access-control-allow-origin': '*' }, body: '' };
+  }
 
   if (meta.size && Number(meta.size) > MAX_BYTES) {
     // of stórt til að streyma héðan — vísa á Drive (gamla leiðin)
@@ -52,7 +64,8 @@ exports.handler = async (event) => {
       headers: {
         'content-type': meta.mimeType || 'application/pdf',
         'content-disposition': 'inline; filename="' + ascii + '"',
-        'cache-control': 'public, max-age=3600',
+        'cache-control': CACHE,
+        ...(etag ? { etag } : {}),
         'access-control-allow-origin': '*',
       },
       body: buf.toString('base64'),
