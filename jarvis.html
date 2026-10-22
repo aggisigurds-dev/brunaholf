@@ -752,10 +752,10 @@ html.embedded[data-thema="ragnarok"] .klukka .t{font-size:28px}
         <!-- 16.10.2026: listinn kemur úr /data/agentar-stada.json (skrifað daglega af
              slokkvitaeki/tools/audit-agentar.cjs --json úr auto-sync-brunaholf.ps1). Kyrrstæði
              listinn hér fyrir neðan er BAKFALL — sýndur með „staða ekki sótt" falli sóknin. -->
-        <h2>Sérfræðingar <span id="sfr-teljari">25 á diski</span></h2>
+        <h2>Sérfræðingar <span id="sfr-teljari">26 á diski</span></h2>
         <div id="sfr-efni">
         <details class="sfr-hop" open>
-          <summary>Raddir á HUD · 17</summary>
+          <summary>Raddir á HUD · 18</summary>
           <div class="sfr-listi">
             <div class="sfr-rod"><span class="sfr-e">🎩</span><span class="sfr-n">Jarvis</span><span class="sfr-r">Dagleg yfirsýn</span></div>
             <div class="sfr-rod"><span class="sfr-e">💰</span><span class="sfr-n">Samantha</span><span class="sfr-r">Fjármál og bókhald</span></div>
@@ -766,6 +766,7 @@ html.embedded[data-thema="ragnarok"] .klukka .t{font-size:28px}
             <div class="sfr-rod"><span class="sfr-e">💥</span><span class="sfr-n">Willis</span><span class="sfr-r">Hraði og afköst</span></div>
             <div class="sfr-rod"><span class="sfr-e">😤</span><span class="sfr-n">Samuel L. J.</span><span class="sfr-r">Tengingar og lyklar</span></div>
             <div class="sfr-rod"><span class="sfr-e">🩺</span><span class="sfr-n">Dr. House</span><span class="sfr-r">Kerfisheilsa</span></div>
+            <div class="sfr-rod"><span class="sfr-e">🪖</span><span class="sfr-n">Rambo</span><span class="sfr-r">Hættuleit — forskoðun áður en ýtt er</span></div>
             <div class="sfr-rod"><span class="sfr-e">🇺🇸</span><span class="sfr-n">Trump</span><span class="sfr-r">Hype-yfirlit</span></div>
             <div class="sfr-rod"><span class="sfr-e">🦆</span><span class="sfr-n">Jóakim</span><span class="sfr-r">Rukkunarmál — Drög-stöð</span></div>
             <div class="sfr-rod"><span class="sfr-e">💪</span><span class="sfr-n">Arnold</span><span class="sfr-r">TurboPaint + RLS</span></div>
@@ -1487,7 +1488,7 @@ var SFR_HLUTVERK = {
   'jarvis':'Dagleg yfirsýn', 'bokari':'Fjármál og bókhald', 'sara-coworker':'Skýrslur LIVE',
   'sara-organizer':'Pör, þekja, gloppur', 'kunnaskra':'Kúnnaskrá og kennitölur', 'skjol':'Skjöl og Drive',
   'gagnaleidslur':'Gagnaleiðslur / rukkun', 'hradi':'Hraði og afköst', 'tengingar':'Tengingar og lyklar',
-  'kerfisheilsa':'Kerfisheilsa', 'hype':'Hype-yfirlit', 'rukkari':'Rukkunarmál — Drög-stöð',
+  'kerfisheilsa':'Kerfisheilsa', 'rambo':'Hættuleit — forskoðun áður en ýtt er', 'hype':'Hype-yfirlit', 'rukkari':'Rukkunarmál — Drög-stöð',
   'oryggi':'TurboPaint + RLS', 'prentun':'Prentun og QR', 'kort':'Kort og geocode',
   'elon-musk':'As-built / RAFKERFI', 'natalie':'Factcheck 2025–26', 'joker':'Útlit, sími, Stílstjóri',
   'eldklar-postur':'Póstvörður eldklar@', 'samthykktir':'Svörin á Þjónustuborðinu',
@@ -1498,7 +1499,7 @@ var SFR_HLUTVERK = {
 };
 // Röð HUD-sætanna eins og hún var á spjaldinu; það sem vantar hér raðast aftast.
 var SFR_ROD = ['jarvis','bokari','sara-coworker','sara-organizer','kunnaskra','skjol','gagnaleidslur',
-  'hradi','tengingar','kerfisheilsa','hype','rukkari','oryggi','prentun','kort','elon-musk','natalie','joker',
+  'hradi','tengingar','kerfisheilsa','rambo','hype','rukkari','oryggi','prentun','kort','elon-musk','natalie','joker',
   'eldklar-postur','samthykktir'];
 var SFR_TAKN = { 'netvordur':'🛡️', 'adstod':'🆘', 'bord-flettur':'📋', 'sala-reikningar':'🧾', 'thema':'🎨', 'framendi':'🖥️', 'villuleit':'🔍' };
 var SFR_MERKI_KLASI = { '🔴':'sfr-raud', '🟡':'sfr-gul', '⚪':'sfr-hvit', '🟢':'' };
@@ -1583,7 +1584,7 @@ async function saekjaSerfraedingar(thvinga){
     if(!teiknaSerfraedinga(j)) throw new Error('tómt svar');
   }catch(e){
     var tel = document.getElementById('sfr-teljari');
-    if(tel) tel.innerHTML = '<span class="sfr-vilt">staða ekki sótt</span> · 25 á diski';
+    if(tel) tel.innerHTML = '<span class="sfr-vilt">staða ekki sótt</span> · 26 á diski';
     var fot = document.getElementById('sfr-fot');
     if(fot) fot.textContent = 'Staða ekki sótt — /data/agentar-stada.json svaraði ekki (' + (e && e.message || e) + '). Listinn er sá sem síðast fékkst, eða kyrrstæði listinn.';
     SFR_SIDAST = nu - 3600000 + 120000;   // reyna aftur eftir 2 mín, ekki fulla ferð
