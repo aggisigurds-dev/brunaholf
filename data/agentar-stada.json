@@ -1,6 +1,6 @@
 {
  "utgafa": 1,
- "nyjast": "2026-10-20",
+ "nyjast": "2026-10-21",
  "throskuldur": 6,
  "osnert_dagar": 30,
  "uppspretta": "slokkvitaeki/tools/audit-agentar.cjs --json",
@@ -27,10 +27,10 @@
    "slod": ".claude/agents/bord-flettur.md",
    "hud": null,
    "emoji": null,
-   "sidast": "2026-10-16",
-   "skrif": 33,
-   "gaetir": 32,
-   "breytt": 3,
+   "sidast": "2026-10-21",
+   "skrif": 35,
+   "gaetir": 35,
+   "breytt": 2,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Flettur, borð og navigation — Verkborð, Bakendi, Bílstjóri, Aksturslisti, URL-routing (218), bakk-takkinn (3 patchar), app-síður (261). Notaðu þegar bætt er við"
@@ -165,7 +165,7 @@
    "sidast": "2026-10-16",
    "skrif": 14,
    "gaetir": 14,
-   "breytt": 2,
+   "breytt": 3,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Sala/POS, reikningagerð, dkPlus/Payday, afslættir, sjálfvirk PDF-vistun, reikninga-póstur og úttektartexti. Notaðu fyrir allt sem snýr að sölu, reikningum, verð"
