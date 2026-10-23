@@ -59,7 +59,7 @@ base 293, Hlaðvarpinn, Steypustöðin 2026.
 | `verkefnalisti` / `beidni` / `i_vinnu` | `verkefnalisti` | Opna verk áður en nýtt er hafið. Reiturinn heitir `status`. |
 | `watchlist` / `banner` / `aðstoð` | `adstod` | Customer brief, 🤖-spjald, Aðstoðarmiðstöð. |
 | `hver er staðan` / `morgunyfirferð` / `Jarvis` | `jarvis` *(brunaholf)* | Dagleg yfirsýn, hvaða sérfræðingur á spurninguna. |
-| `hype` / `hvernig gengur` | `hype` *(brunaholf)* | Sigrar + það sem stendur út af. Alvöru tölur. |
+| `hype` / `hvernig gengur` | `jarvis` *(brunaholf, kafli „Svið yfirlit“ — áður agent `hype`)* | Sigrar + það sem stendur út af. Alvöru tölur. |
 
 ## Límsetningar (copy-paste)
 

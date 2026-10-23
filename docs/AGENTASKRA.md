@@ -29,16 +29,15 @@ Teljarinn **153/187** (tilbúið-staða) er **óbreyttur**. Hann er ekki hluti a
 
 ---
 
-## 25 agentar
+## 23 agentar
 
 `Heim` = kanóníska skráin. `kj` = afrit í `kjarni/.claude/agents` (stale vs heim). Dual-home: `joker` og `kunnaskra` eiga raunverulega skrá í **báðum** rekstrar-repo (hub vs app).
 
 | Nafn | Roster | Heim | Slóð | Kveikjur | Aldrei |
 |---|---|---|---|---|---|
-| `jarvis` | 🎩 Jarvis | brunaholf | `.claude/agents/jarvis.md` (kj afrit) | `hver er staðan` · `morgunyfirferð` · `Jarvis` | Fundin upp tala/dagsetning/nafn. Lestu ekki heilar töflur. |
+| `jarvis` | 🎩 Jarvis | brunaholf | `.claude/agents/jarvis.md` (kj afrit) | `hver er staðan` · `morgunyfirferð` · `Jarvis` · `hype` · `hvernig gengur` (kafli „Svið yfirlit“ — áður agent `hype`) | Fundin upp tala/dagsetning/nafn. Lestu ekki heilar töflur. |
 | `bokari` | 💰 Samantha | brunaholf | `.claude/agents/bokari.md` (kj afrit) | `taxti` · `VSK` · `NLSH` · `uppgjör` · `stemmir tala` · `krafa` (með sala) | Baka afslátt í línu **og** geyma í `afslattur`. Stofna eða senda reikning. |
-| `eldklar-postur` | ✉ Póstvörður Eldklárs | brunaholf | `.claude/agents/eldklar-postur.md` | `nýjustu póstar` · `sækja úr pósti` · `hvað kom í pósti` · `reikningalota` | Snertir AÐEINS eldklar@eldklar.is; skráir punkta í Drög-stöð, skrifar aldrei í sölur/drög/Payday; skáldar aldrei kúnnanafn. |
-| `rukkari` | 🦆 Jóakim aðalönd | brunaholf (spegill í slokkvitaeki + ~/.claude/agents) | `.claude/agents/rukkari.md` | `rukka` · `rukkunarmál` · `reikningalota` · `klára reikninga` · `hvað er tilbúið að senda` · `ósent` · `ógreitt` · `útistandandi` | Senda eða skrifa sjálfur í drög, sölur eða Payday. Giska á tölu. Spyrja um það sem stendur í REIKNINGALOTA.md. |
+| `rukkari` | 🦆 Jóakim aðalönd | brunaholf (spegill í slokkvitaeki + ~/.claude/agents) | `.claude/agents/rukkari.md` | `rukka` · `rukkunarmál` · `reikningalota` · `klára reikninga` · `hvað er tilbúið að senda` · `nýjustu póstar` · `sækja úr pósti` (kafli „Póstur → punktar“ — áður agent `eldklar-postur`) · `ósent` · `ógreitt` · `útistandandi` | Senda eða skrifa sjálfur í drög, sölur eða Payday. Giska á tölu. Spyrja um það sem stendur í REIKNINGALOTA.md. |
 | `sara-organizer` | 🗂️ Sara (pör) | brunaholf | `.claude/agents/sara-organizer.md` (kj afrit) | `para` · `þekja` · `gloppa` · `vantar að rukka` | Giska á pörun. Stofna/breyta reikningi. Senda póst. Sameina rekstrarfélaga-staði. |
 | `sara-coworker` | 🗂️ Sara (skýrslur) | slokkvitaeki | `.claude/agents/sara-coworker.md` (kj afrit, styttra) | `skýrsla` · `úttekt` · `fylla skýrslu` | Yfirskrifa texta sem er þegar í reit. Baka afslátt **og** `afslattur`. Segja „vistað" án lesturs til baka. Hengja brunakerfi á úttekt. Sameina staði. |
 | `kunnaskra` | ❄️ Charlize | **bæði** | bh `.claude/agents/kunnaskra.md` (hryggurinn) · slokk sama nafn (app-hlið) · kj = bh-afrit | `kennitala` · `kt` · `999999` · `customers_base` · `rekstrarfélag` · `sameina` · `tvítak` · `Tengireglan` · `hits[0]` · `companyForBld` | Sameina staði rekstrarfélags. Giska / núlla `fyrirtaeki_id`. Eyða/skrifa yfir kúnnaröð án Agnars. Rugla `fyrirtaeki_id` við kennitölu. |
@@ -47,7 +46,6 @@ Teljarinn **153/187** (tilbúið-staða) er **óbreyttur**. Hann er ekki hluti a
 | `hradi` | 💥 Willis | brunaholf | `.claude/agents/hradi.md` (kj afrit) | `hraði` · `hægt` · `polling` · `bundle` | Fullyrða um bata án mælingar fyrir og eftir. Hamra á DB á meðan mælt er. |
 | `tengingar` | 😤 Samuel L. J. | brunaholf | `.claude/agents/tengingar.md` (kj afrit) | `lykill` · `tengingar` · `gult` · `rautt` | Falskt grænt. Skila lyklum. Setja lykil í kóða eða skjal. |
 | `kerfisheilsa` | 🩺 Dr. House | brunaholf | `.claude/agents/kerfisheilsa.md` (kj afrit) | `bilað` · `niðri` · `timeout` · `eitthvað skrítið` | Úrskurða af status-síðu. Afturkalla deploy til að „prófa". |
-| `hype` | 🇺🇸 Trump | brunaholf | `.claude/agents/hype.md` (kj afrit) | `hype` · `hvernig gengur` | Finna upp tölur. |
 | `oryggi` | 💪 Arnold (RLS-rödd) | brunaholf | `.claude/agents/oryggi.md` (kj afrit) | `RLS` · `policy` · `lekt` · `anon` · `bucket` | Enable RLS án policy. Lyklar í frontend/repo. |
 | `framendi` | *(ekkert sæti)* | brunaholf | `.claude/agents/framendi.md` (kj afrit) | hub-flipi, hvar eitthvað í `index.html` býr | Lesta `index.html` í heilu lagi. |
 | `joker` | 🃏 Joker | **bæði** | slokk `.claude/agents/joker.md` (app) · bh sama nafn (hub) · kj = **bh**-afrit (app-útgáfan er lengri) | `útlit` · `sími` · `mobile` · `þröngt` · `endurhanna` | Giska á útlit án skjás. `node deploy.js`. Harður stoppari á Vista. Fara framhjá Stílstjóra. |
@@ -134,3 +132,5 @@ Bæði slökkvitæki og brunahólf lesa sama Supabase `osfdzskyvisifcwyjkuk`.
 - Charlize-vísun (eldri listi, 12 slokk-agentar): `.claude/skills/charlize/references/agentar.md`
 - Öryggisnet: [`docs/ORYGGISNET.md`](ORYGGISNET.md)
 - As-built: [`docs/RAFKERFI.md`](RAFKERFI.md)
+
+**23.10.2026 (mál #1239):** `hype` sameinaður í `jarvis.md` (kafli „Svið `yfirlit`“) og `eldklar-postur` í `rukkari.md` (kafli „Póstur → punktar“). Engin virkni breyttist. Afrit í kjarna (`hype.md`) er ósnert — kjarni er ekki git-heimildin.

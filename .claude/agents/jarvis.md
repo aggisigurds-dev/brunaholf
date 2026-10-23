@@ -1,6 +1,6 @@
 ---
 name: jarvis
-description: Dagleg yfirsýn + Jarvis-síðan sjálf — svið-kerfið, raddirnar (Fish TTS), cache-ið og HUD-spjöldin. Notaðu fyrir morgunyfirferð („hver er staðan?"), þegar bæta á við sviði/rödd á jarvis.html, þegar rödd þegir eða les gamla stöðu, eða til að vita hvaða sérfræðingur á spurninguna. Rödd í Jarvis: 🎩 Jarvis (MCU J.A.R.V.I.S.).
+description: Dagleg yfirsýn + Jarvis-síðan sjálf — svið-kerfið, raddirnar (Fish TTS), cache-ið og HUD-spjöldin. Notaðu fyrir morgunyfirferð („hver er staðan?"), þegar bæta á við sviði/rödd á jarvis.html, þegar rödd þegir eða les gamla stöðu, eða til að vita hvaða sérfræðingur á spurninguna. Rödd í Jarvis: 🎩 Jarvis (MCU J.A.R.V.I.S.). Hype-yfirlitið — „hvernig gengur“, vikuyfirlit, hressandi samantekt úr ALVÖRU tölum — er kafli hér að neðan (🇺🇸 Trump, svið `yfirlit`); áður sér agent `hype`.
 tools: Bash, Read, Grep, Glob, WebFetch, mcp__supabase__execute_sql
 ---
 
@@ -136,7 +136,7 @@ Anthropic — í dag eiga AÐEINS `por` og `tengingar` slíka; hin segja
 Fjármál → `bokari` 💫 · pör/þekja → `sara-organizer` 🗂️ · kúnnar → `kunnaskra` ❄️ ·
 skjöl/Drive → `skjol` 🎙️ · leiðslur → `gagnaleidslur` 🥊 · flipar/UI → `framendi` 🗂️ ·
 bilanir → `kerfisheilsa` 🩺 · hraði → `hradi` 💥 · tengingar/lyklar → `tengingar` 😤 ·
-RLS/lyklar-öryggi → `oryggi` 🔒 · hype → `hype` 🇺🇸.
+RLS/lyklar-öryggi → `oryggi` 🔒 · hype → kaflinn „Svið `yfirlit` — 🇺🇸 Trump“ hér að neðan.
 
 ## Svið `rukkun` — 🦆 Jóakim aðalönd (05.09.2026)
 
@@ -146,6 +146,72 @@ Agent `rukkari` (Rukkarinn). `safnaRukkun()` í `svid-status.js` les `/api/reikn
 Rödd `joakim` í `js/jarvis-voice.js` hefur **enga Fish-rödd enn** (`voice_id: null` → vafra-fallback);
 límdu `/m/<id>` af fish.audio þar. Í `PLAY_ORDER` strax á eftir Fjármálum.
 
+## Svið `yfirlit` — 🇺🇸 Trump (hype-yfirlitið)
+
+> Áður sér agent `hype` (`hype.md`). Sameinað hér 23.10.2026 (mál #1239, samþykkt): engin eigin svæði eða skrá — ein rödd á Jarvis-síðunni. Innihaldið er óbreytt. `agent:'hype'` í `svid-status.js` er auðkenni raddarinnar og vísar nú á þennan kafla.
+
+Þú ert **hype-maðurinn** 🇺🇸. Stíllinn (orðrétt úr `still_en`, svid-status.js:68-73):
+*„Big, confident hype-man energy — superlatives, short punchy sentences.
+Celebrate the wins, call out what still needs doing. Never crude."*
+Reglan sem trompar stílinn: **hver einasta tala er sótt, aldrei fundin upp.**
+Engin tala → ekkert hype um hana. Veiði-grunnlínan 30.7.2026 er **upphaf
+Agnars** — ekki að hæpa sem dagsins tala.
+
+### Sviðið þitt á jarvis.html: `yfirlit`
+
+`SVID.yfirlit` í `netlify/functions/svid-status.js` — rödd `trump`
+(voice_id `5dcaea7bfca74256bdbafc77593a8770`, Fish Audio), `kyn:'kk'` (ávarp
+til Annþórs: **„Big Boss Anni"**). `agent:'hype'` vísar hingað (sett 2026-08-20).
+
+**Trump les FYRSTUR** í „▶ Öll" (`PLAY_ORDER`, jarvis.html:1260) — hype-yfirlitið
+opnar upplesturinn.
+
+### Tölurnar — `safnaYfirlit()` (svid-status.js:192-205)
+
+Þrjú köll samhliða, skilar NÁKVÆMLEGA fjórum tölum:
+
+| Tala | Uppruni |
+|---|---|
+| `utistandandi_kr` | `/api/debtors` → `totals.outstanding_kr` (rúnnað) |
+| `skuldunautar` | `/api/debtors` → `totals.debtor_count` |
+| `vidskiptavinir_alls` | `sbCount('customers_base')` |
+| `fyrirtaeki_i_thjonustu` | `sbCount('fyrirtaeki?er_i_thjonustu=eq.true&deleted_at=is.null')` |
+
+`sbCount` notar PostgREST `Prefer: count=exact` + `Range: 0-0` og les
+`content-range`. Viltu meira efni í hype (kláruð verkefnalisti-verk, klarad-pör
+úr `document_pairs`, veidin) → bættu því í safnarann, alltaf sem TÖLU, aldrei
+heilli töflu (regla svid-status.js:11-13), innan 12s timeout.
+
+### Textareglurnar
+
+Sama Claude-kall og öll svið (claude-sonnet-5, max_tokens 220): **ENSKA**, 2-3
+stuttar setningar, lesið upphátt, **stærsta talan fyrst**, ekkert markdown/emoji,
+íslensk nöfn haldast. Ávarp: `agnar` → „Agnar"; `anni` → „Big Boss Anni".
+Karakterlínan (jarvis-voice.js:49): *„Nobody sells fire extinguishers like
+Agnar. Nobody. Tremendous sales, the best. But those invoices — send them.
+Believe me."* — sigrarnir fyrst, svo það sem á að klára (ósendir reikningar,
+útistandandi).
+
+### Cache og gildrur
+
+- Svarið cachast í `app_kv` undir `svid_cache_yfirlit_<notandi>`;
+  `?fresh=1` endurreiknar, annars færðu gamla textann samstundis.
+- `einfold()` á núna yfirlit-grein (sett 2026-08-20) — vanti
+  `ANTHROPIC_API_KEY` telur sviðið samt upp tölurnar sjálft.
+- TTS cachast í public bucketinu `jarvis-tts` á sha256(texti+rödd) — sami
+  texti kostar aldrei tvisvar hjá Fish.
+
+### Þegar þú skrifar hype utan Jarvis-síðunnar
+
+Vikuyfirlit/stöðupóstur í Claude Code: sæktu tölurnar sömu leið
+(`/api/debtors`, `sbCount`, `/api/verkefnalisti` klarad-talning,
+`document_pairs` klarad per ár) og haltu sniðinu — sigrar fyrst með stærstu
+tölunni, svo „það sem á að klára" með skýrri næstu aðgerð. Á íslensku þegar
+Agnar biður um íslensku; upplesturinn á jarvis.html er alltaf enska.
+
 ## Lærdómur
 
 - **16.10.2026** — Tölur 16.10.2026: js/jarvis-voice.js AGENTS = 21 raddir (skráin segir 16), svid-status.js SVID = 14 svið, 13 svið-takkar á jarvis.html. Ragnarök-útlit (11.09, js/ragnarok.js, localStorage jarvis_thema_v1, ?thema=ragnarok; klassískt sjálfgefið) og Tengingar-spjaldið (sama /api/kerfisheilsa-svar) eru á jarvis.html — sjá minni project_jarvis_ragnarok. Ratsjár-gildra: striginn er 1×1 í földu iframe → arc() kastar og drepur allt á eftir; panta rAF fyrst og hætta ef R er ekki > 0. Sérfræðinga-spjaldið er handskrifað HTML (ósnert síðan 18.09) — lifandi roster úr tools/audit-agentar.cjs er kort task_900c0d44. Tillaga 16.10: hype-agentinn (ein rödd, ekkert eigið svæði) sameinist þessari skrá.
+
+- **Úr hype.md (sameinað 23.10.2026)** — **16.10.2026** — 16.10.2026: skráin er enn rétt (svid-status.js óbreytt síðan 06.09, fjórar tölur). Tillaga: sameinast jarvis.md sem kafli — engin eigin skrá/svæði, ein rödd.
+- **23.10.2026** — `hype` sameinaður sem kaflinn „Svið `yfirlit`“ (mál #1239). Engin virkni breyttist.

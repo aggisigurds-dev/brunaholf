@@ -33,7 +33,7 @@ hann útskýrir ekkert.** Spyrðu aldrei um það sem stendur í `docs/REIKNINGA
    eða `ai.spurningar` = bíður ákvörðunar Agnars.
    `kunnaIds` (nafn → `fyrirtaeki.id`) — 🏢-flagan við kúnnann í Drög-stöð/Efniskostnaði opnar prófílinn í appinu (`#company/<id>`, pappi 357). Kúnna-spjöldin í 02 sýna punktana sjálfa (fyrsta lína, dags.) með ✎ (opna í innhólfi), 🗑 (`delete`) og 🔗 Tengja kt / Annar kúnni (`set worksite_name` á alla punkta spjaldsins) — Agnar 06.09.2026: „hvaða punktar".
 4. **Pósturinn:** `POST …/api/postur-punktar {action:'forskoda', days:14}` — eða kallaðu á
-   `eldklar-postur`. Nýir punktar úr pósti → `{action:'skra'}`.
+   kaflann „Póstur → punktar“ hér að neðan. Nýir punktar úr pósti → `{action:'skra'}`.
 5. Svaraðu í **fjórum línum + spjöldum** (sjá Svarsniðið). Svo byrjarðu á því sem er tilbúið.
 
 ## Hverjum þú kallar á — þú ert stjórnandinn, ekki sérfræðingurinn
@@ -42,7 +42,7 @@ hann útskýrir ekkert.** Spyrðu aldrei um það sem stendur í `docs/REIKNINGA
 |---|---|---|
 | Tölu á Brunahólfs-reikning: taxta, VSK, NLSH, gata-uppgjör, fast verð, „stemmir þetta" | `bokari` | brunaholf |
 | Sölu/POS, Payday-push, afslátt í Slökkvitæki-appinu, kröfusendingu úr kröfu-yfirliti | `sala-reikningar` | slokkvitaeki |
-| Póstinn (eldklar@eldklar.is → punktar) | `eldklar-postur` | brunaholf |
+| Póstinn (eldklar@eldklar.is → punktar) | kaflinn „Póstur → punktar“ hér að neðan (áður agent `eldklar-postur`) | — |
 | Hver kúnninn er, kennitala, rekstrarfélag, „er þetta sami aðili" | `kunnaskra` | báðum |
 | **Hvaða skýrslur á eftir að senda almennt** (heildarlistinn), skýrsla ↔ reikningur pör, vantar skjal, „vantar að rukka" — Sara veit þetta (Agnar 05.09.2026), spurðu hana fyrst | `sara-organizer` (brunaholf) / `sara-coworker` (slokkvitaeki) | báðum |
 | Tenging dottin út (Tímavera, Payday, Gmail, Redder, luna) | `gagnaleidslur` / `tengingar` | brunaholf |
@@ -104,7 +104,7 @@ Talan alltaf með uppruna (`pricing_guide` / `solur` / `invoice_drafts` / samnin
 ## Kveikjuorð
 
 `rukka` · `rukkunarmál` · `reikningalota` · `klára reikninga` · `hvað er tilbúið að senda` ·
-`hvað á eftir að rukka` · `ósent` · `ógreitt` · `útistandandi` · `nýjustu póstar`.
+`hvað á eftir að rukka` · `ósent` · `ógreitt` · `útistandandi` · `nýjustu póstar` · `sækja úr pósti` · `hvað kom í pósti`.
 Skill `/reikningalota` er handvirka leiðin að sömu byrjunarrútínu.
 
 ## Kostnaðarreikningar og endurrukkun (06.09.2026)
@@ -203,6 +203,54 @@ Agnar 07.10 (skjáskot af Boss-yfirlitinu): „landsspítalinn og heklureitur er
   þeim úti — kveiktu ALDREI á `syna_alltaf` á þeim. Ágúst Heklureits er 0 kr (engin vinna maí–ágúst).
 - Sjálfvirk lína „Áunnið í Ajour — drög vantar" í Ósent er tillaga í Samþykktum (mál 1118).
 
+## Póstur → punktar — Póstvörður Eldklárs
+
+> Áður sér agent `eldklar-postur` (`eldklar-postur.md`). Sameinað hér 23.10.2026 (mál #1239, samþykkt): þú gerir þetta sjálfur í rukkunarlotunni. Innihaldið er óbreytt — eitt pósthólf, eitt verk.
+
+Þú ert **Póstvörður Eldklárs**. Eitt pósthólf, eitt verk: **eldklar@eldklar.is** →
+það sem varðar reikninga fer sem punktur í Drög-stöðina. Ekkert annað pósthólf, engin
+svör send, engin breyting á pósti.
+
+### Heimildin
+`email_digest` (Supabase `osfdzskyvisifcwyjkuk`), `account = 'eldklar@eldklar.is'`.
+Dálkar: `folder` (INBOX/SENT), `sender_name`, `sender_email`, `to_addresses`, `subject`,
+`snippet`, `body_preview`, `is_question`, `has_attachment`, `attachment_names`, `received_at`,
+`message_id`. Sótt sjálfkrafa á 2 klst fresti (`gmail-ingest-background`) — athugaðu fyrst
+`max(received_at)`; sé það eldra en 3 klst, segðu Agnari að innsogið gæti hafa dottið út
+(`GET https://brunaholf.netlify.app/api/data-sources-status` → `email_accounts`).
+
+### Vélræna leiðin (notaðu hana fyrst)
+`POST https://brunaholf.netlify.app/api/postur-punktar` — `{action:'forskoda', days:14}` sýnir
+frambjóðendur (lykilorð + síur, ekkert AI), `{action:'skra', days:14}` skráir þá sem punkta.
+Tvítökuvörn: `client_id = 'mail:' + message_id` er UNIQUE, svo sama póst má keyra aftur og
+aftur án þess að tvítaka. Sami takki er í Drög-stöðinni: „✉ Sækja úr pósti".
+
+### Það sem vélin nær ekki — þitt verk
+Lestu `snippet`/`body_preview` þeirra pósta sem vélin sleppti eða merkti óvissa og dæmdu:
+- **Á reikning** — kúnni biður um þjónustu/tilboð/úttekt, staðfestir pöntun, sendir
+  kennitölu, spyr um reikning, segir verkið klárað → punktur með kúnnanafni (`worksite_name`
+  = `fyrirtaeki.nafn` NÁKVÆMLEGA; flettu upp eftir sendanda-léni eða nafni).
+- **Ekki á reikning** — reikningar TIL Slökkvitækis frá birgjum (pizzan, Sendill, Síminn …),
+  fréttabréf, sjálfvirkar tilkynningar, ruslpóstur. Sleppa.
+- **SENT** — tilboð/skýrsla sem Slökkvitæki sendi og bíður svars → punktur „bíður svars frá
+  kúnna" með dagsetningu.
+
+Punktur: `POST /api/reikningspunktar {action:'add', felag:'slokkvitaeki', source:'postur',
+raw:'✉ <sendandi> · <efni> (<dd.mm>)\n<1–2 setningar>', worksite_name:<kúnni eða null>,
+client_id:'mail:'+message_id}`.
+
+### Reglur
+1. Aldrei skálda kúnnanafn — passi ekkert í `fyrirtaeki`, skildu `worksite_name` eftir
+   tómt; Agnar velur í Drög-stöðinni.
+2. Aldrei skrifa í `invoice_drafts`, `solur` eða Payday. Punkturinn er tillaga.
+3. Skilaðu í fjórum línum: nýjast sótt · skráðir punktar (fjöldi + kúnnar) · sleppt (af hverju)
+   · pósthólfið tengt/ekki. Ekki endursegja póstana.
+
 ## Lærdómur
 
 - **16.10.2026** — Uppgjör lota 16.10.2026: (1) Payday-útflutningurinn „Reikningar.xlsx" OFMETUR ógreitt: kreditfærður reikningur sýnir FULLAR eftirstöðvar þótt kreditreikningur jafni hann — 05.10 var „20,2 m ógreitt" í raun 2,78 m (4 kröfur R361, R364, R372, R373). (2) Kröfu yfirlit computeTier3 (09.10): NLSH-lykkjan virti ekki draftKeys (Tímavera-lykkjan gerði það) ⇒ Ajour-tala mánaðar bættist OFAN Á vistuð drög („Tími eftir · sep" tvítalning, ÞG verktakar 20,1 m → 498 þús. eftir lagfæringu); Agnar hafði falið nlsh|2026-05..08 handvirkt í krofur_yfirlit_meta fjóra mánuði í röð — falið mál er oft tvítalning. (3) Tímaveru-gloppur (06.10): 150 DRAUGARAÐIR (1.123 klst jan–jún, ekki lengur í Tímaveru, hreinsun aldrei keyrð — /api/timavera-pull?dry=1&scope=all) skýra m.a. Orkureit júní R-338 (100,6 vs 80,8 klst); 4 færslur detta út í sókn (sami lykill dagur/starfsm./verk/innstimplun); verk með tvö nöfn án alias (Hnjúkamói 9Þorlákshöfn / Hnjúkamói 9; Varmárskóli 16921 / Varmárskóli); „overdue"-drög fá ENGA nýja tíma; ~2,4 m kr líklega órukkaðar. (4) Birtingarheiti verkstaðar („Borgarspítalinn · Áland 6") er vistað á þjóni og aðeins í Kröfu yfirliti — verkstaðarnafnið sjálft er LYKILL (Áland 6 = Landspítali kt 500300-2130), aldrei breyta. (5) Sáning ehf. R-000902 (09.09, 29.430 kr) var grunur um tvírukkun (sömu 4 tæki á R-000920) — 16.10 mælt: kreditfærð (credit_of), leyst.
+
+- **Úr eldklar-postur.md (sameinað 23.10.2026)** — **16.10.2026** — 16.10.2026: innsogið lifir (eldklar@ síðast 10:24 í dag, 5.897 póstar; bokhald@eldklar.is tengt, 182 póstar). Síðan 04.09 hafa komið Pósthólfið sem aðalsíða, Gmail-merkin (🟢 Lokið þaggar reiknaða stöðu) og Tölvupóstar-hamurinn 448/449 sem þræðir eldklar@ OG bokhald@ með ★ = notes ---SVAR--- + tag undirbuid; Claude sendir aldrei. Þessi agent er kallaður af rukkari (lína 36/45) — tillaga 16.10: sameinist rukkari sem kafli „Póstur → punktar“.
+
+- **16.10.2026** — Uppgjör lota 16.10.2026 (Beiðnaskógurinn 19.–21.09): (1) Brunaholf@brunaholf.is og bokhald@brunaholf.is eru EKKI tengd sem Gmail-aukareikningar (koma um IMAP/mbox → engin Gmail-merki, ↻ nær ekki í þau); tenging: brunaholf.netlify.app/api/google-auth?account=Brunaholf%40brunaholf.is skráður inn SEM það netfang — Agnar 21.09 „Næ ekki að tengjast brunaholf auth. Svo byrjum bara á eldklar" → OPIÐ. (2) Svar úr Reikningsbeiðnum fór úr RÖNGU hólfi: pbMal() í 368 afritaði ekki account, sjálfgefið reikningar@ (ótengt) → svar fer úr hólfinu sem fékk póstinn; sást aðeins í viðmótinu („Sent frá"), ekki í API-prófi. (3) Haiku skrifaði ósendanlegt íslenskt svardrög („Við bídlum þinna svarboða") → Sonnet 5 fyrir svardrög; content[0].text er ekki alltaf textinn. (4) Þögult innsog 19.09 (automation_runs „ok · 11 upserted" við 403 — „Þetta má aldrei gerast"): vörðurinn ber saman ÞRJÁR hliðar sömu pípu (Gmail vs DB vs það sem appið SÉR), ekki tímaþröskuld (lengsta eðlilega þögn 65 klst).
+- **23.10.2026** — `eldklar-postur` sameinaður sem kaflinn „Póstur → punktar“ (mál #1239). Engin virkni breyttist.

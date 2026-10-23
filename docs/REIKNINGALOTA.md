@@ -11,7 +11,7 @@
 >
 > **Agentinn sem á þetta skjal: `rukkari` 🦆** (`.claude/agents/rukkari.md`, spegill í
 > slokkvitaeki) — kallaðu á hann og hann gerir kafla 1 sjálfur, kallar á bokari /
-> sala-reikningar / eldklar-postur og heldur utan um lotuna.
+> sala-reikningar (póstvörðurinn er kafli í rukkari.md) og heldur utan um lotuna.
 
 ---
 
@@ -127,7 +127,7 @@ vistuð á drögunum svo endurprentun stemmi á öllum tækjum. Sértaxtar (t.d.
   í stað þess að treysta samantektinni. brunaholf-pósturinn býr í **Outlook**, ekki Gmail.
 - Tengingastrimillinn efst í Drög-stöðinni sýnir þetta sama — rautt = ótengt/gamalt.
 - **Póstvörður Eldklárs** („✉ Sækja úr pósti" í Drög-stöðinni = `POST /api/postur-punktar {action:'skra'}`,
-  agent `eldklar-postur`): les AÐEINS eldklar@eldklar.is, síðustu 14 daga, INBOX; lykilorð + kt-mátun
+  kafli „Póstur → punktar“ í rukkari.md, áður agent `eldklar-postur`): les AÐEINS eldklar@eldklar.is, síðustu 14 daga, INBOX; lykilorð + kt-mátun
   við `fyrirtaeki`, ekkert AI; sami póstur verður aldrei tvisvar að punkti (`client_id = mail:<message_id>`).
 
 ---

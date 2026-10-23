@@ -86,9 +86,9 @@ fært, orðrétt. Hver þeirra hleðst AÐEINS þegar hann er kallaður til.
 | Að ALLAR tengingar/lyklar séu í lagi á Kerfisheilsu | `tengingar` | 😤 Samuel L. Jackson |
 | Dagleg yfirsýn + jarvis.html sjálf — svið, raddir, TTS, cache | `jarvis` | 🎩 Jarvis |
 | RLS, policies, lyklar/tokens, public buckets — öryggið | `oryggi` | 🔒 *(rödd óvalin)* |
-| Hype-yfirlitið — sigrarnir fyrst, svo það sem á að klára | `hype` | 🇺🇸 Trump |
+| Hype-yfirlitið — sigrarnir fyrst, svo það sem á að klára | `jarvis` (kafli „Svið yfirlit“) | 🇺🇸 Trump |
 | Staðreyndayfirferð — kerfið segir eitt, gögnin annað (factcheck_bord) | `natalie` | 🌸 Natalie |
-| Rukkunarmál beggja félaga — reikningalota, hvað er tilbúið að senda, punktar, póstur, tengingar; stjórnar bokari / sala-reikningar / eldklar-postur og les REIKNINGALOTA.md sjálfur | `rukkari` | 🦆 Jóakim aðalönd |
+| Rukkunarmál beggja félaga — reikningalota, hvað er tilbúið að senda, punktar, póstur, tengingar; stjórnar bokari / sala-reikningar (póstvörðurinn er kafli í rukkari.md) og les REIKNINGALOTA.md sjálfur | `rukkari` | 🦆 Jóakim aðalönd |
 
 **Notkun:** kallaðu á sérfræðinginn með Agent-tólinu (`subagent_type`), eða lestu skrána
 hans beint þegar þú þarft bara þekkinguna. **Ekki afrita innihald þeirra hingað** — ein
