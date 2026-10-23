@@ -1,6 +1,6 @@
 {
  "utgafa": 1,
- "nyjast": "2026-10-21",
+ "nyjast": "2026-10-22",
  "throskuldur": 6,
  "osnert_dagar": 30,
  "uppspretta": "slokkvitaeki/tools/audit-agentar.cjs --json",
@@ -27,10 +27,10 @@
    "slod": ".claude/agents/bord-flettur.md",
    "hud": null,
    "emoji": null,
-   "sidast": "2026-10-21",
-   "skrif": 35,
+   "sidast": "2026-10-22",
+   "skrif": 36,
    "gaetir": 35,
-   "breytt": 2,
+   "breytt": 3,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Flettur, borð og navigation — Verkborð, Bakendi, Bílstjóri, Aksturslisti, URL-routing (218), bakk-takkinn (3 patchar), app-síður (261). Notaðu þegar bætt er við"
@@ -60,7 +60,7 @@
    "sidast": "2026-10-16",
    "skrif": 19,
    "gaetir": 20,
-   "breytt": 2,
+   "breytt": 3,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Hönnuðurinn — lagfærir útlit, fínstillir farsímaskjái (mobile view) og hannar app-view/skjái. Notaðu þegar síða/flipi lítur illa út, brotnar eða er þröng á síma"
@@ -420,9 +420,9 @@
    "sidast": "2026-10-20",
    "skrif": 6,
    "gaetir": 17,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Layout, CSS and responsive rules specific to the Slokkvitaeki app. Use BEFORE writing any CSS, media query, or layout change in this repo - including mobile/des"
   },
   {
@@ -664,6 +664,21 @@
    "daudir": [],
    "merki": "🟢",
    "lysing": "Öryggisvörðurinn — RLS-staða, policies, lyklar/tokens, public buckets og hvað anon-lykillinn kemst í. Notaðu þegar spurt er hvort eitthvað sé opið/lekt, þegar k"
+  },
+  {
+   "nafn": "rambo",
+   "tegund": "agent",
+   "heim": "brunaholf",
+   "slod": ".claude/agents/rambo.md",
+   "hud": "Rambo",
+   "emoji": "🪖",
+   "sidast": "2026-10-22",
+   "skrif": 1,
+   "gaetir": 1,
+   "breytt": 0,
+   "daudir": [],
+   "merki": "🟢",
+   "lysing": "Hættuleit og forskoðun ÁÐUR en óafturkræf aðgerð er framkvæmd — eyðing, fjöldauppfærsla, sameining, krafa/reikningur sendur, migration, deploy á varða leið. Fin"
   },
   {
    "nafn": "rukkari",
