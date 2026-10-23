@@ -1,0 +1,3 @@
+# Línuskil (mál #1238, samþykkt 22.10.2026; Agnar bað um þetta 28.08.2026): öll textaskjöl geymd með LF í repóinu
+# á öllum vélum. Windows-vélarnar (core.autocrlf) sjá enga breytingu á vinnutrénu.
+* text=auto eol=lf
