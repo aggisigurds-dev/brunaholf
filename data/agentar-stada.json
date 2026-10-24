@@ -1,6 +1,6 @@
 {
  "utgafa": 1,
- "nyjast": "2026-10-22",
+ "nyjast": "2026-10-23",
  "throskuldur": 6,
  "osnert_dagar": 30,
  "uppspretta": "slokkvitaeki/tools/audit-agentar.cjs --json",
@@ -30,7 +30,7 @@
    "sidast": "2026-10-22",
    "skrif": 36,
    "gaetir": 35,
-   "breytt": 3,
+   "breytt": 4,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Flettur, borð og navigation — Verkborð, Bakendi, Bílstjóri, Aksturslisti, URL-routing (218), bakk-takkinn (3 patchar), app-síður (261). Notaðu þegar bætt er við"
@@ -60,7 +60,7 @@
    "sidast": "2026-10-16",
    "skrif": 19,
    "gaetir": 20,
-   "breytt": 3,
+   "breytt": 4,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Hönnuðurinn — lagfærir útlit, fínstillir farsímaskjái (mobile view) og hannar app-view/skjái. Notaðu þegar síða/flipi lítur illa út, brotnar eða er þröng á síma"
@@ -75,7 +75,7 @@
    "sidast": "2026-10-01",
    "skrif": 3,
    "gaetir": 6,
-   "breytt": 3,
+   "breytt": 4,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Kortin og geocode-kerfið — Leaflet, mapfix-merkin, Nominatim-proxyið, geocode_cache lögin þrjú og kill-dots sagan. Notaðu þegar pinnar vantar/eru rangir, geocod"
@@ -135,9 +135,9 @@
    "sidast": "2026-10-16",
    "skrif": 4,
    "gaetir": 11,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "QR-merkin og miðaprentunin — Brother PT-P750W, raðnúmerakerfið, QR-skanninn og allar prentleiðirnar. Notaðu þegar miði prentast vitlaust/lítill/óskannanlegur, þ"
   },
   {
@@ -165,7 +165,7 @@
    "sidast": "2026-10-16",
    "skrif": 14,
    "gaetir": 14,
-   "breytt": 3,
+   "breytt": 5,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Sala/POS, reikningagerð, dkPlus/Payday, afslættir, sjálfvirk PDF-vistun, reikninga-póstur og úttektartexti. Notaðu fyrir allt sem snýr að sölu, reikningum, verð"
@@ -177,12 +177,12 @@
    "slod": ".claude/agents/samthykktir.md",
    "hud": "Columbo",
    "emoji": "🕵️",
-   "sidast": "2026-10-16",
-   "skrif": 7,
+   "sidast": "2026-10-23",
+   "skrif": 8,
    "gaetir": 5,
-   "breytt": 2,
+   "breytt": 0,
    "daudir": [],
-   "merki": "🟡",
+   "merki": "🟢",
    "lysing": "Samþykktirnar — á öll svör Agnars á Þjónustuborðinu og vinnur úr þeim. Les biðröðina (svar:samthykkt / vinnsla / endurmeta), ENDURMÆLIR forsendur hvers máls áðu"
   },
   {
@@ -420,7 +420,7 @@
    "sidast": "2026-10-20",
    "skrif": 6,
    "gaetir": 17,
-   "breytt": 1,
+   "breytt": 2,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Layout, CSS and responsive rules specific to the Slokkvitaeki app. Use BEFORE writing any CSS, media query, or layout change in this repo - including mobile/des"
@@ -480,7 +480,7 @@
    "sidast": "2026-10-16",
    "skrif": 3,
    "gaetir": 3,
-   "breytt": 1,
+   "breytt": 2,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Hvernig Agnar sendir skill-agenta í villuleit sem er variant-alert — finna afrit af sama villumynstri (systkini-kt, röng join, falskt grænt) þvert á hubinn. Not"
@@ -499,21 +499,6 @@
    "daudir": [],
    "merki": "🟢",
    "lysing": "Reiknar út reikninga og upphæðir — taxtar, VSK, afslættir, NLSH-samningur, gata-uppgjör. Notaðu þegar á að verðleggja vinnu, útbúa efnislista, sannreyna reiknin"
-  },
-  {
-   "nafn": "eldklar-postur",
-   "tegund": "agent",
-   "heim": "brunaholf",
-   "slod": ".claude/agents/eldklar-postur.md",
-   "hud": "Póstvörður Eldklárs",
-   "emoji": "✉",
-   "sidast": "2026-10-16",
-   "skrif": 3,
-   "gaetir": 0,
-   "breytt": 0,
-   "daudir": [],
-   "merki": "🟢",
-   "lysing": "Póstvörður Eldklárs — sérstakur agent sem vaktar AÐEINS eldklar@eldklar.is (Slökkvitæki-hliðin) í email_digest, finnur pósta sem varða reikninga, kröfur, úttekt"
   },
   {
    "nafn": "framendi",
@@ -561,29 +546,14 @@
    "lysing": "Mælir og lagar hraða — hleðslutíma síðna, þung API-köll, bundle-stærðir, polling sem étur gagnagrunninn. Notaðu þegar eitthvað er hægt, „skrítið\", eða á að fara"
   },
   {
-   "nafn": "hype",
-   "tegund": "agent",
-   "heim": "brunaholf",
-   "slod": ".claude/agents/hype.md",
-   "hud": "Trump",
-   "emoji": "🇺🇸",
-   "sidast": "2026-10-16",
-   "skrif": 4,
-   "gaetir": 1,
-   "breytt": 0,
-   "daudir": [],
-   "merki": "🟢",
-   "lysing": "Hype-yfirlitið — dregur sigrana saman úr ALVÖRU tölum (útistandandi, kúnnafjöldi, fyrirtæki í þjónustu, kláruð verk) og segir hvað stendur út af, með krafti. No"
-  },
-  {
    "nafn": "jarvis",
    "tegund": "agent",
    "heim": "brunaholf",
    "slod": ".claude/agents/jarvis.md",
    "hud": "Jarvis",
    "emoji": "🎩",
-   "sidast": "2026-10-16",
-   "skrif": 7,
+   "sidast": "2026-10-23",
+   "skrif": 8,
    "gaetir": 7,
    "breytt": 0,
    "daudir": [],
@@ -687,12 +657,12 @@
    "slod": ".claude/agents/rukkari.md",
    "hud": "Jóakim aðalönd",
    "emoji": "🦆",
-   "sidast": "2026-10-16",
-   "skrif": 16,
+   "sidast": "2026-10-23",
+   "skrif": 17,
    "gaetir": 9,
-   "breytt": 1,
+   "breytt": 0,
    "daudir": [],
-   "merki": "🟡",
+   "merki": "🟢",
    "lysing": "Rukkarinn — EINN agent sem á öll rukkunarmál beggja félaga (Brunahólf + Slökkvitæki) svo Agnar þurfi aldrei að útskýra upp á nýtt. Les docs/REIKNINGALOTA.md sjá"
   },
   {
