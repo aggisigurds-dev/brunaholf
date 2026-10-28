@@ -1,7 +1,9 @@
 ---
 name: google-drive
-description: Company rules for the Google Drive connector at Slökkvitæki ehf / Brunahólf ehf — the canonical folder map, the úttektarskýrsla/reikningur/samningur filename conventions, the never-delete safety contract, and when to use the connector vs. the server-side /api/drive-* pipeline. Use whenever a task touches Drive files, folders, or document filing — searching for a customer's skýrsla or reikningur, checking what is in a master folder, renaming, moving, deduping, or linking a document to customer_documents.
+description: Company rules for the Google Drive connector at Slökkvitæki ehf / Brunahólf ehf — the canonical folder map, the úttektarskýrsla/reikningur/samningur filename conventions, the never-delete safety contract, and when to use the connector vs. the server-side /api/drive-* pipeline. Use whenever a task touches Drive files, folders, or document filing — searching for a customer's skýrsla or reikningur, checking what is in a master folder, renaming, moving, deduping, or linking a document to customer_documents. Kveikjuorð: Drive, Drive-mappa, skýrslumappa, endurnefna skjal, tvítök í möppunni, customer_documents, finna skýrslu, aldrei eyða.
 ---
+
+> Charlize: `select topic, fact from v_charlize_active where scope in ('brunaholf','slokkvitaeki','baedi') and topic in ('drive','skjol');` áður en þú breytir — tómt = óskráð. Lærdómur í lok lotu → skill `charlize`.
 
 # Google Drive — Slökkvitæki ehf / Brunahólf ehf
 

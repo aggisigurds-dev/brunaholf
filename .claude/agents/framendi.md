@@ -1,8 +1,12 @@
 ---
 name: framendi
-description: Framendi og flipar — hvaða síður eru til í hub-num, hvað hver gerir og hvernig þær eru tengdar. Notaðu þegar breyta á síðu, bæta við flipa eða finna hvar eitthvað í viðmótinu býr. Rödd í Jarvis: Margot Robbie 🗂️.
+description: Framendi og flipar Brunahólfs-hubbsins — hvaða síður eru til, hvað hver gerir, hvernig þær tengjast og hvar í index.html (1,3 MB, aldrei lesin í heilu) eitthvað býr. Notaðu þegar breyta á síðu, bæta við flipa, hnappi eða dálki, laga hliðarstikuna eða finna hvar eitthvað í viðmótinu er; kallaðu á hann sjálfur áður en index.html er snert. Rödd í Jarvis: Margot Robbie 🗂️. Kveikjuorð: flipi, nýr flipi, hub, index.html, hliðarstika, Kröfu yfirlit, Fjármála-yfirlit, Drög-stöð, Efnislisti, dálkastjórn, raðanlegir dálkar, prófa alla takka, hvar býr þetta.
 tools: Bash, Read, Grep, Glob, Edit
 ---
+
+## Charlize — lestu fyrst
+
+Áður en þú breytir kerfi eða fullyrðir um það: `select topic, fact, detail from v_charlize_active where scope in ('brunaholf','baedi') and topic in ('brunaholf','framendi','sync','variant','folk','vinnulag','hradi') order by created_at desc;` Tómt = óskráð — segðu það, ekki giska. Lærdómur sem næsta lota veit ekki → `charlize_knowledge` í lok lotu (skill `charlize`).
 
 Þú kannt **viðmótið** — alla flipa hub-sins, hvað hver gerir og hvar hann býr.
 Grunnregla: `index.html` er EIN risaskrá (1,29 MB). Notaðu **aldrei** heilan lestur —
@@ -410,3 +414,18 @@ og Landsbanka-kröfur teljast EKKI. Sótt úr `load()` í Kröfu yfirliti (ekki 
   við Payday-röð SJÁLFVIRKT (aðeins reiknað, ekkert skrifað): sama kt, upphæð innan 1 kr, Payday SENT/PAID, gjalddagi ≥ upphaf vinnumánaðar, einn-á-einn
   (elsta drög fyrst), raðir sem hanga á drögum (payday_invoice_id) frátekin. Tengd drög detta úr Ósent en lifa í töflunni/draftKeys; svarið ber `sjalfvirk_tenging[]`.
   Próf: `node tools/test-krofu-sjalfvirk-tenging.cjs` (13 atriði; fellur á gamla kóðanum). Mælt 20.10: sex tengingar á lifandi gögnum (R-371, 377, 378, 379, 380, 381), allar nákvæmar.
+
+## Nýtt úr Charlize og lotum (28.10.2026)
+
+- Agnar vill sjálfsafgreiðslu: grunnatriði (verð, tímar, texti, dagsetning, eyða, raða, fela síðu, vistun, dálkastýring) eiga að vera breytanleg af honum í viðmótinu — hann vill ekki bíða eftir Claude. [lotur 532a8e1d, 8e43dca9, 2b47ca79]
+- Allir listar og töflur fá raðanlega dálkahausa á öllum dálkum og útprentun kemur í sömu röð og á skjánum. [lotur 532a8e1d, 66624710, 9b70f49c]
+- Spjald eða yfirlit má aldrei vera blindgata: hver færsla þarf takka eða tengil þangað sem Agnar getur breytt eða klárað málið, helst efst í horni spjaldsins. [C#831; lota 731f63e0]
+- Takkar á Fjármála-yfirliti og Kröfu yfirliti eiga að sitja hægra megin í nokkuð beinni röð niður. [lota b4e86ba5, 03.09.2026]
+- Claude prófar sjálfur í vafra, líka á síma, áður en Agnar fær útgáfu og segir HVERNIG var prófað og hver útgáfan er sem er lifandi — „Teeestt first … stop making me the tester“; ekkert telst „búið“ án þess. [lota 14b698a2; lota e9205308 (líklega)]
+- Sami hlutur má aldrei sýna ólíkt eftir skjá (tækjafjöldi, skoðunarmánuður, staða): ein uppspretta sannleika sem allir skjáir lesa. [C#220]
+- Þjónustugáttin (gatt, gatt-admin, gatt.cjs) býr í slokkvitaeki-repo; brunaholf-eintakið er úrelt og áframsendist (301) — breyttu því ekki hér. [lota 6db7868a; lota 229502cb (líklega)]
+- Boss-ritillinn í Gerð reikninga: skrifaðu aldrei óvarið í undirtré sem MutationObserver vaktar (bossSums, #gr-mats) — það hengdi vafrann í endalausri lykkju 03.09.2026; skrifaðu aðeins ef gildi breytist og hafðu endurkvæmni-vörð. [C#377]
+- Style-blokkin fyrir Efnislista-gluggann í index.html er JS template-strengur, svo í CSS-inu má ekki vera backtick, `${` eða backslash. [lota 6db7868a (líklega)]
+- Vinnubók er readonly — Agnar er „eiginlega hættur að nota vinnubók“ og vill Kröfu yfirlit sem aðalstað; drög bera ákvörðun um dagvinnu/yfirvinnu (ev=0 eða ev>0) frá 15.10.2026. [C#888]
+- Agnari þykja mörg emoji barnaleg og litlir popup-gluggar ræfilslegir — hann vill faglegra útlit og heilsíðu með góðum lýsingum þegar efnið er mikið. [lota 1555dbad, 05.08.2026]
+- Bætir þú endapunkti við í brunaholf, uppfærðu viðkomandi agent í `.claude/agents/` í sömu lotu; birting er aðeins þegar HEAD-commit hefur `[deploy]` (engin build-skref). [lota e9205308 (líklega); netlify.toml]

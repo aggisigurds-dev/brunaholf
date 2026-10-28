@@ -7,7 +7,10 @@ description: >
   production. Covers the publish="." exposure gotcha and its redirect guards, how
   /api/* maps to functions, where secrets live, the huge-index.html rule, and how
   to revert. Use whenever committing/pushing/deploying the Brunahólf hub.
+  Kveikjuorð: deploy, merge, keyra deploy merge, ýta, git push, [deploy], backup fyrst, er deployið komið, revert.
 ---
+
+> Charlize: `select topic, fact from v_charlize_active where scope in ('brunaholf','baedi','kerfi') and topic in ('deploy','git');` áður en þú breytir — tómt = óskráð. Lærdómur í lok lotu → skill `charlize`.
 
 # Deploy — Brunahólf hub
 

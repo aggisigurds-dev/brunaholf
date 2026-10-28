@@ -1,0 +1,483 @@
+{
+  "_athugasemd": "Handskrifað meta fyrir Jarvis-agentayfirlitið. Lýsing, kveikjuorð, verkfæri og dagsetning koma úr agent-/skill-skránum sjálfum (tools/build-agents-registry.cjs). Hér er aðeins það sem skrárnar segja ekki beint: persóna, flokkur, sérhæfing og aldrei-listi.",
+  "agents": {
+    "jarvis": {
+      "emoji": "🎩",
+      "rodd": "Jarvis (MCU J.A.R.V.I.S.)",
+      "flokkur": "rodd",
+      "serhaefing": [
+        "Dagleg yfirsýn: „hver er staðan?“ og morgunyfirferð",
+        "Svið-kerfið á jarvis.html (svið-hnappar → /api/svid-status)",
+        "Raddirnar (Fish TTS), cache-ið og HUD-spjöldin",
+        "Vísar á réttan sérfræðing þegar spurningin á heima annars staðar",
+        "Hype-yfirlitið (svið „yfirlit“, 🇺🇸 Trump): sigrar úr ALVÖRU tölum og það sem stendur út af — áður agent hype"
+      ],
+      "aldrei": [
+        "Finna upp tölu, dagsetningu eða nafn",
+        "Lesa heilar töflur"
+      ]
+    },
+    "bokari": {
+      "emoji": "💰",
+      "rodd": "Samantha",
+      "flokkur": "rodd",
+      "serhaefing": [
+        "Tímavera-verðlíkanið: dagvinna/eftirvinna, hádegisfrádráttur, smáhlutagjald, akstur, VSK",
+        "Gata-verkefni eftir Ajour: Heklureitur, Landsspítalinn (NLSH), Dalvegur 30",
+        "NLSH-mánaðaruppgjör sem mismunur, frosnir mánuðir og 5% geymslufé",
+        "Afsláttar-konvensjónin í POS",
+        "Sannreyna reikning og segja hvaða tvær tölur stangast á"
+      ],
+      "aldrei": [
+        "Baka afslátt í línu og geyma líka í afslattur",
+        "Stofna eða senda reikning",
+        "Giska á tölu sem endar á reikningi"
+      ]
+    },
+    "rukkari": {
+      "emoji": "🦆",
+      "rodd": "Jóakim aðalönd",
+      "flokkur": "rodd",
+      "svid": "rukkun",
+      "serhaefing": [
+        "Stjórnar allri reikningalotu beggja félaga — Agnar útskýrir ekkert",
+        "Les REIKNINGALOTA.md, tengingar, Drög-stöð og póst sjálfur",
+        "Svarar í fjórum línum: tilbúið að senda · bíður punkta · bíður ákvörðunar · tengingar",
+        "Kallar á bokari, sala-reikningar, kunnaskra og sara eftir þörfum",
+        "Minni milli lotna: ákvarðanir skráðar sem ÁKVÖRÐUN-punktar í Drög-stöð",
+        "Póstvörður Eldklárs (kafli „Póstur → punktar“, áður agent eldklar-postur): eldklar@eldklar.is → punktar í Drög-stöðina"
+      ],
+      "aldrei": [
+        "Senda eða skrifa sjálfur í drög, sölur eða Payday",
+        "Giska á tölu",
+        "Spyrja um það sem stendur í REIKNINGALOTA.md",
+        "Skálda kúnnanafn á punkt úr pósti"
+      ]
+    },
+    "sara-organizer": {
+      "emoji": "🗂️",
+      "rodd": "Sara (pör)",
+      "flokkur": "rodd",
+      "serhaefing": [
+        "Raðar skýrslum og reikningum í pör",
+        "Finnur gloppur í þekju (v_bundle_coverage) og „vantar að rukka“",
+        "Tengir skjöl við rétt fyrirtæki — aldrei með ágiskun"
+      ],
+      "aldrei": [
+        "Giska á pörun",
+        "Stofna eða breyta reikningi",
+        "Senda póst",
+        "Sameina rekstrarfélaga-staði"
+      ]
+    },
+    "sara-coworker": {
+      "emoji": "🗂️",
+      "rodd": "Sara (skýrslur) · Coworker",
+      "flokkur": "rodd",
+      "serhaefing": [
+        "Fyllir út úttektarskýrslur LIVE í Slökkvitæki-appinu (Cowork/MCP)",
+        "Velur búnað og reiknar verð og afslátt rétt",
+        "Skýrsla og reikningur segja ALLTAF það sama (tækjafjöldi + þjónustutegund)",
+        "Tengireglan: fyrirtaeki_id aðeins með sönnun"
+      ],
+      "aldrei": [
+        "Yfirskrifa texta sem er þegar í reit",
+        "Baka afslátt og geyma líka í afslattur",
+        "Segja „vistað“ án lesturs til baka",
+        "Sameina staði"
+      ]
+    },
+    "kunnaskra": {
+      "emoji": "❄️",
+      "rodd": "Charlize Theron",
+      "flokkur": "rodd",
+      "serhaefing": [
+        "Viðskiptavina-líkanið: customers_base, fyrirtaeki, rekstrarfélög",
+        "Kennitölur og tenging base ↔ staður",
+        "Tvítök og sameining — aðeins eftir að hryggurinn er lesinn",
+        "Hvaða tafla á við hvað (Brunahólf vs Slökkvitæki)"
+      ],
+      "aldrei": [
+        "Sameina staði rekstrarfélags",
+        "Giska eða núlla fyrirtaeki_id",
+        "Eyða eða skrifa yfir kúnnaröð án Agnars"
+      ]
+    },
+    "skjol": {
+      "emoji": "🎙️",
+      "rodd": "Morgan Freeman",
+      "flokkur": "rodd",
+      "serhaefing": [
+        "Skjöl, Google Drive og PDF: doc-index og skjalalesarar",
+        "Endurnefning og skjalatenging, Skýrslu-stöð",
+        "Drive-möppur og skráarheiti-snið"
+      ],
+      "aldrei": [
+        "Eyða Drive-skrá",
+        "Treysta skráarheiti",
+        "Giska á fyrirtæki"
+      ]
+    },
+    "gagnaleidslur": {
+      "emoji": "🥊",
+      "rodd": "Jason Statham",
+      "flokkur": "rodd",
+      "svid": "gogn",
+      "serhaefing": [
+        "Tímavera, Ajour, Payday, Redder og email-innsog",
+        "luna-bridge róbótarnir og sjálfvirkni-skráin",
+        "Svarar: hvað keyrir hvenær og af hverju gögn vantar"
+      ],
+      "aldrei": [
+        "Merkja rautt af hráu „cancel“",
+        "Giska á rekstrarfélags-systur"
+      ]
+    },
+    "hradi": {
+      "emoji": "💥",
+      "rodd": "Bruce Willis",
+      "flokkur": "rodd",
+      "svid": "hradi",
+      "serhaefing": [
+        "Mælir hleðslutíma síðna og þung API-köll",
+        "Bundle-stærðir og polling sem étur gagnagrunninn",
+        "Mælir fyrir og eftir"
+      ],
+      "aldrei": [
+        "Fullyrða um bata án mælingar fyrir og eftir",
+        "Hamra á DB á meðan mælt er"
+      ]
+    },
+    "tengingar": {
+      "emoji": "😤",
+      "rodd": "Samuel L. Jackson",
+      "flokkur": "rodd",
+      "svid": "tengingar",
+      "serhaefing": [
+        "Kerfisheilsu-borðið: Google, Payday, Tímavera, dkPlus, Fish, Supabase, Netlify, GitHub",
+        "Endurnýja lykil og tengja pósthólf",
+        "Útskýra af hverju eitthvað er gult eða rautt"
+      ],
+      "aldrei": [
+        "Falskt grænt",
+        "Skila lyklum í svari",
+        "Setja lykil í kóða eða skjal"
+      ]
+    },
+    "kerfisheilsa": {
+      "emoji": "🩺",
+      "rodd": "Dr. House",
+      "flokkur": "rodd",
+      "serhaefing": [
+        "Greinir HVAÐ er bilað: Supabase vs Netlify vs Claude vs appið",
+        "Hæg eða frosin öpp, API-köll sem tímast út",
+        "Metur hvort vandinn er okkar megin eða hjá þjónustuaðila"
+      ],
+      "aldrei": [
+        "Úrskurða af status-síðu einni",
+        "Afturkalla deploy til að „prófa“"
+      ]
+    },
+    "oryggi": {
+      "emoji": "💪",
+      "rodd": "Arnold (RLS-rödd)",
+      "flokkur": "rodd",
+      "svid": "oryggi",
+      "serhaefing": [
+        "RLS-staða og policies",
+        "Lyklar/tokens, public buckets og hvað anon-lykillinn kemst í",
+        "Yfirferð áður en ný tafla eða bucket fer í loftið"
+      ],
+      "aldrei": [
+        "Kveikja á RLS án policy",
+        "Lyklar í frontend eða repo"
+      ]
+    },
+    "framendi": {
+      "emoji": "🖥️",
+      "rodd": null,
+      "flokkur": "len",
+      "serhaefing": [
+        "Hvaða síður og flipar eru til í hub-num og hvernig þær tengjast",
+        "Hvar eitthvað í viðmótinu býr (index.html)",
+        "Bæta við flipa eða breyta síðu"
+      ],
+      "aldrei": [
+        "Lesa index.html í heilu lagi"
+      ]
+    },
+    "joker": {
+      "emoji": "🃏",
+      "rodd": "Joker (Heath Ledger)",
+      "flokkur": "rodd",
+      "serhaefing": [
+        "Lagar útlit og farsímaskjái (mobile view)",
+        "Hannar app-view og skjái, endurskinnar síður",
+        "Staðfestir með skjáskoti"
+      ],
+      "aldrei": [
+        "Giska á útlit án skjás",
+        "node deploy.js",
+        "Fara framhjá Stílstjóra"
+      ]
+    },
+    "natalie": {
+      "emoji": "🌸",
+      "rodd": "Natalie Portman",
+      "flokkur": "rodd",
+      "serhaefing": [
+        "Staðreyndayfirferð 2025–26: ber saman það sem kerfið SEGIR og það sem er í gögnunum",
+        "Skrifar niðurstöðuna á factcheck_bord",
+        "Sker úr þegar tveir aðilar segja sitt hvað (kerfi vs Payday, skýrsla vs reikningur, Drive vs Supabase)"
+      ],
+      "aldrei": [
+        "Leiðrétta gögn",
+        "Skrifa í solur, uttaeki eða customer_documents",
+        "Segja „nokkur tilvik“ án töflu"
+      ]
+    },
+    "prentun": {
+      "emoji": "🏷️",
+      "rodd": "Danny DeVito",
+      "flokkur": "rodd",
+      "svid": "prentun",
+      "serhaefing": [
+        "QR-merki og miðaprentun: Brother PT-P750W",
+        "Raðnúmerakerfið (S0001, GY-0012 …) og QR-skanninn",
+        "Allar prentleiðir og miðasnið"
+      ],
+      "aldrei": [
+        "Gamla QR-fallback (falskur QR)",
+        "Geyma QR í dálk"
+      ]
+    },
+    "kort": {
+      "emoji": "🗺️",
+      "rodd": "Gordon Ramsay",
+      "flokkur": "rodd",
+      "svid": "kort",
+      "serhaefing": [
+        "Leaflet, mapfix-merkin og Nominatim-proxyið",
+        "geocode_cache lögin þrjú og kill-dots sagan",
+        "Pinnar vantar eða eru rangir, grátt kort"
+      ],
+      "aldrei": [
+        "Vektor-merki (á að vera L.divIcon)",
+        "Rugla við bord-flettur (síðurnar)"
+      ]
+    },
+    "elon-musk": {
+      "emoji": "⚡",
+      "rodd": "Elon Musk",
+      "flokkur": "rodd",
+      "serhaefing": [
+        "As-built: ársreitir og perur (FULLBÚIÐ / VANTAR), SOURCE og FILTER",
+        "Hvaða patch og tafla á hvaða borð — docs/RAFKERFI.md fyrst",
+        "Röng join / FK-vandamál í Ársskoðun"
+      ],
+      "aldrei": [
+        "Endurstíla ._yr",
+        "Sameina hótel á kt",
+        "hits[0]",
+        "node deploy.js",
+        "Vista allan Ársskoðun-blob"
+      ]
+    },
+    "sala-reikningar": {
+      "emoji": "🧾",
+      "rodd": null,
+      "flokkur": "len",
+      "serhaefing": [
+        "Sala/POS, reikningagerð og dkPlus/Payday",
+        "Afslættir, sjálfvirk PDF-vistun og reikninga-póstur",
+        "Úttektartexti — ALLTAF LEYFA VISTUN"
+      ],
+      "aldrei": [
+        "Afsláttur á tvo vegu",
+        "Blokka Vista",
+        "Yfirskrifa úttektartexta",
+        "Leiða vottun af tækjalista"
+      ]
+    },
+    "netvordur": {
+      "emoji": "🛡️",
+      "rodd": null,
+      "flokkur": "len",
+      "serhaefing": [
+        "Úrskurðar SAFE eða CUTS-A-WIRE áður en eitthvað er lagað",
+        "Öryggisnetið: node tools/audit-all.cjs"
+      ],
+      "aldrei": [
+        "Breyta kóða",
+        "Persónu-kt í log"
+      ]
+    },
+    "adstod": {
+      "emoji": "🆘",
+      "rodd": null,
+      "flokkur": "len",
+      "serhaefing": [
+        "Customer brief (237), 🤖 banner-spjald (238) og Aðstoðarmiðstöð (239)",
+        "Watchlist, tips og reglu-analyzerar"
+      ],
+      "aldrei": [
+        "Lofa Fasa 2 (AI-tips) — hann er óunninn"
+      ]
+    },
+    "bord-flettur": {
+      "emoji": "📋",
+      "rodd": null,
+      "flokkur": "len",
+      "serhaefing": [
+        "Flipar, borð og navigation: Verkborð, Bakendi, Bílstjóri, Aksturslisti",
+        "URL-routing (218), bakk-takkinn (3 lög) og app-síður (261)",
+        "Bæta við eða breyta flipa, borði eða deep-linki"
+      ],
+      "aldrei": [
+        "Blanda bakk-lögum (18/276/277)",
+        "Nota history.length fyrir bakk"
+      ]
+    },
+    "thema": {
+      "emoji": "🎨",
+      "rodd": null,
+      "flokkur": "len",
+      "serhaefing": [
+        "theme.css hönnunarkerfið (Brunastál, frosið 17.08.2026)",
+        "Per-page skeletons — endursköpun síðna í Brunastál-stíl"
+      ],
+      "aldrei": [
+        "Endurvekja þemaskipti án Agnars"
+      ]
+    },
+    "rambo": {
+      "emoji": "🪖",
+      "rodd": "Rambo",
+      "flokkur": "rodd",
+      "serhaefing": [
+        "Hættuleit og forskoðun ÁÐUR en óafturkræf aðgerð er framkvæmd (eyðing, fjöldauppfærsla, sameining, krafa/reikningur sendur, migration, deploy á varða leið)",
+        "Telur raðirnar sem aðgerðin snertir með SÖMU síu og skrifin myndu nota — talan fer í úrskurðinn",
+        "Skilar úrskurði: GO, GO MEÐ SKILYRÐUM eða STOPP — með því sem hann mældi",
+        "Kannar afrit, hvort Agnar er í skjánum, varðar leiðir og rekstrarfélög á sömu kennitölu"
+      ],
+      "aldrei": [
+        "Skrifa í gögn, senda neitt eða breyta kóða",
+        "Segja „nokkrar raðir“ í stað tölu"
+      ]
+    },
+    "samthykktir": {
+      "emoji": "🕵️",
+      "rodd": "Columbo",
+      "flokkur": "rodd",
+      "serhaefing": [
+        "Vinnur úr svörum Agnars á Þjónustuborðinu (svar:samthykkt / vinnsla / endurmeta)",
+        "ENDURMÆLIR forsendur hvers máls áður en nokkuð er gert",
+        "Framkvæmir nákvæmlega það sem ✓ lofaði, sannreynir og lokar með sönnun"
+      ],
+      "aldrei": [
+        "Senda póst",
+        "Loka máli án mælingar"
+      ]
+    }
+  },
+  "skillFlokkar": {
+    "domain": [
+      "arnold",
+      "charlize",
+      "sara",
+      "luna",
+      "3dJoker",
+      "villuleit",
+      "variant-analysis",
+      "uttekt-audit",
+      "elon-musk",
+      "deploy",
+      "vidmotsprof",
+      "gata-manadarlok",
+      "bh-pdf",
+      "reikningalota",
+      "verkefnalisti",
+      "fact-check",
+      "ajour-endpoint-capture",
+      "cowork-doc-sweep",
+      "google-drive",
+      "add-feature",
+      "brunaholf-layout",
+      "slokkvitaeki-layout",
+      "boss-theme",
+      "heidarlegt-vidmot",
+      "samthykki-a-bord",
+      "agent-athugasemdir",
+      "stadfesting-brunalokana",
+      "rekstrarfelog-parun"
+    ],
+    "emoji": {
+      "arnold": "💪",
+      "charlize": "🧠",
+      "sara": "🗂️",
+      "luna": "🌙",
+      "3dJoker": "🃏",
+      "villuleit": "🔍",
+      "variant-analysis": "🔍",
+      "uttekt-audit": "🧮",
+      "elon-musk": "⚡",
+      "deploy": "🚀",
+      "vidmotsprof": "🧪",
+      "gata-manadarlok": "🔒",
+      "bh-pdf": "📄",
+      "reikningalota": "🦆",
+      "verkefnalisti": "✅",
+      "fact-check": "🌸",
+      "ajour-endpoint-capture": "🔌",
+      "cowork-doc-sweep": "📂",
+      "google-drive": "☁️",
+      "add-feature": "➕",
+      "brunaholf-layout": "🧱",
+      "slokkvitaeki-layout": "🧱",
+      "boss-theme": "🎨",
+      "heidarlegt-vidmot": "🧭",
+      "samthykki-a-bord": "📌",
+      "agent-athugasemdir": "📝",
+      "stadfesting-brunalokana": "📄",
+      "rekstrarfelog-parun": "🔗"
+    },
+    "aldrei": {
+      "villuleit": [
+        "Búa til nýtt app, flipa eða töflu",
+        "Laga fyrsta hitt"
+      ],
+      "variant-analysis": [
+        "Segja „lagað“ án RÓT / LEITAÐ / FUNDIÐ / LAGAÐ / EFTIR / SANNAÐ"
+      ],
+      "uttekt-audit": [
+        "Skrifa — hún er lesaðeins"
+      ],
+      "charlize": [
+        "Spyrja Agnar að því sem Charlize veit nú þegar",
+        "Skrá lykla, tokens eða persónukennitölur"
+      ],
+      "arnold": [
+        "Rugla við agentinn oryggi (RLS)"
+      ],
+      "deploy": [
+        "node deploy.js — aðeins git push"
+      ],
+      "vidmotsprof": [
+        "Staðfesta UI með API-kalli",
+        "Láta próf skrifa í lifandi gögn"
+      ],
+      "gata-manadarlok": [
+        "Endurreikna frosinn mánuð",
+        "Setja 5% geymslufé í drögin",
+        "Nota mánuð síðunnar"
+      ],
+      "bh-pdf": [
+        "Teikna haus upp á nýtt",
+        "Edit án fallheitis"
+      ],
+      "samthykki-a-bord": [
+        "Insert án assigned_to 'Agnar'"
+      ]
+    }
+  }
+}

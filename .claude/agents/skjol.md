@@ -1,6 +1,6 @@
 ---
 name: skjol
-description: Skjöl, Google Drive og PDF — doc-index, skjalalesarar, endurnefning, Skýrslu-stöð, Drive-möppur og skjalatenging. Notaðu fyrir allt sem snýr að skjölum, PDF-lestri, Drive eða skráarheitum. Rödd í Jarvis: Morgan Freeman 🎙️.
+description: Skjöl, Google Drive og PDF — doc-index, skjalalesarar, endurnefning, Skýrslu-stöð, Drive-möppur og skjalatenging við fyrirtæki. Notaðu fyrir allt sem snýr að skjölum, PDF-lestri, Drive eða skráarheitum; kallaðu á hann sjálfur, án þess að Agnar nefni hann, þegar skjal á að tengjast fyrirtæki, reikningur finnst ekki, tvítök eða dauðir hlekkir birtast eða skráarheiti þarf að treysta. Rödd í Jarvis: Morgan Freeman 🎙️. Kveikjuorð: Drive, PDF, skjal, skýrslumappa, tvítök í möppu, gömul eintök, endurnefna, dauður hlekkur, customer_documents, doc-index, Skýrslu-stöð, skráarheiti.
 tools: Bash, Read, Grep, Glob, mcp__supabase__execute_sql
 ---
 
@@ -8,6 +8,9 @@ tools: Bash, Read, Grep, Glob, mcp__supabase__execute_sql
 nafnavenjur. Grunnreglan: **skráarheiti er ekki sannleikur** — fyrri endurnefning
 brenglaði um þriðjung heitanna, svo staðfestu alltaf innihald skjalsins sjálfs áður en
 þú tengir það við fyrirtæki eða ár.
+
+## Charlize — lestu fyrst
+Áður en þú tengir skjal, endurnefnir eða treystir skráarheiti: `select topic, fact, detail from v_charlize_active where scope in ('brunaholf','slokkvitaeki','baedi','kerfi') and topic in ('skjol','document_pairs','drive','skyrslur','factcheck') order by created_at desc;` Tómt = óskráð — segðu það, ekki giska. Lærdómur sem næsta lota veit ekki → `charlize_knowledge` í lok lotu (skill `charlize`).
 
 ---
 
@@ -826,3 +829,18 @@ tengdir í `customer_documents` (Drive) og vistar í `reikningslestur` (haus + `
 ## Lærdómur
 
 - **16.10.2026** — Uppgjör lota 16.10.2026: (1) Center hótelin (192–201 nema 194) fengu 09.10 í „📎 Önnur viðhengi" skjölin „Reykskynjarar á teikningum - samantekt brunakerfi.pdf" + „Brunakerfisteikningar - <hús>.pdf" (143 blöð með hlekkjum á Skjalasafn/TurboPaint-skoðun/Greiningu; 1486 Midtown og 1612 Fiskislóð aðeins hið síðara) — vistuð ÁN doc_type/árs og með skráarnöfnum sem forðast orðin skýrsla/reikningur svo þau lendi ekki í skýrslu-/reikningsreitum; PDF-hlekkir í forskoðunarglugga fara með allan flipann á Skjalasafnið (Ctrl+smellur/⬇ Sækja). (2) 38 reikningsskjöl frá 18.07.2026 eru sjálfgerðar mPDF-eftirmyndir cowork-backfill/payday-backfill/stolpi án Drive-frumrits (JDÓ R-000531 eitt þeirra); 39 af 42 eiga Payday-færslu → frumrit sækjanleg um payday-push; S-1077xx (3) Stólpi. Drive vs Supabase 30.09: 3.905 skjöl, 189 ENGIN skrá (179 úttektarskýrslur) — flokkun bíður (Charlize #870). (3) Þjónustusamningur á prófíl fer á samningskort 🧯 (handslökkvitæki/reykskynjari/slöngur eða ekkert hak) og 🔥 (Brunaviðvörunarkerfi/Slökkvikerfi), pörun við NAFN staðar — kt dugar aðeins ef enginn annar staður deilir henni; thjonustusamningar.company_id-gatið (24 af 53) lagað 25.09 (Charlize #878). (4) Við rangstaðsett skjal ræður PDF-HAUSINN, ekki skráarnafnið (Colas „Gullhella"-skráin var Álfhellu-skýrsla, #1191 09.10).
+
+## Nýtt úr Charlize og lotum (28.10.2026)
+
+- Röð í `customer_documents` án `drive_file_id` OG án `storage_path` er EKKI skjal — hún er bara númer og telst aldrei með sem „reikningur tengdur“. [C#70]
+- `customer_documents.invoice_number` er EKKI einkvæmt milli félaga — uppfletting á viðhengi eftir númeri einu getur sent PDF annars fyrirtækis. [C#90]
+- SAFNSKJÖL eru til í Drive: ein PDF með öllum reikningum ársins fyrir eitt félag — `invoice_number` og `amount` á röðinni eru þá tekin úr sitt hvorum reikningnum og bæði röng. [C#155]
+- `is_duplicate`/`dup_of` er ekki traust: getur verið hringtengt, hefur verið sett á nafn félags (ekki stað og ár) og falið raunverulegar skýrslur, og `dup_of` var tillögu-reitur eldri pörunarkeyrslu (33 raðir með `dup_of` en `is_duplicate=false`). [C#148, C#157, C#168]
+- Brunakerfisreikningar bera vörunúmer 315/320 (og oft 300); merktu `customer_documents.vidskiptategund=brunakerfi`, aldrei `doc_type=brunakerfi` á reikningi — allir reikningar halda `doc_type=reikningur`. [C#227]
+- Haus úttektarskýrslu getur verið rangur (sniðmát afritað milli viðskiptavina) og Drive-tólið endurnefndi afrit eftir hausnum; tengdu aldrei skjal eftir möppu-id án þess að bera nafn og kt saman. [C#541, C#539]
+- `customer_documents.notes` geymir oft innsogs-STIMPIL (drive-multitool, doc-index, fasi0, „Sjálfvirkt úr appi“) í stað skráarheitis — UI sem birtir `notes` sem nafn þarf stimpil-vörn. [C#62]
+- Ártalslausar skrár í Úttektarskýrslu-möppunni eru nú aðeins skannaðar myndir án textalags — undirstriks-orsökin var löguð í lesaranum og hitt leyst með PDF-textalestri (`skyrslu-ar`). [C#66]
+- 17 skjöl í `customer_documents` eru kreditnótur skráðar undir númeri frumritsins — rétta númerið er í `reikningslestur_skjol.pdf_nr`. [C#555]
+- 38 reikningsskjöl (cowork-backfill, cowork-payday-backfill, cowork-stolpi, 18.07.2026) eru sjálfgerðar mPDF-eftirmyndir án Drive-frumrits; frumritið er sótt um Payday-push. [C#877]
+- Drive-möppu skýrslna má hvorki endurnefna né eyða sjálfvirkt (Agnar 07.08: tveggja mánaða barátta við afrit); nöfn fylgja röðinni fyrirtæki, staðsetning, kennitala, ár, mánuður. [lota 1555dbad]
+- Röð fyrir brunakerfisskýrslur í Drive (Agnar 20.07): færa allt í eina möppu → eyða 100% samnefndum afritum → lesari endurnefnir hverja skrá í ströngu sniði → eyða afritum aftur → tengja við prófíl; lesarinn á líka að ná netfangi, síma og tengilið. [lota 9b70f49c]

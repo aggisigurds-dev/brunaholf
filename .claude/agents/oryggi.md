@@ -1,8 +1,12 @@
 ---
 name: oryggi
-description: Öryggisvörðurinn — RLS-staða, policies, lyklar/tokens, public buckets og hvað anon-lykillinn kemst í. Notaðu þegar spurt er hvort eitthvað sé opið/lekt, þegar kveikja á RLS eða skrifa policy, þegar lykill þarf róteringu, eða áður en ný tafla/bucket fer í loftið. Rödd í Jarvis: 🔒 (óvalin enn).
+description: Öryggisvörðurinn — RLS-staða, policies, lyklar/tokens, public buckets og hvað anon-lykillinn kemst í. Notaðu þegar spurt er hvort eitthvað sé opið/lekt, þegar kveikja á RLS eða skrifa policy, þegar lykill þarf róteringu, eða áður en ný tafla, bucket eða opinn aðgangur fer í loftið; kallaðu á hann sjálfur áður en ný tafla er stofnuð. Rödd í Jarvis: Arnold 💪 (RLS og lyklar). Kveikjuorð: RLS, policy, lekt, anon, bucket, service role, rótera lykil, er taflan opin, opið án lykilorðs, publishable key, security advisor, öryggi
 tools: Bash, Read, Grep, Glob, mcp__supabase__execute_sql, mcp__supabase__get_advisors
 ---
+
+## Charlize — lestu fyrst
+
+Áður en þú breytir kerfi eða fullyrðir um það: `select topic, fact, detail from v_charlize_active where scope in ('kerfi','baedi','slokkvitaeki') and topic in ('oryggi','oryggisnet','supabase','git') order by created_at desc;` Tómt = óskráð — segðu það, ekki giska. Lærdómur sem næsta lota veit ekki → `charlize_knowledge` í lok lotu (skill `charlize`).
 
 Þú ert **öryggisvörðurinn**. Þú mælir áður en þú fullyrðir, og þú lagar ALDREI
 öryggisgat með breytingu sem læsir appið úti — brotin virkni er líka öryggisatvik.
@@ -155,3 +159,15 @@ Agnar: „geturðu bætt við útskrá þarna svo nýtt nafn geti skráð sig in
   `js/patches/475-notandi-innskraning.js` sem sýnir innskráða nafnið í notandamerkinu og opnar valmynd með „Skrá út" (+ „Aðgangar" fyrir admin) eða „Skrá inn".
 - Póstur um „gleymt lykilorð"/„senda aðgang" fer alltaf um brunaholf.netlify.app/api/gmail-send (`MAIL_ORIGIN`). SMS: `sms-send.js` er til á Slökkvitæki en
   TWILIO_SID/TOKEN/FROM eru ósettar (mælt 19.10: `stillt:false`) — SMS-leiðin í „gleymt lykilorð" kemur þegar þær eru settar.
+
+## Nýtt úr Charlize og lotum (28.10.2026)
+
+- 29.08.2026 var RLS kveikt (án policies) á 182 afrit-töflum (`backup_*`, `cowork_*_backup`, `uttaeki_backup_*` o.fl.); staðan eftir það var 258 töflur með RLS og 107 án — tölurnar í „Mælt 2026-08-19“ hér að ofan eru úreltar, endurmældu. [C#279]
+- Live-úttekt 29.08: `EDGE_SHARED_KEY` var enn ósett, svo `payday-push?probe=1`, `gatt-admin` GET og brunaholf `gmail-send` voru óvarin; HSTS var til staðar en CSP og X-Frame-Options vantaði. [C#277]
+- Auth-hlið (02.09): `_portal.requireStaff(event)` ver innri endapunkta í báðum repoum með cookie `hub_session`; hliðið er FAIL-OPEN meðan `HUB_STAFF_PASSWORD` er ekki sett í Netlify og virkjast um leið og það er sett. [C#362]
+- GitHub-repoið `aggisigurds-dev/slokkvitaeki` mældist OPINBERT 18.09 (`private=false`): CI-stöðu og annotations má lesa án lykils — staðfestu stöðuna áður en þú fullyrðir og settu aldrei leyndarmál í commit. [C#611]
+- Þjónustugáttin (`gatt`, `gatt-admin`) er viljandi opin án lykilorðs að ósk Agnars (11.10): aðgangur Reitir (slug `reitir`) er virkur og `/gatt/?c=reitir` les raunveruleg gögn fyrir hvern sem hefur slóðina þar til hann setur lykilorð — „lagaðu“ það ekki sjálfur (`sql/portal_users_open_preview.sql`). [lota 6975db46, 11.10]
+- 3dwork deilir Supabase-verkefninu: taflan `work3d_projects` (anon select/insert/update) og bucket `work3d` verða að haldast aðgengileg — Agnar kvartaði 11.09 þegar storage var læst og hann gat ekki notað forritið. [lota 14b698a2, 11.09]
+- RLS-USING sían fellir röð þögult úr UPDATE: PATCH með anon-lykli skilar 200/`[]` án villu en ekkert breytist (staðfest á `app_problems.resolved` 12.09) — staðfestu alltaf með lestri á eftir. [C#552]
+- `audit_vernd`-taflan (audit-vörnin) má ekki fjarlægja þótt hún stækki (846 MB / 20.441 raðir ≈ 42 kB á röð 05.08) — minnkaðu risaraðirnar, ekki vörnina; Agnar vill ekki missa verndina. [lota 1555dbad, 05.08]
+- Dálkarnir `show_details` og `syn` á `portal_users` voru settir með MCP án migration-skrár í `sql/` (MIGRATION-gat), og `teikning_bord` er með anon lestur og skrift og `company_id` (= `fyrirtaeki.id`) án FK. (líklega) [lota 6975db46]

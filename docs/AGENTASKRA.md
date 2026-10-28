@@ -25,7 +25,7 @@ Teljarinn **153/187** (tilbúið-staða) er **óbreyttur**. Hann er ekki hluti a
 | Parent `.claude/agents` | ekki til | Rétt. Ekki búa til. |
 | Skill `hindra-kludur` / „hindra klúður" | **ekki á diski** | Leitað í öllum þremur repo. Næsta vörn: `villuleit` + `variant-analysis` + `netvordur`. |
 
-**23 einstök agent-nöfn** á diski (13 í brunaholf + 12 í slokkvitaeki; `joker` og `kunnaskra` eru í báðum sem sitthvor heimaskrá).
+**25 einstök agent-nöfn** á diski (15 skrár í brunaholf + 14 í slokkvitaeki = 29 skrár; `joker`, `kunnaskra`, `natalie` og `rukkari` eru í báðum sem sitthvor heimaskrá). Uppfært 28.10.2026.
 
 ---
 
@@ -125,6 +125,13 @@ Kjarni á líka `.claude/skills/` (viðskipta-afrit + hönnun). Þau eru ekki he
 Bæði slökkvitæki og brunahólf lesa sama Supabase `osfdzskyvisifcwyjkuk`.
 
 **Hvernig Agnar sendir:** opna rétt repo, líma eina línu úr [`TRIGGERS.md`](TRIGGERS.md), t.d. `villuleit: sama mynstur og Plaza`.
+
+## Sjálfvirk skrá, kveikjuorð og athugasemdir (28.10.2026)
+
+- **Kveikjuorð eru í `description:` hverrar agent-/skill-skrár** (síðasta setning: `Kveikjuorð: …`) — þar velur Claude agent. Lýsingar birtast í samhengi hverrar lotu: haltu þeim ≤ ~650 stafir. Kveikjur-dálkurinn í töflunni hér að ofan er frá 31.08; núverandi orð eru í sjálfvirku töflunni neðst í [`TRIGGERS.md`](TRIGGERS.md).
+- **Jarvis → Sérfræðingar:** spjaldið sjálft les lifandi stöðu (🟢🟡🔴⚪, skrif, síðast skrifað) úr `data/agentar-stada.json`, sem `slokkvitaeki/tools/audit-agentar.cjs --json` skrifar daglega. 📖 „Agentaskráin“ opnar glugga úr `js/agents-registry.js` (lýsing, kveikjuorð, „aldrei“, verkfæri, dagsetning úr git; smellur á röð í spjaldinu opnar hann líka) — hann býr `node tools/build-agents-registry.cjs` til úr `.claude/agents` + `.claude/skills` og `tools/agents-meta.json` (persóna, flokkur, sérhæfing). Keyrðu byggjarann eftir hverja breytingu á agent- eða skill-skrá (`SL_REPO=<slóð>` ef slökkvitækja-repóið er ekki systurmappa).
+- **Athugasemdir Agnars við agenta** (Jarvis → opna agent → „📝 Bæta við upplýsingum“) vistast í `agent_notes` (`/api/agent-notes`). Skill `agent-athugasemdir` lýsir hvernig þær eru teknar inn.
+- **Nýr lærdómur** fer í Charlize (`charlize_knowledge`); lotu-uppskera fer fyrst í `charlize_inbox` og Agnar hleypir inn með `charlize_approve(id)`.
 
 ## Tengt
 

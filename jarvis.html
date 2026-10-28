@@ -10,6 +10,10 @@
      sjálft inn á DOM-ready svo ein <script>-lína dugar. Slökkt með
      window.JARVIS_VOICE_NO_TESTER=true. -->
 <script defer src="/js/jarvis-voice.js?v=3"></script>
+<!-- Agentaskrá (28.10.2026): 📖-takki á Sérfræðingar-spjaldinu opnar glugga úr js/agents-registry.js (búið til af
+     tools/build-agents-registry.cjs úr .claude/agents + .claude/skills). Spjaldið sjálft (lifandi staða úr data/agentar-stada.json) er óbreytt. -->
+<script defer src="/js/agents-registry.js?v=20261028"></script>
+<script defer src="/js/agents-panel.js?v=20261028"></script>
 <!-- Útlit (Klassískt ↔ Ragnarök, Agnar 11.09.2026): eigindið á <html> er sett HÉR, áður en
      nokkuð málast, svo Ragnarök blikki ekki klassískt fyrst. Stillingin er á tækinu
      (localStorage jarvis_thema_v1), sameiginleg með Vélarrými; ?thema=ragnarok|klassiskt setur hana.

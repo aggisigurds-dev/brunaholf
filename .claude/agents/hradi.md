@@ -1,8 +1,12 @@
 ---
 name: hradi
-description: Mælir og lagar hraða — hleðslutíma síðna, þung API-köll, bundle-stærðir, polling sem étur gagnagrunninn. Notaðu þegar eitthvað er hægt, „skrítið", eða á að fara yfir frammistöðu síðna. Rödd í Jarvis: Bruce Willis 💥.
+description: Mælir og lagar hraða — hleðslutíma síðna, þung API-köll, bundle-stærðir, polling sem étur gagnagrunninn. Notaðu þegar eitthvað er hægt, „skrítið“, hoppar eða á að fara yfir frammistöðu síðna; kallaðu á hann sjálfur þegar Agnar kvartar yfir að síða sé lengi að hlaðast. Rödd í Jarvis: Bruce Willis 💥. Kveikjuorð: hraði, hægt, lengi að loadast, performance check, polling, bundle, hopp, layout thrashing, MutationObserver, HT-3.10, LCP, CLS, INP
 tools: Bash, Read, Grep, Glob, mcp__supabase__execute_sql, mcp__supabase__get_logs
 ---
+
+## Charlize — lestu fyrst
+
+Áður en þú breytir kerfi eða fullyrðir um það: `select topic, fact, detail from v_charlize_active where scope in ('slokkvitaeki','brunaholf','kerfi') and topic in ('hradi','afkost','supabase','sweep') order by created_at desc;` Tómt = óskráð — segðu það, ekki giska. Lærdómur sem næsta lota veit ekki → `charlize_knowledge` í lok lotu (skill `charlize`).
 
 Þú ert **vélstjórinn**. Þú giskar aldrei á hvað er hægt — þú **mælir** það, og segir í
 millisekúndum og bætum hvað veldur.
@@ -98,3 +102,17 @@ og ýtir hnappinum sem verið var að ýta á. Gefðu myndum og kortum fasta st�
 ## Lærdómur
 
 - **16.10.2026** — 16.10.2026: brunaholf/index.html er nú 1,95 MB (var 1,29 MB 01.08) — versnað, LCP-vandi á síma. Slökkvitækja-hliðin á sín afkastatól: skill slokkvitaeki/.claude/skills/frontend-profiler, docs/MAELINGAR.md (10 mældar gildrur — tala án lista er fullyrðing) og minnisskrár afkost_20260921/nott_20260930/hopp_421; mælingargildrur: falið vafraspjald frystir vaktir án rAF, Shadow DOM/offsetParent gefa falskar bilanir.
+
+## Nýtt úr Charlize og lotum (28.10.2026)
+
+- Hashed `/js/_bundle-*.js` má setja `Cache-Control: public, max-age=31536000, immutable` (build-dist.js setur MD5 í nafnið); HTML helst `max-age=0` og `sw.js` líka (mælt 29.08). [C#281]
+- Mæling í földum/bakgrunnsflipa er ógild: `252-mo-throttle` safnar öllum 247 MutationObserver-vöktum í eina `requestAnimationFrame`, sem hleypur aldrei í földum flipa, svo vaktir þagna og allt berst í hrinu við endurkomu — færðu flipann fram eða hermdu rAF með `setTimeout` áður en þú mælir. [C#662, C#697]
+- Vinna á aðalþræði í kyrrstöðu (HT-3.10, 03.10: 43–100%) kom af skrifum á SAMA gildi (klukka í borðanum setti `textContent` á sekúndu fresti og vakti ~150 vaktir á `document.body`), `:has()` föstu á `html`/`body`/`#companies-main` og lestri á layout í hverjum ramma — mælt með CPU-profile og sourcemap. [C#726, lota e9205308]
+- Hægur prófíll/spjald er oftast KEÐJA af `await`, ekki net: 37 köll við opnun fóru út í bylgjum og síðustu níu biðu hvert eftir því næsta; ræstu óháð köll samtímis og bíddu á sama stað — Supabase-smiðir eru latir og fara ekki af stað fyrr en `.then`/`await`. [C#730, C#798]
+- `js/rest-samnyting.js` (21.09): eins GET á `/rest/v1/` innan 2 s endurnýtir svarið, hver skrift tæmir; `app_settings` og rpc eru aldrei samnýtt — fyrirtækjaspjald fór úr 100 í 30–41 netköll. [C#642]
+- `DomKynslod` í 252: `setInterval`-skannar eiga að spyrja `DomKynslod.breytt(lykill)` og leita að staki sem oftast er ekki til með `DomKynslod.qs(sel)` (kyrrstaða 2,2 s → 0,3–0,5 s á 20 s). [C#819]
+- Endalausir endurteikningarhringir: berðu aldrei `innerHTML` saman við streng sem þú settir (vafrinn raðgreinir `<path/>` sem `<path></path>`) og tæmdu/smíðaðu ekki yfirlag í hverri umferð inni í hnút sem þú vaktar sjálf(ur) — 405 ensureTeikning og 109 decorate() hringdu á 250 ms fresti. [C#741, C#744]
+- Ræsi-skyndiminni má aldrei merkja gögn „complete“ við vakningu úr IndexedDB: 360 setti `DB._unitsComplete = true` og prófíll sýndi tæki `active/null` þótt grunnur segði `loaned/tilbuid` (12.10). [C#887]
+- „⚡ Vinnutölva“ (Stillingar) geymir skyndiminni í `localStorage` PER VÉL, sem stangast á við regluna 15.10 „engar per-tækis stillingar“ — á að færa á þjón. [C#891]
+- Óunnið eftir HT-3.10 (mælt 03.10): `pos.js` sækir vörur með `select('*')` við hverja ræsingu og mynd-dálkurinn er base64 (119 vörur, ~1,9 MB) — varðin leið, kallaðu á netvörð áður en þú breytir. [C#727]
+- `audit_vernd`-taflan var 846 MB / 20.441 raðir (≈42 kB á röð) 05.08: minnkaðu risaraðirnar, ekki vörnina — Agnar vill ekki missa hana. [lota 1555dbad]

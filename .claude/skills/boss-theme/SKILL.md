@@ -1,8 +1,10 @@
 ---
 name: boss-theme
-description: The Boss theme for Brunahólf / Slökkvitæki back-office pages — black steel chrome, cream paper surfaces, gold metal accents, Playfair titles, Plex Mono labels. Use whenever building or restyling a hub page, tab or modal in the Boss look. Contains tokens (colors, the four gold recipes, elevation objects, spacing, type), the .boss-* component classes, foundation cards and the reference Þjónustuborð screen. Mirrored in production as css/theme.css.
+description: The Boss theme for Brunahólf / Slökkvitæki back-office pages — black steel chrome, cream paper surfaces, gold metal accents, Playfair titles, Plex Mono labels. Use whenever building or restyling a hub page, tab or modal in the Boss look. Contains tokens (colors, the four gold recipes, elevation objects, spacing, type), the .boss-* component classes, foundation cards and the reference Þjónustuborð screen. Mirrored in production as css/theme.css. Kveikjuorð: Boss-þema, Boss-útlit, boss-*, gull og svart stál, skinna hub-síðu, modal í Boss, Þjónustuborð-útlit, theme.css.
 user-invocable: true
 ---
+
+> Charlize: `select topic, fact from v_charlize_active where scope in ('brunaholf','slokkvitaeki','baedi') and topic in ('thema','vidmot','ui');` áður en þú breytir — tómt = óskráð. Lærdómur í lok lotu → skill `charlize`.
 
 Read the readme.md within this skill, then `tokens/gold.css` and
 `tokens/elevation.css` — those two files are the theme. If creating visual

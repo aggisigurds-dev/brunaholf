@@ -7,7 +7,10 @@ description: >
   netlify function, GET returns JSON / POST writes, always CORS, paginate Supabase
   reads via the Range header). Use when adding a tab, an embedded page, or an /api
   endpoint to the hub.
+  Kveikjuorð: nýr flipi, bæta við flipa, ný síða í hub, nýtt API, nýtt endpoint, iframe-síða, renderXxx, add-feature.
 ---
+
+> Charlize: `select topic, fact from v_charlize_active where scope in ('brunaholf','baedi','kerfi') and topic in ('kerfi','bord');` áður en þú breytir — tómt = óskráð. Lærdómur í lok lotu → skill `charlize`.
 
 # Add a feature — Brunahólf hub
 

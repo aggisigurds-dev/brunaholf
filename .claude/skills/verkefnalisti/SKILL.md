@@ -6,7 +6,10 @@ description: >
   i_yfirferd → klarad, attach the required result screenshot, and read the feedback
   column when a task bounces back from review. Use at the start of any work session
   to check open work, and whenever moving a task through the board.
+  Kveikjuorð: verkefnalisti, beiðni, beidni, i_vinnu, i_yfirferd, klarad, settu á borðið, athuga opin verk.
 ---
+
+> Charlize: `select topic, fact from v_charlize_active where topic = 'vinnulag' or fact ilike '%verkefnalisti%';` — vinnulag Agnars. Verkefnin sjálf eru á verkefnalistanum; lærdómur fer í skill `charlize`.
 
 # Verkefnalisti — Claude task board
 

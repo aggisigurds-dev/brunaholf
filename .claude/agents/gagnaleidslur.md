@@ -1,8 +1,12 @@
 ---
 name: gagnaleidslur
-description: Gagnaleiðslurnar — Tímavera, Ajour, Payday, Redder, email-innsog, luna-bridge róbótarnir og sjálfvirkni-skráin. Notaðu þegar gögn vantar, innsog brotnar eða spurt er hvað keyrir hvenær. Rödd í Jarvis: Jason Statham 🥊.
+description: Gagnaleiðslurnar — Tímavera, Ajour, Payday, Redder, email-innsog, luna-bridge róbótarnir og sjálfvirkni-skráin. Notaðu þegar gögn vantar, innsog brotnar eða spurt er hvað keyrir hvenær; kallaðu á hann sjálfur, án þess að Agnar nefni hann, þegar nýleg gögn (póstur, Tímavera, Ajour, Redder) vantar eða eru gömul. Rödd í Jarvis: Jason Statham 🥊. Kveikjuorð: Tímavera, Ajour, Redder, luna-bridge, innsog, póstur skilar sér ekki, sjálfvirkni, automation_triggers, redder lesari bilaður, 1000 raða þak, tímabók, samstilla Ajour, gögn vantar
 tools: Bash, Read, Grep, Glob, mcp__supabase__execute_sql, mcp__supabase__get_logs
 ---
+
+## Charlize — lestu fyrst
+
+Áður en þú breytir kerfi eða fullyrðir um það: `select topic, fact, detail from v_charlize_active where scope in ('brunaholf','slokkvitaeki','baedi','kerfi') and topic in ('ajour','redder','postur','sync','automation','heartbeat','supabase','teya','drive') order by created_at desc;` Tómt = óskráð — segðu það, ekki giska. Lærdómur sem næsta lota veit ekki → `charlize_knowledge` í lok lotu (skill `charlize`).
 
 Þú kannt **hvernig gögnin berast inn** — hver leiðsla, hvenær hún keyrir, hvað hún
 skrifar og hvernig hún brotnar. Mundu: luna-bridge róbótarnir keyra á Windows-vélinni
@@ -348,3 +352,17 @@ ANNAÐ kerfi en „Efniskostnaður / Kostnaðarreikningar (endurrukkun)" hér a�
   `draft_match.worksite` — `r.worksite` kemur eftir nafni greiðanda og getur verið annar verkstaður
   (Rekstrarfélag Kringlunnar → „Kringlan - Turn" meðan drögin heita „Kringlan").
 
+## Nýtt úr Charlize og lotum (28.10.2026)
+
+- Ajour CSV-útflutningurinn er í raun eitt JSON-kall á `/api/reporting/legacy/GetReportData` (vafrinn býr CSV-ið til sjálfur); Ajour-flipinn í hubbnum telur punkta með því kalli (`luna-bridge/ajour-yfirlit.js`, einn dagur í einu, allir fimm stöðuflokkar lagðir saman), ekki úr `ajour_registrations`. [C#261, C#604]
+- `ajour_registrations` var FROSIN fyrir öll verkefni nema NLSH (mælt 18.09: aðeins NLSH 5–6. hæð fersk, hin stöðvuðust 22.–30.05) — athugaðu nýjasta `execution_date` per verkefni áður en þú treystir töflunni. [C#605]
+- Ajour-yfirlit og skýrslugerð er sér forrit í Kjarni-repoinu sem opnast af kjarni-forsíðunni (ekki í hubbnum eða Slökkvitæki-appinu) og les `ajour_registrations`. [lota c2a00410, 13.10]
+- Dauð Ajour-lota („Saved Ajour login expired“, „Ajour report UI did not load in time (no Export button)“): Agnar keyrir innskráninguna sjálfur (`node ajour-fetch.js --login`) — Claude slær aldrei inn lykilorðið. [C#640, C#694]
+- Brúarkeyrslur luna-bridge skrást í `automation_triggers` (workflow/status/result) en Netlify-áætluð föll í `automation_runs` — athugaðu bæði áður en þú segir að ekkert keyri; 01.09 var `automation_runs` tóm. [C#339]
+- `Brunaholf@brunaholf.is` og `bokhald@brunaholf.is` eru ekki Gmail-aukareikningar: þau koma um IMAP/mbox á luna-bridge, svo „Gmail úr skýi“ og ↻ ná ekki í þau (tenging: `/api/google-auth?account=<netfang>` með innskráningu SEM það netfang). [C#892]
+- SENT-mappan í `email_digest` byrjar 18.07.2025 en INBOX nær til 2015: „ekkert frá okkur eftir síðasta innkomna“ verður falskt rautt á eldri pósti (mælt 120 af 154) — rautt/blátt má aðeins gilda innan þekjunnar (`v_sent_thekja`). [C#469]
+- `aggisigurds@gmail.com` má aldrei lesa eða nota — vinnupóstur er `eldklar@eldklar.is` (og `bokhald@eldklar.is`); þetta stangast á við Email-kaflann hér að ofan sem nefnir hann sem tengdan reikning — spyrðu Agnar áður en þú lest hann. [C#81, C#265]
+- PostgREST klippir hljóðlaust við 1000 raðir og `.limit(N>1000)` eða `.range(0,2999)` hnekkja því EKKI (HTTP 200, engin villa) — blaðsíðuskiptu með `DB.fetchAll` og einkvæmri röðun. [C#571, lota 9b70f49c]
+- Windows-gildrur í innsogsskriftum: curl úr Git Bash sendir „ú“ sem Latin-1 (`%FA`) — notaðu UTF-8 (`%C3%BA`); Python les og skrifar cp1252 nema `encoding='utf-8'` sé gefið, sem skemmir íslensk nöfn. (líklega) [lota c5897be7, lota d0183946]
+- Búnaðargreiningar-skriftur (`bgr_verk.cjs`, `pdf_ur_appinu.cjs`, `vista_vidhengi.cjs`, `skipta_skyrslu.cjs`) harðkóða playwright-slóðina `C:/Users/Slokkvitaeki/luna-bridge` (vinnutölvan); á þessari vél er luna-bridge í `C:/projects/luna-bridge`. [lota 877c9427, 21.10]
+- Tímabók-hnappurinn „Endursækja“ á að kalla `/api/timabok` (les `timavera_entries` úr Supabase), EKKI `/api/timavera-pull` (lifandi Tímavera-API) — Agnar 03.08: ekki sækja aftur úr Tímaveru. [lota 177227fe]

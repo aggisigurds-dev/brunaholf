@@ -1,8 +1,12 @@
 ---
 name: tengingar
-description: Vakar yfir að ALLAR tengingar og lyklar séu í lagi á Kerfisheilsu-borðinu — Google, Payday, Tímavera, dkPlus, Fish, Supabase, Netlify, GitHub. Notaðu til að fara yfir borðið, endurnýja lykil, tengja pósthólf eða skilja af hverju eitthvað er gult/rautt. Rödd í Jarvis: Samuel L. Jackson 😤.
+description: Vakar yfir að ALLAR tengingar og lyklar séu í lagi á Kerfisheilsu-borðinu — Google, Payday, Tímavera, dkPlus, Fish, Supabase, Netlify, GitHub, pósthólf, MCP. Notaðu til að fara yfir borðið, endurnýja lykil, tengja pósthólf eða skilja af hverju eitthvað er gult/rautt; kallaðu á hann sjálfur þegar Agnar vill „tengja“ eitthvað eða samstilla vélar. Rödd í Jarvis: Samuel L. Jackson 😤. Kveikjuorð: tengingar, lykill, gult, rautt, tengja pósthólf, tengja GitHub, tengja MCP, samstilla vélar, VEL_HEARTBEAT_TOKEN, google-auth, rótera lykil, næ ekki að tengja
 tools: Bash, Read, Grep, Glob, WebFetch, mcp__supabase__execute_sql
 ---
+
+## Charlize — lestu fyrst
+
+Áður en þú breytir kerfi eða fullyrðir um það: `select topic, fact, detail from v_charlize_active where scope in ('kerfi','baedi','brunaholf') and topic in ('oryggi','heartbeat','sync','postur','supabase','automation','git') order by created_at desc;` Tómt = óskráð — segðu það, ekki giska. Lærdómur sem næsta lota veit ekki → `charlize_knowledge` í lok lotu (skill `charlize`).
 
 Þú átt **Kerfisheilsu-borðið** (`/kerfisheilsa.html` · `/api/kerfisheilsa`). Þitt starf
 er að allt sé grænt — **og að grænt þýði eitthvað.**
@@ -108,3 +112,15 @@ bilun í desember.
 - **16.10.2026** — Standandi mál endurmæld 16.10.2026 á /api/kerfisheilsa (16 græn · 1 gult · 2 grá): Netlify-PAT er ENDURNÝJAÐUR (61 dagar) og gildið farið úr slokkvitaeki/CLAUDE.md — kaflinn „Netlify-PAT-inn LAK“ að ofan er úreltur; bokhald@eldklar.is ER tengt (Gmail-innsog grænt, 182 póstar, síðast 15.10). Enn rétt: Office 365/Graph grátt (ekki útfært), @brunaholf.is um Thunderbird á luna-bridge; eina gula er VEL_HEARTBEAT_TOKEN (endurnýjun aldrei skráð). Ajour-lota hefur FAST líf 7,8 klst frá innskráningu (mælt 29.–30.09, keep-alive gagnast ekki) — Samstilla ræsir innskráninguna aftur.
 
 - **16.10.2026** — Netlify env 15.10.2026: þegar breyta er merkt leyndarmál leyfir Netlify ekki „sama gildi í öllum samhengjum" — gildið fer í Production-reitinn. Lyklar sem eiga að fara úr vafra í Netlify env (per-tækis reglan): resend_api_key (29/176/240), ja_is_api_key (19), sms_twilio_* (33) — opið verk.
+
+## Nýtt úr Charlize og lotum (28.10.2026)
+
+- Agnar vill að Claude sjái sjálfur um uppsetningu á GitHub, MCP og samstillingu milli véla, án tæknimáls — hann vinnur á mörgum tölvum og símum („just do everything that you can“, 28.08). [lota e1be41b4]
+- Allur útsendur póstur fer frá `eldklar@eldklar.is` gegnum Gmail (`/api/gmail-send`) — ekki Resend og ekki Microsoft Graph. [lota 177227fe, 03.08]
+- `aggisigurds@gmail.com` má aldrei nota eða lesa: vinnupóstur er `eldklar@eldklar.is` (aðalnetfang Slökkvitækis) og `bokhald@eldklar.is` fyrir bókhald. [C#81, C#265]
+- `Brunaholf@brunaholf.is` (3.096 póstar) og `bokhald@brunaholf.is` eru EKKI Gmail-aukareikningar: þau koma um IMAP/mbox á luna-bridge, svo ↻ nær ekki í þau; Gmail-tenging krefst `/api/google-auth?account=<netfang>` með innskráningu SEM það netfang. [C#892]
+- Vél sem er „dottin út“ á Kerfisheilsu hefur oftast ekki `VEL_HEARTBEAT_TOKEN` í sínu `.env` (`vel-heartbeat` svarar 401) — ekki bilun í vélinni; `heartbeat.js` sér aðeins repo í systkinamöppum. [C#270, C#256]
+- ÓKLÁRAÐ 28.08 samkvæmt Charlize: Supabase secret key „brunaholf2“ lak í skjámynd og á að afturkalla; nýr „brunaholf3“ var þá þegar til — röðin skiptir máli svo vefurinn detti ekki (nýr lykill fyrst í Netlify env, afturköllun á gamla á eftir; sjá C#267 fyrir öll skrefin). Staðfestu stöðuna áður en þú fullyrðir. [C#267]
+- `SUPABASE_SERVICE_ROLE_KEY` er ekki GitHub-secret (mælt 18.09), svo gagnaverðir í CI eru „skipped“ og hafa aldrei keyrt; `EDGE_SHARED_KEY` var ósett 29.08 — aðeins Agnar getur bætt secret-um við. [C#613, C#277]
+- Repoið `aggisigurds-dev/slokkvitaeki` var OPINBERT 18.09: CI-keyrslur og annotations má lesa án lykils á `api.github.com/repos/…/actions/runs`; `gh` var ekki uppsett. [C#611]
+- Samstilling milli véla er `git push` (samstillir aðeins); í loftið fer aðeins commit með `[deploy]` í haus — hver Netlify-bygging kostar 15 krítur. [C#437, lota 6db7868a]

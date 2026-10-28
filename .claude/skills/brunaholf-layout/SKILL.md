@@ -1,7 +1,9 @@
 ---
 name: brunaholf-layout
-description: Layout, CSS and responsive rules specific to the Brunaholf hub. Use BEFORE writing any CSS, media query, or layout change in this repo - including mobile/desktop adjustments, dashboard/table layout, spacing, or theming. Explains the per-page style architecture and the breakpoint sprawl.
+description: Layout, CSS and responsive rules specific to the Brunaholf hub. Use BEFORE writing any CSS, media query, or layout change in this repo - including mobile/desktop adjustments, dashboard/table layout, spacing, or theming. Explains the per-page style architecture and the breakpoint sprawl. Kveikjuorð: layout, CSS, media query, breakpoint, dálkar, þröngt á síma, spacing, taflan brotnar.
 ---
+
+> Charlize: `select topic, fact from v_charlize_active where scope in ('brunaholf','baedi','kerfi') and topic in ('vidmot','ui','bord');` áður en þú breytir — tómt = óskráð. Lærdómur í lok lotu → skill `charlize`.
 
 # Brunaholf layout rules
 
