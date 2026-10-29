@@ -132,6 +132,17 @@
   .cat-chip.active { background:var(--fg); color:#fff; border-color:var(--fg); }
   .cat-chip .cnt { font-variant-numeric:tabular-nums; opacity:.7; font-size:11px; }
 
+  /* Vefur-flipar (29.10.2026, verk 809627e5): Brunahólf / Slökkvitæki / Sameiginlegt fyrir ofan
+     flokkasíuna. Eigin flokkur (ekki .cat-chip) því applyCatFilter slekkur á „active" á öllu .cat-chip. */
+  .vefur-bar { align-items:center; margin-bottom:10px; }
+  .vefur-bar[hidden] { display:none; }
+  .vefur-bar .lbl { font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.04em; margin-right:4px; }
+  .vefur-tab { display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border:1px solid var(--line); border-radius:8px; font:inherit; font-size:13px; font-weight:700; color:var(--muted); background:#fff; cursor:pointer; user-select:none; transition:all .12s; }
+  .vefur-tab:hover { border-color:var(--blue-bg); background:var(--blue-bg); }
+  .vefur-tab.active { background:var(--fg); color:#fff; border-color:var(--fg); }
+  .vefur-tab:focus-visible { outline:2px solid var(--blue); outline-offset:2px; }
+  .vefur-tab .cnt { font-variant-numeric:tabular-nums; opacity:.7; font-size:11.5px; font-weight:600; }
+
   /* Short request-id badge — so a project can be pointed at directly ("check #94295522")
      instead of describing it in prose. Click to copy the full id. */
   .id-badge { display:inline-block; padding:1px 6px; border-radius:5px; font:700 10.5px ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.02em; background:var(--blue-bg); color:var(--blue-deep); border:1px solid var(--blue-bg); cursor:pointer; }
@@ -154,6 +165,9 @@
   .cat-frontend { background:var(--blue-bg); color:var(--blue-deep); }
   .cat-kodi     { background:var(--blue-bg); color:var(--blue-deep); }
   .cat-kerfi    { background:var(--blue-bg); color:var(--blue-deep); }
+  /* Vefur-merki á röð (aðeins Brunahólf / Slökkvitæki; „Sameiginlegt" er sjálfgefið og fær ekkert merki) */
+  .vef-brunaholf    { background:var(--blue-bg); color:var(--blue-deep); }
+  .vef-slokkvitaeki { background:var(--warn-bg); color:var(--red-dark); }
 
   /* Status: í yfirferð */
   .pill.i_yfirferd { background:var(--red-bg); color:var(--red-dark); border:1px solid var(--red-line); }
@@ -197,6 +211,15 @@
     <option value="oryggi">🔒 Öryggi</option>
     <option value="listi">📋 Verkefnalisti</option>
   </select>
+  <!-- Vefur: birtist aðeins þegar dálkurinn `vefur` er til (sql/2026-10-29_verkefnalisti_vefur.sql). -->
+  <div id="add-vefur-wrap" hidden>
+    <label>Vefur</label>
+    <select id="add-vefur" style="width:100%;padding:10px 12px;background:#fff;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:14px">
+      <option value="sameiginlegt">Sameiginlegt</option>
+      <option value="brunaholf">Brunahólf</option>
+      <option value="slokkvitaeki">Slökkvitæki</option>
+    </select>
+  </div>
   <label>Lýsing (valkv.)</label>
   <textarea id="add-desc" placeholder="Hvar gerist þetta? Hvað á að breytast? Hvaða viðmið er notað?"></textarea>
   <label>Skjámynd (valkv. — Ctrl/Cmd-V hér eða smelltu)</label>
@@ -217,6 +240,8 @@
   <button type="button" class="stat" data-go="sec-yfirferd" title="Fara í Í yfirferð"><b id="c-yfirferd" style="color:var(--red-dark)">–</b><span>Í yfirferð</span></button>
   <button type="button" class="stat" data-go="sec-klarad" title="Fara í Klárað"><b id="c-klarad" style="color:var(--ok)">–</b><span>Klárað</span></button>
 </div>
+
+<div id="vefur-bar" class="cat-bar vefur-bar" role="tablist" aria-label="Vefur" hidden></div>
 
 <div id="cat-bar" class="cat-bar"></div>
 
@@ -313,6 +338,7 @@ $('clear-btn').addEventListener('click', () => {
   $('add-title').value = '';
   $('add-desc').value = '';
   $('add-cat').value = 'allt';
+  addVefurTouched = false; syncAddVefur();
   pendingImages = []; renderPasteZone();
   toast('add-toast', '');
 });
@@ -335,12 +361,15 @@ $('add-btn').addEventListener('click', async () => {
         description: $('add-desc').value.trim() || null,
         request_images_b64: pendingImages,
         category: $('add-cat').value || 'allt',
+        // Sendist aðeins þegar dálkurinn er til (annars hunsar JSON.stringify undefined).
+        vefur: HAS_VEFUR ? $('add-vefur').value : undefined,
       }),
     });
     const data = await r.json();
     if (!r.ok || data.error) throw new Error(data.error || ('HTTP ' + r.status));
     toast('add-toast', '✓ Skráð', 'ok');
     $('add-title').value=''; $('add-desc').value=''; pendingImages = []; renderPasteZone();
+    addVefurTouched = false; syncAddVefur();
     setTimeout(() => toast('add-toast', ''), 2500);
     await load();
   } catch (e) {
@@ -408,6 +437,9 @@ function renderTask(t) {
   const catLabel = (CAT_LABELS[catKey] || { label: catKey }).label;
   const catBadge = '<span class="cat-badge cat-' + esc(catKey) + '">' + esc(catLabel) + '</span>';
   const agentBadge = t.assigned_agent ? '<span class="cat-badge" style="background:var(--warn-bg);color:var(--red-dark)">🤖 ' + esc(t.assigned_agent) + '</span>' : '';
+  // Vefur: merki aðeins fyrir Brunahólf / Slökkvitæki; ekkert á meðan dálkurinn er ekki til.
+  const vef = HAS_VEFUR ? vefurOf(t) : '';
+  const vefBadge = (vef && vef !== 'sameiginlegt') ? '<span class="cat-badge vef-' + esc(vef) + '">' + esc(VEFUR_HEITI[vef] || vef) + '</span>' : '';
 
   const imgs = [];
   // Margar skjámyndir (request_image_urls fylki); gamla staka slóðin er fallback.
@@ -435,12 +467,12 @@ function renderTask(t) {
   const flagDot = '<button class="flag-dot" data-flag="' + flag + '" title="Forgangs-merki — smelltu til að skipta lit" onclick="cycleFlag(this,\'' + t.id + '\');return false;"></button>';
 
   return (
-    '<div class="task" data-id="' + t.id + '" data-status="' + t.status + '" data-category="' + esc(catKey) + '"' + draggable + '>' +
+    '<div class="task" data-id="' + t.id + '" data-status="' + t.status + '" data-category="' + esc(catKey) + '"' + (HAS_VEFUR ? ' data-vefur="' + esc(vef) + '"' : '') + draggable + '>' +
       '<div class="task-body">' +
         flagDot +
         grip +
         '<div class="task-text">' +
-          '<div class="title">' + catBadge + agentBadge + esc(t.title) + '</div>' +
+          '<div class="title">' + vefBadge + catBadge + agentBadge + esc(t.title) + '</div>' +
           (t.description ? '<div class="desc clamp" title="Smelltu til að opna/loka" onclick="this.classList.toggle(\'clamp\')">' + esc(t.description) + '</div>' : '') +
           notes +
           fb +
@@ -489,6 +521,56 @@ const CAT_LABELS = {
   kerfi:    { label: 'Kerfi',    emoji: '🧩' },
 };
 
+// ─── Vefur-flipar (29.10.2026, verk 809627e5) ───────────────────────────────
+// Dálkurinn `vefur` ('brunaholf' | 'slokkvitaeki' | 'sameiginlegt', sjálfgefið 'sameiginlegt')
+// kemur með sql/2026-10-29_verkefnalisti_vefur.sql. Á meðan hann er ekki til (HAS_VEFUR=false:
+// engin röð úr /api/verkefnalisti ber lykilinn `vefur`) er flipaöröndin falin, ekkert síað og
+// ekkert sent — síðan hagar sér nákvæmlega eins og áður. Valinn flipi er vidmot-val (lykill
+// vl-vefur → hub_state, eins á öllum vélum) — enginn nýr localStorage-lykill.
+const VEFIR = [
+  { k:'allt',         label:'Allt' },
+  { k:'brunaholf',    label:'Brunahólf' },
+  { k:'slokkvitaeki', label:'Slökkvitæki' },
+  { k:'sameiginlegt', label:'Sameiginlegt' },
+];
+const VEFUR_HEITI = Object.fromEntries(VEFIR.map(v => [v.k, v.label]));
+const vefurOf = (t) => (t && t.vefur) || 'sameiginlegt';
+const erVefur = (v) => VEFIR.some(x => x.k === v);
+let HAS_VEFUR = false;
+let activeVefur = 'allt';
+try { const v = window.Vidmot && Vidmot.lesa('vl-vefur', null); if (erVefur(v)) activeVefur = v; } catch {}
+
+// „Vefur" í nýskráningunni fylgir völdum flipa, nema notandinn hafi sjálfur valið annað.
+let addVefurTouched = false;
+function syncAddVefur() { if (!addVefurTouched) $('add-vefur').value = activeVefur === 'allt' ? 'sameiginlegt' : activeVefur; }
+$('add-vefur').addEventListener('change', () => { addVefurTouched = true; });
+
+// Teiknar flipana. Tölur = opin verk (beiðni, í vinnu, í yfirferð) — klárað/sleppt er ekki til að forgangsraða.
+function renderVefurBar(tasks) {
+  const bar = $('vefur-bar');
+  $('add-vefur-wrap').hidden = !HAS_VEFUR;
+  if (!HAS_VEFUR) { bar.hidden = true; bar.innerHTML = ''; return; }
+  const counts = { allt: 0 };
+  for (const t of tasks) {
+    if (t.status === 'klarad' || t.status === 'sleppt') continue;
+    counts.allt++;
+    const v = vefurOf(t); counts[v] = (counts[v] || 0) + 1;
+  }
+  bar.innerHTML = '<span class="lbl">Vefur</span>' + VEFIR.map(v =>
+    '<button type="button" class="vefur-tab" role="tab" data-vefur="' + v.k + '" title="Opin verk">' +
+      esc(v.label) + ' <span class="cnt">' + (counts[v.k] || 0) + '</span></button>').join('');
+  bar.hidden = false;
+  syncAddVefur();
+}
+$('vefur-bar').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-vefur]'); if (!b) return;
+  activeVefur = b.dataset.vefur;
+  // Vistað aðeins við raunverulegan smell (regla 15.10.2026), ekki í teiknun.
+  try { if (window.Vidmot) Vidmot.setja('vl-vefur', activeVefur); } catch {}
+  addVefurTouched = false; syncAddVefur();
+  applyCatFilter();
+});
+
 // 15.10.2026: sía og röðun eru vidmot-val (js/vidmot.js → hub_state, eins á öllum vélum). Gömlu
 // localStorage-lyklarnir vl-cat / vl-sort eru aðeins einskiptis upphafsgildi — aldrei skrifað í þá framar.
 const vlLesa = (k, ls, d) => { try { return (window.Vidmot && Vidmot.lesa(k, null)) || localStorage.getItem(ls) || d; } catch { return d; } };
@@ -506,15 +588,23 @@ function setSort(s) {
 function applyCatFilter() {
   document.querySelectorAll('.task').forEach(t => {
     const c = t.dataset.category || 'allt';
-    t.style.display = (activeCat === 'allt' || c === activeCat) ? '' : 'none';
+    const vOk = !HAS_VEFUR || activeVefur === 'allt' || t.dataset.vefur === activeVefur;
+    t.style.display = (vOk && (activeCat === 'allt' || c === activeCat)) ? '' : 'none';
   });
   document.querySelectorAll('.cat-chip').forEach(ch => {
     ch.classList.toggle('active', ch.dataset.cat === activeCat);
+  });
+  document.querySelectorAll('.vefur-tab').forEach(b => {
+    const on = b.dataset.vefur === activeVefur;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-selected', on ? 'true' : 'false');
   });
 }
 // Þjónsgildið (annarrar vélar) tekur við þegar vidmot hefur hlaðist.
 if (window.Vidmot) Vidmot.hlada().then(() => {
   const c = Vidmot.lesa('vl-cat', activeCat), s = Vidmot.lesa('vl-sort', activeSort);
+  const v = Vidmot.lesa('vl-vefur', activeVefur);
+  if (v !== activeVefur && erVefur(v)) { activeVefur = v; syncAddVefur(); applyCatFilter(); }
   if (c !== activeCat) { activeCat = c; applyCatFilter(); }
   if (s !== activeSort) { activeSort = s; load(); }
 });
@@ -562,6 +652,8 @@ async function load() {
     if (document.querySelector('.edit-form') || document.querySelector('.fb-box')) { TASKS = Object.fromEntries(data.tasks.map(t => [t.id, t])); return; }
 
     TASKS = Object.fromEntries(data.tasks.map(t => [t.id, t]));
+    // Dálkurinn `vefur` er til þegar raðirnar bera lykilinn (select=* skilar honum öllum eða engum).
+    HAS_VEFUR = data.tasks.some(t => Object.prototype.hasOwnProperty.call(t, 'vefur'));
     const groups = { beidni:[], i_vinnu:[], i_yfirferd:[], klarad:[], sleppt:[] };
     for (const t of data.tasks) (groups[t.status] || groups.beidni).push(t);
     if (activeSort === 'nyjast') {
@@ -583,6 +675,7 @@ async function load() {
     $('list-yfirferd').innerHTML = groups.i_yfirferd.length ? groups.i_yfirferd.map(renderTask).join('') : '<div class="empty">Ekkert í yfirferð.</div>';
     $('list-klarad').innerHTML = groups.klarad.length ? groups.klarad.slice(0, 20).map(renderTask).join('') : '<div class="empty">Ekkert klárað ennþá.</div>';
 
+    renderVefurBar(data.tasks);
     renderCatBar(data.tasks);
     applyCatFilter();
     wireDragDrop($('list-beidni'));
@@ -713,6 +806,8 @@ function openEdit(id) {
   const catOpts = Object.keys(CAT_LABELS).map(k =>
     '<option value="' + k + '"' + ((t.category || 'allt') === k ? ' selected' : '') + '>' +
     CAT_LABELS[k].emoji + ' ' + esc(CAT_LABELS[k].label) + '</option>').join('');
+  const vefOpts = VEFIR.filter(v => v.k !== 'allt').map(v =>
+    '<option value="' + v.k + '"' + (vefurOf(t) === v.k ? ' selected' : '') + '>' + esc(v.label) + '</option>').join('');
 
   row.innerHTML =
     '<div class="edit-form" style="grid-column:1/-1">' +
@@ -720,6 +815,10 @@ function openEdit(id) {
       '<input id="ed-title" style="width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:14px" value="' + esc(t.title) + '">' +
       '<label style="display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:10px 0 4px;font-weight:700">Flokkur</label>' +
       '<select id="ed-cat" style="width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:14px">' + catOpts + '</select>' +
+      (HAS_VEFUR
+        ? '<label style="display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:10px 0 4px;font-weight:700">Vefur</label>' +
+          '<select id="ed-vefur" style="width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:14px">' + vefOpts + '</select>'
+        : '') +
       '<label style="display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:10px 0 4px;font-weight:700">Lýsing</label>' +
       '<textarea id="ed-desc" style="width:100%;min-height:72px;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font:13px/1.45 inherit;resize:vertical">' + esc(t.description || '') + '</textarea>' +
       '<label style="display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:10px 0 4px;font-weight:700">Skjámyndir</label>' +
@@ -777,6 +876,7 @@ function openEdit(id) {
           title: document.getElementById('ed-title').value.trim(),
           description: document.getElementById('ed-desc').value.trim(),
           category: document.getElementById('ed-cat').value,
+          vefur: (document.getElementById('ed-vefur') || {}).value,   // aðeins til þegar dálkurinn er til
           request_image_urls: editImagesKeep,
           add_request_images_b64: editImagesNew,
         }),
