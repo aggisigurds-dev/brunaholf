@@ -18033,6 +18033,8 @@ async function renderTvMaeting(t){
    vistuð í localStorage (cg_values) þegar upprunasíðan er teiknuð, svo Skýrslur
    geti sýnt nýjustu tölur og lagt þær saman í skýrslur þvert á síður.
    Beiðni: Verkefnalisti „CG-ID … calculation reports" (Agnar 2026-08-02).
+   29.10.2026 (664205fc): CG-01…04 skrifast LÍKA í sameiginlega safnið (cg_entries, sjá cgPushShared)
+   svo Skýrslur sjái þau á hverri tölvu — vafra-geymslan fylgir aðeins einum vafra.
    ═══════════════════════════════════════════════════════════════════════ */
 window.CG_REGISTRY = [
   {id:'CG-01', label:'Ógreitt',           tab:'krofuyfirlit', formula:'Σ ógreiddar kröfur (þrep 1) úr /api/debtors'},
@@ -18082,6 +18084,7 @@ window.cgOpen = function(id){
 window.CG_BUILTINS = (window.CG_REGISTRY||[]).slice();
 window.cgUserObj = function(){ try{ return JSON.parse(localStorage.getItem('cg_user')||'{}'); }catch(_){ return {}; } };
 window.CG_SHARED = [];   // entries captured on OTHER apps (t.d. slokkvitaeki.netlify.app) — see cgFetchShared
+window.CG_SRV = {};      // id → {v,t}: síðasta þekkta gildi á þjóninum (aðeins í minni) — svo cgPushShared skrifi ekki að óþörfu
 window.cgRefreshRegistry = function(){
   const u = window.cgUserObj();
   window.CG_REGISTRY = window.CG_BUILTINS.concat(Object.keys(u).sort().map(function(k){return u[k];}), window.CG_SHARED);
@@ -18092,21 +18095,48 @@ window.cgRefreshRegistry();
 // — cg-capture.js þar POSTar hingað) svo Skýrslur sjái þau án þess að localStorage
 // deilist milli léna (sem það gerir aldrei). Kallað við ræsingu + þegar Skýrslur opnast.
 window.cgFetchShared = function(){
+  window.CG_FETCH_TS = Date.now();
   return fetch('/api/cg-entries').then(function(r){ return r.json(); }).then(function(d){
     const rows = (d && d.entries) || [];
-    window.CG_SHARED = rows.map(function(row){
+    // 29.10.2026 (664205fc): CG-01…04 búa nú líka í cg_entries. Þau eru þegar í CG_BUILTINS og mega ekki tvítaka sig í skránni;
+    // gildið af þjóninum er aðeins tekið ef staðbundið gildi vantar eða er eldra (annars hyrfi nýrri talan á þessari vél).
+    const fast = function(id){ return window.CG_BUILTINS.some(function(c){ return c.id===id; }); };
+    window.CG_SHARED = rows.filter(function(row){ return !fast(row.id); }).map(function(row){
       return {id:row.id, label:row.label, tab:row.tab||'', url:row.url||'', match:row.label,
         formula:row.formula || ('Handvirkt CG — ' + (row.source_app||'')), user:true, manual:!!row.manual,
         sourceApp:row.source_app||''};
     });
     rows.forEach(function(row){
-      window.CG_VALUES[row.id] = Object.assign({}, window.CG_VALUES[row.id], {
-        value:Number(row.value)||0, ts:new Date(row.updated_at||row.captured_at||Date.now()).getTime(), snapshot:true});
+      const ts = new Date(row.updated_at||row.captured_at||Date.now()).getTime();
+      window.CG_SRV[row.id] = {v:Math.round(Number(row.value)||0), t:ts};
+      const cur = window.CG_VALUES[row.id];
+      if(fast(row.id) && cur && cur.ts && cur.ts>=ts) return;
+      window.CG_VALUES[row.id] = Object.assign({}, cur, {
+        value:Number(row.value)||0, ts:ts, snapshot:!fast(row.id)});
     });
     window.cgRefreshRegistry();
   }).catch(function(){});
 };
-window.cgFetchShared();
+window.CG_FETCHED = window.cgFetchShared().then(function(){
+  // Skýrslur opnuð beint (síða endurhlaðin á þeim flipa) málast áður en sóknin klárast → mála aftur svo sameiginlegu gildin birtist.
+  try{ if(typeof activeTab==='function' && (activeTab()||{}).id==='skyrslur' && typeof render==='function') render(); }catch(_){}
+});
+// Skrifar innbyggt CG (CG-01…04) í sameiginlega safnið. Aðeins þegar gildið breytist eða 30 mín eru liðnar
+// (samanburður við þjónsgildið sem cgFetchShared sótti, svo endurhleðsla skrifi ekki að óþörfu). Bilar hljóðlega —
+// staðbundna gildið (cgRecord) stendur þótt netið sé úti. Engin vafra-geymsla.
+window.cgPushShared = function(id, value){
+  const c = (window.CG_BUILTINS||[]).find(function(x){ return x.id===id; }); if(!c) return;
+  const v = Math.round(Number(value)||0);
+  return Promise.resolve(window.CG_FETCHED).then(function(){
+    const old = window.CG_SRV[id];
+    if(old && old.v===v && Date.now()-old.t < 30*60e3) return;
+    window.CG_SRV[id] = {v:v, t:Date.now()};   // strax, svo samhliða endurteikningar sendi ekki tvisvar
+    return fetch('/api/cg-entries', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({
+      action:'record', id:id, label:'Kröfu yfirlit — '+c.label, value:v, source_app:'brunaholf', tab:c.tab, formula:c.formula, manual:false
+    })}).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); })
+      .catch(function(){ if(old) window.CG_SRV[id]=old; else delete window.CG_SRV[id]; });
+  }).catch(function(){});
+};
 window.cgNextId = function(){
   const u = window.cgUserObj();
   let n = 1 + window.CG_BUILTINS.length;
@@ -18328,7 +18358,7 @@ async function renderSkyrslur(t){
       +'<button type="button" onclick="cgAddReport()" style="border:1px solid var(--blue-deep);background:linear-gradient(180deg,var(--blue),var(--blue-deep));color:#fff;border-radius:10px;padding:8px 14px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer">➕ Ný skýrsla</button></div></div>'
     +'<div style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:30px">'+reports.map(reportCard).join('')+'</div>'
     +'<h2 style="margin:0 0 12px;font-size:16px;font-weight:800;color:var(--ink-2)">CG-skrá — merktir reikni-gluggar</h2>'
-    +(staleAny?'<div style="font-size:12.5px;color:var(--warn);background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:10px;padding:9px 13px;margin-bottom:12px">⏳ Sum gildi vantar — opnaðu viðkomandi upprunasíðu einu sinni svo talan sækist í localStorage.</div>':'')
+    +(staleAny?'<div style="font-size:12.5px;color:var(--warn);background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:10px;padding:9px 13px;margin-bottom:12px">⏳ Sum gildi vantar — opnaðu viðkomandi upprunasíðu einu sinni svo talan skráist (innbyggðu CG-01–04 fara í sameiginlega safnið og sjást þá á öllum tölvum).</div>':'')
     +'<div style="overflow-x:auto;border:1px solid var(--bg-2);border-radius:14px;background:#fff;box-shadow:0 10px 24px -18px rgba(15,23,42,.3)">'
       +'<table style="width:100%;border-collapse:collapse;font-size:13.5px">'
       +'<thead><tr style="background:var(--tbl-header);text-align:left;color:var(--muted);font-size:11px;letter-spacing:.06em;text-transform:uppercase">'
@@ -18648,7 +18678,7 @@ async function renderKrofuyfirlit(t){
    *   company / likely → sjálfstæðir hamir (ein sýn í einu, óbreytt)
    *   tiers            → þrepin, og tierSel segir hver þeirra eru hökuð
    * „Allt" er því ekki lengur sérstakt ástand heldur „öll þrjú hökuð". */
-  const state = { data:null, tier3:null, sort:'amount_desc', search:'', tierFilter:'company', tierSel:new Set(['t1','t2','t3']), newest:null, showHidden:false, pgFailed:false, wsFailed:false };
+  const state = { data:null, tier3:null, sort:'amount_desc', search:'', tierFilter:'company', tierSel:new Set(['t1','t2','t3']), newest:null, showHidden:false, pgFailed:false, wsFailed:false, t3ok:false };
   // ── Sameina drög (tier 2): valstaða ──────────────────────────────────────
   let t2SelectMode = false;
   const t2Selected = new Map();  // inv_key → invoice object (tier-2 gerd-drög only)
@@ -18936,6 +18966,14 @@ async function renderKrofuyfirlit(t){
       kpi('Ósent', tot2, n2+' drög · '+l2.length+' aðilar', '', 'CG-02') +
       kpi('Tími eftir', tot3, t3sub, '', 'CG-03') +
       kpi('Samtals í pípunni', tot1+tot2+tot3, 'ógreitt + ósent + áætlaðar tekjur', '', 'CG-04', true);
+    // 29.10.2026 (664205fc): CG-01…04 fara líka í sameiginlega safnið (cg_entries) svo Skýrslur sjái þau á hverri tölvu.
+    // Aðeins eftir FULLA hleðslu (t3ok = þrep 3 reiknað í þessari opnun) og þegar ekkert mistókst — annars færi hálf tala
+    // í safnið (t.d. „Tími eftir" = 0 við fyrstu málun, eða tóm þrep 3 þegar verðskrá náðist ekki).
+    if(window.cgPushShared && state.t3ok && state.data && state.tier3 && !state.pgFailed && !state.wsFailed && !window.__KYF_VILLA
+       && !((state.data.warnings||[]).length)){
+      window.cgPushShared('CG-01', tot1); window.cgPushShared('CG-02', tot2);
+      window.cgPushShared('CG-03', tot3); window.cgPushShared('CG-04', tot1+tot2+tot3);
+    }
     if(window.bhSetTabCount) window.bhSetTabCount('krofuyfirlit', n1+n2+n3);
   }
 
@@ -20317,7 +20355,7 @@ async function renderKrofuyfirlit(t){
     ]);
     if(bruR && bruR.error) throw new Error(bruR.error);
     window.__KYF_VILLA = !!((efR&&efR._villa)||(drR&&drR._villa));
-    state.data = bruR; state.newest = bruR.newest_timavera || null;
+    state.data = bruR; state.newest = bruR.newest_timavera || null; state.t3ok = false;   // þrep 3 enn ekki endurreiknað → ekkert fer í sameiginlega CG-safnið fyrr en það er klárt
     for(const d of (((bruR||{}).tier2||{}).debtors||[])) for(const iv of (d.invoices||[])) iv._wfSync = JSON.parse(JSON.stringify(iv.wf||{}));   // þjóns-útgáfa wf per röð (wf_patch)
     const idx = {};
     for(const d of (efR.rows||[])){ const k=(d.worksite_name||'')+'|'+(d.work_month||''); (idx[k]=idx[k]||[]).push(d); }
@@ -20344,7 +20382,7 @@ async function renderKrofuyfirlit(t){
       renderList();
     })();
     // Þrep 3 (reiknað í vafra) + HOURS/REDDER í bakgrunni → endur-teikna þegar klárt.
-    try{ state.tier3 = await computeTier3(); }catch(_){ state.tier3 = groupTier3([]); }
+    try{ state.tier3 = await computeTier3(); state.t3ok = true; }catch(_){ state.tier3 = groupTier3([]); state.t3ok = false; }
     metaFromState(); renderList();
     cacheStore();
   }
