@@ -16,6 +16,7 @@
 const pdf = require('pdf-parse');
 const { freshAccessToken, json, cors } = require('./_google');
 const { sitesForBase, resolveSite, siteWriteAllowed, vidskiptategundSkjals } = require('./_spine');
+const KV = require('./_ktvorn');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -377,8 +378,10 @@ async function createCompany(body) {
   let baseId = null;
   try {
     const ex = await fetch(`${SUPABASE_URL}/rest/v1/customers_base?kennitala=eq.${encodeURIComponent(ktDash)}&select=id&limit=1`, { headers: sbHeaders() });
+    // 29.10.2026: villa í leitinni var lesin sem „ekkert base á kt" → ný base-röð á kt sem átti þegar röð. Nú er ekkert stofnað.
+    if (!ex.ok) return json(502, { error: 'customers_base (kt-leit) ' + ex.status + ' — ekkert stofnað' });
     const rows = await ex.json().catch(() => []); if (Array.isArray(rows) && rows[0]) baseId = rows[0].id;
-  } catch (e) {}
+  } catch (e) { return json(502, { error: 'customers_base (kt-leit): ' + ((e && e.message) || e) + ' — ekkert stofnað' }); }
   if (!baseId) {
     const ins = await fetch(`${SUPABASE_URL}/rest/v1/customers_base`, { method: 'POST', headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }), body: JSON.stringify([{ kennitala: ktDash, nafn, heimilisfang, general_notes: 'Stofnað úr Reikningalesara' }]) });
     if (!ins.ok) return json(500, { error: 'customers_base: ' + (await ins.text()).slice(0, 200) });
@@ -386,12 +389,13 @@ async function createCompany(body) {
   }
   // browsable company (fyrirtaeki) — best-effort, idempotent on kt
   try {
-    const exf = await fetch(`${SUPABASE_URL}/rest/v1/fyrirtaeki?kennitala=eq.${encodeURIComponent(ktDash)}&deleted_at=is.null&select=id,customer_base_id&limit=1`, { headers: sbHeaders() });
-    const fr = await exf.json().catch(() => []);
-    if (Array.isArray(fr) && fr[0]) {
-      if (!fr[0].customer_base_id && baseId) await fetch(`${SUPABASE_URL}/rest/v1/fyrirtaeki?id=eq.${fr[0].id}`, { method: 'PATCH', headers: sbHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ customer_base_id: baseId }) });
-    } else {
-      await fetch(`${SUPABASE_URL}/rest/v1/fyrirtaeki`, { method: 'POST', headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }), body: JSON.stringify([{ nafn, kennitala: ktDash, customer_base_id: baseId, heimilisfang }]) });
+    // 29.10.2026 (Krókur 77): kennitölureglan (_ktvorn.js). Sama hegðun og áður (kt sem á lifandi röð fær enga nýja) en leitin er
+    // nú rétt og villa er EKKI lesin sem „ekkert til" — áður: `.json().catch(()=>[])` á villusvar → POST → tvífari.
+    const res = await KV.faTilStad({ sb: KV.defaultSb(), kt: ktDash, baseId, thjonusta: false, nyrStadurLeyfdur: false,
+      row: { nafn, heimilisfang, customer_base_id: baseId } });
+    if (!res.ok) console.warn('[reikningar-read] createCompany fyrirtaeki:', res.error);
+    else if (res.hvernig === 'til' && res.row && !res.row.customer_base_id && baseId) {
+      await fetch(`${SUPABASE_URL}/rest/v1/fyrirtaeki?id=eq.${res.row.id}`, { method: 'PATCH', headers: sbHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ customer_base_id: baseId }) });
     }
   } catch (e) {}
   // link the invoice itself, if one was passed

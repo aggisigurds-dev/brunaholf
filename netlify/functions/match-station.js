@@ -16,6 +16,7 @@
 // skjals. Engin PDF-þáttun, ekkert fært, ekkert endurnefnt í Drive.
 
 const { json, cors, freshAccessToken } = require('./_google');
+const KV = require('./_ktvorn');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -391,11 +392,15 @@ async function addSite(body) {
   if (!baseId) throw new Error('vantar base_id');
   const nafn = (body.nafn || '').trim(); if (!nafn) throw new Error('vantar nafn');
   const base = (await sbGet(`customers_base?id=eq.${baseId}&select=kennitala`))[0] || {};
-  const row = { nafn, heimilisfang: (body.heimilisfang || '').trim() || null, customer_base_id: baseId, kennitala: base.kennitala || null, er_i_thjonustu: true };
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/fyrirtaeki`, {
-    method: 'POST', headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }), body: JSON.stringify([row]),
+  // 29.10.2026 (Krókur 77): staður sem er þegar til á kennitölunni er NOTAÐUR í stað nýrrar raðar. Áður var hér settur inn
+  // er_i_thjonustu=true röð án nokkurrar athugunar — tvö „bæta við stað" á sama stað gáfu tvær raðir. Reglan (sjá _ktvorn.js):
+  // sama nafn eða sama heimilisfang (gata+númer) á kt → röðin sem er til (sett í þjónustu); annars nýr staður með næsta
+  // staðarnúmeri. Leitarvilla stofnar EKKERT (villan fer til viðmótsins) — ekki giskað.
+  const sb = KV.makeSb((...a) => fetch(...a), SUPABASE_URL, SUPABASE_KEY);
+  const res = await KV.faTilStad({
+    sb, kt: base.kennitala, baseId, thjonusta: true,
+    row: { nafn, heimilisfang: (body.heimilisfang || '').trim() || null, customer_base_id: baseId, kennitala: base.kennitala || null },
   });
-  const rows = await r.json().catch(() => []);
-  if (!r.ok) throw new Error('add-site ' + r.status + ' ' + JSON.stringify(rows).slice(0, 160));
-  return { ok: true, site: Array.isArray(rows) ? rows[0] : null };
+  if (!res.ok) throw new Error('add-site: ' + res.error);
+  return { ok: true, site: res.row, existed: res.hvernig === 'reuse', astaeda: res.astaeda || null };
 }

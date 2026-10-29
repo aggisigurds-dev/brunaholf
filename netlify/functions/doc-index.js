@@ -15,6 +15,7 @@
 const pdf = require('pdf-parse');
 const { freshAccessToken, json, cors } = require('./_google');
 const { sitesByBases, sitesForBase, resolveSite, siteWriteAllowed, vidskiptategundSkjals } = require('./_spine');
+const KV = require('./_ktvorn');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -271,6 +272,8 @@ async function createCompany(body) {
   const nafn = (body.customer_name || '').trim() || ktDash;
   let baseId = null;
   const ex = await fetch(`${SUPABASE_URL}/rest/v1/customers_base?kennitala=eq.${encodeURIComponent(ktDash)}&select=id&limit=1`, { headers: sbHeaders() });
+  // 29.10.2026: villa í leitinni var lesin sem „ekkert base á kt" → ný base-röð á kt sem átti þegar röð. Nú kastar villan.
+  if (!ex.ok) throw new Error('customers_base (kt-leit) ' + ex.status);
   const exRows = await ex.json().catch(() => []);
   if (Array.isArray(exRows) && exRows[0]) baseId = exRows[0].id;
   if (!baseId) {
@@ -279,12 +282,12 @@ async function createCompany(body) {
     if (!ins.ok) throw new Error('customers_base ' + ins.status + ' ' + JSON.stringify(insRows).slice(0, 160));
     baseId = (Array.isArray(insRows) && insRows[0]) ? insRows[0].id : null;
   }
-  try {   // service-branch row in fyrirtaeki, idempotent on kt
-    const fx = await fetch(`${SUPABASE_URL}/rest/v1/fyrirtaeki?kennitala=eq.${encodeURIComponent(ktDash)}&select=id&limit=1`, { headers: sbHeaders() });
-    const fxRows = await fx.json().catch(() => []);
-    if (!(Array.isArray(fxRows) && fxRows[0])) {
-      await fetch(`${SUPABASE_URL}/rest/v1/fyrirtaeki`, { method: 'POST', headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }), body: JSON.stringify([{ nafn, kennitala: ktDash, customer_base_id: baseId, heimilisfang: body.address || null }]) });
-    }
+  try {   // service-branch row in fyrirtaeki — kennitölureglan (_ktvorn.js): kt sem á þegar lifandi röð fær enga nýja
+    // (sama og áður „idempotent on kt") en leitin er nú rétt: bæði snið kt, deleted_at síað, og leitarvilla er EKKI lesin sem
+    // „ekkert til" (áður: `.json().catch(()=>[])` á villusvar → POST → tvífari).
+    const res = await KV.faTilStad({ sb: KV.defaultSb(), kt: ktDash, baseId, thjonusta: false, nyrStadurLeyfdur: false,
+      row: { nafn, heimilisfang: body.address || null, customer_base_id: baseId } });
+    if (!res.ok) console.warn('[doc-index] createCompany fyrirtaeki:', res.error);
   } catch (e) {}
   return baseId;
 }

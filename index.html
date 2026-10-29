@@ -5327,7 +5327,7 @@ function wireStation(){
         const r = await fetch('/api/match-station', { method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'add-site', base_id: COMPANY.id, nafn, heimilisfang: heim }) });
         const d = await r.json(); if (!r.ok) throw new Error(d.error || r.status);
-        await loadBoard(COMPANY.id); setSt('Staður bætt við ✓', 'var(--green)');
+        await loadBoard(COMPANY.id); setSt(d.existed ? 'Staðurinn var þegar til (' + (d.astaeda === 'heimilisfang' ? 'sama heimilisfang' : 'sama nafn') + ') — notaði hann og setti í þjónustu ✓' : 'Staður bætt við ✓', 'var(--green)');
       } catch (e) { setSt('Villa: ' + e.message, 'var(--red)'); }
     }
 

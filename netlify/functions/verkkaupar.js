@@ -12,6 +12,8 @@
 // invoice_drafts (ósent), email_digest (samskipti sem nefna verkstaðina eða greiðandann),
 // customer_worksite_map (verkstaðir sem eru tengdir handvirkt).
 
+const KV = require('./_ktvorn');
+
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const INFO_FIELDS = ['kennitala', 'payment_method', 'payment_terms', 'retention_pct', 'retention_notes',
@@ -190,17 +192,13 @@ async function stofnaStad(b, customer) {
   const heimili = String(b.heimilisfang || '').trim();
   const ktN = normKt(b.kennitala);
   if (!/\d{3}/.test(heimili)) return json(400, { error: 'Heimilisfang með póstnúmeri vantar (t.d. „Sunnukriki 3, 270 Mosfellsbær")' });
-  if (ktN) {
-    const til = await sb('fyrirtaeki?select=id,nafn,heimilisfang&deleted_at=is.null&kennitala=eq.' + ktN);
-    const dup = til.find((f) => f.heimilisfang && f.heimilisfang.trim().toLowerCase() === heimili.toLowerCase());
-    if (dup) return json(200, { ok: true, id: dup.id, existed: true });
-  }
+  // 29.10.2026 (Krókur 77): sama regla og annars staðar (sjá _ktvorn.js). Áður var aðeins athugað nákvæmt heimilisfang
+  // (lágstafir) á sömu kt — sama nafn með örlítið annað heimilisfang bjó til tvífara. Nú: sama NAFN eða sama heimilisfang
+  // (gata+númer) á kt → röðin sem er til; annars nýr staður með næsta staðarnúmeri. Leitarvilla stofnar EKKERT.
   const row = { nafn, heimilisfang: heimili, er_i_thjonustu: false, athugasemdir: 'Stofnað úr Viðskiptavinir (Brunahólf) fyrir greiðandann ' + customer };
-  if (ktN) row.kennitala = ktN;
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/fyrirtaeki`, { method: 'POST', headers: Object.assign(hdrs(), { 'Content-Type': 'application/json', Prefer: 'return=representation' }), body: JSON.stringify(row) });
-  if (!r.ok) return json(r.status, { error: (await r.text()).slice(0, 300) });
-  const rows = await r.json();
-  return json(200, { ok: true, id: (rows[0] || {}).id, existed: false });
+  const res = await KV.faTilStad({ sb: KV.makeSb((...a) => fetch(...a), SUPABASE_URL, SUPABASE_KEY), kt: ktN, thjonusta: false, row });
+  if (!res.ok) return json(res.status || 502, { error: res.error });
+  return json(200, { ok: true, id: (res.row || {}).id, existed: res.hvernig === 'reuse', astaeda: res.astaeda || null });
 }
 
 function hdrs() { return { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }; }

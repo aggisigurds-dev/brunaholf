@@ -13,6 +13,7 @@
 
 const pdf = require('pdf-parse');
 const { freshAccessToken, json, cors } = require('./_google');
+const KV = require('./_ktvorn');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -143,9 +144,21 @@ exports.handler = async (event) => {
         } else if (!pr.base && pr.kt && pr.kt.length === 10 && pr.kt !== '9999999999') {
           const base = await createBase(pr.kt, pr.company);
           if (base) {
-            const site = await createSite(pr.kt, pr.company, pr.address, contact, base.id);
-            if (site) {
-              st.created++; addIds.push(site.id);
+            // 29.10.2026 (Krókur 77): kennitölureglan (_ktvorn.js). Röð sem er til á kt er NOTUÐ (sama nafn/heimilisfang), kt sem á
+            // þegar staði fær ENGA nýja röð úr nafni í skjali (nyrStadurLeyfdur:false → Skýrslu-stöð sker úr), og leitarvilla
+            // stofnar ekkert. Áður: createSite setti inn röð án nokkurrar athugunar á fyrirtaeki.
+            const row = { nafn: (pr.company && String(pr.company).trim()) || ('kt ' + dash(pr.kt)), heimilisfang: pr.address || null, customer_base_id: base.id };
+            if (contact.simi) row.simi = contact.simi;
+            if (contact.netfang) row.netfang = contact.netfang;
+            if (contact.tengilidur) row['tengiliður'] = contact.tengilidur;
+            const res = await KV.faTilStad({ sb: KV.defaultSb(), kt: pr.kt, baseId: base.id, thjonusta: true, nyrStadurLeyfdur: false, row });
+            if (!res.ok) { st.errors++; }
+            else if (res.hvernig === 'til') { st.ambiguous++; }   // kt á þegar staði en enginn þeirra passar nafni/heimilisfangi
+            else {
+              const site = res.row;
+              if (res.hvernig === 'reuse') { if (await updateSiteContact(site.id, contact)) st.contact_filled++; st.upgraded++; }
+              else st.created++;
+              addIds.push(site.id);
               await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?drive_file_id=eq.${encodeURIComponent(f.id)}`, {
                 method: 'PATCH', headers: sbHeaders(), body: JSON.stringify({ customer_base_id: base.id, fyrirtaeki_id: site.id }) });
             }
@@ -311,18 +324,7 @@ async function createBase(kt, nafn) {
   const rows = await r.json().catch(() => []);
   return Array.isArray(rows) && rows[0] ? rows[0] : null;
 }
-// Búa til fyrirtæki (staður) fyrir nýtt brunakerfi-fyrirtæki.
-async function createSite(kt, nafn, address, contact, baseId) {
-  const body = { kennitala: dash(kt), nafn: (nafn && nafn.trim()) || ('kt ' + dash(kt)),
-    heimilisfang: address || null, er_i_thjonustu: true, customer_base_id: baseId };
-  if (contact.simi) body.simi = contact.simi;
-  if (contact.netfang) body.netfang = contact.netfang;
-  if (contact.tengilidur) body['tengiliður'] = contact.tengilidur;
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/fyrirtaeki`, {
-    method: 'POST', headers: sbHeaders({ Prefer: 'return=representation' }), body: JSON.stringify(body) });
-  const rows = await r.json().catch(() => []);
-  return Array.isArray(rows) && rows[0] ? rows[0] : null;
-}
+// (Staðurinn sjálfur er búinn til af KV.faTilStad í _ktvorn.js — hér var áður createSite sem setti inn röð án athugunar.)
 // Fylla AÐEINS auða reiti (yfirskrifar aldrei) + setja er_i_thjonustu=true.
 async function updateSiteContact(siteId, contact) {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/fyrirtaeki?id=eq.${siteId}&select=simi,netfang,${encodeURIComponent('tengiliður')},er_i_thjonustu`, { headers: sbHeaders() });
@@ -525,6 +527,9 @@ async function ktByCompanyName(company, address) {
 async function matchBase(kt) {
   if (!kt) return null;
   const r = await fetch(`${SUPABASE_URL}/rest/v1/customers_base?kennitala=eq.${encodeURIComponent(dash(kt))}&select=id,nafn&limit=1`, { headers: sbHeaders() });
+  // 29.10.2026: villa (500/timeout) var lesin sem „ekkert base á kt" → createBase + staður bjuggu til tvífara. Nú KASTAR villan
+  // (köllunarstaðirnir eru innan try → skráin telst villa og er sleppt, ekkert er stofnað).
+  if (!r.ok) throw new Error('customers_base (kt-leit): ' + r.status + ' ' + (await r.text()).slice(0, 120));
   const rows = await r.json().catch(() => []);
   return (Array.isArray(rows) && rows[0]) ? rows[0] : null;
 }
