@@ -48,7 +48,10 @@ jarvis-voice.js; svið/raddir ÓBREYTT):
   LIVE (slokkvitaeki `sara-coworker`; Coworker-merkið stendur).
 - **Arnold** 💪 = að læra að teikna slökkvitækja-layout inn á
   húsnæðisteikningar (TurboPaint í kjarna, `/kjarni/turbopaint`) · heldur
-  öryggis-hlutverkinu og er áfram röddin á `oryggi`-sviðinu. Roster-emoji
+  öryggis-hlutverkinu í kóðanum (rödd `oryggi`-sviðsins). **29.10.2026 (Agnar):**
+  Arnold „er í TurboPaint, staðsetningu slökkvitækja og 3D-veggjateikningum“ — það
+  er kjarni hlutverksins (skill `arnold`); hvort RLS-röddin á að fá annað nafn er
+  óákveðið. Roster-emoji
   fylgir nú röddinni (💪, var 🔒 — svið-takkinn er áfram 🔒).
 - **Elon Musk** ⚡ = innra tengikerfið / as-built (slokkvitaeki `elon-musk`,
   `docs/RAFKERFI.md`, data-elon rekjarinn). NÝR á roster; á ENGA rödd í

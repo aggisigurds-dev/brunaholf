@@ -101,7 +101,7 @@ Bæði slökkvitæki og brunahólf lesa sama Supabase `osfdzskyvisifcwyjkuk`.
 <!-- AGENT-KVEIKJUR:BEGIN -->
 ## Sjálfvirk tafla — kveikjuorð úr `description` (búin til af `node tools/build-agents-registry.cjs`)
 
-Byggð 2026-10-28. Þessi tafla er dregin beint úr agent- og skill-skránum og gildir ef hún stangast á við handskrifuðu töfluna hér að ofan. Breyttu kveikjuorðum í `description:` skrárinnar, ekki hér.
+Byggð 2026-10-29. Þessi tafla er dregin beint úr agent- og skill-skránum og gildir ef hún stangast á við handskrifuðu töfluna hér að ofan. Breyttu kveikjuorðum í `description:` skrárinnar, ekki hér.
 
 | Heiti | Tegund | Kveikjuorð | Skrá síðast uppfærð |
 |---|---|---|---|
@@ -112,7 +112,7 @@ Byggð 2026-10-28. Þessi tafla er dregin beint úr agent- og skill-skránum og 
 | `framendi` | agent | `flipi` · `nýr flipi` · `hub` · `index.html` · `hliðarstika` · `Kröfu yfirlit` · `Fjármála-yfirlit` · `Drög-stöð` · `Efnislisti` · `dálkastjórn` · `raðanlegir dálkar` · `prófa alla takka` · `hvar býr þetta` | 28.10.2026 |
 | `gagnaleidslur` | agent | `Tímavera` · `Ajour` · `Redder` · `luna-bridge` · `innsog` · `póstur skilar sér ekki` · `sjálfvirkni` · `automation_triggers` · `redder lesari bilaður` · `1000 raða þak` · `tímabók` · `samstilla Ajour` · `gögn vantar` | 28.10.2026 |
 | `hradi` | agent | `hraði` · `hægt` · `lengi að loadast` · `performance check` · `polling` · `bundle` · `hopp` · `layout thrashing` · `MutationObserver` · `HT-3.10` · `LCP` · `CLS` · `INP` | 28.10.2026 |
-| `jarvis` | agent | `hver er staðan` · `morgunyfirferð` · `Jarvis` · `HUD` · `svið` · `hype` · `hvernig gengur` · `vikuyfirlit` · `sigrar` · `afköst` · `agentaskráin` · `hvaða agentar eru til` · `Golden Jarvis` · `Ragnarök` | 28.10.2026 |
+| `jarvis` | agent | `hver er staðan` · `morgunyfirferð` · `Jarvis` · `HUD` · `svið` · `hype` · `hvernig gengur` · `vikuyfirlit` · `sigrar` · `afköst` · `agentaskráin` · `hvaða agentar eru til` · `Golden Jarvis` · `Ragnarök` | 29.10.2026 |
 | `joker` | agent | `útlit` · `sími` · `mobile` · `þröngt` · `of smátt` · `brotið` · `endurhanna` · `mockup` · `skinna` · `Boss-þema` · `Ragnarök` · `kontrast` · `grátt á gráu` · `laga hlutföll` | 28.10.2026 |
 | `kerfisheilsa` | agent | `hægt` · `niðri` · `timeout` · `frosið` · `eitthvað skrítið` · `health check` · `Supabase hrun` · `504` · `statement timeout` · `eru einhverjir gallar` · `peak time Claude` · `appið hleðst ekki` | 28.10.2026 |
 | `kort` | agent | `kort` · `pinnar` · `hnit` · `geocode` · `Leaflet` · `kill-dots` · `Nominatim` · `Staðfangaskrá` · `loftmynd` · `bláa slikjan á kortum` · `grátt kort` | 28.10.2026 |
@@ -123,7 +123,7 @@ Byggð 2026-10-28. Þessi tafla er dregin beint úr agent- og skill-skránum og 
 | `prentun` | agent | `prentun` · `prenta merki` · `QR` · `QR-miði` · `miði` · `Brother` · `PT-P750W` · `raðnúmer` · `skanni` · `strikamerki` | 28.10.2026 |
 | `rambo` | agent | `er óhætt að keyra` · `forskoða` · `hvað getur farið úrskeiðis` · `áður en ég ýti` · `Rambo` | 22.10.2026 |
 | `rukkari` | agent | `rukka` · `rukkunarmál` · `reikningalota` · `klára reikninga` · `hvað er tilbúið að senda` · `hvað á eftir að rukka` · `ósent` · `ógreitt` · `útistandandi` · `kröfur` · `Drög-stöð` · `nýjustu póstar` · `sækja úr pósti` · `hvað kom í pósti` · `brýnt` · `bókhald ósent` · `óafgreitt` · `hvað var rukkað og greitt` | 28.10.2026 |
-| `sala-reikningar` | agent | `reikningur` · `sala` · `POS` · `söluborð` · `Payday` · `dkPlus` · `afsláttur` · `afsláttarhópar` · `krafa` · `kredit` · `Hreyfingarlisti` · `verðlisti` · `birgðir` · `Teya` | 28.10.2026 |
+| `sala-reikningar` | agent | `reikningur` · `sala` · `POS` · `söluborð` · `Payday` · `dkPlus` · `afsláttur` · `afsláttarhópar` · `krafa` · `kredit` · `Hreyfingarlisti` · `verðlisti` · `birgðir` · `Teya` | 29.10.2026 |
 | `samthykktir` | agent | `klára svörin` · `yfirfara svör` · `vinna úr Samþykkja` · `ég er búinn að svara` · `taka borðið` · `afgreiða samþykktir` · `hvað bíður Claude` · `svörin mín á þjónustuborðinu` | 26.10.2026 |
 | `sara-coworker` | agent | `skýrsla` · `úttekt` · `fylla skýrslu` · `vinnublað` · `Sara-borðið` · `para` · `Tengireglan` · `tækjafjöldi` · `T=S` · `ferðanóta` · `staðfesta lista` | 28.10.2026 |
 | `sara-organizer` | agent | `para` · `þekja` · `gloppa` · `vantar að rukka` · `skýrsla og reikningur` · `finna reikninginn sem passar` · `document_pairs` · `v_bundle_coverage` · `hunt tracker` · `brunaskýrsla vs slökkvitæki` | 28.10.2026 |
@@ -134,7 +134,7 @@ Byggð 2026-10-28. Þessi tafla er dregin beint úr agent- og skill-skránum og 
 | `add-feature` | skill | `nýr flipi` · `bæta við flipa` · `ný síða í hub` · `nýtt API` · `nýtt endpoint` · `iframe-síða` · `renderXxx` · `add-feature` | 28.10.2026 |
 | `agent-athugasemdir` | skill | `taka inn athugasemdir` · `athugasemdir við agenta` · `agent_notes` · `bæta inn í agentana` · `uppfæra agentana` · `fara yfir athugasemdirnar` · `agentaskráin` | 28.10.2026 |
 | `ajour-endpoint-capture` | skill | `Ajour` · `NLSH` · `CSV` · `endpoint` · `AjourRegistrationData` | 31.08.2026 |
-| `arnold` | skill | `staðsetning` · `kröfur` · `slökkvigildi` · `flóttaleið` · `merkingar` · `byggingarreglugerð` · `notkunarflokkur` · `gönguleið` · `neyðarlýsing` · `útljós` · `leiðarlýsing` · `skylda` · `skyldugir` · `reglugerð` · `lög` · `eldvarnaeftirlit` · `þjónustusamningur` · `löggilding` · `byggingarlýsing` · `brunahönnun` · `skráningartafla` · `sameign` · `stigagangur` · `fjölbýli` · `húsfélag` · `hvar á tækið að vera` · `teikning` · `aðaluppdráttur` · `skera að húsinu` · `festa útlit` · `teikningagluggi` | 20.10.2026 |
+| `arnold` | skill | `staðsetning` · `kröfur` · `slökkvigildi` · `flóttaleið` · `merkingar` · `byggingarreglugerð` · `notkunarflokkur` · `gönguleið` · `neyðarlýsing` · `útljós` · `leiðarlýsing` · `skylda` · `skyldugir` · `reglugerð` · `lög` · `eldvarnaeftirlit` · `þjónustusamningur` · `löggilding` · `byggingarlýsing` · `brunahönnun` · `skráningartafla` · `sameign` · `stigagangur` · `fjölbýli` · `húsfélag` · `hvar á tækið að vera` · `teikning` · `aðaluppdráttur` · `skera að húsinu` · `festa útlit` · `teikningagluggi` | 29.10.2026 |
 | `bh-pdf` | skill | `láta PDF-ið líta svona út` · `font í Verkstaður` · `lógóið eins og í Efnislistanum` | 10.10.2026 |
 | `boss-theme` | skill | `Boss-þema` · `Boss-útlit` · `boss-*` · `gull og svart stál` · `skinna hub-síðu` · `modal í Boss` · `Þjónustuborð-útlit` · `theme.css` | 28.10.2026 |
 | `brunaholf-layout` | skill | `layout` · `CSS` · `media query` · `breakpoint` · `dálkar` · `þröngt á síma` · `spacing` · `taflan brotnar` | 28.10.2026 |

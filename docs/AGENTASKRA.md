@@ -72,7 +72,7 @@ Teljarinn **153/187** (tilbúið-staða) er **óbreyttur**. Hann er ekki hluti a
 | `netvordur` | agent | slokkvitaeki | `.claude/agents/netvordur.md` | sjá að ofan | Sjá að ofan. |
 | `uttekt-audit` | skill | slokkvitaeki | `.claude/skills/uttekt-audit/SKILL.md` | `audit` · `samræmi` · `stemmir` · `passar magnið` | Skrifa (lesaðeins). |
 | `charlize` | skill | slokkvitaeki | `.claude/skills/charlize/SKILL.md` | `muna` · `skrá` · `Charlize` · `hvernig var þetta` | Spyrja Agnar að því sem Charlize veit nú þegar. |
-| `arnold` | skill | slokkvitaeki | `.claude/skills/arnold/SKILL.md` | `staðsetning` · `slökkvigildi` · `flóttaleið` · `byggingarreglugerð` | Rugla við agent `oryggi` (RLS). Roster-Arnold er **bæði**: þetta skill + `oryggi`-rödd. |
+| `arnold` | skill | slokkvitaeki | `.claude/skills/arnold/SKILL.md` | `staðsetning` · `slökkvigildi` · `flóttaleið` · `byggingarreglugerð` · `TurboPaint` · `3D` | Arnold er í TurboPaint, staðsetningu slökkvitækja og 3D-veggjateikningum (Agnar 29.10.2026). Rugla ekki við agent `oryggi` (RLS) — röddin þar heitir enn Arnold í `jarvis-voice.js`, nafnið óákveðið. |
 | `elon-musk` | skill | slokkvitaeki | `.claude/skills/elon-musk/SKILL.md` | sama og agentinn | Sjá `elon-musk` að ofan. |
 | `deploy` | skill | slokk + bh | `.claude/skills/deploy/SKILL.md` | `deploy` · `ýta` · `deploy.js` | `node deploy.js`. |
 | `vidmotsprof` | skill | brunaholf | `.claude/skills/vidmotsprof/SKILL.md` (+ `sink.cjs`) | `prófa` · `staðfesta` · `virkar þetta` · `skjáskot af PDF` | Staðfesta UI með API-kalli. Láta próf skrifa í lifandi gögn. |

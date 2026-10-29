@@ -43,9 +43,9 @@
   var tolSkills = R.list.filter(function (e) { return e.type === 'skill' && e.flokkur !== 'skill'; });
 
   var counts = {};
-  var authorKey = 'ag_author';
-  var getAuthor = function () { try { return localStorage.getItem(authorKey) || localStorage.getItem('bh_me') || ''; } catch (_) { return ''; } };
-  var setAuthor = function (v) { try { localStorage.setItem(authorKey, v); } catch (_) {} };
+  // Nafn höfundar kemur úr bh_me (sem hubbinn á þegar) — enginn nýr vafra-lykill (vörðurinn audit-vafrastada telur þá).
+  var getAuthor = function () { try { return localStorage.getItem('bh_me') || ''; } catch (_) { return ''; } };
+  var setAuthor = function () {};
 
   function getJSON(url, opt) {
     return fetch(url, opt).then(function (r) {
