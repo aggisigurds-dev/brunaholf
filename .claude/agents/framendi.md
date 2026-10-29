@@ -292,6 +292,12 @@ tekjur (klárað en ógreitt). `renderSkyrslur(t)` í `index.html`.
   296-cg-capture.js` — fljótandi „🎯 CG" takki neðst t.v. á ÖLLUM síðum, sami
   smell-á-töluna-flæði, POSTar beint á `https://brunaholf.netlify.app/api/cg-entries`
   með `source_app:'slokkvitaeki'`.
+- **CG-01…04 í cg_entries (2026-10-29, verkefnalisti 664205fc)**: innbyggðu CG skrifast líka í
+  `cg_entries` með eigin id (`CG-01`…`CG-04`, `source_app:'brunaholf'`) gegnum `cgPushShared(id,value)`
+  — kallað úr `renderCards` í Kröfu yfirliti, aðeins eftir fulla hleðslu (`state.t3ok`) og án villu
+  (`pgFailed`/`wsFailed`/`__KYF_VILLA`/`warnings`). Skrifað þegar gildið breytist eða 30 mín eru liðnar
+  (samanburður við `CG_SRV`, þjónsgildin úr `cgFetchShared`, aðeins í minni). `cgFetchShared` sleppir
+  innbyggðum id í `CG_SHARED` (engin tvítekning) og tekur þjónsgildið aðeins ef staðbundið vantar/er eldra.
 - **Eftir**: merkja fleiri innbyggða glugga (Krófur & Tekjur, Slökkvitæki „í vinnslu");
   „Admin mode" takki við klukkuna (báðar síður) fyrir handvirkar leiðréttingar í summum.
 
