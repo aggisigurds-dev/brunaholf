@@ -14,6 +14,9 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const BUCKET = 'verkefnalisti';
 const MAX_IMG_BYTES = 8 * 1024 * 1024;   // 8 MB per screenshot — generous
+// Vefur (29.10.2026, verk 809627e5): dálkurinn `vefur` kemur með sql/2026-10-29_verkefnalisti_vefur.sql.
+// Tekinn með í add/update AÐEINS ef kallandi sendir hann — svo ekkert breytist meðan migration er ókeyrð.
+const VEFIR = ['brunaholf', 'slokkvitaeki', 'sameiginlegt'];
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -194,6 +197,7 @@ exports.handler = async (event) => {
         priority: Number.isFinite(body.priority) ? body.priority : 1,
         category: body.category ? String(body.category).trim() : 'allt',
       };
+      if (VEFIR.includes(body.vefur)) row.vefur = body.vefur;
       const r = await sb('verkefnalisti', {
         method: 'POST',
         headers: { Prefer: 'return=representation' },
@@ -231,6 +235,7 @@ exports.handler = async (event) => {
       // forgangs-merki: 0=grátt 1=grænt 2=gult 3=rautt (hringrás í UI)
       if (typeof body.flag === 'number') patch.flag = ((body.flag % 4) + 4) % 4;
       if (typeof body.category === 'string') patch.category = body.category.trim();
+      if (VEFIR.includes(body.vefur)) patch.vefur = body.vefur;
       if (typeof body.assigned_agent === 'string') patch.assigned_agent = body.assigned_agent.trim();
       try {
         if (body.result_image_b64) {
