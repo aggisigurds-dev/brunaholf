@@ -6084,10 +6084,12 @@ function renderBakendi(t){
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
             <button id="bk-tv-run" class="btn primary">⏱ Tímavera xlsx → timavera_entries</button>
+            <span title="Úrelt leið: Tímavera sækist núna beint úr API á 2 tíma fresti (kortið „Tímavera API“ hér að neðan, Mæting „Samstilla“). Drive-xlsx leiðin les aðeins síðustu útflutningsskrá." style="${chipStyle('var(--warn-bg)','var(--red-dark)')}">Úrelt</span>
             <span id="bk-tv-status" style="font-size:12.5px;color:var(--muted)"></span>
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
             <button id="bk-pd-run" class="btn primary">💳 Payday xlsx → invoices</button>
+            <span title="Úrelt leið: Payday sækist núna beint úr API kl. 07:00 og 15:00 (Kröfu yfirlit „Samstilla Payday“). Drive-xlsx leiðin les aðeins síðustu útflutningsskrá." style="${chipStyle('var(--warn-bg)','var(--red-dark)')}">Úrelt</span>
             <span id="bk-pd-status" style="font-size:12.5px;color:var(--muted)"></span>
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
@@ -20732,6 +20734,11 @@ async function renderDagurinn(t){
       <div id="dg-skv" class="dg-skv" style="display:none"></div>
       <div id="dg-sg" class="dg-skv" style="display:none"></div>
 
+      <details id="dg-yf" class="dg-yf">
+        <summary id="dg-yf-sum">Yfirlit yfir alla samstillingartakka</summary>
+        <div id="dg-yf-body" class="dg-yf-body"><div class="dg-loading">Sækir…</div></div>
+      </details>
+
       <h3 class="dg-h3">Claude mælir með</h3>
       <div id="dg-reco" class="dg-card"><div class="dg-loading">Sækir…</div></div>
 
@@ -20792,6 +20799,26 @@ async function renderDagurinn(t){
       .dg-foot a:hover{text-decoration:underline}
       .dg-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
       @media (max-width:900px){.dg-grid{grid-template-columns:1fr}}
+      /* Yfirlit yfir samstillingartakka (les-eingöngu tafla) */
+      .dg-yf{margin:14px 0 0;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm)}
+      .dg-yf>summary{cursor:pointer;padding:10px 14px;font-size:13px;font-weight:600;color:var(--ink)}
+      .dg-yf-body{padding:0 14px 12px}
+      .dg-yf-lede{font-size:12px;color:var(--text-dim,var(--muted));margin:0 0 8px;line-height:1.5}
+      .dg-yf-wrap{overflow-x:auto}
+      .dg-yf-t{width:100%;min-width:680px;border-collapse:collapse;font-size:12.5px}
+      .dg-yf-t th{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+      .dg-yf-t td{padding:7px 8px;border-bottom:1px solid var(--border,var(--line));vertical-align:top;color:var(--ink)}
+      .dg-yf-t tr.dg-yf-g td{background:var(--tbl-header,transparent);font-weight:600;padding-top:9px}
+      .dg-yf-t code{font-family:var(--font-mono);font-size:11.5px;word-break:break-all}
+      .dg-yf-sub,.dg-yf-n{display:block;font-size:11.5px;color:var(--muted-2);margin-top:2px;line-height:1.4}
+      .dg-yf-live{font-weight:400;font-size:11.5px;color:var(--muted-2);margin-left:6px}
+      .dg-yf-s{white-space:nowrap;font-weight:600}
+      .dg-yf-s .dg-dot{display:inline-block;width:9px;height:9px;margin-right:6px;vertical-align:baseline}
+      .dg-yf-s.fresh{color:var(--green)}
+      .dg-yf-s.aging{color:var(--warn)}
+      .dg-yf-s.stale{color:var(--red)}
+      .dg-yf-s.unknown{color:var(--muted)}
+      .dg-yf-t tr.dg-yf-u td{opacity:.72}
     </style>`;
 
   // ----- local helpers (mirror renderNLSH; kr/num/esc are NOT global) -----
@@ -20824,6 +20851,100 @@ async function renderDagurinn(t){
 
   const $meta    = document.getElementById('dg-meta');
   const $refresh = document.getElementById('dg-refresh');
+
+  // ----- Yfirlit yfir ALLA samstillingartakka → endapunkt → staða (verkefnalisti fef57da1, 29/10/2026) -----
+  // LESTRARYFIRLIT: engin lína hér keyrir samstillingu né kallar á endapunkt. Taflan er föst skrá tekin úr kóðanum
+  // (index.html, js/hub-sync-buttons.js, netlify.toml, netlify/functions/*); lifandi ferskleiki hverrar gagnalindar
+  // kemur úr SÖMU /api/data-sources-status-svari og spjöldin að ofan (engin aukakall).
+  // ⚠️ Bættu nýjum takka/endapunkti við DG_SYNC_YFIRLIT þegar hann er smíðaður — annars sýnir Dagurinn gamla mynd.
+  // k: takki | sjalfvirkt | tolva (enginn takki í hubbanum) · s: sjá DG_STADA.
+  const DG_STADA = {
+    virkar:    ['fresh',   'Virkar'],
+    bru:       ['aging',   'Þarf brúartölvu'],
+    ostadfest: ['aging',   'Mátun óstaðfest'],
+    villandi:  ['stale',   'Villandi'],
+    varaleid:  ['unknown', 'Varaleið'],
+    urelt:     ['unknown', 'Úrelt']
+  };
+  const DG_SYNC_YFIRLIT = [
+    {key:'timavera', label:'Tímavera klst', rows:[
+      {k:'takki', t:'Samstilla Tímavera', st:'Gerð Reikninga · Vinnubók · Kröfu yfirlit · Landsspítalinn', ep:'/api/timavera-pull?days=30', sk:'timavera_entries (upsert + speglun)', s:'virkar', n:'Aðalleiðin. Speglun eyðir færslum sem Tímavera skilar ekki lengur.'},
+      {k:'takki', t:'Samstilla (Mæting)', st:'Mæting', ep:'/api/timavera-pull?days=8–31', sk:'timavera_entries (upsert + speglun)', s:'virkar', n:'Sami endapunktur, valinn dagafjöldi.'},
+      {k:'takki', t:'Djúp-samstilling', st:'Kröfu yfirlit', ep:'/api/timavera-pull?days=31–366', sk:'timavera_entries (upsert + speglun)', s:'virkar', n:'Speglar breyttar og eyddar færslur allt að 12 mánuði aftur; öryggisþak stöðvar ef meira en 30% yrði eytt.'},
+      {k:'takki', t:'Tímavera API: Prófa tengingu · Prufa · Sækja færslur · Vista lykil', st:'Bakendi', ep:'/api/timavera-pull (?probe=1 · ?dry=1 · POST)', sk:'Prófa og Prufa skrifa ekkert; Sækja skrifar timavera_entries; Vista lykil skrifar app_kv', s:'virkar', n:'Hér er lykillinn vistaður og tengingin prófuð.'},
+      {k:'takki', t:'Tímavera xlsx → timavera_entries', st:'Bakendi › Gagna-uppfærslur úr Drive', ep:'/api/timavera-ingest-drive', sk:'timavera_entries (upsert)', s:'urelt', n:'Skipt út fyrir timavera-pull (aðalheimild frá 15/07/2026). Les aðeins síðustu xlsx-skrá í Drive.'},
+      {k:'sjalfvirkt', t:'Sjálfvirk sókn á 2 tíma fresti + næturspeglun 60 daga', st:'netlify.toml', ep:'timavera-pull-background · timavera-reconcile-background', sk:'timavera_entries', s:'virkar', n:'Sjálfvirkni-spjaldið „timavera-pull“ segir enn „virka daga 09:30 og 12:00 · cowork“ — rétt áætlun er í netlify.toml (15 */2 * * *).'},
+      {k:'tolva', t:'timavera-bridge.js (skrapari á luna-bridge-tölvu)', st:'Tölva — enginn takki í hubbanum', ep:'— (ekki í þessu repói)', sk:'timavera_entries', s:'urelt', n:'RETIRED skv. netlify.toml; timavera-pull leysti hann af.'}
+    ]},
+    {key:'invoices', label:'Payday + krafnir', rows:[
+      {k:'takki', t:'Samstilla Payday', st:'Gerð Reikninga · Kröfu yfirlit', ep:'/api/payday-pull', sk:'invoices (upsert á tilvisun + source); snertir aldrei worksite_match', s:'virkar', n:'Sækir beint úr Payday API.'},
+      {k:'takki', t:'Payday xlsx → invoices', st:'Bakendi › Gagna-uppfærslur úr Drive', ep:'/api/payday-ingest-drive', sk:'invoices (upsert)', s:'urelt', n:'Sami upsert-lykill og payday-pull. Les aðeins síðustu xlsx-skrá í Drive.'},
+      {k:'sjalfvirkt', t:'Sjálfvirk sókn kl. 07:00 og 15:00', st:'netlify.toml', ep:'payday-pull-background', sk:'invoices', s:'virkar', n:'Sjálfvirkni-spjaldið „payday-pull“ segir „daglega · cowork (bridge-vél)“ — keyrslan er í raun á Netlify tvisvar á dag.'}
+    ]},
+    {key:'bank', label:'Landsbankinn ledger', rows:[
+      {k:'takki', t:'Prufa (ekkert vistað)', st:'Bakendi › Gagna-uppfærslur úr Drive', ep:'/api/landsbanki-ingest-drive?dry=1', sk:'Les eingöngu — skrifar ekkert', s:'virkar', n:'Sýnir dálkamátun og fjölda færslna úr nýjustu skrá.'},
+      {k:'takki', t:'Landsbanki — sækja hreyfingar úr Drive', st:'Bakendi › Gagna-uppfærslur úr Drive', ep:'/api/landsbanki-ingest-drive', sk:'bank_transactions (upsert á dags + tnr + upphæð)', s:'ostadfest', n:'Eina leiðin og ekkert sjálfvirkt. Dálkamátunin er enn giskun (athugasemd „verify against a real Landsbanki export“ í kóðanum) — keyrðu Prufu fyrst.'}
+    ]},
+    {key:'ajour', label:'Ajour skráningar', rows:[
+      {k:'takki', t:'Samstilla Ajour', st:'Gerð Reikninga · Kröfu yfirlit · Landsspítalinn', ep:'Beiðni (automation_triggers) til brúartölvu; varaleið /api/nlsh-update', sk:'ajour_registrations (brúartölvan skrifar)', s:'bru', n:'Ajour á ekkert API: engin kveikt brúartölva, engin ný gögn. Svari engin tölva innan 100 sek. er aðeins síðasta Drive-skrá lesin og það sagt.'},
+      {k:'takki', t:'Uppfæra gögn úr Drive', st:'Landsspítalinn', ep:'/api/nlsh-update → ajour-ingest-drive-background', sk:'ajour_registrations (upsert)', s:'villandi', n:'Les aðeins nýjustu AjourRegistrationData-skrá í Drive og sýnir „lokið“ þótt ekkert nýtt hafi komið. Notaðu Samstilla Ajour.'},
+      {k:'takki', t:'Sækja úr Ajour (punktar per verkstað)', st:'Ajour', ep:'/api/ajour-yfirlit (POST) → brúartölva', sk:'app_kv (ajour_yfirlit)', s:'bru', n:'Önnur gögn en skráningarnar hér að ofan — punkta-talning per verkstað.'},
+      {k:'sjalfvirkt', t:'Daglega kl. 06:45 (ajour-fetch) og á klukkustundar fresti (ajour-yfirlit)', st:'Task Scheduler á brúartölvu', ep:'— (luna-bridge skrifar úr tölvunni)', sk:'ajour_registrations · app_kv', s:'bru', n:'Sjálfvirkni-spjöld til fyrir bæði störfin.'}
+    ]},
+    {key:'redder', label:'Redder efnisreikningar', rows:[
+      {k:'takki', t:'Samstilla Redder', st:'Gerð Reikninga · Kröfu yfirlit', ep:'Beiðni (automation_triggers) til brúartölvu; varaleið /api/redder-read', sk:'redder_invoices + línur', s:'bru', n:'Brúin les póstinn í Thunderbird og Redder. Svari engin tölva er Drive lesið og það sagt.'},
+      {k:'takki', t:'Lesa Redder úr Drive (forskoðun, svo skrá)', st:'Efniskostnaður', ep:'/api/redder-read?dry=1 → /api/redder-read', sk:'Forskoðun skrifar ekkert; seinni smellur skrifar redder_invoices + línur', s:'virkar', n:'Les aðeins PDF-skjöl sem eru þegar komin í Drive.'},
+      {k:'sjalfvirkt', t:'Sjálfvirkur lestur kl. 09:50, 13:50 og 17:50', st:'netlify.toml', ep:'redder-read-background', sk:'redder_invoices + línur (aðeins reikningar sem vantar)', s:'virkar', n:'Ekkert Sjálfvirkni-spjald vísar á þetta.'}
+    ]},
+    {key:'email', label:'Email digest', rows:[
+      {k:'takki', t:'Sækja núna (Gmail úr skýi)', st:'Bakendi › Tölvupóstur', ep:'/api/gmail-ingest', sk:'email_digest (upsert á message_id)', s:'virkar', n:'Reiturinn „Prufa“ er hakaður sjálfgefið — ekkert vistast fyrr en hakið er tekið af.'},
+      {k:'takki', t:'Tengja pósthólf (Google)', st:'Bakendi › Tölvupóstur', ep:'/api/google-auth', sk:'google_oauth (aðgangslykill)', s:'virkar', n:'Þarf til að skýið nái í Google-hólfin.'},
+      {k:'sjalfvirkt', t:'Sjálfvirk sókn á 2 tíma fresti (inbox + sent)', st:'netlify.toml', ep:'gmail-ingest-background', sk:'email_digest', s:'virkar', n:'Sjálfvirkni-spjald „gmail-ingest“ til.'},
+      {k:'tolva', t:'bridge.js (Thunderbird mbox á luna-bridge-tölvu)', st:'Tölva — enginn takki í hubbanum', ep:'— (ekki í þessu repói)', sk:'email_digest', s:'bru', n:'Eina leiðin fyrir @brunaholf.is (Office 365) hólfin; Sjálfvirkni-spjald „luna-bridge“ til.'},
+      {k:'tolva', t:'Mail Pulse (Chrome-viðbót): Sync núna á þessum flipa', st:'Chrome-viðbót', ep:'/api/email-ingest-browser (POST, X-Brunaholf-Token)', sk:'email_digest (upsert á message_id)', s:'varaleid', n:'Virkar aðeins meðan Gmail eða Outlook er opið í Chrome.'}
+    ]}
+  ];
+  // Teiknar yfirlitið. `srcs` = sources úr /api/data-sources-status (má vera tómt ef kallið klikkaði).
+  function teiknaYfirlit(srcs){
+    const box = document.getElementById('dg-yf-body'), sum = document.getElementById('dg-yf-sum');
+    if(!box || !box.isConnected) return;
+    const by = {}; (srcs||[]).forEach(s => { by[s.key] = s; });
+    let nTakkar = 0, nUrelt = 0, nVillandi = 0;
+    const body = DG_SYNC_YFIRLIT.map(g => {
+      const s = by[g.key];
+      let live = 'ferskleiki óþekktur';
+      let dot = 'unknown';
+      if(s){
+        dot = s.status || 'unknown';
+        live = 'nýjustu gögn '+fmtDate(s.newest_real)+(s.age_days!=null ? ' ('+relDays(s.age_days)+')' : '')
+          + (s.last_import ? ' · sótt '+relTime(s.last_import) : '')
+          + (s.inactive ? ' · ÓVIRKT: '+(s.inactive_reason||'engin sókn nýlega') : '');
+      }
+      const rows = g.rows.map(r => {
+        const st = DG_STADA[r.s] || ['unknown', r.s];
+        if(r.k === 'takki') nTakkar++;
+        if(r.s === 'urelt') nUrelt++;
+        if(r.s === 'villandi') nVillandi++;
+        const tegund = r.k === 'sjalfvirkt' ? 'Sjálfvirkt — enginn takki' : '';
+        return '<tr'+(r.s==='urelt' ? ' class="dg-yf-u"' : '')+'>'
+          + '<td><b>'+esc(r.t)+'</b>'
+          + '<span class="dg-yf-sub">'+esc([tegund, r.st].filter(Boolean).join(' · '))+'</span>'
+          + (r.n ? '<span class="dg-yf-n">'+esc(r.n)+'</span>' : '')+'</td>'
+          + '<td><code>'+esc(r.ep)+'</code></td>'
+          + '<td>'+esc(r.sk)+'</td>'
+          + '<td><span class="dg-yf-s '+st[0]+'"><span class="dg-dot '+st[0]+'"></span>'+esc(st[1])+'</span></td>'
+          + '</tr>';
+      }).join('');
+      return '<tr class="dg-yf-g"><td colspan="4"><span class="dg-dot '+esc(dot)+'" style="display:inline-block;width:9px;height:9px;margin-right:6px"></span>'
+        + esc(g.label)+'<span class="dg-yf-live">'+esc(live)+'</span></td></tr>'+rows;
+    }).join('');
+    if(sum) sum.textContent = 'Yfirlit yfir alla samstillingartakka — '+nTakkar+' takkar'
+      + (nUrelt ? ', '+nUrelt+' úreltar leiðir' : '') + (nVillandi ? ', '+nVillandi+' villandi' : '');
+    box.innerHTML = '<p class="dg-yf-lede">Hver takki → endapunktur → hvað hann skrifar → staða. Þetta er lestrar-yfirlit: ekkert hér keyrir samstillingu. '
+      + 'Liturinn á gagnalindinni er ferskleiki gagnanna sjálfra (sami og spjöldin að ofan), ekki prófun á endapunktinum.</p>'
+      + '<div class="dg-yf-wrap"><table class="dg-yf-t"><thead><tr><th>Takki</th><th>Endapunktur</th><th>Skrifar</th><th>Staða</th></tr></thead><tbody>'
+      + body + '</tbody></table></div>';
+  }
 
   async function load(){
     $meta.textContent = 'Sækir…';
@@ -20961,6 +21082,9 @@ async function renderDagurinn(t){
       $meta.textContent = 'Villa við samstillingu';
     }
 
+    // ---------- Yfirlit yfir alla samstillingartakka (föst skrá + ferskleikinn úr Band A) ----------
+    try{ teiknaYfirlit(sources); }catch(e){ const yb = document.getElementById('dg-yf-body'); if(yb) yb.innerHTML = '<div class="dg-err">Villa: '+esc(e.message||e)+'</div>'; }
+
     // ---------- BAND B · Claude mælir með (reiknað úr Band A) ----------
     const recoBox = document.getElementById('dg-reco');
     try{
@@ -20975,10 +21099,11 @@ async function renderDagurinn(t){
         let hint = '→ Bakendi „🔄 Gagna-uppfærslur úr Drive"';
         if(s.key === 'timavera') hint = '→ Bakendi „🕒 Tímavera API" eða Mæting „🔄 Samstilla"';
         else if(s.key === 'invoices') hint = '→ Kröfu yfirlit „🔄 Samstilla Payday"';
-        else if(s.key === 'ajour') hint = '→ Landsspítalinn „🔄 Uppfæra gögn úr Drive" (athuga líka hvort nýr CSV-export sé til)';
+        // 29/10/2026 (verkefnalisti fef57da1): Ajour og Redder bentu á Drive-leiðina; lifandi leiðin er brúartakkinn.
+        else if(s.key === 'ajour') hint = '→ „↻ Samstilla Ajour" (Landsspítalinn, Gerð Reikninga eða Kröfu yfirlit) — þarf kveikta brúartölvu; „Uppfæra gögn úr Drive" les aðeins síðustu CSV-skrá';
         else if(s.key === 'email') hint = '→ Bakendi „☁️ Gmail úr skýi" — „⬇️ Sækja núna"';
         else if(s.key === 'bank') hint = '→ Bakendi „🏦 Landsbanki" — keyra 👁 Prufa FYRST og staðfesta rétta skrá';
-        else if(s.key === 'redder') hint = '→ Efniskostnaður „🔍 Lesa Redder úr Drive"';
+        else if(s.key === 'redder') hint = '→ „↻ Samstilla Redder" (Gerð Reikninga eða Kröfu yfirlit); varaleið: Efniskostnaður „🔍 Lesa Redder úr Drive"';
         recs.push(`Uppfæra <b>${esc(s.label||s.key)}</b> (nýjustu gögn ${esc(when)}) <span class="dg-li-sub">${esc(hint)}</span>`);
       });
       // Verkstaðir án reiknings (sama endapunktur og Yfirlit notar)
