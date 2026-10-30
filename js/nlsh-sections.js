@@ -62,6 +62,9 @@
       .nl-um td small{display:block;font-weight:500;font-size:9.5px;color:#44505e}
       .nl-um td.nl-um-na{color:#a0a8b4;font-weight:400}
       .nl-um .nl-um-sum td,.nl-um tfoot td{border-top:2px solid var(--border,#cfd5de);background:transparent}
+      .nl-fl-w{height:auto!important;min-height:84px;padding:6px 3px}
+      .nl-fl-zs{display:flex;flex-direction:column;gap:2px;width:100%;margin-top:4px;padding:0 2px}
+      .nl-fl-z{display:block;border-radius:3px;padding:1px 3px;font-size:9.5px;font-weight:600;text-align:center;color:#1f2933;font-variant-numeric:tabular-nums}
       .nl-fl-leg{display:flex;align-items:center;gap:8px;margin:8px 0 0;font-size:11px;color:var(--text-dim,#5a6473)}
       .nl-fl-leg span.bar{flex:0 0 140px;height:8px;border-radius:4px;background:linear-gradient(90deg,hsl(0 62% 80%),hsl(60 62% 80%),hsl(125 62% 80%))}
     `;
@@ -192,8 +195,11 @@
   // Markmið per flokk: 5H = sami flokkur á sama væng á 6H (hún er búin); gólfgöt (milliloft) = 5H S1/S2 eigin tala, 230 á S4/S5,
   // sama á 4H sem hefur aðeins gólfgöt; 6H = það sem er klárað. Hver flokkur er „umferð“ sem getur verið óhafin á væng.
   const GOLF_CLS = 'Gólf Ø 160-200';
+  // Rafmagn (6H á 285 rafþéttingar og raufar, 5H ekki skráð) er utan markmiða — sjá athugasemd á síðunni.
+  const RAF_CLS = ['Raflagnaþéttingar, göt og raufar', 'Raufar. (Metrer) LV', 'Raf raufar. (Metrar og Stk.)', 'Raf göt (Stk.)'];
   const GOLF_TGT = { S1: 266, S2: 194, S4: 230, S5: 230 };
   function classTarget(stukur, f, w, c) {
+    if (RAF_CLS.indexOf(c) >= 0) return 0;
     if (c === GOLF_CLS) return f === '6H' ? 0 : GOLF_TGT[w];
     if (f === '4H') return 0;
     if (f === '6H') return null;
@@ -208,6 +214,42 @@
     return Math.max(d.done, tgt + (d.done - cd));
   }
 
+  // Norður / Center / Suður (skipting verktaka á hverri stúku): sjá tools/nlsh-stukur.cjs — brýrnar milli stúkna sjást sem dýfa í
+  // y-hnitum. Markmið svæðis: 5H = sama svæði á sama væng á 6H án gólfgata, auk gólfgata (markmið væng skipt eftir hlut svæðis í
+  // gólfgötum 5H S1+S2); 4H = aðeins gólfgöt; 6H = það sem er klárað.
+  const ZONES = [['N', 'Norður'], ['C', 'Center'], ['S', 'Suður']];
+  function zoneOf(stukur, f, w, z) {
+    const d = stukur.wings[f + ' ' + w];
+    return d && d.z && d.z[z] ? d.z[z] : { done: 0, open: 0, cat: {} };
+  }
+  function zoneTarget(stukur, f, w, z) {
+    const zd = zoneOf(stukur, f, w, z);
+    if (f === '6H') return zd.done;
+    let t = 0;
+    if (f === '5H') { const ref = zoneOf(stukur, '6H', w, z); t += ref.done - (ref.cat[GOLF_CLS] || 0) - RAF_CLS.reduce((x, c) => x + (ref.cat[c] || 0), 0); }
+    const g = { N: 0, C: 0, S: 0 };
+    ['S1', 'S2'].forEach((x) => ZONES.forEach(([k]) => { g[k] += zoneOf(stukur, '5H', x, k).cat[GOLF_CLS] || 0; }));
+    const gs = g.N + g.C + g.S;
+    if (gs) t += (GOLF_TGT[w] * g[z]) / gs;
+    return Math.max(zd.done, Math.round(t));
+  }
+  function zoneTable(stukur) {
+    const rows = [];
+    ['6H', '5H', '4H'].forEach((f) => WINGS.forEach((w) => {
+      const cells = ZONES.map(([k]) => {
+        const zd = zoneOf(stukur, f, w, k), t = zoneTarget(stukur, f, w, k);
+        const pct = t ? Math.min(100, Math.round((zd.done / t) * 100)) : 0;
+        const c = pctColor(pct);
+        return `<td style="background:${c.bg}">${pct}%<small>${num(zd.done)} / ~${num(t)}${zd.open ? ' · ' + num(zd.open) + ' opin' : ''}</small></td>`;
+      });
+      rows.push(`<tr><td><b>${f} ${w}</b></td>${cells.join('')}</tr>`);
+    }));
+    return `<details class="nl-fl-det" open><summary>Norður · Center · Suður á hverri stúku (skipting verktaka)</summary>
+      <div class="nl-fl-tw"><table class="nl-fl-t nl-um"><thead><tr><th>Stúka</th>${ZONES.map((z) => `<th>${z[1]}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>
+      <p class="nl-sec-cat">Svæðin eru fundin úr y-hnitum gata á teikningunni (brýrnar milli stúkna). Þetta er nálgun við litamerkingu verktaka (grænt norður, blátt center, rautt suður), ekki nákvæm lína. Markmið eru mat eins og annars staðar.</p>
+    </details>`;
+  }
+
   function floorWingsHtml(stukur, f) {
     const cells = WINGS.map((w) => {
       const d = stukur.wings[f + ' ' + w] || { done: 0, open: 0 };
@@ -216,7 +258,13 @@
       const c = pctColor(pct);
       return { w, d, total, pct, c };
     });
-    const box = (x) => `<div class="nl-fl-w" style="background:${x.c.bg};border-color:${x.c.bd}" title="${f} ${x.w}: ${num(x.d.done)} klárað${x.d.open ? ', ' + num(x.d.open) + ' opin' : ''}, markmið ~${num(x.total)} (mat)">${x.w}<i>${x.pct}%</i><small>${num(x.d.done)} / ~${num(x.total)}</small></div>`;
+    const zrows = (w) => ZONES.map(([k, lab]) => {
+      const zd = zoneOf(stukur, f, w, k), t = zoneTarget(stukur, f, w, k);
+      const pz = t ? Math.min(100, Math.round((zd.done / t) * 100)) : 0;
+      const cz = pctColor(pz);
+      return `<span class="nl-fl-z" style="background:${cz.bg}" title="${f} ${w} ${lab}: ${num(zd.done)} af ~${num(t)}">${lab[0]} ${pz}%</span>`;
+    }).join('');
+    const box = (x) => `<div class="nl-fl-w" style="background:${x.c.bg};border-color:${x.c.bd}" title="${f} ${x.w}: ${num(x.d.done)} klárað${x.d.open ? ', ' + num(x.d.open) + ' opin' : ''}, markmið ~${num(x.total)} (mat)">${x.w}<i>${x.pct}%</i><small>${num(x.d.done)} / ~${num(x.total)}</small><div class="nl-fl-zs">${zrows(x.w)}</div></div>`;
     const done = cells.reduce((a, x) => a + x.d.done, 0), total = cells.reduce((a, x) => a + x.total, 0);
     return { done, total, html: `<div class="nl-fl">
       <div class="nl-fl-h"><b>${FLOOR_NAME[f]}</b><span>${total ? Math.round((done / total) * 100) : 0}% · ${num(done)} af ~${num(total)}</span></div>
@@ -276,6 +324,7 @@
       <div class="nl-fl-sum"><b>${pct}% lokið</b><span>${num(done)} af ~${num(total)} götum á 4.–6. hæð</span><small>Hver stúka fyrir sig úr hnitum Ajour (staða ${fmtD(stukur.updated)}). Heildin er mat: Ajour gefur aðeins klárað, ekki það sem á eftir að gera. Ajour skráir stakar lokanir (sín hvorum megin við vegg). Rafmagnsraufar, rafmagnsgöt og fleira á flokkateikningum er ótalið hér.</small></div>
       <div class="nl-fl-grid">${fl.map((x) => x.html).join('')}</div>
       <div class="nl-fl-leg"><span>0%</span><span class="bar"></span><span>100% búið</span></div>
+      ${zoneTable(stukur)}
       ${umferdirTable(stukur)}
       ${stukurTable(stukur)}
     </div>`;
