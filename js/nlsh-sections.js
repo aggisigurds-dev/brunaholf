@@ -267,7 +267,7 @@
         const zd = zoneOf(stukur, f, w, k), t = zoneTarget(stukur, f, w, k);
         const pz = t ? Math.min(100, Math.round((zd.done / t) * 100)) : 0;
         const cz = pctColor(pz);
-        g += `<g><title>${f} ${w} ${lab}: ${num(zd.done)} af ~${num(t)} (${pz}%)${zd.open ? ', ' + num(zd.open) + ' opin' : ''}</title><rect x="${X[w]}" y="${Y[zi]}" width="${W}" height="${H[zi]}" fill="${cz.bg}" stroke="${cz.bd}" stroke-width="1.2"/><text x="${X[w] + W / 2}" y="${Y[zi] + H[zi] / 2 - 2}" text-anchor="middle" font-size="16" font-weight="700" fill="#1f2933">${pz}%</text><text x="${X[w] + W / 2}" y="${Y[zi] + H[zi] / 2 + 13}" text-anchor="middle" font-size="10.5" fill="#44505e">${lab}</text></g>`;
+        g += `<g><title>${f} ${w} ${lab}: ${num(zd.done)} af ~${num(t)} (${pz}%)${zd.open ? ', ' + num(zd.open) + ' opin' : ''}</title><rect x="${X[w]}" y="${Y[zi]}" width="${W}" height="${H[zi]}" fill="${cz.bg}" stroke="${cz.bd}" stroke-width="1.2"/><text x="${X[w] + W / 2}" y="${Y[zi] + H[zi] / 2 - 8}" text-anchor="middle" font-size="16" font-weight="700" fill="#1f2933">${pz}%</text><text x="${X[w] + W / 2}" y="${Y[zi] + H[zi] / 2 + 6}" text-anchor="middle" font-size="10.5" font-weight="700" fill="#1f2933">${num(zd.done)} / ~${num(t)}</text><text x="${X[w] + W / 2}" y="${Y[zi] + H[zi] / 2 + 19}" text-anchor="middle" font-size="10" fill="#44505e">${lab}</text></g>`;
       });
       g += `<text x="${X[w] + W / 2}" y="${TOP - 8}" text-anchor="middle" font-size="15" font-weight="700" fill="currentColor">${w} · ${x.pct}%</text>`;
       g += `<text x="${X[w] + W / 2}" y="${TOP + H[0] + H[1] + H[2] + 16}" text-anchor="middle" font-size="10.5" fill="currentColor" opacity=".75">${num(x.d.done)} / ~${num(x.total)}</text>`;
