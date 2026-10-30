@@ -1,0 +1,179 @@
+{
+ "updated": "2026-10-30T02:04:29.832Z",
+ "source": "Ajour hnit (registrationCoordinates), skipt við stærsta x-bil per teikningu",
+ "total": 10919,
+ "done": 10281,
+ "open": 638,
+ "wings": {
+  "6H S2": {
+   "done": 1590,
+   "open": 0,
+   "cat": {
+    "Stál Ø15-35 LV": 320,
+    "Stál Ø40-50 LV": 345,
+    "Raflagnaþéttingar, göt og raufar": 249,
+    "Plast Ø20-34 Lv": 151,
+    "Stál Ø110-160 LV": 42,
+    "Stál Ø75-110 LV (1)": 92,
+    "Gólf Ø 160-200": 31,
+    "Loft Ø200-315 LV": 114,
+    "Loft Ø125-160 LV": 151,
+    "Raufar. (Metrer) LV": 54,
+    "Loft Ø400-630 LV": 25,
+    "Raf raufar. (Metrar og Stk.)": 7,
+    "Annað": 7,
+    "Plast Ø35-50 LV (1)": 1,
+    "Plast Ø75-100 LV": 1
+   }
+  },
+  "6H S1": {
+   "done": 1247,
+   "open": 2,
+   "cat": {
+    "Stál Ø40-50 LV": 378,
+    "Raflagnaþéttingar, göt og raufar": 36,
+    "Stál Ø15-35 LV": 280,
+    "Stál Ø110-160 LV": 36,
+    "Loft Ø200-315 LV": 126,
+    "Plast Ø20-34 Lv": 176,
+    "Loft Ø125-160 LV": 131,
+    "Loft Ø400-630 LV": 22,
+    "Stál Ø75-110 LV (1)": 55,
+    "Annað": 3,
+    "Plast Ø35-50 LV (1)": 4
+   }
+  },
+  "5H S1": {
+   "done": 1486,
+   "open": 1,
+   "cat": {
+    "Gólf Ø 160-200": 266,
+    "Stál Ø110-160 LV": 40,
+    "Annað": 5,
+    "Stál Ø40-50 LV": 411,
+    "Stál Ø75-110 LV (1)": 77,
+    "Loft Ø200-315 LV": 79,
+    "Loft Ø125-160 LV": 154,
+    "Stál Ø15-35 LV": 246,
+    "Plast Ø20-34 Lv": 156,
+    "Loft Ø400-630 LV": 16,
+    "Plast Ø35-50 LV (1)": 35,
+    "Raf raufar. (Metrar og Stk.)": 1
+   }
+  },
+  "5H S2": {
+   "done": 1412,
+   "open": 24,
+   "cat": {
+    "Gólf Ø 160-200": 194,
+    "Annað": 2,
+    "Stál Ø40-50 LV": 318,
+    "Stál Ø75-110 LV (1)": 86,
+    "Stál Ø15-35 LV": 363,
+    "Loft Ø125-160 LV": 128,
+    "Loft Ø200-315 LV": 98,
+    "Plast Ø20-34 Lv": 128,
+    "Stál Ø110-160 LV": 36,
+    "Loft Ø400-630 LV": 32,
+    "Raufar. (Metrer) LV": 9,
+    "Raf raufar. (Metrar og Stk.)": 6,
+    "Plast Ø35-50 LV (1)": 12
+   }
+  },
+  "4H S2": {
+   "done": 99,
+   "open": 0,
+   "cat": {
+    "Gólf Ø 160-200": 99
+   }
+  },
+  "4H S1": {
+   "done": 70,
+   "open": 0,
+   "cat": {
+    "Gólf Ø 160-200": 70
+   }
+  },
+  "6H S4": {
+   "done": 1196,
+   "open": 0,
+   "cat": {
+    "Stál Ø40-50 LV": 410,
+    "Stál Ø110-160 LV": 52,
+    "Stál Ø15-35 LV": 199,
+    "Stál Ø75-110 LV (1)": 43,
+    "Plast Ø20-34 Lv": 166,
+    "Loft Ø125-160 LV": 168,
+    "Raufar. (Metrer) LV": 5,
+    "Loft Ø200-315 LV": 74,
+    "Loft Ø400-630 LV": 14,
+    "Plast Ø35-50 LV (1)": 64,
+    "Gólf Ø210-300": 1
+   }
+  },
+  "6H S5": {
+   "done": 1278,
+   "open": 2,
+   "cat": {
+    "Stál Ø110-160 LV": 47,
+    "Stál Ø40-50 LV": 396,
+    "Stál Ø15-35 LV": 255,
+    "Plast Ø20-34 Lv": 187,
+    "Plast Ø35-50 LV (1)": 65,
+    "Loft Ø200-315 LV": 110,
+    "Stál Ø75-110 LV (1)": 49,
+    "Loft Ø125-160 LV": 117,
+    "Loft Ø400-630 LV": 35,
+    "Raufar. (Metrer) LV": 5,
+    "Plast Ø75-100 LV": 9,
+    "Gólf Ø 160-200": 3
+   }
+  },
+  "4H S4": {
+   "done": 91,
+   "open": 0,
+   "cat": {
+    "Gólf Ø 160-200": 91
+   }
+  },
+  "4H S5": {
+   "done": 24,
+   "open": 43,
+   "cat": {
+    "Gólf Ø 160-200": 24
+   }
+  },
+  "5H S4": {
+   "done": 1136,
+   "open": 43,
+   "cat": {
+    "Stál Ø15-35 LV": 230,
+    "Stál Ø75-110 LV (1)": 96,
+    "Stál Ø40-50 LV": 380,
+    "Plast Ø20-34 Lv": 168,
+    "Plast Ø35-50 LV (1)": 58,
+    "Loft Ø200-315 LV": 72,
+    "Loft Ø125-160 LV": 91,
+    "Loft Ø400-630 LV": 10,
+    "Stál Ø110-160 LV": 31
+   }
+  },
+  "5H S5": {
+   "done": 336,
+   "open": 7,
+   "cat": {
+    "Plast Ø35-50 LV (1)": 42,
+    "Plast Ø20-34 Lv": 37,
+    "Stál Ø40-50 LV": 133,
+    "Stál Ø75-110 LV (1)": 28,
+    "Stál Ø15-35 LV": 45,
+    "Stál Ø110-160 LV": 3,
+    "Loft Ø125-160 LV": 23,
+    "Gólf Ø210-300": 1,
+    "Plast Ø75-100 LV": 1,
+    "Loft Ø200-315 LV": 21,
+    "Loft Ø400-630 LV": 2
+   }
+  }
+ }
+}

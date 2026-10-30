@@ -50,6 +50,14 @@
       .nl-fl-cap{display:grid;grid-template-columns:2fr .7fr 2fr;gap:5px;margin-top:6px;font-size:11px;color:var(--text,#1f2933);font-variant-numeric:tabular-nums}
       .nl-fl-cap div{line-height:1.35}
       .nl-fl-cap small{display:block;color:var(--text-dim,#7a8493);font-size:10.5px}
+            .nl-fl-w small{font-size:9.5px;font-weight:500;color:#44505e;font-variant-numeric:tabular-nums}
+      .nl-fl-det{margin:12px 0 0}
+      .nl-fl-det summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--text,#1f2933)}
+      .nl-fl-tw{overflow-x:auto;margin-top:8px}
+      .nl-fl-t{border-collapse:collapse;font-size:11.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+      .nl-fl-t th,.nl-fl-t td{padding:4px 7px;text-align:right;border-bottom:1px solid var(--border,#e3e7ec)}
+      .nl-fl-t th:first-child,.nl-fl-t td:first-child{text-align:left}
+      .nl-fl-t thead th{font-size:10.5px;color:var(--text-dim,#5a6473);font-weight:600}
       .nl-fl-leg{display:flex;align-items:center;gap:8px;margin:8px 0 0;font-size:11px;color:var(--text-dim,#5a6473)}
       .nl-fl-leg span.bar{flex:0 0 140px;height:8px;border-radius:4px;background:linear-gradient(90deg,hsl(0 62% 80%),hsl(60 62% 80%),hsl(125 62% 80%))}
     `;
@@ -152,7 +160,7 @@
     </div>`;
   }
 
-  function floorsHtml(data) {
+  function floorsHtmlPar(data) {
     const floors = ['6H', '5H', '4H'];
     let done = 0, total = 0;
     floors.forEach((f) => pairData(data, f).forEach((p) => { done += p.done || 0; total += p.total; }));
@@ -161,6 +169,67 @@
       <div class="nl-fl-sum"><b>${pct}% lokið</b><span>${num(done)} af ~${num(total)} götum á 4.–6. hæð</span><small>Heildin er mat nema þar sem Áætlað er fyllt inn. Ajour gefur aðeins klárað, ekki það sem á eftir að gera. Stúkurnar eru taldar tvær og tvær því Ajour geymir göt á teikningum sem ná yfir S1+S2 og S4+S5. Ajour skráir stakar lokanir (sín hvorum megin við vegg). Rafmagnsraufar, rafmagnsgöt og fleira á flokkateikningum er ótalið hér.</small></div>
       <div class="nl-fl-grid">${floors.map((f) => floorHtml(data, f)).join('')}</div>
       <div class="nl-fl-leg"><span>0%</span><span class="bar"></span><span>100% búið</span></div>
+    </div>`;
+  }
+
+  // Stúkur hver fyrir sig (30.10.2026): data/nlsh-stukur.json er búið til af tools/nlsh-stukur.cjs úr HNITUM Ajour (hver
+  // skráning ber x,y á teikningunni og atríum-bilið skilur vængina að). Markmið per væng = mat úr kláruðum vængjum:
+  // venjuleg göt úr 6H (búin), gólfgöt (milliloft) 230 per væng á 4H og 5H (5H S1+S2 = 460). 6H á ekki gólfgöt.
+  const WING_BASE = { S1: 1250, S2: 1260, S4: 1200, S5: 1280 };
+  const WING_GOLF = 230;
+  const WINGS = ['S1', 'S2', 'S4', 'S5'];
+  const CLS = [
+    ['Stál Ø15-35 LV', 'Stál 15-35'], ['Stál Ø40-50 LV', 'Stál 40-50'], ['Stál Ø75-110 LV (1)', 'Stál 75-110'], ['Stál Ø110-160 LV', 'Stál 110-160'],
+    ['Plast Ø20-34 Lv', 'Plast 20-34'], ['Plast Ø35-50 LV (1)', 'Plast 35-50'], ['Loft Ø125-160 LV', 'Loft 125-160'], ['Loft Ø200-315 LV', 'Loft 200-315'],
+    ['Loft Ø400-630 LV', 'Loft 400-630'], ['Gólf Ø 160-200', 'Gólf 160-200'], ['Raflagnaþéttingar, göt og raufar', 'Rafþétt.'], ['Raufar. (Metrer) LV', 'Raufar'],
+  ];
+  const fmtD = (iso) => { const d = new Date(iso); return isNaN(d) ? '' : ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear(); };
+
+  function wingTarget(f, w, done) {
+    const t = f === '6H' ? WING_BASE[w] : f === '5H' ? WING_BASE[w] + WING_GOLF : WING_GOLF;
+    return Math.max(t, done);
+  }
+
+  function floorWingsHtml(stukur, f) {
+    const cells = WINGS.map((w) => {
+      const d = stukur.wings[f + ' ' + w] || { done: 0, open: 0 };
+      const total = wingTarget(f, w, d.done);
+      const pct = Math.min(100, Math.round((d.done / total) * 100));
+      const c = pctColor(pct);
+      return { w, d, total, pct, c };
+    });
+    const box = (x) => `<div class="nl-fl-w" style="background:${x.c.bg};border-color:${x.c.bd}" title="${f} ${x.w}: ${num(x.d.done)} klárað${x.d.open ? ', ' + num(x.d.open) + ' opin' : ''}, markmið ~${num(x.total)} (mat)">${x.w}<i>${x.pct}%</i><small>${num(x.d.done)} / ~${num(x.total)}</small></div>`;
+    const done = cells.reduce((a, x) => a + x.d.done, 0), total = cells.reduce((a, x) => a + x.total, 0);
+    return { done, total, html: `<div class="nl-fl">
+      <div class="nl-fl-h"><b>${FLOOR_NAME[f]}</b><span>${total ? Math.round((done / total) * 100) : 0}% · ${num(done)} af ~${num(total)}</span></div>
+      <div class="nl-fl-plan">${box(cells[0])}${box(cells[1])}<div class="nl-fl-mid">S3</div>${box(cells[2])}${box(cells[3])}</div>
+    </div>` };
+  }
+
+  function stukurTable(stukur) {
+    const rows = [];
+    ['6H', '5H', '4H'].forEach((f) => WINGS.forEach((w) => {
+      const d = stukur.wings[f + ' ' + w] || { done: 0, open: 0, cat: {} };
+      const known = CLS.reduce((a, c) => a + (d.cat[c[0]] || 0), 0);
+      const total = wingTarget(f, w, d.done);
+      rows.push(`<tr><td><b>${f} ${w}</b></td>${CLS.map((c) => `<td>${d.cat[c[0]] ? num(d.cat[c[0]]) : '·'}</td>`).join('')}<td>${d.done - known ? num(d.done - known) : '·'}</td><td><b>${num(d.done)}</b></td><td>${d.open ? num(d.open) : '·'}</td><td>~${num(Math.max(0, total - d.done))}</td></tr>`);
+    }));
+    return `<details class="nl-fl-det"><summary>Sundurliðun á hverja stúku og flokk</summary>
+      <div class="nl-fl-tw"><table class="nl-fl-t"><thead><tr><th>Stúka</th>${CLS.map((c) => `<th>${escapeHtml(c[1])}</th>`).join('')}<th>Annað</th><th>Klárað</th><th>Opið</th><th>Eftir (mat)</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>
+      <p class="nl-sec-cat">Staða ${fmtD(stukur.updated)} úr hnitum Ajour (${num(stukur.done)} klárað og ${num(stukur.open)} opið alls; flokkateikningar og „Viðbótarverkefni“ eru utan stúkna). „Eftir“ er mat: markmið væng mínus klárað. Gólf Ø160-200 er milliloft og er mest ógert á 4H og 5H S4+S5. Skipting á eftir að keyra aftur með <code>node tools/nlsh-stukur.cjs</code>.</p>
+    </details>`;
+  }
+
+  function floorsHtml(data, stukur) {
+    if (!stukur || !stukur.wings) return floorsHtmlPar(data);
+    const fl = ['6H', '5H', '4H'].map((f) => floorWingsHtml(stukur, f));
+    const done = fl.reduce((a, x) => a + x.done, 0), total = fl.reduce((a, x) => a + x.total, 0);
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    return `<div class="nl-fl-wrap">
+      <div class="nl-fl-sum"><b>${pct}% lokið</b><span>${num(done)} af ~${num(total)} götum á 4.–6. hæð</span><small>Hver stúka fyrir sig úr hnitum Ajour (staða ${fmtD(stukur.updated)}). Heildin er mat: Ajour gefur aðeins klárað, ekki það sem á eftir að gera. Ajour skráir stakar lokanir (sín hvorum megin við vegg). Rafmagnsraufar, rafmagnsgöt og fleira á flokkateikningum er ótalið hér.</small></div>
+      <div class="nl-fl-grid">${fl.map((x) => x.html).join('')}</div>
+      <div class="nl-fl-leg"><span>0%</span><span class="bar"></span><span>100% búið</span></div>
+      ${stukurTable(stukur)}
     </div>`;
   }
 
@@ -178,13 +247,18 @@
       root.innerHTML = `<div class="nl-sec-save err">Gat ekki sótt svæði: ${escapeHtml(e.message)}</div>`;
       return;
     }
+    let stukur = null;
+    try {
+      const rs = await fetch('/data/nlsh-stukur.json?v=' + Date.now());
+      if (rs.ok) stukur = await rs.json();
+    } catch (_) { stukur = null; }
     const floors = ['4H', '5H'];
     const cat = (data.category || []).filter((c) => c.serials > 0);
     const catLine = cat.length
       ? `<p class="nl-sec-cat">Flokkateikningar teljast ekki með í gataeftirstöðvum: ${cat.map((c) => escapeHtml(c.drawing) + ' (' + num(c.serials) + ')').join(', ')}.</p>`
       : '';
     root.innerHTML = `
-      ${floorsHtml(data)}
+      ${floorsHtml(data, stukur)}
       <p class="nl-sec-note">${escapeHtml(data.note || '')} Áætlað vistast strax. Þetta er ekki herbergjastyring og ekki 95% úr Ajour-lista.</p>
       <div class="nl-sec-save" id="nl-sec-save">${data.drawing_backfilled ? '' : 'Áætlað má fylla inn núna. Lokið fyllist við næsta Ajour-innsog.'}</div>
       ${floors.map((f) => `
