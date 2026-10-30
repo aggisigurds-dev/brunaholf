@@ -43,11 +43,23 @@ const RAF = ['Raflagnaþéttingar, göt og raufar', 'Raufar. (Metrer) LV', 'Raf 
 // Flokkahópur: 0 Loft, 1 Stál, 2 Rafmagn, 3 Gólf (milliloft), 4 Annað (plast o.fl.)
 function hopur(c) { c = c || ''; return /^Loft/i.test(c) ? 0 : /^Stál/i.test(c) ? 1 : RAF.indexOf(c) >= 0 ? 2 : /^Gólf/i.test(c) ? 3 : 4; }
 function punktar(regs) {
+  // [x, y, klárað, hópur, stúka (1,2,4,5), svæði (0 N, 1 C, 2 S)] — stúka og svæði eftir sömu reglu og skiptaEftirHnitum.
   const floors = { '5H': [], '6H': [] };
-  for (const r of regs) {
-    const c = r.coords[0]; if (!c) continue;
-    const t = TRANS.find((x) => x[0].test(r.draw || '')); if (!t) continue;
-    floors[t[1]].push([Math.round((c.x / t[2] + t[3] - CROP.x) * 10) / 10, Math.round((c.y / t[2] + t[4] - CROP.y) * 10) / 10, r.status === 4 ? 1 : 0, hopur(r.cat)]);
+  const byFile = {};
+  for (const r of regs) { const c = r.coords[0]; if (c) (byFile[c.f] ??= []).push({ ...r, x: c.x, y: c.y }); }
+  for (const a of Object.values(byFile)) {
+    const t = TRANS.find((x) => x[0].test(a[0].draw || '')); if (!t) continue;
+    const rule = RULES.find((x) => x[0].test(a[0].draw || '')); if (!rule) continue;
+    const xs = a.map((p) => p.x).sort((p, q) => p - q);
+    let gi = 0, gm = 0;
+    for (let i = 1; i < xs.length; i++) if (xs[i] - xs[i - 1] > gm) { gm = xs[i] - xs[i - 1]; gi = i; }
+    const skil = xs.length > 1 && rule[2] !== rule[3] && gm > 150 ? (xs[gi - 1] + xs[gi]) / 2 : Infinity;
+    const ys = a.map((p) => p.y), ymn = Math.min(...ys), ymx = Math.max(...ys);
+    for (const r of a) {
+      const fy = (r.y - ymn) / ((ymx - ymn) || 1);
+      const st = +(r.x < skil ? rule[2] : rule[3]).slice(1);
+      floors[t[1]].push([Math.round((r.x / t[2] + t[3] - CROP.x) * 10) / 10, Math.round((r.y / t[2] + t[4] - CROP.y) * 10) / 10, r.status === 4 ? 1 : 0, hopur(r.cat), st, fy < 0.275 ? 0 : fy < 0.725 ? 1 : 2]);
+    }
   }
   return floors;
 }

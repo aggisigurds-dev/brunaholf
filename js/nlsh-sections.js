@@ -75,6 +75,14 @@
       .nl-kort-n{margin-left:auto;color:var(--text-dim,#5a6473);font-variant-numeric:tabular-nums}
       .nl-kort-map{position:relative;max-width:1100px;line-height:0;border:1px solid var(--border,#e3e7ec);border-radius:8px;overflow:hidden;background:#fff}
       .nl-kort-map img{width:100%;height:auto;display:block}
+      .nl-kort-ov{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none}
+      .nl-kort-notch{position:absolute;transform:translate(-50%,-50%);background:rgba(255,255,255,.93);border:1px solid #b6bcc6;border-radius:5px;padding:2px 4px;font-size:9.5px;line-height:1.25;color:#1f2933;font-variant-numeric:tabular-nums;text-align:center}
+      .nl-kort-notch b{display:block;font-size:10px}
+      .nl-kort-notch table{border-collapse:collapse;width:100%}
+      .nl-kort-notch th{font-weight:700;color:#5a6473}
+      .nl-kort-notch td{padding:0 2px;text-align:right}
+      .nl-kort-notch td:first-child{text-align:left;color:#44505e}
+      .nl-kort-notch tr.t td,.nl-kort-notch tr.p td{border-top:1px solid #cfd5de;font-weight:700}
       .nl-kort-map canvas{position:absolute;left:0;top:0;width:100%;height:100%}
       .nl-fl-leg{display:flex;align-items:center;gap:8px;margin:8px 0 0;font-size:11px;color:var(--text-dim,#5a6473)}
       .nl-fl-leg span.bar{flex:0 0 140px;height:8px;border-radius:4px;background:linear-gradient(90deg,hsl(0 62% 80%),hsl(60 62% 80%),hsl(125 62% 80%))}
@@ -363,19 +371,59 @@
       <div id="nl-kort" class="nl-kort"><div class="nl-sec-save">Sækir punkta…</div></div>
     </details>`;
   }
-  async function mountKort(root) {
+  async function mountKort(root, stukur) {
     const box = root.querySelector('#nl-kort');
     if (!box) return;
     let pk;
     try { const r = await fetch('/data/nlsh-punktar.json?v=' + Date.now()); if (!r.ok) throw new Error('HTTP ' + r.status); pk = await r.json(); }
     catch (e) { box.innerHTML = '<div class="nl-sec-save err">Gat ekki sótt punkta: ' + escapeHtml(e.message) + '</div>'; return; }
-    const st = { floor: '6H', stada: 'allt', hopar: pk.hopar.map(() => true) };
+    const st = { floor: '6H', stada: 'allt', hopar: pk.hopar.map(() => true), hue: true, tafla: true };
+    const ZK = ['N', 'C', 'S'], ZN = ['Norður', 'Center', 'Suður'];
+    const grpOf = (c) => (/^Loft/i.test(c) ? 0 : /^Stál/i.test(c) ? 1 : RAF_CLS.indexOf(c) >= 0 ? 2 : /^Gólf/i.test(c) ? 3 : 4);
+    const catGrp = (cat) => { const g = [0, 0, 0, 0, 0]; Object.keys(cat || {}).forEach((c) => { g[grpOf(c)] += cat[c]; }); return g; };
+    // markmið hóps á svæði: 5H = sami flokkur á sama svæði á 6H; milliloft = hlutur svæðis í markmiði væng; rafmagn utan markmiða
+    const golfShare = () => { const g = [0, 0, 0]; ['S1', 'S2'].forEach((x) => ZK.forEach((k, zi) => { g[zi] += zoneOf(stukur, '5H', x, k).cat[GOLF_CLS] || 0; })); const t = g[0] + g[1] + g[2]; return g.map((x) => (t ? x / t : 0)); };
+    const target = (f, w, zi) => {
+      const zd = zoneOf(stukur, f, w, ZK[zi]);
+      if (f === '6H') return catGrp(zd.cat);
+      const z6 = zoneOf(stukur, '6H', w, ZK[zi]), ref = catGrp(z6.cat);
+      return [ref[0], ref[1], 0, Math.round(GOLF_TGT[w] * golfShare()[zi]), ref[4]];
+    };
+    const geom = (f) => {
+      const pts = pk.floors[f] || [], out = {};
+      [[1, 2], [4, 5]].forEach((pr) => {
+        const a = pts.filter((q) => pr.indexOf(q[4]) >= 0);
+        if (!a.length) return;
+        const xs = a.map((q) => q[0]).sort((p, q) => p - q), ys = a.map((q) => q[1]);
+        let gi = 1, gm = 0; for (let i = 1; i < xs.length; i++) if (xs[i] - xs[i - 1] > gm) { gm = xs[i] - xs[i - 1]; gi = i; }
+        const ymn = Math.min(...ys) - 10, ymx = Math.max(...ys) + 10, mid = (xs[gi - 1] + xs[gi]) / 2;
+        out[pr[0]] = { x0: xs[0] - 10, x1: xs[gi - 1] + 10 }; out[pr[1]] = { x0: xs[gi] - 10, x1: xs[xs.length - 1] + 10 };
+        out['n' + pr[0]] = { mid, gap: gm, ymn, ymx, l: pr[0], r: pr[1] };
+      });
+      return out;
+    };
+    const sel = () => pk.hopar.map((_, i) => st.hopar[i]);
+    const band = (g, zi) => { const h = g.ymx - g.ymn; return [g.ymn + [0, 0.275, 0.725][zi] * h, g.ymn + [0.275, 0.725, 1][zi] * h]; };
+    const pctOf = (f, w, zi) => {
+      const zd = zoneOf(stukur, f, w, ZK[zi]), d = catGrp(zd.cat), t = target(f, w, zi), s = sel();
+      let dn = 0, tg = 0; s.forEach((on, i) => { if (on) { dn += d[i]; tg += t[i]; } });
+      return tg > 0 ? Math.min(1, dn / tg) : null;
+    };
     const draw = () => {
       const pts = pk.floors[st.floor] || [];
       const cnv = box.querySelector('canvas'), img = box.querySelector('img');
-      const W = img.clientWidth || 900, k = W / pk.w;
+      const W = img.clientWidth || 900, k = W / pk.w, G = geom(st.floor);
       cnv.width = Math.round(W); cnv.height = Math.round(pk.h * k);
       const cx = cnv.getContext('2d'); cx.clearRect(0, 0, cnv.width, cnv.height);
+      if (st.hue) [1, 2, 4, 5].forEach((s5) => {
+        const g = G[s5], pr = G['n' + (s5 < 3 ? 1 : 4)]; if (!g || !pr) return;
+        for (let zi = 0; zi < 3; zi++) {
+          const p = pctOf(st.floor, 'S' + s5, zi); if (p == null) continue;
+          const b = band(pr, zi);
+          cx.fillStyle = 'hsla(' + Math.round(p * 125) + ',78%,50%,0.26)';
+          cx.fillRect(g.x0 * k, b[0] * k, (g.x1 - g.x0) * k, (b[1] - b[0]) * k);
+        }
+      });
       let n = 0;
       pts.forEach((q) => {
         if (!st.hopar[q[3]]) return;
@@ -386,6 +434,29 @@
         if (q[2]) { cx.fillStyle = KORT_LITIR[q[3]] + 'b8'; cx.fill(); } else { cx.fillStyle = '#ffffffcc'; cx.fill(); cx.lineWidth = 2; cx.strokeStyle = '#dc2626'; cx.stroke(); }
       });
       box.querySelector('.nl-kort-n').textContent = num(n) + ' punktar sýndir';
+      // samantekt í skörðunum milli stúkna: hver H hefur norður-, center- og suðurskarð
+      const ov = box.querySelector('.nl-kort-ov'); ov.innerHTML = '';
+      if (!st.tafla) return;
+      const s = sel();
+      [1, 4].forEach((l) => {
+        const pr = G['n' + l]; if (!pr) return;
+        for (let zi = 0; zi < 3; zi++) {
+          const rows = [], b = band(pr, zi), cy = (b[0] + b[1]) / 2;
+          const col = (w) => {
+            const zd = zoneOf(stukur, st.floor, 'S' + w, ZK[zi]), d = catGrp(zd.cat);
+            const open = [0, 0, 0, 0, 0]; (pk.floors[st.floor] || []).forEach((q) => { if (q[4] === w && q[5] === zi && !q[2]) open[q[3]]++; });
+            return d.map((x, i) => (st.stada === 'klarad' ? x : st.stada === 'opid' ? open[i] : x + open[i]));
+          };
+          const cl = col(pr.l), cr = col(pr.r), pl = pctOf(st.floor, 'S' + pr.l, zi), pr2 = pctOf(st.floor, 'S' + pr.r, zi);
+          pk.hopar.forEach((h, i) => { if (s[i]) rows.push('<tr><td>' + h + '</td><td>' + num(cl[i]) + '</td><td>' + num(cr[i]) + '</td></tr>'); });
+          const sum = (c) => c.reduce((a, x, i) => a + (s[i] ? x : 0), 0);
+          const el = document.createElement('div');
+          el.className = 'nl-kort-notch';
+          el.style.left = (pr.mid * k) + 'px'; el.style.top = (cy * k) + 'px';
+          el.innerHTML = '<b>' + ZN[zi] + '</b><table><tr><th></th><th>S' + pr.l + '</th><th>S' + pr.r + '</th></tr>' + rows.join('') + '<tr class="t"><td>Σ</td><td>' + num(sum(cl)) + '</td><td>' + num(sum(cr)) + '</td></tr><tr class="p"><td>%</td><td>' + (pl == null ? '–' : Math.round(pl * 100)) + '</td><td>' + (pr2 == null ? '–' : Math.round(pr2 * 100)) + '</td></tr></table>';
+          ov.appendChild(el);
+        }
+      });
     };
     const cnt = (f) => { const c = pk.hopar.map(() => 0); (pk.floors[f] || []).forEach((q) => { c[q[3]]++; }); return c; };
     const render = () => {
@@ -395,12 +466,14 @@
         <span class="nl-kort-sp"></span>
         ${[['allt', 'Allt'], ['klarad', 'Klárað'], ['opid', 'Opið']].map((x) => `<button type="button" class="nl-kort-b${st.stada === x[0] ? ' on' : ''}" data-st="${x[0]}">${x[1]}</button>`).join('')}
       </div>
-      <div class="nl-kort-bar">${pk.hopar.map((h, i) => `<label class="nl-kort-c"><input type="checkbox" data-h="${i}" ${st.hopar[i] ? 'checked' : ''}><i style="background:${KORT_LITIR[i]}"></i>${h} <small>${num(c[i])}</small></label>`).join('')}<span class="nl-kort-n"></span></div>
-      <div class="nl-kort-map"><img src="/img/nlsh-yfirlit-${st.floor.toLowerCase()}.jpg" alt="Brunayfirlit ${st.floor}"><canvas></canvas></div>
-      <p class="nl-sec-cat">Punktur = staðurinn sem var smellt á í Ajour. Fylltur punktur er klárað, rauður hringur er opið. Staðsetning er sjálfvirkt pörun við brunaveggi blaðsins og getur skeikað um nokkra metra. Blaðið er Rev.A; staða ${fmtD(pk.updated)}.</p>`;
+      <div class="nl-kort-bar">${pk.hopar.map((h, i) => `<label class="nl-kort-c"><input type="checkbox" data-h="${i}" ${st.hopar[i] ? 'checked' : ''}><i style="background:${KORT_LITIR[i]}"></i>${h} <small>${num(c[i])}</small></label>`).join('')}
+        <label class="nl-kort-c"><input type="checkbox" data-o="hue" ${st.hue ? 'checked' : ''}>Litur</label><label class="nl-kort-c"><input type="checkbox" data-o="tafla" ${st.tafla ? 'checked' : ''}>Samantekt</label><span class="nl-kort-n"></span></div>
+      <div class="nl-kort-map"><img src="/img/nlsh-yfirlit-${st.floor.toLowerCase()}.jpg" alt="Brunayfirlit ${st.floor}"><canvas></canvas><div class="nl-kort-ov"></div></div>
+      <p class="nl-sec-cat">Punktur = staðurinn sem var smellt á í Ajour. Fylltur punktur er klárað, rauður hringur er opið. Liturinn yfir svæði sýnir hlutfall af markmiði (rautt lítið, grænt mikið) og fylgir völdum flokkum. Samantektin í skörðunum er fjöldi gata á stúku og svæði, líka eftir völdum flokkum og stöðu. Staðsetning er sjálfvirk pörun við brunaveggi blaðsins og getur skeikað um nokkra metra. Blaðið er Rev.A; staða ${fmtD(pk.updated)}.</p>`;
       box.querySelectorAll('[data-fl]').forEach((b) => b.addEventListener('click', () => { st.floor = b.getAttribute('data-fl'); render(); }));
       box.querySelectorAll('[data-st]').forEach((b) => b.addEventListener('click', () => { st.stada = b.getAttribute('data-st'); render(); }));
       box.querySelectorAll('[data-h]').forEach((b) => b.addEventListener('change', () => { st.hopar[+b.getAttribute('data-h')] = b.checked; draw(); }));
+      box.querySelectorAll('[data-o]').forEach((b) => b.addEventListener('change', () => { st[b.getAttribute('data-o')] = b.checked; draw(); }));
       const im = box.querySelector('img'); im.addEventListener('load', draw); if (im.complete) draw();
     };
     render();
@@ -458,7 +531,7 @@
       `).join('')}
       ${catLine}
     `;
-    mountKort(root);
+    mountKort(root, stukur);
     root.querySelectorAll('.nl-sec-cell').forEach((cell) => {
       const id = cell.getAttribute('data-sec');
       const input = cell.querySelector('.nl-sec-in');
