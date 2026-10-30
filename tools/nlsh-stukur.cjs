@@ -38,13 +38,15 @@ const CROP = { x: 230, y: 265, w: 1930, h: 950 };
 const TRANS = [
   [/^6H\.pdf/i, '6H', 1.58, 12.3, 34.1], [/Brunayfirlit 6H/i, '6H', 1.58, 2.1, 0.9],
   [/^5H 1S og 2S/i, '5H', 5.2906, 176.8, 207.2], [/^5H\s+S4 \+ S5/i, '5H', 3.22, 1372.1, 184.2],
+  // 4H hefur ekki eigið Brunayfirlit: 5H-blaðið er notað (sama grunnmynd). S4+S5 = sama blaðgerð og 5H-loftið; S1+S2 pörun er óviss.
+  [/^4H\. S1-S2/i, '4H', 4.8, 202.5, 88.5], [/^4H\s+4S \+ 5S/i, '4H', 3.22, 1372.1, 184.2],
 ];
 const RAF = ['Raflagnaþéttingar, göt og raufar', 'Raufar. (Metrer) LV', 'Raf raufar. (Metrar og Stk.)', 'Raf göt (Stk.)'];
 // Flokkahópur: 0 Loft, 1 Stál, 2 Rafmagn, 3 Gólf (milliloft), 4 Annað (plast o.fl.)
 function hopur(c) { c = c || ''; return /^Loft/i.test(c) ? 0 : /^Stál/i.test(c) ? 1 : RAF.indexOf(c) >= 0 ? 2 : /^Gólf/i.test(c) ? 3 : 4; }
 function punktar(regs) {
   // [x, y, klárað, hópur, stúka (1,2,4,5), svæði (0 N, 1 C, 2 S)] — stúka og svæði eftir sömu reglu og skiptaEftirHnitum.
-  const floors = { '5H': [], '6H': [] };
+  const floors = { '4H': [], '5H': [], '6H': [] };
   const byFile = {};
   for (const r of regs) { const c = r.coords[0]; if (c) (byFile[c.f] ??= []).push({ ...r, x: c.x, y: c.y }); }
   for (const a of Object.values(byFile)) {

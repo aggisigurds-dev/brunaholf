@@ -442,6 +442,7 @@
     const target = (f, w, zi) => {
       const zd = zoneOf(stukur, f, w, ZK[zi]);
       if (f === '6H') return catGrp(zd.cat);
+      if (f === '4H') return [0, 0, 0, Math.round(GOLF_TGT[w] * golfShare()[zi]), 0];
       const z6 = zoneOf(stukur, '6H', w, ZK[zi]), ref = catGrp(z6.cat);
       return [ref[0], ref[1], 0, Math.round(GOLF_TGT[w] * golfShare()[zi]), ref[4]];
     };
@@ -518,14 +519,14 @@
     const render = () => {
       const c = cnt(st.floor);
       box.innerHTML = `<div class="nl-kort-bar">
-        ${['6H', '5H'].map((f) => `<button type="button" class="nl-kort-b${st.floor === f ? ' on' : ''}" data-fl="${f}">${f === '6H' ? '6. hæð' : '5. hæð'}</button>`).join('')}
+        ${['6H', '5H', '4H'].map((f) => `<button type="button" class="nl-kort-b${st.floor === f ? ' on' : ''}" data-fl="${f}">${f === '6H' ? '6. hæð' : f === '5H' ? '5. hæð' : '4. hæð'}</button>`).join('')}
         <span class="nl-kort-sp"></span>
         ${[['allt', 'Allt'], ['klarad', 'Klárað'], ['opid', 'Opið']].map((x) => `<button type="button" class="nl-kort-b${st.stada === x[0] ? ' on' : ''}" data-st="${x[0]}">${x[1]}</button>`).join('')}
       </div>
       <div class="nl-kort-bar">${pk.hopar.map((h, i) => `<label class="nl-kort-c"><input type="checkbox" data-h="${i}" ${st.hopar[i] ? 'checked' : ''}><i style="background:${KORT_LITIR[i]}"></i>${h} <small>${num(c[i])}</small></label>`).join('')}
         <label class="nl-kort-c"><input type="checkbox" data-o="hue" ${st.hue ? 'checked' : ''}>Litur</label><label class="nl-kort-c"><input type="checkbox" data-o="tafla" ${st.tafla ? 'checked' : ''}>Samantekt</label><span class="nl-kort-n"></span></div>
-      <div class="nl-kort-map"><img src="/img/nlsh-yfirlit-${st.floor.toLowerCase()}.jpg" alt="Brunayfirlit ${st.floor}"><canvas></canvas><div class="nl-kort-ov"></div></div>
-      <p class="nl-sec-cat">Punktur = staðurinn sem var smellt á í Ajour. Fylltur punktur er klárað, rauður hringur er opið. Liturinn yfir svæði sýnir hlutfall af markmiði (rautt lítið, grænt mikið) og fylgir völdum flokkum. Samantektin í skörðunum er fjöldi gata á stúku og svæði, líka eftir völdum flokkum og stöðu. Staðsetning er sjálfvirk pörun við brunaveggi blaðsins og getur skeikað um nokkra metra. Blaðið er Rev.A; staða ${fmtD(pk.updated)}.</p>`;
+      <div class="nl-kort-map"><img src="/img/nlsh-yfirlit-${(st.floor === '4H' ? '5H' : st.floor).toLowerCase()}.jpg" alt="Brunayfirlit ${st.floor === '4H' ? '5H (notað fyrir 4H)' : st.floor}"><canvas></canvas><div class="nl-kort-ov"></div></div>
+      <p class="nl-sec-cat">Punktur = staðurinn sem var smellt á í Ajour. Fylltur punktur er klárað, rauður hringur er opið. Liturinn yfir svæði sýnir hlutfall af markmiði (rautt lítið, grænt mikið) og fylgir völdum flokkum. Samantektin í skörðunum er fjöldi gata á stúku og svæði, líka eftir völdum flokkum og stöðu. Staðsetning er sjálfvirk pörun við brunaveggi blaðsins og getur skeikað um nokkra metra. 4. hæð hefur ekki eigið yfirlitsblað: 5H-blaðið er notað og punktarnir eru aðeins milliloftsgöt (staðsetning þar er grófari, sérstaklega S1 og S2). Blaðið er Rev.A; staða ${fmtD(pk.updated)}.</p>`;
       box.querySelectorAll('[data-fl]').forEach((b) => b.addEventListener('click', () => { st.floor = b.getAttribute('data-fl'); render(); }));
       box.querySelectorAll('[data-st]').forEach((b) => b.addEventListener('click', () => { st.stada = b.getAttribute('data-st'); render(); }));
       box.querySelectorAll('[data-h]').forEach((b) => b.addEventListener('change', () => { st.hopar[+b.getAttribute('data-h')] = b.checked; draw(); }));
