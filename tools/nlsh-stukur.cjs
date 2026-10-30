@@ -32,6 +32,26 @@ const RULES = [
   [/^4H\. S1-S2/i, '4H', 'S1', 'S2'], [/^4H\s+4S \+ 5S/i, '4H', 'S4', 'S5'],
 ];
 
+// Hnit Ajour → Brunayfirlit-blað (A285-31 5H, A286-31 6H, Rev.A): pdf = x/kvarði + frávik, svo dregið frá útskurði (CROP).
+// Fundið sjálfvirkt með því að para hnitin við RAUÐA brunaveggi blaðsins (30.10.2026). Sjá docs: hver Ajour-teikning hefur eigin kvarða.
+const CROP = { x: 230, y: 265, w: 1930, h: 950 };
+const TRANS = [
+  [/^6H\.pdf/i, '6H', 1.58, 12.3, 34.1], [/Brunayfirlit 6H/i, '6H', 1.58, 2.1, 0.9],
+  [/^5H 1S og 2S/i, '5H', 5.2906, 176.8, 207.2], [/^5H\s+S4 \+ S5/i, '5H', 3.22, 1372.1, 184.2],
+];
+const RAF = ['Raflagnaþéttingar, göt og raufar', 'Raufar. (Metrer) LV', 'Raf raufar. (Metrar og Stk.)', 'Raf göt (Stk.)'];
+// Flokkahópur: 0 Loft, 1 Stál, 2 Rafmagn, 3 Gólf (milliloft), 4 Annað (plast o.fl.)
+function hopur(c) { c = c || ''; return /^Loft/i.test(c) ? 0 : /^Stál/i.test(c) ? 1 : RAF.indexOf(c) >= 0 ? 2 : /^Gólf/i.test(c) ? 3 : 4; }
+function punktar(regs) {
+  const floors = { '5H': [], '6H': [] };
+  for (const r of regs) {
+    const c = r.coords[0]; if (!c) continue;
+    const t = TRANS.find((x) => x[0].test(r.draw || '')); if (!t) continue;
+    floors[t[1]].push([Math.round((c.x / t[2] + t[3] - CROP.x) * 10) / 10, Math.round((c.y / t[2] + t[4] - CROP.y) * 10) / 10, r.status === 4 ? 1 : 0, hopur(r.cat)]);
+  }
+  return floors;
+}
+
 function skiptaEftirHnitum(regs) {
   const byFile = {};
   for (const r of regs) { const c = r.coords[0]; if (c) (byFile[c.f] ??= []).push({ ...r, x: c.x, y: c.y }); }
@@ -65,7 +85,7 @@ function skiptaEftirHnitum(regs) {
   }
   return wings;
 }
-module.exports = { skiptaEftirHnitum, RULES };
+module.exports = { skiptaEftirHnitum, RULES, punktar, TRANS, CROP };
 
 if (require.main === module) (async () => {
   const projects = await aj('/api/construction/projects');
@@ -79,6 +99,8 @@ if (require.main === module) (async () => {
     if (arr.length < 200) break;
   }
   const wings = skiptaEftirHnitum(regs);
+  const PUNKTAR = path.join(__dirname, '..', 'data', 'nlsh-punktar.json');
+  fs.writeFileSync(PUNKTAR, JSON.stringify({ updated: new Date().toISOString(), w: CROP.w, h: CROP.h, hopar: ['Loft', 'Stál', 'Rafmagn', 'Gólf', 'Annað'], floors: punktar(regs) }));
   const klarad = regs.filter((r) => r.status === 4).length;
   fs.writeFileSync(OUT, JSON.stringify({ updated: new Date().toISOString(), source: 'Ajour hnit (registrationCoordinates), skipt við stærsta x-bil per teikningu', total: regs.length, done: klarad, open: regs.length - klarad, wings }, null, 1));
   console.log('skrifað', OUT, '| skráningar', regs.length, '| klárað', klarad);

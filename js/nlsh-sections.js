@@ -66,6 +66,16 @@
       .nl-fl-zs{display:flex;flex-direction:column;gap:2px;width:100%;margin-top:4px;padding:0 2px}
       .nl-fl-z{display:block;border-radius:3px;padding:1px 3px;font-size:9.5px;font-weight:600;text-align:center;color:#1f2933;font-variant-numeric:tabular-nums}
       .nl-fl-svg{display:block;width:100%;height:auto;color:var(--text,#1f2933)}
+      .nl-kort-bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:8px 0;font-size:12px}
+      .nl-kort-sp{flex:1}
+      .nl-kort-b{border:1px solid var(--border,#cfd5de);background:var(--card-bg,#fff);color:inherit;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer}
+      .nl-kort-b.on{background:#1f2933;color:#fff;border-color:#1f2933}
+      .nl-kort-c{display:inline-flex;align-items:center;gap:5px;cursor:pointer}
+      .nl-kort-c i{width:10px;height:10px;border-radius:50%;display:inline-block}
+      .nl-kort-n{margin-left:auto;color:var(--text-dim,#5a6473);font-variant-numeric:tabular-nums}
+      .nl-kort-map{position:relative;max-width:1100px;line-height:0;border:1px solid var(--border,#e3e7ec);border-radius:8px;overflow:hidden;background:#fff}
+      .nl-kort-map img{width:100%;height:auto;display:block}
+      .nl-kort-map canvas{position:absolute;left:0;top:0;width:100%;height:100%}
       .nl-fl-leg{display:flex;align-items:center;gap:8px;margin:8px 0 0;font-size:11px;color:var(--text-dim,#5a6473)}
       .nl-fl-leg span.bar{flex:0 0 140px;height:8px;border-radius:4px;background:linear-gradient(90deg,hsl(0 62% 80%),hsl(60 62% 80%),hsl(125 62% 80%))}
     `;
@@ -345,6 +355,58 @@
     </details>`;
   }
 
+  // Punktakort (30.10.2026): hver Ajour-skráning sem punktur á Brunayfirlit 5H/6H (A285-31/A286-31 Rev.A). Hnitin eru pöruð við rauða
+  // brunaveggi blaðsins í tools/nlsh-stukur.cjs → data/nlsh-punktar.json; myndirnar eru img/nlsh-yfirlit-5h|6h.jpg (útskorið).
+  const KORT_LITIR = ['#2563eb', '#d97706', '#9333ea', '#0f766e', '#6b7280'];
+  function kortHtml() {
+    return `<details class="nl-fl-det" open><summary>Kort: hvert gat sem punktur á teikningunni</summary>
+      <div id="nl-kort" class="nl-kort"><div class="nl-sec-save">Sækir punkta…</div></div>
+    </details>`;
+  }
+  async function mountKort(root) {
+    const box = root.querySelector('#nl-kort');
+    if (!box) return;
+    let pk;
+    try { const r = await fetch('/data/nlsh-punktar.json?v=' + Date.now()); if (!r.ok) throw new Error('HTTP ' + r.status); pk = await r.json(); }
+    catch (e) { box.innerHTML = '<div class="nl-sec-save err">Gat ekki sótt punkta: ' + escapeHtml(e.message) + '</div>'; return; }
+    const st = { floor: '6H', stada: 'allt', hopar: pk.hopar.map(() => true) };
+    const draw = () => {
+      const pts = pk.floors[st.floor] || [];
+      const cnv = box.querySelector('canvas'), img = box.querySelector('img');
+      const W = img.clientWidth || 900, k = W / pk.w;
+      cnv.width = Math.round(W); cnv.height = Math.round(pk.h * k);
+      const cx = cnv.getContext('2d'); cx.clearRect(0, 0, cnv.width, cnv.height);
+      let n = 0;
+      pts.forEach((q) => {
+        if (!st.hopar[q[3]]) return;
+        if (st.stada === 'klarad' && !q[2]) return;
+        if (st.stada === 'opid' && q[2]) return;
+        n++;
+        cx.beginPath(); cx.arc(q[0] * k, q[1] * k, q[2] ? 3.2 : 5, 0, 6.2832);
+        if (q[2]) { cx.fillStyle = KORT_LITIR[q[3]] + 'b8'; cx.fill(); } else { cx.fillStyle = '#ffffffcc'; cx.fill(); cx.lineWidth = 2; cx.strokeStyle = '#dc2626'; cx.stroke(); }
+      });
+      box.querySelector('.nl-kort-n').textContent = num(n) + ' punktar sýndir';
+    };
+    const cnt = (f) => { const c = pk.hopar.map(() => 0); (pk.floors[f] || []).forEach((q) => { c[q[3]]++; }); return c; };
+    const render = () => {
+      const c = cnt(st.floor);
+      box.innerHTML = `<div class="nl-kort-bar">
+        ${['6H', '5H'].map((f) => `<button type="button" class="nl-kort-b${st.floor === f ? ' on' : ''}" data-fl="${f}">${f === '6H' ? '6. hæð' : '5. hæð'}</button>`).join('')}
+        <span class="nl-kort-sp"></span>
+        ${[['allt', 'Allt'], ['klarad', 'Klárað'], ['opid', 'Opið']].map((x) => `<button type="button" class="nl-kort-b${st.stada === x[0] ? ' on' : ''}" data-st="${x[0]}">${x[1]}</button>`).join('')}
+      </div>
+      <div class="nl-kort-bar">${pk.hopar.map((h, i) => `<label class="nl-kort-c"><input type="checkbox" data-h="${i}" ${st.hopar[i] ? 'checked' : ''}><i style="background:${KORT_LITIR[i]}"></i>${h} <small>${num(c[i])}</small></label>`).join('')}<span class="nl-kort-n"></span></div>
+      <div class="nl-kort-map"><img src="/img/nlsh-yfirlit-${st.floor.toLowerCase()}.jpg" alt="Brunayfirlit ${st.floor}"><canvas></canvas></div>
+      <p class="nl-sec-cat">Punktur = staðurinn sem var smellt á í Ajour. Fylltur punktur er klárað, rauður hringur er opið. Staðsetning er sjálfvirkt pörun við brunaveggi blaðsins og getur skeikað um nokkra metra. Blaðið er Rev.A; staða ${fmtD(pk.updated)}.</p>`;
+      box.querySelectorAll('[data-fl]').forEach((b) => b.addEventListener('click', () => { st.floor = b.getAttribute('data-fl'); render(); }));
+      box.querySelectorAll('[data-st]').forEach((b) => b.addEventListener('click', () => { st.stada = b.getAttribute('data-st'); render(); }));
+      box.querySelectorAll('[data-h]').forEach((b) => b.addEventListener('change', () => { st.hopar[+b.getAttribute('data-h')] = b.checked; draw(); }));
+      const im = box.querySelector('img'); im.addEventListener('load', draw); if (im.complete) draw();
+    };
+    render();
+    window.addEventListener('resize', () => { if (box.isConnected) draw(); });
+  }
+
   function floorsHtml(data, stukur) {
     if (!stukur || !stukur.wings) return floorsHtmlPar(data);
     const fl = ['6H', '5H', '4H'].map((f) => floorWingsHtml(stukur, f));
@@ -354,6 +416,7 @@
       <div class="nl-fl-sum"><b>${pct}% lokið</b><span>${num(done)} af ~${num(total)} götum á 4.–6. hæð</span><small>Hver stúka fyrir sig úr hnitum Ajour (staða ${fmtD(stukur.updated)}). Heildin er mat: Ajour gefur aðeins klárað, ekki það sem á eftir að gera. Ajour skráir stakar lokanir (sín hvorum megin við vegg). Rafmagnsraufar, rafmagnsgöt og fleira á flokkateikningum er ótalið hér.</small></div>
       <div class="nl-fl-grid">${fl.map((x) => x.html).join('')}</div>
       <div class="nl-fl-leg"><span>0%</span><span class="bar"></span><span>100% búið</span><span>· Loft = loftræsting · Stál = stálrör (vatnslagnir) · Rafmagn · Gólf = milliloft · Annað = plast o.fl. · fjöldi gata sem er klárað</span></div>
+      ${kortHtml()}
       ${zoneTable(stukur)}
       ${umferdirTable(stukur)}
       ${stukurTable(stukur)}
@@ -395,6 +458,7 @@
       `).join('')}
       ${catLine}
     `;
+    mountKort(root);
     root.querySelectorAll('.nl-sec-cell').forEach((cell) => {
       const id = cell.getAttribute('data-sec');
       const input = cell.querySelector('.nl-sec-in');
