@@ -86,6 +86,62 @@
       .nl-kort-map canvas{position:absolute;left:0;top:0;width:100%;height:100%}
       .nl-fl-leg{display:flex;align-items:center;gap:8px;margin:8px 0 0;font-size:11px;color:var(--text-dim,#5a6473)}
       .nl-fl-leg span.bar{flex:0 0 140px;height:8px;border-radius:4px;background:linear-gradient(90deg,hsl(0 62% 80%),hsl(60 62% 80%),hsl(125 62% 80%))}
+      /* ===== fagleg útlit 30.10.2026: dökkt höfuðspjald, númeruð spjöld, rjómapappír ===== */
+.nl-fl-wrap{counter-reset:nlsec;--nl-ink:#161513;--nl-line:#e2ddd0;--nl-paper:#faf8f4;--nl-gold:#c9a54a;--nl-mute:#6f685c;color:var(--nl-ink)}
+      .nl-hero{position:relative;display:grid;grid-template-columns:minmax(0,1.5fr) minmax(200px,.9fr) minmax(0,1.6fr);gap:16px 36px;align-items:center;padding:22px 28px;border-radius:14px;color:#f4f1ea;background:linear-gradient(160deg,#1f1e1b,#0f0f0e);border:1px solid #3a3732;box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 10px 28px rgba(10,10,9,.22)}
+      .nl-hero::before{content:'';position:absolute;left:14px;right:14px;top:0;height:2px;border-radius:0 0 2px 2px;background:linear-gradient(90deg,#8f6a1c,#f5d76e 45%,#b8892e)}
+      .nl-kick{display:block;font:500 10.5px/1.2 'IBM Plex Mono',ui-monospace,Menlo,monospace;letter-spacing:.14em;color:#d9b25a}
+      .nl-hero h2{margin:6px 0 4px;font:800 26px/1.1 'Playfair Display',Georgia,serif;letter-spacing:-.015em;color:#fff}
+      .nl-hero-sub{margin:0;font-size:12px;color:#c8c1b1}
+      .nl-hero-pct{display:grid;grid-template-columns:auto 1fr;align-items:baseline;column-gap:10px}
+      .nl-hero-pct b{font:800 56px/1 'Playfair Display',Georgia,serif;color:#fff;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+      .nl-hero-pct span{font-size:13px;color:#c8c1b1}
+      .nl-hero-pct .nl-bar{grid-column:1/-1;margin-top:10px}
+      .nl-bar{height:8px;border-radius:5px;background:#2e2c27;overflow:hidden}
+      .nl-bar i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,#b8892e,#f5d76e 60%,#c9a54a)}
+      .nl-bar.sm{height:5px;background:#ece7dc;grid-column:1/-1;margin-top:8px}
+      .nl-hero-k{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0}
+      .nl-hero-k>div{padding-left:16px;border-left:1px solid #3a3732}
+      .nl-hero-k dt{font:500 10px 'IBM Plex Mono',ui-monospace,monospace;letter-spacing:.12em;text-transform:uppercase;color:#a8a08f}
+      .nl-hero-k dd{margin:5px 0 0;font:800 26px/1 'Playfair Display',Georgia,serif;color:#fff;font-variant-numeric:tabular-nums}
+      @media (max-width:980px){.nl-hero{grid-template-columns:minmax(0,1fr);padding:18px}.nl-hero-k dd{font-size:21px}}
+      .nl-note{margin:10px 2px 14px;font-size:11.5px;line-height:1.5;color:var(--nl-mute);max-width:900px}
+      .nl-fl{background:#fff;border:1px solid var(--nl-line);border-radius:14px;padding:16px 18px 12px;box-shadow:0 1px 2px rgba(22,21,19,.05),0 4px 14px rgba(22,21,19,.04)}
+      .nl-fl-h{display:grid;grid-template-columns:auto auto 1fr;align-items:center;gap:0 12px;margin-bottom:10px}
+      .nl-fl-h b{font:700 19px 'Playfair Display',Georgia,serif;letter-spacing:-.01em}
+      .nl-fl-pill{font:600 12px 'IBM Plex Mono',ui-monospace,monospace;padding:3px 9px;border-radius:20px;background:#161513;color:#f5d76e}
+      .nl-fl-h .nl-fl-cnt{justify-self:end;font:500 11.5px 'IBM Plex Mono',ui-monospace,monospace;color:var(--nl-mute)}
+      .nl-fl-grid{gap:16px!important}
+      .nl-fl-leg{margin:12px 2px 0!important;flex-wrap:wrap;color:var(--nl-mute)!important}
+      .nl-fl-det{margin:18px 0 0!important;background:#fff;border:1px solid var(--nl-line);border-radius:14px;overflow:hidden;counter-increment:nlsec;box-shadow:0 1px 2px rgba(22,21,19,.05)}
+      .nl-fl-det>summary{list-style:none;display:flex;align-items:center;gap:12px;padding:13px 18px;background:var(--nl-paper);font:700 15.5px 'Playfair Display',Georgia,serif;color:var(--nl-ink);cursor:pointer;user-select:none}
+      .nl-fl-det>summary::-webkit-details-marker{display:none}
+      .nl-fl-det>summary::before{content:counter(nlsec,decimal-leading-zero);font:600 11px 'IBM Plex Mono',ui-monospace,monospace;letter-spacing:.06em;color:#3e2c06;padding:3px 8px;border-radius:5px;background:linear-gradient(180deg,#f5d76e,#c9a54a);box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
+      .nl-fl-det>summary::after{content:'▾';margin-left:auto;color:#8f8776;font-size:12px}
+      .nl-fl-det:not([open])>summary::after{content:'▸'}
+      .nl-fl-det[open]>summary{border-bottom:1px solid var(--nl-line)}
+      .nl-fl-det>:not(summary){margin-left:18px!important;margin-right:18px!important}
+      .nl-fl-det>:last-child{margin-bottom:16px!important}
+      .nl-fl-tw{margin-top:14px!important}
+      .nl-fl-t{width:100%;max-width:1180px;font-size:12px}
+      .nl-fl-svg{max-width:1240px;margin:0 auto}
+      .nl-fl-t thead th{position:sticky;top:0;background:var(--nl-paper);font:500 10px 'IBM Plex Mono',ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--nl-mute);padding:8px 9px;border-bottom:1px solid var(--nl-line)}
+      .nl-fl-t td{padding:7px 9px;border-bottom:1px solid #efebe1}
+      .nl-fl-t tbody tr:hover td{filter:brightness(.97)}
+      .nl-fl-t td:first-child{font-weight:700}
+      .nl-fl-t .nl-um-sum td,.nl-fl-t tfoot td{background:var(--nl-paper)!important;border-top:2px solid var(--nl-line)}
+      .nl-sec-cat{color:var(--nl-mute)!important;max-width:980px!important}
+      .nl-kort-bar{gap:8px 10px!important;margin:14px 0 10px!important}
+      .nl-kort-b{border:1px solid #cfc8b9!important;background:#fff!important;border-radius:8px!important;padding:6px 14px!important;font:600 12px -apple-system,'Segoe UI',Roboto,sans-serif!important;color:var(--nl-ink)!important;box-shadow:0 1px 0 rgba(22,21,19,.06)}
+      .nl-kort-b:hover{background:var(--nl-paper)!important}
+      .nl-kort-b.on{background:#161513!important;color:#f5d76e!important;border-color:#161513!important}
+      .nl-kort-c{border:1px solid var(--nl-line);background:#fff;border-radius:20px;padding:4px 11px 4px 9px;font-size:12px}
+      .nl-kort-c small{color:var(--nl-mute);font-family:'IBM Plex Mono',ui-monospace,monospace}
+      .nl-kort-n{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:11.5px!important}
+      .nl-kort-map{border:1px solid #cfc8b9!important;border-radius:12px!important;box-shadow:0 2px 10px rgba(22,21,19,.08)}
+      .nl-kort-notch{border-color:#cfc8b9!important;border-radius:7px!important;box-shadow:0 2px 8px rgba(22,21,19,.14);font-size:min(10.5px,.8vw)}
+      .nl-kort-notch b{font-family:'IBM Plex Mono',ui-monospace,monospace;letter-spacing:.06em;text-transform:uppercase;font-size:9px!important;color:#8f6a1c}
+      .nl-sec-note{color:var(--nl-mute)}
     `;
     document.head.appendChild(st);
   }
@@ -310,7 +366,7 @@
     });
     const done = cells.reduce((a, x) => a + x.d.done, 0), total = cells.reduce((a, x) => a + x.total, 0);
     return { done, total, html: `<div class="nl-fl">
-      <div class="nl-fl-h"><b>${FLOOR_NAME[f]}</b><span>${total ? Math.round((done / total) * 100) : 0}% · ${num(done)} af ~${num(total)}</span></div>
+      <div class="nl-fl-h"><b>${FLOOR_NAME[f]}</b><span class="nl-fl-pill">${total ? Math.round((done / total) * 100) : 0}%</span><span class="nl-fl-cnt">${num(done)} af ~${num(total)} götum</span><div class="nl-bar sm"><i style="width:${total ? Math.min(100, Math.round((done / total) * 100)) : 0}%"></i></div></div>
       ${planSvg(stukur, f, cells)}
     </div>` };
   }
@@ -486,7 +542,12 @@
     const done = fl.reduce((a, x) => a + x.done, 0), total = fl.reduce((a, x) => a + x.total, 0);
     const pct = total ? Math.round((done / total) * 100) : 0;
     return `<div class="nl-fl-wrap">
-      <div class="nl-fl-sum"><b>${pct}% lokið</b><span>${num(done)} af ~${num(total)} götum á 4.–6. hæð</span><small>Hver stúka fyrir sig úr hnitum Ajour (staða ${fmtD(stukur.updated)}). Heildin er mat: Ajour gefur aðeins klárað, ekki það sem á eftir að gera. Ajour skráir stakar lokanir (sín hvorum megin við vegg). Rafmagnsraufar, rafmagnsgöt og fleira á flokkateikningum er ótalið hér.</small></div>
+      <div class="nl-hero">
+        <div class="nl-hero-main"><span class="nl-kick">NLSH · MEÐFERÐARKJARNI · 4.–6. HÆÐ</span><h2>Framvinda brunaþéttinga</h2><p class="nl-hero-sub">Staða ${fmtD(stukur.updated)} úr hnitum Ajour</p></div>
+        <div class="nl-hero-pct"><b>${pct}%</b><span>lokið</span><div class="nl-bar"><i style="width:${pct}%"></i></div></div>
+        <dl class="nl-hero-k"><div><dt>Klárað</dt><dd>${num(done)}</dd></div><div><dt>Markmið (mat)</dt><dd>~${num(total)}</dd></div><div><dt>Eftir (mat)</dt><dd>~${num(Math.max(0, total - done))}</dd></div></dl>
+      </div>
+      <p class="nl-note">Heildin er mat: Ajour gefur aðeins klárað, ekki það sem á eftir að gera. Ajour skráir stakar lokanir (sín hvorum megin við vegg). Rafmagnsraufar, rafmagnsgöt og fleira á flokkateikningum er ótalið hér.</p>
       <div class="nl-fl-grid">${fl.map((x) => x.html).join('')}</div>
       <div class="nl-fl-leg"><span>0%</span><span class="bar"></span><span>100% búið</span><span>· Loft = loftræsting · Stál = stálrör (vatnslagnir) · Rafmagn · Gólf = milliloft · Annað = plast o.fl. · fjöldi gata sem er klárað</span></div>
       ${kortHtml()}
