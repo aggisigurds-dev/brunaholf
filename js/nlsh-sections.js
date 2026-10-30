@@ -38,7 +38,7 @@
       .nl-fl-sum{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin:0 0 10px;font-size:13px;color:var(--text,#1f2933)}
       .nl-fl-sum b{font-size:22px;font-variant-numeric:tabular-nums}
       .nl-fl-sum small{color:var(--text-dim,#5a6473);font-size:11.5px}
-      .nl-fl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px}
+      .nl-fl-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;max-width:880px}
       @media (max-width:900px){.nl-fl-grid{grid-template-columns:minmax(0,1fr)}}
       .nl-fl{background:var(--card-bg,#fff);border:1px solid var(--border,#e3e7ec);border-radius:10px;padding:10px 12px}
       .nl-fl-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13px;margin-bottom:8px}
@@ -254,25 +254,31 @@
   // Grunnmynd í sama formi og teikning verktaka: stúkur S1 S2 | S3 (atríum) | S4 S5, hver vængur skiptur í norður (efst),
   // center og suður (neðst), brýr milli stúkna á mörkum svæða. Hvert svæði litað eftir hlutfalli af markmiði.
   function planSvg(stukur, f, cells) {
-    const X = { S1: 8, S2: 108, S4: 324, S5: 424 }, W = 68, TOP = 26, H = [72, 86, 64];
-    const Y = [TOP, TOP + H[0], TOP + H[0] + H[1]];
+    const X = { S1: 10, S2: 180, S4: 510, S5: 680 }, W = 130, TOP = 32, H = [128, 146, 128];
+    const Y = [TOP, TOP + H[0], TOP + H[0] + H[1]], BOT = TOP + H[0] + H[1] + H[2];
     const brun = '#d6c4cf';
-    let g = `<rect x="196" y="${TOP}" width="108" height="${H[0] + H[1] + H[2]}" rx="3" fill="url(#nl-hatch)" stroke="#b6bcc6" stroke-dasharray="4 3"/><text x="250" y="${TOP + 118}" text-anchor="middle" font-size="15" font-weight="700" fill="#7a8493">S3</text>`;
-    // brýr: S1–S2 og S4–S5 á tveimur mörkum, löng brú S2–S4 við neðra mark
-    [[X.S1 + W, X.S2], [X.S4 + W, X.S5]].forEach((b2) => [Y[1], Y[2]].forEach((y) => { g += `<rect x="${b2[0]}" y="${y - 7}" width="${b2[1] - b2[0]}" height="14" fill="${brun}" stroke="#a98fa0" stroke-width=".8"/>`; }));
-    g += `<rect x="${X.S2 + W}" y="${Y[2] - 5}" width="${X.S4 - X.S2 - W}" height="10" fill="${brun}" stroke="#a98fa0" stroke-width=".8"/>`;
+    // Flokkahópar í hverju svæði: loftræsting, stál (vatnslagnir), rafmagn, annað (plast, gólf o.fl.)
+    const grp = (zd) => {
+      const sum = (fn) => Object.keys(zd.cat || {}).reduce((a, k) => a + (fn(k) ? zd.cat[k] : 0), 0);
+      const loft = sum((k) => /^Loft/i.test(k)), stal = sum((k) => /^Stál/i.test(k)), raf = sum((k) => RAF_CLS.indexOf(k) >= 0);
+      return [['Loft', loft], ['Stál', stal], ['Rafmagn', raf], ['Annað', Math.max(0, zd.done - loft - stal - raf)]];
+    };
+    let g = `<rect x="330" y="${TOP}" width="160" height="${BOT - TOP}" rx="3" fill="url(#nl-hatch)" stroke="#b6bcc6" stroke-dasharray="4 3"/><text x="410" y="${TOP + (BOT - TOP) / 2 + 6}" text-anchor="middle" font-size="20" font-weight="700" fill="#7a8493">S3</text>`;
+    [[X.S1 + W, X.S2], [X.S4 + W, X.S5]].forEach((b2) => [Y[1], Y[2]].forEach((y) => { g += `<rect x="${b2[0]}" y="${y - 9}" width="${b2[1] - b2[0]}" height="18" fill="${brun}" stroke="#a98fa0" stroke-width=".8"/>`; }));
+    g += `<rect x="${X.S2 + W}" y="${Y[2] - 6}" width="${X.S4 - X.S2 - W}" height="12" fill="${brun}" stroke="#a98fa0" stroke-width=".8"/>`;
     cells.forEach((x) => {
       const w = x.w;
       ZONES.forEach(([k, lab], zi) => {
         const zd = zoneOf(stukur, f, w, k), t = zoneTarget(stukur, f, w, k);
         const pz = t ? Math.min(100, Math.round((zd.done / t) * 100)) : 0;
-        const cz = pctColor(pz);
-        g += `<g><title>${f} ${w} ${lab}: ${num(zd.done)} af ~${num(t)} (${pz}%)${zd.open ? ', ' + num(zd.open) + ' opin' : ''}</title><rect x="${X[w]}" y="${Y[zi]}" width="${W}" height="${H[zi]}" fill="${cz.bg}" stroke="${cz.bd}" stroke-width="1.2"/><text x="${X[w] + W / 2}" y="${Y[zi] + H[zi] / 2 - 8}" text-anchor="middle" font-size="16" font-weight="700" fill="#1f2933">${pz}%</text><text x="${X[w] + W / 2}" y="${Y[zi] + H[zi] / 2 + 6}" text-anchor="middle" font-size="10.5" font-weight="700" fill="#1f2933">${num(zd.done)} / ~${num(t)}</text><text x="${X[w] + W / 2}" y="${Y[zi] + H[zi] / 2 + 19}" text-anchor="middle" font-size="10" fill="#44505e">${lab}</text></g>`;
+        const cz = pctColor(pz), x0 = X[w], y0 = Y[zi], cx = x0 + W / 2;
+        const lines = grp(zd).map((r, ri) => `<text x="${x0 + 12}" y="${y0 + 80 + ri * 14}" font-size="11" fill="#44505e">${r[0]}</text><text x="${x0 + W - 12}" y="${y0 + 80 + ri * 14}" text-anchor="end" font-size="11.5" font-weight="700" fill="#1f2933">${num(r[1])}</text>`).join('');
+        g += `<g><title>${f} ${w} ${lab}: ${num(zd.done)} af ~${num(t)} (${pz}%)${zd.open ? ', ' + num(zd.open) + ' opin' : ''}</title><rect x="${x0}" y="${y0}" width="${W}" height="${H[zi]}" fill="${cz.bg}" stroke="${cz.bd}" stroke-width="1.4"/><text x="${cx}" y="${y0 + 17}" text-anchor="middle" font-size="11.5" fill="#44505e">${lab}</text><text x="${cx}" y="${y0 + 40}" text-anchor="middle" font-size="22" font-weight="700" fill="#1f2933">${pz}%</text><text x="${cx}" y="${y0 + 58}" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1f2933">${num(zd.done)} / ~${num(t)}</text>${lines}</g>`;
       });
-      g += `<text x="${X[w] + W / 2}" y="${TOP - 8}" text-anchor="middle" font-size="15" font-weight="700" fill="currentColor">${w} · ${x.pct}%</text>`;
-      g += `<text x="${X[w] + W / 2}" y="${TOP + H[0] + H[1] + H[2] + 16}" text-anchor="middle" font-size="10.5" fill="currentColor" opacity=".75">${num(x.d.done)} / ~${num(x.total)}</text>`;
+      g += `<text x="${X[w] + W / 2}" y="${TOP - 10}" text-anchor="middle" font-size="17" font-weight="700" fill="currentColor">${w} · ${x.pct}%</text>`;
+      g += `<text x="${X[w] + W / 2}" y="${BOT + 17}" text-anchor="middle" font-size="12" fill="currentColor" opacity=".75">${num(x.d.done)} / ~${num(x.total)}</text>`;
     });
-    return `<svg class="nl-fl-svg" viewBox="0 0 500 ${TOP + H[0] + H[1] + H[2] + 24}" role="img" aria-label="${FLOOR_NAME[f]}: hlutfall búið per stúku og svæði"><defs><pattern id="nl-hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="#f1f3f5"/><rect width="4" height="8" fill="#e6e9ed"/></pattern></defs>${g}</svg>`;
+    return `<svg class="nl-fl-svg" viewBox="0 0 820 ${BOT + 26}" role="img" aria-label="${FLOOR_NAME[f]}: hlutfall og fjöldi gata per stúku og svæði"><defs><pattern id="nl-hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="#f1f3f5"/><rect width="4" height="8" fill="#e6e9ed"/></pattern></defs>${g}</svg>`;
   }
 
   function floorWingsHtml(stukur, f) {
@@ -346,7 +352,7 @@
     return `<div class="nl-fl-wrap">
       <div class="nl-fl-sum"><b>${pct}% lokið</b><span>${num(done)} af ~${num(total)} götum á 4.–6. hæð</span><small>Hver stúka fyrir sig úr hnitum Ajour (staða ${fmtD(stukur.updated)}). Heildin er mat: Ajour gefur aðeins klárað, ekki það sem á eftir að gera. Ajour skráir stakar lokanir (sín hvorum megin við vegg). Rafmagnsraufar, rafmagnsgöt og fleira á flokkateikningum er ótalið hér.</small></div>
       <div class="nl-fl-grid">${fl.map((x) => x.html).join('')}</div>
-      <div class="nl-fl-leg"><span>0%</span><span class="bar"></span><span>100% búið</span></div>
+      <div class="nl-fl-leg"><span>0%</span><span class="bar"></span><span>100% búið</span><span>· Loft = loftræsting · Stál = stálrör (vatnslagnir) · Rafmagn · Annað = plast, gólf (milliloft) o.fl. · fjöldi gata sem er klárað</span></div>
       ${zoneTable(stukur)}
       ${umferdirTable(stukur)}
       ${stukurTable(stukur)}
