@@ -198,7 +198,7 @@
   const GOLF_CLS = 'Gólf Ø 160-200';
   // Rafmagn (6H á 285 rafþéttingar og raufar, 5H ekki skráð) er utan markmiða — sjá athugasemd á síðunni.
   const RAF_CLS = ['Raflagnaþéttingar, göt og raufar', 'Raufar. (Metrer) LV', 'Raf raufar. (Metrar og Stk.)', 'Raf göt (Stk.)'];
-  const GOLF_TGT = { S1: 266, S2: 194, S4: 230, S5: 230 };
+  const GOLF_TGT = { S1: 200, S2: 200, S4: 200, S5: 200 }; // Agnar 30.10: ~100 milliloftsgöt á stúku = ~200 stakar lokanir
   function classTarget(stukur, f, w, c) {
     if (RAF_CLS.indexOf(c) >= 0) return 0;
     if (c === GOLF_CLS) return f === '6H' ? 0 : GOLF_TGT[w];
@@ -254,14 +254,15 @@
   // Grunnmynd í sama formi og teikning verktaka: stúkur S1 S2 | S3 (atríum) | S4 S5, hver vængur skiptur í norður (efst),
   // center og suður (neðst), brýr milli stúkna á mörkum svæða. Hvert svæði litað eftir hlutfalli af markmiði.
   function planSvg(stukur, f, cells) {
-    const X = { S1: 10, S2: 180, S4: 510, S5: 680 }, W = 130, TOP = 32, H = [128, 146, 128];
+    const X = { S1: 10, S2: 180, S4: 510, S5: 680 }, W = 130, TOP = 32, H = [146, 164, 146];
     const Y = [TOP, TOP + H[0], TOP + H[0] + H[1]], BOT = TOP + H[0] + H[1] + H[2];
     const brun = '#d6c4cf';
     // Flokkahópar í hverju svæði: loftræsting, stál (vatnslagnir), rafmagn, annað (plast, gólf o.fl.)
     const grp = (zd) => {
       const sum = (fn) => Object.keys(zd.cat || {}).reduce((a, k) => a + (fn(k) ? zd.cat[k] : 0), 0);
       const loft = sum((k) => /^Loft/i.test(k)), stal = sum((k) => /^Stál/i.test(k)), raf = sum((k) => RAF_CLS.indexOf(k) >= 0);
-      return [['Loft', loft], ['Stál', stal], ['Rafmagn', raf], ['Annað', Math.max(0, zd.done - loft - stal - raf)]];
+      const golf = zd.cat[GOLF_CLS] || 0;
+      return [['Loft', loft], ['Stál', stal], ['Rafmagn', raf], ['Gólf', golf], ['Annað', Math.max(0, zd.done - loft - stal - raf - golf)]];
     };
     let g = `<rect x="330" y="${TOP}" width="160" height="${BOT - TOP}" rx="3" fill="url(#nl-hatch)" stroke="#b6bcc6" stroke-dasharray="4 3"/><text x="410" y="${TOP + (BOT - TOP) / 2 + 6}" text-anchor="middle" font-size="20" font-weight="700" fill="#7a8493">S3</text>`;
     [[X.S1 + W, X.S2], [X.S4 + W, X.S5]].forEach((b2) => [Y[1], Y[2]].forEach((y) => { g += `<rect x="${b2[0]}" y="${y - 9}" width="${b2[1] - b2[0]}" height="18" fill="${brun}" stroke="#a98fa0" stroke-width=".8"/>`; }));
@@ -340,7 +341,7 @@
     const foot = `<tr class="nl-um-sum"><td><b>Eftir</b></td>${cls.map(([c]) => `<td>${perC[c] ? num(perC[c]) : '·'}</td>`).join('')}<td><b>${num(rem)}</b></td></tr>`;
     return `<details class="nl-fl-det" open><summary>Umferðir: hlutfall af markmiði á hverja stúku og flokk</summary>
       <div class="nl-fl-tw"><table class="nl-fl-t nl-um"><thead><tr><th>Stúka</th>${cls.map((c) => `<th>${escapeHtml(c[1])}</th>`).join('')}<th>Eftir</th></tr></thead><tbody>${rows.join('')}</tbody><tfoot>${foot}</tfoot></table></div>
-      <p class="nl-sec-cat">Markmið = sami flokkur á sama væng á 6H (hún er búin). Gólf Ø160-200 (milliloft) er 5H S1/S2 eigin tala (266 og 194) og 230 á S4 og S5, sama á 4H. Lítil tala í reit er stærðin sem eftir er. Samtals eftir um <b>${num(rem)}</b> göt (án rafmagnsraufa). Gólfgöt eru ${perC[GOLF_CLS] ? Math.round((perC[GOLF_CLS] / rem) * 100) : 0}% af því.</p>
+      <p class="nl-sec-cat">Markmið = sami flokkur á sama væng á 6H (hún er búin). Gólf Ø160-200 (milliloft) á 4H og 5H: um 100 göt á stúku (Agnar) = ~200 stakar lokanir; 6H hefur engin gólfgöt í markmiði. Lítil tala í reit er stærðin sem eftir er. Samtals eftir um <b>${num(rem)}</b> göt (án rafmagnsraufa). Gólfgöt eru ${perC[GOLF_CLS] ? Math.round((perC[GOLF_CLS] / rem) * 100) : 0}% af því.</p>
     </details>`;
   }
 
@@ -352,7 +353,7 @@
     return `<div class="nl-fl-wrap">
       <div class="nl-fl-sum"><b>${pct}% lokið</b><span>${num(done)} af ~${num(total)} götum á 4.–6. hæð</span><small>Hver stúka fyrir sig úr hnitum Ajour (staða ${fmtD(stukur.updated)}). Heildin er mat: Ajour gefur aðeins klárað, ekki það sem á eftir að gera. Ajour skráir stakar lokanir (sín hvorum megin við vegg). Rafmagnsraufar, rafmagnsgöt og fleira á flokkateikningum er ótalið hér.</small></div>
       <div class="nl-fl-grid">${fl.map((x) => x.html).join('')}</div>
-      <div class="nl-fl-leg"><span>0%</span><span class="bar"></span><span>100% búið</span><span>· Loft = loftræsting · Stál = stálrör (vatnslagnir) · Rafmagn · Annað = plast, gólf (milliloft) o.fl. · fjöldi gata sem er klárað</span></div>
+      <div class="nl-fl-leg"><span>0%</span><span class="bar"></span><span>100% búið</span><span>· Loft = loftræsting · Stál = stálrör (vatnslagnir) · Rafmagn · Gólf = milliloft · Annað = plast o.fl. · fjöldi gata sem er klárað</span></div>
       ${zoneTable(stukur)}
       ${umferdirTable(stukur)}
       ${stukurTable(stukur)}
