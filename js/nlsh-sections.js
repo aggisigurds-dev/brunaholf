@@ -58,6 +58,10 @@
       .nl-fl-t th,.nl-fl-t td{padding:4px 7px;text-align:right;border-bottom:1px solid var(--border,#e3e7ec)}
       .nl-fl-t th:first-child,.nl-fl-t td:first-child{text-align:left}
       .nl-fl-t thead th{font-size:10.5px;color:var(--text-dim,#5a6473);font-weight:600}
+      .nl-um td{text-align:center;min-width:54px;font-weight:600}
+      .nl-um td small{display:block;font-weight:500;font-size:9.5px;color:#44505e}
+      .nl-um td.nl-um-na{color:#a0a8b4;font-weight:400}
+      .nl-um .nl-um-sum td,.nl-um tfoot td{border-top:2px solid var(--border,#cfd5de);background:transparent}
       .nl-fl-leg{display:flex;align-items:center;gap:8px;margin:8px 0 0;font-size:11px;color:var(--text-dim,#5a6473)}
       .nl-fl-leg span.bar{flex:0 0 140px;height:8px;border-radius:4px;background:linear-gradient(90deg,hsl(0 62% 80%),hsl(60 62% 80%),hsl(125 62% 80%))}
     `;
@@ -185,15 +189,29 @@
   ];
   const fmtD = (iso) => { const d = new Date(iso); return isNaN(d) ? '' : ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear(); };
 
-  function wingTarget(f, w, done) {
-    const t = f === '6H' ? WING_BASE[w] : f === '5H' ? WING_BASE[w] + WING_GOLF : WING_GOLF;
-    return Math.max(t, done);
+  // Markmið per flokk: 5H = sami flokkur á sama væng á 6H (hún er búin); gólfgöt (milliloft) = 5H S1/S2 eigin tala, 230 á S4/S5,
+  // sama á 4H sem hefur aðeins gólfgöt; 6H = það sem er klárað. Hver flokkur er „umferð“ sem getur verið óhafin á væng.
+  const GOLF_CLS = 'Gólf Ø 160-200';
+  const GOLF_TGT = { S1: 266, S2: 194, S4: 230, S5: 230 };
+  function classTarget(stukur, f, w, c) {
+    if (c === GOLF_CLS) return f === '6H' ? 0 : GOLF_TGT[w];
+    if (f === '4H') return 0;
+    if (f === '6H') return null;
+    const ref = stukur.wings['6H ' + w];
+    return ref ? (ref.cat[c] || 0) : 0;
+  }
+  function wingTarget(stukur, f, w) {
+    const d = stukur.wings[f + ' ' + w] || { done: 0, cat: {} };
+    if (f === '6H') return d.done;
+    let tgt = 0, cd = 0;
+    CLS.forEach(([c]) => { tgt += classTarget(stukur, f, w, c) || 0; cd += d.cat[c] || 0; });
+    return Math.max(d.done, tgt + (d.done - cd));
   }
 
   function floorWingsHtml(stukur, f) {
     const cells = WINGS.map((w) => {
       const d = stukur.wings[f + ' ' + w] || { done: 0, open: 0 };
-      const total = wingTarget(f, w, d.done);
+      const total = wingTarget(stukur, f, w);
       const pct = Math.min(100, Math.round((d.done / total) * 100));
       const c = pctColor(pct);
       return { w, d, total, pct, c };
@@ -211,12 +229,41 @@
     ['6H', '5H', '4H'].forEach((f) => WINGS.forEach((w) => {
       const d = stukur.wings[f + ' ' + w] || { done: 0, open: 0, cat: {} };
       const known = CLS.reduce((a, c) => a + (d.cat[c[0]] || 0), 0);
-      const total = wingTarget(f, w, d.done);
+      const total = wingTarget(stukur, f, w);
       rows.push(`<tr><td><b>${f} ${w}</b></td>${CLS.map((c) => `<td>${d.cat[c[0]] ? num(d.cat[c[0]]) : '·'}</td>`).join('')}<td>${d.done - known ? num(d.done - known) : '·'}</td><td><b>${num(d.done)}</b></td><td>${d.open ? num(d.open) : '·'}</td><td>~${num(Math.max(0, total - d.done))}</td></tr>`);
     }));
     return `<details class="nl-fl-det"><summary>Sundurliðun á hverja stúku og flokk</summary>
       <div class="nl-fl-tw"><table class="nl-fl-t"><thead><tr><th>Stúka</th>${CLS.map((c) => `<th>${escapeHtml(c[1])}</th>`).join('')}<th>Annað</th><th>Klárað</th><th>Opið</th><th>Eftir (mat)</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>
       <p class="nl-sec-cat">Staða ${fmtD(stukur.updated)} úr hnitum Ajour (${num(stukur.done)} klárað og ${num(stukur.open)} opið alls; flokkateikningar og „Viðbótarverkefni“ eru utan stúkna). „Eftir“ er mat: markmið væng mínus klárað. Gólf Ø160-200 er milliloft og er mest ógert á 4H og 5H S4+S5. Skipting á eftir að keyra aftur með <code>node tools/nlsh-stukur.cjs</code>.</p>
+    </details>`;
+  }
+
+  // Umferðir: hlutfall af markmiði per flokk á hverja stúku (5H og 4H). Rauðir reitir = umferðin er óhafin eða á byrjunarreit.
+  function umferdirTable(stukur) {
+    const cls = CLS.filter((c) => c[0] !== 'Raflagnaþéttingar, göt og raufar' && c[0] !== 'Raufar. (Metrer) LV');
+    let rem = 0;
+    const perC = {};
+    const rows = [];
+    ['5H', '4H'].forEach((f) => WINGS.forEach((w) => {
+      const d = stukur.wings[f + ' ' + w] || { done: 0, cat: {} };
+      let left = 0;
+      const cells = cls.map(([c]) => {
+        const t = classTarget(stukur, f, w, c);
+        if (!t) return '<td class="nl-um-na">—</td>';
+        const n = d.cat[c] || 0;
+        const pct = Math.round((n / t) * 100);
+        const l = Math.max(0, t - n);
+        left += l; perC[c] = (perC[c] || 0) + l;
+        const col = pctColor(Math.min(100, pct));
+        return `<td style="background:${col.bg}" title="${f} ${w} · ${escapeHtml(c)}: ${num(n)} af ~${num(t)}">${pct > 100 ? '100%+' : pct + '%'}<small>${l ? '−' + num(l) : '✓'}</small></td>`;
+      });
+      rem += left;
+      rows.push(`<tr><td><b>${f} ${w}</b></td>${cells.join('')}<td><b>${num(left)}</b></td></tr>`);
+    }));
+    const foot = `<tr class="nl-um-sum"><td><b>Eftir</b></td>${cls.map(([c]) => `<td>${perC[c] ? num(perC[c]) : '·'}</td>`).join('')}<td><b>${num(rem)}</b></td></tr>`;
+    return `<details class="nl-fl-det" open><summary>Umferðir: hlutfall af markmiði á hverja stúku og flokk</summary>
+      <div class="nl-fl-tw"><table class="nl-fl-t nl-um"><thead><tr><th>Stúka</th>${cls.map((c) => `<th>${escapeHtml(c[1])}</th>`).join('')}<th>Eftir</th></tr></thead><tbody>${rows.join('')}</tbody><tfoot>${foot}</tfoot></table></div>
+      <p class="nl-sec-cat">Markmið = sami flokkur á sama væng á 6H (hún er búin). Gólf Ø160-200 (milliloft) er 5H S1/S2 eigin tala (266 og 194) og 230 á S4 og S5, sama á 4H. Lítil tala í reit er stærðin sem eftir er. Samtals eftir um <b>${num(rem)}</b> göt (án rafmagnsraufa). Gólfgöt eru ${perC[GOLF_CLS] ? Math.round((perC[GOLF_CLS] / rem) * 100) : 0}% af því.</p>
     </details>`;
   }
 
@@ -229,6 +276,7 @@
       <div class="nl-fl-sum"><b>${pct}% lokið</b><span>${num(done)} af ~${num(total)} götum á 4.–6. hæð</span><small>Hver stúka fyrir sig úr hnitum Ajour (staða ${fmtD(stukur.updated)}). Heildin er mat: Ajour gefur aðeins klárað, ekki það sem á eftir að gera. Ajour skráir stakar lokanir (sín hvorum megin við vegg). Rafmagnsraufar, rafmagnsgöt og fleira á flokkateikningum er ótalið hér.</small></div>
       <div class="nl-fl-grid">${fl.map((x) => x.html).join('')}</div>
       <div class="nl-fl-leg"><span>0%</span><span class="bar"></span><span>100% búið</span></div>
+      ${umferdirTable(stukur)}
       ${stukurTable(stukur)}
     </div>`;
   }

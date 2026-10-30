@@ -45,8 +45,14 @@ function skiptaEftirHnitum(regs) {
     const skil = xs.length > 1 && rule[2] !== rule[3] && gm > 150 ? (xs[gi - 1] + xs[gi]) / 2 : Infinity;
     for (const r of a) {
       const k = `${rule[1]} ${r.x < skil ? rule[2] : rule[3]}`;
-      const w = (wings[k] ??= { done: 0, open: 0, cat: {} });
-      if (r.status === 4) { w.done++; w.cat[r.cat || '(tómt)'] = (w.cat[r.cat || '(tómt)'] || 0) + 1; } else w.open++;
+      const w = (wings[k] ??= { done: 0, open: 0, cat: {}, catOpen: {}, mon: {} });
+      const ck = r.cat || '(tómt)';
+      if (r.status === 4) {
+        w.done++; w.cat[ck] = (w.cat[ck] || 0) + 1;
+        // executionTo er „dd-mm-áááá“ (Ajour-tungumál innskráningar) — mánuðurinn er alltaf miðhlutinn.
+        const dm = /^(\d{2})[-\/](\d{2})[-\/](\d{4})/.exec(String(r.exec || ''));
+        if (dm) { const m = `${dm[3]}-${dm[2]}`; w.mon[m] = (w.mon[m] || 0) + 1; }
+      } else { w.open++; w.catOpen[ck] = (w.catOpen[ck] || 0) + 1; }
     }
   }
   return wings;
@@ -61,7 +67,7 @@ if (require.main === module) (async () => {
   for (let page = 1; page < 300; page++) {
     const j = await aj('/api/construction/registration', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body(p.projectId, page)) });
     const arr = Array.isArray(j) ? j : (j.data || j.items || []);
-    for (const r of arr) regs.push({ status: r.status, draw: r.blueprintName, cat: r.categoryGroupName || r.categoryGroup, coords: (r.registrationCoordinates || []).map((c) => ({ f: c.fileId, x: c.x })) });
+    for (const r of arr) regs.push({ status: r.status, exec: r.executionTo, draw: r.blueprintName, cat: r.categoryGroupName || r.categoryGroup, coords: (r.registrationCoordinates || []).map((c) => ({ f: c.fileId, x: c.x })) });
     if (arr.length < 200) break;
   }
   const wings = skiptaEftirHnitum(regs);
