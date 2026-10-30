@@ -420,7 +420,7 @@
         for (let zi = 0; zi < 3; zi++) {
           const p = pctOf(st.floor, 'S' + s5, zi); if (p == null) continue;
           const b = band(pr, zi);
-          cx.fillStyle = 'hsla(' + Math.round(p * 125) + ',78%,50%,0.26)';
+          cx.fillStyle = 'hsla(' + Math.round(p * 125) + ',78%,50%,0.10)';
           cx.fillRect(g.x0 * k, b[0] * k, (g.x1 - g.x0) * k, (b[1] - b[0]) * k);
         }
       });
