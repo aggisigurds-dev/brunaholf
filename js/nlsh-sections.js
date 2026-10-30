@@ -38,7 +38,7 @@
       .nl-fl-sum{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin:0 0 10px;font-size:13px;color:var(--text,#1f2933)}
       .nl-fl-sum b{font-size:22px;font-variant-numeric:tabular-nums}
       .nl-fl-sum small{color:var(--text-dim,#5a6473);font-size:11.5px}
-      .nl-fl-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+      .nl-fl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px}
       @media (max-width:900px){.nl-fl-grid{grid-template-columns:minmax(0,1fr)}}
       .nl-fl{background:var(--card-bg,#fff);border:1px solid var(--border,#e3e7ec);border-radius:10px;padding:10px 12px}
       .nl-fl-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13px;margin-bottom:8px}
@@ -65,6 +65,7 @@
       .nl-fl-w{height:auto!important;min-height:84px;padding:6px 3px}
       .nl-fl-zs{display:flex;flex-direction:column;gap:2px;width:100%;margin-top:4px;padding:0 2px}
       .nl-fl-z{display:block;border-radius:3px;padding:1px 3px;font-size:9.5px;font-weight:600;text-align:center;color:#1f2933;font-variant-numeric:tabular-nums}
+      .nl-fl-svg{display:block;width:100%;height:auto;color:var(--text,#1f2933)}
       .nl-fl-leg{display:flex;align-items:center;gap:8px;margin:8px 0 0;font-size:11px;color:var(--text-dim,#5a6473)}
       .nl-fl-leg span.bar{flex:0 0 140px;height:8px;border-radius:4px;background:linear-gradient(90deg,hsl(0 62% 80%),hsl(60 62% 80%),hsl(125 62% 80%))}
     `;
@@ -250,6 +251,30 @@
     </details>`;
   }
 
+  // Grunnmynd í sama formi og teikning verktaka: stúkur S1 S2 | S3 (atríum) | S4 S5, hver vængur skiptur í norður (efst),
+  // center og suður (neðst), brýr milli stúkna á mörkum svæða. Hvert svæði litað eftir hlutfalli af markmiði.
+  function planSvg(stukur, f, cells) {
+    const X = { S1: 8, S2: 108, S4: 324, S5: 424 }, W = 68, TOP = 26, H = [72, 86, 64];
+    const Y = [TOP, TOP + H[0], TOP + H[0] + H[1]];
+    const brun = '#d6c4cf';
+    let g = `<rect x="196" y="${TOP}" width="108" height="${H[0] + H[1] + H[2]}" rx="3" fill="url(#nl-hatch)" stroke="#b6bcc6" stroke-dasharray="4 3"/><text x="250" y="${TOP + 118}" text-anchor="middle" font-size="15" font-weight="700" fill="#7a8493">S3</text>`;
+    // brýr: S1–S2 og S4–S5 á tveimur mörkum, löng brú S2–S4 við neðra mark
+    [[X.S1 + W, X.S2], [X.S4 + W, X.S5]].forEach((b2) => [Y[1], Y[2]].forEach((y) => { g += `<rect x="${b2[0]}" y="${y - 7}" width="${b2[1] - b2[0]}" height="14" fill="${brun}" stroke="#a98fa0" stroke-width=".8"/>`; }));
+    g += `<rect x="${X.S2 + W}" y="${Y[2] - 5}" width="${X.S4 - X.S2 - W}" height="10" fill="${brun}" stroke="#a98fa0" stroke-width=".8"/>`;
+    cells.forEach((x) => {
+      const w = x.w;
+      ZONES.forEach(([k, lab], zi) => {
+        const zd = zoneOf(stukur, f, w, k), t = zoneTarget(stukur, f, w, k);
+        const pz = t ? Math.min(100, Math.round((zd.done / t) * 100)) : 0;
+        const cz = pctColor(pz);
+        g += `<g><title>${f} ${w} ${lab}: ${num(zd.done)} af ~${num(t)} (${pz}%)${zd.open ? ', ' + num(zd.open) + ' opin' : ''}</title><rect x="${X[w]}" y="${Y[zi]}" width="${W}" height="${H[zi]}" fill="${cz.bg}" stroke="${cz.bd}" stroke-width="1.2"/><text x="${X[w] + W / 2}" y="${Y[zi] + H[zi] / 2 - 2}" text-anchor="middle" font-size="16" font-weight="700" fill="#1f2933">${pz}%</text><text x="${X[w] + W / 2}" y="${Y[zi] + H[zi] / 2 + 13}" text-anchor="middle" font-size="10.5" fill="#44505e">${lab}</text></g>`;
+      });
+      g += `<text x="${X[w] + W / 2}" y="${TOP - 8}" text-anchor="middle" font-size="15" font-weight="700" fill="currentColor">${w} · ${x.pct}%</text>`;
+      g += `<text x="${X[w] + W / 2}" y="${TOP + H[0] + H[1] + H[2] + 16}" text-anchor="middle" font-size="10.5" fill="currentColor" opacity=".75">${num(x.d.done)} / ~${num(x.total)}</text>`;
+    });
+    return `<svg class="nl-fl-svg" viewBox="0 0 500 ${TOP + H[0] + H[1] + H[2] + 24}" role="img" aria-label="${FLOOR_NAME[f]}: hlutfall búið per stúku og svæði"><defs><pattern id="nl-hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="#f1f3f5"/><rect width="4" height="8" fill="#e6e9ed"/></pattern></defs>${g}</svg>`;
+  }
+
   function floorWingsHtml(stukur, f) {
     const cells = WINGS.map((w) => {
       const d = stukur.wings[f + ' ' + w] || { done: 0, open: 0 };
@@ -258,17 +283,10 @@
       const c = pctColor(pct);
       return { w, d, total, pct, c };
     });
-    const zrows = (w) => ZONES.map(([k, lab]) => {
-      const zd = zoneOf(stukur, f, w, k), t = zoneTarget(stukur, f, w, k);
-      const pz = t ? Math.min(100, Math.round((zd.done / t) * 100)) : 0;
-      const cz = pctColor(pz);
-      return `<span class="nl-fl-z" style="background:${cz.bg}" title="${f} ${w} ${lab}: ${num(zd.done)} af ~${num(t)}">${lab[0]} ${pz}%</span>`;
-    }).join('');
-    const box = (x) => `<div class="nl-fl-w" style="background:${x.c.bg};border-color:${x.c.bd}" title="${f} ${x.w}: ${num(x.d.done)} klárað${x.d.open ? ', ' + num(x.d.open) + ' opin' : ''}, markmið ~${num(x.total)} (mat)">${x.w}<i>${x.pct}%</i><small>${num(x.d.done)} / ~${num(x.total)}</small><div class="nl-fl-zs">${zrows(x.w)}</div></div>`;
     const done = cells.reduce((a, x) => a + x.d.done, 0), total = cells.reduce((a, x) => a + x.total, 0);
     return { done, total, html: `<div class="nl-fl">
       <div class="nl-fl-h"><b>${FLOOR_NAME[f]}</b><span>${total ? Math.round((done / total) * 100) : 0}% · ${num(done)} af ~${num(total)}</span></div>
-      <div class="nl-fl-plan">${box(cells[0])}${box(cells[1])}<div class="nl-fl-mid">S3</div>${box(cells[2])}${box(cells[3])}</div>
+      ${planSvg(stukur, f, cells)}
     </div>` };
   }
 
