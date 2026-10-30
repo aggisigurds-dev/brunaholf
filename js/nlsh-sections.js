@@ -310,8 +310,13 @@
     let rem = 0;
     const perC = {};
     const rows = [];
-    ['5H', '4H'].forEach((f) => WINGS.forEach((w) => {
+    ['6H', '5H', '4H'].forEach((f) => WINGS.forEach((w) => {
       const d = stukur.wings[f + ' ' + w] || { done: 0, cat: {} };
+      if (f === '6H') {
+        const c6 = cls.map(([c]) => { const n = d.cat[c] || 0; return n ? `<td style="background:#c3f0c8">${num(n)}</td>` : '<td class="nl-um-na">—</td>'; });
+        rows.push(`<tr><td><b>${f} ${w}</b></td>${c6.join('')}<td>búið</td></tr>`);
+        return;
+      }
       let left = 0;
       const cells = cls.map(([c]) => {
         const t = classTarget(stukur, f, w, c);
@@ -321,7 +326,7 @@
         const l = Math.max(0, t - n);
         left += l; perC[c] = (perC[c] || 0) + l;
         const col = pctColor(Math.min(100, pct));
-        return `<td style="background:${col.bg}" title="${f} ${w} · ${escapeHtml(c)}: ${num(n)} af ~${num(t)}">${pct > 100 ? '100%+' : pct + '%'}<small>${l ? '−' + num(l) : '✓'}</small></td>`;
+        return `<td style="background:${col.bg}" title="${f} ${w} · ${escapeHtml(c)}: ${num(n)} af ~${num(t)}">${pct > 100 ? '100%+' : pct + '%'}<small>${num(n)} / ~${num(t)}</small><small>${l ? '−' + num(l) : '✓'}</small></td>`;
       });
       rem += left;
       rows.push(`<tr><td><b>${f} ${w}</b></td>${cells.join('')}<td><b>${num(left)}</b></td></tr>`);
