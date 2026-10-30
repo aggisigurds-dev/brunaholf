@@ -1,6 +1,6 @@
 {
  "utgafa": 1,
- "nyjast": "2026-10-28",
+ "nyjast": "2026-10-29",
  "throskuldur": 6,
  "osnert_dagar": 30,
  "uppspretta": "slokkvitaeki/tools/audit-agentar.cjs --json",
@@ -30,9 +30,9 @@
    "sidast": "2026-10-28",
    "skrif": 39,
    "gaetir": 36,
-   "breytt": 0,
+   "breytt": 4,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Flettur, borð og navigation í Slökkvitæki-appinu — Þjónustuborð/Verkborð (368), Bakendi, Bílstjóri, Aksturslisti, URL-routing (218), bakk-takkinn (3 lög), app-s"
   },
   {
@@ -45,9 +45,9 @@
    "sidast": "2026-10-28",
    "skrif": 10,
    "gaetir": 4,
-   "breytt": 0,
+   "breytt": 2,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Elon Musk — byggingarstjóri rafkerfisins. As-built yfir tengingar á staðnum: útreikningar (verð, VSK, afsláttur, KPI, TÆKI, FULLBÚIÐ), skjala-lyklar (fyrirtaeki"
   },
   {
@@ -60,9 +60,9 @@
    "sidast": "2026-10-28",
    "skrif": 20,
    "gaetir": 21,
-   "breytt": 0,
+   "breytt": 3,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Hönnuðurinn — lagar útlit, farsímaskjái (mobile view) og hannar skjái/app-view í Slökkvitæki-appinu. Notaðu þegar síða eða flipi lítur illa út, brotnar eða er þ"
   },
   {
@@ -75,9 +75,9 @@
    "sidast": "2026-10-28",
    "skrif": 4,
    "gaetir": 6,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Kortin og geocode-kerfið — Leaflet, mapfix-merkin, Nominatim-proxyið, Staðfangaskrá HMS, geocode_cache lögin þrjú og kill-dots sagan. Notaðu þegar pinnar vantar"
   },
   {
@@ -105,9 +105,9 @@
    "sidast": "2026-10-28",
    "skrif": 7,
    "gaetir": 4,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Natalie 🌸 — staðreyndayfirferð 2025–26: ber saman það sem kerfið SEGIR og það sem er RAUNVERULEGA í gögnunum og skrifar niðurstöðuna á factcheck_bord. Notaðu þ"
   },
   {
@@ -120,9 +120,9 @@
    "sidast": "2026-10-28",
    "skrif": 7,
    "gaetir": 11,
-   "breytt": 0,
+   "breytt": 2,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Netvörður — gætir öryggisnetsins: kallaðu á hann ÁÐUR og EFTIR breytingu á vörðum leiðum (reikninga-OUT 10/233/254, kennitala 121/pos.js, payday-push, tilbúið 1"
   },
   {
@@ -162,12 +162,12 @@
    "slod": ".claude/agents/sala-reikningar.md",
    "hud": null,
    "emoji": null,
-   "sidast": "2026-10-28",
-   "skrif": 16,
+   "sidast": "2026-10-29",
+   "skrif": 17,
    "gaetir": 14,
-   "breytt": 0,
+   "breytt": 2,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Sala/POS, reikningagerð og -sending, Payday/dkPlus, afslættir, verðlistar og vörur, PDF-vistun, reikninga-póstur og úttektartexti í Slökkvitæki-appinu. Notaðu þ"
   },
   {
@@ -252,8 +252,8 @@
    "slod": ".claude/skills/arnold/SKILL.md",
    "hud": null,
    "emoji": null,
-   "sidast": "2026-10-20",
-   "skrif": 13,
+   "sidast": "2026-10-29",
+   "skrif": 14,
    "gaetir": 0,
    "breytt": 0,
    "daudir": [],
@@ -330,9 +330,9 @@
    "sidast": "2026-10-16",
    "skrif": 5,
    "gaetir": 4,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Fact-check á tækjatölum og þjónustustöðu Slökkvitækis — ber saman fjórar heimildir (þjónustusamninga, úttektarreikninga, úttektarskýrslur og tækjaskrána) og seg"
   },
   {
@@ -420,7 +420,7 @@
    "sidast": "2026-10-20",
    "skrif": 6,
    "gaetir": 17,
-   "breytt": 3,
+   "breytt": 4,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Layout, CSS and responsive rules specific to the Slokkvitaeki app. Use BEFORE writing any CSS, media query, or layout change in this repo - including mobile/des"
@@ -507,8 +507,8 @@
    "slod": ".claude/agents/framendi.md",
    "hud": null,
    "emoji": null,
-   "sidast": "2026-10-28",
-   "skrif": 15,
+   "sidast": "2026-10-29",
+   "skrif": 16,
    "gaetir": 11,
    "breytt": 0,
    "daudir": [],
@@ -552,8 +552,8 @@
    "slod": ".claude/agents/jarvis.md",
    "hud": "Jarvis",
    "emoji": "🎩",
-   "sidast": "2026-10-28",
-   "skrif": 9,
+   "sidast": "2026-10-29",
+   "skrif": 10,
    "gaetir": 9,
    "breytt": 0,
    "daudir": [],
@@ -600,9 +600,9 @@
    "sidast": "2026-10-28",
    "skrif": 10,
    "gaetir": 5,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Kann viðskiptavina-líkanið — customers_base (greiðandi, ein röð á kt) → fyrirtaeki (staðir) → uttaeki — rekstrarfélög og kennitölur. Notaðu þegar leita þarf að "
   },
   {
@@ -735,9 +735,9 @@
    "sidast": "2026-10-28",
    "skrif": 1,
    "gaetir": 2,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Vinnur úr athugasemdum Agnars við agenta og skills (Jarvis → Sérfræðingar → „Bæta við upplýsingum“, taflan agent_notes) og vinnur þær inn í réttar agent-/skill-"
   },
   {
