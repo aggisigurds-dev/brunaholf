@@ -38,7 +38,7 @@
       .nl-fl-sum{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin:0 0 10px;font-size:13px;color:var(--text,#1f2933)}
       .nl-fl-sum b{font-size:22px;font-variant-numeric:tabular-nums}
       .nl-fl-sum small{color:var(--text-dim,#5a6473);font-size:11.5px}
-      .nl-fl-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;max-width:880px}
+      .nl-fl-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
       @media (max-width:900px){.nl-fl-grid{grid-template-columns:minmax(0,1fr)}}
       .nl-fl{background:var(--card-bg,#fff);border:1px solid var(--border,#e3e7ec);border-radius:10px;padding:10px 12px}
       .nl-fl-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13px;margin-bottom:8px}
@@ -73,7 +73,7 @@
       .nl-kort-c{display:inline-flex;align-items:center;gap:5px;cursor:pointer}
       .nl-kort-c i{width:10px;height:10px;border-radius:50%;display:inline-block}
       .nl-kort-n{margin-left:auto;color:var(--text-dim,#5a6473);font-variant-numeric:tabular-nums}
-      .nl-kort-map{position:relative;max-width:1100px;line-height:0;border:1px solid var(--border,#e3e7ec);border-radius:8px;overflow:hidden;background:#fff}
+      .nl-kort-map{position:relative;line-height:0;border:1px solid var(--border,#e3e7ec);border-radius:8px;overflow:hidden;background:#fff}
       .nl-kort-map img{width:100%;height:auto;display:block}
       .nl-kort-ov{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none}
       .nl-kort-notch{position:absolute;transform:translate(-50%,-50%);background:rgba(255,255,255,.93);border:1px solid #b6bcc6;border-radius:5px;padding:2px 4px;font-size:9.5px;line-height:1.25;color:#1f2933;font-variant-numeric:tabular-nums;text-align:center}
