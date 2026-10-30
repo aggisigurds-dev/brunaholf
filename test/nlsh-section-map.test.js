@@ -160,3 +160,23 @@ test('status and crew copy', () => {
   assert.equal(crewCopy('5H S2', 40, 12, 28), 'senda áhöfn: 5H S2, 28 göt eftir');
   assert.match(crewCopy('5H S2', 40, null, null), /Ajour-teikning ekki innlesin/);
 });
+
+test('6H: 6H.pdf = S1+S2 (talið einu sinni á S1), Brunayfirlit 6H = S4+S5, rafmagnsþéttingar eru flokkur', () => {
+  const { ALL_SECTIONS } = require('../netlify/functions/nlsh-section-map');
+  assert.equal(SECTIONS.length, 8);
+  assert.equal(ALL_SECTIONS.length, 12);
+  assert.deepEqual(matchSectionIds('6H.pdf'), ['6h-s1', '6h-s2']);
+  assert.deepEqual(matchSectionIds('A286-31_ Brunayfirlit 6H - GRM - Yfirlit - Brunahólfun Rev.0.pdf'), ['6h-s4']);
+  assert.deepEqual(matchSectionIds('6H4S.jpg'), ['6h-s4']);
+  assert.equal(isCategoryDrawing('6H 2S-1S Rafmagnsþéttingar.jpg'), true);
+  assert.deepEqual(matchSectionIds('6H 2S-1S Rafmagnsþéttingar.jpg'), []);
+  const t = tallyBySection([
+    { serial_number: 1, registration_status: 'Done', drawing_name: '6H.pdf' },
+    { serial_number: 2, registration_status: 'Done', drawing_name: '6H.pdf' },
+    { serial_number: 3, registration_status: 'Done', drawing_name: 'A286-31_ Brunayfirlit 6H - GRM.pdf' },
+  ]);
+  assert.equal(t.byId['6h-s1'].doneSerials.size, 2);
+  assert.equal(t.byId['6h-s2'].doneSerials.size, 0);
+  assert.equal(t.byId['6h-s2'].sharedFrom, '6h-s1');
+  assert.equal(t.byId['6h-s4'].doneSerials.size, 1);
+});

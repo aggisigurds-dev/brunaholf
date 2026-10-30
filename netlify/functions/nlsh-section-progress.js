@@ -10,6 +10,7 @@
 
 const {
   SECTIONS,
+  ALL_SECTIONS,
   DUAL_POLICY,
   tallyBySection,
   sectionStatus,
@@ -57,7 +58,7 @@ exports.handler = async (event) => {
   const tally = tallyBySection(drawingColumn ? rows : rows.map((r) => ({ ...r, drawing_name: null })));
   const backfilled = drawingColumn && tally.drawingBackfilled;
 
-  const sections = SECTIONS.map((s) => {
+  const sections = ALL_SECTIONS.map((s) => {
     const plannedN = Math.max(0, Math.round(Number(planned[s.id]) || 0));
     const bucket = tally.byId[s.id];
     const done = backfilled ? bucket.doneSerials.size : null;
@@ -67,7 +68,7 @@ exports.handler = async (event) => {
       name, done: c.done, open: c.open,
     }));
     const sharedFrom = bucket.sharedFrom
-      ? (SECTIONS.find((x) => x.id === bucket.sharedFrom) || {}).label || bucket.sharedFrom
+      ? (ALL_SECTIONS.find((x) => x.id === bucket.sharedFrom) || {}).label || bucket.sharedFrom
       : null;
     return {
       id: s.id,

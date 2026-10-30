@@ -29,6 +29,16 @@ const SECTIONS = [
   { id: '5h-s4', label: '5H S4+S5', floor: '5H' },
 ];
 
+// 6H (30.10.2026): aðeins fyrir hæðamyndina — `6H.pdf` = S1+S2, „Brunayfirlit 6H“ = S4+S5. Spjöldin (SECTIONS) eru
+// áfram átta; ALL_SECTIONS bætir 6H við talninguna og API-svarið.
+const SECTIONS_6H = [
+  { id: '6h-s1', label: '6H S1', floor: '6H' },
+  { id: '6h-s2', label: '6H S2', floor: '6H' },
+  { id: '6h-s3', label: '6H S3', floor: '6H' },
+  { id: '6h-s4', label: '6H S4+S5', floor: '6H' },
+];
+const ALL_SECTIONS = [...SECTIONS, ...SECTIONS_6H];
+
 const DUAL_POLICY = 'primary-only';
 
 // Electrical-addition / sealing sheets sit on the same Ajour list as hole
@@ -45,8 +55,8 @@ function normalizeDrawing(name) {
   s = s.replace(/\bsh(?=\d|s\b)/g, '5h');
   s = s.replace(/\bsh\b/g, '5h');
   // Glued 5H1S / 5h2s and 5HS1 / 5hs2
-  s = s.replace(/\b([45])h([1-5])s\b/g, '$1h $2s');
-  s = s.replace(/\b([45])hs([1-5])\b/g, '$1h s$2');
+  s = s.replace(/\b([456])h([1-5])s\b/g, '$1h $2s');
+  s = s.replace(/\b([456])hs([1-5])\b/g, '$1h s$2');
   s = s.replace(/[_.,;:+\-–—]+/g, ' ');
   s = s.replace(/\s+/g, ' ');
   return s;
@@ -55,6 +65,7 @@ function normalizeDrawing(name) {
 function floorOf(norm) {
   if (/\b4h\b/.test(norm)) return '4h';
   if (/\b5h\b/.test(norm)) return '5h';
+  if (/\b6h\b/.test(norm)) return '6h';
   return null;
 }
 
@@ -78,6 +89,11 @@ function wingTokens(norm, floor) {
   if (!wings.size && /\bceiling\b|\bloft\b/.test(norm)) {
     add(1); add(2); add(3); add(4);
   }
+  // 6H: „6H.pdf“ nær yfir S1+S2, „A286-31 Brunayfirlit 6H“ yfir S4+S5 — engin vængjamerking í titlinum.
+  if (!wings.size && floor === '6h') {
+    if (/\bbrunayfirlit\b/.test(norm)) add(4);
+    else if (/\bpdf\b/.test(norm)) { add(1); add(2); }
+  }
   return [...wings].sort((a, b) => a - b);
 }
 
@@ -92,7 +108,7 @@ function matchSectionIds(drawingName) {
   const ids = [];
   for (const w of wings) {
     const id = `${floor}-s${w}`;
-    if (SECTIONS.some((s) => s.id === id) && !ids.includes(id)) ids.push(id);
+    if (ALL_SECTIONS.some((s) => s.id === id) && !ids.includes(id)) ids.push(id);
   }
   return ids;
 }
@@ -137,7 +153,7 @@ function tallyBySection(rows) {
   }
 
   const byId = {};
-  for (const s of SECTIONS) byId[s.id] = emptyBucket();
+  for (const s of ALL_SECTIONS) byId[s.id] = emptyBucket();
   const unmapped = {};
   const category = {};
 
@@ -202,6 +218,7 @@ function crewCopy(label, planned, done, left) {
 
 module.exports = {
   SECTIONS,
+  ALL_SECTIONS,
   DUAL_POLICY,
   CATEGORY_DRAWING_RE,
   isCategoryDrawing,
