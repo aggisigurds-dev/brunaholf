@@ -67,6 +67,20 @@
   status = 404
   force = true
 
+# 31.10.2026 (úttekt): /tmp/*.json (afrit af hliðarstiku-stöðunni) og /tools/* (agents-meta.json, smíðaskriftur) voru
+# sóttanleg á lifandi vefnum. Engin síða hleður neitt úr þeim (git grep 31.10) — þau eru vinnuskrár repósins.
+[[redirects]]
+  from = "/tmp/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/tools/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
 # Þjónustuvefurinn (kúndavefur /gatt + stjórnsíða /gatt-admin) býr í slokkvitaeki-repoinu
 # (11.10.2026). Hér var eldra eintak sem rak í sundur (Agnar 10.10: „ruglingur á repos") —
 # því var eytt og gamlar slóðir, líka þær sem kúnnar fengu í pósti, vísa nú þangað.

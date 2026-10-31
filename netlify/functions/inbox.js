@@ -12,6 +12,10 @@
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// 31.10.2026 (úttekt): persónulega pósthólfið er utan kerfisins (Agnar 11.09.2026 „já eyða öllu tengt aggisigurds@gmail.com";
+// svarstöð: „aggisigurds@gmail.com er aldrei notað"). Þetta fall svarar án innskráningar, og 23.922 gamlar raðir úr hólfinu
+// liggja enn í email_digest — þær fengust með ?account=… eða komu með þegar account var tómt. Sama regla og postleit.js.
+const PERSONULEGT = 'aggisigurds@gmail.com';
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
@@ -29,11 +33,13 @@ exports.handler = async (event) => {
   const filter = (params.filter || 'all').toLowerCase(); // all | questions
   const q      = (params.q || '').trim();
   const account = (params.account || '').trim();
+  if (account.toLowerCase() === PERSONULEGT) return json(400, { error: 'Þetta pósthólf er ekki hluti af innhólfinu.' });
 
   // Build the PostgREST query.
   const queryParts = [
     'select=id,account,folder,sender_name,sender_email,subject,snippet,is_question,has_attachment,attachment_names,received_at,fetched_at',
     'folder=neq.SENT', // sent-mail rows (SENT ingest) must not appear in the inbox feed
+    `account=not.ilike.${encodeURIComponent(PERSONULEGT)}`,
     `limit=${limit}`,
     'order=received_at.desc.nullslast',
   ];

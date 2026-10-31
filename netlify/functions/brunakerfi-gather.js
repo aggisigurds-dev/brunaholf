@@ -40,6 +40,27 @@ async function driveFetch(url, opts, tries = 4) {
   return last;
 }
 
+// 31.10.2026 (úttekt): EYDD SKRÁNING KEMUR EKKI AFTUR ÞEGJANDI. Skráningum sem var eytt úr customer_documents (t.d.
+// #6255/#6256 20.07, klukkutíma eftir að fyrri sópur bjó þær til) var skilað aftur 29.10 (#10356/#10358) af því þessi sópur
+// athugaði aðeins hvort drive_file_id væri skráð NÚNA. audit_vernd geymir hverja eyðingu (gikkurinn audit_vernd_guard), svo
+// hér er sótt einu sinni á keyrslu mengi Drive-auðkenna sem hefur verið eytt, og þeim er sleppt (row.indexed='eytt_adur').
+// Sé eyðingin röng er skráin tengd handvirkt — sjá tools/audit-skjal-endurkoma.cjs (slokkvitaeki) og Verkefnalista ae9f9b45.
+let _eyddar = null;
+async function eyddarSkrar() {
+  if (_eyddar) return _eyddar;
+  const out = new Set();
+  for (let fra = 0; ; fra += 1000) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/audit_vernd?table_name=eq.customer_documents&op=eq.DELETE&select=fid:old_row->>drive_file_id&order=id`,
+      { headers: Object.assign(sbHeaders(), { Range: `${fra}-${fra + 999}`, 'Range-Unit': 'items' }) });
+    if (!r.ok) throw new Error('audit_vernd ' + r.status);   // kastar: tómt mengi myndi hleypa eyddum skráningum aftur inn
+    const b = await r.json();
+    for (const x of b) if (x.fid) out.add(String(x.fid));
+    if (b.length < 1000) break;
+  }
+  _eyddar = out;
+  return out;
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors(), body: '' };
   let token;
@@ -104,6 +125,7 @@ exports.handler = async (event) => {
         const ex = await fetch(`${SUPABASE_URL}/rest/v1/customer_documents?drive_file_id=eq.${encodeURIComponent(f.id)}&select=id&limit=1`, { headers: sbHeaders() });
         const exr = await ex.json().catch(() => []);
         if (Array.isArray(exr) && exr[0]) { st.skipped++; continue; }   // þegar tengt
+        if ((await eyddarSkrar()).has(String(f.id))) { st.skipped++; st.eytt_adur = (st.eytt_adur || 0) + 1; continue; }   // eytt áður — ekki aftur
         w++; st.scanned++;
         const text = await readPdfText(f.id, token);
         const parsed = await parseReport(text, f.name);
@@ -247,6 +269,8 @@ exports.handler = async (event) => {
             body: JSON.stringify(Object.assign({ doc_type: 'brunakerfi', year: year ? +year : null, customer_name: company },
               base ? { customer_base_id: base.id } : {}, siteId ? { fyrirtaeki_id: siteId } : {})) });
           row.indexed = 'updated';
+        } else if ((await eyddarSkrar()).has(String(f.id))) {
+          row.indexed = 'eytt_adur';            // skráningu var eytt áður — ekki skráð aftur (sjá eyddarSkrar)
         } else {
           await fetch(`${SUPABASE_URL}/rest/v1/customer_documents`, {
             method: 'POST', headers: sbHeaders({ Prefer: 'return=minimal' }),

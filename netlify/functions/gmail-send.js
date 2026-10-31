@@ -60,6 +60,9 @@ exports.handler = async (event) => {
   const to = [].concat(body.to || []).map(s => String(s || '').trim()).filter(Boolean);
   const subject = String(body.subject || '').trim();
   if (!account) return json(400, { error: 'Missing account', message: 'Hvaða pósthólf á að senda frá?' });
+  // 31.10.2026 (úttekt): aldrei sent úr persónulega pósthólfinu (svarstöð: „aggisigurds@gmail.com er aldrei notað").
+  // Fallið svarar án innskráningar, svo hver sem er gat sent sem Agnar. Viðtakandi má áfram vera það netfang (daily-health).
+  if (account.toLowerCase() === 'aggisigurds@gmail.com') return json(403, { error: 'Personal account', message: 'Það er aldrei sent úr persónulega pósthólfinu.' });
   if (!to.length || !subject) return json(400, { error: 'Missing to/subject' });
 
   let token;
