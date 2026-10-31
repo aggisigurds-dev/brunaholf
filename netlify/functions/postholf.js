@@ -11,6 +11,10 @@
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// 31.10.2026 (úttekt): persónulega pósthólfið er utan kerfisins (Agnar 11.09.2026 „já eyða öllu tengt aggisigurds@gmail.com";
+// svarstöð: „aggisigurds@gmail.com er aldrei notað"). Þetta fall svarar án innskráningar, og 23.922 gamlar raðir úr hólfinu
+// liggja enn í email_digest — þær fengust með ?account=… eða komu með þegar account var tómt. Sama regla og postleit.js.
+const PERSONULEGT = 'aggisigurds@gmail.com';
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return resp(204, '', cors());
@@ -19,6 +23,7 @@ exports.handler = async (event) => {
 
   const p = event.queryStringParameters || {};
   const account = (p.account || '').trim();
+  if (account.toLowerCase() === PERSONULEGT) return json(400, { error: 'Þetta pósthólf er ekki hluti af Pósthólfinu.' });
   const label = (p.label || '').trim();
   const onlyStarred = p.starred === '1' || p.starred === 'true';
   const status = (p.status || '').trim().toLowerCase();
@@ -29,6 +34,7 @@ exports.handler = async (event) => {
   const parts = [
     'select=id,account,folder,sender_name,sender_email,subject,snippet,is_question,has_attachment,attachment_names,received_at,gmail_labels,starred',
     'folder=neq.SENT',
+    `account=not.ilike.${encodeURIComponent(PERSONULEGT)}`,
     'or=(starred.eq.true,gmail_labels.neq.[])',
     `limit=${limit}`,
     'order=received_at.desc.nullslast',

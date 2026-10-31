@@ -21,6 +21,11 @@ exports.handler = async (event) => {
     let agent = q.agent;
 
     if (event.httpMethod === 'POST') {
+      // Skrif aðeins frá sama vef (vafri sendir Origin á cross-origin POST; curl/þjónn án Origin fer í gegn eins og áður).
+      const origin = String((event.headers && (event.headers.origin || event.headers.Origin)) || '');
+      if (origin && !/^https:\/\/([a-z0-9-]+--)?brunaholf\.netlify\.app$/.test(origin) && !/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+        return json(403, { error: 'Skrif á athugasemdir eru aðeins leyfð frá brunaholf.netlify.app' });
+      }
       let p = {};
       try { p = JSON.parse(event.body || '{}'); } catch (_) {}
 
@@ -70,6 +75,10 @@ exports.handler = async (event) => {
   }
 };
 
-function cors() { return { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET, POST, OPTIONS', 'access-control-allow-headers': 'content-type' }; }
+// 31.10.2026 (úttekt): CORS `*` leyfði hvaða vef sem er að SKRIFA athugasemdir sem síðan eru unnar inn í agent-skrár og
+// Charlize. Kallarinn (js/agents-panel.js á jarvis.html) er á sama uppruna og þarf enga CORS-heimild. Lestur er áfram opinn
+// öðrum uppruna; skrif ekki. Innskráning á skrifin er sér-ákvörðun Agnars (hub-adgangar.js, „ÁFANGI 1") — þangað til
+// gætir skillið agent-athugasemdir þess að ekkert fari inn í agentana án þess að Agnar sjái það fyrst.
+function cors() { return { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET, OPTIONS', 'access-control-allow-headers': 'content-type' }; }
 function json(s, p) { return resp(s, JSON.stringify(p), { 'content-type': 'application/json', ...cors() }); }
 function resp(statusCode, body, headers) { return { statusCode, headers, body }; }

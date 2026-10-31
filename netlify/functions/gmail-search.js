@@ -3,8 +3,15 @@
 
 const { freshAccessToken, json, cors } = require('./_google');
 
+// 31.10.2026 (úttekt): fallið leitaði án innskráningar í LIFANDI persónulega pósthólfinu (google_oauth id=1 =
+// aggisigurds@gmail.com, gmail.readonly). Persónulega hólfið er utan kerfisins (Agnar 11.09.2026; svarstöð: „aldrei
+// notað") og ekkert í hubbnum, Slökkvitæki, luna-bridge eða kjarna kallar á þetta fall (git grep 31.10). Óvirkt þar til
+// það fær innskráningu og vinnupósthólf. Kóðinn hér að neðan stendur svo hægt sé að endurvekja það.
+const OVIRKT = true;
+
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors(), body: '' };
+  if (OVIRKT) return json(410, { error: 'gmail-search er óvirkt — það leitaði í persónulega pósthólfinu. Notaðu /api/postleit (vinnupósthólfin).' });
   if (event.httpMethod !== 'GET') return json(405, { error: 'Method not allowed' });
 
   const p = event.queryStringParameters || {};

@@ -20,14 +20,12 @@
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-const digits = (s) => String(s || '').replace(/\D/g, '');
-const lc = (s) => String(s || '').trim().toLowerCase();
+// Reglurnar um ógreitt/ósent/sjálfvirka tengingu búa í _krofu-flokkun.js (sameiginlegt með verkkaupar.js / Viðskiptavinum).
+const K = require('./_krofu-flokkun');
+const { digits, lc } = K;
 
-// Status-flokkun (case-insensitive). Allt sem er hvorki greitt, kreditfært/
-// cancelled né draft telst ÓGREITT (þ.m.t. Payday `SENT`).
-const PAID = new Set(['greitt', 'greidd', 'greiddur', 'paid']);
-const CREDIT = new Set(['kreditreikningur', 'kreditfærður', 'kreditfaerdur', 'credit', 'cancelled', 'cancel', 'reversed']);
-const DRAFT = new Set(['drög', 'drog', 'draft']);
+// Status-flokkun (PAID/CREDIT/DRAFT): sjá K.flokkaReikning í _krofu-flokkun.js. Allt sem er hvorki greitt,
+// kreditfært/cancelled né draft telst ÓGREITT (þ.m.t. Payday `SENT`).
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return resp(204, '', cors());
@@ -100,34 +98,8 @@ exports.handler = async (event) => {
     if (nw) return { worksite: nw, worksite_src: 'nafn' };
     return { worksite: null, worksite_src: null };
   };
-  const worksiteToPayer = new Map();  // lc(worksite) -> payer customer_name
-  // 12.10.2026: kt og tilvísun verkstaðarins úr kortinu sjálfu (✎ Greiðandi í Kröfu yfirliti) — áður
-  // kom kt AÐEINS úr fyrri Payday-reikningum á sama nafni, svo nýr greiðandi stóð kt-laus.
-  const wsKt = new Map(), wsTilv = new Map();
-  const cwRod = [...(cwmap || [])].sort((a, b) => (b.confidence === 'manual') - (a.confidence === 'manual'));
-  for (const m of cwRod) {                  // handvirk tenging gengur fyrir ('manual' fremst)
-    const w = lc(m.worksite_name), p = String(m.customer_name || '').trim();
-    if (w && p && !worksiteToPayer.has(w)) {
-      worksiteToPayer.set(w, p);
-      if (digits(m.kt_greidanda)) wsKt.set(w, digits(m.kt_greidanda));
-      if (String(m.tilvisun || '').trim()) wsTilv.set(w, String(m.tilvisun).trim());
-    }
-  }
-  for (const g of (pguide || [])) {         // verðskráin fyllir í eyðurnar
-    const w = lc(g.worksite_name), p = String(g.customer_name || '').trim();
-    if (w && p && !worksiteToPayer.has(w)) worksiteToPayer.set(w, p);
-  }
-  const payerKt = new Map();           // lc(customer_name) -> kt (digits)
-  for (const inv of invoices) {
-    const nm = lc(inv.customer_name), kt = digits(inv.kt_greidanda);
-    if (nm && kt && !payerKt.has(nm)) payerKt.set(nm, kt);
-  }
-  // Resolve a draft's {customer,kt} to its payer when the label is a worksite.
-  function resolvePayer(name) {
-    const payer = worksiteToPayer.get(lc(name));
-    if (!payer) return null;
-    return { customer: payer, kt: wsKt.get(lc(name)) || payerKt.get(lc(payer)) || '', tilvisun: wsTilv.get(lc(name)) || '' };
-  }
+  // Verkstaður → greiðandi (handvirkt kort fyrst, verðskráin fyllir í eyður) — K.greidendur í _krofu-flokkun.js.
+  const resolvePayer = K.greidendur({ cwmap, pguide, invoices });
 
   const metaBy = new Map(meta.map((m) => [m.inv_key, m]));
   const today = new Date().toISOString().slice(0, 10);
@@ -144,28 +116,11 @@ exports.handler = async (event) => {
    * gjalddagi ekki fyrr en vinnumánuður drags byrjar, hver Payday-röð tengist í mesta lagi EINUM drögum (elsta drög fyrst), og röð sem
    * hangir þegar á drögum (payday_invoice_id) er frátekin. Tengd drög LIFA áfram í töflunni (ekkert er eytt eða skrifað — þetta er GET);
    * þau detta aðeins úr Ósent svo upphæðin tvítelst ekki. Greiðandi-kt kemur úr drögunum sjálfum eða greiðandakortinu (resolvePayer).
-   * EKKI_OSENT_TENGING er afrit af EKKI_OSENT hér að neðan — breytist annað þarf hitt að breytast. */
-  const EKKI_OSENT_TENGING = new Set(['invoiced', 'void', 'skipped', 'merged']);
-  const sjalfvirkTenging = new Map();       // draft inv_key → Payday-röð (invoices) sem hún á
-  {
-    const frataekid = new Set(drafts.filter((d) => d.payday_invoice_id != null).map((d) => String(d.payday_invoice_id)));
-    const paydayRodur = invoices.filter((r) => lc(r.source) === 'payday' && /^(sent|paid)$/.test(lc(r.status)) && digits(r.kt_greidanda) && (+r.upphaed_total || 0) > 0 && r.gjalddagi);
-    const kandidatar = drafts
-      .filter((d) => !EKKI_OSENT_TENGING.has(String(d.status || '')) && d.payday_invoice_id == null && d.worksite_name && /^\d{4}-\d{2}$/.test(String(d.work_month || '')) && (+d.total_m_vsk || 0) > 0)
-      .sort((a, b) => String(a.work_month).localeCompare(String(b.work_month)));
-    for (const d of kandidatar) {
-      const payer = resolvePayer(d.worksite_name) || resolvePayer(d.customer_name);
-      const kt = digits(d.kennitala) || (payer && digits(payer.kt)) || '';
-      if (!kt) continue;
-      const amt = +d.total_m_vsk, manudur = d.work_month + '-01';
-      const hit = paydayRodur
-        .filter((r) => !frataekid.has(String(r.id)) && digits(r.kt_greidanda) === kt && Math.abs((+r.upphaed_total) - amt) <= 1 && String(r.gjalddagi) >= manudur)
-        .sort((a, b) => String(a.gjalddagi).localeCompare(String(b.gjalddagi)))[0];
-      if (!hit) continue;
-      frataekid.add(String(hit.id));
-      sjalfvirkTenging.set(`draftinv|${d.worksite_name}|${d.work_month}`, hit);
-      if (!wsEftirPayday.has(String(hit.id))) wsEftirPayday.set(String(hit.id), d.worksite_name);   // Payday-röðin fær verkstaðinn úr drögunum
-    }
+   * Reglan sjálf býr í K.sjalfvirkTenging (_krofu-flokkun.js) og notar sama K.EKKI_OSENT og þrep 2 hér að neðan. */
+  const sjalfvirkTenging = K.sjalfvirkTenging({ drafts, invoices, resolvePayer });   // draft inv_key → Payday-röð (invoices)
+  for (const d of drafts) {                    // Payday-röðin fær verkstaðinn úr drögunum
+    const hit = sjalfvirkTenging.get(K.draftKey(d));
+    if (hit && !wsEftirPayday.has(String(hit.id))) wsEftirPayday.set(String(hit.id), d.worksite_name);
   }
 
   // ---- bank cross-reference (sama og Skuldunautar/debtors.js) ---------------
@@ -184,15 +139,14 @@ exports.handler = async (event) => {
   // ---- classify invoices ----
   const t1 = [], t2 = [];
   for (const r of invoices) {
-    const st = lc(r.status);
     const amt = +r.upphaed_total || +r.hofudstoll || 0;
     if (amt === 0) continue;
-    if (CREDIT.has(st) || amt < 0) continue;                 // kreditfært/cancelled/negative leg
-    const key = `${r.source || 'x'}|${r.tilvisun || r.id}`;
+    const key = K.invKey(r);
     const mt = metaBy.get(key) || {};
-    const isDraft = DRAFT.has(st);
-    const isPaid = PAID.has(st) || !!mt.paid;                 // Payday-greitt eða handvirkt merkt
-    if (isPaid) continue;                                     // ekki útistandandi lengur
+    const flokkur = K.flokkaReikning(r, mt);
+    if (flokkur === 'kredit') continue;                       // kreditfært/cancelled/negative leg
+    if (flokkur === 'greitt') continue;                       // Payday-greitt eða handvirkt merkt — ekki útistandandi
+    const isDraft = flokkur === 'drog';
     // Falið (handvirkt) er EKKI sleppt lengur — við sendum röðina með `hidden:true`
     // svo framendinn geti (a) haldið henni falinni þvert á tæki og (b) sýnt hana
     // aftur með „👁 Sýna falin" hnappnum. Faldar raðir teljast ekki í summur.
@@ -233,7 +187,7 @@ exports.handler = async (event) => {
    *
    * `monthsAgo(3)` stendur eftir sem VIÐMIÐUN fyrir aldursmerkið, ekki sem sía. */
   const cutoff = monthsAgo(3);
-  const EKKI_OSENT = new Set(['invoiced', 'void', 'skipped', 'merged']);
+  const EKKI_OSENT = K.EKKI_OSENT;
   const draftKeys = [];
   for (const d of drafts) {
     const wm = String(d.work_month || '');

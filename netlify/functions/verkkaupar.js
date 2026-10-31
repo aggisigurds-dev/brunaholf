@@ -13,6 +13,8 @@
 // customer_worksite_map (verkstaðir sem eru tengdir handvirkt).
 
 const KV = require('./_ktvorn');
+// Ógreitt/ósent: SÖMU reglur og Kröfu yfirlit (krofu-yfirlit-bru.js) — búa í _krofu-flokkun.js.
+const K = require('./_krofu-flokkun');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -38,16 +40,18 @@ exports.handler = async (event) => {
 const kr = (n) => Math.round(Number(n) || 0);
 // kennitala → dddddd-dddd (sama snið og trigger normalize_kennitala skrifar í customer_info / fyrirtaeki / customers_base)
 const normKt = (s) => { const d = String(s || '').replace(/\D/g, ''); return d.length === 10 ? d.slice(0, 6) + '-' + d.slice(6) : ''; };
-const OSENT = (d) => (d.status || 'draft') === 'draft' && !d.merged_into && Number(d.total_m_vsk) > 0;
-// invoices-staðan kemur úr tveimur innsogum og er ýmist á ensku eða íslensku
-// ("PAID" og "Greidd" hlið við hlið) — normalísera svo greitt teljist ekki ógreitt.
-const stada = (v) => {
-  const s = String(v.status || '').trim().toUpperCase();
-  // Kredit/afturköllun fyrst: kreditreikningur ber oft greiðsludag og reiknaðist
-  // annars sem NEIKVÆÐ greiðsla („Greitt í ár −8,7 m.kr." hjá Eykt).
-  if (/^(CREDIT|KREDIT|CANCELL|ANNULL)/.test(s) || Number(v.upphaed_total) < 0) return 'kredit';
-  if (/^(PAID|GREIDD|GREITT)/.test(s) || v.greidsla_date) return 'greitt';
-  return 'ogreitt';
+/* 31.10.2026 (allsherjar úttekt): Viðskiptavinir sýndi 70,4 m.kr. „ógreitt" og 82,8 m.kr. „ósent" á meðan Kröfu yfirlit
+ * sagði 6,2 m.kr. útistandandi. Þrjár ástæður, allar lagaðar með því að nota reglur Kröfu yfirlits (_krofu-flokkun.js):
+ *   1. Payday-DRÖG (DRAFT/Drög) töldust ógreidd — þau eru ósend (eins og þrep 2 í Kröfu yfirliti).
+ *   2. Handvirkar merkingar í krofur_yfirlit_meta voru hunsaðar: „merkt greitt" telst greitt, falið og „📨 Krafa send"
+ *      teljast ekki í summum (röðin birtist áfram í smáatriðum, merkt falin).
+ *   3. „Ósent" taldi drög sem eru þegar í Payday (payday_invoice_id eða sjálfvirk tenging á kt + upphæð) og
+ *      reikningsfærð/ógild drög (invoiced/void/skipped/merged).
+ * Kredit/afturköllun fyrst: kreditreikningur ber oft greiðsludag og reiknaðist annars sem NEIKVÆÐ greiðsla
+ * („Greitt í ár −8,7 m.kr." hjá Eykt) — K.flokkaReikning tekur kredit fyrst. */
+const stada = (v, mt) => {
+  const f = K.flokkaReikning(v, mt);
+  return (f === 'ogreitt' && v.greidsla_date) ? 'greitt' : f;   // greiðsludagur skráður = greitt
 };
 // Sama krafan getur komið úr báðum innsogum — teljum hverja (gjalddaga, upphæð) einu sinni.
 function dedupe(list) {
@@ -56,13 +60,15 @@ function dedupe(list) {
 }
 
 async function list() {
-  const [pg, info, inv, drafts, map] = await Promise.all([
+  const [pg, info, inv, drafts, map, meta] = await Promise.all([
     sb('pricing_guide?select=worksite_name,customer_name'),
     sb('customer_info?select=customer_name,kennitala,contact_email,last_payment_at'),
-    sb('invoices?select=customer_name,upphaed_total,status,gjalddagi,greidsla_date,worksite_match,tilvisun'),
-    sb('invoice_drafts?select=worksite_name,customer_name,total_m_vsk,status,merged_into,work_month'),
-    sb('customer_worksite_map?select=customer_name,worksite_name,kt_greidanda'),
+    sbAll('invoices?select=id,source,customer_name,kt_greidanda,upphaed_total,hofudstoll,status,gjalddagi,greidsla_date,worksite_match,tilvisun'),
+    sbAll('invoice_drafts?select=worksite_name,customer_name,kennitala,total_m_vsk,status,merged_into,work_month,payday_invoice_id'),
+    sbAll('customer_worksite_map?select=customer_name,worksite_name,kt_greidanda,confidence,tilvisun'),
+    sbAll('krofur_yfirlit_meta?select=inv_key,hidden,paid,done'),
   ]);
+  const { metaBy, tenging } = flokkunarGrunnur({ pg, inv, drafts, map, meta });
   // verkstaður → greiðandi (verðskrá ræður, kortið fyllir í eyður)
   const wsOwner = {};
   for (const m of map) if (m.worksite_name && m.customer_name) wsOwner[m.worksite_name] = m.customer_name;
@@ -81,14 +87,17 @@ async function list() {
   for (const v of dedupe(inv)) {
     if (!v.customer_name) continue;
     const a = get(v.customer_name);
-    const s = stada(v);
+    const mt = metaBy.get(K.invKey(v));
+    const s = stada(v, mt);
     const upp = kr(v.upphaed_total);
     if (s === 'greitt' && String(v.greidsla_date || v.gjalddagi || '').slice(0, 4) === String(ar)) a.greitt_ar += upp;
-    if (s === 'ogreitt' && upp > 0) a.ogreitt += upp;
-    if (v.gjalddagi && (!a.sidasta_krafa || v.gjalddagi > a.sidasta_krafa)) a.sidasta_krafa = v.gjalddagi;
+    if (s === 'ogreitt' && upp > 0 && K.iSummu(mt)) a.ogreitt += upp;
+    if (s === 'drog' && upp > 0 && K.iSummu(mt)) a.osent += upp;          // Payday-drög = ósent (þrep 2 í Kröfu yfirliti)
+    if (s !== 'drog' && v.gjalddagi && (!a.sidasta_krafa || v.gjalddagi > a.sidasta_krafa)) a.sidasta_krafa = v.gjalddagi;
   }
   for (const d of drafts) {
-    if (!OSENT(d)) continue;
+    const mt = metaBy.get(K.draftKey(d));
+    if (!K.erOsent(d, tenging, mt) || !K.iSummu(mt)) continue;
     const name = d.customer_name || wsOwner[d.worksite_name];
     if (!name) continue;
     get(name).osent += kr(d.total_m_vsk);
@@ -110,16 +119,23 @@ async function list() {
 
 async function detail(name) {
   const enc = encodeURIComponent(name);
-  const [infoRows, pg, map, inv, drafts] = await Promise.all([
+  const [infoRows, pg, map, inv, drafts, allPg, allMap, allInv, meta] = await Promise.all([
     sb(`customer_info?customer_name=eq.${enc}&select=*`),
     sb(`pricing_guide?customer_name=eq.${enc}&select=*`),
     sb(`customer_worksite_map?customer_name=eq.${enc}&select=*`),
     sb(`invoices?customer_name=eq.${enc}&select=*&order=gjalddagi.desc.nullslast&limit=200`),
-    sb('invoice_drafts?select=*&order=work_month.desc'),
+    sbAll('invoice_drafts?select=*&order=work_month.desc'),
+    // Sjálfvirka tengingin (drög ↔ Payday) þarf ALLT mengið, ekki bara þennan greiðanda: Payday-röð sem er frátekin
+    // af öðrum drögum má ekki tengjast hér, og greiðandi verkstaðar getur heitið annað en `name`.
+    sb('pricing_guide?select=worksite_name,customer_name'),
+    sbAll('customer_worksite_map?select=customer_name,worksite_name,kt_greidanda,confidence,tilvisun'),
+    sbAll('invoices?select=id,source,customer_name,kt_greidanda,upphaed_total,status,gjalddagi'),
+    sbAll('krofur_yfirlit_meta?select=inv_key,hidden,paid,done'),
   ]);
+  const { metaBy, tenging } = flokkunarGrunnur({ pg: allPg, inv: allInv, drafts, map: allMap, meta });
   const info = infoRows[0] || { customer_name: name };
   const wsNames = [...new Set([...pg.map((p) => p.worksite_name), ...map.map((m) => m.worksite_name)].filter(Boolean))];
-  const drog = drafts.filter((d) => OSENT(d) && (d.customer_name === name || wsNames.includes(d.worksite_name)))
+  const drog = drafts.filter((d) => { const mt = metaBy.get(K.draftKey(d)); return K.erOsent(d, tenging, mt) && K.iSummu(mt) && (d.customer_name === name || wsNames.includes(d.worksite_name)); })
     .map((d) => ({ worksite_name: d.worksite_name, work_month: d.work_month, total_m_vsk: kr(d.total_m_vsk), hours: Number(d.hours_dagvinna) || 0 }));
 
   // Samskipti: póstar sem nefna verkstaðina eða greiðandann (email_digest = brunaholf-pósthólfið)
@@ -134,12 +150,18 @@ async function detail(name) {
   }
 
   const inv2 = dedupe(inv);
-  for (const v of inv2) v.stada = stada(v);
+  for (const v of inv2) {
+    const mt = metaBy.get(K.invKey(v));
+    v.stada = stada(v, mt);
+    if (!K.iSummu(mt)) v.falid = true;      // falið eða „📨 Krafa send" í Kröfu yfirliti — sést, en telst ekki í summu
+  }
+  const iSum = (v) => !v.falid && kr(v.upphaed_total) > 0;
   const samtals = {
-    krofur: inv2.length,
-    ogreitt: inv2.filter((v) => v.stada === 'ogreitt').reduce((a, v) => a + kr(v.upphaed_total), 0),
+    krofur: inv2.filter((v) => v.stada !== 'drog').length,
+    ogreitt: inv2.filter((v) => v.stada === 'ogreitt' && iSum(v)).reduce((a, v) => a + kr(v.upphaed_total), 0),
     greitt: inv2.filter((v) => v.stada === 'greitt').reduce((a, v) => a + kr(v.upphaed_total), 0),
-    osent: drog.reduce((a, d) => a + d.total_m_vsk, 0),
+    osent: drog.reduce((a, d) => a + d.total_m_vsk, 0)
+      + inv2.filter((v) => v.stada === 'drog' && iSum(v)).reduce((a, v) => a + kr(v.upphaed_total), 0),
     verkstadir: wsNames.length,
   };
   // 16.10.2026 — kennitala greiðandans í sömu röð og Efnislistinn: customer_info → verðskrá → kort → drög
@@ -192,6 +214,9 @@ async function stofnaStad(b, customer) {
   const heimili = String(b.heimilisfang || '').trim();
   const ktN = normKt(b.kennitala);
   if (!/\d{3}/.test(heimili)) return json(400, { error: 'Heimilisfang með póstnúmeri vantar (t.d. „Sunnukriki 3, 270 Mosfellsbær")' });
+  // 31.10.2026 (úttekt): tóm kt bjó til fyrirtaeki-röð án kennitölu sem detail() finnur ekki aftur (leitar eftir kt), svo takkinn
+  // birtist á ný og hver smellur bætti við tvífara. Stofnum ekkert án kennitölu — viðmótið segir hvað vantar.
+  if (!ktN) return json(400, { error: 'Kennitölu greiðandans vantar — skráðu hana fyrst svo staðurinn tengist réttu félagi.' });
   // 29.10.2026 (Krókur 77): sama regla og annars staðar (sjá _ktvorn.js). Áður var aðeins athugað nákvæmt heimilisfang
   // (lágstafir) á sömu kt — sama nafn með örlítið annað heimilisfang bjó til tvífara. Nú: sama NAFN eða sama heimilisfang
   // (gata+númer) á kt → röðin sem er til; annars nýr staður með næsta staðarnúmeri. Leitarvilla stofnar EKKERT.
@@ -201,7 +226,28 @@ async function stofnaStad(b, customer) {
   return json(200, { ok: true, id: (res.row || {}).id, existed: res.hvernig === 'reuse', astaeda: res.astaeda || null });
 }
 
+// Sameiginlegur grunnur flokkunarinnar: meta eftir lykli + sjálfvirk tenging drög ↔ Payday (sama og Kröfu yfirlit).
+function flokkunarGrunnur({ pg, inv, drafts, map, meta }) {
+  const metaBy = new Map((meta || []).map((m) => [m.inv_key, m]));
+  const resolvePayer = K.greidendur({ cwmap: map, pguide: pg, invoices: inv });
+  const tenging = K.sjalfvirkTenging({ drafts, invoices: inv, resolvePayer });
+  return { metaBy, tenging };
+}
+
 function hdrs() { return { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }; }
+// Síðuskipt lestur (Range per 1000) — sama mynstur og fetchAll í krofu-yfirlit-bru.js.
+async function sbAll(qs) {
+  const out = []; let from = 0;
+  for (;;) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${qs}`, { headers: Object.assign(hdrs(), { Range: `${from}-${from + 999}`, 'Range-Unit': 'items' }) });
+    if (!r.ok) throw new Error('Supabase ' + r.status + ': ' + (await r.text()).slice(0, 200));
+    const page = await r.json();
+    out.push(...page);
+    if (page.length < 1000) break;
+    from += 1000;
+  }
+  return out;
+}
 async function sb(qs) {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/${qs}`, { headers: hdrs() });
   if (!r.ok) throw new Error('Supabase ' + r.status + ': ' + (await r.text()).slice(0, 200));

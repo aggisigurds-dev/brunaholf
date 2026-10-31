@@ -3169,7 +3169,7 @@ function renderReikningatenglar(t){
 /* ====================== INBOX (Luna email digest) ====================== */
 const INBOX_ACCOUNTS = [
   {value:'',                          label:'Allir reikningar'},
-  {value:'aggisigurds@gmail.com',     label:'aggisigurds@gmail.com'},
+  // aggisigurds@gmail.com tekið út 31.10.2026 — persónulega hólfið er utan kerfisins og /api/inbox hafnar því.
   {value:'eldklar@eldklar.is',        label:'eldklar@eldklar.is'},
   {value:'brunaholfehf@gmail.com',    label:'brunaholfehf@gmail.com'},
   {value:'Brunaholf@brunaholf.is',    label:'Brunaholf@brunaholf.is'},
@@ -3500,7 +3500,7 @@ function renderVidskiptavinir(t) {
         + (krofur.length ? '<table class="vk-tbl"><thead><tr><th>Gjalddagi</th><th>Tilvísun</th><th class="n">Upphæð</th><th>Staða</th><th>Greitt</th></tr></thead><tbody>'
           + krofur.map(v => '<tr><td class="n" style="text-align:left">' + vkDate(v.gjalddagi) + '</td><td>' + escapeHtml(v.worksite_match || v.tilvisun || '—') + '</td>'
             + '<td class="n">' + vkMoney(v.upphaed_total) + '</td>'
-            + '<td><span class="vk-pill ' + (v.stada||'ogreitt') + '">' + (v.stada === 'greitt' ? 'greitt' : v.stada === 'kredit' ? 'kredit' : 'ógreitt') + '</span></td>'
+            + '<td><span class="vk-pill ' + (v.stada||'ogreitt') + '">' + (v.stada === 'greitt' ? 'greitt' : v.stada === 'kredit' ? 'kredit' : v.stada === 'drog' ? 'drög' : 'ógreitt') + (v.falid ? ' · falið' : '') + '</span></td>'
             + '<td class="n" style="text-align:left">' + vkDate(v.greidsla_date) + '</td></tr>').join('')
           + '</tbody></table>' + ((d.krofur||[]).length > 12 ? '<div class="vk-muted" style="margin-top:6px">Sýni 12 nýjustu af ' + d.krofur.length + '.</div>' : '')
           : '<div class="vk-muted">Engar kröfur skráðar á þennan greiðanda.</div>') + '</div>'
@@ -3558,26 +3558,32 @@ function renderVidskiptavinir(t) {
     } else {
       const wsn = vh.length === 1 ? vh[0].worksite_name : '';
       const nafnA = wsn ? name + ' — ' + wsn : name;
+      // 31.10.2026 (úttekt): án kennitölu bjó „Stofna stað" til kennitölulausa röð sem loadDetail finnur ekki aftur, svo
+      // takkinn birtist á ný og hver smellur bætti við tvífara (25 af 41 greiðanda voru kt-lausir). Þjónninn hafnar nú tómri
+      // kt (400); hér er sagt hvað vantar í stað takka sem getur ekki gert það sem hann segist gera.
+      const ktStofna = kennitalaFyrir(name, info) || d.kt || '';
+      const ktTilStadar = String(ktStofna).replace(/\D/g, '').length === 10;
       ps.innerHTML = '<div class="vk-stofna"><div class="vk-sec-h">Enginn staður í Slökkvitæki</div>'
         + '<p class="vk-muted">Staður geymir teikningar, Greiningu, skjöl og tæki og birtist hér sem prófíll. Stofnaðu hann einu sinni — Greiningin vistast svo á hann (sama vél og í Slökkvitæki).</p>'
         + (vh.length ? '<div class="vk-frame-bar" style="padding:0 0 12px"><span class="vk-cap">Verkstaður</span>' + vh.map(x => '<button type="button" class="vk-chip" data-vk-vh="' + escapeAttr(x.worksite_name) + '" data-vk-vha="' + escapeAttr(x.heimilisfang || '') + '">' + escapeHtml(x.worksite_name) + '</button>').join('') + '</div>' : '')
         + '<div class="vk-facts"><div class="vk-fact"><label>Nafn staðar</label><input data-vk-sn value="' + escapeAttr(nafnA) + '"></div>'
         + '<div class="vk-fact wide"><label>Heimilisfang (með póstnúmeri)</label><input data-vk-sh value="' + escapeAttr(heimiliA) + '" placeholder="Gata 4, 200 Bær"></div></div>'
-        + '<div style="margin-top:12px;display:flex;align-items:center;gap:10px"><button type="button" class="boss-btn ivory" data-vk-stofna>＋ Stofna stað í Slökkvitæki</button><span class="vk-st" data-vk-stofna-st></span></div></div>';
+        + (ktTilStadar
+          ? '<div style="margin-top:12px;display:flex;align-items:center;gap:10px"><button type="button" class="boss-btn ivory" data-vk-stofna>＋ Stofna stað í Slökkvitæki</button><span class="vk-st" data-vk-stofna-st></span></div></div>'
+          : '<div class="vk-muted" style="margin-top:12px">Kennitölu greiðandans vantar — skráðu hana í Fjármál-flipanum fyrst. Staðurinn er tengdur greiðandanum á kennitölu, og án hennar finnst hann ekki aftur.</div></div>');
       const btn = ps.querySelector('[data-vk-stofna]'), st = ps.querySelector('[data-vk-stofna-st]');
       ps.querySelectorAll('[data-vk-vh]').forEach(c => c.addEventListener('click', () => {
         ps.querySelector('[data-vk-sn]').value = name + ' — ' + c.dataset.vkVh;
         const hi = ps.querySelector('[data-vk-sh]'); hi.value = c.dataset.vkVha || (c.dataset.vkVh + ', '); hi.focus();
       }));
-      btn.addEventListener('click', async () => {
+      if (btn) btn.addEventListener('click', async () => {
         const nafn = ps.querySelector('[data-vk-sn]').value.trim(), heimili = ps.querySelector('[data-vk-sh]').value.trim();
         if (!nafn) { st.textContent = '✗ nafn vantar'; st.style.color = '#b5522a'; return; }
         if (!/\d{3}/.test(heimili)) { st.textContent = '✗ heimilisfang með póstnúmeri vantar'; st.style.color = '#b5522a'; return; }
         if (!confirm('Stofna stað „' + nafn + '" (' + heimili + ') í Slökkvitæki undir ' + name + '?')) return;
         btn.disabled = true; st.textContent = '⏳'; st.style.color = '';
         try {
-          const kt = kennitalaFyrir(name, info) || d.kt || '';
-          const r = await fetch('/api/verkkaupar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'stofna_stad', customer_name: name, nafn, heimilisfang: heimili, kennitala: kt }) });
+          const r = await fetch('/api/verkkaupar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'stofna_stad', customer_name: name, nafn, heimilisfang: heimili, kennitala: ktStofna }) });
           const j = await r.json(); if (!r.ok || j.error) throw new Error(j.error || ('HTTP ' + r.status));
           delete VKDETAIL[name]; if (VKSUMS[name]) VKSUMS[name].stadir = Math.max(1, (VKSUMS[name].stadir || 0));
           await velja(name, { flipi: 'stadir' });
