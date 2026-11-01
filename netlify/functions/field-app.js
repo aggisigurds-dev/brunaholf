@@ -26,7 +26,13 @@
 const P = require('./_portal');
 const MATERIALS = require('../../js/gr-materials.js');
 
-const KINDS = ['efni', 'punktur', 'maeting', 'beidni'];
+// kostnadur = efniskostnaður sem verkstjóri kaupir inn í verkið (Agnar 01.11.2026): item_label = hvað, category = hvar
+// (verslun), unit_price = upphæð ÁN VSK (appið reiknar út frá kvittun), qty = 1. Fer í Efnislista venjulegra verka og er
+// aðeins til yfirlits á verkum á einingaverði (Landsspítali, Heklureitur). Þarf kind-regluna í sql/2026-11-01_field_entries_kostnadur.sql.
+// verk = verk sem verkstjóri bætir við listann þegar hann er fyrstur á staðinn að taka út verkið og það er hvorki í Tímaveru
+// né Kröfu yfirliti enn (worksite_name = nafn, note = heimilisfang/athugasemd). Birtist hjá öllum í appinu og á skrifstofunni.
+const KINDS = ['efni', 'punktur', 'maeting', 'beidni', 'kostnadur', 'verk'];
+const MAX_KOSTNADUR = 5000000;
 const FIELDS = ['kind', 'worksite_name', 'work_month', 'entry_date', 'employee', 'author', 'item_label', 'qty', 'unit', 'unit_price', 'category', 'note', 'status', 'client_id'];
 const TOKEN = process.env.FIELD_APP_TOKEN || '';
 
@@ -83,13 +89,20 @@ async function handleGet(event) {
     const month = isMonth(q.month) ? q.month : todayIso().slice(0, 7);
     const { from, to } = monthRange(month);
     const since = new Date(Date.now() - 45 * 864e5).toISOString().slice(0, 10);
-    const [tv, aliases, redder, entries, shares, recent] = await Promise.all([
+    const dago = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+    const ym2 = (() => { const d = new Date(); const x = new Date(d.getFullYear(), d.getMonth() - 2, 1); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}`; })();
+    const [tv, aliases, redder, entries, shares, recent, tvVika, drog, nyVerk] = await Promise.all([
       allPages(`timavera_entries?select=project,hours,date,employee&date=gte.${from}&date=lte.${to}&order=date.asc`),
       all('project_aliases?select=canonical_name,alias').catch(() => []),
       all(`redder_invoices?select=worksite_match,dagsetning,month_override,an_vsk,redder_line_items(item_name,magn,upphaed,ein_verd,excluded,worksite_override)&dagsetning=gte.${from}&dagsetning=lte.${to}`).catch(() => []),
       allPages(`field_entries?select=*&work_month=eq.${month}&order=created_at.desc`),
       all('field_shares?select=*&active=is.true&order=created_at.desc').catch(() => []),
       allPages(`timavera_entries?select=employee&date=gte.${since}`).catch(() => []),
+      // Verk í vinnslu: færslur í Tímaveru síðustu 7 daga (líka frá fyrri mánuði), ósend drög í Kröfu yfirliti (síðustu 3 mánuðir)
+      // og verk sem starfsmenn hafa bætt við sjálfir í appinu (síðustu 120 daga). Bilun í einhverju þeirra fellir ekki listann.
+      allPages(`timavera_entries?select=project&date=gte.${dago(7)}`).catch(() => []),
+      all(`invoice_drafts?select=worksite_name&status=eq.draft&work_month=gte.${ym2}`).catch(() => []),
+      all(`field_entries?select=worksite_name,note,author,entry_date&kind=eq.verk&entry_date=gte.${dago(120)}&order=created_at.desc`).catch(() => []),
     ]);
     const amap = {};
     for (const a of aliases) if (a && a.alias) amap[a.alias] = a.canonical_name;
@@ -104,10 +117,18 @@ async function handleGet(event) {
       const e = String(r.employee || '').trim(); if (e) w.employees[e] = (w.employees[e] || 0) + h;
       if (r.date > w.last_date) w.last_date = r.date;
     }
+    const tag = (raw, t, note) => {
+      const p = amap[raw] || raw; if (!p || SKIP.test(p)) return;
+      let w = ws.get(p); if (!w) ws.set(p, w = { name: p, hours: 0, days: new Set(), employees: {}, last_date: '' });
+      (w.tags = w.tags || new Set()).add(t); if (note && !w.note) w.note = note;
+    };
+    for (const r of tvVika) tag(r.project, 'vika');
+    for (const r of drog) tag(r.worksite_name, 'krofur');
+    for (const r of nyVerk) tag(r.worksite_name, 'nytt', r.note);
     const worksites = [...ws.values()].map((w) => ({
-      name: w.name, hours: r2(w.hours), days: w.days.size, last_date: w.last_date,
+      name: w.name, hours: r2(w.hours), days: w.days.size, last_date: w.last_date, tags: [...(w.tags || [])], note: w.note || '',
       employees: Object.entries(w.employees).sort((a, b) => b[1] - a[1]).map(([name, hours]) => ({ name, hours: r2(hours) })),
-    })).sort((a, b) => b.hours - a.hours);
+    })).sort((a, b) => (b.tags.includes('vika') - a.tags.includes('vika')) || (b.hours - a.hours) || a.name.localeCompare(b.name, 'is'));
     // Redder-innkaup per verkstað (sömu línur og Efniskostnaður; undanskildar línur merktar)
     const rd = {};
     for (const inv of redder) {
@@ -164,6 +185,17 @@ async function handlePost(event) {
     if (row.unit_price != null) row.unit_price = Number(row.unit_price) || 0;
     for (const k of ['note', 'item_label', 'worksite_name', 'employee', 'author', 'category', 'unit']) if (row[k] != null) row[k] = String(row[k]).trim().slice(0, 2000);
     row.status = 'new';
+    if (row.kind === 'verk') {
+      if (!row.worksite_name || row.worksite_name.length < 3) return P.json(400, { error: 'Nafn á verki vantar' });
+      row.worksite_name = row.worksite_name.replace(/\s+/g, ' ').slice(0, 120);
+    }
+    if (row.kind === 'kostnadur') {
+      if (!row.worksite_name) return P.json(400, { error: 'Verkstað vantar' });
+      if (!row.item_label || row.item_label.length < 2) return P.json(400, { error: 'Lýsing á efninu vantar' });
+      if (!(row.unit_price > 0) || row.unit_price > MAX_KOSTNADUR) return P.json(400, { error: 'Upphæð vantar eða er óraunhæf' });
+      if (!(row.qty > 0)) row.qty = 1;
+      if (!row.unit) row.unit = 'kaup';
+    }
     if (row.client_id) {
       const ex = await all(`field_entries?select=*&client_id=eq.${encodeURIComponent(String(row.client_id))}`);
       if (ex.length) return P.json(200, { row: ex[0], duplicate: true });

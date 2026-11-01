@@ -103,6 +103,14 @@
   .hero{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}.hero h2{margin:0;font-family:var(--font-display);font-size:22px}.hero .sub{color:var(--muted);font-family:var(--font-mono);font-size:11.5px}
   .rline{display:grid;grid-template-columns:1fr auto auto;gap:8px;padding:5px 0;border-top:1px solid var(--line);font-size:12.5px;align-items:center}.rline:first-child{border-top:0}.rline.ex{opacity:.45;text-decoration:line-through}
   .names{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}.names button{border:1px solid var(--line-2);background:#fff;border-radius:4px;padding:10px;font:inherit;font-size:14px;font-weight:700;text-transform:capitalize;color:var(--ink)}
+  .sec{border-top:1px solid var(--line)}.sec:first-of-type{border-top:0}
+  .sec-h{display:flex;align-items:center;gap:8px;padding:10px 2px;cursor:pointer;font-weight:700;font-size:13.5px}.sec-h .caret{margin-left:auto;transform:rotate(90deg);transition:transform .15s;color:var(--muted)}
+  .sec.collapsed .sec-b{display:none}.sec.collapsed .sec-h .caret{transform:rotate(0)}
+  .ctr{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--line)}.ctr:first-child{border-top:0}
+  .ctr .nm{flex:1;min-width:0;font-size:14px;font-weight:600}.ctr .nm small{display:block;font-weight:400;color:var(--muted);font-family:var(--font-mono);font-size:10.5px;margin-top:1px}
+  .ctr .step{display:flex;align-items:center;gap:6px;flex:none}.ctr .step .key{width:46px;height:44px;padding:0;font-size:22px}.ctr .step .well{width:62px;height:44px;text-align:center;font-family:var(--font-mono);font-weight:700;padding:0 4px}
+  .ctr.on .nm{color:var(--gold-deep)}.ctr.on .well{background:#fbf3d9;border-color:#5a4410}
+  details.skr{margin-top:10px}details.skr summary{cursor:pointer;font-size:12px;color:var(--muted);padding:4px 0}
   @media(min-width:720px){.items{grid-template-columns:1fr 1fr 1fr}.names{grid-template-columns:1fr 1fr 1fr}}
 </style>
   <script src="/js/dags-snid.js?v=20260918b"></script>
@@ -151,13 +159,17 @@
 
   const CAT_MAETING = ['Veikur', 'Fjarverandi', 'Kom of seint', 'Fór snemma', 'Barn veikt', 'Annað'];
   const CAT_BEIDNI = ['Teikningar', 'Efni', 'Verkfæri', 'Aðgangur', 'Spurning', 'Annað'];
+  const SELJENDUR = ['BYKO', 'Húsasmiðjan', 'Múrbúðin', 'Johan Rönning', 'Rubix', 'Annað'];
+  // Verk á einingaverði (efni innifalið í verði per gat / samningi): efniskostnaður er aðeins skráður til yfirlits, ekki á reikning.
+  const EININGAVERK = /landssp[ií]tal|nlsh|heklu\s*reit/i;
+  const VSK = 1.24;
 
   const state = {
     tab: LS.get('bt_tab', 'verk'),
     month: LS.get('bt_month', localYM()),
     author: LS.get('bt_author', ''),
     boot: null, ws: null,
-    dagar: null, maetingEntries: [], beidnir: [],
+    dagar: null, maetingEntries: [], beidnir: [], opt: {}, openSec: {},
     queue: LS.get('bt_queue', []),
     lastOk: null,
   };
@@ -276,17 +288,26 @@
   function renderVerk() {
     const b = state.boot;
     if (state.ws) return renderWsDetail();
-    const list = (b.worksites || []).map(w => {
-      const nE = entriesFor('efni', w.name).length, nP = entriesFor('punktur', w.name).length;
+    // Verk í vinnslu = Tímavera mánaðarins + Tímavera síðustu viku + ósend drög í Kröfu yfirliti + verk sem starfsmenn bættu við;
+    // verk sem bíða í biðröð (netið datt út) bætast við hér svo þau hverfi ekki af listanum.
+    const wsList = (b.worksites || []).slice();
+    for (const p of pendingRows('verk')) if (!wsList.some(w => w.name === p.worksite_name)) wsList.unshift({ name: p.worksite_name, hours: 0, days: 0, employees: [], tags: ['nytt'], note: p.note || '' });
+    const TAGG = { vika: ['🕒 í Tímaveru í vikunni', 'blue'], krofur: ['📑 í Kröfu yfirliti', 'gold'], nytt: ['🆕 nýtt verk', 'green'] };
+    const list = wsList.map(w => {
+      const nE = entriesFor('efni', w.name).length, nP = entriesFor('punktur', w.name).length, nK = entriesFor('kostnadur', w.name).length;
       const rd = (b.redder || {})[w.name];
       return '<div class="wsline" data-ws="' + esc(w.name) + '"><div style="flex:1;min-width:0"><div class="wsname">' + esc(w.name) + '</div>'
+        + ((w.tags || []).length ? '<div class="emps">' + w.tags.filter(t => TAGG[t]).map(t => '<span class="chip ' + TAGG[t][1] + '">' + TAGG[t][0] + '</span>').join('') + '</div>' : '')
+        + (w.note ? '<div class="note" style="color:var(--ink-2);font-size:12.5px;margin-top:2px">' + esc(w.note) + '</div>' : '')
         + '<div class="emps">' + w.employees.slice(0, 6).map(e => '<span class="chip">' + esc(e.name) + ' <span class="num" style="font-weight:500;opacity:.7">' + hf(e.hours) + '</span></span>').join('') + (w.employees.length > 6 ? '<span class="chip">+' + (w.employees.length - 6) + '</span>' : '') + '</div>'
-        + '<div class="cnt"><span><b>' + hf(w.hours) + '</b> klst · ' + w.days + ' dagar</span>' + (rd ? '<span>Redder <b>' + fmt(rd.an_vsk) + '</b> kr</span>' : '') + (nE ? '<span>🧰 <b>' + nE + '</b> efni</span>' : '') + (nP ? '<span>📝 <b>' + nP + '</b> punktar</span>' : '') + '</div></div><span class="arrow">›</span></div>';
+        + '<div class="cnt"><span><b>' + hf(w.hours) + '</b> klst · ' + w.days + ' dagar</span>' + (rd ? '<span>Redder <b>' + fmt(rd.an_vsk) + '</b> kr</span>' : '') + (nE ? '<span>🧰 <b>' + nE + '</b> efni</span>' : '') + (nK ? '<span>💳 <b>' + nK + '</b> sérkaup</span>' : '') + (nP ?'<span>📝 <b>' + nP + '</b> punktar</span>' : '') + '</div></div><span class="arrow">›</span></div>';
     }).join('');
     $('#bt-main').innerHTML = '<div class="monthbar"><button type="button" class="key sm" id="m-prev">‹</button><b>' + esc(monthLabel(state.month)) + '</b><button type="button" class="key sm" id="m-next">›</button></div>'
-      + '<div class="panel"><div class="panel-h" style="cursor:default"><span class="plate">01</span><span class="panel-t">Verkstaðir mánaðarins</span><span class="sum">' + (b.worksites || []).length + ' · úr Tímaveru</span></div>'
-      + (list || '<div class="empty">Engar tímafærslur í ' + esc(monthLabel(state.month)) + '</div>') + '</div>'
-      + '<div class="kicker" style="text-align:center;margin-top:6px">Smelltu á verkstað til að skrá efni af lager og punkta</div>';
+      + '<div class="panel"><div class="panel-h" style="cursor:default"><span class="plate">01</span><span class="panel-t">Verk í vinnslu</span><span class="sum">' + wsList.length + ' verk</span></div>'
+      + (list || '<div class="empty">Engin verk á listanum — bættu við verki hér að neðan</div>') + '</div>'
+      + '<button type="button" class="key wide" id="verk-add">＋ Bæta við verki</button>'
+      + '<div class="kicker" style="text-align:center;margin-top:8px">Smelltu á verk til að skrá efni úr lager, sérkaup og punkta · listinn er verk úr Kröfu yfirliti og verk með tíma í Tímaveru síðustu viku</div>';
+    $('#verk-add').onclick = openVerkSheet;
     $('#m-prev').onclick = () => { state.month = shiftYM(state.month, -1); LS.set('bt_month', state.month); go(); };
     $('#m-next').onclick = () => { state.month = shiftYM(state.month, 1); LS.set('bt_month', state.month); go(); };
     document.querySelectorAll('.wsline').forEach(el => el.addEventListener('click', () => { state.ws = el.dataset.ws; render(); window.scrollTo(0, 0); }));
@@ -297,7 +318,8 @@
     const pend = e.pending ? '<span class="chip warn">⏳ bíður nets</span>' : '';
     let main = '';
     if (e.kind === 'efni') main = '<b>' + esc(e.item_label) + '</b> <span class="num">× ' + hf(e.qty) + '</span> <span style="color:var(--muted)">' + esc(e.unit || '') + '</span>' + (e.note ? '<div class="note">' + esc(e.note) + '</div>' : '');
-    else if (e.kind === 'maeting') main = '<b>' + esc(e.employee || '') + '</b> <span class="chip ' + (/veik/i.test(e.category || '') ? 'red' : 'warn') + '">' + esc(e.category || 'athugasemd') + '</span>' + (e.note ? '<div class="note">' + esc(e.note) + '</div>' : '');
+    else if (e.kind === 'kostnadur') main = '<b>' + esc(e.item_label) + '</b>' + (e.category ? ' <span class="chip">' + esc(e.category) + '</span>' : '') + ' <span class="num">' + fmt((Number(e.qty) || 1) * (Number(e.unit_price) || 0)) + ' kr</span> <span style="color:var(--muted)">án vsk</span>' + (e.note ? '<div class="note">' + esc(e.note) + '</div>' : '');
+    else if (e.kind === 'maeting') main ='<b>' + esc(e.employee || '') + '</b> <span class="chip ' + (/veik/i.test(e.category || '') ? 'red' : 'warn') + '">' + esc(e.category || 'athugasemd') + '</span>' + (e.note ? '<div class="note">' + esc(e.note) + '</div>' : '');
     else if (e.kind === 'beidni') main = '<span class="chip blue">' + esc(e.category || 'beiðni') + '</span>' + (e.worksite_name ? ' <span class="chip">' + esc(e.worksite_name) + '</span>' : '') + '<div class="note">' + esc(e.note || '') + '</div>';
     else main = '<div class="note">' + esc(e.note || '') + '</div>';
     return '<div class="entry' + (e.pending ? ' pending' : '') + '" data-id="' + esc(e.id) + '"><div class="t">' + main + '<div class="meta"><span>' + esc(dmy(e.entry_date)) + (e.created_at ? ' ' + hhmm(e.created_at) : '') + '</span><span>' + esc(e.author || '') + '</span>' + seen + pend + '</div></div>' + (o.noDelete || e.pending ? '' : '<button type="button" class="x" data-del="' + esc(e.id) + '" title="Eyða">×</button>') + '</div>';
@@ -312,23 +334,37 @@
     const b = state.boot, name = state.ws;
     const w = (b.worksites || []).find(x => x.name === name) || { name, hours: 0, employees: [], days: 0 };
     const rd = (b.redder || {})[name] || { an_vsk: 0, lines: [] };
-    const efni = entriesFor('efni', name), punktar = entriesFor('punktur', name);
+    const efni = entriesFor('efni', name), punktar = entriesFor('punktur', name), kostn = entriesFor('kostnadur', name);
     const efniSum = efni.reduce((s, e) => s + (Number(e.qty) || 0) * (Number(e.unit_price) || 0), 0);
+    const kostnSum = kostn.reduce((s, e) => s + (Number(e.qty) || 1) * (Number(e.unit_price) || 0), 0);
     $('#bt-main').innerHTML = '<button type="button" class="back" id="ws-back">‹ Verkstaðir · ' + esc(monthLabel(state.month)) + '</button>'
       + '<div class="hero"><h2>' + esc(name) + '</h2><span class="sub">' + hf(w.hours) + ' klst · ' + w.days + ' dagar · ' + w.employees.length + ' starfsm.</span></div>'
       + '<div class="panel collapsed" id="p-redder"><div class="panel-h"><span class="plate">02</span><span class="panel-t">Redder innkaup</span><span class="sum">' + fmt(rd.an_vsk) + ' kr</span><span class="caret">›</span></div><div class="panel-b">'
       + (rd.lines.length ? rd.lines.map(l => '<div class="rline' + (l.excluded ? ' ex' : '') + '"><span>' + esc(l.label) + '</span><span class="num">× ' + hf(l.qty) + '</span><span class="num" style="color:var(--muted)">' + fmt(l.cost) + ' kr</span></div>').join('') + '<div class="kicker" style="margin-top:8px">án vsk · yfirstrikað = ekki á reikning verkkaupa</div>' : '<div class="empty">Engir Redder-reikningar á þennan verkstað í mánuðinum</div>')
       + '</div></div>'
-      + '<div class="panel"><div class="panel-h" style="cursor:default"><span class="plate">03</span><span class="panel-t">Efni af lager</span><span class="sum">' + (efni.length ? efni.length + ' · ' + fmt(efniSum) + ' kr' : '—') + '</span></div><div class="panel-b">'
-      + '<div id="efni-list">' + (efni.length ? efni.map(e => entryHtml(e)).join('') : '<div class="empty">Ekkert skráð enn — efni sem var notað af lager og á að fara á reikning verkkaupa</div>') + '</div>'
-      + '<button type="button" class="key gold wide" id="efni-add" style="margin-top:10px">＋ Bæta við efni</button></div></div>'
-      + '<div class="panel"><div class="panel-h" style="cursor:default"><span class="plate">04</span><span class="panel-t">Punktar úr verkinu</span><span class="sum">' + (punktar.length || '—') + '</span></div><div class="panel-b">'
+      + '<div class="panel"><div class="panel-h" style="cursor:default"><span class="plate">03</span><span class="panel-t">Efni úr lager</span><span class="sum">' + (efniSum ? fmt(efniSum) + ' kr' : '—') + '</span></div><div class="panel-b">'
+      + '<div class="kicker" style="text-transform:none;letter-spacing:0;font-family:inherit;font-size:12px;margin-bottom:2px">Pikkaðu á ＋ fyrir það sem var notað (eða skrifaðu töluna). Fer á reikning verkkaupa á söluverði Verðskrár.</div>'
+      + efniCounters(name)
+      + '<details class="skr"><summary>Skráningar (' + efni.length + ') — hver skráði og hvenær</summary><div id="efni-list">' + (efni.length ? efni.map(e => entryHtml(e)).join('') : '<div class="empty">Ekkert skráð enn</div>') + '</div></details></div></div>'
+      + '<div class="panel"><div class="panel-h" style="cursor:default"><span class="plate">04</span><span class="panel-t">Sérkaup</span><span class="sum">' + (kostn.length ? kostn.length + ' · ' + fmt(kostnSum) + ' kr' : '—') + '</span></div><div class="panel-b">'
+      + '<div class="kicker" style="text-transform:none;letter-spacing:0;font-family:inherit;font-size:12px">' + (EININGAVERK.test(name) ? 'Efni sem var keypt sérstaklega. Verk á einingaverði — skráð til yfirlits fyrir skrifstofuna og fer ekki á reikning verkkaupa.' : 'Efni sem var keypt sérstaklega og er ekki í listanum hér að ofan. Fer í Efnislista verkstaðarins á kostnaðarverði án vsk — skrifstofan bætir við álagi.') + '</div>'
+      + '<div id="kostn-list">' + (kostn.length ? kostn.map(e => entryHtml(e)).join('') : '<div class="empty">Ekkert skráð enn — skrúfur, plötur o.fl. sem var keypt í verslun</div>') + '</div>'
+      + '<button type="button" class="key gold wide" id="kostn-add" style="margin-top:10px">＋ Bæta við sérkaupum</button></div></div>'
+      + '<div class="panel"><div class="panel-h" style="cursor:default"><span class="plate">05</span><span class="panel-t">Punktar úr verkinu</span><span class="sum">' + (punktar.length || '—') + '</span></div><div class="panel-b">'
       + '<div class="f"><textarea class="well" id="punktur-in" placeholder="Lýsing á því sem var gert, hvar, sérstök atriði, það sem skrifstofan þarf að vita…"></textarea></div>'
       + '<button type="button" class="key wide" id="punktur-save">📝 Vista punkt</button>'
       + '<div id="punktar-list" style="margin-top:10px">' + punktar.map(e => entryHtml(e)).join('') + '</div></div></div>';
     $('#ws-back').onclick = () => { state.ws = null; render(); };
     $('#p-redder .panel-h').onclick = () => $('#p-redder').classList.toggle('collapsed');
-    $('#efni-add').onclick = () => openEfniSheet(name);
+    $('#kostn-add').onclick = () => openKostnadSheet(name);
+    document.querySelectorAll('#bt-main .sec-h').forEach(h => h.addEventListener('click', () => { const s = h.parentElement; s.classList.toggle('collapsed'); state.openSec[s.dataset.sec] = !s.classList.contains('collapsed'); }));
+    document.querySelectorAll('#bt-main .ctr').forEach(row => {
+      const item = efniItem(row.dataset.l); if (!item) return;
+      row.querySelectorAll('[data-d]').forEach(b => b.addEventListener('click', () => adjustEfni(name, item, Number(b.dataset.d))));
+      const inp = row.querySelector('[data-in]');
+      inp.addEventListener('focus', () => inp.select());
+      inp.addEventListener('change', () => { const v = Number(String(inp.value).replace(',', '.')); if (!Number.isFinite(v) || v < 0) { renderWsDetail(); return; } adjustEfni(name, item, r2(v - efniQty(name, item.label))); });
+    });
     $('#punktur-save').onclick = async () => {
       const ta = $('#punktur-in'); const note = ta.value.trim(); if (!note) { toast('Skrifaðu punktinn fyrst'); return; }
       $('#punktur-save').disabled = true;
@@ -338,29 +374,115 @@
     };
     wireDeletes($('#bt-main'), async () => { await loadBoot(true); render(); });
   }
-  function openEfniSheet(ws) {
-    const groups = (state.boot && state.boot.materials) || window.GR_MATERIALS || [];
-    let sec = groups[0] ? groups[0].section : '', item = null, qty = 1;
-    const itemsHtml = () => '<div class="items">' + ((groups.find(g => g.section === sec) || { items: [] }).items.map(it => '<button type="button" data-l="' + esc(it.label) + '"' + (item && item.label === it.label ? ' class="on"' : '') + '>' + esc(it.label) + '<small>' + fmt(it.price) + ' kr/' + esc(it.unit) + '</small></button>').join('')) + '</div>';
-    openSheet('<h2>Efni af lager</h2><div class="sub">' + esc(ws) + ' · ' + esc(monthLabel(state.month)) + ' · fer á reikning verkkaupa á söluverði Verðskrár</div>'
-      + chipsHtml('sec', groups.map(g => g.section), sec) + '<div id="efni-items">' + itemsHtml() + '</div>'
-      + '<div class="f"><label>Magn</label><div class="qty"><button type="button" class="key" id="q-minus">−</button><input class="well" id="q-in" inputmode="decimal" value="1"><button type="button" class="key" id="q-plus">＋</button><span class="u" id="q-unit"></span></div></div>'
-      + '<div class="f"><label>Athugasemd (valfrjálst)</label><input class="well" id="efni-note" placeholder="t.d. 3. hæð, gegnumtök í stigahúsi"></div>'
-      + '<div class="actions"><button type="button" class="key" id="efni-cancel">Hætta við</button><button type="button" class="key gold" id="efni-ok">💾 Vista strax</button></div>', sh => {
-        const pickItem = () => { sh.querySelectorAll('#efni-items button').forEach(b => b.addEventListener('click', () => { item = (groups.find(g => g.section === sec) || { items: [] }).items.find(x => x.label === b.dataset.l) || null; sh.querySelectorAll('#efni-items button').forEach(x => x.classList.toggle('on', x === b)); $('#q-unit', sh).textContent = item ? item.unit : ''; })); };
-        pickItem();
-        wireChips(sh, 'sec', v => { sec = v; item = null; $('#efni-items', sh).innerHTML = itemsHtml(); pickItem(); $('#q-unit', sh).textContent = ''; });
-        const qin = $('#q-in', sh);
-        $('#q-minus', sh).onclick = () => { qty = Math.max(0.5, (Number(String(qin.value).replace(',', '.')) || 1) - 1); qin.value = qty; };
-        $('#q-plus', sh).onclick = () => { qty = (Number(String(qin.value).replace(',', '.')) || 0) + 1; qin.value = qty; };
-        $('#efni-cancel', sh).onclick = closeSheet;
-        $('#efni-ok', sh).onclick = async () => {
-          if (!item) { toast('Veldu efni fyrst'); return; }
-          const q = Number(String(qin.value).replace(',', '.')) || 0; if (!(q > 0)) { toast('Magn vantar'); return; }
-          $('#efni-ok', sh).disabled = true;
-          const row = await save({ kind: 'efni', worksite_name: ws, work_month: state.month, entry_date: today(), item_label: item.label, qty: q, unit: item.unit, unit_price: item.price, note: $('#efni-note', sh).value.trim() });
+  // Bæta við verki: verkstjóri sem er fyrstur á staðinn að taka út verkið (ekki enn í Tímaveru/Kröfu yfirliti) skráir það hér.
+  const normWs = s => String(s || '').toLowerCase().replace(/[^a-z0-9áðéíóúýþæö]/g, '');
+  function openVerkSheet() {
+    openSheet('<h2>Bæta við verki</h2><div class="sub">Ertu fyrstur á staðinn að taka út verkið? Þá birtist það hér hjá öllum og skrifstofan sér það.</div>'
+      + '<div class="f"><label>Heiti verks / staður</label><input class="well" id="v-name" placeholder="t.d. Suðurlandsbraut 14 — 2. hæð" autocomplete="off"></div>'
+      + '<div class="f"><label>Athugasemd (valfrjálst)</label><input class="well" id="v-note" placeholder="t.d. verkkaupi, tengiliður, hvað á að gera" autocomplete="off"></div>'
+      + '<div class="actions"><button type="button" class="key" id="v-cancel">Hætta við</button><button type="button" class="key gold" id="v-ok">💾 Bæta við</button></div>', sh => {
+        $('#v-cancel', sh).onclick = closeSheet;
+        $('#v-ok', sh).onclick = async () => {
+          const name = $('#v-name', sh).value.replace(/\s+/g, ' ').trim(), note = $('#v-note', sh).value.trim();
+          if (name.length < 3) { toast('Skrifaðu heiti á verkinu'); return; }
+          const dup = ((state.boot && state.boot.worksites) || []).find(w => normWs(w.name) === normWs(name));
+          if (dup) { closeSheet(); toast('Verkið er þegar á listanum'); state.ws = dup.name; render(); window.scrollTo(0, 0); return; }
+          $('#v-ok', sh).disabled = true;
+          const row = await save({ kind: 'verk', worksite_name: name, work_month: state.month, entry_date: today(), note });
           closeSheet();
-          if (row) { if (!row.pending) state.boot.entries.unshift(row); toast(row.pending ? 'Í biðröð — sendist sjálfkrafa' : '✓ ' + item.label + ' × ' + hf(q) + ' vistað'); }
+          if (!row) { render(); return; }
+          if (!row.pending) await loadBoot(true);
+          toast(row.pending ? 'Í biðröð — sendist sjálfkrafa' : '✓ Verki bætt við');
+          state.ws = name; render(); window.scrollTo(0, 0);
+        };
+      });
+  }
+
+  // ── Efni úr lager: ＋/− teljarar per atriði Verðskrár ────────────────────────
+  // Talan sem sést er samtala mánaðarins á verkstaðnum (allir starfsmenn). ＋ bætir við eigin færslu dagsins (ein röð per
+  // atriði/dag/starfsmann, ekki röð á hvern smell); − tekur af eigin færslu dagsins og svo þeirri nýjustu. Sýnileg tala
+  // breytist STRAX (state.opt) og vistast í réttri röð í bakgrunni; netið dettur út → ＋ fer í biðröð eins og áður.
+  const r2 = n => Math.round(n * 100) / 100;
+  const efniGroups = () => (state.boot && state.boot.materials) || window.GR_MATERIALS || [];
+  const efniItem = label => { for (const g of efniGroups()) { const it = g.items.find(x => x.label === label); if (it) return it; } return null; };
+  const efniQty = (ws, label) => r2(entriesFor('efni', ws).filter(e => e.item_label === label).reduce((s, e) => s + (Number(e.qty) || 0), 0) + (state.opt[ws + '|' + label] || 0));
+  function efniCounters(ws) {
+    const groups = efniGroups();
+    return groups.map((g, gi) => {
+      const marked = g.items.filter(it => efniQty(ws, it.label) > 0).length;
+      const open = state.openSec[g.section] != null ? state.openSec[g.section] : (gi === 0 || marked > 0);
+      const rows = g.items.map(it => { const n = efniQty(ws, it.label);
+        return '<div class="ctr' + (n > 0 ? ' on' : '') + '" data-l="' + esc(it.label) + '"><div class="nm">' + esc(it.label) + '<small>' + fmt(it.price) + ' kr/' + esc(it.unit) + '</small></div>'
+          + '<div class="step"><button type="button" class="key" data-d="-1" aria-label="Draga frá">−</button><input class="well" inputmode="decimal" data-in value="' + n + '" aria-label="Magn"><button type="button" class="key" data-d="1" aria-label="Bæta við">＋</button></div></div>'; }).join('');
+      return '<div class="sec' + (open ? '' : ' collapsed') + '" data-sec="' + esc(g.section) + '"><div class="sec-h"><span>' + esc(g.section) + '</span>' + (marked ? '<span class="chip gold">' + marked + ' skráð</span>' : '') + '<span class="caret">›</span></div><div class="sec-b">' + rows + '</div></div>';
+    }).join('');
+  }
+  const efniChain = {};
+  function adjustEfni(ws, item, delta) {
+    if (!state.author) { askWho(); return; }
+    const key = ws + '|' + item.label;
+    if (delta < 0) delta = Math.max(delta, -efniQty(ws, item.label));   // aldrei undir 0
+    if (!delta) { renderWsDetail(); return; }
+    state.opt[key] = r2((state.opt[key] || 0) + delta);
+    renderWsDetail();
+    efniChain[key] = (efniChain[key] || Promise.resolve()).then(() => applyEfni(ws, item, delta)).catch(e => toast('✗ ' + (e && e.message || 'villa')))
+      .then(() => { state.opt[key] = r2((state.opt[key] || 0) - delta); if (state.ws === ws) renderWsDetail(); });
+  }
+  async function applyEfni(ws, item, delta) {
+    const mineToday = e => e.author === state.author && e.entry_date === today();
+    const saved = (state.boot.entries || []).filter(e => e.kind === 'efni' && e.worksite_name === ws && e.item_label === item.label);
+    if (delta > 0) {
+      const mine = saved.find(mineToday);
+      if (mine) {
+        const q = r2((Number(mine.qty) || 0) + delta);
+        try { const j = await POST({ action: 'update', id: mine.id, qty: q }); mine.qty = j.row ? Number(j.row.qty) : q; return; }
+        catch (e) { if (e.status === 400 || e.status === 401) { toast('✗ ' + e.message); return; } /* net datt út → ný færsla í biðröð hér að neðan */ }
+      }
+      const row = await save({ kind: 'efni', worksite_name: ws, work_month: state.month, entry_date: today(), item_label: item.label, qty: delta, unit: item.unit, unit_price: item.price });
+      if (row && !row.pending) state.boot.entries.unshift(row);
+      return;
+    }
+    let left = -delta;
+    for (const e of saved.slice().sort((a, b) => (mineToday(b) ? 1 : 0) - (mineToday(a) ? 1 : 0))) {   // eigin færsla dagsins fyrst, svo nýjasta (listinn er nýjast fyrst)
+      if (left <= 0.001) break;
+      const take = Math.min(left, Number(e.qty) || 0), nq = r2((Number(e.qty) || 0) - take);
+      try {
+        if (nq <= 0.001) { await POST({ action: 'delete', id: e.id }); state.boot.entries = state.boot.entries.filter(x => x !== e); }
+        else { const j = await POST({ action: 'update', id: e.id, qty: nq }); e.qty = j.row ? Number(j.row.qty) : nq; }
+        left = r2(left - take);
+      } catch (err) { toast(err.status ? '✗ ' + err.message : 'Net vantar — dragðu frá aftur þegar netið kemur'); return; }
+    }
+    if (left > 0.001) toast('Þetta er enn í biðröð — dragðu frá þegar netið er komið');
+  }
+
+  // Efniskostnaður: verkstjóri skráir hvað hann keypti, hvar og upphæð á kvittun. Vistað ÁN vsk (kvittun með vsk ÷ 1,24) svo
+  // upphæðin passi við Efnislistann; kvittunarupphæðin er geymd í athugasemd.
+  function parseAmount(v) { const s = String(v == null ? '' : v).trim().replace(/\s/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.'); const n = Number(s); return s !== '' && Number.isFinite(n) && n > 0 ? n : 0; }
+  function openKostnadSheet(ws) {
+    let selj = '', medVsk = true;
+    openSheet('<h2>Sérkaup</h2><div class="sub">' + esc(ws) + ' · ' + esc(monthLabel(state.month)) + (EININGAVERK.test(ws) ? ' · verk á einingaverði — aðeins til yfirlits' : ' · fer í Efnislistann á kostnaðarverði') + '</div>'
+      + '<div class="f"><label>Hvað var keypt?</label><input class="well" id="k-what" placeholder="t.d. skrúfur og múrfestingar, 3. hæð" autocomplete="off"></div>'
+      + '<div class="f"><label>Hvar?</label>' + chipsHtml('selj', SELJENDUR, '') + '</div>'
+      + '<div class="f"><label>Upphæð á kvittun (kr)</label><input class="well" id="k-amt" inputmode="decimal" placeholder="0" autocomplete="off"></div>'
+      + '<div class="f"><label>Upphæðin er</label>' + chipsHtml('vsk', ['Með vsk', 'Án vsk'], 'Með vsk') + '<div class="sub" id="k-prev" style="margin:4px 0 0"></div></div>'
+      + '<div class="f"><label>Athugasemd (valfrjálst)</label><input class="well" id="k-note" placeholder="t.d. kvittunarnúmer" autocomplete="off"></div>'
+      + '<div class="actions"><button type="button" class="key" id="k-cancel">Hætta við</button><button type="button" class="key gold" id="k-ok">💾 Vista strax</button></div>', sh => {
+        const amtEl = $('#k-amt', sh);
+        const anVsk = () => { const g = parseAmount(amtEl.value); return g ? Math.round(medVsk ? g / VSK : g) : 0; };
+        const prev = () => { const g = parseAmount(amtEl.value); $('#k-prev', sh).textContent = g ? ('Skráist ' + fmt(anVsk()) + ' kr án vsk' + (medVsk ? ' (kvittun ' + fmt(g) + ' kr með 24% vsk)' : '')) : ''; };
+        wireChips(sh, 'selj', v => { selj = v; });
+        wireChips(sh, 'vsk', v => { medVsk = v === 'Með vsk'; prev(); });
+        amtEl.addEventListener('input', prev);
+        $('#k-cancel', sh).onclick = closeSheet;
+        $('#k-ok', sh).onclick = async () => {
+          const what = $('#k-what', sh).value.trim(), g = parseAmount(amtEl.value), net = anVsk();
+          if (what.length < 2) { toast('Skrifaðu hvað var keypt'); return; }
+          if (!g || !net) { toast('Upphæð vantar'); return; }
+          const note = [$('#k-note', sh).value.trim(), medVsk ? 'kvittun m. vsk ' + fmt(g) + ' kr' : ''].filter(Boolean).join(' · ');
+          $('#k-ok', sh).disabled = true;
+          const row = await save({ kind: 'kostnadur', worksite_name: ws, work_month: state.month, entry_date: today(), item_label: what, qty: 1, unit: 'kaup', unit_price: net, category: selj, note });
+          closeSheet();
+          if (row) { if (!row.pending) state.boot.entries.unshift(row); toast(row.pending ? 'Í biðröð — sendist sjálfkrafa' : '✓ ' + what + ' · ' + fmt(net) + ' kr án vsk vistað'); }
           render();
         };
       });

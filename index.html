@@ -12225,7 +12225,7 @@ async function renderGerdReikninga(t){
         if(base && hasOv){ const rest = (Number(r.an_vsk)||0) - linesAn; if(rest > 0.5) bucket(base).an_vsk += rest; }
       }
       // Frá verkstað (Brunaþéttingar-appið): efni af lager + punktar per verkstað|mánuður → window.__FIELD
-      try{ const fd = fdR && fdR.ok ? await fdR.json() : {rows:[]}; const F = {}; for(const e of (fd.rows||[])){ if(!e.worksite_name || !e.work_month) continue; const k = e.worksite_name+'|'+e.work_month; (F[k] = F[k] || {efni:[], punktar:[]}); if(e.kind==='efni') F[k].efni.push(e); else if(e.kind==='punktur') F[k].punktar.push(e); } window.__FIELD = F; }catch(_){ window.__FIELD = window.__FIELD || {}; }
+      try{ const fd = fdR && fdR.ok ? await fdR.json() : {rows:[]}; const F = {}; for(const e of (fd.rows||[])){ if(!e.worksite_name || !e.work_month) continue; const k = e.worksite_name+'|'+e.work_month; (F[k] = F[k] || {efni:[], punktar:[], kostn:[]}); if(e.kind==='efni') F[k].efni.push(e); else if(e.kind==='punktur') F[k].punktar.push(e); else if(e.kind==='kostnadur') F[k].kostn.push(e); } window.__FIELD = F; }catch(_){ window.__FIELD = window.__FIELD || {}; }
       // Persist a snapshot so the next open paints instantly (stale-while-revalidate).
       try{ localStorage.setItem('gr_snapshot_v1', JSON.stringify({WS,PG,DRAFTS,REDDER,NLSH_MONTHLY,ts:Date.now()})); }catch(_){}
       renderList();
@@ -12565,14 +12565,17 @@ async function renderGerdReikninga(t){
       // Efni af lager sem starfsmenn skráðu í Brunaþéttingar-appinu — á söluverði Verðskrár, eins og Redder
       const fld0 = (window.__FIELD||{})[`${name}|${month}`];
       if(fld0 && fld0.efni.length){ for(const e of fld0.efni){ const ex = mats.find(m=>m.label===e.item_label); if(ex) ex.qty += Number(e.qty)||0; else mats.push({label:e.item_label, price:Number(e.unit_price)||0, qty:Number(e.qty)||0, cost:0}); } }
+      // Efniskostnaður verkstjóra (keypt efni) — á kostnaðarverði án vsk; álag bætir skrifstofan við (cost = innkaupsverð ber við söluverði)
+      if(fld0 && (fld0.kostn||[]).length){ for(const e of fld0.kostn){ const p = Number(e.unit_price)||0; mats.push({label:e.item_label + (e.category ? ' · ' + e.category : ''), price:p, qty:Number(e.qty)||1, cost:p}); } }
     }
     const redderTotal = (REDDER[`${name}|${month}`]||{}).an_vsk || 0;
     // 🧰 Frá verkstað — kassi í 03 með því sem starfsmenn skráðu í appinu (efni + punktar)
-    const fieldBoxHtml = () => { const F = (window.__FIELD||{})[name+'|'+month]; if(!F || (!F.efni.length && !F.punktar.length)) return ''; const dm = d => String(d||'').slice(8,10)+'.'+String(d||'').slice(5,7);
-      return '<div class="gb-field" id="gr-field-box"><div class="k">🧰 Frá verkstað <span class="n">' + F.efni.length + ' efni · ' + F.punktar.length + ' punktar</span></div>'
+    const fieldBoxHtml = () => { const F = (window.__FIELD||{})[name+'|'+month]; const K0 = F ? (F.kostn||[]) : []; if(!F || (!F.efni.length && !F.punktar.length && !K0.length)) return ''; const dm = d => String(d||'').slice(8,10)+'.'+String(d||'').slice(5,7);
+      return '<div class="gb-field" id="gr-field-box"><div class="k">🧰 Frá verkstað <span class="n">' + F.efni.length + ' efni · ' + K0.length + ' sérkaup · ' +F.punktar.length + ' punktar</span></div>'
         + F.efni.map(e => '<div class="fl">' + escapeHtml(e.item_label||'') + ' <b>× ' + escapeHtml(String(e.qty||0)) + ' ' + escapeHtml(e.unit||'') + '</b><small>' + escapeHtml(e.author||'') + ' · ' + dm(e.entry_date) + (e.note ? ' · ' + escapeHtml(e.note) : '') + '</small></div>').join('')
+        + K0.map(e => '<div class="fl">💳 ' + escapeHtml(e.item_label||'') + (e.category ? ' · ' + escapeHtml(e.category) : '') + ' <b>' + fmt((Number(e.qty)||1)*(Number(e.unit_price)||0)) + ' kr án vsk</b><small>' + escapeHtml(e.author||'') + ' · ' + dm(e.entry_date) + (e.note ? ' · ' + escapeHtml(e.note) : '') + '</small></div>').join('')
         + F.punktar.map(p => '<div class="fl p">📝 ' + escapeHtml(p.note||'') + '<small>' + escapeHtml(p.author||'') + ' · ' + dm(p.entry_date) + '</small></div>').join('')
-        + '<div class="fb">' + (F.efni.length ? '<button type="button" class="gb-field-btn" id="gr-field-add">➕ Setja efnið í listann</button>' : '') + (F.punktar.length ? '<button type="button" class="gb-field-btn ivory" id="gr-field-notes">📝 Punktar í athugasemd</button>' : '') + '<span class="h">efnið fór sjálfkrafa í fyrstu forútfyllingu · úr <a href="/brunathettingar" target="_blank" rel="noopener">Brunaþéttingar-appinu</a></span></div></div>'; };
+        + '<div class="fb">' + (F.efni.length ? '<button type="button" class="gb-field-btn" id="gr-field-add">➕ Setja efnið í listann</button>' : '') + (K0.length ? '<button type="button" class="gb-field-btn" id="gr-field-kostn" title="Sérkaup á kostnaðarverði án vsk — bættu við álagi í verðinu">➕ Setja sérkaup í listann</button>' : '') +(F.punktar.length ? '<button type="button" class="gb-field-btn ivory" id="gr-field-notes">📝 Punktar í athugasemd</button>' : '') + '<span class="h">efnið fór sjálfkrafa í fyrstu forútfyllingu · úr <a href="/brunathettingar" target="_blank" rel="noopener">Brunaþéttingar-appinu</a></span></div></div>'; };
 
     // Yfirferðar-hamur: opnað gegnum yfirferðar-hlekkinn (review=1) EÐA drögin
     // eru flögguð til yfirferðar. Snapshot af vistuðu drögunum tekið við opnun
@@ -13337,7 +13340,9 @@ async function renderGerdReikninga(t){
       if(ntGrow && ntTa){ ntGrow.onclick = () => { ntTa.classList.toggle('big'); ntFit(); if(ntTa.classList.contains('big')) ntTa.focus(); }; ntTa.addEventListener('input', ntFit); setTimeout(ntFit, 80); }
       // 🧰 Frá verkstað: efni í listann (leggst við sömu línu ef hún er til) / punktar í innri athugasemd
       const fAdd = K('gr-field-add'); if(fAdd) fAdd.onclick = () => { const F = (window.__FIELD||{})[name+'|'+month]; if(!F) return; let n = 0; for(const e of F.efni){ const rows = [...bg.querySelectorAll('#gr-mats .gr-mat-line')]; const ex = rows.find(r => ((r.querySelector('.m-label')||{}).value||'') === e.item_label); if(ex){ const q = ex.querySelector('.m-qty'); q.value = (Number(q.value)||0) + (Number(e.qty)||0); } else { addMat({label:e.item_label, price:Number(e.unit_price)||0, qty:Number(e.qty)||0, cost:0}); } n++; } draw(); fAdd.textContent = '✓ ' + n + ' línur í listanum'; fAdd.disabled = true; };
-      const fNotes = K('gr-field-notes'); if(fNotes) fNotes.onclick = () => { const F = (window.__FIELD||{})[name+'|'+month]; if(!F) return; const ta = K('gr-notes'); if(!ta) return; const dm = d => String(d||'').slice(8,10)+'.'+String(d||'').slice(5,7); const add = F.punktar.map(p => '• ' + (p.note||'') + ' (' + (p.author||'') + ' ' + dm(p.entry_date) + ')').join('\n'); ta.value = (ta.value.trim() ? ta.value.trim() + '\n' : '') + add; ta.dispatchEvent(new Event('input')); fNotes.textContent = '✓ í athugasemd'; fNotes.disabled = true; };
+      // 💳 Efniskostnaður verkstjóra: lína með sama texta og sama verði er ekki sett aftur (engin tvítalning við endurtekinn smell)
+      const fKostn = K('gr-field-kostn'); if(fKostn) fKostn.onclick = () => { const F = (window.__FIELD||{})[name+'|'+month]; if(!F) return; let n = 0; const rows = () => [...bg.querySelectorAll('#gr-mats .gr-mat-line')]; for(const e of (F.kostn||[])){ const label = e.item_label + (e.category ? ' · ' + e.category : ''), p = Number(e.unit_price)||0; if(rows().some(r => ((r.querySelector('.m-label')||{}).value||'') === label && Number((r.querySelector('.m-price')||{}).value) === p)) continue; addMat({label, price:p, qty:Number(e.qty)||1, cost:p}); n++; } draw(); fKostn.textContent = n ? '✓ ' + n + ' línur í listanum' : '✓ allt komið í listann'; fKostn.disabled = true; };
+      const fNotes = K('gr-field-notes'); if(fNotes) fNotes.onclick =() => { const F = (window.__FIELD||{})[name+'|'+month]; if(!F) return; const ta = K('gr-notes'); if(!ta) return; const dm = d => String(d||'').slice(8,10)+'.'+String(d||'').slice(5,7); const add = F.punktar.map(p => '• ' + (p.note||'') + ' (' + (p.author||'') + ' ' + dm(p.entry_date) + ')').join('\n'); ta.value = (ta.value.trim() ? ta.value.trim() + '\n' : '') + add; ta.dispatchEvent(new Event('input')); fNotes.textContent = '✓ í athugasemd'; fNotes.disabled = true; };
       ntLoad();
       tvLoad();
     })();
@@ -16899,12 +16904,12 @@ async function renderVerkstadapostur(t){
       const r = await fetch('/api/field-app?op=entries&month='+month, {cache:'no-store'});
       const d = await r.json(); if(!r.ok || d.error) throw new Error(d.error||('HTTP '+r.status));
       const rows = d.rows||[], shares = d.shares||[];
-      const efni = rows.filter(e=>e.kind==='efni'), punktar = rows.filter(e=>e.kind==='punktur'), maet = rows.filter(e=>e.kind==='maeting'), beid = rows.filter(e=>e.kind==='beidni');
+      const efni = rows.filter(e=>e.kind==='efni'), punktar = rows.filter(e=>e.kind==='punktur'), maet = rows.filter(e=>e.kind==='maeting'), beid = rows.filter(e=>e.kind==='beidni'), kostn = rows.filter(e=>e.kind==='kostnadur'), nyverk = rows.filter(e=>e.kind==='verk');
       const byWs = list => { const m = {}; for(const e of list){ const k = e.worksite_name||'—'; (m[k] = m[k]||[]).push(e); } return m; };
       const efniWs = byWs(efni), punktWs = byWs(punktar);
       const wsNames = [...new Set([...Object.keys(efniWs), ...Object.keys(punktWs)])].sort((a,b)=>a.localeCompare(b,'is'));
       const nNew = rows.filter(e=>(e.status||'new')==='new').length;
-      let h = '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">'+[['🧰 Efni af lager',efni.length],['📝 Punktar',punktar.length],['💬 Mæting',maet.length],['📨 Beiðnir',beid.length],['🆕 Ólesið',nNew]].map(([l,n])=>'<div style="flex:1;min-width:120px;'+CARD+';margin:0;padding:10px 12px"><div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)">'+l+'</div><div style="font-family:var(--font-mono);font-size:20px;font-weight:600;color:var(--ink)">'+n+'</div></div>').join('')+'</div>';
+      let h = '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">'+[['🧰 Efni af lager',efni.length],['💳 Sérkaup',kostn.length],['🆕 Ný verk',nyverk.length],['📝 Punktar',punktar.length],['💬 Mæting',maet.length],['📨 Beiðnir',beid.length],['🆕 Ólesið',nNew]].map(([l,n])=>'<div style="flex:1;min-width:120px;'+CARD+';margin:0;padding:10px 12px"><div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)">'+l+'</div><div style="font-family:var(--font-mono);font-size:20px;font-weight:600;color:var(--ink)">'+n+'</div></div>').join('')+'</div>';
       // 03 Efni + punktar per verkstað
       h += '<div style="'+CARD+'"><div style="'+HEAD+'"><span style="'+PLATE+'">01</span><span style="'+TITLE+'">Efni af lager & punktar</span><span style="margin-left:auto;font-size:12px;color:var(--muted)">per verkstað · fer sjálfkrafa í Efnislistann</span></div>';
       if(!wsNames.length) h += '<div style="padding:22px;text-align:center;color:var(--muted-2);font-style:italic">Ekkert skráð í '+esc(ml(month))+'</div>';
@@ -16915,6 +16920,23 @@ async function renderVerkstadapostur(t){
         for(const e of ef) h += entryRow(e, '<b>'+esc(e.item_label)+'</b> <span class="ky-num">× '+hf(e.qty)+' '+esc(e.unit||'')+'</span> <span style="color:var(--muted)">· '+fmt(e.unit_price)+' kr</span>'+(e.note?'<div style="color:var(--ink-2);white-space:pre-wrap">'+esc(e.note)+'</div>':''));
         for(const e of pk) h += entryRow(e, '📝 <span style="white-space:pre-wrap">'+esc(e.note||'')+'</span>');
       }
+      h += '</div>';
+      // 💳 Efniskostnaður verkstjóra (keypt efni) per verkstað. Venjuleg verk → Efnislisti á kostnaðarverði án vsk;
+      // verk á einingaverði (Landsspítali, Heklureitur) → aðeins „létt" yfirlit, fer ekki á reikning (Agnar 01.11.2026).
+      const kostnWs = byWs(kostn), kostnNames = Object.keys(kostnWs).sort((a,b)=>a.localeCompare(b,'is'));
+      const EINING = /landssp[ií]tal|nlsh|heklu\s*reit/i;
+      const kSum = list => list.reduce((a,e)=>a+(Number(e.qty)||1)*(Number(e.unit_price)||0),0);
+      h += '<div style="'+CARD+'"><div style="'+HEAD+'"><span style="'+PLATE+'">💳</span><span style="'+TITLE+'">Sérkaup verka · keypt efni</span><span style="margin-left:auto;font-size:12px;color:var(--muted)">samtals '+fmt(kSum(kostn))+' kr án vsk</span></div>';
+      if(!kostnNames.length) h += '<div style="padding:22px;text-align:center;color:var(--muted-2);font-style:italic">Engin sérkaup skráð í '+esc(ml(month))+' — verkstjórar bæta þeim við í appinu undir verkinu</div>';
+      for(const ws of kostnNames){
+        const ks = kostnWs[ws], ein = EINING.test(ws);
+        h += '<div style="padding:10px 14px 4px;border-top:1px solid var(--line-2);display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--bg)"><b style="font-size:14px">'+esc(ws)+'</b><span style="font-family:var(--font-mono);font-size:11.5px;color:var(--muted)">'+ks.length+' færslur · '+fmt(kSum(ks))+' kr án vsk</span>'+chip(ein ? 'einingaverk — aðeins til yfirlits' : 'fer í Efnislistann', ein ? 'blue' : 'green')+(ein ? '' : '<button type="button" data-ws="'+esc(ws)+'" class="fv-open" style="'+KEY+';margin-left:auto">📄 Opna Efnislista</button>')+'</div>';
+        for(const e of ks) h += entryRow(e, '<b>'+esc(e.item_label)+'</b>'+(e.category?' '+chip(e.category,'blue'):'')+' <span class="ky-num">'+fmt((Number(e.qty)||1)*(Number(e.unit_price)||0))+' kr</span> <span style="color:var(--muted)">án vsk</span>'+(e.note?'<div style="color:var(--ink-2);white-space:pre-wrap">'+esc(e.note)+'</div>':''));
+      }
+      h += '</div>';
+      // 🆕 Verk sem verkstjórar bættu við í appinu (fyrstur á staðinn að taka út verkið) — skrifstofan skráir þau í Tímaveru / Kröfu yfirlit
+      h += '<div style="'+CARD+'"><div style="'+HEAD+'"><span style="'+PLATE+'">🆕</span><span style="'+TITLE+'">Ný verk frá verkstað</span><span style="margin-left:auto;font-size:12px;color:var(--muted)">skráðu verkið í Tímaveru / Kröfu yfirlit og merktu svo ✓</span></div>';
+      h += nyverk.length ? nyverk.map(e => entryRow(e, '<b>'+esc(e.worksite_name||'')+'</b>'+(e.note?'<div style="color:var(--ink-2);white-space:pre-wrap">'+esc(e.note)+'</div>':''))).join('') : '<div style="padding:18px;text-align:center;color:var(--muted-2);font-style:italic">Engin ný verk</div>';
       h += '</div>';
       // 02 Mæting
       h += '<div style="'+CARD+'"><div style="'+HEAD+'"><span style="'+PLATE+'">02</span><span style="'+TITLE+'">Mætingar-athugasemdir</span><span style="margin-left:auto;font-size:12px;color:var(--muted)">birtast líka í Mæting · verkstaðir</span></div>';
