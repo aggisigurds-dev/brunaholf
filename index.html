@@ -13,6 +13,10 @@
 <style>html.hub-gate-pending body{visibility:hidden}</style>
 <script>
 (function(){try{
+  /* 01.11.2026 (Agnar: „sleppa innskráningunni inni í appinu"): í ramma í Slökkvitækis-appinu (?embed=1) er hliðið sleppt, því innskráningarkakan
+     (SameSite=Lax) kemst ekki í gegnum ramma og innskráning þar gat aldrei tekist. Beint í vafra er hliðið óbreytt. Til baka: fjarlægja næstu tvær línur. */
+  var embedded=false; try{ embedded = window.self!==window.top && /[?&]embed=1(&|$)/.test(location.search); }catch(e){}
+  if(embedded) return;
   var d=document.documentElement; d.classList.add('hub-gate-pending');
   var done=false, open=function(){ if(done)return; done=true; d.classList.remove('hub-gate-pending'); };
   var t=setTimeout(open,3500);
