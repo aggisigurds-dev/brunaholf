@@ -16876,6 +16876,10 @@ async function renderVerkstadapostur(t){
   const hhmm = v => { const d = new Date(v); return isNaN(d) ? '' : pad(d.getHours())+':'+pad(d.getMinutes()); };
   const hf = n => (Math.round((Number(n)||0)*100)/100).toLocaleString('is-IS');
   const fmt = n => Math.round(Number(n)||0).toLocaleString('is-IS');
+  const dt = v => { const d = new Date(v); return isNaN(d) ? '' : pad(d.getDate())+'/'+pad(d.getMonth()+1)+' '+pad(d.getHours())+':'+pad(d.getMinutes()); };
+  // Samanfelld skráningarlína per verk: hver skráði, hvenær (síðasta breyting) og hversu margar eru nýjar. Færslur eru ein röð per atriði/dag/starfsmann.
+  const fold = (list, inner) => { const last = list.slice().sort((a,b)=>String(b.updated_at||b.created_at).localeCompare(String(a.updated_at||a.created_at)))[0]; const nNew = list.filter(e=>(e.status||'new')==='new').length;
+    return '<details style="border-top:1px solid var(--line)"><summary style="cursor:pointer;padding:6px 14px;font-size:12px;color:var(--muted)">'+list.length+(list.length===1?' skráning':' skráningar')+' · síðast '+esc(last.author||'')+' '+esc(dt(last.updated_at||last.created_at))+(nNew?' · <b style="color:var(--gold-deep)">🆕 '+nNew+' ný</b>':'')+'</summary>'+inner+'</details>'; };
   const CARD = 'background:var(--card);border:1px solid var(--line-2);border-radius:6px;box-shadow:var(--panel-shadow,0 1px 2px rgba(22,21,19,.12));margin-bottom:12px;overflow:hidden';
   const HEAD = 'display:flex;align-items:center;gap:10px;padding:10px 14px;background:linear-gradient(180deg,#faf8f3,#ece7dc);border-bottom:1px solid var(--line-2)';
   const PLATE = 'display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:20px;padding:0 6px;border-radius:2px;border:1px solid #5a4410;background:var(--gold-face,linear-gradient(180deg,#f3dc95,#b8892e));color:#2e2004;font-family:var(--font-mono);font-size:10px;font-weight:700';
@@ -16894,7 +16898,7 @@ async function renderVerkstadapostur(t){
   const entryRow = (e, main) => {
     const st = e.status || 'new';
     return '<div data-id="'+e.id+'" style="display:flex;gap:10px;align-items:flex-start;padding:8px 14px;border-top:1px solid var(--line);'+(st==='done'?'opacity:.55':'')+'">'
-      + '<div style="flex:1;min-width:0">'+main+'<div style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted);margin-top:3px">'+esc(dmy(e.entry_date))+' '+esc(hhmm(e.created_at))+' · '+esc(e.author||'')+(st!=='new'?' · '+(st==='done'?'✓ lokið':'👁 séð'):'')+'</div></div>'
+      + '<div style="flex:1;min-width:0">'+main+'<div style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted);margin-top:3px">'+esc(dt(e.updated_at||e.created_at))+' · '+esc(e.author||'')+(st!=='new'?' · '+(st==='done'?'✓ lokið':'👁 séð'):'')+'</div></div>'
       + '<div style="display:flex;gap:4px;flex:none">'+(st==='new'?'<button type="button" data-st="seen" style="'+KEY+'" title="Merkja séð">👁</button>':'')+(st!=='done'?'<button type="button" data-st="done" style="'+KEY+'" title="Merkja lokið">✓</button>':'')+'<button type="button" data-del="'+e.id+'" style="'+KEY+';color:var(--red)" title="Eyða">×</button></div></div>';
   };
   async function load(){
@@ -16917,8 +16921,10 @@ async function renderVerkstadapostur(t){
         const ef = efniWs[ws]||[], pk = punktWs[ws]||[];
         const sum = ef.reduce((a,e)=>a+(Number(e.qty)||0)*(Number(e.unit_price)||0),0);
         h += '<div style="padding:10px 14px 4px;border-top:1px solid var(--line-2);display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--bg)"><b style="font-size:14px">'+esc(ws)+'</b><span style="font-family:var(--font-mono);font-size:11.5px;color:var(--muted)">'+ef.length+' efni · '+fmt(sum)+' kr · '+pk.length+' punktar</span><button type="button" data-ws="'+esc(ws)+'" class="fv-open" style="'+KEY+';margin-left:auto">📄 Opna Efnislista</button></div>';
-        for(const e of ef) h += entryRow(e, '<b>'+esc(e.item_label)+'</b> <span class="ky-num">× '+hf(e.qty)+' '+esc(e.unit||'')+'</span> <span style="color:var(--muted)">· '+fmt(e.unit_price)+' kr</span>'+(e.note?'<div style="color:var(--ink-2);white-space:pre-wrap">'+esc(e.note)+'</div>':''));
-        for(const e of pk) h += entryRow(e, '📝 <span style="white-space:pre-wrap">'+esc(e.note||'')+'</span>');
+        let inner = '';
+        for(const e of ef) inner += entryRow(e, '<b>'+esc(e.item_label)+'</b> <span class="ky-num">× '+hf(e.qty)+' '+esc(e.unit||'')+'</span> <span style="color:var(--muted)">· '+fmt(e.unit_price)+' kr</span>'+(e.note?'<div style="color:var(--ink-2);white-space:pre-wrap">'+esc(e.note)+'</div>':''));
+        for(const e of pk) inner += entryRow(e, '📝 <span style="white-space:pre-wrap">'+esc(e.note||'')+'</span>');
+        if(ef.length || pk.length) h += fold(ef.concat(pk), inner);
       }
       h += '</div>';
       // 💳 Efniskostnaður verkstjóra (keypt efni) per verkstað. Venjuleg verk → Efnislisti á kostnaðarverði án vsk;
@@ -16931,7 +16937,9 @@ async function renderVerkstadapostur(t){
       for(const ws of kostnNames){
         const ks = kostnWs[ws], ein = EINING.test(ws);
         h += '<div style="padding:10px 14px 4px;border-top:1px solid var(--line-2);display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--bg)"><b style="font-size:14px">'+esc(ws)+'</b><span style="font-family:var(--font-mono);font-size:11.5px;color:var(--muted)">'+ks.length+' færslur · '+fmt(kSum(ks))+' kr án vsk</span>'+chip(ein ? 'einingaverk — aðeins til yfirlits' : 'fer í Efnislistann', ein ? 'blue' : 'green')+(ein ? '' : '<button type="button" data-ws="'+esc(ws)+'" class="fv-open" style="'+KEY+';margin-left:auto">📄 Opna Efnislista</button>')+'</div>';
-        for(const e of ks) h += entryRow(e, '<b>'+esc(e.item_label)+'</b>'+(e.category?' '+chip(e.category,'blue'):'')+' <span class="ky-num">'+fmt((Number(e.qty)||1)*(Number(e.unit_price)||0))+' kr</span> <span style="color:var(--muted)">án vsk</span>'+(e.note?'<div style="color:var(--ink-2);white-space:pre-wrap">'+esc(e.note)+'</div>':''));
+        let innerK = '';
+        for(const e of ks) innerK += entryRow(e, '<b>'+esc(e.item_label)+'</b>'+(e.category?' '+chip(e.category,'blue'):'')+' <span class="ky-num">'+fmt((Number(e.qty)||1)*(Number(e.unit_price)||0))+' kr</span> <span style="color:var(--muted)">án vsk</span>'+(e.note?'<div style="color:var(--ink-2);white-space:pre-wrap">'+esc(e.note)+'</div>':''));
+        h += fold(ks, innerK);
       }
       h += '</div>';
       // 🆕 Verk sem verkstjórar bættu við í appinu (fyrstur á staðinn að taka út verkið) — skrifstofan skráir þau í Tímaveru / Kröfu yfirlit

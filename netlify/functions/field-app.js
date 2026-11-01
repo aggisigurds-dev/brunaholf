@@ -108,7 +108,7 @@ async function handleGet(event) {
     for (const a of aliases) if (a && a.alias) amap[a.alias] = a.canonical_name;
     // Verkstaðir mánaðarins úr Tímaveru — sama alias-samruni og Kröfuyfirlit/worksites.js
     // Gervi-verkefni Tímaveru (veikindi, frí, eigin vinna Slökkvitækis) eru ekki verkstaðir
-    const SKIP = /veikindi|sick|orlof|\bfr[ií]\b|^slökkvitæki|^slokkvitaeki|^brunahólf$|^brunaholf$/i;
+    const SKIP = /veikindi|sick|orlof|\bfr[ií]\b|^slökkvitæki|^slokkvitaeki|^brunah[óo]lf/i;   // „Brunahólf almennt" o.fl. = fyrirtækið sjálft, ekki verkstaður
     const ws = new Map();
     for (const r of tv) {
       const p = amap[r.project] || r.project; if (!p || SKIP.test(p)) continue;
@@ -149,7 +149,9 @@ async function handleGet(event) {
       }
     }
     for (const k of Object.keys(rd)) rd[k].an_vsk = Math.round(rd[k].an_vsk);
-    const names = [...new Set(recent.map((r) => String(r.employee || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'is'));
+    // Nafnavalið í appinu: Tímavera síðustu 45 daga, nema þeir sem Agnar tók út 01.11.2026 (skrifa má nafn með handafli)
+    const HIDE_NAMES = new Set(['alfred', 'hamza', 'kamara', 'nour', 'prosper', 'rui armando']);
+    const names = [...new Set(recent.map((r) => String(r.employee || '').trim()).filter((n) => n && !HIDE_NAMES.has(n.toLowerCase())))].sort((a, b) => a.localeCompare(b, 'is'));
     return P.json(200, { month, names, worksites, redder: rd, materials: MATERIALS, entries, shares, generated_at: new Date().toISOString() });
   }
 
@@ -211,6 +213,8 @@ async function handlePost(event) {
     const patch = { updated_at: new Date().toISOString() };
     for (const k of FIELDS) if (k !== 'client_id' && k !== 'kind' && b[k] !== undefined) patch[k] = b[k];
     if (patch.status && !['new', 'seen', 'done'].includes(patch.status)) return P.json(400, { error: 'status ógilt' });
+    // Starfsmaður breytir magni (＋/− í appinu) → færslan verður aftur „ný" svo skrifstofan sjái breytinguna þótt hún væri áður merkt séð.
+    if (patch.qty !== undefined && b.status === undefined) patch.status = 'new';
     const r = await P.sbPatch(`field_entries?id=eq.${id}`, patch);
     if (!r.ok) return P.json(r.status, { error: (await r.text()).slice(0, 300) });
     const rows = await r.json();
