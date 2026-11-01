@@ -65,7 +65,7 @@ async function list() {
     sb('customer_info?select=customer_name,kennitala,contact_email,last_payment_at'),
     sbAll('invoices?select=id,source,customer_name,kt_greidanda,upphaed_total,hofudstoll,status,gjalddagi,greidsla_date,worksite_match,tilvisun'),
     sbAll('invoice_drafts?select=worksite_name,customer_name,kennitala,total_m_vsk,status,merged_into,work_month,payday_invoice_id'),
-    sbAll('customer_worksite_map?select=customer_name,worksite_name,kt_greidanda,confidence,tilvisun'),
+    sbAll('customer_worksite_map?select=customer_name,worksite_name,kt_greidanda,confidence,tilvisun,retention_pct'),
     sbAll('krofur_yfirlit_meta?select=inv_key,hidden,paid,done'),
   ]);
   const { metaBy, tenging } = flokkunarGrunnur({ pg, inv, drafts, map, meta });
@@ -128,7 +128,7 @@ async function detail(name) {
     // Sjálfvirka tengingin (drög ↔ Payday) þarf ALLT mengið, ekki bara þennan greiðanda: Payday-röð sem er frátekin
     // af öðrum drögum má ekki tengjast hér, og greiðandi verkstaðar getur heitið annað en `name`.
     sb('pricing_guide?select=worksite_name,customer_name'),
-    sbAll('customer_worksite_map?select=customer_name,worksite_name,kt_greidanda,confidence,tilvisun'),
+    sbAll('customer_worksite_map?select=customer_name,worksite_name,kt_greidanda,confidence,tilvisun,retention_pct'),
     sbAll('invoices?select=id,source,customer_name,kt_greidanda,upphaed_total,status,gjalddagi'),
     sbAll('krofur_yfirlit_meta?select=inv_key,hidden,paid,done'),
   ]);

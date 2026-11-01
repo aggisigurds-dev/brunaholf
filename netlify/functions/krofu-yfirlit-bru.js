@@ -53,7 +53,7 @@ exports.handler = async (event) => {
       .catch(() => { warnings.push('bank_transactions lestur mistókst — „líklega greitt" bankamátun vantar'); return []; });
     // Worksite→payer map only affects grouping (optional) — record but stay resilient.
     cwmap = await fetchAll('customer_worksite_map',
-      'select=customer_name,worksite_name,kt_greidanda,confidence,tilvisun')
+      'select=customer_name,worksite_name,kt_greidanda,confidence,tilvisun,retention_pct')
       .catch(() => { warnings.push('customer_worksite_map lestur mistókst — greiðanda-hópun gæti verið ónákvæm'); return []; });
     // Verðskráin ber líka greiðanda per verkstað (Viðskiptavinir-flipinn skrifar hann þangað).
     // Án hennar tvístruðust mánuðir sama verkstaðar: sá sem hafði fengið greiðanda í
@@ -273,7 +273,7 @@ exports.handler = async (event) => {
     hidden_keys: meta.filter((m) => m.hidden).map((m) => m.inv_key),
     draftKeys,
     // Drög sem þjónninn tengdi sjálfvirkt við Payday-reikning (detta úr Ósent, lifa í töflunni) — gagnsæi fyrir yfirferð.
-    sjalfvirk_tenging: [...sjalfvirkTenging].map(([k, r]) => ({ draft: k, tilvisun: r.tilvisun, status: r.status, amount: +r.upphaed_total || 0 })),
+    sjalfvirk_tenging: [...sjalfvirkTenging].map(([k, r]) => ({ draft: k, tilvisun: r.tilvisun, status: r.status, amount: +r.upphaed_total || 0, haldid_eftir: r.haldid_eftir || 0 })),
     likely_paid: { n: likely.length, kr: likely.reduce((a, r) => a + r.amount, 0) },
     note: 'Ógreitt = allir reikningar sem eru hvorki greiddir, kreditfærðir né drög. Payday SENT telst ógreitt (útistandandi). likely_paid = fannst greitt í banka en enn ógreitt í Payday.',
   });
