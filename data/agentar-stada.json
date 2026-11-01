@@ -1,6 +1,6 @@
 {
  "utgafa": 1,
- "nyjast": "2026-10-29",
+ "nyjast": "2026-10-31",
  "throskuldur": 6,
  "osnert_dagar": 30,
  "uppspretta": "slokkvitaeki/tools/audit-agentar.cjs --json",
@@ -45,7 +45,7 @@
    "sidast": "2026-10-28",
    "skrif": 10,
    "gaetir": 4,
-   "breytt": 2,
+   "breytt": 3,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Elon Musk — byggingarstjóri rafkerfisins. As-built yfir tengingar á staðnum: útreikningar (verð, VSK, afsláttur, KPI, TÆKI, FULLBÚIÐ), skjala-lyklar (fyrirtaeki"
@@ -120,7 +120,7 @@
    "sidast": "2026-10-28",
    "skrif": 7,
    "gaetir": 11,
-   "breytt": 2,
+   "breytt": 4,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Netvörður — gætir öryggisnetsins: kallaðu á hann ÁÐUR og EFTIR breytingu á vörðum leiðum (reikninga-OUT 10/233/254, kennitala 121/pos.js, payday-push, tilbúið 1"
@@ -165,7 +165,7 @@
    "sidast": "2026-10-29",
    "skrif": 17,
    "gaetir": 14,
-   "breytt": 2,
+   "breytt": 3,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Sala/POS, reikningagerð og -sending, Payday/dkPlus, afslættir, verðlistar og vörur, PDF-vistun, reikninga-póstur og úttektartexti í Slökkvitæki-appinu. Notaðu þ"
@@ -210,9 +210,9 @@
    "sidast": "2026-10-28",
    "skrif": 7,
    "gaetir": 6,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "theme.css hönnunarkerfið (Brunastál) og per-page skeletons — endursköpun og skinnun síðna. Þemað er FROSIÐ síðan 17.08.2026; byrjaðu ekki á samræmingu óumbeðið."
   },
   {
@@ -660,9 +660,9 @@
    "sidast": "2026-10-28",
    "skrif": 18,
    "gaetir": 9,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Rukkarinn — einn agent fyrir öll rukkunarmál beggja félaga (Brunahólf + Slökkvitæki): les REIKNINGALOTA-kynninguna, tengingar, Drög-stöð og póst sjálfur, segir "
   },
   {
@@ -732,12 +732,12 @@
    "slod": ".claude/skills/agent-athugasemdir/SKILL.md",
    "hud": null,
    "emoji": null,
-   "sidast": "2026-10-28",
-   "skrif": 1,
+   "sidast": "2026-10-31",
+   "skrif": 2,
    "gaetir": 2,
-   "breytt": 1,
+   "breytt": 0,
    "daudir": [],
-   "merki": "🟡",
+   "merki": "🟢",
    "lysing": "Vinnur úr athugasemdum Agnars við agenta og skills (Jarvis → Sérfræðingar → „Bæta við upplýsingum“, taflan agent_notes) og vinnur þær inn í réttar agent-/skill-"
   },
   {
