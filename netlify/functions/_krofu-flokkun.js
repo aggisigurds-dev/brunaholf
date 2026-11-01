@@ -102,6 +102,36 @@ function sjalfvirkTenging({ drafts, invoices, resolvePayer }) {
   return out;
 }
 
+/* TVÍTEKIN PAYDAY-DRÖG (Agnar 01.11.2026): „Eins og þetta — þú mátt reyna sameina". Tindasel/Deluxe Lodges: R-364 (SENT, 1.006.129 kr,
+ * 55 daga gamall) og Payday-drög (R-PD-6bd6e3b2…, sama kt, sama upphæð, stofnað 01.11) birtust bæði — Ógreitt 1.006.129 OG Ósent 1.006.129,
+ * þótt krafan sé ein. Drögin eru annar hlutur í Payday (annað uuid), ekki sama röðin, svo ekkert í gögnunum sjálfum tengir þau.
+ *
+ * REGLAN (ströng, því röng sameining felur raunveruleg drög): Payday-röð í stöðunni drög/Drög/DRAFT (ekki handvirkt merkt greitt) á sömu kt
+ * og upphæð innan 1 kr og Payday-reikningur sem er ÓGREIDDUR (K.flokkaReikning = 'ogreitt', t.d. SENT) og sést í summum (ekki falinn, ekki
+ * „📨 Krafa send"). Greiddur reikningur sameinar EKKI — samskonar upphæð á nýjum drögum gæti verið næsti mánuður í föstum reikningi. Hver
+ * ógreiddur reikningur tekur í mesta lagi ein drög (elstu drög fyrst). Ekkert er skrifað eða eytt: drögin lifa í töflunni, detta aðeins úr
+ * Ósent; verði reikningurinn greiddur/kreditfærður/falinn birtast þau aftur — þá er kominn tími til að horfa á þau.
+ * Skilar Map: lykill drag-raðarinnar (invKey) → ógreidda Payday-röðin sem hún afritar. */
+function tvitekinPaydayDrog({ invoices, metaBy }) {
+  const out = new Map();
+  const mtOf = (r) => (metaBy && metaBy.get(invKey(r))) || {};
+  const upph = (r) => +r.upphaed_total || +r.hofudstoll || 0;
+  const paydayRodur = (invoices || []).filter((r) => lc(r.source) === 'payday' && digits(r.kt_greidanda) && upph(r) > 0);
+  const drog = paydayRodur.filter((r) => flokkaReikning(r, mtOf(r)) === 'drog').sort((a, b) => (+a.id || 0) - (+b.id || 0));
+  const ogreidd = paydayRodur
+    .filter((r) => flokkaReikning(r, mtOf(r)) === 'ogreitt' && iSummu(mtOf(r)))
+    .sort((a, b) => String(a.gjalddagi || '').localeCompare(String(b.gjalddagi || '')));
+  const tekid = new Set();
+  for (const d of drog) {
+    const kt = digits(d.kt_greidanda), amt = upph(d);
+    const hit = ogreidd.find((r) => !tekid.has(String(r.id)) && digits(r.kt_greidanda) === kt && Math.abs(upph(r) - amt) <= 1);
+    if (!hit) continue;
+    tekid.add(String(hit.id));
+    out.set(invKey(d), hit);
+  }
+  return out;
+}
+
 /* Flokkun einnar invoices-raðar: 'kredit' | 'greitt' | 'drog' | 'ogreitt'.
  * `mt` = krofur_yfirlit_meta-röðin (handvirkt merkt greitt telst greitt). */
 function flokkaReikning(r, mt) {
@@ -128,4 +158,4 @@ function erOsent(d, tenging, mt) {
 // Telst röðin í summum? Faldar raðir og „📨 Krafa send" (done) teljast ekki — sama og rollup í Kröfu yfirliti.
 const iSummu = (mt) => !(mt && (mt.hidden || mt.done));
 
-module.exports = { digits, lc, PAID, CREDIT, DRAFT, EKKI_OSENT, invKey, draftKey, greidendur, sjalfvirkTenging, flokkaReikning, erOsent, iSummu };
+module.exports = { digits, lc, PAID, CREDIT, DRAFT, EKKI_OSENT, invKey, draftKey, greidendur, sjalfvirkTenging, tvitekinPaydayDrog, flokkaReikning, erOsent, iSummu };

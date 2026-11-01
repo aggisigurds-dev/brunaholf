@@ -123,6 +123,15 @@ exports.handler = async (event) => {
     if (hit && !wsEftirPayday.has(String(hit.id))) wsEftirPayday.set(String(hit.id), d.worksite_name);
   }
 
+  // ---- tvítekin Payday-drög (01.11.2026): drög á sömu kt og upphæð og ÓGREIDDUR Payday-reikningur teljast ekki aftur sem ósend ----
+  // Reglan: K.tvitekinPaydayDrog (_krofu-flokkun.js). Drögin lifa áfram í töflunni; reikningsröðin fær `sameinad_drog` svo sjáist hvað var sameinað.
+  const tvitekin = K.tvitekinPaydayDrog({ invoices, metaBy });   // inv_key drags → ógreidda Payday-röðin
+  const sameinadVid = new Map();                                 // inv_key reiknings → [tilvísanir sameinaðra draga]
+  for (const [dk, real] of tvitekin) {
+    const rk = K.invKey(real), d = invoices.find((x) => K.invKey(x) === dk);
+    (sameinadVid.get(rk) || sameinadVid.set(rk, []).get(rk)).push({ inv_key: dk, tilvisun: d ? d.tilvisun : null, amount: d ? (+d.upphaed_total || +d.hofudstoll || 0) : 0 });
+  }
+
   // ---- bank cross-reference (sama og Skuldunautar/debtors.js) ---------------
   // Vísbending: reikningur sem enn er „ógreiddur" í Payday en fannst greiddur
   // beint í banka → líklega þegar greitt (skrifstofan gleymdi að merkja í Payday).
@@ -147,6 +156,7 @@ exports.handler = async (event) => {
     if (flokkur === 'kredit') continue;                       // kreditfært/cancelled/negative leg
     if (flokkur === 'greitt') continue;                       // Payday-greitt eða handvirkt merkt — ekki útistandandi
     const isDraft = flokkur === 'drog';
+    if (isDraft && tvitekin.has(key)) continue;               // afrit af ógreiddum Payday-reikningi (sjá hér að ofan) — ein krafa, ekki tvær
     // Falið (handvirkt) er EKKI sleppt lengur — við sendum röðina með `hidden:true`
     // svo framendinn geti (a) haldið henni falinni þvert á tæki og (b) sýnt hana
     // aftur með „👁 Sýna falin" hnappnum. Faldar raðir teljast ekki í summur.
@@ -162,6 +172,7 @@ exports.handler = async (event) => {
       wf: mt.wf_state || null,
       ...finnaVerkstad(r),
       likely_paid: false, bank: null,        // fyllt í matchBank() hér að neðan
+      sameinad_drog: sameinadVid.get(key) || null,
     };
     (isDraft ? t2 : t1).push(row);
   }
@@ -274,6 +285,8 @@ exports.handler = async (event) => {
     draftKeys,
     // Drög sem þjónninn tengdi sjálfvirkt við Payday-reikning (detta úr Ósent, lifa í töflunni) — gagnsæi fyrir yfirferð.
     sjalfvirk_tenging: [...sjalfvirkTenging].map(([k, r]) => ({ draft: k, tilvisun: r.tilvisun, status: r.status, amount: +r.upphaed_total || 0, haldid_eftir: r.haldid_eftir || 0 })),
+    // Payday-drög sem voru sameinuð ógreiddum reikningi (detta úr Ósent, lifa í töflunni) — gagnsæi fyrir yfirferð.
+    tvitekin_payday_drog: [...tvitekin].map(([k, r]) => ({ drog: k, reikningur: r.tilvisun, amount: +r.upphaed_total || +r.hofudstoll || 0 })),
     likely_paid: { n: likely.length, kr: likely.reduce((a, r) => a + r.amount, 0) },
     note: 'Ógreitt = allir reikningar sem eru hvorki greiddir, kreditfærðir né drög. Payday SENT telst ógreitt (útistandandi). likely_paid = fannst greitt í banka en enn ógreitt í Payday.',
   });

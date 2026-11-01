@@ -68,7 +68,7 @@ async function list() {
     sbAll('customer_worksite_map?select=customer_name,worksite_name,kt_greidanda,confidence,tilvisun,retention_pct'),
     sbAll('krofur_yfirlit_meta?select=inv_key,hidden,paid,done'),
   ]);
-  const { metaBy, tenging } = flokkunarGrunnur({ pg, inv, drafts, map, meta });
+  const { metaBy, tenging, tvitekin } = flokkunarGrunnur({ pg, inv, drafts, map, meta });
   // verkstaður → greiðandi (verðskrá ræður, kortið fyllir í eyður)
   const wsOwner = {};
   for (const m of map) if (m.worksite_name && m.customer_name) wsOwner[m.worksite_name] = m.customer_name;
@@ -92,7 +92,7 @@ async function list() {
     const upp = kr(v.upphaed_total);
     if (s === 'greitt' && String(v.greidsla_date || v.gjalddagi || '').slice(0, 4) === String(ar)) a.greitt_ar += upp;
     if (s === 'ogreitt' && upp > 0 && K.iSummu(mt)) a.ogreitt += upp;
-    if (s === 'drog' && upp > 0 && K.iSummu(mt)) a.osent += upp;          // Payday-drög = ósent (þrep 2 í Kröfu yfirliti)
+    if (s === 'drog' && upp > 0 && K.iSummu(mt) && !tvitekin.has(K.invKey(v))) a.osent += upp;   // Payday-drög = ósent (þrep 2 í Kröfu yfirliti) — nema afrit af ógreiddum reikningi
     if (s !== 'drog' && v.gjalddagi && (!a.sidasta_krafa || v.gjalddagi > a.sidasta_krafa)) a.sidasta_krafa = v.gjalddagi;
   }
   for (const d of drafts) {
@@ -129,10 +129,10 @@ async function detail(name) {
     // af öðrum drögum má ekki tengjast hér, og greiðandi verkstaðar getur heitið annað en `name`.
     sb('pricing_guide?select=worksite_name,customer_name'),
     sbAll('customer_worksite_map?select=customer_name,worksite_name,kt_greidanda,confidence,tilvisun,retention_pct'),
-    sbAll('invoices?select=id,source,customer_name,kt_greidanda,upphaed_total,status,gjalddagi'),
+    sbAll('invoices?select=id,source,customer_name,kt_greidanda,upphaed_total,hofudstoll,status,gjalddagi,tilvisun'),
     sbAll('krofur_yfirlit_meta?select=inv_key,hidden,paid,done'),
   ]);
-  const { metaBy, tenging } = flokkunarGrunnur({ pg: allPg, inv: allInv, drafts, map: allMap, meta });
+  const { metaBy, tenging, tvitekin } = flokkunarGrunnur({ pg: allPg, inv: allInv, drafts, map: allMap, meta });
   const info = infoRows[0] || { customer_name: name };
   const wsNames = [...new Set([...pg.map((p) => p.worksite_name), ...map.map((m) => m.worksite_name)].filter(Boolean))];
   const drog = drafts.filter((d) => { const mt = metaBy.get(K.draftKey(d)); return K.erOsent(d, tenging, mt) && K.iSummu(mt) && (d.customer_name === name || wsNames.includes(d.worksite_name)); })
@@ -154,6 +154,7 @@ async function detail(name) {
     const mt = metaBy.get(K.invKey(v));
     v.stada = stada(v, mt);
     if (!K.iSummu(mt)) v.falid = true;      // falið eða „📨 Krafa send" í Kröfu yfirliti — sést, en telst ekki í summu
+    if (v.stada === 'drog' && tvitekin.has(K.invKey(v))) v.falid = true;   // Payday-drög sem afrita ógreiddan reikning — sést, telst ekki (01.11.2026)
   }
   const iSum = (v) => !v.falid && kr(v.upphaed_total) > 0;
   const samtals = {
@@ -231,7 +232,8 @@ function flokkunarGrunnur({ pg, inv, drafts, map, meta }) {
   const metaBy = new Map((meta || []).map((m) => [m.inv_key, m]));
   const resolvePayer = K.greidendur({ cwmap: map, pguide: pg, invoices: inv });
   const tenging = K.sjalfvirkTenging({ drafts, invoices: inv, resolvePayer });
-  return { metaBy, tenging };
+  const tvitekin = K.tvitekinPaydayDrog({ invoices: inv, metaBy });   // Payday-drög sem afrita ógreiddan reikning — telja ekki sem ósend (01.11.2026)
+  return { metaBy, tenging, tvitekin };
 }
 
 function hdrs() { return { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }; }

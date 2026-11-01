@@ -19264,6 +19264,10 @@ async function renderKrofuyfirlit(t){
     const bankLine = lp
       ? `<div class="ky-bank">🏦 Líklega þegar greitt — ${fmtKr(inv.bank.amount)} í banka ${esc(inv.bank.date||'')}${inv.bank.extra>0?' (+'+fmtKr(inv.bank.extra)+' vextir)':''}</div>`
       : '';
+    // 01.11.2026: Payday-drög sem afrita þennan ógreidda reikning eru sameinuð hér (teljast ekki aftur sem ósend) — sýnt svo sjáist hvað hvarf.
+    const sameinadLine = (tier===1 && inv.sameinad_drog && inv.sameinad_drog.length)
+      ? `<div class="ky-bank" style="color:var(--muted,#8a7f6c);font-weight:500">🔗 Payday-drög á sömu upphæð sameinuð hér (${inv.sameinad_drog.map(d=>'R-'+esc(String(d.tilvisun||'drög').slice(0,11))).join(', ')}) — teljast ekki aftur sem ósend</div>`
+      : '';
     // Mánaðar-plata (skönnun eftir mánuði) — úr gjalddaga, annars vinnumánuði (þrep 3).
     // Samreikningur: platan sýnir ALLA mánuðina sem reikningurinn nær yfir.
     const _mfMon = ((REVIEWS[(inv.worksite||'')+'|'+(inv.work_month||'')]||{}).merged_from||[]).map(x=>x.work_month);
@@ -19297,6 +19301,7 @@ async function renderKrofuyfirlit(t){
             <div class="ky-ws"><span class="n">${rnum}</span>${mtagHtml}${perHtml}${tier===1?agingPill(inv.days_overdue):(tier===2&&inv.gamalt?aldursPilla(inv.work_month):'')}</div>
             <div class="ky-sub">${gj}${sub}</div>
             ${bankLine}
+            ${sameinadLine}
             ${noteInline}
           </div>
           ${tier===2?'<span style="flex:1 1 0;min-width:0"></span>':''}
