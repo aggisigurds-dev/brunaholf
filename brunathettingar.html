@@ -14,7 +14,11 @@
      nafn notanda og biðröð ef net dettur út (reynir aftur sjálfkrafa). Öll tæki lesa
      sama grunn; skjámyndin endurnýjast á mínútu fresti og þegar appið kemur í forgrunn.
      Efnið fer beint í Efnislistann í hubnum (kafli 03 „Frá verkstað"); allt annað í
-     hub-flipann „Frá verkstað". Boss-þema (css/theme.css). -->
+     hub-flipann „Frá verkstað". Boss-þema (css/theme.css).
+     02.11.2026 (Agnar: „english version … especially the efnislista efni verkstjóra site"): tungumálalag
+     IS/EN. `?lang=en` (Firestarters EN-appið sendir það) eða EN/IS-takkinn í hausnum (vistað í bt_lang á
+     símanum, eins og nafnið). Þýðingin er AÐEINS birting: allt sem vistast (flokkar, efnisheiti, nótur)
+     fer áfram á íslensku svo skrifstofan og Efnislistinn lesi það óbreytt. -->
 <link rel="manifest" href="/manifest-brunathettingar.json">
 <meta name="theme-color" content="#0a0a09">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -33,7 +37,9 @@
   .bt-head h1{margin:0;font-family:var(--font-display);font-size:20px;font-weight:700;color:#f5d76e;letter-spacing:.2px;line-height:1.1}
   .bt-head .sub{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#c9a54a;margin-top:2px}
   .bt-who{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+  .bt-who .row{display:flex;gap:5px;align-items:center}
   .bt-who button{background:transparent;border:1px solid #3a372f;color:#e8e2d3;border-radius:4px;padding:4px 9px;font:inherit;font-size:12px;font-weight:700;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bt-who button.lang{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.08em;padding:4px 7px;color:#c9a54a}
   .bt-sync{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;display:inline-flex;align-items:center;gap:5px;color:#9a9484;white-space:nowrap}
   .bt-sync i{width:7px;height:7px;border-radius:50%;background:#2f7a4a;box-shadow:0 0 6px #2f7a4a}
   .bt-sync.queued i{background:#d9b25a;box-shadow:0 0 6px #d9b25a}.bt-sync.err i{background:#b5522a;box-shadow:0 0 6px #b5522a}.bt-sync.busy i{background:#9a9484;box-shadow:none}
@@ -119,40 +125,147 @@
 <header class="bt-head">
   <div>
     <h1>Brunaþéttingar</h1>
-    <div class="sub">Brunahólf · verkstaðir</div>
+    <div class="sub" id="bt-subtitle">Brunahólf · verkstaðir</div>
   </div>
   <div class="bt-who">
-    <button type="button" id="bt-who" title="Skipta um nafn">—</button>
+    <div class="row"><button type="button" class="lang" id="bt-lang" title="English / íslenska">EN</button><button type="button" id="bt-who" title="Skipta um nafn">—</button></div>
     <span class="bt-sync busy" id="bt-sync"><i></i><span id="bt-sync-t">sæki…</span></span>
   </div>
 </header>
 <main id="bt-main"><div class="empty">Sæki…</div></main>
 <nav class="bt-tabs" id="bt-tabs">
-  <button type="button" data-tab="verk"><span class="i">🏗</span>Verkstaðir</button>
-  <button type="button" data-tab="maeting"><span class="i">🕒</span>Mæting</button>
-  <button type="button" data-tab="beidnir"><span class="i">📨</span>Beiðnir</button>
-  <button type="button" data-tab="deilt"><span class="i">📎</span>Deilt</button>
+  <button type="button" data-tab="verk"><span class="i">🏗</span><span data-t="tab_verk">Verkstaðir</span></button>
+  <button type="button" data-tab="maeting"><span class="i">🕒</span><span data-t="tab_maeting">Mæting</span></button>
+  <button type="button" data-tab="beidnir"><span class="i">📨</span><span data-t="tab_beidnir">Beiðnir</span></button>
+  <button type="button" data-tab="deilt"><span class="i">📎</span><span data-t="tab_deilt">Deilt</span></button>
 </nav>
-<script src="/js/gr-materials.js?v=20261015m"></script>
+<script src="/js/gr-materials.js?v=20261102en"></script>
 <script>
 (function(){
   'use strict';
   const $ = (s, r) => (r || document).querySelector(s);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
-  const fmt = n => Math.round(Number(n) || 0).toLocaleString('is-IS');
-  const hf = n => (Math.round((Number(n) || 0) * 100) / 100).toLocaleString('is-IS');
-  const MN = ['janúar','febrúar','mars','apríl','maí','júní','júlí','ágúst','september','október','nóvember','desember'];
-  const WD = ['sunnudagur','mánudagur','þriðjudagur','miðvikudagur','fimmtudagur','föstudagur','laugardagur'];
   const pad = n => String(n).padStart(2, '0');
+  const LS = { get(k, d) { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (_) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} } };
+
+  // ── Tungumál (02.11.2026) ─────────────────────────────────────────────────
+  // ?lang=en ræður í þessari opnun (Firestarters EN-appið sendir það inn); annars valið sem EN/IS-takkinn vistaði
+  // á símanum (bt_lang — sama eðlis og nafnið: „hver er við vélina"). Sjálfgefið íslenska.
+  const LANG = (() => { try { const q = new URLSearchParams(location.search).get('lang'); if (q === 'en' || q === 'is') return q; } catch (_) {} return LS.get('bt_lang', 'is') === 'en' ? 'en' : 'is'; })();
+  const EN = LANG === 'en';
+  const T = {
+    is: {
+      subtitle: 'Brunahólf · verkstaðir', who_title: 'Skipta um nafn', loading: 'sæki…', loading_big: 'Sæki…',
+      tab_verk: 'Verkstaðir', tab_maeting: 'Mæting', tab_beidnir: 'Beiðnir', tab_deilt: 'Deilt',
+      months: ['janúar','febrúar','mars','apríl','maí','júní','júlí','ágúst','september','október','nóvember','desember'],
+      wdays: ['sunnudagur','mánudagur','þriðjudagur','miðvikudagur','fimmtudagur','föstudagur','laugardagur'],
+      today: 'Í dag — ', yesterday: 'Í gær — ', locale: 'is-IS',
+      queued_n: n => '⏳ ' + n + ' í biðröð', net_err: 'net-villa', saved_at: t => 'vistað ' + t, connected: 'tengt',
+      no_net_queued: 'Ekkert net — vistað í biðröð, sendist sjálfkrafa', sending_queue: 'sendi biðröð…', rejected: '✗ Færsla hafnað: ', queue_sent: '✓ Biðröð send',
+      who_h: 'Hver ert þú?', who_sub: 'Nafnið fylgir því sem þú skráir svo skrifstofan viti hver skrifaði.', who_or: 'Eða skrifa nafn', name_ph: 'nafn', continue_: 'Áfram', who_btn: '👤 Hver ert þú?',
+      tag_month: '🕒 í Tímaveru í þessum mánuði', tag_krofur: '📑 í Kröfu yfirliti', tag_nytt: '🆕 nýtt verk',
+      h: 'klst', days: 'dagar', efni_n: 'efni', serkaup_n: 'sérkaup', punktar_n: 'punktar', staff_n: 'starfsm.',
+      jobs_h: 'Verk í vinnslu', jobs_n: n => n + ' verk', jobs_empty: 'Engin verk á listanum — bættu við verki hér að neðan', add_job: '＋ Bæta við verki',
+      jobs_kicker: 'Smelltu á verk til að skrá efni úr lager, sérkaup og punkta · listinn er verk úr Kröfu yfirliti og verk með tíma í Tímaveru síðustu viku',
+      seen: '👁 séð á skrifstofu', pending_net: '⏳ bíður nets', ex_vat: 'án vsk', comment: 'athugasemd', request: 'beiðni', del: 'Eyða', del_q: 'Eyða þessari skráningu?', deleted: 'Eytt',
+      back_ws: '‹ Verkstaðir', prev_m: 'Fyrri mánuður', next_m: 'Næsti mánuður',
+      redder_h: 'Redder innkaup', redder_kicker: 'án vsk · yfirstrikað = ekki á reikning verkkaupa', redder_empty: 'Engir Redder-reikningar á þennan verkstað í mánuðinum',
+      stock_h: 'Efni úr lager', stock_kicker: 'Pikkaðu á ＋ fyrir það sem var notað (eða skrifaðu töluna). Fer á reikning verkkaupa á söluverði Verðskrár.',
+      entries_sum: n => 'Skráningar (' + n + ') — hver skráði og hvenær', none_yet: 'Ekkert skráð enn',
+      purch_h: 'Sérkaup', purch_kicker_unit: 'Efni sem var keypt sérstaklega. Verk á einingaverði — skráð til yfirlits fyrir skrifstofuna og fer ekki á reikning verkkaupa.',
+      purch_kicker: 'Efni sem var keypt sérstaklega og er ekki í listanum hér að ofan. Fer í Efnislista verkstaðarins á kostnaðarverði án vsk — skrifstofan bætir við álagi.',
+      purch_empty: 'Ekkert skráð enn — skrúfur, plötur o.fl. sem var keypt í verslun', purch_add: '＋ Bæta við sérkaupum',
+      notes_h: 'Punktar úr verkinu', notes_ph: 'Lýsing á því sem var gert, hvar, sérstök atriði, það sem skrifstofan þarf að vita…', note_save: '📝 Vista punkt', note_first: 'Skrifaðu punktinn fyrst', queued: 'Í biðröð', note_saved: '✓ Punktur vistaður',
+      addjob_h: 'Bæta við verki', addjob_sub: 'Ertu fyrstur á staðinn að taka út verkið? Þá birtist það hér hjá öllum og skrifstofan sér það.', addjob_name: 'Heiti verks / staður', addjob_name_ph: 't.d. Suðurlandsbraut 14 — 2. hæð',
+      comment_opt: 'Athugasemd (valfrjálst)', addjob_note_ph: 't.d. verkkaupi, tengiliður, hvað á að gera', cancel: 'Hætta við', add: '💾 Bæta við', addjob_need: 'Skrifaðu heiti á verkinu', addjob_dup: 'Verkið er þegar á listanum',
+      queued_auto: 'Í biðröð — sendist sjálfkrafa', job_added: '✓ Verki bætt við',
+      minus: 'Draga frá', qty: 'Magn', plus: 'Bæta við', marked_n: n => n + ' skráð', error: 'villa',
+      net_sub_later: 'Net vantar — dragðu frá aftur þegar netið kemur', still_queued: 'Þetta er enn í biðröð — dragðu frá þegar netið er komið',
+      purch_sheet_h: 'Sérkaup', purch_sub_unit: ' · verk á einingaverði — aðeins til yfirlits', purch_sub: ' · fer í Efnislistann á kostnaðarverði',
+      what_bought: 'Hvað var keypt?', what_ph: 't.d. skrúfur og múrfestingar, 3. hæð', where: 'Hvar?', amount: 'Upphæð á kvittun (kr)', amount_is: 'Upphæðin er', note_ph_receipt: 't.d. kvittunarnúmer', save_now: '💾 Vista strax',
+      prev_amt: (n, g, vsk) => 'Skráist ' + n + ' kr án vsk' + (vsk ? ' (kvittun ' + g + ' kr með 24% vsk)' : ''), what_need: 'Skrifaðu hvað var keypt', amount_need: 'Upphæð vantar', purch_saved: (w, n) => '✓ ' + w + ' · ' + n + ' kr án vsk vistað',
+      add_emp: '＋ Starfsmaður sem mætti ekki / annað', att_h: 'Mæting · verkstaðir', att_sub: 'síðustu 8 dagar · beint úr Tímaveru', att_empty: 'Engar tímafærslur síðustu daga',
+      att_kicker: '💬 = athugasemd við starfsmann (veikur, seint, fjarverandi …) — sést strax á skrifstofunni', not_in_tv: 'ekki í Tímaveru', working: 'í vinnu', so_far: 'hingað til', comment_title: 'Athugasemd',
+      att_sheet_h: 'Athugasemd · ', employee: 'Starfsmaður', select_: '— veldu —', other_name: 'Annað nafn…', what: 'Hvað', details_opt: 'Nánar (valfrjálst)', att_note_ph: 't.d. hringdi kl. 7, kemur á morgun',
+      pick_emp: 'Veldu starfsmann', pick_what: 'Veldu hvað (veikur, seint …)',
+      req_h: 'Beiðnir til skrifstofu', req_sub: 'teikningar · efni · verkfæri · annað', req_new: '＋ Ný beiðni', req_sent_h: 'Sendar beiðnir', req_empty: 'Engar beiðnir enn',
+      req_sheet_h: 'Ný beiðni', req_sheet_sub: 'Fer beint á skrifstofuna (hub-flipinn „Frá verkstað")', type_: 'Tegund', ws_opt: 'Verkstaður (valfrjálst)', the_req: 'Beiðnin', req_ph: 't.d. vantar teikningar af 2. hæð, brunahólfun við lyftu', send: '📨 Senda', req_need: 'Skrifaðu beiðnina', req_sent: '✓ Beiðni send',
+      shared_h: 'Deilt & tenglar', shared_sub: 'frá skrifstofunni', nlsh_sub: 'NLSH staða og skýrsla', att_hub: 'Mæting í hub', att_hub_sub: 'full yfirsýn · síðustu 31 dagar', tp_sub: 'teikniborðið', hub_sub: 'stjórnstöðin',
+      shared_ws_h: 'Deilt með verkstað', shared_empty: 'Ekkert deilt enn — Agnar setur TurboPaint-borð og hlekki hér inn úr hubnum',
+      err: 'Villa: ', no_data: 'Náði ekki í gögn: ', retry: 'Reyna aftur',
+      cats: {}, units: {},
+    },
+    en: {
+      subtitle: 'Brunahólf · worksites', who_title: 'Change name', loading: 'loading…', loading_big: 'Loading…',
+      tab_verk: 'Worksites', tab_maeting: 'Attendance', tab_beidnir: 'Requests', tab_deilt: 'Shared',
+      months: ['January','February','March','April','May','June','July','August','September','October','November','December'],
+      wdays: ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
+      today: 'Today — ', yesterday: 'Yesterday — ', locale: 'en-GB',
+      queued_n: n => '⏳ ' + n + ' queued', net_err: 'network error', saved_at: t => 'saved ' + t, connected: 'connected',
+      no_net_queued: 'No network — queued, will send automatically', sending_queue: 'sending queue…', rejected: '✗ Entry rejected: ', queue_sent: '✓ Queue sent',
+      who_h: 'Who are you?', who_sub: 'Your name is attached to everything you record so the office knows who wrote it.', who_or: 'Or type a name', name_ph: 'name', continue_: 'Continue', who_btn: '👤 Who are you?',
+      tag_month: '🕒 in Tímavera this month', tag_krofur: '📑 in the invoice overview', tag_nytt: '🆕 new job',
+      h: 'h', days: 'days', efni_n: 'materials', serkaup_n: 'purchases', punktar_n: 'notes', staff_n: 'staff',
+      jobs_h: 'Jobs in progress', jobs_n: n => n + ' jobs', jobs_empty: 'No jobs on the list — add a job below', add_job: '＋ Add job',
+      jobs_kicker: 'Tap a job to record stock materials, purchases and notes · the list shows jobs from the invoice overview and jobs with Tímavera hours in the last week',
+      seen: '👁 seen by office', pending_net: '⏳ waiting for network', ex_vat: 'excl. VAT', comment: 'comment', request: 'request', del: 'Delete', del_q: 'Delete this entry?', deleted: 'Deleted',
+      back_ws: '‹ Worksites', prev_m: 'Previous month', next_m: 'Next month',
+      redder_h: 'Redder purchases', redder_kicker: 'excl. VAT · struck through = not billed to the client', redder_empty: 'No Redder invoices for this worksite this month',
+      stock_h: 'Stock materials', stock_kicker: 'Tap ＋ for what was used (or type the number). Billed to the client at price-list rates.',
+      entries_sum: n => 'Entries (' + n + ') — who recorded and when', none_yet: 'Nothing recorded yet',
+      purch_h: 'Purchases', purch_kicker_unit: 'Materials bought separately. Unit-price job — recorded for the office only, not billed to the client.',
+      purch_kicker: 'Materials bought separately that are not in the list above. Goes on the worksite material list at cost excl. VAT — the office adds the markup.',
+      purch_empty: 'Nothing recorded yet — screws, boards etc. bought in a store', purch_add: '＋ Add purchase',
+      notes_h: 'Notes from the job', notes_ph: 'What was done, where, special issues, anything the office needs to know…', note_save: '📝 Save note', note_first: 'Write the note first', queued: 'Queued', note_saved: '✓ Note saved',
+      addjob_h: 'Add job', addjob_sub: 'First on site to survey the job? Add it here and everyone, including the office, will see it.', addjob_name: 'Job name / address', addjob_name_ph: 'e.g. Suðurlandsbraut 14 — 2nd floor',
+      comment_opt: 'Comment (optional)', addjob_note_ph: 'e.g. client, contact, what needs doing', cancel: 'Cancel', add: '💾 Add', addjob_need: 'Enter a job name', addjob_dup: 'The job is already on the list',
+      queued_auto: 'Queued — will send automatically', job_added: '✓ Job added',
+      minus: 'Subtract', qty: 'Quantity', plus: 'Add', marked_n: n => n + ' recorded', error: 'error',
+      net_sub_later: 'No network — subtract again when it is back', still_queued: 'Still queued — subtract once the network is back',
+      purch_sheet_h: 'Purchase', purch_sub_unit: ' · unit-price job — for the office only', purch_sub: ' · goes on the material list at cost',
+      what_bought: 'What was bought?', what_ph: 'e.g. screws and anchors, 3rd floor', where: 'Where?', amount: 'Receipt amount (kr)', amount_is: 'The amount is', note_ph_receipt: 'e.g. receipt number', save_now: '💾 Save now',
+      prev_amt: (n, g, vsk) => 'Recorded as ' + n + ' kr excl. VAT' + (vsk ? ' (receipt ' + g + ' kr incl. 24% VAT)' : ''), what_need: 'Enter what was bought', amount_need: 'Amount missing', purch_saved: (w, n) => '✓ ' + w + ' · ' + n + ' kr excl. VAT saved',
+      add_emp: '＋ Employee who did not show / other', att_h: 'Attendance · worksites', att_sub: 'last 8 days · straight from Tímavera', att_empty: 'No time entries in recent days',
+      att_kicker: '💬 = comment on an employee (sick, late, absent …) — the office sees it right away', not_in_tv: 'not in Tímavera', working: 'working', so_far: 'so far', comment_title: 'Comment',
+      att_sheet_h: 'Comment · ', employee: 'Employee', select_: '— select —', other_name: 'Other name…', what: 'What', details_opt: 'Details (optional)', att_note_ph: 'e.g. called at 7, coming tomorrow',
+      pick_emp: 'Select an employee', pick_what: 'Select what (sick, late …)',
+      req_h: 'Requests to the office', req_sub: 'drawings · materials · tools · other', req_new: '＋ New request', req_sent_h: 'Sent requests', req_empty: 'No requests yet',
+      req_sheet_h: 'New request', req_sheet_sub: 'Goes straight to the office (hub tab "Frá verkstað")', type_: 'Type', ws_opt: 'Worksite (optional)', the_req: 'Request', req_ph: 'e.g. need drawings of 2nd floor, fire compartmentation by the lift', send: '📨 Send', req_need: 'Write the request', req_sent: '✓ Request sent',
+      shared_h: 'Shared & links', shared_sub: 'from the office', nlsh_sub: 'NLSH status and report', att_hub: 'Attendance in hub', att_hub_sub: 'full overview · last 31 days', tp_sub: 'drawing board', hub_sub: 'control centre',
+      shared_ws_h: 'Shared with worksite', shared_empty: 'Nothing shared yet — Agnar adds TurboPaint boards and links here from the hub',
+      err: 'Error: ', no_data: 'Could not load data: ', retry: 'Try again',
+      // Vistuð gildi (flokkar, einingar, seljendur) eru áfram íslensk — hér aðeins birtingin.
+      cats: { 'Veikur': 'Sick', 'Fjarverandi': 'Absent', 'Kom of seint': 'Came late', 'Fór snemma': 'Left early', 'Barn veikt': 'Child sick', 'Annað': 'Other',
+              'Teikningar': 'Drawings', 'Efni': 'Materials', 'Verkfæri': 'Tools', 'Aðgangur': 'Access', 'Spurning': 'Question', 'Með vsk': 'Incl. VAT', 'Án vsk': 'Excl. VAT' },
+      units: { 'stk': 'pcs', 'plata': 'board', 'líter': 'litre', 'kaup': 'purchase' },
+    },
+  }[LANG];
+  const cat = v => T.cats[v] || v;                       // birtingarheiti flokks (gildið sjálft vistast óbreytt)
+  const unit = u => T.units[u] || u;
+  document.documentElement.lang = LANG;
+  if (EN) document.title = 'Fire stopping — worksites';
+  $('#bt-subtitle').textContent = T.subtitle;
+  $('#bt-who').title = T.who_title;
+  $('#bt-sync-t').textContent = T.loading;
+  $('#bt-main').innerHTML = '<div class="empty">' + T.loading_big + '</div>';
+  document.querySelectorAll('[data-t]').forEach(el => { el.textContent = T[el.dataset.t]; });
+  const langBtn = $('#bt-lang'); langBtn.textContent = EN ? 'IS' : 'EN';
+  langBtn.addEventListener('click', () => {
+    const nl = EN ? 'is' : 'en'; LS.set('bt_lang', nl);
+    try { const u = new URL(location.href); u.searchParams.set('lang', nl); location.replace(u.toString()); } catch (_) { location.reload(); }
+  });
+
+  const fmt = n => Math.round(Number(n) || 0).toLocaleString(T.locale);
+  const hf = n => (Math.round((Number(n) || 0) * 100) / 100).toLocaleString(T.locale);
+  const MN = T.months, WD = T.wdays;
   const localYM = () => { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1); };
   const today = () => { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
   const monthLabel = ym => { const [y, m] = String(ym).split('-').map(Number); return (MN[m - 1] || ym) + ' ' + y; };
   const shiftYM = (ym, d) => { const [y, m] = ym.split('-').map(Number); const t = new Date(y, m - 1 + d, 1); return t.getFullYear() + '-' + pad(t.getMonth() + 1); };
   const dmy = iso => { const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3] + '/' + m[2] + '/' + m[1] : String(iso || ''); };
-  const dayLbl = iso => { const d = new Date(iso + 'T00:00:00'); if (isNaN(d)) return iso; const t0 = new Date(); t0.setHours(0,0,0,0); const diff = Math.round((t0 - d) / 864e5); const base = WD[d.getDay()] + ' ' + d.getDate() + '. ' + MN[d.getMonth()].slice(0, 3); return diff === 0 ? 'Í dag — ' + base : diff === 1 ? 'Í gær — ' + base : base; };
+  const dayLbl = iso => { const d = new Date(iso + 'T00:00:00'); if (isNaN(d)) return iso; const t0 = new Date(); t0.setHours(0,0,0,0); const diff = Math.round((t0 - d) / 864e5); const base = WD[d.getDay()] + ' ' + d.getDate() + (EN ? ' ' : '. ') + MN[d.getMonth()].slice(0, 3); return diff === 0 ? T.today + base : diff === 1 ? T.yesterday + base : base; };
   const hhmm = iso => { const d = new Date(iso); return isNaN(d) ? '' : pad(d.getHours()) + ':' + pad(d.getMinutes()); };
   const uid = () => (crypto.randomUUID ? crypto.randomUUID() : 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10));
-  const LS = { get(k, d) { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (_) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} } };
   // Aðgangslykill úr slóð (?t=…) — geymdur svo appið virki eftir „bæta á heimaskjá"
   try { const t = new URLSearchParams(location.search).get('t'); if (t) LS.set('bt_token', t); } catch (_) {}
   const TOKEN = LS.get('bt_token', '');
@@ -189,7 +302,7 @@
     const el = $('#bt-sync'); if (!el) return;
     el.className = 'bt-sync ' + (mode || '');
     const q = state.queue.length;
-    $('#bt-sync-t').textContent = text || (q ? ('⏳ ' + q + ' í biðröð') : (mode === 'err' ? 'net-villa' : (state.lastOk ? 'vistað ' + state.lastOk : 'tengt')));
+    $('#bt-sync-t').textContent = text || (q ? T.queued_n(q) : (mode === 'err' ? T.net_err : (state.lastOk ? T.saved_at(state.lastOk) : T.connected)));
   }
   function toast(t) { const el = document.createElement('div'); el.className = 'toast'; el.textContent = t; document.body.appendChild(el); setTimeout(() => el.remove(), 2600); }
   // Vistun STRAX; ef netið bregst fer færslan í biðröð (localStorage) og er send aftur
@@ -204,35 +317,35 @@
     } catch (e) {
       if (e.status === 400 || e.status === 401) { toast('✗ ' + e.message); setSync('err'); return null; }
       state.queue.push(body); LS.set('bt_queue', state.queue); setSync('queued');
-      toast('Ekkert net — vistað í biðröð, sendist sjálfkrafa');
+      toast(T.no_net_queued);
       return Object.assign({ id: 'p:' + body.client_id, pending: true, status: 'new', created_at: new Date().toISOString() }, body);
     }
   }
   let flushing = false;
   async function flush() {
     if (flushing || !state.queue.length) return;
-    flushing = true; setSync('busy', 'sendi biðröð…');
+    flushing = true; setSync('busy', T.sending_queue);
     try {
       for (const b of [...state.queue]) {
         try { await POST(Object.assign({ action: 'add' }, b)); state.queue = state.queue.filter(x => x.client_id !== b.client_id); LS.set('bt_queue', state.queue); }
-        catch (e) { if (e.status === 400 || e.status === 401) { state.queue = state.queue.filter(x => x.client_id !== b.client_id); LS.set('bt_queue', state.queue); toast('✗ Færsla hafnað: ' + e.message); } else break; }
+        catch (e) { if (e.status === 400 || e.status === 401) { state.queue = state.queue.filter(x => x.client_id !== b.client_id); LS.set('bt_queue', state.queue); toast(T.rejected + e.message); } else break; }
       }
     } finally { flushing = false; }
-    if (!state.queue.length) { state.lastOk = hhmm(new Date().toISOString()); setSync('ok'); toast('✓ Biðröð send'); await refresh(true); } else setSync('queued');
+    if (!state.queue.length) { state.lastOk = hhmm(new Date().toISOString()); setSync('ok'); toast(T.queue_sent); await refresh(true); } else setSync('queued');
   }
   const pendingRows = kind => state.queue.filter(b => b.kind === kind).map(b => Object.assign({ id: 'p:' + b.client_id, pending: true, status: 'new', created_at: new Date().toISOString() }, b));
 
   // ── Gögn ──────────────────────────────────────────────────────────────────
   async function loadBoot(force) {
     if (state.boot && state.boot.month === state.month && !force) return state.boot;
-    setSync('busy', 'sæki…');
+    setSync('busy', T.loading);
     try { state.boot = await api('/api/field-app?op=bootstrap&month=' + state.month); setSync(state.queue.length ? 'queued' : 'ok'); }
     catch (e) { setSync('err'); if (!state.boot) throw e; }
     return state.boot;
   }
   async function loadMaeting(force) {
     if (state.dagar && !force) return;
-    setSync('busy', 'sæki…');
+    setSync('busy', T.loading);
     try {
       const [d, e] = await Promise.all([api('/api/timavera-dagar?days=8'), api('/api/field-app?op=entries&days=9&kind=maeting&shares=0')]);
       state.dagar = d; state.maetingEntries = e.rows || []; setSync(state.queue.length ? 'queued' : 'ok');
@@ -240,7 +353,7 @@
   }
   async function loadBeidnir(force) {
     if (state.beidnir.length && !force) return;
-    setSync('busy', 'sæki…');
+    setSync('busy', T.loading);
     try { const e = await api('/api/field-app?op=entries&days=120&kind=beidni&shares=0'); state.beidnir = e.rows || []; setSync(state.queue.length ? 'queued' : 'ok'); }
     catch (err) { setSync('err'); throw err; }
   }
@@ -263,7 +376,8 @@
     if (onOpen) onOpen(bg.firstElementChild);
   }
   function closeSheet() { const s = $('#bt-sheet'); if (s) s.remove(); }
-  function chipsHtml(name, opts, cur) { return '<div class="chips" data-chips="' + name + '">' + opts.map(o => '<button type="button" data-v="' + esc(o) + '"' + (o === cur ? ' class="on"' : '') + '>' + esc(o) + '</button>').join('') + '</div>'; }
+  // Flögurnar bera íslenska GILDIÐ (data-v, vistast) en sýna þýðinguna.
+  function chipsHtml(name, opts, cur) { return '<div class="chips" data-chips="' + name + '">' + opts.map(o => '<button type="button" data-v="' + esc(o) + '"' + (o === cur ? ' class="on"' : '') + '>' + esc(cat(o)) + '</button>').join('') + '</div>'; }
   function wireChips(root, name, onPick) { const box = root.querySelector('[data-chips="' + name + '"]'); if (!box) return; box.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { box.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); onPick(b.dataset.v); })); }
   const chipVal = (root, name) => { const b = root.querySelector('[data-chips="' + name + '"] button.on'); return b ? b.dataset.v : ''; };
 
@@ -271,17 +385,17 @@
   function askWho(force) {
     if (state.author && !force) return;
     const names = (state.boot && state.boot.names) || [];
-    openSheet('<h2>Hver ert þú?</h2><div class="sub">Nafnið fylgir því sem þú skráir svo skrifstofan viti hver skrifaði.</div>'
+    openSheet('<h2>' + T.who_h + '</h2><div class="sub">' + T.who_sub + '</div>'
       + (names.length ? '<div class="names">' + names.map(n => '<button type="button" data-n="' + esc(n) + '">' + esc(n) + '</button>').join('') + '</div>' : '')
-      + '<div class="f"><label>Eða skrifa nafn</label><input class="well" id="who-in" placeholder="nafn" value="' + esc(state.author) + '"></div>'
-      + '<div class="actions"><button type="button" class="key gold" id="who-ok">Áfram</button></div>', sh => {
+      + '<div class="f"><label>' + T.who_or + '</label><input class="well" id="who-in" placeholder="' + T.name_ph + '" value="' + esc(state.author) + '"></div>'
+      + '<div class="actions"><button type="button" class="key gold" id="who-ok">' + T.continue_ + '</button></div>', sh => {
         const done = n => { n = String(n || '').trim(); if (!n) return; state.author = n; LS.set('bt_author', n); closeSheet(); renderWho(); };
         sh.querySelectorAll('.names button').forEach(b => b.addEventListener('click', () => done(b.dataset.n)));
         $('#who-ok', sh).addEventListener('click', () => done($('#who-in', sh).value));
         $('#who-in', sh).addEventListener('keydown', e => { if (e.key === 'Enter') done(e.target.value); });
       });
   }
-  function renderWho() { const b = $('#bt-who'); if (b) b.textContent = state.author ? ('👤 ' + state.author) : '👤 Hver ert þú?'; }
+  function renderWho() { const b = $('#bt-who'); if (b) b.textContent = state.author ? ('👤 ' + state.author) : T.who_btn; }
 
   // ── Verkstaðir ────────────────────────────────────────────────────────────
   const entriesFor = (kind, ws) => ((state.boot && state.boot.entries) || []).filter(e => e.kind === kind && (!ws || e.worksite_name === ws)).concat(pendingRows(kind).filter(e => e.work_month === state.month && (!ws || e.worksite_name === ws)));
@@ -292,21 +406,25 @@
     // verk sem bíða í biðröð (netið datt út) bætast við hér svo þau hverfi ekki af listanum.
     const wsList = (b.worksites || []).slice();
     for (const p of pendingRows('verk')) if (!wsList.some(w => w.name === p.worksite_name)) wsList.unshift({ name: p.worksite_name, hours: 0, days: 0, employees: [], tags: ['nytt'], note: p.note || '' });
-    const TAGG = { vika: ['🕒 í Tímaveru í vikunni', 'blue'], krofur: ['📑 í Kröfu yfirliti', 'gold'], nytt: ['🆕 nýtt verk', 'green'] };
+    // 02.11.2026 (Agnar: „call this í Tímaveru í þessum mánuði ekki viku"): Tímaveru-merkið sýnir hvort verkið hafi tíma í
+    // MÁNUÐINUM sem er opinn (w.hours kemur úr Tímaveru þess mánaðar) — „vika"-merkið (síðustu 7 dagar) raðar áfram á þjóninum
+    // en birtist ekki, því það var villandi þegar skoðaður var liðinn mánuður.
+    const TAGG = { krofur: [T.tag_krofur, 'gold'], nytt: [T.tag_nytt, 'green'] };
     const list = wsList.map(w => {
       const nE = entriesFor('efni', w.name).length, nP = entriesFor('punktur', w.name).length, nK = entriesFor('kostnadur', w.name).length;
       const rd = (b.redder || {})[w.name];
+      const chips = ((Number(w.hours) || 0) > 0 ? ['<span class="chip blue">' + T.tag_month + '</span>'] : []).concat((w.tags || []).filter(t => TAGG[t]).map(t => '<span class="chip ' + TAGG[t][1] + '">' + TAGG[t][0] + '</span>'));
       return '<div class="wsline" data-ws="' + esc(w.name) + '"><div style="flex:1;min-width:0"><div class="wsname">' + esc(w.name) + '</div>'
-        + ((w.tags || []).length ? '<div class="emps">' + w.tags.filter(t => TAGG[t]).map(t => '<span class="chip ' + TAGG[t][1] + '">' + TAGG[t][0] + '</span>').join('') + '</div>' : '')
+        + (chips.length ? '<div class="emps">' + chips.join('') + '</div>' : '')
         + (w.note ? '<div class="note" style="color:var(--ink-2);font-size:12.5px;margin-top:2px">' + esc(w.note) + '</div>' : '')
         + '<div class="emps">' + w.employees.slice(0, 6).map(e => '<span class="chip">' + esc(e.name) + ' <span class="num" style="font-weight:500;opacity:.7">' + hf(e.hours) + '</span></span>').join('') + (w.employees.length > 6 ? '<span class="chip">+' + (w.employees.length - 6) + '</span>' : '') + '</div>'
-        + '<div class="cnt"><span><b>' + hf(w.hours) + '</b> klst · ' + w.days + ' dagar</span>' + (rd ? '<span>Redder <b>' + fmt(rd.an_vsk) + '</b> kr</span>' : '') + (nE ? '<span>🧰 <b>' + nE + '</b> efni</span>' : '') + (nK ? '<span>💳 <b>' + nK + '</b> sérkaup</span>' : '') + (nP ?'<span>📝 <b>' + nP + '</b> punktar</span>' : '') + '</div></div><span class="arrow">›</span></div>';
+        + '<div class="cnt"><span><b>' + hf(w.hours) + '</b> ' + T.h + ' · ' + w.days + ' ' + T.days + '</span>' + (rd ? '<span>Redder <b>' + fmt(rd.an_vsk) + '</b> kr</span>' : '') + (nE ? '<span>🧰 <b>' + nE + '</b> ' + T.efni_n + '</span>' : '') + (nK ? '<span>💳 <b>' + nK + '</b> ' + T.serkaup_n + '</span>' : '') + (nP ?'<span>📝 <b>' + nP + '</b> ' + T.punktar_n + '</span>' : '') + '</div></div><span class="arrow">›</span></div>';
     }).join('');
     $('#bt-main').innerHTML = '<div class="monthbar"><button type="button" class="key sm" id="m-prev">‹</button><b>' + esc(monthLabel(state.month)) + '</b><button type="button" class="key sm" id="m-next">›</button></div>'
-      + '<div class="panel"><div class="panel-h" style="cursor:default"><span class="plate">01</span><span class="panel-t">Verk í vinnslu</span><span class="sum">' + wsList.length + ' verk</span></div>'
-      + (list || '<div class="empty">Engin verk á listanum — bættu við verki hér að neðan</div>') + '</div>'
-      + '<button type="button" class="key wide" id="verk-add">＋ Bæta við verki</button>'
-      + '<div class="kicker" style="text-align:center;margin-top:8px">Smelltu á verk til að skrá efni úr lager, sérkaup og punkta · listinn er verk úr Kröfu yfirliti og verk með tíma í Tímaveru síðustu viku</div>';
+      + '<div class="panel"><div class="panel-h" style="cursor:default"><span class="plate">01</span><span class="panel-t">' + T.jobs_h + '</span><span class="sum">' + T.jobs_n(wsList.length) + '</span></div>'
+      + (list || '<div class="empty">' + T.jobs_empty + '</div>') + '</div>'
+      + '<button type="button" class="key wide" id="verk-add">' + T.add_job + '</button>'
+      + '<div class="kicker" style="text-align:center;margin-top:8px">' + T.jobs_kicker + '</div>';
     $('#verk-add').onclick = openVerkSheet;
     $('#m-prev').onclick = () => { state.month = shiftYM(state.month, -1); LS.set('bt_month', state.month); go(); };
     $('#m-next').onclick = () => { state.month = shiftYM(state.month, 1); LS.set('bt_month', state.month); go(); };
@@ -314,20 +432,20 @@
   }
   function entryHtml(e, opts) {
     const o = opts || {};
-    const seen = e.status && e.status !== 'new' ? '<span class="chip green">👁 séð á skrifstofu</span>' : '';
-    const pend = e.pending ? '<span class="chip warn">⏳ bíður nets</span>' : '';
+    const seen = e.status && e.status !== 'new' ? '<span class="chip green">' + T.seen + '</span>' : '';
+    const pend = e.pending ? '<span class="chip warn">' + T.pending_net + '</span>' : '';
     let main = '';
-    if (e.kind === 'efni') main = '<b>' + esc(e.item_label) + '</b> <span class="num">× ' + hf(e.qty) + '</span> <span style="color:var(--muted)">' + esc(e.unit || '') + '</span>' + (e.note ? '<div class="note">' + esc(e.note) + '</div>' : '');
-    else if (e.kind === 'kostnadur') main = '<b>' + esc(e.item_label) + '</b>' + (e.category ? ' <span class="chip">' + esc(e.category) + '</span>' : '') + ' <span class="num">' + fmt((Number(e.qty) || 1) * (Number(e.unit_price) || 0)) + ' kr</span> <span style="color:var(--muted)">án vsk</span>' + (e.note ? '<div class="note">' + esc(e.note) + '</div>' : '');
-    else if (e.kind === 'maeting') main ='<b>' + esc(e.employee || '') + '</b> <span class="chip ' + (/veik/i.test(e.category || '') ? 'red' : 'warn') + '">' + esc(e.category || 'athugasemd') + '</span>' + (e.note ? '<div class="note">' + esc(e.note) + '</div>' : '');
-    else if (e.kind === 'beidni') main = '<span class="chip blue">' + esc(e.category || 'beiðni') + '</span>' + (e.worksite_name ? ' <span class="chip">' + esc(e.worksite_name) + '</span>' : '') + '<div class="note">' + esc(e.note || '') + '</div>';
+    if (e.kind === 'efni') main = '<b>' + esc(efniLabel(e.item_label)) + '</b> <span class="num">× ' + hf(e.qty) + '</span> <span style="color:var(--muted)">' + esc(unit(e.unit || '')) + '</span>' + (e.note ? '<div class="note">' + esc(e.note) + '</div>' : '');
+    else if (e.kind === 'kostnadur') main = '<b>' + esc(e.item_label) + '</b>' + (e.category ? ' <span class="chip">' + esc(cat(e.category)) + '</span>' : '') + ' <span class="num">' + fmt((Number(e.qty) || 1) * (Number(e.unit_price) || 0)) + ' kr</span> <span style="color:var(--muted)">' + T.ex_vat + '</span>' + (e.note ? '<div class="note">' + esc(e.note) + '</div>' : '');
+    else if (e.kind === 'maeting') main ='<b>' + esc(e.employee || '') + '</b> <span class="chip ' + (/veik/i.test(e.category || '') ? 'red' : 'warn') + '">' + esc(cat(e.category) || T.comment) + '</span>' + (e.note ? '<div class="note">' + esc(e.note) + '</div>' : '');
+    else if (e.kind === 'beidni') main = '<span class="chip blue">' + esc(cat(e.category) || T.request) + '</span>' + (e.worksite_name ? ' <span class="chip">' + esc(e.worksite_name) + '</span>' : '') + '<div class="note">' + esc(e.note || '') + '</div>';
     else main = '<div class="note">' + esc(e.note || '') + '</div>';
-    return '<div class="entry' + (e.pending ? ' pending' : '') + '" data-id="' + esc(e.id) + '"><div class="t">' + main + '<div class="meta"><span>' + esc(dmy(e.entry_date)) + (e.updated_at || e.created_at ? ' ' + hhmm(e.updated_at || e.created_at) : '') + '</span><span>' + esc(e.author || '') + '</span>' + seen + pend + '</div></div>' + (o.noDelete || e.pending ? '' : '<button type="button" class="x" data-del="' + esc(e.id) + '" title="Eyða">×</button>') + '</div>';
+    return '<div class="entry' + (e.pending ? ' pending' : '') + '" data-id="' + esc(e.id) + '"><div class="t">' + main + '<div class="meta"><span>' + esc(dmy(e.entry_date)) + (e.updated_at || e.created_at ? ' ' + hhmm(e.updated_at || e.created_at) : '') + '</span><span>' + esc(e.author || '') + '</span>' + seen + pend + '</div></div>' + (o.noDelete || e.pending ? '' : '<button type="button" class="x" data-del="' + esc(e.id) + '" title="' + T.del + '">×</button>') + '</div>';
   }
   function wireDeletes(root, after) {
     root.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', async () => {
-      if (!confirm('Eyða þessari skráningu?')) return;
-      try { await POST({ action: 'delete', id: Number(b.dataset.del) }); toast('Eytt'); await after(); } catch (e) { toast('✗ ' + e.message); }
+      if (!confirm(T.del_q)) return;
+      try { await POST({ action: 'delete', id: Number(b.dataset.del) }); toast(T.deleted); await after(); } catch (e) { toast('✗ ' + e.message); }
     }));
   }
   function renderWsDetail() {
@@ -337,24 +455,24 @@
     const efni = entriesFor('efni', name), punktar = entriesFor('punktur', name), kostn = entriesFor('kostnadur', name);
     const efniSum = efni.reduce((s, e) => s + (Number(e.qty) || 0) * (Number(e.unit_price) || 0), 0);
     const kostnSum = kostn.reduce((s, e) => s + (Number(e.qty) || 1) * (Number(e.unit_price) || 0), 0);
-    // 02.11.2026 (Agnar: „þyrfti að geta skipt á milli mánaða … erum að fara klára október“): mánaðaskipti líka inni á verkinu,
+    // 02.11.2026 (Agnar: „þyrfti að geta skipt á milli mánaða … erum að fara klára október"): mánaðaskipti líka inni á verkinu,
     // ekki bara á listanum. Verkið helst opið (state.ws) — go() sækir boot fyrir nýja mánuðinn og teiknar sömu sýn.
-    $('#bt-main').innerHTML = '<div class="monthbar wsbar"><button type="button" class="back" id="ws-back">‹ Verkstaðir</button><button type="button" class="key sm" id="m-prev" title="Fyrri mánuður">‹</button><b>' + esc(monthLabel(state.month)) + '</b><button type="button" class="key sm" id="m-next" title="Næsti mánuður">›</button></div>'
-      + '<div class="hero"><h2>' + esc(name) + '</h2><span class="sub">' + hf(w.hours) + ' klst · ' + w.days + ' dagar · ' + w.employees.length + ' starfsm.</span></div>'
-      + '<div class="panel collapsed" id="p-redder"><div class="panel-h"><span class="plate">02</span><span class="panel-t">Redder innkaup</span><span class="sum">' + fmt(rd.an_vsk) + ' kr</span><span class="caret">›</span></div><div class="panel-b">'
-      + (rd.lines.length ? rd.lines.map(l => '<div class="rline' + (l.excluded ? ' ex' : '') + '"><span>' + esc(l.label) + '</span><span class="num">× ' + hf(l.qty) + '</span><span class="num" style="color:var(--muted)">' + fmt(l.cost) + ' kr</span></div>').join('') + '<div class="kicker" style="margin-top:8px">án vsk · yfirstrikað = ekki á reikning verkkaupa</div>' : '<div class="empty">Engir Redder-reikningar á þennan verkstað í mánuðinum</div>')
+    $('#bt-main').innerHTML = '<div class="monthbar wsbar"><button type="button" class="back" id="ws-back">' + T.back_ws + '</button><button type="button" class="key sm" id="m-prev" title="' + T.prev_m + '">‹</button><b>' + esc(monthLabel(state.month)) + '</b><button type="button" class="key sm" id="m-next" title="' + T.next_m + '">›</button></div>'
+      + '<div class="hero"><h2>' + esc(name) + '</h2><span class="sub">' + hf(w.hours) + ' ' + T.h + ' · ' + w.days + ' ' + T.days + ' · ' + w.employees.length + ' ' + T.staff_n + '</span></div>'
+      + '<div class="panel collapsed" id="p-redder"><div class="panel-h"><span class="plate">02</span><span class="panel-t">' + T.redder_h + '</span><span class="sum">' + fmt(rd.an_vsk) + ' kr</span><span class="caret">›</span></div><div class="panel-b">'
+      + (rd.lines.length ? rd.lines.map(l => '<div class="rline' + (l.excluded ? ' ex' : '') + '"><span>' + esc(l.label) + '</span><span class="num">× ' + hf(l.qty) + '</span><span class="num" style="color:var(--muted)">' + fmt(l.cost) + ' kr</span></div>').join('') + '<div class="kicker" style="margin-top:8px">' + T.redder_kicker + '</div>' : '<div class="empty">' + T.redder_empty + '</div>')
       + '</div></div>'
-      + '<div class="panel"><div class="panel-h" style="cursor:default"><span class="plate">03</span><span class="panel-t">Efni úr lager</span><span class="sum">' + (efniSum ? fmt(efniSum) + ' kr' : '—') + '</span></div><div class="panel-b">'
-      + '<div class="kicker" style="text-transform:none;letter-spacing:0;font-family:inherit;font-size:12px;margin-bottom:2px">Pikkaðu á ＋ fyrir það sem var notað (eða skrifaðu töluna). Fer á reikning verkkaupa á söluverði Verðskrár.</div>'
+      + '<div class="panel"><div class="panel-h" style="cursor:default"><span class="plate">03</span><span class="panel-t">' + T.stock_h + '</span><span class="sum">' + (efniSum ? fmt(efniSum) + ' kr' : '—') + '</span></div><div class="panel-b">'
+      + '<div class="kicker" style="text-transform:none;letter-spacing:0;font-family:inherit;font-size:12px;margin-bottom:2px">' + T.stock_kicker + '</div>'
       + efniCounters(name)
-      + '<details class="skr"><summary>Skráningar (' + efni.length + ') — hver skráði og hvenær</summary><div id="efni-list">' + (efni.length ? efni.slice().sort((a, b) => String(b.updated_at || b.created_at || 'z').localeCompare(String(a.updated_at || a.created_at || 'z'))).map(e => entryHtml(e)).join('') : '<div class="empty">Ekkert skráð enn</div>') + '</div></details></div></div>'
-      + '<div class="panel"><div class="panel-h" style="cursor:default"><span class="plate">04</span><span class="panel-t">Sérkaup</span><span class="sum">' + (kostn.length ? kostn.length + ' · ' + fmt(kostnSum) + ' kr' : '—') + '</span></div><div class="panel-b">'
-      + '<div class="kicker" style="text-transform:none;letter-spacing:0;font-family:inherit;font-size:12px">' + (EININGAVERK.test(name) ? 'Efni sem var keypt sérstaklega. Verk á einingaverði — skráð til yfirlits fyrir skrifstofuna og fer ekki á reikning verkkaupa.' : 'Efni sem var keypt sérstaklega og er ekki í listanum hér að ofan. Fer í Efnislista verkstaðarins á kostnaðarverði án vsk — skrifstofan bætir við álagi.') + '</div>'
-      + '<div id="kostn-list">' + (kostn.length ? kostn.map(e => entryHtml(e)).join('') : '<div class="empty">Ekkert skráð enn — skrúfur, plötur o.fl. sem var keypt í verslun</div>') + '</div>'
-      + '<button type="button" class="key gold wide" id="kostn-add" style="margin-top:10px">＋ Bæta við sérkaupum</button></div></div>'
-      + '<div class="panel"><div class="panel-h" style="cursor:default"><span class="plate">05</span><span class="panel-t">Punktar úr verkinu</span><span class="sum">' + (punktar.length || '—') + '</span></div><div class="panel-b">'
-      + '<div class="f"><textarea class="well" id="punktur-in" placeholder="Lýsing á því sem var gert, hvar, sérstök atriði, það sem skrifstofan þarf að vita…"></textarea></div>'
-      + '<button type="button" class="key wide" id="punktur-save">📝 Vista punkt</button>'
+      + '<details class="skr"><summary>' + T.entries_sum(efni.length) + '</summary><div id="efni-list">' + (efni.length ? efni.slice().sort((a, b) => String(b.updated_at || b.created_at || 'z').localeCompare(String(a.updated_at || a.created_at || 'z'))).map(e => entryHtml(e)).join('') : '<div class="empty">' + T.none_yet + '</div>') + '</div></details></div></div>'
+      + '<div class="panel"><div class="panel-h" style="cursor:default"><span class="plate">04</span><span class="panel-t">' + T.purch_h + '</span><span class="sum">' + (kostn.length ? kostn.length + ' · ' + fmt(kostnSum) + ' kr' : '—') + '</span></div><div class="panel-b">'
+      + '<div class="kicker" style="text-transform:none;letter-spacing:0;font-family:inherit;font-size:12px">' + (EININGAVERK.test(name) ? T.purch_kicker_unit : T.purch_kicker) + '</div>'
+      + '<div id="kostn-list">' + (kostn.length ? kostn.map(e => entryHtml(e)).join('') : '<div class="empty">' + T.purch_empty + '</div>') + '</div>'
+      + '<button type="button" class="key gold wide" id="kostn-add" style="margin-top:10px">' + T.purch_add + '</button></div></div>'
+      + '<div class="panel"><div class="panel-h" style="cursor:default"><span class="plate">05</span><span class="panel-t">' + T.notes_h + '</span><span class="sum">' + (punktar.length || '—') + '</span></div><div class="panel-b">'
+      + '<div class="f"><textarea class="well" id="punktur-in" placeholder="' + esc(T.notes_ph) + '"></textarea></div>'
+      + '<button type="button" class="key wide" id="punktur-save">' + T.note_save + '</button>'
       + '<div id="punktar-list" style="margin-top:10px">' + punktar.map(e => entryHtml(e)).join('') + '</div></div></div>';
     $('#ws-back').onclick = () => { state.ws = null; render(); };
     $('#m-prev').onclick = () => { state.month = shiftYM(state.month, -1); LS.set('bt_month', state.month); go(); };
@@ -370,10 +488,10 @@
       inp.addEventListener('change', () => { const v = Number(String(inp.value).replace(',', '.')); if (!Number.isFinite(v) || v < 0) { renderWsDetail(); return; } adjustEfni(name, item, r2(v - efniQty(name, item.label))); });
     });
     $('#punktur-save').onclick = async () => {
-      const ta = $('#punktur-in'); const note = ta.value.trim(); if (!note) { toast('Skrifaðu punktinn fyrst'); return; }
+      const ta = $('#punktur-in'); const note = ta.value.trim(); if (!note) { toast(T.note_first); return; }
       $('#punktur-save').disabled = true;
       const row = await save({ kind: 'punktur', worksite_name: name, work_month: state.month, entry_date: today(), note });
-      if (row) { ta.value = ''; if (!row.pending) state.boot.entries.unshift(row); toast(row.pending ? 'Í biðröð' : '✓ Punktur vistaður'); }
+      if (row) { ta.value = ''; if (!row.pending) state.boot.entries.unshift(row); toast(row.pending ? T.queued : T.note_saved); }
       render();
     };
     wireDeletes($('#bt-main'), async () => { await loadBoot(true); render(); });
@@ -381,22 +499,22 @@
   // Bæta við verki: verkstjóri sem er fyrstur á staðinn að taka út verkið (ekki enn í Tímaveru/Kröfu yfirliti) skráir það hér.
   const normWs = s => String(s || '').toLowerCase().replace(/[^a-z0-9áðéíóúýþæö]/g, '');
   function openVerkSheet() {
-    openSheet('<h2>Bæta við verki</h2><div class="sub">Ertu fyrstur á staðinn að taka út verkið? Þá birtist það hér hjá öllum og skrifstofan sér það.</div>'
-      + '<div class="f"><label>Heiti verks / staður</label><input class="well" id="v-name" placeholder="t.d. Suðurlandsbraut 14 — 2. hæð" autocomplete="off"></div>'
-      + '<div class="f"><label>Athugasemd (valfrjálst)</label><input class="well" id="v-note" placeholder="t.d. verkkaupi, tengiliður, hvað á að gera" autocomplete="off"></div>'
-      + '<div class="actions"><button type="button" class="key" id="v-cancel">Hætta við</button><button type="button" class="key gold" id="v-ok">💾 Bæta við</button></div>', sh => {
+    openSheet('<h2>' + T.addjob_h + '</h2><div class="sub">' + T.addjob_sub + '</div>'
+      + '<div class="f"><label>' + T.addjob_name + '</label><input class="well" id="v-name" placeholder="' + esc(T.addjob_name_ph) + '" autocomplete="off"></div>'
+      + '<div class="f"><label>' + T.comment_opt + '</label><input class="well" id="v-note" placeholder="' + esc(T.addjob_note_ph) + '" autocomplete="off"></div>'
+      + '<div class="actions"><button type="button" class="key" id="v-cancel">' + T.cancel + '</button><button type="button" class="key gold" id="v-ok">' + T.add + '</button></div>', sh => {
         $('#v-cancel', sh).onclick = closeSheet;
         $('#v-ok', sh).onclick = async () => {
           const name = $('#v-name', sh).value.replace(/\s+/g, ' ').trim(), note = $('#v-note', sh).value.trim();
-          if (name.length < 3) { toast('Skrifaðu heiti á verkinu'); return; }
+          if (name.length < 3) { toast(T.addjob_need); return; }
           const dup = ((state.boot && state.boot.worksites) || []).find(w => normWs(w.name) === normWs(name));
-          if (dup) { closeSheet(); toast('Verkið er þegar á listanum'); state.ws = dup.name; render(); window.scrollTo(0, 0); return; }
+          if (dup) { closeSheet(); toast(T.addjob_dup); state.ws = dup.name; render(); window.scrollTo(0, 0); return; }
           $('#v-ok', sh).disabled = true;
           const row = await save({ kind: 'verk', worksite_name: name, work_month: state.month, entry_date: today(), note });
           closeSheet();
           if (!row) { render(); return; }
           if (!row.pending) await loadBoot(true);
-          toast(row.pending ? 'Í biðröð — sendist sjálfkrafa' : '✓ Verki bætt við');
+          toast(row.pending ? T.queued_auto : T.job_added);
           state.ws = name; render(); window.scrollTo(0, 0);
         };
       });
@@ -406,9 +524,11 @@
   // Talan sem sést er samtala mánaðarins á verkstaðnum (allir starfsmenn). ＋ bætir við eigin færslu dagsins (ein röð per
   // atriði/dag/starfsmann, ekki röð á hvern smell); − tekur af eigin færslu dagsins og svo þeirri nýjustu. Sýnileg tala
   // breytist STRAX (state.opt) og vistast í réttri röð í bakgrunni; netið dettur út → ＋ fer í biðröð eins og áður.
+  // Efnisheitið sem vistast (item_label) er ALLTAF íslenska `label` úr Verðskránni; `en` er aðeins birting.
   const r2 = n => Math.round(n * 100) / 100;
   const efniGroups = () => (state.boot && state.boot.materials) || window.GR_MATERIALS || [];
   const efniItem = label => { for (const g of efniGroups()) { const it = g.items.find(x => x.label === label); if (it) return it; } return null; };
+  const efniLabel = label => { const it = EN ? efniItem(label) : null; return it && it.en ? it.en : label; };
   const efniQty = (ws, label) => r2(entriesFor('efni', ws).filter(e => e.item_label === label).reduce((s, e) => s + (Number(e.qty) || 0), 0) + (state.opt[ws + '|' + label] || 0));
   function efniCounters(ws) {
     const groups = efniGroups();
@@ -416,9 +536,9 @@
       const marked = g.items.filter(it => efniQty(ws, it.label) > 0).length;
       const open = state.openSec[g.section] != null ? state.openSec[g.section] : (gi === 0 || marked > 0);
       const rows = g.items.map(it => { const n = efniQty(ws, it.label);
-        return '<div class="ctr' + (n > 0 ? ' on' : '') + '" data-l="' + esc(it.label) + '"><div class="nm">' + esc(it.label) + '<small>' + fmt(it.price) + ' kr/' + esc(it.unit) + '</small></div>'
-          + '<div class="step"><button type="button" class="key" data-d="-1" aria-label="Draga frá">−</button><input class="well" inputmode="decimal" data-in value="' + n + '" aria-label="Magn"><button type="button" class="key" data-d="1" aria-label="Bæta við">＋</button></div></div>'; }).join('');
-      return '<div class="sec' + (open ? '' : ' collapsed') + '" data-sec="' + esc(g.section) + '"><div class="sec-h"><span>' + esc(g.section) + '</span>' + (marked ? '<span class="chip gold">' + marked + ' skráð</span>' : '') + '<span class="caret">›</span></div><div class="sec-b">' + rows + '</div></div>';
+        return '<div class="ctr' + (n > 0 ? ' on' : '') + '" data-l="' + esc(it.label) + '"><div class="nm">' + esc(EN && it.en ? it.en : it.label) + '<small>' + fmt(it.price) + ' kr/' + esc(unit(it.unit)) + '</small></div>'
+          + '<div class="step"><button type="button" class="key" data-d="-1" aria-label="' + T.minus + '">−</button><input class="well" inputmode="decimal" data-in value="' + n + '" aria-label="' + T.qty + '"><button type="button" class="key" data-d="1" aria-label="' + T.plus + '">＋</button></div></div>'; }).join('');
+      return '<div class="sec' + (open ? '' : ' collapsed') + '" data-sec="' + esc(g.section) + '"><div class="sec-h"><span>' + esc(EN && g.en ? g.en : g.section) + '</span>' + (marked ? '<span class="chip gold">' + T.marked_n(marked) + '</span>' : '') + '<span class="caret">›</span></div><div class="sec-b">' + rows + '</div></div>';
     }).join('');
   }
   const efniChain = {};
@@ -429,7 +549,7 @@
     if (!delta) { renderWsDetail(); return; }
     state.opt[key] = r2((state.opt[key] || 0) + delta);
     renderWsDetail();
-    efniChain[key] = (efniChain[key] || Promise.resolve()).then(() => applyEfni(ws, item, delta)).catch(e => toast('✗ ' + (e && e.message || 'villa')))
+    efniChain[key] = (efniChain[key] || Promise.resolve()).then(() => applyEfni(ws, item, delta)).catch(e => toast('✗ ' + (e && e.message || T.error)))
       .then(() => { state.opt[key] = r2((state.opt[key] || 0) - delta); if (state.ws === ws) renderWsDetail(); });
   }
   async function applyEfni(ws, item, delta) {
@@ -454,39 +574,39 @@
         if (nq <= 0.001) { await POST({ action: 'delete', id: e.id }); state.boot.entries = state.boot.entries.filter(x => x !== e); }
         else { const j = await POST({ action: 'update', id: e.id, qty: nq }); e.qty = j.row ? Number(j.row.qty) : nq; }
         left = r2(left - take);
-      } catch (err) { toast(err.status ? '✗ ' + err.message : 'Net vantar — dragðu frá aftur þegar netið kemur'); return; }
+      } catch (err) { toast(err.status ? '✗ ' + err.message : T.net_sub_later); return; }
     }
-    if (left > 0.001) toast('Þetta er enn í biðröð — dragðu frá þegar netið er komið');
+    if (left > 0.001) toast(T.still_queued);
   }
 
   // Efniskostnaður: verkstjóri skráir hvað hann keypti, hvar og upphæð á kvittun. Vistað ÁN vsk (kvittun með vsk ÷ 1,24) svo
-  // upphæðin passi við Efnislistann; kvittunarupphæðin er geymd í athugasemd.
+  // upphæðin passi við Efnislistann; kvittunarupphæðin er geymd í athugasemd (á íslensku — skrifstofan les hana).
   function parseAmount(v) { const s = String(v == null ? '' : v).trim().replace(/\s/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.'); const n = Number(s); return s !== '' && Number.isFinite(n) && n > 0 ? n : 0; }
   function openKostnadSheet(ws) {
     let selj = '', medVsk = true;
-    openSheet('<h2>Sérkaup</h2><div class="sub">' + esc(ws) + ' · ' + esc(monthLabel(state.month)) + (EININGAVERK.test(ws) ? ' · verk á einingaverði — aðeins til yfirlits' : ' · fer í Efnislistann á kostnaðarverði') + '</div>'
-      + '<div class="f"><label>Hvað var keypt?</label><input class="well" id="k-what" placeholder="t.d. skrúfur og múrfestingar, 3. hæð" autocomplete="off"></div>'
-      + '<div class="f"><label>Hvar?</label>' + chipsHtml('selj', SELJENDUR, '') + '</div>'
-      + '<div class="f"><label>Upphæð á kvittun (kr)</label><input class="well" id="k-amt" inputmode="decimal" placeholder="0" autocomplete="off"></div>'
-      + '<div class="f"><label>Upphæðin er</label>' + chipsHtml('vsk', ['Með vsk', 'Án vsk'], 'Með vsk') + '<div class="sub" id="k-prev" style="margin:4px 0 0"></div></div>'
-      + '<div class="f"><label>Athugasemd (valfrjálst)</label><input class="well" id="k-note" placeholder="t.d. kvittunarnúmer" autocomplete="off"></div>'
-      + '<div class="actions"><button type="button" class="key" id="k-cancel">Hætta við</button><button type="button" class="key gold" id="k-ok">💾 Vista strax</button></div>', sh => {
+    openSheet('<h2>' + T.purch_sheet_h + '</h2><div class="sub">' + esc(ws) + ' · ' + esc(monthLabel(state.month)) + (EININGAVERK.test(ws) ? T.purch_sub_unit : T.purch_sub) + '</div>'
+      + '<div class="f"><label>' + T.what_bought + '</label><input class="well" id="k-what" placeholder="' + esc(T.what_ph) + '" autocomplete="off"></div>'
+      + '<div class="f"><label>' + T.where + '</label>' + chipsHtml('selj', SELJENDUR, '') + '</div>'
+      + '<div class="f"><label>' + T.amount + '</label><input class="well" id="k-amt" inputmode="decimal" placeholder="0" autocomplete="off"></div>'
+      + '<div class="f"><label>' + T.amount_is + '</label>' + chipsHtml('vsk', ['Með vsk', 'Án vsk'], 'Með vsk') + '<div class="sub" id="k-prev" style="margin:4px 0 0"></div></div>'
+      + '<div class="f"><label>' + T.comment_opt + '</label><input class="well" id="k-note" placeholder="' + esc(T.note_ph_receipt) + '" autocomplete="off"></div>'
+      + '<div class="actions"><button type="button" class="key" id="k-cancel">' + T.cancel + '</button><button type="button" class="key gold" id="k-ok">' + T.save_now + '</button></div>', sh => {
         const amtEl = $('#k-amt', sh);
         const anVsk = () => { const g = parseAmount(amtEl.value); return g ? Math.round(medVsk ? g / VSK : g) : 0; };
-        const prev = () => { const g = parseAmount(amtEl.value); $('#k-prev', sh).textContent = g ? ('Skráist ' + fmt(anVsk()) + ' kr án vsk' + (medVsk ? ' (kvittun ' + fmt(g) + ' kr með 24% vsk)' : '')) : ''; };
+        const prev = () => { const g = parseAmount(amtEl.value); $('#k-prev', sh).textContent = g ? T.prev_amt(fmt(anVsk()), fmt(g), medVsk) : ''; };
         wireChips(sh, 'selj', v => { selj = v; });
         wireChips(sh, 'vsk', v => { medVsk = v === 'Með vsk'; prev(); });
         amtEl.addEventListener('input', prev);
         $('#k-cancel', sh).onclick = closeSheet;
         $('#k-ok', sh).onclick = async () => {
           const what = $('#k-what', sh).value.trim(), g = parseAmount(amtEl.value), net = anVsk();
-          if (what.length < 2) { toast('Skrifaðu hvað var keypt'); return; }
-          if (!g || !net) { toast('Upphæð vantar'); return; }
-          const note = [$('#k-note', sh).value.trim(), medVsk ? 'kvittun m. vsk ' + fmt(g) + ' kr' : ''].filter(Boolean).join(' · ');
+          if (what.length < 2) { toast(T.what_need); return; }
+          if (!g || !net) { toast(T.amount_need); return; }
+          const note = [$('#k-note', sh).value.trim(), medVsk ? 'kvittun m. vsk ' + Math.round(g).toLocaleString('is-IS') + ' kr' : ''].filter(Boolean).join(' · ');
           $('#k-ok', sh).disabled = true;
           const row = await save({ kind: 'kostnadur', worksite_name: ws, work_month: state.month, entry_date: today(), item_label: what, qty: 1, unit: 'kaup', unit_price: net, category: selj, note });
           closeSheet();
-          if (row) { if (!row.pending) state.boot.entries.unshift(row); toast(row.pending ? 'Í biðröð — sendist sjálfkrafa' : '✓ ' + what + ' · ' + fmt(net) + ' kr án vsk vistað'); }
+          if (row) { if (!row.pending) state.boot.entries.unshift(row); toast(row.pending ? T.queued_auto : T.purch_saved(what, fmt(net))); }
           render();
         };
       });
@@ -501,45 +621,45 @@
       const known = new Set(day.staff.map(s => String(s.employee).toLowerCase()));
       const extra = all.filter(e => e.entry_date === day.date && !known.has(String(e.employee || '').toLowerCase()));
       const extraNames = [...new Set(extra.map(e => e.employee))];
-      return '<div class="panel"><div class="dayhead"><b>' + esc(dayLbl(day.date)) + '</b><span class="sum">' + day.staff.length + ' starfsm. · ' + hf(day.total_hours) + ' klst</span></div>'
+      return '<div class="panel"><div class="dayhead"><b>' + esc(dayLbl(day.date)) + '</b><span class="sum">' + day.staff.length + ' ' + T.staff_n + ' · ' + hf(day.total_hours) + ' ' + T.h + '</span></div>'
         + day.staff.map(s => staffRow(day.date, s, byKey[day.date + '|' + String(s.employee).toLowerCase()] || [])).join('')
         + extraNames.map(n => staffRow(day.date, { employee: n, in: '', out: '', hours: 0, projects: [], absent: true }, byKey[day.date + '|' + String(n).toLowerCase()] || [])).join('')
-        + '<div class="staff" style="justify-content:center"><button type="button" class="key sm" data-addemp="' + esc(day.date) + '">＋ Starfsmaður sem mætti ekki / annað</button></div></div>';
+        + '<div class="staff" style="justify-content:center"><button type="button" class="key sm" data-addemp="' + esc(day.date) + '">' + T.add_emp + '</button></div></div>';
     }).join('');
-    $('#bt-main').innerHTML = '<div class="hero"><h2>Mæting · verkstaðir</h2><span class="sub">síðustu 8 dagar · beint úr Tímaveru</span></div>'
-      + (html || '<div class="empty">Engar tímafærslur síðustu daga</div>')
-      + '<div class="kicker" style="text-align:center;margin-top:6px">💬 = athugasemd við starfsmann (veikur, seint, fjarverandi …) — sést strax á skrifstofunni</div>';
+    $('#bt-main').innerHTML = '<div class="hero"><h2>' + T.att_h + '</h2><span class="sub">' + T.att_sub + '</span></div>'
+      + (html || '<div class="empty">' + T.att_empty + '</div>')
+      + '<div class="kicker" style="text-align:center;margin-top:6px">' + T.att_kicker + '</div>';
     document.querySelectorAll('[data-cm]').forEach(b => b.addEventListener('click', () => openMaetingSheet(b.dataset.date, b.dataset.cm)));
     document.querySelectorAll('[data-addemp]').forEach(b => b.addEventListener('click', () => openMaetingSheet(b.dataset.addemp, '')));
     wireDeletes($('#bt-main'), async () => { await loadMaeting(true); render(); });
   }
   function staffRow(date, s, cmts) {
     return '<div class="staff"><span class="nm">' + esc(s.employee) + '</span>'
-      + (s.absent ? '<span class="chip red">ekki í Tímaveru</span>' : '<span class="tm"><span class="in">' + esc(s.in || '—') + '</span> → ' + (s.open ? '<span class="in">í vinnu</span>' : '<span class="out">' + esc(s.out || '—') + '</span>') + ' · ' + hf(s.hours) + ' klst' + (s.open ? ' hingað til' : '') + '</span>')
-      + '<button type="button" class="cm" data-cm="' + esc(s.employee) + '" data-date="' + esc(date) + '" title="Athugasemd">💬</button>'
+      + (s.absent ? '<span class="chip red">' + T.not_in_tv + '</span>' : '<span class="tm"><span class="in">' + esc(s.in || '—') + '</span> → ' + (s.open ? '<span class="in">' + T.working + '</span>' : '<span class="out">' + esc(s.out || '—') + '</span>') + ' · ' + hf(s.hours) + ' ' + T.h + (s.open ? ' ' + T.so_far : '') + '</span>')
+      + '<button type="button" class="cm" data-cm="' + esc(s.employee) + '" data-date="' + esc(date) + '" title="' + T.comment_title + '">💬</button>'
       + (s.projects && s.projects.length ? '<span class="proj">' + s.projects.map(p => '<span class="chip">' + esc(p.project) + ' <span style="opacity:.65">' + hf(p.hours) + '</span></span>').join('') + '</span>' : '')
-      + (cmts.length ? '<span class="cmts">' + cmts.map(e => '<span class="chip ' + (/veik/i.test(e.category || '') ? 'red' : 'warn') + '">' + esc(e.category || 'athugasemd') + (e.note ? ': ' + esc(e.note) : '') + ' <span style="opacity:.6">· ' + esc(e.author || '') + '</span>' + (e.pending ? ' ⏳' : '') + '</span>' + (e.pending ? '' : '<button type="button" class="x" data-del="' + esc(e.id) + '" title="Eyða" style="border:0;background:transparent;color:var(--muted);cursor:pointer">×</button>')).join('') + '</span>' : '')
+      + (cmts.length ? '<span class="cmts">' + cmts.map(e => '<span class="chip ' + (/veik/i.test(e.category || '') ? 'red' : 'warn') + '">' + esc(cat(e.category) || T.comment) + (e.note ? ': ' + esc(e.note) : '') + ' <span style="opacity:.6">· ' + esc(e.author || '') + '</span>' + (e.pending ? ' ⏳' : '') + '</span>' + (e.pending ? '' : '<button type="button" class="x" data-del="' + esc(e.id) + '" title="' + T.del + '" style="border:0;background:transparent;color:var(--muted);cursor:pointer">×</button>')).join('') + '</span>' : '')
       + '</div>';
   }
   function openMaetingSheet(date, employee) {
     const names = (state.boot && state.boot.names) || [];
-    let cat = '';
-    openSheet('<h2>Athugasemd · ' + esc(dayLbl(date)) + '</h2>'
-      + (employee ? '<div class="sub">Starfsmaður: <b style="text-transform:capitalize">' + esc(employee) + '</b></div>' : '<div class="f"><label>Starfsmaður</label>' + (names.length ? '<select class="well" id="m-emp"><option value="">— veldu —</option>' + names.map(n => '<option>' + esc(n) + '</option>').join('') + '<option value="__annad">Annað nafn…</option></select><input class="well" id="m-emp2" placeholder="nafn" style="margin-top:6px;display:none">' : '<input class="well" id="m-emp2" placeholder="nafn">') + '</div>')
-      + '<div class="f"><label>Hvað</label>' + chipsHtml('cat', CAT_MAETING, '') + '</div>'
-      + '<div class="f"><label>Nánar (valfrjálst)</label><input class="well" id="m-note" placeholder="t.d. hringdi kl. 7, kemur á morgun"></div>'
-      + '<div class="actions"><button type="button" class="key" id="m-cancel">Hætta við</button><button type="button" class="key gold" id="m-ok">💾 Vista strax</button></div>', sh => {
-        wireChips(sh, 'cat', v => { cat = v; });
+    let cat_ = '';
+    openSheet('<h2>' + T.att_sheet_h + esc(dayLbl(date)) + '</h2>'
+      + (employee ? '<div class="sub">' + T.employee + ': <b style="text-transform:capitalize">' + esc(employee) + '</b></div>' : '<div class="f"><label>' + T.employee + '</label>' + (names.length ? '<select class="well" id="m-emp"><option value="">' + T.select_ + '</option>' + names.map(n => '<option>' + esc(n) + '</option>').join('') + '<option value="__annad">' + T.other_name + '</option></select><input class="well" id="m-emp2" placeholder="' + T.name_ph + '" style="margin-top:6px;display:none">' : '<input class="well" id="m-emp2" placeholder="' + T.name_ph + '">') + '</div>')
+      + '<div class="f"><label>' + T.what + '</label>' + chipsHtml('cat', CAT_MAETING, '') + '</div>'
+      + '<div class="f"><label>' + T.details_opt + '</label><input class="well" id="m-note" placeholder="' + esc(T.att_note_ph) + '"></div>'
+      + '<div class="actions"><button type="button" class="key" id="m-cancel">' + T.cancel + '</button><button type="button" class="key gold" id="m-ok">' + T.save_now + '</button></div>', sh => {
+        wireChips(sh, 'cat', v => { cat_ = v; });
         const sel = $('#m-emp', sh); if (sel) sel.addEventListener('change', () => { $('#m-emp2', sh).style.display = sel.value === '__annad' ? '' : 'none'; });
         $('#m-cancel', sh).onclick = closeSheet;
         $('#m-ok', sh).onclick = async () => {
           let emp = employee; if (!emp) { const v = sel ? sel.value : ''; emp = (v && v !== '__annad') ? v : ($('#m-emp2', sh).value || '').trim(); }
-          if (!emp) { toast('Veldu starfsmann'); return; }
-          if (!cat) { toast('Veldu hvað (veikur, seint …)'); return; }
+          if (!emp) { toast(T.pick_emp); return; }
+          if (!cat_) { toast(T.pick_what); return; }
           $('#m-ok', sh).disabled = true;
-          const row = await save({ kind: 'maeting', entry_date: date, work_month: date.slice(0, 7), employee: emp, category: cat, note: $('#m-note', sh).value.trim() });
+          const row = await save({ kind: 'maeting', entry_date: date, work_month: date.slice(0, 7), employee: emp, category: cat_, note: $('#m-note', sh).value.trim() });
           closeSheet();
-          if (row) { if (!row.pending) state.maetingEntries.unshift(row); toast(row.pending ? 'Í biðröð' : '✓ ' + emp + ': ' + cat); }
+          if (row) { if (!row.pending) state.maetingEntries.unshift(row); toast(row.pending ? T.queued : '✓ ' + emp + ': ' + cat(cat_)); }
           render();
         };
       });
@@ -548,29 +668,29 @@
   // ── Beiðnir ───────────────────────────────────────────────────────────────
   function renderBeidnir() {
     const rows = (state.beidnir || []).concat(pendingRows('beidni'));
-    $('#bt-main').innerHTML = '<div class="hero"><h2>Beiðnir til skrifstofu</h2><span class="sub">teikningar · efni · verkfæri · annað</span></div>'
-      + '<button type="button" class="key gold wide" id="b-add">＋ Ný beiðni</button>'
-      + '<div class="panel" style="margin-top:10px"><div class="panel-h" style="cursor:default"><span class="plate">05</span><span class="panel-t">Sendar beiðnir</span><span class="sum">' + rows.length + '</span></div><div class="panel-b">' + (rows.length ? rows.map(e => entryHtml(e)).join('') : '<div class="empty">Engar beiðnir enn</div>') + '</div></div>';
+    $('#bt-main').innerHTML = '<div class="hero"><h2>' + T.req_h + '</h2><span class="sub">' + T.req_sub + '</span></div>'
+      + '<button type="button" class="key gold wide" id="b-add">' + T.req_new + '</button>'
+      + '<div class="panel" style="margin-top:10px"><div class="panel-h" style="cursor:default"><span class="plate">05</span><span class="panel-t">' + T.req_sent_h + '</span><span class="sum">' + rows.length + '</span></div><div class="panel-b">' + (rows.length ? rows.map(e => entryHtml(e)).join('') : '<div class="empty">' + T.req_empty + '</div>') + '</div></div>';
     $('#b-add').onclick = openBeidniSheet;
     wireDeletes($('#bt-main'), async () => { await loadBeidnir(true); render(); });
   }
   function openBeidniSheet() {
     const wss = (state.boot && state.boot.worksites) || [];
-    let cat = '';
-    openSheet('<h2>Ný beiðni</h2><div class="sub">Fer beint á skrifstofuna (hub-flipinn „Frá verkstað")</div>'
-      + '<div class="f"><label>Tegund</label>' + chipsHtml('cat', CAT_BEIDNI, '') + '</div>'
-      + '<div class="f"><label>Verkstaður (valfrjálst)</label><select class="well" id="b-ws"><option value="">—</option>' + wss.map(w => '<option>' + esc(w.name) + '</option>').join('') + '</select></div>'
-      + '<div class="f"><label>Beiðnin</label><textarea class="well" id="b-note" placeholder="t.d. vantar teikningar af 2. hæð, brunahólfun við lyftu"></textarea></div>'
-      + '<div class="actions"><button type="button" class="key" id="b-cancel">Hætta við</button><button type="button" class="key gold" id="b-ok">📨 Senda</button></div>', sh => {
-        wireChips(sh, 'cat', v => { cat = v; });
+    let cat_ = '';
+    openSheet('<h2>' + T.req_sheet_h + '</h2><div class="sub">' + T.req_sheet_sub + '</div>'
+      + '<div class="f"><label>' + T.type_ + '</label>' + chipsHtml('cat', CAT_BEIDNI, '') + '</div>'
+      + '<div class="f"><label>' + T.ws_opt + '</label><select class="well" id="b-ws"><option value="">—</option>' + wss.map(w => '<option>' + esc(w.name) + '</option>').join('') + '</select></div>'
+      + '<div class="f"><label>' + T.the_req + '</label><textarea class="well" id="b-note" placeholder="' + esc(T.req_ph) + '"></textarea></div>'
+      + '<div class="actions"><button type="button" class="key" id="b-cancel">' + T.cancel + '</button><button type="button" class="key gold" id="b-ok">' + T.send + '</button></div>', sh => {
+        wireChips(sh, 'cat', v => { cat_ = v; });
         $('#b-cancel', sh).onclick = closeSheet;
         $('#b-ok', sh).onclick = async () => {
-          const note = $('#b-note', sh).value.trim(); if (!note) { toast('Skrifaðu beiðnina'); return; }
+          const note = $('#b-note', sh).value.trim(); if (!note) { toast(T.req_need); return; }
           $('#b-ok', sh).disabled = true;
           const ws = $('#b-ws', sh).value;
-          const row = await save({ kind: 'beidni', category: cat || 'Annað', worksite_name: ws || null, entry_date: today(), work_month: today().slice(0, 7), note });
+          const row = await save({ kind: 'beidni', category: cat_ || 'Annað', worksite_name: ws || null, entry_date: today(), work_month: today().slice(0, 7), note });
           closeSheet();
-          if (row) { if (!row.pending) state.beidnir.unshift(row); toast(row.pending ? 'Í biðröð' : '✓ Beiðni send'); }
+          if (row) { if (!row.pending) state.beidnir.unshift(row); toast(row.pending ? T.queued : T.req_sent); }
           render();
         };
       });
@@ -579,13 +699,13 @@
   // ── Deilt ─────────────────────────────────────────────────────────────────
   function renderDeilt() {
     const shares = (state.boot && state.boot.shares) || [];
-    $('#bt-main').innerHTML = '<div class="hero"><h2>Deilt & tenglar</h2><span class="sub">frá skrifstofunni</span></div>'
-      + '<div class="tiles"><a class="tile" href="/nlsh.html" target="_blank" rel="noopener"><span class="i">🏥</span><b>Landsspítalinn</b><small>NLSH staða og skýrsla</small></a>'
-      + '<a class="tile" href="/#tvmaeting" target="_blank" rel="noopener"><span class="i">🕒</span><b>Mæting í hub</b><small>full yfirsýn · síðustu 31 dagar</small></a>'
-      + '<a class="tile" href="https://kjarni.vercel.app/kjarni/turbopaint" target="_blank" rel="noopener"><span class="i">📐</span><b>TurboPaint</b><small>teikniborðið</small></a>'
-      + '<a class="tile" href="/" target="_blank" rel="noopener"><span class="i">🏢</span><b>Brunahólf hub</b><small>stjórnstöðin</small></a></div>'
-      + '<div class="panel"><div class="panel-h" style="cursor:default"><span class="plate">06</span><span class="panel-t">Deilt með verkstað</span><span class="sum">' + shares.length + '</span></div><div class="panel-b">'
-      + (shares.length ? shares.map(s => '<div class="entry"><div class="t"><b>' + (s.kind === 'turbopaint' ? '📐 ' : '🔗 ') + '<a href="' + esc(s.url) + '" target="_blank" rel="noopener" style="color:var(--gold-deep)">' + esc(s.title) + '</a></b>' + (s.note ? '<div class="note">' + esc(s.note) + '</div>' : '') + '<div class="meta"><span>' + esc(dmy(s.created_at)) + '</span></div></div></div>').join('') : '<div class="empty">Ekkert deilt enn — Agnar setur TurboPaint-borð og hlekki hér inn úr hubnum</div>')
+    $('#bt-main').innerHTML = '<div class="hero"><h2>' + T.shared_h + '</h2><span class="sub">' + T.shared_sub + '</span></div>'
+      + '<div class="tiles"><a class="tile" href="/nlsh.html" target="_blank" rel="noopener"><span class="i">🏥</span><b>Landsspítalinn</b><small>' + T.nlsh_sub + '</small></a>'
+      + '<a class="tile" href="/#tvmaeting" target="_blank" rel="noopener"><span class="i">🕒</span><b>' + T.att_hub + '</b><small>' + T.att_hub_sub + '</small></a>'
+      + '<a class="tile" href="https://kjarni.vercel.app/kjarni/turbopaint" target="_blank" rel="noopener"><span class="i">📐</span><b>TurboPaint</b><small>' + T.tp_sub + '</small></a>'
+      + '<a class="tile" href="/" target="_blank" rel="noopener"><span class="i">🏢</span><b>Brunahólf hub</b><small>' + T.hub_sub + '</small></a></div>'
+      + '<div class="panel"><div class="panel-h" style="cursor:default"><span class="plate">06</span><span class="panel-t">' + T.shared_ws_h + '</span><span class="sum">' + shares.length + '</span></div><div class="panel-b">'
+      + (shares.length ? shares.map(s => '<div class="entry"><div class="t"><b>' + (s.kind === 'turbopaint' ? '📐 ' : '🔗 ') + '<a href="' + esc(s.url) + '" target="_blank" rel="noopener" style="color:var(--gold-deep)">' + esc(s.title) + '</a></b>' + (s.note ? '<div class="note">' + esc(s.note) + '</div>' : '') + '<div class="meta"><span>' + esc(dmy(s.created_at)) + '</span></div></div></div>').join('') : '<div class="empty">' + T.shared_empty + '</div>')
       + '</div></div>';
   }
 
@@ -598,17 +718,17 @@
       else if (state.tab === 'maeting') renderMaeting();
       else if (state.tab === 'beidnir') renderBeidnir();
       else renderDeilt();
-    } catch (e) { $('#bt-main').innerHTML = '<div class="empty">Villa: ' + esc(e.message) + '</div>'; }
+    } catch (e) { $('#bt-main').innerHTML = '<div class="empty">' + T.err + esc(e.message) + '</div>'; }
   }
   async function go() {
-    $('#bt-main').innerHTML = '<div class="empty">Sæki…</div>';
+    $('#bt-main').innerHTML = '<div class="empty">' + T.loading_big + '</div>';
     try {
       if (state.tab === 'verk' || state.tab === 'deilt') await loadBoot(state.tab === 'verk' && state.boot && state.boot.month !== state.month);
       else if (state.tab === 'maeting') { await loadBoot(false).catch(() => {}); await loadMaeting(false); }
       else if (state.tab === 'beidnir') { await loadBoot(false).catch(() => {}); await loadBeidnir(false); }
       render();
       askWho(false);
-    } catch (e) { $('#bt-main').innerHTML = '<div class="empty">Náði ekki í gögn: ' + esc(e.message) + '<br><br><button type="button" class="key" onclick="location.reload()">Reyna aftur</button></div>'; setSync('err'); }
+    } catch (e) { $('#bt-main').innerHTML = '<div class="empty">' + T.no_data + esc(e.message) + '<br><br><button type="button" class="key" onclick="location.reload()">' + T.retry + '</button></div>'; setSync('err'); }
   }
   document.querySelectorAll('#bt-tabs button').forEach(b => b.addEventListener('click', () => { state.tab = b.dataset.tab; state.ws = null; LS.set('bt_tab', state.tab); go(); window.scrollTo(0, 0); }));
   $('#bt-who').addEventListener('click', () => askWho(true));
