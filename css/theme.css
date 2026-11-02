@@ -618,6 +618,46 @@ body .hub-sync select{background:transparent;border:0;box-shadow:none;padding:2p
   .ky-row > .ky-st{position:static;transform:none}
 }
 .ky-row:hover{background:var(--row-hover)}
+/* 02.11.2026 — Mynd verkstaðar í röðinni + glugginn (Agnar: „vanti mynd þarna af heimilisfanginu … og teikningar af
+   verkstaðnum eins og á slökkvitæki company profiles"). Föst stærð með eða án myndar — myndin kemur í sama reit, ekkert hopp. */
+.ky-wsm{flex:0 0 auto;width:84px;height:54px;box-sizing:border-box;padding:0;border:1px dashed var(--line-2);border-radius:6px;overflow:hidden;background:var(--card-2,#f4f1ea);color:var(--muted-2);font:inherit;font-size:10px;letter-spacing:.02em;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.ky-wsm.med{border-style:solid;background:#1b1a17}
+.ky-wsm img{width:100%;height:100%;object-fit:cover;display:block}
+.ky-wsm:hover{border-color:var(--gold-600,#a8801f)}
+.ky-wsm-tomt{border-color:transparent;background:transparent;cursor:default}
+@media(max-width:900px){.ky-wsm{width:56px;height:38px;font-size:9px}}
+.kyvs{background:var(--card,#fff);border:1px solid var(--line-2);border-radius:14px;max-width:760px;width:100%;max-height:calc(100vh - 32px);display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.4);overflow:hidden}
+.kyvs-h{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:14px 18px 10px;border-bottom:1px solid var(--line)}
+.kyvs-t{font-family:var(--font-display,inherit);font-size:21px;font-weight:700;color:var(--ink);line-height:1.15}
+.kyvs-s{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+.kyvs-x{border:0;background:transparent;font-size:24px;line-height:1;color:var(--muted);cursor:pointer;padding:0 4px}
+.kyvs-b{padding:14px 18px 16px;overflow:auto}
+.kyvs-mynd{position:relative;border-radius:10px;overflow:hidden;background:#1b1a17;aspect-ratio:16/9;max-height:360px;display:flex;align-items:center;justify-content:center}
+.kyvs-mynd img{width:100%;height:100%;object-fit:contain;display:block}
+.kyvs-engin{color:#cfc8b8;font-size:13px;padding:20px;text-align:center}
+.kyvs-attr{position:absolute;right:8px;bottom:6px;font-size:10px;color:#fff;background:rgba(0,0,0,.45);padding:1px 6px;border-radius:4px}
+.kyvs-l{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-right:8px}
+.kyvs-adr,.kyvs-th{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;margin-top:12px;font-size:13.5px;color:var(--ink)}
+.kyvs-lk{font-size:12.5px;color:var(--gold-800,#7a5c12);text-decoration:none;border-bottom:1px dotted currentColor}
+.kyvs-btn{padding:5px 11px;border:1px solid var(--line-2);border-radius:7px;background:transparent;font:inherit;font-size:12.5px;color:var(--ink);cursor:pointer}
+.kyvs-btn:disabled{opacity:.5;cursor:default}
+.kyvs-adr .kyvs-btn{margin-left:auto}
+.kyvs-leit{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.kyvs-leit[hidden]{display:none}
+.kyvs-in{flex:1 1 220px;min-width:0;padding:7px 10px;border:1px solid var(--line-2);border-radius:7px;font:inherit;font-size:13.5px;background:var(--card,#fff);color:var(--ink)}
+.kyvs-cand{flex-basis:100%;display:flex;flex-wrap:wrap;gap:6px}
+.kyvs-flis{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.kyvs-f{font-size:11.5px;padding:2px 9px;border:1px solid var(--line-2);border-radius:999px;color:var(--ink-2)}
+.kyvs-tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:10px}
+.kyvs-tk{display:flex;flex-direction:column;border:1px solid var(--line-2);border-radius:8px;overflow:hidden;text-decoration:none;color:var(--ink);background:var(--card,#fff)}
+.kyvs-tk:hover{border-color:var(--gold-600,#a8801f)}
+.kyvs-tk img{width:100%;height:96px;object-fit:contain;background:#fff;border-bottom:1px solid var(--line)}
+.kyvs-tk.urelt{opacity:.55}
+.kyvs-pdf{height:96px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--muted);background:var(--card-2,#f4f1ea);border-bottom:1px solid var(--line)}
+.kyvs-tl{font-size:11.5px;line-height:1.3;padding:5px 7px 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.kyvs-td{font-size:10.5px;color:var(--muted);padding:2px 7px 6px}
+.kyvs-st{font-size:12.5px;color:var(--muted);margin-top:10px;min-height:16px}
+.kyvs-fot{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
 .ky-row.ky-likely{background:linear-gradient(90deg,rgba(47,122,74,.09),rgba(47,122,74,.03))}
 .ky-row.ky-likely:hover{background:linear-gradient(90deg,rgba(47,122,74,.15),rgba(47,122,74,.06))}
 .ky-row .ky-caret2{width:8px;flex-shrink:0;color:var(--muted-2);font-size:9px;user-select:none;transition:transform .12s ease;display:inline-block}

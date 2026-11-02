@@ -298,6 +298,14 @@ tekjur (klárað en ógreitt). `renderSkyrslur(t)` í `index.html`.
   (`pgFailed`/`wsFailed`/`__KYF_VILLA`/`warnings`). Skrifað þegar gildið breytist eða 30 mín eru liðnar
   (samanburður við `CG_SRV`, þjónsgildin úr `cgFetchShared`, aðeins í minni). `cgFetchShared` sleppir
   innbyggðum id í `CG_SHARED` (engin tvítekning) og tekur þjónsgildið aðeins ef staðbundið vantar/er eldra.
+- **Mynd + teikningar verkstaðar í Kröfu yfirliti (02.11.2026)**: `wsMynd(ws)` setur 84×54 smámynd (`.ky-wsm`,
+  `css/theme.css`) fremst í hverja röð með verkstað; smellur → `openVerkstadur(ws)` (gluggi `#ky-vs-modal`, `.kyvs-*`):
+  stór mynd, heimilisfang (✎ → leit í Landeignaskrá, eitt nákvæmt staðfang sótt strax, annars val), landnr/hæðir/
+  kjallari, teikningagrind (gildandi grunnmyndir fyrst, smámyndir úr skjalasafni, PDF-reitir fyrir map.is-bæina).
+  Gögn: tafla `verkstadur_info` + public bucket `verkstadir` um `/api/verkstadur` (GET `?all=1` / `?ws=`, POST
+  `vista`). Vafrinn sækir úr Slökkvitækja-föllunum (`hus-upplysingar`, `husmynd`, `landnr` — CORS *) og sendir til
+  geymslu; AÐEINS við smell. `loadVsi()` í `fetchAll`, `vsiMala()` uppfærir smámyndir á staðnum (ekkert hopp).
+  Nafn verkstaðar án póstnúmers er tvírætt („Skúlagata 26" = 101 eða 340) — aldrei sjálfvirkt nema eitt staðfang.
 - **Eftir**: merkja fleiri innbyggða glugga (Krófur & Tekjur, Slökkvitæki „í vinnslu");
   „Admin mode" takki við klukkuna (báðar síður) fyrir handvirkar leiðréttingar í summum.
 
