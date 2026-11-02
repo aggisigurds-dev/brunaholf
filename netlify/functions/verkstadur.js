@@ -53,6 +53,20 @@ exports.handler = async (event) => {
     if (!r.ok) return json(r.status, { error: (await r.text()).slice(0, 300) });
     return json(200, { ok: true, row: (await r.json())[0] || null });
   }
+  if (b.action === 'mynd') {
+    // Eigin mynd (Agnar 02.11: „leyfa að ég skipti um mynd") — snertir aðeins myndarreitina, ekki heimilisfang/teikningar.
+    const m = b.mynd || {};
+    if (!m.b64) return json(400, { error: 'mynd vantar' });
+    const upp = await geymaMynd(ws, m, H);
+    if (upp.error) return json(upp.status || 400, { error: upp.error });
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/verkstadur_info?on_conflict=worksite_name`, {
+      method: 'POST',
+      headers: { ...H, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=representation' },
+      body: JSON.stringify({ worksite_name: ws, mynd_url: upp.url, mynd_heimild: 'handvirkt', mynd_texti: String(m.texti || 'Eigin mynd').slice(0, 120), updated_at: new Date().toISOString(), updated_by: String(b.by || '').slice(0, 60) || null }),
+    });
+    if (!r.ok) return json(r.status, { error: (await r.text()).slice(0, 300) });
+    return json(200, { ok: true, row: (await r.json())[0] || null });
+  }
   if (b.action !== 'vista') return json(400, { error: 'action vantar' });
 
   const rod = {
@@ -66,15 +80,9 @@ exports.handler = async (event) => {
   };
   const m = b.mynd;
   if (m && m.b64) {
-    const tegund = /^image\/(jpeg|png|webp)$/.test(m.type || '') ? m.type : 'image/jpeg';
-    const bytes = Buffer.from(String(m.b64), 'base64');
-    if (bytes.length < 2000 || bytes.length > 4e6) return json(400, { error: 'mynd of lítil eða of stór' });
-    const slod = `${slug(ws)}-${Date.now()}.${tegund === 'image/png' ? 'png' : tegund === 'image/webp' ? 'webp' : 'jpg'}`;
-    const up = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${slod}`, {
-      method: 'POST', headers: { ...H, 'Content-Type': tegund, 'x-upsert': 'true', 'Cache-Control': '31536000' }, body: bytes,
-    });
-    if (!up.ok) return json(up.status, { error: 'geymsla: ' + (await up.text()).slice(0, 200) });
-    rod.mynd_url = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${slod}`;
+    const upp = await geymaMynd(ws, m, H);
+    if (upp.error) return json(upp.status || 400, { error: upp.error });
+    rod.mynd_url = upp.url;
     rod.mynd_heimild = String(m.heimild || '').slice(0, 40) || null;
     rod.mynd_texti = String(m.texti || '').slice(0, 120) || null;
   } else if (m === null) {
@@ -125,6 +133,18 @@ function ajourFyrir(ws, row, allar) {
   const ids = new Set(valin.map((v) => v.project_id));
   const teikningar = allar.filter((t) => ids.has(t.project_id)).sort((a, b) => (b.n_skraningar || 0) - (a.n_skraningar || 0));
   return { verkefni, valin, handvalid, teikningar };
+}
+
+async function geymaMynd(ws, m, H) {
+  const tegund = /^image\/(jpeg|png|webp)$/.test(m.type || '') ? m.type : 'image/jpeg';
+  const bytes = Buffer.from(String(m.b64), 'base64');
+  if (bytes.length < 2000 || bytes.length > 4e6) return { error: 'mynd of lítil eða of stór' };
+  const slod = `${slug(ws)}-${Date.now()}.${tegund === 'image/png' ? 'png' : tegund === 'image/webp' ? 'webp' : 'jpg'}`;
+  const up = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${slod}`, {
+    method: 'POST', headers: { ...H, 'Content-Type': tegund, 'x-upsert': 'true', 'Cache-Control': '31536000' }, body: bytes,
+  });
+  if (!up.ok) return { status: up.status, error: 'geymsla: ' + (await up.text()).slice(0, 200) };
+  return { url: `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${slod}` };
 }
 
 function slug(s) {

@@ -80,8 +80,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://osfdzskyvisifcwyjkuk.supabase.co">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/theme.css?v=20261102c">
-<script src="/js/verkstadur.js?v=20261102a"></script>
+<link rel="stylesheet" href="/css/theme.css?v=20261102d">
+<script src="/js/verkstadur.js?v=20261102b"></script>
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
@@ -3676,8 +3676,11 @@ function renderVidskiptavinir(t) {
     if (valinn && !hopar()[valinn]) valinn = null;
     // Djúptenging úr Efnislistanum (nafn verkkaupa) — annars fyrsta félagið á breiðum skjá.
     let opna = null;
-    try { opna = (window.__bhOpna||{}).nafn || null; if (opna) delete window.__bhOpna.nafn; } catch(_) {}
-    if (opna) { const names = Object.keys(hopar()); const hit = names.find(n => n === opna) || names.find(n => n.toLowerCase() === opna.toLowerCase()); if (hit) { leit = ''; const s = wrap.querySelector('#vk-search'); if (s) s.value = ''; velja(hit, { scroll: true }); return; } }
+    let opnaKt = '';
+    try { opna = (window.__bhOpna||{}).nafn || null; opnaKt = String((window.__bhOpna||{}).vk_kt || '').replace(/\D/g, ''); if (opna) delete window.__bhOpna.nafn; delete window.__bhOpna.vk_kt; } catch(_) {}
+    if (opna) { const names = Object.keys(hopar()); const hit = names.find(n => n === opna) || names.find(n => n.toLowerCase() === opna.toLowerCase()) || (opnaKt.length === 10 ? names.find(n => String(kennitalaFyrir(n)).replace(/\D/g, '') === opnaKt) : null); leit = ''; const s = wrap.querySelector('#vk-search'); if (s) s.value = '';
+      // Ekki á listanum (t.d. Payday-kúnni án verkstaðar í kortinu) — prófíllinn sækir samt eftir nafni (/api/verkkaupar?name=), svo hann er opnaður.
+      velja(hit || opna, { scroll: true }); return; }
     if (valinn) velja(valinn);
     else if (window.innerWidth > 980) { const first = Object.keys(hopar()).sort((a,b) => a.localeCompare(b,'is'))[0]; if (first) velja(first); }
   }
@@ -19093,7 +19096,16 @@ async function renderKrofuyfirlit(t){
   const VS = () => window.BhVerkstadur || null;
   const loadVsi = () => { const v = VS(); if(v) v.hlada(); };
   const wsMynd = ws => { const v = VS(); return v ? v.smamynd(ws, ws ? wsDisp(ws) : '') : ''; };
-  const openVerkstadur = ws => { const v = VS(); if(v) v.opna(ws, wsDisp(ws)); };
+  // Borðinn (02.11.2026, Agnar: „setja það í fyrirtækja bannerinn, og leyfa að ég skipti um mynd“): ein mynd per fyrirtæki,
+  // fyrsti verkstaður þess sem á mynd. Nafnið opnar viðskiptavininn í Viðskiptavinum („ef ég ýti á fyrirtækjanafnið þá fari ég inn á company profile“).
+  const wsAfInv = invs => [...new Set((invs||[]).map(i => i && (i.worksite || (i.draft_match && i.draft_match.worksite))).filter(Boolean))];
+  const bannerMynd = invs => { const v = VS(), wsl = wsAfInv(invs); return (v && wsl.length) ? v.bordi(wsl, wsl.map(w => wsDisp(w)).join(', ')) : ''; };
+  const openVerkstadur = (ws, wsl, fyrirtaeki) => { const v = VS(); if(v) v.opna(ws, wsDisp(ws), { wsl, titill: w => wsDisp(w), fyrirtaeki }); };
+  const nafnTengill = (nafn, kt, birt) => `<a class="ky-name ky-name-lk" href="#vidskiptavinir" data-vk-nafn="${esc(nafn||'')}" data-vk-kt="${esc(ktDigits(kt||''))}" title="Opna ${esc(nafn||'')} í Viðskiptavinum">${esc(birt)}</a>`;
+  function opnaVidskiptavin(nafn, kt){
+    const o = (window.__bhOpna = window.__bhOpna || {}); o.nafn = nafn; o.vk_kt = kt || '';
+    try{ window.state.ui.activeTab = 'vidskiptavinir'; save({nav:true}); render(); }catch(_){ location.hash = '#vidskiptavinir'; }
+  }
   // ✎ Greiðandi á spjaldinu (12.10.2026, Agnar á Borgarspítalanum · Áland 6: „Kt. er 500300-2130 LSH og
   // númerið sem þarf að koma fram er 21727. geturðu leyft mér að breyta þessu þarna"). Greiðandi, kt og
   // tilvísun eru per VERKSTAÐ (customer_worksite_map) og fara líka á ósend drög hans — /api/customer-map.
@@ -19371,7 +19383,6 @@ async function renderKrofuyfirlit(t){
       <div class="ky-invrow${tier===2?' ky-t2':''}">
         <div class="ky-row${lp?' ky-likely':''}" data-key="${esc(inv.inv_key)}"${(inv._hidden||inv._done)?' style="opacity:.5"':''}>
           ${t2chk||''}<span class="ky-caret2">▸</span>${kyStadaPilla(kyStada(inv, tier))}
-          ${wsMynd(wsName)}
           <div class="ky-main">
             <div class="ky-ws"><span class="n">${rnum}</span>${mtagHtml}${perHtml}${tier===1?agingPill(inv.days_overdue):(tier===2&&inv.gamalt?aldursPilla(inv.work_month):'')}</div>
             <div class="ky-sub">${gj}${sub}</div>
@@ -19482,8 +19493,9 @@ async function renderKrofuyfirlit(t){
       <div class="ky-card">
         <div class="ky-card-head" role="button" tabindex="0" title="Smelltu til að opna/loka">
           <span class="ky-caret">▾</span>
+          ${bannerMynd([...((c.t[1]||{}).invoices||[]), ...((c.t[2]||{}).invoices||[]), ...((c.t[3]||{}).invoices||[])])}
           <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
-            <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span class="ky-name">${esc(wsDisp(c.customer)||'(óþekkt)')}</span>${c.kt?`<span class="ky-kt">kt ${esc(ktFmt(c.kt))}</span>`:''}${greidHaus([...((c.t[2]||{}).invoices||[]), ...((c.t[3]||{}).invoices||[])], c.customer, c.kt)}</div>
+            <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">${nafnTengill(c.customer, c.kt, wsDisp(c.customer)||'(óþekkt)')}${c.kt?`<span class="ky-kt">kt ${esc(ktFmt(c.kt))}</span>`:''}${greidHaus([...((c.t[2]||{}).invoices||[]), ...((c.t[3]||{}).invoices||[])], c.customer, c.kt)}</div>
             <div class="ky-tags" style="margin-top:0">${c.s1?badge('ogreitt','Ógreitt',c.s1):''}${c.s2?badge('osent','Ósent',c.s2):''}${c.s3?badge('','Tími',c.s3):''}${sameinaBtn((c.t[2]||{}).invoices||[])}</div>
           </div>
           <div class="ky-total"><div class="l">Samtals</div><div class="v ky-num">${fmtNum(c.total)} <span class="boss-kr">kr</span></div></div>
@@ -19527,8 +19539,9 @@ async function renderKrofuyfirlit(t){
       <div class="ky-card">
         <div class="ky-card-head" role="button" tabindex="0" title="Smelltu til að opna/loka">
           <span class="ky-caret">${collapsed?'▸':'▾'}</span>
+          ${bannerMynd(db.invoices)}
           <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
-            <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span class="ky-name">${esc(nm)}</span>${metaHtml}</div>
+            <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">${db.customer ? nafnTengill(db.customer, db.kt, nm) : `<span class="ky-name">${esc(nm)}</span>`}${metaHtml}</div>
             ${agBar}
             <div class="ky-kt">${cnt}</div>
           </div>
@@ -20013,11 +20026,12 @@ async function renderKrofuyfirlit(t){
       const toggle = ()=>{ const rowsEl = h.nextElementSibling; const car = h.querySelector('.ky-caret');
         if(!rowsEl) return; const open = rowsEl.style.display==='none';
         rowsEl.style.display = open?'block':'none'; if(car) car.textContent = open?'▾':'▸'; };
-      h.addEventListener('click', e=>{ if(e.target.closest('.ky-greid-btn')) return; toggle(); });
-      h.addEventListener('keydown', e=>{ if(e.target.closest('.ky-greid-btn')) return; if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggle(); } });
+      h.addEventListener('click', e=>{ if(e.target.closest('.ky-greid-btn, .ky-wsm, .ky-name-lk')) return; toggle(); });
+      h.addEventListener('keydown', e=>{ if(e.target.closest('.ky-greid-btn, .ky-wsm, .ky-name-lk')) return; if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggle(); } });
     });
     listEl.querySelectorAll('.ky-greid-btn').forEach(b=>b.addEventListener('click', e=>{ e.stopPropagation(); openGreidandiForm(b); }));
-    listEl.querySelectorAll('.ky-wsm[data-wsm]').forEach(b=>b.addEventListener('click', e=>{ e.stopPropagation(); openVerkstadur(b.dataset.wsm); }));
+    listEl.querySelectorAll('.ky-wsm[data-wsm]').forEach(b=>b.addEventListener('click', e=>{ e.stopPropagation(); const card = b.closest('.ky-card'), nm = card && card.querySelector('.ky-name'); openVerkstadur(b.dataset.wsm, String(b.dataset.wsl||'').split('~').filter(Boolean), nm ? nm.textContent.trim() : ''); }));
+    listEl.querySelectorAll('.ky-name-lk').forEach(a=>a.addEventListener('click', e=>{ e.preventDefault(); e.stopPropagation(); opnaVidskiptavin(a.dataset.vkNafn, a.dataset.vkKt); }));
     listEl.querySelectorAll('.kyf-sameina-all').forEach(b=>b.addEventListener('click',(e)=>{
       e.stopPropagation();
       const keys=(b.dataset.keys||'').split('~').filter(Boolean);
