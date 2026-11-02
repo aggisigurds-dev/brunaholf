@@ -149,9 +149,11 @@ async function handleGet(event) {
       }
     }
     for (const k of Object.keys(rd)) rd[k].an_vsk = Math.round(rd[k].an_vsk);
-    // Nafnavalið í appinu: Tímavera síðustu 45 daga, nema þeir sem Agnar tók út 01.11.2026 (skrifa má nafn með handafli)
-    const HIDE_NAMES = new Set(['alfred', 'hamza', 'kamara', 'nour', 'prosper', 'rui armando']);
-    const names = [...new Set(recent.map((r) => String(r.employee || '').trim()).filter((n) => n && !HIDE_NAMES.has(n.toLowerCase())))].sort((a, b) => a.localeCompare(b, 'is'));
+    // Nafnavalið í appinu: Tímavera síðustu 45 daga, nema þeir sem Agnar tók út 01.11.2026 (skrifa má nafn með handafli).
+    // 02.11.2026 (Agnar: „settu Agnar í staðinn fyrir Marcin“): Marcin Surowik falinn, Agnar alltaf með þótt hann sé ekki í Tímaveru.
+    const HIDE_NAMES = new Set(['alfred', 'hamza', 'kamara', 'nour', 'prosper', 'rui armando', 'marcin surowik', 'marcin']);
+    const ALWAYS_NAMES = ['Agnar'];
+    const names = [...new Set(ALWAYS_NAMES.concat(recent.map((r) => String(r.employee || '').trim())).filter((n) => n && !HIDE_NAMES.has(n.toLowerCase())))].sort((a, b) => a.localeCompare(b, 'is'));
     return P.json(200, { month, names, worksites, redder: rd, materials: MATERIALS, entries, shares, generated_at: new Date().toISOString() });
   }
 
