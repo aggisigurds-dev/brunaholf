@@ -80,7 +80,7 @@
   .qty{display:flex;align-items:center;gap:8px;margin:6px 0 10px}.qty input{width:90px;text-align:center;font-family:var(--font-mono);font-weight:700}.qty button{width:44px;height:42px;font-size:22px;padding:0}.qty .u{color:var(--muted);font-family:var(--font-mono);font-size:12px}
   .f{margin-bottom:10px}.f label{display:block;font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
   .actions{display:flex;gap:8px;margin-top:8px}.actions .key{flex:1}
-  .monthbar{display:flex;align-items:center;gap:8px;margin:2px 0 10px}.monthbar b{flex:1;text-align:center;font-family:var(--font-display);font-size:18px}
+  .monthbar{display:flex;align-items:center;gap:8px;margin:2px 0 10px}.monthbar b{flex:1;text-align:center;font-family:var(--font-display);font-size:18px}.monthbar.wsbar .back{margin:0;flex:0 0 auto}.monthbar.wsbar b{font-size:16px}
   .empty{padding:16px;text-align:center;color:var(--muted-2);font-style:italic}
   .entry{padding:8px 0;border-top:1px solid var(--line);display:flex;gap:8px;align-items:flex-start}.entry:first-child{border-top:0}
   .entry .t{flex:1;min-width:0}.entry .t b{font-size:14px}.entry .note{white-space:pre-wrap;color:var(--ink-2);margin-top:2px}
@@ -337,7 +337,9 @@
     const efni = entriesFor('efni', name), punktar = entriesFor('punktur', name), kostn = entriesFor('kostnadur', name);
     const efniSum = efni.reduce((s, e) => s + (Number(e.qty) || 0) * (Number(e.unit_price) || 0), 0);
     const kostnSum = kostn.reduce((s, e) => s + (Number(e.qty) || 1) * (Number(e.unit_price) || 0), 0);
-    $('#bt-main').innerHTML = '<button type="button" class="back" id="ws-back">‹ Verkstaðir · ' + esc(monthLabel(state.month)) + '</button>'
+    // 02.11.2026 (Agnar: „þyrfti að geta skipt á milli mánaða … erum að fara klára október“): mánaðaskipti líka inni á verkinu,
+    // ekki bara á listanum. Verkið helst opið (state.ws) — go() sækir boot fyrir nýja mánuðinn og teiknar sömu sýn.
+    $('#bt-main').innerHTML = '<div class="monthbar wsbar"><button type="button" class="back" id="ws-back">‹ Verkstaðir</button><button type="button" class="key sm" id="m-prev" title="Fyrri mánuður">‹</button><b>' + esc(monthLabel(state.month)) + '</b><button type="button" class="key sm" id="m-next" title="Næsti mánuður">›</button></div>'
       + '<div class="hero"><h2>' + esc(name) + '</h2><span class="sub">' + hf(w.hours) + ' klst · ' + w.days + ' dagar · ' + w.employees.length + ' starfsm.</span></div>'
       + '<div class="panel collapsed" id="p-redder"><div class="panel-h"><span class="plate">02</span><span class="panel-t">Redder innkaup</span><span class="sum">' + fmt(rd.an_vsk) + ' kr</span><span class="caret">›</span></div><div class="panel-b">'
       + (rd.lines.length ? rd.lines.map(l => '<div class="rline' + (l.excluded ? ' ex' : '') + '"><span>' + esc(l.label) + '</span><span class="num">× ' + hf(l.qty) + '</span><span class="num" style="color:var(--muted)">' + fmt(l.cost) + ' kr</span></div>').join('') + '<div class="kicker" style="margin-top:8px">án vsk · yfirstrikað = ekki á reikning verkkaupa</div>' : '<div class="empty">Engir Redder-reikningar á þennan verkstað í mánuðinum</div>')
@@ -355,6 +357,8 @@
       + '<button type="button" class="key wide" id="punktur-save">📝 Vista punkt</button>'
       + '<div id="punktar-list" style="margin-top:10px">' + punktar.map(e => entryHtml(e)).join('') + '</div></div></div>';
     $('#ws-back').onclick = () => { state.ws = null; render(); };
+    $('#m-prev').onclick = () => { state.month = shiftYM(state.month, -1); LS.set('bt_month', state.month); go(); };
+    $('#m-next').onclick = () => { state.month = shiftYM(state.month, 1); LS.set('bt_month', state.month); go(); };
     $('#p-redder .panel-h').onclick = () => $('#p-redder').classList.toggle('collapsed');
     $('#kostn-add').onclick = () => openKostnadSheet(name);
     document.querySelectorAll('#bt-main .sec-h').forEach(h => h.addEventListener('click', () => { const s = h.parentElement; s.classList.toggle('collapsed'); state.openSec[s.dataset.sec] = !s.classList.contains('collapsed'); }));
