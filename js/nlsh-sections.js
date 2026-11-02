@@ -84,6 +84,21 @@
       .nl-kort-notch td:first-child{text-align:left;color:#44505e}
       .nl-kort-notch tr.t td,.nl-kort-notch tr.p td{border-top:1px solid #cfd5de;font-weight:700}
       .nl-kort-map canvas{position:absolute;left:0;top:0;width:100%;height:100%}
+      .nl-kort-sum{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:10px 0 0}
+      @media(max-width:900px){.nl-kort-sum{grid-template-columns:repeat(2,minmax(0,1fr))}}
+      .nl-ks{border:1px solid #cfc8b9;border-radius:10px;padding:10px 12px;font-size:12px;font-variant-numeric:tabular-nums;color:#1f2933;background:#fff}
+      .nl-ks-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:4px}
+      .nl-ks-h b{font-size:15px}
+      .nl-ks-h span{font-size:20px;font-weight:700}
+      .nl-ks-s{color:#5a6473;margin-bottom:6px}
+      .nl-ks table{border-collapse:collapse;width:100%}
+      .nl-ks td,.nl-ks th{padding:1px 0;text-align:right;font-weight:400}
+      .nl-ks th{color:#5a6473;font-size:10.5px}
+      .nl-ks td:first-child,.nl-ks th:first-child{text-align:left}
+      .nl-ks tr.t td{border-top:1px solid #cfd5de;font-weight:700}
+      .nl-ks-z{display:flex;gap:6px;margin-top:8px}
+      .nl-ks-z div{flex:1;border-radius:6px;padding:3px 4px;text-align:center;font-size:10.5px;line-height:1.3}
+      .nl-ks-z b{display:block;font-size:13px}
       .nl-fl-leg{display:flex;align-items:center;gap:8px;margin:8px 0 0;font-size:11px;color:var(--text-dim,#5a6473)}
       .nl-fl-leg span.bar{flex:0 0 140px;height:8px;border-radius:4px;background:linear-gradient(90deg,hsl(0 62% 80%),hsl(60 62% 80%),hsl(125 62% 80%))}
       /* ===== fagleg útlit 30.10.2026: dökkt höfuðspjald, númeruð spjöld, rjómapappír ===== */
@@ -491,6 +506,30 @@
         if (q[2]) { cx.fillStyle = KORT_LITIR[q[3]] + 'b8'; cx.fill(); } else { cx.fillStyle = '#ffffffcc'; cx.fill(); cx.lineWidth = 2; cx.strokeStyle = '#dc2626'; cx.stroke(); }
       });
       box.querySelector('.nl-kort-n').textContent = num(n) + ' punktar sýndir';
+      // samantekt fyrir hverja stúku undir teikningunni (fylgir völdum flokkum og stöðu)
+      const sm = box.querySelector('.nl-kort-sum'); sm.innerHTML = '';
+      const sl = sel();
+      [1, 2, 4, 5].forEach((s5) => {
+        const w = 'S' + s5, wd = stukur.wings[st.floor + ' ' + w];
+        if (!wd) return;
+        const dn = catGrp(wd.cat), open = [0, 0, 0, 0, 0];
+        pts.forEach((q) => { if (q[4] === s5 && !q[2]) open[q[3]]++; });
+        const tg = [0, 0, 0, 0, 0];
+        for (let zi = 0; zi < 3; zi++) target(st.floor, w, zi).forEach((x, i) => { tg[i] += x; });
+        const rows = []; let sd = 0, so = 0, stg = 0;
+        pk.hopar.forEach((h, i) => {
+          if (!sl[i]) return;
+          sd += dn[i]; so += open[i]; stg += tg[i];
+          rows.push('<tr><td>' + h + '</td><td>' + num(dn[i]) + '</td><td>' + (open[i] ? num(open[i]) : '·') + '</td><td>' + (tg[i] ? '~' + num(tg[i]) : '·') + '</td></tr>');
+        });
+        const p = stg > 0 ? Math.min(100, Math.round((sd / stg) * 100)) : null, c = pctColor(p == null ? 0 : p);
+        const zs = [0, 1, 2].map((zi) => { const pz = pctOf(st.floor, w, zi), cz = pctColor(pz == null ? 0 : Math.round(pz * 100)); return '<div style="background:' + cz.bg + '">' + ZN[zi] + '<b>' + (pz == null ? '–' : Math.round(pz * 100) + '%') + '</b></div>'; }).join('');
+        const el = document.createElement('div');
+        el.className = 'nl-ks'; el.style.borderColor = c.bd;
+        el.innerHTML = '<div class="nl-ks-h"><b>' + w + '</b><span>' + (p == null ? '–' : p + '%') + '</span></div><div class="nl-ks-s">' + num(sd) + ' klárað' + (so ? ' · ' + num(so) + ' opin' : '') + (stg ? ' af ~' + num(stg) : '') + '</div>'
+          + '<table><tr><th></th><th>Klárað</th><th>Opið</th><th>Markmið</th></tr>' + rows.join('') + '<tr class="t"><td>Σ</td><td>' + num(sd) + '</td><td>' + (so ? num(so) : '·') + '</td><td>' + (stg ? '~' + num(stg) : '·') + '</td></tr></table><div class="nl-ks-z">' + zs + '</div>';
+        sm.appendChild(el);
+      });
       // samantekt í skörðunum milli stúkna: hver H hefur norður-, center- og suðurskarð
       const ov = box.querySelector('.nl-kort-ov'); ov.innerHTML = '';
       if (!st.tafla) return;
@@ -526,6 +565,7 @@
       <div class="nl-kort-bar">${pk.hopar.map((h, i) => `<label class="nl-kort-c"><input type="checkbox" data-h="${i}" ${st.hopar[i] ? 'checked' : ''}><i style="background:${KORT_LITIR[i]}"></i>${h} <small>${num(c[i])}</small></label>`).join('')}
         <label class="nl-kort-c"><input type="checkbox" data-o="hue" ${st.hue ? 'checked' : ''}>Litur</label><label class="nl-kort-c"><input type="checkbox" data-o="tafla" ${st.tafla ? 'checked' : ''}>Samantekt</label><span class="nl-kort-n"></span></div>
       <div class="nl-kort-map"><img src="/img/nlsh-yfirlit-${(st.floor === '4H' ? '5H' : st.floor).toLowerCase()}.jpg" alt="Brunayfirlit ${st.floor === '4H' ? '5H (notað fyrir 4H)' : st.floor}"><canvas></canvas><div class="nl-kort-ov"></div></div>
+      <div class="nl-kort-sum"></div>
       <p class="nl-sec-cat">Punktur = staðurinn sem var smellt á í Ajour. Fylltur punktur er klárað, rauður hringur er opið. Liturinn yfir svæði sýnir hlutfall af markmiði (rautt lítið, grænt mikið) og fylgir völdum flokkum. Samantektin í skörðunum er fjöldi gata á stúku og svæði, líka eftir völdum flokkum og stöðu. Staðsetning er sjálfvirk pörun við brunaveggi blaðsins og getur skeikað um nokkra metra. 4. hæð hefur ekki eigið yfirlitsblað: 5H-blaðið er notað og punktarnir eru aðeins milliloftsgöt (staðsetning þar er grófari, sérstaklega S1 og S2). Blaðið er Rev.A; staða ${fmtD(pk.updated)}.</p>`;
       box.querySelectorAll('[data-fl]').forEach((b) => b.addEventListener('click', () => { st.floor = b.getAttribute('data-fl'); render(); }));
       box.querySelectorAll('[data-st]').forEach((b) => b.addEventListener('click', () => { st.stada = b.getAttribute('data-st'); render(); }));
