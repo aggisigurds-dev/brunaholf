@@ -164,7 +164,7 @@
       no_net_queued: 'Ekkert net — vistað í biðröð, sendist sjálfkrafa', sending_queue: 'sendi biðröð…', rejected: '✗ Færsla hafnað: ', queue_sent: '✓ Biðröð send',
       who_h: 'Hver ert þú?', who_sub: 'Nafnið fylgir því sem þú skráir svo skrifstofan viti hver skrifaði.', who_or: 'Eða skrifa nafn', name_ph: 'nafn', continue_: 'Áfram', who_btn: '👤 Hver ert þú?',
       tag_month: '🕒 í Tímaveru í þessum mánuði', tag_krofur: '📑 í Kröfu yfirliti', tag_nytt: '🆕 nýtt verk',
-      h: 'klst', days: 'dagar', efni_n: 'efni', serkaup_n: 'sérkaup', punktar_n: 'punktar', staff_n: 'starfsm.',
+      h: 'klst', days: n => (n % 10 === 1 && n % 100 !== 11) ? 'dagur' : 'dagar', efni_n: () => 'efni', serkaup_n: () => 'sérkaup', punktar_n: n => (n % 10 === 1 && n % 100 !== 11) ? 'punktur' : 'punktar', staff_n: 'starfsm.',
       jobs_h: 'Verk í vinnslu', jobs_n: n => n + ' verk', jobs_empty: 'Engin verk á listanum — bættu við verki hér að neðan', add_job: '＋ Bæta við verki',
       jobs_kicker: 'Smelltu á verk til að skrá efni úr lager, sérkaup og punkta · listinn er verk úr Kröfu yfirliti og verk með tíma í Tímaveru síðustu viku',
       seen: '👁 séð á skrifstofu', pending_net: '⏳ bíður nets', ex_vat: 'án vsk', comment: 'athugasemd', request: 'beiðni', del: 'Eyða', del_q: 'Eyða þessari skráningu?', deleted: 'Eytt',
@@ -205,7 +205,7 @@
       no_net_queued: 'No network — queued, will send automatically', sending_queue: 'sending queue…', rejected: '✗ Entry rejected: ', queue_sent: '✓ Queue sent',
       who_h: 'Who are you?', who_sub: 'Your name is attached to everything you record so the office knows who wrote it.', who_or: 'Or type a name', name_ph: 'name', continue_: 'Continue', who_btn: '👤 Who are you?',
       tag_month: '🕒 in Tímavera this month', tag_krofur: '📑 in the invoice overview', tag_nytt: '🆕 new job',
-      h: 'h', days: 'days', efni_n: 'materials', serkaup_n: 'purchases', punktar_n: 'notes', staff_n: 'staff',
+      h: 'h', days: n => n === 1 ? 'day' : 'days', efni_n: n => n === 1 ? 'material' : 'materials', serkaup_n: n => n === 1 ? 'purchase' : 'purchases', punktar_n: n => n === 1 ? 'note' : 'notes', staff_n: 'staff',
       jobs_h: 'Jobs in progress', jobs_n: n => n + ' jobs', jobs_empty: 'No jobs on the list — add a job below', add_job: '＋ Add job',
       jobs_kicker: 'Tap a job to record stock materials, purchases and notes · the list shows jobs from the invoice overview and jobs with Tímavera hours in the last week',
       seen: '👁 seen by office', pending_net: '⏳ waiting for network', ex_vat: 'excl. VAT', comment: 'comment', request: 'request', del: 'Delete', del_q: 'Delete this entry?', deleted: 'Deleted',
@@ -418,7 +418,7 @@
         + (chips.length ? '<div class="emps">' + chips.join('') + '</div>' : '')
         + (w.note ? '<div class="note" style="color:var(--ink-2);font-size:12.5px;margin-top:2px">' + esc(w.note) + '</div>' : '')
         + '<div class="emps">' + w.employees.slice(0, 6).map(e => '<span class="chip">' + esc(e.name) + ' <span class="num" style="font-weight:500;opacity:.7">' + hf(e.hours) + '</span></span>').join('') + (w.employees.length > 6 ? '<span class="chip">+' + (w.employees.length - 6) + '</span>' : '') + '</div>'
-        + '<div class="cnt"><span><b>' + hf(w.hours) + '</b> ' + T.h + ' · ' + w.days + ' ' + T.days + '</span>' + (rd ? '<span>Redder <b>' + fmt(rd.an_vsk) + '</b> kr</span>' : '') + (nE ? '<span>🧰 <b>' + nE + '</b> ' + T.efni_n + '</span>' : '') + (nK ? '<span>💳 <b>' + nK + '</b> ' + T.serkaup_n + '</span>' : '') + (nP ?'<span>📝 <b>' + nP + '</b> ' + T.punktar_n + '</span>' : '') + '</div></div><span class="arrow">›</span></div>';
+        + '<div class="cnt"><span><b>' + hf(w.hours) + '</b> ' + T.h + ' · ' + w.days + ' ' + T.days(w.days) + '</span>' + (rd ? '<span>Redder <b>' + fmt(rd.an_vsk) + '</b> kr</span>' : '') + (nE ? '<span>🧰 <b>' + nE + '</b> ' + T.efni_n(nE) + '</span>' : '') + (nK ? '<span>💳 <b>' + nK + '</b> ' + T.serkaup_n(nK) + '</span>' : '') + (nP ?'<span>📝 <b>' + nP + '</b> ' + T.punktar_n(nP) + '</span>' : '') + '</div></div><span class="arrow">›</span></div>';
     }).join('');
     $('#bt-main').innerHTML = '<div class="monthbar"><button type="button" class="key sm" id="m-prev">‹</button><b>' + esc(monthLabel(state.month)) + '</b><button type="button" class="key sm" id="m-next">›</button></div>'
       + '<div class="panel"><div class="panel-h" style="cursor:default"><span class="plate">01</span><span class="panel-t">' + T.jobs_h + '</span><span class="sum">' + T.jobs_n(wsList.length) + '</span></div>'
@@ -458,7 +458,7 @@
     // 02.11.2026 (Agnar: „þyrfti að geta skipt á milli mánaða … erum að fara klára október"): mánaðaskipti líka inni á verkinu,
     // ekki bara á listanum. Verkið helst opið (state.ws) — go() sækir boot fyrir nýja mánuðinn og teiknar sömu sýn.
     $('#bt-main').innerHTML = '<div class="monthbar wsbar"><button type="button" class="back" id="ws-back">' + T.back_ws + '</button><button type="button" class="key sm" id="m-prev" title="' + T.prev_m + '">‹</button><b>' + esc(monthLabel(state.month)) + '</b><button type="button" class="key sm" id="m-next" title="' + T.next_m + '">›</button></div>'
-      + '<div class="hero"><h2>' + esc(name) + '</h2><span class="sub">' + hf(w.hours) + ' ' + T.h + ' · ' + w.days + ' ' + T.days + ' · ' + w.employees.length + ' ' + T.staff_n + '</span></div>'
+      + '<div class="hero"><h2>' + esc(name) + '</h2><span class="sub">' + hf(w.hours) + ' ' + T.h + ' · ' + w.days + ' ' + T.days(w.days) + ' · ' + w.employees.length + ' ' + T.staff_n + '</span></div>'
       + '<div class="panel collapsed" id="p-redder"><div class="panel-h"><span class="plate">02</span><span class="panel-t">' + T.redder_h + '</span><span class="sum">' + fmt(rd.an_vsk) + ' kr</span><span class="caret">›</span></div><div class="panel-b">'
       + (rd.lines.length ? rd.lines.map(l => '<div class="rline' + (l.excluded ? ' ex' : '') + '"><span>' + esc(l.label) + '</span><span class="num">× ' + hf(l.qty) + '</span><span class="num" style="color:var(--muted)">' + fmt(l.cost) + ' kr</span></div>').join('') + '<div class="kicker" style="margin-top:8px">' + T.redder_kicker + '</div>' : '<div class="empty">' + T.redder_empty + '</div>')
       + '</div></div>'
