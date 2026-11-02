@@ -13853,7 +13853,10 @@ async function renderGerdReikninga(t){
     const stale = ferskt && (Date.now() - new Date(ferskt).getTime()) > 3*864e5 && til >= String(ferskt).slice(0,10);
 
     const lines = () => shownKeys().map(k => { const r = rateByKey.get(k); const q = Number(qty[k])||0; return { key:k, label:r.label, size_label:r.size_label, size_min_mm:r.size_min_mm, size_max_mm:r.size_max_mm, price:r.rate_an_vsk, qty:q, total:Math.round(q*r.rate_an_vsk), ajour: ajourByKey[k]||0 }; });
-    const calc = () => { const ls = lines().filter(l => l.qty > 0); const net = ls.reduce((a,l)=>a+l.total,0); const vsk = Math.round(net*VSK_PCT/100); return { ls, net, vsk, total: net+vsk, got: ls.reduce((a,l)=>a+l.qty,0) }; };
+    // 02.11.2026 (Agnar: „setja hak í að rukka staðfestingu brunalokana"): ein lína GR_STADF (20.000 án vsk),
+    // geymd í invoice_drafts.stadfesting og tekin með í fixed_total — sama og í Efnislista Tímaveru-verka.
+    let stadf = !!(existing && Number(existing.stadfesting) > 0);
+    const calc = () => { const ls = lines().filter(l => l.qty > 0); const st = stadf ? GR_STADF : 0; const net = ls.reduce((a,l)=>a+l.total,0) + st; const vsk = Math.round(net*VSK_PCT/100); return { ls, stadf: st, net, vsk, total: net+vsk, got: ls.reduce((a,l)=>a+l.qty,0) }; };
 
     const renderBody = () => {
       const ls = lines();
@@ -13880,6 +13883,8 @@ async function renderGerdReikninga(t){
           <tfoot><tr><td class="l">Samtals</td><td class="aj">${ls.reduce((a,l)=>a+l.ajour,0)||'–'}</td><td id="hk-f-got"></td><td></td><td id="hk-f-net"></td><td></td></tr></tfoot>
         </table>
         <div class="hk-add"><select id="hk-add-sel"><option value="">＋ Bæta við gatastærð…</option>${allRates.filter(r=>!used.has(rateKey(r))).map(r=>`<option value="${rateKey(r)}">${escapeHtml(r.label)} — ${fmt(r.rate_an_vsk)} kr</option>`).join('')}</select></div>
+        <label class="hk-stadf" style="display:flex;align-items:center;gap:10px;margin:10px 0 4px;padding:10px 12px;border:1px solid var(--line-2);border-radius:8px;cursor:pointer;font-size:13.5px"><input type="checkbox" id="hk-stadf" ${stadf?'checked':''} style="width:17px;height:17px;accent-color:var(--gold-600,#a8801f);flex:none"><span style="flex:1"><b>Rukka staðfestingu brunalokana</b></span><span style="color:var(--muted)">${fmt(GR_STADF)} kr án vsk</span></label>
+        ${(data.samraemt||[]).length?`<div class="hk-src" style="margin-top:8px"><b>Fært á verðskrárbil:</b> ${data.samraemt.map(s=>escapeHtml(s.group)+' × '+s.stakar+' → '+escapeHtml(String(s.label||s.size_label).replace(/^Brunalokanir á stærðum\s*/,''))).join(', ')} <span style="color:var(--muted)">(miðja flokksins ræður bilinu)</span></div>`:''}
         ${opnar.length?`<div class="hk-warn"><b>Ekki kláruð í Ajour (ekki talin með):</b> ${opnar.map(o=>escapeHtml(o.group)+' × '+o.stakar).join(', ')}. Bættu við magni ef þau eiga að rukkast núna.</div>`:''}
         ${unm.length?`<div class="hk-warn"><b>Flokkur sem passar ekki við verðskrána:</b> ${unm.map(u=>escapeHtml(u.group)+' × '+u.stakar).join(', ')} — veldu rétta stærð í „Bæta við gatastærð" og settu magnið inn.</div>`:''}`;
       $body.querySelectorAll('[data-hk-q]').forEach(inp => inp.addEventListener('input', () => {
@@ -13890,6 +13895,7 @@ async function renderGerdReikninga(t){
         setDirty(true); refresh();
       }));
       $body.querySelectorAll('[data-hk-rm]').forEach(b => b.onclick = () => { delete qty[b.dataset.hkRm]; setDirty(true); renderBody(); refresh(); });
+      const stb = document.getElementById('hk-stadf'); if(stb) stb.onchange = () => { stadf = stb.checked; setDirty(true); refresh(); };
       const sel = document.getElementById('hk-add-sel');
       sel.onchange = () => { if(!sel.value) return; qty[sel.value] = qty[sel.value] || 0; setDirty(true); renderBody(); refresh(); const inp = $body.querySelector(`[data-hk-q="${sel.value}"]`); if(inp) inp.focus(); };
     };
@@ -13905,6 +13911,7 @@ async function renderGerdReikninga(t){
           <tbody>
             <tr class="sec"><td colspan="4">Brunalokanir</td></tr>
             ${c.ls.map(l=>`<tr><td class="l">${escapeHtml(l.label)}</td><td class="p">${kr(l.price)}</td><td class="m">${l.qty}</td><td class="t">${kr(l.total)}</td></tr>`).join('') || '<tr><td class="l" colspan="4">—</td></tr>'}
+            ${c.stadf?`<tr class="sec"><td colspan="4">Aukagjöld</td></tr><tr><td class="l">Staðfesting brunalokana</td><td class="p">${kr(c.stadf)}</td><td class="m">1</td><td class="t">${kr(c.stadf)}</td></tr>`:''}
             <tr class="sub"><td colspan="3">Samtals án vsk</td><td class="t">${kr(c.net)}</td></tr>
             <tr class="sub"><td colspan="3">Vsk (${VSK_PCT}%)</td><td class="t">${kr(c.vsk)}</td></tr>
             <tr class="grand"><td colspan="3">Samtals með vsk</td><td class="t">${kr(c.total)}</td></tr>
@@ -13926,7 +13933,7 @@ async function renderGerdReikninga(t){
 
     document.getElementById('hk-reset').onclick = () => { qty = fromAjour(); setDirty(true); renderBody(); refresh(); };
 
-    const pdfData = () => { const c = calc(); return { ws: wsName, cust: document.getElementById('hk-cust').value.trim(), kt: document.getElementById('hk-kt').value.trim(), addr: document.getElementById('hk-addr').value.trim(), fra, til, lines: c.ls, net: c.net, vsk: c.vsk, vskPct: VSK_PCT, total: c.total }; };
+    const pdfData = () => { const c = calc(); return { ws: wsName, cust: document.getElementById('hk-cust').value.trim(), kt: document.getElementById('hk-kt').value.trim(), addr: document.getElementById('hk-addr').value.trim(), fra, til, lines: c.ls, stadf: c.stadf, net: c.net, vsk: c.vsk, vskPct: VSK_PCT, total: c.total }; };
     const $st = document.getElementById('hk-st');
     const doSave = async (force) => {
       const c = calc();
@@ -13942,7 +13949,7 @@ async function renderGerdReikninga(t){
           netfang: document.getElementById('hk-email').value.trim() || null,
           source: 'ajour',
           hours_dagvinna: 0, hours_eftirvinna: 0, rate_dagvinna: 0, rate_eftirvinna: 0,
-          akstur_km: 0, akstur_ferdir: 0, akstur_gjald: 0, smahlutagjald: 0, stadfesting: 0,
+          akstur_km: 0, akstur_ferdir: 0, akstur_gjald: 0, smahlutagjald: 0, stadfesting: c.stadf,
           materials_jsonb: c.ls.map(l => ({ gat:true, label:l.label, size_label:l.size_label, size_min_mm:l.size_min_mm, size_max_mm:l.size_max_mm, price:l.price, qty:l.qty, total:l.total, ajour:l.ajour })),
           materials_total: 0,
           net_an_vsk: c.net, vsk_amount: c.vsk, total_m_vsk: c.total, fixed_total: c.total || null, discount_pct: 0,
@@ -26234,6 +26241,10 @@ function drawGatEfnislistiPage(doc, logo, data){
   const kr = n => _pkr(n);
   const bodyRows = [[{ content:'Brunalokanir', colSpan:4, styles:{ fontStyle:'bold', fillColor:[245,245,245], textColor:20 } }]];
   (data.lines||[]).forEach(l => bodyRows.push([l.label, kr(l.price), String(l.qty), kr(l.total)]));
+  if(data.stadf > 0){   // 02.11.2026: hakið „Rukka staðfestingu brunalokana" í Efnislista · göt
+    bodyRows.push([{ content:'Aukagjöld', colSpan:4, styles:{ fontStyle:'bold', fillColor:[245,245,245], textColor:20 } }]);
+    bodyRows.push(['Staðfesting brunalokana', kr(data.stadf), '1', kr(data.stadf)]);
+  }
   const foot = [
     [{content:'Samtals án vsk', colSpan:3, styles:{halign:'right',fontStyle:'italic'}}, {content:kr(data.net), styles:{halign:'right'}}],
     [{content:'Vsk ('+(data.vskPct||24)+'%)', colSpan:3, styles:{halign:'right',fontStyle:'italic'}}, {content:kr(data.vsk), styles:{halign:'right'}}],

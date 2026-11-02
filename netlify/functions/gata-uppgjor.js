@@ -120,15 +120,32 @@ exports.handler = async (event) => {
   const holes = [];
   let holes_an_vsk = 0;
   const unmapped = [];
+  // 02.11.2026 (Agnar: „geturðu púslað þessu saman í verðskrána"): Ajour-flokkur sem passar ekki við
+  // verðskrárbil (verðskráin er í 50 mm bilum, Ajour á t.d. „Gat Ø1210-1300" og „Gat Ø1700-1799") fer á
+  // bilið sem MIÐJA flokksins lendir í: 1210-1300 → Ø1210-1259, 1700-1799 → Ø1710-1759. Sama og var gert
+  // handvirkt í apríl (Excel-blaðið) og október. `samraemt` segir hvað var fært svo það sjáist í glugganum.
+  const bilFyrirMidju = (lo, hi) => {
+    const mid = (lo + hi) / 2;
+    for (const r of rateBySize.values()) if (mid >= Number(r.size_min_mm) && mid < Number(r.size_max_mm) + 1) return r;
+    return null;
+  };
+  const samraemt = [];
+  const holeBy = new Map();   // eitt verðskrárbil = ein lína, þótt tveir Ajour-flokkar lendi á því
   for (const [group, stakar] of Object.entries(groupCounts)) {
     const m = group.match(/(\d{3,4})-(\d{3,4})/);
     if (!m) { unmapped.push({ group, stakar }); continue; }
-    const key = `${parseInt(m[1],10)}-${parseInt(m[2],10)}`;
-    const rate = rateBySize.get(key);
-    if (!rate) { unmapped.push({ group, stakar, parsed_size: key }); continue; }
-    const an_vsk = stakar * Number(rate.rate_an_vsk);
-    holes_an_vsk += an_vsk;
-    holes.push({
+    const lo = parseInt(m[1], 10), hi = parseInt(m[2], 10);
+    const key = `${lo}-${hi}`;
+    let rate = rateBySize.get(key);
+    if (!rate) {
+      rate = bilFyrirMidju(lo, hi);
+      if (!rate) { unmapped.push({ group, stakar, parsed_size: key }); continue; }
+      samraemt.push({ group, stakar, size_label: rate.size_label, label: lysingFor(rate) });
+    }
+    const bk = `${rate.size_min_mm}-${rate.size_max_mm}`;
+    const h = holeBy.get(bk);
+    if (h) { h.stakar += stakar; h.group += ' + ' + group; continue; }
+    holeBy.set(bk, {
       group,
       size_label: rate.size_label,
       size_min_mm: Number(rate.size_min_mm),
@@ -137,9 +154,13 @@ exports.handler = async (event) => {
       rate_scope: rate.scope,
       stakar,
       rate_an_vsk: Number(rate.rate_an_vsk),
-      an_vsk,
-      m_vsk: Math.round(an_vsk * 1.24),
     });
+  }
+  for (const h of holeBy.values()) {
+    h.an_vsk = h.stakar * h.rate_an_vsk;
+    h.m_vsk = Math.round(h.an_vsk * 1.24);
+    holes_an_vsk += h.an_vsk;
+    holes.push(h);
   }
   holes.sort((a,b) => b.an_vsk - a.an_vsk);
   // Öll verð (eigin verðskrá ef til, annars generic) — Efnislistinn getur bætt við stærð handvirkt.
@@ -172,6 +193,7 @@ exports.handler = async (event) => {
     opnar: Object.entries(opnar).map(([group, stakar]) => ({ group, stakar })),
     ferskleiki: { last_import: (nyjast[0] || {}).imported_at || null, last_registration: (seinast[0] || {}).execution_date || null, last_sync: (syncInfo && syncInfo.synced_at) || null },
     unmapped,
+    samraemt,
     band_rates: { kragi: kragar, bordi: bordar },
     totals: {
       holes_an_vsk,
