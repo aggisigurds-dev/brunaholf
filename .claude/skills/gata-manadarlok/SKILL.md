@@ -64,8 +64,11 @@ Kláraðar Ajour-skráningar (`registration_status='Done'`) × eigin verðskrá
 1. **Glugginn á eigið mánaðarval `#hk-man`.** Drögin eru `DRAFTS[ws|mánuður gluggans]` — ALDREI
    `draftFor` (hann les mánuð síðunnar). Gildran 06.10: síðan á ágúst → 0 kr drög #338.
 2. Mánuður án kláraðra gata → glugginn hoppar á síðasta heila mánuð.
-3. Ókláraðar skráningar og flokkar utan verðskrár sjást sem viðvörun — Agnar bætir við
-   handvirkt (`#hk-add-sel`).
+3. Ókláraðar skráningar sjást sem viðvörun — Agnar bætir við handvirkt (`#hk-add-sel`) ef þær eiga
+   að rukkast. **Flokkar utan verðskrár** („Gat Ø1210-1300", „Gat Ø1700-1799") fara SJÁLFKRAFA á bilið sem
+   miðja flokksins lendir í (gata-uppgjor `samraemt`, 9253efc, 02.11.2026) og sjást sem „Fært á verðskrárbil".
+   **Hak „Rukka staðfestingu brunalokana"** (`#hk-stadf`): GR_STADF 20.000 án vsk → `invoice_drafts.stadfesting`,
+   í samtölu, forskoðun og PDF; hakið man sig eftir drögunum.
 4. Vista (`#hk-save`) → drög „Heklu reitur" (gat-línur `gat:true`, `materials_total` 0,
    `fixed_total` = samtala) · PDF `#hk-pdf`.
 5. Ajour-raðirnar koma frá luna-bridge `ajour-yfirlit.js syncVerkefnaRadir` — útrunnin

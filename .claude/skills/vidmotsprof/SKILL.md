@@ -49,6 +49,15 @@ async (page) => {
 Playwright MCP (`browser_run_code_unsafe`) keyrir þetta. Chrome-MCP-hópurinn hefur stundum
 ekki hub-flipann — Playwright er þá leiðin.
 
+### Innskráningarhliðið og engin laus tengi (02.11.2026)
+- Hubbinn sendir óinnskráðan vafra á `adgangar.html` (viðmótshlið: `GET /api/hub-adgangar` → `{gate, authed}`).
+  Ferskur prófunarvafri kemst ekki inn — **aldrei slá inn lykilorð**. Í staðbundnu eintaki svarar route-reglan
+  `/api/hub-adgangar` með `{gate:false}`; á lifandi síðu þarf vafra sem Agnar hefur skráð inn.
+- Séu öll dev-tengi upptekin (`preview_start`: „Maximum 5 dev servers") eða Playwright-MCP vafrinn í notkun
+  annars spjalls: keyra Playwright úr `luna-bridge/node_modules` og þjóna skránum af diski á gervilén
+  (`http://bh.test/` → `fs.readFileSync(REPO + pathname)`, `/api` GET → lifandi síða, önnur köll gripin).
+  Sýnidæmi: scratchpad `hk_stadf_test.cjs` (02.11.2026). PDF-ið má þá skrifa beint á disk úr route-reglunni.
+
 ## 2 · Gildrur sem kostuðu umferðir
 
 - **Sama slóð með nýju `#` endurhleður ekki.** Gamall gluggi (`.gr-modal-bg`) stendur þá og
