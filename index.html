@@ -80,7 +80,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://osfdzskyvisifcwyjkuk.supabase.co">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/theme.css?v=20261102a">
+<link rel="stylesheet" href="/css/theme.css?v=20261102b">
+<script src="/js/verkstadur.js?v=20261102a"></script>
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
@@ -3593,6 +3594,24 @@ function renderVidskiptavinir(t) {
           await velja(name, { flipi: 'stadir' });
         } catch (e) { st.textContent = '✗ ' + (e.message || e); st.style.color = '#b5522a'; btn.disabled = false; }
       });
+    }
+    // — Greining · verkstaðirnir (02.11.2026, Agnar: „setja húsnæðin í greiningu þarna, en ekki slökkvitækjagreiningu, heldur
+    // aðalega að fá góðar teikningar, eða teikningarnar úr Ajour"). Sami panill og glugginn í Kröfu yfirliti (js/verkstadur.js):
+    // mynd, heimilisfang, Ajour-vinnuteikningar og teikningar úr skjalasafni/kortasjá. Greining fasteignar í Slökkvitæki er
+    // aðeins tengill. Greiðandi án verkstaðar fær gamla heimilisfangs-Greininguna hér að neðan.
+    const wsl = [...new Set(vh.map(x => x.worksite_name).filter(Boolean))];
+    if (wsl.length && window.BhVerkstadur) {
+      pg.innerHTML = '<div class="vk-gr-ws"><span class="vk-cap">Verkstaður</span>' + wsl.map(w => '<button type="button" class="vk-chip" data-vk-grws="' + escapeAttr(w) + '">' + escapeHtml(w) + '</button>').join('')
+        + '<span style="flex:1"></span><a class="boss-btn ivory" data-vk-gut target="_blank" rel="noopener" href="' + SLOKK + '/#greining/' + encodeURIComponent(heimiliA) + '"' + (heimiliA ? '' : ' hidden') + '>↗ Greining fasteignar í Slökkvitæki</a></div><div class="vk-gr-panel" data-vk-grp></div>';
+      const panel = pg.querySelector('[data-vk-grp]');
+      const syna = (w) => {
+        pg.querySelectorAll('[data-vk-grws]').forEach(b => b.classList.toggle('on', b.dataset.vkGrws === w));
+        window.BhVerkstadur.teikna(panel, w, { innfellt: true });
+      };
+      pg.querySelector('.vk-gr-ws').addEventListener('click', e => { const b = e.target.closest('[data-vk-grws]'); if (b) syna(b.dataset.vkGrws); });
+      pg._opna = () => syna(wsl[0]);
+      velduFlipa(col, opinnFlipi);
+      return;
     }
     // — Greining (Greining fasteignar fyrir heimilisfang) —
     pg.innerHTML = '<div class="vk-frame-bar"><span class="vk-cap">Heimilisfang</span><input data-vk-gaddr type="text" placeholder="Gata 4, 200 Bær" value="' + escapeAttr(heimiliA) + '">'
@@ -19069,125 +19088,12 @@ async function renderKrofuyfirlit(t){
   // Birtingarheiti verkstada (18.09.2026, Agnar: "Borgarspitalinn fyrir framan Aland"): Timavera-nafnid er
   // LYKILL (drog, verdskra, porun) og ma ekki breytast - heitid er adeins synt. ky_settings.ws_display = { 'Áland 6': 'Borgarspítalinn' }.
   const wsDisp = nm => { const m = KYSET.ws_display || {}; const k = Object.keys(m).find(x => x.toLowerCase() === String(nm||'').trim().toLowerCase()); return (k && m[k]) ? (m[k] + ' · ' + nm) : nm; };
-  // Mynd + teikningar verkstaðar (02.11.2026, Agnar: „vanti mynd þarna af heimilisfanginu og að það sé hægt að sjá betri
-  // upplýsingar og teikningar af verkstaðnum eins og á slökkvitæki company profiles"). Gögnin: tafla verkstadur_info um
-  // /api/verkstadur. Mynd og húsupplýsingar koma úr Slökkvitækja-föllunum (husmynd = Street View/loftmynd, hus-upplysingar =
-  // landnr, hæðir, teikningar úr skjalasafni / map.is) og eru sóttar AÐEINS við smell í glugganum — aldrei í lykkju.
-  const SLOKK = 'https://slokkvitaeki.netlify.app';
-  let VSI = (() => { try{ return JSON.parse(localStorage.getItem('ky_vsi_cache') || '{}') || {}; }catch(_){ return {}; } })();   // skyndiminni; þjónninn ræður
-  async function loadVsi(){
-    try{
-      const r = await fetch('/api/verkstadur?all=1', { cache:'no-store' }); if(!r.ok) return;
-      const j = await r.json(); const m = {}; for(const x of (j.rows||[])) m[x.worksite_name] = x;
-      VSI = m; try{ localStorage.setItem('ky_vsi_cache', JSON.stringify(m)); }catch(_){}
-      vsiMala();
-    }catch(_){}
-  }
-  const vsSmamynd = u => /\/storage\/v1\/object\/public\//.test(u||'') ? u.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/') + '?width=240&resize=contain' : u;   // contain — width eitt sér SKER (21.10)
-  const wsmInni = ws => { const v = VSI[ws]; return (v && v.mynd_url) ? `<img src="${esc(vsSmamynd(v.mynd_url))}" alt="" loading="lazy" onerror="if(!this.dataset.f){this.dataset.f=1;this.src=${esc(JSON.stringify(v.mynd_url))}}">` : '<span>＋ mynd</span>'; };
-  const wsMynd = ws => ws
-    ? `<button type="button" class="ky-wsm${(VSI[ws]&&VSI[ws].mynd_url)?' med':''}" data-wsm="${esc(ws)}" title="${esc(wsDisp(ws))} — mynd, heimilisfang og teikningar">${wsmInni(ws)}</button>`
-    : '<span class="ky-wsm ky-wsm-tomt" aria-hidden="true"></span>';
-  // Uppfærir smámyndirnar Á STAÐNUM (sama hnút, sama stærð) — engin endurteikning listans, ekkert hopp.
-  function vsiMala(){
-    document.querySelectorAll('.ky-wsm[data-wsm]').forEach(b => {
-      const ws = b.dataset.wsm, med = !!(VSI[ws] && VSI[ws].mynd_url), u = med ? VSI[ws].mynd_url : '';
-      if(b.dataset.u === u) return; b.dataset.u = u; b.classList.toggle('med', med); b.innerHTML = wsmInni(ws);
-    });
-  }
-  // Tillaga að heimilisfangi úr nafni verkstaðar („Skùlagata 26" → „Skúlagata 26", „Hnjúkamói 9Þorlákshöfn" → „Hnjúkamói 9").
-  function wsTillaga(ws){
-    const s = String(ws||'').normalize('NFC').replace(/[ùû]/g,'ú').replace(/[òô]/g,'ó').replace(/[ìî]/g,'í').replace(/[àâ]/g,'á').replace(/[èê]/g,'é').trim();
-    const m = /^([A-Za-zÁÐÉÍÓÚÝÞÆÖáðéíóúýþæö .-]+?)\s+(\d{1,4}[A-Za-z]?)(?![\d])/.exec(s);
-    return m ? (m[1].trim() + ' ' + m[2]) : '';
-  }
-  // Landeignaskrá: „Skúlagata 26 (101) - L 101118" → {gata:'Skúlagata 26', postnr:'101', landnr}
-  async function vsLeit(q){
-    const r = await fetch(SLOKK + '/.netlify/functions/landnr?leit=' + encodeURIComponent(q)); const j = await r.json().catch(() => ({}));
-    const seen = new Set(), out = [];
-    for(const x of (j.results||[])){ const m = /^(.+?)\s*\((\d{3})\)\s*-\s*L\s*(\d+)/.exec(String(x.label||'')); if(!m) continue; const k = m[1].toLowerCase()+'|'+m[2]; if(seen.has(k)) continue; seen.add(k); out.push({ gata:m[1].trim(), postnr:m[2], landnr:m[3] }); }
-    return out;
-  }
-  async function saekjaVerkstad(ws, heimilisfang, heimild){
-    const hu = await fetch(SLOKK + '/.netlify/functions/hus-upplysingar?heimilisfang=' + encodeURIComponent(heimilisfang)).then(r => r.json()).catch(() => ({}));
-    const e = hu.eign || null;
-    const fullt = e && e.label ? (e.label + (e.postnr ? ', ' + e.postnr : '')) : heimilisfang;
-    const hm = await fetch(SLOKK + '/api/husmynd', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ address: fullt }) }).then(r => r.json()).catch(() => ({}));
-    const res = (hu.results||[]).map(t => ({ filename:t.filename, infoUrl:t.infoUrl, thumb:t.thumb||null, lysing:t.lysing||'', tegund:t.tegund||'', dags:t.dags||'', haed:t.haed||[], stig:t.stig||[], grunnmynd:!!t.grunnmynd, urelt:!!t.urelt }));
-    res.sort((a,b) => (a.urelt-b.urelt) || (b.grunnmynd-a.grunnmynd) || String(b.dags).localeCompare(String(a.dags)));
-    const fyrri = VSI[ws] || {};
-    const body = { action:'vista', ws, heimilisfang, heimilisfang_heimild: heimild,
-      nytt_heimilisfang: (fyrri.heimilisfang||'') !== heimilisfang,
-      hus: { eign: e, tillogur: hu.tillogur||{}, teikningar: hu.teikningar||{}, heimild: hu.heimild||null },
-      teikningar: res.slice(0, 60),
-      mynd: hm && hm.ok && hm.image ? { b64: hm.image, type: hm.contentType, heimild: hm.heimild, texti: hm.attribution||'' } : null,
-      by: bhMe() || '' };
-    const r = await fetch('/api/verkstadur', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(body) });
-    const j = await r.json().catch(() => ({}));
-    if(!r.ok || !j.row) throw new Error(j.error || ('HTTP ' + r.status));
-    const { teikningar, ...an } = j.row; VSI[ws] = an; try{ localStorage.setItem('ky_vsi_cache', JSON.stringify(VSI)); }catch(_){}
-    vsiMala();
-    return j.row;
-  }
-  async function openVerkstadur(ws){
-    const old = document.getElementById('ky-vs-modal'); if(old) old.remove();
-    const w = document.createElement('div'); w.id = 'ky-vs-modal';
-    w.style.cssText = 'position:fixed;inset:0;z-index:100080;background:rgba(10,10,9,.55);display:flex;align-items:center;justify-content:center;padding:16px';
-    w.innerHTML = `<div class="kyvs"><div class="kyvs-h"><div><div class="kyvs-t">${esc(wsDisp(ws))}</div><div class="kyvs-s">Verkstaður</div></div><button type="button" class="kyvs-x" title="Loka">×</button></div><div class="kyvs-b"><div class="kyvs-st">Sæki…</div></div></div>`;
-    document.body.appendChild(w);
-    const close = () => w.remove();
-    w.addEventListener('click', e => { if(e.target === w) close(); });
-    w.querySelector('.kyvs-x').addEventListener('click', close);
-    w.addEventListener('keydown', e => { if(e.key === 'Escape') close(); });
-    const $b = w.querySelector('.kyvs-b');
-    let row = null;
-    try{ const r = await fetch('/api/verkstadur?ws=' + encodeURIComponent(ws), { cache:'no-store' }); row = (await r.json()).row || null; }catch(_){}
-    const syna = (st) => {
-      const v = row || {}, hus = v.hus || {}, e = hus.eign || {}, til = hus.tillogur || {}, tk = hus.teikningar || {}, tl = v.teikningar || [];
-      const rvk = e.svfnr === '0000';
-      const kort = v.heimilisfang ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent((e.label ? e.label + ', ' + (e.postnr||'') : v.heimilisfang) + ' Ísland') : '';
-      const flis = [
-        e.landnr ? 'Landnr. L' + esc(e.landnr) : '',
-        til.haedir ? esc(til.haedir) + ' hæðir' : '',
-        til.kjallari === 'yes' ? 'kjallari' : '', til.jardhaed === 'yes' ? 'jarðhæð' : '', til.ris === 'yes' ? 'ris' : '',
-      ].filter(Boolean).map(x => `<span class="kyvs-f">${x}</span>`).join('');
-      const tHtml = tl.length ? tl.slice(0, 24).map(t => `<a class="kyvs-tk${t.urelt?' urelt':''}" href="${esc(t.infoUrl||'#')}" target="_blank" rel="noopener" title="${esc([t.tegund, t.lysing, t.dags].filter(Boolean).join(' · '))}">${t.thumb ? `<img src="${esc(t.thumb)}" alt="" loading="lazy">` : '<span class="kyvs-pdf">PDF</span>'}<span class="kyvs-tl">${esc(t.lysing || t.filename || 'Teikning')}</span><span class="kyvs-td">${esc(t.dags ? fmtDate(t.dags) : '')}${t.urelt?' · úrelt':''}</span></a>`).join('') : '';
-      $b.innerHTML = `
-        <div class="kyvs-mynd">${v.mynd_url ? `<img src="${esc(v.mynd_url)}" alt="">` : `<div class="kyvs-engin">${v.heimilisfang ? (v.mynd_heimild === 'engin' ? 'Engin mynd fannst af þessu húsi' : 'Mynd ekki sótt enn') : 'Skráðu heimilisfang verkstaðarins til að sækja mynd og teikningar'}</div>`}${v.mynd_texti ? `<span class="kyvs-attr">${esc(v.mynd_texti)}</span>` : ''}</div>
-        <div class="kyvs-adr"><span class="kyvs-l">Heimilisfang</span><b>${v.heimilisfang ? esc(e.label ? e.label + (e.postnr ? ', ' + e.postnr : '') : v.heimilisfang) : '<span style="color:var(--muted);font-weight:500">óskráð</span>'}</b>${kort ? `<a href="${esc(kort)}" target="_blank" rel="noopener" class="kyvs-lk">Kort ↗</a>` : ''}<button type="button" class="kyvs-btn" data-vs="breyta">✎ ${v.heimilisfang ? 'Breyta' : 'Skrá heimilisfang'}</button></div>
-        <div class="kyvs-leit" hidden><input type="text" class="kyvs-in" placeholder="t.d. Skúlagata 26" value="${esc(v.heimilisfang || wsTillaga(ws))}"><button type="button" class="kyvs-btn" data-vs="leita">Leita</button><div class="kyvs-cand"></div></div>
-        ${flis ? `<div class="kyvs-flis">${flis}</div>` : ''}
-        ${v.heimilisfang ? `<div class="kyvs-th"><span class="kyvs-l">Teikningar</span>${tk.fjoldi ? `<span>${tk.gildandi!=null ? esc(tk.gildandi) + ' gildandi af ' : ''}${esc(tk.fjoldi)}${tk.grunnmyndir ? ' · ' + esc(tk.grunnmyndir) + ' grunnmyndir' : ''}${hus.heimild ? ' · ' + esc(String(hus.heimild).split(' · ')[0]) : ''}</span>` : '<span style="color:var(--muted)">engar fundust</span>'}${rvk && e.landnr ? `<a class="kyvs-lk" target="_blank" rel="noopener" href="https://skjalasafn.reykjavik.is/fotoweb/archives/5000-A%C3%B0aluppdr%C3%A6ttir/?q=${encodeURIComponent(e.landnr)}">Allar í skjalasafni ↗</a>` : ''}</div>
-        ${tHtml ? `<div class="kyvs-tgrid">${tHtml}</div>${tl.length > 24 ? `<div class="kyvs-st">${tl.length - 24} til viðbótar — sjá allar í skjalasafninu/kortasjánni.</div>` : ''}` : ''}` : ''}
-        <div class="kyvs-st" id="kyvs-st">${st || ''}</div>
-        <div class="kyvs-fot">${v.heimilisfang ? `<button type="button" class="kyvs-btn" data-vs="aftur" title="Sækja mynd og teikningar aftur">↻ Sækja aftur</button>` : ''}<button type="button" class="kyvs-btn" data-vs="loka">Loka</button></div>`;
-      $b.querySelector('[data-vs="loka"]').onclick = close;
-      const leit = $b.querySelector('.kyvs-leit'), inp = $b.querySelector('.kyvs-in'), cand = $b.querySelector('.kyvs-cand'), $st = $b.querySelector('#kyvs-st');
-      const keyra = async (adr, heimild) => {
-        $st.style.color = 'var(--muted)'; $st.textContent = 'Sæki mynd, húsupplýsingar og teikningar fyrir ' + adr + '…';
-        $b.querySelectorAll('.kyvs-btn').forEach(x => x.disabled = true);
-        try{ row = await saekjaVerkstad(ws, adr, heimild); syna(row.mynd_url ? '✓ Vistað' : '✓ Vistað — engin mynd fannst af húsinu'); }
-        catch(err){ syna('<span style="color:var(--red)">✗ ' + esc(err.message || err) + '</span>'); }
-      };
-      const leita = async () => {
-        const q = inp.value.trim(); if(!q) return;
-        cand.innerHTML = '<span class="kyvs-st">Leita í Landeignaskrá…</span>';
-        let c = []; try{ c = await vsLeit(q); }catch(_){}
-        // Eitt nákvæmt staðfang (gata + númer, og póstnúmer ef slegið inn) → sótt strax; annars velur notandinn.
-        const qg = q.replace(/,.*$/, '').trim().toLowerCase(), qp = (/,\s*(\d{3})/.exec(q) || [])[1];
-        const nak = c.filter(x => x.gata.toLowerCase() === qg && (!qp || x.postnr === qp));
-        if(nak.length === 1){ keyra(nak[0].gata + ', ' + nak[0].postnr, 'handvirkt'); return; }
-        cand.innerHTML = c.length ? c.slice(0, 8).map(x => `<button type="button" class="kyvs-btn kyvs-c" data-a="${esc(x.gata + ', ' + x.postnr)}">${esc(x.gata)} <span style="color:var(--muted)">(${esc(x.postnr)})</span></button>`).join('') : '<span class="kyvs-st">Ekkert fannst — prófaðu götuheiti og húsnúmer, t.d. „Laugavegur 170".</span>';
-        cand.querySelectorAll('.kyvs-c').forEach(x => x.onclick = () => keyra(x.dataset.a, 'handvirkt'));
-      };
-      $b.querySelector('[data-vs="breyta"]').onclick = () => { leit.hidden = !leit.hidden; if(!leit.hidden){ inp.focus(); inp.select(); } };
-      $b.querySelector('[data-vs="leita"]').onclick = leita;
-      inp.addEventListener('keydown', ev => { if(ev.key === 'Enter'){ ev.preventDefault(); leita(); } });
-      const aft = $b.querySelector('[data-vs="aftur"]'); if(aft) aft.onclick = () => keyra(row.heimilisfang, row.heimilisfang_heimild || 'handvirkt');
-      if(!v.heimilisfang){ leit.hidden = false; if(inp.value) leita(); else inp.focus(); }
-    };
-    syna('');
-  }
+  // Mynd + teikningar verkstaðar (02.11.2026, Agnar: „vanti mynd þarna af heimilisfanginu … og teikningar af verkstaðnum").
+  // Vélin býr í js/verkstadur.js (window.BhVerkstadur) — sami panill í Viðskiptavinir · Greining.
+  const VS = () => window.BhVerkstadur || null;
+  const loadVsi = () => { const v = VS(); if(v) v.hlada(); };
+  const wsMynd = ws => { const v = VS(); return v ? v.smamynd(ws, ws ? wsDisp(ws) : '') : ''; };
+  const openVerkstadur = ws => { const v = VS(); if(v) v.opna(ws, wsDisp(ws)); };
   // ✎ Greiðandi á spjaldinu (12.10.2026, Agnar á Borgarspítalanum · Áland 6: „Kt. er 500300-2130 LSH og
   // númerið sem þarf að koma fram er 21727. geturðu leyft mér að breyta þessu þarna"). Greiðandi, kt og
   // tilvísun eru per VERKSTAÐ (customer_worksite_map) og fara líka á ósend drög hans — /api/customer-map.
@@ -20111,7 +20017,7 @@ async function renderKrofuyfirlit(t){
       h.addEventListener('keydown', e=>{ if(e.target.closest('.ky-greid-btn')) return; if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggle(); } });
     });
     listEl.querySelectorAll('.ky-greid-btn').forEach(b=>b.addEventListener('click', e=>{ e.stopPropagation(); openGreidandiForm(b); }));
-    listEl.querySelectorAll('.ky-wsm[data-wsm]').forEach(b=>{ b.dataset.u = (VSI[b.dataset.wsm]&&VSI[b.dataset.wsm].mynd_url)||''; b.addEventListener('click', e=>{ e.stopPropagation(); openVerkstadur(b.dataset.wsm); }); });
+    listEl.querySelectorAll('.ky-wsm[data-wsm]').forEach(b=>b.addEventListener('click', e=>{ e.stopPropagation(); openVerkstadur(b.dataset.wsm); }));
     listEl.querySelectorAll('.kyf-sameina-all').forEach(b=>b.addEventListener('click',(e)=>{
       e.stopPropagation();
       const keys=(b.dataset.keys||'').split('~').filter(Boolean);

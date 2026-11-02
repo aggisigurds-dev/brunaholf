@@ -24,9 +24,14 @@ exports.handler = async (event) => {
   if (event.httpMethod === 'GET') {
     const q = event.queryStringParameters || {};
     if (q.ws) {
-      const r = await fetch(`${SUPABASE_URL}/rest/v1/verkstadur_info?worksite_name=eq.${encodeURIComponent(q.ws)}&select=*`, { headers: H });
+      const [r, t] = await Promise.all([
+        fetch(`${SUPABASE_URL}/rest/v1/verkstadur_info?worksite_name=eq.${encodeURIComponent(q.ws)}&select=*`, { headers: H }),
+        fetch(`${SUPABASE_URL}/rest/v1/ajour_teikningar?select=file_id,project_id,project_name,nafn,n_skraningar,n_klarad,mynd_url,w,h,sidast&order=project_name,nafn`, { headers: { ...H, Range: '0-4999' } }),
+      ]);
       if (!r.ok) return json(r.status, { error: (await r.text()).slice(0, 300) });
-      return json(200, { row: (await r.json())[0] || null });
+      const row = (await r.json())[0] || null;
+      const allar = t.ok ? await t.json() : [];
+      return json(200, { row, ajour: ajourFyrir(q.ws, row, Array.isArray(allar) ? allar : []) });
     }
     const r = await fetch(`${SUPABASE_URL}/rest/v1/verkstadur_info?select=${LISTI}&order=worksite_name`, { headers: { ...H, Range: '0-999' } });
     if (!r.ok) return json(r.status, { error: (await r.text()).slice(0, 300) });
@@ -36,9 +41,19 @@ exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') return json(405, { error: 'Method not allowed' });
   let b;
   try { b = JSON.parse(event.body || '{}'); } catch { return json(400, { error: 'Invalid JSON' }); }
-  if (b.action !== 'vista') return json(400, { error: 'action vantar' });
   const ws = String(b.ws || '').trim();
   if (!ws) return json(400, { error: 'ws vantar' });
+  if (b.action === 'ajour') {
+    // Handvalið Ajour-verkefni (tómt = sjálfvirk pörun aftur).
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/verkstadur_info?on_conflict=worksite_name`, {
+      method: 'POST',
+      headers: { ...H, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=representation' },
+      body: JSON.stringify({ worksite_name: ws, ajour_project_id: b.ajour_project_id || null, updated_at: new Date().toISOString(), updated_by: String(b.by || '').slice(0, 60) || null }),
+    });
+    if (!r.ok) return json(r.status, { error: (await r.text()).slice(0, 300) });
+    return json(200, { ok: true, row: (await r.json())[0] || null });
+  }
+  if (b.action !== 'vista') return json(400, { error: 'action vantar' });
 
   const rod = {
     worksite_name: ws,
@@ -75,6 +90,42 @@ exports.handler = async (event) => {
   if (!r.ok) return json(r.status, { error: (await r.text()).slice(0, 300) });
   return json(200, { ok: true, row: (await r.json())[0] || null });
 };
+
+// Ajour-verkefni ↔ verkstaður. Nöfnin eru ólík („Skùlagata 26" / „Skúlagata 26", „Heklu reitur" / „Heklureitur",
+// „Hrafnista Nesvellir 4" / „Nesvellir 4", „Höfðabakka 9B" / „Höfðabakki 9B"): sama orð (eða ≥5 stafa sameiginlegt
+// forskeyti) OG sama húsnúmer ef verkstaðurinn ber númer. Handpör eins og í /api/ajour-yfirlit (staðfest af Agnari 18.09).
+const HANDPOR = [[/^landss?p[ií]talinn/i, /^NLSH/i], [/^[áa]land 6/i, /^Borgarsp[ií]talinn/i]];
+const brjota = (s) => String(s || '').toLowerCase().replace(/ð/g, 'd').replace(/þ/g, 'th').replace(/æ/g, 'ae').replace(/ö/g, 'o')
+  .normalize('NFD').replace(/[̀-ͯ]/g, '');
+const ord = (s) => brjota(s).split(/[^a-z0-9]+/).filter((w) => w && !/^\d/.test(w) && w.length >= 4 && !['hotel', 'blu', 'farm', 'reitur', 'reitir'].includes(w));
+const numer = (s) => (brjota(s).match(/\b(\d{1,4})[a-z]?\b/g) || []).map((x) => parseInt(x, 10));
+// Fallbeyging/stafsetning („Fellaskóla"/„Fellaskóli", „Fjarðagata"/„Fjarðargata", „Ölduselskoli"/„Ölduselsskóli"):
+// orð ≥6 stafa með Levenshtein-fjarlægð ≤2 teljast eins. Sameiginlegt forskeyti eitt sér dugar EKKI — „Borgarnes" ≠ „Borgarspítalinn".
+function fjarl(a, b) {
+  const d = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) { let prev = d[0]; d[0] = i; for (let j = 1; j <= b.length; j++) { const t = d[j]; d[j] = Math.min(d[j] + 1, d[j - 1] + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1)); prev = t; } }
+  return d[b.length];
+}
+function passar(ws, pn) {
+  for (const [a, b] of HANDPOR) if (a.test(ws.trim())) return b.test(pn.trim());
+  const wo = ord(ws), po = ord(pn);
+  // „Heklu reitur" → „heklureitur": samsett nafn borið saman án bila (allt nafnið, ekki forskeyti)
+  const wj = brjota(ws).replace(/[^a-z]/g, ''), pj = brjota(pn).replace(/[^a-z]/g, '');
+  const ordPassa = wo.some((w) => po.some((p) => p === w || (w.length >= 6 && p.length >= 6 && fjarl(w, p) <= 2))) || (wj.length >= 6 && wj === pj);
+  if (!ordPassa) return false;
+  const wn = numer(ws); if (!wn.length) return true;
+  const pnn = numer(pn); return wn.some((n) => pnn.includes(n));
+}
+function ajourFyrir(ws, row, allar) {
+  const verk = new Map();
+  for (const t of allar) { const v = verk.get(t.project_id) || { project_id: t.project_id, project_name: t.project_name, n: 0 }; v.n++; verk.set(t.project_id, v); }
+  const verkefni = [...verk.values()].sort((a, b) => String(a.project_name).localeCompare(String(b.project_name), 'is'));
+  const handvalid = (row && row.ajour_project_id) || null;
+  const valin = handvalid ? verkefni.filter((v) => v.project_id === handvalid) : verkefni.filter((v) => passar(ws, v.project_name || ''));
+  const ids = new Set(valin.map((v) => v.project_id));
+  const teikningar = allar.filter((t) => ids.has(t.project_id)).sort((a, b) => (b.n_skraningar || 0) - (a.n_skraningar || 0));
+  return { verkefni, valin, handvalid, teikningar };
+}
 
 function slug(s) {
   return String(s).toLowerCase().replace(/ð/g, 'd').replace(/þ/g, 'th').replace(/æ/g, 'ae').replace(/ö/g, 'o')
