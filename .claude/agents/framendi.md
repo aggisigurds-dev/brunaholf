@@ -298,7 +298,14 @@ tekjur (klárað en ógreitt). `renderSkyrslur(t)` í `index.html`.
   (`pgFailed`/`wsFailed`/`__KYF_VILLA`/`warnings`). Skrifað þegar gildið breytist eða 30 mín eru liðnar
   (samanburður við `CG_SRV`, þjónsgildin úr `cgFetchShared`, aðeins í minni). `cgFetchShared` sleppir
   innbyggðum id í `CG_SHARED` (engin tvítekning) og tekur þjónsgildið aðeins ef staðbundið vantar/er eldra.
-- **Mynd + teikningar verkstaðar í Kröfu yfirliti (02.11.2026)**: `wsMynd(ws)` setur 84×54 smámynd (`.ky-wsm`,
+- **Mynd + teikningar verkstaðar í Kröfu yfirliti (02.11.2026)**: vélin býr í **`js/verkstadur.js`** (`window.BhVerkstadur`
+  — hlada/smamynd/mala/opna/teikna), hlaðin án defer í `<head>`; Kröfu yfirlit á aðeins þunna tengla (`wsMynd`,
+  `openVerkstadur`, `loadVsi`). Sami panill innfelldur í **Viðskiptavinir · Greining** (verkstaðir greiðandans sem
+  flögur; „Greining fasteignar í Slökkvitæki" er aðeins tengill — Agnar: „ekki slökkvitækjagreiningu, heldur aðalega að
+  fá góðar teikningar, eða teikningarnar úr Ajour"). **Teikningar úr Ajour** efst: tafla `ajour_teikningar` (luna-bridge
+  `ajour-teikningar.js`, myndir í `verkstadir/ajour/<fileId>.jpg`), pöruð við verkstað í `/api/verkstadur` (`passar`:
+  sama orð/Levenshtein ≤2 + sama húsnúmer, handpör NLSH/Borgarspítalinn) — valið má yfirskrifa (`ajour_project_id`).
+  `wsMynd(ws)` setur 84×54 smámynd (`.ky-wsm`,
   `css/theme.css`) fremst í hverja röð með verkstað; smellur → `openVerkstadur(ws)` (gluggi `#ky-vs-modal`, `.kyvs-*`):
   stór mynd, heimilisfang (✎ → leit í Landeignaskrá, eitt nákvæmt staðfang sótt strax, annars val), landnr/hæðir/
   kjallari, teikningagrind (gildandi grunnmyndir fyrst, smámyndir úr skjalasafni, PDF-reitir fyrir map.is-bæina).

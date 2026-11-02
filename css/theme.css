@@ -635,6 +635,7 @@ body .hub-sync select{background:transparent;border:0;box-shadow:none;padding:2p
 .kyvs-mynd{position:relative;border-radius:10px;overflow:hidden;background:#1b1a17;aspect-ratio:16/9;max-height:360px;display:flex;align-items:center;justify-content:center}
 .kyvs-mynd img{width:100%;height:100%;object-fit:contain;display:block}
 .kyvs-engin{color:#cfc8b8;font-size:13px;padding:20px;text-align:center}
+.kyvs-mynd.tom{aspect-ratio:auto;height:88px}
 .kyvs-attr{position:absolute;right:8px;bottom:6px;font-size:10px;color:#fff;background:rgba(0,0,0,.45);padding:1px 6px;border-radius:4px}
 .kyvs-l{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-right:8px}
 .kyvs-adr,.kyvs-th{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;margin-top:12px;font-size:13.5px;color:var(--ink)}
