@@ -13892,6 +13892,7 @@ async function renderGerdReikninga(t){
         const l = lines().find(x=>x.key===inp.dataset.hkQ);
         const tr = inp.closest('tr'); if(tr && l){ tr.classList.toggle('hk-diff', l.qty!==l.ajour); tr.classList.toggle('hk-zero', !l.qty); }
         const cell = $body.querySelector(`[data-hk-t="${inp.dataset.hkQ}"]`); if(cell && l) cell.textContent = l.qty?fmt(l.total):'–';
+        const st0 = document.getElementById('hk-st'); if(st0) st0.textContent = '';
         setDirty(true); refresh();
       }));
       $body.querySelectorAll('[data-hk-rm]').forEach(b => b.onclick = () => { delete qty[b.dataset.hkRm]; setDirty(true); renderBody(); refresh(); });
@@ -13931,7 +13932,14 @@ async function renderGerdReikninga(t){
     ['hk-cust','hk-kt','hk-addr','hk-email'].forEach(id => document.getElementById(id).addEventListener('input', () => { setDirty(true); refresh(); }));
     renderBody(); refresh();
 
-    document.getElementById('hk-reset').onclick = () => { qty = fromAjour(); setDirty(true); renderBody(); refresh(); };
+    // 02.11.2026 (Agnar: „gerist ekkert að ýta á magn úr ajour"): segja alltaf hvað gerðist — líka þegar magnið er þegar eins og Ajour.
+    document.getElementById('hk-reset').onclick = () => {
+      const fyrir = calc().got, ny = fromAjour(), st = document.getElementById('hk-st');
+      const breytt = [...new Set([...Object.keys(qty), ...Object.keys(ny)])].filter(k => (Number(qty[k])||0) !== (ny[k]||0)).length;
+      if(!breytt){ if(st) st.textContent = `Magnið er þegar eins og Ajour (${fyrir} kláruð göt) — engu breytt.`; return; }
+      qty = ny; setDirty(true); renderBody(); const c = refresh();
+      if(st) st.textContent = `↺ Magn sett eftir Ajour: ${fyrir} → ${c.got} göt (${breytt} ${breytt===1?'lína breyttist':'línur breyttust'}). Mundu að vista.`;
+    };
 
     const pdfData = () => { const c = calc(); return { ws: wsName, cust: document.getElementById('hk-cust').value.trim(), kt: document.getElementById('hk-kt').value.trim(), addr: document.getElementById('hk-addr').value.trim(), fra, til, lines: c.ls, stadf: c.stadf, net: c.net, vsk: c.vsk, vskPct: VSK_PCT, total: c.total }; };
     const $st = document.getElementById('hk-st');
