@@ -1,6 +1,6 @@
 {
  "utgafa": 1,
- "nyjast": "2026-10-31",
+ "nyjast": "2026-11-01",
  "throskuldur": 6,
  "osnert_dagar": 30,
  "uppspretta": "slokkvitaeki/tools/audit-agentar.cjs --json",
@@ -30,7 +30,7 @@
    "sidast": "2026-10-28",
    "skrif": 39,
    "gaetir": 36,
-   "breytt": 4,
+   "breytt": 5,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Flettur, borð og navigation í Slökkvitæki-appinu — Þjónustuborð/Verkborð (368), Bakendi, Bílstjóri, Aksturslisti, URL-routing (218), bakk-takkinn (3 lög), app-s"
@@ -102,12 +102,12 @@
    "slod": ".claude/agents/natalie.md",
    "hud": "Natalie",
    "emoji": "🌸",
-   "sidast": "2026-10-28",
-   "skrif": 7,
-   "gaetir": 4,
-   "breytt": 1,
+   "sidast": "2026-11-01",
+   "skrif": 8,
+   "gaetir": 5,
+   "breytt": 0,
    "daudir": [],
-   "merki": "🟡",
+   "merki": "🟢",
    "lysing": "Natalie 🌸 — staðreyndayfirferð 2025–26: ber saman það sem kerfið SEGIR og það sem er RAUNVERULEGA í gögnunum og skrifar niðurstöðuna á factcheck_bord. Notaðu þ"
   },
   {
@@ -420,7 +420,7 @@
    "sidast": "2026-10-20",
    "skrif": 6,
    "gaetir": 17,
-   "breytt": 4,
+   "breytt": 5,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Layout, CSS and responsive rules specific to the Slokkvitaeki app. Use BEFORE writing any CSS, media query, or layout change in this repo - including mobile/des"
@@ -454,6 +454,21 @@
    "daudir": [],
    "merki": "🟡",
    "lysing": "Finnur ALLA staði sem bera sömu villu og sá sem var nýlega lagaður. Notaðu strax eftir að villa finnst — áður en sagt er „lagað\" — og þegar Agnar segir „villule"
+  },
+  {
+   "nafn": "vasinn",
+   "tegund": "skill",
+   "heim": "slokkvitaeki",
+   "slod": ".claude/skills/vasinn/SKILL.md",
+   "hud": null,
+   "emoji": null,
+   "sidast": "2026-11-01",
+   "skrif": 1,
+   "gaetir": 2,
+   "breytt": 0,
+   "daudir": [],
+   "merki": "🟢",
+   "lysing": "Kíkja í Vasann — app-síðan þar sem Agnar límir skjáskot, tekur myndir, hleður upp skrám og talar inn hljóðskilaboð handa Claude. Notaðu þegar Agnar segir „kíktu"
   },
   {
    "nafn": "verkefnalisti",
