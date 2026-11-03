@@ -274,6 +274,13 @@ svarað í 3 daga'".
     tengiliðir úr `verkkaupi_crm` (8), „days net" → „dagar", nöfn sameinuð á Payday-nafnið (Hagvirki ehf., SAFÍR byggingar ehf.,
     Vesturgata 22,húsfélag, Tilraunastöð Háskóla Íslands í meinafræði — áður „… að Keldum" í verðskrá).
   - `payment_method` er KÓÐI (payday/bank-direct/mix/unknown — verkstaðaspjaldið les hann); Viðskiptavinir sýnir hann sem fellilista.
+  - Seinna 03.11 („Mátt endurbæta allt sem þú sérð"): FR laug = Framkvæmdafélagið Laugavegur ehf. (Heklu reitur) — sameinað.
+    `payday_vidskiptavinir` (ný tafla, sql/2026-11-03_payday_vidskiptavinir.sql): greiðendaskrá Payday (heimilisfang/netfang/sími sem
+    reikningarnir fara á), payday-pull.js upsertar í sömu keyrslu; prófíllinn sýnir „Í Payday" + Nota þar sem vantar/stangast á (skrifar
+    aldrei sjálft). 33 prófílar fengu heimilisfang/reikningspóst þaðan í tóma reiti. Rofinn „Líka greiðendur sem eru aðeins í Payday"
+    (vidmot `vk_payday_allir`, list() ber `krofur_n`). Utanmynd verkstaðar í haus prófílsins (BhVerkstadur.bordi). „Staðir & teikningar"
+    = verkstaðaspjöld úr verkstadur_info (Brunahólf) — staður í Slökkvitæki þarf ekki lengur; „Stofna stað" er lokaður aukakostur.
+    Samningurinn sýnir kortsverkstaði án verðskrár („＋ Skrá taxta").
 
 ## Nýtt úr Charlize og lotum (28.10.2026)
 

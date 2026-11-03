@@ -311,6 +311,11 @@ tekjur (klárað en ógreitt). `renderSkyrslur(t)` í `index.html`.
   `opnaVidskiptavin` → `window.__bhOpna = {nafn, vk_kt}` → Viðskiptavinir (nafn, svo kt; annars opnað eftir nafni þótt það
   sé ekki á listanum). Eigin mynd: 📷 / Ctrl+V / draga → minnkuð í vafra (1600 px JPEG) → POST `mynd` (`mynd_heimild
   handvirkt`); „↻ Sækja aftur" yfirskrifar hana ekki, „Nota götumynd" gerir það.
+  **03.11.2026:** sama `bordi` er prófílmynd í haus Viðskiptavina (`#vk-dmynd`, smellur → `opna`). „Staðir & teikningar" sýnir
+  verkstaðaspjöld (`.vk-vs-kort`, `BhVerkstadur.info(ws)` fyrir heimilisfang) — smellur opnar verkstaðinn í Greiningu
+  (`grSyna`); Slökkvitæki-staðir fyrir neðan ef til, „Stofna stað í Slökkvitæki" í lokuðum `<details>` (Agnar: „láta greininguna
+  geyma fyrirtækið bara í brunahólf"). Bakfylling 03.11: 76 verkstaðir fengu götumynd + heimilisfang (heimild nafn / Payday-
+  greiðandi / kort / staðarheiti — sjá `heimilisfang_heimild`).
   (Upphaflega:) `wsMynd(ws)` setti 84×54 smámynd (`.ky-wsm`,
   `css/theme.css`) fremst í hverja röð með verkstað; smellur → `openVerkstadur(ws)` (gluggi `#ky-vs-modal`, `.kyvs-*`):
   stór mynd, heimilisfang (✎ → leit í Landeignaskrá, eitt nákvæmt staðfang sótt strax, annars val), landnr/hæðir/

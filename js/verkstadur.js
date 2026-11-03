@@ -245,5 +245,6 @@
     syna(ws);
   }
 
-  window.BhVerkstadur = { hlada, smamynd, bordi, mala, opna, teikna, mynd: myndUrl, tillaga };
+  // info(ws): röð verkstaðarins úr skyndiminninu (heimilisfang, mynd) — Viðskiptavinir · Staðir & teikningar (03.11.2026)
+  window.BhVerkstadur = { hlada, smamynd, bordi, mala, opna, teikna, mynd: myndUrl, tillaga, info: (ws) => VSI[ws] || null };
 })();

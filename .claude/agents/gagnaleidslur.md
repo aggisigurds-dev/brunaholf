@@ -348,7 +348,10 @@ ANNAÐ kerfi en „Efniskostnaður / Kostnaðarreikningar (endurrukkun)" hér a�
   í kerfinu en sækist á staðnum frá 16.10.2026: `GET /api/payday-invoice-pdf?tilvisun=355`
   (`netlify/functions/payday-invoice-pdf.js` → Payday `GET /invoices/{guid}/pdf`, GUID úr `invoices.payday_uuid`
   sem payday-pull fyllir; payday_invoice_id (int) var alltaf NULL því Payday-id er GUID). Hreyfingaryfirlit
-  (`hreyfingar.js` setur `src`) gerir Payday-raðir að hlekk á þetta fall. Fyrri reikningar í 06 telja líka
+  (`hreyfingar.js` setur `src`) gerir Payday-raðir að hlekk á þetta fall.
+  payday-pull upsertar líka greiðendaskrána í `payday_vidskiptavinir` (ssn, heimilisfang, póstnr, bær, netfang, sími,
+  tengiliður; 03.11.2026) — Viðskiptavinir-prófíllinn sýnir hana sem „Í Payday". Villa þar fellir ekki keyrsluna (detail).
+  Gildra: `?probe=1` sækir aðeins FYRSTU síðu (Payday skilar 100 á síðu) — sækja eftir `since/until` gluggum. Fyrri reikningar í 06 telja líka
   `draft_match.worksite` — `r.worksite` kemur eftir nafni greiðanda og getur verið annar verkstaður
   (Rekstrarfélag Kringlunnar → „Kringlan - Turn" meðan drögin heita „Kringlan").
 
