@@ -117,9 +117,35 @@ exports.handler = async (event) => {
       upserted += slice.length;
     }
 
+    // 03.11.2026: greiðendaskráin (heimilisfang/netfang/sími sem reikningarnir fara á) → payday_vidskiptavinir, sem
+    // Viðskiptavinir-prófíllinn sýnir sem „Í Payday". Nýjasta útgáfa hvers greiðanda (customer.edited) ræður. Villa hér
+    // fellir EKKI reikninga-keyrsluna — hún er aðeins skráð í detail.
+    let greidendur = 0, greidVilla = '';
+    try {
+      const by = new Map();
+      for (const raw of allRaw) {
+        const c = (raw && raw.customer) || {};
+        const ssn = String(c.ssn || '').replace(/\D/g, '');
+        if (!ssn) continue;
+        const e = by.get(ssn);
+        if (e && String(e.breytt || '') >= String(c.edited || '')) continue;
+        by.set(ssn, { ssn, payday_id: c.id || null, nafn: c.name || null, heimilisfang: c.address || null, postnr: c.zipCode || null, baer: c.city || null,
+          netfang: c.email || null, simi: c.phone || null, tengilidur: c.contact || null,
+          gjalddagi_dagar: c.dueDateDefaultDaysAfter == null ? null : +c.dueDateDefaultDaysAfter, breytt: c.edited || null, updated_at: now });
+      }
+      if (by.size) {
+        const g = await fetch(`${SUPABASE_URL}/rest/v1/payday_vidskiptavinir?on_conflict=ssn`, {
+          method: 'POST',
+          headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' },
+          body: JSON.stringify([...by.values()]),
+        });
+        if (g.ok) greidendur = by.size; else greidVilla = ' · greiðendur ✗ ' + g.status;
+      }
+    } catch (e) { greidVilla = ' · greiðendur ✗ ' + String(e.message || e).slice(0, 80); }
+
     await logRun({
       status: 'success',
-      detail: `${invoices.length} reikningar · ${upserted} upsert`,
+      detail: `${invoices.length} reikningar · ${upserted} upsert · ${greidendur} greiðendur${greidVilla}`,
       started_at: startedAt,
     }).catch(()=>{});
 

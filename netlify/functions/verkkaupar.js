@@ -75,7 +75,8 @@ async function list() {
   for (const p of pg) if (p.worksite_name && p.customer_name) wsOwner[p.worksite_name] = p.customer_name;
 
   const acc = {};
-  const get = (name) => (acc[name] = acc[name] || { name, kt: null, worksites: 0, osent: 0, ogreitt: 0, greitt_ar: 0, sidasta_krafa: null, sidustu_samskipti: null, skrad: false, stadir: 0, greining: false });
+  // krofur_n: sendar kröfur (án tvífara) — viðmótið getur sýnt greiðendur sem eru aðeins í Payday (03.11.2026)
+  const get = (name) => (acc[name] = acc[name] || { name, kt: null, worksites: 0, osent: 0, ogreitt: 0, greitt_ar: 0, sidasta_krafa: null, sidustu_samskipti: null, skrad: false, stadir: 0, greining: false, krofur_n: 0 });
   // skrad = greiðandinn er skráður viljandi (verðskrá eða customer_info) — ekki bara nefndur á reikningi; viðmótið sýnir aðeins þá
   const wsSet = {}; const addWs = (n, w) => { if (n && w) (wsSet[n] = wsSet[n] || new Set()).add(w); };
   for (const p of pg) if (p.customer_name) { const a = get(p.customer_name); a.worksites++; a.skrad = true; if (!a.kt && p.kennitala) a.kt = p.kennitala; addWs(p.customer_name, p.worksite_name); }
@@ -101,6 +102,7 @@ async function list() {
     if (s === 'ogreitt' && upp > 0 && K.iSummu(mt)) a.ogreitt += upp;
     if (s === 'drog' && upp > 0 && K.iSummu(mt) && !tvitekin.has(K.invKey(v))) a.osent += upp;   // Payday-drög = ósent (þrep 2 í Kröfu yfirliti) — nema afrit af ógreiddum reikningi
     if (s !== 'drog' && v.gjalddagi && (!a.sidasta_krafa || v.gjalddagi > a.sidasta_krafa)) a.sidasta_krafa = v.gjalddagi;
+    if (s !== 'drog' && s !== 'kredit') a.krofur_n++;
   }
   for (const d of drafts) {
     const mt = metaBy.get(K.draftKey(d));
@@ -148,8 +150,13 @@ async function detail(name) {
     || normKt((inv.find((v) => v.source === 'payday' && v.kt_greidanda) || {}).kt_greidanda) || null;
   const ktN = normKt(kt);
   // Reikningar á sömu kt undir öðru nafni (Payday „Tilraunastöð Háskóla Íslands í meinafræði" ↔ verðskrá „… að Keldum") eiga heima hér líka
+  let payday = null;   // greiðendaskrá Payday (payday_vidskiptavinir, payday-pull.js) — prófíllinn sýnir hana sem „Í Payday"
   if (ktN) {
-    const aKt = await sb(`invoices?kt_greidanda=in.(${ktN},${ktN.replace('-', '')})&select=*&order=gjalddagi.desc.nullslast&limit=200`).catch(() => []);
+    const [aKt, pdv] = await Promise.all([
+      sb(`invoices?kt_greidanda=in.(${ktN},${ktN.replace('-', '')})&select=*&order=gjalddagi.desc.nullslast&limit=200`).catch(() => []),
+      sb(`payday_vidskiptavinir?ssn=eq.${ktN.replace('-', '')}&select=*`).catch(() => []),
+    ]);
+    payday = pdv[0] || null;
     const ids = new Set(inv.map((v) => v.id));
     for (const v of aKt) if (!ids.has(v.id)) inv.push(v);
     inv.sort((a, b) => String(b.gjalddagi || '').localeCompare(String(a.gjalddagi || '')));
@@ -210,7 +217,7 @@ async function detail(name) {
     } catch (_) { stadir = []; }
   }
   const verkstadir_heimili = map.filter((m) => m.worksite_name).map((m) => ({ worksite_name: m.worksite_name, heimilisfang: m.heimilisfang || null }));
-  return json(200, { info, kt, worksites: pg, map, krofur: inv2, drog, samskipti, samtals, stadir, verkstadir_heimili, generated_at: new Date().toISOString() });
+  return json(200, { info, kt, worksites: pg, map, krofur: inv2, drog, samskipti, samtals, stadir, verkstadir_heimili, payday, generated_at: new Date().toISOString() });
 }
 
 async function save(event) {
