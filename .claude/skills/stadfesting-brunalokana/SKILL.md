@@ -261,3 +261,6 @@ Svæðisreglur: frjáls texti án forsetningar fær „í" (eða „á" ef „h�
 **Með staðfestingu í pósti (úr sendum póstum 15.10–28.10.2026):** Dalvegur 30A fékk staðfestingu + Ajour-útprentun (rekjanleiki) + afrit af starfsleyfi þjónustuaðila + skilaskýrslu;
 Hvaleyrarbraut 39 og Gullslétta 18: staðfesting + starfsleyfi + „001 Brunahólf Skýrsla NN.pdf"; Sunnukriki 3: staðfesting + „Ajour Skýrsla". Stálhella 22/18 mhl. 02 (01.06): aðeins staðfestingin.
 Ályktun (ósannreynt, Agnar ræður): Ajour-skýrsla fylgir þegar Brunahólf skráði verkið í Ajour og verkkaupi þarf rekjanleika fyrir lokaúttekt/öryggisúttekt; ekkert Ajour-verk = engin skýrsla.
+
+**Regla (Agnar 03.11.2026): Ajour-skýrsla fylgir ALLTAF staðfestingunni þegar verkið er skráð í Ajour.** Ekki lengur ályktun. Fylgir líka starfsleyfi þjónustuaðila (eins og í Dalvegi 30A, Hvaleyrarbraut 39, Gullsléttu 18).
+Ekkert Ajour-verk (t.d. Stálhella) = engin skýrsla. Skýrslan er sótt/prentuð skv. kaflanum „Ajour-gögn" (8 myndir á síðu, án athugasemda). Claude sendir hana ekki — Agnar sendir pósta.
