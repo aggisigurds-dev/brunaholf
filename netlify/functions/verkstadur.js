@@ -31,7 +31,17 @@ exports.handler = async (event) => {
       if (!r.ok) return json(r.status, { error: (await r.text()).slice(0, 300) });
       const row = (await r.json())[0] || null;
       const allar = t.ok ? await t.json() : [];
-      return json(200, { row, ajour: ajourFyrir(q.ws, row, Array.isArray(allar) ? allar : []) });
+      // Teikningaborð Slökkvitækis (03.11.2026, HT-02.11): verkstaður með slokk_company_id á teikning_bord-röð (hæðir, skurðir,
+      // eldveggir/brunahólf sem Teikningin vistar) — hub-inn sýnir hæðaspjöldin og opnar Teikninguna í Slökkvitæki.
+      let bord = null;
+      if (row && row.slokk_company_id) {
+        try {
+          const tb = await fetch(`${SUPABASE_URL}/rest/v1/teikning_bord?company_id=eq.${row.slokk_company_id}&select=company_id,haedir,updated_at`, { headers: H });
+          const b0 = tb.ok ? (await tb.json())[0] : null;
+          if (b0) bord = { company_id: b0.company_id, updated_at: b0.updated_at, haedir: (b0.haedir || []).map((h) => ({ id: h.id, nafn: h.nafn, image_url: h.image_url, frum: h.frum || null, skurdur: h.skurdur || null, eldveggir: (h.eldveggir || []).filter(Boolean).length, holf: (h.holf || []).length, merki: (h.markers || []).length })) };
+        } catch (_) { bord = null; }
+      }
+      return json(200, { row, ajour: ajourFyrir(q.ws, row, Array.isArray(allar) ? allar : []), bord });
     }
     const r = await fetch(`${SUPABASE_URL}/rest/v1/verkstadur_info?select=${LISTI}&order=worksite_name`, { headers: { ...H, Range: '0-999' } });
     if (!r.ok) return json(r.status, { error: (await r.text()).slice(0, 300) });

@@ -666,6 +666,15 @@ body .hub-sync select{background:transparent;border:0;box-shadow:none;padding:2p
 .kyvs-aj:hover{border-color:var(--gold-600,#a8801f)}
 .kyvs-aj img{width:100%;height:170px;object-fit:contain;background:#fff;border-bottom:1px solid var(--line)}
 .kyvs-aj .kyvs-pdf{height:170px}
+/* Brunahólfun (03.11.2026): hæðaspjöld teikningaborðs Slökkvitækis, skorin að húsinu með sama skurði og Teikningin */
+.kyvs-bhgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-top:10px}
+.kyvs-bh{display:flex;flex-direction:column;border:1px solid var(--line-2);border-radius:8px;overflow:hidden;text-decoration:none;color:var(--ink);background:var(--card,#fff)}
+.kyvs-bh:hover{border-color:var(--gold-600,#a8801f)}
+.kyvs-bhm{position:relative;width:100%;overflow:hidden;background:#fff;border-bottom:1px solid var(--line)}
+.kyvs-bhm img{position:absolute;display:block;max-width:none}
+.kyvs-bh .kyvs-tl{padding:6px 8px 0;font-weight:700}
+.kyvs-bh .kyvs-td{padding:0 8px 8px;font-size:12px;color:var(--muted)}
+.kyvs-bhei{color:#b3261e;font-weight:700}
 /* Innfellt í Viðskiptavinir · Greining: mynd til vinstri, upplýsingar til hægri á breiðum skjá */
 @media(min-width:900px){
   .kyvs-efst.innf{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:18px;align-items:start}

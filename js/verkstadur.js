@@ -125,11 +125,36 @@
     return `<div class="kyvs-th"><span class="kyvs-l">Teikningar úr Ajour</span><span>${tk.length ? tk.length + ' vinnuteikningar' : '<span style="color:var(--muted)">engar</span>'}</span>${val}</div>${grid}`;
   }
 
+  // Brunahólfun (03.11.2026, Agnar: „betri teikningar og upplýsingar um verkstaðina … með meiri áherslu á brunaveggjaleit,
+  // brunahólfun og þannig"): verkstaður með slokk_company_id á teikningaborð í Slökkvitæki (teikning_bord) — hér birtast
+  // hæðirnar skornar að húsinu (sama skurður og Teikningin) með tölum úr brunahólfuninni: EI-merki úr textalagi aðaluppdrátta,
+  // eldveggir og brunahólf sem 3D-vél Teikningar reiknar (hus.brunaholfun = síðasta mæling; borðið sjálft ræður þegar
+  // Teikningin hefur vistað eldveggi/hólf). Spjald opnar Teikninguna í Slökkvitæki → 3D → „Brunahólf".
+  // Mælingin býr í sér dálki (verkstadur_info.brunaholfun) — „Skrá heimilisfang" skiptir hus út og má ekki þurrka hana.
+  function brunaholfunHtml(bord, bh) {
+    bh = bh || null;
+    if (!bord && !bh) return '';
+    const haedir = (bord && bord.haedir) || [];
+    const snap = (bh && bh.haedir) || [];
+    const tala = (h) => { const s = snap.find((x) => x.nafn === h.nafn) || {}; return { ei: s.ei, eld: h.eldveggir > 0 ? h.eldveggir : s.eldveggir, holf: h.holf > 0 ? h.holf : s.holf, hurdir: s.hurdir, ath: s.ath }; };
+    const slod = bord ? `${SLOKK}/#company/${bord.company_id}` : '';
+    const kort = haedir.map((h) => {
+      const f = h.frum || {}, s = h.skurdur || {}, t = tala(h);
+      const ok = f.b > 0 && s.w > 0 && s.h > 0;
+      const mynd = h.image_url ? `<div class="kyvs-bhm" style="padding-top:${ok ? (s.h / s.w * 100).toFixed(1) : 70}%"><img src="${esc(SLOKK + h.image_url)}" alt="" loading="lazy" style="${ok ? `width:${(f.b / s.w * 100).toFixed(2)}%;left:${(-s.x / s.w * 100).toFixed(2)}%;top:${(-s.y / s.h * 100).toFixed(2)}%` : 'width:100%;left:0;top:0'}"></div>` : '<div class="kyvs-bhm"></div>';
+      const tolur = t.ei != null ? `<span class="kyvs-bhei">${esc(t.ei)} EI-merki</span> · ${esc(t.eld || 0)} eldveggir · <b>${esc(t.holf || 0)} brunahólf</b>${t.hurdir != null ? ' · ' + esc(t.hurdir) + ' hurðir' : ''}` : `<span style="color:var(--muted)">${esc(t.ath || 'ekki mælt')}</span>`;
+      return `<a class="kyvs-bh" href="${esc(slod)}" target="_blank" rel="noopener" title="${esc(h.nafn)} — opna Teikninguna í Slökkvitæki (3D → Brunahólf)">${mynd}<span class="kyvs-tl">${esc(h.nafn)}</span><span class="kyvs-td">${tolur}</span></a>`;
+    }).join('');
+    const sam = snap.filter((x) => x.ei != null);
+    const yfir = sam.length ? `${sam.reduce((a, x) => a + (x.ei || 0), 0)} EI-merki · ${sam.reduce((a, x) => a + (x.holf || 0), 0)} brunahólf á ${sam.length} hæðum${bh.maelt ? ' · mælt ' + esc(dmy(bh.maelt)) : ''}` : (haedir.length ? haedir.length + ' hæðir' : '');
+    return `<div class="kyvs-th"><span class="kyvs-l">Brunahólfun</span><span>${yfir || '<span style="color:var(--muted)">ekkert teikningaborð</span>'}</span>${slod ? `<a class="kyvs-lk" href="${esc(slod)}" target="_blank" rel="noopener" title="${esc(bh && bh.adferd ? bh.adferd : 'Teikning í Slökkvitæki')}">Opna Teikningu (3D · Brunahólf) ↗</a>` : ''}</div>${kort ? `<div class="kyvs-bhgrid">${kort}</div>` : ''}`;
+  }
+
   async function teikna(el, ws, opts) {
     opts = opts || {};
     el.innerHTML = '<div class="kyvs-st">Sæki…</div>';
-    let row = null, aj = null;
-    try { const r = await fetch('/api/verkstadur?ws=' + encodeURIComponent(ws), { cache: 'no-store' }); const j = await r.json(); row = j.row || null; aj = j.ajour || null; } catch (_) {}
+    let row = null, aj = null, bord = null;
+    try { const r = await fetch('/api/verkstadur?ws=' + encodeURIComponent(ws), { cache: 'no-store' }); const j = await r.json(); row = j.row || null; aj = j.ajour || null; bord = j.bord || null; } catch (_) {}
     const syna = (st) => {
       const v = row || {}, hus = v.hus || {}, e = hus.eign || {}, til = hus.tillogur || {}, tk = hus.teikningar || {}, tl = v.teikningar || [];
       const rvk = e.svfnr === '0000';
@@ -149,6 +174,7 @@
             ${flis ? `<div class="kyvs-flis">${flis}</div>` : ''}
           </div>
         </div>
+        ${brunaholfunHtml(bord, v.brunaholfun)}
         ${ajourHtml(aj)}
         ${v.heimilisfang ? `<div class="kyvs-th"><span class="kyvs-l">Teikningar úr ${rvk ? 'skjalasafni' : 'kortasjá'}</span>${tk.fjoldi ? `<span>${tk.gildandi != null ? esc(tk.gildandi) + ' gildandi af ' : ''}${esc(tk.fjoldi)}${tk.grunnmyndir ? ' · ' + esc(tk.grunnmyndir) + ' grunnmyndir' : ''}${hus.heimild ? ' · ' + esc(String(hus.heimild).split(' · ')[0]) : ''}</span>` : '<span style="color:var(--muted)">engar fundust</span>'}${rvk && e.landnr ? `<a class="kyvs-lk" target="_blank" rel="noopener" href="https://skjalasafn.reykjavik.is/fotoweb/archives/5000-A%C3%B0aluppdr%C3%A6ttir/?q=${encodeURIComponent(e.landnr)}">Allar í skjalasafni ↗</a>` : ''}</div>
           ${tHtml ? `<div class="kyvs-tgrid">${tHtml}</div>${tl.length > 24 ? `<div class="kyvs-st">${tl.length - 24} til viðbótar — sjá allar í skjalasafninu/kortasjánni.</div>` : ''}` : ''}` : ''}
