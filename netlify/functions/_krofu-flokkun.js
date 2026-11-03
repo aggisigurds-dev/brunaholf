@@ -158,4 +158,48 @@ function erOsent(d, tenging, mt) {
 // Telst röðin í summum? Faldar raðir og „📨 Krafa send" (done) teljast ekki — sama og rollup í Kröfu yfirliti.
 const iSummu = (mt) => !(mt && (mt.hidden || mt.done));
 
-module.exports = { digits, lc, PAID, CREDIT, DRAFT, EKKI_OSENT, invKey, draftKey, greidendur, sjalfvirkTenging, tvitekinPaydayDrog, flokkaReikning, erOsent, iSummu };
+/* TVÍFARAR ÚR ÖÐRUM INNSOGUM (Agnar 03.11.2026, ÞG verktakar: „Taka tvítök"). Sami reikningur birtist tvisvar í „Kröfur sem við höfum
+ * sent": Payday-röðin („310") og spegill hennar úr kröfuskrá Landsbankans (landsbankinn_krafnir, innsog 22.05.2026, „310.0", kt án
+ * bandstriks). Mælt 03.11: 82 bankaraðir, allar 82 eiga Payday-tvífara með sömu kt + sama reikningsnúmeri + sama gjalddaga; 29 þeirra eru
+ * hærri í bankanum (tilkynningar-/vanskilagjald), svo upphæðin er EKKI hluti af lyklinum. Payday-röðin ræður (hún ber núverandi stöðu —
+ * bankaskráin er gömul mynd: „Ógreidd" 22.05 hjá Hrafnaskálanúpi þar sem Payday segir CANCELLED). Sama regla og krofur-yfirlit.js.
+ * Handskráð röð úr Tekjur-skjalinu (tekjur_sheet_manual, án kt og reikningsnúmers) er tvífari þegar Payday-röð sama greiðanda ber sömu
+ * upphæð OG sama greiðsludag (Reitir: „TEKJUR-NOV-GRIMSBAER" 8.772.244 greitt 19.12.2025 = R-227).
+ * Ekkert er skrifað eða eytt — röðin dettur aðeins úr listum og summum. Skilar Set af invKey. */
+const tnorm = (s) => String(s || '').trim().replace(/\.0+$/, '');
+function tvifarar(invoices) {
+  const pdNr = new Set(), pdGreitt = new Set();
+  for (const r of invoices || []) {
+    if (lc(r.source) !== 'payday') continue;
+    if (digits(r.kt_greidanda) && tnorm(r.tilvisun)) pdNr.add(digits(r.kt_greidanda) + '|' + tnorm(r.tilvisun));
+    if (r.greidsla_date) pdGreitt.add(lc(r.customer_name) + '|' + Math.round(+r.upphaed_total || 0) + '|' + r.greidsla_date);
+  }
+  const out = new Set();
+  for (const r of invoices || []) {
+    const s = lc(r.source);
+    if (s === 'landsbankinn_krafnir' && pdNr.has(digits(r.kt_greidanda) + '|' + tnorm(r.tilvisun))) out.add(invKey(r));
+    else if (s === 'tekjur_sheet_manual' && r.greidsla_date && pdGreitt.has(lc(r.customer_name) + '|' + Math.round(+r.upphaed_total || 0) + '|' + r.greidsla_date)) out.add(invKey(r));
+  }
+  return out;
+}
+
+/* KREDIT-PÖR: Payday ógildir reikning með kreditreikningi — reikningurinn fær CANCELLED, kreditreikningurinn CREDIT með mínus sömu
+ * upphæð og SAMA gjalddaga (mælt 03.11 á öllum 45 pörum, t.d. ÞG 297/298 27.207.026). Í prófílnum voru það tvær „kredit"-línur sem
+ * litu út eins og tvítak. Skilar Map: invKey ógilta reikningsins → kreditröðin (hver röð í mesta lagi í einu pari). */
+function kreditPor(invoices) {
+  const ogild = new Map();
+  for (const r of invoices || []) {
+    if (!/cancel/.test(lc(r.status)) || !((+r.upphaed_total || 0) > 0)) continue;
+    const k = lc(r.customer_name) + '|' + Math.round(+r.upphaed_total) + '|' + (r.gjalddagi || '');
+    (ogild.get(k) || ogild.set(k, []).get(k)).push(r);
+  }
+  const out = new Map();
+  for (const c of invoices || []) {
+    if (!((+c.upphaed_total || 0) < 0)) continue;
+    const vid = (ogild.get(lc(c.customer_name) + '|' + Math.round(-c.upphaed_total) + '|' + (c.gjalddagi || '')) || []).find((r) => !out.has(invKey(r)));
+    if (vid) out.set(invKey(vid), c);
+  }
+  return out;
+}
+
+module.exports = { digits, lc, PAID, CREDIT, DRAFT, EKKI_OSENT, invKey, draftKey, greidendur, sjalfvirkTenging, tvitekinPaydayDrog, flokkaReikning, erOsent, iSummu, tvifarar, kreditPor };
