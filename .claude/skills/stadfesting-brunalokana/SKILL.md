@@ -185,3 +185,20 @@ Dæmi um „eitt heimilisfang": `Sunnukriki 3, Mosfellsbær` · sveitarfélag `M
   hægri, nafn opnar forskoðun, enginn skjalalisti inni í ritlinum og **dragbær skiptilína** milli hliðarstiku og skjals
   (`bh_eydublad_ew` í Vidmot = sameiginlegt val, tvísmellur núllstillir).
 - **Birting stoppar ef auto-sync nær skránum á undan þér:** sjá skill `deploy` („nothing to commit"-gildran).
+
+## Heklureitur = Laugavegur 168 (lært 03.11.2026)
+
+- **Heimilisfang:** „Laugavegur 168" (myndin á Heklu reit-spjaldinu sýnir „168" á horninu; fyrri staðfestingar í Drive →
+  Brunahólf → Heklureitur heita „Staðfesting. Laugavegur 168"). Greiðandi: Framkvæmdafélagið Laugavegur ehf. (Katrínartún 2);
+  verkstaðarheimilisfang er EKKI skráð í grunni (`verkstadur_info.heimilisfang` null, `invoice_drafts.heimilisfang` null).
+- **Mynstur (2 fyrri skjöl):** einföld gerð — engin „Um ræðir"/niðurstöðulína. „Hvað var gert": „Farið var yfir brunahólfun og lagt mat á
+  verkefnið." · „Brunaþéttingar voru gerðar þar sem þörf var á, byggt á sjónrænu mati." · **„Öll brunahólf voru brunaþétt í <svæði>."**
+  Svæðið er þáttur sem er KLÁRAÐUR: 03.10.2025 „kjallara K0 og K-1, stigahúsi C og D"; 27.01.2026 „stigahúsi A og B".
+  Hver staðfesting nær yfir áfanga — Agnar segir hvaða svæði er klárt; ég skálda það ekki.
+- **Ajour (verkefnið „Heklureitur ", `projectId` c2335722-6c76-4ef3-8dc0-f4a3f4467ab1; `/api/construction/projects` gefur `id`=18 en
+  skráningar þurfa `projectId` GUID):** 2.219 skráningar 01.10.2025–29.10.2026, nær allar „Gat Ø …" (6 línuþéttingar, 2 „Annað"); teikningar:
+  K-1 (flestar), K-0/0 Kjallari, 1.hæð, 6.hæð. Engin hæðaskipting (projectLevel1-3 tómt) og engin stigahúsaheiti — stigahús (A–D) sjást
+  ekki í gögnunum, aðeins á hnitum. Frá 28.09.2026: 614 göt á K-1/K0. Engin staðfesting í Drive eftir 27.01.2026 (þótt ~1.500 göt hafi
+  bæst við) — spyrja Agnar hvort svæði sé klárt áður en ný er gerð.
+- **Drög 03.11.2026** (aðeins staðbundin, ekki í safni): `Heklureitur_stadfesting/…_DROG.pdf` með línunni „Öll brunahólf voru brunaþétt í
+  kjallara K-1 og K0." — til staðfestingar Agnars.
