@@ -35,6 +35,17 @@ const FELOG = ['Brunahólf', 'Slökkvitæki'];
 // Síðurnar sem hægt er að veita aðgang að. Orðin eru geymd eins og þau birtast í valmyndinni.
 const SIDUR = ['Fjármála-yfirlit', 'Kröfu yfirlit', 'Mæting · verkstaðir', 'Efniskostnaður', 'Ajour', 'Vinnubók',
   'Gerð reikninga', 'Viðskiptavinir', 'Skjöl', 'Póstleit', 'TurboPaint', 'J.A.R.V.I.S.'];
+// 03.11.2026 (Agnar: „ég þarf að geta merkt við allar síður í kerfinu, ekki bara eitthvað random"): síða er nú LYKILL per app —
+//   'slokk:<data-view eða slóð>'  = síða í Slökkvitæki-appinu (listinn er lesinn lifandi úr hliðarstiku appsins)
+//   'hub:<flipa-id>'              = flipi í Brunahólfi (listinn kemur úr hub_state, sjá hubKatalog)
+//   'slokk:*' / 'hub:*' = allar síður appsins · 'slokk:!' / 'hub:!' = engin síða.
+// Enginn lykill fyrir app = engin takmörkun þar (eins og fyrir 03.11), svo ekkert breytist fyrr en admin vistar val.
+// Gömlu orðin í SIDUR eru áfram gild (adgangar.html notar þau) en framfylgja engu; Aðgangsstýringin býður þau sem tillögu.
+const okSida = (p) => typeof p === 'string' && (SIDUR.includes(p) || /^(slokk|hub):[^\s<>"'`\\]{1,80}$/.test(p));
+const MAX_SIDUR = 400;
+const HUB_ARFUR = { 'Fjármála-yfirlit': 'hub:fjarmalyfirlit', 'Kröfu yfirlit': 'hub:krofuyfirlit', 'Mæting · verkstaðir': 'hub:tvmaeting',
+  'Efniskostnaður': 'hub:efniskostnadur', 'Ajour': 'hub:ajour', 'Vinnubók': 'hub:vinnubok', 'Gerð reikninga': 'hub:gerdreikninga',
+  'Viðskiptavinir': 'hub:vidskiptavinir', 'Póstleit': 'hub:postleit', 'TurboPaint': 'hub:turbopaint', 'J.A.R.V.I.S.': 'hub:jarvis' }; // 'Skjöl' á engan flipa
 const MAX_MISTOK = 8;
 const LAS_MIN = 15;
 const SENDA_BIL_MIN = 5;
@@ -85,6 +96,27 @@ async function patchStilling(body) { const r = await P.sbPatch('hub_adgangar_sti
 async function delUser(id) {
   const r = await fetch(P.SUPABASE_URL + '/rest/v1/hub_adgangar?id=eq.' + Number(id), { method: 'DELETE', headers: { apikey: P.SUPABASE_KEY, Authorization: 'Bearer ' + P.SUPABASE_KEY } });
   return r.ok;
+}
+
+// Flipar Brunahólfs í röð hliðarstikunnar, flokkaðir undir flokkalínurnar (hub_state: tabs = skrá, ui.vidmot.hlidarstika = röð).
+async function hubKatalog() {
+  try {
+    const r = await P.sbGet('app_kv?key=eq.hub_state&select=tabs:value->tabs,rod:value->ui->vidmot->hlidarstika->v->rod&limit=1');
+    const row = r.ok ? ((await jsonOf(r)) || [])[0] : null;
+    const tabs = (row && Array.isArray(row.tabs)) ? row.tabs : [];
+    const rod = (row && Array.isArray(row.rod)) ? row.rod : tabs.map((t) => (t && t.sep ? { id: t.id, sep: t.label || '' } : { id: t && t.id }));
+    const skra = new Map(tabs.filter((t) => t && t.id && !t.sep).map((t) => [String(t.id), t]));
+    const nafn = (t) => (t.id === 'eydublod' && t.label === 'Eyðublöð') ? 'Staðf. Brunalokana' : String(t.label || t.id);
+    const ut = [], sed = new Set(); let hopur = '';
+    for (const e of rod) {
+      if (!e || !e.id) continue;
+      if (e.sep !== undefined) { hopur = String(e.sep || ''); continue; }
+      const t = skra.get(String(e.id)); if (!t || sed.has(t.id)) continue;
+      sed.add(t.id); ut.push({ k: 'hub:' + t.id, n: nafn(t), h: hopur || 'Fleira', ytri: !!t.url });
+    }
+    for (const t of skra.values()) if (!sed.has(t.id)) ut.push({ k: 'hub:' + t.id, n: nafn(t), h: 'Utan röðunar', ytri: !!t.url });
+    return ut;
+  } catch (_) { return []; }
 }
 
 // ── session ──────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -167,7 +199,7 @@ exports.handler = async (event) => {
         felog: u.felog || [], rola: u.rola, sidur: u.sidur || [], virkur: !!u.virkur, sent_at: u.sent_at, last_login_at: u.last_login_at,
         laest: !!(u.laest_til && new Date(u.laest_til) > new Date()),
       }));
-      return P.json(200, { users, rolur: ROLUR, felog: FELOG, sidurAll: SIDUR, pw_changed_at: s.stilling.pw_changed_at, krefjast: !!s.stilling.krefjast, krefjast_slokk: !!s.stilling.krefjast_slokk, alltaf: !!s.stilling.session_alltaf, me: publicUser(s.user) });
+      return P.json(200, { users, rolur: ROLUR, felog: FELOG, sidurAll: SIDUR, katalogHub: await hubKatalog(), arfur: HUB_ARFUR, pw_changed_at: s.stilling.pw_changed_at, krefjast: !!s.stilling.krefjast, krefjast_slokk: !!s.stilling.krefjast_slokk, alltaf: !!s.stilling.session_alltaf, me: publicUser(s.user) });
     }
     const st = st0;
     // gate = rofinn „krefjast innskráningar" er kveikt OG uppsetningu er lokið; stjórnstöðin (index.html) sendir þá óinnskráða á adgangar.html
@@ -252,7 +284,7 @@ exports.handler = async (event) => {
       nafn, notandanafn: nn || null, starfsmannanumer: String(body.nr || '').trim().slice(0, 12) || null, kennitala: normKt(body.kt) || null,
       postfang: pf || null, simi: normSimi(body.sm) || null,
       felog: (Array.isArray(body.felog) ? body.felog : []).filter((f) => FELOG.includes(f)),
-      rola, sidur: rola === 'Admin' ? SIDUR.slice() : (Array.isArray(body.sidur) ? body.sidur : []).filter((p) => SIDUR.includes(p)),
+      rola, sidur: rola === 'Admin' ? SIDUR.slice() : (Array.isArray(body.sidur) ? body.sidur : []).filter(okSida).slice(0, MAX_SIDUR),
       virkur: body.virkur !== false,
     };
     const all = await listUsers();
@@ -269,6 +301,18 @@ exports.handler = async (event) => {
     const nyr = ((await jsonOf(r)) || [])[0];
     await logA(me, 'stofna', row.notandanafn || nafn);
     return P.json(200, { ok: true, id: nyr && nyr.id });
+  }
+
+  // Aðeins síðuvalið — snertir enga aðra reiti (Aðgangsstýringin í Slökkvitæki-appinu, 03.11.2026).
+  if (action === 'sidur') {
+    const u = await getUserBy('id', Number(body.id));
+    if (!u) return P.json(404, { error: 'Notandi fannst ekki.' });
+    if (u.rola === 'Admin') return P.json(409, { error: 'Admin sér allar síður — ekkert að velja.' });
+    const sidur = [...new Set((Array.isArray(body.sidur) ? body.sidur : []).filter(okSida))].slice(0, MAX_SIDUR);
+    const nyr = await patchUser(u.id, { sidur });
+    if (!nyr) return P.json(500, { error: 'Vistun mistókst.' });
+    await logA(me, 'sidur', u.notandanafn || u.nafn, { fjoldi: sidur.length });
+    return P.json(200, { ok: true, sidur: nyr.sidur || sidur });
   }
 
   if (action === 'eyda') {
@@ -325,4 +369,4 @@ exports.handler = async (event) => {
   return P.json(400, { error: 'Óþekkt aðgerð' });
 };
 
-exports._test = { normNn, normKt, normSimi, encPw, decPw, SIDUR };
+exports._test = { normNn, normKt, normSimi, encPw, decPw, SIDUR, okSida, HUB_ARFUR, hubKatalog };
