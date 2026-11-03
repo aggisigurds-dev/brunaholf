@@ -246,3 +246,8 @@ Dæmi um „eitt heimilisfang": `Sunnukriki 3, Mosfellsbær` · sveitarfélag `M
 - **Aðrar beiðnir í pósti síðustu 70 daga:** Reising (bergthor@reising.is, 16.10) vantar „svona vottorð" fyrir Stálhellu 18 – MHL03 (til er
   Stálhella 22/18 mhl. 02); Hagtak (bergthor@hagtak.is, 14.–16.10) vildi yfirlýsingu og skýrslu fyrir Grandatröð 1C og 1D (Hvaleyrarbraut 39,
   staðfesting gerð 15.10) og ræddi lokaúttekt. Hvort þeim er svarað er ómælt — lesa `to_addresses` áður en sagt er „ósvarað".
+
+**Stálhella 18 mhl. 03 og Gullslétta 18 (03.11.2026):** Reising bað 16.10 um „svona vottorð" og vísaði í mhl. 02 (01.06.2026, heildaryfirferð-gerð) — drög
+smíðuð með sama sniði, en með nýja bundna niðurstöðuorðalaginu (Reising þéttu sjálfir milliveggi; Ajour hefur ekkert Stálhellu-verkefni, svo „hvað var gert" er ósannreynt
+og Agnar staðfestir). Krókur 77 ehf. = Gullslétta 18; staðfesting 28.10.2026 var aðeins í Drive/pósti og flutt í Skjalasafn með `drive-innflutningur/einn.cjs`
+(`skjal_id` 15207ab6-5ee8-4f2a-b88d-528b0955b727). Drög eru smíðuð í staðbundnu eyðublaði (`go()`, `paintForm()`, `passaEinaSidu()`, `buildPdf()` → móttakari á porti 8799), aldrei vistuð án Agnars.
