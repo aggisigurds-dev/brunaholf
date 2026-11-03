@@ -104,6 +104,22 @@ const PW = 'Proforð-1234';
   await call('POST', { action: 'gleymt', postfang: 'lena@bbio.is' }); ok(mails.length === 1, 'gleymt: ekki oftar en á 5 mín fresti');
   await call('POST', { action: 'gleymt', postfang: 'ovirkur@x.is' }); ok(mails.length === 1, 'gleymt: ekkert fyrir óvirkan');
 
+  console.log('Síðuval (03.11)');
+  db.app_kv = [{ key: 'hub_state', tabs: [{ id: 'sep-a', sep: true, label: 'Daglegt' }, { id: 'ajour', label: 'Ajour' }, { id: 'krofuyfirlit', label: 'Kröfu yfirlit' }, { id: 'nyr', label: 'Nýr flipi' }],
+    rod: [{ id: 'sep-a', sep: 'Daglegt' }, { id: 'krofuyfirlit' }, { id: 'ajour' }] }];
+  r = await call('GET', null, adm, { listi: '1' });
+  ok(r.status === 200 && r.body.katalogHub.map((x) => x.k).join() === 'hub:krofuyfirlit,hub:ajour,hub:nyr' && r.body.katalogHub[0].h === 'Daglegt' && r.body.katalogHub[2].h === 'Utan röðunar', 'listi skilar flipum Brunahólfs í röð stikunnar, nýir aftast');
+  ok(r.body.arfur && r.body.arfur['Ajour'] === 'hub:ajour', 'listi skilar þýðingu gömlu orðanna');
+  const lsU = db.hub_adgangar.find((u) => u.notandanafn === 'LS');
+  const annad = JSON.stringify([lsU.nafn, lsU.postfang, lsU.felog, lsU.rola]);
+  r = await call('POST', { action: 'sidur', id: lsU.id, sidur: ['slokk:counter', 'slokk:counter', 'hub:ajour', 'slokk:/gatt-admin/', '<script>', 'hub:!', 'Ajour'] }, adm);
+  ok(r.status === 200 && lsU.sidur.join() === 'slokk:counter,hub:ajour,slokk:/gatt-admin/,hub:!,Ajour', 'sidur vistar aðeins gilda lykla, án tvítaka');
+  ok(JSON.stringify([lsU.nafn, lsU.postfang, lsU.felog, lsU.rola]) === annad, 'sidur snertir enga aðra reiti');
+  r = await call('POST', { action: 'sidur', id: db.hub_adgangar[0].id, sidur: ['slokk:counter'] }, adm); ok(r.status === 409, 'admin fær ekki síðuval');
+  r = await call('POST', { action: 'sidur', id: lsU.id, sidur: [] }); ok(r.status === 401, 'sidur án innskráningar → 401');
+  r = await call('POST', { action: 'vista', id: lsU.id, nafn: lsU.nafn, nn: 'LS', pf: lsU.postfang, rola: 'Starfsmaður', sidur: lsU.sidur, felog: lsU.felog }, adm);
+  ok(r.status === 200 && lsU.sidur.includes('slokk:/gatt-admin/'), 'gamla vista (adgangar.html) heldur nýju lyklunum');
+
   console.log('Lykilorðaskipti');
   r = await call('POST', { action: 'breyta_lykilord', nytt: 'stutt' }, adm); ok(r.status === 400, 'of stutt → 400');
   r = await call('POST', { action: 'breyta_lykilord', nytt: 'Nýtt-lykilorð-9' }, adm); ok(r.status === 200, 'admin skiptir um lykilorð');

@@ -16,15 +16,18 @@
   /* 01.11.2026 (Agnar: „sleppa innskráningunni inni í appinu"): í ramma í Slökkvitækis-appinu (?embed=1) er hliðið sleppt, því innskráningarkakan
      (SameSite=Lax) kemst ekki í gegnum ramma og innskráning þar gat aldrei tekist. Beint í vafra er hliðið óbreytt. Til baka: fjarlægja næstu tvær línur. */
   var embedded=false; try{ embedded = window.self!==window.top && /[?&]embed=1(&|$)/.test(location.search); }catch(e){}
+  window.__hubEmbed = embedded;
   if(embedded) return;
   var d=document.documentElement; d.classList.add('hub-gate-pending');
   var done=false, open=function(){ if(done)return; done=true; d.classList.remove('hub-gate-pending'); };
   var t=setTimeout(open,3500);
   fetch('/api/hub-adgangar',{credentials:'same-origin',cache:'no-store'}).then(function(r){return r.json();}).then(function(s){
     clearTimeout(t);
+    /* 03.11.2026: staðan geymd fyrir síðuvalið (js/adgangur-hub.js) — beitt ÁÐUR en síðan birtist, svo takmarkaður starfsmaður sjái aldrei alla stikuna. */
+    window.__hubAdgangur = s || {}; try{ if(window.__hubAdgBeita) window.__hubAdgBeita(); }catch(e){}
     if(s && s.gate && !s.authed){ location.replace('/adgangar.html?next='+encodeURIComponent(location.pathname+location.search+location.hash)); }
     else open();
-  }).catch(function(){ clearTimeout(t); open(); });
+  }).catch(function(){ clearTimeout(t); window.__hubAdgangur = {}; open(); });
 }catch(e){ document.documentElement.classList.remove('hub-gate-pending'); }})();
 </script>
 <script src="/js/theme.js?v=1"></script>
@@ -1420,6 +1423,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 <script src="/js/nlsh-sections.js?v=20260830b" defer></script>
 <script src="/js/nlsh-stada.js?v=20261006b" defer></script>
 <script src="/js/viewmode.js?v=2" defer></script>
+<script src="/js/adgangur-hub.js?v=20261103a" defer></script>
 <script src="/js/kerfisheilsa-widget.js?v=20260805a" defer></script>
   <script src="/js/dags-snid.js?v=20260918b"></script>
 </head>
@@ -2672,7 +2676,9 @@ function renderTabs(){
   { const th = (state.ui && state.ui.tab_hidden) || null; if(th) for(const t of state.tabs){ if(t.id in th){ const h = !!th[t.id]; if(!!t.hidden !== h) t.hidden = h; } } }
   // 19.10.2026: röðin kemur úr skjalinu (sjá HLIÐARSTIKA v2 að ofan), ekki úr state.tabs.
   const listi = stikaListi();
-  const visible = listi.filter(t => state.ui.editMode || t.sep || !stikaFalinn(t) || t.id==='stillingar');
+  // 03.11.2026 Aðgangsstýring: innskráður starfsmaður (eða admin í „Skoða sem") sér aðeins flipana sína — engar flokkalínur.
+  const _adg = (typeof window.hubAdgSidur === 'function') ? window.hubAdgSidur() : null;
+  const visible = listi.filter(t => state.ui.editMode || t.sep || !stikaFalinn(t) || t.id==='stillingar').filter(t => !_adg || (!t.sep && _adg.has(t.id)));
   if(lay==='horizontal'){
     $tabs.innerHTML = visible.map(t=> t.sep
       ? `<span class="tab-sep-h" data-id="${t.id}" data-sep="1"></span>`
@@ -2802,7 +2808,12 @@ function renderTabs(){
     }
   }
 }
-function activeTab(){ return state.tabs.find(t=>t.id===state.ui.activeTab && !t.sep) || state.tabs.find(t=>!t.sep) || state.tabs[0]; }
+function activeTab(){
+  // 03.11.2026: lokaður flipi (síðuval starfsmanns) opnast aldrei — fyrsti leyfði flipinn í staðinn.
+  const _adg = (typeof window.hubAdgSidur === 'function') ? window.hubAdgSidur() : null;
+  const ok = t => !t.sep && (!_adg || _adg.has(t.id));
+  return state.tabs.find(t=>t.id===state.ui.activeTab && ok(t)) || state.tabs.find(ok) || state.tabs.find(t=>!t.sep) || state.tabs[0];
+}
 function buttonsFor(tabId){ return state.buttons.filter(b=>b.tab===tabId); }
 
 function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
