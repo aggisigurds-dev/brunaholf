@@ -24,6 +24,7 @@
   input,button,select{ font-family:inherit; }
   input{ border:1px solid #3a3732; background:#1c1b18; color:#e5eefb; border-radius:8px; padding:8px 10px; height:38px; }
   .top input{ flex:1; min-width:180px; }
+  @media (max-width:700px){ .top .src{ flex-wrap:wrap; flex-basis:100%; min-width:0; } .top .src input{ min-width:0; flex:1 1 180px; } .top .src .btn{ white-space:nowrap; min-height:34px; } .top .src .pick.top{ min-height:38px; } }
   .btn{ border:1px solid rgba(0,0,0,.15); background:#fff; color:#2a2823; padding:9px 15px; border-radius:9px; font-weight:700; cursor:pointer; font-size:13px; }
   .btn:disabled{ opacity:.5; cursor:default; }
   .btn.primary{ background:linear-gradient(180deg,#4f46e5,#4338ca); color:#fff; border-color:rgba(0,0,0,.2); }

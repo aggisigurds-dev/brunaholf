@@ -189,6 +189,41 @@ html[data-thema="ragnarok"] .scaleln:nth-child(3) span{color:#ff9a3a!important}
 html[data-thema="ragnarok"] .scaleln:nth-child(4) span{color:#ff4a2a!important}
 html[data-thema="ragnarok"] .scaleln:nth-child(5){color:#7d6238!important}
 </style>
+<style id="sima-utlit">
+/* SÍMAÚTLIT (03.11.2026): aðeins innan @media — tölvuútlit óbreytt. Miðjudálkurinn og
+   síðurnar tvær stakkast í einn dálk; allt sem var < 11 px í síma verður 11 px.
+   !important þar sem Ragnarök-reglur (html[data-thema]) eða inline-stíll hafa hærri sértækni. */
+@media (max-width:700px){
+  .wrap{padding:14px 12px 20px;gap:14px}
+  .hdr{flex-direction:column;align-items:stretch;gap:14px;padding:14px 16px 12px}
+  .hdr > div + div{flex-wrap:wrap;gap:14px!important;justify-content:space-between}
+  .hdr > div + div > div[style*="text-align:right"]{text-align:left!important}
+  .ttl{font-size:20px;letter-spacing:5px!important}
+  .sub{font-size:11px;letter-spacing:1.5px!important}
+  .chip{font-size:11px;letter-spacing:1px!important}
+  .leg{font-size:11px;letter-spacing:1px!important;text-align:left;flex:1 1 100%}
+  .clock{font-size:30px}
+  .datestr{font-size:11px;letter-spacing:2px!important}
+  .btnrow{flex-direction:row;flex-wrap:wrap;flex:1 1 100%}
+  .runbtn{flex:1 1 auto;padding:11px 12px;letter-spacing:1px!important}
+  .mid{grid-template-columns:minmax(0,1fr);gap:14px}
+  .core,#siteA,#siteB{grid-column:1!important;grid-row:auto!important}
+  #orb{width:100%!important;height:auto!important;max-width:360px}
+  .core div[style*="font-size:10px"],.core div[style*="font-size:11px"]{font-size:11px!important}
+  .sitehdr{flex-wrap:wrap;gap:8px}
+  .sitename{letter-spacing:2px!important}
+  .sitehost{font-size:11px;letter-spacing:.5px!important}
+  .siteavg{font-size:11px;letter-spacing:1px!important}
+  .grid3{gap:8px}
+  .gunit{font-size:11px!important;letter-spacing:.5px!important}
+  .glabel{font-size:11px;letter-spacing:0!important}
+  .gbase{font-size:11px!important;letter-spacing:0!important}
+  .foot{grid-template-columns:minmax(0,1fr);gap:14px}
+  .fhdr{letter-spacing:2px!important}
+  .logline{letter-spacing:.5px}
+  .scaleln{font-size:11px;letter-spacing:.5px!important}
+}
+</style>
   <script src="/js/dags-snid.js?v=20260918b"></script>
 </head>
 <body>

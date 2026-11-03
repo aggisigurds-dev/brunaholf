@@ -20,8 +20,8 @@ exports.handler = async (event) => {
 
   // Run both reads in parallel.
   const [bRows, fRows] = await Promise.all([
-    sbGet(`customers_base?select=id,nafn,kennitala,heimilisfang,er_i_thjonustu&order=nafn&limit=${limit}` + (q ? `&or=(nafn.ilike.*${enc(q)}*,kennitala.ilike.*${enc(q)}*)` : '')),
-    sbGet(`fyrirtaeki?select=id,nafn,kennitala,heimilisfang,netfang,simi&order=nafn&limit=${limit}&deleted_at=is.null` + (q ? `&or=(nafn.ilike.*${enc(q)}*,kennitala.ilike.*${enc(q)}*)` : '')),
+    sbGet(`customers_base?select=id,nafn,kennitala,heimilisfang&order=nafn&limit=${limit}` + (q ? `&or=(nafn.ilike.*${enc(q)}*,kennitala.ilike.*${enc(q)}*)` : '')),
+    sbGet(`fyrirtaeki?select=id,nafn,kennitala,heimilisfang,netfang,simi,er_i_thjonustu&order=nafn&limit=${limit}&deleted_at=is.null` + (q ? `&or=(nafn.ilike.*${enc(q)}*,kennitala.ilike.*${enc(q)}*)` : '')),
   ]);
 
   // Dedupe by 10-digit kennitala.
@@ -43,6 +43,7 @@ exports.handler = async (event) => {
       existing.simi         = existing.simi         || row.simi         || '';
       existing.refs = existing.refs || {};
       existing.refs[source] = row.id;
+      existing.in_service = existing.in_service || row.er_i_thjonustu === true;
     } else {
       byKt.set(key, {
         id:  source + ':' + row.id,
@@ -54,7 +55,7 @@ exports.handler = async (event) => {
         source,
         ref_id: row.id,
         refs: { [source]: row.id },
-        in_service: !!row.er_i_thjonustu,
+        in_service: row.er_i_thjonustu === true,   // customers_base hefur engan slíkan dálk; aðeins fyrirtaeki
       });
     }
   }

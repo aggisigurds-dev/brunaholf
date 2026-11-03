@@ -38,10 +38,16 @@ exports.handler = async (event) => {
 
   try {
     // Pull every relevant customer base (service customers + anyone with docs).
-    const bases = await fetchAll(
-      'customers_base',
-      `select=id,nafn,kennitala,er_i_thjonustu&order=er_i_thjonustu.desc.nullslast,nafn.asc`
-    );
+    // „Í þjónustu" er ekki dálkur á customers_base (03.11.2026: dálkurinn er ekki til og
+    // fyrirspurnin skilaði 500) — hún er leidd af stöðunum, eins og customer.js gerir.
+    const [baseRows, sites] = await Promise.all([
+      fetchAll('customers_base', `select=id,nafn,kennitala&order=nafn.asc`),
+      fetchAll('fyrirtaeki', `select=customer_base_id&er_i_thjonustu=eq.true&deleted_at=is.null&customer_base_id=not.is.null`),
+    ]);
+    const iThjonustu = new Set(sites.map(s => s.customer_base_id));
+    const bases = baseRows
+      .map(b => ({ ...b, er_i_thjonustu: iThjonustu.has(b.id) }))
+      .sort((a, b) => (b.er_i_thjonustu - a.er_i_thjonustu) || String(a.nafn || '').localeCompare(String(b.nafn || ''), 'is'));
 
     // Pull all docs in window.
     const docs = await fetchAll(

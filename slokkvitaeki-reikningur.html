@@ -65,6 +65,24 @@
   .empty{color:var(--muted);text-align:center;padding:14px;font-size:12.5px;}
   .dk{max-width:820px;margin:0 auto 30px;}
   .dk pre{background:#0b1220;color:#e6edf3;border-radius:10px;padding:12px;font-size:12px;overflow:auto;max-height:40vh;}
+  /* Sími: haus, viðskiptavinur og reikn.upplýsingar stakkast; línutaflan skrunar lárétt. */
+  @media screen and (max-width:640px){
+    .sheet{padding:20px 14px;}
+    .top{flex-wrap:wrap;gap:14px;}
+    .brand .b1{font-size:26px;}
+    .brand .b2{font-size:20px;}
+    .brand img{max-width:100%;}
+    .midrow{flex-direction:column;gap:18px;margin-top:24px;}
+    .cust{min-width:0;}
+    .cust input{width:100%;min-height:32px;}
+    .doc{text-align:left;}
+    .meta{margin-left:0;width:100%;}
+    .meta td.k{white-space:nowrap;}
+    .meta td.v{width:100%;}
+    .meta input{width:100%;min-height:32px;}
+    table.lines{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+    .totals table{min-width:0;width:100%;}
+  }
   @media print{
     body{background:#fff;}
     .no-print{display:none !important;}

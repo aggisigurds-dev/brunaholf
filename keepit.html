@@ -265,6 +265,21 @@
   body.dark .mini:hover{background:#222a33}
   body.dark .card .tag,body.dark .layout-kanban .kcol{background:#1a2129;color:#cbd5e0;border-color:#2a3340}
 </style>
+<style id="sima-utlit">
+/* SÍMAÚTLIT (03.11.2026): aðeins innan @media — tölvuútlit óbreytt. Efsta stikan pakkast í tvær
+   raðir (☰ merki · 🌙 ⚙ ⋯ / leit · röðun); 7 útlitstakkarnir fela sig, því „layoutPick“ undir stikunni
+   gerir sama (og var þegar hugsaður fyrir síma). Skúffan er utan skjás: skugginn lekur ekki inn. */
+@media (max-width:700px){
+  .topbar{flex-wrap:wrap;row-gap:8px}
+  .brand{margin-right:auto}
+  .quick{order:2;flex:1 1 140px;min-width:0}
+  #layoutSeg{display:none}
+  #sortSel{order:3}
+  #darkBtn,#settingsBtn,#moreBtn{order:1}
+  .side{top:108px;max-height:calc(100vh - 124px)}
+  .drawer:not(.open){box-shadow:none}
+}
+</style>
   <script src="/js/dags-snid.js?v=20260918b"></script>
 </head>
 <body>

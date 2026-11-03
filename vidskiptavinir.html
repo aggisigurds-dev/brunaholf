@@ -46,7 +46,7 @@ a{color:inherit}
 .dir.inn{background:#fef2f2;color:#b91c1c}.dir.ut{background:#eff6ff;color:#1d4ed8}
 .sec{font-size:12px;font-weight:800;letter-spacing:.05em;color:#4f46e5;margin:18px 0 6px;text-transform:uppercase}
 .empty{color:#94a3b8;padding:40px;text-align:center}
-.loading{color:#94a3b8;padding:20px}
+.loading{color:#94a3b8;padding:20px}@media (max-width:700px){.wrap{flex-direction:column;height:auto;min-height:calc(100vh - 49px)}.list{width:100%;min-width:0;max-height:40vh;flex:none;border-right:0;border-bottom:1px solid #16305a}.detail{flex:none;overflow:visible;padding:16px 14px}.kpi .c{flex:1 1 130px}.ph h2{font-size:18px}.save button{min-height:40px}}
 </style></head><body>
 <div class=top>
  <a class=back href="./">&larr; Bakendi</a>
@@ -86,7 +86,7 @@ function field(id,label,val,icon){
  return '<div class=fld><div class=l>'+(icon||'')+' '+label+'</div><textarea id="f_'+id+'">'+esc(val||'')+'</textarea></div>';
 }
 function select(kt){
- surKt=kt;renderList();
+ curKt=kt;renderList();
  var c=DATA.find(function(x){return x.kt===kt;});if(!c)return;
  var mails=(c.recent_mails||[]);
  var mailsH=mails.length?('<div class=mails>'+mails.map(function(m){

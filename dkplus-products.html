@@ -33,6 +33,12 @@
   tr.fail td{background:#fdecec;}
   .note{font-size:12px;color:var(--muted);margin-top:16px;border-top:1px solid var(--line);padding-top:10px;}
   code{background:#eef1f5;border-radius:4px;padding:1px 5px;}
+  /* SÍMAÚTLIT (03.11.2026): aðeins innan @media — tölvuútlit óbreytt. Taflan fékk 10 px of mikið pláss
+     (innerWidth 385 á 375); þrengri reitir + skrunumbúðir ef villutexti í Stöðu-dálki gerir hana breiðari. */
+  @media (max-width:700px){
+    .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    th,td{padding-left:4px;padding-right:4px}
+  }
 </style>
   <script src="/js/dags-snid.js?v=20260918b"></script>
 </head>
@@ -52,7 +58,7 @@
     <button id="full" class="warn" onclick="full()">Búa til ALLAR í dk →</button>
   </div>
   <div id="status"></div>
-  <table><thead><tr><th>Vörunúmer</th><th>Lýsing</th><th class="r">Verð (án vsk)</th><th class="r">VSK%</th><th id="res-h">Staða</th></tr></thead><tbody id="rows"></tbody></table>
+  <div class="tbl-wrap"><table><thead><tr><th>Vörunúmer</th><th>Lýsing</th><th class="r">Verð (án vsk)</th><th class="r">VSK%</th><th id="res-h">Staða</th></tr></thead><tbody id="rows"></tbody></table></div>
   <div class="note">Nettóverð (<code>UnitPrice1</code>) er notað til samræmis við reikningslínurnar (sem senda verð án vsk + VSK leitt af vörunni). Endurkeyrsla er örugg — vörur sem þegar eru til skila villu en breyta engu. Eftir innflutning: víxla reikningslínum í <code>ItemCode = dk_vorunr</code> og prófa Björgunarsveit aftur.</div>
 </div>
 <script>
