@@ -251,3 +251,13 @@ Dæmi um „eitt heimilisfang": `Sunnukriki 3, Mosfellsbær` · sveitarfélag `M
 smíðuð með sama sniði, en með nýja bundna niðurstöðuorðalaginu (Reising þéttu sjálfir milliveggi; Ajour hefur ekkert Stálhellu-verkefni, svo „hvað var gert" er ósannreynt
 og Agnar staðfestir). Krókur 77 ehf. = Gullslétta 18; staðfesting 28.10.2026 var aðeins í Drive/pósti og flutt í Skjalasafn með `drive-innflutningur/einn.cjs`
 (`skjal_id` 15207ab6-5ee8-4f2a-b88d-528b0955b727). Drög eru smíðuð í staðbundnu eyðublaði (`go()`, `paintForm()`, `passaEinaSidu()`, `buildPdf()` → móttakari á porti 8799), aldrei vistuð án Agnars.
+
+**⚡ Sjálfvirk smíði (03.11.2026, `UTGAFA` 2026-11-03.2):** á forsíðu Eyðublaða, við hlið spjaldsins — nafn/heimilisfang, dagsetning (í dag), flokkur, hluti hússins
+(listi eða frjáls texti). „Smíða drög" skrifar drögin í localStorage og opnar formið (passar á eina síðu); **ekkert vistast** fyrr en Vista. Kóði: `GEN_BRUNALOKUR` /
+`GEN_SVAEDI` / `genSvaedi()` / `genStart()` í `eydublod.html`. Sjö flokkar úr 58 skjölum: almenn brunaþétting (Heklureitur-snið, svæðið feitletrað) · yfirferð og lagfæringar ·
+brunaþéttingar framkvæmdar · heildaryfirferð (Stálhella-snið) · með eldvarnarhurðum · meðfram lögnum (Sunnukriki) · hluti unninn áður (fyrirvari). Niðurstaða alltaf bundna orðalagið.
+Engin „Byggingar"/„teikningar af vef" — það orðalag er aðeins í 3 verkum af 56 (Sunnukriki 3, Keldur, eitt nafnlaust); teikningasíða (mynd) aðeins í Sunnukriki 3; bætt við í forminu eftir þörfum.
+Svæðisreglur: frjáls texti án forsetningar fær „í" (eða „á" ef „hæð" kemur fyrir) og þágufallsleiðréttingu á stigahús/kjallari/álma/bygging; annað skrifar Agnar eins og það á að standa.
+**Með staðfestingu í pósti (úr sendum póstum 15.10–28.10.2026):** Dalvegur 30A fékk staðfestingu + Ajour-útprentun (rekjanleiki) + afrit af starfsleyfi þjónustuaðila + skilaskýrslu;
+Hvaleyrarbraut 39 og Gullslétta 18: staðfesting + starfsleyfi + „001 Brunahólf Skýrsla NN.pdf"; Sunnukriki 3: staðfesting + „Ajour Skýrsla". Stálhella 22/18 mhl. 02 (01.06): aðeins staðfestingin.
+Ályktun (ósannreynt, Agnar ræður): Ajour-skýrsla fylgir þegar Brunahólf skráði verkið í Ajour og verkkaupi þarf rekjanleika fyrir lokaúttekt/öryggisúttekt; ekkert Ajour-verk = engin skýrsla.
