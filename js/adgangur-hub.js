@@ -6,18 +6,18 @@
  *   • lyklar 'hub:<flipa-id>'; 'hub:*' = allir flipar, 'hub:!' = enginn, enginn hub-lykill = engin takmörkun.
  *     Gömlu orðin („Ajour", „Vinnubók"…) gilda EKKI hér — þau voru aldrei virk og eru aðeins tillaga í Aðgangsstýringunni.
  *   • Admin sér allt. Innskráður starfsmaður sér aðeins sína flipa (renderTabs + activeTab í index.html spyrja hubAdgSidur).
- *   • ?skoda_sem=LS (aðeins admin): stikan eins og LS sér hana, borði efst, „Hætta" skilar öllu. Geymt í sessionStorage
- *     (tímabundin staða í þessum flipa, leyfð skv. reglunni 15.10.2026).
+ *   • ?skoda_sem=LS (aðeins admin): stikan eins og LS sér hana, borði efst, „Hætta" skilar öllu. Staðan býr í slóðinni —
+ *     engin vafrageymsla (audit-vafrastada), lifir endurhleðslu og hash-leiðsögn.
  *   • Í ramma (?embed=1) gerir þetta ekkert — Slökkvitæki-appið stýrir þá.
  * Viðmótshlið eins og innskráningarkrafan: gögnin sjálf eru ekki læst á þjóni.
  */
 (function () {
   'use strict';
   if (window.__hubEmbed) return;
-  var SS = 'bh_skoda_sem';
-  var S = { skoda: lesa(), synt: false };
-
-  function lesa() { try { var j = JSON.parse(sessionStorage.getItem(SS) || 'null'); return j && Array.isArray(j.sidur) ? j : null; } catch (_) { return null; } }
+  var PARAM = 'skoda_sem';
+  var S = { skoda: null };
+  function slodNn() { try { return new URLSearchParams(location.search).get(PARAM) || ''; } catch (_) { return ''; } }
+  function hreinsaSlod() { try { var u = new URL(location.href); u.searchParams.delete(PARAM); history.replaceState(history.state, '', u.pathname + u.search + u.hash); } catch (_) {} }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function stada() { return window.__hubAdgangur || null; }
   function erAdmin() { var s = stada(); return !!(s && s.authed && s.user && s.user.rola === 'Admin'); }
@@ -70,29 +70,26 @@
       '<b>' + esc(u.nafn) + (u.nn ? ' (' + esc(u.nn) + ')' : '') + '</b><span style="color:#aab2c0">Brunahólf: ' + (leyft ? leyft.size + (leyft.size === 1 ? ' flipi' : ' flipar') : 'allir flipar') + '</span>' +
       '<button type="button" id="bh-adg-haetta" style="height:30px;padding:0 12px;border-radius:7px;border:1px solid #7d6020;background:linear-gradient(180deg,#e9cf86,#c9a14a 55%,#a9822f);color:#2a1f08;font:600 12px/28px inherit;font-family:inherit;cursor:pointer">Hætta að skoða</button>';
     b.querySelector('#bh-adg-haetta').addEventListener('click', function () {
-      S.skoda = null; try { sessionStorage.removeItem(SS); } catch (_) {}
+      S.skoda = null; hreinsaSlod();
       teikna();
     });
   }
 
   // ?skoda_sem=NN — aðeins admin; listinn sóttur svo síðuvalið sé nýjasta vistaða útgáfan.
   function skodaUrSlod() {
-    var nn = null; try { nn = new URLSearchParams(location.search).get('skoda_sem'); } catch (_) {}
+    var nn = slodNn();
     if (!nn) return Promise.resolve();
-    try { var u = new URL(location.href); u.searchParams.delete('skoda_sem'); history.replaceState(history.state, '', u.pathname + u.search + u.hash); } catch (_) {}
-    if (!erAdmin()) return Promise.resolve();
+    if (!erAdmin()) { hreinsaSlod(); return Promise.resolve(); }
     return fetch('/api/hub-adgangar?listi=1', { credentials: 'same-origin', cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (j) {
       var u = (j.users || []).find(function (x) { return String(x.nn || '').toUpperCase() === String(nn).toUpperCase(); });
-      if (!u) return;
+      if (!u) { hreinsaSlod(); return; }
       S.skoda = { nn: u.nn, nafn: u.nafn, rola: u.rola, sidur: u.sidur || [] };
-      try { sessionStorage.setItem(SS, JSON.stringify(S.skoda)); } catch (_) {}
     }).catch(function () {});
   }
 
   var keyrt = false;
   function beita() {
     if (keyrt) return; keyrt = true;
-    if (S.skoda && !erAdmin()) { S.skoda = null; try { sessionStorage.removeItem(SS); } catch (_) {} }
     teikna();                                   // strax (áður en síðan birtist, sé head-hliðið enn í gangi)
     skodaUrSlod().then(function () { if (S.skoda) teikna(); });
   }
