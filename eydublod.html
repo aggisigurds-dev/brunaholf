@@ -55,6 +55,18 @@
     display:inline-block; margin-top:11px; font-size:11px; font-weight:700;
     background:var(--red-bg); color:var(--red); border:1px solid var(--red-line); padding:2px 8px; border-radius:999px;
   }
+  .toprad{display:grid; grid-template-columns:minmax(260px,340px) minmax(0,1fr); gap:14px; align-items:start}
+  @media (max-width:820px){ .toprad{grid-template-columns:1fr} }
+  .gen{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:16px 18px; box-shadow:var(--shadow)}
+  .gen h3{margin:0 0 3px; font-size:15px; font-weight:750}
+  .gen .sub{margin:0 0 12px; font-size:12.5px; color:var(--muted)}
+  .gen .gengrid{display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1.4fr) minmax(0,1.6fr); gap:10px 12px}
+  @media (max-width:1100px){ .gen .gengrid{grid-template-columns:1fr 1fr} }
+  @media (max-width:560px){ .gen .gengrid{grid-template-columns:1fr} }
+  .gen select{width:100%; border:1px solid var(--line); border-radius:8px; padding:9px 10px; font-size:14px; font-family:inherit; background:#fff; color:var(--text)}
+  .gen .genlysing{margin:10px 0 0; padding:9px 11px; border-left:3px solid #c9a24a; background:#faf6ee; border-radius:0 8px 8px 0; font-size:12.5px; line-height:1.5; color:var(--text); white-space:pre-line}
+  .gen .genrad{display:flex; align-items:center; gap:12px; margin-top:12px; flex-wrap:wrap}
+  .gen .genrad small{color:var(--muted); font-size:11.5px}
   .introrad{display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap}
   .ajourlink{display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border:1px solid var(--line2); border-radius:8px; background:#fff; color:inherit; text-decoration:none; font-weight:700; font-size:13px; white-space:nowrap; box-shadow:0 1px 2px rgba(0,0,0,.06)}
   .ajourlink:hover{background:#faf6ee; border-color:#c9a24a}
@@ -321,7 +333,7 @@
 /* Útgáfa síðunnar. BUMPAÐU þessu við hverja breytingu — merkið í hausnum er
    eina leiðin fyrir Agnar til að sjá strax hvort vafrinn situr á gamalli
    vistaðri útgáfu (það gerðist 2026-08-07 og kostaði drjúgan tíma). */
-const UTGAFA = '2026-11-03.1';
+const UTGAFA = '2026-11-03.2';
 
 let currentRowId = null;   // id á þeirri DB-röð sem er opin (til staðfestingar)
 let lastPublicUrl = null;  // public_url nýjasta vistunarins — til sendingar
@@ -377,6 +389,95 @@ function efni(v){
 }
 
 /* ═════════════════ EYÐUBLAÐA-SKRÁIN ═════════════════ */
+/* ── Sjálfvirk smíði: flokkar og svæði (úr 58 skjölum í safninu, 03.11.2026) ───────────────
+   Flokkurinn ræður „Hvað var gert", „Um ræðir" og niðurstöðunni; svæðið er það eina sem breytist. */
+const GEN_SVAEDI = [
+  { t:'Allt húsnæðið', all:true },
+  { t:'Kjallari K0 og K-1',        i:'í kjallara K0 og K-1',          a:'kjallara K0 og K-1' },
+  { t:'Kjallari',                  i:'í kjallara',                    a:'kjallara' },
+  { t:'Kjallari og jarðhæð',       i:'í kjallara og á jarðhæð',       a:'kjallara og jarðhæð' },
+  { t:'Jarðhæð',                   i:'á jarðhæð',                     a:'jarðhæð' },
+  { t:'1. hæð',                    i:'á 1. hæð',                      a:'1. hæð' },
+  { t:'2. og 3. hæð',              i:'á 2. og 3. hæð',                a:'2. og 3. hæð' },
+  { t:'Verslunarrými á 1. hæð',    i:'í verslunarrými á 1. hæð',      a:'verslunarrými á 1. hæð' },
+  { t:'Stigahús A og B',           i:'í stigahúsi A og B',            a:'stigahús A og B' },
+  { t:'Stigahús C og D',           i:'í stigahúsi C og D',            a:'stigahús C og D' },
+  { t:'Sameign',                   i:'í sameign',                     a:'sameign' },
+  { t:'Sameign og bílakjallari',   i:'í sameign og bílakjallara',     a:'sameign og bílakjallara' },
+  { t:'Afmarkað svæði (límmiðar)', i:'á afmörkuðu svæði hússins',     a:'afmarkað svæði hússins, límmiðar eru til staðfestingar á því svæði sem unnið var' }
+];
+/* Svæði → { all } eða { i:'í kjallara …' (þágufall m. forsetningu), a:'kjallara …' (þolfall) }.
+   Frjáls texti: skrifaður eins og hann á að standa á eftir „í" (eða með eigin forsetningu, t.d. „á 4. hæð"). */
+function genSvaedi(txt){
+  const t = String(txt || '').trim();
+  if(!t || /^(allt|öll|allur)\b/i.test(t) && /(hús|bygg)/i.test(t)) return { all:true };
+  const p = GEN_SVAEDI.find(x => x.t.toLowerCase() === t.toLowerCase());
+  if(p) return p.all ? { all:true } : p;
+  const m = t.match(/^(í|á|við|milli|meðfram|undir|yfir|frá|utan|innan)\s+(.*)$/i);
+  if(m) return { i:t, a:m[2] };
+  // Lítil þágufallsleiðrétting á algengustu orðunum; annað er skrifað eins og það á að standa.
+  const thagu = t.replace(/^stigahús\b/i, 'stigahúsi').replace(/^bílakjallari\b/i, 'bílakjallara').replace(/^kjallari\b/i, 'kjallara')
+    .replace(/^álma\b/i, 'álmu').replace(/^bygging\b/i, 'byggingu').replace(/^byggingu\b/i, 'byggingu');
+  return { i:(/hæð/i.test(t) ? 'á ' : 'í ') + thagu, a:t };
+}
+const GEN_INNGANGUR = 'Brunahólf ehf. lýsir yfir að öll vinna og efni standist kröfur og reglugerðir samkvæmt leiðbeiningum Húsnæðis- og mannvirkjastofnunar (HMS) og öðrum viðeigandi reglugerðum.';
+const GEN_ENDIR = ' er það mat Brunahólfs ehf. að ';
+const GEN_AD_MARKI = ' í samræmi við gildandi kröfur og reglugerðir, að því marki sem yfirferð og framkvæmdir Brunahólfs ehf. náðu til.';
+const genUm = s => s.all ? 'Um ræðir allt húsið.' : 'Um ræðir ' + s.a + '.';
+const GEN_BRUNALOKUR = {
+  flokkar:[
+    { id:'almenn', nafn:'Almenn brunaþétting', lysing:'Heklureitur, Stálhella 20, Árböðin — stysta gerðin: þrjár línur, ekkert „Um ræðir“ eða niðurstaða. Svæðið er feitletrað.',
+      eftirf:true,
+      hv:s => [ 'Farið var yfir brunahólfun og lagt mat á verkefnið.', 'Brunaþéttingar voru gerðar þar sem þörf var á, byggt á sjónrænu mati.',
+        s.all ? 'Öll brunahólf voru brunaþétt.' : 'Öll brunahólf voru brunaþétt ' + s.i.replace(/^(\S+)\s+(.*)$/, '$1 **$2.**') ] },
+    { id:'yfirferd', nafn:'Yfirferð og lagfæringar', lysing:'Orkureitur, Stangarhylur, Egilsgata — lagfæringar + „Um ræðir“ + niðurstaða (nýja, bundna orðalagið).',
+      eftirf:true,
+      hv:() => [ 'Farið var yfir brunahólfun og lagt mat á endurbætur.', 'Lagfæringar voru gerðar þar sem þörf var á, byggt á sjónrænu mati.' ],
+      um:genUm,
+      nid:() => 'Að loknum framangreindum lagfæringum' + GEN_ENDIR + 'brunahólfun sé' + GEN_AD_MARKI },
+    { id:'thettingar', nafn:'Brunaþéttingar framkvæmdar', lysing:'Hnjúkamói 9, Dalvegur 30A verslun, Nesvellir — „brunaþéttingar voru framkvæmdar“ + „Um ræðir“ + niðurstaða.',
+      eftirf:true,
+      hv:() => [ 'Farið var yfir brunahólfun og lagt mat á umrætt svæði.', 'Brunaþéttingar voru framkvæmdar þar sem þörf var á, byggt á sjónrænu mati.' ],
+      um:genUm,
+      nid:() => 'Að loknum framangreindum brunaþéttingum' + GEN_ENDIR + 'brunahólfun sé' + GEN_AD_MARKI },
+    { id:'heild', nafn:'Heildaryfirferð húsnæðis', lysing:'Stálhella 22/18, Skerpluholt 7, Lyngbarð 2 — yfirferð á framkvæmd og frágangi brunaþéttinga, niðurstaða með nýja orðalaginu.',
+      eftirf:false,
+      hv:s => [ s.all ? 'Farið var yfir brunahólfun í öllu húsnæðinu og lagt mat á framkvæmd og frágang brunaþéttinga.'
+                      : 'Farið var yfir brunahólfun ' + s.i + ' og lagt mat á framkvæmd og frágang brunaþéttinga.',
+        'Frágangur var yfirfarinn og lokað þar sem við átti, byggt á sjónrænu mati.',
+        'Um er að ræða brunaþéttingar ' + (s.all ? 'í öllu húsnæðinu' : s.i) + '.' ],
+      nid:() => 'Að loknum framangreindum brunaþéttingum' + GEN_ENDIR + 'brunahólfun sé' + GEN_AD_MARKI },
+    { id:'hurdir', nafn:'Með eldvarnarhurðum', lysing:'Keldur — lagfæringar + allar eldvarnarhurðir yfirfarnar + „Um ræðir“ + niðurstaða sem nefnir hurðirnar.',
+      eftirf:true,
+      hv:() => [ 'Farið var yfir brunahólfun og lagt mat á endurbætur.', 'Lagfæringar voru gerðar þar sem þörf var á, byggt á sjónrænu mati.',
+        'Farið var yfir allar eldvarnarhurðir. Lokunarbúnaður var settur á þær hurðir sem skorti slíkan búnað og aðrar hurðir yfirfarnar og lagfærðar eftir því sem þörf var á.' ],
+      um:genUm,
+      nid:s => 'Að loknum framangreindum lagfæringum' + GEN_ENDIR + 'brunahólfun og eldvarnarhurðir' + (s.all ? '' : ' ' + s.i) + ' séu' + GEN_AD_MARKI },
+    { id:'lagnir', nafn:'Brunaþéttingar meðfram lögnum', lysing:'Sunnukriki 3 — þéttingar meðfram leiðslum og lögnum í gegnum brunahólfandi byggingarhluta + „Um ræðir“ + niðurstaða.',
+      eftirf:true,
+      hv:() => [ 'Farið var yfir brunahólfun og lagt mat á endurbætur.', 'Brunaþéttingar voru gerðar meðfram leiðslum og lögnum þar sem þær fara í gegnum brunahólfandi byggingarhluta.', 'Lagfæringar voru gerðar þar sem þörf var á, byggt á sjónrænu mati.' ],
+      um:genUm,
+      nid:s => 'Að loknum framangreindum lagfæringum' + GEN_ENDIR + 'brunahólfun og brunaþéttingar meðfram leiðslum og lögnum' + (s.all ? '' : ' ' + s.i) + ' séu' + GEN_AD_MARKI },
+    { id:'fyrirvari', nafn:'Hluti unninn áður (fyrirvari)', lysing:'Hvaleyrarbraut 39, Gullslétta 18, Brúarvogur — staðfestingin tekur aðeins til þess sem er skráð í gæðakerfi Brunahólfs.',
+      eftirf:true,
+      hv:s => [ 'Brunahólfun ' + (s.all ? '' : s.i + ' ') + 'var yfirfarin og lagfærð þar sem þörf var á, byggt á sjónrænu mati.',
+        'Staðfesting þessi tekur eingöngu til þeirra brunaþéttinga sem eru skráðar í gæðakerfi Brunahólfs og merktar með staðfestingu félagsins, þar sem hluti lokana hafði verið framkvæmdur áður en Brunahólf kom að verkinu.' ] }
+  ],
+  /* Gildi sem skrifast í skjalið: { stadur, dagsetning, flokkur, svaedi } → reitir eyðublaðsins. */
+  smida:(inn) => {
+    const fl = GEN_BRUNALOKUR.flokkar.find(x => x.id === inn.flokkur) || GEN_BRUNALOKUR.flokkar[0];
+    const sv = genSvaedi(inn.svaedi);
+    return {
+      stadur:inn.stadur, dagsetning:inn.dagsetning,
+      inngangur:GEN_INNGANGUR + (fl.eftirf ? '\nEftirfarandi var unnið:' : ''),
+      hvadVarGert:fl.hv(sv).join('\n'),
+      umraedir:fl.um ? fl.um(sv) : '',
+      nidurstada:fl.nid ? fl.nid(sv) : '',
+      byggingar:'', teikning:''
+    };
+  }
+};
+
 const FORMS = [
 {
   id:'yfirlysing-brunalokana',
@@ -385,6 +486,7 @@ const FORMS = [
   icon:'🔥',
   merki:'Skjal til verkkaupa',
   skra: v => 'Stadfesting_' + ((v.stadur || 'Brunalokanir').split(',')[0]) + '_' + fmtDate(v.dagsetning),
+  gen: GEN_BRUNALOKUR,
 
   /* Hliðarstikan — aðeins það sem er EKKI ritað beint í skjalið. */
   sections:[
@@ -657,7 +759,7 @@ async function listForms(){
         <a class="ajourlink" href="https://brunaholf.ajoursystem.net/construction" target="_blank" rel="noopener"
            title="Opna Ajour (AjourInspect &amp; QA) í nýjum flipa">🔗 Opna Ajour</a>
       </div>
-      <div class="cards">
+      <div class="toprad"><div class="cards">
         ${FORMS.map(f => `
           <button class="card" onclick="go('${f.id}')">
             <div class="ico">${f.icon}</div>
@@ -666,11 +768,70 @@ async function listForms(){
             ${f.merki ? `<span class="tag">${esc(f.merki)}</span>` : ''}
           </button>`).join('')}
       </div>
+      ${FORMS.filter(f => f.gen).map(genPanel).join('')}</div>
       <div class="sect-h">Skjalasafn</div>
       <div class="docs" id="safnBox"><div class="empty">Sæki…</div></div>
     </div>`;
+  genLysing();
+  const gs = document.getElementById('gen_svaedi'); if(gs) gs.addEventListener('input', genLysing);
   await loadSafn();
   renderSafn('safnBox', true);
+}
+
+function genPanel(f){
+  const g = f.gen;
+  return `<div class="gen" id="genBox">
+    <h3>⚡ Sjálfvirk smíði</h3>
+    <p class="sub">Skrifaðu nafn og svæði, veldu flokk — drögin smíðast sjálf og opnast í eyðublaðinu. Ekkert vistast fyrr en þú ýtir á „Vista“.</p>
+    <div class="gengrid">
+      <div class="fld"><label for="gen_stadur">Nafn / heimilisfang</label>
+        <input type="text" id="gen_stadur" placeholder="T.d. Stálhella 18 mhl. 03" autocomplete="off"></div>
+      <div class="fld"><label for="gen_dags">Dagsetning</label>
+        <input type="date" id="gen_dags" value="${todayIso()}"></div>
+      <div class="fld"><label for="gen_flokkur">Flokkur</label>
+        <select id="gen_flokkur" onchange="genLysing()">${g.flokkar.map(x => `<option value="${x.id}">${esc(x.nafn)}</option>`).join('')}</select></div>
+      <div class="fld"><label for="gen_svaedi">Hluti hússins</label>
+        <input type="text" id="gen_svaedi" list="gen_svaedilisti" placeholder="Allt húsnæðið" autocomplete="off" onkeydown="if(event.key==='Enter')genStart()">
+        <datalist id="gen_svaedilisti">${GEN_SVAEDI.map(x => `<option value="${esc(x.t)}">`).join('')}</datalist></div>
+    </div>
+    <div class="genlysing" id="gen_lysing"></div>
+    <div class="genrad">
+      <button class="btn btn-primary" onclick="genStart()">⚡ Smíða drög</button>
+      <small id="gen_skilabod">Svæði: veldu af listanum eða skrifaðu sjálfur (t.d. „4. hæð“ eða „stigahúsi E“). Tómt = allt húsnæðið.</small>
+    </div>
+  </div>`;
+}
+function genLysing(){
+  const f = FORMS.find(x => x.gen); if(!f) return;
+  const fl = f.gen.flokkar.find(x => x.id === document.getElementById('gen_flokkur').value);
+  const el = document.getElementById('gen_lysing');
+  if(!fl || !el) return;
+  const sv = genSvaedi(document.getElementById('gen_svaedi').value);
+  el.textContent = fl.lysing + '\n\n' + fl.hv(sv).join('\n').replace(/\*\*/g, '');
+}
+async function genStart(){
+  const f = FORMS.find(x => x.gen); if(!f) return;
+  const val = id => (document.getElementById(id) || {}).value || '';
+  const msg = document.getElementById('gen_skilabod');
+  const stadur = val('gen_stadur').trim();
+  if(!stadur){ if(msg){ msg.textContent = '✗ Skrifaðu nafn eða heimilisfang.'; msg.style.color = '#b91c1c'; } document.getElementById('gen_stadur').focus(); return; }
+  const dags = val('gen_dags') || todayIso();
+  const o = f.gen.smida({ stadur, dagsetning:dags, flokkur:val('gen_flokkur'), svaedi:val('gen_svaedi') });
+  // Eldri óvistuð drög mega ekki hverfa þegjandi — geymd undir _fyrra (eitt öryggisafrit).
+  try{
+    const raw = localStorage.getItem(lsKey(f.id));
+    const gamalt = raw && JSON.parse(raw).values;
+    if(gamalt && gamalt.stadur && gamalt.stadur !== stadur) localStorage.setItem(lsKey(f.id) + '_fyrra', raw);
+  }catch(e){}
+  const keep = form; form = f;
+  let v; try{ v = formDefaults(); }finally{ form = keep; }
+  Object.assign(v, o);
+  let eigin = ''; try{ eigin = localStorage.getItem('bh_undirskrift_sjalfgefin') || ''; }catch(e){}
+  v.sig = eigin || SIG_SJALFGEFIN;
+  const ao = {}; Object.keys(f.autos || {}).forEach(k => { ao[k] = false; });   // smíðin skrifar textann; ritanlegur í skjalinu
+  try{ localStorage.setItem(lsKey(f.id), JSON.stringify({ values:v, autoOn:ao, skjalId:'', utgafa:0 })); sessionStorage.setItem('bh_passa', '1'); }
+  catch(e){ if(msg){ msg.textContent = '✗ Tókst ekki að geyma drögin í vafranum.'; msg.style.color = '#b91c1c'; } return; }
+  go(f.id);
 }
 
 async function loadSafn(formId){
@@ -995,6 +1156,7 @@ async function openForm(){
     try{ const d = JSON.parse(raw); if(d && d.form_id === form.id){ applySaved(d); return; } }catch(e){}
   }
   paintForm();
+  if(sessionStorage.getItem('bh_passa')){ sessionStorage.removeItem('bh_passa'); passaEinaSidu(); }   // drög úr sjálfvirkri smíði
   await loadSafn(form.id);
   renderSafn('safnList', false);
 }
