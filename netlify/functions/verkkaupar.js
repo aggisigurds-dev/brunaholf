@@ -61,7 +61,7 @@ function dedupe(list) {
 
 async function list() {
   const [pg, info, inv, drafts, map, meta] = await Promise.all([
-    sb('pricing_guide?select=worksite_name,customer_name'),
+    sb('pricing_guide?select=worksite_name,customer_name,kennitala'),
     sb('customer_info?select=customer_name,kennitala,contact_email,last_payment_at'),
     sbAll('invoices?select=id,source,customer_name,kt_greidanda,upphaed_total,hofudstoll,status,gjalddagi,greidsla_date,worksite_match,tilvisun'),
     sbAll('invoice_drafts?select=worksite_name,customer_name,kennitala,total_m_vsk,status,merged_into,work_month,payday_invoice_id'),
@@ -78,15 +78,22 @@ async function list() {
   const get = (name) => (acc[name] = acc[name] || { name, kt: null, worksites: 0, osent: 0, ogreitt: 0, greitt_ar: 0, sidasta_krafa: null, sidustu_samskipti: null, skrad: false, stadir: 0, greining: false });
   // skrad = greiðandinn er skráður viljandi (verðskrá eða customer_info) — ekki bara nefndur á reikningi; viðmótið sýnir aðeins þá
   const wsSet = {}; const addWs = (n, w) => { if (n && w) (wsSet[n] = wsSet[n] || new Set()).add(w); };
-  for (const p of pg) if (p.customer_name) { const a = get(p.customer_name); a.worksites++; a.skrad = true; addWs(p.customer_name, p.worksite_name); }
+  for (const p of pg) if (p.customer_name) { const a = get(p.customer_name); a.worksites++; a.skrad = true; if (!a.kt && p.kennitala) a.kt = p.kennitala; addWs(p.customer_name, p.worksite_name); }
   for (const m of map) if (m.customer_name) { const a = get(m.customer_name); if (!a.kt && m.kt_greidanda) a.kt = m.kt_greidanda; addWs(m.customer_name, m.worksite_name); }
   for (const i of info) if (i.customer_name) { const a = get(i.customer_name); if (i.kennitala) a.kt = i.kennitala; a.skrad = true; }
   for (const n of Object.keys(wsSet)) acc[n].worksites = Math.max(acc[n].worksites, wsSet[n].size);
 
+  // 03.11.2026: reikningur á kt skráðs greiðanda telst honum þótt nafnið á reikningnum sé annað (Payday „Tilraunastöð Háskóla Íslands í
+  // meinafræði" ↔ verðskrá „… að Keldum") — annars stóð prófíllinn kröfulaus. Aðeins þegar kt á einn skráðan greiðanda.
+  const ktSkrad = new Map();
+  for (const a of Object.values(acc)) { const k = normKt(a.kt); if (a.skrad && k) ktSkrad.set(k, ktSkrad.has(k) ? null : a.name); }
+  const tvi = K.tvifarar(inv);   // bankaspeglar Payday-reikninga („310.0") og handskráðar Tekjur-raðir — sjá _krofu-flokkun.js
   const ar = new Date().getFullYear();
-  for (const v of dedupe(inv)) {
+  for (const v of dedupe(inv.filter((x) => !tvi.has(K.invKey(x))))) {
     if (!v.customer_name) continue;
-    const a = get(v.customer_name);
+    const alt = !(acc[v.customer_name] && acc[v.customer_name].skrad) && ktSkrad.get(normKt(v.kt_greidanda));
+    const a = get(alt || v.customer_name);
+    if (!a.kt && v.source === 'payday' && normKt(v.kt_greidanda)) a.kt = normKt(v.kt_greidanda);   // kt úr Payday þegar skráin þegir
     const mt = metaBy.get(K.invKey(v));
     const s = stada(v, mt);
     const upp = kr(v.upphaed_total);
@@ -134,8 +141,22 @@ async function detail(name) {
   ]);
   const { metaBy, tenging, tvitekin } = flokkunarGrunnur({ pg: allPg, inv: allInv, drafts, map: allMap, meta });
   const info = infoRows[0] || { customer_name: name };
+  // 16.10.2026 — kennitala greiðandans í sömu röð og Efnislistinn: customer_info → verðskrá → kort → drög;
+  // 03.11.2026: → Payday-reikningar á sama nafni (29 af 41 prófíl stóðu kt-lausir þótt Payday vissi hana — Hreyfingar óvirkar, staðir fundust ekki)
+  const kt = info.kennitala || (pg.find((p) => p.kennitala) || {}).kennitala || (map.find((m) => m.kt_greidanda) || {}).kt_greidanda
+    || (drafts.find((d) => d.customer_name === name && d.kennitala) || {}).kennitala
+    || normKt((inv.find((v) => v.source === 'payday' && v.kt_greidanda) || {}).kt_greidanda) || null;
+  const ktN = normKt(kt);
+  // Reikningar á sömu kt undir öðru nafni (Payday „Tilraunastöð Háskóla Íslands í meinafræði" ↔ verðskrá „… að Keldum") eiga heima hér líka
+  if (ktN) {
+    const aKt = await sb(`invoices?kt_greidanda=in.(${ktN},${ktN.replace('-', '')})&select=*&order=gjalddagi.desc.nullslast&limit=200`).catch(() => []);
+    const ids = new Set(inv.map((v) => v.id));
+    for (const v of aKt) if (!ids.has(v.id)) inv.push(v);
+    inv.sort((a, b) => String(b.gjalddagi || '').localeCompare(String(a.gjalddagi || '')));
+  }
   const wsNames = [...new Set([...pg.map((p) => p.worksite_name), ...map.map((m) => m.worksite_name)].filter(Boolean))];
-  const drog = drafts.filter((d) => { const mt = metaBy.get(K.draftKey(d)); return K.erOsent(d, tenging, mt) && K.iSummu(mt) && (d.customer_name === name || wsNames.includes(d.worksite_name)); })
+  const sami = (d) => String(d.customer_name || '').trim().toLowerCase() === name.toLowerCase() || (ktN && normKt(d.kennitala) === ktN);
+  const drog = drafts.filter((d) => { const mt = metaBy.get(K.draftKey(d)); return K.erOsent(d, tenging, mt) && K.iSummu(mt) && (sami(d) || wsNames.includes(d.worksite_name)); })
     .map((d) => ({ worksite_name: d.worksite_name, work_month: d.work_month, total_m_vsk: kr(d.total_m_vsk), hours: Number(d.hours_dagvinna) || 0 }));
 
   // Samskipti: póstar sem nefna verkstaðina eða greiðandann (email_digest = brunaholf-pósthólfið)
@@ -149,28 +170,30 @@ async function detail(name) {
     samskipti = await sb(`email_digest?select=id,sender_name,sender_email,subject,snippet,received_at,folder&or=(${orParts.join(',')})&order=received_at.desc&limit=25`).catch(() => []);
   }
 
-  const inv2 = dedupe(inv);
+  // 03.11.2026 (Agnar: „Taka tvítök"): bankaspeglar Payday-reikninga og handskráðar Tekjur-raðir detta út; kredit-par (ógiltur
+  // reikningur + kreditreikningurinn hans) verður EIN lína „ógilt" í stað tveggja „kredit"-lína. Sjá K.tvifarar / K.kreditPor.
+  const tvi = K.tvifarar(inv), por = K.kreditPor(inv);
+  const parad = new Set([...por.values()].map((c) => K.invKey(c)));
+  const inv2 = dedupe(inv.filter((v) => !tvi.has(K.invKey(v)) && !parad.has(K.invKey(v))));
   for (const v of inv2) {
     const mt = metaBy.get(K.invKey(v));
     v.stada = stada(v, mt);
     if (!K.iSummu(mt)) v.falid = true;      // falið eða „📨 Krafa send" í Kröfu yfirliti — sést, en telst ekki í summu
     if (v.stada === 'drog' && tvitekin.has(K.invKey(v))) v.falid = true;   // Payday-drög sem afrita ógreiddan reikning — sést, telst ekki (01.11.2026)
+    const c = por.get(K.invKey(v));
+    if (c) { v.stada = 'ogilt'; v.kredit_tilvisun = c.tilvisun; v.kredit_dags = c.greidsla_date || c.gjalddagi || null; }
   }
   const iSum = (v) => !v.falid && kr(v.upphaed_total) > 0;
   const samtals = {
-    krofur: inv2.filter((v) => v.stada !== 'drog').length,
+    krofur: inv2.filter((v) => v.stada !== 'drog' && v.stada !== 'ogilt').length,
     ogreitt: inv2.filter((v) => v.stada === 'ogreitt' && iSum(v)).reduce((a, v) => a + kr(v.upphaed_total), 0),
     greitt: inv2.filter((v) => v.stada === 'greitt').reduce((a, v) => a + kr(v.upphaed_total), 0),
     osent: drog.reduce((a, d) => a + d.total_m_vsk, 0)
       + inv2.filter((v) => v.stada === 'drog' && iSum(v)).reduce((a, v) => a + kr(v.upphaed_total), 0),
     verkstadir: wsNames.length,
   };
-  // 16.10.2026 — kennitala greiðandans í sömu röð og Efnislistinn: customer_info → verðskrá → kort → drög
-  const kt = info.kennitala || (pg.find((p) => p.kennitala) || {}).kennitala || (map.find((m) => m.kt_greidanda) || {}).kt_greidanda
-    || (drafts.find((d) => d.customer_name === name && d.kennitala) || {}).kennitala || null;
   // Staðir í Slökkvitæki: fyrirtaeki á sömu kennitölu eða sama customers_base — þar búa teikningar, Greining, skjöl og tæki
   let stadir = [];
-  const ktN = normKt(kt);
   if (ktN) {
     try {
       const base = await sb('customers_base?select=id&kennitala=eq.' + ktN).catch(() => []);

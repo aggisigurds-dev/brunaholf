@@ -264,6 +264,16 @@ svarað í 3 daga'".
   úr email_digest og minnispunkta. Opnast beint úr Efnislistanum með 🏢 á nafni verkkaupa (window.__bhOpna.nafn).
 - Varnagli: fyrsta vistun reitanna var ekki prófuð á þjóni í lotunni (prófunarþjónninn læsir POST) — staðfesta
   „✓ vistað" fyrsta sinn.
+- **03.11.2026 — tvítök og yfirferð allra 41 prófíla** (Agnar: „Taka tvítök, og fara bara vel yfir þá"):
+  - Tvítök í „Kröfur sem við höfum sent" komu úr `landsbankinn_krafnir` (innsog 22.05.2026, „310.0", kt án bandstriks) — allar 82
+    raðir spegla Payday-reikning (sama kt + nr + gjalddagi; 29 hærri í banka vegna gjalda). Regla `K.tvifarar` í `_krofu-flokkun.js`
+    (líka handskráð `tekjur_sheet_manual` = Payday-röð með sömu upphæð og greiðsludag); notuð í verkkaupar.js og Kröfu yfirliti.
+  - Kredit-par (CANCELLED + CREDIT, −sama upphæð, sami gjalddagi; 45 pör) → `K.kreditPor` → ein lína `stada:'ogilt'` með `kredit_tilvisun`.
+  - `kt` fellur nú líka á Payday-reikninga (listinn og detail); detail sækir reikninga á kt ÞÓTT nafnið sé annað. Gögn lagfærð
+    (afrit `backup_20261103_vk_profilar`): kt úr Payday í 29 customer_info-raðir, heimilisfang úr verðskrá/„Address:"-minnispunktum (7),
+    tengiliðir úr `verkkaupi_crm` (8), „days net" → „dagar", nöfn sameinuð á Payday-nafnið (Hagvirki ehf., SAFÍR byggingar ehf.,
+    Vesturgata 22,húsfélag, Tilraunastöð Háskóla Íslands í meinafræði — áður „… að Keldum" í verðskrá).
+  - `payment_method` er KÓÐI (payday/bank-direct/mix/unknown — verkstaðaspjaldið les hann); Viðskiptavinir sýnir hann sem fellilista.
 
 ## Nýtt úr Charlize og lotum (28.10.2026)
 

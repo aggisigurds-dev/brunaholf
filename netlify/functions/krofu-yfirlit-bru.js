@@ -147,10 +147,12 @@ exports.handler = async (event) => {
 
   // ---- classify invoices ----
   const t1 = [], t2 = [];
+  const tvifarar = K.tvifarar(invoices);   // 03.11.2026: bankaspeglar Payday-reikninga („302.0" ↔ R-302) — Payday-röðin ræður (_krofu-flokkun.js)
   for (const r of invoices) {
     const amt = +r.upphaed_total || +r.hofudstoll || 0;
     if (amt === 0) continue;
     const key = K.invKey(r);
+    if (tvifarar.has(key)) continue;
     const mt = metaBy.get(key) || {};
     const flokkur = K.flokkaReikning(r, mt);
     if (flokkur === 'kredit') continue;                       // kreditfært/cancelled/negative leg
