@@ -60,7 +60,7 @@
   .gen{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:16px 18px; box-shadow:var(--shadow)}
   .gen h3{margin:0 0 3px; font-size:15px; font-weight:750}
   .gen .sub{margin:0 0 12px; font-size:12.5px; color:var(--muted)}
-  .gen .gengrid{display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1.4fr) minmax(0,1.6fr); gap:10px 12px}
+  .gen .gengrid{display:grid; grid-template-columns:minmax(0,1.5fr) minmax(0,1.1fr) minmax(0,2.2fr) minmax(0,1.3fr); gap:10px 12px}
   @media (max-width:1100px){ .gen .gengrid{grid-template-columns:1fr 1fr} }
   @media (max-width:560px){ .gen .gengrid{grid-template-columns:1fr} }
   .gen select{width:100%; border:1px solid var(--line); border-radius:8px; padding:9px 10px; font-size:14px; font-family:inherit; background:#fff; color:var(--text)}
@@ -333,7 +333,7 @@
 /* Útgáfa síðunnar. BUMPAÐU þessu við hverja breytingu — merkið í hausnum er
    eina leiðin fyrir Agnar til að sjá strax hvort vafrinn situr á gamalli
    vistaðri útgáfu (það gerðist 2026-08-07 og kostaði drjúgan tíma). */
-const UTGAFA = '2026-11-03.2';
+const UTGAFA = '2026-11-03.3';
 
 let currentRowId = null;   // id á þeirri DB-röð sem er opin (til staðfestingar)
 let lastPublicUrl = null;  // public_url nýjasta vistunarins — til sendingar
@@ -426,39 +426,46 @@ const GEN_AD_MARKI = ' í samræmi við gildandi kröfur og reglugerðir, að þ
 const genUm = s => s.all ? 'Um ræðir allt húsið.' : 'Um ræðir ' + s.a + '.';
 const GEN_BRUNALOKUR = {
   flokkar:[
-    { id:'almenn', nafn:'Almenn brunaþétting', lysing:'Heklureitur, Stálhella 20, Árböðin — stysta gerðin: þrjár línur, ekkert „Um ræðir“ eða niðurstaða. Svæðið er feitletrað.',
+    { id:'almenn', nafn:'Almenn brunaþétting — stysta gerðin',
+      lysing:'Hvenær: Brunahólf þéttir og verkkaupi vill einfalda staðfestingu.\nMunur: aðeins þrjár línur, ekkert „Um ræðir“ og engin niðurstaða. Svæðið er feitletrað í síðustu línu.\nDæmi: Heklureitur (Laugavegur 168/170), Stálhella 20, Árböðin.',
       eftirf:true,
       hv:s => [ 'Farið var yfir brunahólfun og lagt mat á verkefnið.', 'Brunaþéttingar voru gerðar þar sem þörf var á, byggt á sjónrænu mati.',
         s.all ? 'Öll brunahólf voru brunaþétt.' : 'Öll brunahólf voru brunaþétt ' + s.i.replace(/^(\S+)\s+(.*)$/, '$1 **$2.**') ] },
-    { id:'yfirferd', nafn:'Yfirferð og lagfæringar', lysing:'Orkureitur, Stangarhylur, Egilsgata — lagfæringar + „Um ræðir“ + niðurstaða (nýja, bundna orðalagið).',
+    { id:'yfirferd', nafn:'Lagfæringar — yfirferð með niðurstöðu',
+      lysing:'Hvenær: þegar annað hefur verið unnið og Brunahólf yfirfór og lagfærði það sem þurfti.\nMunur: orðalagið „lagfæringar voru gerðar“ + „Um ræðir …“ + niðurstaða með fyrirvara um það sem Brunahólf náði til.\nDæmi: Orkureitur, Stangarhylur 3/3a, Egilsgata 14.',
       eftirf:true,
       hv:() => [ 'Farið var yfir brunahólfun og lagt mat á endurbætur.', 'Lagfæringar voru gerðar þar sem þörf var á, byggt á sjónrænu mati.' ],
       um:genUm,
       nid:() => 'Að loknum framangreindum lagfæringum' + GEN_ENDIR + 'brunahólfun sé' + GEN_AD_MARKI },
-    { id:'thettingar', nafn:'Brunaþéttingar framkvæmdar', lysing:'Hnjúkamói 9, Dalvegur 30A verslun, Nesvellir — „brunaþéttingar voru framkvæmdar“ + „Um ræðir“ + niðurstaða.',
+    { id:'thettingar', nafn:'Brunaþéttingar framkvæmdar — afmarkað svæði',
+      lysing:'Hvenær: Brunahólf þéttir sjálft ákveðið rými eða svæði (ekki bara lagfæringar).\nMunur: „lagt mat á umrætt svæði“ og „brunaþéttingar voru framkvæmdar“ + „Um ræðir …“ + niðurstaða með „brunaþéttingum“.\nDæmi: Hnjúkamói 9, Dalvegur 30A verslun, Nesvellir/Hrafnista.',
       eftirf:true,
       hv:() => [ 'Farið var yfir brunahólfun og lagt mat á umrætt svæði.', 'Brunaþéttingar voru framkvæmdar þar sem þörf var á, byggt á sjónrænu mati.' ],
       um:genUm,
       nid:() => 'Að loknum framangreindum brunaþéttingum' + GEN_ENDIR + 'brunahólfun sé' + GEN_AD_MARKI },
-    { id:'heild', nafn:'Heildaryfirferð húsnæðis', lysing:'Stálhella 22/18, Skerpluholt 7, Lyngbarð 2 — yfirferð á framkvæmd og frágangi brunaþéttinga, niðurstaða með nýja orðalaginu.',
+    { id:'heild', nafn:'Heildaryfirferð — frágangur yfirfarinn',
+      lysing:'Hvenær: þegar fleiri unnu þéttingarnar (t.d. verktakinn sjálfur) og Brunahólf yfirfór og lokaði því sem vantaði.\nMunur: „lagt mat á framkvæmd og frágang brunaþéttinga“ + „Um er að ræða brunaþéttingar í …“ (engin „Um ræðir“-lína) + niðurstaða.\nDæmi: Stálhella 22/18, Skerpluholt 7, Lyngbarð 2, Vesturgata 22.',
       eftirf:false,
       hv:s => [ s.all ? 'Farið var yfir brunahólfun í öllu húsnæðinu og lagt mat á framkvæmd og frágang brunaþéttinga.'
                       : 'Farið var yfir brunahólfun ' + s.i + ' og lagt mat á framkvæmd og frágang brunaþéttinga.',
         'Frágangur var yfirfarinn og lokað þar sem við átti, byggt á sjónrænu mati.',
         'Um er að ræða brunaþéttingar ' + (s.all ? 'í öllu húsnæðinu' : s.i) + '.' ],
       nid:() => 'Að loknum framangreindum brunaþéttingum' + GEN_ENDIR + 'brunahólfun sé' + GEN_AD_MARKI },
-    { id:'hurdir', nafn:'Með eldvarnarhurðum', lysing:'Keldur — lagfæringar + allar eldvarnarhurðir yfirfarnar + „Um ræðir“ + niðurstaða sem nefnir hurðirnar.',
+    { id:'hurdir', nafn:'Lagfæringar og eldvarnarhurðir',
+      lysing:'Hvenær: eins og „Lagfæringar“, en Brunahólf yfirfór líka eldvarnarhurðir (lokunarbúnaður settur á).\nMunur: aukalína um hurðirnar og niðurstaðan nefnir „brunahólfun og eldvarnarhurðir“.\nDæmi: Keldur (byggingar 3-5-7).',
       eftirf:true,
       hv:() => [ 'Farið var yfir brunahólfun og lagt mat á endurbætur.', 'Lagfæringar voru gerðar þar sem þörf var á, byggt á sjónrænu mati.',
         'Farið var yfir allar eldvarnarhurðir. Lokunarbúnaður var settur á þær hurðir sem skorti slíkan búnað og aðrar hurðir yfirfarnar og lagfærðar eftir því sem þörf var á.' ],
       um:genUm,
       nid:s => 'Að loknum framangreindum lagfæringum' + GEN_ENDIR + 'brunahólfun og eldvarnarhurðir' + (s.all ? '' : ' ' + s.i) + ' séu' + GEN_AD_MARKI },
-    { id:'lagnir', nafn:'Brunaþéttingar meðfram lögnum', lysing:'Sunnukriki 3 — þéttingar meðfram leiðslum og lögnum í gegnum brunahólfandi byggingarhluta + „Um ræðir“ + niðurstaða.',
+    { id:'lagnir', nafn:'Lagfæringar og þéttingar meðfram lögnum',
+      lysing:'Hvenær: verkið var einkum þéttingar þar sem leiðslur og lagnir fara í gegnum brunahólfandi veggi og loft.\nMunur: aukalína „brunaþéttingar meðfram leiðslum og lögnum“ og niðurstaðan nefnir þær. Oft með teikningu af svæðinu.\nDæmi: Sunnukriki 3 (Mosfellsbær).',
       eftirf:true,
       hv:() => [ 'Farið var yfir brunahólfun og lagt mat á endurbætur.', 'Brunaþéttingar voru gerðar meðfram leiðslum og lögnum þar sem þær fara í gegnum brunahólfandi byggingarhluta.', 'Lagfæringar voru gerðar þar sem þörf var á, byggt á sjónrænu mati.' ],
       um:genUm,
       nid:s => 'Að loknum framangreindum lagfæringum' + GEN_ENDIR + 'brunahólfun og brunaþéttingar meðfram leiðslum og lögnum' + (s.all ? '' : ' ' + s.i) + ' séu' + GEN_AD_MARKI },
-    { id:'fyrirvari', nafn:'Hluti unninn áður (fyrirvari)', lysing:'Hvaleyrarbraut 39, Gullslétta 18, Brúarvogur — staðfestingin tekur aðeins til þess sem er skráð í gæðakerfi Brunahólfs.',
+    { id:'fyrirvari', nafn:'Með fyrirvara — hluti unninn áður',
+      lysing:'Hvenær: hluti lokana var gerður áður en Brunahólf kom að verkinu.\nMunur: staðfestingin tekur aðeins til þess sem er skráð í gæðakerfi Brunahólfs og merkt með staðfestingu félagsins. Engin „Um ræðir“-lína og engin niðurstaða.\nDæmi: Hvaleyrarbraut 39, Gullslétta 18, Brúarvogur 1-3, Bugðufljót 9.',
       eftirf:true,
       hv:s => [ 'Brunahólfun ' + (s.all ? '' : s.i + ' ') + 'var yfirfarin og lagfærð þar sem þörf var á, byggt á sjónrænu mati.',
         'Staðfesting þessi tekur eingöngu til þeirra brunaþéttinga sem eru skráðar í gæðakerfi Brunahólfs og merktar með staðfestingu félagsins, þar sem hluti lokana hafði verið framkvæmdur áður en Brunahólf kom að verkinu.' ] }
@@ -807,7 +814,8 @@ function genLysing(){
   const el = document.getElementById('gen_lysing');
   if(!fl || !el) return;
   const sv = genSvaedi(document.getElementById('gen_svaedi').value);
-  el.textContent = fl.lysing + '\n\n' + fl.hv(sv).join('\n').replace(/\*\*/g, '');
+  el.textContent = fl.lysing + '\nSkjalið hefur: „Um ræðir“ ' + (fl.um ? 'já' : 'nei') + ' · niðurstöðu ' + (fl.nid ? 'já' : 'nei')
+    + '\n\nSvona hljómar „Hvað var gert“:\n' + fl.hv(sv).join('\n').replace(/\*\*/g, '');
 }
 async function genStart(){
   const f = FORMS.find(x => x.gen); if(!f) return;
