@@ -202,3 +202,11 @@ Dæmi um „eitt heimilisfang": `Sunnukriki 3, Mosfellsbær` · sveitarfélag `M
   bæst við) — spyrja Agnar hvort svæði sé klárt áður en ný er gerð.
 - **Drög 03.11.2026** (aðeins staðbundin, ekki í safni): `Heklureitur_stadfesting/…_DROG.pdf` með línunni „Öll brunahólf voru brunaþétt í
   kjallara K-1 og K0." — til staðfestingar Agnars.
+- **Beiðni 02.11.2026 (póstur, `email_digest`, brunaholf@brunaholf.is):** Hildur M. Nielsen (hildur@heklureitur.is, verkefnastjóri Heklureits)
+  bað um „staðfestingu á brunaþéttingum í kjallara á **Laugavegi 170**, til að senda inn fyrir öryggisúttekt — sambærilegt skjal og var gefið út
+  fyrir Laugaveg 168". Heklureitur er því fleiri hús (168 og 170): heimilisfangið í staðfestingunni fylgir beiðninni, ekki verkefnaheitinu.
+  Svæðislínan fyrir 170: „Öll brunahólf voru brunaþétt í kjallara K-1 og K0." (Agnar: ekki nefna stigahús A/B — þau voru fyrir 168.)
+  Drög: `Heklureitur_stadfesting/Stadfesting_Laugavegur_170_kjallari_03-11-2026_DROG.pdf`. Svara Hildi gerir Agnar, aldrei Claude.
+- **Aðrar beiðnir í pósti síðustu 70 daga:** Reising (bergthor@reising.is, 16.10) vantar „svona vottorð" fyrir Stálhellu 18 – MHL03 (til er
+  Stálhella 22/18 mhl. 02); Hagtak (bergthor@hagtak.is, 14.–16.10) vildi yfirlýsingu og skýrslu fyrir Grandatröð 1C og 1D (Hvaleyrarbraut 39,
+  staðfesting gerð 15.10) og ræddi lokaúttekt. Hvort þeim er svarað er ómælt — lesa `to_addresses` áður en sagt er „ósvarað".

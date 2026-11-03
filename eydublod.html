@@ -188,6 +188,7 @@
     --lh:1.5;                 /* línubil meginmáls (frumritið var 1,15) */
   }
   .doc p{margin:0}
+  .doc p.hv{margin-bottom:.08in}
   .doc .p12{font-family:Calibri,Carlito,"Segoe UI",Candara,Arial,sans-serif; font-size:12pt; line-height:var(--lh)}
   .doc .b{font-weight:bold}
   .doc .bi{font-weight:bold; font-style:italic}
@@ -320,7 +321,7 @@
 /* Útgáfa síðunnar. BUMPAÐU þessu við hverja breytingu — merkið í hausnum er
    eina leiðin fyrir Agnar til að sjá strax hvort vafrinn situr á gamalli
    vistaðri útgáfu (það gerðist 2026-08-07 og kostaði drjúgan tíma). */
-const UTGAFA = '2026-10-20.12';
+const UTGAFA = '2026-11-03.1';
 
 let currentRowId = null;   // id á þeirri DB-röð sem er opin (til staðfestingar)
 let lastPublicUrl = null;  // public_url nýjasta vistunarins — til sendingar
@@ -509,7 +510,7 @@ const FORMS = [
     ${E.para('inngangur', v.inngangur, 'p12')}
 
     <p class="p12 b">${E.line('h1', v.h1)}</p>
-    ${E.para('hvadVarGert', v.hvadVarGert, '')}
+    ${E.para('hvadVarGert', v.hvadVarGert, 'hv')}
     <p class="p12">${E.line('umraedir', v.umraedir, {gult:true})}</p>
     <p class="p12 bi">${E.line('nidurstada', v.nidurstada, {gult:true})}</p>
 
@@ -556,7 +557,7 @@ const FORMS = [
 
     P.paras(v.inngangur, {size:12});
     P.para(v.h1, {size:12, style:'bold'});
-    P.paras(v.hvadVarGert, {size:11});         // frumritið notar grunnletrið hér
+    P.paras(v.hvadVarGert, {size:11, gap:5});  // frumritið notar grunnletrið hér, með bili milli málsgreina
     P.para(v.umraedir, {size:12});
     P.para(v.nidurstada, {size:12, style:'bolditalic'});
 
@@ -1138,7 +1139,7 @@ const E = {
   },
   para: (key, txt, cls) =>
     `<div class="ed" data-f="${key}" data-kind="multi" contenteditable="true">${
-      lines(txt).map(x => `<p class="${cls}">${esc(x)}</p>`).join('') || `<p class="${cls}"><br></p>`}</div>`,
+      lines(txt).map(x => `<p class="${cls}">${esc(x).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')}</p>`).join('') || `<p class="${cls}"><br></p>`}</div>`,
   list: (key, txt) =>
     `<ul class="ed" data-f="${key}" data-kind="multi" contenteditable="true">${
       lines(txt).map(x => `<li>${esc(x)}</li>`).join('') || '<li><br></li>'}</ul>`
@@ -1163,7 +1164,10 @@ function onDocInput(ev){
   const el = ev.target.closest('[data-f]');
   if(!el) return;
   const key = el.dataset.f;
-  const txt = el.innerText.replace(/\u00a0/g, ' ');   // contenteditable skilar hörðum bilum
+  let txt = el.innerText.replace(/\u00a0/g, ' ');   // contenteditable skilar hörðum bilum
+  if (el.dataset.kind === 'multi' && el.querySelector('b, strong')) {   // feitletrun → **texti**
+    txt = [...el.children].map(p => [...p.childNodes].map(nd => nd.nodeType === 3 ? nd.textContent : (/^(B|STRONG)$/.test(nd.nodeName) ? '**' + nd.textContent + '**' : nd.textContent)).join('')).join('\n').replace(/\u00a0/g, ' ');
+  }
 
   if(key === 'dagsetningTexti'){
     const iso = parseDate(txt);
@@ -1386,9 +1390,34 @@ function pdfTools(doc, LH){
     set(o.size || 12, o.style);
     doc.text(String(txt == null ? '' : txt), x, baseline, o.align ? { align:o.align } : undefined);
   }
+  // Málsgrein með **feitletruðum** hluta: orð fyrir orð, brotið á breidd (jsPDF blandar ekki letri í einni línu).
+  function richPara(txt, o){
+    const size = o.size || 12, w = o.w || CW;
+    const parts = String(txt).split(/(\*\*[^*]+\*\*)/).filter(Boolean).map(sg => sg.startsWith('**') ? { t:sg.slice(2, -2), b:true } : { t:sg, b:false });
+    const words = [];
+    parts.forEach(pt => pt.t.split(/(\s+)/).filter(x => x !== '').forEach(x => words.push({ t:x, b:pt.b })));
+    let line = [], lw = 0;
+    const blank = t => /^\s+$/.test(t);
+    const flush = () => {
+      while(line.length && blank(line[line.length - 1].t)) line.pop();
+      if(!line.length) return;
+      need(lh(size)); let x = M;
+      line.forEach(sg => { set(size, sg.b ? 'bold' : 'normal'); doc.text(sg.t, x, y + size*0.86); x += doc.getTextWidth(sg.t); });
+      y += lh(size); line = []; lw = 0;
+    };
+    words.forEach(wd => {
+      set(size, wd.b ? 'bold' : 'normal');
+      const ww = doc.getTextWidth(wd.t);
+      if(lw + ww > w && line.length && !blank(wd.t)) flush();
+      if(!line.length && blank(wd.t)) return;
+      line.push(wd); lw += ww;
+    });
+    flush();
+  }
   function para(txt, o){
     o = o || {};
     if(txt == null || txt === '') return;
+    if(/\*\*[^*]+\*\*/.test(String(txt))){ richPara(txt, o); if(o.gap) y += o.gap; return; }
     const size = o.size || 12, style = o.style, w = o.w || CW;
     set(size, style);
     for(const l of doc.splitTextToSize(String(txt), w)){
@@ -1397,6 +1426,7 @@ function pdfTools(doc, LH){
       else doc.text(l, M, y + size*0.86);
       y += lh(size);
     }
+    if(o.gap) y += o.gap;
   }
   const paras = (txt, o) => lines(txt).forEach(l => para(l, o));
   function bullets(txt, o){
