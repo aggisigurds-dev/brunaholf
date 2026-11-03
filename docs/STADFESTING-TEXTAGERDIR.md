@@ -58,3 +58,10 @@ Fjórir valmöguleikar í hliðarstikunni, hver fyllir sína línu í skjalið (
 4. **Niðurstaða:** sjálfvirk úr 1–3 (nýja orðalagið), orðið „eldvarnarhurðir" aðeins með gerð D.
 
 Opið: hvort Agnar vill að **yfirlýsing 38. gr. a** verði önnur gerð í sama forminu.
+
+## Viðbót 03.11.2026 — flokkun og Heklureitur
+
+- **Almenn brunaþéttinga-yfirlýsing** (Agnar): Heklureitur/Laugavegur 168 og 170. Þrjár línur í „Hvað var gert", engin „Um ræðir"/niðurstaða;
+  svæðið er síðasta línan og er **feitletrað** (`**…**`). Dæmi: „Öll brunahólf voru brunaþétt í **kjallara K0 og K-1.**"
+- **Vinnuaðferð:** póstur (beiðnin, hvaða hús og hluti) → Ajour (hvað var gert) → byggja eins og fyrri yfirlýsingar úr sama verki → drög til Agnars → vista.
+  Sjá `.claude/skills/stadfesting-brunalokana/SKILL.md`.

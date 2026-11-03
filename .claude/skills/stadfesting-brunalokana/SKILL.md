@@ -6,7 +6,7 @@ description: >
   (eydublod.html): hvaða reitir eru fylltir, hvað er sjálfvirkt, hvað má aldrei skálda, hvernig
   PDF og útgáfur vistast. Notaðu þegar Agnar segir „staðfesting brunalokana", „yfirlýsing vegna
   brunalokana", „staðfesting til verkkaupa", „búa til yfirlýsingu fyrir <stað>", „Keldur/Kringlan staðfesting",
-  „yfirlýsing fyrir byggingar 3-5-7", eða biður um að breyta, endurútgefa eða laga þetta skjal.
+  „yfirlýsing fyrir byggingar 3-5-7", „ný staðfesting fyrir <verk>", „Heklureitur staðfesting", „Laugavegur 170", eða biður um að breyta, endurútgefa eða laga þetta skjal.
 ---
 
 # Staðfesting brunalokana
@@ -24,6 +24,42 @@ kaflinn „Eyðublöð — skjalasmiðja með útgáfusögu".
 | Geymsla | tafla `eydublod_skjol` + public fata `eydublod` |
 | Myndir | `img/yfirlysing-logo.jpg` (merkið), `img/undirskrift-annthor.png` |
 | PDF | `js/jspdf.umd.min.js` + `fonts/carlito-*.ttf` (vistað í repo, ekki CDN) |
+
+## Vinnuaðferð — ný staðfesting fyrir verk (Agnar 03.11.2026)
+
+Þegar beðið er um staðfestingu fyrir verk (t.d. Heklureit) — í þessari röð, og **ekkert er vistað, sent eða svarað án Agnars**:
+
+1. **Athuga póstinn (beiðnina).** Pósturinn úr brunaholf@brunaholf.is (Thunderbird → luna-bridge) er í Supabase `email_digest`.
+   Leita að verkinu/heimilisfanginu og orðunum staðfest/yfirlýs/brunaþét/úttekt, t.d.
+   `select received_at, sender_name, subject, body_preview from email_digest where account ilike 'brunaholf@brunaholf.is' and
+   (subject ilike '%staðfest%' or body_preview ilike '%heklu%') order by received_at desc` (`execute_sql`, project `osfdzskyvisifcwyjkuk`).
+   Lesa: **hvaða hús/heimilisfang og hvaða hluta** er beðið um — heimilisfangið í skjalinu fylgir beiðninni, ekki verkefnaheitinu
+   (Heklureitur = Laugavegur 168 **og 170**). Athuga líka hvort fleiri slíkar beiðnir bíða (síðustu ~70 dagar) og fyrri samskipti í
+   sama pósti (t.d. „sambærilegt skjal og fyrir 168"). Svara kúnnanum gerir Agnar, aldrei Claude.
+2. **Skoða Ajour (hvað var raunverulega gert).** Sjá kaflann „Ajour-gögn" hér að neðan: verkefnið, fjöldi skráninga, tímabil, teikningar/hæðir
+   (`blueprintName`: K-1, K-0, 1.hæð …) og flokkar. Ajour sýnir ekki stigahús og skiptir ekki milli húsa á sama verkefni — svæðið sem
+   staðfestingin nefnir ákveður Agnar út frá pósti + Ajour. Ekki skálda svæði.
+3. **Byggja upp eins og fyrri yfirlýsingar úr sama verki.** Finna þær í Drive (Brunahólf → <verk>) og í Skjalasafninu
+   (`/api/eydublod?form_id=yfirlysing-brunalokana&all=1`, sía á `stadur`), bera saman uppsetninguna og nota sama snið: sömu línur í
+   „Hvað var gert", sama orðalag á svæðislínunni, sömu fyrirsagnir. Heklureitur: einföld gerð án „Um ræðir"/niðurstöðu — sjá
+   „Heklureitur" neðar. Svæðið í svæðislínunni er **feitletrað** (`**kjallara K0 og K-1.**` í reitnum; sjá „Feitletrun").
+4. **Drög → Agnar yfirfer → vista.** Smíða drögin í eyðublaðinu (staðbundinn þjónn, `passaEinaSidu()`, `buildPdf()`), skoða PDF-ið í vafra,
+   senda Agnari skjalið (`SendUserFile`) og vista í Skjalasafnið þegar hann hefur samþykkt orðalagið. Skrá í skillið það sem er lært.
+
+**Flokkun (Agnar 03.11.2026):** Heklureits-/Laugavegs-staðfestingar (168, 170) flokkast sem **almenn brunaþéttinga-yfirlýsing** — einföld gerð: „Farið var
+yfir brunahólfun og lagt mat á verkefnið." · „Brunaþéttingar voru gerðar þar sem þörf var á, byggt á sjónrænu mati." · „Öll brunahólf voru brunaþétt í
+**<svæði>**." Aðrar gerðir: með eldvarnarhurðum (Keldur), heildaryfirferð húsnæðis (Skerpluholt, Lyngbarð), stutt yfirlýsing skv. 38. gr. a (Hnjúkamói).
+Flokka beiðnina FYRST — textagerðirnar eru í `docs/STADFESTING-TEXTAGERDIR.md`. Laugavegur 170 (kjallara K0 og K-1, 03.11.2026) er vistuð sem v1
+(`skjal_id` d4f1ed8b-ec53-497f-9fc4-7d35640950a0).
+
+**Pósthólfsleit að beiðnum (03.11.2026, 120 dagar, `email_digest`):** staðfestingar/yfirlýsingar sem sjást — Hildur/Heklureitur (Laugavegur 170, 02.11, ósvarað á þræði),
+Reising (Stálhella 18 MHL03, 16.10, ósvarað á þræði, engin staðfesting til á Drive), Safír (Grensásvegur 6 stigahús 5, 05.08 — Orkureitur-staðfesting gerð sama dag),
+Hagtak (Grandatröð 1C/1D, 14.10 — Hvaleyrarbraut 39 gerð 15.10; „lokaúttekt": staðfesting á viðurkenndum aðila + starfsleyfi, svarað 16.10),
+Brafa (Höfðabakki 9, 29.07, tómt forskot), Gullslétta lokaúttekt (Ari Wendel, 23.07). „Svarað" mælist aðeins sem svar frá @brunaholf.is með sama efnislínu —
+símtöl og aðrir þræðir sjást ekki (ómælt).
+
+**Feitletrun (03.11.2026):** í reitum skjalsins er `**texti**` feitletraður á skjá og í PDF (`richPara` í `pdfTools`); Ctrl+B í ritlinum
+fer aftur í `**…**`. „Hvað var gert" fær nú bil milli málsgreina (`gap:5`, `.doc p.hv`) eins og Word-frumritin. Útgáfumerki `2026-11-03.1`.
 
 ## Reglur sem mega aldrei brotna
 
