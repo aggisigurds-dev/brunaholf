@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Spyrja agent — Brunahólf</title>
+<!-- 04.11.2026 Agentakerfið 2.0 fasi 6 G: „Spyrja <agent>“ — síðukortið velur agentinn, /api/spyrja-agent svarar með
+     agent-skránni + samhengi síðunnar + kúnnaminni. Opnast í ramma (js/spyrja-agent.js) eða í eigin flipa úr appinu.
+     Breytur: ?vefur=brunaholf|slokkvitaeki|kjarni&view=<síðu-id>&path=<slóð>&kt=<kennitala>&titill=<heiti>&agent=<yfirtaka> -->
+<style>
+  :root{--bg:#07090c;--pa:#0d1117;--pb:#111823;--ink:#dfe7f1;--muted:#8a97a8;--acc:#d4a53a;--acc-hi:#f0c35c;--line:rgba(212,165,58,.22);--ok:#3fbf7f;--bad:#e05a4e;--mono:'JetBrains Mono',ui-monospace,Consolas,monospace}
+  *{box-sizing:border-box}html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.5 var(--mono);display:flex;flex-direction:column}
+  header{padding:10px 14px;border-bottom:1px solid var(--line);background:linear-gradient(160deg,var(--pa),var(--pb));display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+  header b{color:var(--acc-hi);letter-spacing:.14em;text-transform:uppercase;font-size:12px}
+  header .r{color:var(--muted);font-size:11px}
+  header .k{margin-left:auto;font-size:11px;color:var(--muted)}
+  #q{display:flex;gap:6px;flex-wrap:wrap;padding:8px 14px;border-bottom:1px solid var(--line)}
+  .qb{font:inherit;font-size:11px;letter-spacing:.06em;padding:6px 10px;border:1px solid var(--line);background:var(--pa);color:var(--ink);cursor:pointer;border-radius:3px}
+  .qb:hover{border-color:var(--acc);color:var(--acc-hi)}
+  .qb.skra{border-color:var(--ok);color:var(--ok)}
+  #l{flex:1;overflow:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+  .m{max-width:92%;padding:9px 12px;border-radius:6px;white-space:pre-wrap;word-wrap:break-word}
+  .m.u{align-self:flex-end;background:#1b2433;border:1px solid #2a3647}
+  .m.a{align-self:flex-start;background:var(--pa);border:1px solid var(--line)}
+  .m.a::before{content:attr(data-a);display:block;color:var(--acc);font-size:10px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px}
+  .m.v{align-self:center;color:var(--bad);font-size:11px}
+  .m.i{align-self:center;color:var(--muted);font-size:11px}
+  form{display:flex;gap:8px;padding:10px 14px;border-top:1px solid var(--line);background:var(--pa)}
+  textarea{flex:1;font:inherit;background:#0a0e14;color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:8px 10px;resize:none;min-height:44px;max-height:140px}
+  button.s{font:inherit;padding:0 16px;border:1px solid var(--acc);background:transparent;color:var(--acc-hi);border-radius:4px;cursor:pointer;letter-spacing:.08em}
+  button:disabled{opacity:.45}
+  #skra{display:none;padding:10px 14px;border-top:1px solid var(--line);background:#0a1410;gap:8px;flex-direction:column}
+  #skra input,#skra textarea{font:inherit;background:#0a0e14;color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:8px 10px;width:100%}
+  #skra .row{display:flex;gap:8px;align-items:center}
+  #skra .row span{color:var(--muted);font-size:11px;flex:1}
+</style>
+</head>
+<body>
+<header><b id="h-agent">Spyrja …</b><span class="r" id="h-rodd"></span><span class="r" id="h-sida"></span><span class="k" id="h-kt"></span></header>
+<div id="q">
+  <button type="button" class="qb" data-q="Útskýrðu þessa síðu í stuttu máli: hvað sýnir hún, hvað get ég gert hér og hvað er algengast að fari úrskeiðis.">Útskýrðu þessa síðu</button>
+  <button type="button" class="qb" data-q="Hvað veit kerfið um þetta fyrirtæki? Taktu saman kúnnaminnið: tengiliðir, hvert reikningar fara, aðgengi, hvað var lofað og hvað fór úrskeiðis." id="qb-kt" hidden>Hvað veit kerfið um þetta fyrirtæki</button>
+  <button type="button" class="qb skra" id="qb-skra">Skráðu þetta</button>
+</div>
+<div id="l"></div>
+<div id="skra">
+  <input id="sk-fact" placeholder="Staðreyndin, ein setning með nöfnum og tölum (fer í biðstofu Charlize)">
+  <textarea id="sk-detail" rows="2" placeholder="Samhengi, dagsetning, heimild (valfrjálst)"></textarea>
+  <div class="row"><span id="sk-hvar"></span><button type="button" class="s" id="sk-send">Skrá í biðstofu</button><button type="button" class="qb" id="sk-haetta">Hætta við</button></div>
+</div>
+<form id="f"><textarea id="t" placeholder="Spurðu …" rows="2"></textarea><button type="submit" class="s" id="b">Senda</button></form>
+<script>
+(function () {
+  var P = new URLSearchParams(location.search);
+  var q = { vefur: P.get('vefur') || 'brunaholf', view: P.get('view') || '', path: P.get('path') || '', kt: P.get('kt') || '', agent: P.get('agent') || '' };
+  var titill = P.get('titill') || '';
+  var msgs = [], agent = null, rodd = null;
+  var $ = function (s) { return document.querySelector(s); };
+  var L = $('#l');
+  function add(cls, txt, a) { var d = document.createElement('div'); d.className = 'm ' + cls; if (a) d.setAttribute('data-a', a); d.textContent = txt; L.appendChild(d); L.scrollTop = L.scrollHeight; return d; }
+  function qs() { return Object.keys(q).filter(function (k) { return q[k]; }).map(function (k) { return k + '=' + encodeURIComponent(q[k]); }).join('&'); }
+  function api(body) { return fetch('/api/spyrja-agent', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(Object.assign({}, q, body)) }).then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || r.status); return j; }); }); }
+  fetch('/api/spyrja-agent?' + qs()).then(function (r) { return r.json(); }).then(function (j) {
+    if (j.error) { add('v', j.need_login ? 'Innskráning starfsmanns vantar — opnaðu brunaholf.netlify.app og skráðu þig inn, svo þessa síðu aftur.' : j.error); return; }
+    agent = j.agent; rodd = j.rodd;
+    $('#h-agent').textContent = 'Spyrja ' + agent; $('#h-rodd').textContent = rodd ? rodd : '';
+    $('#h-sida').textContent = j.sida ? '· síða: ' + j.sida.titill : (titill ? '· ' + titill : '');
+    if (j.kt) { $('#h-kt').textContent = 'kt ' + j.kt + (j.kunni ? ' · kúnnaminni til' : ' · ekkert kúnnaminni'); $('#qb-kt').hidden = false; }
+    $('#sk-hvar').textContent = (j.kt ? 'Fer sem kúnnaminni á kt ' + j.kt : 'Fer sem staðreynd fyrir ' + agent) + ', status pending.';
+    add('i', (j.sida ? j.sida.titill + ' — eigandi ' + (j.sida.eigandi || agent) : 'Engin síða fannst í síðukortinu fyrir „' + (q.view || q.path) + '“; ' + agent + ' svarar') + (j.stadreyndir ? ' · ' + j.stadreyndir + ' staðreyndir í Charlize' : ''));
+    document.title = 'Spyrja ' + agent + ' — Brunahólf';
+  }).catch(function (e) { add('v', 'Náði ekki í agentinn: ' + e.message); });
+  function senda(txt) {
+    txt = String(txt || '').trim(); if (!txt) return;
+    msgs.push({ role: 'user', content: txt }); add('u', txt); $('#t').value = ''; $('#b').disabled = true;
+    var w = add('i', agent ? agent + ' hugsar…' : '…');
+    api({ action: 'spyrja', messages: msgs }).then(function (j) {
+      w.remove(); msgs.push({ role: 'assistant', content: j.reply }); add('a', j.reply, j.agent + (j.rodd ? ' · ' + j.rodd : ''));
+    }).catch(function (e) { w.remove(); msgs.pop(); add('v', e.message); }).then(function () { $('#b').disabled = false; });
+  }
+  $('#f').addEventListener('submit', function (ev) { ev.preventDefault(); senda($('#t').value); });
+  $('#t').addEventListener('keydown', function (ev) { if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); senda($('#t').value); } });
+  document.querySelectorAll('.qb[data-q]').forEach(function (b) { b.addEventListener('click', function () { senda(b.getAttribute('data-q')); }); });
+  $('#qb-skra').addEventListener('click', function () { var s = $('#skra'); s.style.display = s.style.display === 'flex' ? 'none' : 'flex'; var last = msgs.filter(function (m) { return m.role === 'assistant'; }).pop(); if (last && !$('#sk-detail').value) $('#sk-detail').value = 'Úr samtali við ' + agent + ' ' + new Date().toLocaleDateString('is-IS') + ': ' + last.content.slice(0, 300); $('#sk-fact').focus(); });
+  $('#sk-haetta').addEventListener('click', function () { $('#skra').style.display = 'none'; });
+  $('#sk-send').addEventListener('click', function () {
+    var fact = $('#sk-fact').value.trim(); if (fact.length < 10) { add('v', 'Staðreyndin er of stutt.'); return; }
+    $('#sk-send').disabled = true;
+    api({ action: 'skra', fact: fact, detail: $('#sk-detail').value.trim() }).then(function (j) { add('i', 'Skráð í biðstofu Charlize sem kandídati #' + j.id + ' — þú samþykkir í Jarvis.'); $('#sk-fact').value = ''; $('#sk-detail').value = ''; $('#skra').style.display = 'none'; })
+      .catch(function (e) { add('v', e.message); }).then(function () { $('#sk-send').disabled = false; });
+  });
+})();
+</script>
+</body>
+</html>

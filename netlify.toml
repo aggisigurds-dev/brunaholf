@@ -81,6 +81,14 @@
   status = 404
   force = true
 
+# 04.11.2026 (fasi 6 G): netlify/functions/ er inni í publish="." — _portal.js, _agent-prompts-all.json o.fl. voru sótt-
+# anleg sem kyrrstæðar skrár. Föllin sjálf eru keyrð um /api/* og þurfa ekki þessa slóð.
+[[redirects]]
+  from = "/netlify/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
 # Þjónustuvefurinn (kúndavefur /gatt + stjórnsíða /gatt-admin) býr í slokkvitaeki-repoinu
 # (11.10.2026). Hér var eldra eintak sem rak í sundur (Agnar 10.10: „ruglingur á repos") —
 # því var eytt og gamlar slóðir, líka þær sem kúnnar fengu í pósti, vísa nú þangað.

@@ -44,5 +44,25 @@ function skrifa() {
   console.log(`agent-prompts.json: ${Object.keys(agents).map(k => k + ' ' + agents[k].stafir).join(' · ')}`);
   return out;
 }
-module.exports = { skrifa, hreinsa };
-if (require.main === module) skrifa();
+// Allir agentar allra þriggja repóa → netlify/functions/_agent-prompts-all.json (EKKI birt opinberlega: /netlify/* er lokað í
+// netlify.toml). Lesið af netlify/functions/spyrja-agent.js (fasi 6 G, „Spyrja agent“ á hverri síðu). Frumrit ráða: slokkvitaeki
+// fyrst, svo brunaholf, kjarni aðeins fyrir agenta sem eru hvergi annars staðar (kjarni-vefur, artcraft, skraning).
+function skrifaAll() {
+  const KJ = path.resolve(BH, '..', 'kjarni');
+  let meta = {}; try { meta = require(path.join(BH, 'tools', 'agents-meta.json')).agents || {}; } catch (_) {}
+  const agents = {};
+  for (const repo of [SL, BH, KJ]) {
+    const dir = path.join(repo, '.claude', 'agents'); if (!fs.existsSync(dir)) continue;
+    for (const f of fs.readdirSync(dir)) {
+      if (!/\.md$/.test(f)) continue; const nafn = f.replace(/\.md$/, ''); if (agents[nafn]) continue;
+      const { meta: fm, texti } = hreinsa(fs.readFileSync(path.join(dir, f), 'utf8'));
+      agents[nafn] = { nafn, repo: path.basename(repo), lysing: (fm.description || '').slice(0, 400), rodd: (meta[nafn] && meta[nafn].rodd) || null, stafir: texti.length, texti: texti.slice(0, 14000) };
+    }
+  }
+  const out = { generated: new Date().toISOString().slice(0, 10), _athugasemd: 'GENERATED af tools/agent-prompt.cjs — allir agentar, system-prompt fyrir /api/spyrja-agent. Ekki birt (netlify.toml lokar /netlify/*).', agents };
+  fs.writeFileSync(path.join(BH, 'netlify', 'functions', '_agent-prompts-all.json'), JSON.stringify(out));
+  console.log(`_agent-prompts-all.json: ${Object.keys(agents).length} agentar`);
+  return out;
+}
+module.exports = { skrifa, hreinsa, skrifaAll };
+if (require.main === module) { skrifa(); skrifaAll(); }
