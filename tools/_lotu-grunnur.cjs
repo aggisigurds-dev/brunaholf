@@ -66,6 +66,10 @@ function lesaStdin(ms = 1500) {
 /* Hefur verkefnið sjálft (cwd/.claude/settings*.json) þegar þennan hook? Notað af --notandi
  * svo ~/.claude/settings.json keyri hann ekki tvisvar. */
 function verkefniHefur(cwd, ...nofn) {
+  // Lota opnuð í HEIMAMÖPPUNNI sjálfri (t.d. C:\Users\Slokkvitaeki á skrifstofuvélinni, 04.11.2026): þá er
+  // <cwd>/.claude/settings.json = ~/.claude/settings.json, notendahookurinn sjálfur — ekki verkefnishookur.
+  // Án þessarar línu þagði --notandi þar og engin lota fékk leiðarvísi né skráningu.
+  try { if (path.resolve(cwd || '.') === path.resolve(os.homedir())) return false; } catch (_) {}
   for (const f of ['settings.json', 'settings.local.json']) {
     try {
       const t = fs.readFileSync(path.join(cwd || '.', '.claude', f), 'utf8');
