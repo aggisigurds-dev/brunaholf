@@ -141,7 +141,7 @@
     const kort = haedir.map((h) => {
       const f = h.frum || {}, s = h.skurdur || {}, t = tala(h);
       const ok = f.b > 0 && s.w > 0 && s.h > 0;
-      const mynd = h.image_url ? `<div class="kyvs-bhm" style="padding-top:${ok ? (s.h / s.w * 100).toFixed(1) : 70}%"><img src="${esc(SLOKK + h.image_url)}" alt="" loading="lazy" style="${ok ? `width:${(f.b / s.w * 100).toFixed(2)}%;left:${(-s.x / s.w * 100).toFixed(2)}%;top:${(-s.y / s.h * 100).toFixed(2)}%` : 'width:100%;left:0;top:0'}"></div>` : '<div class="kyvs-bhm"></div>';
+      const mynd = h.image_url ? `<div class="kyvs-bhm" style="padding-top:${ok ? (s.h / s.w * 100).toFixed(1) : 70}%"><img src="${esc(/^https?:/.test(h.image_url) ? h.image_url : SLOKK + h.image_url)}" alt="" loading="lazy" style="${ok ? `width:${(f.b / s.w * 100).toFixed(2)}%;left:${(-s.x / s.w * 100).toFixed(2)}%;top:${(-s.y / s.h * 100).toFixed(2)}%` : 'width:100%;left:0;top:0'}"></div>` : '<div class="kyvs-bhm"></div>';
       const tolur = t.ei != null ? `<span class="kyvs-bhei">${esc(t.ei)} EI-merki</span> · ${esc(t.eld || 0)} eldveggir · <b>${esc(t.holf || 0)} brunahólf</b>${t.hurdir != null ? ' · ' + esc(t.hurdir) + ' hurðir' : ''}` : `<span style="color:var(--muted)">${esc(t.ath || 'ekki mælt')}</span>`;
       return `<a class="kyvs-bh" href="${esc(slod)}" target="_blank" rel="noopener" title="${esc(h.nafn)} — opna Teikninguna í Slökkvitæki (3D → Brunahólf)">${mynd}<span class="kyvs-tl">${esc(h.nafn)}</span><span class="kyvs-td">${tolur}</span></a>`;
     }).join('');
