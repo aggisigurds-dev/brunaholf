@@ -95,6 +95,30 @@ Tímavera (klst per verkstað) → Gerð Reikninga / Efnislisti → invoice_draf
   Landspítala-uppgjörið er dæmið; þá á klst-áætlunin ekki við.
 - Greiðandi ≠ verkstaður: `customer_worksite_map` → `pricing_guide` leysa verkstað í greiðanda.
 
+### 4b · Lokaferli Brunahólfs-reiknings: frá drögum að „Senda" (04.11.2026)
+
+Eitt ferli, sömu skref í hvert sinn. Rukkari fer í gegnum 1–4 og skilar skýrslu; Agnar tekur 5–6.
+Reynslan 04.11 (Heklureitur/Landspítali/Skúlagata): tölur stóðust, en PDF vantaði á öll þrjú
+og 34 septembergöt voru ótalin þótt athugasemd drögunum segði annað.
+
+1. **Staða** — `/api/krofu-yfirlit-bru` (ekki `invoices`): ósend drög, `skjol`, ✓ (hver staðfesti), greiðandi/kt.
+2. **Mæla við heimild** — gata-verk: Ajour (GetReportData m. projectIds) á móti drögum, líka göt fyrri
+   mánaða sem fyrri reikningur náði ekki (Ajour mánuður − drög/Payday-reikningur þess mánaðar,
+   per verðflokk). Tímavera-verkstaðir: Tímavera klst × taxti (`pricing_guide`, ekki muna) + efni.
+   Hver tala mæld með heimild eða merkt ÓMÆLT.
+3. **Tvítalning** — Payday-krafa/`payday_invoice_id` á sama kt+mánuð; fyrri mánaðardrög sem eru þegar greidd.
+4. **Ákvarðanir til Agnars** — eitt mál per atriði (staðfestingargjald 20.000, ókláruð göt, haldið eftir 5%,
+   raufar). Rukkari bætir ekki við því sem Agnar hefur ekki samþykkt; samþykki í spjalli nægir fyrir drögin.
+5. **Drög uppfærð** með viðurkenndri skrifleið (`POST /api/invoice-drafts` m. `expected_updated_at`,
+   afrit af upprunalegri röð fyrst, lesið aftur úr grunni á eftir; athugasemdin verður að vera sönn).
+6. **PDF** — Efnislisti-glugginn í Gerð reikninga með réttum mánuði (staðfesta fjölda lína/göt og samtölu
+   í glugganum FYRST; aldrei „Magn úr Ajour" á meðan ósamþykktar viðbætur eru inni) → „Vista PDF" →
+   sækja skjalið úr Storage (`efnislisti-pdf/…`) og lesa textann: samtala í PDF = `fixed_total`.
+   Innskráningu þarf Chrome-viðbót (Browser-glugginn er oft óinnskráður; lykilorð slær Claude aldrei inn).
+7. **Senda** — aðeins Agnar: Kröfu yfirlit → „Senda í bókun". Landspítali: Payday-upphæðin er 95 %
+   (5 % haldið eftir), ekki drögin. Á eftir: athuga að drögin hverfi úr Ósendum og að gömul
+   drög sem Payday sýnir greidd (t.d. #340) séu falin.
+
 ---
 
 ## 5 · Afslættir — hvar þeir búa (ekki muna, fletta upp)
