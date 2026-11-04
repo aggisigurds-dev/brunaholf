@@ -1,6 +1,6 @@
 ---
 name: jarvis
-description: Dagleg yfirsýn + Jarvis-síðan sjálf — svið-kerfið, raddirnar (Fish TTS), cache-ið, HUD-spjöldin og agentaskráin. Hype-yfirlitið („hvernig gengur“, vikuyfirlit, samantekt úr ALVÖRU tölum) er kafli hér að neðan (🇺🇸 Trump, svið `yfirlit`; áður agent `hype`). Notaðu fyrir morgunyfirferð, nýtt svið/rödd á jarvis.html, þegar rödd þegir eða les gamla stöðu, eða til að vita hvaða sérfræðingur á spurninguna. Rödd í Jarvis: 🎩 Jarvis (MCU J.A.R.V.I.S.). Kveikjuorð: hver er staðan, morgunyfirferð, Jarvis, HUD, svið, hype, hvernig gengur, vikuyfirlit, sigrar, afköst, agentaskráin, hvaða agentar eru til, Golden Jarvis, Ragnarök.
+description: Dagleg yfirsýn + Jarvis-síðan sjálf — svið-kerfið, raddirnar (Fish TTS), cache-ið, HUD-spjöldin og agentaskráin. Hype-yfirlitið („hvernig gengur“, vikuyfirlit, samantekt úr ALVÖRU tölum) er kafli hér að neðan (🇺🇸 Trump, svið `yfirlit`; áður agent `hype`). Notaðu fyrir morgunyfirferð, nýtt svið/rödd á jarvis.html, þegar rödd þegir eða les gamla stöðu, eða til að vita hvaða sérfræðingur á spurninguna. Rödd í Jarvis: 🎩 Jarvis (MCU J.A.R.V.I.S.). Kveikjuorð: hver er staðan, morgunyfirferð, Jarvis, HUD, svið, hype, hvernig gengur, vikuyfirlit, sigrar, afköst, agentaskráin, hvaða agentar eru til, Agentanetið, síðukort, lotur, göt
 tools: Bash, Read, Grep, Glob, WebFetch, mcp__supabase__execute_sql
 ---
 
@@ -141,9 +141,12 @@ Anthropic — í dag eiga AÐEINS `por` og `tengingar` slíka; hin segja
 ## Hver kann hvað — vísaðu áfram
 
 Fjármál → `bokari` 💫 · pör/þekja → `sara-organizer` 🗂️ · kúnnar → `kunnaskra` ❄️ ·
-skjöl/Drive → `skjol` 🎙️ · leiðslur → `gagnaleidslur` 🥊 · flipar/UI → `framendi` 🗂️ ·
+skjöl/Drive → `skjol` 🎙️ · leiðslur → `gagnaleidslur` 🥊 · flipar/UI → `framendi` 🗺️ (Lara Croft) ·
 bilanir → `kerfisheilsa` 🩺 · hraði → `hradi` 💥 · tengingar/lyklar → `tengingar` 😤 ·
-RLS/lyklar-öryggi → `oryggi` 🔒 · hype → kaflinn „Svið `yfirlit` — 🇺🇸 Trump“ hér að neðan.
+RLS/lyklar-öryggi → `oryggi` 🔒 (Ripley) · vettvangsapp/Frá verkstað → `verkstadur` 🪨 (The Rock) ·
+lög um bókhald/VSK → `endurskodandi` 🧮 (The Accountant) · póstur → `postur` (Meg Ryan, slokkvitaeki) ·
+forskoðun áður en eytt er → `rambo` 🪖 · hype → kaflinn „Svið `yfirlit` — 🇺🇸 Trump“ hér að neðan.
+Hver á hvaða SÍÐU: `.claude/sidukort.json` (87 síður + 15 Jarvis-spjöld, 04.11.2026) → `data/sidukort.json` eftir byggingu.
 
 ## Svið `rukkun` — 🦆 Jóakim aðalönd (05.09.2026)
 
@@ -217,6 +220,15 @@ tölunni, svo „það sem á að klára" með skýrri næstu aðgerð. Á ísle
 Agnar biður um íslensku; upplesturinn á jarvis.html er alltaf enska.
 
 ## Lærdómur
+
+- **04.11.2026 — Agentakerfið 2.0 (samþykkt plan):** Agentanetið verður lag/flipi í jarvis.html (fasi 5, útlitsviðmið
+  „Agentanetið — Ragnarök.html“, erfir `data-thema`); síðukortið býr í `<repo>/.claude/sidukort.json` og `tools/build-agents-registry.cjs`
+  sameinar í `data/sidukort.json` + SIDUKORT-blokkina í `docs/AGENTASKRA.md`; lotur skrást í `charlize_sessions` (ný); göt-spjaldið les
+  `verkefnalisti` (`category='villa'`, `status='beidni'`). Jarvis á síðurnar jarvis.html (15 spjöld), radd.html, afkastavakt.html,
+  Afköst-flipann, Verkefnaskrá og verkefnalisti.html.
+- **OPIÐ 04.11.2026 (ekki breytt — js er utan þessarar lotu):** `js/jarvis-voice.js:118` gefur Charlize-röddinni role „Verkstaðir“ — rangt,
+  Charlize er kúnnaskrá (`kunnaskra`); verkstaðir eru nú `verkstadur` (The Rock). Sama skrá :88 merkir Statham „Rukkarinn — ógreitt“
+  (rukkari er Jóakim, Statham er gagnaleidslur) og :41 gefur Arnold tvö störf (oryggi heitir nú Ripley). Fer á verkefnalistann.
 
 - **16.10.2026** — Tölur 16.10.2026: js/jarvis-voice.js AGENTS = 21 raddir (skráin segir 16), svid-status.js SVID = 14 svið, 13 svið-takkar á jarvis.html. Ragnarök-útlit (11.09, js/ragnarok.js, localStorage jarvis_thema_v1, ?thema=ragnarok; klassískt sjálfgefið) og Tengingar-spjaldið (sama /api/kerfisheilsa-svar) eru á jarvis.html — sjá minni project_jarvis_ragnarok. Ratsjár-gildra: striginn er 1×1 í földu iframe → arc() kastar og drepur allt á eftir; panta rAF fyrst og hætta ef R er ekki > 0. Sérfræðinga-spjaldið er handskrifað HTML (ósnert síðan 18.09) — lifandi roster úr tools/audit-agentar.cjs er kort task_900c0d44. Tillaga 16.10: hype-agentinn (ein rödd, ekkert eigið svæði) sameinist þessari skrá.
 

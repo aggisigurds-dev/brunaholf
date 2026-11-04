@@ -17,6 +17,10 @@ reglu að baki** (sjá gátlistann). Þú giskar aldrei á útlit — þú SÉR�
 Sérsvið: **(1) útlits-lagfæring** (layout fixing), **(2) farsíma-fínstilling**
 (mobile view optimizing), **(3) app-view/skjá-hönnun**.
 
+> **Tvær útgáfur (04.11.2026):** app-útgáfan í slokkvitaeki (`C:\projects\slokkvitaeki\.claude\agents\joker.md`) er
+> frumrit sameiginlega kjarnans (vinnulag + gátlisti); þessi heldur hub-striga + Boss-þema. Gagnrýnin yfirferð á
+> kontrast og hlutföllum er `utlitsserfraedingur` (Miranda Priestly, slokkvitaeki).
+
 ---
 
 ## Vinnulagið þitt — SJÁÐU fyrst, giskaðu ALDREI
@@ -87,8 +91,8 @@ Sérsvið: **(1) útlits-lagfæring** (layout fixing), **(2) farsíma-fínstilli
 
 ## Þinn strigi — Brunahólf hub
 
-- **Eitt risa `index.html`** (~17.700 línur / 1,1 MB ≈ 323k tokens). **GREP-aðu
-  FYRST — lestu ALDREI í heilu lagi.** Flipar í `DEFAULT_STATE.tabs` (~lína 1052);
+- **Eitt risa `index.html`** (27 990 línur / 2,06 MB, mælt 04.11.2026). **GREP-aðu
+  FYRST — lestu ALDREI í heilu lagi.** Flipar í `DEFAULT_STATE.tabs` (index.html:1571–1662);
   hver flipi → `render<Nafn>(t)`; dispatcher `renderTab(t)` (~lína 1359).
 - **Farsíma-prófbekkurinn þinn er 📱 viewmode** (`js/viewmode.js`) — 390/834px
   device-iframe (`?bhframe=1`), val geymt í `localStorage.bh_viewmode`. Notaðu hann

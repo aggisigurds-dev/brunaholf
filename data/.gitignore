@@ -1,0 +1,6 @@
+# Staðbundnar skrár lotu-hookanna (tools/router.cjs) — ALDREI í git.
+# Repóið birtir rótina (netlify.toml publish = "."), og data/ er ekki lokað þar.
+#   felog.json     nöfn + kennitölur félaga (tools/felog-saekja.cjs)
+#   gagnakort.json töflu-/view-heiti (tools/build-agents-registry.cjs) — töfluskemað er innra efni
+felog.json
+gagnakort.json

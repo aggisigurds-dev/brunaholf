@@ -1,0 +1,7103 @@
+{
+ "generated": "2026-11-04",
+ "_athugasemd": "GENERATED af tools/build-agents-registry.cjs úr <repo>/.claude/sidukort.json — breyttu síðukortunum, ekki hér.",
+ "vefir": [
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "utgafa": 1,
+   "vefagent": "framendi",
+   "alls": 102,
+   "med_eiganda": 102,
+   "vidvorun": 0,
+   "an_eiganda": 0,
+   "hlutfall": 100
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "utgafa": 1,
+   "vefagent": "bord-flettur",
+   "alls": 121,
+   "med_eiganda": 118,
+   "vidvorun": 0,
+   "an_eiganda": 3,
+   "hlutfall": 98
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "utgafa": 1,
+   "vefagent": "kjarni-vefur",
+   "alls": 98,
+   "med_eiganda": 86,
+   "vidvorun": 12,
+   "an_eiganda": 0,
+   "hlutfall": 88
+  }
+ ],
+ "sidur": [
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "verkkaupar",
+   "titill": "Verkkaupar",
+   "tegund": "sida",
+   "leid": "/verkkaupar.html",
+   "skilgreind": [
+    "index.html",
+    "verkkaupar.html"
+   ],
+   "yfir": null,
+   "eigandi": "kunnaskra",
+   "undiragentar": [
+    "framendi"
+   ],
+   "kveikjuord": [
+    "Verkkaupar",
+    "verkkaupi"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "dagurinn",
+   "titill": "Dagurinn",
+   "tegund": "flipi",
+   "leid": "/#dagurinn",
+   "skilgreind": [
+    "index.html#renderDagurinn"
+   ],
+   "yfir": null,
+   "eigandi": "framendi",
+   "undiragentar": [
+    "postur",
+    "gagnaleidslur",
+    "jarvis"
+   ],
+   "kveikjuord": [
+    "Dagurinn",
+    "Samstilla NÚNA",
+    "nýjustu gögn"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "jarvis",
+   "titill": "J.A.R.V.I.S.",
+   "tegund": "flipi",
+   "leid": "/#jarvis",
+   "skilgreind": [
+    "index.html#renderJarvis",
+    "jarvis.html"
+   ],
+   "yfir": null,
+   "eigandi": "jarvis",
+   "undiragentar": [
+    "framendi"
+   ],
+   "kveikjuord": [
+    "Jarvis",
+    "HUD"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "turbopaint",
+   "titill": "TurboPaint",
+   "tegund": "flipi",
+   "leid": "/#turbopaint",
+   "skilgreind": [
+    "index.html#renderTurbopaint"
+   ],
+   "yfir": null,
+   "eigandi": "arnold",
+   "undiragentar": [
+    "framendi",
+    "artcraft"
+   ],
+   "kveikjuord": [
+    "TurboPaint",
+    "teikningar"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "yfirlit",
+   "titill": "Yfirlit",
+   "tegund": "flipi",
+   "leid": "/#yfirlit",
+   "skilgreind": [
+    "index.html#renderYfirlit"
+   ],
+   "yfir": null,
+   "eigandi": "framendi",
+   "undiragentar": [
+    "bokari",
+    "rukkari"
+   ],
+   "kveikjuord": [
+    "Yfirlit",
+    "Útistandandi-bandið"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "stjornbord",
+   "titill": "Stjórnborð",
+   "tegund": "flipi",
+   "leid": "/#stjornbord",
+   "skilgreind": [
+    "index.html#renderStjornbord"
+   ],
+   "yfir": null,
+   "eigandi": "framendi",
+   "undiragentar": [
+    "gagnaleidslur"
+   ],
+   "kveikjuord": [
+    "Stjórnborð"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "leidsogn",
+   "titill": "Leiðsögn",
+   "tegund": "flipi",
+   "leid": "/#leidsogn",
+   "skilgreind": [
+    "index.html#renderLeidsogn"
+   ],
+   "yfir": null,
+   "eigandi": "sara-organizer",
+   "undiragentar": [
+    "kort"
+   ],
+   "kveikjuord": [
+    "Leiðsögn",
+    "gleymd þjónusta"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "inbox",
+   "titill": "Inbox",
+   "tegund": "flipi",
+   "leid": "/#inbox",
+   "skilgreind": [
+    "index.html#renderInbox"
+   ],
+   "yfir": null,
+   "eigandi": "postur",
+   "undiragentar": [
+    "gagnaleidslur",
+    "rukkari"
+   ],
+   "kveikjuord": [
+    "Inbox",
+    "innhólf",
+    "hvað kom í pósti"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "spurningar",
+   "titill": "Spurningar",
+   "tegund": "flipi",
+   "leid": "/#spurningar",
+   "skilgreind": [
+    "index.html#renderSpurningar"
+   ],
+   "yfir": null,
+   "eigandi": "postur",
+   "undiragentar": [
+    "rukkari"
+   ],
+   "kveikjuord": [
+    "Spurningar",
+    "spurningar í pósti"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "timavera",
+   "titill": "Tímavera",
+   "tegund": "flipi",
+   "leid": "/#timavera",
+   "skilgreind": [
+    "index.html#renderTimavera"
+   ],
+   "yfir": null,
+   "eigandi": "gagnaleidslur",
+   "undiragentar": [
+    "bokari",
+    "verkstadur"
+   ],
+   "kveikjuord": [
+    "Tímavera",
+    "tímar starfsmanna"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "tvmaeting",
+   "titill": "Mæting · verkstaðir",
+   "tegund": "flipi",
+   "leid": "/#tvmaeting",
+   "skilgreind": [
+    "index.html#renderTvMaeting"
+   ],
+   "yfir": null,
+   "eigandi": "verkstadur",
+   "undiragentar": [
+    "gagnaleidslur"
+   ],
+   "kveikjuord": [
+    "Mæting · verkstaðir",
+    "hvenær mætti"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "verkstadapostur",
+   "titill": "Frá verkstað",
+   "tegund": "flipi",
+   "leid": "/#verkstadapostur",
+   "skilgreind": [
+    "index.html#renderVerkstadapostur"
+   ],
+   "yfir": null,
+   "eigandi": "verkstadur",
+   "undiragentar": [
+    "bokari",
+    "framendi"
+   ],
+   "kveikjuord": [
+    "Frá verkstað",
+    "Deilt með verkstað"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "verdsamanburdur",
+   "titill": "Verðsamanburður",
+   "tegund": "flipi",
+   "leid": "/#verdsamanburdur",
+   "skilgreind": [
+    "index.html"
+   ],
+   "yfir": null,
+   "eigandi": "bokari",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Verðsamanburður",
+    "samkeppnisverð"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "verkstadir",
+   "titill": "Verkstaðir",
+   "tegund": "flipi",
+   "leid": "/#verkstadir",
+   "skilgreind": [
+    "index.html"
+   ],
+   "yfir": null,
+   "eigandi": "bokari",
+   "undiragentar": [
+    "gagnaleidslur",
+    "verkstadur"
+   ],
+   "kveikjuord": [
+    "Verkstaðir",
+    "verkstaðir án reiknings"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "skuldunautar",
+   "titill": "Skuldunautar",
+   "tegund": "flipi",
+   "leid": "/#skuldunautar",
+   "skilgreind": [
+    "index.html#renderSkuldunautar"
+   ],
+   "yfir": null,
+   "eigandi": "rukkari",
+   "undiragentar": [
+    "bokari"
+   ],
+   "kveikjuord": [
+    "Skuldunautar",
+    "útistandandi"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "skyrslur",
+   "titill": "Skýrslur",
+   "tegund": "flipi",
+   "leid": "/#skyrslur",
+   "skilgreind": [
+    "index.html#renderSkyrslur"
+   ],
+   "yfir": null,
+   "eigandi": "rukkari",
+   "undiragentar": [
+    "bokari"
+   ],
+   "kveikjuord": [
+    "📊 Skýrslur",
+    "óinnheimt virði",
+    "CG-01"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "skyrslustod",
+   "titill": "Skýrslu-stöð",
+   "tegund": "flipi",
+   "leid": "/#skyrslustod",
+   "skilgreind": [
+    "index.html#renderSkyrslustod"
+   ],
+   "yfir": null,
+   "eigandi": "skjol",
+   "undiragentar": [
+    "sara-organizer",
+    "kunnaskra"
+   ],
+   "kveikjuord": [
+    "Skýrslu-stöð",
+    "tengja skjal við stað"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "afkost",
+   "titill": "Afköst",
+   "tegund": "flipi",
+   "leid": "/#afkost",
+   "skilgreind": [
+    "index.html#renderAfkost"
+   ],
+   "yfir": null,
+   "eigandi": "jarvis",
+   "undiragentar": [
+    "bokari"
+   ],
+   "kveikjuord": [
+    "Afköst"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "krofuyfirlit",
+   "titill": "Kröfu yfirlit",
+   "tegund": "flipi",
+   "leid": "/#krofuyfirlit",
+   "skilgreind": [
+    "index.html#renderKrofuyfirlit"
+   ],
+   "yfir": null,
+   "eigandi": "rukkari",
+   "undiragentar": [
+    "bokari",
+    "sala-reikningar"
+   ],
+   "kveikjuord": [
+    "Kröfu yfirlit",
+    "ósent",
+    "Senda í bókun"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "drogstod",
+   "titill": "Drög-stöð",
+   "tegund": "flipi",
+   "leid": "/#drogstod",
+   "skilgreind": [
+    "index.html#renderDrogstod"
+   ],
+   "yfir": null,
+   "eigandi": "rukkari",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Drög-stöð",
+    "punktur",
+    "draft-karfa"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "fjarmalyfirlit",
+   "titill": "Fjármála-yfirlit",
+   "tegund": "flipi",
+   "leid": "/#fjarmalyfirlit",
+   "skilgreind": [
+    "index.html#renderFjarmalyfirlit",
+    "fjarmalyfirlit.html"
+   ],
+   "yfir": null,
+   "eigandi": "bokari",
+   "undiragentar": [
+    "rukkari"
+   ],
+   "kveikjuord": [
+    "Fjármála-yfirlit",
+    "heildarpípa"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "vidskiptavinir",
+   "titill": "Viðskiptavinir",
+   "tegund": "flipi",
+   "leid": "/#vidskiptavinir",
+   "skilgreind": [
+    "index.html#renderVidskiptavinir",
+    "vidskiptavinir.html"
+   ],
+   "yfir": null,
+   "eigandi": "kunnaskra",
+   "undiragentar": [
+    "bokari"
+   ],
+   "kveikjuord": [
+    "Viðskiptavinir"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "krofur",
+   "titill": "Kröfur & Tekjur",
+   "tegund": "flipi",
+   "leid": "/#krofur",
+   "skilgreind": [
+    "index.html#renderKrofur"
+   ],
+   "yfir": null,
+   "eigandi": "rukkari",
+   "undiragentar": [
+    "bokari"
+   ],
+   "kveikjuord": [
+    "Kröfur & Tekjur"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "hreyfingaryfirlit",
+   "titill": "Hreyfingaryfirlit",
+   "tegund": "flipi",
+   "leid": "/#hreyfingaryfirlit",
+   "skilgreind": [
+    "index.html"
+   ],
+   "yfir": null,
+   "eigandi": "rukkari",
+   "undiragentar": [
+    "bokari"
+   ],
+   "kveikjuord": [
+    "Hreyfingaryfirlit"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "nlsh",
+   "titill": "Landsspítalinn",
+   "tegund": "flipi",
+   "leid": "/#nlsh",
+   "skilgreind": [
+    "index.html#renderNLSH",
+    "nlsh.html"
+   ],
+   "yfir": null,
+   "eigandi": "bokari",
+   "undiragentar": [
+    "gagnaleidslur",
+    "verkstadur"
+   ],
+   "kveikjuord": [
+    "NLSH",
+    "Landsspítalinn",
+    "öryggisfé",
+    "frosinn mánuður"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "ajour",
+   "titill": "Ajour",
+   "tegund": "flipi",
+   "leid": "/#ajour",
+   "skilgreind": [
+    "index.html#renderAjour"
+   ],
+   "yfir": null,
+   "eigandi": "gagnaleidslur",
+   "undiragentar": [
+    "bokari"
+   ],
+   "kveikjuord": [
+    "Ajour",
+    "samstilla Ajour"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "maeting",
+   "titill": "Mæting",
+   "tegund": "flipi",
+   "leid": "/#maeting",
+   "skilgreind": [
+    "index.html#renderMaeting",
+    "maeting.html"
+   ],
+   "yfir": null,
+   "eigandi": "verkstadur",
+   "undiragentar": [
+    "gagnaleidslur",
+    "framendi"
+   ],
+   "kveikjuord": [
+    "Mæting",
+    "mætingarskjár"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "verkefnastada",
+   "titill": "Verkefnastaða",
+   "tegund": "flipi",
+   "leid": "/#verkefnastada",
+   "skilgreind": [
+    "index.html"
+   ],
+   "yfir": null,
+   "eigandi": "framendi",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Verkefnastaða"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "april",
+   "titill": "Apríl reikningar",
+   "tegund": "flipi",
+   "leid": "/#april",
+   "skilgreind": [
+    "index.html"
+   ],
+   "yfir": null,
+   "eigandi": "framendi",
+   "undiragentar": [
+    "bokari"
+   ],
+   "kveikjuord": [
+    "Apríl reikningar"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "todo",
+   "titill": "Todo",
+   "tegund": "flipi",
+   "leid": "/#todo",
+   "skilgreind": [
+    "index.html"
+   ],
+   "yfir": null,
+   "eigandi": "framendi",
+   "undiragentar": [
+    "jarvis"
+   ],
+   "kveikjuord": [
+    "Todo"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "slokkvitaeki",
+   "titill": "Slökkvitæki gögn",
+   "tegund": "flipi",
+   "leid": "/#slokkvitaeki",
+   "skilgreind": [
+    "index.html"
+   ],
+   "yfir": null,
+   "eigandi": "framendi",
+   "undiragentar": [
+    "gagnaleidslur"
+   ],
+   "kveikjuord": [
+    "Slökkvitæki gögn"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "gogn",
+   "titill": "Gögn & geymslur",
+   "tegund": "flipi",
+   "leid": "/#gogn",
+   "skilgreind": [
+    "index.html"
+   ],
+   "yfir": null,
+   "eigandi": "framendi",
+   "undiragentar": [
+    "gagnaleidslur"
+   ],
+   "kveikjuord": [
+    "Gögn & geymslur"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "samthaetting",
+   "titill": "Samþætting",
+   "tegund": "flipi",
+   "leid": "/#samthaetting",
+   "skilgreind": [
+    "index.html"
+   ],
+   "yfir": null,
+   "eigandi": "tengingar",
+   "undiragentar": [
+    "gagnaleidslur"
+   ],
+   "kveikjuord": [
+    "Samþætting"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "okkarVerkefni",
+   "titill": "Anni & Aggi",
+   "tegund": "flipi",
+   "leid": "/#okkarVerkefni",
+   "skilgreind": [
+    "index.html#renderOkkarVerkefni"
+   ],
+   "yfir": null,
+   "eigandi": "jarvis",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Anni & Aggi"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "verkefnaskra",
+   "titill": "Verkefnaskrá",
+   "tegund": "flipi",
+   "leid": "/#verkefnaskra",
+   "skilgreind": [
+    "index.html#renderVerkefnaskra"
+   ],
+   "yfir": null,
+   "eigandi": "jarvis",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Verkefnaskrá"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "minverkefni",
+   "titill": "Mín verkefni",
+   "tegund": "flipi",
+   "leid": "/#minverkefni",
+   "skilgreind": [
+    "index.html"
+   ],
+   "yfir": null,
+   "eigandi": "jarvis",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Mín verkefni"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "kvittanir",
+   "titill": "Kvittanir & PDF",
+   "tegund": "flipi",
+   "leid": "/#kvittanir",
+   "skilgreind": [
+    "index.html#renderKvittanir"
+   ],
+   "yfir": null,
+   "eigandi": "skjol",
+   "undiragentar": [
+    "bokari"
+   ],
+   "kveikjuord": [
+    "Kvittanir & PDF"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "tenglar",
+   "titill": "Tenglar",
+   "tegund": "flipi",
+   "leid": "/#tenglar",
+   "skilgreind": [
+    "index.html"
+   ],
+   "yfir": null,
+   "eigandi": "framendi",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Tenglar"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "reikningatenglar",
+   "titill": "Reikningatenglar",
+   "tegund": "flipi",
+   "leid": "/#reikningatenglar",
+   "skilgreind": [
+    "index.html#renderReikningatenglar"
+   ],
+   "yfir": null,
+   "eigandi": "rukkari",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Reikningatenglar"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "pdftools",
+   "titill": "PDF verkfæri",
+   "tegund": "flipi",
+   "leid": "/#pdftools",
+   "skilgreind": [
+    "index.html#renderPdfTools",
+    "pdftools.html"
+   ],
+   "yfir": null,
+   "eigandi": "skjol",
+   "undiragentar": [],
+   "kveikjuord": [
+    "PDF verkfæri",
+    "skipta PDF"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "eydublod",
+   "titill": "Staðf. Brunalokana",
+   "tegund": "flipi",
+   "leid": "/#eydublod",
+   "skilgreind": [
+    "index.html#renderEydublod",
+    "eydublod.html"
+   ],
+   "yfir": null,
+   "eigandi": "skjol",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Staðfesting brunalokana",
+    "eyðublað"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "reikningar",
+   "titill": "Reikningagerð",
+   "tegund": "flipi",
+   "leid": "/#reikningar",
+   "skilgreind": [
+    "index.html"
+   ],
+   "yfir": null,
+   "eigandi": "bokari",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Reikningagerð"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "gerdreikninga",
+   "titill": "Gerð Reikninga",
+   "tegund": "flipi",
+   "leid": "/#gerdreikninga",
+   "skilgreind": [
+    "index.html#renderGerdReikninga"
+   ],
+   "yfir": null,
+   "eigandi": "bokari",
+   "undiragentar": [
+    "verkstadur",
+    "rukkari",
+    "framendi"
+   ],
+   "kveikjuord": [
+    "Gerð reikninga",
+    "Efnislisti",
+    "Tímabók"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "tilbunirReikningar",
+   "titill": "Tilbúnir reikningar",
+   "tegund": "flipi",
+   "leid": "/#tilbunirReikningar",
+   "skilgreind": [
+    "index.html#renderTilbunirReikningar"
+   ],
+   "yfir": null,
+   "eigandi": "bokari",
+   "undiragentar": [
+    "rukkari"
+   ],
+   "kveikjuord": [
+    "Tilbúnir reikningar"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "vinnubok",
+   "titill": "Vinnubók",
+   "tegund": "flipi",
+   "leid": "/#vinnubok",
+   "skilgreind": [
+    "index.html#renderVinnubok"
+   ],
+   "yfir": null,
+   "eigandi": "bokari",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Vinnubók"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "vinnustofa",
+   "titill": "Vinnustofa",
+   "tegund": "flipi",
+   "leid": "/#vinnustofa",
+   "skilgreind": [
+    "index.html#renderVinnustofa"
+   ],
+   "yfir": null,
+   "eigandi": "framendi",
+   "undiragentar": [
+    "bokari",
+    "rukkari",
+    "jarvis"
+   ],
+   "kveikjuord": [
+    "Vinnustofa",
+    "óreiknaðir tímar"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "verdskra",
+   "titill": "Verðskrá",
+   "tegund": "flipi",
+   "leid": "/#verdskra",
+   "skilgreind": [
+    "index.html#renderVerdskra"
+   ],
+   "yfir": null,
+   "eigandi": "bokari",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Verðskrá",
+    "taxti",
+    "gatastærð"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "efniskostnadur",
+   "titill": "Efniskostnaður",
+   "tegund": "flipi",
+   "leid": "/#efniskostnadur",
+   "skilgreind": [
+    "index.html#renderEfniskostnadur"
+   ],
+   "yfir": null,
+   "eigandi": "bokari",
+   "undiragentar": [
+    "rukkari",
+    "verkstadur",
+    "gagnaleidslur"
+   ],
+   "kveikjuord": [
+    "Efniskostnaður",
+    "endurrukka",
+    "Redder-reikningar"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "verdlisti",
+   "titill": "Verðlisti",
+   "tegund": "flipi",
+   "leid": "/#verdlisti",
+   "skilgreind": [
+    "index.html#renderVerdlisti"
+   ],
+   "yfir": null,
+   "eigandi": "bokari",
+   "undiragentar": [
+    "gagnaleidslur"
+   ],
+   "kveikjuord": [
+    "Verðlisti",
+    "innkaupsverð",
+    "álagning"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "vorubirgdir",
+   "titill": "Vörubirgðir",
+   "tegund": "flipi",
+   "leid": "/#vorubirgdir",
+   "skilgreind": [
+    "index.html#renderVorubirgdir"
+   ],
+   "yfir": null,
+   "eigandi": "bokari",
+   "undiragentar": [
+    "birgdastjori"
+   ],
+   "kveikjuord": [
+    "Vörubirgðir",
+    "kaupverð"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "utgjold",
+   "titill": "Útgjöld",
+   "tegund": "flipi",
+   "leid": "/#utgjold",
+   "skilgreind": [
+    "index.html"
+   ],
+   "yfir": null,
+   "eigandi": "framendi",
+   "undiragentar": [
+    "bokari"
+   ],
+   "kveikjuord": [
+    "Útgjöld"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "sjalfvirkni",
+   "titill": "Sjálfvirkni",
+   "tegund": "flipi",
+   "leid": "/#sjalfvirkni",
+   "skilgreind": [
+    "index.html#renderSjalfvirkni"
+   ],
+   "yfir": null,
+   "eigandi": "gagnaleidslur",
+   "undiragentar": [
+    "kerfisheilsa"
+   ],
+   "kveikjuord": [
+    "Sjálfvirkni",
+    "keyra núna",
+    "fast í keyrslu"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "vefryni",
+   "titill": "Vefrýni",
+   "tegund": "flipi",
+   "leid": "/#vefryni",
+   "skilgreind": [
+    "index.html#renderVefryni"
+   ],
+   "yfir": null,
+   "eigandi": "framendi",
+   "undiragentar": [
+    "kerfisheilsa",
+    "joker"
+   ],
+   "kveikjuord": [
+    "Vefrýni",
+    "myndayfirferð"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "skodanir",
+   "titill": "Skoðanir",
+   "tegund": "flipi",
+   "leid": "/#skodanir",
+   "skilgreind": [
+    "index.html#renderSkodanir"
+   ],
+   "yfir": null,
+   "eigandi": "sara-coworker",
+   "undiragentar": [
+    "sara-organizer"
+   ],
+   "kveikjuord": [
+    "Skoðanir",
+    "ársskoðunarform"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "brunayfirlit",
+   "titill": "Brunakerfi yfirlit",
+   "tegund": "flipi",
+   "leid": "/#brunayfirlit",
+   "skilgreind": [
+    "index.html"
+   ],
+   "yfir": null,
+   "eigandi": "sara-organizer",
+   "undiragentar": [
+    "sara-coworker"
+   ],
+   "kveikjuord": [
+    "Brunakerfi yfirlit"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "verkfaeri",
+   "titill": "Verkfæri",
+   "tegund": "ytri",
+   "leid": "https://verkfaeri.netlify.app",
+   "skilgreind": [
+    "index.html"
+   ],
+   "yfir": null,
+   "eigandi": "framendi",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Verkfæri"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "multitool",
+   "titill": "Skjala-multitool",
+   "tegund": "flipi",
+   "leid": "/#multitool",
+   "skilgreind": [
+    "index.html#renderMultitool",
+    "multitool.html"
+   ],
+   "yfir": null,
+   "eigandi": "skjol",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Skjala-multitool",
+    "sóttkví"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "skraalisti",
+   "titill": "Skráalisti",
+   "tegund": "flipi",
+   "leid": "/#skraalisti",
+   "skilgreind": [
+    "index.html#renderSkraalisti",
+    "skraalisti.html"
+   ],
+   "yfir": null,
+   "eigandi": "skjol",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Skráalisti",
+    "bera saman möppur"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "driveleit",
+   "titill": "Drive-leit",
+   "tegund": "flipi",
+   "leid": "/#driveleit",
+   "skilgreind": [
+    "index.html#renderDriveLeit"
+   ],
+   "yfir": null,
+   "eigandi": "skjol",
+   "undiragentar": [
+    "rukkari"
+   ],
+   "kveikjuord": [
+    "Drive-leit",
+    "leita í Drive"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "postleit",
+   "titill": "Póstleit",
+   "tegund": "flipi",
+   "leid": "/#postleit",
+   "skilgreind": [
+    "index.html#renderPostleit"
+   ],
+   "yfir": null,
+   "eigandi": "postur",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Póstleit",
+    "leita í pósti",
+    "hver sendi"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "bakendi",
+   "titill": "Bakendi",
+   "tegund": "flipi",
+   "leid": "/#bakendi",
+   "skilgreind": [
+    "index.html#renderBakendi"
+   ],
+   "yfir": null,
+   "eigandi": "skjol",
+   "undiragentar": [
+    "kunnaskra",
+    "gagnaleidslur",
+    "sara-organizer"
+   ],
+   "kveikjuord": [
+    "Bakendi",
+    "Skýrslu-vakt",
+    "Dauðir skjala-linkar"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "stillingar",
+   "titill": "Stillingar",
+   "tegund": "flipi",
+   "leid": "/#stillingar",
+   "skilgreind": [
+    "index.html#renderStillingar"
+   ],
+   "yfir": null,
+   "eigandi": "tengingar",
+   "undiragentar": [
+    "oryggi",
+    "framendi"
+   ],
+   "kveikjuord": [
+    "Stillingar",
+    "Tímavera API"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "adgangar",
+   "titill": "Aðgangar — Brunahólf",
+   "tegund": "sida",
+   "leid": "/adgangar.html",
+   "skilgreind": [
+    "adgangar.html"
+   ],
+   "yfir": null,
+   "eigandi": "oryggi",
+   "undiragentar": [
+    "tengingar"
+   ],
+   "kveikjuord": [
+    "aðgangar",
+    "innskráning",
+    "krefjast innskráningar"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "afkastavakt",
+   "titill": "Afkastavakt — Vélarrými",
+   "tegund": "sida",
+   "leid": "/afkastavakt.html",
+   "skilgreind": [
+    "afkastavakt.html"
+   ],
+   "yfir": null,
+   "eigandi": "jarvis",
+   "undiragentar": [
+    "bokari",
+    "rukkari"
+   ],
+   "kveikjuord": [
+    "Afkastavakt",
+    "Vélarrými"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "brunakerfi-skodun",
+   "titill": "Skoðunarskýrsla Brunaviðvörunarkerfis · Slökkvitæki ehf",
+   "tegund": "sida",
+   "leid": "/brunakerfi-skodun.html",
+   "skilgreind": [
+    "brunakerfi-skodun.html"
+   ],
+   "yfir": null,
+   "eigandi": "sara-organizer",
+   "undiragentar": [
+    "sara-coworker"
+   ],
+   "kveikjuord": [
+    "skoðunarskýrsla brunakerfis"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "brunakerfi",
+   "titill": "Brunakerfi — yfirlit",
+   "tegund": "sida",
+   "leid": "/brunakerfi.html",
+   "skilgreind": [
+    "brunakerfi.html"
+   ],
+   "yfir": null,
+   "eigandi": "sara-organizer",
+   "undiragentar": [
+    "sara-coworker"
+   ],
+   "kveikjuord": [
+    "Brunakerfi — yfirlit"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "brunathettingar",
+   "titill": "Brunaþéttingar — verkstaðir",
+   "tegund": "sida",
+   "leid": "/brunathettingar.html",
+   "skilgreind": [
+    "brunathettingar.html"
+   ],
+   "yfir": null,
+   "eigandi": "verkstadur",
+   "undiragentar": [
+    "gagnaleidslur",
+    "bokari",
+    "oryggi"
+   ],
+   "kveikjuord": [
+    "Brunaþéttingar-appið",
+    "vettvangsapp",
+    "enska appið"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "customer",
+   "titill": "Kúnna-yfirlit · Brunahólf",
+   "tegund": "sida",
+   "leid": "/customer.html",
+   "skilgreind": [
+    "customer.html"
+   ],
+   "yfir": null,
+   "eigandi": "kunnaskra",
+   "undiragentar": [
+    "skjol",
+    "sara-organizer"
+   ],
+   "kveikjuord": [
+    "customer.html",
+    "Kúnna-yfirlit"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "dkplus-products",
+   "titill": "dk Vörur — innflutningur",
+   "tegund": "sida",
+   "leid": "/dkplus-products.html",
+   "skilgreind": [
+    "dkplus-products.html"
+   ],
+   "yfir": null,
+   "eigandi": "sala-reikningar",
+   "undiragentar": [
+    "endurskodandi"
+   ],
+   "kveikjuord": [
+    "dkPlus vörur"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "dkplus-test",
+   "titill": "DK Plus — tengipróf",
+   "tegund": "sida",
+   "leid": "/dkplus-test.html",
+   "skilgreind": [
+    "dkplus-test.html"
+   ],
+   "yfir": null,
+   "eigandi": "sala-reikningar",
+   "undiragentar": [
+    "tengingar"
+   ],
+   "kveikjuord": [
+    "dkPlus tengipróf"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "doc-matrix",
+   "titill": "Skjala-checklist · Brunahólf",
+   "tegund": "sida",
+   "leid": "/doc-matrix.html",
+   "skilgreind": [
+    "doc-matrix.html"
+   ],
+   "yfir": null,
+   "eigandi": "skjol",
+   "undiragentar": [
+    "sara-organizer"
+   ],
+   "kveikjuord": [
+    "Skjala-checklist",
+    "doc-matrix"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "email-helper",
+   "titill": "Svarhjálp — Brunahólf",
+   "tegund": "sida",
+   "leid": "/email-helper.html",
+   "skilgreind": [
+    "email-helper.html"
+   ],
+   "yfir": null,
+   "eigandi": "postur",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Svarhjálp"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "hledsluaaetlun",
+   "titill": "🔋 Hleðsluáætlun — Brunahólf",
+   "tegund": "sida",
+   "leid": "/hledsluaaetlun.html",
+   "skilgreind": [
+    "hledsluaaetlun.html"
+   ],
+   "yfir": null,
+   "eigandi": "skjol",
+   "undiragentar": [
+    "sara-organizer"
+   ],
+   "kveikjuord": [
+    "Hleðsluáætlun",
+    "reikningslínur"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "keepit",
+   "titill": "Keepit — persónulegt",
+   "tegund": "sida",
+   "leid": "/keepit.html",
+   "skilgreind": [
+    "keepit.html"
+   ],
+   "yfir": null,
+   "eigandi": "skjol",
+   "undiragentar": [],
+   "kveikjuord": [
+    "keepit"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "kerfisheilsa",
+   "titill": "Kerfisheilsa — Brunahólf",
+   "tegund": "sida",
+   "leid": "/kerfisheilsa.html",
+   "skilgreind": [
+    "kerfisheilsa.html"
+   ],
+   "yfir": null,
+   "eigandi": "tengingar",
+   "undiragentar": [
+    "kerfisheilsa",
+    "hradi"
+   ],
+   "kveikjuord": [
+    "Kerfisheilsa",
+    "prófa tengingar",
+    "vélar"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "kerfiskort",
+   "titill": "🗺️ Kerfis-kort — viðskiptavina-gagnagrunnur",
+   "tegund": "sida",
+   "leid": "/kerfiskort.html",
+   "skilgreind": [
+    "kerfiskort.html"
+   ],
+   "yfir": null,
+   "eigandi": "tengingar",
+   "undiragentar": [
+    "kunnaskra"
+   ],
+   "kveikjuord": [
+    "Kerfis-kort"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "pdf-classify",
+   "titill": "PDF Flokkari · Brunahólf",
+   "tegund": "sida",
+   "leid": "/pdf-classify.html",
+   "skilgreind": [
+    "pdf-classify.html"
+   ],
+   "yfir": null,
+   "eigandi": "skjol",
+   "undiragentar": [],
+   "kveikjuord": [
+    "PDF Flokkari"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "radd",
+   "titill": "🎙️ Raddminni — Brunahólf",
+   "tegund": "sida",
+   "leid": "/radd.html",
+   "skilgreind": [
+    "radd.html"
+   ],
+   "yfir": null,
+   "eigandi": "jarvis",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Raddminni"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "reikningar-bid",
+   "titill": "Reikningar í bið — dk+",
+   "tegund": "sida",
+   "leid": "/reikningar-bid.html",
+   "skilgreind": [
+    "reikningar-bid.html"
+   ],
+   "yfir": null,
+   "eigandi": "sala-reikningar",
+   "undiragentar": [
+    "bokari"
+   ],
+   "kveikjuord": [
+    "Reikningar í bið",
+    "dkPlus"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "rekstrarfelog",
+   "titill": "Rekstrarfélög — Brunahólf",
+   "tegund": "sida",
+   "leid": "/rekstrarfelog.html",
+   "skilgreind": [
+    "rekstrarfelog.html"
+   ],
+   "yfir": null,
+   "eigandi": "kunnaskra",
+   "undiragentar": [
+    "skjol"
+   ],
+   "kveikjuord": [
+    "rekstrarfelog.html",
+    "Rekstrarfélög-síðan"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "skoda",
+   "titill": "Brunakerfi · Ársskoðun",
+   "tegund": "sida",
+   "leid": "/skoda.html",
+   "skilgreind": [
+    "skoda.html"
+   ],
+   "yfir": null,
+   "eigandi": "sara-coworker",
+   "undiragentar": [
+    "sara-organizer"
+   ],
+   "kveikjuord": [
+    "skoda.html",
+    "ársskoðunarform"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "slokkvitaeki-reikningur",
+   "titill": "Reikningur — Slökkvitæki ehf",
+   "tegund": "sida",
+   "leid": "/slokkvitaeki-reikningur.html",
+   "skilgreind": [
+    "slokkvitaeki-reikningur.html"
+   ],
+   "yfir": null,
+   "eigandi": "sala-reikningar",
+   "undiragentar": [
+    "bokari"
+   ],
+   "kveikjuord": [
+    "Slökkvitækja-reikningur"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "starfsmenn",
+   "titill": "Starfsmenn — dagur fyrir dag",
+   "tegund": "sida",
+   "leid": "/starfsmenn.html",
+   "skilgreind": [
+    "starfsmenn.html"
+   ],
+   "yfir": null,
+   "eigandi": "verkstadur",
+   "undiragentar": [
+    "gagnaleidslur"
+   ],
+   "kveikjuord": [
+    "starfsmannadagar"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "thjonusta-gloppur",
+   "titill": "🕵️ Gleymt að skrá í þjónustu — Brunahólf",
+   "tegund": "sida",
+   "leid": "/thjonusta-gloppur.html",
+   "skilgreind": [
+    "thjonusta-gloppur.html"
+   ],
+   "yfir": null,
+   "eigandi": "sara-organizer",
+   "undiragentar": [
+    "kunnaskra"
+   ],
+   "kveikjuord": [
+    "Gleymt að skrá í þjónustu"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "veidin",
+   "titill": "🎯 Veiðin — endurheimtar-mælaborð",
+   "tegund": "sida",
+   "leid": "/veidin.html",
+   "skilgreind": [
+    "veidin.html"
+   ],
+   "yfir": null,
+   "eigandi": "kunnaskra",
+   "undiragentar": [
+    "sara-organizer"
+   ],
+   "kveikjuord": [
+    "Veiðin",
+    "endurheimt"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "verkefnalisti",
+   "titill": "Verkefnalisti · Brunahólf",
+   "tegund": "sida",
+   "leid": "/verkefnalisti.html",
+   "skilgreind": [
+    "verkefnalisti.html"
+   ],
+   "yfir": null,
+   "eigandi": "jarvis",
+   "undiragentar": [],
+   "kveikjuord": [
+    "verkefnalisti.html",
+    "verkefnalisti"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "yfirferd",
+   "titill": "Yfirferð efnislista",
+   "tegund": "sida",
+   "leid": "/yfirferd.html",
+   "skilgreind": [
+    "yfirferd.html"
+   ],
+   "yfir": null,
+   "eigandi": "bokari",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Yfirferð efnislista"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "jarvis-vitals",
+   "titill": "Kerfis-vitals",
+   "tegund": "spjald",
+   "leid": "/jarvis.html#vitals",
+   "skilgreind": [
+    "jarvis.html"
+   ],
+   "yfir": "jarvis",
+   "eigandi": "kerfisheilsa",
+   "undiragentar": [
+    "tengingar",
+    "jarvis"
+   ],
+   "kveikjuord": [
+    "vitals",
+    "kerfis-vitals"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "jarvis-fjarskipti",
+   "titill": "Fjarskipti (straumur)",
+   "tegund": "spjald",
+   "leid": "/jarvis.html#fjarskipti",
+   "skilgreind": [
+    "jarvis.html"
+   ],
+   "yfir": "jarvis",
+   "eigandi": "jarvis",
+   "undiragentar": [],
+   "kveikjuord": [
+    "fjarskipti"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "jarvis-serfraedingar",
+   "titill": "Sérfræðingar + 📖 Agentaskráin",
+   "tegund": "spjald",
+   "leid": "/jarvis.html#serfraedingar",
+   "skilgreind": [
+    "jarvis.html"
+   ],
+   "yfir": "jarvis",
+   "eigandi": "jarvis",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Sérfræðingar-spjaldið",
+    "hvaða sérfræðingur á þetta"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "jarvis-villuleit",
+   "titill": "Villuleit",
+   "tegund": "spjald",
+   "leid": "/jarvis.html#villuleit",
+   "skilgreind": [
+    "jarvis.html"
+   ],
+   "yfir": "jarvis",
+   "eigandi": "netvordur",
+   "undiragentar": [
+    "villuleit",
+    "variant-analysis"
+   ],
+   "kveikjuord": [
+    "villuleit",
+    "hindra klúður"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "jarvis-krofur",
+   "titill": "Kröfur",
+   "tegund": "spjald",
+   "leid": "/jarvis.html#krofur",
+   "skilgreind": [
+    "jarvis.html"
+   ],
+   "yfir": "jarvis",
+   "eigandi": "rukkari",
+   "undiragentar": [
+    "bokari"
+   ],
+   "kveikjuord": [
+    "kröfur",
+    "útistandandi"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "jarvis-verk",
+   "titill": "Verk (verkefnalisti)",
+   "tegund": "spjald",
+   "leid": "/jarvis.html#verk",
+   "skilgreind": [
+    "jarvis.html"
+   ],
+   "yfir": "jarvis",
+   "eigandi": "jarvis",
+   "undiragentar": [],
+   "kveikjuord": [
+    "verk",
+    "göt"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "jarvis-markmid",
+   "titill": "Markmið — skýrsluþekja 2026",
+   "tegund": "spjald",
+   "leid": "/jarvis.html#markmid",
+   "skilgreind": [
+    "jarvis.html"
+   ],
+   "yfir": "jarvis",
+   "eigandi": "kunnaskra",
+   "undiragentar": [
+    "sara-organizer"
+   ],
+   "kveikjuord": [
+    "markmið",
+    "skýrsluþekja"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "jarvis-velar",
+   "titill": "Vélar (ratsjá)",
+   "tegund": "spjald",
+   "leid": "/jarvis.html#velar",
+   "skilgreind": [
+    "jarvis.html"
+   ],
+   "yfir": "jarvis",
+   "eigandi": "kerfisheilsa",
+   "undiragentar": [
+    "tengingar"
+   ],
+   "kveikjuord": [
+    "vélar",
+    "lífsmark",
+    "heartbeat"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "jarvis-hljod",
+   "titill": "Hljóð (raddminni)",
+   "tegund": "spjald",
+   "leid": "/jarvis.html#hljod",
+   "skilgreind": [
+    "jarvis.html"
+   ],
+   "yfir": "jarvis",
+   "eigandi": "jarvis",
+   "undiragentar": [],
+   "kveikjuord": [
+    "hljóðnemi",
+    "raddminni"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "jarvis-tengingar",
+   "titill": "Tengingar",
+   "tegund": "spjald",
+   "leid": "/jarvis.html#tengingar",
+   "skilgreind": [
+    "jarvis.html"
+   ],
+   "yfir": "jarvis",
+   "eigandi": "tengingar",
+   "undiragentar": [],
+   "kveikjuord": [
+    "tengingar",
+    "⏱ Prófa"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "jarvis-gogn",
+   "titill": "Gögn (gagnauppsprettur)",
+   "tegund": "spjald",
+   "leid": "/jarvis.html#gogn",
+   "skilgreind": [
+    "jarvis.html"
+   ],
+   "yfir": "jarvis",
+   "eigandi": "gagnaleidslur",
+   "undiragentar": [],
+   "kveikjuord": [
+    "gagnauppsprettur",
+    "data-sources-status"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "jarvis-thekja",
+   "titill": "Þekja (pör)",
+   "tegund": "spjald",
+   "leid": "/jarvis.html#thekja",
+   "skilgreind": [
+    "jarvis.html"
+   ],
+   "yfir": "jarvis",
+   "eigandi": "sara-organizer",
+   "undiragentar": [],
+   "kveikjuord": [
+    "þekja",
+    "pör"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "jarvis-gloppur",
+   "titill": "Gloppur",
+   "tegund": "spjald",
+   "leid": "/jarvis.html#gloppur",
+   "skilgreind": [
+    "jarvis.html"
+   ],
+   "yfir": "jarvis",
+   "eigandi": "sara-organizer",
+   "undiragentar": [
+    "kunnaskra"
+   ],
+   "kveikjuord": [
+    "gloppur",
+    "service-gaps"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "jarvis-perf",
+   "titill": "Þrýstingur — frammistaða",
+   "tegund": "spjald",
+   "leid": "/jarvis.html#perf",
+   "skilgreind": [
+    "jarvis.html"
+   ],
+   "yfir": "jarvis",
+   "eigandi": "hradi",
+   "undiragentar": [
+    "kerfisheilsa"
+   ],
+   "kveikjuord": [
+    "þrýstingur",
+    "frammistaða"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "jarvis-oryggisnet",
+   "titill": "Öryggisnet — verðir",
+   "tegund": "spjald",
+   "leid": "/jarvis.html#oryggisnet",
+   "skilgreind": [
+    "jarvis.html"
+   ],
+   "yfir": "jarvis",
+   "eigandi": "netvordur",
+   "undiragentar": [
+    "rambo"
+   ],
+   "kveikjuord": [
+    "öryggisnet",
+    "verðir"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "counter",
+   "titill": "Afgreiðsla",
+   "tegund": "view",
+   "leid": "#counter",
+   "skilgreind": [
+    "index.html"
+   ],
+   "yfir": null,
+   "eigandi": "sala-reikningar",
+   "undiragentar": [
+    "prentun"
+   ],
+   "kveikjuord": [
+    "afgreiðsla",
+    "sótt",
+    "greitt síðar"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "workshop",
+   "titill": "Verkstæði",
+   "tegund": "view",
+   "leid": "#workshop",
+   "skilgreind": [
+    "index.html"
+   ],
+   "yfir": null,
+   "eigandi": "sala-reikningar",
+   "undiragentar": [
+    "elon-musk",
+    "prentun"
+   ],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "field",
+   "titill": "Þjónustutæki",
+   "tegund": "view",
+   "leid": "#field",
+   "skilgreind": [
+    "index.html"
+   ],
+   "yfir": null,
+   "eigandi": "kort",
+   "undiragentar": [
+    "bord-flettur"
+   ],
+   "kveikjuord": [
+    "kill-dots",
+    "appelsínugulir punktar",
+    "Þjónustutæki"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "companies",
+   "titill": "Fyrirtæki (skrá)",
+   "tegund": "view",
+   "leid": "#companies",
+   "skilgreind": [
+    "index.html",
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "fyrirtaeki",
+   "undiragentar": [
+    "kunnaskra"
+   ],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "brunakerfi",
+   "titill": "Brunakerfi (áskriftir)",
+   "tegund": "view",
+   "leid": "#brunakerfi",
+   "skilgreind": [
+    "index.html"
+   ],
+   "yfir": null,
+   "eigandi": "elon-musk",
+   "undiragentar": [
+    "natalie",
+    "sara-coworker",
+    "sala-reikningar"
+   ],
+   "kveikjuord": [
+    "brunakerfisþjónusta",
+    "brunakerfi áskrift",
+    "fjarlægja úr brunakerfi"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "tilbodhub",
+   "titill": "Tilboð & samningar",
+   "tegund": "view",
+   "leid": "#tilbodhub",
+   "skilgreind": [
+    "index.html"
+   ],
+   "yfir": null,
+   "eigandi": "sala-reikningar",
+   "undiragentar": [
+    "logfraedingur"
+   ],
+   "kveikjuord": [
+    "sérverð",
+    "tilboðsform"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "income",
+   "titill": "Tekjur",
+   "tegund": "view",
+   "leid": "#income",
+   "skilgreind": [
+    "index.html",
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "sala-reikningar",
+   "undiragentar": [],
+   "kveikjuord": [
+    "tekjur"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "lanstaeki",
+   "titill": "Lánstæki",
+   "tegund": "view",
+   "leid": "#lanstaeki",
+   "skilgreind": [
+    "index.html"
+   ],
+   "yfir": null,
+   "eigandi": "elon-musk",
+   "undiragentar": [],
+   "kveikjuord": [
+    "lánstæki",
+    "lánstækjaregla"
+   ],
+   "merki": "sofandi",
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "geymsla",
+   "titill": "Geymsla",
+   "tegund": "view",
+   "leid": "#geymsla",
+   "skilgreind": [
+    "index.html"
+   ],
+   "yfir": null,
+   "eigandi": "bord-flettur",
+   "undiragentar": [
+    "elon-musk",
+    "prentun"
+   ],
+   "kveikjuord": [
+    "geymsla",
+    "í geymslu",
+    "sett í geymslu",
+    "Geymsla"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "settings",
+   "titill": "Stillingar",
+   "tegund": "view",
+   "leid": "#settings",
+   "skilgreind": [
+    "index.html"
+   ],
+   "yfir": null,
+   "eigandi": "joker",
+   "undiragentar": [
+    "prentun",
+    "thema",
+    "elon-musk"
+   ],
+   "kveikjuord": [
+    "stillingar",
+    "stillingasaga",
+    "þetta tæki",
+    "logo á miða"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "bokhalds-yfirlit",
+   "titill": "Bókhald",
+   "tegund": "view",
+   "leid": "#bokhalds-yfirlit",
+   "skilgreind": [
+    "js/patches/11-bokhalds-yfirlit.js",
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "sala-reikningar",
+   "undiragentar": [
+    "bh:bokari"
+   ],
+   "kveikjuord": [
+    "bókhalds yfirlit",
+    "VSK"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "aging-report",
+   "titill": "Aldursgreining",
+   "tegund": "view",
+   "leid": "#aging-report",
+   "skilgreind": [
+    "js/patches/23-aging-report.js"
+   ],
+   "yfir": null,
+   "eigandi": "sala-reikningar",
+   "undiragentar": [
+    "rukkari"
+   ],
+   "kveikjuord": [],
+   "merki": "sofandi",
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "tilbod",
+   "titill": "Tilboð",
+   "tegund": "view",
+   "leid": "#tilbod",
+   "skilgreind": [
+    "js/patches/27-tilbod-quote.js"
+   ],
+   "yfir": null,
+   "eigandi": "sala-reikningar",
+   "undiragentar": [
+    "logfraedingur",
+    "arnold"
+   ],
+   "kveikjuord": [
+    "tilboð",
+    "tilboðsnúmer",
+    "Tilboð"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "drog",
+   "titill": "Drög",
+   "tegund": "view",
+   "leid": "#drog",
+   "skilgreind": [
+    "js/patches/143-drog-list.js"
+   ],
+   "yfir": null,
+   "eigandi": "sala-reikningar",
+   "undiragentar": [],
+   "kveikjuord": [
+    "drög",
+    "í afgreiðslu"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "arsskodun",
+   "titill": "Fyrirtæki í þjónustu",
+   "tegund": "view",
+   "leid": "#arsskodun",
+   "skilgreind": [
+    "js/patches/153-arsskodun.js",
+    "js/patches/317-arsskodun-bilstjori.js",
+    "js/patches/331-ars-phone-skjar.js",
+    "js/patches/341-ars-skjar-scroll-left.js",
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "elon-musk",
+   "undiragentar": [
+    "natalie",
+    "arnold"
+   ],
+   "kveikjuord": [
+    "fyrirtæki í þjónustu",
+    "ársskoðunarlistinn",
+    "póstmerki",
+    "póstnúmer",
+    "ársskoðun",
+    "Fyrirtæki í þjónustu",
+    "árs",
+    "pera",
+    "FULLBÚIÐ",
+    "skoðunarmánuður",
+    "Í vinnslu",
+    "Gleymt"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "allir-vidsk",
+   "titill": "Allir viðskiptavinir",
+   "tegund": "view",
+   "leid": "#allir-vidsk",
+   "skilgreind": [
+    "js/patches/157-allir-vidskiptavinir.js"
+   ],
+   "yfir": null,
+   "eigandi": "kunnaskra",
+   "undiragentar": [
+    "natalie",
+    "fyrirtaeki"
+   ],
+   "kveikjuord": [
+    "Allir viðskiptavinir",
+    "customers_base"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "vidsk-detail",
+   "titill": "Fyrirtækjakort / fyrirtækjaprófíll",
+   "tegund": "view",
+   "leid": "#vidsk-detail",
+   "skilgreind": [
+    "js/patches/158-vidsk-detail.js"
+   ],
+   "yfir": null,
+   "eigandi": "fyrirtaeki",
+   "undiragentar": [
+    "kunnaskra",
+    "sala-reikningar",
+    "sara-coworker",
+    "joker"
+   ],
+   "kveikjuord": [
+    "fyrirtækjakort",
+    "fyrirtækjaprófíll",
+    "prófíll"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "leidsogn",
+   "titill": "Leiðsögn",
+   "tegund": "view",
+   "leid": "#leidsogn",
+   "skilgreind": [
+    "js/patches/161-leidsogn.js",
+    "js/patches/373-leidsogn-uttektarplan.js"
+   ],
+   "yfir": null,
+   "eigandi": "bord-flettur",
+   "undiragentar": [
+    "kort"
+   ],
+   "kveikjuord": [
+    "Leiðsögn",
+    "úttektarplan"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "krofu-yfirlit",
+   "titill": "Kröfu yfirlit",
+   "tegund": "view",
+   "leid": "#krofu-yfirlit",
+   "skilgreind": [
+    "js/patches/166-krofu-yfirlit.js",
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "sala-reikningar",
+   "undiragentar": [
+    "rukkari",
+    "natalie"
+   ],
+   "kveikjuord": [
+    "kröfu yfirlit",
+    "senda kröfu",
+    "XML hafnað"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "hreyfingarlisti",
+   "titill": "Hreyfingarlisti",
+   "tegund": "view",
+   "leid": "#hreyfingarlisti",
+   "skilgreind": [
+    "js/patches/167-hreyfingarlisti.js",
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "sala-reikningar",
+   "undiragentar": [
+    "rukkari"
+   ],
+   "kveikjuord": [
+    "hreyfingarlisti",
+    "til að rukka",
+    "ógreitt"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "thjonustuverk",
+   "titill": "Þjónustuverk",
+   "tegund": "view",
+   "leid": "#thjonustuverk",
+   "skilgreind": [
+    "js/patches/172-thjonustuverk.js",
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "bord-flettur",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": "sofandi",
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "beidnir",
+   "titill": "Beiðnir",
+   "tegund": "view",
+   "leid": "#beidnir",
+   "skilgreind": [
+    "js/patches/178-beidnir.js"
+   ],
+   "yfir": null,
+   "eigandi": "bord-flettur",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": "sofandi",
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "mottaka",
+   "titill": "Móttaka",
+   "tegund": "view",
+   "leid": "#mottaka",
+   "skilgreind": [
+    "js/patches/179-mottaka-arrival.js"
+   ],
+   "yfir": null,
+   "eigandi": "sala-reikningar",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": "sofandi",
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "thjonustu-verkstaedi",
+   "titill": "ÞjónustuVerkstæði",
+   "tegund": "view",
+   "leid": "#thjonustu-verkstaedi",
+   "skilgreind": [
+    "js/patches/190-thjonustu-verkstaedi.js",
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "sala-reikningar",
+   "undiragentar": [
+    "elon-musk"
+   ],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "payrev",
+   "titill": "Yfirferð greiðslna",
+   "tegund": "view",
+   "leid": "#payrev",
+   "skilgreind": [
+    "js/patches/193-payment-review.js"
+   ],
+   "yfir": null,
+   "eigandi": "sala-reikningar",
+   "undiragentar": [
+    "natalie"
+   ],
+   "kveikjuord": [
+    "yfirferð greiðslna",
+    "greiðslumáti",
+    "Yfirferð greiðslna"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "bokhald-yfirferd",
+   "titill": "Bókhald · yfirferð",
+   "tegund": "view",
+   "leid": "#bokhald-yfirferd",
+   "skilgreind": [
+    "js/patches/197-bokhald-yfirferd.js"
+   ],
+   "yfir": null,
+   "eigandi": "sala-reikningar",
+   "undiragentar": [
+    "natalie"
+   ],
+   "kveikjuord": [
+    "bókhald yfirferð",
+    "tvítekning sölu",
+    "Bókhald yfirferð"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "fyrirtaeki-yfirferd",
+   "titill": "Fyrirtæki · yfirferð",
+   "tegund": "view",
+   "leid": "#fyrirtaeki-yfirferd",
+   "skilgreind": [
+    "js/patches/198-fyrirtaeki-yfirferd.js"
+   ],
+   "yfir": null,
+   "eigandi": "kunnaskra",
+   "undiragentar": [
+    "sala-reikningar"
+   ],
+   "kveikjuord": [
+    "vantar kt",
+    "vantar netfang"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "vertid",
+   "titill": "Vertíð",
+   "tegund": "view",
+   "leid": "#vertid",
+   "skilgreind": [
+    "js/patches/210-vertid-mottaka.js"
+   ],
+   "yfir": null,
+   "eigandi": "sala-reikningar",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": "sofandi",
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "bilstjori",
+   "titill": "Bílstjóri · leið dagsins",
+   "tegund": "view",
+   "leid": "#bilstjori",
+   "skilgreind": [
+    "js/patches/219-bilstjori.js",
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "bord-flettur",
+   "undiragentar": [
+    "kort"
+   ],
+   "kveikjuord": [
+    "bílstjóri",
+    "ferðanóta",
+    "tækjahópar"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "kerfi",
+   "titill": "Kerfi",
+   "tegund": "view",
+   "leid": "#kerfi",
+   "skilgreind": [
+    "js/patches/221-kerfi-registry.js"
+   ],
+   "yfir": null,
+   "eigandi": "bord-flettur",
+   "undiragentar": [],
+   "kveikjuord": [
+    "skráaborð"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "bakendi",
+   "titill": "Bakendi",
+   "tegund": "view",
+   "leid": "#bakendi",
+   "skilgreind": [
+    "js/patches/232-bakendi.js"
+   ],
+   "yfir": null,
+   "eigandi": "kunnaskra",
+   "undiragentar": [
+    "bord-flettur"
+   ],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "sameining",
+   "titill": "Sameining",
+   "tegund": "view",
+   "leid": "#sameining",
+   "skilgreind": [
+    "js/patches/236-customer-sameining.js"
+   ],
+   "yfir": null,
+   "eigandi": "kunnaskra",
+   "undiragentar": [
+    "samthykktir"
+   ],
+   "kveikjuord": [
+    "sameina",
+    "tvítak",
+    "999999"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "adstod",
+   "titill": "Aðstoðarmiðstöð",
+   "tegund": "view",
+   "leid": "#adstod",
+   "skilgreind": [
+    "js/patches/239-adstodarmidstod.js"
+   ],
+   "yfir": null,
+   "eigandi": "adstod",
+   "undiragentar": [
+    "kunnaskra",
+    "sala-reikningar"
+   ],
+   "kveikjuord": [
+    "Aðstoðarmiðstöð",
+    "snooze"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "reikninga-postur",
+   "titill": "Reikninga-póstur",
+   "tegund": "view",
+   "leid": "#reikninga-postur",
+   "skilgreind": [
+    "js/patches/240-reikninga-postur.js",
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "rukkari",
+   "undiragentar": [
+    "postur",
+    "sala-reikningar"
+   ],
+   "kveikjuord": [
+    "reikninga-póstur",
+    "senda reikning",
+    "reikningur í pósti",
+    "hver spurði um reikninginn"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "opp",
+   "titill": "Öpp (stýriborð)",
+   "tegund": "view",
+   "leid": "#opp",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bord-flettur",
+    "joker"
+   ],
+   "kveikjuord": [
+    "Öpp",
+    "firestarter",
+    "app-síða",
+    "setja upp í síma"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "aksturslisti",
+   "titill": "Aksturslisti",
+   "tegund": "view",
+   "leid": "#aksturslisti",
+   "skilgreind": [
+    "js/patches/268-aksturslisti-vakt.js",
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "bord-flettur",
+   "undiragentar": [
+    "kort"
+   ],
+   "kveikjuord": [
+    "aksturslisti",
+    "vakt",
+    "á verkstæði"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "brunakerfi-yfirlit",
+   "titill": "Brunakerfi yfirlit (eldra)",
+   "tegund": "view",
+   "leid": "#brunakerfi-yfirlit",
+   "skilgreind": [
+    "js/patches/272-brunakerfi-yfirlit.js"
+   ],
+   "yfir": null,
+   "eigandi": "elon-musk",
+   "undiragentar": [
+    "sara-coworker"
+   ],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "samskiptabord",
+   "titill": "Samskiptaborð",
+   "tegund": "view",
+   "leid": "#samskiptabord",
+   "skilgreind": [
+    "js/patches/287-crm-board.js"
+   ],
+   "yfir": null,
+   "eigandi": "fyrirtaeki",
+   "undiragentar": [
+    "kunnaskra",
+    "rukkari"
+   ],
+   "kveikjuord": [
+    "Samskiptaborð",
+    "ósvarað",
+    "síðasti póstur"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "minar-sidur",
+   "titill": "Mínar síður",
+   "tegund": "view",
+   "leid": "#minar-sidur",
+   "skilgreind": [
+    "js/patches/302-minar-sidur.js",
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "bord-flettur",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Mínar síður",
+    "kubbar"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "thjonustubord",
+   "titill": "Þjónustuborð (sími, eldra)",
+   "tegund": "view",
+   "leid": "#thjonustubord",
+   "skilgreind": [
+    "js/patches/306-thjonustu-mob.js"
+   ],
+   "yfir": null,
+   "eigandi": "bord-flettur",
+   "undiragentar": [
+    "samthykktir"
+   ],
+   "kveikjuord": [],
+   "merki": "sofandi",
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "thjonustuver-postar",
+   "titill": "Þjónustuver póstar",
+   "tegund": "view",
+   "leid": "#thjonustuver-postar",
+   "skilgreind": [
+    "js/patches/309-thjonustuver-postar.js"
+   ],
+   "yfir": null,
+   "eigandi": "postur",
+   "undiragentar": [],
+   "kveikjuord": [
+    "þjónustuver",
+    "hvað vill kúnninn"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "tengilidir",
+   "titill": "Tengiliðir",
+   "tegund": "view",
+   "leid": "#tengilidir",
+   "skilgreind": [
+    "js/patches/310-tengilidir.js"
+   ],
+   "yfir": null,
+   "eigandi": "fyrirtaeki",
+   "undiragentar": [
+    "kunnaskra",
+    "bh:oryggi"
+   ],
+   "kveikjuord": [
+    "tengiliður",
+    "Tengiliðir",
+    "netfang",
+    "lén"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "turbopaint",
+   "titill": "TurboPaint — teikningar",
+   "tegund": "view",
+   "leid": "#turbopaint",
+   "skilgreind": [
+    "js/patches/342-turbopaint-nav.js",
+    "js/patches/376-teikning-ur-teikningaglugga.js",
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "arnold",
+   "undiragentar": [
+    "elon-musk"
+   ],
+   "kveikjuord": [
+    "TurboPaint",
+    "Turbo",
+    "3D",
+    "veggjateikning",
+    "EI-60",
+    "veggjavél"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "stadan",
+   "titill": "Staðan",
+   "tegund": "view",
+   "leid": "#stadan",
+   "skilgreind": [
+    "js/patches/345-stadan.js"
+   ],
+   "yfir": null,
+   "eigandi": "bord-flettur",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": "sofandi",
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "maelabord",
+   "titill": "Mælaborð",
+   "tegund": "view",
+   "leid": "#maelabord",
+   "skilgreind": [
+    "js/patches/346-maelabord.js"
+   ],
+   "yfir": null,
+   "eigandi": "bord-flettur",
+   "undiragentar": [
+    "netvordur"
+   ],
+   "kveikjuord": [
+    "Mælaborð",
+    "línurit",
+    "grunnlína"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "bord",
+   "titill": "Þjónustuborð",
+   "tegund": "view",
+   "leid": "#bord",
+   "skilgreind": [
+    "js/patches/368-thjonustubord5.js",
+    "js/patches/369-krofu-vinnugluggi.js",
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "bord-flettur",
+   "undiragentar": [
+    "samthykktir"
+   ],
+   "kveikjuord": [
+    "Þjónustuborð",
+    "Master",
+    "Mitt borð",
+    "#bord",
+    "hamur",
+    "vinnusvæði"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "kostnadur",
+   "titill": "Kostnaður · reikningar úr pósti",
+   "tegund": "view",
+   "leid": "#kostnadur",
+   "skilgreind": [
+    "js/patches/419-kostnadur.js",
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "innkaupabokari",
+   "undiragentar": [
+    "birgdastjori",
+    "bh:endurskodandi"
+   ],
+   "kveikjuord": [
+    "kostnaður",
+    "birgjareikningur",
+    "Kostnaður"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "samthykkja",
+   "titill": "Samþykkja",
+   "tegund": "view",
+   "leid": "#samthykkja",
+   "skilgreind": [
+    "js/patches/446-samthykkja-simi.js",
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "bord-flettur",
+   "undiragentar": [
+    "samthykktir"
+   ],
+   "kveikjuord": [
+    "Samþykkja",
+    "svörin mín",
+    "bíður Claude"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "svarstod",
+   "titill": "Svar-stöð · hvernig textar verða til",
+   "tegund": "view",
+   "leid": "#svarstod",
+   "skilgreind": [
+    "js/patches/447-svarstod.js",
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "bord-flettur",
+   "undiragentar": [
+    "samthykktir",
+    "sala-reikningar",
+    "postur"
+   ],
+   "kveikjuord": [
+    "Svar-stöð",
+    "SV-",
+    "orðalag reiknings",
+    "SV-númer",
+    "sendileið",
+    "hvaða texti fer út"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "reglur",
+   "titill": "Reglur",
+   "tegund": "view",
+   "leid": "#reglur",
+   "skilgreind": [
+    "js/patches/449-reglur.js"
+   ],
+   "yfir": null,
+   "eigandi": "bord-flettur",
+   "undiragentar": [
+    "samthykktir",
+    "arnold"
+   ],
+   "kveikjuord": [
+    "Reglur-síðan",
+    "Flokkun viðskiptavina"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "tolvupostar",
+   "titill": "Tölvupóstar",
+   "tegund": "view",
+   "leid": "#tolvupostar",
+   "skilgreind": [
+    "js/patches/449-tolvupostar-simi.js",
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "postur",
+   "undiragentar": [
+    "samthykktir",
+    "kunnaskra"
+   ],
+   "kveikjuord": [
+    "Tölvupóstar",
+    "---SVAR---",
+    "undirbúið svar",
+    "tölvupóstar",
+    "svara",
+    "svardrög",
+    "ósvarað"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "erindi",
+   "titill": "Erindi · tilbúin svör",
+   "tegund": "view",
+   "leid": "#erindi",
+   "skilgreind": [
+    "js/patches/449c-erindi-simi.js",
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "postur",
+   "undiragentar": [
+    "samthykktir",
+    "sara-coworker"
+   ],
+   "kveikjuord": [
+    "Erindi",
+    "hvar eru erindin",
+    "tilbúin svör",
+    "drög að svari"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "hunter",
+   "titill": "Hunter · sölulistar",
+   "tegund": "view",
+   "leid": "#hunter",
+   "skilgreind": [
+    "js/patches/487-hunter.js"
+   ],
+   "yfir": null,
+   "eigandi": "fyrirtaeki",
+   "undiragentar": [
+    "kunnaskra"
+   ],
+   "kveikjuord": [
+    "Hunter",
+    "sölulisti",
+    "kynningarpóstur",
+    "hunter-herferð",
+    "sölulistar"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "vasinn",
+   "titill": "Vasinn · skjáskot, myndir, skrár, hljóð handa Claude",
+   "tegund": "view",
+   "leid": "#vasinn",
+   "skilgreind": [
+    "js/patches/491-vasinn.js",
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "innkaupabokari",
+   "undiragentar": [
+    "bord-flettur"
+   ],
+   "kveikjuord": [
+    "Vasinn",
+    "kíktu í vasann"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "adalmal",
+   "titill": "Aðalmál · fundir, frestir og það sem skiptir mestu",
+   "tegund": "view",
+   "leid": "#adalmal",
+   "skilgreind": [
+    "js/patches/492-adalmal.js",
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "bord-flettur",
+   "undiragentar": [
+    "samthykktir"
+   ],
+   "kveikjuord": [
+    "Aðalmál",
+    "vikuyfirlit",
+    "fundir og frestir"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "vidskiptavinir",
+   "titill": "Viðskiptavinir",
+   "tegund": "view",
+   "leid": "#vidskiptavinir",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "kunnaskra",
+   "undiragentar": [],
+   "kveikjuord": [
+    "einstaklingar",
+    "vidskiptavinir-taflan"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "sala",
+   "titill": "Sala",
+   "tegund": "view",
+   "leid": "#sala",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "sala-reikningar",
+   "undiragentar": [
+    "prentun",
+    "birgdastjori"
+   ],
+   "kveikjuord": [
+    "sala",
+    "POS",
+    "söluborð",
+    "kassi",
+    "staðgreitt"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "slokkvikerfi",
+   "titill": "Slökkvikerfis skoðun",
+   "tegund": "view",
+   "leid": "#slokkvikerfi",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "elon-musk",
+   "undiragentar": [
+    "sara-coworker"
+   ],
+   "kveikjuord": [
+    "Slökkvikerfis skoðun",
+    "slökkvikerfi",
+    "háfur"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "brunaskra",
+   "titill": "Brunakerfis skoðun",
+   "tegund": "view",
+   "leid": "#brunaskra",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "elon-musk",
+   "undiragentar": [
+    "sara-coworker"
+   ],
+   "kveikjuord": [
+    "Brunakerfis skoðun",
+    "brunaskoðun",
+    "brunaskra"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "rekstrarfelog",
+   "titill": "Rekstrarfélög",
+   "tegund": "view",
+   "leid": "#rekstrarfelog",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "kunnaskra",
+   "undiragentar": [
+    "natalie"
+   ],
+   "kveikjuord": [
+    "rekstrarfélag",
+    "umsjónaraðili",
+    "Eignaumsjón",
+    "Heimaleiga"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "birgdir",
+   "titill": "Birgðir",
+   "tegund": "view",
+   "leid": "#birgdir",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "birgdastjori",
+   "undiragentar": [
+    "sala-reikningar"
+   ],
+   "kveikjuord": [
+    "birgðir",
+    "talning",
+    "Geymsla",
+    "Birgðir"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "vorur",
+   "titill": "Vörur og þjónusta",
+   "tegund": "view",
+   "leid": "#vorur",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "birgdastjori",
+   "undiragentar": [
+    "sala-reikningar"
+   ],
+   "kveikjuord": [
+    "vörur",
+    "verðlisti",
+    "vöruverð"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "br-gerdreikninga",
+   "titill": "Gerð reikninga",
+   "tegund": "iframe-brunaholf",
+   "leid": "https://brunaholf.netlify.app/?embed=1#gerdreikninga",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bh:bokari"
+   ],
+   "kveikjuord": [
+    "Gerð reikninga",
+    "efnislisti",
+    "Tímabók"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "br-vinnubok",
+   "titill": "Vinnubók",
+   "tegund": "iframe-brunaholf",
+   "leid": "https://brunaholf.netlify.app/?embed=1#vinnubok",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bh:bokari"
+   ],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "br-krofur",
+   "titill": "Krófur & Tekjur",
+   "tegund": "iframe-brunaholf",
+   "leid": "https://brunaholf.netlify.app/?embed=1#krofur",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bh:rukkari"
+   ],
+   "kveikjuord": [
+    "kröfur og tekjur"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "br-krofuyfirlit",
+   "titill": "Kröfu yfirlit (Brunahólf)",
+   "tegund": "iframe-brunaholf",
+   "leid": "https://brunaholf.netlify.app/?embed=1#krofuyfirlit",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bh:rukkari"
+   ],
+   "kveikjuord": [
+    "ósent",
+    "þrep 2",
+    "Senda í bókun"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "br-drogstod",
+   "titill": "Drög-stöð (punktar + draft-körfur)",
+   "tegund": "iframe-brunaholf",
+   "leid": "https://brunaholf.netlify.app/?embed=1#drogstod",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bh:rukkari"
+   ],
+   "kveikjuord": [
+    "Drög-stöð",
+    "punktur",
+    "draft-karfa"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "br-efniskostnadur",
+   "titill": "Efniskostnaður · kostnaðarreikningar (dropp úr síma)",
+   "tegund": "iframe-brunaholf",
+   "leid": "https://brunaholf.netlify.app/?embed=1#efniskostnadur",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bh:bokari"
+   ],
+   "kveikjuord": [
+    "kostnaðarreikningur",
+    "endurrukka"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "br-maeting",
+   "titill": "Mæting · verkstaðir (Tímavera)",
+   "tegund": "iframe-brunaholf",
+   "leid": "https://brunaholf.netlify.app/?embed=1#tvmaeting",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bh:verkstadur"
+   ],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "br-fjarmalyfirlit",
+   "titill": "Fjármála-yfirlit (Slökkv. + Brunahólf)",
+   "tegund": "iframe-brunaholf",
+   "leid": "https://brunaholf.netlify.app/fjarmalyfirlit.html",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bh:bokari"
+   ],
+   "kveikjuord": [
+    "fjármála-yfirlit",
+    "heildarpípa"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "br-dagurinn",
+   "titill": "Dagurinn (Brunahólf)",
+   "tegund": "iframe-brunaholf",
+   "leid": "https://brunaholf.netlify.app/?embed=1#dagurinn",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bh:framendi"
+   ],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "br-reikningagerd",
+   "titill": "Reikningagerð (Brunahólf)",
+   "tegund": "iframe-brunaholf",
+   "leid": "https://brunaholf.netlify.app/?embed=1#reikningar",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bh:bokari"
+   ],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "br-skuldunautar",
+   "titill": "Skuldunautar (Brunahólf)",
+   "tegund": "iframe-brunaholf",
+   "leid": "https://brunaholf.netlify.app/?embed=1#skuldunautar",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bh:rukkari"
+   ],
+   "kveikjuord": [
+    "skuldunautar",
+    "útistandandi"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "br-hreyfingar",
+   "titill": "Hreyfingaryfirlit (Brunahólf)",
+   "tegund": "iframe-brunaholf",
+   "leid": "https://brunaholf.netlify.app/?embed=1#hreyfingaryfirlit",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bh:rukkari"
+   ],
+   "kveikjuord": [
+    "hreyfingaryfirlit"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "br-verkstadir",
+   "titill": "Verkstaðir (Brunahólf)",
+   "tegund": "iframe-brunaholf",
+   "leid": "https://brunaholf.netlify.app/?embed=1#verkstadir",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bh:bokari"
+   ],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "br-nlsh",
+   "titill": "Landsspítalinn (Brunahólf)",
+   "tegund": "iframe-brunaholf",
+   "leid": "https://brunaholf.netlify.app/?embed=1#nlsh",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bh:bokari"
+   ],
+   "kveikjuord": [
+    "NLSH",
+    "öryggisfé",
+    "frosinn mánuður"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "br-efnisnotkun",
+   "titill": "Efnisnotkun · verkstjórar skrá efni á verk",
+   "tegund": "iframe-brunaholf",
+   "leid": "https://brunaholf.netlify.app/brunathettingar?embed=1",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bh:verkstadur"
+   ],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "br-fra-verkstad",
+   "titill": "Frá verkstað · efnisnotkun per verk",
+   "tegund": "iframe-brunaholf",
+   "leid": "https://brunaholf.netlify.app/?embed=1#verkstadapostur",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bh:verkstadur"
+   ],
+   "kveikjuord": [
+    "Frá verkstað"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "br-verkkaupar",
+   "titill": "Verkkaupar (Brunahólf)",
+   "tegund": "iframe-brunaholf",
+   "leid": "https://brunaholf.netlify.app/verkkaupar.html",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bh:kunnaskra"
+   ],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "br-jarvis",
+   "titill": "J.A.R.V.I.S. (Brunahólf)",
+   "tegund": "iframe-brunaholf",
+   "leid": "https://brunaholf.netlify.app/jarvis.html?embed=1",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bh:jarvis"
+   ],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "br-raddminni",
+   "titill": "Raddminni (Brunahólf)",
+   "tegund": "iframe-brunaholf",
+   "leid": "https://brunaholf.netlify.app/radd.html",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bh:jarvis"
+   ],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "br-kerfisheilsa",
+   "titill": "Kerfisheilsa (Brunahólf)",
+   "tegund": "iframe-brunaholf",
+   "leid": "https://brunaholf.netlify.app/kerfisheilsa.html",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bh:tengingar"
+   ],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "br-thjonustugatt",
+   "titill": "Þjónustugátt · stjórnborð (kúnnavefir)",
+   "tegund": "sida",
+   "leid": "/gatt-admin/",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "thjonustugatt",
+   "undiragentar": [
+    "bh:oryggi"
+   ],
+   "kveikjuord": [
+    "gatt-admin",
+    "opna sem kúnni"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "br-yfirferd",
+   "titill": "Yfirferð efnislista (Brunahólf)",
+   "tegund": "iframe-brunaholf",
+   "leid": "https://brunaholf.netlify.app/yfirferd.html",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bh:bokari"
+   ],
+   "kveikjuord": [
+    "yfirferð efnislista"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "br-eydublod",
+   "titill": "Eyðublöð (Brunahólf)",
+   "tegund": "iframe-brunaholf",
+   "leid": "https://brunaholf.netlify.app/eydublod.html",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bh:skjol"
+   ],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "br-skyrslustod",
+   "titill": "Skýrslu-stöð (Brunahólf)",
+   "tegund": "iframe-brunaholf",
+   "leid": "https://brunaholf.netlify.app/?embed=1#skyrslustod",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bh:skjol"
+   ],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "br-driveleit",
+   "titill": "Drive-leit (Brunahólf)",
+   "tegund": "iframe-brunaholf",
+   "leid": "https://brunaholf.netlify.app/?embed=1#driveleit",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bh:skjol"
+   ],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "br-postleit",
+   "titill": "Póstleit (Brunahólf)",
+   "tegund": "iframe-brunaholf",
+   "leid": "https://brunaholf.netlify.app/?embed=1#postleit",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bh:postur"
+   ],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "3dwork",
+   "titill": "3dwork — merkja/CAD-bekkur",
+   "tegund": "iframe-kjarni",
+   "leid": "https://kjarni-3dwork.vercel.app/3dwork",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "kj:3dwork"
+   ],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "brunaaaetlun",
+   "titill": "Brunaáætlun — rýmingaráætlun, eigið eftirlit, flóttaáætlanir",
+   "tegund": "sida",
+   "leid": "/brunaaaetlun/",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "thjonustugatt",
+   "undiragentar": [
+    "arnold"
+   ],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "app:fjarmal",
+   "titill": "Fjármál (app)",
+   "tegund": "app",
+   "leid": "/app/fjarmal/",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "sala-reikningar"
+   ],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "app:verkefni",
+   "titill": "Þjónustuborð (app)",
+   "tegund": "app",
+   "leid": "/app/verkefni/",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bord-flettur",
+    "samthykktir"
+   ],
+   "kveikjuord": [
+    "Þjónustuborðs-appið"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "app:brunaholf",
+   "titill": "Brunahólf (app)",
+   "tegund": "app",
+   "leid": "/app/brunaholf/",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bh:framendi"
+   ],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "app:verkstjorar",
+   "titill": "Verkstjórar (app)",
+   "tegund": "app",
+   "leid": "/app/verkstjorar/",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bh:verkstadur"
+   ],
+   "kveikjuord": [
+    "Verkstjórar",
+    "efnisnotkun"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "app:skyrslustod",
+   "titill": "Skýrslu-stöð (app)",
+   "tegund": "app",
+   "leid": "/app/skyrslustod/",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bh:skjol"
+   ],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "app:brunakerfi",
+   "titill": "Brunakerfi (app)",
+   "tegund": "app",
+   "leid": "/app/brunakerfi/",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "elon-musk"
+   ],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "app:bilstjori",
+   "titill": "Bílstjóri (app)",
+   "tegund": "app",
+   "leid": "/app/bilstjori/",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bord-flettur",
+    "kort"
+   ],
+   "kveikjuord": [
+    "bílstjóra-appið"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "app:boss",
+   "titill": "The Big Boss (app)",
+   "tegund": "app",
+   "leid": "/app/boss/",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "bord-flettur"
+   ],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "app:threedwork",
+   "titill": "3dwork (app)",
+   "tegund": "app",
+   "leid": "/app/threedwork/",
+   "skilgreind": [
+    "js/patches/261-app-profiles.js"
+   ],
+   "yfir": null,
+   "eigandi": "opp",
+   "undiragentar": [
+    "kj:3dwork"
+   ],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "vinnusamantekt",
+   "titill": "Vinnusamantekt (efst á Þjónustuborði)",
+   "tegund": "view",
+   "leid": "#bord (eining efst)",
+   "skilgreind": [
+    "js/patches/489-vinnusamantekt.js"
+   ],
+   "yfir": null,
+   "eigandi": "bord-flettur",
+   "undiragentar": [
+    "samthykktir"
+   ],
+   "kveikjuord": [
+    "Vinnusamantekt",
+    "ljós eftir alvarleika",
+    "hve margar villur"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "samningar",
+   "titill": "Þjónustusamningar",
+   "tegund": "view",
+   "leid": "#samningar",
+   "skilgreind": [
+    "js/patches/50-service-contracts.js"
+   ],
+   "yfir": null,
+   "eigandi": "sala-reikningar",
+   "undiragentar": [
+    "logfraedingur",
+    "kunnaskra"
+   ],
+   "kveikjuord": [
+    "þjónustusamningur",
+    "rukka samning",
+    "Þjónustusamningar",
+    "samningur"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "soluyfirlit",
+   "titill": "Söluyfirlit",
+   "tegund": "view",
+   "leid": "#soluyfirlit",
+   "skilgreind": [
+    "js/patches/54-sales-analytics.js"
+   ],
+   "yfir": null,
+   "eigandi": "sala-reikningar",
+   "undiragentar": [],
+   "kveikjuord": [
+    "söluyfirlit",
+    "stærstu kúnnar",
+    "Söluyfirlit"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "kreditfaera",
+   "titill": "Kreditfæra reikning",
+   "tegund": "view",
+   "leid": "#bokhald (Kreditfæra)",
+   "skilgreind": [
+    "js/patches/92-credit-by-num.js",
+    "js/patches/26-credit-invoice.js"
+   ],
+   "yfir": null,
+   "eigandi": "sala-reikningar",
+   "undiragentar": [
+    "natalie"
+   ],
+   "kveikjuord": [
+    "kreditfæra",
+    "bakfæra",
+    "kreditnóta",
+    "Kreditfæra",
+    "kreditreikningur"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "akstur",
+   "titill": "Akstursdagbók",
+   "tegund": "view",
+   "leid": "view-akstur",
+   "skilgreind": [
+    "js/patches/47-mileage-log.js"
+   ],
+   "yfir": null,
+   "eigandi": "bord-flettur",
+   "undiragentar": [],
+   "kveikjuord": [
+    "akstursdagbók",
+    "km-gjald",
+    "Akstursdagbók"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "taeknimenn",
+   "titill": "Tæknimenn + skírteini",
+   "tegund": "view",
+   "leid": "view-taeknimenn",
+   "skilgreind": [
+    "js/patches/59-technicians.js"
+   ],
+   "yfir": null,
+   "eigandi": "bord-flettur",
+   "undiragentar": [
+    "arnold"
+   ],
+   "kveikjuord": [
+    "tæknimenn",
+    "skírteini",
+    "löggilding",
+    "starfsleyfi",
+    "Tæknimenn"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "stjornstod",
+   "titill": "Stjórnstöð",
+   "tegund": "view",
+   "leid": "#stjornstod",
+   "skilgreind": [
+    "js/patches/61-command-center.js",
+    "js/patches/420-stjornstod-samstilling.js"
+   ],
+   "yfir": null,
+   "eigandi": "bord-flettur",
+   "undiragentar": [
+    "samthykktir"
+   ],
+   "kveikjuord": [
+    "Stjórnstöð",
+    "Hreinsa Þjónustuborð",
+    "Sækja"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "uppferslubord",
+   "titill": "Uppfærsluborð",
+   "tegund": "view",
+   "leid": "#uppferslubord",
+   "skilgreind": [
+    "js/patches/431-uppferslubord.js"
+   ],
+   "yfir": null,
+   "eigandi": "bord-flettur",
+   "undiragentar": [
+    "kodafraedingur"
+   ],
+   "kveikjuord": [
+    "Uppfærsluborð",
+    "endursóknir"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "postsvorun",
+   "titill": "Póstsvörun",
+   "tegund": "sida",
+   "leid": "/postsvorun.html",
+   "skilgreind": [
+    "postsvorun.html"
+   ],
+   "yfir": null,
+   "eigandi": "postur",
+   "undiragentar": [
+    "samthykktir"
+   ],
+   "kveikjuord": [
+    "Póstsvörun",
+    "póstsvörun",
+    "Cowork-svör",
+    "tilbúin svör"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "kunnaskra-html",
+   "titill": "Kúnnaskrá (stök síða)",
+   "tegund": "sida",
+   "leid": "/kunnaskra.html",
+   "skilgreind": [
+    "kunnaskra.html"
+   ],
+   "yfir": null,
+   "eigandi": "kunnaskra",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Kúnnaskrá"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "uppgjorslisti",
+   "titill": "Uppgjörslisti",
+   "tegund": "sida",
+   "leid": "/uppgjorslisti.html",
+   "skilgreind": [
+    "uppgjorslisti.html"
+   ],
+   "yfir": null,
+   "eigandi": "sala-reikningar",
+   "undiragentar": [
+    "rukkari"
+   ],
+   "kveikjuord": [
+    "uppgjör dagsins",
+    "uppgjörslisti"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "hreyfingaryfirlit-html",
+   "titill": "Hreyfingaryfirlit (stök síða)",
+   "tegund": "sida",
+   "leid": "/hreyfingaryfirlit.html",
+   "skilgreind": [
+    "hreyfingaryfirlit.html"
+   ],
+   "yfir": null,
+   "eigandi": "sala-reikningar",
+   "undiragentar": [
+    "rukkari"
+   ],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "innskraning",
+   "titill": "Innskráning",
+   "tegund": "sida",
+   "leid": "/innskraning.html",
+   "skilgreind": [
+    "innskraning.html"
+   ],
+   "yfir": null,
+   "eigandi": "bord-flettur",
+   "undiragentar": [
+    "bh:oryggi"
+   ],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "gatt",
+   "titill": "Þjónustugátt (kúnnavefur)",
+   "tegund": "sida",
+   "leid": "/gatt/?c=<slug>[&eign=<id>]",
+   "skilgreind": [
+    "gatt/index.html",
+    "netlify/functions/gatt.cjs",
+    "netlify/functions/_portal.cjs"
+   ],
+   "yfir": null,
+   "eigandi": "thjonustugatt",
+   "undiragentar": [
+    "sara-coworker",
+    "kunnaskra",
+    "bh:oryggi"
+   ],
+   "kveikjuord": [
+    "þjónustugátt",
+    "kúnnavefur",
+    "opinn aðgangur"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "gatt-q",
+   "titill": "Tilkynna (QR)",
+   "tegund": "sida",
+   "leid": "/gatt/q/?t=<qr>",
+   "skilgreind": [
+    "gatt/q/index.html",
+    "netlify/functions/gatt-qr.cjs"
+   ],
+   "yfir": null,
+   "eigandi": "thjonustugatt",
+   "undiragentar": [
+    "prentun"
+   ],
+   "kveikjuord": [
+    "Tilkynna",
+    "QR-tilkynning"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "gatt-stuttslod",
+   "titill": "Stuttslóðir gáttar",
+   "tegund": "sida",
+   "leid": "/g/:slug · /heimaleiga",
+   "skilgreind": [
+    "netlify.toml"
+   ],
+   "yfir": null,
+   "eigandi": "thjonustugatt",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "rymingaraetlun",
+   "titill": "Rýmingaráætlun",
+   "tegund": "sida",
+   "leid": "/rymingaraetlun/?fyrirtaeki=<id>",
+   "skilgreind": [
+    "rymingaraetlun/index.html",
+    "js/patches/464-brunaaaetlun-takki.js"
+   ],
+   "yfir": null,
+   "eigandi": "thjonustugatt",
+   "undiragentar": [
+    "arnold"
+   ],
+   "kveikjuord": [
+    "rýmingaráætlun"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "vefverslun",
+   "titill": "Vefverslun (prufa)",
+   "tegund": "sida",
+   "leid": "/vefverslun/",
+   "skilgreind": [
+    "vefverslun/index.html",
+    "netlify/functions/vefverslun.cjs"
+   ],
+   "yfir": null,
+   "eigandi": "thjonustugatt",
+   "undiragentar": [
+    "sala-reikningar"
+   ],
+   "kveikjuord": [
+    "vefverslun",
+    "netverslun"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "portal-v1",
+   "titill": "Gamla kúnnagáttin (v1)",
+   "tegund": "view",
+   "leid": "index.html#portal=<base64 id>",
+   "skilgreind": [
+    "js/patches/51-customer-portal.js"
+   ],
+   "yfir": null,
+   "eigandi": "thjonustugatt",
+   "undiragentar": [
+    "bh:oryggi",
+    "kodafraedingur"
+   ],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "spotify",
+   "titill": "Spotify",
+   "tegund": "sida",
+   "leid": "/spotify/",
+   "skilgreind": [
+    "spotify"
+   ],
+   "yfir": null,
+   "eigandi": null,
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": "ekki rekstur",
+   "stada": "❌",
+   "astaeda": [
+    "enginn eigandi"
+   ]
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "img-safn",
+   "titill": "Myndasafn (img/safn)",
+   "tegund": "sida",
+   "leid": "/img/safn/",
+   "skilgreind": [
+    "img/safn"
+   ],
+   "yfir": null,
+   "eigandi": null,
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": "ekki rekstur",
+   "stada": "❌",
+   "astaeda": [
+    "enginn eigandi"
+   ]
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
+   "id": "docs",
+   "titill": "Kennslubækur (docs/)",
+   "tegund": "sida",
+   "leid": "/docs/index.html",
+   "skilgreind": [
+    "docs/index.html"
+   ],
+   "yfir": null,
+   "eigandi": null,
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": "ekki rekstur",
+   "stada": "❌",
+   "astaeda": [
+    "enginn eigandi"
+   ]
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/[slug]",
+   "titill": "Síðuritils-síða",
+   "tegund": "sida",
+   "leid": "/[slug]",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/[slug]/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "kjarni-vefur",
+   "undiragentar": [],
+   "kveikjuord": [
+    "síðuritill",
+    "um-okkur"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/api/andlit (api)",
+   "titill": "InstantID",
+   "tegund": "api",
+   "leid": "/api/andlit",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/api/andlit/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/api/breyta/background (api)",
+   "titill": "Nýr bakgrunnur",
+   "tegund": "api",
+   "leid": "/api/breyta/background",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/api/breyta/background/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/api/breyta/headshot (api)",
+   "titill": "Pro headshot",
+   "tegund": "api",
+   "leid": "/api/breyta/headshot",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/api/breyta/headshot/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/api/breyta/pruna (api)",
+   "titill": "Hraðbreyta (pruna)",
+   "tegund": "api",
+   "leid": "/api/breyta/pruna",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/api/breyta/pruna/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/api/dypt (api)",
+   "titill": "Depth Anything",
+   "tegund": "api",
+   "leid": "/api/dypt",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/api/dypt/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/api/endurljos (api)",
+   "titill": "IC-Light",
+   "tegund": "api",
+   "leid": "/api/endurljos",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/api/endurljos/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/api/innblastur (api)",
+   "titill": "Flux Redux",
+   "tegund": "api",
+   "leid": "/api/innblastur",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/api/innblastur/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/api/litun (api)",
+   "titill": "DDColor",
+   "tegund": "api",
+   "leid": "/api/litun",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/api/litun/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/api/myndband-andlit (api)",
+   "titill": "roop face-swap ræsa",
+   "tegund": "api",
+   "leid": "/api/myndband-andlit",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/api/myndband-andlit/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/api/myndband-andlit/status (api)",
+   "titill": "roop face-swap staða",
+   "tegund": "api",
+   "leid": "/api/myndband-andlit/status",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/api/myndband-andlit/status/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/api/skyjahreyfimynd/kling (api)",
+   "titill": "Kling ræsa",
+   "tegund": "api",
+   "leid": "/api/skyjahreyfimynd/kling",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/api/skyjahreyfimynd/kling/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/api/skyjahreyfimynd/kling/status (api)",
+   "titill": "Kling staða",
+   "tegund": "api",
+   "leid": "/api/skyjahreyfimynd/kling/status",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/api/skyjahreyfimynd/kling/status/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/api/skyjahreyfimynd (api)",
+   "titill": "Wan 2.2 ræsa",
+   "tegund": "api",
+   "leid": "/api/skyjahreyfimynd",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/api/skyjahreyfimynd/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/api/skyjahreyfimynd/status (api)",
+   "titill": "Wan 2.2 staða",
+   "tegund": "api",
+   "leid": "/api/skyjahreyfimynd/status",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/api/skyjahreyfimynd/status/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/api/skyjastudio/flux-fill (api)",
+   "titill": "Skýjastúdíó Flux Fill",
+   "tegund": "api",
+   "leid": "/api/skyjastudio/flux-fill",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/api/skyjastudio/flux-fill/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/api/skyjastudio/juggernaut (api)",
+   "titill": "Skýjastúdíó Juggernaut",
+   "tegund": "api",
+   "leid": "/api/skyjastudio/juggernaut",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/api/skyjastudio/juggernaut/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/api/skyjastudio/replicate (api)",
+   "titill": "Skýjastúdíó SDXL",
+   "tegund": "api",
+   "leid": "/api/skyjastudio/replicate",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/api/skyjastudio/replicate/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/api/tonsmid (api)",
+   "titill": "ElevenLabs Music ræsa",
+   "tegund": "api",
+   "leid": "/api/tonsmid",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/api/tonsmid/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/api/tonsmid/status (api)",
+   "titill": "ElevenLabs Music staða",
+   "tegund": "api",
+   "leid": "/api/tonsmid/status",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/api/tonsmid/status/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/api/turbopaint/fetch-plan (api)",
+   "titill": "Sækja teikningu (fetch-plan)",
+   "tegund": "api",
+   "leid": "/api/turbopaint/fetch-plan",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/api/turbopaint/fetch-plan/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "sl:arnold",
+   "undiragentar": [
+    "elon-musk"
+   ],
+   "kveikjuord": [
+    "sækja teikningu"
+   ],
+   "merki": null,
+   "stada": "⚠️",
+   "astaeda": [
+    "eigandi „sl:arnold“ er ekki í registry"
+   ]
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/api/turbopaint/teikningar (api)",
+   "titill": "Teikningaleit",
+   "tegund": "api",
+   "leid": "/api/turbopaint/teikningar",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/api/turbopaint/teikningar/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "sl:arnold",
+   "undiragentar": [
+    "elon-musk"
+   ],
+   "kveikjuord": [
+    "teikningaleit"
+   ],
+   "merki": null,
+   "stada": "⚠️",
+   "astaeda": [
+    "eigandi „sl:arnold“ er ekki í registry"
+   ]
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/api/upplyfting/clarity (api)",
+   "titill": "Clarity ræsa",
+   "tegund": "api",
+   "leid": "/api/upplyfting/clarity",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/api/upplyfting/clarity/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/api/upplyfting/clarity/status (api)",
+   "titill": "Clarity staða",
+   "tegund": "api",
+   "leid": "/api/upplyfting/clarity/status",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/api/upplyfting/clarity/status/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/api/upplyfting (api)",
+   "titill": "Topaz upplyfting",
+   "tegund": "api",
+   "leid": "/api/upplyfting",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/api/upplyfting/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/api/utvikka (api)",
+   "titill": "Flux Fill outpaint",
+   "tegund": "api",
+   "leid": "/api/utvikka",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/api/utvikka/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/api/video-upplyfting (api)",
+   "titill": "Real-ESRGAN video ræsa",
+   "tegund": "api",
+   "leid": "/api/video-upplyfting",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/api/video-upplyfting/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/api/video-upplyfting/status (api)",
+   "titill": "Real-ESRGAN video staða",
+   "tegund": "api",
+   "leid": "/api/video-upplyfting/status",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/api/video-upplyfting/status/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/api/vidgerd/replicate (api)",
+   "titill": "Viðgerð (Replicate)",
+   "tegund": "api",
+   "leid": "/api/vidgerd/replicate",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/api/vidgerd/replicate/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/bord",
+   "titill": "Borð — stjórnborð",
+   "tegund": "sida",
+   "leid": "/bord",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/bord/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "sl:bord-flettur",
+   "undiragentar": [
+    "kjarni-vefur"
+   ],
+   "kveikjuord": [
+    "borð",
+    "spjöld"
+   ],
+   "merki": null,
+   "stada": "⚠️",
+   "astaeda": [
+    "eigandi „sl:bord-flettur“ er ekki í registry"
+   ]
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/borgarferdir",
+   "titill": "Borgarferðir — Manchester · Glasgow",
+   "tegund": "sida",
+   "leid": "/borgarferdir",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/borgarferdir/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "kjarni-vefur",
+   "undiragentar": [],
+   "kveikjuord": [
+    "borgarferðir"
+   ],
+   "merki": "personulegt",
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/draft",
+   "titill": "Prufusvæði — blokkir, þemu & skikt",
+   "tegund": "sida",
+   "leid": "/draft",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/draft/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "kjarni-vefur",
+   "undiragentar": [
+    "joker"
+   ],
+   "kveikjuord": [
+    "prufusvæði"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kerfi",
+   "titill": "Kerfi — þjónustukerfi",
+   "tegund": "sida",
+   "leid": "/kerfi",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kerfi/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "sl:bord-flettur",
+   "undiragentar": [
+    "kjarni-vefur",
+    "kort"
+   ],
+   "kveikjuord": [
+    "þjónustukerfi"
+   ],
+   "merki": null,
+   "stada": "⚠️",
+   "astaeda": [
+    "eigandi „sl:bord-flettur“ er ekki í registry"
+   ]
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/artcraft/[app]",
+   "titill": "<forrit> — Kjarni (13: photocraft…gridcraft)",
+   "tegund": "sida",
+   "leid": "/kjarni/artcraft/[app]",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/artcraft/[app]/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "PhotoCraft",
+    "PdfCraft",
+    "CADCraft"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/artcraft/andlit",
+   "titill": "Andlit",
+   "tegund": "sida",
+   "leid": "/kjarni/artcraft/andlit",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/artcraft/andlit/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Andlit",
+    "InstantID"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/artcraft/bakgrunnur",
+   "titill": "Bakgrunnur / Á hvítan bakgrunn",
+   "tegund": "sida",
+   "leid": "/kjarni/artcraft/bakgrunnur",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/artcraft/bakgrunnur/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "vörumynd",
+    "hvítur bakgrunnur"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/artcraft/breyta",
+   "titill": "Breyta mynd",
+   "tegund": "sida",
+   "leid": "/kjarni/artcraft/breyta",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/artcraft/breyta/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Breyta mynd",
+    "headshot"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/artcraft/comfy",
+   "titill": "ComfyUI",
+   "tegund": "sida",
+   "leid": "/kjarni/artcraft/comfy",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/artcraft/comfy/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "ComfyUI"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/artcraft/dypt",
+   "titill": "Dýpt",
+   "tegund": "sida",
+   "leid": "/kjarni/artcraft/dypt",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/artcraft/dypt/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Dýpt",
+    "dýptarkort"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/artcraft/endurljos",
+   "titill": "Endurljós",
+   "tegund": "sida",
+   "leid": "/kjarni/artcraft/endurljos",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/artcraft/endurljos/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Endurljós",
+    "IC-Light"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/artcraft/hreyfimynd",
+   "titill": "Hreyfimynd",
+   "tegund": "sida",
+   "leid": "/kjarni/artcraft/hreyfimynd",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/artcraft/hreyfimynd/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Hreyfimynd",
+    "Wan 2.1"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/artcraft/innblastur",
+   "titill": "Innblástur",
+   "tegund": "sida",
+   "leid": "/kjarni/artcraft/innblastur",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/artcraft/innblastur/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Innblástur",
+    "Flux Redux"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/artcraft/kastljos",
+   "titill": "Kastljós",
+   "tegund": "sida",
+   "leid": "/kjarni/artcraft/kastljos",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/artcraft/kastljos/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Kastljós",
+    "birta"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/artcraft/leidarvisir",
+   "titill": "Leiðarvísir — ArtCraft",
+   "tegund": "sida",
+   "leid": "/kjarni/artcraft/leidarvisir",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/artcraft/leidarvisir/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Leiðarvísir"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/artcraft/litun",
+   "titill": "Litun",
+   "tegund": "sida",
+   "leid": "/kjarni/artcraft/litun",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/artcraft/litun/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Litun",
+    "svart/hvítt"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/artcraft/mota",
+   "titill": "Móta",
+   "tegund": "sida",
+   "leid": "/kjarni/artcraft/mota",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/artcraft/mota/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Móta"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/artcraft/myndband-andlit",
+   "titill": "Myndband-andlit",
+   "tegund": "sida",
+   "leid": "/kjarni/artcraft/myndband-andlit",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/artcraft/myndband-andlit/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Myndband-andlit",
+    "face-lock"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/artcraft/myndband-framhald",
+   "titill": "Myndband-framhald",
+   "tegund": "sida",
+   "leid": "/kjarni/artcraft/myndband-framhald",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/artcraft/myndband-framhald/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Myndband-framhald",
+    "teygja myndband"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/artcraft/myndband-portret-andlit",
+   "titill": "Myndband-portret-andlit",
+   "tegund": "sida",
+   "leid": "/kjarni/artcraft/myndband-portret-andlit",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/artcraft/myndband-portret-andlit/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "portret-andlit"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/artcraft/myndband-saumur",
+   "titill": "Myndbanda-saumur",
+   "tegund": "sida",
+   "leid": "/kjarni/artcraft/myndband-saumur",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/artcraft/myndband-saumur/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Myndbanda-saumur"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/artcraft",
+   "titill": "ArtCraft — yfirlit",
+   "tegund": "sida",
+   "leid": "/kjarni/artcraft",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/artcraft/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "ArtCraft"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/artcraft/skyjahreyfimynd",
+   "titill": "Skýjahreyfimynd",
+   "tegund": "sida",
+   "leid": "/kjarni/artcraft/skyjahreyfimynd",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/artcraft/skyjahreyfimynd/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Skýjahreyfimynd",
+    "Wan 2.2",
+    "Kling"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/artcraft/skyjastudio",
+   "titill": "Skýjastúdíó",
+   "tegund": "sida",
+   "leid": "/kjarni/artcraft/skyjastudio",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/artcraft/skyjastudio/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Skýjastúdíó",
+    "SDXL",
+    "Juggernaut"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/artcraft/studio",
+   "titill": "Einkastúdíó",
+   "tegund": "sida",
+   "leid": "/kjarni/artcraft/studio",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/artcraft/studio/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Einkastúdíó",
+    "Forge"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/artcraft/tol",
+   "titill": "Sjálfvirk tól",
+   "tegund": "sida",
+   "leid": "/kjarni/artcraft/tol",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/artcraft/tol/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Autogenerator",
+    "Tól"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/artcraft/tonsmid",
+   "titill": "Tónsmíð",
+   "tegund": "sida",
+   "leid": "/kjarni/artcraft/tonsmid",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/artcraft/tonsmid/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Tónsmíð",
+    "jingill"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/artcraft/upplyfting",
+   "titill": "Upplyfting",
+   "tegund": "sida",
+   "leid": "/kjarni/artcraft/upplyfting",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/artcraft/upplyfting/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Upplyfting",
+    "Topaz",
+    "Clarity"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/artcraft/utvikka",
+   "titill": "Útvíkka",
+   "tegund": "sida",
+   "leid": "/kjarni/artcraft/utvikka",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/artcraft/utvikka/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Útvíkka",
+    "outpaint"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/artcraft/video-upplyfting",
+   "titill": "Myndbanda-upplyfting",
+   "tegund": "sida",
+   "leid": "/kjarni/artcraft/video-upplyfting",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/artcraft/video-upplyfting/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Myndbanda-upplyfting",
+    "4K"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/artcraft/vidgerd",
+   "titill": "Ljósmyndaviðgerð",
+   "tegund": "sida",
+   "leid": "/kjarni/artcraft/vidgerd",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/artcraft/vidgerd/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Ljósmyndaviðgerð",
+    "óskýrt andlit"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/artcraft/vinnslur",
+   "titill": "Verkbók",
+   "tegund": "sida",
+   "leid": "/kjarni/artcraft/vinnslur",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/artcraft/vinnslur/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Verkbók",
+    "vinnslur"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni",
+   "titill": "Kjarni — Stjórnstöð",
+   "tegund": "sida",
+   "leid": "/kjarni",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "kjarni-vefur",
+   "undiragentar": [
+    "joker",
+    "thema"
+   ],
+   "kveikjuord": [
+    "Stjórnstöð",
+    "Ragnarök"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/skraning/flokkar",
+   "titill": "Skráning — flokkar, gátlisti og starfsmenn",
+   "tegund": "sida",
+   "leid": "/kjarni/skraning/flokkar",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/skraning/flokkar/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "skraning",
+   "undiragentar": [
+    "gagnaleidslur",
+    "bokari"
+   ],
+   "kveikjuord": [
+    "gátlisti",
+    "Gat Ø",
+    "stærðarflokkar"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/skraning/greining",
+   "titill": "Skráning — greining",
+   "tegund": "sida",
+   "leid": "/kjarni/skraning/greining",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/skraning/greining/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "skraning",
+   "undiragentar": [
+    "gagnaleidslur"
+   ],
+   "kveikjuord": [
+    "Greining",
+    "Power BI"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/skraning",
+   "titill": "Skráning — Kjarni",
+   "tegund": "sida",
+   "leid": "/kjarni/skraning",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/skraning/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "skraning",
+   "undiragentar": [
+    "gagnaleidslur",
+    "bokari"
+   ],
+   "kveikjuord": [
+    "Skráning & QA",
+    "verk"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/skraning/prenta",
+   "titill": "Skráning — prenta teikningu",
+   "tegund": "sida",
+   "leid": "/kjarni/skraning/prenta",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/skraning/prenta/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "skraning",
+   "undiragentar": [
+    "gagnaleidslur"
+   ],
+   "kveikjuord": [
+    "Hæðarskýrsla"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/skraning/verk",
+   "titill": "Skráning — byggingar og teikningar",
+   "tegund": "sida",
+   "leid": "/kjarni/skraning/verk",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/skraning/verk/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "skraning",
+   "undiragentar": [
+    "gagnaleidslur"
+   ],
+   "kveikjuord": [
+    "bygging",
+    "grunnmynd"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/skraning/vinna",
+   "titill": "Skráning — vinna",
+   "tegund": "sida",
+   "leid": "/kjarni/skraning/vinna",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/skraning/vinna/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "skraning",
+   "undiragentar": [
+    "gagnaleidslur"
+   ],
+   "kveikjuord": [
+    "Vinnuútgáfa",
+    "pinni",
+    "merkja lokið"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/skraning/yfirsyn",
+   "titill": "Skráning — yfirsýn",
+   "tegund": "sida",
+   "leid": "/kjarni/skraning/yfirsyn",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/skraning/yfirsyn/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "skraning",
+   "undiragentar": [
+    "gagnaleidslur"
+   ],
+   "kveikjuord": [
+    "Yfirsýn",
+    "afköst"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/turbopaint",
+   "titill": "TurboPaint — Kjarni",
+   "tegund": "sida",
+   "leid": "/kjarni/turbopaint",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/turbopaint/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "sl:arnold",
+   "undiragentar": [
+    "elon-musk",
+    "joker",
+    "jarvis"
+   ],
+   "kveikjuord": [
+    "TurboPaint",
+    "gólfplan",
+    "veggjaritill",
+    "Lagna-hamur"
+   ],
+   "merki": null,
+   "stada": "⚠️",
+   "astaeda": [
+    "eigandi „sl:arnold“ er ekki í registry"
+   ]
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/marks",
+   "titill": "Marks (tilvísun)",
+   "tegund": "sida",
+   "leid": "/marks",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/marks/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "kjarni-vefur",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": "dauð leið (next.config redirect skyggir)",
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/",
+   "titill": "Brunavarnir í öruggum höndum",
+   "tegund": "sida",
+   "leid": "/",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "kjarni-vefur",
+   "undiragentar": [
+    "joker"
+   ],
+   "kveikjuord": [
+    "forsíða",
+    "fyrirspurn"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/s/[slug]",
+   "titill": "Nýr vefur",
+   "tegund": "sida",
+   "leid": "/s/[slug]",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/s/[slug]/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "kjarni-vefur",
+   "undiragentar": [],
+   "kveikjuord": [
+    "nýr vefur"
+   ],
+   "merki": "stubbur",
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/skjalarinn",
+   "titill": "Skjalarinn — skjöl · pdf · lestur",
+   "tegund": "sida",
+   "leid": "/skjalarinn",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/skjalarinn/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "bh:skjol",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Skjalarinn",
+    "PDF-vinnslustöð"
+   ],
+   "merki": null,
+   "stada": "⚠️",
+   "astaeda": [
+    "eigandi „bh:skjol“ er ekki í registry"
+   ]
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/stjorn",
+   "titill": "Stjórnborð — Brunahólf Slökkvitæki",
+   "tegund": "sida",
+   "leid": "/stjorn",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/stjorn/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "sl:bord-flettur",
+   "undiragentar": [
+    "kjarni-vefur"
+   ],
+   "kveikjuord": [
+    "stjórnborð",
+    "tilkynningaborði",
+    "Meta Pixel"
+   ],
+   "merki": null,
+   "stada": "⚠️",
+   "astaeda": [
+    "eigandi „sl:bord-flettur“ er ekki í registry"
+   ]
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/verslun",
+   "titill": "Verslun — Slökkvitæki ehf",
+   "tegund": "sida",
+   "leid": "/verslun",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/verslun/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "kjarni-vefur",
+   "undiragentar": [
+    "sala-reikningar"
+   ],
+   "kveikjuord": [
+    "verslun",
+    "vefverslun",
+    "karfa"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "web:/dashboard/new",
+   "titill": "Dashboard new (sniðmát)",
+   "tegund": "sida",
+   "leid": "/dashboard/new",
+   "skilgreind": [
+    "apps/web/src/app/(app-pages)/dashboard/new/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "kjarni-vefur",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": "ekki i notkun",
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "web:/dashboard",
+   "titill": "Dashboard (sniðmát)",
+   "tegund": "sida",
+   "leid": "/dashboard",
+   "skilgreind": [
+    "apps/web/src/app/(app-pages)/dashboard/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "kjarni-vefur",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": "ekki i notkun",
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "web:/private-item/[privateItemId]",
+   "titill": "Private Item (sniðmát)",
+   "tegund": "sida",
+   "leid": "/private-item/[privateItemId]",
+   "skilgreind": [
+    "apps/web/src/app/(app-pages)/private-item/[privateItemId]/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "kjarni-vefur",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": "ekki i notkun",
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "web:/private-items",
+   "titill": "Private Items (sniðmát)",
+   "tegund": "sida",
+   "leid": "/private-items",
+   "skilgreind": [
+    "apps/web/src/app/(app-pages)/private-items/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "kjarni-vefur",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": "ekki i notkun",
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "web:/auth/auth-code-error",
+   "titill": "Auth code error (sniðmát)",
+   "tegund": "sida",
+   "leid": "/auth/auth-code-error",
+   "skilgreind": [
+    "apps/web/src/app/(auth-pages)/auth/auth-code-error/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "kjarni-vefur",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": "ekki i notkun",
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "web:/auth/callback (api)",
+   "titill": "Auth callback (sniðmát)",
+   "tegund": "api",
+   "leid": "/auth/callback",
+   "skilgreind": [
+    "apps/web/src/app/(auth-pages)/auth/callback/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "kjarni-vefur",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": "ekki i notkun",
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "web:/auth/confirm (api)",
+   "titill": "Auth confirm (sniðmát)",
+   "tegund": "api",
+   "leid": "/auth/confirm",
+   "skilgreind": [
+    "apps/web/src/app/(auth-pages)/auth/confirm/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "kjarni-vefur",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": "ekki i notkun",
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "web:/forgot-password",
+   "titill": "Forgot password (sniðmát)",
+   "tegund": "sida",
+   "leid": "/forgot-password",
+   "skilgreind": [
+    "apps/web/src/app/(auth-pages)/forgot-password/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "kjarni-vefur",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": "ekki i notkun",
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "web:/login",
+   "titill": "Login (sniðmát)",
+   "tegund": "sida",
+   "leid": "/login",
+   "skilgreind": [
+    "apps/web/src/app/(auth-pages)/login/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "kjarni-vefur",
+   "undiragentar": [
+    "oryggi"
+   ],
+   "kveikjuord": [],
+   "merki": "ekki i notkun",
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "web:/sign-up",
+   "titill": "Sign up (sniðmát)",
+   "tegund": "sida",
+   "leid": "/sign-up",
+   "skilgreind": [
+    "apps/web/src/app/(auth-pages)/sign-up/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "kjarni-vefur",
+   "undiragentar": [
+    "oryggi"
+   ],
+   "kveikjuord": [],
+   "merki": "ekki i notkun",
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "web:/update-password",
+   "titill": "Update password (sniðmát)",
+   "tegund": "sida",
+   "leid": "/update-password",
+   "skilgreind": [
+    "apps/web/src/app/(auth-pages)/update-password/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "kjarni-vefur",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": "ekki i notkun",
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "web:/about",
+   "titill": "About (sniðmát)",
+   "tegund": "sida",
+   "leid": "/about",
+   "skilgreind": [
+    "apps/web/src/app/(external-pages)/about/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "kjarni-vefur",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": "ekki i notkun",
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "web:/borgarferdir",
+   "titill": "City trips from Keflavík",
+   "tegund": "sida",
+   "leid": "/borgarferdir",
+   "skilgreind": [
+    "apps/web/src/app/(external-pages)/borgarferdir/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "kjarni-vefur",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": "personulegt, tvitekid",
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "web:/",
+   "titill": "Nextbase-sniðmát",
+   "tegund": "sida",
+   "leid": "/",
+   "skilgreind": [
+    "apps/web/src/app/(external-pages)/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "kjarni-vefur",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": "ekki i notkun",
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "web:/3dwork",
+   "titill": "3dwork — STL bench",
+   "tegund": "sida",
+   "leid": "/3dwork",
+   "skilgreind": [
+    "apps/web/src/app/3dwork/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "skill:3dJoker",
+   "undiragentar": [],
+   "kveikjuord": [
+    "3dwork",
+    "STL",
+    "Raða"
+   ],
+   "merki": null,
+   "stada": "⚠️",
+   "astaeda": [
+    "eigandi „skill:3dJoker“ er ekki í registry"
+   ]
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "web:/api/3dwork/github/geometry/[id] (api)",
+   "titill": "3dwork geometry",
+   "tegund": "api",
+   "leid": "/api/3dwork/github/geometry/[id]",
+   "skilgreind": [
+    "apps/web/src/app/api/3dwork/github/geometry/[id]/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "skill:3dJoker",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "⚠️",
+   "astaeda": [
+    "eigandi „skill:3dJoker“ er ekki í registry"
+   ]
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "web:/api/3dwork/github/projects/[id] (api)",
+   "titill": "3dwork eitt verkefni",
+   "tegund": "api",
+   "leid": "/api/3dwork/github/projects/[id]",
+   "skilgreind": [
+    "apps/web/src/app/api/3dwork/github/projects/[id]/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "skill:3dJoker",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "⚠️",
+   "astaeda": [
+    "eigandi „skill:3dJoker“ er ekki í registry"
+   ]
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "web:/api/3dwork/github/projects (api)",
+   "titill": "3dwork verkefni",
+   "tegund": "api",
+   "leid": "/api/3dwork/github/projects",
+   "skilgreind": [
+    "apps/web/src/app/api/3dwork/github/projects/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "skill:3dJoker",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "⚠️",
+   "astaeda": [
+    "eigandi „skill:3dJoker“ er ekki í registry"
+   ]
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "web:/api/3dwork/github (api)",
+   "titill": "3dwork GitHub-sync",
+   "tegund": "api",
+   "leid": "/api/3dwork/github",
+   "skilgreind": [
+    "apps/web/src/app/api/3dwork/github/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "skill:3dJoker",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "⚠️",
+   "astaeda": [
+    "eigandi „skill:3dJoker“ er ekki í registry"
+   ]
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "web:/api/marks/preview (api)",
+   "titill": "Marks hlekkjaforskoðun",
+   "tegund": "api",
+   "leid": "/api/marks/preview",
+   "skilgreind": [
+    "apps/web/src/app/api/marks/preview/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "kjarni-vefur",
+   "undiragentar": [],
+   "kveikjuord": [],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "web:/marks/[boardId]",
+   "titill": "Marks — site",
+   "tegund": "sida",
+   "leid": "/marks/[boardId]",
+   "skilgreind": [
+    "apps/web/src/app/marks/[boardId]/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "kjarni-vefur",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Marks-borð"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "web:/marks",
+   "titill": "Marks — kjarni bookmarks",
+   "tegund": "sida",
+   "leid": "/marks",
+   "skilgreind": [
+    "apps/web/src/app/marks/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "kjarni-vefur",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Marks",
+    "bókamerki"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": []
+  }
+ ]
+}

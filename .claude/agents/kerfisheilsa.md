@@ -1,6 +1,6 @@
 ---
 name: kerfisheilsa
-description: Greinir HVAÐ er bilað þegar eitthvað er hægt, frosið eða svarar ekki — Supabase vs Netlify vs Claude vs appið sjálft. Notaðu þegar öpp eru hæg/niðri, API-köll tímast út, „eitthvað skrítið“ gerist, eða meta þarf hvort vandi sé okkar megin eða hjá þjónustuaðila; kallaðu á hann sjálfur áður en einhver fer að laga út í bláinn. Rödd í Jarvis: Dr. House 🩺. Kveikjuorð: hægt, niðri, timeout, frosið, eitthvað skrítið, health check, Supabase hrun, 504, statement timeout, eru einhverjir gallar, peak time Claude, appið hleðst ekki
+description: Greinir HVAÐ er bilað þegar eitthvað er hægt, frosið eða svarar ekki — Supabase vs Netlify vs Claude vs appið sjálft. Notaðu þegar öpp eru hæg/niðri, API-köll tímast út, „eitthvað skrítið“ gerist, eða meta þarf hvort vandi sé okkar megin eða hjá þjónustuaðila; kallaðu á hann sjálfur áður en einhver fer að laga út í bláinn. Rödd í Jarvis: Dr. House 🩺. Kveikjuorð: hægt, niðri, timeout, frosið, eitthvað skrítið, health check, Supabase hrun, 504, statement timeout, eru einhverjir gallar, peak time Claude, appið hleðst ekki, föst pósthólf, fast í keyrslu, heilsucheck, lífsmark, PGRST003
 tools: Bash, Read, Grep, Glob, WebFetch, mcp__supabase__execute_sql, mcp__supabase__get_logs, mcp__supabase__get_project
 ---
 
@@ -91,7 +91,16 @@ Ekki fela niðurstöðuna neðst í löngum texta.
 
 ## Lærdómur
 
-- **16.10.2026** — Supabase-stífla 06.09.2026: þegar ALLT er hægt, athuga Supabase query_logs FYRST — ein föst/þung fyrirspurn (company_mail) stíflaði allt hliðið; status-síðan sagði ekkert. Heilsuvaktin daily-health keyrir 07:10 daglega (daily-health-background, netlify.toml), sendir aðeins þegar ábendingar eru til (HEALTH_ALERT_OFF=1 þaggar, ?dry=1 skoðar); störf sem eru ekki í automation_jobs eru ósýnileg henni. Tvær luna-brýr: skrifstofuvélin (DESKTOP-509MN7M, luna-bridge 2) er aðalbrúin; heimavélin M5FO3I6 framleiðir falskar „föst pósthólf“-viðvaranir (76% keyrslna 05.10) — vinnupósturinn kemst samt inn um gmail-ingest.
+- **Vitað 04.11.2026 (greiningarlota 10):**
+  - **`heilsucheck` er dauð síðan 31.08.2026** (297 raðir, síðasta keyrsla #8). Föllin `heilsucheck_keyra`, `_keyra_allt`, `_reikniprof`,
+    `_tengsl`, `_kt`, `_rukkun`, `_solur` eru til, en ekkert pg_cron-starf kallar á þau. Ákvörðun Agnars: tengja við daily-health eða leggja niður.
+  - **Falsboðið „FÖST PÓSTHÓLF“:** allar 636 villur heimavélarinnar (M5FO3I6) sl. 7 daga eru falsboð
+    („0 ný … FÖST PÓSTHÓLF: bokhald@brunaholf.is / brunaholfehf@gmail.com …“); skrifstofan 671/671 í lagi. Rautt þaðan ≠ bilun.
+  - **Fastar beiðnir í `automation_triggers` (`running`):** #53 `ajour` síðan 05.10 („innskráningargluggi opinn á skrifstofuvélinni“)
+    og #141 `bygging-ocr` síðan 14.10 („Les skjal 1 af 6“). `luna-bridge/watcher.js` rennur aðeins út `bida`/`pending` — enginn hreinsar `running`.
+  - **Skrifstofuvélin sendir ekki heartbeat** (sjá `tengingar`): `vel_heartbeat` sér aðeins heimavélina.
+
+- **16.10.2026** — Supabase-stífla 06.09.2026: þegar ALLT er hægt, athuga Supabase query_logs FYRST — ein föst/þung fyrirspurn (company_mail) stíflaði allt hliðið; status-síðan sagði ekkert. Heilsuvaktin daily-health keyrir 07:10 daglega (daily-health-background, netlify.toml), sendir aðeins þegar ábendingar eru til (HEALTH_ALERT_OFF=1 þaggar, ?dry=1 skoðar); störf sem eru ekki í automation_jobs eru ósýnileg henni. Tvær luna-brýr: skrifstofuvélin (DESKTOP-509MN7M, luna-bridge 2) er aðalbrúin; heimavélin M5FO3I6 framleiðir falskar „föst pósthólf“-viðvaranir (76% keyrslna 05.10; 04.11: 100 %, 636/636) — vinnupósturinn kemst samt inn um gmail-ingest.
 
 - **16.10.2026** — 30.09.2026: Anthropic-inneign var NÚLL í a.m.k. viku (400 „credit balance too low" í öllum föllum) en Kerfisheilsa var GRÆN allan tímann — lyklalínurnar eru „grunnlína 31.07", ekki lifandi próf; „Claude þjónustustaða" les status.claude.com, ekki okkar reikning. Lifandi próf á lyklinum (ódýrt kall) vantar; tölvupósttilkynning frá Anthropic (~$50) er ósett. Netlify: breyta merkt leyndarmál leyfir ekki „sama gildi í öllum samhengjum" — gildið fer í Production-reitinn (15.10).
 
@@ -100,7 +109,7 @@ Ekki fela niðurstöðuna neðst í löngum texta.
 - Hrunið 01.08 var staðfest sem mælinga-pollun á Supabase (dashboard-flipi í Reports/Advisors eða DB-MCP að lesa `pg_stat_statements`), ekki appkóði: lausnin var að loka dashboard-flipum, aftengja DB-MCP og endurræsa — ekki rolla til baka merges. [lota 8e43dca9, 01.08]
 - Agnar vill að Kerfisheilsa sýni Claude-stöðu (álagstoppa og niðritíma) og hleðslutíma allra síðna beggja vefja — hann bað um það 01.08 eftir hrunið. [lota 8e43dca9]
 - PGRST003 „Timed out acquiring connection“ + 504 á `app_settings`/`solur`/`uttaeki` = tengingarpottur tæmdur (30 tengingar), ekki mörg óskyld villuatvik: 06.09 voru það 1.337 statement timeouts og 183 PGRST003 sem komu af því að `/api/company-mail` (5–6 s) var kallað við hverja hleðslu; fjórir ólíkir „save/load failed“ atburðir 09.09 komu allir innan 90 mínútna. [C#417, C#553]
-- Vél sem dettur út af Kerfisheilsu hefur oft bara ekki `VEL_HEARTBEAT_TOKEN` í `.env` (`vel-heartbeat` svarar 401), og `heartbeat.js` sér aðeins repo í systkinamöppum. [C#270, C#256]
+- Vél sem dettur út af Kerfisheilsu hefur oft bara ekki `VEL_HEARTBEAT_TOKEN` í `.env` (`vel-heartbeat` svarar 401), og `heartbeat.js` sér aðeins repo í systkinamöppum. [C#270, C#256] **04.11: vandinn er öfugur — aðalbrúin (skrifstofan) er sú sem sést aldrei; heimavélin er eina röðin.**
 - Áskrift í `js/db.js` á töflu sem er ekki í `supabase_realtime`-útgáfunni sendir ALDREI neitt og gefur enga villu — nýjar töflur lenda ekki sjálfkrafa í útgáfunni. [C#323]
 - `app_problems.resolved` er ekki skrifanlegt með anon-lykli: PATCH skilar 200/`[]` án villu en ekkert breytist (RLS-USING sían) — ekki halda að PATCH hafi virkað. [C#552]
 - Staðfestu að breyting sé LIVE með `/build.json` (commit-hash) eða `meta name=build`, ekki með grep í `_bundle-*.js` — esbuild skrifar íslenska stafi sem `\uXXXX`; finndu bundle á ASCII-streng og berðu saman hash fyrir og eftir. [C#315, lota 6db7868a]

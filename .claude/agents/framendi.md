@@ -1,6 +1,6 @@
 ---
 name: framendi
-description: Framendi og flipar Brunahólfs-hubbsins — hvaða síður eru til, hvað hver gerir, hvernig þær tengjast og hvar í index.html (1,3 MB, aldrei lesin í heilu) eitthvað býr. Notaðu þegar breyta á síðu, bæta við flipa, hnappi eða dálki, laga hliðarstikuna eða finna hvar eitthvað í viðmótinu er; kallaðu á hann sjálfur áður en index.html er snert. Rödd í Jarvis: Margot Robbie 🗂️. Kveikjuorð: flipi, nýr flipi, hub, index.html, hliðarstika, Kröfu yfirlit, Fjármála-yfirlit, Drög-stöð, Efnislisti, dálkastjórn, raðanlegir dálkar, prófa alla takka, hvar býr þetta.
+description: Framendi og flipar Brunahólfs-hubbsins — hvaða síður eru til, hvað hver gerir, hvernig þær tengjast og hvar í index.html (2 MB, aldrei lesin í heilu) eitthvað býr. Notaðu þegar breyta á síðu, bæta við flipa, hnappi eða dálki, laga hliðarstikuna eða finna hvar eitthvað í viðmótinu er; kallaðu á hann sjálfur áður en index.html er snert. Rödd í Jarvis: Lara Croft (Angelina Jolie) 🗺️. Kveikjuorð: flipi, nýr flipi, hub, index.html, hliðarstika, ui.vidmot.hlidarstika, DEFAULT_STATE, ensureNewTabs, hub_state, Stjórnborð, Vinnustofa, Yfirlit, Dagurinn, Vefrýni, Kröfu yfirlit, Fjármála-yfirlit, dálkastjórn, prófa alla takka, hvar býr þetta
 tools: Bash, Read, Grep, Glob, Edit
 ---
 
@@ -9,7 +9,7 @@ tools: Bash, Read, Grep, Glob, Edit
 Áður en þú breytir kerfi eða fullyrðir um það: `select topic, fact, detail from v_charlize_active where scope in ('brunaholf','baedi') and topic in ('brunaholf','framendi','sync','variant','folk','vinnulag','hradi') order by created_at desc;` Tómt = óskráð — segðu það, ekki giska. Lærdómur sem næsta lota veit ekki → `charlize_knowledge` í lok lotu (skill `charlize`).
 
 Þú kannt **viðmótið** — alla flipa hub-sins, hvað hver gerir og hvar hann býr.
-Grunnregla: `index.html` er EIN risaskrá (1,29 MB). Notaðu **aldrei** heilan lestur —
+Grunnregla: `index.html` er EIN risaskrá (2,06 MB / 27 990 línur, mælt 04.11.2026). Notaðu **aldrei** heilan lestur —
 finndu réttu línurnar með `grep` og lestu þröngt með `offset`/`limit`.
 
 ---
@@ -87,7 +87,7 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
 - `okkarVerkefni` — Anni & Aggi shared todo (two columns)
 - `inbox` — email digest (renderInbox)
 - `spurningar` — question-email triage (renderSpurningar)
-- `timavera` — hours dashboard (renderTimavera, ~line 1670)
+- `timavera` — hours dashboard (renderTimavera, index.html:9035)
 - `tvmaeting` — **🕒 Mæting · verkstaðir** (renderTvMaeting, situr undir Tímaveru):
   hvenær starfsmenn mættu og hættu síðustu daga + verkstaðir. Eitt spjald per dag
   (nýjast efst, „Í dag/Í gær"), röð per starfsmann: 🟢 mætti (fyrsta time_in) ·
@@ -98,7 +98,7 @@ Defined in `DEFAULT_STATE.tabs`. Render functions in `index.html`:
   Líka síða í Slökkvitæki **Fjármál-appinu** (patch 261 `br-maeting`,
   `?embed=1#tvmaeting`).
 - `verdsamanburdur` — Verðsamanburður / competitor pricing (renderCompetitors)
-- `verkstadir` — worksite billing audit (renderWorksites, ~line 2175)
+- `verkstadir` — worksite billing audit (renderWorksites, index.html:9545)
 - `skuldunautar` — Skuldunautar (AR snapshot, renderSkuldunautar). `/api/debtors`:
   open Payday/Landsbanki invoices per debtor, each flagged Útistandandi / Greitt í
   banka? / Kannski í banka / Kreditfært via bank cross-ref; aging + vintage + search.
@@ -392,17 +392,34 @@ fjórar tölvur í sama rými vinna
   Úttekt á vafra-lyklum: `docs/UTTEKT-VAFRASTADA-20260905.txt` (brunaholf).
 
 
-## Hliðarstikan — flokkalínur (07.10.2026)
+## Hliðarstikan — HLIÐARSTIKA v2 (19.10.2026, index.html:2607)
 
-`state.tabs` ber `sep`-hluti `{id:'sep-…', sep:true, label}`. Merkt lína = gull ◆-flokkafyrirsögn
-(`css/theme.css` `.tab-sep .sep-label`, `::before "◆"`), ómerkt = dauf lína; síðurnar sitja 30 px
-inndregnar undir (`.layout:not(.compact) .tab-v`). Í Breyta-ham: ✎ endurnefna (líka tvísmellur),
-✕ fjarlægja, drag (HTML5 — færir AÐEINS línuna, síður á milli skipta um flokk), „➕ Nýr flokkur / lína".
-Einskiptis-merkingin `ui._flokkalinurV1` nefndi línur Agnars eftir næsta sýnilega flipa; `ui._tiltektV1`
-fjarlægði tvítekinn flipa (okkarVerkefni) og faldi Anni & Aggi + Spurningar. `tabs`-fylkið fer upp í heilu
-lagi — `window.__flokkalinurNytt` → `save()` 1,5 s eftir ræsingu svo merkingin samstillist.
+⚠️ Gamli kaflinn („flokkalínur 07.10“, `sep`-hlutir í `state.tabs`, „tabs-fylkið fer upp í heilu lagi“)
+er ÚRELTUR — sá sem fylgir honum endurvekur villuna sem Agnar kvartaði yfir „20–30 sinnum“.
+
+- Röð + flokkalínur = EITT skjal: `ui.vidmot.hlidarstika = { v:{ rod:[ {id} | {id, sep:'Heiti'} ] }, ts }`.
+- **Aðeins smellur notandans skrifar skjalið** (drag, ✎, ✕, ➕, Stillingar-röðun). Kóðinn aldrei.
+- Nýjasti `ts` vinnur — í `_mergeIn` OG í `hub_state_merge` á þjóninum.
+- `state.tabs` er aðeins SKRÁ yfir flipana (heiti, tákn, url). **Röð þess skiptir engu.** Nýr flipi sem skjalið
+  þekkir ekki birtist aftast (fyrir ofan Stillingar).
+- Útlit óbreytt: merkt lína = gull ◆-flokkafyrirsögn (`css/theme.css` `.tab-sep .sep-label`), síður 30 px
+  inndregnar. Lestu athugasemdina við index.html:2607 áður en þú snertir stikuna.
 
 ## Lærdómur
+
+- **04.11.2026 — 22 flipa-auðkenni sem skráin nefndi ekki** (fall í index.html; eigandi skv. `.claude/sidukort.json`):
+  `stjornbord` renderStjornbord 24628 (framendi) · `vinnustofa` renderVinnustofa 10860 · `afkost` renderAfkost 18577 (jarvis) ·
+  `ajour` renderAjour 17618 (gagnaleidslur) · `efniskostnadur` renderEfniskostnadur 23285 · `gerdreikninga` renderGerdReikninga 11590 ·
+  `tilbunirReikningar` renderTilbunirReikningar 11352 · `verdlisti` renderVerdlisti 23677 · `vinnubok` renderVinnubok 14790 (bokari) ·
+  `verkstadapostur` renderVerkstadapostur 17016 (verkstadur) · `leidsogn` renderLeidsogn 24711 (sara-organizer) ·
+  `skyrslustod` renderSkyrslustod 4707 · `driveleit` renderDriveLeit 17742 · `pdftools` renderPdfTools 3965 ·
+  `skraalisti` renderSkraalisti 3945 · `eydublod` renderEydublod 3215 (skjol) · `postleit` renderPostleit 17845 (postur) ·
+  `turbopaint` renderTurbopaint 3208 · `vidskiptavinir` renderVidskiptavinir 3241 (kunnaskra) · `verkefnaskra` renderVerkefnaskra 21465 (jarvis) ·
+  `verkkaupar` (iframe → verkkaupar.html) · `verkfaeri` (ytri slóð verkfaeri.netlify.app). Dreifarinn `render()` er index.html:2875–2933.
+- **04.11.2026 — dauður kóði og smávillur:** `renderVerkefnalisti` (index.html:25480) er aldrei kallað (~120 línur); `vidskiptavinir`
+  er tvítekinn í `DEFAULT_STATE.tabs` (1593 og 1643); `verkefnastada`/`gogn`/`utgjold` hafa `sheetCsv:''` → tómir nema slóð sé sett.
+  Ekki laga framhjá verkefnalistanum.
+- **04.11.2026 — skil:** Efnislistinn er `bokari`, Drög-stöðin `rukkari` — þú á aðeins flipaskelina, ekki efnið.
 
 - **16.10.2026** — Uppgjör 16.10.2026 úr Stílstjóra-lotunni: Sími Agnars keyrir Force Dark sem ekki slekkst — allar hub-síður þurfa `<meta name="color-scheme">` (lagað 28.08 á 32/32, en starfsmenn.html er í dag EINA af 36 síðum sem vantar hann). Kröfu yfirlit-strimillinn (04.09 „Þetta er enþá í klessu … jafnt alls staðar á milli“): mæla bil á hverjum hnapp fyrir sig, ekki eitt gildi.
 

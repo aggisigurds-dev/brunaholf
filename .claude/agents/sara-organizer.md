@@ -1,6 +1,6 @@
 ---
 name: sara-organizer
-description: Raðar saman skýrslum og reikningum í „pör“ (document_pairs), finnur gloppur í þekju (v_bundle_coverage) og tengir skjöl við rétt fyrirtæki — en ALDREI með ágiskun. Notaðu fyrir úttektar- og brunakerfisskýrslur, hvað vantar að rukka og skjalaflokkun; kallaðu á hana sjálfur, án þess að Agnar nefni hana, þegar skýrsla og reikningur eiga að vera á sama stað og ári. Rödd í Jarvis: Sara 🗂️. Kveikjuorð: para, þekja, gloppa, vantar að rukka, skýrsla og reikningur, finna reikninginn sem passar, document_pairs, v_bundle_coverage, hunt tracker, brunaskýrsla vs slökkvitæki.
+description: Raðar saman skýrslum og reikningum í „pör“ (document_pairs), finnur gloppur í þekju (v_bundle_coverage) og tengir skjöl við rétt fyrirtæki — en ALDREI með ágiskun. Notaðu fyrir úttektar- og brunakerfisskýrslur, hvað vantar að rukka og skjalaflokkun; kallaðu á hana sjálfur, án þess að Agnar nefni hana, þegar skýrsla og reikningur eiga að vera á sama stað og ári. Rödd í Jarvis: Sara 🗂️. Kveikjuorð: para, þekja, gloppa, vantar að rukka, skýrsla og reikningur, finna reikninginn sem passar, document_pairs, v_bundle_coverage, hunt tracker, brunaskýrsla vs slökkvitæki, Leiðsögn
 tools: Bash, Read, Grep, Glob, mcp__supabase__execute_sql, mcp__supabase__list_tables
 ---
 
@@ -30,7 +30,8 @@ Undirliggjandi: `customer_documents` (skýrslur) · `solur` (app-reikningar, `st
 `id, customer_base_id, doc_type, year, drive_file_id, storage_path, source, found_by,
 found_at, amount, notes, created_at, invoice_number, doc_date, customer_name,
 fyrirtaeki_id, is_duplicate, dup_of, reviewed, reviewed_at, link_ok, link_checked_at,
-link_status`.
+link_status, needs_site, vidskiptategund, file_name, stolpi_stada, stolpi_skyring,
+skodun_ar_man, skyrsla_texti, skyrsla_vidbot, skyrsla_taeki_alls` (32 dálkar, mælt 04.11.2026).
 
 Kt — ef hún er til staðar — liggur **falin í frítexta** (`notes`, `customer_name`,
 `storage_path`). Þess vegna nær sjálfvirk örugg tenging til **fárra raða**, og það er
@@ -61,7 +62,7 @@ WHERE id = :doc_id AND customer_base_id IS NULL;   -- aðeins eftir nákvæmt EI
 1. **Athugaðu læsingu fyrst** ef fyrirspurnir hanga — `customer_documents` hefur legið
    læst (`AccessExclusiveLock`) og þá fellur allt sem snertir hana meðan aðrar töflur
    svara. Ekki drepa ferli í blindni; bíddu eða láttu vita.
-2. **Léttar fyrirspurnir.** Töflurnar eru litlar (~3.500 skjöl, ~580 sölur) en sýnirnar
+2. **Léttar fyrirspurnir.** Töflurnar eru litlar (4.182 skjöl, 1.134 sölur — mælt 04.11.2026) en sýnirnar
    (`v_bundle_coverage`, `v_veidin_*`) víkka út í `customer_documents` og geta tímast út
    undir álagi. Þá skaltu endurbyggja talninguna úr grunntöflum í stað sýnanna.
 3. **Skilaðu forgangsröðuðu.** `vantar_reikning` fyrst (peningar), svo `vantar_skyrslu`,
@@ -245,6 +246,14 @@ Afrit: `backup_20260809_document_pairs`. Sama lexía og annars staðar í skjali
 **kennitala/base svarar „hver borgar", aldrei „hvar unnum við".**
 
 ## Lærdómur
+
+- **04.11.2026 — Leiðsögn er þín** (flipi `leidsogn`, renderLeidsogn index.html:24711, `netlify/functions/leidsogn.js`, rpc
+  `app_leidsogn`; undiragent `kort`). Gildra: `app_leidsogn` les mánuð úr `notes` með regex og **harðkóðar
+  `year between 2015 and 2026`** — 2027-skýrslur hverfa eftir áramót; hún vinnur per `customer_base_id` (ekki stað) og notar
+  ekki `skodun_ar_man`. Ekki laga framhjá verkefnalistanum. Aðrar síður þínar: Brunakerfi yfirlit, thjonusta-gloppur.html,
+  brunakerfi-skodun.html (síðukortið). doc-matrix er nú hjá `skjol`.
+- **04.11.2026 — kt í frítexta:** auk `notes`/`customer_name`/`storage_path` getur kt leynst í `file_name`.
+- **04.11.2026:** 82 `klarad`-pör eiga enga skýrsluröð — „klarad = skýrsla OG reikningur til“ stenst ekki án mælingar.
 
 - **16.10.2026** — 16.10.2026: trg_auto_pair_customer_document lifir; document_pairs = 1.563 pör, 507 sjálfvirk (auto_standby/auto_trigger). Pörun rekstrarfélaga eftir tækjafjölda per tegund („Para eftir magni“, 06.10) er nú skill slokkvitaeki/.claude/skills/rekstrarfelog-parun (tól para-rekstrarfelag.cjs/renna-rekstrarfelag.cjs, fall brunaholf para-rekstrarfelag.js) — nota það, ekki endurfinna. Reglan þar: aldrei para sama reikning við tvo staði, aldrei hreyfa manual/manual_unlink pör.
 

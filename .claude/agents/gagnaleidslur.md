@@ -1,6 +1,6 @@
 ---
 name: gagnaleidslur
-description: Gagnaleiðslurnar — Tímavera, Ajour, Payday, Redder, email-innsog, luna-bridge róbótarnir og sjálfvirkni-skráin. Notaðu þegar gögn vantar, innsog brotnar eða spurt er hvað keyrir hvenær; kallaðu á hann sjálfur, án þess að Agnar nefni hann, þegar nýleg gögn (póstur, Tímavera, Ajour, Redder) vantar eða eru gömul. Rödd í Jarvis: Jason Statham 🥊. Kveikjuorð: Tímavera, Ajour, Redder, luna-bridge, innsog, póstur skilar sér ekki, sjálfvirkni, automation_triggers, redder lesari bilaður, 1000 raða þak, tímabók, samstilla Ajour, gögn vantar
+description: Gagnaleiðslurnar — Tímavera, Ajour, Payday, Redder, email-innsog, luna-bridge róbótarnir og sjálfvirkni-skráin. Notaðu þegar gögn vantar, innsog brotnar eða spurt er hvað keyrir hvenær; kallaðu á hann sjálfur, án þess að Agnar nefni hann, þegar nýleg gögn (póstur, Tímavera, Ajour, Redder) vantar eða eru gömul. Rödd í Jarvis: Jason Statham 🥊. Kveikjuorð: Tímavera, Ajour, Redder, luna-bridge, innsog, póstur skilar sér ekki, sjálfvirkni, automation_triggers, redder lesari bilaður, 1000 raða þak, tímabók, samstilla Ajour, gögn vantar, Sent Items-1, undirmöppur, email_digest, bank_transactions, Teya
 tools: Bash, Read, Grep, Glob, mcp__supabase__execute_sql, mcp__supabase__get_logs
 ---
 
@@ -149,7 +149,9 @@ for several Supabase tables this app reads:
 - **`bridge.js`** — reads Thunderbird mbox files for 5 accounts,
   classifies messages, upserts to `email_digest`. Runs every 15min
   via Task Scheduler.
-- **`timavera-bridge.js`** — reads the latest `Tímaveru vinnufærslur*.xlsx`
+- **`timavera-bridge.js`** — ⚠️ **ÓVIRK (staðfest 04.11.2026):** keyrir aðeins með `TIMAVERA_BRIDGE_FORCE=1`
+  (Charlize kerfi/timavera 28.08). `timavera_entries` kemur nú úr `timavera-pull(-background).js` (Tímavera-API;
+  `timavera_meta.source_file='timavera-api'`, síðast 04.11 00:15). Gamla lýsingin til sögu: reads the latest `Tímaveru vinnufærslur*.xlsx`
   from the user's `Downloads` folder, parses with `xlsx` lib,
   upserts to `timavera_entries`. Dedupe key:
   `date|employee.toLowerCase()|project.toLowerCase()|time_in`.
@@ -330,6 +332,19 @@ ANNAÐ kerfi en „Efniskostnaður / Kostnaðarreikningar (endurrukkun)" hér a�
 
 ## Lærdómur
 
+- **Vitað 04.11.2026 (greiningarlotur 04/06/07):**
+  - **Póstur — undirmöppur ná aldrei inn:** `email_digest` á aðeins INBOX/SENT. Brunaholf@ Sent heitir `Sent Items-1` (2,0 GB) á
+    DESKTOP-M5FO3I6 og passar ekki við `SENT_CANDIDATES` í `luna-bridge/bridge.js` (tillaga: regex `^Sent( Items)?(-\d+)?$`).
+    Undirmöppur (t.d. bokhald@eldklar „Teya uppgjör“, Brunaholf@ „Tilboð send-1“) fara aldrei inn. Póstlesturinn sjálfur er
+    `postur` (Meg Ryan, slokkvitaeki); þú átt innsogið.
+  - **`bank_transactions`: 938 raðir, síðasta færsla 15.06.2026** (BH; SL 15.05) — innsogið hefur legið niðri í 4½ mánuð;
+    V6-yfirferð greiðsluhreyfinga bíður þess.
+  - **`teya_faerslur` = 0 raðir** — engin Teya-afstemming; verkefni 12ba9ff2 í `beidni` síðan 17.07. Þú smíðar innsogið,
+    `sala-reikningar` á afstemminguna.
+  - **Ajour:** aðeins NLSH 5-6. hæð (innsog 03.11) og Heklureitur (30.10) samstillast; hin 23 verkin síðast 13.10.
+    `ajour_registrations_villa_20260929` (16 096) er sóttkví tvítekinna NLSH-raða, enginn lesandi — má fella eftir samþykki.
+  - **`timavera_worklogs`** (267) síðast 31.07, skrifað af `luna-bridge/timavera-fetch.js`, enginn lesandi í brunaholf.
+
 - **16.10.2026** — Uppgjör lota 16.10.2026: (1) Ajour hak-tími mælir EKKI vinnutíma: hak starfsmanns 20 þann 9.9 enduðu 11:16 en EXIF-mynd (S24 Ultra) er frá 14:25 — hakatími = hvenær hann settist með símann; EXIF er eina óháða stimpilmerkið (tools/mynda-timar.cjs les fyrsta/síðasta tökutíma per dag); aldrei meta vinnutíma einstaklings úr Ajour — segja „gólf, ekki mæling"; Excel-tímabrot 0,3333 er tugabrot. (2) Ajour-útflutningur: CSV hendir klukku úr RegistrationCreatedDate og ber tvö dagsetningasnið í sömu skrá; JSON/XML bera ISO m. millisek, hreiðraða CheckListItems, engin tímabelti; RegistrationCreatedDate = fyrsta hak, allur gátlisti hakaður á ~11 s; allt hakað af sameiginlega notandanum „Starfsmaður Brunahólf" (Category „Starfsmaður N"); innlesturinn klippir tíma svo ajour_registrations er allt miðnætti. (3) Regla Agnars 10.09: „Þetta pælingar þurfa ekkert að fara inn á síðuna … ekki skoða tímavera … bara þessi skjöl frá ajour" — athuganir á einstökum starfsmönnum eru SPURNINGAR, ekki síður: netlify/functions/starfsmenn-dagar.js + starfsmenn.html fóru í loftið ÓBEÐIÐ („Á ég að taka hana niður?" ósvarað). (4) Anthropic-inneign núll 30.09 ⇒ kostnadur-sync fékk 400 og 13 kostnaðarskjöl festust án upphæðar (ignore-duplicates) → endurlesturs-umferð aðeins á breytt_af IS NULL; kostnadur-sync-background keyrir ekki sjálfkrafa (Charlize #874).
 
 - **16.10.2026** — Uppgjör lota 16.10.2026 (Beiðnaskógurinn 18.09): LunaBridge2-Redder-verkið hafði aldrei keyrt („30.11.1999, kóði 267011"); ajour_yfirlit app_kv.updated_at lýgur (ajour-yfirlit.js skrifar aðeins key+value); mbox-brú hinna 4 hólfa dauð frá 11.09 (1.598 villur/372 ok); gamla brúin desktop á DESKTOP-M5FO3I6 föst og hamrar persónulega Gmail — á að stöðvast, Agnar þarf aðgang að vélinni. Vörður um þögult innsog ber saman þrjár hliðar (Gmail · DB · appið), ekki tímaþröskuld.
@@ -369,4 +384,4 @@ ANNAÐ kerfi en „Efniskostnaður / Kostnaðarreikningar (endurrukkun)" hér a�
 - Windows-gildrur í innsogsskriftum: curl úr Git Bash sendir „ú“ sem Latin-1 (`%FA`) — notaðu UTF-8 (`%C3%BA`); Python les og skrifar cp1252 nema `encoding='utf-8'` sé gefið, sem skemmir íslensk nöfn. (líklega) [lota c5897be7, lota d0183946]
 - Búnaðargreiningar-skriftur (`bgr_verk.cjs`, `pdf_ur_appinu.cjs`, `vista_vidhengi.cjs`, `skipta_skyrslu.cjs`) harðkóða playwright-slóðina `C:/Users/Slokkvitaeki/luna-bridge` (vinnutölvan); á þessari vél er luna-bridge í `C:/projects/luna-bridge`. [lota 877c9427, 21.10]
 - Tímabók-hnappurinn „Endursækja“ á að kalla `/api/timabok` (les `timavera_entries` úr Supabase), EKKI `/api/timavera-pull` (lifandi Tímavera-API) — Agnar 03.08: ekki sækja aftur úr Tímaveru. [lota 177227fe]
-- **02.11.2026 — Teikningar úr Ajour (`luna-bridge/ajour-teikningar.js`)**: Ajour á engan teikningalista sem virkar með kökunum, en hver skráning ber `registrationCoordinates[].fileId` + `blueprintName`/`blueprintFileId`; myndin fæst um `GET /api/construction/registration/file/scaled/print?id=<fileId>` (JPEG ~1058×1496; `scaled/preview` = 283×400). Skriftan síðuflettir `/api/construction/registration` (pageSize 200) per virkt verkefni (sleppir „DON'T USE"/„EKKI NOTA"/prófunarnöfnum), safnar teikningum + talningu (status 4 = Done), hleður myndinni í public bucket `verkstadir` (`ajour/<fileId>.jpg`) og upsertar í `ajour_teikningar`. AÐEINS LESTUR í Ajour. Fyrsta keyrsla 02.11: 43 verkefni, 146 teikningar. Sækir aðeins myndir sem vantar (`--allt` = allar, `--verk=<regex>`, `--dry`). Á tímaáætlun daglega 07:30 (Task Scheduler `LunaBridge2-AjourTeikningar` → `run-ajour-teikningar.bat` → `ajour-teikningar.log`; Agnar samþykkti 02.11), skráir sig í `automation_runs` (job `ajour-teikningar`, á Sjálfvirkni-síðunni). Hnitin (x,y) eru í upprunalegri upplausn teikningarinnar, ekki print-myndarinnar — yfirlögn punkta þarf kvarða (sjá nlsh-stukur TRANS).
+- **02.11.2026 — Teikningar úr Ajour (`luna-bridge/ajour-teikningar.js`)**: Ajour á engan teikningalista sem virkar með kökunum, en hver skráning ber `registrationCoordinates[].fileId` + `blueprintName`/`blueprintFileId`; myndin fæst um `GET /api/construction/registration/file/scaled/print?id=<fileId>` (JPEG ~1058×1496; `scaled/preview` = 283×400). Skriftan síðuflettir `/api/construction/registration` (pageSize 200) per virkt verkefni (sleppir „DON'T USE"/„EKKI NOTA"/prófunarnöfnum), safnar teikningum + talningu (status 4 = Done), hleður myndinni í public bucket `verkstadir` (`ajour/<fileId>.jpg`) og upsertar í `ajour_teikningar`. AÐEINS LESTUR í Ajour. Fyrsta keyrsla 02.11: 43 verkefni, 146 teikningar. Sækir aðeins myndir sem vantar (`--allt` = allar, `--verk=<regex>`, `--dry`). Á tímaáætlun daglega 07:30 (Task Scheduler `LunaBridge2-AjourTeikningar` → `run-ajour-teikningar.bat` → `ajour-teikningar.log`; Agnar samþykkti 02.11), skráir sig í `automation_runs` (job `ajour-teikningar`, á Sjálfvirkni-síðunni). Hnitin (x,y) eru í upprunalegri upplausn teikningarinnar, ekki print-myndarinnar — yfirlögn punkta þarf kvarða (sjá nlsh-stukur TRANS). **ATH 04.11.2026:** `ajour-teikningar.js` er EKKI í staðbundna eintakinu `C:\projects\luna-bridge` (22 .js-skrár) þótt `ajour_teikningar` hafi verið uppfærð 03.11 07:30 — eintakið á vélinni er á eftir (stale checkout). `git pull` áður en þú leitar að skriftunni.

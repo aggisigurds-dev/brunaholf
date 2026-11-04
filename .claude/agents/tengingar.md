@@ -53,8 +53,9 @@ lykill sannanlega virkar en hefur ekki verið skipt út.
 
 ## 🔴 Standandi mál
 
-- **Netlify-PAT-inn LAK** (var í `CLAUDE.md` sem vefurinn birti) og hefur **ekki verið
-  endurnýjaður**. Stendur réttilega rautt þar til það er gert. Þetta er Agnars aðgerð.
+- **Netlify-PAT:** gildistími og staða sjást á Kerfisheilsu-borðinu (`/api/kerfisheilsa`) — lestu þau þar, ekki úr
+  þessari skrá (eldri tölur hér, lekinn og endurnýjunin 16.10, eru saga). Gildið á aldrei heima í CLAUDE.md eða repo;
+  endurnýjun er Agnars aðgerð.
 - **`bokhald@eldklar.is` ótengt** — þarf Google-innskráningu SEM það netfang.
 - **@brunaholf.is (Office 365)** kemur enn gegnum Thunderbird á luna-bridge-vélinni.
   Ef sú vél er slökkt hættir póstur að berast. Graph-tenging myndi leysa það.
@@ -99,7 +100,7 @@ bilun í desember.
 - **`sb_secret_` / `service_role` má ALDREI fara í framenda.** Þeir fara
   framhjá RLS algjörlega. Bakendi eingöngu (Netlify env).
 - **En:** vörnin sem publishable-lykillinn treystir á er RLS — og hér eru
-  **226 töflur án RLS** (mælt 19.08, sjá `oryggi`). Þess vegna kemst
+  **242 töflur án RLS** (mælt 04.11.2026, sjá `oryggi` — talan hækkar, endurmældu). Þess vegna kemst
   vafra-lykillinn í bókhaldsgögnin. Að lykillinn sé „óhætt að sýna" er satt
   almennt og **ekki satt hjá okkur enn**. Segðu það þannig þegar spurt er.
 
@@ -108,6 +109,11 @@ bilun í desember.
 [Securing your data](https://supabase.com/docs/guides/database/secure-data)
 
 ## Lærdómur
+
+- **04.11.2026 — skrifstofuvélin sendir ekki heartbeat.** `vel_heartbeat` hefur aðeins 1 röð: DESKTOP-M5FO3I6 (heimavélin, first_seen
+  31.07). **Aðalbrúin á skrifstofunni (DESKTOP-509MN7M, luna-bridge 2) sést ALDREI** — þó keyrir hún automation 671/671 í lagi.
+  Vandinn er öfugur við gömlu regluna „vél dottin út“: líklega vantar `VEL_HEARTBEAT_TOKEN` í `.env` þar (vel-heartbeat.js svarar 401
+  án `X-Vel-Token`). Deilt með `kerfisheilsa`; lagfæring krefst vélarinnar sjálfrar.
 
 - **16.10.2026** — Standandi mál endurmæld 16.10.2026 á /api/kerfisheilsa (16 græn · 1 gult · 2 grá): Netlify-PAT er ENDURNÝJAÐUR (61 dagar) og gildið farið úr slokkvitaeki/CLAUDE.md — kaflinn „Netlify-PAT-inn LAK“ að ofan er úreltur; bokhald@eldklar.is ER tengt (Gmail-innsog grænt, 182 póstar, síðast 15.10). Enn rétt: Office 365/Graph grátt (ekki útfært), @brunaholf.is um Thunderbird á luna-bridge; eina gula er VEL_HEARTBEAT_TOKEN (endurnýjun aldrei skráð). Ajour-lota hefur FAST líf 7,8 klst frá innskráningu (mælt 29.–30.09, keep-alive gagnast ekki) — Samstilla ræsir innskráninguna aftur.
 

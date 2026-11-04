@@ -1,6 +1,6 @@
 ---
 name: skjol
-description: Skjöl, Google Drive og PDF — doc-index, skjalalesarar, endurnefning, Skýrslu-stöð, Drive-möppur og skjalatenging við fyrirtæki. Notaðu fyrir allt sem snýr að skjölum, PDF-lestri, Drive eða skráarheitum; kallaðu á hann sjálfur, án þess að Agnar nefni hann, þegar skjal á að tengjast fyrirtæki, reikningur finnst ekki, tvítök eða dauðir hlekkir birtast eða skráarheiti þarf að treysta. Rödd í Jarvis: Morgan Freeman 🎙️. Kveikjuorð: Drive, PDF, skjal, skýrslumappa, tvítök í möppu, gömul eintök, endurnefna, dauður hlekkur, customer_documents, doc-index, Skýrslu-stöð, skráarheiti.
+description: Skjöl, Google Drive og PDF — doc-index, skjalalesarar, endurnefning, Skýrslu-stöð, Drive-möppur og skjalatenging við fyrirtæki. Notaðu fyrir allt sem snýr að skjölum, PDF-lestri, Drive eða skráarheitum; kallaðu á hann sjálfur, án þess að Agnar nefni hann, þegar skjal á að tengjast fyrirtæki, reikningur finnst ekki, tvítök eða dauðir hlekkir birtast eða skráarheiti þarf að treysta. Rödd í Jarvis: Morgan Freeman 🎙️. Kveikjuorð: Drive, PDF, skjal, skýrslumappa, tvítök í möppu, gömul eintök, endurnefna, dauður hlekkur, customer_documents, doc-index, Skýrslu-stöð, skráarheiti, Drive-leit, PDF Flokkari, Skjala-checklist, keepit
 tools: Bash, Read, Grep, Glob, mcp__supabase__execute_sql
 ---
 
@@ -21,7 +21,7 @@ brenglaði um þriðjung heitanna, svo staðfestu alltaf innihald skjalsins sjá
 > sérfræðingur er kallaður til.
 
 ### Google integration
-- `google_oauth`: OAuth tokens (1 row).
+- `google_oauth`: OAuth tokens (3 raðir 04.11.2026 — multi-account, sjá Google-kaflann neðar).
 - `app_kv`: generic key/value store.
 - Helpers: `_google.js`, `drive-folders.js`, `drive-download.js`,
   `drive-list.js` (paginated folder/query listing),
@@ -827,6 +827,17 @@ tengdir í `customer_documents` (Drive) og vistar í `reikningslestur` (haus + `
   `fyrirtaeki_id`, aldrei með eldra skjali en röðin ber). Hreinsun á 119 tvöföldunum er EKKI gerð — þarf lestur á hverju PDF.
 
 ## Lærdómur
+
+- **Vitað 04.11.2026 (greiningarlota 03):**
+  - **60 skjöl eru AÐEINS í Storage, ekki í Drive** — `storage-backup-background` afritar ekki skýrslu-prefixin (brunakerfis-/
+    slökkvikerfisskýrslur appsins). 3 540 af 4 182 `customer_documents` eiga `storage_path` (2 694 í `drive-afrit/`).
+  - **Síður sem þú átt nú (`.claude/sidukort.json`):** Drive-leit (renderDriveLeit index.html:17742, `drive-files-search.js`),
+    PDF Flokkari (`pdf-classify.html`, `pdf-classify(-background).js`), Skjala-checklist (`doc-matrix.html`, `doc-matrix.js`),
+    keepit.html (persónulegt, hvergi tengt — ekki rekstur), Skýrslu-stöð, Skjala-multitool, Skráalisti, PDF verkfæri,
+    Staðf. Brunalokana, Bakendi og Hleðsluáætlun. Leiðsögn er `sara-organizer`.
+  - Föll án eiganda sem falla til þín: `pdf-tools.js`, `drive-flatten.js`, `drive-til-supabase.js`, `mbox-extract-pdfs(-background).js`,
+    `skjalaheiti-log.js`. Töflur án kóðavísunar (report_inbox, report_inbox2, staging_docs, `*_20260823`-skyndimyndir) — ákvörðun Agnars, ekki eyða.
+  - `doc_factcheck`: 898/898 `status='claude'`, engin mannleg yfirferð skráð.
 
 - **16.10.2026** — Uppgjör lota 16.10.2026: (1) Center hótelin (192–201 nema 194) fengu 09.10 í „📎 Önnur viðhengi" skjölin „Reykskynjarar á teikningum - samantekt brunakerfi.pdf" + „Brunakerfisteikningar - <hús>.pdf" (143 blöð með hlekkjum á Skjalasafn/TurboPaint-skoðun/Greiningu; 1486 Midtown og 1612 Fiskislóð aðeins hið síðara) — vistuð ÁN doc_type/árs og með skráarnöfnum sem forðast orðin skýrsla/reikningur svo þau lendi ekki í skýrslu-/reikningsreitum; PDF-hlekkir í forskoðunarglugga fara með allan flipann á Skjalasafnið (Ctrl+smellur/⬇ Sækja). (2) 38 reikningsskjöl frá 18.07.2026 eru sjálfgerðar mPDF-eftirmyndir cowork-backfill/payday-backfill/stolpi án Drive-frumrits (JDÓ R-000531 eitt þeirra); 39 af 42 eiga Payday-færslu → frumrit sækjanleg um payday-push; S-1077xx (3) Stólpi. Drive vs Supabase 30.09: 3.905 skjöl, 189 ENGIN skrá (179 úttektarskýrslur) — flokkun bíður (Charlize #870). (3) Þjónustusamningur á prófíl fer á samningskort 🧯 (handslökkvitæki/reykskynjari/slöngur eða ekkert hak) og 🔥 (Brunaviðvörunarkerfi/Slökkvikerfi), pörun við NAFN staðar — kt dugar aðeins ef enginn annar staður deilir henni; thjonustusamningar.company_id-gatið (24 af 53) lagað 25.09 (Charlize #878). (4) Við rangstaðsett skjal ræður PDF-HAUSINN, ekki skráarnafnið (Colas „Gullhella"-skráin var Álfhellu-skýrsla, #1191 09.10).
 
