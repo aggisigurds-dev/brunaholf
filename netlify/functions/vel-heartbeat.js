@@ -31,13 +31,29 @@ exports.handler = async (event) => {
   if (event.httpMethod === 'GET') {
     const rows = await sb('vel_heartbeat?select=*&order=at.desc');
     const now = Date.now();
-    const velar = (rows || []).map(r => {
+    // 04.11.2026 (Agnar: „ætti þetta ekki að vera með 2 tölvur“): vélar sem keyra Claude-lotur skrá sig í
+    // charlize_sessions (lotu-lok-hookurinn, machine = hostname) án VEL_HEARTBEAT_TOKEN. Þær teljast hér með —
+    // nýjasta lotan er lífsmarkið — svo skrifstofuvélin sjáist þótt luna-bridge keyri ekki þar. Heimild merkt.
+    let lotur = [];
+    try { lotur = (await sb('charlize_sessions?select=machine,last_at,cwd,repo&order=last_at.desc&limit=300')) || []; } catch (_) {}
+    const sedd = new Set((rows || []).map(r => r.vel));
+    const urLotum = new Map();
+    for (const s of lotur) {
+      if (!s.machine || sedd.has(s.machine) || urLotum.has(s.machine)) continue;
+      urLotum.set(s.machine, { vel: s.machine, hostname: s.machine, at: s.last_at, os: null, notendanafn: null, repos: [], verkfaeri: ['claude-code'],
+        verk: ['claude-lotur'], athugasemd: 'séð um Claude-lotu (charlize_sessions) — ekkert luna-bridge lífsmark', heimild: 'charlize_sessions' });
+    }
+    for (const r of rows || []) {
+      const nyjasta = lotur.find(s => s.machine === r.vel);
+      if (nyjasta && (!r.at || new Date(nyjasta.last_at) > new Date(r.at))) r.sidasta_lota = nyjasta.last_at;
+    }
+    const velar = [...(rows || []), ...urLotum.values()].map(r => {
       const min = r.at ? Math.round((now - new Date(r.at).getTime()) / 60000) : null;
-      return Object.assign({}, r, {
+      return Object.assign({ heimild: 'heartbeat' }, r, {
         aldur_min: min,
         status: min == null ? 'graat' : min <= OK_MIN ? 'graent' : min <= GAMALT_MIN ? 'gult' : 'raudt',
       });
-    });
+    }).sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0));
     return json(200, { ok: true, token_required: !!TOKEN, velar });
   }
 

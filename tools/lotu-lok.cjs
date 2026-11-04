@@ -113,6 +113,9 @@ async function keyra(arg = process.argv.slice(2)) {
   const sedGot = new Set(st.got.map(x => x.ts));
   for (const r of routerRadir(sid)) {
     for (const kt of r.kt || []) if (G.ktLogadili(kt)) ktSet.add(kt);
+    // 04.11.2026 (Agnar: „sé engan hafa verið kallaðan til“): agentar sem leiðarvísirinn (router) og síðuvörðurinn kölluðu
+    // inn í lotuna teljast kallaðir, ekki aðeins Agent-tól-undiragentar — annars sýnir Agentanetið dauða kerfið.
+    for (const a of r.agentar || []) if (a && !st.agentar.includes(a)) st.agentar.push(a);
     if (r.gat && !sedGot.has(r.ts)) { st.got.push({ ts: r.ts, ord: (r.ord || []).slice(0, 6) }); sedGot.add(r.ts); }
   }
   st.kt = [...ktSet].slice(0, 40);
