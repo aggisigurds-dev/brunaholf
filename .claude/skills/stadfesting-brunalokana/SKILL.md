@@ -266,3 +266,5 @@ Hvaleyrarbraut 39 og Gullslétta 18: staðfesting + starfsleyfi + „001 Brunah�
 Ekkert Ajour-verk (t.d. Stálhella) = engin skýrsla. Skýrslan er sótt/prentuð skv. kaflanum „Ajour-gögn" (8 myndir á síðu, án athugasemda). Claude sendir hana ekki — Agnar sendir pósta.
 
 **Undantekning (Agnar 04.11.2026): Heklureitur (Laugavegur 168/170) þarf EKKI Ajour-skýrslu með staðfestingunni**, þótt verkið sé skráð í Ajour (2.219 skráningar, ekki skipt milli húsa). Ekki sækja né smíða skýrslu fyrir Heklureit nema hann biðji um það.
+
+**Agnar 04.11.2026: „Það þarf ekki að gera skýrslur"** — Claude býr EKKI til Ajour-skýrslur eða myndayfirlit með staðfestingum nema Agnar biðji sérstaklega um það. Staðfestingin ein er verkið; Ajour-skýrslan er aðeins fylgiskjalaminning í sjálfvirku smíðinni.
