@@ -43,8 +43,20 @@ async function kunniListi(q) {
     e.n++; if (r.topic) e.efni[r.topic] = (e.efni[r.topic] || 0) + 1; if (!e.sidast || r.updated_at > e.sidast) e.sidast = r.updated_at;
     m.set(r.kennitala, e);
   }
-  const felog = [...m.values()].sort((a, b) => (b.sidast || '').localeCompare(a.sidast || '')).slice(0, Math.min(2000, parseInt(q.limit, 10) || 500));
-  return P.json(200, { ok: true, felog, alls: m.size });
+  // Nöfn og „án minnis“ úr customers_base (lögaðilar: kt byrjar á 4–7 — einstaklingar aldrei í listanum, sbr. Charlize-regluna).
+  const logadili = kt => /^[4-7]/.test(String(kt || ''));
+  const nafn = new Map();
+  try {
+    for (let fra = 0; fra < 5000; fra += 1000) {
+      const cb = await all(`customers_base?select=kennitala,nafn&kennitala=not.is.null&order=id.asc&limit=1000&offset=${fra}`);
+      for (const r of cb) if (r.kennitala && logadili(r.kennitala) && !nafn.has(r.kennitala)) nafn.set(r.kennitala, r.nafn);
+      if (cb.length < 1000) break;
+    }
+  } catch (_) {}
+  const felog = [...m.values()].filter(e => logadili(e.kt)).map(e => Object.assign(e, { nafn: nafn.get(e.kt) || null }))
+    .sort((a, b) => (b.sidast || '').localeCompare(a.sidast || '')).slice(0, Math.min(2000, parseInt(q.limit, 10) || 500));
+  const an = [...nafn.entries()].filter(([kt]) => !m.has(kt)).map(([kt, n]) => ({ kt, nafn: n })).sort((a, b) => String(a.nafn || '').localeCompare(String(b.nafn || ''), 'is'));
+  return P.json(200, { ok: true, felog, alls: felog.length, an, vidskiptavinir: nafn.size });
 }
 async function all(qs) { const r = await P.sbGet(qs); if (!r.ok) throw new Error('Supabase ' + r.status + ': ' + (await r.text()).slice(0, 200)); return r.json(); }
 async function count(table, filter) {

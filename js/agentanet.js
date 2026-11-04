@@ -443,16 +443,12 @@
   }
 
   /* Kúnnaminni: félög með minni (op=kunni) + félög án minnis úr data/felog.json. Hver lína: Kúnni (customer.html) · Spyrja (spyrja.html). */
-  var felogP = null;
-  function saekjaFelog() { if (felogP) return felogP; felogP = getJSON('/data/felog.json').catch(function () { return { felog: [] }; }); return felogP; }
   function teiknaKunni(box) {
     var leit = '';
-    Promise.all([getJSON(API_STADA + '?op=kunni&limit=2000'), saekjaFelog()]).then(function (r) {
-      var j = r[0] || {}, F = (r[1] && r[1].felog) || [];
-      var nafn = {}; F.forEach(function (x) { if (x[2] === 'c' && !nafn[x[0]]) nafn[x[0]] = x[1]; });
-      var med = (j.felog || []).map(function (e) { return { kt: e.kt, nafn: nafn[e.kt] || e.kt, n: e.n, sidast: e.sidast, efni: Object.keys(e.efni || {}).join(' · ') }; });
-      var medKt = {}; med.forEach(function (e) { medKt[e.kt] = 1; });
-      var an = F.filter(function (x) { return x[2] === 'c' && !medKt[x[0]]; }).map(function (x) { return { kt: x[0], nafn: x[1] }; });
+    getJSON(API_STADA + '?op=kunni&limit=2000').then(function (j) {
+      j = j || {};
+      var med = (j.felog || []).map(function (e) { return { kt: e.kt, nafn: e.nafn || e.kt, n: e.n, sidast: e.sidast, efni: Object.keys(e.efni || {}).join(' · ') }; });
+      var an = (j.an || []).map(function (e) { return { kt: e.kt, nafn: e.nafn || e.kt }; });
       var lina = function (e, hefur) {
         return '<div class="an-rod"><span class="n">' + esc(e.nafn) + '<i>' + esc(e.kt) + (hefur ? ' · ' + e.n + ' staðr. · ' + fmtD(e.sidast) + (e.efni ? ' · ' + esc(e.efni) : '') : ' · ekkert kúnnaminni') + '</i></span>' +
           '<a class="an-lnk" href="customer.html?kt=' + encodeURIComponent(e.kt) + '" target="_blank" rel="noopener" title="Kúnnasíðan">Kúnni</a>' +
