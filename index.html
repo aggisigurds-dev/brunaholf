@@ -156,7 +156,16 @@ body[data-tab="jarvis"] main{max-width:none;padding:0;background:var(--blue-deep
    í valmyndina á síma, svo hann verður eftir sem mjó dökk ræma (56 px > 12 px toppur
    + 36 px hnappur, því .topbar er overflow:hidden og klippir annars hnappana af). */
 body[data-tab="jarvis"] .topbar .banner-img{display:none}
-body[data-tab="jarvis"] .topbar{min-height:56px;background:var(--blue-deep);box-shadow:none}
+/* 04.11.2026 (Agnar: „bara svart í banner í staðin fyrir svona ljósblátt"): borðinn er sama svarta stálið og á
+   öðrum flipum (theme.css --header-bg-boss), ekki --blue-deep. HUD-ið sjálft (main) heldur bláa grunninum. */
+body[data-tab="jarvis"] .topbar{min-height:56px;background:var(--header-bg-boss,#0a0a09);box-shadow:var(--header-shadow,none)}
+/* 04.11.2026 (Agnar: „fjarlægja þennan auka hvíta botn sem kemur þegar maður skrollar niður"): body ber 80 px
+   neðri fyllingu fyrir fljótandi takkana (+ / 📷) — þeir eru faldir hér, svo fyllingin var bara ljós rönd undir
+   HUD-inu. Hún fer og grunnurinn undir verður sami blái (Ragnarök: svartur) svo ekkert ljóst sjáist við skrun. */
+body[data-tab="jarvis"]{padding-bottom:0;background:var(--blue-deep)}
+html:has(body[data-tab="jarvis"]){background:var(--blue-deep)}
+body[data-tab="jarvis"][data-jv-thema="ragnarok"],
+html:has(body[data-tab="jarvis"][data-jv-thema="ragnarok"]){background:#020202}
 body[data-tab="jarvis"] #_kh-card{display:none}
 /* 2026-08-01 (ósk Agnars): fljótandi + og 📷 takkarnir átu hornið á HUD-inu.
    Faldir HÉR OG AÐEINS HÉR — þeir eru notaðir í JS ($fab, fabSs.onclick) svo
