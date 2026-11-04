@@ -30,10 +30,10 @@
    "utgafa": 1,
    "vefagent": "kjarni-vefur",
    "alls": 98,
-   "med_eiganda": 86,
-   "vidvorun": 12,
+   "med_eiganda": 98,
+   "vidvorun": 0,
    "an_eiganda": 0,
-   "hlutfall": 88
+   "hlutfall": 100
   }
  ],
  "sidur": [
@@ -59,7 +59,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kunnaskra",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -85,7 +87,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "framendi",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -109,7 +113,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "jarvis",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -133,7 +139,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "arnold",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -157,7 +165,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "framendi",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -179,7 +189,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "framendi",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -202,7 +214,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sara-organizer",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -227,7 +241,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "postur",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -250,7 +266,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "postur",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -274,7 +292,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "gagnaleidslur",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -297,7 +317,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "verkstadur",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -321,7 +343,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "verkstadur",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -342,7 +366,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bokari",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -366,7 +392,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bokari",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -389,7 +417,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "rukkari",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -413,7 +443,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "rukkari",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -437,7 +469,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "skjol",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -459,7 +493,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "jarvis",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -484,7 +520,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "rukkari",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -506,7 +544,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "rukkari",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -530,7 +570,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bokari",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -553,7 +595,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kunnaskra",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -575,7 +619,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "rukkari",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -597,7 +643,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "rukkari",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -624,7 +672,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bokari",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -647,7 +697,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "gagnaleidslur",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -672,7 +724,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "verkstadur",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -692,7 +746,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "framendi",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -714,7 +770,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "framendi",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -736,7 +794,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "framendi",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -758,7 +818,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "framendi",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -780,7 +842,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "framendi",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -802,7 +866,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "tengingar",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -822,7 +888,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "jarvis",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -842,7 +910,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "jarvis",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -862,7 +932,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "jarvis",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -884,7 +956,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "skjol",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -904,7 +978,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "framendi",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -924,7 +1000,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "rukkari",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -946,7 +1024,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "skjol",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -968,7 +1048,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "skjol",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -988,7 +1070,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bokari",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1014,7 +1098,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bokari",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1036,7 +1122,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bokari",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1056,7 +1144,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bokari",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1081,7 +1171,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "framendi",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1103,7 +1195,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bokari",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1129,7 +1223,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bokari",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1153,7 +1249,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bokari",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1176,7 +1274,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bokari",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1198,7 +1298,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "framendi",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1222,7 +1324,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "gagnaleidslur",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1246,7 +1350,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "framendi",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1269,7 +1375,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sara-coworker",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1291,7 +1399,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sara-organizer",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1311,7 +1421,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "framendi",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1333,7 +1445,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "skjol",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1355,7 +1469,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "skjol",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1378,7 +1494,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "skjol",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1400,7 +1518,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "postur",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1426,7 +1546,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "skjol",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1450,7 +1572,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "tengingar",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1474,7 +1598,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "oryggi",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1498,7 +1624,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "jarvis",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1520,7 +1648,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sara-organizer",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1542,7 +1672,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sara-organizer",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1568,7 +1700,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "verkstadur",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1592,7 +1726,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kunnaskra",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1614,7 +1750,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sala-reikningar",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1636,7 +1774,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sala-reikningar",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1659,7 +1799,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "skjol",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1679,7 +1821,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "postur",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1702,7 +1846,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "skjol",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1722,7 +1868,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "skjol",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1747,7 +1895,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "tengingar",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1769,7 +1919,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "tengingar",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1789,7 +1941,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "skjol",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1809,7 +1963,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "jarvis",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1832,7 +1988,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sala-reikningar",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1855,7 +2013,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kunnaskra",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1878,7 +2038,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sara-coworker",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1900,7 +2062,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sala-reikningar",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1922,7 +2086,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "verkstadur",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1944,7 +2110,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sara-organizer",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1967,7 +2135,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kunnaskra",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -1988,7 +2158,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "jarvis",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -2008,7 +2180,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bokari",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -2032,7 +2206,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kerfisheilsa",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -2052,7 +2228,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "jarvis",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -2073,7 +2251,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "jarvis",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -2097,7 +2277,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "netvordur",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -2120,7 +2302,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "rukkari",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -2141,7 +2325,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "jarvis",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -2164,7 +2350,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kunnaskra",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -2188,7 +2376,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kerfisheilsa",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -2209,7 +2399,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "jarvis",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -2230,7 +2422,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "tengingar",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -2251,7 +2445,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "gagnaleidslur",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -2272,7 +2468,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sara-organizer",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -2295,7 +2493,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sara-organizer",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -2318,7 +2518,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "hradi",
+   "eigandi_utan": false
   },
   {
    "vefur": "brunaholf",
@@ -2341,7 +2543,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "netvordur",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -2365,7 +2569,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sala-reikningar",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -2386,7 +2592,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sala-reikningar",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -2410,7 +2618,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kort",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -2431,7 +2641,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "fyrirtaeki",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -2457,7 +2669,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "elon-musk",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -2480,7 +2694,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sala-reikningar",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -2501,7 +2717,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sala-reikningar",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -2522,7 +2740,9 @@
    ],
    "merki": "sofandi",
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "elon-musk",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -2548,7 +2768,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bord-flettur",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -2575,7 +2797,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "joker",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -2599,7 +2823,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sala-reikningar",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -2619,7 +2845,9 @@
    "kveikjuord": [],
    "merki": "sofandi",
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sala-reikningar",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -2644,7 +2872,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sala-reikningar",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -2665,7 +2895,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sala-reikningar",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -2703,7 +2935,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "elon-musk",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -2727,7 +2961,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kunnaskra",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -2754,7 +2990,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "fyrirtaeki",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -2778,7 +3016,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bord-flettur",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -2804,7 +3044,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sala-reikningar",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -2829,7 +3071,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sala-reikningar",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -2848,7 +3092,9 @@
    "kveikjuord": [],
    "merki": "sofandi",
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bord-flettur",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -2866,7 +3112,9 @@
    "kveikjuord": [],
    "merki": "sofandi",
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bord-flettur",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -2884,7 +3132,9 @@
    "kveikjuord": [],
    "merki": "sofandi",
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sala-reikningar",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -2905,7 +3155,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sala-reikningar",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -2929,7 +3181,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sala-reikningar",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -2953,7 +3207,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sala-reikningar",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -2976,7 +3232,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kunnaskra",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -2994,7 +3252,9 @@
    "kveikjuord": [],
    "merki": "sofandi",
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sala-reikningar",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3019,7 +3279,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bord-flettur",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3039,7 +3301,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bord-flettur",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3059,7 +3323,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kunnaskra",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3083,7 +3349,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kunnaskra",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3107,7 +3375,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "adstod",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3134,7 +3404,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "rukkari",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3160,7 +3432,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3185,7 +3459,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bord-flettur",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3205,7 +3481,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "elon-musk",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3230,7 +3508,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "fyrirtaeki",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3252,7 +3532,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bord-flettur",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3272,7 +3554,9 @@
    "kveikjuord": [],
    "merki": "sofandi",
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bord-flettur",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3293,7 +3577,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "postur",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3319,7 +3605,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "fyrirtaeki",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3348,7 +3636,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "arnold",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3366,7 +3656,9 @@
    "kveikjuord": [],
    "merki": "sofandi",
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bord-flettur",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3390,7 +3682,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bord-flettur",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3419,7 +3713,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bord-flettur",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3445,7 +3741,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "innkaupabokari",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3470,7 +3768,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bord-flettur",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3500,7 +3800,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bord-flettur",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3524,7 +3826,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bord-flettur",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3554,7 +3858,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "postur",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3581,7 +3887,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "postur",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3607,7 +3915,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "fyrirtaeki",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3631,7 +3941,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "innkaupabokari",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3656,7 +3968,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bord-flettur",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3677,7 +3991,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kunnaskra",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3704,7 +4020,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sala-reikningar",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3728,7 +4046,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "elon-musk",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3752,7 +4072,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "elon-musk",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3777,7 +4099,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kunnaskra",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3802,7 +4126,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "birgdastjori",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3826,7 +4152,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "birgdastjori",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3850,7 +4178,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3870,7 +4200,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3892,7 +4224,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3916,7 +4250,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3940,7 +4276,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3963,7 +4301,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -3983,7 +4323,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4006,7 +4348,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4026,7 +4370,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4046,7 +4392,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4069,7 +4417,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4091,7 +4441,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4111,7 +4463,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4135,7 +4489,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4155,7 +4511,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4177,7 +4535,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4197,7 +4557,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4217,7 +4579,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4237,7 +4601,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4257,7 +4623,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4280,7 +4648,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "thjonustugatt",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4302,7 +4672,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4322,7 +4694,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4342,7 +4716,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4362,7 +4738,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4382,7 +4760,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4402,7 +4782,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4422,7 +4804,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "thjonustugatt",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4442,7 +4826,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4465,7 +4851,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4485,7 +4873,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4508,7 +4898,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4528,7 +4920,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4548,7 +4942,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4571,7 +4967,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4591,7 +4989,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4611,7 +5011,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "opp",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4635,7 +5037,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bord-flettur",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4661,7 +5065,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sala-reikningar",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4683,7 +5089,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sala-reikningar",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4710,7 +5118,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sala-reikningar",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4732,7 +5142,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bord-flettur",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4758,7 +5170,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bord-flettur",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4783,7 +5197,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bord-flettur",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4806,7 +5222,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bord-flettur",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4831,7 +5249,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "postur",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4851,7 +5271,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kunnaskra",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4874,7 +5296,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sala-reikningar",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4894,7 +5318,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "sala-reikningar",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4914,7 +5340,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "bord-flettur",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4942,7 +5370,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "thjonustugatt",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4966,7 +5396,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "thjonustugatt",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -4984,7 +5416,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "thjonustugatt",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -5007,7 +5441,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "thjonustugatt",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -5031,7 +5467,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "thjonustugatt",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -5052,7 +5490,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "thjonustugatt",
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -5072,7 +5512,9 @@
    "stada": "❌",
    "astaeda": [
     "enginn eigandi"
-   ]
+   ],
+   "eigandi_nafn": null,
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -5092,7 +5534,9 @@
    "stada": "❌",
    "astaeda": [
     "enginn eigandi"
-   ]
+   ],
+   "eigandi_nafn": null,
+   "eigandi_utan": false
   },
   {
    "vefur": "slokkvitaeki",
@@ -5112,7 +5556,9 @@
    "stada": "❌",
    "astaeda": [
     "enginn eigandi"
-   ]
+   ],
+   "eigandi_nafn": null,
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5133,7 +5579,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kjarni-vefur",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5151,7 +5599,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5169,7 +5619,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5187,7 +5639,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5205,7 +5659,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5223,7 +5679,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5241,7 +5699,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5259,7 +5719,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5277,7 +5739,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5295,7 +5759,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5313,7 +5779,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5331,7 +5799,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5349,7 +5819,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5367,7 +5839,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5385,7 +5859,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5403,7 +5879,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5421,7 +5899,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5439,7 +5919,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5457,7 +5939,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5475,7 +5959,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5496,10 +5982,10 @@
     "sækja teikningu"
    ],
    "merki": null,
-   "stada": "⚠️",
-   "astaeda": [
-    "eigandi „sl:arnold“ er ekki í registry"
-   ]
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "arnold",
+   "eigandi_utan": true
   },
   {
    "vefur": "kjarni",
@@ -5520,10 +6006,10 @@
     "teikningaleit"
    ],
    "merki": null,
-   "stada": "⚠️",
-   "astaeda": [
-    "eigandi „sl:arnold“ er ekki í registry"
-   ]
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "arnold",
+   "eigandi_utan": true
   },
   {
    "vefur": "kjarni",
@@ -5541,7 +6027,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5559,7 +6047,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5577,7 +6067,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5595,7 +6087,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5613,7 +6107,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5631,7 +6127,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5649,7 +6147,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5671,10 +6171,10 @@
     "spjöld"
    ],
    "merki": null,
-   "stada": "⚠️",
-   "astaeda": [
-    "eigandi „sl:bord-flettur“ er ekki í registry"
-   ]
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "bord-flettur",
+   "eigandi_utan": true
   },
   {
    "vefur": "kjarni",
@@ -5694,7 +6194,9 @@
    ],
    "merki": "personulegt",
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kjarni-vefur",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5716,7 +6218,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kjarni-vefur",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5738,10 +6242,10 @@
     "þjónustukerfi"
    ],
    "merki": null,
-   "stada": "⚠️",
-   "astaeda": [
-    "eigandi „sl:bord-flettur“ er ekki í registry"
-   ]
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "bord-flettur",
+   "eigandi_utan": true
   },
   {
    "vefur": "kjarni",
@@ -5763,7 +6267,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5784,7 +6290,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5805,7 +6313,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5826,7 +6336,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5846,7 +6358,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5867,7 +6381,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5888,7 +6404,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5909,7 +6427,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5930,7 +6450,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5951,7 +6473,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5971,7 +6495,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -5992,7 +6518,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6012,7 +6540,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6033,7 +6563,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6054,7 +6586,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6074,7 +6608,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6094,7 +6630,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6114,7 +6652,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6136,7 +6676,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6158,7 +6700,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6179,7 +6723,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6200,7 +6746,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6221,7 +6769,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6243,7 +6793,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6264,7 +6816,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6285,7 +6839,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6306,7 +6862,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6327,7 +6885,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6351,7 +6911,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kjarni-vefur",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6376,7 +6938,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "skraning",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6399,7 +6963,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "skraning",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6423,7 +6989,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "skraning",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6445,7 +7013,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "skraning",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6468,7 +7038,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "skraning",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6492,7 +7064,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "skraning",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6515,7 +7089,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "skraning",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6541,10 +7117,10 @@
     "Lagna-hamur"
    ],
    "merki": null,
-   "stada": "⚠️",
-   "astaeda": [
-    "eigandi „sl:arnold“ er ekki í registry"
-   ]
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "arnold",
+   "eigandi_utan": true
   },
   {
    "vefur": "kjarni",
@@ -6562,7 +7138,9 @@
    "kveikjuord": [],
    "merki": "dauð leið (next.config redirect skyggir)",
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kjarni-vefur",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6585,7 +7163,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kjarni-vefur",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6605,7 +7185,9 @@
    ],
    "merki": "stubbur",
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kjarni-vefur",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6625,10 +7207,10 @@
     "PDF-vinnslustöð"
    ],
    "merki": null,
-   "stada": "⚠️",
-   "astaeda": [
-    "eigandi „bh:skjol“ er ekki í registry"
-   ]
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "skjol",
+   "eigandi_utan": true
   },
   {
    "vefur": "kjarni",
@@ -6651,10 +7233,10 @@
     "Meta Pixel"
    ],
    "merki": null,
-   "stada": "⚠️",
-   "astaeda": [
-    "eigandi „sl:bord-flettur“ er ekki í registry"
-   ]
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "bord-flettur",
+   "eigandi_utan": true
   },
   {
    "vefur": "kjarni",
@@ -6678,7 +7260,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kjarni-vefur",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6696,7 +7280,9 @@
    "kveikjuord": [],
    "merki": "ekki i notkun",
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kjarni-vefur",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6714,7 +7300,9 @@
    "kveikjuord": [],
    "merki": "ekki i notkun",
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kjarni-vefur",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6732,7 +7320,9 @@
    "kveikjuord": [],
    "merki": "ekki i notkun",
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kjarni-vefur",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6750,7 +7340,9 @@
    "kveikjuord": [],
    "merki": "ekki i notkun",
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kjarni-vefur",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6768,7 +7360,9 @@
    "kveikjuord": [],
    "merki": "ekki i notkun",
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kjarni-vefur",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6786,7 +7380,9 @@
    "kveikjuord": [],
    "merki": "ekki i notkun",
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kjarni-vefur",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6804,7 +7400,9 @@
    "kveikjuord": [],
    "merki": "ekki i notkun",
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kjarni-vefur",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6822,7 +7420,9 @@
    "kveikjuord": [],
    "merki": "ekki i notkun",
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kjarni-vefur",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6842,7 +7442,9 @@
    "kveikjuord": [],
    "merki": "ekki i notkun",
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kjarni-vefur",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6862,7 +7464,9 @@
    "kveikjuord": [],
    "merki": "ekki i notkun",
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kjarni-vefur",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6880,7 +7484,9 @@
    "kveikjuord": [],
    "merki": "ekki i notkun",
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kjarni-vefur",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6898,7 +7504,9 @@
    "kveikjuord": [],
    "merki": "ekki i notkun",
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kjarni-vefur",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6916,7 +7524,9 @@
    "kveikjuord": [],
    "merki": "personulegt, tvitekid",
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kjarni-vefur",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6934,7 +7544,9 @@
    "kveikjuord": [],
    "merki": "ekki i notkun",
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kjarni-vefur",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -6955,10 +7567,10 @@
     "Raða"
    ],
    "merki": null,
-   "stada": "⚠️",
-   "astaeda": [
-    "eigandi „skill:3dJoker“ er ekki í registry"
-   ]
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "3dJoker",
+   "eigandi_utan": true
   },
   {
    "vefur": "kjarni",
@@ -6975,10 +7587,10 @@
    "undiragentar": [],
    "kveikjuord": [],
    "merki": null,
-   "stada": "⚠️",
-   "astaeda": [
-    "eigandi „skill:3dJoker“ er ekki í registry"
-   ]
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "3dJoker",
+   "eigandi_utan": true
   },
   {
    "vefur": "kjarni",
@@ -6995,10 +7607,10 @@
    "undiragentar": [],
    "kveikjuord": [],
    "merki": null,
-   "stada": "⚠️",
-   "astaeda": [
-    "eigandi „skill:3dJoker“ er ekki í registry"
-   ]
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "3dJoker",
+   "eigandi_utan": true
   },
   {
    "vefur": "kjarni",
@@ -7015,10 +7627,10 @@
    "undiragentar": [],
    "kveikjuord": [],
    "merki": null,
-   "stada": "⚠️",
-   "astaeda": [
-    "eigandi „skill:3dJoker“ er ekki í registry"
-   ]
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "3dJoker",
+   "eigandi_utan": true
   },
   {
    "vefur": "kjarni",
@@ -7035,10 +7647,10 @@
    "undiragentar": [],
    "kveikjuord": [],
    "merki": null,
-   "stada": "⚠️",
-   "astaeda": [
-    "eigandi „skill:3dJoker“ er ekki í registry"
-   ]
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "3dJoker",
+   "eigandi_utan": true
   },
   {
    "vefur": "kjarni",
@@ -7056,7 +7668,9 @@
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kjarni-vefur",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -7076,7 +7690,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kjarni-vefur",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -7097,7 +7713,9 @@
    ],
    "merki": null,
    "stada": "✅",
-   "astaeda": []
+   "astaeda": [],
+   "eigandi_nafn": "kjarni-vefur",
+   "eigandi_utan": false
   }
  ]
 }

@@ -29,6 +29,8 @@ Teljarinn **153/187** (tilbúið-staða) er **óbreyttur**. Hann er ekki hluti a
 
 **04.11.2026 (Agentakerfið 2.0, fasi 2):** +14 nýir agentar (2 í brunaholf, 9 í slokkvitaeki, 3 í kjarna) og `rambo` + `samthykktir` komnir í töfluna → **39 agentar**. `oryggi` heitir nú Ripley, `framendi` Lara Croft.
 
+**04.11.2026 (fasi 5 — Agentanetið í Jarvis):** `brunaholf/js/agentanet.js` teiknar lag 2 í `jarvis.html`: fullskjás-graf (⛶ á Sérfræðinga-spjaldinu eða `#agentanet`) með Jarvis-kjarnann í miðju → 5 stjórar (`fyrirtaeki · framendi · bord-flettur · kjarni-vefur · rukkari`) → sérfræðingar → 321 síður sem punktar (grænn eigandi · rauður enginn · grár merki), verðir í rönd; smellur lýsir síður agents, tvísmellur opnar Agentaskrána; lifandi yfirlag úr `charlize_sessions` (agent sem var kallaður glóir). Fjögur ný spjöld: **Síðukort** (þekja per vef, „Leggja til eiganda“ → `agent_notes`), **Lotur síðustu 7 daga** (`/api/lotur`, rautt „ólokið minni“ = kt snert án kúnnaminnis), **Göt & tillögur** (router-göt + síður án eiganda), **Minnið** (`/api/charlize-stada`, biðstofa með Samþykkja = `charlize_approve` / Hafna = `rejected`). Eigendur í öðru repói (`sl:`, `bh:`, `skill:`) leysast nú í byggjaranum (`leysaEiganda`) → kjarni 98/98 ✅. Þemað erfist (klassískt/Ragnarök).
+
 ---
 
 ## 39 agentar
@@ -444,8 +446,8 @@ Byggt 2026-11-04 úr `brunaholf/.claude/sidukort.json`, `slokkvitaeki/.claude/si
 | kjarni | Skýjastúdíó SDXL | `/api/skyjastudio/replicate` | `apps/slokkvitaeki/app/api/skyjastudio/replicate/route.ts` | `artcraft` | — | ✅ |
 | kjarni | ElevenLabs Music ræsa | `/api/tonsmid` | `apps/slokkvitaeki/app/api/tonsmid/route.ts` | `artcraft` | — | ✅ |
 | kjarni | ElevenLabs Music staða | `/api/tonsmid/status` | `apps/slokkvitaeki/app/api/tonsmid/status/route.ts` | `artcraft` | — | ✅ |
-| kjarni | Sækja teikningu (fetch-plan) | `/api/turbopaint/fetch-plan` | `apps/slokkvitaeki/app/api/turbopaint/fetch-plan/route.ts` | `sl:arnold` | `elon-musk` | ⚠️ eigandi „sl:arnold“ er ekki í registry |
-| kjarni | Teikningaleit | `/api/turbopaint/teikningar` | `apps/slokkvitaeki/app/api/turbopaint/teikningar/route.ts` | `sl:arnold` | `elon-musk` | ⚠️ eigandi „sl:arnold“ er ekki í registry |
+| kjarni | Sækja teikningu (fetch-plan) | `/api/turbopaint/fetch-plan` | `apps/slokkvitaeki/app/api/turbopaint/fetch-plan/route.ts` | `sl:arnold` | `elon-musk` | ✅ |
+| kjarni | Teikningaleit | `/api/turbopaint/teikningar` | `apps/slokkvitaeki/app/api/turbopaint/teikningar/route.ts` | `sl:arnold` | `elon-musk` | ✅ |
 | kjarni | Clarity ræsa | `/api/upplyfting/clarity` | `apps/slokkvitaeki/app/api/upplyfting/clarity/route.ts` | `artcraft` | — | ✅ |
 | kjarni | Clarity staða | `/api/upplyfting/clarity/status` | `apps/slokkvitaeki/app/api/upplyfting/clarity/status/route.ts` | `artcraft` | — | ✅ |
 | kjarni | Topaz upplyfting | `/api/upplyfting` | `apps/slokkvitaeki/app/api/upplyfting/route.ts` | `artcraft` | — | ✅ |
@@ -453,10 +455,10 @@ Byggt 2026-11-04 úr `brunaholf/.claude/sidukort.json`, `slokkvitaeki/.claude/si
 | kjarni | Real-ESRGAN video ræsa | `/api/video-upplyfting` | `apps/slokkvitaeki/app/api/video-upplyfting/route.ts` | `artcraft` | — | ✅ |
 | kjarni | Real-ESRGAN video staða | `/api/video-upplyfting/status` | `apps/slokkvitaeki/app/api/video-upplyfting/status/route.ts` | `artcraft` | — | ✅ |
 | kjarni | Viðgerð (Replicate) | `/api/vidgerd/replicate` | `apps/slokkvitaeki/app/api/vidgerd/replicate/route.ts` | `artcraft` | — | ✅ |
-| kjarni | Borð — stjórnborð | `/bord` | `apps/slokkvitaeki/app/bord/page.tsx` | `sl:bord-flettur` | `kjarni-vefur` | ⚠️ eigandi „sl:bord-flettur“ er ekki í registry |
+| kjarni | Borð — stjórnborð | `/bord` | `apps/slokkvitaeki/app/bord/page.tsx` | `sl:bord-flettur` | `kjarni-vefur` | ✅ |
 | kjarni | Borgarferðir — Manchester · Glasgow | `/borgarferdir` | `apps/slokkvitaeki/app/borgarferdir/page.tsx` | `kjarni-vefur` | — | ✅ |
 | kjarni | Prufusvæði — blokkir, þemu & skikt | `/draft` | `apps/slokkvitaeki/app/draft/page.tsx` | `kjarni-vefur` | `joker` | ✅ |
-| kjarni | Kerfi — þjónustukerfi | `/kerfi` | `apps/slokkvitaeki/app/kerfi/page.tsx` | `sl:bord-flettur` | `kjarni-vefur` · `kort` | ⚠️ eigandi „sl:bord-flettur“ er ekki í registry |
+| kjarni | Kerfi — þjónustukerfi | `/kerfi` | `apps/slokkvitaeki/app/kerfi/page.tsx` | `sl:bord-flettur` | `kjarni-vefur` · `kort` | ✅ |
 | kjarni | <forrit> — Kjarni (13: photocraft…gridcraft) | `/kjarni/artcraft/[app]` | `apps/slokkvitaeki/app/kjarni/artcraft/[app]/page.tsx` | `artcraft` | — | ✅ |
 | kjarni | Andlit | `/kjarni/artcraft/andlit` | `apps/slokkvitaeki/app/kjarni/artcraft/andlit/page.tsx` | `artcraft` | — | ✅ |
 | kjarni | Bakgrunnur / Á hvítan bakgrunn | `/kjarni/artcraft/bakgrunnur` | `apps/slokkvitaeki/app/kjarni/artcraft/bakgrunnur/page.tsx` | `artcraft` | — | ✅ |
@@ -493,12 +495,12 @@ Byggt 2026-11-04 úr `brunaholf/.claude/sidukort.json`, `slokkvitaeki/.claude/si
 | kjarni | Skráning — byggingar og teikningar | `/kjarni/skraning/verk` | `apps/slokkvitaeki/app/kjarni/skraning/verk/page.tsx` | `skraning` | `gagnaleidslur` | ✅ |
 | kjarni | Skráning — vinna | `/kjarni/skraning/vinna` | `apps/slokkvitaeki/app/kjarni/skraning/vinna/page.tsx` | `skraning` | `gagnaleidslur` | ✅ |
 | kjarni | Skráning — yfirsýn | `/kjarni/skraning/yfirsyn` | `apps/slokkvitaeki/app/kjarni/skraning/yfirsyn/page.tsx` | `skraning` | `gagnaleidslur` | ✅ |
-| kjarni | TurboPaint — Kjarni | `/kjarni/turbopaint` | `apps/slokkvitaeki/app/kjarni/turbopaint/page.tsx` | `sl:arnold` | `elon-musk` · `joker` · `jarvis` | ⚠️ eigandi „sl:arnold“ er ekki í registry |
+| kjarni | TurboPaint — Kjarni | `/kjarni/turbopaint` | `apps/slokkvitaeki/app/kjarni/turbopaint/page.tsx` | `sl:arnold` | `elon-musk` · `joker` · `jarvis` | ✅ |
 | kjarni | Marks (tilvísun) | `/marks` | `apps/slokkvitaeki/app/marks/page.tsx` | `kjarni-vefur` | — | ✅ |
 | kjarni | Brunavarnir í öruggum höndum | `/` | `apps/slokkvitaeki/app/page.tsx` | `kjarni-vefur` | `joker` | ✅ |
 | kjarni | Nýr vefur | `/s/[slug]` | `apps/slokkvitaeki/app/s/[slug]/page.tsx` | `kjarni-vefur` | — | ✅ |
-| kjarni | Skjalarinn — skjöl · pdf · lestur | `/skjalarinn` | `apps/slokkvitaeki/app/skjalarinn/page.tsx` | `bh:skjol` | — | ⚠️ eigandi „bh:skjol“ er ekki í registry |
-| kjarni | Stjórnborð — Brunahólf Slökkvitæki | `/stjorn` | `apps/slokkvitaeki/app/stjorn/page.tsx` | `sl:bord-flettur` | `kjarni-vefur` | ⚠️ eigandi „sl:bord-flettur“ er ekki í registry |
+| kjarni | Skjalarinn — skjöl · pdf · lestur | `/skjalarinn` | `apps/slokkvitaeki/app/skjalarinn/page.tsx` | `bh:skjol` | — | ✅ |
+| kjarni | Stjórnborð — Brunahólf Slökkvitæki | `/stjorn` | `apps/slokkvitaeki/app/stjorn/page.tsx` | `sl:bord-flettur` | `kjarni-vefur` | ✅ |
 | kjarni | Verslun — Slökkvitæki ehf | `/verslun` | `apps/slokkvitaeki/app/verslun/page.tsx` | `kjarni-vefur` | `sala-reikningar` | ✅ |
 | kjarni | Dashboard new (sniðmát) | `/dashboard/new` | `apps/web/src/app/(app-pages)/dashboard/new/page.tsx` | `kjarni-vefur` | — | ✅ |
 | kjarni | Dashboard (sniðmát) | `/dashboard` | `apps/web/src/app/(app-pages)/dashboard/page.tsx` | `kjarni-vefur` | — | ✅ |
@@ -514,16 +516,16 @@ Byggt 2026-11-04 úr `brunaholf/.claude/sidukort.json`, `slokkvitaeki/.claude/si
 | kjarni | About (sniðmát) | `/about` | `apps/web/src/app/(external-pages)/about/page.tsx` | `kjarni-vefur` | — | ✅ |
 | kjarni | City trips from Keflavík | `/borgarferdir` | `apps/web/src/app/(external-pages)/borgarferdir/page.tsx` | `kjarni-vefur` | — | ✅ |
 | kjarni | Nextbase-sniðmát | `/` | `apps/web/src/app/(external-pages)/page.tsx` | `kjarni-vefur` | — | ✅ |
-| kjarni | 3dwork — STL bench | `/3dwork` | `apps/web/src/app/3dwork/page.tsx` | `skill:3dJoker` | — | ⚠️ eigandi „skill:3dJoker“ er ekki í registry |
-| kjarni | 3dwork geometry | `/api/3dwork/github/geometry/[id]` | `apps/web/src/app/api/3dwork/github/geometry/[id]/route.ts` | `skill:3dJoker` | — | ⚠️ eigandi „skill:3dJoker“ er ekki í registry |
-| kjarni | 3dwork eitt verkefni | `/api/3dwork/github/projects/[id]` | `apps/web/src/app/api/3dwork/github/projects/[id]/route.ts` | `skill:3dJoker` | — | ⚠️ eigandi „skill:3dJoker“ er ekki í registry |
-| kjarni | 3dwork verkefni | `/api/3dwork/github/projects` | `apps/web/src/app/api/3dwork/github/projects/route.ts` | `skill:3dJoker` | — | ⚠️ eigandi „skill:3dJoker“ er ekki í registry |
-| kjarni | 3dwork GitHub-sync | `/api/3dwork/github` | `apps/web/src/app/api/3dwork/github/route.ts` | `skill:3dJoker` | — | ⚠️ eigandi „skill:3dJoker“ er ekki í registry |
+| kjarni | 3dwork — STL bench | `/3dwork` | `apps/web/src/app/3dwork/page.tsx` | `skill:3dJoker` | — | ✅ |
+| kjarni | 3dwork geometry | `/api/3dwork/github/geometry/[id]` | `apps/web/src/app/api/3dwork/github/geometry/[id]/route.ts` | `skill:3dJoker` | — | ✅ |
+| kjarni | 3dwork eitt verkefni | `/api/3dwork/github/projects/[id]` | `apps/web/src/app/api/3dwork/github/projects/[id]/route.ts` | `skill:3dJoker` | — | ✅ |
+| kjarni | 3dwork verkefni | `/api/3dwork/github/projects` | `apps/web/src/app/api/3dwork/github/projects/route.ts` | `skill:3dJoker` | — | ✅ |
+| kjarni | 3dwork GitHub-sync | `/api/3dwork/github` | `apps/web/src/app/api/3dwork/github/route.ts` | `skill:3dJoker` | — | ✅ |
 | kjarni | Marks hlekkjaforskoðun | `/api/marks/preview` | `apps/web/src/app/api/marks/preview/route.ts` | `kjarni-vefur` | — | ✅ |
 | kjarni | Marks — site | `/marks/[boardId]` | `apps/web/src/app/marks/[boardId]/page.tsx` | `kjarni-vefur` | — | ✅ |
 | kjarni | Marks — kjarni bookmarks | `/marks` | `apps/web/src/app/marks/page.tsx` | `kjarni-vefur` | — | ✅ |
 
-**Samantekt:** brunaholf 102/102 með eiganda (100%), 0 ⚠️, 0 ❌ · slokkvitaeki 118/121 með eiganda (98%), 0 ⚠️, 3 ❌ · kjarni 86/98 með eiganda (88%), 12 ⚠️, 0 ❌
+**Samantekt:** brunaholf 102/102 með eiganda (100%), 0 ⚠️, 0 ❌ · slokkvitaeki 118/121 með eiganda (98%), 0 ⚠️, 3 ❌ · kjarni 98/98 með eiganda (100%), 0 ⚠️, 0 ❌
 
 ### Síður án eiganda
 

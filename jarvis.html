@@ -12,8 +12,9 @@
 <script defer src="/js/jarvis-voice.js?v=3"></script>
 <!-- Agentaskrá (28.10.2026): 📖-takki á Sérfræðingar-spjaldinu opnar glugga úr js/agents-registry.js (búið til af
      tools/build-agents-registry.cjs úr .claude/agents + .claude/skills). Spjaldið sjálft (lifandi staða úr data/agentar-stada.json) er óbreytt. -->
-<script defer src="/js/agents-registry.js?v=20261028"></script>
+<script defer src="/js/agents-registry.js?v=20261104"></script>
 <script defer src="/js/agents-panel.js?v=20261028"></script>
+<script defer src="/js/agentanet.js?v=20261104"></script>
 <!-- Útlit (Klassískt ↔ Ragnarök, Agnar 11.09.2026): eigindið á <html> er sett HÉR, áður en
      nokkuð málast, svo Ragnarök blikki ekki klassískt fyrst. Stillingin er á tækinu
      (localStorage jarvis_thema_v1), sameiginleg með Vélarrými; ?thema=ragnarok|klassiskt setur hana.
@@ -796,6 +797,16 @@ html.embedded[data-thema="ragnarok"] .klukka .t{font-size:28px}
         </div>
         <div class="sfr-fot" id="sfr-fot">Smelltu á svið neðst → röddin les. Villuleit á ekkert Fish-sæti — hún er grep-vörnin.</div>
       </div>
+      <div class="spjald" data-spjald="sidukort">
+        <!-- 04.11.2026 Agentakerfið 2.0 (fasi 5): teiknað af js/agentanet.js — data/sidukort.json (byggjarinn) -->
+        <h2>Síðukort <span>3 svið · eigendur</span></h2>
+        <div id="an-sidukort"><div style="color:var(--ink3)">sæki…</div></div>
+      </div>
+      <div class="spjald" data-spjald="minni">
+        <!-- 04.11.2026 Agentakerfið 2.0 (fasi 5): teiknað af js/agentanet.js — /api/charlize-stada, biðstofa með Samþykkja/Hafna -->
+        <h2>Minnið — Charlize <span>charlize_knowledge</span></h2>
+        <div id="an-minni"><div style="color:var(--ink3)">sæki…</div></div>
+      </div>
       <div class="spjald" data-spjald="villuleit">
         <h2>Villuleit <span>hindra klúður</span></h2>
         <div class="mtexti" style="margin-bottom:6px">Eitt staðfest dæmi → leitaðu að afritum. Byrja á rót, svo grep, svo triage. Ekki nýtt app. Vörðu leið → netvörður á undan lagfæringu.</div>
@@ -906,6 +917,16 @@ html.embedded[data-thema="ragnarok"] .klukka .t{font-size:28px}
       <div class="spjald" data-spjald="oryggisnet">
         <h2>Öryggisnet — verðir <button id="on-btn" title="Lesa stöðuna aftur">↻</button> <span id="on-uppf">—</span></h2>
         <div id="on-efni"><div style="color:var(--ink3)">sæki…</div></div>
+      </div>
+      <div class="spjald" data-spjald="lotur">
+        <!-- 04.11.2026 Agentakerfið 2.0 (fasi 5): teiknað af js/agentanet.js — /api/lotur — Stop-hookurinn tools/lotu-lok.cjs skrifar -->
+        <h2>Lotur síðustu 7 daga <span>charlize_sessions</span></h2>
+        <div id="an-lotur"><div style="color:var(--ink3)">sæki…</div></div>
+      </div>
+      <div class="spjald" data-spjald="got">
+        <!-- 04.11.2026 Agentakerfið 2.0 (fasi 5): teiknað af js/agentanet.js — /api/lotur got[] + síður án eiganda; tillaga vistast í agent_notes -->
+        <h2>Göt &amp; tillögur <span>router → agent_notes</span></h2>
+        <div id="an-got"><div style="color:var(--ink3)">sæki…</div></div>
       </div>
     </div>
   </div>
@@ -1968,7 +1989,7 @@ document.addEventListener('visibilitychange', function(){ if(synilegt()) sakja()
 /* -- Utlit (4 forstillingar) + gogn i nyju spjoldin --------------------- */
 (function(){
   var UTLIT = {
-    adal:      { heiti:'Adal',      spjold:['vitals','oryggisnet','serfraedingar','villuleit','fjarskipti','velar','hljod','tengingar','gogn','markmid'] },
+    adal:      { heiti:'Adal',      spjold:['vitals','oryggisnet','serfraedingar','sidukort','minni','villuleit','fjarskipti','velar','hljod','tengingar','gogn','markmid','lotur','got'] },
     kerfi:     { heiti:'Kerfi',     spjold:['vitals','oryggisnet','perf','fjarskipti','velar','tengingar','gogn'] },
     thjonusta: { heiti:'Thjonusta', spjold:['thekja','gloppur','verk','markmid','villuleit'] },
     fjarmal:   { heiti:'Fjarmal',   spjold:['krofur','thekja','markmid'] }
@@ -2286,6 +2307,7 @@ document.addEventListener('visibilitychange', function(){ if(synilegt()) sakja()
     if(syn.indexOf('perf')    !== -1) perfBidur();
     if(syn.indexOf('oryggisnet') !== -1) saekjaOryggisnet();
     if(syn.indexOf('serfraedingar') !== -1 && window.saekjaSerfraedingar) saekjaSerfraedingar();
+    if(window.Agentanet) Agentanet.saekja(syn, true);   // 04.11.2026: sidukort · lotur · got · minni (js/agentanet.js)
   }
   setInterval(function(){ if(document.visibilityState==='visible') saekjaSyn(spjoldFyrir(nuv)); }, 300000);
   document.addEventListener('visibilitychange', function(){
@@ -2302,7 +2324,8 @@ document.addEventListener('visibilitychange', function(){ if(synilegt()) sakja()
     hljod:'◆ Hljodnemi', gogn:'◆ Gagnaleidslur', tengingar:'◆ Tengingar', markmid:'◆ Meginmarkmid', serfraedingar:'◆ Serfraedingar',
     villuleit:'◆ Villuleit (hindra kludur)',
     krofur:'◆ Krofur & utistandandi', thekja:'◆ Thekja — por',
-    gloppur:'◆ Thjonustu-gloppur', verk:'◆ Verkefni', perf:'◆ Thrystingur (frammistada)'
+    gloppur:'◆ Thjonustu-gloppur', verk:'◆ Verkefni', perf:'◆ Thrystingur (frammistada)',
+    sidukort:'◆ Sidukort (agentar - sidur)', lotur:'◆ Lotur sidustu 7 daga', got:'◆ Got & tillogur', minni:'◆ Minnid (Charlize)'
   };
   var ov = document.getElementById('svalmynd');
   var listi = document.getElementById('svallisti');

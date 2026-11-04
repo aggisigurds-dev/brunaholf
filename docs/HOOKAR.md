@@ -103,7 +103,11 @@ Hookurinn keyrir með `cwd` = möppan sem lotan var opnuð í. Ef lotan `cd`-ar 
 
 ## 4. `~/.claude/settings.json` — lotur utan repóanna (C:\projects, worktrees)
 
-Bættu `"hooks"` við (aðrar stillingar óbreyttar). `--notandi` lætur hookinn þegja ef verkefnið hefur hann sjálft í `.claude/settings.json`, svo ekkert keyrir tvisvar:
+**Staða:** sett inn á þessari vél (DESKTOP-M5FO3I6) 04.11.2026 kl. 09:50 — afrit í `~/.claude/settings.json.bak-2026-11-04`. Á hinum vélunum þarf að bæta blokkinni við handvirkt (aðrar stillingar óbreyttar).
+
+**Prófunargildra:** pípupróf með `echo '{"cwd":"C:\projects"}'` í Git Bash skilar oft ógildu JSON (bakskástrik týnast) → hookurinn þegir eins og hann á að gera og lítur út fyrir að vera bilaður. Skrifaðu prófunarinntakið í skrá með `cat <<EOF` og framskástrikum (`C:/projects`) eða keyrðu `--dry`.
+
+Blokkin sem fer inn: `--notandi` lætur hookinn þegja ef verkefnið hefur hann sjálft í `.claude/settings.json`, svo ekkert keyrir tvisvar:
 
 ```json
 "hooks": {

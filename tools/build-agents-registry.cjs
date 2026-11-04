@@ -191,6 +191,18 @@ function readSidukort(repo, dir) {
 
 /* stada: ❌ enginn eigandi · ⚠️ eigandi ekki í registry EÐA skilgreind-skrá finnst ekki · ✅ annars.
  * Bætir entry.sidur = [{id, vefur, titill, hlutverk}] við agentana og skilar þekju per vef. */
+/* Eigandi í öðru repói eða skill utan registry: „sl:arnold“ / „bh:skjol“ / „kj:…“ → sama nafn í registry
+ * (agent eða skill); „skill:3dJoker“ → skill í registry EÐA mappa ~/.claude/skills/<nafn>/SKILL.md.
+ * Skilar { ok, entry, nafn, utan } — utan = eigandinn býr ekki í repói síðunnar (Jarvis sýnir það sem ⇢). */
+function leysaEiganda(eig, byName) {
+  const m = /^(sl|bh|kj|skill):(.+)$/.exec(eig || '');
+  if (!m) return { ok: byName.has(eig), entry: byName.get(eig) || null, nafn: eig, utan: false };
+  const nafn = m[2], entry = byName.get(nafn) || null;
+  if (entry) return { ok: true, entry, nafn, utan: true };
+  if (m[1] === 'skill' && HOME && fs.existsSync(path.join(HOME, '.claude', 'skills', nafn, 'SKILL.md'))) return { ok: true, entry: null, nafn, utan: true };
+  return { ok: false, entry: null, nafn, utan: true };
+}
+
 function computeCoverage(pages, list, kortin) {
   const byName = new Map();
   for (const e of list) if (!byName.has(e.name) || e.type === 'agent') byName.set(e.name, e);
@@ -200,16 +212,18 @@ function computeCoverage(pages, list, kortin) {
     const astaeda = [];
     if (!p.eigandi) { p.stada = '❌'; astaeda.push('enginn eigandi'); }
     else {
-      if (!byName.has(p.eigandi)) astaeda.push(`eigandi „${p.eigandi}“ er ekki í registry`);
+      if (!leysaEiganda(p.eigandi, byName).ok) astaeda.push(`eigandi „${p.eigandi}“ er ekki í registry`);
       const d = dirOf.get(p.repo);
       for (const s of p.skilgreind) if (d && !fs.existsSync(path.join(d, s.split('#')[0]))) astaeda.push(`skrá finnst ekki: ${s}`);
       p.stada = astaeda.length ? '⚠️' : '✅';
     }
     p.astaeda = astaeda;
-    const e = p.eigandi && byName.get(p.eigandi);
+    const le = p.eigandi ? leysaEiganda(p.eigandi, byName) : null;
+    p.eigandi_nafn = le ? le.nafn : null; p.eigandi_utan = !!(le && le.utan);
+    const e = le && le.entry;
     if (e) e.sidur.push({ id: p.id, vefur: p.vefur, titill: p.titill, hlutverk: 'eigandi' });
     for (const u of p.undiragentar) {
-      const ue = byName.get(u);
+      const ue = leysaEiganda(u, byName).entry;
       if (ue && ue !== e) ue.sidur.push({ id: p.id, vefur: p.vefur, titill: p.titill, hlutverk: 'undiragent' });
     }
   }
