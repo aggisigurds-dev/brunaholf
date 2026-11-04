@@ -47,7 +47,7 @@ const tok = w => { const s = stofn(w); return { w, s, f: fold(s) }; };
 const ordin = texti => String(texti || '').normalize('NFC').toLowerCase().split(/[^a-z0-9þæöðáéíóúý]+/);
 /* Fallorð sem hittu kveikjuorð með stofn-pörun (04.11.2026: „fyrir“ ~ fyrirtæki → stjórinn kallaður á hvert „fyrir mig“). */
 const FALLORD = new Set(['fyrir', 'eftir', 'undir', 'yfir', 'milli', 'þegar', 'þetta', 'þessi', 'þessu', 'þessa', 'aðeins', 'alveg', 'hvernig', 'hvort',
-  'einnig', 'þannig', 'vegna', 'meðan', 'síðan', 'núna', 'bara', 'líka', 'samt', 'annars', 'allir', 'allar', 'öllum', 'hérna', 'þarna', 'eitthvað', 'ekkert', 'hægt']);
+  'einnig', 'þannig', 'vegna', 'meðan', 'síðan', 'núna', 'bara', 'líka', 'samt', 'annars', 'allir', 'allar', 'öllum', 'hérna', 'þarna', 'eitthvað', 'ekkert', 'hægt', 'verða', 'verður', 'verði', 'orðið', 'mikið', 'strax']);
 /* orð fyrir kveikjuorð: < 3 stafir hunsuð nema STUTT; fallorð aldrei */
 const ord = texti => ordin(texti).filter(w => w && !FALLORD.has(w) && (w.length >= 3 || STUTT.has(w))).map(tok);
 /* orð fyrir fyrirtækjanöfn: tölur haldast (Laugavegur 11), lagaform (ehf, hf …) fara */
