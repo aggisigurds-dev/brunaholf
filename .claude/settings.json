@@ -20,6 +20,15 @@
           }
         ]
       }
+    ],
+    "UserPromptSubmit": [
+      { "hooks": [ { "type": "command", "command": "node tools/router.cjs", "timeout": 5 } ] }
+    ],
+    "Stop": [
+      { "hooks": [ { "type": "command", "command": "node tools/lotu-lok.cjs", "timeout": 10 } ] }
+    ],
+    "SessionStart": [
+      { "hooks": [ { "type": "command", "command": "node tools/lotu-byrjun.cjs", "timeout": 5 } ] }
     ]
   }
 }

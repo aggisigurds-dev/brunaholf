@@ -11,7 +11,7 @@
     { "prompt": "rukka Center Hotels", "cwd": "C:\\projects\\brunaholf", "vaent": ["rukkari"] },
     { "prompt": "rukka Center Hotels", "cwd": "C:\\projects\\brunaholf", "vaent": ["fyrirtaeki", "rukkari"], "fremstur": "fyrirtaeki", "kt": ["450905-1430"], "krefst": "felog" },
     { "prompt": "rukkaðu Landspítalann fyrir október", "cwd": "C:\\projects\\brunaholf", "vaent": ["rukkari"] },
-    { "prompt": "nýjustu póstar frá eldklar, hvað kom í pósti", "cwd": "C:\\projects\\brunaholf", "vaent": ["rukkari"], "fremstur": "rukkari" },
+    { "prompt": "nýjustu póstar frá eldklar, hvað kom í pósti", "cwd": "C:\\projects\\brunaholf", "vaent": ["postur"], "fremstur": "postur" },
     { "prompt": "hver er staðan á öllu í dag", "cwd": "C:\\projects\\brunaholf", "vaent": ["jarvis"], "fremstur": "jarvis" },
     { "prompt": "VSK reikningurinn fyrir NLSH stemmir ekki", "cwd": "C:\\projects\\brunaholf", "vaent": ["bokari"], "fremstur": "bokari" },
     { "prompt": "QR-miðinn prentast ekki á Brother prentaranum", "cwd": "C:\\projects\\slokkvitaeki", "vaent": ["prentun"], "fremstur": "prentun" },
