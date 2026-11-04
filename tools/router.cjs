@@ -100,14 +100,16 @@ function lesaFelog(dir, kvOrd) {
   const j = f && lesaJson(f);
   const ut = { til: !!j, kt: new Map(), index: new Map() };
   if (!j || !Array.isArray(j.felog)) return ut;
-  const stopp = new Set([...FAST_STOPP.map(w => fold(stofn(w))), ...kvOrd]);
+  const fastStopp = new Set(FAST_STOPP.map(w => fold(stofn(w))));
+  const stopp = new Set([...fastStopp, ...kvOrd]);
   for (const [kt, nafn] of j.felog) {
     if (!ut.kt.has(kt)) ut.kt.set(kt, nafn);
     const K = ordN(nafn);
     if (!K.length) continue;
     const stafir = K.reduce((n, t) => n + t.w.length, 0);
     if (!(K.length >= 2 || stafir >= 8)) continue;
-    if (K.length === 1 && stopp.has(K[0].f)) continue;
+    // Eins orðs nafn sem er líka kveikjuorð síðu (Heimaleiga, 04.11.2026) telst samt félag sé það ≥ 8 stafir; FAST_STOPP aldrei.
+    if (K.length === 1 && (fastStopp.has(K[0].f) || (stopp.has(K[0].f) && stafir < 8))) continue;
     const lyk = K[0].f.slice(0, 6);
     if (!ut.index.has(lyk)) ut.index.set(lyk, []);
     ut.index.get(lyk).push({ kt, nafn, K, stafir });
