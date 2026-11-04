@@ -34,6 +34,7 @@ const HOOKAR = [
   ['UserPromptSubmit', 'router.cjs', 5],
   ['Stop', 'lotu-lok.cjs', 10],
   ['SessionStart', 'lotu-byrjun.cjs', 5],
+  ['PreToolUse', 'sidu-vordur.cjs', 5, 'Read|Edit|Write|MultiEdit|NotebookEdit'],   // síðuvörður (04.11.2026 kvöld)
 ];
 const REPO = ['brunaholf', 'slokkvitaeki', 'kjarni'].map(n => ({ nafn: n, slod: n === 'brunaholf' ? BH : path.join(ROT, n) }));
 const ut = [];
@@ -68,13 +69,13 @@ if (fs.existsSync(SKRA)) {
 } else log('  · ' + SKRA + ' er ekki til — verður búin til');
 st.hooks = st.hooks || {};
 let baett = 0, voru = 0;
-for (const [ev, skra, timeout] of HOOKAR) {
+for (const [ev, skra, timeout, matcher] of HOOKAR) {
   const cmd = 'node ' + BHs + '/tools/' + skra + ' --notandi';
   const listi = Array.isArray(st.hooks[ev]) ? st.hooks[ev] : (st.hooks[ev] = []);
   const til = listi.some(g => (g.hooks || []).some(h => String(h.command || '').includes('/tools/' + skra) || String(h.command || '').includes('\\tools\\' + skra)));
   if (til) { voru++; log('  = ' + ev + ' → ' + skra + ' er þegar í skránni'); continue; }
-  listi.push({ hooks: [{ type: 'command', command: cmd, timeout }] });
-  baett++; log('  + ' + ev + ' → ' + cmd);
+  listi.push(Object.assign(matcher ? { matcher } : {}, { hooks: [{ type: 'command', command: cmd, timeout }] }));
+  baett++; log('  + ' + ev + (matcher ? ' [' + matcher + ']' : '') + ' → ' + cmd);
 }
 if (CHECK || DRY) {
   log(CHECK ? 'Staða aðeins — ekkert skrifað.' : 'Þurrkeyrsla — ekkert skrifað. ' + baett + ' hook(ar) myndu bætast við.');
