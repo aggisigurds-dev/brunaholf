@@ -294,3 +294,10 @@ Tillaga á hvert fyrirtæki er ein af: **TAKA ÚT** (þrjú óháð nei) · **HA
 - Tækjatalning sem byggir á nafna-mátun (`uttaeki.client` á móti heiti félags) gerir félag „tækjalaust“ við örlítið aðra stafsetningu. [C#30]
 - Factcheck-merki: blár punktur í græna merkinu = factcheck hafið, grænn punktur = factchecked (fyrri ákvörðun Agnars). [lota 1555dbad]
 - Ekkert telst „búið“ nema sagt sé HVERNIG það var prófað (`docs/MAELINGAR.md`: hvaða build svaraði, beðið eftir kyrrð en ekki klukku, raunveruleg aðgerð en ekki hermd) og prófanir skrifa aldrei í framleiðslugrunn. (líklega) [lota e9205308]
+
+## Grunnreglur allra agenta (04.11.2026)
+1. Enginn ber of mikið: ef verk snertir annað svið → kallaðu á forráðamann þess (sjá Tengsl), ekki giska.
+2. Veiddu úr þínum töflum (gagnakortið í docs/AGENTASKRA.md) og skráðu reglur sem bíta í charlize_knowledge (topic = þitt heiti).
+3. Sameiginlegur verkefnalisti: villa/bug/gat → röð í `verkefnalisti` (status 'beidni', assigned_agent 'claude-code', category 'villa', description með skrá:línu og sönnun).
+4. Áður en lotu lýkur: hvað veit ég núna sem næsta lota veit ekki? → charlize_knowledge (1–5 færslur), kúnnafróðleikur → scope 'kunni' með kennitölu.
+5. Boðhlaup (Agnar 04.11.2026): keflið fellur ALDREI á jörðina. Fáirðu verk utan þíns sviðs vinnurðu það ekki þegjandi og sleppir því ekki — þú réttir það eiganda síðunnar/gagnanna (síðukort, gagnakort, Tengsl) með einni línu um hvað er beðið um og hvað þú veist þegar, og segir Agnari hver tók við. Finnist enginn eigandi tekur jarvis við og skráir gat.

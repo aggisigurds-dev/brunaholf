@@ -51,7 +51,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/adstod.md",
      "uppfaert": "2026-11-04",
-     "linur": 92
+     "linur": 99
     }
    ],
    "afbrigdi": [],
@@ -508,7 +508,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/birgdastjori.md",
      "uppfaert": "2026-11-04",
-     "linur": 98
+     "linur": 99
     }
    ],
    "afbrigdi": [],
@@ -600,7 +600,7 @@
      "repo": "brunaholf",
      "path": ".claude/agents/bokari.md",
      "uppfaert": "2026-11-04",
-     "linur": 711
+     "linur": 717
     }
    ],
    "afbrigdi": [],
@@ -931,7 +931,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/bord-flettur.md",
      "uppfaert": "2026-11-04",
-     "linur": 613
+     "linur": 624
     }
    ],
    "afbrigdi": [],
@@ -1184,7 +1184,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/elon-musk.md",
      "uppfaert": "2026-11-04",
-     "linur": 345
+     "linur": 352
     }
    ],
    "afbrigdi": [],
@@ -1334,7 +1334,7 @@
      "repo": "brunaholf",
      "path": ".claude/agents/endurskodandi.md",
      "uppfaert": "2026-11-04",
-     "linur": 118
+     "linur": 119
     }
    ],
    "afbrigdi": [],
@@ -1407,7 +1407,7 @@
      "repo": "brunaholf",
      "path": ".claude/agents/framendi.md",
      "uppfaert": "2026-11-04",
-     "linur": 481
+     "linur": 488
     }
    ],
    "afbrigdi": [],
@@ -1599,7 +1599,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/fyrirtaeki.md",
      "uppfaert": "2026-11-04",
-     "linur": 82
+     "linur": 83
     }
    ],
    "afbrigdi": [],
@@ -1697,7 +1697,7 @@
      "repo": "brunaholf",
      "path": ".claude/agents/gagnaleidslur.md",
      "uppfaert": "2026-11-04",
-     "linur": 388
+     "linur": 395
     }
    ],
    "afbrigdi": [],
@@ -1909,12 +1909,12 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/hradi.md",
-     "uppfaert": "2026-10-28",
-     "linur": 119
+     "uppfaert": "2026-11-04",
+     "linur": 126
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-10-28",
+   "uppfaert": "2026-11-04",
    "sidur": [
     {
      "id": "kerfisheilsa",
@@ -1982,7 +1982,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/innkaupabokari.md",
      "uppfaert": "2026-11-04",
-     "linur": 84
+     "linur": 85
     }
    ],
    "afbrigdi": [],
@@ -2056,7 +2056,7 @@
      "repo": "brunaholf",
      "path": ".claude/agents/jarvis.md",
      "uppfaert": "2026-11-04",
-     "linur": 261
+     "linur": 268
     }
    ],
    "afbrigdi": [],
@@ -2252,13 +2252,13 @@
      "repo": "brunaholf",
      "path": ".claude/agents/joker.md",
      "uppfaert": "2026-11-04",
-     "linur": 230
+     "linur": 237
     },
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/joker.md",
      "uppfaert": "2026-11-04",
-     "linur": 623
+     "linur": 630
     }
    ],
    "afbrigdi": [
@@ -2390,7 +2390,7 @@
      "repo": "brunaholf",
      "path": ".claude/agents/kerfisheilsa.md",
      "uppfaert": "2026-11-04",
-     "linur": 118
+     "linur": 125
     }
    ],
    "afbrigdi": [],
@@ -2714,7 +2714,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/kodafraedingur.md",
      "uppfaert": "2026-11-04",
-     "linur": 100
+     "linur": 101
     }
    ],
    "afbrigdi": [],
@@ -2783,7 +2783,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/kort.md",
      "uppfaert": "2026-11-04",
-     "linur": 115
+     "linur": 122
     }
    ],
    "afbrigdi": [],
@@ -2884,14 +2884,14 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/kunnaskra.md",
-     "uppfaert": "2026-11-03",
-     "linur": 299
+     "uppfaert": "2026-11-04",
+     "linur": 306
     },
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/kunnaskra.md",
      "uppfaert": "2026-11-04",
-     "linur": 219
+     "linur": 226
     }
    ],
    "afbrigdi": [
@@ -3151,7 +3151,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/logfraedingur.md",
      "uppfaert": "2026-11-04",
-     "linur": 85
+     "linur": 86
     }
    ],
    "afbrigdi": [],
@@ -3233,15 +3233,15 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/natalie.md",
-     "uppfaert": "2026-10-28",
-     "linur": 297,
+     "uppfaert": "2026-11-04",
+     "linur": 304,
      "afrit": true
     },
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/natalie.md",
      "uppfaert": "2026-11-04",
-     "linur": 307
+     "linur": 314
     }
    ],
    "afbrigdi": [
@@ -3364,7 +3364,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/netvordur.md",
      "uppfaert": "2026-11-04",
-     "linur": 95
+     "linur": 104
     }
    ],
    "afbrigdi": [],
@@ -3441,7 +3441,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/opp.md",
      "uppfaert": "2026-11-04",
-     "linur": 86
+     "linur": 87
     }
    ],
    "afbrigdi": [],
@@ -3717,7 +3717,7 @@
      "repo": "brunaholf",
      "path": ".claude/agents/oryggi.md",
      "uppfaert": "2026-11-04",
-     "linur": 203
+     "linur": 210
     }
    ],
    "afbrigdi": [],
@@ -3839,7 +3839,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/postur.md",
      "uppfaert": "2026-11-04",
-     "linur": 90
+     "linur": 97
     }
    ],
    "afbrigdi": [],
@@ -3967,7 +3967,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/prentun.md",
      "uppfaert": "2026-11-04",
-     "linur": 121
+     "linur": 128
     }
    ],
    "afbrigdi": [],
@@ -4051,12 +4051,12 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/rambo.md",
-     "uppfaert": "2026-10-22",
-     "linur": 56
+     "uppfaert": "2026-11-04",
+     "linur": 63
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-10-22",
+   "uppfaert": "2026-11-04",
    "sidur": [
     {
      "id": "jarvis-oryggisnet",
@@ -4123,13 +4123,13 @@
      "repo": "brunaholf",
      "path": ".claude/agents/rukkari.md",
      "uppfaert": "2026-11-04",
-     "linur": 294
+     "linur": 301
     },
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/rukkari.md",
      "uppfaert": "2026-11-04",
-     "linur": 33
+     "linur": 40
     }
    ],
    "afbrigdi": [
@@ -4392,7 +4392,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/sala-reikningar.md",
      "uppfaert": "2026-11-04",
-     "linur": 465
+     "linur": 472
     }
    ],
    "afbrigdi": [],
@@ -4670,7 +4670,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/samthykktir.md",
      "uppfaert": "2026-11-04",
-     "linur": 225
+     "linur": 232
     }
    ],
    "afbrigdi": [],
@@ -4804,7 +4804,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/sara-coworker.md",
      "uppfaert": "2026-11-04",
-     "linur": 283
+     "linur": 290
     }
    ],
    "afbrigdi": [],
@@ -4933,7 +4933,7 @@
      "repo": "brunaholf",
      "path": ".claude/agents/sara-organizer.md",
      "uppfaert": "2026-11-04",
-     "linur": 274
+     "linur": 281
     }
    ],
    "afbrigdi": [],
@@ -5089,7 +5089,7 @@
      "repo": "brunaholf",
      "path": ".claude/agents/skjol.md",
      "uppfaert": "2026-11-04",
-     "linur": 858
+     "linur": 865
     }
    ],
    "afbrigdi": [],
@@ -5363,7 +5363,7 @@
      "repo": "brunaholf",
      "path": ".claude/agents/tengingar.md",
      "uppfaert": "2026-11-04",
-     "linur": 133
+     "linur": 140
     }
    ],
    "afbrigdi": [],
@@ -5473,12 +5473,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/thema.md",
-     "uppfaert": "2026-10-28",
-     "linur": 162
+     "uppfaert": "2026-11-04",
+     "linur": 169
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-10-28",
+   "uppfaert": "2026-11-04",
    "sidur": [
     {
      "id": "settings",
@@ -5546,7 +5546,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/thjonustugatt.md",
      "uppfaert": "2026-11-04",
-     "linur": 74
+     "linur": 75
     }
    ],
    "afbrigdi": [],
@@ -5649,7 +5649,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/utlitsserfraedingur.md",
      "uppfaert": "2026-11-04",
-     "linur": 85
+     "linur": 86
     }
    ],
    "afbrigdi": [],
@@ -5705,7 +5705,7 @@
      "repo": "brunaholf",
      "path": ".claude/agents/verkstadur.md",
      "uppfaert": "2026-11-04",
-     "linur": 110
+     "linur": 111
     }
    ],
    "afbrigdi": [],
@@ -6066,8 +6066,8 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/skills/arnold/SKILL.md",
-     "uppfaert": "2026-10-29",
-     "linur": 332
+     "uppfaert": "2026-11-02",
+     "linur": 333
     },
     {
      "repo": "cowork",
@@ -6083,7 +6083,7 @@
      "kveikjuord": []
     }
    ],
-   "uppfaert": "2026-10-29",
+   "uppfaert": "2026-11-02",
    "sidur": [
     {
      "id": "turbopaint",
@@ -7391,7 +7391,7 @@
      "repo": "brunaholf",
      "path": ".claude/skills/stadfesting-brunalokana/SKILL.md",
      "uppfaert": "2026-11-04",
-     "linur": 271
+     "linur": 272
     }
    ],
    "afbrigdi": [],

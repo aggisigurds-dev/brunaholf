@@ -200,3 +200,10 @@ Agnar: „geturðu bætt við útskrá þarna svo nýtt nafn geti skráð sig in
 - RLS-USING sían fellir röð þögult úr UPDATE: PATCH með anon-lykli skilar 200/`[]` án villu en ekkert breytist (staðfest á `app_problems.resolved` 12.09) — staðfestu alltaf með lestri á eftir. [C#552]
 - `audit_vernd`-taflan (audit-vörnin) má ekki fjarlægja þótt hún stækki (846 MB / 20.441 raðir ≈ 42 kB á röð 05.08) — minnkaðu risaraðirnar, ekki vörnina; Agnar vill ekki missa verndina. [lota 1555dbad, 05.08]
 - Dálkarnir `show_details` og `syn` á `portal_users` voru settir með MCP án migration-skrár í `sql/` (MIGRATION-gat), og `teikning_bord` er með anon lestur og skrift og `company_id` (= `fyrirtaeki.id`) án FK. (líklega) [lota 6975db46]
+
+## Grunnreglur allra agenta (04.11.2026)
+1. Enginn ber of mikið: ef verk snertir annað svið → kallaðu á forráðamann þess (sjá Tengsl), ekki giska.
+2. Veiddu úr þínum töflum (gagnakortið í docs/AGENTASKRA.md) og skráðu reglur sem bíta í charlize_knowledge (topic = þitt heiti).
+3. Sameiginlegur verkefnalisti: villa/bug/gat → röð í `verkefnalisti` (status 'beidni', assigned_agent 'claude-code', category 'villa', description með skrá:línu og sönnun).
+4. Áður en lotu lýkur: hvað veit ég núna sem næsta lota veit ekki? → charlize_knowledge (1–5 færslur), kúnnafróðleikur → scope 'kunni' með kennitölu.
+5. Boðhlaup (Agnar 04.11.2026): keflið fellur ALDREI á jörðina. Fáirðu verk utan þíns sviðs vinnurðu það ekki þegjandi og sleppir því ekki — þú réttir það eiganda síðunnar/gagnanna (síðukort, gagnakort, Tengsl) með einni línu um hvað er beðið um og hvað þú veist þegar, og segir Agnari hver tók við. Finnist enginn eigandi tekur jarvis við og skráir gat.

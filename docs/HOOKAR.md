@@ -133,3 +133,10 @@ node tools/lotu-byrjun.cjs --texti
 ## Að slökkva
 
 Taktu færslurnar út úr `settings.json` (eða keyrðu `/hooks` og afvirkjaðu). Ekkert annað þarf að hreinsa; `~/.claude/router-log.jsonl` og `~/.claude/lotu-state/` má eyða að vild.
+
+## Síðuvörður og keflið (04.11.2026 kvöld)
+
+- **Síðuvörður** (`tools/sidu-vordur.cjs`, PreToolUse á Read · Edit · Write · MultiEdit · NotebookEdit): þegar lotan snertir skrá sem síðukortið á (`data/sidukort.json` → `skilgreind`, patch-númer eða síðu-id í skráarheiti) kemur eigandi síðunnar inn með slóð á agent-skrána og ALDREI-línur, einu sinni per síðu per lotu (ástand í `~/.claude/lotu-state/`). Skrá sem engin síða á (js/patches, apps/, netlify/functions, *.html) er skráð sem gat í `router-log.jsonl`. Prófun: `node tools/sidu-vordur.cjs --dry <skrá>`.
+- **Keflið (boðhlaup, Agnar):** keflið fellur aldrei. `lotu-byrjun.cjs` setur jarvis með keflið í byrjun hverrar lotu; `router.cjs` réttir jarvis það þegar engin kveikjuorð hitta en promptið lýsir verki (≥ 9 orð); regla 5 í „Grunnreglur allra agenta“ í hverri agent-skrá segir agentinum að rétta verk utan sviðs áfram til eigandans og segja Agnari hver tók við.
+- **Uppsetning á vél:** `node tools/setja-hooka.cjs --pull` setur alla fjóra hookana í `~/.claude/settings.json` (afrit tekið). Gildra sem fannst 04.11: lota opnuð í heimamöppunni sjálfri (C:\Users\<notandi>) lét `--notandi` þegja — lagað í `_lotu-grunnur.cjs`.
+- **Fallorð:** „fyrir“, „eftir“, „yfir“ o.fl. hitta aldrei kveikjuorð með stofn-pörun (FALLORD í router.cjs) — „fyrir mig“ kallaði áður stjórann fyrirtaeki.

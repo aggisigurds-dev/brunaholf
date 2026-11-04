@@ -45,8 +45,11 @@ function stofn(w) {
 }
 const tok = w => { const s = stofn(w); return { w, s, f: fold(s) }; };
 const ordin = texti => String(texti || '').normalize('NFC').toLowerCase().split(/[^a-z0-9þæöðáéíóúý]+/);
-/* orð fyrir kveikjuorð: < 3 stafir hunsuð nema STUTT */
-const ord = texti => ordin(texti).filter(w => w && (w.length >= 3 || STUTT.has(w))).map(tok);
+/* Fallorð sem hittu kveikjuorð með stofn-pörun (04.11.2026: „fyrir“ ~ fyrirtæki → stjórinn kallaður á hvert „fyrir mig“). */
+const FALLORD = new Set(['fyrir', 'eftir', 'undir', 'yfir', 'milli', 'þegar', 'þetta', 'þessi', 'þessu', 'þessa', 'aðeins', 'alveg', 'hvernig', 'hvort',
+  'einnig', 'þannig', 'vegna', 'meðan', 'síðan', 'núna', 'bara', 'líka', 'samt', 'annars', 'allir', 'allar', 'öllum', 'hérna', 'þarna', 'eitthvað', 'ekkert']);
+/* orð fyrir kveikjuorð: < 3 stafir hunsuð nema STUTT; fallorð aldrei */
+const ord = texti => ordin(texti).filter(w => w && !FALLORD.has(w) && (w.length >= 3 || STUTT.has(w))).map(tok);
 /* orð fyrir fyrirtækjanöfn: tölur haldast (Laugavegur 11), lagaform (ehf, hf …) fara */
 const LAGAFORM = new Set(['ehf', 'hf', 'sf', 'ses', 'slf', 'ohf', 'bs', 'svf', 'hses', 'co']);
 const ordN = texti => ordin(texti).filter(w => w && !LAGAFORM.has(w) && (w.length >= 3 || /^\d+$/.test(w) || STUTT.has(w))).map(tok);
@@ -228,7 +231,7 @@ function greina(prompt, cwd, opt = {}) {
   const agentar = valdir.map(v => v.agent);
   if (fyrirtaeki.length) agentar.unshift('fyrirtaeki');
   const ordUt = [...new Set(valdir.flatMap(v => v.hitt.map(c => c.kv)).concat(fyrirtaeki.map(f => f.nafn || f.kt)))].slice(0, 12);
-  return { thogn: false, agentar, valdir, stig, fyrirtaeki, sidur, toflur: nefnirToflu, gat, ord: ordUt, kt: fyrirtaeki.map(f => f.kt), g, heima };
+  return { thogn: false, agentar, valdir, stig, fyrirtaeki, sidur, toflur: nefnirToflu, gat, ord: ordUt, fjoldi: fjoldiOrda, kt: fyrirtaeki.map(f => f.kt), g, heima };
 }
 
 function heimaRepo(e) { return (e.skrar || []).filter(s => !s.afrit).map(s => s.repo); }
@@ -258,7 +261,12 @@ async function kunnaminni(kts) {
 function smida(res, minni) {
   if (res.thogn) return '';
   const { g } = res;
-  if (!res.valdir.length && !res.fyrirtaeki.length && !res.sidur.length) return '';
+  if (!res.valdir.length && !res.fyrirtaeki.length && !res.sidur.length) {
+    // Boðhlaupið (Agnar 04.11.2026): enginn sérfræðingur hitti — keflið fellur samt ekki, jarvis heldur því. Aðeins þegar
+    // promptið lýsir verki (≥ 9 orð), svo stutt svör („já gerðu það“) fái ekki línu.
+    if ((res.fjoldi || 0) >= 9) return 'Keflið: engin kveikjuorð hittu — jarvis (stjóri) heldur keflinu. Finndu eiganda verksins í data/sidukort.json eða docs/AGENTASKRA.md (eða `node tools/router.cjs --dry "<verkið>"`) og réttu honum það áður en þú vinnur; finnist enginn: jarvis vinnur og skráir gat.';
+    return '';
+  }
   const L = [];
   const kvL = [];
   for (const v of res.valdir) for (const c of v.hitt.filter(c => !c.alm || v.hitt.some(x => !x.alm))) kvL.push(`„${c.kv}“ → ${v.agent}`);

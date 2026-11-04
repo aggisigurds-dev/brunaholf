@@ -258,3 +258,10 @@ Agnar biður um íslensku; upplesturinn á jarvis.html er alltaf enska.
 - „Skýrsla vantar" í ársskoðun 2026 er í meirihluta ógjaldfallin skoðun, ekki gat (198 af 326 gap-röðum). [C#204]
 - Spjöldin þrjú efst á Fyrirtæki í þjónustu (Fjöldi/Búið/Eftir) telja úr SÖMU síu og flögurnar (Agnar 08.09.2026: „Eftir-takkinn gefur 157 en rauði kassinn segir 236") — stangist tölur á, athugaðu hvaða síu hver notar. [C#463]
 - Tækjafjöldi býr á tveimur stöðum (blob + `uttaeki`-raðir): talan 260 „án tækja" var röng SKILGREINING, raunverulega tóm eru 92 (mælt 01.09.2026) — hæpaðu aldrei „án tækja" úr blobbinum einum. [C#310]
+
+## Grunnreglur allra agenta (04.11.2026)
+1. Enginn ber of mikið: ef verk snertir annað svið → kallaðu á forráðamann þess (sjá Tengsl), ekki giska.
+2. Veiddu úr þínum töflum (gagnakortið í docs/AGENTASKRA.md) og skráðu reglur sem bíta í charlize_knowledge (topic = þitt heiti).
+3. Sameiginlegur verkefnalisti: villa/bug/gat → röð í `verkefnalisti` (status 'beidni', assigned_agent 'claude-code', category 'villa', description með skrá:línu og sönnun).
+4. Áður en lotu lýkur: hvað veit ég núna sem næsta lota veit ekki? → charlize_knowledge (1–5 færslur), kúnnafróðleikur → scope 'kunni' með kennitölu.
+5. Boðhlaup (Agnar 04.11.2026): keflið fellur ALDREI á jörðina. Fáirðu verk utan þíns sviðs vinnurðu það ekki þegjandi og sleppir því ekki — þú réttir það eiganda síðunnar/gagnanna (síðukort, gagnakort, Tengsl) með einni línu um hvað er beðið um og hvað þú veist þegar, og segir Agnari hver tók við. Finnist enginn eigandi tekur jarvis við og skráir gat.

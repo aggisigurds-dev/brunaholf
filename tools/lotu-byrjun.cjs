@@ -13,6 +13,9 @@
 'use strict';
 const G = require('./_lotu-grunnur.cjs');
 
+/* Boðhlaupið: fyrsta línan í hverri lotu — keflið má aldrei falla (Agnar 04.11.2026). */
+const KEFLI = "Keflið (boðhlaup, Agnar 04.11.2026): jarvis heldur keflinu í byrjun lotu. Keflið fellur ALDREI á jörðina — sá sem heldur því vinnur verkið sé það á hans sviði, annars réttir hann það eiganda síðunnar/gagnanna (leiðarvísir, síðuvörður, data/sidukort.json, docs/AGENTASKRA.md) og segir hverjum; finnist enginn eigandi heldur jarvis því áfram og skráir gat. Lestu Charlize (skill charlize / docs/MINNISBOK.md) áður en þú byrjar.";
+
 const tvo = n => String(n).padStart(2, '0');
 const dags = iso => { const d = new Date(iso); return isNaN(d) ? '??.??' : `${tvo(d.getDate())}.${tvo(d.getMonth() + 1)} ${tvo(d.getHours())}:${tvo(d.getMinutes())}`; };
 
@@ -45,6 +48,7 @@ async function keyra(arg = process.argv.slice(2)) {
   if (arg.includes('--notandi') && G.verkefniHefur(cwd, 'lotu-byrjun.cjs', 'lotu-hookar.cjs')) return G.ljuka('', 0);
   let texti;
   try { texti = await smida(cwd); } catch (e) { texti = 'Lotuminnið (charlize_sessions) svarar ekki — haldið áfram.'; }
+  texti = KEFLI + '\n' + texti;
   if (arg.includes('--texti')) return G.ljuka(texti + '\n', 0);
   return G.ljuka(JSON.stringify({ hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: texti } }) + '\n', 0);
 }

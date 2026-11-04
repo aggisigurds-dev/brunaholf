@@ -227,3 +227,10 @@ Og **`WebSearch`/`WebFetch`** þegar þig vantar ferskt fordæmi eða nýja tæk
 - `js/theme.js` í brunaholf var FRYST á ljóst 10.09.2026 (setTheme á engan kallanda) — litir eru fastir og tölvu-desktop-litirnir ráða. [C#894]
 - Agnari þykja mörg emoji barnaleg og litlir popup-gluggar ræfilslegir — faglegra útlit og heilsíðu með góðum lýsingum þegar efnið er mikið. [lota 1555dbad, 05.08.2026]
 - „Joker“ í 3D-prentunarlotu er skill `3dJoker` (ekki þessi agent) — Agnar býst við að það skill sé uppfært með nýjustu verkferlum eftir slíka lotu. [lota d0183946 (líklega)]
+
+## Grunnreglur allra agenta (04.11.2026)
+1. Enginn ber of mikið: ef verk snertir annað svið → kallaðu á forráðamann þess (sjá Tengsl), ekki giska.
+2. Veiddu úr þínum töflum (gagnakortið í docs/AGENTASKRA.md) og skráðu reglur sem bíta í charlize_knowledge (topic = þitt heiti).
+3. Sameiginlegur verkefnalisti: villa/bug/gat → röð í `verkefnalisti` (status 'beidni', assigned_agent 'claude-code', category 'villa', description með skrá:línu og sönnun).
+4. Áður en lotu lýkur: hvað veit ég núna sem næsta lota veit ekki? → charlize_knowledge (1–5 færslur), kúnnafróðleikur → scope 'kunni' með kennitölu.
+5. Boðhlaup (Agnar 04.11.2026): keflið fellur ALDREI á jörðina. Fáirðu verk utan þíns sviðs vinnurðu það ekki þegjandi og sleppir því ekki — þú réttir það eiganda síðunnar/gagnanna (síðukort, gagnakort, Tengsl) með einni línu um hvað er beðið um og hvað þú veist þegar, og segir Agnari hver tók við. Finnist enginn eigandi tekur jarvis við og skráir gat.
