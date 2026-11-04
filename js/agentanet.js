@@ -21,6 +21,14 @@
   var R = window.AGENTS_REGISTRY;
   if (!R || !R.list) return;
 
+  /* Lita-punktur per agent (Agnar 04.11.2026): grænn = kallaður síðasta sólarhring, gulur = innan viku, rauður = ekki
+   * kallaður í lotu síðustu 7 daga (glugginn sem /api/lotur skilar). „Kallaður“ = leiðarvísir, síðuvörður eða Agent-tól (lotu-lok). */
+  function stPunktur(live, n) {
+    var lv = live && live[n], h = lv && lv.sidast ? (Date.now() - new Date(lv.sidast).getTime()) / 36e5 : null;
+    var st = h == null ? 'r' : h <= 24 ? 'g' : h <= 24 * 7 ? 'y' : 'r';
+    var t = h == null ? 'Ekki kallaður í lotu síðustu 7 daga' : (st === 'g' ? 'Kallaður síðasta sólarhring' : 'Kallaður innan viku') + ' · síðast ' + fmtDT(lv.sidast) + ' · ' + lv.lotur + ' lotu(r)';
+    return '<i class="st st-' + st + '" title="' + esc(t) + '"></i>';
+  }
   var API_LOTUR = '/api/lotur', API_STADA = '/api/charlize-stada', API_NOTES = '/api/agent-notes';
   var STJORAR = ['fyrirtaeki', 'framendi', 'bord-flettur', 'kjarni-vefur', 'rukkari'];
   var STJORI_VEFUR = { framendi: 'brunaholf', 'bord-flettur': 'slokkvitaeki', 'kjarni-vefur': 'kjarni' };
@@ -348,7 +356,7 @@
       var p = P[e.name], lv = live[e.name], sidur = eigandaSidur(e).length;
       var v = STJORI_VEFUR[e.name], th = v && ((D.sidukort && D.sidukort.vefir) || R.thekja || []).filter(function (t) { return t.vefur === v; })[0];
       var sub = (persona(e) ? esc(persona(e)) + ' · ' : '') + (th ? th.alls + ' síður' + (th.an_eiganda ? ' · <span class="red">' + th.an_eiganda + ' án eiganda</span>' : '') : sidur + ' síður');
-      return '<div class="nd ' + cls + (erNyr(e.name) ? ' nd-new' : '') + (valinn === e.name ? ' nd-sel' : '') + '" data-ag="' + esc(e.name) + '" style="left:' + p.x.toFixed(0) + 'px;top:' + p.y.toFixed(0) + 'px"><b>' + esc(e.name) + '</b>' + sub +
+      return '<div class="nd ' + cls + (erNyr(e.name) ? ' nd-new' : '') + (valinn === e.name ? ' nd-sel' : '') + '" data-ag="' + esc(e.name) + '" style="left:' + p.x.toFixed(0) + 'px;top:' + p.y.toFixed(0) + 'px">' + stPunktur(live, e.name) + '<b>' + esc(e.name) + '</b>' + sub +
         (lv ? '<span class="lif" title="Kallaður í ' + lv.lotur + ' lotu(m) síðustu 7 daga">' + lv.lotur + '</span>' : '') + '</div>';
     };
     L.stj.forEach(function (e) { nd += node(e, 'nd-st'); });
@@ -387,7 +395,7 @@
     f.innerHTML = '<span class="l">VERÐIR OG KERFI · <span class="dim">KALLAST Á UNDAN AÐGERÐ, EKKI Í KEÐJUNNI</span></span>' + VERDIR.map(function (n) {
       var e = entry(n); if (!e) return '';
       var cls = (n === 'netvordur' || n === 'rambo') ? ' gw-bad' : erNyr(n) ? ' gw-warn' : n === 'oryggi' ? ' gw-acc' : '';
-      return '<button type="button" class="gw' + cls + '" data-ag="' + esc(n) + '">' + esc(n) + (persona(e) ? ' · ' + esc(persona(e)) : '') + (live[n] ? ' · ' + live[n].lotur + ' lotur' : '') + '</button>';
+      return '<button type="button" class="gw' + cls + '" data-ag="' + esc(n) + '">' + stPunktur(live, n) + esc(n) + (persona(e) ? ' · ' + esc(persona(e)) : '') + (live[n] ? ' · ' + live[n].lotur + ' lotur' : '') + '</button>';
     }).join('');
   }
 
@@ -405,7 +413,8 @@
       kc('Ólokið minni', strik(t.olokid), t.olokid > 0 ? 'hae' : '') +
       kc('Síður án eiganda', an, an > 0 ? 'hae' : '') +
       kc('Göt', lot.got ? lot.got.length : '—', lot.got && lot.got.length ? 'hae' : '') +
-      kc('Lotur í dag', hitt, '');
+      kc('Lotur í dag', hitt, '') +
+      '<span class="kc an-skyr" title="Punkturinn á hverjum agent: hvenær hann var síðast kallaður í lotu"><i class="st st-g"></i>24 klst <i class="st st-y"></i>vika <i class="st st-r"></i>ekki kallaður</span>';
     if (lot.villa || st.villa) m.innerHTML += '<span class="kc hae" title="' + esc(lot.villa || st.villa) + '">' + (/401|Innskráning/.test(lot.villa || st.villa) ? 'Innskráning starfsmanns vantar' : 'Lifandi gögn náðust ekki') + '</span>';
   }
 

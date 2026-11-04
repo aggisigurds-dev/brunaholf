@@ -75,6 +75,14 @@ body.an-lock #jvt-launch,body.an-lock #jvt-panel{display:none!important}
 .an-ov .an-ring{position:absolute;pointer-events:none}
 .an-ov .nd{position:absolute;transform:translate(-50%,-50%);padding:6px 10px;font-size:10px;line-height:1.35;border:1px solid var(--edge-hi);background:var(--node);color:var(--muted);white-space:nowrap;box-shadow:0 0 12px var(--glow-in);cursor:pointer;max-width:200px;overflow:hidden;text-overflow:ellipsis}
 .an-ov .nd b{display:block;color:var(--ink-hi);font-weight:700;font-size:11px}
+/* Staðapunktur (04.11.2026): grænn ≤ 24 klst · gulur ≤ 7 d · rauður ekki kallaður */
+.an-ov .st{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--bad);box-shadow:0 0 6px var(--bad-in);vertical-align:middle;margin-right:5px;flex:none}
+.an-ov .st-g{background:var(--ok);box-shadow:0 0 7px var(--ok-glow)}
+.an-ov .st-y{background:var(--warn);box-shadow:0 0 6px var(--warn-in)}
+.an-ov .nd .st{position:absolute;top:-4px;left:-4px;margin:0;width:9px;height:9px;border:1px solid var(--node)}
+.an-ov .gw .st{width:7px;height:7px;margin-right:6px}
+.an-ov .kc.an-skyr .st{margin:0 3px 0 8px}
+
 .an-ov .nd:hover{border-color:var(--acc)}
 .an-ov .nd-st{border-color:var(--acc);box-shadow:0 0 18px var(--glow),inset 0 0 14px var(--glow-in)}
 .an-ov .nd-new{border:1px dashed var(--warn)}
