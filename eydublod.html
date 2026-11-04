@@ -67,6 +67,8 @@
   .gen .genlysing{margin:10px 0 0; padding:9px 11px; border-left:3px solid #c9a24a; background:#faf6ee; border-radius:0 8px 8px 0; font-size:12.5px; line-height:1.5; color:var(--text); white-space:pre-line}
   .gen .genrad{display:flex; align-items:center; gap:12px; margin-top:12px; flex-wrap:wrap}
   .gen .genrad small{color:var(--muted); font-size:11.5px}
+  .gen .genfylgi{margin-top:12px; padding-top:10px; border-top:1px solid var(--line2); font-size:12px; color:var(--muted); line-height:1.5}
+  .gen .genfylgi b{color:var(--text)}
   .introrad{display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap}
   .ajourlink{display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border:1px solid var(--line2); border-radius:8px; background:#fff; color:inherit; text-decoration:none; font-weight:700; font-size:13px; white-space:nowrap; box-shadow:0 1px 2px rgba(0,0,0,.06)}
   .ajourlink:hover{background:#faf6ee; border-color:#c9a24a}
@@ -333,7 +335,7 @@
 /* Útgáfa síðunnar. BUMPAÐU þessu við hverja breytingu — merkið í hausnum er
    eina leiðin fyrir Agnar til að sjá strax hvort vafrinn situr á gamalli
    vistaðri útgáfu (það gerðist 2026-08-07 og kostaði drjúgan tíma). */
-const UTGAFA = '2026-11-03.3';
+const UTGAFA = '2026-11-04.1';
 
 let currentRowId = null;   // id á þeirri DB-röð sem er opin (til staðfestingar)
 let lastPublicUrl = null;  // public_url nýjasta vistunarins — til sendingar
@@ -806,6 +808,7 @@ function genPanel(f){
       <button class="btn btn-primary" onclick="genStart()">⚡ Smíða drög</button>
       <small id="gen_skilabod">Svæði: veldu af listanum eða skrifaðu sjálfur (t.d. „4. hæð“ eða „stigahúsi E“). Tómt = allt húsnæðið.</small>
     </div>
+    <div class="genfylgi">📎 <b>Fylgir staðfestingunni í pósti:</b> Ajour-skýrsla ef verkið er skráð í Ajour (ekki Heklureitur) og afrit af starfsleyfi þjónustuaðila. Hengdu skýrsluna við skjalið í safninu með „Hengja við“ eftir vistun.</div>
   </div>`;
 }
 function genLysing(){
