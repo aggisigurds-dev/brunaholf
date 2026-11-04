@@ -1,0 +1,58 @@
+/* jarvis-ring.css — fylgir jarvis-ring.js. Tölurnar eru þær sömu og í hönnuninni. */
+.jr{position:relative;pointer-events:none;font-family:'JetBrains Mono',monospace;
+  --jr-acc:#4fd8ff;--jr-acc-hi:#bff2ff;--jr-acc2:#1a7fc0;--jr-edge:rgba(79,216,255,.45);
+  --jr-glow:rgba(79,216,255,.4);--jr-glow-in:rgba(79,216,255,.03);
+  --jr-core-a:rgba(79,216,255,.35);--jr-core-b:rgba(10,60,90,.55);
+  --jr-font:'Rajdhani','JetBrains Mono',sans-serif}
+.jr-svg{position:absolute;inset:0;overflow:visible}
+.jr-g{transform-origin:260px 260px;transform-box:view-box}
+
+/* Stjörnuhiminn — radial-gradient punktar, enginn mynd */
+.jr-stars{position:absolute;border-radius:50%;opacity:.9;
+  box-shadow:inset 0 0 60px var(--jr-glow-in),0 0 40px var(--jr-glow-in);
+  background:
+    radial-gradient(circle at 50% 50%,var(--jr-core-b) 0%,transparent 70%),
+    radial-gradient(1px 1px at 20% 30%,#fff 50%,transparent 51%),
+    radial-gradient(1px 1px at 70% 20%,#fff 50%,transparent 51%),
+    radial-gradient(1.5px 1.5px at 40% 70%,var(--jr-acc-hi) 50%,transparent 51%),
+    radial-gradient(1px 1px at 80% 60%,#fff 50%,transparent 51%),
+    radial-gradient(1px 1px at 55% 15%,#fff 50%,transparent 51%),
+    radial-gradient(1px 1px at 30% 85%,var(--jr-acc-hi) 50%,transparent 51%),
+    radial-gradient(1.5px 1.5px at 65% 80%,#fff 50%,transparent 51%),
+    radial-gradient(1px 1px at 15% 55%,#fff 50%,transparent 51%),
+    radial-gradient(1px 1px at 85% 40%,var(--jr-acc-hi) 50%,transparent 51%),
+    radial-gradient(1px 1px at 48% 45%,#fff 50%,transparent 51%),
+    radial-gradient(1px 1px at 25% 15%,#fff 50%,transparent 51%),
+    radial-gradient(1px 1px at 75% 75%,#fff 50%,transparent 51%),
+    radial-gradient(1px 1px at 60% 35%,#fff 50%,transparent 51%),
+    radial-gradient(1px 1px at 35% 55%,var(--jr-acc-hi) 50%,transparent 51%),
+    radial-gradient(1px 1px at 90% 85%,#fff 50%,transparent 51%),
+    radial-gradient(1px 1px at 10% 75%,#fff 50%,transparent 51%)}
+
+/* Ratsjárgeisli — conic-gradient sem snýst á 5 s */
+.jr-sweep{position:absolute;inset:7.7%;border-radius:50%;opacity:.7;
+  background:conic-gradient(from 0deg,transparent 0deg,transparent 300deg,var(--jr-glow) 355deg,transparent 360deg)}
+
+/* Gráðumerkingar */
+.jr-deg{position:absolute;transform:translate(-50%,-50%);font-size:10px;letter-spacing:.1em;
+  color:var(--jr-acc);text-shadow:0 0 6px var(--jr-glow)}
+
+/* Kjarni */
+.jr-core{position:absolute;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  background:radial-gradient(circle,var(--jr-core-a) 0%,var(--jr-core-b) 55%,transparent 72%)}
+.jr-dot{width:14px;height:14px;border-radius:50%;background:var(--jr-acc-hi);margin-bottom:10px;
+  box-shadow:0 0 18px 6px var(--jr-glow),0 0 40px 14px var(--jr-glow-in)}
+.jr-core-t{font-family:var(--jr-font);font-weight:700;letter-spacing:.3em;color:var(--jr-acc-hi);text-shadow:0 0 14px var(--jr-acc)}
+.jr-core-s{color:#d6e3ea;margin-top:6px;line-height:1.4}
+
+/* Hreyfingar — nákvæmlega sömu tímar og í hönnuninni */
+@media (prefers-reduced-motion:no-preference){
+  .jr-g-a{animation:jr-spin 60s linear infinite}
+  .jr-g-b{animation:jr-spin 30s linear infinite reverse}
+  .jr-g-c{animation:jr-spin 18s linear infinite}
+  .jr-g-d{animation:jr-spin 130s linear infinite reverse}
+  .jr-sweep{animation:jr-spin 5s linear infinite}
+  .jr-core{animation:jr-core 3.4s ease-in-out infinite}
+}
+@keyframes jr-spin{to{transform:rotate(360deg)}}
+@keyframes jr-core{0%,100%{filter:brightness(1);transform:scale(1)}50%{filter:brightness(1.35);transform:scale(1.04)}}

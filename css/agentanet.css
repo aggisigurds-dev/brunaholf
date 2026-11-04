@@ -1,0 +1,185 @@
+/* agentanet.css — Agentanetið (Jarvis lag 2) + spjöldin sidukort · lotur · got · minni + Charlize-biðstofa.
+ * Útlitið er úr hönnuninni „Agentanetið — Jarvis-mælaborð“ (04.11.2026, agentanet-live.dc.html):
+ * klasarnir .pnl .nd .nd-st .nd-new .nd-sel .kc .tab .gw .lnk* .li .ttl eru ÓBREYTTIR svo Cowork geti
+ * pússað útlitið án þess að hreyfa við uppbyggingunni (js/agentanet.js). Allt skorðað undir .an-ov
+ * svo .tab/.pnl o.fl. rekist ekki á jarvis.html. Hringurinn sjálfur er css/jarvis-ring.css.
+ * Þemun: .an-ov.theme-jarvis (blátt, klassískt) og .an-ov.theme-ragnarok (gull) — tókenar úr T-töflunni. */
+
+/* ── Þema-tókenar ──────────────────────────────────────────────────────────── */
+.an-ov.theme-jarvis{
+  --bg:radial-gradient(ellipse at 50% 0%,#061a2a 0%,#02090f 40%,#000000 100%);--pa:rgba(4,16,26,.94);--pb:rgba(0,2,5,.98);--node:rgba(2,10,17,.97);
+  --acc:#4fd8ff;--acc-hi:#bff2ff;--acc2:#1a7fc0;--ink:#d6e3ea;--ink-hi:#f1f8fb;--muted:#7d94a2;
+  --edge:rgba(79,216,255,.2);--edge-hi:rgba(79,216,255,.45);--line:rgba(255,255,255,.06);
+  --glow:rgba(79,216,255,.4);--glow-in:rgba(79,216,255,.03);--glow-soft:rgba(79,216,255,.04);--track:rgba(255,255,255,.05);
+  --warn:#f5c542;--warn-in:rgba(245,197,66,.08);--bad:#ff6b81;--bad-in:rgba(255,107,129,.12);--ok:#3fe0a0;--ok-hi:#8af5c9;--ok-glow:rgba(63,224,160,.35);--on-ok:#022417;--on-acc:#03202f;
+  --core-a:rgba(79,216,255,.35);--core-b:rgba(10,60,90,.55);
+  --frame:linear-gradient(135deg,#1c4a66 0%,#3d7ea3 22%,#0b2435 48%,#2a6587 72%,#0e2d42 100%);--frame-w:2px;--frame-hi:rgba(120,190,230,.25);--dot:#6fc6ea;
+  --hf:'Rajdhani','JetBrains Mono',sans-serif;
+}
+.an-ov.theme-ragnarok{
+  --bg:radial-gradient(ellipse at 50% 0%,#0c0906 0%,#040302 35%,#000000 100%);--pa:rgba(10,9,7,.94);--pb:rgba(0,0,0,.98);--node:rgba(5,4,3,.97);
+  --acc:#d4a53a;--acc-hi:#f6dc8c;--acc2:#8a6418;--ink:#d8d2c6;--ink-hi:#f3efe6;--muted:#8a8378;
+  --edge:rgba(212,165,58,.22);--edge-hi:rgba(212,165,58,.5);--line:rgba(255,255,255,.06);
+  --glow:rgba(212,165,58,.45);--glow-in:rgba(212,165,58,.025);--glow-soft:rgba(212,165,58,.04);--track:rgba(255,255,255,.05);
+  --warn:#f0b43c;--warn-in:rgba(240,180,60,.1);--bad:#e0523c;--bad-in:rgba(224,82,60,.14);--ok:#b9c24a;--ok-hi:#e4ec8e;--ok-glow:rgba(185,194,74,.3);--on-ok:#1b1d04;--on-acc:#1a1002;
+  --core-a:rgba(212,165,58,.45);--core-b:rgba(60,40,8,.6);
+  --frame:linear-gradient(135deg,#f8e3a0 0%,#c9962e 20%,#5c3f10 45%,#f0c35c 70%,#8a6418 100%);--frame-w:1.5px;--frame-hi:rgba(246,220,140,.35);--dot:#f6dc8c;
+  --hf:'Cinzel','Rajdhani',serif;
+}
+
+/* ── Lagið sjálft ─────────────────────────────────────────────────────────── */
+.an-ov{position:fixed;inset:0;z-index:100000;overflow:auto;background:#000}
+.an-ov[hidden]{display:none}
+body.an-lock #jvt-launch,body.an-lock #jvt-panel{display:none!important}
+.an-ov .jv{position:relative;min-height:100%;font-family:'JetBrains Mono',ui-monospace,Consolas,monospace;color:var(--ink);background:var(--bg)}
+.an-ov .jv *{box-sizing:border-box}
+.an-ov .jv-grid{position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:40px 40px;opacity:.5;mask-image:radial-gradient(ellipse at 50% 40%,#000 30%,transparent 85%);-webkit-mask-image:radial-gradient(ellipse at 50% 40%,#000 30%,transparent 85%)}
+.an-ov .jv-scan{position:absolute;left:0;right:0;height:220px;pointer-events:none;background:linear-gradient(180deg,transparent,var(--glow-soft),transparent);top:-240px}
+.an-ov .jv-topline{height:3px;background:linear-gradient(90deg,transparent,var(--acc),var(--acc-hi),var(--acc),transparent);box-shadow:0 0 18px var(--acc)}
+.an-ov .an-inner{position:relative;max-width:1600px;margin:0 auto;padding:14px 16px 16px;display:flex;flex-direction:column;gap:12px}
+
+.an-ov .pnl{position:relative;border:var(--frame-w) solid transparent;background:linear-gradient(160deg,var(--pa),var(--pb)) padding-box,var(--frame) border-box;box-shadow:inset 0 0 40px var(--glow-in),inset 0 1px 0 var(--frame-hi);clip-path:polygon(16px 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%,0 16px)}
+.an-ov .pnl::before,.an-ov .pnl::after{content:"";position:absolute;width:5px;height:5px;border-radius:50%;pointer-events:none;background:var(--dot);box-shadow:0 0 6px var(--dot)}
+.an-ov .pnl::before{top:7px;right:7px}
+.an-ov .pnl::after{bottom:7px;left:7px}
+.an-ov .ttl{font-family:var(--hf);font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--acc);font-size:12px;text-shadow:0 0 10px var(--glow)}
+.an-ov .ttl::before{content:"";display:inline-block;width:6px;height:6px;margin-right:9px;background:var(--acc);transform:rotate(45deg) translateY(-1px);box-shadow:0 0 8px var(--acc)}
+.an-ov .dim{color:var(--muted)}.an-ov .red{color:var(--bad)}.an-ov .ylw{color:var(--warn)}.an-ov .grn{color:var(--ok)}
+
+/* haus: J.A.R.V.I.S. + KPI-smákassar */
+.an-ov .an-head{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.an-ov .an-logo{font-family:var(--hf);font-weight:700;font-size:20px;letter-spacing:.4em;color:var(--acc-hi);text-shadow:0 0 16px var(--glow);margin-right:6px}
+.an-ov .an-tag{font-size:10.5px;letter-spacing:.22em;color:var(--muted);margin-right:auto}
+.an-ov .kc{display:flex;gap:8px;align-items:baseline;padding:7px 12px;border:1px solid var(--edge-hi);background:var(--pa);font-size:11px;letter-spacing:.06em;color:var(--ink);white-space:nowrap;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+.an-ov .kc b{font-family:var(--hf);font-weight:700;font-size:16px;letter-spacing:.04em;color:var(--acc-hi);text-shadow:0 0 10px var(--glow)}
+.an-ov .kc.hae b{color:var(--bad)}.an-ov .kc.var b{color:var(--warn)}.an-ov .kc.dauft b{color:var(--muted);text-shadow:none}
+
+/* flipar / takkar */
+.an-ov .an-tabs{display:flex;gap:8px;align-items:center}
+.an-ov .tab{font-family:var(--hf);font-weight:600;font-size:13px;letter-spacing:.14em;text-transform:uppercase;padding:8px 16px;border:1px solid var(--edge-hi);color:var(--ink);background:var(--pa);cursor:pointer;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);display:inline-flex;align-items:center;gap:6px;min-height:36px}
+.an-ov .tab:hover{color:var(--acc-hi);border-color:var(--acc)}
+.an-ov .tab-on{border-color:var(--acc);color:var(--acc-hi);box-shadow:0 0 14px var(--glow),inset 0 0 12px var(--glow-in)}
+.an-ov .tab svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round}
+.an-ov .btn-out{font-family:var(--hf);font-weight:600;font-size:12px;letter-spacing:.1em;padding:0 14px;height:38px;border:1px solid var(--acc);color:var(--acc-hi);background:var(--pa);cursor:pointer;text-transform:uppercase;box-shadow:0 0 12px var(--glow-in)}
+.an-ov .btn-out:hover{box-shadow:0 0 16px var(--glow)}
+.an-ov .btn-ok{font-family:var(--hf);font-weight:700;font-size:13px;letter-spacing:.06em;padding:0 14px;height:36px;border:1px solid var(--ok);color:var(--on-ok);background:linear-gradient(180deg,var(--ok-hi),var(--ok));box-shadow:0 0 14px var(--ok-glow);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.an-ov .btn-gh{font-family:var(--hf);font-weight:600;font-size:13px;padding:0 14px;height:36px;border:1px solid var(--edge-hi);color:var(--ink);background:transparent;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.an-ov .btn-ok svg,.an-ov .btn-gh svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.an-ov button:disabled{opacity:.45;cursor:default}
+
+/* netið */
+.an-ov .an-body{display:flex;gap:12px;align-items:stretch}
+.an-ov .an-net{flex:1 1 auto;min-width:0;position:relative;overflow:auto}
+.an-ov .an-stage{position:relative;width:1300px;height:700px;margin:4px auto 0}
+.an-ov .an-stage>svg{position:absolute;left:0;top:0}
+.an-ov .an-ring{position:absolute;pointer-events:none}
+.an-ov .nd{position:absolute;transform:translate(-50%,-50%);padding:6px 10px;font-size:10px;line-height:1.35;border:1px solid var(--edge-hi);background:var(--node);color:var(--muted);white-space:nowrap;box-shadow:0 0 12px var(--glow-in);cursor:pointer;max-width:200px;overflow:hidden;text-overflow:ellipsis}
+.an-ov .nd b{display:block;color:var(--ink-hi);font-weight:700;font-size:11px}
+.an-ov .nd:hover{border-color:var(--acc)}
+.an-ov .nd-st{border-color:var(--acc);box-shadow:0 0 18px var(--glow),inset 0 0 14px var(--glow-in)}
+.an-ov .nd-new{border:1px dashed var(--warn)}
+.an-ov .nd-sel{border:1.5px solid var(--acc-hi);box-shadow:0 0 26px var(--glow),inset 0 0 18px var(--glow)}
+.an-ov .nd-sel b{color:var(--acc-hi)}
+.an-ov .nd .lif{position:absolute;top:-8px;right:-8px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--ok);color:var(--on-ok);font-size:9.5px;font-weight:700;line-height:16px;text-align:center;box-shadow:0 0 8px var(--ok)}
+.an-ov .rl{position:absolute;transform:translate(-50%,-50%);font-size:10px;letter-spacing:.22em;color:var(--muted);white-space:nowrap}
+.an-ov .lnk{stroke:var(--acc);stroke-width:1;opacity:.35;fill:none}
+.an-ov .lnk-st{stroke-width:1.8;opacity:.8;filter:drop-shadow(0 0 4px var(--acc))}
+.an-ov .lnk-sel{stroke:var(--acc-hi);stroke-width:1.2;opacity:.9;filter:drop-shadow(0 0 3px var(--acc))}
+.an-ov .lnk-new{stroke:var(--warn);stroke-dasharray:5 5;opacity:.75}
+.an-ov .pulse{fill:var(--acc-hi);filter:drop-shadow(0 0 5px var(--acc))}
+.an-ov .pd{fill:var(--ok);opacity:.7;cursor:pointer}
+.an-ov .pd-bad{fill:var(--bad);opacity:1}
+.an-ov .pd-m{fill:var(--muted);opacity:.5}
+.an-ov .pd-lys{opacity:1;filter:drop-shadow(0 0 5px var(--acc-hi))}
+.an-ov .pd-dauf{opacity:.1}
+.an-ov .sess{fill:var(--ok);filter:drop-shadow(0 0 6px var(--ok))}
+
+/* agentaspjaldið hægra megin */
+.an-ov .an-side{flex:0 0 300px;padding:18px 18px 20px;display:flex;flex-direction:column;gap:14px;font-size:11.5px;line-height:1.6}
+.an-ov .an-side h3{margin:0;font-family:var(--hf);font-weight:700;font-size:18px;letter-spacing:.12em;color:var(--acc-hi);text-shadow:0 0 12px var(--glow)}
+.an-ov .an-side .u{font-size:11px;color:var(--muted);margin-top:4px}
+.an-ov .an-side p{margin:0;color:var(--ink)}
+.an-ov .an-side .sk{font-size:11px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
+.an-ov .an-side .hh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.an-ov .an-side .hh span:last-child{font-size:10px;letter-spacing:.14em;color:var(--muted)}
+.an-ov .li{position:relative;padding-left:14px;font-size:11.5px;line-height:1.6}
+.an-ov .li::before{content:"";position:absolute;left:0;top:9px;width:4px;height:4px;background:var(--acc);transform:rotate(45deg);box-shadow:0 0 5px var(--acc)}
+.an-ov .li i{font-style:normal;color:var(--muted)}
+.an-ov .li-bad{color:var(--bad)}
+.an-ov .li-bad::before{background:var(--bad);box-shadow:0 0 5px var(--bad)}
+.an-ov .ttl.bad{color:var(--bad);text-shadow:0 0 10px var(--bad-in)}
+.an-ov .ttl.bad::before{background:var(--bad);box-shadow:0 0 8px var(--bad)}
+
+/* varðastikan */
+.an-ov .an-verdir{padding:12px 16px;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.an-ov .an-verdir .l{font-size:10.5px;letter-spacing:.18em;color:var(--acc);margin-right:8px}
+.an-ov .gw{font-size:10.5px;letter-spacing:.1em;padding:5px 9px;border:1px solid var(--edge);color:var(--ink);white-space:nowrap;background:none;font-family:inherit;cursor:pointer}
+.an-ov .gw:hover{border-color:var(--acc);color:var(--acc-hi)}
+.an-ov .gw-bad{border-color:var(--bad);color:var(--bad);box-shadow:inset 0 0 10px var(--bad-in)}
+.an-ov .gw-warn{border-color:var(--warn);color:var(--warn)}
+.an-ov .gw-acc{border-color:var(--acc);color:var(--acc)}
+.an-ov .led{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok);margin-right:8px}
+
+/* hreyfingar — aðeins þegar notandinn leyfir */
+@media (prefers-reduced-motion:no-preference){
+  .an-ov .jv-scan{animation:jvscan 9s linear infinite}
+  .an-ov .lnk-new{animation:jvflow 1.2s linear infinite}
+  .an-ov .nd-st{animation:jvglow 3s ease-in-out infinite}
+  .an-ov .nd-new{animation:jvwarn 2.4s ease-in-out infinite}
+  .an-ov .sess{animation:jvflick 2.6s ease-in-out infinite}
+  .an-ov .led{animation:jvblink 1.6s steps(2,end) infinite}
+}
+@keyframes jvscan{from{top:-240px}to{top:100%}}
+@keyframes jvflow{to{stroke-dashoffset:-20}}
+@keyframes jvglow{0%,100%{box-shadow:0 0 10px var(--glow),inset 0 0 10px var(--glow-in)}50%{box-shadow:0 0 26px var(--glow),inset 0 0 18px var(--glow)}}
+@keyframes jvwarn{0%,100%{border-color:var(--warn)}50%{border-color:transparent}}
+@keyframes jvflick{0%,100%{opacity:.3}50%{opacity:1}}
+@keyframes jvblink{0%{opacity:1}100%{opacity:.25}}
+
+/* ── Biðstofan (sama lag, sömu tókenar) ────────────────────────────────────── */
+.an-ov.an-bsov{display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.88)}
+.an-ov.an-bsov[hidden]{display:none}
+.an-ov .an-bs{width:min(980px,100%);height:min(780px,100%);display:flex;flex-direction:column;color:var(--ink);font-family:'JetBrains Mono',ui-monospace,Consolas,monospace}
+.an-ov .an-bs *{box-sizing:border-box}
+.an-ov .an-bs-top{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.an-ov .an-bs-top .n{font-size:11px;color:var(--muted);letter-spacing:.12em}
+.an-ov .an-bs-f{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+.an-ov .an-bs-l{flex:1;overflow:auto;padding:12px 16px}
+.an-ov .an-k{border:1px solid var(--line);border-left:3px solid var(--acc);padding:10px 12px;margin-bottom:8px;background:var(--pa)}
+.an-ov .an-k.burt{opacity:.3;pointer-events:none}
+.an-ov .an-k small{display:block;color:var(--muted);font-size:10px;letter-spacing:.06em;margin-bottom:4px}
+.an-ov .an-k .f{font-size:12px;line-height:1.55;color:var(--ink-hi)}
+.an-ov .an-k .d{font-size:11px;color:var(--ink);margin-top:4px;line-height:1.5}
+.an-ov .an-k .r{display:flex;gap:8px;margin-top:8px;align-items:center}
+.an-ov .an-k .r span{font-size:10px;color:var(--muted);margin-left:auto}
+.an-ov .an-bs-fot{padding:8px 16px;border-top:1px solid var(--line);font-size:10.5px;color:var(--muted);line-height:1.5}
+
+/* ── Spjöldin fjögur í Jarvis-grindinni (erfa jarvis.html-tókenana --cy, --ink …) ── */
+.an-rod{display:flex;gap:8px;align-items:baseline;padding:4px 0;border-bottom:1px dashed rgba(79,216,255,.1);font-size:11px;line-height:1.4;min-width:0}
+.an-rod:last-child{border-bottom:0}
+.an-rod .t{color:var(--ink3);white-space:nowrap;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.an-rod .n{flex:1;min-width:0;color:var(--ink)}
+.an-rod .n i{font-style:normal;color:var(--ink3);margin-left:4px}
+.an-rod .m{color:var(--ink2);white-space:nowrap;font-size:10px}
+.an-rod.olokid .m{color:var(--hae)}
+.an-tom{color:var(--ink3);font-size:11px;padding:6px 0}
+.an-villa{color:var(--hae);font-size:10.5px;padding:4px 0}
+.an-btn{background:none;border:1px solid var(--cy-dim);color:var(--ink2);font:inherit;font-size:10px;letter-spacing:.06em;padding:3px 8px;cursor:pointer;white-space:nowrap}
+.an-btn:hover{color:var(--cy);border-color:var(--cy)}
+.an-btn.ok{color:var(--ok);border-color:var(--ok)}
+.an-btn:disabled{opacity:.45;cursor:default}
+.an-open{display:flex;align-items:center;gap:8px;width:100%;margin:8px 0 2px;padding:10px 12px;background:rgba(79,216,255,.08);border:1px solid var(--cy-dim);color:var(--cy);font:inherit;font-size:11px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;text-align:left}
+.an-open:hover{background:rgba(79,216,255,.18);color:#fff}
+.an-open svg{width:14px;height:14px;flex:0 0 14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.an-h{display:flex;justify-content:space-between;align-items:baseline;margin:10px 0 3px;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--cy2);font-weight:700}
+.an-h span{color:var(--ink3);letter-spacing:.06em;font-weight:400}
+.an-chips{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 6px}
+.an-chip{border:1px solid var(--cy-dim);color:var(--ink2);font-size:10px;padding:2px 7px;letter-spacing:.04em}
+.an-chip b{color:var(--ink);font-weight:700}
+.an-chip.hae{border-color:var(--hae);color:var(--hae)}
+
+@media(max-width:860px){
+  .an-ov .an-side{display:none}
+  .an-ov .an-inner{padding:8px}
+  .an-ov .an-stage{transform-origin:0 0}
+}

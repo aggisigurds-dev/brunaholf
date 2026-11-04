@@ -1,18 +1,21 @@
-/* agentanet.js — Jarvis lag 2: AGENTANETIÐ (Agentakerfið 2.0, fasi 5, 04.11.2026).
+/* agentanet.js — Jarvis lag 2: AGENTANETIÐ (Agentakerfið 2.0, fasi 5, 04.11.2026; útlit úr hönnuninni
+ * „Agentanetið — Jarvis-mælaborð“ sama dag, sjá HANDOFF í agentanet-live.dc.html).
  *
- * Fjögur ný spjöld á jarvis.html og eitt fullskjás-lag:
+ * Fjögur spjöld á jarvis.html og eitt fullskjás-lag:
  *   data-spjald="sidukort"  Síðukort — þekja per vef (data/sidukort.json), síður án eiganda, „Leggja til eiganda“ (agent_notes)
  *   data-spjald="lotur"     Lotur síðustu 7 daga — /api/lotur → charlize_sessions (Stop-hookurinn skrifar), rautt „ólokið minni“
  *   data-spjald="got"       Göt & tillögur — router-göt úr lotum + síður án eiganda → tillaga í agent_notes (sjálfsbæting með samþykki)
  *   data-spjald="minni"     Minnið — /api/charlize-stada: Charlize eftir sviði, kúnnaminni, biðstofa með Samþykkja/Hafna
- *   Agentanetið (⛶)        SVG-graf: Jarvis-kjarninn í miðju → 5 stjórar → sérfræðingar → síður (punktar), verðir í rönd.
- *                           Lifandi yfirlag: agent sem var kallaður í lotu síðustu 7 daga glóir, talan = lotur.
- *                           Smellur á hnút opnar sömu Agentaskrá og 📖 (agents-panel.js). Smellur á agent lýsir síðurnar hans.
+ *   Agentanetið             Toppstika með KPI-smákössum · þemahnappar · netið: Jarvis-hringurinn (js/jarvis-ring.js) í miðju,
+ *                           5 stjórar á innri sporbaug með púlsum, sérfræðingar utar, 321 síðupunktar á ysta baug,
+ *                           agentaspjald hægra megin, varðastika neðst. Lifandi: agent sem var kallaður í lotu fær tölu.
+ *                           Smellur á hnút velur (ljósar línur til þeirra sem hann kallar á + síðurnar hans), tvísmellur
+ *                           eða takkinn opnar Agentaskrána (agents-panel.js).
  *
- * Les window.AGENTS_REGISTRY (js/agents-registry.js) — sama heimild og Agentaskráin — svo listinn og grafið eru aldrei ósamhljóða.
- * Þemað (klassískt/Ragnarök) erfist af html[data-thema] og CSS-breytunum; takkarnir í laginu skipta því eins og rofinn í kjarnanum.
- * Allt lesaðeins nema: agent_notes (tillögur, status 'nytt') og charlize_inbox um charlize_approve / status 'rejected'.
- * Ef skráin vantar gerist ekkert. */
+ * Uppbygging og gögn hér; útlitið (css/agentanet.css) pússar Cowork — klasarnir .pnl .nd .nd-st .nd-new .nd-sel .kc .tab
+ * .gw .lnk* .li .ttl eru hönnunarinnar og haldast. Engin emoji, tákn eru inline stroke-SVG. Allt lesaðeins nema
+ * agent_notes (tillögur, status 'nytt') og charlize_inbox um charlize_approve / status 'rejected'.
+ * Les window.AGENTS_REGISTRY (js/agents-registry.js) — sama heimild og Agentaskráin. Ef skráin vantar gerist ekkert. */
 (function () {
   'use strict';
   var R = window.AGENTS_REGISTRY;
@@ -34,6 +37,7 @@
     'utlitsserfraedingur', 'opp', 'verkstadur', 'kjarni-vefur', 'artcraft', 'skraning'];
   var VEFIR = { brunaholf: 'Brunahólf', slokkvitaeki: 'Slökkvitæki', kjarni: 'Kjarni' };
   var VEF_ROD = ['brunaholf', 'slokkvitaeki', 'kjarni'];
+  var FONTS = 'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Rajdhani:wght@500;600;700&family=Cinzel:wght@600;700&display=swap';
 
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var cut = function (s, n) { s = String(s || ''); return s.length > n ? s.slice(0, n - 1).replace(/\s+\S*$/, '') + '…' : s; };
@@ -42,6 +46,13 @@
   var fmtD = function (iso) { var m = /^(\d{4})-(\d\d)-(\d\d)/.exec(iso || ''); return m ? m[3] + '.' + m[2] : '—'; };
   var idag = function (iso) { var d = new Date(iso || ''), n = new Date(); return !isNaN(d) && d.toDateString() === n.toDateString(); };
   var getAuthor = function () { try { return localStorage.getItem('bh_me') || ''; } catch (_) { return ''; } };
+  var erRagnarok = function () { return document.documentElement.getAttribute('data-thema') === 'ragnarok'; };
+  var SVG = {
+    net: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="3" r="1.5"/><circle cx="20" cy="17" r="1.5"/><circle cx="4" cy="17" r="1.5"/><path d="M12 9V4.5M14.3 13.6l4.4 2.6M9.7 13.6l-4.4 2.6"/></svg>',
+    inbox: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13h5l2 3h4l2-3h5"/><path d="M5 6h14l2 7v6H3v-6z"/></svg>',
+    ok: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>',
+    x: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'
+  };
 
   function getJSON(url, opt) {
     return fetch(url, opt).then(function (r) {
@@ -57,17 +68,17 @@
   function entry(n) { return byName[n] || null; }
   function registryId(n) { var e = entry(n); return e ? e.id : null; }
   function eigandaSidur(e) { return (e && e.sidur || []).filter(function (s) { return s.hlutverk === 'eigandi'; }); }
-  function persona(e) { if (!e) return ''; var r = e.rodd || ''; return r.replace(/\s*\(.*$/, '').trim() || ''; }
+  function persona(e) { if (!e) return ''; return (e.rodd || '').replace(/\s*\(.*$/, '').trim(); }
+  function erNyr(n) { return NYIR.indexOf(n) !== -1; }
 
   /* ---------- gögn ---------- */
-  var D = { sidukort: null, lotur: null, stada: null, inbox: null };
-  var sidukortP = null;   // eitt loforð fyrir alla kallara — tvö spjöld sækja samtímis við ræsingu
+  var D = { sidukort: null, lotur: null, stada: null };
+  var sidukortP = null, loturP = null;
   function saekjaSidukort() {
     if (!sidukortP) sidukortP = getJSON('/data/sidukort.json', { cache: 'no-store' }).then(function (j) { D.sidukort = j; return j; })
       .catch(function (e) { D.sidukort = { villa: e.message, vefir: R.thekja || [], sidur: [] }; return D.sidukort; });
     return sidukortP;
   }
-  var loturP = null;      // beiðni í gangi deilist milli spjalda (lotur + göt sækja samtímis)
   function saekjaLotur(afram) {
     if (D.lotur && !afram) return Promise.resolve(D.lotur);
     if (loturP) return loturP;
@@ -81,47 +92,9 @@
     return getJSON(API_STADA).then(function (j) { D.stada = j; return j; })
       .catch(function (e) { D.stada = { villa: e.message }; return D.stada; });
   }
+  function villuTexti(v) { return esc(v) + (/401|Innskráning/.test(v) ? ' — skráðu þig inn sem starfsmaður.' : ''); }
 
-  /* ---------- stíll ---------- */
-  var css = [
-    '.an-rod{display:flex;gap:8px;align-items:baseline;padding:4px 0;border-bottom:1px dashed rgba(79,216,255,.1);font-size:11px;line-height:1.4;min-width:0}.an-rod:last-child{border-bottom:0}',
-    '.an-rod .t{color:var(--ink3);white-space:nowrap;font-variant-numeric:tabular-nums;letter-spacing:.02em}.an-rod .n{flex:1;min-width:0;color:var(--ink)}.an-rod .n i{font-style:normal;color:var(--ink3);margin-left:4px}',
-    '.an-rod .m{color:var(--ink2);white-space:nowrap}.an-rod.olokid .m{color:var(--hae)}.an-rod .e{letter-spacing:.05em}',
-    '.an-tom{color:var(--ink3);font-size:11px;padding:6px 0}.an-villa{color:var(--hae);font-size:10.5px;padding:4px 0}',
-    '.an-btn{background:none;border:1px solid var(--cy-dim);color:var(--ink2);font:inherit;font-size:10px;letter-spacing:.06em;padding:3px 8px;cursor:pointer;white-space:nowrap}.an-btn:hover{color:var(--cy);border-color:var(--cy)}',
-    '.an-btn.ok{color:var(--ok);border-color:var(--ok)}.an-btn.ok:hover{background:rgba(67,245,160,.12)}.an-btn.hae{color:var(--hae);border-color:var(--hae)}.an-btn.hae:hover{background:rgba(255,90,110,.12)}.an-btn:disabled{opacity:.45;cursor:default}',
-    '.an-open{display:block;width:100%;margin:8px 0 2px;padding:10px 12px;background:rgba(79,216,255,.08);border:1px solid var(--cy-dim);color:var(--cy);font:inherit;font-size:11px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;text-align:left}.an-open:hover{background:rgba(79,216,255,.18);color:#fff}',
-    '.an-h{display:flex;justify-content:space-between;align-items:baseline;margin:10px 0 3px;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--cy2);font-weight:700}.an-h span{color:var(--ink3);letter-spacing:.06em;font-weight:400}',
-    '.an-chips{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 6px}.an-chip{border:1px solid var(--cy-dim);color:var(--ink2);font-size:10px;padding:2px 7px;letter-spacing:.04em}.an-chip b{color:var(--ink);font-weight:700}',
-    /* lagið */
-    '.an-ov{position:fixed;inset:0;z-index:100000;background:rgba(2,6,14,.9);display:flex;flex-direction:column;padding:12px}.an-ov[hidden]{display:none}body.an-lock #jvt-launch,body.an-lock #jvt-panel{display:none!important}',
-    '.an-win{flex:1;min-height:0;background:var(--bg2);border:1px solid var(--cy-dim);display:flex;flex-direction:column;box-shadow:0 0 44px rgba(79,216,255,.12);color:var(--ink)}',
-    '.an-top{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--cy-dim);flex-wrap:wrap}.an-top b{letter-spacing:.3em;font-size:12px;color:var(--cy)}.an-top i{font-style:normal;font-size:10px;color:var(--ink3);letter-spacing:.12em;text-transform:uppercase}',
-    '.an-maelar{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}.an-mae{border:1px solid var(--cy-dim);padding:3px 9px;font-size:10px;color:var(--ink2);letter-spacing:.04em;white-space:nowrap}.an-mae b{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}.an-mae.hae b{color:var(--hae)}.an-mae.var b{color:var(--var)}',
-    '.an-thema{display:flex;gap:4px}.an-thema button{background:none;border:1px solid var(--cy-dim);color:var(--ink2);font:inherit;font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:6px 10px;cursor:pointer;min-height:32px}.an-thema button.on{color:var(--cy);border-color:var(--cy);background:rgba(79,216,255,.1)}',
-    '.an-x{background:none;border:1px solid var(--cy-dim);color:var(--ink2);font:inherit;font-size:13px;padding:4px 10px;cursor:pointer}.an-x:hover{color:#fff;border-color:var(--cy)}',
-    '.an-body{flex:1;min-height:0;display:flex}.an-svgw{flex:1;min-width:0;overflow:auto;position:relative}.an-svgw svg{display:block;width:100%;height:100%;min-height:520px;font-family:var(--mono)}',
-    '.an-side{width:300px;flex:0 0 300px;border-left:1px solid var(--cy-dim);overflow:auto;padding:12px 14px;font-size:11.5px;line-height:1.5}.an-side h3{margin:0 0 4px;font-size:15px;color:var(--ink)}.an-side p{margin:4px 0;color:var(--ink2)}',
-    '.an-side .an-p{font-size:11px;color:var(--ink)}.an-side ul{margin:4px 0;padding-left:16px;font-size:11px}.an-side li{color:var(--ink2)}.an-side li.hae{color:var(--hae)}',
-    '.an-fot{padding:6px 14px;border-top:1px solid var(--cy-dim);display:flex;gap:6px;flex-wrap:wrap;align-items:center}.an-fot .l{font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--cy2);font-weight:700;margin-right:4px}',
-    '.an-v{border:1px solid var(--cy-dim);color:var(--ink2);padding:2px 8px;font-size:10px;cursor:pointer;background:none;font-family:inherit}.an-v.hae{border-color:var(--hae);color:var(--hae)}.an-v.var{border-color:var(--var);color:var(--var)}.an-v:hover{color:#fff}',
-    /* SVG-hnútar */
-    '.an-node{cursor:pointer}.an-node rect{fill:var(--bg2);stroke:var(--cy-dim);stroke-width:1}.an-node.stjori rect{stroke:var(--cy);stroke-width:1.6}.an-node.nyr rect{stroke:var(--var);stroke-dasharray:4 3}',
-    '.an-node:hover rect,.an-node.valinn rect{stroke:var(--cy);fill:rgba(79,216,255,.1)}.an-node.lif rect{filter:drop-shadow(0 0 7px var(--cy))}',
-    '.an-node text{fill:var(--ink);font-size:11px;pointer-events:none}.an-node text.sm{font-size:9.2px}.an-node .u{fill:var(--ink3);font-size:9px}.an-node .hae{fill:var(--hae)}.an-node .lifn{fill:var(--bg);font-size:9px;font-weight:700}',
-    '.an-lina{stroke:var(--cy-dim);stroke-width:1;fill:none}.an-lina.stjori{stroke:var(--cy);stroke-width:1.4;opacity:.7}.an-lina.nyr{stroke:var(--var);stroke-dasharray:5 4}.an-lina.sida{stroke:var(--cy);opacity:.55}',
-    '.an-dot{cursor:pointer}.an-dot circle{fill:var(--ok);opacity:.75}.an-dot.an-x1 circle{fill:var(--hae);opacity:1}.an-dot.an-m circle{fill:var(--ink3);opacity:.6}.an-dot.lys circle{r:4.5;opacity:1;filter:drop-shadow(0 0 5px var(--cy))}.an-dot.daufur circle{opacity:.12}',
-    '.an-vef{fill:var(--ink3);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase}.an-kj circle{fill:none;stroke:var(--cy);opacity:.5}.an-kj .sveip{fill:var(--cy);opacity:.12}.an-kj .agn{fill:var(--cy);opacity:.8}.an-kj .jt{fill:var(--cy);font-size:11px;letter-spacing:.3em;font-weight:700}.an-kj .jt2{fill:var(--ink3);font-size:8.5px}',
-    'html[data-thema="ragnarok"] .an-ov{background:rgba(0,0,0,.92)}html[data-thema="ragnarok"] .an-node.lif rect{filter:drop-shadow(0 0 8px #ffb347)}',
-    /* biðstofa */
-    '.an-bs{width:min(960px,100%);height:min(760px,100%);margin:auto;background:var(--bg2);border:1px solid var(--cy-dim);display:flex;flex-direction:column;color:var(--ink);box-shadow:0 0 44px rgba(79,216,255,.12)}',
-    '.an-bs .an-top b{letter-spacing:.2em}.an-bs-l{flex:1;overflow:auto;padding:10px 14px}.an-k{border:1px solid var(--cy-dim);padding:8px 10px;margin-bottom:8px;background:rgba(79,216,255,.03)}.an-k.burt{opacity:.35;pointer-events:none}',
-    '.an-k small{display:block;color:var(--ink3);font-size:10px;letter-spacing:.04em;margin-bottom:3px}.an-k .f{font-size:12px;line-height:1.5;color:var(--ink)}.an-k .d{font-size:11px;color:var(--ink2);margin-top:3px;line-height:1.45}.an-k .r{display:flex;gap:6px;margin-top:6px;align-items:center}.an-k .r span{font-size:10px;color:var(--ink3);margin-left:auto}',
-    '@media(max-width:860px){.an-side{display:none}.an-ov{padding:0}.an-win{border:0}.an-svgw svg{min-height:420px}}'
-  ].join('\n');
-  var st = document.createElement('style'); st.id = 'an-css'; st.textContent = css; document.head.appendChild(st);
-
-  /* ---------- hjálp: tillaga í agent_notes ---------- */
+  /* ---------- hjálp: tillaga í agent_notes (sýnilegt spor) ---------- */
   function leggjaTil(texti, el) {
     var hver = prompt('Tillaga vistast í agent_notes (status „nýtt“) og lota vinnur hana inn.\n\n' + texti + '\n\nHver á að eiga þetta? (agent-nafn, t.d. bord-flettur)');
     if (hver == null) return;
@@ -129,8 +102,8 @@
     var note = texti + (hver ? ' → eigandi: ' + hver : '');
     if (el) el.disabled = true;
     postJSON(API_NOTES, { agent: 'almennt', note: note, author: getAuthor() })
-      .then(function () { if (el) { el.textContent = '✓ sent'; el.classList.add('ok'); } })
-      .catch(function (e) { if (el) { el.disabled = false; } alert('Tókst ekki: ' + e.message); });
+      .then(function () { if (el) { el.textContent = 'Sent'; el.classList.add('ok'); } })
+      .catch(function (e) { if (el) el.disabled = false; alert('Tókst ekki: ' + e.message); });
   }
 
   /* ---------- spjald: Síðukort ---------- */
@@ -140,7 +113,7 @@
       var h = '';
       (j.vefir || []).forEach(function (v) {
         var cls = v.hlutfall >= 95 ? 'ok' : v.hlutfall >= 80 ? 'var' : 'hae';
-        h += '<div class="maelir"><div class="lina"><span>' + esc(VEFIR[v.vefur] || v.vefur) + '</span><b>' + v.med_eiganda + '/' + v.alls + (v.an_eiganda ? ' <span style="color:var(--hae);letter-spacing:0">· ' + v.an_eiganda + ' ❌</span>' : '') + '</b></div>' +
+        h += '<div class="maelir"><div class="lina"><span>' + esc(VEFIR[v.vefur] || v.vefur) + '</span><b>' + v.med_eiganda + '/' + v.alls + (v.an_eiganda ? ' <span style="color:var(--hae);letter-spacing:0">· ' + v.an_eiganda + ' án eiganda</span>' : '') + '</b></div>' +
           '<div class="rein ' + cls + '"><i style="width:' + v.hlutfall + '%"></i></div></div>';
       });
       var an = (j.sidur || []).filter(function (p) { return p.stada === '❌'; });
@@ -151,7 +124,7 @@
       });
       if (an.length > 8) h += '<div class="an-tom">+ ' + (an.length - 8) + ' til viðbótar í Agentanetinu.</div>';
       if (j.villa) h += '<div class="an-villa">Síðukortið náðist ekki (' + esc(j.villa) + ') — sýni þekju úr agents-registry.</div>';
-      h += '<button type="button" class="an-open" id="an-opna">⛶ Agentanetið — stjóri → sérfræðingar → síður</button>';
+      h += '<button type="button" class="an-open" id="an-opna">' + SVG.net + '<span>Agentanetið — stjóri → sérfræðingar → síður</span></button>';
       box.innerHTML = h;
       box.onclick = function (ev) {
         var b = ev.target.closest('[data-tillaga]');
@@ -167,14 +140,14 @@
     saekjaLotur(afram).then(function (j) {
       var t = j.tolur || {}, rows = j.rows || [];
       var h = '<div class="an-chips"><span class="an-chip"><b>' + rows.length + '</b> lotur</span><span class="an-chip"><b>' + (t.med_kt || 0) + '</b> með kt</span>' +
-        '<span class="an-chip"' + (t.olokid ? ' style="border-color:var(--hae);color:var(--hae)"' : '') + '><b>' + (t.olokid || 0) + '</b> ólokið minni</span><span class="an-chip"><b>' + (t.kunni_skrifad || 0) + '</b> kúnnaminni skráð</span></div>';
-      if (j.villa) h += '<div class="an-villa">' + esc(j.villa) + (/401|Innskráning/.test(j.villa) ? ' — skráðu þig inn sem starfsmaður.' : '') + '</div>';
+        '<span class="an-chip' + (t.olokid ? ' hae' : '') + '"><b>' + (t.olokid || 0) + '</b> ólokið minni</span><span class="an-chip"><b>' + (t.kunni_skrifad || 0) + '</b> kúnnaminni skráð</span></div>';
+      if (j.villa) h += '<div class="an-villa">' + villuTexti(j.villa) + '</div>';
       if (!rows.length && !j.villa) h += '<div class="an-tom">Engar lotur skráðar síðustu 7 daga. Stop-hookurinn (tools/lotu-lok.cjs) skrifar hér þegar lota lýkur.</div>';
       rows.slice(0, 12).forEach(function (s) {
-        var ag = (s.agents_called || []).map(function (a) { var e = entry(a); return e ? '<span title="' + esc(a) + '">' + esc(e.emoji) + '</span>' : ''; }).join('');
+        var ag = (s.agents_called || []).filter(function (a) { return entry(a); }).slice(0, 3).join(' · ');
         h += '<div class="an-rod' + (s.olokid ? ' olokid' : '') + '" title="' + esc(s.cwd || '') + (s.machine ? ' · ' + s.machine : '') + '"><span class="t">' + fmtDT(s.last_at) + '</span>' +
           '<span class="n">' + esc(cut(s.summary || '(engin samantekt)', 110)) + '<i>' + esc(s.repo || '?') + ' · ' + (s.turns || 0) + ' svör' + ((s.kennitolur || []).length ? ' · ' + s.kennitolur.length + ' kt' : '') + '</i></span>' +
-          '<span class="m">' + (s.olokid ? 'ólokið minni' : ag ? '<span class="e">' + ag + '</span>' : (s.kunni_skrifad ? '✓ ' + s.kunni_skrifad : '')) + '</span></div>';
+          '<span class="m">' + (s.olokid ? 'ólokið minni' : ag ? esc(ag) : (s.kunni_skrifad ? 'skráð ' + s.kunni_skrifad : '')) + '</span></div>';
       });
       box.innerHTML = h;
     });
@@ -189,8 +162,8 @@
       var an = (sk.sidur || []).filter(function (p) { return p.stada === '❌'; });
       var sof = (sk.sidur || []).filter(function (p) { return p.merki === 'sofandi'; });
       var okalladir = agents.filter(function (e) { return !(lot.agentar || {})[e.name] && STJORAR.indexOf(e.name) === -1; }).length;
-      var h = '<div class="an-chips"><span class="an-chip"' + (got.length ? ' style="border-color:var(--hae);color:var(--hae)"' : '') + '><b>' + got.length + '</b> router-göt</span><span class="an-chip"><b>' + an.length + '</b> síður án eiganda</span><span class="an-chip"><b>' + sof.length + '</b> sofandi síður</span><span class="an-chip"><b>' + okalladir + '</b> agentar ókallaðir 7 d</span></div>';
-      if (lot.villa) h += '<div class="an-villa">' + esc(lot.villa) + '</div>';
+      var h = '<div class="an-chips"><span class="an-chip' + (got.length ? ' hae' : '') + '"><b>' + got.length + '</b> router-göt</span><span class="an-chip"><b>' + an.length + '</b> síður án eiganda</span><span class="an-chip"><b>' + sof.length + '</b> sofandi síður</span><span class="an-chip"><b>' + okalladir + '</b> agentar ókallaðir 7 d</span></div>';
+      if (lot.villa) h += '<div class="an-villa">' + villuTexti(lot.villa) + '</div>';
       h += '<div class="an-h">Router-göt úr lotum <span>síða/kt nefnd, enginn eigandi</span></div>';
       if (!got.length) h += '<div class="an-tom">Engin göt skráð — routerinn fann eiganda fyrir allt sem var nefnt.</div>';
       got.slice(0, 6).forEach(function (g, i) {
@@ -212,7 +185,7 @@
   function teiknaMinni(afram) {
     var box = document.getElementById('an-minni'); if (!box) return;
     saekjaStada(afram).then(function (j) {
-      if (j.villa) { box.innerHTML = '<div class="an-villa">' + esc(j.villa) + (/401|Innskráning/.test(j.villa) ? ' — skráðu þig inn sem starfsmaður.' : '') + '</div>'; return; }
+      if (j.villa) { box.innerHTML = '<div class="an-villa">' + villuTexti(j.villa) + '</div>'; return; }
       var k = j.knowledge || {}, ib = j.inbox || {}, ku = j.kunni || {};
       var alls = k.active || 1, h = '';
       h += '<div class="an-chips"><span class="an-chip"><b>' + (k.active || 0) + '</b> virkar</span><span class="an-chip"><b>' + (k.superseded || 0) + '</b> úreltar</span><span class="an-chip"><b>' + (k.wrong || 0) + '</b> rangar</span></div>';
@@ -226,7 +199,7 @@
       h += '<div class="an-h">Biðstofa <span>' + (ib.pending || 0) + ' kandídatar</span></div>';
       var pa = ib.per_agent || {};
       h += '<div class="an-chips">' + Object.keys(pa).slice(0, 5).map(function (a) { return '<span class="an-chip">' + esc(a) + ' <b>' + pa[a] + '</b></span>'; }).join('') + '</div>';
-      h += '<button type="button" class="an-open" id="an-bidstofa">🗂 Biðstofan — samþykkja / hafna (' + (ib.pending || 0) + ')</button>';
+      h += '<button type="button" class="an-open" id="an-bidstofa">' + SVG.inbox + '<span>Biðstofan — samþykkja / hafna (' + (ib.pending || 0) + ')</span></button>';
       box.innerHTML = h;
       box.onclick = function (ev) { if (ev.target.closest('#an-bidstofa')) openBidstofa(); };
     });
@@ -234,15 +207,18 @@
 
   /* ---------- Biðstofan ---------- */
   var bsOv = null, bsScope = '';
+  function themaKlasi(el) { el.classList.toggle('theme-ragnarok', erRagnarok()); el.classList.toggle('theme-jarvis', !erRagnarok()); }
+  function hladaLetur() { if (!document.getElementById('an-letur')) { var l = document.createElement('link'); l.id = 'an-letur'; l.rel = 'stylesheet'; l.href = FONTS; document.head.appendChild(l); } }
   function openBidstofa() {
+    hladaLetur();
     if (!bsOv) {
-      bsOv = document.createElement('div'); bsOv.className = 'an-ov'; bsOv.hidden = true;
-      bsOv.innerHTML = '<div class="an-bs" role="dialog" aria-modal="true" aria-label="Charlize biðstofa"><div class="an-top"><b>CHARLIZE · BIÐSTOFA</b><i id="an-bs-t">sæki…</i>' +
-        '<div class="an-maelar" id="an-bs-f"></div><button type="button" class="an-x" aria-label="Loka">✕</button></div><div class="an-bs-l" id="an-bs-l"></div>' +
-        '<div class="an-fot"><span class="l">Reglan</span><span style="font-size:10.5px;color:var(--ink3)">Samþykkja = charlize_approve → charlize_knowledge (sama leið og SQL-samþykktin). Hafna = status rejected með athugasemd. Ekkert fer beint í rekstrargögn.</span></div></div>';
+      bsOv = document.createElement('div'); bsOv.className = 'an-ov an-bsov'; bsOv.hidden = true;
+      bsOv.innerHTML = '<div class="an-bs pnl" role="dialog" aria-modal="true" aria-label="Charlize biðstofa"><div class="an-bs-top"><span class="ttl">Charlize · biðstofa</span><span class="n" id="an-bs-t">sæki…</span>' +
+        '<div class="an-bs-f" id="an-bs-f"></div><button type="button" class="tab" aria-label="Loka">' + SVG.x + '</button></div><div class="an-bs-l" id="an-bs-l"></div>' +
+        '<div class="an-bs-fot">Samþykkja = charlize_approve → charlize_knowledge (sama leið og SQL-samþykktin). Hafna = status rejected með athugasemd. Hvert skrif skráist í agent_logs. Ekkert fer beint í rekstrargögn.</div></div>';
       document.body.appendChild(bsOv);
       bsOv.addEventListener('click', function (ev) { if (ev.target === bsOv) closeBidstofa(); });
-      bsOv.querySelector('.an-x').addEventListener('click', closeBidstofa);
+      bsOv.querySelector('.an-bs-top .tab').addEventListener('click', closeBidstofa);
       bsOv.querySelector('#an-bs-f').addEventListener('click', function (ev) { var b = ev.target.closest('[data-sc]'); if (!b) return; bsScope = b.getAttribute('data-sc'); hladaBidstofu(); });
       bsOv.querySelector('#an-bs-l').addEventListener('click', function (ev) {
         var b = ev.target.closest('[data-adg]'); if (!b) return;
@@ -256,123 +232,139 @@
       });
       document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && bsOv && !bsOv.hidden) closeBidstofa(); });
     }
+    themaKlasi(bsOv);
     bsOv.hidden = false; document.body.style.overflow = 'hidden';
     hladaBidstofu();
   }
-  function closeBidstofa() { if (bsOv) { bsOv.hidden = true; document.body.style.overflow = ''; } }
+  function closeBidstofa() { if (bsOv) { bsOv.hidden = true; if (!ov || ov.hidden) document.body.style.overflow = ''; } }
   function hladaBidstofu() {
     var l = bsOv.querySelector('#an-bs-l'), t = bsOv.querySelector('#an-bs-t'), f = bsOv.querySelector('#an-bs-f');
     l.innerHTML = '<div class="an-tom">sæki…</div>';
     getJSON(API_STADA + '?op=inbox&limit=40' + (bsScope ? '&scope=' + encodeURIComponent(bsScope) : '')).then(function (j) {
       t.textContent = (j.pending || 0) + ' í bið'; t.setAttribute('data-n', j.pending || 0);
       var ps = (D.stada && D.stada.inbox && D.stada.inbox.per_scope) || {};
-      f.innerHTML = '<button type="button" class="an-v' + (!bsScope ? ' var' : '') + '" data-sc="">Allt</button>' + Object.keys(ps).map(function (s) { return '<button type="button" class="an-v' + (bsScope === s ? ' var' : '') + '" data-sc="' + esc(s) + '">' + esc(s) + ' ' + ps[s] + '</button>'; }).join('');
+      f.innerHTML = '<button type="button" class="gw' + (!bsScope ? ' gw-acc' : '') + '" data-sc="">Allt</button>' + Object.keys(ps).map(function (s) { return '<button type="button" class="gw' + (bsScope === s ? ' gw-acc' : '') + '" data-sc="' + esc(s) + '">' + esc(s) + ' ' + ps[s] + '</button>'; }).join('');
       if (!(j.rows || []).length) { l.innerHTML = '<div class="an-tom">Biðstofan er tóm.</div>'; return; }
       l.innerHTML = j.rows.map(function (r) {
         return '<div class="an-k" data-id="' + r.id + '"><small>#' + r.id + ' · ' + esc(r.scope) + ' / ' + esc(r.topic || '—') + ' · ' + esc(r.agent || '?') + ' · ' + fmtD(r.created_at) + (r.kennitala ? ' · kt ' + esc(r.kennitala) : '') + (r.confidence ? ' · ' + esc(r.confidence) : '') + '</small>' +
           '<div class="f">' + esc(r.fact) + '</div>' + (r.detail ? '<div class="d">' + esc(cut(r.detail, 320)) + '</div>' : '') +
-          '<div class="r"><button type="button" class="an-btn ok" data-adg="samthykkja">✓ Samþykkja</button><button type="button" class="an-btn hae" data-adg="hafna">✕ Hafna</button><span>' + esc(cut(r.source_path || '', 50)) + '</span></div></div>';
+          '<div class="r"><button type="button" class="btn-ok" data-adg="samthykkja">' + SVG.ok + 'Samþykkja</button><button type="button" class="btn-gh" data-adg="hafna">' + SVG.x + 'Hafna</button><span>' + esc(cut(r.source_path || '', 50)) + '</span></div></div>';
       }).join('');
     }).catch(function (e) { l.innerHTML = '<div class="an-villa">' + esc(e.message) + '</div>'; });
   }
 
-  /* ---------- Agentanetið (SVG) ---------- */
-  var ov = null, svgEl = null, sideEl = null, valinn = null;
-  var W = 1200, H = 900, CX = 600, CY = 450, R1 = 180, R2 = 280, R3 = 410, STAGG = 48;   // hermt 04.11: engin skörun hnúta/punkta/kjarna   // hringur 2 staggar ±STAGG svo 19 spjöld skarist ekki
-  function pos(r, deg) { var a = (deg - 90) * Math.PI / 180; return { x: CX + r * Math.cos(a), y: CY + r * Math.sin(a) }; }
+  /* ---------- Agentanetið ---------- */
+  var ov = null, stageEl = null, sideEl = null, ring = null, valinn = null;
+  var SW = 1300, SH = 700, CX = 650, CY = 350;          // sviðið (hönnunin er 1260×640; 40 px breiðara og 60 px hærra svo 25 spjöld skarist hvergi)
+  var RING = 312;                                        // 520 × .6 — hringurinn í miðju
+  var E1 = { rx: 280, ry: 165 }, E2 = { rx: 460, ry: 250 }, E3 = { rx: 630, ry: 330 }, E3b = { rx: 612, ry: 318 };   // sporbaugar: stjórar · sérfræðingar · síðupunktar (tveir baugar)
+  var STAG = { rx: 44, ry: 26 }, ND_MAX = 200;   // hermt 04.11 (sim-net): engin skörun hnúta/punkta/hrings                                                                           // sérfræðingar staggast ±STAG; spjald aldrei breiðara en ND_MAX (css)
+  function epos(e, deg) { var a = (deg - 90) * Math.PI / 180; return { x: CX + e.rx * Math.cos(a), y: CY + e.ry * Math.sin(a) }; }
+  function nodeW(e) { var n = e.name.length, s = (persona(e) + ' · ' + eigandaSidur(e).length + ' síður').length; return Math.min(ND_MAX, Math.max(n * 7.6, s * 6.7) + 26); }   // örlítið ríflegt mat á raunbreidd (JetBrains Mono 10/11 px)
 
-  function nodeSvg(e, p, cls, undir) {
-    var n = e.name, live = (D.lotur && D.lotur.agentar || {})[n];
-    var w = 124, hh = 44, x = p.x - w / 2, y = p.y - hh / 2;
-    var g = '<g class="an-node ' + cls + (live ? ' lif' : '') + (valinn === n ? ' valinn' : '') + '" data-ag="' + esc(n) + '" transform="translate(' + x.toFixed(1) + ',' + y.toFixed(1) + ')">' +
-      '<rect width="' + w + '" height="' + hh + '" rx="2"/>' +
-      '<text x="8" y="18"' + (n.length > 14 ? ' class="sm"' : '') + '>' + esc(e.emoji || '') + ' ' + esc(n) + '</text>' +
-      '<text x="8" y="33" class="u">' + esc(cut(undir, 25)) + '</text>';
-    if (live) g += '<circle cx="' + (w - 10) + '" cy="10" r="8" fill="var(--cy)"/><text x="' + (w - 10) + '" y="13.5" text-anchor="middle" class="lifn">' + live.lotur + '</text>';
-    return g + '</g>';
-  }
-
-  function teiknaNet() {
-    if (!svgEl) return;
-    var sk = D.sidukort || { sidur: [] }, pages = sk.sidur || [];
-    var lot = D.lotur || { agentar: {} };
+  function leggjaNet() {
+    var sk = D.sidukort || { sidur: [] };
     var verdir = {}; VERDIR.forEach(function (v) { verdir[v] = true; });
     var stj = STJORAR.map(entry).filter(Boolean);
     var ser = agents.filter(function (e) { return STJORAR.indexOf(e.name) === -1 && !verdir[e.name] && e.name !== 'jarvis'; })
       .concat(['arnold', '3dJoker'].map(entry).filter(Boolean))
-      .filter(function (e, i, a) { return a.indexOf(e) === i; })
-      .sort(function (a, b) { return eigandaSidur(b).length - eigandaSidur(a).length; });
-    // raða sérfræðingum þannig að þeir lendi nálægt stjóranum sem kallar á þá
+      .filter(function (e, i, a) { return a.indexOf(e) === i; });
+    // raðað eftir keðju stjóranna svo sérfræðingur lendi nálægt þeim sem kallar á hann
     var ord = []; STJORAR.forEach(function (s) { (KEDJA[s] || []).forEach(function (n) { if (ord.indexOf(n) === -1 && ser.some(function (e) { return e.name === n; })) ord.push(n); }); });
     ser.forEach(function (e) { if (ord.indexOf(e.name) === -1) ord.push(e.name); });
     ser = ord.map(entry);
-    var P1 = {}, P2 = {};
-    stj.forEach(function (e, i) { P1[e.name] = pos(R1, i * 360 / stj.length); });
-    // gráðug staðsetning: hver sérfræðingur fær fyrsta radíusinn (innar/utar til skiptis) sem skarast ekki við það sem er komið
-    var sett = Object.keys(P1).map(function (k) { return P1[k]; });
-    var skarast = function (p, q) { return Math.abs(p.x - q.x) < 132 && Math.abs(p.y - q.y) < 50; };
+    var P = {}, sett = [];
+    stj.forEach(function (e, i) { var p = epos(E1, i * 360 / stj.length); p.w = nodeW(e); P[e.name] = p; sett.push(p); });
+    var skarast = function (p, q) { return Math.abs(p.x - q.x) < (p.w + q.w) / 2 + 10 && Math.abs(p.y - q.y) < 46; };
     ser.forEach(function (e, i) {
-      var deg = i * 360 / ser.length + 180 / ser.length;
-      var kostir = i % 2 ? [R2 + STAGG, R2 - STAGG, R2, R2 - STAGG * 1.7] : [R2 - STAGG, R2 + STAGG, R2, R2 - STAGG * 1.7];   // aldrei utar en R2+STAGG (punktahringurinn)
+      var deg = i * 360 / ser.length + 180 / ser.length, w = nodeW(e);
+      var inn = { rx: E2.rx - STAG.rx, ry: E2.ry - STAG.ry }, ut = { rx: E2.rx + STAG.rx, ry: E2.ry + STAG.ry }, inn2 = { rx: E2.rx - STAG.rx * 2, ry: E2.ry - STAG.ry * 2 };
+      var ut2 = { rx: E2.rx + STAG.rx * 2, ry: E2.ry + STAG.ry * 2 };
+      var kostir = i % 2 ? [ut, inn, E2, ut2, inn2] : [inn, ut, E2, ut2, inn2];
       var best = null, bestN = 1e9;
       for (var k = 0; k < kostir.length; k++) {
-        var p = pos(kostir[k], deg), n = sett.filter(function (q) { return skarast(p, q); }).length;
+        var p = epos(kostir[k], deg); p.w = w;
+        var n = sett.filter(function (q) { return skarast(p, q); }).length;
         if (n < bestN) { best = p; bestN = n; }
         if (!n) break;
       }
-      P2[e.name] = best; sett.push(best);
+      P[e.name] = best; sett.push(best);
     });
+    // afstilling: hnútur sem skarast enn er ýtt út eftir sínum geisla (6 px í senn) þar til hann er laus eða kominn að punktahringnum
+    for (var it = 0; it < 40; it++) {
+      var hreyft = false;
+      ser.forEach(function (e) {
+        var p = P[e.name];
+        var hitt = sett.filter(function (q) { return q !== p && skarast(p, q); });
+        if (!hitt.length) return;
+        var dx = p.x - CX, dy = (p.y - CY) * (E3.rx / E3.ry), d = Math.hypot(dx, dy) || 1;
+        if (d + 6 > E3.rx - 12) return;
+        p.x += 6 * dx / d; p.y += 6 * (dy / d) * (E3.ry / E3.rx); hreyft = true;
+      });
+      if (!hreyft) break;
+    }
+    return { stj: stj, ser: ser, P: P, pages: sk.sidur || [] };
+  }
 
-    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Agentanetið">';
-    s += '<defs><radialGradient id="an-g"><stop offset="0" stop-color="var(--cy)" stop-opacity=".22"/><stop offset="1" stop-color="var(--cy)" stop-opacity="0"/></radialGradient></defs>';
-    s += '<circle cx="' + CX + '" cy="' + CY + '" r="' + R1 + '" fill="none" stroke="var(--cy-dim)" stroke-dasharray="2 6"/><circle cx="' + CX + '" cy="' + CY + '" r="' + R2 + '" fill="none" stroke="var(--cy-dim)" stroke-dasharray="2 6"/><circle cx="' + CX + '" cy="' + CY + '" r="' + R3 + '" fill="none" stroke="var(--cy-dim)" opacity=".5"/>';
-    // línur: kjarni → stjóri · stjóri → sérfræðingur
-    stj.forEach(function (e) { var p = P1[e.name]; s += '<line class="an-lina stjori" x1="' + CX + '" y1="' + CY + '" x2="' + p.x.toFixed(1) + '" y2="' + p.y.toFixed(1) + '"/>'; });
-    STJORAR.forEach(function (sn) { var a = P1[sn]; if (!a) return; (KEDJA[sn] || []).forEach(function (n) { var b = P2[n]; if (!b) return; s += '<line class="an-lina' + (NYIR.indexOf(n) !== -1 ? ' nyr' : '') + '" x1="' + a.x.toFixed(1) + '" y1="' + a.y.toFixed(1) + '" x2="' + b.x.toFixed(1) + '" y2="' + b.y.toFixed(1) + '"/>'; }); });
-    // síður: punktar á ysta hring, geirar per vef
-    var perVef = {}; VEF_ROD.forEach(function (v) { perVef[v] = pages.filter(function (p) { return p.vefur === v; }); });
-    var alls = pages.length || 1, deg = 0, dots = '';
+  function teiknaNet() {
+    if (!stageEl) return;
+    var L = leggjaNet(), P = L.P, lot = D.lotur || { agentar: {} }, live = lot.agentar || {};
+    var ln = '', nd = '', dots = '', lab = '';
+    var line = function (a, b, cls) { return '<line class="' + cls + '" x1="' + a.x.toFixed(1) + '" y1="' + a.y.toFixed(1) + '" x2="' + b.x.toFixed(1) + '" y2="' + b.y.toFixed(1) + '"/>'; };
+    var C = { x: CX, y: CY };
+    // kjarni → stjóri (þykkar, með púlsum)
+    L.stj.forEach(function (e, i) {
+      var p = P[e.name];
+      ln += line(C, p, 'lnk lnk-st');
+      ln += '<circle class="pulse" r="3"><animateMotion dur="' + (2 + (i % 4) * .2) + 's" repeatCount="indefinite" path="M' + CX + ',' + CY + ' L' + p.x.toFixed(1) + ',' + p.y.toFixed(1) + '"/></circle>';
+    });
+    // stjóri → sérfræðingur
+    STJORAR.forEach(function (sn) {
+      var a = P[sn]; if (!a) return;
+      (KEDJA[sn] || []).forEach(function (n) {
+        var b = P[n]; if (!b) return;
+        var sel = valinn && (valinn === sn || valinn === n);
+        ln += line(a, b, 'lnk' + (sel ? ' lnk-sel' : erNyr(n) ? ' lnk-new' : ''));
+      });
+    });
+    // síðupunktar á ysta baug, geirar per vef
+    var alls = L.pages.length || 1, deg = 0;
     var valSidur = valinn && entry(valinn) ? eigandaSidur(entry(valinn)).map(function (x) { return x.vefur + ':' + x.id; }) : null;
     VEF_ROD.forEach(function (v) {
-      var ps = perVef[v], span = 360 * ps.length / alls, start = deg;
-      var lab = pos(R3 + 26, start + span / 2);
-      dots += '<text class="an-vef" x="' + lab.x.toFixed(1) + '" y="' + lab.y.toFixed(1) + '" text-anchor="middle">' + esc(VEFIR[v]) + ' ' + ps.length + '</text>';
+      var ps = L.pages.filter(function (p) { return p.vefur === v; }), span = 360 * ps.length / alls, start = deg;
+      var lp = epos({ rx: E3.rx - 60, ry: E3.ry + 10 }, start + span / 2);
+      lab += '<span class="rl" style="left:' + lp.x.toFixed(0) + 'px;top:' + lp.y.toFixed(0) + 'px">' + esc(VEFIR[v]).toUpperCase() + ' ' + ps.length + '</span>';
       ps.forEach(function (p, i) {
-        var pp = pos(R3 + [-8, 0, 8][i % 3], start + span * (i + 0.5) / ps.length);
+        var pp = epos(i % 2 ? E3b : E3, start + span * (i + 0.5) / ps.length);
         var key = p.vefur + ':' + p.id, lys = valSidur && valSidur.indexOf(key) !== -1;
-        var cls = p.stada === '❌' ? 'an-x1' : p.merki ? 'an-m' : '';
-        dots += '<g class="an-dot ' + cls + (lys ? ' lys' : valSidur ? ' daufur' : '') + '" data-sida="' + esc(key) + '"><title>' + esc(p.titill) + ' — ' + esc(VEFIR[v]) + (p.eigandi_nafn ? ' · ' + esc(p.eigandi_nafn) + (p.eigandi_utan ? ' ⇢' : '') : ' · ENGINN EIGANDI') + (p.merki ? ' · ' + esc(p.merki) : '') + '</title><circle cx="' + pp.x.toFixed(1) + '" cy="' + pp.y.toFixed(1) + '" r="3"/></g>';
-        if (lys) { var o = P2[valinn] || P1[valinn]; if (o) s += '<line class="an-lina sida" x1="' + o.x.toFixed(1) + '" y1="' + o.y.toFixed(1) + '" x2="' + pp.x.toFixed(1) + '" y2="' + pp.y.toFixed(1) + '"/>'; }
+        var cls = 'pd' + (p.stada === '❌' ? ' pd-bad' : p.merki ? ' pd-m' : '') + (lys ? ' pd-lys' : valSidur ? ' pd-dauf' : '');
+        dots += '<circle class="' + cls + '" cx="' + pp.x.toFixed(1) + '" cy="' + pp.y.toFixed(1) + '" r="' + (lys ? 4 : 2.6) + '"><title>' + esc(p.titill) + ' — ' + esc(VEFIR[v]) + (p.eigandi_nafn ? ' · ' + esc(p.eigandi_nafn) + (p.eigandi_utan ? ' (annað repó)' : '') : ' · ENGINN EIGANDI') + (p.merki ? ' · ' + esc(p.merki) : '') + '</title></circle>';
       });
       deg += span;
     });
-    s += dots;
-    // Jarvis-kjarninn: radar með sveip og ögnum
-    s += '<g class="an-kj" data-ag="jarvis" style="cursor:pointer"><circle cx="' + CX + '" cy="' + CY + '" r="88" fill="url(#an-g)" stroke="none"/>';
-    [72, 54, 36, 18].forEach(function (r, i) { s += '<circle cx="' + CX + '" cy="' + CY + '" r="' + r + '" stroke-width="' + (i ? .8 : 1.4) + '"/>'; });
-    s += '<path class="sveip" d="M ' + CX + ' ' + CY + ' L ' + CX + ' ' + (CY - 72) + ' A 72 72 0 0 1 ' + (CX + 72 * Math.sin(Math.PI / 3)).toFixed(1) + ' ' + (CY - 72 * Math.cos(Math.PI / 3)).toFixed(1) + ' Z"><animateTransform attributeName="transform" type="rotate" from="0 ' + CX + ' ' + CY + '" to="360 ' + CX + ' ' + CY + '" dur="6s" repeatCount="indefinite"/></path>';
-    for (var i = 0; i < 18; i++) { var ang = i * 137.5, rr = 14 + (i * 23) % 56; var q = pos(rr, ang); s += '<circle class="agn" cx="' + q.x.toFixed(1) + '" cy="' + q.y.toFixed(1) + '" r="' + (1 + (i % 3) * .6) + '"><animate attributeName="opacity" values=".2;1;.2" dur="' + (2 + (i % 5)) + 's" repeatCount="indefinite"/></circle>'; }
-    s += '<text class="jt" x="' + CX + '" y="' + (CY - 2) + '" text-anchor="middle">J.A.R.V.I.S.</text><text class="jt2" x="' + CX + '" y="' + (CY + 12) + '" text-anchor="middle">' + R.agents + ' agentar · ' + R.skills + ' skills</text></g>';
     // hnútar
-    stj.forEach(function (e) {
-      var v = STJORI_VEFUR[e.name], th = v && (sk.vefir || R.thekja || []).filter(function (t) { return t.vefur === v; })[0];
-      var u = persona(e) + (th ? ' · ' + th.alls + ' síður' + (th.an_eiganda ? ' · ' + th.an_eiganda + ' ❌' : '') : ' · ' + eigandaSidur(e).length + ' síður');
-      s += nodeSvg(e, P1[e.name], 'stjori' + (NYIR.indexOf(e.name) !== -1 ? ' nyr' : ''), u);
-    });
-    ser.forEach(function (e) { s += nodeSvg(e, P2[e.name], NYIR.indexOf(e.name) !== -1 ? 'nyr' : '', persona(e) + ' · ' + eigandaSidur(e).length + ' síður'); });
-    s += '</svg>';
-    svgEl.innerHTML = s;
+    var node = function (e, cls) {
+      var p = P[e.name], lv = live[e.name], sidur = eigandaSidur(e).length;
+      var v = STJORI_VEFUR[e.name], th = v && ((D.sidukort && D.sidukort.vefir) || R.thekja || []).filter(function (t) { return t.vefur === v; })[0];
+      var sub = (persona(e) ? esc(persona(e)) + ' · ' : '') + (th ? th.alls + ' síður' + (th.an_eiganda ? ' · <span class="red">' + th.an_eiganda + ' án eiganda</span>' : '') : sidur + ' síður');
+      return '<div class="nd ' + cls + (erNyr(e.name) ? ' nd-new' : '') + (valinn === e.name ? ' nd-sel' : '') + '" data-ag="' + esc(e.name) + '" style="left:' + p.x.toFixed(0) + 'px;top:' + p.y.toFixed(0) + 'px"><b>' + esc(e.name) + '</b>' + sub +
+        (lv ? '<span class="lif" title="Kallaður í ' + lv.lotur + ' lotu(m) síðustu 7 daga">' + lv.lotur + '</span>' : '') + '</div>';
+    };
+    L.stj.forEach(function (e) { nd += node(e, 'nd-st'); });
+    L.ser.forEach(function (e) { nd += node(e, ''); });
+    stageEl.innerHTML = '<svg width="' + SW + '" height="' + SH + '" viewBox="0 0 ' + SW + ' ' + SH + '" aria-hidden="true">' + dots + ln + '</svg>' +
+      '<div class="an-ring" id="an-ring" style="left:' + (CX - RING / 2) + 'px;top:' + (CY - RING / 2) + 'px;width:' + RING + 'px;height:' + RING + 'px"></div>' + lab + nd;
+    ring = window.JarvisRing ? window.JarvisRing.mount(stageEl.querySelector('#an-ring'), { size: RING, theme: erRagnarok() ? 'ragnarok' : 'jarvis', sub: R.agents + ' agentar · ' + R.skills + ' skills' }) : null;
     teiknaVerdi();
   }
 
   function teiknaVerdi() {
     var f = ov.querySelector('#an-verdir'); if (!f) return;
-    var lot = D.lotur || { agentar: {} };
-    f.innerHTML = '<span class="l">Verðir og kerfi · kallast á undan aðgerð, ekki í keðjunni</span>' + VERDIR.map(function (n) {
+    var live = (D.lotur && D.lotur.agentar) || {};
+    f.innerHTML = '<span class="l">VERÐIR OG KERFI · <span class="dim">KALLAST Á UNDAN AÐGERÐ, EKKI Í KEÐJUNNI</span></span>' + VERDIR.map(function (n) {
       var e = entry(n); if (!e) return '';
-      var cls = (n === 'netvordur' || n === 'rambo') ? ' hae' : NYIR.indexOf(n) !== -1 ? ' var' : '';
-      var live = (lot.agentar || {})[n];
-      return '<button type="button" class="an-v' + cls + '" data-ag="' + esc(n) + '">' + esc(e.emoji) + ' ' + esc(n) + (persona(e) ? ' · ' + esc(persona(e)) : '') + (live ? ' · ' + live.lotur + ' lotur' : '') + '</button>';
+      var cls = (n === 'netvordur' || n === 'rambo') ? ' gw-bad' : erNyr(n) ? ' gw-warn' : n === 'oryggi' ? ' gw-acc' : '';
+      return '<button type="button" class="gw' + cls + '" data-ag="' + esc(n) + '">' + esc(n) + (persona(e) ? ' · ' + esc(persona(e)) : '') + (live[n] ? ' · ' + live[n].lotur + ' lotur' : '') + '</button>';
     }).join('');
   }
 
@@ -381,85 +373,85 @@
     var st = D.stada || {}, k = st.knowledge || {}, ib = st.inbox || {}, ku = st.kunni || {}, lot = D.lotur || {}, t = lot.tolur || {}, sk = D.sidukort || {};
     var an = (sk.sidur || []).filter(function (p) { return p.stada === '❌'; }).length;
     var hitt = (lot.rows || []).filter(function (r) { return idag(r.last_at); }).length;
-    m.innerHTML = [
-      ['Charlize', (k.active != null ? k.active : '…') + ' virkar', ''],
-      ['Biðstofa', ib.pending != null ? ib.pending : '…', ib.pending > 0 ? 'var' : ''],
-      ['Kúnnaminni', (ku.felog != null ? ku.felog + ' / ' + (ku.af || '?') : '…'), ''],
-      ['Lotur 7 d', t.lotur != null ? t.lotur : '…', ''],
-      ['Ólokið minni', t.olokid != null ? t.olokid : '…', t.olokid > 0 ? 'hae' : ''],
-      ['Síður án eiganda', an, an > 0 ? 'hae' : ''],
-      ['Göt', (lot.got || []).length, (lot.got || []).length ? 'hae' : ''],
-      ['Lotur í dag', hitt, '']
-    ].map(function (x) { return '<span class="an-mae ' + x[2] + '">' + x[0] + ' <b>' + x[1] + '</b></span>'; }).join('');
-    if (lot.villa || st.villa) m.innerHTML += '<span class="an-mae hae" title="' + esc(lot.villa || st.villa) + '">' + (/401|Innskráning/.test(lot.villa || st.villa) ? 'innskráning starfsmanns vantar' : 'lifandi gögn náðust ekki') + '</span>';
+    var strik = function (v) { return v == null ? '—' : v; };   // „mælist ekki“ = strik, aldrei fundið upp
+    var kc = function (lbl, v, cls, eftir) { return '<span class="kc ' + (cls || '') + '">' + lbl + ' <b>' + v + '</b>' + (eftir ? ' ' + eftir : '') + '</span>'; };
+    m.innerHTML = kc('Charlize', strik(k.active), k.active == null ? 'dauft' : '', 'virkar') +
+      kc('Biðstofa', strik(ib.pending), ib.pending > 0 ? 'var' : '') +
+      kc('Kúnnaminni', ku.felog != null ? ku.felog + ' / ' + (ku.af || '?') : '—', '') +
+      kc('Lotur 7 d', strik(t.lotur), '') +
+      kc('Ólokið minni', strik(t.olokid), t.olokid > 0 ? 'hae' : '') +
+      kc('Síður án eiganda', an, an > 0 ? 'hae' : '') +
+      kc('Göt', lot.got ? lot.got.length : '—', lot.got && lot.got.length ? 'hae' : '') +
+      kc('Lotur í dag', hitt, '');
+    if (lot.villa || st.villa) m.innerHTML += '<span class="kc hae" title="' + esc(lot.villa || st.villa) + '">' + (/401|Innskráning/.test(lot.villa || st.villa) ? 'Innskráning starfsmanns vantar' : 'Lifandi gögn náðust ekki') + '</span>';
   }
 
   function velja(n) {
     valinn = valinn === n ? null : n;
     teiknaNet();
     var e = entry(n); if (!sideEl) return;
-    if (!e || valinn !== n) { sideEl.innerHTML = '<p>Smelltu á agent til að lýsa síðurnar hans og sjá hvað hann gætir. Tvísmellur opnar Agentaskrána.</p>'; return; }
+    if (!e || valinn !== n) { sideEl.innerHTML = '<p class="dim">Smelltu á agent til að lýsa síðurnar hans og sjá hverja hann kallar á. Tvísmellur opnar Agentaskrána.</p>'; return; }
     var sid = eigandaSidur(e), und = (e.sidur || []).filter(function (s) { return s.hlutverk === 'undiragent'; });
-    var live = (D.lotur && D.lotur.agentar || {})[n];
-    var h = '<h3>' + esc(e.emoji) + ' ' + esc(n) + '</h3><p>' + esc(e.rodd || (e.type === 'skill' ? 'skill' : 'agent')) + (NYIR.indexOf(n) !== -1 ? ' · <span style="color:var(--var)">nýr 04.11</span>' : '') + '</p>';
-    h += '<p class="an-p">' + esc(cut(e.lysing, 260)) + '</p>';
-    if (live) h += '<p>Kallaður í <b style="color:var(--cy)">' + live.lotur + '</b> lotu(m) síðustu 7 daga · síðast ' + fmtDT(live.sidast) + '</p>';
-    else h += '<p style="color:var(--ink3)">Ekki kallaður í lotu síðustu 7 daga.</p>';
-    var kallar = KEDJA[n]; if (kallar) h += '<div class="an-h">Kallar á</div><ul>' + kallar.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>';
-    var kalladur = STJORAR.filter(function (sn) { return (KEDJA[sn] || []).indexOf(n) !== -1; }); if (kalladur.length) h += '<div class="an-h">Kallaður af</div><ul>' + kalladur.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>';
-    h += '<div class="an-h">Síður <span>' + sid.length + ' eigandi · ' + und.length + ' undir</span></div><ul>' + sid.slice(0, 14).map(function (x) { return '<li>' + esc(x.titill) + ' <i style="color:var(--ink3)">' + esc(VEFIR[x.vefur] || x.vefur) + '</i></li>'; }).join('') + (sid.length > 14 ? '<li style="color:var(--ink3)">+ ' + (sid.length - 14) + '</li>' : '') + '</ul>';
-    if (e.aldrei && e.aldrei.length) h += '<div class="an-h">Aldrei</div><ul>' + e.aldrei.slice(0, 4).map(function (x) { return '<li class="hae">' + esc(x) + '</li>'; }).join('') + '</ul>';
-    h += '<p><button type="button" class="an-btn" data-skra="' + esc(e.id) + '">📖 Opna í Agentaskránni</button></p>';
+    var live = ((D.lotur && D.lotur.agentar) || {})[n];
+    var h = '<div><h3>' + esc(n) + '</h3><div class="u">' + esc(e.rodd || (e.type === 'skill' ? 'skill' : 'agent')) + (erNyr(n) ? ' · <span class="ylw">nýr 04.11</span>' : '') + '</div></div>';
+    h += '<p>' + esc(cut(e.lysing, 260)) + '</p>';
+    h += '<div class="sk">' + (live ? 'Kallaður í <b style="color:var(--acc-hi)">' + live.lotur + '</b> lotu(m) síðustu 7 daga · síðast ' + fmtDT(live.sidast) : 'Ekki kallaður í lotu síðustu 7 daga.') + '</div>';
+    var kallar = KEDJA[n]; if (kallar) h += '<div><div class="ttl" style="margin-bottom:8px">Kallar á</div>' + kallar.map(function (x) { return '<div class="li">' + esc(x) + '</div>'; }).join('') + '</div>';
+    var kalladur = STJORAR.filter(function (sn) { return (KEDJA[sn] || []).indexOf(n) !== -1; }); if (kalladur.length) h += '<div><div class="ttl" style="margin-bottom:8px">Kallaður af</div>' + kalladur.map(function (x) { return '<div class="li">' + esc(x) + '</div>'; }).join('') + '</div>';
+    h += '<div><div class="hh"><span class="ttl">Síður</span><span>' + sid.length + ' EIGANDI · ' + und.length + ' UNDIR</span></div>' + sid.slice(0, 14).map(function (x) { return '<div class="li">' + esc(x.titill) + ' <i>' + esc(VEFIR[x.vefur] || x.vefur) + '</i></div>'; }).join('') + (sid.length > 14 ? '<div class="li dim">+ ' + (sid.length - 14) + ' til viðbótar</div>' : '') + '</div>';
+    if (e.aldrei && e.aldrei.length) h += '<div><div class="ttl bad" style="margin-bottom:8px">Aldrei</div>' + e.aldrei.slice(0, 4).map(function (x) { return '<div class="li li-bad">' + esc(x) + '</div>'; }).join('') + '</div>';
+    h += '<button type="button" class="btn-out" data-skra="' + esc(e.id) + '" style="align-self:flex-start;margin-top:auto">Opna í Agentaskránni</button>';
     sideEl.innerHTML = h;
   }
 
   function setjaThema(t) {
     var rg = t === 'ragnarok';
     var rofi = document.getElementById('thema-rofi');   // rofinn í kjarnanum (js/ragnarok.js) — sama leið, sama vistun
-    if (rofi) { if ((document.documentElement.getAttribute('data-thema') === 'ragnarok') !== rg) rofi.click(); malaThema(); return; }
-    if (rg) {
-      document.documentElement.setAttribute('data-thema', 'ragnarok');
-      if (!document.getElementById('rg-letur')) { var l = document.createElement('link'); l.id = 'rg-letur'; l.rel = 'stylesheet'; l.href = 'https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap'; document.head.appendChild(l); }
-    } else document.documentElement.removeAttribute('data-thema');
-    try { localStorage.setItem('jarvis_thema_v1', rg ? 'ragnarok' : 'klassiskt'); } catch (_) {}
-    try { if (window.Vidmot) window.Vidmot.setja('jarvis_thema_v1', rg ? 'ragnarok' : 'klassiskt'); } catch (_) {}
-    window.dispatchEvent(new CustomEvent('rg:thema', { detail: { ragnarok: rg } }));
+    if (rofi) { if (erRagnarok() !== rg) rofi.click(); }
+    else {
+      if (rg) document.documentElement.setAttribute('data-thema', 'ragnarok'); else document.documentElement.removeAttribute('data-thema');
+      try { localStorage.setItem('jarvis_thema_v1', rg ? 'ragnarok' : 'klassiskt'); } catch (_) {}
+      try { if (window.Vidmot) window.Vidmot.setja('jarvis_thema_v1', rg ? 'ragnarok' : 'klassiskt'); } catch (_) {}
+    }
     malaThema();
   }
   function malaThema() {
     if (!ov) return;
-    var rg = document.documentElement.getAttribute('data-thema') === 'ragnarok';
-    ov.querySelectorAll('.an-thema button').forEach(function (b) { b.classList.toggle('on', (b.getAttribute('data-t') === 'ragnarok') === rg); });
+    var rg = erRagnarok();
+    themaKlasi(ov); if (bsOv) themaKlasi(bsOv);
+    ov.querySelectorAll('.an-tabs [data-t]').forEach(function (b) { var on = (b.getAttribute('data-t') === 'ragnarok') === rg; b.classList.toggle('tab-on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+    if (ring) ring.setTheme(rg ? 'ragnarok' : 'jarvis');
   }
 
   function buildNet() {
     if (ov) return;
     ov = document.createElement('div'); ov.className = 'an-ov'; ov.hidden = true;
-    ov.innerHTML = '<div class="an-win" role="dialog" aria-modal="true" aria-label="Agentanetið"><div class="an-top"><b>J.A.R.V.I.S.</b><i>Agentanetið · lag 2 · stjóri → sérfræðingar → síður</i>' +
-      '<div class="an-maelar" id="an-maelar"></div><div class="an-thema"><button type="button" data-t="klassiskt">Klassískt</button><button type="button" data-t="ragnarok">Ragnarök</button></div><button type="button" class="an-x" aria-label="Loka">✕</button></div>' +
-      '<div class="an-body"><div class="an-svgw" id="an-svg"></div><aside class="an-side" id="an-side"><p>Smelltu á agent til að lýsa síðurnar hans. Tvísmellur opnar Agentaskrána.</p></aside></div>' +
-      '<div class="an-fot" id="an-verdir"></div></div>';
+    ov.innerHTML = '<div class="jv" role="dialog" aria-modal="true" aria-label="Agentanetið"><div class="jv-grid" aria-hidden="true"></div><div class="jv-scan" aria-hidden="true"></div><div class="jv-topline" aria-hidden="true"></div>' +
+      '<div class="an-inner"><header class="an-head"><div class="an-logo">J.A.R.V.I.S.</div><div class="an-tag">AGENTANETIÐ · LAG 2 · STJÓRI → SÉRFRÆÐINGAR → SÍÐUR</div><div id="an-maelar" style="display:contents"></div></header>' +
+      '<div class="an-tabs"><button type="button" class="tab" data-t="klassiskt" aria-pressed="false">Klassískt</button><button type="button" class="tab" data-t="ragnarok" aria-pressed="false">Ragnarök</button><button type="button" class="tab an-x" aria-label="Loka">' + SVG.x + '</button></div>' +
+      '<div class="an-body"><section class="pnl an-net" aria-label="Agentanetið"><div class="an-stage" id="an-stage"></div></section><aside class="pnl an-side" id="an-side" aria-label="Valinn agent"></aside></div>' +
+      '<section class="pnl an-verdir" id="an-verdir" aria-label="Verðir og kerfi"></section></div></div>';
     document.body.appendChild(ov);
-    svgEl = ov.querySelector('#an-svg'); sideEl = ov.querySelector('#an-side');
-    ov.addEventListener('click', function (ev) { if (ev.target === ov) closeNet(); });
+    stageEl = ov.querySelector('#an-stage'); sideEl = ov.querySelector('#an-side');
     ov.querySelector('.an-x').addEventListener('click', closeNet);
-    ov.querySelector('.an-thema').addEventListener('click', function (ev) { var b = ev.target.closest('[data-t]'); if (b) setjaThema(b.getAttribute('data-t')); });
+    ov.querySelector('.an-tabs').addEventListener('click', function (ev) { var b = ev.target.closest('[data-t]'); if (b) setjaThema(b.getAttribute('data-t')); });
     window.addEventListener('rg:thema', malaThema);
     ov.addEventListener('click', function (ev) {
       var sk = ev.target.closest('[data-skra]'); if (sk) { closeNet(); if (window.openAgentRegistry) window.openAgentRegistry(sk.getAttribute('data-skra')); return; }
-      var n = ev.target.closest('[data-ag]'); if (n) { velja(n.getAttribute('data-ag')); }
+      var n = ev.target.closest('[data-ag]'); if (n) velja(n.getAttribute('data-ag'));
     });
     ov.addEventListener('dblclick', function (ev) {
       var n = ev.target.closest('[data-ag]'); if (!n) return;
       var id = registryId(n.getAttribute('data-ag')); if (id && window.openAgentRegistry) { closeNet(); window.openAgentRegistry(id); }
     });
-    document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && ov && !ov.hidden) closeNet(); });
+    document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && ov && !ov.hidden && (!bsOv || bsOv.hidden)) closeNet(); });
   }
   function openNet() {
-    buildNet(); ov.hidden = false; document.body.style.overflow = 'hidden'; document.body.classList.add('an-lock');
-    malaThema(); teiknaMaela();
-    saekjaSidukort().then(function () { teiknaNet(); teiknaMaela(); });
-    saekjaLotur().then(function () { teiknaNet(); teiknaMaela(); });
+    hladaLetur(); buildNet();
+    ov.hidden = false; document.body.style.overflow = 'hidden'; document.body.classList.add('an-lock');
+    themaKlasi(ov); teiknaMaela(); velja(null);
+    saekjaSidukort().then(function () { teiknaNet(); teiknaMaela(); malaThema(); });
+    saekjaLotur().then(function () { teiknaNet(); teiknaMaela(); malaThema(); });
     saekjaStada().then(teiknaMaela);
   }
   function closeNet() { if (ov) { ov.hidden = true; document.body.style.overflow = ''; document.body.classList.remove('an-lock'); } }
@@ -470,7 +462,7 @@
     if (!card || card.querySelector('#an-open-sfr')) return;
     var btn = document.createElement('button');
     btn.type = 'button'; btn.className = 'an-open'; btn.id = 'an-open-sfr'; btn.style.margin = '2px 0 6px';
-    btn.textContent = '⛶ Agentanetið — stjóri → sérfræðingar → síður';
+    btn.innerHTML = SVG.net + '<span>Agentanetið — stjóri → sérfræðingar → síður</span>';
     var ref = card.querySelector('#ag-open') || card.querySelector('h2');
     if (ref) ref.insertAdjacentElement('afterend', btn); else card.insertBefore(btn, card.firstChild);
     btn.addEventListener('click', openNet);
@@ -484,7 +476,7 @@
     if (syn.indexOf('got') !== -1) teiknaGot(afram);
     if (syn.indexOf('minni') !== -1) teiknaMinni(afram);
   }
-  window.Agentanet = { saekja: saekja, opna: openNet, bidstofa: openBidstofa, gogn: D };
+  window.Agentanet = { saekja: saekja, opna: openNet, loka: closeNet, bidstofa: openBidstofa, gogn: D };
 
   function init() {
     try { addEntry(); } catch (err) { console.warn('agentanet: spjald', err); }
