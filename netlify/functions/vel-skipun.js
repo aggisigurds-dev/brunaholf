@@ -42,6 +42,16 @@ const UPPSKRIFTIR = [
     skel: 'py', cmd: 'ajour-ingest.py', mappa: 'repo' },
   { id: 'lifsmark', heiti: '💓 Senda lífsmark núna', lysing: 'Uppfærir stöðuna á borðinu strax.',
     skel: 'node', cmd: 'heartbeat.js', mappa: 'repo' },
+  // ── Claude-API-vinnslur (Agentakerfið 2.0 fasi 6, 04.11.2026) — keyra í luna-bridge með ANTHROPIC_API_KEY úr .env. Skrifa AÐEINS
+  //    í postur_ai_*, charlize_inbox (pending), thjonustubeidni (tag samthykki). Agnar samþykkir allt í biðstofu/Þjónustuborði. ──
+  { id: 'postur-greining', heiti: '🤖 Póstgreining (Claude)', lysing: 'Sækir batch gærdagsins í postur_ai_yfirlit og sendir nýjan póst í greiningu (Haiku, Batches API).',
+    skel: 'bat', cmd: 'run-postur-greining.bat', mappa: 'repo', api: true },
+  { id: 'kunnaminni-postur', heiti: '🧠 Kúnnaminni úr pósti (Claude)', lysing: 'Kandídatar í biðstofu Charlize úr greindum pósti (scope kunni, pending).',
+    skel: 'node', cmd: 'api/kunnaminni-postur.js', args: ['--takmark', '60'], mappa: 'repo', api: true },
+  { id: 'uppfaerslutillogur', heiti: '📋 Uppfærslutillögur á Þjónustuborð (Claude)', lysing: 'Leggur til lokanir, tengiliði og eindaga sem mál með tag samthykki — ekkert framkvæmt.',
+    skel: 'node', cmd: 'api/uppfaerslutillogur.js', args: ['--dagar', '3', '--takmark', '15', '--skrifa'], mappa: 'repo', api: true },
+  { id: 'veidin-skyringar', heiti: '🎣 Veiðin með skýringum (Claude)', lysing: 'Ein lína per gleymt/amber félag: af hverju — í biðstofu Charlize.',
+    skel: 'node', cmd: 'api/veidin-skyringar.js', args: ['--takmark', '40', '--skrifa'], mappa: 'repo', api: true },
 ];
 
 exports.handler = async (event) => {
@@ -52,7 +62,7 @@ exports.handler = async (event) => {
   try {
     if (event.httpMethod === 'GET') {
       if (p.uppskriftir === '1') {
-        return json(200, { ok: true, uppskriftir: UPPSKRIFTIR.map(u => ({ id: u.id, heiti: u.heiti, lysing: u.lysing })) });
+        return json(200, { ok: true, uppskriftir: UPPSKRIFTIR.map(u => ({ id: u.id, heiti: u.heiti, lysing: u.lysing, api: !!u.api })) });
       }
       if (p.taka === '1') return await taka(event, p);
       const rows = await sbGet('vel_skipanir?select=*&order=created_at.desc&limit=' + Math.min(60, +p.limit || 25));
@@ -110,7 +120,7 @@ async function taka(event, p) {
     await sbPatch(`vel_skipanir?id=eq.${s.id}`, { stada: 'villa', utkoma: 'Uppskrift ekki lengur til', lokid_at: new Date().toISOString() });
     return json(200, { ok: true, skipun: null });
   }
-  return json(200, { ok: true, skipun: { id: s.id, uppskrift: u.id, heiti: u.heiti, skel: u.skel, cmd: u.cmd, mappa: u.mappa || null } });
+  return json(200, { ok: true, skipun: { id: s.id, uppskrift: u.id, heiti: u.heiti, skel: u.skel, cmd: u.cmd, args: u.args || [], mappa: u.mappa || null } });
 }
 
 /* Vélin skilar úttakinu. Geymt stytt — logg eiga ekki að fylla gagnagrunninn. */

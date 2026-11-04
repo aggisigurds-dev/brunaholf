@@ -27,12 +27,25 @@ exports.handler = async (event) => {
     if (event.httpMethod !== 'GET') return P.json(405, { error: 'Method not allowed' });
     const q = event.queryStringParameters || {};
     if (q.op === 'inbox') return await inbox(q);
+    if (q.op === 'kunni') return await kunniListi(q);   // 04.11.2026: Agentanetið → „Kúnnaminni“ opnar lista félaga
     return await stada();
   } catch (e) {
     return P.json(500, { error: e.message || String(e) });
   }
 };
 
+/* Félög með kúnnaminni: kt → fjöldi staðreynda, efni, síðast. Nöfn fær vafrinn úr data/felog.json (stöðuskrá). */
+async function kunniListi(q) {
+  const rows = await all('charlize_knowledge?select=kennitala,topic,updated_at&scope=eq.kunni&status=eq.active&kennitala=not.is.null&limit=10000');
+  const m = new Map();
+  for (const r of rows) {
+    const e = m.get(r.kennitala) || { kt: r.kennitala, n: 0, efni: {}, sidast: null };
+    e.n++; if (r.topic) e.efni[r.topic] = (e.efni[r.topic] || 0) + 1; if (!e.sidast || r.updated_at > e.sidast) e.sidast = r.updated_at;
+    m.set(r.kennitala, e);
+  }
+  const felog = [...m.values()].sort((a, b) => (b.sidast || '').localeCompare(a.sidast || '')).slice(0, Math.min(2000, parseInt(q.limit, 10) || 500));
+  return P.json(200, { ok: true, felog, alls: m.size });
+}
 async function all(qs) { const r = await P.sbGet(qs); if (!r.ok) throw new Error('Supabase ' + r.status + ': ' + (await r.text()).slice(0, 200)); return r.json(); }
 async function count(table, filter) {
   const r = await fetch(`${P.SUPABASE_URL}/rest/v1/${table}?select=id${filter ? '&' + filter : ''}&limit=1`, {

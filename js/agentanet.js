@@ -115,8 +115,8 @@
   }
 
   /* ---------- spjald: Síðukort ---------- */
-  function teiknaSidukort() {
-    var box = document.getElementById('an-sidukort'); if (!box) return;
+  function teiknaSidukort(el) {
+    var box = el || document.getElementById('an-sidukort'); if (!box) return;
     saekjaSidukort().then(function (j) {
       var h = '';
       (j.vefir || []).forEach(function (v) {
@@ -143,8 +143,8 @@
   }
 
   /* ---------- spjald: Lotur ---------- */
-  function teiknaLotur(afram) {
-    var box = document.getElementById('an-lotur'); if (!box) return;
+  function teiknaLotur(afram, el) {
+    var box = el || document.getElementById('an-lotur'); if (!box) return;
     saekjaLotur(afram).then(function (j) {
       var t = j.tolur || {}, rows = j.rows || [];
       var h = '<div class="an-chips"><span class="an-chip"><b>' + rows.length + '</b> lotur</span><span class="an-chip"><b>' + (t.med_kt || 0) + '</b> með kt</span>' +
@@ -162,8 +162,8 @@
   }
 
   /* ---------- spjald: Göt & tillögur ---------- */
-  function teiknaGot(afram) {
-    var box = document.getElementById('an-got'); if (!box) return;
+  function teiknaGot(afram, el) {
+    var box = el || document.getElementById('an-got'); if (!box) return;
     Promise.all([saekjaLotur(afram), saekjaSidukort()]).then(function (r) {
       var lot = r[0], sk = r[1];
       var got = lot.got || [];
@@ -190,8 +190,8 @@
   }
 
   /* ---------- spjald: Minnið ---------- */
-  function teiknaMinni(afram) {
-    var box = document.getElementById('an-minni'); if (!box) return;
+  function teiknaMinni(afram, el) {
+    var box = el || document.getElementById('an-minni'); if (!box) return;
     saekjaStada(afram).then(function (j) {
       if (j.villa) { box.innerHTML = '<div class="an-villa">' + villuTexti(j.villa) + '</div>'; return; }
       var k = j.knowledge || {}, ib = j.inbox || {}, ku = j.kunni || {};
@@ -405,7 +405,9 @@
     var an = (sk.sidur || []).filter(function (p) { return p.stada === '❌'; }).length;
     var hitt = (lot.rows || []).filter(function (r) { return idag(r.last_at); }).length;
     var strik = function (v) { return v == null ? '—' : v; };   // „mælist ekki“ = strik, aldrei fundið upp
-    var kc = function (lbl, v, cls, eftir) { return '<span class="kc ' + (cls || '') + '">' + lbl + ' <b>' + v + '</b>' + (eftir ? ' ' + eftir : '') + '</span>'; };
+    // 04.11.2026 (Agnar: „myndi helst vilja komast allsstaðar inn“): hver mælir opnar sitt spjald í hliðarrammanum (data-sp).
+    var SP = { 'Charlize': 'minni', 'Biðstofa': 'bidstofa', 'Kúnnaminni': 'kunni', 'Lotur 7 d': 'lotur', 'Ólokið minni': 'lotur', 'Síður án eiganda': 'sidukort', 'Göt': 'got', 'Lotur í dag': 'lotur' };
+    var kc = function (lbl, v, cls, eftir) { var sp = SP[lbl]; return '<span class="kc ' + (cls || '') + (sp ? ' kc-sp' : '') + '"' + (sp ? ' data-sp="' + sp + '" role="button" tabindex="0" title="Opna ' + lbl + '"' : '') + '>' + lbl + ' <b>' + v + '</b>' + (eftir ? ' ' + eftir : '') + '</span>'; };
     m.innerHTML = kc('Charlize', strik(k.active), k.active == null ? 'dauft' : '', 'virkar') +
       kc('Biðstofa', strik(ib.pending), ib.pending > 0 ? 'var' : '') +
       kc('Kúnnaminni', ku.felog != null ? ku.felog + ' / ' + (ku.af || '?') : '—', '') +
@@ -414,14 +416,104 @@
       kc('Síður án eiganda', an, an > 0 ? 'hae' : '') +
       kc('Göt', lot.got ? lot.got.length : '—', lot.got && lot.got.length ? 'hae' : '') +
       kc('Lotur í dag', hitt, '') +
+      '<span class="kc kc-sp" data-sp="skipanir" role="button" tabindex="0" title="Skipanahólfið — keyra vinnslur á vélunum, líka Claude-API-vinnslurnar">Skipanir <b>▶</b></span>' +
       '<span class="kc an-skyr" title="Punkturinn á hverjum agent: hvenær hann var síðast kallaður í lotu"><i class="st st-g"></i>24 klst <i class="st st-y"></i>vika <i class="st st-r"></i>ekki kallaður</span>';
     if (lot.villa || st.villa) m.innerHTML += '<span class="kc hae" title="' + esc(lot.villa || st.villa) + '">' + (/401|Innskráning/.test(lot.villa || st.villa) ? 'Innskráning starfsmanns vantar' : 'Lifandi gögn náðust ekki') + '</span>';
+  }
+
+  /* ---------- Mælarnir opna spjöldin í hliðarrammanum (04.11.2026) ---------- */
+  var SP_HEITI = { minni: 'Minnið — Charlize', lotur: 'Lotur síðustu 7 daga', got: 'Göt og tillögur', sidukort: 'Síðukort', kunni: 'Kúnnaminni — félög', skipanir: 'Skipanahólfið' };
+  function opnaSpjald(sp) {
+    if (sp === 'bidstofa') { openBidstofa(); return; }
+    if (!sideEl) return;
+    valinn = null; teiknaNet();
+    sideEl.onclick = null;
+    sideEl.innerHTML = '<div><h3>' + esc(SP_HEITI[sp] || sp) + '</h3><div class="u">úr Jarvis-spjaldinu · sömu aðgerðir</div></div><div class="an-sp" id="an-sp"></div>' +
+      '<button type="button" class="btn-out" id="an-sp-aftur" style="align-self:flex-start;margin-top:auto">Til baka í netið</button>';
+    sideEl.querySelector('#an-sp-aftur').onclick = function () { velja(null); };
+    var box = sideEl.querySelector('#an-sp');
+    box.innerHTML = '<p class="dim">sæki…</p>';
+    if (sp === 'minni') teiknaMinni(false, box);
+    else if (sp === 'lotur') teiknaLotur(false, box);
+    else if (sp === 'got') teiknaGot(false, box);
+    else if (sp === 'sidukort') teiknaSidukort(box);
+    else if (sp === 'kunni') teiknaKunni(box);
+    else if (sp === 'skipanir') teiknaSkipanir(box);
+    if (window.innerWidth <= 860 && sideEl.scrollIntoView) sideEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /* Kúnnaminni: félög með minni (op=kunni) + félög án minnis úr data/felog.json. Hver lína: Kúnni (customer.html) · Spyrja (spyrja.html). */
+  var felogP = null;
+  function saekjaFelog() { if (felogP) return felogP; felogP = getJSON('/data/felog.json').catch(function () { return { felog: [] }; }); return felogP; }
+  function teiknaKunni(box) {
+    var leit = '';
+    Promise.all([getJSON(API_STADA + '?op=kunni&limit=2000'), saekjaFelog()]).then(function (r) {
+      var j = r[0] || {}, F = (r[1] && r[1].felog) || [];
+      var nafn = {}; F.forEach(function (x) { if (x[2] === 'c' && !nafn[x[0]]) nafn[x[0]] = x[1]; });
+      var med = (j.felog || []).map(function (e) { return { kt: e.kt, nafn: nafn[e.kt] || e.kt, n: e.n, sidast: e.sidast, efni: Object.keys(e.efni || {}).join(' · ') }; });
+      var medKt = {}; med.forEach(function (e) { medKt[e.kt] = 1; });
+      var an = F.filter(function (x) { return x[2] === 'c' && !medKt[x[0]]; }).map(function (x) { return { kt: x[0], nafn: x[1] }; });
+      var lina = function (e, hefur) {
+        return '<div class="an-rod"><span class="n">' + esc(e.nafn) + '<i>' + esc(e.kt) + (hefur ? ' · ' + e.n + ' staðr. · ' + fmtD(e.sidast) + (e.efni ? ' · ' + esc(e.efni) : '') : ' · ekkert kúnnaminni') + '</i></span>' +
+          '<a class="an-lnk" href="customer.html?kt=' + encodeURIComponent(e.kt) + '" target="_blank" rel="noopener" title="Kúnnasíðan">Kúnni</a>' +
+          '<a class="an-lnk" href="spyrja.html?vefur=brunaholf&view=kunni&kt=' + encodeURIComponent(e.kt) + '&titill=' + encodeURIComponent(e.nafn) + '" target="_blank" rel="noopener" title="Spyrja fyrirtaeki-stjórann um félagið — og skrá">Spyrja</a></div>';
+      };
+      var teikna = function () {
+        var q = leit.toLowerCase();
+        var m2 = q ? med.filter(function (e) { return (e.nafn + ' ' + e.kt).toLowerCase().indexOf(q) !== -1; }) : med;
+        var a2 = q ? an.filter(function (e) { return (e.nafn + ' ' + e.kt).toLowerCase().indexOf(q) !== -1; }) : an;
+        var h = '<div class="an-chips"><span class="an-chip"><b>' + med.length + '</b> með minni</span><span class="an-chip hae"><b>' + an.length + '</b> án minnis</span></div>';
+        h += '<input class="an-leit" id="an-kunni-leit" placeholder="Leita að félagi eða kt…" value="' + esc(leit) + '">';
+        h += '<div class="an-h">Með kúnnaminni <span>' + m2.length + '</span></div>' + m2.slice(0, 60).map(function (e) { return lina(e, true); }).join('');
+        if (m2.length > 60) h += '<div class="an-tom">+ ' + (m2.length - 60) + ' til viðbótar — þrengdu leitina.</div>';
+        h += '<div class="an-h">Án kúnnaminnis <span>' + a2.length + '</span></div>' + a2.slice(0, q ? 60 : 12).map(function (e) { return lina(e, false); }).join('');
+        if (a2.length > (q ? 60 : 12)) h += '<div class="an-tom">+ ' + (a2.length - (q ? 60 : 12)) + ' til viðbótar — leitaðu að nafni. „Spyrja“ opnar stjórann með kúnnaminninu; „Skráðu þetta“ þar setur í biðstofu.</div>';
+        box.innerHTML = h;
+        var inp = box.querySelector('#an-kunni-leit');
+        inp.oninput = function () { leit = inp.value; var p = inp.selectionStart; teikna(); var i2 = box.querySelector('#an-kunni-leit'); i2.focus(); try { i2.setSelectionRange(p, p); } catch (_) {} };
+      };
+      teikna();
+    }).catch(function (e) { box.innerHTML = '<div class="an-villa">' + villuTexti(e.message) + '</div>'; });
+  }
+
+  /* Skipanahólfið: uppskriftir per vél (vel-skipun), Keyra-takki, síðustu keyrslur með úttaki. Claude-API-vinnslurnar merktar 🤖. */
+  function teiknaSkipanir(box) {
+    Promise.all([getJSON('/api/vel-skipun?uppskriftir=1'), getJSON('/api/vel-skipun?limit=20'), getJSON('/api/vel-heartbeat')]).then(function (r) {
+      var upp = (r[0] && r[0].uppskriftir) || [], sk = (r[1] && r[1].skipanir) || [], velar = ((r[2] && r[2].velar) || []).filter(function (v) { return v.heimild !== 'charlize_sessions'; });
+      var teikna = function () {
+        var h = '<p class="dim">Vélin sækir skipunina með næsta lífsmarki (≤ 30 mín, eða strax ef lífsmarkið keyrir). Aðeins fastar uppskriftir — enginn frjáls texti. Claude-vinnslurnar skrifa aðeins tillögur sem þú samþykkir.</p>';
+        velar.forEach(function (v) {
+          h += '<div class="an-h">' + esc(v.vel) + ' <span>' + (v.status === 'graent' ? 'í sambandi' : v.aldur_min + ' mín síðan') + '</span></div>';
+          upp.forEach(function (u) {
+            var irod = sk.some(function (x) { return x.vel === v.vel && x.uppskrift === u.id && (x.stada === 'bid' || x.stada === 'sott'); });
+            h += '<div class="an-rod"><span class="n">' + esc(u.heiti) + '<i>' + esc(u.lysing) + '</i></span><button type="button" class="an-lnk" data-vel="' + esc(v.vel) + '" data-upp="' + esc(u.id) + '"' + (irod ? ' disabled' : '') + '>' + (irod ? 'í röð' : 'Keyra') + '</button></div>';
+          });
+        });
+        if (!velar.length) h += '<div class="an-tom">Engin vél með luna-bridge lífsmark — skipanir keyra aðeins þar.</div>';
+        h += '<div class="an-h">Síðustu keyrslur <span>' + sk.length + '</span></div>';
+        sk.slice(0, 12).forEach(function (x) {
+          var st = x.stada === 'lokid' ? 'ok' : x.stada === 'villa' ? 'hae' : 'var';
+          h += '<div class="an-rod" title="' + esc((x.utkoma || '').slice(-600)) + '"><span class="t">' + fmtD(x.lokid_at || x.sott_at || x.created_at) + '</span><span class="n">' + esc(x.heiti || x.uppskrift) + '<i>' + esc(x.vel) + ' · ' + esc(x.stada) + (x.exit_code != null ? ' · exit ' + x.exit_code : '') + (x.beidandi ? ' · ' + esc(x.beidandi) : '') + '</i></span><span class="an-chip ' + st + '">' + esc(x.stada) + '</span></div>';
+        });
+        box.innerHTML = h;
+        box.onclick = function (ev) {
+          var b = ev.target.closest('[data-upp]'); if (!b || b.disabled) return;
+          b.disabled = true; b.textContent = 'sendi…';
+          postJSON('/api/vel-skipun', { action: 'senda', vel: b.getAttribute('data-vel'), uppskrift: b.getAttribute('data-upp'), beidandi: (getAuthor() || 'jarvis') + ' (agentanet)' })
+            .then(function (j) { b.textContent = j && j.thegar_i_rod ? 'í röð' : 'í röð ✓'; return getJSON('/api/vel-skipun?limit=20'); })
+            .then(function (j2) { sk = (j2 && j2.skipanir) || sk; teikna(); })
+            .catch(function (e) { b.disabled = false; b.textContent = 'Keyra'; alert('Tókst ekki: ' + e.message); });
+        };
+      };
+      teikna();
+    }).catch(function (e) { box.innerHTML = '<div class="an-villa">' + villuTexti(e.message) + '</div>'; });
   }
 
   function velja(n) {
     valinn = valinn === n ? null : n;
     teiknaNet();
     var e = entry(n); if (!sideEl) return;
+    sideEl.onclick = null;
     if (!e || valinn !== n) { sideEl.innerHTML = '<p class="dim">Smelltu á agent til að lýsa síðurnar hans og sjá hverja hann kallar á. Tvísmellur opnar Agentaskrána.</p>'; return; }
     var sid = eigandaSidur(e), und = (e.sidur || []).filter(function (s) { return s.hlutverk === 'undiragent'; });
     var live = ((D.lotur && D.lotur.agentar) || {})[n];
@@ -466,6 +558,7 @@
       '<section class="pnl an-verdir" id="an-verdir" aria-label="Verðir og kerfi"></section></div></div>';
     document.body.appendChild(ov);
     stageEl = ov.querySelector('#an-stage'); sideEl = ov.querySelector('#an-side');
+    ov.querySelector('#an-maelar').addEventListener('click', function (ev) { var b = ev.target.closest('[data-sp]'); if (b) opnaSpjald(b.getAttribute('data-sp')); });
     ov.querySelector('.an-x').addEventListener('click', closeNet);
     ov.querySelector('.an-tabs').addEventListener('click', function (ev) { var b = ev.target.closest('[data-t]'); if (b) setjaThema(b.getAttribute('data-t')); });
     window.addEventListener('rg:thema', malaThema);

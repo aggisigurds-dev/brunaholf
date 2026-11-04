@@ -75,6 +75,16 @@ body.an-lock #jvt-launch,body.an-lock #jvt-panel{display:none!important}
 .an-ov .an-ring{position:absolute;pointer-events:none}
 .an-ov .nd{position:absolute;transform:translate(-50%,-50%);padding:6px 10px;font-size:10px;line-height:1.35;border:1px solid var(--edge-hi);background:var(--node);color:var(--muted);white-space:nowrap;box-shadow:0 0 12px var(--glow-in);cursor:pointer;max-width:200px;overflow:hidden;text-overflow:ellipsis}
 .an-ov .nd b{display:block;color:var(--ink-hi);font-weight:700;font-size:11px}
+/* Mælar sem opna spjald (04.11.2026) + spjald í hliðarramma */
+.an-ov .kc.kc-sp{cursor:pointer}.an-ov .kc.kc-sp:hover{border-color:var(--acc);color:var(--acc-hi)}
+.an-ov .an-sp{display:flex;flex-direction:column;gap:6px;overflow:auto;max-height:calc(100vh - 260px)}
+.an-ov .an-sp .an-rod{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--edge)}.an-ov .an-sp .an-rod .n{flex:1;min-width:0}.an-ov .an-sp .an-rod .n i{display:block;font-style:normal;color:var(--mut);font-size:10px}
+.an-ov .an-sp .an-rod .t{color:var(--mut);font-size:10px;flex:none}
+.an-ov .an-lnk{font:inherit;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:3px 7px;border:1px solid var(--edge);color:var(--acc-hi);background:none;cursor:pointer;text-decoration:none;white-space:nowrap}.an-ov .an-lnk:hover{border-color:var(--acc)}.an-ov .an-lnk[disabled]{opacity:.5;cursor:default}
+.an-ov .an-leit{width:100%;box-sizing:border-box;font:inherit;font-size:11px;padding:6px 8px;border:1px solid var(--edge);background:rgba(0,0,0,.3);color:var(--ink);margin:6px 0}
+.an-ov .an-sp .an-h{display:flex;justify-content:space-between;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--acc);margin-top:10px}.an-ov .an-sp .an-h span{color:var(--mut)}
+.an-ov .an-sp .an-chips{display:flex;flex-wrap:wrap;gap:6px}.an-ov .an-sp .an-chip{font-size:10px;padding:3px 7px;border:1px solid var(--edge);color:var(--ink)}.an-ov .an-sp .an-chip.hae{border-color:var(--bad);color:var(--bad)}.an-ov .an-sp .an-chip.ok{border-color:var(--ok);color:var(--ok)}.an-ov .an-sp .an-chip.var{border-color:var(--warn);color:var(--warn)}
+.an-ov .an-sp .an-tom,.an-ov .an-sp .an-villa{font-size:10.5px;color:var(--mut)}.an-ov .an-sp .an-villa{color:var(--bad)}
 /* Staðapunktur (04.11.2026): grænn ≤ 24 klst · gulur ≤ 7 d · rauður ekki kallaður */
 .an-ov .st{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--bad);box-shadow:0 0 6px var(--bad-in);vertical-align:middle;margin-right:5px;flex:none}
 .an-ov .st-g{background:var(--ok);box-shadow:0 0 7px var(--ok-glow)}
