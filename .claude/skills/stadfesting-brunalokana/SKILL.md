@@ -265,6 +265,7 @@ Hvaleyrarbraut 39 og Gullslétta 18: staðfesting + starfsleyfi + „001 Brunah�
 **Regla (Agnar 03.11.2026): Ajour-skýrsla fylgir ALLTAF staðfestingunni þegar verkið er skráð í Ajour.** Ekki lengur ályktun. Fylgir líka starfsleyfi þjónustuaðila (eins og í Dalvegi 30A, Hvaleyrarbraut 39, Gullsléttu 18).
 Ekkert Ajour-verk (t.d. Stálhella) = engin skýrsla. Skýrslan er sótt/prentuð skv. kaflanum „Ajour-gögn" (8 myndir á síðu, án athugasemda). Claude sendir hana ekki — Agnar sendir pósta.
 
-**Undantekning (Agnar 04.11.2026): Heklureitur (Laugavegur 168/170) þarf EKKI Ajour-skýrslu með staðfestingunni**, þótt verkið sé skráð í Ajour (2.219 skráningar, ekki skipt milli húsa). Ekki sækja né smíða skýrslu fyrir Heklureit nema hann biðji um það.
-
-**Agnar 04.11.2026: „Það þarf ekki að gera skýrslur"** — Claude býr EKKI til Ajour-skýrslur eða myndayfirlit með staðfestingum nema Agnar biðji sérstaklega um það. Staðfestingin ein er verkið; Ajour-skýrslan er aðeins fylgiskjalaminning í sjálfvirku smíðinni.
+**Leiðrétting (Agnar 04.11.2026): „oftast þarf ég að senda skýrslu með, var bara ekki akkurat núna".** Þegar Agnar sagði „þarf víst ekki fyrir Heklureitinn" og „það þarf
+ekki að gera skýrslur" átti það við **beiðnina þá stundina** (Laugavegur 170), ekki almenna reglu. Reglan hér að ofan stendur: Ajour-skýrsla fylgir oftast (alltaf þegar verkið er í Ajour);
+Heklureitur er EKKI undanskilinn til frambúðar. Claude býr samt ekki til Ajour-skýrslu/myndayfirlit nema Agnar biðji um það þá stundina — hann sendir hana sjálfur; sjálfvirka
+smíðin sýnir aðeins fylgiskjalaminningu. Stórt verk (Heklureitur: 2.219 skráningar, 5.918 myndir, ekki skipt milli húsa) þarf umfang frá honum áður en skýrsla er smíðuð.
