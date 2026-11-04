@@ -179,8 +179,28 @@ body.an-lock #jvt-launch,body.an-lock #jvt-panel{display:none!important}
 .an-chip b{color:var(--ink);font-weight:700}
 .an-chip.hae{border-color:var(--hae);color:var(--hae)}
 
+/* skölun sviðsins: js/agentanet.js fitStage() setur transform:scale(k) á .an-stage og hæð á .an-net —
+   sviðið er alltaf 1300×700 í hnitum, en passar í breiddina (k ≤ 1); á síma er lágmark k=0,55 og þá má renna til hliðar */
+.an-ov .an-stage{transform-origin:0 0}
+.an-ov .an-net.an-fit{overflow:hidden}
+.an-ov .an-net.an-scroll{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+/* undir 1200 px fær netið alla breiddina og agentaspjaldið fer undir það (annars skalast sviðið niður í hálfa stærð) */
+@media(max-width:1200px){
+  .an-ov .an-body{flex-direction:column}
+  .an-ov .an-side{flex:0 0 auto}
+}
 @media(max-width:860px){
-  .an-ov .an-side{display:none}
-  .an-ov .an-inner{padding:8px}
-  .an-ov .an-stage{transform-origin:0 0}
+  .an-ov .an-inner{padding:8px;gap:8px}
+  .an-ov .an-head{gap:6px}
+  .an-ov .an-logo{font-size:16px;letter-spacing:.3em}
+  .an-ov .an-tag{flex-basis:100%;margin-right:0;font-size:9px;letter-spacing:.16em;white-space:normal}
+  .an-ov .kc{padding:5px 8px;font-size:10px}
+  .an-ov .kc b{font-size:14px}
+  .an-ov .an-tabs{flex-wrap:wrap}
+  .an-ov .tab{padding:6px 10px;font-size:11px;min-height:32px}
+  .an-ov .an-body{flex-direction:column}
+  .an-ov .an-side{flex:0 0 auto;padding:14px 14px 16px}
+  .an-ov .an-side h3{font-size:16px}
+  .an-ov .an-verdir{padding:10px 12px;gap:5px}
+  .an-ov .gw{font-size:9.5px;padding:4px 7px}
 }

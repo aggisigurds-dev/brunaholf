@@ -357,7 +357,29 @@
       '<div class="an-ring" id="an-ring" style="left:' + (CX - RING / 2) + 'px;top:' + (CY - RING / 2) + 'px;width:' + RING + 'px;height:' + RING + 'px"></div>' + lab + nd;
     ring = window.JarvisRing ? window.JarvisRing.mount(stageEl.querySelector('#an-ring'), { size: RING, theme: erRagnarok() ? 'ragnarok' : 'jarvis', sub: R.agents + ' agentar · ' + R.skills + ' skills' }) : null;
     teiknaVerdi();
+    fitStage();
   }
+
+  /* Skölun: sviðið er teiknað í 1300×700 hnitum og skalað svo það passi í breidd rammans (k ≤ 1).
+     Á síma (≤ 860 px) er lágmark k = 0,55 svo spjöldin séu læsileg; þá rennur maður til hliðar innan rammans. 04.11.2026 */
+  var MIN_K_SIMI = 0.55;
+  function fitStage() {
+    if (!stageEl || !ov || ov.hidden) return;
+    var box = stageEl.parentElement; if (!box) return;
+    var w = box.clientWidth - 8; if (w <= 0) return;
+    var fit = Math.min(1, w / SW);
+    var k = window.innerWidth <= 860 ? Math.max(fit, MIN_K_SIMI) : fit;
+    var scroll = k > fit + 0.001;
+    stageEl.style.transform = 'scale(' + k.toFixed(4) + ')';
+    stageEl.style.marginLeft = scroll ? '4px' : Math.max(0, Math.round((w - SW * k) / 2) + 4) + 'px';
+    stageEl.style.marginTop = '4px';
+    box.style.height = Math.round(SH * k) + 8 + 'px';
+    box.classList.toggle('an-scroll', scroll);
+    box.classList.toggle('an-fit', !scroll);
+    if (scroll && !box.dataset.midjad) { box.scrollLeft = Math.max(0, Math.round((SW * k - w) / 2)); box.dataset.midjad = '1'; }
+  }
+  var fitT = null;
+  function fitStageSeint() { clearTimeout(fitT); fitT = setTimeout(fitStage, 80); }
 
   function teiknaVerdi() {
     var f = ov.querySelector('#an-verdir'); if (!f) return;
@@ -403,6 +425,7 @@
     if (e.aldrei && e.aldrei.length) h += '<div><div class="ttl bad" style="margin-bottom:8px">Aldrei</div>' + e.aldrei.slice(0, 4).map(function (x) { return '<div class="li li-bad">' + esc(x) + '</div>'; }).join('') + '</div>';
     h += '<button type="button" class="btn-out" data-skra="' + esc(e.id) + '" style="align-self:flex-start;margin-top:auto">Opna í Agentaskránni</button>';
     sideEl.innerHTML = h;
+    if (window.innerWidth <= 860 && sideEl.scrollIntoView) sideEl.scrollIntoView({ behavior: 'smooth', block: 'start' });   // á síma er spjaldið undir netinu
   }
 
   function setjaThema(t) {
@@ -446,11 +469,13 @@
       var id = registryId(n.getAttribute('data-ag')); if (id && window.openAgentRegistry) { closeNet(); window.openAgentRegistry(id); }
     });
     document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && ov && !ov.hidden && (!bsOv || bsOv.hidden)) closeNet(); });
+    window.addEventListener('resize', fitStageSeint);
+    window.addEventListener('orientationchange', fitStageSeint);
   }
   function openNet() {
     hladaLetur(); buildNet();
     ov.hidden = false; document.body.style.overflow = 'hidden'; document.body.classList.add('an-lock');
-    themaKlasi(ov); teiknaMaela(); velja(null);
+    themaKlasi(ov); teiknaMaela(); velja(null); fitStage();
     saekjaSidukort().then(function () { teiknaNet(); teiknaMaela(); malaThema(); });
     saekjaLotur().then(function () { teiknaNet(); teiknaMaela(); malaThema(); });
     saekjaStada().then(teiknaMaela);
