@@ -361,8 +361,8 @@
   }
 
   /* Skölun: sviðið er teiknað í 1300×700 hnitum og skalað svo það passi í breidd rammans (k ≤ 1).
-     Á síma (≤ 860 px) er lágmark k = 0,55 svo spjöldin séu læsileg; þá rennur maður til hliðar innan rammans. 04.11.2026 */
-  var MIN_K_SIMI = 0.55;
+     Á síma (≤ 860 px) er lágmark k = 0,8 svo spjöldin séu læsileg; þá rennur maður til hliðar innan rammans. 04.11.2026 */
+  var MIN_K_SIMI = 0.8;   // 04.11 síðdegis: 0,55 var ólæsilegt á síma — heldur skrun en smáletur
   function fitStage() {
     if (!stageEl || !ov || ov.hidden) return;
     var box = stageEl.parentElement; if (!box) return;
