@@ -264,3 +264,5 @@ Hvaleyrarbraut 39 og Gullslétta 18: staðfesting + starfsleyfi + „001 Brunah�
 
 **Regla (Agnar 03.11.2026): Ajour-skýrsla fylgir ALLTAF staðfestingunni þegar verkið er skráð í Ajour.** Ekki lengur ályktun. Fylgir líka starfsleyfi þjónustuaðila (eins og í Dalvegi 30A, Hvaleyrarbraut 39, Gullsléttu 18).
 Ekkert Ajour-verk (t.d. Stálhella) = engin skýrsla. Skýrslan er sótt/prentuð skv. kaflanum „Ajour-gögn" (8 myndir á síðu, án athugasemda). Claude sendir hana ekki — Agnar sendir pósta.
+
+**Undantekning (Agnar 04.11.2026): Heklureitur (Laugavegur 168/170) þarf EKKI Ajour-skýrslu með staðfestingunni**, þótt verkið sé skráð í Ajour (2.219 skráningar, ekki skipt milli húsa). Ekki sækja né smíða skýrslu fyrir Heklureit nema hann biðji um það.
