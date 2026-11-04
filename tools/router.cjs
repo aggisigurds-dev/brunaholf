@@ -184,7 +184,7 @@ function greina(prompt, cwd, opt = {}) {
     const m = finnaRod(K, P);
     if (!m) continue;
     sidaHitt.push({ p, h });
-    if (p.eigandi) { const alm = erAlmennt(K); kand.push({ agent: p.eigandi, kv: h, pos: m.pos, stig: alm ? 1 : 3, alm, teg: m.teg, sida: p }); }
+    if (p.eigandi) { const alm = erAlmennt(K); kand.push({ agent: p.eigandi, kv: h, pos: m.pos, stig: alm ? 1 : (/^iframe/.test(p.tegund || '') || /^br-/.test(p.id || '') ? 2 : 3), alm, teg: m.teg, sida: p }); }
     break;
   }
   // 2) hvert orð fer til hæstu stiga (jafntefli deilist)
