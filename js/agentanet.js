@@ -248,6 +248,7 @@
       l.innerHTML = j.rows.map(function (r) {
         return '<div class="an-k" data-id="' + r.id + '"><small>#' + r.id + ' · ' + esc(r.scope) + ' / ' + esc(r.topic || '—') + ' · ' + esc(r.agent || '?') + ' · ' + fmtD(r.created_at) + (r.kennitala ? ' · kt ' + esc(r.kennitala) : '') + (r.confidence ? ' · ' + esc(r.confidence) : '') + '</small>' +
           '<div class="f">' + esc(r.fact) + '</div>' + (r.detail ? '<div class="d">' + esc(cut(r.detail, 320)) + '</div>' : '') +
+          (r.review_note ? '<div class="d sp">' + esc(cut(r.review_note, 300)) + '</div>' : '') +
           '<div class="r"><button type="button" class="btn-ok" data-adg="samthykkja">' + SVG.ok + 'Samþykkja</button><button type="button" class="btn-gh" data-adg="hafna">' + SVG.x + 'Hafna</button><span>' + esc(cut(r.source_path || '', 50)) + '</span></div></div>';
       }).join('');
     }).catch(function (e) { l.innerHTML = '<div class="an-villa">' + esc(e.message) + '</div>'; });

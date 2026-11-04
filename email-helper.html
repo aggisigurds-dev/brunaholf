@@ -131,6 +131,8 @@
       <div class="stitle">Fáðu svarið<small>Smelltu á hnappinn. Svarið birtist — afritaðu það í póstinn þinn.</small></div>
     </div>
     <button id="go" class="bigbtn">✦ Semja svar</button>
+    <button id="drog" class="bigbtn" title="Drög með öllu sem kerfið veit: greining póstsins, kúnnaminni, þráðurinn og fyrri svör okkar — vistast sem drög, þú sendir sjálfur">✦ Drög með samhengi</button>
+    <div id="drog-samhengi" class="meta" style="margin-top:6px"></div>
     <div id="status" class="status"></div>
     <div id="output" class="out empty" style="margin-top:10px">Svarið birtist hér…</div>
     <div class="opts" style="margin-top:10px">
@@ -163,7 +165,7 @@ try { const s=JSON.parse(localStorage.getItem('brunaholf_svarhjalp')||'{}'); if(
 $('rough').addEventListener('input',()=>{ try{ localStorage.setItem('brunaholf_svarhjalp', JSON.stringify({rough:$('rough').value})); }catch(e){} renderDoc(); });
 
 // ---- Innhólf (inbox) ----
-const INBOX = (location.hostname.endsWith('brunaholf.netlify.app'))
+const INBOX = (location.hostname.endsWith('brunaholf.netlify.app')||/^(localhost|127.0.0.1)$/.test(location.hostname))   // 04.11.2026: staðbundinn prófunarþjónn (tools/local-proxy-serve.cjs) áframsendir /api/
   ? '/api/inbox' : 'https://brunaholf.netlify.app/api/inbox';
 async function loadInbox(){
   const acct=$('account').value, filt=$('filter').value, box=$('inbox');
@@ -196,6 +198,7 @@ async function loadInbox(){
 }
 function pickMail(id){
   const m=window.__mails&&window.__mails[id]; if(!m) return;
+  window.__selId = id;   // 04.11.2026: svardrog þarf email_digest.id
   const from = m.sender_name? (m.sender_name+' <'+m.sender_email+'>') : m.sender_email;
   $('incoming').value = 'Frá: '+from+'\n'+(m.subject?('Efni: '+m.subject+'\n\n'):'')+(m.snippet||'');
   // highlight selected
@@ -263,6 +266,25 @@ Skrifaðu fágað, tilbúið svar sem má senda. ${langInstruction} Tónn: ${ton
   }catch(e){ $('status').textContent='Villa: '+(e&&e.message||e); }
   finally{ $('go').disabled=false; }
 }
+// 04.11.2026 (Agentakerfið 2.0, fasi 6 B): drög með samhengi — /api/svardrog les greiningu, kúnnaminni, þráð og fyrri svör,
+// semur með Opus og VISTAR í cowork_postsvor (status drog). Þú sendir sjálfur. Eldri „Semja svar“ (Luna, án samhengis) stendur.
+const SVARDROG = (location.hostname.endsWith('brunaholf.netlify.app')||/^(localhost|127.0.0.1)$/.test(location.hostname)) ? '/api/svardrog' : 'https://brunaholf.netlify.app/api/svardrog';
+async function composeDrog(lang){
+  const id=window.__selId; if(!id){ $('status').textContent='⚠ Veldu póst úr innhólfinu fyrst (Drög með samhengi þurfa valinn póst).'; return; }
+  const rough=$('rough').value.trim(), tone=$('tone').value;
+  $('status').textContent='⏳ Sæki samhengi og sem drög…'; $('drog').disabled=true; $('output').classList.remove('empty'); $('drog-samhengi').textContent='';
+  try{
+    const r=await fetch(SVARDROG,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email_id:Number(id),rough,lang,tone})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok||j.error) throw new Error(j.error||('HTTP '+r.status));
+    $('output').textContent=(j.drog||'').trim();
+    const s=j.samhengi||{};
+    $('drog-samhengi').textContent='Samhengi: '+(s.fyrirtaeki||'—')+(s.kt?' ('+s.kt+')':'')+' · kúnnaminni '+(s.kunni||0)+' færslur · þráður '+(s.thradur||0)+' póstar · stíldæmi '+(s.stilldaemi||0)+' · '+(s.agent||'')+(j.postsvor_id?' · vistað sem drög #'+j.postsvor_id:'')+(j.usage?' · '+j.usage.usd+' USD':'');
+    $('status').textContent='✓ Drög tilbúin — lestu yfir, lagaðu og afritaðu í póstinn þinn.';
+  }catch(e){ $('status').textContent='Villa: '+(e&&e.message||e); }
+  finally{ $('drog').disabled=false; }
+}
+$('drog').addEventListener('click',()=>composeDrog('is'));
 $('go').addEventListener('click',()=>compose('is'));
 $('en').addEventListener('click',()=>compose('en'));
 $('copy').addEventListener('click',()=>{

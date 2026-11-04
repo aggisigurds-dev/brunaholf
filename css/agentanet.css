@@ -150,6 +150,7 @@ body.an-lock #jvt-launch,body.an-lock #jvt-panel{display:none!important}
 .an-ov .an-k small{display:block;color:var(--muted);font-size:10px;letter-spacing:.06em;margin-bottom:4px}
 .an-ov .an-k .f{font-size:12px;line-height:1.55;color:var(--ink-hi)}
 .an-ov .an-k .d{font-size:11px;color:var(--ink);margin-top:4px;line-height:1.5}
+.an-ov .an-k .d.sp{color:var(--warn);border-left:2px solid var(--warn);padding-left:8px;margin-top:6px}
 .an-ov .an-k .r{display:flex;gap:8px;margin-top:8px;align-items:center}
 .an-ov .an-k .r span{font-size:10px;color:var(--muted);margin-left:auto}
 .an-ov .an-bs-fot{padding:8px 16px;border-top:1px solid var(--line);font-size:10.5px;color:var(--muted);line-height:1.5}

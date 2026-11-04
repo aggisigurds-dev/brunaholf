@@ -358,3 +358,6 @@ for (const e of list) {
   if (e.type === 'agent' && !e.serhaefing.length) warn.push('vantar meta');
   if (warn.length) console.log(`  ! ${e.type}:${e.name} — ${warn.join(', ')}`);
 }
+
+// 04.11.2026 (fasi 6 B): agent-skrár → data/agent-prompts.json fyrir Netlify-föllin (svardrog.js) — sama heimild, tvö svið.
+try { require('./agent-prompt.cjs').skrifa(); } catch (e) { console.warn('agent-prompt.cjs:', e.message); }

@@ -64,7 +64,7 @@ async function inbox(q) {
   if (q.scope && ID_RE.test(q.scope)) parts.push(`scope=eq.${encodeURIComponent(q.scope)}`);
   if (q.agent && ID_RE.test(q.agent)) parts.push(`agent=eq.${encodeURIComponent(q.agent)}`);
   const [rows, pending] = await Promise.all([
-    all(`charlize_inbox?select=id,scope,topic,fact,detail,kennitala,agent,confidence,source_path,created_at&${parts.join('&')}&order=created_at.desc,id.desc&limit=${lim}`),
+    all(`charlize_inbox?select=id,scope,topic,fact,detail,kennitala,agent,confidence,source_path,created_at,review_note&${parts.join('&')}&order=review_note.desc.nullslast,created_at.desc,id.desc&limit=${lim}`),
     count('charlize_inbox', parts.join('&')),
   ]);
   return P.json(200, { rows, pending });
