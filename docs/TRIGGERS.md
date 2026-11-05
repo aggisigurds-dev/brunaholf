@@ -101,7 +101,7 @@ Bæði slökkvitæki og brunahólf lesa sama Supabase `osfdzskyvisifcwyjkuk`.
 <!-- AGENT-KVEIKJUR:BEGIN -->
 ## Sjálfvirk tafla — kveikjuorð úr `description` (búin til af `node tools/build-agents-registry.cjs`)
 
-Byggð 2026-11-04. Þessi tafla er dregin beint úr agent- og skill-skránum og gildir ef hún stangast á við handskrifuðu töfluna hér að ofan. Breyttu kveikjuorðum í `description:` skrárinnar, ekki hér.
+Byggð 2026-11-05. Þessi tafla er dregin beint úr agent- og skill-skránum og gildir ef hún stangast á við handskrifuðu töfluna hér að ofan. Breyttu kveikjuorðum í `description:` skrárinnar, ekki hér.
 
 | Heiti | Tegund | Kveikjuorð | Skrá síðast uppfærð |
 |---|---|---|---|
@@ -120,8 +120,9 @@ Byggð 2026-11-04. Þessi tafla er dregin beint úr agent- og skill-skránum og 
 | `jarvis` | agent | `hver er staðan` · `morgunyfirferð` · `Jarvis` · `HUD` · `svið` · `hype` · `hvernig gengur` · `vikuyfirlit` · `sigrar` · `afköst` · `agentaskráin` · `hvaða agentar eru til` · `Agentanetið` · `síðukort` · `lotur` · `göt` | 04.11.2026 |
 | `joker` | agent | `útlit` · `sími` · `mobile` · `þröngt` · `of smátt` · `brotið` · `endurhanna` · `mockup` · `skinna` · `Boss-þema` · `Ragnarök` · `kontrast` · `grátt á gráu` · `laga hlutföll` | 04.11.2026 |
 | `kerfisheilsa` | agent | `hægt` · `niðri` · `timeout` · `frosið` · `eitthvað skrítið` · `health check` · `Supabase hrun` · `504` · `statement timeout` · `eru einhverjir gallar` · `peak time Claude` · `appið hleðst ekki` · `föst pósthólf` · `fast í keyrslu` · `heilsucheck` · `lífsmark` · `PGRST003` | 04.11.2026 |
+| `kerfisrynir` | agent | `kerfisrýni` · `heildarrýni` · `sími og tölva` · `öpp-rýni` · `kontrast` · `snertimörk` · `PWA` · `service worker` · `manifest` · `RLS-rýni` · `Netlify-fall rýni` · `Hawking` · `Stephen Hawking` | 05.11.2026 |
 | `kjarni-vefur` | agent | `Stjórnstöð` · `kjarni.vercel.app` · `Vercel` · `Turborepo` · `Verslun` · `Vefverslun` · `Marks` · `Stjórnborð` · `Síðuritill` · `Nýr vefur` · `Prufusvæði` · `Tólaskrá` · `build fellur` | 04.11.2026 |
-| `kodafraedingur` | agent | `rétta aðferðin` · `kóðarýni` · `patch-mynstur` · `nýr patch` · `wrap` · `IIFE` · `cache-bump` · `?v=` · `tvítak` · `switchView` · `MutationObserver` · `Lisbeth` | 04.11.2026 |
+| `kodafraedingur` | agent | `rétta aðferðin` · `kóðarýni` · `kóðayfirferð` · `diff` · `merge` · `deploya` · `deploy` · `cache-bump` · `?v=` · `tvítak` · `Netlify-fall` · `Lisbeth` | 05.11.2026 |
 | `kort` | agent | `kort` · `pinnar` · `hnit` · `hnitalaus` · `pinni á röngum stað` · `firmanafn-lyklar` · `geocode` · `Leaflet` · `kill-dots` · `Nominatim` · `Staðfangaskrá` · `loftmynd` · `bláa slikjan á kortum` · `grátt kort` | 04.11.2026 |
 | `kunnaskra` | agent | `kennitala` · `kt` · `customers_base` · `rekstrarfélag` · `sameina` · `tvítak` · `umsjónaraðili` · `endurnefna fyrirtæki` · `nýtt fyrirtæki` · `er þetta sami aðili` · `hits[0]` · `Tengireglan` | 04.11.2026 |
 | `logfraedingur` | agent | `lög` · `reglugerð` · `er þetta löglegt` · `má ég` · `skylda` · `starfsleyfi` · `fyrning` · `fyrnd krafa` · `innheimtuviðvörun` · `dráttarvextir` · `samningur` · `tilboð` · `galli` · `kvörtun` · `trygging` · `persónuvernd` · `kennitala` · `Vinnueftirlitið` | 04.11.2026 |
@@ -154,7 +155,7 @@ Byggð 2026-11-04. Þessi tafla er dregin beint úr agent- og skill-skránum og 
 | `brunaholf-layout` | skill | `layout` · `CSS` · `media query` · `breakpoint` · `dálkar` · `þröngt á síma` · `spacing` · `taflan brotnar` | 28.10.2026 |
 | `charlize` | skill | `muna` · `skrá` · `Charlize` · `hvernig var þetta` · `þekkingargrunnur` | 08.10.2026 |
 | `cowork-doc-sweep` | skill | `Drive` · `skjal` · `veiði` · `doc-sweep` · `samningur` · `úttektarskýrsla` | 31.08.2026 |
-| `deploy` | skill | `deploy` · `merge` · `keyra deploy merge` · `ýta` · `git push` · `[deploy]` · `backup fyrst` · `er deployið komið` · `revert` | 28.10.2026 |
+| `deploy` | skill | `deploy` · `merge` · `keyra deploy merge` · `ýta` · `git push` · `[deploy]` · `backup fyrst` · `er deployið komið` · `revert` | 05.11.2026 |
 | `elon-musk` | skill | `árs` · `ársreitur` · `pera` · `FULLBÚIÐ` · `VANTAR` · `SOURCE` · `FILTER` · `TÆKI` · `KPI` · `data-elon` · `RAFKERFI` · `röng join` · `FK-join` | 31.08.2026 |
 | `fact-check` | skill | `fact check` · `tríó` · `stemmir` · `úttekt vs reikningur` · `óskoðaður` · `fram yfir` · `þjónustulisti` · `tækjatala` | 02.11.2026 |
 | `gata-manadarlok` | skill | `loka mánuðinum` · `Efnislisti NLSH` · `Landsspítalinn september` · `Heklureitur göt` · `lokastaðan` · `setja stöðuna inn` · `sendi reikning fyrir mismuninum` | 02.11.2026 |

@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-04",
+ "generated": "2026-11-05",
  "_athugasemd": "GENERATED af tools/agent-prompt.cjs úr <repo>/.claude/agents/<nafn>.md — breyttu agent-skránum, ekki hér. Lesið af netlify/functions/svardrog.js.",
  "agents": {
   "postur": {

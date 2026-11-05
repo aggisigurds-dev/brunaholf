@@ -29,6 +29,16 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node tools/deploy-vordur.cjs",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [

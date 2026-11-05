@@ -1,6 +1,6 @@
 {
- "generated": "2026-11-04",
- "agents": 39,
+ "generated": "2026-11-05",
+ "agents": 40,
  "skills": 48,
  "list": [
   {
@@ -2435,6 +2435,64 @@
    ]
   },
   {
+   "id": "agent:kerfisrynir",
+   "type": "agent",
+   "name": "kerfisrynir",
+   "emoji": "🌌",
+   "rodd": "Stephen Hawking",
+   "flokkur": "rodd",
+   "svid": null,
+   "lysing": "Kerfisrýnirinn (Stephen Hawking) — fer yfir breytingu á ÖLLU kerfinu í einu, tölvu, síma og öppum, á þremur vefjum (Slökkvitæki-appið, Brunahólfs-hubbinn, Kjarni). Kontrast ≥ 4,5:1, snertimörk ≥ 44 px, síma-layout í 390 px, zoom/viewport í öppunum, PWA (manifest, service worker), fókus og lyklaborð, RLS (anon les tómt), Netlify-föll (staff-hlið, lyklar, CORS, villuleki), innerHTML með ótraustum texta. Lisbeth (kodafraedingur) kallar á hann áður en deploy; hann skilar ÞOLIR / ÞOLIR MEÐ SKILYRÐUM / ÞOLIR EKKI með skrá:línu og mælingu.",
+   "serhaefing": [
+    "Fer yfir breytingu á ÖLLU kerfinu: tölva + sími (390 px) + öpp (app-skelin, br-* iframe) + þrír vefir",
+    "Kontrast ≥ 4,5:1 og snertimörk ≥ 44 px mæld, ekki giskuð; PWA (manifest, service worker, ?v=)",
+    "RLS: ný tafla/view án policy = ÞOLIR EKKI; anon les tómt ≠ ekki til",
+    "Netlify-föll: staff-hlið, lyklar aldrei í framenda, GET framkvæmir ekki verk, villuleki",
+    "Lisbeth kallar á hann fyrir deploy; úrskurður ÞOLIR / ÞOLIR MEÐ SKILYRÐUM / ÞOLIR EKKI"
+   ],
+   "kveikjuord": [
+    "kerfisrýni",
+    "heildarrýni",
+    "sími og tölva",
+    "öpp-rýni",
+    "kontrast",
+    "snertimörk",
+    "PWA",
+    "service worker",
+    "manifest",
+    "RLS-rýni",
+    "Netlify-fall rýni",
+    "Hawking",
+    "Stephen Hawking"
+   ],
+   "aldrei": [
+    "Skrifa kóða",
+    "ÞOLIR án skjámyndar í síma OG tölvu",
+    "Samþykkja töflu/view án RLS",
+    "Giska á kontrast"
+   ],
+   "tools": [
+    "Bash",
+    "Read",
+    "Grep",
+    "Glob"
+   ],
+   "heimili": [
+    "slokkvitaeki"
+   ],
+   "skrar": [
+    {
+     "repo": "slokkvitaeki",
+     "path": ".claude/agents/kerfisrynir.md",
+     "uppfaert": "2026-11-05",
+     "linur": 100
+    }
+   ],
+   "afbrigdi": [],
+   "uppfaert": "2026-11-05",
+   "sidur": []
+  },
+  {
    "id": "agent:kjarni-vefur",
    "type": "agent",
    "name": "kjarni-vefur",
@@ -2672,8 +2730,9 @@
    "rodd": "Lisbeth Salander",
    "flokkur": "rodd",
    "svid": null,
-   "lysing": "Kóðafræðingurinn (Lisbeth Salander) — gætir þess að RÉTTA aðferðin sé notuð í kóðavinnu í Slökkvitæki-appinu: patch-mynstrið (IIFE, wrap, ?v= cache-bump), engin tvítök (variant-analysis), engin bein breyting á modal.js/features.js/pos.js nema rót-villa, próf (audit-all, vidmotsprof), switchView-race + _openCompanySafe, MutationObserver-bann, RLS-vitund. Les diff og segir RÉTT AÐFERÐ eða RÖNG AÐFERÐ. Kallaðu á hana áður en nýr patch er skrifaður og áður en merge/deploy.",
+   "lysing": "Kóðafræðingurinn (Lisbeth Salander) — gætir þess að RÉTTA aðferðin sé notuð í kóðavinnu í Brunahólfs-hubbnum og fer í gegnum ÖLL deploy (regla Agnars 05.11.2026, hook tools/deploy-vordur.cjs). index.html er ein 17.700 lína skrá (grep fyrst, aldrei lesin heil), ný virkni = ný js/*.js skrá + ?v= cache-bump, Netlify-föll CommonJS og sjálfstæð með staff-hliði (P.requireStaff), GET má ekki framkvæma verk, val notanda á þjón (app-state) ekki aðeins localStorage, próf (node --test, check-inline-js). Les diff og segir RÉTT AÐFERÐ eða RÖNG AÐFERÐ.",
    "serhaefing": [
+    "Fer í gegnum ÖLL deploy (hook tools/deploy-vordur.cjs, 05.11.2026): skráir úrskurð með --urskurdur",
     "Úrskurðar RÉTT AÐFERÐ / RÖNG AÐFERÐ um kóðabreytingu áður en merge/deploy",
     "Patch-mynstrið: ný skrá js/patches/NNN, IIFE-flagg, wrap sem afritar flögg, ?v= cache-bump í index.html",
     "Engin tvítök: variant-analysis áður en sagt er „lagað“",
@@ -2683,15 +2742,15 @@
    "kveikjuord": [
     "rétta aðferðin",
     "kóðarýni",
-    "patch-mynstur",
-    "nýr patch",
-    "wrap",
-    "IIFE",
+    "kóðayfirferð",
+    "diff",
+    "merge",
+    "deploya",
+    "deploy",
     "cache-bump",
     "?v=",
     "tvítak",
-    "switchView",
-    "MutationObserver",
+    "Netlify-fall",
     "Lisbeth"
    ],
    "aldrei": [
@@ -2707,18 +2766,51 @@
     "Glob"
    ],
    "heimili": [
+    "brunaholf",
     "slokkvitaeki"
    ],
    "skrar": [
     {
+     "repo": "brunaholf",
+     "path": ".claude/agents/kodafraedingur.md",
+     "uppfaert": "2026-11-05",
+     "linur": 114
+    },
+    {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/kodafraedingur.md",
-     "uppfaert": "2026-11-04",
-     "linur": 101
+     "uppfaert": "2026-11-05",
+     "linur": 115
     }
    ],
-   "afbrigdi": [],
-   "uppfaert": "2026-11-04",
+   "afbrigdi": [
+    {
+     "repo": "slokkvitaeki",
+     "lysing": "Kóðafræðingurinn (Lisbeth Salander) — gætir þess að RÉTTA aðferðin sé notuð í kóðavinnu í Slökkvitæki-appinu: patch-mynstrið (IIFE, wrap, ?v= cache-bump), engin tvítök (variant-analysis), engin bein breyting á modal.js/features.js/pos.js nema rót-villa, próf (audit-all, vidmotsprof), switchView-race + _openCompanySafe, MutationObserver-bann, RLS-vitund. Les diff og segir RÉTT AÐFERÐ eða RÖNG AÐFERÐ. Kallaðu á hana áður en nýr patch er skrifaður og áður en merge/deploy.",
+     "kveikjuord": [
+      "rétta aðferðin",
+      "kóðarýni",
+      "kóðayfirferð",
+      "yfirfara kóða",
+      "code review",
+      "diff",
+      "patch-mynstur",
+      "nýr patch",
+      "merge",
+      "deploya",
+      "tilbúið til deploy",
+      "wrap",
+      "IIFE",
+      "cache-bump",
+      "?v=",
+      "tvítak",
+      "switchView",
+      "MutationObserver",
+      "Lisbeth"
+     ]
+    }
+   ],
+   "uppfaert": "2026-11-05",
    "sidur": [
     {
      "id": "uppferslubord",
@@ -6440,14 +6532,14 @@
     {
      "repo": "brunaholf",
      "path": ".claude/skills/deploy/SKILL.md",
-     "uppfaert": "2026-10-28",
-     "linur": 85
+     "uppfaert": "2026-11-05",
+     "linur": 93
     },
     {
      "repo": "slokkvitaeki",
      "path": ".claude/skills/deploy/SKILL.md",
-     "uppfaert": "2026-10-28",
-     "linur": 82
+     "uppfaert": "2026-11-05",
+     "linur": 90
     }
    ],
    "afbrigdi": [
@@ -6468,7 +6560,7 @@
      ]
     }
    ],
-   "uppfaert": "2026-10-28",
+   "uppfaert": "2026-11-05",
    "sidur": []
   },
   {

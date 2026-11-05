@@ -140,3 +140,11 @@ Taktu færslurnar út úr `settings.json` (eða keyrðu `/hooks` og afvirkjaðu)
 - **Keflið (boðhlaup, Agnar):** keflið fellur aldrei. `lotu-byrjun.cjs` setur jarvis með keflið í byrjun hverrar lotu; `router.cjs` réttir jarvis það þegar engin kveikjuorð hitta en promptið lýsir verki (≥ 9 orð); regla 5 í „Grunnreglur allra agenta“ í hverri agent-skrá segir agentinum að rétta verk utan sviðs áfram til eigandans og segja Agnari hver tók við.
 - **Uppsetning á vél:** `node tools/setja-hooka.cjs --pull` setur alla fjóra hookana í `~/.claude/settings.json` (afrit tekið). Gildra sem fannst 04.11: lota opnuð í heimamöppunni sjálfri (C:\Users\<notandi>) lét `--notandi` þegja — lagað í `_lotu-grunnur.cjs`.
 - **Fallorð:** „fyrir“, „eftir“, „yfir“ o.fl. hitta aldrei kveikjuorð með stofn-pörun (FALLORD í router.cjs) — „fyrir mig“ kallaði áður stjórann fyrirtaeki.
+
+## Deploy-vörður — Lisbeth fer í gegnum öll deploy (05.11.2026)
+
+- **Hvað:** `tools/deploy-vordur.cjs` (PreToolUse á `Bash`) sér skipunina sem er að fara að keyra. `[deploy]`-commit, `git push` með `[deploy]`-haus, `netlify deploy`, `node deploy.js`, `gh pr merge` og `git merge` fá `permissionDecision: ask` — Agnar sér „🖤 Lisbeth hefur ekki farið yfir þetta deploy“ — nema gildur úrskurður sé til í `~/.claude/lisbeth/<repo>.json`: RÉTT AÐFERÐ / RÉTT MEÐ SKILYRÐUM, yngri en 4 klst, á sama kóða (`git diff --quiet <head> HEAD`, ekkert óvistað í tracked skrám). Hookurinn neitar aldrei; Agnar ræður.
+- **Lisbeth skráir:** `node tools/deploy-vordur.cjs --urskurdur "RÉTT AÐFERÐ" --cwd <repo-rót> [--hawking "ÞOLIR …"]`. Staða: `--stada --cwd <rót>`. Þurrkeyrsla: `--dry "<skipun>" --cwd <rót>`.
+- **Hawking:** `kerfisrynir` (Stephen Hawking, `slokkvitaeki/.claude/agents/kerfisrynir.md`) fer yfir tölvu + síma + öpp + RLS + Netlify-föll; Lisbeth kallar á hann þegar það er snert og skráir úrskurð hans með `--hawking`.
+- **Uppsetning:** í `.claude/settings.json` allra þriggja repóa (brunaholf beint, slokkvitaeki um `lotu-hookar.cjs deploy`, kjarni um `../brunaholf/tools/`) og í `~/.claude/settings.json` með `node tools/setja-hooka.cjs --pull` (fimmti hookurinn, matcher `Bash`, `--notandi` þegir þar sem repóið hefur hann sjálft).
+- **Log:** hver stöðvun og hver úrskurður fer í `~/.claude/router-log.jsonl` (`deploy: {repo, skref, gildur, hvers}`) → lotu-lok.
