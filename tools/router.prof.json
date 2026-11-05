@@ -23,7 +23,7 @@
     { "prompt": "Tímavera innsogið skilar engu síðan í gær", "cwd": "C:\\projects\\brunaholf", "vaent": ["gagnaleidslur"], "fremstur": "gagnaleidslur" },
     { "prompt": "Drive-mappan er full af tvítökum, endurnefna skjölin", "cwd": "C:\\projects\\brunaholf", "vaent": ["skjol"], "fremstur": "skjol" },
     { "prompt": "factcheck á árinu, stemmir þetta við gögnin", "cwd": "C:\\projects\\slokkvitaeki", "vaent": ["natalie"], "fremstur": "natalie" },
-    { "prompt": "er óhætt að ýta þessu í deploy núna", "cwd": "C:\\projects\\slokkvitaeki", "vaent": ["netvordur"], "fremstur": "netvordur" },
+    { "prompt": "er óhætt að ýta þessu í deploy núna", "cwd": "C:\\projects\\slokkvitaeki", "vaent": ["kodafraedingur", "netvordur"], "fremstur": "kodafraedingur" },
     { "prompt": "hvað vitum við um 510117-0690 núna", "cwd": "C:\\projects\\brunaholf", "vaent": ["fyrirtaeki"], "fremstur": "fyrirtaeki", "kt": ["510117-0690"] },
     { "prompt": "Vasinn tekur ekki við skjáskotum úr símanum lengur, getur þú skoðað það", "cwd": "C:\\projects\\slokkvitaeki", "sida": "prof-vasinn", "gat": true },
     { "prompt": "charlize_knowledge taflan skilar tómu þegar ég les hana úr hubbinum núna í morgun", "cwd": "C:\\projects\\brunaholf", "gat": true, "krefst": "gagnakort" },
