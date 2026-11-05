@@ -259,6 +259,19 @@
         "450905-1430"
       ],
       "krefst": "felog"
+    },
+    {
+      "prompt": "Krókháls 9 | 110 Reykjavík Tel: 590 2000 | Mobile: 899-7200 www.benni.is | gudmundurs@benni.is ég var að biðja um samskipti frá þessum",
+      "cwd": "C:\\projects\\slokkvitaeki",
+      "vaent": [
+        "fyrirtaeki",
+        "postur"
+      ],
+      "fremstur": "fyrirtaeki",
+      "kt": [
+        "711292-2929"
+      ],
+      "krefst": "felog"
     }
   ]
 }

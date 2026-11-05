@@ -32,10 +32,34 @@ async function allt(tafla, select, sia) {
 
 (async () => {
   const dry = process.argv.includes('--dry');
-  const [fy, cb] = await Promise.all([
-    allt('fyrirtaeki', 'id,nafn,kennitala', '&deleted_at=is.null&kennitala=not.is.null'),
-    allt('customers_base', 'id,nafn,kennitala', '&kennitala=not.is.null'),
+  const [fy, cb, cc] = await Promise.all([
+    allt('fyrirtaeki', 'id,nafn,kennitala,netfang,customer_base_id', '&deleted_at=is.null'),
+    allt('customers_base', 'id,nafn,kennitala,netfang,contact_email', '&kennitala=not.is.null'),
+    allt('charlize_contacts', 'id,kennitala,netfang,status', '&netfang=not.is.null&status=neq.rejected'),
   ]);
+  // Netföng og lén → kt (05.11.2026, Agnar: signatúra með gudmundurs@benni.is þekktist ekki). Netfang gildir aðeins
+  // þegar það vísar á EINA kt; lén aðeins þegar allar raðir þess eru á einni kt og það er ekki almennt pósthús.
+  const cbKt = new Map(cb.map(r => [r.id, r.kennitala]));
+  const ALMENN_LEN = new Set(['gmail.com', 'hotmail.com', 'outlook.com', 'live.com', 'yahoo.com', 'icloud.com', 'me.com', 'simnet.is',
+    'internet.is', 'mi.is', 'visir.is', 'mmedia.is', 'vortex.is', 'centrum.is', 'islandia.is', 'hive.is', 'talnet.is', 'emax.is', 'eldklar.is', 'brunaholf.is']);
+  const nfKt = new Map();
+  const baeta = (nf, kt) => {
+    nf = String(nf || '').trim().toLowerCase(); kt = G.ktSnid(kt);
+    if (!nf.includes('@') || !kt || !G.ktLogadili(kt)) return;
+    if (!nfKt.has(nf)) nfKt.set(nf, new Set());
+    nfKt.get(nf).add(kt);
+  };
+  for (const r of cc) baeta(r.netfang, r.kennitala);
+  for (const r of cb) { baeta(r.netfang, r.kennitala); baeta(r.contact_email, r.kennitala); }
+  for (const r of fy) baeta(r.netfang, r.kennitala || cbKt.get(r.customer_base_id));
+  const netfong = [], lenKt = new Map();
+  for (const [nf, kts] of nfKt) {
+    const dom = nf.split('@')[1];
+    if (!lenKt.has(dom)) lenKt.set(dom, new Set());
+    for (const kt of kts) lenKt.get(dom).add(kt);
+    if (kts.size === 1) netfong.push([nf, [...kts][0]]);
+  }
+  const len = [...lenKt].filter(([dom, kts]) => kts.size === 1 && !ALMENN_LEN.has(dom)).map(([dom, kts]) => [dom, [...kts][0]]);
   const sed = new Set();
   const felog = [];
   let einst = 0;
@@ -55,13 +79,16 @@ async function allt(tafla, select, sia) {
   if (!felog.length) throw new Error(`0 félög komu til baka (fyrirtaeki ${fy.length}, customers_base ${cb.length}) — RLS eða lykill? Skrá ekki skrifuð.`);
   const ut = {
     generated: new Date().toISOString(),
-    _athugasemd: 'GENERATED af tools/felog-saekja.cjs — aðeins lögaðilar (kt 4–7…). [kt, nafn, uppruni c=customers_base f=fyrirtaeki, id]. ALDREI í git (data/.gitignore).',
+    _athugasemd: 'GENERATED af tools/felog-saekja.cjs — aðeins lögaðilar (kt 4–7…). felog: [kt, nafn, uppruni c=customers_base f=fyrirtaeki, id]; netfong: [netfang, kt] (aðeins einkvæm); len: [lén, kt] (aðeins einkvæm, ekki almenn pósthús). ALDREI í git (data/.gitignore).',
     fjoldi: felog.length,
     felog,
+    netfong,
+    len,
   };
   const kts = new Set(felog.map(f => f[0])).size;
-  if (dry) { console.log(`[dry] ${felog.length} nöfn, ${kts} kennitölur (fyrirtaeki ${fy.length}, customers_base ${cb.length}; ${einst} raðir einstaklinga sleppt)`); return; }
+  const lysing = `${felog.length} nöfn, ${kts} kennitölur, ${netfong.length} netföng, ${len.length} lén (fyrirtaeki ${fy.length}, customers_base ${cb.length}, charlize_contacts ${cc.length}; ${einst} raðir einstaklinga sleppt)`;
+  if (dry) { console.log(`[dry] ${lysing}`); return; }
   fs.mkdirSync(path.dirname(UT), { recursive: true });
   fs.writeFileSync(UT, JSON.stringify(ut) + '\n');
-  console.log(`✅ data/felog.json: ${felog.length} nöfn, ${kts} kennitölur (fyrirtaeki ${fy.length}, customers_base ${cb.length}; ${einst} raðir einstaklinga sleppt)`);
+  console.log(`✅ data/felog.json: ${lysing}`);
 })().catch(e => { console.error('VILLA:', e.message); process.exit(1); });

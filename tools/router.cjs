@@ -23,8 +23,9 @@
  *                  hæstu stigum á það (jafntefli deilist).
  *   Val            ≥ 2 stig, hámark 3 agentar; jafntefli → sá sem á heima í basename(cwd).
  *   Þögn           prompt sem byrjar á „/“ eða er < 3 orð.
- *   Fyrirtæki      kt (\b\d{6}-?\d{4}\b, aðeins lögaðilar) eða nafn úr data/felog.json (≥ 2 orð eða
- *                  ≥ 8 stafir) → agentinn `fyrirtaeki` fremst (nefndur þótt hann vanti í registry) +
+ *   Fyrirtæki      kt (\b\d{6}-?\d{4}\b, aðeins lögaðilar), netfang/lén (felog.json netfong/len, einkvæm —
+ *                  05.11.2026, þá líka `postur`) eða nafn úr data/felog.json (≥ 2 orð eða ≥ 8 stafir)
+ *                  → agentinn `fyrirtaeki` fremst (nefndur þótt hann vanti í registry) +
  *                  charlize_yfirlit('<kt>') um REST, 3 s tímamörk; hámark 2 fyrirtæki.
  *   Log            ~/.claude/router-log.jsonl {ts,session_id,cwd,ord,agentar,kt,gat} — ENGINN prompt-texti.
  *                  gat:true = prompt > 8 orð nefnir síðu (síðukort) eða töflu (data/gagnakort.json) en enginn eigandi fannst.
@@ -98,8 +99,10 @@ const FAST_STOPP = ['slökkvitæki', 'slökkvikerfi', 'brunahólf', 'brunakerfi'
 function lesaFelog(dir, kvOrd) {
   const f = [path.join(dir, 'felog.json'), path.resolve(__dirname, '..', 'data', 'felog.json')].find(x => fs.existsSync(x));
   const j = f && lesaJson(f);
-  const ut = { til: !!j, kt: new Map(), index: new Map() };
+  const ut = { til: !!j, kt: new Map(), index: new Map(), netfong: new Map(), len: new Map() };
   if (!j || !Array.isArray(j.felog)) return ut;
+  for (const [nf, kt] of (Array.isArray(j.netfong) ? j.netfong : [])) ut.netfong.set(nf, kt);
+  for (const [dom, kt] of (Array.isArray(j.len) ? j.len : [])) ut.len.set(dom, kt);
   const fastStopp = new Set(FAST_STOPP.map(w => fold(stofn(w))));
   const stopp = new Set([...fastStopp, ...kvOrd]);
   for (const [kt, nafn] of j.felog) {
@@ -210,10 +213,28 @@ function greina(prompt, cwd, opt = {}) {
   }).sort((a, b) => b.stig - a.stig || (b.heima - a.heima) || a.agent.localeCompare(b.agent));
   const valdir = stig.filter(s => s.stig >= 2).slice(0, 3);
 
-  // 4) fyrirtæki: kt í texta + nöfn úr felog.json
+  // 4) fyrirtæki: kt í texta + netföng/lén (05.11.2026) + nöfn úr felog.json
   const fyrirtaeki = [];
   const ktTexti = G.finnaKt(texti, g.felog.kt);
   for (const kt of ktTexti) fyrirtaeki.push({ kt, nafn: g.felog.kt.get(kt) || null, hvadan: 'kt' });
+  // Netfang → kt (einkvæmt í felog.json), annars lén netfangsins eða bert lén („www.benni.is“) → kt. Signatúra án nafns/kt dugar þá.
+  const netfangHitt = [];
+  if (g.felog.til && (g.felog.netfong.size || g.felog.len.size)) {
+    const lag = sneid.toLowerCase();
+    for (const m of lag.matchAll(/[a-z0-9._%+-]+@([a-z0-9-]+(?:\.[a-z0-9-]+)+)/g)) {
+      const kt = g.felog.netfong.get(m[0]) || g.felog.len.get(m[1]);
+      if (kt) netfangHitt.push({ kt, hvad: m[0] });
+    }
+    for (const m of lag.matchAll(/(?:^|[^a-z0-9@.-])(?:www\.)?([a-z0-9-]+\.[a-z]{2,6})(?=$|[^a-z0-9.-])/g)) {
+      const kt = g.felog.len.get(m[1]);
+      if (kt) netfangHitt.push({ kt, hvad: m[1] });
+    }
+    for (const h of netfangHitt) {
+      if (fyrirtaeki.length >= 2) break;
+      if (fyrirtaeki.some(f => f.kt === h.kt)) continue;
+      fyrirtaeki.push({ kt: h.kt, nafn: g.felog.kt.get(h.kt) || null, hvadan: 'netfang', hvad: h.hvad });
+    }
+  }
   if (g.felog.til) {
     for (const h of finnaFelog(ordN(sneid), g.felog)) {
       if (fyrirtaeki.length >= 2) break;
@@ -231,6 +252,8 @@ function greina(prompt, cwd, opt = {}) {
   const gat = fjoldiOrda > 8 && (sidur.length > 0 || nefnirToflu.length > 0) && enginnEigandi;
 
   const agentar = valdir.map(v => v.agent);
+  // Netfang í prompti = samskipti við kúnna → pósturinn (postur) með, næst á eftir stjóranum
+  if (fyrirtaeki.some(f => f.hvadan === 'netfang') && !agentar.includes('postur') && g.byName.has('postur')) agentar.unshift('postur');
   if (fyrirtaeki.length) agentar.unshift('fyrirtaeki');
   const ordUt = [...new Set(valdir.flatMap(v => v.hitt.map(c => c.kv)).concat(fyrirtaeki.map(f => f.nafn || f.kt)))].slice(0, 12);
   return { thogn: false, agentar, valdir, stig, fyrirtaeki, sidur, toflur: nefnirToflu, gat, ord: ordUt, fjoldi: fjoldiOrda, kt: fyrirtaeki.map(f => f.kt), g, heima };
@@ -272,7 +295,7 @@ function smida(res, minni) {
   const L = [];
   const kvL = [];
   for (const v of res.valdir) for (const c of v.hitt.filter(c => !c.alm || v.hitt.some(x => !x.alm))) kvL.push(`„${c.kv}“ → ${v.agent}`);
-  for (const f of res.fyrirtaeki) kvL.push(`${f.hvadan === 'kt' ? 'kt ' + f.kt : '„' + f.nafn + '“'} → fyrirtaeki`);
+  for (const f of res.fyrirtaeki) kvL.push(`${f.hvadan === 'kt' ? 'kt ' + f.kt : f.hvadan === 'netfang' ? 'netfang ' + f.hvad : '„' + f.nafn + '“'} → fyrirtaeki${f.hvadan === 'netfang' ? ' + postur' : ''}`);
   L.push('Leiðarvísir — kveikjuorð: ' + (kvL.length ? kvL.slice(0, 8).join(' · ') : '(engin)'));
   for (const p of res.sidur.slice(0, 2)) {
     L.push(`Síða: ${p.titill} (${p.vefur}${p.leid ? ', ' + p.leid : ''}) — ${p.eigandi ? 'eigandi ' + p.eigandi : 'ENGINN EIGANDI skráður (gat í síðukortinu)'}`
