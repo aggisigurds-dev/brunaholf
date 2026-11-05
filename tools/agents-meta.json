@@ -748,7 +748,7 @@
       "flokkur": "rodd",
       "svid": null,
       "serhaefing": [
-        "Fer í gegnum ÖLL deploy (hook tools/deploy-vordur.cjs, 05.11.2026): skráir úrskurð með --urskurdur",
+        "Fer yfir ný deploy EFTIR Á (05.11.2026): deploy-vörðurinn tools/deploy-vordur.cjs stoppar ekkert, skráir í ~/.claude/lisbeth/yfirferd-bid.jsonl; hún lagar og stillir",
         "Úrskurðar RÉTT AÐFERÐ / RÖNG AÐFERÐ um kóðabreytingu áður en merge/deploy",
         "Patch-mynstrið: ný skrá js/patches/NNN, IIFE-flagg, wrap sem afritar flögg, ?v= cache-bump í index.html",
         "Engin tvítök: variant-analysis áður en sagt er „lagað“",
@@ -860,7 +860,7 @@
         "Kontrast ≥ 4,5:1 og snertimörk ≥ 44 px mæld, ekki giskuð; PWA (manifest, service worker, ?v=)",
         "RLS: ný tafla/view án policy = ÞOLIR EKKI; anon les tómt ≠ ekki til",
         "Netlify-föll: staff-hlið, lyklar aldrei í framenda, GET framkvæmir ekki verk, villuleki",
-        "Lisbeth kallar á hann fyrir deploy; úrskurður ÞOLIR / ÞOLIR MEÐ SKILYRÐUM / ÞOLIR EKKI"
+        "Lisbeth kallar á hann í yfirferð eftir deploy; úrskurður ÞOLIR / ÞOLIR MEÐ SKILYRÐUM / ÞOLIR EKKI"
       ],
       "aldrei": [
         "Skrifa kóða",

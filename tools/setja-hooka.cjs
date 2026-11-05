@@ -35,7 +35,7 @@ const HOOKAR = [
   ['Stop', 'lotu-lok.cjs', 10],
   ['SessionStart', 'lotu-byrjun.cjs', 5],
   ['PreToolUse', 'sidu-vordur.cjs', 5, 'Read|Edit|Write|MultiEdit|NotebookEdit'],   // síðuvörður (04.11.2026 kvöld)
-  ['PreToolUse', 'deploy-vordur.cjs', 5, 'Bash'],   // deploy-vörður: Lisbeth fer í gegnum öll deploy (05.11.2026)
+  ['PreToolUse', 'deploy-vordur.cjs', 5, 'Bash'],   // deploy-vörður: stoppar ekkert, Lisbeth fer yfir deploy eftir á (05.11.2026)
 ];
 const REPO = ['brunaholf', 'slokkvitaeki', 'kjarni'].map(n => ({ nafn: n, slod: n === 'brunaholf' ? BH : path.join(ROT, n) }));
 const ut = [];

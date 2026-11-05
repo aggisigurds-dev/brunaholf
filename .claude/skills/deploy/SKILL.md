@@ -17,13 +17,13 @@ description: >
 The hub has **no build step**. The site *is* the repo: `publish = "."` in
 `netlify.toml`. You edit the source directly and push.
 
-## 0. Lisbeth fyrst — öll deploy (Agnar 05.11.2026)
-Hookurinn `brunaholf/tools/deploy-vordur.cjs` (PreToolUse á Bash) stoppar `[deploy]`-commit, `git push` með
-`[deploy]`-haus, `netlify deploy`, `gh pr merge` og `git merge` með spurningu til Agnars þar til **kodafraedingur**
-(🖤 Lisbeth) hefur skráð úrskurð á NÁKVÆMLEGA þennan kóða: kallaðu á hana (Agent `kodafraedingur`) á diffið
-`git diff <síðasta [deploy]>..HEAD`; hún kallar á `kerfisrynir` (Stephen Hawking) ef viðmót/sími/öpp/RLS/fall
-er snert, og skráir: `node C:\projects\brunaholf\tools\deploy-vordur.cjs --urskurdur "RÉTT AÐFERÐ" --cwd <rót>`.
-Gildir 4 klst, aðeins á sama kóða. RÖNG AÐFERÐ = laga fyrst. Staða: `node …/deploy-vordur.cjs --stada --cwd <rót>`.
+## 0. Deploy stoppa ekki — Lisbeth fer yfir EFTIR Á (Agnar 05.11.2026)
+Hookurinn `brunaholf/tools/deploy-vordur.cjs` (PreToolUse á Bash) svarar `allow` við `[deploy]`-commit, `git push` með
+`[deploy]`-haus, `netlify deploy`, `gh pr merge` og `git merge` — engin forskoðun, engin spurning til Agnars. Hvert deploy er
+skráð í `~/.claude/lisbeth/yfirferd-bid.jsonl`; **kodafraedingur** (🖤 Lisbeth) fer yfir það á eftir (Agent `kodafraedingur`),
+kallar á `kerfisrynir` (Stephen Hawking) ef viðmót/sími/öpp/RLS/fall er snert, og lagar/stillir það sem er rangt.
+Þú þarft ekki að kalla á hana fyrir deploy; gerðu það eftir stórt deploy ef þú vilt yfirferð strax.
+Staða: `node …/deploy-vordur.cjs --stada --cwd <rót>`.
 
 ## Deploy = `[deploy]` í haus-commiti (regla frá 07.09.2026)
 Hvert framleiðslu-deploy kostar 15 Netlify-krítur (≈ 10 sent) og hver ýting var deploy —
