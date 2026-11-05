@@ -82,7 +82,11 @@ async function tilThegar(account, gmailIds) {
 async function saekjaGmail(token, gmailMsgId, attachmentId) {
   const r = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${gmailMsgId}/attachments/${attachmentId}`,
     { headers: { Authorization: `Bearer ${token}` } });
-  if (!r.ok) throw new Error(`Gmail attachment ${r.status}`);
+  if (!r.ok) {
+    // 05.11.2026: 403 kom á hvert viðhengi þótt scope sé gmail.readonly — ástæða Google þarf að sjást (án tokena/lykla í textanum)
+    let t = ''; try { t = (await r.text()).replace(/\s+/g, ' ').slice(0, 160); } catch (_) {}
+    throw new Error(`Gmail attachment ${r.status}${t ? ': ' + t : ''}`);
+  }
   const j = await r.json();
   return Buffer.from(String(j.data || '').replace(/-/g, '+').replace(/_/g, '/'), 'base64');
 }
