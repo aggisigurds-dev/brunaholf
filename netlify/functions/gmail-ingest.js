@@ -182,6 +182,26 @@ exports.handler = async (event) => {
       pageToken = list.nextPageToken || '';
     } while (pageToken && ++guard < 30);
 
+    // 1b) 05.11.2026: format=metadata skilar EKKI hlutatrénu (parts), svo attachment_names var alltaf tómt
+    // um API-leiðina (þurrkeyrsla 05.11: 55 skeyti með has:attachment → with_attachment 0). Gmail er látið
+    // segja hvaða skeyti bera viðhengi (sama leit + has:attachment); þau fá svo hlutatréð sótt sér (fields-
+    // skorið, engin body.data) — aðeins þegar vidhengi=1, annars óbreytt hegðun.
+    const medVidhengi = new Set();
+    if (vidhengi) {
+      let pt = ''; let g2 = 0;
+      do {
+        const params = new URLSearchParams({ q: q + ' has:attachment', maxResults: '100' });
+        if (pt) params.set('pageToken', pt);
+        const lr = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?' + params, { headers: { Authorization: `Bearer ${token}` } });
+        if (!lr.ok) break;
+        const list = await lr.json();
+        (list.messages || []).forEach(m => medVidhengi.add(m.id));
+        pt = list.nextPageToken || '';
+      } while (pt && ++g2 < 30);
+    }
+    const PARTS = 'filename,mimeType,body(size,attachmentId),headers';
+    const FIELDS = `payload(${PARTS},parts(${PARTS},parts(${PARTS},parts(${PARTS}))))`;
+
     // 2) fetch each message (metadata headers + internalDate + snippet)
     const records = [];
     // 05.11.2026: hlutatré skeyta með viðhengi, geymt til hliðar (email_digest-röðin má ekki bera auka-dálka)
@@ -219,9 +239,17 @@ exports.handler = async (event) => {
             if (!isNaN(d.getTime())) receivedAt = d.toISOString();
           }
 
-          // has_attachment: detect parts with a filename (metadata format still
-          // returns the payload part tree).
-          const attachment_names = collectAttachmentNames(m.payload);
+          // has_attachment: hlutatréð kemur EKKI með format=metadata (sjá 1b) — sótt sér fyrir skeyti
+          // sem Gmail segir bera viðhengi; án vidhengi=1 er gamla (tóma) hegðunin óbreytt.
+          let payloadTre = m.payload;
+          if (vidhengi && medVidhengi.has(id)) {
+            try {
+              const fr = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=full&fields=${encodeURIComponent(FIELDS)}`,
+                { headers: { Authorization: `Bearer ${token}` } });
+              if (fr.ok) payloadTre = (await fr.json()).payload || m.payload;
+            } catch (_) { /* hlutatré er viðbót — skeytið sjálft fer samt inn */ }
+          }
+          const attachment_names = collectAttachmentNames(payloadTre);
 
           // INBOX/SENT/UNREAD eru skilin eftir - `folder` ber tha stadreynd thegar,
           // og UNREAD segir bara hvort EINHVER hafi opnad postinn i Gmail.
@@ -232,7 +260,7 @@ exports.handler = async (event) => {
 
           const messageId = (hh['message-id'] || '').trim() || `gmail:${account}/${id}`;
           if (vidhengi && attachment_names.length) {
-            skeytiMedVidhengi.push({ gmailMsgId: id, messageId, folder: sentFolder ? 'SENT' : 'INBOX', receivedAt, payload: m.payload });
+            skeytiMedVidhengi.push({ gmailMsgId: id, messageId, folder: sentFolder ? 'SENT' : 'INBOX', receivedAt, payload: payloadTre });
           }
           return {
             // dedupe key — RFC822 Message-Id header, fall back to the gmail id.
@@ -276,6 +304,8 @@ exports.handler = async (event) => {
         listed: ids.length, mapped: records.length, errors,
         questions: records.filter(r => r.is_question).length,
         with_attachment: records.filter(r => r.has_attachment).length,
+        gmail_has_attachment: vidhengi ? medVidhengi.size : undefined,
+        vidhengi_nofn: vidhengi ? records.flatMap(r => r.attachment_names).slice(0, 30) : undefined,
         samples: records.slice(0, 8).map(r => ({
           subject: r.subject || '(án efnis)',
           from: r.sender_name || r.sender_email || '',
