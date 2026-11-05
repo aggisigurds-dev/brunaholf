@@ -282,7 +282,7 @@ Byggt 2026-11-05 úr `brunaholf/.claude/sidukort.json`, `slokkvitaeki/.claude/si
 | brunaholf | PDF Flokkari · Brunahólf | `/pdf-classify.html` | `pdf-classify.html` | `skjol` | — | ✅ |
 | brunaholf | 🎙️ Raddminni — Brunahólf | `/radd.html` | `radd.html` | `jarvis` | — | ✅ |
 | brunaholf | Reikningar í bið — dk+ | `/reikningar-bid.html` | `reikningar-bid.html` | `sala-reikningar` | `bokari` | ✅ |
-| brunaholf | Rekstrarfélög — Brunahólf | `/rekstrarfelog.html` | `rekstrarfelog.html` | `kunnaskra` | `skjol` | ✅ |
+| brunaholf | Rekstrarfélög — Brunahólf | `/rekstrarfelog.html` | `rekstrarfelog.html` | `kunnaskra` | `skjol` · `heimaleiga` · `center-hotel` | ✅ |
 | brunaholf | Brunakerfi · Ársskoðun | `/skoda.html` | `skoda.html` | `sara-coworker` | `sara-organizer` | ✅ |
 | brunaholf | Reikningur — Slökkvitæki ehf | `/slokkvitaeki-reikningur.html` | `slokkvitaeki-reikningur.html` | `sala-reikningar` | `bokari` | ✅ |
 | brunaholf | Starfsmenn — dagur fyrir dag | `/starfsmenn.html` | `starfsmenn.html` | `verkstadur` | `gagnaleidslur` | ✅ |
@@ -364,7 +364,7 @@ Byggt 2026-11-05 úr `brunaholf/.claude/sidukort.json`, `slokkvitaeki/.claude/si
 | slokkvitaeki | Sala | `#sala` | `js/patches/261-app-profiles.js` | `sala-reikningar` | `prentun` · `birgdastjori` | ✅ |
 | slokkvitaeki | Slökkvikerfis skoðun | `#slokkvikerfi` | `js/patches/261-app-profiles.js` | `elon-musk` | `sara-coworker` | ✅ |
 | slokkvitaeki | Brunakerfis skoðun | `#brunaskra` | `js/patches/261-app-profiles.js` | `elon-musk` | `sara-coworker` | ✅ |
-| slokkvitaeki | Rekstrarfélög | `#rekstrarfelog` | `js/patches/261-app-profiles.js` | `kunnaskra` | `natalie` | ✅ |
+| slokkvitaeki | Rekstrarfélög | `#rekstrarfelog` | `js/patches/261-app-profiles.js` | `kunnaskra` | `natalie` · `heimaleiga` · `center-hotel` | ✅ |
 | slokkvitaeki | Birgðir | `#birgdir` | `js/patches/261-app-profiles.js` | `birgdastjori` | `sala-reikningar` | ✅ |
 | slokkvitaeki | Vörur og þjónusta | `#vorur` | `js/patches/261-app-profiles.js` | `birgdastjori` | `sala-reikningar` | ✅ |
 | slokkvitaeki | Gerð reikninga | `https://brunaholf.netlify.app/?embed=1#gerdreikninga` | `js/patches/261-app-profiles.js` | `opp` | `bh:bokari` | ✅ |
@@ -459,7 +459,9 @@ Byggt 2026-11-05 úr `brunaholf/.claude/sidukort.json`, `slokkvitaeki/.claude/si
 | kjarni | Borgarferðir — Manchester · Glasgow | `/borgarferdir` | `apps/slokkvitaeki/app/borgarferdir/page.tsx` | `kjarni-vefur` | — | ✅ |
 | kjarni | Prufusvæði — blokkir, þemu & skikt | `/draft` | `apps/slokkvitaeki/app/draft/page.tsx` | `kjarni-vefur` | `joker` | ✅ |
 | kjarni | Kerfi — þjónustukerfi | `/kerfi` | `apps/slokkvitaeki/app/kerfi/page.tsx` | `sl:bord-flettur` | `kjarni-vefur` · `kort` | ✅ |
-| kjarni | <forrit> — Kjarni (13: photocraft…gridcraft) | `/kjarni/artcraft/[app]` | `apps/slokkvitaeki/app/kjarni/artcraft/[app]/page.tsx` | `artcraft` | — | ✅ |
+| kjarni | <forrit> — Kjarni (5: photocraft, filmcraft, lightcraft, effectcraft, designcraft; OfficeCraft-öppin vísast á /kjarni/officecraft/<id>) | `/kjarni/artcraft/[app]` | `apps/slokkvitaeki/app/kjarni/artcraft/[app]/page.tsx` | `artcraft` | — | ✅ |
+| kjarni | OfficeCraft — yfirlit | `/kjarni/officecraft` | `apps/slokkvitaeki/app/kjarni/officecraft/page.tsx` | `artcraft` | `kjarni-vefur` | ✅ |
+| kjarni | <forrit> — OfficeCraft — Kjarni (8: wordcraft, gridcraft, deckcraft, pdfcraft, cadcraft, figcraft, vectorcraft, soundcraft) | `/kjarni/officecraft/[app]` | `apps/slokkvitaeki/app/kjarni/officecraft/[app]/page.tsx` | `artcraft` | — | ✅ |
 | kjarni | Andlit | `/kjarni/artcraft/andlit` | `apps/slokkvitaeki/app/kjarni/artcraft/andlit/page.tsx` | `artcraft` | — | ✅ |
 | kjarni | Bakgrunnur / Á hvítan bakgrunn | `/kjarni/artcraft/bakgrunnur` | `apps/slokkvitaeki/app/kjarni/artcraft/bakgrunnur/page.tsx` | `artcraft` | — | ✅ |
 | kjarni | Breyta mynd | `/kjarni/artcraft/breyta` | `apps/slokkvitaeki/app/kjarni/artcraft/breyta/page.tsx` | `artcraft` | — | ✅ |
@@ -525,7 +527,7 @@ Byggt 2026-11-05 úr `brunaholf/.claude/sidukort.json`, `slokkvitaeki/.claude/si
 | kjarni | Marks — site | `/marks/[boardId]` | `apps/web/src/app/marks/[boardId]/page.tsx` | `kjarni-vefur` | — | ✅ |
 | kjarni | Marks — kjarni bookmarks | `/marks` | `apps/web/src/app/marks/page.tsx` | `kjarni-vefur` | — | ✅ |
 
-**Samantekt:** brunaholf 102/102 með eiganda (100%), 0 ⚠️, 0 ❌ · slokkvitaeki 118/121 með eiganda (98%), 0 ⚠️, 3 ❌ · kjarni 98/98 með eiganda (100%), 0 ⚠️, 0 ❌
+**Samantekt:** brunaholf 102/102 með eiganda (100%), 0 ⚠️, 0 ❌ · slokkvitaeki 118/121 með eiganda (98%), 0 ⚠️, 3 ❌ · kjarni 100/100 með eiganda (100%), 0 ⚠️, 0 ❌
 
 ### Síður án eiganda
 

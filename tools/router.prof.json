@@ -1,36 +1,264 @@
 {
   "_athugasemd": "Próf fyrir tools/router.cjs --test. vaent = agentar sem VERÐA að koma; ekki = mega ekki koma; fremstur = fyrsti agent; tomt = routerinn á að þegja; kt = kennitölur sem eiga að finnast; gat = vænt gildi; sida = id síðu sem á að passa; krefst = staðbundnar skrár (data/<x>.json, ekki í git) — tilvikinu er sleppt ef þær vantar. _profsidur bætast við síðukortið AÐEINS í prófinu, svo síðu-reglurnar (eigandi fær 3 stig, gat á síðu án eiganda) séu prófaðar áður en raunveruleg síðukort eru til.",
   "_profsidur": [
-    { "vefur": "slokkvitaeki", "repo": "slokkvitaeki", "id": "prof-adalmal", "titill": "Aðalmál · prófsíða", "tegund": "view", "leid": "#adalmal", "skilgreind": [], "eigandi": "bord-flettur", "undiragentar": ["framendi"], "kveikjuord": [] },
-    { "vefur": "slokkvitaeki", "repo": "slokkvitaeki", "id": "prof-vasinn", "titill": "Vasinn · prófsíða", "tegund": "view", "leid": "#vasinn", "skilgreind": [], "eigandi": null, "undiragentar": [], "kveikjuord": [] }
+    {
+      "vefur": "slokkvitaeki",
+      "repo": "slokkvitaeki",
+      "id": "prof-adalmal",
+      "titill": "Aðalmál · prófsíða",
+      "tegund": "view",
+      "leid": "#adalmal",
+      "skilgreind": [],
+      "eigandi": "bord-flettur",
+      "undiragentar": [
+        "framendi"
+      ],
+      "kveikjuord": []
+    },
+    {
+      "vefur": "slokkvitaeki",
+      "repo": "slokkvitaeki",
+      "id": "prof-vasinn",
+      "titill": "Vasinn · prófsíða",
+      "tegund": "view",
+      "leid": "#vasinn",
+      "skilgreind": [],
+      "eigandi": null,
+      "undiragentar": [],
+      "kveikjuord": []
+    }
   ],
   "tilvik": [
-    { "prompt": "Þjónustuborðið sýnir ekki Aðalmál", "cwd": "C:\\projects\\slokkvitaeki", "vaent": ["bord-flettur"], "fremstur": "bord-flettur", "ekki": ["natalie"], "sida": "prof-adalmal" },
-    { "prompt": "thjonustubordid synir ekki adalmal", "cwd": "C:\\projects\\slokkvitaeki", "vaent": ["bord-flettur"], "fremstur": "bord-flettur" },
-    { "prompt": "flipinn á Þjónustuborðinu hleðst ekki", "cwd": "C:\\projects\\slokkvitaeki", "vaent": ["bord-flettur"], "fremstur": "bord-flettur" },
-    { "prompt": "rukka Center Hotels", "cwd": "C:\\projects\\brunaholf", "vaent": ["rukkari"] },
-    { "prompt": "rukka Center Hotels", "cwd": "C:\\projects\\brunaholf", "vaent": ["fyrirtaeki", "rukkari"], "fremstur": "fyrirtaeki", "kt": ["450905-1430"], "krefst": "felog" },
-    { "prompt": "rukkaðu Landspítalann fyrir október", "cwd": "C:\\projects\\brunaholf", "vaent": ["rukkari"] },
-    { "prompt": "nýjustu póstar frá eldklar, hvað kom í pósti", "cwd": "C:\\projects\\brunaholf", "vaent": ["postur"], "fremstur": "postur" },
-    { "prompt": "hver er staðan á öllu í dag", "cwd": "C:\\projects\\brunaholf", "vaent": ["jarvis"], "fremstur": "jarvis" },
-    { "prompt": "VSK reikningurinn fyrir NLSH stemmir ekki", "cwd": "C:\\projects\\brunaholf", "vaent": ["bokari"], "fremstur": "bokari" },
-    { "prompt": "QR-miðinn prentast ekki á Brother prentaranum", "cwd": "C:\\projects\\slokkvitaeki", "vaent": ["prentun"], "fremstur": "prentun" },
-    { "prompt": "pinnarnir á kortinu eru gráir og hnitin vitlaus", "cwd": "C:\\projects\\slokkvitaeki", "vaent": ["kort"], "fremstur": "kort" },
-    { "prompt": "er RLS policy á þessari töflu opin fyrir anon", "cwd": "C:\\projects\\brunaholf", "vaent": ["oryggi"], "fremstur": "oryggi" },
-    { "prompt": "kennitalan á þessu fyrirtæki er vitlaus, þarf að sameina tvítak", "cwd": "C:\\projects\\slokkvitaeki", "vaent": ["kunnaskra"], "fremstur": "kunnaskra" },
-    { "prompt": "appið er hægt og lengi að loadast á símanum", "cwd": "C:\\projects\\slokkvitaeki", "vaent": ["hradi"], "fremstur": "hradi" },
-    { "prompt": "útlitið er of þröngt í símanum, laga hlutföll", "cwd": "C:\\projects\\slokkvitaeki", "vaent": ["joker"], "fremstur": "joker" },
-    { "prompt": "Tímavera innsogið skilar engu síðan í gær", "cwd": "C:\\projects\\brunaholf", "vaent": ["gagnaleidslur"], "fremstur": "gagnaleidslur" },
-    { "prompt": "Drive-mappan er full af tvítökum, endurnefna skjölin", "cwd": "C:\\projects\\brunaholf", "vaent": ["skjol"], "fremstur": "skjol" },
-    { "prompt": "factcheck á árinu, stemmir þetta við gögnin", "cwd": "C:\\projects\\slokkvitaeki", "vaent": ["natalie"], "fremstur": "natalie" },
-    { "prompt": "er óhætt að ýta þessu í deploy núna", "cwd": "C:\\projects\\slokkvitaeki", "vaent": ["kodafraedingur", "netvordur"], "fremstur": "kodafraedingur" },
-    { "prompt": "hvað vitum við um 510117-0690 núna", "cwd": "C:\\projects\\brunaholf", "vaent": ["fyrirtaeki"], "fremstur": "fyrirtaeki", "kt": ["510117-0690"] },
-    { "prompt": "Vasinn tekur ekki við skjáskotum úr símanum lengur, getur þú skoðað það", "cwd": "C:\\projects\\slokkvitaeki", "sida": "prof-vasinn", "gat": true },
-    { "prompt": "charlize_knowledge taflan skilar tómu þegar ég les hana úr hubbinum núna í morgun", "cwd": "C:\\projects\\brunaholf", "gat": true, "krefst": "gagnakort" },
-    { "prompt": "kennitala einstaklings 010190-2939 á ekki að fara í logginn", "cwd": "C:\\projects\\brunaholf", "ekki": ["fyrirtaeki"] },
-    { "prompt": "takk fyrir", "tomt": true },
-    { "prompt": "/compact núna strax takk", "tomt": true },
-    { "prompt": "gott að heyra, haltu áfram svona", "tomt": true, "gat": false },
-    { "prompt": "hvernig er veðrið á morgun hjá þér", "tomt": true }
+    {
+      "prompt": "Þjónustuborðið sýnir ekki Aðalmál",
+      "cwd": "C:\\projects\\slokkvitaeki",
+      "vaent": [
+        "bord-flettur"
+      ],
+      "fremstur": "bord-flettur",
+      "ekki": [
+        "natalie"
+      ],
+      "sida": "prof-adalmal"
+    },
+    {
+      "prompt": "thjonustubordid synir ekki adalmal",
+      "cwd": "C:\\projects\\slokkvitaeki",
+      "vaent": [
+        "bord-flettur"
+      ],
+      "fremstur": "bord-flettur"
+    },
+    {
+      "prompt": "flipinn á Þjónustuborðinu hleðst ekki",
+      "cwd": "C:\\projects\\slokkvitaeki",
+      "vaent": [
+        "bord-flettur"
+      ],
+      "fremstur": "bord-flettur"
+    },
+    {
+      "prompt": "rukka Center Hotels",
+      "cwd": "C:\\projects\\brunaholf",
+      "vaent": [
+        "rukkari"
+      ]
+    },
+    {
+      "prompt": "rukka Center Hotels",
+      "cwd": "C:\\projects\\brunaholf",
+      "vaent": [
+        "fyrirtaeki",
+        "rukkari"
+      ],
+      "fremstur": "fyrirtaeki",
+      "kt": [
+        "450905-1430"
+      ],
+      "krefst": "felog"
+    },
+    {
+      "prompt": "rukkaðu Landspítalann fyrir október",
+      "cwd": "C:\\projects\\brunaholf",
+      "vaent": [
+        "rukkari"
+      ]
+    },
+    {
+      "prompt": "nýjustu póstar frá eldklar, hvað kom í pósti",
+      "cwd": "C:\\projects\\brunaholf",
+      "vaent": [
+        "postur"
+      ],
+      "fremstur": "postur"
+    },
+    {
+      "prompt": "hver er staðan á öllu í dag",
+      "cwd": "C:\\projects\\brunaholf",
+      "vaent": [
+        "jarvis"
+      ],
+      "fremstur": "jarvis"
+    },
+    {
+      "prompt": "VSK reikningurinn fyrir NLSH stemmir ekki",
+      "cwd": "C:\\projects\\brunaholf",
+      "vaent": [
+        "bokari"
+      ],
+      "fremstur": "bokari"
+    },
+    {
+      "prompt": "QR-miðinn prentast ekki á Brother prentaranum",
+      "cwd": "C:\\projects\\slokkvitaeki",
+      "vaent": [
+        "prentun"
+      ],
+      "fremstur": "prentun"
+    },
+    {
+      "prompt": "pinnarnir á kortinu eru gráir og hnitin vitlaus",
+      "cwd": "C:\\projects\\slokkvitaeki",
+      "vaent": [
+        "kort"
+      ],
+      "fremstur": "kort"
+    },
+    {
+      "prompt": "er RLS policy á þessari töflu opin fyrir anon",
+      "cwd": "C:\\projects\\brunaholf",
+      "vaent": [
+        "oryggi"
+      ],
+      "fremstur": "oryggi"
+    },
+    {
+      "prompt": "kennitalan á þessu fyrirtæki er vitlaus, þarf að sameina tvítak",
+      "cwd": "C:\\projects\\slokkvitaeki",
+      "vaent": [
+        "kunnaskra"
+      ],
+      "fremstur": "kunnaskra"
+    },
+    {
+      "prompt": "appið er hægt og lengi að loadast á símanum",
+      "cwd": "C:\\projects\\slokkvitaeki",
+      "vaent": [
+        "hradi"
+      ],
+      "fremstur": "hradi"
+    },
+    {
+      "prompt": "útlitið er of þröngt í símanum, laga hlutföll",
+      "cwd": "C:\\projects\\slokkvitaeki",
+      "vaent": [
+        "joker"
+      ],
+      "fremstur": "joker"
+    },
+    {
+      "prompt": "Tímavera innsogið skilar engu síðan í gær",
+      "cwd": "C:\\projects\\brunaholf",
+      "vaent": [
+        "gagnaleidslur"
+      ],
+      "fremstur": "gagnaleidslur"
+    },
+    {
+      "prompt": "Drive-mappan er full af tvítökum, endurnefna skjölin",
+      "cwd": "C:\\projects\\brunaholf",
+      "vaent": [
+        "skjol"
+      ],
+      "fremstur": "skjol"
+    },
+    {
+      "prompt": "factcheck á árinu, stemmir þetta við gögnin",
+      "cwd": "C:\\projects\\slokkvitaeki",
+      "vaent": [
+        "natalie"
+      ],
+      "fremstur": "natalie"
+    },
+    {
+      "prompt": "er óhætt að ýta þessu í deploy núna",
+      "cwd": "C:\\projects\\slokkvitaeki",
+      "vaent": [
+        "kodafraedingur",
+        "netvordur"
+      ],
+      "fremstur": "kodafraedingur"
+    },
+    {
+      "prompt": "hvað vitum við um 510117-0690 núna",
+      "cwd": "C:\\projects\\brunaholf",
+      "vaent": [
+        "fyrirtaeki"
+      ],
+      "fremstur": "fyrirtaeki",
+      "kt": [
+        "510117-0690"
+      ]
+    },
+    {
+      "prompt": "Vasinn tekur ekki við skjáskotum úr símanum lengur, getur þú skoðað það",
+      "cwd": "C:\\projects\\slokkvitaeki",
+      "sida": "prof-vasinn",
+      "gat": true
+    },
+    {
+      "prompt": "charlize_knowledge taflan skilar tómu þegar ég les hana úr hubbinum núna í morgun",
+      "cwd": "C:\\projects\\brunaholf",
+      "gat": true,
+      "krefst": "gagnakort"
+    },
+    {
+      "prompt": "kennitala einstaklings 010190-2939 á ekki að fara í logginn",
+      "cwd": "C:\\projects\\brunaholf",
+      "ekki": [
+        "fyrirtaeki"
+      ]
+    },
+    {
+      "prompt": "takk fyrir",
+      "tomt": true
+    },
+    {
+      "prompt": "/compact núna strax takk",
+      "tomt": true
+    },
+    {
+      "prompt": "gott að heyra, haltu áfram svona",
+      "tomt": true,
+      "gat": false
+    },
+    {
+      "prompt": "hvernig er veðrið á morgun hjá þér",
+      "tomt": true
+    },
+    {
+      "prompt": "hvað er staðan hjá Heimaleigu með Bríetartún",
+      "cwd": "C:\\projects\\slokkvitaeki",
+      "vaent": [
+        "fyrirtaeki",
+        "heimaleiga"
+      ],
+      "fremstur": "fyrirtaeki",
+      "kt": [
+        "510117-0690"
+      ],
+      "krefst": "felog"
+    },
+    {
+      "prompt": "Center Hótel reikningarnir á bið eftir fundinn",
+      "cwd": "C:\\projects\\slokkvitaeki",
+      "vaent": [
+        "center-hotel"
+      ],
+      "kt": [
+        "450905-1430"
+      ],
+      "krefst": "felog"
+    }
   ]
 }

@@ -1,6 +1,6 @@
 {
  "generated": "2026-11-05",
- "agents": 40,
+ "agents": 42,
  "skills": 48,
  "list": [
   {
@@ -73,7 +73,7 @@
    "rodd": "Edward Scissorhands (Johnny Depp)",
    "flokkur": "rodd",
    "svid": null,
-   "lysing": "Edward Scissorhands 🎨 (Johnny Depp) — sérfræðingur ArtCraft í Kjarna (/kjarni/artcraft, 28 síður + 26 API-leiðir): mynd-, myndbands- og hljóðtólin á Replicate (Wan 2.2, Kling, Flux, Topaz, IC-Light, InstantID, ElevenLabs), staðbundin tól (ComfyUI, Forge, í vafra) og 13 opnu ArtCraft-forritin. Notaðu þegar tól bilar eða skilar villu, nýtt líkan eða tól á að bætast við, eða spurt er hvað kall kostar. Opnu API-leiðirnar eru öryggismál → oryggi.",
+   "lysing": "Edward Scissorhands 🎨 (Johnny Depp) — sérfræðingur ArtCraft í Kjarna (/kjarni/artcraft, 28 síður + 26 API-leiðir): mynd-, myndbands- og hljóðtólin á Replicate (Wan 2.2, Kling, Flux, Topaz, IC-Light, InstantID, ElevenLabs), staðbundin tól (ComfyUI, Forge, í vafra) og 5 opnu ArtCraft-forritin; 8 skrifstofuforritin búa í OfficeCraft (/kjarni/officecraft, sama WASM). Notaðu þegar tól bilar eða skilar villu, nýtt líkan eða tól á að bætast við, eða spurt er hvað kall kostar. Opnu API-leiðirnar eru öryggismál → oryggi.",
    "serhaefing": [
     "ArtCraft í Kjarna: /kjarni/artcraft — 28 síður og 26 API-leiðir",
     "Mynd-, myndbands- og hljóðtól á Replicate (Wan 2.2, Kling, Flux, Topaz, IC-Light, InstantID, ElevenLabs)",
@@ -117,12 +117,12 @@
     {
      "repo": "kjarni",
      "path": ".claude/agents/artcraft.md",
-     "uppfaert": "2026-11-04",
+     "uppfaert": "2026-11-05",
      "linur": 67
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-04",
+   "uppfaert": "2026-11-05",
    "sidur": [
     {
      "id": "turbopaint",
@@ -289,7 +289,19 @@
     {
      "id": "slokkvitaeki:/kjarni/artcraft/[app]",
      "vefur": "kjarni",
-     "titill": "<forrit> — Kjarni (13: photocraft…gridcraft)",
+     "titill": "<forrit> — Kjarni (5: photocraft, filmcraft, lightcraft, effectcraft, designcraft; OfficeCraft-öppin vísast á /kjarni/officecraft/<id>)",
+     "hlutverk": "eigandi"
+    },
+    {
+     "id": "slokkvitaeki:/kjarni/officecraft",
+     "vefur": "kjarni",
+     "titill": "OfficeCraft — yfirlit",
+     "hlutverk": "eigandi"
+    },
+    {
+     "id": "slokkvitaeki:/kjarni/officecraft/[app]",
+     "vefur": "kjarni",
+     "titill": "<forrit> — OfficeCraft — Kjarni (8: wordcraft, gridcraft, deckcraft, pdfcraft, cadcraft, figcraft, vectorcraft, soundcraft)",
      "hlutverk": "eigandi"
     },
     {
@@ -930,12 +942,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/bord-flettur.md",
-     "uppfaert": "2026-11-04",
-     "linur": 624
+     "uppfaert": "2026-11-05",
+     "linur": 626
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-04",
+   "uppfaert": "2026-11-05",
    "sidur": [
     {
      "id": "field",
@@ -1128,6 +1140,84 @@
      "vefur": "kjarni",
      "titill": "Stjórnborð — Brunahólf Slökkvitæki",
      "hlutverk": "eigandi"
+    }
+   ]
+  },
+  {
+   "id": "agent:center-hotel",
+   "type": "agent",
+   "name": "center-hotel",
+   "emoji": "🏨",
+   "rodd": null,
+   "flokkur": "len",
+   "svid": "slokkvitaeki",
+   "lysing": "Center Hótel-agentinn 🏨 — ber alla söguna um Center Hotels (Miðbæjarhótel/Centerhotels ehf., kt 450905-1430, 11 hótel, Melissa) svo hún sé aldrei rannsökuð aftur: samningsverðin, „tvíborgunin“ 2024–2025, reikningarnir fjórir á bið (1.206.646 kr), skeytamiðlunin, reyklosunarskýrslurnar, gáttin, pósturinn og fundurinn 05.11.2026. Kallaðu á hann um leið og Center Hótel eða eitthvert hótelanna kemur við sögu; hann vísar á sérfræðing og uppfærir eigin skrá í lok lotu.",
+   "serhaefing": [
+    "Ber alla söguna um Center Hótel (kt 450905-1430, 11 hótel): tvíborgunin 2024–2025, reikningar á bið, skeytamiðlun, reyklosunarskýrslur",
+    "Tengiliðir per hótel (Melissa, Lydia, hótelstjórar) og hvað hver bað um",
+    "Réttir sérfræðingum keflið með því sem er þegar vitað"
+   ],
+   "kveikjuord": [
+    "Center Hótel",
+    "Center Hotels",
+    "Centerhotels",
+    "Miðbæjarhótel",
+    "Melissa",
+    "Munguia",
+    "Lydia gjaldkeri",
+    "Arnarhvoll",
+    "Miðgarður",
+    "Plaza",
+    "Klöpp",
+    "Skjaldbreið",
+    "Þingholt",
+    "Þingholt Apartments",
+    "Hlaðvarpinn",
+    "Þverholt 14",
+    "Laugavegur 95-99",
+    "Laugavegur 120",
+    "tvíborgun",
+    "skeytamiðlun",
+    "reyklosun"
+   ],
+   "aldrei": [
+    "Sameina hótelin eða telja eina skýrslu gilda fyrir öll",
+    "Senda póst til Center Hotels",
+    "Fella niður eða samþykkja reikning sjálfur",
+    "Ljúka lotu án þess að uppfæra eigin skrá og Charlize"
+   ],
+   "tools": [
+    "Bash",
+    "Read",
+    "Grep",
+    "Glob",
+    "Edit"
+   ],
+   "heimili": [
+    "slokkvitaeki"
+   ],
+   "skrar": [
+    {
+     "repo": "slokkvitaeki",
+     "path": ".claude/agents/center-hotel.md",
+     "uppfaert": "2026-11-05",
+     "linur": 142
+    }
+   ],
+   "afbrigdi": [],
+   "uppfaert": "2026-11-05",
+   "sidur": [
+    {
+     "id": "rekstrarfelog",
+     "vefur": "brunaholf",
+     "titill": "Rekstrarfélög — Brunahólf",
+     "hlutverk": "undiragent"
+    },
+    {
+     "id": "rekstrarfelog",
+     "vefur": "slokkvitaeki",
+     "titill": "Rekstrarfélög",
+     "hlutverk": "undiragent"
     }
    ]
   },
@@ -1862,6 +1952,86 @@
    ]
   },
   {
+   "id": "agent:heimaleiga",
+   "type": "agent",
+   "name": "heimaleiga",
+   "emoji": "🏘️",
+   "rodd": null,
+   "flokkur": "len",
+   "svid": "slokkvitaeki",
+   "lysing": "Heimaleigu-agentinn 🏘️ — ber alla söguna um Heimaleigu-hópinn (11 kennitölur, 19 eignir, Dimka og Eva) svo hún sé aldrei rannsökuð aftur: hver greiðir fyrir hvaða eign, reikningar sem fóru á rangan greiðanda, 193.600 kr Bríetartúns-keðjan, Máni/Midtown-skiptingin, ofrukkunin 45.519, sérkjörin 30.10.2026, gáttin, pósturinn og það sem er opið. Kallaðu á hann um leið og Heimaleiga eða einhver eign hennar kemur við sögu; hann vísar á sérfræðing og uppfærir eigin skrá í lok lotu.",
+   "serhaefing": [
+    "Ber alla söguna um Heimaleigu-hópinn (10 kt, 17 eignir): hver greiðir fyrir hvað, rangir greiðendur, Bríetartún 193.600, Máni/Midtown",
+    "Gátt, póstur, skjöl og lotur um Heimaleigu — lesið einu sinni 05.11.2026, uppfært í lok hverrar lotu",
+    "Réttir sérfræðingum keflið með því sem er þegar vitað"
+   ],
+   "kveikjuord": [
+    "Heimaleiga",
+    "Dimka",
+    "Eva Mareksdóttir",
+    "Máni Apartments",
+    "Midtown Hotel",
+    "Blue Mountain",
+    "Icelandic Apartments",
+    "Iceland Comfort",
+    "Ice Apartments",
+    "S30 Apartments",
+    "46heima",
+    "TYR Apartments",
+    "Bríetartún",
+    "Dalbrekka",
+    "Urðarhvarf",
+    "Eldsalir",
+    "Aegina",
+    "Mannheimar",
+    "Grettisgata 62",
+    "Freyjugata 16",
+    "Laugavegur 46",
+    "Laugavegur 42",
+    "Iðun apartments"
+   ],
+   "aldrei": [
+    "Sameina eða tengja staði/kt sjálfur",
+    "Reikningur á Heimaleigu fyrir eign með annan greiðanda",
+    "Senda póst til Heimaleigu",
+    "Ljúka lotu án þess að uppfæra eigin skrá og Charlize"
+   ],
+   "tools": [
+    "Bash",
+    "Read",
+    "Grep",
+    "Glob",
+    "Edit"
+   ],
+   "heimili": [
+    "slokkvitaeki"
+   ],
+   "skrar": [
+    {
+     "repo": "slokkvitaeki",
+     "path": ".claude/agents/heimaleiga.md",
+     "uppfaert": "2026-11-05",
+     "linur": 181
+    }
+   ],
+   "afbrigdi": [],
+   "uppfaert": "2026-11-05",
+   "sidur": [
+    {
+     "id": "rekstrarfelog",
+     "vefur": "brunaholf",
+     "titill": "Rekstrarfélög — Brunahólf",
+     "hlutverk": "undiragent"
+    },
+    {
+     "id": "rekstrarfelog",
+     "vefur": "slokkvitaeki",
+     "titill": "Rekstrarfélög",
+     "hlutverk": "undiragent"
+    }
+   ]
+  },
+  {
    "id": "agent:hradi",
    "type": "agent",
    "name": "hradi",
@@ -2580,6 +2750,12 @@
      "id": "slokkvitaeki:/kerfi",
      "vefur": "kjarni",
      "titill": "Kerfi — þjónustukerfi",
+     "hlutverk": "undiragent"
+    },
+    {
+     "id": "slokkvitaeki:/kjarni/officecraft",
+     "vefur": "kjarni",
+     "titill": "OfficeCraft — yfirlit",
      "hlutverk": "undiragent"
     },
     {
@@ -3809,7 +3985,7 @@
      "repo": "brunaholf",
      "path": ".claude/agents/oryggi.md",
      "uppfaert": "2026-11-04",
-     "linur": 210
+     "linur": 211
     }
    ],
    "afbrigdi": [],
@@ -9827,7 +10003,9 @@
    "yfir": null,
    "eigandi": "kunnaskra",
    "undiragentar": [
-    "skjol"
+    "skjol",
+    "heimaleiga",
+    "center-hotel"
    ],
    "kveikjuord": [
     "rekstrarfelog.html",
@@ -11911,13 +12089,14 @@
    "yfir": null,
    "eigandi": "kunnaskra",
    "undiragentar": [
-    "natalie"
+    "natalie",
+    "heimaleiga",
+    "center-hotel"
    ],
    "kveikjuord": [
     "rekstrarfélag",
     "umsjónaraðili",
-    "Eignaumsjón",
-    "Heimaleiga"
+    "Eignaumsjón"
    ],
    "merki": null,
    "stada": "✅",
@@ -14073,7 +14252,7 @@
    "vefur": "kjarni",
    "repo": "kjarni",
    "id": "slokkvitaeki:/kjarni/artcraft/[app]",
-   "titill": "<forrit> — Kjarni (13: photocraft…gridcraft)",
+   "titill": "<forrit> — Kjarni (5: photocraft, filmcraft, lightcraft, effectcraft, designcraft; OfficeCraft-öppin vísast á /kjarni/officecraft/<id>)",
    "tegund": "sida",
    "leid": "/kjarni/artcraft/[app]",
    "skilgreind": [
@@ -14084,6 +14263,57 @@
    "undiragentar": [],
    "kveikjuord": [
     "PhotoCraft",
+    "FilmCraft",
+    "LightCraft"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/officecraft",
+   "titill": "OfficeCraft — yfirlit",
+   "tegund": "sida",
+   "leid": "/kjarni/officecraft",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/officecraft/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [
+    "kjarni-vefur"
+   ],
+   "kveikjuord": [
+    "OfficeCraft",
+    "skrifstofuforrit"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/officecraft/[app]",
+   "titill": "<forrit> — OfficeCraft — Kjarni (8: wordcraft, gridcraft, deckcraft, pdfcraft, cadcraft, figcraft, vectorcraft, soundcraft)",
+   "tegund": "sida",
+   "leid": "/kjarni/officecraft/[app]",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/officecraft/[app]/page.tsx"
+   ],
+   "yfir": "slokkvitaeki:/kjarni/officecraft",
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "WordCraft",
+    "GridCraft",
+    "DeckCraft",
     "PdfCraft",
     "CADCraft"
    ],
@@ -14807,7 +15037,8 @@
    ],
    "kveikjuord": [
     "Skráning & QA",
-    "verk"
+    "verk",
+    "Ajour-Craft"
    ],
    "merki": null,
    "stada": "✅",
@@ -15568,8 +15799,8 @@
    "repo": "kjarni",
    "utgafa": 1,
    "vefagent": "kjarni-vefur",
-   "alls": 98,
-   "med_eiganda": 98,
+   "alls": 100,
+   "med_eiganda": 100,
    "vidvorun": 0,
    "an_eiganda": 0,
    "hlutfall": 100
@@ -15590,6 +15821,7 @@
   "jarvis.md",
   "joker.md",
   "kerfisheilsa.md",
+  "kerfisrynir.md",
   "kodafraedingur.md",
   "kort.md",
   "kunnaskra.md",

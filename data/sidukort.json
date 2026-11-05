@@ -29,8 +29,8 @@
    "repo": "kjarni",
    "utgafa": 1,
    "vefagent": "kjarni-vefur",
-   "alls": 98,
-   "med_eiganda": 98,
+   "alls": 100,
+   "med_eiganda": 100,
    "vidvorun": 0,
    "an_eiganda": 0,
    "hlutfall": 100
@@ -2005,7 +2005,9 @@
    "yfir": null,
    "eigandi": "kunnaskra",
    "undiragentar": [
-    "skjol"
+    "skjol",
+    "heimaleiga",
+    "center-hotel"
    ],
    "kveikjuord": [
     "rekstrarfelog.html",
@@ -4089,13 +4091,14 @@
    "yfir": null,
    "eigandi": "kunnaskra",
    "undiragentar": [
-    "natalie"
+    "natalie",
+    "heimaleiga",
+    "center-hotel"
    ],
    "kveikjuord": [
     "rekstrarfélag",
     "umsjónaraðili",
-    "Eignaumsjón",
-    "Heimaleiga"
+    "Eignaumsjón"
    ],
    "merki": null,
    "stada": "✅",
@@ -6251,7 +6254,7 @@
    "vefur": "kjarni",
    "repo": "kjarni",
    "id": "slokkvitaeki:/kjarni/artcraft/[app]",
-   "titill": "<forrit> — Kjarni (13: photocraft…gridcraft)",
+   "titill": "<forrit> — Kjarni (5: photocraft, filmcraft, lightcraft, effectcraft, designcraft; OfficeCraft-öppin vísast á /kjarni/officecraft/<id>)",
    "tegund": "sida",
    "leid": "/kjarni/artcraft/[app]",
    "skilgreind": [
@@ -6262,6 +6265,57 @@
    "undiragentar": [],
    "kveikjuord": [
     "PhotoCraft",
+    "FilmCraft",
+    "LightCraft"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/officecraft",
+   "titill": "OfficeCraft — yfirlit",
+   "tegund": "sida",
+   "leid": "/kjarni/officecraft",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/officecraft/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [
+    "kjarni-vefur"
+   ],
+   "kveikjuord": [
+    "OfficeCraft",
+    "skrifstofuforrit"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/officecraft/[app]",
+   "titill": "<forrit> — OfficeCraft — Kjarni (8: wordcraft, gridcraft, deckcraft, pdfcraft, cadcraft, figcraft, vectorcraft, soundcraft)",
+   "tegund": "sida",
+   "leid": "/kjarni/officecraft/[app]",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/officecraft/[app]/page.tsx"
+   ],
+   "yfir": "slokkvitaeki:/kjarni/officecraft",
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "WordCraft",
+    "GridCraft",
+    "DeckCraft",
     "PdfCraft",
     "CADCraft"
    ],
@@ -6985,7 +7039,8 @@
    ],
    "kveikjuord": [
     "Skráning & QA",
-    "verk"
+    "verk",
+    "Ajour-Craft"
    ],
    "merki": null,
    "stada": "✅",

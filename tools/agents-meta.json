@@ -886,6 +886,74 @@
           "kodafraedingur"
         ]
       }
+    },
+    "heimaleiga": {
+      "emoji": "🏘️",
+      "rodd": null,
+      "flokkur": "len",
+      "svid": "slokkvitaeki",
+      "serhaefing": [
+        "Ber alla söguna um Heimaleigu-hópinn (10 kt, 17 eignir): hver greiðir fyrir hvað, rangir greiðendur, Bríetartún 193.600, Máni/Midtown",
+        "Gátt, póstur, skjöl og lotur um Heimaleigu — lesið einu sinni 05.11.2026, uppfært í lok hverrar lotu",
+        "Réttir sérfræðingum keflið með því sem er þegar vitað"
+      ],
+      "aldrei": [
+        "Sameina eða tengja staði/kt sjálfur",
+        "Reikningur á Heimaleigu fyrir eign með annan greiðanda",
+        "Senda póst til Heimaleigu",
+        "Ljúka lotu án þess að uppfæra eigin skrá og Charlize"
+      ],
+      "tengsl": {
+        "kallar_a": [
+          "sala-reikningar",
+          "rukkari",
+          "kunnaskra",
+          "sara-coworker",
+          "thjonustugatt",
+          "natalie",
+          "postur"
+        ],
+        "a_undan": [],
+        "svipad": [
+          "center-hotel",
+          "fyrirtaeki",
+          "kunnaskra"
+        ]
+      }
+    },
+    "center-hotel": {
+      "emoji": "🏨",
+      "rodd": null,
+      "flokkur": "len",
+      "svid": "slokkvitaeki",
+      "serhaefing": [
+        "Ber alla söguna um Center Hótel (kt 450905-1430, 11 hótel): tvíborgunin 2024–2025, reikningar á bið, skeytamiðlun, reyklosunarskýrslur",
+        "Tengiliðir per hótel (Melissa, Lydia, hótelstjórar) og hvað hver bað um",
+        "Réttir sérfræðingum keflið með því sem er þegar vitað"
+      ],
+      "aldrei": [
+        "Sameina hótelin eða telja eina skýrslu gilda fyrir öll",
+        "Senda póst til Center Hotels",
+        "Fella niður eða samþykkja reikning sjálfur",
+        "Ljúka lotu án þess að uppfæra eigin skrá og Charlize"
+      ],
+      "tengsl": {
+        "kallar_a": [
+          "sala-reikningar",
+          "rukkari",
+          "kunnaskra",
+          "sara-coworker",
+          "thjonustugatt",
+          "natalie",
+          "postur"
+        ],
+        "a_undan": [],
+        "svipad": [
+          "heimaleiga",
+          "fyrirtaeki",
+          "kunnaskra"
+        ]
+      }
     }
   },
   "skillFlokkar": {
