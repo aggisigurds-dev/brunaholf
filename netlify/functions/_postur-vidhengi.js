@@ -50,15 +50,23 @@ function sleppa(v) {
   return null;
 }
 
+/* Supabase Storage hafnar lyklum með öðru en ASCII (InvalidKey, mælt 05.11: „Bílabúð benna-Krókhálsi 9.pdf“,
+ * „eldklar@eldklar.is/…“). Slóðin er því ASCII-slug; rétta skráarnafnið lifir í postur_vidhengi.filename. */
+const ISL = { á: 'a', é: 'e', í: 'i', ó: 'o', ú: 'u', ý: 'y', ð: 'd', þ: 'th', æ: 'ae', ö: 'o', Á: 'A', É: 'E', Í: 'I', Ó: 'O', Ú: 'U', Ý: 'Y', Ð: 'D', Þ: 'Th', Æ: 'Ae', Ö: 'O' };
+function ascii(s) {
+  return String(s).normalize('NFC').replace(/[áéíóúýðþæöÁÉÍÓÚÝÐÞÆÖ]/g, c => ISL[c]).normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
 function oruggtNafn(fn) {
   // Lisbeth 05.11: # og % líka — encodeURI sleppir # og fetch klippir slóðina þar („Reikningur #123.pdf“)
-  return String(fn).normalize('NFC').replace(/[\\/:*?"<>|#%\u0000-\u001f]/g, '_').replace(/\s+/g, ' ').trim().slice(0, 120) || 'vidhengi';
+  const a = ascii(fn).replace(/[^A-Za-z0-9._-]+/g, '_').replace(/^_+|_+$/g, '').replace(/_{2,}/g, '_').slice(0, 120);
+  return a && a !== '.' ? a : 'vidhengi';
 }
 /* Storage-slóð kóðuð per lið — sama mynstur og storage-backup-background.js:141, ekki encodeURI á heild. */
 const kodaSlod = (p) => String(p).split('/').map(encodeURIComponent).join('/');
 function slod(account, receivedAt, gmailMsgId, filename) {
   const ar = (receivedAt && String(receivedAt).slice(0, 4)) || 'ar';
-  return `${String(account).toLowerCase()}/${ar}/${gmailMsgId}/${oruggtNafn(filename)}`;
+  const holf = ascii(String(account).toLowerCase()).replace(/[^a-z0-9.-]+/g, '_');
+  return `${holf}/${ar}/${String(gmailMsgId).replace(/[^A-Za-z0-9_-]/g, '')}/${oruggtNafn(filename)}`;
 }
 
 const sbH = () => ({ apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` });

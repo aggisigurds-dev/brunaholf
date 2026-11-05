@@ -35,8 +35,11 @@ test('sleppa: inline-myndir og >20 MB sleppt, PDF og stór mynd tekin', () => {
   assert.equal(V.sleppa({ filename: 'Outlook-abc123.gif', mime: 'image/gif', size: 90_000, attachmentId: 'z' }), 'inline-mynd');
 });
 
-test('slod: hólf/ár/gmail-id/öruggt nafn', () => {
+test('slod: ASCII-slug (Supabase Storage hafnar íslenskum stöfum og @), rétta nafnið lifir í töflunni', () => {
   assert.equal(V.slod('Eldklar@eldklar.is', '2026-06-15T21:04:18.000Z', '18f3abc', 'Tilboð: Krókháls 9 / 41.pdf'),
-    'eldklar@eldklar.is/2026/18f3abc/Tilboð_ Krókháls 9 _ 41.pdf');
-  assert.equal(V.slod('a@b.is', null, 'id1', ''), 'a@b.is/ar/id1/vidhengi');
+    'eldklar_eldklar.is/2026/18f3abc/Tilbod_Krokhals_9_41.pdf');
+  assert.equal(V.slod('a@b.is', null, 'id1', ''), 'a_b.is/ar/id1/vidhengi');
+  assert.equal(V.oruggtNafn('Bílabúð benna-Krókhálsi 9- 2026.pdf'), 'Bilabud_benna-Krokhalsi_9-_2026.pdf');
+  assert.equal(V.oruggtNafn('Nesdekk, Dekkjalager - Breiðhöfða 13 - #219.pdf'), 'Nesdekk_Dekkjalager_-_Breidhofda_13_-_219.pdf');
+  assert.equal(V.oruggtNafn('þjónustusamningur ÆÐI 50%.pdf'), 'thjonustusamningur_AeDI_50_.pdf');
 });
