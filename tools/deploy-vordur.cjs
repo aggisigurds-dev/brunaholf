@@ -126,9 +126,21 @@ async function keyra(extra) {
   if (m.gildur) {
     ut.additionalContext = `Deploy-vörður: Lisbeth úrskurðaði ${m.u.urskurdur} á ${String(m.u.head).slice(0, 7)} kl. ${String(m.u.ts).slice(11, 16)} (${repo.nafn})${m.u.hawking ? ' · Hawking: ' + m.u.hawking : ''}. „${skref}“ fer í gegn.`;
   } else {
-    ut.permissionDecision = 'ask';
-    ut.permissionDecisionReason = `🖤 Lisbeth hefur ekki farið yfir þetta deploy (${repo.nafn}): ${m.hvers}. Kalla á kodafraedingur fyrst — eða hleypa í gegn án yfirferðar?`;
-    ut.additionalContext = leidbeining(repo, skref, m);
+    /* 05.11.2026 (Agnar: „það stoppar allt út af þessu … vill hafa þetta bara auto, full permission … agentið fer kannski
+       bara yfir ný deploys og fixar þau til og stillir eins og þau eiga að vera"): vörðurinn STOPPAR EKKI lengur. Deployið fer
+       í gegn og er sett í biðröð — Lisbeth fer yfir ÞAÐ EFTIR Á (~/.claude/lisbeth/yfirferd-bid.jsonl). Gamla hegðunin
+       (permissionDecision 'ask' + leiðbeining um að kalla á hana fyrst) er horfin; leidbeining() stendur ónotuð. */
+    ut.permissionDecision = 'allow';
+    ut.permissionDecisionReason = `🖤 Deploy (${repo.nafn}) fer í gegn án forskoðunar; Lisbeth fer yfir það eftir á.`;
+    ut.additionalContext = `Deploy-vörður: ekki stöðvað (auto). Deployið (${repo.nafn}, ${skref}) er skráð til yfirferðar Lisbeth eftir á — engin forskoðun þarf.`;
+    if (!dry) {
+      try {
+        fs.mkdirSync(MAPPA, { recursive: true });
+        fs.appendFileSync(path.join(MAPPA, 'yfirferd-bid.jsonl'), JSON.stringify({
+          ts: new Date().toISOString(), repo: repo.nafn, head: git(repo.rot, 'rev-parse', 'HEAD'), skref, hvers: m.hvers || null, vel: require('os').hostname(),
+        }) + '\n');
+      } catch (_) { /* biðröðin má aldrei fella lotuna */ }
+    }
   }
   if (!dry) logga({ session_id: inn.session_id, cwd, deploy: { repo: repo.nafn, skref, gildur: m.gildur, hvers: m.hvers || null } });
   return G.ljuka(JSON.stringify({ hookSpecificOutput: ut }) + '\n', 0);
