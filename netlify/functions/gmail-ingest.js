@@ -18,6 +18,11 @@
 //            folder='SENT', is_question=false (our own replies are never
 //            inbound questions). Default (param omitted) = inbox, unchanged.
 //   dry=1    preview only — returns counts + a few sample subjects, writes NOTHING.
+//   vidhengi=1  (05.11.2026) sækir líka viðhengin sjálf í bucket postur-vidhengi + töfluna
+//            postur_vidhengi (sjá _postur-vidhengi.js: inline-myndum sleppt, hámark 20 MB,
+//            tvítök hunsuð). Innsogið sjálft fellur aldrei þótt viðhengi bregðist.
+//   q        aukaleit sem bætist aftan við Gmail-spurninguna (bakfylling: „has:attachment
+//            (samningur OR þjónustusamningur …)“). Með q má days ná 1100 (3 ár).
 //
 // ── Single-account note ──────────────────────────────────────────────────────
 // The shared OAuth helper (_google.js) stores exactly ONE token row (id=1) and
@@ -28,6 +33,7 @@
 // wrong mailbox. Multi-account (a token row per email) is a separate, larger task.
 
 const { freshAccessToken, loadTokens, freshAccessTokenFor, loadTokensFor, json, cors } = require('./_google');
+const { vistaVidhengi } = require('./_postur-vidhengi');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -85,7 +91,10 @@ exports.handler = async (event) => {
   const dry = p.dry === '1' || p.dry === 'true';
   // 2026-07-17: hámark hækkað 90 → 400 svo Stólpa-tímabilið (feb–mars 2026)
   // náist í sögulegri sókn; venjuleg keyrsla notar áfram fáa daga.
-  const days = Math.min(Math.max(parseInt(p.days || '10', 10) || 10, 1), 400);
+  // 05.11.2026: með aukaleit (q) má glugginn ná 1100 daga (bakfylling samninga 3 ár aftur).
+  const extraQ = String(p.q || '').replace(/[\r\n]/g, ' ').trim().slice(0, 300);
+  const vidhengi = p.vidhengi === '1' || p.vidhengi === 'true';
+  const days = Math.min(Math.max(parseInt(p.days || '10', 10) || 10, 1), extraQ ? 1100 : 400);
   const wantAccount = (p.account || '').trim();
   // folder=sent → pull the SENT mailbox (rows get folder='SENT', is_question=false).
   const sentFolder = (p.folder || '').trim().toLowerCase() === 'sent';
@@ -157,7 +166,7 @@ exports.handler = async (event) => {
     } catch (_) { merkjaNofn = null; }
 
     // 1) list recent message ids (inbox by default, sent mail with folder=sent)
-    const q = `in:${sentFolder ? 'sent' : 'inbox'} newer_than:${days}d`;
+    const q = `in:${sentFolder ? 'sent' : 'inbox'} newer_than:${days}d${extraQ ? ' ' + extraQ : ''}`;
     const ids = [];
     let pageToken = '';
     let guard = 0;
@@ -175,6 +184,8 @@ exports.handler = async (event) => {
 
     // 2) fetch each message (metadata headers + internalDate + snippet)
     const records = [];
+    // 05.11.2026: hlutatré skeyta með viðhengi, geymt til hliðar (email_digest-röðin má ekki bera auka-dálka)
+    const skeytiMedVidhengi = [];
     let errors = 0;
     // modest concurrency so we stay inside the function time budget
     const CONC = 8;
@@ -219,9 +230,13 @@ exports.handler = async (event) => {
                 .filter(n => !/^(INBOX|SENT|UNREAD|DRAFT)$/.test(n))
             : null;
 
+          const messageId = (hh['message-id'] || '').trim() || `gmail:${account}/${id}`;
+          if (vidhengi && attachment_names.length) {
+            skeytiMedVidhengi.push({ gmailMsgId: id, messageId, folder: sentFolder ? 'SENT' : 'INBOX', receivedAt, payload: m.payload });
+          }
           return {
             // dedupe key — RFC822 Message-Id header, fall back to the gmail id.
-            message_id: (hh['message-id'] || '').trim() || `gmail:${account}/${id}`,
+            message_id: messageId,
             // 19.09.2026 — ÞRÁÐURINN. Gmail skilar `threadId` með hverju skeyti og
             // hefur alltaf gert; hann fór beint í ruslið hér. Án hans var spurningin
             // „svöruðum við þessu?" ágiskun: útsendur póstur tengdist félagi eftir
@@ -319,10 +334,18 @@ exports.handler = async (event) => {
       upserted += slice.length;
     }
 
+    // 5) viðhengin sjálf (vidhengi=1) — eftir upsert svo message_id sé til; bilun hér fellir aldrei innsogið
+    let vidh = null;
+    if (vidhengi) {
+      try { vidh = await vistaVidhengi(token, account, skeytiMedVidhengi); }
+      catch (e) { vidh = { villa: String(e.message || e) }; }
+    }
+
     return json(200, {
-      ok: true, account, days, folder: sentFolder ? 'SENT' : 'INBOX',
+      ok: true, account, days, folder: sentFolder ? 'SENT' : 'INBOX', q: extraQ || undefined,
       listed: ids.length, mapped: records.length, upserted, nyir, errors,
       questions: records.filter(r => r.is_question).length,
+      ...(vidh ? { vidhengi: vidh } : {}),
     });
   } catch (e) {
     return json(500, { error: String(e.message || e) });

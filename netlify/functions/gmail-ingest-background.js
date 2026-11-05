@@ -51,7 +51,8 @@ async function logRun(status, detail) {
 exports.handler = async () => {
   const ran = [];
   for (const j of JOBS) {
-    const qs = { account: j.account, days: String(DAYS) };
+    // 05.11.2026: viðhengin fylgja með (bucket postur-vidhengi, tafla postur_vidhengi) — sjá _postur-vidhengi.js
+    const qs = { account: j.account, days: String(DAYS), vidhengi: '1' };
     if (j.folder === 'sent') qs.folder = 'sent';
     try {
       const res = await ingest({ httpMethod: 'GET', queryStringParameters: qs }, {});
