@@ -58,7 +58,10 @@ exports.handler = async () => {
       const res = await ingest({ httpMethod: 'GET', queryStringParameters: qs }, {});
       let body = {};
       try { body = JSON.parse((res && res.body) || '{}'); } catch (_) {}
-      ran.push({ account: j.account, folder: j.folder.toUpperCase(), ok: body.ok !== false, upserted: body.upserted || 0, nyir: body.nyir, errors: body.errors || 0 });
+      const v = body.vidhengi || {};
+      ran.push({ account: j.account, folder: j.folder.toUpperCase(), ok: body.ok !== false, upserted: body.upserted || 0, nyir: body.nyir, errors: body.errors || 0,
+        // 05.11.2026 (Lisbeth): viðhengjabilun má ekki vera þögul — sott/villur fara í automation_runs
+        vidh_sott: v.sott || 0, vidh_villur: (v.villur || 0) + (v.villa ? 1 : 0), vidh_villa: v.villa || (v.villulisti && v.villulisti[0]) || null });
     } catch (e) {
       ran.push({ account: j.account, folder: j.folder.toUpperCase(), ok: false, error: String((e && e.message) || e) });
     }
@@ -76,7 +79,10 @@ exports.handler = async () => {
   const nyirAlls = ran.reduce((n, r) => n + (r.nyir || 0), 0);
   const sundurlidun = ran.map((r) => r.folder + ':' + (!r.ok ? 'villa'
     : (r.nyir === null || r.nyir === undefined) ? '?' : r.nyir)).join(' ');
-  await logRun(bad ? 'error' : 'ok',
-    (oviss ? '?' : nyirAlls) + ' nýir · ' + total + ' óbreyttir · ' + sundurlidun);
+  const vidhSott = ran.reduce((n, r) => n + (r.vidh_sott || 0), 0);
+  const vidhVillur = ran.reduce((n, r) => n + (r.vidh_villur || 0), 0);
+  const vidhTexti = ' · viðhengi ' + vidhSott + (vidhVillur ? ' (' + vidhVillur + ' villur: ' + (ran.find(r => r.vidh_villa) || {}).vidh_villa + ')' : '');
+  await logRun(bad ? 'error' : (vidhVillur ? 'warn' : 'ok'),
+    (oviss ? '?' : nyirAlls) + ' nýir · ' + total + ' óbreyttir · ' + sundurlidun + vidhTexti);
   return { statusCode: 200, body: JSON.stringify({ ok: bad === 0, ran }) };
 };

@@ -51,8 +51,11 @@ function sleppa(v) {
 }
 
 function oruggtNafn(fn) {
-  return String(fn).normalize('NFC').replace(/[\\/:*?"<>|\u0000-\u001f]/g, '_').replace(/\s+/g, ' ').trim().slice(0, 120) || 'vidhengi';
+  // Lisbeth 05.11: # og % líka — encodeURI sleppir # og fetch klippir slóðina þar („Reikningur #123.pdf“)
+  return String(fn).normalize('NFC').replace(/[\\/:*?"<>|#%\u0000-\u001f]/g, '_').replace(/\s+/g, ' ').trim().slice(0, 120) || 'vidhengi';
 }
+/* Storage-slóð kóðuð per lið — sama mynstur og storage-backup-background.js:141, ekki encodeURI á heild. */
+const kodaSlod = (p) => String(p).split('/').map(encodeURIComponent).join('/');
 function slod(account, receivedAt, gmailMsgId, filename) {
   const ar = (receivedAt && String(receivedAt).slice(0, 4)) || 'ar';
   return `${String(account).toLowerCase()}/${ar}/${gmailMsgId}/${oruggtNafn(filename)}`;
@@ -85,7 +88,7 @@ async function saekjaGmail(token, gmailMsgId, attachmentId) {
 }
 
 async function hladaUpp(storagePath, buf, mime) {
-  const r = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeURI(storagePath)}`, {
+  const r = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${kodaSlod(storagePath)}`, {
     method: 'POST',
     headers: { ...sbH(), 'Content-Type': mime || 'application/octet-stream', 'x-upsert': 'true' },
     body: buf,
@@ -144,7 +147,7 @@ async function vistaVidhengi(token, account, skeyti, opt = {}) {
 
 /* Undirrituð slóð (lesaðeins) í eina skrá, gildir `sek` sekúndur. */
 async function undirritudSlod(storagePath, sek = 3600) {
-  const r = await fetch(`${SUPABASE_URL}/storage/v1/object/sign/${BUCKET}/${encodeURI(storagePath)}`, {
+  const r = await fetch(`${SUPABASE_URL}/storage/v1/object/sign/${BUCKET}/${kodaSlod(storagePath)}`, {
     method: 'POST', headers: { ...sbH(), 'Content-Type': 'application/json' }, body: JSON.stringify({ expiresIn: sek }),
   });
   if (!r.ok) throw new Error(`sign ${r.status}`);
