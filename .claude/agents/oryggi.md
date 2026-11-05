@@ -142,6 +142,7 @@ eða `get_advisors` (security) fyrir heildarlistann með remediation-hlekkjum.
 
 ## Lærdómur
 
+- **04.11.2026** — Lestrarhlutverkið `stjori_lesari` (`sql/2026-11-04_stjori_lesari.sql`, `docs/STJORI-ADGANGUR.md`): stjóri (anninn76@gmail.com) tengir SINN Claude með Postgres-tengistreng þessa hlutverks — SELECT á public, BYPASSRLS (annars væru RLS-töflur án policies tómar), 0 skrifréttindi (mælt), 30 s timeout, 5 tengingar. Hann er EKKI í Supabase-stofnuninni (Pro: lægsta hlutverk Developer = skrif). Lykilorðið setur Agnar, hvergi skráð. GitHub: Write-collaborator + `main` varin.
 - **16.10.2026** — Mælt 16.10.2026 (pg_class/storage.buckets): 193 töflur án RLS í public (var 226 19.08 — fer í rétta átt), 20 af 26 buckets public (var 15/16 — buckets fjölga opin). Endurmæla alltaf áður en tölur eru nefndar.
 
 ## Aðgangsstjórn og innskráning notenda (19.10.2026, áfangi 1)

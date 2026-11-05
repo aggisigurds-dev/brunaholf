@@ -358,6 +358,48 @@
   .veidikort{grid-template-columns:1fr 1fr}
   .svidrod{gap:8px}
   .svidbtn{min-height:42px;padding:8px 12px}
+
+  /* ── Fliparöðin á síma (Agnar 04.11.2026: „ekki láta þetta staflast uppi“) ───────────────────────
+     Áður: miðjuð stigatröppa í 4–5 röðum (padding 0 130px skildi ~130 px eftir fyrir flipana, ⚙ ⛶ og
+     Vélarrými svifu sitt hvoru megin). Nú: EIN 44 px röð — Aðal · Kerfi · Þjónusta · Fjármál jafnháir, sama bil og radíus,
+     Vélarrými á eftir þeim, ⚙ ⛶ ferningar á endanum. Táknin (.em) víkja á síma
+     (eins og í Ragnarök) svo allt komist fyrir á 412 px; á þrengri skjá (360–390) rennur röðin til hliðar og það
+     sem er aftast (Vélarrými, ⚙, ⛶) sést hálft — aðalflipanir fjórir eru alltaf fremstir. */
+  .utlitsrod{flex-wrap:nowrap;justify-content:flex-start;align-items:stretch;gap:3px;margin:0 0 8px;padding:6px 0;
+    overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .utlitsrod::-webkit-scrollbar{display:none}
+  .utlitsrod .em{display:none}
+  .utlitsrod .ubtn,.utlitsrod #velarrymi{order:1;position:static;transform:none;flex:1 0 auto;
+    display:inline-flex;align-items:center;justify-content:center;height:44px;min-height:44px;min-width:44px;padding:0 6px;
+    font-size:12px;letter-spacing:.01em;line-height:1;white-space:nowrap;text-decoration:none;border-radius:10px}
+  .utlitsrod #velarrymi{order:2}
+  .utlitsrod #spjaldval,.utlitsrod #fskjar{position:static;top:auto;transform:none;flex:0 0 40px;width:40px;min-width:40px;height:44px;
+    padding:0;font-size:17px;border-radius:10px}
+  .utlitsrod #spjaldval{order:3}
+  .utlitsrod #fskjar{order:4}
+  .utlitsrod .ubtn.virkt{box-shadow:none}
+
+  /* ── Agentanetið og Biðstofan á síma (04.11.2026) ───────────────────────────────────────────────
+     Útlitið sjálft býr í css/agentanet.css; hér er aðeins símahamurinn lagaður (undir 640 px) svo að netið
+     byrji ofar: mælakassarnir voru 5 raðir (200 px) á undan netinu — nú ein renniröð. */
+  .an-ov .an-inner{padding:6px 8px 10px;gap:6px}
+  .an-ov .an-head{gap:4px 8px}
+  .an-ov .an-logo{font-size:15px;letter-spacing:.34em;margin-right:0}
+  .an-ov .an-tag{margin-bottom:2px}
+  .an-ov #an-maelar{display:flex!important;flex:1 1 100%;flex-wrap:nowrap;gap:6px;overflow-x:auto;
+    padding:2px 0 4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .an-ov #an-maelar::-webkit-scrollbar{display:none}
+  .an-ov #an-maelar>.kc{flex:0 0 auto;align-items:center;min-height:36px}
+  .an-ov .an-tabs{flex-wrap:nowrap}
+  .an-ov .an-tabs .tab{min-height:40px}
+  .an-ov .an-tabs .an-x{margin-left:auto;min-width:44px;justify-content:center}
+  /* Biðstofan: ✕ uppi hægra megin við titilinn, síurnar í eigin röð með ≥ 40 px snertiflöt */
+  .an-ov .an-bs-top{padding:8px 12px 10px;gap:6px 10px}
+  .an-ov .an-bs-top .tab{order:1;margin:0 6px 0 auto;min-width:44px;min-height:40px;padding:0;justify-content:center}
+  .an-ov .an-bs-f{order:2;flex:1 1 100%;margin-left:0;gap:6px}
+  .an-ov .an-bs-f .gw{flex:0 0 auto;min-height:40px;padding:0 6px;font-size:10.5px;display:inline-flex;align-items:center;justify-content:center}
+  /* Raddir-takkinn (fljótandi, z-index efstur) lá yfir skýringartexta Biðstofunnar neðst */
+  body:has(.an-ov:not([hidden])) #jvt-launch,body:has(.an-ov:not([hidden])) #jvt-panel{display:none!important}
 }
 
 /* -- Tengingar (11.09.2026, úr Golden Jarvis MkII): þjónusturnar úr /api/kerfisheilsa ----------
@@ -697,9 +739,16 @@ html.embedded[data-thema="ragnarok"] .klukka .t{font-size:28px}
   html[data-thema="ragnarok"] .kjarni{min-height:600px}
   html[data-thema="ragnarok"] .merki{font-size:21px;letter-spacing:.26em}
   html[data-thema="ragnarok"] .klukka .t{font-size:32px}
-  html[data-thema="ragnarok"] .utlitsrod{gap:6px}
-  html[data-thema="ragnarok"] .ubtn,
-  html[data-thema="ragnarok"] #velarrymi{padding:0 12px}
+  /* fliparöðin: sama ein röð og í klassíska (sjá efst) — Ragnarök-reglurnar hér fyrir ofan hafa meiri sérhæfni */
+  html[data-thema="ragnarok"] .utlitsrod{gap:3px;padding:6px 0;margin-bottom:8px}
+  html[data-thema="ragnarok"] .utlitsrod .ubtn,
+  html[data-thema="ragnarok"] .utlitsrod #velarrymi{order:1;flex:1 0 auto;height:44px;padding:0 6px;font-size:12px;letter-spacing:.01em}
+  html[data-thema="ragnarok"] .utlitsrod #velarrymi{order:2}
+  html[data-thema="ragnarok"] #spjaldval,
+  html[data-thema="ragnarok"] #fskjar{flex:0 0 40px;width:40px;height:44px}
+  html[data-thema="ragnarok"] #spjaldval{order:3}
+  html[data-thema="ragnarok"] #fskjar{order:4}
+  html[data-thema="ragnarok"] .utlitsrod .ubtn.virkt{box-shadow:0 0 8px rgba(255,200,90,.4)}
 }
 </style>
 <!-- Sett á <html> STRAX (ekki í enda body) svo app-hamurinn sé kominn áður en
