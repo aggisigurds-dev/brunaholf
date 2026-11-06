@@ -1,6 +1,6 @@
 {
  "utgafa": 1,
- "nyjast": "2026-11-04",
+ "nyjast": "2026-11-05",
  "throskuldur": 6,
  "osnert_dagar": 30,
  "uppspretta": "slokkvitaeki/tools/audit-agentar.cjs --json",
@@ -42,13 +42,28 @@
    "slod": ".claude/agents/bord-flettur.md",
    "hud": null,
    "emoji": null,
-   "sidast": "2026-11-04",
-   "skrif": 43,
-   "gaetir": 38,
-   "breytt": 1,
+   "sidast": "2026-11-05",
+   "skrif": 44,
+   "gaetir": 39,
+   "breytt": 2,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Flettur, borð og navigation í Slökkvitæki-appinu — Þjónustuborð (368) og undirborð, Bakendi, Bílstjóri, Aksturslisti, URL-routing (218), bakk (3 lög) og app-síð"
+  },
+  {
+   "nafn": "center-hotel",
+   "tegund": "agent",
+   "heim": "slokkvitaeki",
+   "slod": ".claude/agents/center-hotel.md",
+   "hud": null,
+   "emoji": null,
+   "sidast": "2026-11-05",
+   "skrif": 2,
+   "gaetir": 1,
+   "breytt": 0,
+   "daudir": [],
+   "merki": "🟢",
+   "lysing": "Center Hótel-agentinn 🏨 — ber alla söguna um Center Hotels (Miðbæjarhótel/Centerhotels ehf., kt 450905-1430, 11 hótel, Melissa) svo hún sé aldrei rannsökuð aft"
   },
   {
    "nafn": "elon-musk",
@@ -75,10 +90,25 @@
    "sidast": "2026-11-04",
    "skrif": 2,
    "gaetir": 7,
+   "breytt": 1,
+   "daudir": [],
+   "merki": "🟡",
+   "lysing": "M (Judi Dench) 🕴️ — stjóri fyrirtækja í þjónustu. Opnar hvert mál um eitt fyrirtæki á charlize_yfirlit(kt) og kúnnaminni, vísar á sérfræðing (kunnaskra: kt/rek"
+  },
+  {
+   "nafn": "heimaleiga",
+   "tegund": "agent",
+   "heim": "slokkvitaeki",
+   "slod": ".claude/agents/heimaleiga.md",
+   "hud": null,
+   "emoji": null,
+   "sidast": "2026-11-05",
+   "skrif": 2,
+   "gaetir": 1,
    "breytt": 0,
    "daudir": [],
    "merki": "🟢",
-   "lysing": "M (Judi Dench) 🕴️ — stjóri fyrirtækja í þjónustu. Opnar hvert mál um eitt fyrirtæki á charlize_yfirlit(kt) og kúnnaminni, vísar á sérfræðing (kunnaskra: kt/rek"
+   "lysing": "Heimaleigu-agentinn 🏘️ — ber alla söguna um Heimaleigu-hópinn (11 kennitölur, 19 eignir, Dimka og Eva) svo hún sé aldrei rannsökuð aftur: hver greiðir fyrir hv"
   },
   {
    "nafn": "innkaupabokari",
@@ -111,15 +141,30 @@
    "lysing": "Hönnuðurinn — lagar útlit, farsímaskjái (mobile view) og hannar skjái/app-view í Slökkvitæki-appinu. Notaðu þegar síða eða flipi lítur illa út, brotnar eða er þ"
   },
   {
+   "nafn": "kerfisrynir",
+   "tegund": "agent",
+   "heim": "slokkvitaeki",
+   "slod": ".claude/agents/kerfisrynir.md",
+   "hud": null,
+   "emoji": null,
+   "sidast": "2026-11-05",
+   "skrif": 1,
+   "gaetir": 3,
+   "breytt": 0,
+   "daudir": [],
+   "merki": "🟢",
+   "lysing": "Kerfisrýnirinn (Stephen Hawking) — fer yfir breytingu á ÖLLU kerfinu í einu, tölvu, síma og öppum, á þremur vefjum (Slökkvitæki-appið, Brunahólfs-hubbinn, Kjarn"
+  },
+  {
    "nafn": "kodafraedingur",
    "tegund": "agent",
    "heim": "slokkvitaeki",
    "slod": ".claude/agents/kodafraedingur.md",
    "hud": "Lisbeth Salander",
    "emoji": "🖤",
-   "sidast": "2026-11-04",
-   "skrif": 2,
-   "gaetir": 17,
+   "sidast": "2026-11-05",
+   "skrif": 4,
+   "gaetir": 18,
    "breytt": 0,
    "daudir": [],
    "merki": "🟢",
@@ -210,9 +255,9 @@
    "sidast": "2026-11-04",
    "skrif": 2,
    "gaetir": 5,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Öpp-sérfræðingurinn (Ant-Man) — á app-skelina „firestarter\" (261 PAGES/APPS, 316, 354), app-síðurnar br-* (iframe á brunaholf), síðuskipti í öppunum, zoom og sk"
   },
   {
@@ -255,9 +300,9 @@
    "sidast": "2026-11-04",
    "skrif": 4,
    "gaetir": 5,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Rukkarinn — spegill í slokkvitaeki af heimaagentinum í brunaholf: einn agent fyrir öll rukkunarmál beggja félaga; les kynninguna sjálfur, athugar tengingar, Drö"
   },
   {
@@ -330,9 +375,9 @@
    "sidast": "2026-11-04",
    "skrif": 2,
    "gaetir": 12,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Heimdall (Idris Elba) 🌈 gætir hliðsins að kúnnanum: Þjónustugáttin (/gatt, gatt-admin, Tilkynna-QR), opna ársskoðunarformið skoda.html, rýmingaráætlun, vefvers"
   },
   {
@@ -345,9 +390,9 @@
    "sidast": "2026-11-04",
    "skrif": 2,
    "gaetir": 5,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Útlitsgagnrýnandinn (Miranda Priestly) — fer YFIR útlit og hafnar því sem stenst ekki: síma-layout passar alltaf (S26 980 px + venjulegur sími), ekkert klúður í"
   },
   {
@@ -432,9 +477,9 @@
    "slod": ".claude/skills/deploy/SKILL.md",
    "hud": null,
    "emoji": null,
-   "sidast": "2026-10-28",
-   "skrif": 6,
-   "gaetir": 0,
+   "sidast": "2026-11-05",
+   "skrif": 8,
+   "gaetir": 1,
    "breytt": 0,
    "daudir": [],
    "merki": "🟢",
@@ -645,9 +690,9 @@
    "sidast": "2026-11-04",
    "skrif": 13,
    "gaetir": 6,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Reiknar út Brunahólfs-reikninga og upphæðir: taxtar, VSK, afslættir, Efnislisti, NLSH-samningur, gata-uppgjör (Ajour). Notaðu þegar á að verðleggja vinnu, útbúa"
   },
   {
@@ -660,9 +705,9 @@
    "sidast": "2026-11-04",
    "skrif": 2,
    "gaetir": 6,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "The Accountant 🧮 — sannreynir að fjármálauppsetning kerfisins standist lög: bókhald 145/1994, VSK 50/1988 (reikningsefni, tímabil, innskattur), ársreikningar 3"
   },
   {
@@ -675,9 +720,9 @@
    "sidast": "2026-11-04",
    "skrif": 22,
    "gaetir": 13,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Framendi og flipar Brunahólfs-hubbsins — hvaða síður eru til, hvað hver gerir, hvernig þær tengjast og hvar í index.html (2 MB, aldrei lesin í heilu) eitthvað b"
   },
   {
@@ -687,12 +732,12 @@
    "slod": ".claude/agents/gagnaleidslur.md",
    "hud": "Statham",
    "emoji": "🥊",
-   "sidast": "2026-11-04",
-   "skrif": 24,
-   "gaetir": 8,
-   "breytt": 0,
+   "sidast": "2026-11-05",
+   "skrif": 25,
+   "gaetir": 11,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Gagnaleiðslurnar — Tímavera, Ajour, Payday, Redder, email-innsog, luna-bridge róbótarnir og sjálfvirkni-skráin. Notaðu þegar gögn vantar, innsog brotnar eða spu"
   },
   {
@@ -705,9 +750,9 @@
    "sidast": "2026-11-04",
    "skrif": 5,
    "gaetir": 4,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Mælir og lagar hraða — hleðslutíma síðna, þung API-köll, bundle-stærðir, polling sem étur gagnagrunninn. Notaðu þegar eitthvað er hægt, „skrítið“, hoppar eða á "
   },
   {
@@ -720,9 +765,9 @@
    "sidast": "2026-11-04",
    "skrif": 12,
    "gaetir": 9,
-   "breytt": 0,
+   "breytt": 3,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Dagleg yfirsýn + Jarvis-síðan sjálf — svið-kerfið, raddirnar (Fish TTS), cache-ið, HUD-spjöldin og agentaskráin. Hype-yfirlitið („hvernig gengur“, vikuyfirlit, "
   },
   {
@@ -735,9 +780,9 @@
    "sidast": "2026-11-04",
    "skrif": 6,
    "gaetir": 6,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Hönnuðurinn — lagar útlit, farsímaskjái (mobile view) og hannar skjái/app-view í Brunahólfs-hubbinum. Notaðu þegar flipi eða síða lítur illa út, brotnar eða er "
   },
   {
@@ -750,10 +795,27 @@
    "sidast": "2026-11-04",
    "skrif": 7,
    "gaetir": 4,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Greinir HVAÐ er bilað þegar eitthvað er hægt, frosið eða svarar ekki — Supabase vs Netlify vs Claude vs appið sjálft. Notaðu þegar öpp eru hæg/niðri, API-köll t"
+  },
+  {
+   "nafn": "kodafraedingur",
+   "tegund": "agent",
+   "heim": "brunaholf",
+   "slod": ".claude/agents/kodafraedingur.md",
+   "hud": "Lisbeth Salander",
+   "emoji": "🖤",
+   "sidast": "2026-11-05",
+   "skrif": 2,
+   "gaetir": 10,
+   "breytt": 0,
+   "daudir": [
+    "netlify/functions/_adgangur.js"
+   ],
+   "merki": "🔴",
+   "lysing": "Kóðafræðingurinn (Lisbeth Salander) — gætir þess að RÉTTA aðferðin sé notuð í kóðavinnu í Brunahólfs-hubbnum og fer yfir ný deploy EFTIR Á (regla Agnars 05.11.2"
   },
   {
    "nafn": "kunnaskra",
@@ -765,9 +827,9 @@
    "sidast": "2026-11-04",
    "skrif": 13,
    "gaetir": 6,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Kann viðskiptavina-líkanið — customers_base (greiðandi, ein röð á kt) → fyrirtaeki (staðir) → uttaeki — rekstrarfélög og kennitölur. Notaðu þegar leita þarf að "
   },
   {
@@ -780,9 +842,9 @@
    "sidast": "2026-11-04",
    "skrif": 5,
    "gaetir": 5,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Natalie 🌸 — staðreyndayfirferð 2025–26: ber saman það sem kerfið SEGIR og það sem er RAUNVERULEGA í gögnunum og skrifar niðurstöðuna á factcheck_bord. Notaðu þ"
   },
   {
@@ -795,9 +857,9 @@
    "sidast": "2026-11-04",
    "skrif": 11,
    "gaetir": 8,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Öryggisvörðurinn — RLS-staða, policies, lyklar/tokens, public buckets og hvað anon-lykillinn kemst í. Notaðu þegar spurt er hvort eitthvað sé opið/lekt, þegar k"
   },
   {
@@ -810,9 +872,9 @@
    "sidast": "2026-11-04",
    "skrif": 2,
    "gaetir": 2,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Hættuleit og forskoðun ÁÐUR en óafturkræf aðgerð er framkvæmd — eyðing, fjöldauppfærsla, sameining, krafa/reikningur sendur, migration, deploy á varða leið. Fin"
   },
   {
@@ -825,9 +887,9 @@
    "sidast": "2026-11-04",
    "skrif": 20,
    "gaetir": 10,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Rukkarinn — einn agent fyrir öll rukkunarmál beggja félaga (Brunahólf + Slökkvitæki): les REIKNINGALOTA-kynninguna, tengingar, Drög-stöð og Þjónustuborð sjálfur"
   },
   {
@@ -840,9 +902,9 @@
    "sidast": "2026-11-04",
    "skrif": 8,
    "gaetir": 2,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Raðar saman skýrslum og reikningum í „pör“ (document_pairs), finnur gloppur í þekju (v_bundle_coverage) og tengir skjöl við rétt fyrirtæki — en ALDREI með ágisk"
   },
   {
@@ -855,9 +917,9 @@
    "sidast": "2026-11-04",
    "skrif": 11,
    "gaetir": 7,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Skjöl, Google Drive og PDF — doc-index, skjalalesarar, endurnefning, Skýrslu-stöð, Drive-möppur og skjalatenging við fyrirtæki. Notaðu fyrir allt sem snýr að sk"
   },
   {
@@ -870,9 +932,9 @@
    "sidast": "2026-11-04",
    "skrif": 8,
    "gaetir": 1,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Vakar yfir að ALLAR tengingar og lyklar séu í lagi á Kerfisheilsu-borðinu — Google, Payday, Tímavera, dkPlus, Fish, Supabase, Netlify, GitHub, pósthólf, MCP. No"
   },
   {
@@ -885,9 +947,9 @@
    "sidast": "2026-11-04",
    "skrif": 2,
    "gaetir": 4,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Brunaþéttingar-vettvangsappið og allt sem starfsmenn senda af verkstað: brunathettingar.html (IS/EN), /api/field-app, field_entries/field_shares, flipinn „Frá v"
   },
   {
@@ -972,9 +1034,9 @@
    "slod": ".claude/skills/deploy/SKILL.md",
    "hud": null,
    "emoji": null,
-   "sidast": "2026-10-28",
-   "skrif": 6,
-   "gaetir": 0,
+   "sidast": "2026-11-05",
+   "skrif": 8,
+   "gaetir": 1,
    "breytt": 0,
    "daudir": [],
    "merki": "🟢",
