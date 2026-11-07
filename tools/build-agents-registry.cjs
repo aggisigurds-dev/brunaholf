@@ -282,10 +282,31 @@ const kortin = [['brunaholf', BH], ['slokkvitaeki', SL], ['kjarni', KJ]].map(([r
 const pages = kortin.flatMap(k => k.sidur);
 const thekja = computeCoverage(pages, list, kortin);
 
+/* ── EKKI TAPA ÞVÍ SEM BÝR Á ANNARRI VÉL (07.11.2026) ────────────────────────────────────────
+   Byggjarinn les AÐEINS skrár sem eru á þeirri vél sem keyrir hann. Vélarnar eru fimm og eiga
+   ekki allar sömu skills. Mælt 07.11.2026: endurgerð á skrifstofuvélinni felldi ÁTTA skills út
+   (3dJoker, artifacts-builder, luna, parametric-3d-printing, ui-ux-pro-max, using-superpowers,
+   web-artifacts-builder, webapp-testing) — þau voru hvergi horfin, bara annars staðar. Þögul
+   eyðing í generaðri skrá er verri en engin endurgerð, því næsti lesandi heldur að þau séu ekki til.
+   Því: færsla úr fyrri skrá sem þessi vél fann EKKI er borin áfram, merkt `onnur_vel`. */
+let bornarAfram = 0;
+try {
+  const fyrri = JSON.parse(fs.readFileSync(path.join(BH, 'data', 'agents-registry.json'), 'utf8'));
+  const nuIds = new Set(list.map(e => e.id));
+  for (const e of (fyrri.list || [])) {
+    if (e && e.id && !nuIds.has(e.id)) { list.push({ ...e, onnur_vel: true }); bornarAfram++; }
+  }
+  if (bornarAfram) {
+    list.sort((a, b) => String(a.id).localeCompare(String(b.id), 'is'));
+    console.log('  ↪ ' + bornarAfram + ' færsla/-ur borin áfram úr fyrri skrá (finnast ekki á þessari vél, merktar onnur_vel)');
+  }
+} catch (_) { /* engin fyrri skrá — fyrsta keyrsla */ }
+
 const out = {
   generated: new Date().toISOString().slice(0, 10),
   agents: list.filter(e => e.type === 'agent').length,
   skills: list.filter(e => e.type === 'skill').length,
+  a_odrum_velum: bornarAfram,
   list,
 };
 fs.writeFileSync(path.join(BH, 'js', 'agents-registry.js'),
