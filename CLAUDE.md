@@ -168,10 +168,24 @@ eitthvað er óbirt (live `/build.json` ≠ HEAD). Sjá `.claude/skills/deploy/S
 
 ## Security note
 
-19 tables currently have RLS disabled (see Supabase advisory). This
-means the anon key can read/write them. Not auto-fixing because
-enabling RLS without policies would lock the app out. Tackle as a
-dedicated task with policies designed per-table.
+**ENDURMÆLT 07.11.2026 — talan „19 tables" var röng og hafði aldrei verið endurmæld.**
+Rétt tala: **258 töflur í `public` án RLS** — 126 lifandi og 132 `backup_*`.
+`anon` hefur **SELECT, INSERT, UPDATE OG DELETE** á þær allar, og publishable-lykillinn
+stendur í `slokkvitaeki/js/config.js`, þ.e. í vafra hvers einasta gests. Þetta er
+skrifaðgangur, ekki lesaðgangur. Þar á meðal: `solur` (1.147), `customers_base` (1.222),
+`uttaeki` (7.029), `charlize_knowledge` (2.014) og `app_settings` (ein röð sem geymir
+`banner_upplysingar`, `arsskodun_customers` og verðskrár).
+
+**Fimm töflur hafa reglur en RLS SLÖKKT**, svo reglurnar eru óvirkar: `solur`,
+`vidskiptavinir`, `vorur`, `sala_transactions`, `verkdagbok`. Auk þess eru 90 af 97 views
+ekki `security_invoker`, og tugir taflna MEÐ RLS bera regluna `anon USING true`, sem er
+jafn opið.
+
+**Fyrsta skrefið er áhættulaust:** 132 `backup_*` töflur eru ekki lesnar af appinu — þar má
+kveikja RLS án reglu og ekkert læsist úti. Fjármálatöflurnar eru annað mál: appið les þær
+með anon-lyklinum, svo RLS án reglu tæmir viðmótið. Raunveruleg vörn krefst þess að færa
+skrif á Netlify-föll með service-role eða taka upp innskráningu — hönnunarákvörðun, ekki
+ein skipun. Mál **#1536** á Þjónustuborðinu, eigandi `oryggi`. **Aðeins Agnar ákveður.**
 
 
 ## Verkefnalisti (Claude task board) — vinnureglur
