@@ -84,7 +84,10 @@ const PENINGASYNIR = [
   ['skodun_gleymd',       'v_skodun_gleymd'],         // lifandi tæki, skoðun gleymd
   ['taekjatolur_misraemi','v_taekjatolur_misraemi'],  // skýrsla og tækjaskrá stangast á
   ['skeytamidlun_vantar', 'v_skeytamidlun_vantar'],   // ógreitt og tóm skeytamiðlun
-  ['erindi_osvarad',      'v_erindi_osvarad'],        // SÍA, ekki fundur — sjá comment
+  // v_erindi_osvarad er VILJANDI EKKI HÉR (07.11.2026). Hún skilar 559 röðum en handmæling sama
+  // dag gaf 9 raunverulega ósvaraða kúnna; hún er SÍA til að þrengja leit, ekki fundur. Tala sem
+  // stendur á veiðiborði er lesin sem staðreynd, og 559 er það ekki. Sýnin stendur áfram í
+  // grunninum með sinni viðvörun og spjaldið `postur` í Vinnusamantektinni mælir ósvarað í raun.
 ];
 async function peningaTolur(){
   const out = {};
