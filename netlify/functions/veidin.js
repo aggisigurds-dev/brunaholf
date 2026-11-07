@@ -71,6 +71,28 @@ async function sbCount(path){
   }catch(_){ return null; }
 }
 
+// 💰 PENINGASÝNIRNAR (07.11.2026). Rannsóknarlotur fundu um 1,5 m.kr. sem lá úti og 133 staði
+// sem bíða skoðunar. Sú leit var handvirk; mælingarnar eru nú sýnir sem endurreiknast og hanga
+// hér, á sama stað og veiðin sem fyrir er — Agnar á ekki að þurfa að greina sama hlutinn tvisvar.
+// Hver sýn ber `comment on view` með sínum gildrum (select obj_description('<sýn>'::regclass)).
+// EKKERT þeirra hefur grunnlínu: ný skotmörk, og talan sjálf er markmiðið (niður í núll).
+const PENINGASYNIR = [
+  ['krafa_ekki_send',     'v_krafa_ekki_send'],       // reikningur til, krafan aldrei send
+  ['kredit_an_endurgerdar','v_kredit_an_endurgerdar'],// kreditfært og aldrei endurgert
+  ['verk_an_reiknings',   'v_verk_an_reiknings'],     // skýrsla til, enginn reikningur
+  ['skodun_gleymd',       'v_skodun_gleymd'],         // lifandi tæki, skoðun gleymd
+  ['taekjatolur_misraemi','v_taekjatolur_misraemi'],  // skýrsla og tækjaskrá stangast á
+  ['skeytamidlun_vantar', 'v_skeytamidlun_vantar'],   // ógreitt og tóm skeytamiðlun
+  ['erindi_osvarad',      'v_erindi_osvarad'],        // SÍA, ekki fundur — sjá comment
+];
+async function peningaTolur(){
+  const out = {};
+  await Promise.all(PENINGASYNIR.map(async ([lykill, syn]) => {
+    out[lykill] = await sbCount(syn + '?select=*');   // null ef sýnin er ekki til
+  }));
+  return out;
+}
+
 // Aðeins tölurnar — enginn listi. Jarvis og hubburinn sýna FJÖLDA (spjöld,
 // þrýstimæla, skotmörk); þeir lásu samt öll 113 KB af röðum til að fá þær.
 // 09.09.2026: 95 KB af því voru fjórir listar sem Jarvis snertir aldrei
@@ -96,6 +118,10 @@ async function tolurHamur(){
     sbCount('v_veidin_hud_buid_gloppa?select=*'),
     sbCount('v_veidin_drive_tvitok?select=*'),
   ]);
+  // 💰 Peningasýnirnar (07.11.2026) — mælingar úr rannsóknarlotunum sem fundu um 1,5 m.kr.
+  // Þær eru EINANGRAÐAR: `Promise.all` að ofan má ekki brotna þótt sýn vanti, og sbCount
+  // skilar null í stað þess að birta 0 sem staðreynd. Engin grunnlína — nýtt skotmark.
+  const pen = await peningaTolur();
   const t = tolur[0] || {};
   const hunt = huntRows[0] || {};
   const nuna = {
@@ -123,6 +149,7 @@ async function tolurHamur(){
     drive_2026_radir: hunt.drive_2026_radir,
     drive_2026_distinct: hunt.drive_2026_distinct,
     drive_tvitok: hunt.drive_tvitok != null ? hunt.drive_tvitok : driveN,
+    ...pen,
   };
   const delta = {};
   for (const k of Object.keys(BASELINE)) {
@@ -161,6 +188,8 @@ exports.handler = async (event) => {
       hunt = huntRows[0] || {};
       systkini = sy; blobGraen = bl; hudGloppa = hg; driveTv = dt; skjolAnArs = sa;
     } catch (_) { /* hunt er viðbót — eldri lyklar standa */ }
+    // 💰 Peningasýnirnar (07.11.2026) — sérkall svo þær brotni ekki með hunt-blokkinni að ofan.
+    const peningar = await peningaTolur();
     // 📦 Bundle-pör þessa árs — sjá v_bundle_coverage. „gloppur" = ókláruð pör
     // (vantar reikning fyrst, svo vantar skýrslu, svo billed-via-Payday).
     const gOrder = { vantar_reikning: 0, vantar_skyrslu: 1, reikn_payday: 2 };
@@ -192,6 +221,7 @@ exports.handler = async (event) => {
       drive_2026_radir: hunt.drive_2026_radir,
       drive_2026_distinct: hunt.drive_2026_distinct,
       drive_tvitok: hunt.drive_tvitok != null ? hunt.drive_tvitok : driveTv.length,
+      ...peningar,
     };
     const delta = {};
     for (const k of Object.keys(BASELINE)) {

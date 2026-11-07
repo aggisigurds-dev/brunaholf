@@ -292,6 +292,15 @@ client_id:'mail:'+message_id}`.
 - Hrá leitarorðatalning á „cancel“/„uppsögn“ er mjög hávær (45 „uppsagnir“ á ári voru að mestu fundarafbókanir og söluaðilapóstur) — máta á kúnna áður en þú skráir uppsögn sem punkt [C#136].
 - Gamall póstur án nokkurrar úttektar þýðir yfirleitt tilboð sem varð aldrei að samningi (líklega) [C#51].
 
+## Lærdómur 07.11.2026 (allt mælt)
+
+- **Tala úr talningu er ekki krafa.** `R-000716 Þangbakki 8-10, 190.987 kr.` leit út eins og kredit sem gleymdist að endurgera. Verkið var ALDREI UNNIÐ: Agnar skrifaði „misskilningur með þetta verk", málið segir „engin úttekt var gerð", tækin 55 höfðu enga skoðunardagsetningu. Lestu `krafa_note`, athugasemdir, póstinn og málið áður en tala er kölluð krafa.
+- **Yfirtökureikningar eru EKKI okkar krafa.** `stolpi_reikningar` merktir „opinn við yfirtöku 07.05.2026" (95 stk., 4,6 m.kr.) voru greiddir til fyrri eiganda; 3,2 m.kr. voru ranglega taldar sem tekjur 07.11. Hver sem telur útistandandi kröfur útilokar allt sem ber „yfirtöku" í stöðu eða skýringu.
+- **`invoiced_at` er TÓMT á reikningum sem bíða kröfu:** `invoiced_at is not null` skilaði NÚLLI þótt níu reikningar upp á 662.759 kr. biðu. Rétta merkið er `greitt_med = 'reikningur'`.
+- **`reikningspunktar.applied` er marklaus** (NULL á öllum 26, þar af 14 sannanlega rukkaðir). Fáni sem er aldrei settur segir ekkert — mældu gegn `solur`. Hoppers: `krafa_sent_at` segir 28.08 en kúnninn segist aldrei hafa fengið kröfu.
+- **Skeytamiðlun ræður því hvort reikningur kemst í samþykkt.** Center Hotels taka ekki við reikningi nema með skeytamiðlun; `payday_delivery` var tómt á öllum 12 stöðunum og 1,21 m.kr. sat fast. Athugaðu `payday_delivery` áður en ógreiddur reikningur er talinn vanskil.
+- **Sýnur í stað handvirkrar leitar:** `v_krafa_ekki_send`, `v_kredit_an_endurgerdar`, `v_verk_an_reiknings`, `v_skodun_gleymd`, `v_taekjatolur_misraemi`, `v_erindi_osvarad`, `v_skeytamidlun_vantar`. Lestu gildrurnar: `select obj_description('<sýn>'::regclass)`.
+
 ## Grunnreglur allra agenta (04.11.2026)
 1. Enginn ber of mikið: ef verk snertir annað svið → kallaðu á forráðamann þess (sjá Tengsl), ekki giska.
 2. Veiddu úr þínum töflum (gagnakortið í docs/AGENTASKRA.md) og skráðu reglur sem bíta í charlize_knowledge (topic = þitt heiti).

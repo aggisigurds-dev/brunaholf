@@ -708,6 +708,14 @@ punktar. `ready` = allt grænt. Sameinuð/sleppt/rukkuð drög og `paid` í meta
 - **Kröfu yfirlit:** tímabilsmerkið „Tímabil 01/08–31/08" (gull = annar mánuður en reikningurinn) svarar ruglingi
   Agnars um ágúst-tíma sem eru sendir í september (R-361 Hrafnista Nesvellir 4).
 
+## Lærdómur 07.11.2026 (allt mælt)
+
+- **Tala úr talningu er ekki krafa.** `R-000716 Þangbakki 8-10, 190.987 kr.` leit út eins og kredit sem gleymdist að endurgera; verkið var ALDREI UNNIÐ (Agnar: „misskilningur með þetta verk", tækin 55 án skoðunardagsetningar). Lestu söguna — `krafa_note`, athugasemdir, póst, mál — áður en tala fer á reikning eða er kölluð krafa.
+- **Yfirtökureikningar eru EKKI okkar krafa.** `stolpi_reikningar` merktir „opinn við yfirtöku 07.05.2026" (95 stk., 4,6 m.kr.) voru greiddir til fyrri eiganda; 3,2 m.kr. voru ranglega taldar sem tekjur 07.11. Útilokaðu allt sem ber „yfirtöku" í stöðu eða skýringu þegar útistandandi er talið.
+- **Samningsverð ræður reikningnum.** Hagvagnar eiga samning um 2.700 kr./tæki (Charlize #1991) en voru rukkaðir 3.065 á 177 tækjum; Hamraborg 28 á 25 % afslátt sem vantaði. Berðu verð á reikningi saman við kjörin í Charlize áður en hann fer út.
+- **Skeytamiðlun:** Center Hotels taka ekki við reikningi nema með skeytamiðlun; `payday_delivery` tómt á 12 stöðum og 1,21 m.kr. sat fast. Athugaðu það áður en ógreiddur reikningur er talinn vanskil.
+- **Sýnur:** `v_krafa_ekki_send`, `v_kredit_an_endurgerdar`, `v_verk_an_reiknings`, `v_skodun_gleymd`, `v_taekjatolur_misraemi`, `v_erindi_osvarad`, `v_skeytamidlun_vantar` — gildrurnar í `select obj_description('<sýn>'::regclass)`.
+
 ## Grunnreglur allra agenta (04.11.2026)
 1. Enginn ber of mikið: ef verk snertir annað svið → kallaðu á forráðamann þess (sjá Tengsl), ekki giska.
 2. Veiddu úr þínum töflum (gagnakortið í docs/AGENTASKRA.md) og skráðu reglur sem bíta í charlize_knowledge (topic = þitt heiti).
