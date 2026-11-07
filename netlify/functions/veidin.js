@@ -77,7 +77,8 @@ async function sbCount(path){
 // Hver sýn ber `comment on view` með sínum gildrum (select obj_description('<sýn>'::regclass)).
 // EKKERT þeirra hefur grunnlínu: ný skotmörk, og talan sjálf er markmiðið (niður í núll).
 const PENINGASYNIR = [
-  ['krafa_ekki_send',     'v_krafa_ekki_send'],       // reikningur til, krafan aldrei send
+  ['krafa_ekki_send',     'v_krafa_ekki_send'],       // breiða talan — SÖMU skilyrði og Vinnusamantektin (489)
+  ['krafa_ekki_send_adgerd','v_krafa_ekki_send_adgerd'], // sá hluti sem má raunverulega senda
   ['kredit_an_endurgerdar','v_kredit_an_endurgerdar'],// kreditfært og aldrei endurgert
   ['verk_an_reiknings',   'v_verk_an_reiknings'],     // skýrsla til, enginn reikningur
   ['skodun_gleymd',       'v_skodun_gleymd'],         // lifandi tæki, skoðun gleymd
