@@ -162,6 +162,11 @@ body.an-lock #jvt-launch,body.an-lock #jvt-panel{display:none!important}
 .an-ov .an-bs-top{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
 .an-ov .an-bs-top .n{font-size:11px;color:var(--muted);letter-spacing:.12em}
 .an-ov .an-bs-f{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+/* 07.11.2026: þrjár síuraðir (efnisflokkur · aldur · svið) — hver á sinni línu svo flokkarnir
+   lesist sem bunkar en ekki sem ein löng runa af pillum. */
+.an-ov .an-bs-f{flex-direction:column;align-items:flex-end;gap:5px;width:100%;margin-left:0}
+.an-ov .an-bs-fr{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+@media (max-width:760px){.an-ov .an-bs-f{align-items:stretch}.an-ov .an-bs-fr{justify-content:flex-start}}
 .an-ov .an-bs-l{flex:1;overflow:auto;padding:12px 16px}
 .an-ov .an-k{border:1px solid var(--line);border-left:3px solid var(--acc);padding:10px 12px;margin-bottom:8px;background:var(--pa)}
 .an-ov .an-k.burt{opacity:.3;pointer-events:none}

@@ -2,8 +2,8 @@
 //
 //   GET  /api/charlize-stada                     → { knowledge:{active,superseded,wrong,per_scope,per_agent},
 //                                                    inbox:{pending,per_scope,per_agent}, kunni:{faerslur,felog,af}, generated }
-//   GET  /api/charlize-stada?op=inbox&limit=40&scope=kunni&agent=postur
-//                                                → { rows:[{id,scope,topic,fact,detail,kennitala,agent,confidence,source_path,created_at}], pending }
+//   GET  /api/charlize-stada?op=inbox&limit=40&scope=kunni&agent=postur&flokkur=postsvar&aldur=nytt
+//                                                → { rows:[{…,flokkur,aldur}], pending, per_flokkur, per_aldur }
 //   POST /api/charlize-stada { action:'samthykkja', id }        → rpc charlize_approve(id) → { ok, knowledge_id }
 //   POST /api/charlize-stada { action:'hafna', id, note? }      → charlize_inbox.status='rejected' (+review_note) → { ok }
 //
@@ -66,6 +66,26 @@ async function count(table, filter) {
 }
 function tally(rows, key) { const o = {}; for (const r of rows) { const k = r[key] || '—'; o[k] = (o[k] || 0) + 1; } return Object.fromEntries(Object.entries(o).sort((a, b) => b[1] - a[1])); }
 
+/* ── Flokkun biðstofunnar (07.11.2026) ────────────────────────────────────────────────────────
+   Agnar: „gera fleiri flokka, eldra flokkur, nýtt, mikilvægast, eftir að svara póstum,
+   kerfisspurningar." Röð með 488 kandídötum er ólesanleg; fimm flokkar gera hana að fimm
+   lesanlegum bunkum. Flokkurinn er REIKNAÐUR úr efninu við hvert kall — ekki geymdur dálkur —
+   svo hann fylgi orðalaginu og engin færsla festist í röngum flokki eftir á.
+   Aðferðin var MÆLD á 488 kandídötum 07.11.2026. Fyrsta tilraunin flokkaði eingöngu eftir
+   orðalagi og skildi 219 (45 %) eftir í „Annað“ — bunki sem er jafn ólesanlegur og röðin sjálf.
+   Því ræður `topic`, sem framleiðandinn setur þegar, meginflokkuninni, og orðalagið lyftir
+   aðeins því sem er aðkallandi upp í „Mikilvægast“. Þá verða bunkarnir níu og „Annað“ 28.
+   Röðin skiptir máli: fyrsta regla sem passar ræður. */
+const BRYNT = /kvört|kvart|vanskil|ógreidd|innheimt|lögfræ|slökkvilið|eldvarnaeftirlit|úttektarskyld|hætta á|öryggisatrið|tjón|bilun|virkar ekki|ónothæf/i;
+const AF_TOPIC = { loford: 'postsvar', reikningar: 'peningar', tengilidir: 'tengilidir', thjonusta: 'thjonusta', adgengi: 'adgengi', vandamal: 'vandamal' };
+function flokka(r) {
+  if ((r.scope || '') !== 'kunni') return 'kerfi';
+  if (BRYNT.test((r.fact || '') + ' ' + (r.detail || ''))) return 'mikilvaegast';
+  return AF_TOPIC[r.topic] || 'annad';
+}
+// Aldursásinn er sjálfstæður: sama færsla er bæði í efnisflokki og í „nýtt“ eða „eldra“.
+function aldur(r) { return (Date.now() - new Date(r.created_at).getTime()) < 7 * 864e5 ? 'nytt' : 'eldra'; }
+
 async function stada() {
   const [kn, ib, felog] = await Promise.all([
     all('charlize_knowledge?select=scope,status,agent,kennitala&limit=10000'),
@@ -88,11 +108,23 @@ async function inbox(q) {
   const parts = ['status=eq.pending'];
   if (q.scope && ID_RE.test(q.scope)) parts.push(`scope=eq.${encodeURIComponent(q.scope)}`);
   if (q.agent && ID_RE.test(q.agent)) parts.push(`agent=eq.${encodeURIComponent(q.agent)}`);
-  const [rows, pending] = await Promise.all([
-    all(`charlize_inbox?select=id,scope,topic,fact,detail,kennitala,agent,confidence,source_path,created_at,review_note&${parts.join('&')}&order=review_note.desc.nullslast,created_at.desc,id.desc&limit=${lim}`),
-    count('charlize_inbox', parts.join('&')),
-  ]);
-  return P.json(200, { rows, pending });
+  // Flokkurinn er reiknaður, ekki dálkur, svo PostgREST getur hvorki síað né talið hann: biðröðin
+  // er sótt í heilu lagi (þak 2000) og flokkuð hér. Þannig eru teljararnir á flipunum réttir —
+  // ekki „40 af þeim sem komust í þetta kall“, sem væri mælitæki sem lýgur.
+  const allir = await all(`charlize_inbox?select=id,scope,topic,fact,detail,kennitala,agent,confidence,source_path,created_at,review_note&${parts.join('&')}&order=created_at.desc,id.desc&limit=2000`);
+  allir.forEach((r) => { r.flokkur = flokka(r); r.aldur = aldur(r); });
+  let valdir = allir;
+  if (q.flokkur && ID_RE.test(q.flokkur)) valdir = valdir.filter((r) => r.flokkur === q.flokkur);
+  if (q.aldur && ID_RE.test(q.aldur)) valdir = valdir.filter((r) => r.aldur === q.aldur);
+  // Færsla sem ber review_note (snert áður) efst, svo nýjasta fyrst — sama röð og áður.
+  valdir.sort((a, b) => (b.review_note ? 1 : 0) - (a.review_note ? 1 : 0) || String(b.created_at).localeCompare(String(a.created_at)) || b.id - a.id);
+  return P.json(200, {
+    rows: valdir.slice(0, lim),
+    pending: valdir.length,
+    alls: allir.length,
+    per_flokkur: tally(allir, 'flokkur'),
+    per_aldur: tally(allir, 'aldur'),
+  });
 }
 
 async function skrifa(event) {

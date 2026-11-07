@@ -214,7 +214,14 @@
   }
 
   /* ---------- Biðstofan ---------- */
-  var bsOv = null, bsScope = '';
+  var bsOv = null, bsScope = '', bsFlokkur = '', bsAldur = '';
+  // 07.11.2026 (Agnar: „gera fleiri flokka — eldra, nýtt, mikilvægast, eftir að svara póstum,
+  // kerfisspurningar"). Heitin eru mannamál; lyklarnir koma reiknaðir frá /api/charlize-stada.
+  var FL_HEITI = { mikilvaegast: 'Mikilvægast', postsvar: 'Eftir að svara', peningar: 'Peningar og reikningar',
+    vandamal: 'Vandamál', thjonusta: 'Þjónusta og pantanir', adgengi: 'Aðgengi og bókanir',
+    tengilidir: 'Tengiliðir', kerfi: 'Kerfisspurningar', annad: 'Annað' };
+  var FL_ROD = ['mikilvaegast', 'postsvar', 'peningar', 'vandamal', 'thjonusta', 'adgengi', 'tengilidir', 'kerfi', 'annad'];
+  var AL_HEITI = { nytt: 'Nýtt (7 dagar)', eldra: 'Eldra' };
   function themaKlasi(el) { el.classList.toggle('theme-ragnarok', erRagnarok()); el.classList.toggle('theme-jarvis', !erRagnarok()); }
   function hladaLetur() { if (!document.getElementById('an-letur')) { var l = document.createElement('link'); l.id = 'an-letur'; l.rel = 'stylesheet'; l.href = FONTS; document.head.appendChild(l); } }
   function openBidstofa() {
@@ -227,7 +234,13 @@
       document.body.appendChild(bsOv);
       bsOv.addEventListener('click', function (ev) { if (ev.target === bsOv) closeBidstofa(); });
       bsOv.querySelector('.an-bs-top .tab').addEventListener('click', closeBidstofa);
-      bsOv.querySelector('#an-bs-f').addEventListener('click', function (ev) { var b = ev.target.closest('[data-sc]'); if (!b) return; bsScope = b.getAttribute('data-sc'); hladaBidstofu(); });
+      bsOv.querySelector('#an-bs-f').addEventListener('click', function (ev) {
+        var b = ev.target.closest('[data-sc],[data-fl],[data-al]'); if (!b) return;
+        if (b.hasAttribute('data-sc')) bsScope = b.getAttribute('data-sc');
+        else if (b.hasAttribute('data-fl')) bsFlokkur = b.getAttribute('data-fl');
+        else bsAldur = b.getAttribute('data-al');
+        hladaBidstofu();
+      });
       bsOv.querySelector('#an-bs-l').addEventListener('click', function (ev) {
         var b = ev.target.closest('[data-adg]'); if (!b) return;
         var k = b.closest('.an-k'), id = Number(k.getAttribute('data-id')), adg = b.getAttribute('data-adg');
@@ -248,13 +261,29 @@
   function hladaBidstofu() {
     var l = bsOv.querySelector('#an-bs-l'), t = bsOv.querySelector('#an-bs-t'), f = bsOv.querySelector('#an-bs-f');
     l.innerHTML = '<div class="an-tom">sæki…</div>';
-    getJSON(API_STADA + '?op=inbox&limit=40' + (bsScope ? '&scope=' + encodeURIComponent(bsScope) : '')).then(function (j) {
-      t.textContent = (j.pending || 0) + ' í bið'; t.setAttribute('data-n', j.pending || 0);
+    getJSON(API_STADA + '?op=inbox&limit=40' + (bsScope ? '&scope=' + encodeURIComponent(bsScope) : '') +
+      (bsFlokkur ? '&flokkur=' + encodeURIComponent(bsFlokkur) : '') + (bsAldur ? '&aldur=' + encodeURIComponent(bsAldur) : '')).then(function (j) {
+      t.textContent = (j.pending || 0) + ' í bið' + (j.alls && j.pending !== j.alls ? ' af ' + j.alls : '');
+      t.setAttribute('data-n', j.pending || 0);
       var ps = (D.stada && D.stada.inbox && D.stada.inbox.per_scope) || {};
-      f.innerHTML = '<button type="button" class="gw' + (!bsScope ? ' gw-acc' : '') + '" data-sc="">Allt</button>' + Object.keys(ps).map(function (s) { return '<button type="button" class="gw' + (bsScope === s ? ' gw-acc' : '') + '" data-sc="' + esc(s) + '">' + esc(s) + ' ' + ps[s] + '</button>'; }).join('');
-      if (!(j.rows || []).length) { l.innerHTML = '<div class="an-tom">Biðstofan er tóm.</div>'; return; }
+      var pf = j.per_flokkur || {}, pa = j.per_aldur || {};
+      // Þrjár raðir: efnisflokkur (það sem Agnar spurði um), aldur, og gamla sviðs-sían.
+      var h = '<div class="an-bs-fr">' +
+        '<button type="button" class="gw' + (!bsFlokkur ? ' gw-acc' : '') + '" data-fl="">Allir flokkar</button>' +
+        FL_ROD.filter(function (k) { return pf[k]; }).map(function (k) {
+          return '<button type="button" class="gw' + (bsFlokkur === k ? ' gw-acc' : '') + '" data-fl="' + k + '">' + esc(FL_HEITI[k] || k) + ' ' + pf[k] + '</button>';
+        }).join('') + '</div>';
+      h += '<div class="an-bs-fr">' +
+        '<button type="button" class="gw' + (!bsAldur ? ' gw-acc' : '') + '" data-al="">Allur aldur</button>' +
+        ['nytt', 'eldra'].filter(function (k) { return pa[k]; }).map(function (k) {
+          return '<button type="button" class="gw' + (bsAldur === k ? ' gw-acc' : '') + '" data-al="' + k + '">' + esc(AL_HEITI[k]) + ' ' + pa[k] + '</button>';
+        }).join('') + '</div>';
+      h += '<div class="an-bs-fr"><button type="button" class="gw' + (!bsScope ? ' gw-acc' : '') + '" data-sc="">Öll svið</button>' +
+        Object.keys(ps).map(function (s) { return '<button type="button" class="gw' + (bsScope === s ? ' gw-acc' : '') + '" data-sc="' + esc(s) + '">' + esc(s) + ' ' + ps[s] + '</button>'; }).join('') + '</div>';
+      f.innerHTML = h;
+      if (!(j.rows || []).length) { l.innerHTML = '<div class="an-tom">Enginn kandídat í þessari síu.</div>'; return; }
       l.innerHTML = j.rows.map(function (r) {
-        return '<div class="an-k" data-id="' + r.id + '"><small>#' + r.id + ' · ' + esc(r.scope) + ' / ' + esc(r.topic || '—') + ' · ' + esc(r.agent || '?') + ' · ' + fmtD(r.created_at) + (r.kennitala ? ' · kt ' + esc(r.kennitala) : '') + (r.confidence ? ' · ' + esc(r.confidence) : '') + '</small>' +
+        return '<div class="an-k" data-id="' + r.id + '"><small>#' + r.id + ' · <b>' + esc(FL_HEITI[r.flokkur] || r.flokkur || '—') + '</b> · ' + esc(r.scope) + ' / ' + esc(r.topic || '—') + ' · ' + esc(r.agent || '?') + ' · ' + fmtD(r.created_at) + (r.kennitala ? ' · kt ' + esc(r.kennitala) : '') + (r.confidence ? ' · ' + esc(r.confidence) : '') + '</small>' +
           '<div class="f">' + esc(r.fact) + '</div>' + (r.detail ? '<div class="d">' + esc(cut(r.detail, 320)) + '</div>' : '') +
           (r.review_note ? '<div class="d sp">' + esc(cut(r.review_note, 300)) + '</div>' : '') +
           '<div class="r"><button type="button" class="btn-ok" data-adg="samthykkja">' + SVG.ok + 'Samþykkja</button><button type="button" class="btn-gh" data-adg="hafna">' + SVG.x + 'Hafna</button><span>' + esc(cut(r.source_path || '', 50)) + '</span></div></div>';
