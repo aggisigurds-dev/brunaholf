@@ -165,6 +165,9 @@
   .cat-frontend { background:var(--blue-bg); color:var(--blue-deep); }
   .cat-kodi     { background:var(--blue-bg); color:var(--blue-deep); }
   .cat-kerfi    { background:var(--blue-bg); color:var(--blue-deep); }
+  /* 08.11.2026: 24 verk báru `villa` án þess að flokkurinn væri til hér — merkið birtist
+     ómerkt og datt úr síunni. Rauður eins og oryggi, því hvort tveggja er „eitthvað er að". */
+  .cat-villa    { background:var(--red-bg); color:var(--red); }
   /* Vefur-merki á röð (aðeins Brunahólf / Slökkvitæki; „Sameiginlegt" er sjálfgefið og fær ekkert merki) */
   .vef-brunaholf    { background:var(--blue-bg); color:var(--blue-deep); }
   .vef-slokkvitaeki { background:var(--warn-bg); color:var(--red-dark); }
@@ -519,7 +522,11 @@ const CAT_LABELS = {
   frontend: { label: 'Framendi', emoji: '🖥️' },
   kodi:     { label: 'Kóði',     emoji: '⚙️' },
   kerfi:    { label: 'Kerfi',    emoji: '🧩' },
+  villa:    { label: 'Villa',    emoji: '🐞' },
 };
+// ATH: `tools/audit-verkefni-flokkar.cjs` í slokkvitaeki-repóinu ber afrit af þessum lyklum og
+// fer rautt þegar verk ber flokk sem er ekki hér. Bætirðu flokki við þarf hann á BÁÐA staði,
+// auk .cat-<lykill> reglu hér að ofan — annars birtist merkið ómerkt og dettur úr síunni.
 
 // ─── Vefur-flipar (29.10.2026, verk 809627e5) ───────────────────────────────
 // Dálkurinn `vefur` ('brunaholf' | 'slokkvitaeki' | 'sameiginlegt', sjálfgefið 'sameiginlegt')
