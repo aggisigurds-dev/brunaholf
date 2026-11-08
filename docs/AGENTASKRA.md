@@ -199,7 +199,7 @@ Bæði slökkvitæki og brunahólf lesa sama Supabase `osfdzskyvisifcwyjkuk`.
 <!-- SIDUKORT:BEGIN -->
 ## Síðukort — hver á hverja síðu (búið til af `node tools/build-agents-registry.cjs`)
 
-Byggt 2026-11-07 úr `brunaholf/.claude/sidukort.json`, `kjarni/.claude/sidukort.json`. Staða: ✅ eigandi til · ⚠️ eigandi ekki í registry eða skilgreind-skrá finnst ekki · ❌ enginn eigandi. Breyttu síðukortinu, ekki hér.
+Byggt 2026-11-10 úr `brunaholf/.claude/sidukort.json`, `slokkvitaeki/.claude/sidukort.json`, `kjarni/.claude/sidukort.json`. Staða: ✅ eigandi til · ⚠️ eigandi ekki í registry eða skilgreind-skrá finnst ekki · ❌ enginn eigandi. Breyttu síðukortinu, ekki hér.
 
 | Vefur | Síða | Leið | Skilgreind | Eigandi | Undiragentar | Staða |
 |---|---|---|---|---|---|---|
@@ -305,6 +305,127 @@ Byggt 2026-11-07 úr `brunaholf/.claude/sidukort.json`, `kjarni/.claude/sidukort
 | brunaholf | Gloppur | `/jarvis.html#gloppur` | `jarvis.html` | `sara-organizer` | `kunnaskra` | ✅ |
 | brunaholf | Þrýstingur — frammistaða | `/jarvis.html#perf` | `jarvis.html` | `hradi` | `kerfisheilsa` | ✅ |
 | brunaholf | Öryggisnet — verðir | `/jarvis.html#oryggisnet` | `jarvis.html` | `netvordur` | `rambo` | ✅ |
+| slokkvitaeki | Afgreiðsla | `#counter` | `index.html` | `sala-reikningar` | `prentun` | ✅ |
+| slokkvitaeki | Verkstæði | `#workshop` | `index.html` | `sala-reikningar` | `elon-musk` · `prentun` | ✅ |
+| slokkvitaeki | Þjónustutæki | `#field` | `index.html` | `kort` | `bord-flettur` | ✅ |
+| slokkvitaeki | Fyrirtæki (skrá) | `#companies` | `index.html` · `js/patches/261-app-profiles.js` | `fyrirtaeki` | `kunnaskra` | ✅ |
+| slokkvitaeki | Brunakerfi (áskriftir) | `#brunakerfi` | `index.html` | `elon-musk` | `natalie` · `sara-coworker` · `sala-reikningar` | ✅ |
+| slokkvitaeki | Tilboð & samningar | `#tilbodhub` | `index.html` | `sala-reikningar` | `logfraedingur` | ✅ |
+| slokkvitaeki | Tekjur | `#income` | `index.html` · `js/patches/261-app-profiles.js` | `sala-reikningar` | — | ✅ |
+| slokkvitaeki | Lánstæki | `#lanstaeki` | `index.html` | `elon-musk` | — | ✅ |
+| slokkvitaeki | Geymsla | `#geymsla` | `index.html` | `bord-flettur` | `elon-musk` · `prentun` | ✅ |
+| slokkvitaeki | Stillingar | `#settings` | `index.html` | `joker` | `prentun` · `thema` · `elon-musk` | ✅ |
+| slokkvitaeki | Bókhald | `#bokhalds-yfirlit` | `js/patches/11-bokhalds-yfirlit.js` · `js/patches/261-app-profiles.js` | `sala-reikningar` | `bh:bokari` | ✅ |
+| slokkvitaeki | Aldursgreining | `#aging-report` | `js/patches/23-aging-report.js` | `sala-reikningar` | `rukkari` | ✅ |
+| slokkvitaeki | Tilboð | `#tilbod` | `js/patches/27-tilbod-quote.js` | `sala-reikningar` | `logfraedingur` · `arnold` | ✅ |
+| slokkvitaeki | Drög | `#drog` | `js/patches/143-drog-list.js` | `sala-reikningar` | — | ✅ |
+| slokkvitaeki | Fyrirtæki í þjónustu | `#arsskodun` | `js/patches/153-arsskodun.js` · `js/patches/317-arsskodun-bilstjori.js` · `js/patches/331-ars-phone-skjar.js` · `js/patches/341-ars-skjar-scroll-left.js` · `js/patches/261-app-profiles.js` | `elon-musk` | `natalie` · `arnold` | ✅ |
+| slokkvitaeki | Allir viðskiptavinir | `#allir-vidsk` | `js/patches/157-allir-vidskiptavinir.js` | `kunnaskra` | `natalie` · `fyrirtaeki` | ✅ |
+| slokkvitaeki | Fyrirtækjakort / fyrirtækjaprófíll | `#vidsk-detail` | `js/patches/158-vidsk-detail.js` | `fyrirtaeki` | `kunnaskra` · `sala-reikningar` · `sara-coworker` · `joker` | ✅ |
+| slokkvitaeki | Leiðsögn | `#leidsogn` | `js/patches/161-leidsogn.js` · `js/patches/373-leidsogn-uttektarplan.js` | `bord-flettur` | `kort` | ✅ |
+| slokkvitaeki | Kröfu yfirlit | `#krofu-yfirlit` | `js/patches/166-krofu-yfirlit.js` · `js/patches/261-app-profiles.js` | `sala-reikningar` | `rukkari` · `natalie` | ✅ |
+| slokkvitaeki | Hreyfingarlisti | `#hreyfingarlisti` | `js/patches/167-hreyfingarlisti.js` · `js/patches/261-app-profiles.js` | `sala-reikningar` | `rukkari` | ✅ |
+| slokkvitaeki | Þjónustuverk | `#thjonustuverk` | `js/patches/172-thjonustuverk.js` · `js/patches/261-app-profiles.js` | `bord-flettur` | — | ✅ |
+| slokkvitaeki | Beiðnir | `#beidnir` | `js/patches/178-beidnir.js` | `bord-flettur` | — | ✅ |
+| slokkvitaeki | Móttaka | `#mottaka` | `js/patches/179-mottaka-arrival.js` | `sala-reikningar` | — | ✅ |
+| slokkvitaeki | ÞjónustuVerkstæði | `#thjonustu-verkstaedi` | `js/patches/190-thjonustu-verkstaedi.js` · `js/patches/261-app-profiles.js` | `sala-reikningar` | `elon-musk` | ✅ |
+| slokkvitaeki | Yfirferð greiðslna | `#payrev` | `js/patches/193-payment-review.js` | `sala-reikningar` | `natalie` | ✅ |
+| slokkvitaeki | Bókhald · yfirferð | `#bokhald-yfirferd` | `js/patches/197-bokhald-yfirferd.js` | `sala-reikningar` | `natalie` | ✅ |
+| slokkvitaeki | Fyrirtæki · yfirferð | `#fyrirtaeki-yfirferd` | `js/patches/198-fyrirtaeki-yfirferd.js` | `kunnaskra` | `sala-reikningar` | ✅ |
+| slokkvitaeki | Vertíð | `#vertid` | `js/patches/210-vertid-mottaka.js` | `sala-reikningar` | — | ✅ |
+| slokkvitaeki | Bílstjóri · leið dagsins | `#bilstjori` | `js/patches/219-bilstjori.js` · `js/patches/261-app-profiles.js` | `bord-flettur` | `kort` | ✅ |
+| slokkvitaeki | Kerfi | `#kerfi` | `js/patches/221-kerfi-registry.js` | `bord-flettur` | — | ✅ |
+| slokkvitaeki | Bakendi | `#bakendi` | `js/patches/232-bakendi.js` | `kunnaskra` | `bord-flettur` | ✅ |
+| slokkvitaeki | Sameining | `#sameining` | `js/patches/236-customer-sameining.js` | `kunnaskra` | `samthykktir` | ✅ |
+| slokkvitaeki | Aðstoðarmiðstöð | `#adstod` | `js/patches/239-adstodarmidstod.js` | `adstod` | `kunnaskra` · `sala-reikningar` | ✅ |
+| slokkvitaeki | Reikninga-póstur | `#reikninga-postur` | `js/patches/240-reikninga-postur.js` · `js/patches/261-app-profiles.js` | `rukkari` | `postur` · `sala-reikningar` | ✅ |
+| slokkvitaeki | Öpp (stýriborð) | `#opp` | `js/patches/261-app-profiles.js` | `opp` | `bord-flettur` · `joker` | ✅ |
+| slokkvitaeki | Aksturslisti | `#aksturslisti` | `js/patches/268-aksturslisti-vakt.js` · `js/patches/261-app-profiles.js` | `bord-flettur` | `kort` | ✅ |
+| slokkvitaeki | Brunakerfi yfirlit (eldra) | `#brunakerfi-yfirlit` | `js/patches/272-brunakerfi-yfirlit.js` | `elon-musk` | `sara-coworker` | ✅ |
+| slokkvitaeki | Samskiptaborð | `#samskiptabord` | `js/patches/287-crm-board.js` | `fyrirtaeki` | `kunnaskra` · `rukkari` | ✅ |
+| slokkvitaeki | Mínar síður | `#minar-sidur` | `js/patches/302-minar-sidur.js` · `js/patches/261-app-profiles.js` | `bord-flettur` | — | ✅ |
+| slokkvitaeki | Þjónustuborð (sími, eldra) | `#thjonustubord` | `js/patches/306-thjonustu-mob.js` | `bord-flettur` | `samthykktir` | ✅ |
+| slokkvitaeki | Þjónustuver póstar | `#thjonustuver-postar` | `js/patches/309-thjonustuver-postar.js` | `postur` | — | ✅ |
+| slokkvitaeki | Tengiliðir | `#tengilidir` | `js/patches/310-tengilidir.js` | `fyrirtaeki` | `kunnaskra` · `bh:oryggi` | ✅ |
+| slokkvitaeki | TurboPaint — teikningar | `#turbopaint` | `js/patches/342-turbopaint-nav.js` · `js/patches/376-teikning-ur-teikningaglugga.js` · `js/patches/261-app-profiles.js` | `arnold` | `elon-musk` | ✅ |
+| slokkvitaeki | Staðan | `#stadan` | `js/patches/345-stadan.js` | `bord-flettur` | — | ✅ |
+| slokkvitaeki | Mælaborð | `#maelabord` | `js/patches/346-maelabord.js` | `bord-flettur` | `netvordur` | ✅ |
+| slokkvitaeki | Þjónustuborð | `#bord` | `js/patches/368-thjonustubord5.js` · `js/patches/369-krofu-vinnugluggi.js` · `js/patches/261-app-profiles.js` | `bord-flettur` | `samthykktir` | ✅ |
+| slokkvitaeki | Kostnaður · reikningar úr pósti | `#kostnadur` | `js/patches/419-kostnadur.js` · `js/patches/261-app-profiles.js` | `innkaupabokari` | `birgdastjori` · `bh:endurskodandi` | ✅ |
+| slokkvitaeki | Samþykkja | `#samthykkja` | `js/patches/446-samthykkja-simi.js` · `js/patches/261-app-profiles.js` | `bord-flettur` | `samthykktir` | ✅ |
+| slokkvitaeki | Svar-stöð · hvernig textar verða til | `#svarstod` | `js/patches/447-svarstod.js` · `js/patches/261-app-profiles.js` | `bord-flettur` | `samthykktir` · `sala-reikningar` · `postur` | ✅ |
+| slokkvitaeki | Reglur | `#reglur` | `js/patches/449-reglur.js` | `bord-flettur` | `samthykktir` · `arnold` | ✅ |
+| slokkvitaeki | Tölvupóstar | `#tolvupostar` | `js/patches/449-tolvupostar-simi.js` · `js/patches/261-app-profiles.js` | `postur` | `samthykktir` · `kunnaskra` | ✅ |
+| slokkvitaeki | Erindi · tilbúin svör | `#erindi` | `js/patches/449c-erindi-simi.js` · `js/patches/261-app-profiles.js` | `postur` | `samthykktir` · `sara-coworker` | ✅ |
+| slokkvitaeki | Hunter · sölulistar | `#hunter` | `js/patches/487-hunter.js` | `fyrirtaeki` | `kunnaskra` | ✅ |
+| slokkvitaeki | Vasinn · skjáskot, myndir, skrár, hljóð handa Claude | `#vasinn` | `js/patches/491-vasinn.js` · `js/patches/261-app-profiles.js` | `innkaupabokari` | `bord-flettur` | ✅ |
+| slokkvitaeki | Aðalmál · fundir, frestir og það sem skiptir mestu | `#adalmal` | `js/patches/492-adalmal.js` · `js/patches/261-app-profiles.js` | `bord-flettur` | `samthykktir` | ✅ |
+| slokkvitaeki | Viðskiptavinir | `#vidskiptavinir` | `js/patches/261-app-profiles.js` | `kunnaskra` | — | ✅ |
+| slokkvitaeki | Sala | `#sala` | `js/patches/261-app-profiles.js` | `sala-reikningar` | `prentun` · `birgdastjori` | ✅ |
+| slokkvitaeki | Slökkvikerfis skoðun | `#slokkvikerfi` | `js/patches/261-app-profiles.js` | `elon-musk` | `sara-coworker` | ✅ |
+| slokkvitaeki | Brunakerfis skoðun | `#brunaskra` | `js/patches/261-app-profiles.js` | `elon-musk` | `sara-coworker` | ✅ |
+| slokkvitaeki | Rekstrarfélög | `#rekstrarfelog` | `js/patches/261-app-profiles.js` | `kunnaskra` | `natalie` · `heimaleiga` · `center-hotel` | ✅ |
+| slokkvitaeki | Birgðir | `#birgdir` | `js/patches/261-app-profiles.js` | `birgdastjori` | `sala-reikningar` | ✅ |
+| slokkvitaeki | Vörur og þjónusta | `#vorur` | `js/patches/261-app-profiles.js` | `birgdastjori` | `sala-reikningar` | ✅ |
+| slokkvitaeki | Gerð reikninga | `https://brunaholf.netlify.app/?embed=1#gerdreikninga` | `js/patches/261-app-profiles.js` | `opp` | `bh:bokari` | ✅ |
+| slokkvitaeki | Vinnubók | `https://brunaholf.netlify.app/?embed=1#vinnubok` | `js/patches/261-app-profiles.js` | `opp` | `bh:bokari` | ✅ |
+| slokkvitaeki | Krófur & Tekjur | `https://brunaholf.netlify.app/?embed=1#krofur` | `js/patches/261-app-profiles.js` | `opp` | `bh:rukkari` | ✅ |
+| slokkvitaeki | Kröfu yfirlit (Brunahólf) | `https://brunaholf.netlify.app/?embed=1#krofuyfirlit` | `js/patches/261-app-profiles.js` | `opp` | `bh:rukkari` | ✅ |
+| slokkvitaeki | Drög-stöð (punktar + draft-körfur) | `https://brunaholf.netlify.app/?embed=1#drogstod` | `js/patches/261-app-profiles.js` | `opp` | `bh:rukkari` | ✅ |
+| slokkvitaeki | Efniskostnaður · kostnaðarreikningar (dropp úr síma) | `https://brunaholf.netlify.app/?embed=1#efniskostnadur` | `js/patches/261-app-profiles.js` | `opp` | `bh:bokari` | ✅ |
+| slokkvitaeki | Mæting · verkstaðir (Tímavera) | `https://brunaholf.netlify.app/?embed=1#tvmaeting` | `js/patches/261-app-profiles.js` | `opp` | `bh:verkstadur` | ✅ |
+| slokkvitaeki | Fjármála-yfirlit (Slökkv. + Brunahólf) | `https://brunaholf.netlify.app/fjarmalyfirlit.html` | `js/patches/261-app-profiles.js` | `opp` | `bh:bokari` | ✅ |
+| slokkvitaeki | Dagurinn (Brunahólf) | `https://brunaholf.netlify.app/?embed=1#dagurinn` | `js/patches/261-app-profiles.js` | `opp` | `bh:framendi` | ✅ |
+| slokkvitaeki | Reikningagerð (Brunahólf) | `https://brunaholf.netlify.app/?embed=1#reikningar` | `js/patches/261-app-profiles.js` | `opp` | `bh:bokari` | ✅ |
+| slokkvitaeki | Skuldunautar (Brunahólf) | `https://brunaholf.netlify.app/?embed=1#skuldunautar` | `js/patches/261-app-profiles.js` | `opp` | `bh:rukkari` | ✅ |
+| slokkvitaeki | Hreyfingaryfirlit (Brunahólf) | `https://brunaholf.netlify.app/?embed=1#hreyfingaryfirlit` | `js/patches/261-app-profiles.js` | `opp` | `bh:rukkari` | ✅ |
+| slokkvitaeki | Verkstaðir (Brunahólf) | `https://brunaholf.netlify.app/?embed=1#verkstadir` | `js/patches/261-app-profiles.js` | `opp` | `bh:bokari` | ✅ |
+| slokkvitaeki | Landsspítalinn (Brunahólf) | `https://brunaholf.netlify.app/?embed=1#nlsh` | `js/patches/261-app-profiles.js` | `opp` | `bh:bokari` | ✅ |
+| slokkvitaeki | Efnisnotkun · verkstjórar skrá efni á verk | `https://brunaholf.netlify.app/brunathettingar?embed=1` | `js/patches/261-app-profiles.js` | `opp` | `bh:verkstadur` | ✅ |
+| slokkvitaeki | Frá verkstað · efnisnotkun per verk | `https://brunaholf.netlify.app/?embed=1#verkstadapostur` | `js/patches/261-app-profiles.js` | `opp` | `bh:verkstadur` | ✅ |
+| slokkvitaeki | Verkkaupar (Brunahólf) | `https://brunaholf.netlify.app/verkkaupar.html` | `js/patches/261-app-profiles.js` | `opp` | `bh:kunnaskra` | ✅ |
+| slokkvitaeki | J.A.R.V.I.S. (Brunahólf) | `https://brunaholf.netlify.app/jarvis.html?embed=1` | `js/patches/261-app-profiles.js` | `opp` | `bh:jarvis` | ✅ |
+| slokkvitaeki | Raddminni (Brunahólf) | `https://brunaholf.netlify.app/radd.html` | `js/patches/261-app-profiles.js` | `opp` | `bh:jarvis` | ✅ |
+| slokkvitaeki | Kerfisheilsa (Brunahólf) | `https://brunaholf.netlify.app/kerfisheilsa.html` | `js/patches/261-app-profiles.js` | `opp` | `bh:tengingar` | ✅ |
+| slokkvitaeki | Þjónustugátt · stjórnborð (kúnnavefir) | `/gatt-admin/` | `js/patches/261-app-profiles.js` | `thjonustugatt` | `bh:oryggi` | ✅ |
+| slokkvitaeki | Yfirferð efnislista (Brunahólf) | `https://brunaholf.netlify.app/yfirferd.html` | `js/patches/261-app-profiles.js` | `opp` | `bh:bokari` | ✅ |
+| slokkvitaeki | Eyðublöð (Brunahólf) | `https://brunaholf.netlify.app/eydublod.html` | `js/patches/261-app-profiles.js` | `opp` | `bh:skjol` | ✅ |
+| slokkvitaeki | Skýrslu-stöð (Brunahólf) | `https://brunaholf.netlify.app/?embed=1#skyrslustod` | `js/patches/261-app-profiles.js` | `opp` | `bh:skjol` | ✅ |
+| slokkvitaeki | Drive-leit (Brunahólf) | `https://brunaholf.netlify.app/?embed=1#driveleit` | `js/patches/261-app-profiles.js` | `opp` | `bh:skjol` | ✅ |
+| slokkvitaeki | Póstleit (Brunahólf) | `https://brunaholf.netlify.app/?embed=1#postleit` | `js/patches/261-app-profiles.js` | `opp` | `bh:postur` | ✅ |
+| slokkvitaeki | 3dwork — merkja/CAD-bekkur | `https://kjarni-3dwork.vercel.app/3dwork` | `js/patches/261-app-profiles.js` | `opp` | `kj:3dwork` | ✅ |
+| slokkvitaeki | Brunaáætlun — rýmingaráætlun, eigið eftirlit, flóttaáætlanir | `/brunaaaetlun/` | `js/patches/261-app-profiles.js` | `thjonustugatt` | `arnold` | ✅ |
+| slokkvitaeki | Fjármál (app) | `/app/fjarmal/` | `js/patches/261-app-profiles.js` | `opp` | `sala-reikningar` | ✅ |
+| slokkvitaeki | Þjónustuborð (app) | `/app/verkefni/` | `js/patches/261-app-profiles.js` | `opp` | `bord-flettur` · `samthykktir` | ✅ |
+| slokkvitaeki | Brunahólf (app) | `/app/brunaholf/` | `js/patches/261-app-profiles.js` | `opp` | `bh:framendi` | ✅ |
+| slokkvitaeki | Verkstjórar (app) | `/app/verkstjorar/` | `js/patches/261-app-profiles.js` | `opp` | `bh:verkstadur` | ✅ |
+| slokkvitaeki | Skýrslu-stöð (app) | `/app/skyrslustod/` | `js/patches/261-app-profiles.js` | `opp` | `bh:skjol` | ✅ |
+| slokkvitaeki | Brunakerfi (app) | `/app/brunakerfi/` | `js/patches/261-app-profiles.js` | `opp` | `elon-musk` | ✅ |
+| slokkvitaeki | Bílstjóri (app) | `/app/bilstjori/` | `js/patches/261-app-profiles.js` | `opp` | `bord-flettur` · `kort` | ✅ |
+| slokkvitaeki | The Big Boss (app) | `/app/boss/` | `js/patches/261-app-profiles.js` | `opp` | `bord-flettur` | ✅ |
+| slokkvitaeki | 3dwork (app) | `/app/threedwork/` | `js/patches/261-app-profiles.js` | `opp` | `kj:3dwork` | ✅ |
+| slokkvitaeki | Vinnusamantekt (efst á Þjónustuborði) | `#bord (eining efst)` | `js/patches/489-vinnusamantekt.js` | `bord-flettur` | `samthykktir` | ✅ |
+| slokkvitaeki | Þjónustusamningar | `#samningar` | `js/patches/50-service-contracts.js` | `sala-reikningar` | `logfraedingur` · `kunnaskra` | ✅ |
+| slokkvitaeki | Söluyfirlit | `#soluyfirlit` | `js/patches/54-sales-analytics.js` | `sala-reikningar` | — | ✅ |
+| slokkvitaeki | Kreditfæra reikning | `#bokhald (Kreditfæra)` | `js/patches/92-credit-by-num.js` · `js/patches/26-credit-invoice.js` | `sala-reikningar` | `natalie` | ✅ |
+| slokkvitaeki | Akstursdagbók | `view-akstur` | `js/patches/47-mileage-log.js` | `bord-flettur` | — | ✅ |
+| slokkvitaeki | Tæknimenn + skírteini | `view-taeknimenn` | `js/patches/59-technicians.js` | `bord-flettur` | `arnold` | ✅ |
+| slokkvitaeki | Stjórnstöð | `#stjornstod` | `js/patches/61-command-center.js` · `js/patches/420-stjornstod-samstilling.js` | `bord-flettur` | `samthykktir` | ✅ |
+| slokkvitaeki | Uppfærsluborð | `#uppferslubord` | `js/patches/431-uppferslubord.js` | `bord-flettur` | `kodafraedingur` | ✅ |
+| slokkvitaeki | Póstsvörun | `/postsvorun.html` | `postsvorun.html` | `postur` | `samthykktir` | ✅ |
+| slokkvitaeki | Kúnnaskrá (stök síða) | `/kunnaskra.html` | `kunnaskra.html` | `kunnaskra` | — | ✅ |
+| slokkvitaeki | Uppgjörslisti | `/uppgjorslisti.html` | `uppgjorslisti.html` | `sala-reikningar` | `rukkari` | ✅ |
+| slokkvitaeki | Hreyfingaryfirlit (stök síða) | `/hreyfingaryfirlit.html` | `hreyfingaryfirlit.html` | `sala-reikningar` | `rukkari` | ✅ |
+| slokkvitaeki | Innskráning | `/innskraning.html` | `innskraning.html` | `bord-flettur` | `bh:oryggi` | ✅ |
+| slokkvitaeki | Þjónustugátt (kúnnavefur) | `/gatt/?c=<slug>[&eign=<id>]` | `gatt/index.html` · `netlify/functions/gatt.cjs` · `netlify/functions/_portal.cjs` | `thjonustugatt` | `sara-coworker` · `kunnaskra` · `bh:oryggi` | ✅ |
+| slokkvitaeki | Tilkynna (QR) | `/gatt/q/?t=<qr>` | `gatt/q/index.html` · `netlify/functions/gatt-qr.cjs` | `thjonustugatt` | `prentun` | ✅ |
+| slokkvitaeki | Stuttslóðir gáttar | `/g/:slug · /heimaleiga` | `netlify.toml` | `thjonustugatt` | — | ✅ |
+| slokkvitaeki | Rýmingaráætlun | `/rymingaraetlun/?fyrirtaeki=<id>` | `rymingaraetlun/index.html` · `js/patches/464-brunaaaetlun-takki.js` | `thjonustugatt` | `arnold` | ✅ |
+| slokkvitaeki | Vefverslun (prufa) | `/vefverslun/` | `vefverslun/index.html` · `netlify/functions/vefverslun.cjs` | `thjonustugatt` | `sala-reikningar` | ✅ |
+| slokkvitaeki | Gamla kúnnagáttin (v1) | `index.html#portal=<base64 id>` | `js/patches/51-customer-portal.js` | `thjonustugatt` | `bh:oryggi` · `kodafraedingur` | ✅ |
+| slokkvitaeki | Spotify | `/spotify/` | `spotify` | — | — | ❌ |
+| slokkvitaeki | Myndasafn (img/safn) | `/img/safn/` | `img/safn` | — | — | ❌ |
+| slokkvitaeki | Kennslubækur (docs/) | `/docs/index.html` | `docs/index.html` | — | — | ❌ |
 | kjarni | Síðuritils-síða | `/[slug]` | `apps/slokkvitaeki/app/[slug]/page.tsx` | `kjarni-vefur` | — | ✅ |
 | kjarni | InstantID | `/api/andlit` | `apps/slokkvitaeki/app/api/andlit/route.ts` | `artcraft` | — | ✅ |
 | kjarni | Nýr bakgrunnur | `/api/breyta/background` | `apps/slokkvitaeki/app/api/breyta/background/route.ts` | `artcraft` | — | ✅ |
@@ -397,18 +518,21 @@ Byggt 2026-11-07 úr `brunaholf/.claude/sidukort.json`, `kjarni/.claude/sidukort
 | kjarni | About (sniðmát) | `/about` | `apps/web/src/app/(external-pages)/about/page.tsx` | `kjarni-vefur` | — | ✅ |
 | kjarni | City trips from Keflavík | `/borgarferdir` | `apps/web/src/app/(external-pages)/borgarferdir/page.tsx` | `kjarni-vefur` | — | ✅ |
 | kjarni | Nextbase-sniðmát | `/` | `apps/web/src/app/(external-pages)/page.tsx` | `kjarni-vefur` | — | ✅ |
-| kjarni | 3dwork — STL bench | `/3dwork` | `apps/web/src/app/3dwork/page.tsx` | `skill:3dJoker` | — | ⚠️ eigandi „skill:3dJoker“ er ekki í registry |
-| kjarni | 3dwork geometry | `/api/3dwork/github/geometry/[id]` | `apps/web/src/app/api/3dwork/github/geometry/[id]/route.ts` | `skill:3dJoker` | — | ⚠️ eigandi „skill:3dJoker“ er ekki í registry |
-| kjarni | 3dwork eitt verkefni | `/api/3dwork/github/projects/[id]` | `apps/web/src/app/api/3dwork/github/projects/[id]/route.ts` | `skill:3dJoker` | — | ⚠️ eigandi „skill:3dJoker“ er ekki í registry |
-| kjarni | 3dwork verkefni | `/api/3dwork/github/projects` | `apps/web/src/app/api/3dwork/github/projects/route.ts` | `skill:3dJoker` | — | ⚠️ eigandi „skill:3dJoker“ er ekki í registry |
-| kjarni | 3dwork GitHub-sync | `/api/3dwork/github` | `apps/web/src/app/api/3dwork/github/route.ts` | `skill:3dJoker` | — | ⚠️ eigandi „skill:3dJoker“ er ekki í registry |
+| kjarni | 3dwork — STL bench | `/3dwork` | `apps/web/src/app/3dwork/page.tsx` | `skill:3dJoker` | — | ✅ |
+| kjarni | 3dwork geometry | `/api/3dwork/github/geometry/[id]` | `apps/web/src/app/api/3dwork/github/geometry/[id]/route.ts` | `skill:3dJoker` | — | ✅ |
+| kjarni | 3dwork eitt verkefni | `/api/3dwork/github/projects/[id]` | `apps/web/src/app/api/3dwork/github/projects/[id]/route.ts` | `skill:3dJoker` | — | ✅ |
+| kjarni | 3dwork verkefni | `/api/3dwork/github/projects` | `apps/web/src/app/api/3dwork/github/projects/route.ts` | `skill:3dJoker` | — | ✅ |
+| kjarni | 3dwork GitHub-sync | `/api/3dwork/github` | `apps/web/src/app/api/3dwork/github/route.ts` | `skill:3dJoker` | — | ✅ |
 | kjarni | Marks hlekkjaforskoðun | `/api/marks/preview` | `apps/web/src/app/api/marks/preview/route.ts` | `kjarni-vefur` | — | ✅ |
 | kjarni | Marks — site | `/marks/[boardId]` | `apps/web/src/app/marks/[boardId]/page.tsx` | `kjarni-vefur` | — | ✅ |
 | kjarni | Marks — kjarni bookmarks | `/marks` | `apps/web/src/app/marks/page.tsx` | `kjarni-vefur` | — | ✅ |
+| kjarni | Ljósastýring Langamýri 22 (Hue Remote API) | `/ljos` | `apps/slokkvitaeki/app/ljos/page.tsx` · `apps/slokkvitaeki/app/api/ljos/route.ts` | `kjarni-vefur` | `oryggi` | ✅ |
 
-**Samantekt:** brunaholf 102/102 með eiganda (100%), 0 ⚠️, 0 ❌ · kjarni 95/100 með eiganda (95%), 5 ⚠️, 0 ❌
+**Samantekt:** brunaholf 102/102 með eiganda (100%), 0 ⚠️, 0 ❌ · slokkvitaeki 118/121 með eiganda (98%), 0 ⚠️, 3 ❌ · kjarni 101/101 með eiganda (100%), 0 ⚠️, 0 ❌
 
 ### Síður án eiganda
 
-_Engar — allar síður eiga eiganda._
+- slokkvitaeki · Spotify (`/spotify/`)
+- slokkvitaeki · Myndasafn (img/safn) (`/img/safn/`)
+- slokkvitaeki · Kennslubækur (docs/) (`/docs/index.html`)
 <!-- SIDUKORT:END -->
