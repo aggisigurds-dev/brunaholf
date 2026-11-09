@@ -273,6 +273,8 @@ h1{margin:2px 0 0;font-family:"Playfair Display",serif;font-weight:700;font-size
       '<section class="tb scroll" id="tbl" aria-label="Starfsmannalisti"></section></main>';
     renderMe(); renderKpi(); renderTable();
     $('#nyr').addEventListener('click', function () { openDrawer(null); });
+    // Beinn hlekkur úr Aðgangsstýringu í Slökkvitæki (?nyr=1): opnar „Bæta við aðgangi“ einu sinni.
+    if (!S._nyrAuto && /[?&]nyr=1(&|$)/.test(location.search)) { S._nyrAuto = true; openDrawer(null); }
     $('#leit').addEventListener('input', function (e) { S.q = e.target.value; renderTable(); });
     var seg = $('#felagSeg'); seg.innerHTML = ['Allir'].concat(S.felog).map(function (n) { return '<button type="button" class="sg' + (S.felagSia === n ? ' on' : '') + '" data-f="' + esc(n) + '" aria-pressed="' + (S.felagSia === n) + '">' + esc(n) + '</button>'; }).join('');
     seg.addEventListener('click', function (e) { var b = e.target.closest('[data-f]'); if (!b) return; S.felagSia = b.getAttribute('data-f'); seg.querySelectorAll('.sg').forEach(function (x) { var on = x.getAttribute('data-f') === S.felagSia; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); }); renderTable(); });
