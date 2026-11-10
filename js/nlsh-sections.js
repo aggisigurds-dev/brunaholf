@@ -10,7 +10,8 @@
     i_vinnu: { lab: 'Í vinnu', col: '#2563eb' },
     lokid: { lab: 'Lokið', col: '#16a34a' },
   };
-  const num = (n) => (n == null ? '—' : Math.round(n).toLocaleString('is-IS'));
+  // Eigið snið: toLocaleString('is-IS') fellur í en-US („10,193“) þar sem íslenska vantar í vafrann.
+  const num = (n) => (n == null ? '—' : String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.'));
 
   function ensureStyle() {
     if (document.getElementById('nl-sec-style')) return;
@@ -121,6 +122,31 @@
       .nl-hero-k dd{margin:5px 0 0;font:800 26px/1 'Playfair Display',Georgia,serif;color:#fff;font-variant-numeric:tabular-nums}
       @media (max-width:980px){.nl-hero{grid-template-columns:minmax(0,1fr);padding:18px}.nl-hero-k dd{font-size:21px}}
       .nl-note{margin:10px 2px 14px;font-size:11.5px;line-height:1.5;color:var(--nl-mute);max-width:900px}
+      .nl-note b{color:var(--nl-ink)}
+      .nl-dg{margin:4px 0 18px}
+      .nl-dg-h{display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;margin:16px 2px 8px}
+      .nl-dg-h b{font:700 19px 'Playfair Display',Georgia,serif;letter-spacing:-.01em}
+      .nl-dg-h span:last-child{font-size:12px;color:var(--nl-mute);font-variant-numeric:tabular-nums}
+      .nl-dg-g{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+      @media (max-width:1000px){.nl-dg-g{grid-template-columns:repeat(2,minmax(0,1fr))}}
+      @media (max-width:520px){.nl-dg-g{grid-template-columns:minmax(0,1fr)}}
+      .nl-dk{min-width:0;background:#fff;color:#1f2933;border:1px solid var(--nl-line);border-top:3px solid var(--dk,#9ca3af);border-radius:12px;padding:12px 14px 10px;box-shadow:0 1px 2px rgba(22,21,19,.05),0 4px 14px rgba(22,21,19,.04)}
+      .nl-dk-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+      .nl-dk-h b{font:700 15px 'Playfair Display',Georgia,serif}
+      .nl-dk-p{font:800 26px/1 'Playfair Display',Georgia,serif;font-variant-numeric:tabular-nums}
+      .nl-dk-s{font-size:11.5px;color:#6f685c;margin:3px 0 9px;font-variant-numeric:tabular-nums}
+      .nl-dk-r{display:grid;grid-template-columns:78px minmax(0,1fr) auto;align-items:center;gap:8px;font-size:11.5px;padding:3px 0;font-variant-numeric:tabular-nums}
+      .nl-dk-r span{color:#44505e}
+      .nl-dk-r em{font-style:normal;font-weight:700;white-space:nowrap}
+      .nl-dk-r em small{font-weight:400;color:#6f685c}
+      .nl-dk-r.na span,.nl-dk-r.na em{color:#9aa1ab;font-weight:400}
+      .nl-dk-b{height:7px;border-radius:4px;background:#ece7dc;overflow:hidden}
+      .nl-dk-b i{display:block;height:100%;border-radius:4px}
+      .nl-ut{display:grid;gap:9px;background:#fff;color:#1f2933;border:1px solid var(--nl-line);border-radius:12px;padding:14px 16px;margin:8px 0}
+      .nl-ut-r{display:grid;grid-template-columns:170px minmax(60px,1fr) minmax(0,1.4fr);align-items:center;gap:12px;font-size:12px;font-variant-numeric:tabular-nums}
+      .nl-ut-r b{font-weight:600}
+      .nl-ut-r em{font-style:normal;color:#44505e}
+      @media (max-width:640px){.nl-ut-r{grid-template-columns:minmax(0,1fr);gap:4px}}
       .nl-fl{background:#fff;border:1px solid var(--nl-line);border-radius:14px;padding:16px 18px 12px;box-shadow:0 1px 2px rgba(22,21,19,.05),0 4px 14px rgba(22,21,19,.04)}
       .nl-fl-h{display:grid;grid-template-columns:auto auto 1fr;align-items:center;gap:0 12px;margin-bottom:10px}
       .nl-fl-h b{font:700 19px 'Playfair Display',Georgia,serif;letter-spacing:-.01em}
@@ -294,14 +320,104 @@
     if (f === '4H') return 0;
     if (f === '6H') return null;
     const ref = stukur.wings['6H ' + w];
-    return ref ? (ref.cat[c] || 0) : 0;
+    const t = ref ? (ref.cat[c] || 0) : 0;
+    return /^Loft/i.test(c) ? Math.round(t * loftFactor(stukur, w)) : t;
+  }
+
+  // Loftræsting 5H er talin sér á Miro (borð uXjVG3Z1Bmk=, Agnar): 5H1S 115 gegnumtök = 230 lokanir, 5H2S 122 = 244 — um 12 %
+  // færri en á 6H, svo „6H = 100 %“ vanmat loftið á 5H (10.11.2026). Miro telur um 7 % færri en Ajour skráir (6H S2: 272 á Miro
+  // á móti kláruðu í Ajour) og markmiðið er kvarðað með því hlutfalli. S4/S5 eru ótalin á Miro: meðalhlutfall S1 og S2 (áætlun).
+  const MIRO_LOFT = { vidmid: 272, S1: 230, S2: 244 };
+  const sumCat = (o, fn) => Object.keys(o || {}).reduce((a, k) => a + (fn(k) ? o[k] : 0), 0);
+  const erLoft = (c) => /^Loft/i.test(c);
+  function loftFactor(stukur, w) {
+    const l6 = (x) => sumCat((stukur.wings['6H ' + x] || {}).cat, erLoft);
+    const kv = l6('S2') ? l6('S2') / MIRO_LOFT.vidmid : 1;
+    const fw = (x) => (l6(x) ? Math.min(1, (MIRO_LOFT[x] * kv) / l6(x)) : 1);
+    return MIRO_LOFT[w] ? fw(w) : (fw('S1') + fw('S2')) / 2;
+  }
+
+  // Flokkahópar með ÞAKI per hóp (10.11.2026): markmið hóps = sami hópur á sama væng á 6H (loft kvarðað, sjá að ofan), en aldrei
+  // minna en klárað + opið á deildinni sjálfri. Áður var allt lagt saman og stál umfram viðmið faldi að loftræsting var ógerð
+  // (5H S4 sýndi 96 % með 68 % af loftinu). Hópar frekar en stakir stærðarflokkar: flokkun milli nágrannastærða er ekki eins
+  // milli hæða (5H S1 Stál 40-50 = 411 á móti 378 á 6H). 4H hefur aðeins milliloft; 6H á ekkert milliloft (Agnar 10.11.2026).
+  const HOPAR = [['Loft', 'Loftræsting', erLoft], ['Stál', 'Stálrör', (c) => /^Stál/i.test(c)], ['Plast', 'Plaströr', (c) => /^Plast/i.test(c)], ['Gólf', 'Milliloft', (c) => c === GOLF_CLS]];
+  function hopStada(stukur, f, w) {
+    const d = stukur.wings[f + ' ' + w] || { done: 0, open: 0, cat: {}, catOpen: {} };
+    const ref = stukur.wings['6H ' + w] || { cat: {}, catOpen: {} };
+    return HOPAR.map(([k, nafn, fn]) => {
+      const done = sumCat(d.cat, fn), open = sumCat(d.catOpen, fn);
+      let mark;
+      if (k === 'Gólf') mark = f === '6H' ? 0 : GOLF_TGT[w];
+      else if (f === '4H') mark = 0;
+      else if (f === '6H') mark = done;
+      else mark = Math.round((sumCat(ref.cat, fn) + sumCat(ref.catOpen, fn)) * (k === 'Loft' ? loftFactor(stukur, w) : 1));
+      return { k, nafn, done, open, mark, tgt: Math.max(mark, done + open) };
+    });
   }
   function wingTarget(stukur, f, w) {
-    const d = stukur.wings[f + ' ' + w] || { done: 0, cat: {} };
-    if (f === '6H') return d.done;
-    let tgt = 0, cd = 0;
-    CLS.forEach(([c]) => { tgt += classTarget(stukur, f, w, c) || 0; cd += d.cat[c] || 0; });
+    const d = stukur.wings[f + ' ' + w] || { done: 0, open: 0, cat: {} };
+    const hs = hopStada(stukur, f, w);
+    const tgt = hs.reduce((a, h) => a + h.tgt, 0), cd = hs.reduce((a, h) => a + h.done, 0);
     return Math.max(d.done, tgt + (d.done - cd));
+  }
+
+  // Deildaspjöld: ein stika per flokkahóp á hverri deild — sýnir HVAÐ er eftir, ekki bara hve mikið.
+  function deildirHtml(stukur) {
+    const stika = (p) => { const c = pctColor(p); return c.bd; };
+    const haedir = ['6H', '5H', '4H'].map((f) => {
+      let fd = 0, ft = 0;
+      const kort = WINGS.map((w) => {
+        const d = stukur.wings[f + ' ' + w] || { done: 0, open: 0 };
+        const hs = hopStada(stukur, f, w);
+        const done = hs.reduce((a, h) => a + h.done, 0), tgt = hs.reduce((a, h) => a + h.tgt, 0);
+        fd += done; ft += tgt;
+        const p = tgt ? Math.floor((done / tgt) * 100) : 0;
+        const radir = hs.map((h) => {
+          if (!h.tgt) return '';
+          if (!h.mark && f === '6H') return `<div class="nl-dk-r na" title="Milliloft á ekki að vera á 6. hæð (Agnar 10.11.2026) — líklega rangt flokkað í Ajour"><span>${h.nafn}</span><div class="nl-dk-b"></div><em>${num(h.done)} <small>utan markmiðs</small></em></div>`;
+          const hp = Math.floor((h.done / h.tgt) * 100);
+          return `<div class="nl-dk-r" title="${f} ${w} · ${h.nafn}: ${num(h.done)} klárað${h.open ? ', ' + num(h.open) + ' opin í Ajour' : ''}, markmið ~${num(h.tgt)}"><span>${h.nafn}</span><div class="nl-dk-b"><i style="width:${Math.max(hp, h.done ? 2 : 0)}%;background:${stika(hp)}"></i></div><em>${num(h.done)} <small>/ ~${num(h.tgt)}</small></em></div>`;
+        }).join('');
+        const eftir = Math.max(0, tgt - done);
+        return `<div class="nl-dk" style="--dk:${stika(p)}">
+          <div class="nl-dk-h"><b>${f} ${w}</b><span class="nl-dk-p">${p}%</span></div>
+          <div class="nl-dk-s">${eftir ? '~' + num(eftir) + ' eftir' : 'lokið'}${d.open ? ' · ' + num(d.open) + ' opin í Ajour' : ''}</div>
+          ${radir}
+        </div>`;
+      }).join('');
+      const fp = ft ? Math.floor((fd / ft) * 100) : 0;
+      return `<div class="nl-dg-h"><b>${FLOOR_NAME[f]}</b><span class="nl-fl-pill">${fp}%</span><span>${num(fd)} af ~${num(ft)} · ~${num(Math.max(0, ft - fd))} eftir</span></div><div class="nl-dg-g">${kort}</div>`;
+    }).join('');
+    return `<div class="nl-dg">${haedir}
+      <p class="nl-sec-cat">Hver stika er einn flokkahópur. Markmið (~) = sami hópur á sömu deild á 6. hæð, en aldrei minna en klárað + opið. Loftræsting á 5. hæð er kvörðuð við eigin talningu (S1 og S2 taldar, S4 og S5 áætlaðar með sama hlutfalli). Milliloft: um 100 göt á deild = ~${num(GOLF_TGT.S1)} lokanir á 4. og 5. hæð, ekkert á 6. hæð. Rafmagn er sér hér fyrir neðan.</p>
+    </div>`;
+  }
+
+  // Utan deilda: rafmagn á sérteikningum, Viðbótarverkefni og skráningar án teikningar (stukur.utan úr tools/nlsh-stukur.cjs).
+  function utanHtml(stukur) {
+    const u = stukur.utan;
+    if (!u) return '';
+    const finna = (re) => { const k = Object.keys(u).find((x) => re.test(x)); return k ? u[k] : { done: 0, open: 0, cat: {}, catOpen: {} }; };
+    const erRaf = (c) => RAF_CLS.indexOf(c) >= 0;
+    const rafDeild = (f) => ['S1', 'S2'].reduce((a, w) => { const d = stukur.wings[f + ' ' + w] || {}; return [a[0] + sumCat(d.cat, erRaf), a[1] + sumCat(d.catOpen, erRaf)]; }, [0, 0]);
+    const r6 = finna(/^6H.*Rafmagns/i), r5 = finna(/^5H.*Rafmagns/i), vb = finna(/Viðbótarverkefni/i), an = finna(/^\(engin teikning\)$/);
+    const d6 = rafDeild('6H'), d5 = rafDeild('5H');
+    const k6 = d6[0] + r6.done, o6 = d6[1] + r6.open, k5 = d5[0] + r5.done, o5 = d5[1] + r5.open;
+    const minnis = (an.catOpen['Guide point'] || 0) + (an.catOpen['Annað'] || 0);
+    const rod = (heiti, done, tgt, texti, lit) => {
+      const p = tgt ? Math.min(100, Math.floor((done / tgt) * 100)) : 0;
+      return `<div class="nl-ut-r"><b>${heiti}</b><div class="nl-dk-b"><i style="width:${Math.max(p, done ? 1 : 0)}%;background:${lit || pctColor(p).bd}"></i></div><em>${texti}</em></div>`;
+    };
+    return `<details class="nl-fl-det" open><summary>Rafmagn og annað utan deilda</summary>
+      <div class="nl-ut">
+        ${rod('Rafmagn 6H · S1+S2', k6, k6 + o6, `${num(k6)} klárað${o6 ? ' · ' + num(o6) + ' opin' : ''}`)}
+        ${rod('Rafmagn 5H · S1+S2', k5, k6 + o6, `${num(k5)} klárað · ${num(o5)} mæld og ólokuð`)}
+        ${rod('Viðbótarverkefni', vb.done, vb.done + vb.open, `${num(vb.done)} klárað${vb.open ? ' · ' + num(vb.open) + ' opin' : ''}`)}
+        ${rod('Án teikningar', an.done, an.done + an.open, `${num(an.open)} opnar, þar af ${num(minnis)} minnispunktar · ${num(an.done)} kláraðar`, '#9ca3af')}
+      </div>
+      <p class="nl-sec-cat">Rafmagn er skráð á sérteikningar í Ajour og skiptist ekki á deildir hér. Stikan fyrir 5. hæð miðar við 6. hæð, sem er viðmið en ekki markmið: aðeins upprunalegar rafmagnsteikningar eru til og breytingar hafa tvítalið sum göt (Agnar 10.11.2026). Á S4 og S5 er ekkert rafmagn skráð á hvorugri hæð. Skráningar án teikningar eru athugasemdir, leiðréttingar og göt sem bíða (t.d. eftir gifsi) og verða ekki staðsettar á deild.</p>
+    </details>`;
   }
 
   // Norður / Center / Suður (skipting verktaka á hverri stúku): sjá tools/nlsh-stukur.cjs — brýrnar milli stúkna sjást sem dýfa í
@@ -316,7 +432,7 @@
     const zd = zoneOf(stukur, f, w, z);
     if (f === '6H') return zd.done;
     let t = 0;
-    if (f === '5H') { const ref = zoneOf(stukur, '6H', w, z); t += ref.done - (ref.cat[GOLF_CLS] || 0) - RAF_CLS.reduce((x, c) => x + (ref.cat[c] || 0), 0); }
+    if (f === '5H') { const ref = zoneOf(stukur, '6H', w, z); t += ref.done - (ref.cat[GOLF_CLS] || 0) - RAF_CLS.reduce((x, c) => x + (ref.cat[c] || 0), 0) - Math.round(sumCat(ref.cat, erLoft) * (1 - loftFactor(stukur, w))); }
     const g = { N: 0, C: 0, S: 0 };
     ['S1', 'S2'].forEach((x) => ZONES.forEach(([k]) => { g[k] += zoneOf(stukur, '5H', x, k).cat[GOLF_CLS] || 0; }));
     const gs = g.N + g.C + g.S;
@@ -430,7 +546,7 @@
     const foot = `<tr class="nl-um-sum"><td><b>Eftir</b></td>${cls.map(([c]) => `<td>${perC[c] ? num(perC[c]) : '·'}</td>`).join('')}<td><b>${num(rem)}</b></td></tr>`;
     return `<details class="nl-fl-det" open><summary>Umferðir: hlutfall af markmiði á hverja stúku og flokk</summary>
       <div class="nl-fl-tw"><table class="nl-fl-t nl-um"><thead><tr><th>Stúka</th>${cls.map((c) => `<th>${escapeHtml(c[1])}</th>`).join('')}<th>Eftir</th></tr></thead><tbody>${rows.join('')}</tbody><tfoot>${foot}</tfoot></table></div>
-      <p class="nl-sec-cat">Markmið = sami flokkur á sama væng á 6H (hún er búin). Gólf Ø160-200 (milliloft) á 4H og 5H: um 100 göt á stúku (Agnar) = ~200 stakar lokanir; 6H hefur engin gólfgöt í markmiði. Lítil tala í reit er stærðin sem eftir er. Samtals eftir um <b>${num(rem)}</b> göt (án rafmagnsraufa). Gólfgöt eru ${perC[GOLF_CLS] ? Math.round((perC[GOLF_CLS] / rem) * 100) : 0}% af því.</p>
+      <p class="nl-sec-cat">Markmið = sami flokkur á sama væng á 6H (hún er búin); loftræsting á 5H er kvörðuð niður við eigin talningu (um 12 % færri gegnumtök en á 6H). Stærðarflokkun er ekki alveg eins milli hæða, svo stakur flokkur getur sýnt of lítið þótt hópurinn sé búinn — deildaspjöldin efst leggja hópana saman. Gólf Ø160-200 (milliloft) á 4H og 5H: um 100 göt á stúku (Agnar) = ~200 stakar lokanir; 6H hefur engin gólfgöt í markmiði. Lítil tala í reit er stærðin sem eftir er. Samtals eftir um <b>${num(rem)}</b> göt (án rafmagnsraufa). Gólfgöt eru ${perC[GOLF_CLS] ? Math.round((perC[GOLF_CLS] / rem) * 100) : 0}% af því.</p>
     </details>`;
   }
 
@@ -459,7 +575,7 @@
       if (f === '6H') return catGrp(zd.cat);
       if (f === '4H') return [0, 0, 0, Math.round(GOLF_TGT[w] * golfShare()[zi]), 0];
       const z6 = zoneOf(stukur, '6H', w, ZK[zi]), ref = catGrp(z6.cat);
-      return [ref[0], ref[1], 0, Math.round(GOLF_TGT[w] * golfShare()[zi]), ref[4]];
+      return [Math.round(ref[0] * loftFactor(stukur, w)), ref[1], 0, Math.round(GOLF_TGT[w] * golfShare()[zi]), ref[4]];
     };
     const geom = (f) => {
       const pts = pk.floors[f] || [], out = {};
@@ -577,6 +693,16 @@
     window.addEventListener('resize', () => { if (box.isConnected) draw(); });
   }
 
+  // Opnar skráningar í Ajour eru EKKI sama og ólokuð göt: meirihlutinn hefur enga teikningu (athugasemdir, leiðréttingar, bið).
+  function opidLina(stukur) {
+    const u = stukur.utan;
+    if (!u) return 'Rafmagnsraufar, rafmagnsgöt og fleira á flokkateikningum er ótalið hér.';
+    const aDeild = Object.keys(stukur.wings).reduce((a, k) => a + (stukur.wings[k].open || 0), 0);
+    const an = (u['(engin teikning)'] || { open: 0 }).open;
+    const ser = Object.keys(u).reduce((a, k) => a + (k === '(engin teikning)' ? 0 : u[k].open), 0);
+    return `Opið í Ajour: <b>${num(stukur.open)}</b> skráningar — ${num(aDeild)} á deildum, ${num(ser)} á sérteikningum (rafmagn, viðbótarverk) og ${num(an)} án teikningar.`;
+  }
+
   function floorsHtml(data, stukur) {
     if (!stukur || !stukur.wings) return floorsHtmlPar(data);
     const fl = ['6H', '5H', '4H'].map((f) => floorWingsHtml(stukur, f));
@@ -588,7 +714,9 @@
         <div class="nl-hero-pct"><b>${pct}%</b><span>lokið</span><div class="nl-bar"><i style="width:${pct}%"></i></div></div>
         <dl class="nl-hero-k"><div><dt>Klárað</dt><dd>${num(done)}</dd></div><div><dt>Markmið (mat)</dt><dd>~${num(total)}</dd></div><div><dt>Eftir (mat)</dt><dd>~${num(Math.max(0, total - done))}</dd></div></dl>
       </div>
-      <p class="nl-note">Heildin er mat: Ajour gefur aðeins klárað, ekki það sem á eftir að gera. Ajour skráir stakar lokanir (sín hvorum megin við vegg). Rafmagnsraufar, rafmagnsgöt og fleira á flokkateikningum er ótalið hér.</p>
+      <p class="nl-note">Heildin er mat: Ajour gefur aðeins klárað, ekki það sem á eftir að gera. Ajour skráir stakar lokanir (sín hvorum megin við vegg). ${opidLina(stukur)}</p>
+      ${deildirHtml(stukur)}
+      ${utanHtml(stukur)}
       <div class="nl-fl-grid">${fl.map((x) => x.html).join('')}</div>
       <div class="nl-fl-leg"><span>0%</span><span class="bar"></span><span>100% búið</span><span>· Loft = loftræsting · Stál = stálrör (vatnslagnir) · Rafmagn · Gólf = milliloft · Annað = plast o.fl. · fjöldi gata sem er klárað</span></div>
       ${kortHtml()}

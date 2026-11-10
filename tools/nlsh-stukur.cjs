@@ -99,7 +99,21 @@ function skiptaEftirHnitum(regs) {
   }
   return wings;
 }
-module.exports = { skiptaEftirHnitum, RULES, punktar, TRANS, CROP };
+// Það sem stúkuskiptingin sleppir (10.11.2026): flokkateikningar (Rafmagnsþéttingar 5H/6H), „Viðbótarverkefni“ og skráningar ÁN
+// teikningar. Áður hurfu þær þegjandi úr samtölunum — 5H-rafmagn (72 mældar, 0 lokað) sást hvergi. Lykill = heiti teikningar.
+function utanStukna(regs) {
+  const out = {};
+  for (const r of regs) {
+    const hefurHnit = !!(r.coords && r.coords[0]);
+    if (hefurHnit && RULES.some((x) => x[0].test(r.draw || ''))) continue;
+    const k = hefurHnit ? (r.draw || '(óþekkt teikning)') : '(engin teikning)';
+    const o = (out[k] ??= { done: 0, open: 0, cat: {}, catOpen: {} });
+    const c = r.cat || '(tómt)';
+    if (r.status === 4) { o.done++; o.cat[c] = (o.cat[c] || 0) + 1; } else { o.open++; o.catOpen[c] = (o.catOpen[c] || 0) + 1; }
+  }
+  return out;
+}
+module.exports = { skiptaEftirHnitum, utanStukna, RULES, punktar, TRANS, CROP };
 
 if (require.main === module) (async () => {
   const projects = await aj('/api/construction/projects');
@@ -116,7 +130,7 @@ if (require.main === module) (async () => {
   const PUNKTAR = path.join(__dirname, '..', 'data', 'nlsh-punktar.json');
   fs.writeFileSync(PUNKTAR, JSON.stringify({ updated: new Date().toISOString(), w: CROP.w, h: CROP.h, hopar: ['Loft', 'Stál', 'Rafmagn', 'Gólf', 'Annað'], floors: punktar(regs) }));
   const klarad = regs.filter((r) => r.status === 4).length;
-  fs.writeFileSync(OUT, JSON.stringify({ updated: new Date().toISOString(), source: 'Ajour hnit (registrationCoordinates), skipt við stærsta x-bil per teikningu', total: regs.length, done: klarad, open: regs.length - klarad, wings }, null, 1));
+  fs.writeFileSync(OUT, JSON.stringify({ updated: new Date().toISOString(), source: 'Ajour hnit (registrationCoordinates), skipt við stærsta x-bil per teikningu', total: regs.length, done: klarad, open: regs.length - klarad, wings, utan: utanStukna(regs) }, null, 1));
   console.log('skrifað', OUT, '| skráningar', regs.length, '| klárað', klarad);
   Object.keys(wings).sort().forEach((k) => console.log(k.padEnd(7), wings[k].done, 'opið', wings[k].open));
 })().catch((e) => { console.error('VILLA', e.message); process.exit(1); });
