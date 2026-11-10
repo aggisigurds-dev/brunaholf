@@ -42,6 +42,17 @@ function repoAf(cwd) {
 function deploySkref(cmd, cwd) {
   const c = String(cmd || '');
   if (/\[deploy\]/i.test(c) && /\bgit\s+commit\b/.test(c)) return '[deploy]-commit';
+  /* 10.11.2026: birtingin kviknar á [deploy] HVAR SEM ER í skilaboðum haus-commitsins (netlify.toml: `git log -1 --pretty=%B | grep`,
+     deploy.yml: contains(head_commit.message, …)) — líka í meginmáli. Lota 2ef635f0 skrifaði „Ekki [deploy]: fer út með næstu
+     birtingu" í meginmál skilaboða úr skrá (git commit -F) og birti báðar síður óvart, framhjá þessum verði. Því er skráin lesin
+     þegar slóðin er læsileg, og ýting skoðar ÖLL skilaboðin (%B), ekki bara fyrirsögnina. */
+  const mF = /\bgit\s+commit\b/.test(c) && c.match(/(?:\s-F|\s--file)(?:=|\s+)"?([^"\s;&|]+)"?/);
+  if (mF && !/[$`]/.test(mF[1])) {
+    let texti = null;
+    try { texti = fs.readFileSync(path.isAbsolute(mF[1]) ? mF[1] : path.join(cwd, mF[1]), 'utf8'); } catch (_) { /* ólæsileg slóð → ýtingin grípur það */ }
+    if (texti && /\[deploy\]/i.test(texti))
+      return /\[deploy\]/i.test(texti.split(/\r?\n/)[0]) ? '[deploy]-commit (skilaboð úr skrá)' : 'commit með [deploy] í MEGINMÁLI skilaboða — ýting BIRTIR (óviljandi? umorðaðu og amend-aðu fyrir ýtingu)';
+  }
   if (/\bnetlify\s+deploy\b/.test(c)) return 'netlify deploy';
   if (/\bnode\s+deploy\.js\b/.test(c)) return 'node deploy.js (BANNAÐ — eyðir föllunum)';
   if (/\bgh\s+pr\s+merge\b/.test(c)) return 'gh pr merge';
@@ -49,6 +60,8 @@ function deploySkref(cmd, cwd) {
   if (/\bgit\s+push\b/.test(c) && !/--dry-run/.test(c)) {
     const msg = git(cwd, 'log', '-1', '--format=%s');
     if (msg && /\[deploy\]/i.test(msg)) return 'git push með [deploy]-haus';
+    const allt = git(cwd, 'log', '-1', '--format=%B');
+    if (allt && /\[deploy\]/i.test(allt)) return 'git push þar sem [deploy] stendur í MEGINMÁLI haus-commitsins — þetta BIRTIR (óviljandi? amend-aðu skilaboðin fyrst)';
   }
   return null;
 }

@@ -57,6 +57,13 @@ með `[deploy]`-haus, `netlify deploy`, `gh pr merge` og `git merge`, og bætir 
    á index.html; UI í gegnum viðmótið (skill `vidmotsprof`, `bh-browser.cjs`), ekki með API-kalli.
 9. **Deploy-reglan.** `[deploy]` í haus-commiti birtir; `deploy.bat`/`netlify deploy` handvirkt = vísa á skill
    `deploy`. Hálfkláruð breyting í `main` fer í loftið með morgunkeyrslunni 06:15 — WIP er ekki commit-að í main.
+   **`[deploy]` birtir HVAR SEM ER í skilaboðunum, líka í meginmáli** (`netlify.toml`: `git log -1 --pretty=%B | grep`;
+   slökkvitæki `deploy.yml`: `contains(head_commit.message, …)`). 10.11.2026 skrifaði lota „Ekki [deploy]: fer út með næstu
+   birtingu" í meginmál og birti BÁÐAR síður óvart (brunaholf 70baa1c, slokkvitaeki 8642c13d). Skrifaðu „ekki birt" eða
+   „án birtingar" — aldrei orðið í hornklofum nema þú ætlir að birta. `deploy-vordur.cjs` les nú skilaboðaskrá (`-F`) og öll
+   skilaboð haus-commitsins við ýtingu og segir frá, en hann stöðvar ekki. Önnur gildra sama kvöld: GitHub AFTURKALLAR
+   birtingu sem er í gangi þegar ný ýting kemur á master (`[deploy] Teikning…` b7a3a85d var afturkölluð af skjalaýtingu
+   mínútu síðar og fór aldrei út) — staðfestu ALLTAF með `build.json` að þitt commit sé það sem er í loftinu.
 10. **Hookar og tól.** `tools/router.cjs`, `sidu-vordur.cjs`, `lotu-lok.cjs`, `deploy-vordur.cjs`: alltaf exit 0,
     aldrei stdout nema JSON, aldrei nettenging án timeout; `node tools/router.cjs --test` 27/27 eftir breytingu.
 

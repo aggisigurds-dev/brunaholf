@@ -37,6 +37,11 @@ git commit --allow-empty -m "[deploy] hvað fer út" && git push origin main
 ```
 Auto-sync wip-commit ber `[skip ci]` nema óýtt `[deploy]`-commit bíði undir því.
 
+**⚠️ Merkið virkar hvar sem er í skilaboðunum (mælt 10.11.2026).** `ignore`-skipunin grípur `[deploy]` í ÖLLUM
+skilaboðum haus-commitsins (`%B`), ekki bara fyrirsögninni; sama gildir í slökkvitæki (`contains(head_commit.message, …)`).
+Setning eins og „Ekki [deploy]" í meginmáli BIRTIR. Viltu ekki birta: skrifaðu „ekki birt" og nefndu merkið aldrei.
+Eftir hverja ýtingu sem á að birta: `curl -s https://brunaholf.netlify.app/build.json` og berðu commit saman við þitt.
+
 ## The flow
 ```bash
 # edit index.html and/or netlify/functions/*.js directly
