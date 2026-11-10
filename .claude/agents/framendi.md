@@ -463,6 +463,12 @@ og Landsbanka-kröfur teljast EKKI. Sótt úr `load()` í Kröfu yfirliti (ekki 
   við Payday-röð SJÁLFVIRKT (aðeins reiknað, ekkert skrifað): sama kt, upphæð innan 1 kr, Payday SENT/PAID, gjalddagi ≥ upphaf vinnumánaðar, einn-á-einn
   (elsta drög fyrst), raðir sem hanga á drögum (payday_invoice_id) frátekin. Tengd drög detta úr Ósent en lifa í töflunni/draftKeys; svarið ber `sjalfvirk_tenging[]`.
   Próf: `node tools/test-krofu-sjalfvirk-tenging.cjs` (13 atriði; fellur á gamla kóðanum). Mælt 20.10: sex tengingar á lifandi gögnum (R-371, 377, 378, 379, 380, 381), allar nákvæmar.
+- **10.11.2026 — „📄 Efnislisti · sundurliðun" á sendum reikningi (þrep 1):** Agnar: „setja aftur Efnislistann þangað sem var sendur svo
+  ég sjái sundurliðunina". Röðin finnur sig í `state.data.sjalfvirk_tenging` (tilvísun → `draftinv|verkstaður|mánuður`) og sækir PDF-ið úr
+  `EFDOCS[verkstaður|mánuður]` (aðalskjal fyrst, aldrei `innra`/`timabok_pdf`); tengillinn `[data-ky-sendpdf]` opnar í nýjum flipa og
+  stöðvar smellinn svo röðin opnist ekki. Aðeins lestur. Drög sem hanga á `payday_invoice_id` (ekki í sjalfvirk_tenging) fá EKKI tengil enn.
+  Próf án skrifa: scratchpad `ky_pdf_test.cjs` (skrár af diski á `bh.test`, GET → lifandi API): R-386/387/388 fengu tengil.
+  **Mundu:** tengingin er aðeins reiknuð — ekkert skrifar `payday_invoice_id` á drögin, svo NLSH-mánuður frystist ekki sjálfur (sjá skill `gata-manadarlok`).
 
 ## Nýtt úr Charlize og lotum (28.10.2026)
 

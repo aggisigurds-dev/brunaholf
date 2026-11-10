@@ -36,6 +36,11 @@ Hvorugt verkið rukkast eftir Tímaveru. **Dýpri þekking (verð, reglur, saga)
 5. **Sjálfvirk frysting:** drög mánaðarins send (payday_invoice_id / invoiced) með
    `nlsh:true`-línum → frystast við næsta GET. Annars „🔒 Festa" (`#nle-frysta`,
    POST `{action:'frysta', month}`) — birtist þegar reikningur er sendur en mánuður ófestur.
+   **GAT (mælt 10.11.2026):** síðan 20.10 tengir Kröfu yfirlit drög við Payday aðeins í ÚTREIKNINGI
+   (`sjalfvirk_tenging` í `/api/krofu-yfirlit-bru`) og skrifar ekki `payday_invoice_id` á drögin — þá
+   frystist mánuðurinn EKKI sjálfkrafa. Október 2026 var sendur sem R-388 (4.756.347 = 5.006.681 × 0,95)
+   og stóð ófrosinn þar til Claude festi hann 10.11. Athugaðu því alltaf: er mánuðurinn í
+   `sjalfvirk_tenging` með Payday-tilvísun en `fryst: false`? Þá: bera upphæðina saman (× 0,95) og festa.
 
 **Skrefin (þegar Agnar biður):**
 1. Opna gluggann. Hann velur sjálfur **fyrsta ófrosna mánuðinn** (`autoMan`) — síðumánuður
