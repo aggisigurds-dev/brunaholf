@@ -426,6 +426,25 @@ ANNAÐ kerfi en „Efniskostnaður / Kostnaðarreikningar (endurrukkun)" hér a�
 
 **Miro-borðið „Landsspitali“** (`uXjVJ1jKBnY=`; verkfæri `mcp__be6a48b9…__canvas_search` / `canvas_read_as_svg`, aðeins lesið): einn rammi per kerfi og deild (6H1S/6H2S). Hver lestur er 20–30 þús. tókn — láttu undiragent telja og skrifa JSON. Lesið 08.11: **6H2S Rafmagnsraufar = 55 grænir tíglar (rhombus #067429) = 55 pör = 110 stakar**; **Sprinklerkerfi = 83 stjörnur** (35×1, 40×4, 50×26, 60×30, 75×22). Flokkun (Agnar 08.11): 60 mm → Stál Ø75-110; 40/50 → Ø40-50; 75 → Ø75-110; 35 → Ø15-35. Loftræsting = krossar með stærð, vatnslagnir = ský, yfirlitsrammar = talnamerki („2/3“) — ekki gegnumtök. Engir rammar eru til fyrir 6H1S rafmagn/sprinkler. Agnar: 6H1S og 6H2S eru tvær deildir; 110 sem 100% á deild (óstaðfest enn). **Staðfest (Agnar 08.11):** hver sprinklerstjarna = eitt gegnumtak = TVÆR lokanir (stakar) → 83 stjörnur = 166 stakar á 6H2S: Ø15-35 2, Ø40-50 60, Ø75-110 104. Ajour-flokkar Stál innihalda ÖLL stálrör (ekki bara sprinkler): 6H S2 klárað 30.10 = Ø15-35 320, Ø40-50 345, Ø75-110 92, Ø110-160 42 — samanburður við sprinkler eitt og sér er ekki marktækur, markmið per flokk þarf summu allra stálkerfa (sprinkler + vatn/hiti o.fl.). Ajour-lotan (`ajour-state.json`) gaf 401 þann 08.11 — `retry-ajour-login.bat` áður en hnit eru sótt. Ekkert var skrifað á borðið.
 
+## Ajour-innlestur: sókn eftir beiðni og NULL-dagsetningar sem tvítakast (mælt 04.–10.11.2026, lota 2ef635f0)
+
+- **Sækja núna:** `insert into automation_triggers (workflow, status, requested_by) values ('ajour','bida','<hver>') returning id;`
+  (taflan hefur ENGAN `created_at` — dálkarnir eru requested_at/started_at/finished_at/result). Tekið innan mínútu, ~2 mín,
+  result endar á „Ajour sótt: N færslur uppfærðar · yfirlit vistað"; ótekin beiðni í 30 mín → úrelt. **Watcher keyrir á BÁÐUM
+  vélum** (`LunaBridge-Watcher` á DESKTOP-M5FO3I6, `LunaBridge2-Watcher` á skrifstofuvélinni; `schtasks` 10.11) — sú sem tekur
+  beiðnina þarf lifandi `ajour-state.json`. Daglega sóknin 06:45 (`LunaBridge2-Ajour`) er aðeins á skrifstofuvélinni.
+- **Hvað sókn uppfærir:** `ajour-ingest.py:128` upsertar á `(serial_number, project_name, execution_date)` með merge-duplicates og
+  sendir `category_group` og `registration_status` → flokka- og stöðubreyting í Ajour skrifast yfir (staðfest: 12068 fór úr
+  Raufar/Published í Gólf Ø 160-200/Done). `imported_at` er aðeins sett við innsetningu og segir ekkert um uppfærslur.
+- **VILLA (verkefnalisti `1bd6ccae`, ólagað):** þegar `execution_date` er NULL passar einkvæmi vísirinn ekki (NULL ≠ NULL) og röðin
+  er SETT INN aftur við hverja sókn. 10.11: 63 raðir án dags á 62 NLSH-skráningum (12271 tvisvar: 09.11 og 10.11) → um +62 raðir
+  á dag. `nlsh_stada*` og `nlsh-uppgjor` telja `count(distinct serial_number)` og skekkjast ekki; allt sem telur raðir gerir það,
+  og þegar skráning fær dag verður NULL-röðin eftir með gamla stöðu (telst í `ekki_done`). Sama rót: breytist framkvæmdadagur
+  í Ajour verður gamla röðin eftir. Rétt lagfæring er lykill á `(project_name, serial_number)` — vísir + báðir innlesarar
+  (`ajour-ingest.py` og `netlify/functions/ajour-ingest-drive-background.js`) í SAMA skrefi á báðum vélum; gamall kóði á móti
+  nýjum vísi fellir 500 raða lotu (409), nýr kóði á móti gömlum vísi fær 42P10. Í dag er aðeins eitt tvítekið par í töflunni.
+- **Lesa aldrei `count(*)` úr `ajour_registrations` sem fjölda skráninga** — notaðu `count(distinct serial_number)` per verk.
+
 ## Grunnreglur allra agenta (04.11.2026)
 1. Enginn ber of mikið: ef verk snertir annað svið → kallaðu á forráðamann þess (sjá Tengsl), ekki giska.
 2. Veiddu úr þínum töflum (gagnakortið í docs/AGENTASKRA.md) og skráðu reglur sem bíta í charlize_knowledge (topic = þitt heiti).

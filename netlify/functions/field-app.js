@@ -101,7 +101,9 @@ async function handleGet(event) {
       // Verk í vinnslu: færslur í Tímaveru síðustu 7 daga (líka frá fyrri mánuði), ósend drög í Kröfu yfirliti (síðustu 3 mánuðir)
       // og verk sem starfsmenn hafa bætt við sjálfir í appinu (síðustu 120 daga). Bilun í einhverju þeirra fellir ekki listann.
       allPages(`timavera_entries?select=project&date=gte.${dago(7)}`).catch(() => []),
-      all(`invoice_drafts?select=worksite_name&status=eq.draft&work_month=gte.${ym2}`).catch(() => []),
+      // 10.11.2026: drög sem þegar eru tengd Payday-reikningi (payday_invoice_id) eru SEND, ekki verk í vinnslu — Kringlan (#337 → R-384)
+      // stóð á listanum með 0 klst. Drög sem tengjast aðeins í útreikningi Kröfu yfirlits bera enn null og sjást áfram.
+      all(`invoice_drafts?select=worksite_name&status=eq.draft&payday_invoice_id=is.null&work_month=gte.${ym2}`).catch(() => []),
       all(`field_entries?select=worksite_name,note,author,entry_date&kind=eq.verk&entry_date=gte.${dago(120)}&order=created_at.desc`).catch(() => []),
     ]);
     const amap = {};

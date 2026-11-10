@@ -221,6 +221,20 @@ Agnar biður um íslensku; upplesturinn á jarvis.html er alltaf enska.
 
 ## Lærdómur
 
+- **10.11.2026 — Lotu-yfirferð (Agnar sendi á margar lotur: „farðu í gegnum allar þínar beiðnir úr þessu sessioni, athugaðu hvort
+  það virki í raun, endurbættu það sem er hægt, uppfærðu þekkingargrunn agenta").** Aðferð sem virkaði (lota 2ef635f0, 59 beiðnir í
+  15 þráðum, Charlize #2291): (1) dragðu beiðnirnar úr afriti lotunnar — `~/.claude/projects/<verkefni>/<lota>.jsonl`, `type:"user"`,
+  slepptu `tool_result`, `isMeta` og `isCompactSummary`; (2) flokkaðu í þræði og sannreyndu hvern á LIFANDI gögnum (build.json, SQL,
+  búntar; Slökkvitæki krefst innskráningar frá 09.11 → staðbundinn þjónn á móti lifandi grunni); lesaðeins undiragentar mega keyra
+  samhliða en aðeins EINN með vafrann; (3) þrjár bilanir koma aftur og aftur: **dagsett gögn úreldast** (vikuyfirlitinu var lokað og
+  Aðalmál stóð tómt), **beiðni sem önnur beiðni tók við var aldrei kláruð** (Brunahólfs-málaglugginn) og **nótur bera gamlar tölur**
+  (drög #344 sögðu 4.357.923 þegar reikningurinn var 5.006.681); (4) lagaðu í sér vinnutré ef önnur lota á óvistað í repóinu;
+  (5) villur → `verkefnalisti`, reglur → Charlize, viðbætur → agent-skrá eiganda. Segðu Agnari hvað var EKKI gert og hvers vegna.
+- **10.11.2026 — notkun agenta:** `charlize_sessions` er að 80 % Arnold-vaktin („Biðröð tóm", skráir bord-flettur, elon-musk, framendi,
+  arnold í hvert sinn) — síaðu hana út áður en þú lest hver er kallaður. Síðustu 7 daga aldrei kallaðir: `innkaupabokari`,
+  `kerfisrynir`, `rambo`, `samthykktir`, `sara-organizer`, `verkstadur`. `agent_notes` er tóm — „Bæta við upplýsingum" hefur aldrei
+  verið notað. Routerinn: „beiðnir" (= óskir) kallaði bord-flettur einn og sér því síðan heitir Beiðnir → nú í `ALMENN` (8338404).
+  `docs/AGENTASKRA.md` vantaði `kerfisrynir`, `heimaleiga`, `center-hotel` → 42 raðir.
 - **04.11.2026 — Agentakerfið 2.0 (samþykkt plan):** Agentanetið verður lag/flipi í jarvis.html (fasi 5, útlitsviðmið
   „Agentanetið — Ragnarök.html“, erfir `data-thema`); síðukortið býr í `<repo>/.claude/sidukort.json` og `tools/build-agents-registry.cjs`
   sameinar í `data/sidukort.json` + SIDUKORT-blokkina í `docs/AGENTASKRA.md`; lotur skrást í `charlize_sessions` (ný); göt-spjaldið les

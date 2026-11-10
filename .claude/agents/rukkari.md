@@ -301,6 +301,22 @@ client_id:'mail:'+message_id}`.
 - **Skeytamiðlun ræður því hvort reikningur kemst í samþykkt.** Center Hotels taka ekki við reikningi nema með skeytamiðlun; `payday_delivery` var tómt á öllum 12 stöðunum og 1,21 m.kr. sat fast. Athugaðu `payday_delivery` áður en ógreiddur reikningur er talinn vanskil.
 - **Sýnur í stað handvirkrar leitar:** `v_krafa_ekki_send`, `v_kredit_an_endurgerdar`, `v_verk_an_reiknings`, `v_skodun_gleymd`, `v_taekjatolur_misraemi`, `v_erindi_osvarad`, `v_skeytamidlun_vantar`. Lestu gildrurnar: `select obj_description('<sýn>'::regclass)`.
 
+## Fjármála-yfirlit og Kröfu yfirlit Brunahólfs — það sem heldur tölunum réttum (endurmælt 10.11.2026, lota 2ef635f0)
+
+- **Handvirkar varnir sem þarf enn:** `krofur_yfirlit_meta` `payday|378` (Landspítali 3.959.247) og `payday|372` (Mosfellsbær 152.095)
+  eru `paid=true` síðan 02.11 því bankinn sýndi greiðslu með millifærslu en Payday segir enn SENT. Payday uppfærir ekki stöðu við
+  millifærslu og `bank_transactions` endar 15.06.2026 (`likely_paid` er blint) — ekki taka merkin af fyrr en Payday segir PAID.
+- **Sjálfvirk tenging er REIKNUÐ, ekki skrifuð:** `sjalfvirk_tenging`/`haldid_eftir` eru í svari `krofu-yfirlit-bru`; `payday_invoice_id`
+  á drögunum helst null (okt 2026: #343 ↔ 387, #344 ↔ 388 með 250.334 haldið eftir). Sönnun tengingar er svarið, ekki dálkurinn.
+- **Það sem pípan sér ekki:** tímar liðins mánaðar án draga (okt 2026: Tindasel 494.041, Grensásvegur 10 132.891, Gullslétta 18 69.678
+  = 696.610) birtast aðeins í `timavera_eldri`, sem er brúttó per mánuð og EKKI í `grand_total`. Spurðu Agnar hvort gera á drög.
+- **Enn opið frá 02.11:** R-000418 Strandasel 9 (39.638) er `final` án kreditnótu og telst því útistandandi; R-360 Krókur 77
+  (3.500.000) og R-314 JL Rafverktakar (495.018) eru SENT og falin, óákveðin; janúar-drög #169 (1.233.963) án reiknings;
+  `customer_worksite_map.retention_pct` = 10 á Landsspítala en raunin er 5. Nóta Agnars á `payday|384` (02.11: „Eftir að færa þetta
+  yfir á rekstrarfélag kringlunnar") stangast á við að R-384 var greiddur af Reitum 04.11 — spyrja áður en nokkuð er fært.
+- **Vikuyfirlit fyrir Agnar** fer á Aðalmál (Slökkvitæki patch 492): nýtt mál í hverri viku með merkinu `adalmal`, ekki `samthykki`
+  (Charlize #2286). Síðast #1587 (10.11.2026).
+
 ## Grunnreglur allra agenta (04.11.2026)
 1. Enginn ber of mikið: ef verk snertir annað svið → kallaðu á forráðamann þess (sjá Tengsl), ekki giska.
 2. Veiddu úr þínum töflum (gagnakortið í docs/AGENTASKRA.md) og skráðu reglur sem bíta í charlize_knowledge (topic = þitt heiti).

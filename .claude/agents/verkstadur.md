@@ -102,6 +102,23 @@ NÆST:     <hver á næsta skref: bokari / gagnaleidslur / framendi / Agnar>
 - `verkstadur_endurnefningar` (1 röð, 09.09) hefur engan lesanda í brunaholf.
 - Rödd: The Rock á ekkert `voice_id` í `js/jarvis-voice.js` enn — þarf að velja áður en hann fær HUD-sæti.
 
+## Opið / vitað 10.11.2026 (yfirferð lotu 2ef635f0 — lotan sem smíðaði ＋/−, Sérkaup og „Verk í vinnslu")
+- **Appið virkar en er ÓNOTAÐ:** `field_entries` hefur enn aðeins 3 raðir (02.11, Skúlagata 26, „marcin surowik", allar `new`).
+  Engin `kostnadur`- eða `verk`-færsla hefur nokkurn tíma komið frá verkstjóra. Vandinn er innleiðing, ekki bilun — ekki
+  smíða fleiri eiginleika fyrr en einhver notar það sem er til (spurning 5 til Agnars í Aðalmál-máli #1587).
+- **Nafnavalið:** `HIDE_NAMES` (field-app.js) felur Alfred, Hamza, Kamara, Nour, Prosper, Rui Armando (Agnar 01.11) og Marcin
+  (Agnar 02.11: „settu Agnar í staðinn fyrir Marcin", ccde30b); `ALWAYS_NAMES = ['Agnar']`. Eini maðurinn sem hefur skráð er
+  því ekki í valinu — hann skrifar nafnið með handafli. Prófið sem fylgdi ekki breytingunni var lagað 10.11 (e8a5a9f).
+- **„Dagurinn" (gátlistar per verk + dagskrá)** sem Agnar sagði já við 01.11 var ALDREI smíðað. Síðan `#dagurinn` í hubbinum er
+  annað (eigandi `framendi`). Ekki rugla.
+- **Einingaverk:** „Efni úr lager" sagði „Fer á reikning verkkaupa" á öllum verkum; `stock_kicker_unit` (e8a5a9f, birtist með
+  næstu birtingu) segir nú að efnið sé innifalið í einingaverðinu á Landsspítala og Heklureit.
+- **Verkalistinn (bootstrap):** drög með `payday_invoice_id` eru send og detta af listanum (10.11). Drög sem tengjast Payday
+  aðeins í útreikningi Kröfu yfirlits bera null og sjást áfram með 0 klst — þekkt suð, ekki villa.
+- **„Firestarter" = Slökkvitækis-appskelin**, ekki `/brunathettingar` eitt og sér: appið „Verkstjórar" (`/app/verkstjorar/`) og
+  síðurnar `br-efnisnotkun` / `br-fra-verkstad` í `261-app-profiles.js` (eigandi `opp`). Ramminn opnast án innskráningar því
+  hliðið í `index.html` er sleppt þegar `?embed=1` er í ramma (b9501d2) — viðmótshlið, ekki API-vörn.
+
 ## ALDREI
 - ALDREI breyta verði í brunathettingar.html eða field-app.js — aðeins í js/gr-materials.js, og aðeins með samþykki Agnars.
 - ALDREI setja efniskostnað verkstjóra á reikning einingaverks (LSH, Heklureitur) — þar er hann aðeins til yfirlits.

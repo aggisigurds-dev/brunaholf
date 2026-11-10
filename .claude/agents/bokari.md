@@ -686,6 +686,22 @@ punktar. `ready` = allt grænt. Sameinuð/sleppt/rukkuð drög og `paid` í meta
 - **04.11.2026 — NLSH:** október 2026 er opinn (`nlsh_manadarlok` 15 línur, `fryst_at` null); `nlsh_month_snapshot` stöðvaðist
   11.06 (síðasti mánuður 2026-05) en `nlsh-monthly.js` les hana enn. Efniskostnaður verkstjóra (field_entries kind
   `kostnadur`) er aðeins til yfirlits á einingaverkum — `verkstadur` (The Rock) á appið, þú á upphæðina.
+- **10.11.2026 — NLSH: raufar á rafmagnsteikningu og frosinn mánuður (yfirferð lotu 2ef635f0, allt mælt):**
+  Agnar 02.11: „flest af nýju sem fóru í metrar raufar áttu að fara í rafmagnsraufar og göt", 03.11: „ég laga í Ajour".
+  Það var EKKI gert: 10.11 standa 47 október-skráningar á `6H 2S-1S Rafmagnsþéttingar.jpg` enn í „Raufar. (Metrer) LV"
+  (43 Done, 4 opnar; lýsing „620mm", „0-32" eða tóm → `raufMetrar` les ekkert → 0 kr í 2.11; okt 2.11 = 3,72 m).
+  Sem 3.1 væru þær 43 × 4.883 = **209.969 kr m. vsk**. `gagnaleidslur` lítur á sömu raðir sem „2.11 án metra" (Metraskráin) —
+  Agnar ræður hvort þær eru 3.1 eða 2.11; spurningin stendur í Aðalmál-máli #1587 og efst í nótu draga #344.
+  **Frosinn mánuður tekur seinkomna flokkabreytingu EKKI upp:** `nlsh_stada_manudir` telur skráningu á mánuð Done-dagsins
+  (október), frosinn október notar `stakar_man` eins og hann var sendur, og tillaga nóvember = lokatala okt + nýtt í nóv.
+  Breytist flokkurinn í Ajour eftir frystingu kemur munurinn því HVERGI fram sjálfkrafa — hækka þarf lokatölu verkliðarins
+  í næsta opna mánuði með hendi (teknar_fram ver aðeins tvítalningu fram á við, ekki þetta).
+- **10.11.2026 — saga draga #344 (okt 2026):** 3.225.978 (tillaga 01.11) → 4.357.923 (04.11, +20 gólf 1.2) → 4.340.140 (06.11)
+  → 5.006.681 (09.11, vistað úr glugganum) → R-388 4.756.347 (95 %, 250.334 haldið eftir), festur 10.11. Þrjár lotur vitnuðu í
+  þrjár tölur — lestu `invoice_drafts` + `nlsh_manadarlok` rétt áður en tala er sögð, og uppfærðu nótur sem bera gamla tölu.
+- **10.11.2026 — Heklureitur okt (#343 → R-387 4.798.428):** seinkomin göt fyrri mánaðar fara á næsta reikning (34 septembergöt,
+  378.500 án vsk, Agnar 01.11). `invoice_drafts.stadfesting` (20.000) er SÉR DÁLKUR, ekki lína í `materials_jsonb`: net = Σ línur +
+  stadfesting. Tveir taxtar sem Agnar las upp því þeir voru ekki í töflunni: Ø1210–1259 = 63.000 og Ø1710–1759 = 88.000.
 
 - **16.10.2026** — Uppgjör lota 16.10.2026: (1) Gerð reikninga/Efnislisti 15.10: gluggi sem Agnar hafði opinn (óvistaður, gömul gildi) var vistaður 18:01 og þurrkaði bæði leiðrétta yfirvinnu OG efnið sem lotan hafði sett (Áland 6 79.478 kr) — þriðja skiptið sama kvöld; verklag: eftir að lota skrifar í drög má EKKI vista úr opnum glugga — loka og opna aftur; tveir ritlar staflast með sömu auðkenni (gr-ws/gr-save/gr-mat-pick). (2) Drög bera ákvörðun um dagvinnu/yfirvinnu (ev=0/ev>0) frá 15.10 — drog-timar les ekki lengur dv/ev úr /api/timabok (Charlize #880 leysir af #836). (3) Efniskostnaður-kortið „Reikningar í gagnagrunni" (15.10) opnar lista 391 reikninga (255 tengdir, 136 ótengdir) með 🔗 Tengja / ✏️, hver mánuður í ramma með samtölu; Redder 137012 (22.06, Landspítalinn, 90.750) og 136032 höfðu sloppið framhjá möppunni — Landspítala-reikningurinn aldrei á Efnislista júní (sendir mánuðir frosnir, ákvörðun Agnars).
 
