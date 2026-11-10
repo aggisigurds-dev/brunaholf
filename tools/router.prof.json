@@ -272,6 +272,21 @@
         "711292-2929"
       ],
       "krefst": "felog"
+    },
+    {
+      "prompt": "Mátt fara í gegnum allar þínar beiðnir úr þessu sessioni, athuga hvort það virki í raun, og endurbæta það sem er hægt",
+      "cwd": "C:\\projects\\slokkvitaeki",
+      "ekki": [
+        "bord-flettur"
+      ]
+    },
+    {
+      "prompt": "Beiðnir vantar í talninguna á Þjónustuborðinu hjá Agnari",
+      "cwd": "C:\\projects\\slokkvitaeki",
+      "vaent": [
+        "bord-flettur"
+      ],
+      "fremstur": "bord-flettur"
     }
   ]
 }

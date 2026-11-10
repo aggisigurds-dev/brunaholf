@@ -18,7 +18,7 @@
  *                  vsk,pdf,nav,3d; viðskeyti strípað (stofn ≥ 4); forskeyti ≥ 5 telst beyging;
  *                  broddalaus ritháttur (thjonustubord) telst beyging.
  *   Stig           kveikjuorð nákvæmt 3 · beygt 2 · síðuheiti/síðu-kveikjuorð 3 (til eiganda síðunnar) ·
- *                  almennt orð (skrá, muna, sala, kort, borð, flipi, app, skjal, villa, prófa, staðan) 1,
+ *                  almennt orð (skrá, muna, sala, kort, borð, flipi, app, skjal, villa, prófa, staðan, beiðnir) 1,
  *                  og telur aðeins ef agentinn hefur annað hitt. Sama orð fer til þess agents sem nær
  *                  hæstu stigum á það (jafntefli deilist).
  *   Val            ≥ 2 stig, hámark 3 agentar; jafntefli → sá sem á heima í basename(cwd).
@@ -64,7 +64,9 @@ function sama(p, k) {
   if (p.s === k.s || p.f === k.f || forskeyti(p.w, k.w) || forskeyti(p.s, k.s) || forskeyti(p.f, k.f)) return 'b';
   return null;
 }
-const ALMENN = ['skrá', 'muna', 'sala', 'kort', 'borð', 'flipi', 'app', 'skjal', 'villa', 'prófa', 'staðan'].map(tok);
+/* 'beiðnir' (10.11.2026): síðan „Beiðnir“ (#beidnir, sofandi) hitti á „allar þínar beiðnir úr þessari lotu“ og kallaði
+ * bord-flettur fjórum sinnum einn og sér. Orðið er hversdagsmál hjá Agnari → telur aðeins með öðru hitti. */
+const ALMENN = ['skrá', 'muna', 'sala', 'kort', 'borð', 'flipi', 'app', 'skjal', 'villa', 'prófa', 'staðan', 'beiðnir'].map(tok);
 const erAlmennt = K => K.length === 1 && ALMENN.some(a => K[0].w === a.w || K[0].s === a.s || K[0].f === a.f);
 
 /* Finnur K (orðaröð) samfellt í P; skilar { pos[], teg:'n'|'b' } — nákvæmt tekið fram yfir beygt. */
