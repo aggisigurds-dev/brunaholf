@@ -55,6 +55,20 @@ Hvorugt verkið rukkast eftir Tímaveru. **Dýpri þekking (verð, reglur, saga)
 **Lyklagildra:** drögin heita „Landsspitalinn" (án broddstafs), þrep-3 línan „Landsspítalinn".
 Mátaðu verkstaðinn með `/landssp|nlsh/i`, aldrei stafsetningu.
 
+**Lærdómur 05.–10.11.2026 (lotan um 11560/8833):**
+- **Ajour-afritið fyrst.** Flokkabreyting í Ajour sést ekki í `ajour_registrations` fyrr en
+  `node luna-bridge/ajour-nuna.js` hefur keyrt. Skráning með tóman hakalista er ekki Done og telst ekki.
+- **Vistun yfirskrifar allar 15 lokatölur.** Tala úr fyrri lotu er úrelt um leið og einhver vistar
+  aftur (október: Claude vistaði 06.11, glugginn vistaði aftur 09.11). Lestu `nlsh_manadarlok` og
+  drögin áður en þú vitnar í tölu.
+- **Án innskráningar** (hubbinn sendir á `adgangar.html`): sömu köll og `#nle-save` beint —
+  `POST /api/nlsh-stada {month, lines}` og `POST /api/invoice-drafts` með `expected_updated_at`.
+  Þurrkeyra, vista, lesa til baka. Aðeins þegar Agnar bað um vistun.
+- **2.11 metrar per skráningu:** `POST /api/nlsh-stada {action:'raufar', serial_number, metrar,
+  athugasemd, month}`; metrar = (L+L+B+B)/1000. Breytir frosnum mánuðum ekki í reikningi.
+- **Sent PDF aftur:** `efnislisti_documents` (doc_type `efnislisti_pdf`, `public_url`) geymir PDF-ið
+  þótt Payday-reikningurinn sé ótengdur drögunum (Heklureitur R-387 ↔ drög #343).
+
 ## Heklureitur — Efnislisti · göt
 
 **Hvar:** Gerð reikninga → Heklu reitur → 🧾 Efnislisti · göt → `openHeklureitur(name, monthArg)`.
