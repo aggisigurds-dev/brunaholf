@@ -85,6 +85,15 @@
       .nl-kort-notch td:first-child{text-align:left;color:#44505e}
       .nl-kort-notch tr.t td,.nl-kort-notch tr.p td{border-top:1px solid #cfd5de;font-weight:700}
       .nl-kort-map canvas{position:absolute;left:0;top:0;width:100%;height:100%}
+      .nl-kort-in{position:relative;line-height:0}
+      .nl-kort-skil{width:1px;align-self:stretch;background:#cfc8b9;margin:0 4px}
+      .nl-kort-leg{gap:5px 6px!important;margin-top:0!important}
+      .nl-kort-t{display:inline-flex;align-items:center;gap:5px;border:1px solid #e2ddd0;background:#fff;color:#1f2933;border-radius:20px;padding:3px 9px 3px 7px;font:500 11.5px -apple-system,'Segoe UI',Roboto,sans-serif;cursor:pointer;line-height:1.3}
+      .nl-kort-t small{color:#6f685c;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10.5px}
+      .nl-kort-t.af{opacity:.38;text-decoration:line-through}
+      .nl-kort-t.opid{cursor:default;border-style:dashed}
+      button.nl-kort-t:hover{background:#faf8f4}
+      button.nl-kort-t:focus-visible{outline:2px solid #c9a54a;outline-offset:1px}
       .nl-kort-sum{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:10px 0 0}
       @media(max-width:900px){.nl-kort-sum{grid-template-columns:repeat(2,minmax(0,1fr))}}
       .nl-ks{border:1px solid #cfc8b9;border-radius:10px;padding:10px 12px;font-size:12px;font-variant-numeric:tabular-nums;color:#1f2933;background:#fff}
@@ -564,7 +573,43 @@
     let pk;
     try { const r = await fetch('/data/nlsh-punktar.json?v=' + Date.now()); if (!r.ok) throw new Error('HTTP ' + r.status); pk = await r.json(); }
     catch (e) { box.innerHTML = '<div class="nl-sec-save err">Gat ekki sótt punkta: ' + escapeHtml(e.message) + '</div>'; return; }
-    const st = { floor: '6H', stada: 'allt', hopar: pk.hopar.map(() => true), hue: true, tafla: true };
+    const st = { floor: '6H', stada: 'allt', hopar: pk.hopar.map(() => true), hue: true, tafla: true, zoom: 'allt', af: {} };
+    // Tákn eftir tegund og stærð (10.11.2026) — sama hugsun og á Miro-kortum Agnars: kross = loftræsting, tígull = rafmagn,
+    // hvert tákn segir tegund og stærð. [lögun, litur, radíus, heiti]; lögun: x kross, o hringur, t þríhyrningur, s ferningur, d tígull.
+    const TAKN = (c) => {
+      c = c || '';
+      const m = /(\d+)\s*-\s*(\d+)/.exec(c), lo = m ? +m[1] : 0;
+      if (/^Loft/i.test(c)) return !m ? ['x', '#64748b', 3.6, 'Loft annað'] : lo >= 400 ? ['x', '#c026d3', 5.2, 'Loft 400-630'] : lo >= 200 ? ['x', '#7c3aed', 4.4, 'Loft 200-315'] : ['x', '#2563eb', 3.6, 'Loft 125-160'];
+      if (/^Stál/i.test(c)) return lo >= 110 ? ['o', '#7c2d12', 4.6, 'Stál 110-160'] : lo >= 75 ? ['o', '#c2410c', 3.9, 'Stál 75-110'] : lo >= 40 ? ['o', '#f97316', 3.2, 'Stál 40-50'] : ['o', '#fbbf24', 2.7, 'Stál 15-35'];
+      if (/^Plast/i.test(c)) return lo >= 75 ? ['t', '#155e75', 4.8, 'Plast 75-100'] : lo >= 35 ? ['t', '#0891b2', 4.1, 'Plast 35-50'] : ['t', '#22d3ee', 3.4, 'Plast 20-34'];
+      if (c === GOLF_CLS) return ['s', '#0f766e', 3.8, 'Milliloft'];
+      if (RAF_CLS.indexOf(c) >= 0) return ['d', '#067429', 4, 'Rafmagn'];
+      return ['s', '#9ca3af', 2.6, 'Annað'];
+    };
+    const HOPTAKN = [['x', '#2563eb', 3.8, 'Loft'], ['o', '#f97316', 3.2, 'Stál'], ['d', '#067429', 4, 'Rafmagn'], ['s', '#0f766e', 3.8, 'Milliloft'], ['s', '#9ca3af', 2.6, 'Annað']];
+    const TK = pk.flokkar ? pk.flokkar.map(TAKN) : null;
+    const taknOf = (q) => (TK && TK[q[6]]) || HOPTAKN[q[3]];
+    const ROD = ['Loft 125-160', 'Loft 200-315', 'Loft 400-630', 'Loft annað', 'Stál 15-35', 'Stál 40-50', 'Stál 75-110', 'Stál 110-160', 'Plast 20-34', 'Plast 35-50', 'Plast 75-100', 'Milliloft', 'Rafmagn', 'Annað', 'Loft', 'Stál'];
+    const slod = (cx, t, x, y, r) => {
+      cx.beginPath();
+      if (t === 'x') { cx.moveTo(x - r, y - r); cx.lineTo(x + r, y + r); cx.moveTo(x + r, y - r); cx.lineTo(x - r, y + r); }
+      else if (t === 'd') { cx.moveTo(x, y - r * 1.25); cx.lineTo(x + r, y); cx.lineTo(x, y + r * 1.25); cx.lineTo(x - r, y); cx.closePath(); }
+      else if (t === 't') { cx.moveTo(x, y - r); cx.lineTo(x + r, y + r * 0.8); cx.lineTo(x - r, y + r * 0.8); cx.closePath(); }
+      else if (t === 's') cx.rect(x - r * 0.85, y - r * 0.85, r * 1.7, r * 1.7);
+      else cx.arc(x, y, r, 0, 6.2832);
+    };
+    const teikna = (cx, q, k, zs) => {
+      const t = taknOf(q), x = q[0] * k, y = q[1] * k, r = t[2] * zs;
+      slod(cx, t[0], x, y, r);
+      if (t[0] === 'x') { cx.lineCap = 'round'; cx.lineWidth = Math.max(1, r * 0.5); cx.strokeStyle = q[2] ? t[1] + 'e0' : '#dc2626'; cx.stroke(); }
+      else if (q[2]) { cx.fillStyle = t[1] + 'd0'; cx.fill(); cx.lineWidth = 0.6; cx.strokeStyle = 'rgba(22,21,19,.4)'; cx.stroke(); }
+      else { cx.fillStyle = '#ffffffe0'; cx.fill(); cx.lineWidth = 2; cx.strokeStyle = '#dc2626'; cx.stroke(); }
+      if (!q[2]) { cx.beginPath(); cx.arc(x, y, r + 3.5 * zs, 0, 6.2832); cx.lineWidth = Math.max(1, 1.6 * zs); cx.strokeStyle = '#dc2626'; cx.stroke(); }
+    };
+    const taknSvg = (t) => {
+      const c = t[1], p = t[0] === 'x' ? '<path d="M3 3L11 11M11 3L3 11" stroke="' + c + '" stroke-width="2.4" stroke-linecap="round" fill="none"/>' : t[0] === 'd' ? '<path d="M7 1L12 7L7 13L2 7Z" fill="' + c + '"/>' : t[0] === 't' ? '<path d="M7 2L12.5 12H1.5Z" fill="' + c + '"/>' : t[0] === 's' ? '<rect x="2.5" y="2.5" width="9" height="9" fill="' + c + '"/>' : '<circle cx="7" cy="7" r="' + Math.min(6, t[2] * 1.25) + '" fill="' + c + '"/>';
+      return '<svg viewBox="0 0 14 14" width="13" height="13" aria-hidden="true">' + p + '</svg>';
+    };
     const ZK = ['N', 'C', 'S'], ZN = ['Norður', 'Center', 'Suður'];
     const grpOf = (c) => (/^Loft/i.test(c) ? 0 : /^Stál/i.test(c) ? 1 : RAF_CLS.indexOf(c) >= 0 ? 2 : /^Gólf/i.test(c) ? 3 : 4);
     const catGrp = (cat) => { const g = [0, 0, 0, 0, 0]; Object.keys(cat || {}).forEach((c) => { g[grpOf(c)] += cat[c]; }); return g; };
@@ -600,7 +645,13 @@
     const draw = () => {
       const pts = pk.floors[st.floor] || [];
       const cnv = box.querySelector('canvas'), img = box.querySelector('img');
-      const W = img.clientWidth || 900, k = W / pk.w, G = geom(st.floor);
+      const G = geom(st.floor), inn = box.querySelector('.nl-kort-in');
+      // Stækkun á vængjapar: innri kassinn er breikkaður og hliðrað svo parið fylli kortið (bakgrunnsmyndin er 2.123 px á breidd).
+      let Z = 1;
+      const zp = st.zoom === 'allt' ? null : G['n' + st.zoom];
+      if (zp && G[zp.l] && G[zp.r]) { const x0 = Math.max(0, G[zp.l].x0 - 30), x1 = Math.min(pk.w, G[zp.r].x1 + 30); Z = pk.w / (x1 - x0); inn.style.width = (Z * 100) + '%'; inn.style.marginLeft = (-(x0 / pk.w) * Z * 100) + '%'; }
+      else { inn.style.width = '100%'; inn.style.marginLeft = '0'; }
+      const W = img.clientWidth || 900, k = W / pk.w, zs = Math.max(0.42, Math.min(1.8, Math.sqrt(k / 0.74))); // táknstærð fylgir kvarða kortsins (sími lítil, stækkað stærri)
       cnv.width = Math.round(W); cnv.height = Math.round(pk.h * k);
       const cx = cnv.getContext('2d'); cx.clearRect(0, 0, cnv.width, cnv.height);
       if (st.hue) [1, 2, 4, 5].forEach((s5) => {
@@ -613,14 +664,15 @@
         }
       });
       let n = 0;
-      pts.forEach((q) => {
-        if (!st.hopar[q[3]]) return;
+      // kláraðir fyrst, opnir ofan á svo þeir hverfi ekki undir
+      [1, 0].forEach((umf) => pts.forEach((q) => {
+        if (q[2] !== umf) return;
+        if (!st.hopar[q[3]] || st.af[taknOf(q)[3]]) return;
         if (st.stada === 'klarad' && !q[2]) return;
         if (st.stada === 'opid' && q[2]) return;
         n++;
-        cx.beginPath(); cx.arc(q[0] * k, q[1] * k, q[2] ? 3.2 : 5, 0, 6.2832);
-        if (q[2]) { cx.fillStyle = KORT_LITIR[q[3]] + 'b8'; cx.fill(); } else { cx.fillStyle = '#ffffffcc'; cx.fill(); cx.lineWidth = 2; cx.strokeStyle = '#dc2626'; cx.stroke(); }
-      });
+        teikna(cx, q, k, zs);
+      }));
       box.querySelector('.nl-kort-n').textContent = num(n) + ' punktar sýndir';
       // samantekt fyrir hverja stúku undir teikningunni (fylgir völdum flokkum og stöðu)
       const sm = box.querySelector('.nl-kort-sum'); sm.innerHTML = '';
@@ -675,16 +727,25 @@
       const c = cnt(st.floor);
       box.innerHTML = `<div class="nl-kort-bar">
         ${['6H', '5H', '4H'].map((f) => `<button type="button" class="nl-kort-b${st.floor === f ? ' on' : ''}" data-fl="${f}">${f === '6H' ? '6. hæð' : f === '5H' ? '5. hæð' : '4. hæð'}</button>`).join('')}
+        <span class="nl-kort-skil"></span>
+        ${[['allt', 'Öll hæðin'], ['1', 'S1 + S2'], ['4', 'S4 + S5']].map((x) => `<button type="button" class="nl-kort-b${st.zoom === x[0] ? ' on' : ''}" data-zm="${x[0]}" title="Stækka kortið á þetta vængjapar">${x[1]}</button>`).join('')}
         <span class="nl-kort-sp"></span>
         ${[['allt', 'Allt'], ['klarad', 'Klárað'], ['opid', 'Opið']].map((x) => `<button type="button" class="nl-kort-b${st.stada === x[0] ? ' on' : ''}" data-st="${x[0]}">${x[1]}</button>`).join('')}
       </div>
       <div class="nl-kort-bar">${pk.hopar.map((h, i) => `<label class="nl-kort-c"><input type="checkbox" data-h="${i}" ${st.hopar[i] ? 'checked' : ''}><i style="background:${KORT_LITIR[i]}"></i>${h} <small>${num(c[i])}</small></label>`).join('')}
         <label class="nl-kort-c"><input type="checkbox" data-o="hue" ${st.hue ? 'checked' : ''}>Litur</label><label class="nl-kort-c"><input type="checkbox" data-o="tafla" ${st.tafla ? 'checked' : ''}>Samantekt</label><span class="nl-kort-n"></span></div>
-      <div class="nl-kort-map"><img src="/img/nlsh-yfirlit-${(st.floor === '4H' ? '5H' : st.floor).toLowerCase()}.jpg" alt="Brunayfirlit ${st.floor === '4H' ? '5H (notað fyrir 4H)' : st.floor}"><canvas></canvas><div class="nl-kort-ov"></div></div>
+      <div class="nl-kort-bar nl-kort-leg">${(() => {
+        const tal = {}, tk = {};
+        (pk.floors[st.floor] || []).forEach((q) => { const t = taknOf(q); tal[t[3]] = (tal[t[3]] || 0) + 1; tk[t[3]] = t; });
+        return Object.keys(tal).sort((a, b) => ROD.indexOf(a) - ROD.indexOf(b)).map((h) => `<button type="button" class="nl-kort-t${st.af[h] ? ' af' : ''}" data-tk="${escapeAttr(h)}" aria-pressed="${st.af[h] ? 'false' : 'true'}" title="Sýna eða fela ${escapeAttr(h)}">${taknSvg(tk[h])}${escapeHtml(h)} <small>${num(tal[h])}</small></button>`).join('') + '<span class="nl-kort-t opid"><svg viewBox="0 0 14 14" width="13" height="13" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="#fff" stroke="#dc2626" stroke-width="2"/></svg>Opið í Ajour</span>';
+      })()}</div>
+      <div class="nl-kort-map"><div class="nl-kort-in"><img src="/img/nlsh-yfirlit-${(st.floor === '4H' ? '5H' : st.floor).toLowerCase()}.jpg" alt="Brunayfirlit ${st.floor === '4H' ? '5H (notað fyrir 4H)' : st.floor}"><canvas></canvas><div class="nl-kort-ov"></div></div></div>
       <div class="nl-kort-sum"></div>
-      <p class="nl-sec-cat">Punktur = staðurinn sem var smellt á í Ajour. Fylltur punktur er klárað, rauður hringur er opið. Liturinn yfir svæði sýnir hlutfall af markmiði (rautt lítið, grænt mikið) og fylgir völdum flokkum. Samantektin í skörðunum er fjöldi gata á stúku og svæði, líka eftir völdum flokkum og stöðu. Staðsetning er sjálfvirk pörun við brunaveggi blaðsins og getur skeikað um nokkra metra. 4. hæð hefur ekki eigið yfirlitsblað: 5H-blaðið er notað og punktarnir eru aðeins milliloftsgöt (staðsetning þar er grófari, sérstaklega S1 og S2). Blaðið er Rev.A; staða ${fmtD(pk.updated)}.</p>`;
+      <p class="nl-sec-cat">Hvert tákn er ein skráning í Ajour, á staðnum sem var smellt á. Lögun segir tegund (kross = loftræsting, hringur = stálrör, þríhyrningur = plaströr, ferningur = milliloft, tígull = rafmagn), litur og stærð segja stærðarflokk. Smelltu á tákn í skýringunum til að fela það eða sýna, og á „S1 + S2“ eða „S4 + S5“ til að stækka. Fyllt tákn er klárað, rauður hringur er opið. Liturinn yfir svæði sýnir hlutfall af markmiði (rautt lítið, grænt mikið) og fylgir völdum flokkum. Samantektin í skörðunum er fjöldi gata á stúku og svæði, líka eftir völdum flokkum og stöðu. Staðsetning er sjálfvirk pörun við brunaveggi blaðsins og getur skeikað um nokkra metra. 4. hæð hefur ekki eigið yfirlitsblað: 5H-blaðið er notað og punktarnir eru aðeins milliloftsgöt (staðsetning þar er grófari, sérstaklega S1 og S2). Blaðið er Rev.A; staða ${fmtD(pk.updated)}.</p>`;
       box.querySelectorAll('[data-fl]').forEach((b) => b.addEventListener('click', () => { st.floor = b.getAttribute('data-fl'); render(); }));
       box.querySelectorAll('[data-st]').forEach((b) => b.addEventListener('click', () => { st.stada = b.getAttribute('data-st'); render(); }));
+      box.querySelectorAll('[data-zm]').forEach((b) => b.addEventListener('click', () => { st.zoom = b.getAttribute('data-zm'); render(); }));
+      box.querySelectorAll('[data-tk]').forEach((b) => b.addEventListener('click', () => { const h = b.getAttribute('data-tk'); st.af[h] = !st.af[h]; b.classList.toggle('af', !!st.af[h]); b.setAttribute('aria-pressed', st.af[h] ? 'false' : 'true'); draw(); }));
       box.querySelectorAll('[data-h]').forEach((b) => b.addEventListener('change', () => { st.hopar[+b.getAttribute('data-h')] = b.checked; draw(); }));
       box.querySelectorAll('[data-o]').forEach((b) => b.addEventListener('change', () => { st[b.getAttribute('data-o')] = b.checked; draw(); }));
       const im = box.querySelector('img'); im.addEventListener('load', draw); if (im.complete) draw();

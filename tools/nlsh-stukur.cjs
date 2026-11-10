@@ -44,9 +44,10 @@ const TRANS = [
 const RAF = ['Raflagnaþéttingar, göt og raufar', 'Raufar. (Metrer) LV', 'Raf raufar. (Metrar og Stk.)', 'Raf göt (Stk.)'];
 // Flokkahópur: 0 Loft, 1 Stál, 2 Rafmagn, 3 Gólf (milliloft), 4 Annað (plast o.fl.)
 function hopur(c) { c = c || ''; return /^Loft/i.test(c) ? 0 : /^Stál/i.test(c) ? 1 : RAF.indexOf(c) >= 0 ? 2 : /^Gólf/i.test(c) ? 3 : 4; }
-function punktar(regs) {
-  // [x, y, klárað, hópur, stúka (1,2,4,5), svæði (0 N, 1 C, 2 S)] — stúka og svæði eftir sömu reglu og skiptaEftirHnitum.
+function punktar(regs, flokkar = []) {
+  // [x, y, klárað, hópur, stúka (1,2,4,5), svæði (0 N, 1 C, 2 S), flokkur (vísir í flokkar[] — stærðarflokkur Ajour, 10.11.2026)] — stúka og svæði eftir sömu reglu og skiptaEftirHnitum.
   const floors = { '4H': [], '5H': [], '6H': [] };
+  const fl = (c) => { c = c || '(tómt)'; let i = flokkar.indexOf(c); if (i < 0) { flokkar.push(c); i = flokkar.length - 1; } return i; };
   const byFile = {};
   for (const r of regs) { const c = r.coords[0]; if (c) (byFile[c.f] ??= []).push({ ...r, x: c.x, y: c.y }); }
   for (const a of Object.values(byFile)) {
@@ -60,7 +61,7 @@ function punktar(regs) {
     for (const r of a) {
       const fy = (r.y - ymn) / ((ymx - ymn) || 1);
       const st = +(r.x < skil ? rule[2] : rule[3]).slice(1);
-      floors[t[1]].push([Math.round((r.x / t[2] + t[3] - CROP.x) * 10) / 10, Math.round((r.y / t[2] + t[4] - CROP.y) * 10) / 10, r.status === 4 ? 1 : 0, hopur(r.cat), st, fy < 0.275 ? 0 : fy < 0.725 ? 1 : 2]);
+      floors[t[1]].push([Math.round((r.x / t[2] + t[3] - CROP.x) * 10) / 10, Math.round((r.y / t[2] + t[4] - CROP.y) * 10) / 10, r.status === 4 ? 1 : 0, hopur(r.cat), st, fy < 0.275 ? 0 : fy < 0.725 ? 1 : 2, fl(r.cat)]);
     }
   }
   return floors;
@@ -128,7 +129,8 @@ if (require.main === module) (async () => {
   }
   const wings = skiptaEftirHnitum(regs);
   const PUNKTAR = path.join(__dirname, '..', 'data', 'nlsh-punktar.json');
-  fs.writeFileSync(PUNKTAR, JSON.stringify({ updated: new Date().toISOString(), w: CROP.w, h: CROP.h, hopar: ['Loft', 'Stál', 'Rafmagn', 'Gólf', 'Annað'], floors: punktar(regs) }));
+  const FLOKKAR = [];
+  fs.writeFileSync(PUNKTAR, JSON.stringify({ updated: new Date().toISOString(), w: CROP.w, h: CROP.h, hopar: ['Loft', 'Stál', 'Rafmagn', 'Gólf', 'Annað'], floors: punktar(regs, FLOKKAR), flokkar: FLOKKAR }));
   const klarad = regs.filter((r) => r.status === 4).length;
   fs.writeFileSync(OUT, JSON.stringify({ updated: new Date().toISOString(), source: 'Ajour hnit (registrationCoordinates), skipt við stærsta x-bil per teikningu', total: regs.length, done: klarad, open: regs.length - klarad, wings, utan: utanStukna(regs) }, null, 1));
   console.log('skrifað', OUT, '| skráningar', regs.length, '| klárað', klarad);
