@@ -470,6 +470,17 @@ og Landsbanka-kröfur teljast EKKI. Sótt úr `load()` í Kröfu yfirliti (ekki 
   Próf án skrifa: scratchpad `ky_pdf_test.cjs` (skrár af diski á `bh.test`, GET → lifandi API): R-386/387/388 fengu tengil.
   **Mundu:** tengingin er aðeins reiknuð — ekkert skrifar `payday_invoice_id` á drögin, svo NLSH-mánuður frystist ekki sjálfur (sjá skill `gata-manadarlok`).
 
+## Ógreitt og ósent: EIN skilgreining fyrir Kröfu yfirlit og Viðskiptavini (31.10.2026, endurmælt 10.11.)
+- Reglurnar búa í `netlify/functions/_krofu-flokkun.js` (`flokkaReikning`, `erOsent`, `iSummu`, `greidendur`, `sjalfvirkTenging`,
+  síðar `tvifarar`/öryggisfé) og BÆÐI `krofu-yfirlit-bru.js` og `verkkaupar.js` kalla á þær. Áður hélt `verkkaupar.js` eigin
+  afriti sem fékk ekki lagfæringuna frá 20.10. — Viðskiptavinir sýndi 70,4 m.kr. ógreitt á móti 6,2 í Kröfu yfirliti.
+  Breyting á reglu fer í ÞESSA skrá, aldrei í annað fallið; próf `test/krofu-flokkun-*.test.js`.
+- Mæling sem á að halda (10.11.: 13.150.501 = 13.150.501, 0 kr munur per nafn): summa `ogreitt` úr `/api/verkkaupar` =
+  `tier1.total` úr `/api/krofu-yfirlit-bru`. Ósent má víkja um drög sem eiga engan greiðanda (NESDEKK 2026-10, 358.918 kr) —
+  Viðskiptavinir sleppir þeim, Kröfu yfirlit sýnir þau undir verkstaðarnafni. Listinn í Viðskiptavinum sýnir aðeins `skrad`-greiðendur.
+- „Stofna stað í Slökkvitæki" krefst kennitölu greiðandans (þjónninn svarar 400, viðmótið segir hvað vantar) — án hennar
+  varð til kt-laus tvífari við hvern smell. Pillan `drog` (Payday-drög) ber sama lit og `osent`.
+
 ## Nýtt úr Charlize og lotum (28.10.2026)
 
 - Agnar vill sjálfsafgreiðslu: grunnatriði (verð, tímar, texti, dagsetning, eyða, raða, fela síðu, vistun, dálkastýring) eiga að vera breytanleg af honum í viðmótinu — hann vill ekki bíða eftir Claude. [lotur 532a8e1d, 8e43dca9, 2b47ca79]

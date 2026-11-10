@@ -60,6 +60,6 @@ myndir.forEach((m, i) => {
   doc.text(m.fl, x + 22, y + ch - 3);
 });
 
-const out = path.resolve(ARGV[2] || path.join(path.dirname(DIR), path.basename(DIR).replace(/s+/g, '_') + '_myndayfirlit_8-a-sidu.pdf'));
+const out = path.resolve(ARGV[2] || path.join(path.dirname(DIR), path.basename(DIR).replace(/\s+/g, '_') + '_myndayfirlit_8-a-sidu.pdf'));
 fs.writeFileSync(out, Buffer.from(doc.output('arraybuffer')));
 console.log(out, myndir.length, 'myndir', sidur, 'síður');

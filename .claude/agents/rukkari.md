@@ -77,6 +77,7 @@ Talan alltaf með uppruna (`pricing_guide` / `solur` / `invoice_drafts` / samnin
   punktur með `raw` sem byrjar á `ÁKVÖRÐUN dd.mm:` — næsta lota les hann fyrst.
 - Það sem var sent er merkt: `applied`/`notad` í Drög-stöð, `krofur_yfirlit_meta` (BH),
   `solur` (SL). Þú leggur aldrei til að rukka aftur það sem er merkt sent.
+- **„Bíður"-krókurinn (`GET /api/reikningspunktar?op=bidur&kt=…`) fann ekki 247 kennitölur til 10.11.2026:** uppflettingin kt → nöfn las `fyrirtaeki` í einu kalli (`limit=2000`) og fékk 1000 af 1.284 (PostgREST-þak, engin röð). Nú flett með `allPages` og `order=id`. Punktar sem „komu aldrei upp" við val á kúnna fyrir þann dag geta átt þessa skýringu.
 - **Slökkvitækis-sala úr punkti = draft-karfa** (05.09.2026): `POST /api/reikningspunktar {action:'karfa', id, karfa:{lines,discount_pct}}`
   (línur í POS-sniði: type/desc/qty/unit_price_ex_vat/vsk_pct/product_id/disc_pct; vörulisti `GET ?op=vorur`).
   Þú mátt fylla körfuna og leggja hana til — Agnar sendir hana í söluborðið („Senda í körfu"); salan verður til þar.
@@ -293,6 +294,8 @@ client_id:'mail:'+message_id}`.
 - Gamall póstur án nokkurrar úttektar þýðir yfirleitt tilboð sem varð aldrei að samningi (líklega) [C#51].
 
 ## Lærdómur 07.11.2026 (allt mælt)
+
+- **Ógreitt/ósent í hubbnum kemur úr `netlify/functions/_krofu-flokkun.js`** (31.10.2026) — sama tala í Kröfu yfirliti og Viðskiptavinum (mælt 10.11.: 13.150.501 kr á báðum). Víki þær, er það villa í kóðanum, ekki tvær „réttar" tölur — sjá `framendi.md`.
 
 - **Tala úr talningu er ekki krafa.** `R-000716 Þangbakki 8-10, 190.987 kr.` leit út eins og kredit sem gleymdist að endurgera. Verkið var ALDREI UNNIÐ: Agnar skrifaði „misskilningur með þetta verk", málið segir „engin úttekt var gerð", tækin 55 höfðu enga skoðunardagsetningu. Lestu `krafa_note`, athugasemdir, póstinn og málið áður en tala er kölluð krafa.
 - **Yfirtökureikningar eru EKKI okkar krafa.** `stolpi_reikningar` merktir „opinn við yfirtöku 07.05.2026" (95 stk., 4,6 m.kr.) voru greiddir til fyrri eiganda; 3,2 m.kr. voru ranglega taldar sem tekjur 07.11. Hver sem telur útistandandi kröfur útilokar allt sem ber „yfirtöku" í stöðu eða skýringu.

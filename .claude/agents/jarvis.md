@@ -235,6 +235,12 @@ Agnar biður um íslensku; upplesturinn á jarvis.html er alltaf enska.
   `kerfisrynir`, `rambo`, `samthykktir`, `sara-organizer`, `verkstadur`. `agent_notes` er tóm — „Bæta við upplýsingum" hefur aldrei
   verið notað. Routerinn: „beiðnir" (= óskir) kallaði bord-flettur einn og sér því síðan heitir Beiðnir → nú í `ALMENN` (8338404).
   `docs/AGENTASKRA.md` vantaði `kerfisrynir`, `heimaleiga`, `center-hotel` → 42 raðir.
+- **10.11.2026 — „Minnið"-spjaldið taldi 976 virkar staðreyndir þegar þær voru 2.133** (kúnnaminni 83 í stað 793):
+  `/api/charlize-stada` bað um `limit=10000` í einu kalli og PostgREST klippir í 1000 án villu. `all()` í
+  `netlify/functions/charlize-stada.js` flettir nú 1000 í senn með fastri röð; `limit` í kallinu er heildarþak
+  (biðstofan 2000). Próf: `test/charlize-stada-thak.test.js` (gerviþjónn sem skilar aldrei fleiri en 1000 röðum; séð
+  rautt á gamla kóðanum). Slétt tala á spjaldi sem er jöfn 1000 er grunur, ekki talning — slokkvitaeki
+  `docs/MAELINGAR.md` kafli 22. Sama þak beit nafnaleit raddminnis (`raddminni.js` `finnaFelag`: 1000 af 1.284 félögum).
 - **04.11.2026 — Agentakerfið 2.0 (samþykkt plan):** Agentanetið verður lag/flipi í jarvis.html (fasi 5, útlitsviðmið
   „Agentanetið — Ragnarök.html“, erfir `data-thema`); síðukortið býr í `<repo>/.claude/sidukort.json` og `tools/build-agents-registry.cjs`
   sameinar í `data/sidukort.json` + SIDUKORT-blokkina í `docs/AGENTASKRA.md`; lotur skrást í `charlize_sessions` (ný); göt-spjaldið les
