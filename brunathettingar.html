@@ -171,6 +171,7 @@
       back_ws: '‹ Verkstaðir', prev_m: 'Fyrri mánuður', next_m: 'Næsti mánuður',
       redder_h: 'Redder innkaup', redder_kicker: 'án vsk · yfirstrikað = ekki á reikning verkkaupa', redder_empty: 'Engir Redder-reikningar á þennan verkstað í mánuðinum',
       stock_h: 'Efni úr lager', stock_kicker: 'Pikkaðu á ＋ fyrir það sem var notað (eða skrifaðu töluna). Fer á reikning verkkaupa á söluverði Verðskrár.',
+      stock_kicker_unit: 'Pikkaðu á ＋ fyrir það sem var notað (eða skrifaðu töluna). Verk á einingaverði — efnið er innifalið í verðinu og er skráð til yfirlits fyrir skrifstofuna, það fer ekki á reikning verkkaupa.',
       entries_sum: n => 'Skráningar (' + n + ') — hver skráði og hvenær', none_yet: 'Ekkert skráð enn',
       purch_h: 'Sérkaup', purch_kicker_unit: 'Efni sem var keypt sérstaklega. Verk á einingaverði — skráð til yfirlits fyrir skrifstofuna og fer ekki á reikning verkkaupa.',
       purch_kicker: 'Efni sem var keypt sérstaklega og er ekki í listanum hér að ofan. Fer í Efnislista verkstaðarins á kostnaðarverði án vsk — skrifstofan bætir við álagi.',
@@ -212,6 +213,7 @@
       back_ws: '‹ Worksites', prev_m: 'Previous month', next_m: 'Next month',
       redder_h: 'Redder purchases', redder_kicker: 'excl. VAT · struck through = not billed to the client', redder_empty: 'No Redder invoices for this worksite this month',
       stock_h: 'Stock materials', stock_kicker: 'Tap ＋ for what was used (or type the number). Billed to the client at price-list rates.',
+      stock_kicker_unit: 'Tap ＋ for what was used (or type the number). Unit-price job — materials are included in the price; recorded for the office only, not billed to the client.',
       entries_sum: n => 'Entries (' + n + ') — who recorded and when', none_yet: 'Nothing recorded yet',
       purch_h: 'Purchases', purch_kicker_unit: 'Materials bought separately. Unit-price job — recorded for the office only, not billed to the client.',
       purch_kicker: 'Materials bought separately that are not in the list above. Goes on the worksite material list at cost excl. VAT — the office adds the markup.',
@@ -463,7 +465,7 @@
       + (rd.lines.length ? rd.lines.map(l => '<div class="rline' + (l.excluded ? ' ex' : '') + '"><span>' + esc(l.label) + '</span><span class="num">× ' + hf(l.qty) + '</span><span class="num" style="color:var(--muted)">' + fmt(l.cost) + ' kr</span></div>').join('') + '<div class="kicker" style="margin-top:8px">' + T.redder_kicker + '</div>' : '<div class="empty">' + T.redder_empty + '</div>')
       + '</div></div>'
       + '<div class="panel"><div class="panel-h" style="cursor:default"><span class="plate">03</span><span class="panel-t">' + T.stock_h + '</span><span class="sum">' + (efniSum ? fmt(efniSum) + ' kr' : '—') + '</span></div><div class="panel-b">'
-      + '<div class="kicker" style="text-transform:none;letter-spacing:0;font-family:inherit;font-size:12px;margin-bottom:2px">' + T.stock_kicker + '</div>'
+      + '<div class="kicker" style="text-transform:none;letter-spacing:0;font-family:inherit;font-size:12px;margin-bottom:2px">' + (EININGAVERK.test(name) ? T.stock_kicker_unit : T.stock_kicker) + '</div>'
       + efniCounters(name)
       + '<details class="skr"><summary>' + T.entries_sum(efni.length) + '</summary><div id="efni-list">' + (efni.length ? efni.slice().sort((a, b) => String(b.updated_at || b.created_at || 'z').localeCompare(String(a.updated_at || a.created_at || 'z'))).map(e => entryHtml(e)).join('') : '<div class="empty">' + T.none_yet + '</div>') + '</div></details></div></div>'
       + '<div class="panel"><div class="panel-h" style="cursor:default"><span class="plate">04</span><span class="panel-t">' + T.purch_h + '</span><span class="sum">' + (kostn.length ? kostn.length + ' · ' + fmt(kostnSum) + ' kr' : '—') + '</span></div><div class="panel-b">'

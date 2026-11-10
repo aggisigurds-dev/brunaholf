@@ -80,14 +80,16 @@ test('bootstrap: verk í vinnslu = Tímavera mánaðarins + vika + ósend drög 
   assert.ok(!('Veikindi' in ws), 'gervi-verkefni Tímaveru eru ekki verk');
 });
 
-test('bootstrap: nafnavalið sleppir þeim sem Agnar tók út, restin er óbreytt', async () => {
+// 02.11.2026 (ccde30b, Agnar: „settu Agnar í staðinn fyrir Marcin“): Marcin er falinn og Agnar alltaf með,
+// þótt hann sé ekki í Tímaveru. Prófið fylgdi ekki þeirri breytingu og stóð rautt til 10.11.2026.
+test('bootstrap: nafnavalið sleppir þeim sem Agnar tók út og hefur Agnar alltaf með', async () => {
   global.fetch = async (url) => {
     const t = new URL(String(url)).pathname.replace('/rest/v1/', '');
     const data = t === 'timavera_entries' ? ['Hamza', 'Lena', 'Rui Armando', 'Marcin Surowik', 'ALFRED', 'Lena'].map((employee) => ({ employee, project: 'X', hours: 1, date: new Date().toISOString().slice(0, 10) })) : [];
     return { ok: true, status: 200, json: async () => data, text: async () => '' };
   };
   const r = await F.handler({ httpMethod: 'GET', headers: {}, queryStringParameters: { op: 'bootstrap' } });
-  assert.deepEqual(JSON.parse(r.body).names, ['Lena', 'Marcin Surowik']);
+  assert.deepEqual(JSON.parse(r.body).names, ['Agnar', 'Lena']);
 });
 
 test('óþekkt kind er enn hafnað', async () => {
