@@ -1,6 +1,6 @@
 {
  "utgafa": 1,
- "nyjast": "2026-11-08",
+ "nyjast": "2026-11-09",
  "throskuldur": 6,
  "osnert_dagar": 30,
  "uppspretta": "slokkvitaeki/tools/audit-agentar.cjs --json",
@@ -42,10 +42,10 @@
    "slod": ".claude/agents/bord-flettur.md",
    "hud": null,
    "emoji": null,
-   "sidast": "2026-11-05",
-   "skrif": 44,
+   "sidast": "2026-11-09",
+   "skrif": 45,
    "gaetir": 39,
-   "breytt": 5,
+   "breytt": 1,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Flettur, borð og navigation í Slökkvitæki-appinu — Þjónustuborð (368) og undirborð, Bakendi, Bílstjóri, Aksturslisti, URL-routing (218), bakk (3 lög) og app-síð"
@@ -90,7 +90,7 @@
    "sidast": "2026-11-04",
    "skrif": 2,
    "gaetir": 7,
-   "breytt": 2,
+   "breytt": 3,
    "daudir": [],
    "merki": "🟡",
    "lysing": "M (Judi Dench) 🕴️ — stjóri fyrirtækja í þjónustu. Opnar hvert mál um eitt fyrirtæki á charlize_yfirlit(kt) og kúnnaminni, vísar á sérfræðing (kunnaskra: kt/rek"
@@ -312,12 +312,12 @@
    "slod": ".claude/agents/sala-reikningar.md",
    "hud": null,
    "emoji": null,
-   "sidast": "2026-11-08",
-   "skrif": 24,
+   "sidast": "2026-11-09",
+   "skrif": 25,
    "gaetir": 19,
-   "breytt": 0,
+   "breytt": 2,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Sala/POS, reikningagerð og -sending (Gmail), Payday, afslættir, verðlistar og vörur, PDF-vistun, tilboð og þjónustusamningar, reikninga-póstur og úttektartexti "
   },
   {
@@ -432,8 +432,8 @@
    "slod": ".claude/skills/arnold/SKILL.md",
    "hud": null,
    "emoji": null,
-   "sidast": "2026-11-02",
-   "skrif": 15,
+   "sidast": "2026-11-09",
+   "skrif": 16,
    "gaetir": 0,
    "breytt": 0,
    "daudir": [],
@@ -994,7 +994,7 @@
    "gaetir": 0,
    "breytt": 0,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "⚪",
    "lysing": "Útlit og smíði PDF-skjala Brunahólfs í vafranum (jsPDF + autoTable) — Efnislisti, Tímaskýrsla, Efnislisti · göt (Heklureitur), Efnislisti · NLSH. Sameiginlegi h"
   },
   {
@@ -1099,7 +1099,7 @@
    "gaetir": 1,
    "breytt": 0,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "⚪",
    "lysing": "Take a real rendered screenshot of a page (or drive a form / verify a UI change) from a Claude Code web/remote session, where plain Playwright fails every time "
   },
   {
