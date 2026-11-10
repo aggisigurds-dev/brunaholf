@@ -1,4 +1,9 @@
 -- ============================================================================
+-- ÓKEYRT 10.11.2026 (staðfest með SQL): nýju vísarnir eru ekki til, tvítöldu vísarnir fjórir standa, v_hledsluspa ber
+-- gömlu formúluna. Staðfesting Supabase birtist ekki á tækinu sem Agnar var á (31.10., 10.11.) — keyrist úr lotu þar sem
+-- hann sér spurninguna, eða límist í SQL-ritil Supabase. Ekkert hér er öryggisstilling (ekki mál #1536).
+-- Liður 4 (Krókur 77) er ÞEGAR LEYSTUR í gögnunum (léttvatn = 20, audit-t-s-i grænn 10.11.); UPDATE-ið neðst er þá no-op.
+-- ============================================================================
 -- VÍSAR, HLEÐSLUSPÁ OG EINN REITUR (31.10.2026, allsherjar úttekt)
 --
 -- 1. email_digest: póstfyrirspurn Kerfisheilsu (data-sources-status, eitt kall per pósthólf)

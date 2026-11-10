@@ -95,7 +95,9 @@ async function handleGet(event) {
     if (!kt && !nafn) return P.json(400, { error: 'kt eða kunni vantar' });
     let nofn = new Set(); if (nafn) nofn.add(nafn);
     if (kt) {
-      const fl = await all(`fyrirtaeki?select=nafn,kennitala&deleted_at=is.null&limit=2000`).catch(() => []);
+      // 10.11.2026: `limit=2000` í einu kalli skilaði 1000 af 1.284 félögum (PostgREST-þak) án raðar, svo punktar sem
+      // biðu félags utan þeirra 1000 komu aldrei upp við kennitölu. Flett með fastri röð.
+      const fl = await allPages('fyrirtaeki?select=nafn,kennitala&deleted_at=is.null&order=id').catch(() => []);
       for (const f of fl) if (digits(f.kennitala) === kt && f.nafn) nofn.add(lc(f.nafn));
     }
     const rows = await all("reikningspunktar?select=id,felag,status,worksite_name,karfa,updated_at&felag=eq.slokkvitaeki&status=in.(nytt,flokkad)&karfa=not.is.null&order=updated_at.desc&limit=400");

@@ -240,8 +240,16 @@ async function finnaFelag(q) {
   // Nöfnin eru sótt í einu lagi og fold-uð hér — PostgREST getur ekki fellt
   // broddstafi sjálft. ~1.400 raðir, geymt í 5 mín milli kalla.
   if (!_felagsCache || Date.now() - _felagsTs > 300000) {
-    _felagsCache = await sbGet('fyrirtaeki?select=nafn,kennitala,heimilisfang,er_i_thjonustu,athugasemdir' +
-      '&deleted_at=is.null&limit=2000') || [];
+    // 10.11.2026: eitt kall með `limit=2000` skilaði 1000 af 1.284 (PostgREST-þak), svo félag utan þeirra fannst
+    // aldrei eftir nafni. Flett 1000 í senn með fastri röð.
+    const oll = [];
+    for (let fra = 0; fra < 20000; fra += 1000) {
+      const sida = await sbGet('fyrirtaeki?select=nafn,kennitala,heimilisfang,er_i_thjonustu,athugasemdir' +
+        '&deleted_at=is.null&order=id&limit=1000&offset=' + fra) || [];
+      oll.push(...sida);
+      if (sida.length < 1000) break;
+    }
+    _felagsCache = oll;
     _felagsTs = Date.now();
   }
   // ÍSLENSK BEYGING: þú segir „segðu mér frá Heimaleigu" en félagið heitir

@@ -58,7 +58,26 @@ async function kunniListi(q) {
   const an = [...nafn.entries()].filter(([kt]) => !m.has(kt)).map(([kt, n]) => ({ kt, nafn: n })).sort((a, b) => String(a.nafn || '').localeCompare(String(b.nafn || ''), 'is'));
   return P.json(200, { ok: true, felog, alls: felog.length, an, vidskiptavinir: nafn.size });
 }
-async function all(qs) { const r = await P.sbGet(qs); if (!r.ok) throw new Error('Supabase ' + r.status + ': ' + (await r.text()).slice(0, 200)); return r.json(); }
+// PostgREST skilar mest 1000 röðum í kalli, hvað sem `limit` segir. Mælt 10.11.2026: `limit=10000` á charlize_knowledge
+// skilaði 1000 af 2.168, svo „Minnið“ taldi innan við helming minnisins og sagði það án fyrirvara. `limit` í kallinu er
+// því HEILDARÞAK (ekkert limit = allt) og síðurnar eru sóttar 1000 í senn með fastri röð, svo engin röð falli milli síðna.
+const SIDA = 1000;
+async function all(qs) {
+  const m = /[?&]limit=(\d+)/.exec(qs);
+  const thak = m ? parseInt(m[1], 10) : Infinity;
+  let grunn = qs.replace(/([?&])limit=\d+&?/, '$1').replace(/[?&]$/, '');
+  if (!/[?&]order=/.test(grunn)) grunn += '&order=id';
+  const ut = [];
+  while (ut.length < thak) {
+    const n = Math.min(SIDA, thak - ut.length);
+    const r = await P.sbGet(`${grunn}&limit=${n}&offset=${ut.length}`);
+    if (!r.ok) throw new Error('Supabase ' + r.status + ': ' + (await r.text()).slice(0, 200));
+    const sida = await r.json();
+    ut.push(...sida);
+    if (sida.length < n) break;
+  }
+  return ut;
+}
 async function count(table, filter) {
   const r = await fetch(`${P.SUPABASE_URL}/rest/v1/${table}?select=id${filter ? '&' + filter : ''}&limit=1`, {
     headers: { apikey: P.SUPABASE_KEY, Authorization: 'Bearer ' + P.SUPABASE_KEY, Prefer: 'count=exact' } });

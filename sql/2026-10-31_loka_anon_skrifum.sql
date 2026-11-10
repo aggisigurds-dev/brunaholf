@@ -1,4 +1,12 @@
 -- ============================================================================
+-- ⛔ ÓKEYRT (staðfest með SQL 10.11.2026) — OG MÁ EKKI KEYRA ÁN AGNARS.
+--    RLS er ákvörðun Agnars einni (mál #1536 á Þjónustuborðinu, 07.11.2026: „RLS skiptir ekki miklu máli.
+--    Þau fá kröfuna í bankann samt." — CLAUDE.md, Security note: „Aðeins Agnar ákveður."). Þessi skrá var skrifuð
+--    31.10., á undan þeirri ákvörðun. Tvær tilraunir til að keyra hana (31.10., 10.11.) runnu út á staðfestingu Supabase.
+--    EITT ATRIÐI HÉR ER ANNARS EÐLIS EN GAGNALEKI og stendur sérstaklega í #1536: cowork_js_patches (liður 1) —
+--    kóði úr töflunni KEYRIR á síðum beggja vefja, og anon má skrifa í hana. Það er ein skipun, án áhrifa á virkni.
+--    Endurmælt 10.11.: 165 afritstöflur opnar (voru ~110), DO-blokkin tekur þær allar; ekkert í kóða sex repóa les þær.
+-- ============================================================================
 -- LOKA ANON-SKRIFUM ÞAR SEM ENGINN ÞARF ÞAU (31.10.2026, allsherjar úttekt)
 --
 -- 1. cowork_js_patches — lifandi síður beggja vefja (Netlify snippet-innspýting,

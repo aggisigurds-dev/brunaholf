@@ -332,6 +332,15 @@ ANNAÐ kerfi en „Efniskostnaður / Kostnaðarreikningar (endurrukkun)" hér a�
 
 ## Lærdómur
 
+- **31.10.2026 (endurmælt 10.11.) — sópur má ekki skrá aftur það sem var eytt:** `brunakerfi-gather.js` athugaði aðeins hvort
+  `drive_file_id` væri skráð NÚNA og skilaði 29.10. tveimur skýrslum sem var eytt 20.07. Nú les hann einu sinni á keyrslu
+  mengi eyddra Drive-auðkenna úr `audit_vernd` (`table_name=customer_documents`, `op=DELETE`, `old_row->>drive_file_id`,
+  28 ms, 851 röð) og sleppir þeim (`indexed='eytt_adur'`). Sama regla á við HVERN sóp sem skráir í `customer_documents`
+  (drive-multitool, cowork-doc-sweep) — vörðurinn er `slokkvitaeki/tools/audit-skjal-endurkoma.cjs` (grænn 10.11.: B 16/16).
+- **31.10.2026 — þyngsta endurtekna kallið er póstfyrirspurn Kerfisheilsu:** `data-sources-status.js` spyr `email_digest` einu
+  sinni per pósthólf með `order=received_at.desc.nullslast`; 1,39 m. köll frá 02.08., ~30 ms hvert, og enginn vísir nær því
+  (eini vísirinn er `received_at DESC` = nulls first, enginn á `account`). Vísarnir bíða í
+  `sql/2026-10-31_visar_hledsluspa_krokur77.sql` (ÓKEYRT 10.11. — staðfesting Supabase birtist ekki hjá Agnari).
 - **Vitað 04.11.2026 (greiningarlotur 04/06/07):**
   - **Póstur — undirmöppur ná aldrei inn:** `email_digest` á aðeins INBOX/SENT. Brunaholf@ Sent heitir `Sent Items-1` (2,0 GB) á
     DESKTOP-M5FO3I6 og passar ekki við `SENT_CANDIDATES` í `luna-bridge/bridge.js` (tillaga: regex `^Sent( Items)?(-\d+)?$`).
