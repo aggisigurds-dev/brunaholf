@@ -19471,6 +19471,16 @@ async function renderKrofuyfirlit(t){
     const sameinadLine = (tier===1 && inv.sameinad_drog && inv.sameinad_drog.length)
       ? `<div class="ky-bank" style="color:var(--muted,#8a7f6c);font-weight:500">🔗 Payday-drög á sömu upphæð sameinuð hér (${inv.sameinad_drog.map(d=>'R-'+esc(String(d.tilvisun||'drög').slice(0,11))).join(', ')}) — teljast ekki aftur sem ósend</div>`
       : '';
+    // 10.11.2026 (Agnar: „setja aftur Efnislistann þangað sem var sendur svo ég sjái sundurliðunina"): sendur reikningur
+    // (þrep 1) sem brúin tengdi sjálfvirkt við drög (sjalfvirk_tenging: draftinv|verkstaður|mánuður ↔ tilvísun) fær tengil á
+    // PDF-ið sem var vistað með þeim drögum. Aðeins lestur — ekkert er skrifað og ekkert reiknað upp á nýtt.
+    const _sjT = tier===1 ? (((state.data||{}).sjalfvirk_tenging)||[]).find(x=>String(x.tilvisun)===String(inv.tilvisun)) : null;
+    const _sjK = _sjT ? String(_sjT.draft||'').split('|') : [];
+    const _sjDocs = (_sjK.length===3 ? (EFDOCS[_sjK[1]+'|'+_sjK[2]]||[]) : []).filter(d=>d.doc_type!=='innra' && d.doc_type!=='timabok_pdf' && bhDocUrl(d));
+    const _sjDoc = _sjDocs.find(d=>d.is_primary) || _sjDocs.find(d=>/pdf/.test(d.doc_type||'')) || _sjDocs[0] || null;
+    const sendPdfLine = _sjDoc
+      ? `<div class="ky-bank"><a data-ky-sendpdf href="${esc(bhDocUrl(_sjDoc))}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="${esc(_sjDoc.title||'Efnislisti')} — sundurliðunin sem fylgdi reikningnum" style="color:var(--blue-deep,#1d4f7a);font-weight:600;text-decoration:none">📄 Efnislisti · sundurliðun</a></div>`
+      : '';
     // Mánaðar-plata (skönnun eftir mánuði) — úr gjalddaga, annars vinnumánuði (þrep 3).
     // Samreikningur: platan sýnir ALLA mánuðina sem reikningurinn nær yfir.
     const _mfMon = ((REVIEWS[(inv.worksite||'')+'|'+(inv.work_month||'')]||{}).merged_from||[]).map(x=>x.work_month);
@@ -19505,6 +19515,7 @@ async function renderKrofuyfirlit(t){
             <div class="ky-sub">${gj}${sub}</div>
             ${bankLine}
             ${sameinadLine}
+            ${sendPdfLine}
             ${noteInline}
           </div>
           ${tier===2?'<span style="flex:1 1 0;min-width:0"></span>':''}
