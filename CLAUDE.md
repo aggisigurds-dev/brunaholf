@@ -20,6 +20,15 @@ relevant section here if it's core — in the same commit.
 
 ---
 
+## ⛔ SAMÞYKKISÞAK (11.11.2026)
+
+Síðustu 14 daga stofnuðu Claude-lotur 99 samþykkismál á Þjónustuborðið og Agnar svaraði engu
+þeirra; 146 biðu. Þú mátt aðeins stofna samþykkismál á Agnar ef aðgerðin fer út fyrir kerfið eða
+er óafturkræf (krafa, reikningur, kredit, póstur til kúnna, þjónustustaða, eyðing), forsendan er
+mæld sama dag, ekkert opið mál er til um sama efni, og mest TVÖ á lotu. Kerfisspurningar, tilboð
+um aukavinnu og afturkræfar gagnaleiðréttingar fara á Verkefnalistann, ekki borðið.
+Reglan í heild: `C:\projects\slokkvitaeki\CLAUDE.md`, kaflinn SAMÞYKKISÞAK.
+
 ## What this app is
 
 `brunaholf.netlify.app` is the operations hub for **Brunahólf ehf**
