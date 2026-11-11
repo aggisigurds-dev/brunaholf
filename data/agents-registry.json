@@ -1,7 +1,7 @@
 {
  "generated": "2026-11-11",
  "agents": 42,
- "skills": 56,
+ "skills": 58,
  "a_odrum_velum": 8,
  "list": [
   {
@@ -1833,7 +1833,7 @@
      "repo": "brunaholf",
      "path": ".claude/agents/jarvis.md",
      "uppfaert": "2026-11-11",
-     "linur": 297
+     "linur": 305
     }
    ],
    "afbrigdi": [],
@@ -2976,7 +2976,11 @@
     "full audit",
     "patch wars",
     "áður en deploy",
-    "áður en merge"
+    "áður en merge",
+    "prófa fyrir birtingu",
+    "er þetta prófað",
+    "má birta",
+    "reykpróf"
    ],
    "aldrei": [
     "Breyta kóða",
@@ -2995,12 +2999,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/netvordur.md",
-     "uppfaert": "2026-11-10",
+     "uppfaert": "2026-11-11",
      "linur": 121
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-10",
+   "uppfaert": "2026-11-11",
    "sidur": [
     {
      "id": "jarvis-villuleit",
@@ -3690,7 +3694,12 @@
     "settu á borðið",
     "settu á þjónustuborðið",
     "settu á Samþykkja",
-    "setja tag á mig"
+    "setja tag á mig",
+    "uppfæra þjónustuborðið",
+    "uppfæra borðið",
+    "hverju er búið að svara",
+    "er búið að senda reikning",
+    "hreinsa borðið"
    ],
    "aldrei": [
     "Senda póst",
@@ -4821,7 +4830,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/skills/agenta-samstilling/SKILL.md",
      "uppfaert": "2026-11-11",
-     "linur": 74
+     "linur": 86
     }
    ],
    "afbrigdi": [],
@@ -5050,6 +5059,48 @@
    ],
    "afbrigdi": [],
    "uppfaert": "2026-10-10",
+   "sidur": []
+  },
+  {
+   "id": "skill:bord-uppfaersla",
+   "type": "skill",
+   "name": "bord-uppfaersla",
+   "emoji": "🧩",
+   "rodd": null,
+   "flokkur": "verkfaeri",
+   "svid": null,
+   "lysing": "Verkferlið „Uppfæra Þjónustuborðið\" — fara yfir öll opin mál á Þjónustuborðinu og færa borðið til samræmis við raunveruleikann: vinna úr því sem Agnar hefur svarað (✓ ▶ ✕ 💬), finna mál sem eru þegar leyst (reikningur sendur, krafa greidd, kreditfært, pósti svarað) og loka þeim með sönnun, og skila stuttum lista yfir það sem raunverulega bíður. Forráðamaður er `samthykktir` (regluverkið er í `.claude/agents/samthykktir.md`); peningahliðin er `rukkari` / `sala-reikningar`.",
+   "serhaefing": [],
+   "kveikjuord": [
+    "uppfæra þjónustuborðið",
+    "uppfæra borðið",
+    "hverju er búið að svara",
+    "hvað er búið að svara",
+    "klára svörin",
+    "yfirfara svör",
+    "hvaða reikningar eru sendir",
+    "er búið að senda reikning",
+    "er búið að rukka",
+    "hreinsa borðið",
+    "borðið úrelt",
+    "loka því sem er búið",
+    "hvað bíður í raun"
+   ],
+   "aldrei": [],
+   "tools": [],
+   "heimili": [
+    "slokkvitaeki"
+   ],
+   "skrar": [
+    {
+     "repo": "slokkvitaeki",
+     "path": ".claude/skills/bord-uppfaersla/SKILL.md",
+     "uppfaert": "2026-11-11",
+     "linur": 131
+    }
+   ],
+   "afbrigdi": [],
+   "uppfaert": "2026-11-11",
    "sidur": []
   },
   {
@@ -5888,7 +5939,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/skills/lista-uttekt/SKILL.md",
      "uppfaert": "2026-11-11",
-     "linur": 73
+     "linur": 84
     }
    ],
    "afbrigdi": [],
@@ -5926,7 +5977,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/skills/lotu-uttekt/SKILL.md",
      "uppfaert": "2026-11-11",
-     "linur": 66
+     "linur": 77
     }
    ],
    "afbrigdi": [],
@@ -6070,6 +6121,47 @@
    "uppfaert": "2026-09-16",
    "sidur": [],
    "onnur_vel": true
+  },
+  {
+   "id": "skill:profa-fyrir-birtingu",
+   "type": "skill",
+   "name": "profa-fyrir-birtingu",
+   "emoji": "🧩",
+   "rodd": null,
+   "flokkur": "verkfaeri",
+   "svid": null,
+   "lysing": "Verkferlið „Prófa fyrir birtingu\" — skylduhlið áður en nokkur breyting á Slökkvitæki-appinu er sögð búin eða birt með [deploy]: málfræði allra skráa, verðir, breytingin keyrð í raun (án skrifa í lifandi gögn), afgreiðsla og skýrslugerð reyktar, og lifandi síðan lesin eftir birtingu. Til þess gert að lota skili aldrei „smíðað en óprófað — láttu vita ef eitthvað brotnar\". Forráðamaður er `netvordur`.",
+   "serhaefing": [],
+   "kveikjuord": [
+    "prófa fyrir birtingu",
+    "er þetta prófað",
+    "prófaðu þetta",
+    "virkar þetta",
+    "áður en þú birtir",
+    "má birta",
+    "tilbúið í deploy",
+    "sannprófa breytinguna",
+    "reykpróf",
+    "brotnaði eitthvað",
+    "skemmdi afgreiðsluna",
+    "skemmdi skýrslugerðina"
+   ],
+   "aldrei": [],
+   "tools": [],
+   "heimili": [
+    "slokkvitaeki"
+   ],
+   "skrar": [
+    {
+     "repo": "slokkvitaeki",
+     "path": ".claude/skills/profa-fyrir-birtingu/SKILL.md",
+     "uppfaert": "2026-11-11",
+     "linur": 70
+    }
+   ],
+   "afbrigdi": [],
+   "uppfaert": "2026-11-11",
+   "sidur": []
   },
   {
    "id": "skill:rannsoknarhamur",
@@ -6250,7 +6342,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/skills/sannreyna-fyrirtaeki/SKILL.md",
      "uppfaert": "2026-11-11",
-     "linur": 137
+     "linur": 149
     }
    ],
    "afbrigdi": [],

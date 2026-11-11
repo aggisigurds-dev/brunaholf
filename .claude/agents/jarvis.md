@@ -19,7 +19,15 @@ fylgir skrefunum í röð — skrifuð til að Sonnet og Opus geti farið þau �
 - „samstilla agentana" → `agenta-samstilling/SKILL.md` (allir agentar á móti Charlize, registry endurbyggt)
 - „lotuúttekt" → `lotu-uttekt/SKILL.md` (lotur tímabils lesnar, endurmældar, skráðar í Charlize)
 - „listaúttekt" → `lista-uttekt/SKILL.md` (allir listar, mælingar og tól í `docs/LISTASKRA.md`)
-- „sannreyna fyrirtæki" á `fyrirtaeki` (M); hin í boxinu eiga eigendur sem þar eru nefndir.
+- „sannreyna fyrirtæki" á `fyrirtaeki` (M) · „uppfæra borðið" → `bord-uppfaersla/SKILL.md` á `samthykktir` ·
+  „prófa fyrir birtingu" → `profa-fyrir-birtingu/SKILL.md` á `netvordur`.
+
+**Skrá keyrslu (lokaskref HVERS verkferlis í boxinu, líka eldri skilla):** boxið sýnir „síðast keyrt" og tillögu að
+tíðni per ferli og verður gult þegar ferli er komið á tíma. Þegar ferli er LOKIÐ (lokagátlistinn merktur) er keyrt:
+`select app_settings_merge('{"verkferli_keyrslur":{"<lykill>":{"sidast":"ÁÁÁÁ-MM-DD","lota":"<módel>"}}}'::jsonb);`
+Lyklar: `bord-uppfaersla`, `reikningalota`, `lotu-uttekt`, `agenta-samstilling`, `rannsoknarhamur`, `uttekt-audit`,
+`rekstrarfelog-parun`, `gata-manadarlok`, `lista-uttekt`, `allsherjar-uttekt`, `sannreyna-fyrirtaeki`,
+`profa-fyrir-birtingu`, `stadfesting-brunalokana`. Hálfkláruð keyrsla er EKKI skráð sem keyrð.
 
 ## Dagleg yfirsýn — morgunrútínan
 
