@@ -317,7 +317,7 @@
   ];
   const fmtD = (iso) => { const d = new Date(iso); return isNaN(d) ? '' : ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear(); };
 
-  // Markmið per flokk: 5H = sami flokkur á sama væng á 6H (hún er búin); gólfgöt (milliloft) = 5H S1/S2 eigin tala, 230 á S4/S5,
+  // Markmið per flokk: 5H = sami flokkur á sama væng á 6H (hún er búin); gólfgöt (milliloft) = GOLF_TGT á deild (eitt verk á gat),
   // sama á 4H sem hefur aðeins gólfgöt; 6H = það sem er klárað. Hver flokkur er „umferð“ sem getur verið óhafin á væng.
   const GOLF_CLS = 'Gólf Ø 160-200';
   // Rafmagn (6H á 285 rafþéttingar og raufar, 5H ekki skráð) er utan markmiða — sjá athugasemd á síðunni.
@@ -524,7 +524,7 @@
     }));
     return `<details class="nl-fl-det"><summary>Sundurliðun á hverja stúku og flokk</summary>
       <div class="nl-fl-tw"><table class="nl-fl-t"><thead><tr><th>Stúka</th>${CLS.map((c) => `<th>${escapeHtml(c[1])}</th>`).join('')}<th>Annað</th><th>Klárað</th><th>Opið</th><th>Eftir (mat)</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>
-      <p class="nl-sec-cat">Staða ${fmtD(stukur.updated)} úr hnitum Ajour (${num(stukur.done)} klárað og ${num(stukur.open)} opið alls; flokkateikningar og „Viðbótarverkefni“ eru utan stúkna). „Eftir“ er mat: markmið væng mínus klárað. Gólf Ø160-200 er milliloft og er mest ógert á 4H og 5H S4+S5. Skipting á eftir að keyra aftur með <code>node tools/nlsh-stukur.cjs</code>.</p>
+      <p class="nl-sec-cat">Staða ${fmtD(stukur.updated)} úr hnitum Ajour (${num(stukur.done)} klárað og ${num(stukur.open)} opið alls; flokkateikningar og „Viðbótarverkefni“ eru utan stúkna). „Eftir“ er mat: markmið væng mínus klárað. Gólf Ø160-200 er milliloft (eitt verk á hvert gat). Skipting á eftir að keyra aftur með <code>node tools/nlsh-stukur.cjs</code>.</p>
     </details>`;
   }
 

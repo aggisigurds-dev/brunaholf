@@ -26,9 +26,13 @@ const body = (projectId, page) => ({ projectId, registrationSearch: { forProject
   forwardedCompleted: false, forwardedRejected: false, commentedFrom: null, commentedTo: null, labelIds: [] } });
 
 // [teikning, hæð, vinstri vængur, hægri vængur]. Flokkateikningar (Rafmagnsþéttingar) og „Viðbótarverkefni“ eru ekki hér.
+// LEIÐRÉTT 11.11.2026: „5H. Ceiling“ (gólfgöt 5. hæðar) er HEILT hæðarblað í sama sniði og 6H.pdf (A1, 3763×2658 px) með öllum
+// fjórum deildum — x-svið punktanna (387–747, 1057–1399, 2296–2669, 2974–3348) fellur á deildir 6H-blaðanna. Áður var blaðið
+// talið S1+S2 og stærsta bilið (atríum) skipti því í „S1“ = S1+S2 (267) og „S2“ = S4+S5 (204): 5H S4/S5 sýndu 0 gólfgöt.
+// Regla með FYLKI í þriðja sæti = blað með mörgum deildum, skipt við (n−1) stærstu bilin í x.
 const RULES = [
   [/^6H\.pdf/i, '6H', 'S1', 'S2'], [/Brunayfirlit 6H/i, '6H', 'S4', 'S5'], [/^6H4S/i, '6H', 'S4', 'S4'], [/^6H5S/i, '6H', 'S5', 'S5'],
-  [/^5H 1S og 2S/i, '5H', 'S1', 'S2'], [/^5H\. Ceiling/i, '5H', 'S1', 'S2'], [/^5H\s+S4 \+ S5/i, '5H', 'S4', 'S5'],
+  [/^5H 1S og 2S/i, '5H', 'S1', 'S2'], [/^5H\. Ceiling/i, '5H', ['S1', 'S2', 'S4', 'S5']], [/^5H\s+S4 \+ S5/i, '5H', 'S4', 'S5'],
   [/^4H\. S1-S2/i, '4H', 'S1', 'S2'], [/^4H\s+4S \+ 5S/i, '4H', 'S4', 'S5'],
 ];
 
@@ -38,11 +42,26 @@ const CROP = { x: 230, y: 265, w: 1930, h: 950 };
 const TRANS = [
   [/^6H\.pdf/i, '6H', 1.58, 12.3, 34.1], [/Brunayfirlit 6H/i, '6H', 1.58, 2.1, 0.9],
   [/^5H 1S og 2S/i, '5H', 5.2906, 176.8, 207.2], [/^5H\s+S4 \+ S5/i, '5H', 3.22, 1372.1, 184.2],
+  // „5H. Ceiling“ = sama blaðsnið og 6H.pdf: brúnir deilda í gólfpunktunum falla á vegggötin með dx 11–15 pt og dy 27–30 pt (11.11.2026).
+  [/^5H\. Ceiling/i, '5H', 1.58, 12.3, 34.1],
   // 4H hefur ekki eigið Brunayfirlit: 5H-blaðið er notað (sama grunnmynd). S4+S5 = sama blaðgerð og 5H-loftið; S1+S2 pörun er óviss.
   [/^4H\. S1-S2/i, '4H', 4.8, 202.5, 88.5], [/^4H\s+4S \+ 5S/i, '4H', 3.22, 1372.1, 184.2],
 ];
 const RAF = ['Raflagnaþéttingar, göt og raufar', 'Raufar. (Metrer) LV', 'Raf raufar. (Metrar og Stk.)', 'Raf göt (Stk.)'];
 // Flokkahópur: 0 Loft, 1 Stál, 2 Rafmagn, 3 Gólf (milliloft), 4 Annað (plast o.fl.)
+// Deild eftir x-hniti: tveggja deilda blað skiptist við stærsta bilið (atríum eða bil milli vængja); blað með fylki af deildum
+// skiptist við (n−1) stærstu bilin. Skilar falli x → 'S1' | 'S2' | 'S4' | 'S5'.
+function deildFall(rule, xs) {
+  const r = [...xs].sort((p, q) => p - q), bil = [];
+  for (let i = 1; i < r.length; i++) bil.push([r[i] - r[i - 1], (r[i - 1] + r[i]) / 2]);
+  bil.sort((p, q) => q[0] - p[0]);
+  if (Array.isArray(rule[2])) {
+    const skil = bil.slice(0, rule[2].length - 1).filter((b) => b[0] > 150).map((b) => b[1]).sort((p, q) => p - q);
+    return (x) => rule[2][skil.filter((c) => x >= c).length];
+  }
+  const skil = r.length > 1 && rule[2] !== rule[3] && bil.length && bil[0][0] > 150 ? bil[0][1] : Infinity;
+  return (x) => (x < skil ? rule[2] : rule[3]);
+}
 function hopur(c) { c = c || ''; return /^Loft/i.test(c) ? 0 : /^Stál/i.test(c) ? 1 : RAF.indexOf(c) >= 0 ? 2 : /^Gólf/i.test(c) ? 3 : 4; }
 function punktar(regs, flokkar = []) {
   // [x, y, klárað, hópur, stúka (1,2,4,5), svæði (0 N, 1 C, 2 S), flokkur (vísir í flokkar[] — stærðarflokkur Ajour, 10.11.2026)] — stúka og svæði eftir sömu reglu og skiptaEftirHnitum.
@@ -53,14 +72,11 @@ function punktar(regs, flokkar = []) {
   for (const a of Object.values(byFile)) {
     const t = TRANS.find((x) => x[0].test(a[0].draw || '')); if (!t) continue;
     const rule = RULES.find((x) => x[0].test(a[0].draw || '')); if (!rule) continue;
-    const xs = a.map((p) => p.x).sort((p, q) => p - q);
-    let gi = 0, gm = 0;
-    for (let i = 1; i < xs.length; i++) if (xs[i] - xs[i - 1] > gm) { gm = xs[i] - xs[i - 1]; gi = i; }
-    const skil = xs.length > 1 && rule[2] !== rule[3] && gm > 150 ? (xs[gi - 1] + xs[gi]) / 2 : Infinity;
+    const deild = deildFall(rule, a.map((p) => p.x));
     const ys = a.map((p) => p.y), ymn = Math.min(...ys), ymx = Math.max(...ys);
     for (const r of a) {
       const fy = (r.y - ymn) / ((ymx - ymn) || 1);
-      const st = +(r.x < skil ? rule[2] : rule[3]).slice(1);
+      const st = +deild(r.x).slice(1);
       floors[t[1]].push([Math.round((r.x / t[2] + t[3] - CROP.x) * 10) / 10, Math.round((r.y / t[2] + t[4] - CROP.y) * 10) / 10, r.status === 4 ? 1 : 0, hopur(r.cat), st, fy < 0.275 ? 0 : fy < 0.725 ? 1 : 2, fl(r.cat)]);
     }
   }
@@ -74,16 +90,13 @@ function skiptaEftirHnitum(regs) {
   for (const a of Object.values(byFile)) {
     const rule = RULES.find((x) => x[0].test(a[0].draw || ''));
     if (!rule) continue;
-    const xs = a.map((p) => p.x).sort((p, q) => p - q);
-    let gi = 0, gm = 0;
-    for (let i = 1; i < xs.length; i++) if (xs[i] - xs[i - 1] > gm) { gm = xs[i] - xs[i - 1]; gi = i; }
-    const skil = xs.length > 1 && rule[2] !== rule[3] && gm > 150 ? (xs[gi - 1] + xs[gi]) / 2 : Infinity;
+    const deild = deildFall(rule, a.map((p) => p.x));
     // Norður / Center / Suður (skipting verktaka): brýrnar milli stúkna sjást sem dýfa í y-hnitum við ~27 % og ~72 % af
     // hæð teikningarinnar. Lítið y þýðir norður (efst á teikningu).
     const ys = a.map((p) => p.y);
     const ymn = Math.min(...ys), ymx = Math.max(...ys);
     for (const r of a) {
-      const k = `${rule[1]} ${r.x < skil ? rule[2] : rule[3]}`;
+      const k = `${rule[1]} ${deild(r.x)}`;
       const w = (wings[k] ??= { done: 0, open: 0, cat: {}, catOpen: {}, mon: {}, z: { N: { done: 0, open: 0, cat: {} }, C: { done: 0, open: 0, cat: {} }, S: { done: 0, open: 0, cat: {} } } });
       const fy = (r.y - ymn) / ((ymx - ymn) || 1);
       const zz = w.z[fy < 0.275 ? 'N' : fy < 0.725 ? 'C' : 'S'];
@@ -114,7 +127,7 @@ function utanStukna(regs) {
   }
   return out;
 }
-module.exports = { skiptaEftirHnitum, utanStukna, RULES, punktar, TRANS, CROP };
+module.exports = { skiptaEftirHnitum, utanStukna, deildFall, RULES, punktar, TRANS, CROP };
 
 if (require.main === module) (async () => {
   const projects = await aj('/api/construction/projects');
