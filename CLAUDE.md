@@ -29,6 +29,14 @@ mæld sama dag, ekkert opið mál er til um sama efni, og mest TVÖ á lotu. Ker
 um aukavinnu og afturkræfar gagnaleiðréttingar fara á Verkefnalistann, ekki borðið.
 Reglan í heild: `C:\projects\slokkvitaeki\CLAUDE.md`, kaflinn SAMÞYKKISÞAK.
 
+## ⭐ FORGANGSMÁL (11.11.2026)
+
+Einingin 28 Forgangsmál á „Agnar · mitt vinnuborð“ (Slökkvitækis-appið, #bord) sýnir aðeins það sem Claude-lota
+handvelur: mál með merkinu `forgangsmal` (niðurstaða sem þarf að bregðast við) eða `skilabod` (mikilvægur póstur sem
+bíður svars). Mest 7 forgangsmál og 5 skilaboð, mælt sama dag, með tölunni í málinu. Brunahólfs-póstur opnast ekki í
+því appi og starfsmannamál fara aldrei á borðið.
+Uppskrift og þak: `C:projectsslokkvitaekiCLAUDE.md`, kaflinn FORGANGSMÁL.
+
 ## What this app is
 
 `brunaholf.netlify.app` is the operations hub for **Brunahólf ehf**
