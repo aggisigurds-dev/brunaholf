@@ -131,6 +131,17 @@
   // eldveggir og brunahólf sem 3D-vél Teikningar reiknar (hus.brunaholfun = síðasta mæling; borðið sjálft ræður þegar
   // Teikningin hefur vistað eldveggi/hólf). Spjald opnar Teikninguna í Slökkvitæki → 3D → „Brunahólf".
   // Mælingin býr í sér dálki (verkstadur_info.brunaholfun) — „Skrá heimilisfang" skiptir hus út og má ekki þurrka hana.
+  // „＋ Stofna teikningaborð" (mál #1464, 11.11.2026, valkostur 1): verkstaður án teikningaborðs fær hnapp sem opnar heiti-reit
+  // og „Vista". Vista → /api/verkstadur {action:'stofna_bord'} býr til falið félag í Slökkvitæki (kt Brunahólfs, ekki í þjónustu)
+  // og tengir það verkstaðnum (slokk_company_id) — sama snið og Skúlagata 26 (#1910) var sett upp í höndunum. Þjónninn tvítekur
+  // aldrei: verkstaður sem á félag fær það aftur, og sama nafn/heimilisfang á kt Brunahólfs endurnýtir röðina.
+  function stofnaHtml(ws, v) {
+    const heimili = !!(v && v.heimilisfang);
+    return `<div class="kyvs-th" data-vs-bord><span class="kyvs-l">Brunahólfun</span><span style="color:var(--muted)">ekkert teikningaborð</span>${heimili
+      ? '<button type="button" class="kyvs-btn" data-vs="stofna-bord" title="Býr til falið félag í Slökkvitæki svo Teikningin (hæðir, eldveggir, brunahólf) virki fyrir þennan verkstað">＋ Stofna teikningaborð</button>'
+      : '<button type="button" class="kyvs-btn" disabled title="Teikningin sækir hæðirnar eftir heimilisfanginu">＋ Stofna teikningaborð — skráðu heimilisfang fyrst</button>'}</div>
+      <div class="kyvs-leit" data-vs-bordform hidden><input type="text" class="kyvs-in" data-vs-bordheiti maxlength="100" value="${esc('Brunahólf - ' + (tillaga(ws) || ws))}" title="Heiti félagsins í Slökkvitæki"><button type="button" class="kyvs-btn" data-vs="vista-bord">Vista</button><button type="button" class="kyvs-btn" data-vs="haetta-bord">Hætta við</button></div>`;
+  }
   function brunaholfunHtml(bord, bh) {
     bh = bh || null;
     if (!bord && !bh) return '';
@@ -146,7 +157,7 @@
       return `<a class="kyvs-bh" href="${esc(slod)}" target="_blank" rel="noopener" title="${esc(h.nafn)} — opna Teikninguna í Slökkvitæki (3D → Brunahólf)">${mynd}<span class="kyvs-tl">${esc(h.nafn)}</span><span class="kyvs-td">${tolur}</span></a>`;
     }).join('');
     const sam = snap.filter((x) => x.ei != null);
-    const yfir = sam.length ? `${sam.reduce((a, x) => a + (x.ei || 0), 0)} EI-merki · ${sam.reduce((a, x) => a + (x.holf || 0), 0)} brunahólf á ${sam.length} hæðum${bh.maelt ? ' · mælt ' + esc(dmy(bh.maelt)) : ''}` : (haedir.length ? haedir.length + ' hæðir' : '');
+    const yfir = sam.length ? `${sam.reduce((a, x) => a + (x.ei || 0), 0)} EI-merki · ${sam.reduce((a, x) => a + (x.holf || 0), 0)} brunahólf á ${sam.length} hæðum${bh.maelt ? ' · mælt ' + esc(dmy(bh.maelt)) : ''}` : (haedir.length ? haedir.length + ' hæðir' : (bord && bord.tomt ? 'Teikningaborð til — engar hæðir enn. Opnaðu Teikninguna, sæktu hæðirnar og vistaðu.' : ''));
     return `<div class="kyvs-th"><span class="kyvs-l">Brunahólfun</span><span>${yfir || '<span style="color:var(--muted)">ekkert teikningaborð</span>'}</span>${slod ? `<a class="kyvs-lk" href="${esc(slod)}" target="_blank" rel="noopener" title="${esc(bh && bh.adferd ? bh.adferd : 'Teikning í Slökkvitæki')}">Opna Teikningu (3D · Brunahólf) ↗</a>` : ''}</div>${kort ? `<div class="kyvs-bhgrid">${kort}</div>` : ''}`;
   }
 
@@ -174,7 +185,7 @@
             ${flis ? `<div class="kyvs-flis">${flis}</div>` : ''}
           </div>
         </div>
-        ${brunaholfunHtml(bord, v.brunaholfun)}
+        ${(bord || v.brunaholfun) ? brunaholfunHtml(bord, v.brunaholfun) : stofnaHtml(ws, v)}
         ${ajourHtml(aj)}
         ${v.heimilisfang ? `<div class="kyvs-th"><span class="kyvs-l">Teikningar úr ${rvk ? 'skjalasafni' : 'kortasjá'}</span>${tk.fjoldi ? `<span>${tk.gildandi != null ? esc(tk.gildandi) + ' gildandi af ' : ''}${esc(tk.fjoldi)}${tk.grunnmyndir ? ' · ' + esc(tk.grunnmyndir) + ' grunnmyndir' : ''}${hus.heimild ? ' · ' + esc(String(hus.heimild).split(' · ')[0]) : ''}</span>` : '<span style="color:var(--muted)">engar fundust</span>'}${rvk && e.landnr ? `<a class="kyvs-lk" target="_blank" rel="noopener" href="https://skjalasafn.reykjavik.is/fotoweb/archives/5000-A%C3%B0aluppdr%C3%A6ttir/?q=${encodeURIComponent(e.landnr)}">Allar í skjalasafni ↗</a>` : ''}</div>
           ${tHtml ? `<div class="kyvs-tgrid">${tHtml}</div>${tl.length > 24 ? `<div class="kyvs-st">${tl.length - 24} til viðbótar — sjá allar í skjalasafninu/kortasjánni.</div>` : ''}` : ''}` : ''}
@@ -235,6 +246,29 @@
         document.addEventListener('paste', lim);
       }
       el._setjaMynd = setjaMynd;
+      const sb = q('[data-vs="stofna-bord"]'), bform = q('[data-vs-bordform]');
+      if (sb && bform) {
+        const bheiti = q('[data-vs-bordheiti]');
+        sb.onclick = () => { bform.hidden = false; bheiti.focus(); bheiti.select(); };
+        q('[data-vs="haetta-bord"]').onclick = () => { bform.hidden = true; };
+        const vistaBord = async () => {
+          const heiti = bheiti.value.trim(); if (!heiti) { bheiti.focus(); return; }
+          $st.style.color = 'var(--muted)'; $st.textContent = 'Stofna teikningaborð…';
+          el.querySelectorAll('.kyvs-btn').forEach((x) => { x.disabled = true; });
+          try {
+            const r = await fetch('/api/verkstadur', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'stofna_bord', ws, heiti, by: me() }) });
+            const j = await r.json().catch(() => ({}));
+            if (!r.ok || !j.company_id) throw new Error(j.error || ('HTTP ' + r.status));
+            // Lesið til baka af þjóninum — borðið birtist aðeins ef verkstaðurinn ber nú félagið.
+            const g = await fetch('/api/verkstadur?ws=' + encodeURIComponent(ws), { cache: 'no-store' }); const jg = await g.json();
+            row = jg.row || row; aj = jg.ajour || aj; bord = jg.bord || null;
+            if (!bord || +bord.company_id !== +j.company_id) throw new Error('vistað, en verkstaðurinn las ekki félagið til baka');
+            syna(j.til ? '✓ Verkstaðurinn átti þegar teikningaborð (#' + j.company_id + ')' : '✓ Teikningaborð ' + (j.endurnytt ? 'tengt (félag #' : 'stofnað (félag #') + j.company_id + ') — opnaðu Teikninguna og sæktu hæðirnar');
+          } catch (err) { syna('<span style="color:var(--red)">✗ ' + esc(err.message || err) + '</span>'); }
+        };
+        q('[data-vs="vista-bord"]').onclick = vistaBord;
+        bheiti.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); vistaBord(); } if (ev.key === 'Escape') { ev.stopPropagation(); bform.hidden = true; } });
+      }
       const ajs = q('.kyvs-ajsel');
       if (ajs) ajs.onchange = async () => {
         $st.style.color = 'var(--muted)'; $st.textContent = 'Vista Ajour-verkefni…';

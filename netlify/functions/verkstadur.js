@@ -11,9 +11,14 @@
 //
 // Vafrinn sækir sjálfur úr Slökkvitækja-föllunum (hus-upplysingar + husmynd, CORS *) og sendir hingað til
 // geymslu — svo engin keðja ytri kalla lendir á 10 s þaki fallsins. Sótt aðeins við raunverulegan smell.
+const KV = require('./_ktvorn');
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const BUCKET = 'verkstadir';
+// Teikningaborð verkstaðar (mál #1464, 11.11.2026): falið félag á kennitölu Brunahólfs ehf (customers_base 330) sem
+// er_i_thjonustu=false og status óvirkur — sama snið og 17 handgerðu raðirnar frá 03.–04.11 (#1910 Skúlagata 26 o.fl.).
+const BH_KT = '5204172300';
+const GERVI_FORSKEYTI = 'Brunahólf - ';
 const LISTI = 'worksite_name,heimilisfang,heimilisfang_heimild,mynd_url,mynd_heimild,mynd_texti,hus,updated_at,updated_by';
 
 exports.handler = async (event) => {
@@ -39,6 +44,9 @@ exports.handler = async (event) => {
           const tb = await fetch(`${SUPABASE_URL}/rest/v1/teikning_bord?company_id=eq.${row.slokk_company_id}&select=company_id,haedir,updated_at`, { headers: H });
           const b0 = tb.ok ? (await tb.json())[0] : null;
           if (b0) bord = { company_id: b0.company_id, updated_at: b0.updated_at, haedir: (b0.haedir || []).map((h) => ({ id: h.id, nafn: h.nafn, image_url: h.image_url, frum: h.frum || null, skurdur: h.skurdur || null, eldveggir: (h.eldveggir || []).filter(Boolean).length, holf: (h.holf || []).length, merki: (h.markers || []).length })) };
+          // Félagið er til en Teikningin hefur ekki vistað neitt enn (teikning_bord verður til við fyrstu vistun þar):
+          // borðið er samt TIL — tómt — svo hub-inn sýnir „Opna Teikningu" en ekki „Stofna" aftur.
+          else if (tb.ok) bord = { company_id: row.slokk_company_id, updated_at: null, haedir: [], tomt: true };
         } catch (_) { bord = null; }
       }
       return json(200, { row, ajour: ajourFyrir(q.ws, row, Array.isArray(allar) ? allar : []), bord });
@@ -77,6 +85,7 @@ exports.handler = async (event) => {
     if (!r.ok) return json(r.status, { error: (await r.text()).slice(0, 300) });
     return json(200, { ok: true, row: (await r.json())[0] || null });
   }
+  if (b.action === 'stofna_bord') return stofnaBord(ws, b, H);
   if (b.action !== 'vista') return json(400, { error: 'action vantar' });
 
   const rod = {
@@ -143,6 +152,46 @@ function ajourFyrir(ws, row, allar) {
   const ids = new Set(valin.map((v) => v.project_id));
   const teikningar = allar.filter((t) => ids.has(t.project_id)).sort((a, b) => (b.n_skraningar || 0) - (a.n_skraningar || 0));
   return { verkefni, valin, handvalid, teikningar };
+}
+
+// „＋ Stofna teikningaborð" (mál #1464, valkostur 1): verkstaður án slokk_company_id fær falið félag í Slökkvitæki
+// svo Teikningin (teikning_bord per félag) virki. Aldrei tvítekið:
+//   1. verkstaðurinn á þegar félag → því skilað, ekkert skrifað;
+//   2. annars kennitölureglan (_ktvorn.faTilStad) á kt Brunahólfs: sama NAFN eða sama heimilisfang → sú röð notuð
+//      (t.d. „Varmárskóli" og „Varmárskóli 16921" deila #1925), annars ný röð;
+//   3. röð sem fyndist og er Í ÞJÓNUSTU eða ber ekki „Brunahólf - "-forskeytið er aldrei tengd sjálfkrafa (409).
+// teikning_bord-röðin sjálf verður til þegar Teikningin í Slökkvitæki vistar fyrst (upsert á company_id, 375/383).
+async function stofnaBord(ws, b, H) {
+  const r0 = await fetch(`${SUPABASE_URL}/rest/v1/verkstadur_info?worksite_name=eq.${encodeURIComponent(ws)}&select=worksite_name,heimilisfang,slokk_company_id`, { headers: H });
+  if (!r0.ok) return json(502, { error: 'verkstaðaleit mistókst — ekkert stofnað: ' + (await r0.text()).slice(0, 200) });
+  const row = (await r0.json())[0] || null;
+  if (row && row.slokk_company_id) return json(200, { ok: true, til: true, company_id: row.slokk_company_id });
+  const heimili = String((row && row.heimilisfang) || '').trim();
+  if (!/\d/.test(heimili)) return json(400, { error: 'Skráðu heimilisfang verkstaðarins fyrst — Teikningin sækir hæðirnar eftir því.' });
+  const heiti = String(b.heiti || '').replace(/\s+/g, ' ').trim().slice(0, 100);
+  if (!heiti) return json(400, { error: 'Heiti vantar' });
+  const nafn = heiti.indexOf(GERVI_FORSKEYTI) === 0 ? heiti : GERVI_FORSKEYTI + heiti;
+  const dags = new Date().toISOString().slice(0, 10).split('-').reverse().join('.');
+  const res = await KV.faTilStad({
+    sb: KV.makeSb((...a) => fetch(...a), SUPABASE_URL, SUPABASE_KEY), kt: BH_KT, thjonusta: false,
+    row: { nafn, heimilisfang: heimili, er_i_thjonustu: false, status: 'óvirkur',
+      athugasemdir: 'Verkstaður Brunahólfs (Tímavera „' + ws + '"). Röðin er til svo teikningaborð + brunahólfun virki — ekki þjónustukúnni Slökkvitækis. Stofnað ' + dags + ' með „Stofna teikningaborð" í hubbnum' + (b.by ? ' (' + String(b.by).slice(0, 40) + ')' : '') + '.' },
+  });
+  if (!res.ok) return json(res.status || 502, { error: res.error });
+  const f = res.row || {};
+  if (res.hvernig === 'reuse' && (f.er_i_thjonustu === true || String(f.nafn || '').indexOf(GERVI_FORSKEYTI) !== 0)) {
+    return json(409, { error: '„' + (f.nafn || '#' + f.id) + '" (#' + f.id + ') á sama nafn eða heimilisfang en er ekki falið teikningafélag — tengi ekki sjálfkrafa.' });
+  }
+  if (!f.id) return json(502, { error: 'félagið varð ekki til (ekkert id)' });
+  const u = await fetch(`${SUPABASE_URL}/rest/v1/verkstadur_info?on_conflict=worksite_name`, {
+    method: 'POST',
+    headers: { ...H, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=representation' },
+    body: JSON.stringify({ worksite_name: ws, slokk_company_id: f.id, updated_at: new Date().toISOString(), updated_by: String(b.by || '').slice(0, 60) || null }),
+  });
+  if (!u.ok) return json(u.status, { error: 'félag #' + f.id + ' til, en tenging við verkstaðinn mistókst: ' + (await u.text()).slice(0, 200) });
+  const ur = (await u.json())[0] || {};
+  if (ur.slokk_company_id !== f.id) return json(502, { error: 'las til baka slokk_company_id=' + ur.slokk_company_id + ' (átti að vera ' + f.id + ')' });
+  return json(200, { ok: true, til: false, endurnytt: res.hvernig === 'reuse', company_id: f.id, nafn: f.nafn });
 }
 
 async function geymaMynd(ws, m, H) {
