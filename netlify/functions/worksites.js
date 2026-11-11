@@ -118,12 +118,12 @@ exports.handler = async (event) => {
     const projectsArr = [...byProject.values()].map(p => ({
       ...p,
       project_lc: p.project.toLowerCase(),
-      core: extractCore(p.project),
+      core: foldIs(extractCore(p.project)),
     }));
 
     const emailsByProject = {};
     for (const e of emails) {
-      const hay = ((e.subject || '') + ' ' + (e.snippet || '')).toLowerCase();
+      const hay = foldIs((e.subject || '') + ' ' + (e.snippet || ''));
       if (!hay.trim()) continue;
       for (const p of projectsArr) {
         if (!p.core || p.core.length < 4) continue;
@@ -397,6 +397,13 @@ async function fetchAllPages(path) {
 
 // Pull the "core" identifying token from a project name — drop common prefixes
 // and noise so substring matching against emails is more accurate.
+// 11.11.2026: „Sidumuli 21" (Tímavera) fann ekki „Síðumúli 21" í pósti — brjóta niður broddstafi, ð→d, þ→th, æ→ae, ö→o.
+function foldIs(s) {
+  return String(s || '').toLowerCase()
+    .replace(/þ/g, 'th').replace(/ð/g, 'd').replace(/æ/g, 'ae')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+
 function extractCore(name) {
   if (!name) return '';
   let n = name.toLowerCase();

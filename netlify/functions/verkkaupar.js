@@ -169,12 +169,14 @@ async function detail(name) {
   // Samskipti: póstar sem nefna verkstaðina eða greiðandann (email_digest = brunaholf-pósthólfið)
   const orParts = [];
   const like = (s) => `*${String(s).replace(/[*,()]/g, ' ').trim()}*`;
-  for (const w of wsNames.slice(0, 12)) { orParts.push(`subject.ilike.${like(w)}`); orParts.push(`snippet.ilike.${like(w)}`); }
+  // 11.11.2026: ilike þekkir ekki broddstafi (Sidumuli ≠ Síðumúli): sérhljóðar og d/ð/þ verða „_" (einn stafur) — nákvæmt nóg með götunúmerinu.
+  const brodd = (s) => `*${String(s).replace(/[*,()%]/g, ' ').trim().replace(/[aeiouyádðþéíóúýæöàäâèêëìîïòôùüû]/gi, '_').replace(/\s+/g, ' ')}*`;
+  for (const w of wsNames.slice(0, 12)) { for (const f of ['subject', 'snippet', 'body_preview']) orParts.push(`${f}.ilike.${brodd(w)}`); }
   const first = name.split(/\s+/)[0];
   if (first && first.length > 3) { orParts.push(`sender_name.ilike.${like(first)}`); orParts.push(`subject.ilike.${like(first)}`); }
   let samskipti = [];
   if (orParts.length) {
-    samskipti = await sb(`email_digest?select=id,sender_name,sender_email,subject,snippet,received_at,folder&or=(${orParts.join(',')})&order=received_at.desc&limit=25`).catch(() => []);
+    samskipti = await sb(`email_digest?select=id,sender_name,sender_email,subject,snippet,received_at,folder&or=(${orParts.join(',')})&order=received_at.desc&limit=40`).catch(() => []);
   }
 
   // 03.11.2026 (Agnar: „Taka tvítök"): bankaspeglar Payday-reikninga og handskráðar Tekjur-raðir detta út; kredit-par (ógiltur
