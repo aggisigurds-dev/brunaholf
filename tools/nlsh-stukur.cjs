@@ -97,11 +97,11 @@ function skiptaEftirHnitum(regs) {
     const ymn = Math.min(...ys), ymx = Math.max(...ys);
     for (const r of a) {
       const k = `${rule[1]} ${deild(r.x)}`;
-      const w = (wings[k] ??= { done: 0, open: 0, cat: {}, catOpen: {}, mon: {}, z: { N: { done: 0, open: 0, cat: {} }, C: { done: 0, open: 0, cat: {} }, S: { done: 0, open: 0, cat: {} } } });
+      const w = (wings[k] ??= { done: 0, open: 0, cat: {}, catOpen: {}, mon: {}, z: { N: { done: 0, open: 0, cat: {}, catOpen: {} }, C: { done: 0, open: 0, cat: {}, catOpen: {} }, S: { done: 0, open: 0, cat: {}, catOpen: {} } } });
       const fy = (r.y - ymn) / ((ymx - ymn) || 1);
       const zz = w.z[fy < 0.275 ? 'N' : fy < 0.725 ? 'C' : 'S'];
       const zc = r.cat || '(tómt)';
-      if (r.status === 4) { zz.done++; zz.cat[zc] = (zz.cat[zc] || 0) + 1; } else zz.open++;
+      if (r.status === 4) { zz.done++; zz.cat[zc] = (zz.cat[zc] || 0) + 1; } else { zz.open++; zz.catOpen[zc] = (zz.catOpen[zc] || 0) + 1; }
       const ck = r.cat || '(tómt)';
       if (r.status === 4) {
         w.done++; w.cat[ck] = (w.cat[ck] || 0) + 1;

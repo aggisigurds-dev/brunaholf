@@ -320,7 +320,11 @@
   // Markmið per flokk: 5H = sami flokkur á sama væng á 6H (hún er búin); gólfgöt (milliloft) = GOLF_TGT á deild (eitt verk á gat),
   // sama á 4H sem hefur aðeins gólfgöt; 6H = það sem er klárað. Hver flokkur er „umferð“ sem getur verið óhafin á væng.
   const GOLF_CLS = 'Gólf Ø 160-200';
-  // Rafmagn (6H á 285 rafþéttingar og raufar, 5H ekki skráð) er utan markmiða — sjá athugasemd á síðunni.
+  // Rafmagn í STÆRÐARFLOKKATÖFLUNNI (umferðir) er utan markmiða. Í deildastöðu, heild og hlutum telst rafmagn með frá 11.11.2026:
+  // 104 stök verk á hverja deild á 5H og 6H (Agnar) — sama regla og stöðuskýrslan í Kjarna (/kjarni/skraning/skyrsla, RAF_MARK).
+  // Aðeins rafmagn á deildarblöðunum telst á deild; sérteikningarnar (Rafmagnsþéttingar 5H/6H) eru án deildar, sjá utanHtml.
+  const RAF_TGT = 104;
+  const erRafG = (c) => /^Raf/i.test(c);   // rafþéttingar, raf raufar, raf göt — EKKI „Raufar. (Metrer)“ (raufar við kantaða stokka)
   const RAF_CLS = ['Raflagnaþéttingar, göt og raufar', 'Raufar. (Metrer) LV', 'Raf raufar. (Metrar og Stk.)', 'Raf göt (Stk.)'];
   // Agnar 11.11.2026: Ajour telur STÖK verk og tvö stök verk eru ein lokun í Landspítalatilboðinu — NEMA gólfgötin: rörið kemur
   // gegnum gólfið og er aðeins þétt neðan frá, svo eitt stakt gólfverk er heil þétting. „Rúmlega 100 á deild“ → 110 skráningar.
@@ -353,7 +357,7 @@
   // minna en klárað + opið á deildinni sjálfri. Áður var allt lagt saman og stál umfram viðmið faldi að loftræsting var ógerð
   // (5H S4 sýndi 96 % með 68 % af loftinu). Hópar frekar en stakir stærðarflokkar: flokkun milli nágrannastærða er ekki eins
   // milli hæða (5H S1 Stál 40-50 = 411 á móti 378 á 6H). 4H hefur aðeins milliloft; 6H á ekkert milliloft (Agnar 10.11.2026).
-  const HOPAR = [['Loft', 'Loftræsting', erLoft], ['Stál', 'Stálrör', (c) => /^Stál/i.test(c)], ['Plast', 'Plaströr', (c) => /^Plast/i.test(c)], ['Gólf', 'Milliloft', (c) => c === GOLF_CLS]];
+  const HOPAR = [['Loft', 'Loftræsting', erLoft], ['Stál', 'Stálrör', (c) => /^Stál/i.test(c)], ['Plast', 'Plaströr', (c) => /^Plast/i.test(c)], ['Gólf', 'Milliloft', (c) => c === GOLF_CLS], ['Raf', 'Rafmagn', erRafG]];
   function hopStada(stukur, f, w) {
     const d = stukur.wings[f + ' ' + w] || { done: 0, open: 0, cat: {}, catOpen: {} };
     const ref = stukur.wings['6H ' + w] || { cat: {}, catOpen: {} };
@@ -361,6 +365,7 @@
       const done = sumCat(d.cat, fn), open = sumCat(d.catOpen, fn);
       let mark;
       if (k === 'Gólf') mark = f === '6H' ? 0 : GOLF_TGT[w];
+      else if (k === 'Raf') mark = f === '4H' ? 0 : RAF_TGT;
       else if (f === '4H') mark = 0;
       else if (f === '6H') mark = done;
       else mark = Math.round((sumCat(ref.cat, fn) + sumCat(ref.catOpen, fn)) * (k === 'Loft' ? loftFactor(stukur, w) : 1));
@@ -384,11 +389,11 @@
         const hs = hopStada(stukur, f, w);
         const done = hs.reduce((a, h) => a + h.done, 0), tgt = hs.reduce((a, h) => a + h.tgt, 0);
         fd += done; ft += tgt;
-        const p = tgt ? Math.floor((done / tgt) * 100) : 0;
+        const p = tgt ? Math.round((done / tgt) * 100) : 0;
         const radir = hs.map((h) => {
           if (!h.tgt) return '';
           if (!h.mark && f === '6H') return `<div class="nl-dk-r na" title="Milliloft á ekki að vera á 6. hæð (Agnar 10.11.2026) — líklega rangt flokkað í Ajour"><span>${h.nafn}</span><div class="nl-dk-b"></div><em>${num(h.done)} <small>utan markmiðs</small></em></div>`;
-          const hp = Math.floor((h.done / h.tgt) * 100);
+          const hp = Math.round((h.done / h.tgt) * 100);
           return `<div class="nl-dk-r" title="${f} ${w} · ${h.nafn}: ${num(h.done)} klárað${h.open ? ', ' + num(h.open) + ' opin í Ajour' : ''}, markmið ~${num(h.tgt)}"><span>${h.nafn}</span><div class="nl-dk-b"><i style="width:${Math.max(hp, h.done ? 2 : 0)}%;background:${stika(hp)}"></i></div><em>${num(h.done)} <small>/ ~${num(h.tgt)}</small></em></div>`;
         }).join('');
         const eftir = Math.max(0, tgt - done);
@@ -398,11 +403,11 @@
           ${radir}
         </div>`;
       }).join('');
-      const fp = ft ? Math.floor((fd / ft) * 100) : 0;
+      const fp = ft ? Math.round((fd / ft) * 100) : 0;
       return `<div class="nl-dg-h"><b>${FLOOR_NAME[f]}</b><span class="nl-fl-pill">${fp}%</span><span>${num(fd)} af ~${num(ft)} · ~${num(Math.max(0, ft - fd))} eftir</span></div><div class="nl-dg-g">${kort}</div>`;
     }).join('');
     return `<div class="nl-dg">${haedir}
-      <p class="nl-sec-cat">Hver stika er einn flokkahópur. Markmið (~) = sami hópur á sömu deild á 6. hæð, en aldrei minna en klárað + opið. Loftræsting á 5. hæð er kvörðuð við eigin talningu (S1 og S2 taldar, S4 og S5 áætlaðar með sama hlutfalli). Milliloft: rúmlega 100 göt á deild á 4. og 5. hæð (markmið ~${num(GOLF_TGT.S1)}, eitt verk á hvert gat því aðeins er þétt neðan frá), ekkert á 6. hæð. Tölurnar eru stök verk eins og Ajour telur þau. Rafmagn er sér hér fyrir neðan.</p>
+      <p class="nl-sec-cat">Hver stika er einn flokkahópur. Markmið (~) = sami hópur á sömu deild á 6. hæð, en aldrei minna en klárað + opið. Loftræsting á 5. hæð er kvörðuð við eigin talningu (S1 og S2 taldar, S4 og S5 áætlaðar með sama hlutfalli). Milliloft: rúmlega 100 göt á deild á 4. og 5. hæð (markmið ~${num(GOLF_TGT.S1)}, eitt verk á hvert gat því aðeins er þétt neðan frá), ekkert á 6. hæð. Rafmagn: markmið ${num(RAF_TGT)} stök verk á deild á 5. og 6. hæð og telst með í heildinni (aðeins það sem er skráð á deildarblöðin; rafmagn á sérteikningum er hér fyrir neðan). Tölurnar eru stök verk eins og Ajour telur þau.</p>
     </div>`;
   }
 
@@ -411,60 +416,63 @@
     const u = stukur.utan;
     if (!u) return '';
     const finna = (re) => { const k = Object.keys(u).find((x) => re.test(x)); return k ? u[k] : { done: 0, open: 0, cat: {}, catOpen: {} }; };
-    const erRaf = (c) => RAF_CLS.indexOf(c) >= 0;
-    const rafDeild = (f) => ['S1', 'S2'].reduce((a, w) => { const d = stukur.wings[f + ' ' + w] || {}; return [a[0] + sumCat(d.cat, erRaf), a[1] + sumCat(d.catOpen, erRaf)]; }, [0, 0]);
     const r6 = finna(/^6H.*Rafmagns/i), r5 = finna(/^5H.*Rafmagns/i), vb = finna(/Viðbótarverkefni/i), an = finna(/^\(engin teikning\)$/);
-    const d6 = rafDeild('6H'), d5 = rafDeild('5H');
-    const k6 = d6[0] + r6.done, o6 = d6[1] + r6.open, k5 = d5[0] + r5.done, o5 = d5[1] + r5.open;
     const minnis = (an.catOpen['Guide point'] || 0) + (an.catOpen['Annað'] || 0);
     const rod = (heiti, done, tgt, texti, lit) => {
       const p = tgt ? Math.min(100, Math.floor((done / tgt) * 100)) : 0;
       return `<div class="nl-ut-r"><b>${heiti}</b><div class="nl-dk-b"><i style="width:${Math.max(p, done ? 1 : 0)}%;background:${lit || pctColor(p).bd}"></i></div><em>${texti}</em></div>`;
     };
-    return `<details class="nl-fl-det" open><summary>Rafmagn og annað utan deilda</summary>
+    return `<details class="nl-fl-det" open><summary>Rafmagn á sérteikningum, aukaverk og annað utan deilda</summary>
       <div class="nl-ut">
-        ${rod('Rafmagn 6H · S1+S2', k6, k6 + o6, `${num(k6)} klárað${o6 ? ' · ' + num(o6) + ' opin' : ''}`)}
-        ${rod('Rafmagn 5H · S1+S2', k5, k6 + o6, `${num(k5)} klárað · ${num(o5)} mæld og ólokuð`)}
-        ${rod('Viðbótarverkefni', vb.done, vb.done + vb.open, `${num(vb.done)} klárað${vb.open ? ' · ' + num(vb.open) + ' opin' : ''}`)}
+        ${rod('Rafmagn 6H · sérteikning S1+S2', r6.done, r6.done + r6.open, `${num(r6.done)} klárað${r6.open ? ' · ' + num(r6.open) + ' opin' : ''}`)}
+        ${rod('Rafmagn 5H · sérteikning S1+S2', r5.done, r5.done + r5.open, `${num(r5.done)} klárað · ${num(r5.open)} mæld og ólokuð`)}
+        ${rod('Aukaverk (Viðbótarverkefni)', vb.done, vb.done + vb.open, `${num(vb.done)} klárað${vb.open ? ' · ' + num(vb.open) + ' opin' : ''}`)}
         ${rod('Án teikningar', an.done, an.done + an.open, `${num(an.open)} opnar, þar af ${num(minnis)} minnispunktar · ${num(an.done)} kláraðar`, '#9ca3af')}
       </div>
-      <p class="nl-sec-cat">Rafmagn er skráð á sérteikningar í Ajour og skiptist ekki á deildir hér. Stikan fyrir 5. hæð miðar við 6. hæð, sem er viðmið en ekki markmið: aðeins upprunalegar rafmagnsteikningar eru til og breytingar hafa tvítalið sum göt (Agnar 10.11.2026). Á S4 og S5 er ekkert rafmagn skráð á hvorugri hæð. Skráningar án teikningar eru athugasemdir, leiðréttingar og göt sem bíða (t.d. eftir gifsi) og verða ekki staðsettar á deild.</p>
+      <p class="nl-sec-cat">Rafmagn sem er skráð á sérteikningar í Ajour skiptist ekki á deildir og telst því ekki í deildastöðunni að ofan; þar telst aðeins rafmagn á deildarblöðunum, á móti markmiðinu ${num(RAF_TGT)} stök verk á deild (Agnar 11.11.2026). Aðeins upprunalegar rafmagnsteikningar eru til og breytingar hafa tvítalið sum göt (Agnar 10.11.2026). Á S4 og S5 er ekkert rafmagn skráð á hvorugri hæð. Aukaverk (teikningin „Viðbótarverkefni“) eru utan stöðu og markmiða. Skráningar án teikningar eru athugasemdir, leiðréttingar og göt sem bíða (t.d. eftir gifsi) og verða ekki staðsettar á deild.</p>
     </details>`;
   }
 
   // Norður / Center / Suður (skipting verktaka á hverri stúku): sjá tools/nlsh-stukur.cjs — brýrnar milli stúkna sjást sem dýfa í
-  // y-hnitum. Markmið svæðis: 5H = sama svæði á sama væng á 6H án gólfgata, auk gólfgata (markmið væng skipt eftir hlut svæðis í
-  // gólfgötum 5H S1+S2); 4H = aðeins gólfgöt; 6H = það sem er klárað.
+  // y-hnitum (skil við 27,5 % og 72,5 %). Markmið hluta (11.11.2026, sama regla og stöðuskýrslan í Kjarna): hver flokkahópur á
+  // hlutanum fær sama markmið og deildin fengi — sami hópur á sama hluta á 6H (loft kvarðað), aldrei minna en klárað + opið þar;
+  // föstu deildarmarkmiðin (milliloft 110, rafmagn 104) skiptast jafnt á hlutana þrjá. Summa hluta getur vikið lítillega frá deild.
   const ZONES = [['N', 'Norður'], ['C', 'Center'], ['S', 'Suður']];
   function zoneOf(stukur, f, w, z) {
     const d = stukur.wings[f + ' ' + w];
     return d && d.z && d.z[z] ? d.z[z] : { done: 0, open: 0, cat: {} };
   }
-  function zoneTarget(stukur, f, w, z) {
-    const zd = zoneOf(stukur, f, w, z);
-    if (f === '6H') return zd.done;
-    let t = 0;
-    if (f === '5H') { const ref = zoneOf(stukur, '6H', w, z); t += ref.done - (ref.cat[GOLF_CLS] || 0) - RAF_CLS.reduce((x, c) => x + (ref.cat[c] || 0), 0) - Math.round(sumCat(ref.cat, erLoft) * (1 - loftFactor(stukur, w))); }
-    const g = { N: 0, C: 0, S: 0 };
-    ['S1', 'S2'].forEach((x) => ZONES.forEach(([k]) => { g[k] += zoneOf(stukur, '5H', x, k).cat[GOLF_CLS] || 0; }));
-    const gs = g.N + g.C + g.S;
-    if (gs) t += (GOLF_TGT[w] * g[z]) / gs;
-    return Math.max(zd.done, Math.round(t));
+  const thridj = (m, i) => [Math.ceil(m / 3), Math.round(m / 3), Math.floor(m / 3)][i];
+  function hlutaStada(stukur, f, w, zi) {
+    const z = ZONES[zi][0], zd = zoneOf(stukur, f, w, z), ref = zoneOf(stukur, '6H', w, z);
+    const hs = HOPAR.map(([k, nafn, fn]) => {
+      const done = sumCat(zd.cat, fn), open = sumCat(zd.catOpen, fn);
+      let mark;
+      if (k === 'Gólf') mark = f === '6H' ? 0 : thridj(GOLF_TGT[w], zi);
+      else if (k === 'Raf') mark = f === '4H' ? 0 : thridj(RAF_TGT, zi);
+      else if (f === '4H') mark = 0;
+      else if (f === '6H') mark = done;
+      else mark = Math.round((sumCat(ref.cat, fn) + sumCat(ref.catOpen, fn)) * (k === 'Loft' ? loftFactor(stukur, w) : 1));
+      return { k, nafn, done, open, tgt: Math.max(mark, done + open) };
+    });
+    return { hs, done: hs.reduce((a, h) => a + h.done, 0), open: hs.reduce((a, h) => a + h.open, 0), tgt: hs.reduce((a, h) => a + h.tgt, 0) };
   }
   function zoneTable(stukur) {
     const rows = [];
     ['6H', '5H', '4H'].forEach((f) => WINGS.forEach((w) => {
-      const cells = ZONES.map(([k]) => {
-        const zd = zoneOf(stukur, f, w, k), t = zoneTarget(stukur, f, w, k);
-        const pct = t ? Math.min(100, Math.round((zd.done / t) * 100)) : 0;
-        const c = pctColor(pct);
-        return `<td style="background:${c.bg}">${pct}%<small>${num(zd.done)} / ~${num(t)}${zd.open ? ' · ' + num(zd.open) + ' opin' : ''}</small></td>`;
+      const cells = ZONES.map((z, zi) => {
+        const s = hlutaStada(stukur, f, w, zi);
+        if (!s.tgt) return '<td class="nl-um-na">—</td>';
+        const pct = Math.round((s.done / s.tgt) * 100), c = pctColor(pct);
+        return `<td style="background:${c.bg}">${pct}%<small>${num(s.done)} / ${num(s.tgt)}${s.open ? ' · ' + num(s.open) + ' opin' : ''}</small></td>`;
       });
-      rows.push(`<tr><td><b>${f} ${w}</b></td>${cells.join('')}</tr>`);
+      const hs = hopStada(stukur, f, w), d = hs.reduce((a, h) => a + h.done, 0), t = hs.reduce((a, h) => a + h.tgt, 0);
+      const p = t ? Math.round((d / t) * 100) : 0, c = pctColor(p);
+      rows.push(`<tr><td><b>${f} ${w}</b></td>${cells.join('')}<td style="background:${c.bg}"><b>${p}%</b><small>${num(d)} / ${num(t)}</small></td></tr>`);
     }));
     return `<details class="nl-fl-det" open><summary>Norður · Center · Suður á hverri stúku (skipting verktaka)</summary>
-      <div class="nl-fl-tw"><table class="nl-fl-t nl-um"><thead><tr><th>Stúka</th>${ZONES.map((z) => `<th>${z[1]}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>
-      <p class="nl-sec-cat">Svæðin eru fundin úr y-hnitum gata á teikningunni (brýrnar milli stúkna). Þetta er nálgun við litamerkingu verktaka (grænt norður, blátt center, rautt suður), ekki nákvæm lína. Markmið eru mat eins og annars staðar.</p>
+      <div class="nl-fl-tw"><table class="nl-fl-t nl-um"><thead><tr><th>Stúka</th>${ZONES.map((z) => `<th>${z[1]}</th>`).join('')}<th>Deildin</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>
+      <p class="nl-sec-cat">Hlutinn er fundinn úr y-hnitum gata á teikningunni (skil við 27,5 % og 72,5 % af lengd álmu, þar sem brýrnar milli stúkna eru). Markmið hluta fylgir sömu reglu og deildin: sami flokkahópur á sama hluta á 6. hæð (loftræsting kvörðuð), aldrei minna en klárað + opið. Föst markmið á deild (milliloft ${num(GOLF_TGT.S1)}, rafmagn ${num(RAF_TGT)}) skiptast jafnt á hlutana þrjá, svo summa hluta getur vikið lítillega frá markmiði deildar. Sama regla og tölur og í stöðuskýrslunni í Kjarna.</p>
     </details>`;
   }
 
@@ -487,11 +495,11 @@
     cells.forEach((x) => {
       const w = x.w;
       ZONES.forEach(([k, lab], zi) => {
-        const zd = zoneOf(stukur, f, w, k), t = zoneTarget(stukur, f, w, k);
-        const pz = t ? Math.min(100, Math.round((zd.done / t) * 100)) : 0;
+        const zd = zoneOf(stukur, f, w, k), hl = hlutaStada(stukur, f, w, zi), t = hl.tgt;
+        const pz = t ? Math.min(100, Math.round((hl.done / t) * 100)) : 0;
         const cz = pctColor(pz), x0 = X[w], y0 = Y[zi], cx = x0 + W / 2;
         const lines = grp(zd).map((r, ri) => `<text x="${x0 + 12}" y="${y0 + 80 + ri * 14}" font-size="11" fill="#44505e">${r[0]}</text><text x="${x0 + W - 12}" y="${y0 + 80 + ri * 14}" text-anchor="end" font-size="11.5" font-weight="700" fill="#1f2933">${num(r[1])}</text>`).join('');
-        g += `<g><title>${f} ${w} ${lab}: ${num(zd.done)} af ~${num(t)} (${pz}%)${zd.open ? ', ' + num(zd.open) + ' opin' : ''}</title><rect x="${x0}" y="${y0}" width="${W}" height="${H[zi]}" fill="${cz.bg}" stroke="${cz.bd}" stroke-width="1.4"/><text x="${cx}" y="${y0 + 17}" text-anchor="middle" font-size="11.5" fill="#44505e">${lab}</text><text x="${cx}" y="${y0 + 40}" text-anchor="middle" font-size="22" font-weight="700" fill="#1f2933">${pz}%</text><text x="${cx}" y="${y0 + 58}" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1f2933">${num(zd.done)} / ~${num(t)}</text>${lines}</g>`;
+        g += `<g><title>${f} ${w} ${lab}: ${num(hl.done)} af ${num(t)} (${pz}%)${hl.open ? ', ' + num(hl.open) + ' opin' : ''}</title><rect x="${x0}" y="${y0}" width="${W}" height="${H[zi]}" fill="${cz.bg}" stroke="${cz.bd}" stroke-width="1.4"/><text x="${cx}" y="${y0 + 17}" text-anchor="middle" font-size="11.5" fill="#44505e">${lab}</text><text x="${cx}" y="${y0 + 40}" text-anchor="middle" font-size="22" font-weight="700" fill="#1f2933">${pz}%</text><text x="${cx}" y="${y0 + 58}" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1f2933">${num(hl.done)} / ${num(t)}</text>${lines}</g>`;
       });
       g += `<text x="${X[w] + W / 2}" y="${TOP - 10}" text-anchor="middle" font-size="17" font-weight="700" fill="currentColor">${w} · ${x.pct}%</text>`;
       g += `<text x="${X[w] + W / 2}" y="${BOT + 17}" text-anchor="middle" font-size="12" fill="currentColor" opacity=".75">${num(x.d.done)} / ~${num(x.total)}</text>`;
@@ -501,9 +509,9 @@
 
   function floorWingsHtml(stukur, f) {
     const cells = WINGS.map((w) => {
-      const d = stukur.wings[f + ' ' + w] || { done: 0, open: 0 };
-      const total = wingTarget(stukur, f, w);
-      const pct = Math.min(100, Math.round((d.done / total) * 100));
+      const hs = hopStada(stukur, f, w);
+      const d = { done: hs.reduce((a, h) => a + h.done, 0) }, total = hs.reduce((a, h) => a + h.tgt, 0);
+      const pct = total ? Math.min(100, Math.round((d.done / total) * 100)) : 0;
       const c = pctColor(pct);
       return { w, d, total, pct, c };
     });
@@ -778,7 +786,7 @@
         <div class="nl-hero-pct"><b>${pct}%</b><span>lokið</span><div class="nl-bar"><i style="width:${pct}%"></i></div></div>
         <dl class="nl-hero-k"><div><dt>Klárað</dt><dd>${num(done)}</dd></div><div><dt>Markmið (mat)</dt><dd>~${num(total)}</dd></div><div><dt>Eftir (mat)</dt><dd>~${num(Math.max(0, total - done))}</dd></div></dl>
       </div>
-      <p class="nl-note">Heildin er mat: Ajour gefur aðeins klárað, ekki það sem á eftir að gera. Ajour telur stök verk: tvö stök verk (sín hvorum megin við vegg) eru ein lokun í tilboðinu, nema gólfgöt þar sem eitt verk er heil þétting (þétt neðan frá). ${opidLina(stukur)}</p>
+      <p class="nl-note">Heildin er mat: Ajour gefur aðeins klárað, ekki það sem á eftir að gera. Ajour telur stök verk: tvö stök verk (sín hvorum megin við vegg) eru ein lokun í tilboðinu, nema gólfgöt þar sem eitt verk er heil þétting (þétt neðan frá). Rafmagn telst með: markmið ${num(RAF_TGT)} stök verk á deild á 5. og 6. hæð. Aukaverk og rafmagn á sérteikningum eru utan heildarinnar. ${opidLina(stukur)}</p>
       ${deildirHtml(stukur)}
       ${utanHtml(stukur)}
       <div class="nl-fl-grid">${fl.map((x) => x.html).join('')}</div>
