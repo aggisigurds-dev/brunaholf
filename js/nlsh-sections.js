@@ -306,7 +306,7 @@
 
   // Stúkur hver fyrir sig (30.10.2026): data/nlsh-stukur.json er búið til af tools/nlsh-stukur.cjs úr HNITUM Ajour (hver
   // skráning ber x,y á teikningunni og atríum-bilið skilur vængina að). Markmið per væng = mat úr kláruðum vængjum:
-  // venjuleg göt úr 6H (búin), gólfgöt (milliloft) 230 per væng á 4H og 5H (5H S1+S2 = 460). 6H á ekki gólfgöt.
+  // venjuleg göt úr 6H (búin), gólfgöt (milliloft) rúmlega 100 per væng á 4H og 5H (GOLF_TGT, eitt verk á gat). 6H á ekki gólfgöt.
   const WING_BASE = { S1: 1250, S2: 1260, S4: 1200, S5: 1280 };
   const WING_GOLF = 230;
   const WINGS = ['S1', 'S2', 'S4', 'S5'];
@@ -322,7 +322,10 @@
   const GOLF_CLS = 'Gólf Ø 160-200';
   // Rafmagn (6H á 285 rafþéttingar og raufar, 5H ekki skráð) er utan markmiða — sjá athugasemd á síðunni.
   const RAF_CLS = ['Raflagnaþéttingar, göt og raufar', 'Raufar. (Metrer) LV', 'Raf raufar. (Metrar og Stk.)', 'Raf göt (Stk.)'];
-  const GOLF_TGT = { S1: 200, S2: 200, S4: 200, S5: 200 }; // Agnar 30.10: ~100 milliloftsgöt á stúku = ~200 stakar lokanir
+  // Agnar 11.11.2026: Ajour telur STÖK verk og tvö stök verk eru ein lokun í Landspítalatilboðinu — NEMA gólfgötin: rörið kemur
+  // gegnum gólfið og er aðeins þétt neðan frá, svo eitt stakt gólfverk er heil þétting. „Rúmlega 100 á deild“ → 110 skráningar.
+  // (Áður 200 = „100 göt × 2“, sem var rangt og sýndi 4. hæð í 44 %.)
+  const GOLF_TGT = { S1: 110, S2: 110, S4: 110, S5: 110 };
   function classTarget(stukur, f, w, c) {
     if (RAF_CLS.indexOf(c) >= 0) return 0;
     if (c === GOLF_CLS) return f === '6H' ? 0 : GOLF_TGT[w];
@@ -333,7 +336,7 @@
     return /^Loft/i.test(c) ? Math.round(t * loftFactor(stukur, w)) : t;
   }
 
-  // Loftræsting 5H er talin sér á Miro (borð uXjVG3Z1Bmk=, Agnar): 5H1S 115 gegnumtök = 230 lokanir, 5H2S 122 = 244 — um 12 %
+  // Loftræsting 5H er talin sér á Miro (borð uXjVG3Z1Bmk=, Agnar): 5H1S 115 gegnumtök = 230 stök verk, 5H2S 122 = 244 — um 12 %
   // færri en á 6H, svo „6H = 100 %“ vanmat loftið á 5H (10.11.2026). Miro telur um 7 % færri en Ajour skráir (6H S2: 272 á Miro
   // á móti kláruðu í Ajour) og markmiðið er kvarðað með því hlutfalli. S4/S5 eru ótalin á Miro: meðalhlutfall S1 og S2 (áætlun).
   const MIRO_LOFT = { vidmid: 272, S1: 230, S2: 244 };
@@ -399,7 +402,7 @@
       return `<div class="nl-dg-h"><b>${FLOOR_NAME[f]}</b><span class="nl-fl-pill">${fp}%</span><span>${num(fd)} af ~${num(ft)} · ~${num(Math.max(0, ft - fd))} eftir</span></div><div class="nl-dg-g">${kort}</div>`;
     }).join('');
     return `<div class="nl-dg">${haedir}
-      <p class="nl-sec-cat">Hver stika er einn flokkahópur. Markmið (~) = sami hópur á sömu deild á 6. hæð, en aldrei minna en klárað + opið. Loftræsting á 5. hæð er kvörðuð við eigin talningu (S1 og S2 taldar, S4 og S5 áætlaðar með sama hlutfalli). Milliloft: um 100 göt á deild = ~${num(GOLF_TGT.S1)} lokanir á 4. og 5. hæð, ekkert á 6. hæð. Rafmagn er sér hér fyrir neðan.</p>
+      <p class="nl-sec-cat">Hver stika er einn flokkahópur. Markmið (~) = sami hópur á sömu deild á 6. hæð, en aldrei minna en klárað + opið. Loftræsting á 5. hæð er kvörðuð við eigin talningu (S1 og S2 taldar, S4 og S5 áætlaðar með sama hlutfalli). Milliloft: rúmlega 100 göt á deild á 4. og 5. hæð (markmið ~${num(GOLF_TGT.S1)}, eitt verk á hvert gat því aðeins er þétt neðan frá), ekkert á 6. hæð. Tölurnar eru stök verk eins og Ajour telur þau. Rafmagn er sér hér fyrir neðan.</p>
     </div>`;
   }
 
@@ -555,7 +558,7 @@
     const foot = `<tr class="nl-um-sum"><td><b>Eftir</b></td>${cls.map(([c]) => `<td>${perC[c] ? num(perC[c]) : '·'}</td>`).join('')}<td><b>${num(rem)}</b></td></tr>`;
     return `<details class="nl-fl-det" open><summary>Umferðir: hlutfall af markmiði á hverja stúku og flokk</summary>
       <div class="nl-fl-tw"><table class="nl-fl-t nl-um"><thead><tr><th>Stúka</th>${cls.map((c) => `<th>${escapeHtml(c[1])}</th>`).join('')}<th>Eftir</th></tr></thead><tbody>${rows.join('')}</tbody><tfoot>${foot}</tfoot></table></div>
-      <p class="nl-sec-cat">Markmið = sami flokkur á sama væng á 6H (hún er búin); loftræsting á 5H er kvörðuð niður við eigin talningu (um 12 % færri gegnumtök en á 6H). Stærðarflokkun er ekki alveg eins milli hæða, svo stakur flokkur getur sýnt of lítið þótt hópurinn sé búinn — deildaspjöldin efst leggja hópana saman. Gólf Ø160-200 (milliloft) á 4H og 5H: um 100 göt á stúku (Agnar) = ~200 stakar lokanir; 6H hefur engin gólfgöt í markmiði. Lítil tala í reit er stærðin sem eftir er. Samtals eftir um <b>${num(rem)}</b> göt (án rafmagnsraufa). Gólfgöt eru ${perC[GOLF_CLS] ? Math.round((perC[GOLF_CLS] / rem) * 100) : 0}% af því.</p>
+      <p class="nl-sec-cat">Markmið = sami flokkur á sama væng á 6H (hún er búin); loftræsting á 5H er kvörðuð niður við eigin talningu (um 12 % færri gegnumtök en á 6H). Stærðarflokkun er ekki alveg eins milli hæða, svo stakur flokkur getur sýnt of lítið þótt hópurinn sé búinn — deildaspjöldin efst leggja hópana saman. Gólf Ø160-200 (milliloft) á 4H og 5H: rúmlega 100 göt á stúku (Agnar), eitt stakt verk á hvert gat (markmið ~${num(GOLF_TGT.S1)}); 6H hefur engin gólfgöt í markmiði. Lítil tala í reit er stærðin sem eftir er. Samtals eftir um <b>${num(rem)}</b> göt (án rafmagnsraufa). Gólfgöt eru ${perC[GOLF_CLS] ? Math.round((perC[GOLF_CLS] / rem) * 100) : 0}% af því.</p>
     </details>`;
   }
 
@@ -775,7 +778,7 @@
         <div class="nl-hero-pct"><b>${pct}%</b><span>lokið</span><div class="nl-bar"><i style="width:${pct}%"></i></div></div>
         <dl class="nl-hero-k"><div><dt>Klárað</dt><dd>${num(done)}</dd></div><div><dt>Markmið (mat)</dt><dd>~${num(total)}</dd></div><div><dt>Eftir (mat)</dt><dd>~${num(Math.max(0, total - done))}</dd></div></dl>
       </div>
-      <p class="nl-note">Heildin er mat: Ajour gefur aðeins klárað, ekki það sem á eftir að gera. Ajour skráir stakar lokanir (sín hvorum megin við vegg). ${opidLina(stukur)}</p>
+      <p class="nl-note">Heildin er mat: Ajour gefur aðeins klárað, ekki það sem á eftir að gera. Ajour telur stök verk: tvö stök verk (sín hvorum megin við vegg) eru ein lokun í tilboðinu, nema gólfgöt þar sem eitt verk er heil þétting (þétt neðan frá). ${opidLina(stukur)}</p>
       ${deildirHtml(stukur)}
       ${utanHtml(stukur)}
       <div class="nl-fl-grid">${fl.map((x) => x.html).join('')}</div>
