@@ -119,7 +119,7 @@ Lagatilvísanir eða kröfur sem breytast (t.d. nýtt ákvæði í byggingarregl
 
 ## Ef þarf að breyta eyðublaðinu sjálfu
 
-- Breytingar fara í `eydublod.html`. **Bumpa `UTGAFA`** (nú `'2026-10-20.2'`) við hverja breytingu —
+- Breytingar fara í `eydublod.html`. **Bumpa `UTGAFA`** við hverja breytingu —
   hún birtist í hausnum og er eina leiðin til að sjá strax hvort vafrinn situr á gömlu eintaki.
 - `doc()` (skjár) og `pdf()` (PDF) verða að breytast **saman** — annars víkur PDF-ið frá forskoðun.
 - Línubil á einum stað (`--lh` í CSS og `LH` í PDF lesa sama gildi) — ekki hardkóða.
@@ -238,13 +238,13 @@ Dæmi um „eitt heimilisfang": `Sunnukriki 3, Mosfellsbær` · sveitarfélag `M
   bæst við) — spyrja Agnar hvort svæði sé klárt áður en ný er gerð.
 - **Drög 03.11.2026** (aðeins staðbundin, ekki í safni): `Heklureitur_stadfesting/…_DROG.pdf` með línunni „Öll brunahólf voru brunaþétt í
   kjallara K-1 og K0." — til staðfestingar Agnars.
-- **Beiðni 02.11.2026 (póstur, `email_digest`, brunaholf@brunaholf.is):** Hildur M. Nielsen (hildur@heklureitur.is, verkefnastjóri Heklureits)
+- **Beiðni 02.11.2026 (póstur, `email_digest`, brunaholf@brunaholf.is):** Hildur M. Nielsen (verkefnastjóri Heklureits)
   bað um „staðfestingu á brunaþéttingum í kjallara á **Laugavegi 170**, til að senda inn fyrir öryggisúttekt — sambærilegt skjal og var gefið út
   fyrir Laugaveg 168". Heklureitur er því fleiri hús (168 og 170): heimilisfangið í staðfestingunni fylgir beiðninni, ekki verkefnaheitinu.
   Svæðislínan fyrir 170: „Öll brunahólf voru brunaþétt í kjallara K-1 og K0." (Agnar: ekki nefna stigahús A/B — þau voru fyrir 168.)
   Drög: `Heklureitur_stadfesting/Stadfesting_Laugavegur_170_kjallari_03-11-2026_DROG.pdf`. Svara Hildi gerir Agnar, aldrei Claude.
-- **Aðrar beiðnir í pósti síðustu 70 daga:** Reising (bergthor@reising.is, 16.10) vantar „svona vottorð" fyrir Stálhellu 18 – MHL03 (til er
-  Stálhella 22/18 mhl. 02); Hagtak (bergthor@hagtak.is, 14.–16.10) vildi yfirlýsingu og skýrslu fyrir Grandatröð 1C og 1D (Hvaleyrarbraut 39,
+- **Aðrar beiðnir í pósti síðustu 70 daga:** Reising (16.10) vantar „svona vottorð" fyrir Stálhellu 18 – MHL03 (til er
+  Stálhella 22/18 mhl. 02); Hagtak (14.–16.10) vildi yfirlýsingu og skýrslu fyrir Grandatröð 1C og 1D (Hvaleyrarbraut 39,
   staðfesting gerð 15.10) og ræddi lokaúttekt. Hvort þeim er svarað er ómælt — lesa `to_addresses` áður en sagt er „ósvarað".
 
 **Stálhella 18 mhl. 03 og Gullslétta 18 (03.11.2026):** Reising bað 16.10 um „svona vottorð" og vísaði í mhl. 02 (01.06.2026, heildaryfirferð-gerð) — drög

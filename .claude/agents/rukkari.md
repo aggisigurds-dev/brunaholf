@@ -75,7 +75,8 @@ Talan alltaf með uppruna (`pricing_guide` / `solur` / `invoice_drafts` / samnin
   felag:'brunaholf'|'slokkvitaeki', raw, worksite_name?}`. Ekki í svarið þitt, ekki á miða.
 - Ákvörðun sem er tekin (afsláttur samþykktur, „ekki rukka X", „bíða með Y til október") →
   punktur með `raw` sem byrjar á `ÁKVÖRÐUN dd.mm:` — næsta lota les hann fyrst.
-- Það sem var sent er merkt: `applied`/`notad` í Drög-stöð, `krofur_yfirlit_meta` (BH),
+- Það sem var sent sést í `solur` (`krafa_sent_at`, `dk_invoice_id`) og Payday — EKKI í `reikningspunktar.applied`,
+  sem er aldrei settur (sjá Lærdóm neðar). Aðrar merkingar: `notad` í Drög-stöð, `krofur_yfirlit_meta` (BH),
   `solur` (SL). Þú leggur aldrei til að rukka aftur það sem er merkt sent.
 - **„Bíður"-krókurinn (`GET /api/reikningspunktar?op=bidur&kt=…`) fann ekki 247 kennitölur til 10.11.2026:** uppflettingin kt → nöfn las `fyrirtaeki` í einu kalli (`limit=2000`) og fékk 1000 af 1.284 (PostgREST-þak, engin röð). Nú flett með `allPages` og `order=id`. Punktar sem „komu aldrei upp" við val á kúnna fyrir þann dag geta átt þessa skýringu.
 - **Slökkvitækis-sala úr punkti = draft-karfa** (05.09.2026): `POST /api/reikningspunktar {action:'karfa', id, karfa:{lines,discount_pct}}`

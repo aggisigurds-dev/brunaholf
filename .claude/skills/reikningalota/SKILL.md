@@ -9,7 +9,7 @@ Lestu **`docs/REIKNINGALOTA.md`** fyrst — allt sem Agnar hefur þurft að endu
 (félögin, flæðin, afslættirnir, pósturinn) stendur þar. Spurðu ekki um það.
 
 Sé Agent-tólið tiltækt: kallaðu á **`rukkari`** (🦆) — hann keyrir þessa rútínu, kallar á
-bokari / sala-reikningar / eldklar-postur og heldur utan um lotuna. Skillinn er handvirka leiðin.
+bokari / sala-reikningar / postur (áður eldklar-postur; `slokkvitaeki/.claude/agents/postur.md`) og heldur utan um lotuna. Skillinn er handvirka leiðin.
 
 ## Rútínan (5 mín, engar spurningar)
 
