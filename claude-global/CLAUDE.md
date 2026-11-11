@@ -1,4 +1,4 @@
-<!-- FRUMRITIÐ er brunaholf/claude-global/CLAUDE.md (git). Skráin í ~/.claude/CLAUDE.md er AFRIT sem tools/global-samstilling.cjs skrifar við upphaf lotu á hverri vél. Breyttu frumritinu, ekki afritinu: afritið er yfirskrifað (gamla eintakið fer í ~/.claude/backups/global-samstilling/). -->
+<!-- FRUMRITIÐ er brunaholf/claude-global/CLAUDE.md (git). Skráin í ~/.claude/CLAUDE.md er AFRIT sem tools/global-samstilling.cjs skrifar þegar hún er keyrð á vélinni (handvirkt: node tools/global-samstilling.cjs). Breyttu frumritinu, ekki afritinu: afritið er yfirskrifað (gamla eintakið fer í ~/.claude/backups/global-samstilling/). -->
 
 # graphify
 - **graphify** (`~/.claude/skills/graphify/SKILL.md`) - any input to knowledge graph. Trigger: `/graphify`
