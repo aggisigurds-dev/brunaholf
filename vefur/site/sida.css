@@ -19,6 +19,8 @@
 .bh2 .w-topbar .bh2-topnav a{transition:color .16s var(--w-ease)}
 .bh2 .w-topbar .bh2-tools{flex:none;gap:10px}
 .w-only-m{display:none!important}
+.bh2 .w-tele{margin-right:4px;padding:8px 6px;border-radius:var(--r-sm);color:var(--on-navy);font:600 14px/1 var(--font-sans);font-variant-numeric:tabular-nums;text-decoration:none;white-space:nowrap;transition:color .16s var(--w-ease)}
+.bh2 .w-tele:hover{color:var(--orange-hi)}
 .bh2 .w-cart{text-decoration:none}
 .bh2 .w-cart .bh2-count{position:absolute;top:-1px;right:-5px;box-shadow:0 0 0 2px var(--navy-900)}
 
@@ -42,6 +44,11 @@
 .bh2 .bh2-card>header .bh2-tag{margin-left:auto;flex:none}
 .w-h2{display:flex;align-items:center;gap:10px;margin:0;font:700 22px/1.25 var(--font-sans);letter-spacing:-.01em;color:var(--ink)}
 .w-h2 .bh2-ic{width:24px;height:24px;color:var(--orange)}
+
+/* atriðin fjögur undir forsíðumyndinni */
+.bh2 .w-trust{list-style:none;margin:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 20px;padding:14px 20px}
+.w-trust li{display:flex;align-items:center;gap:10px;min-width:0;font:600 14px/1.35 var(--font-sans);color:var(--ink)}
+.w-trust .bh2-ic{flex:none;width:20px;height:20px;color:var(--orange-ink)}
 
 /* notice (not shown for now, kept so it can be switched back on) */
 .w-notice{display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:var(--r-lg);background:var(--warn-tint);color:var(--ink);box-shadow:var(--shadow-card)}
@@ -87,6 +94,8 @@
 .bh2 .w-prop p{margin:0 4px}
 .w-prop__foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:auto 4px 0;padding-top:10px}
 .w-prop__foot b{font:700 16px/1 var(--font-sans);white-space:nowrap}
+.w-prop__verd{display:flex;flex-direction:column;gap:4px;min-width:0}
+.w-prop__verd small{font:400 12px/1.2 var(--font-sans);font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
 .w-prop__go{display:grid;place-items:center;flex:none;width:32px;height:32px;border-radius:8px;background:var(--surface);color:var(--orange-ink);box-shadow:inset 0 0 0 1px var(--line);transition:background-color .16s var(--w-ease),color .16s var(--w-ease),box-shadow .16s var(--w-ease)}
 .w-prop__go .bh2-ic{width:16px;height:16px}
 .bh2 .w-prop:hover .w-prop__go{background:linear-gradient(180deg,var(--orange-hi),var(--orange-lo));color:var(--on-orange);box-shadow:var(--shadow-glow)}
@@ -181,6 +190,8 @@
   .w-products{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 @media (max-width:1100px){
+  .bh2 .w-tele{display:none}
+  .bh2 .w-trust{grid-template-columns:repeat(2,minmax(0,1fr))}
   .w-intro,.w-uttekt{grid-column:1/-1}
   .w-svc{grid-template-columns:repeat(2,minmax(0,1fr))}
 }

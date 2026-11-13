@@ -51,6 +51,7 @@
         <a class="w-only-m" href="#hafa-samband" data-spy="hafa-samband">Hafa samband</a>
       </nav>
       <div class="bh2-tools">
+        <a class="w-tele" href="tel:+3545470100">547-0100</a>
         <a class="bh2-iconbtn w-cart" href="#karfa" aria-label="Karfa"><i data-ic="shopping-cart"></i><span class="bh2-count" id="w-cart-n" hidden>0</span></a>
         <a class="bh2-btn primary sm w-contact-btn" href="#hafa-samband"><i data-ic="phone"></i>Hafa samband</a>
       </div>
@@ -68,6 +69,14 @@
     </section>
 
     <main class="bh2-content w-content" id="efni">
+
+      <!-- Sömu fjögur atriði og standa undir forsíðumyndinni í V1 -->
+      <ul class="bh2-card w-trust">
+        <li><i data-ic="circle-check"></i>Starfsleyfi frá HMS</li>
+        <li><i data-ic="circle-check"></i>ISO 14001 umhverfisvottun</li>
+        <li><i data-ic="circle-check"></i>Vistvæn efni</li>
+        <li><i data-ic="circle-check"></i>Skýrsla eftir hvert verk</li>
+      </ul>
 
       <!-- Tilkynningin um pöntunarkerfið var tekin út í bili (12.11.2026). Stíllinn (.w-notice) stendur, svo hún kemur
            aftur með því að setja þennan bút inn á ný:
@@ -214,7 +223,7 @@ window.BH_SITE = {
     return '<li class="w-product"><a class="bh2-prop w-prop" href="#vara-' + v.id + '">' +
       '<span class="w-prop__img"><img src="' + VV.esc(v.mynd) + '" alt=""></span>' +
       '<h3>' + VV.esc(v.nafn) + '</h3><p>' + VV.esc(v.flokkur) + '</p>' +
-      '<span class="w-prop__foot"><b class="bh2-num">' + VV.kr(v.verd) + '</b>' +
+      '<span class="w-prop__foot"><span class="w-prop__verd"><b class="bh2-num">' + VV.kr(v.verd) + '</b><small>' + VV.kr(v.an) + ' án vsk</small></span>' +
       '<span class="w-prop__go">' + ic + '<span class="w-vh">Skoða vöru</span></span></span></a></li>';
   }
 };
