@@ -135,13 +135,15 @@
 
 /* Myndskeiðið í forsíðuhausnum (stökin með data-hetja-video og data-hetja-takki í síðunni). Kyrrmyndin undir því sést þar til
    það spilar. Það er sótt eftir að síðan er hlaðin, fer ekki sjálft í gang þar sem hreyfing er afþökkuð í tækinu
-   (prefers-reduced-motion) eða gagnasparnaður er á, stöðvast á meðan hausinn sést ekki og takkinn stöðvar það og ræsir. */
+   (prefers-reduced-motion), gagnasparnaður er á eða tengingin er hæg, stöðvast á meðan hausinn sést ekki og takkinn stöðvar
+   það og ræsir. */
 (function () {
   'use strict';
   var v = document.querySelector('[data-hetja-video]'), takki = document.querySelector('[data-hetja-takki]');
   if (!v || typeof v.play !== 'function') return;
   var kyrrt = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  var spara = !!(navigator.connection && navigator.connection.saveData);
+  var teng = navigator.connection || {};
+  var spara = !!(teng.saveData || /(^|-)2g$|^3g$/.test(teng.effectiveType || ''));     /* gagnasparnaður eða hæg tenging */
   var stoppad = kyrrt || spara;                 /* sá sem skoðar, eða stilling tækisins, vill ekki hreyfingu */
   var sest = false, hladid = document.readyState === 'complete';
   function merkja() {

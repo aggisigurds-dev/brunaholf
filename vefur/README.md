@@ -52,16 +52,27 @@ Leiðarskriftan reiðir sig á þessi stök í síðunum: `#heim`, `#brunasyn`, 
 
 ## Myndskeiðið í forsíðuhausnum
 
-Forsíðuhausinn í báðum útgáfum sýnir myndskeiðið sem er í forsíðuhaus núverandi brunaholf.is: `img/hetja-eldur.mp4`. Undir því liggur kyrrmynd af fyrsta ramma þess, `img/hetja-eldur.webp`.
+Forsíðuhausinn í báðum útgáfum sýnir myndskeiðið sem er í forsíðuhaus núverandi brunaholf.is, í fullri upplausn (1920×1080, 26 sekúndur, án hljóðs) og í tveimur sniðum. Undir því liggur kyrrmynd af fyrsta ramma þess, `img/hetja-eldur.webp`.
 
-- Skráin er unnin upp úr frumskránni (29,5 MB, HEVC í .mov, sem spilast ekki í öllum vöfrum): 1280×720, H.264, 26 sekúndur, 2,6 MB. Hún er spegluð, svo loginn er hægra megin og textinn vinstra megin, og upphaf og endir eru felld saman svo lykkjan hökti ekki.
+| Skrá | Snið | Stærð | Hver fær hana |
+|---|---|---|---|
+| `img/hetja-eldur-hevc.mp4` | HEVC | 12,0 MB | Vafrar sem spila HEVC: Safari, og Chrome og Edge á tækjum sem afkóða það í vélbúnaði. |
+| `img/hetja-eldur.mp4` | H.264 | 14,7 MB | Allir aðrir. |
+
+Vafrinn tekur fyrri `<source>`-línuna sem hann getur spilað.
+
+- Skrárnar eru unnar upp úr frumskránni (29,5 MB, HEVC í .mov, sem spilast ekki í öllum vöfrum). Þær eru speglaðar, svo loginn er hægra megin og textinn vinstra megin, og upphaf og endir eru felld saman svo lykkjan hökti ekki.
 - Kyrrmyndin sést þar til myndskeiðið spilar. Það er sótt eftir að síðan er hlaðin og aðeins þegar forsíðan er opin.
-- Það fer ekki sjálft í gang þar sem hreyfing er afþökkuð í tækinu (`prefers-reduced-motion`) eða gagnasparnaður er á, og það stöðvast á meðan hausinn sést ekki.
+- Það fer ekki sjálft í gang þar sem hreyfing er afþökkuð í tækinu (`prefers-reduced-motion`), gagnasparnaður er á eða tengingin er hæg, og það stöðvast á meðan hausinn sést ekki.
 - Takkinn í hausnum stöðvar það og ræsir. Án skriftu stendur kyrrmyndin ein.
-- Skipta um myndskeið: setja nýjar skrár undir sömu heitum, kyrrmyndina sem fyrsta ramma þess. Bláa slikjan yfir því (`.w-hero--video::after` í `site/sida.css`, `.c-hero::after` í `v1-skrar/site/sida.css`) er stillt eftir þessu myndskeiði, svo litamun textans þarf að mæla aftur.
+- Skipta um myndskeið: setja báðar skrárnar undir sömu heitum og kyrrmyndina sem fyrsta ramma þess. HEVC-skráin þarf merkið `hvc1`; sé hún ekki til má taka fyrri `<source>`-línuna út, því H.264-skráin spilast alls staðar. Bláa slikjan yfir myndskeiðinu (`.w-hero--video::after` í `site/sida.css`, `.c-hero::after` í `v1-skrar/site/sida.css`) er stillt eftir þessu myndskeiði, svo litamun textans þarf að mæla aftur.
 - Taka það út: eyða `<video>` og takkanum úr hausnum í báðum síðum. Þá stendur kyrrmyndin eftir.
 
 Myndskeiðið er aðkeypt lagerefni af núverandi vef. Leyfið fyrir því þarf að gilda áfram á nýja vefnum.
+
+## Þjónustugáttin
+
+Hlekkur á innskráningu viðskiptavina, `https://slokkvitaeki.netlify.app/gatt/`, er á tveimur stöðum í hvorri síðu: í hausnum (`a.w-gatt` í V2, `a.c-gatt` í V1; á mjóum skjá táknið eitt) og í spjaldi á forsíðunni. Gáttin sjálf býr í kóðasafni Slökkvitækja-appsins (`gatt/`). Setningin í spjaldinu er orðrétt af innskráningarsíðu hennar.
 
 ## Vörur og verslun
 
@@ -91,5 +102,6 @@ Skrárnar eins og þær standa hér voru keyrðar í vafra (Chromium):
 - Sex síður (forsíða, Brunaþéttingar, vörulisti, tvær vörusíður, karfa) í sjö breiddum frá 320 til 1440 px á hvorri útgáfu: engin lárétt skrun, engar brotnar myndir, engir dauðir hlekkir, engar skriftuvillur.
 - Ferð kaupanda: valmynd, setja í körfu, flokkur, leit, röðun, vörusíða, karfa, greiðsluhnappurinn, beinar slóðir, til baka í vafra, valmynd og karfa á síma.
 - Litamunur texta og bakgrunns nær 4,5:1 alls staðar nema á hvítum texta á appelsínugulum hnöppum.
-- Myndskeiðið í forsíðuhausnum: spilar, takkinn stöðvar það og ræsir (líka með lyklaborði), það stöðvast þegar farið er af forsíðunni eða skrunað frá hausnum, er ekki sótt þegar hreyfing er afþökkuð eða síðan er opnuð beint á versluninni.
+- Myndskeiðið í forsíðuhausnum (H.264-skráin; prófunarvafrinn spilar ekki HEVC): spilar, takkinn stöðvar það og ræsir (líka með lyklaborði), það stöðvast þegar farið er af forsíðunni eða skrunað frá hausnum, er ekki sótt þegar hreyfing er afþökkuð eða síðan er opnuð beint á versluninni. HEVC-skráin var lesin með ffprobe: Main, þrep 4.0, merkið `hvc1`.
+- Hausinn með hlekknum á þjónustugáttina í fjórtán breiddum frá 320 til 1440 px á hvorri útgáfu: engin lárétt skrun.
 - Textinn yfir myndskeiðinu, mældur á móti því sem er á bak við hann í 27 römmum (einn á sekúndu) í þrettán breiddum frá 360 til 1920 px: stór fyrirsögn nær 3:1 og annar texti 4,5:1 í hverjum ramma.

@@ -22,6 +22,11 @@
 .bh2 .w-tele{margin-right:4px;padding:8px 6px;border-radius:var(--r-sm);color:var(--on-navy);font:600 14px/1 var(--font-sans);font-variant-numeric:tabular-nums;text-decoration:none;white-space:nowrap;transition:color .16s var(--w-ease)}
 .bh2 .w-tele:hover{color:var(--orange-hi)}
 .bh2 .w-cart{text-decoration:none}
+/* Þjónustugáttin: hlekkur á innskráningu viðskiptavina (slokkvitaeki.netlify.app/gatt/). Í stikunni með heiti á breiðum skjá, annars táknið eitt. */
+.bh2 .w-gatt{display:inline-flex;align-items:center;justify-content:center;gap:8px;flex:none;height:36px;padding:0 12px;border-radius:var(--r-md);box-shadow:inset 0 0 0 1px rgba(255,255,255,.32);color:var(--on-navy);font:600 13px/1 var(--font-sans);text-decoration:none;white-space:nowrap;transition:background-color .16s var(--w-ease)}
+.bh2 .w-gatt:hover{background:var(--nav-hover,rgba(255,255,255,.07))}
+.bh2 .w-gatt:focus-visible{outline:3px solid var(--orange-hi);outline-offset:2px}
+.w-gatt .bh2-ic{width:18px;height:18px}
 .bh2 .w-cart .bh2-count{position:absolute;top:-1px;right:-5px;box-shadow:0 0 0 2px var(--navy-900)}
 
 /* hero */
@@ -33,10 +38,10 @@
 .bh2 .w-hero h1{max-width:17em;font-size:clamp(30px,2.2vw + 21px,44px);text-wrap:balance}
 .bh2 .w-hero h1 em{font-style:normal;color:var(--orange-hi)}
 .bh2 .w-hero p.w-hero__sub{margin-top:12px;font-size:clamp(16px,1.2vw + 8px,20px);font-weight:500}
-/* Forsíðuhausinn: myndskeiðið af núverandi brunaholf.is (img/hetja-eldur.mp4) liggur yfir kyrrmynd af fyrsta ramma þess
-   (img/hetja-eldur.webp í --hero-img). Kyrrmyndin sést þar til myndskeiðið spilar, og ein þar sem hreyfing er afþökkuð eða það
-   næst ekki. Blái slikjan er þéttari en yfir ljósmynd, því eldurinn er bjartari. Takkinn stöðvar það og ræsir.
-   Skriftan er neðst í site/router.js. */
+/* Forsíðuhausinn: myndskeiðið af núverandi brunaholf.is liggur yfir kyrrmynd af fyrsta ramma þess (img/hetja-eldur.webp í --hero-img).
+   Það er í tveimur sniðum í fullri upplausn: img/hetja-eldur-hevc.mp4 fyrir tæki sem spila HEVC, annars img/hetja-eldur.mp4 (H.264).
+   Kyrrmyndin sést þar til myndskeiðið spilar, og ein þar sem hreyfing er afþökkuð eða það næst ekki. Bláa slikjan er þéttari en
+   yfir ljósmynd, því eldurinn er bjartari. Takkinn stöðvar það og ræsir. Skriftan er neðst í site/router.js. */
 .bh2 .w-hero--video{--hero-img:url(../img/hetja-eldur.webp)}
 .w-hero__video{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover;object-position:right top;pointer-events:none}
 .bh2 .w-hero--video::after{background:linear-gradient(90deg,rgba(2,25,60,.92) 0%,rgba(2,25,60,.8) 24%,rgba(2,25,60,.62) 46%,rgba(2,25,60,.44) 62%,rgba(2,25,60,.14) 82%,rgba(2,25,60,0) 100%),linear-gradient(180deg,rgba(233,240,250,0) 74%,var(--page) 100%)}
@@ -100,6 +105,14 @@
 .w-svc li{display:flex;align-items:center;gap:12px;min-width:0;font-weight:600;font-size:14.5px;line-height:1.35}
 .w-svc .tile{display:grid;place-items:center;flex:none;width:44px;height:44px;border-radius:var(--r-md);background:var(--orange-tint);color:var(--orange-ink)}
 .w-svc .tile .bh2-ic{width:22px;height:22px}
+
+/* þjónustugáttin á forsíðunni: eitt spjald með heiti, einni setningu og hnappi */
+.bh2 .w-gattkort{display:flex;flex-wrap:wrap;align-items:center;gap:14px 16px}
+.w-gattkort .tile{display:grid;place-items:center;flex:none;width:44px;height:44px;border-radius:var(--r-md);background:var(--orange-tint);color:var(--orange-ink)}
+.w-gattkort .tile .bh2-ic{width:22px;height:22px}
+.w-gattkort__t{flex:1 1 220px;min-width:0}
+.bh2 .w-gattkort h2{margin:0;font:700 18px/1.3 var(--font-sans);letter-spacing:-.01em;color:var(--ink)}
+.w-gattkort p{margin:2px 0 0;font-size:14.5px;line-height:1.5;color:var(--ink-2)}
 
 /* shop preview on the front page */
 .w-shop,.w-contact{display:grid;gap:14px;padding-top:10px}
@@ -209,6 +222,11 @@
   .w-prose{columns:2;column-gap:28px}
   .w-prose p{break-inside:avoid}
 }
+@media (max-width:1240px){
+  /* stikan: heiti þjónustugáttarinnar víkur fyrir tákninu einu, svo valmyndin haldi plássinu */
+  .bh2 .w-gatt{width:36px;padding:0;border-radius:50%;box-shadow:none}
+  .w-gatt span{display:none}
+}
 @media (max-width:1199px){
   .w-products{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
@@ -217,6 +235,10 @@
   .bh2 .w-trust{grid-template-columns:repeat(2,minmax(0,1fr))}
   .w-intro,.w-uttekt{grid-column:1/-1}
   .w-svc{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:860px){
+  /* valmyndin kemst ekki öll fyrir: hún skrunar til hliðar og dofnar út þar sem meira er */
+  .bh2 .w-topbar .bh2-topnav{-webkit-mask-image:linear-gradient(90deg,#000 86%,transparent);mask-image:linear-gradient(90deg,#000 86%,transparent);padding-right:24px}
 }
 @media (max-width:700px){
   .bh2 .w-topbar .w-contact-btn{display:none}
