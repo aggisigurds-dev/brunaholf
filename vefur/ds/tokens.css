@@ -1,0 +1,37 @@
+:root{
+  /* Brunahólf design tokens (tokens.json v1) */
+  --navy:#222f47;
+  --navy-deep:#18213a;
+  --orange:#ff4001;
+  --orange-ink:#d13300;
+  --mist:#f0f2f7;
+  --white:#ffffff;
+  --ink:#1b2338;
+  --muted:#515d78;
+  --line:#d5dae6;
+  --on-navy-muted:#b9c2d6;
+  --tab-ink:#aab4cc;
+  --footer-ink:#9aa6c0;
+  --tile-ink:#d4dbea;
+  --shop-row:rgba(24,33,58,0.18);
+  --shop-icon:rgba(255,255,255,0.28);
+  --scrim-strong:rgba(24,33,58,0.94);
+  --scrim-soft:rgba(24,33,58,0.1);
+  --gap-8:8px;
+  --gap-10:10px;
+  --gap-14:14px;
+  --gap-16:16px;
+  --gutter:20px;
+  --pad-tile:30px;
+  --pad-panel:48px;
+  --header-h:72px;
+  --section:72px;
+  --wrap:1180px;
+  --r:16px;
+  --r-tab:12px;
+  --r-icon:10px;
+  --pill:999px;
+  --ease:cubic-bezier(.23,1,.32,1);
+  --ease-io:cubic-bezier(.77,0,.175,1);
+  --font-sans:Poppins, system-ui, sans-serif;
+}

@@ -1,0 +1,92 @@
+/* Brunahólf — íhlutir. Gildi og nöfn úr brunaholf-preview.pages.dev; litir koma úr tokens.json (tokens.css). */
+.bh{font-family:var(--font-sans,Poppins,system-ui,sans-serif);color:var(--ink,#1b2338);-webkit-font-smoothing:antialiased}
+.bh *,.bh *::before,.bh *::after{box-sizing:border-box}
+.bh-ico{width:1.15em;height:1.15em;flex:none;fill:currentColor}
+
+/* Takkar — pilla, 600 15px. Aðaltakki orange; draugur ink-útlína; ljós á navy */
+.bh-btn{display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border-radius:999px;font:600 15px/1.2 var(--font-sans,Poppins,system-ui,sans-serif);border:0;cursor:pointer;background:var(--orange,#ff4001);color:var(--white,#fff);text-decoration:none;transition:transform .16s var(--ease,cubic-bezier(.23,1,.32,1)),background-color .16s var(--ease,cubic-bezier(.23,1,.32,1)),color .16s var(--ease,cubic-bezier(.23,1,.32,1))}
+.bh-btn:hover{background:var(--orange-ink,#d13300)}
+.bh-btn:active{transform:scale(.97)}
+.bh-btn:focus-visible,.bh-chip:focus-visible,.bh-tab:focus-visible,.bh-seg button:focus-visible,.bh-card:focus-visible{outline:3px solid var(--orange,#ff4001);outline-offset:3px}
+.bh-btn.ghost{background:transparent;color:var(--ink,#1b2338);box-shadow:inset 0 0 0 1.5px var(--ink,#1b2338)}
+.bh-btn.ghost:hover{background:var(--ink,#1b2338);color:var(--white,#fff)}
+.bh-btn.light{background:var(--white,#fff);color:var(--navy,#222f47)}
+.bh-btn.light:hover{background:var(--mist,#f0f2f7)}
+.bh-btn.sm{padding:10px 16px;font-size:14px}
+
+/* Flísar á navy (hetja) og smáhnappar á ljósu */
+.bh-chips{display:flex;flex-wrap:wrap;gap:10px}
+.bh-chip{padding:11px 20px;border-radius:999px;border:1.5px solid rgba(255,255,255,.55);background:transparent;color:var(--white,#fff);font:500 15px/1.2 var(--font-sans,Poppins,system-ui,sans-serif);cursor:pointer;transition:background-color .16s var(--ease,cubic-bezier(.23,1,.32,1)),color .16s var(--ease,cubic-bezier(.23,1,.32,1)),border-color .16s var(--ease,cubic-bezier(.23,1,.32,1)),transform .16s var(--ease,cubic-bezier(.23,1,.32,1))}
+.bh-chip:hover{border-color:var(--white,#fff)}
+.bh-chip:active{transform:scale(.97)}
+.bh-chip[aria-pressed=true]{background:var(--white,#fff);color:var(--navy,#222f47);border-color:var(--white,#fff)}
+.bh-quick{padding:8px 14px;border-radius:999px;border:1.5px solid var(--navy,#222f47);background:none;color:var(--navy,#222f47);font:500 13.5px/1.2 var(--font-sans,Poppins,system-ui,sans-serif);cursor:pointer}
+.bh-quick:hover{background:var(--mist,#f0f2f7)}
+
+/* Rofi (seg) */
+.bh-seg{display:inline-flex;gap:4px;padding:4px;border-radius:999px;background:var(--white,#fff);box-shadow:inset 0 0 0 1px var(--line,#d5dae6)}
+.bh-seg button{padding:10px 20px;border:0;border-radius:999px;background:none;color:var(--ink,#1b2338);font:500 15px/1.2 var(--font-sans,Poppins,system-ui,sans-serif);cursor:pointer;transition:background-color .18s var(--ease,cubic-bezier(.23,1,.32,1)),color .18s var(--ease,cubic-bezier(.23,1,.32,1))}
+.bh-seg button[aria-pressed=true]{background:var(--navy,#222f47);color:var(--white,#fff)}
+
+/* Haus + möppuflipar */
+.bh-header{background:var(--navy,#222f47);color:var(--white,#fff)}
+.bh-header .bh-wrap{display:flex;align-items:center;gap:20px;height:72px}
+.bh-logo img{height:40px;width:auto;display:block}
+.bh-tele{margin-left:auto;font-size:14px;color:var(--on-navy-muted,#b9c2d6);display:flex;gap:8px;align-items:center}
+.bh-wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+.bh-tabs{background:var(--navy-deep,#18213a)}
+.bh-tabs .bh-wrap{display:flex;gap:4px;overflow-x:auto;padding-top:8px;scrollbar-width:none}
+.bh-tab{flex:none;padding:12px 22px;border-radius:12px 12px 0 0;font:500 15px/1.2 var(--font-sans,Poppins,system-ui,sans-serif);color:var(--tab-ink,#aab4cc);white-space:nowrap;text-decoration:none;background:none;border:0;cursor:pointer;transition:background-color .18s var(--ease,cubic-bezier(.23,1,.32,1)),color .18s var(--ease,cubic-bezier(.23,1,.32,1))}
+.bh-tab:hover{background:rgba(255,255,255,.07);color:var(--white,#fff)}
+.bh-tab[aria-current=page]{background:var(--mist,#f0f2f7);color:var(--navy,#222f47);font-weight:600;box-shadow:inset 0 3px 0 var(--orange,#ff4001)}
+
+/* Myndaflís */
+.bh-tile{position:relative;overflow:hidden;border-radius:16px;min-height:400px;color:var(--white,#fff);display:flex;flex-direction:column;justify-content:flex-end;padding:30px;isolation:isolate;text-decoration:none}
+.bh-tile img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;transition:transform .7s var(--ease,cubic-bezier(.23,1,.32,1))}
+.bh-tile::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(to top,var(--scrim-strong,rgba(24,33,58,.94)) 8%,var(--scrim-soft,rgba(24,33,58,.1)) 70%)}
+.bh-tile:hover img{transform:scale(1.04)}
+.bh-tile h3{margin:0 0 6px;font:600 28px/1.15 var(--font-sans,Poppins,system-ui,sans-serif);letter-spacing:-.015em}
+.bh-tile p{margin:0;color:var(--tile-ink,#d4dbea);max-width:30em;font-size:16px;line-height:1.5}
+.bh-go{position:absolute;right:20px;top:20px;width:44px;height:44px;border-radius:50%;background:var(--orange,#ff4001);color:var(--white,#fff);display:grid;place-items:center;font-size:20px;transition:transform .2s var(--ease,cubic-bezier(.23,1,.32,1))}
+.bh-tile:hover .bh-go{transform:translate(3px,-3px)}
+
+/* Vefverslunarborði */
+.bh-shop{background:var(--orange,#ff4001);color:var(--white,#fff);border-radius:16px;padding:48px;display:grid;grid-template-columns:1.2fr .8fr;gap:32px;align-items:center}
+.bh-shop h2{margin:0 0 10px;color:var(--white,#fff);font:600 36px/1.12 var(--font-sans,Poppins,system-ui,sans-serif);letter-spacing:-.02em}
+.bh-shop p{margin:0;opacity:.95;line-height:1.6}
+.bh-shop .bh-btn{margin-top:22px}
+.bh-prods{display:grid;gap:10px}
+.bh-prod{display:flex;gap:14px;align-items:center;background:var(--shop-row,rgba(24,33,58,.18));border-radius:12px;padding:12px 16px;font-weight:500}
+.bh-prod i{width:44px;height:44px;border-radius:10px;background:var(--shop-icon,rgba(255,255,255,.28));display:grid;place-items:center;font-size:22px;flex:none;font-style:normal}
+.bh-prod small{display:block;font-weight:400;opacity:.92}
+@media (max-width:760px){.bh-shop{grid-template-columns:1fr;padding:30px}}
+
+/* Traustræma */
+.bh-trust{background:var(--white,#fff);border-bottom:1px solid var(--line,#d5dae6)}
+.bh-trust .bh-wrap{display:flex;flex-wrap:wrap;gap:14px 40px;justify-content:space-between;padding-block:20px;font-weight:500;font-size:15px;color:var(--navy,#222f47)}
+.bh-trust span{display:flex;gap:10px;align-items:center}
+.bh-trust .bh-ico{width:22px;height:22px;color:var(--orange-ink,#d13300)}
+
+/* CTA-borði */
+.bh-cta{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;background:var(--navy,#222f47);color:var(--white,#fff);border-radius:16px;padding:34px 38px}
+.bh-cta h3{margin:0;font:600 28px/1.15 var(--font-sans,Poppins,system-ui,sans-serif);letter-spacing:-.015em}
+.bh-cta p{margin:4px 0 0;color:var(--on-navy-muted,#b9c2d6)}
+.bh-cta .acts{display:flex;flex-wrap:wrap;gap:10px}
+.bh-cta .bh-btn.ghost{color:var(--white,#fff);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.5)}
+.bh-cta .bh-btn.ghost:hover{background:var(--white,#fff);color:var(--navy,#222f47)}
+
+/* Vörukort — VIÐBÓT fyrir vefverslun (sjá components/ProductCard/README.md) */
+.bh-card{display:flex;flex-direction:column;background:var(--white,#fff);border-radius:16px;overflow:hidden;color:var(--ink,#1b2338);text-decoration:none;transition:transform .2s var(--ease,cubic-bezier(.23,1,.32,1)),box-shadow .2s var(--ease,cubic-bezier(.23,1,.32,1))}
+.bh-card:hover{transform:translateY(-2px);box-shadow:0 14px 30px -18px rgba(24,33,58,.45)}
+.bh-card .img{position:relative;aspect-ratio:1/1;background:var(--white,#fff);display:grid;place-items:center;padding:22px;border-bottom:1px solid var(--line,#d5dae6)}
+.bh-card .img img{max-width:100%;max-height:100%;object-fit:contain}
+.bh-card .tag{position:absolute;left:14px;top:14px;padding:5px 11px;border-radius:999px;background:var(--mist,#f0f2f7);color:var(--navy,#222f47);font:600 12px/1 var(--font-sans,Poppins,system-ui,sans-serif)}
+.bh-card .tag.low{background:var(--orange,#ff4001);color:var(--white,#fff)}
+.bh-card .body{display:flex;flex-direction:column;gap:4px;padding:16px 18px 18px;flex:1}
+.bh-card .cat{font-size:12.5px;font-weight:500;color:var(--muted,#515d78)}
+.bh-card h4{margin:0;font:600 17px/1.3 var(--font-sans,Poppins,system-ui,sans-serif);color:var(--navy,#222f47)}
+.bh-card .price{display:flex;align-items:baseline;gap:8px;margin-top:auto;padding-top:12px}
+.bh-card .price b{font:700 20px/1 var(--font-sans,Poppins,system-ui,sans-serif);color:var(--ink,#1b2338);font-variant-numeric:tabular-nums}
+.bh-card .price small{font-size:12.5px;color:var(--muted,#515d78);font-variant-numeric:tabular-nums}
+.bh-card .add{margin-top:12px;justify-content:center}
+@media (prefers-reduced-motion:reduce){.bh *{transition:none!important;animation:none!important}}
