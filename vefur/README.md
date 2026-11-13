@@ -13,6 +13,16 @@ Efni og virkni eru þau sömu í báðum: forsíða, Brunaþéttingar, vefverslu
 
 Endurnefna `index.html` í `v2.html` og `v1.html` í `index.html`. Allar slóðir í síðunum eru afstæðar við þessa möppu, svo ekkert annað breytist.
 
+## Breytingar úr tillögunum í Claude
+
+Vefurinn er smíðaður úr tveimur Claude-artifactum, tillögunum V2 og V1, sem bera sömu skrár og hér. Fínpússun fer fram þar og er svo færð hingað. Hlekkirnir á tillögurnar eru í minninu undir efninu `vefsida`.
+
+- Skrár aðalsíðunnar fara óbreyttar á sinn stað: `site/sida.css`, `ds/` og `verslun/gogn.js`.
+- Skrár hinnar útgáfunnar fara undir `v1-skrar/`. Þar verður `url(../img/…)` í stílblaði að `url(../../img/…)`, því skráin liggur einni möppu dýpra.
+- `index.html` tillögunnar er aðeins innihald síðunnar. Hér stendur það í heilu HTML-skjali: það sem er ofan við `<div class="bh2 …">` í tillögunni (`<div class="bh …">` í V1) fer inn í `<head>`, á eftir línunum sem þar standa fyrir, að frátöldum `<title>`, athugasemdinni og `claude:viewport-fit-sides`. Í `v1.html` fá eigin skrár útgáfunnar forskeytið `v1-skrar/`.
+- `site/router.js`, `verslun/verslun.js` og `verslun/verslun.css` eru sameiginleg báðum síðum. Breytist þau í annarri tillögunni þarf hin að fylgja.
+- Eftir færslu eru báðar síður keyrðar í vafra eins og lýst er undir „Prófað“.
+
 ## Skrár
 
 | Skrá | Hvað er í henni |
