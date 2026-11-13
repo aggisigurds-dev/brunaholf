@@ -41,6 +41,16 @@
 .c-hero p{margin:18px 0 0;max-width:30em;font-size:clamp(17px,1.5vw,20px);line-height:1.5;color:var(--on-navy-muted)}
 .c-hero--page .bh-wrap{padding-block:clamp(40px,5.4vw,68px)}
 .c-hero--page h1{font-size:clamp(30px,4.6vw,56px)}
+/* Forsíðuhausinn: myndskeiðið af núverandi brunaholf.is (img/hetja-eldur.mp4) liggur yfir kyrrmynd af fyrsta ramma þess
+   (img/hetja-eldur.webp). Kyrrmyndin sést þar til myndskeiðið spilar, og ein þar sem hreyfing er afþökkuð eða það næst ekki.
+   Takkinn stöðvar það og ræsir. Skriftan er neðst í site/router.js. */
+.c-hero--video .c-hero__img img{object-position:center}
+.c-hero__img video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;pointer-events:none}
+.c-hero__spila{position:absolute;right:max(var(--gutter),env(safe-area-inset-right,0px));bottom:16px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,.16);color:var(--white);cursor:pointer;transition:background-color .16s var(--ease)}
+.c-hero__spila:hover{background:rgba(255,255,255,.28)}
+.c-hero__spila:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+.c-hero__spila svg{width:18px;height:18px;fill:currentColor}
+.c-hero__spila[data-stada="spilar"] .i-spila,.c-hero__spila[data-stada="stopp"] .i-stopp{display:none}
 
 /* sections: headings in navy on mist, content in white panels */
 .c-sec{padding-top:clamp(40px,6vw,72px)}
@@ -53,6 +63,13 @@
   .c-cols{columns:2;column-gap:48px}
   .c-cols p{break-inside:avoid}
 }
+/* Kynningin á forsíðunni: ein inngangssetning og fjórir stuttir bitar með fyrirsögn, í stað samfellds texta */
+.c-um__lead{margin:0;max-width:44em;font-size:clamp(18px,1.7vw,21px);line-height:1.55;font-weight:500;color:var(--navy)}
+.c-um__list{list-style:none;margin:clamp(22px,2.6vw,32px) 0 0;padding:clamp(22px,2.6vw,32px) 0 0;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(22px,2.6vw,32px) clamp(28px,4vw,56px)}
+.c-um__list li{min-width:0}
+.c-um__list h3{margin:0 0 6px;font:600 18px/1.3 var(--font-sans);letter-spacing:-.01em;color:var(--navy)}
+.c-um__list h3::before{content:"";display:block;width:28px;height:3px;margin-bottom:12px;border-radius:var(--pill);background:var(--orange)}
+.c-um__list p{margin:0;font-size:15.5px;line-height:1.65}
 
 /* the inspection band: navy, the question and the one action on the left, the three steps as rows on the right */
 .c-uttekt{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:32px clamp(28px,4vw,56px);align-items:center;background:var(--navy);color:var(--white);border-radius:var(--r);padding:clamp(28px,4vw,var(--pad-panel))}
@@ -143,6 +160,7 @@
 }
 @media (max-width:900px){
   .c-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .c-um__list{grid-template-columns:1fr}
   .c-uttekt{grid-template-columns:1fr}
   .c-contact{grid-template-columns:1fr}
 }

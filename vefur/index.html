@@ -60,12 +60,19 @@
 
   <!-- Sýn 1: forsíðan -->
   <div id="heim">
-    <section class="bh2-hero w-hero" aria-labelledby="hero-title">
+    <section class="bh2-hero w-hero w-hero--video" aria-labelledby="hero-title">
+      <video class="w-hero__video" muted loop playsinline disablepictureinpicture preload="none" tabindex="-1" aria-hidden="true" data-hetja-video>
+        <source src="img/hetja-eldur.mp4" type="video/mp4">
+      </video>
       <div class="w-wrap">
         <p class="bh2-eyebrow">Brunahólf ehf.</p>
         <h1 id="hero-title">Sérfræðingar í <em>brunaþéttingum</em> og eldvarnarlausnum</h1>
         <p class="w-hero__sub">Gerum þetta rétt og vel</p>
       </div>
+      <button class="w-hero__spila" type="button" data-hetja-takki hidden aria-label="Stöðva myndskeið">
+        <svg class="bh2-ic i-stopp" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="14" y="4" width="4" height="16" rx="1"/><rect x="6" y="4" width="4" height="16" rx="1"/></svg>
+        <svg class="bh2-ic i-spila" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+      </button>
     </section>
 
     <main class="bh2-content w-content" id="efni">
@@ -89,12 +96,39 @@
       <div class="bh2-grid w-row1">
         <section class="bh2-card w-intro" aria-labelledby="intro-title">
           <header><i data-ic="flame"></i><h2 id="intro-title">Brunahólf ehf.</h2></header>
-          <div class="w-prose">
-            <p class="lead">Brunahólf ehf. sérhæfir sig í reyk- og brunaþéttingum auk annarra eldvarnarlausna sem tryggja hámarksöryggi í byggingum. Við höfum víðtæka sérfræðiþekkingu og veitum þjónustu fyrir fjölbreytt verkefni, þar á meðal heilbrigðisstofnanir, stóriðju og hótel á höfuðborgarsvæðinu og víðar.</p>
-            <p>Einnig þjónustum við smærri fyrirtæki og heimili þar sem við leggjum sömuleiðis ríka áherslu á fagleg vinnubrögð, áreiðanleika og skýr samskipti.</p>
-            <p>Fyrirtækið er rekið af sérfræðingum með starfsleyfi frá HMS fyrir brunaþéttingar, brunaviðvörunarkerfi, slökkvikerfi og handslökkvitæki. Allir starfsmenn okkar hafa lokið viðeigandi námskeiðum og þjálfun og ávallt er unnið samkvæmt nýjustu reglum og alþjóðlegum stöðlum í brunavörnum.</p>
-            <p>Við leggjum einnig mikið upp úr umhverfisvænum lausnum og reynum eftir fremsta megni að notast við umhverfisvæn efni í brunaþéttingar og aðrar eldvarnarframkvæmdir, sem tryggir bæði öryggi og sjálfbærni.</p>
-          </div>
+          <!-- Textinn er orðréttur af forsíðu brunaholf.is, skipt í inngangssetningu og fjóra bita. Fyrirsagnir bitanna fjögurra eru nýjar. -->
+          <p class="w-um__lead">Brunahólf ehf. sérhæfir sig í reyk- og brunaþéttingum auk annarra eldvarnarlausna sem tryggja hámarksöryggi í byggingum.</p>
+          <ul class="w-um">
+            <li>
+              <span class="tile"><i data-ic="building-2"></i></span>
+              <div>
+                <h3>Fjölbreytt verkefni</h3>
+                <p>Við höfum víðtæka sérfræðiþekkingu og veitum þjónustu fyrir fjölbreytt verkefni, þar á meðal heilbrigðisstofnanir, stóriðju og hótel á höfuðborgarsvæðinu og víðar.</p>
+              </div>
+            </li>
+            <li>
+              <span class="tile"><i data-ic="house"></i></span>
+              <div>
+                <h3>Fyrirtæki og heimili</h3>
+                <p>Einnig þjónustum við smærri fyrirtæki og heimili þar sem við leggjum sömuleiðis ríka áherslu á fagleg vinnubrögð, áreiðanleika og skýr samskipti.</p>
+              </div>
+            </li>
+            <li>
+              <span class="tile"><i data-ic="shield-check"></i></span>
+              <div>
+                <h3>Starfsleyfi og þjálfun</h3>
+                <p>Fyrirtækið er rekið af sérfræðingum með starfsleyfi frá HMS fyrir brunaþéttingar, brunaviðvörunarkerfi, slökkvikerfi og handslökkvitæki. Allir starfsmenn okkar hafa lokið viðeigandi námskeiðum og þjálfun og ávallt er unnið samkvæmt nýjustu reglum og alþjóðlegum stöðlum í brunavörnum.</p>
+              </div>
+            </li>
+            <li>
+              <!-- laufblaðið er ekki í táknasafni hönnunarkerfisins (ds/bundle.js), svo það er teiknað hér: Lucide „leaf“, sama safn og hin táknin -->
+              <span class="tile"><svg class="bh2-ic" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg></span>
+              <div>
+                <h3>Umhverfisvænar lausnir</h3>
+                <p>Við leggjum einnig mikið upp úr umhverfisvænum lausnum og reynum eftir fremsta megni að notast við umhverfisvæn efni í brunaþéttingar og aðrar eldvarnarframkvæmdir, sem tryggir bæði öryggi og sjálfbærni.</p>
+              </div>
+            </li>
+          </ul>
         </section>
 
         <section class="bh2-card w-uttekt" id="uttekt" aria-labelledby="uttekt-title">

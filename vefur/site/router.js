@@ -132,3 +132,40 @@
   };
   syna(true);
 })();
+
+/* Myndskeiðið í forsíðuhausnum (stökin með data-hetja-video og data-hetja-takki í síðunni). Kyrrmyndin undir því sést þar til
+   það spilar. Það er sótt eftir að síðan er hlaðin, fer ekki sjálft í gang þar sem hreyfing er afþökkuð í tækinu
+   (prefers-reduced-motion) eða gagnasparnaður er á, stöðvast á meðan hausinn sést ekki og takkinn stöðvar það og ræsir. */
+(function () {
+  'use strict';
+  var v = document.querySelector('[data-hetja-video]'), takki = document.querySelector('[data-hetja-takki]');
+  if (!v || typeof v.play !== 'function') return;
+  var kyrrt = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  var spara = !!(navigator.connection && navigator.connection.saveData);
+  var stoppad = kyrrt || spara;                 /* sá sem skoðar, eða stilling tækisins, vill ekki hreyfingu */
+  var sest = false, hladid = document.readyState === 'complete';
+  function merkja() {
+    if (!takki) return;
+    takki.setAttribute('data-stada', v.paused ? 'stopp' : 'spilar');
+    takki.setAttribute('aria-label', v.paused ? 'Spila myndskeið' : 'Stöðva myndskeið');
+  }
+  function stilla() {
+    if (hladid && sest && !stoppad) {
+      var p = v.play();
+      if (p && p.catch) p.catch(function () {});     /* vafrinn leyfir ekki sjálfspilun: kyrrmyndin stendur */
+    } else if (!v.paused) v.pause();
+  }
+  v.addEventListener('play', merkja);
+  v.addEventListener('pause', merkja);
+  var kildur = v.querySelectorAll('source');
+  if (kildur.length) kildur[kildur.length - 1].addEventListener('error', function () { if (takki) takki.hidden = true; });
+  if (takki) {
+    takki.hidden = false;
+    takki.addEventListener('click', function () { stoppad = !v.paused; hladid = true; stilla(); });
+  }
+  if (!hladid) window.addEventListener('load', function () { hladid = true; stilla(); });
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(function (f) { sest = f[f.length - 1].isIntersecting; stilla(); }).observe(v);
+  } else { sest = true; stilla(); }
+  merkja();
+})();
