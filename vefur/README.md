@@ -4,25 +4,25 @@ Kyrrstæður vefur án smíðaskrefs: skrárnar í þessari möppu eru vefurinn 
 
 | Síða | Útgáfa |
 |---|---|
-| `index.html` | V1, sú sem vefurinn byrjar á. Hönnunarkerfið Brunahólf: dökkblár haus með flipum, pillulaga hnappar, letrið Poppins. |
-| `v2.html` | V2, geymd til hliðar. Hönnunarkerfið Brunahólf V2: ljósblár grunnur, hvít spjöld með mjúkum skugga. |
+| `index.html` | V2, aðalsíðan. Hönnunarkerfið Brunahólf V2: ljósblár grunnur, hvít spjöld með mjúkum skugga, letrið Poppins. |
+| `v1.html` | V1, geymd til hliðar. Hönnunarkerfið Brunahólf: dökkblár haus með flipum, pillulaga hnappar. |
 
 Efni og virkni eru þau sömu í báðum: forsíða, Brunaþéttingar, vefverslun (42 vörur, vörusíður, karfa) og Hafa samband á hverri sýn.
 
-## Skipta yfir í V2
+## Skipta yfir í V1
 
-Endurnefna `index.html` í `v1.html` og `v2.html` í `index.html`. Allar slóðir í síðunum eru afstæðar við þessa möppu, svo ekkert annað breytist.
+Endurnefna `index.html` í `v2.html` og `v1.html` í `index.html`. Allar slóðir í síðunum eru afstæðar við þessa möppu, svo ekkert annað breytist.
 
 ## Skrár
 
 | Skrá | Hvað er í henni |
 |---|---|
-| `index.html`, `v2.html` | Texti og uppbygging. Neðst í hvorri eru stillingar leiðarskriftunnar (`window.BH_SITE`). |
-| `site/sida.css`, `ds/` | Útlit V1 og hönnunarkerfi þess. |
-| `v2-skrar/` | Það sem V2 á ein: hönnunarkerfið (`ds/`), stílblaðið (`site/sida.css`) og vörugögn með litum V2 (`verslun/gogn.js`). |
+| `index.html`, `v1.html` | Texti og uppbygging. Neðst í hvorri eru stillingar leiðarskriftunnar (`window.BH_SITE`). |
+| `site/sida.css`, `ds/` | Útlit V2 og hönnunarkerfi þess. |
+| `v1-skrar/` | Það sem V1 á ein: hönnunarkerfið (`ds/`), stílblaðið (`site/sida.css`) og vörugögnin (`verslun/gogn.js`). |
 | `site/router.js` | Sýnirnar þrjár og slóðirnar. Sameiginleg báðum síðum. |
 | `verslun/verslun.js`, `verslun/verslun.css` | Verslunin sjálf, tekin úr `vefverslun/` í kóðasafni Slökkvitækja-appsins og aðlöguð á sjö stöðum sem taldir eru upp efst í skránni. Sameiginleg báðum síðum. |
-| `verslun/gogn.js` | Vörur, verð, birgðir og stillingar verslunarinnar fyrir V1. |
+| `verslun/gogn.js` | Vörur, verð, birgðir og stillingar verslunarinnar fyrir V2, þar á meðal litir hennar í `efni.thema`. |
 | `img/`, `vv/v/`, `myndir/` | Merkið og forsíðumyndir, vörumyndir (heitið er númer vörunnar) og myndir á vörusíðum. Sameiginlegar. |
 
 ## Slóðir
@@ -50,7 +50,7 @@ Leiðarskriftan reiðir sig á þessi stök í síðunum: `#heim`, `#brunasyn`, 
 - Röð: röðin í `vorur` er röðin í versluninni, og fyrstu vörurnar sjást í vörukynningunni á forsíðunni.
 - Texti og myndir í versluninni: `efni.t["<lykill>"]` og `efni.m["<lykill>"]`. Lykillinn er `data-e` eða `data-m` á stakinu.
 
-Sé breytt í `verslun/gogn.js` þarf sama breyting að fara í `v2-skrar/verslun/gogn.js`, sem ber að auki liti V2 í `efni.thema`.
+Sé breytt í `verslun/gogn.js` þarf sama breyting að fara í `v1-skrar/verslun/gogn.js`.
 
 Verslunin er í prufuham: „Halda áfram í greiðslu“ sýnir skilaboð og sendir ekkert.
 

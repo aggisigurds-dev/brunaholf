@@ -67,26 +67,6 @@ window.BH_VV_GOGN = {
    "bordi.merki": {
     "x": "Brunahólf slökkvitæki ehf."
    }
-  },
-  "thema": {
-   "litir": {
-    "navy": "#011f40",
-    "navyDeep": "#02193c",
-    "orange": "#ff6702",
-    "orangeInk": "#c2410c",
-    "mist": "#e9f0fa",
-    "white": "#ffffff",
-    "ink": "#101e43",
-    "muted": "#5a6882",
-    "line": "#d8dee9"
-   },
-   "letur": {
-    "fyrirsagnir": "Poppins",
-    "texti": "Poppins"
-   },
-   "grunnstaerd": 16,
-   "runun": 14,
-   "takkar": "runad"
   }
  },
  "drog_uppfaert": "2026-10-13T01:02:03.407+00:00",

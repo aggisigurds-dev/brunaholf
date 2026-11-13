@@ -1,179 +1,230 @@
-/* Stílblað síðunnar „Brunahólf vefur, V1“. Verslunin á sitt eigið (verslun/verslun.css); kaflinn um hana hér lagar hana að síðunni. */
-/* ---- site layer: only layout for this page; colours, corners, type and the components come from the design system ---- */
-.c-site{position:relative;font-size:17px;line-height:1.6}
-.c-vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
-.c-nw{white-space:nowrap}
-.c-skip{position:absolute;left:12px;top:-80px;z-index:100;padding:10px 16px;border-radius:var(--pill);background:var(--white);color:var(--navy);font-weight:600;text-decoration:none;transition:top .16s var(--ease)}
-.c-skip:focus{top:calc(env(safe-area-inset-top,0px) + 12px)}
-::selection{background:rgba(255,64,1,.22)}
+/* Stílblað síðunnar „Brunahólf vefur, V2“. Verslunin á sitt eigið (verslun/verslun.css); kaflinn um hana hér lagar hana að síðunni. */
+/* ---- site layer: only layout for the public page, every colour, radius and shadow comes from the tokens ---- */
+.w-site{position:relative}
+.w-wrap{width:100%;max-width:calc(var(--w-max) + 2 * var(--w-gutter));margin-inline:auto;padding-left:max(var(--w-gutter),env(safe-area-inset-left,0px));padding-right:max(var(--w-gutter),env(safe-area-inset-right,0px))}
+.w-vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+.w-nw{white-space:nowrap}
+.w-skip{position:absolute;left:12px;top:-80px;z-index:100;padding:10px 14px;border-radius:var(--r-md);background:var(--surface);color:var(--ink);font-weight:600;box-shadow:var(--shadow-raised);transition:top .16s var(--w-ease)}
+.w-skip:focus{top:calc(env(safe-area-inset-top,0px) + 12px)}
+::selection{background:rgba(255,103,2,.25)}
 #top{scroll-margin-top:9999px}
-.c-site [id]{scroll-margin-top:calc(var(--header-h) + var(--tabs-h) + env(safe-area-inset-top,0px) + 16px)}
-.bh .bh-wrap{padding-left:max(var(--gutter),env(safe-area-inset-left,0px));padding-right:max(var(--gutter),env(safe-area-inset-right,0px))}
+.w-site [id]{scroll-margin-top:calc(var(--topbar-h) + env(safe-area-inset-top,0px) + 16px)}
 
-/* header and folder tabs (both stay at the top of the screen; on phones only the tabs do) */
-.bh .bh-header{position:sticky;top:env(safe-area-inset-top,0px);z-index:50}
-.bh .bh-logo{flex:none;border-radius:6px}
-.bh a.bh-tele{text-decoration:none;transition:color .16s var(--ease)}
-.bh a.bh-tele:hover{color:var(--white)}
-.bh .bh-header .bh-btn{flex:none}
-.bh .c-tabs{position:sticky;top:calc(var(--header-h) + env(safe-area-inset-top,0px));z-index:49}
-.bh .c-tabs .bh-wrap{align-items:flex-end;gap:10px;overflow:visible}
-.c-tabs__list{display:flex;gap:4px;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}
-.c-tabs__list::-webkit-scrollbar{display:none}
-/* á mjóum skjá komast fliparnir ekki allir fyrir: stikan skrunar til hliðar og dofnar út þar sem meira er */
-@media (max-width:560px){.c-tabs__list{padding-right:28px;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent)}}
-.c-cart{position:relative;flex:none;display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;margin-bottom:1px;border-radius:50%;color:var(--white);text-decoration:none;transition:background-color .16s var(--ease)}
-.c-cart:hover{background:rgba(255,255,255,.07)}
-.c-cart:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
-.c-cart .vv-ico{width:22px;height:22px}
-/* small text on orange: the system's darker orange carries it (white on it is 5:1) */
-.c-cart__n{position:absolute;top:0;right:-4px;min-width:20px;height:20px;padding:0 6px;border-radius:var(--pill);background:var(--orange-ink);color:var(--white);font:700 11.5px/20px var(--font-sans);text-align:center;box-shadow:0 0 0 2px var(--navy-deep)}
+/* top bar */
+.bh2 .w-topbar{display:block;padding:0;top:env(safe-area-inset-top,0px);height:var(--topbar-h)}
+.w-topbar__in{display:flex;align-items:center;gap:8px;height:100%}
+.bh2 .w-topbar .bh2-logo{width:auto;padding:0;margin-right:clamp(10px,3vw,40px)}
+.bh2 .w-topbar .bh2-logo img{height:30px;width:auto}
+.bh2 .w-topbar .bh2-topnav{flex:1;min-width:0;padding-left:0;gap:clamp(18px,2.6vw,34px)}
+.bh2 .w-topbar .bh2-topnav a{transition:color .16s var(--w-ease)}
+.bh2 .w-topbar .bh2-tools{flex:none;gap:10px}
+.w-only-m{display:none!important}
+.bh2 .w-cart{text-decoration:none}
+.bh2 .w-cart .bh2-count{position:absolute;top:-1px;right:-5px;box-shadow:0 0 0 2px var(--navy-900)}
 
-/* hero: a photo on the right 60% over navy, with the system's gradient */
-.c-hero{position:relative;background:var(--navy);color:var(--white);overflow:hidden}
-.c-hero__img{position:absolute;right:0;top:0;bottom:0;width:60%}
-.c-hero__img img{width:100%;height:100%;object-fit:cover;object-position:right center}
-.c-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--navy) 0%,var(--navy) 40%,color-mix(in srgb,var(--navy) 86%,transparent) 58%,color-mix(in srgb,var(--navy) 20%,transparent) 100%);pointer-events:none}
-.c-hero .bh-wrap{position:relative;z-index:1;padding-block:clamp(48px,7vw,88px)}
-.c-hero__yfir{display:block;margin-bottom:16px;font:600 13px/1.2 var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--on-navy-muted)}
-.c-hero h1{margin:0;max-width:12em;font:700 clamp(30px,5.2vw,64px)/1.04 var(--font-sans);letter-spacing:-.025em;text-wrap:balance}
-.c-hero h1 em{font-style:normal;color:var(--orange)}
-.c-hero p{margin:18px 0 0;max-width:30em;font-size:clamp(17px,1.5vw,20px);line-height:1.5;color:var(--on-navy-muted)}
-.c-hero--page .bh-wrap{padding-block:clamp(40px,5.4vw,68px)}
-.c-hero--page h1{font-size:clamp(30px,4.6vw,56px)}
+/* hero */
+/* Forsíðumyndin. Hero-íhlutur hönnunarkerfisins les hana úr --hero-img. Slóðin er skráð hér í stílblaðinu en ekki á stakinu sjálfu,
+   því vafrar leysa afstæða slóð í breytu ýmist frá skránni sem setur hana eða þeirri sem notar hana (ds/bundle.css). */
+.bh2 .w-hero{--hero-img:url(../img/hetja-v3.webp)}
+.bh2 .w-hero{display:flex;align-items:center;padding:0;min-height:clamp(290px,31vw,430px)}
+.w-hero .w-wrap{padding-block:clamp(36px,5vw,60px) clamp(76px,8vw,108px)}
+.bh2 .w-hero h1{max-width:17em;font-size:clamp(30px,2.2vw + 21px,44px);text-wrap:balance}
+.bh2 .w-hero h1 em{font-style:normal;color:var(--orange-hi)}
+.bh2 .w-hero p.w-hero__sub{margin-top:12px;font-size:clamp(16px,1.2vw + 8px,20px);font-weight:500}
 
-/* sections: headings in navy on mist, content in white panels */
-.c-sec{padding-top:clamp(40px,6vw,72px)}
-.c-h2{margin:0 0 clamp(18px,2.4vw,28px);font:600 clamp(28px,3.6vw,44px)/1.12 var(--font-sans);letter-spacing:-.02em;color:var(--navy);text-wrap:balance}
-.c-panel{background:var(--white);border-radius:var(--r);padding:clamp(24px,4vw,var(--pad-panel))}
-.c-prose p{margin:0;line-height:1.7}
-.c-prose p + p{margin-top:1.1em}
-.c-prose .lead{font-size:clamp(18px,1.7vw,21px);line-height:1.55;font-weight:500;color:var(--navy)}
-@media (min-width:901px){
-  .c-cols{columns:2;column-gap:48px}
-  .c-cols p{break-inside:avoid}
-}
+/* content column */
+.bh2 .w-content{position:relative;z-index:1;margin:-36px auto 0;max-width:calc(var(--w-max) + 2 * var(--w-gutter));padding:0 max(var(--w-gutter),env(safe-area-inset-right,0px)) 32px max(var(--w-gutter),env(safe-area-inset-left,0px))}
+.w-content>*{min-width:0}
+/* Hafa samband er sameiginlegt öllum sýnum (eins og fóturinn á brunaholf.is): sýnirnar enda án botnbils og kaflinn kemur í sama bili og spjöldin */
+.bh2 #heim .w-content,.bh2 #brunasyn .w-content{padding-bottom:0}
+.bh2 .w-shared{margin-top:var(--space-5)}
+.bh2 .bh2-card>header h2,.bh2 .bh2-card>header h3{margin:0;font:inherit;letter-spacing:-.01em;min-width:0}
+.bh2 .bh2-card>header .bh2-tag{margin-left:auto;flex:none}
+.w-h2{display:flex;align-items:center;gap:10px;margin:0;font:700 22px/1.25 var(--font-sans);letter-spacing:-.01em;color:var(--ink)}
+.w-h2 .bh2-ic{width:24px;height:24px;color:var(--orange)}
 
-/* the inspection band: navy, the question and the one action on the left, the three steps as rows on the right */
-.c-uttekt{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:32px clamp(28px,4vw,56px);align-items:center;background:var(--navy);color:var(--white);border-radius:var(--r);padding:clamp(28px,4vw,var(--pad-panel))}
-.c-uttekt h2{margin:0 0 24px;font:600 clamp(26px,3vw,36px)/1.14 var(--font-sans);letter-spacing:-.02em;text-wrap:balance}
-.c-steps{list-style:none;margin:0;padding:0;display:grid;gap:10px}
-.c-steps li{display:flex;gap:14px;align-items:center;background:rgba(255,255,255,.07);border-radius:var(--r-tab);padding:14px 16px;font-weight:500;font-size:15.5px;line-height:1.5}
-.c-steps i{flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:var(--r-icon);background:var(--orange);color:var(--white);font:700 19px/1 var(--font-sans);font-style:normal}
+/* notice (not shown for now, kept so it can be switched back on) */
+.w-notice{display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:var(--r-lg);background:var(--warn-tint);color:var(--ink);box-shadow:var(--shadow-card)}
+.w-notice .mark{display:grid;place-items:center;flex:none;width:36px;height:36px;border-radius:50%;background:var(--warn);color:var(--on-orange)}
+.w-notice .mark .bh2-ic{width:20px;height:20px}
+.w-notice p{flex:1;min-width:0;margin:0;font-size:14px;line-height:1.5}
+.bh2 .w-notice p a{color:var(--warn-ink);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+
+/* row 1: about + inspection */
+.w-row1{--cols:3}
+.w-intro{grid-column:span 2}
+.w-prose p{margin:0;font-size:15px;line-height:1.7;color:var(--ink-2)}
+.w-prose p + p{margin-top:12px}
+.w-prose .lead{font-size:16px;color:var(--ink)}
+.bh2 .w-uttekt{display:flex;flex-direction:column}
+.bh2 .w-uttekt>header{align-items:flex-start}
+.bh2 .w-uttekt>header .bh2-ic{margin-top:1px}
+.w-steps{margin:0 0 16px}
+.bh2 .w-steps>li{align-items:flex-start;gap:12px;padding:10px 0}
+.w-steps .tile{display:grid;place-items:center;flex:none;width:32px;height:32px;border-radius:var(--r-md);background:var(--orange-tint);color:var(--orange-ink);font:700 14px/1 var(--font-sans)}
+.bh2 .w-steps .t{font-weight:500;font-size:14.5px;line-height:1.5}
+.bh2 .w-uttekt .bh2-btn{margin-top:auto}
 
 /* services */
-.c-checks{list-style:none;margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 clamp(24px,4vw,56px)}
-.c-checks li{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--line);font-weight:500;color:var(--navy);line-height:1.4}
-.c-checks li:nth-last-child(-n+2){border-bottom:0}
-.c-checks .vv-ico{width:22px;height:22px;color:var(--orange-ink)}
+.w-svc{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px 20px}
+.w-svc li{display:flex;align-items:center;gap:12px;min-width:0;font-weight:600;font-size:14.5px;line-height:1.35}
+.w-svc .tile{display:grid;place-items:center;flex:none;width:44px;height:44px;border-radius:var(--r-md);background:var(--orange-tint);color:var(--orange-ink)}
+.w-svc .tile .bh2-ic{width:22px;height:22px}
 
-/* the shop panel on the front page: the system's orange panel, its rows are products from the shop */
-/* Vörukynningin á forsíðunni: vörukort hönnunarkerfisins (ProductCard) á ljósum grunni. Appelsínuguli vefverslunarborðinn
-   (ShopPanel) þótti of yfirgnæfandi, svo appelsínugult er hér aðeins á hnappnum. */
-.c-shophead{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:6px 32px;margin-bottom:clamp(18px,2.4vw,28px)}
-.c-shophead .c-h2{margin:0}
-.c-hours{margin:0 0 6px;color:var(--muted);line-height:1.5}
-.c-hours b{font-weight:600;color:var(--navy)}
-.c-cards{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(12px,1.8vw,24px)}
-.c-cards li{display:flex;min-width:0}
-.bh .c-cards .bh-card{flex:1;min-width:0}
-/* myndreiturinn er nákvæmlega ferningur: myndin fyllir hann að innan en teygir hann ekki, svo kortin verða jafnhá */
-.bh .c-cards .bh-card .img{--p:22px;padding:0}
-.bh .c-cards .bh-card .img img{position:absolute;left:var(--p);top:var(--p);width:calc(100% - 2 * var(--p));height:calc(100% - 2 * var(--p));max-width:none;max-height:none;object-fit:contain}
-.bh .bh-card h3{margin:0;font:600 17px/1.3 var(--font-sans);color:var(--navy)}
-.c-more{display:flex;justify-content:center;margin-top:clamp(20px,2.6vw,32px)}
+/* shop preview on the front page */
+.w-shop,.w-contact{display:grid;gap:14px;padding-top:10px}
+.w-shop__head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 24px}
+.w-hours{display:flex;align-items:center;gap:8px;margin:0;font-size:14px;color:var(--muted)}
+.w-hours .bh2-ic{color:var(--ink-2)}
+.w-hours b{color:var(--ink);font-weight:600}
+.w-products{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));grid-auto-rows:1fr;gap:16px}
+.w-product{display:flex;min-width:0}
+.bh2 .w-prop{width:100%;min-width:0;padding:8px 8px 10px;color:var(--ink)}
+/* square photo plate: every plate is the same size and the photo is fitted inside it */
+.w-prop__img{position:relative;display:block;height:0;padding-bottom:100%;border-radius:var(--r-sm);background:var(--surface-2);overflow:hidden}
+.w-prop__img img{position:absolute;top:7%;left:7%;width:86%;height:86%;max-width:none;object-fit:contain;mix-blend-mode:multiply}
+.bh2 .w-prop h3{margin:10px 4px 2px;font:600 14px/1.35 var(--font-sans);overflow-wrap:anywhere}
+.bh2 .w-prop p{margin:0 4px}
+.w-prop__foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:auto 4px 0;padding-top:10px}
+.w-prop__foot b{font:700 16px/1 var(--font-sans);white-space:nowrap}
+.w-prop__go{display:grid;place-items:center;flex:none;width:32px;height:32px;border-radius:8px;background:var(--surface);color:var(--orange-ink);box-shadow:inset 0 0 0 1px var(--line);transition:background-color .16s var(--w-ease),color .16s var(--w-ease),box-shadow .16s var(--w-ease)}
+.w-prop__go .bh2-ic{width:16px;height:16px}
+.bh2 .w-prop:hover .w-prop__go{background:linear-gradient(180deg,var(--orange-hi),var(--orange-lo));color:var(--on-orange);box-shadow:var(--shadow-glow)}
+.w-shop__more{display:flex;justify-content:center;padding-top:4px}
 
-/* contact (on every view) and footer */
-.c-contact{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
-.c-contact .c-panel{padding:28px 30px}
-.c-contact h3{margin:0;font:600 22px/1.2 var(--font-sans);letter-spacing:-.01em;color:var(--navy)}
-.c-co{margin:2px 0 18px;font-size:14.5px;color:var(--muted)}
-.c-dl{margin:0;display:grid;gap:12px}
-.c-dl div{display:grid;gap:1px}
-.c-dl dt{font-size:13.5px;font-weight:500;color:var(--muted)}
-.c-dl dd{margin:0;font-weight:500;overflow-wrap:anywhere}
-.c-dl a{color:inherit;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:4px;transition:color .16s var(--ease)}
-.c-dl a:hover{color:var(--orange-ink);text-decoration-color:currentColor}
-.c-dl small{font-size:.85em;font-weight:400;color:var(--muted)}
-.c-open p{margin:18px 0 0;color:var(--muted);line-height:1.5}
-.c-open b{display:block;margin-top:4px;font:600 20px/1.3 var(--font-sans);color:var(--navy)}
-.c-foot{margin-top:clamp(40px,6vw,72px);background:var(--navy-deep);color:var(--footer-ink);font-size:14.5px;line-height:1.5}
-.c-foot .bh-wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px;padding-block:28px calc(28px + env(safe-area-inset-bottom,0px))}
-.c-foot__l{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
-.c-foot img{height:30px;width:auto}
+/* contact */
+.bh2 .bh2-contact .t small a{transition:color .16s var(--w-ease)}
+.bh2 .bh2-contact .t small a:hover{color:var(--orange-ink)}
+.w-open p{margin:0;color:var(--ink-2)}
+.w-open b{display:block;margin:2px 0 14px;font:700 19px/1.3 var(--font-sans)}
+.w-open .w-tag{margin:0;padding-top:14px;border-top:1px solid var(--line-soft);font-size:14px;color:var(--muted)}
 
-/* ---- the web shop inside this page. It is built in this same design system, so it runs as it is; these rules only fit it
-        under the page's header and tabs (its own logo, tabs, footer and cart button are not shown) and tidy a few edges. ---- */
+/* footer */
+.bh2 .w-foot{flex-wrap:wrap;gap:12px 24px;margin:8px 0 0;padding-bottom:24px}
+.w-foot__l{display:flex;align-items:center;gap:12px;flex:1 1 260px;min-width:0;line-height:1.5}
+.w-foot__r{margin-left:auto;letter-spacing:0;text-transform:none;font:500 14px/1.2 var(--font-sans);color:var(--ink)}
+
+/* ---- the web shop inside V2. Its own stylesheet and script run as they are; these rules only fit it into the V2 shell:
+        the shell's top bar and footer replace the shop's own, and the V2 tokens give it its colours, shadows and corners. ---- */
 #vv-app{display:flex;flex-direction:column;min-width:0}
 #vv-app>*{width:100%;min-width:0}
 #vv-app .vv-hetja{order:-2}
 #vv-app .vv-traust{order:-1}
+/* merki, flipar, fótur og körfutakki verslunarinnar sjást ekki: efsta stikan ber merkið, valmyndina og körfuna */
 #vv-app .vv-flipar,#vv-app .vv-fotur,#vv-app .vv-haus .vv-logo,#vv-app .vv-haus-h{display:none}
-#vv-app .vv-wrap{padding-left:max(var(--gutter),env(safe-area-inset-left,0px));padding-right:max(var(--gutter),env(safe-area-inset-right,0px))}
+#vv-app .vv-wrap{max-width:calc(var(--w-max) + 2 * var(--w-gutter));padding-left:max(var(--w-gutter),env(safe-area-inset-left,0px));padding-right:max(var(--w-gutter),env(safe-area-inset-right,0px))}
+/* Forsíðumynd verslunarinnar: húsið í ljósaskiptunum (img/verslun-hetja.webp, hlutfall 3:1). Jaðrar myndarinnar eru í sama
+   dökkbláa lit og flöturinn, svo hún rennur saumlaust inn í hann; textinn stendur á heilum lit vinstra megin. */
+#vv-app .vv-hetja>.vv-m{width:min(100%,1560px)}
+#vv-app .vv-hetja::after{background:linear-gradient(90deg,var(--c-navy) 0,var(--c-navy) 40%,color-mix(in srgb,var(--c-navy) 80%,transparent) 50%,color-mix(in srgb,var(--c-navy) 40%,transparent) 59%,color-mix(in srgb,var(--c-navy) 12%,transparent) 66%,transparent 72%)}
 #vv-app .vv-haus{background:transparent;color:var(--ink)}
 #vv-app .vv-haus .vv-wrap{min-height:0;padding-block:20px 0}
-#vv-app .vv-leit{min-width:0;max-width:520px;box-shadow:inset 0 0 0 1px var(--line)}
-#vv-app .vv-adal{padding-top:26px;padding-bottom:0}
-/* product photos: the same air around every photo, so none touches the edge of its frame */
+#vv-app .vv-leit{min-width:0;max-width:520px;border-radius:var(--r-md);box-shadow:inset 0 0 0 1px var(--line),var(--shadow-card)}
+#vv-app .vv-adal{padding-top:26px;padding-bottom:20px}
+/* Takkar eftir Button-reglum V2 (Claude Design): einn appelsínugulur aðaltakki á svæði, aðrir hvítir með hárlínu,
+   10 px horn, 14 px/600. „Í körfu" á vörukorti er sami hvíti takkinn og „PANTA" í verðtöflu gáttarinnar. */
+#vv-app{--r-btn:var(--r-md)}
+#vv-app .vv-btn{min-height:40px;padding:8px 16px;border-radius:var(--r-md);font:600 14px/1.2 var(--font-sans)}
+#vv-app .vv-btn.sm{min-height:36px;padding:6px 14px;font-size:13.5px}
+#vv-app .vv-btn.navy,#vv-app .vv-btn.ghost{background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line),0 1px 2px rgba(2,25,60,.06)}
+#vv-app .vv-btn.navy:hover,#vv-app .vv-btn.ghost:hover{background:var(--row-hover);color:var(--ink)}
+#vv-app .vv-kort .vv-btn{min-height:40px;font-size:14px}
+/* aðaltakkar: verslunartakki án afbrigðis, „Setja í körfu" á vörusíðu og eini takkinn í tómri stöðu */
+#vv-app .vv-btn:not(.ghost):not(.ljos):not(.navy),#vv-app .vv-kaupa .vv-btn,#vv-app .vv-tomt .vv-btn{background:linear-gradient(180deg,var(--orange-hi),var(--orange) 55%,var(--orange-lo));color:var(--on-orange);box-shadow:var(--shadow-glow)}
+#vv-app .vv-btn:not(.ghost):not(.ljos):not(.navy):hover,#vv-app .vv-kaupa .vv-btn:hover,#vv-app .vv-tomt .vv-btn:hover{background:var(--orange-lo);color:var(--on-orange)}
+#vv-app .vv-kaupa .vv-btn,#vv-app .vv-samantekt .vv-btn{min-height:48px;padding:8px 24px;font-size:15px}
+/* vöruhlekkirnir þrír í dökkbláa spjaldinu („Hvaða tæki hentar?") eru val, ekki aðgerð: hvítir í stað þriggja appelsínugulra */
+#vv-app .vv-blad.navy .vv-flokkar .vv-btn{background:var(--surface);color:var(--ink);box-shadow:none}
+#vv-app .vv-blad.navy .vv-flokkar .vv-btn:hover{background:var(--row-hover);color:var(--ink)}
+/* á dökkbláum fleti (hetja og tilboðsborði) halda útlínutakkarnir hvítu útlínunni */
+#vv-app .vv-hetja .vv-btn.ghost,#vv-app .vv-cta .vv-btn.ghost{background:transparent;color:var(--on-navy);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.55)}
+#vv-app .vv-hetja .vv-btn.ghost:hover,#vv-app .vv-cta .vv-btn.ghost:hover{background:var(--surface);color:var(--navy-900);box-shadow:none}
+/* reitir og val: 10 px horn, hárlína og fókushringur kerfisins */
+#vv-app .vv-leit:focus-within{outline:3px solid rgba(255,103,2,.45);outline-offset:0;box-shadow:inset 0 0 0 1px var(--orange),var(--shadow-card)}
+#vv-app .vv-rada select{min-height:44px;border:1px solid var(--line);border-radius:var(--r-md);font:400 14px/1.4 var(--font-sans);color:var(--ink)}
+#vv-app .vv-val,#vv-app .vv-reitir input{border-radius:var(--r-md)}
+/* letur eftir stiga V2: hetjutitill 44/1.1 700 (30 px á síma), eyebrow 12 px 0.18em, kaflatitill 22 px 700 */
+#vv-app .vv-hetja-yfir{margin-bottom:10px;font:600 12px/1.2 var(--font-sans);letter-spacing:.18em;color:var(--on-navy)}
+#vv-app .vv-hetja h1{margin-bottom:12px;font:700 clamp(30px,2.2vw + 21px,44px)/1.1 var(--font-sans);letter-spacing:-.02em;text-shadow:0 2px 12px rgba(2,25,60,.4)}
+/* áherslutexti: orange-ink á ljósu (kerfið: appelsínugulur texti á ljósu er orange-ink), orange-hi á dökkbláu */
+#vv-app .vv-aherslu{color:var(--orange-ink)}
+#vv-app .vv-hetja .vv-aherslu,#vv-app .vv-blad.navy .vv-aherslu,#vv-app .vv-cta .vv-aherslu,#vv-app .vv-bordi .vv-aherslu,#vv-app .vv-samantekt .vv-aherslu{color:var(--orange-hi)}
+#vv-app .vv-hetja p{margin-bottom:22px;font-size:16px;color:var(--on-navy)}
+/* aðeins titill vörulistans („Allar vörur"). Kaflatitlar vörusíðna (.vv-yfir) halda sínu, líka sá hvíti í dökkbláa spjaldinu */
+#vv-app .vv-titilrod h2:not(.vv-yfir){font:700 22px/1.25 var(--font-sans);letter-spacing:-.01em;color:var(--ink)}
+#vv-app .vv-kort{box-shadow:var(--shadow-card)}
+/* vörumyndir: jafnt loft í kringum hverja mynd, svo engin þeirra snerti brún rammans */
 #vv-app .vv-kort-m .vv-m{padding:16px}
 #vv-app .vv-galleri .vv-m[data-m="vara.galleri"]{padding:28px}
 #vv-app .vv-traust .vv-ico{flex:none}
-#vv-app .vv-cta .vv-btn.ghost{display:none}      /* „Spyrja Loga": spjallið fylgir ekki þessari síðu */
+/* heiti félagsins í borðanum á vörusíðum er lengra en það sem borðinn var teiknaður fyrir */
 #vv-app .vv-bordi .vv-bordi-merki{flex:0 1 auto;min-width:0}
 #vv-app .vv-bordi .vv-bordi-merki b{font-size:22px;line-height:1.15}
-#vv-app .vv-samantekt{top:calc(var(--header-h) + var(--tabs-h) + env(safe-area-inset-top,0px) + 16px)}
+#vv-app .vv-kort:hover{box-shadow:var(--shadow-raised)}
+#vv-app .vv-flokk{border:0;background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+#vv-app .vv-flokk:hover{background:var(--row-hover)}
+#vv-app .vv-flokk[aria-pressed=true]{background:var(--navy-700);color:var(--on-navy);box-shadow:none}
+#vv-app .vv-cta .vv-btn.ghost{display:none}      /* „Spyrja Loga": spjallið fylgir ekki þessari síðu */
+#vv-app .vv-samantekt{top:calc(var(--topbar-h) + env(safe-area-inset-top,0px) + 16px)}
 #vv-app .vv-karfa-l,#vv-app .vv-samantekt{min-width:0}
 #vv-app .vv-reitir input{min-width:0;width:100%}
-/* emphasis: the darker orange for small text on light (the system's rule), the brand orange on navy */
-#vv-app .vv-aherslu{color:var(--orange-ink)}
-#vv-app .vv-hetja .vv-aherslu,#vv-app .vv-blad.navy .vv-aherslu,#vv-app .vv-cta .vv-aherslu,#vv-app .vv-bordi .vv-aherslu,#vv-app .vv-samantekt .vv-aherslu{color:var(--orange)}
-#vv-app .vv-merki.lagt,#vv-app .vv-112 b{background:var(--orange-ink)}
-/* appelsínugulur texti verslunarinnar á ljósa grunninum er 4,48:1 með tákni kerfisins (#d13300); þessi tónn nær 4,5:1 */
-#vv-app{--c-orange-ink:#cf3200}
+/* smátt letur á appelsínugulum merkjum er navy-950 (kerfið: hvítt á orange nær aðeins 2,9:1) */
+#vv-app .vv-merki.lagt,#vv-app .vv-112 b{color:var(--navy-950)}
 .vv-toast{font-family:var(--font-sans);bottom:calc(24px + env(safe-area-inset-bottom,0px))}
 
 /* responsive */
-@media (max-width:980px){
-  #vv-app .vv-karfa{grid-template-columns:minmax(0,1fr)}
-  #vv-app .vv-samantekt{position:static}
+@media (min-width:1101px){
+  .w-prose{columns:2;column-gap:28px}
+  .w-prose p{break-inside:avoid}
 }
-@media (max-width:940px){
-  #vv-app .vv-traust .vv-wrap{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 20px}
-  .bh .bh-trust .bh-wrap{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 20px}
+@media (max-width:1199px){
+  .w-products{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
-@media (max-width:900px){
-  .c-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .c-uttekt{grid-template-columns:1fr}
-  .c-contact{grid-template-columns:1fr}
+@media (max-width:1100px){
+  .w-intro,.w-uttekt{grid-column:1/-1}
+  .w-svc{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media (max-width:700px){
-  :root{--header-h:60px}
-  .bh .bh-header{position:static}
-  .bh .bh-header .bh-wrap{height:var(--header-h)}
-  .bh .bh-logo img{height:34px}
-  .bh a.bh-tele{display:none}
-  .bh .bh-header .bh-btn{margin-left:auto}
-  .bh .c-tabs{top:env(safe-area-inset-top,0px)}
-  .bh .bh-tab{padding:12px 16px}
-  .c-site [id]{scroll-margin-top:calc(var(--tabs-h) + env(safe-area-inset-top,0px) + 12px)}
-  #vv-app .vv-samantekt{top:auto}
+  .bh2 .w-topbar .w-contact-btn{display:none}
+  .w-only-m{display:flex!important}
+  .bh2 .w-topbar .bh2-topnav{-webkit-mask-image:linear-gradient(90deg,#000 86%,transparent);mask-image:linear-gradient(90deg,#000 86%,transparent);padding-right:24px}
+  .bh2 .w-hero::after{background:linear-gradient(90deg,var(--navy-950) 26%,rgba(2,25,60,.74) 60%,rgba(2,25,60,.3) 100%),linear-gradient(180deg,rgba(233,240,250,0) 62%,var(--page) 100%)}
+  .w-notice{flex-wrap:wrap}
+  .w-notice p{flex:1 1 200px}
+  .w-notice .bh2-btn{width:100%}
+  .w-foot__r{margin-left:0;flex-basis:100%}
+}
+@media (max-width:1240px){
+  /* mjórri skjáir: myndin heldur hlutfallinu 3:1 neðst í fletinum (húsið alltaf hægra megin við textann) og dofnar upp í bláa litinn */
+  #vv-app .vv-hetja>.vv-m{top:auto;height:auto!important;aspect-ratio:3/1;-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 26%);mask-image:linear-gradient(180deg,transparent 0,#000 26%)}
+  #vv-app .vv-hetja p,#vv-app .vv-hetja .vv-hnappar{max-width:47vw}
+}
+@media (max-width:980px){
+  #vv-app .vv-karfa{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:940px){
+  /* traustlínan: tvö og tvö saman í stað þess að síðasta atriðið detti eitt niður */
+  #vv-app .vv-traust .vv-wrap{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 20px}
 }
 @media (max-width:640px){
-  .c-site{font-size:16px}
-  .bh .bh-wrap,#vv-app .vv-wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-  .c-hero__img{width:100%;opacity:.35}
-  .c-checks{grid-template-columns:1fr}
-  .bh .c-cards .bh-card .img{--p:14px}
-  .bh .bh-card .body{padding:12px 14px 14px}
-  .bh .bh-card h3{font-size:15px}
-  .bh .bh-card .price{flex-wrap:wrap;gap:2px 8px}
-  .bh .bh-card .price b{font-size:17px}
-  .c-checks li:nth-last-child(2){border-bottom:1px solid var(--line)}
-  .bh .bh-trust .bh-wrap{font-size:14px;gap:10px 16px;padding-block:16px}
-  #vv-app .vv-flokkar[aria-label="Flokkar"]{margin-inline:-16px;padding-inline:16px;scroll-padding-inline:16px}
-  #vv-app .vv-leit{max-width:none}
+  /* sími: textinn efst á heilum lit, húsið sem borði neðst í fletinum */
+  #vv-app .vv-hetja{padding-bottom:calc(40vw - 36px)}
+  #vv-app .vv-hetja .vv-wrap{padding-block:32px 0}
+  #vv-app .vv-hetja>.vv-m{aspect-ratio:5/2;opacity:1;-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 36%);mask-image:linear-gradient(180deg,transparent 0,#000 36%)}
+  #vv-app .vv-hetja::after{display:none}
+  #vv-app .vv-hetja p,#vv-app .vv-hetja .vv-hnappar{max-width:none}
   #vv-app .vv-kort-m .vv-m{padding:12px}
   #vv-app .vv-galleri .vv-m[data-m="vara.galleri"]{padding:18px}
   #vv-app .vv-bordi .vv-bordi-merki b{font-size:20px}
+  #vv-app .vv-flokkar[aria-label="Flokkar"]{margin-inline:calc(-1 * var(--w-gutter));padding-inline:var(--w-gutter);scroll-padding-inline:var(--w-gutter)}
+  #vv-app .vv-leit{max-width:none}
+}
+@media (max-width:600px){
+  .w-svc{grid-template-columns:1fr}
+}
+@media (max-width:560px){
+  .w-products{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .bh2 .w-prop h3{font-size:13.5px}
+  .w-prop__foot b{font-size:15px}
 }
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}

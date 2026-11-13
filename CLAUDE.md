@@ -69,7 +69,7 @@ data from Ajour, Google Drive/Sheets/Gmail integration, and a tilbod
   Drive/Sheets/Gmail. See `netlify/functions/_google.js`.
 - **Static site**: `public/tilbod/` is the standalone tilbod generator.
 - **Nýja brunaholf.is (tillaga, `vefur/`, 13.11.2026):** kyrrstæður opinber vefur án smíðaskrefs, borinn fram á `/vefur/`.
-  `vefur/index.html` er V1 (aðalsíðan) og `vefur/v2.html` V2 til hliðar: forsíða, Brunaþéttingar og vefverslunin.
+  `vefur/index.html` er V2 (aðalsíðan) og `vefur/v1.html` V1 til hliðar: forsíða, Brunaþéttingar og vefverslunin.
   Skrár, slóðir, skipti yfir í V2 og það sem þarf áður en lénið er tengt: `vefur/README.md`.
 - **Brunaþéttingar — verkstaða-appið (`brunathettingar.html`, `/brunathettingar`, 03.09.2026):**
   sér-PWA fyrir starfsmenn á verkstað (Boss-þema, `manifest-brunathettingar.json`). Fjórir flipar:
