@@ -33,6 +33,20 @@
 .bh2 .w-hero h1{max-width:17em;font-size:clamp(30px,2.2vw + 21px,44px);text-wrap:balance}
 .bh2 .w-hero h1 em{font-style:normal;color:var(--orange-hi)}
 .bh2 .w-hero p.w-hero__sub{margin-top:12px;font-size:clamp(16px,1.2vw + 8px,20px);font-weight:500}
+/* Forsíðuhausinn: myndskeiðið af núverandi brunaholf.is (img/hetja-eldur.mp4) liggur yfir kyrrmynd af fyrsta ramma þess
+   (img/hetja-eldur.webp í --hero-img). Kyrrmyndin sést þar til myndskeiðið spilar, og ein þar sem hreyfing er afþökkuð eða það
+   næst ekki. Blái slikjan er þéttari en yfir ljósmynd, því eldurinn er bjartari. Takkinn stöðvar það og ræsir.
+   Skriftan er neðst í site/router.js. */
+.bh2 .w-hero--video{--hero-img:url(../img/hetja-eldur.webp)}
+.w-hero__video{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover;object-position:right top;pointer-events:none}
+.bh2 .w-hero--video::after{background:linear-gradient(90deg,rgba(2,25,60,.92) 0%,rgba(2,25,60,.8) 24%,rgba(2,25,60,.62) 46%,rgba(2,25,60,.44) 62%,rgba(2,25,60,.14) 82%,rgba(2,25,60,0) 100%),linear-gradient(180deg,rgba(233,240,250,0) 74%,var(--page) 100%)}
+/* fyrirsögnin heldur sig vinstra megin, þar sem slikjan er þéttust, svo eldurinn lendi ekki undir henni */
+@media (min-width:701px){.bh2 .w-hero--video h1{max-width:min(17em,62%)}}
+.w-hero__spila{position:absolute;top:14px;right:calc(max(0px,(100% - var(--w-max) - 2 * var(--w-gutter)) / 2) + max(var(--w-gutter),env(safe-area-inset-right,0px)));z-index:1;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:50%;background:rgba(2,25,60,.5);color:var(--on-navy);cursor:pointer;transition:background-color .16s var(--w-ease)}
+.w-hero__spila:hover{background:rgba(2,25,60,.78)}
+.w-hero__spila:focus-visible{outline:3px solid var(--orange-hi);outline-offset:2px}
+.w-hero__spila .bh2-ic{width:18px;height:18px}
+.w-hero__spila[data-stada="spilar"] .i-spila,.w-hero__spila[data-stada="stopp"] .i-stopp{display:none}
 
 /* content column */
 .bh2 .w-content{position:relative;z-index:1;margin:-36px auto 0;max-width:calc(var(--w-max) + 2 * var(--w-gutter));padding:0 max(var(--w-gutter),env(safe-area-inset-right,0px)) 32px max(var(--w-gutter),env(safe-area-inset-left,0px))}
@@ -63,6 +77,15 @@
 .w-prose p{margin:0;font-size:15px;line-height:1.7;color:var(--ink-2)}
 .w-prose p + p{margin-top:12px}
 .w-prose .lead{font-size:16px;color:var(--ink)}
+/* kynningin á forsíðunni: ein inngangssetning og fjórir stuttir bitar með tákni og fyrirsögn, í stað samfellds texta */
+.w-um__lead{margin:0;font-size:16px;line-height:1.65;color:var(--ink)}
+.w-um{list-style:none;margin:16px 0 0;padding:16px 0 0;border-top:1px solid var(--line-soft);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 24px}
+.w-um li{display:flex;align-items:flex-start;gap:12px;min-width:0}
+.w-um li>div{min-width:0}
+.w-um .tile{display:grid;place-items:center;flex:none;width:44px;height:44px;border-radius:var(--r-md);background:var(--orange-tint);color:var(--orange-ink)}
+.w-um .tile .bh2-ic{width:22px;height:22px}
+.bh2 .w-um h3{margin:0 0 4px;font:600 15px/1.35 var(--font-sans);letter-spacing:-.01em;color:var(--ink)}
+.w-um p{margin:0;font-size:14.5px;line-height:1.6;color:var(--ink-2)}
 .bh2 .w-uttekt{display:flex;flex-direction:column}
 .bh2 .w-uttekt>header{align-items:flex-start}
 .bh2 .w-uttekt>header .bh2-ic{margin-top:1px}
@@ -200,6 +223,9 @@
   .w-only-m{display:flex!important}
   .bh2 .w-topbar .bh2-topnav{-webkit-mask-image:linear-gradient(90deg,#000 86%,transparent);mask-image:linear-gradient(90deg,#000 86%,transparent);padding-right:24px}
   .bh2 .w-hero::after{background:linear-gradient(90deg,var(--navy-950) 26%,rgba(2,25,60,.74) 60%,rgba(2,25,60,.3) 100%),linear-gradient(180deg,rgba(233,240,250,0) 62%,var(--page) 100%)}
+  .bh2 .w-hero--video::after{background:linear-gradient(90deg,rgba(2,25,60,.86) 0%,rgba(2,25,60,.74) 70%,rgba(2,25,60,.5) 100%),linear-gradient(180deg,rgba(233,240,250,0) 74%,var(--page) 100%)}
+  .w-hero__video{object-position:60% top}
+  .bh2 .w-hero--video h1{max-width:11.5em}
   .w-notice{flex-wrap:wrap}
   .w-notice p{flex:1 1 200px}
   .w-notice .bh2-btn{width:100%}
@@ -232,6 +258,7 @@
 }
 @media (max-width:600px){
   .w-svc{grid-template-columns:1fr}
+  .w-um{grid-template-columns:1fr}
 }
 @media (max-width:560px){
   .w-products{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}

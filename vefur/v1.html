@@ -57,12 +57,21 @@
 
   <!-- Sýn 1: forsíðan -->
   <div id="heim">
-    <section class="c-hero" aria-labelledby="hero-title">
-      <div class="c-hero__img" aria-hidden="true"><img src="img/hetja-v3.webp" alt="" width="2000" height="386"></div>
+    <section class="c-hero c-hero--video" aria-labelledby="hero-title">
+      <div class="c-hero__img" aria-hidden="true">
+        <img src="img/hetja-eldur.webp" alt="" width="1280" height="720">
+        <video muted loop playsinline disablepictureinpicture preload="none" tabindex="-1" data-hetja-video>
+          <source src="img/hetja-eldur.mp4" type="video/mp4">
+        </video>
+      </div>
       <div class="bh-wrap">
         <span class="c-hero__yfir">Brunahólf ehf.</span>
         <h1 id="hero-title">Sérfræðingar í <em>brunaþéttingum</em> og eldvarnarlausnum</h1>
         <p>Gerum þetta rétt og vel</p>
+        <button class="c-hero__spila" type="button" data-hetja-takki hidden aria-label="Stöðva myndskeið">
+          <svg class="i-stopp" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg>
+          <svg class="i-spila" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+        </button>
       </div>
     </section>
     <div class="bh-trust"><div class="bh-wrap">
@@ -74,11 +83,27 @@
       <section class="c-sec" aria-labelledby="intro-title">
         <div class="bh-wrap">
           <h2 class="c-h2" id="intro-title">Brunahólf ehf.</h2>
-          <div class="c-panel c-prose c-cols">
-            <p class="lead">Brunahólf ehf. sérhæfir sig í reyk- og brunaþéttingum auk annarra eldvarnarlausna sem tryggja hámarksöryggi í byggingum. Við höfum víðtæka sérfræðiþekkingu og veitum þjónustu fyrir fjölbreytt verkefni, þar á meðal heilbrigðisstofnanir, stóriðju og hótel á höfuðborgarsvæðinu og víðar.</p>
-            <p>Einnig þjónustum við smærri fyrirtæki og heimili þar sem við leggjum sömuleiðis ríka áherslu á fagleg vinnubrögð, áreiðanleika og skýr samskipti.</p>
-            <p>Fyrirtækið er rekið af sérfræðingum með starfsleyfi frá HMS fyrir brunaþéttingar, brunaviðvörunarkerfi, slökkvikerfi og handslökkvitæki. Allir starfsmenn okkar hafa lokið viðeigandi námskeiðum og þjálfun og ávallt er unnið samkvæmt nýjustu reglum og alþjóðlegum stöðlum í brunavörnum.</p>
-            <p>Við leggjum einnig mikið upp úr umhverfisvænum lausnum og reynum eftir fremsta megni að notast við umhverfisvæn efni í brunaþéttingar og aðrar eldvarnarframkvæmdir, sem tryggir bæði öryggi og sjálfbærni.</p>
+          <!-- Textinn er orðréttur af forsíðu brunaholf.is, skipt í inngangssetningu og fjóra bita. Fyrirsagnir bitanna fjögurra eru nýjar. -->
+          <div class="c-panel c-um">
+            <p class="c-um__lead">Brunahólf ehf. sérhæfir sig í reyk- og brunaþéttingum auk annarra eldvarnarlausna sem tryggja hámarksöryggi í byggingum.</p>
+            <ul class="c-um__list">
+              <li>
+                <h3>Fjölbreytt verkefni</h3>
+                <p>Við höfum víðtæka sérfræðiþekkingu og veitum þjónustu fyrir fjölbreytt verkefni, þar á meðal heilbrigðisstofnanir, stóriðju og hótel á höfuðborgarsvæðinu og víðar.</p>
+              </li>
+              <li>
+                <h3>Fyrirtæki og heimili</h3>
+                <p>Einnig þjónustum við smærri fyrirtæki og heimili þar sem við leggjum sömuleiðis ríka áherslu á fagleg vinnubrögð, áreiðanleika og skýr samskipti.</p>
+              </li>
+              <li>
+                <h3>Starfsleyfi og þjálfun</h3>
+                <p>Fyrirtækið er rekið af sérfræðingum með starfsleyfi frá HMS fyrir brunaþéttingar, brunaviðvörunarkerfi, slökkvikerfi og handslökkvitæki. Allir starfsmenn okkar hafa lokið viðeigandi námskeiðum og þjálfun og ávallt er unnið samkvæmt nýjustu reglum og alþjóðlegum stöðlum í brunavörnum.</p>
+              </li>
+              <li>
+                <h3>Umhverfisvænar lausnir</h3>
+                <p>Við leggjum einnig mikið upp úr umhverfisvænum lausnum og reynum eftir fremsta megni að notast við umhverfisvæn efni í brunaþéttingar og aðrar eldvarnarframkvæmdir, sem tryggir bæði öryggi og sjálfbærni.</p>
+              </li>
+            </ul>
           </div>
         </div>
       </section>

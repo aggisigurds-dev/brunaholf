@@ -30,10 +30,10 @@ Vefurinn er smíðaður úr tveimur Claude-artifactum, tillögunum V2 og V1, sem
 | `index.html`, `v1.html` | Texti og uppbygging. Neðst í hvorri eru stillingar leiðarskriftunnar (`window.BH_SITE`). |
 | `site/sida.css`, `ds/` | Útlit V2 og hönnunarkerfi þess. |
 | `v1-skrar/` | Það sem V1 á ein: hönnunarkerfið (`ds/`), stílblaðið (`site/sida.css`) og vörugögnin (`verslun/gogn.js`). |
-| `site/router.js` | Sýnirnar þrjár og slóðirnar. Sameiginleg báðum síðum. |
+| `site/router.js` | Sýnirnar þrjár og slóðirnar, og neðst skriftan sem stýrir myndskeiðinu í forsíðuhausnum. Sameiginleg báðum síðum. |
 | `verslun/verslun.js`, `verslun/verslun.css` | Verslunin sjálf, tekin úr `vefverslun/` í kóðasafni Slökkvitækja-appsins og aðlöguð á sjö stöðum sem taldir eru upp efst í skránni. Sameiginleg báðum síðum. |
 | `verslun/gogn.js` | Vörur, verð, birgðir og stillingar verslunarinnar fyrir V2, þar á meðal litir hennar í `efni.thema`. |
-| `img/`, `vv/v/`, `myndir/` | Merkið og forsíðumyndir, vörumyndir (heitið er númer vörunnar) og myndir á vörusíðum. Sameiginlegar. |
+| `img/`, `vv/v/`, `myndir/` | Merkið, forsíðumyndir og myndskeiðið í forsíðuhausnum, vörumyndir (heitið er númer vörunnar) og myndir á vörusíðum. Sameiginlegar. |
 
 ## Slóðir
 
@@ -49,6 +49,19 @@ Síðan er ein skrá með þremur sýnum sem skipt er á milli með #-slóðum.
 | allt annað | Forsíðan |
 
 Leiðarskriftan reiðir sig á þessi stök í síðunum: `#heim`, `#brunasyn`, `#verslunarsyn`, `#vv-app`, `#kynning`, `#allar`, `#allar-n`, `.w-cart`, `#w-cart-n`, `#hafa-samband`, og valmyndarhlekkina með `data-spy`.
+
+## Myndskeiðið í forsíðuhausnum
+
+Forsíðuhausinn í báðum útgáfum sýnir myndskeiðið sem er í forsíðuhaus núverandi brunaholf.is: `img/hetja-eldur.mp4`. Undir því liggur kyrrmynd af fyrsta ramma þess, `img/hetja-eldur.webp`.
+
+- Skráin er unnin upp úr frumskránni (29,5 MB, HEVC í .mov, sem spilast ekki í öllum vöfrum): 1280×720, H.264, 26 sekúndur, 2,6 MB. Hún er spegluð, svo loginn er hægra megin og textinn vinstra megin, og upphaf og endir eru felld saman svo lykkjan hökti ekki.
+- Kyrrmyndin sést þar til myndskeiðið spilar. Það er sótt eftir að síðan er hlaðin og aðeins þegar forsíðan er opin.
+- Það fer ekki sjálft í gang þar sem hreyfing er afþökkuð í tækinu (`prefers-reduced-motion`) eða gagnasparnaður er á, og það stöðvast á meðan hausinn sést ekki.
+- Takkinn í hausnum stöðvar það og ræsir. Án skriftu stendur kyrrmyndin ein.
+- Skipta um myndskeið: setja nýjar skrár undir sömu heitum, kyrrmyndina sem fyrsta ramma þess. Bláa slikjan yfir því (`.w-hero--video::after` í `site/sida.css`, `.c-hero::after` í `v1-skrar/site/sida.css`) er stillt eftir þessu myndskeiði, svo litamun textans þarf að mæla aftur.
+- Taka það út: eyða `<video>` og takkanum úr hausnum í báðum síðum. Þá stendur kyrrmyndin eftir.
+
+Myndskeiðið er aðkeypt lagerefni af núverandi vef. Leyfið fyrir því þarf að gilda áfram á nýja vefnum.
 
 ## Vörur og verslun
 
@@ -66,7 +79,7 @@ Verslunin er í prufuham: „Halda áfram í greiðslu“ sýnir skilaboð og se
 
 ## Áður en lénið er tengt
 
-1. Stofna sérstakan Netlify-vef fyrir þessa möppu: Base directory `vefur`, engin build-skipun, Publish directory `vefur`. Rót þessa kóðasafns er stjórnstöðin og á ekki að svara á léninu. Vefurinn þarf sömu `ignore`-reglu og er í `netlify.toml` í rótinni, annars kostar hver ýting birtingu.
+1. Stofna sérstakan Netlify-vef fyrir þessa möppu: Base directory `vefur`, engin build-skipun, Publish directory `vefur`. Rót þessa kóðasafns er stjórnstöðin og á ekki að svara á léninu. Vefurinn þarf sömu `ignore`-reglu og er í `netlify.toml` í rótinni, annars kostar hver ýting birtingu. Netlify-vefur stjórnstöðvarinnar bætir auk þess skriftu hennar við hverja HTML-síðu sem hann ber fram, líka þessar; sérstakur vefur gerir það ekki.
 2. Taka línuna `<meta name="robots" content="noindex">` úr báðum síðunum.
 3. Við DNS-breytinguna færist aðeins vefvísunin. Póstfærslur lénsins (MX) verða að standa óhreyfðar, annars hættir pósturinn að berast.
 4. Ákveða hvort verslunin fer í loftið með ótengda greiðslu og afrit af vöruskránni, eða bíður.
@@ -78,3 +91,5 @@ Skrárnar eins og þær standa hér voru keyrðar í vafra (Chromium):
 - Sex síður (forsíða, Brunaþéttingar, vörulisti, tvær vörusíður, karfa) í sjö breiddum frá 320 til 1440 px á hvorri útgáfu: engin lárétt skrun, engar brotnar myndir, engir dauðir hlekkir, engar skriftuvillur.
 - Ferð kaupanda: valmynd, setja í körfu, flokkur, leit, röðun, vörusíða, karfa, greiðsluhnappurinn, beinar slóðir, til baka í vafra, valmynd og karfa á síma.
 - Litamunur texta og bakgrunns nær 4,5:1 alls staðar nema á hvítum texta á appelsínugulum hnöppum.
+- Myndskeiðið í forsíðuhausnum: spilar, takkinn stöðvar það og ræsir (líka með lyklaborði), það stöðvast þegar farið er af forsíðunni eða skrunað frá hausnum, er ekki sótt þegar hreyfing er afþökkuð eða síðan er opnuð beint á versluninni.
+- Textinn yfir myndskeiðinu, mældur á móti því sem er á bak við hann í 27 römmum (einn á sekúndu) í þrettán breiddum frá 360 til 1920 px: stór fyrirsögn nær 3:1 og annar texti 4,5:1 í hverjum ramma.
