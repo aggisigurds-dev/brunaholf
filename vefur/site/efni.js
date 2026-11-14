@@ -344,9 +344,10 @@
   }
   if (!API) return;                    /* síðan stendur ein (t.d. tillaga í Claude): ekkert að sækja */
   if (geymt && typeof geymt === 'object' && geymt.efni) beita(geymt.efni, geymt.nr); else bida();
-  /* Svar þjónsins má vera allt að hálfrar mínútu gamalt (geymt á jaðrinum). Hafi þessi vafri sjálfur birt nýrri útgáfu rétt áðan
-     er eldra númer því ekki tekið fram yfir hana. */
-  var nybirt = !!geymt && typeof geymt.kl === 'number' && Date.now() - geymt.kl < 120000;
+  /* Svar þjónsins er geymt á jaðrinum og getur verið nokkurra mínútna gamalt rétt eftir birtingu. Útgáfunúmerið hækkar aðeins,
+     svo lægra númer en það sem þessi vafri lærði af á síðustu tíu mínútum er gamalt svar og er ekki tekið fram yfir nýja efnið.
+     Eldra afrit víkur (taflan gæti hafa verið endurstillt). */
+  var nybirt = !!geymt && typeof geymt.kl === 'number' && Date.now() - geymt.kl < 600000;
   fetch(API + '?utgafa=' + encodeURIComponent(U), { credentials: 'omit' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (r) {
     if (r && r.efni && typeof r.efni === 'object' && r.nr !== nr && !(nybirt && typeof nr === 'number' && r.nr < nr)) {
       beita(r.efni, r.nr);
