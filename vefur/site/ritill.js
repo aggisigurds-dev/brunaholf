@@ -848,7 +848,7 @@
     $('form', g).addEventListener('submit', function (e) {
       e.preventDefault();
       var villa = $('[data-r="villa"]', g), n = $('#brr-nn', g).value.trim().toUpperCase(), lyk = $('#brr-lykilord', g).value;
-      function segja(s) { villa.hidden = false; villa.textContent = s; takki.disabled = false; }
+      function segja(s) { villa.hidden = false; villa.textContent = s; takki.disabled = false; $('#brr-lykilord', g).value = ''; }      /* lykilorðið stendur ekki eftir í reitnum */
       if (!n || !lyk) return segja('Notandanafn og lykilorð vantar.');
       takki.disabled = true;
       innskraning({ action: 'login', nn: n, password: lyk }).then(function (r) {
@@ -888,7 +888,9 @@
     stada(); teiknaSpjald();
   }
   function utskra() {      /* sama innskráning og í stjórnstöðinni: útskráning hér gildir líka þar */
-    innskraning({ action: 'logout' }).catch(function () {}).then(function () { utskradur('utskrad'); });
+    innskraning({ action: 'logout' }).then(function (r) {
+      if (r.status === 200) utskradur('utskrad'); else skilabod('Útskráning tókst ekki. Reyndu aftur.');      /* cookie-ið stendur þá enn: ekki látast vera útskráð */
+    }).catch(function () { skilabod('Útskráning tókst ekki: ekkert samband við þjóninn.'); });
   }
   function innskrad(j) {
     R.hamur = 'innskrad'; R.villa = '';

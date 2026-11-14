@@ -67,8 +67,7 @@ function kokur(event) {
   String(hra).split(';').forEach((b) => {
     const i = b.indexOf('=');
     if (i < 1) return;
-    const k = b.slice(0, i).trim();
-    if (k in ut) return;
+    const k = b.slice(0, i).trim();      // komi sama heiti tvisvar gildir það síðara, eins og í hub-adgangar
     try { ut[k] = decodeURIComponent(b.slice(i + 1).trim()); } catch (e) { ut[k] = ''; }
   });
   return ut;
@@ -92,8 +91,8 @@ async function notandi(event) {
   try { p = JSON.parse(Buffer.from(gogn, 'base64url').toString('utf8')); } catch (e) { return { villa: 401 }; }
   if (!p || typeof p.exp !== 'number' || p.exp < Math.floor(Date.now() / 1000)) return { villa: 401 };
   if (String(p.v || '') !== String(st.pw_changed_at || '')) return { villa: 401 };      // lykilorði skipt: eldri innskráning ógild
-  const uid = Number(p.uid);
-  if (!Number.isInteger(uid) || uid < 1) return { villa: 401 };
+  const uid = p.uid;      // tala, eins og innskráningin skrifar hana; annað (strengur, true) er ekki tekið gilt
+  if (typeof uid !== 'number' || !Number.isInteger(uid) || uid < 1) return { villa: 401 };
   const u = await sb(`hub_adgangar?id=eq.${uid}&select=id,nafn,notandanafn,rola,virkur`);
   if (!u.ok) return { villa: 502 };
   const n = (await u.json())[0];
