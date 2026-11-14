@@ -567,3 +567,16 @@ Færðir punktar · Tillögur · Símaviðmót · Stöðuskýrsla.
   röð fjarri réttum stað, hvert með tvö hök (seinna hakið kemur af `hinnKlar`), sem leit út eins og fimm kláraðar lokanir. Einnig hafnað: að láta
   lagfæringu sleppa ✕ og verða sjálfkrafa græn; þá hefði talningin ekki passað við merkin.
 - **Eftir stendur:** „×n" af sömu stærð án lagfæringa segir ekki hvort verkin eru endar sömu lokunar eða tveggja. Pikk á merkið sýnir númerin („Í sama merki").
+
+## Merki hinna tegundanna: lýsing Agnars (14.11.2026) — ÓÚTFÆRT í kortinu
+- **Mock-up:** þrjár tillögur hönnunarlotu (A fjölskylda plússins, B hluturinn sjálfur, C klasar) í `kjarni/apps/slokkvitaeki/docs/apex-merki-tillogur/`
+  og í Claude Design: https://claude.ai/artifact/5MMdaWA8kQ14WKuFVJzQhn (Brunahólf V2; arkir Main, Simi, TillagaA–D).
+- **Orð Agnars eftir að hafa séð þær:** „Milliloft. Já fínt kassi með V-inu innan í þegar tengt … rafmagn tígull með rafmagnseldingu … sprinkler eru svo oft
+  bara stakir svo eitthvað annað … tveir hringir saman sniðugt fyrir vatn og hita sem er 80% alltaf í pörum. Þá kannski eins og 2 × 8-ur á hlið til að
+  túlka þessi 4 rör meðfram endunum báðum megin í sitthvorum svipuðum litum."
+- **Tillaga D (mín útfærsla á þessu, örk TillagaD):** milliloft = kassi, hakið fer INN í hann þegar klárað (ekkert hak utan við) · rafmagn = tígull
+  með eldingu · úðakerfi = stakur hringur með punkti · vatn og hiti = tveir hringir saman (átta á hlið) per par; fjögur rör = tvær áttur hlið við hlið
+  eftir veggnum, hvor í sínum tóni af sama lit · plaströr = átta með punkti í hvorum hring · loft raufar = tvö samsíða strik · plús óbreyttur.
+- **Afleiðing fyrir útfærslu:** rör skiptast þá eftir KERFI (úði / vatn og hiti), ekki efni (stál / plast). Kerfið er aðeins þekkt þar sem `skr_kerfi`
+  eða myndgreining (`visbendingar.json`) segir til; óþekkt kerfi þarf hlutlaust merki. Óstaðfest hjá Agnari: hvar áttirnar tvær eiga að standa
+  („meðfram endunum báðum megin") og hvaða litatónar.
