@@ -37,7 +37,7 @@
 /* hero: a photo on the right 60% over navy, with the system's gradient */
 .c-hero{position:relative;background:var(--navy);color:var(--white);overflow:hidden}
 .c-hero__img{position:absolute;right:0;top:0;bottom:0;width:60%}
-.c-hero__img img{width:100%;height:100%;object-fit:cover;object-position:right center}
+.c-hero__img img{width:100%;height:100%;object-fit:cover;object-position:var(--hetja-pos,right center)}
 .c-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--navy) 0%,var(--navy) 40%,color-mix(in srgb,var(--navy) 86%,transparent) 58%,color-mix(in srgb,var(--navy) 20%,transparent) 100%);pointer-events:none}
 .c-hero .bh-wrap{position:relative;z-index:1;padding-block:clamp(48px,7vw,88px)}
 .c-hero__yfir{display:block;margin-bottom:16px;font:600 13px/1.2 var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--on-navy-muted)}
@@ -50,7 +50,10 @@
    Það er í tveimur sniðum í fullri upplausn: img/hetja-eldur-hevc.mp4 fyrir tæki sem spila HEVC, annars img/hetja-eldur.mp4 (H.264).
    Kyrrmyndin sést þar til myndskeiðið spilar, og ein þar sem hreyfing er afþökkuð eða það næst ekki.
    Takkinn stöðvar það og ræsir. Skriftan er neðst í site/router.js. */
-.c-hero--video .c-hero__img img{object-position:center}
+.c-hero--video .c-hero__img img{object-position:var(--hetja-pos,center)}
+/* Ljós mynd í hausnum (data-hetja-ljos, teikningin af Loga; bannerasafnið er neðst í site/router.js): slikjan nær lengra til hægri,
+   svo appelsínugula orðið í fyrirsögninni sé læsilegt á ljósum pappír. Á síma er myndin dauf undir öllum textanum. */
+.c-hero[data-hetja-ljos]::after{background:linear-gradient(90deg,var(--navy) 0%,var(--navy) 44%,color-mix(in srgb,var(--navy) 90%,transparent) 60%,color-mix(in srgb,var(--navy) 20%,transparent) 100%)}
 .c-hero__img video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;pointer-events:none}
 .c-hero__spila{position:absolute;right:max(var(--gutter),env(safe-area-inset-right,0px));bottom:16px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,.16);color:var(--white);cursor:pointer;transition:background-color .16s var(--ease)}
 .c-hero__spila:hover{background:rgba(255,255,255,.28)}
@@ -198,6 +201,7 @@
   .c-site{font-size:16px}
   .bh .bh-wrap,#vv-app .vv-wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
   .c-hero__img{width:100%;opacity:.35}
+  .c-hero[data-hetja-ljos] .c-hero__img{opacity:.18}
   .c-checks{grid-template-columns:1fr}
   .bh .c-cards .bh-card .img{--p:14px}
   .bh .bh-card .body{padding:12px 14px 14px}

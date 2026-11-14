@@ -88,9 +88,9 @@
    <!-- Sýn 1: forsíðan -->
    <div id="heim">
 
-    <section class="hero hero--video" aria-labelledby="hero-title">
+    <section class="hero hero--video" aria-labelledby="hero-title" data-hetja="eldur">
       <div class="hero__bak" aria-hidden="true">
-        <img src="img/hetja-eldur.webp" alt="" width="1920" height="1080">
+        <img src="img/hetja-eldur.webp" alt="" width="1920" height="1080" data-hetja-mynd>
         <video muted loop playsinline disablepictureinpicture preload="none" tabindex="-1" data-hetja-video>
           <source src="img/hetja-eldur-hevc.mp4" type="video/mp4; codecs=hvc1.1.6.L120.90">
           <source src="img/hetja-eldur.mp4" type="video/mp4">
@@ -307,6 +307,7 @@ window.BH_SITE = {
   }
 };
 </script>
+<script>window.BH_UTGAFUR=[["V1","v1.html"],["V2","index.html"],["V3","v3.html"]];</script>
 <script src="site/router.js"></script>
 <script src="verslun/verslun.js"></script>
 <script>
