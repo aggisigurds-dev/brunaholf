@@ -531,3 +531,9 @@ Færðir punktar · Tillögur · Símaviðmót · Stöðuskýrsla.
 - **Ekki opnað (viljandi, segja Agnari ef hann rekst á það):** heiti verks og yfirlitsblaða (sex tól finna verkið á heitinu „NLSH 5-6. hæð · gatakort"
   og blöðin á „Brunayfirlit <hæð>"; nafnbreyting myndi brjóta þau), starfsmaður og dagsetning á skráningu, heiti flokka (síðan Categories/schema).
 - **Eftir flokkabreytingar:** `-para.cjs --haed … --write`; táknið á kortinu uppfærist við næstu hleðslu.
+
+## Stærð og litir tákna í Stillingum (14.11.2026) — `skr_verk.stillingar.taknStaerd`, `.litir`
+- **Orð Agnars:** „Stækka minnka icons slider, táknin kannski, litir á táknum". Og um „of stórt": „Meinti þá iconin. En þú síðan breyttir þeim. Svo allt í lagi."
+- **Hvað:** sleðinn „Stærð tákna" (50–250 %) og litareitur við hvert tákn sem er á kortinu, með „Upprunalegir litir". Vistast á verkinu, eins á öllum
+  tækjum; breytir aðeins útliti. Kóði: `tk` (margfaldari á `zs` og `merkisR`) og `LITIR` (lykill = heiti tákns, t.d. „Loft 125-160") í KortClient.
+- **Prófað** með skrif gripin: sleði 100 → 200 %, litur breyttur og endurstilltur; sendingarnar réttar. Stöðuskýrslan notar sína eigin liti (óbreytt).
