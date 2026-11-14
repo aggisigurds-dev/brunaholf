@@ -3,18 +3,18 @@
 // GET  /api/vefur-efni?utgafa=v2            → { nr, efni }            birt efni; opið öllum, þetta er það sem gestir sjá
 // GET  /api/vefur-efni?utgafa=v2&drog=1     → { efni, grunnur, … }    drögin                     (innskráning)
 // GET  /api/vefur-efni?utgafa=v2&saga=1     → { saga: [{id, nr, af, kl}] }                        (innskráning)
-// POST { adgerd: 'innskra', lykilord, nafn }            → { tok, rennur, nafn }
 // POST { adgerd: 'vista', utgafa, efni, grunnur }       drög vistuð; 409 ef annað tæki vistaði á undan
 // POST { adgerd: 'birta', utgafa }                      drögin verða birta útgáfan og fara í söguna
 // POST { adgerd: 'henda', utgafa }                      drögin verða aftur eins og birta útgáfan
 // POST { adgerd: 'endurheimta', utgafa, id }            útgáfa úr sögunni sett í drögin
 // POST { adgerd: 'mynd', utgafa, gogn }                 mynd (data-URL: jpeg, png eða webp, mest 6 MB) → { url }
 //
-// AÐGANGUR. Lykilorð ritilsins er umhverfisbreytan VEFUR_RITILL_LYKILORD. Sé hún EKKI sett, eða styttri en 16 stafir, er
-// öllu lokað nema lestri á birtu efni (503): ekkert er vistað, engu hlaðið upp og drög ekki sýnd. Lágmarkslengdin er til
-// þess að ekki sé hægt að giska á lykilorðið: fallið getur ekki talið rangar tilraunir. Innskráning skilar undirrituðum
-// miða sem gildir í 30 daga og er sendur í hausnum x-ritill-tok. Undirskriftin notar líka þjónustulykil gagnagrunnsins,
-// svo miði dugar ekki til að giska á lykilorðið. Nýtt lykilorð ógildir alla miða.
+// AÐGANGUR. Innskráningin er notendaskrá starfsmanna (hub_adgangar), sú sama og í stjórnstöðinni og Slökkvitæki-appinu.
+// /api/hub-adgangar skráir inn (notandanafn + lykilorð, telur rangar tilraunir og læsir) og setur cookie-ið hub_user.
+// Þetta fall les sama cookie og sannreynir það á sama hátt og þar: undirskrift með session_secret, gildistími,
+// lykilorðaskipti ógilda það, notandinn þarf að vera virkur. Aðeins notendur með hlutverkið Admin mega breyta vefnum.
+// Án gilds cookie er öllu lokað nema lestri á birtu efni (401); notandi án heimildar fær 403.
+// Skrif þurfa auk þess að koma frá síðunni sjálfri: hausinn x-ritill, og Origin (sé hann sendur) af listanum UPPRUNI.
 // Texti er hreinsaður hér áður en hann er vistaður (hreinsaHtml) og aftur í vafranum áður en hann fer á síðuna
 // (vefur/site/efni.js). Listarnir yfir leyfð merki, stíla og letur þurfa að vera þeir sömu á báðum stöðum.
 // Töflurnar vefur_efni og vefur_efni_saga (sql/2026-11-14_vefur_efni.sql) eru með RLS og engar reglur: aðeins þetta fall
@@ -24,13 +24,12 @@ const crypto = require('crypto');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const LYKILORD = process.env.VEFUR_RITILL_LYKILORD || '';
-const VIRKT = LYKILORD.length >= 16;    // styttra lykilorð telst ósett
 const UTGAFUR = ['v1', 'v2', 'v3'];
 const BUCKET = 'vefverslun';
 const MAX_EFNI = 400 * 1024;            // drög sem JSON
 const MAX_MYND = 4 * 1024 * 1024;       // ein mynd (beiðni til Netlify-falls rúmar ekki meira en um 4,4 MB af mynd)
-const GILDIR = 30 * 24 * 3600 * 1000;   // miði
+const COOKIE = 'hub_user';              // sett af /api/hub-adgangar við innskráningu
+const RITSTJORAR = ['Admin'];           // hlutverk í hub_adgangar sem mega breyta vefnum
 // Síður sem mega kalla á fallið úr vafra. Sama lén þarf ekki að vera hér; lénið bætist við þegar vefurinn flytur.
 const UPPRUNI = ['https://brunaholf.netlify.app', 'https://www.brunaholf.is', 'https://brunaholf.is'];
 
@@ -39,7 +38,7 @@ function hausar(event, auka) {
   const h = {
     'Content-Type': 'application/json; charset=utf-8',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, x-ritill-tok',
+    'Access-Control-Allow-Headers': 'Content-Type, x-ritill',
     'Referrer-Policy': 'no-referrer',
     Vary: 'Origin',
   };
@@ -61,33 +60,51 @@ async function rod(utgafa, select) {
   return { rod: rows[0] || null };
 }
 
-// ---- miði: <gögn>.<undirskrift>, lykillinn leiddur af lykilorðinu ----
-const lykill = () => crypto.createHmac('sha256', SUPABASE_KEY).update('vefur-ritill-v1:' + LYKILORD).digest();
-const b64 = (s) => Buffer.from(s).toString('base64url');
-function gefaMida(nafn) {
-  const gogn = b64(JSON.stringify({ n: nafn, e: Date.now() + GILDIR }));
-  return gogn + '.' + crypto.createHmac('sha256', lykill()).update(gogn).digest('base64url');
+// ---- innskráning: cookie-ið hub_user úr /api/hub-adgangar, sannreynt eins og þar (sessionUser í hub-adgangar.js) ----
+function kokur(event) {
+  const hra = (event.headers && (event.headers.cookie || event.headers.Cookie)) || '';
+  const ut = {};
+  String(hra).split(';').forEach((b) => {
+    const i = b.indexOf('=');
+    if (i < 1) return;
+    const k = b.slice(0, i).trim();      // komi sama heiti tvisvar gildir það síðara, eins og í hub-adgangar
+    try { ut[k] = decodeURIComponent(b.slice(i + 1).trim()); } catch (e) { ut[k] = ''; }
+  });
+  return ut;
 }
-function lesaMida(tok) {
-  if (!VIRKT || typeof tok !== 'string' || tok.length > 600) return null;
+// Skilar { nafn, nn } fyrir innskráðan ritstjóra, annars { villa: 401 | 403 | 502 | 503 }.
+async function notandi(event) {
+  const tok = kokur(event)[COOKIE];
+  if (typeof tok !== 'string' || tok.length < 20 || tok.length > 2000) return { villa: 401 };
   const i = tok.indexOf('.');
-  if (i < 1) return null;
-  const gogn = tok.slice(0, i), undir = Buffer.from(tok.slice(i + 1));
-  const rett = Buffer.from(crypto.createHmac('sha256', lykill()).update(gogn).digest('base64url'));
-  if (undir.length !== rett.length || !crypto.timingSafeEqual(undir, rett)) return null;
-  try {
-    const o = JSON.parse(Buffer.from(gogn, 'base64url').toString('utf8'));
-    return o && typeof o.e === 'number' && o.e > Date.now() ? { nafn: String(o.n || '').slice(0, 40) } : null;
-  } catch (e) { return null; }
+  if (i < 1) return { villa: 401 };
+  // röðin kemur aðeins sé lykilorð sett (uppsetningu lokið); lykilorðs-hashið sjálft er ekki sótt hingað
+  const r = await sb('hub_adgangar_stilling?id=eq.1&pw_hash=not.is.null&select=session_secret,pw_changed_at');
+  if (!r.ok) return { villa: 502 };
+  const st = (await r.json())[0];
+  if (!st || !st.session_secret) return { villa: 503 };      // innskráning starfsmanna er ekki sett upp
+  const gogn = tok.slice(0, i);
+  const rett = crypto.createHmac('sha256', st.session_secret).update(gogn).digest();
+  const gefid = Buffer.from(tok.slice(i + 1), 'base64url');
+  if (gefid.length !== rett.length || !crypto.timingSafeEqual(gefid, rett)) return { villa: 401 };
+  let p;
+  try { p = JSON.parse(Buffer.from(gogn, 'base64url').toString('utf8')); } catch (e) { return { villa: 401 }; }
+  if (!p || typeof p.exp !== 'number' || p.exp < Math.floor(Date.now() / 1000)) return { villa: 401 };
+  if (String(p.v || '') !== String(st.pw_changed_at || '')) return { villa: 401 };      // lykilorði skipt: eldri innskráning ógild
+  const uid = p.uid;      // tala, eins og innskráningin skrifar hana; annað (strengur, true) er ekki tekið gilt
+  if (typeof uid !== 'number' || !Number.isInteger(uid) || uid < 1) return { villa: 401 };
+  const u = await sb(`hub_adgangar?id=eq.${uid}&select=id,nafn,notandanafn,rola,virkur`);
+  if (!u.ok) return { villa: 502 };
+  const n = (await u.json())[0];
+  if (!n || !n.virkur) return { villa: 401 };
+  if (!RITSTJORAR.includes(n.rola)) return { villa: 403 };
+  const nn = String(n.notandanafn || '').slice(0, 12);
+  return { nafn: (String(n.nafn || '').trim().split(/\s+/)[0] || nn || 'Ónefndur').slice(0, 40), nn };
 }
-function samaLykilord(reynt) {
-  const a = crypto.createHash('sha256').update(String(reynt || '')).digest();
-  const b = crypto.createHash('sha256').update(LYKILORD).digest();
-  return crypto.timingSafeEqual(a, b);
-}
-const bida = (ms) => new Promise((r) => setTimeout(r, ms));
-
-const ovirkt = (event) => svar(event, 503, { villa: 'ovirkt', astaeda: LYKILORD ? 'stutt' : 'osett' });
+const hafnad = (event, hver) => (hver.villa === 403 ? svar(event, 403, { villa: 'heimild' })
+  : hver.villa === 503 ? svar(event, 503, { villa: 'ovirkt' })
+    : hver.villa === 502 ? svar(event, 502, { villa: 'Innskráning náðist ekki' })
+      : svar(event, 401, { villa: 'innskraning' }));
 
 // ---- hreinsun: sömu reglur og í vefur/site/efni.js. Úttakið er sett saman úr leyfðum bitum eingöngu ----
 const MERKI = new Set(['b', 'strong', 'i', 'em', 'u', 's', 'br', 'span', 'small', 'a', 'sup', 'sub']);
@@ -243,7 +260,6 @@ exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: hausar(event), body: '' };
   if (!SUPABASE_URL || !SUPABASE_KEY) return svar(event, 500, { villa: 'Tenging við gagnagrunn vantar' });
   const q = event.queryStringParameters || {};
-  const tok = (event.headers && (event.headers['x-ritill-tok'] || event.headers['X-Ritill-Tok'])) || '';
 
   try {
     if (event.httpMethod === 'GET') {
@@ -262,9 +278,8 @@ exports.handler = async (event) => {
           'Access-Control-Allow-Origin': '*',
         });
       }
-      if (!VIRKT) return ovirkt(event);
-      const hver = lesaMida(tok);
-      if (!hver) return svar(event, 401, { villa: 'innskraning' });
+      const hver = await notandi(event);
+      if (hver.villa) return hafnad(event, hver);
       if (q.saga) {
         const r = await sb(`vefur_efni_saga?utgafa=eq.${utgafa}&select=id,nr,af,created_at&order=nr.desc&limit=20`);
         if (!r.ok) return svar(event, 502, { villa: 'Sagan náðist ekki' });
@@ -274,23 +289,19 @@ exports.handler = async (event) => {
       if (!r.rod) return svar(event, r.villa ? 502 : 404, { villa: 'Geymslan er ekki tilbúin' });
       const x = r.rod;
       return svar(event, 200, { efni: x.drog || {}, grunnur: x.drog_uppfaert, drog_af: x.drog_af, birt_nr: x.birt_nr, birt_kl: x.birt_kl, birt_af: x.birt_af,
-        obirt: JSON.stringify(x.drog || {}) !== JSON.stringify(x.birt || {}), nafn: hver.nafn });
+        obirt: JSON.stringify(x.drog || {}) !== JSON.stringify(x.birt || {}), nafn: hver.nafn, nn: hver.nn });
     }
 
     if (event.httpMethod !== 'POST') return svar(event, 405, { villa: 'Aðeins GET og POST' });
     if ((event.body || '').length > 9 * 1024 * 1024) return svar(event, 413, { villa: 'Of stórt' });
     let b;
     try { b = JSON.parse(event.isBase64Encoded ? Buffer.from(event.body, 'base64').toString('utf8') : event.body || '{}'); } catch (e) { return svar(event, 400, { villa: 'Ógilt JSON' }); }
-    if (!VIRKT) return ovirkt(event);
-
-    if (b.adgerd === 'innskra') {
-      if (!samaLykilord(b.lykilord)) { await bida(600); return svar(event, 401, { villa: 'Rangt lykilorð' }); }
-      const nafn = String(b.nafn || '').replace(/[^\p{L}\p{N} .-]/gu, '').trim().slice(0, 40) || 'Ónefndur';
-      return svar(event, 200, { tok: gefaMida(nafn), rennur: Date.now() + GILDIR, nafn });
-    }
-
-    const hver = lesaMida(tok);
-    if (!hver) return svar(event, 401, { villa: 'innskraning' });
+    // skrif koma aðeins frá síðunni sjálfri: innskráningin er cookie, svo önnur síða má ekki geta sent beiðni í nafni notandans
+    const h = event.headers || {};
+    const uppruni = h.origin || h.Origin || '';
+    if (!(h['x-ritill'] || h['X-Ritill']) || (uppruni && !UPPRUNI.includes(uppruni))) return svar(event, 403, { villa: 'Beiðnin kom ekki frá síðunni' });
+    const hver = await notandi(event);
+    if (hver.villa) return hafnad(event, hver);
     const utgafa = b.utgafa;
     if (!UTGAFUR.includes(utgafa)) return svar(event, 400, { villa: 'Óþekkt útgáfa' });
     const nu = new Date().toISOString();
