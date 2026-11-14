@@ -3,6 +3,8 @@
 // GET  /api/vefur-efni?utgafa=v2            → { nr, efni }            birt efni; opið öllum, þetta er það sem gestir sjá
 // GET  /api/vefur-efni?utgafa=v2&drog=1     → { efni, grunnur, … }    drögin                     (innskráning)
 // GET  /api/vefur-efni?utgafa=v2&saga=1     → { saga: [{id, nr, af, kl}] }                        (innskráning)
+// GET  /api/vefur-efni?innranet=1           → { nafn, nn, ritstjori, hlekkir }   hver er skráður inn og leiðir starfsfólks
+//                                             í innri kerfin (hvaða virkur starfsmaður sem er; 401 án innskráningar)
 // POST { adgerd: 'vista', utgafa, efni, grunnur }       drög vistuð; 409 ef annað tæki vistaði á undan
 // POST { adgerd: 'birta', utgafa }                      drögin verða birta útgáfan og fara í söguna
 // POST { adgerd: 'henda', utgafa }                      drögin verða aftur eins og birta útgáfan
@@ -32,6 +34,13 @@ const MAX_EFNI = 400 * 1024;            // drög sem JSON
 const MAX_MYND = 4 * 1024 * 1024;       // ein mynd (beiðni til Netlify-falls rúmar ekki meira en um 4,4 MB af mynd)
 const COOKIE = 'hub_user';              // sett af /api/hub-adgangar við innskráningu
 const RITSTJORAR = ['Admin'];           // hlutverk í hub_adgangar sem mega breyta vefnum
+// Leiðir starfsfólks úr innskráningunni á vefnum („Innranet“ í fætinum). Þær standa hér en ekki í skriftu síðunnar,
+// svo þær berist aðeins þeim sem er skráður inn.
+const INNRANET = [
+  { heiti: 'Stjórnborð þjónustugáttar', lysing: 'Viðskiptavinavefir, aðgangar og skilaboð', slod: 'https://slokkvitaeki.netlify.app/gatt-admin/' },
+  { heiti: 'Slökkvitæki-kerfið', lysing: 'Tæki, viðskiptavinir, verk og sala', slod: 'https://slokkvitaeki.netlify.app/' },
+  { heiti: 'Stjórnstöð Brunahólfs', lysing: 'Reikningar, verkstaðir, póstur og aðgangar starfsfólks', slod: 'https://brunaholf.netlify.app/' },
+];
 // Síður sem mega kalla á fallið úr vafra. Sama lén þarf ekki að vera hér; lénið bætist við þegar vefurinn flytur.
 const UPPRUNI = ['https://brunaholf.netlify.app', 'https://www.brunaholf.is', 'https://brunaholf.is'];
 
@@ -74,8 +83,9 @@ function kokur(event) {
   });
   return ut;
 }
-// Skilar { nafn, nn } fyrir innskráðan ritstjóra, annars { villa: 401 | 403 | 502 | 503 }.
-async function notandi(event) {
+// Skilar { nafn, nn, ritstjori } fyrir innskráðan ritstjóra, annars { villa: 401 | 403 | 502 | 503 }.
+// allir = true: hvaða virkur starfsmaður sem er telst (innranetið); ritstjori segir þá hvort hann má breyta vefnum.
+async function notandi(event, allir) {
   const tok = kokur(event)[COOKIE];
   if (typeof tok !== 'string' || tok.length < 20 || tok.length > 2000) return { villa: 401 };
   const i = tok.indexOf('.');
@@ -99,9 +109,10 @@ async function notandi(event) {
   if (!u.ok) return { villa: 502 };
   const n = (await u.json())[0];
   if (!n || !n.virkur) return { villa: 401 };
-  if (!RITSTJORAR.includes(n.rola)) return { villa: 403 };
+  const ritstjori = RITSTJORAR.includes(n.rola);
+  if (!ritstjori && !allir) return { villa: 403 };
   const nn = String(n.notandanafn || '').slice(0, 12);
-  return { nafn: (String(n.nafn || '').trim().split(/\s+/)[0] || nn || 'Ónefndur').slice(0, 40), nn };
+  return { nafn: (String(n.nafn || '').trim().split(/\s+/)[0] || nn || 'Ónefndur').slice(0, 40), nn, ritstjori };
 }
 const hafnad = (event, hver) => (hver.villa === 403 ? svar(event, 403, { villa: 'heimild' })
   : hver.villa === 503 ? svar(event, 503, { villa: 'ovirkt' })
@@ -112,7 +123,8 @@ const hafnad = (event, hver) => (hver.villa === 403 ? svar(event, 403, { villa: 
 const MERKI = new Set(['b', 'strong', 'i', 'em', 'u', 's', 'br', 'span', 'small', 'a', 'sup', 'sub']);
 const LETUR = ['Poppins', 'Inter', 'Questrial', 'Montserrat', 'Roboto', 'Open Sans', 'Lato', 'Nunito', 'Raleway', 'Work Sans', 'DM Sans', 'Source Sans 3', 'Playfair Display', 'Merriweather', 'Oswald'];
 const MYNDIR = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/vefur/`;
-const litur = (v) => (typeof v === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(v) ? v.toLowerCase() : null);
+// litur: #rgb eða #rrggbb. Gegnsæi (#rrggbbaa) er ekki tekið gilt: það gæti falið texta.
+const litur = (v) => (typeof v === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v) ? v.toLowerCase() : null);
 const lykillOk = (k) => typeof k === 'string' && /^[a-z0-9][a-z0-9._-]{0,80}$/.test(k);
 function myndOk(src) {
   if (typeof src !== 'string' || src.length > 400 || src.includes('..')) return false;
@@ -124,7 +136,8 @@ const stadurOk = (v) => (typeof v === 'string' && (STADIR.includes(v) || /^(left
 function slodOk(h) {
   h = String(h || '').trim();
   if (/^#[A-Za-z0-9_\/.=&%-]{0,120}$/.test(h) || /^tel:\+?[0-9 ()-]{3,24}$/.test(h) || /^mailto:[^\s<>"']{3,120}$/.test(h)) return h;
-  return /^https:\/\/[^\s<>"']{3,400}$/.test(h) ? h : null;
+  // vefslóð: vélarheiti strax á eftir https:// (stafir, tölur, punktar, bandstrik), enginn notandahluti og ekkert öfugt skástrik
+  return h.length <= 400 && /^https:\/\/[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?(?::\d{1,5})?(?:[\/?#][^\s<>"'\\]*)?$/.test(h) ? h : null;
 }
 function stillOk(v) {
   const ut = [];
@@ -302,6 +315,11 @@ exports.handler = async (event) => {
 
   try {
     if (event.httpMethod === 'GET') {
+      if (q.innranet) {      // innskráning starfsfólks á vefnum: hver er skráður inn, og leiðirnar í innri kerfin
+        const hver = await notandi(event, true);
+        if (hver.villa) return hafnad(event, hver);
+        return svar(event, 200, { nafn: hver.nafn, nn: hver.nn, ritstjori: hver.ritstjori, hlekkir: INNRANET });
+      }
       const utgafa = q.utgafa;
       if (!UTGAFUR.includes(utgafa)) return svar(event, 400, { villa: 'Óþekkt útgáfa' });
       if (!q.drog && !q.saga) {

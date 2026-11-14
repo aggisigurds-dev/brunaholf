@@ -160,6 +160,8 @@
 .bh2 .w-foot__fb:hover{color:var(--orange-ink)}
 .bh2 .w-foot__fb:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
 .w-foot__fb .bh2-ic{width:20px;height:20px}
+/* innskráning starfsfólks: falin í síðunni, site/efni.js sýnir hana þar sem þjónninn er til staðar */
+[data-innranet][hidden]{display:none!important}
 
 /* ---- the web shop inside V2. Its own stylesheet and script run as they are; these rules only fit it into the V2 shell:
         the shell's top bar and footer replace the shop's own, and the V2 tokens give it its colours, shadows and corners. ---- */

@@ -49,7 +49,8 @@
   ];
 
   /* ---- gildi sem mega fara á síðuna ---- */
-  function litur(v) { return typeof v === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(v) ? v.toLowerCase() : null; }
+  /* litur: #rgb eða #rrggbb. Gegnsæi (#rrggbbaa) er ekki tekið gilt: það gæti falið texta án þess að ritillinn sæi það. */
+  function litur(v) { return typeof v === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v) ? v.toLowerCase() : null; }
   function tala(v, min, max) {
     if (typeof v === 'string') v = v.trim() === '' ? NaN : Number(v);      /* aðeins tala eða talnastrengur: hlutur gæti kastað villu við umbreytingu */
     return typeof v === 'number' && isFinite(v) ? Math.min(max, Math.max(min, v)) : null;
@@ -72,7 +73,8 @@
     if (typeof h !== 'string') return null;
     h = h.trim();
     if (/^#[A-Za-z0-9_\/.=&%-]{0,120}$/.test(h) || /^tel:\+?[0-9 ()-]{3,24}$/.test(h) || /^mailto:[^\s<>"']{3,120}$/.test(h)) return h;
-    return /^https:\/\/[^\s<>"']{3,400}$/.test(h) ? h : null;
+    /* vefslóð: vélarheiti strax á eftir https:// (stafir, tölur, punktar, bandstrik), enginn notandahluti og ekkert öfugt skástrik */
+    return h.length <= 400 && /^https:\/\/[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?(?::\d{1,5})?(?:[\/?#][^\s<>"'\\]*)?$/.test(h) ? h : null;
   }
 
   /* ---- hreinsun á texta: aðeins þessi merki, klasar og stílar lifa ---- */
@@ -222,7 +224,7 @@
     });
     return r.length ? ':root{' + imp(r) + '}' : '';
   }
-  function stillT(o) {
+  function stillT(o, svaedi) {
     var r = [], n;
     if (!o || typeof o !== 'object') return '';
     stillKassi(o, r);
@@ -234,7 +236,7 @@
     if (o.ta === 'left' || o.ta === 'center' || o.ta === 'right') r.push('text-align:' + o.ta);
     if (o.it === true) r.push('font-style:italic');
     if (o.tt === 'uppercase' || o.tt === 'none') r.push('text-transform:' + o.tt);
-    if (litur(o.c)) r.push('color:' + litur(o.c));
+    if (!svaedi && litur(o.c)) r.push('color:' + litur(o.c));      /* litur texta á svæði fer á textana í því, sjá litSvaedis */
     return imp(r);
   }
   /* tekur síðan þetta gildi gilt í s eða sm? Ritillinn notar þetta til að segja frá gildum sem var sleppt úr svari. */
@@ -260,6 +262,8 @@
   }
   /* falið stak: gestir sjá það ekki. Í ritlinum (html.brr-syna-falid) sést það dauft með strikalínu, svo hægt sé að velja það og sýna aftur. */
   var FALID = 'opacity:.38!important;outline:2px dashed #e11d48!important;outline-offset:-2px!important';
+  /* engin regla nær inn í verslunina (#vv-app), sem teiknar sín eigin lykluðu stök. :where heldur vægi reglunnar óbreyttu. */
+  var UTAN = ':where(:not(#vv-app *))';
   function stilblad(efni) {
     var a = [], b = [], t = efni.t || {}, m = efni.m || {}, sv = efni.k || {};
     function regla(listi, val, st) { if (st) listi.push(val + '{' + st + '}'); }
@@ -268,23 +272,24 @@
       listi.push('html:not(.brr-syna-falid) ' + val + '{display:none!important}');
       listi.push('html.brr-syna-falid ' + val + '{' + FALID + '}');
     }
-    /* litur texta á svæði nær til textanna í því, nema hnappa og hlekkja. Reglan vegur ekkert (:where), svo texti með eigin lit
-       heldur honum, og innra svæði með eigin lit ræður sínum textum (--bh-c erfist niður tréð). */
-    function litSvaedis(val, st) {
+    /* litur texta á svæði nær til textanna í því, nema hnappa og hlekkja og þess sem verslunin teiknar. Reglan vegur ekkert
+       (:where), svo texti með eigin lit heldur honum, og innra svæði með eigin lit ræður sínum textum (--bh-c erfist niður tréð).
+       Svæðið sjálft fær ekki litinn, svo hann erfist ekki inn í verslunina. */
+    function litSvaedis(k, st) {
       var c = st && typeof st === 'object' ? litur(st.c) : null;
       if (!c) return;
-      a.push(val + '{--bh-c:' + c + '}');
-      a.push(':where(' + val + ' [data-e]:not(a,button,a *,button *)){color:var(--bh-c)!important}');
+      a.push('[data-k="' + k + '"]{--bh-c:' + c + '}');
+      a.push(':where([data-k="' + k + '"] [data-e]:not(a,button,a *,button *,#vv-app *)){color:var(--bh-c)!important}');
     }
     var thema = stilUtlit(efni.utlit);
     if (thema) a.push(thema);
     [[t, 'data-e'], [sv, 'data-k']].forEach(function (x) {
       Object.keys(x[0]).forEach(function (k) {
-        var o = x[0][k], val = '[' + x[1] + '="' + k + '"]';
+        var o = x[0][k], val = '[' + x[1] + '="' + k + '"]' + UTAN, sv = x[1] === 'data-k';
         if (!lykillOk(k) || !o || typeof o !== 'object') return;
-        regla(a, val, stillT(o.s));
-        regla(b, val, stillT(o.sm));
-        if (x[1] === 'data-k') litSvaedis(val, o.s);
+        regla(a, val, stillT(o.s, sv));
+        regla(b, val, stillT(o.sm, sv));
+        if (sv) litSvaedis(k, o.s);
         fela(a, val, o.s);
         fela(b, val, o.sm);
       });
@@ -292,9 +297,9 @@
     Object.keys(m).forEach(function (k) {
       if (!lykillOk(k) || !m[k]) return;
       [[a, stillM(m[k])], [b, stillM(m[k].sm)]].forEach(function (x) {
-        regla(x[0], '[data-m="' + k + '"]', x[1][0]);
-        regla(x[0], '[data-mr="' + k + '"]', x[1][1]);
-        regla(x[0], '[data-m="' + k + '"]:not([data-mf])', x[1][2]);
+        regla(x[0], '[data-m="' + k + '"]' + UTAN, x[1][0]);
+        regla(x[0], '[data-mr="' + k + '"]' + UTAN, x[1][1]);
+        regla(x[0], '[data-m="' + k + '"]:not([data-mf])' + UTAN, x[1][2]);
       });
     });
     return a.join('\n') + (b.length ? '\n@media ' + SIMI + '{\n' + b.join('\n') + '\n}' : '');
@@ -355,15 +360,8 @@
   }
   function setjaTexta(el) {
     if (el.closest('#vv-app')) return;                     /* verslunin teiknar sín eigin merktu stök */
-    var k = el.getAttribute('data-e'), o = (efni.t || {})[k];
-    var breytt = o && typeof o.h === 'string';
-    /* hlekkur: stakið sjálft sé það <a>, annars hlekkurinn sem það stendur í */
-    var hl = el.nodeName === 'A' ? el : el.closest('a'), ny = o && typeof o === 'object' ? slod(o.href) : null;
-    if (hl && (ny || hl._bhHref !== undefined)) {
-      if (hl._bhHref === undefined) hl._bhHref = hl.getAttribute('href');
-      var vil = ny || hl._bhHref;
-      if (hl.getAttribute('href') !== vil) { if (vil === null) hl.removeAttribute('href'); else hl.setAttribute('href', vil); }
-    }
+    var k = el.getAttribute('data-e'), t = efni.t && typeof efni.t === 'object' ? efni.t : {}, o = hefur(t, k) ? t[k] : null;
+    var breytt = !!o && typeof o === 'object' && typeof o.h === 'string';
     if (!breytt && el._bhFrum === undefined) return;       /* ósnert stak: látið vera */
     if (el._bhFrum === undefined) el._bhFrum = el.innerHTML;
     var html = breytt ? hreinsaFyrir(el, o.h) : el._bhFrum;
@@ -383,6 +381,26 @@
       if (el._bhFrum.h) el.setAttribute('height', el._bhFrum.h);
     }
     el.setAttribute('src', src);
+  }
+  /* slóð hlekks: stakið sjálft sé það <a>, annars hlekkurinn sem það stendur í. Hver hlekkur er afgreiddur einu sinni:
+     standi fleiri lykluð stök í honum ræður það fyrsta sem á gilda slóð. Upprunalega slóðin kemur aftur þegar engin er sett. */
+  function setjaHlekki() {
+    var t = efni.t && typeof efni.t === 'object' ? efni.t : {}, sed = [];
+    Array.prototype.forEach.call(d.querySelectorAll('[data-e]'), function (el) {
+      if (el.closest('#vv-app')) return;
+      var hl = el.nodeName === 'A' ? el : el.closest('a');
+      if (!hl || sed.indexOf(hl) >= 0) return;
+      sed.push(hl);
+      var ny = null;
+      (hl.hasAttribute('data-e') ? [hl] : []).concat(Array.prototype.slice.call(hl.querySelectorAll('[data-e]'))).forEach(function (x) {
+        var k = x.getAttribute('data-e'), o = hefur(t, k) ? t[k] : null;
+        if (!ny && o && typeof o === 'object') ny = slod(o.href);
+      });
+      if (!ny && hl._bhHref === undefined) return;       /* ósnertur hlekkur */
+      if (hl._bhHref === undefined) hl._bhHref = hl.getAttribute('href');
+      var vil = ny || hl._bhHref;
+      if (hl.getAttribute('href') !== vil) { if (vil === null) hl.removeAttribute('href'); else hl.setAttribute('href', vil); }
+    });
   }
   /* röð svæða: lykluð börn svæðis fá röðina úr rod[lykill svæðis]; börn án lykils standa kyrr í sínum sætum */
   function rada() {
@@ -409,6 +427,7 @@
     reyna(function () { var css = stilblad(efni); if (blad.textContent !== css) blad.textContent = css; });
     reyna(function () { leturIEfni(efni).forEach(hladaLetri); });
     Array.prototype.forEach.call(d.querySelectorAll('[data-e]'), function (el) { reyna(function () { setjaTexta(el); }); });
+    reyna(setjaHlekki);
     Array.prototype.forEach.call(d.querySelectorAll('[data-m]'), function (el) { reyna(function () { setjaMynd(el); }); });
     reyna(rada);
     reyna(hetja);
@@ -438,6 +457,34 @@
     KASSI: KASSI, SKUGGAR: Object.keys(SKUGGAR), TAKN: TAKN, lykillOk: lykillOk, STILAR: STILAR, giltStil: giltStil,
     frum: function (el) { return el._bhFrum; }
   };
+
+  /* ---- innskráning starfsfólks: „Innranet“ í fætinum (data-innranet) eða ?innranet í slóðinni hleður site/innranet.js.
+     Hlekkurinn er falinn í síðunni og sýndur hér, því hann á aðeins við þar sem þjónninn er til staðar. Á öðru léni en
+     þjónninn er á vísar hann þangað: innskráningin er cookie á vef stjórnstöðvarinnar. ---- */
+  var innHladid = false;
+  function innranet() {
+    if (window.BH_INNRANET) return window.BH_INNRANET.opna();
+    if (innHladid) return;
+    innHladid = true;
+    if (!d.querySelector('link[href$="ritill.css"]')) { var l = d.createElement('link'); l.rel = 'stylesheet'; l.href = GRUNNUR + 'ritill.css'; d.head.appendChild(l); }
+    var r = d.createElement('script');
+    r.src = GRUNNUR + 'innranet.js';
+    d.body.appendChild(r);
+  }
+  function innranetTilbuid() {
+    var heima = !/^https?:/i.test(API) || API.indexOf(location.origin + '/') === 0;      /* þjónninn er á þessum vef */
+    Array.prototype.forEach.call(d.querySelectorAll('[data-innranet]'), function (a) {
+      a.hidden = false;
+      if (!heima) a.setAttribute('href', API.replace(/\/api\/.*$/, '/vefur/?innranet'));
+    });
+    if (!heima || RITILL) return;      /* í ritlinum er hlekkurinn texti sem má breyta; Ctrl+smellur fylgir honum */
+    d.addEventListener('click', function (e) {
+      var a = e.target && e.target.closest ? e.target.closest('[data-innranet]') : null;
+      if (a && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) { e.preventDefault(); innranet(); }
+    });
+    if (q.has('innranet')) innranet();
+  }
+  if (API) { if (d.readyState === 'loading') d.addEventListener('DOMContentLoaded', innranetTilbuid); else innranetTilbuid(); }
 
   var geymt = null;
   try { geymt = JSON.parse(localStorage.getItem(LYKILL) || 'null'); } catch (e) {}
