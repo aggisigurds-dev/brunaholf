@@ -613,3 +613,12 @@ Færðir punktar · Tillögur · Símaviðmót · Stöðuskýrsla.
   opið eða klárað fyrr en hann er tengdur.
 - **Prófað** á þróunarþjóni í símasýn: grár punktur (#5356) valinn í færsluham og dreginn 12 px að merkinu, teljarinn fór 24 → 23 og hakið birtist; skrifin
   (`PATCH skr_faerslur`) fengu gervisvar, ekkert fór í grunninn. Prófunarskriftur: `apex_adal_prof.cjs`, `apex_adal_drag2.cjs` (scratchpad lotunnar).
+
+## Flýtileiðir með Apex-tákninu (15.11.2026) — kjarni main 9ebdb59
+- **Orð Agnars:** „Hver er linkurinn á aðalkerfið og síðan reportkerfið. Gæti ég downloadað shortcut með apex merkingu" og, þegar ég ætlaði að gera skýrslutáknið
+  appelsínugult: „Oj. Nei eins og logoið. Hvíta og síðan bláa útgáfan." → táknin eru lógóið óbreytt: hvíta útgáfan = aðalkerfið, bláa = skýrslan. Engin ný litaafbrigði.
+- **Útfært:** `public/apex/kort.webmanifest` (Apex Ajour, `/kjarni/skraning/kort`, hvítt tákn) og `public/apex/skyrsla.webmanifest` (Apex skýrsla,
+  `/kjarni/skraning/skyrsla?kynning=1`, blátt tákn); `manifest`, `appleWebApp` og `icons` í `kort/page.tsx` og `skyrsla/page.tsx`. Tákn: `icon-192/512`,
+  `icon-maskable-512`, `apple-touch-icon`, `apex.ico` (og `skyrsla-` afbrigðin), smíðuð með `apex-logo/takn.cjs` (scratchpad lotunnar).
+- **Ósnert:** `public/skraning/manifest.webmanifest` (vinnuútgáfan `/vinna`, eldra pinnatákn) er á sviði `skraning`.
+- **Skjáborð skrifstofuvélar:** `Apex Ajour.url` og `Apex skýrsla.url`, tákn í `%LOCALAPPDATA%\ApexAjour\`.
