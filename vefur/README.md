@@ -74,6 +74,10 @@ Myndskeiðið er aðkeypt lagerefni af núverandi vef. Leyfið fyrir því þarf
 
 Hlekkur á innskráningu viðskiptavina, `https://slokkvitaeki.netlify.app/gatt/`, er á tveimur stöðum í hvorri síðu: í hausnum (`a.w-gatt` í V2, `a.c-gatt` í V1; á mjóum skjá táknið eitt) og í spjaldi á forsíðunni. Gáttin sjálf býr í kóðasafni Slökkvitækja-appsins (`gatt/`). Setningin í spjaldinu er orðrétt af innskráningarsíðu hennar.
 
+## Facebook
+
+Hlekkur á Facebook-síðuna er í fætinum í báðum síðum (`a.w-foot__fb` í V2, `a.c-foot__fb` í V1) og opnast í nýjum flipa. Slóðin er deilihlekkurinn sem Agnar lét í té: `https://www.facebook.com/share/1DqFztD5Uv/`.
+
 ## Vörur og verslun
 
 `verslun/gogn.js` er afrit af vöruskránni frá 12.11.2026, ekki lifandi tenging. Breyting þar sést aðeins á þessum vef.
