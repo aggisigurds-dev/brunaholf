@@ -631,3 +631,15 @@ Færðir punktar · Tillögur · Símaviðmót · Stöðuskýrsla.
 - **Rafmagn:** óbreytt, stakur tígull með eldingu (sannreynt á lifandi síðu).
 - **Opið:** stálrör með ÓÞEKKT kerfi teiknast enn sem blómhringur. Mælt 15.11: 381 af 5.692 stálskráningum á verki 4 eiga enga `skr_kerfi`-röð án vafa
   (4.176 vatn, 1.135 úði). Spurt Agnar hvort þau eigi líka að verða áttur.
+
+## Klípa á hæðarteikningum skýrslunnar (15.11.2026) — kjarni main 4b429ee
+- **Orð Agnars:** „Zoom pirringur. Get ekkert pinch-zoomað kringum teikningarnar, til að sjá aðeins betur.. og í að sjá stærra næ ég engan veginn að zooma nægilega mikið."
+- **Orsök (mæld í símahermi á lifandi síðu fyrir breytingu):** `Haedarkort` í `skyrsla/Haedir.tsx` studdi ENGA klípu á snertiskjá (aðeins +, tvísmell, Ctrl + skrun),
+  `touch-action: pan-y` lokaði á klípu síðunnar yfir teikningunni, og þakið var fast 8×. Tíu klípur skiluðu scale(1).
+- **Nú:** snertiatburðir (`touchstart`/`touchmove`, ekki passive) á `.sk-hk-mynd`: tveir fingur stækka um miðjuna á milli sín og færa teikninguna með sér; eins fingurs
+  drag og val á punkti óvirkt þar til allir fingur eru farnir af (`klipa.current`). Þak `zMest` = 3 skjápixlar á pixil teikningar, 8–60× (52× í 334 px glugga).
+  Einn fingur skrunar síðunni áfram í fullri sýn. Gatakortið: tveir fingur færa nú líka blaðið meðan klipið er (`drag.current.mx/my`).
+- **Prófað** með CDP `Input.dispatchTouchEvent` (tveir snertipunktar) í símahermi, prófunarþjónn og lifandi síða: 1 klípa → 4×, 3 → 52× (þak), tveggja fingra
+  færsla breytir hliðrun, klípa inn → 1×, eins fingurs strok skrunar síðunni (2857 → 3042). Prófunarskrifta: `apex_klipa_skyrsla_prof.cjs` (scratchpad lotunnar).
+- **Óvíst:** ég gekk út frá því að hann ætti við skýrsluna (þar var klípan dauð); á gatakortinu virkaði klípan í hermi fyrir breytingu. Myndin sjálf er 5.790 px breið,
+  svo dýpsta stækkun er óskýr; skarpari mynd þyrfti hærri upplausn á yfirlitsblaðinu. Óprófað í síma Agnars.
