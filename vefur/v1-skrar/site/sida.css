@@ -138,6 +138,8 @@
 .c-foot__fb:hover{text-decoration:underline}
 .c-foot__fb:focus-visible{outline:3px solid var(--orange);outline-offset:3px}
 .c-foot__fb svg{width:20px;height:20px}
+/* innskráning starfsfólks: falin í síðunni, site/efni.js sýnir hana þar sem þjónninn er til staðar */
+[data-innranet][hidden]{display:none!important}
 
 /* ---- the web shop inside this page. It is built in this same design system, so it runs as it is; these rules only fit it
         under the page's header and tabs (its own logo, tabs, footer and cart button are not shown) and tidy a few edges. ---- */

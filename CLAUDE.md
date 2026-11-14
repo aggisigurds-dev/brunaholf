@@ -76,6 +76,8 @@ data from Ajour, Google Drive/Sheets/Gmail integration, and a tilbod
   Tveir hamir: Einfalt (texti, myndir, kaflar, aðallitir) og Ítarlegt (`?ritill&hamur=itarlegt`: bil, horn, rammar, dálkar á hverju svæði, hvert þematákn). Útlit er líka efni:
   `k` (svæði), `rod` (röð), `utlit` (þematákn af listanum `#bh-utlit` í haus V2). Claude breytir útliti gegnum ritilinn, ekki kóða: „Leiðbeiningar fyrir Claude“ í ritlinum,
   eða `window.BH_RITILL.lysing()` og `.sameina({…})` í vafra.
+  „Innranet“ í fæti hverrar síðu (`?innranet`, `site/innranet.js`) er innskráning starfsfólks á síðunni: þaðan í ritilinn og, með hlekkjum sem þjónninn
+  afhendir eftir innskráningu (`INNRANET` í fallinu), í stjórnborð þjónustugáttar, Slökkvitæki-kerfið og stjórnstöðina.
   Lyklar staka (`data-e`, `data-m`, `data-k`) mega aldrei breytast.
   Skrár, slóðir, skipti milli útgáfa, færsla breytinga úr Claude-tillögunum og það sem þarf áður en lénið er tengt: `vefur/README.md`.
 - **Brunaþéttingar — verkstaða-appið (`brunathettingar.html`, `/brunathettingar`, 03.09.2026):**
