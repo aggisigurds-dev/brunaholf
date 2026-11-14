@@ -17,10 +17,14 @@ mappa upp annað húsnæði, púsla saman bútum af teikningum" og „agent með
 Agnar 14.11.2026: „Ajour-útgáfan mun heita síðar Apex … mun heita í bili Apex Ajour á meðan það er meira sem greiningartól fyrir
 Ajour." Nýja Ajour (Skráning í Kjarna) heitir því **Apex Ajour** meðan hún les og greinir Ajour-gögn (gatakort, stöðuskýrsla), og
 **Apex** þegar hún tekur við skráningunni sjálfri. Heiti í kóða, slóðum og töflum (`skraning`, `gatakort`, `skr_*`) eru óbreytt;
-nafninu er ekki breytt í viðmóti né í stöðuskýrslunni til COWI nema Agnar biðji um það. **Lógó:** Agnar valdi tillögu C 14.11.2026 („þetta er töff"): dökkblár ferningur með hvítum tindi og appelsínugulum punkti
+nafninu er ekki breytt í stöðuskýrslunni til COWI nema Agnar biðji um það. **Lógó:** Agnar valdi tillögu C 14.11.2026 („þetta er töff"): dökkblár ferningur með hvítum tindi og appelsínugulum punkti
 (skráningin á kortinu) + orðmerkið APEX með AJOUR undir. Skrárnar eru í Kjarna, `apps/slokkvitaeki/public/apex/`
 (`apex-ajour.svg`, `apex-ajour-dokkt.svg`, `apex-takn.svg`); allt teiknað sem strik, ekkert letur. Litir: #02193c og #ff6702.
-Lógóið er EKKI komið í viðmótið; það bíður orða Agnars.
+**Í viðmóti Kjarna frá 14.11.2026** (Agnar: „breyta síðan nafninu inn á Kjarna"): „Ajour-Craft" heitir nú „Apex Ajour" í
+valmynd, tólaskrá og skinnum (`app/kjarni/data.ts`, `skins.ts`, `stod-gogn.ts`); síðutitlar eru „Apex Ajour — …"; lógóið er í
+haus sjö síðna (`.aj-apex` í `skraning.css`; táknið eitt undir 900 px og í `gk-mjor` á gatakortinu; `apex-ajour-haus.svg`,
+`apex-takn-ljost.svg`). **Óbreytt viljandi:** stöðuskýrslan (`/skyrsla`) og prentsíðan (`/prenta`), því þær fara til annarra;
+flipinn „Skráning & QA"; heiti í kóða, slóðum og töflum.
 
 ## Lestu fyrst (í þessari röð)
 Slóðirnar eru í brunaholf-repóinu. Á skrifstofuvélinni: `C:\Users\Slokkvitaeki\brunaholf\`.
