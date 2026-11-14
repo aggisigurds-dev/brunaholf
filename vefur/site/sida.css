@@ -1,3 +1,4 @@
+/* takna: litir fylgja þematáknum */
 /* Stílblað síðunnar „Brunahólf vefur, V2“. Verslunin á sitt eigið (verslun/verslun.css); kaflinn um hana hér lagar hana að síðunni. */
 /* ---- site layer: only layout for the public page, every colour, radius and shadow comes from the tokens ---- */
 .w-site{position:relative}
@@ -6,7 +7,7 @@
 .w-nw{white-space:nowrap}
 .w-skip{position:absolute;left:12px;top:-80px;z-index:100;padding:10px 14px;border-radius:var(--r-md);background:var(--surface);color:var(--ink);font-weight:600;box-shadow:var(--shadow-raised);transition:top .16s var(--w-ease)}
 .w-skip:focus{top:calc(env(safe-area-inset-top,0px) + 12px)}
-::selection{background:rgba(255,103,2,.25)}
+::selection{background:rgba(255,103,2,.25);background:color-mix(in srgb,var(--orange) 25%,transparent)}
 #top{scroll-margin-top:9999px}
 .w-site [id]{scroll-margin-top:calc(var(--topbar-h) + env(safe-area-inset-top,0px) + 16px)}
 
@@ -44,16 +45,16 @@
    yfir ljósmynd, því eldurinn er bjartari. Takkinn stöðvar það og ræsir. Skriftan er neðst í site/router.js. */
 .bh2 .w-hero--video{--hero-img:url(../img/hetja-eldur.webp)}
 .w-hero__mynd,.w-hero__video{position:absolute;inset:0;z-index:-2;width:100%;height:100%;max-width:none;object-fit:cover;object-position:var(--hetja-pos,right top);pointer-events:none}
-.bh2 .w-hero--video::after{background:linear-gradient(90deg,rgba(2,25,60,.92) 0%,rgba(2,25,60,.8) 24%,rgba(2,25,60,.62) 46%,rgba(2,25,60,.44) 62%,rgba(2,25,60,.14) 82%,rgba(2,25,60,0) 100%),linear-gradient(180deg,rgba(233,240,250,0) 74%,var(--page) 100%)}
+.bh2 .w-hero--video::after{background:linear-gradient(90deg,rgba(2,25,60,.92) 0%,rgba(2,25,60,.8) 24%,rgba(2,25,60,.62) 46%,rgba(2,25,60,.44) 62%,rgba(2,25,60,.14) 82%,rgba(2,25,60,0) 100%),linear-gradient(180deg,rgba(233,240,250,0) 74%,var(--page) 100%);background:linear-gradient(90deg,color-mix(in srgb,var(--navy-950) 92%,transparent) 0%,color-mix(in srgb,var(--navy-950) 80%,transparent) 24%,color-mix(in srgb,var(--navy-950) 62%,transparent) 46%,color-mix(in srgb,var(--navy-950) 44%,transparent) 62%,color-mix(in srgb,var(--navy-950) 14%,transparent) 82%,color-mix(in srgb,var(--navy-950) 0%,transparent) 100%),linear-gradient(180deg,color-mix(in srgb,var(--page) 0%,transparent) 74%,var(--page) 100%)}
 /* fyrirsögnin heldur sig vinstra megin, þar sem slikjan er þéttust, svo eldurinn lendi ekki undir henni */
 @media (min-width:701px){.bh2 .w-hero--video h1{max-width:min(17em,62%)}}
 /* Aðrir bannerar en eldurinn (data-hetja-gerd="mynd"; bannerasafnið er neðst í site/router.js): slikjan er þéttari undir textanum,
    því húsin á myndunum eru björt þar sem eldmyndin er dökk. Ljós mynd (data-hetja-ljos, teikningin af Loga) fær hana enn þéttari. */
 .bh2 .w-hero--video[data-hetja-gerd="mynd"]{--hero-img:none}
-.bh2 .w-hero--video[data-hetja-gerd="mynd"]::after{background:linear-gradient(90deg,rgba(2,25,60,.94) 0%,rgba(2,25,60,.9) 30%,rgba(2,25,60,.8) 52%,rgba(2,25,60,.7) 62%,rgba(2,25,60,.24) 76%,rgba(2,25,60,0) 88%),linear-gradient(180deg,rgba(233,240,250,0) 74%,var(--page) 100%)}
-.bh2 .w-hero--video[data-hetja-ljos]::after{background:linear-gradient(90deg,var(--navy-950) 0%,var(--navy-950) 34%,rgba(2,25,60,.9) 54%,rgba(2,25,60,.74) 64%,rgba(2,25,60,0) 80%),linear-gradient(180deg,rgba(233,240,250,0) 74%,var(--page) 100%)}
-.w-hero__spila{position:absolute;top:14px;right:calc(max(0px,(100% - var(--w-max) - 2 * var(--w-gutter)) / 2) + max(var(--w-gutter),env(safe-area-inset-right,0px)));z-index:1;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:50%;background:rgba(2,25,60,.5);color:var(--on-navy);cursor:pointer;transition:background-color .16s var(--w-ease)}
-.w-hero__spila:hover{background:rgba(2,25,60,.78)}
+.bh2 .w-hero--video[data-hetja-gerd="mynd"]::after{background:linear-gradient(90deg,rgba(2,25,60,.94) 0%,rgba(2,25,60,.9) 30%,rgba(2,25,60,.8) 52%,rgba(2,25,60,.7) 62%,rgba(2,25,60,.24) 76%,rgba(2,25,60,0) 88%),linear-gradient(180deg,rgba(233,240,250,0) 74%,var(--page) 100%);background:linear-gradient(90deg,color-mix(in srgb,var(--navy-950) 94%,transparent) 0%,color-mix(in srgb,var(--navy-950) 90%,transparent) 30%,color-mix(in srgb,var(--navy-950) 80%,transparent) 52%,color-mix(in srgb,var(--navy-950) 70%,transparent) 62%,color-mix(in srgb,var(--navy-950) 24%,transparent) 76%,color-mix(in srgb,var(--navy-950) 0%,transparent) 88%),linear-gradient(180deg,color-mix(in srgb,var(--page) 0%,transparent) 74%,var(--page) 100%)}
+.bh2 .w-hero--video[data-hetja-ljos]::after{background:linear-gradient(90deg,var(--navy-950) 0%,var(--navy-950) 34%,rgba(2,25,60,.9) 54%,rgba(2,25,60,.74) 64%,rgba(2,25,60,0) 80%),linear-gradient(180deg,rgba(233,240,250,0) 74%,var(--page) 100%);background:linear-gradient(90deg,var(--navy-950) 0%,var(--navy-950) 34%,color-mix(in srgb,var(--navy-950) 90%,transparent) 54%,color-mix(in srgb,var(--navy-950) 74%,transparent) 64%,color-mix(in srgb,var(--navy-950) 0%,transparent) 80%),linear-gradient(180deg,color-mix(in srgb,var(--page) 0%,transparent) 74%,var(--page) 100%)}
+.w-hero__spila{position:absolute;top:14px;right:calc(max(0px,(100% - var(--w-max) - 2 * var(--w-gutter)) / 2) + max(var(--w-gutter),env(safe-area-inset-right,0px)));z-index:1;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:50%;background:rgba(2,25,60,.5);background:color-mix(in srgb,var(--navy-950) 50%,transparent);color:var(--on-navy);cursor:pointer;transition:background-color .16s var(--w-ease)}
+.w-hero__spila:hover{background:rgba(2,25,60,.78);background:color-mix(in srgb,var(--navy-950) 78%,transparent)}
 .w-hero__spila:focus-visible{outline:3px solid var(--orange-hi);outline-offset:2px}
 .w-hero__spila .bh2-ic{width:18px;height:18px}
 .w-hero__spila[data-stada="spilar"] .i-spila,.w-hero__spila[data-stada="stopp"] .i-stopp{display:none}
@@ -182,7 +183,7 @@
 #vv-app{--r-btn:var(--r-md)}
 #vv-app .vv-btn{min-height:40px;padding:8px 16px;border-radius:var(--r-md);font:600 14px/1.2 var(--font-sans)}
 #vv-app .vv-btn.sm{min-height:36px;padding:6px 14px;font-size:13.5px}
-#vv-app .vv-btn.navy,#vv-app .vv-btn.ghost{background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line),0 1px 2px rgba(2,25,60,.06)}
+#vv-app .vv-btn.navy,#vv-app .vv-btn.ghost{background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line),0 1px 2px rgba(2,25,60,.06);box-shadow:inset 0 0 0 1px var(--line),0 1px 2px color-mix(in srgb,var(--navy-950) 6%,transparent)}
 #vv-app .vv-btn.navy:hover,#vv-app .vv-btn.ghost:hover{background:var(--row-hover);color:var(--ink)}
 #vv-app .vv-kort .vv-btn{min-height:40px;font-size:14px}
 /* aðaltakkar: verslunartakki án afbrigðis, „Setja í körfu" á vörusíðu og eini takkinn í tómri stöðu */
@@ -196,12 +197,12 @@
 #vv-app .vv-hetja .vv-btn.ghost,#vv-app .vv-cta .vv-btn.ghost{background:transparent;color:var(--on-navy);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.55)}
 #vv-app .vv-hetja .vv-btn.ghost:hover,#vv-app .vv-cta .vv-btn.ghost:hover{background:var(--surface);color:var(--navy-900);box-shadow:none}
 /* reitir og val: 10 px horn, hárlína og fókushringur kerfisins */
-#vv-app .vv-leit:focus-within{outline:3px solid rgba(255,103,2,.45);outline-offset:0;box-shadow:inset 0 0 0 1px var(--orange),var(--shadow-card)}
+#vv-app .vv-leit:focus-within{outline:3px solid rgba(255,103,2,.45);outline:3px solid color-mix(in srgb,var(--orange) 45%,transparent);outline-offset:0;box-shadow:inset 0 0 0 1px var(--orange),var(--shadow-card)}
 #vv-app .vv-rada select{min-height:44px;border:1px solid var(--line);border-radius:var(--r-md);font:400 14px/1.4 var(--font-sans);color:var(--ink)}
 #vv-app .vv-val,#vv-app .vv-reitir input{border-radius:var(--r-md)}
 /* letur eftir stiga V2: hetjutitill 44/1.1 700 (30 px á síma), eyebrow 12 px 0.18em, kaflatitill 22 px 700 */
 #vv-app .vv-hetja-yfir{margin-bottom:10px;font:600 12px/1.2 var(--font-sans);letter-spacing:.18em;color:var(--on-navy)}
-#vv-app .vv-hetja h1{margin-bottom:12px;font:700 clamp(30px,2.2vw + 21px,44px)/1.1 var(--font-sans);letter-spacing:-.02em;text-shadow:0 2px 12px rgba(2,25,60,.4)}
+#vv-app .vv-hetja h1{margin-bottom:12px;font:700 clamp(30px,2.2vw + 21px,44px)/1.1 var(--font-sans);letter-spacing:-.02em;text-shadow:0 2px 12px rgba(2,25,60,.4);text-shadow:0 2px 12px color-mix(in srgb,var(--navy-950) 40%,transparent)}
 /* áherslutexti: orange-ink á ljósu (kerfið: appelsínugulur texti á ljósu er orange-ink), orange-hi á dökkbláu */
 #vv-app .vv-aherslu{color:var(--orange-ink)}
 #vv-app .vv-hetja .vv-aherslu,#vv-app .vv-blad.navy .vv-aherslu,#vv-app .vv-cta .vv-aherslu,#vv-app .vv-bordi .vv-aherslu,#vv-app .vv-samantekt .vv-aherslu{color:var(--orange-hi)}
@@ -255,12 +256,12 @@
   .bh2 .w-topbar .w-contact-btn{display:none}
   .w-only-m{display:flex!important}
   .bh2 .w-topbar .bh2-topnav{-webkit-mask-image:linear-gradient(90deg,#000 86%,transparent);mask-image:linear-gradient(90deg,#000 86%,transparent);padding-right:24px}
-  .bh2 .w-hero::after{background:linear-gradient(90deg,var(--navy-950) 26%,rgba(2,25,60,.74) 60%,rgba(2,25,60,.3) 100%),linear-gradient(180deg,rgba(233,240,250,0) 62%,var(--page) 100%)}
-  .bh2 .w-hero--video::after{background:linear-gradient(90deg,rgba(2,25,60,.86) 0%,rgba(2,25,60,.74) 70%,rgba(2,25,60,.5) 100%),linear-gradient(180deg,rgba(233,240,250,0) 74%,var(--page) 100%)}
+  .bh2 .w-hero::after{background:linear-gradient(90deg,var(--navy-950) 26%,rgba(2,25,60,.74) 60%,rgba(2,25,60,.3) 100%),linear-gradient(180deg,rgba(233,240,250,0) 62%,var(--page) 100%);background:linear-gradient(90deg,var(--navy-950) 26%,color-mix(in srgb,var(--navy-950) 74%,transparent) 60%,color-mix(in srgb,var(--navy-950) 30%,transparent) 100%),linear-gradient(180deg,color-mix(in srgb,var(--page) 0%,transparent) 62%,var(--page) 100%)}
+  .bh2 .w-hero--video::after{background:linear-gradient(90deg,rgba(2,25,60,.86) 0%,rgba(2,25,60,.74) 70%,rgba(2,25,60,.5) 100%),linear-gradient(180deg,rgba(233,240,250,0) 74%,var(--page) 100%);background:linear-gradient(90deg,color-mix(in srgb,var(--navy-950) 86%,transparent) 0%,color-mix(in srgb,var(--navy-950) 74%,transparent) 70%,color-mix(in srgb,var(--navy-950) 50%,transparent) 100%),linear-gradient(180deg,color-mix(in srgb,var(--page) 0%,transparent) 74%,var(--page) 100%)}
   .w-hero--video :is(.w-hero__mynd,.w-hero__video){object-position:var(--hetja-pos,60% top)}
   .bh2 .w-hero--video h1{max-width:11.5em}
-  .bh2 .w-hero--video[data-hetja-gerd="mynd"]::after{background:linear-gradient(90deg,rgba(2,25,60,.9) 0%,rgba(2,25,60,.8) 70%,rgba(2,25,60,.68) 100%),linear-gradient(180deg,rgba(233,240,250,0) 74%,var(--page) 100%)}
-  .bh2 .w-hero--video[data-hetja-ljos]::after{background:linear-gradient(90deg,var(--navy-950) 0%,rgba(2,25,60,.92) 55%,rgba(2,25,60,.82) 100%),linear-gradient(180deg,rgba(233,240,250,0) 74%,var(--page) 100%)}
+  .bh2 .w-hero--video[data-hetja-gerd="mynd"]::after{background:linear-gradient(90deg,rgba(2,25,60,.9) 0%,rgba(2,25,60,.8) 70%,rgba(2,25,60,.68) 100%),linear-gradient(180deg,rgba(233,240,250,0) 74%,var(--page) 100%);background:linear-gradient(90deg,color-mix(in srgb,var(--navy-950) 90%,transparent) 0%,color-mix(in srgb,var(--navy-950) 80%,transparent) 70%,color-mix(in srgb,var(--navy-950) 68%,transparent) 100%),linear-gradient(180deg,color-mix(in srgb,var(--page) 0%,transparent) 74%,var(--page) 100%)}
+  .bh2 .w-hero--video[data-hetja-ljos]::after{background:linear-gradient(90deg,var(--navy-950) 0%,rgba(2,25,60,.92) 55%,rgba(2,25,60,.82) 100%),linear-gradient(180deg,rgba(233,240,250,0) 74%,var(--page) 100%);background:linear-gradient(90deg,var(--navy-950) 0%,color-mix(in srgb,var(--navy-950) 92%,transparent) 55%,color-mix(in srgb,var(--navy-950) 82%,transparent) 100%),linear-gradient(180deg,color-mix(in srgb,var(--page) 0%,transparent) 74%,var(--page) 100%)}
   .w-notice{flex-wrap:wrap}
   .w-notice p{flex:1 1 200px}
   .w-notice .bh2-btn{width:100%}

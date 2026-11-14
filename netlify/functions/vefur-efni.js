@@ -15,6 +15,8 @@
 // lykilorðaskipti ógilda það, notandinn þarf að vera virkur. Aðeins notendur með hlutverkið Admin mega breyta vefnum.
 // Án gilds cookie er öllu lokað nema lestri á birtu efni (401); notandi án heimildar fær 403.
 // Skrif þurfa auk þess að koma frá síðunni sjálfri: hausinn x-ritill, og Origin (sé hann sendur) af listanum UPPRUNI.
+// Efnið: t (textar), m (myndir), k (svæði), rod (röð svæða), utlit (þema), hetja, litir, myndasafn. Sniðið stendur efst í
+// vefur/site/efni.js. Stílar eru tölur innan marka, litir og orð af lista: ekkert frjálst CSS er vistað.
 // Texti er hreinsaður hér áður en hann er vistaður (hreinsaHtml) og aftur í vafranum áður en hann fer á síðuna
 // (vefur/site/efni.js). Listarnir yfir leyfð merki, stíla og letur þurfa að vera þeir sömu á báðum stöðum.
 // Töflurnar vefur_efni og vefur_efni_saga (sql/2026-11-14_vefur_efni.sql) eru með RLS og engar reglur: aðeins þetta fall
@@ -121,7 +123,7 @@ const STADIR = ['left top', 'top', 'right top', 'left', 'center', 'right', 'left
 const stadurOk = (v) => (typeof v === 'string' && (STADIR.includes(v) || /^(left|center|right|(?:100|\d{1,2})%) (top|center|bottom|(?:100|\d{1,2})%)$/.test(v)) ? v : null);
 function slodOk(h) {
   h = String(h || '').trim();
-  if (/^#[A-Za-z0-9_-]*$/.test(h) || /^tel:\+?[0-9 ()-]{3,24}$/.test(h) || /^mailto:[^\s<>"']{3,120}$/.test(h)) return h;
+  if (/^#[A-Za-z0-9_\/.=&%-]{0,120}$/.test(h) || /^tel:\+?[0-9 ()-]{3,24}$/.test(h) || /^mailto:[^\s<>"']{3,120}$/.test(h)) return h;
   return /^https:\/\/[^\s<>"']{3,400}$/.test(h) ? h : null;
 }
 function stillOk(v) {
@@ -188,9 +190,17 @@ const tala = (v, min, max) => {
   return typeof v === 'number' && Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : null;
 };
 const hlutur = (o) => !!o && typeof o === 'object' && !Array.isArray(o);
+// kassastílar (bil, horn, rammi, breidd …): [lágmark, hámark], sömu mörk og KASSI í vefur/site/efni.js
+const KASSI = { pt: [0, 400], pb: [0, 400], pl: [0, 400], pr: [0, 400], mt: [-200, 400], mb: [-200, 400], mw: [120, 2400], h: [0, 2000], r: [0, 200], bw: [0, 20], gap: [0, 200], op: [0.05, 1], dal: [1, 6] };
 function textaStillOk(o) {
   const n = {};
   let x;
+  for (const k of Object.keys(KASSI)) if ((x = tala(o[k], KASSI[k][0], KASSI[k][1])) !== null) n[k] = x;
+  if ((x = litur(o.bg))) n.bg = x;
+  if ((x = litur(o.bc))) n.bc = x;
+  if (o.sk === 'none' || o.sk === 's' || o.sk === 'm' || o.sk === 'l') n.sk = o.sk;
+  if (o.jf === 'v' || o.jf === 'm' || o.jf === 'h') n.jf = o.jf;
+  if (o.fal === true) n.fal = true;
   if (typeof o.ff === 'string' && LETUR.includes(o.ff)) n.ff = o.ff;
   if ((x = tala(o.fs, 8, 200)) !== null) n.fs = x;
   if ((x = tala(o.fw, 100, 900)) !== null) n.fw = x;
@@ -222,8 +232,37 @@ function hreinsaEfni(efni) {
       if (!lykillOk(k) || !o || typeof o !== 'object' || Array.isArray(o)) continue;
       const n = {};
       if (typeof o.h === 'string') n.h = hreinsaHtml(o.h);
+      if (typeof o.href === 'string' && slodOk(o.href)) n.href = slodOk(o.href);
       for (const b of ['s', 'sm']) if (hlutur(o[b])) n[b] = textaStillOk(o[b]);
       ut.t[k] = n;
+    }
+  }
+  if (efni.k) {      // svæði: kaflar, spjöld, listar
+    ut.k = {};
+    for (const k of Object.keys(efni.k)) {
+      const o = efni.k[k];
+      if (!lykillOk(k) || !hlutur(o)) continue;
+      const n = {};
+      for (const b of ['s', 'sm']) if (hlutur(o[b])) n[b] = textaStillOk(o[b]);
+      ut.k[k] = n;
+    }
+  }
+  if (efni.rod) {      // röð barna innan svæðis
+    ut.rod = {};
+    for (const k of Object.keys(efni.rod)) {
+      const l = efni.rod[k];
+      if (!lykillOk(k) || !Array.isArray(l)) continue;
+      ut.rod[k] = [...new Set(l.filter(lykillOk))].slice(0, 80);
+    }
+  }
+  if (efni.utlit) {      // þema: tákn → litur, letur af lista eða tala
+    ut.utlit = {};
+    for (const k of Object.keys(efni.utlit).slice(0, 120)) {
+      const v = efni.utlit[k];
+      if (!/^--[a-z0-9-]{1,40}$/.test(k)) continue;
+      if (typeof v === 'number' && Number.isFinite(v)) ut.utlit[k] = Math.min(4000, Math.max(0, v));
+      else if (litur(v)) ut.utlit[k] = litur(v);
+      else if (typeof v === 'string' && LETUR.includes(v)) ut.utlit[k] = v;
     }
   }
   if (efni.m) {
@@ -248,8 +287,8 @@ function hreinsaEfni(efni) {
 
 function efniOk(efni) {
   if (!efni || typeof efni !== 'object' || Array.isArray(efni)) return 'efni vantar';
-  for (const k of Object.keys(efni)) if (!['t', 'm', 'hetja', 'litir', 'myndasafn'].includes(k)) return 'Óþekktur hluti í efni: ' + k.slice(0, 30);
-  for (const k of ['t', 'm']) if (efni[k] !== undefined && (typeof efni[k] !== 'object' || efni[k] === null || Array.isArray(efni[k]))) return 'Ógilt efni';
+  for (const k of Object.keys(efni)) if (!['t', 'm', 'k', 'rod', 'utlit', 'hetja', 'litir', 'myndasafn'].includes(k)) return 'Óþekktur hluti í efni: ' + k.slice(0, 30);
+  for (const k of ['t', 'm', 'k', 'rod', 'utlit']) if (efni[k] !== undefined && (typeof efni[k] !== 'object' || efni[k] === null || Array.isArray(efni[k]))) return 'Ógilt efni';
   if (efni.litir !== undefined && !Array.isArray(efni.litir)) return 'Ógilt litaval';
   if (efni.myndasafn !== undefined && !Array.isArray(efni.myndasafn)) return 'Ógilt myndasafn';
   if (Buffer.byteLength(JSON.stringify(efni)) > MAX_EFNI) return 'Drögin eru of stór';
