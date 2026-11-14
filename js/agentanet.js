@@ -42,7 +42,7 @@
     rukkari: ['bokari', 'postur', 'logfraedingur', 'endurskodandi']
   };
   var NYIR = ['fyrirtaeki', 'postur', 'thjonustugatt', 'logfraedingur', 'endurskodandi', 'innkaupabokari', 'birgdastjori', 'kodafraedingur',
-    'utlitsserfraedingur', 'opp', 'verkstadur', 'kjarni-vefur', 'artcraft', 'skraning', 'gatakort'];
+    'utlitsserfraedingur', 'opp', 'verkstadur', 'kjarni-vefur', 'artcraft', 'skraning'];   // merkið segir „nýr 04.11“: aðeins agentar frá þeim degi
   var VEFIR = { brunaholf: 'Brunahólf', slokkvitaeki: 'Slökkvitæki', kjarni: 'Kjarni' };
   var VEF_ROD = ['brunaholf', 'slokkvitaeki', 'kjarni'];
   var FONTS = 'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Rajdhani:wght@500;600;700&family=Cinzel:wght@600;700&display=swap';
