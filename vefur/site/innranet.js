@@ -46,7 +46,8 @@
   function innskraning() {
     var nn = '';
     try { nn = localStorage.getItem(LS_NN) || ''; } catch (e) {}
-    var g = gluggi('<h3 id="brr-inn-titill">Innskráning starfsfólks</h3><p>Sama notandanafn og lykilorð og í stjórnstöðinni og Slökkvitæki-appinu.</p>' +
+    /* glugginn sem allir geta opnað segir ekkert um innri kerfin: aðeins notandanafn og lykilorð */
+    var g = gluggi('<h3 id="brr-inn-titill">Innskráning</h3>' +
       '<form><label for="brr-inn-nn">Notandanafn</label><input type="text" id="brr-inn-nn" autocomplete="username" autocapitalize="characters" autocorrect="off" spellcheck="false" maxlength="8" value="' + esc(nn) + '">' +
       '<label for="brr-inn-lykilord">Lykilorð</label><input type="password" id="brr-inn-lykilord" autocomplete="current-password">' +
       '<p class="brr-villa" data-r="villa" role="alert" hidden></p><div class="brr-hnappar"><button type="button" class="brr-h" data-r="loka">Hætta við</button>' +
@@ -61,7 +62,7 @@
       fetch(INN, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'login', nn: n, password: lyk }) }).then(svarJson).then(function (r) {
         if (r.status !== 200) {
           return segja(r.status === 401 ? 'Rangt notandanafn eða lykilorð.' : r.status === 429 ? 'Of margar rangar tilraunir. Reyndu aftur eftir nokkrar mínútur.'
-            : r.status === 503 ? 'Innskráning starfsmanna hefur ekki verið sett upp á þjóninum.' : 'Innskráning mistókst.');
+            : r.status === 503 ? 'Innskráning hefur ekki verið sett upp á þjóninum.' : 'Innskráning mistókst.');
         }
         try { localStorage.setItem(LS_NN, n); } catch (x) {}
         return stada().then(function (s) { if (s.status === 200) valmynd(s.j); else segja('Innskráningin tókst, en leiðirnar náðust ekki. Reyndu aftur.'); });
@@ -95,7 +96,7 @@
     stada().then(function (r) {
       if (r.status === 200) valmynd(r.j);
       else if (r.status === 401 || r.status === 403) innskraning();
-      else if (r.status === 503) { gluggi('<h3 id="brr-inn-titill">Innskráning starfsfólks</h3><p>Innskráning starfsmanna hefur ekki verið sett upp á þjóninum.</p><div class="brr-hnappar"><button type="button" class="brr-h brr-blar" data-r="loka">Loka</button></div>'); }
+      else if (r.status === 503) { gluggi('<h3 id="brr-inn-titill">Innskráning</h3><p>Innskráning hefur ekki verið sett upp á þjóninum.</p><div class="brr-hnappar"><button type="button" class="brr-h brr-blar" data-r="loka">Loka</button></div>'); }
       else skilabod('Ekki náðist samband við þjóninn. Reyndu aftur.');
     }).catch(function () { skilabod('Ekki náðist samband við þjóninn. Reyndu aftur.'); });
   }
