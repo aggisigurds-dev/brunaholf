@@ -537,3 +537,13 @@ Færðir punktar · Tillögur · Símaviðmót · Stöðuskýrsla.
 - **Hvað:** sleðinn „Stærð tákna" (50–250 %) og litareitur við hvert tákn sem er á kortinu, með „Upprunalegir litir". Vistast á verkinu, eins á öllum
   tækjum; breytir aðeins útliti. Kóði: `tk` (margfaldari á `zs` og `merkisR`) og `LITIR` (lykill = heiti tákns, t.d. „Loft 125-160") í KortClient.
 - **Prófað** með skrif gripin: sleði 100 → 200 %, litur breyttur og endurstilltur; sendingarnar réttar. Stöðuskýrslan notar sína eigin liti (óbreytt).
+
+## Eitt merkjasett og neongræn fylling (14.11.2026)
+- **Sömu merkin alls staðar** (kjarni main d677d7b). Agnar: „Af hverju ertu að nota sitthvor merkin … X í öðru og plúsmerkið mitt í öðru. Erum búnir að eyða
+  gríðarlegum tíma að gera hitt fínt." Merkjastíll símans (útlína í lit stærðar, ✓ per klárað stakt verk) er nú líka á tölvu (`miro` í KortClient), og
+  táknalistinn og litalistinn nota `MerkiSvg`. Gömlu X/fylltu táknin (`TaknSvg`, else-greinin í teikningunni) eru aðeins á bak við
+  `skr_verk.stillingar.eldriTakn` (ekkert viðmót). **Aldrei smíða nýtt viðmót með gömlu táknunum.** Sannreynt á lifandi tölvusýn.
+- **Neongræn fylling = tilbúið** (kjarni main 921d393). Agnar: „Í staðinn fyrir þennan stóra tígul yfir þegar eitthvað er ready. Er ekki hægt að setja
+  neongrænt innfill inn í táknin." Merki fyllist (`NEON_FYLL`) þegar ekkert er opið, hinn endann vantar hvergi, og bæði stöku verkin eru kláruð eða ein
+  skráning er öll lokunin (gólf, plata samkvæmt myndgreiningu). Græni tígullinn (parað áætlað gat, „fullt") er ekki teiknaður lengur í þessum stíl;
+  guli tígullinn („vantar hluta") og rauðu punktarnir eru óbreyttir. Skýring: „Tilbúið" í neðri stiku símans og setning í hliðarstiku tölvu.
