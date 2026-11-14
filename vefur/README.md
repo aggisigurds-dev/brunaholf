@@ -12,7 +12,7 @@ Efni og virkni eru þau sömu í öllum þremur: forsíða, Brunaþéttingar, ve
 
 ## Skipta um aðalútgáfu
 
-Aðalsíðan er sú sem heitir `index.html`. Til að gera aðra útgáfu að aðalsíðu: endurnefna `index.html` í `v2.html` og síðu hinnar útgáfunnar (`v1.html` eða `v3.html`) í `index.html`. Allar slóðir í síðunum eru afstæðar við þessa möppu, svo ekkert annað breytist.
+Aðalsíðan er sú sem heitir `index.html`. Til að gera aðra útgáfu að aðalsíðu: endurnefna `index.html` í `v2.html` og síðu hinnar útgáfunnar (`v1.html` eða `v3.html`) í `index.html`. Allar slóðir í síðunum eru afstæðar við þessa möppu. Eitt þarf að fylgja: listinn `window.BH_UTGAFUR` neðst í síðunum þremur (heiti og skrá hverrar útgáfu), sem bannerasafnið notar til að skipta á milli þeirra.
 
 ## Breytingar úr tillögunum í Claude
 
@@ -22,6 +22,8 @@ Vefurinn er smíðaður úr þremur Claude-artifactum, tillögunum V2, V1 og V3,
 - Skrár hinna útgáfnanna fara undir `v1-skrar/` og `v3-skrar/`. Þar verður `url(../img/…)` í stílblaði að `url(../../img/…)`, því skráin liggur einni möppu dýpra.
 - `index.html` tillögunnar er aðeins innihald síðunnar. Hér stendur það í heilu HTML-skjali: það sem er ofan við fyrsta stak síðunnar í tillögunni (`<div class="bh2 …">` í V2, `<div class="bh …">` í V1, `<svg width="0" …>` í V3) fer inn í `<head>`, á eftir línunum sem þar standa fyrir, að frátöldum `<title>`, athugasemdinni og `claude:viewport-fit-sides`. Í `v1.html` og `v3.html` fá eigin skrár útgáfunnar forskeytið `v1-skrar/` eða `v3-skrar/`.
 - `site/router.js` og `verslun/verslun.js` eru sameiginleg öllum síðunum, og `verslun/verslun.css` er sameiginleg V2 og V1. Breytist þau í einni tillögunni þurfa hinar að fylgja.
+- Línan `<script>window.BH_UTGAFUR=…</script>` neðst í hverri síðu er aðeins hér, ekki í tillögunum, því hver tillaga stendur ein.
+- Myndir bannerasafnsins (`img/banner/`, `img/hetja-v3.webp`, `img/verslun-hetja.webp`) eru sameiginlegar; nýr banner í einni tillögunni þarf að fara í hinar.
 - Eftir færslu eru allar síðurnar keyrðar í vafra eins og lýst er undir „Prófað“.
 
 ## Skrár
@@ -32,11 +34,11 @@ Vefurinn er smíðaður úr þremur Claude-artifactum, tillögunum V2, V1 og V3,
 | `site/sida.css`, `ds/` | Útlit V2 og hönnunarkerfi þess. |
 | `v1-skrar/` | Það sem V1 á ein: hönnunarkerfið (`ds/`), stílblaðið (`site/sida.css`) og vörugögnin (`verslun/gogn.js`). |
 | `v3-skrar/` | Það sem V3 á ein: stílblaðið (`site/sida.css`), stílblað verslunarinnar (`verslun/verslun.css`) og vörugögnin (`verslun/gogn.js`). |
-| `site/router.js` | Sýnirnar þrjár og slóðirnar, og neðst skriftan sem stýrir myndskeiðinu í forsíðuhausnum. Sameiginleg öllum síðunum. |
+| `site/router.js` | Sýnirnar þrjár og slóðirnar, og í seinni hlutanum bannerasafnið og skriftan sem stýrir myndskeiðinu í forsíðuhausnum. Sameiginleg öllum síðunum. |
 | `verslun/verslun.js` | Verslunin sjálf, tekin úr `vefverslun/` í kóðasafni Slökkvitækja-appsins og aðlöguð á sjö stöðum sem taldir eru upp efst í skránni. Sameiginleg öllum síðunum. |
 | `verslun/verslun.css` | Útlit verslunarinnar í V2 og V1. |
 | `verslun/gogn.js` | Vörur, verð, birgðir og stillingar verslunarinnar fyrir V2, þar á meðal litir hennar í `efni.thema`. |
-| `img/`, `vv/v/`, `myndir/` | Merkið, forsíðumyndir og myndskeiðið í forsíðuhausnum, vörumyndir (heitið er númer vörunnar) og myndir á vörusíðum. Sameiginlegar. |
+| `img/`, `vv/v/`, `myndir/` | Merkið, myndskeiðið í forsíðuhausnum og myndir bannerasafnsins (þrjár þeirra í `img/banner/`), vörumyndir (heitið er númer vörunnar) og myndir á vörusíðum. Sameiginlegar. |
 
 ## Slóðir
 
@@ -71,9 +73,28 @@ Vafrinn tekur fyrri `<source>`-línuna sem hann getur spilað.
 - Það fer ekki sjálft í gang þar sem hreyfing er afþökkuð í tækinu (`prefers-reduced-motion`), gagnasparnaður er á eða tengingin er hæg, og það stöðvast á meðan hausinn sést ekki.
 - Takkinn í hausnum stöðvar það og ræsir. Án skriftu stendur kyrrmyndin ein.
 - Skipta um myndskeið: setja báðar skrárnar undir sömu heitum og kyrrmyndina sem fyrsta ramma þess. HEVC-skráin þarf merkið `hvc1`; sé hún ekki til má taka fyrri `<source>`-línuna út, því H.264-skráin spilast alls staðar. Slikjan yfir myndskeiðinu er stillt eftir þessu myndskeiði, svo litamun textans þarf að mæla aftur. Hún er blá í V2 (`.w-hero--video::after` í `site/sida.css`) og V1 (`.c-hero::after` í `v1-skrar/site/sida.css`) og svört í V3 (`.hero--video::after` í `v3-skrar/site/sida.css`).
-- Taka það út: eyða `<video>` og takkanum úr hausnum í öllum síðunum. Þá stendur kyrrmyndin eftir.
+- Taka það út: festa annan banner í hausnum (sjá Bannerasafnið hér fyrir neðan). Myndskeiðið er þá ekki sótt.
 
 Myndskeiðið er aðkeypt lagerefni af núverandi vef. Leyfið fyrir því þarf að gilda áfram á nýja vefnum.
+
+## Bannerasafnið
+
+Forsíðuhausinn sýnir einn banner úr safni sem er sameiginlegt öllum útgáfunum: listinn `BANNERAR` í seinni hluta `site/router.js`.
+
+| Heiti | `id` | Mynd |
+|---|---|---|
+| Eldur, myndskeið | `eldur` | Myndskeiðið, yfir kyrrmyndinni `img/hetja-eldur.webp`. Er á öllum síðunum núna. |
+| Eldur, kyrrmynd | `eldur-kyrr` | `img/hetja-eldur.webp` |
+| Húsið | `hus` | `img/hetja-v3.webp`, forsíðumynd fyrstu tillagnanna |
+| Hús við vatn | `hus-vatn` | `img/verslun-hetja.webp`, forsíðumynd verslunarinnar |
+| Hús, breið mynd | `hus-breid` | `img/banner/hus-breid.webp`, úr þjónustugáttinni |
+| Sólarlag | `solarlag` | `img/banner/solarlag.webp`, innskráningarmynd þjónustugáttarinnar, spegluð svo húsið sé hægra megin |
+| Logi | `logi` | `img/banner/logi.webp`, teikningin af síðunni Slökkvitæki á núverandi brunaholf.is. Pappírinn er framlengdur til vinstri svo Logi standi hægra megin við textann. |
+
+- **Skoða og bera saman:** `?bannerar` aftan við slóð síðunnar, t.d. `/vefur/?bannerar`, opnar bannerasafnið neðst á síðunni. Þar er skipt á milli bannera og á milli útgáfnanna þriggja, og hlekkurinn sem þar stendur sýnir síðuna með völdum banner (`?hetja=<id>`). Þetta er forskoðun: valið fylgir slóðinni og breytir engu fyrir aðra gesti.
+- **Festa banner:** setja `id` hans í `data-hetja` á hausnum í síðunni og skrána hans í `src` á `<img data-hetja-mynd>` í sama haus, svo rétta myndin sjáist strax þegar síðan opnast. `<video>` og takkinn mega standa: skriftan felur þau þegar bannerinn er kyrrmynd og sækir myndskeiðið þá ekki.
+- **Nýr banner:** setja myndina í `img/banner/` og bæta línu í `BANNERAR` með `id`, `heiti`, `gerd: 'mynd'`, `mynd` og `pos` (`object-position` myndarinnar í hausnum). Ljós mynd fær `ljos: true`.
+- **Slikjan undir textanum** er í stílblaði hverrar útgáfu. V2 og V3 hafa þrjár: fyrir eldinn, fyrir aðrar myndir (`[data-hetja-gerd="mynd"]`, þéttari því húsin eru björt þar sem eldmyndin er dökk) og fyrir ljósa mynd (`[data-hetja-ljos]`). Í V1 er myndin hægra megin í hausnum og slikjan þétt undir textanum; þar er aðeins sérregla fyrir ljósa mynd. Eftir nýjan banner þarf að mæla litamun textans yfir myndinni.
 
 ## Þjónustugáttin
 
@@ -114,3 +135,5 @@ Skrárnar eins og þær standa hér voru keyrðar í vafra (Chromium):
 - Myndskeiðið í forsíðuhausnum (H.264-skráin; prófunarvafrinn spilar ekki HEVC): spilar, takkinn stöðvar það og ræsir (líka með lyklaborði), það stöðvast þegar farið er af forsíðunni eða skrunað frá hausnum, er ekki sótt þegar hreyfing er afþökkuð eða síðan er opnuð beint á versluninni. HEVC-skráin var lesin með ffprobe: Main, þrep 4.0, merkið `hvc1`.
 - Hausinn með hlekknum á þjónustugáttina í fjórtán breiddum frá 320 til 1920 px á hverri útgáfu: engin lárétt skrun.
 - Textinn yfir myndskeiðinu, mældur á móti því sem er á bak við hann í 27 römmum (einn á sekúndu) í þrettán breiddum frá 360 til 1920 px: stór fyrirsögn nær 3:1 og annar texti 4,5:1 í hverjum ramma.
+- Bannerasafnið á hverri útgáfu: hver banner sést í hausnum á tölvu og síma, myndskeiðið er ekki sótt þegar bannerinn er kyrrmynd, safnið (`?bannerar`) skiptir um banner og um útgáfu, afritar hlekkinn og lokast, og engin lárétt skrun verður niður í 320 px.
+- Textinn yfir hverri kyrrmynd safnsins (sex myndir), mældur á móti myndinni á bak við hann í þrettán breiddum frá 360 til 1920 px á hverri útgáfu: stór fyrirsögn nær 3:1 og annar texti 4,5:1.

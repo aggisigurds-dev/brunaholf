@@ -98,8 +98,12 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
    er eins og á núverandi vef, en þéttari undir textanum. Takkinn stöðvar það og ræsir. Skriftan er neðst í site/router.js. */
 .hero--video{position:relative;overflow:hidden;background:var(--hero-a)}
 .hero__bak{position:absolute;inset:0}
-.hero__bak :is(img,video){position:absolute;inset:0;width:100%;height:100%;max-width:none;object-fit:cover;object-position:center;pointer-events:none}
+.hero__bak :is(img,video){position:absolute;inset:0;width:100%;height:100%;max-width:none;object-fit:cover;object-position:var(--hetja-pos,center);pointer-events:none}
 .hero--video::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(80deg,#000 0%,rgba(0,0,0,.88) 34%,rgba(0,0,0,.66) 58%,rgba(0,0,0,.22) 84%,rgba(0,0,0,0) 100%)}
+/* Aðrir bannerar en eldurinn (data-hetja-gerd="mynd"; bannerasafnið er neðst í site/router.js): slikjan er þéttari undir textanum,
+   því húsin á myndunum eru björt þar sem eldmyndin er dökk. Ljós mynd (data-hetja-ljos, teikningin af Loga) fær hana enn þéttari. */
+.hero--video[data-hetja-gerd="mynd"]::after{background:linear-gradient(80deg,#000 0%,rgba(0,0,0,.9) 36%,rgba(0,0,0,.78) 58%,rgba(0,0,0,.54) 76%,rgba(0,0,0,.14) 92%,rgba(0,0,0,0) 100%)}
+.hero--video[data-hetja-ljos]::after{background:linear-gradient(80deg,#000 0%,rgba(0,0,0,.92) 40%,rgba(0,0,0,.82) 60%,rgba(0,0,0,.7) 68%,rgba(0,0,0,.5) 77%,rgba(0,0,0,.12) 92%,rgba(0,0,0,0) 100%)}
 .hero--video .wrap{position:relative;z-index:1}
 .hero__spila{position:absolute;z-index:2;top:1.1rem;right:calc(max(0px,(100% - var(--maxw)) / 2) + max(var(--gutter),env(safe-area-inset-right,0px)));display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;cursor:pointer;transition:background .15s ease}
 .hero__spila:hover{background:rgba(255,255,255,.28)}
@@ -293,7 +297,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 @media (max-width:700px){
   .hero{align-items:flex-end}
   /* sími: textinn er neðst í hausnum, svo slikjan þéttist niður á við og eldurinn sést ofan við hann */
-  .hero--video::after{background:linear-gradient(180deg,rgba(0,0,0,.3) 0%,rgba(0,0,0,.74) 46%,rgba(0,0,0,.93) 100%)}
+  .hero--video::after,.hero--video[data-hetja-gerd="mynd"]::after{background:linear-gradient(180deg,rgba(0,0,0,.3) 0%,rgba(0,0,0,.74) 46%,rgba(0,0,0,.93) 100%)}
+  .hero--video[data-hetja-ljos]::after{background:linear-gradient(180deg,rgba(0,0,0,.72) 0%,rgba(0,0,0,.84) 46%,rgba(0,0,0,.93) 100%)}
 }
 @media (max-width:640px){
   .um__list{grid-template-columns:1fr}
