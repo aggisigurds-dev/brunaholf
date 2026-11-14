@@ -1,0 +1,316 @@
+/* Stílblað síðunnar „Brunahólf vefur, núverandi útlit“. Verslunin á sitt eigið (verslun/verslun.css); kaflinn um hana hér lagar hana að síðunni. */
+/* Layout: follows brunaholf.is. Navy bands (header, inspection band, footer) frame white reading sections; one charcoal-to-steel hero;
+   orange marks the single highlighted phrase in each heading and the one action. Questrial headings, Inter text. */
+:root{
+  --navy:#1b2a4d; --navy-deep:#131e38; --navy-line:#33426b; --on-navy:#f7fafc; --on-navy-muted:#b4bfd6;
+  --orange:#f15a24; --orange-strong:#d9480f; --orange-on-navy:#ff7a45; --orange-text:#c2410c; --orange-tint:#fdece5;
+  --bg:#ffffff; --bg-alt:#f4f6fa; --surface:#ffffff; --heading:#2d3748; --text:#4a5568; --muted:#647089; --line:#e2e8f0;
+  --plate:#f3f5f9; --notice:#3b4863; --chip-on:#1b2a4d; --chip-on-fg:#ffffff;
+  --hero-a:#05070b; --hero-b:#171b23; --hero-c:#3d4452; --hero-d:#7d8597; --on-hero:#f1f3f6;
+  --shadow:0 1px 2px rgba(27,42,77,.06),0 16px 32px -16px rgba(27,42,77,.25);
+  --radius:14px; --maxw:1240px; --gutter:clamp(20px,4vw,40px); --header-h:78px;
+  --font-head:"Questrial","Century Gothic","Avenir Next",Avenir,"Trebuchet MS",sans-serif;
+  --font-body:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+/* One look by design: the page mirrors brunaholf.is, which has a single (light) appearance, so every colour is set
+   explicitly above and does not follow the viewer's theme. */
+
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:1.0625rem;line-height:1.65;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overflow-x:hidden}
+:is(h1,h2,h3):where(:not(#vv-app *)){margin:0;font-family:var(--font-head);font-weight:400;color:var(--heading);letter-spacing:-.02em;line-height:1.1;text-wrap:balance}
+:is(h1,h2) em:where(:not(#vv-app *)){font-style:normal;color:var(--orange)}
+p:where(:not(#vv-app *)){margin:0}
+:is(ul,ol):where(:not(#vv-app *)){margin:0;padding:0;list-style:none}
+a:where(:not(#vv-app *)){color:inherit;text-decoration:none}
+img{display:block;max-width:100%}
+button{font:inherit}
+:focus-visible:where(:not(#vv-app *)){outline:2px solid var(--orange);outline-offset:3px;border-radius:4px}
+.site{position:relative}
+.wrap{max-width:var(--maxw);margin-inline:auto;padding-left:max(var(--gutter),env(safe-area-inset-left,0px));padding-right:max(var(--gutter),env(safe-area-inset-right,0px))}
+.section{padding-block:clamp(4rem,9vw,7.5rem)}
+.ic{flex:none;width:1.25em;height:1.25em;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+.nw{white-space:nowrap}
+::selection{background:rgba(241,90,36,.28)}
+a,button{-webkit-tap-highlight-color:rgba(241,90,36,.16)}
+#top{scroll-margin-top:9999px}
+section[id],footer[id]{scroll-margin-top:calc(var(--header-h) + env(safe-area-inset-top,0px))}
+
+.skip{position:absolute;left:12px;top:-80px;z-index:100;background:#fff;color:#1b2a4d;padding:.6em 1em;border-radius:8px;font-weight:600;transition:top .15s ease}
+.skip:focus{top:calc(env(safe-area-inset-top,0px) + 12px)}
+
+/* ---- notice ---- */
+.notice{background:var(--notice);color:#fff;font-size:.95rem;line-height:1.5}
+.notice__in{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:1rem;padding-block:.75rem}
+.notice__in p{grid-column:2;text-align:center;max-width:74ch}
+.notice a{font-weight:700;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px}
+.notice strong{font-weight:700;white-space:nowrap}
+.notice button{grid-column:3;justify-self:end;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.55);border-radius:6px;padding:.42em .95em;font-size:.88rem;cursor:pointer;white-space:nowrap;transition:background .15s ease,border-color .15s ease}
+.notice button:hover{background:rgba(255,255,255,.12);border-color:#fff}
+
+/* ---- header ---- */
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--navy);z-index:60}
+.site-header{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:var(--navy);color:var(--on-navy);box-shadow:0 1px 0 rgba(255,255,255,.07)}
+.site-header__in{display:flex;align-items:center;justify-content:space-between;gap:1.5rem;min-height:var(--header-h)}
+.brand{display:inline-flex;align-items:center;border-radius:6px}
+.brand img{height:52px;width:auto}
+.nav{display:flex;align-items:center;gap:clamp(1.4rem,2.8vw,2.5rem)}
+.nav a{position:relative;padding:.55rem 0;font-size:.98rem;font-weight:500;color:var(--on-navy);transition:color .15s ease}
+.nav a::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;border-radius:2px;background:var(--orange);transform:scaleX(0);transform-origin:left;transition:transform .22s ease}
+.nav a:hover::after,.nav a[aria-current]::after{transform:scaleX(1)}
+.nav a[aria-current]{color:var(--orange-on-navy)}
+.site-header__r{display:flex;align-items:center;gap:clamp(1rem,2.2vw,1.8rem)}
+.cart{position:relative;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:10px;color:var(--on-navy);transition:background .15s ease}
+.cart:hover{background:rgba(255,255,255,.08)}
+.cart .ic{width:24px;height:24px}
+.cart__n{position:absolute;top:1px;right:-2px;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--orange);color:var(--navy-deep);font-size:.72rem;font-weight:700;line-height:20px;text-align:center;box-shadow:0 0 0 2px var(--navy)}
+.icon-btn{display:none;align-items:center;justify-content:center;width:44px;height:44px;margin-right:-10px;background:transparent;border:0;border-radius:10px;color:var(--on-navy);cursor:pointer}
+.icon-btn .ic{width:24px;height:24px}
+/* Þjónustugáttin: hlekkur á innskráningu viðskiptavina (slokkvitaeki.netlify.app/gatt/). Í hausnum með heiti á breiðum skjá, annars táknið eitt. */
+.gatt{display:inline-flex;align-items:center;justify-content:center;gap:.5em;flex:none;padding:.5em .9em;border:1px solid rgba(255,255,255,.42);border-radius:8px;color:var(--on-navy);font-size:.95rem;font-weight:600;white-space:nowrap;transition:background .15s ease}
+.gatt:hover{background:rgba(255,255,255,.1)}
+
+/* ---- mobile drawer ---- */
+.drawer{position:fixed;inset:0;z-index:80;display:flex;flex-direction:column;background:var(--navy-deep);color:var(--on-navy);
+  padding:calc(env(safe-area-inset-top,0px) + 10px) max(20px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 28px) max(20px,env(safe-area-inset-left,0px));overflow-y:auto}
+.drawer__top{display:flex;align-items:center;justify-content:space-between;min-height:54px;margin-bottom:1.2rem}
+.drawer__top img{height:40px;width:auto}
+.drawer__top .icon-btn{display:inline-flex}
+.drawer__link{display:flex;align-items:center;justify-content:space-between;padding:.85rem 0;border-bottom:1px solid var(--navy-line);font-family:var(--font-head);font-size:1.9rem;letter-spacing:-.02em;color:#fff}
+.drawer__link .ic{width:1.1rem;height:1.1rem;color:var(--orange)}
+.drawer__contact{margin-top:auto;padding-top:2rem;display:grid;gap:.3rem;color:var(--on-navy-muted);font-size:.95rem}
+.drawer__contact strong{color:#fff;font-weight:600}
+
+/* ---- hero ---- */
+.hero{display:flex;align-items:center;min-height:clamp(430px,56vw,780px);color:var(--on-hero);
+  background:linear-gradient(102deg,var(--hero-a) 0%,var(--hero-b) 32%,var(--hero-c) 66%,var(--hero-d) 100%)}
+.hero .wrap{width:100%;padding-block:clamp(3.5rem,8vw,6rem)}
+.hero__label{font-family:var(--font-head);font-size:clamp(1.15rem,2.1vw,1.85rem);letter-spacing:-.01em;color:#fff;margin-bottom:clamp(.7rem,1.5vw,1.3rem)}
+.hero h1{color:var(--on-hero);font-size:clamp(1.75rem,8.6vw,7.2rem);line-height:1.09;letter-spacing:-.03em}
+.hero h1 span{display:block}
+
+.hero--page{min-height:clamp(280px,32vw,440px)}
+.hero--page h1{font-size:clamp(1.75rem,6.6vw,5.2rem)}
+/* Forsíðuhausinn: myndskeiðið af núverandi brunaholf.is liggur yfir kyrrmynd af fyrsta ramma þess (img/hetja-eldur.webp).
+   Það er í tveimur sniðum í fullri upplausn: img/hetja-eldur-hevc.mp4 fyrir tæki sem spila HEVC, annars img/hetja-eldur.mp4 (H.264).
+   Kyrrmyndin sést þar til myndskeiðið spilar, og ein þar sem hreyfing er afþökkuð eða það næst ekki. Svarta slikjan frá vinstri
+   er eins og á núverandi vef, en þéttari undir textanum. Takkinn stöðvar það og ræsir. Skriftan er neðst í site/router.js. */
+.hero--video{position:relative;overflow:hidden;background:var(--hero-a)}
+.hero__bak{position:absolute;inset:0}
+.hero__bak :is(img,video){position:absolute;inset:0;width:100%;height:100%;max-width:none;object-fit:cover;object-position:center;pointer-events:none}
+.hero--video::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(80deg,#000 0%,rgba(0,0,0,.88) 34%,rgba(0,0,0,.66) 58%,rgba(0,0,0,.22) 84%,rgba(0,0,0,0) 100%)}
+.hero--video .wrap{position:relative;z-index:1}
+.hero__spila{position:absolute;z-index:2;top:1.1rem;right:calc(max(0px,(100% - var(--maxw)) / 2) + max(var(--gutter),env(safe-area-inset-right,0px)));display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;cursor:pointer;transition:background .15s ease}
+.hero__spila:hover{background:rgba(255,255,255,.28)}
+.hero__spila .ic{width:18px;height:18px}
+.hero__spila[data-stada="spilar"] .i-spila,.hero__spila[data-stada="stopp"] .i-stopp{display:none}
+
+/* ---- heading + content split (intro, services) ---- */
+.split{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(2rem,6vw,6rem);align-items:start}
+.split h2,.shop__head h2,.footer__title{font-size:clamp(2.1rem,4.4vw,3.6rem)}
+.split h2 .br{display:block}
+@media (min-width:901px){
+  .split h2{position:sticky;top:calc(var(--header-h) + env(safe-area-inset-top,0px) + 2.5rem)}
+}
+.prose{max-width:64ch}
+.prose p{font-size:1.125rem;line-height:1.8}
+.prose p + p{margin-top:1.3em}
+.prose .lead{font-size:clamp(1.2rem,1.75vw,1.42rem);line-height:1.6;color:var(--heading)}
+/* Kynningin á forsíðunni: ein inngangssetning og fjórir stuttir bitar með fyrirsögn, í stað samfellds texta */
+.um__lead{font-size:clamp(1.2rem,1.75vw,1.42rem);line-height:1.6;color:var(--heading)}
+.um__list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(1.4rem,2.6vw,2.2rem) clamp(1.5rem,3vw,3rem);margin-top:clamp(1.8rem,3vw,2.6rem)}
+.um__list li{min-width:0;padding-top:1.1rem;border-top:1px solid var(--line)}
+.um__list h3{font-family:var(--font-body);font-size:1.1rem;font-weight:700;letter-spacing:0;line-height:1.35;color:var(--heading)}
+.um__list p{margin-top:.45rem;font-size:1.02rem;line-height:1.7}
+
+/* ---- inspection band ---- */
+.band{background:var(--navy);color:var(--on-navy)}
+.band__title{max-width:17em;margin-inline:auto;text-align:center;color:#fff;font-size:clamp(2rem,4.8vw,4.1rem);line-height:1.13}
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(1rem,2vw,1.6rem);margin-top:clamp(2.4rem,5vw,4rem)}
+.steps li{padding:clamp(1.3rem,2.2vw,1.9rem);background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius)}
+.steps__n{display:block;margin-bottom:.9rem;font-family:var(--font-head);font-size:1.7rem;line-height:1;color:var(--orange)}
+.steps p{font-size:1.06rem;line-height:1.6;color:var(--on-navy)}
+.band__cta{display:flex;justify-content:center;margin-top:clamp(2.2rem,4vw,3.2rem)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.55em;padding:.82em 1.55em;border-radius:8px;background:var(--orange);color:#fff;font-weight:700;font-size:1.17rem;line-height:1.2;
+  box-shadow:0 10px 22px -12px rgba(241,90,36,.8);transition:background .15s ease,transform .15s ease}
+.btn:hover{background:var(--orange-strong);transform:translateY(-1px)}
+.btn .ic{width:1.05em;height:1.05em;stroke-width:2.2}
+
+/* ---- services ---- */
+.checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 clamp(1.5rem,3vw,3rem)}
+.checks ul{border-top:1px solid var(--line)}
+.checks li{display:grid;grid-template-columns:auto 1fr;gap:.85rem;align-items:start;padding:1rem 0;border-bottom:1px solid var(--line);color:var(--heading);font-weight:500;font-size:1.05rem;line-height:1.45}
+.tick{display:grid;place-items:center;width:1.65rem;height:1.65rem;border-radius:50%;background:var(--orange-tint);color:var(--orange-text)}
+.tick .ic{width:.95rem;height:.95rem;stroke-width:2.6}
+
+/* þjónustugáttin á forsíðunni: reitur undir þjónustulistanum með heiti, einni setningu og hnappi */
+.gattkort{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem 2rem;margin-top:clamp(2.2rem,4vw,3.4rem);padding:clamp(1.3rem,2.4vw,1.9rem) clamp(1.3rem,2.6vw,2.2rem);background:var(--bg-alt);border:1px solid var(--line);border-radius:var(--radius)}
+.gattkort h3{font-size:clamp(1.35rem,2.2vw,1.75rem)}
+.gattkort p{margin-top:.35rem}
+.btn--line{background:transparent;color:var(--heading);box-shadow:inset 0 0 0 1.5px var(--heading)}
+.btn--line:hover{background:var(--heading);color:#fff}
+
+/* ---- shop ---- */
+.shop{background:var(--bg-alt);border-top:1px solid var(--line)}
+.shop__head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:1rem 2.5rem;margin-bottom:clamp(1.6rem,3vw,2.3rem)}
+.shop__hours{display:flex;align-items:flex-start;gap:.65rem;max-width:30rem;font-size:.98rem;line-height:1.5;color:var(--text)}
+.shop__hours .ic{width:1.3rem;height:1.3rem;margin-top:.1rem;color:var(--orange-text)}
+.shop__hours strong{display:block;color:var(--heading);font-weight:600}
+.filters{position:relative;display:flex;flex-wrap:wrap;gap:.45rem;margin-bottom:clamp(1.2rem,2.4vw,1.8rem)}
+.filters button{flex:none;display:inline-flex;align-items:center;gap:.5em;padding:.48em .85em;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--text);font-size:.875rem;font-weight:600;white-space:nowrap;cursor:pointer;transition:background .15s ease,color .15s ease,border-color .15s ease}
+.filters button span{font-size:.82em;font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums}
+.filters button:hover{border-color:var(--chip-on);color:var(--heading)}
+.filters button[aria-pressed="true"]{background:var(--chip-on);border-color:var(--chip-on);color:var(--chip-on-fg)}
+.filters button[aria-pressed="true"] span{color:inherit;opacity:.72}
+.products--kynning{grid-template-columns:repeat(6,minmax(0,1fr))!important}
+.shop__more{display:flex;justify-content:center;margin-top:clamp(1.6rem,3vw,2.4rem)}
+.products{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));grid-auto-rows:1fr;gap:clamp(.75rem,1.5vw,1.25rem)}
+.product{display:flex;min-width:0}
+.product__link{display:flex;flex-direction:column;width:100%;min-width:0;padding:.6rem .6rem .8rem;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.product__link:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:var(--orange)}
+/* square photo plate: every plate is the same size and the photo is fitted inside it, whatever its shape */
+.product__img{position:relative;display:block;height:0;padding:0 0 100%;background:var(--plate);border-radius:calc(var(--radius) - 5px);overflow:hidden}
+.product__img img{position:absolute;top:7%;left:7%;width:86%;height:86%;max-width:none;object-fit:contain;mix-blend-mode:multiply;transition:transform .25s ease}
+.product__link:hover .product__img img{transform:scale(1.05)}
+.product__name{display:block;margin:.8rem .3rem 0;color:var(--heading);font-size:.93rem;font-weight:500;line-height:1.38;overflow-wrap:anywhere}
+.product__foot{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin:auto .3rem 0;padding-top:.75rem}
+.product__price{color:var(--heading);font-size:1.02rem;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.product__go{display:grid;place-items:center;width:1.8rem;height:1.8rem;border:1px solid var(--line);border-radius:50%;color:var(--orange-text);transition:background .18s ease,color .18s ease,border-color .18s ease}
+.product__go .ic{width:.95rem;height:.95rem;stroke-width:2.2}
+.product__link:hover .product__go{background:var(--orange);border-color:var(--orange);color:#fff}
+
+/* ---- footer ---- */
+.footer{background:var(--navy);color:var(--on-navy)}
+.footer__title{color:#fff;padding-top:clamp(3.5rem,7vw,5.5rem)}
+.footer__grid{display:grid;grid-template-columns:minmax(0,1.3fr) repeat(3,minmax(0,1fr));gap:clamp(2rem,4vw,3.5rem);padding-block:clamp(2rem,4vw,3rem) clamp(2.5rem,5vw,4rem)}
+.footer__brand img{height:54px;width:auto;margin-left:-3px}
+.footer__brand p{margin-top:1.1rem;max-width:25ch;color:var(--on-navy);font-size:1.08rem;font-weight:600;line-height:1.5}
+/* Facebook-síðan: hlekkur undir merkinu í fætinum, opnast í nýjum flipa */
+.footer__fb{display:inline-flex;align-items:center;gap:.55em;min-height:36px;margin-top:1.1rem;color:#fff;font-weight:600;text-underline-offset:4px}
+.footer__fb:hover{text-decoration:underline}
+.footer__fb svg{width:1.35rem;height:1.35rem}
+.footer h3{font-family:var(--font-body);font-size:1.15rem;font-weight:700;letter-spacing:0;line-height:1.3;color:#fff}
+.footer__co{margin-top:.15rem;font-size:.9rem;color:var(--on-navy-muted)}
+.contact{display:grid;gap:.75rem;margin-top:1.1rem}
+.contact li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:.7rem;align-items:center;font-size:1.02rem;line-height:1.35}
+.contact .ic{width:1.35rem;height:1.35rem;color:var(--orange)}
+.contact a{overflow-wrap:anywhere;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:4px;transition:text-decoration-color .15s ease,color .15s ease}
+.contact a:hover{color:#fff;text-decoration-color:var(--orange)}
+.contact small{font-size:.86em;color:var(--on-navy-muted)}
+.footer__hours p{margin-top:1.1rem;line-height:1.6}
+.footer__hours strong{display:block;color:#fff;font-weight:700}
+.footer__bottom{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.4rem 2rem;padding-block:1.4rem 1.6rem;border-top:1px solid var(--navy-line);font-size:.9rem;color:var(--on-navy-muted)}
+
+/* ---- the web shop inside this page. Its own stylesheet and script run as they are; these rules fit it into the page:
+        the page's header and footer replace the shop's own, and it takes the page's colours, fonts and corners
+        (the colours also reach it through the shop's own theme settings, set from the same values at build time). ---- */
+#vv-app{display:flex;flex-direction:column;min-width:0;--r-btn:8px;--f-head:var(--font-body);--f-body:var(--font-body)}
+#vv-app>*{width:100%;min-width:0}
+#vv-app .vv-hetja{order:-2}
+#vv-app .vv-traust{order:-1}
+/* the shop's own logo, tabs, footer and cart button are not shown: the page's header carries the logo, the menu and the cart */
+#vv-app .vv-flipar,#vv-app .vv-fotur,#vv-app .vv-haus .vv-logo,#vv-app .vv-haus-h{display:none}
+#vv-app .vv-wrap{max-width:var(--maxw);padding-left:max(var(--gutter),env(safe-area-inset-left,0px));padding-right:max(var(--gutter),env(safe-area-inset-right,0px))}
+/* big headings in the page's display face (Questrial, regular weight), everything else in its text face */
+#vv-app :is(.vv-hetja h1,.vv-titilrod h2,.vv-titilrod h1,.vv-yfir,.vv-vara-h h1,.vv-cta h3,.vv-h3){font-family:var(--font-head);font-weight:400;letter-spacing:-.02em}
+/* the shop front opens with the same charcoal-to-steel band as the front page, without a picture */
+#vv-app .vv-hetja{background:linear-gradient(102deg,var(--hero-a) 0%,var(--hero-b) 32%,var(--hero-c) 66%,var(--hero-d) 100%)}
+#vv-app .vv-hetja>.vv-m,#vv-app .vv-hetja::after{display:none}
+#vv-app .vv-hetja .vv-wrap{padding-block:clamp(3rem,6vw,5rem)}
+#vv-app .vv-hetja h1{font-size:clamp(2.2rem,5.2vw,4.4rem);line-height:1.08}
+#vv-app .vv-hetja-yfir{color:#fff}
+#vv-app .vv-hetja p{color:var(--on-hero)}
+#vv-app .vv-haus{background:transparent;color:var(--heading)}
+#vv-app .vv-haus .vv-wrap{min-height:0;padding-block:20px 0}
+#vv-app .vv-leit{min-width:0;max-width:520px;border-radius:8px;box-shadow:inset 0 0 0 1px var(--line)}
+#vv-app .vv-adal{padding-top:26px}
+#vv-app .vv-kort{border:1px solid var(--line)}
+#vv-app .vv-kort:hover{border-color:var(--orange);box-shadow:var(--shadow)}
+/* product photos: the same air around every photo, so none touches the edge of its frame */
+#vv-app .vv-kort-m .vv-m{padding:16px}
+#vv-app .vv-galleri .vv-m[data-m="vara.galleri"]{padding:28px}
+#vv-app .vv-traust .vv-ico{flex:none}
+#vv-app .vv-flokk{border:1px solid var(--line);background:var(--surface);color:var(--text)}
+#vv-app .vv-flokk:hover{border-color:var(--chip-on);color:var(--heading)}
+#vv-app .vv-flokk[aria-pressed=true]{background:var(--chip-on);border-color:var(--chip-on);color:var(--chip-on-fg)}
+#vv-app .vv-cta .vv-btn.ghost{display:none}      /* „Spyrja Loga": spjallið fylgir ekki þessari síðu */
+#vv-app .vv-bordi .vv-bordi-merki{flex:0 1 auto;min-width:0}
+#vv-app .vv-bordi .vv-bordi-merki b{font-size:22px;line-height:1.15}
+#vv-app .vv-samantekt{top:calc(var(--header-h) + env(safe-area-inset-top,0px) + 16px)}
+#vv-app .vv-karfa-l,#vv-app .vv-samantekt{min-width:0}
+#vv-app .vv-reitir input{min-width:0;width:100%}
+/* emphasis: the darker orange for small text on light, the brand orange on the dark bands */
+#vv-app .vv-aherslu{color:var(--orange-text)}
+#vv-app .vv-hetja .vv-aherslu,#vv-app .vv-blad.navy .vv-aherslu,#vv-app .vv-cta .vv-aherslu,#vv-app .vv-bordi .vv-aherslu,#vv-app .vv-samantekt .vv-aherslu{color:var(--orange)}
+/* small text on the orange badges is dark: white on this orange is only 3.4:1 */
+#vv-app .vv-merki.lagt,#vv-app .vv-112 b{color:var(--navy-deep)}
+.vv-toast{font-family:var(--font-body);bottom:calc(24px + env(safe-area-inset-bottom,0px))}
+@media (max-width:980px){
+  #vv-app .vv-karfa{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:940px){
+  #vv-app .vv-traust .vv-wrap{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 20px}
+}
+@media (max-width:640px){
+  #vv-app .vv-flokkar[aria-label="Flokkar"]{margin-inline:calc(-1 * var(--gutter));padding-inline:var(--gutter);scroll-padding-inline:var(--gutter)}
+  #vv-app .vv-leit{max-width:none}
+  #vv-app .vv-kort-m .vv-m{padding:12px}
+  #vv-app .vv-galleri .vv-m[data-m="vara.galleri"]{padding:18px}
+  #vv-app .vv-bordi .vv-bordi-merki b{font-size:20px}
+}
+
+/* ---- responsive ---- */
+@media (max-width:1100px){
+  .products--kynning{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+}
+@media (max-width:1000px){
+  .footer__grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  /* hausinn: heiti þjónustugáttarinnar víkur fyrir tákninu einu */
+  .gatt{width:44px;height:44px;padding:0;border:0;border-radius:10px}
+  .gatt span{display:none}
+  .gatt .ic{width:24px;height:24px}
+}
+@media (max-width:900px){
+  .split{grid-template-columns:1fr;gap:1.6rem}
+  .split h2 .br--wide{display:inline}
+  .steps{grid-template-columns:1fr}
+  .steps li{display:grid;grid-template-columns:auto 1fr;gap:1.1rem;align-items:start}
+  .steps__n{margin:0;padding-top:.12em}
+}
+@media (max-width:860px){
+  :root{--header-h:64px}
+  .nav{display:none}
+  .site-header__r{gap:.15rem}
+  .icon-btn{display:inline-flex}
+  .brand img{height:42px}
+  .notice__in{grid-template-columns:1fr;gap:.65rem;padding-block:.9rem}
+  .notice__in p,.notice button{grid-column:1}
+  .notice button{justify-self:stretch;padding:.6em}
+  .filters{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-inline:calc(var(--gutter) * -1);padding:2px var(--gutter)}
+  .filters::-webkit-scrollbar{display:none}
+}
+@media (max-width:700px){
+  .hero{align-items:flex-end}
+  /* sími: textinn er neðst í hausnum, svo slikjan þéttist niður á við og eldurinn sést ofan við hann */
+  .hero--video::after{background:linear-gradient(180deg,rgba(0,0,0,.3) 0%,rgba(0,0,0,.74) 46%,rgba(0,0,0,.93) 100%)}
+}
+@media (max-width:640px){
+  .um__list{grid-template-columns:1fr}
+  .checks{grid-template-columns:1fr}
+  .checks ul + ul{border-top:0}
+  .footer__grid{grid-template-columns:1fr}
+  .footer__bottom{flex-direction:column}
+}
+@media (max-width:560px){
+  .products--kynning{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .products{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .product__link{padding:.45rem .45rem .7rem}
+  .product__name{font-size:.88rem;margin-inline:.25rem}
+  .product__foot{margin-inline:.25rem}
+  .product__price{font-size:.96rem}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{transition:none!important}
+}

@@ -45,6 +45,18 @@
     root.style.scrollBehavior = 'auto';
     try { fn(); } finally { setTimeout(function () { root.style.scrollBehavior = ''; }, 0); }
   }
+  /* Bein slóð á kafla (t.d. #hafa-samband): síðan lengist eftir fyrstu skrunun þegar vörukynningin, myndir og letur hlaðast,
+     svo kaflinn færist undan. Skrunað er aftur að honum þar til sá sem skoðar hreyfir síðuna sjálfur. */
+  var beint = null;
+  function afturAdKafla() {
+    var t = beint && nuna !== 'verslun' ? d.getElementById(beint) : null;
+    if (sest(t)) hopp(function () { t.scrollIntoView(); });
+  }
+  ['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(function (n) {
+    window.addEventListener(n, function () { beint = null; }, { passive: true });
+  });
+  window.addEventListener('load', afturAdKafla);
+  if (d.fonts && d.fonts.ready) d.fonts.ready.then(afturAdKafla);
   function syna(fyrsta) {
     var h = location.hash.slice(1), adur = nuna;
     nuna = synFyrir(h);
@@ -54,13 +66,14 @@
     if (nuna !== 'verslun' && (nuna !== adur || fyrsta)) {
       /* kaflinn var falinn þegar smellt var, svo vafrinn gat ekki skrunað að honum sjálfur */
       var t = h && h !== 'top' && h !== 'brunathettingar' ? d.getElementById(h) : null;
-      if (sest(t)) t.scrollIntoView();
+      if (sest(t)) { t.scrollIntoView(); beint = fyrsta ? h : null; }
       else if (nuna !== adur) window.scrollTo(0, 0);
     }
     virkur();
     if (C.vidSyn) C.vidSyn(nuna);
   }
   window.addEventListener('hashchange', function () {
+    beint = null;
     if (synFyrir(location.hash.slice(1)) !== nuna || nuna === 'verslun') hopp(function () { syna(false); });
     else syna(false);
   });
@@ -100,6 +113,7 @@
     ul.innerHTML = vorur.slice(0, C.kynningFjoldi).map(function (v) { return C.kynningarKort(synd(v, VV), VV); }).join('');
     var n = d.getElementById('allar-n');
     if (n) n.textContent = ' (' + vorur.length + ')';
+    afturAdKafla();
   }
   function uppfaera() {
     var n = fjoldi(), merki = d.getElementById('w-cart-n');
