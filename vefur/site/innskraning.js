@@ -49,6 +49,24 @@
     if (o.vidLokun) o.vidLokun();
     return o;
   }
+  /* Skjárinn sést ekki fyrr en stílblaðið hans er komið: á hægri tengingu stæðu reitirnir annars ósniðnir neðst á síðunni
+     augnablik. Þegar hann birtist fær fyrsti auði reiturinn fókusinn (eða fyrsti hlekkurinn í valmyndinni), því falið stak
+     tekur ekki við fókus og kallarinn reyndi það of snemma. */
+  function bidaStila(h) {
+    var l = d.querySelector('link[rel="stylesheet"][href$="innskraning.css"]');
+    if (!l || l.sheet) return;
+    h.style.visibility = 'hidden';
+    var syna = function () {
+      if (!h.style.visibility) return;
+      h.style.visibility = '';
+      if (!h.isConnected || h.contains(d.activeElement) && d.activeElement !== h) return;
+      var r = Array.prototype.filter.call(h.querySelectorAll('.bhi-kort input'), function (x) { return !x.value; })[0] || h.querySelector('.bhi-kort a[href], .bhi-kort button');
+      if (r) r.focus({ preventScroll: true });
+    };
+    l.addEventListener('load', syna);
+    l.addEventListener('error', syna);
+    setTimeout(syna, 3000);
+  }
   /* o: { html (það sem fer í kortið), titillId, breitt, klasi, vidLokun (kallað þegar skjánum er lokað, ekki þegar annar tekur við) } */
   function skjar(o) {
     var fyrri = opinn ? loka(false) : null;
@@ -78,6 +96,7 @@
       }
       if (e.target.closest('[data-bhi="loka"]')) loka();
     });
+    bidaStila(h);
     d.body.appendChild(h);
     opinn = { hula: h, fyrriFokus: fyrri ? fyrri.fyrriFokus : d.activeElement, yfirflaedi: fyrri ? fyrri.yfirflaedi : d.documentElement.style.overflow, vidLokun: o.vidLokun };
     d.documentElement.style.overflow = 'hidden';      /* síðan undir skrunar ekki á meðan */

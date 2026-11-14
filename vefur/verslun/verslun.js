@@ -1,4 +1,4 @@
-/* Vefverslun Brunahólfs: skrifta verslunarinnar, tekin úr vefverslun/verslun.js í kóðasafni Slökkvitækja-appsins (afritað 13.11.2026).
+/* Vefverslun Brunahólfs: skrifta verslunarinnar, tekin úr vefverslun/verslun.js í kóðasafni Slökkvitækja-appsins (afritað 14.11.2026).
    Aðlöguð á þessum stöðum svo hún keyri inni í þessari síðu:
    1. gögnin koma úr verslun/gogn.js (window.BH_VV_GOGN), ekki af /api/vefverslun
    2. ritillinn (ritill.js) fylgir ekki: VV.breytaLeyft = false
