@@ -6,38 +6,41 @@ Kyrrstæður vefur án smíðaskrefs: skrárnar í þessari möppu eru vefurinn 
 |---|---|
 | `index.html` | V2, aðalsíðan. Hönnunarkerfið Brunahólf V2: ljósblár grunnur, hvít spjöld með mjúkum skugga, letrið Poppins. |
 | `v1.html` | V1, geymd til hliðar. Hönnunarkerfið Brunahólf: dökkblár haus með flipum, pillulaga hnappar. |
+| `v3.html` | V3, geymd til hliðar. Útlit núverandi brunaholf.is: dökkblár haus, hvítur grunnur, appelsínugul áhersla, letrið Questrial í fyrirsögnum og Inter í texta. |
 
-Efni og virkni eru þau sömu í báðum: forsíða, Brunaþéttingar, vefverslun (42 vörur, vörusíður, karfa) og Hafa samband á hverri sýn.
+Efni og virkni eru þau sömu í öllum þremur: forsíða, Brunaþéttingar, vefverslun (42 vörur, vörusíður, karfa) og Hafa samband á hverri sýn.
 
-## Skipta yfir í V1
+## Skipta um aðalútgáfu
 
-Endurnefna `index.html` í `v2.html` og `v1.html` í `index.html`. Allar slóðir í síðunum eru afstæðar við þessa möppu, svo ekkert annað breytist.
+Aðalsíðan er sú sem heitir `index.html`. Til að gera aðra útgáfu að aðalsíðu: endurnefna `index.html` í `v2.html` og síðu hinnar útgáfunnar (`v1.html` eða `v3.html`) í `index.html`. Allar slóðir í síðunum eru afstæðar við þessa möppu, svo ekkert annað breytist.
 
 ## Breytingar úr tillögunum í Claude
 
-Vefurinn er smíðaður úr tveimur Claude-artifactum, tillögunum V2 og V1, sem bera sömu skrár og hér. Fínpússun fer fram þar og er svo færð hingað. Hlekkirnir á tillögurnar eru í minninu undir efninu `vefsida`.
+Vefurinn er smíðaður úr þremur Claude-artifactum, tillögunum V2, V1 og V3, sem bera sömu skrár og hér. Fínpússun fer fram þar og er svo færð hingað. Hlekkirnir á tillögurnar eru í minninu undir efninu `vefsida`.
 
-- Skrár aðalsíðunnar fara óbreyttar á sinn stað: `site/sida.css`, `ds/` og `verslun/gogn.js`.
-- Skrár hinnar útgáfunnar fara undir `v1-skrar/`. Þar verður `url(../img/…)` í stílblaði að `url(../../img/…)`, því skráin liggur einni möppu dýpra.
-- `index.html` tillögunnar er aðeins innihald síðunnar. Hér stendur það í heilu HTML-skjali: það sem er ofan við `<div class="bh2 …">` í tillögunni (`<div class="bh …">` í V1) fer inn í `<head>`, á eftir línunum sem þar standa fyrir, að frátöldum `<title>`, athugasemdinni og `claude:viewport-fit-sides`. Í `v1.html` fá eigin skrár útgáfunnar forskeytið `v1-skrar/`.
-- `site/router.js`, `verslun/verslun.js` og `verslun/verslun.css` eru sameiginleg báðum síðum. Breytist þau í annarri tillögunni þarf hin að fylgja.
-- Eftir færslu eru báðar síður keyrðar í vafra eins og lýst er undir „Prófað“.
+- Skrár aðalsíðunnar fara óbreyttar á sinn stað: `site/sida.css`, `ds/`, `verslun/gogn.js` og `verslun/verslun.css`.
+- Skrár hinna útgáfnanna fara undir `v1-skrar/` og `v3-skrar/`. Þar verður `url(../img/…)` í stílblaði að `url(../../img/…)`, því skráin liggur einni möppu dýpra.
+- `index.html` tillögunnar er aðeins innihald síðunnar. Hér stendur það í heilu HTML-skjali: það sem er ofan við fyrsta stak síðunnar í tillögunni (`<div class="bh2 …">` í V2, `<div class="bh …">` í V1, `<svg width="0" …>` í V3) fer inn í `<head>`, á eftir línunum sem þar standa fyrir, að frátöldum `<title>`, athugasemdinni og `claude:viewport-fit-sides`. Í `v1.html` og `v3.html` fá eigin skrár útgáfunnar forskeytið `v1-skrar/` eða `v3-skrar/`.
+- `site/router.js` og `verslun/verslun.js` eru sameiginleg öllum síðunum, og `verslun/verslun.css` er sameiginleg V2 og V1. Breytist þau í einni tillögunni þurfa hinar að fylgja.
+- Eftir færslu eru allar síðurnar keyrðar í vafra eins og lýst er undir „Prófað“.
 
 ## Skrár
 
 | Skrá | Hvað er í henni |
 |---|---|
-| `index.html`, `v1.html` | Texti og uppbygging. Neðst í hvorri eru stillingar leiðarskriftunnar (`window.BH_SITE`). |
+| `index.html`, `v1.html`, `v3.html` | Texti og uppbygging. Neðst í hverri eru stillingar leiðarskriftunnar (`window.BH_SITE`). |
 | `site/sida.css`, `ds/` | Útlit V2 og hönnunarkerfi þess. |
 | `v1-skrar/` | Það sem V1 á ein: hönnunarkerfið (`ds/`), stílblaðið (`site/sida.css`) og vörugögnin (`verslun/gogn.js`). |
-| `site/router.js` | Sýnirnar þrjár og slóðirnar, og neðst skriftan sem stýrir myndskeiðinu í forsíðuhausnum. Sameiginleg báðum síðum. |
-| `verslun/verslun.js`, `verslun/verslun.css` | Verslunin sjálf, tekin úr `vefverslun/` í kóðasafni Slökkvitækja-appsins og aðlöguð á sjö stöðum sem taldir eru upp efst í skránni. Sameiginleg báðum síðum. |
+| `v3-skrar/` | Það sem V3 á ein: stílblaðið (`site/sida.css`), stílblað verslunarinnar (`verslun/verslun.css`) og vörugögnin (`verslun/gogn.js`). |
+| `site/router.js` | Sýnirnar þrjár og slóðirnar, og neðst skriftan sem stýrir myndskeiðinu í forsíðuhausnum. Sameiginleg öllum síðunum. |
+| `verslun/verslun.js` | Verslunin sjálf, tekin úr `vefverslun/` í kóðasafni Slökkvitækja-appsins og aðlöguð á sjö stöðum sem taldir eru upp efst í skránni. Sameiginleg öllum síðunum. |
+| `verslun/verslun.css` | Útlit verslunarinnar í V2 og V1. |
 | `verslun/gogn.js` | Vörur, verð, birgðir og stillingar verslunarinnar fyrir V2, þar á meðal litir hennar í `efni.thema`. |
 | `img/`, `vv/v/`, `myndir/` | Merkið, forsíðumyndir og myndskeiðið í forsíðuhausnum, vörumyndir (heitið er númer vörunnar) og myndir á vörusíðum. Sameiginlegar. |
 
 ## Slóðir
 
-Síðan er ein skrá með þremur sýnum sem skipt er á milli með #-slóðum.
+Hver síða er ein skrá með þremur sýnum sem skipt er á milli með #-slóðum.
 
 | Slóð | Sýn |
 |---|---|
@@ -50,9 +53,11 @@ Síðan er ein skrá með þremur sýnum sem skipt er á milli með #-slóðum.
 
 Leiðarskriftan reiðir sig á þessi stök í síðunum: `#heim`, `#brunasyn`, `#verslunarsyn`, `#vv-app`, `#kynning`, `#allar`, `#allar-n`, `.w-cart`, `#w-cart-n`, `#hafa-samband`, og valmyndarhlekkina með `data-spy`.
 
+Sé síða opnuð beint á kafla, t.d. `v3.html#hafa-samband`, skrunar leiðarskriftan aftur að honum á meðan síðan hleðst og lengist, þar til sá sem skoðar hreyfir síðuna sjálfur.
+
 ## Myndskeiðið í forsíðuhausnum
 
-Forsíðuhausinn í báðum útgáfum sýnir myndskeiðið sem er í forsíðuhaus núverandi brunaholf.is, í fullri upplausn (1920×1080, 26 sekúndur, án hljóðs) og í tveimur sniðum. Undir því liggur kyrrmynd af fyrsta ramma þess, `img/hetja-eldur.webp`.
+Forsíðuhausinn í öllum útgáfunum sýnir myndskeiðið sem er í forsíðuhaus núverandi brunaholf.is, í fullri upplausn (1920×1080, 26 sekúndur, án hljóðs) og í tveimur sniðum. Undir því liggur kyrrmynd af fyrsta ramma þess, `img/hetja-eldur.webp`.
 
 | Skrá | Snið | Stærð | Hver fær hana |
 |---|---|---|---|
@@ -65,18 +70,18 @@ Vafrinn tekur fyrri `<source>`-línuna sem hann getur spilað.
 - Kyrrmyndin sést þar til myndskeiðið spilar. Það er sótt eftir að síðan er hlaðin og aðeins þegar forsíðan er opin.
 - Það fer ekki sjálft í gang þar sem hreyfing er afþökkuð í tækinu (`prefers-reduced-motion`), gagnasparnaður er á eða tengingin er hæg, og það stöðvast á meðan hausinn sést ekki.
 - Takkinn í hausnum stöðvar það og ræsir. Án skriftu stendur kyrrmyndin ein.
-- Skipta um myndskeið: setja báðar skrárnar undir sömu heitum og kyrrmyndina sem fyrsta ramma þess. HEVC-skráin þarf merkið `hvc1`; sé hún ekki til má taka fyrri `<source>`-línuna út, því H.264-skráin spilast alls staðar. Bláa slikjan yfir myndskeiðinu (`.w-hero--video::after` í `site/sida.css`, `.c-hero::after` í `v1-skrar/site/sida.css`) er stillt eftir þessu myndskeiði, svo litamun textans þarf að mæla aftur.
-- Taka það út: eyða `<video>` og takkanum úr hausnum í báðum síðum. Þá stendur kyrrmyndin eftir.
+- Skipta um myndskeið: setja báðar skrárnar undir sömu heitum og kyrrmyndina sem fyrsta ramma þess. HEVC-skráin þarf merkið `hvc1`; sé hún ekki til má taka fyrri `<source>`-línuna út, því H.264-skráin spilast alls staðar. Slikjan yfir myndskeiðinu er stillt eftir þessu myndskeiði, svo litamun textans þarf að mæla aftur. Hún er blá í V2 (`.w-hero--video::after` í `site/sida.css`) og V1 (`.c-hero::after` í `v1-skrar/site/sida.css`) og svört í V3 (`.hero--video::after` í `v3-skrar/site/sida.css`).
+- Taka það út: eyða `<video>` og takkanum úr hausnum í öllum síðunum. Þá stendur kyrrmyndin eftir.
 
 Myndskeiðið er aðkeypt lagerefni af núverandi vef. Leyfið fyrir því þarf að gilda áfram á nýja vefnum.
 
 ## Þjónustugáttin
 
-Hlekkur á innskráningu viðskiptavina, `https://slokkvitaeki.netlify.app/gatt/`, er á tveimur stöðum í hvorri síðu: í hausnum (`a.w-gatt` í V2, `a.c-gatt` í V1; á mjóum skjá táknið eitt) og í spjaldi á forsíðunni. Gáttin sjálf býr í kóðasafni Slökkvitækja-appsins (`gatt/`). Setningin í spjaldinu er orðrétt af innskráningarsíðu hennar.
+Hlekkur á innskráningu viðskiptavina, `https://slokkvitaeki.netlify.app/gatt/`, er í hausnum (`a.w-gatt` í V2, `a.c-gatt` í V1, `a.gatt` í V3; á mjóum skjá táknið eitt) og í spjaldi á forsíðunni í hverri síðu. Í V3 er hann líka í valmyndinni sem opnast á síma. Gáttin sjálf býr í kóðasafni Slökkvitækja-appsins (`gatt/`). Setningin í spjaldinu er orðrétt af innskráningarsíðu hennar.
 
 ## Facebook
 
-Hlekkur á Facebook-síðuna er í fætinum í báðum síðum (`a.w-foot__fb` í V2, `a.c-foot__fb` í V1) og opnast í nýjum flipa. Slóðin er deilihlekkurinn sem Agnar lét í té: `https://www.facebook.com/share/1DqFztD5Uv/`.
+Hlekkur á Facebook-síðuna er í fætinum í öllum síðunum (`a.w-foot__fb` í V2, `a.c-foot__fb` í V1, `a.footer__fb` í V3) og opnast í nýjum flipa. Slóðin er deilihlekkurinn sem Agnar lét í té: `https://www.facebook.com/share/1DqFztD5Uv/`.
 
 ## Vörur og verslun
 
@@ -88,24 +93,24 @@ Hlekkur á Facebook-síðuna er í fætinum í báðum síðum (`a.w-foot__fb` �
 - Röð: röðin í `vorur` er röðin í versluninni, og fyrstu vörurnar sjást í vörukynningunni á forsíðunni.
 - Texti og myndir í versluninni: `efni.t["<lykill>"]` og `efni.m["<lykill>"]`. Lykillinn er `data-e` eða `data-m` á stakinu.
 
-Sé breytt í `verslun/gogn.js` þarf sama breyting að fara í `v1-skrar/verslun/gogn.js`.
+Sé breytt í `verslun/gogn.js` þarf sama breyting að fara í `v1-skrar/verslun/gogn.js` og `v3-skrar/verslun/gogn.js`.
 
 Verslunin er í prufuham: „Halda áfram í greiðslu“ sýnir skilaboð og sendir ekkert.
 
 ## Áður en lénið er tengt
 
 1. Stofna sérstakan Netlify-vef fyrir þessa möppu: Base directory `vefur`, engin build-skipun, Publish directory `vefur`. Rót þessa kóðasafns er stjórnstöðin og á ekki að svara á léninu. Vefurinn þarf sömu `ignore`-reglu og er í `netlify.toml` í rótinni, annars kostar hver ýting birtingu. Netlify-vefur stjórnstöðvarinnar bætir auk þess skriftu hennar við hverja HTML-síðu sem hann ber fram, líka þessar; sérstakur vefur gerir það ekki.
-2. Taka línuna `<meta name="robots" content="noindex">` úr báðum síðunum.
+2. Taka línuna `<meta name="robots" content="noindex">` úr öllum síðunum.
 3. Við DNS-breytinguna færist aðeins vefvísunin. Póstfærslur lénsins (MX) verða að standa óhreyfðar, annars hættir pósturinn að berast.
 4. Ákveða hvort verslunin fer í loftið með ótengda greiðslu og afrit af vöruskránni, eða bíður.
 
-## Prófað 13.11.2026
+## Prófað 14.11.2026
 
 Skrárnar eins og þær standa hér voru keyrðar í vafra (Chromium):
 
-- Sex síður (forsíða, Brunaþéttingar, vörulisti, tvær vörusíður, karfa) í sjö breiddum frá 320 til 1440 px á hvorri útgáfu: engin lárétt skrun, engar brotnar myndir, engir dauðir hlekkir, engar skriftuvillur.
-- Ferð kaupanda: valmynd, setja í körfu, flokkur, leit, röðun, vörusíða, karfa, greiðsluhnappurinn, beinar slóðir, til baka í vafra, valmynd og karfa á síma.
+- Sex síður (forsíða, Brunaþéttingar, vörulisti, tvær vörusíður, karfa) í sjö breiddum frá 320 til 1440 px á hverri útgáfu: engin lárétt skrun, engar brotnar myndir, engir dauðir hlekkir, engar skriftuvillur.
+- Ferð kaupanda: valmynd, setja í körfu, flokkur, leit, röðun, vörusíða, karfa, greiðsluhnappurinn, beinar slóðir (líka beint á kaflann Hafa samband), til baka í vafra, valmynd og karfa á síma.
 - Litamunur texta og bakgrunns nær 4,5:1 alls staðar nema á hvítum texta á appelsínugulum hnöppum.
 - Myndskeiðið í forsíðuhausnum (H.264-skráin; prófunarvafrinn spilar ekki HEVC): spilar, takkinn stöðvar það og ræsir (líka með lyklaborði), það stöðvast þegar farið er af forsíðunni eða skrunað frá hausnum, er ekki sótt þegar hreyfing er afþökkuð eða síðan er opnuð beint á versluninni. HEVC-skráin var lesin með ffprobe: Main, þrep 4.0, merkið `hvc1`.
-- Hausinn með hlekknum á þjónustugáttina í fjórtán breiddum frá 320 til 1440 px á hvorri útgáfu: engin lárétt skrun.
+- Hausinn með hlekknum á þjónustugáttina í fjórtán breiddum frá 320 til 1920 px á hverri útgáfu: engin lárétt skrun.
 - Textinn yfir myndskeiðinu, mældur á móti því sem er á bak við hann í 27 römmum (einn á sekúndu) í þrettán breiddum frá 360 til 1920 px: stór fyrirsögn nær 3:1 og annar texti 4,5:1 í hverjum ramma.
