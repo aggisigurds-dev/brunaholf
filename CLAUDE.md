@@ -72,7 +72,8 @@ data from Ajour, Google Drive/Sheets/Gmail integration, and a tilbod
   `vefur/index.html` er V2 (aðalsíðan); `vefur/v1.html` (V1) og `vefur/v3.html` (V3, núverandi útlit) eru til hliðar: forsíða, Brunaþéttingar og vefverslunin.
   **Ritill á síðunni (`?ritill`, 14.11.2026):** texti, myndir, lógó, bannerar og litir breytast á síðunni sjálfri og vistast sem efni (ekki kóði) gegnum
   `/api/vefur-efni` (`netlify/functions/vefur-efni.js`) í töflunum `vefur_efni` / `vefur_efni_saga` (RLS á, engar reglur; `sql/2026-11-14_vefur_efni.sql`).
-  Lykilorð: `VEFUR_RITILL_LYKILORD` (env, minnst 16 stafir); ósett = prufuhamur, ekkert vistast. Lyklar staka (`data-e`, `data-m`) mega aldrei breytast.
+  Innskráning ritilsins er notendaskrá starfsmanna (`hub_adgangar`, cookie `hub_user` úr `/api/hub-adgangar`); aðeins Admin vistar og birtir, án innskráningar er prufuhamur.
+  Lyklar staka (`data-e`, `data-m`) mega aldrei breytast.
   Skrár, slóðir, skipti milli útgáfa, færsla breytinga úr Claude-tillögunum og það sem þarf áður en lénið er tengt: `vefur/README.md`.
 - **Brunaþéttingar — verkstaða-appið (`brunathettingar.html`, `/brunathettingar`, 03.09.2026):**
   sér-PWA fyrir starfsmenn á verkstað (Boss-þema, `manifest-brunathettingar.json`). Fjórir flipar:

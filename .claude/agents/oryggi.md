@@ -105,8 +105,10 @@ Eyðublöð-kaflanum hjá framendi/skjol).
 frontend þarf ekki að snerta beint: færa aðganginn í Netlify-fall og læsa töflunni.
 `vefur_efni` + `vefur_efni_saga` (14.11.2026, `sql/2026-11-14_vefur_efni.sql`) fylgja sama mynstri og ganga
 skrefi lengra: RLS á, engar reglur, réttindi anon/authenticated tekin af, og fallið `/api/vefur-efni` er
-**lokað sjálfgefið** (503 á allt nema lestur á birtu efni þar til `VEFUR_RITILL_LYKILORD`, minnst 16 stafir,
-er sett). Mælt 14.11.2026 með opinbera lyklinum: GET, PATCH og POST skila 401 / 42501.
+**lokað án innskráningar** (401 á allt nema lestur á birtu efni). Innskráningin er notendaskráin `hub_adgangar`:
+fallið les cookie-ið `hub_user` og sannreynir það eins og `sessionUser` í `hub-adgangar.js` (breytist annað þarf hitt
+að fylgja), aðeins hlutverkið Admin má skrifa (annars 403), og skrif þurfa hausinn `x-ritill` og `Origin` af lista.
+Mælt 14.11.2026 með opinbera lyklinum: GET, PATCH og POST á töflurnar skila 401 / 42501.
 `charlize_contacts` (setup-tengilidir.sql) kveikir líka RLS strax við stofnun.
 **En taflan lekur gegnum view:** view keyra með réttindum eigandans, ekki anon. Tvö view lesa
 `charlize_contacts` og anon má lesa bæði: `v_charlize_contacts_active` (frá upphafi — netfang, kt,

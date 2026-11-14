@@ -1,7 +1,9 @@
 /* Ritill síðunnar. site/efni.js hleður þessari skrá þegar slóðin ber ?ritill.
    Smellt er á texta, mynd, lógó eða forsíðuhausinn á síðunni sjálfri og honum breytt í spjaldinu. Breytingarnar eru efni
    (sjá sniðið efst í site/efni.js), ekki kóði: þær vistast sem drög á þjóninum og fara til gesta þegar ýtt er á Birta.
-   - Innskráning: lykilorð ritilsins. Án hennar er ritillinn í prufuham: allt virkar, en ekkert vistast á þjóninum.
+   - Innskráning: notendaskrá starfsmanna (sama notandanafn og lykilorð og í stjórnstöðinni og Slökkvitæki-appinu), gegnum
+     /api/hub-adgangar sem setur cookie. Aðeins Admin má breyta vefnum. Án innskráningar er ritillinn í prufuham: allt
+     virkar á skjánum, en ekkert vistast á þjóninum.
    - Sími: stærðir og uppröðun sem breytt er í símabreidd gilda aðeins á síma (sm í efninu). Á tölvu sýnir „Sími“ síðuna
      í ramma í símabreidd.
    - „Breytingar sem texti“ sýnir efnið sem JSON, svo hægt sé að afrita það, laga og setja inn aftur. */
@@ -12,7 +14,8 @@
   var U = E.utgafa, API = E.api;
   var q = new URLSearchParams(location.search);
   var IRAMMA = q.has('rammi');
-  var LS_TOK = 'bh_ritill_tok', LS_NAFN = 'bh_me', SS_PRUFA = 'bh_ritill_prufa_' + U;
+  var LS_NN = 'bh_ritill_nn', SS_PRUFA = 'bh_ritill_prufa_' + U;
+  var INN = API.replace(/[^\/]*$/, 'hub-adgangar');      /* innskráning starfsmanna, á sama vef og fallið */
 
   function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function $(sel, rot) { return (rot || d).querySelector(sel); }
@@ -49,7 +52,7 @@
   }
 
   var R = window.BH_RITILL = {
-    efni: {}, birt: {}, birtNr: 0, grunnur: null, tok: null, nafn: '', hamur: 'hled', astaeda: '', villa: '',
+    efni: {}, birt: {}, birtNr: 0, grunnur: null, nafn: '', hamur: 'hled', astaeda: '', villa: '',
     val: null, svid: 'reit', saga: [], fram: [], sLykill: null, sTimi: 0, ovistad: false, obirt: false, vistar: false, timi: null, breyta: true,
     simi: window.matchMedia(E.simi).matches, litaBreyting: false
   };
@@ -57,11 +60,16 @@
 
   /* ---- samskipti við þjóninn ---- */
   function svarJson(r) { return r.json().catch(function () { return {}; }).then(function (j) { return { status: r.status, j: j || {} }; }); }
+  /* innskráningin er cookie á þessum vef: hún fylgir beiðnum á sama uppruna. Hausinn x-ritill segir að beiðnin komi frá síðunni. */
+  var HAUSAR = { 'Content-Type': 'application/json', 'x-ritill': '1' };
   function kalla(body) {
-    return fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-ritill-tok': R.tok || '' }, body: JSON.stringify(body) }).then(svarJson);
+    return fetch(API, { method: 'POST', credentials: 'same-origin', headers: HAUSAR, body: JSON.stringify(body) }).then(svarJson);
   }
-  function saekja(auka) {
-    return fetch(API + '?utgafa=' + encodeURIComponent(U) + (auka || ''), { headers: R.tok ? { 'x-ritill-tok': R.tok } : {} }).then(svarJson);
+  function saekja(auka) {      /* birt efni (ekkert auka) er sótt án cookie, eins og gestir sækja það */
+    return fetch(API + '?utgafa=' + encodeURIComponent(U) + (auka || ''), auka ? { credentials: 'same-origin', cache: 'no-store' } : { credentials: 'omit' }).then(svarJson);
+  }
+  function innskraning(body) {
+    return fetch(INN, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(svarJson);
   }
 
   /* ---- skilaboð og gluggar ---- */
@@ -155,7 +163,7 @@
         R.grunnur = r.j.grunnur; R.vistadKl = Date.now(); R.villa = '';
         if (JSON.stringify(R.efni) === sent) R.ovistad = false; else R.timi = setTimeout(vista, 400);
       } else if (r.status === 409) arekstur(r.j);
-      else if (r.status === 401) { R.villa = 'Innskráning rann út'; utskra(); }
+      else if (r.status === 401 || r.status === 403) lokid(r.status === 403);
       else R.villa = 'Vistun mistókst: ' + (r.j.villa || r.status);
       stada();
       return r.status === 200;
@@ -514,9 +522,9 @@
     if (R.hamur === 'prufa') {
       prufa = '<div class="brr-ath brr-gult"><strong>Prufuhamur.</strong> Þú getur prófað allt, en ekkert vistast og gestir sjá engar breytingar. ' +
         (R.astaeda === 'utskrad' ? 'Skráðu þig inn til að vista.<div class="brr-hnappar" style="margin-top:8px"><button type="button" class="brr-h brr-blar" data-r="innskra">Skrá inn</button></div>'
-          : R.astaeda === 'ovirkt' ? 'Vistun er ekki virk enn: lykilorð ritilsins hefur ekki verið sett á þjóninum.'
-            : R.astaeda === 'stutt' ? 'Vistun er ekki virk: lykilorð ritilsins á þjóninum er of stutt (þarf minnst 16 stafi).'
-            : R.astaeda === 'geymsla' ? 'Geymslan á þjóninum er ekki tilbúin enn.' : 'Ekki náðist samband við þjóninn.') + '</div>';
+          : R.astaeda === 'heimild' ? 'Notandinn sem er skráður inn má ekki breyta vefnum (aðeins notendur með hlutverkið Admin).<div class="brr-hnappar" style="margin-top:8px"><button type="button" class="brr-h brr-blar" data-r="innskra">Skrá inn sem annar notandi</button></div>'
+            : R.astaeda === 'ovirkt' ? 'Innskráning starfsmanna hefur ekki verið sett upp á þjóninum.'
+              : R.astaeda === 'geymsla' ? 'Geymslan á þjóninum er ekki tilbúin enn.' : 'Ekki náðist samband við þjóninn.') + '</div>';
     }
     return prufa + kafli('', '<p style="margin:0 0 6px">Smelltu á það sem þú vilt breyta:</p><ul style="margin:0;padding-left:18px;line-height:1.7"><li><b>Texta</b>: skrifaðu beint í hann</li>' +
       '<li><b>Hluta af texta</b>: veldu orðin og breyttu letri, stærð eða lit</li><li><b>Mynd eða lógó</b>: skipta um, stækka eða minnka</li><li><b>Forsíðuhausinn</b>: velja banner og hæð</li></ul>' +
@@ -709,7 +717,7 @@
       (inn ? '<button type="button" role="menuitem" data-r="saga">Útgáfusaga…</button>' : '') +
       '<button type="button" role="menuitem" data-r="henda">Henda óbirtum breytingum</button>' +
       '<button type="button" role="menuitem" data-r="json">Breytingar sem texti…</button>' +
-      (inn ? '<button type="button" role="menuitem" data-r="utskra">Skrá út</button>' : R.astaeda === 'utskrad' ? '<button type="button" role="menuitem" data-r="innskra">Skrá inn</button>' : '');
+      (inn ? '<button type="button" role="menuitem" data-r="utskra">Skrá út</button>' : R.astaeda === 'utskrad' || R.astaeda === 'heimild' ? '<button type="button" role="menuitem" data-r="innskra">Skrá inn</button>' : '');
     d.body.appendChild(m);
     m.addEventListener('click', function (e) {
       var b = e.target.closest('[data-r]');
@@ -745,10 +753,12 @@
   }
   function birta() {
     if (R.hamur !== 'innskrad') {
-      gluggi('<h3>Birting er ekki í boði í prufuham</h3><p>' + (R.astaeda === 'utskrad' ? 'Skráðu þig inn með lykilorði ritilsins til að vista og birta breytingar.'
-        : R.astaeda === 'ovirkt' || R.astaeda === 'stutt' ? 'Vistun hefur ekki verið virkjuð: lykilorð ritilsins (VEFUR_RITILL_LYKILORD, minnst 16 stafir) hefur ekki verið sett á þjóninum. Þangað til er hægt að prófa ritilinn, en ekkert vistast.'
-          : 'Ekki náðist í geymsluna á þjóninum.') + '</p><div class="brr-hnappar">' +
-        (R.astaeda === 'utskrad' ? '<button type="button" class="brr-h brr-blar" data-r="inn">Skrá inn</button>' : '') + '<button type="button" class="brr-h" data-r="haetta">Loka</button></div>')
+      var ma = R.astaeda === 'utskrad' || R.astaeda === 'heimild';
+      gluggi('<h3>Birting er ekki í boði í prufuham</h3><p>' + (R.astaeda === 'utskrad' ? 'Skráðu þig inn með notandanafni og lykilorði til að vista og birta breytingar.'
+        : R.astaeda === 'heimild' ? 'Notandinn sem er skráður inn má ekki breyta vefnum. Aðeins notendur með hlutverkið Admin geta vistað og birt.'
+          : R.astaeda === 'ovirkt' ? 'Innskráning starfsmanna hefur ekki verið sett upp á þjóninum. Þangað til er hægt að prófa ritilinn, en ekkert vistast.'
+            : 'Ekki náðist í geymsluna á þjóninum.') + '</p><div class="brr-hnappar">' +
+        (ma ? '<button type="button" class="brr-h brr-blar" data-r="inn">Skrá inn</button>' : '') + '<button type="button" class="brr-h" data-r="haetta">Loka</button></div>')
         .addEventListener('click', function (e) { if (e.target.closest('[data-r="inn"]')) { this.remove(); gluggiInnskraning(); } });
       return;
     }
@@ -827,24 +837,31 @@
     });
   }
   function gluggiInnskraning() {
-    var nafn = '';
-    try { nafn = localStorage.getItem(LS_NAFN) || ''; } catch (e) {}
-    var g = gluggi('<h3>Innskráning í ritilinn</h3><p>Með innskráningu vistast breytingarnar á þjóninum og hægt er að birta þær.</p>' +
-      '<form><label for="brr-nafn">Nafn</label><input type="text" id="brr-nafn" autocomplete="name" value="' + esc(nafn) + '">' +
-      '<label for="brr-lykilord">Lykilorð ritilsins</label><input type="password" id="brr-lykilord" autocomplete="current-password">' +
+    var nn = '';
+    try { nn = localStorage.getItem(LS_NN) || ''; } catch (e) {}
+    var g = gluggi('<h3>Innskráning</h3><p>Sama notandanafn og lykilorð og í stjórnstöðinni og Slökkvitæki-appinu. Með innskráningu vistast breytingarnar á þjóninum og hægt er að birta þær.</p>' +
+      '<form><label for="brr-nn">Notandanafn</label><input type="text" id="brr-nn" autocomplete="username" autocapitalize="characters" autocorrect="off" spellcheck="false" maxlength="8" value="' + esc(nn) + '">' +
+      '<label for="brr-lykilord">Lykilorð</label><input type="password" id="brr-lykilord" autocomplete="current-password">' +
       '<p class="brr-villa" data-r="villa" hidden></p><div class="brr-hnappar"><button type="button" class="brr-h" data-r="haetta">Skoða án innskráningar</button>' +
       '<button type="submit" class="brr-h brr-blar">Skrá inn</button></div></form>');
+    var takki = $('button[type="submit"]', g);
     $('form', g).addEventListener('submit', function (e) {
       e.preventDefault();
-      var villa = $('[data-r="villa"]', g), n = $('#brr-nafn', g).value.trim();
-      kalla({ adgerd: 'innskra', lykilord: $('#brr-lykilord', g).value, nafn: n }).then(function (r) {
-        if (r.status !== 200) { villa.hidden = false; villa.textContent = r.status === 503 ? 'Vistun er ekki virk: lykilorð ritilsins hefur ekki verið sett á þjóninum.' : (r.j.villa || 'Innskráning mistókst'); return; }
-        R.tok = r.j.tok;
-        try { localStorage.setItem(LS_TOK, R.tok); if (n) localStorage.setItem(LS_NAFN, n); } catch (x) {}
-        g.remove();
+      var villa = $('[data-r="villa"]', g), n = $('#brr-nn', g).value.trim().toUpperCase(), lyk = $('#brr-lykilord', g).value;
+      function segja(s) { villa.hidden = false; villa.textContent = s; takki.disabled = false; }
+      if (!n || !lyk) return segja('Notandanafn og lykilorð vantar.');
+      takki.disabled = true;
+      innskraning({ action: 'login', nn: n, password: lyk }).then(function (r) {
+        if (r.status !== 200) {
+          return segja(r.status === 401 ? 'Rangt notandanafn eða lykilorð.' : r.status === 429 ? 'Of margar rangar tilraunir. Reyndu aftur eftir nokkrar mínútur.'
+            : r.status === 503 ? 'Innskráning starfsmanna hefur ekki verið sett upp á þjóninum.' : 'Innskráning mistókst.');
+        }
+        try { localStorage.setItem(LS_NN, n); } catch (x) {}
         var prufa = R.hamur === 'prufa' ? JSON.stringify(R.efni) : null;
-        saekja('&drog=1').then(function (x) {
-          if (x.status !== 200) return skilabod('Drögin náðust ekki');
+        return saekja('&drog=1').then(function (x) {
+          if (x.status === 403) return segja('Notandinn ' + n + ' má ekki breyta vefnum. Aðeins notendur með hlutverkið Admin geta það.');
+          if (x.status !== 200) return segja('Drögin náðust ekki. Reyndu aftur.');
+          g.remove();
           afvelja();
           innskrad(x.j);
           if (prufa && prufa !== JSON.stringify(R.efni) && prufa !== JSON.stringify(R.birt)) {
@@ -852,15 +869,26 @@
           }
           try { sessionStorage.removeItem(SS_PRUFA); } catch (y) {}
         });
-      });
+      }).catch(function () { segja('Ekki náðist samband við þjóninn.'); });
     });
+    setTimeout(function () { var r = $(nn ? '#brr-lykilord' : '#brr-nn', g); if (r) r.focus(); }, 30);
   }
-  function utskra() {
-    R.tok = null;
-    try { localStorage.removeItem(LS_TOK); } catch (e) {}
+  /* innskráningin endaði á meðan unnið var (lykilorði skipt, útskráð annars staðar, heimild tekin): breytingarnar standa á
+     skjánum, ritillinn fer í prufuham og býður innskráningu. Eftir hana er spurt hvort nota eigi breytingarnar. */
+  function lokid(anHeimildar) {
+    utskradur(anHeimildar ? 'heimild' : 'utskrad');
+    if (anHeimildar) return skilabod('Þessi notandi má ekki lengur breyta vefnum. Breytingarnar eru enn á skjánum.');
+    skilabod('Innskráningin rann út. Skráðu þig inn aftur til að vista.');
+    if (!IRAMMA && !$('#brr-nn')) gluggiInnskraning();
+  }
+  /* innskráningin er ekki lengur gild hér (útskráð, útrunnin eða án heimildar): ritillinn heldur áfram í prufuham */
+  function utskradur(astaeda) {
     afvelja();
-    R.hamur = 'prufa'; R.astaeda = 'utskrad'; R.ovistad = false;
+    R.hamur = 'prufa'; R.astaeda = astaeda || 'utskrad'; R.ovistad = false;
     stada(); teiknaSpjald();
+  }
+  function utskra() {      /* sama innskráning og í stjórnstöðinni: útskráning hér gildir líka þar */
+    innskraning({ action: 'logout' }).catch(function () {}).then(function () { utskradur('utskrad'); });
   }
   function innskrad(j) {
     R.hamur = 'innskrad'; R.villa = '';
@@ -879,18 +907,18 @@
   /* ---- ræsing ---- */
   window.addEventListener('pagehide', function () {
     if (R.hamur === 'innskrad' && R.ovistad) {
-      try { fetch(API, { method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json', 'x-ritill-tok': R.tok || '' }, body: JSON.stringify({ adgerd: 'vista', utgafa: U, efni: R.efni, grunnur: R.grunnur }) }); } catch (e) {}
+      try { fetch(API, { method: 'POST', keepalive: true, credentials: 'same-origin', headers: HAUSAR, body: JSON.stringify({ adgerd: 'vista', utgafa: U, efni: R.efni, grunnur: R.grunnur }) }); } catch (e) {}
     }
   });
   window.matchMedia(E.simi).addEventListener('change', function (e) { R.simi = e.matches; teiknaSpjald(); });
-  try { R.tok = localStorage.getItem(LS_TOK) || null; } catch (e) {}
   teiknaKrom(); stada(); teiknaSpjald();
   saekja('').then(function (p) {
     R.birt = (p.j && p.j.efni) || {}; R.birtNr = (p.j && p.j.nr) || 0;
     return saekja('&drog=1');
   }).then(function (r) {
     if (r.status === 200) return innskrad(r.j);
-    if (r.status === 401) { R.tok = null; try { localStorage.removeItem(LS_TOK); } catch (e) {} return prufa('utskrad', true); }
-    return prufa(r.status === 503 ? (r.j.astaeda === 'stutt' ? 'stutt' : 'ovirkt') : 'geymsla', false);
+    if (r.status === 401) return prufa('utskrad', true);
+    if (r.status === 403) return prufa('heimild', false);
+    return prufa(r.status === 503 ? 'ovirkt' : 'geymsla', false);
   }).catch(function () { prufa('samband', false); });
 })();
