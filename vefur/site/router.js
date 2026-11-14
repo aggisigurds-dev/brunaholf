@@ -147,7 +147,7 @@
   syna(true);
 })();
 
-/* Bannerar í forsíðuhausnum (stakið með data-hetja í síðunni). Safnið hér fyrir neðan telur upp það sem hausinn getur sýnt.
+/* Bannerar í forsíðuhausnum (stakið með data-hetja í síðunni). Safnið (BANNERAR) er í site/efni.js og telur upp það sem hausinn getur sýnt.
    - Banner síðunnar er gildið í data-hetja á hausnum. ?hetja=<id> í slóðinni sýnir annan, til skoðunar og til að deila.
    - ?bannerar í slóðinni opnar bannerasafnið neðst á síðunni, þar sem skipt er á milli þeirra. Það er forskoðun: valið fylgir
      slóðinni og breytir engu fyrir aðra gesti.
@@ -160,15 +160,7 @@
 (function () {
   'use strict';
   var d = document;
-  var BANNERAR = [
-    { id: 'eldur', heiti: 'Eldur, myndskeið', gerd: 'video', mynd: 'img/hetja-eldur.webp' },
-    { id: 'eldur-kyrr', heiti: 'Eldur, kyrrmynd', gerd: 'kyrr', mynd: 'img/hetja-eldur.webp' },
-    { id: 'hus', heiti: 'Húsið', gerd: 'mynd', mynd: 'img/hetja-v3.webp', pos: 'right top' },
-    { id: 'hus-vatn', heiti: 'Hús við vatn', gerd: 'mynd', mynd: 'img/verslun-hetja.webp', pos: 'right center' },
-    { id: 'hus-breid', heiti: 'Hús, breið mynd', gerd: 'mynd', mynd: 'img/banner/hus-breid.webp', pos: 'right center' },
-    { id: 'solarlag', heiti: 'Sólarlag', gerd: 'mynd', mynd: 'img/banner/solarlag.webp', pos: 'right bottom' },
-    { id: 'logi', heiti: 'Logi', gerd: 'mynd', mynd: 'img/banner/logi.webp', pos: 'right 30%', ljos: true }
-  ];
+  var BANNERAR = (window.BH_EFNI && window.BH_EFNI.BANNERAR) || [{ id: 'eldur', heiti: 'Eldur, myndskeið', gerd: 'video', mynd: 'img/hetja-eldur.webp' }];
   var hero = d.querySelector('[data-hetja]');
   if (!hero) return;
   var mynd = hero.querySelector('[data-hetja-mynd]'), v = hero.querySelector('[data-hetja-video]'), takki = hero.querySelector('[data-hetja-takki]');
@@ -228,6 +220,11 @@
   }
   setja(nuna);
   merkja();
+  /* fyrir ritilinn og efnislagið (site/efni.js): setja banner eftir heiti hans */
+  window.BH_HETJA = {
+    setja: function (id) { var b = finna(id); if (b) setja(b); return !!b; },
+    nuna: function () { return nuna.id; }
+  };
 
   /* ---- Bannerasafnið: opnast með ?bannerar í slóðinni ---- */
   if (!q.has('bannerar')) return;

@@ -10,6 +10,8 @@
 <meta name="robots" content="noindex">
 <link rel="icon" href="img/taknmynd.png">
 <style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<!-- Efnislagið: bannerasafnið, breytingar úr ritlinum og ritillinn sjálfur (?ritill). Sjá site/efni.js. -->
+<script src="site/efni.js" data-api="/api/vefur-efni" data-myndir="https://osfdzskyvisifcwyjkuk.supabase.co/storage/v1/object/public/vefverslun/vefur/" data-utgafa="v2" data-litir="#02193c,#011f40,#0b2d5f,#101e43,#5a6882,#d8dee9,#e9f0fa,#ffffff,#ff6702,#ff8a1f,#c2410c,#000000,#d92d20,#1f9d55,#2563eb"></script>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="ds/tokens.css">
@@ -42,35 +44,35 @@
 
   <header class="bh2-topbar w-topbar">
     <div class="w-wrap w-topbar__in">
-      <a class="bh2-logo" href="#top" aria-label="Brunahólf, forsíða"><img src="img/logo.webp" alt="Brunahólf" width="500" height="150"></a>
+      <a class="bh2-logo" href="#top" aria-label="Brunahólf, forsíða"><img src="img/logo.webp" alt="Brunahólf" width="500" height="150" data-m="sida.haus.mynd"></a>
       <nav class="bh2-topnav" aria-label="Aðalvalmynd">
-        <a href="#top" data-spy="top" aria-current="page">Forsíða</a>
-        <a href="#brunathettingar" data-spy="brunathettingar">Brunaþéttingar</a>
-        <a href="#verslun" data-spy="slokkvitaeki" data-filter="slokkvitaeki">Slökkvitæki</a>
-        <a href="#verslun" data-spy="verslun" data-filter="">Verslun</a>
-        <a class="w-only-m" href="#hafa-samband" data-spy="hafa-samband">Hafa samband</a>
+        <a href="#top" data-spy="top" aria-current="page" data-e="sida.bh2-topnav.a">Forsíða</a>
+        <a href="#brunathettingar" data-spy="brunathettingar" data-e="sida.bh2-topnav.a2">Brunaþéttingar</a>
+        <a href="#verslun" data-spy="slokkvitaeki" data-filter="slokkvitaeki" data-e="sida.bh2-topnav.a3">Slökkvitæki</a>
+        <a href="#verslun" data-spy="verslun" data-filter="" data-e="sida.bh2-topnav.a4">Verslun</a>
+        <a class="w-only-m" href="#hafa-samband" data-spy="hafa-samband" data-e="sida.bh2-topnav.a5">Hafa samband</a>
       </nav>
       <div class="bh2-tools">
-        <a class="w-tele" href="tel:+3545470100">547-0100</a>
+        <a class="w-tele" href="tel:+3545470100" data-e="sida.haus.a">547-0100</a>
         <a class="bh2-iconbtn w-cart" href="#karfa" aria-label="Karfa"><i data-ic="shopping-cart"></i><span class="bh2-count" id="w-cart-n" hidden>0</span></a>
-        <a class="w-gatt" href="https://slokkvitaeki.netlify.app/gatt/" aria-label="Þjónustugátt, innskráning viðskiptavina"><i data-ic="user-round"></i><span>Þjónustugátt</span></a>
-        <a class="bh2-btn primary sm w-contact-btn" href="#hafa-samband"><i data-ic="phone"></i>Hafa samband</a>
+        <a class="w-gatt" href="https://slokkvitaeki.netlify.app/gatt/" aria-label="Þjónustugátt, innskráning viðskiptavina"><i data-ic="user-round"></i><span data-e="sida.haus.span">Þjónustugátt</span></a>
+        <a class="bh2-btn primary sm w-contact-btn" href="#hafa-samband"><i data-ic="phone"></i><span data-e="sida.haus.a2">Hafa samband</span></a>
       </div>
     </div>
   </header>
 
   <!-- Sýn 1: forsíðan -->
   <div id="heim">
-    <section class="bh2-hero w-hero w-hero--video" aria-labelledby="hero-title" data-hetja="eldur">
-      <img class="w-hero__mynd" src="img/hetja-eldur.webp" alt="" width="1920" height="1080" data-hetja-mynd>
+    <section class="bh2-hero w-hero w-hero--video" aria-labelledby="hero-title" data-hetja="eldur" data-mr="heim.w-hero-video.mynd">
+      <img class="w-hero__mynd" src="img/hetja-eldur.webp" alt="" width="1920" height="1080" data-hetja-mynd data-m="heim.w-hero-video.mynd" data-mf>
       <video class="w-hero__video" muted loop playsinline disablepictureinpicture preload="none" tabindex="-1" aria-hidden="true" data-hetja-video>
         <source src="img/hetja-eldur-hevc.mp4" type="video/mp4; codecs=hvc1.1.6.L120.90">
         <source src="img/hetja-eldur.mp4" type="video/mp4">
       </video>
       <div class="w-wrap">
-        <p class="bh2-eyebrow">Brunahólf ehf.</p>
-        <h1 id="hero-title">Sérfræðingar í <em>brunaþéttingum</em> og eldvarnarlausnum</h1>
-        <p class="w-hero__sub">Gerum þetta rétt og vel</p>
+        <p class="bh2-eyebrow" data-e="heim.w-hero-video.p">Brunahólf ehf.</p>
+        <h1 id="hero-title" data-e="heim.w-hero-video.hero-title">Sérfræðingar í <em>brunaþéttingum</em> og eldvarnarlausnum</h1>
+        <p class="w-hero__sub" data-e="heim.w-hero-video.p2">Gerum þetta rétt og vel</p>
       </div>
       <button class="w-hero__spila" type="button" data-hetja-takki hidden aria-label="Stöðva myndskeið">
         <svg class="bh2-ic i-stopp" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="14" y="4" width="4" height="16" rx="1"/><rect x="6" y="4" width="4" height="16" rx="1"/></svg>
@@ -82,10 +84,10 @@
 
       <!-- Sömu fjögur atriði og standa undir forsíðumyndinni í V1 -->
       <ul class="bh2-card w-trust">
-        <li><i data-ic="circle-check"></i>Starfsleyfi frá HMS</li>
-        <li><i data-ic="circle-check"></i>ISO 14001 umhverfisvottun</li>
-        <li><i data-ic="circle-check"></i>Vistvæn efni</li>
-        <li><i data-ic="circle-check"></i>Skýrsla eftir hvert verk</li>
+        <li><i data-ic="circle-check"></i><span data-e="heim.efni.li">Starfsleyfi frá HMS</span></li>
+        <li><i data-ic="circle-check"></i><span data-e="heim.efni.li2">ISO 14001 umhverfisvottun</span></li>
+        <li><i data-ic="circle-check"></i><span data-e="heim.efni.li3">Vistvæn efni</span></li>
+        <li><i data-ic="circle-check"></i><span data-e="heim.efni.li4">Skýrsla eftir hvert verk</span></li>
       </ul>
 
       <!-- Tilkynningin um pöntunarkerfið var tekin út í bili (12.11.2026). Stíllinn (.w-notice) stendur, svo hún kemur
@@ -98,64 +100,64 @@
 
       <div class="bh2-grid w-row1">
         <section class="bh2-card w-intro" aria-labelledby="intro-title">
-          <header><i data-ic="flame"></i><h2 id="intro-title">Brunahólf ehf.</h2></header>
+          <header><i data-ic="flame"></i><h2 id="intro-title" data-e="heim.w-intro.intro-title">Brunahólf ehf.</h2></header>
           <!-- Textinn er orðréttur af forsíðu brunaholf.is, skipt í inngangssetningu og fjóra bita. Fyrirsagnir bitanna fjögurra eru nýjar. -->
-          <p class="w-um__lead">Brunahólf ehf. sérhæfir sig í reyk- og brunaþéttingum auk annarra eldvarnarlausna sem tryggja hámarksöryggi í byggingum.</p>
+          <p class="w-um__lead" data-e="heim.w-intro.p">Brunahólf ehf. sérhæfir sig í reyk- og brunaþéttingum auk annarra eldvarnarlausna sem tryggja hámarksöryggi í byggingum.</p>
           <ul class="w-um">
             <li>
               <span class="tile"><i data-ic="building-2"></i></span>
               <div>
-                <h3>Fjölbreytt verkefni</h3>
-                <p>Við höfum víðtæka sérfræðiþekkingu og veitum þjónustu fyrir fjölbreytt verkefni, þar á meðal heilbrigðisstofnanir, stóriðju og hótel á höfuðborgarsvæðinu og víðar.</p>
+                <h3 data-e="heim.w-intro.h3">Fjölbreytt verkefni</h3>
+                <p data-e="heim.w-intro.p2">Við höfum víðtæka sérfræðiþekkingu og veitum þjónustu fyrir fjölbreytt verkefni, þar á meðal heilbrigðisstofnanir, stóriðju og hótel á höfuðborgarsvæðinu og víðar.</p>
               </div>
             </li>
             <li>
               <span class="tile"><i data-ic="house"></i></span>
               <div>
-                <h3>Fyrirtæki og heimili</h3>
-                <p>Einnig þjónustum við smærri fyrirtæki og heimili þar sem við leggjum sömuleiðis ríka áherslu á fagleg vinnubrögð, áreiðanleika og skýr samskipti.</p>
+                <h3 data-e="heim.w-intro.h32">Fyrirtæki og heimili</h3>
+                <p data-e="heim.w-intro.p3">Einnig þjónustum við smærri fyrirtæki og heimili þar sem við leggjum sömuleiðis ríka áherslu á fagleg vinnubrögð, áreiðanleika og skýr samskipti.</p>
               </div>
             </li>
             <li>
               <span class="tile"><i data-ic="shield-check"></i></span>
               <div>
-                <h3>Starfsleyfi og þjálfun</h3>
-                <p>Fyrirtækið er rekið af sérfræðingum með starfsleyfi frá HMS fyrir brunaþéttingar, brunaviðvörunarkerfi, slökkvikerfi og handslökkvitæki. Allir starfsmenn okkar hafa lokið viðeigandi námskeiðum og þjálfun og ávallt er unnið samkvæmt nýjustu reglum og alþjóðlegum stöðlum í brunavörnum.</p>
+                <h3 data-e="heim.w-intro.h33">Starfsleyfi og þjálfun</h3>
+                <p data-e="heim.w-intro.p4">Fyrirtækið er rekið af sérfræðingum með starfsleyfi frá HMS fyrir brunaþéttingar, brunaviðvörunarkerfi, slökkvikerfi og handslökkvitæki. Allir starfsmenn okkar hafa lokið viðeigandi námskeiðum og þjálfun og ávallt er unnið samkvæmt nýjustu reglum og alþjóðlegum stöðlum í brunavörnum.</p>
               </div>
             </li>
             <li>
               <!-- laufblaðið er ekki í táknasafni hönnunarkerfisins (ds/bundle.js), svo það er teiknað hér: Lucide „leaf“, sama safn og hin táknin -->
               <span class="tile"><svg class="bh2-ic" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg></span>
               <div>
-                <h3>Umhverfisvænar lausnir</h3>
-                <p>Við leggjum einnig mikið upp úr umhverfisvænum lausnum og reynum eftir fremsta megni að notast við umhverfisvæn efni í brunaþéttingar og aðrar eldvarnarframkvæmdir, sem tryggir bæði öryggi og sjálfbærni.</p>
+                <h3 data-e="heim.w-intro.h34">Umhverfisvænar lausnir</h3>
+                <p data-e="heim.w-intro.p5">Við leggjum einnig mikið upp úr umhverfisvænum lausnum og reynum eftir fremsta megni að notast við umhverfisvæn efni í brunaþéttingar og aðrar eldvarnarframkvæmdir, sem tryggir bæði öryggi og sjálfbærni.</p>
               </div>
             </li>
           </ul>
         </section>
 
         <section class="bh2-card w-uttekt" id="uttekt" aria-labelledby="uttekt-title">
-          <header><i data-ic="shield-check"></i><h2 id="uttekt-title">Kemst byggingin þín ekki í gegnum öryggisúttekt?</h2></header>
+          <header><i data-ic="shield-check"></i><h2 id="uttekt-title" data-e="heim.uttekt.uttekt-title">Kemst byggingin þín ekki í gegnum öryggisúttekt?</h2></header>
           <ol class="bh2-list w-steps">
-            <li><span class="tile" aria-hidden="true">1</span><span class="t">Við greinum og útfærum nauðsynlegar úrbætur samkvæmt skýrslum frá HMS.</span></li>
-            <li><span class="tile" aria-hidden="true">2</span><span class="t">Við tryggjum að allar bruna- og reykþéttingar uppfylli viðeigandi reglugerðir.</span></li>
-            <li><span class="tile" aria-hidden="true">3</span><span class="t">Að loknum framkvæmdum skilum við uppfærðri skýrslu og sjáum til þess að byggingin standist öryggisúttekt með fullnægjandi brunavörnum.</span></li>
+            <li><span class="tile" aria-hidden="true">1</span><span class="t" data-e="heim.uttekt.span">Við greinum og útfærum nauðsynlegar úrbætur samkvæmt skýrslum frá HMS.</span></li>
+            <li><span class="tile" aria-hidden="true">2</span><span class="t" data-e="heim.uttekt.span2">Við tryggjum að allar bruna- og reykþéttingar uppfylli viðeigandi reglugerðir.</span></li>
+            <li><span class="tile" aria-hidden="true">3</span><span class="t" data-e="heim.uttekt.span3">Að loknum framkvæmdum skilum við uppfærðri skýrslu og sjáum til þess að byggingin standist öryggisúttekt með fullnægjandi brunavörnum.</span></li>
           </ol>
-          <a class="bh2-btn primary block" href="#hafa-samband">Hafa samband<i data-ic="arrow-right"></i></a>
+          <a class="bh2-btn primary block" href="#hafa-samband"><span data-e="heim.uttekt.a">Hafa samband</span><i data-ic="arrow-right"></i></a>
         </section>
       </div>
 
       <section class="bh2-card" id="thjonusta" aria-labelledby="svc-title">
-        <header><i data-ic="list-checks"></i><h2 id="svc-title">Þjónustan okkar</h2></header>
+        <header><i data-ic="list-checks"></i><h2 id="svc-title" data-e="heim.thjonusta.svc-title">Þjónustan okkar</h2></header>
         <ul class="w-svc">
-          <li><span class="tile"><i data-ic="shield-check"></i></span>Vottuð efni og fagleg vinnubrögð</li>
-          <li><span class="tile"><i data-ic="circle-check"></i></span>ISO 14001 umhverfisvottuð þjónusta</li>
-          <li><span class="tile"><i data-ic="clipboard-check"></i></span>Tryggt samræmi við gildandi eldvarnareglur</li>
-          <li><span class="tile"><i data-ic="history"></i></span>Fullkomið gæðakerfi með rekjanleika</li>
-          <li><span class="tile"><i data-ic="layers"></i></span>Brunaþétting eldvarnarveggja og gólfa</li>
-          <li><span class="tile"><i data-ic="door-open"></i></span>Reykþétting og eldvarnarhurðir</li>
-          <li><span class="tile"><i data-ic="headset"></i></span>Faglegar eldvarnarráðgjafir</li>
-          <li><span class="tile"><i data-ic="building-2"></i></span>Eldvarnarlausnir fyrir allar gerðir bygginga</li>
+          <li><span class="tile"><i data-ic="shield-check"></i></span><span data-e="heim.thjonusta.li">Vottuð efni og fagleg vinnubrögð</span></li>
+          <li><span class="tile"><i data-ic="circle-check"></i></span><span data-e="heim.thjonusta.li2">ISO 14001 umhverfisvottuð þjónusta</span></li>
+          <li><span class="tile"><i data-ic="clipboard-check"></i></span><span data-e="heim.thjonusta.li3">Tryggt samræmi við gildandi eldvarnareglur</span></li>
+          <li><span class="tile"><i data-ic="history"></i></span><span data-e="heim.thjonusta.li4">Fullkomið gæðakerfi með rekjanleika</span></li>
+          <li><span class="tile"><i data-ic="layers"></i></span><span data-e="heim.thjonusta.li5">Brunaþétting eldvarnarveggja og gólfa</span></li>
+          <li><span class="tile"><i data-ic="door-open"></i></span><span data-e="heim.thjonusta.li6">Reykþétting og eldvarnarhurðir</span></li>
+          <li><span class="tile"><i data-ic="headset"></i></span><span data-e="heim.thjonusta.li7">Faglegar eldvarnarráðgjafir</span></li>
+          <li><span class="tile"><i data-ic="building-2"></i></span><span data-e="heim.thjonusta.li8">Eldvarnarlausnir fyrir allar gerðir bygginga</span></li>
         </ul>
       </section>
 
@@ -163,19 +165,19 @@
       <section class="bh2-card w-gattkort" aria-labelledby="gatt-title">
         <span class="tile"><i data-ic="user-round"></i></span>
         <div class="w-gattkort__t">
-          <h2 id="gatt-title">Þjónustugátt viðskiptavina</h2>
-          <p>Skráðu þig inn til að nálgast gögn, skýrslur og þjónustu.</p>
+          <h2 id="gatt-title" data-e="heim.w-gattkort.gatt-title">Þjónustugátt viðskiptavina</h2>
+          <p data-e="heim.w-gattkort.p">Skráðu þig inn til að nálgast gögn, skýrslur og þjónustu.</p>
         </div>
-        <a class="bh2-btn" href="https://slokkvitaeki.netlify.app/gatt/">Innskráning<i data-ic="arrow-right"></i></a>
+        <a class="bh2-btn" href="https://slokkvitaeki.netlify.app/gatt/"><span data-e="heim.w-gattkort.a">Innskráning</span><i data-ic="arrow-right"></i></a>
       </section>
 
       <section class="w-shop" id="verslun-kynning" aria-labelledby="shop-title">
         <div class="w-shop__head">
-          <h2 class="w-h2" id="shop-title"><i data-ic="shopping-cart"></i>Verslunin okkar</h2>
-          <p class="w-hours"><i data-ic="clock"></i><span>Opnunartími verslunar okkar <span class="w-nw">Helluhrauni 10:</span> <b>Alla virka daga kl. <span class="w-nw">09:00–17:00</span></b></span></p>
+          <h2 class="w-h2" id="shop-title"><i data-ic="shopping-cart"></i><span data-e="heim.verslun-kynning.shop-title">Verslunin okkar</span></h2>
+          <p class="w-hours"><i data-ic="clock"></i><span data-e="heim.verslun-kynning.span">Opnunartími verslunar okkar <span class="w-nw">Helluhrauni 10:</span> <b>Alla virka daga kl. <span class="w-nw">09:00–17:00</span></b></span></p>
         </div>
         <ul class="w-products" id="kynning"></ul>
-        <div class="w-shop__more"><a class="bh2-btn primary" href="#verslun" data-filter="" id="allar">Skoða allar vörur<span id="allar-n"></span><i data-ic="arrow-right"></i></a></div>
+        <div class="w-shop__more"><a class="bh2-btn primary" href="#verslun" data-filter="" id="allar"><span data-e="heim.verslun-kynning.allar">Skoða allar vörur</span><span id="allar-n"></span><i data-ic="arrow-right"></i></a></div>
       </section>
 
     </main>
@@ -185,30 +187,30 @@
   <div id="brunasyn" hidden>
     <section class="bh2-hero w-hero" aria-labelledby="bruna-title">
       <div class="w-wrap">
-        <p class="bh2-eyebrow">Brunahólf ehf.</p>
-        <h1 id="bruna-title">Af hverju að brunaþétta?</h1>
+        <p class="bh2-eyebrow" data-e="bruna.w-hero.p">Brunahólf ehf.</p>
+        <h1 id="bruna-title" data-e="bruna.w-hero.bruna-title">Af hverju að brunaþétta?</h1>
       </div>
     </section>
 
     <main class="bh2-content w-content">
       <div class="bh2-grid w-row1">
         <section class="bh2-card w-intro" aria-labelledby="bruna-card-title">
-          <header><i data-ic="flame"></i><h2 id="bruna-card-title">Brunaþéttingar</h2></header>
+          <header><i data-ic="flame"></i><h2 id="bruna-card-title" data-e="bruna.w-intro.bruna-card-title">Brunaþéttingar</h2></header>
           <div class="w-prose">
-            <p class="lead">Brunaþéttingar eru ekki aðeins mikilvægar öryggisráðstafanir heldur einnig lögbundnar samkvæmt íslenskum byggingarreglugerðum. Vandaðar bruna- og reykþéttingar hægja á útbreiðslu elds og geta margfaldað þann tíma sem tekur fyrir eld að breiðast milli rýma. Þetta skiptir sköpum fyrir öryggi íbúa, starfsfólks og viðbragðsaðila.</p>
-            <p>Brunahólf ehf. starfar með fullgilt starfsleyfi frá HMS fyrir brunaþéttingar, brunaviðvörunarkerfi, slökkvikerfi og handslökkvitæki, sem tryggir að allt okkar starf er unnið samkvæmt ströngustu öryggis- og regluviðmiðum.</p>
-            <p>Reykþéttingar eru oft vanræktar en þær eru mikilvægur þáttur í brunavörnum. Helsta hættan við eldsvoða stafar af reyk, sem getur valdið tjóni á fólki, dýrum og eignum. Með réttum reykþéttingum og öðrum eldvarnarlausnum, sem falla undir leyfi okkar, er hægt að lágmarka þessa áhættu og tryggja að byggingin standist strangar öryggiskröfur.</p>
+            <p class="lead" data-e="bruna.w-intro.p">Brunaþéttingar eru ekki aðeins mikilvægar öryggisráðstafanir heldur einnig lögbundnar samkvæmt íslenskum byggingarreglugerðum. Vandaðar bruna- og reykþéttingar hægja á útbreiðslu elds og geta margfaldað þann tíma sem tekur fyrir eld að breiðast milli rýma. Þetta skiptir sköpum fyrir öryggi íbúa, starfsfólks og viðbragðsaðila.</p>
+            <p data-e="bruna.w-intro.p2">Brunahólf ehf. starfar með fullgilt starfsleyfi frá HMS fyrir brunaþéttingar, brunaviðvörunarkerfi, slökkvikerfi og handslökkvitæki, sem tryggir að allt okkar starf er unnið samkvæmt ströngustu öryggis- og regluviðmiðum.</p>
+            <p data-e="bruna.w-intro.p3">Reykþéttingar eru oft vanræktar en þær eru mikilvægur þáttur í brunavörnum. Helsta hættan við eldsvoða stafar af reyk, sem getur valdið tjóni á fólki, dýrum og eignum. Með réttum reykþéttingum og öðrum eldvarnarlausnum, sem falla undir leyfi okkar, er hægt að lágmarka þessa áhættu og tryggja að byggingin standist strangar öryggiskröfur.</p>
           </div>
         </section>
 
         <section class="bh2-card w-uttekt" aria-labelledby="uttekt-title-2">
-          <header><i data-ic="shield-check"></i><h2 id="uttekt-title-2">Kemst byggingin þín ekki í gegnum öryggisúttekt?</h2></header>
+          <header><i data-ic="shield-check"></i><h2 id="uttekt-title-2" data-e="bruna.w-uttekt.uttekt-title-2">Kemst byggingin þín ekki í gegnum öryggisúttekt?</h2></header>
           <ol class="bh2-list w-steps">
-            <li><span class="tile" aria-hidden="true">1</span><span class="t">Við greinum og útfærum nauðsynlegar úrbætur samkvæmt skýrslum frá HMS.</span></li>
-            <li><span class="tile" aria-hidden="true">2</span><span class="t">Við tryggjum að allar bruna- og reykþéttingar uppfylli viðeigandi reglugerðir.</span></li>
-            <li><span class="tile" aria-hidden="true">3</span><span class="t">Að loknum framkvæmdum skilum við uppfærðri skýrslu og sjáum til þess að byggingin standist öryggisúttekt með fullnægjandi brunavörnum.</span></li>
+            <li><span class="tile" aria-hidden="true">1</span><span class="t" data-e="bruna.w-uttekt.span">Við greinum og útfærum nauðsynlegar úrbætur samkvæmt skýrslum frá HMS.</span></li>
+            <li><span class="tile" aria-hidden="true">2</span><span class="t" data-e="bruna.w-uttekt.span2">Við tryggjum að allar bruna- og reykþéttingar uppfylli viðeigandi reglugerðir.</span></li>
+            <li><span class="tile" aria-hidden="true">3</span><span class="t" data-e="bruna.w-uttekt.span3">Að loknum framkvæmdum skilum við uppfærðri skýrslu og sjáum til þess að byggingin standist öryggisúttekt með fullnægjandi brunavörnum.</span></li>
           </ol>
-          <a class="bh2-btn primary block" href="#hafa-samband">Hafa samband<i data-ic="arrow-right"></i></a>
+          <a class="bh2-btn primary block" href="#hafa-samband"><span data-e="bruna.w-uttekt.a">Hafa samband</span><i data-ic="arrow-right"></i></a>
         </section>
       </div>
     </main>
@@ -222,40 +224,42 @@
   <!-- Hafa samband: sameiginlegt öllum sýnum -->
   <div class="bh2-content w-content w-shared">
     <section class="w-contact" id="hafa-samband" aria-labelledby="contact-title">
-      <h2 class="w-h2" id="contact-title"><i data-ic="headset"></i>Hafa samband</h2>
+      <h2 class="w-h2" id="contact-title"><i data-ic="headset"></i><span data-e="sida.hafa-samband.contact-title">Hafa samband</span></h2>
       <div class="bh2-grid">
         <section class="bh2-card" aria-labelledby="c1">
-          <header><i data-ic="building-2"></i><h3 id="c1">Skrifstofa</h3><span class="bh2-tag">Brunahólf ehf.</span></header>
+          <header><i data-ic="building-2"></i><h3 id="c1" data-e="sida.bh2-card.c1">Skrifstofa</h3><span class="bh2-tag" data-e="sida.bh2-card.span">Brunahólf ehf.</span></header>
           <ul class="bh2-list bh2-contact">
-            <li><span class="tile"><i data-ic="phone"></i></span><span class="t">Sími<small><a href="tel:+3545470100">547-0100</a></small></span></li>
-            <li><span class="tile"><i data-ic="mail"></i></span><span class="t">Netfang<small><a href="mailto:brunaholf@brunaholf.is">brunaholf@brunaholf.is</a></small></span></li>
-            <li><span class="tile"><i data-ic="map-pin"></i></span><span class="t">Heimilisfang<small><a href="https://ja.is/kort/?d=hashid%3AaaVvlO&amp;x=359061&amp;y=402486&amp;type=map&amp;nz=13.70" target="_blank" rel="noopener">Hlíðasmári 10</a></small></span></li>
+            <li><span class="tile"><i data-ic="phone"></i></span><span class="t" data-e="sida.bh2-card.span2">Sími<small><a href="tel:+3545470100">547-0100</a></small></span></li>
+            <li><span class="tile"><i data-ic="mail"></i></span><span class="t" data-e="sida.bh2-card.span3">Netfang<small><a href="mailto:brunaholf@brunaholf.is">brunaholf@brunaholf.is</a></small></span></li>
+            <li><span class="tile"><i data-ic="map-pin"></i></span><span class="t" data-e="sida.bh2-card.span4">Heimilisfang<small><a href="https://ja.is/kort/?d=hashid%3AaaVvlO&amp;x=359061&amp;y=402486&amp;type=map&amp;nz=13.70" target="_blank" rel="noopener">Hlíðasmári 10</a></small></span></li>
           </ul>
         </section>
         <section class="bh2-card" aria-labelledby="c2">
-          <header><i data-ic="fire-extinguisher"></i><h3 id="c2">Verslun</h3><span class="bh2-tag">Brunahólf slökkvitæki ehf.</span></header>
+          <header><i data-ic="fire-extinguisher"></i><h3 id="c2" data-e="sida.bh2-card.c2">Verslun</h3><span class="bh2-tag" data-e="sida.bh2-card.span5">Brunahólf slökkvitæki ehf.</span></header>
           <ul class="bh2-list bh2-contact">
-            <li><span class="tile"><i data-ic="phone"></i></span><span class="t">Sími<small><a href="tel:+3545654080">565-4080</a> · <a href="tel:+3548370100">837-0100</a> (Farsími)</small></span></li>
-            <li><span class="tile"><i data-ic="mail"></i></span><span class="t">Netfang<small><a href="mailto:slokkvitaeki@brunaholf.is">slokkvitaeki@brunaholf.is</a></small></span></li>
-            <li><span class="tile"><i data-ic="map-pin"></i></span><span class="t">Heimilisfang<small><a href="https://ja.is/kort/?d=hashid%3AELNqN&amp;x=356372&amp;y=400426&amp;type=map&amp;nz=13.70" target="_blank" rel="noopener">Helluhraun 10</a></small></span></li>
+            <li><span class="tile"><i data-ic="phone"></i></span><span class="t" data-e="sida.bh2-card.span6">Sími<small><a href="tel:+3545654080">565-4080</a> · <a href="tel:+3548370100">837-0100</a> (Farsími)</small></span></li>
+            <li><span class="tile"><i data-ic="mail"></i></span><span class="t" data-e="sida.bh2-card.span7">Netfang<small><a href="mailto:slokkvitaeki@brunaholf.is">slokkvitaeki@brunaholf.is</a></small></span></li>
+            <li><span class="tile"><i data-ic="map-pin"></i></span><span class="t" data-e="sida.bh2-card.span8">Heimilisfang<small><a href="https://ja.is/kort/?d=hashid%3AELNqN&amp;x=356372&amp;y=400426&amp;type=map&amp;nz=13.70" target="_blank" rel="noopener">Helluhraun 10</a></small></span></li>
           </ul>
         </section>
         <section class="bh2-card w-open" aria-labelledby="c3">
-          <header><i data-ic="clock"></i><h3 id="c3">Opnunartími</h3></header>
-          <p>Opnunartími verslunar okkar <span class="w-nw">Helluhrauni 10:</span></p>
-          <b>Alla virka daga kl. <span class="w-nw">09:00–17:00</span></b>
-          <p class="w-tag">Brunahólf ehf. er sérfræðifyrirtæki í brunaþéttingum og eldvarnarlausnum.</p>
+          <header><i data-ic="clock"></i><h3 id="c3" data-e="sida.w-open.c3">Opnunartími</h3></header>
+          <p data-e="sida.w-open.p">Opnunartími verslunar okkar <span class="w-nw">Helluhrauni 10:</span></p>
+          <b data-e="sida.w-open.b">Alla virka daga kl. <span class="w-nw">09:00–17:00</span></b>
+          <p class="w-tag" data-e="sida.w-open.p2">Brunahólf ehf. er sérfræðifyrirtæki í brunaþéttingum og eldvarnarlausnum.</p>
         </section>
       </div>
     </section>
   </div>
 
   <div class="w-wrap">
-    <footer class="bh2-foot w-foot"><span class="w-foot__l"><span class="flame"><i data-ic="flame"></i></span><span>Brunahólf ehf. // Brunahólf slökkvitæki ehf.</span></span><a class="w-foot__fb" href="https://www.facebook.com/share/1DqFztD5Uv/" target="_blank" rel="noopener"><svg class="bh2-ic" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/></svg>Facebook</a><span class="w-foot__r">© 2026 – Allur réttur áskilinn</span></footer>
+    <footer class="bh2-foot w-foot"><span class="w-foot__l"><span class="flame"><i data-ic="flame"></i></span><span data-e="sida.w-foot.span">Brunahólf ehf. // Brunahólf slökkvitæki ehf.</span></span><a class="w-foot__fb" href="https://www.facebook.com/share/1DqFztD5Uv/" target="_blank" rel="noopener"><svg class="bh2-ic" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/></svg><span data-e="sida.w-foot.a">Facebook</span></a><a class="w-foot__fb w-foot__gatt" href="https://slokkvitaeki.netlify.app/gatt/"><i data-ic="user-round"></i><span data-e="sida.w-foot.gatt">Þjónustugátt</span></a><span class="w-foot__r" data-e="sida.w-foot.span2">© 2026 – Allur réttur áskilinn</span></footer>
   </div>
 </div>
 
 <script src="ds/bundle.js"></script>
+<!-- Breytingar úr ritlinum (site/efni.js) eru settar á síðuna hér, áður en hún er teiknuð -->
+<script>window.BH_EFNI && window.BH_EFNI.setja();</script>
 <script src="verslun/gogn.js"></script>
 <script>
 /* Stillingar þessarar útgáfu fyrir leiðarskriftuna */
