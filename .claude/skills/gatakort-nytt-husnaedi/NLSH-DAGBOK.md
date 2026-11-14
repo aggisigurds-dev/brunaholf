@@ -517,3 +517,17 @@ Færðir punktar · Tillögur · Símaviðmót · Stöðuskýrsla.
   10 var prófað: einn veggur fyllti skjáinn, nýtist ekki. Tölva óbreytt. (kjarni main 05967e2)
 - **Ósvarað:** hvað „þægilegt vinnubreytinga-layout" og „full stjórn á öllu" á að ná yfir (gatakortið í síma eða Vinnusíðan; hvaða aðgerðir
   vantar). Skráningum er enn aldrei breytt úr gatakortinu.
+
+## Opna fyrir breytingar á skráningum (14.11.2026) — `skr_verk.stillingar`, `skr_skraningar.handvirkt`
+- **Orð Agnars:** „helst að losna við kjánaleg höft sem stoppa mann í eðlilegri vinnu … þarf ekki allt að vera sjáanlegt. Kannski bara einhvers
+  staðar í stillingum að ég geti opnað á sem flesta hluti sem eru að stoppa mann til að breyta einhverju, skrifa, stærðir, flokkar, texta, heiti".
+- **Hvað:** Stillingar neðst í „Lög og síur" á gatakortinu: hak „Opna fyrir breytingar á skráningum" (sjálfgefið lokað). Opið: flokkur og stærð,
+  staða (Klárað/Opið), lýsing og athugasemd breytanleg á völdum punkti. Kjarni main 87c3e20; migration `skr_handvirkt_stillingar` (tveir dálkar, viðbót).
+- **Skrif:** `update skr_skraningar set <svið>, handvirkt` + `insert skr_atburdir` (hvad flokkur | stada | texti, gogn {svid, fra, til, uppruni: 'gatakort'}).
+  `handvirkt` = { <svið>: { fra, hvenaer } }; sé gildið sett aftur á upprunalegt hverfur lykillinn. `-innflutningur.cjs` hlífir sviðum í `handvirkt`
+  (flokkur_id, stada, lysing; athugasemd flytur hann ekki inn). Stöðuskýrslan: liður „Handbreytt í Apex Ajour" í afstemmingu ef eitthvað er breytt.
+- **Prófað** í gegnum viðmótið á tölvu- og símabreidd með öll skrif gripin (ekkert fór í grunninn). Sýnirnar `skr_yfirlit`/`skr_hub_skraningar`
+  töldu 10.709 fyrir verk 4 og 37.261 alls fyrir breytinguna; dálkaviðbót breytir því ekki.
+- **Ekki opnað (viljandi, segja Agnari ef hann rekst á það):** heiti verks og yfirlitsblaða (sex tól finna verkið á heitinu „NLSH 5-6. hæð · gatakort"
+  og blöðin á „Brunayfirlit <hæð>"; nafnbreyting myndi brjóta þau), starfsmaður og dagsetning á skráningu, heiti flokka (síðan Categories/schema).
+- **Eftir flokkabreytingar:** `-para.cjs --haed … --write`; táknið á kortinu uppfærist við næstu hleðslu.

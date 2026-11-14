@@ -83,8 +83,13 @@ verk og kalla útkomuna mælingu. Hvert `.cjs` sem á `.py`-systur með sama hei
 ## Grunnreglur gatakortsins (lærðar á NLSH)
 1. **Yfirlitsblað hæðar er hnitakerfið.** Hver Ajour-teikning fær vörpun (a, b, c, d, e, f; samsett blöð fá `hlutar` með
    `fra_x`) á yfirlitsblað sinnar hæðar. Deild og hluti reiknast af STÖÐU punktsins, ekki af heiti teikningar.
-2. **Skráningu er aldrei breytt.** Færður punktur fer í `skr_faerslur`, áætlað gat í `skr_aaetlud`, kerfi í `skr_kerfi`.
-   Flokkur í grunni og í Ajour stendur; endurflokkun á korti er aðeins sýning.
+2. **Þú og tólin breytið aldrei skráningu.** Færður punktur fer í `skr_faerslur`, áætlað gat í `skr_aaetlud`, kerfi í `skr_kerfi`.
+   Endurflokkun tóla á korti er aðeins sýning. **Agnar getur hins vegar breytt skráningu sjálfur** (14.11.2026: „losna við kjánaleg
+   höft … í stillingum að ég geti opnað á sem flesta hluti … breyta, skrifa, stærðir, flokkar, texta"): hakið „Opna fyrir breytingar á
+   skráningum" í Stillingum á gatakortinu (`skr_verk.stillingar.breytingar`, eins á öllum tækjum) gerir flokk, stöðu, lýsingu og
+   athugasemd breytanleg á völdum punkti. Gildið fer í dálkinn, upprunalega gildið í `skr_skraningar.handvirkt`, færsla í
+   `skr_atburdir`; „Upprunalegt" tekur til baka. Innflutningurinn yfirskrifar ekki handbreytt svið, og stöðuskýrslan telur þau upp í
+   afstemmingunni. Ajour sjálft breytist aldrei. Eftir flokkabreytingar: keyra `-para.cjs` aftur.
 3. **Einingin er stakt verk:** þétting öðrum megin við vegg. Tvö stök verk eru ein lokun. Í gólfi er eitt verk ein
    þétting og aðeins neðri vinnan er skráð. Lagfæring telst nýtt verk.
 4. **Aldrei leggja fagblað beint yfir án mælingar.** Húsið situr ekki á sama stað á öllum blöðum (hliðrun 10–90 pt á
