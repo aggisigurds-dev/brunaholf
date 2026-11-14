@@ -583,3 +583,16 @@ Færðir punktar · Tillögur · Símaviðmót · Stöðuskýrsla.
 - **Viðbót Agnars sama dag um raufar:** „En metrar kringum ferkantaða loftræstingu. Mætti svona svipast sem plúsinn eða jú kannski bara kassa. En er í
   þeim flokk." → Loft raufar (metrar) eru LOFTRÆSTING og eiga að vera í fjölskyldu plússins: liggjandi kassi með sömu útlínu og plúsinn, metrarnir inni í,
   hök utan við eins og á plúsnum. Greinist frá millilofti (ferningur, hak inni í, annar litur) á lögun og lit. Uppfært á örkinni TillagaD.
+
+## Tillaga D komin í kortið (14.11.2026) — kjarni main, commit „Gatakort: merki tillögu D"
+- **Orð Agnars til viðbótar:** „Setja fyrir 2 x 2 á brunavegginn. V check sitt hvorum megin" og (með tveimur myndum af Miro-borðinu, blómhringir með „2" í
+  rauðu, bláu, appelsínugulu og ljósbláu, „2pl hvitt") „Eru almennt 2 og 2 saman. 2x heitt og 2x kalt."
+- **Útfært í KortClient (`merki`):** stálrör eftir KERFI (`kerfiKort` úr `skr_kerfi` án vafa: 1.135 úði, 4.176 vatn mælt 14.11; úrskurður af ljósmynd í
+  `visbendingar.json` gengur fyrir): úði = hringur með punkti · vatn og hiti = átta (`attur`) þvert á brunavegginn · 3+ rör á staðnum = tvær áttur (2 × 2)
+  á veggnum, `HEITT` rauð og `KALT` blá · óþekkt kerfi = blómhringur með fjölda. Plast = átta með punktum (2 × 2 í tveimur tónum af stærðarlitnum).
+  Rafmagn = tígull með `elding`. Milliloft = kassi, hakið inni í (ekkert hak utan við). Loft raufar = liggjandi kassi. Úði og vatn renna ekki saman í merki.
+- **Fyrirvarar:** (1) rautt/blátt í 2 × 2 er TÁKNRÆNT; gögnin segja ekki heitt eða kalt. (2) Fjöldi röra er metinn af fjölda stakra verka í merkinu
+  (hæsta tala á annarri hlið, annars helmingur), ekki talinn. (3) Stærðarliturinn sést ekki á 2 × 2 stálmerkinu; pikk sýnir flokkinn. (4) Fagsýnirnar
+  „Úðakerfi" og „Vatn og lagnir" sía enn aðeins eftir úrskurði af ljósmynd, ekki eftir `skr_kerfi`, svo vatnsáttur sjást í úðasýninni. (5) Metrar í
+  raufamerkinu eru ekki sýndir (talan er í athugasemd skráningar, ekki sótt á kortið).
+- **Prófað** á þróunarþjóni með skrif stöðvuð (Vatn og lagnir, Úðakerfi, tölvusýn, val á punkti); engar villur.
