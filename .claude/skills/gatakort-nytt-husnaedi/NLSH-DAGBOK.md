@@ -622,3 +622,12 @@ Færðir punktar · Tillögur · Símaviðmót · Stöðuskýrsla.
   `icon-maskable-512`, `apple-touch-icon`, `apex.ico` (og `skyrsla-` afbrigðin), smíðuð með `apex-logo/takn.cjs` (scratchpad lotunnar).
 - **Ósnert:** `public/skraning/manifest.webmanifest` (vinnuútgáfan `/vinna`, eldra pinnatákn) er á sviði `skraning`.
 - **Skjáborð skrifstofuvélar:** `Apex Ajour.url` og `Apex skýrsla.url`, tákn í `%LOCALAPPDATA%\ApexAjour\`.
+
+## Áttur alltaf á hlið (15.11.2026) — kjarni main 479ef69
+- **Orð Agnars:** „2 x 2 áttu að vera 8 á hlið x 2 vatnslagnir... tígull með eldingu fyrir rafmagn stakur. Já flott merki."
+- **Var:** áttan lá ÞVERT á brunavegginn, svo hún stóð upprétt (8) við láréttan vegg og 2 × 2 varð tvær uppréttar áttur hlið við hlið.
+- **Nú:** `attuMidjur` / `attur` taka ekki lengur stefnu veggjar. Rörapar = ein átta á hlið (∞); 2 × 2 = tvær áttur á hlið, hvor ofan á annarri með bili (0,62 R),
+  rauð (`HEITT`) og blá (`KALT`) á stálrörum. Hökin fylgja veggnum áfram (ofan og neðan við láréttan vegg).
+- **Rafmagn:** óbreytt, stakur tígull með eldingu (sannreynt á lifandi síðu).
+- **Opið:** stálrör með ÓÞEKKT kerfi teiknast enn sem blómhringur. Mælt 15.11: 381 af 5.692 stálskráningum á verki 4 eiga enga `skr_kerfi`-röð án vafa
+  (4.176 vatn, 1.135 úði). Spurt Agnar hvort þau eigi líka að verða áttur.
