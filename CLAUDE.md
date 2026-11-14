@@ -73,7 +73,10 @@ data from Ajour, Google Drive/Sheets/Gmail integration, and a tilbod
   **Ritill á síðunni (`?ritill`, 14.11.2026):** texti, myndir, lógó, bannerar og litir breytast á síðunni sjálfri og vistast sem efni (ekki kóði) gegnum
   `/api/vefur-efni` (`netlify/functions/vefur-efni.js`) í töflunum `vefur_efni` / `vefur_efni_saga` (RLS á, engar reglur; `sql/2026-11-14_vefur_efni.sql`).
   Innskráning ritilsins er notendaskrá starfsmanna (`hub_adgangar`, cookie `hub_user` úr `/api/hub-adgangar`); aðeins Admin vistar og birtir, án innskráningar er prufuhamur.
-  Lyklar staka (`data-e`, `data-m`) mega aldrei breytast.
+  Tveir hamir: Einfalt (texti, myndir, kaflar, aðallitir) og Ítarlegt (`?ritill&hamur=itarlegt`: bil, horn, rammar, dálkar á hverju svæði, hvert þematákn). Útlit er líka efni:
+  `k` (svæði), `rod` (röð), `utlit` (þematákn af listanum `#bh-utlit` í haus V2). Claude breytir útliti gegnum ritilinn, ekki kóða: „Leiðbeiningar fyrir Claude“ í ritlinum,
+  eða `window.BH_RITILL.lysing()` og `.sameina({…})` í vafra.
+  Lyklar staka (`data-e`, `data-m`, `data-k`) mega aldrei breytast.
   Skrár, slóðir, skipti milli útgáfa, færsla breytinga úr Claude-tillögunum og það sem þarf áður en lénið er tengt: `vefur/README.md`.
 - **Brunaþéttingar — verkstaða-appið (`brunathettingar.html`, `/brunathettingar`, 03.09.2026):**
   sér-PWA fyrir starfsmenn á verkstað (Boss-þema, `manifest-brunathettingar.json`). Fjórir flipar:
