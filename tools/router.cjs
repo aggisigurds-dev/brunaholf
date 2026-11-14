@@ -191,7 +191,8 @@ function greina(prompt, cwd, opt = {}) {
     const m = finnaRod(K, P);
     if (!m) continue;
     sidaHitt.push({ p, h });
-    if (p.eigandi) { const alm = erAlmennt(K); kand.push({ agent: p.eigandi, kv: h, pos: m.pos, stig: alm ? 1 : (/^iframe/.test(p.tegund || '') || /^br-/.test(p.id || '') ? 2 : 3), alm, teg: m.teg, sida: p }); }
+    // síðukort kjarna merkir agent sem býr í brunaholf/slokkvitaeki með forskeyti (bh:/sl:); agentinn heitir án þess
+    if (p.eigandi) { const alm = erAlmennt(K); kand.push({ agent: p.eigandi.replace(/^(?:bh|sl):/, ''), kv: h, pos: m.pos, stig: alm ? 1 : (/^iframe/.test(p.tegund || '') || /^br-/.test(p.id || '') ? 2 : 3), alm, teg: m.teg, sida: p }); }
     break;
   }
   // 2) hvert orð fer til hæstu stiga (jafntefli deilist)
@@ -268,6 +269,8 @@ function agentSkra(e) {
   const rot = s.repo === 'notandi' ? G.HEIMA : G.REPO[s.repo];
   if (!rot) return null;
   const p = path.join(rot, s.path.replace(/^~\/\.claude\/|^~\//, ''));
+  // Heimaskráin finnst ekki í repóinu (t.d. kjarni á annarri grein): notandaafritið ~/.claude/agents/<nafn>.md vísar á frumritið.
+  if (!fs.existsSync(p)) { const h = path.join(G.HEIMA, 'agents', e.name + '.md'); if (fs.existsSync(h)) return { slod: h, til: true }; }
   return { slod: p, til: fs.existsSync(p) };
 }
 

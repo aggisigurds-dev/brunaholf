@@ -38,11 +38,11 @@
     fyrirtaeki: ['kunnaskra', 'thjonustugatt', 'sara-coworker', 'sala-reikningar', 'natalie', 'elon-musk', 'arnold', 'postur'],
     framendi: ['verkstadur', 'bokari', 'skjol', 'sara-organizer', 'jarvis'],
     'bord-flettur': ['postur', 'sala-reikningar', 'opp', 'innkaupabokari', 'birgdastjori', 'elon-musk'],
-    'kjarni-vefur': ['artcraft', 'skraning', '3dJoker', 'arnold'],
+    'kjarni-vefur': ['artcraft', 'skraning', 'gatakort', '3dJoker', 'arnold'],   // gatakort (Jackie Chan, Apex Ajour) 14.11.2026
     rukkari: ['bokari', 'postur', 'logfraedingur', 'endurskodandi']
   };
   var NYIR = ['fyrirtaeki', 'postur', 'thjonustugatt', 'logfraedingur', 'endurskodandi', 'innkaupabokari', 'birgdastjori', 'kodafraedingur',
-    'utlitsserfraedingur', 'opp', 'verkstadur', 'kjarni-vefur', 'artcraft', 'skraning'];
+    'utlitsserfraedingur', 'opp', 'verkstadur', 'kjarni-vefur', 'artcraft', 'skraning'];   // merkið segir „nýr 04.11“: aðeins agentar frá þeim degi
   var VEFIR = { brunaholf: 'Brunahólf', slokkvitaeki: 'Slökkvitæki', kjarni: 'Kjarni' };
   var VEF_ROD = ['brunaholf', 'slokkvitaeki', 'kjarni'];
   var FONTS = 'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Rajdhani:wght@500;600;700&family=Cinzel:wght@600;700&display=swap';

@@ -1,7 +1,7 @@
 {
- "generated": "2026-11-11",
- "agents": 42,
- "skills": 58,
+ "generated": "2026-11-14",
+ "agents": 43,
+ "skills": 59,
  "a_odrum_velum": 8,
  "list": [
   {
@@ -111,12 +111,12 @@
     {
      "repo": "kjarni",
      "path": ".claude/agents/artcraft.md",
-     "uppfaert": "2026-11-05",
-     "linur": 67
+     "uppfaert": "2026-11-11",
+     "linur": 93
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-05",
+   "uppfaert": "2026-11-11",
    "sidur": [
     {
      "id": "turbopaint",
@@ -428,6 +428,18 @@
      "id": "slokkvitaeki:/kjarni/artcraft/tonsmid",
      "vefur": "kjarni",
      "titill": "Tónsmíð",
+     "hlutverk": "eigandi"
+    },
+    {
+     "id": "slokkvitaeki:/kjarni/artcraft/tonklippa",
+     "vefur": "kjarni",
+     "titill": "Tónklippa (vísar á /coach)",
+     "hlutverk": "eigandi"
+    },
+    {
+     "id": "slokkvitaeki:/coach",
+     "vefur": "kjarni",
+     "titill": "THE COACH — þjálfaraapp (PWA) með Tónklippu",
      "hlutverk": "eigandi"
     },
     {
@@ -1403,7 +1415,7 @@
      "repo": "brunaholf",
      "path": ".claude/agents/gagnaleidslur.md",
      "uppfaert": "2026-11-11",
-     "linur": 475
+     "linur": 483
     }
    ],
    "afbrigdi": [],
@@ -1564,6 +1576,98 @@
      "vefur": "kjarni",
      "titill": "Skráning — yfirsýn",
      "hlutverk": "undiragent"
+    }
+   ]
+  },
+  {
+   "id": "agent:gatakort",
+   "type": "agent",
+   "name": "gatakort",
+   "emoji": "🥋",
+   "rodd": "Jackie Chan",
+   "flokkur": "rodd",
+   "svid": null,
+   "lysing": "Jackie Chan 🥋 — sérfræðingur Apex Ajour: Gatakortsins og stöðuskýrslunnar í nýja Ajour (Skráning í Kjarna, /kjarni/skraning/kort og /kjarni/skraning/skyrsla): kortleggur húsnæði frá grunni. Púslar hlutablöðum saman í eina hæðarmynd, stillir fagteikningar af sem lög, varpar Ajour-teikningum á yfirlitsblað, finnur punktana, færir þá á skurðpunkt lagnar og brunaveggjar, parar skráningar við áætluð göt og við hinn endann, greinir lagnakerfi af teikningum og myndum, og heldur stöðuskýrslunni réttri. Notaðu þegar kortleggja á nýtt húsnæði eða nýja hæð, bæta við lagi, laga vörpun eða pörun, eða þegar tala á gatakorti eða í stöðuskýrslu er dregin í efa.",
+   "serhaefing": [
+    "Gatakortið og stöðuskýrslan í nýja Ajour (Skráning í Kjarna): /kjarni/skraning/kort og /kjarni/skraning/skyrsla",
+    "Kortleggja húsnæði frá grunni: yfirlitsblað hæðar sem hnitakerfi, hlutablöð púsluð saman, fagteikningar stilltar af sem lög",
+    "Vörpun Ajour-teikninga á yfirlitsblað (FFT-fylgni veggja, ásamót, samsett blöð) og hæðarhnit hvers punkts",
+    "Brunaveggir, nemar, sjálfvirk færsla punkta á skurðpunkt lagnar og brunaveggjar, pörun við áætluð göt og hinn endann",
+    "Áætluð göt úr Miro, tillögur milli hæða, lagnakerfi stálröra af teikningum og ljósmyndum",
+    "Verkferlið gatakort-nytt-husnaedi og NLSH-dagbókin (allt sem var gert á NLSH 11.–14.11.2026)"
+   ],
+   "kveikjuord": [
+    "Apex",
+    "Apex Ajour",
+    "Gatakort",
+    "Jackie Chan",
+    "nýja Ajour",
+    "kortleggja húsnæði",
+    "mappa upp húsnæði",
+    "nýtt húsnæði á kort",
+    "púsla saman teikningum",
+    "skeyta teikningum",
+    "hlutablöð",
+    "lög á teikningu",
+    "fagteikningar sem lög",
+    "stilla af teikningu",
+    "vörpun teikningar",
+    "finna punktana",
+    "para punkta",
+    "hinn endann vantar",
+    "sömu megin",
+    "áætluð göt",
+    "tillögur á korti",
+    "nemar",
+    "brunayfirlit",
+    "yfirlitsblað",
+    "stöðuskýrsla",
+    "útboðssamanburður",
+    "skr_aaetlud",
+    "skr_log",
+    "skr_faerslur"
+   ],
+   "aldrei": [
+    "--write án þurrkeyrslu, eða NLSH-tól keyrt óbreytt á annað verk",
+    "Breyta skráningu (flokkur, staða, hnit) — færsla fer í skr_faerslur, áætlun í skr_aaetlud",
+    "Skrifa í ajour_registrations eða keyra ajour-import.js --write fyrir verk sem uppgjör les úr Ajour",
+    "Hard-delete — eytt=true með afriti, og földun skráninga aðeins með orðum Agnars",
+    "Kalla áætlun eða tillögu talningu, eða birta forsendur NLSH í skýrslu annars húsnæðis",
+    "Sækja teikningu eða mynd án leyfis Agnars; senda skýrslu eða póst út úr húsi"
+   ],
+   "tools": [
+    "Bash",
+    "Read",
+    "Grep",
+    "Glob",
+    "Edit",
+    "Write"
+   ],
+   "heimili": [
+    "brunaholf"
+   ],
+   "skrar": [
+    {
+     "repo": "brunaholf",
+     "path": ".claude/agents/gatakort.md",
+     "uppfaert": "2026-11-14",
+     "linur": 140
+    }
+   ],
+   "afbrigdi": [],
+   "uppfaert": "2026-11-14",
+   "sidur": [
+    {
+     "id": "slokkvitaeki:/kjarni/skraning/skyrsla",
+     "vefur": "kjarni",
+     "titill": "Skráning — stöðuskýrsla",
+     "hlutverk": "eigandi"
+    },
+    {
+     "id": "slokkvitaeki:/kjarni/skraning/kort",
+     "vefur": "kjarni",
+     "titill": "Skráning — gatakort",
+     "hlutverk": "eigandi"
     }
    ]
   },
@@ -2472,6 +2576,12 @@
      "vefur": "kjarni",
      "titill": "Marks — kjarni bookmarks",
      "hlutverk": "eigandi"
+    },
+    {
+     "id": "slokkvitaeki:/ljos",
+     "vefur": "kjarni",
+     "titill": "Ljósastýring Langamýri 22 (Hue Remote API)",
+     "hlutverk": "eigandi"
     }
    ]
   },
@@ -3129,12 +3239,12 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/oryggi.md",
-     "uppfaert": "2026-11-10",
-     "linur": 234
+     "uppfaert": "2026-11-14",
+     "linur": 240
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-10",
+   "uppfaert": "2026-11-14",
    "sidur": [
     {
      "id": "stillingar",
@@ -3164,6 +3274,12 @@
      "id": "web:/sign-up",
      "vefur": "kjarni",
      "titill": "Sign up (sniðmát)",
+     "hlutverk": "undiragent"
+    },
+    {
+     "id": "slokkvitaeki:/ljos",
+     "vefur": "kjarni",
+     "titill": "Ljósastýring Langamýri 22 (Hue Remote API)",
      "hlutverk": "undiragent"
     }
    ]
@@ -4169,18 +4285,30 @@
     {
      "repo": "kjarni",
      "path": ".claude/agents/skraning.md",
-     "uppfaert": "2026-11-04",
-     "linur": 68
+     "uppfaert": "2026-11-14",
+     "linur": 81
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-04",
+   "uppfaert": "2026-11-14",
    "sidur": [
     {
      "id": "slokkvitaeki:/kjarni/skraning/flokkar",
      "vefur": "kjarni",
      "titill": "Skráning — flokkar, gátlisti og starfsmenn",
      "hlutverk": "eigandi"
+    },
+    {
+     "id": "slokkvitaeki:/kjarni/skraning/skyrsla",
+     "vefur": "kjarni",
+     "titill": "Skráning — stöðuskýrsla",
+     "hlutverk": "undiragent"
+    },
+    {
+     "id": "slokkvitaeki:/kjarni/skraning/kort",
+     "vefur": "kjarni",
+     "titill": "Skráning — gatakort",
+     "hlutverk": "undiragent"
     },
     {
      "id": "slokkvitaeki:/kjarni/skraning/greining",
@@ -5694,6 +5822,47 @@
    "sidur": []
   },
   {
+   "id": "skill:gatakort-nytt-husnaedi",
+   "type": "skill",
+   "name": "gatakort-nytt-husnaedi",
+   "emoji": "🥋",
+   "rodd": null,
+   "flokkur": "skill",
+   "svid": null,
+   "lysing": "Kortleggja húsnæði á Gatakortið í nýja Ajour (Skráning í Kjarna): frá teikningum að korti með skráningum, lögum, pörun og stöðuskýrslu. Skref fyrir skref: safna teikningum, velja hnitakerfi hæðar, púsla hlutablöðum saman, stilla fagteikningar af sem lög, flytja inn skráningar úr Ajour, varpa Ajour-teikningum á yfirlitsblað, finna brunaveggi og gegnumtök, færa punkta á skurðpunkt, para við áætluð göt og hinn endann, og sannreyna. Notaðu þegar Agnar segir „mappa upp annað húsnæði\", „kortleggja nýja hæð\", „púsla saman teikningum\", „bæta við lagi\", „setja fagteikningu yfir\", „stilla af teikningu\" eða „gera gatakort fyrir <verk>\". Eigandi: agentinn `gatakort` (Jackie Chan). Fyrirmyndin er NLSH (verk 4), skráð í NLSH-DAGBOK.md í sömu möppu. Kóðinn og tólin eru í Kjarna (apps/slokkvitaeki/tools/skraning-gatakort-*).",
+   "serhaefing": [],
+   "kveikjuord": [
+    "mappa upp húsnæði",
+    "kortleggja nýja hæð",
+    "gatakort fyrir nýtt verk",
+    "púsla saman teikningum",
+    "bæta við lagi",
+    "setja fagteikningu yfir",
+    "stilla af teikningu",
+    "nýtt húsnæði á gatakort"
+   ],
+   "aldrei": [
+    "Keyra NLSH-tól óbreytt á annað verk",
+    "--write án þurrkeyrslu",
+    "Birta forsendur NLSH í skýrslu annars húsnæðis"
+   ],
+   "tools": [],
+   "heimili": [
+    "brunaholf"
+   ],
+   "skrar": [
+    {
+     "repo": "brunaholf",
+     "path": ".claude/skills/gatakort-nytt-husnaedi/SKILL.md",
+     "uppfaert": "2026-11-14",
+     "linur": 269
+    }
+   ],
+   "afbrigdi": [],
+   "uppfaert": "2026-11-14",
+   "sidur": []
+  },
+  {
    "id": "skill:google-drive",
    "type": "skill",
    "name": "google-drive",
@@ -6342,7 +6511,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/skills/sannreyna-fyrirtaeki/SKILL.md",
      "uppfaert": "2026-11-11",
-     "linur": 149
+     "linur": 163
     }
    ],
    "afbrigdi": [],
@@ -10691,6 +10860,62 @@
   {
    "vefur": "kjarni",
    "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/artcraft/tonklippa",
+   "titill": "Tónklippa (vísar á /coach)",
+   "tegund": "sida",
+   "leid": "/kjarni/artcraft/tonklippa",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/artcraft/tonklippa/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Tónklippa"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/coach",
+   "titill": "THE COACH — þjálfaraapp (PWA) með Tónklippu",
+   "tegund": "sida",
+   "leid": "/coach",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/coach/page.tsx",
+    "apps/slokkvitaeki/app/coach/manifest.webmanifest/route.ts",
+    "apps/slokkvitaeki/app/tonklippa/page.tsx",
+    "apps/slokkvitaeki/public/coach-sw.js",
+    "apps/database/supabase/schemas/tonklippa.sql"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "THE COACH",
+    "þjálfaraapp",
+    "Tónklippa",
+    "klippa tónlist",
+    "skautarútína",
+    "dansrútína",
+    "iðkendur",
+    "heimaskjár",
+    "skúffa"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
    "id": "slokkvitaeki:/kjarni/artcraft/upplyfting",
    "titill": "Upplyfting",
    "tegund": "sida",
@@ -10856,6 +11081,65 @@
    "astaeda": [],
    "eigandi_nafn": "skraning",
    "eigandi_utan": false
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/skraning/skyrsla",
+   "titill": "Skráning — stöðuskýrsla",
+   "tegund": "sida",
+   "leid": "/kjarni/skraning/skyrsla",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/skraning/skyrsla/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "bh:gatakort",
+   "undiragentar": [
+    "skraning"
+   ],
+   "kveikjuord": [
+    "Stöðuskýrsla",
+    "skýrsla til Landspítalans",
+    "útboðsmagn",
+    "staða per deild",
+    "útboðssamanburður"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "gatakort",
+   "eigandi_utan": true
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/skraning/kort",
+   "titill": "Skráning — gatakort",
+   "tegund": "sida",
+   "leid": "/kjarni/skraning/kort",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/skraning/kort/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "bh:gatakort",
+   "undiragentar": [
+    "skraning"
+   ],
+   "kveikjuord": [
+    "Gatakort",
+    "áætluð göt",
+    "lög á teikningu",
+    "brunayfirlit",
+    "kortleggja húsnæði",
+    "púsla saman teikningum",
+    "hinn endann vantar",
+    "nýja Ajour"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "gatakort",
+   "eigandi_utan": true
   },
   {
    "vefur": "kjarni",
@@ -11642,6 +11926,34 @@
    "astaeda": [],
    "eigandi_nafn": "kjarni-vefur",
    "eigandi_utan": false
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/ljos",
+   "titill": "Ljósastýring Langamýri 22 (Hue Remote API)",
+   "tegund": "sida",
+   "leid": "/ljos",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/ljos/page.tsx",
+    "apps/slokkvitaeki/app/api/ljos/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "kjarni-vefur",
+   "undiragentar": [
+    "oryggi"
+   ],
+   "kveikjuord": [
+    "ljós",
+    "ljósastýring",
+    "Langamýri",
+    "Hue"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "kjarni-vefur",
+   "eigandi_utan": false
   }
  ],
  "thekja": [
@@ -11661,8 +11973,8 @@
    "repo": "kjarni",
    "utgafa": 1,
    "vefagent": "kjarni-vefur",
-   "alls": 100,
-   "med_eiganda": 95,
+   "alls": 105,
+   "med_eiganda": 100,
    "vidvorun": 5,
    "an_eiganda": 0,
    "hlutfall": 95
@@ -11678,6 +11990,7 @@
   "framendi.md",
   "fyrirtaeki.md",
   "gagnaleidslur.md",
+  "gatakort.md",
   "hradi.md",
   "innkaupabokari.md",
   "jarvis.md",
