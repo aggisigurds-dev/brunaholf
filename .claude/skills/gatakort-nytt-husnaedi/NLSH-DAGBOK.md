@@ -506,3 +506,34 @@ Færðir punktar · Tillögur · Símaviðmót · Stöðuskýrsla.
 - **Hlutar deildar:** hver skráning ber `ajour_gogn.svaedi` = N | C | S (Norðurhlið, Center, Suðurhlið). Skýrslusíðan sýnir þá ekki
   enn; hönnunin í Claude Design (Stöðuskýrsla NLSH) gerir það (skil við 27,5 % og 72,5 % af lengd álmu, mælt úr hnitum).
 - ALDREI senda tölur úr þessari sýn sem „gildandi magn" án staðfestingar Agnars — útboðstölurnar eru upphafstölur.
+
+## Apex Ajour: nafn, lógó og stækkun (14.11.2026)
+- **Nafn:** „Ajour-Craft" → „Apex Ajour" í Kjarna (kjarni main f7a913a): valmynd, tólaskrá, skinn, síðutitlar sjö síðna. Stöðuskýrslan og
+  prentsíðan óbreyttar viljandi (fara til annarra). Agnar: „Ajour-útgáfan mun heita síðar Apex … í bili Apex Ajour", „breyta síðan nafninu inn á Kjarna".
+- **Lógó:** tillaga C valin („þetta er töff"). Í haus var það fyrst 36 px á hæð; Agnar: „eiginlega allt of stórt þarna" → ein lág lína
+  (tákn + APEX + AJOUR), 18 px á hæð, 102 px á breidd; táknið eitt í síma 20 px (kjarni main 6b6d4ca). Skrár: `apps/slokkvitaeki/public/apex/`.
+- **Stækkun á gatakorti:** Agnar: „geta zoomað alveg og full stjórn á öllu". Mælt á lifandi síðu í símabreidd (390 px): mesta stækkun var um
+  3,5 m þvert yfir skjáinn (200 mm veggur = 22 px). `kMest` í KortClient: aldrei minna en 6 skjápixlar á grunnpixil → um 1,6 m (veggur 48 px).
+  10 var prófað: einn veggur fyllti skjáinn, nýtist ekki. Tölva óbreytt. (kjarni main 05967e2)
+- **Ósvarað:** hvað „þægilegt vinnubreytinga-layout" og „full stjórn á öllu" á að ná yfir (gatakortið í síma eða Vinnusíðan; hvaða aðgerðir
+  vantar). Skráningum er enn aldrei breytt úr gatakortinu.
+
+## Opna fyrir breytingar á skráningum (14.11.2026) — `skr_verk.stillingar`, `skr_skraningar.handvirkt`
+- **Orð Agnars:** „helst að losna við kjánaleg höft sem stoppa mann í eðlilegri vinnu … þarf ekki allt að vera sjáanlegt. Kannski bara einhvers
+  staðar í stillingum að ég geti opnað á sem flesta hluti sem eru að stoppa mann til að breyta einhverju, skrifa, stærðir, flokkar, texta, heiti".
+- **Hvað:** Stillingar neðst í „Lög og síur" á gatakortinu: hak „Opna fyrir breytingar á skráningum" (sjálfgefið lokað). Opið: flokkur og stærð,
+  staða (Klárað/Opið), lýsing og athugasemd breytanleg á völdum punkti. Kjarni main 87c3e20; migration `skr_handvirkt_stillingar` (tveir dálkar, viðbót).
+- **Skrif:** `update skr_skraningar set <svið>, handvirkt` + `insert skr_atburdir` (hvad flokkur | stada | texti, gogn {svid, fra, til, uppruni: 'gatakort'}).
+  `handvirkt` = { <svið>: { fra, hvenaer } }; sé gildið sett aftur á upprunalegt hverfur lykillinn. `-innflutningur.cjs` hlífir sviðum í `handvirkt`
+  (flokkur_id, stada, lysing; athugasemd flytur hann ekki inn). Stöðuskýrslan: liður „Handbreytt í Apex Ajour" í afstemmingu ef eitthvað er breytt.
+- **Prófað** í gegnum viðmótið á tölvu- og símabreidd með öll skrif gripin (ekkert fór í grunninn). Sýnirnar `skr_yfirlit`/`skr_hub_skraningar`
+  töldu 10.709 fyrir verk 4 og 37.261 alls fyrir breytinguna; dálkaviðbót breytir því ekki.
+- **Ekki opnað (viljandi, segja Agnari ef hann rekst á það):** heiti verks og yfirlitsblaða (sex tól finna verkið á heitinu „NLSH 5-6. hæð · gatakort"
+  og blöðin á „Brunayfirlit <hæð>"; nafnbreyting myndi brjóta þau), starfsmaður og dagsetning á skráningu, heiti flokka (síðan Categories/schema).
+- **Eftir flokkabreytingar:** `-para.cjs --haed … --write`; táknið á kortinu uppfærist við næstu hleðslu.
+
+## Stærð og litir tákna í Stillingum (14.11.2026) — `skr_verk.stillingar.taknStaerd`, `.litir`
+- **Orð Agnars:** „Stækka minnka icons slider, táknin kannski, litir á táknum". Og um „of stórt": „Meinti þá iconin. En þú síðan breyttir þeim. Svo allt í lagi."
+- **Hvað:** sleðinn „Stærð tákna" (50–250 %) og litareitur við hvert tákn sem er á kortinu, með „Upprunalegir litir". Vistast á verkinu, eins á öllum
+  tækjum; breytir aðeins útliti. Kóði: `tk` (margfaldari á `zs` og `merkisR`) og `LITIR` (lykill = heiti tákns, t.d. „Loft 125-160") í KortClient.
+- **Prófað** með skrif gripin: sleði 100 → 200 %, litur breyttur og endurstilltur; sendingarnar réttar. Stöðuskýrslan notar sína eigin liti (óbreytt).

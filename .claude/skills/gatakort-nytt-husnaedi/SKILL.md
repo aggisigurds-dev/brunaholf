@@ -244,7 +244,7 @@ ekki prósentu.
 | Nýtt greiningarverk og skráningar þess (`skr_verk`, `skr_skraningar` með `ajour_registration_id`) | Já | `ajour_nafn = NULL`; sýnir uppgjörs taldar fyrir og eftir |
 | JSON í `kort/veggir`, `kort/nemar`, `visbendingar.json` | Já | Í commit |
 | `eytt = true` á skráningar | Aðeins með orðum Agnars í lotunni | Afrit + `skr_atburdir` + `--til-baka` |
-| Flokkur, staða eða hnit á skráningu | NEI | Færsla fer í `skr_faerslur`; flokkur stendur |
+| Flokkur, staða, texti eða hnit á skráningu | NEI úr tóli eða af agent | Færsla fer í `skr_faerslur`. Agnar breytir sjálfur í viðmótinu („Opna fyrir breytingar" í Stillingum); þau svið eru í `handvirkt` og innflutningur hlífir þeim |
 | `ajour_registrations`, `skr_ajour_lesid`, Ajour sjálft | NEI | Aðeins lestur |
 | Skilgreining `skr_yfirlit`, `skr_hub_skraningar`, `skr_haedarhnit` | NEI án Hermione | Schemas + samanburður uppgjörs |
 | Hard-delete á hverju sem er | NEI | — |
