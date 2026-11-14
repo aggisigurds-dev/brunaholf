@@ -506,3 +506,14 @@ Færðir punktar · Tillögur · Símaviðmót · Stöðuskýrsla.
 - **Hlutar deildar:** hver skráning ber `ajour_gogn.svaedi` = N | C | S (Norðurhlið, Center, Suðurhlið). Skýrslusíðan sýnir þá ekki
   enn; hönnunin í Claude Design (Stöðuskýrsla NLSH) gerir það (skil við 27,5 % og 72,5 % af lengd álmu, mælt úr hnitum).
 - ALDREI senda tölur úr þessari sýn sem „gildandi magn" án staðfestingar Agnars — útboðstölurnar eru upphafstölur.
+
+## Apex Ajour: nafn, lógó og stækkun (14.11.2026)
+- **Nafn:** „Ajour-Craft" → „Apex Ajour" í Kjarna (kjarni main f7a913a): valmynd, tólaskrá, skinn, síðutitlar sjö síðna. Stöðuskýrslan og
+  prentsíðan óbreyttar viljandi (fara til annarra). Agnar: „Ajour-útgáfan mun heita síðar Apex … í bili Apex Ajour", „breyta síðan nafninu inn á Kjarna".
+- **Lógó:** tillaga C valin („þetta er töff"). Í haus var það fyrst 36 px á hæð; Agnar: „eiginlega allt of stórt þarna" → ein lág lína
+  (tákn + APEX + AJOUR), 18 px á hæð, 102 px á breidd; táknið eitt í síma 20 px (kjarni main 6b6d4ca). Skrár: `apps/slokkvitaeki/public/apex/`.
+- **Stækkun á gatakorti:** Agnar: „geta zoomað alveg og full stjórn á öllu". Mælt á lifandi síðu í símabreidd (390 px): mesta stækkun var um
+  3,5 m þvert yfir skjáinn (200 mm veggur = 22 px). `kMest` í KortClient: aldrei minna en 6 skjápixlar á grunnpixil → um 1,6 m (veggur 48 px).
+  10 var prófað: einn veggur fyllti skjáinn, nýtist ekki. Tölva óbreytt. (kjarni main 05967e2)
+- **Ósvarað:** hvað „þægilegt vinnubreytinga-layout" og „full stjórn á öllu" á að ná yfir (gatakortið í síma eða Vinnusíðan; hvaða aðgerðir
+  vantar). Skráningum er enn aldrei breytt úr gatakortinu.
