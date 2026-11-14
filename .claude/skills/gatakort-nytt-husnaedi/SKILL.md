@@ -14,6 +14,8 @@ description: >
 
 # Gatakort fyrir nýtt húsnæði
 
+Nýja Ajour heitir **Apex Ajour** í bili (greiningartól ofan á Ajour) og síðar **Apex** (Agnar 14.11.2026). Heiti í kóða eru óbreytt.
+
 Fyrirmyndin er NLSH, meðferðarkjarni 4.–6. hæð (11.–14.11.2026). Allt sem þar var gert, mælt og úrskurðað er í
 `NLSH-DAGBOK.md` í þessari möppu. Þetta skjal er leiðin; dagbókin er sönnunargagnið og gildrusafnið.
 

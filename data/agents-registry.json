@@ -1587,7 +1587,7 @@
    "rodd": "Jackie Chan",
    "flokkur": "rodd",
    "svid": null,
-   "lysing": "Jackie Chan 🥋 — sérfræðingur Gatakortsins og stöðuskýrslunnar í nýja Ajour (Skráning í Kjarna, /kjarni/skraning/kort og /kjarni/skraning/skyrsla): kortleggur húsnæði frá grunni. Púslar hlutablöðum saman í eina hæðarmynd, stillir fagteikningar af sem lög, varpar Ajour-teikningum á yfirlitsblað, finnur punktana, færir þá á skurðpunkt lagnar og brunaveggjar, parar skráningar við áætluð göt og við hinn endann, greinir lagnakerfi af teikningum og myndum, og heldur stöðuskýrslunni réttri. Notaðu þegar kortleggja á nýtt húsnæði eða nýja hæð, bæta við lagi, laga vörpun eða pörun, eða þegar tala á gatakorti eða í stöðuskýrslu er dregin í efa.",
+   "lysing": "Jackie Chan 🥋 — sérfræðingur Apex Ajour: Gatakortsins og stöðuskýrslunnar í nýja Ajour (Skráning í Kjarna, /kjarni/skraning/kort og /kjarni/skraning/skyrsla): kortleggur húsnæði frá grunni. Púslar hlutablöðum saman í eina hæðarmynd, stillir fagteikningar af sem lög, varpar Ajour-teikningum á yfirlitsblað, finnur punktana, færir þá á skurðpunkt lagnar og brunaveggjar, parar skráningar við áætluð göt og við hinn endann, greinir lagnakerfi af teikningum og myndum, og heldur stöðuskýrslunni réttri. Notaðu þegar kortleggja á nýtt húsnæði eða nýja hæð, bæta við lagi, laga vörpun eða pörun, eða þegar tala á gatakorti eða í stöðuskýrslu er dregin í efa.",
    "serhaefing": [
     "Gatakortið og stöðuskýrslan í nýja Ajour (Skráning í Kjarna): /kjarni/skraning/kort og /kjarni/skraning/skyrsla",
     "Kortleggja húsnæði frá grunni: yfirlitsblað hæðar sem hnitakerfi, hlutablöð púsluð saman, fagteikningar stilltar af sem lög",
@@ -1597,6 +1597,8 @@
     "Verkferlið gatakort-nytt-husnaedi og NLSH-dagbókin (allt sem var gert á NLSH 11.–14.11.2026)"
    ],
    "kveikjuord": [
+    "Apex",
+    "Apex Ajour",
     "Gatakort",
     "Jackie Chan",
     "nýja Ajour",
@@ -1649,7 +1651,7 @@
      "repo": "brunaholf",
      "path": ".claude/agents/gatakort.md",
      "uppfaert": "2026-11-14",
-     "linur": 134
+     "linur": 140
     }
    ],
    "afbrigdi": [],
@@ -4284,7 +4286,7 @@
      "repo": "kjarni",
      "path": ".claude/agents/skraning.md",
      "uppfaert": "2026-11-14",
-     "linur": 79
+     "linur": 81
     }
    ],
    "afbrigdi": [],
@@ -5853,7 +5855,7 @@
      "repo": "brunaholf",
      "path": ".claude/skills/gatakort-nytt-husnaedi/SKILL.md",
      "uppfaert": "2026-11-14",
-     "linur": 267
+     "linur": 269
     }
    ],
    "afbrigdi": [],
