@@ -4,7 +4,7 @@
       þjóninum og sett á síðuna.
       Efnið geymir aðeins það sem breytt var; allt annað stendur eins og það er í síðunni sjálfri. Síðasta útgáfa er geymd
       í vafranum svo síðan birtist rétt strax við næstu heimsókn, og er borin saman við þjóninn í hvert sinn.
-   3. Ritillinn: ?ritill í slóðinni hleður site/ritill.js og site/ritill.css.
+   3. Ritillinn: ?ritill í slóðinni hleður site/ritill.js og site/ritill.css, og innskráningarskjáinn (site/innskraning.js og .css).
    Stillingar eru á <script>-merkinu: data-utgafa (v1, v2 eða v3), data-api (slóð fallsins; vanti hana er ekkert sótt og
    ritillinn ekki í boði), data-myndir (forskeyti slóða á myndir sem hlaðið var upp) og data-litir (litaval útgáfunnar).
    Allt sem kemur af þjóninum er hreinsað áður en það fer á síðuna: texti, fáein textamerki og stílar af lista, ekkert annað.
@@ -462,14 +462,26 @@
      Hlekkurinn er falinn í síðunni og sýndur hér, því hann á aðeins við þar sem þjónninn er til staðar. Á öðru léni en
      þjónninn er á vísar hann þangað: innskráningin er cookie á vef stjórnstöðvarinnar. ---- */
   var innHladid = false;
+  /* stílblað og skriftur sem hlaðast eftir þörfum. Skrifturnar keyra í þeirri röð sem þær eru taldar upp (async = false),
+     því sú seinni notar þá fyrri. Náist skrá ekki er reynt aftur við næsta smell. */
+  function hladaSkrar(stilar, skriftur, mistokst) {
+    stilar.forEach(function (f) {
+      if (d.querySelector('link[href$="' + f + '"]')) return;
+      var l = d.createElement('link'); l.rel = 'stylesheet'; l.href = GRUNNUR + f; d.head.appendChild(l);
+    });
+    skriftur.forEach(function (f) {
+      var r = d.createElement('script');
+      r.src = GRUNNUR + f; r.async = false;
+      if (mistokst) r.onerror = function () { r.remove(); mistokst(); };
+      d.body.appendChild(r);
+    });
+  }
   function innranet() {
     if (window.BH_INNRANET) return window.BH_INNRANET.opna();
     if (innHladid) return;
     innHladid = true;
-    if (!d.querySelector('link[href$="ritill.css"]')) { var l = d.createElement('link'); l.rel = 'stylesheet'; l.href = GRUNNUR + 'ritill.css'; d.head.appendChild(l); }
-    var r = d.createElement('script');
-    r.src = GRUNNUR + 'innranet.js';
-    d.body.appendChild(r);
+    /* innskraning.js er skjárinn (premium útlitið), innranet.js það sem gerist á honum */
+    hladaSkrar(['innskraning.css'], [window.BH_INNSKRANING ? '' : 'innskraning.js', 'innranet.js'].filter(Boolean), function () { innHladid = false; });
   }
   function innranetTilbuid() {
     var heima = !/^https?:/i.test(API) || API.indexOf(location.origin + '/') === 0;      /* þjónninn er á þessum vef */
@@ -490,12 +502,7 @@
   try { geymt = JSON.parse(localStorage.getItem(LYKILL) || 'null'); } catch (e) {}
   if (RITILL) {
     /* ritillinn sækir drögin sjálfur og setur þau á síðuna */
-    var hlada = function () {
-      var l = d.createElement('link'), r = d.createElement('script');
-      l.rel = 'stylesheet'; l.href = GRUNNUR + 'ritill.css';
-      r.src = GRUNNUR + 'ritill.js';
-      d.head.appendChild(l); d.body.appendChild(r);
-    };
+    var hlada = function () { hladaSkrar(['ritill.css', 'innskraning.css'], ['innskraning.js', 'ritill.js']); };      /* innskráning ritilsins er teiknuð á sama skjá og „Innranet“ */
     if (d.readyState === 'loading') d.addEventListener('DOMContentLoaded', hlada); else hlada();
     return;
   }

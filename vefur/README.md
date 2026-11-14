@@ -38,12 +38,13 @@ Vefurinn er smíðaður úr þremur Claude-artifactum, tillögunum V2, V1 og V3,
 | `v3-skrar/` | Það sem V3 á ein: stílblaðið (`site/sida.css`), stílblað verslunarinnar (`verslun/verslun.css`) og vörugögnin (`verslun/gogn.js`). |
 | `site/efni.js` | Efnislagið: bannerasafnið (`BANNERAR`), breytingar úr ritlinum settar á síðuna, og hleðsla ritilsins (`?ritill`). Hleðst í `<head>`. Sameiginleg öllum síðunum. |
 | `site/ritill.js`, `site/ritill.css` | Ritillinn sjálfur. Hlaðast aðeins þegar slóðin ber `?ritill`. Eru ekki í tillögunum í Claude. |
-| `site/innranet.js` | Innskráning starfsfólks á síðunni og valmyndin eftir hana. Hleðst aðeins þegar smellt er á „Innranet“ í fætinum eða slóðin ber `?innranet`. Notar útlitið úr `site/ritill.css`. |
+| `site/innranet.js` | Innskráning starfsfólks á síðunni og valmyndin eftir hana. Hleðst aðeins þegar smellt er á „Innranet“ í fætinum eða slóðin ber `?innranet`. |
+| `site/innskraning.js`, `site/innskraning.css` | Innskráningarskjár starfsfólks í premium útliti: sama myndefni, kort, reitir og hnappar og á innskráningarsíðu þjónustugáttarinnar. „Innranet“ og innskráning ritilsins teikna bæði á hann. Hlaðast aðeins með þeim. |
 | `site/router.js` | Sýnirnar þrjár og slóðirnar, og í seinni hlutanum skriftan sem setur bannerinn í forsíðuhausinn og stýrir myndskeiðinu. Sameiginleg öllum síðunum. |
 | `verslun/verslun.js` | Verslunin sjálf, tekin úr `vefverslun/` í kóðasafni Slökkvitækja-appsins og aðlöguð á sjö stöðum sem taldir eru upp efst í skránni. Sameiginleg öllum síðunum. |
 | `verslun/verslun.css` | Útlit verslunarinnar í V2 og V1. |
 | `verslun/gogn.js` | Vörur, verð, birgðir og stillingar verslunarinnar fyrir V2, þar á meðal litir hennar í `efni.thema`. |
-| `img/`, `vv/v/`, `myndir/` | Merkið, myndskeiðið í forsíðuhausnum og myndir bannerasafnsins (þrjár þeirra í `img/banner/`), vörumyndir (heitið er númer vörunnar) og myndir á vörusíðum. Sameiginlegar. |
+| `img/`, `vv/v/`, `myndir/` | Merkið, myndskeiðið í forsíðuhausnum og myndir bannerasafnsins (þrjár þeirra í `img/banner/`), bakgrunnur innskráningarskjásins (`img/innskraning.webp`, sama mynd og á innskráningarsíðu þjónustugáttarinnar), vörumyndir (heitið er númer vörunnar) og myndir á vörusíðum. Sameiginlegar. |
 
 ## Slóðir
 
@@ -125,9 +126,9 @@ Forsíðuhausinn sýnir einn banner úr safni sem er sameiginlegt öllum útgáf
 
 **Vistun.** Breytingar vistast sjálfkrafa sem drög á þjóninum og eru þær sömu á öllum tækjum. Gestir sjá ekkert fyrr en ýtt er á **Birta**; þá fer útgáfan í loftið innan mínútu og í útgáfusöguna, þaðan sem hægt er að sækja eldri útgáfu aftur í drögin. Vinni tvö tæki í drögunum samtímis lætur ritillinn vita og spyr hvora útgáfuna eigi að halda.
 
-**Innskráning.** Sama notandanafn og lykilorð og í stjórnstöðinni og Slökkvitæki-appinu (notendaskrá starfsmanna, `hub_adgangar`). Aðeins notendur með hlutverkið **Admin** geta vistað og birt; hlutverkum er stýrt í Aðgöngum stjórnstöðvarinnar. Sá sem er þegar skráður inn í stjórnstöðina í sama vafra er líka skráður inn í ritilinn, og útskráning á öðrum staðnum gildir á hinum. Án innskráningar er ritillinn í **prufuham**: allt virkar á skjánum, en ekkert vistast og gestir sjá engar breytingar. Þegar lykilorði starfsmanna er skipt skrást allir út.
+**Innskráning.** Sama notandanafn og lykilorð og í stjórnstöðinni og Slökkvitæki-appinu (notendaskrá starfsmanna, `hub_adgangar`). Aðeins notendur með hlutverkið **Admin** geta vistað og birt; hlutverkum er stýrt í Aðgöngum stjórnstöðvarinnar. Sá sem er þegar skráður inn í stjórnstöðina í sama vafra er líka skráður inn í ritilinn, og útskráning á öðrum staðnum gildir á hinum. Án innskráningar er ritillinn í **prufuham**: allt virkar á skjánum, en ekkert vistast og gestir sjá engar breytingar. Þegar lykilorði starfsmanna er skipt skrást allir út. Innskráningin er heill skjár í premium útliti (`site/innskraning.js`), sá sami og „Innranet“ opnar. Hann sýnir aðeins notandanafn og lykilorð og nefnir engin innri kerfi.
 
-**Innranet.** Neðst á hverri síðu er hlekkurinn „Innranet“ (líka `?innranet` aftan við slóðina). Hann opnar innskráningu starfsfólks á síðunni sjálfri, með sama notandanafni og lykilorði og að ofan, og eftir hana valmynd: Breyta síðunni, Stillingar síðunnar (ítarlegi ritillinn) og leiðir í innri kerfin (stjórnborð þjónustugáttar, Slökkvitæki-kerfið, stjórnstöðin). Leiðirnar í innri kerfin koma frá þjóninum eftir innskráningu (`INNRANET` í `netlify/functions/vefur-efni.js`) og standa ekki í skriftum síðunnar, svo gestir sjái þær ekki. Hlekkurinn er falinn í síðunni (`hidden`) og `site/efni.js` sýnir hann þar sem þjónninn er til staðar; í tillögunum í Claude sést hann því ekki.
+**Innranet.** Neðst á hverri síðu er hlekkurinn „Innranet“ (líka `?innranet` aftan við slóðina). Hann opnar innskráningarskjá starfsfólks á síðunni sjálfri, í sama útliti og innskráningarsíða þjónustugáttarinnar (myndin á bak við, merkið, kort með reitum og appelsínugulum hnappi), með sama notandanafni og lykilorði og að ofan, og eftir innskráningu valmynd á sama skjá: Breyta síðunni, Stillingar síðunnar (ítarlegi ritillinn) og leiðir í innri kerfin (stjórnborð þjónustugáttar, Slökkvitæki-kerfið, stjórnstöðin). Leiðirnar í innri kerfin koma frá þjóninum eftir innskráningu (`INNRANET` í `netlify/functions/vefur-efni.js`) og standa ekki í skriftum síðunnar, svo gestir sjái þær ekki. Hlekkurinn er falinn í síðunni (`hidden`) og `site/efni.js` sýnir hann þar sem þjónninn er til staðar; í tillögunum í Claude sést hann því ekki.
 
 **Með hjálp Claude.** „Leiðbeiningar fyrir Claude“ (í ítarlega spjaldinu og í „Fleiri aðgerðir“) er texti til að afrita í spjall við Claude: reglurnar, dæmi, lyklar allra texta, svæða, mynda og tákna á síðunni og breytingarnar eins og þær standa. Claude svarar með einum JSON-hlut sem er límdur í „Setja inn svar frá Claude“ og sameinaður við breytingarnar sem fyrir eru (gildið `null` eyðir færslu). Ritillinn lagar það sem er næstum rétt (lit sem `red` eða `rgb(…)`, `"12px"`), sleppir gildum sem síðan tekur ekki gild og segir frá þeim, og nefnir lykla sem eru ekki til og aðra vefi sem hlekkir vísa á. Allt verður drög og má afturkalla. Claude sem stýrir vafranum sjálfur getur kallað á `window.BH_RITILL.lysing()` og `window.BH_RITILL.sameina({…})`.
 
@@ -167,6 +168,8 @@ Hlekkur á Facebook-síðuna er í fætinum í öllum síðunum (`a.w-foot__fb` 
 Sé breytt í `verslun/gogn.js` þarf sama breyting að fara í `v1-skrar/verslun/gogn.js` og `v3-skrar/verslun/gogn.js`.
 
 Verslunin er í prufuham: „Halda áfram í greiðslu“ sýnir skilaboð og sendir ekkert.
+
+**Afhending.** Vörur eru aðeins sóttar: Helluhrauni 10, Hafnarfirði, virka daga 9 til 17. Reglulegar heimsendingar eru ekki hafnar (Agnar 14.11.2026), svo í stað valsins „Fá sent heim“ stendur ábending sem opnar póst til verslunarinnar. Textarnir bera lyklana `afh.saekja.x` og `afh.heim.ath`, og netfangið í hlekknum er lesið úr textanum sjálfum. Þetta kemur úr `vefverslun/` í kóðasafni Slökkvitækja-appsins (fallið `afhending()` í `verslun.js`): þegar heimsendingar hefjast kemur valið aftur þar og er svo fært hingað.
 
 ## Áður en lénið er tengt
 

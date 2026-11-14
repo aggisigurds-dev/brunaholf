@@ -42,8 +42,7 @@
     efni: {}, vorur: [], stada: 'prufa', drog_uppfaert: null, utgafa: 0, virkjad: null,
     ritill: false, breytaLeyft: false,
     sia: { flokkur: '', leit: '', rada: 'vinsaelt' },
-    vara: { mynd: 0, fjoldi: 1, afhending: 'saekja', m2: 500, tilk: '' },
-    karfaAfh: 'saekja',
+    vara: { mynd: 0, fjoldi: 1, m2: 500, tilk: '' },
     karfa: lesaKorfu(),
     sjg: {}, sjgM: {},
   };
@@ -245,12 +244,23 @@ ${uppselt ? `<a class="vv-btn ghost sm" href="#vara-${v.id}">${E('span', 'kort.l
     const l = sjanlegar();
     return `<div class="vv-grind" id="vv-grind">${l.length ? l.map(kort).join('') : `<div class="vv-tomt" style="grid-column:1/-1">${E('span', 'forsida.ekkert', 'Engin vara fannst. Prófaðu annað leitarorð.')}</div>`}</div>`;
   }
+  // ── Afhending ───────────────────────────────────────────────────────────────
+  // Vörur eru sóttar í Helluhraun 10. Reglulegar heimsendingar eru ekki hafnar (Agnar 14.11.2026), svo í stað valsins
+  // „Fá sent heim“ stendur ábending um að senda póst. Netfangið í hlekknum er lesið úr textanum sjálfum: sé textanum
+  // breytt í ritlinum fylgir hlekkurinn með.
+  const HEIM_ATH = 'Því miður erum við ekki byrjaðir á reglulegum heimsendingum, en þið getið sent okkur póst á {slokkvitaeki@brunaholf.is} og þá græjum við það í hvelli.';
+  function afhending() {
+    const netfang = (texti('afh.heim.ath', HEIM_ATH).match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+/) || ['slokkvitaeki@brunaholf.is'])[0];
+    return `<div class="vv-val valid"><span class="punktur"></span><span style="flex:1">${E('b', 'afh.saekja.t', 'Sækja hjá okkur')}${E('small', 'afh.saekja.x', 'Helluhrauni 10, Hafnarfirði · virka daga 9 til 17')}</span>${E('b', 'afh.saekja.verd', '0 kr')}</div>
+<a class="vv-afh-ath" href="mailto:${esc(netfang)}">${ico('bill')}${E('span', 'afh.heim.ath', HEIM_ATH)}</a>`;
+  }
+
   function sidaForsida() {
     const syn = synilegar();
     const flokkar = [];
     for (const v of syn) if (!flokkar.some((f) => f.f === v.flokkur)) flokkar.push({ f: v.flokkur, n: syn.filter((x) => x.flokkur === v.flokkur).length });
-    const hetja = B('forsida.hetja', `${M('forsida.hetja.mynd', { src: 'myndir/hetja.jpg', alt: '', fit: 'cover', bak: 'transparent' }, { fast: 1, strax: 1 })}<div class="vv-wrap">${E('span', 'forsida.hetja.yfir', 'Vefverslun Brunahólfs', 'vv-hetja-yfir')}${E('h1', 'forsida.hetja.titill', 'Rétt tæki, {á réttum stað.}')}${E('p', 'forsida.hetja.texti', 'Slökkvitæki, eldvarnateppi, reykskynjarar og sjúkratöskur. Sæktu hjá okkur eða fáðu sent heim.')}<div class="vv-hnappar"><a class="vv-btn ghost" href="#vara-1">${E('span', 'forsida.hetja.takki1', 'Hvaða slökkvitæki á ég að kaupa?')}</a><a class="vv-btn ghost" href="#vara-3">${E('span', 'forsida.hetja.takki2', 'Er reykskynjarinn minn nóg?')}</a></div></div>`, 'vv-hetja');
-    const traust = B('forsida.traust', `<div class="vv-wrap">${[['innsigli', 'Starfsleyfi frá HMS'], ['bill', 'Sótt eða sent heim'], ['spjall', 'Ráðgjöf frá fagfólki'], ['hringhak', 'Skoðun og áfylling á tækjum']].map(([i, d], k) => `<span>${ico(i)}${E('span', 'traust.' + (k + 1), d)}</span>`).join('')}</div>`, 'vv-traust');
+    const hetja = B('forsida.hetja', `${M('forsida.hetja.mynd', { src: 'myndir/hetja.jpg', alt: '', fit: 'cover', bak: 'transparent' }, { fast: 1, strax: 1 })}<div class="vv-wrap">${E('span', 'forsida.hetja.yfir', 'Vefverslun Brunahólfs', 'vv-hetja-yfir')}${E('h1', 'forsida.hetja.titill', 'Rétt tæki, {á réttum stað.}')}${E('p', 'forsida.hetja.texti', 'Slökkvitæki, eldvarnateppi, reykskynjarar og sjúkratöskur. Sæktu hjá okkur í Helluhrauni 10, Hafnarfirði.')}<div class="vv-hnappar"><a class="vv-btn ghost" href="#vara-1">${E('span', 'forsida.hetja.takki1', 'Hvaða slökkvitæki á ég að kaupa?')}</a><a class="vv-btn ghost" href="#vara-3">${E('span', 'forsida.hetja.takki2', 'Er reykskynjarinn minn nóg?')}</a></div></div>`, 'vv-hetja');
+    const traust = B('forsida.traust', `<div class="vv-wrap">${[['innsigli', 'Starfsleyfi frá HMS'], ['karfa', 'Sótt í Helluhrauni 10, Hafnarfirði'], ['spjall', 'Ráðgjöf frá fagfólki'], ['hringhak', 'Skoðun og áfylling á tækjum']].map(([i, d], k) => `<span>${ico(i)}${E('span', 'traust.' + (k + 1), d)}</span>`).join('')}</div>`, 'vv-traust');
     const rada = [['vinsaelt', 'Vinsælast'], ['lagt', 'Verð: lægst fyrst'], ['haett', 'Verð: hæst fyrst'], ['nafn', 'Nafn (A–Ö)']];
     return `${hetja}${traust}<main class="vv-wrap vv-adal">
 <div class="vv-titilrod"><div>${E('h2', 'forsida.titill', 'Allar vörur')}<span class="vv-undir" id="vv-taln">${esc(talnTexti())}</span></div>
@@ -803,8 +813,7 @@ ${Pr ? `<div class="vv-pillur">${(S.pillur || Pr.pillur).map((d, i) => E('span',
 <div class="vv-stort-verd"><b>${kr(v.verd)}</b><small>${tala(v.an)} án vsk</small></div>
 <span class="vv-lager">${ico('hringhak')}${uppselt ? E('span', 'lager.uppselt', 'Uppselt í bili. Pantaðu og við látum vita þegar það kemur.') : othekktLager(v) ? E('span', 'lager.stadfest', 'Fáanlegt. Við staðfestum afhendingartíma með pöntuninni.') : E('span', 'lager.til', 'Á lager, tilbúið til afhendingar')}</span>
 <fieldset class="vv-afh"><legend>${E('span', 'afh.titill', 'Afhending')}</legend>
-<button type="button" class="vv-val" data-act="afh" data-v="saekja" aria-pressed="${s.afhending === 'saekja'}"><span class="punktur"></span><span style="flex:1">${E('b', 'afh.saekja.t', 'Sækja hjá okkur')}${E('small', 'afh.saekja.x', 'Helluhrauni 10, Hafnarfirði · virka daga 8 til 16')}</span>${E('b', 'afh.saekja.verd', '0 kr')}</button>
-<button type="button" class="vv-val" data-act="afh" data-v="senda" aria-pressed="${s.afhending === 'senda'}"><span class="punktur"></span><span style="flex:1">${E('b', 'afh.senda.t', 'Fá sent heim')}${E('small', 'afh.senda.x', 'Póstsending um land allt')}</span>${E('b', 'afh.senda.verd', 'Bætist við')}</button></fieldset>
+${afhending()}</fieldset>
 <div class="vv-kaupa"><div class="vv-fj" role="group" aria-label="Fjöldi"><button type="button" class="vv-stp" data-act="faerri" aria-label="Fækka">${ico('minus')}</button><span>${s.fjoldi}</span><button type="button" class="vv-stp" data-act="fleiri" aria-label="Fjölga">${ico('plus')}</button></div>
 <button type="button" class="vv-btn navy" data-act="setja" data-id="${v.id}">${ico('karfa')}${KASSI ? KASSI_TAKKI : E('span', 'vara.takki', 'Setja í körfu')} · ${kr(v.verd * s.fjoldi)}</button></div>
 ${s.tilk ? `<div class="vv-tilk" role="status"><span>${esc(s.tilk)}</span><a class="vv-btn ljos sm" href="#karfa">${E('span', 'vara.skoda-korfu', 'Skoða körfu')}</a></div>` : ''}
@@ -838,19 +847,18 @@ ${s.tilk ? `<div class="vv-tilk" role="status"><span>${esc(s.tilk)}</span><a cla
 <div class="vv-fj"><button type="button" class="vv-stp litill" data-act="k-faerri" data-id="${v.id}" aria-label="Fækka">${ico('minus')}</button><span>${n}</span><button type="button" class="vv-stp litill" data-act="k-fleiri" data-id="${v.id}" aria-label="Fjölga">${ico('plus')}</button></div>
 <div class="samt">${kr(v.verd * n)}</div></div>`).join('')}</div>
 <div class="vv-blad">${E('h2', 'karfa.afh', 'Afhending', 'vv-h3')}
-<button type="button" class="vv-val" data-act="k-afh" data-v="saekja" aria-pressed="${VV.karfaAfh === 'saekja'}"><span class="punktur"></span><span style="flex:1">${E('b', 'afh.saekja.t', 'Sækja hjá okkur')}${E('small', 'afh.saekja.x', 'Helluhrauni 10, Hafnarfirði · virka daga 8 til 16')}</span>${E('b', 'afh.saekja.verd', '0 kr')}</button>
-<button type="button" class="vv-val" data-act="k-afh" data-v="senda" aria-pressed="${VV.karfaAfh === 'senda'}"><span class="punktur"></span><span style="flex:1">${E('b', 'afh.senda.t', 'Fá sent heim')}${E('small', 'afh.senda.x', 'Póstsending um land allt')}</span>${E('b', 'afh.senda.verd', 'Bætist við')}</button></div>
+${afhending()}</div>
 <div class="vv-blad">${E('h2', 'karfa.upplysingar', 'Upplýsingar', 'vv-h3')}<div class="vv-reitir">
 <label>${esc(texti('karfa.nafn', 'Nafn'))}<input autocomplete="name" placeholder="Jón Jónsson"></label><label>${esc(texti('karfa.kt', 'Kennitala (fyrir reikning)'))}<input inputmode="numeric" placeholder="000000-0000"></label>
 <label>${esc(texti('karfa.netfang', 'Netfang'))}<input type="email" autocomplete="email" placeholder="jon@daemi.is"></label><label>${esc(texti('karfa.simi', 'Sími'))}<input type="tel" autocomplete="tel" placeholder="000 0000"></label></div></div>
 </div>
 <aside class="vv-samantekt">${E('h2', 'karfa.samantekt', 'Samantekt')}
 <div class="rod"><span>${esc(texti('karfa.vorur', 'Vörur'))}</span><b>${kr(vorur)}</b></div>
-<div class="rod"><span>${esc(texti('karfa.afhending', 'Afhending'))}</span><b>${VV.karfaAfh === 'senda' ? esc(texti('afh.senda.verd', 'Bætist við')) : '0 kr'}</b></div>
+<div class="rod"><span>${esc(texti('karfa.afhending', 'Afhending'))}</span><b>${esc(texti('afh.saekja.verd', '0 kr'))}</b></div>
 <div class="rod"><span>${esc(texti('karfa.vsk', 'Þar af vsk (24%)'))}</span><b>${kr(vsk)}</b></div>
 <div class="alls"><span>${esc(texti('karfa.samtals', 'Samtals'))}</span><b>${kr(vorur)}</b></div>
 <button type="button" class="vv-btn breidur" data-act="greida">${E('span', 'karfa.greida', 'Halda áfram í greiðslu')}${ico('haegri')}</button>
-${E('p', 'karfa.greidsluleidir', 'Greiðsluleiðir: kort, millifærsla eða reikningur á kennitölu fyrirtækis. Sendingarkostnaður bætist við og er staðfestur með pöntuninni.', 'smatt')}</aside></div></main>`;
+${E('p', 'karfa.greidsluleidir', 'Greiðsluleiðir: kort, millifærsla eða reikningur á kennitölu fyrirtækis. Vörur eru sóttar í Helluhrauni 10, Hafnarfirði.', 'smatt')}</aside></div></main>`;
   }
 
   // ── Teiknun og leiðir ──────────────────────────────────────────────────
@@ -926,8 +934,6 @@ ${E('p', 'karfa.greidsluleidir', 'Greiðsluleiðir: kort, millifærsla eða reik
     } else if (act === 'mynd') { s.mynd = Number(a.dataset.i) || 0; render(false); }
     else if (act === 'faerri') { s.fjoldi = Math.max(1, s.fjoldi - 1); render(false); }
     else if (act === 'fleiri') { s.fjoldi = Math.min(99, s.fjoldi + 1); render(false); }
-    else if (act === 'afh') { s.afhending = a.dataset.v; render(false); }
-    else if (act === 'k-afh') { VV.karfaAfh = a.dataset.v; render(false); }
     else if (act === 'setja') {
       if (KASSI) { sendaKassa({ vvKassi: 'setja', id, n: s.fjoldi }); return; }
       baetaVid(id, s.fjoldi);

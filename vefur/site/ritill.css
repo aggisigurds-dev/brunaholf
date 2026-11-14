@@ -117,13 +117,8 @@ html.brr-itarlegt body.brr-breyta [data-k]:not(#vv-app *):hover:not(:has([data-k
 .brr-falid small{color:#64748b}
 .brr-skref{margin:0 0 12px;padding-left:20px;font-size:14px;line-height:1.55;color:#334155}
 .brr-listi{max-height:220px;overflow-y:auto;line-height:1.7}
-/* innskráning starfsfólks á síðunni (site/innranet.js): leiðirnar eftir innskráningu */
+/* millifyrirsögn í glugga */
 .brr-gluggi h4{margin:16px 0 8px;font:600 11.5px/1.2 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#64748b}
-.brr-inn-lina{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:56px;margin:0 0 8px;padding:9px 14px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#0f172a;text-decoration:none}
-.brr-inn-lina:hover{background:#f1f5f9;border-color:#94a3b8}
-.brr-inn-lina strong{display:block;font-size:15px;font-weight:600}
-.brr-inn-lina small{display:block;margin-top:2px;font-size:12.5px;line-height:1.4;color:#475569}
-.brr-inn-lina > span:last-child{flex:none;font-size:18px;color:#2563eb}
 .brr-listi span{display:block}
 
 /* ---- gluggar, valmynd, skilaboð ---- */
