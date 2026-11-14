@@ -26,6 +26,7 @@ const FRUM = path.join(BH, 'claude-global');
 const AGENTAR = {                       // nafn → heimaskrá (frumritið ræður)
   rukkari: path.join(BH, '.claude', 'agents', 'rukkari.md'),
   samthykktir: path.join(ROT, 'slokkvitaeki', '.claude', 'agents', 'samthykktir.md'),
+  gatakort: path.join(BH, '.claude', 'agents', 'gatakort.md'),      // Jackie Chan (14.11.2026): kallanlegur úr hvaða möppu sem er
 };
 const tol = n => 'node ' + path.join(BH, 'tools', n).replace(/\\/g, '/') + ' --notandi';
 const HOOKAR = [                        // [atburður, skrá, matcher, tímamörk]

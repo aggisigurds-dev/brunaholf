@@ -1,7 +1,7 @@
 {
  "generated": "2026-11-14",
  "agents": 43,
- "skills": 58,
+ "skills": 59,
  "a_odrum_velum": 8,
  "list": [
   {
@@ -1642,14 +1642,14 @@
     "Write"
    ],
    "heimili": [
-    "kjarni"
+    "brunaholf"
    ],
    "skrar": [
     {
-     "repo": "kjarni",
+     "repo": "brunaholf",
      "path": ".claude/agents/gatakort.md",
      "uppfaert": "2026-11-14",
-     "linur": 127
+     "linur": 134
     }
    ],
    "afbrigdi": [],
@@ -5817,6 +5817,47 @@
    ],
    "afbrigdi": [],
    "uppfaert": "2026-11-10",
+   "sidur": []
+  },
+  {
+   "id": "skill:gatakort-nytt-husnaedi",
+   "type": "skill",
+   "name": "gatakort-nytt-husnaedi",
+   "emoji": "🥋",
+   "rodd": null,
+   "flokkur": "skill",
+   "svid": null,
+   "lysing": "Kortleggja húsnæði á Gatakortið í nýja Ajour (Skráning í Kjarna): frá teikningum að korti með skráningum, lögum, pörun og stöðuskýrslu. Skref fyrir skref: safna teikningum, velja hnitakerfi hæðar, púsla hlutablöðum saman, stilla fagteikningar af sem lög, flytja inn skráningar úr Ajour, varpa Ajour-teikningum á yfirlitsblað, finna brunaveggi og gegnumtök, færa punkta á skurðpunkt, para við áætluð göt og hinn endann, og sannreyna. Notaðu þegar Agnar segir „mappa upp annað húsnæði\", „kortleggja nýja hæð\", „púsla saman teikningum\", „bæta við lagi\", „setja fagteikningu yfir\", „stilla af teikningu\" eða „gera gatakort fyrir <verk>\". Eigandi: agentinn `gatakort` (Jackie Chan). Fyrirmyndin er NLSH (verk 4), skráð í NLSH-DAGBOK.md í sömu möppu. Kóðinn og tólin eru í Kjarna (apps/slokkvitaeki/tools/skraning-gatakort-*).",
+   "serhaefing": [],
+   "kveikjuord": [
+    "mappa upp húsnæði",
+    "kortleggja nýja hæð",
+    "gatakort fyrir nýtt verk",
+    "púsla saman teikningum",
+    "bæta við lagi",
+    "setja fagteikningu yfir",
+    "stilla af teikningu",
+    "nýtt húsnæði á gatakort"
+   ],
+   "aldrei": [
+    "Keyra NLSH-tól óbreytt á annað verk",
+    "--write án þurrkeyrslu",
+    "Birta forsendur NLSH í skýrslu annars húsnæðis"
+   ],
+   "tools": [],
+   "heimili": [
+    "brunaholf"
+   ],
+   "skrar": [
+    {
+     "repo": "brunaholf",
+     "path": ".claude/skills/gatakort-nytt-husnaedi/SKILL.md",
+     "uppfaert": "2026-11-14",
+     "linur": 267
+    }
+   ],
+   "afbrigdi": [],
+   "uppfaert": "2026-11-14",
    "sidur": []
   },
   {
@@ -11050,7 +11091,7 @@
     "apps/slokkvitaeki/app/kjarni/skraning/skyrsla/page.tsx"
    ],
    "yfir": null,
-   "eigandi": "gatakort",
+   "eigandi": "bh:gatakort",
    "undiragentar": [
     "skraning"
    ],
@@ -11065,7 +11106,7 @@
    "stada": "✅",
    "astaeda": [],
    "eigandi_nafn": "gatakort",
-   "eigandi_utan": false
+   "eigandi_utan": true
   },
   {
    "vefur": "kjarni",
@@ -11078,7 +11119,7 @@
     "apps/slokkvitaeki/app/kjarni/skraning/kort/page.tsx"
    ],
    "yfir": null,
-   "eigandi": "gatakort",
+   "eigandi": "bh:gatakort",
    "undiragentar": [
     "skraning"
    ],
@@ -11096,7 +11137,7 @@
    "stada": "✅",
    "astaeda": [],
    "eigandi_nafn": "gatakort",
-   "eigandi_utan": false
+   "eigandi_utan": true
   },
   {
    "vefur": "kjarni",
@@ -11947,6 +11988,7 @@
   "framendi.md",
   "fyrirtaeki.md",
   "gagnaleidslur.md",
+  "gatakort.md",
   "hradi.md",
   "innkaupabokari.md",
   "jarvis.md",

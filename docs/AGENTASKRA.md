@@ -377,8 +377,8 @@ Byggt 2026-11-14 úr `brunaholf/.claude/sidukort.json`, `kjarni/.claude/sidukort
 | kjarni | Verkbók | `/kjarni/artcraft/vinnslur` | `apps/slokkvitaeki/app/kjarni/artcraft/vinnslur/page.tsx` | `artcraft` | — | ✅ |
 | kjarni | Kjarni — Stjórnstöð | `/kjarni` | `apps/slokkvitaeki/app/kjarni/page.tsx` | `kjarni-vefur` | `joker` · `thema` | ✅ |
 | kjarni | Skráning — flokkar, gátlisti og starfsmenn | `/kjarni/skraning/flokkar` | `apps/slokkvitaeki/app/kjarni/skraning/flokkar/page.tsx` | `skraning` | `gagnaleidslur` · `bokari` | ✅ |
-| kjarni | Skráning — stöðuskýrsla | `/kjarni/skraning/skyrsla` | `apps/slokkvitaeki/app/kjarni/skraning/skyrsla/page.tsx` | `gatakort` | `skraning` | ✅ |
-| kjarni | Skráning — gatakort | `/kjarni/skraning/kort` | `apps/slokkvitaeki/app/kjarni/skraning/kort/page.tsx` | `gatakort` | `skraning` | ✅ |
+| kjarni | Skráning — stöðuskýrsla | `/kjarni/skraning/skyrsla` | `apps/slokkvitaeki/app/kjarni/skraning/skyrsla/page.tsx` | `bh:gatakort` | `skraning` | ✅ |
+| kjarni | Skráning — gatakort | `/kjarni/skraning/kort` | `apps/slokkvitaeki/app/kjarni/skraning/kort/page.tsx` | `bh:gatakort` | `skraning` | ✅ |
 | kjarni | Skráning — greining | `/kjarni/skraning/greining` | `apps/slokkvitaeki/app/kjarni/skraning/greining/page.tsx` | `skraning` | `gagnaleidslur` | ✅ |
 | kjarni | Skráning — Kjarni | `/kjarni/skraning` | `apps/slokkvitaeki/app/kjarni/skraning/page.tsx` | `skraning` | `gagnaleidslur` · `bokari` | ✅ |
 | kjarni | Skráning — prenta teikningu | `/kjarni/skraning/prenta` | `apps/slokkvitaeki/app/kjarni/skraning/prenta/page.tsx` | `skraning` | `gagnaleidslur` | ✅ |

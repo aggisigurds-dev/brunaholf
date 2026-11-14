@@ -4038,7 +4038,7 @@
     "apps/slokkvitaeki/app/kjarni/skraning/skyrsla/page.tsx"
    ],
    "yfir": null,
-   "eigandi": "gatakort",
+   "eigandi": "bh:gatakort",
    "undiragentar": [
     "skraning"
    ],
@@ -4053,7 +4053,7 @@
    "stada": "✅",
    "astaeda": [],
    "eigandi_nafn": "gatakort",
-   "eigandi_utan": false
+   "eigandi_utan": true
   },
   {
    "vefur": "kjarni",
@@ -4066,7 +4066,7 @@
     "apps/slokkvitaeki/app/kjarni/skraning/kort/page.tsx"
    ],
    "yfir": null,
-   "eigandi": "gatakort",
+   "eigandi": "bh:gatakort",
    "undiragentar": [
     "skraning"
    ],
@@ -4084,7 +4084,7 @@
    "stada": "✅",
    "astaeda": [],
    "eigandi_nafn": "gatakort",
-   "eigandi_utan": false
+   "eigandi_utan": true
   },
   {
    "vefur": "kjarni",

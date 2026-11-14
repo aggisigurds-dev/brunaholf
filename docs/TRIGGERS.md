@@ -162,6 +162,7 @@ Byggð 2026-11-14. Þessi tafla er dregin beint úr agent- og skill-skránum og 
 | `elon-musk` | skill | `árs` · `ársreitur` · `pera` · `FULLBÚIÐ` · `VANTAR` · `SOURCE` · `FILTER` · `TÆKI` · `KPI` · `data-elon` · `RAFKERFI` · `röng join` · `FK-join` | 31.08.2026 |
 | `fact-check` | skill | `fact check` · `tríó` · `stemmir` · `úttekt vs reikningur` · `óskoðaður` · `fram yfir` · `þjónustulisti` · `tækjatala` | 08.11.2026 |
 | `gata-manadarlok` | skill | `loka mánuðinum` · `Efnislisti NLSH` · `Landsspítalinn september` · `Heklureitur göt` · `lokastaðan` · `setja stöðuna inn` · `sendi reikning fyrir mismuninum` | 10.11.2026 |
+| `gatakort-nytt-husnaedi` | skill | `mappa upp húsnæði` · `kortleggja nýja hæð` · `gatakort fyrir nýtt verk` · `púsla saman teikningum` · `bæta við lagi` · `setja fagteikningu yfir` · `stilla af teikningu` · `nýtt húsnæði á gatakort` | 14.11.2026 |
 | `google-drive` | skill | `Drive` · `Drive-mappa` · `skýrslumappa` · `endurnefna skjal` · `tvítök í möppunni` · `customer_documents` · `finna skýrslu` · `aldrei eyða` | 28.10.2026 |
 | `heidarlegt-vidmot` | skill | `lygandi takki` · `vistun segir OK` · `röðun` · `forgangur` · `hvað er efst` · `hnappur sem gerir ekkert` · `heiðarlegt viðmót` | 18.09.2026 |
 | `reikningalota` | skill | `reikningalota` · `klára reikninga` · `hvað er tilbúið að senda` · `ertu með nýjustu póstana` | 11.11.2026 |

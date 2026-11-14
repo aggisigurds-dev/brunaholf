@@ -485,7 +485,8 @@
         "bokari": "NLSH/gata-uppgjör — samanburður fyrir/eftir",
         "gagnaleidslur": "Ajour-útflutningur (luna-bridge)",
         "arnold": "TurboPaint og veggjagreining — ekki gatakortið",
-        "oryggi": "fatan skraning er opin; RLS á skr_*"
+        "oryggi": "fatan skraning er opin; RLS á skr_*",
+        "skill gatakort-nytt-husnaedi": "verkferlið fyrir nýtt húsnæði + NLSH-dagbókin"
       }
     },
     "verkstadur": {
@@ -1013,7 +1014,8 @@
       "samthykki-a-bord",
       "agent-athugasemdir",
       "stadfesting-brunalokana",
-      "rekstrarfelog-parun"
+      "rekstrarfelog-parun",
+      "gatakort-nytt-husnaedi"
     ],
     "emoji": {
       "arnold": "💪",
@@ -1043,7 +1045,8 @@
       "samthykki-a-bord": "📌",
       "agent-athugasemdir": "📝",
       "stadfesting-brunalokana": "📄",
-      "rekstrarfelog-parun": "🔗"
+      "rekstrarfelog-parun": "🔗",
+      "gatakort-nytt-husnaedi": "🥋"
     },
     "aldrei": {
       "villuleit": [
@@ -1081,6 +1084,11 @@
       ],
       "samthykki-a-bord": [
         "Insert án assigned_to 'Agnar'"
+      ],
+      "gatakort-nytt-husnaedi": [
+        "Keyra NLSH-tól óbreytt á annað verk",
+        "--write án þurrkeyrslu",
+        "Birta forsendur NLSH í skýrslu annars húsnæðis"
       ]
     }
   }
