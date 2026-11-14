@@ -567,3 +567,49 @@ Færðir punktar · Tillögur · Símaviðmót · Stöðuskýrsla.
   röð fjarri réttum stað, hvert með tvö hök (seinna hakið kemur af `hinnKlar`), sem leit út eins og fimm kláraðar lokanir. Einnig hafnað: að láta
   lagfæringu sleppa ✕ og verða sjálfkrafa græn; þá hefði talningin ekki passað við merkin.
 - **Eftir stendur:** „×n" af sömu stærð án lagfæringa segir ekki hvort verkin eru endar sömu lokunar eða tveggja. Pikk á merkið sýnir númerin („Í sama merki").
+
+## Merki hinna tegundanna: lýsing Agnars (14.11.2026) — ÓÚTFÆRT í kortinu
+- **Mock-up:** þrjár tillögur hönnunarlotu (A fjölskylda plússins, B hluturinn sjálfur, C klasar) í `kjarni/apps/slokkvitaeki/docs/apex-merki-tillogur/`
+  og í Claude Design: https://claude.ai/artifact/5MMdaWA8kQ14WKuFVJzQhn (Brunahólf V2; arkir Main, Simi, TillagaA–D).
+- **Orð Agnars eftir að hafa séð þær:** „Milliloft. Já fínt kassi með V-inu innan í þegar tengt … rafmagn tígull með rafmagnseldingu … sprinkler eru svo oft
+  bara stakir svo eitthvað annað … tveir hringir saman sniðugt fyrir vatn og hita sem er 80% alltaf í pörum. Þá kannski eins og 2 × 8-ur á hlið til að
+  túlka þessi 4 rör meðfram endunum báðum megin í sitthvorum svipuðum litum."
+- **Tillaga D (mín útfærsla á þessu, örk TillagaD):** milliloft = kassi, hakið fer INN í hann þegar klárað (ekkert hak utan við) · rafmagn = tígull
+  með eldingu · úðakerfi = stakur hringur með punkti · vatn og hiti = tveir hringir saman (átta á hlið) per par; fjögur rör = tvær áttur hlið við hlið
+  eftir veggnum, hvor í sínum tóni af sama lit · plaströr = átta með punkti í hvorum hring · loft raufar = tvö samsíða strik · plús óbreyttur.
+- **Afleiðing fyrir útfærslu:** rör skiptast þá eftir KERFI (úði / vatn og hiti), ekki efni (stál / plast). Kerfið er aðeins þekkt þar sem `skr_kerfi`
+  eða myndgreining (`visbendingar.json`) segir til; óþekkt kerfi þarf hlutlaust merki. Óstaðfest hjá Agnari: hvar áttirnar tvær eiga að standa
+  („meðfram endunum báðum megin") og hvaða litatónar.
+- **Viðbót Agnars sama dag um raufar:** „En metrar kringum ferkantaða loftræstingu. Mætti svona svipast sem plúsinn eða jú kannski bara kassa. En er í
+  þeim flokk." → Loft raufar (metrar) eru LOFTRÆSTING og eiga að vera í fjölskyldu plússins: liggjandi kassi með sömu útlínu og plúsinn, metrarnir inni í,
+  hök utan við eins og á plúsnum. Greinist frá millilofti (ferningur, hak inni í, annar litur) á lögun og lit. Uppfært á örkinni TillagaD.
+
+## Tillaga D komin í kortið (14.11.2026) — kjarni main, commit „Gatakort: merki tillögu D"
+- **Orð Agnars til viðbótar:** „Setja fyrir 2 x 2 á brunavegginn. V check sitt hvorum megin" og (með tveimur myndum af Miro-borðinu, blómhringir með „2" í
+  rauðu, bláu, appelsínugulu og ljósbláu, „2pl hvitt") „Eru almennt 2 og 2 saman. 2x heitt og 2x kalt."
+- **Útfært í KortClient (`merki`):** stálrör eftir KERFI (`kerfiKort` úr `skr_kerfi` án vafa: 1.135 úði, 4.176 vatn mælt 14.11; úrskurður af ljósmynd í
+  `visbendingar.json` gengur fyrir): úði = hringur með punkti · vatn og hiti = átta (`attur`) þvert á brunavegginn · 3+ rör á staðnum = tvær áttur (2 × 2)
+  á veggnum, `HEITT` rauð og `KALT` blá · óþekkt kerfi = blómhringur með fjölda. Plast = átta með punktum (2 × 2 í tveimur tónum af stærðarlitnum).
+  Rafmagn = tígull með `elding`. Milliloft = kassi, hakið inni í (ekkert hak utan við). Loft raufar = liggjandi kassi. Úði og vatn renna ekki saman í merki.
+- **Fyrirvarar:** (1) rautt/blátt í 2 × 2 er TÁKNRÆNT; gögnin segja ekki heitt eða kalt. (2) Fjöldi röra er metinn af fjölda stakra verka í merkinu
+  (hæsta tala á annarri hlið, annars helmingur), ekki talinn. (3) Stærðarliturinn sést ekki á 2 × 2 stálmerkinu; pikk sýnir flokkinn. (4) Fagsýnirnar
+  „Úðakerfi" og „Vatn og lagnir" sía enn aðeins eftir úrskurði af ljósmynd, ekki eftir `skr_kerfi`, svo vatnsáttur sjást í úðasýninni. (5) Metrar í
+  raufamerkinu eru ekki sýndir (talan er í athugasemd skráningar, ekki sótt á kortið).
+- **Prófað** á þróunarþjóni með skrif stöðvuð (Vatn og lagnir, Úðakerfi, tölvusýn, val á punkti); engar villur.
+
+## Eitt aðalmerki á hverju gegnumtaki (14.11.2026) — kjarni main ad14f49
+- **Orð Agnars:** „Mættir reyna að það komi bara eitt aðalmerki akkúrat á gegnumskurðinn. Síðan dregur maður Ajour-punktinn að honum til að fá V …
+  séu kannski í öðrum lit þegar ótengd. Og aðalmerkin liggja ekki á hvert öðru."
+- **Útfært í KortClient (hópunarlykkjan, vinnustækkun Rs ≥ 7):** loftræstiskráning sem á nema (`endar.get(id).nemi`) rennur í EITT merki per nema og stærð,
+  og merkið stendur á nemanum sjálfum (miðlína brunaveggjar þar sem stokkurinn fer í gegn), ekki á meðaltali punktanna. Hökin sitt hvorum megin eins og áður.
+- **Ótengdur punktur:** loftræstiskráning án nema sem er innan `OTENGD_PX` = 45 px frá einhverjum nema er teiknuð sem lítill grár plús (`OTENGT`), án stöðu.
+  Dregin að merkinu í færsluham smellur hún á nemann (gamla smellireglan, `SMELL_NAER`) og gengur þá í aðalmerkið. Skráning fjær öllum nemum teiknast eins og áður.
+- **Færsluhamur:** auð gegnumtök (nemi án skráningar) sjást sem daufar brotnar plúsútlínur, svo vitað sé hvert má draga.
+- **Pikk:** finnist engin skráning undir fingrinum velst sú tengda skráning sem er næst pikkinu og á nema innan `mork × 1,4`.
+- **Skýring:** „Ótengdur punktur (n)" með fjölda á sýndum punktum (110 í loftræstisýn á yfirlitsblaðinu sem opnast fyrst, mælt 14.11; í færsluham aðeins virka deildin).
+- **Stilling:** „Eitt aðalmerki á hverju gegnumtaki" (`skr_verk.stillingar.adalmerki`, sjálfgefið á).
+- **Skörun:** gamla hliðrunin (Loft-merki innan 1,9 R færð 2,1 R meðfram vegg) gildir áfram, líka fyrir tvær stærðir á sama nema.
+- **Takmörk:** nemar eru aðeins til fyrir loftræstingu á yfirlitsblöðum (5H/6H); rör, rafmagn og gólf eru óbreytt. Ótengdur punktur sýnir EKKI hvort verkið er
+  opið eða klárað fyrr en hann er tengdur.
+- **Prófað** á þróunarþjóni í símasýn: grár punktur (#5356) valinn í færsluham og dreginn 12 px að merkinu, teljarinn fór 24 → 23 og hakið birtist; skrifin
+  (`PATCH skr_faerslur`) fengu gervisvar, ekkert fór í grunninn. Prófunarskriftur: `apex_adal_prof.cjs`, `apex_adal_drag2.cjs` (scratchpad lotunnar).
