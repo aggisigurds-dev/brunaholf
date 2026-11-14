@@ -596,3 +596,20 @@ Færðir punktar · Tillögur · Símaviðmót · Stöðuskýrsla.
   „Úðakerfi" og „Vatn og lagnir" sía enn aðeins eftir úrskurði af ljósmynd, ekki eftir `skr_kerfi`, svo vatnsáttur sjást í úðasýninni. (5) Metrar í
   raufamerkinu eru ekki sýndir (talan er í athugasemd skráningar, ekki sótt á kortið).
 - **Prófað** á þróunarþjóni með skrif stöðvuð (Vatn og lagnir, Úðakerfi, tölvusýn, val á punkti); engar villur.
+
+## Eitt aðalmerki á hverju gegnumtaki (14.11.2026) — kjarni main ad14f49
+- **Orð Agnars:** „Mættir reyna að það komi bara eitt aðalmerki akkúrat á gegnumskurðinn. Síðan dregur maður Ajour-punktinn að honum til að fá V …
+  séu kannski í öðrum lit þegar ótengd. Og aðalmerkin liggja ekki á hvert öðru."
+- **Útfært í KortClient (hópunarlykkjan, vinnustækkun Rs ≥ 7):** loftræstiskráning sem á nema (`endar.get(id).nemi`) rennur í EITT merki per nema og stærð,
+  og merkið stendur á nemanum sjálfum (miðlína brunaveggjar þar sem stokkurinn fer í gegn), ekki á meðaltali punktanna. Hökin sitt hvorum megin eins og áður.
+- **Ótengdur punktur:** loftræstiskráning án nema sem er innan `OTENGD_PX` = 45 px frá einhverjum nema er teiknuð sem lítill grár plús (`OTENGT`), án stöðu.
+  Dregin að merkinu í færsluham smellur hún á nemann (gamla smellireglan, `SMELL_NAER`) og gengur þá í aðalmerkið. Skráning fjær öllum nemum teiknast eins og áður.
+- **Færsluhamur:** auð gegnumtök (nemi án skráningar) sjást sem daufar brotnar plúsútlínur, svo vitað sé hvert má draga.
+- **Pikk:** finnist engin skráning undir fingrinum velst sú tengda skráning sem er næst pikkinu og á nema innan `mork × 1,4`.
+- **Skýring:** „Ótengdur punktur (n)" með fjölda á sýndum punktum (110 í loftræstisýn á yfirlitsblaðinu sem opnast fyrst, mælt 14.11; í færsluham aðeins virka deildin).
+- **Stilling:** „Eitt aðalmerki á hverju gegnumtaki" (`skr_verk.stillingar.adalmerki`, sjálfgefið á).
+- **Skörun:** gamla hliðrunin (Loft-merki innan 1,9 R færð 2,1 R meðfram vegg) gildir áfram, líka fyrir tvær stærðir á sama nema.
+- **Takmörk:** nemar eru aðeins til fyrir loftræstingu á yfirlitsblöðum (5H/6H); rör, rafmagn og gólf eru óbreytt. Ótengdur punktur sýnir EKKI hvort verkið er
+  opið eða klárað fyrr en hann er tengdur.
+- **Prófað** á þróunarþjóni í símasýn: grár punktur (#5356) valinn í færsluham og dreginn 12 px að merkinu, teljarinn fór 24 → 23 og hakið birtist; skrifin
+  (`PATCH skr_faerslur`) fengu gervisvar, ekkert fór í grunninn. Prófunarskriftur: `apex_adal_prof.cjs`, `apex_adal_drag2.cjs` (scratchpad lotunnar).
