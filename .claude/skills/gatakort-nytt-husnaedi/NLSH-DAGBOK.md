@@ -580,3 +580,6 @@ Færðir punktar · Tillögur · Símaviðmót · Stöðuskýrsla.
 - **Afleiðing fyrir útfærslu:** rör skiptast þá eftir KERFI (úði / vatn og hiti), ekki efni (stál / plast). Kerfið er aðeins þekkt þar sem `skr_kerfi`
   eða myndgreining (`visbendingar.json`) segir til; óþekkt kerfi þarf hlutlaust merki. Óstaðfest hjá Agnari: hvar áttirnar tvær eiga að standa
   („meðfram endunum báðum megin") og hvaða litatónar.
+- **Viðbót Agnars sama dag um raufar:** „En metrar kringum ferkantaða loftræstingu. Mætti svona svipast sem plúsinn eða jú kannski bara kassa. En er í
+  þeim flokk." → Loft raufar (metrar) eru LOFTRÆSTING og eiga að vera í fjölskyldu plússins: liggjandi kassi með sömu útlínu og plúsinn, metrarnir inni í,
+  hök utan við eins og á plúsnum. Greinist frá millilofti (ferningur, hak inni í, annar litur) á lögun og lit. Uppfært á örkinni TillagaD.
