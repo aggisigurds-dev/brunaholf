@@ -192,6 +192,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .footer__brand p{margin-top:1.1rem;max-width:25ch;color:var(--on-navy);font-size:1.08rem;font-weight:600;line-height:1.5}
 /* Facebook-síðan: hlekkur undir merkinu í fætinum, opnast í nýjum flipa */
 .footer__fb{display:inline-flex;align-items:center;gap:.55em;min-height:36px;margin-top:1.1rem;color:#fff;font-weight:600;text-underline-offset:4px}
+.footer__fb + .footer__fb{margin-left:1.4rem}
 .footer__fb:hover{text-decoration:underline}
 .footer__fb svg{width:1.35rem;height:1.35rem}
 .footer h3{font-family:var(--font-body);font-size:1.15rem;font-weight:700;letter-spacing:0;line-height:1.3;color:#fff}

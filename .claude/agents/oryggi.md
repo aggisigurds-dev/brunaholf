@@ -103,6 +103,10 @@ Eyðublöð-kaflanum hjá framendi/skjol).
 `vefryni_pages` + `vefryni_pins`: **RLS ON, engar anon-policies** — aðeins
 `/api/vefryni` (service-role) les/skrifar. Þetta er mynstrið fyrir töflur sem
 frontend þarf ekki að snerta beint: færa aðganginn í Netlify-fall og læsa töflunni.
+`vefur_efni` + `vefur_efni_saga` (14.11.2026, `sql/2026-11-14_vefur_efni.sql`) fylgja sama mynstri og ganga
+skrefi lengra: RLS á, engar reglur, réttindi anon/authenticated tekin af, og fallið `/api/vefur-efni` er
+**lokað sjálfgefið** (503 á allt nema lestur á birtu efni þar til `VEFUR_RITILL_LYKILORD`, minnst 16 stafir,
+er sett). Mælt 14.11.2026 með opinbera lyklinum: GET, PATCH og POST skila 401 / 42501.
 `charlize_contacts` (setup-tengilidir.sql) kveikir líka RLS strax við stofnun.
 **En taflan lekur gegnum view:** view keyra með réttindum eigandans, ekki anon. Tvö view lesa
 `charlize_contacts` og anon má lesa bæði: `v_charlize_contacts_active` (frá upphafi — netfang, kt,
