@@ -547,3 +547,12 @@ Færðir punktar · Tillögur · Símaviðmót · Stöðuskýrsla.
   neongrænt innfill inn í táknin." Merki fyllist (`NEON_FYLL`) þegar ekkert er opið, hinn endann vantar hvergi, og bæði stöku verkin eru kláruð eða ein
   skráning er öll lokunin (gólf, plata samkvæmt myndgreiningu). Græni tígullinn (parað áætlað gat, „fullt") er ekki teiknaður lengur í þessum stíl;
   guli tígullinn („vantar hluta") og rauðu punktarnir eru óbreyttir. Skýring: „Tilbúið" í neðri stiku símans og setning í hliðarstiku tölvu.
+
+## Litakerfi merkjanna: grænt, gult, rautt (14.11.2026) — kjarni main e008ff5
+- **Orð Agnars** (eftir neonfyllinguna, „er þetta ekki skýrara svoleiðis"): „En öll hin merkin, geturðu eitthvað gert öðruvísi útgáfu þar í samræmi.
+  Til að reyna gera allt skýrara og augljósara."
+- **Reglan:** fyllingin í merkinu segir stöðu lokunarinnar. Grænt (`NEON_FYLL`) = tilbúið · gult (`GULT_FYLL`) = hálfnað (klárað öðrum megin, eða sumt
+  klárað og annað opið) · rautt (`RAUTT_FYLL`) = opið (ekkert klárað). Hálfnað er aðeins metið á yfirlitsblaði. Rauði hringurinn er aðeins á blönduðu
+  merki. Parað áætlað gat (aðeins ef „Sýna líka áætluð göt sem eiga skráningu" er á) er lítil brotin útlína. Hök, rautt ✕, gult „?" og tölur óbreytt.
+- **Hugmyndin sem hann staðfesti:** staða sést Í merkinu (fylling), ekki með stærra tákni ofan á því. Sama regla á við ný merki framvegis.
+- **Óbreytt:** rauður punktur (eftir, óskráð), appelsínugulur „?" (tillaga), kerfispunktur við merkið, stöðuskýrslan (hún notar sína eigin punkta).
